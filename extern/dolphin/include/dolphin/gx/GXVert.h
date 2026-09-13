@@ -29,6 +29,18 @@ volatile PPCWGPipe GXWGFifo : GXFIFO_ADDR;
 #define GXWGFifo (*(volatile PPCWGPipe *)GXFIFO_ADDR)
 #endif
 
+#if defined(TARGET_PC)
+/* The write-gather pipe (GXFIFO_ADDR = 0xCC008000) is a real GameCube
+ * hardware register and is unmapped under TARGET_PC: any raw GXWGFifo
+ * store writes straight there and faults with an ACCESS_VIOLATION. Vertex
+ * attributes must go through the named GX entry points (GXPosition3f32 /
+ * GXTexCoord2f32 / GXTexCoord1x8 / ...), which pc/platform/shim_gxvert.c
+ * forwards to Aurora. Poisoning the macro turns any stray raw store into a
+ * self-documenting compile error instead of a runtime crash. */
+#undef GXWGFifo
+#define GXWGFifo GXWGFifo_use_named_GX_entry_points_see_shim_gxvert
+#endif
+
 #if defined(TARGET_PC) || DEBUG
 
 // external functions

@@ -486,7 +486,10 @@ void *gw_AXAcquireVoice(uint32_t priority, void *callback, uint32_t user_context
     if (v == NULL) {
         int best = -1;
         for (i = 0; i < GW_AX_NUM_VOICES; ++i) {
-            if (gw_ax_in_use[i] && (best < 0 || gw_ax_voices[i].priority < gw_ax_voices[best].priority)) {
+            if (gw_ax_in_use[i] &&
+                (best < 0 ||
+                 (int32_t) gw_r32(&gw_ax_voices[i].priority) <
+                     (int32_t) gw_r32(&gw_ax_voices[best].priority))) {
                 best = i;
             }
         }
@@ -500,7 +503,7 @@ void *gw_AXAcquireVoice(uint32_t priority, void *callback, uint32_t user_context
     }
 
     i = (int)(v - gw_ax_voices);
-    v->priority = (int)priority;
+    gw_w32(&v->priority, priority);
     v->callback = (void (*)(void *))callback;
     v->userContext = user_context;
     gw_w32(&v->index, (uint32_t)i);
@@ -527,7 +530,7 @@ void gw_AXSetVoicePriority(void *voice, uint32_t priority) {
     if (v < &gw_ax_voices[0] || v >= &gw_ax_voices[GW_AX_NUM_VOICES]) {
         return;
     }
-    v->priority = (int)priority;
+    gw_w32(&v->priority, priority);
 }
 
 void gw_AXSetVoiceState(void *voice, uint16_t state) {

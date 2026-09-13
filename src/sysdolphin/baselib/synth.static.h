@@ -53,7 +53,10 @@ static struct {
     /* 0C */ int xC;
 } HSD_Synth_804C2A60[6];
 static u32 hsd_SynthSFXLoadBuf[0x20 / 4];
-static AXVPB* HSD_Synth_804C2AE0[0x80 / 4];
+/* 64 entries: [0..31] hold each bank's node list, [bank_id + 0x80/4] (see
+ * HSD_SynthSFXBankDeflag) the bank's deflag offset. 0x80/4 made that write run past the end and
+ * land on HSD_Synth_804C29E0's buckets, corrupting an SFX list head with a native pointer. */
+static AXVPB* HSD_Synth_804C2AE0[0x100 / 4];
 static int hsd_SynthSFXBank[0x80 / 4];
 static int hsd_SynthSFXBankHead[0x84 / 4];
 static struct HSD_SynthSFXNode hsd_SynthSFXNodes[0x40];

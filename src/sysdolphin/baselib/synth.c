@@ -1288,6 +1288,14 @@ void HSD_Synth_8038ADD0(void)
     }
     pos = (*(u32*) ((u8*) node->voice[0] + 0x1B2) - HSD_Synth_804D7780 * 2) >>
           0x11;
+#if defined(TARGET_PC)
+    /* pos is the stream-ring buffer index and must address lbl_804C4540[3]. The voice's current
+     * address (voice + 0x1B2) is 0 until its stream is set up, which makes the unsigned difference
+     * wrap to 0x7FFF and this read run far past the array. */
+    if (pos >= ARRAY_SIZE(lbl_804C4540)) {
+        return;
+    }
+#endif
     if (pos != HSD_Synth_804D7774) {
         HSD_Synth_804D7774 = pos;
         for (i = 0; i < node->voice_count; i++) {

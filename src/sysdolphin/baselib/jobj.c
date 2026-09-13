@@ -1097,6 +1097,12 @@ HSD_JObj* jobj_get_effector_checked(HSD_JObj* eff)
     }
 }
 
+#if defined(TARGET_PC)
+/* Declared unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
+ * gw_diag_jobj_mtx in shim_gx.c. Writing gw_diag_jobj_mtx here would double-prefix. */
+extern void diag_jobj_mtx(const float* mtx, int stage, int branch);
+#endif
+
 extern const Vec3 HSD_JObj_803B94C4;
 
 /// @todo Variables @c var_f27 and @c var_f28 are used uninitialized
@@ -1394,6 +1400,29 @@ void HSD_JObjSetupMatrixSub(HSD_JObj* jobj)
     HSD_JOBJ_METHOD(jobj)->make_mtx(jobj);
     jobj->flags &= ~JOBJ_MTX_DIRTY;
     if (!(jobj->flags & JOBJ_USER_DEF_MTX)) {
+#if defined(TARGET_PC)
+        /* TEMP DIAG (instrumentation only, no behaviour change): record whether the matrix is
+         * already NaN as make_mtx produced it, before any IK runs, and again after the joint
+         * branch. See gw_diag_jobj_mtx in pc/platform/shim_gx.c. */
+        {
+            int diag_branch;
+            switch (jobj->flags & JOBJ_JOINT) {
+            case JOBJ_JOINT1:
+                diag_branch = 0;
+                break;
+            case JOBJ_JOINT2:
+                diag_branch = 1;
+                break;
+            case JOBJ_EFFECTOR:
+                diag_branch = 2;
+                break;
+            default:
+                diag_branch = 3;
+                break;
+            }
+            diag_jobj_mtx(&jobj->mtx[0][0], 0, diag_branch);
+        }
+#endif
         switch (jobj->flags & JOBJ_JOINT) {
         case JOBJ_JOINT1:
             resolveIKJoint1(jobj);
@@ -1438,6 +1467,26 @@ void HSD_JObjSetupMatrixSub(HSD_JObj* jobj)
             }
             break;
         }
+#if defined(TARGET_PC)
+        {
+            int diag_branch;
+            switch (jobj->flags & JOBJ_JOINT) {
+            case JOBJ_JOINT1:
+                diag_branch = 0;
+                break;
+            case JOBJ_JOINT2:
+                diag_branch = 1;
+                break;
+            case JOBJ_EFFECTOR:
+                diag_branch = 2;
+                break;
+            default:
+                diag_branch = 3;
+                break;
+            }
+            diag_jobj_mtx(&jobj->mtx[0][0], 1, diag_branch);
+        }
+#endif
         jobj->flags &= ~JOBJ_MTX_DIRTY;
     }
 }

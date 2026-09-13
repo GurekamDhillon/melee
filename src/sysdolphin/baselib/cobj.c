@@ -460,6 +460,13 @@ static bool setupBottomHalfCamera(HSD_CObj* cobj)
     return true;
 }
 
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
+ * gw_diag_cobj_view in shim_gx.c. */
+extern void diag_cobj_view(const float* mtx, const float* eye, const float* up,
+                           const float* interest);
+#endif
+
 void HSD_CObjSetupViewingMtx(HSD_CObj* cobj)
 {
     Vec3 eyepos;
@@ -471,6 +478,12 @@ void HSD_CObjSetupViewingMtx(HSD_CObj* cobj)
         HSD_CObjGetUpVector(cobj, &up_vec);
         HSD_CObjGetInterest(cobj, &interest);
         C_MTXLookAt(cobj->view_mtx, &eyepos, &up_vec, &interest);
+#if defined(TARGET_PC)
+        /* TEMP DIAG (instrumentation only, no behaviour change): report whether LookAt's inputs
+         * or its resulting view matrix are NaN. See gw_diag_cobj_view in pc/platform/shim_gx.c. */
+        diag_cobj_view(&cobj->view_mtx[0][0], (const float*) &eyepos,
+                       (const float*) &up_vec, (const float*) &interest);
+#endif
         HSD_WObjClearFlags(cobj->eyepos, 2);
         HSD_WObjClearFlags(cobj->interest, 2);
         HSD_CObjClearFlags(cobj, 0x40000000);

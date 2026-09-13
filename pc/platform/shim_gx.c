@@ -26,7 +26,8 @@
 #include "shim_gx.h"
 #include "shim_vi.h"
 
-#include <aurora/gfx.h> /* TEMP DIAG: aurora_get_stats */
+#include <aurora/gfx.h>
+#include <dolphin/gx/GXCpu2Efb.h> /* TEMP DIAG: aurora_get_stats */
 
 #include <dolphin/gx.h>
 
@@ -128,9 +129,161 @@ static GXColor gw_diag_clearclr;
 static uint32_t gw_diag_seg_prim;
 static uint32_t gw_diag_seg_dlist;
 static unsigned gw_diag_mtx_slots_this_frame;
+static unsigned gw_diag_mtx_calls;
+static unsigned gw_diag_mtx_bad;   /* NaN or infinite elements */
+static unsigned gw_diag_mtx_huge;  /* |element| > 1e6, i.e. geometry flung out of clip space */
+static float gw_diag_mtx_maxabs;
+static float gw_diag_mtx_rowlen_min = 1e30f;
+static float gw_diag_mtx_rowlen_max;
 static uint32_t gw_diag_copytex_calls;
 static uint32_t gw_diag_copytex_clears;
 
+
+/* TEMP DIAG: called from HSD_JObjSetupMatrixSub (TARGET_PC-guarded) to find where NaN first
+ * enters a joint matrix. stage 0 = straight out of make_mtx, before any IK; stage 1 = after the
+ * joint branch has run. branch is the JOBJ_JOINT selector: 0 JOINT1, 1 JOINT2, 2 EFFECTOR,
+ * 3 default. Counting both stages separates "animation produced a NaN transform" from "the IK
+ * solver produced one", which is the whole question. */
+static uint32_t gw_jobj_seen[2][4];
+static uint32_t gw_jobj_nan[2][4];
+
+void gw_diag_jobj_mtx(const float *mtx, int stage, int branch) {
+  int i;
+  int bad = 0;
+  if (mtx == NULL || stage < 0 || stage > 1 || branch < 0 || branch > 3) {
+    return;
+  }
+  for (i = 0; i < 12; ++i) {
+    /* NaN and infinity without pulling math.h into game-adjacent code: exponent all ones. */
+    union { float f; uint32_t u; } v;
+    v.f = mtx[i];
+    if ((v.u & 0x7F800000u) == 0x7F800000u) {
+      bad = 1;
+      break;
+    }
+  }
+  ++gw_jobj_seen[stage][branch];
+  if (bad) {
+    ++gw_jobj_nan[stage][branch];
+  }
+}
+
+/* TEMP DIAG: the camera's viewing matrix and the three vectors C_MTXLookAt builds it from.
+ * The modelview handed to GXLoadPosMtxImm is view x joint, so a NaN view matrix poisons nearly
+ * every matrix even when only a few joints are bad -- which is exactly the 4% -> 87% jump the
+ * jobj counters show. LookAt goes NaN when eye == interest, or when up is parallel to the view
+ * direction: the cross product is zero and normalising it divides by zero. */
+static uint32_t gw_cobj_calls;
+static uint32_t gw_cobj_nan_mtx;
+static uint32_t gw_cobj_nan_in;
+static int gw_cobj_reported;
+
+static int gw_diag_is_bad(float f) {
+  union { float f; uint32_t u; } v;
+  v.f = f;
+  return (v.u & 0x7F800000u) == 0x7F800000u;
+}
+
+/* TEMP DIAG: the game camera's own source data, sampled inside Camera_8002AF68 -- the
+ * CAMERA_STANDARD path that a normal match uses. The existing cobj probe fires for all ~90
+ * cobjs per frame without saying which; this one fires only for the main game camera, which is
+ * the one whose view matrix multiplies into every model's modelview. If these inputs are
+ * already bad, the rot is upstream in game_camera and the camera code is just a courier. */
+static uint32_t gw_gcam_calls;
+static uint32_t gw_gcam_bad_interest;
+static uint32_t gw_gcam_bad_position;
+static uint32_t gw_gcam_bad_translation;
+static int gw_gcam_reported;
+
+void gw_diag_game_camera(const float *interest, const float *position, const float *translation) {
+  int i;
+  int bi = 0, bp = 0, bt = 0;
+  if (interest == NULL || position == NULL || translation == NULL) {
+    return;
+  }
+  ++gw_gcam_calls;
+  for (i = 0; i < 3; ++i) {
+    if (gw_diag_is_bad(interest[i])) {
+      bi = 1;
+    }
+    if (gw_diag_is_bad(position[i])) {
+      bp = 1;
+    }
+    if (gw_diag_is_bad(translation[i])) {
+      bt = 1;
+    }
+  }
+  gw_gcam_bad_interest += (uint32_t)bi;
+  gw_gcam_bad_position += (uint32_t)bp;
+  gw_gcam_bad_translation += (uint32_t)bt;
+  if ((bi || bp || bt) && gw_gcam_reported < 4) {
+    ++gw_gcam_reported;
+    gw_log("gw: DIAG   gamecam BAD interest=(%.3f,%.3f,%.3f) position=(%.3f,%.3f,%.3f) "
+           "translation=(%.3f,%.3f,%.3f)",
+           interest[0], interest[1], interest[2], position[0], position[1], position[2],
+           translation[0], translation[1], translation[2]);
+  }
+}
+
+void gw_diag_cobj_view(const float *mtx, const float *eye, const float *up, const float *interest) {
+  int i;
+  int badIn = 0;
+  int badMtx = 0;
+  if (mtx == NULL || eye == NULL || up == NULL || interest == NULL) {
+    return;
+  }
+  ++gw_cobj_calls;
+  for (i = 0; i < 3; ++i) {
+    if (gw_diag_is_bad(eye[i]) || gw_diag_is_bad(up[i]) || gw_diag_is_bad(interest[i])) {
+      badIn = 1;
+    }
+  }
+  for (i = 0; i < 12; ++i) {
+    if (gw_diag_is_bad(mtx[i])) {
+      badMtx = 1;
+    }
+  }
+  if (badIn) {
+    ++gw_cobj_nan_in;
+  }
+  if (badMtx) {
+    ++gw_cobj_nan_mtx;
+  }
+  if ((badIn || badMtx) && gw_cobj_reported < 4) {
+    ++gw_cobj_reported;
+    gw_log("gw: DIAG   cobj BAD eye=(%.3f,%.3f,%.3f) up=(%.3f,%.3f,%.3f) interest=(%.3f,%.3f,%.3f)",
+           eye[0], eye[1], eye[2], up[0], up[1], up[2], interest[0], interest[1], interest[2]);
+    gw_log("gw: DIAG   cobj view row0=(%.3f,%.3f,%.3f,%.3f)", mtx[0], mtx[1], mtx[2], mtx[3]);
+  }
+}
+
+void gw_diag_jobj_report(void) {
+  static const char *const names[4] = {"JOINT1", "JOINT2", "EFFECTOR", "default"};
+  int b;
+  if (gw_gcam_calls != 0u) {
+    gw_log("gw: DIAG   gamecam: calls=%u bad_interest=%u bad_position=%u bad_translation=%u",
+           gw_gcam_calls, gw_gcam_bad_interest, gw_gcam_bad_position, gw_gcam_bad_translation);
+  }
+  gw_gcam_calls = 0u;
+  gw_gcam_bad_interest = 0u;
+  gw_gcam_bad_position = 0u;
+  gw_gcam_bad_translation = 0u;
+  if (gw_cobj_calls != 0u) {
+    gw_log("gw: DIAG   cobj lookat: calls=%u nan_inputs=%u nan_viewmtx=%u", gw_cobj_calls,
+           gw_cobj_nan_in, gw_cobj_nan_mtx);
+  }
+  gw_cobj_calls = 0u;
+  gw_cobj_nan_in = 0u;
+  gw_cobj_nan_mtx = 0u;
+  for (b = 0; b < 4; ++b) {
+    if (gw_jobj_seen[0][b] != 0u || gw_jobj_seen[1][b] != 0u) {
+      gw_log("gw: DIAG   jobj %-8s premake nan=%u/%u   postjoint nan=%u/%u", names[b],
+             gw_jobj_nan[0][b], gw_jobj_seen[0][b], gw_jobj_nan[1][b], gw_jobj_seen[1][b]);
+    }
+    gw_jobj_seen[0][b] = gw_jobj_seen[1][b] = 0u;
+    gw_jobj_nan[0][b] = gw_jobj_nan[1][b] = 0u;
+  }
+}
 
 /* The one point where a finished EFB copy means the frame is complete (see shim_vi.h). */
 void gw_GXCopyDisp(void *dest, u8 clear) {
@@ -153,6 +306,52 @@ void gw_GXCopyDisp(void *dest, u8 clear) {
   }
   gw_diag_seg_prim = gw_gx_prim_count;
   gw_diag_seg_dlist = gw_gx_dlist_count;
+  /* TEMP DIAG: sample the depth buffer across the frame. This distinguishes the two remaining
+   * possibilities without needing anyone to look at the screen. Depth writes are enabled
+   * (zupd=1 every frame), so if triangles are rasterising they must leave varying depth behind.
+   *   all samples identical -> nothing rasterises at all (culled, degenerate, or off-screen)
+   *   samples vary          -> geometry IS rasterising and the fault is in colour output
+   * GXPeekZ returns the previous frame's snapshot and requests a new one, so a whole grid read
+   * in one frame comes from one consistent snapshot. */
+  if ((gw_gx_copydisp_count % 30u) == 0u) {
+    unsigned distinct = 0;
+    u32 seen[8];
+    u32 zmin = 0xFFFFFFFFu;
+    u32 zmax = 0;
+    for (int gy = 0; gy < 5; ++gy) {
+      for (int gx = 0; gx < 7; ++gx) {
+        u32 z = 0;
+        unsigned k;
+        GXPeekZ((u16)(45 + gx * 92), (u16)(48 + gy * 96), &z);
+        if (z < zmin) {
+          zmin = z;
+        }
+        if (z > zmax) {
+          zmax = z;
+        }
+        for (k = 0; k < distinct; ++k) {
+          if (seen[k] == z) {
+            break;
+          }
+        }
+        if (k == distinct && distinct < 8u) {
+          seen[distinct++] = z;
+        }
+      }
+    }
+    gw_log("gw: DIAG   depth grid: distinct=%u min=0x%06X max=0x%06X", distinct, zmin, zmax);
+    gw_diag_jobj_report();
+    gw_log("gw: DIAG   posmtx health: loads=%u nan/inf=%u huge=%u maxabs=%.3f rowlen=[%.4f..%.4f]",
+           gw_diag_mtx_calls, gw_diag_mtx_bad, gw_diag_mtx_huge, gw_diag_mtx_maxabs,
+           gw_diag_mtx_rowlen_min > 1e29f ? 0.0f : gw_diag_mtx_rowlen_min, gw_diag_mtx_rowlen_max);
+  }
+  gw_diag_mtx_calls = 0;
+  gw_diag_mtx_bad = 0;
+  gw_diag_mtx_huge = 0;
+  gw_diag_mtx_maxabs = 0.0f;
+  gw_diag_mtx_rowlen_min = 1e30f;
+  gw_diag_mtx_rowlen_max = 0.0f;
+
   gw_diag_copytex_calls = 0;
   gw_diag_copytex_clears = 0;
   gw_diag_mtx_slots_this_frame = 0;
@@ -291,6 +490,40 @@ void gw_GXLoadPosMtxImm(const void *mtx, u32 id) {
    * into PNMTX1..9 and selects between them with per-vertex PNMTXIDX, so gating on id==0 saw
    * only the boot-time menu matrix and missed the gameplay transform path entirely. Cap at 4
    * slots per sampled frame to bound the volume. */
+  /* TEMP DIAG: health of every position matrix this frame, not just the logged ones. If
+   * animation is producing NaN or exploded transforms, every vertex leaves clip space and
+   * nothing rasterises -- and pausing, which freezes animation, would restore the last good
+   * values. That is exactly the pause/unpause split the depth grid measures. */
+  {
+    int e;
+    ++gw_diag_mtx_calls;
+    for (e = 0; e < 12; ++e) {
+      const float v = native[e / 4][e % 4];
+      if (isnan(v) || isinf(v)) {
+        ++gw_diag_mtx_bad;
+        continue;
+      }
+      if (fabsf(v) > gw_diag_mtx_maxabs) {
+        gw_diag_mtx_maxabs = fabsf(v);
+      }
+      if (fabsf(v) > 1e6f) {
+        ++gw_diag_mtx_huge;
+      }
+    }
+    for (e = 0; e < 3; ++e) {
+      const float a = native[e][0], b = native[e][1], c = native[e][2];
+      const float len = sqrtf(a * a + b * b + c * c);
+      if (!isnan(len)) {
+        if (len < gw_diag_mtx_rowlen_min) {
+          gw_diag_mtx_rowlen_min = len;
+        }
+        if (len > gw_diag_mtx_rowlen_max) {
+          gw_diag_mtx_rowlen_max = len;
+        }
+      }
+    }
+  }
+
   if (gw_diag_mtx_slots_this_frame < 4u) {
     char tag[16];
     snprintf(tag, sizeof tag, "posmtx%u", (unsigned)id);

@@ -1338,6 +1338,13 @@ void Camera_8002A768(CameraTransformState* transform, s32 arg1)
     }
 }
 
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
+ * gw_diag_game_camera in shim_gx.c. */
+extern void diag_game_camera(const float* interest, const float* position,
+                             const float* translation);
+#endif
+
 void Camera_8002AF68(HSD_CObj* cobj, CameraTransformState* transform)
 {
     u8 _1[4];
@@ -1346,6 +1353,15 @@ void Camera_8002AF68(HSD_CObj* cobj, CameraTransformState* transform)
     u8 _2[4];
 
     HSD_CObjSetFov(cobj, transform->fov);
+
+#if defined(TARGET_PC)
+    /* TEMP DIAG (instrumentation only, no behaviour change): is the main game camera's own
+     * source data already NaN before this function uses it? See gw_diag_game_camera in
+     * pc/platform/shim_gx.c. */
+    diag_game_camera((const float*) &transform->interest,
+                     (const float*) &transform->position,
+                     (const float*) &game_camera.translation);
+#endif
 
     vec = transform->interest;
     vec.x += game_camera.translation.x;

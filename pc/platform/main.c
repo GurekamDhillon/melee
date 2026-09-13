@@ -79,7 +79,11 @@ int main(int argc, char *argv[]) {
 
   const AuroraConfig config = {
       .appName = "Melee PC",
-      .desiredBackend = BACKEND_AUTO,
+      /* Dawn's D3D12 backend (v20260807.225922, 32-bit x86) crashes a few seconds into
+       * first-frame rendering: wgpuSurfaceGetCurrentTexture -> d3d12::Queue::WaitForSerial
+       * dereferences a queue-serial value as a pointer (near-NULL read, webgpu_dawn.dll
+       * +0x363548). D3D11's queue/serial path does not, so pin it until Dawn is fixed. */
+      .desiredBackend = BACKEND_D3D11,
       .vsync = true,
       .windowWidth = 1280,
       .windowHeight = 960,

@@ -267,6 +267,14 @@ void Ground_801BFFB0(void)
     stage_info.x6E0 = 0;
     stage_info.x708 = 0;
     stage_info.x740 = 0;
+#if defined(TARGET_PC)
+    if (Ground_804D6950 != NULL) {
+        ssize_t i;
+        for (i = 0; i < buffer_size; i++) {
+            Ground_804D6950[i] = 0;
+        }
+    }
+#endif
 }
 
 static void zeroBuffer(void)
@@ -454,6 +462,11 @@ void Ground_801C0754(StageIdPair* pair)
 {
     StageData* stage;
     s32 arg3;
+#if defined(TARGET_PC)
+    if (stage_datas[pair->grkind] == NULL) {
+        return;
+    }
+#endif
     Ground_801BFFB0();
     stage_info.grkind = pair->grkind;
     stage = stage_datas[pair->grkind];
@@ -467,6 +480,11 @@ void Ground_801C0754(StageIdPair* pair)
 
 void Ground_801C0800(StageIdPair* pair)
 {
+#if defined(TARGET_PC)
+    if (stage_datas[pair->grkind] == NULL) {
+        return;
+    }
+#endif
     StageData* stage_data = stage_datas[pair->grkind];
     Ground_801C38D0(stage_info.param->x8, stage_info.param->x14,
                     stage_info.param->x1C, stage_info.param->x18);
@@ -687,6 +705,11 @@ void Ground_801C0C2C(HSD_GObj* arg0)
 
 void Ground_OnLoad(StageIdPair* pair)
 {
+#if defined(TARGET_PC)
+    if (stage_datas[pair->grkind] == NULL) {
+        return;
+    }
+#endif
     stage_datas[pair->grkind]->on_load();
 }
 
@@ -698,6 +721,11 @@ void Ground_801C0FB8(StageIdPair* pair)
         void (*unk8)(s32);
     }* cur;
     void* next;
+#if defined(TARGET_PC)
+    if (stage_datas[pair->grkind] == NULL) {
+        return;
+    }
+#endif
     stage_datas[pair->grkind]->on_start();
     for (cur = stage_info.x6A4; cur != NULL; cur = next) {
         next = cur->unk0;
@@ -711,6 +739,11 @@ void Ground_801C0FB8(StageIdPair* pair)
 
 void Ground_DemoInit(StageIdPair* pair, s32 arg1)
 {
+#if defined(TARGET_PC)
+    if (stage_datas[pair->grkind] == NULL) {
+        return;
+    }
+#endif
     stage_datas[pair->grkind]->on_demo_init(arg1);
 }
 
@@ -1647,6 +1680,11 @@ bool Ground_801C2ED0(HSD_JObj* jobj, s32 arg1)
     GrJoint* cur;
     int i;
     int max;
+#if defined(TARGET_PC)
+    if (stage_datas[stage_info.grkind] == NULL) {
+        return false;
+    }
+#endif
     if (temp_r3 != NULL) {
         cur = temp_r3->unk4->unk8[arg1].unk20;
         max = temp_r3->unk4->unk8[arg1].unk24;

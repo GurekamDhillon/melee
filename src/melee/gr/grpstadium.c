@@ -2221,7 +2221,12 @@ void grStadium_801D4548(Ground_GObj* gobj)
         if (temp_r31->u.stadium.xDE == 5) {
             temp_r31->u.stadium.xD8 =
                 randi_between_2(yakumono_param->x0, yakumono_param->x4);
+#if defined(TARGET_PC)
+            grAnime_801C65B0(temp_r31->u.stadium.xD0);
+            temp_r31->u.stadium.xD0 = NULL;
+#else
             grAnime_801C65B0((void*) temp_r31->u.stadium.xCC);
+#endif
             mpLib_800575B0(0x55);
             mpLib_800575B0(0x6F);
         } else {

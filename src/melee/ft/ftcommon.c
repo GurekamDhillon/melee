@@ -1100,7 +1100,15 @@ void ftCommon_8007E83C(HSD_GObj* gobj, s32 arg1, float div)
     if (itGetKind(fp->item_gobj) == It_Kind_Parasol) {
         parasol_table_1[arg1](fp->item_gobj, val);
     } else {
+#if defined(TARGET_PC)
+        if (arg1 >= 0 && arg1 < (s32) ARRAY_SIZE(parasol_table_3) &&
+            parasol_table_3[arg1] != NULL)
+        {
+            parasol_table_3[arg1](fp->item_gobj, val);
+        }
+#else
         parasol_table_3[arg1](fp->item_gobj, val);
+#endif
     }
 }
 

@@ -108,8 +108,34 @@ void gw_gx_get_stats(uint32_t *copies, uint32_t *prims, uint32_t *dlists) {
   *dlists = gw_gx_dlist_count;
 }
 
+/* TEMP DIAG (remove with the rest of the black-screen instrumentation): the state the EFB copy
+ * inherits, and how much geometry actually reached the frame being copied. A frame that presents
+ * with ~0 draws behind it is black because nothing was drawn into it; a frame with draws behind it
+ * but colorupd=0 is black because nothing was allowed to write colour. These two cases need
+ * opposite fixes, and only a live run separates them. Sampled twice a second so a run can be
+ * paused and unpaused and the two regimes compared in one log. */
+static uint32_t gw_diag_last_prim;
+static uint32_t gw_diag_last_dlist;
+static u8 gw_diag_colorupd = 0xFF;
+static u8 gw_diag_alphaupd = 0xFF;
+static u8 gw_diag_zcmp = 0xFF;
+static u8 gw_diag_zupd = 0xFF;
+static GXColor gw_diag_clearclr;
+
 /* The one point where a finished EFB copy means the frame is complete (see shim_vi.h). */
 void gw_GXCopyDisp(void *dest, u8 clear) {
+  if ((gw_gx_copydisp_count % 30u) == 0u) {
+    gw_log("gw: DIAG copy #%u  since-last prim=%u dlist=%u  clear=%u colorupd=%u alphaupd=%u "
+           "zcmp=%u zupd=%u clearclr=%u,%u,%u,%u",
+           gw_gx_copydisp_count, gw_gx_prim_count - gw_diag_last_prim,
+           gw_gx_dlist_count - gw_diag_last_dlist, (unsigned)clear, (unsigned)gw_diag_colorupd,
+           (unsigned)gw_diag_alphaupd, (unsigned)gw_diag_zcmp, (unsigned)gw_diag_zupd,
+           (unsigned)gw_diag_clearclr.r, (unsigned)gw_diag_clearclr.g, (unsigned)gw_diag_clearclr.b,
+           (unsigned)gw_diag_clearclr.a);
+  }
+  gw_diag_last_prim = gw_gx_prim_count;
+  gw_diag_last_dlist = gw_gx_dlist_count;
+
   GXCopyDisp(dest, (GXBool)clear);
   ++gw_gx_copydisp_count;
   gw_frame_mark_content();
@@ -521,10 +547,18 @@ void gw_GXSetBlendMode(u32 type, u32 src_factor, u32 dst_factor, u32 op) {
                  (GXLogicOp)op);
 }
 
-void gw_GXSetColorUpdate(u8 enable) { GXSetColorUpdate((GXBool)enable); }
-void gw_GXSetAlphaUpdate(u8 enable) { GXSetAlphaUpdate((GXBool)enable); }
+void gw_GXSetColorUpdate(u8 enable) {
+  gw_diag_colorupd = enable; /* TEMP DIAG */
+  GXSetColorUpdate((GXBool)enable);
+}
+void gw_GXSetAlphaUpdate(u8 enable) {
+  gw_diag_alphaupd = enable; /* TEMP DIAG */
+  GXSetAlphaUpdate((GXBool)enable);
+}
 
 void gw_GXSetZMode(u8 compare_enable, u32 func, u8 update_enable) {
+  gw_diag_zcmp = compare_enable; /* TEMP DIAG */
+  gw_diag_zupd = update_enable;  /* TEMP DIAG */
   GXSetZMode((GXBool)compare_enable, (GXCompare)func, (GXBool)update_enable);
 }
 
@@ -543,6 +577,7 @@ void gw_GXSetFieldMode(u8 field_mode, u8 half_aspect_ratio) {
 }
 
 void gw_GXSetCopyClear(GXColor clear_clr, u32 clear_z) {
+  gw_diag_clearclr = clear_clr; /* TEMP DIAG */
   GXSetCopyClear(clear_clr, clear_z);
 }
 

@@ -525,6 +525,11 @@ void HSD_AObjSetRate(HSD_AObj* aobj, f32 rate)
 
 void HSD_AObjSetRewindFrame(HSD_AObj* aobj, f32 frame)
 {
+#if defined(TARGET_PC)
+    if ((uintptr_t) aobj < 0x1000u) {
+        return;
+    }
+#endif
     if (!aobj) {
         return;
     }
@@ -533,6 +538,11 @@ void HSD_AObjSetRewindFrame(HSD_AObj* aobj, f32 frame)
 
 void HSD_AObjSetEndFrame(HSD_AObj* aobj, f32 frame)
 {
+#if defined(TARGET_PC)
+    if ((uintptr_t) aobj < 0x1000u) {
+        return;
+    }
+#endif
     if (!aobj) {
         return;
     }

@@ -148,20 +148,63 @@ const unsigned char gw___ctype_map[256] = {
  * this target, so general varargs are not available yet. The boot-critical caller was moved to
  * explicit parameters (HSD_SetInitParameterU32/Ptr), so anything reaching here is a non-boot path:
  * returning zeroed storage keeps it from faulting, at the cost of seeing zero arguments. */
-void *gw___va_arg(void *v_list, uint8_t type) {
-  static unsigned char zero[8];
-  static bool warned;
-  (void)v_list;
-  (void)type;
-  if (!warned) {
-    warned = true;
-    gw_log("gw: __va_arg called - variadic game function arguments are not available");
-    /* Naming the caller matters: the zeros it gets back usually surface later as a NULL
-     * dereference somewhere unrelated, so the return address here is the only link back to the
-     * variadic function that actually needs porting to explicit parameters. */
-    gw_log_code_addr("__va_arg first called from", _ReturnAddress());
+/* Steps a va_list that llvm.va_start filled with x86 semantics. See src/MSL/stdarg.h for why the
+ * game's own va_list machinery cannot work here and why this has to live on the native side.
+ *
+ * Two conversions happen:
+ *   - the va_list slot at offset 0 is a native pointer, read and advanced natively;
+ *   - the value itself is copied out byte-swapped, because the caller pushed it natively but the
+ *     game will dereference the returned pointer with a gwtool-swapped load.
+ * Returning a pointer into a static also matches what the game expects: MSL's va_arg immediately
+ * dereferences it, so the storage only has to outlive the expression. */
+#define GW_VA_FLOAT 0x10000u
+
+void *gw___va_arg(void *v_list, unsigned info) {
+  static union {
+    unsigned char b[8];
+    float f;
+  } slot;
+  char **cursor = (char **)v_list;
+  const unsigned size = info & 0xFFFFu;
+  char *p;
+  unsigned step;
+
+  if (cursor == NULL || *cursor == NULL) {
+    gw_log("gw: __va_arg on an uninitialised va_list");
+    memset(&slot, 0, sizeof slot);
+    return slot.b;
   }
-  return zero;
+
+  p = *cursor;
+  /* Variadic arguments are promoted: floats arrive as doubles, anything narrower than int as int,
+   * and every slot is 4-byte aligned on x86. */
+  step = (info & GW_VA_FLOAT) ? 8u : ((size < 4u ? 4u : size) + 3u) & ~3u;
+  *cursor = p + step;
+
+  if ((info & GW_VA_FLOAT) && size == sizeof(float)) {
+    double d;
+    memcpy(&d, p, sizeof d);
+    slot.f = (float)d; /* narrow first, then hand it over byte-swapped below */
+    gw_wf32(slot.b, slot.f);
+    return slot.b;
+  }
+
+  switch (size) {
+  case 1:
+    slot.b[0] = (unsigned char)*p;
+    break;
+  case 2:
+    gw_w16(slot.b, (uint16_t) * (const uint16_t *)p);
+    break;
+  case 8:
+    gw_w64(slot.b, *(const uint64_t *)p);
+    break;
+  case 4:
+  default:
+    gw_w32(slot.b, *(const uint32_t *)p);
+    break;
+  }
+  return slot.b;
 }
 
 /* ---- MSL console I/O ----------------------------------------------------------------------

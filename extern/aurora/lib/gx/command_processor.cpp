@@ -551,10 +551,37 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& 
   const bool cleanState = g_gxState.dirty == 0 && fmt == sDrawCache.lastDrawFmt && sDrawCache.lineMode == 0 &&
                           prim != GX_LINES && prim != GX_LINESTRIP && prim != GX_POINTS;
   auto* lastDraw = cleanState ? gfx::get_last_draw_command<DrawData>() : nullptr;
-  const bool canMerge = lastDraw != nullptr && lastDraw->instanceCount == 1;
+
+  // Read the vertex data before deciding whether to merge: the merge predicate below needs the
+  // indices these vertices reference.
+  const auto vertexData = reader.take(totalVtxBytes);
+
+  // A merged draw is folded into the previous draw command and never reaches push_gx_draw, so it
+  // keeps that draw's immediates -- including arrayStart[], whose storage was uploaded to cover
+  // only the first draw's maximum index. If these vertices index further into an indexed array,
+  // merging makes them read past the end of the uploaded snapshot: a few vertices land on garbage
+  // while their neighbours are correct, which renders as spikes through otherwise sound geometry.
+  // push_gx_draw's bounds assert cannot catch this, as it checks the array's nominal size rather
+  // than the number of bytes actually uploaded.
+  bool canMerge = lastDraw != nullptr && lastDraw->instanceCount == 1;
+  if (canMerge) {
+    for (int i = GX_VA_POS; i <= GX_VA_TEX7; ++i) {
+      if (g_gxState.vtxDesc[i] != GX_INDEX8 && g_gxState.vtxDesc[i] != GX_INDEX16) {
+        continue;
+      }
+      const auto& array = g_gxState.arrays[i];
+      const auto& attrFmt = g_gxState.vtxFmts[fmt].attrs[i];
+      const auto attr = static_cast<GXAttr>(i);
+      const u32 needed = max_index_for_attr(i, fmt, vertexData, vtxCount) * array.stride +
+                         comp_type_size(attr, attrFmt.type) * comp_cnt_count(attr, attrFmt.cnt);
+      if (array.cachedRange.size < needed) {
+        canMerge = false;
+        break;
+      }
+    }
+  }
 
   // Push raw vertex data to buffer. Merged draws must remain contiguous with the previous range.
-  const auto vertexData = reader.take(totalVtxBytes);
   gfx::Range vertRange = gfx::push_verts(vertexData.data(), vertexData.size(), canMerge ? 0 : 4);
 
   // Try to merge with previous draw call

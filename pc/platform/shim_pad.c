@@ -20,32 +20,44 @@ int gw_PADRead(void *status) {
    * The game reads this array big-endian (see gw.h), so the u16 button field is
    * byte-swapped here; stick and err are single bytes and cross unchanged. Only the
    * fields the keys actually provide are touched, so a real controller on channel 0
-   * keeps its own values; while any key is held the channel is marked connected
-   * (err = 0) so HSD_PadRenewMasterStatus accepts the synthesized status. */
+   * keeps its own values; the channel is always marked connected (err = 0) so
+   * HSD_PadRenewMasterStatus accepts the synthesized status and the pad never appears
+   * to disconnect while idle. */
   {
     u16 btn = gw_r16(&st[PAD_CHAN0].button);
     int held = 0;
     int stick = 0;
     s8 sx = 0;
     s8 sy = 0;
+    HWND fg = GetForegroundWindow();
+    DWORD pid = 0;
 
-    if (GetAsyncKeyState('W') & 0x8000) { sy += 80; stick = 1; }
-    if (GetAsyncKeyState('S') & 0x8000) { sy -= 80; stick = 1; }
-    if (GetAsyncKeyState('A') & 0x8000) { sx -= 80; stick = 1; }
-    if (GetAsyncKeyState('D') & 0x8000) { sx += 80; stick = 1; }
-    if (GetAsyncKeyState('J') & 0x8000) { btn |= PAD_BUTTON_A; held = 1; }
-    if (GetAsyncKeyState('K') & 0x8000) { btn |= PAD_BUTTON_B; held = 1; }
-    if (GetAsyncKeyState(VK_RETURN) & 0x8000) { btn |= PAD_BUTTON_START; held = 1; }
+    if (fg != NULL) GetWindowThreadProcessId(fg, &pid);
 
-    if (held || stick) {
+    /* GetAsyncKeyState reports the GLOBAL key state, so without this gate the game
+     * would react to W/A/S/D/J/K/Enter even while its window is not focused. Only
+     * apply the overlay when the foreground window belongs to this exe. */
+    if (pid == GetCurrentProcessId()) {
+      if (GetAsyncKeyState('W') & 0x8000) { sy += 80; stick = 1; }
+      if (GetAsyncKeyState('S') & 0x8000) { sy -= 80; stick = 1; }
+      if (GetAsyncKeyState('A') & 0x8000) { sx -= 80; stick = 1; }
+      if (GetAsyncKeyState('D') & 0x8000) { sx += 80; stick = 1; }
+      if (GetAsyncKeyState('J') & 0x8000) { btn |= PAD_BUTTON_A; held = 1; }
+      if (GetAsyncKeyState('K') & 0x8000) { btn |= PAD_BUTTON_B; held = 1; }
+      if (GetAsyncKeyState(VK_RETURN) & 0x8000) { btn |= PAD_BUTTON_START; held = 1; }
+
       if (stick) {
         st[PAD_CHAN0].stickX = sx;
         st[PAD_CHAN0].stickY = sy;
       }
-      gw_w16(&st[PAD_CHAN0].button, btn);
-      st[PAD_CHAN0].err = 0;
-      gw_log("gw_PADRead: kbd overlay held=%d btn=%04x stick=%d sx=%d sy=%d", held, btn, stick, sx, sy); /* TEMP probe */
+      if (held || stick) {
+        gw_w16(&st[PAD_CHAN0].button, btn);
+      }
     }
+    /* The keyboard bridge stands in for a physical controller on channel 0, so mark it
+     * connected unconditionally: otherwise Aurora reports err = -1 whenever no key is
+     * held and HSD_PadRenewMasterStatus drops the pad between inputs. */
+    st[PAD_CHAN0].err = 0;
   }
 
   return ret;

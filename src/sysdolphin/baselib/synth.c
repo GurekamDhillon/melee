@@ -354,8 +354,18 @@ void HSD_Synth_80388E08(int sfx_id)
 static void HSD_SynthSFXGroupDataReaddressCallback(void* result, int length,
                                                    void* addr, int cancelflag)
 {
+#ifndef TARGET_PC
     HSD_ASSERT(0x182, sfxGroupDataReaddressCounter > 0);
     sfxGroupDataReaddressCounter--;
+#else
+    /* The ARQ completion is deferred (gw_defer) and runs after the caller has already moved
+     * on; on PC the counter is never incremented (see HSD_SynthSFXGroupDataReaddress), so
+     * there is nothing to decrement and the assert would otherwise trip on a late callback. */
+    (void) result;
+    (void) length;
+    (void) addr;
+    (void) cancelflag;
+#endif
 }
 
 #ifdef MUST_MATCH
@@ -377,7 +387,9 @@ void HSD_SynthSFXGroupDataReaddress(AXVPB* arg0, void* callback)
     int j;
 
     p = (u8*) arg0 + 0x18;
+#ifndef TARGET_PC
     sfxGroupDataReaddressCounter += 1;
+#endif
     HSD_DevComRequest(
         0, (uintptr_t) arg0->callback, (uintptr_t) callback, arg0->userContext,
         0x1B, 0,
@@ -423,9 +435,17 @@ void HSD_SynthSFXBankDeflag(int bank_id)
 
 void HSD_SynthSFXBankDeflagSync(void)
 {
+#ifndef TARGET_PC
     while (sfxGroupDataReaddressCounter) {
         continue;
     }
+#else
+    /* On PC the readdress's CPU-side fixups (in HSD_SynthSFXGroupDataReaddress) run
+     * synchronously and the ARAM copy is an inline memcpy in the ARQ shim; only the ARQ
+     * completion callback is deferred (gw_defer), and this spin never pumps that queue, so
+     * spinning here deadlocks map load. The counter is left at 0 (increment skipped above),
+     * so there is nothing to wait for. */
+#endif
 }
 
 u32 HSD_SynthGetSoundMode(void)

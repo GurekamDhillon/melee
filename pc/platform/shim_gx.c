@@ -151,9 +151,29 @@ void gw_GXSetTexCoordGen2(u32 dst_coord, u32 func, u32 src_param, u32 mtx, u8 no
                     (GXBool)normalize, pt_texmtx);
 }
 
-void gw_GXSetVtxDesc(u32 attr, u32 type) { GXSetVtxDesc((GXAttr)attr, (GXAttrType)type); }
+/* TEMP DIAG (remove before ship): log matrix-index attribute setup so a live run can confirm
+ * whether PNMTXIDX/TEXnMTXIDX are used as INDEX8/16 (the suspect path) vs DIRECT/NONE. */
+static void gw_diag_mtxidx(const char *where, u32 attr, u32 a, u32 b) {
+  static int count;
+  if (attr <= GX_VA_TEX7MTXIDX) {
+    if (count < 40) {
+      gw_log("gw: DIAG %s mtxidx attr=%u a=%u b=%u", where, attr, a, b);
+      ++count;
+    }
+  }
+}
+
+void gw_GXSetVtxDesc(u32 attr, u32 type) {
+  gw_diag_mtxidx("vtxdesc", attr, type, 0);
+  GXSetVtxDesc((GXAttr)attr, (GXAttrType)type);
+}
 
 void gw_GXSetVtxAttrFmt(u32 vtxfmt, u32 attr, u32 cnt, u32 type, u8 frac) {
+  static int fmtcount;
+  if (attr == GX_VA_POS && fmtcount < 20) {
+    gw_log("gw: DIAG vtxattrfmt POS vtxfmt=%u cnt=%u comptype=%u frac=%u", vtxfmt, cnt, type, frac);
+    ++fmtcount;
+  }
   GXSetVtxAttrFmt((GXVtxFmt)vtxfmt, (GXAttr)attr, (GXCompCnt)cnt, (GXCompType)type, frac);
 }
 
@@ -164,6 +184,7 @@ void gw_GXSetVtxAttrFmt(u32 vtxfmt, u32 attr, u32 cnt, u32 type, u8 frac) {
 void gw_GXSetArray(u32 attr, const void *base, u8 stride) {
   u32 size = 0xFFFFFFFFu;
   const unsigned char *p = (const unsigned char *)base;
+  gw_diag_mtxidx("setarray", attr, (u32)(uintptr_t)base, stride);
   if (gw_mem1 != NULL && p >= gw_mem1 && p < gw_mem1 + gw_mem1_size) {
     size = (u32)(gw_mem1 + gw_mem1_size - p);
   }
@@ -172,15 +193,37 @@ void gw_GXSetArray(u32 attr, const void *base, u8 stride) {
 
 /* ---- transform ---------------------------------------------------------------------------- */
 
+/* TEMP DIAG (remove before ship): dump the first projection + position matrices so a live run
+ * can tell a sane transform from garbage. Gated to a few calls to avoid log spam. */
+static void gw_diag_dump_mtx(const char *tag, const f32 *m, int n) {
+  static int count;
+  if (count >= 6) {
+    return;
+  }
+  ++count;
+  if (n == 16) {
+    gw_log("gw: DIAG %s %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f",
+           tag, m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14],
+           m[15]);
+  } else {
+    gw_log("gw: DIAG %s %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f", tag, m[0], m[1], m[2],
+           m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11]);
+  }
+}
+
 void gw_GXSetProjection(const void *mtx, u32 type) {
   f32 native[4][4];
   gw_read_mtx44(native, mtx);
+  gw_diag_dump_mtx("proj", &native[0][0], 16);
   GXSetProjection(native, (GXProjectionType)type);
 }
 
 void gw_GXLoadPosMtxImm(const void *mtx, u32 id) {
   f32 native[3][4];
   gw_read_mtx(native, mtx);
+  if (id == 0) {
+    gw_diag_dump_mtx("posmtx0", &native[0][0], 12);
+  }
   GXLoadPosMtxImm(native, id);
 }
 

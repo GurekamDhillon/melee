@@ -436,6 +436,19 @@ EF_Effect* efLib_Create(int gfx_id, HSD_GObj* parent_gobj)
     EF_EffectDesc* desc;
     u8 p_link;
 
+#if defined(TARGET_PC)
+    /* efAsync_DatEntries[bank].data is the EF archive for that bank and stays NULL until
+     * efAsync_OnLoad loads it, so a gfx_id whose bank has not loaded dereferences NULL below.
+     * Bound the bank index too: gfx_id / 1000 is otherwise unbounded against the 51-entry table. */
+    {
+        int bank = gfx_id / 1000;
+        if (bank < 0 || bank >= (int) ARRAY_SIZE(efAsync_DatEntries) ||
+            efAsync_DatEntries[bank].data == NULL) {
+            return NULL;
+        }
+    }
+#endif
+
     desc = &((EF_EffectDesc*) efAsync_DatEntries[gfx_id / 1000]
                  .data)[gfx_id % 1000];
 

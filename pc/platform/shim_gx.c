@@ -21,6 +21,8 @@
  * GXWaitDrawDone and GXSetMisc/GXSetTevClampMode are not implemented by Aurora. The two draw-done
  * entry points route through the VI shim instead, which owns HSD's XFB state machine; the rest are
  * logged stubs. */
+#include <stdio.h>
+
 #include "shim_gx.h"
 #include "shim_vi.h"
 
@@ -125,6 +127,7 @@ static u8 gw_diag_zupd = 0xFF;
 static GXColor gw_diag_clearclr;
 static uint32_t gw_diag_seg_prim;
 static uint32_t gw_diag_seg_dlist;
+static unsigned gw_diag_mtx_slots_this_frame;
 static uint32_t gw_diag_copytex_calls;
 static uint32_t gw_diag_copytex_clears;
 
@@ -152,6 +155,7 @@ void gw_GXCopyDisp(void *dest, u8 clear) {
   gw_diag_seg_dlist = gw_gx_dlist_count;
   gw_diag_copytex_calls = 0;
   gw_diag_copytex_clears = 0;
+  gw_diag_mtx_slots_this_frame = 0;
   gw_diag_last_prim = gw_gx_prim_count;
   gw_diag_last_dlist = gw_gx_dlist_count;
 
@@ -260,11 +264,9 @@ void gw_GXSetArray(u32 attr, const void *base, u8 stride) {
 /* TEMP DIAG (remove before ship): dump the first projection + position matrices so a live run
  * can tell a sane transform from garbage. Gated to a few calls to avoid log spam. */
 static void gw_diag_dump_mtx(const char *tag, const f32 *m, int n) {
-  static int count;
-  if (count >= 6) {
+  if ((gw_gx_copydisp_count % 30u) != 0u) {
     return;
   }
-  ++count;
   if (n == 16) {
     gw_log("gw: DIAG %s %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f | %.3f %.3f %.3f %.3f",
            tag, m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8], m[9], m[10], m[11], m[12], m[13], m[14],
@@ -285,8 +287,15 @@ void gw_GXSetProjection(const void *mtx, u32 type) {
 void gw_GXLoadPosMtxImm(const void *mtx, u32 id) {
   f32 native[3][4];
   gw_read_mtx(native, mtx);
-  if (id == 0) {
-    gw_diag_dump_mtx("posmtx0", &native[0][0], 12);
+  /* TEMP DIAG: log every matrix slot, not just PNMTX0. In-game HSD loads its object matrices
+   * into PNMTX1..9 and selects between them with per-vertex PNMTXIDX, so gating on id==0 saw
+   * only the boot-time menu matrix and missed the gameplay transform path entirely. Cap at 4
+   * slots per sampled frame to bound the volume. */
+  if (gw_diag_mtx_slots_this_frame < 4u) {
+    char tag[16];
+    snprintf(tag, sizeof tag, "posmtx%u", (unsigned)id);
+    gw_diag_dump_mtx(tag, &native[0][0], 12);
+    ++gw_diag_mtx_slots_this_frame;
   }
   GXLoadPosMtxImm(native, id);
 }

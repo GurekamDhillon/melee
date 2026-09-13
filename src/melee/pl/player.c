@@ -2050,6 +2050,18 @@ void Player_80036DD8(void)
 
 void Player_80036E20(CharacterKind ckind, HSD_Archive* archive, s32 arg2)
 {
+#if defined(TARGET_PC)
+    /* Console .data places ftMapping_list at str_PdPmdat_start_of_data+0x20, which the
+     * Unk_Struct_w_Array view aliases. The port links the two globals separately, so the
+     * view lands on str_plLoadCommonData and yields a bogus internal_id that indexes
+     * ftData_803C2468 out of range. Read the real table instead. */
+    ftDemo_SetArchiveData(ftMapping_list[ckind].internal_id, archive, arg2);
+    if ((ftMapping_list[ckind].extra_internal_id != -1) &&
+        (ftMapping_list[ckind].has_transformation == 0))
+    {
+        ftDemo_SetArchiveData(ftMapping_list[ckind].extra_internal_id, archive, arg2);
+    }
+#else
     struct Unk_Struct_w_Array* unkStruct =
         (struct Unk_Struct_w_Array*) &str_PdPmdat_start_of_data;
     ftDemo_SetArchiveData(unkStruct->vec_arr[ckind].x, archive, arg2);
@@ -2058,6 +2070,7 @@ void Player_80036E20(CharacterKind ckind, HSD_Archive* archive, s32 arg2)
     {
         ftDemo_SetArchiveData(unkStruct->vec_arr[ckind].y, archive, arg2);
     }
+#endif
 }
 
 HSD_JObj* Player_80036EA0(s32 slot)

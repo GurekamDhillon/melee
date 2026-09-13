@@ -42,11 +42,38 @@ static bool gw_exiting;
 #define GW_TIMER_CLOCK 40500000u
 #define GW_TICKS_PER_FIELD (GW_TIMER_CLOCK / 60u)
 
-static uint64_t gw_ticks;
+/* The clock free-runs off the host's high-resolution counter rather than being stepped by the
+ * frame driver. Stepping it only from gw_frame_tick and gw_wait_idle made game time stop
+ * whenever the game was computing instead of waiting -- a 14-second run advanced about two
+ * seconds of game time -- so every duration the game measured was short by however busy the
+ * frame had been, and alarms bunched up behind long stretches of work. A GameCube's time base
+ * runs unconditionally, and so does this. */
+static uint64_t gw_qpc_freq;
+static uint64_t gw_qpc_base;
 static uint64_t gw_last_advance_ms;
 
-uint64_t gw_time_ticks(void) { return gw_ticks; }
-void gw_time_advance_field(void) { gw_ticks += GW_TICKS_PER_FIELD; }
+uint64_t gw_time_ticks(void) {
+  LARGE_INTEGER now;
+  uint64_t elapsed;
+  if (gw_qpc_freq == 0) {
+    LARGE_INTEGER freq;
+    QueryPerformanceFrequency(&freq);
+    gw_qpc_freq = (uint64_t)freq.QuadPart;
+    QueryPerformanceCounter(&now);
+    gw_qpc_base = (uint64_t)now.QuadPart;
+    return 0;
+  }
+  QueryPerformanceCounter(&now);
+  elapsed = (uint64_t)now.QuadPart - gw_qpc_base;
+  /* Split the conversion so a long session cannot overflow: elapsed * 40.5e6 would wrap after
+   * about half a day at a 10 MHz counter. */
+  return (elapsed / gw_qpc_freq) * GW_TIMER_CLOCK +
+         ((elapsed % gw_qpc_freq) * GW_TIMER_CLOCK) / gw_qpc_freq;
+}
+
+/* Kept because the frame driver still marks field boundaries, but the clock no longer depends on
+ * being told about them. */
+void gw_time_advance_field(void) {}
 
 /* ---- deferred work -----------------------------------------------------------------------
  * The DVD and ARQ shims complete their transfers immediately but must not call back into game
@@ -160,9 +187,8 @@ void gw_frame_tick(void) {
            gw_retrace_count, gw_presented_count, copies, prims, dlists);
   }
 
-  gw_time_advance_field();
   gw_last_advance_ms = GetTickCount64();
-  gw_os_run_alarms(gw_ticks);
+  gw_os_run_alarms(gw_time_ticks());
   gw_run_deferred();
 
   if (gw_pre_retrace_cb != NULL) {
@@ -181,23 +207,18 @@ void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
   *waits = gw_wait_idle_count;
 }
 
+/* Called from the shims a blocking game loop reaches (DVDGetDriveStatus, above all). The clock
+ * runs on its own now, so this only has to give alarms and completions a chance to run; the
+ * once-per-millisecond gate keeps a tight spin from calling them millions of times a second. */
 void gw_wait_idle(void) {
   const uint64_t now = GetTickCount64();
   ++gw_wait_idle_count;
-  if (gw_last_advance_ms == 0) {
-    gw_last_advance_ms = now;
+  if (now == gw_last_advance_ms) {
     return;
   }
-  bool ticked = false;
-  while (now - gw_last_advance_ms >= 16) {
-    gw_last_advance_ms += 16;
-    gw_time_advance_field();
-    ticked = true;
-  }
-  if (ticked) {
-    gw_os_run_alarms(gw_ticks);
-    gw_run_deferred();
-  }
+  gw_last_advance_ms = now;
+  gw_os_run_alarms(gw_time_ticks());
+  gw_run_deferred();
 }
 
 /* ---- GX draw-done ------------------------------------------------------------------------

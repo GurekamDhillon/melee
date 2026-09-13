@@ -375,8 +375,55 @@ static u32 calc_vtx_size(GXVtxFmt fmt) noexcept {
   return vtxSize;
 }
 
-static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, gfx::Range vertRange, gfx::Range idxRange,
-                         u32 numIndices) noexcept {
+// Byte offset of attribute `attr` within a single vertex of `fmt`, matching the per-vertex
+// layout produced by calc_vtx_size / populate_pipeline_config.
+static u32 attr_stream_offset(int attr, GXVtxFmt fmt) noexcept {
+  const auto& vtxFmt = g_gxState.vtxFmts[fmt];
+  u32 off = 0;
+  for (int i = GX_VA_PNMTXIDX; i < attr; ++i) {
+    const auto& attrFmt = vtxFmt.attrs[i];
+    switch (g_gxState.vtxDesc[i]) {
+    case GX_NONE:
+      break;
+    case GX_DIRECT: {
+      const auto a = static_cast<GXAttr>(i);
+      off += comp_type_size(a, attrFmt.type) * comp_cnt_count(a, attrFmt.cnt);
+      break;
+    }
+    case GX_INDEX8:
+      off += i == GX_VA_NRM && attrFmt.cnt == GX_NRM_NBT3 ? 3 : 1;
+      break;
+    case GX_INDEX16:
+      off += i == GX_VA_NRM && attrFmt.cnt == GX_NRM_NBT3 ? 6 : 2;
+      break;
+    }
+  }
+  return off;
+}
+
+// Largest attribute-array index referenced by the indexed attribute `attr` across all `vtxCount`
+// vertices of `fmt` in the raw vertex stream `vertexData`. Index values are big-endian in the GX
+// FIFO stream (INDEX8 = 1 byte, INDEX16 = 2 bytes; NBT3 normals carry 3 indices).
+static u32 max_index_for_attr(int attr, GXVtxFmt fmt, std::span<const uint8_t> vertexData, u16 vtxCount) noexcept {
+  const u32 vtxSize = (g_gxState.lastVtxFmt == fmt) ? g_gxState.lastVtxSize : calc_vtx_size(fmt);
+  const u32 offset = attr_stream_offset(attr, fmt);
+  const auto& attrFmt = g_gxState.vtxFmts[fmt].attrs[attr];
+  const bool nbt3 = attr == GX_VA_NRM && attrFmt.cnt == GX_NRM_NBT3;
+  const bool idx16 = g_gxState.vtxDesc[attr] == GX_INDEX16;
+  const u32 subCount = nbt3 ? 3 : 1;
+  u32 maxIndex = 0;
+  for (u16 v = 0; v < vtxCount; ++v) {
+    const uint8_t* p = vertexData.data() + static_cast<size_t>(v) * vtxSize + offset;
+    for (u32 c = 0; c < subCount; ++c) {
+      const u32 idx = idx16 ? read_bits<u16>(p + c * 2) : p[c];
+      maxIndex = std::max(maxIndex, idx);
+    }
+  }
+  return maxIndex;
+}
+
+static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
+                         gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
   auto& state = g_gxState;
   auto& cache = sDrawCache;
 
@@ -386,8 +433,14 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, gfx::Rang
       continue;
     }
     auto& array = state.arrays[i];
-    if (array.cachedRange.size == 0) {
-      array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), array.size);
+    const auto& attrFmt = state.vtxFmts[fmt].attrs[i];
+    const u32 needed = max_index_for_attr(i, fmt, vertexData, vtxCount) * array.stride +
+                       comp_type_size(static_cast<GXAttr>(i), attrFmt.type) *
+                           comp_cnt_count(static_cast<GXAttr>(i), attrFmt.cnt);
+    AURORA_ASSERT(needed <= array.size, "indexed attr {} references {} bytes, array is {} bytes", i, needed,
+                  array.size);
+    if (array.cachedRange.size < needed) {
+      array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), needed);
     }
     immediates.arrayStart[i - GX_VA_POS] = array.cachedRange.offset;
   }
@@ -466,7 +519,8 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, gfx::Rang
   });
 }
 
-static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, gfx::Range vertRange) noexcept {
+static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
+                                 gfx::Range vertRange) noexcept {
   ZoneScoped;
   u32 numIndices = 0;
   gfx::Range idxRange;
@@ -479,7 +533,7 @@ static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, g
     idxBuf.clear();
   }
 
-  push_gx_draw(prim, fmt, vtxCount, vertRange, idxRange, numIndices);
+  push_gx_draw(prim, fmt, vtxCount, vertexData, vertRange, idxRange, numIndices);
 }
 
 static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& reader) noexcept {
@@ -538,7 +592,7 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& 
     return;
   }
 
-  handle_draw_unmerged(prim, fmt, vtxCount, vertRange);
+  handle_draw_unmerged(prim, fmt, vtxCount, vertexData, vertRange);
 }
 
 static void handle_draw(u8 cmd, ByteReader& reader) noexcept {
@@ -740,7 +794,7 @@ void handle_aurora(ByteReader& reader) noexcept {
     const auto vertexData = reader.take(totalVtxBytes);
     const gfx::Range vertRange = gfx::push_verts(vertexData.data(), vertexData.size(), 4);
     if (indexCount != 0) {
-      push_gx_draw(prim, fmt, vtxCount, vertRange, idxRange, indexCount);
+      push_gx_draw(prim, fmt, vtxCount, vertexData, vertRange, idxRange, indexCount);
     }
   } else if (subCmd == GX_AURORA_DEBUG_GROUP_PUSH) {
     auto label = reader.read_string();

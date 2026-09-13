@@ -42,6 +42,14 @@ u32 HSD_AObjGetFlags(HSD_AObj* aobj)
 
 void HSD_AObjSetFlags(HSD_AObj* aobj, u32 flags)
 {
+#if defined(TARGET_PC)
+    /* A stage animation list can hand this a garbage non-NULL pointer (observed 0xB from
+     * grAnime_801C70E0 walking a DObj whose aobj is corrupt); the plain `aobj != NULL` test lets
+     * the store fault near NULL. Treat an impossibly small pointer as absent. */
+    if ((uintptr_t) aobj < 0x1000u) {
+        return;
+    }
+#endif
     if (aobj) {
         flags &= (AOBJ_LOOP | AOBJ_NO_UPDATE);
         aobj->flags |= flags;

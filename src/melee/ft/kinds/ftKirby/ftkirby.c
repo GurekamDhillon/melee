@@ -2769,6 +2769,15 @@ void ftKb_SpecialN_800EED50(s32 arg0, s32 arg1)
     Fighter_CostumeStrings* costumes;
     Fighter_CostumeStrings* cs;
 
+#if defined(TARGET_PC)
+    /* The hat id reaches this callback out of range (observed arg0=68 against a 33-entry
+     * ftKb_Init_803CA9D0), and indexing it reads past the table into a garbage filename that
+     * then faults in lbFileGetFullName. Ignore an out-of-range id rather than crash. */
+    if (arg0 < 0 || arg0 >= (s32) Ft_Kind_Max) {
+        return;
+    }
+#endif
+
     if (arg0 != -1 && arg0 != 4) {
         if (ftKb_Init_803CA9D0[arg0].filename != NULL) {
             if (((HSD_Archive**) &ft_80459B88)[arg0] == NULL) {

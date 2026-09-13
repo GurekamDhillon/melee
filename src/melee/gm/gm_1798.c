@@ -54,6 +54,19 @@
 #define RESULTS_JOBJS disp->jobjs
 #endif
 
+#if defined(TARGET_PC)
+/* CameraKindData alias view: kind[], slot_off[], cobj_desc at +0x10/+0x6D0/+0xF08 are
+ * really gmResultCharacterScaleData, gmResultCharacterData.slot_off, gmResultCameraDesc.
+ * CharScaleEntry/CameraKindParams share the 0x30-byte layout, so the view is exact. */
+#define RESULT_CAM_KIND ((CameraKindParams*) gmResultCharacterScaleData)
+#define RESULT_CAM_SLOTOFF (gmResultCharacterData.slot_off)
+#define RESULT_CAM_DESC ((HSD_CObjDesc*) &gmResultCameraDesc)
+#else
+#define RESULT_CAM_KIND data->kind
+#define RESULT_CAM_SLOTOFF data->slot_off
+#define RESULT_CAM_DESC (&data->cobj_desc)
+#endif
+
 extern ResultsData lbl_8046DBE8;
 
 ResultsDisplayData lbl_8046E1B0;
@@ -417,7 +430,7 @@ HSD_GObj* fn_8017A318(s32 arg0)
     }
 
     gobj = GObj_Create(0x13, 0x14, 0);
-    cobj = HSD_CObjLoadDesc(&data->cobj_desc);
+    cobj = HSD_CObjLoadDesc(RESULT_CAM_DESC);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj);
 
     {
@@ -432,28 +445,28 @@ HSD_GObj* fn_8017A318(s32 arg0)
 
     kind_data = RESULTS_STATE.char_kind[arg0];
     (void) kind_data;
-    eye.y += data->kind[kind_data].y_off[vi];
+    eye.y += RESULT_CAM_KIND[kind_data].y_off[vi];
 
     vi = ((s32) variant <= 2) ? variant : 3;
-    interest.y += data->kind[kind_data].y_off[vi];
+    interest.y += RESULT_CAM_KIND[kind_data].y_off[vi];
 
     vi = ((s32) variant <= 2) ? variant : 3;
-    eye.x += data->kind[kind_data].x_off[vi];
+    eye.x += RESULT_CAM_KIND[kind_data].x_off[vi];
 
     {
         f32 interest_x;
         vi = ((s32) variant <= 2) ? variant : 3;
-        interest_x = interest.x + data->kind[kind_data].x_off[vi];
+        interest_x = interest.x + RESULT_CAM_KIND[kind_data].x_off[vi];
 
         {
             f32 x_off, y_off;
 
             interest.x = interest_x;
-            x_off = data->slot_off[kind_data][0][slot];
+            x_off = RESULT_CAM_SLOTOFF[kind_data][0][slot];
             eye.x += x_off;
             interest.x += x_off;
 
-            eye.y = eye.y + (y_off = data->slot_off[kind_data][1][slot]);
+            eye.y = eye.y + (y_off = RESULT_CAM_SLOTOFF[kind_data][1][slot]);
             interest.y += y_off;
         }
     }
@@ -463,12 +476,12 @@ HSD_GObj* fn_8017A318(s32 arg0)
     }
 
     vi = ((s32) variant <= 2) ? variant : 3;
-    if ((1.0f - data->kind[kind_data].z_scale[vi]) < 0.0f) {
+    if ((1.0f - RESULT_CAM_KIND[kind_data].z_scale[vi]) < 0.0f) {
         vi = ((s32) variant <= 2) ? variant : 3;
-        eye.z += 100.0f * (1.0f - data->kind[kind_data].z_scale[vi]);
+        eye.z += 100.0f * (1.0f - RESULT_CAM_KIND[kind_data].z_scale[vi]);
     } else {
         vi = ((s32) variant <= 2) ? variant : 3;
-        eye.z += 300.0f * (1.0f - data->kind[kind_data].z_scale[vi]);
+        eye.z += 300.0f * (1.0f - RESULT_CAM_KIND[kind_data].z_scale[vi]);
     }
 
     HSD_CObjSetEyePosition(cobj, &eye);

@@ -1,12 +1,39 @@
 /* AX shims: the audio DSP interface, stubbed.
  *
  * The port has no audio backend yet. Everything here is inert except the four FX init calls, which
- * axdriver.c checks for `== 1` before storing the effect handle, and AXAcquireVoice, which reports
- * "no voice" by returning NULL -- callers treat that as a normal failure and retry (see
+ * axdriver.c checks for `== 1` before storing the effect handle, and the voice allocator below,
+ * which must hand out a valid voice because the synth dereferences it unconditionally (see
  * _research/melee-boot.md §5). Nothing on the boot path waits on an AX callback: the two blocking
  * waits that matter (HSD_SynthSFXWaitForLoadCompletion and AXDriver_8038DA70) are completed by the
  * DVD/ARQ callback chain, which works. */
 #include "gw.h"
+
+/* ---- minimal voice pool --------------------------------------------------------------------
+ * AXAcquireVoice cannot just return NULL. The synth's stream path (HSD_Synth_8038B5AC in synth.c)
+ * reads voice->index immediately after acquiring, so a NULL result faults at NULL+0x18 the moment
+ * the game starts a stream -- which is exactly what the title->main-menu transition does when it
+ * starts the menu music. Model a 64-voice pool (AX_MAX_VOICES) that hands out distinct voices and
+ * recycles them on AXFreeVoice. The game reads `index` through a byte-swapped load (it is a scalar
+ * in game-visible memory), so it is written big-endian via gw_w32; callback/priority/userContext
+ * are only touched by this shim and stay native. */
+
+#define GW_AX_NUM_VOICES 64
+
+/* Mirror of AXVPB (extern/dolphin/include/dolphin/ax.h): index at 0x18, pb at 0x138, 0x1F8 total.
+ * Only `index` is read by game code; the full size is reserved so the stream-advance read at
+ * voice+0x1B2 (synth.c HSD_Synth_8038ADD0) stays inside the allocation. */
+typedef struct {
+    void *next, *prev;        /* 0x000 */
+    void *next1;              /* 0x008 */
+    int priority;             /* 0x00C */
+    void (*callback)(void *); /* 0x010 */
+    uint32_t userContext;     /* 0x014 */
+    uint32_t index;           /* 0x018 */
+    uint8_t _rest[0x1F8 - 0x1C];
+} gw_ax_voice;
+
+static gw_ax_voice gw_ax_voices[GW_AX_NUM_VOICES];
+static bool gw_ax_in_use[GW_AX_NUM_VOICES];
 
 void gw_AXInit(void) {}
 
@@ -23,13 +50,47 @@ void gw_AXRegisterAuxBCallback(void *callback, void *context) {
 }
 
 void *gw_AXAcquireVoice(uint32_t priority, void *callback, uint32_t user_context) {
-  (void)priority;
-  (void)callback;
-  (void)user_context;
-  return NULL;
+  gw_ax_voice *v = NULL;
+  int i;
+
+  for (i = 0; i < GW_AX_NUM_VOICES; ++i) {
+    if (!gw_ax_in_use[i]) {
+      v = &gw_ax_voices[i];
+      break;
+    }
+  }
+  if (v == NULL) {
+    int best = -1;
+    for (i = 0; i < GW_AX_NUM_VOICES; ++i) {
+      if (gw_ax_in_use[i] && (best < 0 || gw_ax_voices[i].priority < gw_ax_voices[best].priority)) {
+        best = i;
+      }
+    }
+    if (best < 0) {
+      return NULL;
+    }
+    v = &gw_ax_voices[best];
+    if (v->callback != NULL) {
+      v->callback(v); /* drop callback: the synth removes the node for this voice */
+    }
+  }
+
+  i = (int)(v - gw_ax_voices);
+  v->priority = (int)priority;
+  v->callback = (void (*)(void *))callback;
+  v->userContext = user_context;
+  gw_w32(&v->index, (uint32_t)i);
+  gw_ax_in_use[i] = true;
+  return v;
 }
 
-void gw_AXFreeVoice(void *voice) { (void)voice; }
+void gw_AXFreeVoice(void *voice) {
+  gw_ax_voice *v = (gw_ax_voice *)voice;
+  if (v < &gw_ax_voices[0] || v >= &gw_ax_voices[GW_AX_NUM_VOICES]) {
+    return;
+  }
+  gw_ax_in_use[v - gw_ax_voices] = false;
+}
 
 void gw_AXSetVoicePriority(void *voice, uint32_t priority) {
   (void)voice;

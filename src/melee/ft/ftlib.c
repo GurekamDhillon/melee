@@ -986,7 +986,19 @@ void ftLib_80087610(u8 arg0)
 {
     u8 i;
     for (i = 0; i <= SELKIND_COUNT; i++) {
-        if (gm_IsCKindUnlocked(i)) {
+#if defined(TARGET_PC)
+        /* The attract path plays characters the save may not have unlocked (Koopa, ...), but their
+         * hat archive is still needed, and the inclusive bound makes SELKIND_COUNT itself invalid.
+         * Load every valid kind instead of only the unlocked ones. */
+        if (i >= SELKIND_COUNT) {
+            continue;
+        }
+#else
+        if (!gm_IsCKindUnlocked(i)) {
+            continue;
+        }
+#endif
+        {
             ftKb_SpecialN_800EED50(Player_800325C8(i, 0), arg0);
             if (i == CKind_Zelda || i == CKind_Seak) {
                 ftKb_SpecialN_800EED50(Player_800325C8(i, 1), arg0);

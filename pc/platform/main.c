@@ -10,6 +10,7 @@
 #include "shim_vi.h"
 
 #include <aurora/aurora.h>
+#include <dolphin/gx/GXAurora.h>
 #include <aurora/event.h>
 #include <aurora/main.h>
 
@@ -66,6 +67,29 @@ static bool gw_find_iso(int argc, char **argv) {
   return false;
 }
 
+/* Backend override so D3D11 and D3D12 can be compared without a rebuild:
+ *   MELEE_BACKEND=d3d12   (or d3d11, auto, vulkan)
+ * Defaults to D3D11 for the reason documented at .desiredBackend below. */
+static AuroraBackend gw_desired_backend(void) {
+  const char *env = getenv("MELEE_BACKEND");
+  if (env == NULL) {
+    return BACKEND_D3D11;
+  }
+  if (_stricmp(env, "d3d12") == 0) {
+    gw_log("melee-pc: MELEE_BACKEND=d3d12");
+    return BACKEND_D3D12;
+  }
+  if (_stricmp(env, "auto") == 0) {
+    gw_log("melee-pc: MELEE_BACKEND=auto");
+    return BACKEND_AUTO;
+  }
+  if (_stricmp(env, "vulkan") == 0) {
+    gw_log("melee-pc: MELEE_BACKEND=vulkan");
+    return BACKEND_VULKAN;
+  }
+  return BACKEND_D3D11;
+}
+
 int main(int argc, char *argv[]) {
   gw_install_crash_handler();
   gw_log("melee-pc: starting");
@@ -83,7 +107,7 @@ int main(int argc, char *argv[]) {
        * first-frame rendering: wgpuSurfaceGetCurrentTexture -> d3d12::Queue::WaitForSerial
        * dereferences a queue-serial value as a pointer (near-NULL read, webgpu_dawn.dll
        * +0x363548). D3D11's queue/serial path does not, so pin it until Dawn is fixed. */
-      .desiredBackend = BACKEND_D3D11,
+      .desiredBackend = gw_desired_backend(),
       .vsync = true,
       .windowWidth = 1280,
       .windowHeight = 960,
@@ -97,6 +121,15 @@ int main(int argc, char *argv[]) {
   AuroraInfo info = aurora_initialize(argc, argv, &config);
   gw_log("melee-pc: aurora backend %d, window %ux%u", (int)info.backend, info.windowSize.width,
          info.windowSize.height);
+
+  /* Letterbox rather than stretch when the window is not 4:3.
+   *
+   * Aurora's two halves disagree out of the box: the GX side defaults its policy to
+   * AURORA_VIEWPORT_FIT (gx.hpp), but the window side defaults g_frameBufferAspectFit to false
+   * (window.cpp), and the window only learns the policy when AuroraSetViewportPolicy is called.
+   * With nobody calling it, GX believes it is fitting while the window stretches. Setting it
+   * explicitly syncs the two and makes resizing preserve the game's 4:3 aspect. */
+  AuroraSetViewportPolicy(AURORA_VIEWPORT_FIT);
 
   /* Order matters: the fixups rewrite pointers inside game globals, so nothing may read a game
    * global before this runs. */

@@ -46,6 +46,22 @@ static inline s32 SfxLoadStreamDataSize(s32 size)
     return size + 8;
 }
 
+#if defined(TARGET_PC)
+/* Node slots are indexed by AXVPB.index, which a stale voice pointer can make garbage; a bad index
+ * here walks or clears an unrelated node (observed as a node's voice[0] turning into garbage). */
+static struct HSD_SynthSFXNode* hsd_SynthSFXNodeAt(s32 index)
+{
+    if (index < 0 || index >= (s32) ARRAY_SIZE(hsd_SynthSFXNodes)) {
+        OSReport("[NODEIDX] bad index=%d\n", index);
+        return &hsd_SynthSFXNodes[0];
+    }
+    return &hsd_SynthSFXNodes[index];
+}
+#define SFX_NODE_AT(index) hsd_SynthSFXNodeAt(index)
+#else
+#define SFX_NODE_AT(index) (&hsd_SynthSFXNodes[index])
+#endif
+
 static void HSD_SynthSFXSampleLoadCallback(int result, int length, void* addr,
                                            bool cancelflag)
 {
@@ -487,7 +503,7 @@ void HSD_SynthSFXStopNode(struct HSD_SynthSFXNode* node)
     }
     for (i = 0; i < node->voice_count; i++) {
         AXFreeVoice(node->voice[i]);
-        hsd_SynthSFXNodes[node->voice[i]->index].x0 = 0;
+        SFX_NODE_AT(node->voice[i]->index)->x0 = 0;
     }
 }
 
@@ -502,7 +518,7 @@ void dropcallback(void* dropped)
 
     enabled = OSDisableInterrupts();
 
-    node = &hsd_SynthSFXNodes[voice->index];
+    node = SFX_NODE_AT(voice->index);
 
     /// Search HSD_Synth_804C28E0 queue for this voice and remove it
     for (i = 0; i < HSD_Synth_804D7720; i++) {
@@ -519,7 +535,7 @@ void dropcallback(void* dropped)
 
     if (node->x0 == -1) {
         /// Secondary voice - follow to primary node
-        node = &hsd_SynthSFXNodes[node->voice[0]->index];
+        node = SFX_NODE_AT(node->voice[0]->index);
     }
 
     if (!(node->flags & 1) && node->x27 == 1 &&
@@ -533,7 +549,7 @@ void dropcallback(void* dropped)
         if (v != voice) {
             HSD_Synth_804C28E0[HSD_Synth_804D7720++] = v;
         }
-        hsd_SynthSFXNodes[node->voice[i]->index].x0 = 0;
+        SFX_NODE_AT(node->voice[i]->index)->x0 = 0;
     }
 
     OSRestoreInterrupts(enabled);
@@ -599,13 +615,13 @@ int HSD_Synth_80389334(int sfx_id, u8 vol, u8 vol2, u8 pan, int priority,
                 return -1;
             }
             if (sfx_entry->unk8 == 2) {
-                hsd_SynthSFXNodes[voices[1]->index].x0 = -1;
-                hsd_SynthSFXNodes[voices[1]->index].voice[0] = voices[0];
+                SFX_NODE_AT(voices[1]->index)->x0 = -1;
+                SFX_NODE_AT(voices[1]->index)->voice[0] = voices[0];
             }
 
             node_idx = voices[0]->index;
 
-            sfx_node = &hsd_SynthSFXNodes[node_idx];
+            sfx_node = SFX_NODE_AT(node_idx);
             sfx_node->x27 = 1;
             sfx_node->sfx_id = sfx_id;
             sfx_node->flags = 0;
@@ -716,7 +732,7 @@ static inline void freeVoices(struct HSD_SynthSFXNode* node)
     int j;
     for (j = 0; j < node->voice_count; j++) {
         AXFreeVoice(node->voice[j]);
-        hsd_SynthSFXNodes[node->voice[j]->index].x0 = 0;
+                SFX_NODE_AT(node->voice[j]->index)->x0 = 0;
     }
 }
 
@@ -1001,7 +1017,7 @@ s32 HSD_Synth_8038A000(void)
                 if (flags & 1) {
                     for (i = 0; i < node->voice_count; i++) {
                         AXFreeVoice(node->voice[i]);
-                        hsd_SynthSFXNodes[node->voice[i]->index].x0 = 0;
+                        SFX_NODE_AT(node->voice[i]->index)->x0 = 0;
                     }
                 } else if ((flags & 6) == 2) {
                     node->flags = flags | 6;
@@ -1458,7 +1474,7 @@ int HSD_Synth_8038B5AC(int entrynum, u8 vol, u8 vol2, int channel)
     HSD_Synth_804D7764 = entrynum;
     voice = AXAcquireVoice(0x1D, dropcallback, 0);
     idx = voice->index;
-    voice_node = &hsd_SynthSFXNodes[idx];
+    voice_node = SFX_NODE_AT(idx);
     HSD_Synth_804D7750 += 0x40;
     if (HSD_Synth_804D7750 < 0) {
         HSD_Synth_804D7750 = 0x40;

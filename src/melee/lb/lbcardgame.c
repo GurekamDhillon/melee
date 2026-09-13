@@ -18,13 +18,6 @@
 
 #define _p(x) (lb_80433318.x)
 
-#if defined(TARGET_PC)
-/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
- * gw_diag_card_state in shim_gx.c. Reports the card work-area pointers just before the create
- * path dereferences them, so a bad x5C names the fault instead of a bare AV. */
-extern void diag_card_state(void* x5c, int enable, void* x64);
-#endif
-
 static struct {
     u32 x0, x4, x8;
     u32 pad[2];
@@ -120,9 +113,6 @@ u32 lb_8001C87C(void)
 
 int lb_8001C8BC(void)
 {
-#if defined(TARGET_PC)
-    diag_card_state(_p(x5C), _p(enable), _p(x64));
-#endif
     HSD_ASSERT(0x140, _p(enable));
 
     return lb_8001BC18(0, "SuperSmashBros0110290334", (void**) lb_803BAB74,

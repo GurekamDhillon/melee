@@ -14,7 +14,6 @@
 #if defined(TARGET_PC)
 /* Unprefixed: gwtool prefixes every symbol in a game TU with gw_. */
 extern void wait_idle(void);
-extern void diag_card_pending(int pending, int state);
 #endif
 
 #define _p(x) (lb_80432A68.x)
@@ -719,18 +718,6 @@ int lb_8001B6F8(void)
     int result;
 
     hsd_803AAA48();
-#if defined(TARGET_PC)
-    {
-        static int last_pending = -1;
-        static int logged;
-        const int pending = _p(x8AC);
-        if (pending != last_pending && logged < 60) {
-            last_pending = pending;
-            ++logged;
-            diag_card_pending(pending, _p(unk_34));
-        }
-    }
-#endif
     enabled = OSDisableInterrupts();
     if (_p(x8AC) != 0) {
         result = 0xB;

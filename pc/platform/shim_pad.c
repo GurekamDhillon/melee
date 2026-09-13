@@ -45,6 +45,18 @@ static int gw_pad_diag_on(void) {
   return cached;
 }
 
+/* MELEE_PAD_IGNORE_ADAPTER=1 drops the raw GC adapter's contribution, so only the
+ * script/live/keyboard input drives the pad. Useful when a plugged-in controller drifts or
+ * holds a button and would otherwise fight the scripted input. */
+static int gw_pad_ignore_adapter(void) {
+  static int cached = -1;
+  if (cached < 0) {
+    const char *v = getenv("MELEE_PAD_IGNORE_ADAPTER");
+    cached = (v != NULL && v[0] == '1') ? 1 : 0;
+  }
+  return cached;
+}
+
 void gw_diag_pads(void) {
   static int reported;
 
@@ -198,6 +210,36 @@ static void gw_pad_script_apply(PADStatus *st) {
   }
 }
 
+/* Live input (MELEE_PAD_LIVE=<path>): re-read the file on every PADRead and apply it, so inputs
+ * can be driven in real time without restarting the game. Format: <buttons_hex> [sx sy [tl tr]],
+ * same bit layout as MELEE_PAD_SCRIPT. Polled, not cached: writing the file changes the next
+ * frame. Takes precedence over the script and the keyboard overlay. */
+static void gw_pad_live_apply(PADStatus *st) {
+  const char *path = getenv("MELEE_PAD_LIVE");
+  char line[128];
+  FILE *f;
+  unsigned int buttons = 0;
+  int sx = 0, sy = 0, tl = 0, tr = 0;
+
+  if (path == NULL || path[0] == '\0') {
+    return;
+  }
+  f = fopen(path, "r");
+  if (f == NULL) {
+    return;
+  }
+  if (fgets(line, sizeof line, f) != NULL &&
+      sscanf(line, "%x %d %d %d %d", &buttons, &sx, &sy, &tl, &tr) >= 1) {
+    st[PAD_CHAN0].stickX = (int8_t)sx;
+    st[PAD_CHAN0].stickY = (int8_t)sy;
+    st[PAD_CHAN0].triggerLeft = (uint8_t)tl;
+    st[PAD_CHAN0].triggerRight = (uint8_t)tr;
+    gw_w16(&st[PAD_CHAN0].button, (uint16_t)buttons);
+    st[PAD_CHAN0].err = 0;
+  }
+  fclose(f);
+}
+
 int gw_PADRead(void *status) {
   PADStatus *st = (PADStatus *)status;
   int ret = (int)PADRead(st);
@@ -226,8 +268,10 @@ int gw_PADRead(void *status) {
 
   /* Overwrite whatever SDL produced for any channel the raw adapter is driving. Channels with
    * nothing plugged into the adapter are left as Aurora filled them. */
-  gw_gc_adapter_read(st);
-  gw_gc_adapter_diag();
+  if (!gw_pad_ignore_adapter()) {
+    gw_gc_adapter_read(st);
+    gw_gc_adapter_diag();
+  }
 
   gw_diag_pads();
   gw_diag_pad_values(st);
@@ -262,6 +306,10 @@ int gw_PADRead(void *status) {
       if (GetAsyncKeyState('J') & 0x8000) { btn |= PAD_BUTTON_A; held = 1; }
       if (GetAsyncKeyState('K') & 0x8000) { btn |= PAD_BUTTON_B; held = 1; }
       if (GetAsyncKeyState(VK_RETURN) & 0x8000) { btn |= PAD_BUTTON_START; held = 1; }
+      if (GetAsyncKeyState(VK_UP) & 0x8000) { btn |= PAD_BUTTON_UP; held = 1; }
+      if (GetAsyncKeyState(VK_DOWN) & 0x8000) { btn |= PAD_BUTTON_DOWN; held = 1; }
+      if (GetAsyncKeyState(VK_LEFT) & 0x8000) { btn |= PAD_BUTTON_LEFT; held = 1; }
+      if (GetAsyncKeyState(VK_RIGHT) & 0x8000) { btn |= PAD_BUTTON_RIGHT; held = 1; }
 
       if (stick) {
         st[PAD_CHAN0].stickX = sx;
@@ -276,13 +324,14 @@ int gw_PADRead(void *status) {
      * held and HSD_PadRenewMasterStatus drops the pad between inputs. With the raw adapter
      * driving the channel this is unnecessary -- it sets err itself for ports that really
      * have a controller, and forcing it here would make an empty port look connected. */
-    if (!gw_gc_adapter_present()) {
+    if (!gw_gc_adapter_present() || gw_pad_ignore_adapter()) {
       st[PAD_CHAN0].err = 0;
     }
   }
 
-  /* Scripted input takes precedence over both the adapter and the keyboard overlay. */
+  /* Scripted and live input take precedence over the adapter and the keyboard overlay. */
   gw_pad_script_apply(st);
+  gw_pad_live_apply(st);
 
   return ret;
 }

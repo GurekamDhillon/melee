@@ -157,6 +157,17 @@ static void HSD_SynthSFXHeaderLoadCallback(int result, int length, void* addr,
     if (HSD_Synth_804D7738 == 0) {
         int bankID = HSD_Synth_804C2A60[0].bankID;
 
+#if defined(TARGET_PC)
+        /* The cursor is only rewound by HSD_SynthSFXUnloadBank, whose callers are gated on scene
+         * state and do not run between every load here, so the cursor creeps until a load no longer
+         * fits and the assert below aborts the game. Run the real unload -- it stops the voices
+         * using the bank and frees their nodes before rewinding. */
+        if (hsd_SynthSFXBankHead[bankID + 1] - hsd_SynthSFXBank[bankID] <
+            (int) hsd_SynthSFXLoadBuf[1]) {
+            HSD_SynthSFXUnloadBank(bankID);
+        }
+#endif
+
         HSD_ASSERTREPORT(0xCD,
                          hsd_SynthSFXBankHead[bankID + 1] -
                                  hsd_SynthSFXBank[bankID] >=

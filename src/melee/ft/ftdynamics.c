@@ -187,7 +187,11 @@ void ftCo_8009D3BC(Fighter* fp)
 
 void ftCo_8009D4D4(Fighter* fp)
 {
-    KirbyHatStruct* hat = ft_80459B88.hats[Ft_Kind_Kirby];
+    KirbyHatStruct** hats = ft_80459B88.hats;
+    KirbyHatStruct* hat = hats != NULL ? hats[Ft_Kind_Kirby] : NULL;
+    if (hat == NULL) {
+        return;
+    }
     fp->dynamics_num = hat->hat_dynamics[1]->dynamicsNum;
     HSD_ASSERTREPORT(265, fp->dynamics_num < Ft_Dynamics_NumMax,
                      "fighter dynamics num over!\n");

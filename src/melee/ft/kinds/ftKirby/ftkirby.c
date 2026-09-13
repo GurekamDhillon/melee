@@ -2680,12 +2680,24 @@ void ftKb_Init_LoadSpecialAttrs(HSD_GObj* gobj)
 
 void ftKb_Init_800EEB00(Fighter_GObj* gobj, ArticleDynamicBones** arg1)
 {
-    *arg1 = ft_80459B88.hats[Ft_Kind_Pichu]->hat_dynamics[4]->ftDynamicBones;
+    KirbyHatStruct** hats = ft_80459B88.hats;
+    KirbyHatStruct* hat = hats != NULL ? hats[Ft_Kind_Pichu] : NULL;
+    if (hat == NULL) {
+        *arg1 = NULL;
+        return;
+    }
+    *arg1 = hat->hat_dynamics[4]->ftDynamicBones;
 }
 
 void ftKb_Init_800EEB1C(Fighter_GObj* gobj, s32* arg1)
 {
-    *arg1 = ft_80459B88.hats[Ft_Kind_Pichu]->hat_dynamics[4]->x4;
+    KirbyHatStruct** hats = ft_80459B88.hats;
+    KirbyHatStruct* hat = hats != NULL ? hats[Ft_Kind_Pichu] : NULL;
+    if (hat == NULL) {
+        *arg1 = 0;
+        return;
+    }
+    *arg1 = hat->hat_dynamics[4]->x4;
 }
 
 void ftKb_Init_OnKnockbackEnter(HSD_GObj* gobj)
@@ -3600,7 +3612,10 @@ void ftKb_SpecialN_800F0F5C(Fighter_GObj* gobj)
 /// callers' @c dont_inline pragmas), but that shifts register allocation.
 #define LOAD_HAT(gobj, fp, fp2, kind, hat, part_dobj_indices)                 \
     do {                                                                      \
-        (hat) = ft_80459B88.hats[kind];                                       \
+        (hat) = ftKb_hatTable[kind];                                          \
+        if ((hat) == NULL) {                                                  \
+            return;                                                           \
+        }                                                                     \
         ftKb_SpecialN_800EF040(gobj, (kind) + 1, hat);                        \
         (fp2)->u.kb.hat.x14.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);   \
         (fp2)->u.kb.hat.x1C.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);   \
@@ -3635,7 +3650,12 @@ void ftKb_SpecialN_800F0FC0(Fighter_GObj* gobj)
 
 void ftKb_SpecialN_800F10A4(Fighter_GObj* gobj)
 {
-    ftKb_SpecialN_800EF69C(gobj, 3, ft_80459B88.hats[Ft_Kind_Captain]);
+    KirbyHatStruct** hats = ftKb_hatTable;
+    KirbyHatStruct* hat = hats[Ft_Kind_Captain];
+    if (hat == NULL) {
+        return;
+    }
+    ftKb_SpecialN_800EF69C(gobj, 3, hat);
 }
 
 /// Load Yoshi's hat for Kirby copy ability.
@@ -3664,7 +3684,12 @@ void ftKb_SpecialN_800F10D4(Fighter_GObj* gobj)
 void ftKb_SpecialN_800F11AC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    ftKb_SpecialN_800EF69C(gobj, 0xF, ft_80459B88.hats[14]);
+    KirbyHatStruct** hats = ftKb_hatTable;
+    KirbyHatStruct* hat = hats[14];
+    if (hat == NULL) {
+        return;
+    }
+    ftKb_SpecialN_800EF69C(gobj, 0xF, hat);
     ftCo_UnloadDynamicBones(fp);
 }
 
@@ -3694,7 +3719,12 @@ void ftKb_SpecialN_800F11F0(Fighter_GObj* gobj)
 void ftKb_SpecialN_800F12C8(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    ftKb_SpecialN_800EF69C(gobj, 0x10, ft_80459B88.hats[Ft_Kind_Purin]);
+    KirbyHatStruct** hats = ftKb_hatTable;
+    KirbyHatStruct* hat = hats[Ft_Kind_Purin];
+    if (hat == NULL) {
+        return;
+    }
+    ftKb_SpecialN_800EF69C(gobj, 0x10, hat);
     ftCo_UnloadDynamicBones(fp);
 }
 
@@ -3721,7 +3751,12 @@ void ftKb_SpecialN_800F130C(Fighter_GObj* gobj)
 
 void ftKb_SpecialN_800F13F0(Fighter_GObj* gobj)
 {
-    ftKb_SpecialN_800EF69C(gobj, 0x16, ft_80459B88.hats[Ft_Kind_DrMario]);
+    KirbyHatStruct** hats = ftKb_hatTable;
+    KirbyHatStruct* hat = hats[Ft_Kind_DrMario];
+    if (hat == NULL) {
+        return;
+    }
+    ftKb_SpecialN_800EF69C(gobj, 0x16, hat);
 }
 
 u8* ftKb_SpecialN_800F1420(Fighter_GObj* gobj, const u32* arg1)
@@ -3786,8 +3821,12 @@ void ftKb_SpecialN_800F14B4(Fighter_GObj* gobj)
 void ftKb_SpecialN_800F15D8(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+    KirbyHatStruct** hats = ftKb_hatTable;
     KirbyHatStruct* new_var;
-    new_var = ft_80459B88.hats[Ft_Kind_Pichu];
+    new_var = hats[Ft_Kind_Pichu];
+    if (new_var == NULL) {
+        return;
+    }
     ftKb_SpecialN_800EF69C(gobj, 0x18, new_var);
     fp->x5AC.xC[4] = NULL;
     Fighter_UpdateModelScale(gobj);

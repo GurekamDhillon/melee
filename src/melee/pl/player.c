@@ -274,6 +274,18 @@ void Player_80031CB0(CharacterKind kind, u8 color)
 
 void Player_80031D2C(CharacterKind kind, u8 color)
 {
+#if defined(TARGET_PC)
+    /* ftLib_80087610 preloads Kirby's hat archives, but its only caller is the VS-match setup
+     * (gm_8017C838), which the attract path never reaches - so ft_80459B88.hats stays all-NULL and
+     * the first Kirby demo crashes. Run it once, here, before any fighter is set up. */
+    {
+        static bool hats_preloaded;
+        if (!hats_preloaded) {
+            hats_preloaded = true;
+            ftLib_80087610(0);
+        }
+    }
+#endif
     if (ftMapping_list[kind].internal_id != -1) {
         ftData_8008578C(ftMapping_list[kind].internal_id, color);
     }

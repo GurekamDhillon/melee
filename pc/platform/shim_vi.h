@@ -33,6 +33,8 @@ void gw_time_advance_field(void);
  * roughly one field per real frame period, then runs due alarms and deferred callbacks, so the
  * periodic pad alarm and queued DVD/ARQ completions still make progress. */
 void gw_wait_idle(void);
+/* Diagnostics: retraces counted, frames actually presented, gw_wait_idle calls. */
+void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits);
 
 /* Queued work the pump runs at a safe point, used by the DVD and ARQ shims to complete
  * "asynchronous" transfers the way interrupt callbacks used to. */

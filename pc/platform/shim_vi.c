@@ -130,11 +130,14 @@ bool gw_frame_init(void) {
 
 void gw_frame_mark_content(void) { gw_frame_has_content = true; }
 
+static uint32_t gw_presented_count;
+
 void gw_frame_tick(void) {
   if (gw_frame_has_content && gw_frame_begun) {
     aurora_end_frame(); /* presents, and waits for vsync, which is what paces the game */
     gw_frame_begun = false;
     gw_frame_has_content = false;
+    ++gw_presented_count;
   } else {
     /* A wait that produced no new frame: don't burn a core spinning. */
     Sleep(1);
@@ -147,6 +150,16 @@ void gw_frame_tick(void) {
   }
 
   ++gw_retrace_count;
+
+  /* Heartbeat, roughly every two seconds of game time. Cheap, and it is the only way to tell a
+   * hung frame loop from one that is running but drawing nothing. */
+  if ((gw_retrace_count % 120u) == 0u) {
+    uint32_t copies, prims, dlists;
+    gw_gx_get_stats(&copies, &prims, &dlists);
+    gw_log("gw: heartbeat retrace=%u presented=%u  gx: copydisp=%u prim=%u dlist=%u",
+           gw_retrace_count, gw_presented_count, copies, prims, dlists);
+  }
+
   gw_time_advance_field();
   gw_last_advance_ms = GetTickCount64();
   gw_os_run_alarms(gw_ticks);
@@ -160,8 +173,17 @@ void gw_frame_tick(void) {
   }
 }
 
+static uint32_t gw_wait_idle_count;
+
+void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
+  *retrace = gw_retrace_count;
+  *presented = gw_presented_count;
+  *waits = gw_wait_idle_count;
+}
+
 void gw_wait_idle(void) {
   const uint64_t now = GetTickCount64();
+  ++gw_wait_idle_count;
   if (gw_last_advance_ms == 0) {
     gw_last_advance_ms = now;
     return;

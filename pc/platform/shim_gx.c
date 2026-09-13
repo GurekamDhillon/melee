@@ -95,9 +95,23 @@ void gw_GXSetDrawDone(void) { gw_gx_set_draw_done(); }
 void gw_GXWaitDrawDone(void) { gw_gx_wait_draw_done(); }
 void *gw_GXSetDrawDoneCallback(void *cb) { return gw_gx_set_draw_done_callback(cb); }
 
+/* Counters behind gw_gx_get_stats, so the frame driver's heartbeat can say whether the game is
+ * actually drawing. A black window with zero copies means the game never finished a frame; zero
+ * primitives means it never submitted geometry at all. */
+static uint32_t gw_gx_copydisp_count;
+static uint32_t gw_gx_prim_count;
+static uint32_t gw_gx_dlist_count;
+
+void gw_gx_get_stats(uint32_t *copies, uint32_t *prims, uint32_t *dlists) {
+  *copies = gw_gx_copydisp_count;
+  *prims = gw_gx_prim_count;
+  *dlists = gw_gx_dlist_count;
+}
+
 /* The one point where a finished EFB copy means the frame is complete (see shim_vi.h). */
 void gw_GXCopyDisp(void *dest, u8 clear) {
   GXCopyDisp(dest, (GXBool)clear);
+  ++gw_gx_copydisp_count;
   gw_frame_mark_content();
 }
 
@@ -106,10 +120,14 @@ void gw_GXCopyTex(void *dest, u8 clear) { GXCopyTex(dest, (GXBool)clear); }
 /* ---- geometry ----------------------------------------------------------------------------- */
 
 void gw_GXBegin(u32 type, u32 vtxfmt, u16 nverts) {
+  ++gw_gx_prim_count;
   GXBegin((GXPrimitive)type, (GXVtxFmt)vtxfmt, nverts);
 }
 
-void gw_GXCallDisplayList(void *list, u32 nbytes) { GXCallDisplayList(list, nbytes); }
+void gw_GXCallDisplayList(void *list, u32 nbytes) {
+  ++gw_gx_dlist_count;
+  GXCallDisplayList(list, nbytes);
+}
 void gw_GXClearVtxDesc(void) { GXClearVtxDesc(); }
 void gw_GXInvalidateVtxCache(void) { GXInvalidateVtxCache(); }
 

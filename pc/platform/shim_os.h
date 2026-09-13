@@ -12,6 +12,8 @@ extern "C" {
  * calls this once per field (see shim_vi.h), which is where the GameCube's timer interrupt would
  * have landed. */
 void gw_os_run_alarms(uint64_t ticks);
+/* Diagnostics: how many alarms are armed, and how many have fired since startup. */
+void gw_os_alarm_stats(uint32_t *active, uint32_t *fired);
 
 #ifdef __cplusplus
 }

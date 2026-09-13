@@ -225,6 +225,19 @@ int gw_DVDReadAsyncPrio(void *file_info, void *addr, int length, int offset, voi
       want = file_length - (uint32_t)offset;
     }
 
+    /* fread rejects a NULL buffer through the CRT's invalid-parameter path, which calls
+     * __fastfail and takes the process down with STATUS_STACK_BUFFER_OVERRUN -- bypassing SEH, so
+     * no crash handler runs and nothing is logged. A NULL destination here means a game
+     * allocation failed upstream, which is worth reporting as itself rather than as a silent
+     * disappearance. */
+    if (want != 0 && addr == NULL) {
+      gw_log("gw: DVDReadAsyncPrio with a NULL destination (%u bytes at offset %d) - the caller's "
+             "allocation failed",
+             want, offset);
+      want = 0;
+      result = (uint32_t)-1;
+    }
+
     if (want != 0 &&
         (fseek(gw_iso, (long)(file_offset + (uint32_t)offset), SEEK_SET) != 0 ||
          fread(addr, 1, want, gw_iso) != want)) {

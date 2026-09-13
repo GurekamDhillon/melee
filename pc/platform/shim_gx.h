@@ -25,6 +25,11 @@ extern unsigned char gw_GXNtsc480Prog[GW_RENDER_MODE_SIZE];
 
 void gw_gx_init_render_modes(void);
 
+/* Draw activity since startup: finished EFB copies, GXBegin primitives, display lists called.
+ * The frame driver logs these periodically so a blank window can be told apart from a game that
+ * is drawing but not presenting. */
+void gw_gx_get_stats(uint32_t *copies, uint32_t *prims, uint32_t *dlists);
+
 /* Convert a big-endian GXRenderModeObj in game memory (one of the three above, or one the game
  * built itself) into a native one Aurora can read. */
 void gw_read_render_mode(GXRenderModeObj *dst, const void *src_be);

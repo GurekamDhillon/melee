@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
   }
 
   gw_log("melee-pc: entering game main()");
+  gw_start_watchdog();
   gw_main();
 
   gw_log("melee-pc: game main() returned");

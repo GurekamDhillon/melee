@@ -107,6 +107,10 @@ void gw_write_mtx44(void *dst, const float src[4][4]);
 
 void gw_log(const char *fmt, ...);
 void gw_logv(const char *fmt, va_list ap);
+/* Logs two strings with no format expansion; safe for printing a suspect format string. */
+void gw_log_raw(const char *prefix, const char *text);
+/* True when MELEE_PC_TRACE_OSREPORT is set; gates the OSReport format trace. */
+bool gw_trace_osreport(void);
 /* Logs the first call of an unimplemented entry point, then counts silently. Whatever appears
  * during boot is the real to-do list, in the order the game needs it. */
 void gw_stub_hit(const char *name);
@@ -118,6 +122,9 @@ void gw_dump_stub_summary(void);
 void gw_install_crash_handler(void);
 /* Logs a code address as a melee-pc.map rva, or as module+offset when it is not in the exe. */
 void gw_log_code_addr(const char *label, const void *addr);
+/* Samples the game thread's pc every few seconds. Finds loops that never present a frame,
+ * which produce no log output and look exactly like a hang from outside. */
+void gw_start_watchdog(void);
 
 /* ---- process-wide runtime ---------------------------------------------------------------- */
 
@@ -129,6 +136,9 @@ extern unsigned char *gw_aram;
 extern uint32_t gw_aram_size;
 
 bool gw_mem_init(void);
+/* Fills the OS globals at the bottom of MEM1 that the console's IPL would have written; without
+ * them OS_BUS_CLOCK is zero and every tick conversion collapses to zero. Called by gw_mem_init. */
+void gw_init_lomem(void);
 void gw_apply_fixups(void); /* swap link-time pointers in game globals; must run first */
 const char *gw_iso_path(void);
 

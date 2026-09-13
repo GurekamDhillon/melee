@@ -32,15 +32,26 @@ static int gw_cur_heap(void) { return (int)(int32_t)gw_r32(gw___OSCurrHeap); }
 static void gw_set_cur_heap(int heap) { gw_w32(gw___OSCurrHeap, (uint32_t)heap); }
 
 /* ---- arena --------------------------------------------------------------------------------
- * The arena starts as all of MEM1; the game carves framebuffers, the FIFO, the audio heap and the
- * main heap out of it during boot, and reports what is left as "system" memory. */
+ * The game carves framebuffers, the FIFO, the audio heap and the main heap out of the arena
+ * during boot, and reports what is left as "system" memory.
+ *
+ * The arena must not start at the very bottom of MEM1. A real GameCube reserves the low pages for
+ * the OS globals, the exception vectors and the disc header, and OSInit leaves __OSArenaLo above
+ * all of that. Starting at 0x80000000 instead put the game's first allocation straight over the
+ * globals gw_init_lomem writes, which zeroed __OSBusClock at 0x800000F8. Every OSSecondsToTicks
+ * then evaluated to zero, lb_0195.c never armed the pad alarm, and the scene loop spun on an
+ * empty pad queue forever without drawing -- a black window with no error anywhere. */
+
+/* Matches the console's post-OSInit __OSArenaLo: past the globals, the 0x100-0x3000 exception
+ * vectors and the boot info block. */
+#define GW_ARENA_LO_OFFSET 0x3100u
 
 static uintptr_t gw_arena_lo;
 static uintptr_t gw_arena_hi;
 
 static void gw_arena_ensure(void) {
   if (gw_arena_lo == 0) {
-    gw_arena_lo = (uintptr_t)gw_mem1;
+    gw_arena_lo = (uintptr_t)gw_mem1 + GW_ARENA_LO_OFFSET;
     gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size;
   }
 }
@@ -204,6 +215,8 @@ void gw_OSSetPeriodicAlarm(void *alarm, int64_t start, int64_t period, void *han
   a->handler = handler;
   a->period = (uint64_t)period;
   a->fire_at = gw_time_ticks() + (uint64_t)start;
+  gw_log("gw: periodic alarm armed handle=%p start=%lld period=%lld", alarm, (long long)start,
+         (long long)period);
 }
 
 void gw_OSCancelAlarm(void *alarm) {
@@ -215,7 +228,29 @@ void gw_OSCancelAlarm(void *alarm) {
   }
 }
 
+static uint32_t gw_alarm_fire_count;
+
+void gw_os_alarm_stats(uint32_t *active, uint32_t *fired) {
+  uint32_t n = 0;
+  for (int i = 0; i < GW_MAX_ALARMS; ++i) {
+    if (gw_alarms[i].handle != NULL && gw_alarms[i].handler != NULL) {
+      ++n;
+    }
+  }
+  *active = n;
+  *fired = gw_alarm_fire_count;
+}
+
 void gw_os_run_alarms(uint64_t ticks) {
+  /* Not re-entrant, for the same reason gw_run_deferred is not: a handler is free to call
+   * something that ends up back in gw_wait_idle -- DVDGetDriveStatus does -- and on hardware a
+   * timer interrupt cannot preempt itself. Without this the handler recurses until it deadlocks
+   * on the CRT's lock inside a nested log call. */
+  static bool running;
+  if (running) {
+    return;
+  }
+  running = true;
   for (int i = 0; i < GW_MAX_ALARMS; ++i) {
     gw_alarm *a = &gw_alarms[i];
     while (a->handle != NULL && a->handler != NULL && ticks >= a->fire_at) {
@@ -223,6 +258,7 @@ void gw_os_run_alarms(uint64_t ticks) {
       void *handle = a->handle;
       /* Handlers are void(void) functions cast to OSAlarmHandler; the extra arguments are
        * ignored on both ABIs. */
+      ++gw_alarm_fire_count;
       ((void (*)(void *, void *))handler)(handle, NULL);
       if (a->handler != handler) {
         break; /* cancelled or re-armed inside the handler */
@@ -235,6 +271,7 @@ void gw_os_run_alarms(uint64_t ticks) {
       a->fire_at += a->period;
     }
   }
+  running = false;
 }
 
 /* ---- threads and contexts -----------------------------------------------------------------
@@ -313,6 +350,13 @@ void *gw_OSSetErrorHandler(u16 type, void *handler) {
 
 void gw_OSReport(const char *fmt, ...) {
   va_list ap;
+  /* With MELEE_PC_TRACE_OSREPORT set, the raw format goes out before anything is expanded.
+   * Formatting game-supplied arguments is one place a bad pointer can take the CRT down, and
+   * __fastfail bypasses SEH -- so the last line would otherwise be whatever printed fine,
+   * not the call that died. Off by default: it doubles the log. */
+  if (gw_trace_osreport()) {
+    gw_log_raw("OSReport fmt: ", fmt);
+  }
   va_start(ap, fmt);
   gw_logv(fmt, ap);
   va_end(ap);

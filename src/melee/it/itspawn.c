@@ -88,6 +88,18 @@ static int bisectValue(int val, ItemPickTable* table, int lo, int hi)
     }
 }
 
+#if defined(TARGET_PC)
+/* An empty pick table has size 0 and, because HSD_MemAlloc returns NULL for size <= 0, NULL
+ * x4/xC as well (see the allocations in it_8026CA4C). bisectValue(val, table, 0, 0) then fails
+ * its base case -- lo == hi - 1 is 0 == -1 -- and dereferences xC[0] immediately. On a GameCube
+ * address 0 is mapped and readable, so that produced garbage without faulting; on the PC port
+ * NULL is unmapped and it is an access violation roughly 20 seconds into a match. Guard at the
+ * callers, where "no item to spawn" is already a handled outcome, rather than returning a
+ * sentinel kind from it_8026C65C -- that value flows into spawn.kind and would index the item
+ * tables. */
+#define GW_PICK_TABLE_EMPTY(t) ((t)->size == 0 || (t)->x4 == NULL || (t)->xC == NULL)
+#endif
+
 ItemKind it_8026C65C(ItemPickTable* table)
 {
     int temp_r6 = table->x8;
@@ -137,6 +149,15 @@ ItemKind it_8026C75C(ItemPickTable* table)
             tbl->size--;
         }
     }
+#if defined(TARGET_PC)
+    if (GW_PICK_TABLE_EMPTY(tbl)) {
+        if (chk1 && chk2) {
+            tbl->x8 = saved;
+            tbl->size++;
+        }
+        return -1;
+    }
+#endif
     kind = it_8026C65C(tbl);
 
     ret = kind;

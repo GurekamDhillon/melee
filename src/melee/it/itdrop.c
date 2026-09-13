@@ -147,6 +147,13 @@ Item_GObj* it_8026F6BC(Item_GObj* item_gobj, Vec3* arg1, Vec3* vel, bool chk)
     if (HSD_Randi(it_804D6D28->x124) != 0) {
         return NULL;
     }
+#if defined(TARGET_PC)
+    /* Same empty-pick-table guard as itspawn.c: with size 0 the table's x4/xC are NULL and
+     * bisectValue dereferences NULL, which faults here but not on a GameCube. Nothing to spawn. */
+    if (it_804A0E60.size == 0 || it_804A0E60.x4 == NULL || it_804A0E60.xC == NULL) {
+        return NULL;
+    }
+#endif
     spawned_item_gobj =
         it_8026F5C8(item_gobj, it_8026C65C(&it_804A0E60), arg1);
     if (spawned_item_gobj != NULL) {

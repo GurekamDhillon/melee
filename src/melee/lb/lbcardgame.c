@@ -16,6 +16,11 @@
 #include <sysdolphin/baselib/gobjproc.h>
 #include <sysdolphin/baselib/jobj.h>
 
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_. */
+extern void wait_idle(void);
+#endif
+
 #define _p(x) (lb_80433318.x)
 
 static struct {
@@ -235,6 +240,13 @@ void lb_8001CC84(void)
 void lb_8001CDB4(void)
 {
     while (_p(xC) || _p(x10)) {
+#if defined(TARGET_PC)
+        /* lb_8001CC84 only polls the card state through lb_8001B6F8; it issues no shim call, so
+         * nothing would pump the port's deferred queue and the CARD completion behind
+         * hsd_803AAA48's busy flag would never arrive. Same fix, and same reason, as the waits in
+         * lbcardnew.c. */
+        wait_idle();
+#endif
         lb_8001CC84();
     }
 }

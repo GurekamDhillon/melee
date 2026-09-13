@@ -24,6 +24,8 @@
 #include "shim_gx.h"
 #include "shim_vi.h"
 
+#include <aurora/gfx.h> /* TEMP DIAG: aurora_get_stats */
+
 #include <dolphin/gx.h>
 
 #include <math.h>
@@ -121,6 +123,11 @@ static u8 gw_diag_alphaupd = 0xFF;
 static u8 gw_diag_zcmp = 0xFF;
 static u8 gw_diag_zupd = 0xFF;
 static GXColor gw_diag_clearclr;
+static uint32_t gw_diag_seg_prim;
+static uint32_t gw_diag_seg_dlist;
+static uint32_t gw_diag_copytex_calls;
+static uint32_t gw_diag_copytex_clears;
+
 
 /* The one point where a finished EFB copy means the frame is complete (see shim_vi.h). */
 void gw_GXCopyDisp(void *dest, u8 clear) {
@@ -132,7 +139,19 @@ void gw_GXCopyDisp(void *dest, u8 clear) {
            (unsigned)gw_diag_alphaupd, (unsigned)gw_diag_zcmp, (unsigned)gw_diag_zupd,
            (unsigned)gw_diag_clearclr.r, (unsigned)gw_diag_clearclr.g, (unsigned)gw_diag_clearclr.b,
            (unsigned)gw_diag_clearclr.a);
+    {
+      const AuroraStats *st = aurora_get_stats();
+      gw_log("gw: DIAG   aurora drawcalls=%u merged=%u verts=%u", st->drawCallCount,
+             st->mergedDrawCallCount, st->lastVertSize);
+    }
+    gw_log("gw: DIAG   copytex since-last calls=%u with-clear=%u; tail-seg prim=%u dlist=%u",
+           gw_diag_copytex_calls, gw_diag_copytex_clears, gw_gx_prim_count - gw_diag_seg_prim,
+           gw_gx_dlist_count - gw_diag_seg_dlist);
   }
+  gw_diag_seg_prim = gw_gx_prim_count;
+  gw_diag_seg_dlist = gw_gx_dlist_count;
+  gw_diag_copytex_calls = 0;
+  gw_diag_copytex_clears = 0;
   gw_diag_last_prim = gw_gx_prim_count;
   gw_diag_last_dlist = gw_gx_dlist_count;
 
@@ -141,7 +160,26 @@ void gw_GXCopyDisp(void *dest, u8 clear) {
   gw_frame_mark_content();
 }
 
-void gw_GXCopyTex(void *dest, u8 clear) { GXCopyTex(dest, (GXBool)clear); }
+/* TEMP DIAG: GXCopyTex resolves the EFB into a texture and, when clear is set, CLEARS the EFB
+ * afterwards (GXFrameBuffer.cpp copy_tex -> resolve_pass_into with clearColor/clearAlpha/
+ * clearDepth). A mid-frame copy-with-clear therefore wipes everything drawn so far. If Melee
+ * issues one between the 3D scene and the HUD, the scene is discarded and only the HUD survives
+ * the frame -- which is exactly the reported symptom. Count them per frame to find out. */
+void gw_GXCopyTex(void *dest, u8 clear) {
+  ++gw_diag_copytex_calls;
+  if (clear) {
+    ++gw_diag_copytex_clears;
+  }
+  /* TEMP DIAG: how much geometry this copy is about to wipe. Sampled on the same frames as the
+   * copy-disp line so one frame's segments read together. */
+  if ((gw_gx_copydisp_count % 30u) == 0u) {
+    gw_log("gw: DIAG   copytex seg prim=%u dlist=%u clear=%u", gw_gx_prim_count - gw_diag_seg_prim,
+           gw_gx_dlist_count - gw_diag_seg_dlist, (unsigned)clear);
+  }
+  gw_diag_seg_prim = gw_gx_prim_count;
+  gw_diag_seg_dlist = gw_gx_dlist_count;
+  GXCopyTex(dest, (GXBool)clear);
+}
 
 /* ---- geometry ----------------------------------------------------------------------------- */
 

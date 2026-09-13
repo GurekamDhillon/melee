@@ -94,6 +94,19 @@ int main(int argc, char *argv[]) {
   gw_install_crash_handler();
   gw_log("melee-pc: starting");
 
+  /* Keep SDL's HIDAPI GameCube driver off the adapter. The port reads the WUP-028 directly over
+   * WinUSB (pc/platform/gc_adapter.c) to get the console's own analog ranges and button layout;
+   * if SDL opens the device first, that open fails and the pad falls back to SDL's remapped,
+   * deadzoned view of the same hardware. SDL reads its hints from the environment, so setting
+   * this before Aurora starts is enough -- no SDL linkage needed here. Set
+   * MELEE_SDL_GAMECUBE=1 to hand the adapter back to SDL instead. */
+  {
+    const char *prefer_sdl = getenv("MELEE_SDL_GAMECUBE");
+    if (prefer_sdl == NULL || prefer_sdl[0] != '1') {
+      _putenv("SDL_JOYSTICK_HIDAPI_GAMECUBE=0");
+    }
+  }
+
   if (!gw_find_iso(argc, argv)) {
     gw_log("melee-pc: no disc image found. Pass --iso <path to a GALE01 v1.02 image>, set"
            " MELEE_ISO, or put melee.iso next to the executable.");

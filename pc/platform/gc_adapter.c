@@ -1,0 +1,830 @@
+/* Raw GameCube controller adapter input (Nintendo WUP-028 and compatibles such as the Mayflash
+ * in Wii U / Switch mode), read directly over WinUSB.
+ *
+ * Aurora can already see the adapter through SDL3's HIDAPI GameCube driver, but everything it
+ * reports has passed through SDL's gamepad abstraction: deadzones, axis rescaling, trigger
+ * emulation and a button mapping table. That mapping is wrong for this adapter in practice
+ * (A/B/X/Y and the d-pad come through scrambled), and Melee is calibrated against the console's
+ * own analog ranges, so the abstraction also costs precision exactly where it matters --
+ * shield-drop angles, wavedash notches, lightshield depth. This reads the adapter's report bytes
+ * and builds PADStatus the way the console does, with no intermediate mapping.
+ *
+ * Two transports are supported. The Windows HID class driver is the usual case and needs no
+ * setup at all -- it hands back the adapter's own report bytes, which is how SDL can see the
+ * device in the first place. WinUSB is tried first for machines where the adapter has been bound
+ * with Zadig, as older Dolphin setups require. Both deliver identical reports, so the decode is
+ * shared. If neither opens, every entry point reports "no adapter" and the caller falls back to
+ * Aurora's SDL path.
+ *
+ * Protocol (as implemented by Dolphin's GCAdapter):
+ *   - write a single 0x13 byte to start polling
+ *   - interrupt IN delivers 37 bytes: a 0x21 tag followed by 4 ports x 9 bytes
+ *   - per port: [0] status, [1] buttons low, [2] buttons high, [3] stickX, [4] stickY,
+ *               [5] substickX, [6] substickY, [7] triggerLeft, [8] triggerRight
+ *   - status high nibble: 1 = wired, 2 = wireless; 0 = nothing plugged into that adapter port
+ *   - rumble: write {0x11, p0, p1, p2, p3}
+ */
+#include "gw.h"
+
+#include <dolphin/pad.h>
+
+#include <string.h>
+#include <stdlib.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <winusb.h>
+#include <setupapi.h>
+#include <hidsdi.h>
+#include <ctype.h>
+
+#define GC_ADAPTER_VID 0x057E
+#define GC_ADAPTER_PID 0x0337
+
+#define GC_EP_IN 0x81
+#define GC_EP_OUT 0x02
+
+#define GC_PAYLOAD_SIZE 37
+#define GC_PORTS 4
+
+/* Adapter report bits. This is the adapter's own encoding, not the console's PADStatus bits. */
+#define GC_BTN_A 0x01
+#define GC_BTN_B 0x02
+#define GC_BTN_X 0x04
+#define GC_BTN_Y 0x08
+#define GC_BTN_DLEFT 0x10
+#define GC_BTN_DRIGHT 0x20
+#define GC_BTN_DDOWN 0x40
+#define GC_BTN_DUP 0x80
+
+#define GC_BTN2_START 0x01
+#define GC_BTN2_Z 0x02
+#define GC_BTN2_R 0x04
+#define GC_BTN2_L 0x08
+
+/* {A5DCBF10-6530-11D2-901F-00C04FB951ED}: the device interface Windows exposes for a USB device
+ * bound to WinUSB. Declared here so the shim does not need the SDK's usbiodef.h. */
+static const GUID gw_guid_devinterface_usb_device = {
+    0xA5DCBF10, 0x6530, 0x11D2, { 0x90, 0x1F, 0x00, 0xC0, 0x4F, 0xB9, 0x51, 0xED }
+};
+
+static HANDLE gw_gc_dev = INVALID_HANDLE_VALUE;
+static WINUSB_INTERFACE_HANDLE gw_gc_usb;
+static int gw_gc_ready;
+static int gw_gc_tried;
+
+/* Which transport is driving the adapter. The device is normally left on the Windows HID driver
+ * (which is how SDL can see it at all); WinUSB only applies on machines where it has been bound
+ * with Zadig, as older Dolphin setups require. Both deliver the same report bytes. */
+enum { GW_GC_NONE = 0, GW_GC_WINUSB, GW_GC_HID };
+static int gw_gc_backend;
+
+/* HID transport state. Reads are overlapped so a frame is never blocked waiting on the device. */
+static HANDLE gw_gc_hid = INVALID_HANDLE_VALUE;
+static HANDLE gw_gc_hid_event;
+static OVERLAPPED gw_gc_hid_ov;
+static int gw_gc_hid_pending;
+static unsigned char gw_gc_hid_buf[64];
+static ULONG gw_gc_hid_in_len;
+static ULONG gw_gc_hid_out_len;
+
+/* Neutral stick readings captured the first time a port reports data. The console calibrates
+ * against the origin the controller reports at power-on; the adapter gives raw 0..255, so the
+ * first sample stands in for that origin. */
+static unsigned char gw_gc_origin[GC_PORTS][4];
+static int gw_gc_have_origin[GC_PORTS];
+
+/* Resting trigger positions, and any button bits found held at rest. Worn or plugged triggers
+ * sit well off zero -- one pinned at 255 reads as permanently holding L, which the game sees as
+ * a held shield. Calibrating against the resting value and rescaling the travel that is left
+ * makes such a controller usable; a trigger with no travel at all is reported as never pressed
+ * rather than always pressed, which is the safer failure. The same sampling catches a switch
+ * stuck closed and masks that bit. */
+static unsigned char gw_gc_trig_rest[GC_PORTS][2];
+static unsigned char gw_gc_btn_stuck[GC_PORTS][2];
+static volatile LONG gw_gc_recal;
+
+#define GW_GC_TRIG_DEAD 200 /* resting value above which a trigger has no usable travel left */
+
+/* The adapter is read on its own thread. A blocking USB read on the game thread costs a frame:
+ * the device only produces a packet when it has one, so a timeout-bounded read in the frame loop
+ * stalls for the whole timeout whenever the adapter is idle, which shows up directly as input
+ * lag. The reader thread parks in that blocking read instead, and the game thread only copies the
+ * most recent packet out under the lock. */
+static unsigned char gw_gc_payload[GC_PAYLOAD_SIZE];
+static int gw_gc_payload_valid;
+
+static CRITICAL_SECTION gw_gc_lock;
+static int gw_gc_lock_ready;
+static HANDLE gw_gc_thread;
+static volatile LONG gw_gc_quit;
+static volatile LONG gw_gc_lost;
+
+void gw_gc_adapter_shutdown(void);
+static DWORD WINAPI gw_gc_reader(LPVOID arg);
+
+static void gw_gc_close(void) {
+  if (gw_gc_usb != NULL) {
+    WinUsb_Free(gw_gc_usb);
+    gw_gc_usb = NULL;
+  }
+  if (gw_gc_dev != INVALID_HANDLE_VALUE) {
+    CloseHandle(gw_gc_dev);
+    gw_gc_dev = INVALID_HANDLE_VALUE;
+  }
+  if (gw_gc_hid != INVALID_HANDLE_VALUE) {
+    CloseHandle(gw_gc_hid);
+    gw_gc_hid = INVALID_HANDLE_VALUE;
+  }
+  if (gw_gc_hid_event != NULL) {
+    CloseHandle(gw_gc_hid_event);
+    gw_gc_hid_event = NULL;
+  }
+  gw_gc_hid_pending = 0;
+  gw_gc_backend = GW_GC_NONE;
+  gw_gc_ready = 0;
+}
+
+/* Open the adapter through the Windows HID class driver. This is the path that works on a stock
+ * machine with no Zadig step: the HID driver hands back the adapter's own report bytes, exactly
+ * as SDL's HIDAPI GameCube driver reads them, so the decode below is unchanged. */
+static int gw_gc_open_hid(void) {
+  GUID hidGuid;
+  HDEVINFO info;
+  SP_DEVICE_INTERFACE_DATA ifdata;
+  DWORD index;
+  int found = 0;
+
+  HidD_GetHidGuid(&hidGuid);
+  info = SetupDiGetClassDevsA(&hidGuid, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+  if (info == INVALID_HANDLE_VALUE) {
+    return 0;
+  }
+
+  ZeroMemory(&ifdata, sizeof(ifdata));
+  ifdata.cbSize = sizeof(ifdata);
+
+  for (index = 0; SetupDiEnumDeviceInterfaces(info, NULL, &hidGuid, index, &ifdata); ++index) {
+    DWORD needed = 0;
+    SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail;
+    HANDLE h;
+
+    SetupDiGetDeviceInterfaceDetailA(info, &ifdata, NULL, 0, &needed, NULL);
+    if (needed == 0) {
+      continue;
+    }
+    detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)LocalAlloc(LMEM_FIXED, needed);
+    if (detail == NULL) {
+      continue;
+    }
+    detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+    if (!SetupDiGetDeviceInterfaceDetailA(info, &ifdata, detail, needed, NULL, NULL)) {
+      LocalFree(detail);
+      continue;
+    }
+
+    h = CreateFileA(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+      HIDD_ATTRIBUTES attr;
+      ZeroMemory(&attr, sizeof(attr));
+      attr.Size = sizeof(attr);
+      if (HidD_GetAttributes(h, &attr) && attr.VendorID == GC_ADAPTER_VID &&
+          attr.ProductID == GC_ADAPTER_PID) {
+        PHIDP_PREPARSED_DATA pp = NULL;
+        if (HidD_GetPreparsedData(h, &pp)) {
+          HIDP_CAPS caps;
+          if (HidP_GetCaps(pp, &caps) == HIDP_STATUS_SUCCESS) {
+            gw_gc_hid_in_len = caps.InputReportByteLength;
+            gw_gc_hid_out_len = caps.OutputReportByteLength;
+            if (gw_gc_hid_in_len > 0 && gw_gc_hid_in_len <= sizeof(gw_gc_hid_buf)) {
+              gw_gc_hid = h;
+              found = 1;
+            }
+          }
+          HidD_FreePreparsedData(pp);
+        }
+      }
+      if (!found) {
+        CloseHandle(h);
+      }
+    }
+    LocalFree(detail);
+    if (found) {
+      break;
+    }
+  }
+
+  SetupDiDestroyDeviceInfoList(info);
+  return found;
+}
+
+/* Copy a report into the payload buffer. Windows prefixes HID reports with a report-ID byte, so
+ * the 0x21 tag may sit at offset 0 or 1 depending on whether the device uses numbered reports. */
+static void gw_gc_accept_report(const unsigned char *buf, ULONG len) {
+  ULONG off;
+  for (off = 0; off + GC_PAYLOAD_SIZE <= len; ++off) {
+    if (buf[off] == 0x21) {
+      memcpy(gw_gc_payload, buf + off, GC_PAYLOAD_SIZE);
+      gw_gc_payload_valid = 1;
+      return;
+    }
+  }
+}
+
+/* Non-blocking overlapped read: issue once, harvest whenever it completes. */
+static int gw_gc_poll_hid(void) {
+  int guard = 0;
+
+  while (guard++ < 8) {
+    DWORD got = 0;
+
+    if (!gw_gc_hid_pending) {
+      ZeroMemory(&gw_gc_hid_ov, sizeof(gw_gc_hid_ov));
+      gw_gc_hid_ov.hEvent = gw_gc_hid_event;
+      ResetEvent(gw_gc_hid_event);
+      if (ReadFile(gw_gc_hid, gw_gc_hid_buf, gw_gc_hid_in_len, &got, &gw_gc_hid_ov)) {
+        gw_gc_accept_report(gw_gc_hid_buf, got);
+        continue;
+      }
+      if (GetLastError() != ERROR_IO_PENDING) {
+        gw_log("gw: gc adapter: HID read failed (error %lu); reverting to the SDL pad path",
+               (unsigned long)GetLastError());
+        gw_gc_close();
+        return 0;
+      }
+      gw_gc_hid_pending = 1;
+    }
+
+    if (WaitForSingleObject(gw_gc_hid_event, 0) != WAIT_OBJECT_0) {
+      break;
+    }
+    if (GetOverlappedResult(gw_gc_hid, &gw_gc_hid_ov, &got, FALSE)) {
+      gw_gc_accept_report(gw_gc_hid_buf, got);
+    }
+    gw_gc_hid_pending = 0;
+  }
+
+  return gw_gc_payload_valid;
+}
+
+/* Case-insensitive substring search; the device path's VID/PID casing is not guaranteed. */
+static const char *gw_gc_stristr(const char *hay, const char *needle) {
+  size_t n = strlen(needle);
+  if (n == 0) {
+    return hay;
+  }
+  for (; *hay != '\0'; ++hay) {
+    size_t i = 0;
+    while (i < n && hay[i] != '\0' &&
+           (char)toupper((unsigned char)hay[i]) == (char)toupper((unsigned char)needle[i])) {
+      ++i;
+    }
+    if (i == n) {
+      return hay;
+    }
+  }
+  return NULL;
+}
+
+/* Walk the WinUSB device interfaces looking for the adapter's VID/PID in the device path. */
+static int gw_gc_open(void) {
+  HDEVINFO info;
+  SP_DEVICE_INTERFACE_DATA ifdata;
+  DWORD index;
+  char want[32];
+  int found = 0;
+
+  wsprintfA(want, "vid_%04x&pid_%04x", GC_ADAPTER_VID, GC_ADAPTER_PID);
+
+  info = SetupDiGetClassDevsA(&gw_guid_devinterface_usb_device, NULL, NULL,
+                              DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+  if (info == INVALID_HANDLE_VALUE) {
+    return 0;
+  }
+
+  ZeroMemory(&ifdata, sizeof(ifdata));
+  ifdata.cbSize = sizeof(ifdata);
+
+  for (index = 0;
+       SetupDiEnumDeviceInterfaces(info, NULL, &gw_guid_devinterface_usb_device, index, &ifdata);
+       ++index) {
+    DWORD needed = 0;
+    SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail;
+
+    SetupDiGetDeviceInterfaceDetailA(info, &ifdata, NULL, 0, &needed, NULL);
+    if (needed == 0) {
+      continue;
+    }
+    detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)LocalAlloc(LMEM_FIXED, needed);
+    if (detail == NULL) {
+      continue;
+    }
+    detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+    if (SetupDiGetDeviceInterfaceDetailA(info, &ifdata, detail, needed, NULL, NULL) &&
+        gw_gc_stristr(detail->DevicePath, want) != NULL) {
+      gw_gc_dev = CreateFileA(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
+                              FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+      if (gw_gc_dev == INVALID_HANDLE_VALUE) {
+        /* ERROR_ACCESS_DENIED here almost always means another process (typically SDL, which
+         * opens this adapter through its own HIDAPI GameCube driver) already holds the device. */
+        gw_log("gw: gc adapter: found %s but CreateFile failed (error %lu)", detail->DevicePath,
+               (unsigned long)GetLastError());
+      } else if (WinUsb_Initialize(gw_gc_dev, &gw_gc_usb)) {
+        found = 1;
+      } else {
+        gw_log("gw: gc adapter: WinUsb_Initialize failed (error %lu)",
+               (unsigned long)GetLastError());
+        CloseHandle(gw_gc_dev);
+        gw_gc_dev = INVALID_HANDLE_VALUE;
+      }
+    }
+    LocalFree(detail);
+    if (found) {
+      break;
+    }
+  }
+
+  SetupDiDestroyDeviceInfoList(info);
+  return found;
+}
+
+/* Diagnostic: list every device-interface path that mentions this vendor, under both the USB
+ * and HID interface classes. A Zadig-installed WinUSB device does not necessarily register under
+ * GUID_DEVINTERFACE_USB_DEVICE -- it exposes whatever DeviceInterfaceGUIDs the generated INF set
+ * -- so when the open fails this says which class the device is actually reachable through. */
+static void gw_gc_dump_one_class(const GUID *guid, const char *label) {
+  HDEVINFO info;
+  SP_DEVICE_INTERFACE_DATA ifdata;
+  DWORD index;
+  int shown = 0;
+
+  info = SetupDiGetClassDevsA(guid, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+  if (info == INVALID_HANDLE_VALUE) {
+    gw_log("gw: gc adapter: %s enumeration unavailable (error %lu)", label,
+           (unsigned long)GetLastError());
+    return;
+  }
+  ZeroMemory(&ifdata, sizeof(ifdata));
+  ifdata.cbSize = sizeof(ifdata);
+  for (index = 0; SetupDiEnumDeviceInterfaces(info, NULL, guid, index, &ifdata); ++index) {
+    DWORD needed = 0;
+    SP_DEVICE_INTERFACE_DETAIL_DATA_A *detail;
+    SetupDiGetDeviceInterfaceDetailA(info, &ifdata, NULL, 0, &needed, NULL);
+    if (needed == 0) {
+      continue;
+    }
+    detail = (SP_DEVICE_INTERFACE_DETAIL_DATA_A *)LocalAlloc(LMEM_FIXED, needed);
+    if (detail == NULL) {
+      continue;
+    }
+    detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+    if (SetupDiGetDeviceInterfaceDetailA(info, &ifdata, detail, needed, NULL, NULL) &&
+        gw_gc_stristr(detail->DevicePath, "vid_057e") != NULL && shown < 8) {
+      ++shown;
+      gw_log("gw: gc adapter: %s candidate: %s", label, detail->DevicePath);
+    }
+    LocalFree(detail);
+  }
+  SetupDiDestroyDeviceInfoList(info);
+  if (shown == 0) {
+    gw_log("gw: gc adapter: %s: nothing matching vid_057e (%lu interfaces scanned)", label,
+           (unsigned long)index);
+  }
+}
+
+static void gw_gc_dump_interfaces(void) {
+  GUID hidGuid;
+  gw_gc_dump_one_class(&gw_guid_devinterface_usb_device, "usb-class");
+  HidD_GetHidGuid(&hidGuid);
+  gw_gc_dump_one_class(&hidGuid, "hid-class");
+}
+
+static void gw_gc_start_reader(void) {
+  DWORD tid = 0;
+  if (!gw_gc_lock_ready) {
+    InitializeCriticalSection(&gw_gc_lock);
+    gw_gc_lock_ready = 1;
+  }
+  InterlockedExchange(&gw_gc_quit, 0);
+  InterlockedExchange(&gw_gc_lost, 0);
+  gw_gc_thread = CreateThread(NULL, 0, gw_gc_reader, NULL, 0, &tid);
+  if (gw_gc_thread == NULL) {
+    gw_log("gw: gc adapter: could not start the reader thread (error %lu)",
+           (unsigned long)GetLastError());
+  } else {
+    /* Input latency matters more than throughput here; keep the reader ahead of the frame. */
+    SetThreadPriority(gw_gc_thread, THREAD_PRIORITY_ABOVE_NORMAL);
+  }
+}
+
+void gw_gc_adapter_shutdown(void) {
+  InterlockedExchange(&gw_gc_quit, 1);
+  if (gw_gc_thread != NULL) {
+    /* The reader is parked in a timeout-bounded read, so it observes the flag promptly. */
+    if (WaitForSingleObject(gw_gc_thread, 500) != WAIT_OBJECT_0) {
+      if (gw_gc_backend == GW_GC_HID && gw_gc_hid != INVALID_HANDLE_VALUE) {
+        CancelIoEx(gw_gc_hid, NULL);
+      } else if (gw_gc_backend == GW_GC_WINUSB && gw_gc_usb != NULL) {
+        WinUsb_AbortPipe(gw_gc_usb, GC_EP_IN);
+      }
+      WaitForSingleObject(gw_gc_thread, 500);
+    }
+    CloseHandle(gw_gc_thread);
+    gw_gc_thread = NULL;
+  }
+  gw_gc_close();
+}
+
+int gw_gc_adapter_init(void) {
+  unsigned char start = 0x13;
+  ULONG written = 0;
+  ULONG timeout = 20;
+  ULONG raw = 1;
+
+  if (gw_gc_tried) {
+    return gw_gc_ready;
+  }
+  gw_gc_tried = 1;
+
+  if (gw_gc_open()) {
+    gw_gc_backend = GW_GC_WINUSB;
+  } else if (gw_gc_open_hid()) {
+    gw_gc_backend = GW_GC_HID;
+  } else {
+    gw_log("gw: gc adapter: no WUP-028 adapter found on either WinUSB or HID; using the SDL pad "
+           "path instead.");
+    gw_gc_dump_interfaces();
+    return 0;
+  }
+
+  if (gw_gc_backend == GW_GC_HID) {
+    unsigned char out[64];
+    DWORD written = 0;
+    ULONG len = gw_gc_hid_out_len;
+
+    gw_gc_hid_event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    if (gw_gc_hid_event == NULL) {
+      gw_gc_close();
+      return 0;
+    }
+    /* Start polling. The report is padded to the descriptor's output length, with the leading
+     * byte reserved for the report ID (0 on this device). */
+    if (len == 0 || len > sizeof(out)) {
+      len = 2;
+    }
+    ZeroMemory(out, sizeof(out));
+    out[0] = 0x00;
+    out[1] = 0x13;
+    if (!HidD_SetOutputReport(gw_gc_hid, out, len)) {
+      OVERLAPPED ov;
+      ZeroMemory(&ov, sizeof(ov));
+      ov.hEvent = gw_gc_hid_event;
+      ResetEvent(gw_gc_hid_event);
+      if (!WriteFile(gw_gc_hid, out, len, &written, &ov) && GetLastError() != ERROR_IO_PENDING) {
+        gw_log("gw: gc adapter: HID start command failed (error %lu)",
+               (unsigned long)GetLastError());
+      } else {
+        WaitForSingleObject(gw_gc_hid_event, 50);
+      }
+    }
+    gw_gc_ready = 1;
+    gw_gc_start_reader();
+    gw_log("gw: gc adapter: opened over HID (vid %04X pid %04X, report %lu bytes), reading raw "
+           "reports", GC_ADAPTER_VID, GC_ADAPTER_PID, (unsigned long)gw_gc_hid_in_len);
+    return 1;
+  }
+
+  /* Short read timeout: the pad is polled once per frame from the game thread, and a stalled
+   * read must never hold up the frame. RAW_IO keeps WinUSB from buffering partial packets. */
+  WinUsb_SetPipePolicy(gw_gc_usb, GC_EP_IN, PIPE_TRANSFER_TIMEOUT, sizeof(timeout), &timeout);
+  (void)raw;
+  WinUsb_SetPipePolicy(gw_gc_usb, GC_EP_OUT, PIPE_TRANSFER_TIMEOUT, sizeof(timeout), &timeout);
+
+  if (!WinUsb_WritePipe(gw_gc_usb, GC_EP_OUT, &start, 1, &written, NULL)) {
+    gw_log("gw: gc adapter: found, but the start command failed (error %lu)",
+           (unsigned long)GetLastError());
+    gw_gc_close();
+    return 0;
+  }
+
+  gw_gc_ready = 1;
+  gw_gc_start_reader();
+  gw_log("gw: gc adapter: opened over WinUSB (vid %04X pid %04X), reading raw reports",
+         GC_ADAPTER_VID, GC_ADAPTER_PID);
+  return 1;
+}
+
+int gw_gc_adapter_present(void) { return gw_gc_ready; }
+
+/* Re-sample the resting state on the next read. Safe to call at any time; it only latches a
+ * flag, and the capture itself happens on the game thread inside gw_gc_adapter_read. */
+void gw_gc_adapter_recalibrate(void) {
+  InterlockedExchange(&gw_gc_recal, 1);
+  gw_log("gw: gc adapter: recalibrating on the next poll -- release everything now");
+}
+
+/* One blocking read on whichever transport is open. Returns 1 on a good packet, 0 on timeout,
+ * -1 if the device has gone away. Runs on the reader thread only. */
+static int gw_gc_read_blocking(void) {
+  unsigned char buf[64];
+  DWORD err;
+
+  if (gw_gc_backend == GW_GC_WINUSB) {
+    ULONG got = 0;
+    if (WinUsb_ReadPipe(gw_gc_usb, GC_EP_IN, buf, GC_PAYLOAD_SIZE, &got, NULL)) {
+      if (got == GC_PAYLOAD_SIZE && buf[0] == 0x21) {
+        EnterCriticalSection(&gw_gc_lock);
+        memcpy(gw_gc_payload, buf, GC_PAYLOAD_SIZE);
+        gw_gc_payload_valid = 1;
+        LeaveCriticalSection(&gw_gc_lock);
+        return 1;
+      }
+      return 0;
+    }
+    err = GetLastError();
+    if (err == ERROR_SEM_TIMEOUT) {
+      return 0;
+    }
+    return -1;
+  }
+
+  if (gw_gc_backend == GW_GC_HID) {
+    DWORD got = 0;
+    OVERLAPPED ov;
+    ZeroMemory(&ov, sizeof(ov));
+    ov.hEvent = gw_gc_hid_event;
+    ResetEvent(gw_gc_hid_event);
+    if (!ReadFile(gw_gc_hid, buf, gw_gc_hid_in_len, &got, &ov)) {
+      if (GetLastError() != ERROR_IO_PENDING) {
+        return -1;
+      }
+      if (WaitForSingleObject(gw_gc_hid_event, 20) != WAIT_OBJECT_0) {
+        CancelIo(gw_gc_hid);
+        WaitForSingleObject(gw_gc_hid_event, 50);
+        return 0;
+      }
+      if (!GetOverlappedResult(gw_gc_hid, &ov, &got, FALSE)) {
+        return -1;
+      }
+    }
+    {
+      ULONG off;
+      for (off = 0; off + GC_PAYLOAD_SIZE <= got; ++off) {
+        if (buf[off] == 0x21) {
+          EnterCriticalSection(&gw_gc_lock);
+          memcpy(gw_gc_payload, buf + off, GC_PAYLOAD_SIZE);
+          gw_gc_payload_valid = 1;
+          LeaveCriticalSection(&gw_gc_lock);
+          return 1;
+        }
+      }
+    }
+    return 0;
+  }
+
+  return -1;
+}
+
+static DWORD WINAPI gw_gc_reader(LPVOID arg) {
+  (void)arg;
+  while (InterlockedCompareExchange(&gw_gc_quit, 0, 0) == 0) {
+    if (gw_gc_read_blocking() < 0) {
+      InterlockedExchange(&gw_gc_lost, 1);
+      break;
+    }
+  }
+  return 0;
+}
+
+/* Game-thread side: never touches the device, only the last packet the reader stored. */
+static int gw_gc_poll(void) {
+  int valid;
+
+  if (!gw_gc_ready) {
+    return 0;
+  }
+  if (InterlockedCompareExchange(&gw_gc_lost, 0, 0) != 0) {
+    gw_log("gw: gc adapter: device went away; reverting to the SDL pad path");
+    gw_gc_adapter_shutdown();
+    return 0;
+  }
+  EnterCriticalSection(&gw_gc_lock);
+  valid = gw_gc_payload_valid;
+  LeaveCriticalSection(&gw_gc_lock);
+  return valid;
+}
+
+static int gw_gc_poll_unused(void) {
+  unsigned char buf[GC_PAYLOAD_SIZE];
+  ULONG got = 0;
+  int guard = 0;
+
+  if (!gw_gc_ready) {
+    return 0;
+  }
+  if (gw_gc_backend == GW_GC_HID) {
+    return gw_gc_poll_hid();
+  }
+
+  /* Drain whatever the adapter has queued and keep the newest packet: it reports far faster than
+   * the game's frame rate, and acting on a stale packet would add input latency. The guard stops
+   * a pathologically fast device from spinning the frame here. */
+  while (guard++ < 16 && WinUsb_ReadPipe(gw_gc_usb, GC_EP_IN, buf, sizeof(buf), &got, NULL)) {
+    if (got == GC_PAYLOAD_SIZE && buf[0] == 0x21) {
+      memcpy(gw_gc_payload, buf, GC_PAYLOAD_SIZE);
+      gw_gc_payload_valid = 1;
+    }
+    if (got == 0) {
+      break;
+    }
+  }
+
+  if (!gw_gc_payload_valid) {
+    const DWORD err = GetLastError();
+    if (err == ERROR_DEVICE_NOT_CONNECTED || err == ERROR_GEN_FAILURE ||
+        err == ERROR_FILE_NOT_FOUND || err == ERROR_NO_SUCH_DEVICE) {
+      gw_log("gw: gc adapter: lost the device (error %lu); reverting to the SDL pad path",
+             (unsigned long)err);
+      gw_gc_close();
+      return 0;
+    }
+  }
+
+  return gw_gc_payload_valid;
+}
+
+/* Rescale a trigger so its resting position reads 0 and full depression still reaches 255. A
+ * trigger whose rest value leaves no usable travel is reported as never pressed. */
+static u8 gw_gc_trigger(unsigned char raw, unsigned char rest) {
+  int span;
+  int v;
+
+  if (rest >= GW_GC_TRIG_DEAD) {
+    return 0;
+  }
+  span = 255 - (int)rest;
+  v = ((int)raw - (int)rest) * 255 / span;
+  if (v < 0) {
+    v = 0;
+  }
+  if (v > 255) {
+    v = 255;
+  }
+  return (u8)v;
+}
+
+/* Centre a raw 0..255 axis on its captured origin and clamp into the console's s8 range. */
+static s8 gw_gc_axis(unsigned char raw, unsigned char origin) {
+  int v = (int)raw - (int)origin;
+  if (v > 127) {
+    v = 127;
+  }
+  if (v < -128) {
+    v = -128;
+  }
+  return (s8)v;
+}
+
+int gw_gc_adapter_read(void *status) {
+  PADStatus *st = (PADStatus *)status;
+  int chan;
+  int any = 0;
+  int recal;
+
+  if (!gw_gc_ready || st == NULL) {
+    return 0;
+  }
+  if (!gw_gc_poll()) {
+    return 0;
+  }
+
+  recal = InterlockedExchange(&gw_gc_recal, 0) != 0;
+
+  for (chan = 0; chan < GC_PORTS; ++chan) {
+    const unsigned char *p = &gw_gc_payload[1 + chan * 9];
+    const int type = p[0] >> 4;
+    u16 btn = 0;
+    unsigned char b1;
+    unsigned char b2;
+
+    if (type != 1 && type != 2) {
+      /* Nothing plugged into this adapter port: leave the channel untouched so Aurora's own
+       * devices and the keyboard overlay can still own it. */
+      continue;
+    }
+
+    if (!gw_gc_have_origin[chan] || recal) {
+      gw_gc_origin[chan][0] = p[3];
+      gw_gc_origin[chan][1] = p[4];
+      gw_gc_origin[chan][2] = p[5];
+      gw_gc_origin[chan][3] = p[6];
+      gw_gc_trig_rest[chan][0] = p[7];
+      gw_gc_trig_rest[chan][1] = p[8];
+      /* Anything held at the moment of calibration is treated as stuck and masked out. Hold
+       * nothing while this runs; the hotkey exists so it can be repeated deliberately. */
+      gw_gc_btn_stuck[chan][0] = p[1];
+      gw_gc_btn_stuck[chan][1] = p[2];
+      gw_gc_have_origin[chan] = 1;
+      gw_log("gw: gc adapter: ch%d calibrated -- stick (%u,%u) c (%u,%u) triggers (%u,%u)%s%s",
+             chan, p[3], p[4], p[5], p[6], p[7], p[8],
+             p[7] >= GW_GC_TRIG_DEAD ? " [L has no travel, disabled]" : "",
+             p[8] >= GW_GC_TRIG_DEAD ? " [R has no travel, disabled]" : "");
+      if (p[1] != 0 || p[2] != 0) {
+        gw_log("gw: gc adapter: ch%d has buttons held at rest (b1=%02X b2=%02X); masking them",
+               chan, p[1], p[2]);
+      }
+    }
+
+    b1 = (unsigned char)(p[1] & ~gw_gc_btn_stuck[chan][0]);
+    b2 = (unsigned char)(p[2] & ~gw_gc_btn_stuck[chan][1]);
+
+    if (b1 & GC_BTN_A) { btn |= PAD_BUTTON_A; }
+    if (b1 & GC_BTN_B) { btn |= PAD_BUTTON_B; }
+    if (b1 & GC_BTN_X) { btn |= PAD_BUTTON_X; }
+    if (b1 & GC_BTN_Y) { btn |= PAD_BUTTON_Y; }
+    if (b1 & GC_BTN_DLEFT) { btn |= PAD_BUTTON_LEFT; }
+    if (b1 & GC_BTN_DRIGHT) { btn |= PAD_BUTTON_RIGHT; }
+    if (b1 & GC_BTN_DDOWN) { btn |= PAD_BUTTON_DOWN; }
+    if (b1 & GC_BTN_DUP) { btn |= PAD_BUTTON_UP; }
+    if (b2 & GC_BTN2_START) { btn |= PAD_BUTTON_START; }
+    if (b2 & GC_BTN2_Z) { btn |= PAD_TRIGGER_Z; }
+    if (b2 & GC_BTN2_R) { btn |= PAD_TRIGGER_R; }
+    if (b2 & GC_BTN2_L) { btn |= PAD_TRIGGER_L; }
+
+    /* The status array lives in game memory, so the u16 button field is written big-endian;
+     * every other field is a single byte and crosses unchanged. */
+    gw_w16(&st[chan].button, btn);
+    st[chan].stickX = gw_gc_axis(p[3], gw_gc_origin[chan][0]);
+    st[chan].stickY = gw_gc_axis(p[4], gw_gc_origin[chan][1]);
+    st[chan].substickX = gw_gc_axis(p[5], gw_gc_origin[chan][2]);
+    st[chan].substickY = gw_gc_axis(p[6], gw_gc_origin[chan][3]);
+    st[chan].triggerLeft = gw_gc_trigger(p[7], gw_gc_trig_rest[chan][0]);
+    st[chan].triggerRight = gw_gc_trigger(p[8], gw_gc_trig_rest[chan][1]);
+    st[chan].analogA = 0;
+    st[chan].analogB = 0;
+    st[chan].err = 0;
+    any = 1;
+  }
+
+  return any;
+}
+
+void gw_gc_adapter_rumble(int chan, int on) {
+  static unsigned char state[GC_PORTS];
+  unsigned char cmd[5];
+  ULONG written = 0;
+  int i;
+
+  if (!gw_gc_ready || chan < 0 || chan >= GC_PORTS) {
+    return;
+  }
+  if (state[chan] == (unsigned char)(on ? 1 : 0)) {
+    return;
+  }
+  state[chan] = (unsigned char)(on ? 1 : 0);
+
+  cmd[0] = 0x11;
+  for (i = 0; i < GC_PORTS; ++i) {
+    cmd[1 + i] = state[i];
+  }
+  if (gw_gc_backend == GW_GC_HID) {
+    unsigned char out[64];
+    ULONG len = gw_gc_hid_out_len;
+    if (len == 0 || len > sizeof(out)) {
+      len = sizeof(cmd) + 1;
+    }
+    ZeroMemory(out, sizeof(out));
+    out[0] = 0x00; /* report ID */
+    memcpy(out + 1, cmd, sizeof(cmd));
+    HidD_SetOutputReport(gw_gc_hid, out, len);
+    return;
+  }
+  WinUsb_WritePipe(gw_gc_usb, GC_EP_OUT, cmd, sizeof(cmd), &written, NULL);
+}
+
+/* Dump the adapter's raw report bytes, so a mapping question can be settled against what was
+ * actually pressed rather than by guessing. Off unless MELEE_PAD_DIAG=1. */
+void gw_gc_adapter_diag(void) {
+  static int frames;
+  static int on = -1;
+  int chan;
+
+  if (on < 0) {
+    const char *v = getenv("MELEE_PAD_DIAG");
+    on = (v != NULL && v[0] == '1') ? 1 : 0;
+  }
+  if (!on || !gw_gc_ready || !gw_gc_payload_valid || (++frames % 30) != 0) {
+    return;
+  }
+  for (chan = 0; chan < GC_PORTS; ++chan) {
+    const unsigned char *p = &gw_gc_payload[1 + chan * 9];
+    if ((p[0] >> 4) != 1 && (p[0] >> 4) != 2) {
+      continue;
+    }
+    gw_log("gw: DIAG gcraw ch%d type=%d b1=%02X b2=%02X stick=(%u,%u) c=(%u,%u) trig=(%u,%u)",
+           chan, p[0] >> 4, p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]);
+  }
+}

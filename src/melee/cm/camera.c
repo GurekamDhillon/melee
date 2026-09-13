@@ -160,6 +160,20 @@ static inline float vec_len(Vec3* offset)
                  (offset->z * offset->z));
 }
 
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
+ * gw_diag_game_camera in shim_gx.c. */
+extern void diag_game_camera(const float* interest, const float* position,
+                             const float* translation);
+extern void diag_camera_consts(float smooth, float target_fov, float fov_rate, float scale);
+extern void diag_camera_subject(float px, float py, float pz, float ext_z, float yaw);
+extern void diag_camera_track(const float* interest, const float* position);
+extern void diag_camera_desc(const float* eyepos, const float* interest, float fov,
+                             float nnear, float ffar, float aspect);
+extern void diag_cam_translate(int xmin, int xmax, int ymin, int ymax, float aspect, float fov,
+                               float z_pos, float half_h, float out_x, float out_y);
+#endif
+
 void Camera_Init(int n_subjects)
 {
     CmSubject* cam_box;
@@ -172,6 +186,10 @@ void Camera_Init(int n_subjects)
     game_camera.transform.interest = *interest_pos;
     game_camera.transform.target_interest = *interest_pos;
     eye_pos = &cm_803BCB64.eyepos->pos;
+#if defined(TARGET_PC)
+    diag_camera_desc((const float*) eye_pos, (const float*) interest_pos, cm_803BCB64.fov,
+                     cm_803BCB64.nnear, cm_803BCB64.ffar, cm_803BCB64.aspect);
+#endif
     game_camera.transform.position = *eye_pos;
     game_camera.transform.target_position = *eye_pos;
     game_camera.transform.target_fov = cm_803BCB64.fov;
@@ -923,6 +941,17 @@ void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
         HSD_WObjDesc eyepos;
         HSD_CameraDescPerspective desc;
     }* data = (struct CameraStaticData*) &cm_803BCB18;
+#if defined(TARGET_PC)
+    /* The port links each global separately, so cm_803BCB18/3C/50/64 are NOT contiguous the way
+     * the original .data laid them out (0x3BCB18, +0x24, +0x14, +0x14). The struct view above
+     * therefore lands in unrelated memory and reads desc as zeros -- and a zero viewport with a
+     * zero aspect makes the scale below 0 * (h / 0) = 0 * inf = NaN, which propagates into
+     * game_camera.translation.x/y and from there through the camera into every view matrix.
+     * Name the descriptor directly. Same class as the particle.c and ftmaterial.c fixes. */
+#define CM_DESC cm_803BCB64
+#else
+#define CM_DESC data->desc
+#endif
 
     input_x = game_camera.quake_offset.x * game_camera.quake_scale;
     input_y = game_camera.quake_offset.y * game_camera.quake_scale;
@@ -939,12 +968,12 @@ void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
     half_view_height =
         bounds->z_pos * tanf(0.5f * (0.017453292f * state->fov));
     viewport_x_scale =
-        data->desc.aspect *
+        CM_DESC.aspect *
         (half_view_height /
-         (0.5f * (f32) (data->desc.viewport.xmax - data->desc.viewport.xmin)));
+         (0.5f * (f32) (CM_DESC.viewport.xmax - CM_DESC.viewport.xmin)));
     viewport_y_scale =
         half_view_height /
-        (0.5f * (f32) (data->desc.viewport.ymax - data->desc.viewport.ymin));
+        (0.5f * (f32) (CM_DESC.viewport.ymax - CM_DESC.viewport.ymin));
     depth_factor_y = Stage_GetCamZoomRate();
     depth_factor_x = Stage_GetCamMaxDepth() - depth_factor_y;
 
@@ -959,6 +988,13 @@ void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
         (depth_ratio * (cm_803BCCA0.x5C - cm_803BCCA0.x54)) + cm_803BCCA0.x54;
     depth_factor_x =
         (depth_ratio * (cm_803BCCA0.x60 - cm_803BCCA0.x58)) + cm_803BCCA0.x58;
+#if defined(TARGET_PC)
+    diag_cam_translate(CM_DESC.viewport.xmin, CM_DESC.viewport.xmax,
+                       CM_DESC.viewport.ymin, CM_DESC.viewport.ymax, CM_DESC.aspect,
+                       state->fov, bounds->z_pos, half_view_height,
+                       depth_factor_x * (input_x * viewport_x_scale),
+                       depth_factor_y * (input_y * viewport_y_scale));
+#endif
     Camera_80030DE4(depth_factor_x * (input_x * viewport_x_scale),
                     depth_factor_y * (input_y * viewport_y_scale));
     game_camera.quake_offset.x = 0.0f;
@@ -1338,12 +1374,6 @@ void Camera_8002A768(CameraTransformState* transform, s32 arg1)
     }
 }
 
-#if defined(TARGET_PC)
-/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
- * gw_diag_game_camera in shim_gx.c. */
-extern void diag_game_camera(const float* interest, const float* position,
-                             const float* translation);
-#endif
 
 void Camera_8002AF68(HSD_CObj* cobj, CameraTransformState* transform)
 {
@@ -1361,6 +1391,15 @@ void Camera_8002AF68(HSD_CObj* cobj, CameraTransformState* transform)
     diag_game_camera((const float*) &transform->interest,
                      (const float*) &transform->position,
                      (const float*) &game_camera.translation);
+    /* The per-frame camera update smooths toward a target with
+     *     interest += (target - interest) * cm_803BCCA0.x64
+     * which diverges geometrically if that coefficient is not a small fraction -- exactly how
+     * sane values become 1e22 and 1e33 within a few frames. cm_803BCCA0 is extern static data
+     * from the original binary, and the port byte-swaps link-time POINTERS in game globals, so
+     * a table of floats would not be corrected by that pass. Print the coefficients once. */
+    diag_camera_consts(cm_803BCCA0.x64, cm_803BCCA0.x6C, cm_803BCCA0.x70, cm_803BCCA0.x3C);
+    diag_camera_track((const float*) &game_camera.transform.interest,
+                      (const float*) &game_camera.transform.position);
 #endif
 
     vec = transform->interest;
@@ -2577,6 +2616,13 @@ void Camera_8002D318(void* unused)
         {
             pos = get_subject_x1C(subject);
             half_z = 0.5f * subject->ext.v.z;
+#if defined(TARGET_PC)
+            /* TEMP DIAG: the tracked player's position and extent, and the camera yaw, are the
+             * only inputs to target_interest. The smoothing coefficient is known good (0.05), so
+             * if interest is diverging the garbage must enter here. */
+            diag_camera_subject(pos->x, pos->y, pos->z, subject->ext.v.z,
+                                game_camera.yaw_offset);
+#endif
             game_camera.transform.target_interest.x =
                 -((half_z * cosf(game_camera.yaw_offset)) - pos->x);
             game_camera.transform.target_interest.y = pos->y;

@@ -121,6 +121,14 @@ static RecordBlock lbl_803D8D08[6] = {
 lbl_80472ED8_t lbl_80472ED8;
 RegClearRecordState lbl_80473594;
 
+#if defined(TARGET_PC)
+/* lbl_80472ED8 ends at 0x6BC; the console .bss placed lbl_80473594 immediately after it,
+ * but the port links them separately. */
+#define REGCLEAR_RECORD lbl_80473594
+#else
+#define REGCLEAR_RECORD data->record[0]
+#endif
+
 int gm_80181A14(void)
 {
     (void) &lbl_80472ED8;
@@ -320,7 +328,7 @@ void fn_80181E18(void)
     case 0x23:
     case 0x24:
         if (gm_8016AEEC() == 0 && gm_8016AEFC() == 0x3B) {
-            data->record[0].x0 = 1;
+            REGCLEAR_RECORD.x0 = 1;
             gm_8016B33C(7);
             gm_8016B328();
         }
@@ -340,10 +348,10 @@ void fn_80181E18(void)
             continue;
         }
 
-        switch (data->record[0].x8) {
+        switch (REGCLEAR_RECORD.x8) {
         case 0x21:
         case 0x22:
-            data->record[0].x4 = gm_GetFrameCount();
+            REGCLEAR_RECORD.x4 = gm_GetFrameCount();
             break;
         }
 
@@ -354,7 +362,7 @@ void fn_80181E18(void)
         field = &data->x4;
         x4 = field;
         next = *x4;
-        data->record[0].x2 = (s16) (temp + next);
+        REGCLEAR_RECORD.x2 = (s16) (temp + next);
 
         switch (mode) {
         case 0x21:
@@ -397,7 +405,7 @@ void fn_80181E18(void)
                 }
             }
             if (count == 0) {
-                data->record[0].x0 = 1;
+                REGCLEAR_RECORD.x0 = 1;
                 gm_8016B33C(7);
                 gm_8016B328();
             }
@@ -613,7 +621,7 @@ void gm_80182554(int arg0, int arg1)
 
 static inline u16 gm_80182578_GetTimeFromData(RegClearRecordOverlay* data)
 {
-    return data->record[0].x2;
+    return REGCLEAR_RECORD.x2;
 }
 
 static inline int gm_80182578_GetRecordTime(RecordBlock* blocks, int idx,
@@ -699,10 +707,10 @@ void gm_80182578(void)
     s32 mode;
     u32 score_val;
 
-    mode_ptr = &data->record[0].x8;
-    idx_ptr = &data->record[0].xC;
+    mode_ptr = &REGCLEAR_RECORD.x8;
+    idx_ptr = &REGCLEAR_RECORD.xC;
     blocks = lbl_803D8D08;
-    mode = data->record[0].x8;
+    mode = REGCLEAR_RECORD.x8;
     idx = gm_80182578_GetIndexFromPointer(idx_ptr);
     time_val = gm_80182578_GetRecordTime(blocks, idx, mode);
 
@@ -716,29 +724,29 @@ void gm_80182578(void)
         } else {
             mode = gmMainLib_8015D710(gm_CKindToSelKind((u8) idx));
         }
-        if (data->record[0].x0 != 0) {
-            u32 score_store = (u32) data->record[0].x4;
+        if (REGCLEAR_RECORD.x0 != 0) {
+            u32 score_store = (u32) REGCLEAR_RECORD.x4;
             if (score_store < score_val) {
                 int i = gm_80182578_GetIndexFromPointer(idx_ptr);
                 int m = *mode_ptr;
                 switch (m) {
                 case 33:
-                    blocks[0].icons[i] = data->record[0].x0;
+                    blocks[0].icons[i] = REGCLEAR_RECORD.x0;
                     break;
                 case 34:
-                    blocks[1].icons[i] = data->record[0].x0;
+                    blocks[1].icons[i] = REGCLEAR_RECORD.x0;
                     break;
                 case 35:
-                    blocks[2].icons[i] = data->record[0].x0;
+                    blocks[2].icons[i] = REGCLEAR_RECORD.x0;
                     break;
                 case 36:
-                    blocks[3].icons[i] = data->record[0].x0;
+                    blocks[3].icons[i] = REGCLEAR_RECORD.x0;
                     break;
                 case 37:
-                    blocks[4].icons[i] = data->record[0].x0;
+                    blocks[4].icons[i] = REGCLEAR_RECORD.x0;
                     break;
                 case 38:
-                    blocks[5].icons[i] = data->record[0].x0;
+                    blocks[5].icons[i] = REGCLEAR_RECORD.x0;
                     break;
                 }
                 switch (m) {
@@ -761,56 +769,56 @@ void gm_80182578(void)
                     blocks[5].scores[i] = score_store;
                     break;
                 }
-                gm_80182578_SetTime(blocks, i, m, data->record[0].x2);
+                gm_80182578_SetTime(blocks, i, m, REGCLEAR_RECORD.x2);
             }
-        } else if ((s32) data->record[0].x2 > (s32) time_val && mode == 0) {
+        } else if ((s32) REGCLEAR_RECORD.x2 > (s32) time_val && mode == 0) {
             int i = *idx_ptr;
             int m = *mode_ptr;
             switch (m) {
             case 33:
-                blocks[0].times[i] = data->record[0].x2;
+                blocks[0].times[i] = REGCLEAR_RECORD.x2;
                 break;
             case 34:
-                blocks[1].times[i] = data->record[0].x2;
+                blocks[1].times[i] = REGCLEAR_RECORD.x2;
                 break;
             case 35:
-                blocks[2].times[i] = data->record[0].x2;
+                blocks[2].times[i] = REGCLEAR_RECORD.x2;
                 break;
             case 36:
-                blocks[3].times[i] = data->record[0].x2;
+                blocks[3].times[i] = REGCLEAR_RECORD.x2;
                 break;
             case 37:
-                blocks[4].times[i] = data->record[0].x2;
+                blocks[4].times[i] = REGCLEAR_RECORD.x2;
                 break;
             case 38:
-                blocks[5].times[i] = data->record[0].x2;
+                blocks[5].times[i] = REGCLEAR_RECORD.x2;
                 break;
             }
         }
         break;
     case 0x23:
     case 0x24:
-        if (data->record[0].x0 != 0) {
+        if (REGCLEAR_RECORD.x0 != 0) {
             u16 time_store = gm_80182578_GetTimeFromData(data);
             if ((s32) time_store > (s32) time_val) {
                 switch (mode) {
                 case 33:
-                    blocks[0].icons[idx] = data->record[0].x0;
+                    blocks[0].icons[idx] = REGCLEAR_RECORD.x0;
                     break;
                 case 34:
-                    blocks[1].icons[idx] = data->record[0].x0;
+                    blocks[1].icons[idx] = REGCLEAR_RECORD.x0;
                     break;
                 case 35:
-                    blocks[2].icons[idx] = data->record[0].x0;
+                    blocks[2].icons[idx] = REGCLEAR_RECORD.x0;
                     break;
                 case 36:
-                    blocks[3].icons[idx] = data->record[0].x0;
+                    blocks[3].icons[idx] = REGCLEAR_RECORD.x0;
                     break;
                 case 37:
-                    blocks[4].icons[idx] = data->record[0].x0;
+                    blocks[4].icons[idx] = REGCLEAR_RECORD.x0;
                     break;
                 case 38:
-                    blocks[5].icons[idx] = data->record[0].x0;
+                    blocks[5].icons[idx] = REGCLEAR_RECORD.x0;
                     break;
                 }
                 switch (mode) {
@@ -838,25 +846,25 @@ void gm_80182578(void)
         break;
     case 0x25:
     case 0x26:
-        if ((s32) data->record[0].x2 > (s32) time_val) {
+        if ((s32) REGCLEAR_RECORD.x2 > (s32) time_val) {
             switch (mode) {
             case 33:
-                blocks[0].times[idx] = data->record[0].x2;
+                blocks[0].times[idx] = REGCLEAR_RECORD.x2;
                 break;
             case 34:
-                blocks[1].times[idx] = data->record[0].x2;
+                blocks[1].times[idx] = REGCLEAR_RECORD.x2;
                 break;
             case 35:
-                blocks[2].times[idx] = data->record[0].x2;
+                blocks[2].times[idx] = REGCLEAR_RECORD.x2;
                 break;
             case 36:
-                blocks[3].times[idx] = data->record[0].x2;
+                blocks[3].times[idx] = REGCLEAR_RECORD.x2;
                 break;
             case 37:
-                blocks[4].times[idx] = data->record[0].x2;
+                blocks[4].times[idx] = REGCLEAR_RECORD.x2;
                 break;
             case 38:
-                blocks[5].times[idx] = data->record[0].x2;
+                blocks[5].times[idx] = REGCLEAR_RECORD.x2;
                 break;
             }
         }
@@ -874,8 +882,8 @@ static inline RecordBlock* fn_80182B5C_GetRecordBlocks(void)
 static inline u32 fn_80182B5C_GetScore(RecordBlock* blocks,
                                        RegClearRecordOverlay* data)
 {
-    int idx = data->record[0].xC;
-    int mode = data->record[0].x8;
+    int idx = REGCLEAR_RECORD.xC;
+    int mode = REGCLEAR_RECORD.x8;
 
     switch (mode) {
     case 33:
@@ -898,8 +906,8 @@ static inline u32 fn_80182B5C_GetScore(RecordBlock* blocks,
 static inline int fn_80182B5C_GetTime(RecordBlock* blocks,
                                       RegClearRecordOverlay* data)
 {
-    int idx = data->record[0].xC;
-    int mode = data->record[0].x8;
+    int idx = REGCLEAR_RECORD.xC;
+    int mode = REGCLEAR_RECORD.x8;
 
     switch (mode) {
     case 33:
@@ -924,9 +932,9 @@ void fn_80182B5C(void)
     RegClearRecordOverlay* data = (RegClearRecordOverlay*) &lbl_80472ED8;
     RecordBlock* blocks = fn_80182B5C_GetRecordBlocks();
     int time;
-    int idx = data->record[0].xC;
+    int idx = REGCLEAR_RECORD.xC;
     u32 score;
-    int mode = data->record[0].x8;
+    int mode = REGCLEAR_RECORD.x8;
 
     time = fn_80182B5C_GetTime(blocks, data);
     score = fn_80182B5C_GetScore(blocks, data);
@@ -939,12 +947,12 @@ void fn_80182B5C(void)
         } else {
             gmMainLib_8015D710(gm_CKindToSelKind((u8) idx));
         }
-        if (data->record[0].x0 != 0) {
-            if ((u32) data->record[0].x4 < score) {
+        if (REGCLEAR_RECORD.x0 != 0) {
+            if ((u32) REGCLEAR_RECORD.x4 < score) {
                 gm_8016B350(0x9C40);
                 gm_8016B364(0x144);
-                gm_80167858((s32) data->record[0].x10,
-                            (s32) data->record[0].x11, 0xD, 0x5A);
+                gm_80167858((s32) REGCLEAR_RECORD.x10,
+                            (s32) REGCLEAR_RECORD.x11, 0xD, 0x5A);
             }
         } else {
             gm_8016B364(0x148);
@@ -953,19 +961,19 @@ void fn_80182B5C(void)
         break;
     case 0x23:
     case 0x24:
-        if (data->record[0].x0 != 0 && (s32) data->record[0].x2 > time) {
+        if (REGCLEAR_RECORD.x0 != 0 && (s32) REGCLEAR_RECORD.x2 > time) {
             gm_8016B350(0x9C40);
             gm_8016B364(0x144);
-            gm_80167858((s32) data->record[0].x10, (s32) data->record[0].x11,
+            gm_80167858((s32) REGCLEAR_RECORD.x10, (s32) REGCLEAR_RECORD.x11,
                         0xD, 0x5A);
         }
         break;
     case 0x25:
     case 0x26:
-        if ((s32) data->record[0].x2 > time) {
+        if ((s32) REGCLEAR_RECORD.x2 > time) {
             gm_8016B350(0x9C40);
             gm_8016B364(0x144);
-            gm_80167858((s32) data->record[0].x10, (s32) data->record[0].x11,
+            gm_80167858((s32) REGCLEAR_RECORD.x10, (s32) REGCLEAR_RECORD.x11,
                         0xD, 0x5A);
         }
         break;

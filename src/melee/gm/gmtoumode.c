@@ -194,8 +194,13 @@ void gm_801B18D4(GameModeState* arg0)
         smd->players[i] = src->players[i];
     }
 
+#if defined(TARGET_PC)
+    /* gm_80487810 is not contiguous with gm_804876D8 on PC. */
+    gm_SetupSuddenDeath(smd, &gm_80487810.match_end);
+#else
     /// @todo :: figure out how to call this not inlined
     gm_SetupSuddenDeath(smd, &((MatchExitInfo*) (src + 1))->match_end);
+#endif
 }
 #ifdef MUST_MATCH
 #pragma pop

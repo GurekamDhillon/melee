@@ -82,6 +82,14 @@ typedef struct BracketData {
     /* 0x3700 */ BracketSrcEntry* srcs[3];
 } BracketData;
 
+#if defined(TARGET_PC)
+/* BracketData::srcs[3] runs one pointer past lbl_80473AB8 to 0x804771C4, which the console
+ * .bss held as gm_804771C4; the port links them separately. */
+#define TOU_TM_DATA (&gm_804771C4)
+#else
+#define TOU_TM_DATA ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])
+#endif
+
 typedef struct BracketSrcPtr {
     BracketSrcEntry* ptr;
 } BracketSrcPtr;
@@ -2428,20 +2436,20 @@ void fn_8018FBE0(s32 arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4, s32 arg5,
 {
     s32 i;
 
-    ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->cur_option = arg0;
-    ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->x1C = arg1;
-    ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->x20 = arg2;
+    TOU_TM_DATA->cur_option = arg0;
+    TOU_TM_DATA->x1C = arg1;
+    TOU_TM_DATA->x20 = arg2;
 
     for (i = 0; 64 > i; i++) {
-        ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->x37[i].x2 =
+        TOU_TM_DATA->x37[i].x2 =
             (u8) arg3;
-        ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->x37[i].x1 =
+        TOU_TM_DATA->x37[i].x1 =
             (u8) arg4;
-        ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->x37[i].xD =
+        TOU_TM_DATA->x37[i].xD =
             (u8) i;
-        ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->x37[i].x9 =
+        TOU_TM_DATA->x37[i].x9 =
             (u16) arg5;
-        ((TmData*) &((BracketData*) lbl_80473AB8)->srcs[3])->x37[i].x0 =
+        TOU_TM_DATA->x37[i].x0 =
             (u8) arg6;
     }
 }

@@ -38,6 +38,16 @@ ASSERT_SIZE(struct lbl_80472E48_t, 0x80);
 static struct lbl_80472E48_t lbl_80472E48;
 static s32 lbl_80472EC8[4];
 
+#if defined(TARGET_PC)
+/* lbl_80472E48 is 0x80 bytes; the console .bss placed lbl_80472EC8 immediately after it,
+ * but the port links them separately. */
+#define STATE_EC8 lbl_80472EC8
+#define STATE_X80 lbl_80472EC8
+#else
+#define STATE_EC8 state->ec8
+#define STATE_X80 state->x80
+#endif
+
 static HSD_Archive* lbl_804D65C8;
 static DynamicModelDesc** lbl_804D65CC;
 static DynamicModelDesc** lbl_804D65D0;
@@ -106,17 +116,17 @@ void fn_80180C60(HSD_GObj* gobj)
         dist = 0;
     }
 
-    state->ec8[0] = dist;
+    STATE_EC8[0] = dist;
     b76 = state->e48.b76;
 
     if (b76 != 0 && state->e48.b54) {
         ifTime_HideTimers();
-        if (state->ec8[0] == state->ec8[1]) {
-            state->ec8[3] = state->ec8[3] + 1;
+        if (STATE_EC8[0] == STATE_EC8[1]) {
+            STATE_EC8[3] = STATE_EC8[3] + 1;
         } else {
-            state->ec8[3] = 0;
+            STATE_EC8[3] = 0;
         }
-        if (state->ec8[3] > 0x3C) {
+        if (STATE_EC8[3] > 0x3C) {
             state->e48.b32 = 1;
             if (dist == 0 && !state->e48.b10) {
                 state->e48.b10 = 1;
@@ -125,12 +135,12 @@ void fn_80180C60(HSD_GObj* gobj)
     } else {
         if (b76 != 0) {
             ifTime_HideTimers();
-            if (state->ec8[0] == state->ec8[1]) {
-                state->ec8[3] = state->ec8[3] + 1;
+            if (STATE_EC8[0] == STATE_EC8[1]) {
+                STATE_EC8[3] = STATE_EC8[3] + 1;
             } else {
-                state->ec8[3] = 0;
+                STATE_EC8[3] = 0;
             }
-            if (state->ec8[3] > 0x78) {
+            if (STATE_EC8[3] > 0x78) {
                 state->e48.b32 = 1;
                 if (!state->e48.b10) {
                     state->e48.b10 = 1;
@@ -151,7 +161,7 @@ void fn_80180C60(HSD_GObj* gobj)
                 state->e48.b54 = 1;
                 Player_80031790(0);
             }
-            state->ec8[3] = 0;
+            STATE_EC8[3] = 0;
         }
     }
 
@@ -235,10 +245,10 @@ void fn_80180C60(HSD_GObj* gobj)
     }
 
     HSD_JObjAnimAll(jobj);
-    state->ec8[1] = state->ec8[0];
-    max_dist = &state->ec8[2];
-    if (state->ec8[0] > *max_dist + 0xA) {
-        *max_dist = state->ec8[0];
+    STATE_EC8[1] = STATE_EC8[0];
+    max_dist = &STATE_EC8[2];
+    if (STATE_EC8[0] > *max_dist + 0xA) {
+        *max_dist = STATE_EC8[0];
         lbAudioAx_80023870(0xBB, 0x7F, 0x40, 0x8A);
     }
 }
@@ -288,7 +298,7 @@ void fn_80181598(void)
         {
             unk_4 = &state->x0.unk_4;
             idx = gm_CKindToSelKind((u8) *unk_4);
-            val = state->x80[0];
+            val = STATE_X80[0];
             idx = (u8) idx << 2;
             state = (lbl_80472E48_with_ec8*) state->x0.x14;
             if (val > *(s32*) ((unsigned char*) state + idx)) {
@@ -311,10 +321,10 @@ void fn_80181708(void)
     HSD_GObj* gobj;
     lbl_80472E48_with_ec8* state = (lbl_80472E48_with_ec8*) &lbl_80472E48;
 
-    state->x80[0] = 0;
-    state->x80[1] = 0;
-    state->x80[2] = 0;
-    state->x80[3] = 0;
+    STATE_X80[0] = 0;
+    STATE_X80[1] = 0;
+    STATE_X80[2] = 0;
+    STATE_X80[3] = 0;
     state->x0.b76 = 0;
     state->x0.b54 = 0;
     state->x0.b32 = 0;

@@ -154,9 +154,9 @@ void gw_diag_jobj_mtx(const float *mtx, int stage, int branch) {
     return;
   }
   for (i = 0; i < 12; ++i) {
-    /* NaN and infinity without pulling math.h into game-adjacent code: exponent all ones. */
+    /* jobj->mtx lives in big-endian game memory: read it through gw_rf32, not natively. */
     union { float f; uint32_t u; } v;
-    v.f = mtx[i];
+    v.f = gw_rf32(&mtx[i]);
     if ((v.u & 0x7F800000u) == 0x7F800000u) {
       bad = 1;
       break;
@@ -195,6 +195,172 @@ static uint32_t gw_gcam_bad_position;
 static uint32_t gw_gcam_bad_translation;
 static int gw_gcam_reported;
 
+/* TEMP DIAG: the camera tuning constants from cm_803BCCA0, printed once. x64 is the smoothing
+ * coefficient in interest += (target - interest) * x64 and must be a small fraction; anything
+ * else makes the update diverge. These live in the original binary's static data. */
+/* TEMP DIAG: the tracked player's position, the subject extent and the camera yaw -- the only
+ * inputs to target_interest. Counts bad values per frame and prints the first few offenders. */
+static uint32_t gw_subj_calls;
+static uint32_t gw_subj_bad;
+static int gw_subj_reported;
+
+void gw_diag_camera_subject(float px, float py, float pz, float ext_z, float yaw) {
+  const int bad = gw_diag_is_bad(px) || gw_diag_is_bad(py) || gw_diag_is_bad(pz) ||
+                  gw_diag_is_bad(ext_z) || gw_diag_is_bad(yaw);
+  ++gw_subj_calls;
+  if (bad) {
+    ++gw_subj_bad;
+  }
+  if ((bad || px > 1e6f || px < -1e6f || py > 1e6f || py < -1e6f) && gw_subj_reported < 6) {
+    ++gw_subj_reported;
+    gw_log("gw: DIAG   subject BAD pos=(%g,%g,%g) ext_z=%g yaw=%g", (double)px, (double)py,
+           (double)pz, (double)ext_z, (double)yaw);
+  }
+}
+
+void gw_diag_camera_subject_report(void) {
+  if (gw_subj_calls != 0u) {
+    gw_log("gw: DIAG   subject: calls=%u bad=%u", gw_subj_calls, gw_subj_bad);
+  }
+  gw_subj_calls = 0u;
+  gw_subj_bad = 0u;
+}
+
+/* TEMP DIAG: catch the MOMENT game_camera's transform goes bad, rather than guessing which
+ * branch writes it. Keeps the previous value of each component and logs the transition from good
+ * to bad with both values. The shape of that transition is the diagnosis:
+ *   a sudden jump from a sane number straight to 1e33 or NaN  -> something assigns garbage
+ *   a value roughly doubling or growing each frame            -> a feedback loop diverging
+ * Also logs a bad -> good recovery, since the camera evidently does recover between episodes. */
+static float gw_camtrk_prev[6];
+static int gw_camtrk_prev_bad[6];
+static int gw_camtrk_have;
+static int gw_camtrk_events;
+
+static int gw_diag_suspect(float f) {
+  return gw_diag_is_bad(f) || f > 1e6f || f < -1e6f;
+}
+
+/* TEMP DIAG: read back C-source static initialisers whose values are known exactly from the
+ * source, to test whether statics defined in game C source are read with the wrong endianness.
+ *   cm_803BCB3C.pos = { 0.0f, 40.241425f, 300.241f }   (eyepos)
+ *   cm_803BCB50.pos = { 0.0f, 10.0f, 0.0f }            (interest)
+ *   fov 30.0f, near 0.1f, far 16384.0f, aspect 1.2173333f
+ * cm_803BCCA0, which reads correctly, is extern data from the ORIGINAL big-endian binary, so a
+ * byte-swapping load is right for it. Statics emitted by clang are native little-endian and the
+ * same load would read them backwards. If the values below come back wrong, that is the bug. */
+/* TEMP DIAG: the inputs to the only writer of game_camera.translation that is not a zeroing
+ * call (Camera_80030DE4 at camera.c:978). translation.x/.y are NaN in game, and the computation
+ * divides by the viewport width and height, so a zero viewport extent yields infinity and then
+ * NaN. Expect viewport 0..640 x 0..480, aspect ~1.217, fov ~30. */
+void gw_diag_cam_translate(int xmin, int xmax, int ymin, int ymax, float aspect, float fov,
+                           float z_pos, float half_h, float out_x, float out_y) {
+  static int n;
+  if (n >= 4) {
+    return;
+  }
+  ++n;
+  gw_log("gw: DIAG   camtrans viewport=[%d..%d]x[%d..%d] aspect=%g fov=%g z_pos=%g half_h=%g",
+         xmin, xmax, ymin, ymax, (double)aspect, (double)fov, (double)z_pos, (double)half_h);
+  gw_log("gw: DIAG   camtrans -> translation=(%g, %g)", (double)out_x, (double)out_y);
+}
+
+/* TEMP DIAG: envelope (skinned) blending. SetupEnvelopeModelMtx accumulates
+ *     mtx += joint_mtx * weight
+ * over the envelope list, so the weights for one matrix slot must sum to 1.0 or the blended
+ * transform is scaled wrong and the limb stretches. Mario's head (a single weight-1 joint) takes
+ * the other branch and renders correctly, which is consistent with the blend being at fault. */
+static uint32_t gw_env_draws;
+static uint32_t gw_env_badsum;
+static int gw_env_reported;
+
+void gw_diag_envelope(int count, float weight_sum) {
+  ++gw_env_draws;
+  if (weight_sum < 0.99f || weight_sum > 1.01f) {
+    ++gw_env_badsum;
+    if (gw_env_reported < 8) {
+      ++gw_env_reported;
+      gw_log("gw: DIAG   envelope BAD joints=%d weight_sum=%g", count, (double)weight_sum);
+    }
+  }
+}
+
+void gw_diag_envelope_report(void) {
+  if (gw_env_draws != 0u) {
+    gw_log("gw: DIAG   envelope: blends=%u bad_weight_sum=%u", gw_env_draws, gw_env_badsum);
+  }
+  gw_env_draws = 0u;
+  gw_env_badsum = 0u;
+}
+
+void gw_diag_camera_desc(const float *eyepos, const float *interest, float fov, float nearz,
+                         float farz, float aspect) {
+  static int done;
+  int i;
+  if (done || eyepos == NULL || interest == NULL) {
+    return;
+  }
+  done = 1;
+  /* Game memory is big-endian by design (gwtool pre-swaps scalar initialisers), so a native
+   * shim MUST read game-visible scalars through gw_rf32. Reading them natively byte-swaps them
+   * and manufactures exactly the huge/tiny garbage this probe was built to look for. */
+  gw_log("gw: DIAG   camdesc eyepos=(%g,%g,%g) expect (0, 40.241425, 300.241)",
+         (double)gw_rf32(&eyepos[0]), (double)gw_rf32(&eyepos[1]), (double)gw_rf32(&eyepos[2]));
+  gw_log("gw: DIAG   camdesc interest=(%g,%g,%g) expect (0, 10, 0)",
+         (double)gw_rf32(&interest[0]), (double)gw_rf32(&interest[1]),
+         (double)gw_rf32(&interest[2]));
+  gw_log("gw: DIAG   camdesc fov=%g near=%g far=%g aspect=%g  expect 30 / 0.1 / 16384 / 1.2173333",
+         (double)fov, (double)nearz, (double)farz, (double)aspect);
+  for (i = 0; i < 3; ++i) {
+    union { float f; uint32_t u; } v, sw;
+    v.f = eyepos[i];
+    sw.u = ((v.u & 0x000000FFu) << 24) | ((v.u & 0x0000FF00u) << 8) |
+           ((v.u & 0x00FF0000u) >> 8) | ((v.u & 0xFF000000u) >> 24);
+    gw_log("gw: DIAG   camdesc eyepos[%d] bits=%08X byteswapped=%g", i, v.u, (double)sw.f);
+  }
+}
+
+void gw_diag_camera_track(const float *interest, const float *position) {
+  static const char *const names[6] = {"int.x", "int.y", "int.z", "pos.x", "pos.y", "pos.z"};
+  float cur[6];
+  int i;
+  if (interest == NULL || position == NULL) {
+    return;
+  }
+  for (i = 0; i < 3; ++i) {
+    cur[i] = gw_rf32(&interest[i]);      /* big-endian game memory */
+    cur[i + 3] = gw_rf32(&position[i]);
+  }
+  for (i = 0; i < 6; ++i) {
+    const int bad = gw_diag_suspect(cur[i]);
+    if (gw_camtrk_have && bad != gw_camtrk_prev_bad[i] && gw_camtrk_events < 24) {
+      ++gw_camtrk_events;
+      union { float f; uint32_t u; } v, sw;
+      v.f = cur[i];
+      sw.u = ((v.u & 0x000000FFu) << 24) | ((v.u & 0x0000FF00u) << 8) |
+             ((v.u & 0x00FF0000u) >> 8) | ((v.u & 0xFF000000u) >> 24);
+      /* If this value is a big-endian float being read natively, the byte-swapped
+       * interpretation is the real one and should look like a plausible camera coordinate. */
+      gw_log("gw: DIAG   camtrk %s %s: %g -> %g   [bits=%08X  byteswapped=%g]", names[i],
+             bad ? "WENT BAD" : "recovered", (double)gw_camtrk_prev[i], (double)cur[i], v.u,
+             (double)sw.f);
+    }
+    gw_camtrk_prev[i] = cur[i];
+    gw_camtrk_prev_bad[i] = bad;
+  }
+  gw_camtrk_have = 1;
+}
+
+void gw_diag_camera_consts(float smooth, float target_fov, float fov_rate, float scale) {
+  static int done;
+  if (done) {
+    return;
+  }
+  done = 1;
+  gw_log("gw: DIAG   camera consts: smooth(x64)=%g target_fov(x6C)=%g fov_rate(x70)=%g scale(x3C)=%g",
+         (double)smooth, (double)target_fov, (double)fov_rate, (double)scale);
+}
+
 void gw_diag_game_camera(const float *interest, const float *position, const float *translation) {
   int i;
   int bi = 0, bp = 0, bt = 0;
@@ -203,13 +369,13 @@ void gw_diag_game_camera(const float *interest, const float *position, const flo
   }
   ++gw_gcam_calls;
   for (i = 0; i < 3; ++i) {
-    if (gw_diag_is_bad(interest[i])) {
+    if (gw_diag_is_bad(gw_rf32(&interest[i]))) {
       bi = 1;
     }
-    if (gw_diag_is_bad(position[i])) {
+    if (gw_diag_is_bad(gw_rf32(&position[i]))) {
       bp = 1;
     }
-    if (gw_diag_is_bad(translation[i])) {
+    if (gw_diag_is_bad(gw_rf32(&translation[i]))) {
       bt = 1;
     }
   }
@@ -234,12 +400,13 @@ void gw_diag_cobj_view(const float *mtx, const float *eye, const float *up, cons
   }
   ++gw_cobj_calls;
   for (i = 0; i < 3; ++i) {
-    if (gw_diag_is_bad(eye[i]) || gw_diag_is_bad(up[i]) || gw_diag_is_bad(interest[i])) {
+    if (gw_diag_is_bad(gw_rf32(&eye[i])) || gw_diag_is_bad(gw_rf32(&up[i])) ||
+        gw_diag_is_bad(gw_rf32(&interest[i]))) {
       badIn = 1;
     }
   }
   for (i = 0; i < 12; ++i) {
-    if (gw_diag_is_bad(mtx[i])) {
+    if (gw_diag_is_bad(gw_rf32(&mtx[i]))) {
       badMtx = 1;
     }
   }
@@ -251,15 +418,26 @@ void gw_diag_cobj_view(const float *mtx, const float *eye, const float *up, cons
   }
   if ((badIn || badMtx) && gw_cobj_reported < 4) {
     ++gw_cobj_reported;
-    gw_log("gw: DIAG   cobj BAD eye=(%.3f,%.3f,%.3f) up=(%.3f,%.3f,%.3f) interest=(%.3f,%.3f,%.3f)",
-           eye[0], eye[1], eye[2], up[0], up[1], up[2], interest[0], interest[1], interest[2]);
-    gw_log("gw: DIAG   cobj view row0=(%.3f,%.3f,%.3f,%.3f)", mtx[0], mtx[1], mtx[2], mtx[3]);
+    /* Raw bits as well as values: %.3f prints a denormal as 0.000, which is exactly how a
+     * misread up-vector would masquerade as a genuinely zero one. 0x3F800000 is 1.0f. */
+    gw_log("gw: DIAG   cobj BAD eye=(%g,%g,%g) up=(%g,%g,%g) interest=(%g,%g,%g)",
+           (double)gw_rf32(&eye[0]), (double)gw_rf32(&eye[1]), (double)gw_rf32(&eye[2]),
+           (double)gw_rf32(&up[0]), (double)gw_rf32(&up[1]), (double)gw_rf32(&up[2]),
+           (double)gw_rf32(&interest[0]), (double)gw_rf32(&interest[1]),
+           (double)gw_rf32(&interest[2]));
+    gw_log("gw: DIAG   cobj BAD up bits (be-read)=%08X %08X %08X  raw native=%08X %08X %08X",
+           gw_r32(&up[0]), gw_r32(&up[1]), gw_r32(&up[2]),
+           ((const uint32_t *)up)[0], ((const uint32_t *)up)[1], ((const uint32_t *)up)[2]);
+    gw_log("gw: DIAG   cobj view row0 bits=%08X %08X %08X %08X", gw_r32(&mtx[0]), gw_r32(&mtx[1]),
+           gw_r32(&mtx[2]), gw_r32(&mtx[3]));
   }
 }
 
 void gw_diag_jobj_report(void) {
   static const char *const names[4] = {"JOINT1", "JOINT2", "EFFECTOR", "default"};
   int b;
+  gw_diag_camera_subject_report();
+  gw_diag_envelope_report();
   if (gw_gcam_calls != 0u) {
     gw_log("gw: DIAG   gamecam: calls=%u bad_interest=%u bad_position=%u bad_translation=%u",
            gw_gcam_calls, gw_gcam_bad_interest, gw_gcam_bad_position, gw_gcam_bad_translation);

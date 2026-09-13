@@ -3051,7 +3051,15 @@ void hsd_8039D0A0(HSD_Generator* gen)
 
     prev = NULL;
     idnum = gen->idnum;
+#if defined(TARGET_PC)
+    /* The port links each game global separately, so hsd_804D08E8/jobj, the 16 particle list
+     * heads and the allocator are NOT contiguous like the original .bss. Reaching the heads or
+     * alloc_data by offsetting from hsd_804D08E8 (as the original struct view did) lands in an
+     * unrelated scratch/statics region and reads a garbage "head" pointer -> AV in the walk. */
+    head = &hsd_804D0908[gen->linkNo];
+#else
     head = &data->particle[gen->linkNo];
+#endif
     prt = *head;
 
     while (prt != NULL) {
@@ -3085,7 +3093,11 @@ void hsd_8039D0A0(HSD_Generator* gen)
                 }
             }
 
+#if defined(TARGET_PC)
+            HSD_ObjFree(&hsd_804D0F60.alloc_data, prt);
+#else
             HSD_ObjFree(&data->alloc_data, prt);
+#endif
             hsd_804D78E2--;
         } else {
             prev = prt;

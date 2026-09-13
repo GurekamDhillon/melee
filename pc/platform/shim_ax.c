@@ -497,15 +497,15 @@ void *gw_AXAcquireVoice(uint32_t priority, void *callback, uint32_t user_context
             return NULL;
         }
         v = &gw_ax_voices[best];
-        if (v->callback != NULL) {
-            v->callback(v); /* drop callback: the synth removes the node for this voice */
+        if (gw_rptr(&v->callback) != NULL) {
+            ((void (*)(void *)) gw_rptr(&v->callback))(v);
         }
     }
 
     i = (int)(v - gw_ax_voices);
     gw_w32(&v->priority, priority);
-    v->callback = (void (*)(void *))callback;
-    v->userContext = user_context;
+    gw_wptr(&v->callback, (const void *) callback);
+    gw_w32(&v->userContext, user_context);
     gw_w32(&v->index, (uint32_t)i);
     gw_ax_in_use[i] = true;
     memset(&gw_ax_state[i], 0, sizeof gw_ax_state[i]);

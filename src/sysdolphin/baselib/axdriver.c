@@ -910,6 +910,14 @@ void AXDriver_8038DCFC(void)
         HSD_AudioFree(AXDriver_804D7798);
     }
     AXDriver_804D7798 = NULL;
+#if defined(TARGET_PC)
+    /* The bank/sample tables point into the buffer just freed; a caller that frees, then reloads and
+     * plays (lbAudioAx_80027AB0), dereferences them if the reload returns early, so clear them too. */
+    AXDriver_804D77B0 = 0;
+    AXDriver_804D77B4 = NULL;
+    AXDriver_804D77B8 = 0;
+    AXDriver_804D77BC = NULL;
+#endif
 }
 
 int AXDriverSetupAux(int channel, AXDriverAuxType type, void* param)

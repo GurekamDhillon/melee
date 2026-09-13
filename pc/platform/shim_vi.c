@@ -339,6 +339,8 @@ void gw_frame_tick(void) {
   long long t_enter = 0, t_present = 0, t_events = 0, t_begin = 0;
   int presented = 0;
 
+  gw_watch_tick();
+
   if (prof) {
     t_enter = gw_prof_now();
   }

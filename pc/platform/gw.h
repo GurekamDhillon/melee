@@ -122,6 +122,10 @@ void gw_dump_stub_summary(void);
 void gw_install_crash_handler(void);
 /* Logs a code address as a melee-pc.map rva, or as module+offset when it is not in the exe. */
 void gw_log_code_addr(const char *label, const void *addr);
+/* PAGE_GUARD a region and log the faulting instruction of accesses, to find what overwrites a
+ * field. gw_watch_tick re-arms it; call that once per frame from the frame pump. */
+void gw_watch_page(void *addr, size_t size);
+void gw_watch_tick(void);
 /* Samples the game thread's pc every few seconds. Finds loops that never present a frame,
  * which produce no log output and look exactly like a hang from outside. */
 void gw_start_watchdog(void);

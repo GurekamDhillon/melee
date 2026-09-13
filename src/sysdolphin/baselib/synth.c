@@ -1496,6 +1496,10 @@ void HSD_SynthStreamSetVolume(f32 volume)
     updateAllVolume(0xFFFF);
 }
 
+#if defined(TARGET_PC)
+extern void watch_page(void *, unsigned long);
+#endif
+
 void HSD_SynthInit(int dsp_size, int voices, int stream_size, int bank_size)
 {
     AXInit();
@@ -1505,6 +1509,9 @@ void HSD_SynthInit(int dsp_size, int voices, int stream_size, int bank_size)
     HSD_Synth_804D7784 *= 2;
     hsd_SynthSFXBankHead[0] = ARAlloc(bank_size);
     AXRegisterCallback(HSD_SynthCallback);
+#if defined(TARGET_PC)
+    watch_page(hsd_SynthSFXNodes, sizeof hsd_SynthSFXNodes);
+#endif
     HSD_Synth_804D777C = 0xFF;
     AISetStreamVolLeft(HSD_Synth_804D6030 * (f32) HSD_Synth_804D777C);
     AISetStreamVolRight(HSD_Synth_804D6030 * (f32) HSD_Synth_804D777C);

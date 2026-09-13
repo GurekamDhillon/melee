@@ -421,10 +421,58 @@ static void gw_invalid_parameter(const wchar_t *expr, const wchar_t *func, const
   _exit(3);
 }
 
+/* ---- write watchdog --------------------------------------------------------------------------
+ * PAGE_GUARD a region and log the faulting instruction of every access, to catch what overwrites a
+ * field whose value changes without a deterministic trigger. The CPU clears the guard on the first
+ * access, so the handler logs and disarms; gw_watch_tick re-arms once per frame to catch the next
+ * writer. Only the first access per frame is reported, which is enough to spot an unexpected one. */
+static void *gw_watch_addr;
+static size_t gw_watch_len;
+static int gw_watch_armed;
+
+static LONG CALLBACK gw_vectored_exception(EXCEPTION_POINTERS *ep) {
+  if (ep->ExceptionRecord->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION) {
+    char where[MAX_PATH + 64];
+    const uintptr_t pc = (uintptr_t)ep->ExceptionRecord->ExceptionAddress;
+    const uintptr_t target = (uintptr_t)ep->ExceptionRecord->ExceptionInformation[1];
+    gw_log("gw: GUARD access by %s at %p", gw_describe_code_addr(pc, where, sizeof where),
+           (void *)target);
+    gw_watch_armed = 0;
+    if (gw_watch_addr != NULL) {
+      DWORD old;
+      VirtualProtect(gw_watch_addr, gw_watch_len, PAGE_READWRITE, &old);
+    }
+    return EXCEPTION_CONTINUE_EXECUTION;
+  }
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+void gw_watch_page(void *addr, size_t size) {
+  const uintptr_t page = 0x1000;
+  uintptr_t start = (uintptr_t)addr & ~(page - 1);
+  uintptr_t end = ((uintptr_t)addr + size + page - 1) & ~(page - 1);
+  DWORD old;
+  gw_watch_addr = (void *)start;
+  gw_watch_len = end - start;
+  if (VirtualProtect(gw_watch_addr, gw_watch_len, PAGE_READWRITE | PAGE_GUARD, &old)) {
+    gw_watch_armed = 1;
+  }
+}
+
+void gw_watch_tick(void) {
+  if (!gw_watch_armed && gw_watch_addr != NULL) {
+    DWORD old;
+    if (VirtualProtect(gw_watch_addr, gw_watch_len, PAGE_READWRITE | PAGE_GUARD, &old)) {
+      gw_watch_armed = 1;
+    }
+  }
+}
+
 void gw_install_crash_handler(void) {
   gw_image_base = (uintptr_t)GetModuleHandleW(NULL);
   SetUnhandledExceptionFilter(&gw_unhandled_exception);
   _set_invalid_parameter_handler(&gw_invalid_parameter);
+  AddVectoredExceptionHandler(1, &gw_vectored_exception);
 }
 
 /* ---- watchdog -------------------------------------------------------------------------------

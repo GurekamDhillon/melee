@@ -112,9 +112,11 @@ static void gw_arq_complete(void *request, void *callback, uint32_t unused) {
 
 void gw_ARQPostRequest(void *request, uint32_t owner, uint32_t type, uint32_t priority,
                        uint32_t source, uint32_t dest, uint32_t length, void *callback) {
-  (void)owner;
   (void)type;
   (void)priority;
+  if (request != NULL) {
+    gw_w32((unsigned char *)request + 4, owner); /* ARQRequest.owner == lbArqHandle.node */
+  }
   if (length != 0 && source != dest) {
     memcpy(gw_ar_addr(dest), gw_ar_addr(source), length);
   }

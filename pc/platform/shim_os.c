@@ -256,11 +256,18 @@ void gw_os_run_alarms(uint64_t ticks) {
     while (a->handle != NULL && a->handler != NULL && ticks >= a->fire_at) {
       void *handler = a->handler;
       void *handle = a->handle;
+      uint64_t fire_at = a->fire_at;
       /* Handlers are void(void) functions cast to OSAlarmHandler; the extra arguments are
        * ignored on both ABIs. */
       ++gw_alarm_fire_count;
       ((void (*)(void *, void *))handler)(handle, NULL);
-      if (a->handler != handler) {
+      /* A handler may cancel the alarm (OSCancelAlarm clears handler), or re-arm a one-shot by
+       * calling OSSetAlarm with the same handler -- lbMemory's chunked memcpy (fn_80015184) does
+       * exactly that, rescheduling itself 3ms out. OSSetAlarm bumps fire_at, so treating
+       * "handler unchanged" as "still idle" cancelled the re-armed alarm after its first chunk
+       * and left the copy (and the preload heap compaction that drives it) stalled forever.
+       * Compare fire_at too, so a re-armed one-shot survives. */
+      if (a->handler != handler || a->fire_at != fire_at) {
         break; /* cancelled or re-armed inside the handler */
       }
       if (a->period == 0) {

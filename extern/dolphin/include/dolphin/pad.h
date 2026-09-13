@@ -70,6 +70,10 @@ typedef struct PADStatus {
     /*0x08*/ u8 analogA;
     /*0x09*/ u8 analogB;
     /*0x0A*/ s8 err;
+#ifdef TARGET_PC
+    // Aurora reports buttons that the GameCube controller did not have.
+    u32 extButton;
+#endif
 } PADStatus;
 
 // PAD.c

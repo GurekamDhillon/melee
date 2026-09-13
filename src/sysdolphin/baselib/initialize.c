@@ -307,6 +307,69 @@ void HSD_ObjDumpStat(void)
     }
 }
 
+static bool hsd_init_parameter_allowed(void)
+{
+    if (init_done) {
+        if (!shown) {
+            OSReport(
+                "init parameter should be set before invoking HSD_Init().\n");
+            shown = true;
+        }
+        return false;
+    }
+    return true;
+}
+
+#ifdef TARGET_PC
+bool HSD_SetInitParameterU32(HSD_InitParam param, u32 value)
+{
+    if (!hsd_init_parameter_allowed()) {
+        return false;
+    }
+
+    switch (param) {
+    case HSD_INIT_FIFO_SIZE:
+        if (value > 0) {
+            iparam_fifo_size = value;
+            return true;
+        }
+        break;
+    case HSD_INIT_XFB_MAX_NUM:
+        if (value > 0) {
+            iparam_xfb_max_num = value;
+            return true;
+        }
+        break;
+    case HSD_INIT_HEAP_MAX_NUM:
+        if (value > 0) {
+            iparam_heap_max_num = value;
+            return true;
+        }
+        break;
+    case HSD_INIT_AUDIO_HEAP_SIZE:
+        if (value > 0) {
+            iparam_audio_heap_size = value;
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool HSD_SetInitParameterPtr(HSD_InitParam param, void* value)
+{
+    if (!hsd_init_parameter_allowed()) {
+        return false;
+    }
+    if (param == HSD_INIT_RENDER_MODE_OBJ) {
+        rmode = value;
+        return true;
+    }
+    return false;
+}
+#else
 bool HSD_SetInitParameter(HSD_InitParam param, ...)
 {
     va_list ap;
@@ -363,3 +426,4 @@ bool HSD_SetInitParameter(HSD_InitParam param, ...)
 
     return ok;
 }
+#endif

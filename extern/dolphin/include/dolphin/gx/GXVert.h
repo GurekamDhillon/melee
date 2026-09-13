@@ -29,7 +29,7 @@ volatile PPCWGPipe GXWGFifo : GXFIFO_ADDR;
 #define GXWGFifo (*(volatile PPCWGPipe *)GXFIFO_ADDR)
 #endif
 
-#if DEBUG
+#if defined(TARGET_PC) || DEBUG
 
 // external functions
 

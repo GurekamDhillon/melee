@@ -297,8 +297,12 @@ void hsd_80391E18(const u8* list, f32 x1, f32 y1, f32 x2, f32 y2)
 
         GXBegin(0xA8, 0, 2);
 
+#if defined(TARGET_PC)
+        GXPosition2f32(prev_x, prev_y);
+#else
         GXWGFifo.f32 = prev_x;
         GXWGFifo.f32 = prev_y;
+#endif
 
         prev_x = t * dx + x1;
         prev_y = t * dy + y1;

@@ -10,10 +10,19 @@ typedef void (*jmp_t)(void);
 typedef jmp_t jtbl_t[];
 
 #ifndef MWERKS_GEKKO
+#ifdef TARGET_PC
+/* The PC port keeps Gekko's arithmetic: __frsqrte is the hardware estimate (pc/gameworld/
+ * gekko_fp.c), and sqrtf/sqrtf_accurate stay the Newton-Raphson refinements in MSL/math_ppc.h
+ * that consume it. Substituting sqrt() here would change every distance and normalization the
+ * fighter physics computes. */
+#define sqrtf__Ff(x) sqrtf(x)
+#define __fabs(f) fabs(f)
+#else
 #define __frsqrte(x) sqrt(x)
 #define sqrtf__Ff(x) sqrtf(x)
 #define sqrtf_accurate(x) sqrtf(x)
 #define __fabs(f) fabsf(f)
+#endif
 #endif
 
 #ifndef UNK_T

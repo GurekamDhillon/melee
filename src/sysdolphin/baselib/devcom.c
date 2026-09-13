@@ -406,6 +406,19 @@ int HSD_DevComRequest(int file, uintptr_t src, uintptr_t dest, size_t size,
         !(HSD_DevComGetDestType(type) == DEVCOMDEST_SBUF
             && size > DEVCOM_BUF_SIZE));
 
+#ifdef TARGET_PC
+    /* The 32-byte alignment these asserts demand came free on hardware: ARAM offsets, OSAlloc
+     * results and the DOL's own data layout were all 32-aligned. On PC neither the host allocator
+     * nor the linker guarantees it for a game global, so report the arguments before dying --
+     * otherwise the assert names a line but not which caller or which operand is at fault. */
+    if (src % 32 != 0 || dest % 32 != 0 || size % 32 != 0 || size == 0) {
+        OSReport("HSD_DevComRequest: file=%d src=0x%08X dest=0x%08X size=0x%X type=0x%X pri=%d "
+                 "cb=%p (src%%32=%d dest%%32=%d size%%32=%d)\n",
+                 file, (u32) src, (u32) dest, (u32) size, type, pri, cb,
+                 (int) (src % 32), (int) (dest % 32), (int) (size % 32));
+    }
+#endif
+
     HSD_ASSERT(0x1EF, src % 32 == 0);
     HSD_ASSERT(0x1F0, dest % 32 == 0);
     HSD_ASSERT(0x1F1, size % 32 == 0);

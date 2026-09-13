@@ -40,6 +40,11 @@ HSD_RenderPass HSD_GetCurrentRenderPass(void);
 void HSD_StartRender(HSD_RenderPass pass);
 void HSD_Init_803755A8(void);
 void HSD_ObjDumpStat(void);
+#ifdef TARGET_PC
+bool HSD_SetInitParameterU32(HSD_InitParam param, u32 value);
+bool HSD_SetInitParameterPtr(HSD_InitParam param, void* value);
+#else
 bool HSD_SetInitParameter(HSD_InitParam param, ...);
+#endif
 
 #endif

@@ -144,10 +144,17 @@ int main(void)
         OSAllocFromArenaHi(0x01800000, 4);
     }
     arena_size = (intptr_t) OSGetArenaHi() - (intptr_t) OSGetArenaLo();
+#ifdef TARGET_PC
+    HSD_SetInitParameterU32(HSD_INIT_XFB_MAX_NUM, 2);
+    HSD_SetInitParameterPtr(HSD_INIT_RENDER_MODE_OBJ, &GXNtsc480IntDf);
+    HSD_SetInitParameterU32(HSD_INIT_FIFO_SIZE, 0x40000);
+    HSD_SetInitParameterU32(HSD_INIT_HEAP_MAX_NUM, 4);
+#else
     HSD_SetInitParameter(HSD_INIT_XFB_MAX_NUM, 2);
     HSD_SetInitParameter(HSD_INIT_RENDER_MODE_OBJ, &GXNtsc480IntDf);
     HSD_SetInitParameter(HSD_INIT_FIFO_SIZE, 0x40000);
     HSD_SetInitParameter(HSD_INIT_HEAP_MAX_NUM, 4);
+#endif
     db_SetupCrashHandler();
     HSD_AllocateXFB(2, &GXNtsc480IntDf);
     HSD_GXSetFifoObj(GXInit(HSD_AllocateFifo(0x40000), 0x40000));

@@ -37,7 +37,12 @@ typedef struct _GXColorS10
 
 typedef struct _GXTexObj
 {
+#ifdef TARGET_PC
+    // Aurora stores a larger representation here than real GX did.
+    u32 dummy[16];
+#else
     u32 dummy[8];
+#endif
 } GXTexObj;
 
 typedef struct _GXLightObj
@@ -52,7 +57,11 @@ typedef struct _GXTexRegion
 
 typedef struct _GXTlutObj
 {
+#ifdef TARGET_PC
+    u32 dummy[10];
+#else
     u32 dummy[3];
+#endif
 } GXTlutObj;
 
 typedef struct _GXTlutRegion

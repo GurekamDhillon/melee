@@ -345,6 +345,32 @@ static LONG WINAPI gw_unhandled_exception(EXCEPTION_POINTERS *ep) {
     }
   }
 
+  /* The FP walk fails whenever -O2 omits frame pointers (most game/shim code). Scan the raw stack
+   * for words that fall inside the game image, which recovers the return-address chain. */
+  gw_log("gw:   stack scan (image addresses):");
+  {
+    const uintptr_t *sp = (const uintptr_t *)(uintptr_t)ctx->Esp;
+    uintptr_t base = gw_image_base;
+    int found = 0;
+    int i;
+    if (base == 0) {
+      base = (uintptr_t)GetModuleHandleW(NULL);
+      gw_image_base = base;
+    }
+    for (i = 1; i < 2048 && found < 48; ++i) {
+      uintptr_t w;
+      if (IsBadReadPtr(sp + i, sizeof(uintptr_t)) != 0) {
+        break;
+      }
+      w = sp[i];
+      if (w >= base && w < base + 0x1000000u) {
+        gw_log("gw:     [esp+%04X] %s", (unsigned)(i * 4),
+               gw_describe_code_addr(w, where, sizeof where));
+        ++found;
+      }
+    }
+  }
+
   gw_log("gw:   for a map rva, take the melee-pc.map entry with the greatest address <= it");
   gw_dump_stub_summary();
   return EXCEPTION_EXECUTE_HANDLER;

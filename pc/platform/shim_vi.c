@@ -10,6 +10,7 @@
 #include "shim_vi.h"
 
 #include "gw.h"
+#include "shim_ax.h"
 #include "shim_gx.h"
 #include "shim_os.h"
 
@@ -157,23 +158,252 @@ bool gw_frame_init(void) {
 
 void gw_frame_mark_content(void) { gw_frame_has_content = true; }
 
+
+/* ---- frame profiler ---------------------------------------------------------------------- */
+
+/* Off unless MELEE_PROFILE=1. The port is not as smooth as Dolphin and the cause is not obvious,
+ * so this measures the frame rather than guessing at it. The distinction that matters is between
+ * a uniformly slow frame and an occasional long one: those have completely different causes and
+ * an average hides both. Hence percentiles and a histogram, not a mean.
+ *
+ * The frame is split at the points gw_frame_tick already has:
+ *   game    - everything between the end of the last tick and the start of this one, i.e. game
+ *             logic plus the FIFO writes it makes
+ *   present - aurora_end_frame(), which only enqueues to Aurora's render worker and returns, so
+ *             this is submit cost, not a vsync wait; the real Present()/vsync block happens on
+ *             that worker thread, and the game thread's only render back-pressure is the frame
+ *             slot acquired in begin
+ *   events  - gw_handle_events()
+ *   begin   - aurora_begin_frame()
+ *
+ * "empty" counts ticks that presented nothing and took the Sleep(1) path: the game polling
+ * retrace more than once per frame. Those cost a millisecond each and are a smoothness suspect
+ * in their own right. */
+static int gw_prof_on(void) {
+  static int cached = -1;
+  if (cached < 0) {
+    const char *v = getenv("MELEE_PROFILE");
+    cached = (v != NULL && v[0] == '1') ? 1 : 0;
+  }
+  return cached;
+}
+
+#define GW_PROF_FRAMES 600
+#define GW_PROF_BUCKETS 8
+
+static double gw_prof_freq;
+static long long gw_prof_last_end;
+static long long gw_prof_last_cpu = -1;
+static double gw_prof_samples[GW_PROF_FRAMES];
+static int gw_prof_count;
+static int gw_prof_head;
+static double gw_prof_sum_game, gw_prof_sum_present, gw_prof_sum_events, gw_prof_sum_begin;
+static double gw_prof_sum_cpu;
+static uint32_t gw_prof_frames, gw_prof_empty;
+static uint32_t gw_prof_hist[GW_PROF_BUCKETS];
+static int gw_prof_spikes;
+
+/* Upper bounds in ms. 16.67 is the target; the buckets either side of it are what matter. */
+static const double gw_prof_edges[GW_PROF_BUCKETS] = { 14.0, 16.0, 17.5, 20.0, 25.0, 34.0, 50.0, 1e9 };
+
+static long long gw_prof_now(void) {
+  LARGE_INTEGER t;
+  QueryPerformanceCounter(&t);
+  return (long long)t.QuadPart;
+}
+
+static double gw_prof_ms(long long a, long long b) {
+  if (gw_prof_freq <= 0.0) {
+    LARGE_INTEGER f;
+    QueryPerformanceFrequency(&f);
+    gw_prof_freq = (double)f.QuadPart;
+  }
+  return ((double)(b - a) * 1000.0) / gw_prof_freq;
+}
+
+/* Kernel+user CPU time of the calling thread, in 100 ns units. The wall split cannot tell real
+ * game work from the pad-wait spin, and those call for opposite fixes (optimise the work vs.
+ * yield the spin); this is the number that separates them. */
+static long long gw_prof_thread_cpu(void) {
+  FILETIME create, exit, kernel, user;
+  ULARGE_INTEGER k, u;
+  if (!GetThreadTimes(GetCurrentThread(), &create, &exit, &kernel, &user)) {
+    return 0;
+  }
+  k.LowPart = kernel.dwLowDateTime;
+  k.HighPart = kernel.dwHighDateTime;
+  u.LowPart = user.dwLowDateTime;
+  u.HighPart = user.dwHighDateTime;
+  return (long long)(k.QuadPart + u.QuadPart);
+}
+
+static int gw_prof_cmp(const void *a, const void *b) {
+  const double x = *(const double *)a;
+  const double y = *(const double *)b;
+  return (x < y) ? -1 : ((x > y) ? 1 : 0);
+}
+
+static double gw_prof_pct(const double *sorted, int n, double p) {
+  int i = (int)(p * (double)(n - 1) + 0.5);
+  if (i < 0) { i = 0; }
+  if (i >= n) { i = n - 1; }
+  return sorted[i];
+}
+
+static void gw_prof_report(void) {
+  double sorted[GW_PROF_FRAMES];
+  int n = gw_prof_count;
+  int i;
+
+  if (n < 2 || gw_prof_frames == 0u) {
+    return;
+  }
+  for (i = 0; i < n; ++i) {
+    sorted[i] = gw_prof_samples[i];
+  }
+  qsort(sorted, (size_t)n, sizeof(sorted[0]), gw_prof_cmp);
+
+  gw_log("gw: PROF frame ms  p50=%.2f p95=%.2f p99=%.2f max=%.2f  (%d frames)",
+         gw_prof_pct(sorted, n, 0.50), gw_prof_pct(sorted, n, 0.95), gw_prof_pct(sorted, n, 0.99),
+         sorted[n - 1], n);
+  gw_log("gw: PROF split ms  game=%.2f present=%.2f events=%.2f begin=%.2f  empty_ticks=%u",
+         gw_prof_sum_game / gw_prof_frames, gw_prof_sum_present / gw_prof_frames,
+         gw_prof_sum_events / gw_prof_frames, gw_prof_sum_begin / gw_prof_frames, gw_prof_empty);
+  gw_log("gw: PROF cpu ms    game_cpu=%.2f  of_game_wall=%.2f  wait=%.2f",
+         gw_prof_sum_cpu / gw_prof_frames, gw_prof_sum_game / gw_prof_frames,
+         (gw_prof_sum_game - gw_prof_sum_cpu) / gw_prof_frames);
+  gw_log("gw: PROF hist      <14:%u  <16:%u  <17.5:%u  <20:%u  <25:%u  <34:%u  <50:%u  50+:%u",
+         gw_prof_hist[0], gw_prof_hist[1], gw_prof_hist[2], gw_prof_hist[3], gw_prof_hist[4],
+         gw_prof_hist[5], gw_prof_hist[6], gw_prof_hist[7]);
+
+  gw_prof_sum_game = gw_prof_sum_present = gw_prof_sum_events = gw_prof_sum_begin = 0.0;
+  gw_prof_sum_cpu = 0.0;
+  gw_prof_frames = 0u;
+  gw_prof_empty = 0u;
+  gw_prof_spikes = 0;
+  for (i = 0; i < GW_PROF_BUCKETS; ++i) {
+    gw_prof_hist[i] = 0u;
+  }
+}
+
+static void gw_prof_record(double total) {
+  int b;
+  for (b = 0; b < GW_PROF_BUCKETS; ++b) {
+    if (total < gw_prof_edges[b]) {
+      ++gw_prof_hist[b];
+      break;
+    }
+  }
+  gw_prof_samples[gw_prof_head] = total;
+  gw_prof_head = (gw_prof_head + 1) % GW_PROF_FRAMES;
+  if (gw_prof_count < GW_PROF_FRAMES) {
+    ++gw_prof_count;
+  }
+}
+
 static uint32_t gw_presented_count;
 
+/* Field pacing. A GameCube's VI gives the game a hard 16.667 ms boundary. Here the present is
+ * asynchronous (aurora_end_frame only enqueues to the render worker) and a VRR display lets
+ * Present() return without back-pressure, so nothing holds the game to 60 Hz and it free-runs at
+ * its own frame cost (~15.6 ms). The 1/60 pad alarm is only a soft reference, so every ~13
+ * free-run frames the pad queue drains and the game stalls a whole period -- the 15.6/30.6 ms
+ * bimodal judder. Wait out the boundary here against the free-running virtual clock, with
+ * catch-up so a long frame (map load) does not accumulate a deficit. */
+static uint64_t gw_last_field_tick;
+
+static void gw_pace_field(void) {
+  uint64_t now = gw_time_ticks();
+  uint64_t last_pump;
+  if (gw_last_field_tick == 0) {
+    gw_last_field_tick = now;
+    return;
+  }
+  const uint64_t target = gw_last_field_tick + GW_TICKS_PER_FIELD;
+  if (now < target) {
+    last_pump = now;
+    while ((now = gw_time_ticks()) < target) {
+      if (now - last_pump >= GW_TIMER_CLOCK / 1000u) {
+        last_pump = now;
+        gw_os_run_alarms(now);
+        gw_run_deferred();
+      }
+      YieldProcessor();
+    }
+  }
+  gw_last_field_tick = now;
+}
+
 void gw_frame_tick(void) {
+  const int prof = gw_prof_on();
+  long long t_enter = 0, t_present = 0, t_events = 0, t_begin = 0;
+  int presented = 0;
+
+  if (prof) {
+    t_enter = gw_prof_now();
+  }
+
   if (gw_frame_has_content && gw_frame_begun) {
-    aurora_end_frame(); /* presents, and waits for vsync, which is what paces the game */
+    gw_pace_field();
+    aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
     gw_frame_begun = false;
     gw_frame_has_content = false;
     ++gw_presented_count;
+    presented = 1;
   } else {
     /* A wait that produced no new frame: don't burn a core spinning. */
     Sleep(1);
+    if (prof) {
+      ++gw_prof_empty;
+    }
+  }
+  if (prof) {
+    t_present = gw_prof_now();
   }
 
   gw_handle_events();
+  if (prof) {
+    t_events = gw_prof_now();
+  }
 
   if (!gw_frame_begun) {
     gw_frame_begun = aurora_begin_frame();
+  }
+
+  if (prof) {
+    t_begin = gw_prof_now();
+    if (presented) {
+      /* "game" is the span since the previous tick finished: the game's own work plus the FIFO
+       * writes it made, none of which happens inside this function. */
+      if (gw_prof_last_end != 0) {
+        const double game = gw_prof_ms(gw_prof_last_end, t_enter);
+        const double total = gw_prof_ms(gw_prof_last_end, t_begin);
+        const long long cpu_now = gw_prof_thread_cpu();
+        const double cpu =
+            (gw_prof_last_cpu >= 0) ? (double)(cpu_now - gw_prof_last_cpu) / 10000.0 : 0.0;
+        gw_prof_last_cpu = cpu_now;
+        gw_prof_sum_game += game;
+        gw_prof_sum_cpu += cpu;
+        gw_prof_sum_present += gw_prof_ms(t_enter, t_present);
+        gw_prof_sum_events += gw_prof_ms(t_present, t_events);
+        gw_prof_sum_begin += gw_prof_ms(t_events, t_begin);
+        ++gw_prof_frames;
+        gw_prof_record(total);
+        /* The per-component averages cannot explain a bimodal distribution: they describe the
+         * typical frame, while the judder lives in the tail. Attribute the slow frames
+         * individually so it is clear whether a 33 ms frame is game work or a stalled present. */
+        if (total > 25.0 && gw_prof_spikes < 12) {
+          ++gw_prof_spikes;
+          gw_log("gw: PROF spike %.2f ms  game=%.2f cpu=%.2f present=%.2f events=%.2f begin=%.2f",
+                 total, game, cpu, gw_prof_ms(t_enter, t_present), gw_prof_ms(t_present, t_events),
+                 gw_prof_ms(t_events, t_begin));
+        }
+        if ((gw_prof_frames % 180u) == 0u) {
+          gw_prof_report();
+        }
+      }
+      gw_prof_last_end = t_begin;
+    }
   }
 
   ++gw_retrace_count;
@@ -197,6 +427,10 @@ void gw_frame_tick(void) {
   if (gw_post_retrace_cb != NULL) {
     gw_post_retrace_cb(gw_retrace_count);
   }
+
+  /* Audio: generate zero or more 5 ms AX sub-frames on the game thread (the AX mixer lives in
+   * shim_ax.c and drives HSD_SynthCallback + voice mixing). */
+  gw_ax_frame_tick();
 }
 
 static uint32_t gw_wait_idle_count;

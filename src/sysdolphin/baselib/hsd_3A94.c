@@ -102,14 +102,31 @@ typedef struct CardQueueEntry {
 
 /* 3A949C */ static void hsd_803A949C(s32 chan, s32 arg1);
 /* 3ACB74 */ static s32 fn_803ACB74(s32 seq_a, s32 seq_b);
+#if defined(TARGET_PC)
+/* The card code casts hsd_804D1138 to one contiguous CardContext. On the original those three
+ * .bss blocks were adjacent (0x10 + 0x1200 + 0x300), but the port links each global separately,
+ * so alias the two sub-arrays into hsd_804D1138, which is sized to the whole context. */
+#define hsd_804D1148 ((u32(*)[0x9]) (void *) (hsd_804D1138 + 0x10))
+#define hsd_804D2348 (*(__baselib_UnkType003 *) (void *) (hsd_804D1138 + 0x1210))
+#else
 /* 4D1148 */ extern u32 hsd_804D1148[0x80][0x9];
 /* 4D2348 */ extern __baselib_UnkType003 hsd_804D2348;
+#endif
 /* 4D7980 */ extern volatile s32 hsd_804D7980;
 /* 4D7984 */ extern volatile s32 hsd_804D7984;
 /* 4D7988 */ extern s32 hsd_804D7988;
 /* 4D798C */ extern s32 hsd_804D798C;
 /* 4D7998 */ extern s32 hsd_804D7998;
 /* 4D799C */ extern s32 hsd_804D799C;
+
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_. */
+extern void diag_card_engine(int busy, int idx, int type, int read_idx, int write_idx,
+                             int tail);
+extern void diag_card_dequeue(int type, int arg);
+extern void diag_card_read(int type, int state, int dst, int size);
+extern void diag_card_engine_read(int buf, int len, int off);
+#endif
 /// .sbss globals emit in reverse declaration order.
 /* 4D79C8 */ u8 hsd_804D79C8;
 /* 4D79C4 */ s32 hsd_804D79C4;
@@ -160,6 +177,9 @@ void hsd_803A949C(s32 chan, s32 arg1)
     }
 
     state = ((CardState*) CMD_S32(0x14));
+#if defined(TARGET_PC)
+    diag_card_read(CMD_TYPE, CMD_S32(0x14), CMD_S32(0x28), CMD_S32(0x30));
+#endif
 
     switch (CMD_TYPE) {
     case 2:
@@ -595,6 +615,9 @@ s32 fn_803AA790(void)
     s32 arg0;
 
     entry = &((CardQueueEntry*) &hsd_804D2348)[hsd_804D7990];
+#if defined(TARGET_PC)
+    diag_card_dequeue(entry->x0, entry->x4);
+#endif
     arg0 = entry->x4;
     hsd_804D7990 = (hsd_804D7990 + 1) % 32;
 
@@ -911,6 +934,22 @@ void hsd_803AAA48(void)
             busy = 0;
         }
         OSRestoreInterrupts(intr);
+#if defined(TARGET_PC)
+        {
+            static s32 last_key = -1;
+            static int logged;
+            const s32 cur = ((CardBufEntry*) hsd_804D1138)[hsd_804D7980].x10;
+            const s32 key = (busy << 24) | (hsd_804D7980 << 16) | ((cur & 0xFF) << 8) |
+                            ((hsd_804D7990 & 0xF) << 4) | (hsd_804D7994 & 0xF) ^
+                            (hsd_804D7984 << 4);
+            if (key != last_key && logged < 80) {
+                last_key = key;
+                ++logged;
+                diag_card_engine(busy, hsd_804D7980, cur, hsd_804D7990, hsd_804D7994,
+                                 hsd_804D7984);
+            }
+        }
+#endif
         if (busy) {
             return;
         }
@@ -989,6 +1028,9 @@ void hsd_803AAA48(void)
             }
             hsd_804D798C = CARDGetXferredBytes(CMD_STATE->x4);
             intr2 = OSDisableInterrupts();
+#if defined(TARGET_PC)
+            diag_card_engine_read((int)(intptr_t) CMD_STATE->x0, CMD_STATE->x8, CMD_X1C);
+#endif
             r = retryCardReadAsync(&CMD_STATE->file_info, CMD_STATE->x0,
                                    CMD_STATE->x8, CMD_X1C,
                                    (void (*)(s32, s32)) hsd_803A949C);

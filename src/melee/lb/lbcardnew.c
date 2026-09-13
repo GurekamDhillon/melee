@@ -11,6 +11,12 @@
 #include <sysdolphin/baselib/hsd_3B27.h>
 #include <sysdolphin/baselib/memory.h>
 
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_. */
+extern void wait_idle(void);
+extern void diag_card_pending(int pending, int state);
+#endif
+
 #define _p(x) (lb_80432A68.x)
 
 int lb_80019BB8(int card_result)
@@ -713,6 +719,18 @@ int lb_8001B6F8(void)
     int result;
 
     hsd_803AAA48();
+#if defined(TARGET_PC)
+    {
+        static int last_pending = -1;
+        static int logged;
+        const int pending = _p(x8AC);
+        if (pending != last_pending && logged < 60) {
+            last_pending = pending;
+            ++logged;
+            diag_card_pending(pending, _p(unk_34));
+        }
+    }
+#endif
     enabled = OSDisableInterrupts();
     if (_p(x8AC) != 0) {
         result = 0xB;
@@ -766,6 +784,12 @@ u32 lb_8001B7E0(int chan, char* filename, void* file_entries, void* save_data,
     result = lb_80019CB0(0x10);
     if (result == 0xB) {
         do {
+#if defined(TARGET_PC)
+            /* This spin calls no shim, so nothing would pump the port's deferred queue and the
+             * CARD completion behind lb_8001B6F8 would never arrive. Same fix, and same reason,
+             * as the ARQ wait in lbarq.c. */
+            wait_idle();
+#endif
         } while ((result = lb_8001B6F8()) == 0xB);
     }
     return result;
@@ -786,6 +810,12 @@ int lb_8001B8C8(int chan)
     result = lb_80019CB0(0x10);
     if (result == 0xB) {
         do {
+#if defined(TARGET_PC)
+            /* This spin calls no shim, so nothing would pump the port's deferred queue and the
+             * CARD completion behind lb_8001B6F8 would never arrive. Same fix, and same reason,
+             * as the ARQ wait in lbarq.c. */
+            wait_idle();
+#endif
         } while ((result = lb_8001B6F8()) == 0xB);
     }
     return result;
@@ -818,6 +848,12 @@ int lb_8001BA44(int chan, const char* filename, UNK_T status_out)
     result = lb_80019CB0(0x10);
     if (result == 0xB) {
         do {
+#if defined(TARGET_PC)
+            /* This spin calls no shim, so nothing would pump the port's deferred queue and the
+             * CARD completion behind lb_8001B6F8 would never arrive. Same fix, and same reason,
+             * as the ARQ wait in lbarq.c. */
+            wait_idle();
+#endif
         } while ((result = lb_8001B6F8()) == 0xB);
     }
     return result;
@@ -876,6 +912,12 @@ int lb_8001BC18(int chan, char* filename, void** file_entries, void* save_data,
 
     if (result == 0xB) {
         do {
+#if defined(TARGET_PC)
+            /* This spin calls no shim, so nothing would pump the port's deferred queue and the
+             * CARD completion behind lb_8001B6F8 would never arrive. Same fix, and same reason,
+             * as the ARQ wait in lbarq.c. */
+            wait_idle();
+#endif
         } while ((result = lb_8001B6F8()) == 0xB);
     }
     return result;
@@ -901,6 +943,12 @@ int lb_8001BD34(int chan, const char* filename, UNK_T file_entries,
     result = lb_80019CB0(0x10);
     if (result == 0xB) {
         do {
+#if defined(TARGET_PC)
+            /* This spin calls no shim, so nothing would pump the port's deferred queue and the
+             * CARD completion behind lb_8001B6F8 would never arrive. Same fix, and same reason,
+             * as the ARQ wait in lbarq.c. */
+            wait_idle();
+#endif
         } while ((result = lb_8001B6F8()) == 0xB);
     }
     return result;
@@ -990,6 +1038,12 @@ int lb_8001BFD8(int chan, lbCardNew_SnapshotEntry* snapshot_entries,
     result = lb_80019CB0(0x10);
     if (result == 0xB) {
         do {
+#if defined(TARGET_PC)
+            /* This spin calls no shim, so nothing would pump the port's deferred queue and the
+             * CARD completion behind lb_8001B6F8 would never arrive. Same fix, and same reason,
+             * as the ARQ wait in lbarq.c. */
+            wait_idle();
+#endif
         } while ((result = lb_8001B6F8()) == 0xB);
     }
     return result;
@@ -1078,6 +1132,12 @@ int lb_8001C2D8(int chan, const char* company, const char* game_name,
     result = lb_80019CB0(0x10);
     if (result == 0xB) {
         do {
+#if defined(TARGET_PC)
+            /* This spin calls no shim, so nothing would pump the port's deferred queue and the
+             * CARD completion behind lb_8001B6F8 would never arrive. Same fix, and same reason,
+             * as the ARQ wait in lbarq.c. */
+            wait_idle();
+#endif
         } while ((result = lb_8001B6F8()) == 0xB);
     }
     return result;

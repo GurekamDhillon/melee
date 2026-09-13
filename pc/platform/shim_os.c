@@ -138,6 +138,15 @@ int gw_OSGetTick(void) { return (int)(int32_t)(uint32_t)gw_time_ticks(); }
 
 void gw_OSTicksToCalendarTime(int64_t ticks, void *td) {
   OSTicksToCalendarTime((OSTime)ticks, (OSCalendarTime *)td);
+  {
+    static int logged;
+    if (logged < 8) {
+      ++logged;
+      gw_log("gw: DIAG   CALTIME ticks=%lld year=%d mon=%d day=%d", (long long)ticks,
+             ((OSCalendarTime *)td)->year, ((OSCalendarTime *)td)->mon,
+             ((OSCalendarTime *)td)->mday);
+    }
+  }
 }
 
 /* ---- interrupts --------------------------------------------------------------------------- */

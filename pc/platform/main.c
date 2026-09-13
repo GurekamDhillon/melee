@@ -26,7 +26,12 @@ static void gw_aurora_log(AuroraLogLevel level, const char *module, const char *
                           unsigned int len) {
   (void)len;
   static const char *const names[] = {"debug", "info", "warning", "error", "fatal"};
-  if (level >= LOG_WARNING) {
+  static int verbose = -1;
+  if (verbose < 0) {
+    const char *v = getenv("MELEE_AURORA_VERBOSE");
+    verbose = (v != NULL && v[0] == '1') ? 1 : 0;
+  }
+  if (level >= LOG_WARNING || (verbose && level >= LOG_INFO)) {
     gw_log("aurora[%s] %s: %s", names[level], module, message);
   }
   if (level == LOG_FATAL) {

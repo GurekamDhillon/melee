@@ -9,7 +9,13 @@
 
 /* 4D2348 */ u8 hsd_804D2348[0x300];
 /* 4D1148 */ u32 hsd_804D1148[0x80][0x9];
+#if defined(TARGET_PC)
+/* The card code treats hsd_804D1138 as a full CardContext; the port links the original adjacent
+ * .bss blocks separately, so size this to the whole context (see hsd_3A94.c). */
+u8 hsd_804D1138[0x10 + 0x1200 + 0x300];
+#else
 /* 4D1138 */ u8 hsd_804D1138[0x10];
+#endif
 
 /* 4D799C */ s32 hsd_804D799C;
 /* 4D7998 */ s32 hsd_804D7998;

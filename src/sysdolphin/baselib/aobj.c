@@ -18,6 +18,13 @@
 #include "tobj.h"
 #include "wobj.h"
 
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
+ * gw_diag_aobj_bad in shim_gx.c. A non-NULL but tiny aobj means a caller read the pointer from
+ * the wrong place (a struct-layout bug elsewhere), so report the site before the store faults. */
+extern void diag_aobj_bad(void* aobj, unsigned int flags, void* caller);
+#endif
+
 HSD_ObjAllocData aobj_alloc_data;
 
 static HSD_SList* endcallback_list;
@@ -43,6 +50,11 @@ u32 HSD_AObjGetFlags(HSD_AObj* aobj)
 void HSD_AObjSetFlags(HSD_AObj* aobj, u32 flags)
 {
     if (aobj) {
+#if defined(TARGET_PC)
+        if ((unsigned long) aobj < 0x1000UL) {
+            diag_aobj_bad(aobj, flags, __builtin_return_address(0));
+        }
+#endif
         flags &= (AOBJ_LOOP | AOBJ_NO_UPDATE);
         aobj->flags |= flags;
     }

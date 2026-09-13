@@ -18,6 +18,13 @@
 
 #define _p(x) (lb_80433318.x)
 
+#if defined(TARGET_PC)
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_, so this resolves to
+ * gw_diag_card_state in shim_gx.c. Reports the card work-area pointers just before the create
+ * path dereferences them, so a bad x5C names the fault instead of a bare AV. */
+extern void diag_card_state(void* x5c, int enable, void* x64);
+#endif
+
 static struct {
     u32 x0, x4, x8;
     u32 pad[2];
@@ -63,8 +70,31 @@ static const char* lb_8001C658(void)
     } else {
         gamedata_str = "Super Smash Bros. Melee         Game Data";
     }
+#if defined(TARGET_PC)
+    {
+        /* _1C is 0x40 bytes and x5C sits immediately after it. The JP literal is 46 bytes in the
+         * original Shift-JIS execution charset but 65 in UTF-8, so the unbounded sprintf overflows
+         * into x5C and the next _p(x5C)[...] dereferences date digits. Format into a scratch
+         * buffer and cap the copy at the real buffer size. */
+        char tmp[128];
+        int n = sprintf(tmp, "%s %4d/%02d/%02d", gamedata_str, time.year, time.mon + 1,
+                        time.mday);
+        int k;
+        if (n < 0) {
+            n = 0;
+        }
+        if (n > (int) sizeof(_p(_1C)) - 1) {
+            n = (int) sizeof(_p(_1C)) - 1;
+        }
+        for (k = 0; k < n; ++k) {
+            _p(_1C)[k] = tmp[k];
+        }
+        _p(_1C)[n] = '\0';
+    }
+#else
     sprintf(_p(_1C), "%s %4d/%02d/%02d", gamedata_str, time.year, time.mon + 1,
             time.mday);
+#endif
     return _p(_1C);
 }
 
@@ -90,6 +120,9 @@ u32 lb_8001C87C(void)
 
 int lb_8001C8BC(void)
 {
+#if defined(TARGET_PC)
+    diag_card_state(_p(x5C), _p(enable), _p(x64));
+#endif
     HSD_ASSERT(0x140, _p(enable));
 
     return lb_8001BC18(0, "SuperSmashBros0110290334", (void**) lb_803BAB74,

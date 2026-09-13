@@ -1,6 +1,7 @@
 /* Shims for hardware that is simply absent on the PC: data cache maintenance, the debug port, the
  * PowerPC MSR, and the audio interface. */
 #include "gw.h"
+#include "shim_ax.h"
 
 /* DMA-coherency maintenance only; x86 has no such caches, and every game DMA is a memcpy here. */
 void gw_DCFlushRange(void *addr, uint32_t n) {
@@ -27,12 +28,12 @@ int gw_PPCMfmsr(void) { return 0; }
 
 void gw_PPCMtmsr(int msr) { (void)msr; }
 
-/* No AI hardware. Aurora owns the audio path (currently unimplemented), so these are inert until
- * the AX/AI work happens. */
+/* The AI has no hardware here; the AX mixer in shim_ax.c owns the output path. These track the
+ * master volume and sample rate the game sets, which the mixer applies each sub-frame. */
 void gw_AIInit(uint8_t *stack) { (void)stack; }
 
-void gw_AISetDSPSampleRate(uint32_t rate) { (void)rate; }
+void gw_AISetDSPSampleRate(uint32_t rate) { gw_ai_dsp_sample_rate = rate; }
 
-void gw_AISetStreamVolLeft(uint8_t vol) { (void)vol; }
+void gw_AISetStreamVolLeft(uint8_t vol) { gw_ai_stream_vol_left = vol; }
 
-void gw_AISetStreamVolRight(uint8_t vol) { (void)vol; }
+void gw_AISetStreamVolRight(uint8_t vol) { gw_ai_stream_vol_right = vol; }

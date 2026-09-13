@@ -433,6 +433,67 @@ void gw_diag_cobj_view(const float *mtx, const float *eye, const float *up, cons
   }
 }
 
+void gw_diag_aobj_bad(void *aobj, uint32_t flags, void *caller) {
+  static int reported;
+  if (reported < 8) {
+    const uint32_t c = (uint32_t)(uintptr_t)caller;
+    const uint32_t csw = (c >> 24) | ((c >> 8) & 0x0000FF00u) | ((c << 8) & 0x00FF0000u) | (c << 24);
+    ++reported;
+    gw_log("gw: DIAG   BADAOBJ aobj=%08X flags=%08X caller=%08X caller_bswap=%08X",
+           (uint32_t)(uintptr_t)aobj, flags, c, csw);
+  }
+}
+
+void gw_diag_card_engine_read(int buf, int len, int off) {
+  static int logged;
+  if (logged < 30) {
+    ++logged;
+    gw_log("gw: DIAG   CARDEREAD buf=%08X len=%d off=%d", (unsigned)buf, len, off);
+  }
+}
+
+void gw_diag_card_read(int type, int state, int dst, int size) {
+  static int logged;
+  if (logged < 40) {
+    ++logged;
+    gw_log("gw: DIAG   CARDREAD type=%d state=%08X dst=%08X size=%d", type, state, dst, size);
+  }
+}
+
+void gw_diag_card_dequeue(int type, int arg) {
+  static int logged;
+  if (logged < 40) {
+    ++logged;
+    gw_log("gw: DIAG   CARDDEQ type=%d arg=%08X", type, (unsigned)arg);
+  }
+}
+
+void gw_diag_card_engine(int busy, int idx, int type, int read_idx, int write_idx, int tail) {
+  static int logged;
+  if (logged < 80) {
+    ++logged;
+    gw_log("gw: DIAG   CARDENG busy=%d head=%d type=%d tail=%d r=%d w=%d", busy, idx, type, tail,
+           read_idx, write_idx);
+  }
+}
+
+void gw_diag_card_pending(int pending, int state) {
+  static int logged;
+  if (logged < 60) {
+    ++logged;
+    gw_log("gw: DIAG   CARDPEND pending=%d state=%d", pending, state);
+  }
+}
+
+void gw_diag_card_state(void *x5c, int enable, void *x64) {
+  static int reported;
+  if (reported < 8) {
+    ++reported;
+    gw_log("gw: DIAG   CARDSTATE x5C=%08X enable=%d x64=%08X", (uint32_t)(uintptr_t)x5c, enable,
+           (uint32_t)(uintptr_t)x64);
+  }
+}
+
 void gw_diag_jobj_report(void) {
   static const char *const names[4] = {"JOINT1", "JOINT2", "EFFECTOR", "default"};
   int b;

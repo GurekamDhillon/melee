@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
+// Portions of this file are derived from Dolphin Emulator's Source/Core/Common/FloatUtils.cpp
+// (Copyright 2018 Dolphin Emulator Project, also GPL-2.0-or-later): the frsqrte/fres estimate
+// tables and the surrounding normalisation logic. See pc/LICENSE and pc/README.md.
+//
 /* Bit-exact Gekko floating-point estimate instructions.
  *
  * This is game-world code: it is compiled for PowerPC and byte-swapped by gwtool like the rest of

@@ -355,16 +355,29 @@ void Player_80031FB0(int slot, s32 entity_index)
 void Player_80032070(int slot, bool bool_arg)
 {
     StaticPlayer* player;
+#if !defined(TARGET_PC)
     struct Unk_Struct_w_Array* unkStruct =
         (struct Unk_Struct_w_Array*) &str_PdPmdat_start_of_data;
+#endif
     Player_CheckSlot(slot);
     player = &player_slots[slot];
 
     if (bool_arg == 0) {
         ftCo_800D4FF4(player->player_entity[player->transformed[0]]);
 
+#if defined(TARGET_PC)
+        /* Console places ftMapping_list directly after str_PdPmdat_start_of_data
+         * ("PdPm.dat"), which the Unk_Struct_w_Array view aliases. The port links
+         * the two globals separately, so vec_arr[ckind].z is garbage and wrongly
+         * revives the transform partner (Sheik) as a second fighter. Read the
+         * real mapping table, like Player_80036E20 does. */
+        if (player->flags.b2 &&
+            ftMapping_list[player->ckind].has_transformation == 0 &&
+            ftLib_8008701C(player->player_entity[player->transformed[1]]))
+#else
         if (player->flags.b2 && unkStruct->vec_arr[player->ckind].z == 0 &&
             ftLib_8008701C(player->player_entity[player->transformed[1]]))
+#endif
         {
             ftCo_800D4FF4(player->player_entity[player->transformed[1]]);
         }

@@ -1984,6 +1984,40 @@ bool un_80301840(enum soundtest_callback_arg0 arg0)
     return 0;
 }
 
+#if defined(TARGET_PC)
+/* PC dev: debug-menu rows that unlock all characters/stages and save to card. */
+static char gw_dev_unlock_chars_label[] = "Unlock All Characters";
+static char gw_dev_unlock_stages_label[] = "Unlock All Stages";
+
+static void gw_dev_save_profile(void)
+{
+    lbCardNew_AllocWorkArea();
+    lb_8001C87C();
+}
+
+bool gw_dev_unlock_all_chars(enum soundtest_callback_arg0 arg0)
+{
+    if (arg0 != 1) {
+        return 0;
+    }
+    OSReport("PC dev: unlock all characters\n");
+    gm_80164F18();
+    gw_dev_save_profile();
+    return 0;
+}
+
+bool gw_dev_unlock_all_stages(enum soundtest_callback_arg0 arg0)
+{
+    if (arg0 != 1) {
+        return 0;
+    }
+    OSReport("PC dev: unlock all stages\n");
+    gm_8016468C();
+    gw_dev_save_profile();
+    return 0;
+}
+#endif
+
 bool un_803018BC(enum soundtest_callback_arg0 arg0)
 {
     if (arg0 != 1) {
@@ -2326,7 +2360,7 @@ bool un_80301E08(enum soundtest_callback_arg0 update_scene)
 /* 803FA4A8 */ char un_803FA4A8[] = "New DefCalc :";
 /* 803FA4B8 */ char un_803FA4B8[] = "Global Data Edit >";
 /* 803FA4CC */ char un_803FA4CC[] = "Mode Team Test >";
-/* 803FA4E0 */ struct un_80304138_objalloc_t_x8 un_803FA4E0[11] = {
+/* 803FA4E0 */ struct un_80304138_objalloc_t_x8 un_803FA4E0[] = {
     { 0, NULL, db_build_timestamp, NULL, NULL, 0.0f, 0.0f, 0.0f },
     { 1, un_803001DC, un_803FA454, NULL, NULL, 0.0f, 0.0f, 0.0f },
     { 1, un_80301420, un_803FA468, NULL, NULL, 0.0f, 0.0f, 0.0f },
@@ -2339,6 +2373,12 @@ bool un_80301E08(enum soundtest_callback_arg0 update_scene)
     { 3, NULL, un_803FA4A8, NULL, &db_804D6B88, 0.0f, 1.0f, 1.0f },
     { 1, un_80300290, un_803FA4B8, NULL, NULL, 0.0f, 0.0f, 0.0f },
     { 1, un_803002FC, un_803FA4CC, NULL, NULL, 0.0f, 0.0f, 0.0f },
+#if defined(TARGET_PC)
+    { 1, gw_dev_unlock_all_chars, gw_dev_unlock_chars_label, NULL, NULL, 0.0f,
+      0.0f, 0.0f },
+    { 1, gw_dev_unlock_all_stages, gw_dev_unlock_stages_label, NULL, NULL, 0.0f,
+      0.0f, 0.0f },
+#endif
     { 9, NULL, NULL, NULL, NULL, 0.0f, 0.0f, 0.0f },
 };
 /* 803FA640 */ char un_803FA640[] = "< Global Data Edit >";

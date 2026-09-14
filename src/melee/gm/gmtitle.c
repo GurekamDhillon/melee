@@ -278,6 +278,13 @@ void gm_Scene_Title_OnFrame(void)
         tmp = gm_GetCurrentSceneExitData();
         *tmp = input;
         gm_801A4B60();
+#if defined(TARGET_PC)
+    } else if (input & (HSD_PAD_Y | HSD_PAD_B)) {
+        sfxForward();
+        tmp = gm_GetCurrentSceneExitData();
+        *tmp = input;
+        gm_801A4B60();
+#endif
     } else if (DbLevel >= DbLKind_DebugRom) {
         if (input & HSD_PAD_Y) {
             sfxForward();

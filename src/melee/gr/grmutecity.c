@@ -1128,12 +1128,26 @@ void grMuteCity_801F0F4C(Ground_GObj* gobj)
 
 void grMuteCity_801F106C(s32 i)
 {
+#if defined(TARGET_PC)
+    /* grMc_8049F4B8 immediately follows grMc_8049F440 in the console .bss, so the
+     * grMc_CarState view's cars member (at +0x78) lands on it. The port links the
+     * globals separately; anchor the view at the real cars array (idx is unused
+     * in this function). */
+    typedef struct grMc_CarState {
+        grMc_CarEntry cars[30];
+    } grMc_CarState;
+#else
     typedef struct grMc_CarState {
         s32 idx[30];
         grMc_CarEntry cars[30];
     } grMc_CarState;
+#endif
     f32 max_x8;
+#if defined(TARGET_PC)
+    grMc_CarState* state = (grMc_CarState*) grMc_8049F4B8;
+#else
     grMc_CarState* state = (grMc_CarState*) grMc_8049F440;
+#endif
     grMc_CarEntry* cars = state->cars;
     u16 flags16 = state->cars[i].x20;
 

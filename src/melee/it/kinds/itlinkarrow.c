@@ -681,16 +681,32 @@ bool itLinkarrow_UnkMotion4_Anim(Item_GObj* gobj)
     case 4:
     case 6:
         rand = HSD_Randf();
+#if defined(TARGET_PC)
+        /* it_803F6A84 immediately follows it_803F6A28 in the console .data, so the
+         * (f32*)&it_803F6A28 + x9C view with [23]/[31] aliases it_803F6A84[x9C] and
+         * it_803F6A84[8 + x9C] (see the table usage above). Use the real symbol. */
+        temp_r3 = &it_803F6A84[ip->xDD4_itemVar.linkarrow.x9C];
+        var_f32 = MTXDegToRad((temp_r3[8] * rand) + temp_r3[0]);
+#else
         temp_r3 = (f32*) &it_803F6A28 + ip->xDD4_itemVar.linkarrow.x9C;
         var_f32 = MTXDegToRad((temp_r3[31] * rand) + temp_r3[23]);
+#endif
         var_f31 = ip->xDD4_itemVar.linkarrow.x94 + var_f32;
         break;
     case 1:
     case 3:
     case 5:
         rand = HSD_Randf();
+#if defined(TARGET_PC)
+        /* it_803F6A84 immediately follows it_803F6A28 in the console .data, so the
+         * (f32*)&it_803F6A28 + x9C view with [23]/[31] aliases it_803F6A84[x9C] and
+         * it_803F6A84[8 + x9C] (see the table usage above). Use the real symbol. */
+        temp_r3 = &it_803F6A84[ip->xDD4_itemVar.linkarrow.x9C];
+        var_f32 = MTXDegToRad((temp_r3[8] * rand) + temp_r3[0]);
+#else
         temp_r3 = (f32*) &it_803F6A28 + ip->xDD4_itemVar.linkarrow.x9C;
         var_f32 = MTXDegToRad((temp_r3[31] * rand) + temp_r3[23]);
+#endif
         var_f31 = ip->xDD4_itemVar.linkarrow.x94 - var_f32;
         break;
     default:

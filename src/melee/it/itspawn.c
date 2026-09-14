@@ -313,7 +313,15 @@ void it_8026CD50(s32* counts, u64 mask, f32 weight)
 {
     /// @todo #it_804A0E50 immediately follows #it_804A0E30; the original
     ///       addressed it relative to the spawner.
+#if defined(TARGET_PC)
+    /* it_804A0E50 immediately follows it_804A0E30 in the console .bss, so the
+     * original reached it as (ItemPickTable*)(spawner + 1). The port links the
+     * globals separately; reference the real symbol. */
+    ItemPickTable* pick = &it_804A0E50;
+#else
     RandomItemSpawner* spawner = &it_804A0E30;
+    ItemPickTable* pick = (ItemPickTable*) (spawner + 1);
+#endif
     s32* p;
     s32 cnt;
     ItemKind it_kind;
@@ -338,10 +346,9 @@ void it_8026CD50(s32* counts, u64 mask, f32 weight)
         it_kind++;
         mask >>= 1;
     }
-    ((ItemPickTable*) (spawner + 1))->size = cnt;
-    *(item_kinds = &((ItemPickTable*) (spawner + 1))->x4) =
-        HSD_MemAlloc(cnt * 4);
-    *(weights = &((ItemPickTable*) (spawner + 1))->xC) = HSD_MemAlloc(cnt * 4);
+    pick->size = cnt;
+    *(item_kinds = &pick->x4) = HSD_MemAlloc(cnt * 4);
+    *(weights = &pick->xC) = HSD_MemAlloc(cnt * 4);
 
     idx = (cnt2 = 0);
     mask = backup;

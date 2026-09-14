@@ -147,6 +147,24 @@ typedef struct grZe_BubbleSpawnPos {
 /* 8049F158 */ static Vec3 grZe_8049F158[2];
 /* 8049F170 */ static grZe_BubbleEntry grZe_8049F170[20];
 
+#if defined(TARGET_PC)
+/* The console .bss placed grZe_8049F158 and grZe_8049F170 immediately after
+ * grZe_8049F140, so the (grZe_BubbleSpawnPos*) view of grZe_8049F140 (stride
+ * 0x24, fields at +0x14/+0x18) actually reads them. The port links the globals
+ * separately; index the real arrays: i == 0 reads grZe_8049F140[1].z /
+ * grZe_8049F158[0].x, i > 0 reads grZe_8049F170[i - 1]'s position. */
+static void grZe_8049F140_GetSpawnPos(s32 i, f32* px, f32* py)
+{
+    if (i == 0) {
+        *px = grZe_8049F140[1].z;
+        *py = grZe_8049F158[0].x;
+    } else {
+        *px = grZe_8049F170[i - 1].x08_x;
+        *py = grZe_8049F170[i - 1].x0C_y;
+    }
+}
+#endif
+
 typedef struct grZe_BubbleScales {
     f32 values[7];
 } grZe_BubbleScales;
@@ -523,6 +541,16 @@ void grZebes_801D881C(HSD_GObj* gobj)
                 if (spawn_phase < mirror) {
                     f32 rand = HSD_Randf();
                     f32 scale_min = yakumono_param->x58;
+#if defined(TARGET_PC)
+                    f32 px;
+                    f32 py;
+                    grZe_8049F140_GetSpawnPos(spawn_phase, &px, &py);
+                    {
+                        f32 scale_range = yakumono_param->x5C - scale_min;
+                        grZebes_801DAE70(spawn_phase, 4, px, py,
+                                         scale_range * rand + scale_min);
+                    }
+#else
                     grZe_BubbleSpawnPos* pos =
                         (grZe_BubbleSpawnPos*) grZe_8049F140;
                     {
@@ -532,14 +560,23 @@ void grZebes_801D881C(HSD_GObj* gobj)
                                          pos[spawn_phase].x18_y,
                                          scale_range * rand + scale_min);
                     }
+#endif
                 }
                 if (spawn_phase <= mirror) {
                     f32 rand2 = HSD_Randf();
+#if defined(TARGET_PC)
+                    f32 px;
+                    f32 py;
+                    grZe_8049F140_GetSpawnPos(mirror + 2, &px, &py);
+                    grZebes_801DAE70(mirror, 4, px, py,
+                                     (f32) (0.5 * rand2 + 1.0));
+#else
                     grZe_BubbleSpawnPos* pos =
                         (grZe_BubbleSpawnPos*) grZe_8049F140;
                     grZebes_801DAE70(mirror, 4, pos[mirror + 2].x14_x,
                                      pos[mirror + 2].x18_y,
                                      (f32) (0.5 * rand2 + 1.0));
+#endif
                 }
             }
             if (grAnime_801C83D0(gobj, 0xE, 1) != 0) {

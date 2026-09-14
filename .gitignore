@@ -174,3 +174,8 @@ fabric.properties
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
+
+# The port's build tooling lives under pc/build and is tracked, including its
+# .bat scripts (which the *.bat and build/ rules above would otherwise drop).
+!pc/build/
+!pc/build/**

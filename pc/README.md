@@ -23,10 +23,10 @@ a 64-voice mixer) feeding SDL3. See `pc/platform/gw.h` for the shim/retarget con
 
 ## Building
 
-The build scripts and the full per-translation-unit pipeline are documented in the project's
-`_research/port-dev-quickref.md` and `docs/DEVLOG.md`. The short version: build Aurora + Dawn +
-SDL3, compile each game translation unit through `gwtool`, link with the platform shims, and run
-`melee-pc.exe --iso <your GALE01 v1.02 image>`.
+The build scripts and the full per-translation-unit pipeline are documented in
+[`pc/docs/PORT_DEV_QUICKREF.md`](docs/PORT_DEV_QUICKREF.md) and [`pc/build/`](build/). The short
+version: build Aurora + Dawn + SDL3, compile each game translation unit through `gwtool`, link with
+the platform shims, and run `melee-pc.exe --iso <your GALE01 v1.02 image>`.
 
 ## Licence
 

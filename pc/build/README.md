@@ -12,6 +12,11 @@ layout:
 (`extern/aurora`); `build_aurora_melee.bat` then builds the port's Aurora into `ax86m` reusing them.
 No other checkout is required. Third-party versions and licences: [`../DEPENDENCIES.md`](../DEPENDENCIES.md).
 
+`ax86` is a persistent build directory, so if it was ever configured against a different Aurora
+checkout CMake refuses the stale cache with "does not match the source ... used to generate cache".
+Delete `_build\ax86\CMakeCache.txt` and `_build\ax86\CMakeFiles\` — keep `_deps`, which `ax86m`
+reuses — and re-run. A fresh clone never sees this.
+
 ## Pipeline
 
 1. Every game translation unit is compiled by `masstest/pipe_wsl.sh` (or `pipe_win.sh` under Git

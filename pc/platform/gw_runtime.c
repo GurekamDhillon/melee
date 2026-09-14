@@ -178,10 +178,13 @@ void gw_log(const char *fmt, ...) {
 
 void gw_panic(const char *fmt, ...) {
   va_list ap;
+  char msg[1024];
   va_start(ap, fmt);
-  fputs("gw: PANIC ", stdout);
-  gw_logv(fmt, ap);
+  vsnprintf(msg, sizeof msg, fmt, ap);
   va_end(ap);
+  fputs("gw: PANIC ", stdout);
+  gw_log("%s", msg);
+  gw_archive_crash_log(msg);
   gw_dump_stub_summary();
   abort();
 }
@@ -213,6 +216,49 @@ void gw_dump_stub_summary(void) {
   for (int i = 0; i < gw_stub_count; ++i) {
     gw_log("gw:   %-32s %lu", gw_stubs[i].name, gw_stubs[i].count);
   }
+}
+
+/* Copies the session log to crashlogs/crash-<timestamp>.log before melee-pc.log is next truncated. */
+void gw_archive_crash_log(const char *reason) {
+  SYSTEMTIME st;
+  char dst[MAX_PATH];
+  char header[256];
+  FILE *in;
+  FILE *out;
+
+  GetLocalTime(&st);
+  CreateDirectoryA("crashlogs", NULL);
+  snprintf(dst, sizeof dst, "crashlogs\\crash-%04u%02u%02u-%02u%02u%02u.log", st.wYear,
+           st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+
+  if (gw_log_file != NULL) {
+    fflush(gw_log_file);
+  }
+
+  out = fopen(dst, "wb");
+  if (out == NULL) {
+    return;
+  }
+
+  {
+    int n = snprintf(header, sizeof header, "==== crash %04u-%02u-%02u %02u:%02u:%02u  %s ====\n",
+                     st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
+                     reason != NULL ? reason : "(no reason)");
+    if (n > 0) {
+      fwrite(header, 1, (size_t)n, out);
+    }
+  }
+
+  in = fopen("melee-pc.log", "rb");
+  if (in != NULL) {
+    char buf[4096];
+    size_t r;
+    while ((r = fread(buf, 1, sizeof buf, in)) > 0) {
+      fwrite(buf, 1, r, out);
+    }
+    fclose(in);
+  }
+  fclose(out);
 }
 
 /* ---- crash reporting -----------------------------------------------------------------------
@@ -373,6 +419,7 @@ static LONG WINAPI gw_unhandled_exception(EXCEPTION_POINTERS *ep) {
 
   gw_log("gw:   for a map rva, take the melee-pc.map entry with the greatest address <= it");
   gw_dump_stub_summary();
+  gw_archive_crash_log("unhandled exception");
   return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -418,6 +465,7 @@ static void gw_invalid_parameter(const wchar_t *expr, const wchar_t *func, const
     }
   }
   gw_dump_stub_summary();
+  gw_archive_crash_log("CRT invalid parameter");
   _exit(3);
 }
 
@@ -447,11 +495,25 @@ static LONG CALLBACK gw_vectored_exception(EXCEPTION_POINTERS *ep) {
   return EXCEPTION_CONTINUE_SEARCH;
 }
 
+static bool gw_watch_enabled(void) {
+  static int state = -1;
+  if (state < 0) {
+    const char *v = getenv("MELEE_WATCH");
+    state = (v != NULL && v[0] != '\0' && v[0] != '0') ? 1 : 0;
+  }
+  return state != 0;
+}
+
 void gw_watch_page(void *addr, size_t size) {
   const uintptr_t page = 0x1000;
-  uintptr_t start = (uintptr_t)addr & ~(page - 1);
-  uintptr_t end = ((uintptr_t)addr + size + page - 1) & ~(page - 1);
+  uintptr_t start;
+  uintptr_t end;
   DWORD old;
+  if (!gw_watch_enabled()) {
+    return;
+  }
+  start = (uintptr_t)addr & ~(page - 1);
+  end = ((uintptr_t)addr + size + page - 1) & ~(page - 1);
   gw_watch_addr = (void *)start;
   gw_watch_len = end - start;
   if (VirtualProtect(gw_watch_addr, gw_watch_len, PAGE_READWRITE | PAGE_GUARD, &old)) {
@@ -460,6 +522,9 @@ void gw_watch_page(void *addr, size_t size) {
 }
 
 void gw_watch_tick(void) {
+  if (!gw_watch_enabled()) {
+    return;
+  }
   if (!gw_watch_armed && gw_watch_addr != NULL) {
     DWORD old;
     if (VirtualProtect(gw_watch_addr, gw_watch_len, PAGE_READWRITE | PAGE_GUARD, &old)) {

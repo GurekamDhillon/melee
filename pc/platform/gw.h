@@ -117,6 +117,7 @@ void gw_stub_hit(const char *name);
 #define GW_STUB() gw_stub_hit(__FUNCTION__)
 void gw_panic(const char *fmt, ...);
 void gw_dump_stub_summary(void);
+void gw_archive_crash_log(const char *reason);
 /* Turns a fault from "the log stops" into a logged address, .map RVA and frame list. Install
  * before anything else so faults during startup are reported too. */
 void gw_install_crash_handler(void);

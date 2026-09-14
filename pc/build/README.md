@@ -8,6 +8,10 @@ layout:
 - build directory `C:\gdm\_build`, with objects under `_build\masstest\out` and `_build\masstest\shimobj`
 - Aurora + Dawn + SDL3 built into `C:\gdm\_build\ax86m`
 
+`build_aurora_x86.bat` bootstraps Dawn and SDL3 into `_build\ax86` from the vendored Aurora
+(`extern/aurora`); `build_aurora_melee.bat` then builds the port's Aurora into `ax86m` reusing them.
+No other checkout is required. Third-party versions and licences: [`../DEPENDENCIES.md`](../DEPENDENCIES.md).
+
 ## Pipeline
 
 1. Every game translation unit is compiled by `masstest/pipe_wsl.sh` (or `pipe_win.sh` under Git

@@ -43,6 +43,9 @@ attribution header.
 image. Not affiliated with, endorsed by or sponsored by Nintendo; *Super Smash Bros.* and *Melee*
 are trademarks of Nintendo.
 
+Dependencies — including the vendored Aurora and its port patches — are inventoried in
+[`pc/DEPENDENCIES.md`](pc/DEPENDENCIES.md).
+
 ## Credits
 
 [doldecomp/melee](https://github.com/doldecomp/melee) · [encounter/aurora](https://github.com/encounter/aurora) ·

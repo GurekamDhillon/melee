@@ -3,6 +3,8 @@
 #include "gw.h"
 #include "shim_ax.h"
 
+#include <string.h>
+
 /* DMA-coherency maintenance only; x86 has no such caches, and every game DMA is a memcpy here. */
 void gw_DCFlushRange(void *addr, uint32_t n) {
   (void)addr;
@@ -18,6 +20,26 @@ void gw_DCInvalidateRange(void *addr, uint32_t n) {
   (void)addr;
   (void)n;
 }
+
+/* DCZeroRange is the one cache op with an architectural side effect rather than just coherency
+ * bookkeeping: dcbz establishes a cache line as all zeroes without reading memory first, so the
+ * range really does read back as zero afterwards. THPVideoDecode relies on it to clear its
+ * 0x920-byte decoder state. */
+void gw_DCZeroRange(void *addr, uint32_t n) { memset(addr, 0, n); }
+
+/* ---- locked cache ---------------------------------------------------------------------------
+ * The Gekko can lock a 16 KB chunk of L1 as directly addressed scratch at 0xE0000000 and DMA
+ * between it and main memory. The THP decoder is the only user here: it builds each MCU row of
+ * Y/U/V tiles in locked cache and queues it out with LCStoreData. With no such memory on the PC,
+ * THPInit points its work pointers at an ordinary static buffer (see the TARGET_PC branch of
+ * THPInit in extern/dolphin/src/dolphin/thp/THPDec.c), which makes the store a plain copy and the
+ * queue wait a no-op. Both sides are raw tile bytes, so there is no endianness to handle. */
+uint32_t gw_LCStoreData(void *dst, void *src, uint32_t n) {
+  memcpy(dst, src, n);
+  return 0;
+}
+
+void gw_LCQueueWait(uint32_t len) { (void)len; }
 
 /* No debugger attached to the PC build. */
 int gw_DBIsDebuggerPresent(void) { return 0; }

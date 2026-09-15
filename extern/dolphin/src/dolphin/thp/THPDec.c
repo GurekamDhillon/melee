@@ -1,6 +1,8 @@
 #include <dolphin.h>
 #include <dolphin/thp/thp.h>
 
+#include <string.h>
+
 #ifdef __MWERKS__
 #define THP_SDATA __declspec(section ".sdata")
 #else
@@ -79,6 +81,301 @@ typedef struct THPMCURowFields {
 } THPMCURowFields;
 
 #define THPROUNDUP(a, b) ((((s32) (a)) + ((s32) (b) - 1L)) / ((s32) (b)))
+
+#if defined(TARGET_PC)
+/* ---- portable replacements for this file's Gekko-specific code -----------------------------
+ *
+ * Every hot routine in this file was written as MWERKS inline PowerPC assembly: the IDCT as
+ * paired-single (Gekko SIMD) code driven by the graphics quantisation registers, the Huffman
+ * decoders as hand-scheduled bit twiddling. clang's PowerPC front end does not accept `asm`
+ * blocks at all, so the gwtool pipeline cannot build any of it. They are reimplemented below in
+ * plain C, and the assembly versions are compiled out.
+ *
+ * These are not instruction-by-instruction transliterations; they are the standard algorithms the
+ * assembly implements:
+ *
+ *   - The IDCT is the AAN float IDCT. __THPReadQuantizationTable pre-scales the quantisation
+ *     tables by __THPAANScaleFactor[row] * __THPAANScaleFactor[col] with no 1/8 term, which is
+ *     exactly the AAN setup, and leaves the descale to the output stage. The assembly's output
+ *     stage adds a bias of 1024.0 into the even half of the column butterfly and stores through
+ *     GQR6 = 0x3D043D04, i.e. as u8 with a store scale of 2^-3: that is "divide by 8, clamp to
+ *     0..255", and the bias then lands as the +128 JPEG level shift. Both are folded into
+ *     __THPStoreSample below.
+ *   - The Huffman decoders are baseline JPEG, driven by the same 5-bit quick/increment lookup and
+ *     maxCode/valPtr fallback that __THPPrepBitStream builds.
+ *
+ * The assembly's extra all-zero shortcut tiers (_quarterIDCT / _halfIDCT, chosen by how many
+ * coefficients in a row are zero) are pure optimisations that produce identical results; they
+ * collapse into the single all-AC-zero fast path here.
+ *
+ * Output layout is unchanged: 8x4 GX_TF_I8 tiles, 32 bytes each, `Gwid` pixels per row, which is
+ * why a row of tiles is Gwid*4 bytes and __THPInverseDCTY8 starts Gwid*8 bytes lower.
+ */
+
+/* PowerPC shift semantics: a shift count with bit 5 set produces zero, where C would be UB. */
+static u32 __THPSlw(u32 v, u32 n) { return (n & 0x20u) ? 0u : (v << (n & 0x1Fu)); }
+static u32 __THPSrw(u32 v, u32 n) { return (n & 0x20u) ? 0u : (v >> (n & 0x1Fu)); }
+
+/* Bit stream. info->cnt is a 1-based cursor into the 32-bit big-endian word info->currByte, so
+ * (33 - cnt) bits of it are still unread; info->file points at that word. Every access here goes
+ * through ordinary C loads, which gwtool byte-swaps, so the stream is read big-endian exactly as
+ * on hardware. */
+static u32 __THPNextWord(THPFileInfo* info)
+{
+    u32* p = (u32*) info->file;
+    p++;
+    info->file = (u8*) p;
+    info->currByte = *p;
+    return *p;
+}
+
+/* Consume and return the next t bits, most significant first. 1 <= t <= 25. */
+static u32 __THPGetBits(THPFileInfo* info, u32 t)
+{
+    u32 cnt = info->cnt;
+    u32 avail = 33u - cnt;
+    u32 hi = __THPSlw(info->currByte, cnt - 1u);
+    u32 v;
+
+    if (t <= avail) {
+        v = hi >> (32u - t);
+        info->cnt = cnt + t;
+    } else {
+        u32 lo = __THPNextWord(info);
+        v = (hi + __THPSrw(lo, avail)) >> (32u - t);
+        info->cnt = t - avail + 1u;
+    }
+    return v;
+}
+
+/* Peek the next 5 bits without consuming, reading ahead into the following word when the current
+ * one is nearly spent (the assembly's _notEnoughBits paths do the same). */
+static u32 __THPPeek5(const THPFileInfo* info)
+{
+    u32 cnt = info->cnt;
+    u32 avail = 33u - cnt;
+    u32 hi = __THPSlw(info->currByte, cnt - 1u);
+
+    if (avail >= 5u) {
+        return hi >> 27;
+    }
+    return (hi + __THPSrw(((const u32*) info->file)[1], avail)) >> 27;
+}
+
+static void __THPSkipBits(THPFileInfo* info, u32 t)
+{
+    u32 cnt = info->cnt;
+    u32 avail = 33u - cnt;
+
+    if (t <= avail) {
+        info->cnt = cnt + t;
+    } else {
+        __THPNextWord(info);
+        info->cnt = t - avail + 1u;
+    }
+}
+
+/* One Huffman symbol: the 5-bit quick table covers code lengths 1..5 and reports 0xFF when none
+ * of them matched, in which case walk maxCode one bit at a time. maxCode[17] is the 0xfffff
+ * sentinel __THPHuffGenerateDecoderTables plants to terminate that walk. */
+static s32 __THPHuffDecodePC(THPFileInfo* info, const THPHuffmanTab* h)
+{
+    u32 idx = __THPPeek5(info);
+    u32 sym = h->quick[idx];
+    s32 code;
+    s32 l;
+
+    if (sym != 0xFFu) {
+        __THPSkipBits(info, h->increment[idx]);
+        return (s32) sym;
+    }
+
+    __THPSkipBits(info, 5u);
+    code = (s32) idx;
+    l = 5;
+    do {
+        code = (code << 1) | (s32) __THPGetBits(info, 1u);
+        l++;
+    } while (code > h->maxCode[l]);
+
+    return (s32) h->Vij[code + h->valPtr[l]];
+}
+
+/* JPEG EXTEND: a t-bit value whose top bit is clear is negative. The assembly spells the same
+ * test as __cntlzw(v) > 32 - t. */
+static s32 __THPExtend(u32 v, u32 t)
+{
+    if (v < (1u << (t - 1u))) {
+        return (s32) (v + ((0xFFFFFFFFu << t) + 1u));
+    }
+    return (s32) v;
+}
+
+static void __THPHuffDecodeBlockPC(THPFileInfo* info, THPCoeff* block,
+                                   const THPHuffmanTab* dch,
+                                   const THPHuffmanTab* ach, THPCoeff* predDC)
+{
+    THPCoeff diff = 0;
+    s32 t;
+    s32 k;
+
+    memset(block, 0, 64 * sizeof(THPCoeff));
+
+    t = __THPHuffDecodePC(info, dch);
+    if (t != 0) {
+        diff = (THPCoeff) __THPExtend(__THPGetBits(info, (u32) t), (u32) t);
+    }
+    block[0] = *predDC = (THPCoeff) (s16) (*predDC + diff);
+
+    for (k = 1; k < 64; k++) {
+        s32 sym = __THPHuffDecodePC(info, ach);
+        s32 size = sym & 15;
+        s32 run = sym >> 4;
+
+        if (size != 0) {
+            /* k can reach 78 here; __THPJpegNaturalOrder is padded to 80 entries for exactly
+             * that, all of the padding mapping to 63. */
+            k += run;
+            block[__THPJpegNaturalOrder[k]] =
+                (THPCoeff) __THPExtend(__THPGetBits(info, (u32) size), (u32) size);
+        } else if (run != 15) {
+            break; /* EOB */
+        } else {
+            k += 15; /* ZRL */
+        }
+    }
+}
+
+/* The GQR6 store: value / 8, truncated, clamped to u8. */
+static void __THPStoreSample(THPSample* dst, f32 v)
+{
+    s32 i = (s32) (v * 0.125f);
+    if (i < 0) {
+        i = 0;
+    } else if (i > 255) {
+        i = 255;
+    }
+    *dst = (THPSample) i;
+}
+
+/* One 8x8 block: dequantise with Gq, AAN IDCT, and write the result as two 8x4 I8 tiles at
+ * Gbase + rowOff + xPos*4 and one tile row (Gwid*4 bytes) below it. */
+static void __THPInverseDCTPC(const THPCoeff* in, u32 xPos, u32 rowOff)
+{
+    const f32* q = Gq.value;
+    THPSample* obase = Gbase.value;
+    u32 wid = Gwid.value;
+    f32 ws[64];
+    THPSample* out0;
+    THPSample* out1;
+    int i;
+
+    /* Pass 1: rows. */
+    for (i = 0; i < 8; i++) {
+        const THPCoeff* ip = in + i * 8;
+        const f32* qp = q + i * 8;
+        f32* wp = ws + i * 8;
+        f32 t0, t1, t2, t3, t4, t5, t6, t7;
+        f32 t10, t11, t12, t13, z5, z10, z11, z12, z13;
+
+        if (ip[1] == 0 && ip[2] == 0 && ip[3] == 0 && ip[4] == 0 && ip[5] == 0 &&
+            ip[6] == 0 && ip[7] == 0) {
+            f32 dc = (f32) ip[0] * qp[0];
+            wp[0] = wp[1] = wp[2] = wp[3] = dc;
+            wp[4] = wp[5] = wp[6] = wp[7] = dc;
+            continue;
+        }
+
+        t0 = (f32) ip[0] * qp[0];
+        t1 = (f32) ip[2] * qp[2];
+        t2 = (f32) ip[4] * qp[4];
+        t3 = (f32) ip[6] * qp[6];
+
+        t10 = t0 + t2;
+        t11 = t0 - t2;
+        t13 = t1 + t3;
+        t12 = (t1 - t3) * 1.414213562f - t13;
+
+        t0 = t10 + t13;
+        t3 = t10 - t13;
+        t1 = t11 + t12;
+        t2 = t11 - t12;
+
+        t4 = (f32) ip[1] * qp[1];
+        t5 = (f32) ip[3] * qp[3];
+        t6 = (f32) ip[5] * qp[5];
+        t7 = (f32) ip[7] * qp[7];
+
+        z13 = t6 + t5;
+        z10 = t6 - t5;
+        z11 = t4 + t7;
+        z12 = t4 - t7;
+
+        t7 = z11 + z13;
+        t11 = (z11 - z13) * 1.414213562f;
+        z5 = (z10 + z12) * 1.847759065f;
+        t10 = 1.082392200f * z12 - z5;
+        t12 = -2.613125930f * z10 + z5;
+
+        t6 = t12 - t7;
+        t5 = t11 - t6;
+        t4 = t10 + t5;
+
+        wp[0] = t0 + t7;
+        wp[7] = t0 - t7;
+        wp[1] = t1 + t6;
+        wp[6] = t1 - t6;
+        wp[2] = t2 + t5;
+        wp[5] = t2 - t5;
+        wp[4] = t3 + t4;
+        wp[3] = t3 - t4;
+    }
+
+    /* Pass 2: columns, then the biased/descaled/clamped store into the two tiles. */
+    out0 = obase + rowOff + xPos * 4;
+    out1 = out0 + wid * 4;
+
+    for (i = 0; i < 8; i++) {
+        const f32* cp = ws + i;
+        f32 t0, t1, t2, t3, t4, t5, t6, t7;
+        f32 t10, t11, t12, t13, z5, z10, z11, z12, z13;
+
+        t10 = cp[0] + cp[32] + 1024.0f;
+        t11 = cp[0] - cp[32] + 1024.0f;
+        t13 = cp[16] + cp[48];
+        t12 = (cp[16] - cp[48]) * 1.414213562f - t13;
+
+        t0 = t10 + t13;
+        t3 = t10 - t13;
+        t1 = t11 + t12;
+        t2 = t11 - t12;
+
+        z13 = cp[40] + cp[24];
+        z10 = cp[40] - cp[24];
+        z11 = cp[8] + cp[56];
+        z12 = cp[8] - cp[56];
+
+        t7 = z11 + z13;
+        t11 = (z11 - z13) * 1.414213562f;
+        z5 = (z10 + z12) * 1.847759065f;
+        t10 = 1.082392200f * z12 - z5;
+        t12 = -2.613125930f * z10 + z5;
+
+        t6 = t12 - t7;
+        t5 = t11 - t6;
+        t4 = t10 + t5;
+
+        __THPStoreSample(&out0[i], t0 + t7);
+        __THPStoreSample(&out0[8 + i], t1 + t6);
+        __THPStoreSample(&out0[16 + i], t2 + t5);
+        __THPStoreSample(&out0[24 + i], t3 - t4);
+        __THPStoreSample(&out1[i], t3 + t4);
+        __THPStoreSample(&out1[8 + i], t2 - t5);
+        __THPStoreSample(&out1[16 + i], t1 - t6);
+        __THPStoreSample(&out1[24 + i], t0 - t7);
+    }
+}
+#endif /* TARGET_PC */
 
 void __THPPrepBitStream(THPFileInfo* info)
 {
@@ -1016,6 +1313,12 @@ void THPDec_803313D0(s32 arg0, void* arg1, void* arg2, void* arg3, u32 x)
     }
 }
 
+#if defined(TARGET_PC)
+inline void __THPInverseDCTNoYPos(THPCoeff* in, u32 xPos)
+{
+    __THPInverseDCTPC(in, xPos, 0);
+}
+#else
 inline void __THPInverseDCTNoYPos(register THPCoeff* in, register u32 xPos)
 {
     register f32 *q, *ws;
@@ -1315,6 +1618,15 @@ inline void __THPInverseDCTNoYPos(register THPCoeff* in, register u32 xPos)
     }
 }
 
+#endif
+
+#if defined(TARGET_PC)
+inline void __THPInverseDCTY8(THPCoeff* in, u32 xPos)
+{
+    /* Eight pixel rows lower, i.e. two 8x4 tile rows on from the NoYPos block. */
+    __THPInverseDCTPC(in, xPos, Gwid.value * 8);
+}
+#else
 inline void __THPInverseDCTY8(register THPCoeff* in, register u32 xPos)
 {
     register f32 *q, *ws;
@@ -1625,6 +1937,14 @@ inline void __THPInverseDCTY8(register THPCoeff* in, register u32 xPos)
     }
 }
 
+#endif
+
+#if defined(TARGET_PC)
+inline s32 __THPHuffDecodeTab(THPFileInfo* info, THPHuffmanTab* h)
+{
+    return __THPHuffDecodePC(info, h);
+}
+#else
 inline s32 __THPHuffDecodeTab(register THPFileInfo* info,
                               register THPHuffmanTab* h)
 {
@@ -1865,6 +2185,8 @@ _FailedCheckNoBits1:
     return (h->Vij[(s32) (code + h->valPtr[cnt])]);
 }
 
+#endif
+
 typedef struct THPFileInfoDCTCompYView {
     u8 pad[0x83E];
     THPCoeff predDC;
@@ -2015,6 +2337,13 @@ static void __THPDecompressiMCURowNxN(THPFileInfo* info, u32 x)
     ((THPDecodeInfo*) info)->x8F8 += ((sizeof(u8) * 64) * (x / 16));
 }
 
+#if defined(TARGET_PC)
+static void __THPHuffDecodeDCTCompY(THPFileInfo* info, THPCoeff* block)
+{
+    __THPHuffDecodeBlockPC(info, block, Ydchuff.value, Yachuff.value,
+                           &((THPFileInfoDCTCompYView*) info)->predDC);
+}
+#else
 static void __THPHuffDecodeDCTCompY(register THPFileInfo* info,
                                     THPCoeff* block)
 {
@@ -2399,6 +2728,15 @@ static void __THPHuffDecodeDCTCompY(register THPFileInfo* info,
     }
 }
 
+#endif
+
+#if defined(TARGET_PC)
+static void __THPHuffDecodeDCTCompU(THPFileInfo* info, THPCoeff* block)
+{
+    __THPHuffDecodeBlockPC(info, block, Udchuff.value, Uachuff.value,
+                           &((THPFileInfoDCTCompUView*) info)->predDC);
+}
+#else
 static void __THPHuffDecodeDCTCompU(register THPFileInfo* info,
                                     THPCoeff* block)
 {
@@ -2531,6 +2869,15 @@ static void __THPHuffDecodeDCTCompU(register THPFileInfo* info,
     }
 }
 
+#endif
+
+#if defined(TARGET_PC)
+static void __THPHuffDecodeDCTCompV(THPFileInfo* info, THPCoeff* block)
+{
+    __THPHuffDecodeBlockPC(info, block, Vdchuff.value, Vachuff.value,
+                           &((THPFileInfoDCTCompVView*) info)->predDC);
+}
+#else
 static void __THPHuffDecodeDCTCompV(register THPFileInfo* info,
                                     THPCoeff* block)
 {
@@ -2663,6 +3010,8 @@ static void __THPHuffDecodeDCTCompV(register THPFileInfo* info,
     }
 }
 
+#endif
+
 #define OS_GQR_F32 0x0000
 #define OS_GQR_U8 0x0004
 #define OS_GQR_U16 0x0005
@@ -2734,6 +3083,22 @@ static inline void OSInitFastCast(void) {
 #pragma function_align 4
 #endif
 
+#if defined(TARGET_PC)
+void THPInit(void)
+{
+    /* No locked cache here, so the scratch THP normally builds inside it at 0xE0000000 (and DMAs
+     * out with LCStoreData) is a plain static buffer. Only the 672-wide set is ever used by the
+     * decode path, and the real THPInit's __THPLC setup is a GC-layout alias view besides - it
+     * writes work672[] past the end of __THPLC expecting __THPLCWork672 to follow it in memory,
+     * which does not hold once the two are separate symbols. Sized for 672 pixels wide: Y is
+     * width*16 bytes per MCU row, U and V are (width/2)*8 each. */
+    static u8 __THPLCWorkBuffer[0x2A00 + 0xA80 + 0xA80] ATTRIBUTE_ALIGN(32);
+
+    __THPLCWork672[0] = &__THPLCWorkBuffer[0];
+    __THPLCWork672[1] = &__THPLCWorkBuffer[0x2A00];
+    __THPLCWork672[2] = &__THPLCWorkBuffer[0x2A00 + 0xA80];
+}
+#else
 void THPInit(void)
 {
     u8* base;
@@ -2778,5 +3143,7 @@ void THPInit(void)
 
     OSInitFastCast();
 }
+
+#endif
 
 u8* __THPLCWork672[3];

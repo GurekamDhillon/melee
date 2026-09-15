@@ -1,9 +1,9 @@
 /* Stubs for SDK subsystems the port does not support.
  *
  * MCC is the GBA link cable controller and FIO is a developer file-I/O channel: neither exists on
- * the PC and nothing on the boot path uses them, so every entry point fails immediately. THP is the
- * FMV decoder; the port skips the opening movie (OSGetResetCode()==0x80000000), so its entry points
- * are inert too. */
+ * the PC and nothing on the boot path uses them, so every entry point fails immediately. (THP, the
+ * FMV decoder, used to be stubbed here too; it is now built for real - see the note at the end of
+ * this file.) */
 #include "gw.h"
 
 /* ---- MCC (GBA link) ----------------------------------------------------------------------- */
@@ -110,42 +110,8 @@ uint32_t gw_FIOFwrite(int handle, void *data, uint32_t size) {
   return 0;
 }
 
-/* ---- THP (FMV decoder) -------------------------------------------------------------------- */
-
-void gw_THPInit(void) {}
-
-int gw_THPVideoDecode(void *file, void *tile_y, void *tile_u, void *tile_v, void *work) {
-  (void)file;
-  (void)tile_y;
-  (void)tile_u;
-  (void)tile_v;
-  (void)work;
-  return -1;
-}
-
-int gw_THPDec_8032F8D4(void *data, void *out) {
-  (void)data;
-  (void)out;
-  return -1;
-}
-
-int gw_THPDec_8032FD40(void *data, uint16_t arg) {
-  (void)data;
-  (void)arg;
-  return -1;
-}
-
-void gw_THPDec_80331340(int a, void *b, void *c, void *d) {
-  (void)a;
-  (void)b;
-  (void)c;
-  (void)d;
-}
-
-void gw_THPDec_803313D0(int a, void *b, void *c, void *d, uint32_t e) {
-  (void)a;
-  (void)b;
-  (void)c;
-  (void)d;
-  (void)e;
-}
+/* ---- THP (FMV decoder) --------------------------------------------------------------------
+ * Not stubbed any more: extern/dolphin/src/dolphin/thp/THPDec.c is built as a game TU and
+ * supplies the real decoder, with its Gekko paired-single IDCT and assembly Huffman decoders
+ * reimplemented in C behind TARGET_PC. The locked cache it decodes into is backed by
+ * gw_LCStoreData/gw_LCQueueWait in shim_misc.c. */

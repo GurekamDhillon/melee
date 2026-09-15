@@ -763,6 +763,22 @@ struct un_803FA258_t {
 
 void un_802FF7DC(void)
 {
+#if defined(TARGET_PC)
+    /* un_803F9FA4 (SoundTestMenuData) sits 0x7C bytes past the "Sound Test Menu"
+     * label string un_803F9F28 in the console .data; the original reached the
+     * menu entries through a (struct un_803F9F28_t*) cast of un_803F9F28. The
+     * port links the globals separately, so reference the real symbol. */
+    struct SoundTestMenuData* data = &un_803F9FA4;
+    int* syms;
+    lbArchive_LoadSymbols(data->x160, &un_804D6DA8, data->x16C, 0);
+    syms = un_804D6DA8;
+    data->entries[1].x18 = (f32) syms[0];
+    data->entries[1].xC = (char**) syms[1];
+    data->entries[6].xC = (char**) syms[2];
+    data->entries[7].xC = (char**) syms[3];
+    data->entries[7].x18 = (f32) syms[4];
+    data->entries[8].xC = (char**) syms[7];
+#else
     struct un_803F9F28_t* data = (struct un_803F9F28_t*) un_803F9F28;
     int* syms;
     lbArchive_LoadSymbols(data->x1DC, &un_804D6DA8, data->x1E8, 0);
@@ -773,6 +789,7 @@ void un_802FF7DC(void)
     data->x168 = syms[3];
     data->x174 = syms[4];
     data->x188 = syms[7];
+#endif
 }
 
 bool un_802FF884(char* arg0)
@@ -985,6 +1002,74 @@ void un_802FFEE0(struct UnkSoundTestData0* arg0)
 void un_802FFF2C(StartMeleeData* arg0)
 {
     StartMeleeRules* r = &arg0->rules;
+#if defined(TARGET_PC)
+    /* un_803FA258 immediately follows the 0x130-byte int un_803FA128[76] in the
+     * console .data; the original addressed it through a (struct
+     * un_803FA128_t*) overlay cast of un_803FA128, whose x130 member lands on
+     * un_803FA258. The port links the globals separately, so reference the real
+     * symbol. */
+    struct un_803FA128_x130_t* s = (struct un_803FA128_x130_t*) &un_803FA258;
+    struct un_803FA128_x130_t* sp;
+    s32 i;
+    u16 timer;
+
+    gm_SetupRulesDefaults(r);
+    r->x2_2 = 0;
+    r->is_teams = s->xC;
+    switch (s->xC8) {
+    case 0:
+        r->match_kind = 0;
+        timer = s->xCC[1] + s->xCC[0] * 0x3C;
+        if (timer != 0) {
+            r->time_limit = timer;
+            r->timer_enabled = 1;
+        } else {
+            r->timer_enabled = 0;
+        }
+        break;
+    case 1:
+        r->match_kind = 1;
+        r->timer_enabled = 0;
+        break;
+    case 2:
+        r->match_kind = 2;
+        timer = s->xCC[1] + s->xCC[0] * 0x3C;
+        if (timer != 0) {
+            r->time_limit = timer;
+            r->timer_enabled = 1;
+        } else {
+            r->timer_enabled = 0;
+        }
+        break;
+    default:
+        r->match_kind = 0;
+        r->timer_enabled = 0;
+        break;
+    }
+    r->stkind = s->x8;
+    r->x20 = -1;
+    r->item_freq = s->xCC[3] - 1;
+    r->sd_penalty = -1;
+    r->x30 = s->xEC;
+    gm_SetupAllPlayerDefaults(arg0->players);
+    sp = s;
+    for (i = 0; i < 4; i++) {
+        arg0->players[i].ckind = sp->x10[i];
+        arg0->players[i].slot_type = sp->x24[i];
+        arg0->players[i].color = sp->x38[i];
+        arg0->players[i].sub_color = sp->x48[i];
+        arg0->players[i].team = sp->x58[i];
+        arg0->players[i].rumble_enabled = sp->xDC[i];
+        arg0->players[i].damage1 = sp->x68[i];
+        arg0->players[i].attack_ratio = sp->x78[i];
+        arg0->players[i].defense_ratio = sp->x88[i];
+        arg0->players[i].cpu_kind = sp->xA8[i];
+        arg0->players[i].cpu_level = sp->xB8[i];
+        arg0->players[i].stocks = s->xCC[2];
+        arg0->players[i].xC_b1 = 0;
+        arg0->players[i].model_scale = sp->x98[i];
+    }
+#else
     struct un_803FA128_t* s = (struct un_803FA128_t*) un_803FA128;
     struct un_803FA128_x130_t* sp;
     s32 i;
@@ -1046,6 +1131,7 @@ void un_802FFF2C(StartMeleeData* arg0)
         arg0->players[i].xC_b1 = 0;
         arg0->players[i].model_scale = sp->x98[i];
     }
+#endif
 }
 
 bool un_803001DC(enum soundtest_callback_arg0 update_scene)
@@ -1098,6 +1184,23 @@ bool un_803002FC(enum soundtest_callback_arg0 update_scene)
 
 bool un_80300338(enum soundtest_callback_arg0 arg0)
 {
+#if defined(TARGET_PC)
+    /* un_803FA258 immediately follows the 0x130-byte int un_803FA128[76] in the
+     * console .data; the original addressed x220/x224..x227 through a (struct
+     * un_803FA128_t*) overlay cast of un_803FA128 (x220 == 0x130+0xF0 -> xF0,
+     * x224..x227 -> xF4..xF7). The port links the globals separately, so
+     * reference the real symbol. */
+    struct un_803FA258_t* data = &un_803FA258;
+    u8* src;
+
+    src = gmMainLib_8045A6C0;
+    src = src + data->xF0;
+
+    data->xF4 = src[0x1868];
+    data->xF5 = src[0x1869];
+    data->xF6 = src[0x186A];
+    data->xF7 = src[0x186B];
+#else
     struct un_803FA128_t* data = (struct un_803FA128_t*) un_803FA128;
     u8* src;
 
@@ -1108,11 +1211,26 @@ bool un_80300338(enum soundtest_callback_arg0 arg0)
     data->x225 = src[0x1869];
     data->x226 = src[0x186A];
     data->x227 = src[0x186B];
+#endif
     return 0;
 }
 
 bool un_80300378(enum soundtest_callback_arg0 arg0)
 {
+#if defined(TARGET_PC)
+    struct un_803FA258_t* data = &un_803FA258;
+    u8* ptr;
+
+    data->xF0 &= 0xFFFE;
+
+    ptr = gmMainLib_8045A6C0;
+    ptr = ptr + data->xF0;
+
+    data->xF4 = ptr[0x1868];
+    data->xF5 = ptr[0x1869];
+    data->xF6 = ptr[0x186A];
+    data->xF7 = ptr[0x186B];
+#else
     struct un_803FA128_t* data = (struct un_803FA128_t*) un_803FA128;
     u8* ptr;
 
@@ -1125,12 +1243,27 @@ bool un_80300378(enum soundtest_callback_arg0 arg0)
     data->x225 = ptr[0x1869];
     data->x226 = ptr[0x186A];
     data->x227 = ptr[0x186B];
+#endif
 
     return 0;
 }
 
 bool un_803003C4(enum soundtest_callback_arg0 arg0)
 {
+#if defined(TARGET_PC)
+    struct un_803FA258_t* data = &un_803FA258;
+    u8* ptr;
+
+    data->xF0 &= 0xFFFC;
+
+    ptr = gmMainLib_8045A6C0;
+    ptr = ptr + data->xF0;
+
+    data->xF4 = ptr[0x1868];
+    data->xF5 = ptr[0x1869];
+    data->xF6 = ptr[0x186A];
+    data->xF7 = ptr[0x186B];
+#else
     struct un_803FA128_t* data = (struct un_803FA128_t*) un_803FA128;
     u8* ptr;
 
@@ -1143,12 +1276,27 @@ bool un_803003C4(enum soundtest_callback_arg0 arg0)
     data->x225 = ptr[0x1869];
     data->x226 = ptr[0x186A];
     data->x227 = ptr[0x186B];
+#endif
 
     return 0;
 }
 
 bool un_80300410(enum soundtest_callback_arg0 arg0)
 {
+#if defined(TARGET_PC)
+    struct un_803FA258_t* data = &un_803FA258;
+
+    if (arg0 == 1) {
+        u8* dst;
+        sfxForward();
+        dst = gmMainLib_8045A6C0;
+        dst += data->xF0;
+        dst[0x1868] = data->xF4;
+        dst[0x1869] = data->xF5;
+        dst[0x186A] = data->xF6;
+        dst[0x186B] = data->xF7;
+    }
+#else
     struct un_803FA128_t* data = (struct un_803FA128_t*) un_803FA128;
 
     if (arg0 == 1) {
@@ -1161,6 +1309,7 @@ bool un_80300410(enum soundtest_callback_arg0 arg0)
         dst[0x186A] = data->x226;
         dst[0x186B] = data->x227;
     }
+#endif
     return 0;
 }
 

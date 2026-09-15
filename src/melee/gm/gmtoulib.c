@@ -1718,6 +1718,18 @@ void fn_8018E618(int arg0, f32 farg0, int arg1)
             struct lbl_803D9DD0_t cobj_data;
         } CObjData;
         HSD_CObj* cobj = HSD_CObjLoadDesc((HSD_CObjDesc*) &cam);
+#if defined(TARGET_PC)
+        /* lbl_803D9DD0 immediately follows the 0x24-byte lbl_803D9DAC in the
+         * console .bss, so the original reached it as ((CObjData*)
+         * &lbl_803D9DAC)->cobj_data. The port links the globals separately;
+         * reference the real symbol. */
+        lbl_803D9DD0.cobj = cobj;
+        {
+            HSD_CObj** cobj_ptr = &lbl_803D9DD0.cobj;
+            u8* kind_ptr = &HSD_GObj_CameraKind;
+            HSD_GObjObject_80390A70(gobj, *kind_ptr, *cobj_ptr);
+        }
+#else
         CObjData* cobj_data = (CObjData*) &lbl_803D9DAC;
         cobj_data->cobj_data.cobj = cobj;
         {
@@ -1725,6 +1737,7 @@ void fn_8018E618(int arg0, f32 farg0, int arg1)
             u8* kind_ptr = &HSD_GObj_CameraKind;
             HSD_GObjObject_80390A70(gobj, *kind_ptr, *cobj_ptr);
         }
+#endif
     }
     GObj_SetupGXLinkMax(gobj, HSD_GObj_803910D8, 1);
     ((u32*) &gobj->gxlink_prios)[1] = 0x10;

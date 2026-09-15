@@ -1035,7 +1035,15 @@ void grVenom_80204F20(Ground_GObj* arg0)
 
     grVe_803E5348.arwing.arwing_gobj[gp->u.venom.xC8 = grVe_804D6A34] = arg0;
 
+#if defined(TARGET_PC)
+    /* base[grVe_803E5380[xC8] + 170] is 170 words (0x2A8 bytes) past
+     * grVe_803E5348, i.e. grVe_803E5530[grVe_803E5380[xC8] + 48] (the trailing
+     * 3/3/3/3/6 words; grVe_803E5530 is at +0x1E8 = +122 words). */
+    other = grVenom_80203EAC(
+        grVe_803E5530[grVe_803E5380[gp->u.venom.xC8] + 48]);
+#else
     other = grVenom_80203EAC(base[base[gp->u.venom.xC8 + 14] + 170]);
+#endif
     if (other != NULL) {
         Ground* other_gp = other->user_data;
         other_gp->x10_flags.b2 = 0;
@@ -1118,10 +1126,21 @@ void grVenom_802052E0(Ground_GObj* gobj, Vec3* pos)
         new_var3 = &gp->u.venom;
         spawn_idx = (*new_var3).xC8;
         data_idx = new_var[spawn_idx + 11];
+#if defined(TARGET_PC)
+        {
+            /* The spawn positions are f32 triples in grVe_803E5530 (at +0x1E8),
+             * starting at word 12 (byte 0x218 from grVe_803E5348). */
+            f32* spawn = (f32*) &grVe_803E5530[12 + data_idx * 3];
+            pos->x = jobj_pos.x + spawn[0];
+            pos->y = jobj_pos.y + spawn[1];
+            pos->z = jobj_pos.z + spawn[2];
+        }
+#else
         spawn_data = (VenomSpawnData*) (new_var2 + data_idx * 12);
         pos->x = jobj_pos.x + spawn_data->x;
         pos->y = jobj_pos.y + spawn_data->y;
         pos->z = jobj_pos.z + spawn_data->z;
+#endif
     } else {
         pos->x = pos->y = pos->z = 0.0F;
     }
@@ -1149,8 +1168,17 @@ void grVenom_802053B0(Ground_GObj* gobj)
     if ((u32) ptr[8] == (u32) gobj) {
         if (gp->u.venom.xD4 == 1) {
             gp->u.venom.xD4 = 0;
+#if defined(TARGET_PC)
+            /* base[arwing_type + 0x7A] is 122 words (0x1E8 bytes) past
+             * grVe_803E5348, i.e. grVe_803E5530[arwing_type]. */
+            grAnime_801C8138(
+                gobj, gp->map_id,
+                grVe_803E5530[grVe_803E5348.arwing.arwing_type
+                                  [gp->u.venom.xC8]]);
+#else
             grAnime_801C8138(gobj, gp->map_id,
                              base[base[gp->u.venom.xC8 + 11] + 0x7A]);
+#endif
             return;
         }
 
@@ -1505,6 +1533,18 @@ void grVenom_80205F30(Ground_GObj* gobj)
                 Ground_GetMapGObj(5);
                 lb_8000B1CC(Ground_801C3FA4(other, 5), NULL, &sp64);
                 {
+#if defined(TARGET_PC)
+                    /* base + arwing_type*3 reaches grVe_803E5530[12 +
+                     * arwing_type*3] (as f32; the spawn positions start at
+                     * word 12 of grVe_803E5530). */
+                    f32* spawn = (f32*) &grVe_803E5530
+                        [12 + grVe_803E5348.arwing.arwing_type
+                                  [other_gp->u.venom.xC8] *
+                                  3];
+                    sp94.x = sp64.x + spawn[0];
+                    sp94.y = sp64.y + spawn[1];
+                    sp94.z = sp64.z + spawn[2];
+#else
                     VenomSpawnData* spawn_data =
                         (VenomSpawnData*) (base +
                                            base[other_gp->u.venom.xC8 + 11] *
@@ -1512,6 +1552,7 @@ void grVenom_80205F30(Ground_GObj* gobj)
                     sp94.x = sp64.x + spawn_data->x;
                     sp94.y = sp64.y + spawn_data->y;
                     sp94.z = sp64.z + spawn_data->z;
+#endif
                 }
             } else {
                 sp94.x = sp94.y = sp94.z = 0.0F;
@@ -1589,6 +1630,15 @@ void grVenom_80205F30(Ground_GObj* gobj)
                     Ground_GetMapGObj(5);
                     lb_8000B1CC(Ground_801C3FA4(far_other, 5), NULL, &sp50);
                     {
+#if defined(TARGET_PC)
+                        f32* spawn = (f32*) &grVe_803E5530
+                            [12 + grVe_803E5348.arwing.arwing_type
+                                      [far_other_gp->u.venom.xC8] *
+                                      3];
+                        sp94.x = sp50.x + spawn[0];
+                        sp94.y = sp50.y + spawn[1];
+                        sp94.z = sp50.z + spawn[2];
+#else
                         VenomSpawnData* spawn_data =
                             (VenomSpawnData*) (base +
                                                base[far_other_gp->u.venom.xC8 +
@@ -1597,6 +1647,7 @@ void grVenom_80205F30(Ground_GObj* gobj)
                         sp94.x = sp50.x + spawn_data->x;
                         sp94.y = sp50.y + spawn_data->y;
                         sp94.z = sp50.z + spawn_data->z;
+#endif
                     }
                 } else {
                     sp94.x = sp94.y = sp94.z = 0.0F;

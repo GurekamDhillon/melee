@@ -64,6 +64,32 @@ typedef struct MnNameNewDataLayout {
     Vec3 x8D8;
 } MnNameNewDataLayout;
 
+#if defined(TARGET_PC)
+/* The console .data packed AnimLoopSettings[3] (mnNameNew_803EDA58), the key map
+ * (mnNameNew_KeyMap) and the glyph table (mnNameNew_GlyphTable) contiguously, and this file
+ * reconstructs that whole run as MnNameNewDataLayout. The port links them as separate objects,
+ * so reach each real symbol directly (GC-layout alias view, DEVLOG 16.1). Without this the glyph
+ * tables point into unrelated memory and the name-entry keyboard renders nothing. The casts strip
+ * the volatile on GlyphChar so the rows match the char* types the callers use. */
+#define MNNAMENEW_ANIM  mnNameNew_803EDA58
+#define MNNAMENEW_X8CC  (&unk_vec)
+#define MNNAMENEW_KEYS  (mnNameNew_KeyMap.key_jobj_ids)
+#define MNNAMENEW_X34   ((char**) mnNameNew_KeyMap.x34)
+#define MNNAMENEW_XFC   ((char**) mnNameNew_KeyMap.xFC)
+#define MNNAMENEW_CHARS ((char**) mnNameNew_KeyMap.character_bytes)
+#define MNNAMENEW_LOWER ((GlyphRow*) mnNameNew_GlyphTable.lower_glyphs)
+#define MNNAMENEW_UPPER ((GlyphRow*) mnNameNew_GlyphTable.upper_glyphs)
+#else
+#define MNNAMENEW_ANIM  (layout->anim)
+#define MNNAMENEW_X8CC  (&layout->x8CC)
+#define MNNAMENEW_KEYS  (layout->key_jobj_ids)
+#define MNNAMENEW_X34   (layout->x34)
+#define MNNAMENEW_XFC   (layout->xFC)
+#define MNNAMENEW_CHARS (layout->character_bytes)
+#define MNNAMENEW_LOWER (layout->lower_glyphs)
+#define MNNAMENEW_UPPER (layout->upper_glyphs)
+#endif
+
 extern StaticModelDesc mnNameNew_804A06F0;
 extern StaticModelDesc mnNameNew_804A0700;
 extern StaticModelDesc mnNameNew_804A0710;
@@ -384,15 +410,15 @@ HSD_Text* mnNameNew_KeySetup(NameNewEntry* arg0, u8 arg1)
     switch ((s32) arg1) {
     case 0:
         arg0->mode = 0;
-        str_table = layout->x34;
+        str_table = MNNAMENEW_X34;
         break;
     case 1:
         arg0->mode = 1;
-        str_table = layout->xFC;
+        str_table = MNNAMENEW_XFC;
         break;
     case 2:
         arg0->mode = 2;
-        str_table = layout->character_bytes;
+        str_table = MNNAMENEW_CHARS;
         break;
     }
 
@@ -419,7 +445,7 @@ HSD_Text* mnNameNew_KeySetup(NameNewEntry* arg0, u8 arg1)
         }
     }
 
-    lb_8000B1CC(key_jobj, &layout->x8CC, &text_pos);
+    lb_8000B1CC(key_jobj, MNNAMENEW_X8CC, &text_pos);
     pos_x = text_pos.x;
     pos_y = -text_pos.y;
     pos_z = text_pos.z;
@@ -749,17 +775,17 @@ char* AddCharacterToName(char* arg0, u8 arg1, u8 arg2, u8 arg3)
         if ((u8) (arg1 - 0x30) <= 1U) {
             if ((arg2 % 2) != 0) {
                 table =
-                    AddCharacterToName_getGlyphs(layout->upper_glyphs, arg1);
+                    AddCharacterToName_getGlyphs(MNNAMENEW_UPPER, arg1);
             } else {
                 table =
-                    AddCharacterToName_getGlyphs(layout->lower_glyphs, arg1);
+                    AddCharacterToName_getGlyphs(MNNAMENEW_LOWER, arg1);
             }
         } else if ((arg3 == 0 && (arg2 % 2) == 0) ||
                    (arg3 == 1 && (arg2 % 2) != 0))
         {
-            table = AddCharacterToName_getGlyphs(layout->lower_glyphs, arg1);
+            table = AddCharacterToName_getGlyphs(MNNAMENEW_LOWER, arg1);
         } else {
-            table = AddCharacterToName_getGlyphs(layout->upper_glyphs, arg1);
+            table = AddCharacterToName_getGlyphs(MNNAMENEW_UPPER, arg1);
         }
         dest = arg0;
 
@@ -773,9 +799,9 @@ char* AddCharacterToName(char* arg0, u8 arg1, u8 arg2, u8 arg3)
         break;
     }
     case 2:
-        arg0[0] = layout->character_bytes[arg1][0];
-        arg0[1] = layout->character_bytes[arg1][1];
-        arg0[2] = layout->character_bytes[arg1][2];
+        arg0[0] = MNNAMENEW_CHARS[arg1][0];
+        arg0[1] = MNNAMENEW_CHARS[arg1][1];
+        arg0[2] = MNNAMENEW_CHARS[arg1][2];
         break;
     }
     return arg0;
@@ -953,7 +979,7 @@ void mnNameNew_MainInput(HSD_GObj* arg0)
         u16 sel = *(hovered = &mn_804A04F0.hovered_selection);
         if (sel < 0x32U) {
             if (data->mode != 2 && sel < 0x32U) {
-                key_char = layout->lower_glyphs[(u8) sel][0];
+                key_char = MNNAMENEW_LOWER[(u8) sel][0];
                 space_lead = "　"[0];
                 if (space_lead == (s8) key_char[0] &&
                     (s8) "　"[1] == (s8) key_char[1])
@@ -965,7 +991,7 @@ void mnNameNew_MainInput(HSD_GObj* arg0)
                 if (n == 0) {
                     lbAudioAx_80024030(1);
                     mn_804A04F0.confirmed_selection = 0;
-                    n = mnNameNew_CountVariants(layout->lower_glyphs,
+                    n = mnNameNew_CountVariants(MNNAMENEW_LOWER,
                                                 (u8) *hovered);
                     {
                         u8 variant_count = (u8) (n * 2);
@@ -1384,7 +1410,7 @@ HSD_Text* mnNameNew_8023D130(GlyphVariantEntry* arg0, u16 arg1, u8 arg2,
     jobj14 = arg0->jobjs[4];
     jobj18 = arg0->jobjs[5];
     jobj1C = arg0->jobjs[6];
-    lb_8000B1CC(jobj14, &layout->x8CC, &text_pos);
+    lb_8000B1CC(jobj14, MNNAMENEW_X8CC, &text_pos);
     pos_x = text_pos.x;
     pos_y = -text_pos.y;
     pos_z = text_pos.z;
@@ -1399,9 +1425,9 @@ HSD_Text* mnNameNew_8023D130(GlyphVariantEntry* arg0, u16 arg1, u8 arg2,
     y_range =
         -(HSD_JObjGetTranslationY(jobj1C) - HSD_JObjGetTranslationY(jobj14));
     table_upper =
-        AddCharacterToName_getGlyphs(layout->upper_glyphs, (u8) arg3);
+        AddCharacterToName_getGlyphs(MNNAMENEW_UPPER, (u8) arg3);
     table_lower =
-        AddCharacterToName_getGlyphs(layout->lower_glyphs, (u8) arg3);
+        AddCharacterToName_getGlyphs(MNNAMENEW_LOWER, (u8) arg3);
     arg1 = (u8) arg1;
     for (i = 0; i < (s32) arg1; i++) {
         char* str;
@@ -1608,15 +1634,15 @@ void fn_8023DAEC(HSD_GObj* arg0)
         data->desc_text = NULL;
     }
     all_anims_done = 1;
-    if (mn_8022EFD8(data->jobjs[4], &layout->anim[1]) <
-        *(end_frame = &layout->anim[1].end_frame))
+    if (mn_8022EFD8(data->jobjs[4], &MNNAMENEW_ANIM[1]) <
+        *(end_frame = &MNNAMENEW_ANIM[1].end_frame))
     {
         all_anims_done = 0;
     }
-    if (mn_8022EFD8(data->jobjs[2], &layout->anim[1]) < *end_frame) {
+    if (mn_8022EFD8(data->jobjs[2], &MNNAMENEW_ANIM[1]) < *end_frame) {
         all_anims_done = 0;
     }
-    if (mn_8022EFD8(data->jobjs[6], &layout->anim[1]) < *end_frame) {
+    if (mn_8022EFD8(data->jobjs[6], &MNNAMENEW_ANIM[1]) < *end_frame) {
         all_anims_done = 0;
     }
     if (all_anims_done != 0 || mn_804A04F0.x10 == 1) {
@@ -1752,7 +1778,7 @@ void mnNameNew_8023E0D8(NameNewEntry* arg0)
     s32 i;
 
     layout = (MnNameNewDataLayout*) mnNameNew_803EDA58;
-    anim = layout->anim;
+    anim = MNNAMENEW_ANIM;
     jobj = arg0->jobjs[12];
     HSD_JObjReqAnim(jobj, anim[2].start_frame);
     HSD_JObjAnim(jobj);
@@ -1781,7 +1807,7 @@ void mnNameNew_8023E0D8(NameNewEntry* arg0)
     HSD_JObjReqAnim(jobj, anim[0].start_frame);
     HSD_JObjAnim(jobj);
 
-    jobj_ids = layout->key_jobj_ids;
+    jobj_ids = MNNAMENEW_KEYS;
     for (i = 0x32; i < 0x3A; i++) {
         jobj = arg0->jobjs[jobj_ids[i - 0x32]];
         HSD_JObjReqAnimAll(jobj, (f32) (arg0->x1 == i));

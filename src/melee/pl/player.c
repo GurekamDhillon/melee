@@ -456,8 +456,10 @@ Gm_PKind Player_GetPlayerSlotType(s32 slot)
 Gm_PKind Player_8003248C(s32 slot, bool arg1)
 {
     Gm_PKind slot_type;
+#if !defined(TARGET_PC)
     struct Unk_Struct_w_Array* unk_struct =
         (struct Unk_Struct_w_Array*) &str_PdPmdat_start_of_data;
+#endif
     StaticPlayer* player;
 
     Player_CheckSlot(slot);
@@ -465,7 +467,11 @@ Gm_PKind Player_8003248C(s32 slot, bool arg1)
     player = &player_slots[slot];
 
     if (arg1 == 1) {
+#if defined(TARGET_PC)
+        if (ftMapping_list[player->ckind].has_transformation == 0) {
+#else
         if (unk_struct->vec_arr[player->ckind].z == 0) {
+#endif
             if (player->pkind == Gm_PKind_Human ||
                 player->pkind == Gm_PKind_Cpu)
             {
@@ -500,8 +506,10 @@ s8 Player_800325C8(CharacterKind kind, bool b)
 s8 Player_80032610(s32 slot, bool arg1)
 { //// decomp.me/scratch/pHTx2
 
+#if !defined(TARGET_PC)
     struct Unk_Struct_w_Array* some_struct =
         (struct Unk_Struct_w_Array*) &str_PdPmdat_start_of_data;
+#endif
     StaticPlayer* player;
     s32 error_value = -1;
 
@@ -509,10 +517,18 @@ s8 Player_80032610(s32 slot, bool arg1)
     player = &player_slots[slot];
 
     if (arg1 == 0) {
+#if defined(TARGET_PC)
+        return ftMapping_list[player->ckind].internal_id;
+#else
         return some_struct->vec_arr[player->ckind].x;
+#endif
     }
     if (arg1 == 1) {
+#if defined(TARGET_PC)
+        return ftMapping_list[player->ckind].extra_internal_id;
+#else
         return some_struct->vec_arr[player->ckind].y;
+#endif
     }
 
     return error_value;
@@ -1306,13 +1322,20 @@ s32 Player_GetRemainingHPByIndex(s32 slot, s32 index)
 s32 Player_GetFalls(s32 slot)
 { /// decomp.me/scratch/8ijor
     StaticPlayer* player;
+#if !defined(TARGET_PC)
     struct Unk_Struct_w_Array* unkStruct =
         (struct Unk_Struct_w_Array*) &str_PdPmdat_start_of_data;
+#endif
     Player_CheckSlot(slot);
     player = &player_slots[slot];
 
+#if defined(TARGET_PC)
+    if (ftMapping_list[player->ckind].extra_internal_id != -1 &&
+        ftMapping_list[player->ckind].has_transformation != 0)
+#else
     if (unkStruct->vec_arr[player->ckind].y != -1 &&
         unkStruct->vec_arr[player->ckind].z != 0)
+#endif
     {
         return player->falls[player->transformed[0]] +
                player->falls[player->transformed[1]];

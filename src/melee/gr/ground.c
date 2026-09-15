@@ -103,6 +103,8 @@
 #include <melee/ty/tydisplay.h>
 #include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/debug.h>
+#include <sysdolphin/baselib/displayfunc.h>
+#include <sysdolphin/baselib/dobj.h>
 #include <sysdolphin/baselib/fog.h>
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjgxlink.h>
@@ -113,11 +115,15 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/memory.h>
+#include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/particle.h>
+#include <sysdolphin/baselib/pobj.h>
 #include <sysdolphin/baselib/psstructs.h>
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/spline.h>
 #include <sysdolphin/baselib/wobj.h>
+
+#include <dolphin/gx/GXCommandList.h>
 
 /* 1BFFA8 */ static void Ground_OnStart(void);
 /* 1BFFAC */ static void Ground_801BFFAC(int);
@@ -478,6 +484,125 @@ void Ground_801C0754(StageIdPair* pair)
     Ground_801C5878();
 }
 
+#if defined(TARGET_PC)
+static MapCollData* Ground_TTMod_BuildCollData(MapCollData* orig, int level,
+                                               int nplat)
+{
+    extern void TTMod_Platform(int level, int i, float* cx, float* cy,
+                               float* cz, float* w, float* d);
+    MapCollData* merged;
+    Vec2* verts;
+    MapLine* lines;
+    MapJoint* joints;
+    int ovc = orig->vert_count;
+    int olc = orig->line_count;
+    int ojc = orig->joint_count;
+    float scale = Ground_801C0498();
+    float inv;
+    int i;
+
+    if (scale <= 0.001f) {
+        scale = 1.0f;
+    }
+    inv = 1.0f / scale;
+
+    merged = HSD_MemAlloc(sizeof(*merged));
+    verts = HSD_MemAlloc((ovc + nplat * 2) * sizeof(*verts));
+    lines = HSD_MemAlloc((olc + nplat) * sizeof(*lines));
+    joints = HSD_MemAlloc((ojc + nplat) * sizeof(*joints));
+    if (merged == NULL || verts == NULL || lines == NULL || joints == NULL) {
+        return NULL;
+    }
+
+    for (i = 0; i < ovc; i++) {
+        verts[i] = orig->verts[i];
+    }
+    for (i = 0; i < olc; i++) {
+        lines[i] = orig->lines[i];
+    }
+    for (i = 0; i < ojc; i++) {
+        joints[i] = orig->joints[i];
+    }
+
+    for (i = 0; i < nplat; i++) {
+        float cx, cy, cz, w, d;
+        float cx_c, cy_c, hw_c;
+        int vi = ovc + 2 * i;
+        int li = olc + i;
+        int ji = ojc + i;
+
+        TTMod_Platform(level, i, &cx, &cy, &cz, &w, &d);
+        cx_c = cx * inv;
+        cy_c = cy * inv;
+        hw_c = (0.5f * w) * inv;
+
+        verts[vi + 0].x = cx_c - hw_c;
+        verts[vi + 0].y = cy_c;
+        verts[vi + 1].x = cx_c + hw_c;
+        verts[vi + 1].y = cy_c;
+
+        lines[li].v0_idx = (u16) (vi + 0);
+        lines[li].v1_idx = (u16) (vi + 1);
+        lines[li].prev_id0 = -1;
+        lines[li].next_id0 = -1;
+        lines[li].prev_id1 = -1;
+        lines[li].next_id1 = -1;
+        lines[li].hi_flags = CollLine_Floor | LINE_FLAG_PLATFORM;
+        lines[li].lo_flags = 0;
+
+        joints[ji].floor_start = (s16) li;
+        joints[ji].floor_count = 1;
+        joints[ji].ceiling_start = 0;
+        joints[ji].ceiling_count = 0;
+        joints[ji].right_wall_start = 0;
+        joints[ji].right_wall_count = 0;
+        joints[ji].left_wall_start = 0;
+        joints[ji].left_wall_count = 0;
+        joints[ji].dynamic_start = 0;
+        joints[ji].dynamic_count = 0;
+        joints[ji].left_bound = cx_c - hw_c - 30.0f;
+        joints[ji].bottom_bound = cy_c - 30.0f;
+        joints[ji].right_bound = cx_c + hw_c + 30.0f;
+        joints[ji].top_bound = cy_c + 30.0f;
+        joints[ji].vtx_start = (s16) vi;
+        joints[ji].vtx_count = 2;
+    }
+
+    merged->verts = verts;
+    merged->vert_count = ovc + nplat * 2;
+    merged->lines = lines;
+    merged->line_count = olc + nplat;
+    merged->floor_start = orig->floor_start;
+    merged->floor_count = orig->floor_count;
+    merged->ceiling_start = orig->ceiling_start;
+    merged->ceiling_count = orig->ceiling_count;
+    merged->right_wall_start = orig->right_wall_start;
+    merged->right_wall_count = orig->right_wall_count;
+    merged->left_wall_start = orig->left_wall_start;
+    merged->left_wall_count = orig->left_wall_count;
+    merged->dynamic_start = orig->dynamic_start;
+    merged->dynamic_count = orig->dynamic_count;
+    merged->joints = joints;
+    merged->joint_count = ojc + nplat;
+    merged->x2C = orig->x2C;
+
+    return merged;
+}
+
+static void Ground_TTMod_InitLines(MapCollData* merged, int nplat)
+{
+    CollLine* gline = mpGetGroundCollLine();
+    int olc = merged->line_count - nplat;
+    int i;
+
+    for (i = 0; i < nplat; i++) {
+        int idx = olc + i;
+        gline[idx].x0 = &merged->lines[idx];
+        gline[idx].flags = merged->lines[idx].hi_flags | LINE_FLAG_ENABLED;
+    }
+}
+#endif
+
 void Ground_801C0800(StageIdPair* pair)
 {
 #if defined(TARGET_PC)
@@ -520,7 +645,37 @@ void Ground_801C0800(StageIdPair* pair)
         psInitDataBankLoad(0x1E, stage_info.map_ptcl, stage_info.map_texg, 0,
                            0);
     }
+#if defined(TARGET_PC)
+    {
+        extern UNK_T gm_801B6320(void);
+        extern int TTMod_ForCharacter(int ckind);
+        extern int TTMod_PlatformCount(int level);
+        int ckind = *(s8*) gm_801B6320();
+        int level = -1;
+        int nplat = 0;
+        MapCollData* merged;
+        if (stage_info.grkind >= Gr_Kind_TMario &&
+            stage_info.grkind <= Gr_Kind_TGanon)
+        {
+            level = TTMod_ForCharacter(ckind);
+            nplat = level >= 0 ? TTMod_PlatformCount(level) : 0;
+        }
+        if (nplat > 0 && stage_info.coll_data != NULL) {
+            merged = Ground_TTMod_BuildCollData(stage_info.coll_data, level,
+                                                nplat);
+            if (merged != NULL) {
+                mpLibLoad(merged);
+                Ground_TTMod_InitLines(merged, nplat);
+            } else {
+                mpLibLoad(stage_info.coll_data);
+            }
+        } else {
+            mpLibLoad(stage_info.coll_data);
+        }
+    }
+#else
     mpLibLoad(stage_info.coll_data);
+#endif
     mpLib_80058820();
     Ground_801C1E94();
     Ground_801C466C();
@@ -2480,6 +2635,106 @@ HSD_JObj* Ground_801C4100(HSD_JObj* jobj)
     }
 }
 
+#if defined(TARGET_PC)
+static float Ground_TTMod_BoxVerts[8][3] = {
+    { -0.5f, -0.5f, -0.5f }, { 0.5f, -0.5f, -0.5f },
+    { 0.5f, 0.5f, -0.5f },   { -0.5f, 0.5f, -0.5f },
+    { -0.5f, -0.5f, 0.5f },  { 0.5f, -0.5f, 0.5f },
+    { 0.5f, 0.5f, 0.5f },    { -0.5f, 0.5f, 0.5f },
+};
+
+static u8 Ground_TTMod_BoxDisp[64] = {
+    GX_DRAW_TRIANGLES, 0x00, 0x24,
+    4, 5, 6, 4, 6, 7, 1, 0, 3, 1, 3, 2,
+    3, 7, 6, 3, 6, 2, 0, 1, 5, 0, 5, 4,
+    0, 4, 7, 0, 7, 3, 1, 6, 5, 1, 2, 6,
+};
+
+static HSD_VtxDescList Ground_TTMod_BoxVtxDesc[2] = {
+    { GX_VA_POS, GX_INDEX8, GX_POS_XYZ, GX_F32, 0, 12, Ground_TTMod_BoxVerts },
+    { GX_VA_NULL, GX_NONE, GX_POS_XY, GX_U8, 0, 0, NULL },
+};
+
+static HSD_Material Ground_TTMod_BoxMat = {
+    { 0x80, 0x80, 0x80, 0xFF },
+    { 0xE0, 0xE0, 0xE0, 0xFF },
+    { 0x00, 0x00, 0x00, 0x00 },
+    1.0f,
+    0.0f,
+};
+
+static HSD_PObjDesc Ground_TTMod_BoxPObjDesc = {
+    NULL, NULL, Ground_TTMod_BoxVtxDesc, 0, 2, Ground_TTMod_BoxDisp, { NULL },
+};
+
+static HSD_MObjDesc Ground_TTMod_BoxMObjDesc = {
+    NULL, RENDER_DIFFUSE_MAT, NULL, &Ground_TTMod_BoxMat, NULL, NULL,
+};
+
+static HSD_DObjDesc Ground_TTMod_BoxDObjDesc = {
+    NULL, NULL, &Ground_TTMod_BoxMObjDesc, &Ground_TTMod_BoxPObjDesc,
+};
+
+static HSD_Joint Ground_TTMod_BoxJoint = {
+    NULL, JOBJ_JOINT | JOBJ_OPA, NULL, NULL,
+    { &Ground_TTMod_BoxDObjDesc },
+    { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 0.0f },
+    NULL, NULL,
+};
+
+static void Ground_TTMod_AddPlatformBoxes(int level)
+{
+    extern int TTMod_PlatformCount(int level);
+    extern void TTMod_Platform(int level, int i, float* cx, float* cy,
+                               float* cz, float* w, float* d);
+    Ground_GObj* gobj;
+    HSD_JObj* root;
+    float scale = Ground_801C0498();
+    float inv;
+    int nplat;
+    int i;
+
+    nplat = TTMod_PlatformCount(level);
+    if (nplat <= 0) {
+        return;
+    }
+    gobj = Ground_GetMapGObj(0);
+    if (gobj == NULL || GET_JOBJ(gobj) == NULL) {
+        return;
+    }
+    root = HSD_JObjGetChild(GET_JOBJ(gobj));
+    if (root == NULL) {
+        return;
+    }
+    if (scale <= 0.001f) {
+        scale = 1.0f;
+    }
+    inv = 1.0f / scale;
+
+    for (i = 0; i < nplat; i++) {
+        float cx, cy, cz, w, d;
+        HSD_JObj* box;
+        Vec3 tr;
+        Vec3 sc;
+
+        TTMod_Platform(level, i, &cx, &cy, &cz, &w, &d);
+        box = HSD_JObjLoadJoint(&Ground_TTMod_BoxJoint);
+        if (box == NULL) {
+            continue;
+        }
+        sc.x = w * inv;
+        sc.y = 5.0f * inv;
+        sc.z = d * inv;
+        HSD_JObjSetScale(box, &sc);
+        tr.x = cx * inv;
+        tr.y = (cy - 2.5f) * inv;
+        tr.z = cz * inv;
+        HSD_JObjSetTranslate(box, &tr);
+        HSD_JObjAddChild(root, box);
+    }
+}
+#endif
+
 s32 Ground_801C4210(void)
 {
     u8 _[8];
@@ -2513,6 +2768,7 @@ s32 Ground_801C4210(void)
             }
             stage_info.x6D4 = count;
             stage_info.x6D2 = count;
+            Ground_TTMod_AddPlatformBoxes(level);
             return count;
         }
     }

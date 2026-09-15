@@ -626,6 +626,7 @@ void gw_start_watchdog(void) {
 
 #define TT_MAX_LEVELS 32
 #define TT_MAX_TARGETS 21
+#define TT_MAX_PLATFORMS 16
 #define TT_NAME_MAX 64
 
 typedef struct {
@@ -633,6 +634,10 @@ typedef struct {
   int ckind;
   int target_count;
   float targets[TT_MAX_TARGETS][3];
+  /* Phase 2: custom platform geometry (top surface at cy, X extent w, Z
+   * extent d, in world/stage units). */
+  int platform_count;
+  float platforms[TT_MAX_PLATFORMS][5];
 } TTLevel;
 
 static TTLevel tt_levels[TT_MAX_LEVELS];
@@ -737,6 +742,18 @@ static void tt_parse_file(const char *path, const char *fname) {
           lvl.target_count++;
         }
       }
+    } else if (strcmp(key, "platform") == 0) {
+      if (lvl.platform_count < TT_MAX_PLATFORMS) {
+        float cx, cy, cz, w, d;
+        if (sscanf(val, "%f %f %f %f %f", &cx, &cy, &cz, &w, &d) == 5) {
+          lvl.platforms[lvl.platform_count][0] = cx;
+          lvl.platforms[lvl.platform_count][1] = cy;
+          lvl.platforms[lvl.platform_count][2] = cz;
+          lvl.platforms[lvl.platform_count][3] = w;
+          lvl.platforms[lvl.platform_count][4] = d;
+          lvl.platform_count++;
+        }
+      }
     }
   }
   fclose(f);
@@ -816,4 +833,27 @@ void gw_TTMod_Target(int level, int i, float *x, float *y, float *z) {
   gw_wf32(x, tt_levels[level].targets[i][0]);
   gw_wf32(y, tt_levels[level].targets[i][1]);
   gw_wf32(z, tt_levels[level].targets[i][2]);
+}
+
+int gw_TTMod_PlatformCount(int level) {
+  tt_load();
+  if (level < 0 || level >= tt_level_count) return 0;
+  return tt_levels[level].platform_count;
+}
+
+void gw_TTMod_Platform(int level, int i, float *cx, float *cy, float *cz, float *w, float *d) {
+  tt_load();
+  if (level < 0 || level >= tt_level_count || i < 0 || i >= tt_levels[level].platform_count) {
+    if (cx != NULL) gw_wf32(cx, 0.0f);
+    if (cy != NULL) gw_wf32(cy, 0.0f);
+    if (cz != NULL) gw_wf32(cz, 0.0f);
+    if (w != NULL) gw_wf32(w, 0.0f);
+    if (d != NULL) gw_wf32(d, 0.0f);
+    return;
+  }
+  gw_wf32(cx, tt_levels[level].platforms[i][0]);
+  gw_wf32(cy, tt_levels[level].platforms[i][1]);
+  gw_wf32(cz, tt_levels[level].platforms[i][2]);
+  gw_wf32(w, tt_levels[level].platforms[i][3]);
+  gw_wf32(d, tt_levels[level].platforms[i][4]);
 }

@@ -246,6 +246,46 @@ bool un_80304780(void)
 /* 4A2750 */ static char _Toy_devtext_buf_804A2750[0xFC];
 /* 4A284C */ u16 Toy_804A284C[302];
 /* 4A2AA8 */ ToyAnimState Toy_804A2AA8;
+#if defined(TARGET_PC)
+/* _Toy_804A26B8 is only 0xC bytes, but the console .bss placed Toy_804A284C
+ * (u16[302]) and Toy_804A2AA8 (ToyAnimState) immediately after it, at +0x194 and
+ * +0x3F0. The port links every global as a separate symbol, so code that aliases
+ * &_Toy_804A26B8 as a Toy/Toy26B8 (0x404) must reference the real symbols by name
+ * (GC-layout alias view, DEVLOG §16.1).
+ *
+ * u16 index into Toy_804A284C for each Toy26B8 byte offset:
+ *   +0x194 x194/x195 -> [0]   +0x19A x19A -> [3]   +0x19C x19C -> [4]
+ *   +0x19E trophy_flags -> [5]
+ *   +0x3E8 selectedIdx -> [0x12A]   +0x3EA selectedTrophyId -> [0x12B]
+ *   +0x3EC trophy_count -> [0x12C]   +0x3F0 anim -> Toy_804A2AA8
+ */
+#define TOY_ANIM      (&Toy_804A2AA8)                          /* ToyAnimState* */
+#define TOY_FLAGS     (&Toy_804A284C[5])                       /* u16* trophy_flags */
+#define TOY_COUNT     ((s16*) &Toy_804A284C[0x12C])            /* s16* trophy_count */
+#define TOY_SEL       ((s16*) &Toy_804A284C[0x12A])            /* s16* selectedIdx */
+#define TOY_SELID     ((s16*) &Toy_804A284C[0x12B])            /* s16* selectedTrophyId */
+#define TOY_X194      ((u8*) &Toy_804A284C[0])                 /* u8* x194 */
+#define TOY_X19A      ((u16*) &Toy_804A284C[3])                /* u16* x19A */
+#define TOY_X19C      ((u16*) &Toy_804A284C[4])                /* u16* x19C */
+#define TOY_X195      (*(s8*) ((u8*) &Toy_804A284C[0] + 1))    /* s8 x195 */
+#define TOY_X196      (*(s8*) ((u8*) &Toy_804A284C[0] + 2))    /* s8 x196 */
+#define TOY_X197      (*(u8*) ((u8*) &Toy_804A284C[0] + 3))    /* u8 x197 */
+#define TOY_X198      (*(u8*) ((u8*) &Toy_804A284C[0] + 4))    /* u8 x198 */
+#endif
+
+/* Both-build accessors for the alias-view sites: the non-PC expansion keeps the
+ * original `x->member` expression byte-identical, while the PC expansion reads the
+ * real symbol. `x` is the local alias base (e.g. `base`, `toy`). */
+#if defined(TARGET_PC)
+#define TOY_TROPHY_COUNT_OF(x)  ((s16) Toy_804A284C[0x12C])
+#define TOY_TROPHY_FLAGS_OF(x)  (&Toy_804A284C[5])
+#define TOY_ANIM_OF(x)          (&Toy_804A2AA8)
+#else
+#define TOY_TROPHY_COUNT_OF(x)  ((x)->trophy_count)
+#define TOY_TROPHY_FLAGS_OF(x)  ((x)->trophy_flags)
+#define TOY_ANIM_OF(x)          (&(x)->anim)
+#endif
+
 /* 4D5A40 */ static GXColor _Toy_color_E2E2E2FF = { 0xE2, 0xE2, 0xE2, 0xFF };
 /* 4D5A44 */ static GXColor _Toy_color_FF8020FF = { 0xFF, 0x80, 0x20, 0xFF };
 
@@ -556,10 +596,13 @@ int Toy_GetTrophyTotal(void)
 
 static inline s32 _Toy_GetTrophyTotal(Toy26B8* toy)
 {
+#if defined(TARGET_PC)
+    (void) toy;
+#endif
     if (gm_IsCurrently1PMode() != 0 ||
         gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
     {
-        return toy->trophy_count;
+        return TOY_TROPHY_COUNT_OF(toy);
     }
     return *gmMainLib_GetTrophyCount();
 }
@@ -1083,7 +1126,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
     s16 idx;
     s32 count;
     s32 stateFlag;
+#if defined(TARGET_PC)
+    u16* trophyTable = TOY_FLAGS;
+#else
     Toy* toy = (Toy*) &_Toy_804A26B8;
+#endif
     u16* table;
     s32 newVal;
     u16* ptr;
@@ -1093,7 +1140,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
     u16 state[3];
 
     if (gm_IsCurrently1PMode() || gm_GetCurrentGameMode() == GM_TOY_LOTTERY) {
+#if defined(TARGET_PC)
+        table = trophyTable;
+#else
         table = toy->trophyTable;
+#endif
     } else {
         table = gmMainLib_GetTrophyFlags();
     }
@@ -1105,7 +1156,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            table = trophyTable;
+#else
             table = toy->trophyTable;
+#endif
         } else {
             table = gmMainLib_GetTrophyFlags();
         }
@@ -1117,7 +1172,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            oldCount = *TOY_COUNT;
+#else
             oldCount = toy->trophyCount;
+#endif
         } else {
             oldCount = *gmMainLib_GetTrophyCount();
         }
@@ -1125,14 +1184,22 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            *TOY_COUNT = (s16) newCount;
+#else
             toy->trophyCount = (s16) newCount;
+#endif
         } else {
             *gmMainLib_GetTrophyCount() = (s16) newCount;
         }
     }
 
     if (gm_IsCurrently1PMode() || gm_GetCurrentGameMode() == GM_TOY_LOTTERY) {
+#if defined(TARGET_PC)
+        table = trophyTable;
+#else
         table = toy->trophyTable;
+#endif
     } else {
         table = gmMainLib_GetTrophyFlags();
     }
@@ -1141,7 +1208,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            table = trophyTable;
+#else
             table = toy->trophyTable;
+#endif
         } else {
             table = gmMainLib_GetTrophyFlags();
         }
@@ -1149,7 +1220,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            table = trophyTable;
+#else
             table = toy->trophyTable;
+#endif
         } else {
             table = gmMainLib_GetTrophyFlags();
         }
@@ -1159,7 +1234,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            table = trophyTable;
+#else
             table = toy->trophyTable;
+#endif
         } else {
             table = gmMainLib_GetTrophyFlags();
         }
@@ -1168,7 +1247,11 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
     }
 
     if (gm_IsCurrently1PMode() || gm_GetCurrentGameMode() == GM_TOY_LOTTERY) {
+#if defined(TARGET_PC)
+        state[2] = *TOY_X19A | *TOY_X19C;
+#else
         state[2] = toy->x19A | toy->x19C;
+#endif
         statePtr = &state[2];
     } else {
         statePtr = gmMainLib_GetTrophyCategoryFlags();
@@ -1183,12 +1266,20 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            count = *TOY_COUNT;
+#else
             count = toy->trophyCount;
+#endif
         } else {
             count = *gmMainLib_GetTrophyCount();
         }
         if (count >= 0xFA) {
+#if defined(TARGET_PC)
+            *TOY_X194 = 2;
+#else
             *(u8*) &toy->x194 = 2;
+#endif
             Toy_80305918(7, 0, 0);
         }
     }
@@ -1222,12 +1313,20 @@ void Toy_80305918(s8 arg0, s32 arg1, s32 arg2)
     u8* var_r3;
     u16 temp_val;
 
+#if defined(TARGET_PC)
+    (void) base;
+#else
     base = (u16*) &_Toy_804A26B8.x0;
+#endif
     if (arg0 == 8) {
         return;
     }
 
+#if defined(TARGET_PC)
+    temp_r26 = (u8*) TOY_FLAGS;
+#else
     temp_r26 = (u8*) base + 0x19E;
+#endif
 
     for (var_r25 = 0, var_r27 = 0; var_r25 < TY_TROPHY_COUNT;
          var_r25++, var_r27 += 2)
@@ -1300,16 +1399,28 @@ void Toy_80305918(s8 arg0, s32 arg1, s32 arg2)
         if (arg2 != 0) {
             u16 val4;
             s32 mask2;
+#if defined(TARGET_PC)
+            val4 = *TOY_X19C;
+            mask2 = 1 << arg0;
+            if (val4 & mask2) {
+                *TOY_X19C = (u16) (val4 ^ mask2);
+            }
+#else
             val4 = ((Toy26B8*) base)->x19C;
             mask2 = 1 << arg0;
             if (val4 & mask2) {
                 ((Toy26B8*) base)->x19C = (u16) (val4 ^ mask2);
             }
+#endif
         } else {
             if (gm_IsCurrently1PMode() != 0 ||
                 gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
             {
+#if defined(TARGET_PC)
+                ptr = TOY_X19A;
+#else
                 ptr = (u16*) ((u8*) base + 0x19A);
+#endif
             } else {
                 ptr = gmMainLib_GetTrophyCategoryFlags();
             }
@@ -1321,13 +1432,21 @@ void Toy_80305918(s8 arg0, s32 arg1, s32 arg2)
         }
     } else {
         if (arg2 != 0) {
+#if defined(TARGET_PC)
+            u16* ptr19c = TOY_X19C;
+#else
             u16* ptr19c = (u16*) ((u8*) base + 0x19C);
+#endif
             *ptr19c = (u16) (*ptr19c | (1 << arg0));
         } else {
             if (gm_IsCurrently1PMode() != 0 ||
                 gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
             {
+#if defined(TARGET_PC)
+                ptr = TOY_X19A;
+#else
                 ptr = (u16*) ((u8*) base + 0x19A);
+#endif
             } else {
                 ptr = gmMainLib_GetTrophyCategoryFlags();
             }
@@ -2588,12 +2707,20 @@ void Toy_80307E84(HSD_GObj* gobj)
     HSD_JObj* jobj0;
     HSD_JObj* jobj1;
 
+#if defined(TARGET_PC)
+    state = TOY_ANIM;
+    idx = state->x0E;
+    x0F_val = state->x0F;
+    jobj0 = state->jobj[idx];
+    jobj1 = state->jobj[idx ^ 1];
+#else
     base = (s32*) &_Toy_804A26B8;
     state = (ToyAnimState*) ((u8*) base + 0x3F0);
     idx = M2C_FIELD(base, s8*, 0x3FE);
     x0F_val = M2C_FIELD(base, s8*, 0x3FF);
     jobj0 = (HSD_JObj*) base[idx + (0x3F4 / 4)];
     jobj1 = (HSD_JObj*) base[(idx ^ 1) + (0x3F4 / 4)];
+#endif
 
     if (x0F_val <= 0) {
         if (state->x10 == 1) {
@@ -2619,6 +2746,14 @@ void _Toy_80307F64(s32 arg0, s32 arg1)
     HSD_JObj* jobj1;
     HSD_JObj* jobj2;
 
+#if defined(TARGET_PC)
+    state = TOY_ANIM;
+    idx = state->x0E;
+    jobj1 = state->jobj[(s32) idx];
+    jobj2 = state->jobj[(s32) (idx ^ 1)];
+
+    if (state->x0F == 0) {
+#else
     base = (Toy26B8*) &_Toy_804A26B8;
     state = &base->anim;
     idx = base->anim.x0E;
@@ -2626,6 +2761,7 @@ void _Toy_80307F64(s32 arg0, s32 arg1)
     jobj2 = base->anim.jobj[(s32) (idx ^ 1)];
 
     if (base->anim.x0F == 0) {
+#endif
         if (arg1 != 0) {
             if (arg0 != state->x11) {
                 HSD_JObjRemoveAnimAll(jobj1);
@@ -3105,7 +3241,11 @@ void _Toy_80308F04(HSD_CObj* cobj)
 
     data = (void*) &_Toy_804A26B8;
     state = _Toy_sbss_804D6E68;
+#if defined(TARGET_PC)
+    jobj_ptr = ((Toy26B8_2*) TOY_ANIM->gobj)->x28;
+#else
     jobj_ptr = ((Toy26B8_2*) data->x3F0)->x28;
+#endif
 
     top = HSD_CObjGetTop(cobj);
     bottom = HSD_CObjGetBottom(cobj);
@@ -3337,7 +3477,7 @@ void _Toy_80309404(HSD_GObj* gobj)
     base = (Toy26B8*) &_Toy_804A26B8;
     ed8 = Toy_sbss_804D6ED8;
     state = _Toy_sbss_804D6E68;
-    anim = &base->anim;
+    anim = TOY_ANIM_OF(base);
     ed4 = Toy_sbss_804D6ED4;
     zoom_update = 0.0f;
     movement_update = 0.0f;
@@ -3437,7 +3577,11 @@ void _Toy_80309404(HSD_GObj* gobj)
         Toy_80310660(1);
         HSD_GObj_80390CD4(gobj);
         mn_8022F268();
+#if defined(TARGET_PC)
+        TOY_X198 = 1;
+#else
         base->x198 = 1;
+#endif
         return;
     }
 
@@ -3458,7 +3602,7 @@ void _Toy_80309404(HSD_GObj* gobj)
             if ((gm_IsCurrently1PMode() != 0) ||
                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
             {
-                trophy_count = base->trophy_count;
+                trophy_count = TOY_TROPHY_COUNT_OF(base);
             } else {
                 trophy_count = *gmMainLib_GetTrophyCount();
             }
@@ -3502,7 +3646,7 @@ void _Toy_80309404(HSD_GObj* gobj)
             if ((gm_IsCurrently1PMode() != 0) ||
                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
             {
-                trophy_count = base->trophy_count;
+                trophy_count = TOY_TROPHY_COUNT_OF(base);
             } else {
                 trophy_count = *gmMainLib_GetTrophyCount();
             }
@@ -3721,7 +3865,7 @@ void _Toy_80309404(HSD_GObj* gobj)
             if ((gm_IsCurrently1PMode() != 0) ||
                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
             {
-                trophy_count = base->trophy_count;
+                trophy_count = TOY_TROPHY_COUNT_OF(base);
             } else {
                 trophy_count = *gmMainLib_GetTrophyCount();
             }
@@ -3749,7 +3893,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                             if ((gm_IsCurrently1PMode() != 0) ||
                                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                             {
-                                total = base->trophy_count;
+                                total = TOY_TROPHY_COUNT_OF(base);
                             } else {
                                 total = *gmMainLib_GetTrophyCount();
                             }
@@ -3758,7 +3902,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                         if ((gm_IsCurrently1PMode() != 0) ||
                             (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                         {
-                            total = base->trophy_count;
+                            total = TOY_TROPHY_COUNT_OF(base);
                         } else {
                             total = *gmMainLib_GetTrophyCount();
                         }
@@ -3774,7 +3918,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                                     (gm_GetCurrentGameMode() ==
                                      GM_TOY_LOTTERY))
                                 {
-                                    list_idx = base->trophy_count;
+                                    list_idx = TOY_TROPHY_COUNT_OF(base);
                                 } else {
                                     list_idx = *gmMainLib_GetTrophyCount();
                                 }
@@ -3855,7 +3999,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                         if ((gm_IsCurrently1PMode() != 0) ||
                             (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                         {
-                            total = base->trophy_count;
+                            total = TOY_TROPHY_COUNT_OF(base);
                         } else {
                             total = *gmMainLib_GetTrophyCount();
                         }
@@ -3865,7 +4009,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                         if ((gm_IsCurrently1PMode() != 0) ||
                             (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                         {
-                            total = base->trophy_count;
+                            total = TOY_TROPHY_COUNT_OF(base);
                         } else {
                             total = *gmMainLib_GetTrophyCount();
                         }
@@ -3884,7 +4028,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                                     (gm_GetCurrentGameMode() ==
                                      GM_TOY_LOTTERY))
                                 {
-                                    cnt2 = base->trophy_count;
+                                    cnt2 = TOY_TROPHY_COUNT_OF(base);
                                 } else {
                                     cnt2 = *gmMainLib_GetTrophyCount();
                                 }
@@ -3956,7 +4100,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                         if ((gm_IsCurrently1PMode() != 0) ||
                             (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                         {
-                            flags = base->trophy_flags;
+                            flags = TOY_TROPHY_FLAGS_OF(base);
                         } else {
                             flags = gmMainLib_GetTrophyFlags();
                         }
@@ -3970,7 +4114,7 @@ void _Toy_80309404(HSD_GObj* gobj)
                             if ((gm_IsCurrently1PMode() != 0) ||
                                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                             {
-                                flags = base->trophy_flags;
+                                flags = TOY_TROPHY_FLAGS_OF(base);
                             } else {
                                 flags = gmMainLib_GetTrophyFlags();
                             }
@@ -4050,9 +4194,13 @@ void _Toy_8030B530(HSD_GObj* arg0)
     Toy6E68* state = _Toy_sbss_804D6E68;
     ToyED8Data* ed8 = Toy_sbss_804D6ED8;
     ToyCameraControl* ed4 = Toy_sbss_804D6ED4;
-    ToyAnimState* anim = &base->anim;
+    ToyAnimState* anim = TOY_ANIM_OF(base);
 
+#if defined(TARGET_PC)
+    if (TOY_ANIM->gobj != NULL) {
+#else
     if (base->x3F0 != NULL) {
+#endif
         HSD_JObj* n2;
         HSD_JObj* jobj_child;
         HSD_JObj* jobj_next;
@@ -4495,7 +4643,7 @@ void _Toy_8030B530(HSD_GObj* arg0)
                         if ((gm_IsCurrently1PMode() != 0) ||
                             (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                         {
-                            total = base->trophy_count;
+                            total = TOY_TROPHY_COUNT_OF(base);
                         } else {
                             total = *gmMainLib_GetTrophyCount();
                         }
@@ -4504,7 +4652,7 @@ void _Toy_8030B530(HSD_GObj* arg0)
                     if ((gm_IsCurrently1PMode() != 0) ||
                         (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                     {
-                        total = base->trophy_count;
+                        total = TOY_TROPHY_COUNT_OF(base);
                     } else {
                         total = *gmMainLib_GetTrophyCount();
                     }
@@ -4518,7 +4666,7 @@ void _Toy_8030B530(HSD_GObj* arg0)
                             if ((gm_IsCurrently1PMode() != 0) ||
                                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                             {
-                                lk = base->trophy_count;
+                                lk = TOY_TROPHY_COUNT_OF(base);
                             } else {
                                 lk = *gmMainLib_GetTrophyCount();
                             }
@@ -4581,7 +4729,7 @@ void _Toy_8030B530(HSD_GObj* arg0)
                     if ((gm_IsCurrently1PMode() != 0) ||
                         (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                     {
-                        total = base->trophy_count;
+                        total = TOY_TROPHY_COUNT_OF(base);
                     } else {
                         total = *gmMainLib_GetTrophyCount();
                     }
@@ -4591,7 +4739,7 @@ void _Toy_8030B530(HSD_GObj* arg0)
                     if ((gm_IsCurrently1PMode() != 0) ||
                         (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                     {
-                        total = base->trophy_count;
+                        total = TOY_TROPHY_COUNT_OF(base);
                     } else {
                         total = *gmMainLib_GetTrophyCount();
                     }
@@ -4608,7 +4756,7 @@ void _Toy_8030B530(HSD_GObj* arg0)
                             if ((gm_IsCurrently1PMode() != 0) ||
                                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                             {
-                                cnt2 = base->trophy_count;
+                                cnt2 = TOY_TROPHY_COUNT_OF(base);
                             } else {
                                 cnt2 = *gmMainLib_GetTrophyCount();
                             }
@@ -4761,7 +4909,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
     PAD_STACK(56);
 
     base = (Toy26B8*) &_Toy_804A26B8;
-    anim = &base->anim;
+    anim = TOY_ANIM_OF(base);
     state = _Toy_sbss_804D6E68;
     ed4 = Toy_sbss_804D6ED4;
     cobj = arg0->hsd_obj;
@@ -4868,7 +5016,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                 if ((gm_IsCurrently1PMode() != 0) ||
                     (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                 {
-                    tc = base->trophy_count;
+                    tc = TOY_TROPHY_COUNT_OF(base);
                 } else {
                     tc = *gmMainLib_GetTrophyCount();
                 }
@@ -5029,7 +5177,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                         if ((gm_IsCurrently1PMode() != 0) ||
                             (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                         {
-                            tc = base->trophy_count;
+                            tc = TOY_TROPHY_COUNT_OF(base);
                         } else {
                             tc = *gmMainLib_GetTrophyCount();
                         }
@@ -5049,7 +5197,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                                     (gm_GetCurrentGameMode() ==
                                      GM_TOY_LOTTERY))
                                 {
-                                    total = base->trophy_count;
+                                    total = TOY_TROPHY_COUNT_OF(base);
                                 } else {
                                     total = *gmMainLib_GetTrophyCount();
                                 }
@@ -5058,7 +5206,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                             if ((gm_IsCurrently1PMode() != 0) ||
                                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                             {
-                                total = base->trophy_count;
+                                total = TOY_TROPHY_COUNT_OF(base);
                             } else {
                                 total = *gmMainLib_GetTrophyCount();
                             }
@@ -5075,7 +5223,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                                         (gm_GetCurrentGameMode() ==
                                          GM_TOY_LOTTERY))
                                     {
-                                        count = base->trophy_count;
+                                        count = TOY_TROPHY_COUNT_OF(base);
                                     } else {
                                         count = *gmMainLib_GetTrophyCount();
                                     }
@@ -5163,7 +5311,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                             if ((gm_IsCurrently1PMode() != 0) ||
                                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                             {
-                                total = base->trophy_count;
+                                total = TOY_TROPHY_COUNT_OF(base);
                             } else {
                                 total = *gmMainLib_GetTrophyCount();
                             }
@@ -5173,7 +5321,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                             if ((gm_IsCurrently1PMode() != 0) ||
                                 (gm_GetCurrentGameMode() == GM_TOY_LOTTERY))
                             {
-                                total = base->trophy_count;
+                                total = TOY_TROPHY_COUNT_OF(base);
                             } else {
                                 total = *gmMainLib_GetTrophyCount();
                             }
@@ -5192,7 +5340,7 @@ void _Toy_8030E110(HSD_GObj* arg0)
                                         (gm_GetCurrentGameMode() ==
                                          GM_TOY_LOTTERY))
                                     {
-                                        count2 = base->trophy_count;
+                                        count2 = TOY_TROPHY_COUNT_OF(base);
                                     } else {
                                         count2 = *gmMainLib_GetTrophyCount();
                                     }
@@ -5502,7 +5650,11 @@ void _Toy_8030FA50(void)
 static inline void _Toy_8030FE48_init_sort_key(s16** ptr)
 {
     s16* keys = _Toy_sbss_804D6E64->key;
+#if defined(TARGET_PC)
+    s32 sort_mode = TOY_X195;
+#else
     s32 sort_mode = ((Toy26B8*) &_Toy_804A26B8)->x195;
+#endif
 
     // Integer-domain on purpose: a pointer sum emits the base register first.
     *ptr = (s16*) ((sort_mode << 1) + (uintptr_t) keys);
@@ -5551,7 +5703,11 @@ inline void _Toy_8030FE48_link_entries(ToyDisplayList* data, s32 entry_count)
 void _Toy_8030FE48(ToyDisplayList* data, s32 arg1)
 {
     Toy26B8* toy = (Toy26B8*) &_Toy_804A26B8;
+#if defined(TARGET_PC)
+    s16* sel = TOY_SEL;
+#else
     s16* sel = &toy->selectedIdx;
+#endif
     s32 sort_idx = 0;
     s32 count;
     s32 entry_count;
@@ -5565,7 +5721,11 @@ void _Toy_8030FE48(ToyDisplayList* data, s32 arg1)
     data->selectedIdx = *sel;
 
     while (sort_idx < _Toy_GetTrophyTotal(toy)) {
+#if defined(TARGET_PC)
+        if (*TOY_SELID == *ptr) {
+#else
         if (toy->selectedTrophyId == *ptr) {
+#endif
             data->selectedIdx = (s16) sort_idx;
             *sel = data->selectedIdx;
             break;
@@ -5625,7 +5785,7 @@ void _Toy_8030FE48(ToyDisplayList* data, s32 arg1)
             if (gm_IsCurrently1PMode() != 0 ||
                 gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
             {
-                tcount = toy->trophy_count;
+                tcount = TOY_TROPHY_COUNT_OF(toy);
             } else {
                 tcount = *gmMainLib_GetTrophyCount();
             }
@@ -5647,7 +5807,7 @@ void _Toy_8030FE48(ToyDisplayList* data, s32 arg1)
             if (gm_IsCurrently1PMode() != 0 ||
                 gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
             {
-                tcount2 = toy->trophy_count;
+                tcount2 = TOY_TROPHY_COUNT_OF(toy);
             } else {
                 tcount2 = *gmMainLib_GetTrophyCount();
             }
@@ -5714,7 +5874,7 @@ static inline void toy_toggle_flag(Toy26B8* toy)
     if (gm_IsCurrently1PMode() != 0 ||
         gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
     {
-        flags = toy->trophy_flags;
+        flags = TOY_TROPHY_FLAGS_OF(toy);
     } else {
         flags = gmMainLib_GetTrophyFlags();
     }
@@ -5726,7 +5886,7 @@ static inline void toy_toggle_flag(Toy26B8* toy)
         if (gm_IsCurrently1PMode() != 0 ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
-            flags = toy->trophy_flags;
+            flags = TOY_TROPHY_FLAGS_OF(toy);
         } else {
             flags = gmMainLib_GetTrophyFlags();
         }
@@ -5783,7 +5943,11 @@ void Toy_80310324(void)
     tg = (ToyGlobalsS_*) Toy_sbss_804D6ED8;
 
     _Toy_8030663C();
+#if defined(TARGET_PC)
+    Toy_803067BC(TOY_X195, TOY_X196);
+#else
     Toy_803067BC(toy->x195, toy->x196);
+#endif
 
     if (tg->x50 == NULL) {
         tg->x50 = lbArchive_LoadSymbols(
@@ -5822,13 +5986,17 @@ void Toy_80310324(void)
     if (gm_IsCurrently1PMode() != 0 ||
         gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
     {
-        var_r0 = toy->trophy_count;
+        var_r0 = TOY_TROPHY_COUNT_OF(toy);
     } else {
         var_r0 = *gmMainLib_GetTrophyCount();
     }
 
     if (var_r0 != 0) {
+#if defined(TARGET_PC)
+        memzero(TOY_ANIM, sizeof(*TOY_ANIM));
+#else
         memzero(&toy->anim, sizeof(toy->anim));
+#endif
         _Toy_8030FE48((ToyDisplayList*) Toy_sbss_804D6EE0, 0);
         tg6 = (ToyGlobalsS_*) Toy_sbss_804D6EE0;
         Toy_803087F4(tg6->x140);
@@ -5874,7 +6042,11 @@ void Toy_80310660(s32 arg0)
 
     state = (u8*) &_Toy_804A26B8;
     arg = arg0;
+#if defined(TARGET_PC)
+    ty27 = (u8*) TOY_ANIM;
+#else
     ty27 = state + 0x3F0;
+#endif
     ty31 = (void**) _Toy_sbss_804D6E68;
     ty28 = (TyCleanupObj*) Toy_sbss_804D6ED4;
     ty26 = _Toy_sbss_804D6E6C;
@@ -5884,7 +6056,11 @@ void Toy_80310660(s32 arg0)
     if (gm_IsCurrently1PMode() != 0 ||
         gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
     {
+#if defined(TARGET_PC)
+        idx = *TOY_COUNT;
+#else
         idx = *(s16*) (state + 0x3EC);
+#endif
     } else {
         idx = *gmMainLib_GetTrophyCount();
     }
@@ -5896,7 +6072,11 @@ void Toy_80310660(s32 arg0)
         if (gm_IsCurrently1PMode() != 0 ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            ptr = TOY_FLAGS;
+#else
             ptr = (u16*) (state + 0x19E);
+#endif
         } else {
             ptr = gmMainLib_GetTrophyFlags();
         }
@@ -5907,7 +6087,11 @@ void Toy_80310660(s32 arg0)
             if (gm_IsCurrently1PMode() != 0 ||
                 gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
             {
+#if defined(TARGET_PC)
+                ptr = TOY_FLAGS;
+#else
                 ptr = (u16*) (state + 0x19E);
+#endif
             } else {
                 ptr = gmMainLib_GetTrophyFlags();
             }
@@ -5915,8 +6099,13 @@ void Toy_80310660(s32 arg0)
             *ptr ^= 0x8000;
         }
 
+#if defined(TARGET_PC)
+        *TOY_SEL = ty25->x154;
+        *TOY_SELID = ty25->x140->x10;
+#else
         *(s16*) (state + 0x3E8) = ty25->x154;
         *(s16*) (state + 0x3EA) = ty25->x140->x10;
+#endif
     }
 
     if (arg != 0) {
@@ -5932,7 +6121,11 @@ void Toy_80310660(s32 arg0)
         if (gm_IsCurrently1PMode() != 0 ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
         {
+#if defined(TARGET_PC)
+            idx = *TOY_COUNT;
+#else
             idx = *(s16*) (state + 0x3EC);
+#endif
         } else {
             idx = *gmMainLib_GetTrophyCount();
         }
@@ -6405,10 +6598,23 @@ void Toy_80311960(void)
 
     for (i = 0; i < TY_TROPHY_COUNT; i++) {
         save_data[i] = 0;
+#if defined(TARGET_PC)
+        TOY_FLAGS[i] = 0;
+#else
         ((u16*) (base + 0x194))[i + 5] = 0;
+#endif
     }
 
     *save_data2 = 0;
+#if defined(TARGET_PC)
+    *TOY_X19C = 0;
+    *TOY_X19A = 0;
+    *TOY_SEL = 0;
+    *TOY_SELID = 0;
+    TOY_X197 = 0;
+    *gmMainLib_GetTrophyCount() = 0;
+    *TOY_COUNT = 0;
+#else
     ((u16*) base)[0xCE] = 0;
     ((u16*) base)[0xCD] = 0;
     ((u16*) base)[0x1F4] = 0;
@@ -6416,6 +6622,7 @@ void Toy_80311960(void)
     ((Toy26B8*) base)->x197 = 0;
     *gmMainLib_GetTrophyCount() = 0;
     ((u16*) base)[0x1F6] = 0;
+#endif
 }
 
 void Toy_Scene_OnEnter(void* arg0)
@@ -6482,14 +6689,22 @@ void Toy_Scene_OnEnter(void* arg0)
     Toy_8031263C();
 
     /* Validate saved selection index */
+#if defined(TARGET_PC)
+    selp = TOY_SEL;
+#else
     selp = &((s16*) base)[0x1F4];
+#endif
     if (*selp < 0) {
         goto reset_selection;
     }
     if (gm_IsCurrently1PMode() != 0 ||
         gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
     {
+#if defined(TARGET_PC)
+        count = *TOY_COUNT;
+#else
         count = *(s16*) (base + 0x3EC);
+#endif
     } else {
         count = *gmMainLib_GetTrophyCount();
     }
@@ -6498,8 +6713,13 @@ void Toy_Scene_OnEnter(void* arg0)
         *selp = 0;
     }
 
+#if defined(TARGET_PC)
+    TOY_X195 = 0;
+    TOY_X196 = 0;
+#else
     ((Toy26B8*) base)->x195 = 0;
     ((Toy26B8*) base)->x196 = 0;
+#endif
 
     /* Set up SIS font tables based on language */
     if (lbLang_IsSavedLanguageJP() != 0) {
@@ -6637,19 +6857,31 @@ void Toy_Mode_OnInit(void)
     Toy* userData = (Toy*) &_Toy_804A26B8;
     void* targetPtr;
 
+#if defined(TARGET_PC)
+    memzero(TOY_X194, 0x25A);
+#else
     memzero(&userData->x194, 0x25A);
+#endif
 
     _Toy_sbss_804D6EA1 = 0;
 
     if (gm_IsCurrently1PMode() || gm_GetCurrentGameMode() == GM_TOY_LOTTERY) {
+#if defined(TARGET_PC)
+        targetPtr = TOY_X19A;
+#else
         targetPtr = &userData->x19A;
+#endif
     } else {
         targetPtr = gmMainLib_GetTrophyCategoryFlags();
     }
 
     *(u16*) targetPtr |= 4;
 
+#if defined(TARGET_PC)
+    *TOY_X194 = 1;
+#else
     *(u8*) &userData->x194 = 1;
+#endif
 }
 
 void Toy_8031234C(s32 arg0)
@@ -6669,7 +6901,11 @@ void Toy_8031234C(s32 arg0)
     if (arg0 != 0) {
         s32 category;
         dstPtr = saveData;
+#if defined(TARGET_PC)
+        srcPtr = (u16*) Toy_804A284C;
+#else
         srcPtr = (u16*) (toy + 0x194);
+#endif
         for (i = TY_TROPHY_COUNT; i != 0; i--) {
             u16 flags = srcPtr[5];
             if (flags & 0x8000) {
@@ -6680,7 +6916,11 @@ void Toy_8031234C(s32 arg0)
             dstPtr++;
         }
 
+#if defined(TARGET_PC)
+        *stateData = *TOY_X19A;
+#else
         *stateData = *(u16*) (toy + 0x19A);
+#endif
 
         for (category = 0; category < 9; category++) {
             if ((u32) category > 1U && category != 8 && category != 3 &&
@@ -6697,12 +6937,23 @@ void Toy_8031234C(s32 arg0)
             }
         }
 
+#if defined(TARGET_PC)
+        *gmMainLib_GetTrophyCount() = *TOY_COUNT;
+#else
         *gmMainLib_GetTrophyCount() = *(s16*) (toy + 0x3EC);
+#endif
     } else {
+#if defined(TARGET_PC)
+        *TOY_X19A = *stateData;
+        *TOY_X19C = 0;
+        memcpy(TOY_FLAGS, saveData, 0x24A);
+        *TOY_COUNT = *gmMainLib_GetTrophyCount();
+#else
         *(u16*) (toy + 0x19A) = *stateData;
         *(u16*) (toy + 0x19C) = 0;
         memcpy(toy + 0x19E, saveData, 0x24A);
         *(s16*) (toy + 0x3EC) = *gmMainLib_GetTrophyCount();
+#endif
     }
 }
 

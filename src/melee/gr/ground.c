@@ -2489,6 +2489,34 @@ s32 Ground_801C4210(void)
     ///       #HSD_JObj).
     enum_t count = 0;
     enum_t i;
+#if defined(TARGET_PC)
+    {
+        /* Data-driven Break-the-Targets layout (mods/targettest/<name>.tt). If a mod claims the
+         * character whose Target Test is loading, spawn its targets at the mod's bare world
+         * coordinates instead of the vanilla joints. TTMod_* resolve to gw_TTMod_* through gwtool's
+         * symbol prefix; the shim writes the coordinates as big-endian floats into this Vec3. */
+        extern UNK_T gm_801B6320(void);
+        extern int TTMod_ForCharacter(int ckind);
+        extern int TTMod_TargetCount(int level);
+        extern void TTMod_Target(int level, int i, float* x, float* y,
+                                 float* z);
+        int ckind = *(s8*) gm_801B6320();
+        int level = TTMod_ForCharacter(ckind);
+        if (level >= 0) {
+            int n = TTMod_TargetCount(level);
+            for (i = 0; i < n; i++) {
+                Vec3 pos;
+                TTMod_Target(level, i, &pos.x, &pos.y, &pos.z);
+                if (it_8027B5B0(It_Kind_Mato, &pos, NULL, NULL, 0) != NULL) {
+                    count++;
+                }
+            }
+            stage_info.x6D4 = count;
+            stage_info.x6D2 = count;
+            return count;
+        }
+    }
+#endif
     for (i = 199; i < 220; i++) {
         if (stage_info.x280[i] != NULL &&
             it_8027B5B0(It_Kind_Mato, 0, stage_info.x280[i], NULL, 0) != NULL)

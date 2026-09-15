@@ -614,3 +614,206 @@ void gw_start_watchdog(void) {
   }
   CloseHandle(CreateThread(NULL, 0, &gw_watchdog, NULL, 0, NULL));
 }
+
+/* ---- data-driven Target Test layouts (mods/targettest/<name>.tt) ---------------------------
+ * Phase 1: custom target layouts that reuse each character's existing Target Test geometry. A
+ * <name>.tt file is read once, lazily, on first query; the game calls gw_TTMod_ForCharacter for
+ * the Target Test character and, on a hit, spawns the mod's targets at bare world coordinates.
+ *
+ * The directory is resolved next to the executable (the same GetModuleFileNameA dance shim_card.c
+ * uses for "card/"). Coordinates are stored as native floats and marshalled to big-endian guest
+ * memory by gw_TTMod_Target via gw_wf32. No JSON dependency: the format is plain line-based text. */
+
+#define TT_MAX_LEVELS 32
+#define TT_MAX_TARGETS 21
+#define TT_NAME_MAX 64
+
+typedef struct {
+  char name[TT_NAME_MAX];
+  int ckind;
+  int target_count;
+  float targets[TT_MAX_TARGETS][3];
+} TTLevel;
+
+static TTLevel tt_levels[TT_MAX_LEVELS];
+static int tt_level_count;
+static int tt_loaded;
+
+static void tt_base_dir(char *path, size_t cap) {
+  DWORD n = GetModuleFileNameA(NULL, path, (DWORD)cap);
+  if (n > 0 && n < (DWORD)cap) {
+    char *slash = strrchr(path, '\\');
+    if (slash != NULL) {
+      slash[1] = '\0';
+      strncat(path, "mods\\targettest", cap - strlen(path) - 1);
+    }
+  } else {
+    strcpy(path, "mods\\targettest");
+  }
+}
+
+static int tt_ieq(const char *a, const char *b) {
+  while (*a != '\0' && *b != '\0') {
+    char ca = *a, cb = *b;
+    if (ca >= 'A' && ca <= 'Z') ca = (char)(ca + ('a' - 'A'));
+    if (cb >= 'A' && cb <= 'Z') cb = (char)(cb + ('a' - 'A'));
+    if (ca != cb) return 0;
+    a++;
+    b++;
+  }
+  return *a == *b;
+}
+
+/* Maps a `character` value to the decomp's CharacterKind enum (ft/forward.h): either a bare
+ * integer (the ckind itself) or a case-insensitive name. */
+static int tt_parse_ckind(const char *v) {
+  char *end;
+  long n = strtol(v, &end, 0);
+  if (end != v && *end == '\0') {
+    return (int)n;
+  }
+  static const struct {
+    const char *name;
+    int ckind;
+  } table[] = {
+      {"captain", 0},    {"falcon", 0},   {"donkey", 1},     {"dk", 1},
+      {"fox", 2},        {"gamewatch", 3}, {"gw", 3},        {"kirby", 4},
+      {"koopa", 5},      {"bowser", 5},   {"link", 6},       {"luigi", 7},
+      {"mario", 8},      {"marth", 9},    {"mars", 9},       {"mewtwo", 10},
+      {"ness", 11},      {"peach", 12},   {"pikachu", 13},   {"iceclimbers", 14},
+      {"popo", 14},      {"nana", 14},    {"jigglypuff", 15}, {"purin", 15},
+      {"samus", 16},     {"yoshi", 17},   {"zelda", 18},     {"sheik", 19},
+      {"seak", 19},      {"falco", 20},   {"clink", 21},     {"younglink", 21},
+      {"drmario", 22},   {"emblem", 23},  {"roy", 23},       {"pichu", 24},
+      {"ganon", 25},     {"ganondorf", 25},
+  };
+  size_t i;
+  for (i = 0; i < sizeof table / sizeof table[0]; ++i) {
+    if (tt_ieq(v, table[i].name)) return table[i].ckind;
+  }
+  return -1;
+}
+
+static void tt_parse_file(const char *path, const char *fname) {
+  FILE *f = fopen(path, "rb");
+  TTLevel lvl;
+  char line[512];
+  if (f == NULL) return;
+  memset(&lvl, 0, sizeof lvl);
+  lvl.ckind = -1;
+  while (fgets(line, sizeof line, f) != NULL) {
+    char *s = line;
+    char key[64];
+    char *val;
+    int k = 0;
+    while (*s == ' ' || *s == '\t') s++;
+    if (*s == '#' || *s == '\0' || *s == '\n' || *s == '\r') continue;
+    while (*s != '\0' && *s != ' ' && *s != '\t' && *s != '\n' && *s != '\r') {
+      if (k < (int)sizeof key - 1) key[k++] = *s;
+      s++;
+    }
+    key[k] = '\0';
+    while (*s == ' ' || *s == '\t') s++;
+    val = s;
+    {
+      char *e = val + strlen(val);
+      while (e > val && (e[-1] == '\n' || e[-1] == '\r' || e[-1] == ' ' || e[-1] == '\t')) {
+        *--e = '\0';
+      }
+    }
+    if (strcmp(key, "name") == 0) {
+      snprintf(lvl.name, sizeof lvl.name, "%s", val);
+    } else if (strcmp(key, "character") == 0) {
+      lvl.ckind = tt_parse_ckind(val);
+    } else if (strcmp(key, "basestage") == 0) {
+      /* Phase 2 (custom geometry): accepted for forward compatibility, ignored here. */
+    } else if (strcmp(key, "target") == 0) {
+      if (lvl.target_count < TT_MAX_TARGETS) {
+        float x, y, z;
+        if (sscanf(val, "%f %f %f", &x, &y, &z) == 3) {
+          lvl.targets[lvl.target_count][0] = x;
+          lvl.targets[lvl.target_count][1] = y;
+          lvl.targets[lvl.target_count][2] = z;
+          lvl.target_count++;
+        }
+      }
+    }
+  }
+  fclose(f);
+  if (lvl.ckind < 0 || lvl.target_count == 0) {
+    gw_log("gw: targettest: skipping %s (missing character or targets)", fname);
+    return;
+  }
+  {
+    int i;
+    for (i = 0; i < tt_level_count; ++i) {
+      if (tt_levels[i].ckind == lvl.ckind) {
+        gw_log("gw: targettest: ignoring %s: character already claimed by %s", fname,
+               tt_levels[i].name);
+        return;
+      }
+    }
+  }
+  if (tt_level_count >= TT_MAX_LEVELS) {
+    gw_log("gw: targettest: level table full, ignoring %s", fname);
+    return;
+  }
+  tt_levels[tt_level_count++] = lvl;
+}
+
+static void tt_load(void) {
+  char dir[MAX_PATH];
+  char pattern[MAX_PATH];
+  WIN32_FIND_DATAA fd;
+  HANDLE h;
+  if (tt_loaded) return;
+  tt_loaded = 1;
+  tt_base_dir(dir, sizeof dir);
+  snprintf(pattern, sizeof pattern, "%s\\*.tt", dir);
+  h = FindFirstFileA(pattern, &fd);
+  if (h == INVALID_HANDLE_VALUE) {
+    gw_log("gw: targettest: no mods found in %s", dir);
+    return;
+  }
+  do {
+    char path[MAX_PATH];
+    if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) continue;
+    snprintf(path, sizeof path, "%s\\%s", dir, fd.cFileName);
+    tt_parse_file(path, fd.cFileName);
+  } while (FindNextFileA(h, &fd) != 0);
+  FindClose(h);
+  gw_log("gw: targettest: loaded %d mods from %s", tt_level_count, dir);
+}
+
+int gw_TTMod_Count(void) {
+  tt_load();
+  return tt_level_count;
+}
+
+int gw_TTMod_ForCharacter(int ckind) {
+  int i;
+  tt_load();
+  for (i = 0; i < tt_level_count; ++i) {
+    if (tt_levels[i].ckind == ckind) return i;
+  }
+  return -1;
+}
+
+int gw_TTMod_TargetCount(int level) {
+  tt_load();
+  if (level < 0 || level >= tt_level_count) return 0;
+  return tt_levels[level].target_count;
+}
+
+void gw_TTMod_Target(int level, int i, float *x, float *y, float *z) {
+  tt_load();
+  if (level < 0 || level >= tt_level_count || i < 0 || i >= tt_levels[level].target_count) {
+    if (x != NULL) gw_wf32(x, 0.0f);
+    if (y != NULL) gw_wf32(y, 0.0f);
+    if (z != NULL) gw_wf32(z, 0.0f);
+    return;
+  }
+  gw_wf32(x, tt_levels[level].targets[i][0]);
+  gw_wf32(y, tt_levels[level].targets[i][1]);
+  gw_wf32(z, tt_levels[level].targets[i][2]);
+}

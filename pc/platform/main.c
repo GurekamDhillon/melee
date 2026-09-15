@@ -169,6 +169,13 @@ int main(int argc, char *argv[]) {
   }
   gw_log("melee-pc: disc image %s", gw_iso_path_buf);
 
+  /* Scan the Target Test mod directory now so the loader reports what it found at boot, instead of
+   * only on the first Target Test query. */
+  {
+    extern int gw_TTMod_Count(void);
+    (void)gw_TTMod_Count();
+  }
+
   int win_x = 0, win_y = 0, win_w = 1280, win_h = 960;
   bool have_x = gw_env_int("MELEE_WINDOW_X", &win_x);
   bool have_y = gw_env_int("MELEE_WINDOW_Y", &win_y);

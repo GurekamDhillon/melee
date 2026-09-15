@@ -23,6 +23,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <timeapi.h> /* timeBeginPeriod: see gw_pace_field */
 
 typedef void (*gw_retrace_cb)(uint32_t retraceCount);
 typedef void (*gw_drawdone_cb)(void);
@@ -309,8 +310,26 @@ static uint32_t gw_presented_count;
  * its own frame cost (~15.6 ms). The 1/60 pad alarm is only a soft reference, so every ~13
  * free-run frames the pad queue drains and the game stalls a whole period -- the 15.6/30.6 ms
  * bimodal judder. Wait out the boundary here against the free-running virtual clock, with
- * catch-up so a long frame (map load) does not accumulate a deficit. */
+ * catch-up so a long frame (map load) does not accumulate a deficit.
+ *
+ * The wait used to be a pure YieldProcessor() spin for the whole remainder. Measured with
+ * MELEE_PROFILE=1 plus per-thread CPU accounting (Get-Process): game logic and the GPU submit
+ * together cost well under 1 ms of the 16.67 ms frame, and the game thread nonetheless burned
+ * 0.96 of a full CPU core, continuously -- the other ~16 ms of "present" was 100% spin, for a
+ * boundary that is milliseconds away and nothing productive to do while waiting for it. That is
+ * wasted heat, battery and fan noise for no smoothness benefit, and on a machine with few cores
+ * it can steal cycles from the render worker or any other app running alongside the game.
+ *
+ * Sleep() releases the core for everything but the final stretch, where only a spin can hit the
+ * boundary precisely (a Sleep wakeup is scheduled, not exact). GW_PACE_SPIN_TICKS sizes that
+ * stretch well above Sleep(1)'s typical overshoot under load, so the frame-time percentiles this
+ * replaces (measured p50=16.67 p95=16.97-17.02 p99=17.05-17.15) do not move; the periodic pump of
+ * alarms/deferred work keeps the same ~1 ms cadence it always had, just checked after each wake
+ * instead of after each spin iteration. */
+#define GW_PACE_SPIN_TICKS (3u * (GW_TIMER_CLOCK / 1000u)) /* spin only the final ~3 ms */
+
 static uint64_t gw_last_field_tick;
+static bool gw_pace_timer_res_set;
 
 static void gw_pace_field(void) {
   uint64_t now = gw_time_ticks();
@@ -319,8 +338,15 @@ static void gw_pace_field(void) {
     gw_last_field_tick = now;
     return;
   }
-  const uint64_t target = gw_last_field_tick + GW_TICKS_PER_FIELD;
-  if (now < target) {
+  if (!gw_pace_timer_res_set) {
+    /* Raise the OS timer resolution for the life of the process, so the Sleep(1) below actually
+     * wakes in ~1-2 ms rather than the ~15.6 ms default tick. Windows resets a process's timer
+     * resolution request automatically on exit, so there is no matching timeEndPeriod. */
+    timeBeginPeriod(1);
+    gw_pace_timer_res_set = true;
+  }
+  {
+    const uint64_t target = gw_last_field_tick + GW_TICKS_PER_FIELD;
     last_pump = now;
     while ((now = gw_time_ticks()) < target) {
       if (now - last_pump >= GW_TIMER_CLOCK / 1000u) {
@@ -328,7 +354,11 @@ static void gw_pace_field(void) {
         gw_os_run_alarms(now);
         gw_run_deferred();
       }
-      YieldProcessor();
+      if (target - now > GW_PACE_SPIN_TICKS) {
+        Sleep(1);
+      } else {
+        YieldProcessor();
+      }
     }
   }
   gw_last_field_tick = now;

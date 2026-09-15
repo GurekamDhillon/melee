@@ -169,11 +169,10 @@ void gw_CARDInit(void) {
     return;
   }
 
-  /* Opt-in while the card paths are still being brought up. They are new code on both sides and
-   * currently break the boot flow, so the default stays on the long-standing no-card behaviour
-   * that the rest of the game is known to handle. Set MELEE_CARD=1 to exercise them. */
-  if (enable == NULL || enable[0] != '1') {
-    gw_log("gw: card: disabled (set MELEE_CARD=1 to enable); reporting no card");
+  /* Enabled by default: the card paths are exercised and working. Set MELEE_CARD=0 to fall back
+   * to the long-standing no-card behaviour. */
+  if (enable != NULL && enable[0] == '0') {
+    gw_log("gw: card: disabled (MELEE_CARD=0); reporting no card");
     return;
   }
 

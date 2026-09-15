@@ -327,8 +327,15 @@ int gw_OSCheckActiveThreads(void) { return 0; }
 
 /* ---- reset and modes ---------------------------------------------------------------------- */
 
-/* 0x80000000 tells gmmain_lib.c to skip the opening movie, which keeps THP off the boot path. */
-int gw_OSGetResetCode(void) { return (int32_t)0x80000000u; }
+/* gmmain_lib.c reads this to set skip_intro: 0x80000000 is the "rebooted from the IPL" code,
+ * which skips the opening movie, and anything else plays it. This used to be hardcoded to skip,
+ * because THP decode was stubbed out and the movie would only have drawn garbage. The decoder is
+ * real now (extern/dolphin/src/dolphin/thp/THPDec.c), so report a cold boot - which is what
+ * launching the executable actually is - and let MvOpen.mth play, Start-skippable exactly as on
+ * console. MELEE_SKIP_INTRO=1 restores the old straight-to-title behaviour. */
+int gw_OSGetResetCode(void) {
+  return getenv("MELEE_SKIP_INTRO") != NULL ? (int32_t)0x80000000u : 0;
+}
 
 int gw_OSGetResetSwitchState(void) { return 0; }
 

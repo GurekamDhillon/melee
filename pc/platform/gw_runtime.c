@@ -807,6 +807,24 @@ int gw_TTMod_Count(void) {
   return tt_level_count;
 }
 
+/* Dev/debug hook: MELEE_TARGET_TEST=<ckind int or name like mario/fox/zelda> boots the game
+ * straight into Target Test with that character, skipping menus and the CSS. Game code calls the
+ * unprefixed `TestTargetTestCKind` (gwtool maps it to this symbol) and treats a negative return as
+ * "not set / not a known character". Read once and cached; returns the CharacterKind (ft/forward.h)
+ * or -1. Reuses tt_parse_ckind so the integer/name grammar matches the .tt mod files. */
+int gw_TestTargetTestCKind(void) {
+  static int state = -2; /* -2 = unread, -1 = unset/invalid, >=0 = ckind */
+  if (state == -2) {
+    const char *v = getenv("MELEE_TARGET_TEST");
+    state = (v == NULL || v[0] == '\0') ? -1 : tt_parse_ckind(v);
+    if (state >= 0) {
+      gw_log("gw: MELEE_TARGET_TEST=\"%s\" -> ckind %d (booting straight into Target Test)",
+             v, state);
+    }
+  }
+  return state;
+}
+
 int gw_TTMod_ForCharacter(int ckind) {
   int i;
   tt_load();

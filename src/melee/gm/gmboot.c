@@ -80,6 +80,14 @@ void bootOnLeave(GameModeState* data)
     // Enter mode
     // Gekko "boot to CSS" code changes scene_id to a hardcoded 2 (::GM_VS)
     gm_ChangeGameModeAfterCurrentScene(scene_data->mode_id);
+#if defined(TARGET_PC)
+    {
+        extern int TestTargetTestCKind(void);
+        if (TestTargetTestCKind() >= 0) {
+            gm_SetPendingGameMode(GM_TARGET_TEST);
+        }
+    }
+#endif
 }
 
 GameModeState gm_Mode_MemCard_States[] = {

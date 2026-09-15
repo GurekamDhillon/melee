@@ -283,6 +283,16 @@ void gm_801B6428(GameModeState* arg0)
 
     temp_r31 = &gmMainLib_804D3EE0->vs.unk_530.unk_584;
 
+#if defined(TARGET_PC)
+    {
+        extern int TestTargetTestCKind(void);
+        if (TestTargetTestCKind() >= 0) {
+            OSReport("Target Test direct launch: starting with ckind=%d\n",
+                     (int) temp_r31->unk_584);
+        }
+    }
+#endif
+
     temp_r3->rules = gm_80490960.vs.start.rules;
 
     temp_r3->rules.match_kind = 1;
@@ -427,6 +437,25 @@ void gm_Mode_TargetTest_OnLoad(void)
 {
     gm_804D68E8 = gm_801677F0();
     gm_804D68E9 = 0;
+#if defined(TARGET_PC)
+    {
+        extern int TestTargetTestCKind(void);
+        int ckind = TestTargetTestCKind();
+        if (ckind >= 0) {
+            struct gmm_x0_584_t* sel = &gmMainLib_804D3EE0->vs.unk_530.unk_584;
+            sel->unk_584 = (s8) ckind;
+            sel->unk_585 = 0;
+            sel->unk_586 = 0x78;
+            gm_SetupRulesDefaults(&gm_80490960.vs.start.rules);
+            gm_801B06B0(&gm_80490960, 0xF, (s8) ckind, 1, 0, 0x78, 0,
+                        gm_804D68E8);
+            lbDvd_GetPreloadCacheScene()->game_cache.entries[0].char_id = ckind;
+            lbDvd_GetPreloadCacheScene()->game_cache.entries[0].color = 0;
+            lbDvd_SetupVsPreloadCache();
+            gm_SetGameModeStateId(1);
+        }
+    }
+#endif
 }
 
 void gm_Mode_10ManVs_OnInit(void)

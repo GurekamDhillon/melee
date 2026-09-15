@@ -292,6 +292,13 @@ void ftLg_Init_OnLoad(HSD_GObj* gobj)
 
     PUSH_ATTRS(fp, ftLuigiAttributes);
 
+#if defined(TARGET_PC)
+    /// @bug Read-before-write: `x222C_cycloneCharge` is read by the Cyclone
+    /// enter/phys handlers before any write. HSD_ObjAlloc leaves the block
+    /// uncleared, so zero it here for the port.
+    fp->u.lg.x222C_cycloneCharge = false;
+#endif
+
     it_8026B3F8(item_list[0], It_Kind_Luigi_Fire);
 }
 

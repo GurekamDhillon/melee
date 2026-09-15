@@ -80,7 +80,17 @@ Fighter_GObj* ftDemo_CreateFighter(plAllocInfo2* alloc_info)
         {
             enum_t a, b;
             if (alloc_info->unk8 >= 9) {
+#if defined(TARGET_PC)
+                if (ftData_UnkDemoCallbacks0[fp->kind] != NULL) {
+                    ftData_UnkDemoCallbacks0[fp->kind](alloc_info->unk8, &a,
+                                                       &b);
+                } else {
+                    a = 0;
+                    b = 9;
+                }
+#else
                 ftData_UnkDemoCallbacks0[fp->kind](alloc_info->unk8, &a, &b);
+#endif
             } else if (alloc_info->unk8 >= 8) {
                 b = 13;
                 a = 13;

@@ -14,11 +14,61 @@
 #include <aurora/event.h>
 #include <aurora/main.h>
 
+#include <windows.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 static char gw_iso_path_buf[1024];
+
+/* Window placement, for running the port without it landing on the user's main display - a
+ * second monitor, off-screen entirely, or hidden. Aurora only honours non-negative positions
+ * (window.cpp treats a negative x or y as "undefined" and centres the window), so a position on
+ * a monitor left of or above the primary has to be applied after the window exists; everything
+ * else goes through AuroraConfig and never flashes on the wrong display.
+ *
+ *   MELEE_WINDOW_X / MELEE_WINDOW_Y  window position, virtual-desktop coordinates (may be
+ *                                    negative; large values such as 30000 park it off-screen)
+ *   MELEE_WINDOW_W / MELEE_WINDOW_H  window size (Aurora clamps to at least 640x480)
+ *   MELEE_WINDOW_HIDE=1              hide the window entirely; the game still runs and renders
+ */
+static bool gw_env_int(const char *name, int *out) {
+  const char *v = getenv(name);
+  if (v == NULL || *v == 0) {
+    return false;
+  }
+  *out = atoi(v);
+  return true;
+}
+
+/* Apply whatever AuroraConfig could not: a negative position, and hiding. Runs immediately after
+ * aurora_initialize, before the first frame is drawn. */
+static void gw_apply_window_env(void) {
+  int x, y, hide = 0;
+  bool have_x = gw_env_int("MELEE_WINDOW_X", &x);
+  bool have_y = gw_env_int("MELEE_WINDOW_Y", &y);
+  HWND hwnd;
+
+  (void)gw_env_int("MELEE_WINDOW_HIDE", &hide);
+  if (!hide && !((have_x && x < 0) || (have_y && y < 0))) {
+    return; /* the config path already placed it */
+  }
+  hwnd = FindWindowA(NULL, "Melee PC");
+  if (hwnd == NULL) {
+    gw_log("melee-pc: window placement: could not find the window");
+    return;
+  }
+  if ((have_x && x < 0) || (have_y && y < 0)) {
+    SetWindowPos(hwnd, NULL, have_x ? x : 0, have_y ? y : 0, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+    gw_log("melee-pc: window moved to %d,%d", have_x ? x : 0, have_y ? y : 0);
+  }
+  if (hide) {
+    ShowWindow(hwnd, SW_HIDE);
+    gw_log("melee-pc: window hidden (MELEE_WINDOW_HIDE=1)");
+  }
+}
 
 const char *gw_iso_path(void) { return gw_iso_path_buf[0] != '\0' ? gw_iso_path_buf : NULL; }
 
@@ -119,6 +169,12 @@ int main(int argc, char *argv[]) {
   }
   gw_log("melee-pc: disc image %s", gw_iso_path_buf);
 
+  int win_x = 0, win_y = 0, win_w = 1280, win_h = 960;
+  bool have_x = gw_env_int("MELEE_WINDOW_X", &win_x);
+  bool have_y = gw_env_int("MELEE_WINDOW_Y", &win_y);
+  (void)gw_env_int("MELEE_WINDOW_W", &win_w);
+  (void)gw_env_int("MELEE_WINDOW_H", &win_h);
+
   const AuroraConfig config = {
       .appName = "Melee PC",
       /* Dawn's D3D12 backend (v20260807.225922, 32-bit x86) crashes a few seconds into
@@ -127,8 +183,12 @@ int main(int argc, char *argv[]) {
        * +0x363548). D3D11's queue/serial path does not, so pin it until Dawn is fixed. */
       .desiredBackend = gw_desired_backend(),
       .vsync = true,
-      .windowWidth = 1280,
-      .windowHeight = 960,
+      /* Aurora reads a negative x or y as "undefined"; those are applied after init instead
+       * (gw_apply_window_env), so pass -1 to keep its centring default in that case. */
+      .windowPosX = (have_x && win_x >= 0) ? win_x : -1,
+      .windowPosY = (have_y && win_y >= 0) ? win_y : -1,
+      .windowWidth = (uint32_t)win_w,
+      .windowHeight = (uint32_t)win_h,
       .logCallback = &gw_aurora_log,
       .logLevel = LOG_INFO,
       /* The port manages MEM1 and ARAM itself, because game code tells main memory from ARAM by
@@ -139,6 +199,7 @@ int main(int argc, char *argv[]) {
   AuroraInfo info = aurora_initialize(argc, argv, &config);
   gw_log("melee-pc: aurora backend %d, window %ux%u", (int)info.backend, info.windowSize.width,
          info.windowSize.height);
+  gw_apply_window_env();
 
   /* Letterbox rather than stretch when the window is not 4:3.
    *

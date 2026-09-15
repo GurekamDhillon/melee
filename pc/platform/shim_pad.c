@@ -244,6 +244,16 @@ int gw_PADRead(void *status) {
   PADStatus *st = (PADStatus *)status;
   int ret = (int)PADRead(st);
 
+  /* Aurora fills every channel's PADStatus natively, but the game reads the array big-endian
+   * (gw.h). Swap each channel's u16 button into big-endian order before the overlays below touch
+   * it, so channels nothing drives (and 1-3) keep a value the game can read, the adapter's and
+   * overlays' gw_w16 writes stay correct, and the keyboard overlay's gw_r16 read sees big-endian.
+   * stick/substick/trigger/analog/err are single bytes and cross unchanged; extButton is not
+   * swapped because the game never reads it (only Aurora's own pad.cpp touches it). */
+  for (int i = 0; i < PAD_CHANMAX; ++i) {
+    st[i].button = gw_bswap16(st[i].button);
+  }
+
   /* F9 re-runs controller calibration: the resting stick and trigger positions are re-sampled
    * and any button held at that moment is masked as stuck. Worn triggers and trigger plugs drift,
    * so this needs to be repeatable without restarting the game. Gated to the foreground window,
@@ -306,6 +316,10 @@ int gw_PADRead(void *status) {
       if (GetAsyncKeyState('J') & 0x8000) { btn |= PAD_BUTTON_A; held = 1; }
       if (GetAsyncKeyState('K') & 0x8000) { btn |= PAD_BUTTON_B; held = 1; }
       if (GetAsyncKeyState(VK_RETURN) & 0x8000) { btn |= PAD_BUTTON_START; held = 1; }
+      /* F1 is the in-match C-stick toggle hotkey. It has no GameCube button, so
+       * it rides the reserved pad bit 0x0080 (HSD_PAD_7) into game code, where
+       * fighter.c treats that bit's press edge as the F1 toggle. */
+      if (GetAsyncKeyState(VK_F1) & 0x8000) { btn |= 0x0080; held = 1; }
       if (GetAsyncKeyState(VK_UP) & 0x8000) { btn |= PAD_BUTTON_UP; held = 1; }
       if (GetAsyncKeyState(VK_DOWN) & 0x8000) { btn |= PAD_BUTTON_DOWN; held = 1; }
       if (GetAsyncKeyState(VK_LEFT) & 0x8000) { btn |= PAD_BUTTON_LEFT; held = 1; }

@@ -136,8 +136,28 @@ int64_t gw_OSGetTime(void) { return (int64_t)gw_time_ticks(); }
 
 int gw_OSGetTick(void) { return (int)(int32_t)(uint32_t)gw_time_ticks(); }
 
+/* Aurora writes each OSCalendarTime field natively (little-endian) into the game's buffer, but the
+ * game reads them big-endian, so the save-description date comes out garbage (DEVLOG §13.6.5).
+ * Swap every 32-bit field in place, one by one, so the swap stays correct even if the struct's
+ * layout ever gains padding. All ten fields are 32-bit: sec/min/hour/mday/mon/year/wday/yday/
+ * msec/usec. */
+static void gw_calendar_time_bswap(OSCalendarTime *td) {
+  td->sec = (int)gw_bswap32((uint32_t)td->sec);
+  td->min = (int)gw_bswap32((uint32_t)td->min);
+  td->hour = (int)gw_bswap32((uint32_t)td->hour);
+  td->mday = (int)gw_bswap32((uint32_t)td->mday);
+  td->mon = (int)gw_bswap32((uint32_t)td->mon);
+  td->year = (int)gw_bswap32((uint32_t)td->year);
+  td->wday = (int)gw_bswap32((uint32_t)td->wday);
+  td->yday = (int)gw_bswap32((uint32_t)td->yday);
+  td->msec = (int)gw_bswap32((uint32_t)td->msec);
+  td->usec = (int)gw_bswap32((uint32_t)td->usec);
+}
+
 void gw_OSTicksToCalendarTime(int64_t ticks, void *td) {
-  OSTicksToCalendarTime((OSTime)ticks, (OSCalendarTime *)td);
+  OSCalendarTime *cal = (OSCalendarTime *)td;
+  OSTicksToCalendarTime((OSTime)ticks, cal);
+  gw_calendar_time_bswap(cal);
 }
 
 /* ---- interrupts --------------------------------------------------------------------------- */

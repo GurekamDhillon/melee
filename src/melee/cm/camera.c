@@ -15,6 +15,7 @@
 #include <dolphin/types.h>
 #include <melee/ft/ftlib.h>
 #include <melee/gm/gm_unsplit.h>
+#include <melee/gm/gmmultiman.h>
 #include <melee/gr/grcastle.h>
 #include <melee/gr/grcorneria.h>
 #include <melee/gr/grgarden.h>
@@ -1446,7 +1447,13 @@ void Camera_8002B0E0(void)
     f32 var_f2;
     PAD_STACK(8);
 
+#if defined(TARGET_PC)
+    if ((gm_IsCurrently1PMode_inline() != 0) && (game_camera.x2C0 > 0.0f) &&
+        !(gm_GetCurrentGameMode() == GM_TARGET_TEST &&
+          gm_CStickSmashTargetTest)) {
+#else
     if ((gm_IsCurrently1PMode_inline() != 0) && (game_camera.x2C0 > 0.0f)) {
+#endif
         {
             s32 idx = Player_GetPlayerId(0) & 0xFF;
             var_f1 = HSD_PadCopyStatus[idx].nml_subStickY;

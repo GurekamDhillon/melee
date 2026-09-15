@@ -34,6 +34,13 @@ static u32 pad;
 static u8 gm_804D68F0;
 static s8 gm_804D68F1;
 
+/* PC-only port toggle: when true in Target Test, the C-stick performs smash
+ * attacks and aerials instead of controlling the camera. Defaults to false
+ * (camera), matching console behaviour. */
+#if defined(TARGET_PC)
+bool gm_CStickSmashTargetTest;
+#endif
+
 GameModeState gm_Mode_TargetTest_States[] = {
     {
         0,

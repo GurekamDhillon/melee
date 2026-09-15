@@ -14,6 +14,7 @@
 #include <melee/gm/gm_1601.h>
 #include <melee/gm/gm_unsplit.h>
 #include <melee/gm/gmmain_lib.h>
+#include <melee/gm/gmmultiman.h>
 #include <melee/gm/types.h>
 #include <melee/lb/lb_00B0.h>
 #include <melee/lb/lb_013B.h>
@@ -83,6 +84,9 @@ static HSD_Text* mnCharSel_804D6CDC;
 static HSD_Text* mnCharSel_804D6CE0;
 static HSD_Text* mnCharSel_804D6CE4;
 static HSD_Text* mnCharSel_804D6CE8;
+#if defined(TARGET_PC)
+static HSD_Text* mnCharSel_CStickText;
+#endif
 static u32 mnCharSel_804D6CEC;
 static s8 mnCharSel_804D6CF0;
 static s8 mnCharSel_804D6CF1;
@@ -627,6 +631,13 @@ void mnCharSel_8025C020(int arg0)
             HSD_SisLib_803A70A0(mnCharSel_804D6CE8, 0, NULL);
             HSD_JObjSetFlagsAll(sp7C, JOBJ_HIDDEN);
         }
+#if defined(TARGET_PC)
+        if (mnCharSel_CStickText != NULL) {
+            HSD_SisLib_803A70A0(mnCharSel_CStickText, 0,
+                                gm_CStickSmashTargetTest ? "C-STICK: SMASH"
+                                                         : "C-STICK: CAMERA");
+        }
+#endif
         break;
     case STADIUM_HOMERUN:
         if (arg0 == 0) {
@@ -2496,6 +2507,14 @@ void mnCharSel_CursorThink(HSD_GObj* gobj)
             }
         }
 
+#if defined(TARGET_PC)
+        if (mnCharSel_804D6CB0->match_type == STADIUM_TARGET &&
+            (trigger & (HSD_PAD_L | HSD_PAD_R))) {
+            gm_CStickSmashTargetTest = !gm_CStickSmashTargetTest;
+            sfxMove();
+        }
+#endif
+
         cursor->xC = (f32) ((0.0002f * dx) + cursor->xC);
         cursor->x10 = (f32) ((0.0002f * dy) + cursor->x10);
 
@@ -4243,6 +4262,9 @@ s32 mnCharSel_802640A0(void)
     mnCharSel_804D6CDC = NULL;
     mnCharSel_804D6CE8 = NULL;
     mnCharSel_804D6CE4 = NULL;
+#if defined(TARGET_PC)
+    mnCharSel_CStickText = NULL;
+#endif
     mnCharSel_804D6CF2 = 0x1E;
     mnCharSel_804D6CF3 = 0;
     {
@@ -4954,6 +4976,25 @@ s32 mnCharSel_802640A0(void)
             text->font_size.x = 0.06f;
             text->font_size.y = 0.045f;
             HSD_SisLib_803A6B98(text, 0.0f, 0.0f, NULL);
+#if defined(TARGET_PC)
+            lb_80011E24(mnCharSel_804D6CC8, &sp108, 5, -1);
+            lb_8000B1CC(sp108, NULL, &spEC);
+            text = HSD_SisLib_803A6754(0, ctx);
+            mnCharSel_CStickText = text;
+            {
+                f32 sx, sy, sz;
+                sx = 10.9f + spEC.x;
+                sz = spEC.z;
+                sy = -spEC.y - 0.6f;
+                text->pos_x = sx;
+                text->pos_y = sy;
+                text->pos_z = sz;
+            }
+            text->font_size.x = 0.06f;
+            text->font_size.y = 0.045f;
+            text->default_alignment = 2;
+            HSD_SisLib_803A6B98(text, 0.0f, 0.0f, NULL);
+#endif
             lb_80011E24(mnCharSel_804D6CC8, &sp108, 3, -1);
             HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN);
             goto hide_extra;

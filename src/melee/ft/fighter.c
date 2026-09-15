@@ -61,6 +61,7 @@
 #include <melee/db/db.h>
 #include <melee/ef/efasync.h>
 #include <melee/gm/gm_unsplit.h>
+#include <melee/gm/gmmultiman.h>
 #include <melee/gr/ground.h>
 #include <melee/gr/stage.h>
 #include <melee/if/ifmagnify.h>
@@ -1821,8 +1822,15 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                 SET_STICKS(fp->input.lstick[0].x, fp->input.lstick[0].y,
                            HSD_PadGameStatus[fp->x618_player_id].nml_stickX,
                            HSD_PadGameStatus[fp->x618_player_id].nml_stickY);
+#if defined(TARGET_PC)
+                if (DbLevel < DbLKind_DebugRom &&
+                    (gm_IsCurrently1PMode_inline() == 0 ||
+                     (gm_GetCurrentGameMode() == GM_TARGET_TEST &&
+                      gm_CStickSmashTargetTest)))
+#else
                 if (DbLevel < DbLKind_DebugRom &&
                     gm_IsCurrently1PMode_inline() == 0)
+#endif
                 {
                     SET_STICKS(
                         fp->input.cstick[0].x, fp->input.cstick[0].y,

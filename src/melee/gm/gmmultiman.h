@@ -6,6 +6,13 @@
 
 #include <placeholder.h>
 
+/* PC-only port toggle: when true in Target Test, the C-stick performs smash
+ * attacks and aerials instead of controlling the camera. Defaults to false
+ * (camera), matching console behaviour. */
+#if defined(TARGET_PC)
+extern bool gm_CStickSmashTargetTest;
+#endif
+
 /* 1B6320 */ UNK_T gm_801B6320(void);
 /* 1B632C */ void gm_801B632C(GameModeState*);
 /* 1B63C4 */ void gm_801B63C4(GameModeState*);

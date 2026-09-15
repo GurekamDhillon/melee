@@ -2359,7 +2359,16 @@ void fn_8018F888(void)
 {
     s32 i = fn_8018F888_inline0();
 
+#if defined(TARGET_PC)
+    /* fn_8018F888_inline0 returns 0x40 when no entry has x1 set; the array is
+     * BracketEntry[64] (indices 0..63), so a write at [0x40] lands past the end
+     * into a separately-linked symbol. Skip it when the bracket is empty. */
+    if (i < 0x40) {
+        lbl_80473AB8[i].x20.g = 0;
+    }
+#else
     lbl_80473AB8[i].x20.g = 0;
+#endif
 
     if (gm_804771C4.x33 != 5) {
         return;
@@ -2367,7 +2376,13 @@ void fn_8018F888(void)
 
     i = fn_8018F888_inline0();
 
+#if defined(TARGET_PC)
+    if (i < 0x3F) {
+        lbl_80473AB8[i + 1].x20.g = 0;
+    }
+#else
     lbl_80473AB8[i + 1].x20.g = 0;
+#endif
 }
 #ifdef MUST_MATCH
 #pragma pop

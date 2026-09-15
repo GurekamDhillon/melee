@@ -1583,7 +1583,14 @@ void* hsd_8039930C(HSD_Particle* pp, HSD_Particle* prev)
             case 0xB7:
                 /* Aim velocity toward JObj */
                 {
+#if defined(TARGET_PC)
+                    /* hsd_804D08E8 has 8 entries; the opcode byte plus pJObjOfs is
+                     * unconstrained, so mask to the 3-bit jobj index the rest of the
+                     * file uses (see the 0xBF handler and (kind & 0x7000) >> 12). */
+                    HSD_JObj* jobj = hsd_804D08E8[(*pc++ + pp->pJObjOfs) & 7];
+#else
                     HSD_JObj* jobj = hsd_804D08E8[*pc++ + pp->pJObjOfs];
+#endif
                     MtxPtr matrix;
                     f32 dz, dy, dx, vel_mag_sq, dist_sq;
 
@@ -1645,7 +1652,11 @@ void* hsd_8039930C(HSD_Particle* pp, HSD_Particle* prev)
                     range = fval;
 
                     {
+#if defined(TARGET_PC)
+                        HSD_JObj* jobj = hsd_804D08E8[idx & 7];
+#else
                         HSD_JObj* jobj = hsd_804D08E8[idx];
+#endif
                         if (hsd_803991D8((HSD_Generator*) pp, jobj, force,
                                          range) != 0)
                         {

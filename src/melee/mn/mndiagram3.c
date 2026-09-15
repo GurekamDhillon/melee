@@ -36,6 +36,27 @@ static void sdata2_order(void)
 }
 #endif
 
+#if defined(TARGET_PC)
+/* The console .data block laid these out contiguously from 803EEC10:
+ *   803EEC10  AnimLoopSettings (0xC)
+ *   803EEC1C  AnimLoopSettings (0xC)
+ *   803EEC28  mnDiagram3_PosTable (0x24)
+ *   803EEC4C  mnDiagram3_StatTable (0x60)
+ * Decompiled code casts &mnDiagram3_803EEC10 to mnDiagram3_DataTable* (and to
+ * char* in mnDiagram3_HandleInput) and walks to `positions` (0x18) and `stats`
+ * (0x3C), reaching the two real tables. The port links each symbol separately,
+ * so reference the real tables by name. */
+#define DIAGRAM3_POSITIONS mnDiagram3_803EEC28
+#define DIAGRAM3_STATS     mnDiagram3_803EEC4C
+#define DIAGRAM3_POS_X0    (&mnDiagram3_803EEC28.x0)
+#define DIAGRAM3_LABELS    (mnDiagram3_803EEC4C.label_ids)
+#else
+#define DIAGRAM3_POSITIONS (table->positions)
+#define DIAGRAM3_STATS     (table->stats)
+#define DIAGRAM3_POS_X0    ((Vec3*) (base + 0x18))
+#define DIAGRAM3_LABELS    ((u16*) (base + 0x3C))
+#endif
+
 HSD_GObj* mnDiagram3_804D6C20;
 
 void mnDiagram3_PopulateRankings(HSD_GObj* gobj)
@@ -95,7 +116,7 @@ void mnDiagram3_PopulateRankings(HSD_GObj* gobj)
         {
             u32 max_distance;
 
-            unit_glyph_ids = table->stats.unit_glyph_ids;
+            unit_glyph_ids = DIAGRAM3_STATS.unit_glyph_ids;
             (void) row_spacing;
             row_spacing = row_spacing - divider;
             max_distance = 0x5F5E0FF;
@@ -109,7 +130,7 @@ void mnDiagram3_PopulateRankings(HSD_GObj* gobj)
                         if (!mnDiagram2_IsIconOnlyStat(stat_type)) {
                             if (i == 0) {
                                 lb_8000B1CC(data->jobjs[6],
-                                            &table->positions.xC, &position);
+                                            &DIAGRAM3_POSITIONS.xC, &position);
                                 title_text = HSD_SisLib_803A6754(0, 1);
                                 data->title_text = title_text;
                                 title_text->font_size.x = 0.035f;
@@ -145,7 +166,7 @@ void mnDiagram3_PopulateRankings(HSD_GObj* gobj)
                 }
 
                 if (i == 0) {
-                    lb_8000B1CC(data->jobjs[6], &table->positions.x18,
+                    lb_8000B1CC(data->jobjs[6], &DIAGRAM3_POSITIONS.x18,
                                 &position);
                     value_text = HSD_SisLib_803A6754(0, 1);
                     data->value_text = value_text;
@@ -235,7 +256,7 @@ void mnDiagram3_PopulateRankings(HSD_GObj* gobj)
                         continue;
                     }
 
-                    lb_8000B1CC(data->jobjs[6], &table->positions.x18,
+                    lb_8000B1CC(data->jobjs[6], &DIAGRAM3_POSITIONS.x18,
                                 &position);
                     {
                         HSD_Text* icon_text;
@@ -306,7 +327,7 @@ static inline void mnDiagram3_RebuildRowLabels(Diagram3* data, char* base,
     base_idx = data->scroll_offset;
     spacing = HSD_JObjGetTranslationY(data->jobjs[9]) -
               HSD_JObjGetTranslationY(data->jobjs[8]);
-    lb_8000B1CC(data->jobjs[8], (Vec3*) (base + 0x18), pos);
+    lb_8000B1CC(data->jobjs[8], DIAGRAM3_POS_X0, pos);
     i = 0;
     do {
         text = HSD_SisLib_803A5ACC(0, 1, pos->x - 6.5f,
@@ -315,7 +336,7 @@ static inline void mnDiagram3_RebuildRowLabels(Diagram3* data, char* base,
         data->row_labels[i] = text;
         HSD_SisLib_803A6368(
             text,
-            ((u16*) (base + 0x3C))[mnDiagram3_GetRowStat(data, base_idx, i)]);
+            DIAGRAM3_LABELS[mnDiagram3_GetRowStat(data, base_idx, i)]);
         i++;
     } while (i < count);
 }

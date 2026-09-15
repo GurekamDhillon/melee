@@ -65,6 +65,16 @@ static char mnEvent_803EF7A0[0xD0] = {
     0x61, 0x72, 0x6B, 0x45, 0x76, 0x5F, 0x54, 0x6F, 0x70, 0x5F, 0x6A, 0x6F,
     0x69, 0x6E, 0x74, 0x00,
 };
+#if defined(TARGET_PC)
+/* mnEvent_803EF740 is a single AnimLoopSettings (0xC). On the console the .data
+ * block placed the 0xD0-byte char table mnEvent_803EF7A0 0x60 bytes after it;
+ * decompiled code does (char*) &mnEvent_803EF740 + off to reach the table's
+ * strings (assert literals, archive section names). The port links each symbol
+ * separately, so reference the table and subtract the 0x60 console gap. */
+#define MNEVENT_STR(ptr, off) (mnEvent_803EF7A0 + ((off) - 0x60))
+#else
+#define MNEVENT_STR(ptr, off) ((ptr) + (off))
+#endif
 static s32 mnEvent_804D5028 = 0xCABC9FFF;
 
 static s32 mnEvent_804D502C = 0xFF;
@@ -724,8 +734,8 @@ void mnEvent_8024E524(s32 event_idx)
 
     user_data = HSD_MemAlloc(sizeof(MnEventData));
     if (user_data == NULL) {
-        OSReport(strs + 0x70);
-        __assert(strs + 0x88, 0x39B, strs + 0x94);
+        OSReport(MNEVENT_STR(strs, 0x70));
+        __assert(MNEVENT_STR(strs, 0x88), 0x39B, MNEVENT_STR(strs, 0x94));
     }
     mnEvent_8024E420(user_data, event_idx);
     GObj_InitUserData(gobj, 0, HSD_Free, user_data);
@@ -767,9 +777,11 @@ void mnEvent_8024E838(int event_idx, int first_time)
     mnEvent_804D6C60 = NULL;
     {
         HSD_Archive* archive = mn_804D6BB8;
-        lbArchive_LoadSections(archive, arr, base + 0xA0, arr + 1, base + 0xB8,
-                               arr + 2, base + 0xD4, arr + 3, base + 0xF4,
-                               arr + 4, base + 0x118, 0);
+        lbArchive_LoadSections(archive, arr, MNEVENT_STR(base, 0xA0), arr + 1,
+                               MNEVENT_STR(base, 0xB8), arr + 2,
+                               MNEVENT_STR(base, 0xD4), arr + 3,
+                               MNEVENT_STR(base, 0xF4), arr + 4,
+                               MNEVENT_STR(base, 0x118), 0);
     }
 
     if (first_time == 0) {

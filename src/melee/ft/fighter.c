@@ -57,6 +57,9 @@
 #include "types.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#if defined(TARGET_PC)
+#include <dolphin/os.h> // OSReport (routes to the port's gw_log)
+#endif
 #include <melee/cm/camera.h>
 #include <melee/db/db.h>
 #include <melee/ef/efasync.h>
@@ -1908,6 +1911,25 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             }
 
             Fighter_Spaghetti_8006AD10_Inner1(fp);
+
+#if defined(TARGET_PC)
+            if (fp->x618_player_id == 0 &&
+                gm_GetCurrentGameMode() == GM_TARGET_TEST)
+            {
+                static bool cstick_combo_was_held;
+                bool combo =
+                    (fp->input.held_buttons[0] &
+                     (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START)) ==
+                    (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START);
+                if ((combo && !cstick_combo_was_held) ||
+                    (fp->input.pressed_buttons & HSD_PAD_7)) {
+                    gm_CStickSmashTargetTest = !gm_CStickSmashTargetTest;
+                    OSReport("C-STICK: %s\n",
+                             gm_CStickSmashTargetTest ? "SMASH" : "CAMERA");
+                }
+                cstick_combo_was_held = combo;
+            }
+#endif
 
             // Fighter_ClampSpecificValue
             fp->x676_x++;

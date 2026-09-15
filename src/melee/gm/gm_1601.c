@@ -3897,7 +3897,14 @@ void fn_80168A6C(void* arg0, void* arg1, s32 idx)
 
 f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
 {
+#if defined(TARGET_PC)
+    /* The decomp leaves `base` uninitialised: mwcc happened to keep `ckind` in the register, so
+     * every playable character indexed itself. clang + -ftrivial-auto-var-init=zero makes it 0,
+     * which maps every character to frame 0 (Captain Falcon) in the shared stock-icon atlas. */
+    int base = ckind;
+#else
     int base;
+#endif
     if (ckind == CKind_GKoops) {
         return 58.0F;
     }
@@ -3930,7 +3937,12 @@ float gm_80168BF8(int arg0)
 {
     CharacterKind ckind = Player_GetPlayerCharacter(arg0);
     u32 costume = Player_GetCostumeId(arg0);
+#if defined(TARGET_PC)
+    /* The decomp omits the return, relying on the tail call; make it explicit on the port. */
+    return gm_80168B34(ckind, Player_80036394(arg0), costume);
+#else
     gm_80168B34(ckind, Player_80036394(arg0), costume);
+#endif
 }
 
 void gm_80168C5C(u32 arg0)

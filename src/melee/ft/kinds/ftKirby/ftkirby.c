@@ -4180,6 +4180,17 @@ void ftKb_SpecialN_800F1BAC(Fighter_GObj* gobj, s32 kind, bool arg2)
     HSD_GObjEvent cb;
 
     if (fp->u.kb.hat.kind != kind) {
+#if defined(TARGET_PC)
+        /* The hat archive table is zeroed by ftKb_Init_800EE528 (reached through
+         * Fighter_800679B0 / ftDemo_ObjAllocInit) after the one-shot preload in
+         * Player_80031D2C, and never refilled for the demo/victory scenes. Without the hat,
+         * ftKb_SpecialN_800F16D0 below cannot register the copied item's article in
+         * it_804D6D38, so spawning the copied move dereferences a NULL article at
+         * Item_80267AA8. Reload the copied kind's hat on demand. */
+        if (((KirbyHatStruct**) &ft_80459B88)[kind] == NULL) {
+            ftKb_SpecialN_800EED50(kind, fp->x619_costume_id);
+        }
+#endif
         fp->u.kb.hat.kind = kind;
         ftKb_SpecialN_800F190C(gobj, fp->u.kb.hat.kind);
         if ((cb = ftKb_Init_803C9CC8[fp->u.kb.hat.kind * 2]) != NULL) {

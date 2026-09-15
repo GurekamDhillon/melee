@@ -403,7 +403,15 @@ grZebes_UpdateCollisionColumns(grZe_BubbleState* state, f32 column_width,
                                f32* column_x, f32* column_heights,
                                int* bubble_idx, int* vertex_idx)
 {
+#if defined(TARGET_PC)
+    /* grZe_8049F140 is 0x18 bytes (2 Vec3); the console .bss laid grZe_8049F158
+     * at +0x18 and grZe_8049F170 at +0x30, so the grZe_BubbleState view's
+     * `bubbles` field (offset 0x30) aliases grZe_8049F170. The port links the
+     * globals separately; index the real array. */
+    grZe_BubbleEntry* bubble = grZe_8049F170;
+#else
     grZe_BubbleEntry* bubble = state->bubbles;
+#endif
     f32 top_y;
     f32 x_offset;
     f32 left_x;
@@ -2291,12 +2299,22 @@ void grZebes_801DC408(Ground_GObj* gobj)
 
 static inline f32 grZebes_GetBubbleStartY(Vec3* base)
 {
+#if defined(TARGET_PC)
+    /* base[2] (stride 0xC from grZe_8049F140) reaches grZe_8049F158[0]. */
+    return grZe_8049F158[0].y;
+#else
     return base[2].y;
+#endif
 }
 
 static inline f32 grZebes_GetBubbleStartX(Vec3* base)
 {
+#if defined(TARGET_PC)
+    /* base[2] (stride 0xC from grZe_8049F140) reaches grZe_8049F158[0]. */
+    return grZe_8049F158[0].x;
+#else
     return base[2].x;
+#endif
 }
 
 static inline void grZebes_SpawnBubbleLine(Vec3* base,
@@ -2310,8 +2328,14 @@ static inline void grZebes_SpawnBubbleLine(Vec3* base,
     {
         f32 y_diff;
 
+#if defined(TARGET_PC)
+        /* base[3] (stride 0xC from grZe_8049F140) reaches grZe_8049F158[1]. */
+        x_diff = grZe_8049F158[1].x - x_start;
+        y_diff = grZe_8049F158[1].y - *y_start;
+#else
         x_diff = base[3].x - x_start;
         y_diff = base[3].y - *y_start;
+#endif
         for (*ip = 0; *ip < 7; (*ip)++) {
             grZebes_801DAE70(*ip, arg1, x_diff / 6.0f * (f32) *ip + x_start,
                              y_diff / 6.0f * (f32) *ip + *y_start,
@@ -2339,7 +2363,12 @@ void grZebes_801DC744(s32 arg0, u8 arg1)
         f32 x_range;
         f32 y_range;
 
+#if defined(TARGET_PC)
+        /* base[2] (stride 0xC from grZe_8049F140) reaches grZe_8049F158[0]. */
+        p_x = grZe_8049F158[0].x;
+#else
         p_x = base[2].x;
+#endif
         y_start = grZebes_GetBubbleStartY(base);
         bubble_r = yakumono_param->x74;
         x_base = p_x + bubble_r;

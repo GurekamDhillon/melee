@@ -1417,9 +1417,14 @@ typedef struct grVe_AnimArg {
 static inline s32 grVe_GetAnimArg(s32 fire_kind, Ground* gp,
                                   grVe_AnimData* anim_data)
 {
+#if defined(TARGET_PC)
+    /* anim_args (5x2 s32) is grVe_803E5644 at +0x2FC, a separate symbol on the port. */
+    return grVe_803E5644[gp->u.venom.xF4 * 2 + fire_kind];
+#else
     anim_data = (grVe_AnimData*) ((s32*) anim_data + gp->u.venom.xF4 * 2);
     anim_data = (grVe_AnimData*) ((s32*) anim_data + fire_kind);
     return ((volatile grVe_AnimArg*) anim_data)->value;
+#endif
 }
 
 void grVenom_80205F30(Ground_GObj* gobj)
@@ -1458,7 +1463,13 @@ void grVenom_80205F30(Ground_GObj* gobj)
 
     entry = base + gp->u.venom.xC8;
     if ((u32) entry[8] != 0U) {
+#if defined(TARGET_PC)
+        /* entry[14] = base[xC8 + 14] is 14 words (0x38 bytes) past
+         * grVe_803E5348, i.e. grVe_803E5380[xC8]. */
+        if (grVe_803E5380[gp->u.venom.xC8] == 4) {
+#else
         if (entry[14] == 4) {
+#endif
             tmp_jobj = Ground_801C3FA4(gobj, 1);
             HSD_JObjSetRotationZ(tmp_jobj, 0.0F);
         }
@@ -1490,7 +1501,11 @@ void grVenom_80205F30(Ground_GObj* gobj)
                 if (gp->u.venom.xF8 <= 0) {
                     gp->u.venom.xF4 = HSD_Randi(4) + 1;
                     fire_kind = -1;
+#if defined(TARGET_PC)
+                    switch (grVe_803E5380[GET_GROUND(gobj)->u.venom.xC8]) {
+#else
                     switch (base[GET_GROUND(gobj)->u.venom.xC8 + 14]) {
+#endif
                     case 0:
                         break;
                     case 1:
@@ -1504,16 +1519,31 @@ void grVenom_80205F30(Ground_GObj* gobj)
                     }
                     {
                         grVe_AnimData* anim_data = (grVe_AnimData*) base;
+#if defined(TARGET_PC)
+                        s32 idx0 = grVe_803E5380[gp->u.venom.xC8];
+#else
                         s32 idx0 = base[gp->u.venom.xC8 + 14];
+#endif
                         s32 anim_arg =
                             grVe_GetAnimArg(fire_kind, gp, anim_data);
+#if defined(TARGET_PC)
+                        /* anim_data->anim_ids is 0xD6 words (0x358 bytes) past
+                         * grVe_803E5348, i.e. grVe_803E56A0. */
+                        s32 anim_id = grVe_803E56A0[idx0];
+#else
                         s32 anim_id = anim_data->anim_ids[idx0];
+#endif
                         grAnime_801C8098(gobj, anim_id, 7, anim_arg, 0.0F,
                                          1.0F);
                     }
                 } else {
+#if defined(TARGET_PC)
+                    s32 idx0 = grVe_803E5380[gp->u.venom.xC8];
+                    s32 anim_id = grVe_803E56A0[idx0];
+#else
                     s32 idx0 = base[gp->u.venom.xC8 + 14];
                     s32 anim_id = base[idx0 + 0xD6];
+#endif
                     tmp_jobj = Ground_801C3FA4(gobj, anim_id);
                     HSD_JObjSetRotationZ(tmp_jobj, 0.0F);
                 }
@@ -1561,8 +1591,13 @@ void grVenom_80205F30(Ground_GObj* gobj)
             HSD_JObjSetTranslate(jobj, &sp94);
 
             {
+#if defined(TARGET_PC)
+                s32 idx0 = grVe_803E5380[gp->u.venom.xC8];
+                s32 anim_id = grVe_803E56A0[idx0];
+#else
                 s32 idx0 = base[gp->u.venom.xC8 + 14];
                 s32 anim_id = base[idx0 + 0xD6];
+#endif
                 lb_8000B1CC(Ground_801C3FA4(gobj, anim_id), NULL, &sp94);
             }
             if (gp->u.venom.linked_gobj != NULL) {
@@ -1574,8 +1609,13 @@ void grVenom_80205F30(Ground_GObj* gobj)
 
             {
                 f32 rot_z;
+#if defined(TARGET_PC)
+                s32 idx0 = grVe_803E5380[gp->u.venom.xC8];
+                s32 anim_id = grVe_803E56A0[idx0];
+#else
                 s32 idx0 = base[gp->u.venom.xC8 + 14];
                 s32 anim_id = base[idx0 + 0xD6];
+#endif
                 helper = Ground_801C3FA4(gobj, anim_id);
                 rot_z = HSD_JObjGetRotationZ(helper);
                 if (gp->u.venom.linked_gobj != NULL) {
@@ -1674,7 +1714,11 @@ void grVenom_80205F30(Ground_GObj* gobj)
                     sp88.y += 5.0F;
                     lbAudioAx_800237A8(0x6B6C9, 0x7F, 0x40);
                     fire_kind = -1;
+#if defined(TARGET_PC)
+                    switch (grVe_803E5380[GET_GROUND(gobj)->u.venom.xC8]) {
+#else
                     switch (base[GET_GROUND(gobj)->u.venom.xC8 + 14]) {
+#endif
                     case 0:
                         break;
                     case 1:

@@ -48,18 +48,33 @@ typedef struct gw_ppc_ctx {
 
 /* ---- native-call bridge seam ---------------------------------------------------------
  * When the interpreter branches/calls a target outside the blob's code range, it asks the
- * resolver for a native function pointer. Phase 1 marshals integer arguments only: the guest
- * argument registers r3..r10 are passed to the native function in order, and its returned word
- * is stored back into r3. Float args (f1..f8), float returns, and struct/sret returns are NOT
- * marshalled in Phase 1 - later phases widen this without changing the resolver contract. */
+ * resolver for a native function pointer plus the target's calling signature. Integer arguments
+ * come from r3..r10 in order; float arguments come from f1..f8, interleaved per the PowerPC ABI
+ * (a float parameter consumes the next FPR, an integer/pointer parameter the next GPR). The
+ * callee's returned word is stored back into r3; a float return (f1) is captured into FPR 1.
+ * struct/sret returns ride the existing integer path: the guest already places the hidden sret
+ * pointer in r3, so it is passed as argument 0 and the callee fills it big-endian. */
 
-/* A native target, in the fixed callable shape the bridge marshals into. */
+/* A native target, in the fixed callable shape the bridge marshals into. On i686 cdecl both a
+ * float argument and a uint32 occupy four bytes on the stack, so a float argument's IEEE-754 bit
+ * pattern passed as a uint32 lands in the callee's float slot verbatim. */
 typedef uint32_t (*gw_ppc_native_fn)(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
                                      uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7);
 
-/* Resolver: guest target address -> native function pointer, or NULL (which panics). `ctx` is
- * the opaque pointer supplied to gw_ppc_set_bridge. */
-typedef gw_ppc_native_fn (*gw_ppc_resolver_fn)(uint32_t guest_addr, void *ctx);
+/* Calling signature of a bridged target. `float_args` is a bitmask: bit i set => native argument
+ * slot i is a float sourced from the next FPR (f1..f8) rather than the next GPR (r3..r10).
+ * `n_args` bounds the walk (1..8); `ret_float` set => the callee returns a float, captured into
+ * FPR 1 instead of the word return in r3. */
+typedef struct gw_ppc_sig {
+    uint32_t float_args;
+    uint32_t n_args;
+    int ret_float;
+} gw_ppc_sig;
+
+/* Resolver: guest target address -> native function pointer, or NULL (which panics). When the
+ * function is resolved, *sig is filled with its calling signature. `ctx` is the opaque pointer
+ * supplied to gw_ppc_set_bridge. */
+typedef gw_ppc_native_fn (*gw_ppc_resolver_fn)(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig);
 
 /* Set the process-global bridge: the resolver + its opaque context, and the blob's code range
  * [code_lo, code_hi). A branch/call whose target falls outside this range is resolved through

@@ -175,17 +175,53 @@ static void gw_ppc_cmp(gw_ppc_ctx *c, uint32_t crfd, uint32_t a, uint32_t b, int
 static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
     gw_ppc_ctx *c = &m->cpu;
     gw_ppc_native_fn fn;
+    gw_ppc_sig sig;
+    uint32_t args[8];
+    int fpr_i = 1; /* float args start at f1 */
+    int gpr_i = 3; /* integer args start at r3 */
+    uint32_t i;
+
     if (m->resolve == NULL) {
         gw_panic("ppc: branch to 0x%08X outside blob with no resolver (ip=0x%08X)", guest_addr,
                  c->pc - 4);
     }
-    fn = m->resolve(guest_addr, m->bridge_ctx);
+    sig.float_args = 0;
+    sig.n_args = 8;
+    sig.ret_float = 0;
+    fn = m->resolve(guest_addr, m->bridge_ctx, &sig);
     if (fn == NULL) {
         gw_panic("ppc: resolver returned NULL for guest address 0x%08X", guest_addr);
     }
-    /* Marshal r3..r10 into the native call and take the word back into r3. */
-    c->gpr[3] = fn(c->gpr[3], c->gpr[4], c->gpr[5], c->gpr[6], c->gpr[7], c->gpr[8], c->gpr[9],
-                   c->gpr[10]);
+    if (sig.n_args > 8) {
+        gw_panic("ppc: resolver reported %u args (>8) for guest address 0x%08X", sig.n_args,
+                 guest_addr);
+    }
+    /* Marshal each native argument from its PowerPC register: a float argument takes the next
+     * FPR (f1..f8), an integer/pointer argument the next GPR (r3..r10). The float's IEEE-754
+     * bits are passed in the uint32 slot, which on i686 cdecl lands verbatim in the callee's
+     * float slot. */
+    for (i = 0; i < 8; ++i) {
+        args[i] = 0;
+    }
+    for (i = 0; i < sig.n_args; ++i) {
+        if (sig.float_args & (1u << i)) {
+            float f = (float)c->fpr[fpr_i].d;
+            memcpy(&args[i], &f, 4);
+            ++fpr_i;
+        } else {
+            args[i] = c->gpr[gpr_i];
+            ++gpr_i;
+        }
+    }
+    if (sig.ret_float) {
+        /* The callee returns in x87 ST(0); call it in its float shape and capture into f1. */
+        float (*ffn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                     uint32_t) = (void *)fn;
+        float r = ffn(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+        c->fpr[1].d = (double)r;
+    } else {
+        c->gpr[3] = fn(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+    }
 }
 
 /* Evaluate a branch condition. Follows the ISA BO field:
@@ -1162,8 +1198,9 @@ static uint32_t gw_ppc_test_helper(uint32_t x, uint32_t a1, uint32_t a2, uint32_
     return x * 3u + 7u;
 }
 
-static gw_ppc_native_fn gw_ppc_test_resolve(uint32_t guest_addr, void *ctx) {
+static gw_ppc_native_fn gw_ppc_test_resolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
     (void)ctx;
+    (void)sig;
     if (guest_addr == GW_PPC_TEST_HELPER_GUEST) {
         return gw_ppc_test_helper;
     }
@@ -1213,6 +1250,80 @@ static int test_ppc_call_bridged_helper(void) {
     return 0;
 }
 
+/* ---- float bridge test ------------------------------------------------------------------
+ * Exercises the float-argument and float-return marshalling: a blob loads two float constants
+ * into f1/f2, passes an integer in r3, calls a bridged helper that takes (word, float, float)
+ * and returns a float, then stores the returned f1 back to guest memory. */
+
+#define GW_PPC_TEST_FCODE 0x80300100u        /* guest code base */
+#define GW_PPC_TEST_FDATA 0x80300140u        /* float constants + result scratch (r9+0x140..) */
+#define GW_PPC_TEST_FHELPER_GUEST 0x80380360u /* fake guest address of the float helper */
+
+static float gw_ppc_test_fhelper(uint32_t x, float a, float b, uint32_t c, uint32_t d,
+                                 uint32_t e, uint32_t f, uint32_t g) {
+    (void)c;
+    (void)d;
+    (void)e;
+    (void)f;
+    (void)g;
+    return (float)x + 2.0f * a + b;
+}
+
+static gw_ppc_native_fn gw_ppc_test_fresolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
+    (void)ctx;
+    if (guest_addr == GW_PPC_TEST_FHELPER_GUEST) {
+        sig->float_args = (1u << 1) | (1u << 2); /* args 1 and 2 are floats (f1, f2) */
+        sig->n_args = 3;
+        sig->ret_float = 1;
+        return (gw_ppc_native_fn)(uintptr_t)gw_ppc_test_fhelper;
+    }
+    return NULL;
+}
+
+static int test_ppc_float_bridge(void) {
+    static const uint32_t blob[] = {
+        0x7C0802A6u, /* mflr r0 */
+        0x3D208030u, /* lis r9, 0x8030 */
+        0xC0290140u, /* lfs f1, 0x140(r9) */
+        0xC0490144u, /* lfs f2, 0x144(r9) */
+        0x3860000Au, /* li r3, 10 */
+        0x48000000u |
+            ((GW_PPC_TEST_FHELPER_GUEST - (GW_PPC_TEST_FCODE + 20)) & 0x03FFFFFCu) | 1u, /* bl */
+        0x3D208030u, /* lis r9, 0x8030 */
+        0xD0290148u, /* stfs f1, 0x148(r9) */
+        0x7C0803A6u, /* mtlr r0 */
+        0x4E800020u, /* blr */
+    };
+    const float a = 1.5f, b = 2.25f;
+    const float expected = 10.0f + 2.0f * a + b; /* 15.25 */
+    uint32_t args[1];
+    unsigned i;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_FCODE + 4 * i), blob[i]);
+    }
+    gw_wf32((void *)(uintptr_t)GW_PPC_TEST_FDATA, a);
+    gw_wf32((void *)(uintptr_t)(GW_PPC_TEST_FDATA + 4), b);
+    gw_wf32((void *)(uintptr_t)(GW_PPC_TEST_FDATA + 8), 0.0f);
+
+    args[0] = 10u;
+
+    gw_ppc_set_bridge(gw_ppc_test_fresolve, NULL, GW_PPC_TEST_FCODE,
+                      GW_PPC_TEST_FCODE + (uint32_t)sizeof blob);
+
+    gw_ppc_call(GW_PPC_TEST_FCODE, args, 1, 0 /* rtoc */, GW_PPC_TEST_STACK);
+
+    {
+        float got = gw_rf32((const void *)(uintptr_t)(GW_PPC_TEST_FDATA + 8));
+        if (got != expected) {
+            gw_test_fail("float bridge stored %.6f, expected %.6f", got, expected);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
+    gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
 }

@@ -152,8 +152,9 @@ static uint32_t gw_mex_shim_setup_proc(uint32_t gobj, uint32_t cb, uint32_t prio
 }
 
 /* guest -> native resolver: m-ex-only helpers and guest-callback installers resolve to the native
- * shims above; everything else resolves through the build-time bridge table. */
-static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx) {
+ * shims above; everything else resolves through the build-time bridge table. Fighter_ChangeMotionState
+ * (0x800693AC) is tagged with its float signature so the bridge marshals its f1..f3 float args. */
+static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
     int kind;
     uint32_t native;
     (void)ctx;
@@ -173,6 +174,13 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx) {
     }
     native = gw_mex_bridge_lookup(guest_addr, &kind);
     if (native != 0 && kind == 1) {
+        if (guest_addr == 0x800693ACu) {
+            /* Fighter_ChangeMotionState(gobj, msid, flags, f32 anim_start, f32 anim_speed,
+             * f32 anim_blend, arg3): ints in r3-r5, floats in f1-f3, then arg3 in r6. */
+            sig->float_args = (1u << 3) | (1u << 4) | (1u << 5);
+            sig->n_args = 7;
+            sig->ret_float = 0;
+        }
         return (gw_ppc_native_fn)(uintptr_t)native;
     }
     gw_log("interp: unresolved guest call target 0x%08X (no bridge entry)", guest_addr);

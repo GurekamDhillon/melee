@@ -12,8 +12,8 @@ extern void TestFail(const char *msg);
 #define MEX_SPECIAL_COUNT 7
 
 static int test_external_special_range(void) {
-    if ((int)ChKind_Max != 0x21 || (int)Ft_Kind_Max != 0x21) {
-        TestFail("ChKind_Max and Ft_Kind_Max should both be 0x21");
+    if ((int)ChKind_Max != 0x21 || (int)Ft_Kind_Max != 0x22) {
+        TestFail("ChKind_Max should be 0x21 and Ft_Kind_Max should be 0x22");
         return 1;
     }
     if ((int)ChKind_Max - (int)CKind_Playable_Count != MEX_SPECIAL_COUNT) {

@@ -262,7 +262,8 @@ void ft_8008549C(void)
         { ftBo_CostumeList, ARRAY_SIZE(ftBo_CostumeList) },
         { ftGl_CostumeList, ARRAY_SIZE(ftGl_CostumeList) },
         { ftGk_CostumeList, ARRAY_SIZE(ftGk_CostumeList) },
-        { ftSb_CostumeList, ARRAY_SIZE(ftSb_CostumeList) }
+        { ftSb_CostumeList, ARRAY_SIZE(ftSb_CostumeList) },
+        { ftFx_CostumeList, ARRAY_SIZE(ftFx_CostumeList) }
     };
 
 ftData_UnkCountStruct ftData_Table_Unk0[Ft_Kind_Max] = {
@@ -271,7 +272,7 @@ ftData_UnkCountStruct ftData_Table_Unk0[Ft_Kind_Max] = {
     { 0, 320 }, { 0, 313 }, { 0, 314 }, { 0, 327 }, { 0, 314 }, { 0, 312 },
     { 0, 327 }, { 0, 311 }, { 0, 314 }, { 0, 303 }, { 0, 327 }, { 0, 320 },
     { 0, 323 }, { 0, 318 }, { 0, 327 }, { 0, 345 }, { 0, 344 }, { 0, 295 },
-    { 0, 295 }, { 0, 316 }, { 0, 296 },
+    { 0, 295 }, { 0, 316 }, { 0, 296 }, { 0, 327 },
 };
 
 Event ftData_Table_Unk1[Ft_Kind_Max] = {
@@ -319,7 +320,7 @@ HSD_GObjEvent ftData_OnLoad[Ft_Kind_Max] = {
     ftCl_Init_OnLoad, ftDr_Init_OnLoad, ftFc_Init_OnLoad, ftPc_Init_OnLoad,
     ftGw_Init_OnLoad, ftGn_Init_OnLoad, ftFe_Init_OnLoad, ftMh_Init_OnLoad,
     ftCh_Init_OnLoad, ftBo_Init_OnLoad, ftGl_Init_OnLoad, ftGk_Init_OnLoad,
-    ftSb_Init_OnLoad,
+    ftSb_Init_OnLoad, ftFx_Init_OnLoad,
 };
 
 HSD_GObjEvent ftData_OnDeath[Ft_Kind_Max] = {
@@ -331,7 +332,7 @@ HSD_GObjEvent ftData_OnDeath[Ft_Kind_Max] = {
     ftCl_Init_OnDeath, ftDr_Init_OnDeath, ftFc_Init_OnDeath, ftPc_Init_OnDeath,
     ftGw_Init_OnDeath, ftGn_Init_OnDeath, ftFe_Init_OnDeath, ftMh_Init_OnDeath,
     ftCh_Init_OnDeath, ftBo_Init_OnDeath, ftGl_Init_OnDeath, ftGk_Init_OnDeath,
-    ftSb_Init_OnDeath,
+    ftSb_Init_OnDeath, ftFx_Init_OnDeath,
 };
 
 HSD_GObjEvent ftData_OnUserDataRemove[Ft_Kind_Max] = {
@@ -339,6 +340,7 @@ HSD_GObjEvent ftData_OnUserDataRemove[Ft_Kind_Max] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, ftPr_Init_OnUserDataRemove,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL,
     NULL,
 };
 
@@ -376,6 +378,7 @@ MotionState* ftData_CharacterStateTables[Ft_Kind_Max] = {
     NULL,
     ftGk_Init_MotionStateTable,
     ftSb_Init_MotionStateTable,
+    ftFx_Init_MotionStateTable,
 };
 
 MotionState* ftData_UnkMotionStates0[Ft_Kind_Max] = {
@@ -411,6 +414,7 @@ MotionState* ftData_UnkMotionStates0[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_UnkMotionStates0,
+    NULL,
     NULL,
 };
 
@@ -448,6 +452,7 @@ HSD_GObjEvent ftData_SpecialS[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialS_Enter,
     NULL,
+    ftFx_SpecialSStart_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirHi[Ft_Kind_Max] = {
@@ -484,6 +489,7 @@ HSD_GObjEvent ftData_SpecialAirHi[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirHi_Enter,
     NULL,
+    ftFx_SpecialAirHiStart_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirLw[Ft_Kind_Max] = {
@@ -520,6 +526,7 @@ HSD_GObjEvent ftData_SpecialAirLw[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirLw_Enter,
     NULL,
+    ftFx_SpecialAirLw_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirS[Ft_Kind_Max] = {
@@ -556,6 +563,7 @@ HSD_GObjEvent ftData_SpecialAirS[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirS_Enter,
     NULL,
+    ftFx_SpecialAirSStart_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirN[Ft_Kind_Max] = {
@@ -592,6 +600,7 @@ HSD_GObjEvent ftData_SpecialAirN[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirN_Enter,
     NULL,
+    ftFx_SpecialAirN_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialN[Ft_Kind_Max] = {
@@ -628,6 +637,7 @@ HSD_GObjEvent ftData_SpecialN[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialN_Enter,
     NULL,
+    ftFx_SpecialN_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialLw[Ft_Kind_Max] = {
@@ -664,6 +674,7 @@ HSD_GObjEvent ftData_SpecialLw[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialLw_Enter,
     NULL,
+    ftFx_SpecialLw_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialHi[Ft_Kind_Max] = {
@@ -700,6 +711,7 @@ HSD_GObjEvent ftData_SpecialHi[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialHi_Enter,
     NULL,
+    ftFx_SpecialHi_Enter,
 };
 
 HSD_GObjEvent ftData_OnAbsorb[Ft_Kind_Max] = {
@@ -728,6 +740,7 @@ HSD_GObjEvent ftData_OnAbsorb[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGw_Init_OnAbsorb,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -772,6 +785,7 @@ Fighter_ItemEvent ftData_OnItemPickupExt[Ft_Kind_Max] = {
     ftGl_Init_OnItemPickup,
     ftGk_Init_OnItemPickup,
     NULL,
+    ftFx_Init_OnItemPickup,
 };
 
 HSD_GObjEvent ftData_OnItemInvisible[Ft_Kind_Max] = {
@@ -808,6 +822,7 @@ HSD_GObjEvent ftData_OnItemInvisible[Ft_Kind_Max] = {
     ftGl_Init_OnItemInvisible,
     ftGk_Init_OnItemInvisible,
     NULL,
+    ftFx_Init_OnItemInvisible,
 };
 
 HSD_GObjEvent ftData_OnItemVisible[Ft_Kind_Max] = {
@@ -844,6 +859,7 @@ HSD_GObjEvent ftData_OnItemVisible[Ft_Kind_Max] = {
     ftGl_Init_OnItemVisible,
     ftGk_Init_OnItemVisible,
     NULL,
+    ftFx_Init_OnItemVisible,
 };
 
 Fighter_ItemEvent ftData_OnItemDropExt[Ft_Kind_Max] = {
@@ -880,6 +896,7 @@ Fighter_ItemEvent ftData_OnItemDropExt[Ft_Kind_Max] = {
     ftGl_Init_OnItemDrop,
     ftGk_Init_OnItemDrop,
     NULL,
+    ftFx_Init_OnItemDrop,
 };
 
 Fighter_ItemEvent ftData_OnItemPickup[Ft_Kind_Max] = {
@@ -916,6 +933,7 @@ Fighter_ItemEvent ftData_OnItemPickup[Ft_Kind_Max] = {
     ftGl_Init_OnItemPickup,
     ftGk_Init_OnItemPickup,
     NULL,
+    ftFx_Init_OnItemPickup,
 };
 
 Fighter_ItemEvent ftData_OnItemDrop[Ft_Kind_Max] = {
@@ -952,6 +970,7 @@ Fighter_ItemEvent ftData_OnItemDrop[Ft_Kind_Max] = {
     ftGl_Init_OnItemDrop,
     ftGk_Init_OnItemDrop,
     NULL,
+    ftFx_Init_OnItemDrop,
 };
 
 HSD_GObjEvent ftData_UnkMotionStates1[Ft_Kind_Max] = {
@@ -968,6 +987,7 @@ HSD_GObjEvent ftData_UnkMotionStates1[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftPk_Init_UnkMotionStates1,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -1024,6 +1044,7 @@ HSD_GObjEvent ftData_UnkMotionStates2[Ft_Kind_Max] = {
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 HSD_GObjEvent ftData_OnKnockbackEnter[Ft_Kind_Max] = {
@@ -1059,7 +1080,7 @@ HSD_GObjEvent ftData_OnKnockbackEnter[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_OnKnockbackEnter,
-    ftSb_Init_OnKnockbackEnter,
+    ftSb_Init_OnKnockbackEnter, ftFx_Init_OnKnockbackEnter,
 };
 
 HSD_GObjEvent ftData_OnKnockbackExit[Ft_Kind_Max] = {
@@ -1095,7 +1116,7 @@ HSD_GObjEvent ftData_OnKnockbackExit[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_OnKnockbackExit,
-    ftSb_Init_OnKnockbackExit,
+    ftSb_Init_OnKnockbackExit, ftFx_Init_OnKnockbackExit,
 };
 
 HSD_GObjEvent ftData_UnkMotionStates3[Ft_Kind_Max] = {
@@ -1131,6 +1152,7 @@ HSD_GObjEvent ftData_UnkMotionStates3[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_UnkMotionStates3,
+    NULL,
     NULL,
 };
 
@@ -1168,6 +1190,7 @@ HSD_GObjEvent ftData_UnkMotionStates4[Ft_Kind_Max] = {
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 HSD_GObjEvent ftKindCalcIndiviParamTable[Ft_Kind_Max] = {
@@ -1187,7 +1210,7 @@ HSD_GObjEvent ftKindCalcIndiviParamTable[Ft_Kind_Max] = {
     ftFe_Init_LoadSpecialAttrs, ftMh_Init_LoadSpecialAttrs,
     ftCh_Init_LoadSpecialAttrs, ftBo_Init_LoadSpecialAttrs,
     ftGl_Init_LoadSpecialAttrs, ftGk_Init_LoadSpecialAttrs,
-    ftSb_Init_LoadSpecialAttrs,
+    ftSb_Init_LoadSpecialAttrs, ftFx_Init_LoadSpecialAttrs,
 };
 
 /// Standard Character .dat File Names
@@ -1230,6 +1253,7 @@ struct StringPair ftData_803C1F40[Ft_Kind_Max] = {
     { ftGl_Init_DatFilename, ftGl_Init_DataName },
     { ftGk_Init_DatFilename, ftGk_Init_DataName },
     { ftSb_Init_DatFilename, ftSb_Init_DataName },
+    { ftFx_Init_DatFilename, ftFx_Init_DataName },
 };
 
 Event ftData_UnkMotionStates5[Ft_Kind_Max] = {
@@ -1239,7 +1263,7 @@ Event ftData_UnkMotionStates5[Ft_Kind_Max] = {
     NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL,
 };
 
 Fighter_UnkMtxEvent ftData_UnkMtxFunc0[Ft_Kind_Max] = {
@@ -1259,6 +1283,7 @@ Fighter_UnkMtxEvent ftData_UnkMtxFunc0[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftPr_Init_UnkMtxFunc0,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -1315,6 +1340,7 @@ ftData_UnkModelStruct ftData_UnkIntBoolFunc0 = {
         NULL,
         NULL,
         NULL,
+        NULL,
     },
     {
         NULL,
@@ -1350,6 +1376,7 @@ ftData_UnkModelStruct ftData_UnkIntBoolFunc0 = {
         NULL,
         NULL,
         NULL,
+        NULL,
     },
 };
 
@@ -1362,6 +1389,7 @@ struct {
     { NULL, NULL },
     { NULL, NULL },
     { ftKb_Init_UnkCallbackPairs0_0, ftKb_Init_UnkCallbackPairs0_1 },
+    [Ft_Kind_Sonic] = { NULL, NULL },
 };
 
 /// Costume and Joint Strings
@@ -1382,7 +1410,7 @@ Fighter_CostumeStrings* ftData_803C2360[Ft_Kind_Max] = {
     ftFe_Init_CostumeStrings, ftMh_Init_CostumeStrings,
     ftCh_Init_CostumeStrings, ftBo_Init_CostumeStrings,
     ftGl_Init_CostumeStrings, ftGk_Init_CostumeStrings,
-    ftSb_Init_CostumeStrings,
+    ftSb_Init_CostumeStrings, ftFx_Init_CostumeStrings,
 
 };
 
@@ -1403,7 +1431,7 @@ char* ftData_803C23E4[Ft_Kind_Max] = {
     ftFe_Init_AnimDatFilename, ftMh_Init_AnimDatFilename,
     ftCh_Init_AnimDatFilename, ftBo_Init_AnimDatFilename,
     ftGl_Init_AnimDatFilename, ftGk_Init_AnimDatFilename,
-    ftSb_Init_AnimDatFilename,
+    ftSb_Init_AnimDatFilename, ftFx_Init_AnimDatFilename,
 };
 
 /// Demo Lookup Strings
@@ -1441,6 +1469,7 @@ Fighter_DemoStrings* ftData_803C2468[Ft_Kind_Max] = {
     NULL,
     &ftGk_Init_DemoMotionFilenames,
     NULL,
+    &ftFx_Init_DemoMotionFilenames,
 };
 
 Fighter_MotionFileStringGetter ftData_803C24EC[Ft_Kind_Max] = {
@@ -1476,6 +1505,7 @@ Fighter_MotionFileStringGetter ftData_803C24EC[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_GetMotionFileString,
+    NULL,
     NULL,
 };
 
@@ -1513,6 +1543,7 @@ Fighter_UnkPtrEvent ftData_UnkDemoCallbacks0[Ft_Kind_Max] = {
     NULL,
     ftGk_Init_UnkDemoCallbacks0,
     NULL,
+    NULL,
 };
 
 ftData_UnkCountStruct ftData_UnkIntPairs[Ft_Kind_Max] = {
@@ -1521,12 +1552,12 @@ ftData_UnkCountStruct ftData_UnkIntPairs[Ft_Kind_Max] = {
     { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 16 },
     { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 },
     { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 },
-    { 0, 14 }, { 0, 15 }, { 0, 14 },
+    { 0, 14 }, { 0, 15 }, { 0, 14 }, { 0, 14 },
 };
 
 u8 ftData_UnkBytePerCharacter[Ft_Kind_Max] = {
     1,  3,  4,  8, 5, 12, 6, 17, 10, 15, 14, 14, 7,  2,  9,  11, 13,
-    18, 16, 17, 6, 1, 3,  7, -1, 19, 49, -1, -1, -1, -1, 12, -1,
+    18, 16, 17, 6, 1, 3,  7, -1, 19, 49, -1, -1, -1, -1, 12, -1, 3,
 };
 
 void ftData_80085560(int idx, int increment)

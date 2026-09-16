@@ -123,8 +123,9 @@ typedef enum FighterKind {
     /* 1E */ Ft_Kind_Girl,
     /* 1F */ Ft_Kind_GKoops,
     /* 20 */ Ft_Kind_Sandbag,
-    /* 21 */ Ft_Kind_None,
-    /* 21 */ Ft_Kind_Max = Ft_Kind_None
+    /* 21 */ Ft_Kind_Sonic,
+    /* 22 */ Ft_Kind_None,
+    /* 22 */ Ft_Kind_Max = Ft_Kind_None
 } FighterKind;
 
 typedef enum CharacterKind {

@@ -1871,7 +1871,7 @@ struct ft_80459B88_t {
     /* +0 */ Kirby_Unk* x0;
     /* +4 */ KirbyHatStruct* hats[Ft_Kind_Max];
 };
-ASSERT_SIZE(struct ft_80459B88_t, 0x88);
+ASSERT_SIZE(struct ft_80459B88_t, 0x8C);
 
 struct IKState {
     /* 0x00 */ HSD_JObj* jobj0;

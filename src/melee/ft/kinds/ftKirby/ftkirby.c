@@ -2458,6 +2458,7 @@ ftKirby_CostumeArchive* ftKb_Init_803C9FC8[Ft_Kind_Max] = {
     NULL,
     NULL,
     NULL,
+    NULL,
 };
 
 MotionState ftKb_Init_UnkMotionStates0[] = {

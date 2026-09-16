@@ -208,6 +208,45 @@ static void gw_dvd_complete(void *file_info, void *callback, uint32_t result) {
   }
 }
 
+/* Synchronous read of a whole disc file into a malloc'd buffer. Returns the buffer (caller
+ * frees it) or NULL on failure (with *out_size set to 0). This is the headless path the m-ex
+ * ftFunction loader uses to pull a fighter .dat (e.g. PlSn.dat) off the ISO without going
+ * through the game's async DVD queue. */
+void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size) {
+  uint32_t length;
+  uint32_t offset;
+  void *buf;
+  int entrynum;
+
+  if (out_size != NULL) {
+    *out_size = 0;
+  }
+  entrynum = gw_DVDConvertPathToEntrynum(path);
+  if (entrynum < 0 || !gw_iso_open() || gw_fst_nodes == 0) {
+    gw_log("gw: DVDReadFileAlloc: %s not found on the disc image", path != NULL ? path : "(null)");
+    return NULL;
+  }
+  if (gw_fst_kind((uint32_t)entrynum) != 0) {
+    return NULL;
+  }
+  offset = gw_fst_offset((uint32_t)entrynum);
+  length = gw_fst_length((uint32_t)entrynum);
+  buf = malloc(length);
+  if (buf == NULL) {
+    gw_log("gw: DVDReadFileAlloc: cannot allocate %u bytes for %s", length, path);
+    return NULL;
+  }
+  if (fseek(gw_iso, (long)offset, SEEK_SET) != 0 || fread(buf, 1, length, gw_iso) != length) {
+    gw_log("gw: DVDReadFileAlloc: short read of %s (%u bytes at %u)", path, length, offset);
+    free(buf);
+    return NULL;
+  }
+  if (out_size != NULL) {
+    *out_size = length;
+  }
+  return buf;
+}
+
 int gw_DVDReadAsyncPrio(void *file_info, void *addr, int length, int offset, void *callback,
                         int prio) {
   (void)prio;

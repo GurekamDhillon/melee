@@ -147,6 +147,10 @@ void gw_init_lomem(void);
 void gw_apply_fixups(void); /* swap link-time pointers in game globals; must run first */
 const char *gw_iso_path(void);
 
+/* Synchronous read of a whole disc file into a malloc'd buffer (caller frees). NULL on failure;
+ * *out_size is 0 unless the read succeeded. Headless path for the m-ex ftFunction loader. */
+void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
+
 /* Whether a ported m-ex behavior is enabled (MELEE_MEX env / mods\mex.txt). See tools/mex_port/. */
 int gw_Mex_Enabled(const char *name);
 

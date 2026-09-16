@@ -28,8 +28,14 @@ struct lbHeap_HeapDesc lbHeap_803BA380[LBHEAP_DESC_COUNT] = {
 #if defined(TARGET_PC)
     /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/Persistent Heap Expansion/
      * "Relocate Heap Def.asm". Adds heap 6 (m-ex's "CUSTOM scene file heap", 0x20 bytes) and
-     * moves the terminator to LBHEAP_HEAP_COUNT. Heap 3 also grows by 0x1E90. */
-    { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x4FA690 }, { 4, 2, 6, 0x64B400 },
+     * moves the terminator to LBHEAP_HEAP_COUNT. m-ex raises heap 3 from 0x4F8800 to 0x4FA690.
+     *
+     * The Akaneia disc's IfAll.usd (0xE9B1C, the "all items" archive) is 0x55B8 larger than the
+     * vanilla disc's, which overflows m-ex's heap 3 during match setup (the item/effect preload
+     * in lbdvd.c inline2 -- EfMnData, EfCoData, ItCo, IfAll -- all land in heap 3). The measured
+     * shortfall is 0xB6B0; heap 3 is grown by 0x20000 (128 KB) to 0x51A690, donating from the
+     * main heap (which sits at ~11.3 MB and only ~35 KB in use at that point). */
+    { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x51A690 }, { 4, 2, 6, 0x64B400 },
     { 5, 4, 6, 0x96C800 }, { 6, 1, 3, 0x20 },     { LBHEAP_HEAP_COUNT, 0, 0, 0 },
 #else
     { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x4F8800 }, { 4, 2, 6, 0x64B400 },

@@ -1612,6 +1612,28 @@ void ftData_8008572C(FighterKind kind)
     if (gFtDataList[kind] == NULL) {
         lbArchive_80017040(NULL, ftData_803C1F40[kind].a, &gFtDataList[kind],
                            ftData_803C1F40[kind].b, 0);
+#if defined(TARGET_PC)
+        /* The wait-anim table's x10_animCurrFlags packs the FighterKind of the figatree it was
+         * authored for into the low 6 bits (Fighter::x597_bits; the union's u32 bitfields are
+         * allocated MSB-first on the big-endian PPC target, so the trailing 6-bit field lands in
+         * bits 0-5). Ft_Kind_Sonic reuses Fox's disc data verbatim, so those bits say Fox (1).
+         * ftAnim_8006FE08/ftAnim_8006F954 then see fp->kind (33) != x597_bits (1) and route Sonic
+         * down the cross-kind remap path (ftAnim_8006FCE4 -> lbAnim_8001E7E8), which skips the
+         * "constant" track types (5/6/7) that a native Fox figatree legitimately contains and
+         * writes through a NULL FObj. Rewrite the kind bits to the fighter's own kind so a pure
+         * clone uses the native animation path (ftAnim_8006F4C8 -> lbAnim_8001E6D8), exactly as
+         * Fox does. Only those 6 bits change; the parts mask and flag bits stay Fox's, which is
+         * correct because Sonic's parts table is Fox's. */
+        if (kind == Ft_Kind_Sonic) {
+            ftData* fd = gFtDataList[kind];
+            int i;
+            for (i = 0; i < ftData_Table_Unk0[kind].count; i++) {
+                u32 flags = (u32) fd->xC[i].x10_animCurrFlags;
+                flags = (flags & ~0x3Fu) | (u32) kind;
+                fd->xC[i].x10_animCurrFlags = (s32) flags;
+            }
+        }
+#endif
     }
 }
 

@@ -180,6 +180,25 @@ void Fighter_FirstInitialize_80067A84(void)
     HSD_ObjAllocInit(&fighter_x59C_alloc_data, 0x8000, 0x20);
 }
 
+#if defined(TARGET_PC)
+/* The disc's PlCo.dat common data holds per-kind pointer tables sized for vanilla's Ft_Kind_Max
+ * (33). The port adds Ft_Kind_Sonic at index 33, so widen each kind-indexed table to Ft_Kind_Max,
+ * filling the new slot with Fox's entry, so the new kind never reads past the loaded data.
+ * Returns a distinct copy per call. */
+static void** ftCommonData_ExtendKindTable(void** loaded)
+{
+    static void* copies[8][Ft_Kind_Max];
+    static int next;
+    void** out = copies[next++];
+    int i;
+    for (i = 0; i < Ft_Kind_Max - 1; ++i) {
+        out[i] = loaded[i];
+    }
+    out[Ft_Kind_Sonic] = loaded[Ft_Kind_Fox];
+    return out;
+}
+#endif
+
 void Fighter_LoadCommonData(void)
 {
     void** pData;
@@ -193,8 +212,14 @@ void Fighter_LoadCommonData(void)
     Fighter_804D6550 = pData[1];
     Fighter_804D654C = pData[2];
     Fighter_804D6548 = pData[3];
+#if defined(TARGET_PC)
+    ftPartsTable = (FighterPartsTable**) ftCommonData_ExtendKindTable((void**) pData[4]);
+    Fighter_804D6540 =
+        (struct Fighter_804D6540_t**) ftCommonData_ExtendKindTable((void**) pData[5]);
+#else
     ftPartsTable = pData[4];
     Fighter_804D6540 = pData[5];
+#endif
     Fighter_804D653C = pData[6];
     Fighter_804D6538 = pData[7];
     Fighter_804D6534 = pData[8];

@@ -74,7 +74,11 @@ ftMapping ftMapping_list[ChKind_Max] = {
     /* CKind_GKoops    */ { Ft_Kind_GKoops, 0xFF },
     /* CKind_CrezyH    */ { Ft_Kind_CrezyH, 0xFF },
     /* ChKind_Sandbag  */ { Ft_Kind_Sandbag, 0xFF },
+#if defined(TARGET_PC)
+    /* ChKind_Popo     */ { Ft_Kind_Sonic, 0xFF }
+#else
     /* ChKind_Popo     */ { Ft_Kind_Popo, 0xFF }
+#endif
 };
 
 ////.bss

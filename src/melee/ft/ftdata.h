@@ -60,4 +60,11 @@
 /* 3C52A0 */ extern MotionState ftData_803C52A0[14];
 /* 4598B8 */ extern ftData* gFtDataList[Ft_Kind_Max];
 
+#if defined(TARGET_PC)
+/* True when the loaded disc carries Sonic's own data (PlSn.dat and its costumes), i.e. a
+ * content-expanded disc (Akaneia). On a vanilla GALE01 Sonic only exists as the port's Fox clone,
+ * and the Ft_Kind_Sonic data/parts tables fall back to Fox's. */
+int ftData_SonicHasOwnData(void);
+#endif
+
 #endif

@@ -109,6 +109,7 @@
 #include "kinds/ftSeak/ftseakspeciallw.h"
 #include "kinds/ftSeak/ftseakspecialn.h"
 #include "kinds/ftSeak/ftseakspecials.h"
+#include "kinds/ftSonic/ftsonic.h"
 #include "kinds/ftYoshi/ftyoshi.h"
 #include "kinds/ftYoshi/ftyoshiguard.h"
 #include "kinds/ftYoshi/ftyoshispecialhi.h"
@@ -122,6 +123,7 @@
 #include "kinds/ftZelda/ftzeldaspecialn.h"
 #include "kinds/ftZelda/ftzeldaspecials.h"
 #include "types.h"
+#include <dolphin/dvd.h>
 #include <melee/ef/efasync.h>
 #include <melee/lb/lbarchive.h>
 #include <melee/lb/lbarq.h>
@@ -263,7 +265,11 @@ void ft_8008549C(void)
         { ftGl_CostumeList, ARRAY_SIZE(ftGl_CostumeList) },
         { ftGk_CostumeList, ARRAY_SIZE(ftGk_CostumeList) },
         { ftSb_CostumeList, ARRAY_SIZE(ftSb_CostumeList) },
+#if defined(TARGET_PC)
+        { ftSn_CostumeList, ARRAY_SIZE(ftSn_CostumeList) }
+#else
         { ftFx_CostumeList, ARRAY_SIZE(ftFx_CostumeList) }
+#endif
     };
 
 ftData_UnkCountStruct ftData_Table_Unk0[Ft_Kind_Max] = {
@@ -272,7 +278,12 @@ ftData_UnkCountStruct ftData_Table_Unk0[Ft_Kind_Max] = {
     { 0, 320 }, { 0, 313 }, { 0, 314 }, { 0, 327 }, { 0, 314 }, { 0, 312 },
     { 0, 327 }, { 0, 311 }, { 0, 314 }, { 0, 303 }, { 0, 327 }, { 0, 320 },
     { 0, 323 }, { 0, 318 }, { 0, 327 }, { 0, 345 }, { 0, 344 }, { 0, 295 },
-    { 0, 295 }, { 0, 316 }, { 0, 296 }, { 0, 327 },
+    { 0, 295 }, { 0, 316 }, { 0, 296 },
+#if defined(TARGET_PC)
+    { 0, 321 },
+#else
+    { 0, 327 },
+#endif
 };
 
 Event ftData_Table_Unk1[Ft_Kind_Max] = {
@@ -1253,7 +1264,11 @@ struct StringPair ftData_803C1F40[Ft_Kind_Max] = {
     { ftGl_Init_DatFilename, ftGl_Init_DataName },
     { ftGk_Init_DatFilename, ftGk_Init_DataName },
     { ftSb_Init_DatFilename, ftSb_Init_DataName },
+#if defined(TARGET_PC)
+    { ftSn_Init_DatFilename, ftSn_Init_DataName },
+#else
     { ftFx_Init_DatFilename, ftFx_Init_DataName },
+#endif
 };
 
 Event ftData_UnkMotionStates5[Ft_Kind_Max] = {
@@ -1410,7 +1425,12 @@ Fighter_CostumeStrings* ftData_803C2360[Ft_Kind_Max] = {
     ftFe_Init_CostumeStrings, ftMh_Init_CostumeStrings,
     ftCh_Init_CostumeStrings, ftBo_Init_CostumeStrings,
     ftGl_Init_CostumeStrings, ftGk_Init_CostumeStrings,
-    ftSb_Init_CostumeStrings, ftFx_Init_CostumeStrings,
+    ftSb_Init_CostumeStrings,
+#if defined(TARGET_PC)
+    ftSn_Init_CostumeStrings,
+#else
+    ftFx_Init_CostumeStrings,
+#endif
 
 };
 
@@ -1431,7 +1451,12 @@ char* ftData_803C23E4[Ft_Kind_Max] = {
     ftFe_Init_AnimDatFilename, ftMh_Init_AnimDatFilename,
     ftCh_Init_AnimDatFilename, ftBo_Init_AnimDatFilename,
     ftGl_Init_AnimDatFilename, ftGk_Init_AnimDatFilename,
-    ftSb_Init_AnimDatFilename, ftFx_Init_AnimDatFilename,
+    ftSb_Init_AnimDatFilename,
+#if defined(TARGET_PC)
+    ftSn_Init_AnimDatFilename,
+#else
+    ftFx_Init_AnimDatFilename,
+#endif
 };
 
 /// Demo Lookup Strings
@@ -1560,6 +1585,32 @@ u8 ftData_UnkBytePerCharacter[Ft_Kind_Max] = {
     18, 16, 17, 6, 1, 3,  7, -1, 19, 49, -1, -1, -1, -1, 12, -1, 3,
 };
 
+#if defined(TARGET_PC)
+int ftData_SonicHasOwnData(void)
+{
+    static int cached = -1;
+    if (cached < 0) {
+        cached = DVDConvertPathToEntrynum("PlSn.dat") != -1;
+    }
+    return cached;
+}
+
+static void ftData_SonicFallback(void)
+{
+    if (ftData_SonicHasOwnData()) {
+        return;
+    }
+    ftData_803C1F40[Ft_Kind_Sonic].a = ftFx_Init_DatFilename;
+    ftData_803C1F40[Ft_Kind_Sonic].b = ftFx_Init_DataName;
+    ftData_803C2360[Ft_Kind_Sonic] = ftFx_Init_CostumeStrings;
+    ftData_803C23E4[Ft_Kind_Sonic] = ftFx_Init_AnimDatFilename;
+    CostumeListsForeachCharacter[Ft_Kind_Sonic].costume_list = ftFx_CostumeList;
+    CostumeListsForeachCharacter[Ft_Kind_Sonic].numCostumes =
+        ARRAY_SIZE(ftFx_CostumeList);
+    ftData_Table_Unk0[Ft_Kind_Sonic].count = 327;
+}
+#endif
+
 void ftData_80085560(int idx, int increment)
 {
     ft_8045996C[idx] += increment;
@@ -1577,6 +1628,10 @@ void ftData_800855C8(FighterKind kind, u8 color)
     int i;
     int lo;
     int hi;
+
+#if defined(TARGET_PC)
+    ftData_SonicFallback();
+#endif
 
     if (color != 0xFF &&
         color >= CostumeListsForeachCharacter[kind].numCostumes)
@@ -1609,21 +1664,30 @@ void ftData_800855C8(FighterKind kind, u8 color)
 
 void ftData_8008572C(FighterKind kind)
 {
+#if defined(TARGET_PC)
+    ftData_SonicFallback();
+#endif
     if (gFtDataList[kind] == NULL) {
         lbArchive_80017040(NULL, ftData_803C1F40[kind].a, &gFtDataList[kind],
                            ftData_803C1F40[kind].b, 0);
 #if defined(TARGET_PC)
+        if (kind == Ft_Kind_Sonic) {
+            OSReport("gw: ftData_8008572C kind=%d file=%s sym=%s\n", kind,
+                     ftData_803C1F40[kind].a, ftData_803C1F40[kind].b);
+        }
         /* The wait-anim table's x10_animCurrFlags packs the FighterKind of the figatree it was
          * authored for into the low 6 bits (Fighter::x597_bits; the union's u32 bitfields are
          * allocated MSB-first on the big-endian PPC target, so the trailing 6-bit field lands in
-         * bits 0-5). Ft_Kind_Sonic reuses Fox's disc data verbatim, so those bits say Fox (1).
-         * ftAnim_8006FE08/ftAnim_8006F954 then see fp->kind (33) != x597_bits (1) and route Sonic
-         * down the cross-kind remap path (ftAnim_8006FCE4 -> lbAnim_8001E7E8), which skips the
-         * "constant" track types (5/6/7) that a native Fox figatree legitimately contains and
-         * writes through a NULL FObj. Rewrite the kind bits to the fighter's own kind so a pure
-         * clone uses the native animation path (ftAnim_8006F4C8 -> lbAnim_8001E6D8), exactly as
-         * Fox does. Only those 6 bits change; the parts mask and flag bits stay Fox's, which is
-         * correct because Sonic's parts table is Fox's. */
+         * bits 0-5). The figatree's authoring kind does not match the port's kind: on a vanilla
+         * disc Ft_Kind_Sonic reuses Fox's data (bits say Fox, 1), and Sonic's own Akaneia data was
+         * authored for m-ex's kind (31), never the port's Ft_Kind_Sonic (33). ftAnim_8006FE08/
+         * ftAnim_8006F954 then see fp->kind (33) != x597_bits and route Sonic down the cross-kind
+         * remap path (ftAnim_8006FCE4 -> lbAnim_8001E7E8), which skips the "constant" track types
+         * (5/6/7) and writes through a NULL FObj. Rewrite the low 6 bits to the port's own kind so
+         * Sonic always uses the native animation path (ftAnim_8006F4C8 -> lbAnim_8001E6D8). Only
+         * those 6 bits change; the parts-mask/flag bits stay as authored, which is correct because
+         * ftParts_8007506C/ftPartsRemap now key off this kind too (ftCommonData_ExtendKindTable
+         * hands Ft_Kind_Sonic Sonic's own parts table). */
         if (kind == Ft_Kind_Sonic) {
             ftData* fd = gFtDataList[kind];
             int i;
@@ -1659,6 +1723,14 @@ void ftData_80085820(FighterKind kind, int costume_id)
 {
     UnkCostumeStruct* temp_r5 =
         &CostumeListsForeachCharacter[kind].costume_list[costume_id];
+#if defined(TARGET_PC)
+    if (kind == Ft_Kind_Sonic) {
+        OSReport("gw: ftData_80085820 kind=%d costume=%d file=%s joint=%s\n",
+                 kind, costume_id,
+                 ftData_803C2360[kind][costume_id].dat_filename,
+                 ftData_803C2360[kind][costume_id].joint_name);
+    }
+#endif
     if (temp_r5->joint == NULL) {
         if (ftData_803C2360[kind][costume_id].matanim_joint_name != NULL) {
             lbArchive_80017040(

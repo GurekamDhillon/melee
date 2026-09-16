@@ -182,9 +182,13 @@ void Fighter_FirstInitialize_80067A84(void)
 
 #if defined(TARGET_PC)
 /* The disc's PlCo.dat common data holds per-kind pointer tables sized for vanilla's Ft_Kind_Max
- * (33). The port adds Ft_Kind_Sonic at index 33, so widen each kind-indexed table to Ft_Kind_Max,
- * filling the new slot with Fox's entry, so the new kind never reads past the loaded data.
- * Returns a distinct copy per call. */
+ * (33). The port adds Ft_Kind_Sonic at index 33, so widen each kind-indexed table to Ft_Kind_Max.
+ *
+ * On a content-expanded disc (Akaneia) the per-kind tables are authored under m-ex's own kind
+ * numbering, which moves the six vanilla bosses to 35..40 and gives the seven added fighters
+ * 27..33 -- Sonic is 31. Sonic's own entry is used there; on a vanilla disc (no Sonic data) the
+ * slot falls back to Fox's entry, so the new kind never reads past the loaded data and the
+ * vanilla clone boot still works. Returns a distinct copy per call. */
 static void** ftCommonData_ExtendKindTable(void** loaded)
 {
     static void* copies[8][Ft_Kind_Max];
@@ -194,7 +198,7 @@ static void** ftCommonData_ExtendKindTable(void** loaded)
     for (i = 0; i < Ft_Kind_Max - 1; ++i) {
         out[i] = loaded[i];
     }
-    out[Ft_Kind_Sonic] = loaded[Ft_Kind_Fox];
+    out[Ft_Kind_Sonic] = ftData_SonicHasOwnData() ? loaded[31] : loaded[Ft_Kind_Fox];
     return out;
 }
 #endif

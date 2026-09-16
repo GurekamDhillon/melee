@@ -51,6 +51,9 @@
 #define GW_MEX_SLOT_ON_FRAME 23
 #define GW_MEX_SLOT_ON_ACTION_STATE_CHANGE 24
 #define GW_MEX_SLOT_ON_REAPPLY_ATTR 25
+#define GW_MEX_SLOT_ON_ITEM_PICKUP 13
+#define GW_MEX_SLOT_ON_DOUBLE_JUMP 32
+#define GW_MEX_SLOT_ON_USMASH 36
 
 /* onLoad's absolute bl targets (see the disassembly in the evidence log). */
 #define GW_MEX_GUEST_INDEX_ITEM   0x803D7058u /* m-ex MEX_IndexFighterItem (no vanilla symbol) */
@@ -198,6 +201,18 @@ static uint32_t gw_mex_interp_run(uint32_t slot, void *gobj) {
     return gw_ppc_call(target, args, 1, gw_mex_ff.mexdata_base, gw_mex_stack_top);
 }
 
+/* Two-argument variant (OnItemPickup): gobj -> r3, arg1 -> r4. */
+static uint32_t gw_mex_interp_run2(uint32_t slot, void *gobj, uint32_t arg1) {
+    uint32_t target = gw_mex_override_target(slot);
+    uint32_t args[2];
+    if (target == 0) {
+        return 0;
+    }
+    args[0] = (uint32_t)(uintptr_t)gobj;
+    args[1] = arg1;
+    return gw_ppc_call(target, args, 2, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+}
+
 /* onLoad (slot 0) - actually runs Sonic's PPC onLoad through the interpreter. */
 static void gw_mex_interp_onload(void *gobj) {
     uint32_t target = gw_mex_override_target(GW_MEX_SLOT_ON_LOAD);
@@ -258,6 +273,32 @@ static uint32_t gw_mex_interp_run_logged(uint32_t slot, const char *name, void *
     return r3;
 }
 
+/* Two-argument logged variant (OnItemPickup): logs its first invocation with the item gobj, then
+ * throttles to one line per 60 invocations. */
+static uint32_t gw_mex_interp_run_logged2(uint32_t slot, const char *name, void *gobj,
+                                          uint32_t arg1) {
+    uint32_t target = gw_mex_override_target(slot);
+    static int first_logged2[64];
+    static uint32_t count2[64];
+    uint32_t r3;
+
+    if (target == 0) {
+        return 0;
+    }
+    ++count2[slot];
+    if (slot < 64u && !first_logged2[slot]) {
+        first_logged2[slot] = 1;
+        gw_log("interp: %s kind=%d entry=0x%08X gobj=%p item=0x%08X invocation 1 running", name,
+               GW_MEX_KIND_SONIC, target, gobj, arg1);
+    }
+    r3 = gw_mex_interp_run2(slot, gobj, arg1);
+    if (slot < 64u && (count2[slot] == 1u || (count2[slot] % 60u) == 1u)) {
+        gw_log("interp: %s kind=%d invocation %u ran, r3=0x%08X", name, GW_MEX_KIND_SONIC,
+               count2[slot], r3);
+    }
+    return r3;
+}
+
 /* onActionStateChange (slot 24) - dispatched from ftcolanim.c's four ftData_UnkMotionStates4 call
  * sites (ftCo_800C0134 / ftCo_800C0200 / ftCo_800C0408). Fires when the fighter's colour-anim
  * action state changes, so it runs during spawn/respawn without any input. */
@@ -286,6 +327,25 @@ GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_HI, special_hi)
 GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_HI_AIR, special_hi_air)
 GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_LW, special_lw)
 GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_LW_AIR, special_lw_air)
+
+/* onDoubleJump (slot 32) - dispatched from ftCo_800CBAC4 (ftCo_JumpAerial.c), the common aerial-
+ * jump enter. Fires when the fighter double/multi-jumps, so it needs an air jump input. */
+static void gw_mex_interp_double_jump(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_DOUBLE_JUMP, "onDoubleJump", gobj);
+}
+
+/* onUSmash (slot 36) - dispatched from doEnter (ftCo_AttackHi4.c), the up-smash enter. Fires on
+ * up+A input. */
+static void gw_mex_interp_usmash(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_USMASH, "onUSmash", gobj);
+}
+
+/* onItemPickup (slot 13) - dispatched from ftpickupitem_800948A8 (ftpickupitem.c) with the picked
+ * item gobj. Fires only when the fighter picks up an item, so in Target Test it cannot fire. */
+static void gw_mex_interp_item_pickup(void *gobj, void *arg1) {
+    gw_mex_interp_run_logged2(GW_MEX_SLOT_ON_ITEM_PICKUP, "onItemPickup", gobj,
+                              (uint32_t)(uintptr_t)arg1);
+}
 
 /* Called from game code (ftData_8008572C) once Sonic's data is on the disc. `kind` is the port's
  * Ft_Kind_Sonic (33). */
@@ -350,11 +410,16 @@ void gw_Mex_FtFunctionInstall(int kind) {
     gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW, GW_MEX_KIND_SONIC, gw_mex_interp_special_lw);
     gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW_AIR, GW_MEX_KIND_SONIC,
                         gw_mex_interp_special_lw_air);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DOUBLE_JUMP, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_double_jump);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_USMASH, GW_MEX_KIND_SONIC, gw_mex_interp_usmash);
+    gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP, GW_MEX_KIND_SONIC,
+                         gw_mex_interp_item_pickup);
 
     gw_mex_installed = 1;
     gw_log("interp: installed Sonic ftFunction (code 0x%08X..0x%08X, mexData 0x%08X, stack "
-           "0x%08X, %d overrides); onLoad/onFrame/onActionStateChange/onReapplyAttr/8 specials "
-           "active",
+           "0x%08X, %d overrides); onLoad/onFrame/onActionStateChange/onReapplyAttr/8 specials/"
+           "onDoubleJump/onUSmash/onItemPickup active",
            gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size, mexdata_base,
            stack_base, gw_mex_ff.override_count);
 }

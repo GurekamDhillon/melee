@@ -1031,6 +1031,7 @@ int gw_Mex_Enabled(const char *name) {
  * m-ex. See _research/mex-tier-c-hooks.md. */
 
 static gwmex_gobj_fn gw_mex_gobj_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
+static gwmex_gobj_fn2 gw_mex_gobj_hooks2[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 static gwmex_gobj_pred gw_mex_pred_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 
 int gw_Mex_HookRegister(int event, int kind, gwmex_gobj_fn fn) {
@@ -1038,6 +1039,14 @@ int gw_Mex_HookRegister(int event, int kind, gwmex_gobj_fn fn) {
     return 0;
   }
   gw_mex_gobj_hooks[event][kind] = fn;
+  return 1;
+}
+
+int gw_Mex_HookRegister2(int event, int kind, gwmex_gobj_fn2 fn) {
+  if ((unsigned)event >= GW_MEX_EVENT_COUNT || (unsigned)kind >= GW_MEX_KIND_MAX) {
+    return 0;
+  }
+  gw_mex_gobj_hooks2[event][kind] = fn;
   return 1;
 }
 
@@ -1058,6 +1067,18 @@ void gw_Mex_GObjDispatch(int event, int kind, void *gobj, void *vanilla) {
     fn(gobj);
   } else if (vanilla != NULL) {
     ((gwmex_gobj_fn)vanilla)(gobj);
+  }
+}
+
+void gw_Mex_GObjDispatch2(int event, int kind, void *gobj, void *arg1, void *vanilla) {
+  gwmex_gobj_fn2 fn = NULL;
+  if ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX) {
+    fn = gw_mex_gobj_hooks2[event][kind];
+  }
+  if (fn != NULL) {
+    fn(gobj, arg1);
+  } else if (vanilla != NULL) {
+    ((gwmex_gobj_fn2)vanilla)(gobj, arg1);
   }
 }
 
@@ -1140,6 +1161,15 @@ void gw_Mex_SpecialLwAirDispatch(int kind, void *gobj, void *vanilla) {
 }
 void gw_Mex_MoveLogicDispatch(int kind, void *gobj, void *vanilla) {
   gw_Mex_GObjDispatch(GW_MEX_EVENT_MOVE_LOGIC, kind, gobj, vanilla);
+}
+void gw_Mex_OnDoubleJumpDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind, gobj, vanilla);
+}
+void gw_Mex_OnUSmashDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_USMASH, kind, gobj, vanilla);
+}
+void gw_Mex_OnItemPickupDispatch(int kind, void *gobj, void *arg1, void *vanilla) {
+  gw_Mex_GObjDispatch2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind, gobj, arg1, vanilla);
 }
 
 /* Demo registration for OnFrame: proves the surface fires without a custom mod. Installed once,

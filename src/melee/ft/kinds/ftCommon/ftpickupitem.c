@@ -276,6 +276,12 @@ void ftpickupitem_800948A8(Fighter_GObj* gobj, Item_GObj* item_gobj)
         fp->item_gobj = item_gobj;
     }
     ftpickupitem_80094818(gobj, true);
+#if defined(TARGET_PC)
+    {
+        extern void Mex_OnItemPickupDispatch(int kind, void* gobj, void* arg1, void* vanilla);
+        Mex_OnItemPickupDispatch(fp->kind, gobj, item_gobj, NULL);
+    }
+#endif
     {
         Fighter_Part ret_part;
         if (itIsHeavy(item_gobj) == false) {

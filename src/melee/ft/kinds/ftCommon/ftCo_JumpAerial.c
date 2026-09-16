@@ -142,6 +142,13 @@ void ftCo_800CBAC4(Fighter_GObj* gobj, FtMotionId msid, Vec3* vel, bool arg3)
 {
     Fighter* fp = GET_FIGHTER(gobj);
 
+#if defined(TARGET_PC)
+    {
+        extern void Mex_OnDoubleJumpDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnDoubleJumpDispatch(fp->kind, gobj, NULL);
+    }
+#endif
+
     Fighter_ChangeMotionState(gobj, msid, Ft_MF_SkipNametagVis, 0.0F, 1.0F,
                               0.0F, NULL);
     fp->x2221_b7 = true;

@@ -167,6 +167,8 @@ void gw_main(void);
  * per-fighter per-frame and m-ex is single-slot (last registration wins). */
 
 typedef void (*gwmex_gobj_fn)(void* gobj);
+/* Two-argument hook (gobj + one extra word, e.g. OnItemPickup's item_gobj). */
+typedef void (*gwmex_gobj_fn2)(void* gobj, void* arg1);
 /* Predicates (Category 2, e.g. OnFloat) return a value deciding whether the behaviour fires. It is
  * `int`, not `bool`, for the same boundary reason as gw_Mex_Enabled: game code's MSL `bool` is
  * `int`, the native layer's is `_Bool`. */
@@ -197,6 +199,9 @@ enum {
     GW_MEX_EVENT_SPECIAL_LW,          /* ftData_SpecialLw           */
     GW_MEX_EVENT_SPECIAL_LW_AIR,      /* ftData_SpecialAirLw        */
     GW_MEX_EVENT_MOVE_LOGIC,          /* MoveLogic (m-ex Arch_FighterFunc slot 3) */
+    GW_MEX_EVENT_ON_DOUBLE_JUMP,      /* ftCo_800CBAC4 (m-ex onDoubleJump, slot 32) */
+    GW_MEX_EVENT_ON_USMASH,           /* ftCo_AttackHi4 doEnter (m-ex onUSmash, slot 36) */
+    GW_MEX_EVENT_ON_ITEM_PICKUP,      /* ftpickupitem_800948A8 (m-ex OnItemPickup, slot 13) */
     GW_MEX_EVENT_COUNT
 };
 
@@ -207,11 +212,13 @@ enum {
  * bool: game code's MSL `bool` is `int`, while the native layer's is `_Bool`, so the boundary uses
  * int like gw_Mex_Enabled). */
 int gw_Mex_HookRegister(int event, int kind, gwmex_gobj_fn fn);
+int gw_Mex_HookRegister2(int event, int kind, gwmex_gobj_fn2 fn);
 int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn);
 
 /* Call override[event][kind](gobj) if registered, else vanilla(gobj) if non-NULL. `vanilla` is the
  * decomp table entry already byte-swapped to native by the game call site. */
 void gw_Mex_GObjDispatch(int event, int kind, void* gobj, void* vanilla);
+void gw_Mex_GObjDispatch2(int event, int kind, void* gobj, void* arg1, void* vanilla);
 
 /* Predicate dispatch for the Category 2 events (OnFloat and friends), whose return value decides
  * whether the behaviour fires: returns the registered predicate's result, else `vanilla`'s, else 0.
@@ -242,6 +249,9 @@ void gw_Mex_SpecialHiAirDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_SpecialLwDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_SpecialLwAirDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_MoveLogicDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnDoubleJumpDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnUSmashDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnItemPickupDispatch(int kind, void* gobj, void* arg1, void* vanilla);
 
 #ifdef __cplusplus
 }

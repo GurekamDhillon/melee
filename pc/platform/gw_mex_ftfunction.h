@@ -55,6 +55,12 @@ enum {
  * (out is filled and the structure is logged), or a GW_FTFUNC_ERR_* code with the reason logged. */
 int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction *out);
 
+/* Like gw_ftfunction_load, but relocates the code to an explicit `code_base` and the
+ * Arch_FighterFunc tables to an explicit `mexdata_base` (both guest addresses the caller has
+ * already allocated from the fighter heap). The phase-3 runtime path. */
+int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t code_base,
+                          uint32_t mexdata_base, gw_ftfunction *out);
+
 /* Logs the parsed structure (code size, reloc counts, resolved per-slot overrides). */
 void gw_ftfunction_report(const gw_ftfunction *ff);
 

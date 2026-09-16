@@ -160,9 +160,9 @@ static int gw_ftfunction_reloc(const unsigned char *dat, size_t dat_size, uint32
  * must not write, so it is re-expressed as a native-hook registration (recorded, not applied). */
 
 static int gw_ftfunction_overload(const unsigned char *dat, size_t dat_size, uint32_t frt_data_off,
-                                  uint32_t frt_count, uint32_t code_base, uint32_t internal_id,
-                                  gw_ftfunction *out) {
-    uint32_t next_perkind = GW_FTFUNC_MEXDATA_BASE + GW_FTFUNC_SLOT_COUNT * 4u;
+                                  uint32_t frt_count, uint32_t code_base, uint32_t mexdata_base,
+                                  uint32_t internal_id, gw_ftfunction *out) {
+    uint32_t next_perkind = mexdata_base + GW_FTFUNC_SLOT_COUNT * 4u;
     uint32_t i;
 
     for (i = 0; i < frt_count; ++i) {
@@ -185,11 +185,11 @@ static int gw_ftfunction_overload(const unsigned char *dat, size_t dat_size, uin
                 gw_log("ftfunction: function-reloc entry %u slot %u out of range", i, slot);
                 return GW_FTFUNC_ERR_BAD_SLOT;
             }
-            perkind = gw_r32((void *)(uintptr_t)(GW_FTFUNC_MEXDATA_BASE + slot * 4u));
+            perkind = gw_r32((void *)(uintptr_t)(mexdata_base + slot * 4u));
             if (perkind == 0) {
                 perkind = next_perkind;
                 next_perkind += GW_FTFUNC_PERKIND_STRIDE;
-                gw_w32((void *)(uintptr_t)(GW_FTFUNC_MEXDATA_BASE + slot * 4u), perkind);
+                gw_w32((void *)(uintptr_t)(mexdata_base + slot * 4u), perkind);
             }
             gw_w32((void *)(uintptr_t)(perkind + internal_id * 4u), target);
 
@@ -215,8 +215,9 @@ static int gw_ftfunction_overload(const unsigned char *dat, size_t dat_size, uin
 
 /* ---- core: parse + relocate a whole .dat buffer in memory ---------------------------- */
 
-static int gw_ftfunction_load_from_memory(const unsigned char *dat, size_t dat_size,
-                                          uint32_t internal_id, gw_ftfunction *out) {
+static int gw_ftfunction_load_from_memory_at(const unsigned char *dat, size_t dat_size,
+                                             uint32_t internal_id, uint32_t code_base,
+                                             uint32_t mexdata_base, gw_ftfunction *out) {
     uint32_t data_size, file_size;
     int32_t pub_off;
     uint32_t struct_off, code_off, irt_off, frt_off, irt_count, frt_count, code_size;
@@ -271,33 +272,33 @@ static int gw_ftfunction_load_from_memory(const unsigned char *dat, size_t dat_s
                frt_count);
         return GW_FTFUNC_ERR_BAD_STRUCT;
     }
-    if (code_size > gw_mem1_size ||
-        GW_FTFUNC_CODE_BASE + code_size > 0x80000000u + gw_mem1_size) {
+    if (code_size > gw_mem1_size || code_base + code_size > 0x80000000u + gw_mem1_size) {
         gw_log("ftfunction: code size 0x%X does not fit in guest MEM1", code_size);
         return GW_FTFUNC_ERR_BAD_STRUCT;
     }
 
-    memcpy((void *)(uintptr_t)GW_FTFUNC_CODE_BASE, dat + GW_HSD_HEADER_SIZE + code_off, code_size);
+    memcpy((void *)(uintptr_t)code_base, dat + GW_HSD_HEADER_SIZE + code_off, code_size);
 
-    rc = gw_ftfunction_reloc(dat, dat_size, irt_off, irt_count, GW_FTFUNC_CODE_BASE, code_size);
+    rc = gw_ftfunction_reloc(dat, dat_size, irt_off, irt_count, code_base, code_size);
     if (rc != GW_FTFUNC_OK) {
         return rc;
     }
-    rc = gw_ftfunction_overload(dat, dat_size, frt_off, frt_count, GW_FTFUNC_CODE_BASE,
+    rc = gw_ftfunction_overload(dat, dat_size, frt_off, frt_count, code_base, mexdata_base,
                                 internal_id, out);
     if (rc != GW_FTFUNC_OK) {
         return rc;
     }
 
-    out->code_base = GW_FTFUNC_CODE_BASE;
+    out->code_base = code_base;
     out->code_size = code_size;
     out->instr_reloc_count = irt_count;
     out->func_reloc_count = frt_count;
-    out->mexdata_base = GW_FTFUNC_MEXDATA_BASE;
+    out->mexdata_base = mexdata_base;
     return GW_FTFUNC_OK;
 }
 
-int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction *out) {
+int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t code_base,
+                          uint32_t mexdata_base, gw_ftfunction *out) {
     unsigned char *dat;
     uint32_t dat_size = 0;
     int rc;
@@ -307,12 +308,18 @@ int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction
     if (dat == NULL) {
         return GW_FTFUNC_ERR_NO_FILE;
     }
-    rc = gw_ftfunction_load_from_memory(dat, dat_size, internal_id, out);
+    rc = gw_ftfunction_load_from_memory_at(dat, dat_size, internal_id, code_base, mexdata_base,
+                                           out);
     free(dat);
     if (rc == GW_FTFUNC_OK) {
         gw_ftfunction_report(out);
     }
     return rc;
+}
+
+int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction *out) {
+    return gw_ftfunction_load_at(dat_path, internal_id, GW_FTFUNC_CODE_BASE,
+                                 GW_FTFUNC_MEXDATA_BASE, out);
 }
 
 /* ---- report -------------------------------------------------------------------------- */
@@ -528,7 +535,7 @@ static int test_ftfunction_corrupt_rejected(void) {
     {
         size_t size;
         unsigned char *buf = gw_ftfunction_build_archive(&size);
-        int rc = gw_ftfunction_load_from_memory(buf, size, 0, &ff);
+        int rc = gw_ftfunction_load_from_memory_at(buf, size, 0, GW_FTFUNC_CODE_BASE, GW_FTFUNC_MEXDATA_BASE, &ff);
         free(buf);
         if (rc != GW_FTFUNC_OK) {
             gw_test_fail("valid archive rejected with %d", rc);
@@ -541,7 +548,7 @@ static int test_ftfunction_corrupt_rejected(void) {
         unsigned char *buf = gw_ftfunction_build_archive(&size);
         int rc;
         gw_w32(buf + cases[i].off, cases[i].value);
-        rc = gw_ftfunction_load_from_memory(buf, size, 0, &ff);
+        rc = gw_ftfunction_load_from_memory_at(buf, size, 0, GW_FTFUNC_CODE_BASE, GW_FTFUNC_MEXDATA_BASE, &ff);
         free(buf);
         if (rc == GW_FTFUNC_OK) {
             gw_test_fail("corrupt (%s) accepted", cases[i].what);
@@ -565,7 +572,7 @@ static int test_ftfunction_funcaddr_hook(void) {
      * guest address (0x80068B40, the m-ex init site) with the top bit set. */
     gw_w32(buf + 0x3C, 0x80068B40u);
     gw_w32(buf + 0x40, 0x0u);
-    rc = gw_ftfunction_load_from_memory(buf, size, 0, &ff);
+    rc = gw_ftfunction_load_from_memory_at(buf, size, 0, GW_FTFUNC_CODE_BASE, GW_FTFUNC_MEXDATA_BASE, &ff);
     free(buf);
     if (rc != GW_FTFUNC_OK) {
         gw_test_fail("func-addr archive rejected with %d", rc);

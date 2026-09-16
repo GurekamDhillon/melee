@@ -123,9 +123,27 @@ static uint32_t gw_ppc_cr_bit(const gw_ppc_ctx *c, uint32_t bi) {
     return (c->cr >> (31 - bi)) & 1u;
 }
 
+static void gw_ppc_cr_set_bit(gw_ppc_ctx *c, uint32_t bi, uint32_t v) {
+    uint32_t mask = 1u << (31 - bi);
+    c->cr = (c->cr & ~mask) | ((v & 1u) << (31 - bi));
+}
+
 static void gw_ppc_cr_set_field(gw_ppc_ctx *c, uint32_t crfd, uint32_t field) {
     uint32_t shift = 28 - 4 * crfd;
     c->cr = (c->cr & ~(0xFu << shift)) | ((field & 0xFu) << shift);
+}
+
+static uint32_t gw_ppc_cr_get_field(const gw_ppc_ctx *c, uint32_t crfd) {
+    return (c->cr >> (28 - 4 * crfd)) & 0xFu;
+}
+
+/* XER[CA] (bit 29, i.e. 0x20000000) - the carry flag the add/sub-with-carry family uses. */
+static uint32_t gw_ppc_xer_ca(const gw_ppc_ctx *c) {
+    return (c->xer >> 29) & 1u;
+}
+
+static void gw_ppc_xer_set_ca(gw_ppc_ctx *c, uint32_t v) {
+    c->xer = (c->xer & ~0x20000000u) | ((v & 1u) << 29);
 }
 
 /* Set CR[crfd] from a signed comparison of `res` against zero (LT/GT/EQ), copying XER[SO]. */
@@ -226,6 +244,7 @@ static uint32_t gw_ppc_mask(uint32_t mb, uint32_t me) {
 
 static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn);          /* opcode 31 */
 static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single); /* 59 / 63 */
+static int gw_ppc_execute_cr(gw_ppc_machine *m, uint32_t insn);         /* CR-logical / mcrf */
 
 /* ---- main dispatch --------------------------------------------------------------------
  * Returns 1 when the guest function returns to the native caller (a blr to an out-of-blob LR);
@@ -286,6 +305,37 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         rs = (insn >> 21) & 0x1F;
         c->gpr[ra] = c->gpr[rs] & ((insn & 0xFFFF) << 16);
         gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        break;
+
+    /* ---- rotate/shift immediate ----------------------------------------------------- */
+    case 21: /* rlwinm rA, rS, SH, MB, ME (slwi/srwi/clrlwi/clrrwi are aliases) */
+        ra = (insn >> 16) & 0x1F;
+        rs = (insn >> 21) & 0x1F;
+        c->gpr[ra] = gw_ppc_rotl(c->gpr[rs], (insn >> 11) & 0x1F) &
+                     gw_ppc_mask((insn >> 6) & 0x1F, (insn >> 1) & 0x1F);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        }
+        break;
+    case 20: /* rlwimi rA, rS, SH, MB, ME (inserts into the existing rA) */
+    {
+        uint32_t m = gw_ppc_mask((insn >> 6) & 0x1F, (insn >> 1) & 0x1F);
+        ra = (insn >> 16) & 0x1F;
+        rs = (insn >> 21) & 0x1F;
+        c->gpr[ra] = (gw_ppc_rotl(c->gpr[rs], (insn >> 11) & 0x1F) & m) | (c->gpr[ra] & ~m);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        }
+        break;
+    }
+    case 23: /* rlwnm rA, rS, rB, MB, ME (rotate by register) */
+        ra = (insn >> 16) & 0x1F;
+        rs = (insn >> 21) & 0x1F;
+        c->gpr[ra] = gw_ppc_rotl(c->gpr[rs], c->gpr[(insn >> 11) & 0x1F]) &
+                     gw_ppc_mask((insn >> 6) & 0x1F, (insn >> 1) & 0x1F);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        }
         break;
 
     /* ---- compare immediate ---------------------------------------------------------- */
@@ -470,23 +520,29 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         }
         break;
     }
-    case 19: /* bclr / bcctr (blr, blrl, bctr, bctrl) */
+    case 19: /* bclr / bcctr (blr, blrl, bctr, bctrl) + the CR-logical family */
     {
-        uint32_t bo = (insn >> 21) & 0x1F;
-        uint32_t bi = (insn >> 16) & 0x1F;
-        int is_ctr = (insn & 0x400) != 0;
-        int lk = insn & 1;
-        if (gw_ppc_cond(m, bo, bi)) {
-            uint32_t target = is_ctr ? c->ctr : c->lr;
-            if (lk) {
-                c->lr = c->pc;
-            }
-            if (gw_ppc_in_blob(m, target)) {
-                c->pc = target;
-            } else if (!is_ctr && !lk) {
-                return 1; /* blr to an out-of-blob LR: return to the native caller */
-            } else {
-                gw_ppc_bridge_call(m, target);
+        uint32_t xo = (insn >> 1) & 0x3FF;
+        if (xo != 16 && xo != 528) { /* 16 = bclr, 528 = bcctr */
+            return gw_ppc_execute_cr(m, insn);
+        }
+        {
+            uint32_t bo = (insn >> 21) & 0x1F;
+            uint32_t bi = (insn >> 16) & 0x1F;
+            int is_ctr = (insn & 0x400) != 0;
+            int lk = insn & 1;
+            if (gw_ppc_cond(m, bo, bi)) {
+                uint32_t target = is_ctr ? c->ctr : c->lr;
+                if (lk) {
+                    c->lr = c->pc;
+                }
+                if (gw_ppc_in_blob(m, target)) {
+                    c->pc = target;
+                } else if (!is_ctr && !lk) {
+                    return 1; /* blr to an out-of-blob LR: return to the native caller */
+                } else {
+                    gw_ppc_bridge_call(m, target);
+                }
             }
         }
         break;
@@ -761,6 +817,159 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
         break;
     }
 
+    /* add/sub with carry (the 64-bit arithmetic idioms m-ex code emits) */
+    case 8: /* subfc rD, rA, rB: rD = rB - rA, CA = no borrow */
+        gw_ppc_xer_set_ca(c, c->gpr[rb] >= c->gpr[ra]);
+        c->gpr[rd] = c->gpr[rb] - c->gpr[ra];
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    case 136: /* subfe rD, rA, rB: rD = ~rA + rB + CA */
+    {
+        uint32_t ca = gw_ppc_xer_ca(c);
+        uint32_t res = (~c->gpr[ra]) + c->gpr[rb] + ca;
+        gw_ppc_xer_set_ca(c, (uint64_t)(~c->gpr[ra]) + c->gpr[rb] + ca >= 0x100000000u);
+        c->gpr[rd] = res;
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    }
+    case 200: /* subfze rD, rA: rD = ~rA + CA */
+    {
+        uint32_t ca = gw_ppc_xer_ca(c);
+        uint32_t res = (~c->gpr[ra]) + ca;
+        gw_ppc_xer_set_ca(c, (uint64_t)(~c->gpr[ra]) + ca >= 0x100000000u);
+        c->gpr[rd] = res;
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    }
+    case 232: /* subfme rD, rA: rD = ~rA + CA - 1 */
+    {
+        uint32_t ca = gw_ppc_xer_ca(c);
+        uint32_t res = (~c->gpr[ra]) + ca - 1;
+        gw_ppc_xer_set_ca(c, (uint64_t)(~c->gpr[ra]) + ca >= 1);
+        c->gpr[rd] = res;
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    }
+    case 202: /* addze rD, rA: rD = rA + CA */
+    {
+        uint32_t ca = gw_ppc_xer_ca(c);
+        uint32_t res = c->gpr[ra] + ca;
+        gw_ppc_xer_set_ca(c, (uint64_t)c->gpr[ra] + ca >= 0x100000000u);
+        c->gpr[rd] = res;
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    }
+    case 234: /* addme rD, rA: rD = rA + CA - 1 */
+    {
+        uint32_t ca = gw_ppc_xer_ca(c);
+        uint32_t res = c->gpr[ra] + ca - 1;
+        gw_ppc_xer_set_ca(c, (uint64_t)c->gpr[ra] + ca >= 1);
+        c->gpr[rd] = res;
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    }
+
+    case 983: /* stfiwx fS, rA, rB: store the low 32 bits of fS as a word */
+        gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], c->fpr[rs].u32[1]);
+        break;
+
+    /* cache / synchronisation instructions are no-ops in the interpreter (single-threaded);
+     * dcbz zeroes its 32-byte block so struct-clearing code behaves */
+    case 54: /* dcbst */
+    case 86: /* dcbf */
+    case 150: /* isync */
+    case 246: /* dcbtst */
+    case 278: /* dcbt */
+    case 470: /* dcbi */
+    case 598: /* sync */
+    case 854: /* eieio */
+    case 982: /* icbi */
+        break;
+    case 1014: /* dcbz */
+    case 1015: /* dcbz_l */
+    {
+        uint32_t ea = (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb];
+        uint32_t i;
+        for (i = 0; i < 32; i += 4) {
+            gw_ppc_st32(m, ea + i, 0);
+        }
+        break;
+    }
+
+    default:
+        gw_ppc_bad_opcode(ip, insn);
+    }
+    return 0;
+}
+
+/* ---- opcode 19 CR-logical family (and mcrf) -------------------------------------------
+ * `cr<op> crD, crA, crB` names three single CR bits (BT/BA/BB); the destination bit is the
+ * boolean op of the two source bits. mcrf copies a whole 4-bit field. These appear in
+ * m-ex-generated code (the `crxor 6,6,6` "clear a scratch CR field" idiom). */
+
+static int gw_ppc_execute_cr(gw_ppc_machine *m, uint32_t insn) {
+    gw_ppc_ctx *c = &m->cpu;
+    uint32_t xo = (insn >> 1) & 0x3FF;
+    uint32_t ip = c->pc - 4;
+    uint32_t bt = (insn >> 21) & 0x1F;
+    uint32_t ba = (insn >> 16) & 0x1F;
+    uint32_t bb = (insn >> 11) & 0x1F;
+    uint32_t a, b, r;
+
+    switch (xo) {
+    case 0: /* mcrf crfD, crfS */
+        gw_ppc_cr_set_field(c, (insn >> 23) & 7, gw_ppc_cr_get_field(c, (insn >> 18) & 7));
+        break;
+    case 33: /* crnor */
+    case 129: /* crandc */
+    case 193: /* crxor */
+    case 225: /* crnand */
+    case 257: /* crand */
+    case 289: /* creqv */
+    case 417: /* crorc */
+    case 449: /* cror */
+        a = gw_ppc_cr_bit(c, ba);
+        b = gw_ppc_cr_bit(c, bb);
+        switch (xo) {
+        case 33:
+            r = !(a | b);
+            break;
+        case 129:
+            r = a & !b;
+            break;
+        case 193:
+            r = a ^ b;
+            break;
+        case 225:
+            r = !(a & b);
+            break;
+        case 257:
+            r = a & b;
+            break;
+        case 289:
+            r = !(a ^ b);
+            break;
+        case 417:
+            r = a | !b;
+            break;
+        default: /* 449 */
+            r = a | b;
+            break;
+        }
+        gw_ppc_cr_set_bit(c, bt, r);
+        break;
     default:
         gw_ppc_bad_opcode(ip, insn);
     }

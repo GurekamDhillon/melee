@@ -1696,6 +1696,12 @@ void ftData_8008572C(FighterKind kind)
                 flags = (flags & ~0x3Fu) | (u32) kind;
                 fd->xC[i].x10_animCurrFlags = (s32) flags;
             }
+            /* Ported from m-ex (https://github.com/akaneia/m-ex): load Sonic's PlSn.dat
+             * ftFunction PPC blob and install the onLoad override, so the engine's existing
+             * onLoad dispatch (fighter.c -> Mex_OnLoadDispatch) runs Sonic's PPC onLoad through
+             * the interpreter instead of Fox's vanilla entry. See gw_mex_ftfunction_runtime.c. */
+            extern void Mex_FtFunctionInstall(int kind);
+            Mex_FtFunctionInstall((int) kind);
         }
 #endif
     }

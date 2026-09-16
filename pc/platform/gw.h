@@ -163,7 +163,10 @@ void gw_main(void);
  * per-fighter per-frame and m-ex is single-slot (last registration wins). */
 
 typedef void (*gwmex_gobj_fn)(void* gobj);
-typedef bool (*gwmex_gobj_pred)(void* gobj);
+/* Predicates (Category 2, e.g. OnFloat) return a value deciding whether the behaviour fires. It is
+ * `int`, not `bool`, for the same boundary reason as gw_Mex_Enabled: game code's MSL `bool` is
+ * `int`, the native layer's is `_Bool`. */
+typedef int (*gwmex_gobj_pred)(void* gobj);
 
 /* Event ids mirror the ftData_* table families (one id per table). The game-side call sites use
  * the per-event dispatch wrappers below, so these ids only cross the boundary at registration. */
@@ -194,6 +197,12 @@ int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn);
 /* Call override[event][kind](gobj) if registered, else vanilla(gobj) if non-NULL. `vanilla` is the
  * decomp table entry already byte-swapped to native by the game call site. */
 void gw_Mex_GObjDispatch(int event, int kind, void* gobj, void* vanilla);
+
+/* Predicate dispatch for the Category 2 events (OnFloat and friends), whose return value decides
+ * whether the behaviour fires: returns the registered predicate's result, else `vanilla`'s, else 0.
+ * No game call site yet - Category 2 is deferred (_research/mex-tier-c-hooks.md section 7.3) - but
+ * the surface is complete and tested, so a future site has a proven entry point. */
+int gw_Mex_GObjPredDispatch(int event, int kind, void* gobj, void* vanilla);
 
 /* Per-event dispatch wrappers for the game-side call sites (keeps the event id out of game code). */
 void gw_Mex_OnLoadDispatch(int kind, void* gobj, void* vanilla);

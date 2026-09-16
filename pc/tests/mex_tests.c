@@ -168,6 +168,60 @@ static int test_mex_onframe_hook_register_and_clear(void) {
     return 0;
 }
 
+/* ---- m-ex Tier C predicate surface (Category 2, e.g. OnFloat) --------------------------
+ * A predicate returns a value rather than merely running: dispatch returns the override's
+ * result, else the vanilla predicate's, else 0. Register and clear must both work. */
+
+extern int Mex_PredicateRegister(int event, int kind, int (*fn)(void*));
+extern int Mex_GObjPredDispatch(int event, int kind, void* gobj, void* vanilla);
+
+static int mex_pred_hook(void* gobj)
+{
+    (void) gobj;
+    return 1;
+}
+
+static int mex_pred_vanilla(void* gobj)
+{
+    (void) gobj;
+    return 2;
+}
+
+static int test_mex_predicate_register_and_clear(void) {
+    if (Mex_PredicateRegister(999, 0, mex_pred_hook) != 0) {
+        TestFail("Mex_PredicateRegister should reject an out-of-range event");
+        return 1;
+    }
+    if (Mex_GObjPredDispatch(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, NULL, NULL) != 0) {
+        TestFail("predicate dispatch with neither override nor vanilla should return 0");
+        return 1;
+    }
+    if (Mex_GObjPredDispatch(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, NULL,
+                             (void*) mex_pred_vanilla) != 2) {
+        TestFail("predicate dispatch without an override should return the vanilla result");
+        return 1;
+    }
+    if (Mex_PredicateRegister(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, mex_pred_hook) != 1) {
+        TestFail("Mex_PredicateRegister rejected a valid (event, kind)");
+        return 1;
+    }
+    if (Mex_GObjPredDispatch(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, NULL,
+                             (void*) mex_pred_vanilla) != 1) {
+        TestFail("registered predicate should return its own result, not vanilla's");
+        return 1;
+    }
+    if (Mex_PredicateRegister(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, NULL) != 1) {
+        TestFail("Mex_PredicateRegister should accept NULL to clear the slot");
+        return 1;
+    }
+    if (Mex_GObjPredDispatch(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, NULL,
+                             (void*) mex_pred_vanilla) != 2) {
+        TestFail("clearing the predicate slot should restore the vanilla result");
+        return 1;
+    }
+    return 0;
+}
+
 void MexTestRegisterAll(void) {
     TestRegister("gm_Is1PMode_1p_modes", test_1p_mode_classification);
     TestRegister("gm_Is1PMode_vs_modes", test_vs_mode_is_not_1p);
@@ -176,4 +230,6 @@ void MexTestRegisterAll(void) {
     TestRegister("charid_remap_identity_vanilla", test_special_id_remap_is_identity);
     TestRegister("mex_onframe_hook_register_and_clear",
                  test_mex_onframe_hook_register_and_clear);
+    TestRegister("mex_predicate_register_and_clear",
+                 test_mex_predicate_register_and_clear);
 }

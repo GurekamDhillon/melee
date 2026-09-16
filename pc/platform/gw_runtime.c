@@ -1039,6 +1039,20 @@ void gw_Mex_GObjDispatch(int event, int kind, void *gobj, void *vanilla) {
   }
 }
 
+int gw_Mex_GObjPredDispatch(int event, int kind, void *gobj, void *vanilla) {
+  gwmex_gobj_pred fn = NULL;
+  if ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX) {
+    fn = gw_mex_pred_hooks[event][kind];
+  }
+  if (fn != NULL) {
+    return fn(gobj);
+  }
+  if (vanilla != NULL) {
+    return ((gwmex_gobj_pred)vanilla)(gobj);
+  }
+  return 0;
+}
+
 void gw_Mex_OnLoadDispatch(int kind, void *gobj, void *vanilla) {
   gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_LOAD, kind, gobj, vanilla);
 }

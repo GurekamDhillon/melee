@@ -84,10 +84,23 @@ void bootOnLeave(GameModeState* data)
     {
         extern int TestTrainingCKind(void);
         extern int TestTargetTestCKind(void);
+        extern const char *ContentProbeName(void);
+        extern void ContentProbeResult(const char *name, void *archive);
+        extern void *lbArchive_LoadArchive(const char *filename);
+
         if (TestTrainingCKind() >= 0) {
             gm_SetPendingGameMode(GM_TRAINING);
         } else if (TestTargetTestCKind() >= 0) {
             gm_SetPendingGameMode(GM_TARGET_TEST);
+        }
+
+        /* m-ex content proof of life: load the file named by MELEE_CONTENT_PROBE through the game's
+         * own HSD archive loader and report whether it parsed. */
+        {
+            const char *probe = ContentProbeName();
+            if (probe != NULL) {
+                ContentProbeResult(probe, lbArchive_LoadArchive(probe));
+            }
         }
     }
 #endif

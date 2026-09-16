@@ -849,6 +849,28 @@ int gw_TestTrainingCKind(void) {
   return state;
 }
 
+/* Dev/debug hook: MELEE_CONTENT_PROBE=<file.dat> loads that file through the game's own HSD archive
+ * loader at boot and logs whether it parsed. This is the m-ex content-pipeline proof of life: the
+ * file comes from the disc FST and is parsed by lbArchive_LoadArchive, so a Sonic file loading here
+ * means the port consumes m-ex-produced content. Game code calls the unprefixed `ContentProbeName`
+ * and `ContentProbeResult`. Read once. */
+const char *gw_ContentProbeName(void) {
+  static const char *cached;
+  static int read;
+  if (!read) {
+    const char *v = getenv("MELEE_CONTENT_PROBE");
+    cached = (v != NULL && v[0] != '\0') ? v : NULL;
+    read = 1;
+  }
+  return cached;
+}
+
+void gw_ContentProbeResult(const char *name, void *archive) {
+  gw_log("gw: content probe: %s -> %s", name != NULL ? name : "(null)",
+         archive != NULL ? "parsed by lbArchive_LoadArchive"
+                         : "FAILED (loader returned NULL)");
+}
+
 int gw_TTMod_ForCharacter(int ckind) {
   int i;
   tt_load();

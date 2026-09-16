@@ -440,7 +440,25 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
     AURORA_ASSERT(needed <= array.size, "indexed attr {} references {} bytes, array is {} bytes", i, needed,
                   array.size);
     if (array.cachedRange.size < needed) {
-      array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), needed);
+      // A GC GXSetArray carries no array size; the port's shim reports MEM1 arrays as
+      // [base, end-of-MEM1) and anything else as UINT32_MAX. A model drawn as many
+      // per-triangle indexed draws (Melee's envelope path, e.g. Sonic) references a
+      // monotonically growing max index, so caching `needed` re-uploads the whole array
+      // once per triangle -- O(n^2) bytes into the storage buffer, overflowing it for a
+      // larger model. For a bounded (MEM1) array the data is contiguous and safe to
+      // over-read up to array.size, so grow the snapshot geometrically to amortize the
+      // uploads. For an unbounded array (unknown extent) keep uploading exactly what is
+      // referenced, never more.
+      u32 pushSize = needed;
+      if (array.size != 0xFFFFFFFFu) {
+        if (array.cachedRange.size != 0 && pushSize < array.cachedRange.size * 2) {
+          pushSize = array.cachedRange.size * 2;
+        }
+        if (pushSize > array.size) {
+          pushSize = array.size;
+        }
+      }
+      array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), pushSize);
     }
     immediates.arrayStart[i - GX_VA_POS] = array.cachedRange.offset;
   }

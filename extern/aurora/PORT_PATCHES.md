@@ -40,6 +40,16 @@ through `uintptr_t`:
   neighbours were correct, which rendered as spikes through otherwise sound
   geometry.
 - **`handle_draw_unmerged`** — now takes the vertex data so the above can run.
+- **`push_gx_draw`** — when the referenced extent of an indexed array grows past the
+  cached snapshot, grow the snapshot **geometrically** (doubling, clamped to the
+  array's reported size) instead of re-uploading exactly `needed` bytes. A model
+  drawn as many per-triangle indexed draws (Melee's envelope path — Sonic's m-ex
+  model, which has no pre-built display list and references its arrays with a
+  monotonically increasing max index) otherwise re-uploads the whole array once per
+  triangle: O(n²) bytes into the storage buffer, overflowing its 8 MiB frame budget.
+  The doubling is applied only to *bounded* arrays (the port's shim reports MEM1
+  arrays as `[base, end-of-MEM1)`); an unbounded array (`UINT32_MAX`) is still
+  uploaded exactly `needed`, never over-read.
 
 ## 4. Memory card
 

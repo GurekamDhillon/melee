@@ -13,6 +13,7 @@
 #include "gw.h"
 #include "gw_test.h"
 #include "gw_ppc.h"
+#include "gw_mex_bridge.h"
 
 #include <string.h>
 
@@ -43,6 +44,30 @@ void gw_ppc_set_bridge(gw_ppc_resolver_fn resolve, void *ctx, uint32_t code_lo, 
 
 /* ---- guest memory access (bounds-checked, big-endian) ---------------------------------- */
 
+/* The game's static globals (.data/.bss/.sbss) live in the NATIVE exe (the retargeted x86 image),
+ * not in guest MEM1, even though their guest addresses (0x803B7280..0x804DEA98 in this build) fall
+ * numerically inside the MEM1 window. Heap data (fighter/HSD objects, the blob's own stack) is
+ * allocated from gw_mem1, so its guest address IS its native address. Only bridge-table data
+ * objects (kind 0) are therefore re-routed to native storage; every other address stays a direct
+ * MEM1 access. The value stored at a static's native address is big-endian (gwtool byte-swaps every
+ * game access), so it is read/written with the same gw_rN/gw_wN accessors as MEM1. */
+static uint32_t gw_ppc_static_native(uint32_t ea) {
+    int kind = 0;
+    uint32_t native;
+    /* All bridge data objects sit at/above 0x803B7280 (the decomp .data base); the interpreter's
+     * heap/stack/code all live below 0x80300000. Gate the lookup so the hot heap path skips the
+     * binary search. The bound is deliberately loose: a heap address above it simply misses the
+     * exact-match lookup and falls through to MEM1 unchanged. */
+    if (ea < 0x80300000u) {
+        return 0;
+    }
+    native = gw_mex_bridge_lookup(ea, &kind);
+    if (native != 0 && kind == 0) {
+        return native;
+    }
+    return 0;
+}
+
 static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {
     /* Every interpreted access must land wholly in MEM1. Use 64-bit to avoid wraparound. */
     uint64_t end = (uint64_t)ea + (uint64_t)size;
@@ -60,48 +85,84 @@ static void gw_ppc_access_violation(uint32_t ip, uint32_t ea) {
 }
 
 static uint8_t gw_ppc_ld8(gw_ppc_machine *m, uint32_t ea) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        return gw_r8((const void *)(uintptr_t)native);
+    }
     if (!gw_ppc_ea_ok(ea, 1)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
     return gw_r8((const void *)(uintptr_t)ea);
 }
 static uint16_t gw_ppc_ld16(gw_ppc_machine *m, uint32_t ea) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        return gw_r16((const void *)(uintptr_t)native);
+    }
     if (!gw_ppc_ea_ok(ea, 2)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
     return gw_r16((const void *)(uintptr_t)ea);
 }
 static uint32_t gw_ppc_ld32(gw_ppc_machine *m, uint32_t ea) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        return gw_r32((const void *)(uintptr_t)native);
+    }
     if (!gw_ppc_ea_ok(ea, 4)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
     return gw_r32((const void *)(uintptr_t)ea);
 }
 static uint64_t gw_ppc_ld64(gw_ppc_machine *m, uint32_t ea) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        return gw_r64((const void *)(uintptr_t)native);
+    }
     if (!gw_ppc_ea_ok(ea, 8)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
     return gw_r64((const void *)(uintptr_t)ea);
 }
 static void gw_ppc_st8(gw_ppc_machine *m, uint32_t ea, uint8_t v) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        gw_w8((void *)(uintptr_t)native, v);
+        return;
+    }
     if (!gw_ppc_ea_ok(ea, 1)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
     gw_w8((void *)(uintptr_t)ea, v);
 }
 static void gw_ppc_st16(gw_ppc_machine *m, uint32_t ea, uint16_t v) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        gw_w16((void *)(uintptr_t)native, v);
+        return;
+    }
     if (!gw_ppc_ea_ok(ea, 2)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
     gw_w16((void *)(uintptr_t)ea, v);
 }
 static void gw_ppc_st32(gw_ppc_machine *m, uint32_t ea, uint32_t v) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        gw_w32((void *)(uintptr_t)native, v);
+        return;
+    }
     if (!gw_ppc_ea_ok(ea, 4)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
     gw_w32((void *)(uintptr_t)ea, v);
 }
 static void gw_ppc_st64(gw_ppc_machine *m, uint32_t ea, uint64_t v) {
+    uint32_t native = gw_ppc_static_native(ea);
+    if (native != 0) {
+        gw_w64((void *)(uintptr_t)native, v);
+        return;
+    }
     if (!gw_ppc_ea_ok(ea, 8)) {
         gw_ppc_access_violation(m->cpu.pc - 4, ea);
     }
@@ -259,7 +320,9 @@ static uint32_t gw_ppc_fetch(gw_ppc_machine *m, uint32_t ip) {
         gw_panic("ppc: pc=0x%08X outside blob code range [0x%08X,0x%08X)", ip, m->code_lo,
                  m->code_hi);
     }
-    return gw_ppc_ld32(m, ip);
+    /* Blob code always lives in guest MEM1 (allocated from the fighter heap), so instruction
+     * fetch is a direct big-endian read - never a bridged static. */
+    return gw_r32((const void *)(uintptr_t)ip);
 }
 
 /* ---- rotation mask (rlwinm/rlwimi) ---------------------------------------------------- */
@@ -1323,7 +1386,75 @@ static int test_ppc_float_bridge(void) {
     return 0;
 }
 
+/* ---- static-global bridge test -----------------------------------------------------------
+ * The interpreter must route a load/store of a bridge-table data object (kind 0) through the
+ * NATIVE storage, not raw MEM1. ftData_803C52A0 (guest 0x803C52A0) is a game .data table whose
+ * bytes are big-endian (gw_apply_fixups has run); a blob loading it must see the same value as a
+ * direct native read, and a blob store must land in native storage. This is the interpreter-level
+ * proof of the guest->native static bridge, independent of any in-match game state. */
+
+#define GW_PPC_TEST_STATIC_GUEST 0x803C52A0u /* ftData_803C52A0 (kind-0 .data object) */
+
+static int test_ppc_static_bridge(void) {
+    /* lis r3,0x803C ; lwz r3,0x52A0(r3) ; blr  -> return *(0x803C52A0) via the bridge */
+    static const uint32_t load_blob[] = {
+        0x3C60803Cu, /* lis r3, 0x803C */
+        0x806352A0u, /* lwz r3, 0x52A0(r3) */
+        0x4E800020u, /* blr */
+    };
+    /* lis r4,0x803C ; lis r3,0xC0FF ; ori r3,r3,0xEE11 ; stw r3,0x52A0(r4) ; blr */
+    static const uint32_t store_blob[] = {
+        0x3C80803Cu, /* lis r4, 0x803C */
+        0x3C60C0FFu, /* lis r3, 0xC0FF */
+        0x6063EE11u, /* ori r3, r3, 0xEE11 */
+        0x906452A0u, /* stw r3, 0x52A0(r4) */
+        0x4E800020u, /* blr */
+    };
+    const uint32_t magic = 0xC0FFEE11u;
+    int kind = -1;
+    uint32_t native = gw_mex_bridge_lookup(GW_PPC_TEST_STATIC_GUEST, &kind);
+    uint32_t saved, expected, got;
+    unsigned i;
+
+    if (native == 0 || kind != 0) {
+        gw_test_fail("bridge lookup of ftData_803C52A0 (0x803C52A0) failed: native=0x%08X kind=%d",
+                     native, kind);
+        return 1;
+    }
+
+    /* 1. load: the blob returns *(static) and must equal a direct native read. */
+    for (i = 0; i < sizeof load_blob / sizeof load_blob[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_CODE + 4 * i), load_blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t)sizeof load_blob);
+    expected = gw_r32((const void *)(uintptr_t)native);
+    got = gw_ppc_call(GW_PPC_TEST_CODE, NULL, 0, 0, GW_PPC_TEST_STACK);
+    if (got != expected) {
+        gw_test_fail("static load returned 0x%08X, expected native value 0x%08X", got, expected);
+        return 1;
+    }
+
+    /* 2. store: the blob writes MAGIC to the static; native storage must reflect it (then restore). */
+    saved = gw_r32((const void *)(uintptr_t)native);
+    for (i = 0; i < sizeof store_blob / sizeof store_blob[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_CODE + 4 * i), store_blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t)sizeof store_blob);
+    gw_ppc_call(GW_PPC_TEST_CODE, NULL, 0, 0, GW_PPC_TEST_STACK);
+    got = gw_r32((const void *)(uintptr_t)native);
+    gw_w32((void *)(uintptr_t)native, saved); /* restore the table slot */
+    if (got != magic) {
+        gw_test_fail("static store left 0x%08X, expected 0x%08X", got, magic);
+        return 1;
+    }
+
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
+    gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
 }

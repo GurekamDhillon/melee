@@ -775,7 +775,21 @@ void Fighter_UnkInitLoad_80068914(Fighter_GObj* gobj,
     fp->x2D0 = 0;
     fp->x18 = 0x155;
     fp->x1C_actionStateList = ftData_MotionStateList;
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Fighter Move Logic/PlayerBlockInit.asm, @ 0x80068B60 (replaces the `addi` that
+         * computes the ftData_CharacterStateTables base with a load of Arch_FighterFunc_MoveLogic).
+         * MoveLogic is a per-kind MotionState[] table (not a function): the engine indexes it by
+         * `motion_id - fp->x18` to drive a state's anim/phys/coll/cam callbacks. For Sonic we hand
+         * back the interpreted MoveLogic table; every other kind keeps its vanilla table. */
+        extern void* Mex_MoveLogicTable(int kind, void* vanilla);
+        fp->x20_actionStateList = Mex_MoveLogicTable((int) fp->kind,
+                                                     ftData_CharacterStateTables[fp->kind]);
+    }
+#else
     fp->x20_actionStateList = ftData_CharacterStateTables[fp->kind];
+#endif
     fp->x24 = fp->ft_data->xC;
     fp->x28 = fp->ft_data->x10;
 
@@ -2679,9 +2693,14 @@ void Fighter_8006C80C(Fighter_GObj* gobj)
         Fighter_UnkApplyTransformation_8006C0F0(gobj);
 
         if (!fp->x2219_b5) {
+#if defined(TARGET_PC)
+            extern void Mex_FighterCallbackDispatch(void* gobj, void* cb);
+            Mex_FighterCallbackDispatch(gobj, fp->accessory4_cb);
+#else
             if (fp->accessory4_cb) {
                 fp->accessory4_cb(gobj);
             }
+#endif
         }
 
         ftColl_8007AE80(gobj);

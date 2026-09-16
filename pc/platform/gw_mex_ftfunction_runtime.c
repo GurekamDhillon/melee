@@ -70,10 +70,23 @@
 #define GW_MEX_STACK_SIZE 0x10000u
 #define GW_MEX_GETDATA_SIZE 0x1000u /* synthetic safe buffer MEX_GetData(8) hands back */
 
+/* MoveLogic (slot 3) is a MotionState[] table the engine indexes by `motion_id - fp->x18`. Its
+ * layout (mirroring src/melee/ft/types.h MotionState, 0x20 bytes) is:
+ *   0x00 anim_id, 0x04 x4_flags, 0x08 move_id<<24, 0x0C anim_cb, 0x10 input_cb,
+ *   0x14 phys_cb, 0x18 coll_cb, 0x1C cam_cb.
+ * Sonic's table (PlSn.dat) has 31 entries (code +0x1D4 .. +0x5B4) and every cam_cb is the vanilla
+ * ftCamera_UpdateCameraBox (0x800761C8). */
+#define GW_MEX_MOVE_MAX_ENTRIES 64
+#define GW_MEX_MOVE_CAM_CB_GUEST 0x800761C8u /* ftCamera_UpdateCameraBox */
+
 static gw_ftfunction gw_mex_ff;      /* the loaded, relocated blob (code + overrides) */
 static uint32_t gw_mex_stack_top;    /* guest stack top (r1) */
 static uint32_t gw_mex_getdata_buf;  /* guest buffer backing the MEX_GetData(8) shim */
 static int gw_mex_installed;         /* 1 once installed, -1 on failure */
+
+static uint32_t gw_mex_movelogic_table;  /* guest addr of Sonic's MoveLogic MotionState[] */
+static int gw_mex_movelogic_entries;     /* number of MotionState entries (31) */
+static uint32_t gw_mex_move_cb_guest[GW_MEX_MOVE_MAX_ENTRIES][4]; /* preserved guest anim/input/phys/coll */
 
 static uint32_t gw_mex_override_target(uint32_t slot) {
     int i;
@@ -236,6 +249,144 @@ static uint32_t gw_mex_interp_run2(uint32_t slot, void *gobj, uint32_t arg1) {
     args[0] = (uint32_t)(uintptr_t)gobj;
     args[1] = arg1;
     return gw_ppc_call(target, args, 2, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+}
+
+/* ---- MoveLogic (slot 3) move-table runtime -------------------------------------------
+ * MoveLogic is NOT code: it is a MotionState[] table the engine indexes by `motion_id - fp->x18`
+ * (fighter.c:1235) to drive each action state's anim/phys/coll/cam callbacks. m-ex swaps
+ * ftData_CharacterStateTables[kind] for this table (PlayerBlockInit.asm @ 0x80068B60, replacing
+ * `addi r6,r3,4832` = the ftData_CharacterStateTables base). The table's anim/input/phys/coll
+ * callbacks are guest PPC code, so each is rewritten to a native trampoline that interprets the
+ * preserved guest address; cam_cb is the vanilla ftCamera_UpdateCameraBox, bridged to native. */
+
+enum {
+    GW_MEX_MOVE_CB_ANIM = 0,
+    GW_MEX_MOVE_CB_INPUT,
+    GW_MEX_MOVE_CB_PHYS,
+    GW_MEX_MOVE_CB_COLL,
+};
+
+static uint32_t gw_mex_move_cb_guest_addr(void *gobj, int which) {
+    uint32_t fd = gw_r32((const void *)(uintptr_t)((uintptr_t)gobj + 0x2Cu)); /* gobj->user_data */
+    uint32_t motion_id, x18;
+    int idx;
+    if (fd < 0x80000000u || fd >= 0x80000000u + gw_mem1_size) {
+        return 0;
+    }
+    motion_id = gw_r32((const void *)(uintptr_t)(fd + 0x10u)); /* fp->motion_id */
+    x18 = gw_r32((const void *)(uintptr_t)(fd + 0x18u));       /* fp->x18 (341) */
+    idx = (int)(motion_id - x18);
+    if (idx < 0 || idx >= gw_mex_movelogic_entries) {
+        return 0;
+    }
+    return gw_mex_move_cb_guest[idx][which];
+}
+
+static void gw_mex_move_call(void *gobj, int which) {
+    uint32_t target = gw_mex_move_cb_guest_addr(gobj, which);
+    uint32_t args[1];
+    static const char *const names[4] = {"anim", "input", "phys", "coll"};
+    static int first[4];
+    static uint32_t count[4];
+    uint32_t fd;
+
+    if (target == 0) {
+        return;
+    }
+    if (!first[which]) {
+        first[which] = 1;
+        fd = gw_r32((const void *)(uintptr_t)((uintptr_t)gobj + 0x2Cu));
+        gw_log("interp: MoveLogic %s_cb kind=33 gobj=%p motion_id=0x%X anim_id=0x%X -> guest "
+               "0x%08X (interpreting)",
+               names[which], gobj, gw_r32((const void *)(uintptr_t)(fd + 0x10u)),
+               gw_r32((const void *)(uintptr_t)(fd + 0x14u)), target);
+    }
+    args[0] = (uint32_t)(uintptr_t)gobj;
+    gw_ppc_call(target, args, 1, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    ++count[which];
+    if (count[which] == 1u || (count[which] % 60u) == 1u) {
+        gw_log("interp: MoveLogic %s_cb invocation %u ran", names[which], count[which]);
+    }
+}
+
+static void gw_mex_move_anim_cb(void *gobj) { gw_mex_move_call(gobj, GW_MEX_MOVE_CB_ANIM); }
+static void gw_mex_move_input_cb(void *gobj) { gw_mex_move_call(gobj, GW_MEX_MOVE_CB_INPUT); }
+static void gw_mex_move_phys_cb(void *gobj) { gw_mex_move_call(gobj, GW_MEX_MOVE_CB_PHYS); }
+static void gw_mex_move_coll_cb(void *gobj) { gw_mex_move_call(gobj, GW_MEX_MOVE_CB_COLL); }
+
+/* General fighter-callback dispatch for the "incoming-call" slots (accessory1_cb/accessory4_cb/
+ * deal_dmg_cb/...) that m-ex guest code overwrites with guest PPC function pointers. A guest
+ * address (in MEM1) is interpreted; a native pointer is called directly. */
+void gw_Mex_FighterCallbackDispatch(void *gobj, void *cb) {
+    uint32_t a = (uint32_t)(uintptr_t)cb;
+    uint32_t args[1];
+    if (a == 0) {
+        return;
+    }
+    if (a >= 0x80000000u && a < 0x80000000u + gw_mem1_size && gw_mex_ff.mexdata_base != 0) {
+        args[0] = (uint32_t)(uintptr_t)gobj;
+        gw_ppc_call(a, args, 1, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+        return;
+    }
+    ((gwmex_gobj_fn)cb)(gobj);
+}
+
+/* Rewrite Sonic's MoveLogic table in place: preserve the guest anim/input/phys/coll callbacks and
+ * replace them with native trampolines; replace cam_cb with the bridged ftCamera_UpdateCameraBox.
+ * Runs once, at install, before the engine ever reads the table. */
+static void gw_mex_movelogic_setup(void) {
+    uint32_t table = gw_mex_override_target(GW_MEX_SLOT_MOVE_LOGIC);
+    uint32_t next = gw_mex_override_target(GW_MEX_SLOT_SPECIAL_N);
+    uint32_t cam_native;
+    int cam_kind = -1;
+    int entries, i;
+
+    if (table == 0 || next <= table) {
+        gw_log("interp: MoveLogic table missing (slot3=0x%08X slot4=0x%08X)", table, next);
+        return;
+    }
+    entries = (int)((next - table) / 0x20u);
+    if (entries < 1 || entries > GW_MEX_MOVE_MAX_ENTRIES) {
+        gw_log("interp: MoveLogic table size implausible (%d entries)", entries);
+        return;
+    }
+    cam_native = gw_mex_bridge_lookup(GW_MEX_MOVE_CAM_CB_GUEST, &cam_kind);
+    if (cam_native == 0 || cam_kind != 1) {
+        gw_log("interp: MoveLogic cam_cb 0x%08X not bridged -> table left unwired",
+               GW_MEX_MOVE_CAM_CB_GUEST);
+        return;
+    }
+
+    gw_mex_movelogic_entries = entries;
+    for (i = 0; i < entries; ++i) {
+        uint32_t e = table + (uint32_t)i * 0x20u;
+        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_ANIM] =
+            gw_r32((const void *)(uintptr_t)(e + 0x0Cu));
+        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_INPUT] =
+            gw_r32((const void *)(uintptr_t)(e + 0x10u));
+        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_PHYS] =
+            gw_r32((const void *)(uintptr_t)(e + 0x14u));
+        gw_mex_move_cb_guest[i][GW_MEX_MOVE_CB_COLL] =
+            gw_r32((const void *)(uintptr_t)(e + 0x18u));
+        gw_w32((void *)(uintptr_t)(e + 0x0Cu), (uint32_t)(uintptr_t)gw_mex_move_anim_cb);
+        gw_w32((void *)(uintptr_t)(e + 0x10u), (uint32_t)(uintptr_t)gw_mex_move_input_cb);
+        gw_w32((void *)(uintptr_t)(e + 0x14u), (uint32_t)(uintptr_t)gw_mex_move_phys_cb);
+        gw_w32((void *)(uintptr_t)(e + 0x18u), (uint32_t)(uintptr_t)gw_mex_move_coll_cb);
+        gw_w32((void *)(uintptr_t)(e + 0x1Cu), cam_native);
+    }
+    gw_mex_movelogic_table = table;
+    gw_log("interp: MoveLogic table @ guest 0x%08X (%d MotionState entries): anim/input/phys/coll "
+           "-> trampolines, cam -> gw_ftCamera_UpdateCameraBox 0x%08X",
+           table, entries, cam_native);
+}
+
+/* The engine site (fighter.c Fighter_UnkInitLoad_80068914) asks for the per-kind character-state
+ * table; for Sonic we hand back the interpreted MoveLogic table instead of Fox's vanilla one. */
+void *gw_Mex_MoveLogicTable(int kind, void *vanilla) {
+    if (kind == GW_MEX_KIND_SONIC && gw_mex_installed == 1 && gw_mex_movelogic_table != 0) {
+        return (void *)(uintptr_t)gw_mex_movelogic_table;
+    }
+    return vanilla;
 }
 
 /* onLoad (slot 0) - actually runs Sonic's PPC onLoad through the interpreter. */
@@ -415,6 +566,8 @@ void gw_Mex_FtFunctionInstall(int kind) {
     gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, gw_mex_ff.code_base,
                       gw_mex_ff.code_base + gw_mex_ff.code_size);
 
+    gw_mex_movelogic_setup();
+
     /* Install the onLoad and onFrame overrides (this phase's deliverables). The other engine
      * events (onDeath/onDestroy/...) are not registered so they keep their vanilla behaviour. */
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, GW_MEX_KIND_SONIC, gw_mex_interp_onload);
@@ -444,7 +597,7 @@ void gw_Mex_FtFunctionInstall(int kind) {
     gw_mex_installed = 1;
     gw_log("interp: installed Sonic ftFunction (code 0x%08X..0x%08X, mexData 0x%08X, stack "
            "0x%08X, %d overrides); onLoad/onFrame/onActionStateChange/onReapplyAttr/8 specials/"
-           "onDoubleJump/onUSmash/onItemPickup active",
+           "onDoubleJump/onUSmash/onItemPickup + MoveLogic table active",
            gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size, mexdata_base,
            stack_base, gw_mex_ff.override_count);
 }

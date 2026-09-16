@@ -249,6 +249,13 @@ void gw_Mex_SpecialHiAirDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_SpecialLwDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_SpecialLwAirDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_MoveLogicDispatch(int kind, void* gobj, void* vanilla);
+/* MoveLogic (m-ex Arch_FighterFunc slot 3) is a per-kind MotionState[] table, not a callback: the
+ * engine site (Fighter_UnkInitLoad_80068914) asks for the per-kind character-state table and this
+ * returns the interpreted MoveLogic table for Sonic, else `vanilla` (ftData_CharacterStateTables). */
+void* gw_Mex_MoveLogicTable(int kind, void* vanilla);
+/* Dispatch a fighter callback field (accessory1_cb/accessory4_cb/deal_dmg_cb/...) that m-ex guest
+ * code may have overwritten with a guest PPC pointer: interpret a guest address, else call it. */
+void gw_Mex_FighterCallbackDispatch(void* gobj, void* cb);
 void gw_Mex_OnDoubleJumpDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnUSmashDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnItemPickupDispatch(int kind, void* gobj, void* arg1, void* vanilla);

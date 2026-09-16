@@ -408,7 +408,8 @@ static int test_ftfunction_load_plsn(void) {
             uint32_t slot;
             uint32_t off;
         } expect[] = {
-            {0x0, 0x0},   {0x1, 0x124}, {0x2, 0x194}, {0xB, 0x694}, {0x24, 0xB64},
+            {0x0, 0x0},  {0x1, 0x124}, {0x2, 0x194}, {0x3, 0x1D4}, {0xB, 0x694},
+            {0x24, 0xB64},
         };
         unsigned i;
         for (i = 0; i < sizeof expect / sizeof expect[0]; ++i) {
@@ -562,6 +563,64 @@ static int test_ftfunction_corrupt_rejected(void) {
     return 0;
 }
 
+/* Lock the MoveLogic (slot 3) characterization: it is a MotionState[] table (0x20 bytes/entry)
+ * between the MoveLogic and SpecialN overrides, every entry's cam_cb is the vanilla
+ * ftCamera_UpdateCameraBox (0x800761C8) and its four code callbacks resolve inside the code
+ * range. Proves the loader surfaced the table verbatim, so the runtime can safely rewrite it. */
+static int test_ftfunction_movelogic_table(void) {
+    gw_ftfunction ff;
+    uint32_t table = 0, next = 0;
+    int i, rc, entries;
+
+    if (gw_iso_path() == NULL) {
+        return 0;
+    }
+    rc = gw_ftfunction_load("PlSn.dat", 31, &ff);
+    if (rc == GW_FTFUNC_ERR_NO_FILE) {
+        return 0;
+    }
+    if (rc != GW_FTFUNC_OK) {
+        gw_test_fail("gw_ftfunction_load(PlSn.dat) returned %d", rc);
+        return 1;
+    }
+    for (i = 0; i < ff.override_count; ++i) {
+        if (ff.overrides[i].is_func_addr) {
+            continue;
+        }
+        if (ff.overrides[i].slot == 3) {
+            table = ff.overrides[i].target;
+        } else if (ff.overrides[i].slot == 4) {
+            next = ff.overrides[i].target;
+        }
+    }
+    if (table == 0 || next <= table || ((next - table) % 0x20u) != 0) {
+        gw_test_fail("MoveLogic table bounds bad: slot3=0x%08X slot4=0x%08X", table, next);
+        return 1;
+    }
+    entries = (int)((next - table) / 0x20u);
+    if (entries != 31) {
+        gw_test_fail("MoveLogic table has %d entries, expected 31", entries);
+        return 1;
+    }
+    for (i = 0; i < entries; ++i) {
+        uint32_t e = table + (uint32_t)i * 0x20u;
+        int cb;
+        if (gw_r32((const void *)(uintptr_t)(e + 0x1Cu)) != 0x800761C8u) {
+            gw_test_fail("MoveLogic entry %d cam_cb 0x%08X, expected 0x800761C8", i,
+                         gw_r32((const void *)(uintptr_t)(e + 0x1Cu)));
+            return 1;
+        }
+        for (cb = 0; cb < 4; ++cb) {
+            uint32_t cb_addr = gw_r32((const void *)(uintptr_t)(e + 0x0Cu + (uint32_t)cb * 4u));
+            if (cb_addr < ff.code_base || cb_addr >= ff.code_base + ff.code_size) {
+                gw_test_fail("MoveLogic entry %d cb%d 0x%08X outside code range", i, cb, cb_addr);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static int test_ftfunction_funcaddr_hook(void) {
     size_t size;
     unsigned char *buf = gw_ftfunction_build_archive(&size);
@@ -593,6 +652,7 @@ static int test_ftfunction_funcaddr_hook(void) {
 
 void gw_ftfunction_tests_register(void) {
     gw_test_register("ftfunction_load_plsn", test_ftfunction_load_plsn);
+    gw_test_register("ftfunction_movelogic_table", test_ftfunction_movelogic_table);
     gw_test_register("ftfunction_corrupt_rejected", test_ftfunction_corrupt_rejected);
     gw_test_register("ftfunction_funcaddr_hook", test_ftfunction_funcaddr_hook);
 }

@@ -153,6 +153,61 @@ int gw_Mex_Enabled(const char *name);
 /* melee's own main(), renamed by gwtool. */
 void gw_main(void);
 
+/* ---- m-ex Tier C fighter hook surface (native re-expression) ----------------------------
+ * Ported from m-ex (https://github.com/akaneia/m-ex): each "Fighter On*" patch replaces one
+ * `addi` that computes a per-character callback-table base, and the decomp already calls
+ * `ftData_<X>[fp->kind](gobj)` at those sites. A hook is therefore a table-slot override: one
+ * native function pointer per (event, kind); NULL means "no override, run the vanilla entry".
+ * See _research/mex-tier-c-hooks.md. `kind` is the internal FighterKind (melee/ft/forward.h
+ * Ft_Kind_*), 0..Ft_Kind_Max-1. Dispatch is a flat array, not a chain, because OnFrame runs
+ * per-fighter per-frame and m-ex is single-slot (last registration wins). */
+
+typedef void (*gwmex_gobj_fn)(void* gobj);
+typedef bool (*gwmex_gobj_pred)(void* gobj);
+
+/* Event ids mirror the ftData_* table families (one id per table). The game-side call sites use
+ * the per-event dispatch wrappers below, so these ids only cross the boundary at registration. */
+enum {
+    GW_MEX_EVENT_ON_LOAD = 0,         /* ftData_OnLoad            */
+    GW_MEX_EVENT_ON_DEATH,            /* ftData_OnDeath           */
+    GW_MEX_EVENT_ON_DESTROY,          /* ftData_OnUserDataRemove  */
+    GW_MEX_EVENT_ON_FRAME,            /* ftData_UnkMotionStates3  */
+    GW_MEX_EVENT_ON_ABSORB,           /* ftData_OnAbsorb          */
+    GW_MEX_EVENT_ON_APPLY_HEAD_ITEM,  /* ftData_UnkMotionStates1  */
+    GW_MEX_EVENT_ON_REMOVE_HEAD_ITEM, /* ftData_UnkMotionStates2  */
+    GW_MEX_EVENT_ON_ITEM_INVISIBLE,   /* ftData_OnItemInvisible   */
+    GW_MEX_EVENT_ON_ITEM_VISIBLE,     /* ftData_OnItemVisible     */
+    GW_MEX_EVENT_ON_KNOCKBACK_ENTER,  /* ftData_OnKnockbackEnter  */
+    GW_MEX_EVENT_ON_KNOCKBACK_EXIT,   /* ftData_OnKnockbackExit   */
+    GW_MEX_EVENT_COUNT
+};
+
+#define GW_MEX_KIND_MAX 33 /* Ft_Kind_Max (melee/ft/forward.h) */
+
+/* Register/clear a per-(event, kind) override. fn == NULL clears the slot, so the vanilla entry
+ * runs again. Last registration wins; m-ex does not chain. Returns 0 on a bad event/kind (int, not
+ * bool: game code's MSL `bool` is `int`, while the native layer's is `_Bool`, so the boundary uses
+ * int like gw_Mex_Enabled). */
+int gw_Mex_HookRegister(int event, int kind, gwmex_gobj_fn fn);
+int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn);
+
+/* Call override[event][kind](gobj) if registered, else vanilla(gobj) if non-NULL. `vanilla` is the
+ * decomp table entry already byte-swapped to native by the game call site. */
+void gw_Mex_GObjDispatch(int event, int kind, void* gobj, void* vanilla);
+
+/* Per-event dispatch wrappers for the game-side call sites (keeps the event id out of game code). */
+void gw_Mex_OnLoadDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnDeathDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnDestroyDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnFrameDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnAbsorbDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnApplyHeadItemDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnRemoveHeadItemDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnItemInvisibleDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnItemVisibleDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnKnockbackEnterDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnKnockbackExitDispatch(int kind, void* gobj, void* vanilla);
+
 #ifdef __cplusplus
 }
 #endif

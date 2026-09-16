@@ -98,10 +98,82 @@ static int test_vs_mode_is_not_1p(void) {
     return 0;
 }
 
+/* ---- m-ex Tier C hook surface (OnFrame) ------------------------------------------------
+ * Exercises the native re-expression of the Fighter OnFrame table-slot override. Registration
+ * writes a native fn into a flat per-(event,kind) array; the dispatch runs the override if set,
+ * else the vanilla entry. Clearing (NULL) must restore vanilla. */
+
+extern int Mex_HookRegister(int event, int kind, void (*fn)(void*));
+extern void Mex_OnFrameDispatch(int kind, void* gobj, void* vanilla);
+
+/* Mirrors GW_MEX_EVENT_ON_FRAME in pc/platform/gw.h. The game call sites dispatch through the
+ * per-event Mex_*Dispatch wrappers, so this id is only needed here to register. */
+enum { MEX_EVENT_ON_FRAME = 3 };
+
+static int mex_onframe_hook_calls;
+static int mex_onframe_vanilla_calls;
+
+static void mex_onframe_hook(void* gobj)
+{
+    (void) gobj;
+    mex_onframe_hook_calls++;
+}
+
+static void mex_onframe_vanilla(void* gobj)
+{
+    (void) gobj;
+    mex_onframe_vanilla_calls++;
+}
+
+static int test_mex_onframe_hook_register_and_clear(void) {
+    if (Mex_HookRegister(999, 0, mex_onframe_hook) != 0) {
+        TestFail("Mex_HookRegister should reject an out-of-range event");
+        return 1;
+    }
+
+    /* No override -> vanilla entry runs. */
+    mex_onframe_hook_calls = 0;
+    mex_onframe_vanilla_calls = 0;
+    Mex_OnFrameDispatch(Ft_Kind_Fox, NULL, (void*) mex_onframe_vanilla);
+    if (mex_onframe_hook_calls != 0 || mex_onframe_vanilla_calls != 1) {
+        TestFail("OnFrame dispatch without an override should run the vanilla entry");
+        return 1;
+    }
+
+    /* Registered override replaces the vanilla entry. */
+    if (Mex_HookRegister(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, mex_onframe_hook) != 1) {
+        TestFail("Mex_HookRegister rejected a valid (event, kind)");
+        return 1;
+    }
+    mex_onframe_hook_calls = 0;
+    mex_onframe_vanilla_calls = 0;
+    Mex_OnFrameDispatch(Ft_Kind_Fox, NULL, (void*) mex_onframe_vanilla);
+    if (mex_onframe_hook_calls != 1 || mex_onframe_vanilla_calls != 0) {
+        TestFail("registered OnFrame hook should run instead of the vanilla entry");
+        return 1;
+    }
+
+    /* Clearing (NULL) restores the vanilla entry. */
+    if (Mex_HookRegister(MEX_EVENT_ON_FRAME, Ft_Kind_Fox, NULL) != 1) {
+        TestFail("Mex_HookRegister should accept a NULL fn to clear the slot");
+        return 1;
+    }
+    mex_onframe_hook_calls = 0;
+    mex_onframe_vanilla_calls = 0;
+    Mex_OnFrameDispatch(Ft_Kind_Fox, NULL, (void*) mex_onframe_vanilla);
+    if (mex_onframe_hook_calls != 0 || mex_onframe_vanilla_calls != 1) {
+        TestFail("clearing the OnFrame slot should restore the vanilla entry");
+        return 1;
+    }
+    return 0;
+}
+
 void MexTestRegisterAll(void) {
     TestRegister("gm_Is1PMode_1p_modes", test_1p_mode_classification);
     TestRegister("gm_Is1PMode_vs_modes", test_vs_mode_is_not_1p);
     TestRegister("heap_table_shape", test_heap_table_shape);
     TestRegister("charid_special_range_is_7", test_external_special_range);
     TestRegister("charid_remap_identity_vanilla", test_special_id_remap_is_identity);
+    TestRegister("mex_onframe_hook_register_and_clear",
+                 test_mex_onframe_hook_register_and_clear);
 }

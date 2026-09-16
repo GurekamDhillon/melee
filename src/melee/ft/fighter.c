@@ -554,9 +554,21 @@ void Fighter_UnkProcessDeath_80068354(Fighter_GObj* gobj)
     ftColl_8007AFF8(gobj);
     ftColl_8007B0C0(gobj, HurtCapsule_Enabled);
 
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Fighter OnDeath/InitializePlayerDataValues.asm, @ 0x80068660 (replaces the
+         * `addi` that computes the ftData_OnDeath table base with a load of a per-kind override
+         * table). OnDeath is a per-(kind) table slot; a registered override replaces the vanilla
+         * entry and clearing it (NULL) restores vanilla. */
+        extern void Mex_OnDeathDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnDeathDispatch(fp->kind, gobj, (void*) ftData_OnDeath[fp->kind]);
+    }
+#else
     if (ftData_OnDeath[fp->kind]) {
         ftData_OnDeath[fp->kind](gobj);
     }
+#endif
 
     ftCo_800A101C(fp, Player_GetCpuType(fp->player_id),
                   Player_GetCpuLevel(fp->player_id), 0);
@@ -887,9 +899,21 @@ Fighter_GObj* Fighter_Create(struct plAllocInfo* input)
 
     ftCo_8009F578(fp);
 
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Fighter OnLoad/AllocateAndInitPlayer.asm, @ 0x800690F0 (replaces the `addi`
+         * that computes the ftData_OnLoad table base with a load of a per-kind override table).
+         * OnLoad is a per-(kind) table slot; a registered override replaces the vanilla entry and
+         * clearing it (NULL) restores vanilla. */
+        extern void Mex_OnLoadDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnLoadDispatch(fp->kind, gobj, (void*) ftData_OnLoad[fp->kind]);
+    }
+#else
     if (ftData_OnLoad[fp->kind]) {
         ftData_OnLoad[fp->kind](gobj);
     }
+#endif
 
     Fighter_Create_Inline2(gobj);
 
@@ -1653,9 +1677,22 @@ void Fighter_8006A360(Fighter_GObj* gobj)
             }
         }
 
+#if defined(TARGET_PC)
+        {
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/m-ex/Fighter OnFrame/Fighter_OnFrame.asm, @ 0x8006AA28 (replaces the `addi`
+             * that computes the ftData_UnkMotionStates3 table base with a load of a per-kind
+             * override table). OnFrame is a per-(kind) table slot; a registered override replaces
+             * the vanilla entry and clearing it (NULL) restores vanilla. */
+            extern void Mex_OnFrameDispatch(int kind, void* gobj, void* vanilla);
+            Mex_OnFrameDispatch(fp->kind, gobj,
+                                (void*) ftData_UnkMotionStates3[fp->kind]);
+        }
+#else
         if (ftData_UnkMotionStates3[fp->kind]) {
             ftData_UnkMotionStates3[fp->kind](gobj);
         }
+#endif
 
         if (fp->x21CC) {
             fp->x21CC(gobj);
@@ -3000,9 +3037,22 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
                     fp->reflect_hit_cb(gobj);
                 }
             } else if (fp->AbsorbAttr.x1A40_absorbHitDirection) {
+#if defined(TARGET_PC)
+                /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                 * asm/m-ex/Fighter OnAbsorb/Absorb.asm, @ 0x8006D654 (replaces the `addi` that
+                 * computes the ftData_OnAbsorb table base with a load of a per-kind override
+                 * table). OnAbsorb is a per-(kind) table slot; a registered override replaces the
+                 * vanilla entry and clearing it (NULL) restores vanilla. */
+                {
+                    extern void Mex_OnAbsorbDispatch(int kind, void* gobj, void* vanilla);
+                    Mex_OnAbsorbDispatch(fp->kind, gobj,
+                                         (void*) ftData_OnAbsorb[fp->kind]);
+                }
+#else
                 if (ftData_OnAbsorb[fp->kind]) {
                     ftData_OnAbsorb[fp->kind](gobj);
                 }
+#endif
             } else if (fp->unk_gobj != NULL) {
                 if (fp->hurtbox_detect_cb) {
                     fp->hurtbox_detect_cb(gobj);
@@ -3145,9 +3195,22 @@ void Fighter_Unload_8006DABC(void* user_data)
     Fighter* fp = (Fighter*) user_data;
     int kind = fp->kind;
 
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Fighter OnDestroy/Destroy.asm, @ 0x8006DAE8 (replaces the `addi` that computes
+         * the ftData_OnUserDataRemove table base with a load of a per-kind override table).
+         * OnDestroy is a per-(kind) table slot; a registered override replaces the vanilla entry
+         * and clearing it (NULL) restores vanilla. */
+        extern void Mex_OnDestroyDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnDestroyDispatch(kind, fp->gobj,
+                              (void*) ftData_OnUserDataRemove[kind]);
+    }
+#else
     if (ftData_OnUserDataRemove[kind]) {
         ftData_OnUserDataRemove[kind](fp->gobj);
     }
+#endif
 
     ftColl_8007B8E8(fp->gobj);
     efAsync_QueueClear(&fp->x60C);

@@ -1410,9 +1410,23 @@ void ftCommon_8007F578(HSD_GObj* gobj)
     if (fp->item_gobj == NULL) {
         return;
     }
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Fighter OnItemVisibility/onSetItemInvisible.asm, @ 0x8007F61C and
+         * onSetItemInvisible2.asm, @ 0x8007F59C (both replace the `addi` that computes the
+         * ftData_OnItemInvisible table base with a load of a per-kind override table). OnItem
+         * invisible is a per-(kind) table slot; a registered override replaces the vanilla entry
+         * and clearing it (NULL) restores vanilla. */
+        extern void Mex_OnItemInvisibleDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnItemInvisibleDispatch(fp->kind, gobj,
+                                    (void*) ftData_OnItemInvisible[fp->kind]);
+    }
+#else
     if (ftData_OnItemInvisible[fp->kind] != NULL) {
         ftData_OnItemInvisible[fp->kind](gobj);
     }
+#endif
 }
 
 void ftCommon_8007F5CC(Item_GObj* gobj, bool arg1)
@@ -1426,9 +1440,23 @@ void ftCommon_8007F5CC(Item_GObj* gobj, bool arg1)
         if (!arg1) {
             ftCommon_8007F578(gobj);
         } else if (item != NULL) {
+#if defined(TARGET_PC)
+            {
+                /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                 * asm/m-ex/Fighter OnItemVisibility/onSetItemVisible.asm, @ 0x8007F650 (replaces
+                 * the `addi` that computes the ftData_OnItemVisible table base with a load of a
+                 * per-kind override table). OnItem visible is a per-(kind) table slot; a
+                 * registered override replaces the vanilla entry and clearing it (NULL) restores
+                 * vanilla. */
+                extern void Mex_OnItemVisibleDispatch(int kind, void* gobj, void* vanilla);
+                Mex_OnItemVisibleDispatch(fp->kind, gobj,
+                                          (void*) ftData_OnItemVisible[fp->kind]);
+            }
+#else
             if (ftData_OnItemVisible[fp->kind] != NULL) {
                 ftData_OnItemVisible[fp->kind](gobj);
             }
+#endif
         }
     }
     fp->x221E_b3 = arg1;
@@ -1474,17 +1502,43 @@ MtxPtr ftCommon_8007F804(Fighter* fp)
 void ftCommon_8007F824(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Fighter OnKnockback/OnKnockback.asm, @ 0x8007F830 (replaces the `addi` that
+         * computes the ftData_OnKnockbackEnter table base with a load of a per-kind override
+         * table). OnKnockback enter is a per-(kind) table slot; a registered override replaces the
+         * vanilla entry and clearing it (NULL) restores vanilla. */
+        extern void Mex_OnKnockbackEnterDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnKnockbackEnterDispatch(fp->kind, gobj,
+                                     (void*) ftData_OnKnockbackEnter[fp->kind]);
+    }
+#else
     if (ftData_OnKnockbackEnter[fp->kind] != NULL) {
         ftData_OnKnockbackEnter[fp->kind](gobj);
     }
+#endif
 }
 
 void ftCommon_8007F86C(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Fighter OnKnockbackExit/OnKnockbackExit.asm, @ 0x8007F878 (replaces the `addi`
+         * that computes the ftData_OnKnockbackExit table base with a load of a per-kind override
+         * table). OnKnockback exit is a per-(kind) table slot; a registered override replaces the
+         * vanilla entry and clearing it (NULL) restores vanilla. */
+        extern void Mex_OnKnockbackExitDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnKnockbackExitDispatch(fp->kind, gobj,
+                                    (void*) ftData_OnKnockbackExit[fp->kind]);
+    }
+#else
     if (ftData_OnKnockbackExit[fp->kind] != NULL) {
         ftData_OnKnockbackExit[fp->kind](gobj);
     }
+#endif
 }
 
 void ftCommon_8007F8B4(Fighter* fp, Vec3* v)
@@ -1500,9 +1554,23 @@ void ftCommon_8007F8E8(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
     if (fp->x197C == NULL || fp->x1980 == NULL) {
+#if defined(TARGET_PC)
+        {
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/m-ex/Fighter OnRemoveHeadItem/Fighter_OnRemoveHeadItem.asm, @ 0x8007F918
+             * (replaces the `addi` that computes the ftData_UnkMotionStates2 table base with a
+             * load of a per-kind override table). OnRemoveHeadItem is a per-(kind) table slot; a
+             * registered override replaces the vanilla entry and clearing it (NULL) restores
+             * vanilla. */
+            extern void Mex_OnRemoveHeadItemDispatch(int kind, void* gobj, void* vanilla);
+            Mex_OnRemoveHeadItemDispatch(fp->kind, gobj,
+                                         (void*) ftData_UnkMotionStates2[fp->kind]);
+        }
+#else
         if (ftData_UnkMotionStates2[fp->kind] != NULL) {
             ftData_UnkMotionStates2[fp->kind](gobj);
         }
+#endif
     }
 }
 
@@ -1512,9 +1580,23 @@ static inline void _func_8007F948_inline(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
     if (fp->x197C == NULL || fp->x1980 == NULL) {
+#if defined(TARGET_PC)
+        {
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/m-ex/Fighter OnApplyHeadItem/Fighter_OnApplyHeadItem.asm, @ 0x8007FB9C
+             * (replaces the `addi` that computes the ftData_UnkMotionStates1 table base with a
+             * load of a per-kind override table). OnApplyHeadItem is a per-(kind) table slot; a
+             * registered override replaces the vanilla entry and clearing it (NULL) restores
+             * vanilla. */
+            extern void Mex_OnApplyHeadItemDispatch(int kind, void* gobj, void* vanilla);
+            Mex_OnApplyHeadItemDispatch(fp->kind, gobj,
+                                        (void*) ftData_UnkMotionStates1[fp->kind]);
+        }
+#else
         if (ftData_UnkMotionStates1[fp->kind] != NULL) {
             ftData_UnkMotionStates1[fp->kind](gobj);
         }
+#endif
     }
 }
 

@@ -957,6 +957,8 @@ static void gw_mex_load_file(const char *path) {
   fclose(f);
 }
 
+static void gw_mex_demo_register(void);
+
 static void gw_mex_load(void) {
   char path[MAX_PATH];
   const char *env;
@@ -983,6 +985,7 @@ static void gw_mex_load(void) {
       gw_log("gw: mex:   %s", gw_mex_features[i]);
     }
   }
+  gw_mex_demo_register();
 }
 
 int gw_Mex_Enabled(const char *name) {
@@ -995,4 +998,99 @@ int gw_Mex_Enabled(const char *name) {
     if (tt_ieq(name, gw_mex_features[i])) return 1;
   }
   return 0;
+}
+
+/* ---- m-ex Tier C fighter hook surface (native re-expression) ----------------------------
+ * Ported from m-ex (https://github.com/akaneia/m-ex): the "Fighter On*" patches each replace one
+ * `addi` computing a per-character callback-table base, and the decomp already calls
+ * `ftData_<X>[fp->kind](gobj)`. A hook is a table-slot override: a flat per-(event,kind) array of
+ * native function pointers, all NULL by default. NULL means "no override, run vanilla", so
+ * clearing a slot restores vanilla behaviour; there is no chain (last registration wins), matching
+ * m-ex. See _research/mex-tier-c-hooks.md. */
+
+static gwmex_gobj_fn gw_mex_gobj_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
+static gwmex_gobj_pred gw_mex_pred_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
+
+int gw_Mex_HookRegister(int event, int kind, gwmex_gobj_fn fn) {
+  if ((unsigned)event >= GW_MEX_EVENT_COUNT || (unsigned)kind >= GW_MEX_KIND_MAX) {
+    return 0;
+  }
+  gw_mex_gobj_hooks[event][kind] = fn;
+  return 1;
+}
+
+int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn) {
+  if ((unsigned)event >= GW_MEX_EVENT_COUNT || (unsigned)kind >= GW_MEX_KIND_MAX) {
+    return 0;
+  }
+  gw_mex_pred_hooks[event][kind] = fn;
+  return 1;
+}
+
+void gw_Mex_GObjDispatch(int event, int kind, void *gobj, void *vanilla) {
+  gwmex_gobj_fn fn = NULL;
+  if ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX) {
+    fn = gw_mex_gobj_hooks[event][kind];
+  }
+  if (fn != NULL) {
+    fn(gobj);
+  } else if (vanilla != NULL) {
+    ((gwmex_gobj_fn)vanilla)(gobj);
+  }
+}
+
+void gw_Mex_OnLoadDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_LOAD, kind, gobj, vanilla);
+}
+void gw_Mex_OnDeathDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_DEATH, kind, gobj, vanilla);
+}
+void gw_Mex_OnDestroyDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_DESTROY, kind, gobj, vanilla);
+}
+void gw_Mex_OnFrameDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_FRAME, kind, gobj, vanilla);
+}
+void gw_Mex_OnAbsorbDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_ABSORB, kind, gobj, vanilla);
+}
+void gw_Mex_OnApplyHeadItemDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_APPLY_HEAD_ITEM, kind, gobj, vanilla);
+}
+void gw_Mex_OnRemoveHeadItemDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_REMOVE_HEAD_ITEM, kind, gobj, vanilla);
+}
+void gw_Mex_OnItemInvisibleDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_ITEM_INVISIBLE, kind, gobj, vanilla);
+}
+void gw_Mex_OnItemVisibleDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_ITEM_VISIBLE, kind, gobj, vanilla);
+}
+void gw_Mex_OnKnockbackEnterDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_KNOCKBACK_ENTER, kind, gobj, vanilla);
+}
+void gw_Mex_OnKnockbackExitDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_KNOCKBACK_EXIT, kind, gobj, vanilla);
+}
+
+/* Demo registration for OnFrame: proves the surface fires without a custom mod. Installed once,
+ * from gw_mex_load(), so it rides the existing "read flags once" path. The hook logs only its
+ * first invocation to avoid a per-fighter per-frame flood. */
+static void gw_mex_demo_onframe(void *gobj) {
+  static int logged;
+  (void)gobj;
+  if (!logged) {
+    logged = 1;
+    gw_log("mex: OnFrame demo hook fired (gobj=%p)", gobj);
+  }
+}
+
+static void gw_mex_demo_register(void) {
+  int k;
+  if (!gw_Mex_Enabled("mex_onframe")) {
+    return;
+  }
+  for (k = 0; k < GW_MEX_KIND_MAX; ++k) {
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, k, gw_mex_demo_onframe);
+  }
 }

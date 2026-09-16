@@ -117,9 +117,22 @@ Fighter_GObj* ftDemo_CreateFighter(plAllocInfo2* alloc_info)
         ftAnim_8006FE48(gobj);
         Fighter_UnkUpdateVecFromBones_8006876C(fp);
         ftCo_8009F578(fp);
+#if defined(TARGET_PC)
+        {
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/m-ex/Fighter OnLoad/AllocateAndInitPlayer - Results Screen.asm, @ 0x800BEA28
+             * (replaces the `addi` that computes the ftData_OnLoad table base with a load of a
+             * per-kind override table). OnLoad (results screen) is the same per-(kind) slot; a
+             * registered override replaces the vanilla entry and clearing it (NULL) restores
+             * vanilla. */
+            extern void Mex_OnLoadDispatch(int kind, void* gobj, void* vanilla);
+            Mex_OnLoadDispatch(fp->kind, gobj, (void*) ftData_OnLoad[fp->kind]);
+        }
+#else
         if (ftData_OnLoad[fp->kind] != NULL) {
             ftData_OnLoad[fp->kind](gobj);
         }
+#endif
         ftColl_8007B320(gobj);
         fp->x890_cameraBox = Camera_80029020();
         lbShadow_8000ED54(&fp->x20A4, gobj->hsd_obj);

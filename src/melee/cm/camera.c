@@ -959,7 +959,17 @@ void Camera_ApplyQuake(CameraBounds* bounds, CameraTransformState* state)
     input_x *= 10.0f;
     input_y *= 10.0f;
 
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/gameplay/Enable C Stick Always/1P Camera2.asm, @ 0x8002A124. Forces
+     * the `gm_IsCurrently1PMode_inline()` gate to 0 so the 1P quake-scale
+     * factor is skipped. Opt-in: MELEE_MEX=enable_c_stick_always_1p_camera2. */
+    extern int Mex_Enabled(const char *);
+    if (gm_IsCurrently1PMode_inline() != 0 &&
+        !Mex_Enabled("enable_c_stick_always_1p_camera2")) {
+#else
     if (gm_IsCurrently1PMode_inline() != 0) {
+#endif
         input_x *= cm_803BCCA0.xE8;
         input_y *= cm_803BCCA0.xE8;
     }
@@ -1448,9 +1458,15 @@ void Camera_8002B0E0(void)
     PAD_STACK(8);
 
 #if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/gameplay/Enable C Stick Always/1P Camera.asm, @ 0x8002B0F8. The stock
+     * `bl gm_IsCurrently1PMode_inline()` gate is forced to 0, disabling the 1P
+     * sub-stick camera zoom so the C-stick routes to smash inputs. Opt-in:
+     * MELEE_MEX=enable_c_stick_always_1p_camera. */
+    extern int Mex_Enabled(const char *);
     if ((gm_IsCurrently1PMode_inline() != 0) && (game_camera.x2C0 > 0.0f) &&
-        !(gm_GetCurrentGameMode() == GM_TARGET_TEST &&
-          gm_CStickSmashTargetTest)) {
+        !gm_CStickSmashTargetTest &&
+        !Mex_Enabled("enable_c_stick_always_1p_camera")) {
 #else
     if ((gm_IsCurrently1PMode_inline() != 0) && (game_camera.x2C0 > 0.0f)) {
 #endif

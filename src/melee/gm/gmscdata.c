@@ -760,3 +760,30 @@ GameMode* gm_GetAllGameModes(void)
 {
     return modes;
 }
+
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/Scene Expansion/Get Major Scenes.asm, @ 801a50ac.
+ * Major-scene count derived from the sentinel-terminated `modes` table. m-ex swaps this accessor to return an
+ * MxDt-supplied table (OFST_MajorScenes) and reads the terminator from OFST_MetaData_TermMajor at runtime; the
+ * port exposes the same data-derived count so hosting additional scenes stays a pure data change. */
+int gm_GetNumGameModes(void)
+{
+    GameMode* cur = modes;
+    while (cur->kind != GM_COUNT) {
+        cur++;
+    }
+    return (int) (cur - modes);
+}
+
+/* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/Scene Expansion/Minor Scene Types/Get Minor Scene Types.asm, @ 801a50a0.
+ * Minor-scene count derived from the sentinel-terminated `scenes` table (m-ex reads OFST_MetaData_TermMinor
+ * at runtime). Note the table has a hole at GS_0x6, so the count is the number of entries, not the terminator value. */
+int gm_GetNumGameScenes(void)
+{
+    GameScene* cur = scenes;
+    while (cur->kind != GS_COUNT) {
+        cur++;
+    }
+    return (int) (cur - scenes);
+}
+#endif

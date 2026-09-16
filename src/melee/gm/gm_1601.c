@@ -2280,6 +2280,16 @@ found:
     {
         return true;
     }
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Stages/Spoof Individual Stage Unlocked.asm,
+     * inserted at 0x801644E8, the `return false` tail. The patch's `li r3,1` reports the stage
+     * as unlocked regardless of the save-data bit. Opt-in: MELEE_MEX=unlock_individual_stages. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_individual_stages")) {
+        return true;
+    }
+#endif
     return false;
 }
 
@@ -2326,6 +2336,17 @@ bool gm_80164600(void)
 
     for (i = 0; i < NUM_UNLOCKABLE_STAGES; i++) {
         if (!(*stage_unlock_mask & (1LL << i))) {
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/Additional/Unlock Everything/Unlock All Stages/Spoof All Stages Unlocked.asm,
+             * inserted at 0x80164658, the loop's `return false`. The patch's `li r3,1` makes the
+             * first missing stage report unlocked, so every stage is treated as unlocked.
+             * Opt-in: MELEE_MEX=unlock_all_stages. */
+            extern int Mex_Enabled(const char *);
+            if (Mex_Enabled("unlock_all_stages")) {
+                return true;
+            }
+#endif
             return false;
         }
     }
@@ -2375,6 +2396,17 @@ bool gm_IsCKindUnlocked(u8 ckind)
     {
         return true;
     }
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Characters/Spoof Individual Characters as
+     * Unlocked.asm, inserted at 0x801648F4, the `return false` tail. The patch's `li r3,1`
+     * reports the character as unlocked regardless of the save-data bit. Opt-in:
+     * MELEE_MEX=unlock_individual_characters. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_individual_characters")) {
+        return true;
+    }
+#endif
     return false;
 }
 
@@ -2428,6 +2460,17 @@ bool gm_80164ABC(void)
         if (!(*unlockable_character_bitfield & (1LL << i))) {
             /// @remarks Gekko codes which unlock all characters change this to
             ///          return @c true.
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/Additional/Unlock Everything/Unlock All Characters/Spoof All Characters as
+             * Unlocked.asm, inserted at 0x80164B14, the loop's `return false`. The patch's
+             * `li r3,1` makes the first missing character report unlocked, so every character is
+             * treated as unlocked. Opt-in: MELEE_MEX=unlock_all_characters. */
+            extern int Mex_Enabled(const char *);
+            if (Mex_Enabled("unlock_all_characters")) {
+                return true;
+            }
+#endif
             return false;
         }
     }
@@ -3292,7 +3335,48 @@ void fn_8016719C(s32 slot, s32 subchar)
             Camera_8002F3AC();
         }
     } else {
-        var_r30 = fn_80167638(slot, &respawn_pos, &offset);
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/gameplay/Neutral Respawn.s, inserted at 0x8016721C, the `fn_80167638(slot, ...)`
+         * call. The patch passes a "neutral spawn index" instead of the raw slot: it ranks this
+         * player among the present slots and looks the stage up in a per-stage neutral respawn
+         * table, so players respawn at balanced positions. Opt-in: MELEE_MEX=neutral_respawn. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("neutral_respawn") && !gm_IsCurrently1PMode_inline() && slot < 5) {
+            static const s8 neutral_respawn_table[][5] = {
+                { 0x20, 0, 1, 2, 3 }, /* Final Destination */
+                { 0x1F, 2, 3, 0, 1 }, /* Battlefield */
+                { 0x08, 0, 1, 3, 2 }, /* Yoshi's Story */
+                { 0x1C, 1, 3, 0, 2 }, /* Dream Land */
+                { 0x02, 0, 1, 2, 3 }, /* Fountain of Dreams */
+                { 0x03, 0, 1, 2, 3 }, /* Pokemon Stadium */
+                { -1 },
+            };
+            int loop;
+            int spawn_order = 0;
+            int spawn_id = slot;
+            int stage_id = gm_GetStKind();
+            for (loop = 0; loop <= 4; loop++) {
+                if (Player_GetPlayerSlotType(loop) > Gm_PKind_Cpu) {
+                    continue;
+                }
+                if (slot == loop) {
+                    break;
+                }
+                spawn_order++;
+            }
+            for (loop = 0; neutral_respawn_table[loop][0] != -1; loop++) {
+                if (neutral_respawn_table[loop][0] == stage_id) {
+                    spawn_id = neutral_respawn_table[loop][1 + spawn_order];
+                    break;
+                }
+            }
+            var_r30 = fn_80167638(spawn_id, &respawn_pos, &offset);
+        } else
+#endif
+        {
+            var_r30 = fn_80167638(slot, &respawn_pos, &offset);
+        }
     }
     respawn_pos.x += offset.x;
     Player_SetSpawnPlatformPos(slot, &respawn_pos);

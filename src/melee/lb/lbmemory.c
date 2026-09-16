@@ -151,6 +151,15 @@ Handle* lbMemory_80014FC8(Handle* arg0, size_t size)
             start = (void*) ((u32) iter->x4_lo + (u32) iter->x8_hi);
         }
     }
+#if defined(TARGET_PC)
+    /* Failure-path diagnostic: only runs when the allocation is already about to assert, so it
+     * costs nothing in normal operation. The size separates an absurd request (uninitialised
+     * field) from the arena genuinely running out of room. See docs/HANDOFF.md, MELEE_TRAINING. */
+    if (memp_kouho == NULL) {
+        OSReport("lbMemory_80014FC8: ALLOC_FAIL size=0x%X lo=0x%X hi=0x%X\n", (unsigned int) size,
+                 (unsigned int) arg0->x4_lo, (unsigned int) arg0->x8_hi);
+    }
+#endif
     HSD_ASSERT(0xE9, memp_kouho);
     {
         Handle* result;

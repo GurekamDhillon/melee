@@ -227,6 +227,28 @@ void fn_802FCC44(HSD_GObj* gobj)
     u8* slot = HSD_GObjGetUserData(gobj);
     HSD_JObj* jobj = gobj->hsd_obj;
     PAD_STACK(8);
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/gameplay/Hide Nametag When Invisible.asm, inserted at 0x802FCCD8. Outside doubles, a
+     * fighter who is invisible (Mewtwo's airdodge or the invisibility flag) hides their nametag
+     * whenever gm_8016B258 reports the tag off. Opt-in: MELEE_MEX=hide_nametag_invisible. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("hide_nametag_invisible") &&
+        gmVs_GetController_1()->start.is_teams != true)
+    {
+        Fighter* fp = (Fighter*) HSD_GObjGetUserData(Player_GetEntity(*slot));
+        if (((fp->kind == Ft_Kind_Mewtwo && fp->motion_id == 0xEC) || fp->x221E_b7) &&
+            gm_8016B258(*slot) == false)
+        {
+            HSD_JObjSetFlags(HSD_JObjGetChild(jobj), JOBJ_HIDDEN);
+            if (has_nametag(*slot)) {
+                HSD_SisLib_803A746C(un_804D6D78, un_804A1EF8[*slot], -5000.0f,
+                                    0.0f);
+            }
+            return;
+        }
+    }
+#endif
     if (Player_GetPlayerSlotType(*slot) != Gm_PKind_NA &&
         Player_GetPlayerState(*slot) && Player_GetStocks(*slot) &&
         (un_804D6D70[*slot] || Player_GetNametagSlotID(*slot) != 'x' ||

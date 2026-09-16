@@ -111,6 +111,16 @@ void gmVsMelee_ResetKOCounts(void)
 
 void gmVsMelee_Mode_OnLoad(void)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/gameplay/CSS KO Star Codes/Disable KO Star Deletion When Leaving CSS.asm, inserted at
+     * 0x801A5600, the function entry. The patch's `nop` neutralises the KO-count reset, so KO
+     * stars survive leaving the CSS. Opt-in: MELEE_MEX=keep_ko_stars. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("keep_ko_stars")) {
+        return;
+    }
+#endif
     gmVsMelee_ResetKOCounts();
 }
 
@@ -210,6 +220,20 @@ void gmVsMelee_ExitVs(GameModeState* state, u8 id0, u8 id1)
 {
     MatchExitInfo* exit = gm_GetGameModeStateExitData(state);
     ssize_t i;
+
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/qol/Skip Result Screen.asm, inserted at 0x801A5B00. The stock
+         * `mr r27, id0` (load the single-winner next-state id) is replaced with
+         * `li r27, 0`, so a one-winner VS match skips the results screen and
+         * goes straight to game-mode state 0. Opt-in: MELEE_MEX=skip_result_screen. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("skip_result_screen")) {
+            id0 = 0;
+        }
+    }
+#endif
 
     for (i = 0; i < GM_MAX_PLAYERS; i++) {
         if (exit->match_end.player_standings[i].pkind == Gm_PKind_Human) {

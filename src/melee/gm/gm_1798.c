@@ -39,6 +39,10 @@
 #include <sysdolphin/baselib/wobj.h>
 
 #if defined(TARGET_PC)
+#include <melee/ft/inlines.h>
+#endif
+
+#if defined(TARGET_PC)
 /* ResultsDisplayLayout is a struct view that runs past lbl_8046E1B0 (ResultsDisplayData, which
  * ends at 0x1DC) and on into three further globals the original .data placed immediately after
  * it: lbl_8046E38C at 0x1DC, lbl_8046E39C at 0x1EC and lbl_8046E3AC at 0x1FC. The port links
@@ -91,6 +95,32 @@ static void sdata2_order(void)
     (void) 10.0f;
     (void) S32_TO_F32;
     (void) -300.0f;
+}
+#endif
+
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex):
+ * asm/qol/ReduceResultScreenLag/{clapping,rewrite_prologue,rewrite_epilogue,
+ * slot1,slot2,slot3,slot4}.asm. The result screen normally draws every player's
+ * clapping model; these patches toggle Fighter.x21FC_flag.b0 so only the model for
+ * the slot being rendered stays visible (show_slot >= 0), or every model at once
+ * (show_slot < 0), cutting overdraw lag.
+ * Opt-in: MELEE_MEX=reduce_result_screen_lag. */
+static void gm_1798_MexSetResultModels(int show_slot)
+{
+    extern int Mex_Enabled(const char *);
+    int i;
+    if (!Mex_Enabled("reduce_result_screen_lag")) {
+        return;
+    }
+    for (i = 0; i < 6; i++) {
+        HSD_GObj* entity = Player_GetEntity(i);
+        if (entity == NULL) {
+            continue;
+        }
+        GET_FIGHTER(entity)->x21FC_flag.b0 =
+            (show_slot < 0) ? 1 : (i == show_slot);
+    }
 }
 #endif
 
@@ -170,6 +200,10 @@ void fn_80179990(HSD_GObj* arg0, int arg1, int arg2)
     HSD_JObj* child_jobj;
     int lookup;
     PAD_STACK(0x10);
+
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(arg2);
+#endif
 
     fn_801795D4();
     fn_801796F0(arg2);
@@ -270,45 +304,69 @@ void fn_80179DA8(HSD_GObj* gobj, int arg1)
 void fn_80179DCC(HSD_GObj* gobj, int arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(0);
+#endif
     if (HSD_CObjSetCurrent(cobj)) {
         Camera_800313E0(gobj, 0);
         gobj->gxlink_prios = 0x80;
         HSD_GObj_80390ED0(gobj, 7U);
         HSD_CObjEndCurrent();
     }
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(-1);
+#endif
 }
 
 void fn_80179E34(HSD_GObj* gobj, int arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(1);
+#endif
     if (HSD_CObjSetCurrent(cobj)) {
         Camera_800313E0(gobj, 0);
         gobj->gxlink_prios = 0x80;
         HSD_GObj_80390ED0(gobj, 7U);
         HSD_CObjEndCurrent();
     }
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(-1);
+#endif
 }
 
 void fn_80179E9C(HSD_GObj* gobj, int arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(2);
+#endif
     if (HSD_CObjSetCurrent(cobj)) {
         Camera_800313E0(gobj, 0);
         gobj->gxlink_prios = 0x80;
         HSD_GObj_80390ED0(gobj, 7U);
         HSD_CObjEndCurrent();
     }
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(-1);
+#endif
 }
 
 void fn_80179F04(HSD_GObj* gobj, int arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(3);
+#endif
     if (HSD_CObjSetCurrent(cobj)) {
         Camera_800313E0(gobj, 0);
         gobj->gxlink_prios = 0x80;
         HSD_GObj_80390ED0(gobj, 7U);
         HSD_CObjEndCurrent();
     }
+#if defined(TARGET_PC)
+    gm_1798_MexSetResultModels(-1);
+#endif
 }
 
 void fn_80179F6C(int idx, HSD_GObj* value)

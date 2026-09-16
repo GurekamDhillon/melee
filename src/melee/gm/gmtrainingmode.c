@@ -293,4 +293,36 @@ void gm_Mode_Training_OnLoad(void)
 {
     gm_804D68C0 = gm_801677F0();
     gm_804D68C1 = 0;
+#if defined(TARGET_PC)
+    {
+        /* Dev/debug hook: MELEE_TRAINING=<ckind> boots straight into Training Mode. Training's
+         * state machine is CSS (0) -> SSS (1) -> GS_TRAINING (2), so this seeds the player, the
+         * default stage and the VS preload cache, then jumps to state 2 to skip both menus.
+         * The stage seed mirrors what the SSS state's exit handler (gm_801B1EEC) does when the
+         * player picks a stage: both rules.stkind and gm_80473814.stage_id are set, otherwise
+         * lbDvd_SetupVsPreloadCache has no stage file to cache and the lbmemory assert fires. */
+        extern int TestTrainingCKind(void);
+        int ckind = TestTrainingCKind();
+        if (ckind >= 0) {
+            VsModeData* vs = &gmMainLib_804D3EE0->modes.unk_D10;
+            vs->start.players[0].ckind = (s8) ckind;
+            vs->start.players[0].color = 0;
+            /* The training dummy. gm_801B1C24 (the CSS exit handler) normally sets this from the
+             * CSS; jumping straight to state 2 skips it, leaving players[1] as
+             * Cpu + ChKind_None (0x21). ftMapping_list is [ChKind_Max] = [33] (indices 0..32), so
+             * that ckind indexes one past the array and the match scene builds a fighter with a
+             * garbage id, which exhausts the heap in lbMemory_80014FC8. */
+            vs->start.players[1].ckind = (s8) ckind;
+            vs->start.players[1].color = 1;
+            vs->start.players[1].cpu_kind = 0;
+            vs->start.rules.stkind = St_Kind_Izumi;
+            gm_80473814.stage_id = St_Kind_Izumi;
+            lbDvd_GetPreloadCacheScene()->game_cache.stkind = St_Kind_Izumi;
+            lbDvd_GetPreloadCacheScene()->game_cache.entries[0].char_id = ckind;
+            lbDvd_GetPreloadCacheScene()->game_cache.entries[0].color = 0;
+            lbDvd_SetupVsPreloadCache();
+            gm_SetGameModeStateId(2);
+        }
+    }
+#endif
 }

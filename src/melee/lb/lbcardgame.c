@@ -100,6 +100,19 @@ static int lb_8001C820(void)
 {
     int var_r0;
 
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Use Save Banner #1.asm, inserted at 0x8001C838, the `var_r0 = 2`
+     * all-trophies branch. The patch reads the `GTME` magic at 0x80000000 to detect an ISO boot
+     * and selects save-banner slot 1 (ISO) instead of 2 (memcard). The PC port always boots from
+     * an ISO, so this always picks slot 1. Opt-in: MELEE_MEX=use_save_banner_1. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("use_save_banner_1")) {
+        var_r0 = 1;
+        return _p(x5C)[var_r0];
+    }
+#endif
+
     if (un_80304470() != 0) {
         var_r0 = 2;
     } else if (gm_80164ABC() != 0) {

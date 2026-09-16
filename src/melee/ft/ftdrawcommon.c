@@ -412,6 +412,20 @@ void ftDrawCommon_80081118(void)
 void ftDrawCommon_80081140(void)
 {
     HSD_GObj* gobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/gameplay/Disable FoD Reflection.asm, inserted at 0x8008114C, the fighter-list head
+     * load. When 4+ players are present the patch nulls the FoD reflection render callback, so the
+     * costly floor reflection is skipped. Opt-in: MELEE_MEX=disable_fod_reflection. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("disable_fod_reflection") && ftLib_800860C4() >= 4) {
+        while (gobj != NULL) {
+            gobj->render_cb = NULL;
+            gobj = gobj->next;
+        }
+        return;
+    }
+#endif
     while (gobj != NULL) {
         gobj->render_cb = ftDrawCommon_80080C28;
         gobj = gobj->next;

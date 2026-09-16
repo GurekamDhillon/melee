@@ -1347,6 +1347,17 @@ static inline bool gm_801721EC_4(void)
 
 bool gm_801721EC(void)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Special Messages/Spoof No Pending Messages
+     * 2.asm, inserted at 0x8017229C, the `return true` branch. The patch's `li r3,0` makes the
+     * function always report "no pending special messages", so the challenger-approach prompt is
+     * suppressed. Opt-in: MELEE_MEX=no_pending_messages. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("no_pending_messages")) {
+        return false;
+    }
+#endif
     if (gm_801721EC_2() || gm_801721EC_4()) {
         return true;
     }
@@ -1629,6 +1640,20 @@ int gm_80172898(u16 arg0)
     s32 var_r3;
     int i;
     int count = 0;
+
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/Additional/Disable Special Records/Disable Trophy Messages.asm, inserted at
+         * 0x80172898, the function entry. `blr` there makes the whole function a no-op, so no
+         * trophy unlock is recorded and the new-trophy count is always zero. Opt-in:
+         * MELEE_MEX=no_trophy_messages. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("no_trophy_messages")) {
+            return 0;
+        }
+    }
+#endif
 
     for (i = 0; i < 0x42; i++) {
         if (!gmMainLib_8015D94C(i) && fn_8017279C(i, arg0) != 0) {

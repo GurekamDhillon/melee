@@ -840,7 +840,12 @@ void gmClassic_801B3500(GameModeState* arg0)
         } else {
             sd->x1C[i] = 0;
         }
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep.asm, @ 0x801B37C8. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if (sd->x10[i] != ChKind_None) {
+#else
         if (sd->x10[i] != 0x21) {
+#endif
             enemy_count++;
         }
     }
@@ -866,7 +871,12 @@ void gmClassic_801B3500(GameModeState* arg0)
     for (i = 1; i < 3; i++) {
         sd->x0D[i] = gm_8017DB6C((gm_8017DB6C_arg0_t*) ad->x0.xC.x24, i - 1);
         sd->x13[i] = gm_8017DB78((gm_8017DB6C_arg0_t*) ad->x0.xC.x24, i - 1);
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep.asm, @ 0x801B37C8. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if (sd->x0D[i] != ChKind_None) {
+#else
         if (sd->x0D[i] != 0x21) {
+#endif
             ally_count++;
         }
     }
@@ -885,7 +895,12 @@ void gmClassic_801B3500(GameModeState* arg0)
 
     for (i = 0; i < 3; i++) {
         s8 echar = entry->xC->x02[i];
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Classic Mode Special Fighters.asm, @ 0x801B34F0. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if (echar != ChKind_None) {
+#else
         if (echar != 0x21) {
+#endif
             gc->entries[count].char_id = echar;
             if (entry->x1 & 8) {
                 gc->entries[count].color = 0xFF;
@@ -898,7 +913,12 @@ void gmClassic_801B3500(GameModeState* arg0)
 
     for (i = 0; i < 3; i++) {
         s8 achar = ad->x0.xC.x24[i].ckind;
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Classic Mode Special Fighters.asm, @ 0x801B34F0. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if (achar != ChKind_None) {
+#else
         if (achar != 0x21) {
+#endif
             gc->entries[count].char_id = achar;
             gc->entries[count].color = ad->x0.xC.x24[i].color;
             count++;
@@ -921,17 +941,31 @@ void gmClassic_801B3500(GameModeState* arg0)
 
     for (i = 0; i < 3; i++) {
         s8 achar = ad->x0.xC.x24[i].ckind;
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Classic Mode Special Fighters.asm, @ 0x801B34F0. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if (achar != ChKind_None) {
+#else
         if (achar != 0x21) {
+#endif
             audio |= lbAudioAx_80026E84(achar);
         }
     }
 
     for (i = 0; i < 3; i++) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Classic Mode Special Fighters.asm, @ 0x801B34F0. Replaces the external-ID null/Kirby literals with ChKind_None/CKind_Kirby. */
+        if (entry->xC->x02[i] != ChKind_None) {
+            audio |= lbAudioAx_80026E84(new_var->xC->x02[i]);
+            if (entry->xC->x02[i] == CKind_Kirby) {
+                audio |= ((u64) 2 << 32) | 0x4000;
+            }
+#else
         if (entry->xC->x02[i] != 0x21) {
             audio |= lbAudioAx_80026E84(new_var->xC->x02[i]);
             if (entry->xC->x02[i] == 4) {
                 audio |= ((u64) 2 << 32) | 0x4000;
             }
+#endif
         }
     }
 

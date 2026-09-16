@@ -516,7 +516,12 @@ void onEnterVs(GameModeState* arg0)
             md->players[0].damage = ev->x28;
             md->players[0].xC_b1 = 0;
             c = ev->x38;
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Event Mode Special Fighters.asm, @ 0x801BADC4. Replaces the external-ID null literal 0x21 with ChKind_None. */
+            if (c != ChKind_None) {
+#else
             if (c != 0x21) {
+#endif
                 md->players[0].ckind = c;
                 ev->x0 = c;
                 ev->x4C[0] = c;
@@ -584,9 +589,16 @@ void onEnterVs(GameModeState* arg0)
         } else {
             color2 = 0;
         }
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Event Mode Special Fighters.asm, @ 0x801BADC4. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        gm_8016A22C(k, ChKind_None, ChKind_None, ev->x50[1], 0, 0, x5_flag, 0,
+                    color2, ev->x0, ev->x1, bonus->x1, bonus->x2, bonus->x3,
+                    bonus->x4, 0, 1, bonus->x8, bonus->xC);
+#else
         gm_8016A22C(k, 0x21, 0x21, ev->x50[1], 0, 0, x5_flag, 0, color2,
                     ev->x0, ev->x1, bonus->x1, bonus->x2, bonus->x3, bonus->x4,
                     0, 1, bonus->x8, bonus->xC);
+#endif
         gm_8016A414(levels[level]->evbonus->x10);
         gm_8016A21C(&md->rules);
         if ((levels[level]->evbonus->flags >> 7) & 1) {
@@ -655,7 +667,12 @@ void onExitVs(GameModeState* arg0)
         ev->x2C = 0;
         ev->x30 = 0;
         ev->x34 = 0;
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/EventMatchEnd.asm, @ 0x801BC700. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        ev->x38 = ChKind_None;
+#else
         ev->x38 = 0x21;
+#endif
         ev->x3C = 0;
         ev->x40 = 0;
         gm_801BBB64();
@@ -747,7 +764,12 @@ void gm_Mode_Event_OnInit(void)
     temp_r6 = &gmMainLib_804D3EE0->vs.unk_530;
     gmMainLib_804D3EE0->vs.unk_530.x0 = 0;
     temp_r6->x1 = 0;
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/EventMode.asm, @ 0x801BBA68. Replaces the external-ID null literal 0x21 with ChKind_None. */
+    temp_r6->x2 = ChKind_None;
+#else
     temp_r6->x2 = 0x21;
+#endif
     temp_r6->x3 = 0;
     temp_r6->nametag = 0x78;
     temp_r6->unk_535 = 0;
@@ -774,7 +796,12 @@ void gm_Mode_Event_OnInit(void)
     temp_r6->x2C = 0;
     temp_r6->x30 = 0;
     temp_r6->x34 = 0;
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/EventMode.asm, @ 0x801BBA68. Replaces the external-ID null literal 0x21 with ChKind_None. */
+    temp_r6->x38 = ChKind_None;
+#else
     temp_r6->x38 = 0x21;
+#endif
     temp_r6->x3C = 0;
     temp_r6->x40 = 0;
     temp_r6->x44 = -1;
@@ -782,7 +809,12 @@ void gm_Mode_Event_OnInit(void)
     temp_r6->x48 = 0;
 
     for (i = 0; i < 4; i++) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/EventMode.asm, @ 0x801BBA68. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        temp_r6->x4C[i] = ChKind_None;
+#else
         temp_r6->x4C[i] = 0x21;
+#endif
         temp_r6->x50[i] = 0;
     }
 }
@@ -932,11 +964,21 @@ void gm_Mode_Event_OnLoad(void)
     temp_r30->x2C = 0;
     temp_r30->x30 = 0;
     temp_r30->x34 = 0;
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/EventMode.asm, @ 0x801BBA68. Replaces the external-ID null literal 0x21 with ChKind_None. */
+    temp_r30->x38 = ChKind_None;
+#else
     temp_r30->x38 = 0x21;
+#endif
     temp_r30->x3C = 0;
     temp_r30->x40 = 0;
     gm_801BBB64();
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/EventMode.asm, @ 0x801BBA68. Replaces the external-ID null literal 0x21 with ChKind_None. */
+    if (temp_r29[temp_r28]->player_init[0]->c_kind != ChKind_None) {
+#else
     if (temp_r29[temp_r28]->player_init[0]->c_kind != 0x21) {
+#endif
         gm_SetGameModeStateId(1);
     }
 }
@@ -1267,10 +1309,18 @@ void gm_801BC670(HSD_GObj* arg0)
         temp_r31->x30 = 0;
     }
     if (Player_80036394(0) == Ft_Kind_Seak) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/EventMatchEnd.asm, @ 0x801BC700. Replaces the external Seak/null ID literals 0x13/0x21 with CKind_Seak/ChKind_None. */
+        temp_r31->x38 = CKind_Seak;
+    } else {
+        temp_r31->x38 = ChKind_None;
+    }
+#else
         temp_r31->x38 = 0x13;
     } else {
         temp_r31->x38 = 0x21;
     }
+#endif
     temp_r31->x34 += gm_GetFrameCount();
     Player_80036844(0, 1);
     lbAudioAx_80028B90();

@@ -1806,8 +1806,24 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             if (ftCo_IsCpuControlled(fp)) {
                 SET_STICKS(fp->input.lstick[0].x, fp->input.lstick[0].y,
                            ftCo_GetCpuLStickX(fp), ftCo_GetCpuLStickY(fp));
+#if defined(TARGET_PC)
+                /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                 * asm/gameplay/Enable C Stick Always/Enable CStick for CPU in
+                 * Debug.asm, @ 0x8006AE00 (neutralises the `DbLevel <
+                 * DbLKind_DebugRom` gate) and PlayerThink_Interrupt2.asm, @
+                 * 0x8006AE04 (neutralises the `!gm_IsCurrently1PMode_inline()`
+                 * gate), so the CPU C-stick is always routed. Opt-in:
+                 * MELEE_MEX=enable_c_stick_always_cpu_debug or
+                 * enable_c_stick_always_interrupt2. */
+                extern int Mex_Enabled(const char *);
+                if ((DbLevel < DbLKind_DebugRom ||
+                     Mex_Enabled("enable_c_stick_always_cpu_debug")) &&
+                    (!gm_IsCurrently1PMode_inline() ||
+                     Mex_Enabled("enable_c_stick_always_interrupt2")))
+#else
                 if (DbLevel < DbLKind_DebugRom &&
                     !gm_IsCurrently1PMode_inline())
+#endif
                 {
                     SET_STICKS(fp->input.cstick[0].x, fp->input.cstick[0].y,
                                ftCo_GetCpuCStickX(fp), ftCo_GetCpuCStickY(fp));
@@ -1826,10 +1842,20 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                            HSD_PadGameStatus[fp->x618_player_id].nml_stickX,
                            HSD_PadGameStatus[fp->x618_player_id].nml_stickY);
 #if defined(TARGET_PC)
-                if (DbLevel < DbLKind_DebugRom &&
+                /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                 * asm/gameplay/Enable C Stick Always/Spoof Debug Level as 0 for
+                 * Human C Stick Inputs.asm, @ 0x8006AE90 (reads the debug level
+                 * as 0) and PlayerThink_Interrupt1.asm, @ 0x8006AE9C
+                 * (neutralises the `gm_IsCurrently1PMode_inline() == 0` gate),
+                 * so the human C-stick is always routed. Opt-in:
+                 * MELEE_MEX=enable_c_stick_always_spoof_debug_level or
+                 * enable_c_stick_always_interrupt1. */
+                extern int Mex_Enabled(const char *);
+                if ((DbLevel < DbLKind_DebugRom ||
+                     Mex_Enabled("enable_c_stick_always_spoof_debug_level")) &&
                     (gm_IsCurrently1PMode_inline() == 0 ||
-                     (gm_GetCurrentGameMode() == GM_TARGET_TEST &&
-                      gm_CStickSmashTargetTest)))
+                     gm_CStickSmashTargetTest ||
+                     Mex_Enabled("enable_c_stick_always_interrupt1")))
 #else
                 if (DbLevel < DbLKind_DebugRom &&
                     gm_IsCurrently1PMode_inline() == 0)
@@ -1913,9 +1939,7 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             Fighter_Spaghetti_8006AD10_Inner1(fp);
 
 #if defined(TARGET_PC)
-            if (fp->x618_player_id == 0 &&
-                gm_GetCurrentGameMode() == GM_TARGET_TEST)
-            {
+            if (fp->x618_player_id == 0 && gm_IsCurrently1PMode_inline() != 0) {
                 static bool cstick_combo_was_held;
                 bool combo =
                     (fp->input.held_buttons[0] &

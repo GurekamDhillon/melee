@@ -182,6 +182,14 @@ void gw_panic(const char *fmt, ...) {
   va_start(ap, fmt);
   vsnprintf(msg, sizeof msg, fmt, ap);
   va_end(ap);
+  {
+    /* Under the test runner a panic fails the current test instead of killing the process. */
+    extern int gw_test_active(void);
+    extern void gw_test_panic_hit(const char *);
+    if (gw_test_active()) {
+      gw_test_panic_hit(msg);
+    }
+  }
   fputs("gw: PANIC ", stdout);
   gw_log("%s", msg);
   gw_archive_crash_log(msg);
@@ -825,6 +833,22 @@ int gw_TestTargetTestCKind(void) {
   return state;
 }
 
+/* Dev/debug hook: MELEE_TRAINING=<ckind int or name like mario/fox/zelda> boots straight into
+ * Training Mode with that character, skipping the menus and the CSS. Same shape and grammar as
+ * MELEE_TARGET_TEST above; game code calls the unprefixed `TestTrainingCKind`. Read once. */
+int gw_TestTrainingCKind(void) {
+  static int state = -2;
+  if (state == -2) {
+    const char *v = getenv("MELEE_TRAINING");
+    state = (v == NULL || v[0] == '\0') ? -1 : tt_parse_ckind(v);
+    if (state >= 0) {
+      gw_log("gw: MELEE_TRAINING=\"%s\" -> ckind %d (booting straight into Training Mode)", v,
+             state);
+    }
+  }
+  return state;
+}
+
 int gw_TTMod_ForCharacter(int ckind) {
   int i;
   tt_load();
@@ -874,4 +898,101 @@ void gw_TTMod_Platform(int level, int i, float *cx, float *cy, float *cz, float 
   gw_wf32(cz, tt_levels[level].platforms[i][2]);
   gw_wf32(w, tt_levels[level].platforms[i][3]);
   gw_wf32(d, tt_levels[level].platforms[i][4]);
+}
+
+/* m-ex feature registry. Behaviors ported from akaneia/m-ex (https://github.com/akaneia/m-ex) are
+ * each gated on a named feature so a default build behaves exactly as before. Features are enabled
+ * by the MELEE_MEX environment variable (comma- or space-separated) and/or a `mods\mex.txt` file
+ * beside the executable (one feature per line, `#` starts a comment). Game code calls the
+ * unprefixed `Mex_Enabled`, which gwtool maps onto gw_Mex_Enabled. */
+
+#define GW_MEX_MAX_FEATURES 64
+#define GW_MEX_NAME_MAX 48
+
+static char gw_mex_features[GW_MEX_MAX_FEATURES][GW_MEX_NAME_MAX];
+static int gw_mex_feature_count = -1;
+
+static void gw_mex_add(const char *name, size_t len) {
+  size_t i;
+  if (len == 0 || len >= GW_MEX_NAME_MAX) return;
+  if (gw_mex_feature_count >= GW_MEX_MAX_FEATURES) return;
+  for (i = 0; i < len; ++i) {
+    char c = name[i];
+    gw_mex_features[gw_mex_feature_count][i] =
+        (c >= 'A' && c <= 'Z') ? (char)(c + ('a' - 'A')) : c;
+  }
+  gw_mex_features[gw_mex_feature_count][len] = '\0';
+  gw_mex_feature_count++;
+}
+
+static void gw_mex_parse_list(const char *s) {
+  while (*s != '\0') {
+    size_t len = 0;
+    while (*s == ',' || *s == ' ' || *s == '\t' || *s == ';') s++;
+    while (s[len] != '\0' && s[len] != ',' && s[len] != ' ' && s[len] != '\t' &&
+           s[len] != ';' && s[len] != '\n' && s[len] != '\r') {
+      len++;
+    }
+    gw_mex_add(s, len);
+    s += len;
+  }
+}
+
+static void gw_mex_load_file(const char *path) {
+  FILE *f = fopen(path, "rb");
+  char line[256];
+  if (f == NULL) return;
+  while (fgets(line, sizeof line, f) != NULL) {
+    char *s = line;
+    char *end;
+    while (*s == ' ' || *s == '\t') s++;
+    if (*s == '#' || *s == '\n' || *s == '\r' || *s == '\0') continue;
+    end = s + strlen(s);
+    while (end > s && (end[-1] == '\n' || end[-1] == '\r' || end[-1] == ' ' || end[-1] == '\t')) {
+      end--;
+    }
+    *end = '\0';
+    gw_mex_add(s, strlen(s));
+  }
+  fclose(f);
+}
+
+static void gw_mex_load(void) {
+  char path[MAX_PATH];
+  const char *env;
+  DWORD n;
+  if (gw_mex_feature_count >= 0) return;
+  gw_mex_feature_count = 0;
+  env = getenv("MELEE_MEX");
+  if (env != NULL) {
+    gw_mex_parse_list(env);
+  }
+  n = GetModuleFileNameA(NULL, path, (DWORD)sizeof path);
+  if (n > 0 && n < (DWORD)sizeof path) {
+    char *slash = strrchr(path, '\\');
+    if (slash != NULL) {
+      slash[1] = '\0';
+      strncat(path, "mods\\mex.txt", sizeof path - strlen(path) - 1);
+      gw_mex_load_file(path);
+    }
+  }
+  if (gw_mex_feature_count > 0) {
+    int i;
+    gw_log("gw: mex: %d feature(s) enabled", gw_mex_feature_count);
+    for (i = 0; i < gw_mex_feature_count; ++i) {
+      gw_log("gw: mex:   %s", gw_mex_features[i]);
+    }
+  }
+}
+
+int gw_Mex_Enabled(const char *name) {
+  int i;
+  if (name == NULL) {
+    return 0;
+  }
+  gw_mex_load();
+  for (i = 0; i < gw_mex_feature_count; ++i) {
+    if (tt_ieq(name, gw_mex_features[i])) return 1;
+  }
+  return 0;
 }

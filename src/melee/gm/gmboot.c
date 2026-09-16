@@ -82,8 +82,11 @@ void bootOnLeave(GameModeState* data)
     gm_ChangeGameModeAfterCurrentScene(scene_data->mode_id);
 #if defined(TARGET_PC)
     {
+        extern int TestTrainingCKind(void);
         extern int TestTargetTestCKind(void);
-        if (TestTargetTestCKind() >= 0) {
+        if (TestTrainingCKind() >= 0) {
+            gm_SetPendingGameMode(GM_TRAINING);
+        } else if (TestTargetTestCKind() >= 0) {
             gm_SetPendingGameMode(GM_TARGET_TEST);
         }
     }

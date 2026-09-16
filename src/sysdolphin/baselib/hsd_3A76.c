@@ -562,6 +562,20 @@ void HSD_SisLib_803A84BC(HSD_GObj* gobj, int pass)
                 (text->box_size_x * text->font_size.x) + text->pos_x;
             max_y =
                 (text->box_size_y * text->font_size.y) + text->pos_y;
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/Additional/TextModifications/align background.asm, inserted at 0x803A8840. For
+             * centre/right-aligned text the background quad is shifted by half (centre) or all
+             * (right) of its width so it lines up with the glyphs. Opt-in:
+             * MELEE_MEX=text_align_background. */
+            extern int Mex_Enabled(const char *);
+            if (Mex_Enabled("text_align_background") && text->default_alignment != 0) {
+                f32 width = text->box_size_x * text->font_size.x;
+                f32 factor = (text->default_alignment == 1) ? -0.5f : -1.0f;
+                min_x = text->pos_x + (width * factor);
+                max_x = min_x + width;
+            }
+#endif
             GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
             GXSetTevColor(GX_TEVREG0, *(&text->bg_color));
             GXBegin(GX_QUADS, GX_VTXFMT0, 4U);
@@ -751,6 +765,17 @@ void HSD_SisLib_803A84BC(HSD_GObj* gobj, int pass)
                             text->active_color.r = sis_cursor[1];
                             text->active_color.g = sis_cursor[2];
                             text->active_color.b = sis_cursor[3];
+#if defined(TARGET_PC)
+                            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                             * asm/Additional/TextModifications/copy alpha to 0x8c.asm, inserted at
+                             * 0x803A8D90. The active colour set by this opcode keeps the text's
+                             * alpha channel instead of leaving it stale. Opt-in:
+                             * MELEE_MEX=text_copy_alpha. */
+                            extern int Mex_Enabled(const char *);
+                            if (Mex_Enabled("text_copy_alpha")) {
+                                text->active_color.a = text->text_color.a;
+                            }
+#endif
                             sis_cursor += 3;
                             break;
                         case 13:
@@ -895,6 +920,18 @@ void HSD_SisLib_803A84BC(HSD_GObj* gobj, int pass)
                                         }
                                         GXLoadTexObj(&tex_obj, GX_TEXMAP0);
                                         GXSetTevColor(GX_TEVREG0, *(&text->active_color));
+#if defined(TARGET_PC)
+                                        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                                         * asm/Additional/TextModifications/add alpha tev.asm,
+                                         * inserted at 0x803A9220. Routes the text's active colour
+                                         * alpha into the TEV konstant alpha so glyphs blend with
+                                         * it. Opt-in: MELEE_MEX=text_alpha_tev. */
+                                        extern int Mex_Enabled(const char *);
+                                        if (Mex_Enabled("text_alpha_tev")) {
+                                            GXSetTevKAlphaSel(GX_TEVSTAGE0, GX_TEV_KASEL_K0_A);
+                                            GXSetTevKColor(GX_KCOLOR0, text->active_color);
+                                        }
+#endif
                                         GXBegin(GX_QUADS, GX_VTXFMT0, 4U);
                                         {
                                             f32 glyph_depth = text->pos_z;

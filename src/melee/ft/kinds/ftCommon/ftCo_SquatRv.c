@@ -31,6 +31,39 @@
 bool ftCo_SquatRv_CheckInput(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/qol/UCF 0.84/UCF DBOOC SquatRv Fix.asm, inserted at 0x800D65EC. When
+         * the stick is tilted past the 1.0 cardinal during the first frame of a turn
+         * (x670_timer_lstick_tilt_x == 0), the SquatRv threshold is relaxed from
+         * p_ftCommonData->x94 to 0.59 so a full-tilt dashback out of crouch reads as
+         * a dash, not a crouch-reverse.
+         * Opt-in: MELEE_MEX=ucf_dbooc_squatrv_fix. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("ucf_dbooc_squatrv_fix")) {
+            float deadzone = p_ftCommonData->x94;
+            if (fp->x670_timer_lstick_tilt_x < 1) {
+                int x = (int) (fabsf(fp->input.lstick[0].x) * 80.0f -
+                               0.0001f) +
+                        2;
+                int y = (int) (fabsf(fp->input.lstick[0].y) * 80.0f -
+                               0.0001f) +
+                        2;
+                if (x * x + y * y > 6400) {
+                    deadzone = 0.59f;
+                }
+            }
+            if (fp->input.lstick[0].y > -deadzone) {
+                ftCo_SquatRv_Enter(gobj);
+                return true;
+            }
+            return false;
+        }
+    }
+#endif
+
     if (fp->input.lstick[0].y > -p_ftCommonData->x94) {
         ftCo_SquatRv_Enter(gobj);
         return true;

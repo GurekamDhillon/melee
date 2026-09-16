@@ -147,6 +147,9 @@ void gw_init_lomem(void);
 void gw_apply_fixups(void); /* swap link-time pointers in game globals; must run first */
 const char *gw_iso_path(void);
 
+/* Whether a ported m-ex behavior is enabled (MELEE_MEX env / mods\mex.txt). See tools/mex_port/. */
+int gw_Mex_Enabled(const char *name);
+
 /* melee's own main(), renamed by gwtool. */
 void gw_main(void);
 

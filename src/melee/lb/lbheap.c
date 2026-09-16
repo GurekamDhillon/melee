@@ -18,9 +18,23 @@ struct lbHeap_HeapOffsetView {
     struct Heap heap;
 };
 
-struct lbHeap_HeapDesc lbHeap_803BA380[5] = {
+#if defined(TARGET_PC)
+#define LBHEAP_DESC_COUNT 6
+#else
+#define LBHEAP_DESC_COUNT 5
+#endif
+
+struct lbHeap_HeapDesc lbHeap_803BA380[LBHEAP_DESC_COUNT] = {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/Persistent Heap Expansion/
+     * "Relocate Heap Def.asm". Adds heap 6 (m-ex's "CUSTOM scene file heap", 0x20 bytes) and
+     * moves the terminator to LBHEAP_HEAP_COUNT. Heap 3 also grows by 0x1E90. */
+    { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x4FA690 }, { 4, 2, 6, 0x64B400 },
+    { 5, 4, 6, 0x96C800 }, { 6, 1, 3, 0x20 },     { LBHEAP_HEAP_COUNT, 0, 0, 0 },
+#else
     { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x4F8800 }, { 4, 2, 6, 0x64B400 },
     { 5, 4, 6, 0x96C800 }, { 6, 0, 0, 0 },
+#endif
 };
 
 #define lbHeap_GetHeapOffsetView(offset)                                      \
@@ -111,7 +125,7 @@ void lbHeap_80015900(void)
     destroy_cursor = (uintptr_t) &lbHeap_80431FA0.heap_array[destroy_i] -
                      offsetof(struct lbHeap_HeapOffsetView, heap);
     heap_offset = lbHeap_HeapViewOffset(2);
-    for (; destroy_i < 6; destroy_i++, destroy_cursor += sizeof(struct Heap),
+    for (; destroy_i < LBHEAP_HEAP_COUNT; destroy_i++, destroy_cursor += sizeof(struct Heap),
                           heap_offset += sizeof(struct Heap))
     {
         if (((struct Heap*) (destroy_cursor + 0x10))->transient == 1) {
@@ -125,7 +139,7 @@ void lbHeap_80015900(void)
     aram_lo = lbHeap_80431FA0.aram_lo;
     aram_hi = lbHeap_80431FA0.aram_hi;
 
-    for (bounds_i = 2; bounds_i < 6; bounds_i++) {
+    for (bounds_i = 2; bounds_i < LBHEAP_HEAP_COUNT; bounds_i++) {
         bounds_heap = &lbHeap_80431FA0.heap_array[bounds_i];
         if (lbHeap_80431FA0.heap_array[bounds_i].transient == 0) {
             switch (bounds_heap->type) {
@@ -168,7 +182,7 @@ void lbHeap_80015900(void)
     aram_heap->status = LbHeapStatus_Create;
     aram_heap->type = 3;
 
-    for (create_i = 2, heap_offset = lbHeap_HeapViewOffset(2); create_i < 6;
+    for (create_i = 2, heap_offset = lbHeap_HeapViewOffset(2); create_i < LBHEAP_HEAP_COUNT;
          create_i++, heap_offset += sizeof(struct Heap))
     {
         if (lbHeap_80431FA0.heap_array[create_i].transient == 0) {
@@ -242,6 +256,13 @@ int lbHeap_80015D6C(u32 heap0, void (*cb)(u32), u32 heap1)
 
 char* lbHeap_803BA448[] = {
     "     Hsd", "    ARAM", "     Seq", "    Stay", "    AllM", "    AllA",
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/Persistent Heap Expansion/
+     * adds heap 6 but never extends this parallel name table, so the widened report loop in
+     * lbHeap_80015DF8 would read one entry past the end. The name is added here to keep that
+     * loop in bounds; it is the "CUSTOM scene file heap" in m-ex's Relocate Heap Def.asm. */
+    "   Scene",
+#endif
 };
 
 void lbHeap_80015DF8(void)
@@ -253,7 +274,7 @@ void lbHeap_80015DF8(void)
 
     OSReport("[lbHeap] -- Report --\n");
 
-    for (i = 0; i < 6; i++) {
+    for (i = 0; i < LBHEAP_HEAP_COUNT; i++) {
         OSReport("%s :", lbHeap_803BA448[i]);
         p = &lbHeap_80431FA0.heap_array[i];
         if (p->status == LbHeapStatus_Create) {
@@ -296,7 +317,7 @@ void lbHeap_80015F3C(void)
     lbHeap_ResetHeap(&lbHeap_80431FA0.heap_array[5]);
 
     desc = lbHeap_803BA380;
-    while ((curr_idx = desc->idx) != 6) {
+    while ((curr_idx = desc->idx) != LBHEAP_HEAP_COUNT) {
         curr_heap = &lbHeap_80431FA0.heap_array[curr_idx];
 
         curr_heap->type = desc->type;

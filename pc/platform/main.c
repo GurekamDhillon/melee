@@ -176,6 +176,27 @@ int main(int argc, char *argv[]) {
     (void)gw_TTMod_Count();
   }
 
+  /* --test runs the in-engine suite and exits: no window, no GPU, no frame driver. It still runs
+   * the fixups and MEM1 reservation above the game's own main(), because those are what make guest
+   * memory valid for the retargeted objects the tests link against. See
+   * _research/engine-test-suite-plan.md. */
+  {
+    extern bool gw_test_requested(int argc, char **argv);
+    extern int gw_test_run_all(void);
+    if (gw_test_requested(argc, argv)) {
+      gw_apply_fixups();
+      if (!gw_mem_init()) {
+        gw_log("melee-pc: tests: could not reserve MEM1/ARAM");
+        return 1;
+      }
+      {
+        int failures = gw_test_run_all();
+        gw_log("melee-pc: tests complete, failures=%d", failures);
+        return failures != 0;
+      }
+    }
+  }
+
   int win_x = 0, win_y = 0, win_w = 1280, win_h = 960;
   bool have_x = gw_env_int("MELEE_WINDOW_X", &win_x);
   bool have_y = gw_env_int("MELEE_WINDOW_Y", &win_y);

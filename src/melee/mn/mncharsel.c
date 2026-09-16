@@ -162,7 +162,18 @@ static CSSIconsData mnCharSel_803F0A48 = {
     },
 };
 
+/// Number of CSS icons in the `icons[]` table: the ::SELKIND_COUNT selectable
+/// fighters plus a trailing "no character" entry at index ::SELKIND_COUNT.
+/// Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/CSS Expansion/Icon Num/
+/// replaces the hardcoded icon-count comparisons with `OFST_Metadata_CSSIconCount`
+/// (e.g. RandomChar1.asm @ 0x8025FB70, CSSLoad.asm @ 0x80264914).
+#define CSS_ICON_COUNT (SELKIND_COUNT + 1)
+
+#if defined(TARGET_PC)
+static CSSIcon icons[CSS_ICON_COUNT] = {
+#else
 static CSSIcon icons[25 + 1] = {
+#endif
     // -------- Icons Top Row --------
 
     { // Dr. Mario -                      0x803F0B24
@@ -1695,7 +1706,7 @@ void fn_8025F0E0(HSD_GObj* gobj)
                         AOBJ_ARG_AF, 0.0f);
     }
 
-    for (i = 0; i < 25; i++) {
+    for (i = 0; i < SELKIND_COUNT; i++) {
         timer = icons[i].anim_timer;
         if (timer != 0) {
             timer = timer - 1;
@@ -2040,7 +2051,7 @@ void mnCharSel_8025FB50(u8 door, s32 arg1)
     HSD_JObj* icon_jobj;
 
     do {
-        s32 temp = HSD_Randi(0x19);
+        s32 temp = HSD_Randi(SELKIND_COUNT);
         icon_idx = temp;
         icon_offset = getIconOffset(icon_idx);
     } while (icons[icon_idx].state == 0);
@@ -2123,7 +2134,7 @@ s32 mnCharSel_8025FDEC(u8 door)
 
         {
             CSSIcon* icon = icons;
-            for (icon_idx = 0; icon_idx < 0x19; icon_idx++) {
+            for (icon_idx = 0; icon_idx < SELKIND_COUNT; icon_idx++) {
                 if (css->vs.start.players[player].ckind ==
                     icon[icon_idx].char_kind)
                 {
@@ -2508,7 +2519,7 @@ void mnCharSel_CursorThink(HSD_GObj* gobj)
         }
 
 #if defined(TARGET_PC)
-        if (mnCharSel_804D6CB0->match_type == STADIUM_TARGET &&
+        if (mnCharSel_804D6CB0->match_type >= REG_CLASSIC &&
             (trigger & (HSD_PAD_L | HSD_PAD_R))) {
             gm_CStickSmashTargetTest = !gm_CStickSmashTargetTest;
             sfxMove();
@@ -2613,14 +2624,15 @@ void mnCharSel_CursorThink(HSD_GObj* gobj)
                                      (m->x8 > 24.4f && m->x8 < 30.2f)))
                                 {
                                     s32 icon_count;
-                                    for (icon_count = 0; icon_count < 25;
+                                    for (icon_count = 0;
+                                         icon_count < SELKIND_COUNT;
                                          icon_count++)
                                     {
                                         if (icons[icon_count].state < 2) {
                                             break;
                                         }
                                     }
-                                    if (icon_count == 0x19) {
+                                    if (icon_count == SELKIND_COUNT) {
                                         mnCharSel_8025FB50(door, 0);
                                         while (true) {
                                             mnCharSel_803F0DFC.doors[door]
@@ -2648,7 +2660,7 @@ void mnCharSel_CursorThink(HSD_GObj* gobj)
                                 struct CSSCharModel* m2 =
                                     mnCharSel_804A0BD0[door];
                                 s32 i;
-                                for (i = 0; i < 0x19; i++) {
+                                for (i = 0; i < SELKIND_COUNT; i++) {
                                     if (m2->x8 > icons[i].bound_l &&
                                         m2->x8 < icons[i].bound_r &&
                                         m2->xC < icons[i].bound_u &&
@@ -4385,7 +4397,7 @@ s32 mnCharSel_802640A0(void)
     icons[row_b].bound_u = ICONROWHT_TOP_TOP;
     icons[row_b].bound_d = ICONROWHT_MID_TOP;
 
-    for (icon = 0; icon < 0x19; icon++) {
+    for (icon = 0; icon < SELKIND_COUNT; icon++) {
         icons[icon].state = gm_IsCKindUnlocked(icons[icon].char_kind);
         icons[icon].anim_timer = 0;
         if (mnCharSel_804D6CF5 == 1) {
@@ -4465,7 +4477,7 @@ s32 mnCharSel_802640A0(void)
             u8* char_kinds;
             s32 icon_off;
             do {
-                i = HSD_Randi(0x19);
+                i = HSD_Randi(SELKIND_COUNT);
             } while (icons[i].state == 0);
             char_kinds = &icons[0].char_kind;
             icon_off = getIconOffset(i);
@@ -4554,7 +4566,7 @@ s32 mnCharSel_802640A0(void)
                 } else {
                     player = i;
                 }
-                for (found = 0; found < 0x19; found++) {
+                for (found = 0; found < SELKIND_COUNT; found++) {
                     if (mnCharSel_804D6CB0->vs.start.players[player].ckind ==
                             icons[found].char_kind &&
                         gm_IsCKindUnlocked(
@@ -4564,7 +4576,7 @@ s32 mnCharSel_802640A0(void)
                         break;
                     }
                 }
-                if (found >= 0x19) {
+                if (found >= SELKIND_COUNT) {
                     u8* slot_type;
                     mnCharSel_804D6CB0->vs.start.players[player].ckind =
                         CKind_Playable_Count;
@@ -5485,6 +5497,28 @@ void mnCharSel_Scene_OnFrame(void)
             if (mnCharSel_804D6CF5 == 4) {
                 lbAudioAx_8002411C(0x147);
             }
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/gameplay/Disable FoD in Doubles.asm, @ 0x80266CE0. On the
+             * CSS->SSS transition, when the random stage select mask is the
+             * default all-legal set (0xE70000B0) or that set with only
+             * Fountain of Dreams toggled off (bit 0x20), force FoD off in
+             * teams and on in singles. Opt-in: MELEE_MEX=disable_fod_in_doubles. */
+            extern int Mex_Enabled(const char *);
+            if (Mex_Enabled("disable_fod_in_doubles")) {
+                struct GamePrefs* prefs = gmMainLib_GetGamePrefs();
+                u32 mask = prefs->stage_mask;
+                u32 diff = mask ^ 0xE70000B0;
+                if (diff == 0 || diff == 0x20) {
+                    if (mnCharSel_804D6CB0->vs.start.rules.is_teams == 1) {
+                        mask &= ~0x20u;
+                    } else {
+                        mask |= 0x20u;
+                    }
+                    prefs->stage_mask = mask;
+                }
+            }
+#endif
             sfxForward();
         }
         break;

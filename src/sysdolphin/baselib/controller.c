@@ -370,7 +370,28 @@ void HSD_PadRenewMasterStatus(void)
             mp->last_button = mp->button;
             mp->err = qread->err;
             if (mp->err == 0) {
+#if defined(TARGET_PC)
+                {
+                    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                     * asm/qol/XYDisablesStart/Main.asm, inserted at 0x803775BC. When
+                     * Start is pressed together with both X and Y, the Start bit is
+                     * cleared from the button state before it is latched, so holding
+                     * X+Y+Start cannot trigger a pause.
+                     * Opt-in: MELEE_MEX=xy_disables_start. */
+                    extern int Mex_Enabled(const char *);
+                    if (Mex_Enabled("xy_disables_start") &&
+                        (qread->button & (PAD_BUTTON_START | PAD_BUTTON_X |
+                                          PAD_BUTTON_Y)) ==
+                            (PAD_BUTTON_START | PAD_BUTTON_X | PAD_BUTTON_Y))
+                    {
+                        mp->button = qread->button & ~PAD_BUTTON_START;
+                    } else {
+                        mp->button = qread->button;
+                    }
+                }
+#else
                 mp->button = qread->button;
+#endif
                 mp->stickX = qread->stickX;
                 mp->stickY = qread->stickY;
                 mp->subStickX = qread->substickX;

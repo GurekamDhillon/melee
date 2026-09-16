@@ -39,6 +39,16 @@ void gm_InitChallengerData(u8 human_ckind, u8 human_color, u8 human_slot,
 #endif
 bool gm_80173754(u8 gameMode, u8 arg1)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Special Messages/Spoof No Pending Messages.asm,
+     * inserted at 0x801737B0, the `return true` branch. The patch's `li r3,0` makes the function
+     * never trigger the challenger-approach game mode. Opt-in: MELEE_MEX=no_pending_messages_2. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("no_pending_messages_2")) {
+        return false;
+    }
+#endif
     if (gm_801721EC()) {
         memzero(&challenger_data, sizeof(challenger_data));
         challenger_data.human_ckind = ChKind_None;
@@ -318,6 +328,20 @@ void gm_80173EEC(void)
     int selkind;
     u8 ckind;
     u16* temp_r29;
+
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/Additional/Disable Special Records/Disable Special Messages.asm, inserted at
+         * 0x80173EEC, the function entry. `blr` there makes the whole function a no-op, so no
+         * "special message" unlock notification is recorded. Opt-in:
+         * MELEE_MEX=no_special_messages. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("no_special_messages")) {
+            return;
+        }
+    }
+#endif
 
     for (selkind = 0; selkind < SELKIND_COUNT; selkind++) {
         temp_r29 = &gmMainLib_8015EDBC()->x18[(u32) selkind];

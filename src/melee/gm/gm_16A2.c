@@ -145,7 +145,12 @@ void fn_801695BC(u8 arg0, u8 arg1, u8 arg2, const u8* arg3, s8* arg4)
     s8 colors[6];
 
     ncolors = gm_GetNumCostumesForCKind(arg0);
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep14.asm, @ 0x8017CFC0. Replaces the external-ID null literal 0x21 with ChKind_None. */
+    if ((s8) arg0 != ChKind_None) {
+#else
     if ((s8) arg0 != 0x21) {
+#endif
         ncolors_s32 = ncolors;
         for (i = 0; i < ncolors; i++) {
             colors[i] = (s8) i;
@@ -191,7 +196,12 @@ void fn_801697FC(s8 character, s8 costume, s8 new_character, s8 new_costume,
     u8 ncolors = gm_GetNumCostumesForCKind(character);
     int i;
 
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep14.asm, @ 0x8017CFC0. Replaces the external-ID null literal 0x21 with ChKind_None. */
+    if (character == ChKind_None) {
+#else
     if (character == 0x21) {
+#endif
         return;
     }
     if (new_character == character && costume == new_costume) {
@@ -390,9 +400,16 @@ void fn_80169C54(s8 arg0, s8 arg1)
         costumes[i] = -1;
     }
     for (i = 0; i < 3; i++) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/LoadKirbyHats.asm, @ 0x80169DB8. Replaces the external Kirby ID literal 4 with CKind_Kirby. */
+        if ((s32) *scan == CKind_Kirby) {
+            if (st->xB == 0) {
+                count = gm_GetNumCostumesForCKind(CKind_Kirby);
+#else
         if ((s32) *scan == 4) {
             if (st->xB == 0) {
                 count = gm_GetNumCostumesForCKind(4U);
+#endif
                 for (costume_idx = 0; costume_idx < count; costume_idx++) {
                     costumes[costume_idx] = costume_idx;
                     ncostumes++;
@@ -406,7 +423,12 @@ void fn_80169C54(s8 arg0, s8 arg1)
         scan++;
     }
 
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/LoadKirbyHats.asm, @ 0x80169DB8. Replaces the external Kirby ID literal 4 with CKind_Kirby. */
+    if (arg0 == CKind_Kirby) {
+#else
     if (arg0 == 4) {
+#endif
         costumes[ncostumes] = arg1;
         ncostumes++;
     }
@@ -415,7 +437,12 @@ void fn_80169C54(s8 arg0, s8 arg1)
         character = &st->x0;
         do {
             ckind = *character;
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/LoadKirbyHats.asm, @ 0x80169DB8. Replaces the external-ID null/Kirby literals with ChKind_None/CKind_Kirby. */
+            if (ChKind_None != ckind && ckind != CKind_Kirby) {
+#else
             if (0x21 != ckind && ckind != 4) {
+#endif
                 fighter0 = Player_800325C8((CharacterKind) ckind, 0);
                 if ((fighter0 != -1) && (fighter0 != 4)) {
                     for (costume_it0 = &costumes[costume_idx0 = 0];

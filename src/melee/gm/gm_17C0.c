@@ -324,7 +324,12 @@ void gm_8017C838(void)
         ftLib_80087610(var_r3);
         break;
     case 0x48:
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/Internal Character ID Shifts/Wireframes/AdventureMode - FightCheck.asm, @ 0x8017D2E4. Replaces the internal Pikachu ID literal 0xC with Ft_Kind_Pikachu. */
+        sp10[0] = Ft_Kind_Pikachu;
+#else
         sp10[0] = 0xC;
+#endif
         if (gm_IsCKindUnlocked(CKind_Pichu) != 0) {
             sp10[1] = Ft_Kind_Pichu;
         }
@@ -500,7 +505,12 @@ static inline s32 gm_8017CE34_CountEnemies(const s8* arg0)
     s32 i;
 
     for (i = 0; i < 3; i++) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep14.asm, @ 0x8017CFC0. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if ((s32) arg0[i] != ChKind_None) {
+#else
         if ((s32) arg0[i] != 0x21) {
+#endif
             count++;
         }
     }
@@ -696,6 +706,25 @@ void gm_8017CE34(StartMeleeData* arg0, Unk1PData* arg1, s8* arg2, u8 arg3,
             }
 
             first_enemy = (u8) arg2[0];
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/1P Modes.s, @ 0x8017D500. Expresses the special-enemy classification in terms of the external-ID enums (Kirby, wireframes Boy/Girl, Pikachu). */
+            if ((s8) first_enemy != CKind_Kirby) {
+                if ((u8) (first_enemy - CKind_Boy) <=
+                    (u8) (CKind_Girl - CKind_Boy))
+                {
+                    arg0->rules.x0_3 = 6;
+                    event_enemy_count = 5;
+                    colors[0] = 0;
+                    special_stage = 1;
+                    special_enemy_mode = 1;
+                } else if (((s8) first_enemy == CKind_Pikachu) &&
+                           (((s32) arg2[1] != CKind_Pikachu) ||
+                            ((s32) arg2[2] != CKind_Pikachu)))
+                {
+                    special_enemy_mode = 2;
+                }
+            }
+#else
             if ((s8) first_enemy != 4) {
                 if ((u8) (first_enemy - 0x1B) <= 1U) {
                     arg0->rules.x0_3 = 6;
@@ -709,6 +738,7 @@ void gm_8017CE34(StartMeleeData* arg0, Unk1PData* arg1, s8* arg2, u8 arg3,
                     special_enemy_mode = 2;
                 }
             }
+#endif
 
             stage_flags = Ground_801C5AD0(Stage_8022519C(arg7));
 
@@ -739,7 +769,12 @@ void gm_8017CE34(StartMeleeData* arg0, Unk1PData* arg1, s8* arg2, u8 arg3,
     enemy_idx = 0;
     for (;;) {
         enemy_kind = &arg2[enemy_idx];
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep14.asm, @ 0x8017CFC0. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if ((s32) (u8) enemy_kind[0] != ChKind_None) {
+#else
         if ((s32) (u8) enemy_kind[0] != 0x21) {
+#endif
             if (arg1->x8 & 8) {
                 if (arg1->x4C != NULL) {
                     enemy_level =
@@ -806,7 +841,12 @@ void gm_8017CE34(StartMeleeData* arg0, Unk1PData* arg1, s8* arg2, u8 arg3,
                 break;
             }
         } else {
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Master Hand/1P Spawn.asm, @ 0x8017D598. Replaces the external Master Hand ID literal 0x1A with CKind_MasterH. */
+            if ((enemy_idx == 0) && ((s32) enemy_kind[1] == CKind_MasterH)) {
+#else
             if ((enemy_idx == 0) && ((s32) enemy_kind[1] == 0x1A)) {
+#endif
                 arg0->players[player_idx].slot_type = 3;
                 player_idx += 1;
             }
@@ -1028,12 +1068,22 @@ s32 gm_8017DB88(void* arg0, u8 arg1, s32 arg2, s32 arg3, u8* arg4, u8 arg5,
         s32 count;
 
         count = fn_8017DE54(arg1, arg4);
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicInit2.asm, @ 0x8017DD10. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        chars[1] = ChKind_None;
+        out = arg0;
+        chars[2] = ChKind_None;
+        p = chars;
+        i = 0;
+        chars[3] = ChKind_None;
+#else
         chars[1] = 0x21;
         out = arg0;
         chars[2] = 0x21;
         p = chars;
         i = 0;
         chars[3] = 0x21;
+#endif
         chars[0] = arg5;
         for (; i < count; i++) {
             p[1] = fn_8017D9C0(chars, arg4);
@@ -1072,7 +1122,12 @@ s32 gm_8017DB88(void* arg0, u8 arg1, s32 arg2, s32 arg3, u8* arg4, u8 arg5,
             out++;
         }
         for (; i < 3; i++) {
+#if defined(TARGET_PC)
+            /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep30.asm, @ 0x8017DBCC. Replaces the external-ID null literal 0x21 with ChKind_None. */
+            ((RegClearCharEntry*) arg0)[i].x0 = ChKind_None;
+#else
             ((RegClearCharEntry*) arg0)[i].x0 = 0x21;
+#endif
         }
         return count;
     }
@@ -1120,6 +1175,19 @@ s32 fn_8017DE54(u8 arg0, u8* arg1)
     }
     if (arg0 & 0x10) {
         count = 0;
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep28.asm, @ 0x8017DE78. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if ((s32) arg1[0] != ChKind_None) {
+            count = 1;
+        }
+        p = &arg1[1];
+        if ((s32) *p != ChKind_None) {
+            count += 1;
+        }
+        if ((s32) p[1] != ChKind_None) {
+            count += 1;
+        }
+#else
         if ((s32) arg1[0] != 0x21) {
             count = 1;
         }
@@ -1130,6 +1198,7 @@ s32 fn_8017DE54(u8 arg0, u8* arg1)
         if ((s32) p[1] != 0x21) {
             count += 1;
         }
+#endif
         return 3 - count;
     }
     if (arg0 & 2) {

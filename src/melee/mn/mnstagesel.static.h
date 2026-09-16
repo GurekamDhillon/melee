@@ -7,12 +7,27 @@
 
 #include <melee/sc/types.h>
 
+/// Number of actual (selectable) stages on the stage-select screen.
+/// Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/SSS Expansion/
+/// RandomStage - Rewrite.s @ 0x802599EC reads the stage count from
+/// `OFST_Metadata_SSSIconCount` (minus 1 to exclude the "Random" icon).
+#define NUM_STAGES 29
+/// Number of stage-select icons: ::NUM_STAGES stages plus the trailing
+/// "Random" entry at index ::NUM_STAGES.
+#define SSS_ICON_COUNT (NUM_STAGES + 1)
+/// Iteration cap for the random-stage picker in mnStageSel_802599EC.
+#define MAX_ITER 100000
+
 struct stagelistinfo {
     HSD_JObj* x0;
     int x4;
     u8 x8, x9, xA, stkind;
     f32 xC, x10, x14, x18;
+#if defined(TARGET_PC)
+} mnStageSel_803F06D0[SSS_ICON_COUNT] = {
+#else
 } mnStageSel_803F06D0[30] = {
+#endif
     { 0, 0, 0x2, 0x00, 0x00, 0x04, 3.1F, 2.7F, 1.0F, 1.0F },
     { 0, 0, 0x2, 0x01, 0x0C, 0x0B, 3.1F, 2.7F, 1.0F, 1.0F },
     { 0, 0, 0x2, 0x02, 0x01, 0x05, 3.1F, 2.7F, 1.0F, 1.0F },
@@ -83,8 +98,5 @@ struct StageSelUserData {
     u16 x2;
     int x4;
 };
-
-#define MAX_ITER 100000
-#define NUM_STAGES 29
 
 #endif

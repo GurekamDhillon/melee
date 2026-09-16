@@ -1594,6 +1594,28 @@ static bool Ground_801C24F8(StKind stkind, u32 arg1, s32* arg2)
                     }
                     break;
                 case 6:
+#if defined(TARGET_PC)
+                    {
+                        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                         * asm/qol/Stage Music = 50 50.asm, inserted at 0x801C26B0. The
+                         * stock `lha r0, 0x16(r30)` (load StageParam.x16, the alternate-
+                         * track percentage) is replaced with `li r0, 50`, so this stage
+                         * music rule always gives the alternate track a 50% chance
+                         * instead of the stage's configured value.
+                         * Opt-in: MELEE_MEX=stage_music_5050. */
+                        extern int Mex_Enabled(const char *);
+                        if (Mex_Enabled("stage_music_5050")) {
+                            if (gm_80164ABC() &&
+                                (50 > HSD_Randi(RANDI_MAX) || temp_r25))
+                            {
+                                arg1 |= 2;
+                            } else {
+                                arg1 |= 1;
+                            }
+                            break;
+                        }
+                    }
+#endif
                     if (gm_80164ABC() &&
                         (phi_r30->x16 > HSD_Randi(RANDI_MAX) || temp_r25))
                     {

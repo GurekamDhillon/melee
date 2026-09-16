@@ -1,4 +1,6 @@
 #include "gmvs.h"
+#include "gmvsmode.h"
+#include "gmvsmelee.h"
 
 #include <Runtime/platform.h>
 
@@ -332,6 +334,17 @@ bool gm_8016B3D8(void)
 
 bool gm_IsCurrently1PMode_inline(void)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/gameplay/Enable C Stick Always/Single Player Always Returns False.s, inserted at
+     * 0x8016B480, the switch tail. The patch's `nop` neutralises the `return true` dispatch, so
+     * the game never reports a single-player mode and the C-stick is handled like multiplayer.
+     * Opt-in: MELEE_MEX=enable_c_stick_1p. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("enable_c_stick_1p")) {
+        return false;
+    }
+#endif
     switch (gm_GetCurrentGameMode()) {
     case GM_CLASSIC:
     case GM_ADVENTURE:
@@ -1740,6 +1753,49 @@ void fn_8016DCC0(StartMeleeData* arg0)
             fn_8016A09C();
         }
     }
+
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/qol/Limit Costume ID/costume id.asm, inserted at 0x8016DED4. Clamps
+         * each player's costume to the number of costumes their character actually
+         * has, then resolves duplicate character+costume+subcolor picks by bumping
+         * the later player's subcolor.
+         * Opt-in: MELEE_MEX=limit_costume_id. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("limit_costume_id")) {
+            int j;
+            for (i = 0; i < 6; i++) {
+                if (Player_GetPlayerSlotType(i) == Gm_PKind_NA) {
+                    continue;
+                }
+                if ((int) Player_GetCostumeId(i) >=
+                    gm_GetNumCostumesForCKind(Player_GetPlayerCharacter(i)))
+                {
+                    Player_SetCostumeId(i, 0);
+                }
+            }
+            for (i = 0; i < 6; i++) {
+                if (Player_GetPlayerSlotType(i) == Gm_PKind_NA) {
+                    continue;
+                }
+                for (j = 0; j < 6; j++) {
+                    if (j == i || Player_GetPlayerSlotType(j) == Gm_PKind_NA ||
+                        Player_GetPlayerCharacter(j) !=
+                            Player_GetPlayerCharacter(i) ||
+                        Player_GetCostumeId(j) != Player_GetCostumeId(i) ||
+                        Player_GetControllerIndex(j) !=
+                            Player_GetControllerIndex(i))
+                    {
+                        continue;
+                    }
+                    Player_SetControllerIndex(j,
+                                             Player_GetControllerIndex(j) + 1);
+                }
+            }
+        }
+    }
+#endif
 }
 
 static float direction(float x)
@@ -1882,6 +1938,74 @@ void fn_8016E124(void)
 }
 
 /// @todo The loop's SFX flag load uses a different equivalent address form.
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex):
+ * asm/gameplay/Neutral Spawn.asm, inserted at 0x8016E510 inside fn_8016E2BC's spawn loop. The
+ * patch re-homes each player at a per-stage "neutral spawn" position (separate singles and teams
+ * layouts) instead of the stock spawn points. Opt-in: MELEE_MEX=neutral_spawn. */
+typedef struct {
+    s32 stage_id;
+    float singles[4][2];
+    float teams[4][2];
+} NeutralSpawnEntry;
+
+static const NeutralSpawnEntry neutral_spawn_table[] = {
+    { 0x20,
+      { { -60.0f, 10.0f }, { 60.0f, 10.0f }, { -20.0f, 10.0f }, { 20.0f, 10.0f } },
+      { { -60.0f, 10.0f }, { -20.0f, 10.0f }, { 60.0f, 10.0f }, { 20.0f, 10.0f } } },
+    { 0x1F,
+      { { -38.8f, 35.2f }, { 38.8f, 35.2f }, { 0.0f, 8.0f }, { 0.0f, 62.4f } },
+      { { -38.8f, 35.2f }, { -38.8f, 5.0f }, { 38.8f, 35.2f }, { 38.8f, 5.0f } } },
+    { 0x08,
+      { { -42.0f, 26.6f }, { 42.0f, 28.0f }, { 0.0f, 46.9f }, { 0.0f, 4.9f } },
+      { { -42.0f, 26.6f }, { -42.0f, 5.0f }, { 42.0f, 28.0f }, { 42.0f, 5.0f } } },
+    { 0x1C,
+      { { -46.6f, 37.2f }, { 47.4f, 37.3f }, { 0.0f, 7.0f }, { 0.0f, 58.5f } },
+      { { -46.6f, 37.2f }, { -46.6f, 5.0f }, { 47.4f, 37.3f }, { 47.4f, 5.0f } } },
+    { 0x02,
+      { { -41.25f, 21.0f }, { 41.25f, 27.0f }, { 0.0f, 5.25f }, { 0.0f, 48.0f } },
+      { { -41.25f, 21.0f }, { -41.25f, 5.0f }, { 41.25f, 27.0f }, { 41.25f, 5.0f } } },
+    { 0x03,
+      { { -40.0f, 32.0f }, { 40.0f, 32.0f }, { 70.0f, 7.0f }, { -70.0f, 7.0f } },
+      { { -40.0f, 32.0f }, { -40.0f, 5.0f }, { 40.0f, 32.0f }, { 40.0f, 5.0f } } },
+    { -1, { { 0.0f } }, { { 0.0f } } },
+};
+
+static const u8 neutral_spawn_notfound_doubles[4] = { 0x00, 0x03, 0x01, 0x02 };
+
+static void neutral_spawn_set(int slot, int spawn_id, bool is_teams)
+{
+    Vec3 pos;
+    int stage_id = gm_GetStKind();
+    int i;
+    const NeutralSpawnEntry* entry = NULL;
+
+    for (i = 0; neutral_spawn_table[i].stage_id != -1; i++) {
+        if (neutral_spawn_table[i].stage_id == stage_id) {
+            entry = &neutral_spawn_table[i];
+            break;
+        }
+    }
+    if (entry != NULL) {
+        const float* p = is_teams ? entry->teams[spawn_id] : entry->singles[spawn_id];
+        pos.x = p[0];
+        pos.y = p[1];
+        pos.z = 0.0f;
+        Player_80032768(slot, &pos);
+    } else {
+        int id = is_teams ? neutral_spawn_notfound_doubles[spawn_id] : spawn_id;
+        Stage_80224E64(id, &pos);
+        Player_80032768(slot, &pos);
+    }
+    Player_LoadPlayerCoords(slot, &pos);
+    if (pos.x <= 0.0f) {
+        Player_SetFacingDirection(slot, 1.0f);
+    } else {
+        Player_SetFacingDirection(slot, -1.0f);
+    }
+}
+#endif
+
 void fn_8016E2BC(void)
 {
     UNUSED u8 pad[8];
@@ -1940,6 +2064,71 @@ void fn_8016E2BC(void)
                     }
                 }
                 Player_80032768(i, &sp18);
+#if defined(TARGET_PC)
+                /* Ported from m-ex (https://github.com/akaneia/m-ex):
+                 * asm/gameplay/Neutral Spawn.asm, inserted at 0x8016E510. Override each player's
+                 * spawn point with the per-stage neutral spawn layout. Opt-in:
+                 * MELEE_MEX=neutral_spawn. */
+                extern int Mex_Enabled(const char *);
+                if (Mex_Enabled("neutral_spawn") && !gm_IsCurrently1PMode_inline() && i < 5) {
+                    bool neutral_is_teams = controller.start.is_teams == true;
+                    if (neutral_is_teams) {
+                        bool is_2v2 = true;
+                        int team_id;
+                        for (team_id = 0; team_id < 3; team_id++) {
+                            int members = 0;
+                            int cnt;
+                            for (cnt = 0; cnt < 4; cnt++) {
+                                if (Player_GetPlayerSlotType(cnt) == Gm_PKind_NA) {
+                                    continue;
+                                }
+                                if (Player_GetTeam(cnt) == team_id) {
+                                    members++;
+                                }
+                            }
+                            if (members == 1 || members > 2) {
+                                is_2v2 = false;
+                                break;
+                            }
+                        }
+                        if (is_2v2) {
+                            int team_array[4];
+                            int array_size = 0;
+                            int idx;
+                            for (team_id = 0; team_id < 3; team_id++) {
+                                int cnt;
+                                for (cnt = 0; cnt < 4; cnt++) {
+                                    if (Player_GetPlayerSlotType(cnt) == Gm_PKind_NA) {
+                                        continue;
+                                    }
+                                    if (Player_GetTeam(cnt) == team_id) {
+                                        team_array[array_size++] = cnt;
+                                    }
+                                }
+                            }
+                            for (idx = 0; idx < 4; idx++) {
+                                if (team_array[idx] == i) {
+                                    break;
+                                }
+                            }
+                            neutral_spawn_set(i, idx, true);
+                        }
+                    } else {
+                        int spawn_order = 0;
+                        int loop;
+                        for (loop = 0; loop <= 4; loop++) {
+                            if (Player_GetPlayerSlotType(loop) == Gm_PKind_NA) {
+                                continue;
+                            }
+                            if (i == loop) {
+                                break;
+                            }
+                            spawn_order++;
+                        }
+                        neutral_spawn_set(i, spawn_order, false);
+                    }
+                }
+#endif
                 is_teams = controller.start.is_teams == true;
                 Player_SetUnk45(
                     i, fn_80160840(gm_80160854(Player_GetPlayerId(i),
@@ -2123,6 +2312,19 @@ void gm_Scene_Vs_OnExit(void* user_data)
             }
         }
     }
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/gameplay/CSS KO Star Codes/Calculate KO Stars Upon Exiting Dairantou.asm, inserted at
+     * 0x8016EBAC, the function epilogue. When leaving VS mode the patch records the match into the
+     * results state, updates the KO-star counts from the match data, and refreshes the VS records.
+     * Opt-in: MELEE_MEX=ko_stars_on_exit. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("ko_stars_on_exit") && gm_GetCurrentGameMode() == GM_VS) {
+        gmVsMelee_EnterResults(gm_Mode_Vs_States);
+        gmVsMelee_ExitResults(gm_Mode_Vs_States, &gmMainLib_804D3EE0->modes.vs_melee, 0);
+        gm_801623A4(&gmVsMelee_ResultsEnterData.match_end);
+    }
+#endif
 }
 
 void gm_Scene_SuddenDeath_OnEnter(void* user_data)

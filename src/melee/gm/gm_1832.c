@@ -898,7 +898,12 @@ s32 fn_80185E34(void)
     local = lbl_803B7C28;
 
     for (i = 0; i < lbl_8047368C.xEF; i++) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/IntroInitLeft.asm, @ 0x80185EA4. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if (lbl_8047368C.xF1[i] != ChKind_None) {
+#else
         if (lbl_8047368C.xF1[i] != 0x21) {
+#endif
             Player_80036CF0(player_slot);
             Player_SetPlayerCharacter(player_slot,
                                       (CharacterKind) lbl_8047368C.xF1[i]);
@@ -924,7 +929,12 @@ void fn_80185F5C(s32 arg0)
     local = lbl_803B7C40;
 
     while (i < lbl_8047368C.xF0) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/IntroInitRight.asm, @ 0x80185FCC. Replaces the external-ID null literal 0x21 with ChKind_None. */
+        if (lbl_8047368C.xF1[i] != ChKind_None) {
+#else
         if (lbl_8047368C.xF1[i] != 0x21) {
+#endif
             Player_80036CF0(arg0);
             Player_SetPlayerCharacter(arg0,
                                       (CharacterKind) lbl_8047368C.xF4[i]);

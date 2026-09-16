@@ -83,6 +83,37 @@ GXRenderModeObj gmMainLib_803D4A80 = {
     { 8, 8, 0xA, 0xC, 0xA, 8, 8 },
 };
 
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex): asm/qol/Default Tournament
+ * Settings/*.asm (data words at 0x803D4A48/4C/50/60/78). Applies the tournament-
+ * standard defaults to gmMainLib_DefaultGameRules / gmMainLib_DefaultGamePrefs at
+ * boot, before they are copied into the active state.
+ * Opt-in via MELEE_MEX=<default_stock_mode|default_4_stocks|default_8_minutes|
+ * default_no_items|default_tournament_stages>. */
+static void gmMainLib_MexApplyTournamentDefaults(void)
+{
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("default_stock_mode")) {
+        gmMainLib_DefaultGameRules.mode = 1;
+        gmMainLib_DefaultGameRules.time_limit = 0;
+    }
+    if (Mex_Enabled("default_4_stocks")) {
+        gmMainLib_DefaultGameRules.stock_count = 4;
+    }
+    if (Mex_Enabled("default_8_minutes")) {
+        gmMainLib_DefaultGameRules.stock_time_limit = 8;
+        gmMainLib_DefaultGameRules.friendly_fire = true;
+    }
+    if (Mex_Enabled("default_no_items")) {
+        gmMainLib_DefaultGamePrefs.item_freq = 0xFF;
+    }
+    /* m-ex (https://github.com/akaneia/m-ex): tournament-legal stage mask. */
+    if (Mex_Enabled("default_tournament_stages")) {
+        gmMainLib_DefaultGamePrefs.stage_mask = 0xE70000B0;
+    }
+}
+#endif
+
 #ifdef MUST_MATCH
 static void order_bss(void)
 {
@@ -645,6 +676,17 @@ int gmMainLib_8015D94C(u32 arg0)
 {
     u32* thing = &gmMainLib_GetSaveData()->x1B4C[0];
     u32 flag = thing[arg0 / 32];
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Special Messages/Special Messages 1.asm,
+     * inserted at 0x8015D968. The stock `and r3,r4,r0` tests the save-data bit for a special
+     * message; the patch's `li r3,1` reports every special message as unlocked. Opt-in:
+     * MELEE_MEX=unlock_special_messages. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_special_messages")) {
+        return 1;
+    }
+#endif
     return flag & (1 << (arg0 % 32));
 }
 
@@ -670,6 +712,17 @@ bool gmMainLib_8015D984(u32 arg0)
         return true;
     }
 
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Special Messages/Special Messages 2.asm,
+     * inserted at 0x8015D9D8, the `return false` tail. The patch's `li r3,1` turns the
+     * already-recorded path into a `return true`, so a special message is always reported as
+     * newly recorded. Opt-in: MELEE_MEX=unlock_special_messages_2. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_special_messages_2")) {
+        return true;
+    }
+#endif
     return false;
 }
 
@@ -946,6 +999,16 @@ struct gmm_x1868_1A8_t* gmMainLib_8015EDC8(void)
 
 s32 gmMainLib_8015EDD4(void)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock Sound Test.asm, inserted at 0x8015EDDC. The
+     * stock `rlwinm r3,r0,0,29,29` extracts the sound-test unlock bit; the patch's `li r3,1`
+     * makes the feature report unlocked. Opt-in: MELEE_MEX=unlock_sound_test. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_sound_test")) {
+        return 1;
+    }
+#endif
     return gmMainLib_GetSaveData()->x186C & 4;
 }
 
@@ -961,6 +1024,16 @@ void gmMainLib_8015EDF8(void)
 
 s32 gmMainLib_8015EE0C(void)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Rules/Unlock Score Display.asm, inserted at
+     * 0x8015EE14. The stock `clrlwi r3,r0,31` extracts the score-display unlock bit; the patch's
+     * `li r3,1` makes it report unlocked. Opt-in: MELEE_MEX=unlock_score_display. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_score_display")) {
+        return 1;
+    }
+#endif
     return gmMainLib_GetSaveData()->x186C & 1;
 }
 
@@ -976,6 +1049,17 @@ void gmMainLib_8015EE30(void)
 
 s32 gmMainLib_8015EE44(void)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Rules/Unlock Random Stage Select.asm, inserted
+     * at 0x8015EE4C. The stock `rlwinm r3,r0,0,30,30` extracts the random-stage-select unlock
+     * bit; the patch's `li r3,1` makes it report unlocked. Opt-in:
+     * MELEE_MEX=unlock_random_stage_select. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_random_stage_select")) {
+        return 1;
+    }
+#endif
     return gmMainLib_GetSaveData()->x186C & 2;
 }
 
@@ -993,6 +1077,16 @@ void gmMainLib_8015EE68(void)
 
 s32 gmMainLib_8015EE90(void)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All-Star.asm, inserted at 0x8015EE98. The stock
+     * `rlwinm r3,r0,0,28,28` extracts the All-Star unlock bit; the patch's `li r3,1` makes it
+     * report unlocked. Opt-in: MELEE_MEX=unlock_all_star. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("unlock_all_star")) {
+        return 1;
+    }
+#endif
     return gmMainLib_GetSaveData()->x186C & 8;
 }
 
@@ -1214,6 +1308,22 @@ void gmMainLib_8015F600(int arg0, int arg1)
         memzero(&gmMainLib_804D3EE0->thing.trophy_count, 0x25C);
         Toy_80311960();
 
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/Additional/Unlock Everything/Unlock All Trophies/Fill Save Data.asm, inserted at
+         * 0x8015F6F8, the `arg1 == 0` comparison. The patch writes the trophy save block
+         * (count = 293, every trophy flag = 99) right after the block is zeroed, so a freshly
+         * reset save already has all trophies collected. Opt-in: MELEE_MEX=fill_trophy_save_data. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("fill_trophy_save_data")) {
+            int ti;
+            gmMainLib_GetSaveData()->trophy_count = 293;
+            for (ti = 0; ti < TY_TROPHY_COUNT; ti++) {
+                gmMainLib_GetSaveData()->trophy_flags[ti] = 99;
+            }
+        }
+#endif
+
         if (arg1 == 0) {
             Toy_803124BC();
             Toy_SetUnlockState((s32) (s16) Toy_80305058(2, 0x63, 0, 100.0f),
@@ -1328,6 +1438,10 @@ void gmMainLib_8015FB68(void)
 void gmMainLib_8015FBA4(void)
 {
     int i;
+
+#if defined(TARGET_PC)
+    gmMainLib_MexApplyTournamentDefaults();
+#endif
 
     memzero(gmMainLib_804D3EE0, 0x10A30);
     if (DVDConvertPathToEntrynum("/usa.ini") != -1) {

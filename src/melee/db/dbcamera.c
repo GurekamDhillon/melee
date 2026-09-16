@@ -283,8 +283,21 @@ void fn_CheckCameraInfo(int player, int buttons_down, int buttons_pressed,
                         f32 cstick_x, f32 cstick_y)
 {
     if (gm_8018841C() == 0 && gm_GetCurrentGameMode() != GM_CAMERA_MODE) {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/gameplay/Enable C Stick Always/Rotate Camera with Dpad Down and C Stick -
+         * Initiate.asm, inserted at 0x802274F0. Holding dpad-down forces the camera-rotate check
+         * onto its else path, freeing the C-stick for the dpad-down rotate. Opt-in:
+         * MELEE_MEX=rotate_camera_dpad_down. */
+        extern int Mex_Enabled(const char *);
+#endif
         if (Camera_80030178() == 0 && Camera_80030154() == 0 &&
-            (ABS(cstick_x) > 0.6F || ABS(cstick_y) > 0.6F))
+            (ABS(cstick_x) > 0.6F || ABS(cstick_y) > 0.6F)
+#if defined(TARGET_PC)
+            && !(Mex_Enabled("rotate_camera_dpad_down") &&
+                 (HSD_PadMasterStatus[player].button & HSD_PAD_DPADDOWN))
+#endif
+           )
         {
             fn_CheckCameraInfo_helper();
             Camera_8003006C();
@@ -384,7 +397,17 @@ static void fn_80227904(HSD_GObj* camera, int port)
     } else if (buttons & 2) {
         fn_80227FE0(camera, -cstick_x, -cstick_y);
     } else {
-        fn_80227B64(camera, cstick_x, cstick_y);
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/gameplay/Enable C Stick Always/Rotate Camera with Dpad Down and C Stick.asm,
+         * inserted at 0x80227B70 in fn_80227B64 (whose only caller is this function). Holding
+         * dpad-down skips the free-camera orbit. Opt-in: MELEE_MEX=rotate_camera_dpad_down. */
+        extern int Mex_Enabled(const char *);
+        if (!(Mex_Enabled("rotate_camera_dpad_down") && (buttons & HSD_PAD_DPADDOWN)))
+#endif
+        {
+            fn_80227B64(camera, cstick_x, cstick_y);
+        }
     }
     db_CameraInfoDisplayTimer = 0x3C;
 }

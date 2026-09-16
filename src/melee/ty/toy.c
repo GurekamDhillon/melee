@@ -121,6 +121,16 @@ bool un_80304470(void)
     if (sum <= count) {
         return 1;
     } else {
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/Additional/Unlock Everything/Unlock All Trophies/Spoof All Trophies as Unlocked.asm,
+         * inserted at 0x803044F0, the `else` branch's `li r3,0`. The patch's `li r3,1` makes the
+         * all-trophies check report unlocked. Opt-in: MELEE_MEX=unlock_all_trophies. */
+        extern int Mex_Enabled(const char *);
+        if (Mex_Enabled("unlock_all_trophies")) {
+            return 1;
+        }
+#endif
         return 0;
     }
 }
@@ -618,6 +628,16 @@ static inline u16* idk(void)
 
 s32 Toy_803048C0(int arg0)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex):
+     * asm/Additional/Unlock Everything/Unlock All Trophies/Have 99 of Every Trophy.asm, inserted
+     * at 0x8030490C, the `clrlwi r3,r0,24` count mask. The patch's `li r3,99` reports 99 of every
+     * trophy. Opt-in: MELEE_MEX=have_99_trophies. */
+    extern int Mex_Enabled(const char *);
+    if (Mex_Enabled("have_99_trophies")) {
+        return 99;
+    }
+#endif
     return idk()[arg0] & 0xFF;
 }
 

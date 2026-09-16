@@ -1040,6 +1040,20 @@ void fn_80182F40(HSD_GObj* unused)
     if (gm_801A4BA8() >= 0x4B0) {
         lbAudioAx_80024C84();
         lbAudioAx_80023694();
+#if defined(TARGET_PC)
+        {
+            /* Ported from m-ex (https://github.com/akaneia/m-ex):
+             * asm/qol/Disable Movies/Title InGame Demo.asm, inserted at 0x80182FBC. The stock
+             * `bne` (skip the demo-start block when the scene is not 3) is replaced with an
+             * unconditional branch to the same target, so the title screen never starts the
+             * in-game demo. Opt-in: MELEE_MEX=no_title_demo. */
+            extern int Mex_Enabled(const char *);
+            if (Mex_Enabled("no_title_demo")) {
+                gm_801A4B60();
+                return;
+            }
+        }
+#endif
         if (gm_GetCurrentSceneIndex() == 3 && gmMainLib_8015DB00() % 2 == 0) {
             gmMainLib_8015DB18();
             gm_SetNextGameModeStateId(0);

@@ -4,6 +4,16 @@
 #include <melee/lb/lbheap.h> // IWYU pragma: export
 #include <melee/lb/lbmemory.h>
 
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/Persistent Heap Expansion/
+ * adds a seventh heap slot (id 6) and moves the descriptor terminator to 7. This one is a
+ * build-level change rather than a runtime option, because the heap array's size must be
+ * compile-time; it is therefore always on for TARGET_PC and never on for the matcher. */
+#define LBHEAP_HEAP_COUNT 7
+#else
+#define LBHEAP_HEAP_COUNT 6
+#endif
+
 struct Heap {
     /* 10 */ s32 id;
     /* 14 */ Handle* handle;
@@ -22,9 +32,9 @@ struct lbHeap_HeapState {
     /* 0x04 */ void* arena_hi;    /* inferred */
     /* 0x08 */ uintptr_t aram_lo; /* inferred */
     /* 0x0C */ uintptr_t aram_hi; /* inferred */
-    /* 0x10 */ struct Heap heap_array[6];
-}; /* size = 0xB8 */
-ASSERT_SIZE(struct lbHeap_HeapState, 0xB8);
+    /* 0x10 */ struct Heap heap_array[LBHEAP_HEAP_COUNT];
+}; /* size = 0xB8 vanilla; grows 0x1C per extra heap */
+ASSERT_SIZE(struct lbHeap_HeapState, 0x10 + LBHEAP_HEAP_COUNT * 0x1C);
 
 /* 431FA0 */ static struct lbHeap_HeapState lbHeap_80431FA0;
 

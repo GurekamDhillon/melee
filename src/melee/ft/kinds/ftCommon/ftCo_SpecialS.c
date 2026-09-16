@@ -45,5 +45,12 @@ static void doEnter(Fighter_GObj* gobj)
     fp->gr_vel +=
         -(fp->gr_vel * (1 - fp->co_attrs.specials_ground_speed_retention)) *
         ft_GetGroundFrictionMultiplier(fp);
+#if defined(TARGET_PC)
+    {
+        extern void Mex_SpecialSDispatch(int kind, void* gobj, void* vanilla);
+        Mex_SpecialSDispatch(fp->kind, gobj, (void*) ftData_SpecialS[fp->kind]);
+    }
+#else
     ftData_SpecialS[fp->kind](gobj);
+#endif
 }

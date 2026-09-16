@@ -231,7 +231,15 @@ void ftCo_800D105C(Fighter_GObj* fgp)
 
     HSD_ASSERTREPORT(0x10d, ftKindCalcIndiviParamTable[fp->kind] != NULL,
                      "don\'t set ftKindCalcIndiviParamTable!!\n");
+#if defined(TARGET_PC)
+    {
+        extern void Mex_OnReapplyAttrDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnReapplyAttrDispatch(fp->kind, fgp,
+                                  (void*) ftKindCalcIndiviParamTable[fp->kind]);
+    }
+#else
     ftKindCalcIndiviParamTable[fp->kind](fgp);
+#endif
 
     if (fp->x2D0 != NULL) {
         ftCo_800D0CBC(fgp);

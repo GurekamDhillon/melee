@@ -1108,6 +1108,39 @@ void gw_Mex_OnKnockbackEnterDispatch(int kind, void *gobj, void *vanilla) {
 void gw_Mex_OnKnockbackExitDispatch(int kind, void *gobj, void *vanilla) {
   gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_KNOCKBACK_EXIT, kind, gobj, vanilla);
 }
+void gw_Mex_OnActionStateChangeDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, kind, gobj, vanilla);
+}
+void gw_Mex_OnReapplyAttrDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_REAPPLY_ATTR, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialNDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_N, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialNAirDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_N_AIR, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialSDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_S, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialSAirDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_S_AIR, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialHiDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_HI, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialHiAirDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_HI_AIR, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialLwDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_LW, kind, gobj, vanilla);
+}
+void gw_Mex_SpecialLwAirDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_SPECIAL_LW_AIR, kind, gobj, vanilla);
+}
+void gw_Mex_MoveLogicDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_MOVE_LOGIC, kind, gobj, vanilla);
+}
 
 /* Demo registration for OnFrame: proves the surface fires without a custom mod. Installed once,
  * from gw_mex_load(), so it rides the existing "read flags once" path. The hook logs only its

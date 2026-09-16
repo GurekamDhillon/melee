@@ -48,7 +48,14 @@ bool ftCo_800D6824(Fighter_GObj* gobj)
         return false;
     }
     if (fp->x689 == 0) {
+#if defined(TARGET_PC)
+        {
+            extern void Mex_SpecialNDispatch(int kind, void* gobj, void* vanilla);
+            Mex_SpecialNDispatch(fp->kind, gobj, (void*) ftData_SpecialN[fp->kind]);
+        }
+#else
         ftData_SpecialN[fp->kind](gobj);
+#endif
         return true;
     }
     return false;
@@ -71,7 +78,14 @@ bool ftCo_800D68C0(Fighter_GObj* gobj)
         return false;
     }
     if (fp->x687 == 0) {
+#if defined(TARGET_PC)
+        {
+            extern void Mex_SpecialLwDispatch(int kind, void* gobj, void* vanilla);
+            Mex_SpecialLwDispatch(fp->kind, gobj, (void*) ftData_SpecialLw[fp->kind]);
+        }
+#else
         ftData_SpecialLw[fp->kind](gobj);
+#endif
         return true;
     }
     return false;
@@ -94,7 +108,14 @@ bool ftCo_Attack100_CheckInput(Fighter_GObj* gobj)
         return false;
     }
     if (fp->x686 == 0) {
+#if defined(TARGET_PC)
+        {
+            extern void Mex_SpecialHiDispatch(int kind, void* gobj, void* vanilla);
+            Mex_SpecialHiDispatch(fp->kind, gobj, (void*) ftData_SpecialHi[fp->kind]);
+        }
+#else
         ftData_SpecialHi[fp->kind](gobj);
+#endif
         return true;
     }
     return false;
@@ -107,7 +128,14 @@ bool ftCo_800D69C4(Fighter_GObj* gobj)
         return false;
     }
     if (fp->x686 == 0 && fp->x68B >= p_ftCommonData->x1C) {
+#if defined(TARGET_PC)
+        {
+            extern void Mex_SpecialHiAirDispatch(int kind, void* gobj, void* vanilla);
+            Mex_SpecialHiAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirHi[fp->kind]);
+        }
+#else
         ftData_SpecialAirHi[fp->kind](gobj);
+#endif
         return true;
     }
     return false;

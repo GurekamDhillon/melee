@@ -39,7 +39,18 @@
 /* Arch_FighterFunc slot indices (Header.s: onLoad 0x00 ... GetTrailData 0xB4). See
  * gw_mex_ftfunction.c's slot_names table; onFrame is slot 23. */
 #define GW_MEX_SLOT_ON_LOAD 0
+#define GW_MEX_SLOT_MOVE_LOGIC 3
+#define GW_MEX_SLOT_SPECIAL_N 4
+#define GW_MEX_SLOT_SPECIAL_N_AIR 5
+#define GW_MEX_SLOT_SPECIAL_S 6
+#define GW_MEX_SLOT_SPECIAL_S_AIR 7
+#define GW_MEX_SLOT_SPECIAL_HI 8
+#define GW_MEX_SLOT_SPECIAL_HI_AIR 9
+#define GW_MEX_SLOT_SPECIAL_LW 10
+#define GW_MEX_SLOT_SPECIAL_LW_AIR 11
 #define GW_MEX_SLOT_ON_FRAME 23
+#define GW_MEX_SLOT_ON_ACTION_STATE_CHANGE 24
+#define GW_MEX_SLOT_ON_REAPPLY_ATTR 25
 
 /* onLoad's absolute bl targets (see the disassembly in the evidence log). */
 #define GW_MEX_GUEST_INDEX_ITEM   0x803D7058u /* m-ex MEX_IndexFighterItem (no vanilla symbol) */
@@ -213,6 +224,61 @@ static void gw_mex_interp_onframe(void *gobj) {
     }
 }
 
+/* Run one override slot, logging its first invocation and a throttled progress line. Used by the
+ * auto-firing overrides (onActionStateChange / onReapplyAttr) so their execution is provable in the
+ * log without flooding. Each slot's first invocation is always logged; later ones every 60. */
+static uint32_t gw_mex_interp_run_logged(uint32_t slot, const char *name, void *gobj) {
+    uint32_t target = gw_mex_override_target(slot);
+    static int first_logged[64];
+    static uint32_t count[64];
+    uint32_t r3;
+
+    if (target == 0) {
+        return 0;
+    }
+    ++count[slot];
+    if (slot < 64u && !first_logged[slot]) {
+        first_logged[slot] = 1;
+        gw_log("interp: %s kind=%d entry=0x%08X gobj=%p invocation 1 running", name,
+               GW_MEX_KIND_SONIC, target, gobj);
+    }
+    r3 = gw_mex_interp_run(slot, gobj);
+    if (slot < 64u && (count[slot] == 1u || (count[slot] % 60u) == 1u)) {
+        gw_log("interp: %s kind=%d invocation %u ran, r3=0x%08X", name, GW_MEX_KIND_SONIC,
+               count[slot], r3);
+    }
+    return r3;
+}
+
+/* onActionStateChange (slot 24) - dispatched from ftcolanim.c's four ftData_UnkMotionStates4 call
+ * sites (ftCo_800C0134 / ftCo_800C0200 / ftCo_800C0408). Fires when the fighter's colour-anim
+ * action state changes, so it runs during spawn/respawn without any input. */
+static void gw_mex_interp_action_state_change(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_ACTION_STATE_CHANGE, "onActionStateChange", gobj);
+}
+
+/* onReapplyAttr (slot 25) - dispatched from ftCo_800D105C (ftchangeparam.c), which re-applies the
+ * fighter's DAT attributes (plus metal/bunny-hood modifiers) at spawn and on item effects. */
+static void gw_mex_interp_reapply_attr(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_REAPPLY_ATTR, "onReapplyAttr", gobj);
+}
+
+/* The 8 specials (slots 4-11) - dispatched from the existing ftData_Special* call sites in
+ * ftCo_Attack100.c / ftCo_SpecialS.c / ftCo_SpecialAir.c. They fire on B-button input, so in a
+ * headless Target Test they only run when MELEE_PAD_SCRIPT drives a B press. */
+#define GW_MEX_SPECIAL_INTERP(slot, NAME)                                          \
+    static void gw_mex_interp_##NAME(void *gobj) {                                 \
+        gw_mex_interp_run_logged(slot, #NAME, gobj);                               \
+    }
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_N, special_n)
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_N_AIR, special_n_air)
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_S, special_s)
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_S_AIR, special_s_air)
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_HI, special_hi)
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_HI_AIR, special_hi_air)
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_LW, special_lw)
+GW_MEX_SPECIAL_INTERP(GW_MEX_SLOT_SPECIAL_LW_AIR, special_lw_air)
+
 /* Called from game code (ftData_8008572C) once Sonic's data is on the disc. `kind` is the port's
  * Ft_Kind_Sonic (33). */
 void gw_Mex_FtFunctionInstall(int kind) {
@@ -260,10 +326,27 @@ void gw_Mex_FtFunctionInstall(int kind) {
      * events (onDeath/onDestroy/...) are not registered so they keep their vanilla behaviour. */
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, GW_MEX_KIND_SONIC, gw_mex_interp_onload);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, GW_MEX_KIND_SONIC, gw_mex_interp_onframe);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_action_state_change);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_REAPPLY_ATTR, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_reapply_attr);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N, GW_MEX_KIND_SONIC, gw_mex_interp_special_n);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N_AIR, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_special_n_air);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S, GW_MEX_KIND_SONIC, gw_mex_interp_special_s);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S_AIR, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_special_s_air);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI, GW_MEX_KIND_SONIC, gw_mex_interp_special_hi);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI_AIR, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_special_hi_air);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW, GW_MEX_KIND_SONIC, gw_mex_interp_special_lw);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW_AIR, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_special_lw_air);
 
     gw_mex_installed = 1;
     gw_log("interp: installed Sonic ftFunction (code 0x%08X..0x%08X, mexData 0x%08X, stack "
-           "0x%08X, %d overrides); onLoad override active",
+           "0x%08X, %d overrides); onLoad/onFrame/onActionStateChange/onReapplyAttr/8 specials "
+           "active",
            gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size, mexdata_base,
            stack_base, gw_mex_ff.override_count);
 }

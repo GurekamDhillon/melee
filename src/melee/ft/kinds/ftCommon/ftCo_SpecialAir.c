@@ -16,7 +16,14 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
             if (ftData_SpecialAirHi[fp->kind] == NULL) {
                 return false;
             }
+#if defined(TARGET_PC)
+            {
+                extern void Mex_SpecialHiAirDispatch(int kind, void* gobj, void* vanilla);
+                Mex_SpecialHiAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirHi[fp->kind]);
+            }
+#else
             ftData_SpecialAirHi[fp->kind](gobj);
+#endif
             fp->x2227_b5 = true;
             return true;
         }
@@ -24,7 +31,14 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
             if (ftData_SpecialAirLw[fp->kind] == NULL) {
                 return false;
             }
+#if defined(TARGET_PC)
+            {
+                extern void Mex_SpecialLwAirDispatch(int kind, void* gobj, void* vanilla);
+                Mex_SpecialLwAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirLw[fp->kind]);
+            }
+#else
             ftData_SpecialAirLw[fp->kind](gobj);
+#endif
             fp->x2227_b5 = true;
             return true;
         }
@@ -36,7 +50,14 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
             {
                 ftCommon_UpdateFacing(fp);
             }
+#if defined(TARGET_PC)
+            {
+                extern void Mex_SpecialSAirDispatch(int kind, void* gobj, void* vanilla);
+                Mex_SpecialSAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirS[fp->kind]);
+            }
+#else
             ftData_SpecialAirS[fp->kind](gobj);
+#endif
             fp->x2227_b5 = true;
             return true;
         }
@@ -49,7 +70,14 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
         {
             fp->facing_dir = -fp->facing_dir;
         }
+#if defined(TARGET_PC)
+        {
+            extern void Mex_SpecialNAirDispatch(int kind, void* gobj, void* vanilla);
+            Mex_SpecialNAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirN[fp->kind]);
+        }
+#else
         ftData_SpecialAirN[fp->kind](gobj);
+#endif
         fp->x2227_b5 = true;
         return true;
     }

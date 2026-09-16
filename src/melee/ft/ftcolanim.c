@@ -32,6 +32,18 @@ FtCmd ftCo_803C6ADC[3] = {
     ftCo_800BFF14,
 };
 
+#if defined(TARGET_PC)
+/* m-ex onActionStateChange (Arch_FighterFunc slot 24) replaces ftData_UnkMotionStates4. The
+ * dispatch runs a registered override (e.g. Sonic's PPC onActionStateChange) else the vanilla
+ * entry; the NULL check lives inside the dispatcher, mirroring the vanilla guard. */
+static void ftCo_DispatchActionStateChange(Fighter* fp)
+{
+    extern void Mex_OnActionStateChangeDispatch(int kind, void* gobj, void* vanilla);
+    Mex_OnActionStateChangeDispatch(fp->kind, fp->gobj,
+                                    (void*) ftData_UnkMotionStates4[fp->kind]);
+}
+#endif
+
 void ftCo_800BFD04(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -168,9 +180,13 @@ void ft_800C0098(Fighter* fp)
 void ftCo_800C0134(Fighter* fp)
 {
     lb_80014498(&fp->x488);
+#if defined(TARGET_PC)
+    ftCo_DispatchActionStateChange(fp);
+#else
     if (ftData_UnkMotionStates4[fp->kind] != NULL) {
         ftData_UnkMotionStates4[fp->kind](fp->gobj);
     }
+#endif
     if (ftCo_800C53E4(fp) != 0) {
         s32 arg1 = 0x6A;
         if (arg1 >= 0x7B) {
@@ -203,9 +219,13 @@ void ftCo_800C0200(Fighter* fp, int arg1)
     }
     if (Fighter_804D653C[arg1].unk5 != 0) {
         lb_80014498(&fp->x488);
+#if defined(TARGET_PC)
+        ftCo_DispatchActionStateChange(fp);
+#else
         if (ftData_UnkMotionStates4[fp->kind] != NULL) {
             ftData_UnkMotionStates4[fp->kind](fp->gobj);
         }
+#endif
         if (ftCo_800C53E4(fp) != 0) {
             ftCo_800BFFD0(fp, 0x6A, 0);
         }
@@ -267,9 +287,13 @@ void ftCo_800C0408(Fighter_GObj* gobj)
     if (fp->x408.x28_colanim.i == 0) {
         while (lb_80014258(gobj, &fp->x488, ft_800BFF34)) {
             lb_80014498(&fp->x488);
+#if defined(TARGET_PC)
+            ftCo_DispatchActionStateChange(fp);
+#else
             if (ftData_UnkMotionStates4[fp->kind] != NULL) {
                 ftData_UnkMotionStates4[fp->kind](fp->gobj);
             }
+#endif
             if (ftCo_800C53E4(fp)) {
                 ftCo_800BFFD0(fp, 0x6A, 0);
             }
@@ -277,9 +301,13 @@ void ftCo_800C0408(Fighter_GObj* gobj)
     } else {
         while (lb_80014258(gobj, &fp->x488, ft_800BFF70)) {
             lb_80014498(&fp->x488);
+#if defined(TARGET_PC)
+            ftCo_DispatchActionStateChange(fp);
+#else
             if (ftData_UnkMotionStates4[fp->kind] != NULL) {
                 ftData_UnkMotionStates4[fp->kind](fp->gobj);
             }
+#endif
             if (ftCo_800C53E4(fp)) {
                 ftCo_800BFFD0(fp, 0x6A, 0);
             }

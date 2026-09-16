@@ -186,6 +186,17 @@ enum {
     GW_MEX_EVENT_ON_ITEM_VISIBLE,     /* ftData_OnItemVisible     */
     GW_MEX_EVENT_ON_KNOCKBACK_ENTER,  /* ftData_OnKnockbackEnter  */
     GW_MEX_EVENT_ON_KNOCKBACK_EXIT,   /* ftData_OnKnockbackExit   */
+    GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, /* ftData_UnkMotionStates4  */
+    GW_MEX_EVENT_ON_REAPPLY_ATTR,     /* ftKindCalcIndiviParamTable */
+    GW_MEX_EVENT_SPECIAL_N,           /* ftData_SpecialN            */
+    GW_MEX_EVENT_SPECIAL_N_AIR,       /* ftData_SpecialAirN         */
+    GW_MEX_EVENT_SPECIAL_S,           /* ftData_SpecialS            */
+    GW_MEX_EVENT_SPECIAL_S_AIR,       /* ftData_SpecialAirS         */
+    GW_MEX_EVENT_SPECIAL_HI,          /* ftData_SpecialHi           */
+    GW_MEX_EVENT_SPECIAL_HI_AIR,      /* ftData_SpecialAirHi        */
+    GW_MEX_EVENT_SPECIAL_LW,          /* ftData_SpecialLw           */
+    GW_MEX_EVENT_SPECIAL_LW_AIR,      /* ftData_SpecialAirLw        */
+    GW_MEX_EVENT_MOVE_LOGIC,          /* MoveLogic (m-ex Arch_FighterFunc slot 3) */
     GW_MEX_EVENT_COUNT
 };
 
@@ -220,6 +231,17 @@ void gw_Mex_OnItemInvisibleDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnItemVisibleDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnKnockbackEnterDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnKnockbackExitDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnActionStateChangeDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnReapplyAttrDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialNDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialNAirDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialSDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialSAirDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialHiDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialHiAirDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialLwDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_SpecialLwAirDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_MoveLogicDispatch(int kind, void* gobj, void* vanilla);
 
 #ifdef __cplusplus
 }

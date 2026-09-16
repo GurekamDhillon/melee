@@ -52,7 +52,7 @@
 /* 26814C */ static void Item_8026814C(HSD_GObj* gobj);
 /* 2682F0 */ static bool Item_802682F0(HSD_GObj* gobj);
 /* 268560 */ static void Item_80268560(HSD_GObj* gobj);
-/* 26862C */ static HSD_GObj* Item_8026862C(SpawnItem* spawnItem);
+/* 26862C */ HSD_GObj* Item_8026862C(SpawnItem* spawnItem);
 /* 268BE0 */ static void Item_80268BE0(HSD_JObj* item_jobj,
                                        HSD_AnimJoint* anim_joint,
                                        HSD_MatAnimJoint* matanim_joint,
@@ -909,7 +909,7 @@ static void foobar3(HSD_GObj* gobj)
     }
 }
 
-static HSD_GObj* Item_8026862C(SpawnItem* spawnItem)
+HSD_GObj* Item_8026862C(SpawnItem* spawnItem)
 {
     HSD_GObj* gobj;
     void* user_data;

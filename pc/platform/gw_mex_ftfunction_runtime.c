@@ -57,6 +57,7 @@
 
 /* onLoad's absolute bl targets (see the disassembly in the evidence log). */
 #define GW_MEX_GUEST_INDEX_ITEM   0x803D7058u /* m-ex MEX_IndexFighterItem (no vanilla symbol) */
+#define GW_MEX_GUEST_GET_FT_ITEM_ID 0x803D7088u /* m-ex MEX_GetFtItemID (no vanilla symbol) */
 #define GW_MEX_GUEST_GET_DATA     0x803D7094u /* m-ex MEX_GetData (no vanilla symbol) */
 #define GW_MEX_GUEST_GXLINK_CLEAR 0x8039084Cu /* HSD_GObjGXLink_8039084C (gobj->gx_link is NONE) */
 #define GW_MEX_GUEST_SETUP_GXLINK 0x8039069Cu /* GObj_SetupGXLink(cb=guest 0x80000BDC) */
@@ -117,6 +118,28 @@ static uint32_t gw_mex_shim_get_data(uint32_t id, uint32_t a1, uint32_t a2, uint
     return (id == 8u) ? gw_mex_getdata_buf : 0u;
 }
 
+static uint32_t gw_mex_shim_get_ft_item_id(uint32_t gobj, uint32_t item_id, uint32_t a2,
+                                           uint32_t a3, uint32_t a4, uint32_t a5, uint32_t a6,
+                                           uint32_t a7) {
+    static int logged;
+    static uint32_t count;
+    uint32_t fighter_id = 0;
+    (void)a2; (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
+    ++count;
+    if (!logged) {
+        uint32_t fd = gw_r32((const void *)(uintptr_t)(gobj + 0x2Cu));
+        if (fd >= 0x80000000u && fd < 0x80000000u + gw_mem1_size) {
+            fighter_id = gw_r32((const void *)(uintptr_t)(fd + 0x4u));
+        }
+        logged = 1;
+        gw_log("interp: MEX_GetFtItemID(gobj=0x%08X item=%u fighter=%u) -> 0 (mexData item "
+               "lookup table not built in the port)", gobj, item_id, fighter_id);
+    } else if ((count % 60u) == 1u) {
+        gw_log("interp: MEX_GetFtItemID hit %u -> 0 (no-op)", count);
+    }
+    return 0;
+}
+
 static uint32_t gw_mex_shim_gxlink_clear(uint32_t gobj, uint32_t a1, uint32_t a2, uint32_t a3,
                                          uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
     static int logged;
@@ -164,6 +187,8 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
     switch (guest_addr) {
     case GW_MEX_GUEST_INDEX_ITEM:
         return gw_mex_shim_index_item;
+    case GW_MEX_GUEST_GET_FT_ITEM_ID:
+        return gw_mex_shim_get_ft_item_id;
     case GW_MEX_GUEST_GET_DATA:
         return gw_mex_shim_get_data;
     case GW_MEX_GUEST_GXLINK_CLEAR:
@@ -464,8 +489,25 @@ static int test_bridge_lookup_miss(void) {
     return 0;
 }
 
+static int test_resolver_mex_shims(void) {
+    /* Every MEX_* call target in Sonic's ftFunction must resolve to a native shim, never NULL. */
+    static const uint32_t mex_targets[] = {GW_MEX_GUEST_INDEX_ITEM, GW_MEX_GUEST_GET_FT_ITEM_ID,
+                                           GW_MEX_GUEST_GET_DATA};
+    unsigned i;
+    for (i = 0; i < sizeof mex_targets / sizeof mex_targets[0]; ++i) {
+        gw_ppc_sig sig;
+        memset(&sig, 0, sizeof sig);
+        if (gw_mex_interp_resolve(mex_targets[i], NULL, &sig) == NULL) {
+            gw_test_fail("resolver returned NULL for MEX_* target 0x%08X", mex_targets[i]);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("bridge_lookup_memcpy", test_bridge_lookup_memcpy);
     gw_test_register("bridge_lookup_global", test_bridge_lookup_global);
     gw_test_register("bridge_lookup_miss", test_bridge_lookup_miss);
+    gw_test_register("resolver_mex_shims", test_resolver_mex_shims);
 }

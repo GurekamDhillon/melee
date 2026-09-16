@@ -36,6 +36,11 @@
 #define GW_MEX_INTERNAL_SONIC 31  /* Sonic's m-ex internal character id */
 #define GW_MEX_FTFUNC_DAT "PlSn.dat"
 
+/* Arch_FighterFunc slot indices (Header.s: onLoad 0x00 ... GetTrailData 0xB4). See
+ * gw_mex_ftfunction.c's slot_names table; onFrame is slot 23. */
+#define GW_MEX_SLOT_ON_LOAD 0
+#define GW_MEX_SLOT_ON_FRAME 23
+
 /* onLoad's absolute bl targets (see the disassembly in the evidence log). */
 #define GW_MEX_GUEST_INDEX_ITEM   0x803D7058u /* m-ex MEX_IndexFighterItem (no vanilla symbol) */
 #define GW_MEX_GUEST_GET_DATA     0x803D7094u /* m-ex MEX_GetData (no vanilla symbol) */
@@ -176,11 +181,36 @@ static uint32_t gw_mex_interp_run(uint32_t slot, void *gobj) {
 
 /* onLoad (slot 0) - actually runs Sonic's PPC onLoad through the interpreter. */
 static void gw_mex_interp_onload(void *gobj) {
-    uint32_t target = gw_mex_override_target(0);
+    uint32_t target = gw_mex_override_target(GW_MEX_SLOT_ON_LOAD);
     uint32_t r3;
     gw_log("interp: onLoad kind=%d entry=0x%08X gobj=%p running", GW_MEX_KIND_SONIC, target, gobj);
-    r3 = gw_mex_interp_run(0, gobj);
+    r3 = gw_mex_interp_run(GW_MEX_SLOT_ON_LOAD, gobj);
     gw_log("interp: onLoad kind=%d entry=0x%08X ran, r3=0x%08X", GW_MEX_KIND_SONIC, target, r3);
+}
+
+/* onFrame (slot 23) - runs Sonic's PPC onFrame per fighter per frame (Fighter_8006A360 ->
+ * Mex_OnFrameDispatch -> gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_FRAME)). The log is throttled to one
+ * line per second (60 invocations), since OnFrame fires at 60 Hz per fighter. */
+static void gw_mex_interp_onframe(void *gobj) {
+    uint32_t target = gw_mex_override_target(GW_MEX_SLOT_ON_FRAME);
+    static int first = 1;
+    static uint32_t count;
+    uint32_t r3;
+
+    if (target == 0) {
+        return;
+    }
+    if (first) {
+        first = 0;
+        gw_log("interp: onFrame kind=%d entry=0x%08X gobj=%p running (per-frame)",
+               GW_MEX_KIND_SONIC, target, gobj);
+    }
+    r3 = gw_mex_interp_run(GW_MEX_SLOT_ON_FRAME, gobj);
+    ++count;
+    if ((count % 60u) == 1u) {
+        gw_log("interp: onFrame kind=%d invocation %u ran, r3=0x%08X", GW_MEX_KIND_SONIC, count,
+               r3);
+    }
 }
 
 /* Called from game code (ftData_8008572C) once Sonic's data is on the disc. `kind` is the port's
@@ -226,9 +256,10 @@ void gw_Mex_FtFunctionInstall(int kind) {
     gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, gw_mex_ff.code_base,
                       gw_mex_ff.code_base + gw_mex_ff.code_size);
 
-    /* Install ONLY the onLoad override (this phase's deliverable). The other engine events
-     * (onDeath/onDestroy/onFrame/...) are not registered so they keep their vanilla behaviour. */
+    /* Install the onLoad and onFrame overrides (this phase's deliverables). The other engine
+     * events (onDeath/onDestroy/...) are not registered so they keep their vanilla behaviour. */
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, GW_MEX_KIND_SONIC, gw_mex_interp_onload);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, GW_MEX_KIND_SONIC, gw_mex_interp_onframe);
 
     gw_mex_installed = 1;
     gw_log("interp: installed Sonic ftFunction (code 0x%08X..0x%08X, mexData 0x%08X, stack "

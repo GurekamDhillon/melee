@@ -277,6 +277,33 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         imm = (int32_t)(int16_t)(insn & 0xFFFF);
         c->gpr[rd] = (uint32_t)((int32_t)c->gpr[ra] * imm);
         break;
+    case 8: /* subfic rD, rA, SIMM: rD = SIMM - rA, XER[CA] = no borrow (rA=0 => literal 0) */
+        rd = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t b = (ra == 0 ? 0 : c->gpr[ra]);
+            uint32_t iv = (uint32_t)imm;
+            gw_ppc_xer_set_ca(c, iv >= b);
+            c->gpr[rd] = iv - b;
+        }
+        break;
+    case 12: /* addic rD, rA, SIMM */
+    case 13: /* addic. rD, rA, SIMM (records CR0; Rc is the low opcode bit) */
+        rd = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t b = (ra == 0 ? 0 : c->gpr[ra]);
+            uint32_t iv = (uint32_t)imm;
+            uint32_t sum = b + iv;
+            gw_ppc_xer_set_ca(c, (uint32_t)(((uint64_t)b + (uint64_t)iv) >> 32));
+            c->gpr[rd] = sum;
+            if (insn & 1) {
+                gw_ppc_cr0_cmp(c, sum);
+            }
+        }
+        break;
 
     /* ---- logic immediate ------------------------------------------------------------ */
     case 24: /* ori rA, rS, UIMM */

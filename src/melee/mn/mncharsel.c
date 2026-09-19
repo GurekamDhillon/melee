@@ -197,6 +197,7 @@ typedef struct MexSelectChr {
     int csp_stride;
 } MexSelectChr;
 static MexSelectChr* mnCharSel_Mex;  /* NULL = the retail CSS */
+static bool mnCharSel_StcAttached;   /* 1P stock dots (regend 53..57) use m-ex Stc_icns */
 static HSD_JObj* mnCharSel_IconRoot; /* the joint tree icons[].joint_id_* resolve in */
 static u8 mnCharSel_IconUnavail[CSS_ICON_MAX]; /* m-ex icon whose fighter the port lacks */
 #define MNCS_ICON_ROOT(retail) (mnCharSel_IconRoot != NULL ? mnCharSel_IconRoot : (retail))
@@ -1052,6 +1053,13 @@ void mnCharSel_8025D5AC(int door, int frame, bool hidden)
         sethidden(sp50, hidden);
         if (hidden) {
             frame = 0xB9;
+#if defined(TARGET_PC)
+            /* m-ex "CSS - Change Stock Frame Dot (2)": the empty-slot dot is Stc_icns frame 7
+             * (the red ring); 0xB9 there is some fighter's icon. */
+            if (mnCharSel_StcAttached) {
+                frame = 7;
+            }
+#endif
         }
         for (i = 0; i < 5; i++) {
             u8 tmp = data2.xf0[i];
@@ -1279,6 +1287,17 @@ static void mnCharSel_MexPortrait(int door, int icon, int costume, int retail_fr
         mnCharSel_8025D5AC(door, retail_frame, 0);
         if (root == NULL) {
             return;
+        }
+        if (door == 0 && mnCharSel_StcAttached) {
+            /* m-ex "CSS - Costume Change Rewrite": the stock dots show this fighter's icon */
+            extern f32 gm_MexStockFrame(int fk, int costume);
+            extern s8 Player_800325C8(CharacterKind, bool);
+            f32 sf = gm_MexStockFrame(Player_800325C8(icons[icon].char_kind, 0), costume);
+            int d;
+            for (d = 0; d < 5; d++) {
+                animateJoint(mnCharSel_804D6CC0, data2.xf0[d], TOBJ_MASK,
+                             sf >= 0.0F ? sf : 7.0F);
+            }
         }
         j = animateJoint(root, cj, TOBJ_MASK,
                          (float) (ext + costume * mnCharSel_Mex->csp_stride));
@@ -4368,6 +4387,7 @@ static void mnCharSel_MexSetup(void)
     }
     mnCharSel_Mex = NULL;
     mnCharSel_IconRoot = NULL;
+    mnCharSel_StcAttached = false;
     mnCharSel_IconCount = SELKIND_COUNT;
 
     mex = HSD_ArchiveGetPublicAddress(mnCharSel_804D6CD0, "mexSelectChr");
@@ -4501,7 +4521,21 @@ static void mnCharSel_MexSetup(void)
     } else {
         /* 1P / Training: the regend model's portrait is joint 45, its emblem joint 43. The
          * Training CPU door is a separate model, attached where it is built. */
+        extern HSD_MatAnimJoint* gm_MexStockMatAnim(void);
+        HSD_MatAnimJoint* stc = gm_MexStockMatAnim();
         mnCharSel_MexAttach(mex, mnCharSel_804D6CC0, 0x2D, 0x2B);
+        /* m-ex "Replace CSS SinglePlayer Stock And Emblem": the five stock dots use Stc_icns */
+        if (stc != NULL) {
+            int d;
+            for (d = 0; d < 5; d++) {
+                j = NULL;
+                lb_80011E24(mnCharSel_804D6CC0, &j, data2.xf0[d], -1);
+                if (j != NULL) {
+                    HSD_JObjAddAnimAll(j, NULL, stc, NULL);
+                }
+            }
+            mnCharSel_StcAttached = true;
+        }
     }
 
     mnCharSel_IconRoot = root;

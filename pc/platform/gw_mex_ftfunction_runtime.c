@@ -382,6 +382,33 @@ int gw_Mex_ExtToPortCKind(int ext) {
     return -1;
 }
 
+/* Port FighterKind -> m-ex INTERNAL id, or -1. FK 0..26 are the same in both. m-ex appends its
+ * new fighters after the vanilla playables and moves the six specials to the end (internal
+ * internal_id_count-6 .. -1 = 35..40 on Akaneia), where the port keeps them at 27..32 and adds
+ * Sonic at 33 (m-ex 31). Verified: _research/mex-stock-icons.md. */
+int gw_Mex_InternalForPortKind(int fk) {
+    if (fk >= 0 && fk <= 26) {
+        return fk;
+    }
+    if (fk >= 27 && fk <= 32) {
+        return fk + 8;
+    }
+    if (fk == GW_MEX_KIND_SONIC) {
+        return GW_MEX_INTERNAL_SONIC;
+    }
+    return -1;
+}
+
+/* mexData metadata.internal_id_count (41 on Akaneia), or 0 without mexData. */
+int gw_Mex_InternalCount(void) {
+    uint32_t md;
+    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+        return 0;
+    }
+    md = gw_r32((const void *) (uintptr_t) gw_mexdt);
+    return gw_mexdt_in(md, 8u) ? (int) gw_r32((const void *) (uintptr_t) (md + 0x04u)) : 0;
+}
+
 /* Franchise-emblem index for an m-ex external id: mexData fighter +0x08 -> insignia_idx[ext]
  * (u8). For ext 0..25 it equals retail's own emblem table (lbl_803B7B18); Sonic (30) is 17, an
  * emblem that exists only in Akaneia's IfAll Eblm_matanim_joint. -1 when unavailable. */

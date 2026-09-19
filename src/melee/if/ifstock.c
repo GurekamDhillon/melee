@@ -538,6 +538,28 @@ void fn_802F9680(HSD_GObj* gobj, int renderpass)
     }
 }
 
+#if defined(TARGET_PC)
+extern HSD_MatAnimJoint* gm_MexStockMatAnim(void);
+extern f32 gm_MexStockFrame(int fk, int costume);
+
+/* m-ex "Replace ... Stock Matanim": point one stock-icon joint at Stc_icns (no-op on retail). */
+static void ifStock_MexAttach(HSD_JObj* jobj)
+{
+    HSD_MatAnimJoint* stc = gm_MexStockMatAnim();
+    if (jobj != NULL && stc != NULL) {
+        HSD_JObjAddAnimAll(jobj, NULL, stc, NULL);
+    }
+}
+
+/* m-ex "All Star / Multispawn - Change Stock Frame": retail passes arg1 = 0 (ignored by its
+ * formula); m-ex needs the fighter, ftMapping_list[ckind].internal_id. */
+static f32 ifStock_MexFrame(int ckind, int costume)
+{
+    f32 mex = gm_MexStockFrame(Player_800325C8(ckind, 0), costume);
+    return mex >= 0.0F ? mex : gm_80168B34(ckind, 0, costume);
+}
+#endif
+
 HSD_GObj* ifStock_802F96D0(int a, int b, float x, float y)
 {
     struct ifStock_804A1378* q = &ifStock_804A1378;
@@ -548,12 +570,19 @@ HSD_GObj* ifStock_802F96D0(int a, int b, float x, float y)
     GObj_SetupGXLink(gobj, fn_802F9680, 11, 0);
     gm_8016895C(jobj, *q->x0, 0);
     lb_80011E24(jobj, &jobj2, 1, -1);
+#if defined(TARGET_PC)
+    ifStock_MexAttach(jobj2);
+#endif
     HSD_JObjSetTranslateX(jobj, x);
     HSD_JObjSetTranslateY(jobj, y);
     HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
     HSD_JObjClearFlags(jobj2, JOBJ_HIDDEN);
     HSD_JObjReqAnimAll(jobj, 0.0f);
+#if defined(TARGET_PC)
+    HSD_TObjReqAnimAll(jobj2->u.dobj->mobj->tobj, ifStock_MexFrame(a, b));
+#else
     HSD_TObjReqAnimAll(jobj2->u.dobj->mobj->tobj, gm_80168B34(a, 0, b));
+#endif
     HSD_AObjSetRate(jobj2->u.dobj->mobj->tobj->aobj, 0.0f);
     HSD_JObjAnimAll(jobj);
     return gobj;
@@ -610,6 +639,12 @@ void ifStock_802F98E8(u8 player, u8 b)
                 lb_80011E24(jobj, ifStock_804A1378.player[player].x4, 0, 1, 2,
                             3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
                             -1);
+#if defined(TARGET_PC)
+                /* m-ex: the seven stock-icon joints (x4[1..7]) use Stc_icns */
+                for (i = 1; i <= 7; i++) {
+                    ifStock_MexAttach(ifStock_804A1378.player[player].x4[i]);
+                }
+#endif
                 stock->player[player].x0 = gobj;
                 ifStock_804A1378.player[player].coins =
                     Player_GetCoins(player);
@@ -756,6 +791,9 @@ static inline HSD_GObj* ifStock_802F9F48_inline(int arg)
     GObj_SetupGXLink(gobj, fn_802F95E8, 11, 0);
     gm_8016895C(jobj, *q->x0, 0);
     lb_80011E24(jobj, &jobj2, 1, -1);
+#if defined(TARGET_PC)
+    ifStock_MexAttach(jobj2);
+#endif
     if (!arg) {
         HSD_GObj_SetupProc(gobj, fn_802F8E08, 17);
     }
@@ -763,9 +801,15 @@ static inline HSD_GObj* ifStock_802F9F48_inline(int arg)
     HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
     HSD_JObjClearFlags(jobj2, JOBJ_HIDDEN);
     HSD_JObjReqAnimAll(jobj, 0.0f);
+#if defined(TARGET_PC)
+    HSD_TObjReqAnimAll(
+        jobj2->u.dobj->mobj->tobj,
+        ifStock_MexFrame(ifStock_804A1774.x83[arg], ifStock_804A1774.x1[arg]));
+#else
     HSD_TObjReqAnimAll(
         jobj2->u.dobj->mobj->tobj,
         gm_80168B34(ifStock_804A1774.x83[arg], 0, ifStock_804A1774.x1[arg]));
+#endif
     HSD_AObjSetRate(jobj2->u.dobj->mobj->tobj->aobj, 0.0f);
     HSD_JObjAnimAll(jobj);
     return gobj;

@@ -3989,6 +3989,63 @@ void fn_80168A6C(void* arg0, void* arg1, s32 idx)
     ((s32*) arg1)[7] = src->xC;
 }
 
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex): Standalone Functions/Stock Icon Get Frame.asm
+ * and the HUD / CSS stock-icon patches (see _research/mex-stock-icons.md). An m-ex IfAll carries
+ * `Stc_icns`, one stock-icon atlas laid out by m-ex INTERNAL id:
+ *     frame = reserved + costume * stride + internal
+ * with the six specials (the last six internal ids) at fixed frames. Retail's own atlas and
+ * formula (gm_80168B34) have no room for new fighters - Sonic showed Ice Climbers. Callers attach
+ * gm_MexStockMatAnim() to the icon joint and request gm_MexStockFrame(); both return "not m-ex"
+ * (NULL / -1) on a retail disc, which keeps every retail path. */
+typedef struct MexStcIcns {
+    u16 reserved;
+    u16 stride;
+    HSD_MatAnimJoint* matanim;
+} MexStcIcns;
+
+static MexStcIcns* gm_MexStcIcns(void)
+{
+    extern HSD_Archive* lbDvd_8001819C(const char* basename);
+    static HSD_Archive* cached_archive;
+    static MexStcIcns* cached;
+    HSD_Archive* ifall = lbDvd_8001819C("IfAll");
+    if (ifall != cached_archive) {
+        cached_archive = ifall;
+        cached = ifall != NULL ? HSD_ArchiveGetPublicAddress(ifall, "Stc_icns") : NULL;
+    }
+    return cached;
+}
+
+HSD_MatAnimJoint* gm_MexStockMatAnim(void)
+{
+    MexStcIcns* stc = gm_MexStcIcns();
+    return stc != NULL ? stc->matanim : NULL;
+}
+
+/* The m-ex stock frame for port FighterKind `fk`, or -1 when not m-ex / unknown fighter. */
+f32 gm_MexStockFrame(int fk, int costume)
+{
+    extern int Mex_InternalForPortKind(int);
+    extern int Mex_InternalCount(void);
+    static const u8 specials[6] = { 3, 2, 1, 1, 5, 6 };
+    MexStcIcns* stc = gm_MexStcIcns();
+    int mint, n;
+    if (stc == NULL) {
+        return -1.0F;
+    }
+    mint = Mex_InternalForPortKind(fk);
+    n = Mex_InternalCount();
+    if (mint < 0 || n <= 6) {
+        return -1.0F;
+    }
+    if (mint >= n - 6 && mint < n) {
+        return specials[mint - (n - 6)];
+    }
+    return stc->reserved + stc->stride * costume + mint;
+}
+#endif
+
 f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
 {
 #if defined(TARGET_PC)
@@ -4033,6 +4090,12 @@ float gm_80168BF8(int arg0)
     u32 costume = Player_GetCostumeId(arg0);
 #if defined(TARGET_PC)
     /* The decomp omits the return, relying on the tail call; make it explicit on the port. */
+    /* m-ex: every in-match stock icon reaches the formula through here (the hook at
+     * 0x80168B34 takes the current FighterKind, arg1). */
+    f32 mex = gm_MexStockFrame(Player_80036394(arg0), costume);
+    if (mex >= 0.0F) {
+        return mex;
+    }
     return gm_80168B34(ckind, Player_80036394(arg0), costume);
 #else
     gm_80168B34(ckind, Player_80036394(arg0), costume);

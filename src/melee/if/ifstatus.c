@@ -819,10 +819,35 @@ HSD_GObj* ifStatus_802F61FC(IfDamageState* state, s32 player_idx)
     lb_8000C07C(jobj, 0, (HSD_AnimJoint**) hud->unk26C,
                 (HSD_MatAnimJoint**) hud->unk270,
                 (HSD_ShapeAnimJoint**) hud->unk274);
+#if defined(TARGET_PC)
+    {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex): HUD/Replace Match Emblem Matanim
+         * + the emblem-frame hook at 0x802F6320. With an m-ex IfAll the series emblem comes from
+         * Eblm_matanim_joint at frame insignia_idx[external id] - the retail frame is a stock-atlas
+         * index with no room for new fighters (Sonic showed Ice Climbers' emblem). Retail's
+         * MH/Giga -> Boy remap is skipped, as m-ex does. */
+        extern HSD_Archive* lbDvd_8001819C(const char* basename);
+        extern int Mex_PortCKindToExt(int);
+        extern int Mex_InsigniaForExt(int);
+        HSD_Archive* ifall = lbDvd_8001819C("IfAll");
+        HSD_MatAnimJoint* eblm =
+            ifall != NULL ? HSD_ArchiveGetPublicAddress(ifall, "Eblm_matanim_joint") : NULL;
+        int emblem = eblm != NULL ? Mex_InsigniaForExt(Mex_PortCKindToExt(chara)) : -1;
+        if (emblem >= 0) {
+            HSD_JObjAddAnimAll(jobj->child, NULL, eblm, NULL);
+            tobj = jobj->child->u.dobj->mobj->tobj;
+            HSD_TObjReqAnimAll(tobj, 0.5f + emblem);
+            goto emblem_set;
+        }
+    }
+#endif
     if (chara == CKind_MasterH || (u32) (chara - CKind_GKoops) <= 1) {
         chara = CKind_Boy;
     }
     HSD_TObjReqAnimAll(tobj, 0.5f + gm_80168B34(chara, 0, 0));
+#if defined(TARGET_PC)
+emblem_set:
+#endif
     HSD_AObjSetRate(tobj->aobj, 0.1f);
     HSD_TObjAnim(tobj);
     vec = ifAll_GetPlayerHUDPosition(idx);

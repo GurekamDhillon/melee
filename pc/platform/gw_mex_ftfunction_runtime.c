@@ -234,7 +234,10 @@ static const gw_mex_sig_entry gw_mex_sigs[] = {
     {0x803263D4u, GW_MEX_SIG_F1, 1, 1}, /* sinf   */
     {0x803265A8u, GW_MEX_SIG_F1, 1, 1}, /* logf   */
     {0x80364340u, GW_MEX_SIG_F2, 2, 1}, /* fmodf  */
-    {0x803228C0u, GW_MEX_SIG_F1, 1, 0}, /* __cvt_fp2unsigned: float in, integer out */
+    /* __cvt_fp2unsigned(double) was here as a float arg. That is WRONG: its parameter is a
+     * DOUBLE, and the bridge marshals 4-byte argument slots only, so neither a float slot nor
+     * the integer default can express it. Removed rather than left wrong - supporting a double
+     * argument is a real gap in gw_ppc_bridge_call, not a table entry. */
 
     /* Fighter_ChangeMotionState(gobj, msid, flags, f32 anim_start, f32 anim_speed,
      * f32 anim_blend, arg3): ints in r3-r5, floats in f1-f3, then arg3 in r6. */

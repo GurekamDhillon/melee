@@ -35,6 +35,27 @@ typedef struct gw_ppc_machine {
  * bridges into native code can be re-entered (native -> gw_ppc_call -> ... ) without clobbering. */
 static gw_ppc_machine gw_ppc_m;
 
+/* ---- re-entry bound ---------------------------------------------------------------------
+ * A guest override that calls the very engine function it was hooked from re-enters the
+ * interpreter through the bridge (guest -> native -> hook dispatch -> gw_ppc_call -> guest ...).
+ * The semantic fix for that cycle lives in the hook dispatcher (gw_runtime.c reruns vanilla for a
+ * hook already on the stack); this is the backstop for any cycle that fix does not cover. Without
+ * it the recursion consumes the NATIVE stack and dies as 0xC00000FD (STACK_OVERFLOW) at
+ * gw_ppc_call+0x3, with no indication of which guest functions formed the loop.
+ *
+ * At the cap the call is refused (r3 = 0) and the whole guest chain is logged once, so a new cycle
+ * shows up as a diagnosable log line instead of an unrecoverable crash. The cap is far above any
+ * legitimate nesting: real fighter callbacks bridge out and back at most a few levels deep. */
+#define GW_PPC_MAX_DEPTH 16
+
+/* Gap left below the interrupted frame's r1 when a nested run derives its own guest stack. Big
+ * enough for the PowerPC linkage area plus the leaf slack a caller may still be using. */
+#define GW_PPC_NEST_GAP 0x40u
+
+static int gw_ppc_depth;                          /* active gw_ppc_call nesting level */
+static uint32_t gw_ppc_entry[GW_PPC_MAX_DEPTH];   /* entry address per level, for the cycle log */
+static int gw_ppc_depth_logged;                   /* the cap log fires once per process */
+
 void gw_ppc_set_bridge(gw_ppc_resolver_fn resolve, void *ctx, uint32_t code_lo, uint32_t code_hi) {
     gw_ppc_m.resolve = resolve;
     gw_ppc_m.bridge_ctx = ctx;
@@ -1211,6 +1232,34 @@ uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uin
     uint32_t r3;
     int i;
 
+    /* Refuse to recurse past the cap, and log the guest chain that got here. */
+    if (gw_ppc_depth >= GW_PPC_MAX_DEPTH) {
+        if (!gw_ppc_depth_logged) {
+            gw_ppc_depth_logged = 1;
+            gw_log("ppc: call depth cap (%d) hit entering guest 0x%08X - refusing, r3=0. "
+                   "Guest chain follows (innermost last):",
+                   GW_PPC_MAX_DEPTH, guest_fn);
+            for (i = 0; i < GW_PPC_MAX_DEPTH; ++i) {
+                gw_log("ppc:   depth %2d: guest 0x%08X", i, gw_ppc_entry[i]);
+            }
+        }
+        return 0;
+    }
+
+    /* A nested run must not restart on the caller-supplied stack top: the interrupted guest frame
+     * is still live there, and reusing it silently corrupts the outer call's locals and saved
+     * registers. Continue below the interrupted frame's own r1 instead. `sp` is still used for the
+     * outermost run, and as the fallback if the saved r1 is not a sane MEM1 address. */
+    if (gw_ppc_depth > 0) {
+        uint32_t outer_sp = saved.cpu.gpr[1];
+        if (outer_sp >= GW_PPC_MEM1_BASE + GW_PPC_NEST_GAP &&
+            (uint64_t) outer_sp < (uint64_t) GW_PPC_MEM1_BASE + (uint64_t) gw_mem1_size) {
+            sp = outer_sp - GW_PPC_NEST_GAP;
+        }
+    }
+    gw_ppc_entry[gw_ppc_depth] = guest_fn;
+    ++gw_ppc_depth;
+
     memset(c, 0, sizeof *c);
     for (i = 0; i < 32; ++i) {
         c->fpr[i].u64 = 0;
@@ -1226,6 +1275,7 @@ uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uin
     }
 
     r3 = gw_ppc_run(&gw_ppc_m);
+    --gw_ppc_depth;
     gw_ppc_m = saved;
     return r3;
 }
@@ -1453,8 +1503,91 @@ static int test_ppc_static_bridge(void) {
     return 0;
 }
 
+/* ---- re-entry cap test -------------------------------------------------------------------
+ * Regression test for the double-jump crash: Sonic's onDoubleJump override calls the very engine
+ * function whose dispatch site invoked it, so the interpreter re-entered itself without bound and
+ * the process died on a blown native stack (last log line: "onDoubleJump ... invocation 1
+ * running", no matching "ran"). The semantic fix is in gw_Mex_GObjDispatch; GW_PPC_MAX_DEPTH is
+ * the interpreter's backstop for any cycle that misses.
+ *
+ * Here a bridged helper re-enters gw_ppc_call on the same blob, i.e. unbounded recursion by
+ * construction. The cap must stop it: the call returns normally, the nesting never exceeds
+ * GW_PPC_MAX_DEPTH, and the refused innermost call yields 0. Without the cap this test does not
+ * fail - it takes the process down, which is precisely the bug. */
+
+#define GW_PPC_TEST_RECURSE_GUEST 0x80380360u /* fake guest address of the recursing helper */
+
+static int gw_ppc_test_recurse_max; /* deepest gw_ppc_depth observed inside the helper */
+
+static gw_ppc_native_fn gw_ppc_test_recurse_resolve(uint32_t guest_addr, void *ctx,
+                                                    gw_ppc_sig *sig);
+
+static uint32_t gw_ppc_test_recurse_helper(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
+                                           uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void)a0; (void)a1; (void)a2; (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
+    if (gw_ppc_depth > gw_ppc_test_recurse_max) {
+        gw_ppc_test_recurse_max = gw_ppc_depth;
+    }
+    /* Re-enter the interpreter on the same blob - the cycle the cap exists to bound. */
+    return gw_ppc_call(GW_PPC_TEST_CODE, NULL, 0, 0, GW_PPC_TEST_STACK);
+}
+
+static gw_ppc_native_fn gw_ppc_test_recurse_resolve(uint32_t guest_addr, void *ctx,
+                                                    gw_ppc_sig *sig) {
+    (void)ctx;
+    (void)sig;
+    if (guest_addr == GW_PPC_TEST_RECURSE_GUEST) {
+        return gw_ppc_test_recurse_helper;
+    }
+    return NULL;
+}
+
+static int test_ppc_reentry_cap(void) {
+    /* mflr r0 ; bl RECURSE_HELPER ; mtlr r0 ; blr  -> r3 = helper() */
+    static const uint32_t blob[] = {
+        0x7C0802A6u, /* mflr r0 */
+        0x48000000u |
+            ((GW_PPC_TEST_RECURSE_GUEST - (GW_PPC_TEST_CODE + 4)) & 0x03FFFFFCu) | 1u, /* bl */
+        0x7C0803A6u, /* mtlr r0 */
+        0x4E800020u, /* blr */
+    };
+    int saved_logged = gw_ppc_depth_logged;
+    uint32_t r3;
+    unsigned i;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_test_recurse_max = 0;
+    gw_ppc_depth_logged = 1; /* keep the 16-line cap dump out of the test log */
+
+    gw_ppc_set_bridge(gw_ppc_test_recurse_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t)sizeof blob);
+
+    /* Reaching the next line at all is most of the point: unbounded, this never returns. */
+    r3 = gw_ppc_call(GW_PPC_TEST_CODE, NULL, 0, 0, GW_PPC_TEST_STACK);
+
+    gw_ppc_depth_logged = saved_logged; /* leave the one-shot for a real in-game cap hit */
+
+    if (gw_ppc_test_recurse_max != GW_PPC_MAX_DEPTH) {
+        gw_test_fail("re-entry reached depth %d, expected the cap %d", gw_ppc_test_recurse_max,
+                     GW_PPC_MAX_DEPTH);
+        return 1;
+    }
+    if (r3 != 0u) {
+        gw_test_fail("the refused call should yield r3=0, got 0x%08X", r3);
+        return 1;
+    }
+    if (gw_ppc_depth != 0) {
+        gw_test_fail("gw_ppc_depth left at %d after unwinding, expected 0", gw_ppc_depth);
+        return 1;
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
+    gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
 }

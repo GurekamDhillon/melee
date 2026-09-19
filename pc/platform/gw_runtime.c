@@ -1034,6 +1034,19 @@ static gwmex_gobj_fn gw_mex_gobj_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 static gwmex_gobj_fn2 gw_mex_gobj_hooks2[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 static gwmex_gobj_pred gw_mex_pred_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 
+/* Hook re-entry. An m-ex override is written as a REPLACEMENT for the engine function it hooks,
+ * and it commonly performs the real work by calling that same engine function - Sonic's
+ * onDoubleJump calls ftCo_800CBAC4, the very function whose dispatch site invoked it. Dispatching
+ * the hook again there is an infinite loop (hook -> guest -> native -> hook -> ...), which for an
+ * interpreted guest override burns the native stack and dies as 0xC00000FD at gw_ppc_call+0x3.
+ *
+ * So a hook already on the stack for this (event, kind) is skipped and the vanilla path runs
+ * instead: the guest's call into the engine function gets the engine function's real behaviour,
+ * which is exactly what the override asked for. This is the standard detour/trampoline rule and
+ * it costs nothing when no hook is active. Nesting is never legitimate here - the engine drives
+ * these events one fighter at a time, not recursively. */
+static unsigned char gw_mex_hook_active[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
+
 int gw_Mex_HookRegister(int event, int kind, gwmex_gobj_fn fn) {
   if ((unsigned)event >= GW_MEX_EVENT_COUNT || (unsigned)kind >= GW_MEX_KIND_MAX) {
     return 0;
@@ -1060,11 +1073,14 @@ int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn) {
 
 void gw_Mex_GObjDispatch(int event, int kind, void *gobj, void *vanilla) {
   gwmex_gobj_fn fn = NULL;
-  if ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX) {
+  int in_range = ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX);
+  if (in_range && !gw_mex_hook_active[event][kind]) {
     fn = gw_mex_gobj_hooks[event][kind];
   }
   if (fn != NULL) {
+    gw_mex_hook_active[event][kind] = 1;
     fn(gobj);
+    gw_mex_hook_active[event][kind] = 0;
   } else if (vanilla != NULL) {
     ((gwmex_gobj_fn)vanilla)(gobj);
   }
@@ -1072,11 +1088,14 @@ void gw_Mex_GObjDispatch(int event, int kind, void *gobj, void *vanilla) {
 
 void gw_Mex_GObjDispatch2(int event, int kind, void *gobj, void *arg1, void *vanilla) {
   gwmex_gobj_fn2 fn = NULL;
-  if ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX) {
+  int in_range = ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX);
+  if (in_range && !gw_mex_hook_active[event][kind]) {
     fn = gw_mex_gobj_hooks2[event][kind];
   }
   if (fn != NULL) {
+    gw_mex_hook_active[event][kind] = 1;
     fn(gobj, arg1);
+    gw_mex_hook_active[event][kind] = 0;
   } else if (vanilla != NULL) {
     ((gwmex_gobj_fn2)vanilla)(gobj, arg1);
   }
@@ -1084,11 +1103,16 @@ void gw_Mex_GObjDispatch2(int event, int kind, void *gobj, void *arg1, void *van
 
 int gw_Mex_GObjPredDispatch(int event, int kind, void *gobj, void *vanilla) {
   gwmex_gobj_pred fn = NULL;
-  if ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX) {
+  int in_range = ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX);
+  if (in_range && !gw_mex_hook_active[event][kind]) {
     fn = gw_mex_pred_hooks[event][kind];
   }
   if (fn != NULL) {
-    return fn(gobj);
+    int r;
+    gw_mex_hook_active[event][kind] = 1;
+    r = fn(gobj);
+    gw_mex_hook_active[event][kind] = 0;
+    return r;
   }
   if (vanilla != NULL) {
     return ((gwmex_gobj_pred)vanilla)(gobj);

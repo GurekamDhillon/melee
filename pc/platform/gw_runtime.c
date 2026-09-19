@@ -833,22 +833,6 @@ int gw_TestTargetTestCKind(void) {
   return state;
 }
 
-/* Dev/debug hook: MELEE_CSS_SONIC=<ckind int or name like pichu/roy> - the character select screen
- * turns THAT character's icon into Sonic (see mnCharSel_Scene_OnEnter). A stopgap until the m-ex
- * data-driven CSS exists. Same grammar as MELEE_TARGET_TEST; game code calls the unprefixed
- * `TestCssSonicCKind`. Read once; -1 when unset. */
-int gw_TestCssSonicCKind(void) {
-  static int state = -2;
-  if (state == -2) {
-    const char *v = getenv("MELEE_CSS_SONIC");
-    state = (v == NULL || v[0] == '\0') ? -1 : tt_parse_ckind(v);
-    if (state >= 0) {
-      gw_log("gw: MELEE_CSS_SONIC=\"%s\" -> ckind %d's CSS icon selects Sonic", v, state);
-    }
-  }
-  return state;
-}
-
 /* Dev/debug hook: MELEE_TRAINING=<ckind int or name like mario/fox/zelda> boots straight into
  * Training Mode with that character, skipping the menus and the CSS. Same shape and grammar as
  * MELEE_TARGET_TEST above; game code calls the unprefixed `TestTrainingCKind`. Read once. */

@@ -5641,27 +5641,6 @@ void mnCharSel_Scene_OnEnter(void* arg0)
     lbCardNew_AllocWorkArea();
     lbCardGame_LoadArchive(0);
     mnCharSel_804D6CB0 = (CSSData*) arg0;
-#if defined(TARGET_PC)
-    {
-        /* Dev toggle until the m-ex data-driven CSS exists (_research/mex-css.md):
-         * MELEE_CSS_SONIC=<character> turns that character's icon into the port's Sonic
-         * (CharacterKind 0x20, mapped to Ft_Kind_Sonic by ftMapping_list). Remapped in place,
-         * so the icon index is unchanged and every icon-count / sentinel site keeps working, and
-         * the restore loop finds Sonic's pick when returning to the CSS. The icon ART stays the
-         * replaced character's - the real portraits come with the m-ex CSS. */
-        extern int TestCssSonicCKind(void);
-        int from = TestCssSonicCKind();
-        if (from >= 0 && from != 0x20) {
-            int k;
-            for (k = 0; k < MNCS_NUM_SK; k++) {
-                if (icons[k].char_kind == from) {
-                    icons[k].char_kind = 0x20;
-                    break;
-                }
-            }
-        }
-    }
-#endif
 
     mnCharSel_804D6CF0 = mnCharSel_804D6CB0->unk_0x0 - 1;
 

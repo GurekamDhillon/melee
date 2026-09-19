@@ -2,8 +2,12 @@
 
 This directory is a vendored copy of [encounter/aurora](https://github.com/encounter/aurora)
 (MIT — see [`LICENSE`](LICENSE)), taken at upstream commit
-`749d6ee7a22bdfab78c8ece9047bca5d79aa72ca`. Seven files carry changes made for this
-port. They fall into three groups.
+`cb0e279` ("Fix imgui texture upload race", updated from `749d6ee7a22bdfab78c8ece9047bca5d79aa72ca`).
+Seven files carry changes made for this port. They fall into four groups.
+
+To update: clone upstream, commit the port's changed files onto the old base commit (with LF
+line endings), rebase onto the new upstream head, then replace this tree with the result
+(`git archive`) and keep this file.
 
 ## 1. 32-bit pointer portability
 
@@ -53,11 +57,15 @@ through `uintptr_t`:
 
 ## 4. Memory card
 
-`lib/card/CardGciFolder.cpp`:
+- `lib/dolphin/card.cpp` — `CARDSetBasePath` keeps the supplied base path when Aurora has no
+  game name yet (`g_gameName` is only set by Aurora's DVD layer, which the port disables), and
+  `CARDInit` resolves it with the game code it is given. Upstream dropped the path in that case
+  and fell back to `<userPath>/<region>`, so the port's card folder (`_build/card`,
+  `MELEE_CARD_PATH`) was silently replaced by `%AppData%/Melee PC`.
+- `lib/dolphin/card.cpp` — `CARDGetStatus` no longer logs an error for `NOFILE`. The game
+  scans all 127 directory slots at boot and an empty slot answering `NOFILE` is normal; it
+  logged ~126 errors per boot.
 
-- `openFile` returns `NOFILE` rather than `NOCARD` for a missing save (the game
-  read `NOCARD` as "no card inserted").
-- `deleteFile` implemented for both overloads.
-- `renameFile` moves the file on disk and commits the directory.
-
-Matches the memory-card behaviour the game expects (see `docs/DEVLOG.md` §13.2).
+The port's earlier card patches (`openFile` returning `NOFILE`, `deleteFile`, `renameFile`)
+were dropped at the `cb0e279` update: upstream's card rewrite ("CARD: Fix error handling &
+bugs, use temp files") implements all three.

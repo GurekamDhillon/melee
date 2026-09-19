@@ -63,7 +63,7 @@ typedef uint32_t (*gw_ppc_native_fn)(uint32_t a0, uint32_t a1, uint32_t a2, uint
 
 /* Calling signature of a bridged target. `float_args` is a bitmask: bit i set => native argument
  * slot i is a float sourced from the next FPR (f1..f8) rather than the next GPR (r3..r10).
- * `n_args` bounds the walk (1..8); `ret_float` set => the callee returns a float, captured into
+ * `n_args` bounds the walk (0..8; 0 for a no-argument function like HSD_Randf); `ret_float` set => the callee returns a float, captured into
  * FPR 1 instead of the word return in r3. */
 typedef struct gw_ppc_sig {
     uint32_t float_args;

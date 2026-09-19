@@ -658,14 +658,44 @@ static const gw_mex_sig_entry gw_mex_sigs[] = {
     {0x800693ACu, (1u << 3) | (1u << 4) | (1u << 5), 7, 0},
 };
 
-static const gw_mex_sig_entry *gw_mex_sig_lookup(uint32_t guest_addr) {
-    unsigned i;
+/* The prototype-derived set (tools/mex_port/gen_sigs.py), covering 96 of the blob's 101 bridged
+ * targets versus the 12 above. Regenerate with:
+ *   python tools/mex_port/gen_sigs.py --blob _build/sonic_ftfunction_reloc.bin \
+ *          --blob-base 0x807F4D60 --out-c melee/pc/platform/gw_mex_sigs_gen.inc
+ * It refuses varargs and doubles rather than guessing, and exits non-zero if it ever disagrees
+ * with the hand table above. */
+#include "gw_mex_sigs_gen.inc"
+
+/* Hand table first, so a deliberate hand entry always wins; then the generated table. A target in
+ * neither keeps gw_ppc_bridge_call's integer default. */
+static int gw_mex_sig_lookup(uint32_t guest_addr, gw_ppc_sig *sig) {
+    unsigned i, lo, hi;
     for (i = 0; i < sizeof gw_mex_sigs / sizeof gw_mex_sigs[0]; ++i) {
         if (gw_mex_sigs[i].guest == guest_addr) {
-            return &gw_mex_sigs[i];
+            sig->float_args = gw_mex_sigs[i].float_args;
+            sig->n_args = gw_mex_sigs[i].n_args;
+            sig->ret_float = gw_mex_sigs[i].ret_float;
+            return 1;
         }
     }
-    return NULL;
+    lo = 0;
+    hi = (unsigned) (sizeof gw_mex_gen_sigs / sizeof gw_mex_gen_sigs[0]);
+    while (lo < hi) {
+        unsigned mid = lo + (hi - lo) / 2u;
+        if (gw_mex_gen_sigs[mid].guest < guest_addr) {
+            lo = mid + 1u;
+        } else {
+            hi = mid;
+        }
+    }
+    if (lo < (unsigned) (sizeof gw_mex_gen_sigs / sizeof gw_mex_gen_sigs[0]) &&
+        gw_mex_gen_sigs[lo].guest == guest_addr) {
+        sig->float_args = gw_mex_gen_sigs[lo].float_args;
+        sig->n_args = gw_mex_gen_sigs[lo].n_args;
+        sig->ret_float = gw_mex_gen_sigs[lo].ret_float;
+        return 1;
+    }
+    return 0;
 }
 
 /* guest -> native resolver: m-ex-only helpers and guest-callback installers resolve to the native
@@ -693,12 +723,7 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
     }
     native = gw_mex_bridge_lookup(guest_addr, &kind);
     if (native != 0 && kind == 1) {
-        const gw_mex_sig_entry *e = gw_mex_sig_lookup(guest_addr);
-        if (e != NULL) {
-            sig->float_args = e->float_args;
-            sig->n_args = e->n_args;
-            sig->ret_float = e->ret_float;
-        }
+        (void) gw_mex_sig_lookup(guest_addr, sig);
         return (gw_ppc_native_fn)(uintptr_t)native;
     }
     gw_log("interp: unresolved guest call target 0x%08X (no bridge entry)", guest_addr);

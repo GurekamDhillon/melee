@@ -732,7 +732,8 @@ static void gw_mex_trap_note(uint32_t eip) {
         gw_mex_trap_seen_count[gw_mex_trap_seen_n] = 1u;
         ++gw_mex_trap_seen_n;
     }
-    gw_log("interp: trap: native code called guest %s directly - emulating", gw_ppc_describe(eip));
+    gw_log("interp: trap: native code called guest %s directly - %s", gw_ppc_describe(eip),
+           gw_mex_in_blob(eip) ? "interpreting" : "redirected to its native build");
 }
 
 static LONG CALLBACK gw_mex_exec_trap(PEXCEPTION_POINTERS ep) {
@@ -743,9 +744,27 @@ static LONG CALLBACK gw_mex_exec_trap(PEXCEPTION_POINTERS ep) {
         return EXCEPTION_CONTINUE_SEARCH;
     }
     eip = (uint32_t) ep->ContextRecord->Eip;
-    if ((uint32_t) er->ExceptionInformation[1] != eip || gw_mex_ff.code_size == 0u ||
-        !gw_mex_in_blob(eip)) {
+    if ((uint32_t) er->ExceptionInformation[1] != eip || gw_mex_ff.code_size == 0u) {
         return EXCEPTION_CONTINUE_SEARCH;
+    }
+    if (!gw_mex_in_blob(eip)) {
+        /* A VANILLA engine function called through its GameCube address. m-ex code does this
+         * constantly: Sonic alone has 64 raw stores like `fp->pre_hitlag_cb = efLib_PauseAll`
+         * (and post_hitlag_cb = efLib_ResumeAll, take_dmg_2_cb = efLib_DestroyAll) across his
+         * side-B and down-B states. On hardware that address IS the function; in the port the
+         * function is the gwtool-built gw_ one, so the native call faulted on hitlag during a spin
+         * move (user-found, VS match: execute fault at 0x8005BA40 = efLib_PauseAll).
+         * Redirect to the native implementation. No marshalling: the caller is native code
+         * calling through a native function pointer, and the target is the native build of the
+         * same function, so both sides already agree on the cdecl arguments. */
+        int kind = 0;
+        uint32_t native = gw_mex_bridge_lookup(eip, &kind);
+        if (native == 0u || kind != 1) {
+            return EXCEPTION_CONTINUE_SEARCH; /* not a known function: a real crash */
+        }
+        gw_mex_trap_note(eip);
+        ep->ContextRecord->Eip = (DWORD) native;
+        return EXCEPTION_CONTINUE_EXECUTION;
     }
     gw_mex_trap_note(eip);
     gw_mex_trap_target = eip;

@@ -1503,6 +1503,17 @@ void fn_80176BCC(HSD_GObj* gobj)
 static inline int fn_80176BF0_inline(u8 arg1)
 {
     int i;
+#if defined(TARGET_PC)
+    /* Series emblem on the VS results screen. CharacterKind 0x20 is the port's Sonic and is not
+     * in lbl_803B7B18 (it covers 0x00-0x19), so this returned -1, fn_80176BF0 selected no emblem
+     * joint and returned NULL, and fn_80176F60 read data->x20->u.dobj (+0x18) through it - a crash
+     * entering VS results after any match Sonic played (user-found). 11 is the only emblem no
+     * character maps to (the match-cancelled one); a neutral stand-in until m-ex's emblems
+     * (IfAll Eblm_matanim_joint) are wired up with the data-driven CSS. */
+    if (arg1 == 0x20) {
+        return 11;
+    }
+#endif
     for (i = 0; i < 33; i++) { ///< @todo `ARRAY_SIZE(lbl_803B7B18)`
         if (arg1 == lbl_803B7B18.lookup[i][0]) {
             return lbl_803B7B18.lookup[i][1];

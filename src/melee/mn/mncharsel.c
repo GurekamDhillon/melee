@@ -4473,7 +4473,14 @@ s32 mnCharSel_802640A0(void)
         HSD_ForeachAnim(mnCharSel_804D6CC4, JOBJ_TYPE, ALL_TYPE_MASK,
                         HSD_AObjStopAnim, AOBJ_ARG_AOV, 0, 0);
         ck = mnCharSel_804D6CB0->vs.start.players[mnCharSel_804D6CF1].ckind;
+#if defined(TARGET_PC)
+        /* the port's Sonic is CharacterKind 0x20 - past CKind_Playable_Count but playable */
+        if (((s8) ck >= CKind_Playable_Count && ck != 0x20) ||
+            gm_IsCKindUnlocked(ck) == 0)
+        {
+#else
         if ((s8) ck >= CKind_Playable_Count || gm_IsCKindUnlocked(ck) == 0) {
+#endif
             u8* char_kinds;
             s32 icon_off;
             do {
@@ -5361,6 +5368,27 @@ void mnCharSel_Scene_OnEnter(void* arg0)
     lbCardNew_AllocWorkArea();
     lbCardGame_LoadArchive(0);
     mnCharSel_804D6CB0 = (CSSData*) arg0;
+#if defined(TARGET_PC)
+    {
+        /* Dev toggle until the m-ex data-driven CSS exists (_research/mex-css.md):
+         * MELEE_CSS_SONIC=<character> turns that character's icon into the port's Sonic
+         * (CharacterKind 0x20, mapped to Ft_Kind_Sonic by ftMapping_list). Remapped in place,
+         * so the icon index is unchanged and every icon-count / sentinel site keeps working, and
+         * the restore loop finds Sonic's pick when returning to the CSS. The icon ART stays the
+         * replaced character's - the real portraits come with the m-ex CSS. */
+        extern int TestCssSonicCKind(void);
+        int from = TestCssSonicCKind();
+        if (from >= 0 && from != 0x20) {
+            int k;
+            for (k = 0; k < SELKIND_COUNT; k++) {
+                if (icons[k].char_kind == from) {
+                    icons[k].char_kind = 0x20;
+                    break;
+                }
+            }
+        }
+    }
+#endif
 
     mnCharSel_804D6CF0 = mnCharSel_804D6CB0->unk_0x0 - 1;
 

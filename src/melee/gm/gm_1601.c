@@ -77,7 +77,11 @@ char* lbl_803D4D74[] = {
     "ギガクッパ",
     "クレイジーハンド",
     "サンドバッグ君",
+#if defined(TARGET_PC)
+    "ソニック", /* CharacterKind 0x20 = the port's Sonic */
+#else
     NULL,
+#endif
 };
 
 /// US character names
@@ -114,7 +118,13 @@ char* lbl_803D4FDC[] = {
     "Ｇ－Ｂｏｗｓｅｒ",
     "Ｃｒａｚｙｈａｎｄ",
     "Ｓａｎｄｂａｇ",
+#if defined(TARGET_PC)
+    /* CharacterKind 0x20 (solo Popo in vanilla) is the port's Sonic (ftMapping_list). The CSS
+     * formats this name on every hover; NULL here was a probable crash. */
+    "Ｓｏｎｉｃ",
+#else
     NULL,
+#endif
 };
 
 char* lbl_803D5060[] = {
@@ -4260,6 +4270,14 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
         HSD_Randi(0);
         HSD_Randi(0);
     }
+#if defined(TARGET_PC)
+    /* The port's Sonic (CharacterKind 0x20) is past this CKind_Playable_Count table, which
+     * returned 0 colours - and the CSS does (costume + 1) % ncolors on X. Sonic has 7 costumes
+     * (ftSn_CostumeList: Nr Re Gr Ye Bk Or Wh). */
+    if (ckind == 0x20) {
+        return 7;
+    }
+#endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {
         return 0;
     }
@@ -4268,6 +4286,12 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
 
 u8 gm_80169264(u8 ckind)
 {
+#if defined(TARGET_PC)
+    /* team RED costume for the port's Sonic: PlSnRe = 1. Checked before the bounds check, which would return 0 for 0x20. */
+    if (ckind == 0x20) {
+        return 1;
+    }
+#endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {
         return 0;
     }
@@ -4276,6 +4300,12 @@ u8 gm_80169264(u8 ckind)
 
 u8 gm_80169290(u8 ckind)
 {
+#if defined(TARGET_PC)
+    /* team GREEN costume for the port's Sonic: PlSnGr = 2. Checked before the bounds check, which would return 0 for 0x20. */
+    if (ckind == 0x20) {
+        return 2;
+    }
+#endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {
         return 0;
     }
@@ -4284,6 +4314,12 @@ u8 gm_80169290(u8 ckind)
 
 u8 gm_801692BC(u8 ckind)
 {
+#if defined(TARGET_PC)
+    /* team BLUE costume for the port's Sonic: his default (PlSnNr) is blue = 0. Checked before the bounds check, which would return 0 for 0x20. */
+    if (ckind == 0x20) {
+        return 0;
+    }
+#endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {
         return 0;
     }

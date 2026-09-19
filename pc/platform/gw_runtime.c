@@ -1207,6 +1207,20 @@ void gw_Mex_OnItemPickupDispatch(int kind, void *gobj, void *arg1, void *vanilla
   gw_Mex_GObjDispatch2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind, gobj, arg1, vanilla);
 }
 
+/* The three item slots m-ex names OnItemRelease / OnItemCatch / onUnknownItemRelated (16/17/18).
+ * Each replaces one vanilla per-kind table whose dispatch site is already in ftcommon.c, and each
+ * takes the fighter gobj plus that call site's s32 argument. Leaving them unregistered is not
+ * inert: ftdata.c's clone-base fallback then runs the BASE fighter's handler instead. */
+void gw_Mex_OnItemDropExtDispatch(int kind, void *gobj, void *arg1, void *vanilla) {
+  gw_Mex_GObjDispatch2(GW_MEX_EVENT_ON_ITEM_DROP_EXT, kind, gobj, arg1, vanilla);
+}
+void gw_Mex_OnItemPickup2Dispatch(int kind, void *gobj, void *arg1, void *vanilla) {
+  gw_Mex_GObjDispatch2(GW_MEX_EVENT_ON_ITEM_PICKUP2, kind, gobj, arg1, vanilla);
+}
+void gw_Mex_OnItemDropDispatch(int kind, void *gobj, void *arg1, void *vanilla) {
+  gw_Mex_GObjDispatch2(GW_MEX_EVENT_ON_ITEM_DROP, kind, gobj, arg1, vanilla);
+}
+
 /* Demo registration for OnFrame: proves the surface fires without a custom mod. Installed once,
  * from gw_mex_load(), so it rides the existing "read flags once" path. The hook logs only its
  * first invocation to avoid a per-fighter per-frame flood. */

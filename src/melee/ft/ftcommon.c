@@ -1025,9 +1025,18 @@ void ftCommon_8007E6DC(HSD_GObj* gobj, HSD_GObj* item_gobj, s32 arg2)
     if (ftCo_800C5240(gobj)) {
         ftCo_800C5500(gobj);
     }
+#if defined(TARGET_PC)
+    /* m-ex Arch_FighterFunc slot 16 (OnItemRelease), the table this call site reads. */
+    {
+        extern void Mex_OnItemDropExtDispatch(int kind, void* gobj, void* arg1, void* vanilla);
+        Mex_OnItemDropExtDispatch(fp->kind, gobj, (void*) arg2,
+                                  (void*) ftData_OnItemDropExt[fp->kind]);
+    }
+#else
     if (ftData_OnItemDropExt[fp->kind] != NULL) {
         ftData_OnItemDropExt[fp->kind](gobj, arg2);
     }
+#endif
     pl_8003EA08(fp->player_id, fp->is_sub_fighter);
     fp->item_gobj = NULL;
 }
@@ -1035,17 +1044,35 @@ void ftCommon_8007E6DC(HSD_GObj* gobj, HSD_GObj* item_gobj, s32 arg2)
 void ftCommon_8007E79C(HSD_GObj* gobj, s32 arg1)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    /* m-ex Arch_FighterFunc slot 18 (onUnknownItemRelated). */
+    {
+        extern void Mex_OnItemDropDispatch(int kind, void* gobj, void* arg1, void* vanilla);
+        Mex_OnItemDropDispatch(fp->kind, gobj, (void*) arg1,
+                               (void*) ftData_OnItemDrop[fp->kind]);
+    }
+#else
     if (ftData_OnItemDrop[fp->kind] != NULL) {
         ftData_OnItemDrop[fp->kind](gobj, arg1);
     }
+#endif
 }
 
 void ftCommon_8007E7E4(HSD_GObj* gobj, s32 arg1)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    /* m-ex Arch_FighterFunc slot 17 (OnItemCatch). */
+    {
+        extern void Mex_OnItemPickup2Dispatch(int kind, void* gobj, void* arg1, void* vanilla);
+        Mex_OnItemPickup2Dispatch(fp->kind, gobj, (void*) arg1,
+                                  (void*) ftData_OnItemPickup[fp->kind]);
+    }
+#else
     if (ftData_OnItemPickup[fp->kind] != NULL) {
         ftData_OnItemPickup[fp->kind](gobj, arg1);
     }
+#endif
 }
 
 void ftCommon_8007E82C(HSD_GObj* gobj)

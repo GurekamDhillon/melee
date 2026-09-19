@@ -87,6 +87,9 @@ static int gw_mex_slot_of_internal(int k);
 #define GW_MEX_SLOT_ON_ACTION_STATE_CHANGE 24
 #define GW_MEX_SLOT_ON_REAPPLY_ATTR 25
 #define GW_MEX_SLOT_ON_ITEM_PICKUP 13
+#define GW_MEX_SLOT_ON_ITEM_DROP_EXT 16 /* ftData_OnItemDropExt - m-ex OnItemRelease  */
+#define GW_MEX_SLOT_ON_ITEM_PICKUP2 17  /* ftData_OnItemPickup  - m-ex OnItemCatch    */
+#define GW_MEX_SLOT_ON_ITEM_DROP 18     /* ftData_OnItemDrop - m-ex onUnknownItemRelated */
 #define GW_MEX_SLOT_ON_DOUBLE_JUMP 32
 #define GW_MEX_SLOT_ON_USMASH 36
 
@@ -2031,6 +2034,24 @@ static void gw_mex_interp_item_pickup(void *gobj, void *arg1) {
                               (uint32_t)(uintptr_t)arg1);
 }
 
+/* The three remaining item slots (16/17/18), dispatched from ftcommon.c's ftCommon_8007E6DC /
+ * ftCommon_8007E7E4 / ftCommon_8007E79C - the same three call sites m-ex's "Fighter OnItem"
+ * patches hook. Each passes the call site's s32 argument on in r4. Every Akaneia fighter with an
+ * ftFunction overrides all three, and while they were unregistered the clone base's handler ran
+ * silently in their place: a thrown or caught item behaved as the BASE character's. */
+static void gw_mex_interp_item_drop_ext(void *gobj, void *arg1) {
+    gw_mex_interp_run_logged2(GW_MEX_SLOT_ON_ITEM_DROP_EXT, "onItemRelease", gobj,
+                              (uint32_t) (uintptr_t) arg1);
+}
+static void gw_mex_interp_item_pickup2(void *gobj, void *arg1) {
+    gw_mex_interp_run_logged2(GW_MEX_SLOT_ON_ITEM_PICKUP2, "onItemCatch", gobj,
+                              (uint32_t) (uintptr_t) arg1);
+}
+static void gw_mex_interp_item_drop(void *gobj, void *arg1) {
+    gw_mex_interp_run_logged2(GW_MEX_SLOT_ON_ITEM_DROP, "onItemDrop", gobj,
+                              (uint32_t) (uintptr_t) arg1);
+}
+
 /* Symbolizer for gw_ppc: guest address -> the containing blob function's name, or NULL. */
 static const char *gw_mex_symbolize(uint32_t guest_addr) {
     gw_mex_kind *prev = gw_mex_k;
@@ -2195,6 +2216,12 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_USMASH, kind, gw_mex_interp_usmash);
     gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind,
                          gw_mex_interp_item_pickup);
+    gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_DROP_EXT, kind,
+                         gw_mex_interp_item_drop_ext);
+    gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP2, kind,
+                         gw_mex_interp_item_pickup2);
+    gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_DROP, kind,
+                         gw_mex_interp_item_drop);
 
     gw_mex_installed = 1;
     /* MELEE_MEX_DUMP_CODE=<path> writes the RELOCATED blob (what the interpreter actually

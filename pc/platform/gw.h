@@ -202,6 +202,9 @@ enum {
     GW_MEX_EVENT_ON_DOUBLE_JUMP,      /* ftCo_800CBAC4 (m-ex onDoubleJump, slot 32) */
     GW_MEX_EVENT_ON_USMASH,           /* ftCo_AttackHi4 doEnter (m-ex onUSmash, slot 36) */
     GW_MEX_EVENT_ON_ITEM_PICKUP,      /* ftpickupitem_800948A8 (m-ex OnItemPickup, slot 13) */
+    GW_MEX_EVENT_ON_ITEM_DROP_EXT,    /* ftData_OnItemDropExt (m-ex OnItemRelease, slot 16)  */
+    GW_MEX_EVENT_ON_ITEM_PICKUP2,     /* ftData_OnItemPickup  (m-ex OnItemCatch, slot 17)    */
+    GW_MEX_EVENT_ON_ITEM_DROP,        /* ftData_OnItemDrop (m-ex onUnknownItemRelated, 18)   */
     GW_MEX_EVENT_COUNT
 };
 
@@ -259,6 +262,9 @@ void gw_Mex_FighterCallbackDispatch(void* gobj, void* cb);
 void gw_Mex_OnDoubleJumpDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnUSmashDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnItemPickupDispatch(int kind, void* gobj, void* arg1, void* vanilla);
+void gw_Mex_OnItemDropExtDispatch(int kind, void* gobj, void* arg1, void* vanilla);
+void gw_Mex_OnItemPickup2Dispatch(int kind, void* gobj, void* arg1, void* vanilla);
+void gw_Mex_OnItemDropDispatch(int kind, void* gobj, void* arg1, void* vanilla);
 
 #ifdef __cplusplus
 }

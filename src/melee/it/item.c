@@ -546,6 +546,18 @@ void Item_80267978(HSD_GObj* gobj)
         int idx = item_data->kind - It_PKind_Start;
         item_data->xC4_article_data = it_804D6D30[idx];
         item_data->xB8_itemLogicTable = &it_803F23CC[idx];
+#if defined(TARGET_PC)
+    } else if (item_data->kind >= 237) {
+        /* Ported from m-ex (https://github.com/akaneia/m-ex):
+         * asm/m-ex/Item Extension/Create Item.asm, @ 0x80267990. m-ex adds a fifth range for custom
+         * item kinds (CustomItemStart = 237) backed by mexData. Without it, a custom kind falls into
+         * the stage branch below and indexes it_804A0F60 far past its end. Both lookups panic with
+         * a specific reason instead of returning NULL (pc/platform/gw_mex_ftfunction_runtime.c). */
+        extern void* Mex_ItemCustomDesc(int kind);
+        extern void* Mex_ItemCustomLogic(int kind);
+        item_data->xC4_article_data = Mex_ItemCustomDesc(item_data->kind);
+        item_data->xB8_itemLogicTable = Mex_ItemCustomLogic(item_data->kind);
+#endif
     } else {
         // Stage items
         int idx = item_data->kind - It_Kind_Old_Kuri;

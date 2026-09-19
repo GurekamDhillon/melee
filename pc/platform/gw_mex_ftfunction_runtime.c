@@ -107,17 +107,259 @@ static uint32_t gw_mex_override_target(uint32_t slot) {
  * Each is a logged no-op: the real work (mexData item tables, GXLink/proc guest callbacks) is
  * not built in the port yet, so the shim documents the call and returns safely. */
 
-static uint32_t gw_mex_shim_index_item(uint32_t fighter_id, uint32_t article_data,
-                                       uint32_t article_id, uint32_t a3, uint32_t a4, uint32_t a5,
-                                       uint32_t a6, uint32_t a7) {
-    static int logged;
-    (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
-    if (!logged) {
-        logged = 1;
-        gw_log("interp: MEX_IndexFighterItem(fighter=%u article=0x%08X id=%u) -> no-op (mexData "
-               "item tables not built in the port)", fighter_id, article_data, article_id);
+/* ---- mexData: MxDt.dat ---------------------------------------------------------------------
+ * m-ex's content tables (fighter/item/stage/...) ship on the disc as MxDt.dat, an HSD archive
+ * whose single public symbol is literally `mexData`. The port does not author a layout - it loads
+ * the real one. Field paths below were verified against the file (tools/mex_port/dump_mxdt.py),
+ * NOT taken from m-ex's mxdt.h, whose MexData.fighter struct is admittedly incomplete:
+ *
+ *   mexData +0x08 -> fighter;  fighter +0x4C -> item_lookup[]   (stride 8: {s32 count; u16 *ids})
+ *   mexData +0x1C -> item;     item +0x10 -> Custom[] (stride 0x3C), +0x14 -> RuntimeIndex[] (4)
+ *
+ * item +0x00..+0x0C (Common/Fighter/Pokemon/Stages) are ABSOLUTE vanilla guest addresses, not
+ * data offsets; they are not in the reloc table, so relocation correctly leaves them alone.
+ *
+ * INDEX SPACES - the trap here. Two numberings of fighters are in play:
+ *   - the PORT's kind (Ft_Kind_Sonic = 33, appended after the vanilla kinds), which is what the
+ *     engine stores in fp->kind and therefore what Sonic's own guest code reads and passes;
+ *   - Akaneia's m-ex INTERNAL kind (Sonic = 31), which is what item_lookup is indexed by.
+ * They differ, so every table access maps port kind -> internal kind first. Only Sonic's mapping
+ * is known; any other kind is a hard error, because a guessed index silently returns another
+ * fighter's items (item_lookup[33] is somebody else's row). And `fighter.names` is indexed by yet
+ * another space (EXTERNAL id) - do not use it with either of these. */
+
+#define GW_MEXDT_OFF_FIGHTER 0x08u
+#define GW_MEXDT_OFF_ITEM 0x1Cu
+#define GW_MEXDT_FIGHTER_OFF_ITEM_LOOKUP 0x4Cu
+#define GW_MEXDT_ITEM_OFF_CUSTOM 0x10u
+#define GW_MEXDT_ITEM_OFF_RUNTIME_INDEX 0x14u
+#define GW_MEX_CUSTOM_ITEM_START 237u /* m-ex CustomItemStart: global item kinds >= this are custom */
+
+static uint32_t gw_mexdt;        /* guest address of the mexData root; 0 = not loaded */
+static uint32_t gw_mexdt_base;   /* guest address of the loaded data section */
+static uint32_t gw_mexdt_size;
+
+static int gw_mexdt_in(uint32_t a, uint32_t len) {
+    return a >= gw_mexdt_base && (uint64_t) a + len <= (uint64_t) gw_mexdt_base + gw_mexdt_size;
+}
+
+/* Load an HSD archive's data section into guest memory and apply its relocation table (each
+ * entry is the data offset of a pointer word; the word becomes base + its data-relative value).
+ * Returns the guest address of `symbol`, or 0 with a logged reason. `fixed_base` != 0 loads at
+ * that guest address instead of allocating from the HSD heap - the in-engine tests use it, since
+ * they run before the game's heaps exist. */
+static uint32_t gw_mex_load_hsd(const char *path, const char *symbol, uint32_t fixed_base,
+                                uint32_t *out_base, uint32_t *out_size) {
+    extern void *gw_HSD_MemAlloc(uint32_t size);
+    extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
+    uint32_t file_len = 0, file_size, data_size, nb_reloc, i, base;
+    unsigned char *dat = (unsigned char *) gw_DVDReadFileAlloc(path, &file_len);
+    int32_t sym;
+
+    if (dat == NULL) {
+        gw_log("mexdata: %s not on this disc", path);
+        return 0u;
     }
-    return 0;
+    if (file_len < 0x20u) {
+        gw_log("mexdata: %s too small for an HSD header", path);
+        free(dat);
+        return 0u;
+    }
+    file_size = gw_r32(dat + 0x00);
+    data_size = gw_r32(dat + 0x04);
+    nb_reloc = gw_r32(dat + 0x08);
+    if (file_size != file_len || 0x20u + (uint64_t) data_size + (uint64_t) nb_reloc * 4u > file_len) {
+        gw_log("mexdata: %s header inconsistent (file 0x%X/0x%X data 0x%X relocs %u)", path,
+               file_size, file_len, data_size, nb_reloc);
+        free(dat);
+        return 0u;
+    }
+    sym = gw_ftfunction_find_public(dat, file_len, symbol);
+    if (sym < 0 || (uint32_t) sym >= data_size) {
+        gw_log("mexdata: %s has no public symbol %s", path, symbol);
+        free(dat);
+        return 0u;
+    }
+    base = fixed_base != 0u ? fixed_base : (uint32_t) (uintptr_t) gw_HSD_MemAlloc(data_size);
+    if (base == 0u) {
+        gw_log("mexdata: cannot allocate %u bytes for %s", data_size, path);
+        free(dat);
+        return 0u;
+    }
+    memcpy((void *) (uintptr_t) base, dat + 0x20, data_size);
+    for (i = 0; i < nb_reloc; ++i) {
+        uint32_t off = gw_r32(dat + 0x20 + data_size + i * 4u);
+        if ((uint64_t) off + 4u > data_size) {
+            gw_log("mexdata: %s reloc %u points past the data (0x%X)", path, i, off);
+            continue;
+        }
+        gw_w32((void *) (uintptr_t) (base + off),
+               gw_r32((const void *) (uintptr_t) (base + off)) + base);
+    }
+    free(dat);
+    *out_base = base;
+    *out_size = data_size;
+    return base + (uint32_t) sym;
+}
+
+/* Load MxDt.dat once. Safe to call when it is absent (vanilla disc): mexData stays unloaded and
+ * anything that needs it fails loudly at the point of use rather than at boot. */
+static void gw_mexdt_load(void) {
+    uint32_t root, fighter, lookup, item;
+    if (gw_mexdt != 0u) {
+        return;
+    }
+    root = gw_mex_load_hsd("MxDt.dat", "mexData", 0u, &gw_mexdt_base, &gw_mexdt_size);
+    if (root == 0u) {
+        return;
+    }
+    /* Validate the three pointers everything below depends on, so a layout mismatch is caught
+     * here, once, instead of as a wild read inside an item spawn. */
+    fighter = gw_r32((const void *) (uintptr_t) (root + GW_MEXDT_OFF_FIGHTER));
+    item = gw_r32((const void *) (uintptr_t) (root + GW_MEXDT_OFF_ITEM));
+    lookup = gw_mexdt_in(fighter, 0x50u)
+                 ? gw_r32((const void *) (uintptr_t) (fighter + GW_MEXDT_FIGHTER_OFF_ITEM_LOOKUP))
+                 : 0u;
+    if (!gw_mexdt_in(fighter, 0x50u) || !gw_mexdt_in(item, 0x18u) || !gw_mexdt_in(lookup, 8u)) {
+        gw_log("mexdata: MxDt.dat loaded but its layout does not match (fighter 0x%08X item "
+               "0x%08X item_lookup 0x%08X) - leaving mexData unloaded",
+               fighter, item, lookup);
+        return;
+    }
+    gw_mexdt = root;
+    gw_log("mexdata: MxDt.dat loaded, mexData @ 0x%08X (data 0x%08X, %u bytes)", root,
+           gw_mexdt_base, gw_mexdt_size);
+}
+
+/* Port fighter kind -> m-ex internal kind. See INDEX SPACES above. */
+static uint32_t gw_mex_internal_kind(uint32_t port_kind, const char *why) {
+    if (port_kind == (uint32_t) GW_MEX_KIND_SONIC) {
+        return (uint32_t) GW_MEX_INTERNAL_SONIC;
+    }
+    gw_panic("mexdata: %s: no m-ex internal kind is known for port fighter kind %u", why,
+             port_kind);
+    return 0u;
+}
+
+/* item_lookup[internal_kind].ids[n], with every step bounds-checked. */
+static uint32_t gw_mex_ft_item_global(uint32_t port_kind, uint32_t n, const char *why) {
+    uint32_t mk, fighter, lookup, entry, ids;
+    int32_t count;
+    if (gw_mexdt == 0u) {
+        gw_panic("mexdata: %s needs MxDt.dat, which is not loaded (not on this disc?)", why);
+    }
+    mk = gw_mex_internal_kind(port_kind, why);
+    fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
+    lookup = gw_r32((const void *) (uintptr_t) (fighter + GW_MEXDT_FIGHTER_OFF_ITEM_LOOKUP));
+    entry = lookup + mk * 8u;
+    if (!gw_mexdt_in(entry, 8u)) {
+        gw_panic("mexdata: %s: item_lookup[%u] is outside MxDt.dat", why, mk);
+    }
+    count = (int32_t) gw_r32((const void *) (uintptr_t) entry);
+    ids = gw_r32((const void *) (uintptr_t) (entry + 4u));
+    if ((int32_t) n < 0 || (int32_t) n >= count || !gw_mexdt_in(ids + n * 2u, 2u)) {
+        gw_panic("mexdata: %s: fighter item %u out of range (kind %u has %d)", why, n, mk, count);
+    }
+    return gw_r16((const void *) (uintptr_t) (ids + n * 2u));
+}
+
+/* MEX_IndexFighterItem(fighter_kind, ItemDesc *desc, item_id): register a fighter article's
+ * descriptor in item.RuntimeIndex so item creation can find it. m-ex's Create Item patch ASSERTS
+ * if the slot for a custom kind is NULL, so this is not optional. Called from the fighter's own
+ * OnLoad, which runs long before any special can spawn the item.
+ *
+ * NOT YET DONE: whether this call ALSO fills item.Custom (the 0x3C-stride state/function table)
+ * is unsettled - see _research/mex-data-layer-design.md section 5. For Sonic's kind that slot
+ * ships empty, so something fills it. */
+static uint32_t gw_mex_shim_index_item(uint32_t fighter_kind, uint32_t desc, uint32_t item_id,
+                                       uint32_t a3, uint32_t a4, uint32_t a5, uint32_t a6,
+                                       uint32_t a7) {
+    uint32_t global, item, rt, slot;
+    (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    global = gw_mex_ft_item_global(fighter_kind, item_id, "MEX_IndexFighterItem");
+    if (global < GW_MEX_CUSTOM_ITEM_START) {
+        gw_panic("mexdata: MEX_IndexFighterItem: global item kind %u is not a custom kind",
+                 global);
+    }
+    item = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_ITEM));
+    rt = gw_r32((const void *) (uintptr_t) (item + GW_MEXDT_ITEM_OFF_RUNTIME_INDEX));
+    slot = rt + (global - GW_MEX_CUSTOM_ITEM_START) * 4u;
+    if (!gw_mexdt_in(slot, 4u)) {
+        gw_panic("mexdata: MEX_IndexFighterItem: RuntimeIndex[%u] is outside MxDt.dat",
+                 global - GW_MEX_CUSTOM_ITEM_START);
+    }
+    gw_w32((void *) (uintptr_t) slot, desc);
+    gw_log("mexdata: MEX_IndexFighterItem(kind %u, item %u) -> global item kind %u, "
+           "RuntimeIndex[%u] = desc 0x%08X",
+           fighter_kind, item_id, global, global - GW_MEX_CUSTOM_ITEM_START, desc);
+    return 0u;
+}
+
+/* ---- custom item creation (the native half of m-ex's Create Item patch) --------------------
+ * Called from Item_80267978 (src/melee/it/item.c), which picks an item's descriptor (xC4) and
+ * logic table (xB8) by kind range. Vanilla has four ranges and routes everything >= 208 to the
+ * STAGE tables, so a custom kind like Sonic's spring (277) indexed the stage table at 69 - far off
+ * its end - got NULL model data and asserted "not found zako model data!". m-ex patches that site
+ * (Create Item.asm @0x80267990) to add a fifth range, kind >= 237, backed by mexData:
+ *   descriptor  = item.RuntimeIndex[kind - 237]           (filled by MEX_IndexFighterItem)
+ *   logic table = &item.Custom[kind - 237], stride 0x3C   (sizeof ItemLogicTable)
+ * Both fail loudly rather than return something plausible: m-ex itself asserts
+ * "ItemNotInitialized" on a NULL descriptor, and an all-zero logic table would give the item no
+ * states and crash somewhere unrelated much later. The logic table's callbacks (spawned,
+ * destroyed, ...) may be guest code; native item code calling them is covered by the execute
+ * trap. */
+
+#define GW_MEX_ITEM_LOGIC_STRIDE 0x3Cu
+
+static uint32_t gw_mex_item_table(uint32_t off, const char *what) {
+    uint32_t item;
+    if (gw_mexdt == 0u) {
+        gw_panic("mexdata: custom item %s needs MxDt.dat, which is not loaded", what);
+    }
+    item = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_ITEM));
+    return gw_r32((const void *) (uintptr_t) (item + off));
+}
+
+/* Descriptor (ItemGObjData+0xC4) for a custom item kind. Native pointer == guest address. */
+void *gw_Mex_ItemCustomDesc(int kind) {
+    uint32_t idx, slot, desc;
+    if (kind < (int) GW_MEX_CUSTOM_ITEM_START) {
+        gw_panic("mexdata: Mex_ItemCustomDesc(%d) called for a vanilla item kind", kind);
+    }
+    idx = (uint32_t) kind - GW_MEX_CUSTOM_ITEM_START;
+    slot = gw_mex_item_table(GW_MEXDT_ITEM_OFF_RUNTIME_INDEX, "descriptor") + idx * 4u;
+    if (!gw_mexdt_in(slot, 4u)) {
+        gw_panic("mexdata: item kind %d: RuntimeIndex[%u] is outside MxDt.dat", kind, idx);
+    }
+    desc = gw_r32((const void *) (uintptr_t) slot);
+    if (desc == 0u) {
+        gw_panic("mexdata: item kind %d not initialized - RuntimeIndex[%u] is NULL. The owning "
+                 "fighter's OnLoad must call MEX_IndexFighterItem before the item can spawn "
+                 "(m-ex asserts ItemNotInitialized here too)",
+                 kind, idx);
+    }
+    return (void *) (uintptr_t) desc;
+}
+
+/* Logic table (ItemGObjData+0xB8) for a custom item kind: &item.Custom[idx]. */
+void *gw_Mex_ItemCustomLogic(int kind) {
+    uint32_t idx, entry;
+    if (kind < (int) GW_MEX_CUSTOM_ITEM_START) {
+        gw_panic("mexdata: Mex_ItemCustomLogic(%d) called for a vanilla item kind", kind);
+    }
+    idx = (uint32_t) kind - GW_MEX_CUSTOM_ITEM_START;
+    entry = gw_mex_item_table(GW_MEXDT_ITEM_OFF_CUSTOM, "logic table") +
+            idx * GW_MEX_ITEM_LOGIC_STRIDE;
+    if (!gw_mexdt_in(entry, GW_MEX_ITEM_LOGIC_STRIDE)) {
+        gw_panic("mexdata: item kind %d: item.Custom[%u] is outside MxDt.dat", kind, idx);
+    }
+    if (gw_r32((const void *) (uintptr_t) entry) == 0u) { /* ItemLogicTable.states */
+        gw_panic("mexdata: item kind %d: item.Custom[%u] is EMPTY (no state table). It ships "
+                 "zeroed in MxDt.dat and nothing has filled it yet - the item's logic presumably "
+                 "comes from the fighter's itFunction, which the port does not load yet",
+                 kind, idx);
+    }
+    return (void *) (uintptr_t) entry;
 }
 
 static uint32_t gw_mex_shim_get_data(uint32_t id, uint32_t a1, uint32_t a2, uint32_t a3,
@@ -135,26 +377,21 @@ static uint32_t gw_mex_shim_get_data(uint32_t id, uint32_t a1, uint32_t a2, uint
     return (id == 8u) ? gw_mex_getdata_buf : 0u;
 }
 
+/* MEX_GetFtItemID(fighter_gobj, n): the fighter's n-th article as a GLOBAL item kind. A pure
+ * lookup into static file data - item_lookup ships correct, so there is no build step. For Sonic
+ * the only correct answer is MEX_GetFtItemID(sonic, 0) == 277 (test mex_ft_item_id_sonic).
+ * Previously this returned 0 forever, which is item kind 0 - a real, different item. */
 static uint32_t gw_mex_shim_get_ft_item_id(uint32_t gobj, uint32_t item_id, uint32_t a2,
                                            uint32_t a3, uint32_t a4, uint32_t a5, uint32_t a6,
                                            uint32_t a7) {
-    static int logged;
-    static uint32_t count;
-    uint32_t fighter_id = 0;
-    (void)a2; (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
-    ++count;
-    if (!logged) {
-        uint32_t fd = gw_r32((const void *)(uintptr_t)(gobj + 0x2Cu));
-        if (fd >= 0x80000000u && fd < 0x80000000u + gw_mem1_size) {
-            fighter_id = gw_r32((const void *)(uintptr_t)(fd + 0x4u));
-        }
-        logged = 1;
-        gw_log("interp: MEX_GetFtItemID(gobj=0x%08X item=%u fighter=%u) -> 0 (mexData item "
-               "lookup table not built in the port)", gobj, item_id, fighter_id);
-    } else if ((count % 60u) == 1u) {
-        gw_log("interp: MEX_GetFtItemID hit %u -> 0 (no-op)", count);
+    uint32_t fd, kind;
+    (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    fd = gw_r32((const void *) (uintptr_t) (gobj + 0x2Cu)); /* gobj->user_data */
+    if (fd < 0x80000000u || fd >= 0x80000000u + gw_mem1_size) {
+        gw_panic("mexdata: MEX_GetFtItemID: gobj 0x%08X has no fighter data", gobj);
     }
-    return 0;
+    kind = gw_r32((const void *) (uintptr_t) (fd + 0x4u)); /* fp->kind */
+    return gw_mex_ft_item_global(kind, item_id, "MEX_GetFtItemID");
 }
 
 /* ---- incoming calls: native code calling guest code ---------------------------------------
@@ -812,6 +1049,7 @@ void gw_Mex_FtFunctionInstall(int kind) {
                       gw_mex_ff.code_base + gw_mex_ff.code_size);
     /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every panic,
      * budget dump and trace names a guest function instead of printing a bare address. */
+    gw_mexdt_load();
     gw_ppc_set_symbolizer(gw_mex_symbolize);
     /* First in the chain, so it runs before the port's own crash handling - which it defers to
      * for anything that is not an execute fault inside the blob. */
@@ -882,6 +1120,33 @@ void gw_mex_ftfunction_runtime_tests_register(void);
 
 /* ---- tests --------------------------------------------------------------------------- */
 
+/* MEX_GetFtItemID(sonic, 0) must be 277: Sonic is m-ex internal kind 31 with one article, global
+ * ItemKind 277 - reproduced independently by tools/mex_port/dump_mxdt.py. This pins the whole chain
+ * the spring depends on: the HSD relocation, the verified field paths, AND the port-kind (33) ->
+ * internal-kind (31) mapping. Get the mapping wrong and it returns another fighter's item. Skips
+ * on a disc without MxDt.dat (vanilla). Loads at a fixed scratch address, not the HSD heap. */
+#define GW_MEXDT_TEST_BASE 0x80600000u
+static int test_mex_ft_item_id_sonic(void) {
+    uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
+    uint32_t root, got;
+    int rc = 0;
+    root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base,
+                           &gw_mexdt_size);
+    if (root == 0u) {
+        gw_log("test mex_ft_item_id_sonic: no MxDt.dat on this disc - skipped");
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 0;
+    }
+    gw_mexdt = root;
+    got = gw_mex_ft_item_global((uint32_t) GW_MEX_KIND_SONIC, 0u, "test");
+    if (got != 277u) {
+        gw_test_fail("MEX_GetFtItemID(sonic, 0) = %u, expected 277", got);
+        rc = 1;
+    }
+    gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+    return rc;
+}
+
 static int test_bridge_lookup_memcpy(void) {
     int kind = -1;
     uint32_t native = gw_mex_bridge_lookup(0x800031F4u, &kind); /* memcpy */
@@ -934,6 +1199,7 @@ static int test_resolver_mex_shims(void) {
 }
 
 void gw_mex_ftfunction_runtime_tests_register(void) {
+    gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("bridge_lookup_memcpy", test_bridge_lookup_memcpy);
     gw_test_register("bridge_lookup_global", test_bridge_lookup_global);
     gw_test_register("bridge_lookup_miss", test_bridge_lookup_miss);

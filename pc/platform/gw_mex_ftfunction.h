@@ -77,6 +77,10 @@ int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction
 int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t code_base,
                           uint32_t mexdata_base, gw_ftfunction *out);
 
+/* HSD archive public-symbol lookup: the data offset of `symbol`, or -1. Shared with the MxDt.dat
+ * loader in gw_mex_ftfunction_runtime.c. */
+int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size, const char *symbol);
+
 /* Resolve a guest address to the name of the blob function containing it, or NULL. Cheap linear
  * scan: this is only ever called on a panic/trace path. */
 const char *gw_ftfunction_symbol_name(const gw_ftfunction *ff, uint32_t guest_addr);

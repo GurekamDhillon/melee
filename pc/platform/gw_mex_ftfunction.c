@@ -74,7 +74,7 @@ static const char *gw_ftfunction_slot_name(uint32_t slot) {
 }
 /* ---- HSD archive public-symbol lookup ------------------------------------------------ */
 
-static int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size,
+int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size,
                                          const char *symbol) {
     uint32_t data_size, nb_reloc, nb_public, nb_extern;
     uint32_t o_public, o_symbols;

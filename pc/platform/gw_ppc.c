@@ -15,6 +15,7 @@
 #include "gw_ppc.h"
 #include "gw_mex_bridge.h"
 
+#include <math.h>
 #include <string.h>
 
 /* Guest MEM1 base - the same reservation gw_mem_init makes in gw_runtime.c. */
@@ -47,6 +48,14 @@ static gw_ppc_machine gw_ppc_m;
  * shows up as a diagnosable log line instead of an unrecoverable crash. The cap is far above any
  * legitimate nesting: real fighter callbacks bridge out and back at most a few levels deep. */
 #define GW_PPC_MAX_DEPTH 16
+
+/* Instruction budget for one gw_ppc_call. Guest code that loops forever (e.g. a search over an
+ * m-ex list whose shims return nothing, so the terminating condition never holds) otherwise
+ * freezes the game thread inside the interpreter with no diagnostic - the watchdog just reports
+ * "at gw_ppc_execute_fp" over and over. The budget turns that into a clean panic naming the guest
+ * PC and the range it was looping in. It is far above any legitimate callback: a per-frame
+ * fighter callback runs thousands of instructions, not tens of millions. */
+#define GW_PPC_MAX_INSNS 50000000u
 
 /* Gap left below the interrupted frame's r1 when a nested run derives its own guest stack. Big
  * enough for the PowerPC linkage area plus the leaf slack a caller may still be using. */
@@ -1127,9 +1136,21 @@ static int gw_ppc_execute_cr(gw_ppc_machine *m, uint32_t insn) {
  * Single ops compute in double then round to single (frsp semantics); Gekko's 25-bit-mantissa
  * rounding is not modeled in Phase 1. NaN/exception behavior is approximated. */
 
+/* fsqrt/frsqrte operand helper. Gekko's fsqrt is an estimate; computing it exactly is closer to
+ * the hardware than refusing the instruction, and the port is not cycle- or bit-exact anyway. */
+static double gw_ppc_sqrt(double x) { return sqrt(x); }
+
 static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
     gw_ppc_ctx *c = &m->cpu;
-    uint32_t xo = (insn >> 1) & 0x3FF;
+    /* Opcodes 59/63 carry TWO instruction forms with DIFFERENT XO widths:
+     *   A-form  (fadd/fsub/fmul/fdiv/fmadd/fsel/...): XO is 5 bits, bits 26..30.
+     *   X-form  (fmr/fneg/fabs/frsp/fctiwz/fcmpu/...): XO is 10 bits, bits 21..30.
+     * Decoding everything with the 10-bit mask (as this did) only works for an A-form
+     * instruction whose frC field happens to be zero, because frC occupies the upper five bits
+     * of that mask. `fmuls f12,f12,f12` (0xED8C0332) therefore decoded as xo=409 and raised
+     * "unimplemented opcode" mid-move. So: try the 5-bit A-form XO first, fall back to X-form. */
+    uint32_t xo5 = (insn >> 1) & 0x1F;
+    uint32_t xo10 = (insn >> 1) & 0x3FF;
     uint32_t ip = c->pc - 4;
     uint32_t fd = (insn >> 21) & 0x1F;
     uint32_t fa = (insn >> 16) & 0x1F;
@@ -1137,27 +1158,62 @@ static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
     uint32_t fc = (insn >> 6) & 0x1F;
     double a = c->fpr[fa].d;
     double b = c->fpr[fb].d;
+    double cc = c->fpr[fc].d;
     double r;
+    int have = 1;
 
-    /* fmr/fneg/fabs/frsp/fctiwz are rD,rB form (bits 16..20 are zero) and appear in opcode 63. */
-    switch (xo) {
-    case 21: /* fadd / fadds */
-        r = a + b;
-        c->fpr[fd].d = single ? (double)(float)r : r;
-        break;
-    case 20: /* fsub / fsubs */
-        r = a - b;
-        c->fpr[fd].d = single ? (double)(float)r : r;
-        break;
-    case 25: /* fmul / fmuls */
-        r = a * b;
-        c->fpr[fd].d = single ? (double)(float)r : r;
-        break;
-    case 18: /* fdiv / fdivs */
+    /* ---- A-form (5-bit XO). Note the operand pattern: the multiply family reads frA and
+     * frC (NOT frB), and the multiply-add family is frA*frC +/- frB. */
+    switch (xo5) {
+    case 18: /* fdiv / fdivs:   fD = fA / fB */
         r = a / b;
-        c->fpr[fd].d = single ? (double)(float)r : r;
         break;
+    case 20: /* fsub / fsubs:   fD = fA - fB */
+        r = a - b;
+        break;
+    case 21: /* fadd / fadds:   fD = fA + fB */
+        r = a + b;
+        break;
+    case 22: /* fsqrt / fsqrts: fD = sqrt(fB) */
+        r = gw_ppc_sqrt(b);
+        break;
+    case 24: /* fres:           fD = 1 / fB (estimate; computed exactly) */
+        r = 1.0 / b;
+        break;
+    case 25: /* fmul / fmuls:   fD = fA * fC  <- frC, not frB */
+        r = a * cc;
+        break;
+    case 26: /* frsqrte:        fD = 1 / sqrt(fB) (estimate; computed exactly) */
+        r = 1.0 / gw_ppc_sqrt(b);
+        break;
+    case 28: /* fmsub / fmsubs:   fD =  (fA * fC) - fB */
+        r = (a * cc) - b;
+        break;
+    case 29: /* fmadd / fmadds:   fD =  (fA * fC) + fB */
+        r = (a * cc) + b;
+        break;
+    case 30: /* fnmsub / fnmsubs: fD = -((fA * fC) - fB) */
+        r = -((a * cc) - b);
+        break;
+    case 31: /* fnmadd / fnmadds: fD = -((fA * fC) + fB) */
+        r = -((a * cc) + b);
+        break;
+    case 23: /* fsel: fD = (fA >= 0 or NaN) ? fC : fB. Never rounded to single. */
+        c->fpr[fd].d = (a >= 0.0 || a != a) ? cc : b;
+        return 0;
+    default:
+        have = 0;
+        break;
+    }
+    if (have) {
+        /* Single-precision forms round the double result to float (frsp semantics). Gekko's
+         * 25-bit-mantissa intermediate rounding is not modeled. */
+        c->fpr[fd].d = single ? (double) (float) r : r;
+        return 0;
+    }
 
+    /* ---- X-form (10-bit XO), opcode 63. */
+    switch (xo10) {
     case 72: /* fmr: fD = fB */
         c->fpr[fd].d = b;
         break;
@@ -1167,23 +1223,26 @@ static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
     case 264: /* fabs */
         c->fpr[fd].d = b < 0 ? -b : b;
         break;
-    case 12: /* frsp: round to single */
-        c->fpr[fd].d = (double)(float)b;
+    case 136: /* fnabs */
+        c->fpr[fd].d = b < 0 ? b : -b;
         break;
-    case 15: /* fctiwz: convert to 32-bit integer (truncate), store sign-extended in the FPR */
+    case 12: /* frsp: round to single */
+        c->fpr[fd].d = (double) (float) b;
+        break;
+    case 15: /* fctiwz: convert to 32-bit integer (truncate), sign-extended in the FPR */
     {
-        int32_t iv = (int32_t)b;
-        c->fpr[fd].u64 = (uint64_t)(int64_t)iv;
+        int32_t iv = (int32_t) b;
+        c->fpr[fd].u64 = (uint64_t) (int64_t) iv;
         break;
     }
     case 14: /* fctiw (round to nearest) */
     {
-        int32_t iv = (int32_t)(b >= 0 ? b + 0.5 : b - 0.5);
-        c->fpr[fd].u64 = (uint64_t)(int64_t)iv;
+        int32_t iv = (int32_t) (b >= 0 ? b + 0.5 : b - 0.5);
+        c->fpr[fd].u64 = (uint64_t) (int64_t) iv;
         break;
     }
 
-    case 0: /* fcmpu */
+    case 0:  /* fcmpu */
     case 32: /* fcmpo (FP exception not modeled) */
     {
         uint32_t crfd = (insn >> 23) & 7;
@@ -1202,10 +1261,6 @@ static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
         break;
     }
 
-    case 23: /* fsel: fD = (fA >= 0 or NaN) ? fC : fB */
-        c->fpr[fd].d = (a >= 0.0 || a != a) ? c->fpr[fc].d : b;
-        break;
-
     default:
         gw_ppc_bad_opcode(ip, insn);
     }
@@ -1215,9 +1270,24 @@ static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
 /* ---- run loop ------------------------------------------------------------------------ */
 
 static uint32_t gw_ppc_run(gw_ppc_machine *m) {
+    uint32_t budget = GW_PPC_MAX_INSNS;
+    uint32_t lo = 0xFFFFFFFFu, hi = 0u; /* PC range visited, to describe a runaway loop */
     for (;;) {
         uint32_t ip = m->cpu.pc;
-        uint32_t insn = gw_ppc_fetch(m, ip);
+        uint32_t insn;
+        if (ip < lo) {
+            lo = ip;
+        }
+        if (ip > hi) {
+            hi = ip;
+        }
+        if (budget-- == 0u) {
+            gw_panic("ppc: instruction budget (%u) exhausted at ip=0x%08X - guest code is "
+                     "looping (PC range 0x%08X..0x%08X). This is an infinite loop in the "
+                     "interpreted blob, not an interpreter fault.",
+                     GW_PPC_MAX_INSNS, ip, lo, hi);
+        }
+        insn = gw_ppc_fetch(m, ip);
         m->cpu.pc = ip + 4;
         if (gw_ppc_execute(m, insn)) {
             return m->cpu.gpr[3];
@@ -1585,9 +1655,70 @@ static int test_ppc_reentry_cap(void) {
     return 0;
 }
 
+/* ---- A-form FP decode test -----------------------------------------------------------
+ * Regression test for the neutral-B crash. Two distinct bugs lived in the opcode 59/63 decode:
+ *   1. XO was masked to 10 bits for every form, but an A-form op's XO is 5 bits (26..30); the
+ *      upper five bits of the wide mask are frC. So any fmul with frC != 0 missed its case and
+ *      raised "unimplemented opcode" - exactly what killed Sonic's neutral special
+ *      (0xED8C0332 = fmuls f12,f12,f12 at guest 0x807F8490).
+ *   2. fmul was computed as frA * frB. The ISA says frD = frA * frC.
+ * Both are invisible unless frC is both non-zero and different from frB, so the test uses three
+ * distinct registers with distinct values: only frA*frC gives 3.5 * 11.0.
+ */
+static int test_ppc_fp_aform_decode(void) {
+    /* lfs f3,0(r3) ; lfs f4,4(r3) ; lfs f5,8(r3) ; fmuls f2,f3,f5 ; fmadds f6,f3,f5,f4 ;
+     * stfs f2,12(r3) ; stfs f6,16(r3) ; blr
+     * f3 = fA = 3.5, f4 = fB = 100.0, f5 = fC = 11.0. fmuls must yield fA*fC = 38.5 (NOT
+     * fA*fB = 350.0), and fmadds must yield fA*fC + fB = 138.5. */
+    static const uint32_t blob[] = {
+        0xC0630000u, /* lfs  f3, 0(r3)  */
+        0xC0830004u, /* lfs  f4, 4(r3)  */
+        0xC0A30008u, /* lfs  f5, 8(r3)  */
+        0xEC430172u, /* fmuls f2, f3, f5      (A-form XO=25, frC=5) */
+        0xECC3217Au, /* fmadds f6, f3, f5, f4 (A-form XO=29, frC=5) */
+        0xD043000Cu, /* stfs f2, 12(r3) */
+        0xD0C30010u, /* stfs f6, 16(r3) */
+        0x4E800020u, /* blr */
+    };
+    const float fa = 3.5f, fb = 100.0f, fc = 11.0f;
+    const float want_mul = fa * fc;        /* 38.5  */
+    const float want_madd = fa * fc + fb;  /* 138.5 */
+    uint32_t args[1];
+    float got_mul, got_madd;
+    unsigned i;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 0), fa);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 4), fb);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 8), fc);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 12), 0.0f);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 16), 0.0f);
+
+    args[0] = GW_PPC_TEST_FDATA;
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t) sizeof blob);
+    gw_ppc_call(GW_PPC_TEST_CODE, args, 1, 0, GW_PPC_TEST_STACK);
+
+    got_mul = gw_rf32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 12));
+    got_madd = gw_rf32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 16));
+    if (got_mul != want_mul) {
+        gw_test_fail("fmuls gave %.4f, expected fA*fC = %.4f (fA*fB would be %.4f)", got_mul,
+                     want_mul, fa * fb);
+        return 1;
+    }
+    if (got_madd != want_madd) {
+        gw_test_fail("fmadds gave %.4f, expected fA*fC+fB = %.4f", got_madd, want_madd);
+        return 1;
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
     gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
+    gw_test_register("ppc_fp_aform_decode", test_ppc_fp_aform_decode);
 }

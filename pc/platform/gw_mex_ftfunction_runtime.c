@@ -118,6 +118,30 @@ static uint32_t gw_mex_override_target(uint32_t slot) {
  * Each is a logged no-op: the real work (mexData item tables, GXLink/proc guest callbacks) is
  * not built in the port yet, so the shim documents the call and returns safely. */
 
+/* ---- persistent guest memory -----------------------------------------------------------------
+ * Everything the m-ex runtime puts in guest memory (fighter code, its stack, mexData, item article
+ * code) comes from here, NOT HSD_MemAlloc: it is loaded once and must outlive the scene that
+ * loaded it. See GW_MEX_PERSIST_SIZE in shim_os.c. A bump allocator - nothing is ever freed, which
+ * is correct: each blob is loaded exactly once per process. Zero-filled. */
+static void *gw_mex_persist_alloc(uint32_t size) {
+    extern void gw_mex_persist_region(uint32_t *base, uint32_t *size);
+    static uint32_t base, cap, used;
+    uint32_t p;
+    if (cap == 0u) {
+        gw_mex_persist_region(&base, &cap);
+    }
+    size = (size + 31u) & ~31u;
+    if (size > cap - used) {
+        gw_panic("mex: persistent guest memory exhausted (%u of %u bytes used, %u requested) - "
+                 "raise GW_MEX_PERSIST_SIZE in shim_os.c",
+                 used, cap, size);
+    }
+    p = base + used;
+    used += size;
+    memset((void *) (uintptr_t) p, 0, size);
+    return (void *) (uintptr_t) p;
+}
+
 /* ---- mexData: MxDt.dat ---------------------------------------------------------------------
  * m-ex's content tables (fighter/item/stage/...) ship on the disc as MxDt.dat, an HSD archive
  * whose single public symbol is literally `mexData`. The port does not author a layout - it loads
@@ -191,7 +215,7 @@ static uint32_t gw_mex_load_hsd(const char *path, const char *symbol, uint32_t f
         free(dat);
         return 0u;
     }
-    base = fixed_base != 0u ? fixed_base : (uint32_t) (uintptr_t) gw_HSD_MemAlloc(data_size);
+    base = fixed_base != 0u ? fixed_base : (uint32_t) (uintptr_t) gw_mex_persist_alloc(data_size);
     if (base == 0u) {
         gw_log("mexdata: cannot allocate %u bytes for %s", data_size, path);
         free(dat);
@@ -304,6 +328,69 @@ static uint32_t gw_mex_shim_index_item(uint32_t fighter_kind, uint32_t desc, uin
            "RuntimeIndex[%u] = desc 0x%08X",
            fighter_kind, item_id, global, global - GW_MEX_CUSTOM_ITEM_START, desc);
     return 0u;
+}
+
+/* ---- m-ex CSS accessors (for the data-driven character select, mncharsel.c) ------------------
+ * Paths verified against the file with tools/mex_port/dump_css.py:
+ *   mexData +0x00 -> metadata, metadata +0x0C = css icon count (s32)
+ *   mexData +0x04 -> menu, menu +0x04 -> css, css +0xDC = icon array, stride 0x1C - the SAME
+ *   layout as the port's CSSIcon (hud, char, state, timer, joint vs, joint 1p, sfx, bounds)
+ * Icon char ids are m-ex EXTERNAL ids. m-ex external 0..25 are exactly the retail CharacterKind
+ * order, so they map to themselves; external 30 is Sonic, the port's CharacterKind 0x20. Every
+ * other external id is a character the port does not have - reported as -1 ("not available"),
+ * never guessed: 0x1E is Crazy Hand to the port but Sonic to m-ex, and 0x20 is the port's Sonic but
+ * m-ex's Tails. */
+int gw_Mex_CssIconCount(void) {
+    uint32_t meta;
+    int32_t n;
+    /* The CSS runs before any match, i.e. before a fighter install would load mexData. It lives
+     * in persistent memory, so loading it here, early, is safe. */
+    gw_mexdt_load();
+    if (gw_mexdt == 0u) {
+        return 0;
+    }
+    meta = gw_r32((const void *) (uintptr_t) gw_mexdt);
+    if (!gw_mexdt_in(meta, 0x10u)) {
+        return 0;
+    }
+    n = (int32_t) gw_r32((const void *) (uintptr_t) (meta + 0x0Cu));
+    return (n > 0 && n <= 64) ? n : 0;
+}
+
+void *gw_Mex_CssIconTable(void) {
+    uint32_t menu, css, tbl;
+    int n = gw_Mex_CssIconCount();
+    if (n == 0) {
+        return NULL;
+    }
+    menu = gw_r32((const void *) (uintptr_t) (gw_mexdt + 0x04u));
+    css = gw_mexdt_in(menu, 8u) ? gw_r32((const void *) (uintptr_t) (menu + 0x04u)) : 0u;
+    tbl = css + 0xDCu;
+    if (css == 0u || !gw_mexdt_in(tbl, (uint32_t) n * 0x1Cu)) {
+        return NULL;
+    }
+    return (void *) (uintptr_t) tbl;
+}
+
+int gw_Mex_ExtToPortCKind(int ext) {
+    if (ext >= 0 && ext <= 25) {
+        return ext;
+    }
+    if (ext == 30) {
+        return 0x20; /* Sonic */
+    }
+    return -1;
+}
+
+/* The reverse, for portraits: the port's CharacterKind -> m-ex external id (-1 if none). */
+int gw_Mex_PortCKindToExt(int ckind) {
+    if (ckind >= 0 && ckind <= 25) {
+        return ckind;
+    }
+    if (ckind == 0x20) {
+        return 30;
+    }
+    return -1;
 }
 
 /* ---- item articles: itFunction -------------------------------------------------------------
@@ -426,7 +513,7 @@ static void gw_mex_load_items(const char *dat_path, uint32_t port_kind) {
             gw_log("itfunction: article %u has an out-of-range code/reloc table", n);
             continue;
         }
-        code = (uint32_t) (uintptr_t) gw_HSD_MemAlloc(code_size);
+        code = (uint32_t) (uintptr_t) gw_mex_persist_alloc(code_size);
         if (code == 0u) {
             gw_log("itfunction: cannot allocate %u bytes for article %u", code_size, n);
             continue;
@@ -1392,10 +1479,10 @@ void gw_Mex_FtFunctionInstall(int kind) {
     }
     gw_mex_installed = -1;
 
-    code_base = (uint32_t)(uintptr_t)gw_HSD_MemAlloc(0x6000u);
-    mexdata_base = (uint32_t)(uintptr_t)gw_HSD_MemAlloc(GW_MEX_MEXDATA_SIZE);
-    stack_base = (uint32_t)(uintptr_t)gw_HSD_MemAlloc(GW_MEX_STACK_SIZE);
-    getdata_base = (uint32_t)(uintptr_t)gw_HSD_MemAlloc(GW_MEX_GETDATA_SIZE);
+    code_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(0x6000u);
+    mexdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_MEXDATA_SIZE);
+    stack_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_STACK_SIZE);
+    getdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_GETDATA_SIZE);
     if (code_base == 0 || mexdata_base == 0 || stack_base == 0 || getdata_base == 0) {
         gw_log("interp: ftFunction install failed: heap allocation returned NULL");
         return;

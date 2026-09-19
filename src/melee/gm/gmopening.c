@@ -140,6 +140,14 @@ void fn_801AA0E8(void)
     1250, 2, 394, 1, 65536, 2,
 };
 
+#if defined(TARGET_PC)
+/* Set when the disc has no opening movie. m-ex builds (Akaneia) ship without MvOpen.mth; on
+ * hardware their code skips the scene. Playing it anyway reads a garbage header from file -1 and
+ * asserts in HSD_DevComRequest (user-found: the game died at boot once a save existed, since the
+ * save skips the memory-card prompt and boot goes straight to the opening). */
+static bool gm_Opening_NoMovie;
+#endif
+
 void gm_Scene_Opening_OnEnter(UNK_T arg0)
 {
     HSD_GObj* temp_r3;
@@ -163,6 +171,12 @@ void gm_Scene_Opening_OnEnter(UNK_T arg0)
     gmTitle_801A1A3C();
     gmTitle_801A19AC();
     gmTitle_801A1944();
+#if defined(TARGET_PC)
+    gm_Opening_NoMovie = DVDConvertPathToEntrynum("MvOpen.mth") < 0;
+    if (gm_Opening_NoMovie) {
+        return;
+    }
+#endif
 
     temp_r3 = GObj_Create(0x13, 0x14, 0);
     gm_804D67F4 = temp_r3;
@@ -194,6 +208,15 @@ void gm_Scene_Opening_OnFrame(void)
     HSD_SObj* temp_r3_3;
     PAD_STACK(4);
 
+#if defined(TARGET_PC)
+    if (gm_Opening_NoMovie) {
+        /* no movie: straight on to the title, as the A/Start skip does */
+        gm_801A4B60(); /* end this scene */
+        gm_SetPendingGameMode(GM_TITLE);
+        gm_SetNewGameModePending();
+        return;
+    }
+#endif
     lbMthp_8001F578();
     temp_r3 = lbMthp_8001F5C4();
     if (gm_804D67EC > 5400) {

@@ -46,14 +46,21 @@
 #define FTFUNC_OFF_SYMBOL_TABLE 0x1Cu
 #define FTFUNC_SYMBOL_STRIDE 12u
 
-/* Arch_FighterFunc slot names, word-indexed (Header.s: onLoad 0x0 ... GetTrailData 0xB4). */
+/* Arch_FighterFunc slot names, word-indexed (Header.s: onLoad 0x0 ... GetTrailData 0xB4).
+ * Display only (gw_ftfunction_slot_name), never semantic - the runtime keys off GW_MEX_SLOT_*.
+ * Three entries were corrected on 2026-09-19 against the blob's OWN debug symbol table, which
+ * names the function each slot resolves to: slot 1 is OnRespawn (was "onDeath") and slots 21/22
+ * are the eye-texture pair (was "onKnockbackEnter"/"onKnockbackExit"). The other 22 agree.
+ * NOTE this means GW_MEX_EVENT_ON_DEATH / ON_KNOCKBACK_ENTER / ON_KNOCKBACK_EXIT may be mapped
+ * to the wrong slots too. No live miswiring today because the runtime does not register hooks
+ * for any of those three, but check before it does. */
 static const char *const gw_ftfunction_slot_names[GW_FTFUNC_SLOT_COUNT] = {
-    "onLoad",         "onDeath",        "onDestroy",       "MoveLogic",
+    "onLoad",         "OnRespawn",      "onDestroy",       "MoveLogic",
     "SpecialN",       "SpecialNAir",    "SpecialS",        "SpecialSAir",
     "SpecialHi",      "SpecialHiAir",   "SpecialLw",       "SpecialLwAir",
     "onAbsorb",       "OnItemPickup",   "onMakeItemInvisible", "onMakeItemVisible",
     "OnItemRelease",  "OnItemPickup2",  "onUnknownItemRelated", "onApplyHeadItem",
-    "onRemoveHeadItem", "onKnockbackEnter", "onKnockbackExit", "onFrame",
+    "onRemoveHeadItem", "EyeTextureDamaged", "EyeTextureNormal", "onFrame",
     "onActionStateChange", "onReapplyAttr", "onModelRender", "onShadowRender",
     "onUnknownMultijump", "onActionStateChangeWhileEyeTextureIsChanged", "onTwoEntryTable", "onFloat",
     "onDoubleJump",   "onZair",         "onLanding",       "onFSmash",
@@ -337,7 +344,7 @@ static int gw_ftfunction_load_from_memory_at(const unsigned char *dat, size_t da
                         ++n;
                     }
                     memcpy(w, dat + p, n);
-                    w[n] = ' ';
+                    w[n] = '\0';
                     out->symbols[i].start = code_base + gw_r32(e + 0);
                     out->symbols[i].end = code_base + gw_r32(e + 4);
                     out->symbols[i].name = w;

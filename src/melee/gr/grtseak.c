@@ -93,6 +93,18 @@ HSD_GObj* grTSeak_80223908(int arg0)
 {
     HSD_GObj* gobj;
     StageCallbacks* callbacks = &grTSk_StageCallbacks[arg0];
+#if defined(TARGET_PC)
+    /* Every m-ex custom stage's onInit calls THIS creator (it is the one m-ex repoints at
+     * `Get grFunction`), so the table it indexes must be the running stage's, not grTSk's.
+     * Mex_GrCallbacks returns NULL for a vanilla stage, which keeps the line above. */
+    {
+        extern void* Mex_GrCallbacks(void);
+        StageCallbacks* mex_cbs = (StageCallbacks*) Mex_GrCallbacks();
+        if (mex_cbs != NULL) {
+            callbacks = &mex_cbs[arg0];
+        }
+    }
+#endif
 
     gobj = Ground_GetStageGObj(arg0);
 

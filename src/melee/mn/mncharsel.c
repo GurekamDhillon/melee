@@ -193,7 +193,7 @@ typedef struct MexSelectChr {
     HSD_Joint* icon_joint;
     HSD_AnimJoint* icon_animjoint;
     HSD_MatAnimJoint* icon_matanim;
-    HSD_MatAnimJoint* csp_matanim;
+    HSD_MatAnim* csp_matanim; /* one material anim, not a joint tree: 221 CSP images */
     int csp_stride;
 } MexSelectChr;
 static MexSelectChr* mnCharSel_Mex;  /* NULL = the retail CSS */
@@ -1250,6 +1250,33 @@ static inline s32 getHandicapValue(int port)
     return hval != 0 ? hval : 1;
 }
 
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/CSS Expansion/HUD/ - "Use External ID
+ * For CSP" and "CSS - Costume Change Rewrite". With an m-ex CSS the portrait is a frame of
+ * mexSelectChr's one CSP material animation, frame = ext + costume * csp_stride (41 on Akaneia),
+ * and the emblem is a frame of IfAll's Eblm_matanim_joint, frame = insignia[ext]. Retail used one
+ * frame for both (ft_hudindex + costume * 30), which on Akaneia showed a stale portrait: Akaneia
+ * stripped every retail portrait animation. VS doors only; 1P keeps the retail path for now. */
+static void mnCharSel_MexPortrait(int door, int icon, int costume)
+{
+    extern int Mex_PortCKindToExt(int);
+    extern int Mex_InsigniaForExt(int);
+    int ext = Mex_PortCKindToExt(icons[icon].char_kind);
+    int emblem = Mex_InsigniaForExt(ext);
+    HSD_JObj* j;
+    if (ext < 0) {
+        mnCharSel_8025D5AC(door, 0, 1);
+        return;
+    }
+    j = animateJoint(mnCharSel_804D6CC0, mnCharSel_803F0DFC.doors[door].costume_joint,
+                     TOBJ_MASK, (float) (ext + costume * mnCharSel_Mex->csp_stride));
+    sethidden(j, 0);
+    j = animateJoint(mnCharSel_804D6CC0, mnCharSel_803F0DFC.doors[door].emblem_joint,
+                     TOBJ_MASK, (float) (emblem >= 0 ? emblem : 0));
+    sethidden(j, emblem < 0);
+}
+#endif
+
 void mnCharSel_8025DB34(u8 arg0)
 {
     struct {
@@ -1620,6 +1647,11 @@ void mnCharSel_8025DB34(u8 arg0)
                 mnCharSel_804D6CB0->vs.start.players[port].color = color;
             }
             hud_idx += color * 0x1E;
+#if defined(TARGET_PC)
+            if (mnCharSel_Mex != NULL && mnCharSel_804D6CF5 != 1) {
+                mnCharSel_MexPortrait((int) arg0, final_icon, color);
+            } else
+#endif
             mnCharSel_8025D5AC((int) arg0, hud_idx, 0);
         }
     }
@@ -4397,6 +4429,31 @@ static void mnCharSel_MexSetup(void)
                 icons[icon].bound_r = br[slot];
                 icons[icon].bound_u = bu[slot];
                 icons[icon].bound_d = bd[slot];
+            }
+        }
+    }
+
+    /* Portraits and emblems (VS doors): as m-ex's "Replace CSS VS Emblem" does, give each door's
+     * portrait joint's DObj the CSP material animation, and each emblem joint's SECOND DObj IfAll's
+     * Eblm_matanim_joint animation. Frames are picked per selection in mnCharSel_MexPortrait. */
+    if (mnCharSel_804D6CF5 != 1) {
+        extern HSD_Archive* lbDvd_8001819C(const char* basename);
+        HSD_Archive* ifall = lbDvd_8001819C("IfAll");
+        HSD_MatAnimJoint* eblm =
+            ifall != NULL ? HSD_ArchiveGetPublicAddress(ifall, "Eblm_matanim_joint") : NULL;
+        int d;
+        for (d = 0; d < 4; d++) {
+            j = NULL;
+            lb_80011E24(mnCharSel_804D6CC0, &j, mnCharSel_803F0DFC.doors[d].costume_joint,
+                        -1);
+            if (j != NULL && j->u.dobj != NULL && mex->csp_matanim != NULL) {
+                HSD_DObjAddAnimAll(j->u.dobj, mex->csp_matanim, NULL);
+            }
+            j = NULL;
+            lb_80011E24(mnCharSel_804D6CC0, &j, mnCharSel_803F0DFC.doors[d].emblem_joint,
+                        -1);
+            if (j != NULL && j->u.dobj != NULL && j->u.dobj->next != NULL && eblm != NULL) {
+                HSD_DObjAddAnimAll(j->u.dobj->next, eblm->matanim, NULL);
             }
         }
     }

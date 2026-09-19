@@ -4272,10 +4272,13 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
     }
 #if defined(TARGET_PC)
     /* The port's Sonic (CharacterKind 0x20) is past this CKind_Playable_Count table, which
-     * returned 0 colours - and the CSS does (costume + 1) % ncolors on X. Sonic has 7 costumes
-     * (ftSn_CostumeList: Nr Re Gr Ye Bk Or Wh). */
+     * returned 0 colours - and the CSS does (costume + 1) % ncolors on X. Sonic has FIVE usable
+     * costumes (Nr Re Gr Ye Bk). PlSn.dat's disc directory also carries Or and Wh, but his fighter
+     * data's per-costume model-part tables only cover five: picking the 7th crashed at match start
+     * in ftParts_8007487C, reading the "PlySonic..." joint-name string as a pointer (user-found).
+     * Akaneia's CSP sheet (5 rows) and its own CSS agree on five. */
     if (ckind == 0x20) {
-        return 7;
+        return 5;
     }
 #endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {

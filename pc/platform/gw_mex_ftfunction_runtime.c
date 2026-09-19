@@ -382,6 +382,22 @@ int gw_Mex_ExtToPortCKind(int ext) {
     return -1;
 }
 
+/* Franchise-emblem index for an m-ex external id: mexData fighter +0x08 -> insignia_idx[ext]
+ * (u8). For ext 0..25 it equals retail's own emblem table (lbl_803B7B18); Sonic (30) is 17, an
+ * emblem that exists only in Akaneia's IfAll Eblm_matanim_joint. -1 when unavailable. */
+int gw_Mex_InsigniaForExt(int ext) {
+    uint32_t fighter, tbl;
+    if (ext < 0 || gw_Mex_CssIconCount() == 0) {
+        return -1;
+    }
+    fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
+    tbl = gw_mexdt_in(fighter, 0x0Cu) ? gw_r32((const void *) (uintptr_t) (fighter + 0x08u)) : 0u;
+    if (tbl == 0u || !gw_mexdt_in(tbl + (uint32_t) ext, 1u)) {
+        return -1;
+    }
+    return *(const uint8_t *) (uintptr_t) (tbl + (uint32_t) ext);
+}
+
 /* The reverse, for portraits: the port's CharacterKind -> m-ex external id (-1 if none). */
 int gw_Mex_PortCKindToExt(int ckind) {
     if (ckind >= 0 && ckind <= 25) {

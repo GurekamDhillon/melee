@@ -525,6 +525,21 @@ void lbMthp_8001F410(const char* filename, u32* rate_table, void* buf,
     streamPlayer = &MoviePlayer;
 
     HSD_ASSERT(833, !MoviePlayer.power);
+#if defined(TARGET_PC)
+    /* m-ex discs (Akaneia) ship without the movies. Playing a missing file read a garbage header
+     * from file -1 and asserted in HSD_DevComRequest (user-found: the title screen's idle "How to
+     * Play" demo crashed the game). Instead report the movie as already finished - every movie
+     * scene ends on lbMthp_8001F604() != 0 - and leave the player idle: power stays 0 so
+     * lbMthp_8001F800 has nothing to stop, and the render callback (lbMthp_8001F67C) decodes
+     * nothing (unk_94 == unk_90) and draws nothing (unk_148 == 0). */
+    if (DVDConvertPathToEntrynum(filename) < 0) {
+        OSReport("lbMthp: %s is not on this disc - skipping the movie\n", filename);
+        MoviePlayer.unk_94 = MoviePlayer.unk_90;
+        MoviePlayer.unk_148 = 0;
+        MoviePlayer.unk_144 = 1;
+        return;
+    }
+#endif
     MoviePlayer.power = 1;
     fn_8001EB14(&MoviePlayer, filename);
     MoviePlayer.rate_table = rate_table;

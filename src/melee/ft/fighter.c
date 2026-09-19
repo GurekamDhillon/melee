@@ -188,12 +188,18 @@ void Fighter_FirstInitialize_80067A84(void)
  * numbering, which moves the six vanilla bosses to 35..40 and gives the seven added fighters
  * 27..33 -- Sonic is 31. Sonic's own entry is used there; on a vanilla disc (no Sonic data) the
  * slot falls back to Fox's entry, so the new kind never reads past the loaded data and the
- * vanilla clone boot still works. Returns a distinct copy per call. */
-static void** ftCommonData_ExtendKindTable(void** loaded)
+ * vanilla clone boot still works. */
+static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
 {
-    static void* copies[8][Ft_Kind_Max];
-    static int next;
-    void** out = copies[next++];
+    /* One fixed copy per widened table (slot 0 = ftPartsTable, 1 = Fighter_804D6540), rebuilt on
+     * every load. This was `copies[8]` indexed by a counter that never wrapped: PlCo.dat's common
+     * data reloads on every scene change (match start, results...) and each load takes two
+     * copies, so the fifth load wrote past the array - user-found as a crash on the SECOND
+     * match's results screen (write to a garbage address inside this function). The globals are
+     * reassigned to the same buffer on each load and read through, so rebuilding in place is
+     * safe. */
+    static void* copies[2][Ft_Kind_Max];
+    void** out = copies[slot];
     int i;
     for (i = 0; i < Ft_Kind_Max - 1; ++i) {
         out[i] = loaded[i];
@@ -217,9 +223,10 @@ void Fighter_LoadCommonData(void)
     Fighter_804D654C = pData[2];
     Fighter_804D6548 = pData[3];
 #if defined(TARGET_PC)
-    ftPartsTable = (FighterPartsTable**) ftCommonData_ExtendKindTable((void**) pData[4]);
+    ftPartsTable =
+        (FighterPartsTable**) ftCommonData_ExtendKindTable((void**) pData[4], 0);
     Fighter_804D6540 =
-        (struct Fighter_804D6540_t**) ftCommonData_ExtendKindTable((void**) pData[5]);
+        (struct Fighter_804D6540_t**) ftCommonData_ExtendKindTable((void**) pData[5], 1);
 #else
     ftPartsTable = pData[4];
     Fighter_804D6540 = pData[5];

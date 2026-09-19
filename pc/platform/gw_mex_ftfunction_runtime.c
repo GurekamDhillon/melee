@@ -48,6 +48,11 @@
  * entry resets state and sets model-part defaults. Dispatched from fighter.c via
  * GW_MEX_EVENT_ON_DEATH. */
 #define GW_MEX_SLOT_ON_RESPAWN 1
+#define GW_MEX_SLOT_ON_DESTROY 2            /* ftData_OnUserDataRemove */
+#define GW_MEX_SLOT_ON_ITEM_INVISIBLE 14    /* ftData_OnItemInvisible  */
+#define GW_MEX_SLOT_ON_ITEM_VISIBLE 15      /* ftData_OnItemVisible    */
+#define GW_MEX_SLOT_ON_KNOCKBACK_ENTER 21   /* ftData_OnKnockbackEnter - Sonic: EyeTextureDamaged */
+#define GW_MEX_SLOT_ON_KNOCKBACK_EXIT 22    /* ftData_OnKnockbackExit  - Sonic: EyeTextureNormal  */
 #define GW_MEX_SLOT_MOVE_LOGIC 3
 #define GW_MEX_SLOT_SPECIAL_N 4
 #define GW_MEX_SLOT_SPECIAL_N_AIR 5
@@ -1195,6 +1200,28 @@ static void gw_mex_interp_respawn(void *gobj) {
     gw_mex_interp_run_logged(GW_MEX_SLOT_ON_RESPAWN, "OnRespawn", gobj);
 }
 
+/* Slots that override a vanilla per-kind table with a dispatch site already in the game. Wired by
+ * the TABLE each slot replaces (the Header.s names), not by the function name in the blob's debug
+ * symbols: the two are different namespaces and both are correct - slot 21 overrides
+ * ftData_OnKnockbackEnter, and Sonic's handler for it is called EyeTextureDamaged. An unregistered
+ * slot does not fail; it silently runs the Fox clone's handler instead, which is exactly how his
+ * idle mouth went missing (slot 1). */
+static void gw_mex_interp_destroy(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_DESTROY, "onDestroy", gobj);
+}
+static void gw_mex_interp_item_invisible(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_ITEM_INVISIBLE, "onItemInvisible", gobj);
+}
+static void gw_mex_interp_item_visible(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_ITEM_VISIBLE, "onItemVisible", gobj);
+}
+static void gw_mex_interp_knockback_enter(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_KNOCKBACK_ENTER, "onKnockbackEnter", gobj);
+}
+static void gw_mex_interp_knockback_exit(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_KNOCKBACK_EXIT, "onKnockbackExit", gobj);
+}
+
 /* onActionStateChange (slot 24) - dispatched from ftcolanim.c's four ftData_UnkMotionStates4 call
  * sites (ftCo_800C0134 / ftCo_800C0200 / ftCo_800C0408). Fires when the fighter's colour-anim
  * action state changes, so it runs during spawn/respawn without any input. */
@@ -1310,6 +1337,15 @@ void gw_Mex_FtFunctionInstall(int kind) {
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, GW_MEX_KIND_SONIC, gw_mex_interp_onload);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, GW_MEX_KIND_SONIC, gw_mex_interp_onframe);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_DEATH, GW_MEX_KIND_SONIC, gw_mex_interp_respawn);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DESTROY, GW_MEX_KIND_SONIC, gw_mex_interp_destroy);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_INVISIBLE, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_item_invisible);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_VISIBLE, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_item_visible);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_ENTER, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_knockback_enter);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_EXIT, GW_MEX_KIND_SONIC,
+                        gw_mex_interp_knockback_exit);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, GW_MEX_KIND_SONIC,
                         gw_mex_interp_action_state_change);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_REAPPLY_ATTR, GW_MEX_KIND_SONIC,

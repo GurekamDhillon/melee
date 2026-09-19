@@ -48,12 +48,11 @@
 
 /* Arch_FighterFunc slot names, word-indexed (Header.s: onLoad 0x0 ... GetTrailData 0xB4).
  * Display only (gw_ftfunction_slot_name), never semantic - the runtime keys off GW_MEX_SLOT_*.
- * Three entries were corrected on 2026-09-19 against the blob's OWN debug symbol table, which
- * names the function each slot resolves to: slot 1 is OnRespawn (was "onDeath") and slots 21/22
- * are the eye-texture pair (was "onKnockbackEnter"/"onKnockbackExit"). The other 22 agree.
- * NOTE this means GW_MEX_EVENT_ON_DEATH / ON_KNOCKBACK_ENTER / ON_KNOCKBACK_EXIT may be mapped
- * to the wrong slots too. No live miswiring today because the runtime does not register hooks
- * for any of those three, but check before it does. */
+ * Slots 1/21/22 display Sonic's FUNCTION names from the blob's debug symbols (OnRespawn,
+ * EyeTextureDamaged/Normal). The Header.s names they replaced (onDeath, onKnockbackEnter/Exit) were
+ * not wrong: those name the vanilla TABLE each slot overrides - ftData_OnDeath (the (re)spawn
+ * initialiser, despite the name), ftData_OnKnockbackEnter/Exit - and the table is what the runtime
+ * wires to (GW_MEX_EVENT_ON_DEATH / ON_KNOCKBACK_ENTER / ON_KNOCKBACK_EXIT). */
 static const char *const gw_ftfunction_slot_names[GW_FTFUNC_SLOT_COUNT] = {
     "onLoad",         "OnRespawn",      "onDestroy",       "MoveLogic",
     "SpecialN",       "SpecialNAir",    "SpecialS",        "SpecialSAir",

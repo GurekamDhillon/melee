@@ -740,8 +740,8 @@ void fn_80178050(HSD_GObj* arg0)
             if (phase == 1) {
                 data->x0_23 = 2;
                 {
-                    s32 k = 0;
-                    do {
+                    s32 k;
+                    for (k = 0; k < 4; k++) {
                         switch ((s32) match_end->player_standings[k].pkind) {
                         case 2:
                             break;
@@ -756,14 +756,12 @@ void fn_80178050(HSD_GObj* arg0)
                             data->player_data[k].x0_0 = 1;
                             break;
                         }
-                        k++;
-                    } while (k < 4);
+                    }
                 }
             }
 
             {
-                k2 = 0;
-                do {
+                for (k2 = 0; k2 < 4; k2++) {
                     u8 slot = match_end->player_standings[k2].pkind;
                     if (slot == 0) {
                         if (!data->player_data[k2].x0_0) {
@@ -856,13 +854,12 @@ void fn_80178050(HSD_GObj* arg0)
                             var_r24 = 1;
                         }
                     }
-                    k2++;
-                } while (k2 < 4);
+                }
             }
 
             {
-                s32 k3 = 0;
-                do {
+                s32 k3;
+                for (k3 = 0; k3 < 4; k3++) {
                     if (match_end->player_standings[k3].pkind != 3) {
                         if (!data->player_data[k3].x0_1) {
                             HSD_JObjSetFlagsAll(data->player_data[k3].jobjs[8],
@@ -893,8 +890,7 @@ void fn_80178050(HSD_GObj* arg0)
                                 data->player_data[k3].jobjs[0xB], JOBJ_HIDDEN);
                         }
                     }
-                    k3++;
-                } while (k3 < 4);
+                }
             }
 
             {
@@ -922,7 +918,9 @@ void fn_801785B0(HSD_GObj* gobj)
     HSD_JObj* jobj = gobj->hsd_obj;
     HSD_JObj* child;
     HSD_JObj* node;
-    MatchEnd* match_end = fn_80174274();
+    MatchEnd* match_end =
+        fn_80174274(); /// @remark This type seems suspicious because the use
+                       /// of sd_penalty as a frame value
     u8 mode = match_end->match_kind;
     int frame_val;
     f32 fv;
@@ -937,7 +935,7 @@ void fn_801785B0(HSD_GObj* gobj)
         lb_80011E24(jobj, &child, 0xC, -1);
         node = child;
         {
-            s8 raw = fn_80174274()->xC;
+            s8 raw = fn_80174274()->sd_penalty;
             frame_val = ABS(raw);
         }
         fv = (f32) frame_val;
@@ -962,7 +960,7 @@ void fn_801785B0(HSD_GObj* gobj)
         lb_80011E24(jobj, &child, 0x11, -1);
         node = child;
         {
-            s8 raw = fn_80174274()->xC;
+            s8 raw = fn_80174274()->sd_penalty;
             frame_val = ABS(raw);
         }
         fv = (f32) frame_val;
@@ -987,7 +985,7 @@ void fn_801785B0(HSD_GObj* gobj)
         lb_80011E24(jobj, &child, 0x10, -1);
         node = child;
         {
-            s8 raw = fn_80174274()->xC;
+            s8 raw = fn_80174274()->sd_penalty;
             frame_val = ABS(raw);
         }
         fv = (f32) frame_val;
@@ -1012,7 +1010,7 @@ void fn_801785B0(HSD_GObj* gobj)
         lb_80011E24(jobj, &child, 0x15, -1);
         node = child;
         {
-            s8 raw = fn_80174274()->xC;
+            s8 raw = fn_80174274()->sd_penalty;
             frame_val = ABS(raw);
         }
         fv = (f32) frame_val;
@@ -1100,12 +1098,10 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
 
                 if (match_end->match_kind != 3) {
                     f32 taunt_frame = gm_80168B34(
-                        (CharacterKind) (s8) (u8) match_end
-                            ->player_standings[(*i)]
+                        (CharacterKind) match_end->player_standings[(*i)]
                             .ckind,
-                        (int) (s8) (u8) match_end->player_standings[(*i)]
-                            .ftkind,
-                        match_end->player_standings[(*i)].x3);
+                        match_end->player_standings[(*i)].ftkind,
+                        match_end->player_standings[(*i)].x3_b0);
                     HSD_JObj* taunt_jobj = data->player_data[(*i)].jobjs[7];
                     HSD_ForeachAnim(taunt_jobj, JOBJ_TYPE, ALL_TYPE_MASK,
                                     HSD_AObjSetRate, AOBJ_ARG_AF, 0.0);
@@ -1259,11 +1255,11 @@ static inline void fn_80179350_update(ResultsData* data, MatchEnd* match_end,
             fn_80178BB4(arg0);
         }
     } else {
-        HSD_JObjAnimAll((HSD_JObj*) arg0->hsd_obj);
+        HSD_JObjAnimAll(GET_JOBJ(arg0));
         switch (data->x1) {
         case 1: {
             ResultsData* d = &lbl_8046DBE8;
-            HSD_JObj* jobj = (HSD_JObj*) arg0->hsd_obj;
+            HSD_JObj* jobj = GET_JOBJ(arg0);
             float frame = lbGetJObjCurrFrame(jobj);
             if (frame >= 10.0f && !d->x0_1) {
                 fn_80177748();

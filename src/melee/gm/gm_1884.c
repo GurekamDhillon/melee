@@ -23,7 +23,6 @@
 #include <melee/pl/pl_040D.h>
 #include <melee/pl/player.h>
 #include <melee/sc/types.h>
-#include <Runtime/runtime.h>
 #include <sysdolphin/baselib/aobj.h>
 #include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/dobj.h>
@@ -223,8 +222,7 @@ void fn_80188644(void)
     Player_800328D4(0, &sp10);
     ifStatus_802F6508(0);
 
-    i = 0;
-    do {
+    for (i = 0; i < 4; i++) {
         if (i != 0 && i <= saved_count) {
             fn_8016EF98(i);
             if (i == 1) {
@@ -236,8 +234,7 @@ void fn_80188644(void)
                 gm_8016EDDC(i, &lbl_80473700.players[i]);
             }
         }
-        i++;
-    } while (i < 4);
+    }
 
     gm_80473814.menu_values[0] = 0;
     gm_80473814.menu_values[1] = 0;
@@ -780,9 +777,8 @@ void fn_801891F4(void)
             {
                 f32 selected_speed =
                     speed_stack.speeds.values[sub->menu_values[0]];
-                lb_80019880(
-                    __cvt_dbl_usll((f64) (0.016666668f / selected_speed *
-                                          (f32) gm_801891F4_GetTickRate())));
+                lb_80019880(1 / 60.0F / selected_speed *
+                            gm_801891F4_GetTickRate());
             }
 
             fn_80188550(sub->menu_values[2] + 1);

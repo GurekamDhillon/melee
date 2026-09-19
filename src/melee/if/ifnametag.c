@@ -234,7 +234,7 @@ void fn_802FCC44(HSD_GObj* gobj)
      * whenever gm_8016B258 reports the tag off. Opt-in: MELEE_MEX=hide_nametag_invisible. */
     extern int Mex_Enabled(const char *);
     if (Mex_Enabled("hide_nametag_invisible") &&
-        gmVs_GetController_1()->start.is_teams != true)
+        gmVs_GetSceneController()->start.is_teams != true)
     {
         Fighter* fp = (Fighter*) HSD_GObjGetUserData(Player_GetEntity(*slot));
         if (((fp->kind == Ft_Kind_Mewtwo && fp->motion_id == 0xEC) || fp->x221E_b7) &&

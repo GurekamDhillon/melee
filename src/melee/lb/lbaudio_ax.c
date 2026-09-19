@@ -29,8 +29,6 @@
 
 #define GET_SOUND(x) ((lbAudioAx_UserData*) HSD_GObjGetUserData(x))
 
-#define GOBJ_TYPE_AUDIO_AX 0x3E
-
 #define VOL_MAX 0x7F
 #define PAN_MID 0x40
 
@@ -211,7 +209,7 @@ int lbAudioAx_80023694(void)
 
 int lbAudioAx_800236B8(int voice)
 {
-    AXDriverKeyOff(voice);
+    HSD_AudioSFXKeyOff(voice);
     return -1;
 }
 
@@ -225,12 +223,12 @@ int lbAudioAx_800236DC(void)
 
 bool lbAudioAx_80023710(int arg0)
 {
-    return AXDriver_8038D9D8(arg0);
+    return HSD_AudioSFXCheck(arg0);
 }
 
 bool lbAudioAx_80023730(void)
 {
-    return AXDriver_8038EA18();
+    return AXDriverCheck();
 }
 
 static int fn_80023750(int id, int vol, int pan, int track, int channel)
@@ -252,7 +250,7 @@ static int fn_80023750(int id, int vol, int pan, int track, int channel)
 #if defined(TARGET_PC)
     if (id >= 550000 && id < 0x83D60 + 1000000) {
         static int logged;
-        int r = AXDriver_8038CFF4(id, vol, pan, track, channel);
+        int r = HSD_AudioSFXStartParam(id, vol, pan, track, channel);
         if (logged < 12) {
             logged++;
             OSReport("lbAudioAx: m-ex sfx %d -> voice %d\n", id, r);
@@ -260,7 +258,7 @@ static int fn_80023750(int id, int vol, int pan, int track, int channel)
         return r;
     }
 #endif
-    return AXDriver_8038CFF4(id, vol, pan, track, channel);
+    return HSD_AudioSFXStartParam(id, vol, pan, track, channel);
 }
 
 int lbAudioAx_800237A8(int id, int vol, int pan)
@@ -418,7 +416,7 @@ static bool fn_80023ED4(const char* path, int vol, int arg2)
     if (arg2 >= 9) {
         arg2 = 8;
     }
-    return AXDriver_8038E8EC(path, vol, arg2);
+    return HSD_AudioPStreamStartChParam(path, vol, arg2);
 }
 
 static inline const char* getHPSFile(int arg0)
@@ -812,18 +810,18 @@ static void fn_80024654(int arg0)
     }
     lbl_804D38E0 = lbl_804D38D8;
     if (arg0 == 1) {
-        AXDriver_8038D914(5, 1, 0x20);
-        AXDriver_8038D914(6, 1, 0x20);
-        AXDriver_8038D914(8, 1, (u8) lbl_804D38D8);
-        AXDriver_8038D914(7, 1, (u8) lbl_804D38D8);
+        HSD_AudioSFXSetMixGroup(5, 1, 0x20);
+        HSD_AudioSFXSetMixGroup(6, 1, 0x20);
+        HSD_AudioSFXSetMixGroup(8, 1, (u8) lbl_804D38D8);
+        HSD_AudioSFXSetMixGroup(7, 1, (u8) lbl_804D38D8);
         lbl_804D38DC = lbl_804D38E0;
         return;
     }
     if (lbl_804D38DC != lbl_804D38E0) {
-        AXDriver_8038D914(5, 1, 0x20);
-        AXDriver_8038D914(6, 1, 0x20);
-        AXDriver_8038D914(8, 1, (u8) lbl_804D38D8);
-        AXDriver_8038D914(7, 1, (u8) lbl_804D38D8);
+        HSD_AudioSFXSetMixGroup(5, 1, 0x20);
+        HSD_AudioSFXSetMixGroup(6, 1, 0x20);
+        HSD_AudioSFXSetMixGroup(8, 1, (u8) lbl_804D38D8);
+        HSD_AudioSFXSetMixGroup(7, 1, (u8) lbl_804D38D8);
         lbl_804D38DC = lbl_804D38E0;
     }
 }
@@ -836,7 +834,7 @@ void lbAudioAx_80024B1C(int voice, int pan)
     if (pan > 0x7F) {
         pan = 0x7F;
     }
-    AXDriver_8038D2B4(voice, pan * 2);
+    HSD_AudioSFXSetPan(voice, pan * 2);
 }
 
 void lbAudioAx_80024B58(int voice, int vol)
@@ -847,7 +845,7 @@ void lbAudioAx_80024B58(int voice, int vol)
     if (vol > VOL_MAX) {
         vol = VOL_MAX;
     }
-    AXDriver_8038D3B8(voice, vol * 2);
+    HSD_AudioSFXSetVolumeEx(voice, vol * 2);
 }
 
 int lbAudioAx_80024B94(int voice, int arg1)
@@ -859,7 +857,7 @@ int lbAudioAx_80024B94(int voice, int arg1)
     if (arg1 > limit) {
         arg1 = limit;
     }
-    return AXDriver_8038D4E4(voice, arg1);
+    return HSD_AudioSFXSetPitchFid(voice, arg1);
 }
 
 bool lbAudioAx_80024BD0(void)
@@ -916,10 +914,10 @@ void lbAudioAx_80024C84(void)
     lbl_804D38B4 = 1.0F;
     lbl_804D38B8 = 1.0F;
     lbl_804D38BC = 1.0F;
-    AXDriver_8038E844(5);
-    AXDriver_8038E844(6);
-    AXDriver_8038E844(8);
-    AXDriver_8038E844(7);
+    HSD_AudioPStreamResumeCh(5);
+    HSD_AudioPStreamResumeCh(6);
+    HSD_AudioPStreamResumeCh(8);
+    HSD_AudioPStreamResumeCh(7);
     lbl_804D38D8 = 1;
     lbl_804D38CC = 0x7F;
 }
@@ -971,45 +969,45 @@ void lbAudioAx_80024E84(bool arg0)
     if (arg0) {
         lbl_804D38E4 = 0.2F;
         lbl_804D38E8 = 0.2F;
-        AXDriver_8038E6C0(5);
-        AXDriver_8038E6C0(6);
-        AXDriver_8038E6C0(8);
-        AXDriver_8038E6C0(7);
+        HSD_AudioPStreamPauseCh(5);
+        HSD_AudioPStreamPauseCh(6);
+        HSD_AudioPStreamPauseCh(8);
+        HSD_AudioPStreamPauseCh(7);
     } else {
         lbl_804D38E4 = 1.0F;
         lbl_804D38E8 = 1.0F;
-        AXDriver_8038E844(5);
-        AXDriver_8038E844(6);
-        AXDriver_8038E844(8);
-        AXDriver_8038E844(7);
+        HSD_AudioPStreamResumeCh(5);
+        HSD_AudioPStreamResumeCh(6);
+        HSD_AudioPStreamResumeCh(8);
+        HSD_AudioPStreamResumeCh(7);
     }
 }
 
 void lbAudioAx_80024F08(void)
 {
     HSD_SynthStreamSetVolume(0.0F);
-    AXDriver_8038E6C0(2);
-    AXDriver_8038E6C0(3);
-    AXDriver_8038E6C0(4);
-    AXDriver_8038E6C0(5);
-    AXDriver_8038E6C0(6);
-    AXDriver_8038E6C0(7);
-    AXDriver_8038E6C0(8);
-    AXDriver_8038E6C0(9);
+    HSD_AudioPStreamPauseCh(2);
+    HSD_AudioPStreamPauseCh(3);
+    HSD_AudioPStreamPauseCh(4);
+    HSD_AudioPStreamPauseCh(5);
+    HSD_AudioPStreamPauseCh(6);
+    HSD_AudioPStreamPauseCh(7);
+    HSD_AudioPStreamPauseCh(8);
+    HSD_AudioPStreamPauseCh(9);
 }
 
 void lbAudioAx_80024F6C(void)
 {
     HSD_SynthStreamSetVolume(synth_volume);
-    AXDriver_8038E844(2);
-    AXDriver_8038E844(3);
-    AXDriver_8038E844(4);
-    AXDriver_8038E844(9);
+    HSD_AudioPStreamResumeCh(2);
+    HSD_AudioPStreamResumeCh(3);
+    HSD_AudioPStreamResumeCh(4);
+    HSD_AudioPStreamResumeCh(9);
     if (!lbl_804D640C) {
-        AXDriver_8038E844(5);
-        AXDriver_8038E844(6);
-        AXDriver_8038E844(8);
-        AXDriver_8038E844(7);
+        HSD_AudioPStreamResumeCh(5);
+        HSD_AudioPStreamResumeCh(6);
+        HSD_AudioPStreamResumeCh(8);
+        HSD_AudioPStreamResumeCh(7);
     }
 }
 
@@ -1467,7 +1465,7 @@ HSD_GObj* lbAudioAx_800263E8(float f1, HSD_GObj* owner, int arg2, int sfx_id,
         params.x24 = arg9;
         params.voice = voice;
 
-        gobj = GObj_Create(HSD_GOBJ_CLASS_SOUND, GOBJ_TYPE_AUDIO_AX, 0);
+        gobj = GObj_Create(HSD_GOBJ_CLASS_SOUND, HSD_GOBJ_PLINK_AUDIO_AX, 0);
         if (gobj != NULL) {
             userdata = HSD_ObjAlloc(&lbl_80433710);
             if (userdata == NULL) {
@@ -1511,7 +1509,7 @@ bool lbAudioAx_80026510(HSD_GObj* target)
     PAD_STACK(8);
 
     if (target != NULL) {
-        cur = HSD_GObjPLinkHead[GOBJ_TYPE_AUDIO_AX];
+        cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_AUDIO_AX];
 
         while (cur != NULL) {
             lbAudioAx_UserData* ud = GET_SOUND(cur);
@@ -1519,7 +1517,7 @@ bool lbAudioAx_80026510(HSD_GObj* target)
 
             if (ud != NULL && ud->owner == target) {
                 if (ud->voice_id != -1) {
-                    AXDriverKeyOff(ud->voice_id);
+                    HSD_AudioSFXKeyOff(ud->voice_id);
                 }
                 if (cur != NULL) {
                     HSD_GObjFree(cur);
@@ -1539,14 +1537,14 @@ bool lbAudioAx_800265C4(HSD_GObj* target_obj, int voice)
 
     PAD_STACK(8);
 
-    cur = HSD_GObjPLinkHead[GOBJ_TYPE_AUDIO_AX];
+    cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_AUDIO_AX];
 
     while (cur != NULL) {
         lbAudioAx_UserData* ud = GET_SOUND(cur);
         if (ud != NULL && ud->owner == target_obj && ud->voice_id != -1 &&
             ud->voice_id == voice)
         {
-            AXDriverKeyOff(ud->voice_id);
+            HSD_AudioSFXKeyOff(ud->voice_id);
             if (cur != NULL) {
                 HSD_GObjFree(cur);
             }
@@ -1588,7 +1586,7 @@ static void fn_800267B0(void)
                 lbl_804338A4[j] == -1)
             {
                 int x = lbl_80433A64[j];
-                HSD_Synth_80388E08(x);
+                HSD_SynthSFXGroupDataRemove(x);
                 lbl_80433A64[j] = -1;
                 lbl_80433984[j] = -1;
                 lbl_804D6448 -= offsets_arr_803BC4E4[j][0];
@@ -2110,7 +2108,7 @@ void lbAudioAx_80027DF8(void)
 
     if (lbl_804D6420 != 0) {
         if (lbl_804D38F0 != -1) {
-            if (AXDriver_8038D9D8(lbl_804D38F0) == 0) {
+            if (HSD_AudioSFXCheck(lbl_804D38F0) == 0) {
                 lbl_804D38F0 = fn_80023750(0x84, lbl_804D6428, PAN_MID, 5, 4);
             } else {
                 lbAudioAx_80024B58(lbl_804D38F0, lbl_804D6428);
@@ -2133,7 +2131,7 @@ void lbAudioAx_80027DF8(void)
 
     if (lbl_804D6424 != 0) {
         if (lbl_804D38F4 != -1) {
-            if (AXDriver_8038D9D8(lbl_804D38F4) == 0) {
+            if (HSD_AudioSFXCheck(lbl_804D38F4) == 0) {
                 lbl_804D38F4 = fn_80023750(0x85, lbl_804D642C, PAN_MID, 6, 4);
             } else {
                 lbAudioAx_80024B58(lbl_804D38F4, lbl_804D642C);
@@ -2280,21 +2278,22 @@ void lbAudioAx_8002838C(void)
     lbl_804D6438 = lbl_804D643C + lbl_804D6440 + lbl_804D6444;
     lbl_804D3870 = lbl_804D6438;
 
-    AXDriver_8038E498(AX_MAX_VOICES, 0, 0x40, lbl_804D3870);
+    HSD_AudioInitMultiPStream(AX_MAX_VOICES, 0, 0x40, lbl_804D3870);
 
     {
         static u8 lbl_80433C64[53 * 1024];
-        AXDriver_8038E37C(AXDRIVER_AUX_REVERB_STD, &rvbStd);
+        HSD_AudioSFXGetDefaultAuxParam(AXDRIVER_AUX_REVERB_STD, &rvbStd);
         rvbStd.time = 1.88F;
         HSD_ASSERT(0xF6E, HSD_AudioGetAuxHeapSize(2, &rvbStd) < 53*1024);
-        AXDriver_8038E30C(0, 2, &rvbStd, lbl_80433C64, sizeof(lbl_80433C64));
+        HSD_AudioSFXSetupAux(0, 2, &rvbStd, lbl_80433C64,
+                             sizeof(lbl_80433C64));
     }
 
     {
         static u8 lbl_80441064[71 * 1024];
-        AXDriver_8038E37C(AXDRIVER_AUX_DELAY, &delay);
+        HSD_AudioSFXGetDefaultAuxParam(AXDRIVER_AUX_DELAY, &delay);
         HSD_ASSERT(0xF72, HSD_AudioGetAuxHeapSize(2, &delay) < 71*1024);
-        AXDriver_8038E30C(1, 4, &delay, lbl_80441064, sizeof(lbl_80441064));
+        HSD_AudioSFXSetupAux(1, 4, &delay, lbl_80441064, sizeof(lbl_80441064));
     }
 
     HSD_SynthSFXAllocateBank(lbl_804D643C);

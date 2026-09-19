@@ -23,11 +23,9 @@
 /* 213900 */ bool grGreens_80213900(Ground_GObj*);
 /* 213908 */ void grGreens_80213908(Ground_GObj*);
 /* 21390C */ void grGreens_8021390C(Ground_GObj*);
-/* 213910 */ void grGreens_80213910(Ground_GObj*);
 /* 21393C */ bool grGreens_8021393C(Ground_GObj*);
 /* 213944 */ void grGreens_80213944(Ground_GObj*);
 /* 213948 */ void grGreens_80213948(Ground_GObj*);
-/* 21394C */ void grGreens_8021394C(Ground_GObj*);
 /* 213978 */ bool grGreens_80213978(Ground_GObj*);
 /* 213980 */ void grGreens_80213980(Ground_GObj*);
 /* 213984 */ void grGreens_80213984(Ground_GObj*);
@@ -54,7 +52,7 @@
 /* 2150C4 */ void grGreens_802150C4(Ground_GObj*, int, int);
 /* 215358 */ void grGreens_80215358(Ground_GObj*, int, int, int, int);
 /* 2159B4 */ void fn_802159B4(Item_GObj*, Ground*);
-/* 2159B8 */ void grGreens_802159B8(Ground*, int, int, int);
+/* 2159B8 */ void grGreens_802159B8(Ground*, int, int, HSD_GObj*);
 /* 215B84 */ void fn_80215B84(Item_GObj*, Ground*, Vec*, HSD_GObj*, float);
 /* 215D50 */ void fn_80215D50(Item_GObj*, Ground*, HSD_GObj*);
 /* 215D54 */ s32 grGreens_80215D54(Ground_GObj*, int, int);

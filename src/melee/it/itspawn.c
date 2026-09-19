@@ -221,10 +221,6 @@ void fn_8026C88C(HSD_GObj* gobj)
     it_8026C88C_inline(alloc);
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 void it_8026CA4C(ItemPickTable* alloc, s32* arg1, u64 arg2, s32 arg3, f32 arg4)
 {
     u64 mask = arg2;
@@ -242,9 +238,6 @@ void it_8026CA4C(ItemPickTable* alloc, s32* arg1, u64 arg2, s32 arg3, f32 arg4)
     }
     alloc->x8 = sum;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 bool it_8026CB3C(Vec3* vec)
 {
@@ -311,16 +304,10 @@ void it_8026CB9C(s32* counts, u64 mask, f32 weight)
 
 void it_8026CD50(s32* counts, u64 mask, f32 weight)
 {
+#ifdef MUST_MATCH
     /// @todo #it_804A0E50 immediately follows #it_804A0E30; the original
     ///       addressed it relative to the spawner.
-#if defined(TARGET_PC)
-    /* it_804A0E50 immediately follows it_804A0E30 in the console .bss, so the
-     * original reached it as (ItemPickTable*)(spawner + 1). The port links the
-     * globals separately; reference the real symbol. */
-    ItemPickTable* pick = &it_804A0E50;
-#else
     RandomItemSpawner* spawner = &it_804A0E30;
-    ItemPickTable* pick = (ItemPickTable*) (spawner + 1);
 #endif
     s32* p;
     s32 cnt;
@@ -346,9 +333,17 @@ void it_8026CD50(s32* counts, u64 mask, f32 weight)
         it_kind++;
         mask >>= 1;
     }
-    pick->size = cnt;
-    *(item_kinds = &pick->x4) = HSD_MemAlloc(cnt * 4);
-    *(weights = &pick->xC) = HSD_MemAlloc(cnt * 4);
+#ifdef MUST_MATCH
+    ((ItemPickTable*) (spawner + 1))->size = cnt;
+    *(item_kinds = &((ItemPickTable*) (spawner + 1))->x4) =
+        HSD_MemAlloc(cnt * 4);
+    *(weights = &((ItemPickTable*) (spawner + 1))->xC) = HSD_MemAlloc(cnt * 4);
+#else
+    // Non-matching builds may lay these globals out in a different order.
+    it_804A0E50.size = cnt;
+    *(item_kinds = &it_804A0E50.x4) = HSD_MemAlloc(cnt * 4);
+    *(weights = &it_804A0E50.xC) = HSD_MemAlloc(cnt * 4);
+#endif
 
     idx = (cnt2 = 0);
     mask = backup;

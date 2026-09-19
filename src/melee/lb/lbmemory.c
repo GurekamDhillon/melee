@@ -42,7 +42,7 @@ struct Allocator {
     u8 x6EC[0x6F0 - 0x6EC];
 };
 
-/* 015320 */ static void lbMemory_80015320(int, int, void*, bool);
+/* 015320 */ static void lbMemory_80015320(int, uintptr_t, void*, bool);
 
 struct Allocator lbMemory_804318B0;
 #define _p(x) (lbMemory_804318B0.x)
@@ -60,7 +60,7 @@ ASSERT_SIZE(lbMemory_804318B0, 0x6F0);
         *list = handle->x0_next;                                              \
     } while (0)
 
-static inline Handle* new_handle(void* arenaLo, void* arenaHi)
+Handle* lbMemory_80014E24(void* arenaLo, void* arenaHi)
 {
     Handle* h;
     HSD_ASSERT(0x7B, _p(free_heap));
@@ -75,11 +75,6 @@ static inline Handle* new_handle(void* arenaLo, void* arenaHi)
     h->x8_hi = arenaHi;
     h->xC_prev = NULL;
     return h;
-}
-
-Handle* lbMemory_80014E24(void* arenaLo, void* arenaHi)
-{
-    return new_handle(arenaLo, arenaHi);
 }
 
 void lbMemory_80014EEC(Handle* handle)
@@ -237,7 +232,7 @@ u32 lbMemory_8001529C(Handle* h, void (*arg1)(u32), u32 arg2)
     for (iter = h->xC_prev; iter != NULL; iter = iter->x0_next) {
         lo = iter->x4_lo;
         if (lo != *r7) {
-            lbMemory_80015320(0, (int) iter, NULL, false);
+            lbMemory_80015320(0, (uintptr_t) iter, NULL, false);
             return 1;
         }
         *r7 = (void*) ((u32) lo + (u32) iter->x8_hi);
@@ -262,7 +257,7 @@ static void start_ram_copy(u32 old, u32 current, u32 size, Handle* next)
     OSSetAlarm(&p->alarm, OSMillisecondsToTicks(3), fn_80015184);
 }
 
-static void lbMemory_80015320(int arg0, int _handle, void* arg2,
+static void lbMemory_80015320(int arg0, uintptr_t _handle, void* arg2,
                               bool cancelflag)
 {
     void* null_or_old;
@@ -288,9 +283,9 @@ static void lbMemory_80015320(int arg0, int _handle, void* arg2,
             copy_src = null_or_old;
 
             if ((u32) handle->x4_lo < 0x80000000U) {
-                HSD_DevComRequest(0, (u32) copy_src, current,
-                                  OSRoundUp32B(handle->x8_hi), 0x1B, 1,
-                                  lbMemory_80015320, handle->x0_next);
+                HSD_DevComRequest(
+                    0, (u32) copy_src, current, OSRoundUp32B(handle->x8_hi),
+                    0x1B, 1, lbMemory_80015320, (uintptr_t) handle->x0_next);
                 return;
             } else {
                 start_ram_copy((u32) copy_src, current,
@@ -300,7 +295,7 @@ static void lbMemory_80015320(int arg0, int _handle, void* arg2,
         }
 
         *currentp = (void*) ((u32) old + (u32) handle->x8_hi);
-        lbMemory_80015320(0, (int) handle->x0_next, null_or_old, false);
+        lbMemory_80015320(0, (uintptr_t) handle->x0_next, null_or_old, false);
         return;
     }
 
@@ -315,7 +310,7 @@ void lbMemory_800154BC(uintptr_t* arenaLo, uintptr_t* arenaHi)
 
 Handle* lbMemory_800154D4(void* arenaLo, void* arenaHi)
 {
-    _p(x69C) = new_handle(arenaLo, arenaHi);
+    _p(x69C) = lbMemory_80014E24(arenaLo, arenaHi);
     return _p(x69C);
 }
 
@@ -338,46 +333,34 @@ void lbMemory_800155A4(void)
     _p(x69C) = NULL;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 void lbMemory_8001564C(void)
 {
-    u32 size[3];
+    u32 freed_size;
     int i;
-    u8* base = (u8*) &lbMemory_804318B0;
 
     _p(a_arenaLo) = (void*) ARAlloc(0x20);
-    ARFree(&size[2]);
+    ARFree(&freed_size);
     _p(a_arenaHi) =
         (void*) ((ARGetSize() > 0x01000000U) ? 0x01000000U : ARGetSize());
 
     _p(free_mem) = (Handle*) &_p(x8_mem)[0];
-    for (i = 0; i < 0x82; i++) {
+    for (i = 0; i < (int) ARRAY_SIZE(_p(x8_mem)) - 1; i++) {
         _p(x8_mem)[i].x0_next = &_p(x8_mem)[i + 1];
     }
     _p(x8_mem)[i].x0_next = NULL;
 
     _p(x634_max_num_allocs) = 0;
     _p(x630_num_allocs) = 0;
-    // The chain below walks _p(x638_heap)[0..5], one Handle (0x10) apart.
-    // Writing it through the array instead does not match.
     _p(free_heap) = &_p(x638_heap)[0];
-    *(void**) (base + 0x638) = base + 0x648;
-    *(void**) (base + 0x648) = base + 0x658;
-    *(void**) (base + 0x658) = base + 0x668;
-    *(void**) (base + 0x668) = base + 0x678;
-    *(void**) (base + 0x678) = base + 0x688;
-    *(void**) (base + 0x688) = NULL;
+    for (i = 0; i < (int) ARRAY_SIZE(_p(x638_heap)) - 1; i++) {
+        _p(x638_heap)[i].x0_next = &_p(x638_heap)[i + 1];
+    }
+    _p(x638_heap)[i].x0_next = NULL;
     _p(x69C) = NULL;
     {
         void* hi = _p(a_arenaHi);
         void* lo = _p(a_arenaLo);
-        _p(x69C) = lbMemory_80014E24(lo, hi);
+        lbMemory_800154D4(lo, hi);
     }
-    _p(x6A0_mgr).size = 0; // base + 0x6D0 on PowerPC
+    _p(x6A0_mgr).size = 0;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif

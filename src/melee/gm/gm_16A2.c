@@ -433,9 +433,7 @@ void fn_80169C54(s8 arg0, s8 arg1)
         ncostumes++;
     }
     if (ncostumes > 0) {
-        slot = 0;
-        character = &st->x0;
-        do {
+        for (slot = 0, character = &st->x0; slot < 3; slot++, character++) {
             ckind = *character;
 #if defined(TARGET_PC)
             /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/LoadKirbyHats.asm, @ 0x80169DB8. Replaces the external-ID null/Kirby literals with ChKind_None/CKind_Kirby. */
@@ -462,9 +460,7 @@ void fn_80169C54(s8 arg0, s8 arg1)
                     }
                 }
             }
-            slot++;
-            character++;
-        } while (slot < 3);
+        }
         if (arg0 != 4) {
             extra_fighter0 = Player_800325C8((CharacterKind) arg0, 0);
             if ((extra_fighter0 != -1) && (extra_fighter0 != 4)) {
@@ -548,7 +544,7 @@ void fn_8016A09C(void)
     PAD_STACK(4);
     var_r29 = 0;
 
-    gmVs_GetController_1();
+    gmVs_GetSceneState();
     lbl_8046B488.unk_10_b1 = 1;
     lbl_8046B488.unk_10_b0 = 0;
 
@@ -575,14 +571,14 @@ void gm_8016A164(void)
 {
     int i;
     struct lbl_8046B488_t* gp = gm_1601_GetUnkData();
-    VsSceneController* match_info = gmVs_GetController_1();
+    VsSceneState* scene_state = gmVs_GetSceneState();
     PAD_STACK(4);
     if (gp == 0) {
-        if (match_info == 0) {
+        if (scene_state == 0) {
         }
     }
 
-    match_info->is_singleplayer = false;
+    scene_state->is_singleplayer = false;
     gp->x8 = 0;
     gp->x7 = 0;
     gp->unk_10_b1 = false;
@@ -734,7 +730,7 @@ void fn_8016A46C(void)
 
 void fn_8016A488(int arg0)
 {
-    if (gmVs_GetController_1()->hud_enabled == true) {
+    if (gmVs_GetSceneState()->hud_enabled == true) {
         Player_80031848(arg0);
     }
 }
@@ -940,7 +936,7 @@ bool gm_8016A944(void)
 
 UNK_T gm_8016A97C(void)
 {
-    return &M2C_FIELD(&lbl_8046B668, UNK_T*, 0x1C);
+    return lbl_8046B668.arr2;
 }
 
 struct lbl_8046B668_t* gm_8016A98C(void)

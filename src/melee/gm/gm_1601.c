@@ -32,6 +32,7 @@
 #include <melee/pl/plbonuslib.h>
 #include <melee/sc/types.h>
 #include <melee/ty/toy.h>
+#include <melee/ty/types.h>
 #include <sysdolphin/baselib/controller.h>
 #include <sysdolphin/baselib/gobjplink.h>
 #include <sysdolphin/baselib/hsd_3924.h>
@@ -568,7 +569,7 @@ char* gm_801604DC(CharacterKind ckind, GameModeKind mode)
         var_r3 = lbl_803B7A00[ckind];
         break;
     }
-    return Toy_8030813C(var_r3) + 4;
+    return Toy_8030813C(var_r3)->archive_name;
 }
 
 char* gm_80160564(CharacterKind ckind, GameModeKind mode)
@@ -588,7 +589,7 @@ char* gm_80160564(CharacterKind ckind, GameModeKind mode)
         var_r3 = lbl_803B7A00[ckind];
         break;
     }
-    return Toy_8030813C(var_r3) + 0x24;
+    return Toy_8030813C(var_r3)->symbol_name;
 }
 
 u8 gm_SelKindToUnlockIndex(SelectableCharacterKind selkind)
@@ -883,9 +884,9 @@ void fn_80160DE8(HSD_JObj* arg0, u8 arg1, s32 arg2, u8 arg3, f32 farg0,
             use_alt_name = true;
         }
         if (use_alt_name) {
-            temp = lbl_803B75F8[tmp_ckind + 0x63];
+            temp = lbl_803B7784[tmp_ckind];
         } else {
-            temp = lbl_803B75F8[tmp_ckind + 0x21];
+            temp = lbl_803B767C[tmp_ckind];
         }
         size = temp;
     } else {
@@ -895,7 +896,7 @@ void fn_80160DE8(HSD_JObj* arg0, u8 arg1, s32 arg2, u8 arg3, f32 farg0,
             use_alt_name = true;
         }
         if (use_alt_name) {
-            temp = lbl_803B75F8[tmp_ckind + 0x42];
+            temp = lbl_803B7700[tmp_ckind];
         } else {
             temp = lbl_803B75F8[tmp_ckind];
         }
@@ -994,8 +995,8 @@ s32 fn_80161154(MatchEnd* arg0)
         if (spC[i]) {
             if (idx == 4) {
                 idx = i;
-            } else if ((u32) arg0->player_standings[idx].x20 >
-                       (u32) arg0->player_standings[i].x20)
+            } else if (arg0->player_standings[idx].x20 >
+                       arg0->player_standings[i].x20)
             {
                 idx = i;
             }
@@ -1006,7 +1007,7 @@ s32 fn_80161154(MatchEnd* arg0)
     for (i = 0; i < 4; i++) {
         if (spC[i] && idx != i) {
             player = &arg0->player_standings[i];
-            if ((u32) player->x20 == (u32) best_player->x20) {
+            if (player->x20 == best_player->x20) {
                 cnt += 1;
             } else {
                 spC[i] = 0;
@@ -1111,29 +1112,6 @@ s32 fn_80161154(MatchEnd* arg0)
     }
 }
 
-struct gm_stats {
-    /* 0x00 */ u16 unk0;
-    /* 0x02 */ u8 pad2[2];
-    /* 0x04 */ u32 unk4;
-    /* 0x08 */ u32 unk8;
-    /* 0x0C */ u32 unkC;
-    /* 0x10 */ u32 unk10;
-    /* 0x14 */ u32 unk14;
-    /* 0x18 */ u16 unk18;
-    /* 0x1A */ u16 unk1A;
-    /* 0x1C */ u16 unk1C;
-    /* 0x1E */ u16 unk1E;
-    /* 0x20 */ u32 unk20;
-    /* 0x24 */ u32 unk24;
-    /* 0x28 */ u32 unk28;
-    /* 0x2C */ u32 unk2C;
-    /* 0x30 */ u32 unk30;
-    /* 0x34 */ u32 unk34;
-    /* 0x38 */ u32 unk38;
-    /* 0x3C */ u32 unk3C;
-    /* 0x40 */ u32 unk40;
-};
-
 static inline u32 fn_80161C90_count_players(MatchEnd* match_end)
 {
     u32 count = 0;
@@ -1147,31 +1125,23 @@ static inline u32 fn_80161C90_count_players(MatchEnd* match_end)
     return count;
 }
 
-void fn_80161C90(MatchEnd* arg0, int arg1, u16* arg2)
+void fn_80161C90(MatchEnd* arg0, int arg1, struct GmStats* s)
 {
     MatchPlayerData* p = &arg0->player_standings[arg1];
-    struct gm_stats* s = (struct gm_stats*) arg2;
     u32 count;
     s32 flag;
     s32 i;
 
-    s->unk0 = (s->unk0 + p->self_destructs > 0xFFFF)
-                  ? 0xFFFF
-                  : s->unk0 + p->self_destructs;
-    s->unk4 =
-        (s->unk4 + p->x38 > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk4 + p->x38;
-    s->unk8 =
-        (s->unk8 + p->x3C > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk8 + p->x3C;
-    s->unkC =
-        (s->unkC + p->x40 > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unkC + p->x40;
-    s->unk10 =
-        (s->unk10 + p->x44 > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk10 + p->x44;
-    s->unk14 =
-        (s->unk14 + p->x48 > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk14 + p->x48;
-    if (s->unk18 < p->x4C) {
-        s->unk18 = p->x4C;
+    s->sd_count = SAT_ADD(s->sd_count, p->self_destructs, U16_MAX);
+    s->attacks_hit = SAT_ADD(s->attacks_hit, p->x38, U32_MAX);
+    s->attacks_total = SAT_ADD(s->attacks_total, p->x3C, U32_MAX);
+    s->damage_dealt = SAT_ADD(s->damage_dealt, p->x40, U32_MAX);
+    s->damage_taken = SAT_ADD(s->damage_taken, p->x44, U32_MAX);
+    s->damage_recovered = SAT_ADD(s->damage_recovered, p->x48, U32_MAX);
+    if (s->peak_damage < p->x4C) {
+        s->peak_damage = p->x4C;
     }
-    s->unk1A = (s->unk1A + 1 > 0xFFFF) ? 0xFFFF : s->unk1A + 1;
+    s->match_count = SAT_ADD(s->match_count, 1, U16_MAX);
     {
         if (arg1 == fn_80165548(arg0, fn_80165418(arg0), fn_801654A0(arg0))) {
             flag = 1;
@@ -1179,7 +1149,7 @@ void fn_80161C90(MatchEnd* arg0, int arg1, u16* arg2)
             flag = 0;
         }
         if (flag != 0) {
-            s->unk1C = (s->unk1C + 1 > 0xFFFF) ? 0xFFFF : s->unk1C + 1;
+            s->victories = SAT_ADD(s->victories, 1, U16_MAX);
         }
     }
     if (arg1 == fn_80161154(arg0)) {
@@ -1188,36 +1158,21 @@ void fn_80161C90(MatchEnd* arg0, int arg1, u16* arg2)
         flag = 0;
     }
     if (flag != 0) {
-        s->unk1E = (s->unk1E + 1 > 0xFFFF) ? 0xFFFF : s->unk1E + 1;
+        s->losses = SAT_ADD(s->losses, 1, U16_MAX);
     }
-    s->unk20 = (s->unk20 + arg0->frame_count / 60 > 0xFFFFFFFFU)
-                   ? 0xFFFFFFFFU
-                   : s->unk20 + arg0->frame_count / 60;
+    s->play_time = SAT_ADD(s->play_time, arg0->frame_count / 60, U32_MAX);
     count = fn_80161C90_count_players(arg0);
-    count = s->unk24 + count;
-    if (count > 0xFFFF) {
-        count = 0xFFFF;
-    }
-    s->unk24 = count;
-    s->unk28 =
-        (s->unk28 + p->x50 > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk28 + p->x50;
+    s->total_player_count = SAT_ADD(s->total_player_count, count, U16_MAX);
+    s->walk_distance = SAT_ADD(s->walk_distance, p->x50, U32_MAX);
     gmMainLib_8015EDBC()->x10 =
-        (p->x50 + gmMainLib_8015EDBC()->x10 > 0xFFFFFFFFU)
-            ? 0xFFFFFFFFU
-            : p->x50 + gmMainLib_8015EDBC()->x10;
-    s->unk2C =
-        (s->unk2C + p->x54 > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk2C + p->x54;
-    s->unk30 =
-        (s->unk30 + p->x58 > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk30 + p->x58;
-    s->unk34 =
-        (s->unk34 + p->x5C > 0xFFFFFFFFU) ? 0xFFFFFFFFU : s->unk34 + p->x5C;
+        SAT_ADD(p->x50, gmMainLib_8015EDBC()->x10, U32_MAX);
+    s->run_distance = SAT_ADD(s->run_distance, p->x54, U32_MAX);
+    s->fall_distance = SAT_ADD(s->fall_distance, p->x58, U32_MAX);
+    s->peak_height = SAT_ADD(s->peak_height, p->x5C, U32_MAX);
     if (arg0->match_kind == 2) {
-        s->unk38 = (s->unk38 + p->x60 > 0xFFFFFFFFU) ? 0xFFFFFFFFU
-                                                     : s->unk38 + p->x60;
-        s->unk3C = (s->unk3C + p->x64 > 0xFFFFFFFFU) ? 0xFFFFFFFFU
-                                                     : s->unk3C + p->x64;
-        s->unk40 = (s->unk40 + p->x68 > 0xFFFFFFFFU) ? 0xFFFFFFFFU
-                                                     : s->unk40 + p->x68;
+        s->coins_collected = SAT_ADD(s->coins_collected, p->x60, U32_MAX);
+        s->coins_swiped = SAT_ADD(s->coins_swiped, p->x64, U32_MAX);
+        s->coins_lost = SAT_ADD(s->coins_lost, p->x68, U32_MAX);
     }
 }
 
@@ -1252,7 +1207,7 @@ void fn_80162068(MatchEnd* match_end)
             }
             fd->fighter_kos[gm_CKindToSelKind(pdata_j->ckind)] = (u16) sum;
         }
-        fn_80161C90(match_end, i, &fd->sd_count);
+        fn_80161C90(match_end, i, &fd->stats);
     }
 }
 void fn_80162170(MatchEnd* arg0)
@@ -1301,7 +1256,7 @@ void fn_80162170(MatchEnd* arg0)
                 nt->play_time_by_fighter[gm_CKindToSelKind(p->ckind)] =
                     play_time;
             }
-            fn_80161C90(arg0, i, &nt->sd_count);
+            fn_80161C90(arg0, i, &nt->stats);
         }
     }
 }
@@ -1421,7 +1376,7 @@ void gm_SetupHumanResultsScreen(u8 arg0, u8 arg1)
 
     if ((u8) (arg1 - 7) <= 1) {
         u32* p = gmMainLib_GetMatchResetCounter();
-        *p = (*p + 1 > U32_MAX) ? U32_MAX : *p + 1;
+        *p = SAT_ADD(*p, 1, U32_MAX);
         return;
     }
     if (gm_GetCurrentGameMode() == GM_STAMINA_VS) {
@@ -1438,7 +1393,7 @@ void gm_SetupHumanResultsScreen(u8 arg0, u8 arg1)
             counter = gmMainLib_GetCoinMatchTotal();
             {
                 struct gmm_retval_EDBC* q = gmMainLib_8015EDBC();
-                q->x4 = (q->x4 + 1 > U32_MAX) ? U32_MAX : q->x4 + 1;
+                q->x4 = SAT_ADD(q->x4, 1, U32_MAX);
             }
             break;
         case MatchKind_Bonus:
@@ -1446,18 +1401,18 @@ void gm_SetupHumanResultsScreen(u8 arg0, u8 arg1)
             break;
         }
     }
-    *counter = (*counter + 1 > U32_MAX) ? U32_MAX : *counter + 1;
+    *counter = SAT_ADD(*counter, 1, U32_MAX);
     {
         struct gmm_retval_ED98* a = gmMainLib_8015ED98();
-        a->x0 = (a->x0 + 1 > U32_MAX) ? U32_MAX : a->x0 + 1;
+        a->x0 = SAT_ADD(a->x0, 1, U32_MAX);
     }
     {
         struct gmm_retval_EDB0* b = gmMainLib_8015EDB0();
-        b->x0 = ((u32) b->x0 + 1 > U32_MAX) ? U32_MAX : (u32) b->x0 + 1;
+        b->x0 = SAT_ADD((u32) b->x0, 1, U32_MAX);
     }
     {
         struct gmm_retval_EDBC* c = gmMainLib_8015EDBC();
-        c->x0 = ((u32) c->x0 + 1 > U32_MAX) ? U32_MAX : (u32) c->x0 + 1;
+        c->x0 = SAT_ADD((u32) c->x0, 1, U32_MAX);
     }
 }
 
@@ -1647,14 +1602,12 @@ u8 gm_80162D6C(void)
     s32 i;
     u8 min;
 
-    i = 0;
     min = 4;
-    do {
+    for (i = 0; i < 0x19; i++) {
         if (min > (*gmMainLib_8015D194((u8) i))) {
             min = *gmMainLib_8015D194((u8) i);
         }
-        i += 1;
-    } while (i < 0x19);
+    }
 
     return min;
 }
@@ -1724,14 +1677,12 @@ u8 gm_80162F68(void)
     s32 i;
     u8 min;
 
-    i = 0;
     min = 4;
-    do {
+    for (i = 0; i < 0x19; i++) {
         if (min > (*gmMainLib_8015D2BC((u8) i))) {
             min = *gmMainLib_8015D2BC((u8) i);
         }
-        i += 1;
-    } while (i < 0x19);
+    }
 
     return min;
 }
@@ -1798,14 +1749,12 @@ u8 gm_80163164(void)
     s32 i;
     u8 min;
 
-    i = 0;
     min = 4;
-    do {
+    for (i = 0; i < 0x19; i++) {
         if (min > (*gmMainLib_8015D3E4((u8) i))) {
             min = *gmMainLib_8015D3E4((u8) i);
         }
-        i += 1;
-    } while (i < 0x19);
+    }
 
     return min;
 }
@@ -2231,25 +2180,23 @@ bool gm_IsStageUnlocked(u16 stkind)
 
 bool fn_801642A0(void)
 {
-    s32 var_r30;
-    s32 var_r29;
-    u8 var_r0;
+    s32 enabled_count;
+    s32 i;
+    u8 enabled;
 
-    var_r30 = 0;
-    var_r29 = 0;
-    do {
-        if ((1 << (u16) var_r29) & gmMainLib_GetGamePrefs()->stage_mask) {
-            var_r0 = 1;
+    enabled_count = 0;
+    for (i = 0; i < 0x1D; i++) {
+        if ((1 << (u16) i) & gmMainLib_GetGamePrefs()->stage_mask) {
+            enabled = true;
         } else {
-            var_r0 = 0;
+            enabled = false;
         }
-        if (var_r0 != 0) {
-            var_r30 += 1;
+        if (enabled) {
+            enabled_count += 1;
         }
-        var_r29 += 1;
-    } while (var_r29 < 0x1D);
+    }
 
-    if (var_r30 > 1) {
+    if (enabled_count > 1) {
         return false;
     }
     return true;
@@ -2288,27 +2235,40 @@ bool gm_80164330(s32 arg0)
                                                                       : false;
 }
 
+static inline u8 getStageUnlockIndex(u8 grkind)
+{
+    int i;
+    for (i = 0; i < NUM_UNLOCKABLE_STAGES; i++) {
+        if ((s32) grkind == (s32) lbl_803B790C[i][1]) {
+            return lbl_803B790C[i][0];
+        }
+    }
+    return NUM_UNLOCKABLE_STAGES;
+}
+
+static inline u8 getStageUnlockNotifyId(u8 unlock_idx)
+{
+    int i;
+    for (i = 0; i < NUM_UNLOCKABLE_STAGES; i++) {
+        if ((s32) unlock_idx == (s32) lbl_803B790C[i][0]) {
+            return lbl_803B790C[i][2];
+        }
+    }
+    return 0x42;
+}
+
 bool gm_80164430(u16 arg0)
 {
-    u16* temp_r31;
-    s32 i;
+    u16* stage_unlock_mask;
     u8 stage_idx;
     u8 unlock_bit;
 
-    temp_r31 = gmMainLib_8015EDA4();
+    stage_unlock_mask = gmMainLib_8015EDA4();
     stage_idx = Stage_8022519C(arg0);
+    unlock_bit = getStageUnlockIndex(stage_idx);
 
-    for (i = 0; i < NUM_UNLOCKABLE_STAGES; i++) {
-        if ((s32) stage_idx == (s32) lbl_803B790C[i][1]) {
-            unlock_bit = lbl_803B790C[i][0];
-            goto found;
-        }
-    }
-    unlock_bit = NUM_UNLOCKABLE_STAGES;
-
-found:
     if (unlock_bit == NUM_UNLOCKABLE_STAGES ||
-        (*temp_r31 & (1LL << unlock_bit)))
+        (*stage_unlock_mask & (1LL << unlock_bit)))
     {
         return true;
     }
@@ -2328,33 +2288,16 @@ found:
 void gm_80164504(u16 stkind)
 {
     u16* stage_unlock_mask;
-    s32 i;
     u8 grkind;
     u8 unlock_idx;
     u8 notify_val;
 
     stage_unlock_mask = gmMainLib_8015EDA4();
     grkind = Stage_8022519C(stkind);
+    unlock_idx = getStageUnlockIndex(grkind);
 
-    for (i = 0; i < NUM_UNLOCKABLE_STAGES; i++) {
-        if ((s32) grkind == (s32) lbl_803B790C[i][1]) {
-            unlock_idx = lbl_803B790C[i][0];
-            goto found_stage;
-        }
-    }
-    unlock_idx = NUM_UNLOCKABLE_STAGES;
-
-found_stage:
     if (unlock_idx != NUM_UNLOCKABLE_STAGES) {
-        for (i = 0; i < NUM_UNLOCKABLE_STAGES; i++) {
-            if ((s32) unlock_idx == (s32) lbl_803B790C[i][0]) {
-                notify_val = lbl_803B790C[i][2];
-                goto found_notify;
-            }
-        }
-        notify_val = 0x42;
-
-    found_notify:
+        notify_val = getStageUnlockNotifyId(unlock_idx);
         gmMainLib_8015D818(notify_val);
         *stage_unlock_mask |= (1LL << (s32) unlock_idx);
     }
@@ -2772,8 +2715,8 @@ u32 fn_801656A8(MatchEnd* arg0, u32 arg1)
         s32 j;
         for (j = 0; j < 6; j++) {
             if (arg0->player_standings[j].pkind != 3 &&
-                (u32) arg0->player_standings[arg1].x20 >
-                    (u32) arg0->player_standings[j].x20)
+                arg0->player_standings[arg1].x20 >
+                    arg0->player_standings[j].x20)
             {
                 cnt_gt += 1;
             }
@@ -2813,35 +2756,37 @@ static inline s32 fn_8016588C_clamp(s32 v)
     return result;
 }
 
-s32 fn_8016588C(lbl_8046B6A0_24C_t* arg0, s32 arg1)
+s32 fn_8016588C(MatchEnd* match_end, s32 player_slot)
 {
     s32 v;
 
     PAD_STACK(0x18);
 
     if (gm_GetCurrentGameMode() == GM_STAMINA_VS) {
-        if (arg0->x58[arg1].x28 != 0) {
-            v = arg0->x58[arg1].x28 / 60 + 0xFF000001;
+        if (match_end->player_standings[player_slot].x28 != 0) {
+            v = match_end->player_standings[player_slot].x28 / 60 + 0xFF000001;
         } else {
-            v = arg0->x58[arg1].x9;
+            v = match_end->player_standings[player_slot].x9;
         }
         return fn_8016588C_clamp(v);
-    } else if (arg0->x5 == 2) {
-        return fn_8016588C_clamp(((MatchPlayerData*) arg0->x58)[arg1].x1C);
-    } else if (arg0->x5 == 1) {
-        if ((s8) arg0->x58[arg1].x8 != 0) {
-            v = (s8) arg0->x58[arg1].x8;
+    } else if (match_end->match_kind == 2) {
+        return fn_8016588C_clamp(match_end->player_standings[player_slot].x1C);
+    } else if (match_end->match_kind == 1) {
+        if (match_end->player_standings[player_slot].stocks != 0) {
+            v = match_end->player_standings[player_slot].stocks;
         } else {
-            v = arg0->x58[arg1].x28 / 60 + 0xFF000001;
+            v = match_end->player_standings[player_slot].x28 / 60 + 0xFF000001;
         }
         return fn_8016588C_clamp(v);
-    } else if (arg0->x5 == 3) {
-        pl_80039450(arg1);
-        return fn_8016588C_clamp(fn_8016FFD4(arg0, 2, (u8) arg1));
+    } else if (match_end->match_kind == 3) {
+        pl_80039450(player_slot);
+        return fn_8016588C_clamp(fn_8016FFD4(match_end, 2, (u8) player_slot));
     } else {
-        u16 a = arg0->x58[arg1].xA;
-        return fn_8016588C_clamp(arg0->x58[arg1].x20 -
-                                 (arg0->x58[arg1].x24 - a) + a * arg0->xC);
+        u16 a = match_end->player_standings[player_slot].self_destructs;
+        return fn_8016588C_clamp(
+            match_end->player_standings[player_slot].x20 -
+            (match_end->player_standings[player_slot].x24 - a) +
+            a * match_end->sd_penalty);
     }
 }
 
@@ -3015,10 +2960,10 @@ s32 fn_801661E0(MatchEnd* arg0)
     return (s32) arg0;
 }
 
-void gm_80166378(lbl_8046B6A0_24C_t* arg0_raw)
+void gm_80166378(MatchEnd* arg0_raw)
 {
     s32 i;
-    MatchEnd* arg0 = (MatchEnd*) arg0_raw;
+    MatchEnd* arg0 = arg0_raw;
     u64 stack_padding;
     f32 sp48_y;
     f32 sp48_x;
@@ -3039,7 +2984,7 @@ void gm_80166378(lbl_8046B6A0_24C_t* arg0_raw)
             arg0->player_standings[i].ckind = Player_GetPlayerCharacter(i);
             arg0->player_standings[i].ftkind = Player_80036394(i);
             arg0->player_standings[i].stocks = Player_GetStocks(i);
-            arg0->player_standings[i].x3 = Player_GetCostumeId(i);
+            arg0->player_standings[i].x3_b0 = Player_GetCostumeId(i);
             arg0->player_standings[i].x4 = Player_GetNametagSlotID(i);
             arg0->player_standings[i].x1C = Player_GetCoins(i);
             arg0->player_standings[i].x28 = Player_GetMatchFrameCount(i);
@@ -3051,8 +2996,8 @@ void gm_80166378(lbl_8046B6A0_24C_t* arg0_raw)
             arg0->player_standings[i].x24 = Player_GetFalls(i);
             arg0->player_standings[i].team = Player_GetTeam(i);
             arg0->player_standings[i].percent = Player_GetDamage(i);
-            arg0->player_standings[i].x3_6 = Player_800353BC(i);
-            arg0->player_standings[i].x3_7 = Player_GetMoreFlagsBit2(i);
+            arg0->player_standings[i].x3_b6 = Player_800353BC(i);
+            arg0->player_standings[i].x3_b7 = Player_GetMoreFlagsBit2(i);
             arg0->player_standings[i].x9 = (s8) Player_GetRemainingHP(i);
             cnt = Player_GetJoystickCountByIndex(i, 0);
             sp48_y = (a = 0.031f) * ((f32) cnt * fn_8016B5B0());
@@ -3187,7 +3132,7 @@ s32 gm_80166A98(MatchEnd* arg0, u8 arg1, s8 arg2, u8 arg3, s8 arg4, u8 arg5,
 
     // Apply player color to all 4 players?
     for (i = 0; i < 4; i++) {
-        arg0->player_standings[i].x3 = arg1;
+        arg0->player_standings[i].x3_b0 = arg1;
     }
 
     arg0->player_standings[0].score = score0;
@@ -3349,12 +3294,12 @@ void fn_8016719C(s32 slot, s32 subchar)
 {
     Vec3 respawn_pos;
     Vec3 offset;
-    VsSceneController* match_info;
+    VsSceneState* scene_state;
     s32 var_r30;
     StKind stkind;
     struct fn_8016719C_xC_bits* temp_r4;
 
-    match_info = gmVs_GetController_1();
+    scene_state = gmVs_GetSceneState();
     stkind = gm_GetStKind();
     if (Stage_80224DC8(stkind) != 0) {
         var_r30 = Ground_801C5774();
@@ -3421,11 +3366,12 @@ void fn_8016719C(s32 slot, s32 subchar)
     respawn_pos.y = Stage_GetCamBoundsTopOffset();
     Player_80032768(slot, &respawn_pos);
     Player_SetFacingDirection(slot, respawn_pos.x >= 0.0f ? -1.0f : 1.0f);
-    Player_SetHPByIndex(slot, subchar, match_info->fighters[slot].x6);
+    Player_SetHPByIndex(slot, subchar, scene_state->fighters[slot].x6);
     Player_80032070(slot, subchar);
     if (subchar != 1) {
         ifStatus_802F6508(slot);
-        temp_r4 = (struct fn_8016719C_xC_bits*) &match_info->fighters[slot].xC;
+        temp_r4 =
+            (struct fn_8016719C_xC_bits*) &scene_state->fighters[slot].xC;
         if (temp_r4->b0) {
             temp_r4->b0 = true;
             Camera_800310E8();
@@ -3502,22 +3448,22 @@ void gm_801674C4(s8 arg0, u8 arg1, s8 arg2, s8 arg3, GmRouteCallback arg4)
 
 void fn_8016758C(void)
 {
-    VsSceneController* mi = gmVs_GetController_1();
+    VsSceneState* scene_state = gmVs_GetSceneState();
     int i;
 
-    for (i = 0; i < ARRAY_SIZE(mi->fighters); i++) {
-        if (mi->fighters[i].x8 != 0) {
-            mi->fighters[i].x8--;
+    for (i = 0; i < ARRAY_SIZE(scene_state->fighters); i++) {
+        if (scene_state->fighters[i].x8 != 0) {
+            scene_state->fighters[i].x8--;
         }
     }
 }
 
 static inline int get_idx(void)
 {
-    VsSceneController* info = gmVs_GetController_1();
+    VsSceneState* scene_state = gmVs_GetSceneState();
     int i;
-    for (i = 0; i < ARRAY_SIZE(info->fighters); i++) {
-        if (info->fighters[i].x8 == 0) {
+    for (i = 0; i < ARRAY_SIZE(scene_state->fighters); i++) {
+        if (scene_state->fighters[i].x8 == 0) {
             return i;
         }
     }
@@ -3548,10 +3494,10 @@ s32 fn_80167638(s32 arg0, Vec3* arg1, Vec3* arg2)
             arg2->y = 0.0f;
         }
         {
-            VsSceneController* info = gmVs_GetController_1();
+            VsSceneState* scene_state = gmVs_GetSceneState();
             PAD_STACK(8);
-            info->fighters[idx].x8 = 0x90;
-            info->fighters[idx].x9 = chr;
+            scene_state->fighters[idx].x8 = 0x90;
+            scene_state->fighters[idx].x9 = chr;
         }
     }
     return tmp;
@@ -3579,7 +3525,7 @@ u8 gm_801677F0(void)
 bool gm_RumbleEnabledForPlayer(int port, int nametag)
 {
     bool result = false;
-    if (nametag == GM_NAMETAG_NONE) {
+    if (nametag == GM_NAMETAG_COUNT) {
         if (GetRumbleSettingOfPort(port)) {
             result = true;
         }
@@ -3616,7 +3562,7 @@ void gm_SetupPlayerDefaults(struct PlayerInitData* player)
     player->handicap = 9;
     player->team = 0;
     player->rumble_enabled = false;
-    player->nametag = GM_NAMETAG_NONE;
+    player->nametag = GM_NAMETAG_COUNT;
     player->xC_b1 = true;
     player->cpu_kind = 4;
     player->cpu_level = 0;
@@ -3755,8 +3701,7 @@ void gm_80167BC8(VsModeData* vs_data)
     vs_data->start.rules.x30 = 0.1f * rules->damage_ratio;
     vs_data->start.rules.item_freq = (s8) prefs->item_freq;
     prefs = gmMainLib_GetGamePrefs();
-    i = 0;
-    do {
+    for (i = 0; i < 0x20; i++) {
         u8 item = lbl_803B7844[(u8) i];
         if ((s32) item != 0x23) {
             if (prefs->item_mask & (1LL << i)) {
@@ -3765,8 +3710,7 @@ void gm_80167BC8(VsModeData* vs_data)
                 vs_data->start.rules.x20 &= ~(1LL << item);
             }
         }
-        i++;
-    } while (i < 0x20);
+    }
 
     switch (gmMainLib_8015ED30()) {
     case 1:
@@ -4111,17 +4055,16 @@ float gm_80168BF8(int arg0)
     CharacterKind ckind = Player_GetPlayerCharacter(arg0);
     u32 costume = Player_GetCostumeId(arg0);
 #if defined(TARGET_PC)
-    /* The decomp omits the return, relying on the tail call; make it explicit on the port. */
-    /* m-ex: every in-match stock icon reaches the formula through here (the hook at
-     * 0x80168B34 takes the current FighterKind, arg1). */
-    f32 mex = gm_MexStockFrame(Player_80036394(arg0), costume);
-    if (mex >= 0.0F) {
-        return mex;
+    {
+        /* m-ex: every in-match stock icon reaches the formula through here (the hook at
+         * 0x80168B34 takes the current FighterKind, arg1). */
+        f32 mex = gm_MexStockFrame(Player_80036394(arg0), costume);
+        if (mex >= 0.0F) {
+            return mex;
+        }
     }
-    return gm_80168B34(ckind, Player_80036394(arg0), costume);
-#else
-    gm_80168B34(ckind, Player_80036394(arg0), costume);
 #endif
+    return gm_80168B34(ckind, Player_80036394(arg0), costume);
 }
 
 void gm_80168C5C(u32 arg0)

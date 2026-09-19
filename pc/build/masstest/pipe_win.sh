@@ -8,7 +8,7 @@ d="C:/gdm/_build/masstest/out"
 C:/gdm/_toolchains/llvm/bin/clang.exe --target=ppc32-none-eabi -std=c99 -nostdinc -fno-builtin -DLINT -DTARGET_PC \
   -fno-short-enums -fsigned-char -mlong-double-64 -fno-strict-aliasing -fwrapv -fcommon -fgnu89-inline \
   -ftrivial-auto-var-init=zero -O2 -Xclang -disable-llvm-passes -emit-llvm -c -w \
-  -Isrc -isystem src/MSL -isystem extern/dolphin/include -isystem extern/dolphin/src -isystem build/GALE01/include \
+  -Isrc -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src -isystem build/GALE01/include \
   -include src/MSL/math_ppc.h \
   "$f" -o "$d/$n.bc" 2> "$d/$n.cc.err" || { echo "CC_FAIL $f"; cat "$d/$n.cc.err"; exit 1; }
 rm -f "$d/$n.cc.err"

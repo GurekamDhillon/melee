@@ -9,7 +9,6 @@
 #include <melee/ft/ftlib.h>
 #include <melee/gm/gm_1601.h>
 #include <melee/gm/gmvs.h>
-#include <melee/gm/types.h>
 #include <melee/gr/ground.h>
 #include <melee/gr/stage.h>
 #include <melee/lb/lb_00B0.h>
@@ -70,8 +69,8 @@ static u8 ifMagnify_803F984C[16][4] = {
 
 static inline bool ifMagnify_IsHUDVisible(void)
 {
-    if ((gmVs_GetController_0()->hud_enabled == 0) || ifAll_IsHUDHidden() ||
-        Camera_80030130())
+    if ((gmVs_GetSceneController()->state.hud_enabled == 0) ||
+        ifAll_IsHUDHidden() || Camera_80030130())
     {
         return false;
     }
@@ -214,8 +213,7 @@ void ifMagnify_802FB8C0(HSD_GObj* gobj, int code)
             translate.x = 0.09125f * edge_pos.x;
             translate.y = 0.1f * edge_pos.y;
             translate.z = 0.0f;
-            HSD_JObjSetTranslate((HSD_JObj*) player->gobj->hsd_obj,
-                                 &translate);
+            HSD_JObjSetTranslate(player->gobj->hsd_obj, &translate);
 
             HSD_GObj_JObjCallback(gobj, code);
             if ((player->state.edge == 4) || (player->state.edge == 2)) {
@@ -603,11 +601,9 @@ void ifMagnify_802FC870(void)
     archive = ifAll_GetArchive();
     lbArchive_LoadSections(*archive, (void**) &ifMagnify_804A1DE0,
                            ifMagnify_804D57E8, 0);
-    i = 0;
-    do {
+    for (i = 0; i < 6; i++) {
         ifMagnify_802FC3C0(i);
-        i++;
-    } while (i < 6);
+    }
     ifMagnify_802FC618();
 }
 

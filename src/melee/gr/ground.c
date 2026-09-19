@@ -550,16 +550,16 @@ static MapCollData* Ground_TTMod_BuildCollData(MapCollData* orig, int level,
         lines[li].hi_flags = CollLine_Floor | LINE_FLAG_PLATFORM;
         lines[li].lo_flags = 0;
 
-        joints[ji].floor_start = (s16) li;
-        joints[ji].floor_count = 1;
-        joints[ji].ceiling_start = 0;
-        joints[ji].ceiling_count = 0;
-        joints[ji].right_wall_start = 0;
-        joints[ji].right_wall_count = 0;
-        joints[ji].left_wall_start = 0;
-        joints[ji].left_wall_count = 0;
-        joints[ji].dynamic_start = 0;
-        joints[ji].dynamic_count = 0;
+        joints[ji].ranges[MapLineGroup_Floor].start = (s16) li;
+        joints[ji].ranges[MapLineGroup_Floor].count = 1;
+        joints[ji].ranges[MapLineGroup_Ceiling].start = 0;
+        joints[ji].ranges[MapLineGroup_Ceiling].count = 0;
+        joints[ji].ranges[MapLineGroup_RightWall].start = 0;
+        joints[ji].ranges[MapLineGroup_RightWall].count = 0;
+        joints[ji].ranges[MapLineGroup_LeftWall].start = 0;
+        joints[ji].ranges[MapLineGroup_LeftWall].count = 0;
+        joints[ji].ranges[MapLineGroup_Dynamic].start = 0;
+        joints[ji].ranges[MapLineGroup_Dynamic].count = 0;
         joints[ji].left_bound = cx_c - hw_c - 30.0f;
         joints[ji].bottom_bound = cy_c - 30.0f;
         joints[ji].right_bound = cx_c + hw_c + 30.0f;
@@ -572,16 +572,16 @@ static MapCollData* Ground_TTMod_BuildCollData(MapCollData* orig, int level,
     merged->vert_count = ovc + nplat * 2;
     merged->lines = lines;
     merged->line_count = olc + nplat;
-    merged->floor_start = orig->floor_start;
-    merged->floor_count = orig->floor_count;
-    merged->ceiling_start = orig->ceiling_start;
-    merged->ceiling_count = orig->ceiling_count;
-    merged->right_wall_start = orig->right_wall_start;
-    merged->right_wall_count = orig->right_wall_count;
-    merged->left_wall_start = orig->left_wall_start;
-    merged->left_wall_count = orig->left_wall_count;
-    merged->dynamic_start = orig->dynamic_start;
-    merged->dynamic_count = orig->dynamic_count;
+    merged->ranges[MapLineGroup_Floor].start = orig->ranges[MapLineGroup_Floor].start;
+    merged->ranges[MapLineGroup_Floor].count = orig->ranges[MapLineGroup_Floor].count;
+    merged->ranges[MapLineGroup_Ceiling].start = orig->ranges[MapLineGroup_Ceiling].start;
+    merged->ranges[MapLineGroup_Ceiling].count = orig->ranges[MapLineGroup_Ceiling].count;
+    merged->ranges[MapLineGroup_RightWall].start = orig->ranges[MapLineGroup_RightWall].start;
+    merged->ranges[MapLineGroup_RightWall].count = orig->ranges[MapLineGroup_RightWall].count;
+    merged->ranges[MapLineGroup_LeftWall].start = orig->ranges[MapLineGroup_LeftWall].start;
+    merged->ranges[MapLineGroup_LeftWall].count = orig->ranges[MapLineGroup_LeftWall].count;
+    merged->ranges[MapLineGroup_Dynamic].start = orig->ranges[MapLineGroup_Dynamic].start;
+    merged->ranges[MapLineGroup_Dynamic].count = orig->ranges[MapLineGroup_Dynamic].count;
     merged->joints = joints;
     merged->joint_count = ojc + nplat;
     merged->x2C = orig->x2C;
@@ -1849,7 +1849,7 @@ bool Ground_801C2D24(enum_t arg0, Vec3* arg1)
     return false;
 }
 
-bool Ground_801C2ED0(HSD_JObj* jobj, s32 arg1)
+bool Ground_InitMapColl(HSD_JObj* jobj, s32 arg1)
 {
     u8 _[4];
     bool result = false;
@@ -1888,7 +1888,7 @@ bool Ground_801C2ED0(HSD_JObj* jobj, s32 arg1)
 
 static s16 Ground_804D6954;
 
-bool Ground_801C2FE0(Ground_GObj* arg0)
+bool Ground_UpdateMapColl(Ground_GObj* arg0)
 {
     StageData* stagedata;
     UnkArchiveStruct* archive;
@@ -2228,20 +2228,18 @@ void Ground_801C36F4(int map_id, HSD_JObj* root, UNK_T joint)
     }
     i = 0;
     entry = stage_dat->unk0;
-entry_loop:
-    if (i < entry_count) {
-        if (entry->joint == joint) {
-            goto entry_found;
+    while (true) {
+        if (i < entry_count) {
+            if (entry->joint == joint) {
+                break;
+            }
+        } else {
+            return;
         }
-        goto entry_next;
+        entry++;
+        i++;
     }
-    return;
-entry_next:
-    entry++;
-    i++;
-    goto entry_loop;
 
-entry_found:
     for (i = 0; i < 0x57 * 3; i++) {
         jobj = stage_info.x280[i];
         (void) jobj;
@@ -3571,30 +3569,24 @@ s32 Ground_801C5840(void)
     return stage_info.x6E4[i];
 }
 
-#ifdef MUST_MATCH
-#pragma push
-/// With propagation on, the single-use @c &stage_info is rematerialized at the
-/// store instead of being computed at the start of the branch and held in
-/// r31 across the two calls
-#pragma opt_propagation off
-#endif
+static inline void initSinglePlayerDisplay(StageInfo* stageinfo)
+{
+    int display_id = tyDisplay_8031C2EC();
+    tyDisplay_8031C454(display_id);
+    stageinfo->x6E4[0] = display_id;
+}
+
 void Ground_801C5878(void)
 {
     PAD_STACK(8);
     tyDisplay_8031C2CC();
     if (gm_IsCurrently1PMode() != 0) {
-        StageInfo* stageinfo = &stage_info;
-        int display_id;
-        display_id = tyDisplay_8031C2EC();
-        tyDisplay_8031C454(display_id);
-        stageinfo->x6E4[0] = display_id;
+        StageInfo* stageinfo;
+        initSinglePlayerDisplay(stageinfo = &stage_info);
     } else {
         stage_info.x6E4[0] = -1;
     }
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 Item_GObj* Ground_801C58E0(s32 arg0, s32 arg1)
 {
@@ -3605,14 +3597,6 @@ Item_GObj* Ground_801C58E0(s32 arg0, s32 arg1)
     result = it_802F2094(0, &sp10, tmp, 0);
     Toy_80304A58(tmp);
     return result;
-}
-
-static inline s32 randi(s32 max)
-{
-    if (max != 0) {
-        return HSD_Randi(max);
-    }
-    return 0;
 }
 
 int Ground_801C5940(void)

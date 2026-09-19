@@ -19,14 +19,6 @@
 #include <sysdolphin/baselib/mtx.h>
 #include <sysdolphin/baselib/quatlib.h>
 
-static inline HSD_JObj* jobj_parent(HSD_JObj* jobj)
-{
-    if (jobj == NULL) {
-        return NULL;
-    }
-    return jobj->parent;
-}
-
 #ifdef MUST_MATCH
 #pragma inline_depth(1)
 #endif
@@ -39,7 +31,7 @@ void fn_80020AEC(HSD_JObj* jobj, Mtx out)
     volatile f32 scale_mag;
     u8 _[4];
 
-    HSD_MtxInverseConcat(HSD_JObjGetMtxPtr(jobj_parent(jobj)),
+    HSD_MtxInverseConcat(HSD_JObjGetMtxPtr(HSD_JObjGetParent(jobj)),
                          HSD_JObjGetMtxPtr(jobj), out);
 
     for (i = 0; i < 3; i++) {
@@ -88,10 +80,10 @@ void fn_80020AEC(HSD_JObj* jobj, Mtx out)
         out[2][i] = col.z;
     }
 
-    cur = jobj_parent(jobj);
+    cur = HSD_JObjGetParent(jobj);
     while (cur != NULL) {
-        if (jobj_parent(cur) != NULL) {
-            HSD_MtxInverseConcat(HSD_JObjGetMtxPtr(jobj_parent(cur)),
+        if (HSD_JObjGetParent(cur) != NULL) {
+            HSD_MtxInverseConcat(HSD_JObjGetMtxPtr(HSD_JObjGetParent(cur)),
                                  HSD_JObjGetMtxPtr(cur), tmp);
         } else {
             PSMTXCopy(HSD_JObjGetMtxPtr(cur), tmp);
@@ -118,7 +110,7 @@ void fn_80020AEC(HSD_JObj* jobj, Mtx out)
         }
 
         PSMTXConcat(tmp, out, out);
-        cur = jobj_parent(cur);
+        cur = HSD_JObjGetParent(cur);
     }
 }
 #ifdef MUST_MATCH
@@ -205,8 +197,8 @@ void fn_8002113C(HSD_JObj* jobj, Vec3* axis, f32 angle)
     HSD_JObjSetupMatrix(jobj);
     fn_80020AEC(jobj, mtx);
     PSMTXTranspose(mtx, mtx);
-    PSMTXMultVec(mtx, (Vec*) axis, (Vec*) &localAxis);
-    PSMTXRotAxisRad(rotMtx, (Vec*) &localAxis, -angle);
+    PSMTXMultVec(mtx, axis, &localAxis);
+    PSMTXRotAxisRad(rotMtx, &localAxis, -angle);
 
     if (!(jobj->flags & JOBJ_USE_QUATERNION)) {
         HSD_JObjGetRotation(jobj, (Quaternion*) &rot);

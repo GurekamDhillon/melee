@@ -160,7 +160,7 @@ int main(void)
     HSD_GXSetFifoObj(GXInit(HSD_AllocateFifo(0x40000), 0x40000));
     HSD_InitComponent();
     GXSetMisc(1, 8);
-    *seed_ptr = OSGetTick();
+    *HSD_RandSeedPtr = OSGetTick();
     lbAudioAx_8002838C();
     lb_80019AAC(&gmMain_8015FD24);
     HSD_VISetUserPostRetraceCallback(&gmMain_8015FDA0);
@@ -170,8 +170,8 @@ int main(void)
     lbHeap_80015F3C();
     lbDvd_80018F68();
     lbArq_80014D2C();
-    lb_8001C5BC();
-    lb_8001D21C();
+    lbCardNew_Init();
+    lbCardGame_Init();
     lbSnap_8001E290();
     gmMainLib_8015FCC0();
     lbMthp_8001F87C();

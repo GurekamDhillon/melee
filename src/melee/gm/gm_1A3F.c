@@ -42,8 +42,38 @@ struct stateMachine {
 ASSERT_SIZE(struct stateMachine, 0x14);
 
 /* 1A3F48 */ static void preloadState(GameModeState*);
+
+/**
+ * @brief Runs one game-mode scene transition and invokes the run loop for a
+ * given scene
+ *
+ * Finds the current #GameModeState in @p mode, runs its @c Prep handler, loads
+ * the scene via #gm_FindGameSceneHandler / #gm_801A4D34, then advances
+ * #GameRouting::curr_scene_idx when the scene loop exits.
+ */
 /* 1A4014 */ static void gm_801A4014(GameMode*);
+
+/**
+ * @brief Loads a game mode, runs it to completion, then unloads it.
+ *
+ * Loads the data associated with the given #GameModeKind (asset preload and
+ * #GameMode::Load), then executes its scene graph via #gm_801A4014 until
+ * #GameState::pending is set. When the loop finishes, unloads the mode
+ * (#GameMode::Unload) unless the game is resetting, then returns
+ * #GameRouting::pending_mode, the next pending #GameModeKind.
+ *
+ * If #GameState::game_mode_override is defined and returns a mode < #GM_COUNT,
+ * a single scene from that game mode will be executed after the current scene
+ * exits, skipping typical game mode load/preload routines for the resulting
+ * gamemode.  #GameState::pending takes precedence over the override behavior.
+ *
+ * See also: ::gm_ChangeGameModeAfterCurrentScene, ::gm_SetPendingGameMode,
+ * ::gm_SetNewGameModePending
+ *
+ * @returns The next pending #GameModeKind (#GameRouting::pending_mode).
+ */
 /* 1A43A0 */ static u8 runGameMode(u8 mode);
+
 /* 479D30 */ static struct stateMachine state_machine;
 
 void preloadState(GameModeState* state)
@@ -71,8 +101,8 @@ void preloadState(GameModeState* state)
         preloaded_state->is_heap_persistent[1] = true;
     }
     lbDvd_80018254();
-    lb_8001C5A4();
-    lb_8001D1F4();
+    lbCardNew_ForgetMemory();
+    lbCardGame_Reset();
     lbSnap_8001E27C();
     Toy_803127D4();
     tyDisplay_8031C8B8();
@@ -129,8 +159,9 @@ void gm_801A4014(GameMode* mode)
     GameModeState* state;
     struct stateMachine* sm;
     struct GameSceneInfo* info;
-    u32 dead; ///< @todo regswap hack
-    PAD_STACK(2 * 4);
+    u8 kind;
+    uintptr_t zero;
+    PAD_STACK(4);
 
     sm = &state_machine;
     state = findState(mode->states);
@@ -141,9 +172,15 @@ void gm_801A4014(GameMode* mode)
         state->on_enter(state);
     }
     info = &state->info;
+    kind = info->scene_kind;
+    /* The lookup's result has to reach `scene` through an instruction the
+     * copy propagator cannot delete, or `scene` loses its own register web and
+     * takes the one this function's state pointer needs. `| (zero = 0)` is the
+     * only spelling that survives that pass and still folds back to a plain
+     * move, and C has no bitwise operator on pointers, hence the round trip.
+     */
     scene =
-        (GameScene*) ((uintptr_t) gm_FindGameSceneHandler(info->scene_kind) |
-                      (dead = 0));
+        (GameScene*) ((uintptr_t) gm_FindGameSceneHandler(kind) | (zero = 0));
     gm_801A4BD4();
     gm_801A4B88(info);
     if (scene->on_enter != NULL) {
@@ -168,12 +205,12 @@ void gm_801A4014(GameMode* mode)
         }
     }
     lb_8001CDB4();
-    lb_8001B760(11);
+    lbCardNew_CompleteAllTasks(11);
     lbMthp_8001F800();
     if (gmMainLib_8046B0F0.resetting) {
         lbAudioAx_80027DBC();
         HSD_PadReset();
-        while (lb_8001B6F8() == 11);
+        while (lbCardNew_CompleteNextTask() == 11);
         if (DVDCheckDisk() == 0) {
             OSResetSystem(1, 0, 0);
         }

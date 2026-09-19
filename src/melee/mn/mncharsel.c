@@ -2210,9 +2210,6 @@ void mnCharSel_8025FB50(u8 door, s32 arg1)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma auto_inline off
-#endif
 s32 mnCharSel_8025FDEC(u8 door)
 {
     CSSData* css;
@@ -2298,9 +2295,6 @@ s32 mnCharSel_8025FDEC(u8 door)
     }
     return 1;
 }
-#ifdef MUST_MATCH
-#pragma auto_inline on
-#endif
 
 void mnCharSel_CostumeChange(int door, u32 input)
 {
@@ -3763,6 +3757,7 @@ void fn_80262F44(HSD_GObj* gobj)
 {
     HSD_JObj* jobj = GET_JOBJ(gobj);
     int i;
+    int valid_count = 0;
     PAD_STACK(0x8);
 
     if (mnCharSel_804D6CB0->match_type == VS_CAMERA) {
@@ -3787,7 +3782,7 @@ void fn_80262F44(HSD_GObj* gobj)
         }
         HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
     } else {
-        s32 valid_count = 0;
+        valid_count = 0;
 
         for (i = 0; i < (s32) mnCharSel_804D6CF5; i++) {
             if (mnCharSel_803F0DFC.doors[i].p_kind != 3) {

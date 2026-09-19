@@ -18,9 +18,12 @@
 #include <dolphin/types.h>
 #include <melee/mn/types.h>
 
+#define GM_NAMETAG_BANK_COUNT 7
+#define GM_NAMETAG_BANK_SIZE 19
+
 /// @deprecated Replace with inline bitfields
 typedef union UnkFlagStruct {
-    u8 u8;
+    u8 byte;
     struct {
         u8 b0 : 1;
         u8 b1 : 1;
@@ -60,7 +63,38 @@ typedef struct un_804A1F48_t {
 } un_804A1F48_t;
 ASSERT_SIZE(struct un_804A1F48_t, 0xC);
 
+struct GameSceneInfo {
+    /**
+     * The #GameSceneKind associated with this scene. This is the value
+     * matched by #gm_FindGameSceneHandler to look up the corresponding
+     * #GameScene supplying the #GameScene::on_enter, #GameScene::on_exit,
+     * and #GameScene::on_frame callbacks invoked for this scene. Not to be
+     * confused with #GameModeState::id, which is the scene graph
+     * traversal index.
+     */
+    /* +0 */ u8 scene_kind;    ///< ::GameSceneKind
+    /* +4 */ void* enter_data; ///< data passed to GameScene::on_enter
+    /* +8 */ void* exit_data;  ///< data passed to GameScene::on_exit
+};
+
+/**
+ * @note Colloquially known as "Minor Scene"
+ *
+ * A single entry in a #GameMode's scene graph. Each scene is looked up by
+ * its #GameModeState::id during scene graph traversal. The scene graph is
+ * walked comparing each entry's @c idx against #GameRouting::curr_scene_idx,
+ * and #nextScene advances to the next scene whose @c idx is greater than the
+ * current one. An @c idx value of @c 0xFF terminates a collection of
+ * GameModeState.
+ */
 struct GameModeState {
+    /**
+     * Scene graph index searched against #GameRouting::curr_scene_idx during
+     * scene graph traversal. This is the value matched when the scene graph is
+     * walked to find the current scene. Not to be confused with
+     * @c GameModeState::info.scene_kind, which is the scene's
+     * #GameSceneKind.
+     */
     /* +0 */ u8 id;      ///< locally defined by game mode
     /* +1 */ u8 preload; ///< ::lbDvdPreloadKind
     /* +2 */ u16 flags;
@@ -68,11 +102,7 @@ struct GameModeState {
     /* +4 */ void (*on_enter)(GameModeState*);
     /* +8 */ void (*on_exit)(GameModeState*);
 
-    struct GameSceneInfo {
-        /* +0 */ u8 scene_kind;    ///< ::GameSceneKind
-        /* +4 */ void* enter_data; ///< data passed to GameScene::on_enter
-        /* +8 */ void* exit_data;  ///< data passed to GameScene::on_exit
-    } info;
+    GameSceneInfo info;
 };
 
 /// @note Colloquially known as "Major Scene"
@@ -90,7 +120,10 @@ struct GameMode {
 /// @note Colloquially known as "Minor Scene"
 struct GameScene {
     u8 kind; ///< ::GameSceneKind
+
+    /// Referenced from @c gm_801A4014 when passed to #gm_801A4D34.
     void (*on_frame)(void);
+
     void (*on_enter)(void*);
     void (*on_exit)(void*);
     UNUSED UNK_T unused;
@@ -107,29 +140,35 @@ struct GamePrefs {
     /* +18 */ u32 stage_mask;
 };
 
+/// Match statistics shared by #FighterData and #NameTagData.
+struct GmStats {
+    /* 0x00 */ u16 sd_count;
+    /* 0x02 */ u8 pad_2[2];
+    /* 0x04 */ u32 attacks_hit;
+    /* 0x08 */ u32 attacks_total;
+    /* 0x0C */ s32 damage_dealt;
+    /* 0x10 */ s32 damage_taken;
+    /* 0x14 */ s32 damage_recovered;
+    /* 0x18 */ u16 peak_damage;
+    /* 0x1A */ u16 match_count;
+    /* 0x1C */ u16 victories;
+    /* 0x1E */ u16 losses;
+    /* 0x20 */ u32 play_time;
+    /* 0x24 */ u32 total_player_count;
+    /* 0x28 */ s32 walk_distance;
+    /* 0x2C */ s32 run_distance;
+    /* 0x30 */ s32 fall_distance;
+    /* 0x34 */ s32 peak_height;
+    /* 0x38 */ s32 coins_collected;
+    /* 0x3C */ s32 coins_swiped;
+    /* 0x40 */ s32 coins_lost;
+};
+ASSERT_SIZE(struct GmStats, 0x44);
+
 struct FighterData {
     /* 0x00 */ u16 fighter_kos[SELKIND_COUNT];
     /* 0x32 */ u8 padding_0x32[2];
-    /* 0x34 */ u16 sd_count;
-    /* 0x36 */ u8 padding_0x36[2];
-    /* 0x38 */ u32 attacks_hit;
-    /* 0x3C */ u32 attacks_total;
-    /* 0x40 */ s32 damage_dealt;
-    /* 0x44 */ s32 damage_taken;
-    /* 0x48 */ s32 damage_recovered;
-    /* 0x4C */ u16 peak_damage;
-    /* 0x4E */ u16 match_count;
-    /* 0x50 */ u16 victories;
-    /* 0x52 */ u16 losses;
-    /* 0x54 */ u32 play_time;
-    /* 0x58 */ u32 total_player_count;
-    /* 0x5C */ s32 walk_distance;
-    /* 0x60 */ s32 run_distance;
-    /* 0x64 */ s32 fall_distance;
-    /* 0x68 */ s32 peak_height;
-    /* 0x6C */ s32 coins_collected;
-    /* 0x70 */ s32 coins_swiped;
-    /* 0x74 */ s32 coins_lost;
+    /* 0x34 */ struct GmStats stats;
     /* 0x78 */ s8 x78;
     /* 0x79 */ s8 x79;
     /* 0x7A */ UnkFlagStruct x7A;
@@ -165,27 +204,8 @@ struct FighterData {
 };
 
 struct NameTagData {
-    /* 0x000 */ u16 vs_kos[120];
-    /* 0x0F0 */ u16 sd_count;
-    /* 0x0F2 */ u8 padding_0xF2[2];
-    /* 0x0F4 */ u32 attacks_hit;
-    /* 0x0F8 */ u32 attacks_total;
-    /* 0x0FC */ s32 damage_dealt;
-    /* 0x100 */ s32 damage_taken;
-    /* 0x104 */ s32 damage_recovered;
-    /* 0x108 */ u16 peak_damage;
-    /* 0x10A */ u16 match_count;
-    /* 0x10C */ u16 victories;
-    /* 0x10E */ u16 losses;
-    /* 0x110 */ u32 play_time;
-    /* 0x114 */ u32 total_player_count;
-    /* 0x118 */ s32 walk_distance;
-    /* 0x11C */ s32 run_distance;
-    /* 0x120 */ s32 fall_distance;
-    /* 0x124 */ s32 peak_height;
-    /* 0x128 */ s32 coins_collected;
-    /* 0x12C */ s32 coins_swiped;
-    /* 0x130 */ s32 coins_lost;
+    /* 0x000 */ u16 vs_kos[GM_NAMETAG_COUNT];
+    /* 0x0F0 */ struct GmStats stats;
     /* 0x134 */ u32 play_time_by_fighter[SELKIND_COUNT];
     /* 0x198 */ char namedata[8];
     /* 0x1A0 */ s8 x1A0;
@@ -195,7 +215,7 @@ struct NameTagData {
 };
 
 struct NameTagDataBank {
-    struct NameTagData inner[19];
+    struct NameTagData inner[GM_NAMETAG_BANK_SIZE];
 };
 
 struct GameRules {
@@ -253,12 +273,19 @@ struct gmm_retval_EDBC {
     int x114[SELKIND_COUNT];
 };
 
-struct gmm_x1868 {
-    /* 0x0000 */ u16
-        unlocked_characers_bitmask; ///< unlocked characters bitmask
-    /* 0x0002 */ u16 x186A;         ///< unlocked stages bitmask
-    /* 0x0004 */ u8 x186C;          ///< unlocked features bitmask - score
-                                    ///< display/random stage etc...
+struct gmm_x1868_1A8_t {
+    /* 0x01A8 +0 */ u32 x0;
+    /* 0x01AC +4 */ u8 x4; ///< true/false
+    /* 0x01AD +5 */ u8 x5;
+    /* 0x01AE +6 */ u8 x6;
+};
+
+typedef struct {
+    /* 0x0000 */ u16 unlocked_characters; ///< unlocked characters bitmask
+    /* 0x0002 */ u16 x186A;               ///< unlocked stages bitmask
+    /* 0x0004 */ u8 x186C; ///< unlocked features bitmask - score
+                           ///< display/random stage etc...
+
     /// @remarks this would make sense to be apart of x186C, but seems unused.
     // perhaps features got removed from the unlock system? item switch comes
     // to mind as plausible
@@ -266,12 +293,7 @@ struct gmm_x1868 {
     /* 0x0008 */ struct gmm_retval_ED98 unk_8;
     /* 0x0028 */ struct gmm_retval_EDB0 unk_28;
     /* 0x0030 */ struct gmm_retval_EDBC unk_30;
-    struct gmm_x1868_1A8_t {
-        /* 0x01A8 +0 */ u32 x0;
-        /* 0x01AC +4 */ u8 x4; ///< true/false
-        /* 0x01AD +5 */ u8 x5;
-        /* 0x01AE +6 */ u8 x6;
-    } unk_1A8;
+    gmm_x1868_1A8_t unk_1A8;
     /* 0x01B0 */ u32 time_matches;
     /* 0x01B4 */ u32 stock_matches;
     /* 0x01B8 */ u32 coin_matches;
@@ -299,10 +321,9 @@ struct gmm_x1868 {
     /* 0x02D5 */ char pad_2D5[3]; /* maybe part of x1B3C[4]? */
     /* 0x02D8 */ u32 x1B40[3];
     /* 0x02E4 */ u32 x1B4C[3];
-    /* 0x02F0 */ u32 x1B58[3];
-    /* 0x02FC */ u8 padding_x1B58[0x1C];
-    /* 0x0318 */ u32 x1B80[4];
-    /* 0x0328 */ u8 padding_x1B80[0xF8];
+    /* 0x02F0 */ u32
+        x1B58[(TY_TROPHY_COUNT + 31) / 32]; ///< one bit per trophy
+    /* 0x0318 */ u32 x1B80[66];
     /* 0x0420 */ u32 x1C88[3];
     /* 0x042C */ u8 padding_x1C88[0x1C];
     /* 0x0448 */ struct GamePrefs x1CB0;
@@ -311,8 +332,89 @@ struct gmm_x1868 {
     /* 0x046C */ u16 trophy_flags[TY_TROPHY_COUNT];
     /* 0x06B6 */ u8 padding_trophy_flags[0xE];
     /* 0x06C4 */ struct FighterData x1F2C[SELKIND_COUNT];
-    /* 0x1760 */ struct NameTagDataBank x2FF8[2];
-}; /* size = 0x55E8 */
+} GmSaveData;
+ASSERT_SIZE(GmSaveData, 0x1790);
+
+struct GmCardData {
+    /*    +0 */ GmSaveData save_data;
+    /* +1760 */ struct NameTagDataBank nametag_banks[GM_NAMETAG_BANK_COUNT];
+};
+
+struct gmm_x0_528_t {
+    /* 0x051C */ s8 c_kind;
+    /* 0x051D */ u8 stocks;
+    /* 0x051E */ u8 color;
+    /* 0x051F */ u8 cpu_level;
+    /* 0x0520 */ u8 nametag;
+    /* 0x0521 */ u8 x5;
+};
+
+struct gmm_x0_584_t {
+    /* 0x0584 */ s8 unk_584;
+    /* 0x0585 */ u8 unk_585;
+    /* 0x0586 */ u8 unk_586;
+    /* 0x0587 */ s8 unk_587;
+};
+
+struct EventData {
+    /* 0x0530 */ u8 x0;
+    /* 0x0531 */ u8 x1;
+    /* 0x0532 */ s8 x2;
+    /* 0x0533 */ u8 x3;
+    /* 0x0534 */ u8 nametag;
+    /* 0x0535 */ u8 unk_535;
+    /* 0x0536 */ u8 x6;
+    /* 0x0537 */ u8 x7;
+    /* 0x0538 */ s8 x8;
+    /* 0x0539 */ s8 x9;
+    /* 0x053A */ s8 xA;
+    /* 0x053B */ u8 xB_0 : 1;
+    /* 0x053B */ u8 xB_1 : 1;
+    /* 0x053B */ u8 xB_2 : 1;
+    /* 0x053B */ u8 xB_3 : 1;
+    /* 0x053B */ u8 xB_4 : 1;
+    /* 0x053B */ u8 xB_5 : 1;
+    /* 0x053B */ u8 xB_6 : 1;
+    /* 0x053B */ u8 xB_7 : 1;
+    /* 0x053C */ int xC;
+    /* 0x0540 */ int x10;
+    /* 0x0544 */ int x14;
+    /* 0x0548 */ int x18;
+    /* 0x054C */ float x1C;
+    /* 0x0550 */ int x20;
+    /* 0x0554 */ int x24;
+    /* 0x0558 */ int x28;
+    /* 0x055C */ int x2C; // timer seconds
+    /* 0x0560 */ int x30;
+    /* 0x0564 */ int x34;
+    /* 0x0568 */ u8 x38;
+    /* 0x056C */ int x3C;
+    /* 0x0570 */ int x40;
+    /* 0x0574 */ s8 x44;
+    /* 0x0575 */ u8 x45;
+    /* 0x0578 */ StKind x48;
+    /* 0x057C */ s8 x4C[4]; ///< CharacterKind
+    /* 0x0580 */ u8 x50[4]; ///< character color
+    struct gmm_x0_584_t unk_584;
+};
+
+struct gmm_x0_vsdata {
+    gmm_x0_528_t unk_51C, unk_522, unk_528;
+    struct EventData unk_530;
+};
+
+/// Per-trophy unlock state, indexed by trophy id.
+struct gmm_x0_44_t {
+    /* 0x0044 */ u32
+        flags[(TY_TROPHY_COUNT + 31) / 32];  ///< one bit per trophy
+    /* 0x006C */ u32 times[TY_TROPHY_COUNT]; ///< #lbTime_GetTimeInSeconds
+    /* 0x0500 */ char pad_500[0x1C];
+};
+
+struct gmm_x0_vsmodes {
+    /* 0x0588 */ s8 nametags[PAD_MAX_CONTROLLERS];
+    /* 0x0590 */ VsModeData table[GmVsMode_Count]; ///< indexed by ::GmVsMode
+};
 
 struct gmm_x0 {
     /* 0x0000 */ u8 language;
@@ -320,150 +422,22 @@ struct gmm_x0 {
     /* 0x0002 */ u8 unk_2;
     /* 0x0003 */ char pad_3[0x36]; /* maybe part of x1[0x38]? */
     /* 0x0039 */ u8 x39[0xB];
-    /* 0x0044 */ s32 unk_44;
-    /* 0x0048 */ char pad_48[0x24]; /* maybe part of x44[0xA]? */
-    /* 0x006C */ u32 unk_6C[4];
-    /* 0x007C */ char pad_7C[0x4A0]; /* maybe part of x6C[0x4B]? */
+    /* 0x0044 */ struct gmm_x0_44_t unk_44;
     /** @remarks `gmMainLib_8015CDC8` hands out a pointer to the start of this
      * block and its callers read on into `unk_530`, so the three slots and the
      * event data form one object. */
-    struct gmm_x0_vsdata {
-        struct gmm_x0_528_t {
-            /* 0x051C */ s8 c_kind;
-            /* 0x051D */ u8 stocks;
-            /* 0x051E */ u8 color;
-            /* 0x051F */ u8 cpu_level;
-            /* 0x0520 */ u8 nametag;
-            /* 0x0521 */ u8 x5;
-        } unk_51C, unk_522, unk_528;
-        struct EventData {
-            /* 0x0530 */ u8 x0;
-            /* 0x0531 */ u8 x1;
-            /* 0x0532 */ s8 x2;
-            /* 0x0533 */ u8 x3;
-            /* 0x0534 */ u8 nametag;
-            /* 0x0535 */ u8 unk_535;
-            /* 0x0536 */ u8 x6;
-            /* 0x0537 */ u8 x7;
-            /* 0x0538 */ s8 x8;
-            /* 0x0539 */ s8 x9;
-            /* 0x053A */ s8 xA;
-            /* 0x053B */ u8 xB_0 : 1;
-            /* 0x053B */ u8 xB_1 : 1;
-            /* 0x053B */ u8 xB_2 : 1;
-            /* 0x053B */ u8 xB_3 : 1;
-            /* 0x053B */ u8 xB_4 : 1;
-            /* 0x053B */ u8 xB_5 : 1;
-            /* 0x053B */ u8 xB_6 : 1;
-            /* 0x053B */ u8 xB_7 : 1;
-            /* 0x053C */ int xC;
-            /* 0x0540 */ int x10;
-            /* 0x0544 */ int x14;
-            /* 0x0548 */ int x18;
-            /* 0x054C */ float x1C;
-            /* 0x0550 */ int x20;
-            /* 0x0554 */ int x24;
-            /* 0x0558 */ int x28;
-            /* 0x055C */ int x2C; // timer seconds
-            /* 0x0560 */ int x30;
-            /* 0x0564 */ int x34;
-            /* 0x0568 */ u8 x38;
-            /* 0x056C */ int x3C;
-            /* 0x0570 */ int x40;
-            /* 0x0574 */ s8 x44;
-            /* 0x0575 */ u8 x45;
-            /* 0x0578 */ StKind x48;
-            /* 0x057C */ s8 x4C[4]; ///< CharacterKind
-            /* 0x0580 */ u8 x50[4]; ///< character color
-            struct gmm_x0_584_t {
-                /* 0x0584 */ s8 unk_584;
-                /* 0x0585 */ u8 unk_585;
-                /* 0x0586 */ u8 unk_586;
-                /* 0x0587 */ s8 unk_587;
-            } unk_584;
-        } unk_530;
-    } vs;
+    struct gmm_x0_vsdata vs;
     /** @remarks Directly follows #gmm_x0_vsdata; `gmMainLib_8015DBF4` and
      * `gmMainLib_8015EA80` walk the table from a pointer to that block. */
-    struct gmm_x0_vsmodes {
-        /* 0x0588 */ s8 nametags[PAD_MAX_CONTROLLERS];
-        /// @todo Maybe array of ::VsModeData with kind-index
-        /* 0x0590 */ VsModeData vs_melee;     ///< VS melee
-        /* 0x06D0 */ VsModeData unk_6D0;      ///< super sudden death
-        /* 0x0810 */ VsModeData vs_invisible; ///< invisible melee
-        /* 0x0950 */ VsModeData vs_camera;
-        /* 0x0A90 */ VsModeData vs_fixed_camera; ///< fixed camera mode
-        /* 0x0BD0 */ VsModeData unk_BD0;         ///< single button melee
-        /* 0x0D10 */ VsModeData unk_D10;         ///< training mode
-        /* 0x0E50 */ VsModeData unk_E50;         ///< tiny melee
-        /* 0x0F90 */ VsModeData unk_F90;         ///< giant melee
-        /* 0x10D0 */ VsModeData vs_stamina;      ///< stamina melee
-        /* 0x1210 */ VsModeData unk_1210;        ///< slowmo melee
-        /* 0x1350 */ VsModeData vs_lightning;    ///< lightning melee
-        /* 0x1490 */ VsModeData unk_1490; ///< multiman, 3/15 min, endless,
-                                          ///< cruel
-        /* 0x15D0 */ VsModeData unk_15D0; ///< unused?
-        /* 0x1710 */ VsModeData unk_1710; ///< opening movie?
-    } modes;
+    struct gmm_x0_vsmodes modes;
     /* 0x1850 */ GameRules x1850;
-    /* 0x1898 */ struct gmm_x1868 thing;
-    /* 0x6E50 */ u8 pad_6E50[0x8518 - 0x6E50];
+    /* 0x1898 */ struct GmCardData thing;
 };
+ASSERT_SIZE(struct gmm_x0_44_t, 0x51C - 0x44);
 ASSERT_SIZE(struct EventData, 0x588 - 0x530);
 ASSERT_SIZE(struct gmm_x0_vsdata, 0x588 - 0x51C);
 ASSERT_SIZE(struct gmm_x0_vsmodes, 0x1850 - 0x588);
-ASSERT_SIZE(struct gmm_x0, 0x8518);
-
-/// @todo ::MatchEnd
-struct lbl_8046B6A0_24C_t {
-    UNK_T x0;
-    u8 x4; ///< MatchOutcome
-    u8 x5; ///< match mode
-    u8 is_teams;
-    u8 x7;
-    u32 x8;
-    s8 xC;
-    u8 xD;
-    u8 xE;
-    u8 padF[0x16 - 0xF];
-    u8 x16;
-    u8 pad17[0x24 - 0x17];
-    struct {
-        u8 x0;
-        u8 pad_x1[0xB];
-    } x24[1];
-    u8 pad30[0x58 - 0x30];
-    struct lbl_8046B6A0_24C_58_t {
-        u8 x0;
-        u8 x1;
-        u8 x2;
-        u8 x3;
-        u8 x4;
-        u8 x5;
-        u8 x6;
-        u8 x7;
-        u8 x8;
-        u8 x9;
-        u16 xA;
-        u8 padC[2];
-        u16 xE;
-        u8 pad10[0x1C - 0x10];
-        u8 x1C;
-        u8 pad1D[0x20 - 0x1D];
-        u32 x20;
-        u32 x24;
-        u32 x28;
-        u32 x2C;
-        u8 pad30[0x40 - 0x30];
-        u32 x40;
-        u8 pad44[0xA8 - 0x44];
-    } x58[6];
-    u8 pad3F0[0x44C - 0x3F0 - 0x58];
-    struct lbl_8046B6A0_24C_44C_t {
-        u8 x0[0x101];
-        int x104[0x101];
-    } x44C[6];
-};
+ASSERT_SIZE(struct gmm_x0, 0x10A30);
 
 struct Placeholder_8016AE38_flags_2 {
     /* +0:0 */ u8 x0_b0_b2 : 3;
@@ -528,80 +502,9 @@ struct VsSceneFighter {
     u16 xC;
 };
 
-struct VsSceneController {
-    /* 0x0000 */ u8 unk_0; ///< 0 During a match
-                           ///< 1 While GAME! or "TIMEOUT!" is displayed/match
-                           ///< is frozen on final frame 2 While in 1p and
-                           ///< scores are shown calculating 3 When match is
-                           ///< finished. Stays 0 when LRA+Start ends a match
-    /* 0x0001 */ s8 pauser;
-    /* 0x0002 */ u8
-        pause_timer; ///< Frames remaining before unpause input is accepted
-                     ///< after pausing. Set to @c 0xA on pause and decremented
-                     ///< each frame while paused.
-    /* 0x0003 */ u8 unk_3;
-    /* 0x0004 */ u8
-        unpause_timer; ///< Frames remaining before pause input is accepted
-                       ///< after unpausing. Set to @c 0xA on unpause and
-                       ///< decremented each frame while unpaused. Mirrors
-                       ///< #VsSceneController::pause_timer semantics.
-    /* 0x0005 */ u8 hud_enabled;
-    /* 0x0006 */ u8 terminate_match;
-    /* 0x0007 */ u8 is_singleplayer;
-    /* 0x0008 */ u8 match_result; ///< MatchOutcome
-                                  ///< Sticky, stays until a new match starts
-    /* 0x0009 */ u8 unk_9; //< 1 during classic mode stage-clear points screen
-                           // and between stages
-    /* 0x000A */ u8 unk_A;
-    /* 0x000B */ u8 unk_B; // end graphic / SFX type
-    /* 0x000C */ u8 unk_C;
-    /* 0x000D */ u8 unk_D;
-    /* 0x000E */ u8 match_over;
-    /* 0x000F */ u8 unk_F;
-    /* 0x0010 */ s32 unk_10;
-    /* 0x0014 */ s32 unk_14;
-    /* 0x0018 */ u8 unk_18; /* maybe part of unk_14[4]? */
-    /* 0x001C */ u32* unk_1C;
-    /* 0x0020 */ u32* unk_20;
-    /* 0x0024 */ u32 frame_count;
-    /* 0x0028 */ u32 timer_seconds;
-    /* 0x002C */ u16 unk_2C; ///< timer frames
-    /* 0x002E */ u16 unk_2E;
-    /* 0x0030 */ u8 unk_30;
-    /* 0x0034 */ f32 unk_34;
-    /* 0x0038 */ struct VsSceneFighter fighters[GM_MAX_PLAYERS];
-    /* 0x0038 */ char pad_8C[0x24C - 0x8C]; /* maybe part of unk_34[0x925]? */
-    /* 0x024C */ struct lbl_8046B6A0_24C_t x24C;
-    /* 0x24C8 */ struct StartMeleeRules start;
-}; /* size = 0x2528 */
-ASSERT_SIZE(struct VsSceneController, 0x2528);
-
 struct datetime {
     u16 year;
     u8 month, day, hour, minute, second;
-};
-
-struct gmMainLib_8015EF30_s {
-    /*  +0 */ s16 x0;
-    /*  +2 */ s16 x2;
-    /*  +4 */ s32 x4;
-    /*  +8 */ s32 x8;
-    /*  +C */ s32 xC;
-    /*  +10 */ s32 x10;
-    /*  +14 */ s32 x14;
-    /*  +18 */ s16 x18;
-    /*  +1A */ s16 x1A;
-    /*  +1C */ s16 x1C;
-    /*  +1E */ s16 x1E;
-    /*  +20 */ s32 x20;
-    /*  +24 */ s32 x24;
-    /*  +28 */ s32 x28;
-    /*  +2C */ s32 x2C;
-    /*  +30 */ s32 x30;
-    /*  +34 */ s32 x34;
-    /*  +38 */ s32 x38;
-    /*  +3C */ s32 x3C;
-    /*  +40 */ s32 x40;
 };
 
 struct gm_8017DB6C_arg0_t {
@@ -637,9 +540,14 @@ struct MatchPlayerData {
     u8 pkind;  ///< ::Gm_PKind
     s8 ckind;  ///< ::CharacterKind
     s8 ftkind; ///< ::FighterKind
-    u8 x3 : 6;
-    u8 x3_6 : 1;
-    u8 x3_7 : 1;
+    union {
+        struct {
+            u8 x3_b0 : 6;
+            u8 x3_b6 : 1;
+            u8 x3_b7 : 1;
+        };
+        u8 x3;
+    };
     u8 x4;
     u8 is_big_loser;
     u8 is_small_loser;
@@ -652,7 +560,7 @@ struct MatchPlayerData {
     u16 kills[4];
     u16 x18;
     s32 x1C;
-    s32 x20;
+    u32 x20;
     int x24;
     u32 x28;
     int score;
@@ -690,6 +598,11 @@ struct MatchPlayerData {
 };
 ASSERT_SIZE(struct MatchPlayerData, 0xA8);
 
+struct UnkResultPlayerData {
+    u8 x0[0x101];
+    int x104[0x101];
+};
+
 struct MatchEnd {
     /* 0x00 */ u32 x0;        ///< timer
     /* 0x04 */ u8 outcome;    ///< ::MatchOutcome
@@ -697,7 +610,7 @@ struct MatchEnd {
     /* 0x06 */ u8 is_teams;   ///< @todo enum between teams/not-teams
     /* 0x07 */ u8 x7;
     /* 0x08 */ u32 frame_count;
-    /* 0x0C */ u8 xC;
+    /* 0x0C */ s8 sd_penalty;
     /* 0x0D */ u8 n_winners;
     /* 0x0E */ u8 n_team_winners;
     /* 0x0F */ u8 loser;
@@ -706,11 +619,7 @@ struct MatchEnd {
     /* 0x1B */ struct MatchTeamData team_standings[GM_MAX_TEAMS];
     /* 0x58 */ struct MatchPlayerData player_standings[GM_MAX_PLAYERS];
     /* 0x448 */ u8 _x448[4]; // offset by 1 because of the previous struct
-    /* 0x44c */ struct UnkResultPlayerData {
-        u8 x0[0x100];
-        char pad_x100[0x508 - 0x100];
-    } x44C[4]; // 0x508 * 4 = 0x1420
-    /* 0x186C */ u8 pad_x186C[0x227C - 0x186C];
+    /* 0x44C */ struct UnkResultPlayerData x44C[6]; // 0x508 * 6 = 0x1820
 };
 ASSERT_SIZE(struct MatchEnd, 0x227C);
 
@@ -743,34 +652,38 @@ typedef struct gmPlayerData {
     /* 07 */ u8 mode; ///< @todo Actually ::GameModeState::id
 } gmPlayerData;
 
+typedef struct Unk1PData_x24 {
+    /* 24 */ s8 ckind;
+    /* 25 */ u8 color;
+    /* 26 */ u8 cpu_level;
+    /* 27 */ u8 cpu_kind;
+    /* 28 */ float attack_ratio;
+    /* 2C */ float defense_ratio;
+} Unk1PData_x24;
+
+typedef struct Unk1PData_xC {
+    /* 0C */ u8 xC;
+    /* 0D */ u8 xD;
+    /* 0E */ u8 xE;
+    /* 0F */ u8 xF;
+    /* 10 */ u8 x10;
+    /* 11 */ u8 x11;
+    /* 12 */ u8 x12;
+    /* 13 */ u8 x13;
+    /* 14 */ u16 x14;
+    /* 18 */ int x18;
+    /* 1C */ int x1C;
+    /* 20 */ u32 x20;
+    Unk1PData_x24 x24[3];
+} Unk1PData_xC;
+
 struct Unk1PData {
     struct gmPlayerData x0;
     /* 08 */ u8 x8;
     /* 09 */ u8 x9;
     /* 0A */ u8 xA;
     /* 0B */ u8 xB;
-    /* 0C */ struct Unk1PData_xC {
-        /* 0C */ u8 xC;
-        /* 0D */ u8 xD;
-        /* 0E */ u8 xE;
-        /* 0F */ u8 xF;
-        /* 10 */ u8 x10;
-        /* 11 */ u8 x11;
-        /* 12 */ u8 x12;
-        /* 13 */ u8 x13;
-        /* 14 */ u16 x14;
-        /* 18 */ int x18;
-        /* 1C */ int x1C;
-        /* 20 */ u32 x20;
-        struct Unk1PData_x24 {
-            /* 24 */ s8 ckind;
-            /* 25 */ u8 color;
-            /* 26 */ u8 cpu_level;
-            /* 27 */ u8 cpu_kind;
-            /* 28 */ float attack_ratio;
-            /* 2C */ float defense_ratio;
-        } x24[3];
-    } xC;
+    /* 0C */ Unk1PData_xC xC;
     /* 48 */ u8 (*x48)(u8, u8);
     /* 4C */ u8 (*x4C)(u8, u8, u8);
     /* 50 */ u8 (*x50)(u8, u8, u8);
@@ -1341,5 +1254,57 @@ typedef struct gm_8019ECAC_OnEnter_t {
     u8 pad_x8[0x14 - 0x8];
     u32 x14;
 } gm_8019ECAC_OnEnter_t;
+
+struct VsSceneState {
+    /* 0x0000 */ u8 unk_0; ///< 0 During a match
+                           ///< 1 While GAME! or "TIMEOUT!" is displayed/match
+                           ///< is frozen on final frame 2 While in 1p and
+                           ///< scores are shown calculating 3 When match is
+                           ///< finished. Stays 0 when LRA+Start ends a match
+    /* 0x0001 */ s8 pauser;
+    /* 0x0002 */ u8
+        pause_timer; ///< Frames remaining before unpause input is accepted
+                     ///< after pausing. Set to @c 0xA on pause and decremented
+                     ///< each frame while paused.
+    /* 0x0003 */ u8 unk_3;
+    /* 0x0004 */ u8
+        unpause_timer; ///< Frames remaining before pause input is accepted
+                       ///< after unpausing. Set to @c 0xA on unpause and
+                       ///< decremented each frame while unpaused. Mirrors
+                       ///< #VsSceneController::pause_timer semantics.
+    /* 0x0005 */ u8 hud_enabled;
+    /* 0x0006 */ u8 terminate_match;
+    /* 0x0007 */ u8 is_singleplayer;
+    /* 0x0008 */ u8 match_result; ///< MatchOutcome
+                                  ///< Sticky, stays until a new match starts
+    /* 0x0009 */ u8 unk_9; //< 1 during classic mode stage-clear points screen
+                           // and between stages
+    /* 0x000A */ u8 unk_A;
+    /* 0x000B */ u8 unk_B; // end graphic / SFX type
+    /* 0x000C */ u8 unk_C;
+    /* 0x000D */ u8 unk_D;
+    /* 0x000E */ u8 match_over;
+    /* 0x000F */ u8 unk_F;
+    /* 0x0010 */ s32 unk_10;
+    /* 0x0014 */ s32 unk_14;
+    /* 0x0018 */ u8 unk_18; /* maybe part of unk_14[4]? */
+    /* 0x001C */ u32* unk_1C;
+    /* 0x0020 */ u32* unk_20;
+    /* 0x0024 */ u32 frame_count;
+    /* 0x0028 */ u32 timer_seconds;
+    /* 0x002C */ u16 unk_2C; ///< timer frames
+    /* 0x002E */ u16 unk_2E;
+    /* 0x0030 */ u8 unk_30;
+    /* 0x0034 */ f32 unk_34;
+    /* 0x0038 */ struct VsSceneFighter fighters[GM_MAX_PLAYERS];
+    /* 0x0038 */ char pad_8C[0x24C - 0x8C]; /* maybe part of unk_34[0x925]? */
+    /* 0x024C */ MatchEnd x24C;
+};
+
+struct VsSceneController {
+    /* 0x0000 */ struct VsSceneState state;
+    /* 0x24C8 */ struct StartMeleeRules start;
+}; /* size = 0x2528 */
+ASSERT_SIZE(struct VsSceneController, 0x2528);
 
 #endif

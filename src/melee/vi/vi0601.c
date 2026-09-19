@@ -6,15 +6,13 @@
 #include <melee/ef/eflib.h>
 #include <melee/gm/gm_unsplit.h>
 #include <melee/gr/grcorneria.h>
-#include <melee/gr/ground.h>
+#include <melee/gr/inlines.h>
 #include <melee/gr/stage.h>
 #include <melee/it/item.h>
-#include <melee/lb/lb_00F9.h>
 #include <melee/lb/lb_013B.h>
 #include <melee/lb/lbarchive.h>
 #include <melee/lb/lbaudio_ax.h>
 #include <melee/lb/lbspdisplay.h>
-#include <melee/mp/mpcoll.h>
 #include <melee/pl/player.h>
 #include <melee/sc/types.h>
 #include <sysdolphin/baselib/aobj.h>
@@ -101,7 +99,8 @@ void un_8031E9B8(void)
             if ((gobj = grCorneria_801E1BF0())->hsd_obj == NULL) {
                 child = NULL;
             } else {
-                child = ((HSD_JObj*) gobj->hsd_obj)->child;
+                jobj = gobj->hsd_obj;
+                child = jobj->child;
             }
             HSD_GObj_SetupProc(gobj, fn_8031E800, 2);
             gm_8016895C(child, un_804D6FB0->models[i], 0);
@@ -151,8 +150,7 @@ void vi0601_Scene_OnEnter(UNUSED void* enter_data)
     lbArchive_LoadSymbols("Vi0601.dat", &un_804D6FB0, "visual0601Scene", NULL);
 
     gobj = GObj_Create(0x13, 0x14, 0);
-    cobj =
-        lb_80013B14((HSD_CameraDescPerspective*) un_804D6FB0->cameras->desc);
+    cobj = lb_80013B14(&un_804D6FB0->cameras->desc->perspective);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj);
     GObj_SetupGXLinkMax(gobj, vi0601_GObj_OnRender, 2);
     HSD_CObjAddAnim(cobj, un_804D6FB0->cameras->anims[0]);
@@ -160,11 +158,7 @@ void vi0601_Scene_OnEnter(UNUSED void* enter_data)
     HSD_CObjAnim(cobj);
     HSD_GObj_SetupProc(gobj, vi0601_RunFrame, 0);
 
-    Camera_Init(6);
-    lb_8000FCDC();
-    mpColl_80041C78();
-    Ground_801C0378(0x40);
-    Stage_802251E8(St_Kind_Corneria, 0);
+    Stage_InitScene(St_Kind_Corneria, 0);
     Item_80266FA8();
     Item_80266FCC();
     Stage_8022524C();

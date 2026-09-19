@@ -1,4 +1,3 @@
-#include "gmtou_1.h"
 
 #include <placeholder.h>
 
@@ -9,6 +8,7 @@
 #include "gmscene.h"
 #include "gmtou_0.h"
 #include "gmtoulib.h"
+#include "inlines.h"
 #include "types.h"
 #include <dolphin/pad.h>
 #include <melee/lb/lbarchive.h>
@@ -388,10 +388,6 @@ void fn_801967E0(s32 arg0)
     return;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 s32 fn_80196CF8(void)
 {
     TmData* tmdata;
@@ -417,9 +413,6 @@ s32 fn_80196CF8(void)
 
     return result;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 /// Cycles animation frame counter and updates JObj animation.
 void fn_80196DBC(HSD_GObj* gobj)
@@ -438,29 +431,28 @@ void fn_80196DBC(HSD_GObj* gobj)
 /// Updates the tournament UI animation frame counter.
 void fn_80196E30(HSD_GObj* gobj)
 {
-    u8* base_ptr;
+    struct Lbl804799D8_t* state;
     s32 cur_option;
     HSD_JObj* jobj;
-    u8* x1A_ptr;
-    u8 val;
+    u8* frame;
 
-    base_ptr = (u8*) &lbl_804799D8;
+    state = &lbl_804799D8;
     cur_option = gm_GetTournamentData()->cur_option;
     jobj = gobj->hsd_obj;
 
     if (cur_option <= 0x1A || cur_option >= 0x1F) {
-        if ((*(x1A_ptr = base_ptr + 0x1A)) > 0x77U) {
-            *x1A_ptr = 0x5A;
+        if (*(frame = &state->x1A) > 0x77U) {
+            *frame = 0x5A;
         }
     } else if (cur_option <= 0x1E) {
-        if ((*(x1A_ptr = base_ptr + 0x1A)) > 0x9FU) {
-            *x1A_ptr = 0x82;
+        if (*(frame = &state->x1A) > 0x9FU) {
+            *frame = 0x82;
         }
     }
 
-    val = *(base_ptr += 0x1A);
-    fn_8019044C(jobj, (f32) val);
-    *base_ptr = *base_ptr + 1;
+    frame = &state->x1A;
+    fn_8019044C(jobj, *frame);
+    (*frame)++;
 }
 
 /// Tournament mode JObj visibility/animation callback.
@@ -632,28 +624,6 @@ void fn_80196FFC(HSD_GObj* gobj)
     }
 
     fn_8019044C(jobj, (f32) lbl_804799D8.x2A[pnum].cur);
-}
-
-static inline f32 gmTournament_GetPlayerX(u8 player_count, s32 player)
-{
-    if ((s32) player_count == 4) {
-        return (13.0f * (f32) player) + -19.5f;
-    }
-    if ((s32) player_count == 3) {
-        return 6.5f + ((13.0f * (f32) player) - 19.5f);
-    }
-    return 6.5f + ((13.0f * (2.0f * (f32) player)) - 19.5f);
-}
-
-static inline void gmTournament_SetPlayerX(f32* x, u8 player_count, s32 player)
-{
-    if ((s32) player_count == 4) {
-        *x = (13.0f * (f32) player) + -19.5f;
-    } else if ((s32) player_count == 3) {
-        *x = 6.5f + ((13.0f * (f32) player) - 19.5f);
-    } else {
-        *x = 6.5f + ((13.0f * (2.0f * (f32) player)) - 19.5f);
-    }
 }
 
 /// Updates visibility and position of a tournament menu JObj.
@@ -1910,7 +1880,7 @@ void fn_8019A86C(TmData* tm, u32 arg1, u32 arg2)
         {
             s32 cond3;
             if ((fn_8018F640(4) & 0x1160) &&
-                ((u32) (fn_8018F6A8(4) & 0x1160) == 0x1160))
+                ((fn_8018F6A8(4) & 0x1160) == 0x1160))
             {
                 cond3 = 1;
             } else {
@@ -2163,7 +2133,7 @@ void fn_8019AF50(s32* arg0, u32 arg1, u32 arg2)
             lbl_804799D8.x0++;
             if (lbl_804799D8.x0 >= 0x64U) {
                 int i;
-                u32 count = (u32) (lbl_804799D8.x0 - 0x64) / 15;
+                u32 count = (lbl_804799D8.x0 - 0x64) / 15;
                 u8* base = (u8*) &lbl_804799D8;
                 u8* dest = (u8*) &sp_buf;
                 for (i = 0; i < count; i++) {

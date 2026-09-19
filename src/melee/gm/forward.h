@@ -3,12 +3,15 @@
 
 #include <Runtime/platform.h>
 
+#define HSD_GOBJ_PLINK_20 20
+#define HSD_GOBJ_PLINK_27 27
+
 /// @todo Put in proper places. ::GM_MAX_PLAYERS is ::Gm_Player_NumMax but
 /// needs to be used for array size declarations.
 /// @{
 #define GM_MAX_PLAYERS 6
 #define GM_MAX_TEAMS 5
-#define GM_NAMETAG_NONE 120
+#define GM_NAMETAG_COUNT 120
 #define GM_FPS 60
 #define GM_GAMEMODESTATE_TERMINATE 0xFF
 /// @}
@@ -61,6 +64,26 @@ typedef enum GameModeKind {
     /* 2C */ GM_SINGLE_BUTTON_VS,
     /* 2D */ GM_COUNT,
 } GameModeKind;
+
+/// Index into #gmm_x0_vsmodes::table.
+typedef enum GmVsMode {
+    /* 00 */ GmVsMode_Melee,
+    /* 01 */ GmVsMode_SuperSuddenDeath,
+    /* 02 */ GmVsMode_Invisible,
+    /* 03 */ GmVsMode_Camera,
+    /* 04 */ GmVsMode_FixedCamera,
+    /* 05 */ GmVsMode_SingleButton,
+    /* 06 */ GmVsMode_Training,
+    /* 07 */ GmVsMode_Tiny,
+    /* 08 */ GmVsMode_Giant,
+    /* 09 */ GmVsMode_Stamina,
+    /* 0A */ GmVsMode_Slomo,
+    /* 0B */ GmVsMode_Lightning,
+    /* 0C */ GmVsMode_Multiman, ///< 10/100-man, 3/15 min, endless, cruel
+    /* 0D */ GmVsMode_UnkD,     ///< unused?
+    /* 0E */ GmVsMode_Opening,  ///< opening movie?
+    GmVsMode_Count,
+} GmVsMode;
 
 typedef enum GameSceneKind {
     /* +00 */ GS_TITLE,
@@ -152,7 +175,9 @@ typedef struct GameSceneInfo GameSceneInfo;
 typedef struct gm_8016A92C_arg0_t gm_8016A92C_arg0_t;
 typedef struct gm_8017DB6C_arg0_t gm_8017DB6C_arg0_t;
 typedef struct gmm_x0_528_t gmm_x0_528_t;
-typedef struct lbl_8046B6A0_24C_t lbl_8046B6A0_24C_t;
+struct GmStats;
+typedef struct gmm_x1868_1A8_t gmm_x1868_1A8_t;
+typedef struct VsSceneState VsSceneState;
 typedef struct VsSceneController VsSceneController;
 typedef struct ChallengerData ChallengerData;
 typedef struct MatchEnd MatchEnd;

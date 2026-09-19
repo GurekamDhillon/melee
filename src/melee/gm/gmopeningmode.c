@@ -350,14 +350,12 @@ void gm_SetupTitleDemo(void)
     u8 cur_id;
 
     count = 0;
-    c = 0;
-    do {
+    for (c = 0; c < CKind_Playable_Count; c++) {
         if (gm_IsCKindUnlocked(c) != 0) {
             character_pool[count] = c;
             count += 1;
         }
-        c += 1;
-    } while (c < CKind_Playable_Count);
+    }
     character_pool[count] = CKind_Playable_Count;
     for (i = 0; i < count; i++) {
         for (j = i + 1; j < count; j++) {
@@ -473,7 +471,7 @@ void onEnterVs(GameModeState* arg0)
     VsModeData* temp_r30;
     int i;
 
-    temp_r30 = &gmMainLib_804D3EE0->modes.unk_1710;
+    temp_r30 = &gmMainLib_804D3EE0->modes.table[GmVsMode_Opening];
     md = gm_GetGameModeStateEnterData(arg0);
     gm_80167BC8(temp_r30);
     gm_LoadRumbleEnabled(md);
@@ -535,6 +533,7 @@ void gm_801BF684(s32 arg0)
     gm_8049E548.unk_C = arg0;
 }
 
+/// @returns ::GrKind
 u8 gm_801BF694(void)
 {
     return gm_8049E548.unk_C;

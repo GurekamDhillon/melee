@@ -28,22 +28,7 @@ static HSD_WObjDesc interest = {
     NULL,
 };
 
-/// @todo ::HSD_CameraDescFrustum without `left` or `right`
-/* 3F9E60 */ static struct fake_HSD_CObjDesc {
-    char* class_name;
-    u16 flags;
-    u16 projection_type;
-    HSD_RectS16 viewport;
-    Scissor scissor;
-    HSD_WObjDesc* eyepos;
-    HSD_WObjDesc* interest;
-    f32 roll;
-    Vec3* up_vector;
-    f32 nnear;
-    f32 ffar;
-    f32 top;
-    f32 bottom;
-} un_803F9E60 = {
+/* 3F9E60 */ static HSD_CameraDescPerspective un_803F9E60 = {
     NULL,
     0,
     (1 << 0),
@@ -125,7 +110,7 @@ void fn_802FF218(HSD_GObj* arg0)
             int s;
             int tmp;
             gm_8016B774();
-            s = gm_8016C658(y);
+            s = gm_GetMatchEndPlayerScore(y);
             if (s > 9999) {
                 s = 9999;
             }
@@ -163,7 +148,7 @@ void un_802FF364(int slot)
     thing->x4->default_alignment = 1;
     thing->x4->default_kerning = 1;
     gm_8016B774();
-    s = gm_8016C658(slot);
+    s = gm_GetMatchEndPlayerScore(slot);
     if (s > 9999) {
         s = 9999;
     }

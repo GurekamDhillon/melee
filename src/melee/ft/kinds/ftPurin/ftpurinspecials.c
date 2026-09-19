@@ -23,32 +23,43 @@
 static MotionFlags const ftPr_MF_SpecialS_Coll =
     ftCommon_GroundAirColl_MF | Ft_MF_KeepGfx | Ft_MF_SkipHit;
 
-#ifdef MUST_MATCH
-static float order_sdata2(void)
+static float calcAngleRadians(HSD_GObj* gobj, float lstick_y)
 {
-    (void) 0.0f;
-    (void) MTXDegToRad(1);
-    (void) 1.0f;
+    Fighter* fp = GET_FIGHTER(gobj);
+    ftPurinAttributes* da = fp->dat_attrs;
+
+    float left_stick_y = stickGetDir(lstick_y, 0);
+    if (left_stick_y > da->xE0) {
+        left_stick_y = da->xE0;
+    }
+    left_stick_y -= da->xDC;
+    if (left_stick_y < 0.0f) {
+        left_stick_y = 0.0f;
+    }
+    if (lstick_y < 0.0f) {
+        left_stick_y = -left_stick_y;
+    }
+
+    return MTXDegToRad(left_stick_y * da->xE4 / (da->xE0 - da->xDC));
 }
-#endif
 
 void ftPr_SpecialS_Enter(Fighter_GObj* fighter_gobj)
 {
     Fighter* fighter = GET_FIGHTER(fighter_gobj);
-    Fighter_ChangeMotionState(fighter_gobj, 0x16B, 0, 0, 1, 0, NULL);
+    Fighter_ChangeMotionState(fighter_gobj, ftPr_MS_SpecialS, 0, 0.0f, 1.0f,
+                              0.0f, NULL);
     ftAnim_8006EBA4(fighter_gobj);
-    fighter->cmd_vars[0] = fighter->cmd_vars[1] = fighter->cmd_vars[2] =
-        fighter->cmd_vars[3] = 0;
+    Fighter_ClearCmdVars(fighter);
 }
 
 void ftPr_SpecialAirS_Enter(Fighter_GObj* fighter_gobj)
 {
     Fighter* fighter = GET_FIGHTER(fighter_gobj);
 
-    Fighter_ChangeMotionState(fighter_gobj, 0x16C, 0, 0, 1, 0, NULL);
+    Fighter_ChangeMotionState(fighter_gobj, ftPr_MS_SpecialAirS, 0, 0.0f, 1.0f,
+                              0.0f, NULL);
     ftAnim_8006EBA4(fighter_gobj);
-    fighter->cmd_vars[0] = fighter->cmd_vars[1] = fighter->cmd_vars[2] =
-        fighter->cmd_vars[3] = 0;
+    Fighter_ClearCmdVars(fighter);
 }
 
 void ftPr_SpecialS_Anim(Fighter_GObj* gobj)
@@ -72,26 +83,6 @@ void ftPr_SpecialAirS_IASA(HSD_GObj* arg0) {}
 void ftPr_SpecialS_Phys(Fighter_GObj* gobj)
 {
     ft_80084FA8(gobj);
-}
-
-static inline float calcAngleRadians(HSD_GObj* gobj, float lstick_y)
-{
-    Fighter* fp = GET_FIGHTER(gobj);
-    ftPurinAttributes* da = fp->dat_attrs;
-
-    float left_stick_y = stickGetDir(lstick_y, 0);
-    if (left_stick_y > da->xE0) {
-        left_stick_y = da->xE0;
-    }
-    left_stick_y -= da->xDC;
-    if (left_stick_y < 0) {
-        left_stick_y = 0;
-    }
-    if (lstick_y < 0) {
-        left_stick_y = -left_stick_y;
-    }
-
-    return MTXDegToRad(left_stick_y * da->xE4 / (da->xE0 - da->xDC));
 }
 
 /// This is called once each frame during Puff's aerial side special

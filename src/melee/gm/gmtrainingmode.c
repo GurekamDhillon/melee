@@ -72,22 +72,18 @@ GameModeState gm_Mode_Training_States[] = {
     { -1 },
 };
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 void gm_801B1B74(GameModeState* arg0)
 {
     VsModeData* vs_data;
     CSSData* css;
     PAD_STACK(8);
 
-    vs_data = &gmMainLib_804D3EE0->modes.unk_D10;
+    vs_data = &gmMainLib_804D3EE0->modes.table[GmVsMode_Training];
     css = gm_GetGameModeStateEnterData(arg0);
     if (gm_804D68C1 != 0) {
         lbCardNew_AllocWorkArea();
         lbCardGame_LoadArchive(0);
-        lbCardGame_UpdatePowerTime();
+        lbCardGame_SaveChanges();
     }
     gm_801B06B0(css, 0x17U, vs_data->start.players[0].ckind, 1,
                 vs_data->start.players[0].color,
@@ -98,9 +94,6 @@ void gm_801B1B74(GameModeState* arg0)
     lbDvd_SetupVsPreloadCache();
     gm_804D68C1 = lbTime_8000AF74((u32) gm_804D68C1, 1);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 static void gm_801B07E8_layer(CSSData* css_data, s8* c_kind, s8* stocks,
                               s8* color, s8* arg4, u8* level)
@@ -110,7 +103,7 @@ static void gm_801B07E8_layer(CSSData* css_data, s8* c_kind, s8* stocks,
 
 void gm_801B1C24(GameModeState* arg0)
 {
-    VsModeData* vs = &gmMainLib_804D3EE0->modes.unk_D10;
+    VsModeData* vs = &gmMainLib_804D3EE0->modes.table[GmVsMode_Training];
     CSSData* css = gm_GetGameModeStateExitData(arg0);
     s32 i;
     struct GameCache* cache;
@@ -190,7 +183,7 @@ void gm_801B1EEC(GameModeState* arg0)
     SSSData* sss;
     s16 stkind;
 
-    vs_data = &gmMainLib_804D3EE0->modes.unk_D10;
+    vs_data = &gmMainLib_804D3EE0->modes.table[GmVsMode_Training];
     sss = gm_GetGameModeStateExitData(arg0);
     if (sss->start_game == 0) {
         gm_SetNextGameModeStateId(0);
@@ -206,17 +199,13 @@ void gm_801B1EEC(GameModeState* arg0)
 
 void fn_801B1F6C(int unused) {}
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 void gm_801B1F70(GameModeState* arg0)
 {
     VsModeData* vs;
     StartMeleeData* data;
     int i;
 
-    vs = &gmMainLib_804D3EE0->modes.unk_D10;
+    vs = &gmMainLib_804D3EE0->modes.table[GmVsMode_Training];
     data = gm_GetGameModeStateEnterData(arg0);
     gm_SetupRulesDefaults(&data->rules);
 
@@ -250,9 +239,6 @@ void gm_801B1F70(GameModeState* arg0)
     gm_LoadRumbleEnabled(data);
     gm_80189CDC(data);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void gm_801B2204(GameModeState* arg0)
 {
@@ -274,7 +260,7 @@ void gm_801B2204(GameModeState* arg0)
 
 void gm_Mode_Training_OnInit(void)
 {
-    VsModeData* temp_r31 = &gmMainLib_804D3EE0->modes.unk_D10;
+    VsModeData* temp_r31 = &gmMainLib_804D3EE0->modes.table[GmVsMode_Training];
     int i;
 
     gm_InitVsMode(temp_r31);
@@ -304,7 +290,7 @@ void gm_Mode_Training_OnLoad(void)
         extern int TestTrainingCKind(void);
         int ckind = TestTrainingCKind();
         if (ckind >= 0) {
-            VsModeData* vs = &gmMainLib_804D3EE0->modes.unk_D10;
+            VsModeData* vs = &gmMainLib_804D3EE0->modes.table[GmVsMode_Training];
             vs->start.players[0].ckind = (s8) ckind;
             vs->start.players[0].color = 0;
             /* The training dummy. gm_801B1C24 (the CSS exit handler) normally sets this from the

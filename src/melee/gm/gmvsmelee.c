@@ -30,7 +30,7 @@
 
 VsModeData* gmVsMelee_GetVsData(void)
 {
-    return &gmMainLib_804D3EE0->modes.vs_melee;
+    return &gmMainLib_804D3EE0->modes.table[GmVsMode_Melee];
 }
 
 u8* gmVsMelee_GetKOCounts(void)
@@ -100,7 +100,7 @@ u8 findSmallestLoser(MatchEnd* end)
 
 void gmVsMelee_Mode_OnInit(void)
 {
-    gm_InitVsMode(&gmMainLib_804D3EE0->modes.vs_melee);
+    gm_InitVsMode(&gmMainLib_804D3EE0->modes.table[GmVsMode_Melee]);
     gmMainLib_8015CDEC();
 }
 
@@ -324,21 +324,21 @@ void gmVsMelee_ExitResults(GameModeState* state, VsModeData* vs, u8 state_id)
             unk = gm_80172DD4(gmMainLib_8015ED98()->x0);
             if (unk != ChKind_None) {
                 gm_InitChallengerData(match_end->player_standings[idx].ckind,
-                                      (match_end->player_standings[idx].x3),
+                                      (match_end->player_standings[idx].x3_b0),
                                       idx, match_end->player_standings[idx].x4,
                                       unk, 0);
                 gm_SetNextGameModeStateId(gmVsMode_State_Approach);
                 unk_bool = true;
             } else if ((unk = gm_80172D78()) != ChKind_None) {
                 gm_InitChallengerData(match_end->player_standings[idx].ckind,
-                                      (match_end->player_standings[idx].x3),
+                                      (match_end->player_standings[idx].x3_b0),
                                       idx, match_end->player_standings[idx].x4,
                                       unk, 0);
                 gm_SetNextGameModeStateId(gmVsMode_State_Approach);
                 unk_bool = true;
             } else if ((unk = gm_80172E74()) != ChKind_None) {
                 gm_InitChallengerData(match_end->player_standings[idx].ckind,
-                                      (match_end->player_standings[idx].x3),
+                                      (match_end->player_standings[idx].x3_b0),
                                       idx, match_end->player_standings[idx].x4,
                                       unk, 0);
                 gm_SetNextGameModeStateId(gmVsMode_State_Approach);

@@ -328,8 +328,7 @@ static inline void mnDiagram3_RebuildRowLabels(Diagram3* data, char* base,
     spacing = HSD_JObjGetTranslationY(data->jobjs[9]) -
               HSD_JObjGetTranslationY(data->jobjs[8]);
     lb_8000B1CC(data->jobjs[8], DIAGRAM3_POS_X0, pos);
-    i = 0;
-    do {
+    for (i = 0; i < count; i++) {
         text = HSD_SisLib_803A5ACC(0, 1, pos->x - 6.5f,
                                    -spacing * (f32) i + -pos->y, pos->z, 6.5f,
                                    240.0f);
@@ -337,8 +336,7 @@ static inline void mnDiagram3_RebuildRowLabels(Diagram3* data, char* base,
         HSD_SisLib_803A6368(
             text,
             DIAGRAM3_LABELS[mnDiagram3_GetRowStat(data, base_idx, i)]);
-        i++;
-    } while (i < count);
+    }
 }
 
 static inline void mnDiagram3_RefreshRankings(HSD_GObj* diagram_gobj)
@@ -596,14 +594,14 @@ void mnDiagram3_InitUserData(Diagram3* data, int arg1)
     data->row_icons[4] = NULL;
 }
 
-static inline HSD_JObj* mnDiagram3_LoadJoint(mnDiagram_ArchiveData* archive)
+static inline HSD_JObj* mnDiagram3_LoadJoint(StaticModelDesc* archive)
 {
-    return HSD_JObjLoadJoint(archive->x0);
+    return HSD_JObjLoadJoint(archive->joint);
 }
 
 void mnDiagram3_Create(int arg0)
 {
-    mnDiagram_ArchiveData* archive = &mnDiagram_804A0844;
+    StaticModelDesc* archive = &MenMainConB3_Top;
     register HSD_GObj* gobj;
     HSD_JObj* jobj;
     Diagram3* user_data;
@@ -614,7 +612,8 @@ void mnDiagram3_Create(int arg0)
     jobj = mnDiagram3_LoadJoint(archive);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 6, 0x80);
-    HSD_JObjAddAnimAll(jobj, archive->x4, archive->x8, archive->xC);
+    HSD_JObjAddAnimAll(jobj, archive->animjoint, archive->matanim_joint,
+                       archive->shapeanim_joint);
     HSD_JObjReqAnimAll(jobj, 0.0f);
     HSD_JObjAnimAll(jobj);
 
@@ -654,9 +653,7 @@ static inline void mnDiagram3_SetupRows(HSD_JObj* jobj, Diagram3* popup_data,
     lb_8000B1CC(data->jobjs[8], &mnDiagram3_803EEC28.x0, &pos);
 
     row_spacing = 6.5f;
-    i = 0;
-
-    do {
+    for (i = 0; i < count; i++) {
         f32 fi = (f32) i;
         HSD_Text* text = HSD_SisLib_803A5ACC(0, 1, pos.x - row_spacing,
                                              -spacing * fi + -pos.y, pos.z,
@@ -693,8 +690,7 @@ static inline void mnDiagram3_SetupRows(HSD_JObj* jobj, Diagram3* popup_data,
                 HSD_SisLib_803A6368(text, *entry);
             }
         }
-        i++;
-    } while (i < count);
+    }
 }
 
 static inline f32 mnDiagram3_GetPopupSpacing(HSD_JObj* popup_row,
@@ -711,7 +707,7 @@ static inline f32 mnDiagram3_GetPopupY(HSD_JObj* popup_row, f32 row_spacing,
 }
 
 static inline HSD_JObj* mnDiagram3_CreatePopup(Diagram3* data,
-                                               mnDiagram_ArchiveData* archive)
+                                               StaticModelDesc* archive)
 {
     HSD_GObj* popup;
     HSD_JObj* popup_jobj;
@@ -721,7 +717,8 @@ static inline HSD_JObj* mnDiagram3_CreatePopup(Diagram3* data,
     popup_jobj = mnDiagram3_LoadJoint(archive);
     HSD_GObjObject_80390A70(popup, HSD_GObj_JObjKind, popup_jobj);
     GObj_SetupGXLink(popup, HSD_GObj_JObjCallback, 4, 0x80);
-    HSD_JObjAddAnimAll(popup_jobj, archive->x4, archive->x8, archive->xC);
+    HSD_JObjAddAnimAll(popup_jobj, archive->animjoint, archive->matanim_joint,
+                       archive->shapeanim_joint);
     HSD_JObjReqAnimAll(popup_jobj, 0.0f);
     HSD_JObjAnimAll(popup_jobj);
     return popup_jobj;
@@ -732,7 +729,7 @@ void mnDiagram3_Init(void* arg0)
     void* new_var;
     Diagram3* data;
     HSD_GObj* gobj;
-    mnDiagram_ArchiveData* archive;
+    StaticModelDesc* archive;
     f32 row_spacing;
 
     {
@@ -747,7 +744,7 @@ void mnDiagram3_Init(void* arg0)
     mnDiagram3_Create((int) arg0);
 
     gobj = mnDiagram3_804D6C20;
-    archive = &mnDiagram_804A0854;
+    archive = &MenMainCursorB3_Top;
 
     {
         HSD_JObj* popup_jobj;

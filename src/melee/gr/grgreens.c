@@ -88,6 +88,9 @@ static struct grGreens_YakumonoParam* yakumono_param;
 static u8 grGr_804D6AAC;
 static u8 grGr_804D6AAD;
 
+static void stageGObj1_OnInit(Ground_GObj* gobj);
+static void stageGObj3_OnInit(Ground_GObj* gobj);
+
 static StageCallbacks grGr_callbacks[] = {
     {
         grGreens_8021360C,
@@ -97,7 +100,7 @@ static StageCallbacks grGr_callbacks[] = {
         0,
     },
     {
-        grGreens_80213910,
+        stageGObj1_OnInit,
         grGreens_8021393C,
         grGreens_80213944,
         grGreens_80213948,
@@ -111,7 +114,7 @@ static StageCallbacks grGr_callbacks[] = {
         0,
     },
     {
-        grGreens_8021394C,
+        stageGObj3_OnInit,
         grGreens_80213978,
         grGreens_80213980,
         grGreens_80213984,
@@ -311,10 +314,9 @@ void grGreens_80213908(Ground_GObj* arg) {}
 
 void grGreens_8021390C(Ground_GObj* arg) {}
 
-void grGreens_80213910(Ground_GObj* gobj)
+static void stageGObj1_OnInit(Ground_GObj* gobj)
 {
-    Ground* gp = GET_GROUND(gobj);
-    grAnime_801C8138(gobj, gp->map_id, 0);
+    Ground_StartMapAnim(gobj);
 }
 
 bool grGreens_8021393C(Ground_GObj* arg)
@@ -326,10 +328,9 @@ void grGreens_80213944(Ground_GObj* arg) {}
 
 void grGreens_80213948(Ground_GObj* arg) {}
 
-void grGreens_8021394C(Ground_GObj* gobj)
+static void stageGObj3_OnInit(Ground_GObj* gobj)
 {
-    Ground* gp = GET_GROUND(gobj);
-    grAnime_801C8138(gobj, gp->map_id, 0);
+    Ground_StartMapAnim(gobj);
 }
 
 bool grGreens_80213978(Ground_GObj* arg)
@@ -732,7 +733,7 @@ void grGreens_80214674(Ground_GObj* gobj)
     Ground_GObj* new_var;
     Ground* gp = GET_GROUND(gobj);
     new_var = gobj;
-    Ground_801C2ED0(gobj->hsd_obj, gp->map_id);
+    Ground_InitMapColl(gobj->hsd_obj, gp->map_id);
     gp->u.greens.x4 = HSD_MemAlloc(5 * 6 * sizeof(*gp->u.greens.x4));
     memzero(gp->u.greens.x4, 5 * 6 * sizeof(*gp->u.greens.x4));
     gp->u.greens.x8_blocks = HSD_MemAlloc(5 * sizeof(*gp->u.greens.x8_blocks));
@@ -762,7 +763,7 @@ void grGreens_8021479C(Ground_GObj* gobj)
     if (!gp->u.greens.x0_flags.b0) {
         grGreens_802166C4(gobj);
     }
-    Ground_801C2FE0(gobj);
+    Ground_UpdateMapColl(gobj);
     if (!gp->u.greens.x0_flags.b0) {
         grGreens_80216C20(gobj);
     }
@@ -1056,7 +1057,7 @@ void grGreens_80215358(Ground_GObj* gobj, int col, int row, int arg3, int arg4)
     block->x10 = item_gobj;
     block->x14 = jobj;
     block->x18 = Ground_801C32D4(6, grGr_803E7840[num]);
-    block->x1C = 0;
+    block->x1C = NULL;
     block->x1_4 = 0;
     block->x1_7 = 0;
     vec.x = ((Vec(*)[6]) gp->u.greens.x4)[row][col].x;
@@ -1082,37 +1083,37 @@ void fn_802159B4(Item_GObj* item_gobj, Ground* gp)
     return;
 }
 
-void grGreens_802159B8(Ground* gp, int i, int j, int value)
+void grGreens_802159B8(Ground* gp, int i, int j, HSD_GObj* gobj)
 {
     UNUSED u8 pad[8];
     Vec vec;
-    Item_GObj* gobj;
+    Item_GObj* item_gobj;
     float f;
     PAD_STACK(0x10);
-    if ((gobj = gp->u.greens.x8_blocks[j][i].x10) &&
+    if ((item_gobj = gp->u.greens.x8_blocks[j][i].x10) &&
         !gp->u.greens.x8_blocks[j][i].x1_7)
     {
         gp->u.greens.x8_blocks[j][i].x1_7 = 1;
-        grMaterial_801C8E28(gobj);
-        gp->u.greens.x8_blocks[j][i].x1C = value;
+        grMaterial_801C8E28(item_gobj);
+        gp->u.greens.x8_blocks[j][i].x1C = gobj;
 
         if (gp->u.greens.x8_blocks[j][i].x1_1) {
             HSD_JObj* jobj = gp->u.greens.x8_blocks[j][i].xC->hsd_obj;
 
             HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
-            grMaterial_801C8D98(gobj, 1);
-            it_80275414(gobj);
+            grMaterial_801C8D98(item_gobj, 1);
+            it_80275414(item_gobj);
             gp->u.greens.x8_blocks[j][i].x1_2 = 1;
-            HSD_JObjGetTranslation(gobj->hsd_obj, &vec);
+            HSD_JObjGetTranslation(item_gobj->hsd_obj, &vec);
             vec.y += 5.0f * Ground_801C0498();
-            efSync_Spawn(1039, gobj, &vec);
+            efSync_Spawn(1039, item_gobj, &vec);
         } else {
             f = 0.0f;
             gp->u.greens.x8_blocks[j][i].x1_3 = 1;
             Camera_RequestQuake(QuakeKind_Small, NULL);
-            HSD_JObjGetTranslation(gobj->hsd_obj, &vec);
+            HSD_JObjGetTranslation(item_gobj->hsd_obj, &vec);
             vec.y += 5.0f * Ground_801C0498();
-            efSync_Spawn(1032, gobj, &vec, &f);
+            efSync_Spawn(1032, item_gobj, &vec, &f);
             Ground_801C5414(430007, 186);
         }
     }
@@ -1152,7 +1153,7 @@ void fn_80215B84(Item_GObj* item_gobj, Ground* gp, Vec* arg2, HSD_GObj* gobj,
     if (!find_block(ground, item_gobj, &row, &col)) {
         HSD_ASSERT(1465, 0);
     }
-    grGreens_802159B8(ground, col, row, (s32) hit);
+    grGreens_802159B8(ground, col, row, hit);
 }
 
 void fn_80215D50(Item_GObj* item_gobj, Ground* gp, HSD_GObj* gobj)
@@ -1215,7 +1216,7 @@ void grGreens_80215ED8(Ground_GObj* gobj, int col, int row)
         if (gp->u.greens.x8_blocks[row][col].x1_4) {
             gp->u.greens.x8_blocks[row][col].x4 = 0.0f;
             gp->u.greens.x8_blocks[row][col].x1_4 = 0;
-            grGreens_802159B8(gp, col, row, 0);
+            grGreens_802159B8(gp, col, row, NULL);
         } else {
             gp->u.greens.x8_blocks[row][col].x4 += yakumono_param->x30;
             if (gp->u.greens.x8_blocks[row][col].x4 > yakumono_param->x2C) {
@@ -1560,7 +1561,7 @@ void fn_80216DE4(void* user_data, int joint_id, CollData* coll, int coll_x50,
 
 DynamicsDesc* grGreens_80216E64(enum_t arg)
 {
-    return false;
+    return NULL;
 }
 
 bool grGreens_80216E6C(Vec3* arg, int arg0, HSD_JObj* jobj)

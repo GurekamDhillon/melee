@@ -358,7 +358,7 @@ void lbShadow_8000F38C(s32 arg0)
             HSD_GObj* lgobj;
             for (lgobj = HSD_GObjGXLinkHead[4]; lgobj != NULL;) {
                 nextGx = lgobj->next_gx;
-                lobj = (HSD_LObj*) lgobj->hsd_obj;
+                lobj = lgobj->hsd_obj;
                 while (lobj != NULL) {
                     if (lobj->flags & 3) {
                         fallback = lobj;
@@ -465,7 +465,7 @@ void lbShadow_8000F38C(s32 arg0)
                         if (!fp2->invisible && !fp2->x221E_b5 &&
                             fp2->x5AC.xC[1] != NULL)
                         {
-                            HSD_JObj* jobj = (HSD_JObj*) gobj->hsd_obj;
+                            HSD_JObj* jobj = gobj->hsd_obj;
                             HSD_ShadowAddObject(fp2->x20A4.shadow, jobj);
                             lobj = (HSD_LObj*) 1;
                         }
@@ -518,8 +518,7 @@ void lbShadow_8000F38C(s32 arg0)
                                         0);
 
                     {
-                        i = 0;
-                        do {
+                        for (i = 0; i < 0x14; i++) {
                             f32 scale = cm->target_ext.v.z;
                             f32 top = 1.2f * scale;
                             f32 bot = 1.2f * -scale;
@@ -528,8 +527,7 @@ void lbShadow_8000F38C(s32 arg0)
                             if (HSD_ViewingRectCheck(&rect) != 0) {
                                 break;
                             }
-                            i++;
-                        } while (i < 0x14);
+                        }
 
                         if (i < 0x14) {
                             HSD_ShadowSetViewingRect(fp->x20A4.shadow,

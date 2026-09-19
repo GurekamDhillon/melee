@@ -185,7 +185,23 @@ static u8 mnCharSel_IconCount = SELKIND_COUNT;
 /* icons[] capacity: m-ex's metadata allows more icons than retail's 25; the table is refilled
  * from mexData at scene entry. */
 #define CSS_ICON_MAX 64
+
+/* m-ex's CSS descriptor, public symbol `mexSelectChr` of an m-ex MnSlChr archive (verified with
+ * tools/mex_port/dump_css.py): the icon model, its anims, and the portrait (CSP) material anim with
+ * its per-costume frame stride. Absent on retail. */
+typedef struct MexSelectChr {
+    HSD_Joint* icon_joint;
+    HSD_AnimJoint* icon_animjoint;
+    HSD_MatAnimJoint* icon_matanim;
+    HSD_MatAnimJoint* csp_matanim;
+    int csp_stride;
+} MexSelectChr;
+static MexSelectChr* mnCharSel_Mex;  /* NULL = the retail CSS */
+static HSD_JObj* mnCharSel_IconRoot; /* the joint tree icons[].joint_id_* resolve in */
+static u8 mnCharSel_IconUnavail[CSS_ICON_MAX]; /* m-ex icon whose fighter the port lacks */
+#define MNCS_ICON_ROOT(retail) (mnCharSel_IconRoot != NULL ? mnCharSel_IconRoot : (retail))
 #else
+#define MNCS_ICON_ROOT(retail) (retail)
 #define MNCS_NUM 0x19
 #define MNCS_NUM_U 0x19U
 #define MNCS_NUM_SK SELKIND_COUNT
@@ -1735,14 +1751,14 @@ void fn_8025F0E0(HSD_GObj* gobj)
             icons[i].anim_timer = timer;
             if (timer == 0) {
                 if (mnCharSel_804D6CF5 == 1) {
-                    lb_80011E24(jobj, &sp4C, icons[i].joint_id_1p, -1);
+                    lb_80011E24(MNCS_ICON_ROOT(jobj), &sp4C, icons[i].joint_id_1p, -1);
                     HSD_ForeachAnim(sp4C, JOBJ_TYPE, TOBJ_MASK,
                                     HSD_AObjReqAnim, AOBJ_ARG_AF, 0.0f);
                     HSD_JObjAnimAll(sp4C);
                     HSD_ForeachAnim(sp4C, JOBJ_TYPE, TOBJ_MASK,
                                     HSD_AObjStopAnim, AOBJ_ARG_AOV, 0, 0);
                 } else {
-                    lb_80011E24(jobj, &sp48, icons[i].joint_id_vs, -1);
+                    lb_80011E24(MNCS_ICON_ROOT(jobj), &sp48, icons[i].joint_id_vs, -1);
                     HSD_ForeachAnim(sp48, JOBJ_TYPE, TOBJ_MASK,
                                     HSD_AObjReqAnim, AOBJ_ARG_AF, 0.0f);
                     HSD_JObjAnimAll(sp48);
@@ -2105,10 +2121,10 @@ void mnCharSel_8025FB50(u8 door, s32 arg1)
                             mnCharSel_804A0BC0[mnCharSel_804D6CF5 - 1]->gobj);
 
     if (mnCharSel_804D6CF5 == 1) {
-        lb_80011E24(mnCharSel_804D6CC0, &icon_jobj,
+        lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &icon_jobj,
                     icons[icon_idx].joint_id_1p, -1);
     } else {
-        lb_80011E24(mnCharSel_804D6CC0, &icon_jobj,
+        lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &icon_jobj,
                     icons[icon_idx].joint_id_vs, -1);
     }
     HSD_ForeachAnim(icon_jobj, JOBJ_TYPE, TOBJ_MASK, HSD_AObjReqAnim,
@@ -2178,10 +2194,10 @@ s32 mnCharSel_8025FDEC(u8 door)
         mnCharSel_804A0BD0[door]->x5 = 0;
 
         if (mnCharSel_804D6CF5 == 1) {
-            lb_80011E24(mnCharSel_804D6CC0, &sp10, icons[icon_idx].joint_id_1p,
+            lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp10, icons[icon_idx].joint_id_1p,
                         -1);
         } else {
-            lb_80011E24(mnCharSel_804D6CC0, &sp10, icons[icon_idx].joint_id_vs,
+            lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp10, icons[icon_idx].joint_id_vs,
                         -1);
         }
         HSD_ForeachAnim(sp10, JOBJ_TYPE, TOBJ_MASK, HSD_AObjReqAnim,
@@ -2714,11 +2730,11 @@ void mnCharSel_CursorThink(HSD_GObj* gobj)
                                                     .char_kind;
                                             if (mnCharSel_804D6CF5 == 1) {
                                                 lb_80011E24(
-                                                    mnCharSel_804D6CC0, &sp98,
+                                                    MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp98,
                                                     icons[i].joint_id_1p, -1);
                                             } else {
                                                 lb_80011E24(
-                                                    mnCharSel_804D6CC0, &sp98,
+                                                    MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp98,
                                                     icons[i].joint_id_vs, -1);
                                             }
                                             HSD_ForeachAnim(sp98, JOBJ_TYPE,
@@ -4238,6 +4254,158 @@ static const GXColor mnCharSel_804DC58C = { 160, 160, 0, 255 };
 static const GXColor mnCharSel_804DC590 = { 180, 80, 0, 255 };
 static const GXColor mnCharSel_804DC594 = { 220, 0, 0, 255 };
 
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/CSS Expansion/ - the data-driven
+ * CSS, re-expressed natively (see _research/mex-css.md). When the MnSlChr archive carries
+ * `mexSelectChr` (Akaneia does) and mexData has a CSS icon table:
+ *   - the icon table and count come from mexData (32 icons on Akaneia), with each icon's m-ex
+ *     EXTERNAL id translated to the port's CharacterKind; an icon whose fighter the port does not
+ *     have is marked unavailable (hidden, never selectable);
+ *   - the icons are drawn by mexSelectChr's own icon model, and every icon-joint lookup resolves
+ *     in it (MNCS_ICON_ROOT) - its joint ids are the ones in mexData's rows;
+ *   - the retail menu model's 25 icon joints are hidden.
+ * Returns silently on retail, leaving the retail CSS untouched. Re-entrant across CSS visits:
+ * icons[] is static, so the retail "no character" row and retail joint ids are captured once. */
+static void mnCharSel_MexSetup(void)
+{
+    extern int Mex_CssIconCount(void);
+    extern void* Mex_CssIconTable(void);
+    extern int Mex_ExtToPortCKind(int);
+    static int captured;
+    static CSSIcon retail_none;
+    static u8 retail_vs[SELKIND_COUNT], retail_1p[SELKIND_COUNT];
+    MexSelectChr* mex;
+    CSSIcon* tbl;
+    HSD_GObj* gobj;
+    HSD_JObj* root;
+    HSD_JObj* j;
+    int n, i;
+
+    if (!captured) {
+        retail_none = icons[SELKIND_COUNT];
+        for (i = 0; i < SELKIND_COUNT; i++) {
+            retail_vs[i] = icons[i].joint_id_vs;
+            retail_1p[i] = icons[i].joint_id_1p;
+        }
+        captured = 1;
+    }
+    mnCharSel_Mex = NULL;
+    mnCharSel_IconRoot = NULL;
+    mnCharSel_IconCount = SELKIND_COUNT;
+
+    mex = HSD_ArchiveGetPublicAddress(mnCharSel_804D6CD0, "mexSelectChr");
+    n = (mex != NULL) ? Mex_CssIconCount() : 0;
+    tbl = (n > 0 && n <= CSS_ICON_MAX) ? Mex_CssIconTable() : NULL;
+    if (tbl == NULL) {
+        return;
+    }
+
+    /* hide the retail icons: the m-ex model replaces them */
+    for (i = 0; i < SELKIND_COUNT; i++) {
+        j = NULL;
+        lb_80011E24(mnCharSel_804D6CC0, &j,
+                    mnCharSel_804D6CF5 == 1 ? retail_1p[i] : retail_vs[i], -1);
+        if (j != NULL) {
+            HSD_JObjSetFlagsAll(j, JOBJ_HIDDEN);
+        }
+    }
+
+    for (i = 0; i < n; i++) {
+        int ck;
+        icons[i] = tbl[i];
+        ck = Mex_ExtToPortCKind(icons[i].char_kind);
+        /* not available = the port lacks the fighter, OR it is still locked on this save (locked
+         * fighters are hidden, as on retail). Both are excluded from the packed grid below, so
+         * neither leaves a hole. */
+        mnCharSel_IconUnavail[i] = (ck < 0) || !gm_IsCKindUnlocked((u8) ck);
+        icons[i].char_kind = (ck < 0) ? retail_none.char_kind : (u8) ck;
+        icons[i].anim_timer = 0;
+    }
+    icons[n] = retail_none;
+    mnCharSel_IconCount = (u8) n;
+
+    gobj = GObj_Create(4, 5, 0x80);
+    root = HSD_JObjLoadJoint(mex->icon_joint);
+    HSD_JObjAddAnimAll(root, mex->icon_animjoint, mex->icon_matanim, NULL);
+    HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, root);
+    GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 1, 0x80);
+    HSD_JObjReqAnimAll(root, 0.0f);
+    HSD_JObjAnimAll(root);
+    HSD_ForeachAnim(root, JOBJ_TYPE, ALL_TYPE_MASK, HSD_AObjStopAnim, AOBJ_ARG_AOV,
+                    0, 0);
+
+    /* Pack the grid. Akaneia's layout has a slot for each of its fighters; the ones the port
+     * does not have are hidden, which left holes in the grid (user-reported: "positionally messed
+     * up... random gaps"). Keep Akaneia's slot positions and order, but slide the available icons
+     * into consecutive slots, row by row, centring a partial last row. An icon moves by moving its
+     * own joint (the joint carries that fighter's art) and taking the slot's bounds (the cursor
+     * hit-tests bounds) - both from the same layout data, so they stay consistent. Every slot's
+     * position and bounds are captured BEFORE anything moves. */
+    {
+        static Vec3 pos[CSS_ICON_MAX];
+        static f32 bl[CSS_ICON_MAX], br[CSS_ICON_MAX], bu[CSS_ICON_MAX], bd[CSS_ICON_MAX];
+        int row_start[CSS_ICON_MAX], row_cap[CSS_ICON_MAX], rows = 0;
+        int avail[CSS_ICON_MAX], n_avail = 0, placed = 0, r, k;
+        for (i = 0; i < n; i++) {
+            j = NULL;
+            lb_80011E24(root, &j, mnCharSel_804D6CF5 == 1 ? icons[i].joint_id_1p
+                                                          : icons[i].joint_id_vs, -1);
+            if (j != NULL) {
+                HSD_JObjGetTranslation(j, &pos[i]);
+            }
+            bl[i] = icons[i].bound_l;
+            br[i] = icons[i].bound_r;
+            bu[i] = icons[i].bound_u;
+            bd[i] = icons[i].bound_d;
+            /* a new row starts where the slot's top bound changes by more than rounding */
+            if (i == 0 || bu[i] - bu[i - 1] > 1.0f || bu[i - 1] - bu[i] > 1.0f) {
+                row_start[rows] = i;
+                row_cap[rows] = 0;
+                rows++;
+            }
+            row_cap[rows - 1]++;
+            if (!mnCharSel_IconUnavail[i]) {
+                avail[n_avail++] = i;
+            }
+        }
+        /* Spread the icons EVENLY over the rows (25 over 3 -> 9, 8, 8), each row centred, rather
+         * than filling rows greedily (11, 11, 3 - user: "not best fit"). Falls back to greedy only
+         * if an even share would not fit a row. */
+        for (r = 0; r < rows && placed < n_avail; r++) {
+            int take = n_avail / rows + (r < n_avail % rows ? 1 : 0);
+            int off;
+            if (take > row_cap[r]) {
+                take = row_cap[r];
+            }
+            if (r == rows - 1) {
+                take = n_avail - placed; /* whatever remains goes in the last row */
+                if (take > row_cap[r]) {
+                    take = row_cap[r];
+                }
+            }
+            off = (row_cap[r] - take) / 2;
+            for (k = 0; k < take; k++, placed++) {
+                int icon = avail[placed];
+                int slot = row_start[r] + off + k;
+                j = NULL;
+                lb_80011E24(root, &j, mnCharSel_804D6CF5 == 1 ? icons[icon].joint_id_1p
+                                                              : icons[icon].joint_id_vs, -1);
+                if (j != NULL) {
+                    HSD_JObjSetTranslate(j, &pos[slot]);
+                }
+                icons[icon].bound_l = bl[slot];
+                icons[icon].bound_r = br[slot];
+                icons[icon].bound_u = bu[slot];
+                icons[icon].bound_d = bd[slot];
+            }
+        }
+    }
+
+    mnCharSel_IconRoot = root;
+    mnCharSel_Mex = mex;
+}
+#endif
+
 s32 mnCharSel_802640A0(void)
 {
     HSD_JObj* sp108;
@@ -4395,6 +4563,12 @@ s32 mnCharSel_802640A0(void)
     HSD_ForeachAnim(mnCharSel_804D6CC0, JOBJ_TYPE, ALL_TYPE_MASK,
                     HSD_AObjStopAnim, AOBJ_ARG_AOV, 0, 0);
 
+#if defined(TARGET_PC)
+    mnCharSel_MexSetup();
+    /* The retail Luigi-row relocation moves retail icon joints and rewrites two retail rows'
+     * bounds; with an m-ex CSS the layout and bounds come from mexData instead. */
+    if (mnCharSel_Mex == NULL) {
+#endif
     if (gm_IsCKindUnlocked(CKind_Luigi) == 0) {
         row_a = 2;
         row_b = 0x13;
@@ -4403,32 +4577,52 @@ s32 mnCharSel_802640A0(void)
         row_b = 2;
     }
     if (mnCharSel_804D6CF5 == 1) {
-        lb_80011E24(mnCharSel_804D6CC0, &sp108, icons[row_a].joint_id_1p, -1);
+        lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp108, icons[row_a].joint_id_1p, -1);
     } else {
-        lb_80011E24(mnCharSel_804D6CC0, &sp108, icons[row_a].joint_id_vs, -1);
+        lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp108, icons[row_a].joint_id_vs, -1);
     }
     HSD_JObjSetTranslateY(sp108, ICONROWY_BTM);
     icons[row_a].bound_u = ICONROWHT_BTM_TOP;
     icons[row_a].bound_d = ICONROWHT_BTM_BTM;
     if (mnCharSel_804D6CF5 == 1) {
-        lb_80011E24(mnCharSel_804D6CC0, &sp108, icons[row_b].joint_id_1p, -1);
+        lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp108, icons[row_b].joint_id_1p, -1);
     } else {
-        lb_80011E24(mnCharSel_804D6CC0, &sp108, icons[row_b].joint_id_vs, -1);
+        lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp108, icons[row_b].joint_id_vs, -1);
     }
     HSD_JObjSetTranslateY(sp108, ICONROWY_TOP);
     icons[row_b].bound_u = ICONROWHT_TOP_TOP;
     icons[row_b].bound_d = ICONROWHT_MID_TOP;
+#if defined(TARGET_PC)
+    }
+#endif
 
     for (icon = 0; icon < MNCS_NUM_SK; icon++) {
         icons[icon].state = gm_IsCKindUnlocked(icons[icon].char_kind);
         icons[icon].anim_timer = 0;
         if (mnCharSel_804D6CF5 == 1) {
-            lb_80011E24(mnCharSel_804D6CC0, &sp108, icons[icon].joint_id_1p,
+            lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp108, icons[icon].joint_id_1p,
                         -1);
         } else {
-            lb_80011E24(mnCharSel_804D6CC0, &sp108, icons[icon].joint_id_vs,
+            lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &sp108, icons[icon].joint_id_vs,
                         -1);
         }
+#if defined(TARGET_PC)
+        if (mnCharSel_Mex != NULL) {
+            /* The retail switch below keys off RETAIL icon indices (0, 8, 9... = the unlockable
+             * fighters) and retail-only anims. With an m-ex layout: an icon whose fighter the port
+             * lacks, or that is still locked on this save, is hidden and dead; the rest are
+             * selectable. */
+            if (mnCharSel_IconUnavail[icon] || icons[icon].state == 0) {
+                icons[icon].state = 0;
+                if (sp108 != NULL) {
+                    HSD_JObjSetFlagsAll(sp108, JOBJ_HIDDEN);
+                }
+            } else {
+                icons[icon].state = 2;
+            }
+            continue;
+        }
+#endif
         switch (icon) {
         case 0:
         case 8:

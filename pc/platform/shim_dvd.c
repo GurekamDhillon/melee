@@ -14,10 +14,23 @@
  * Read completions are queued through gw_defer rather than called inline: devcom.c sets its
  * in-flight flag *after* the DVDReadAsyncPrio call, so a synchronous callback would observe a
  * half-updated request. gw_wait_idle (called from DVDGetDriveStatus) and the frame tick both drain
- * the queue. */
+ * the queue.
+ *
+ * Mods folder: every directory under mods/ (next to the executable, or MELEE_MODS_DIR) is a mod,
+ * and each file in it answers the disc path of its position inside the mod: mods/sonic/PlSn.dat
+ * is /PlSn.dat, mods/sonic/audio/us/sonic.ssm is /audio/us/sonic.ssm. A path that exists on the
+ * disc is overridden (it keeps its disc entrynum, so nothing that cached the number notices); any
+ * other path is added with a new entrynum past the disc FST. Mods apply in name order and a later
+ * mod wins a path both provide (logged). Names match case-insensitively. mods/targettest holds
+ * Target Test layouts, not disc files, and is skipped. MELEE_MODS=0 disables the overlay. A
+ * FastOpen'd mod file carries GW_MOD_OFFSET_FLAG | index in the disc-offset field (real disc
+ * offsets stay below 2 GiB), and reads of it go to the host file instead of the image. */
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 #include "shim_vi.h"
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,11 +133,198 @@ static const char *gw_fst_name(uint32_t index) {
   return (const char *)(gw_fst + gw_fst_names + offset);
 }
 
+/* Case-insensitive, as the SDK's DVDConvertPathToEntrynum is: disc names are lower case, and a
+ * mod's (or the game's) path may not be. */
 static bool gw_name_matches(const char *name, const char *component, size_t length) {
-  return strlen(name) == length && strncmp(name, component, length) == 0;
+  return strlen(name) == length && _strnicmp(name, component, length) == 0;
 }
 
-void gw_DVDInit(void) { (void)gw_iso_open(); }
+/* ---- mods overlay ------------------------------------------------------------------------------ */
+
+#define GW_MOD_OFFSET_FLAG 0x80000000u
+#define GW_MOD_MAX_FILES 4096
+#define GW_MOD_MAX_MODS 64
+#define GW_MOD_PATH_MAX 260
+
+typedef struct gw_mod_file {
+  char disc[GW_MOD_PATH_MAX]; /* disc path, '/'-separated, no leading slash */
+  char host[MAX_PATH];
+  char mod[64];
+  uint32_t size;
+  int entrynum;
+} gw_mod_file;
+
+static gw_mod_file *gw_mod_files;
+static int gw_mod_count;
+static bool gw_mods_loaded;
+
+static int gw_iso_lookup(const char *path);
+
+static int gw_path_ieq(const char *a, const char *b) {
+  for (;; ++a, ++b) {
+    char ca = *a == '\\' ? '/' : *a, cb = *b == '\\' ? '/' : *b;
+    if (ca >= 'A' && ca <= 'Z') ca = (char)(ca - 'A' + 'a');
+    if (cb >= 'A' && cb <= 'Z') cb = (char)(cb - 'A' + 'a');
+    if (ca != cb) return 0;
+    if (ca == '\0') return 1;
+  }
+}
+
+static const char *gw_strip_slash(const char *p) {
+  while (*p == '/' || *p == '\\') ++p;
+  return p;
+}
+
+static gw_mod_file *gw_mod_by_path(const char *path) {
+  int i;
+  path = gw_strip_slash(path);
+  for (i = 0; i < gw_mod_count; ++i) {
+    if (gw_path_ieq(gw_mod_files[i].disc, path)) return &gw_mod_files[i];
+  }
+  return NULL;
+}
+
+static gw_mod_file *gw_mod_by_entrynum(int entrynum) {
+  int i;
+  for (i = 0; i < gw_mod_count; ++i) {
+    if (gw_mod_files[i].entrynum == entrynum) return &gw_mod_files[i];
+  }
+  return NULL;
+}
+
+static void gw_mods_scan(const char *mod, const char *host_dir, const char *rel) {
+  char pattern[MAX_PATH];
+  WIN32_FIND_DATAA fd;
+  HANDLE h;
+  snprintf(pattern, sizeof pattern, "%s\\*", host_dir);
+  h = FindFirstFileA(pattern, &fd);
+  if (h == INVALID_HANDLE_VALUE) return;
+  do {
+    char host[MAX_PATH], disc[GW_MOD_PATH_MAX];
+    gw_mod_file *m;
+    if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0) continue;
+    snprintf(host, sizeof host, "%s\\%s", host_dir, fd.cFileName);
+    snprintf(disc, sizeof disc, "%s%s", rel, fd.cFileName);
+    if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      char sub[GW_MOD_PATH_MAX];
+      snprintf(sub, sizeof sub, "%s/", disc);
+      gw_mods_scan(mod, host, sub);
+      continue;
+    }
+    if (fd.nFileSizeHigh != 0) {
+      gw_log("gw: mods: %s/%s is over 4 GiB - skipped", mod, disc);
+      continue;
+    }
+    m = gw_mod_by_path(disc);
+    if (m != NULL) {
+      gw_log("gw: mods: %s overrides %s's /%s", mod, m->mod, disc);
+    } else {
+      if (gw_mod_count >= GW_MOD_MAX_FILES) {
+        gw_log("gw: mods: more than %d files - /%s skipped", GW_MOD_MAX_FILES, disc);
+        continue;
+      }
+      m = &gw_mod_files[gw_mod_count++];
+      strncpy(m->disc, disc, sizeof m->disc - 1);
+    }
+    strncpy(m->host, host, sizeof m->host - 1);
+    strncpy(m->mod, mod, sizeof m->mod - 1);
+    m->size = fd.nFileSizeLow;
+  } while (FindNextFileA(h, &fd));
+  FindClose(h);
+}
+
+static int gw_mods_name_cmp(const void *a, const void *b) {
+  return _stricmp((const char *)a, (const char *)b);
+}
+
+static void gw_mods_load(void) {
+  static char names[GW_MOD_MAX_MODS][64];
+  const char *enable = getenv("MELEE_MODS");
+  const char *dir_env = getenv("MELEE_MODS_DIR");
+  char dir[MAX_PATH], pattern[MAX_PATH];
+  WIN32_FIND_DATAA fd;
+  HANDLE h;
+  int n = 0, i, next;
+
+  if (gw_mods_loaded || !gw_iso_open()) return;
+  gw_mods_loaded = true;
+  if (enable != NULL && enable[0] == '0') {
+    gw_log("gw: mods: disabled (MELEE_MODS=0)");
+    return;
+  }
+  if (dir_env != NULL && dir_env[0] != '\0') {
+    strncpy(dir, dir_env, sizeof dir - 1);
+    dir[sizeof dir - 1] = '\0';
+  } else {
+    DWORD len = GetModuleFileNameA(NULL, dir, (DWORD)sizeof dir);
+    char *slash = (len > 0 && len < sizeof dir) ? strrchr(dir, '\\') : NULL;
+    if (slash != NULL) {
+      slash[1] = '\0';
+      strncat(dir, "mods", sizeof dir - strlen(dir) - 1);
+    } else {
+      strcpy(dir, "mods");
+    }
+  }
+
+  snprintf(pattern, sizeof pattern, "%s\\*", dir);
+  h = FindFirstFileA(pattern, &fd);
+  if (h == INVALID_HANDLE_VALUE) return; /* no mods folder: nothing to do */
+  do {
+    if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || fd.cFileName[0] == '.') continue;
+    if (_stricmp(fd.cFileName, "targettest") == 0) continue; /* Target Test layouts, not disc files */
+    if (n < GW_MOD_MAX_MODS) {
+      strncpy(names[n], fd.cFileName, sizeof names[n] - 1);
+      ++n;
+    }
+  } while (FindNextFileA(h, &fd));
+  FindClose(h);
+  if (n == 0) return;
+  qsort(names, (size_t)n, sizeof names[0], gw_mods_name_cmp);
+
+  gw_mod_files = (gw_mod_file *)calloc(GW_MOD_MAX_FILES, sizeof *gw_mod_files);
+  if (gw_mod_files == NULL) return;
+  for (i = 0; i < n; ++i) {
+    char host[MAX_PATH];
+    int before = gw_mod_count;
+    snprintf(host, sizeof host, "%s\\%s", dir, names[i]);
+    gw_mods_scan(names[i], host, "");
+    gw_log("gw: mods: %s (%d new paths)", names[i], gw_mod_count - before);
+  }
+
+  /* Entrynums: an override keeps the disc's number; an addition gets one past the FST. */
+  next = (int)gw_fst_nodes;
+  for (i = 0; i < gw_mod_count; ++i) {
+    gw_mod_file *m = &gw_mod_files[i];
+    int e = gw_iso_lookup(m->disc);
+    if (e >= 0 && gw_fst_kind((uint32_t)e) == 0) {
+      m->entrynum = e;
+      gw_log("gw: mods:   /%s <- %s (overrides the disc file, %u bytes)", m->disc, m->mod, m->size);
+    } else {
+      m->entrynum = next++;
+      gw_log("gw: mods:   /%s <- %s (new file, %u bytes)", m->disc, m->mod, m->size);
+    }
+  }
+}
+
+/* Read `length` bytes at `offset` of mod file `m` into `dst`. Returns bytes read. */
+static uint32_t gw_mod_read(const gw_mod_file *m, void *dst, uint32_t offset, uint32_t length) {
+  FILE *f = fopen(m->host, "rb");
+  uint32_t got = 0;
+  if (f == NULL) {
+    gw_log("gw: mods: cannot open %s", m->host);
+    return 0;
+  }
+  if (fseek(f, (long)offset, SEEK_SET) == 0) {
+    got = (uint32_t)fread(dst, 1, length, f);
+  }
+  fclose(f);
+  return got;
+}
+
+void gw_DVDInit(void) {
+  (void)gw_iso_open();
+  gw_mods_load();
+}
 
 int gw_DVDGetDriveStatus(void) {
   gw_wait_idle();
@@ -136,9 +336,19 @@ int gw_DVDCheckDisk(void) { return 1; }
 void *gw_DVDGetCurrentDiskID(void) { return gw_disk_id; }
 
 int gw_DVDConvertPathToEntrynum(const char *path) {
+  gw_mod_file *m;
   if (!gw_iso_open() || gw_fst_nodes == 0 || path == NULL) {
     return -1;
   }
+  gw_mods_load();
+  m = gw_mod_by_path(path);
+  if (m != NULL) {
+    return m->entrynum;
+  }
+  return gw_iso_lookup(path);
+}
+
+static int gw_iso_lookup(const char *path) {
 
   const char *component = path;
   if (*component == '/') {
@@ -179,7 +389,22 @@ int gw_DVDConvertPathToEntrynum(const char *path) {
 }
 
 int gw_DVDFastOpen(int entrynum, void *file_info) {
-  if (!gw_iso_open() || gw_fst_nodes == 0 || entrynum < 0 || (uint32_t)entrynum >= gw_fst_nodes) {
+  gw_mod_file *m;
+  if (!gw_iso_open() || gw_fst_nodes == 0 || entrynum < 0) {
+    return 0;
+  }
+  gw_mods_load();
+  m = gw_mod_by_entrynum(entrynum);
+  if (m != NULL) {
+    unsigned char *info = (unsigned char *)file_info;
+    gw_w32(info + 0x0C, GW_DVD_STATE_END);
+    gw_w32(info + 0x10, 0);
+    gw_w32(info + 0x14, m->size);
+    gw_w32(info + 0x30, GW_MOD_OFFSET_FLAG | (uint32_t)(m - gw_mod_files));
+    gw_w32(info + 0x34, m->size);
+    return 1;
+  }
+  if ((uint32_t)entrynum >= gw_fst_nodes) {
     return 0;
   }
   if (gw_fst_kind((uint32_t)entrynum) != 0) {
@@ -222,6 +447,21 @@ void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size) {
     *out_size = 0;
   }
   entrynum = gw_DVDConvertPathToEntrynum(path);
+  {
+    gw_mod_file *m = entrynum >= 0 ? gw_mod_by_entrynum(entrynum) : NULL;
+    if (m != NULL) {
+      buf = malloc(m->size != 0 ? m->size : 1);
+      if (buf == NULL || gw_mod_read(m, buf, 0, m->size) != m->size) {
+        gw_log("gw: DVDReadFileAlloc: cannot read mod file %s", m->host);
+        free(buf);
+        return NULL;
+      }
+      if (out_size != NULL) {
+        *out_size = m->size;
+      }
+      return buf;
+    }
+  }
   if (entrynum < 0 || !gw_iso_open() || gw_fst_nodes == 0) {
     gw_log("gw: DVDReadFileAlloc: %s not found on the disc image", path != NULL ? path : "(null)");
     return NULL;
@@ -245,6 +485,31 @@ void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size) {
     *out_size = length;
   }
   return buf;
+}
+
+/* Synchronous read of the first `length` bytes of a disc (or mod) file. Returns the bytes read,
+ * 0 when the file does not exist. For headers - e.g. an .ssm's sample-data size. */
+uint32_t gw_DVDReadPrefix(const char *path, void *dst, uint32_t length) {
+  const int entrynum = gw_DVDConvertPathToEntrynum(path);
+  gw_mod_file *m = entrynum >= 0 ? gw_mod_by_entrynum(entrynum) : NULL;
+  uint32_t n;
+  if (entrynum < 0) {
+    return 0;
+  }
+  if (m != NULL) {
+    return gw_mod_read(m, dst, 0, length < m->size ? length : m->size);
+  }
+  if ((uint32_t)entrynum >= gw_fst_nodes || gw_fst_kind((uint32_t)entrynum) != 0) {
+    return 0;
+  }
+  n = gw_fst_length((uint32_t)entrynum);
+  if (length > n) {
+    length = n;
+  }
+  if (fseek(gw_iso, (long)gw_fst_offset((uint32_t)entrynum), SEEK_SET) != 0) {
+    return 0;
+  }
+  return (uint32_t)fread(dst, 1, length, gw_iso);
 }
 
 int gw_DVDReadAsyncPrio(void *file_info, void *addr, int length, int offset, void *callback,
@@ -277,9 +542,15 @@ int gw_DVDReadAsyncPrio(void *file_info, void *addr, int length, int offset, voi
       result = (uint32_t)-1;
     }
 
-    if (want != 0 &&
-        (fseek(gw_iso, (long)(file_offset + (uint32_t)offset), SEEK_SET) != 0 ||
-         fread(addr, 1, want, gw_iso) != want)) {
+    if (want != 0 && (file_offset & GW_MOD_OFFSET_FLAG) != 0) {
+      const uint32_t idx = file_offset & ~GW_MOD_OFFSET_FLAG;
+      if ((int)idx >= gw_mod_count ||
+          gw_mod_read(&gw_mod_files[idx], addr, (uint32_t)offset, want) != want) {
+        result = (uint32_t)-1;
+      }
+    } else if (want != 0 &&
+               (fseek(gw_iso, (long)(file_offset + (uint32_t)offset), SEEK_SET) != 0 ||
+                fread(addr, 1, want, gw_iso) != want)) {
       result = (uint32_t)-1;
     }
   } else {

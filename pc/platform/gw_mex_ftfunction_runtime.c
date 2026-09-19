@@ -410,9 +410,31 @@ const char *gw_Mex_SsmFile(int i) {
     return t != 0u ? (const char *) (uintptr_t) gw_r32((const void *) (uintptr_t) (t + 4u * (uint32_t) i))
                    : NULL;
 }
+/* Bank i's ARAM size: the .ssm header's sample-data word (word 1), read from the file that will
+ * actually load - disc or mod. m-ex's table holds the sizes of the files IT shipped (Akaneia's);
+ * any other file there (a vanilla disc under a mod, a mod's own bank) differs, and the bank buffer
+ * sized from the table overflowed (vanilla main.ssm is 160 bytes larger than Akaneia's). m-ex has
+ * the same fix, CalculateBankSizes_Boot, which Akaneia does not ship. 0 when the file is absent;
+ * the table's value when the header cannot be read. */
 uint32_t gw_Mex_SsmSize(int i) {
+    extern uint32_t gw_DVDReadPrefix(const char *path, void *dst, uint32_t length);
     uint32_t t = gw_mex_ssm_table(0x4u);
-    return t != 0u ? gw_r32((const void *) (uintptr_t) (t + 8u * (uint32_t) i)) : 0u;
+    uint32_t table = t != 0u ? gw_r32((const void *) (uintptr_t) (t + 8u * (uint32_t) i)) : 0u;
+    const char *name = gw_Mex_SsmFile(i);
+    char path[96];
+    unsigned char hdr[8];
+    if (name == NULL || name[0] == 0) {
+        return table;
+    }
+    snprintf(path, sizeof path, "/audio/us/%s", name);
+    switch (gw_DVDReadPrefix(path, hdr, sizeof hdr)) {
+    case 0:
+        return 0u; /* not on the disc or in a mod */
+    case 8:
+        return gw_r32(hdr + 4);
+    default:
+        return table;
+    }
 }
 int gw_Mex_SsmLookup(int i, int k) {
     uint32_t t = gw_mex_ssm_table(0x8u);

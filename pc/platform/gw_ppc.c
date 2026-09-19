@@ -16,6 +16,7 @@
 #include "gw_mex_bridge.h"
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -71,6 +72,25 @@ static int gw_ppc_depth_logged;                   /* the cap log fires once per 
  * garbage, so seeing the actual values is the only way to tell a bad signature from a bad input. */
 static int gw_ppc_trace_fp;
 
+static gw_ppc_symbolizer_fn gw_ppc_symbolizer;
+
+void gw_ppc_set_symbolizer(gw_ppc_symbolizer_fn fn) { gw_ppc_symbolizer = fn; }
+
+const char *gw_ppc_describe(uint32_t guest_addr) {
+    /* Rotating buffers so a single log call can describe more than one address. */
+    static char buf[4][80];
+    static int next;
+    char *b = buf[next];
+    const char *name = (gw_ppc_symbolizer != NULL) ? gw_ppc_symbolizer(guest_addr) : NULL;
+    next = (next + 1) & 3;
+    if (name != NULL) {
+        snprintf(b, sizeof buf[0], "0x%08X (%s)", guest_addr, name);
+    } else {
+        snprintf(b, sizeof buf[0], "0x%08X", guest_addr);
+    }
+    return b;
+}
+
 void gw_ppc_set_bridge(gw_ppc_resolver_fn resolve, void *ctx, uint32_t code_lo, uint32_t code_hi) {
     const char *t = getenv("MELEE_PPC_TRACE_FP");
     gw_ppc_trace_fp = (t != NULL && t[0] == '1');
@@ -119,7 +139,7 @@ static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {
 }
 
 static void gw_ppc_access_violation(uint32_t ip, uint32_t ea) {
-    gw_panic("ppc: guest access violation at ip=0x%08X ea=0x%08X", ip, ea);
+    gw_panic("ppc: guest access violation at ip=%s ea=0x%08X", gw_ppc_describe(ip), ea);
 }
 
 static uint8_t gw_ppc_ld8(gw_ppc_machine *m, uint32_t ea) {
@@ -210,7 +230,7 @@ static void gw_ppc_st64(gw_ppc_machine *m, uint32_t ea, uint64_t v) {
 /* ---- panics --------------------------------------------------------------------------- */
 
 static void gw_ppc_bad_opcode(uint32_t ip, uint32_t insn) {
-    gw_panic("ppc: unimplemented opcode at ip=0x%08X word=0x%08X", ip, insn);
+    gw_panic("ppc: unimplemented opcode at ip=%s word=0x%08X", gw_ppc_describe(ip), insn);
 }
 
 /* ---- CR helpers -----------------------------------------------------------------------
@@ -321,7 +341,8 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
             float a0, a1;
             memcpy(&a0, &args[0], 4);
             memcpy(&a1, &args[1], 4);
-            gw_log("ppc: fp-call 0x%08X(%.6f, %.6f) -> %.6f  [nargs=%u mask=0x%X]", guest_addr,
+            gw_log("ppc: fp-call %s(%.6f, %.6f) -> %.6f  [nargs=%u mask=0x%X]",
+                   gw_ppc_describe(guest_addr),
                    (double) a0, (double) a1, (double) r, sig.n_args, sig.float_args);
         }
         c->fpr[1].d = (double)r;
@@ -1307,8 +1328,8 @@ static uint32_t gw_ppc_run(gw_ppc_machine *m) {
              * numeric loop is almost always one operand being wrong (a zero step, an infinity),
              * and the values are the only way to tell which. */
             int k;
-            gw_log("ppc: instruction budget exhausted at ip=0x%08X, PC range 0x%08X..0x%08X - "
-                   "guest register state follows:", ip, lo, hi);
+            gw_log("ppc: instruction budget exhausted at ip=%s, PC range 0x%08X..0x%08X - "
+                   "guest register state follows:", gw_ppc_describe(ip), lo, hi);
             for (k = 0; k < 32; ++k) {
                 if (m->cpu.fpr[k].d != 0.0) {
                     gw_log("ppc:   f%-2d = %.9g  (bits 0x%08X%08X)", k, m->cpu.fpr[k].d,
@@ -1321,10 +1342,10 @@ static uint32_t gw_ppc_run(gw_ppc_machine *m) {
                     gw_log("ppc:   r%-2d = 0x%08X", k, m->cpu.gpr[k]);
                 }
             }
-            gw_panic("ppc: instruction budget (%u) exhausted at ip=0x%08X - guest code is "
-                     "looping (PC range 0x%08X..0x%08X). This is an infinite loop in the "
+            gw_panic("ppc: instruction budget (%u) exhausted at ip=%s - guest code is "
+                     "looping (PC range %s..0x%08X). This is an infinite loop in the "
                      "interpreted blob, not an interpreter fault.",
-                     GW_PPC_MAX_INSNS, ip, lo, hi);
+                     GW_PPC_MAX_INSNS, gw_ppc_describe(ip), gw_ppc_describe(lo), hi);
         }
         insn = gw_ppc_fetch(m, ip);
         m->cpu.pc = ip + 4;
@@ -1349,7 +1370,7 @@ uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uin
                    "Guest chain follows (innermost last):",
                    GW_PPC_MAX_DEPTH, guest_fn);
             for (i = 0; i < GW_PPC_MAX_DEPTH; ++i) {
-                gw_log("ppc:   depth %2d: guest 0x%08X", i, gw_ppc_entry[i]);
+                gw_log("ppc:   depth %2d: guest %s", i, gw_ppc_describe(gw_ppc_entry[i]));
             }
         }
         return 0;

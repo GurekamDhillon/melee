@@ -583,6 +583,11 @@ static void gw_mex_interp_item_pickup(void *gobj, void *arg1) {
                               (uint32_t)(uintptr_t)arg1);
 }
 
+/* Symbolizer for gw_ppc: guest address -> the containing blob function's name, or NULL. */
+static const char *gw_mex_symbolize(uint32_t guest_addr) {
+    return gw_ftfunction_symbol_name(&gw_mex_ff, guest_addr);
+}
+
 /* Called from game code (ftData_8008572C) once Sonic's data is on the disc. `kind` is the port's
  * Ft_Kind_Sonic (33). */
 void gw_Mex_FtFunctionInstall(int kind) {
@@ -625,6 +630,9 @@ void gw_Mex_FtFunctionInstall(int kind) {
     gw_mex_stack_top = stack_base + GW_MEX_STACK_SIZE - 0x100u;
     gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, gw_mex_ff.code_base,
                       gw_mex_ff.code_base + gw_mex_ff.code_size);
+    /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every panic,
+     * budget dump and trace names a guest function instead of printing a bare address. */
+    gw_ppc_set_symbolizer(gw_mex_symbolize);
 
     gw_mex_movelogic_setup();
 

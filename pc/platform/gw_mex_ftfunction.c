@@ -39,6 +39,12 @@
 #define FTFUNC_OFF_FUNC_RELOC 0x0Cu
 #define FTFUNC_OFF_FUNC_RELOC_COUNT 0x10u
 #define FTFUNC_OFF_CODE_SIZE 0x14u
+/* Verified against PlSn.dat: +0x18 is the debug-symbol COUNT (207 for Sonic) and +0x1C is the
+ * data offset of the table, which sits immediately after this 0x20-byte struct. Each entry is
+ * {u32 codeStart, u32 codeEnd, u32 nameOffset} - the second word is an END offset, not a size. */
+#define FTFUNC_OFF_SYMBOL_COUNT 0x18u
+#define FTFUNC_OFF_SYMBOL_TABLE 0x1Cu
+#define FTFUNC_SYMBOL_STRIDE 12u
 
 /* Arch_FighterFunc slot names, word-indexed (Header.s: onLoad 0x0 ... GetTrailData 0xB4). */
 static const char *const gw_ftfunction_slot_names[GW_FTFUNC_SLOT_COUNT] = {
@@ -289,12 +295,88 @@ static int gw_ftfunction_load_from_memory_at(const unsigned char *dat, size_t da
         return rc;
     }
 
+    /* Debug symbols. Diagnostics only: any problem here logs and leaves the table empty rather
+     * than failing the load, because a blob without symbols must still run. The strings are
+     * copied because the caller frees the .dat buffer as soon as this returns. */
+    {
+        uint32_t sym_count = gw_r32(dat + struct_off + FTFUNC_OFF_SYMBOL_COUNT);
+        uint32_t sym_off = gw_r32(dat + struct_off + FTFUNC_OFF_SYMBOL_TABLE);
+        uint32_t tbl = GW_HSD_HEADER_SIZE + sym_off;
+        if (sym_count != 0u && sym_count <= 4096u &&
+            (uint64_t) tbl + (uint64_t) sym_count * FTFUNC_SYMBOL_STRIDE <= (uint64_t) dat_size) {
+            uint32_t i, str_bytes = 0, bad = 0;
+            /* Pass 1: total the name lengths and sanity-check every offset. */
+            for (i = 0; i < sym_count; ++i) {
+                uint32_t noff = gw_r32(dat + tbl + i * FTFUNC_SYMBOL_STRIDE + 8);
+                uint32_t p = GW_HSD_HEADER_SIZE + noff;
+                uint32_t n = 0;
+                if (p >= dat_size) {
+                    bad = 1;
+                    break;
+                }
+                while (p + n < dat_size && dat[p + n] != 0 && n < 128u) {
+                    ++n;
+                }
+                if (n == 0u || n >= 128u) {
+                    bad = 1;
+                    break;
+                }
+                str_bytes += n + 1u;
+            }
+            if (!bad) {
+                out->symbols = (gw_ftfunction_symbol *) malloc(sym_count * sizeof *out->symbols);
+                out->symbol_strings = (char *) malloc(str_bytes);
+            }
+            if (out->symbols != NULL && out->symbol_strings != NULL) {
+                char *w = out->symbol_strings;
+                for (i = 0; i < sym_count; ++i) {
+                    const unsigned char *e = dat + tbl + i * FTFUNC_SYMBOL_STRIDE;
+                    uint32_t p = GW_HSD_HEADER_SIZE + gw_r32(e + 8);
+                    uint32_t n = 0;
+                    while (dat[p + n] != 0 && n < 127u) {
+                        ++n;
+                    }
+                    memcpy(w, dat + p, n);
+                    w[n] = ' ';
+                    out->symbols[i].start = code_base + gw_r32(e + 0);
+                    out->symbols[i].end = code_base + gw_r32(e + 4);
+                    out->symbols[i].name = w;
+                    w += n + 1u;
+                }
+                out->symbol_count = sym_count;
+                gw_log("ftfunction: %u debug symbols (table @ 0x%X, %u bytes of names)", sym_count,
+                       sym_off, str_bytes);
+            } else {
+                free(out->symbols);
+                free(out->symbol_strings);
+                out->symbols = NULL;
+                out->symbol_strings = NULL;
+                gw_log("ftfunction: debug symbol table unusable (count=%u) - panics will show "
+                       "raw guest addresses",
+                       sym_count);
+            }
+        }
+    }
+
     out->code_base = code_base;
     out->code_size = code_size;
     out->instr_reloc_count = irt_count;
     out->func_reloc_count = frt_count;
     out->mexdata_base = mexdata_base;
     return GW_FTFUNC_OK;
+}
+
+const char *gw_ftfunction_symbol_name(const gw_ftfunction *ff, uint32_t guest_addr) {
+    uint32_t i;
+    if (ff == NULL || ff->symbols == NULL) {
+        return NULL;
+    }
+    for (i = 0; i < ff->symbol_count; ++i) {
+        if (guest_addr >= ff->symbols[i].start && guest_addr < ff->symbols[i].end) {
+            return ff->symbols[i].name;
+        }
+    }
+    return NULL;
 }
 
 int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t code_base,

@@ -86,6 +86,18 @@ void gw_ppc_set_bridge(gw_ppc_resolver_fn resolve, void *ctx, uint32_t code_lo, 
 uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,
                      uint32_t sp);
 
+/* ---- symbolizer -------------------------------------------------------------------------
+ * Optional: resolves a guest code address to a function name for panics and traces. The m-ex
+ * runtime installs one backed by the blob's own MEXDebugSymbol table. The interpreter keeps no
+ * knowledge of where names come from, exactly like the bridge resolver above. Unset (or a NULL
+ * return) simply means addresses print bare. */
+typedef const char *(*gw_ppc_symbolizer_fn)(uint32_t guest_addr);
+void gw_ppc_set_symbolizer(gw_ppc_symbolizer_fn fn);
+
+/* "0x807FA130 (SpawnTrailEffect)" or "0x807FA130" - never NULL, safe on any path. Returns a
+ * pointer to one of a few rotating static buffers, so several calls in one printf are fine. */
+const char *gw_ppc_describe(uint32_t guest_addr);
+
 /* Registers the interpreter's self-contained end-to-end test with the in-engine suite. */
 void gw_ppc_tests_register(void);
 

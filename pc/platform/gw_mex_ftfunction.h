@@ -25,6 +25,15 @@ typedef struct gw_ftfunction_override {
     int is_func_addr; /* non-zero => func-address case (must become a native hook, phase 3) */
 } gw_ftfunction_override;
 
+/* One entry of the blob's MEXDebugSymbol table: the guest code range a function covers, and its
+ * name. The on-disc entry is {u32 codeStart, u32 codeEnd, u32 nameOffset} - note the second word
+ * is an END OFFSET, not a length. Ranges are contiguous (entry N's end == entry N+1's start). */
+typedef struct gw_ftfunction_symbol {
+    uint32_t start; /* guest address, inclusive */
+    uint32_t end;   /* guest address, exclusive */
+    const char *name;
+} gw_ftfunction_symbol;
+
 /* A loaded, relocated ftFunction blob. */
 typedef struct gw_ftfunction {
     uint32_t code_base;         /* guest address of the relocated code */
@@ -34,6 +43,13 @@ typedef struct gw_ftfunction {
     uint32_t mexdata_base;      /* guest address of the Arch_FighterFunc holder (r2 base) */
     int override_count;
     gw_ftfunction_override overrides[64]; /* capped; func_reloc_count is authoritative */
+
+    /* Debug symbols, copied out of the .dat during load (the file buffer is freed). Both
+     * allocations are owned by this struct and live for the process. NULL/0 when the blob has
+     * no table or it failed to parse - never a hard error, this is diagnostics only. */
+    uint32_t symbol_count;
+    gw_ftfunction_symbol *symbols;
+    char *symbol_strings;
 } gw_ftfunction;
 
 /* Error codes. 0 = success, negative = a clean, logged failure (never a native fault). */
@@ -60,6 +76,10 @@ int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction
  * already allocated from the fighter heap). The phase-3 runtime path. */
 int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t code_base,
                           uint32_t mexdata_base, gw_ftfunction *out);
+
+/* Resolve a guest address to the name of the blob function containing it, or NULL. Cheap linear
+ * scan: this is only ever called on a panic/trace path. */
+const char *gw_ftfunction_symbol_name(const gw_ftfunction *ff, uint32_t guest_addr);
 
 /* Logs the parsed structure (code size, reloc counts, resolved per-slot overrides). */
 void gw_ftfunction_report(const gw_ftfunction *ff);

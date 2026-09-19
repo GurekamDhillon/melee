@@ -447,6 +447,68 @@ int gw_Mex_SsmForPortKind(int fk) {
     return fk == GW_MEX_KIND_SONIC ? gw_mex_ssm_for_ext(30 /* Sonic's external id */) : -1;
 }
 
+/* ---- m-ex music and per-fighter audio -----------------------------------------------------------
+ * mexData.music (root +0x14) +0x00 = the BGM file names (char*[bgm_count]; 0..97 are retail's
+ * hps_files, in order). fighter +0x30 victory_theme[ext] (a BGM index) and +0x34
+ * announcer_call[ext] (an SFX id in nr_name.ssm), both s32 by EXTERNAL id. Values verified on
+ * Akaneia: Sonic (ext 30) = BGM 125 ff_sonic.hps, announcer 510059; ext 0..25 equal retail. */
+#define GW_MEXDT_OFF_MUSIC 0x14u
+
+int gw_Mex_BgmCount(void) {
+    uint32_t md;
+    if (gw_Mex_CssIconCount() == 0) {
+        return 0;
+    }
+    md = gw_r32((const void *) (uintptr_t) gw_mexdt);
+    return gw_mexdt_in(md, 0x24u) ? (int) gw_r32((const void *) (uintptr_t) (md + 0x20u)) : 0;
+}
+
+const char *gw_Mex_BgmFile(int i) {
+    uint32_t music, names;
+    if (i < 0 || i >= gw_Mex_BgmCount()) {
+        return NULL;
+    }
+    music = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_MUSIC));
+    names = gw_mexdt_in(music, 4u) ? gw_r32((const void *) (uintptr_t) music) : 0u;
+    if (names == 0u || !gw_mexdt_in(names + 4u * (uint32_t) i, 4u)) {
+        return NULL;
+    }
+    return (const char *) (uintptr_t) gw_r32((const void *) (uintptr_t) (names + 4u * (uint32_t) i));
+}
+
+/* fighter-table s32 at `field_off`, indexed by the port CharacterKind's external id; `fallback`
+ * when unavailable. */
+static int gw_mex_fighter_s32_for_ck(int ck, uint32_t field_off, int fallback) {
+    extern int gw_Mex_PortCKindToExt(int);
+    int ext = gw_Mex_PortCKindToExt(ck);
+    uint32_t fighter, tbl;
+    if (ext < 0 || gw_Mex_CssIconCount() == 0) {
+        return fallback;
+    }
+    fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
+    tbl = gw_mexdt_in(fighter + field_off, 4u) ? gw_r32((const void *) (uintptr_t) (fighter + field_off)) : 0u;
+    if (tbl == 0u || !gw_mexdt_in(tbl + 4u * (uint32_t) ext, 4u)) {
+        return fallback;
+    }
+    return (int) gw_r32((const void *) (uintptr_t) (tbl + 4u * (uint32_t) ext));
+}
+
+int gw_Mex_VictoryThemeForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 0x30u, -1); }
+
+/* fighter +0x28 result_file[ext] (char*, "GmRstMSn.dat") and +0x2C result_scale[ext] (f32). */
+const char *gw_Mex_ResultFileForPortCKind(int ck) {
+    uint32_t p = (uint32_t) gw_mex_fighter_s32_for_ck(ck, 0x28u, 0);
+    return (p != 0u && gw_mexdt_in(p, 1u) && *(const char *) (uintptr_t) p != 0)
+               ? (const char *) (uintptr_t) p
+               : NULL;
+}
+float gw_Mex_ResultScaleForPortCKind(int ck) {
+    union { uint32_t u; float f; } v;
+    v.u = (uint32_t) gw_mex_fighter_s32_for_ck(ck, 0x2Cu, 0x3F800000);
+    return v.f;
+}
+int gw_Mex_AnnouncerForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 0x34u, -1); }
+
 /* Port FighterKind -> m-ex INTERNAL id, or -1. FK 0..26 are the same in both. m-ex appends its
  * new fighters after the vanilla playables and moves the six specials to the end (internal
  * internal_id_count-6 .. -1 = 35..40 on Akaneia), where the port keeps them at 27..32 and adds

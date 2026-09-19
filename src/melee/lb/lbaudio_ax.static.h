@@ -261,7 +261,17 @@ static const char* ssm_files[LBAX_SSM_DIM] = {
     "1pend.ssm",    "last.ssm",    "end.ssm",      NULL,
 };
 
-static const char* hps_files[] = {
+#if defined(TARGET_PC)
+/* BGM files: retail's 98, extended from mexData.music at audio init (139 on Akaneia). */
+#define LBAX_BGM_CAP 256
+#define LBAX_BGM_DIM LBAX_BGM_CAP
+static int lbAx_BgmN = 0x62;
+#define LBAX_BGM_N lbAx_BgmN
+#else
+#define LBAX_BGM_DIM
+#define LBAX_BGM_N 0x62
+#endif
+static const char* hps_files[LBAX_BGM_DIM] = {
     "1p_qk.hps",      "akaneia.hps",    "baloon.hps",     "bigblue.hps",
     "castle.hps",     "continue.hps",   "corneria.hps",   "docmari.hps",
     "ending.hps",     "famidemo.hps",   "ff_1p01.hps",    "ff_1p02.hps",

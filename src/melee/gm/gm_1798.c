@@ -63,6 +63,12 @@
  * really gmResultCharacterScaleData, gmResultCharacterData.slot_off, gmResultCameraDesc.
  * CharScaleEntry/CameraKindParams share the 0x30-byte layout, so the view is exact. */
 #define RESULT_CAM_KIND ((CameraKindParams*) gmResultCharacterScaleData)
+#if defined(TARGET_PC)
+/* The results per-character tables (scale, camera offsets) have 32 rows, retail's CharacterKinds.
+ * An m-ex fighter past them (Sonic, 0x20) uses Mario's camera row - m-ex's own data makes its new
+ * fighters Mario clones - and its size comes from mexData result_scale. */
+#define RESULT_TBL_KIND(k) ((u32) (k) < 32 ? (k) : CKind_Mario)
+#endif
 #define RESULT_CAM_SLOTOFF (gmResultCharacterData.slot_off)
 #define RESULT_CAM_DESC ((HSD_CObjDesc*) &gmResultCameraDesc)
 #else
@@ -503,6 +509,9 @@ HSD_GObj* fn_8017A318(s32 arg0)
 
     kind_data = RESULTS_STATE.char_kind[arg0];
     (void) kind_data;
+#if defined(TARGET_PC)
+    kind_data = RESULT_TBL_KIND(kind_data);
+#endif
     eye.y += RESULT_CAM_KIND[kind_data].y_off[vi];
 
     vi = ((s32) variant <= 2) ? variant : 3;
@@ -624,6 +633,12 @@ Fighter_GObj* fn_8017A67C(CharacterKind kind, int arg1, int arg2)
                 pos2 = *(Vec3*) &config->x80;
                 pos2.y = 100.0f * (f32) (arg2 + 1);
                 Player_80032A04(arg2, &pos2);
+#if defined(TARGET_PC)
+                if ((u32) kind >= 32) {
+                    extern float Mex_ResultScaleForPortCKind(int);
+                    Player_SetScale(arg2, 1.8f * Mex_ResultScaleForPortCKind(kind));
+                } else
+#endif
                 Player_SetScale(arg2,
                                 1.8f * gmResultCharacterData.scale[kind]);
                 Player_80036F34(arg2, variant);
@@ -636,7 +651,11 @@ Fighter_GObj* fn_8017A67C(CharacterKind kind, int arg1, int arg2)
                 } else {
                     var_idx = 3;
                 }
+#if defined(TARGET_PC)
+                scale = gmResultCharacterScaleData[RESULT_TBL_KIND(kind)].x20[var_idx];
+#else
                 scale = gmResultCharacterScaleData[kind].x20[var_idx];
+#endif
                 Player_80036F34(arg2, variant);
                 Player_SetScale(
                     arg2,

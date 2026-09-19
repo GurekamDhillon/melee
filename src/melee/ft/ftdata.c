@@ -1460,6 +1460,20 @@ char* ftData_803C23E4[Ft_Kind_Max] = {
 };
 
 /// Demo Lookup Strings
+#if defined(TARGET_PC)
+/* Sonic's demo motions. m-ex names his results animations `ftDemoResultSonic` in GmRstMSn.dat
+ * (same layout as retail's ftDemoResultMotionFile<Name>: one raw figatree block). Looking up
+ * Fox's name there found nothing and the results pose played from a stale pointer (user-found
+ * "atree data error" when Sonic won). The other three are not on Akaneia's disc; their lookups
+ * return NULL, as Fox's names did. */
+static Fighter_DemoStrings ftSn_DemoMotionFilenames = {
+    "ftDemoResultSonic",
+    "ftDemoIntroSonic",
+    "ftDemoEndingSonic",
+    "ftDemoViWaitSonic",
+};
+#endif
+
 Fighter_DemoStrings* ftData_803C2468[Ft_Kind_Max] = {
     &ftMr_Init_DemoMotionFilenames,
     &ftFx_Init_DemoMotionFilenames,
@@ -1494,7 +1508,11 @@ Fighter_DemoStrings* ftData_803C2468[Ft_Kind_Max] = {
     NULL,
     &ftGk_Init_DemoMotionFilenames,
     NULL,
+#if defined(TARGET_PC)
+    &ftSn_DemoMotionFilenames,
+#else
     &ftFx_Init_DemoMotionFilenames,
+#endif
 };
 
 Fighter_MotionFileStringGetter ftData_803C24EC[Ft_Kind_Max] = {
@@ -1702,6 +1720,16 @@ void ftData_8008572C(FighterKind kind)
                 u32 flags = (u32) fd->xC[i].x10_animCurrFlags;
                 flags = (flags & ~0x3Fu) | (u32) kind;
                 fd->xC[i].x10_animCurrFlags = (s32) flags;
+            }
+            /* Same for the demo motions (results-screen / intro poses, fd->x14): they are
+             * authored for m-ex's kind too, and the cross-kind path crashed on the results
+             * screen when Sonic won (user-found, ftDemo_CreateFighter -> lbAnim_8001E7E8). */
+            if (fd->x14 != NULL) {
+                for (i = 0; i < ftData_UnkIntPairs[kind].count; i++) {
+                    u32 flags = (u32) fd->x14[i].x10_animCurrFlags;
+                    flags = (flags & ~0x3Fu) | (u32) kind;
+                    fd->x14[i].x10_animCurrFlags = (s32) flags;
+                }
             }
             /* Ported from m-ex (https://github.com/akaneia/m-ex): load Sonic's PlSn.dat
              * ftFunction PPC blob and install the onLoad override, so the engine's existing

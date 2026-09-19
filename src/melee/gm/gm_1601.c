@@ -479,6 +479,15 @@ void gm_801603B0(void)
 u32 fn_80160400(CharacterKind ckind)
 {
     struct VictoryTheme* theme = ckind_victory_themes;
+#if defined(TARGET_PC)
+    /* Ported from m-ex: the victory theme is mexData fighter.victory_theme[external id] (Sonic:
+     * 125, ff_sonic.hps); for the retail cast it equals the table below. */
+    extern int Mex_VictoryThemeForPortCKind(int);
+    int mex = Mex_VictoryThemeForPortCKind(ckind);
+    if (mex >= 0) {
+        return mex;
+    }
+#endif
 
     while (true) {
         if (theme->ckind == ckind) {
@@ -501,6 +510,19 @@ char* gm_80160438(s32 ckind)
 {
     struct ResultAnimEntry* entry = lbl_803D53A8;
     s32 id;
+#if defined(TARGET_PC)
+    /* Ported from m-ex: the results-screen file is mexData fighter.result_file[external id]
+     * (Sonic: GmRstMSn.dat). Retail's table has no entry past Roy, and a winner without one gets
+     * no results fighter - the winner camera then read a NULL fighter (user-found crash when
+     * Sonic won). */
+    {
+        extern const char* Mex_ResultFileForPortCKind(int);
+        const char* mex = Mex_ResultFileForPortCKind(ckind);
+        if (mex != NULL) {
+            return (char*) mex;
+        }
+    }
+#endif
 
     while (true) {
         id = entry->ckind;
@@ -4104,6 +4126,16 @@ float gm_80168BF8(int arg0)
 
 void gm_80168C5C(u32 arg0)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex: the announcer's name call is mexData fighter.announcer_call[external id]
+     * (Sonic: 510059, in nr_name.ssm); for the retail cast it equals the switch below. */
+    extern int Mex_AnnouncerForPortCKind(int);
+    int mex = Mex_AnnouncerForPortCKind((int) arg0);
+    if (mex >= 0) {
+        lbAudioAx_800243F4(mex);
+        return;
+    }
+#endif
     switch (arg0) {
     case 0:
         lbAudioAx_800243F4(0x7C830);

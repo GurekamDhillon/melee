@@ -942,6 +942,22 @@ s32 ftLib_8008746C(HSD_GObj* gobj)
         return 0x1FBD1;
     }
 
+#if defined(TARGET_PC)
+    {
+        /* The crowd cheer is entry 0 of the fighter's own bank (Fox 110000). An m-ex fighter
+         * names it relatively (Sonic: 5000), and crowdsfx plays it without going through
+         * ft_80087D0C's relative-id conversion, so it was silent (m-ex has the same gap). */
+        extern int Mex_SsmForPortKind(int);
+        s32 id = fp->ft_data->x4C_sfx->x34;
+        if (id >= 5000 && id < 10000) {
+            int ssm = Mex_SsmForPortKind(fp->kind);
+            if (ssm >= 0) {
+                return id - 5000 + ssm * 10000;
+            }
+        }
+        return id;
+    }
+#endif
     return fp->ft_data->x4C_sfx->x34;
 }
 

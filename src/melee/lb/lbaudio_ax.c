@@ -51,7 +51,7 @@ int lbAudioAx_80023090(int idx)
         return 0;
     }
     if (idx >= 0x62) {
-        return 0;
+        return 0; /* m-ex BGMs past retail's table have no flags entry: retail's default */
     }
     return flags_arr_803BB800[idx];
 }
@@ -425,7 +425,7 @@ static inline const char* getHPSFile(int arg0)
 {
     if (arg0 < 0) {
         return NULL;
-    } else if (arg0 >= 0x62) {
+    } else if (arg0 >= LBAX_BGM_N) {
         return NULL;
     } else {
         strcpy(&cur_hps_file[hps_stem_pos], hps_files[arg0]);
@@ -453,7 +453,7 @@ int lbAudioAx_80023F28(int arg0)
 {
     const char* filename;
 
-    if (arg0 < 0 || arg0 >= 0x62) {
+    if (arg0 < 0 || arg0 >= LBAX_BGM_N) {
         return true;
     }
     if (!(filename = getHPSFile(arg0))) {
@@ -2225,6 +2225,22 @@ static void lbAudioAx_MexTables(void)
     }
     lbAx_N = n;
     OSReport("lbAudioAx: %d sound banks from mexData\n", n);
+
+    {
+        /* BGM: m-ex appends its music after retail's 98 (Sonic's victory theme is 125) */
+        extern int Mex_BgmCount(void);
+        extern const char* Mex_BgmFile(int);
+        int nb = Mex_BgmCount();
+        if (nb > LBAX_BGM_CAP) {
+            nb = LBAX_BGM_CAP;
+        }
+        for (i = 0x62; i < nb; i++) {
+            hps_files[i] = Mex_BgmFile(i);
+        }
+        if (nb > 0x62) {
+            lbAx_BgmN = nb;
+        }
+    }
 }
 #endif
 

@@ -37,6 +37,19 @@ static bool fn_80026E58(int);
 int lbAudioAx_8002305C(int arg0, int arg1)
 {
     static const int size = ARRAY_SIZE(unk_arr_803BC4A0);
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): Fighter BGM/GetFighterBGM.asm replaces
+     * this 0x21-entry table with mexData's, which has a row for every m-ex fighter. Callers pass
+     * a CharacterKind, so kinds the port added (Sonic and friends) are past the retail table and
+     * would otherwise all fall through to 0x62. -1 = no mexData row: keep retail's answer. */
+    {
+        extern int Mex_FighterBgmForPortCKind(int ck, int which);
+        int mex = Mex_FighterBgmForPortCKind(arg0, arg1);
+        if (mex >= 0) {
+            return mex;
+        }
+    }
+#endif
     if (arg0 >= 0 && arg0 < size) {
         return unk_arr_803BC4A0[arg0][arg1];
     }

@@ -930,6 +930,41 @@ void gmMainLib_8015ECBC(void)
     u8 _[4];
 
     GameRules* rules = &gmMainLib_804D3EE0->x1850;
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): BGM/MenuPlaylist.asm. Its injection
+     * sits on this function's epilogue, so it overwrites whatever the retail branches chose with
+     * a weighted draw over mexData's menu playlist - the unlock gate below no longer decides.
+     * Entry i is taken with weight chance[i] out of their sum; an all-zero playlist (or none at
+     * all, i.e. no mexData) leaves the retail choice alone rather than forcing m-ex's 52. */
+    {
+        extern int Mex_MenuPlaylistCount(void);
+        extern int Mex_MenuPlaylistBgm(int i);
+        extern int Mex_MenuPlaylistChance(int i);
+        int n = Mex_MenuPlaylistCount();
+        int i, total = 0;
+        for (i = 0; i < n; i++) {
+            if (Mex_MenuPlaylistBgm(i) >= 0) {
+                total += Mex_MenuPlaylistChance(i);
+            }
+        }
+        if (total > 0) {
+            int roll = HSD_Randi(total);
+            int acc = 0;
+            for (i = 0; i < n; i++) {
+                int bgm = Mex_MenuPlaylistBgm(i);
+                int chance = (bgm >= 0) ? Mex_MenuPlaylistChance(i) : 0;
+                if (chance == 0) {
+                    continue;
+                }
+                acc += chance;
+                if (roll < acc) {
+                    rules->bgm = (u8) bgm;
+                    return;
+                }
+            }
+        }
+    }
+#endif
     if (gm_80164600() && gm_80164ABC()) {
         if (HSD_Randi(4) != 0) {
             rules->bgm = 0x34;

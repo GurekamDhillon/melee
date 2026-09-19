@@ -627,6 +627,66 @@ float gw_Mex_ResultScaleForPortCKind(int ck) {
 }
 int gw_Mex_AnnouncerForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 0x34u, -1); }
 
+/* ---- m-ex menu playlist (mexData.music +0x04 / +0x08) ----------------------------------------
+ * Ported from m-ex (https://github.com/akaneia/m-ex): BGM/MenuPlaylist.asm. The main-menu theme
+ * becomes a weighted draw over MexPlaylistEntry { u16 bgm_id; u16 chance }, stride 4, instead of
+ * retail's hard-coded 1-in-4 between menu01 and menu3. The draw itself stays in game code so it
+ * uses the game's own RNG stream; these accessors only expose the table. Akaneia ships 2 entries:
+ * bgm 52 at weight 45, bgm 54 at weight 19. */
+static uint32_t gw_mex_music_field(uint32_t off) {
+    uint32_t music;
+    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+        return 0u;
+    }
+    music = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_MUSIC));
+    return gw_mexdt_in(music + off, 4u) ? gw_r32((const void *) (uintptr_t) (music + off)) : 0u;
+}
+
+int gw_Mex_MenuPlaylistCount(void) {
+    uint32_t tbl = gw_mex_music_field(0x04u);
+    int32_t n = (int32_t) gw_mex_music_field(0x08u);
+    if (tbl == 0u || n <= 0 || n > 256 || !gw_mexdt_in(tbl, (uint32_t) n * 4u)) {
+        return 0;
+    }
+    return (int) n;
+}
+
+static uint32_t gw_mex_menu_playlist_entry(int i) {
+    uint32_t tbl = gw_mex_music_field(0x04u);
+    return (i >= 0 && i < gw_Mex_MenuPlaylistCount()) ? tbl + (uint32_t) i * 4u : 0u;
+}
+
+/* Entry i's BGM id, or -1 when it is out of range or names no BGM the port's table has. */
+int gw_Mex_MenuPlaylistBgm(int i) {
+    uint32_t e = gw_mex_menu_playlist_entry(i);
+    int bgm = e != 0u ? (int) gw_r16((const void *) (uintptr_t) e) : -1;
+    return (bgm >= 0 && bgm < gw_Mex_BgmCount()) ? bgm : -1;
+}
+
+/* Entry i's weight (m-ex calls it a percent, but it is really a share of their sum), or 0. */
+int gw_Mex_MenuPlaylistChance(int i) {
+    uint32_t e = gw_mex_menu_playlist_entry(i);
+    return e != 0u ? (int) gw_r16((const void *) (uintptr_t) (e + 2u)) : 0;
+}
+
+/* ---- m-ex per-fighter BGM (mexData.fighter +0x54) --------------------------------------------
+ * Ported from m-ex (https://github.com/akaneia/m-ex): Fighter BGM/GetFighterBGM.asm, which
+ * replaces the vanilla 0x21-entry table behind lbAudioAx_8002305C. Two u16 BGM ids per fighter,
+ * stride 4, indexed by m-ex EXTERNAL id - the same space as the CharacterKind the retail call
+ * sites pass. One big-endian word holds both, `which` 0 in the high half. Verified on Akaneia:
+ * ext 30 (Sonic) = { 105, 134 }, ext 0..25 equal the retail table. Returns -1 when mexData is
+ * absent, the port has no external id for the character, or m-ex marks it 0xFFFF ("no music",
+ * the bosses) - in each case the caller keeps retail's value. */
+int gw_Mex_FighterBgmForPortCKind(int ck, int which) {
+    int word, bgm;
+    if (which < 0 || which > 1) {
+        return -1;
+    }
+    word = gw_mex_fighter_s32_for_ck(ck, 0x54u, -1);
+    bgm = (which == 0) ? ((word >> 16) & 0xFFFF) : (word & 0xFFFF);
+    return (bgm == 0xFFFF || bgm >= gw_Mex_BgmCount()) ? -1 : bgm;
+}
+
 /* Port FighterKind -> m-ex INTERNAL id, or -1. FK 0..26 are the same in both. m-ex appends its
  * new fighters after the vanilla playables and moves the six specials to the end (internal
  * internal_id_count-6 .. -1 = 35..40 on Akaneia), where the port keeps them at 27..32 and adds
@@ -2285,6 +2345,63 @@ static int test_mex_ft_item_id_sonic(void) {
     return rc;
 }
 
+/* The two music tables this port reads out of mexData: the menu playlist (music +0x04/+0x08)
+ * and per-fighter BGM (fighter +0x54). Both are pure layout, so the failure mode of a wrong
+ * offset is garbage that happens not to crash - the checks are therefore range checks over the
+ * whole table, not a single spot value, and the real values are logged for eyeballing. Skipped on
+ * a disc without MxDt.dat. Disc-agnostic on purpose: Akaneia and ACE ship different playlists. */
+static int test_mex_music_tables(void) {
+    uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
+    uint32_t root;
+    int rc = 0, n, i, total = 0, nbgm, sonic_ck, slot;
+    root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base,
+                           &gw_mexdt_size);
+    if (root == 0u) {
+        gw_log("test mex_music_tables: no MxDt.dat on this disc - skipped");
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 0;
+    }
+    gw_mexdt = root;
+    nbgm = gw_Mex_BgmCount();
+    n = gw_Mex_MenuPlaylistCount();
+    if (n <= 0) {
+        gw_test_fail("mexData has no menu playlist (count %d)", n);
+        rc = 1;
+    }
+    for (i = 0; i < n; ++i) {
+        int bgm = gw_Mex_MenuPlaylistBgm(i), chance = gw_Mex_MenuPlaylistChance(i);
+        gw_log("test mex_music_tables: menu playlist[%d] = bgm %d, weight %d", i, bgm, chance);
+        if (bgm < 0 || bgm >= nbgm) {
+            gw_test_fail("menu playlist[%d] names bgm %d, outside the %d-entry table", i, bgm,
+                         nbgm);
+            rc = 1;
+        }
+        total += chance;
+    }
+    if (rc == 0 && total <= 0) {
+        gw_test_fail("menu playlist weights sum to %d - no entry could ever be drawn", total);
+        rc = 1;
+    }
+    slot = gw_mex_slot_of_internal(GW_MEX_INTERNAL_SONIC);
+    sonic_ck = slot >= 0 ? GW_PORT_CK_MEX0 + slot : -1;
+    if (sonic_ck >= 0) {
+        int a = gw_Mex_FighterBgmForPortCKind(sonic_ck, 0);
+        int b = gw_Mex_FighterBgmForPortCKind(sonic_ck, 1);
+        gw_log("test mex_music_tables: fighter BGM for CKind %d = { %d, %d }", sonic_ck, a, b);
+        if (a < 0 || a >= nbgm || b < 0 || b >= nbgm) {
+            gw_test_fail("fighter BGM { %d, %d } outside the %d-entry table", a, b, nbgm);
+            rc = 1;
+        }
+    }
+    /* Falcon is m-ex external 0 on every m-ex disc and CharacterKind 0 in the port. */
+    if (gw_Mex_FighterBgmForPortCKind(0, 0) < 0) {
+        gw_test_fail("fighter BGM has no row for external id 0");
+        rc = 1;
+    }
+    gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+    return rc;
+}
+
 static int test_bridge_lookup_memcpy(void) {
     int kind = -1;
     uint32_t native = gw_mex_bridge_lookup(0x800031F4u, &kind); /* memcpy */
@@ -2338,6 +2455,7 @@ static int test_resolver_mex_shims(void) {
 
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
+    gw_test_register("mex_music_tables", test_mex_music_tables);
     gw_test_register("bridge_lookup_memcpy", test_bridge_lookup_memcpy);
     gw_test_register("bridge_lookup_global", test_bridge_lookup_global);
     gw_test_register("bridge_lookup_miss", test_bridge_lookup_miss);

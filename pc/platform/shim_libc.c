@@ -85,6 +85,10 @@ float gw_cosf(float x) { return cosf(x); }
 float gw_tanf(float x) { return tanf(x); }
 float gw_atanf(float x) { return atanf(x); }
 float gw_logf(float x) { return logf(x); }
+/* The decomp only has fmodf as a static inline (src/MSL/math.h), so it never reaches the map and
+ * guest 0x80364340 had no bridge entry. m-ex fighter blobs (Tails' side-B and slerp) call it as a
+ * real function, so the port needs a real symbol for it. */
+float gw_fmodf(float x, float y) { return fmodf(x, y); }
 double gw_fabs(double x) { return fabs(x); }
 float gw_fabsf(float x) { return fabsf(x); }
 

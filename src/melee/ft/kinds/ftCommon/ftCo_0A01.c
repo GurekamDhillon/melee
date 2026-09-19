@@ -110,8 +110,17 @@
 /* 0A2840 */ static bool ftCo_800A5944(Item* ip);
 /* 0A2A60 */ static void ftCo_800B21C8(Fighter*);
 /* 0A2D50 */ static void ftCo_800B24B8(Fighter*);
+#if defined(TARGET_PC)
+/* External linkage on the port: m-ex fighter blobs (Wolf/Diddy/Lucas/Tails' MexCPU_Process) call
+ * all three of these by their GameCube addresses, and the guest->native bridge can only pair a
+ * symbol that reaches melee-pc.map. They are declared `static` here but defined without it, so
+ * clang gives them internal linkage and they vanish from the map. Nothing else changes. */
+/* 0A3028 */ void ftCo_800B2790(Fighter* fp);
+/* 0A3C48 */ void ftCo_800B33B0(Fighter* fp);
+#else
 /* 0A3028 */ static void ftCo_800B2790(Fighter* fp);
 /* 0A3C48 */ static void ftCo_800B33B0(Fighter* fp);
+#endif
 /* 0A5ACC */ static bool ftCo_800A5ACC(Fighter*);
 /* 0A5CE0 */ static Fighter* ftCo_800A5CE0(Fighter* fp);
 /* 0A5F4C */ static Item* ftCo_800A5F4C(Fighter* fp, ItemKind);
@@ -145,7 +154,11 @@
 /* 0AC30C */ static void ftCo_800AC30C(Fighter* fp);
 /* 0AC434 */ static void ftCo_800AC434(Fighter* fp);
 /* 0AC5A0 */ static void ftCo_800AC5A0(Fighter* fp);
+#if defined(TARGET_PC)
+/* 0B2AFC */ void ftCo_800B2AFC(Fighter* fp);
+#else
 /* 0B2AFC */ static void ftCo_800B2AFC(Fighter* fp);
+#endif
 
 /// @todo .sdata2 order hack
 #ifdef MUST_MATCH

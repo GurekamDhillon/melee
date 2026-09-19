@@ -342,6 +342,18 @@ int gw_DVDConvertPathToEntrynum(const char *path) {
   }
   gw_mods_load();
   m = gw_mod_by_path(path);
+  {
+    /* MELEE_DVD_TRACE=1: log every path the game resolves (with its source), e.g. to find which
+     * disc files a mod must carry. */
+    static int trace = -1;
+    if (trace < 0) {
+      const char *v = getenv("MELEE_DVD_TRACE");
+      trace = (v != NULL && v[0] == '1');
+    }
+    if (trace) {
+      gw_log("gw: dvd: %s -> %s", path, m != NULL ? m->mod : "disc");
+    }
+  }
   if (m != NULL) {
     return m->entrynum;
   }

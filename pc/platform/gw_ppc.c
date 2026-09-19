@@ -395,6 +395,18 @@ void gw_ppc_add_code_range(uint32_t lo, uint32_t hi) {
     ++gw_ppc_range_count;
 }
 
+void gw_ppc_remove_code_range(uint32_t lo, uint32_t hi) {
+    int i;
+    for (i = 0; i < gw_ppc_range_count; ++i) {
+        if (gw_ppc_range_lo[i] == lo && gw_ppc_range_hi[i] == hi) {
+            --gw_ppc_range_count;
+            gw_ppc_range_lo[i] = gw_ppc_range_lo[gw_ppc_range_count];
+            gw_ppc_range_hi[i] = gw_ppc_range_hi[gw_ppc_range_count];
+            return;
+        }
+    }
+}
+
 static int gw_ppc_in_extra_range(uint32_t a) {
     int i;
     for (i = 0; i < gw_ppc_range_count; ++i) {

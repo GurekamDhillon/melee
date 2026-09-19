@@ -93,6 +93,18 @@ const char *gw_ftfunction_symbol_name(const gw_ftfunction *ff, uint32_t guest_ad
 /* Logs the parsed structure (code size, reloc counts, resolved per-slot overrides). */
 void gw_ftfunction_report(const gw_ftfunction *ff);
 
+/* Load `dat_path`'s ftFunction IN PLACE inside the game's own loaded copy of the same file, as m-ex
+ * does on hardware: the code is relocated where it already sits in the archive's data section
+ * (`arch_data`, `arch_data_size` bytes), so it lives exactly as long as the fighter's file. The
+ * disc copy supplies the pristine (pre-reloc) code and the tables; the archive's data size must
+ * match it. Returns GW_FTFUNC_ERR_BAD_ARCHIVE on a mismatch. */
+int gw_ftfunction_load_in_archive(const char *dat_path, uint32_t internal_id, uint32_t arch_data,
+                                  uint32_t arch_data_size, uint32_t mexdata_base,
+                                  gw_ftfunction *out);
+
+/* Free what a load allocated natively (the symbol table). Leaves *ff zeroed. */
+void gw_ftfunction_free(gw_ftfunction *ff);
+
 /* Registers the module's self-contained tests with the in-engine suite. */
 void gw_ftfunction_tests_register(void);
 

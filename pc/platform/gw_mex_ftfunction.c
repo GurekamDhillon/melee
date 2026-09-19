@@ -405,6 +405,63 @@ int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t c
     return rc;
 }
 
+int gw_ftfunction_load_in_archive(const char *dat_path, uint32_t internal_id, uint32_t arch_data,
+                                  uint32_t arch_data_size, uint32_t mexdata_base,
+                                  gw_ftfunction *out) {
+    unsigned char *dat;
+    uint32_t dat_size = 0, code_off, code_size, i, differ = 0;
+    int32_t pub;
+    int rc;
+
+    memset(out, 0, sizeof *out);
+    dat = (unsigned char *)gw_DVDReadFileAlloc(dat_path, &dat_size);
+    if (dat == NULL) {
+        return GW_FTFUNC_ERR_NO_FILE;
+    }
+    if (dat_size < GW_HSD_HEADER_SIZE || gw_r32(dat + 0x04) != arch_data_size) {
+        gw_log("ftfunction: %s on disc (data 0x%X) is not the loaded archive (data 0x%X)",
+               dat_path, dat_size >= GW_HSD_HEADER_SIZE ? gw_r32(dat + 0x04) : 0u,
+               arch_data_size);
+        free(dat);
+        return GW_FTFUNC_ERR_BAD_ARCHIVE;
+    }
+    pub = gw_ftfunction_find_public(dat, dat_size, "ftFunction");
+    if (pub < 0 || (uint32_t)pub + 0x18u > arch_data_size) {
+        free(dat);
+        return GW_FTFUNC_ERR_NO_SYMBOL;
+    }
+    code_off = gw_r32(dat + GW_HSD_HEADER_SIZE + (uint32_t)pub + FTFUNC_OFF_CODE);
+    code_size = gw_r32(dat + GW_HSD_HEADER_SIZE + (uint32_t)pub + FTFUNC_OFF_CODE_SIZE);
+    if (code_off > arch_data_size || code_size > arch_data_size - code_off) {
+        free(dat);
+        return GW_FTFUNC_ERR_BAD_STRUCT;
+    }
+    /* Diagnostic: on a fresh load the archive's code bytes equal the disc's (HSD relocation never
+     * touches code). On a reused preloaded archive they differ only at m-ex reloc sites. */
+    for (i = 0; i + 4u <= code_size; i += 4u) {
+        if (memcmp((const void *)(uintptr_t)(arch_data + code_off + i),
+                   dat + GW_HSD_HEADER_SIZE + code_off + i, 4) != 0) {
+            ++differ;
+        }
+    }
+    rc = gw_ftfunction_load_from_memory_at(dat, dat_size, internal_id, arch_data + code_off,
+                                           mexdata_base, out);
+    free(dat);
+    if (rc == GW_FTFUNC_OK) {
+        gw_log("ftfunction: %s relocated in place in its loaded archive (%u of %u code words "
+               "already differed)",
+               dat_path, differ, code_size / 4u);
+        gw_ftfunction_report(out);
+    }
+    return rc;
+}
+
+void gw_ftfunction_free(gw_ftfunction *ff) {
+    free(ff->symbols);
+    free(ff->symbol_strings);
+    memset(ff, 0, sizeof *ff);
+}
+
 int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction *out) {
     return gw_ftfunction_load_at(dat_path, internal_id, GW_FTFUNC_CODE_BASE,
                                  GW_FTFUNC_MEXDATA_BASE, out);

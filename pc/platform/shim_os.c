@@ -47,17 +47,18 @@ static void gw_set_cur_heap(int heap) { gw_w32(gw___OSCurrHeap, (uint32_t)heap);
 #define GW_ARENA_LO_OFFSET 0x3100u
 
 /* The top GW_MEX_PERSIST_SIZE bytes of MEM1 are withheld from the game's arena and belong to the
- * m-ex runtime (gw_mex_persist_alloc in gw_mex_ftfunction_runtime.c). m-ex guest code and data
- * must live at guest (MEM1) addresses, and must SURVIVE scene changes: they are loaded once, when
- * the fighter first installs, but the game's heaps are scene-scoped. Allocated from HSD_MemAlloc,
- * they were freed at the end of the first match and reused, and the second VS match with Sonic
- * jumped into overwritten code (user-found: "unimplemented opcode at 0x807A77E0 (OnLoad)").
- * m-ex solves the same problem with a persistent heap (asm/m-ex/Persistent Heap Expansion/).
+ * m-ex runtime (gw_mex_persist_alloc in gw_mex_ftfunction_runtime.c): its SHARED, process-lifetime
+ * guest state - mexData (MxDt.dat), the interpreter's guest stack, the Arch_FighterFunc holder.
+ * Scene-scoped heaps cannot hold these: allocated from HSD_MemAlloc they were freed at the end of
+ * the first match and the second VS match jumped into overwritten memory (user-found:
+ * "unimplemented opcode at 0x807A77E0 (OnLoad)"). m-ex does the same with a persistent heap
+ * (asm/m-ex/Persistent Heap Expansion/). Per-fighter CODE is not here: it is relocated in place
+ * inside the fighter's own loaded file, so it costs nothing per fighter (gw_Mex_FtFunctionInstall).
  *
  * Taking it off the top is the safe place: lbheap carves its fixed heaps downward from the arena's
  * top and gives the MAIN heap whatever remains (lbheap.c), so this only shrinks the main heap,
- * measured at ~11.3 MB with little in use. 512 KB covers Sonic (~200 KB) with room for more. */
-#define GW_MEX_PERSIST_SIZE 0x80000u
+ * measured at ~11.3 MB with little in use. 256 KB holds the shared state (~180 KB). */
+#define GW_MEX_PERSIST_SIZE 0x40000u
 
 static uintptr_t gw_arena_lo;
 static uintptr_t gw_arena_hi;

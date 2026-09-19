@@ -86,6 +86,10 @@ void gw_ppc_set_bridge(gw_ppc_resolver_fn resolve, void *ctx, uint32_t code_lo, 
  * Without this, a `bl` from one article function to another is mistaken for a native call. */
 void gw_ppc_add_code_range(uint32_t lo, uint32_t hi);
 
+/* Forget a range added with gw_ppc_add_code_range (exact lo/hi). No-op if absent. Used when a
+ * fighter's file is unloaded and its code is reinstalled elsewhere on the next load. */
+void gw_ppc_remove_code_range(uint32_t lo, uint32_t hi);
+
 /* True if `a` is guest code: the bridge range or any registered range. Used by the interpreter's
  * interpret-vs-bridge decision and fetch guard, and by the m-ex runtime's execute trap. */
 int gw_ppc_is_guest_code(uint32_t a);

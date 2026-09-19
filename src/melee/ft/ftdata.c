@@ -1668,8 +1668,15 @@ void ftData_8008572C(FighterKind kind)
     ftData_SonicFallback();
 #endif
     if (gFtDataList[kind] == NULL) {
+#if defined(TARGET_PC)
+        /* captured for m-ex fighters, whose code is relocated inside this file */
+        HSD_Archive* ftData_LoadedArchive = NULL;
+        lbArchive_80017040(&ftData_LoadedArchive, ftData_803C1F40[kind].a,
+                           &gFtDataList[kind], ftData_803C1F40[kind].b, 0);
+#else
         lbArchive_80017040(NULL, ftData_803C1F40[kind].a, &gFtDataList[kind],
                            ftData_803C1F40[kind].b, 0);
+#endif
 #if defined(TARGET_PC)
         if (kind == Ft_Kind_Sonic) {
             OSReport("gw: ftData_8008572C kind=%d file=%s sym=%s\n", kind,
@@ -1700,8 +1707,9 @@ void ftData_8008572C(FighterKind kind)
              * ftFunction PPC blob and install the onLoad override, so the engine's existing
              * onLoad dispatch (fighter.c -> Mex_OnLoadDispatch) runs Sonic's PPC onLoad through
              * the interpreter instead of Fox's vanilla entry. See gw_mex_ftfunction_runtime.c. */
-            extern void Mex_FtFunctionInstall(int kind);
-            Mex_FtFunctionInstall((int) kind);
+            extern void Mex_FtFunctionInstall(int kind, void* arch_data, u32 arch_data_size);
+            Mex_FtFunctionInstall((int) kind, ftData_LoadedArchive->data,
+                                  ftData_LoadedArchive->header.data_size);
         }
 #endif
     }

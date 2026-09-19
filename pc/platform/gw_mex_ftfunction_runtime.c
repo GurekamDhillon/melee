@@ -475,8 +475,29 @@ static const char *gw_mex_article_symbol_name(uint32_t a) {
     return NULL;
 }
 
-/* Load every article of `dat_path`'s itFunction for port fighter `port_kind`. Needs mexData. */
-static void gw_mex_load_items(const char *dat_path, uint32_t port_kind) {
+/* Guest code ranges of the loaded articles, so a reinstall can unregister them. */
+#define GW_MEX_MAX_ARTICLES 16
+static uint32_t gw_mex_article_lo[GW_MEX_MAX_ARTICLES], gw_mex_article_hi[GW_MEX_MAX_ARTICLES];
+static int gw_mex_article_count;
+
+static void gw_mex_unload_items(void) {
+    uint32_t i;
+    int k;
+    for (k = 0; k < gw_mex_article_count; ++k) {
+        gw_ppc_remove_code_range(gw_mex_article_lo[k], gw_mex_article_hi[k]);
+    }
+    gw_mex_article_count = 0;
+    for (i = 0; i < gw_mex_article_sym_count; ++i) {
+        free((void *) gw_mex_article_syms[i].name);
+    }
+    gw_mex_article_sym_count = 0;
+}
+
+/* Load every article of `dat_path`'s itFunction for port fighter `port_kind`. Needs mexData.
+ * With `arch_data` (the game's loaded copy of the same file, data section) each article's code is
+ * relocated in place there, as m-ex does; otherwise it is copied into persistent memory. */
+static void gw_mex_load_items(const char *dat_path, uint32_t port_kind, uint32_t arch_data,
+                              uint32_t arch_data_size) {
     extern void *gw_HSD_MemAlloc(uint32_t size);
     extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
     uint32_t dat_size = 0, data_size, top, count, n;
@@ -529,7 +550,16 @@ static void gw_mex_load_items(const char *dat_path, uint32_t port_kind) {
             gw_log("itfunction: article %u has an out-of-range code/reloc table", n);
             continue;
         }
-        code = (uint32_t) (uintptr_t) gw_mex_persist_alloc(code_size);
+        if (arch_data != 0u) {
+            if (data_size != arch_data_size) {
+                gw_log("itfunction: %s on disc is not the loaded archive - articles skipped",
+                       dat_path);
+                break;
+            }
+            code = arch_data + code_off;
+        } else {
+            code = (uint32_t) (uintptr_t) gw_mex_persist_alloc(code_size);
+        }
         if (code == 0u) {
             gw_log("itfunction: cannot allocate %u bytes for article %u", code_size, n);
             continue;
@@ -542,6 +572,11 @@ static void gw_mex_load_items(const char *dat_path, uint32_t port_kind) {
         /* Register BEFORE anything can run it: the interpreter must treat a bl between two
          * functions of this article as in-guest, not as a native call. */
         gw_ppc_add_code_range(code, code + code_size);
+        if (gw_mex_article_count < GW_MEX_MAX_ARTICLES) {
+            gw_mex_article_lo[gw_mex_article_count] = code;
+            gw_mex_article_hi[gw_mex_article_count] = code + code_size;
+            ++gw_mex_article_count;
+        }
         gw_mex_article_symbols(dat, dat_size, mf, code);
 
         global = gw_mex_ft_item_global(port_kind, n, "itFunction");
@@ -734,6 +769,17 @@ static int gw_mex_in_blob(uint32_t a) {
     return gw_ppc_is_guest_code(a);
 }
 
+/* Release every thunk bound to guest code in [lo, hi) - that code is being unloaded. Anything
+ * native still holding such a thunk belonged to the scene that just ended (its GObjs are gone). */
+static void gw_mex_release_thunks(uint32_t lo, uint32_t hi) {
+    int k;
+    for (k = 0; k < gw_mex_thunk_count; ++k) {
+        if (gw_mex_thunk_guest[k] >= lo && gw_mex_thunk_guest[k] < hi) {
+            gw_mex_thunk_guest[k] = 0u;
+        }
+    }
+}
+
 /* Guest function address -> something native code can call. See the block comment above. */
 static uint32_t gw_mex_callable(uint32_t guest, const char *why) {
     int k, kind = 0;
@@ -747,11 +793,18 @@ static uint32_t gw_mex_callable(uint32_t guest, const char *why) {
                 return (uint32_t) (uintptr_t) gw_mex_thunks[k];
             }
         }
-        if (gw_mex_thunk_count >= GW_MEX_THUNK_MAX) {
-            gw_panic("interp: out of native thunks (%d) binding %s for %s", GW_MEX_THUNK_MAX,
-                     gw_ppc_describe(guest), why);
+        for (k = 0; k < gw_mex_thunk_count; ++k) {
+            if (gw_mex_thunk_guest[k] == 0u) {
+                break; /* a slot released by gw_mex_release_thunks */
+            }
         }
-        k = gw_mex_thunk_count++;
+        if (k == gw_mex_thunk_count) {
+            if (gw_mex_thunk_count >= GW_MEX_THUNK_MAX) {
+                gw_panic("interp: out of native thunks (%d) binding %s for %s", GW_MEX_THUNK_MAX,
+                         gw_ppc_describe(guest), why);
+            }
+            ++gw_mex_thunk_count;
+        }
         gw_mex_thunk_guest[k] = guest;
         gw_log("interp: thunk %d -> guest %s (%s)", k, gw_ppc_describe(guest), why);
         return (uint32_t) (uintptr_t) gw_mex_thunks[k];
@@ -1483,59 +1536,91 @@ static const char *gw_mex_symbolize(uint32_t guest_addr) {
     return n != NULL ? n : gw_mex_article_symbol_name(guest_addr);
 }
 
-/* Called from game code (ftData_8008572C) once Sonic's data is on the disc. `kind` is the port's
- * Ft_Kind_Sonic (33). */
-void gw_Mex_FtFunctionInstall(int kind) {
-    uint32_t code_base, mexdata_base, stack_base, getdata_base;
-    extern void *gw_HSD_MemAlloc(uint32_t size);
+/* Called from game code (ftData_8008572C) every time Sonic's fighter file is (re)loaded - once per
+ * residency, i.e. per scene that uses him. `kind` is the port's Ft_Kind_Sonic (33); `arch_data` /
+ * `arch_data_size` are the loaded PlSn archive's data section.
+ *
+ * Ported from m-ex (https://github.com/akaneia/m-ex): Init ftFunction.asm relocates a fighter's
+ * code IN PLACE inside its loaded Pl file, so the code lives exactly as long as the file and costs
+ * no memory of its own. The port does the same, which is what lets any number of m-ex fighters
+ * load match by match instead of each claiming persistent memory forever. Only the runtime's
+ * shared state (mexData, the guest stack, the Arch_FighterFunc holder) is persistent.
+ *
+ * A reload first unwinds the previous install: its code ranges, thunks and symbols point into the
+ * previous (now freed) copy of the file. */
+void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size) {
+    static uint32_t mexdata_base, stack_base;
+    uint32_t getdata_base;
     int rc;
 
-    if (kind != GW_MEX_KIND_SONIC || gw_mex_installed != 0) {
+    if (kind != GW_MEX_KIND_SONIC || gw_mex_installed < 0) {
+        return;
+    }
+
+    if (mexdata_base == 0u) {
+        /* One-time, process-lifetime setup. */
+        mexdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_MEXDATA_SIZE);
+        stack_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_STACK_SIZE);
+        getdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_GETDATA_SIZE);
+        gw_mex_getdata_buf = getdata_base;
+        {
+            /* Make every per-kind slot of the synthetic costume table point at a zeroed
+             * sub-region, so onLoad's costume lookup dereferences valid guest memory and reads
+             * NULL (skips). */
+            uint32_t i;
+            for (i = 0; i < 0x400u / 4u; ++i) {
+                gw_w32((void *)(uintptr_t)(getdata_base + 4u * i), getdata_base + 0x400u);
+            }
+        }
+        gw_mex_stack_top = stack_base + GW_MEX_STACK_SIZE - 0x100u;
+        gw_mexdt_load();
+        /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every
+         * panic, budget dump and trace names a guest function instead of a bare address. */
+        gw_ppc_set_symbolizer(gw_mex_symbolize);
+        /* First in the chain, so it runs before the port's own crash handling - which it defers
+         * to for anything that is not an execute fault inside the blob. */
+        if (AddVectoredExceptionHandler(1, gw_mex_exec_trap) == NULL) {
+            gw_log("interp: could not install the guest execute trap - direct native calls into "
+                   "guest code will crash");
+        }
+    }
+
+    if (gw_mex_installed == 1) {
+        /* Unwind the previous residency. Its file is gone; nothing may reach its code. */
+        gw_log("interp: reinstalling Sonic ftFunction (previous code 0x%08X was freed with its "
+               "file)",
+               gw_mex_ff.code_base);
+        gw_mex_release_thunks(gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size);
+        {
+            int k;
+            for (k = 0; k < gw_mex_article_count; ++k) {
+                gw_mex_release_thunks(gw_mex_article_lo[k], gw_mex_article_hi[k]);
+            }
+        }
+        gw_mex_unload_items();
+        gw_ftfunction_free(&gw_mex_ff);
+        gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, 0u, 0u);
+        gw_mex_movelogic_table = 0u;
+        gw_mex_installed = 0;
+    }
+    if (arch_data == NULL) {
+        gw_log("interp: ftFunction install failed: no loaded archive");
         return;
     }
     gw_mex_installed = -1;
 
-    code_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(0x6000u);
-    mexdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_MEXDATA_SIZE);
-    stack_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_STACK_SIZE);
-    getdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_GETDATA_SIZE);
-    if (code_base == 0 || mexdata_base == 0 || stack_base == 0 || getdata_base == 0) {
-        gw_log("interp: ftFunction install failed: heap allocation returned NULL");
-        return;
-    }
-    memset((void *)(uintptr_t)mexdata_base, 0, GW_MEX_MEXDATA_SIZE);
-    memset((void *)(uintptr_t)getdata_base, 0, GW_MEX_GETDATA_SIZE);
-    gw_mex_getdata_buf = getdata_base;
-    {
-        /* Make every per-kind slot of the synthetic costume table point at a zeroed sub-region,
-         * so onLoad's costume lookup dereferences valid guest memory and reads NULL (skips). */
-        uint32_t i;
-        for (i = 0; i < 0x400u / 4u; ++i) {
-            gw_w32((void *)(uintptr_t)(getdata_base + 4u * i), getdata_base + 0x400u);
-        }
-    }
-
-    rc = gw_ftfunction_load_at(GW_MEX_FTFUNC_DAT, GW_MEX_INTERNAL_SONIC, code_base, mexdata_base,
-                               &gw_mex_ff);
+    rc = gw_ftfunction_load_in_archive(GW_MEX_FTFUNC_DAT, GW_MEX_INTERNAL_SONIC,
+                                       (uint32_t) (uintptr_t) arch_data, arch_data_size,
+                                       mexdata_base, &gw_mex_ff);
     if (rc != GW_FTFUNC_OK) {
         gw_log("interp: ftFunction install failed: load returned %d", rc);
         return;
     }
 
-    gw_mex_stack_top = stack_base + GW_MEX_STACK_SIZE - 0x100u;
     gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, gw_mex_ff.code_base,
                       gw_mex_ff.code_base + gw_mex_ff.code_size);
-    /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every panic,
-     * budget dump and trace names a guest function instead of printing a bare address. */
-    gw_mexdt_load();
-    gw_mex_load_items(GW_MEX_FTFUNC_DAT, (uint32_t) GW_MEX_KIND_SONIC);
-    gw_ppc_set_symbolizer(gw_mex_symbolize);
-    /* First in the chain, so it runs before the port's own crash handling - which it defers to
-     * for anything that is not an execute fault inside the blob. */
-    if (AddVectoredExceptionHandler(1, gw_mex_exec_trap) == NULL) {
-        gw_log("interp: could not install the guest execute trap - direct native calls into "
-               "guest code will crash");
-    }
+    gw_mex_load_items(GW_MEX_FTFUNC_DAT, (uint32_t) GW_MEX_KIND_SONIC,
+                      (uint32_t) (uintptr_t) arch_data, arch_data_size);
 
     gw_mex_movelogic_setup();
 

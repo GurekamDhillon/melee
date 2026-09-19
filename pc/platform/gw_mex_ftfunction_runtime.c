@@ -627,6 +627,25 @@ float gw_Mex_ResultScaleForPortCKind(int ck) {
 }
 int gw_Mex_AnnouncerForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 0x34u, -1); }
 
+/* ---- m-ex menu params (mexData.menu +0x00) ---------------------------------------------------
+ * params[0] is the CSS cursor scale m-ex's CursorScale patches apply (Akaneia: 0.95 - its icon
+ * grid is denser than retail's 25, so the retail hand covers too much of it). params[2] is the
+ * 1P level-text Y offset (AdjustLevelTextOffset). 1.0 when there is no mexData, so a caller can
+ * multiply unconditionally. */
+float gw_Mex_MenuParamF(int i) {
+    uint32_t menu, params, p;
+    if (i < 0 || i > 7 || gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+        return 1.0f;
+    }
+    menu = gw_r32((const void *) (uintptr_t) (gw_mexdt + 0x04u));
+    params = gw_mexdt_in(menu, 4u) ? gw_r32((const void *) (uintptr_t) menu) : 0u;
+    p = params + (uint32_t) i * 4u;
+    if (params == 0u || !gw_mexdt_in(p, 4u)) {
+        return 1.0f;
+    }
+    return gw_rf32((const void *) (uintptr_t) p);
+}
+
 /* ---- m-ex menu playlist (mexData.music +0x04 / +0x08) ----------------------------------------
  * Ported from m-ex (https://github.com/akaneia/m-ex): BGM/MenuPlaylist.asm. The main-menu theme
  * becomes a weighted draw over MexPlaylistEntry { u16 bgm_id; u16 chance }, stride 4, instead of

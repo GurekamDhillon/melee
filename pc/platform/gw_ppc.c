@@ -16,6 +16,7 @@
 #include "gw_mex_bridge.h"
 
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Guest MEM1 base - the same reservation gw_mem_init makes in gw_runtime.c. */
@@ -65,7 +66,14 @@ static int gw_ppc_depth;                          /* active gw_ppc_call nesting 
 static uint32_t gw_ppc_entry[GW_PPC_MAX_DEPTH];   /* entry address per level, for the cycle log */
 static int gw_ppc_depth_logged;                   /* the cap log fires once per process */
 
+/* MELEE_PPC_TRACE_FP=1 logs every bridged call that the signature table marks as float-returning,
+ * with its marshalled arguments and result. Diagnostic only: a wrong float signature is silent
+ * garbage, so seeing the actual values is the only way to tell a bad signature from a bad input. */
+static int gw_ppc_trace_fp;
+
 void gw_ppc_set_bridge(gw_ppc_resolver_fn resolve, void *ctx, uint32_t code_lo, uint32_t code_hi) {
+    const char *t = getenv("MELEE_PPC_TRACE_FP");
+    gw_ppc_trace_fp = (t != NULL && t[0] == '1');
     gw_ppc_m.resolve = resolve;
     gw_ppc_m.bridge_ctx = ctx;
     gw_ppc_m.code_lo = code_lo;
@@ -309,6 +317,13 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
         float (*ffn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
                      uint32_t) = (void *)fn;
         float r = ffn(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+        if (gw_ppc_trace_fp) {
+            float a0, a1;
+            memcpy(&a0, &args[0], 4);
+            memcpy(&a1, &args[1], 4);
+            gw_log("ppc: fp-call 0x%08X(%.6f, %.6f) -> %.6f  [nargs=%u mask=0x%X]", guest_addr,
+                   (double) a0, (double) a1, (double) r, sig.n_args, sig.float_args);
+        }
         c->fpr[1].d = (double)r;
     } else {
         c->gpr[3] = fn(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
@@ -1251,7 +1266,13 @@ static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
         if (a != a || b != b) { /* NaN: unordered */
             field = so;         /* LT=GT=EQ=0 */
         } else if (a > b) {
-            field = (2u << 2) | so; /* GT */
+            /* A CR field is [LT, GT, EQ, SO] with LT the MSB, so GT is bit 2 - (1u << 2).
+             * This previously read (2u << 2) = 0b1000, which is the LT bit: every float
+             * compare that should have said "greater" reported "less". A `blt` after a float
+             * compare therefore branched exactly when it should not, which hung Sonic's
+             * neutral special in `while (angle < 0) angle += 2*PI;` - the angle went positive
+             * immediately and the loop kept going anyway (observed: f31 had reached 8.9e7). */
+            field = (1u << 2) | so; /* GT */
         } else if (a < b) {
             field = (1u << 3) | so; /* LT */
         } else {
@@ -1282,6 +1303,24 @@ static uint32_t gw_ppc_run(gw_ppc_machine *m) {
             hi = ip;
         }
         if (budget-- == 0u) {
+            /* Dump the FPRs/GPRs a float loop would be turning on, before panicking: a runaway
+             * numeric loop is almost always one operand being wrong (a zero step, an infinity),
+             * and the values are the only way to tell which. */
+            int k;
+            gw_log("ppc: instruction budget exhausted at ip=0x%08X, PC range 0x%08X..0x%08X - "
+                   "guest register state follows:", ip, lo, hi);
+            for (k = 0; k < 32; ++k) {
+                if (m->cpu.fpr[k].d != 0.0) {
+                    gw_log("ppc:   f%-2d = %.9g  (bits 0x%08X%08X)", k, m->cpu.fpr[k].d,
+                           (unsigned) (m->cpu.fpr[k].u64 >> 32),
+                           (unsigned) (m->cpu.fpr[k].u64 & 0xFFFFFFFFu));
+                }
+            }
+            for (k = 0; k < 32; ++k) {
+                if (m->cpu.gpr[k] != 0u) {
+                    gw_log("ppc:   r%-2d = 0x%08X", k, m->cpu.gpr[k]);
+                }
+            }
             gw_panic("ppc: instruction budget (%u) exhausted at ip=0x%08X - guest code is "
                      "looping (PC range 0x%08X..0x%08X). This is an infinite loop in the "
                      "interpreted blob, not an interpreter fault.",
@@ -1715,10 +1754,59 @@ static int test_ppc_fp_aform_decode(void) {
     return 0;
 }
 
+/* ---- float compare test ---------------------------------------------------------------
+ * Regression test for the neutral-B hang. fcmpu encoded GT as (2u << 2) = 0b1000, which is the
+ * LT bit of the [LT, GT, EQ, SO] field - so a float compare reporting "greater" set "less", and
+ * every blt/bgt after a float compare took the wrong path. Checks all three orderings, because
+ * only GT was wrong and testing one direction would have missed it. */
+static int test_ppc_fcmpu_orderings(void) {
+    /* lfs f1,0(r3) ; lfs f2,4(r3) ; fcmpu cr0,f1,f2 ; (mfcr r4) ; stw r4,8(r3) ; blr */
+    static const uint32_t blob[] = {
+        0xC0230000u, /* lfs  f1, 0(r3) */
+        0xC0430004u, /* lfs  f2, 4(r3) */
+        0xFC011000u, /* fcmpu cr0, f1, f2 */
+        0x7C800026u, /* mfcr r4 */
+        0x90830008u, /* stw  r4, 8(r3) */
+        0x4E800020u, /* blr */
+    };
+    /* CR0 occupies the top nibble of CR: LT=0x80000000, GT=0x40000000, EQ=0x20000000. */
+    static const struct { float a, b; uint32_t want; const char *name; } cases[] = {
+        {1.0f, 2.0f, 0x80000000u, "less"},
+        {2.0f, 1.0f, 0x40000000u, "greater"},
+        {1.5f, 1.5f, 0x20000000u, "equal"},
+    };
+    unsigned i;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t) sizeof blob);
+
+    for (i = 0; i < sizeof cases / sizeof cases[0]; ++i) {
+        uint32_t args[1];
+        uint32_t got;
+        gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 0), cases[i].a);
+        gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 4), cases[i].b);
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 8), 0u);
+        args[0] = GW_PPC_TEST_FDATA;
+        gw_ppc_call(GW_PPC_TEST_CODE, args, 1, 0, GW_PPC_TEST_STACK);
+        got = gw_r32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 8)) & 0xF0000000u;
+        if (got != cases[i].want) {
+            gw_test_fail("fcmpu %.1f vs %.1f (%s): CR0 = 0x%08X, expected 0x%08X",
+                         (double) cases[i].a, (double) cases[i].b, cases[i].name, got,
+                         cases[i].want);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
     gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
     gw_test_register("ppc_fp_aform_decode", test_ppc_fp_aform_decode);
+    gw_test_register("ppc_fcmpu_orderings", test_ppc_fcmpu_orderings);
 }

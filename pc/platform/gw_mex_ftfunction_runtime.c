@@ -29,6 +29,7 @@
 #include "gw_mex_ftfunction.h"
 #include "gw_mex_bridge.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -190,9 +191,69 @@ static uint32_t gw_mex_shim_setup_proc(uint32_t gobj, uint32_t cb, uint32_t prio
     return 0;
 }
 
+/* ---- bridged-call signatures -----------------------------------------------------------
+ * The bridge defaults every target to "8 integer args, integer return" (gw_ppc_bridge_call).
+ * That is correct for the majority of engine calls, which pass pointers and ints, but it is
+ * silently WRONG for anything using the FPRs: float arguments get pulled from r3.. instead of
+ * f1.., and a float return is dropped on the floor because the callee's f1 is never written back.
+ *
+ * That is not a crash - it is garbage that propagates. It cost a real bug: Sonic's neutral
+ * special calls atan2f and then normalises the angle with
+ *     while (a < 0) a += 2*PI;
+ * With atan2f's return discarded, the guest read a stale f1; when that happened to be hugely
+ * negative the loop could never reach zero and the game hung inside the interpreter with no
+ * diagnostic (found via the GW_PPC_MAX_INSNS budget panic).
+ *
+ * This table is the float-signature set, keyed by guest address. It is deliberately explicit
+ * rather than inferred: a wrong signature here is another silent-garbage bug, so each entry is
+ * justified by the function's decomp prototype. NOTE this covers the math library and the one
+ * engine function already known; the blob bridges ~101 distinct targets in total and the rest
+ * still ride the integer default, so any engine function taking or returning a float is still
+ * a latent instance of this bug. Deriving the full set from the decomp prototypes is the
+ * principled fix. */
+typedef struct gw_mex_sig_entry {
+    uint32_t guest;
+    uint32_t float_args; /* bit i => native arg slot i is a float from the next FPR */
+    uint32_t n_args;
+    int ret_float;
+} gw_mex_sig_entry;
+
+#define GW_MEX_SIG_F1 0x1u  /* (float) */
+#define GW_MEX_SIG_F2 0x3u  /* (float, float) */
+
+static const gw_mex_sig_entry gw_mex_sigs[] = {
+    /* libm: one or two float args, float return. Addresses from config/GALE01/symbols.txt. */
+    {0x8000CE50u, GW_MEX_SIG_F1, 1, 1}, /* expf   */
+    {0x8000CEE0u, GW_MEX_SIG_F2, 2, 1}, /* powf   */
+    {0x80022C30u, GW_MEX_SIG_F2, 2, 1}, /* atan2f <- the neutral-B hang */
+    {0x80022D1Cu, GW_MEX_SIG_F1, 1, 1}, /* acosf  */
+    {0x80022DBCu, GW_MEX_SIG_F1, 1, 1}, /* asinf  */
+    {0x80022E68u, GW_MEX_SIG_F1, 1, 1}, /* atanf  */
+    {0x803261BCu, GW_MEX_SIG_F1, 1, 1}, /* tanf   */
+    {0x80326240u, GW_MEX_SIG_F1, 1, 1}, /* cosf   */
+    {0x803263D4u, GW_MEX_SIG_F1, 1, 1}, /* sinf   */
+    {0x803265A8u, GW_MEX_SIG_F1, 1, 1}, /* logf   */
+    {0x80364340u, GW_MEX_SIG_F2, 2, 1}, /* fmodf  */
+    {0x803228C0u, GW_MEX_SIG_F1, 1, 0}, /* __cvt_fp2unsigned: float in, integer out */
+
+    /* Fighter_ChangeMotionState(gobj, msid, flags, f32 anim_start, f32 anim_speed,
+     * f32 anim_blend, arg3): ints in r3-r5, floats in f1-f3, then arg3 in r6. */
+    {0x800693ACu, (1u << 3) | (1u << 4) | (1u << 5), 7, 0},
+};
+
+static const gw_mex_sig_entry *gw_mex_sig_lookup(uint32_t guest_addr) {
+    unsigned i;
+    for (i = 0; i < sizeof gw_mex_sigs / sizeof gw_mex_sigs[0]; ++i) {
+        if (gw_mex_sigs[i].guest == guest_addr) {
+            return &gw_mex_sigs[i];
+        }
+    }
+    return NULL;
+}
+
 /* guest -> native resolver: m-ex-only helpers and guest-callback installers resolve to the native
- * shims above; everything else resolves through the build-time bridge table. Fighter_ChangeMotionState
- * (0x800693AC) is tagged with its float signature so the bridge marshals its f1..f3 float args. */
+ * shims above; everything else resolves through the build-time bridge table, tagged with its
+ * float signature when gw_mex_sigs has one. */
 static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
     int kind;
     uint32_t native;
@@ -215,12 +276,11 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
     }
     native = gw_mex_bridge_lookup(guest_addr, &kind);
     if (native != 0 && kind == 1) {
-        if (guest_addr == 0x800693ACu) {
-            /* Fighter_ChangeMotionState(gobj, msid, flags, f32 anim_start, f32 anim_speed,
-             * f32 anim_blend, arg3): ints in r3-r5, floats in f1-f3, then arg3 in r6. */
-            sig->float_args = (1u << 3) | (1u << 4) | (1u << 5);
-            sig->n_args = 7;
-            sig->ret_float = 0;
+        const gw_mex_sig_entry *e = gw_mex_sig_lookup(guest_addr);
+        if (e != NULL) {
+            sig->float_args = e->float_args;
+            sig->n_args = e->n_args;
+            sig->ret_float = e->ret_float;
         }
         return (gw_ppc_native_fn)(uintptr_t)native;
     }
@@ -595,6 +655,27 @@ void gw_Mex_FtFunctionInstall(int kind) {
                          gw_mex_interp_item_pickup);
 
     gw_mex_installed = 1;
+    /* MELEE_MEX_DUMP_CODE=<path> writes the RELOCATED blob (what the interpreter actually
+     * executes, after Reloc/Overload have been applied) so it can be disassembled offline:
+     *   python tools/mex_port/ppc_disasm.py --raw <path> --base <code_base> --start <va> --count N
+     * Dumping the relocated image rather than the on-disc section matters - the disc bytes still
+     * have unrelocated branch/address operands, so they disassemble into misleading targets. */
+    {
+        const char *dump_path = getenv("MELEE_MEX_DUMP_CODE");
+        if (dump_path != NULL && dump_path[0] != '\0') {
+            FILE *df = fopen(dump_path, "wb");
+            if (df == NULL) {
+                gw_log("interp: MELEE_MEX_DUMP_CODE: cannot open %s", dump_path);
+            } else {
+                size_t wrote = fwrite((const void *)(uintptr_t)gw_mex_ff.code_base, 1,
+                                      gw_mex_ff.code_size, df);
+                fclose(df);
+                gw_log("interp: dumped %u bytes of relocated code (base 0x%08X) to %s",
+                       (unsigned)wrote, gw_mex_ff.code_base, dump_path);
+            }
+        }
+    }
+
     gw_log("interp: installed Sonic ftFunction (code 0x%08X..0x%08X, mexData 0x%08X, stack "
            "0x%08X, %d overrides); onLoad/onFrame/onActionStateChange/onReapplyAttr/8 specials/"
            "onDoubleJump/onUSmash/onItemPickup + MoveLogic table active",

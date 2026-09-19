@@ -1256,8 +1256,8 @@ static inline s32 getHandicapValue(int port)
  * mexSelectChr's one CSP material animation, frame = ext + costume * csp_stride (41 on Akaneia),
  * and the emblem is a frame of IfAll's Eblm_matanim_joint, frame = insignia[ext]. Retail used one
  * frame for both (ft_hudindex + costume * 30), which on Akaneia showed a stale portrait: Akaneia
- * stripped every retail portrait animation. VS doors only; 1P keeps the retail path for now. */
-static void mnCharSel_MexPortrait(int door, int icon, int costume)
+ * stripped every retail portrait animation. */
+static void mnCharSel_MexPortrait(int door, int icon, int costume, int retail_frame)
 {
     extern int Mex_PortCKindToExt(int);
     extern int Mex_InsigniaForExt(int);
@@ -1266,6 +1266,25 @@ static void mnCharSel_MexPortrait(int door, int icon, int costume)
     HSD_JObj* j;
     if (ext < 0) {
         mnCharSel_8025D5AC(door, 0, 1);
+        return;
+    }
+    if (mnCharSel_804D6CF5 == 1) {
+        /* 1P / Training. Run the retail routine first - it also drives the stock-icon dots and
+         * the rest of the card - then override the portrait and emblem with m-ex frames. The
+         * player's card is the regend model (portrait 45, emblem 43); the Training CPU door is
+         * its own model (portrait 6, emblem 4). */
+        HSD_JObj* root = door != 0 ? mnCharSel_804D6CC4 : mnCharSel_804D6CC0;
+        int cj = door != 0 ? 6 : 0x2D;
+        int ej = door != 0 ? 4 : 0x2B;
+        mnCharSel_8025D5AC(door, retail_frame, 0);
+        if (root == NULL) {
+            return;
+        }
+        j = animateJoint(root, cj, TOBJ_MASK,
+                         (float) (ext + costume * mnCharSel_Mex->csp_stride));
+        sethidden(j, 0);
+        j = animateJoint(root, ej, TOBJ_MASK, (float) (emblem >= 0 ? emblem : 0));
+        sethidden(j, emblem < 0);
         return;
     }
     j = animateJoint(mnCharSel_804D6CC0, mnCharSel_803F0DFC.doors[door].costume_joint,
@@ -1648,8 +1667,8 @@ void mnCharSel_8025DB34(u8 arg0)
             }
             hud_idx += color * 0x1E;
 #if defined(TARGET_PC)
-            if (mnCharSel_Mex != NULL && mnCharSel_804D6CF5 != 1) {
-                mnCharSel_MexPortrait((int) arg0, final_icon, color);
+            if (mnCharSel_Mex != NULL) {
+                mnCharSel_MexPortrait((int) arg0, final_icon, color, hud_idx);
             } else
 #endif
             mnCharSel_8025D5AC((int) arg0, hud_idx, 0);
@@ -4287,6 +4306,32 @@ static const GXColor mnCharSel_804DC590 = { 180, 80, 0, 255 };
 static const GXColor mnCharSel_804DC594 = { 220, 0, 0, 255 };
 
 #if defined(TARGET_PC)
+/* Give one portrait slot m-ex's art: the portrait joint's DObj gets mexSelectChr's CSP material
+ * animation, the emblem joint's SECOND DObj IfAll's Eblm_matanim_joint animation - the same shape
+ * in every m-ex patch that does it (Replace CSS VS / SinglePlayer / Training Emblem). */
+static void mnCharSel_MexAttach(MexSelectChr* mex, HSD_JObj* root, int csp_joint,
+                                int emblem_joint)
+{
+    extern HSD_Archive* lbDvd_8001819C(const char* basename);
+    HSD_Archive* ifall = lbDvd_8001819C("IfAll");
+    HSD_MatAnimJoint* eblm =
+        ifall != NULL ? HSD_ArchiveGetPublicAddress(ifall, "Eblm_matanim_joint") : NULL;
+    HSD_JObj* j;
+    if (root == NULL) {
+        return;
+    }
+    j = NULL;
+    lb_80011E24(root, &j, csp_joint, -1);
+    if (j != NULL && j->u.dobj != NULL && mex->csp_matanim != NULL) {
+        HSD_DObjAddAnimAll(j->u.dobj, mex->csp_matanim, NULL);
+    }
+    j = NULL;
+    lb_80011E24(root, &j, emblem_joint, -1);
+    if (j != NULL && j->u.dobj != NULL && j->u.dobj->next != NULL && eblm != NULL) {
+        HSD_DObjAddAnimAll(j->u.dobj->next, eblm->matanim, NULL);
+    }
+}
+
 /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/CSS Expansion/ - the data-driven
  * CSS, re-expressed natively (see _research/mex-css.md). When the MnSlChr archive carries
  * `mexSelectChr` (Akaneia does) and mexData has a CSS icon table:
@@ -4350,6 +4395,17 @@ static void mnCharSel_MexSetup(void)
          * fighters are hidden, as on retail). Both are excluded from the packed grid below, so
          * neither leaves a hole. */
         mnCharSel_IconUnavail[i] = (ck < 0) || !gm_IsCKindUnlocked((u8) ck);
+        /* Stub: the port's Sonic (0x20) has no single-player STORY data on the disc (per-character
+         * intro/ending/progression files), so Classic crashed at load in lbfile.c on a missing
+         * file (user-found). Hidden in the three story modes; he stays in Training and the
+         * Stadium modes, which use no per-character story files (Target Test runs him fine). */
+        if (ck == 0x20 &&
+            (mnCharSel_804D6CB0->match_type == REG_CLASSIC ||
+             mnCharSel_804D6CB0->match_type == REG_ADVENTURE ||
+             mnCharSel_804D6CB0->match_type == REG_ALLSTAR))
+        {
+            mnCharSel_IconUnavail[i] = 1;
+        }
         icons[i].char_kind = (ck < 0) ? retail_none.char_kind : (u8) ck;
         icons[i].anim_timer = 0;
     }
@@ -4437,25 +4493,15 @@ static void mnCharSel_MexSetup(void)
      * portrait joint's DObj the CSP material animation, and each emblem joint's SECOND DObj IfAll's
      * Eblm_matanim_joint animation. Frames are picked per selection in mnCharSel_MexPortrait. */
     if (mnCharSel_804D6CF5 != 1) {
-        extern HSD_Archive* lbDvd_8001819C(const char* basename);
-        HSD_Archive* ifall = lbDvd_8001819C("IfAll");
-        HSD_MatAnimJoint* eblm =
-            ifall != NULL ? HSD_ArchiveGetPublicAddress(ifall, "Eblm_matanim_joint") : NULL;
         int d;
         for (d = 0; d < 4; d++) {
-            j = NULL;
-            lb_80011E24(mnCharSel_804D6CC0, &j, mnCharSel_803F0DFC.doors[d].costume_joint,
-                        -1);
-            if (j != NULL && j->u.dobj != NULL && mex->csp_matanim != NULL) {
-                HSD_DObjAddAnimAll(j->u.dobj, mex->csp_matanim, NULL);
-            }
-            j = NULL;
-            lb_80011E24(mnCharSel_804D6CC0, &j, mnCharSel_803F0DFC.doors[d].emblem_joint,
-                        -1);
-            if (j != NULL && j->u.dobj != NULL && j->u.dobj->next != NULL && eblm != NULL) {
-                HSD_DObjAddAnimAll(j->u.dobj->next, eblm->matanim, NULL);
-            }
+            mnCharSel_MexAttach(mex, mnCharSel_804D6CC0, mnCharSel_803F0DFC.doors[d].costume_joint,
+                                mnCharSel_803F0DFC.doors[d].emblem_joint);
         }
+    } else {
+        /* 1P / Training: the regend model's portrait is joint 45, its emblem joint 43. The
+         * Training CPU door is a separate model, attached where it is built. */
+        mnCharSel_MexAttach(mex, mnCharSel_804D6CC0, 0x2D, 0x2B);
     }
 
     mnCharSel_IconRoot = root;
@@ -4742,6 +4788,12 @@ s32 mnCharSel_802640A0(void)
         HSD_JObjAddAnimAll(mnCharSel_804D6CC4, css_models->door.animjoint,
                            css_models->door.matanim_joint,
                            css_models->door.shapeanim_joint);
+#if defined(TARGET_PC)
+        /* m-ex "Replace CSS Training Emblem": the CPU door's portrait is joint 6, emblem 4 */
+        if (mnCharSel_Mex != NULL) {
+            mnCharSel_MexAttach(mnCharSel_Mex, mnCharSel_804D6CC4, 6, 4);
+        }
+#endif
         HSD_JObjReqAnimAll(mnCharSel_804D6CC4, 0.0f);
         HSD_ForeachAnim(mnCharSel_804D6CC4, JOBJ_TYPE, ALL_TYPE_MASK,
                         HSD_AObjStopAnim, AOBJ_ARG_AOV, 0, 0);

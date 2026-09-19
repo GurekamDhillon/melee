@@ -295,6 +295,171 @@ static uint32_t gw_mex_shim_index_item(uint32_t fighter_kind, uint32_t desc, uin
     return 0u;
 }
 
+/* ---- item articles: itFunction -------------------------------------------------------------
+ * A fighter's own item code ships in its .dat as the public symbol `itFunction` - Sonic's spring
+ * lives there. Layout, verified across all 7 Akaneia custom fighters (tools/mex_port/
+ * dump_itfunction.py, _research/mex-item-spawn.md):
+ *     { u32 count; u32 article[count]; }   article[n] = data offset of a MEXFunction, 0 = hole
+ * Each article is an ORDINARY MEXFunction - the same struct as ftFunction - which is why parsing
+ * the whole symbol as one MEXFunction (the earlier attempt) produced nonsense.
+ *
+ * What m-ex does with it (its loader hook @0x80068B40, run right after ftFunction): relocate each
+ * article's code, then write `Custom[global-237][slot] = code + off` for each FUNCTION reloc
+ * {slot, code_offset}, where slot is a word index into the 0x3C-byte ItemLogicTable. Slots it does
+ * not list keep their shipped values. That is what fills item.Custom - MEX_IndexFighterItem only
+ * ever writes RuntimeIndex (confirmed against the code Akaneia actually ships).
+ *
+ * The state table the logic table points at lives INSIDE the article's code (at code+0), and its
+ * function pointers are fixed up by the article's own abs32 instruction relocs. So every function
+ * reachable from Custom[] is guest code; native item code calling it lands in the execute trap. */
+
+#define GW_MEX_ITEM_LOGIC_STRIDE 0x3Cu /* sizeof ItemLogicTable (identical redefinition below) */
+#define GW_MEX_ITEM_LOGIC_SLOTS 15u   /* 0x3C / 4 */
+
+#define GW_MEX_MAX_ARTICLE_SYMS 256
+static gw_ftfunction_symbol gw_mex_article_syms[GW_MEX_MAX_ARTICLE_SYMS];
+static uint32_t gw_mex_article_sym_count;
+
+static void gw_mex_article_symbols(const unsigned char *dat, uint32_t dat_size, uint32_t mf,
+                                   uint32_t code) {
+    /* +0x18 count, +0x1C table data offset; entries {start, END, name}, stride 12. */
+    uint32_t n = gw_r32(dat + mf + 0x18), off = gw_r32(dat + mf + 0x1C), i;
+    uint32_t tbl = 0x20u + off;
+    if (n == 0u || (uint64_t) tbl + (uint64_t) n * 12u > dat_size) {
+        return;
+    }
+    for (i = 0; i < n && gw_mex_article_sym_count < GW_MEX_MAX_ARTICLE_SYMS; ++i) {
+        const unsigned char *e = dat + tbl + i * 12u;
+        uint32_t np = 0x20u + gw_r32(e + 8), len = 0;
+        char *copy;
+        if (np >= dat_size) {
+            continue;
+        }
+        while (np + len < dat_size && dat[np + len] != 0 && len < 127u) {
+            ++len;
+        }
+        copy = (char *) malloc(len + 1u);
+        if (copy == NULL) {
+            return;
+        }
+        memcpy(copy, dat + np, len);
+        copy[len] = 0;
+        gw_mex_article_syms[gw_mex_article_sym_count].start = code + gw_r32(e + 0);
+        gw_mex_article_syms[gw_mex_article_sym_count].end = code + gw_r32(e + 4);
+        gw_mex_article_syms[gw_mex_article_sym_count].name = copy;
+        ++gw_mex_article_sym_count;
+    }
+}
+
+static const char *gw_mex_article_symbol_name(uint32_t a) {
+    uint32_t i;
+    for (i = 0; i < gw_mex_article_sym_count; ++i) {
+        if (a >= gw_mex_article_syms[i].start && a < gw_mex_article_syms[i].end) {
+            return gw_mex_article_syms[i].name;
+        }
+    }
+    return NULL;
+}
+
+/* Load every article of `dat_path`'s itFunction for port fighter `port_kind`. Needs mexData. */
+static void gw_mex_load_items(const char *dat_path, uint32_t port_kind) {
+    extern void *gw_HSD_MemAlloc(uint32_t size);
+    extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
+    uint32_t dat_size = 0, data_size, top, count, n;
+    unsigned char *dat;
+    int32_t pub;
+
+    if (gw_mexdt == 0u) {
+        gw_log("itfunction: mexData not loaded - %s's items cannot be registered", dat_path);
+        return;
+    }
+    dat = (unsigned char *) gw_DVDReadFileAlloc(dat_path, &dat_size);
+    if (dat == NULL || dat_size < 0x20u) {
+        free(dat);
+        return;
+    }
+    data_size = gw_r32(dat + 0x04);
+    pub = gw_ftfunction_find_public(dat, dat_size, "itFunction");
+    if (pub < 0) {
+        gw_log("itfunction: %s has no itFunction (no fighter items)", dat_path);
+        free(dat);
+        return;
+    }
+    top = 0x20u + (uint32_t) pub;
+    count = gw_r32(dat + top);
+    if (count > 64u || (uint64_t) top + 4u + (uint64_t) count * 4u > dat_size) {
+        gw_log("itfunction: %s implausible article count %u", dat_path, count);
+        free(dat);
+        return;
+    }
+    for (n = 0; n < count; ++n) {
+        uint32_t art = gw_r32(dat + top + 4u + n * 4u);
+        uint32_t mf, code_off, irt_off, irt_count, frt_off, frt_count, code_size, code;
+        uint32_t global, item, custom, entry, i;
+        if (art == 0u) {
+            continue; /* a hole in the article array */
+        }
+        mf = 0x20u + art;
+        if ((uint64_t) mf + 0x20u > dat_size) {
+            gw_log("itfunction: article %u struct past the file", n);
+            continue;
+        }
+        code_off = gw_r32(dat + mf + 0x00);
+        irt_off = gw_r32(dat + mf + 0x04); /* NB: 0 is a VALID offset (Sonic's spring uses it) */
+        irt_count = gw_r32(dat + mf + 0x08);
+        frt_off = gw_r32(dat + mf + 0x0C);
+        frt_count = gw_r32(dat + mf + 0x10);
+        code_size = gw_r32(dat + mf + 0x14);
+        if (code_size == 0u || code_off > data_size || code_size > data_size - code_off ||
+            (uint64_t) frt_off + (uint64_t) frt_count * 8u > data_size) {
+            gw_log("itfunction: article %u has an out-of-range code/reloc table", n);
+            continue;
+        }
+        code = (uint32_t) (uintptr_t) gw_HSD_MemAlloc(code_size);
+        if (code == 0u) {
+            gw_log("itfunction: cannot allocate %u bytes for article %u", code_size, n);
+            continue;
+        }
+        memcpy((void *) (uintptr_t) code, dat + 0x20u + code_off, code_size);
+        if (gw_ftfunction_reloc(dat, dat_size, irt_off, irt_count, code, code_size) != 0) {
+            gw_log("itfunction: article %u relocation failed", n);
+            continue;
+        }
+        /* Register BEFORE anything can run it: the interpreter must treat a bl between two
+         * functions of this article as in-guest, not as a native call. */
+        gw_ppc_add_code_range(code, code + code_size);
+        gw_mex_article_symbols(dat, dat_size, mf, code);
+
+        global = gw_mex_ft_item_global(port_kind, n, "itFunction");
+        if (global < GW_MEX_CUSTOM_ITEM_START) {
+            gw_log("itfunction: article %u maps to vanilla item kind %u - not a custom item", n,
+                   global);
+            continue;
+        }
+        item = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_ITEM));
+        custom = gw_r32((const void *) (uintptr_t) (item + GW_MEXDT_ITEM_OFF_CUSTOM));
+        entry = custom + (global - GW_MEX_CUSTOM_ITEM_START) * GW_MEX_ITEM_LOGIC_STRIDE;
+        if (!gw_mexdt_in(entry, GW_MEX_ITEM_LOGIC_STRIDE)) {
+            gw_log("itfunction: item.Custom[%u] is outside MxDt.dat", global - 237u);
+            continue;
+        }
+        for (i = 0; i < frt_count; ++i) {
+            uint32_t slot = gw_r32(dat + 0x20u + frt_off + i * 8u);
+            uint32_t off = gw_r32(dat + 0x20u + frt_off + i * 8u + 4u);
+            if (slot >= GW_MEX_ITEM_LOGIC_SLOTS || off >= code_size) {
+                gw_log("itfunction: article %u function reloc %u out of range (slot %u off 0x%X)",
+                       n, i, slot, off);
+                continue;
+            }
+            gw_w32((void *) (uintptr_t) (entry + slot * 4u), code + off);
+        }
+        gw_log("itfunction: %s article %u -> item kind %u: code 0x%08X (+0x%X), %u relocs, "
+               "%u logic slots into item.Custom[%u]",
+               dat_path, n, global, code, code_size, irt_count, frt_count, global - 237u);
+    }
+    free(dat);
+}
+
 /* ---- custom item creation (the native half of m-ex's Create Item patch) --------------------
  * Called from Item_80267978 (src/melee/it/item.c), which picks an item's descriptor (xC4) and
  * logic table (xB8) by kind range. Vanilla has four ranges and routes everything >= 208 to the
@@ -450,8 +615,9 @@ static const gw_mex_thunk_fn gw_mex_thunks[GW_MEX_THUNK_MAX] = {
     GW_MEX_THUNK_REF8(4), GW_MEX_THUNK_REF8(5), GW_MEX_THUNK_REF8(6), GW_MEX_THUNK_REF8(7),
 };
 
+/* Guest code = ftFunction or any registered item article (see gw_ppc_add_code_range). */
 static int gw_mex_in_blob(uint32_t a) {
-    return a >= gw_mex_ff.code_base && a < gw_mex_ff.code_base + gw_mex_ff.code_size;
+    return gw_ppc_is_guest_code(a);
 }
 
 /* Guest function address -> something native code can call. See the block comment above. */
@@ -521,12 +687,21 @@ static uint32_t gw_mex_trap_trampoline(uint32_t a0, uint32_t a1, uint32_t a2, ui
     /* Capture the target FIRST: the guest function may itself make a native call that traps
      * again, and that nested trap overwrites gw_mex_trap_target. */
     uint32_t target = gw_mex_trap_target;
-    uint32_t args[4];
+    uint32_t args[4], r3;
+    static int logged_returns;
     args[0] = a0;
     args[1] = a1;
     args[2] = a2;
     args[3] = a3;
-    return gw_ppc_call(target, args, 4, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    r3 = gw_ppc_call(target, args, 4, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    /* The return value matters to native callers more than it looks: an item state's animated /
+     * collided callbacks are predicates, and returning TRUE tells the engine to DESTROY the item.
+     * Log the first few so "why did this die on frame 1" is answerable. */
+    if (logged_returns < 48) {
+        ++logged_returns;
+        gw_log("interp: trap: %s returned r3=0x%08X", gw_ppc_describe(target), r3);
+    }
+    return r3;
 }
 
 static void gw_mex_trap_note(uint32_t eip) {
@@ -1027,7 +1202,8 @@ static void gw_mex_interp_item_pickup(void *gobj, void *arg1) {
 
 /* Symbolizer for gw_ppc: guest address -> the containing blob function's name, or NULL. */
 static const char *gw_mex_symbolize(uint32_t guest_addr) {
-    return gw_ftfunction_symbol_name(&gw_mex_ff, guest_addr);
+    const char *n = gw_ftfunction_symbol_name(&gw_mex_ff, guest_addr);
+    return n != NULL ? n : gw_mex_article_symbol_name(guest_addr);
 }
 
 /* Called from game code (ftData_8008572C) once Sonic's data is on the disc. `kind` is the port's
@@ -1075,6 +1251,7 @@ void gw_Mex_FtFunctionInstall(int kind) {
     /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every panic,
      * budget dump and trace names a guest function instead of printing a bare address. */
     gw_mexdt_load();
+    gw_mex_load_items(GW_MEX_FTFUNC_DAT, (uint32_t) GW_MEX_KIND_SONIC);
     gw_ppc_set_symbolizer(gw_mex_symbolize);
     /* First in the chain, so it runs before the port's own crash handling - which it defers to
      * for anything that is not an execute fault inside the blob. */

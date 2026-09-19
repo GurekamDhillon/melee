@@ -665,8 +665,19 @@ struct Item {
         itZeldaDinFireExplode_ItemVars zeldadinfireexplode;
         u8 _[0xFCC - 0xDD4];
     } xDD4_itemVar;
+#if defined(TARGET_PC)
+    /* +FCC: m-ex extends Item by one word - the ORIGINAL owner, which unlike `owner` never
+     * changes (reflection, theft). Custom item code reads it unconditionally; Sonic's spring
+     * OnSpawn does, so on a 0xFCC-byte Item it read past the allocation. Appended at the end, so
+     * no existing offset moves; the item pool is sized by sizeof(Item) (item.c). */
+    HSD_GObj* mex_original_owner;
+#endif
 };
+#if defined(TARGET_PC)
+ASSERT_SIZE(struct Item, 0xFD0);
+#else
 ASSERT_SIZE(struct Item, 0xFCC);
+#endif
 
 struct sdata_ItemGXLink {
     GObj_RenderFunc x0_renderFunc;

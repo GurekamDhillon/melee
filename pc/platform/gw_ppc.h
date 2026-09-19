@@ -81,6 +81,15 @@ typedef gw_ppc_native_fn (*gw_ppc_resolver_fn)(uint32_t guest_addr, void *ctx, g
  * the bridge instead of being interpreted. */
 void gw_ppc_set_bridge(gw_ppc_resolver_fn resolve, void *ctx, uint32_t code_lo, uint32_t code_hi);
 
+/* Guest code is a SET of ranges, not one. The bridge's [code_lo, code_hi) is the fighter's
+ * ftFunction; each item article (itFunction) is loaded into its own region and registered here.
+ * Without this, a `bl` from one article function to another is mistaken for a native call. */
+void gw_ppc_add_code_range(uint32_t lo, uint32_t hi);
+
+/* True if `a` is guest code: the bridge range or any registered range. Used by the interpreter's
+ * interpret-vs-bridge decision and fetch guard, and by the m-ex runtime's execute trap. */
+int gw_ppc_is_guest_code(uint32_t a);
+
 /* Run guest_fn (a guest address) until it returns via blr, yielding r3. gpr_args[0..nargs-1] are
  * placed in r3, r4, ...; rtoc -> r2; sp -> r1. Reentrant: the active machine is saved/restored. */
 uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,

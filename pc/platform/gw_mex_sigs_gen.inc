@@ -5,7 +5,7 @@
  * gw_ppc_bridge_call which argument slots come from an FPR (f1..f8) rather than a
  * GPR (r3..r10), how many slots there are, and whether the result returns in f1.
  *
- * Scope: the 101 distinct out-of-blob bl targets in sonic_ftfunction_reloc.bin (base 0x807F4D60, 22392 bytes).
+ * Scope: the 115 distinct out-of-blob bl targets across sonic_ftfunction_reloc.bin (base 0x807F4D60, 22392 bytes, 101 targets); sonic_spring_reloc.bin (base 0x80827800, 1280 bytes, 16 targets).
  * Functions whose prototype could not be parsed with confidence are deliberately
  * ABSENT: they keep the interpreter's integer default, which is what they already
  * had. See _research/bridge-signatures.md for the list and the reasons.
@@ -59,6 +59,7 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x8007D6A4u, 0x00u, 1, 0 }, /* ftCommon_8007D6A4 */
     { 0x8007D7FCu, 0x00u, 1, 0 }, /* ftCommon_8007D7FC */
     { 0x8007D9FCu, 0x00u, 1, 0 }, /* ftCommon_UpdateFacing */
+    { 0x8007DB58u, 0x00u, 1, 0 }, /* ftCommon_8007DB58 */
     { 0x8007E2FCu, 0x00u, 1, 0 }, /* ftCommon_8007E2FC */
     { 0x80080E18u, 0x00u, 2, 0 }, /* ftDrawCommon_80080E18 */
     { 0x80081298u, 0x00u, 1, 0 }, /* ftCliffCommon_80081298 */
@@ -86,11 +87,24 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x800CCAACu, 0x00u, 1, 0 }, /* ftCo_Fall_IASA_Inner */
     { 0x800CCDA8u, 0x00u, 1, 0 }, /* ftCo_FallAerial_Enter */
     { 0x800D5CB0u, 0x04u, 3, 0 }, /* ftCo_LandingFallSpecial_Enter */
+    { 0x800DC920u, 0x00u, 2, 0 }, /* ftCo_800DC920 */
+    { 0x800DCFD4u, 0x00u, 1, 0 }, /* ftCo_800DCFD4 */
     { 0x8016B168u, 0x00u, 0, 0 }, /* gm_8016B168 */
     { 0x8026862Cu, 0x00u, 1, 0 }, /* Item_8026862C */
+    { 0x80268E5Cu, 0x00u, 3, 0 }, /* Item_80268E5C */
     { 0x8026A8ECu, 0x00u, 1, 0 }, /* Item_8026A8EC */
     { 0x8026B2B4u, 0x00u, 1, 0 }, /* itIsHeavy */
     { 0x8026B320u, 0x00u, 1, 0 }, /* itGetHoldKind */
+    { 0x8026D8A4u, 0x00u, 2, 0 }, /* it_8026D8A4 */
+    { 0x8026E15Cu, 0x00u, 2, 0 }, /* it_8026E15C */
+    { 0x80272860u, 0x06u, 3, 0 }, /* it_80272860 */
+    { 0x80272CC0u, 0x00u, 2, 0 }, /* it_80272CC0 */
+    { 0x80272DB0u, 0x00u, 1, 0 }, /* itColl_BounceOffVictim */
+    { 0x80273030u, 0x00u, 1, 0 }, /* it_80273030 */
+    { 0x80273078u, 0x00u, 1, 0 }, /* itColl_BounceOffShield */
+    { 0x80273130u, 0x00u, 1, 0 }, /* it_80273130 */
+    { 0x80275158u, 0x02u, 2, 0 }, /* it_80275158 */
+    { 0x802762B0u, 0x00u, 1, 0 }, /* it_802762B0 */
     { 0x803258E8u, 0x00u, 2, 0 }, /* strcmp */
     { 0x803261BCu, 0x01u, 1, 1 }, /* tanf */
     { 0x80326240u, 0x01u, 1, 1 }, /* cosf */

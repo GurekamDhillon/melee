@@ -110,7 +110,7 @@ int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size,
  * code offset is the low 24 bits. A target whose top nibble is 0x8 is an absolute guest address
  * (the asm tests `(target << 8) & 0xF0 == 0x80`); otherwise it is an offset from the code base. */
 
-static int gw_ftfunction_reloc(const unsigned char *dat, size_t dat_size, uint32_t irt_data_off,
+int gw_ftfunction_reloc(const unsigned char *dat, size_t dat_size, uint32_t irt_data_off,
                                uint32_t irt_count, uint32_t code_base, uint32_t code_size) {
     uint32_t i;
 

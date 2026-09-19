@@ -77,6 +77,11 @@ int gw_ftfunction_load(const char *dat_path, uint32_t internal_id, gw_ftfunction
 int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t code_base,
                           uint32_t mexdata_base, gw_ftfunction *out);
 
+/* Apply a MEXFunction's instruction-reloc table to code already copied to code_base. Shared with
+ * the itFunction (item article) loader: an article is an ordinary MEXFunction. */
+int gw_ftfunction_reloc(const unsigned char *dat, size_t dat_size, uint32_t irt_data_off,
+                        uint32_t irt_count, uint32_t code_base, uint32_t code_size);
+
 /* HSD archive public-symbol lookup: the data offset of `symbol`, or -1. Shared with the MxDt.dat
  * loader in gw_mex_ftfunction_runtime.c. */
 int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size, const char *symbol);

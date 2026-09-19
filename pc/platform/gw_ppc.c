@@ -375,7 +375,44 @@ static int gw_ppc_cond(gw_ppc_machine *m, uint32_t bo, uint32_t bi) {
     return (((c->ctr != 0) ^ ((bo & 0x02) != 0)) & (crbit ^ ((bo & 0x08) == 0))) != 0;
 }
 
+#define GW_PPC_MAX_CODE_RANGES 16
+static uint32_t gw_ppc_range_lo[GW_PPC_MAX_CODE_RANGES];
+static uint32_t gw_ppc_range_hi[GW_PPC_MAX_CODE_RANGES];
+static int gw_ppc_range_count;
+
+void gw_ppc_add_code_range(uint32_t lo, uint32_t hi) {
+    int i;
+    for (i = 0; i < gw_ppc_range_count; ++i) {
+        if (gw_ppc_range_lo[i] == lo && gw_ppc_range_hi[i] == hi) {
+            return; /* idempotent: a respawn may load the same article again */
+        }
+    }
+    if (gw_ppc_range_count >= GW_PPC_MAX_CODE_RANGES) {
+        gw_panic("ppc: too many guest code ranges (%d)", GW_PPC_MAX_CODE_RANGES);
+    }
+    gw_ppc_range_lo[gw_ppc_range_count] = lo;
+    gw_ppc_range_hi[gw_ppc_range_count] = hi;
+    ++gw_ppc_range_count;
+}
+
+static int gw_ppc_in_extra_range(uint32_t a) {
+    int i;
+    for (i = 0; i < gw_ppc_range_count; ++i) {
+        if (a >= gw_ppc_range_lo[i] && a < gw_ppc_range_hi[i]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int gw_ppc_is_guest_code(uint32_t a) {
+    return (a >= gw_ppc_m.code_lo && a < gw_ppc_m.code_hi) || gw_ppc_in_extra_range(a);
+}
+
 static int gw_ppc_in_blob(const gw_ppc_machine *m, uint32_t addr) {
+    if (gw_ppc_in_extra_range(addr)) {
+        return 1;
+    }
     return addr >= m->code_lo && addr < m->code_hi;
 }
 

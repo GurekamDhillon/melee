@@ -202,6 +202,10 @@ static void Item_80267130(HSD_GObj* gobj, SpawnItem* spawnItem)
     item_data->pos = spawnItem->prev_pos;
     item_data->init_facing_dir = item_data->facing_dir = spawnItem->facing_dir;
     item_data->owner = spawnItem->x0_parent_gobj;
+#if defined(TARGET_PC)
+    /* m-ex: Item+0xFCC = original owner (see it/types.h). */
+    item_data->mex_original_owner = spawnItem->x0_parent_gobj;
+#endif
 
     {
         int facing_dir;
@@ -945,6 +949,13 @@ HSD_GObj* Item_8026862C(SpawnItem* spawnItem)
         // Pokemon
         int idx = spawnItem->kind - It_PKind_Start;
         GObj_SetupGXLink(gobj, it_803F2310[idx].x0_renderFunc, 6, 0);
+#if defined(TARGET_PC)
+    } else if (spawnItem->kind >= 237) {
+        /* m-ex custom items render with the generic item renderer; otherwise the stage branch
+         * below reads it_803F4CA8 far past its end for any kind >= 237. */
+        extern void it_8026EECC(HSD_GObj*, int);
+        GObj_SetupGXLink(gobj, it_8026EECC, 6, 0);
+#endif
     } else {
         // Stage items
         int idx = spawnItem->kind - It_Kind_Old_Kuri;

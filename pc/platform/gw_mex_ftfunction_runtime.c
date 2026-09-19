@@ -33,6 +33,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 #define GW_MEX_KIND_SONIC 33      /* Ft_Kind_Sonic in the port (melee/ft/forward.h) */
 #define GW_MEX_INTERNAL_SONIC 31  /* Sonic's m-ex internal character id */
 #define GW_MEX_FTFUNC_DAT "PlSn.dat"
@@ -154,41 +157,215 @@ static uint32_t gw_mex_shim_get_ft_item_id(uint32_t gobj, uint32_t item_id, uint
     return 0;
 }
 
-static uint32_t gw_mex_shim_gxlink_clear(uint32_t gobj, uint32_t a1, uint32_t a2, uint32_t a3,
-                                         uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
-    static int logged;
-    (void)a1; (void)a2; (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
-    if (!logged) {
-        logged = 1;
-        gw_log("interp: HSD_GObjGXLink_8039084C(gobj=0x%08X) -> skipped (gobj->gx_link is "
-               "HSD_GOBJ_GXLINK_NONE at onLoad time)", gobj);
-    }
-    return 0;
+/* ---- incoming calls: native code calling guest code ---------------------------------------
+ * The "incoming-call problem". Guest code hands a guest function address to a native engine API
+ * (GObj_SetupGXLink, HSD_GObj_SetupProc, ...), which stores it and later CALLS it as a native
+ * function pointer. A guest address is not x86 code, so that call executes MEM1 bytes and dies
+ * with ACCESS_VIOLATION at the guest address (seen: 0x807FA400 = SpecialNHit_Enter).
+ *
+ * Fix: a pool of native thunks. Each thunk is a real x86 function bound to one guest address;
+ * when native code calls it, it interprets that guest function. gw_mex_callable() maps whatever
+ * the guest passes to something native code can call:
+ *   - an address inside the blob       -> a thunk that interprets it
+ *   - a VANILLA engine function's guest address (e.g. a stock callback the guest reuses)
+ *                                      -> that function's native gw_ address, via the bridge;
+ *                                         thunking it would interpret engine code we do not have
+ *   - 0                                -> 0
+ * Thunks are deduplicated by guest address and never freed: the set of distinct callbacks a
+ * fighter installs is small and fixed, and a callback may be invoked long after it was set.
+ *
+ * Arity: each thunk forwards FOUR integer arguments. Callers here pass 1 (proc/event callbacks)
+ * or 2 (render callbacks: gobj + pass). Under cdecl the caller pushes and pops its own arguments,
+ * so reading two extra slots is harmless - they are caller-frame words the guest never reads.
+ * Forwarding matters: GXLink_Sonic returns immediately unless pass == 2, so a thunk that dropped
+ * the second argument would silently draw nothing and look like a rendering bug. */
+
+#define GW_MEX_THUNK_MAX 64
+
+static uint32_t gw_mex_thunk_guest[GW_MEX_THUNK_MAX];
+static int gw_mex_thunk_count;
+
+static uint32_t gw_mex_thunk_run(int k, uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    uint32_t args[4];
+    args[0] = a0;
+    args[1] = a1;
+    args[2] = a2;
+    args[3] = a3;
+    return gw_ppc_call(gw_mex_thunk_guest[k], args, 4, gw_mex_ff.mexdata_base, gw_mex_stack_top);
 }
 
+#define GW_MEX_THUNK(k) \
+    static uint32_t gw_mex_thunk_##k(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) { \
+        return gw_mex_thunk_run(k, a0, a1, a2, a3); \
+    }
+#define GW_MEX_THUNK8(b) \
+    GW_MEX_THUNK(b##0) GW_MEX_THUNK(b##1) GW_MEX_THUNK(b##2) GW_MEX_THUNK(b##3) \
+    GW_MEX_THUNK(b##4) GW_MEX_THUNK(b##5) GW_MEX_THUNK(b##6) GW_MEX_THUNK(b##7)
+GW_MEX_THUNK8(0) GW_MEX_THUNK8(1) GW_MEX_THUNK8(2) GW_MEX_THUNK8(3)
+GW_MEX_THUNK8(4) GW_MEX_THUNK8(5) GW_MEX_THUNK8(6) GW_MEX_THUNK8(7)
+
+typedef uint32_t (*gw_mex_thunk_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+#define GW_MEX_THUNK_REF8(b) \
+    gw_mex_thunk_##b##0, gw_mex_thunk_##b##1, gw_mex_thunk_##b##2, gw_mex_thunk_##b##3, \
+    gw_mex_thunk_##b##4, gw_mex_thunk_##b##5, gw_mex_thunk_##b##6, gw_mex_thunk_##b##7
+static const gw_mex_thunk_fn gw_mex_thunks[GW_MEX_THUNK_MAX] = {
+    GW_MEX_THUNK_REF8(0), GW_MEX_THUNK_REF8(1), GW_MEX_THUNK_REF8(2), GW_MEX_THUNK_REF8(3),
+    GW_MEX_THUNK_REF8(4), GW_MEX_THUNK_REF8(5), GW_MEX_THUNK_REF8(6), GW_MEX_THUNK_REF8(7),
+};
+
+static int gw_mex_in_blob(uint32_t a) {
+    return a >= gw_mex_ff.code_base && a < gw_mex_ff.code_base + gw_mex_ff.code_size;
+}
+
+/* Guest function address -> something native code can call. See the block comment above. */
+static uint32_t gw_mex_callable(uint32_t guest, const char *why) {
+    int k, kind = 0;
+    uint32_t native;
+    if (guest == 0u) {
+        return 0u;
+    }
+    if (gw_mex_in_blob(guest)) {
+        for (k = 0; k < gw_mex_thunk_count; ++k) {
+            if (gw_mex_thunk_guest[k] == guest) {
+                return (uint32_t) (uintptr_t) gw_mex_thunks[k];
+            }
+        }
+        if (gw_mex_thunk_count >= GW_MEX_THUNK_MAX) {
+            gw_panic("interp: out of native thunks (%d) binding %s for %s", GW_MEX_THUNK_MAX,
+                     gw_ppc_describe(guest), why);
+        }
+        k = gw_mex_thunk_count++;
+        gw_mex_thunk_guest[k] = guest;
+        gw_log("interp: thunk %d -> guest %s (%s)", k, gw_ppc_describe(guest), why);
+        return (uint32_t) (uintptr_t) gw_mex_thunks[k];
+    }
+    native = gw_mex_bridge_lookup(guest, &kind);
+    if (native != 0u && kind == 1) {
+        return native; /* a vanilla engine function the guest is reusing as a callback */
+    }
+    gw_panic("interp: %s: callback 0x%08X is neither blob code nor a bridged engine function",
+             why, guest);
+    return 0u;
+}
+
+/* ---- incoming calls, general case: trap and emulate ---------------------------------------
+ * The thunk pool above covers callbacks the guest hands to an engine API. It cannot cover the
+ * other route: guest code STORING a code address straight into engine data. Sonic does exactly
+ * that - `stw r9,0x21C0(r31)` puts SpecialNHit_Enter into fp->deal_dmg_cb - and the engine later
+ * calls `fp->deal_dmg_cb(gobj)` with no API in between. Fighter alone has 19 such HSD_GObjEvent
+ * fields (fp+0x21B0..0x21F8) with ~29 native call sites, of which one was routed; item and
+ * effect code will add more. Patching call sites one by one would always miss the next.
+ *
+ * So catch it at the only point every such call has in common. Guest MEM1 is not executable, so
+ * a native call to a guest address faults CLEANLY on the instruction fetch (DEP), with EIP equal
+ * to the guest address and the stack exactly as the caller left it: return address at [esp],
+ * arguments above it. A vectored handler that sees an execute fault inside the blob rewrites EIP
+ * to gw_mex_trap_trampoline and resumes. Because nothing on the stack moved, the trampoline
+ * receives the caller's arguments as though it had been called directly, interprets the guest
+ * function, and `ret`s straight back to the original caller - which cleans up its own arguments
+ * (cdecl). No game-source edits; covers every such call site, including ones not found yet.
+ *
+ * Deliberately narrow: only EXCEPTION_ACCESS_VIOLATION, only an EXECUTE fault (information[0] ==
+ * 8), only when the faulting address is EIP and lies inside the blob. Everything else returns
+ * CONTINUE_SEARCH untouched, so real crashes still reach the port's crash logger.
+ *
+ * Cost is one exception round trip per call. That is fine for event callbacks (on hit, on death)
+ * but not for anything per-frame; the first trap per target is logged so a hot one can be given an
+ * explicit route (as accessory4_cb has in fighter.c) instead. */
+
+static __declspec(thread) uint32_t gw_mex_trap_target;
+
+#define GW_MEX_TRAP_SEEN_MAX 32
+static uint32_t gw_mex_trap_seen[GW_MEX_TRAP_SEEN_MAX];
+static uint32_t gw_mex_trap_seen_count[GW_MEX_TRAP_SEEN_MAX];
+static int gw_mex_trap_seen_n;
+
+static uint32_t gw_mex_trap_trampoline(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
+    /* Capture the target FIRST: the guest function may itself make a native call that traps
+     * again, and that nested trap overwrites gw_mex_trap_target. */
+    uint32_t target = gw_mex_trap_target;
+    uint32_t args[4];
+    args[0] = a0;
+    args[1] = a1;
+    args[2] = a2;
+    args[3] = a3;
+    return gw_ppc_call(target, args, 4, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+}
+
+static void gw_mex_trap_note(uint32_t eip) {
+    int i;
+    for (i = 0; i < gw_mex_trap_seen_n; ++i) {
+        if (gw_mex_trap_seen[i] == eip) {
+            uint32_t n = ++gw_mex_trap_seen_count[i];
+            if ((n % 600u) == 0u) {
+                gw_log("interp: trap: %s has been called natively %u times - consider an "
+                       "explicit route if this is per-frame", gw_ppc_describe(eip), n);
+            }
+            return;
+        }
+    }
+    if (gw_mex_trap_seen_n < GW_MEX_TRAP_SEEN_MAX) {
+        gw_mex_trap_seen[gw_mex_trap_seen_n] = eip;
+        gw_mex_trap_seen_count[gw_mex_trap_seen_n] = 1u;
+        ++gw_mex_trap_seen_n;
+    }
+    gw_log("interp: trap: native code called guest %s directly - emulating", gw_ppc_describe(eip));
+}
+
+static LONG CALLBACK gw_mex_exec_trap(PEXCEPTION_POINTERS ep) {
+    PEXCEPTION_RECORD er = ep->ExceptionRecord;
+    uint32_t eip;
+    if (er->ExceptionCode != EXCEPTION_ACCESS_VIOLATION || er->NumberParameters < 2 ||
+        er->ExceptionInformation[0] != 8 /* execute */) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    eip = (uint32_t) ep->ContextRecord->Eip;
+    if ((uint32_t) er->ExceptionInformation[1] != eip || gw_mex_ff.code_size == 0u ||
+        !gw_mex_in_blob(eip)) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    gw_mex_trap_note(eip);
+    gw_mex_trap_target = eip;
+    ep->ContextRecord->Eip = (DWORD) (uintptr_t) gw_mex_trap_trampoline;
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+/* Call the real native engine function for `guest_addr` with the generic bridge shape. */
+static uint32_t gw_mex_call_native(uint32_t guest_addr, uint32_t a0, uint32_t a1, uint32_t a2,
+                                   uint32_t a3) {
+    int kind = 0;
+    uint32_t native = gw_mex_bridge_lookup(guest_addr, &kind);
+    if (native == 0u || kind != 1) {
+        gw_panic("interp: no native engine function for guest 0x%08X", guest_addr);
+    }
+    return ((gw_ppc_native_fn) (uintptr_t) native)(a0, a1, a2, a3, 0, 0, 0, 0);
+}
+
+/* HSD_GObjGXLink_8039084C(gobj): no callback argument, so no translation is needed. It used to
+ * be skipped outright; it is a plain engine call and now runs for real. */
+static uint32_t gw_mex_shim_gxlink_clear(uint32_t gobj, uint32_t a1, uint32_t a2, uint32_t a3,
+                                         uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    return gw_mex_call_native(GW_MEX_GUEST_GXLINK_CLEAR, gobj, 0, 0, 0);
+}
+
+/* GObj_SetupGXLink(gobj, render_cb, gx_link, priority): translate render_cb, then call for real. */
 static uint32_t gw_mex_shim_setup_gxlink(uint32_t gobj, uint32_t cb, uint32_t gx_link,
                                          uint32_t priority, uint32_t a4, uint32_t a5, uint32_t a6,
                                          uint32_t a7) {
-    static int logged;
-    (void)a4; (void)a5; (void)a6; (void)a7;
-    if (!logged) {
-        logged = 1;
-        gw_log("interp: GObj_SetupGXLink(gobj=0x%08X cb=0x%08X link=%u pri=%u) -> guest render "
-               "callback deferred (incoming-call problem)", gobj, cb, gx_link, priority);
-    }
-    return 0;
+    (void) a4; (void) a5; (void) a6; (void) a7;
+    return gw_mex_call_native(GW_MEX_GUEST_SETUP_GXLINK, gobj,
+                              gw_mex_callable(cb, "GObj_SetupGXLink render_cb"), gx_link,
+                              priority);
 }
 
+/* HSD_GObj_SetupProc(gobj, cb, priority): translate cb, call for real, and return the proc the
+ * engine hands back - the guest may keep it. */
 static uint32_t gw_mex_shim_setup_proc(uint32_t gobj, uint32_t cb, uint32_t priority, uint32_t a3,
                                        uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
-    static int logged;
-    (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
-    if (!logged) {
-        logged = 1;
-        gw_log("interp: HSD_GObj_SetupProc(gobj=0x%08X cb=0x%08X pri=%u) -> guest proc callback "
-               "deferred (incoming-call problem)", gobj, cb, priority);
-    }
-    return 0;
+    (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    return gw_mex_call_native(GW_MEX_GUEST_SETUP_PROC, gobj,
+                              gw_mex_callable(cb, "HSD_GObj_SetupProc cb"), priority, 0);
 }
 
 /* ---- bridged-call signatures -----------------------------------------------------------
@@ -636,6 +813,12 @@ void gw_Mex_FtFunctionInstall(int kind) {
     /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every panic,
      * budget dump and trace names a guest function instead of printing a bare address. */
     gw_ppc_set_symbolizer(gw_mex_symbolize);
+    /* First in the chain, so it runs before the port's own crash handling - which it defers to
+     * for anything that is not an execute fault inside the blob. */
+    if (AddVectoredExceptionHandler(1, gw_mex_exec_trap) == NULL) {
+        gw_log("interp: could not install the guest execute trap - direct native calls into "
+               "guest code will crash");
+    }
 
     gw_mex_movelogic_setup();
 

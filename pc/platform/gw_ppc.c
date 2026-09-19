@@ -486,6 +486,15 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         rs = (insn >> 21) & 0x1F;
         c->gpr[ra] = c->gpr[rs] ^ (insn & 0xFFFF);
         break;
+    case 27: /* xoris rA, rS, UIMM: rA = rS ^ (UIMM << 16). No CR update.
+              * Compilers emit `xoris rX,rX,0x8000` for int -> float conversion: flipping the sign
+              * bit biases a signed int so it can be stored under the 0x43300000 exponent word and
+              * loaded as a double, then the bias subtracted. It was the last instruction class
+              * reachable in Sonic's code that the interpreter lacked (8 sites, 5 functions). */
+        ra = (insn >> 16) & 0x1F;
+        rs = (insn >> 21) & 0x1F;
+        c->gpr[ra] = c->gpr[rs] ^ ((insn & 0xFFFF) << 16);
+        break;
     case 28: /* andi. rA, rS, UIMM (always records) */
         ra = (insn >> 16) & 0x1F;
         rs = (insn >> 21) & 0x1F;
@@ -1823,6 +1832,51 @@ static int test_ppc_fcmpu_orderings(void) {
     return 0;
 }
 
+/* ---- xoris / int->float idiom test ------------------------------------------------------
+ * Exercises xoris the way compilers actually use it - the classic int -> float conversion:
+ *   xoris r4,r3,0x8000 ; stw r4,4(r5) ; lis r4,0x4330 ; stw r4,0(r5) ; lfd f1,0(r5)
+ *   ; lfd f2,8(r5) ; fsub f1,f1,f2 ; stfs f1,16(r5)
+ * where 8(r5) holds the bias double 0x4330000080000000. Checks negative, zero and positive ints,
+ * because a wrong xoris (e.g. dropping the << 16) breaks the sign handling specifically. */
+static int test_ppc_xoris_int_to_float(void) {
+    static const uint32_t blob[] = {
+        0x6C648000u, /* xoris r4, r3, 0x8000 */
+        0x90850004u, /* stw   r4, 4(r5)      */
+        0x3C804330u, /* lis   r4, 0x4330     */
+        0x90850000u, /* stw   r4, 0(r5)      */
+        0xC8250000u, /* lfd   f1, 0(r5)      */
+        0xC8450008u, /* lfd   f2, 8(r5)      */
+        0xFC211028u, /* fsub  f1, f1, f2     */
+        0xD0250010u, /* stfs  f1, 16(r5)     */
+        0x4E800020u, /* blr                  */
+    };
+    static const int32_t ins[] = {-7, 0, 12345};
+    unsigned i;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t) sizeof blob);
+    for (i = 0; i < sizeof ins / sizeof ins[0]; ++i) {
+        uint32_t args[3];
+        float got;
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 8), 0x43300000u);  /* bias hi */
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 12), 0x80000000u); /* bias lo */
+        gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 16), -999.0f);
+        args[0] = (uint32_t) ins[i];      /* r3 */
+        args[1] = 0u;                     /* r4 */
+        args[2] = GW_PPC_TEST_FDATA;      /* r5 */
+        gw_ppc_call(GW_PPC_TEST_CODE, args, 3, 0, GW_PPC_TEST_STACK);
+        got = gw_rf32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 16));
+        if (got != (float) ins[i]) {
+            gw_test_fail("int->float via xoris: %d came out as %.3f", ins[i], (double) got);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
@@ -1830,4 +1884,5 @@ void gw_ppc_tests_register(void) {
     gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
     gw_test_register("ppc_fp_aform_decode", test_ppc_fp_aform_decode);
     gw_test_register("ppc_fcmpu_orderings", test_ppc_fcmpu_orderings);
+    gw_test_register("ppc_xoris_int_to_float", test_ppc_xoris_int_to_float);
 }

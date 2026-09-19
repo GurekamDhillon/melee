@@ -230,6 +230,9 @@ int HSD_SynthSFXLoad(const char* filename, int bankID, void (*cb)(int, int),
                      "invalid bankID = %d; filename = %s\n", bankID, filename);
 
     entrynum = DVDConvertPathToEntrynum(filename);
+#if defined(TARGET_PC)
+    OSReport("synth: bank %d <- %s (entry %d)\n", bankID, filename, entrynum);
+#endif
 
     while (HSD_Synth_804D772C >= 6) {
     }

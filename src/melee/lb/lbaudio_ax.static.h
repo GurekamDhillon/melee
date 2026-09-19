@@ -89,11 +89,25 @@ static HSD_ObjAllocData lbl_80433710;
 static int lbl_8043373C[17];
 static int lbl_80433780[17];
 
-static int lbl_804337C4[0x38];
-static int lbl_804338A4[0x38];
-static int lbl_80433984[0x38];
-static int lbl_80433A64[0x38];
-static int lbl_80433B44[0x38];
+#if defined(TARGET_PC)
+/* Sound-bank tables, sized for m-ex's bank list (78 on Akaneia; m-ex's own ceiling is 100) and
+ * filled from mexData at audio init (lbAudioAx_MexTables). LBAX_N is the live bank count: 55 on
+ * retail. Bank 55 stays the "no bank" value - on m-ex it is null.ssm, an empty bank. */
+#define LBAX_CAP 102
+#define LBAX_SSM_DIM LBAX_CAP
+static int lbAx_N = 55;
+#define LBAX_N lbAx_N
+#else
+#define LBAX_CAP 0x38
+#define LBAX_SSM_DIM
+#define LBAX_N 55
+#endif
+
+static int lbl_804337C4[LBAX_CAP];
+static int lbl_804338A4[LBAX_CAP];
+static int lbl_80433984[LBAX_CAP];
+static int lbl_80433A64[LBAX_CAP];
+static int lbl_80433B44[LBAX_CAP];
 
 static char cur_hps_stem[0x40] = "";
 static char cur_ssm_file[0x40] = "/audio/";
@@ -116,7 +130,7 @@ static struct {
     { 0x20, 0x100000000 }, { 0x37, 0x000000000 }, { 0x0D, 0x000002000 },
 };
 
-static s8 s32_arr_803BB5D0[0x38][4] = {
+static s8 s32_arr_803BB5D0[LBAX_CAP][4] = {
     { 0x01, 0x05, 0x05, 0x00 }, { 0x01, 0x05, 0x05, 0x00 },
     { 0x03, 0x00, 0x00, 0x00 }, { 0x03, 0x00, 0x00, 0x00 },
     { 0x03, 0x04, 0x04, 0x00 }, { 0x03, 0x04, 0x04, 0x00 },
@@ -208,7 +222,7 @@ static s8 flags_arr_803BB800[] = {
     0x00, 0x02, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00,
 };
 
-static int s32_arr_803BB8D4[0x38][2] = {
+static int s32_arr_803BB8D4[LBAX_CAP][2] = {
     { 0, 0x20F },         { 0x2710, 0x2750 },   { 0x4E20, 0x4E25 },
     { 0x7530, 0x7546 },   { 0x9C40, 0x9C4A },   { 0xC350, 0xC356 },
     { 0xEA60, 0xEAB4 },   { 0x11170, 0x111DF }, { 0x13880, 0x138C2 },
@@ -230,7 +244,7 @@ static int s32_arr_803BB8D4[0x38][2] = {
     { 0x83D60, 0x83D60 }, { 0x83D60, 0x83D60 },
 };
 
-static const char* ssm_files[] = {
+static const char* ssm_files[LBAX_SSM_DIM] = {
     "main.ssm",     "pokemon.ssm", "nr_title.ssm", "nr_select.ssm",
     "nr_1p.ssm",    "nr_vs.ssm",   "captain.ssm",  "clink.ssm",
     "dk.ssm",       "drmario.ssm", "falco.ssm",    "fox.ssm",
@@ -286,7 +300,7 @@ static u8 unk_arr_803BC4A0[0x21][2] = {
     { 0x62, 0x62 }, { 0x62, 0x62 }, { 0x62, 0x62 }, { 0x62, 0x62 },
 };
 
-static u32 offsets_arr_803BC4E4[][2] = {
+static u32 offsets_arr_803BC4E4[LBAX_SSM_DIM][2] = {
     2045824, 0, 561760, 1, 153024,  0, 239264, 1, 121888, 0, 54176,  0,
     443328,  1, 298400, 0, 206368,  0, 430560, 1, 599712, 1, 573216, 1,
     487936,  0, 477600, 1, 586208,  1, 526752, 1, 328672, 1, 372992, 1,

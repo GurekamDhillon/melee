@@ -2091,8 +2091,28 @@ u32 Item_8026AE60(void)
     return result;
 }
 
+#if defined(TARGET_PC)
+/* Ported from m-ex: Subaction ID Override/SFX/ItemSFXBehavior0-2.asm - an item owned by an m-ex
+ * fighter plays that fighter's relative ids (5000..9999) from the fighter's bank. */
+static enum_t Item_MexSfx(Item* item_data, enum_t sfx)
+{
+    extern int Mex_SsmForPortKind(int);
+    HSD_GObj* owner = item_data->mex_original_owner;
+    if (sfx >= 5000 && sfx < 10000 && owner != NULL && ftLib_80086960(owner)) {
+        int ssm = Mex_SsmForPortKind(ftLib_GetKind(owner));
+        if (ssm >= 0) {
+            return sfx - 5000 + ssm * 10000;
+        }
+    }
+    return sfx;
+}
+#endif
+
 void Item_8026AE84(Item* item_data, enum_t sfx, u8 pan, u8 volume)
 {
+#if defined(TARGET_PC)
+    sfx = Item_MexSfx(item_data, sfx);
+#endif
     if (sfx != 540000) {
         if (sfx != 540001) {
             item_data->xD6C =
@@ -2105,6 +2125,9 @@ void Item_8026AE84(Item* item_data, enum_t sfx, u8 pan, u8 volume)
 
 void Item_8026AF0C(Item* item_data, enum_t sfx, u8 pan, u8 volume)
 {
+#if defined(TARGET_PC)
+    sfx = Item_MexSfx(item_data, sfx);
+#endif
     if (sfx != 540000) {
         if (sfx != 540001) {
             if (item_data->sfx_unk1 != SFX_NONE) {
@@ -2120,6 +2143,9 @@ void Item_8026AF0C(Item* item_data, enum_t sfx, u8 pan, u8 volume)
 
 void Item_8026AFA0(Item* item_data, enum_t sfx, u8 pan, u8 volume)
 {
+#if defined(TARGET_PC)
+    sfx = Item_MexSfx(item_data, sfx);
+#endif
     if (sfx != 540000) {
         if (sfx != 540001) {
             if (item_data->sfx_unk2 != SFX_NONE) {

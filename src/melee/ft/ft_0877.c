@@ -305,6 +305,18 @@ s32 ft_80087C70(Fighter* fp, s32 arg1)
 
 s32 ft_80087D0C(Fighter* fighter, s32 sfx_id)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): Subaction ID Override/SFX/
+     * FighterPitchShift.asm. An m-ex fighter's data names its own sounds 5000..9999, meaning
+     * "index (id - 5000) in my bank"; make that absolute before anything looks at it. */
+    extern int Mex_SsmForPortKind(int);
+    if (sfx_id >= 5000 && sfx_id < 10000) {
+        int ssm = Mex_SsmForPortKind(fighter->kind);
+        if (ssm >= 0) {
+            sfx_id = sfx_id - 5000 + ssm * 10000;
+        }
+    }
+#endif
     enum_t sfx = lbAudioAx_800233EC(sfx_id);
     enum_t ssm_id = lbAudioAx_80023130(sfx);
 

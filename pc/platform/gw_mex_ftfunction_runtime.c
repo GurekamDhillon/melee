@@ -382,6 +382,71 @@ int gw_Mex_ExtToPortCKind(int ext) {
     return -1;
 }
 
+/* ---- m-ex sound banks (mexData.ssm, root +0x10) -------------------------------------------------
+ * See _research/mex-sound-banks.md. m-ex numbers banks 0..54 exactly as retail and appends its own
+ * (55 = null.ssm, 66 = sonic.ssm on Akaneia). mexData.ssm = {Files (char*[]), Flags ({u32 size;
+ * u32 flag}[]), LookupTable ({s8 group, load_prio, unload_prio, pitch_thresh}[]), Runtime}. */
+#define GW_MEXDT_OFF_SSM 0x10u
+
+/* metadata.ssm_count (78 on Akaneia), or 0 without mexData. */
+int gw_Mex_SsmCount(void) {
+    uint32_t md;
+    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+        return 0;
+    }
+    md = gw_r32((const void *) (uintptr_t) gw_mexdt);
+    return gw_mexdt_in(md, 0x20u) ? (int) gw_r32((const void *) (uintptr_t) (md + 0x1Cu)) : 0;
+}
+
+static uint32_t gw_mex_ssm_table(uint32_t which) {
+    uint32_t ssm = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_SSM));
+    return gw_mexdt_in(ssm + which, 4u) ? gw_r32((const void *) (uintptr_t) (ssm + which)) : 0u;
+}
+
+/* Bank i's file name ("sonic.ssm"), its ARAM size, and LookupTable byte k (0 group, 1 load prio,
+ * 2 unload prio, 3 pitch threshold). Callers bound i by gw_Mex_SsmCount(). */
+const char *gw_Mex_SsmFile(int i) {
+    uint32_t t = gw_mex_ssm_table(0x0u);
+    return t != 0u ? (const char *) (uintptr_t) gw_r32((const void *) (uintptr_t) (t + 4u * (uint32_t) i))
+                   : NULL;
+}
+uint32_t gw_Mex_SsmSize(int i) {
+    uint32_t t = gw_mex_ssm_table(0x4u);
+    return t != 0u ? gw_r32((const void *) (uintptr_t) (t + 8u * (uint32_t) i)) : 0u;
+}
+int gw_Mex_SsmLookup(int i, int k) {
+    uint32_t t = gw_mex_ssm_table(0x8u);
+    return t != 0u ? (int) *(const int8_t *) (uintptr_t) (t + 4u * (uint32_t) i + (uint32_t) k) : 0;
+}
+
+/* fighter.ssm_files[ext].ssm_id (mexData.fighter +0x38, stride 0x10, EXTERNAL id), or -1. */
+static int gw_mex_ssm_for_ext(int ext) {
+    uint32_t fighter, tbl, e;
+    if (ext < 0 || gw_Mex_SsmCount() == 0) {
+        return -1;
+    }
+    fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
+    tbl = gw_mexdt_in(fighter + 0x38u, 4u) ? gw_r32((const void *) (uintptr_t) (fighter + 0x38u)) : 0u;
+    e = tbl + (uint32_t) ext * 0x10u;
+    if (tbl == 0u || !gw_mexdt_in(e, 1u)) {
+        return -1;
+    }
+    e = *(const uint8_t *) (uintptr_t) e;
+    return (e == 0xFFu || (int) e >= gw_Mex_SsmCount()) ? -1 : (int) e;
+}
+
+/* The sound bank of a player's CharacterKind (port numbering), or -1. */
+int gw_Mex_SsmForPortCKind(int ck) {
+    extern int gw_Mex_PortCKindToExt(int);
+    return gw_mex_ssm_for_ext(gw_Mex_PortCKindToExt(ck));
+}
+
+/* The bank that a fighter's RELATIVE sound ids (5000..9999) index, by port FighterKind, or -1.
+ * Only m-ex fighters use relative ids; vanilla fighters' data holds absolute ids. */
+int gw_Mex_SsmForPortKind(int fk) {
+    return fk == GW_MEX_KIND_SONIC ? gw_mex_ssm_for_ext(30 /* Sonic's external id */) : -1;
+}
+
 /* Port FighterKind -> m-ex INTERNAL id, or -1. FK 0..26 are the same in both. m-ex appends its
  * new fighters after the vanilla playables and moves the six specials to the end (internal
  * internal_id_count-6 .. -1 = 35..40 on Akaneia), where the port keeps them at 27..32 and adds

@@ -61,7 +61,7 @@ int lbAudioAx_800230C8(int i, int* lo, int* hi)
     if (i < 0) {
         return 1;
     }
-    if (i >= 55) {
+    if (i >= LBAX_N) {
         return 1;
     }
     if (lo != NULL) {
@@ -73,11 +73,22 @@ int lbAudioAx_800230C8(int i, int* lo, int* hi)
     return 0;
 }
 
+#if defined(TARGET_PC)
+/* An m-ex sound id: bank >= 55 (id >= 550000) that exists on this disc. Retail stops at bank 54
+ * and uses 540000/540001 as "none"/"key off", so every retail id keeps its retail meaning. */
+#define LBAX_MEX_ID(id) (LBAX_N > 55 && (id) >= 550000 && (id) < LBAX_N * 10000)
+#endif
+
 int lbAudioAx_80023130(int arg0)
 {
     int i;
+#if defined(TARGET_PC)
+    if (LBAX_MEX_ID(arg0)) {
+        return arg0 / 10000; /* m-ex: bank = id / 10000 */
+    }
+#endif
     if (arg0 >= 0 && arg0 < 0x83D60) {
-        for (i = 0; i < 55; i++) {
+        for (i = 0; i < LBAX_N; i++) {
             if (s32_arr_803BB8D4[i][0] <= arg0 &&
                 arg0 <= s32_arr_803BB8D4[i][1])
             {
@@ -90,7 +101,7 @@ int lbAudioAx_80023130(int arg0)
 
 int lbAudioAx_80023220(int idx)
 {
-    if (idx >= 0 && idx < 55) {
+    if (idx >= 0 && idx < LBAX_N) {
         return s32_arr_803BB5D0[idx][3];
     }
     return 0;
@@ -100,14 +111,14 @@ int lbAudioAx_80023220(int idx)
 static inline void fn_80023254_shift(int count)
 {
     int i;
-    for (i = 55; i > count; i--) {
+    for (i = LBAX_N; i > count; i--) {
         lbl_80433B44[i] = lbl_80433B44[i - 1];
     }
 }
 
 static void fn_80023254(int arg0)
 {
-    bool used[56];
+    bool used[LBAX_CAP];
     int count;
     int index;
     int i;
@@ -115,13 +126,13 @@ static void fn_80023254(int arg0)
 
     PAD_STACK(8);
 
-    for (i = 0; zero = count = 0, i < 56; i++) {
+    for (i = 0; zero = count = 0, i < LBAX_N + 1; i++) {
         lbl_80433B44[i] = 55;
         used[i] = zero;
     }
 
-    for (; count <= 55; count++) {
-        for (index = 0; index <= 55; index++) {
+    for (; count <= LBAX_N; count++) {
+        for (index = 0; index <= LBAX_N; index++) {
             if (arg0 == s32_arr_803BB5D0[index][0] && !used[index] &&
                 offsets_arr_803BC4E4[lbl_80433B44[count]][0] <
                     offsets_arr_803BC4E4[index][0])
@@ -238,11 +249,27 @@ static int fn_80023750(int id, int vol, int pan, int track, int channel)
     if (pan > 0xFF) {
         pan = 0xFF;
     }
+#if defined(TARGET_PC)
+    if (id >= 550000 && id < 0x83D60 + 1000000) {
+        static int logged;
+        int r = AXDriver_8038CFF4(id, vol, pan, track, channel);
+        if (logged < 12) {
+            logged++;
+            OSReport("lbAudioAx: m-ex sfx %d -> voice %d\n", id, r);
+        }
+        return r;
+    }
+#endif
     return AXDriver_8038CFF4(id, vol, pan, track, channel);
 }
 
 int lbAudioAx_800237A8(int id, int vol, int pan)
 {
+#if defined(TARGET_PC)
+    if (LBAX_MEX_ID(id)) {
+        return fn_80023750(id, vol, pan, 0, 7);
+    }
+#endif
     if (id >= 0x83D61) {
         return fn_80023750(0x83D60, 0, PAN_MID, 0, 7);
     } else {
@@ -356,7 +383,7 @@ int lbAudioAx_80023B24(int id)
 
             {
                 int k;
-                for (k = 0; k < 55; k++) {
+                for (k = 0; k < LBAX_N; k++) {
                     if (s32_arr_803BB5D0[k][2] != 5) {
                         lbl_804337C4[k] = -1;
                         lbl_804338A4[k] = -1;
@@ -1423,7 +1450,11 @@ HSD_GObj* lbAudioAx_800263E8(float f1, HSD_GObj* owner, int arg2, int sfx_id,
     HSD_GObj* gobj;
     SoundParams params;
 
+#if defined(TARGET_PC)
+    if (sfx_id < 0x83D60 || LBAX_MEX_ID(sfx_id)) {
+#else
     if (sfx_id < 0x83D60) {
+#endif
         params.owner = owner;
         params.x4 = arg2;
         params.sfx_id = sfx_id;
@@ -1531,7 +1562,7 @@ static int fn_80026650(void)
     int i;
     int priority;
     for (priority = 4; priority >= 0; priority--) {
-        for (i = 0; i < 55; i++) {
+        for (i = 0; i < LBAX_N; i++) {
             if (priority == s32_arr_803BB5D0[i][1] && lbl_804338A4[i] == 1 &&
                 lbl_80433984[i] == -1)
             {
@@ -1551,7 +1582,7 @@ static void fn_800267B0(void)
     }
 
     for (i = 0; i < 5; i++) {
-        for (j = 0; lbl_804D6438 < lbl_804D6448 + lbl_804D6450 && j < 55; j++)
+        for (j = 0; lbl_804D6438 < lbl_804D6448 + lbl_804D6450 && j < LBAX_N; j++)
         {
             if (lbl_80433984[j] != -1 && i == s32_arr_803BB5D0[j][2] &&
                 lbl_804338A4[j] == -1)
@@ -1577,7 +1608,7 @@ static void fn_800268B4(void)
     lbl_804D644C = 0;
     lbl_804D6448 = 0;
 
-    for (i = 0; i < 55; i++) {
+    for (i = 0; i < LBAX_N; i++) {
         int flag1, flag2;
         int flags;
 
@@ -1620,7 +1651,7 @@ static void fn_800269AC(void)
     PAD_STACK(8);
 
     if (HSD_SynthSFXGetPendingLoadCount() != 0) {
-        for (i = 0; i < 55; i++) {
+        for (i = 0; i < LBAX_N; i++) {
             if (s32_arr_803BB5D0[i][1] != 5 && lbl_80433A64[i] != -1 &&
                 lbl_80433984[i] == -1)
             {
@@ -1639,7 +1670,7 @@ static void fn_800269AC(void)
         if (HSD_SynthSFXGetPendingLoadCount() != 0) {
             HSD_SynthSFXWaitForLoadCompletion(lb_800195D0);
             HSD_SynthSFXUnloadBank(2);
-            for (i = 0; i < 55; i++) {
+            for (i = 0; i < LBAX_N; i++) {
                 if (s32_arr_803BB5D0[i][1] != 5) {
                     lbl_80433984[i] = -1;
                     lbl_80433A64[i] = -1;
@@ -1655,7 +1686,7 @@ static void fn_80026C04(int arg0, int unused)
     int slot;
 
     if (arg0 != -1) {
-        for (i = 0; i < 55; i++) {
+        for (i = 0; i < LBAX_N; i++) {
             if (arg0 == lbl_80433A64[i]) {
                 lbl_80433984[i] = 1;
                 lbl_804D644C -= offsets_arr_803BC4E4[i][0];
@@ -1686,6 +1717,18 @@ u64 lbAudioAx_80026E84(CharacterKind ckind)
     if (ckind < 0 || ckind >= ChKind_Max) {
         return 0;
     }
+#if defined(TARGET_PC)
+    if (LBAX_N > 55) {
+        /* m-ex: the fighter's own bank from mexData. A bank past the u64 mask (Sonic's 66) has no
+         * mask bit - it is requested by index at match start; the retail entry at the same
+         * CharacterKind would load someone else's bank (Sonic's slot held Ice Climbers'). */
+        extern int Mex_SsmForPortCKind(int);
+        int ssm = Mex_SsmForPortCKind(ckind);
+        if (ssm >= 0) {
+            return ssm < 64 ? 1ULL << ssm : 0;
+        }
+    }
+#endif
     return lbl_803BB3C0[ckind].x8;
 }
 
@@ -1735,6 +1778,18 @@ void lbAudioAx_80026F2C(u32 flags)
         }
         mask >>= 1;
     }
+#if defined(TARGET_PC)
+    /* m-ex banks (56..) are past the retail masks: reset them by LookupTable group, as m-ex's
+     * rewrite does for every bank (flag 1 -> groups 1,2; 2 -> 3; 4 -> 4; 8 -> 5; 0x10 -> 6). */
+    for (i = 56; i < LBAX_N; i++) {
+        int g = s32_arr_803BB5D0[i][0];
+        if (((flags & 1) && (g == 1 || g == 2)) || ((flags & 2) && g == 3) ||
+            ((flags & 4) && g == 4) || ((flags & 8) && g == 5) || ((flags & 16) && g == 6))
+        {
+            lbl_804337C4[i] = -1;
+        }
+    }
+#endif
 }
 
 void lbAudioAx_8002702C(u32 flags, u64 mask)
@@ -1772,7 +1827,7 @@ void lbAudioAx_8002702C(u32 flags, u64 mask)
 static inline void lbAudioAx_80027168_inline(void)
 {
     int i;
-    for (i = 0; i < 55; i++) {
+    for (i = 0; i < LBAX_N; i++) {
         if (s32_arr_803BB5D0[i][1] != 5 && lbl_80433984[i] == 2) {
             lbl_80433984[i] = 1;
         }
@@ -1796,7 +1851,7 @@ void lbAudioAx_80027168(void)
 
     lbAudioAx_80027168_inline();
 
-    for (i = count = 0; i < 55; i++) {
+    for (i = count = 0; i < LBAX_N; i++) {
         if (s32_arr_803BB5D0[i][1] != 5 && lbl_804337C4[i] != -1) {
             count++;
         }
@@ -1808,7 +1863,7 @@ void lbAudioAx_80027168(void)
 
     fn_800269AC();
 
-    for (i = 0; i < 55; i++) {
+    for (i = 0; i < LBAX_N; i++) {
         lbl_804338A4[i] = lbl_804337C4[i];
     }
 
@@ -1828,13 +1883,13 @@ static int fn_80027488(void)
 {
     int i;
 
-    for (i = 0; i < 55; i++) {
+    for (i = 0; i < LBAX_N; i++) {
         if (lbl_804338A4[i] == 1 && lbl_80433984[i] == -1) {
             return 1;
         }
     }
 
-    for (i = 0; i < 55; i++) {
+    for (i = 0; i < LBAX_N; i++) {
         if (lbl_804338A4[i] == 1 && lbl_80433984[i] == 1) {
             lbl_80433984[i] = 2;
         }
@@ -1886,6 +1941,42 @@ void lbAudioAx_8002785C(void)
     lbl_804D38D8 = s32_arr_803BB6B0[Stage_8022519C(stkind)][1];
     result |= lbAudioAx_80026EBC(stkind);
 
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): Audio_LoadAll_Rewrite / Audio_Request-
+     * SSMLoad - each player's bank is requested BY INDEX, which reaches the banks past the u64
+     * mask (Sonic's sonic.ssm is 66). */
+    {
+        extern int Mex_SsmForPortCKind(int);
+        int extra[4];
+        int n_extra = 0;
+        if (LBAX_N > 55) {
+            for (i = 0; i < 4; i++) {
+                int ssm;
+                if (gm_8016B184()) {
+                    int ck = i == 0 ? Player_GetPlayerCharacter(0) : gm_80169370(i - 1);
+                    ssm = (i == 0 || ck != ChKind_Max) ? Mex_SsmForPortCKind(ck) : -1;
+                } else {
+                    ssm = Player_GetPlayerSlotType(i) != Gm_PKind_NA
+                              ? Mex_SsmForPortCKind(Player_GetPlayerCharacter(i))
+                              : -1;
+                }
+                if (ssm >= 64 && ssm < LBAX_N) {
+                    extra[n_extra++] = ssm;
+                }
+            }
+        }
+        if (result || n_extra != 0) {
+            lbAudioAx_80026F2C(0xC);
+            lbAudioAx_8002702C(0xC, result);
+            for (i = 0; i < n_extra; i++) {
+                lbl_804337C4[extra[i]] = 1;
+            }
+            lbAudioAx_80027168();
+            lbAudioAx_80027648();
+        }
+        return;
+    }
+#endif
     if (result) {
         lbAudioAx_80026F2C(0xC);
         lbAudioAx_8002702C(0xC, result);
@@ -1900,7 +1991,13 @@ static char str_audio[0xC] = "/audio/";
 static inline enum_t setup_audio_lang(void)
 {
     enum_t lang;
+#if defined(TARGET_PC)
+    /* m-ex forces US audio: its bank list describes /audio/us/ only (the new banks exist only
+     * there). */
+    if (LBAX_N > 55 || lbLang_IsSavedLanguageUS()) {
+#else
     if (lbLang_IsSavedLanguageUS()) {
+#endif
         strcpy(cur_ssm_file, str_audio_us);
         ssm_stem_pos = 10;
         return LANG_US;
@@ -1929,7 +2026,7 @@ void lbAudioAx_80027AB0(int id)
 
         {
             int i;
-            for (i = 0; i < 55; i++) {
+            for (i = 0; i < LBAX_N; i++) {
                 if (i != 0) {
                     lbl_80433A64[i] = -1;
                     lbl_804337C4[i] = -1;
@@ -2087,6 +2184,50 @@ void lbAudioAx_8002835C(void)
     HSD_ObjAllocInit(&lbl_80433710, sizeof(lbAudioAx_UserData), 4);
 }
 
+#if defined(TARGET_PC)
+/* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/SSM - the bank tables come from
+ * mexData.ssm when the disc has it (see _research/mex-sound-banks.md). Every table is rewritten,
+ * including the retail banks (m-ex's values for 0..54 equal retail's; Akaneia grew some banks, and
+ * the ARAM budget must use the real sizes). No mexData: the retail tables stay. */
+static void lbAudioAx_MexTables(void)
+{
+    extern int Mex_SsmCount(void);
+    extern const char* Mex_SsmFile(int);
+    extern u32 Mex_SsmSize(int);
+    extern int Mex_SsmLookup(int, int);
+    int n = Mex_SsmCount();
+    int i, k;
+    if (n <= 55) {
+        return;
+    }
+    if (n > LBAX_CAP - 1) {
+        OSReport("lbAudioAx: m-ex has %d sound banks, the port holds %d\n", n, LBAX_CAP - 1);
+        n = LBAX_CAP - 1;
+    }
+    for (i = 0; i < n; i++) {
+        const char* name = Mex_SsmFile(i);
+        if (name != NULL) {
+            ssm_files[i] = name;
+        }
+        offsets_arr_803BC4E4[i][0] = Mex_SsmSize(i);
+        for (k = 0; k < 4; k++) {
+            s32_arr_803BB5D0[i][k] = (s8) Mex_SsmLookup(i, k);
+        }
+        if (i >= 55) {
+            s32_arr_803BB8D4[i][0] = i * 10000;
+            s32_arr_803BB8D4[i][1] = i * 10000 + 9999;
+        }
+    }
+    /* the entry past the last bank is the sort's "none" slot, like retail's 55 */
+    offsets_arr_803BC4E4[n][0] = 0;
+    for (k = 0; k < 4; k++) {
+        s32_arr_803BB5D0[n][k] = 0;
+    }
+    lbAx_N = n;
+    OSReport("lbAudioAx: %d sound banks from mexData\n", n);
+}
+#endif
+
 void lbAudioAx_8002838C(void)
 {
     static u32 ar_stack[0x10];
@@ -2098,6 +2239,10 @@ void lbAudioAx_8002838C(void)
     ARInit(ar_stack, ARRAY_SIZE(ar_stack));
     ARQInit();
     AIInit(NULL);
+
+#if defined(TARGET_PC)
+    lbAudioAx_MexTables();
+#endif
 
     lbl_804D643C = offsets_arr_803BC4E4[0][0];
     lbl_804D6440 = offsets_arr_803BC4E4[0x33][0];
@@ -2140,7 +2285,7 @@ void lbAudioAx_8002838C(void)
     HSD_SynthSFXAllocateBank(lbl_804D6440);
     HSD_SynthSFXAllocateBank(lbl_804D6444);
 
-    for (i = 0; i < 56; i++) {
+    for (i = 0; i < LBAX_N + 1; i++) {
         lbl_804337C4[i] = -1;
         lbl_804338A4[i] = -1;
         lbl_80433984[i] = -1;
@@ -2185,7 +2330,7 @@ void lbAudioAx_80028690(void)
         strcpy(&cur_ssm_file[ssm_stem_pos], "smash2.sem");
         AXDriver_8038DA70(cur_ssm_file, lb_800195D0);
 
-        for (i = 0; i < 55; i++) {
+        for (i = 0; i < LBAX_N; i++) {
             if (i != 0) {
                 lbl_80433A64[i] = -1;
                 lbl_804337C4[i] = -1;

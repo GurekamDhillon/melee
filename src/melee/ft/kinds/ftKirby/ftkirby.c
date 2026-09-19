@@ -2458,7 +2458,6 @@ ftKirby_CostumeArchive* ftKb_Init_803C9FC8[Ft_Kind_Max] = {
     NULL,
     NULL,
     NULL,
-    NULL,
 };
 
 MotionState ftKb_Init_UnkMotionStates0[] = {
@@ -4299,3 +4298,11 @@ void ftKb_SpecialN_800F1F1C(Fighter_GObj* gobj, Vec3* pos)
         efAsync_Spawn(gobj, &fp->x60C, 2, 0x49E, fp->parts[0].joint, pos);
     }
 }
+
+#if defined(TARGET_PC)
+/* ftData_MexInitKinds: an m-ex fighter kind takes its clone base's Kirby hat costume archive. */
+void ftKb_MexCopyKindHat(int dst, int src)
+{
+    ftKb_Init_803C9FC8[dst] = ftKb_Init_803C9FC8[src];
+}
+#endif

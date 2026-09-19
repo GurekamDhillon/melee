@@ -109,7 +109,6 @@
 #include "kinds/ftSeak/ftseakspeciallw.h"
 #include "kinds/ftSeak/ftseakspecialn.h"
 #include "kinds/ftSeak/ftseakspecials.h"
-#include "kinds/ftSonic/ftsonic.h"
 #include "kinds/ftYoshi/ftyoshi.h"
 #include "kinds/ftYoshi/ftyoshiguard.h"
 #include "kinds/ftYoshi/ftyoshispecialhi.h"
@@ -265,12 +264,7 @@ void ft_8008549C(void)
         { ftGl_CostumeList, ARRAY_SIZE(ftGl_CostumeList) },
         { ftGk_CostumeList, ARRAY_SIZE(ftGk_CostumeList) },
         { ftSb_CostumeList, ARRAY_SIZE(ftSb_CostumeList) },
-#if defined(TARGET_PC)
-        { ftSn_CostumeList, ARRAY_SIZE(ftSn_CostumeList) }
-#else
-        { ftFx_CostumeList, ARRAY_SIZE(ftFx_CostumeList) }
-#endif
-    };
+};
 
 ftData_UnkCountStruct ftData_Table_Unk0[Ft_Kind_Max] = {
     { 0, 303 }, { 0, 327 }, { 0, 318 }, { 0, 337 }, { 0, 479 }, { 0, 316 },
@@ -279,11 +273,6 @@ ftData_UnkCountStruct ftData_Table_Unk0[Ft_Kind_Max] = {
     { 0, 327 }, { 0, 311 }, { 0, 314 }, { 0, 303 }, { 0, 327 }, { 0, 320 },
     { 0, 323 }, { 0, 318 }, { 0, 327 }, { 0, 345 }, { 0, 344 }, { 0, 295 },
     { 0, 295 }, { 0, 316 }, { 0, 296 },
-#if defined(TARGET_PC)
-    { 0, 321 },
-#else
-    { 0, 327 },
-#endif
 };
 
 Event ftData_Table_Unk1[Ft_Kind_Max] = {
@@ -331,7 +320,7 @@ HSD_GObjEvent ftData_OnLoad[Ft_Kind_Max] = {
     ftCl_Init_OnLoad, ftDr_Init_OnLoad, ftFc_Init_OnLoad, ftPc_Init_OnLoad,
     ftGw_Init_OnLoad, ftGn_Init_OnLoad, ftFe_Init_OnLoad, ftMh_Init_OnLoad,
     ftCh_Init_OnLoad, ftBo_Init_OnLoad, ftGl_Init_OnLoad, ftGk_Init_OnLoad,
-    ftSb_Init_OnLoad, ftFx_Init_OnLoad,
+    ftSb_Init_OnLoad,
 };
 
 HSD_GObjEvent ftData_OnDeath[Ft_Kind_Max] = {
@@ -343,7 +332,7 @@ HSD_GObjEvent ftData_OnDeath[Ft_Kind_Max] = {
     ftCl_Init_OnDeath, ftDr_Init_OnDeath, ftFc_Init_OnDeath, ftPc_Init_OnDeath,
     ftGw_Init_OnDeath, ftGn_Init_OnDeath, ftFe_Init_OnDeath, ftMh_Init_OnDeath,
     ftCh_Init_OnDeath, ftBo_Init_OnDeath, ftGl_Init_OnDeath, ftGk_Init_OnDeath,
-    ftSb_Init_OnDeath, ftFx_Init_OnDeath,
+    ftSb_Init_OnDeath,
 };
 
 HSD_GObjEvent ftData_OnUserDataRemove[Ft_Kind_Max] = {
@@ -351,7 +340,6 @@ HSD_GObjEvent ftData_OnUserDataRemove[Ft_Kind_Max] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, ftPr_Init_OnUserDataRemove,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL,
     NULL,
 };
 
@@ -389,7 +377,6 @@ MotionState* ftData_CharacterStateTables[Ft_Kind_Max] = {
     NULL,
     ftGk_Init_MotionStateTable,
     ftSb_Init_MotionStateTable,
-    ftFx_Init_MotionStateTable,
 };
 
 MotionState* ftData_UnkMotionStates0[Ft_Kind_Max] = {
@@ -425,7 +412,6 @@ MotionState* ftData_UnkMotionStates0[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_UnkMotionStates0,
-    NULL,
     NULL,
 };
 
@@ -463,7 +449,6 @@ HSD_GObjEvent ftData_SpecialS[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialS_Enter,
     NULL,
-    ftFx_SpecialSStart_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirHi[Ft_Kind_Max] = {
@@ -500,7 +485,6 @@ HSD_GObjEvent ftData_SpecialAirHi[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirHi_Enter,
     NULL,
-    ftFx_SpecialAirHiStart_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirLw[Ft_Kind_Max] = {
@@ -537,7 +521,6 @@ HSD_GObjEvent ftData_SpecialAirLw[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirLw_Enter,
     NULL,
-    ftFx_SpecialAirLw_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirS[Ft_Kind_Max] = {
@@ -574,7 +557,6 @@ HSD_GObjEvent ftData_SpecialAirS[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirS_Enter,
     NULL,
-    ftFx_SpecialAirSStart_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialAirN[Ft_Kind_Max] = {
@@ -611,7 +593,6 @@ HSD_GObjEvent ftData_SpecialAirN[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialAirN_Enter,
     NULL,
-    ftFx_SpecialAirN_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialN[Ft_Kind_Max] = {
@@ -648,7 +629,6 @@ HSD_GObjEvent ftData_SpecialN[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialN_Enter,
     NULL,
-    ftFx_SpecialN_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialLw[Ft_Kind_Max] = {
@@ -685,7 +665,6 @@ HSD_GObjEvent ftData_SpecialLw[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialLw_Enter,
     NULL,
-    ftFx_SpecialLw_Enter,
 };
 
 HSD_GObjEvent ftData_SpecialHi[Ft_Kind_Max] = {
@@ -722,7 +701,6 @@ HSD_GObjEvent ftData_SpecialHi[Ft_Kind_Max] = {
     NULL,
     ftKp_SpecialHi_Enter,
     NULL,
-    ftFx_SpecialHi_Enter,
 };
 
 HSD_GObjEvent ftData_OnAbsorb[Ft_Kind_Max] = {
@@ -751,7 +729,6 @@ HSD_GObjEvent ftData_OnAbsorb[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGw_Init_OnAbsorb,
-    NULL,
     NULL,
     NULL,
     NULL,
@@ -796,7 +773,6 @@ Fighter_ItemEvent ftData_OnItemPickupExt[Ft_Kind_Max] = {
     ftGl_Init_OnItemPickup,
     ftGk_Init_OnItemPickup,
     NULL,
-    ftFx_Init_OnItemPickup,
 };
 
 HSD_GObjEvent ftData_OnItemInvisible[Ft_Kind_Max] = {
@@ -833,7 +809,6 @@ HSD_GObjEvent ftData_OnItemInvisible[Ft_Kind_Max] = {
     ftGl_Init_OnItemInvisible,
     ftGk_Init_OnItemInvisible,
     NULL,
-    ftFx_Init_OnItemInvisible,
 };
 
 HSD_GObjEvent ftData_OnItemVisible[Ft_Kind_Max] = {
@@ -870,7 +845,6 @@ HSD_GObjEvent ftData_OnItemVisible[Ft_Kind_Max] = {
     ftGl_Init_OnItemVisible,
     ftGk_Init_OnItemVisible,
     NULL,
-    ftFx_Init_OnItemVisible,
 };
 
 Fighter_ItemEvent ftData_OnItemDropExt[Ft_Kind_Max] = {
@@ -907,7 +881,6 @@ Fighter_ItemEvent ftData_OnItemDropExt[Ft_Kind_Max] = {
     ftGl_Init_OnItemDrop,
     ftGk_Init_OnItemDrop,
     NULL,
-    ftFx_Init_OnItemDrop,
 };
 
 Fighter_ItemEvent ftData_OnItemPickup[Ft_Kind_Max] = {
@@ -944,7 +917,6 @@ Fighter_ItemEvent ftData_OnItemPickup[Ft_Kind_Max] = {
     ftGl_Init_OnItemPickup,
     ftGk_Init_OnItemPickup,
     NULL,
-    ftFx_Init_OnItemPickup,
 };
 
 Fighter_ItemEvent ftData_OnItemDrop[Ft_Kind_Max] = {
@@ -981,7 +953,6 @@ Fighter_ItemEvent ftData_OnItemDrop[Ft_Kind_Max] = {
     ftGl_Init_OnItemDrop,
     ftGk_Init_OnItemDrop,
     NULL,
-    ftFx_Init_OnItemDrop,
 };
 
 HSD_GObjEvent ftData_UnkMotionStates1[Ft_Kind_Max] = {
@@ -998,7 +969,6 @@ HSD_GObjEvent ftData_UnkMotionStates1[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftPk_Init_UnkMotionStates1,
-    NULL,
     NULL,
     NULL,
     NULL,
@@ -1055,7 +1025,6 @@ HSD_GObjEvent ftData_UnkMotionStates2[Ft_Kind_Max] = {
     NULL,
     NULL,
     NULL,
-    NULL,
 };
 
 HSD_GObjEvent ftData_OnKnockbackEnter[Ft_Kind_Max] = {
@@ -1091,7 +1060,7 @@ HSD_GObjEvent ftData_OnKnockbackEnter[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_OnKnockbackEnter,
-    ftSb_Init_OnKnockbackEnter, ftFx_Init_OnKnockbackEnter,
+    ftSb_Init_OnKnockbackEnter,
 };
 
 HSD_GObjEvent ftData_OnKnockbackExit[Ft_Kind_Max] = {
@@ -1127,7 +1096,7 @@ HSD_GObjEvent ftData_OnKnockbackExit[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_OnKnockbackExit,
-    ftSb_Init_OnKnockbackExit, ftFx_Init_OnKnockbackExit,
+    ftSb_Init_OnKnockbackExit,
 };
 
 HSD_GObjEvent ftData_UnkMotionStates3[Ft_Kind_Max] = {
@@ -1163,7 +1132,6 @@ HSD_GObjEvent ftData_UnkMotionStates3[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_UnkMotionStates3,
-    NULL,
     NULL,
 };
 
@@ -1201,7 +1169,6 @@ HSD_GObjEvent ftData_UnkMotionStates4[Ft_Kind_Max] = {
     NULL,
     NULL,
     NULL,
-    NULL,
 };
 
 HSD_GObjEvent ftKindCalcIndiviParamTable[Ft_Kind_Max] = {
@@ -1221,7 +1188,7 @@ HSD_GObjEvent ftKindCalcIndiviParamTable[Ft_Kind_Max] = {
     ftFe_Init_LoadSpecialAttrs, ftMh_Init_LoadSpecialAttrs,
     ftCh_Init_LoadSpecialAttrs, ftBo_Init_LoadSpecialAttrs,
     ftGl_Init_LoadSpecialAttrs, ftGk_Init_LoadSpecialAttrs,
-    ftSb_Init_LoadSpecialAttrs, ftFx_Init_LoadSpecialAttrs,
+    ftSb_Init_LoadSpecialAttrs,
 };
 
 /// Standard Character .dat File Names
@@ -1264,11 +1231,6 @@ struct StringPair ftData_803C1F40[Ft_Kind_Max] = {
     { ftGl_Init_DatFilename, ftGl_Init_DataName },
     { ftGk_Init_DatFilename, ftGk_Init_DataName },
     { ftSb_Init_DatFilename, ftSb_Init_DataName },
-#if defined(TARGET_PC)
-    { ftSn_Init_DatFilename, ftSn_Init_DataName },
-#else
-    { ftFx_Init_DatFilename, ftFx_Init_DataName },
-#endif
 };
 
 Event ftData_UnkMotionStates5[Ft_Kind_Max] = {
@@ -1278,7 +1240,7 @@ Event ftData_UnkMotionStates5[Ft_Kind_Max] = {
     NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL,
 };
 
 Fighter_UnkMtxEvent ftData_UnkMtxFunc0[Ft_Kind_Max] = {
@@ -1298,7 +1260,6 @@ Fighter_UnkMtxEvent ftData_UnkMtxFunc0[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftPr_Init_UnkMtxFunc0,
-    NULL,
     NULL,
     NULL,
     NULL,
@@ -1404,7 +1365,6 @@ struct {
     { NULL, NULL },
     { NULL, NULL },
     { ftKb_Init_UnkCallbackPairs0_0, ftKb_Init_UnkCallbackPairs0_1 },
-    [Ft_Kind_Sonic] = { NULL, NULL },
 };
 
 /// Costume and Joint Strings
@@ -1426,12 +1386,6 @@ Fighter_CostumeStrings* ftData_803C2360[Ft_Kind_Max] = {
     ftCh_Init_CostumeStrings, ftBo_Init_CostumeStrings,
     ftGl_Init_CostumeStrings, ftGk_Init_CostumeStrings,
     ftSb_Init_CostumeStrings,
-#if defined(TARGET_PC)
-    ftSn_Init_CostumeStrings,
-#else
-    ftFx_Init_CostumeStrings,
-#endif
-
 };
 
 char* ftData_803C23E4[Ft_Kind_Max] = {
@@ -1452,28 +1406,9 @@ char* ftData_803C23E4[Ft_Kind_Max] = {
     ftCh_Init_AnimDatFilename, ftBo_Init_AnimDatFilename,
     ftGl_Init_AnimDatFilename, ftGk_Init_AnimDatFilename,
     ftSb_Init_AnimDatFilename,
-#if defined(TARGET_PC)
-    ftSn_Init_AnimDatFilename,
-#else
-    ftFx_Init_AnimDatFilename,
-#endif
 };
 
 /// Demo Lookup Strings
-#if defined(TARGET_PC)
-/* Sonic's demo motions. m-ex names his results animations `ftDemoResultSonic` in GmRstMSn.dat
- * (same layout as retail's ftDemoResultMotionFile<Name>: one raw figatree block). Looking up
- * Fox's name there found nothing and the results pose played from a stale pointer (user-found
- * "atree data error" when Sonic won). The other three are not on Akaneia's disc; their lookups
- * return NULL, as Fox's names did. */
-static Fighter_DemoStrings ftSn_DemoMotionFilenames = {
-    "ftDemoResultSonic",
-    "ftDemoIntroSonic",
-    "ftDemoEndingSonic",
-    "ftDemoViWaitSonic",
-};
-#endif
-
 Fighter_DemoStrings* ftData_803C2468[Ft_Kind_Max] = {
     &ftMr_Init_DemoMotionFilenames,
     &ftFx_Init_DemoMotionFilenames,
@@ -1508,11 +1443,6 @@ Fighter_DemoStrings* ftData_803C2468[Ft_Kind_Max] = {
     NULL,
     &ftGk_Init_DemoMotionFilenames,
     NULL,
-#if defined(TARGET_PC)
-    &ftSn_DemoMotionFilenames,
-#else
-    &ftFx_Init_DemoMotionFilenames,
-#endif
 };
 
 Fighter_MotionFileStringGetter ftData_803C24EC[Ft_Kind_Max] = {
@@ -1548,7 +1478,6 @@ Fighter_MotionFileStringGetter ftData_803C24EC[Ft_Kind_Max] = {
     NULL,
     NULL,
     ftGk_Init_GetMotionFileString,
-    NULL,
     NULL,
 };
 
@@ -1586,7 +1515,6 @@ Fighter_UnkPtrEvent ftData_UnkDemoCallbacks0[Ft_Kind_Max] = {
     NULL,
     ftGk_Init_UnkDemoCallbacks0,
     NULL,
-    NULL,
 };
 
 ftData_UnkCountStruct ftData_UnkIntPairs[Ft_Kind_Max] = {
@@ -1595,37 +1523,253 @@ ftData_UnkCountStruct ftData_UnkIntPairs[Ft_Kind_Max] = {
     { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 16 },
     { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 },
     { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 }, { 0, 14 },
-    { 0, 14 }, { 0, 15 }, { 0, 14 }, { 0, 14 },
+    { 0, 14 }, { 0, 15 }, { 0, 14 },
 };
 
 u8 ftData_UnkBytePerCharacter[Ft_Kind_Max] = {
     1,  3,  4,  8, 5, 12, 6, 17, 10, 15, 14, 14, 7,  2,  9,  11, 13,
-    18, 16, 17, 6, 1, 3,  7, -1, 19, 49, -1, -1, -1, -1, 12, -1, 3,
+    18, 16, 17, 6, 1, 3,  7, -1, 19, 49, -1, -1, -1, -1, 12, -1,
 };
 
 #if defined(TARGET_PC)
-int ftData_SonicHasOwnData(void)
-{
-    static int cached = -1;
-    if (cached < 0) {
-        cached = DVDConvertPathToEntrynum("PlSn.dat") != -1;
-    }
-    return cached;
-}
+/* ---- m-ex fighters -----------------------------------------------------------------------------
+ * Ported from m-ex (https://github.com/akaneia/m-ex): its patches make every per-fighter-kind
+ * table of the engine read MxDt.dat instead of the retail arrays. The port sizes those arrays for
+ * the m-ex kind slots (Ft_Kind_Mex0.., forward.h) and fills each slot's row ONCE, at fighter init,
+ * from the disc's MxDt.dat:
+ *   - callbacks: fighter_function[slot][internal] - each fighter's DEFAULT vanilla function per
+ *     table (m-ex gives an added fighter its clone base's), mapped to native through the bridge.
+ *     The table <-> slot pairing is verified against the retail rows (tools/mex_port, 26 of 46
+ *     slots have a retail table). The fighter's own ftFunction overrides stay with the runtime's
+ *     hooks (gw_mex_ftfunction_runtime.c), installed when its file loads (ftData_8008572C).
+ *   - data: Pl file + ftData symbol, anim file and count, costumes, demo/results symbols.
+ *   - tables m-ex does not describe: copied from the retail fighter it was cloned from (the one
+ *     whose default onLoad it shares) - Kirby's copy tables, demo-motion count, effect file.
+ * A disc without MxDt.dat leaves every slot empty. */
+static Fighter_CostumeStrings ftData_MexCostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0][16];
+static UnkCostumeStruct ftData_MexCostumeLists[Ft_Kind_Max - Ft_Kind_Mex0][16];
 
-static void ftData_SonicFallback(void)
+void ftData_MexInitKinds(void)
 {
-    if (ftData_SonicHasOwnData()) {
+    extern int Mex_SlotInternal(int slot);
+    extern const char* Mex_FtPlFile(int k);
+    extern const char* Mex_FtPlSymbol(int k);
+    extern const char* Mex_FtAnimFile(int k);
+    extern int Mex_FtAnimCount(int k);
+    extern int Mex_FtCostumeCount(int k);
+    extern const char* Mex_FtCostumeString(int k, int c, int which);
+    extern void* Mex_FtDemoStrings(int k);
+    extern void* Mex_FtFunc(int slot, int k);
+    extern int Mex_FtBaseKind(int k);
+    extern void Player_MexSetMapping(int ckind, int fkind);
+    extern void ftKb_MexCopyKindData(int dst, int src);
+    extern void ftKb_MexCopyKindHat(int dst, int src);
+    static bool done;
+    int slot, n = 0;
+
+    if (done) {
         return;
     }
-    ftData_803C1F40[Ft_Kind_Sonic].a = ftFx_Init_DatFilename;
-    ftData_803C1F40[Ft_Kind_Sonic].b = ftFx_Init_DataName;
-    ftData_803C2360[Ft_Kind_Sonic] = ftFx_Init_CostumeStrings;
-    ftData_803C23E4[Ft_Kind_Sonic] = ftFx_Init_AnimDatFilename;
-    CostumeListsForeachCharacter[Ft_Kind_Sonic].costume_list = ftFx_CostumeList;
-    CostumeListsForeachCharacter[Ft_Kind_Sonic].numCostumes =
-        ARRAY_SIZE(ftFx_CostumeList);
-    ftData_Table_Unk0[Ft_Kind_Sonic].count = 327;
+    done = true;
+    for (slot = 0; slot < Ft_Kind_Max - Ft_Kind_Mex0; slot++) {
+        FighterKind fk = Ft_Kind_Mex0 + slot;
+        int k = Mex_SlotInternal(slot);
+        int base, c, ncost;
+        if (k < 0) {
+            continue;
+        }
+        base = Mex_FtBaseKind(k);
+
+        /* Each callback: m-ex's default for this fighter, or - when m-ex leaves the slot empty
+         * because the fighter's own ftFunction overrides it - its clone base's. The engine
+         * asserts several of these are non-NULL (ftKindCalcIndiviParamTable). */
+        ftData_OnLoad[fk] = (HSD_GObjEvent) Mex_FtFunc(0, k);
+        if (ftData_OnLoad[fk] == NULL) {
+            ftData_OnLoad[fk] = ftData_OnLoad[base];
+        }
+        ftData_OnDeath[fk] = (HSD_GObjEvent) Mex_FtFunc(1, k);
+        if (ftData_OnDeath[fk] == NULL) {
+            ftData_OnDeath[fk] = ftData_OnDeath[base];
+        }
+        ftData_OnUserDataRemove[fk] = (HSD_GObjEvent) Mex_FtFunc(2, k);
+        if (ftData_OnUserDataRemove[fk] == NULL) {
+            ftData_OnUserDataRemove[fk] = ftData_OnUserDataRemove[base];
+        }
+        ftData_CharacterStateTables[fk] = (MotionState*) Mex_FtFunc(3, k);
+        if (ftData_CharacterStateTables[fk] == NULL) {
+            ftData_CharacterStateTables[fk] = ftData_CharacterStateTables[base];
+        }
+        ftData_SpecialN[fk] = (HSD_GObjEvent) Mex_FtFunc(4, k);
+        if (ftData_SpecialN[fk] == NULL) {
+            ftData_SpecialN[fk] = ftData_SpecialN[base];
+        }
+        ftData_SpecialAirN[fk] = (HSD_GObjEvent) Mex_FtFunc(5, k);
+        if (ftData_SpecialAirN[fk] == NULL) {
+            ftData_SpecialAirN[fk] = ftData_SpecialAirN[base];
+        }
+        ftData_SpecialS[fk] = (HSD_GObjEvent) Mex_FtFunc(6, k);
+        if (ftData_SpecialS[fk] == NULL) {
+            ftData_SpecialS[fk] = ftData_SpecialS[base];
+        }
+        ftData_SpecialAirS[fk] = (HSD_GObjEvent) Mex_FtFunc(7, k);
+        if (ftData_SpecialAirS[fk] == NULL) {
+            ftData_SpecialAirS[fk] = ftData_SpecialAirS[base];
+        }
+        ftData_SpecialHi[fk] = (HSD_GObjEvent) Mex_FtFunc(8, k);
+        if (ftData_SpecialHi[fk] == NULL) {
+            ftData_SpecialHi[fk] = ftData_SpecialHi[base];
+        }
+        ftData_SpecialAirHi[fk] = (HSD_GObjEvent) Mex_FtFunc(9, k);
+        if (ftData_SpecialAirHi[fk] == NULL) {
+            ftData_SpecialAirHi[fk] = ftData_SpecialAirHi[base];
+        }
+        ftData_SpecialLw[fk] = (HSD_GObjEvent) Mex_FtFunc(10, k);
+        if (ftData_SpecialLw[fk] == NULL) {
+            ftData_SpecialLw[fk] = ftData_SpecialLw[base];
+        }
+        ftData_SpecialAirLw[fk] = (HSD_GObjEvent) Mex_FtFunc(11, k);
+        if (ftData_SpecialAirLw[fk] == NULL) {
+            ftData_SpecialAirLw[fk] = ftData_SpecialAirLw[base];
+        }
+        ftData_OnAbsorb[fk] = (HSD_GObjEvent) Mex_FtFunc(12, k);
+        if (ftData_OnAbsorb[fk] == NULL) {
+            ftData_OnAbsorb[fk] = ftData_OnAbsorb[base];
+        }
+        ftData_OnItemPickupExt[fk] = (Fighter_ItemEvent) Mex_FtFunc(13, k);
+        if (ftData_OnItemPickupExt[fk] == NULL) {
+            ftData_OnItemPickupExt[fk] = ftData_OnItemPickupExt[base];
+        }
+        ftData_OnItemInvisible[fk] = (HSD_GObjEvent) Mex_FtFunc(14, k);
+        if (ftData_OnItemInvisible[fk] == NULL) {
+            ftData_OnItemInvisible[fk] = ftData_OnItemInvisible[base];
+        }
+        ftData_OnItemVisible[fk] = (HSD_GObjEvent) Mex_FtFunc(15, k);
+        if (ftData_OnItemVisible[fk] == NULL) {
+            ftData_OnItemVisible[fk] = ftData_OnItemVisible[base];
+        }
+        ftData_OnItemDropExt[fk] = (Fighter_ItemEvent) Mex_FtFunc(16, k);
+        if (ftData_OnItemDropExt[fk] == NULL) {
+            ftData_OnItemDropExt[fk] = ftData_OnItemDropExt[base];
+        }
+        ftData_OnItemPickup[fk] = (Fighter_ItemEvent) Mex_FtFunc(17, k);
+        if (ftData_OnItemPickup[fk] == NULL) {
+            ftData_OnItemPickup[fk] = ftData_OnItemPickup[base];
+        }
+        ftData_OnItemDrop[fk] = (Fighter_ItemEvent) Mex_FtFunc(18, k);
+        if (ftData_OnItemDrop[fk] == NULL) {
+            ftData_OnItemDrop[fk] = ftData_OnItemDrop[base];
+        }
+        ftData_UnkMotionStates1[fk] = (HSD_GObjEvent) Mex_FtFunc(19, k);
+        if (ftData_UnkMotionStates1[fk] == NULL) {
+            ftData_UnkMotionStates1[fk] = ftData_UnkMotionStates1[base];
+        }
+        ftData_UnkMotionStates2[fk] = (HSD_GObjEvent) Mex_FtFunc(20, k);
+        if (ftData_UnkMotionStates2[fk] == NULL) {
+            ftData_UnkMotionStates2[fk] = ftData_UnkMotionStates2[base];
+        }
+        ftData_OnKnockbackEnter[fk] = (HSD_GObjEvent) Mex_FtFunc(21, k);
+        if (ftData_OnKnockbackEnter[fk] == NULL) {
+            ftData_OnKnockbackEnter[fk] = ftData_OnKnockbackEnter[base];
+        }
+        ftData_OnKnockbackExit[fk] = (HSD_GObjEvent) Mex_FtFunc(22, k);
+        if (ftData_OnKnockbackExit[fk] == NULL) {
+            ftData_OnKnockbackExit[fk] = ftData_OnKnockbackExit[base];
+        }
+        ftData_UnkMotionStates3[fk] = (HSD_GObjEvent) Mex_FtFunc(23, k);
+        if (ftData_UnkMotionStates3[fk] == NULL) {
+            ftData_UnkMotionStates3[fk] = ftData_UnkMotionStates3[base];
+        }
+        ftData_UnkMotionStates4[fk] = (HSD_GObjEvent) Mex_FtFunc(24, k);
+        if (ftData_UnkMotionStates4[fk] == NULL) {
+            ftData_UnkMotionStates4[fk] = ftData_UnkMotionStates4[base];
+        }
+        ftKindCalcIndiviParamTable[fk] = (HSD_GObjEvent) Mex_FtFunc(25, k);
+        if (ftKindCalcIndiviParamTable[fk] == NULL) {
+            ftKindCalcIndiviParamTable[fk] = ftKindCalcIndiviParamTable[base];
+        }
+        ftData_UnkMtxFunc0[fk] = (Fighter_UnkMtxEvent) Mex_FtFunc(26, k);
+        if (ftData_UnkMtxFunc0[fk] == NULL) {
+            ftData_UnkMtxFunc0[fk] = ftData_UnkMtxFunc0[base];
+        }
+        ftData_803C24EC[fk] = (Fighter_MotionFileStringGetter) Mex_FtFunc(38, k);
+        if (ftData_803C24EC[fk] == NULL) {
+            ftData_803C24EC[fk] = ftData_803C24EC[base];
+        }
+        ftData_UnkDemoCallbacks0[fk] = (Fighter_UnkPtrEvent) Mex_FtFunc(39, k);
+        if (ftData_UnkDemoCallbacks0[fk] == NULL) {
+            ftData_UnkDemoCallbacks0[fk] = ftData_UnkDemoCallbacks0[base];
+        }
+        ftData_UnkMotionStates0[fk] = (MotionState*) Mex_FtFunc(40, k);
+        if (ftData_UnkMotionStates0[fk] == NULL) {
+            ftData_UnkMotionStates0[fk] = ftData_UnkMotionStates0[base];
+        }
+
+        ftData_803C1F40[fk].a = (char*) Mex_FtPlFile(k);
+        ftData_803C1F40[fk].b = (char*) Mex_FtPlSymbol(k);
+        ftData_803C23E4[fk] = (char*) Mex_FtAnimFile(k);
+        ftData_Table_Unk0[fk].count = Mex_FtAnimCount(k);
+        ftData_803C2468[fk] = (Fighter_DemoStrings*) Mex_FtDemoStrings(k);
+        ncost = Mex_FtCostumeCount(k);
+        if (ncost > 16) {
+            ncost = 16;
+        }
+        for (c = 0; c < ncost; c++) {
+            ftData_MexCostumeStrings[slot][c].dat_filename = (char*) Mex_FtCostumeString(k, c, 0);
+            ftData_MexCostumeStrings[slot][c].joint_name = (char*) Mex_FtCostumeString(k, c, 1);
+            ftData_MexCostumeStrings[slot][c].matanim_joint_name =
+                (char*) Mex_FtCostumeString(k, c, 2);
+        }
+        ftData_803C2360[fk] = ftData_MexCostumeStrings[slot];
+        CostumeListsForeachCharacter[fk].costume_list = ftData_MexCostumeLists[slot];
+        CostumeListsForeachCharacter[fk].numCostumes = ncost;
+
+        ftData_Table_Unk1[fk] = ftData_Table_Unk1[base];
+        ftData_UnkMotionStates5[fk] = ftData_UnkMotionStates5[base];
+        ftData_UnkIntPairs[fk].count = ftData_UnkIntPairs[base].count;
+        ftData_UnkBytePerCharacter[fk] = ftData_UnkBytePerCharacter[base];
+        ftData_UnkCallbackPairs0[fk] = ftData_UnkCallbackPairs0[base];
+        ftKb_MexCopyKindHat(fk, base);
+        ftKb_MexCopyKindData(fk, base);
+        Player_MexSetMapping(ChKind_Mex0 + slot, fk);
+        n++;
+    }
+    /* Retail fighters the disc gives MORE costumes than retail (ACE's Mario has 7): append the
+     * extra costumes' files after the retail ones, which stay exactly as they were. */
+    for (slot = 0; slot < Ft_Kind_MasterH; slot++) {
+        static Fighter_CostumeStrings strs[Ft_Kind_MasterH][16];
+        static UnkCostumeStruct lists[Ft_Kind_MasterH][16];
+        int ncost = Mex_FtCostumeCount(slot);
+        int have = CostumeListsForeachCharacter[slot].numCostumes, c;
+        if (ncost <= have || ftData_803C2360[slot] == NULL) {
+            continue;
+        }
+        if (ncost > 16) {
+            ncost = 16;
+        }
+        for (c = 0; c < ncost; c++) {
+            if (c < have) {
+                strs[slot][c] = ftData_803C2360[slot][c];
+            } else {
+                strs[slot][c].dat_filename = (char*) Mex_FtCostumeString(slot, c, 0);
+                strs[slot][c].joint_name = (char*) Mex_FtCostumeString(slot, c, 1);
+                strs[slot][c].matanim_joint_name = (char*) Mex_FtCostumeString(slot, c, 2);
+            }
+        }
+        ftData_803C2360[slot] = strs[slot];
+        CostumeListsForeachCharacter[slot].costume_list = lists[slot];
+        CostumeListsForeachCharacter[slot].numCostumes = ncost;
+    }
+    if (n != 0) {
+        OSReport("gw: %d m-ex fighter kinds from MxDt.dat (kinds %d..%d)\n", n,
+                 Ft_Kind_Mex0, Ft_Kind_Mex0 + n - 1);
+    }
+}
+
+/* Is `kind` an m-ex fighter with a row? */
+bool ftData_IsMexKind(FighterKind kind)
+{
+    return kind >= Ft_Kind_Mex0 && kind < Ft_Kind_Max &&
+           ftData_803C1F40[kind].a != NULL;
 }
 #endif
 
@@ -1648,7 +1792,7 @@ void ftData_800855C8(FighterKind kind, u8 color)
     int hi;
 
 #if defined(TARGET_PC)
-    ftData_SonicFallback();
+    ftData_MexInitKinds();
 #endif
 
     if (color != 0xFF &&
@@ -1683,7 +1827,7 @@ void ftData_800855C8(FighterKind kind, u8 color)
 void ftData_8008572C(FighterKind kind)
 {
 #if defined(TARGET_PC)
-    ftData_SonicFallback();
+    ftData_MexInitKinds();
 #endif
     if (gFtDataList[kind] == NULL) {
 #if defined(TARGET_PC)
@@ -1696,7 +1840,7 @@ void ftData_8008572C(FighterKind kind)
                            ftData_803C1F40[kind].b, 0);
 #endif
 #if defined(TARGET_PC)
-        if (kind == Ft_Kind_Sonic) {
+        if (ftData_IsMexKind(kind)) {
             OSReport("gw: ftData_8008572C kind=%d file=%s sym=%s\n", kind,
                      ftData_803C1F40[kind].a, ftData_803C1F40[kind].b);
         }
@@ -1704,16 +1848,16 @@ void ftData_8008572C(FighterKind kind)
          * authored for into the low 6 bits (Fighter::x597_bits; the union's u32 bitfields are
          * allocated MSB-first on the big-endian PPC target, so the trailing 6-bit field lands in
          * bits 0-5). The figatree's authoring kind does not match the port's kind: on a vanilla
-         * disc Ft_Kind_Sonic reuses Fox's data (bits say Fox, 1), and Sonic's own Akaneia data was
-         * authored for m-ex's kind (31), never the port's Ft_Kind_Sonic (33). ftAnim_8006FE08/
-         * ftAnim_8006F954 then see fp->kind (33) != x597_bits and route Sonic down the cross-kind
+         * m-ex fighter's data is authored for m-ex's INTERNAL kind (Sonic: 31), never the port's
+         * kind for it (Ft_Kind_Mex0 + slot). ftAnim_8006FE08/ftAnim_8006F954 then see fp->kind
+         * != x597_bits and route the fighter down the cross-kind
          * remap path (ftAnim_8006FCE4 -> lbAnim_8001E7E8), which skips the "constant" track types
          * (5/6/7) and writes through a NULL FObj. Rewrite the low 6 bits to the port's own kind so
          * Sonic always uses the native animation path (ftAnim_8006F4C8 -> lbAnim_8001E6D8). Only
          * those 6 bits change; the parts-mask/flag bits stay as authored, which is correct because
          * ftParts_8007506C/ftPartsRemap now key off this kind too (ftCommonData_ExtendKindTable
-         * hands Ft_Kind_Sonic Sonic's own parts table). */
-        if (kind == Ft_Kind_Sonic) {
+         * hands each m-ex kind its own parts table). */
+        if (ftData_IsMexKind(kind)) {
             ftData* fd = gFtDataList[kind];
             int i;
             for (i = 0; i < ftData_Table_Unk0[kind].count; i++) {
@@ -1723,12 +1867,37 @@ void ftData_8008572C(FighterKind kind)
             }
             /* Same for the demo motions (results-screen / intro poses, fd->x14): they are
              * authored for m-ex's kind too, and the cross-kind path crashed on the results
-             * screen when Sonic won (user-found, ftDemo_CreateFighter -> lbAnim_8001E7E8). */
+             * screen when Sonic won (user-found, ftDemo_CreateFighter -> lbAnim_8001E7E8).
+             *
+             * Nothing gives the length of THIS fighter's demo table: ftData_UnkIntPairs[kind]
+             * .count is the clone base's, MxDt.dat has no equivalent, and an m-ex fighter's
+             * table can be shorter. Walking the base's count overran Sonic's by four entries
+             * and wrote the kind into whatever followed - for PlSn.dat that was the spring
+             * article's ItemStateArray, whose zeroed anim_joint became 0x25 and crashed
+             * HSD_JObjAddAnim the first time the spring spawned. So trust the DATA instead of
+             * the count: every real motion has a subaction script (xC), including the holes
+             * that have no figatree, and PlSn.dat's table is followed by structs whose xC word
+             * is zero - so the first entry without one ends the table. */
             if (fd->x14 != NULL) {
+                u8* arch_lo = (u8*) ftData_LoadedArchive->data;
+                u8* arch_hi = arch_lo + ftData_LoadedArchive->header.data_size;
+                int n_demo = 0;
                 for (i = 0; i < ftData_UnkIntPairs[kind].count; i++) {
-                    u32 flags = (u32) fd->x14[i].x10_animCurrFlags;
-                    flags = (flags & ~0x3Fu) | (u32) kind;
-                    fd->x14[i].x10_animCurrFlags = (s32) flags;
+                    u8* entry = (u8*) &fd->x14[i];
+                    u32 flags;
+                    if (entry < arch_lo || entry + sizeof(fd->x14[0]) > arch_hi ||
+                        fd->x14[i].xC == NULL)
+                    {
+                        break;
+                    }
+                    flags = (u32) fd->x14[i].x10_animCurrFlags;
+                    fd->x14[i].x10_animCurrFlags = (s32) ((flags & ~0x3Fu) | (u32) kind);
+                    n_demo++;
+                }
+                if (n_demo != ftData_UnkIntPairs[kind].count) {
+                    OSReport("gw: kind %d has %d demo motions, not the base's %d\n", kind,
+                             n_demo, ftData_UnkIntPairs[kind].count);
+                    ftData_UnkIntPairs[kind].count = n_demo;
                 }
             }
             /* Ported from m-ex (https://github.com/akaneia/m-ex): load Sonic's PlSn.dat
@@ -1766,7 +1935,7 @@ void ftData_80085820(FighterKind kind, int costume_id)
     UnkCostumeStruct* temp_r5 =
         &CostumeListsForeachCharacter[kind].costume_list[costume_id];
 #if defined(TARGET_PC)
-    if (kind == Ft_Kind_Sonic) {
+    if (ftData_IsMexKind(kind)) {
         OSReport("gw: ftData_80085820 kind=%d costume=%d file=%s joint=%s\n",
                  kind, costume_id,
                  ftData_803C2360[kind][costume_id].dat_filename,
@@ -1852,7 +2021,11 @@ void ftData_80085A14(FighterKind kind)
         for (i = 0; i < (u32) ftData_Table_Unk0[kind].count; i++) {
             temp_r0 = temp_r27->xC[i].x8;
             if (temp_r0 != 0) {
+#if defined(TARGET_PC)
+                if (temp_r0 > 0x10000) { /* the buffer size, fighter.c (m-ex anims exceed 0x8000) */
+#else
                 if (temp_r0 > 0x8000) {
+#endif
                     HSD_ASSERTREPORT(0x9AF, 0, "fighter figatree over! %x\n",
                                      temp_r0);
                 }

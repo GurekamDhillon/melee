@@ -169,6 +169,16 @@ int main(void)
     lbMemory_8001564C();
     lbHeap_80015F3C();
     lbDvd_80018F68();
+#if defined(TARGET_PC)
+    {
+        /* The m-ex fighter rows (per-kind tables, character mapping) must exist before ANY scene
+         * runs: a preload maps a character kind through ftMapping_list first, and an unfilled
+         * m-ex row read as fighter 0 - Training preloaded Mario's animations for Sonic and his
+         * own then did not fit. Needs only the disc. */
+        extern void ftData_MexInitKinds(void);
+        ftData_MexInitKinds();
+    }
+#endif
     lbArq_80014D2C();
     lbCardNew_Init();
     lbCardGame_Init();

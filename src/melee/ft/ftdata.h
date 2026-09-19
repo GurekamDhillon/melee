@@ -75,7 +75,8 @@
 /* True when the loaded disc carries Sonic's own data (PlSn.dat and its costumes), i.e. a
  * content-expanded disc (Akaneia). On a vanilla GALE01 Sonic only exists as the port's Fox clone,
  * and the Ft_Kind_Sonic data/parts tables fall back to Fox's. */
-int ftData_SonicHasOwnData(void);
+void ftData_MexInitKinds(void);
+bool ftData_IsMexKind(FighterKind kind);
 #endif
 
 #endif

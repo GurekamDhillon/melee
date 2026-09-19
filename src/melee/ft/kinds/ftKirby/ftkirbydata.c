@@ -79,7 +79,6 @@ ftKirby_CopyName ftKb_Init_803CA9D0[Ft_Kind_Max] = {
     { NULL, NULL },
     { NULL, NULL },
     { NULL, NULL },
-    { "PlKbCpFx.dat", "ftDataKirbyCopyFox" },
 };
 
 char ftKb_Init_803CAAD8[] = "PlKbNrCpDk.dat";
@@ -245,5 +244,14 @@ Fighter_CostumeStrings* ftKb_Init_803CB3E8[] = {
 
 u8 ftKb_Init_803CB46C[Ft_Kind_Max] = {
     32, 33, 38, 39, -1, 41, 35, 21, 42, 45, 46, 46, 36, 34, 40, 43, 44,
-    37, 20, 21, 35, 32, 33, 36, -1, 47, 48, -1, -1, -1, -1, -1, -1, 33,
+    37, 20, 21, 35, 32, 33, 36, -1, 47, 48, -1, -1, -1, -1, -1, -1,
 };
+
+#if defined(TARGET_PC)
+/* ftData_MexInitKinds: an m-ex fighter kind takes its clone base's Kirby copy-name row. */
+void ftKb_MexCopyKindData(int dst, int src)
+{
+    ftKb_Init_803CA9D0[dst] = ftKb_Init_803CA9D0[src];
+    ftKb_Init_803CB46C[dst] = ftKb_Init_803CB46C[src];
+}
+#endif

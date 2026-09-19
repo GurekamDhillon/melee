@@ -93,7 +93,7 @@ static int lbl_80433780[17];
 /* Sound-bank tables, sized for m-ex's bank list (78 on Akaneia; m-ex's own ceiling is 100) and
  * filled from mexData at audio init (lbAudioAx_MexTables). LBAX_N is the live bank count: 55 on
  * retail. Bank 55 stays the "no bank" value - on m-ex it is null.ssm, an empty bank. */
-#define LBAX_CAP 102
+#define LBAX_CAP 160 /* ACE has 103 banks */
 #define LBAX_SSM_DIM LBAX_CAP
 static int lbAx_N = 55;
 #define LBAX_N lbAx_N

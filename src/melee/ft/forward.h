@@ -123,9 +123,17 @@ typedef enum FighterKind {
     /* 1E */ Ft_Kind_Girl,
     /* 1F */ Ft_Kind_GKoops,
     /* 20 */ Ft_Kind_Sandbag,
-    /* 21 */ Ft_Kind_Sonic,
-    /* 22 */ Ft_Kind_None,
-    /* 22 */ Ft_Kind_Max = Ft_Kind_None
+#if defined(TARGET_PC)
+    /* m-ex fighters: kind Ft_Kind_Mex0 + i is the i-th m-ex fighter the disc's MxDt.dat defines
+     * after the retail cast (Mex_SlotInternal maps it to m-ex's INTERNAL id). Rows are filled at
+     * startup from MxDt.dat (ftData_MexInitKinds); an unused slot stays empty. 31 slots: ACE has
+     * exactly 31 m-ex fighters, and a kind must stay below 64 (the 6-bit x597_bits field). */
+    /* 21 */ Ft_Kind_Mex0,
+    Ft_Kind_None = Ft_Kind_Mex0 + 31, /* 0x40: kinds must stay below 64 (6-bit x597_bits) */
+#else
+    /* 21 */ Ft_Kind_None,
+#endif
+    Ft_Kind_Max = Ft_Kind_None
 } FighterKind;
 
 typedef enum CharacterKind {
@@ -166,7 +174,14 @@ typedef enum CharacterKind {
     /* 1F */ ChKind_Sandbag,                       // Sandbag
     /* 20 */ ChKind_Popo,                          // Popo
     /* 21 */ ChKind_None,                          // None
-    /* 21 */ ChKind_Max = ChKind_None
+    /* 21 */ ChKind_Max = ChKind_None,
+#if defined(TARGET_PC)
+    /* m-ex fighters' character kinds come AFTER the "none" sentinel (used ~200 times, and
+     * stored), so it keeps its value; slot i matches Ft_Kind_Mex0 + i. ChKind_Cap sizes the
+     * tables they index. */
+    /* 22 */ ChKind_Mex0,
+    ChKind_Cap = ChKind_Mex0 + 31,
+#endif
 } CharacterKind;
 
 static MotionFlags const Ft_MF_None = 0;

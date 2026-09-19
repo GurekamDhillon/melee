@@ -149,6 +149,9 @@ void Fighter_800679B0(void)
     HSD_ObjAllocInit(&fighter_alloc_data, sizeof(Fighter), /*align*/ 4);
     HSD_ObjAllocInit(&fighter_dat_attrs_alloc_data, /*size*/ 0x424,
                      /*align*/ 4);
+#if defined(TARGET_PC)
+    ftData_MexInitKinds(); /* m-ex kind rows, before anything reads the per-kind tables */
+#endif
     ft_800852B0();
     Fighter_LoadCommonData();
     ft_8008549C();
@@ -177,18 +180,23 @@ void Fighter_800679B0(void)
 void Fighter_FirstInitialize_80067A84(void)
 {
     Fighter_800679B0();
+#if defined(TARGET_PC)
+    /* The per-fighter animation buffers (fp->x59C/x5A0: one figatree each, DMA'd from ARAM). Retail
+     * sizes them for its largest animation, 0x8000. m-ex fighters exceed that (Akaneia's Sonic has
+     * a 0x8796 one) and ftData_80085A14 asserted "fighter figatree over" loading them; the port
+     * doubles the buffer and raises the check with it (FT_ANIM_BUF_SIZE). */
+    HSD_ObjAllocInit(&fighter_x59C_alloc_data, 0x10000, 0x20);
+#else
     HSD_ObjAllocInit(&fighter_x59C_alloc_data, 0x8000, 0x20);
+#endif
 }
 
 #if defined(TARGET_PC)
-/* The disc's PlCo.dat common data holds per-kind pointer tables sized for vanilla's Ft_Kind_Max
- * (33). The port adds Ft_Kind_Sonic at index 33, so widen each kind-indexed table to Ft_Kind_Max.
- *
- * On a content-expanded disc (Akaneia) the per-kind tables are authored under m-ex's own kind
- * numbering, which moves the six vanilla bosses to 35..40 and gives the seven added fighters
- * 27..33 -- Sonic is 31. Sonic's own entry is used there; on a vanilla disc (no Sonic data) the
- * slot falls back to Fox's entry, so the new kind never reads past the loaded data and the
- * vanilla clone boot still works. */
+/* The disc's PlCo.dat common data holds per-kind pointer tables sized for ITS kind count: vanilla's
+ * 33, or m-ex's internal count on an m-ex disc (41 Akaneia, 65 ACE). The port's kinds differ from
+ * both (the m-ex slots follow the retail 33), so each kind-indexed table is rebuilt in the port's
+ * order. m-ex moves the six bosses to its last six ids and puts added fighters from 27, which the
+ * old one-to-one copy got wrong (on Akaneia the bosses read Wolf's..Tails' rows). */
 static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
 {
     /* One fixed copy per widened table (slot 0 = ftPartsTable, 1 = Fighter_804D6540), rebuilt on
@@ -198,13 +206,19 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
      * match's results screen (write to a garbage address inside this function). The globals are
      * reassigned to the same buffer on each load and read through, so rebuilding in place is
      * safe. */
+    extern int Mex_InternalForPortKind(int fk);
     static void* copies[2][Ft_Kind_Max];
     void** out = copies[slot];
     int i;
-    for (i = 0; i < Ft_Kind_Max - 1; ++i) {
-        out[i] = loaded[i];
+    /* PlCo's tables are indexed the disc's way: retail kinds on a vanilla disc, m-ex INTERNAL ids
+     * on an m-ex disc (bosses moved to the end, added fighters from 27). */
+    for (i = 0; i < Ft_Kind_Max; ++i) {
+        int k = Mex_InternalForPortKind(i);
+        if (k < 0) {
+            k = i < Ft_Kind_Mex0 ? i : -1; /* vanilla disc: retail layout, no m-ex rows */
+        }
+        out[i] = k >= 0 ? loaded[k] : NULL;
     }
-    out[Ft_Kind_Sonic] = ftData_SonicHasOwnData() ? loaded[31] : loaded[Ft_Kind_Fox];
     return out;
 }
 #endif

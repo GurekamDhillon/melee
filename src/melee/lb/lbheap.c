@@ -216,6 +216,19 @@ void* lbHeap_80015BD0(int heap_id, size_t size)
             result = HSD_MemAlloc(size);
             HSD_SetHeap(cur_heap);
         } else {
+#if defined(TARGET_PC)
+            /* MELEE_HEAP_TRACE=1: log each allocation from the handle-managed (ARAM / fixed)
+             * heaps - to see what fills one when an allocation fails. */
+            static int trace = -1;
+            if (trace < 0) {
+                extern int Env1(const char* name);
+                trace = Env1("MELEE_HEAP_TRACE");
+            }
+            if (trace) {
+                OSReport("lbHeap: heap %d type %d alloc 0x%X\n", heap_id, p->type,
+                         (unsigned int) size);
+            }
+#endif
             result = lbMemory_80014FC8(p->handle, size);
             if (p->type == 3) {
                 result = result->x4_lo;

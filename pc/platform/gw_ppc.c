@@ -375,7 +375,7 @@ static int gw_ppc_cond(gw_ppc_machine *m, uint32_t bo, uint32_t bi) {
     return (((c->ctr != 0) ^ ((bo & 0x02) != 0)) & (crbit ^ ((bo & 0x08) == 0))) != 0;
 }
 
-#define GW_PPC_MAX_CODE_RANGES 16
+#define GW_PPC_MAX_CODE_RANGES 256
 static uint32_t gw_ppc_range_lo[GW_PPC_MAX_CODE_RANGES];
 static uint32_t gw_ppc_range_hi[GW_PPC_MAX_CODE_RANGES];
 static int gw_ppc_range_count;

@@ -57,8 +57,9 @@ static void gw_set_cur_heap(int heap) { gw_w32(gw___OSCurrHeap, (uint32_t)heap);
  *
  * Taking it off the top is the safe place: lbheap carves its fixed heaps downward from the arena's
  * top and gives the MAIN heap whatever remains (lbheap.c), so this only shrinks the main heap,
- * measured at ~11.3 MB with little in use. 256 KB holds the shared state (~180 KB). */
-#define GW_MEX_PERSIST_SIZE 0x40000u
+ * measured at ~11.3 MB with little in use. 384 KB holds the shared state (~260 KB on ACE,
+ * whose MxDt.dat is 164 KB). */
+#define GW_MEX_PERSIST_SIZE 0x60000u
 
 static uintptr_t gw_arena_lo;
 static uintptr_t gw_arena_hi;

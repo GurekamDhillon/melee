@@ -205,7 +205,7 @@ enum {
     GW_MEX_EVENT_COUNT
 };
 
-#define GW_MEX_KIND_MAX 34 /* Ft_Kind_Max (melee/ft/forward.h) */
+#define GW_MEX_KIND_MAX (0x21 + 31) /* Ft_Kind_Max (melee/ft/forward.h): retail + m-ex slots */
 
 /* Register/clear a per-(event, kind) override. fn == NULL clears the slot, so the vanilla entry
  * runs again. Last registration wins; m-ex does not chain. Returns 0 on a bad event/kind (int, not

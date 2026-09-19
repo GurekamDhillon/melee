@@ -1071,6 +1071,11 @@ int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn) {
   return 1;
 }
 
+/* The m-ex runtime serves several fighters; a hook runs with its fighter selected
+ * (gw_mex_ftfunction_runtime.c), restored afterwards - hooks nest across fighters. */
+extern void *gw_Mex_SelectKind(int kind);
+extern void gw_Mex_RestoreKind(void *prev);
+
 void gw_Mex_GObjDispatch(int event, int kind, void *gobj, void *vanilla) {
   gwmex_gobj_fn fn = NULL;
   int in_range = ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX);
@@ -1078,9 +1083,11 @@ void gw_Mex_GObjDispatch(int event, int kind, void *gobj, void *vanilla) {
     fn = gw_mex_gobj_hooks[event][kind];
   }
   if (fn != NULL) {
+    void *prev = gw_Mex_SelectKind(kind);
     gw_mex_hook_active[event][kind] = 1;
     fn(gobj);
     gw_mex_hook_active[event][kind] = 0;
+    gw_Mex_RestoreKind(prev);
   } else if (vanilla != NULL) {
     ((gwmex_gobj_fn)vanilla)(gobj);
   }
@@ -1093,9 +1100,11 @@ void gw_Mex_GObjDispatch2(int event, int kind, void *gobj, void *arg1, void *van
     fn = gw_mex_gobj_hooks2[event][kind];
   }
   if (fn != NULL) {
+    void *prev = gw_Mex_SelectKind(kind);
     gw_mex_hook_active[event][kind] = 1;
     fn(gobj, arg1);
     gw_mex_hook_active[event][kind] = 0;
+    gw_Mex_RestoreKind(prev);
   } else if (vanilla != NULL) {
     ((gwmex_gobj_fn2)vanilla)(gobj, arg1);
   }
@@ -1109,9 +1118,11 @@ int gw_Mex_GObjPredDispatch(int event, int kind, void *gobj, void *vanilla) {
   }
   if (fn != NULL) {
     int r;
+    void *prev = gw_Mex_SelectKind(kind);
     gw_mex_hook_active[event][kind] = 1;
     r = fn(gobj);
     gw_mex_hook_active[event][kind] = 0;
+    gw_Mex_RestoreKind(prev);
     return r;
   }
   if (vanilla != NULL) {
@@ -1216,4 +1227,11 @@ static void gw_mex_demo_register(void) {
   for (k = 0; k < GW_MEX_KIND_MAX; ++k) {
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, k, gw_mex_demo_onframe);
   }
+}
+
+/* Game code reads a debug switch through this (gwtool prefixes every game symbol, so game code
+ * cannot call the CRT's getenv): 1 when environment variable `name` starts with '1'. */
+int gw_Env1(const char *name) {
+  const char *v = getenv(name);
+  return v != NULL && v[0] == '1';
 }

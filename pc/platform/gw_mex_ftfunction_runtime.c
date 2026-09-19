@@ -37,9 +37,29 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#define GW_MEX_KIND_SONIC 33      /* Ft_Kind_Sonic in the port (melee/ft/forward.h) */
-#define GW_MEX_INTERNAL_SONIC 31  /* Sonic's m-ex internal character id */
-#define GW_MEX_FTFUNC_DAT "PlSn.dat"
+/* Index spaces (see INDEX SPACES below). The port reserves a block of fighter kinds and a block
+ * of character kinds for m-ex fighters (melee/ft/forward.h Ft_Kind_Mex0, ChKind_Mex0). Slots are
+ * DENSE: slot i is the i-th non-empty m-ex fighter row from internal id GW_MEX_FIRST_NEW up
+ * (gw_Mex_SlotInternal), so builds with placeholder rows (ACE's "NONE") still fit. */
+#define GW_MEX_SLOTS 31             /* Ft_Kind_Mex0 .. +30: a fighter kind must fit the 6-bit
+                                     * x597_bits field the animation code compares it with */
+#define GW_PORT_FT_MEX0 0x21        /* Ft_Kind_Mex0 */
+#define GW_PORT_CK_MEX0 0x22        /* ChKind_Mex0 (after ChKind_None, 0x21) */
+#define GW_MEX_FIRST_NEW 27         /* m-ex internal id of the first added fighter */
+#define GW_MEX_INTERNAL_SONIC 31    /* Sonic's m-ex internal id (tests only) */
+
+/* m-ex index-space mappings, defined below */
+int gw_Mex_PortCKindToExt(int ckind);
+int gw_Mex_ExtToPortCKind(int ext);
+int gw_Mex_InternalForPortKind(int fk);
+int gw_Mex_PortKindForInternal(int k);
+int gw_Mex_InternalForExt(int e);
+int gw_Mex_ExtForInternal(int k);
+int gw_Mex_SlotInternal(int slot);
+int gw_Mex_InternalCount(void);
+int gw_Mex_CssIconCount(void);
+int gw_Mex_FtCostumeCount(int k);
+static int gw_mex_slot_of_internal(int k);
 
 /* Arch_FighterFunc slot indices (Header.s: onLoad 0x00 ... GetTrailData 0xB4). See
  * gw_mex_ftfunction.c's slot_names table; onFrame is slot 23. */
@@ -81,7 +101,7 @@
 /* Arch_FighterFunc layout the loader writes (see gw_mex_ftfunction.c): a 46-slot pointer array
  * followed by the per-kind tables. 0x2000 bytes covers the slot array + 25 overridden slots'
  * 64-entry per-kind tables with margin. */
-#define GW_MEX_MEXDATA_SIZE 0x2000u
+#define GW_MEX_MEXDATA_SIZE 0x5000u /* 46 slots + 46 per-kind tables of 96 ids */
 #define GW_MEX_STACK_SIZE 0x10000u
 #define GW_MEX_GETDATA_SIZE 0x1000u /* synthetic safe buffer MEX_GetData(8) hands back */
 
@@ -94,14 +114,80 @@
 #define GW_MEX_MOVE_MAX_ENTRIES 64
 #define GW_MEX_MOVE_CAM_CB_GUEST 0x800761C8u /* ftCamera_UpdateCameraBox */
 
-static gw_ftfunction gw_mex_ff;      /* the loaded, relocated blob (code + overrides) */
-static uint32_t gw_mex_stack_top;    /* guest stack top (r1) */
-static uint32_t gw_mex_getdata_buf;  /* guest buffer backing the MEX_GetData(8) shim */
-static int gw_mex_installed;         /* 1 once installed, -1 on failure */
+#define GW_MEX_MAX_ARTICLES 16
+#define GW_MEX_MAX_ARTICLE_SYMS 64
 
-static uint32_t gw_mex_movelogic_table;  /* guest addr of Sonic's MoveLogic MotionState[] */
-static int gw_mex_movelogic_entries;     /* number of MotionState entries (31) */
-static uint32_t gw_mex_move_cb_guest[GW_MEX_MOVE_MAX_ENTRIES][4]; /* preserved guest anim/input/phys/coll */
+/* Everything the runtime holds for ONE m-ex fighter. Each engine entry point (a hook dispatched
+ * for a fighter kind, a MoveLogic trampoline) selects the fighter it serves into gw_mex_k and
+ * restores the previous one on return - one fighter's guest code can trigger another fighter's
+ * hook (Sonic's hit puts Wolf into knockback). The macros below keep the single-fighter code that
+ * reads gw_mex_ff & co. working unchanged against the current fighter. */
+typedef struct gw_mex_kind {
+    int port_kind;                /* Ft_Kind_Mex0 + slot */
+    int internal;                 /* m-ex internal id */
+    gw_ftfunction ff;             /* the loaded, relocated blob (code + overrides) */
+    int installed;                /* 1 once installed, -1 on permanent failure */
+    uint32_t movelogic_table;     /* guest addr of its MoveLogic MotionState[] */
+    int movelogic_entries;
+    uint32_t move_cb_guest[GW_MEX_MOVE_MAX_ENTRIES][4]; /* preserved guest anim/input/phys/coll */
+    uint32_t art_lo[GW_MEX_MAX_ARTICLES], art_hi[GW_MEX_MAX_ARTICLES];
+    int art_count;
+    gw_ftfunction_symbol art_syms[GW_MEX_MAX_ARTICLE_SYMS];
+    uint32_t art_sym_count;
+} gw_mex_kind;
+
+static gw_mex_kind gw_mex_kinds[GW_MEX_SLOTS];
+static gw_mex_kind *gw_mex_k = &gw_mex_kinds[0];
+static uint32_t gw_mex_r2;            /* shared Arch_FighterFunc holder: every blob's r2 */
+static int gw_mex_any_installed;      /* any fighter's code is installed (exec trap guard) */
+static uint32_t gw_mex_stack_top;     /* guest stack top (r1), shared */
+static uint32_t gw_mex_getdata_buf;   /* guest buffer backing the MEX_GetData(8) shim */
+
+#define gw_mex_ff (gw_mex_k->ff)
+#define gw_mex_installed (gw_mex_k->installed)
+#define gw_mex_movelogic_table (gw_mex_k->movelogic_table)
+#define gw_mex_movelogic_entries (gw_mex_k->movelogic_entries)
+#define gw_mex_move_cb_guest (gw_mex_k->move_cb_guest)
+#define gw_mex_article_lo (gw_mex_k->art_lo)
+#define gw_mex_article_hi (gw_mex_k->art_hi)
+#define gw_mex_article_count (gw_mex_k->art_count)
+#define gw_mex_article_syms (gw_mex_k->art_syms)
+#define gw_mex_article_sym_count (gw_mex_k->art_sym_count)
+
+static int gw_mex_slot_of_port(int fk) {
+    return (fk >= GW_PORT_FT_MEX0 && fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS) ? fk - GW_PORT_FT_MEX0
+                                                                           : -1;
+}
+
+/* Make port fighter kind `fk` current. Returns the previous selection for gw_Mex_RestoreKind;
+ * a non-m-ex kind leaves the selection as it was. Called by gw_runtime.c's hook dispatch. */
+void *gw_Mex_SelectKind(int fk) {
+    gw_mex_kind *prev = gw_mex_k;
+    int s = gw_mex_slot_of_port(fk);
+    if (s >= 0) {
+        gw_mex_k = &gw_mex_kinds[s];
+    }
+    return prev;
+}
+
+void gw_Mex_RestoreKind(void *prev) {
+    if (prev != NULL) {
+        gw_mex_k = (gw_mex_kind *) prev;
+    }
+}
+
+/* The port fighter kind of a fighter gobj (gobj->user_data->kind), or -1. */
+static int gw_mex_gobj_kind(void *gobj) {
+    uint32_t fd;
+    if (gobj == NULL) {
+        return -1;
+    }
+    fd = gw_r32((const void *) (uintptr_t) ((uintptr_t) gobj + 0x2Cu));
+    if (fd < 0x80000000u || fd >= 0x80000000u + gw_mem1_size) {
+        return -1;
+    }
+    return (int) gw_r32((const void *) (uintptr_t) (fd + 0x04u));
+}
 
 static uint32_t gw_mex_override_target(uint32_t slot) {
     int i;
@@ -268,8 +354,10 @@ static void gw_mexdt_load(void) {
 
 /* Port fighter kind -> m-ex internal kind. See INDEX SPACES above. */
 static uint32_t gw_mex_internal_kind(uint32_t port_kind, const char *why) {
-    if (port_kind == (uint32_t) GW_MEX_KIND_SONIC) {
-        return (uint32_t) GW_MEX_INTERNAL_SONIC;
+    extern int gw_Mex_InternalForPortKind(int fk);
+    int k = gw_Mex_InternalForPortKind((int) port_kind);
+    if (k >= 0) {
+        return (uint32_t) k;
     }
     gw_panic("mexdata: %s: no m-ex internal kind is known for port fighter kind %u", why,
              port_kind);
@@ -373,13 +461,15 @@ void *gw_Mex_CssIconTable(void) {
 }
 
 int gw_Mex_ExtToPortCKind(int ext) {
+    extern int gw_Mex_InternalForExt(int ext);
+    extern int gw_Mex_SlotInternal(int slot);
+    int k;
     if (ext >= 0 && ext <= 25) {
         return ext;
     }
-    if (ext == 30) {
-        return 0x20; /* Sonic */
-    }
-    return -1;
+    k = gw_Mex_InternalForExt(ext);
+    k = k >= 0 ? gw_mex_slot_of_internal(k) : -1;
+    return k >= 0 ? GW_PORT_CK_MEX0 + k : -1;
 }
 
 /* ---- m-ex sound banks (mexData.ssm, root +0x10) -------------------------------------------------
@@ -466,7 +556,10 @@ int gw_Mex_SsmForPortCKind(int ck) {
 /* The bank that a fighter's RELATIVE sound ids (5000..9999) index, by port FighterKind, or -1.
  * Only m-ex fighters use relative ids; vanilla fighters' data holds absolute ids. */
 int gw_Mex_SsmForPortKind(int fk) {
-    return fk == GW_MEX_KIND_SONIC ? gw_mex_ssm_for_ext(30 /* Sonic's external id */) : -1;
+    extern int gw_Mex_ExtForInternal(int k);
+    int s = gw_mex_slot_of_port(fk);
+    int k = s >= 0 ? gw_Mex_SlotInternal(s) : -1;
+    return k >= 0 ? gw_mex_ssm_for_ext(gw_Mex_ExtForInternal(k)) : -1;
 }
 
 /* ---- m-ex music and per-fighter audio -----------------------------------------------------------
@@ -536,16 +629,235 @@ int gw_Mex_AnnouncerForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 
  * internal_id_count-6 .. -1 = 35..40 on Akaneia), where the port keeps them at 27..32 and adds
  * Sonic at 33 (m-ex 31). Verified: _research/mex-stock-icons.md. */
 int gw_Mex_InternalForPortKind(int fk) {
+    int n = gw_Mex_InternalCount();
+    int s = gw_mex_slot_of_port(fk);
     if (fk >= 0 && fk <= 26) {
         return fk;
     }
     if (fk >= 27 && fk <= 32) {
-        return fk + 8;
+        /* the six bosses: m-ex moves them to the last six internal ids */
+        return n > 6 ? n - 6 + (fk - 27) : fk;
     }
-    if (fk == GW_MEX_KIND_SONIC) {
-        return GW_MEX_INTERNAL_SONIC;
+    return s >= 0 ? gw_Mex_SlotInternal(s) : -1;
+}
+
+/* ---- m-ex fighter rows ---------------------------------------------------------------------------
+ * What ftData_MexInitKinds (melee/ft/ftdata.c) fills the port's per-kind tables from. Every value
+ * is returned as a plain scalar or pointer: game code and platform code must not share structs
+ * (game memory is big-endian). Strings point into the loaded MxDt.dat. Layouts: m-ex
+ * MexTK/include/mxdt.h MexData.fighter / fighter_function; field order verified by
+ * tools/mex_port/dump_fighters.py on Akaneia and ACE. Tables are indexed by INTERNAL id except
+ * names/costume_info/ssm/results/victory/announcer (EXTERNAL id). */
+
+static uint32_t gw_mex_ftfield(uint32_t off) {
+    uint32_t fighter;
+    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+        return 0u;
+    }
+    fighter = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_FIGHTER));
+    return gw_mexdt_in(fighter + off, 4u) ? gw_r32((const void *) (uintptr_t) (fighter + off)) : 0u;
+}
+
+static uint32_t gw_mex_word(uint32_t tbl, uint32_t index, uint32_t stride) {
+    uint32_t a = tbl + index * stride;
+    return (tbl != 0u && gw_mexdt_in(a, 4u)) ? gw_r32((const void *) (uintptr_t) a) : 0u;
+}
+
+static const char *gw_mex_cstr(uint32_t p) {
+    return (p != 0u && gw_mexdt_in(p, 1u)) ? (const char *) (uintptr_t) p : NULL;
+}
+
+/* The slot table: slot i -> the i-th non-empty m-ex fighter row (internal id >= 27, before the
+ * six bosses m-ex keeps last). Built once, when mexData is first available. */
+static int gw_mex_slot_internal[GW_MEX_SLOTS];
+static int gw_mex_slot_count = -1;
+
+static void gw_mex_slots_build(void) {
+    int n, k;
+    if (gw_mex_slot_count >= 0 || gw_Mex_CssIconCount() == 0) {
+        return;
+    }
+    n = gw_Mex_InternalCount();
+    gw_mex_slot_count = 0;
+    for (k = GW_MEX_FIRST_NEW; n > 6 && k < n - 6; ++k) {
+        extern int gw_DVDConvertPathToEntrynum(const char *path);
+        const char *pl = gw_mex_cstr(gw_mex_word(gw_mex_ftfield(0x04u), (uint32_t) k, 8u));
+        if (pl == NULL || pl[0] == '\0') {
+            continue; /* a placeholder row */
+        }
+        if (gw_DVDConvertPathToEntrynum(pl) < 0) {
+            gw_log("mexdata: m-ex fighter %d's %s is not on the disc or in a mod - skipped", k, pl);
+            continue;
+        }
+        if (gw_mex_slot_count == GW_MEX_SLOTS) {
+            gw_log("mexdata: more than %d m-ex fighters - m-ex %d (%s) and later are left out",
+                   GW_MEX_SLOTS, k, pl);
+            break;
+        }
+        gw_mex_slot_internal[gw_mex_slot_count++] = k;
+    }
+    gw_log("mexdata: %d m-ex fighter slots", gw_mex_slot_count);
+}
+
+/* m-ex internal id of port slot `slot`, or -1. */
+int gw_Mex_SlotInternal(int slot) {
+    gw_mex_slots_build();
+    return (slot >= 0 && slot < gw_mex_slot_count) ? gw_mex_slot_internal[slot] : -1;
+}
+
+/* Port slot of m-ex internal id `k`, or -1. */
+static int gw_mex_slot_of_internal(int k) {
+    int i;
+    gw_mex_slots_build();
+    for (i = 0; i < gw_mex_slot_count; ++i) {
+        if (gw_mex_slot_internal[i] == k) {
+            return i;
+        }
     }
     return -1;
+}
+
+/* Port fighter kind of m-ex internal id `k` (retail kinds map to themselves), or -1. */
+int gw_Mex_PortKindForInternal(int k) {
+    int n = gw_Mex_InternalCount(), s;
+    if (k >= 0 && k <= 26) {
+        return k;
+    }
+    if (n > 6 && k >= n - 6 && k < n) {
+        return 27 + (k - (n - 6));
+    }
+    s = gw_mex_slot_of_internal(k);
+    return s >= 0 ? GW_PORT_FT_MEX0 + s : -1;
+}
+
+/* External id whose ft_kind_desc names internal `k` ({u8 internal, extra, transform}, stride 3). */
+int gw_Mex_ExtForInternal(int k) {
+    uint32_t desc = gw_mex_ftfield(0x0Cu);
+    int e, n = gw_Mex_InternalCount();
+    for (e = 0; desc != 0u && e < n; ++e) {
+        if (gw_mexdt_in(desc + (uint32_t) e * 3u, 1u) &&
+            *(const uint8_t *) (uintptr_t) (desc + (uint32_t) e * 3u) == (uint8_t) k) {
+            return e;
+        }
+    }
+    return -1;
+}
+
+int gw_Mex_InternalForExt(int e) {
+    uint32_t desc = gw_mex_ftfield(0x0Cu);
+    if (e < 0 || desc == 0u || !gw_mexdt_in(desc + (uint32_t) e * 3u, 1u)) {
+        return -1;
+    }
+    return *(const uint8_t *) (uintptr_t) (desc + (uint32_t) e * 3u);
+}
+
+const char *gw_Mex_FtPlFile(int k) { return gw_mex_cstr(gw_mex_word(gw_mex_ftfield(0x04u), (uint32_t) k, 8u)); }
+const char *gw_Mex_FtPlSymbol(int k) {
+    uint32_t t = gw_mex_ftfield(0x04u);
+    return t != 0u ? gw_mex_cstr(gw_mex_word(t + 4u, (uint32_t) k, 8u)) : NULL;
+}
+const char *gw_Mex_FtAnimFile(int k) { return gw_mex_cstr(gw_mex_word(gw_mex_ftfield(0x1Cu), (uint32_t) k, 4u)); }
+int gw_Mex_FtAnimCount(int k) { return (int) gw_mex_word(gw_mex_ftfield(0x20u), (uint32_t) k, 4u); }
+int gw_Mex_FtEffectIndex(int k) {
+    uint32_t t = gw_mex_ftfield(0x24u);
+    return (t != 0u && gw_mexdt_in(t + (uint32_t) k, 1u)) ? *(const uint8_t *) (uintptr_t) (t + (uint32_t) k) : -1;
+}
+int gw_Mex_FtCostumeCount(int k) {
+    uint32_t t = gw_mex_ftfield(0x10u);
+    int e = gw_Mex_ExtForInternal(k);
+    return (e >= 0 && t != 0u && gw_mexdt_in(t + (uint32_t) e * 4u, 1u))
+               ? *(const uint8_t *) (uintptr_t) (t + (uint32_t) e * 4u)
+               : 0;
+}
+/* Costume c of internal k: which 0 = file, 1 = joint symbol, 2 = matanim symbol. */
+const char *gw_Mex_FtCostumeString(int k, int c, int which) {
+    uint32_t tbl = gw_mex_word(gw_mex_ftfield(0x14u), (uint32_t) k, 4u);
+    return tbl != 0u ? gw_mex_cstr(gw_mex_word(tbl + (uint32_t) which * 4u, (uint32_t) c, 16u)) : NULL;
+}
+/* Guest address of the {result, intro, ending, wait} symbol-name block (Fighter_DemoStrings). */
+void *gw_Mex_FtDemoStrings(int k) {
+    uint32_t p = gw_mex_word(gw_mex_ftfield(0x18u), (uint32_t) k, 4u);
+    return (p != 0u && gw_mexdt_in(p, 16u)) ? (void *) (uintptr_t) p : NULL;
+}
+
+/* fighter_function[slot][k] as a native pointer: the vanilla function (or data table, for
+ * MoveLogic) m-ex gives this fighter by default, through the bridge. NULL when empty or not
+ * bridged (logged once per address). The ftFunction's overrides are NOT here - those are guest
+ * code, dispatched by the runtime's hooks once the fighter's file loads. */
+void *gw_Mex_FtFunc(int slot, int k) {
+    uint32_t ff, tbl, g, native;
+    int kind = -1;
+    if (gw_Mex_CssIconCount() == 0) {
+        return NULL;
+    }
+    ff = gw_r32((const void *) (uintptr_t) (gw_mexdt + 0x0Cu));
+    tbl = gw_mex_word(ff, (uint32_t) slot, 4u);
+    g = gw_mex_word(tbl, (uint32_t) k, 4u);
+    if (g == 0u) {
+        return NULL;
+    }
+    native = gw_mex_bridge_lookup(g, &kind);
+    if (native == 0u) {
+        gw_log("mexdata: fighter_function[%d][%d] = 0x%08X has no native counterpart - left empty",
+               slot, k, g);
+        return NULL;
+    }
+    return (void *) (uintptr_t) native;
+}
+
+/* fighter.names[ext] (plain ASCII, e.g. "Sonic"), or NULL. */
+const char *gw_Mex_FighterName(int ext) {
+    return ext >= 0 ? gw_mex_cstr(gw_mex_word(gw_mex_ftfield(0x00u), (uint32_t) ext, 4u)) : NULL;
+}
+
+/* costume_info[ext of port character kind ck].{num, red_idx, blue_idx, green_idx}[field], or 0
+ * (no mexData, or ck has no m-ex row). */
+int gw_Mex_CostumeInfo(int ck, int field) {
+    uint32_t t = gw_mex_ftfield(0x10u);
+    int e = gw_Mex_PortCKindToExt(ck);
+    if (e < 0 || t == 0u || field < 0 || field > 3 || !gw_mexdt_in(t + (uint32_t) e * 4u, 4u)) {
+        return 0;
+    }
+    return *(const uint8_t *) (uintptr_t) (t + (uint32_t) e * 4u + (uint32_t) field);
+}
+
+/* The part-visibility table a fighter's costume uses: costume_file[k][costume]
+ * .visibility_lookup_idx (m-ex lets costumes share one; Sonic's all use 0). The costume id itself
+ * when there is no mexData or no row for it. */
+int gw_Mex_CostumeVisIdx(int fk, int costume) {
+    int k = gw_Mex_InternalForPortKind(fk);
+    uint32_t tbl;
+    int32_t v;
+    if (k < 0 || costume < 0 || gw_Mex_CssIconCount() == 0 ||
+        costume >= gw_Mex_FtCostumeCount(k)) {
+        return costume;
+    }
+    tbl = gw_mex_word(gw_mex_ftfield(0x14u), (uint32_t) k, 4u);
+    if (tbl == 0u || !gw_mexdt_in(tbl + (uint32_t) costume * 16u + 12u, 4u)) {
+        return costume;
+    }
+    v = (int32_t) gw_r32((const void *) (uintptr_t) (tbl + (uint32_t) costume * 16u + 12u));
+    return (v >= 0 && v < 16) ? v : costume;
+}
+
+/* The retail fighter this one was cloned from: the retail kind whose default onLoad it shares
+ * (m-ex fighters keep their base's vanilla callbacks until their ftFunction overrides them). Used
+ * for the per-kind tables m-ex does not describe. Mario when nothing matches. */
+int gw_Mex_FtBaseKind(int k) {
+    uint32_t ff, tbl, g;
+    int r;
+    if (gw_Mex_CssIconCount() == 0) {
+        return 0;
+    }
+    ff = gw_r32((const void *) (uintptr_t) (gw_mexdt + 0x0Cu));
+    tbl = gw_mex_word(ff, 0u, 4u);
+    g = gw_mex_word(tbl, (uint32_t) k, 4u);
+    for (r = 0; g != 0u && r <= 26; ++r) {
+        if (gw_mex_word(tbl, (uint32_t) r, 4u) == g) {
+            return r;
+        }
+    }
+    return 0;
 }
 
 /* mexData metadata.internal_id_count (41 on Akaneia), or 0 without mexData. */
@@ -576,11 +888,13 @@ int gw_Mex_InsigniaForExt(int ext) {
 
 /* The reverse, for portraits: the port's CharacterKind -> m-ex external id (-1 if none). */
 int gw_Mex_PortCKindToExt(int ckind) {
+    extern int gw_Mex_ExtForInternal(int k);
     if (ckind >= 0 && ckind <= 25) {
         return ckind;
     }
-    if (ckind == 0x20) {
-        return 30;
+    if (ckind >= GW_PORT_CK_MEX0 && ckind < GW_PORT_CK_MEX0 + GW_MEX_SLOTS) {
+        int k = gw_Mex_SlotInternal(ckind - GW_PORT_CK_MEX0);
+        return k >= 0 ? gw_Mex_ExtForInternal(k) : -1;
     }
     return -1;
 }
@@ -606,9 +920,7 @@ int gw_Mex_PortCKindToExt(int ckind) {
 #define GW_MEX_ITEM_LOGIC_STRIDE 0x3Cu /* sizeof ItemLogicTable (identical redefinition below) */
 #define GW_MEX_ITEM_LOGIC_SLOTS 15u   /* 0x3C / 4 */
 
-#define GW_MEX_MAX_ARTICLE_SYMS 256
-static gw_ftfunction_symbol gw_mex_article_syms[GW_MEX_MAX_ARTICLE_SYMS];
-static uint32_t gw_mex_article_sym_count;
+/* Article symbols and code ranges live in the per-fighter state (gw_mex_kind). */
 
 static void gw_mex_article_symbols(const unsigned char *dat, uint32_t dat_size, uint32_t mf,
                                    uint32_t code) {
@@ -651,10 +963,6 @@ static const char *gw_mex_article_symbol_name(uint32_t a) {
     return NULL;
 }
 
-/* Guest code ranges of the loaded articles, so a reinstall can unregister them. */
-#define GW_MEX_MAX_ARTICLES 16
-static uint32_t gw_mex_article_lo[GW_MEX_MAX_ARTICLES], gw_mex_article_hi[GW_MEX_MAX_ARTICLES];
-static int gw_mex_article_count;
 
 static void gw_mex_unload_items(void) {
     uint32_t i;
@@ -918,7 +1226,7 @@ static uint32_t gw_mex_thunk_run(int k, uint32_t a0, uint32_t a1, uint32_t a2, u
     args[1] = a1;
     args[2] = a2;
     args[3] = a3;
-    return gw_ppc_call(gw_mex_thunk_guest[k], args, 4, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    return gw_ppc_call(gw_mex_thunk_guest[k], args, 4, gw_mex_r2, gw_mex_stack_top);
 }
 
 #define GW_MEX_THUNK(k) \
@@ -1036,7 +1344,7 @@ static uint32_t gw_mex_trap_trampoline(uint32_t a0, uint32_t a1, uint32_t a2, ui
     args[1] = a1;
     args[2] = a2;
     args[3] = a3;
-    r3 = gw_ppc_call(target, args, 4, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    r3 = gw_ppc_call(target, args, 4, gw_mex_r2, gw_mex_stack_top);
     /* The return value matters to native callers more than it looks: an item state's animated /
      * collided callbacks are predicates, and returning TRUE tells the engine to DESTROY the item.
      * Log the first few so "why did this die on frame 1" is answerable. */
@@ -1076,7 +1384,7 @@ static LONG CALLBACK gw_mex_exec_trap(PEXCEPTION_POINTERS ep) {
         return EXCEPTION_CONTINUE_SEARCH;
     }
     eip = (uint32_t) ep->ContextRecord->Eip;
-    if ((uint32_t) er->ExceptionInformation[1] != eip || gw_mex_ff.code_size == 0u) {
+    if ((uint32_t) er->ExceptionInformation[1] != eip || !gw_mex_any_installed) {
         return EXCEPTION_CONTINUE_SEARCH;
     }
     if (!gw_mex_in_blob(eip)) {
@@ -1109,6 +1417,19 @@ static uint32_t gw_mex_call_native(uint32_t guest_addr, uint32_t a0, uint32_t a1
                                    uint32_t a3) {
     int kind = 0;
     uint32_t native = gw_mex_bridge_lookup(guest_addr, &kind);
+    {   /* MELEE_MEX_TRACE_CALLS=1: the first shimmed engine calls a blob makes, with args. */
+        static int trace = -1, n_logged;
+        if (trace < 0) {
+            const char *v = getenv("MELEE_MEX_TRACE_CALLS");
+            trace = (v != NULL && v[0] == '1');
+        }
+        if (trace && n_logged < 40) {
+            ++n_logged;
+            gw_log("interp: shim call guest 0x%08X -> native 0x%08X (a0=0x%08X a1=0x%08X "
+                   "a2=0x%08X a3=0x%08X)",
+                   guest_addr, native, a0, a1, a2, a3);
+        }
+    }
     if (native == 0u || kind != 1) {
         gw_panic("interp: no native engine function for guest 0x%08X", guest_addr);
     }
@@ -1275,7 +1596,7 @@ static uint32_t gw_mex_interp_run(uint32_t slot, void *gobj) {
         return 0;
     }
     args[0] = (uint32_t)(uintptr_t)gobj;
-    return gw_ppc_call(target, args, 1, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    return gw_ppc_call(target, args, 1, gw_mex_r2, gw_mex_stack_top);
 }
 
 /* Two-argument variant (OnItemPickup): gobj -> r3, arg1 -> r4. */
@@ -1287,7 +1608,7 @@ static uint32_t gw_mex_interp_run2(uint32_t slot, void *gobj, uint32_t arg1) {
     }
     args[0] = (uint32_t)(uintptr_t)gobj;
     args[1] = arg1;
-    return gw_ppc_call(target, args, 2, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    return gw_ppc_call(target, args, 2, gw_mex_r2, gw_mex_stack_top);
 }
 
 /* ---- MoveLogic (slot 3) move-table runtime -------------------------------------------
@@ -1322,6 +1643,7 @@ static uint32_t gw_mex_move_cb_guest_addr(void *gobj, int which) {
 }
 
 static void gw_mex_move_call(void *gobj, int which) {
+    void *prev = gw_Mex_SelectKind(gw_mex_gobj_kind(gobj));
     uint32_t target = gw_mex_move_cb_guest_addr(gobj, which);
     uint32_t args[1];
     static const char *const names[4] = {"anim", "input", "phys", "coll"};
@@ -1330,22 +1652,24 @@ static void gw_mex_move_call(void *gobj, int which) {
     uint32_t fd;
 
     if (target == 0) {
+        gw_Mex_RestoreKind(prev);
         return;
     }
     if (!first[which]) {
         first[which] = 1;
         fd = gw_r32((const void *)(uintptr_t)((uintptr_t)gobj + 0x2Cu));
-        gw_log("interp: MoveLogic %s_cb kind=33 gobj=%p motion_id=0x%X anim_id=0x%X -> guest "
+        gw_log("interp: MoveLogic %s_cb kind=%d gobj=%p motion_id=0x%X anim_id=0x%X -> guest "
                "0x%08X (interpreting)",
-               names[which], gobj, gw_r32((const void *)(uintptr_t)(fd + 0x10u)),
+               names[which], gw_mex_k->port_kind, gobj, gw_r32((const void *)(uintptr_t)(fd + 0x10u)),
                gw_r32((const void *)(uintptr_t)(fd + 0x14u)), target);
     }
     args[0] = (uint32_t)(uintptr_t)gobj;
-    gw_ppc_call(target, args, 1, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+    gw_ppc_call(target, args, 1, gw_mex_r2, gw_mex_stack_top);
     ++count[which];
     if (count[which] == 1u || (count[which] % 60u) == 1u) {
         gw_log("interp: MoveLogic %s_cb invocation %u ran", names[which], count[which]);
     }
+    gw_Mex_RestoreKind(prev);
 }
 
 static void gw_mex_move_anim_cb(void *gobj) { gw_mex_move_call(gobj, GW_MEX_MOVE_CB_ANIM); }
@@ -1362,9 +1686,9 @@ void gw_Mex_FighterCallbackDispatch(void *gobj, void *cb) {
     if (a == 0) {
         return;
     }
-    if (a >= 0x80000000u && a < 0x80000000u + gw_mem1_size && gw_mex_ff.mexdata_base != 0) {
+    if (a >= 0x80000000u && a < 0x80000000u + gw_mem1_size && gw_mex_r2 != 0) {
         args[0] = (uint32_t)(uintptr_t)gobj;
-        gw_ppc_call(a, args, 1, gw_mex_ff.mexdata_base, gw_mex_stack_top);
+        gw_ppc_call(a, args, 1, gw_mex_r2, gw_mex_stack_top);
         return;
     }
     ((gwmex_gobj_fn)cb)(gobj);
@@ -1422,8 +1746,9 @@ static void gw_mex_movelogic_setup(void) {
 /* The engine site (fighter.c Fighter_UnkInitLoad_80068914) asks for the per-kind character-state
  * table; for Sonic we hand back the interpreted MoveLogic table instead of Fox's vanilla one. */
 void *gw_Mex_MoveLogicTable(int kind, void *vanilla) {
-    if (kind == GW_MEX_KIND_SONIC && gw_mex_installed == 1 && gw_mex_movelogic_table != 0) {
-        return (void *)(uintptr_t)gw_mex_movelogic_table;
+    int s = gw_mex_slot_of_port(kind);
+    if (s >= 0 && gw_mex_kinds[s].installed == 1 && gw_mex_kinds[s].movelogic_table != 0) {
+        return (void *)(uintptr_t)gw_mex_kinds[s].movelogic_table;
     }
     return vanilla;
 }
@@ -1432,9 +1757,9 @@ void *gw_Mex_MoveLogicTable(int kind, void *vanilla) {
 static void gw_mex_interp_onload(void *gobj) {
     uint32_t target = gw_mex_override_target(GW_MEX_SLOT_ON_LOAD);
     uint32_t r3;
-    gw_log("interp: onLoad kind=%d entry=0x%08X gobj=%p running", GW_MEX_KIND_SONIC, target, gobj);
+    gw_log("interp: onLoad kind=%d entry=0x%08X gobj=%p running", gw_mex_k->port_kind, target, gobj);
     r3 = gw_mex_interp_run(GW_MEX_SLOT_ON_LOAD, gobj);
-    gw_log("interp: onLoad kind=%d entry=0x%08X ran, r3=0x%08X", GW_MEX_KIND_SONIC, target, r3);
+    gw_log("interp: onLoad kind=%d entry=0x%08X ran, r3=0x%08X", gw_mex_k->port_kind, target, r3);
 }
 
 /* onFrame (slot 23) - runs Sonic's PPC onFrame per fighter per frame (Fighter_8006A360 ->
@@ -1533,7 +1858,7 @@ static void gw_mex_interp_onframe(void *gobj) {
     if (first) {
         first = 0;
         gw_log("interp: onFrame kind=%d entry=0x%08X gobj=%p running (per-frame)",
-               GW_MEX_KIND_SONIC, target, gobj);
+               gw_mex_k->port_kind, target, gobj);
     }
     r3 = gw_mex_interp_run(GW_MEX_SLOT_ON_FRAME, gobj);
     /* MELEE_MEX_TRACE_PARTS=1: log the model-part visibility table (fp->x5F4_arr[0..3], {prev,
@@ -1569,7 +1894,7 @@ static void gw_mex_interp_onframe(void *gobj) {
     }
     ++count;
     if ((count % 60u) == 1u) {
-        gw_log("interp: onFrame kind=%d invocation %u ran, r3=0x%08X", GW_MEX_KIND_SONIC, count,
+        gw_log("interp: onFrame kind=%d invocation %u ran, r3=0x%08X", gw_mex_k->port_kind, count,
                r3);
     }
 }
@@ -1590,11 +1915,11 @@ static uint32_t gw_mex_interp_run_logged(uint32_t slot, const char *name, void *
     if (slot < 64u && !first_logged[slot]) {
         first_logged[slot] = 1;
         gw_log("interp: %s kind=%d entry=0x%08X gobj=%p invocation 1 running", name,
-               GW_MEX_KIND_SONIC, target, gobj);
+               gw_mex_k->port_kind, target, gobj);
     }
     r3 = gw_mex_interp_run(slot, gobj);
     if (slot < 64u && (count[slot] == 1u || (count[slot] % 60u) == 1u)) {
-        gw_log("interp: %s kind=%d invocation %u ran, r3=0x%08X", name, GW_MEX_KIND_SONIC,
+        gw_log("interp: %s kind=%d invocation %u ran, r3=0x%08X", name, gw_mex_k->port_kind,
                count[slot], r3);
     }
     return r3;
@@ -1616,11 +1941,11 @@ static uint32_t gw_mex_interp_run_logged2(uint32_t slot, const char *name, void 
     if (slot < 64u && !first_logged2[slot]) {
         first_logged2[slot] = 1;
         gw_log("interp: %s kind=%d entry=0x%08X gobj=%p item=0x%08X invocation 1 running", name,
-               GW_MEX_KIND_SONIC, target, gobj, arg1);
+               gw_mex_k->port_kind, target, gobj, arg1);
     }
     r3 = gw_mex_interp_run2(slot, gobj, arg1);
     if (slot < 64u && (count2[slot] == 1u || (count2[slot] % 60u) == 1u)) {
-        gw_log("interp: %s kind=%d invocation %u ran, r3=0x%08X", name, GW_MEX_KIND_SONIC,
+        gw_log("interp: %s kind=%d invocation %u ran, r3=0x%08X", name, gw_mex_k->port_kind,
                count2[slot], r3);
     }
     return r3;
@@ -1708,8 +2033,18 @@ static void gw_mex_interp_item_pickup(void *gobj, void *arg1) {
 
 /* Symbolizer for gw_ppc: guest address -> the containing blob function's name, or NULL. */
 static const char *gw_mex_symbolize(uint32_t guest_addr) {
-    const char *n = gw_ftfunction_symbol_name(&gw_mex_ff, guest_addr);
-    return n != NULL ? n : gw_mex_article_symbol_name(guest_addr);
+    gw_mex_kind *prev = gw_mex_k;
+    const char *n = NULL;
+    int i;
+    for (i = 0; i < GW_MEX_SLOTS && n == NULL; ++i) {
+        gw_mex_k = &gw_mex_kinds[i];
+        n = gw_ftfunction_symbol_name(&gw_mex_ff, guest_addr);
+        if (n == NULL) {
+            n = gw_mex_article_symbol_name(guest_addr);
+        }
+    }
+    gw_mex_k = prev;
+    return n;
 }
 
 /* Called from game code (ftData_8008572C) every time Sonic's fighter file is (re)loaded - once per
@@ -1727,9 +2062,24 @@ static const char *gw_mex_symbolize(uint32_t guest_addr) {
 void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size) {
     static uint32_t mexdata_base, stack_base;
     uint32_t getdata_base;
-    int rc;
+    int rc, slot = gw_mex_slot_of_port(kind), internal;
+    const char *dat;
+    void *prev;
 
-    if (kind != GW_MEX_KIND_SONIC || gw_mex_installed < 0) {
+    if (slot < 0) {
+        return;
+    }
+    internal = gw_Mex_SlotInternal(slot);
+    dat = internal >= 0 ? gw_Mex_FtPlFile(internal) : NULL;
+    if (dat == NULL) {
+        gw_log("interp: kind %d has no m-ex fighter row - nothing to install", kind);
+        return;
+    }
+    prev = gw_Mex_SelectKind(kind);
+    gw_mex_k->port_kind = kind;
+    gw_mex_k->internal = internal;
+    if (gw_mex_installed < 0) {
+        gw_Mex_RestoreKind(prev);
         return;
     }
 
@@ -1749,6 +2099,8 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
             }
         }
         gw_mex_stack_top = stack_base + GW_MEX_STACK_SIZE - 0x100u;
+        gw_mex_r2 = mexdata_base;
+        gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, 0u, 0u); /* code lives in added ranges */
         gw_mexdt_load();
         /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every
          * panic, budget dump and trace names a guest function instead of a bare address. */
@@ -1763,9 +2115,10 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
 
     if (gw_mex_installed == 1) {
         /* Unwind the previous residency. Its file is gone; nothing may reach its code. */
-        gw_log("interp: reinstalling Sonic ftFunction (previous code 0x%08X was freed with its "
+        gw_log("interp: reinstalling %s's ftFunction (previous code 0x%08X was freed with its "
                "file)",
-               gw_mex_ff.code_base);
+               dat, gw_mex_ff.code_base);
+        gw_ppc_remove_code_range(gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size);
         gw_mex_release_thunks(gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size);
         {
             int k;
@@ -1775,65 +2128,72 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
         }
         gw_mex_unload_items();
         gw_ftfunction_free(&gw_mex_ff);
-        gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, 0u, 0u);
         gw_mex_movelogic_table = 0u;
         gw_mex_installed = 0;
     }
     if (arch_data == NULL) {
         gw_log("interp: ftFunction install failed: no loaded archive");
+        gw_Mex_RestoreKind(prev);
         return;
     }
     gw_mex_installed = -1;
 
-    rc = gw_ftfunction_load_in_archive(GW_MEX_FTFUNC_DAT, GW_MEX_INTERNAL_SONIC,
+    rc = gw_ftfunction_load_in_archive(dat, (uint32_t) internal,
                                        (uint32_t) (uintptr_t) arch_data, arch_data_size,
                                        mexdata_base, &gw_mex_ff);
+    if (rc == GW_FTFUNC_ERR_NO_SYMBOL) {
+        /* A fighter with no ftFunction runs entirely on its base's vanilla callbacks. */
+        gw_log("interp: %s has no ftFunction - vanilla callbacks only", dat);
+        gw_mex_installed = 0;
+        gw_Mex_RestoreKind(prev);
+        return;
+    }
     if (rc != GW_FTFUNC_OK) {
-        gw_log("interp: ftFunction install failed: load returned %d", rc);
+        gw_log("interp: %s ftFunction install failed: load returned %d", dat, rc);
+        gw_Mex_RestoreKind(prev);
         return;
     }
 
-    gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, gw_mex_ff.code_base,
-                      gw_mex_ff.code_base + gw_mex_ff.code_size);
-    gw_mex_load_items(GW_MEX_FTFUNC_DAT, (uint32_t) GW_MEX_KIND_SONIC,
-                      (uint32_t) (uintptr_t) arch_data, arch_data_size);
+    gw_ppc_add_code_range(gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size);
+    gw_mex_any_installed = 1;
+    gw_mex_load_items(dat, (uint32_t) kind, (uint32_t) (uintptr_t) arch_data, arch_data_size);
 
     gw_mex_movelogic_setup();
 
     /* Install the onLoad and onFrame overrides (this phase's deliverables). The other engine
      * events (onDeath/onDestroy/...) are not registered so they keep their vanilla behaviour. */
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, GW_MEX_KIND_SONIC, gw_mex_interp_onload);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, GW_MEX_KIND_SONIC, gw_mex_interp_onframe);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DEATH, GW_MEX_KIND_SONIC, gw_mex_interp_respawn);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DESTROY, GW_MEX_KIND_SONIC, gw_mex_interp_destroy);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_INVISIBLE, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, kind, gw_mex_interp_onload);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, kind, gw_mex_interp_onframe);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DEATH, kind, gw_mex_interp_respawn);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DESTROY, kind, gw_mex_interp_destroy);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_INVISIBLE, kind,
                         gw_mex_interp_item_invisible);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_VISIBLE, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_VISIBLE, kind,
                         gw_mex_interp_item_visible);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_ENTER, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_ENTER, kind,
                         gw_mex_interp_knockback_enter);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_EXIT, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_EXIT, kind,
                         gw_mex_interp_knockback_exit);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, kind,
                         gw_mex_interp_action_state_change);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_REAPPLY_ATTR, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_REAPPLY_ATTR, kind,
                         gw_mex_interp_reapply_attr);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N, GW_MEX_KIND_SONIC, gw_mex_interp_special_n);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N_AIR, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N, kind, gw_mex_interp_special_n);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N_AIR, kind,
                         gw_mex_interp_special_n_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S, GW_MEX_KIND_SONIC, gw_mex_interp_special_s);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S_AIR, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S, kind, gw_mex_interp_special_s);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S_AIR, kind,
                         gw_mex_interp_special_s_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI, GW_MEX_KIND_SONIC, gw_mex_interp_special_hi);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI_AIR, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI, kind, gw_mex_interp_special_hi);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI_AIR, kind,
                         gw_mex_interp_special_hi_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW, GW_MEX_KIND_SONIC, gw_mex_interp_special_lw);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW_AIR, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW, kind, gw_mex_interp_special_lw);
+    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW_AIR, kind,
                         gw_mex_interp_special_lw_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DOUBLE_JUMP, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind,
                         gw_mex_interp_double_jump);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_USMASH, GW_MEX_KIND_SONIC, gw_mex_interp_usmash);
-    gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP, GW_MEX_KIND_SONIC,
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_USMASH, kind, gw_mex_interp_usmash);
+    gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind,
                          gw_mex_interp_item_pickup);
 
     gw_mex_installed = 1;
@@ -1858,11 +2218,11 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
         }
     }
 
-    gw_log("interp: installed Sonic ftFunction (code 0x%08X..0x%08X, mexData 0x%08X, stack "
-           "0x%08X, %d overrides); onLoad/onFrame/onActionStateChange/onReapplyAttr/8 specials/"
-           "onDoubleJump/onUSmash/onItemPickup + MoveLogic table active",
-           gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size, mexdata_base,
-           stack_base, gw_mex_ff.override_count);
+    gw_log("interp: installed %s ftFunction for kind %d / m-ex %d (code 0x%08X..0x%08X, "
+           "mexData 0x%08X, stack 0x%08X, %d overrides)",
+           dat, kind, internal, gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size,
+           mexdata_base, stack_base, gw_mex_ff.override_count);
+    gw_Mex_RestoreKind(prev);
 }
 
 /* Register the module's self-contained tests (bridge lookup + resolver). */
@@ -1888,7 +2248,8 @@ static int test_mex_ft_item_id_sonic(void) {
         return 0;
     }
     gw_mexdt = root;
-    got = gw_mex_ft_item_global((uint32_t) GW_MEX_KIND_SONIC, 0u, "test");
+    got = gw_mex_ft_item_global(
+        (uint32_t) (GW_PORT_FT_MEX0 + gw_mex_slot_of_internal(GW_MEX_INTERNAL_SONIC)), 0u, "test");
     if (got != 277u) {
         gw_test_fail("MEX_GetFtItemID(sonic, 0) = %u, expected 277", got);
         rc = 1;

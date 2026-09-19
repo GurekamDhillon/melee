@@ -12,8 +12,14 @@ extern void TestFail(const char *msg);
 #define MEX_SPECIAL_COUNT 7
 
 static int test_external_special_range(void) {
-    if ((int)ChKind_Max != 0x21 || (int)Ft_Kind_Max != 0x22) {
-        TestFail("ChKind_Max should be 0x21 and Ft_Kind_Max should be 0x22");
+    /* ChKind_Max is the retail "none" sentinel and must keep its value (it is stored and compared
+     * everywhere); the m-ex character kinds follow it. Fighter kinds, retail + the m-ex slots, must
+     * stay below 64: the animation code compares fp->kind with a 6-bit field (x597_bits). */
+    if ((int)ChKind_Max != 0x21 || (int)ChKind_Mex0 != 0x22 || (int)Ft_Kind_Mex0 != 0x21 ||
+        (int)Ft_Kind_Max > 64)
+    {
+        TestFail("kind layout: expected ChKind_Max 0x21, ChKind_Mex0 0x22, Ft_Kind_Mex0 0x21, "
+                 "Ft_Kind_Max <= 64");
         return 1;
     }
     if ((int)ChKind_Max - (int)CKind_Playable_Count != MEX_SPECIAL_COUNT) {

@@ -4410,11 +4410,11 @@ static void mnCharSel_MexSetup(void)
          * fighters are hidden, as on retail). Both are excluded from the packed grid below, so
          * neither leaves a hole. */
         mnCharSel_IconUnavail[i] = (ck < 0) || !gm_IsCKindUnlocked((u8) ck);
-        /* Stub: the port's Sonic (0x20) has no single-player STORY data on the disc (per-character
+        /* Stub: m-ex fighters have no single-player STORY support in the port (per-character
          * intro/ending/progression files), so Classic crashed at load in lbfile.c on a missing
-         * file (user-found). Hidden in the three story modes; he stays in Training and the
-         * Stadium modes, which use no per-character story files (Target Test runs him fine). */
-        if (ck == 0x20 &&
+         * file (user-found, Sonic). Hidden in the three story modes; they stay in Training and
+         * the Stadium modes, which use no per-character story files. */
+        if (ck >= ChKind_Mex0 &&
             (mnCharSel_804D6CB0->match_type == REG_CLASSIC ||
              mnCharSel_804D6CB0->match_type == REG_ADVENTURE ||
              mnCharSel_804D6CB0->match_type == REG_ALLSTAR))
@@ -4828,8 +4828,8 @@ s32 mnCharSel_802640A0(void)
                         HSD_AObjStopAnim, AOBJ_ARG_AOV, 0, 0);
         ck = mnCharSel_804D6CB0->vs.start.players[mnCharSel_804D6CF1].ckind;
 #if defined(TARGET_PC)
-        /* the port's Sonic is CharacterKind 0x20 - past CKind_Playable_Count but playable */
-        if (((s8) ck >= CKind_Playable_Count && ck != 0x20) ||
+        /* m-ex fighters' character kinds are past CKind_Playable_Count but playable */
+        if (((s8) ck >= CKind_Playable_Count && ck < ChKind_Mex0) ||
             gm_IsCKindUnlocked(ck) == 0)
         {
 #else

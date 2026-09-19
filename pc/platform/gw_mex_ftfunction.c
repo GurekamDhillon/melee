@@ -27,7 +27,7 @@
  * instead. Both addresses sit in free MEM1 well below the phase-1 test scratch (0x80300000+). */
 #define GW_FTFUNC_CODE_BASE 0x802F0000u    /* relocated code */
 #define GW_FTFUNC_MEXDATA_BASE 0x802E0000u /* r2 base: Arch_FighterFunc + per-kind arrays */
-#define GW_FTFUNC_KIND_MAX 64              /* per-kind array width (m-ex internal ids) */
+#define GW_FTFUNC_KIND_MAX 96              /* per-kind array width (m-ex internal ids; ACE has 65) */
 #define GW_FTFUNC_SLOT_COUNT 46            /* Arch_FighterFunc word slots (Header.s) */
 #define GW_FTFUNC_PERKIND_STRIDE (GW_FTFUNC_KIND_MAX * 4u)
 
@@ -174,8 +174,17 @@ int gw_ftfunction_reloc(const unsigned char *dat, size_t dat_size, uint32_t irt_
 static int gw_ftfunction_overload(const unsigned char *dat, size_t dat_size, uint32_t frt_data_off,
                                   uint32_t frt_count, uint32_t code_base, uint32_t mexdata_base,
                                   uint32_t internal_id, gw_ftfunction *out) {
+    /* The holder is SHARED by every m-ex fighter: a slot's per-kind table may already exist
+     * (another fighter overrode that slot first). New tables go after the highest one in use -
+     * starting from the base each load made two fighters' tables collide. */
     uint32_t next_perkind = mexdata_base + GW_FTFUNC_SLOT_COUNT * 4u;
     uint32_t i;
+    for (i = 0; i < GW_FTFUNC_SLOT_COUNT; ++i) {
+        uint32_t t = gw_r32((void *)(uintptr_t)(mexdata_base + i * 4u));
+        if (t != 0 && t + GW_FTFUNC_PERKIND_STRIDE > next_perkind) {
+            next_perkind = t + GW_FTFUNC_PERKIND_STRIDE;
+        }
+    }
 
     for (i = 0; i < frt_count; ++i) {
         uint32_t e = GW_HSD_HEADER_SIZE + frt_data_off + i * 8u;

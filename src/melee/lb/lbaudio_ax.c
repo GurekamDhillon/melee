@@ -1712,11 +1712,8 @@ static bool fn_80026E58(int arg0)
 
 u64 lbAudioAx_80026E84(CharacterKind ckind)
 {
-    if (ckind < 0 || ckind >= ChKind_Max) {
-        return 0;
-    }
 #if defined(TARGET_PC)
-    if (LBAX_N > 55) {
+    if (LBAX_N > 55 && ckind >= 0) { /* before the retail bound: m-ex kinds are past it */
         /* m-ex: the fighter's own bank from mexData. A bank past the u64 mask (Sonic's 66) has no
          * mask bit - it is requested by index at match start; the retail entry at the same
          * CharacterKind would load someone else's bank (Sonic's slot held Ice Climbers'). */
@@ -1727,6 +1724,9 @@ u64 lbAudioAx_80026E84(CharacterKind ckind)
         }
     }
 #endif
+    if (ckind < 0 || ckind >= ChKind_Max) {
+        return 0;
+    }
     return lbl_803BB3C0[ckind].x8;
 }
 

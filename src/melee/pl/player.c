@@ -33,7 +33,12 @@ typedef struct _ftMapping {
 char str_PdPmdat_start_of_data[] = "PdPm.dat";
 char str_plLoadCommonData[] = "plLoadCommonData";
 
+#if defined(TARGET_PC)
+/* sized for the m-ex character kinds too; their rows are filled by ftData_MexInitKinds */
+ftMapping ftMapping_list[ChKind_Cap] = {
+#else
 ftMapping ftMapping_list[ChKind_Max] = {
+#endif
     //////ftMapping_list
     /* CKind_Captain   */ { Ft_Kind_Captain, 0xFF },
     /* CKind_Donkey    */ { Ft_Kind_Donkey, 0xFF },
@@ -67,11 +72,7 @@ ftMapping ftMapping_list[ChKind_Max] = {
     /* CKind_GKoops    */ { Ft_Kind_GKoops, 0xFF },
     /* CKind_CrezyH    */ { Ft_Kind_CrezyH, 0xFF },
     /* ChKind_Sandbag  */ { Ft_Kind_Sandbag, 0xFF },
-#if defined(TARGET_PC)
-    /* ChKind_Popo     */ { Ft_Kind_Sonic, 0xFF }
-#else
     /* ChKind_Popo     */ { Ft_Kind_Popo, 0xFF }
-#endif
 };
 
 ////.bss
@@ -2116,3 +2117,13 @@ void Player_80037054(s32 slot, s32 arg1)
         player->player_entity[1] = ftDemo_CreateFighter(&some_struct);
     }
 }
+
+#if defined(TARGET_PC)
+/* ftData_MexInitKinds: m-ex character kind `ckind` plays fighter kind `fkind`. */
+void Player_MexSetMapping(int ckind, int fkind)
+{
+    ftMapping_list[ckind].internal_id = fkind;
+    ftMapping_list[ckind].extra_internal_id = -1;
+    ftMapping_list[ckind].has_transformation = 0;
+}
+#endif

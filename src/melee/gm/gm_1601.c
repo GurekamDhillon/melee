@@ -78,11 +78,7 @@ char* lbl_803D4D74[] = {
     "ギガクッパ",
     "クレイジーハンド",
     "サンドバッグ君",
-#if defined(TARGET_PC)
-    "ソニック", /* CharacterKind 0x20 = the port's Sonic */
-#else
     NULL,
-#endif
 };
 
 /// US character names
@@ -119,13 +115,7 @@ char* lbl_803D4FDC[] = {
     "Ｇ－Ｂｏｗｓｅｒ",
     "Ｃｒａｚｙｈａｎｄ",
     "Ｓａｎｄｂａｇ",
-#if defined(TARGET_PC)
-    /* CharacterKind 0x20 (solo Popo in vanilla) is the port's Sonic (ftMapping_list). The CSS
-     * formats this name on every hover; NULL here was a probable crash. */
-    "Ｓｏｎｉｃ",
-#else
     NULL,
-#endif
 };
 
 char* lbl_803D5060[] = {
@@ -732,6 +722,52 @@ u32 gm_80160854(u8 slot, u8 team, u8 is_teams, u8 slot_type)
     return 0;
 }
 
+#if defined(TARGET_PC)
+/* ---- m-ex character kinds (ChKind_Mex0.., forward.h) -------------------------------------------
+ * The retail per-character tables here stop at the retail cast; an m-ex character kind reads its
+ * values from the disc's MxDt.dat instead (Mex_* in gw_mex_ftfunction_runtime.c). */
+#define GM_IS_MEX_CK(ck) ((u32) (ck) >= ChKind_Mex0 && (u32) (ck) < ChKind_Cap)
+/* ckind_to_selkind_map stops at ChKind_Popo. An m-ex fighter is unlocked from the start, which is
+ * what Popo's selkind reports (the Ice Climbers are a base-cast character). */
+#define GM_CK_TO_SELKIND(ck) \
+    (GM_IS_MEX_CK(ck) ? ckind_to_selkind_map[ChKind_Popo] : ckind_to_selkind_map[ck])
+
+/* An m-ex fighter's name, converted from MxDt's ASCII to the full-width forms the game's own name
+ * strings use ("Sonic" -> "Ｓｏｎｉｃ"), which is what the menus' text code expects. */
+static const char* gm_MexName(u8 ckind)
+{
+    extern int Mex_PortCKindToExt(int);
+    extern const char* Mex_FighterName(int ext);
+    static char names[ChKind_Cap - ChKind_Mex0][96];
+    char* out = names[ckind - ChKind_Mex0];
+    const char* src;
+    int n = 0;
+    if (out[0] != '\0') {
+        return out;
+    }
+    src = Mex_FighterName(Mex_PortCKindToExt(ckind));
+    if (src == NULL) {
+        return "?";
+    }
+    for (; *src != '\0' && n < (int) sizeof(names[0]) - 4; src++) {
+        u32 c = (u8) *src;
+        if (c > 0x20 && c < 0x7F) {
+            /* U+FF01..U+FF5E, UTF-8: EF BC 81.. / EF BD 80.. */
+            u32 u = 0xFF01 + (c - 0x21);
+            out[n++] = (char) 0xEF;
+            out[n++] = (char) (0x80 | ((u >> 6) & 0x3F));
+            out[n++] = (char) (0x80 | (u & 0x3F));
+        } else {
+            out[n++] = (char) c; /* spaces and anything else as-is */
+        }
+    }
+    out[n] = '\0';
+    return out;
+}
+#else
+#define GM_CK_TO_SELKIND(ck) ckind_to_selkind_map[ck]
+#endif
+
 GXColor gm_80160968(u32 arg0)
 {
     return lbl_803B7864[(u8) arg0];
@@ -740,6 +776,11 @@ GXColor gm_80160968(u32 arg0)
 /// Get SJIS character name for a given CharacterKind
 const char* gm_80160980(u8 ckind)
 {
+#if defined(TARGET_PC)
+    if (GM_IS_MEX_CK(ckind)) {
+        return gm_MexName(ckind);
+    }
+#endif
     if (lbLang_IsSavedLanguageUS()) {
         return lbl_803D4FDC[ckind];
     } else {
@@ -749,6 +790,11 @@ const char* gm_80160980(u8 ckind)
 
 const char* fn_801609E0(u8 ckind)
 {
+#if defined(TARGET_PC)
+    if (GM_IS_MEX_CK(ckind)) {
+        return gm_MexName(ckind);
+    }
+#endif
     if (lbLang_IsSavedLanguageUS()) {
         if (lbl_803D50E4[ckind] != NULL) {
             return lbl_803D50E4[ckind];
@@ -783,6 +829,11 @@ const char* gm_80160A60(int arg0)
                 }
             }
         }
+#if defined(TARGET_PC)
+        if (GM_IS_MEX_CK(ckind)) {
+            return gm_MexName(ckind);
+        }
+#endif
         if (lbLang_IsSavedLanguageUS()) {
             return lbl_803D4FDC[ckind];
         } else {
@@ -2117,7 +2168,7 @@ u8 gm_SelKindToCKind(u8 selkind)
 
 u8 gm_CKindToSelKind(u8 ckind)
 {
-    return ckind_to_selkind_map[ckind];
+    return GM_CK_TO_SELKIND(ckind);
 }
 
 bool gm_8016403C(u8 item)
@@ -2363,7 +2414,7 @@ int gm_801647F8(u8 arg0)
 bool gm_IsCKindUnlocked(u8 ckind)
 {
     u16* unlocked_chars_bitmask = gmMainLib_GetUnlockedCharactersBitmaskPtr();
-    u8 selkind = ckind_to_selkind_map[ckind];
+    u8 selkind = GM_CK_TO_SELKIND(ckind);
     u8 unlock_bit = gm_SelKindToUnlockIndex(selkind);
 
     if (unlock_bit == NUM_UNLOCKABLE_CHARACTERS ||
@@ -2394,7 +2445,7 @@ void gm_UnlockCKind(CharacterKind ckind)
     u8 notify_val;
 
     char_unlock_mask = gmMainLib_GetUnlockedCharactersBitmaskPtr();
-    selkind = ckind_to_selkind_map[(u8) ckind];
+    selkind = GM_CK_TO_SELKIND((u8) ckind);
 
     unlock_idx = gm_SelKindToUnlockIndex(selkind);
 
@@ -2418,7 +2469,7 @@ void gm_80164A0C(u8 ckind)
 {
     u16* unlockable_character_bitfield =
         gmMainLib_GetUnlockedCharactersBitmaskPtr();
-    s32 selkind = ckind_to_selkind_map[ckind];
+    s32 selkind = GM_CK_TO_SELKIND(ckind);
     u8 idx = gm_SelKindToUnlockIndex(selkind);
     if (idx != NUM_UNLOCKABLE_CHARACTERS) {
         *unlockable_character_bitfield &= ~(1ULL << idx);
@@ -4309,14 +4360,19 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
         HSD_Randi(0);
     }
 #if defined(TARGET_PC)
-    /* The port's Sonic (CharacterKind 0x20) is past this CKind_Playable_Count table, which
-     * returned 0 colours - and the CSS does (costume + 1) % ncolors on X. Sonic has FIVE usable
-     * costumes (Nr Re Gr Ye Bk). PlSn.dat's disc directory also carries Or and Wh, but his fighter
-     * data's per-costume model-part tables only cover five: picking the 7th crashed at match start
-     * in ftParts_8007487C, reading the "PlySonic..." joint-name string as a pointer (user-found).
-     * Akaneia's CSP sheet (5 rows) and its own CSS agree on five. */
-    if (ckind == 0x20) {
-        return 5;
+    {
+        /* m-ex: costume_info[ext].num. For an m-ex fighter always (past this table's end); for a
+         * retail one when the disc gives it more costumes than retail (ACE's Mario has 7) -
+         * ftData_MexInitKinds appended the extra costumes' files. The costumes past a fighter's
+         * own part-visibility tables are safe: ftParts remaps them (m-ex's visibility_lookup_idx),
+         * which is what the 7th-Sonic-costume crash lacked. */
+        extern int Mex_CostumeInfo(int ckind, int field);
+        int n = Mex_CostumeInfo(ckind, 0);
+        if (n > 0 && (GM_IS_MEX_CK(ckind) || (ckind < ARRAY_SIZE(lbl_803D51A0) &&
+                                               n > lbl_803D51A0[ckind].ncolors)))
+        {
+            return n;
+        }
     }
 #endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {
@@ -4328,9 +4384,9 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
 u8 gm_80169264(u8 ckind)
 {
 #if defined(TARGET_PC)
-    /* team RED costume for the port's Sonic: PlSnRe = 1. Checked before the bounds check, which would return 0 for 0x20. */
-    if (ckind == 0x20) {
-        return 1;
+    if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].red_idx */
+        extern int Mex_CostumeInfo(int ckind, int field);
+        return Mex_CostumeInfo(ckind, 1);
     }
 #endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {
@@ -4342,9 +4398,9 @@ u8 gm_80169264(u8 ckind)
 u8 gm_80169290(u8 ckind)
 {
 #if defined(TARGET_PC)
-    /* team GREEN costume for the port's Sonic: PlSnGr = 2. Checked before the bounds check, which would return 0 for 0x20. */
-    if (ckind == 0x20) {
-        return 2;
+    if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].green_idx */
+        extern int Mex_CostumeInfo(int ckind, int field);
+        return Mex_CostumeInfo(ckind, 3);
     }
 #endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {
@@ -4356,9 +4412,9 @@ u8 gm_80169290(u8 ckind)
 u8 gm_801692BC(u8 ckind)
 {
 #if defined(TARGET_PC)
-    /* team BLUE costume for the port's Sonic: his default (PlSnNr) is blue = 0. Checked before the bounds check, which would return 0 for 0x20. */
-    if (ckind == 0x20) {
-        return 0;
+    if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].blue_idx */
+        extern int Mex_CostumeInfo(int ckind, int field);
+        return Mex_CostumeInfo(ckind, 2);
     }
 #endif
     if (ckind >= ARRAY_SIZE(lbl_803D51A0)) {

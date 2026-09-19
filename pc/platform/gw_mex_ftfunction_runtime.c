@@ -87,6 +87,9 @@ static int gw_mex_slot_of_internal(int k);
 #define GW_MEX_SLOT_ON_ACTION_STATE_CHANGE 24
 #define GW_MEX_SLOT_ON_REAPPLY_ATTR 25
 #define GW_MEX_SLOT_ON_ITEM_PICKUP 13
+#define GW_MEX_SLOT_ON_ABSORB 12            /* ftData_OnAbsorb        - Lucas (PSI Magnet) */
+#define GW_MEX_SLOT_ON_APPLY_HEAD_ITEM 19   /* ftData_UnkMotionStates1 */
+#define GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM 20  /* ftData_UnkMotionStates2 */
 #define GW_MEX_SLOT_ON_DOUBLE_JUMP 32
 #define GW_MEX_SLOT_ON_USMASH 36
 
@@ -2056,6 +2059,22 @@ static void gw_mex_interp_usmash(void *gobj) {
     gw_mex_interp_run_logged(GW_MEX_SLOT_ON_USMASH, "onUSmash", gobj);
 }
 
+/* onAbsorb (slot 12) - dispatched from fighter.c's ftData_OnAbsorb call site. Lucas is the only
+ * Akaneia fighter that overrides it (PSI Magnet). */
+static void gw_mex_interp_absorb(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_ABSORB, "onAbsorb", gobj);
+}
+
+/* onApplyHeadItem / onRemoveHeadItem (slots 19/20) - dispatched from ftcommon.c. No Akaneia
+ * fighter overrides either, but the registration is conditional, so registering them costs
+ * nothing and stops the next fighter that does from silently running the clone base's. */
+static void gw_mex_interp_apply_head_item(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_APPLY_HEAD_ITEM, "onApplyHeadItem", gobj);
+}
+static void gw_mex_interp_remove_head_item(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM, "onRemoveHeadItem", gobj);
+}
+
 /* onItemPickup (slot 13) - dispatched from ftpickupitem_800948A8 (ftpickupitem.c) with the picked
  * item gobj. Fires only when the fighter picks up an item, so in Target Test it cannot fire. */
 static void gw_mex_interp_item_pickup(void *gobj, void *arg1) {
@@ -2077,6 +2096,92 @@ static const char *gw_mex_symbolize(uint32_t guest_addr) {
     }
     gw_mex_k = prev;
     return n;
+}
+
+/* Register `fn` for `event` only if this fighter's blob overrides `slot`. See the comment at the
+ * call site: an unconditional registration replaces vanilla behaviour with nothing. */
+static void gw_mex_hook(int event, int kind, uint32_t slot, void (*fn)(void *)) {
+    if (gw_mex_override_target(slot) != 0u) {
+        gw_Mex_HookRegister(event, kind, fn);
+    }
+}
+
+/* Names for the Arch_FighterFunc slots the port knows how to dispatch, indexed by slot. A slot a
+ * fighter overrides but the port does not dispatch runs the clone base's handler with no warning
+ * at all - the failure mode that made Sonic's idle mouth go missing - so every install says which
+ * of its overrides went nowhere. This is diagnostics, not behaviour. */
+static const char *gw_mex_slot_name(uint32_t slot) {
+    switch (slot) {
+    case 0:  return "onLoad";
+    case 1:  return "onRespawn";
+    case 2:  return "onDestroy";
+    case 3:  return "moveLogic";
+    case 4:  return "specialN";
+    case 5:  return "specialNAir";
+    case 6:  return "specialS";
+    case 7:  return "specialSAir";
+    case 8:  return "specialHi";
+    case 9:  return "specialHiAir";
+    case 10: return "specialLw";
+    case 11: return "specialLwAir";
+    case 12: return "onAbsorb";
+    case 13: return "onItemPickup";
+    case 14: return "onItemInvisible";
+    case 15: return "onItemVisible";
+    case 16: return "onItemRelease";
+    case 17: return "onItemCatch";
+    case 18: return "onItemUnk";
+    case 19: return "onApplyHeadItem";
+    case 20: return "onRemoveHeadItem";
+    case 21: return "onKnockbackEnter";
+    case 22: return "onKnockbackExit";
+    case 23: return "onFrame";
+    case 24: return "onActionStateChange";
+    case 25: return "onReapplyAttr";
+    case 26: return "onModelRender";
+    case 32: return "onDoubleJump";
+    case 33: return "onZair";
+    case 34: return "onLanding";
+    case 35: return "onFSmash";
+    case 36: return "onUSmash";
+    case 41: return "onIntroL";
+    case 43: return "onTaunt";
+    case 44: return "onCatch";
+    default: return NULL;
+    }
+}
+
+/* Slots this build dispatches. Anything else the blob overrides is reported, once per install. */
+static int gw_mex_slot_is_wired(uint32_t slot) {
+    switch (slot) {
+    case GW_MEX_SLOT_ON_LOAD: case GW_MEX_SLOT_ON_RESPAWN: case GW_MEX_SLOT_ON_DESTROY:
+    case GW_MEX_SLOT_MOVE_LOGIC: case GW_MEX_SLOT_SPECIAL_N: case GW_MEX_SLOT_SPECIAL_N_AIR:
+    case GW_MEX_SLOT_SPECIAL_S: case GW_MEX_SLOT_SPECIAL_S_AIR: case GW_MEX_SLOT_SPECIAL_HI:
+    case GW_MEX_SLOT_SPECIAL_HI_AIR: case GW_MEX_SLOT_SPECIAL_LW: case GW_MEX_SLOT_SPECIAL_LW_AIR:
+    case GW_MEX_SLOT_ON_ABSORB: case GW_MEX_SLOT_ON_ITEM_PICKUP:
+    case GW_MEX_SLOT_ON_ITEM_INVISIBLE: case GW_MEX_SLOT_ON_ITEM_VISIBLE:
+    case GW_MEX_SLOT_ON_APPLY_HEAD_ITEM: case GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM:
+    case GW_MEX_SLOT_ON_KNOCKBACK_ENTER: case GW_MEX_SLOT_ON_KNOCKBACK_EXIT:
+    case GW_MEX_SLOT_ON_FRAME: case GW_MEX_SLOT_ON_ACTION_STATE_CHANGE:
+    case GW_MEX_SLOT_ON_REAPPLY_ATTR: case GW_MEX_SLOT_ON_DOUBLE_JUMP: case GW_MEX_SLOT_ON_USMASH:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static void gw_mex_report_unwired_slots(int kind) {
+    int i;
+    for (i = 0; i < gw_mex_ff.override_count; ++i) {
+        uint32_t slot = gw_mex_ff.overrides[i].slot;
+        const char *name;
+        if (gw_mex_ff.overrides[i].is_func_addr || gw_mex_slot_is_wired(slot)) {
+            continue;
+        }
+        name = gw_mex_slot_name(slot);
+        gw_log("interp: kind %d overrides slot %u (%s) but the port does not dispatch it - the "
+               "clone base's handler runs instead", kind, slot, name != NULL ? name : "unknown");
+    }
 }
 
 /* Called from game code (ftData_8008572C) every time Sonic's fighter file is (re)loaded - once per
@@ -2192,41 +2297,59 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
 
     gw_mex_movelogic_setup();
 
-    /* Install the onLoad and onFrame overrides (this phase's deliverables). The other engine
-     * events (onDeath/onDestroy/...) are not registered so they keep their vanilla behaviour. */
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, kind, gw_mex_interp_onload);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, kind, gw_mex_interp_onframe);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DEATH, kind, gw_mex_interp_respawn);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DESTROY, kind, gw_mex_interp_destroy);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_INVISIBLE, kind,
-                        gw_mex_interp_item_invisible);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ITEM_VISIBLE, kind,
-                        gw_mex_interp_item_visible);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_ENTER, kind,
-                        gw_mex_interp_knockback_enter);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_KNOCKBACK_EXIT, kind,
-                        gw_mex_interp_knockback_exit);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, kind,
-                        gw_mex_interp_action_state_change);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_REAPPLY_ATTR, kind,
-                        gw_mex_interp_reapply_attr);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N, kind, gw_mex_interp_special_n);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_N_AIR, kind,
-                        gw_mex_interp_special_n_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S, kind, gw_mex_interp_special_s);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_S_AIR, kind,
-                        gw_mex_interp_special_s_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI, kind, gw_mex_interp_special_hi);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_HI_AIR, kind,
-                        gw_mex_interp_special_hi_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW, kind, gw_mex_interp_special_lw);
-    gw_Mex_HookRegister(GW_MEX_EVENT_SPECIAL_LW_AIR, kind,
-                        gw_mex_interp_special_lw_air);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind,
-                        gw_mex_interp_double_jump);
-    gw_Mex_HookRegister(GW_MEX_EVENT_ON_USMASH, kind, gw_mex_interp_usmash);
-    gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind,
-                         gw_mex_interp_item_pickup);
+    /* Install a hook for each slot this fighter's blob actually overrides.
+     *
+     * The condition is the point. Registering unconditionally is not conservative: a registered
+     * hook REPLACES the vanilla callback (gw_Mex_GObjDispatch only falls through to `vanilla`
+     * when no hook is present), and gw_mex_interp_run does nothing when the slot has no
+     * override - so an unconditional registration silently turns the engine's own behaviour into
+     * a no-op for every fighter that leaves that slot empty. Sonic is the one Akaneia fighter who
+     * fills all of them, which is why nothing showed it. Wolf overrides neither slot 14 nor 15,
+     * so his item-visibility callbacks would have done nothing at all; Lucas does not override
+     * slot 23, so his per-frame engine callback would have been dropped entirely.
+     *
+     * Slots the blob does not override keep the vanilla / clone-base callback, which is what
+     * ftData_MexInitKinds already put in the per-kind table. */
+    gw_mex_hook(GW_MEX_EVENT_ON_LOAD, kind, GW_MEX_SLOT_ON_LOAD, gw_mex_interp_onload);
+    gw_mex_hook(GW_MEX_EVENT_ON_FRAME, kind, GW_MEX_SLOT_ON_FRAME, gw_mex_interp_onframe);
+    gw_mex_hook(GW_MEX_EVENT_ON_DEATH, kind, GW_MEX_SLOT_ON_RESPAWN, gw_mex_interp_respawn);
+    gw_mex_hook(GW_MEX_EVENT_ON_DESTROY, kind, GW_MEX_SLOT_ON_DESTROY, gw_mex_interp_destroy);
+    gw_mex_hook(GW_MEX_EVENT_ON_ITEM_INVISIBLE, kind, GW_MEX_SLOT_ON_ITEM_INVISIBLE,
+                gw_mex_interp_item_invisible);
+    gw_mex_hook(GW_MEX_EVENT_ON_ITEM_VISIBLE, kind, GW_MEX_SLOT_ON_ITEM_VISIBLE,
+                gw_mex_interp_item_visible);
+    gw_mex_hook(GW_MEX_EVENT_ON_KNOCKBACK_ENTER, kind, GW_MEX_SLOT_ON_KNOCKBACK_ENTER,
+                gw_mex_interp_knockback_enter);
+    gw_mex_hook(GW_MEX_EVENT_ON_KNOCKBACK_EXIT, kind, GW_MEX_SLOT_ON_KNOCKBACK_EXIT,
+                gw_mex_interp_knockback_exit);
+    gw_mex_hook(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, kind, GW_MEX_SLOT_ON_ACTION_STATE_CHANGE,
+                gw_mex_interp_action_state_change);
+    gw_mex_hook(GW_MEX_EVENT_ON_REAPPLY_ATTR, kind, GW_MEX_SLOT_ON_REAPPLY_ATTR,
+                gw_mex_interp_reapply_attr);
+    gw_mex_hook(GW_MEX_EVENT_ON_ABSORB, kind, GW_MEX_SLOT_ON_ABSORB, gw_mex_interp_absorb);
+    gw_mex_hook(GW_MEX_EVENT_ON_APPLY_HEAD_ITEM, kind, GW_MEX_SLOT_ON_APPLY_HEAD_ITEM,
+                gw_mex_interp_apply_head_item);
+    gw_mex_hook(GW_MEX_EVENT_ON_REMOVE_HEAD_ITEM, kind, GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM,
+                gw_mex_interp_remove_head_item);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_N, kind, GW_MEX_SLOT_SPECIAL_N, gw_mex_interp_special_n);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_N_AIR, kind, GW_MEX_SLOT_SPECIAL_N_AIR,
+                gw_mex_interp_special_n_air);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_S, kind, GW_MEX_SLOT_SPECIAL_S, gw_mex_interp_special_s);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_S_AIR, kind, GW_MEX_SLOT_SPECIAL_S_AIR,
+                gw_mex_interp_special_s_air);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_HI, kind, GW_MEX_SLOT_SPECIAL_HI, gw_mex_interp_special_hi);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_HI_AIR, kind, GW_MEX_SLOT_SPECIAL_HI_AIR,
+                gw_mex_interp_special_hi_air);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_LW, kind, GW_MEX_SLOT_SPECIAL_LW, gw_mex_interp_special_lw);
+    gw_mex_hook(GW_MEX_EVENT_SPECIAL_LW_AIR, kind, GW_MEX_SLOT_SPECIAL_LW_AIR,
+                gw_mex_interp_special_lw_air);
+    gw_mex_hook(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind, GW_MEX_SLOT_ON_DOUBLE_JUMP,
+                gw_mex_interp_double_jump);
+    gw_mex_hook(GW_MEX_EVENT_ON_USMASH, kind, GW_MEX_SLOT_ON_USMASH, gw_mex_interp_usmash);
+    if (gw_mex_override_target(GW_MEX_SLOT_ON_ITEM_PICKUP) != 0u) {
+        gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind, gw_mex_interp_item_pickup);
+    }
+    gw_mex_report_unwired_slots(kind);
 
     gw_mex_installed = 1;
     /* MELEE_MEX_DUMP_CODE=<path> writes the RELOCATED blob (what the interpreter actually

@@ -43,6 +43,11 @@
 /* Arch_FighterFunc slot indices (Header.s: onLoad 0x00 ... GetTrailData 0xB4). See
  * gw_mex_ftfunction.c's slot_names table; onFrame is slot 23. */
 #define GW_MEX_SLOT_ON_LOAD 0
+/* Slot 1: the blob's own debug symbols name its target OnRespawn. It overrides vanilla's
+ * ftData_OnDeath table, which despite the decomp's name is the (re)spawn initialiser - Fox's
+ * entry resets state and sets model-part defaults. Dispatched from fighter.c via
+ * GW_MEX_EVENT_ON_DEATH. */
+#define GW_MEX_SLOT_ON_RESPAWN 1
 #define GW_MEX_SLOT_MOVE_LOGIC 3
 #define GW_MEX_SLOT_SPECIAL_N 4
 #define GW_MEX_SLOT_SPECIAL_N_AIR 5
@@ -1093,6 +1098,34 @@ static void gw_mex_interp_onframe(void *gobj) {
                GW_MEX_KIND_SONIC, target, gobj);
     }
     r3 = gw_mex_interp_run(GW_MEX_SLOT_ON_FRAME, gobj);
+    /* MELEE_MEX_TRACE_PARTS=1: log the model-part visibility table (fp->x5F4_arr[0..3], {prev,
+     * idx} pairs) whenever it changes, with the action state. Groups 2/3 are Sonic's left/right
+     * mouth; ProcessMouth copies [2].prev into whichever one matches the facing direction. */
+    {
+        static int trace = -1;
+        static uint8_t last[8];
+        static uint32_t last_msid = 0xFFFFFFFFu;
+        uint32_t fd;
+        if (trace < 0) {
+            const char *t = getenv("MELEE_MEX_TRACE_PARTS");
+            trace = (t != NULL && t[0] == '1');
+        }
+        fd = gw_r32((const void *) (uintptr_t) ((uintptr_t) gobj + 0x2Cu));
+        if (trace && fd >= 0x80000000u && fd < 0x80000000u + gw_mem1_size) {
+            uint8_t cur[8];
+            uint32_t msid = gw_r32((const void *) (uintptr_t) (fd + 0x10u));
+            memcpy(cur, (const void *) (uintptr_t) (fd + 0x5F4u), 8);
+            if (memcmp(cur, last, 8) != 0 || msid != last_msid) {
+                memcpy(last, cur, 8);
+                last_msid = msid;
+                gw_log("parts: msid=0x%03X facing=%.0f  [0]%d/%d [1]%d/%d [2]%d/%d [3]%d/%d "
+                       "(prev/idx)",
+                       msid, (double) gw_rf32((const void *) (uintptr_t) (fd + 0x2Cu)),
+                       (int8_t) cur[0], (int8_t) cur[1], (int8_t) cur[2], (int8_t) cur[3],
+                       (int8_t) cur[4], (int8_t) cur[5], (int8_t) cur[6], (int8_t) cur[7]);
+            }
+        }
+    }
     ++count;
     if ((count % 60u) == 1u) {
         gw_log("interp: onFrame kind=%d invocation %u ran, r3=0x%08X", GW_MEX_KIND_SONIC, count,
@@ -1150,6 +1183,16 @@ static uint32_t gw_mex_interp_run_logged2(uint32_t slot, const char *name, void 
                count2[slot], r3);
     }
     return r3;
+}
+
+/* OnRespawn (slot 1) - dispatched from fighter.c's ftData_OnDeath call site (GW_MEX_EVENT_ON_DEATH),
+ * which runs at every (re)spawn, including the first. Sonic's sets his model-part DEFAULTS here:
+ * ftParts_80074A4C(gobj, 2, 0) makes variant 0 the default for mesh group 2, his mouth. Unregistered,
+ * the Fox-clone fallback ran instead and only set group 0, so x5F4_arr[2].prev stayed -1;
+ * ProcessMouth refills the mouth from that default whenever an animation is not driving it, so the
+ * mouth vanished in idle and only appeared when an attack animation set it directly. */
+static void gw_mex_interp_respawn(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_RESPAWN, "OnRespawn", gobj);
 }
 
 /* onActionStateChange (slot 24) - dispatched from ftcolanim.c's four ftData_UnkMotionStates4 call
@@ -1266,6 +1309,7 @@ void gw_Mex_FtFunctionInstall(int kind) {
      * events (onDeath/onDestroy/...) are not registered so they keep their vanilla behaviour. */
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_LOAD, GW_MEX_KIND_SONIC, gw_mex_interp_onload);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_FRAME, GW_MEX_KIND_SONIC, gw_mex_interp_onframe);
+    gw_Mex_HookRegister(GW_MEX_EVENT_ON_DEATH, GW_MEX_KIND_SONIC, gw_mex_interp_respawn);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_ACTION_STATE_CHANGE, GW_MEX_KIND_SONIC,
                         gw_mex_interp_action_state_change);
     gw_Mex_HookRegister(GW_MEX_EVENT_ON_REAPPLY_ATTR, GW_MEX_KIND_SONIC,

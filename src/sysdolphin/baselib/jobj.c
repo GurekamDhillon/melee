@@ -178,8 +178,41 @@ void HSD_JObjMakeMatrix(HSD_JObj* jobj)
         } else {
             scl = NULL;
         }
+#if defined(TARGET_PC)
+        /* m-ex scale compensation (joint flag bit 26, "MTX_SCALE_COMPENSATE" in HSDLib, which
+         * notes it "can only be used by m-ex models"). Re-expressed from the hook Akaneia ships
+         * in codes.gct at HSD_JObjMakeMatrix+0x204 (0x8036F3FC), which replaces exactly this
+         * HSD_MtxSRT call and resumes at +0x218, before the parent concat below.
+         *
+         * Vanilla HSD's scl argument only compensates NON-uniform parent scale (the axis ratios,
+         * to avoid shear); a UNIFORM parent scale still flows into every child. m-ex models can
+         * set this bit so a child cancels its parent's LOCAL scale while its position still
+         * follows the parent: translate is pre-scaled by the parent's scale and the result is
+         * pre-multiplied by diag(1 / parent scale). Without it, Sonic's jab - which scales his
+         * hand and every finger joint by ~2.2 - compounded down the finger chain to ~33x.
+         * Only the Euler (HSD_MtxSRT) path is patched, as in m-ex; the quaternion path is not.
+         * Vanilla models never set bit 26, so they are unaffected. */
+        if ((jobj->flags & (1 << 26)) && jobj->parent != NULL) {
+            Vec3* ps = &jobj->parent->scale;
+            Vec3 st;
+            Mtx comp;
+            st.x = jobj->translate.x * ps->x;
+            st.y = jobj->translate.y * ps->y;
+            st.z = jobj->translate.z * ps->z;
+            HSD_MtxSRT(jobj->mtx, &jobj->scale, (Vec3*) &jobj->rotate, &st, scl);
+            PSMTXIdentity(comp);
+            comp[0][0] = (f32) (1.0 / ps->x);
+            comp[1][1] = (f32) (1.0 / ps->y);
+            comp[2][2] = (f32) (1.0 / ps->z);
+            PSMTXConcat(comp, jobj->mtx, jobj->mtx);
+        } else {
+            HSD_MtxSRT(jobj->mtx, &jobj->scale, (Vec3*) &jobj->rotate,
+                       &jobj->translate, scl);
+        }
+#else
         HSD_MtxSRT(jobj->mtx, &jobj->scale, (Vec3*) &jobj->rotate,
                    &jobj->translate, scl);
+#endif
     }
     if (jobj->parent != NULL) {
         PSMTXConcat(jobj->parent->mtx, jobj->mtx, jobj->mtx);

@@ -29,6 +29,7 @@
 #include "gw_mex_ftfunction.h"
 #include "gw_mex_bridge.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1088,6 +1089,87 @@ static void gw_mex_interp_onload(void *gobj) {
 /* onFrame (slot 23) - runs Sonic's PPC onFrame per fighter per frame (Fighter_8006A360 ->
  * Mex_OnFrameDispatch -> gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_FRAME)). The log is throttled to one
  * line per second (60 invocations), since OnFrame fires at 60 Hz per fighter. */
+/* MELEE_MEX_TRACE_SCALE=1: each frame, walk the fighter's joint tree (gobj->hsd_obj, HSD_JObj:
+ * next +0x08, child +0x10, local scale Vec3 +0x2C, world Mtx +0x44) and log any joint whose LOCAL
+ * scale or WORLD matrix row length is abnormally large, naming it by depth-first index. Written to
+ * find the joint behind "the fists go huge for a few frames during jab". */
+static void gw_mex_trace_scale(void *gobj, uint32_t fd) {
+    static int trace = -1;
+    uint32_t stack[256];
+    int sp = 0, idx = 0;
+    uint32_t msid, root;
+    if (trace < 0) {
+        const char *t = getenv("MELEE_MEX_TRACE_SCALE");
+        trace = (t != NULL && t[0] == '1');
+    }
+    if (!trace) {
+        return;
+    }
+    msid = gw_r32((const void *) (uintptr_t) (fd + 0x10u));
+    root = gw_r32((const void *) (uintptr_t) ((uintptr_t) gobj + 0x28u));
+    if (root < 0x80000000u || root >= 0x80000000u + gw_mem1_size) {
+        return;
+    }
+    stack[sp++] = root;
+    while (sp > 0 && idx < 400) {
+        uint32_t j = stack[--sp];
+        uint32_t nx, ch;
+        float sx, sy, sz, wmax = 0.0f;
+        int r;
+        if (j < 0x80000000u || j >= 0x80000000u + gw_mem1_size) {
+            continue;
+        }
+        sx = gw_rf32((const void *) (uintptr_t) (j + 0x2Cu));
+        sy = gw_rf32((const void *) (uintptr_t) (j + 0x30u));
+        sz = gw_rf32((const void *) (uintptr_t) (j + 0x34u));
+        for (r = 0; r < 3; ++r) { /* row length of the 3x3 part of the world matrix */
+            float a = gw_rf32((const void *) (uintptr_t) (j + 0x44u + r * 16u + 0u));
+            float b = gw_rf32((const void *) (uintptr_t) (j + 0x44u + r * 16u + 4u));
+            float c = gw_rf32((const void *) (uintptr_t) (j + 0x44u + r * 16u + 8u));
+            float l = (float) sqrt((double) (a * a + b * b + c * c));
+            if (l > wmax) {
+                wmax = l;
+            }
+        }
+        if (sx > 3.0f || sy > 3.0f || sz > 3.0f || sx < -3.0f || sy < -3.0f || sz < -3.0f ||
+            wmax > 3.0f) {
+            /* Which animation TRACKS does this joint actually have? HSD_JObj.aobj +0x7C;
+             * HSD_AObj.fobj +0x14; HSD_FObj: next +0x00, obj_type +0x13 (SCAX/Y/Z = 8/9/10),
+             * frac_value +0x14 (quantisation format). A joint that shows a large local scale with
+             * NO scale track means something other than its animation wrote it. */
+            char tracks[96];
+            int tl = 0, nf = 0;
+            uint32_t aobj = gw_r32((const void *) (uintptr_t) (j + 0x7Cu));
+            uint32_t fo = (aobj >= 0x80000000u && aobj < 0x80000000u + gw_mem1_size)
+                              ? gw_r32((const void *) (uintptr_t) (aobj + 0x14u))
+                              : 0u;
+            tracks[0] = 0;
+            while (fo >= 0x80000000u && fo < 0x80000000u + gw_mem1_size && nf < 16 &&
+                   tl < (int) sizeof tracks - 12) {
+                uint8_t ty = *(const uint8_t *) (uintptr_t) (fo + 0x13u);
+                uint8_t fr = *(const uint8_t *) (uintptr_t) (fo + 0x14u);
+                tl += snprintf(tracks + tl, sizeof tracks - (size_t) tl, "%u/%02X ", ty, fr);
+                fo = gw_r32((const void *) (uintptr_t) fo);
+                ++nf;
+            }
+            gw_log("scale: msid=0x%03X joint %d local=(%.2f,%.2f,%.2f) world_rowmax=%.2f "
+                   "tracks[type/frac]: %s",
+                   msid, idx, (double) sx, (double) sy, (double) sz, (double) wmax,
+                   aobj ? (nf ? tracks : "(aobj, no fobj)") : "(no aobj)");
+        }
+        ++idx;
+        nx = gw_r32((const void *) (uintptr_t) (j + 0x08u));
+        ch = gw_r32((const void *) (uintptr_t) (j + 0x10u));
+        /* depth-first: visit the child before the sibling, so indices follow the bone order */
+        if (nx != 0u && sp < 255) {
+            stack[sp++] = nx;
+        }
+        if (ch != 0u && sp < 255) {
+            stack[sp++] = ch;
+        }
+    }
+}
+
 static void gw_mex_interp_onframe(void *gobj) {
     uint32_t target = gw_mex_override_target(GW_MEX_SLOT_ON_FRAME);
     static int first = 1;
@@ -1116,6 +1198,9 @@ static void gw_mex_interp_onframe(void *gobj) {
             trace = (t != NULL && t[0] == '1');
         }
         fd = gw_r32((const void *) (uintptr_t) ((uintptr_t) gobj + 0x2Cu));
+        if (fd >= 0x80000000u && fd < 0x80000000u + gw_mem1_size) {
+            gw_mex_trace_scale(gobj, fd);
+        }
         if (trace && fd >= 0x80000000u && fd < 0x80000000u + gw_mem1_size) {
             uint8_t cur[8];
             uint32_t msid = gw_r32((const void *) (uintptr_t) (fd + 0x10u));

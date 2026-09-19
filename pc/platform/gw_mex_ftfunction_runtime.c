@@ -757,7 +757,15 @@ const char *gw_Mex_FtPlSymbol(int k) {
     return t != 0u ? gw_mex_cstr(gw_mex_word(t + 4u, (uint32_t) k, 8u)) : NULL;
 }
 const char *gw_Mex_FtAnimFile(int k) { return gw_mex_cstr(gw_mex_word(gw_mex_ftfield(0x1Cu), (uint32_t) k, 4u)); }
-int gw_Mex_FtAnimCount(int k) { return (int) gw_mex_word(gw_mex_ftfield(0x20u), (uint32_t) k, 4u); }
+/* anim_num is {u32 zero; u32 count} per INTERNAL kind - stride 8, count in the second word, the
+ * same shape as pl_file/pl_symbol above. Read at stride 4 it returns 0 for every even kind and
+ * the PREVIOUS fighter's count for every odd one: Sonic (31) got 327, Jigglypuff's, against a
+ * real 321, and Dedede (32) got 0. Proven from the disc - in Akaneia's MxDt.dat every +0 word is
+ * zero and unrelocated, and the run ends exactly at internal 40, the last boss. */
+int gw_Mex_FtAnimCount(int k) {
+    uint32_t t = gw_mex_ftfield(0x20u);
+    return t != 0u ? (int) gw_mex_word(t + 4u, (uint32_t) k, 8u) : 0;
+}
 int gw_Mex_FtEffectIndex(int k) {
     uint32_t t = gw_mex_ftfield(0x24u);
     return (t != 0u && gw_mexdt_in(t + (uint32_t) k, 1u)) ? *(const uint8_t *) (uintptr_t) (t + (uint32_t) k) : -1;

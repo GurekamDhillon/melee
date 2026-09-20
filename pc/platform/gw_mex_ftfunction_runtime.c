@@ -2891,6 +2891,18 @@ static int test_mex_css_icon_map(void) {
  * The assertion is narrow and structural - each kind's Pl file must be the one MxDt.dat names for
  * it, and each kind's costume files must belong to that same fighter (they share the Pl file's
  * "PlXx" stem). A row that has picked up another fighter's data fails on the stem. */
+/* ASCII-only, locale-free case-insensitive compare of the first `n` bytes. */
+static int gw_strncasecmp_ascii(const char *a, const char *b, size_t n) {
+    size_t i;
+    for (i = 0; i < n; ++i) {
+        int ca = (unsigned char) a[i], cb = (unsigned char) b[i];
+        if (ca >= 'A' && ca <= 'Z') { ca += 'a' - 'A'; }
+        if (cb >= 'A' && cb <= 'Z') { cb += 'a' - 'A'; }
+        if (ca != cb || ca == 0) { return ca - cb; }
+    }
+    return 0;
+}
+
 static int test_mex_ftdata_rows(void) {
     extern void gw_ftData_MexInitKinds(void);
     extern uint8_t gw_ftData_803C1F40[];   /* StringPair[Ft_Kind_Max]        {file, symbol} */
@@ -2924,7 +2936,12 @@ static int test_mex_ftdata_rows(void) {
         if (plname == NULL) {
             continue; /* an empty m-ex slot, or a kind this disc does not define */
         }
-        /* "PlFx.dat" -> "PlFx": the stem every one of that fighter's costume files starts with. */
+        /* "PlFx.dat" -> "PlFx": the stem every one of that fighter's costume files starts with.
+         * Compared case-insensitively, because a disc need not spell the two the same:
+         * ACE's internal kind 45 is "PlBF.dat" with costumes "PlBfNr.dat".."PlBfCap.dat",
+         * all six of them present on the disc. It is the only such fighter on either
+         * m-ex disc (checked with tools/mex_port/dump_mxdt.py), and the check still
+         * catches a row that names a DIFFERENT fighter, which is what it is for. */
         memcpy(stem, plname, 4);
         stem[4] = '\0';
         gw_log("test mex_ftdata_rows: kind %2d internal %3d  %-9s %-16s %u costumes", fk, internal,
@@ -2948,7 +2965,7 @@ static int test_mex_ftdata_rows(void) {
                 rc = 1;
                 continue;
             }
-            if (strncmp(fn, stem, 4) != 0) {
+            if (gw_strncasecmp_ascii(fn, stem, 4) != 0) {
                 gw_test_fail("kind %d (%s) costume %u is %s - another fighter's file", fk, plname,
                              c, fn);
                 rc = 1;

@@ -66,9 +66,13 @@ static void gw_test_isolate_begin(void) {
 
 void gw_Mex_InvalidateAfterMem1Restore(void); /* pc/platform/gw_mex_ftfunction_runtime.c */
 
-/* Restoring MEM1 puts the link-time pointers back to their pre-fixup values, so the fixups have to
- * run again or every game global points at its unrelocated self. Platform-side statics are not in
- * MEM1 and are deliberately not restored: a test must set up any platform state it depends on. */
+/* Platform-side statics are not in MEM1 and are deliberately not restored: a test must set up any
+ * platform state it depends on.
+ *
+ * The gw_apply_fixups() call below is kept for the case it was written for, but it is now a no-op
+ * after the first application. Game globals live in the exe's own data section, not in MEM1, so
+ * the restore above never disturbs the fixups - and re-applying them BYTE-SWAPPED THEM BACK, once
+ * per test, leaving every game global correct or corrupt by the parity of the test index. */
 static void gw_test_isolate_end(void) {
   if (gw_test_mem_snapshot == NULL) {
     return;
@@ -104,12 +108,45 @@ void gw_test_panic_hit(const char *msg) {
   longjmp(gw_test_jmp, 1);
 }
 
-/* A structured exception (bad dereference, divide by zero) is a test failure, not a dead run. */
+/* A structured exception (bad dereference, divide by zero) is a test failure, not a dead run.
+ *
+ * The exception record is captured and reported. "test raised a structured exception" on its own
+ * says only that something went wrong somewhere, which costs a rebuild-and-bisect cycle every
+ * time; the code, the faulting instruction and - for an access violation - the address and
+ * direction of the bad access usually name the bug outright. gw_log_code_addr turns the
+ * instruction pointer into a melee-pc.map RVA, which is how every other fault in this port is
+ * read. */
+static EXCEPTION_POINTERS *gw_test_exc;
+static int gw_test_exc_filter(EXCEPTION_POINTERS *ep) {
+  gw_test_exc = ep;
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+
 static int gw_test_invoke(gw_test_fn fn) {
   __try {
     return fn();
-  } __except (EXCEPTION_EXECUTE_HANDLER) {
-    gw_test_fail("test raised a structured exception");
+  } __except (gw_test_exc_filter(GetExceptionInformation())) {
+    EXCEPTION_POINTERS *ep = gw_test_exc;
+    if (ep == NULL || ep->ExceptionRecord == NULL) {
+      gw_test_fail("test raised a structured exception");
+      return 1;
+    }
+    {
+      const EXCEPTION_RECORD *er = ep->ExceptionRecord;
+      if (er->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && er->NumberParameters >= 2) {
+        static const char *const dir[3] = {"reading", "writing", "executing"};
+        ULONG_PTR op = er->ExceptionInformation[0];
+        gw_test_fail("ACCESS_VIOLATION %s 0x%08lX at pc 0x%08lX",
+                     op <= 8 ? dir[op == 8 ? 2 : (int)op] : "accessing",
+                     (unsigned long)er->ExceptionInformation[1],
+                     (unsigned long)(ULONG_PTR)er->ExceptionAddress);
+      } else {
+        gw_test_fail("structured exception 0x%08lX at pc 0x%08lX",
+                     (unsigned long)er->ExceptionCode,
+                     (unsigned long)(ULONG_PTR)er->ExceptionAddress);
+      }
+      gw_log_code_addr("  test fault pc", er->ExceptionAddress);
+    }
     return 1;
   }
 }

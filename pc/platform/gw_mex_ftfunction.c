@@ -104,6 +104,104 @@ int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size,
     return -1;
 }
 
+/* ---- recovering a missing codeSize ----------------------------------------------------
+ *
+ * 16 of ACE's 31 fighter blobs declare `codeSize == 0`: they were built by a MexTK that predates
+ * the field, and they carry no debug symbols either (so the symbol table's code_end, which would
+ * give the answer outright, is not available). Rejecting them costs half of ACE's roster, so the
+ * size is derived from the archive's own layout instead.
+ *
+ * TWO independent derivations exist and they bracket the answer:
+ *
+ *   LOWER BOUND: max(instruction-reloc code offset) + 4. Every relocated instruction is inside
+ *     the code, so the code is at least this long. Measured against the 15 blobs that DO declare
+ *     a size (7 on Akaneia, 15 on ACE): it lands 0x10..0x7A *under* the declared value, because
+ *     the last few instructions of the last function are an epilogue that needs no relocation.
+ *     Copying only this much would leave that epilogue as zero words. So it is a check, not the
+ *     answer.
+ *
+ *   UPPER BOUND, and the one used: the smallest data-section offset above `code` that any OTHER
+ *     structure in the archive occupies. A flat PPC blob contains no archive structure, so the
+ *     code cannot reach that far. Candidates are the MEXFunction struct itself and its three
+ *     tables, every public and extern symbol's data offset, every entry of the archive's own
+ *     relocation table, and every offset those entries point at - plus the end of the data
+ *     section as the last resort.
+ *
+ * Scored over all 22 blobs across both discs that declare a size, the upper bound is
+ * `declared + 0x00 .. +0x1C` - i.e. exactly the code region rounded up to the next structure,
+ * the difference being MexTK's alignment padding. It is NEVER short on any of them, which is the
+ * property that matters: over-copying dead padding is harmless, truncating a function is not.
+ * The lower bound is asserted against it, so a blob whose layout does not fit this shape is
+ * refused rather than half-loaded. */
+static uint32_t gw_ftfunction_code_bound(const unsigned char *dat, size_t dat_size,
+                                         uint32_t code_off, const uint32_t *others,
+                                         int others_n) {
+    uint32_t data_size = gw_r32(dat + 0x04);
+    uint32_t nb_reloc = gw_r32(dat + 0x08);
+    uint32_t nb_public = gw_r32(dat + 0x0C);
+    uint32_t nb_extern = gw_r32(dat + 0x10);
+    uint32_t o_reloc = GW_HSD_HEADER_SIZE + data_size;
+    uint32_t o_public = o_reloc + nb_reloc * 4u;
+    uint32_t best = data_size; /* nothing can run past the data section */
+    uint32_t i;
+    int k;
+
+#define GW_FT_BOUND(x)                                                                            \
+    do {                                                                                          \
+        uint32_t v_ = (x);                                                                        \
+        if (v_ > code_off && v_ < best) {                                                         \
+            best = v_;                                                                            \
+        }                                                                                         \
+    } while (0)
+
+    for (k = 0; k < others_n; ++k) {
+        GW_FT_BOUND(others[k]);
+    }
+    /* Public and extern symbol entries are {u32 data_offset; u32 name_offset}, back to back. */
+    for (i = 0; i < nb_public + nb_extern; ++i) {
+        uint32_t p = o_public + i * 8u;
+        if (p + 8u > dat_size) {
+            break;
+        }
+        GW_FT_BOUND(gw_r32(dat + p));
+    }
+    /* The archive relocation table lists the data offset of every word holding a pointer. Both
+     * the word's own position and the offset it holds are structure boundaries. */
+    for (i = 0; i < nb_reloc; ++i) {
+        uint32_t p = o_reloc + i * 4u;
+        uint32_t off;
+        if (p + 4u > dat_size) {
+            break;
+        }
+        off = gw_r32(dat + p);
+        GW_FT_BOUND(off);
+        if (off + 4u <= data_size) {
+            GW_FT_BOUND(gw_r32(dat + GW_HSD_HEADER_SIZE + off));
+        }
+    }
+#undef GW_FT_BOUND
+    return best;
+}
+
+/* max(instruction-reloc code offset) + 4: the lower bound described above. 0 when there are no
+ * instruction relocs, which is itself suspicious for a blob with no declared size. */
+static uint32_t gw_ftfunction_reloc_extent(const unsigned char *dat, size_t dat_size,
+                                           uint32_t irt_data_off, uint32_t irt_count) {
+    uint32_t i, max = 0;
+    for (i = 0; i < irt_count; ++i) {
+        uint32_t e = GW_HSD_HEADER_SIZE + irt_data_off + i * 8u;
+        uint32_t off;
+        if (e + 8u > dat_size) {
+            break;
+        }
+        off = (gw_r32(dat + e) & 0x00FFFFFFu) + 4u;
+        if (off > max) {
+            max = off;
+        }
+    }
+    return max;
+}
+
 /* ---- Reloc (reimplemented from Standalone Functions/Reloc.asm) ------------------------
  * Each 8-byte entry is { flag:code_offset (u32), target (u32) }. The flag is the top byte; the
  * code offset is the low 24 bits. A target whose top nibble is 0x8 is an absolute guest address
@@ -279,6 +377,35 @@ static int gw_ftfunction_load_from_memory_at(const unsigned char *dat, size_t da
     frt_count = gw_r32(dat + struct_off + FTFUNC_OFF_FUNC_RELOC_COUNT);
     code_size = gw_r32(dat + struct_off + FTFUNC_OFF_CODE_SIZE);
 
+    /* A blob built by a MexTK older than the codeSize field ships 0 here. Recover it from the
+     * archive layout rather than refusing the fighter - see gw_ftfunction_code_bound(). */
+    if (code_size == 0 && code_off < data_size) {
+        uint32_t others[4];
+        int n = 0;
+        uint32_t bound, need;
+        others[n++] = (uint32_t) pub_off; /* the MEXFunction struct itself */
+        if (irt_count != 0) {
+            others[n++] = irt_off;
+        }
+        if (frt_count != 0) {
+            others[n++] = frt_off;
+        }
+        if (gw_r32(dat + struct_off + FTFUNC_OFF_SYMBOL_COUNT) != 0u) {
+            others[n++] = gw_r32(dat + struct_off + FTFUNC_OFF_SYMBOL_TABLE);
+        }
+        bound = gw_ftfunction_code_bound(dat, dat_size, code_off, others, n);
+        need = gw_ftfunction_reloc_extent(dat, dat_size, irt_off, irt_count);
+        if (bound <= code_off || bound - code_off < need || need == 0u) {
+            gw_log("ftfunction: codeSize is 0 and the archive layout does not recover it "
+                   "(code 0x%X, next structure 0x%X, instruction relocs need 0x%X)",
+                   code_off, bound, need);
+            return GW_FTFUNC_ERR_BAD_STRUCT;
+        }
+        code_size = bound - code_off;
+        gw_log("ftfunction: codeSize is 0 (a MexTK older than the field); recovered 0x%X from the "
+               "archive layout - code 0x%X..0x%X, instruction relocs reach 0x%X",
+               code_size, code_off, bound, need);
+    }
     if (code_size == 0 || code_off > data_size || code_size > data_size - code_off) {
         gw_log("ftfunction: code [0x%X,+0x%X) outside the data section", code_off, code_size);
         return GW_FTFUNC_ERR_BAD_STRUCT;
@@ -441,6 +568,16 @@ int gw_ftfunction_load_in_archive(const char *dat_path, uint32_t internal_id, ui
     }
     code_off = gw_r32(dat + GW_HSD_HEADER_SIZE + (uint32_t)pub + FTFUNC_OFF_CODE);
     code_size = gw_r32(dat + GW_HSD_HEADER_SIZE + (uint32_t)pub + FTFUNC_OFF_CODE_SIZE);
+    /* Only the "already differed" diagnostic below uses this; the real recovery happens inside
+     * gw_ftfunction_load_from_memory_at(). Repeat it here so a codeSize-0 blob does not report
+     * "0 of 0 code words" and look like it carried no code. */
+    if (code_size == 0u) {
+        uint32_t self = (uint32_t) pub;
+        uint32_t bound = gw_ftfunction_code_bound(dat, dat_size, code_off, &self, 1);
+        if (bound > code_off) {
+            code_size = bound - code_off;
+        }
+    }
     if (code_off > arch_data_size || code_size > arch_data_size - code_off) {
         free(dat);
         return GW_FTFUNC_ERR_BAD_STRUCT;
@@ -717,6 +854,148 @@ static int test_ftfunction_corrupt_rejected(void) {
     return 0;
 }
 
+/* Lock the codeSize recovery against ground truth. Half of ACE's fighter blobs declare
+ * codeSize 0 and the loader now derives it from the archive layout; the blobs that DO declare a
+ * size are the only check on that derivation, so run it against each of them and require the
+ * derived value to be in [declared, declared+0x20] - never short, and no further past the end
+ * than MexTK's alignment padding. Measured offline over all 22 declaring blobs on the two discs:
+ * declared+0x00 .. declared+0x1C. Skips on a disc with no m-ex fighters. */
+static int test_ftfunction_codesize_recovery(void) {
+    static const char *const files[] = { "PlWf.dat", "PlDd.dat", "PlLz.dat", "PlLc.dat",
+                                         "PlSn.dat", "PlDe.dat", "PlTs.dat", "PlNt.dat",
+                                         "PlKx.dat", "PlZx.dat", "PlBl.dat", "PlLu.dat",
+                                         "PlBF.dat", "PlGkp.dat", "PlWfU.dat" };
+    unsigned f;
+    int checked = 0;
+
+    if (gw_iso_path() == NULL) {
+        return 0;
+    }
+    for (f = 0; f < sizeof files / sizeof files[0]; ++f) {
+        unsigned char *dat;
+        uint32_t dat_size = 0, data_size, code_off, irt_off, irt_count, frt_off, frt_count;
+        uint32_t declared, bound, need, derived, others[4], struct_off;
+        int32_t pub;
+        int n = 0, bad = 0;
+
+        dat = (unsigned char *) gw_DVDReadFileAlloc(files[f], &dat_size);
+        if (dat == NULL) {
+            continue; /* not on this disc */
+        }
+        data_size = dat_size >= GW_HSD_HEADER_SIZE ? gw_r32(dat + 0x04) : 0u;
+        pub = gw_ftfunction_find_public(dat, dat_size, "ftFunction");
+        if (pub < 0 || (uint32_t) pub + 0x20u > data_size) {
+            free(dat);
+            continue;
+        }
+        struct_off = GW_HSD_HEADER_SIZE + (uint32_t) pub;
+        code_off = gw_r32(dat + struct_off + FTFUNC_OFF_CODE);
+        irt_off = gw_r32(dat + struct_off + FTFUNC_OFF_INSTR_RELOC);
+        irt_count = gw_r32(dat + struct_off + FTFUNC_OFF_INSTR_RELOC_COUNT);
+        frt_off = gw_r32(dat + struct_off + FTFUNC_OFF_FUNC_RELOC);
+        frt_count = gw_r32(dat + struct_off + FTFUNC_OFF_FUNC_RELOC_COUNT);
+        declared = gw_r32(dat + struct_off + FTFUNC_OFF_CODE_SIZE);
+        if (declared == 0u) {
+            free(dat); /* one of the blobs this whole path exists for - nothing to check against */
+            continue;
+        }
+        others[n++] = (uint32_t) pub;
+        if (irt_count != 0u) {
+            others[n++] = irt_off;
+        }
+        if (frt_count != 0u) {
+            others[n++] = frt_off;
+        }
+        if (gw_r32(dat + struct_off + FTFUNC_OFF_SYMBOL_COUNT) != 0u) {
+            others[n++] = gw_r32(dat + struct_off + FTFUNC_OFF_SYMBOL_TABLE);
+        }
+        bound = gw_ftfunction_code_bound(dat, dat_size, code_off, others, n);
+        need = gw_ftfunction_reloc_extent(dat, dat_size, irt_off, irt_count);
+        derived = bound > code_off ? bound - code_off : 0u;
+
+        if (derived < declared) {
+            gw_test_fail("%s: recovered codeSize 0x%X is SHORT of the declared 0x%X - the last "
+                         "function would be truncated",
+                         files[f], derived, declared);
+            bad = 1;
+        } else if (derived > declared + 0x20u) {
+            gw_test_fail("%s: recovered codeSize 0x%X overshoots the declared 0x%X by more than "
+                         "alignment padding - the bound is not the end of the code",
+                         files[f], derived, declared);
+            bad = 1;
+        } else if (need == 0u || need > declared) {
+            gw_test_fail("%s: instruction relocs reach 0x%X, past the declared codeSize 0x%X",
+                         files[f], need, declared);
+            bad = 1;
+        }
+        free(dat);
+        if (bad) {
+            return 1;
+        }
+        ++checked;
+    }
+    if (checked == 0) {
+        gw_log("ftfunction: no m-ex fighter blob with a declared codeSize on this disc - "
+               "skipping");
+        return 0;
+    }
+    gw_log("test ftfunction_codesize_recovery: %d blob(s) - the derived size is never short and "
+           "never more than 0x20 long",
+           checked);
+    return 0;
+}
+
+/* The other half of the same story: the blobs that ship codeSize 0 must now actually LOAD.
+ * These 16 are ACE's, with their m-ex INTERNAL ids; the list is by name so the test simply
+ * skips on Akaneia and on vanilla, where none of the files exist. Every one of them also ships
+ * an empty debug-symbol table, so a crash inside one will be attributed to an address and not a
+ * name - that is a property of the data, not something the port can fix. */
+static int test_ftfunction_codesize_zero_blobs(void) {
+    static const struct {
+        const char *dat;
+        uint32_t internal;
+    } blobs[] = {
+        { "PlWr.dat", 35 },  { "PlDa.dat", 36 }, { "PlLc2.dat", 37 }, { "PlRc.dat", 38 },
+        { "PlSm.dat", 39 },  { "PlSd.dat", 40 }, { "PlFy.dat", 41 },  { "PlMk.dat", 42 },
+        { "PlSc.dat", 43 },  { "PlLb.dat", 44 }, { "PlMM.dat", 46 },  { "PlDl.dat", 47 },
+        { "PlNm.dat", 49 },  { "PlCn.dat", 55 }, { "PlSh.dat", 56 },  { "PlTd.dat", 57 },
+    };
+    unsigned i;
+    int loaded = 0;
+
+    if (gw_iso_path() == NULL) {
+        return 0;
+    }
+    for (i = 0; i < sizeof blobs / sizeof blobs[0]; ++i) {
+        gw_ftfunction ff;
+        int rc = gw_ftfunction_load(blobs[i].dat, blobs[i].internal, &ff);
+        if (rc == GW_FTFUNC_ERR_NO_FILE) {
+            continue; /* not this disc */
+        }
+        if (rc != GW_FTFUNC_OK) {
+            gw_test_fail("%s (internal %u) failed to load with %d - the codeSize recovery did "
+                         "not cover it",
+                         blobs[i].dat, blobs[i].internal, rc);
+            return 1;
+        }
+        if (ff.code_size == 0u || ff.override_count == 0) {
+            gw_test_fail("%s loaded with code_size 0x%X and %d override(s)", blobs[i].dat,
+                         ff.code_size, ff.override_count);
+            gw_ftfunction_free(&ff);
+            return 1;
+        }
+        gw_ftfunction_free(&ff);
+        ++loaded;
+    }
+    if (loaded == 0) {
+        gw_log("ftfunction: no codeSize-0 fighter blobs on this disc - skipping");
+        return 0;
+    }
+    gw_log("test ftfunction_codesize_zero_blobs: %d blob(s) that declare codeSize 0 now load",
+           loaded);
+    return 0;
+}
+
 /* Lock the MoveLogic (slot 3) characterization: it is a MotionState[] table (0x20 bytes/entry)
  * between the MoveLogic and SpecialN overrides, every entry's cam_cb is the vanilla
  * ftCamera_UpdateCameraBox (0x800761C8) and its four code callbacks resolve inside the code
@@ -808,5 +1087,7 @@ void gw_ftfunction_tests_register(void) {
     gw_test_register("ftfunction_load_plsn", test_ftfunction_load_plsn);
     gw_test_register("ftfunction_movelogic_table", test_ftfunction_movelogic_table);
     gw_test_register("ftfunction_corrupt_rejected", test_ftfunction_corrupt_rejected);
+    gw_test_register("ftfunction_codesize_recovery", test_ftfunction_codesize_recovery);
+    gw_test_register("ftfunction_codesize_zero_blobs", test_ftfunction_codesize_zero_blobs);
     gw_test_register("ftfunction_funcaddr_hook", test_ftfunction_funcaddr_hook);
 }

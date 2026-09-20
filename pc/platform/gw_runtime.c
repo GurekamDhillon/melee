@@ -1509,6 +1509,17 @@ static const struct {
     {"invisible", 0x11, 2}, /* GM_INVISIBLE_VS */
     {"slomo", 0x12, 10},    /* GM_SLOMO_VS */
     {"lightning", 0x13, 11},/* GM_LIGHTNING_VS */
+    /* The three trophy modes. None has a VsModeData row, so they seed nothing and simply boot:
+     * the gallery (view a trophy in 3D), the lottery (coins -> trophies) and the collection
+     * (the grid of everything unlocked). GS_TOY_* run tylist/toy/tyfigupon/tydisplay. */
+    {"trophygallery", 0x0B, -1},    /* GM_TOY_GALLERY */
+    {"tygallery", 0x0B, -1},
+    {"trophylottery", 0x0C, -1},    /* GM_TOY_LOTTERY */
+    {"tylottery", 0x0C, -1},
+    {"lottery", 0x0C, -1},
+    {"trophycollection", 0x0D, -1}, /* GM_TOY_COLLECTION */
+    {"tycollection", 0x0D, -1},
+    {"trophies", 0x0D, -1},
 };
 
 static void gw_sl_player_init(GwSlPlayer *p) {

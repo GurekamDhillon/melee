@@ -582,9 +582,19 @@ static void gw_ppc_log_code_ranges(void) {
     }
 }
 
+/* A DEGENERATE RANGE MATCHES NOTHING. An entry that was never filled in, or was released, is
+ * [0,0) - and a plain `a >= lo && a < hi` test on it makes address 0 look like guest code.
+ * Address 0 is exactly the LR sentinel gw_ppc_call uses for "return to the native caller", so
+ * one stale entry turns every tail call and every blr into a fall-through. It presented as
+ * ppc_tail_branch_returns passing or failing by TEST ORDER (these ranges are platform state,
+ * which the per-test MEM1 snapshot does not restore), and in the game as
+ * "outside blob code range [0x00000000,0x00000000)" on Dedede's double jump. */
 static int gw_ppc_in_extra_range(uint32_t a) {
     int i;
     for (i = 0; i < gw_ppc_range_count; ++i) {
+        if (gw_ppc_range_lo[i] >= gw_ppc_range_hi[i]) {
+            continue;
+        }
         if (a >= gw_ppc_range_lo[i] && a < gw_ppc_range_hi[i]) {
             return 1;
         }
@@ -637,6 +647,12 @@ static uint32_t gw_ppc_mask(uint32_t mb, uint32_t me) {
 static int gw_ppc_bridge_tail(gw_ppc_machine *m, uint32_t target) {
     gw_ppc_ctx *c = &m->cpu;
     gw_ppc_bridge_call(m, target);
+    /* LR == 0 is gw_ppc_call's sentinel for "there is no guest caller". Check it explicitly
+     * rather than leaning on the range test: it is the one value that must never be treated as
+     * an address, whatever the ranges happen to say. */
+    if (c->lr == 0u) {
+        return 1;
+    }
     if (gw_ppc_in_blob(m, c->lr)) {
         c->pc = c->lr;
         return 0;

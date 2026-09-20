@@ -1962,6 +1962,7 @@ static void gw_mex_move_call(void *gobj, int which) {
     uint32_t args[1];
     static const char *const names[4] = {"anim", "input", "phys", "coll"};
     static int first[4];
+    static int first_native[4];
     static uint32_t count[4];
     uint32_t fd;
 
@@ -1976,6 +1977,31 @@ static void gw_mex_move_call(void *gobj, int which) {
                "0x%08X (interpreting)",
                names[which], gw_mex_k->port_kind, gobj, gw_r32((const void *)(uintptr_t)(fd + 0x10u)),
                gw_r32((const void *)(uintptr_t)(fd + 0x14u)), target);
+    }
+    /* A MoveLogic row's callback is NOT always guest code. m-ex builds the table from the
+     * fighter's own blob where it has an override and from the VANILLA ENGINE elsewhere, so a
+     * row can hold a native retail address - and interpreting one walks the PPC machine into
+     * native memory. Dedede's double jump did exactly that: phys_cb for motion 0x155 is
+     * 0x800D7634, an engine function, and the run died on
+     *   ppc: pc=0x800D7634 outside blob code range [0x00000000,0x00000000)
+     * The same guest-or-native question is already answered one function up, for the incoming-
+     * call slots; this path just never asked it. */
+    if (!gw_mex_in_blob(target)) {
+        int nkind = 0;
+        uint32_t native = gw_mex_bridge_lookup(target, &nkind);
+        if (native != 0u && nkind == 1) {
+            if (!first_native[which]) {
+                first_native[which] = 1;
+                gw_log("interp: MoveLogic %s_cb -> guest 0x%08X is a vanilla engine function, "
+                       "calling it natively", names[which], target);
+            }
+            ((void (*)(void *))(uintptr_t)native)(gobj);
+            ++count[which];
+            gw_Mex_RestoreKind(prev);
+            return;
+        }
+        gw_panic("interp: MoveLogic %s_cb: 0x%08X is neither blob code nor a bridged engine "
+                 "function", names[which], target);
     }
     args[0] = (uint32_t)(uintptr_t)gobj;
     gw_ppc_call(target, args, 1, gw_mex_r2, gw_mex_stack_top);

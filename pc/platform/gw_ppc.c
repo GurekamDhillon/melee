@@ -156,8 +156,28 @@ static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {
 
 static int gw_ppc_looks_guest(uint32_t v) {
     /* Plausible-pointer test, deliberately loose: word-aligned, inside MEM1, and with room for
-     * the 0x20 bytes the hexdump reads. A false positive costs one extra line. */
-    return (v & 3u) == 0u && gw_ppc_ea_ok(v, 0x20u);
+     * the 0x40 bytes the hexdump reads. A false positive costs two extra lines. */
+    return (v & 3u) == 0u && gw_ppc_ea_ok(v, 0x40u);
+}
+
+/* 0x40 bytes at a guest address, two lines of eight big-endian words. 0x40 rather than 0x20
+ * because that is what tells the engine's structures apart by eye: an HSD_JObj's scale sits at
+ * +0x2C..+0x34 and a Fighter's facing_dir at +0x2C, and a pointer holding the wrong KIND of
+ * object is the usual reason an interpreted load faults. */
+static void gw_ppc_dump_mem(const char *label, uint32_t v) {
+    int k;
+    for (k = 0; k < 2; ++k) {
+        uint32_t a = v + (uint32_t)(0x20 * k);
+        gw_log("ppc:   %s+0x%02X 0x%08X: %08X %08X %08X %08X %08X %08X %08X %08X", label,
+               0x20 * k, a, gw_r32((const void *)(uintptr_t)(a + 0x00)),
+               gw_r32((const void *)(uintptr_t)(a + 0x04)),
+               gw_r32((const void *)(uintptr_t)(a + 0x08)),
+               gw_r32((const void *)(uintptr_t)(a + 0x0C)),
+               gw_r32((const void *)(uintptr_t)(a + 0x10)),
+               gw_r32((const void *)(uintptr_t)(a + 0x14)),
+               gw_r32((const void *)(uintptr_t)(a + 0x18)),
+               gw_r32((const void *)(uintptr_t)(a + 0x1C)));
+    }
 }
 
 static void gw_ppc_dump_state(const gw_ppc_machine *m, uint32_t ip) {
@@ -221,15 +241,11 @@ static void gw_ppc_dump_state(const gw_ppc_machine *m, uint32_t ip) {
             continue;
         }
         seen[n_seen++] = v;
-        gw_log("ppc:   [r%d] 0x%08X: %08X %08X %08X %08X %08X %08X %08X %08X", i, v,
-               gw_r32((const void *)(uintptr_t)(v + 0x00)),
-               gw_r32((const void *)(uintptr_t)(v + 0x04)),
-               gw_r32((const void *)(uintptr_t)(v + 0x08)),
-               gw_r32((const void *)(uintptr_t)(v + 0x0C)),
-               gw_r32((const void *)(uintptr_t)(v + 0x10)),
-               gw_r32((const void *)(uintptr_t)(v + 0x14)),
-               gw_r32((const void *)(uintptr_t)(v + 0x18)),
-               gw_r32((const void *)(uintptr_t)(v + 0x1C)));
+        {
+            char label[8];
+            snprintf(label, sizeof label, "r%d", i);
+            gw_ppc_dump_mem(label, v);
+        }
     }
     gw_log("ppc: --- end of interpreter state ---");
 }

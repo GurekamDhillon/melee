@@ -3331,6 +3331,115 @@ static int test_mex_all_override_slots_wired(void) {
     return rc;
 }
 
+
+/* The demo-motion table walk must never reach the ftData struct.
+ *
+ * ftData_MexInitKinds rewrites the packed figatree kind in each demo motion's flags word, and
+ * nothing in the data gives that table's length: MxDt.dat has no entry for it and
+ * ftData_UnkIntPairs holds the CLONE BASE's count. The first bound was "stop at the first entry
+ * with no subaction script", which held for Sonic and failed for Tails: PlTs.dat puts the ftData
+ * struct directly after the table, so entry 14's xC word is really ftData+0x8 - the parts table,
+ * non-NULL - and the walk continued into entry 14, whose x10 field IS ftData+0xC, i.e. `xC`, the
+ * pointer to the MAIN animation table. Rewriting its low 6 bits left a misaligned pointer, and
+ * the first x8 read through it returned the last byte of entry 0's xC followed by three zeros:
+ * 0x0C000000, the value in the user's crash.
+ *
+ * So the invariant is simply stated: for every fighter on the disc, the furthest byte the walk
+ * can touch must stay below the ftData struct. This checks it the way the fix computes it - the
+ * struct plus every pointer word in it that lands above the table - and also reports what the old
+ * NULL-xC heuristic alone would have allowed, so a regression is legible rather than just red.
+ *
+ * Reads go through gw_r32: this is game memory, and the archive's pointers are big-endian. */
+#define GW_FTDATA_TEST_BASE 0x80700000u
+#define GW_FTDATA_OFF_XC 0x0Cu
+#define GW_FTDATA_OFF_X14 0x14u
+#define GW_FTDATA_WORDS 24u /* sizeof(struct ftData) / 4 - every word of it is a pointer */
+#define GW_WAITANIM_STRIDE 0x18u
+#define GW_WAITANIM_OFF_XC 0x0Cu
+
+static int test_mex_demo_table_bounded(void) {
+    unsigned f;
+    int loaded = 0, rc = 0;
+    for (f = 0; f < sizeof gw_mex_test_fighters / sizeof gw_mex_test_fighters[0]; ++f) {
+        int k = (int) gw_mex_test_fighters[f].internal;
+        const char *name = gw_mex_test_fighters[f].name;
+        const char *dat = gw_Mex_FtPlFile(k);
+        const char *sym = gw_Mex_FtPlSymbol(k);
+        uint32_t base = 0, size = 0, fd, x14, xc, hi, lo, w;
+        int n_landmark, n_heuristic, i;
+
+        if (dat == NULL || sym == NULL) {
+            continue;
+        }
+        fd = gw_mex_load_hsd(dat, sym, GW_FTDATA_TEST_BASE, &base, &size);
+        if (fd == 0u) {
+            continue; /* not on this disc */
+        }
+        ++loaded;
+        x14 = gw_r32((const void *) (uintptr_t) (fd + GW_FTDATA_OFF_X14));
+        xc = gw_r32((const void *) (uintptr_t) (fd + GW_FTDATA_OFF_XC));
+        if (x14 == 0u) {
+            gw_log("test mex_demo_table_bounded: %s has no demo table", name);
+            continue;
+        }
+        lo = base;
+        hi = base + size;
+
+        /* The bound the fix computes. */
+        {
+            uint32_t end = hi;
+            if (fd > x14 && fd < end) {
+                end = fd;
+            }
+            for (w = 0; w < GW_FTDATA_WORDS; ++w) {
+                uint32_t p = gw_r32((const void *) (uintptr_t) (fd + w * 4u));
+                if (p > x14 && p < end && p >= lo && p < hi) {
+                    end = p;
+                }
+            }
+            n_landmark = (int) ((end - x14) / GW_WAITANIM_STRIDE);
+        }
+        /* What the NULL-xC heuristic alone would have allowed. */
+        n_heuristic = 0;
+        for (i = 0; i < 64; ++i) {
+            uint32_t e = x14 + (uint32_t) i * GW_WAITANIM_STRIDE;
+            if (e + GW_WAITANIM_STRIDE > hi ||
+                gw_r32((const void *) (uintptr_t) (e + GW_WAITANIM_OFF_XC)) == 0u) {
+                break;
+            }
+            ++n_heuristic;
+        }
+
+        gw_log("test mex_demo_table_bounded: %s: demo table %d entries (the NULL-xC heuristic "
+               "alone would have allowed %d)", name, n_landmark, n_heuristic);
+
+        if (n_landmark <= 0) {
+            gw_test_fail("%s: demo table bound came out as %d", name, n_landmark);
+            rc = 1;
+            continue;
+        }
+        /* The walk writes the flags word at entry+0x10, so the last byte it touches is
+         * entry + 0x14. Nothing it touches may reach the struct. */
+        if (fd > x14 &&
+            x14 + (uint32_t) (n_landmark - 1) * GW_WAITANIM_STRIDE + 0x14u > fd) {
+            gw_test_fail("%s: the demo walk reaches 0x%08X, into the ftData struct at 0x%08X",
+                         name,
+                         x14 + (uint32_t) (n_landmark - 1) * GW_WAITANIM_STRIDE + 0x14u, fd);
+            rc = 1;
+        }
+        /* Nor may it reach the main animation table, whichever side of it that lies. */
+        if (xc > x14 && x14 + (uint32_t) n_landmark * GW_WAITANIM_STRIDE > xc) {
+            gw_test_fail("%s: the demo walk runs into the main animation table at 0x%08X", name,
+                         xc);
+            rc = 1;
+        }
+    }
+    if (loaded == 0) {
+        gw_log("test mex_demo_table_bounded: no m-ex fighters on this disc - skipped");
+    }
+    return rc;
+}
+
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
@@ -3343,4 +3452,5 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_kirby_hats", test_mex_kirby_hats);
     gw_test_register("mex_kirby_tables_wired", test_mex_kirby_tables_wired);
     gw_test_register("mex_all_override_slots_wired", test_mex_all_override_slots_wired);
+    gw_test_register("mex_demo_table_bounded", test_mex_demo_table_bounded);
 }

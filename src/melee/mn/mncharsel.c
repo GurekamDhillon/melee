@@ -4369,6 +4369,58 @@ static void mnCharSel_MexAttach(MexSelectChr* mex, HSD_JObj* root, int csp_joint
  *   - the retail menu model's 25 icon joints are hidden.
  * Returns silently on retail, leaving the retail CSS untouched. Re-entrant across CSS visits:
  * icons[] is static, so the retail "no character" row and retail joint ids are captured once. */
+/* How many of `n_avail` icons each row of the m-ex grid takes.
+ *
+ * Split out of mnCharSel_MexSetup so it can be tested: it is the only part of the CSS layout that
+ * is pure arithmetic, and the CSS itself cannot be reached from a headless run. External linkage
+ * for the same reason - mex_css_pack_rows calls it directly.
+ *
+ * Icons are spread EVENLY over the rows (25 over 3 -> 9, 8, 8) rather than filling each row
+ * greedily (11, 11, 3 - user: "not best fit"), with the remainder going to the earliest rows.
+ * A row that cannot hold its share is clamped to its capacity and what it could not take is
+ * redistributed over the rows that still have room.
+ *
+ * That redistribution is the part that matters. The previous version clamped, then gave the LAST
+ * row "whatever remains" and clamped that too, so on any layout whose rows are not all about the
+ * same width it silently placed fewer icons than it was given. An unplaced icon is not invisible:
+ * it keeps its own joint position and its own bounds while another icon is moved on top of it, so
+ * two icons end up claiming overlapping bounds and the cursor's first-match hit test can select
+ * the one underneath. Akaneia's and ACE's layout is 11/11/10, where an even share never exceeds a
+ * row, so this could not fire there at any unlock level - but a layout with one short row is a
+ * data change away, and the failure would be near-impossible to read from the screen.
+ *
+ * Fills take[0..rows-1] and returns the total, which is min(n_avail, sum of the capacities). */
+int mnCharSel_MexPackRows(const int* row_cap, int rows, int n_avail, int* take)
+{
+    int r, placed = 0;
+
+    if (rows <= 0 || n_avail <= 0) {
+        for (r = 0; r < rows; r++) {
+            take[r] = 0;
+        }
+        return 0;
+    }
+    for (r = 0; r < rows; r++) {
+        int share = n_avail / rows + (r < n_avail % rows ? 1 : 0);
+        take[r] = (share > row_cap[r]) ? row_cap[r] : share;
+        placed += take[r];
+    }
+    while (placed < n_avail) {
+        int progress = 0;
+        for (r = 0; r < rows && placed < n_avail; r++) {
+            if (take[r] < row_cap[r]) {
+                take[r]++;
+                placed++;
+                progress = 1;
+            }
+        }
+        if (progress == 0) {
+            break; /* every row is full: the grid has fewer slots than icons */
+        }
+    }
+    return placed;
+}
+
 static void mnCharSel_MexSetup(void)
 {
     extern int Mex_CssIconCount(void);
@@ -4466,7 +4518,8 @@ static void mnCharSel_MexSetup(void)
     {
         static Vec3 pos[CSS_ICON_MAX];
         static f32 bl[CSS_ICON_MAX], br[CSS_ICON_MAX], bu[CSS_ICON_MAX], bd[CSS_ICON_MAX];
-        int row_start[CSS_ICON_MAX], row_cap[CSS_ICON_MAX], rows = 0;
+        int row_start[CSS_ICON_MAX], row_cap[CSS_ICON_MAX], row_take[CSS_ICON_MAX];
+        int rows = 0;
         int avail[CSS_ICON_MAX], n_avail = 0, placed = 0, r, k;
         for (i = 0; i < n; i++) {
             j = NULL;
@@ -4495,22 +4548,17 @@ static void mnCharSel_MexSetup(void)
             MNCS_TRACE("mexcss:   row %d: slots %d..%d (%d wide)\n", r, row_start[r],
                        row_start[r] + row_cap[r] - 1, row_cap[r]);
         }
-        /* Spread the icons EVENLY over the rows (25 over 3 -> 9, 8, 8), each row centred, rather
-         * than filling rows greedily (11, 11, 3 - user: "not best fit"). Falls back to greedy only
-         * if an even share would not fit a row. */
+        /* Each row's share (see mnCharSel_MexPackRows), then each row centred in its slots. */
+        {
+            int total = mnCharSel_MexPackRows(row_cap, rows, n_avail, row_take);
+            if (total != n_avail) {
+                MNCS_TRACE("mexcss: only %d of %d icons fit the %d-row grid\n", total, n_avail,
+                           rows);
+            }
+        }
         for (r = 0; r < rows && placed < n_avail; r++) {
-            int take = n_avail / rows + (r < n_avail % rows ? 1 : 0);
-            int off;
-            if (take > row_cap[r]) {
-                take = row_cap[r];
-            }
-            if (r == rows - 1) {
-                take = n_avail - placed; /* whatever remains goes in the last row */
-                if (take > row_cap[r]) {
-                    take = row_cap[r];
-                }
-            }
-            off = (row_cap[r] - take) / 2;
+            int take = row_take[r];
+            int off = (row_cap[r] - take) / 2;
             for (k = 0; k < take; k++, placed++) {
                 int icon = avail[placed];
                 int slot = row_start[r] + off + k;

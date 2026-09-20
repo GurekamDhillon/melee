@@ -22,10 +22,27 @@
 __declspec(allocate(".gwfix$a")) static void *const gw_fixups_start[1] = {0};
 __declspec(allocate(".gwfix$z")) static void *const gw_fixups_end[1] = {0};
 
+/* This is a TOGGLE, not an assignment: it byte-swaps each pointer in place, so calling it twice
+ * puts every game global back to its unswapped link-time value. Nothing ever wants that, and it
+ * is invisible until something dereferences one - so the second call is refused rather than
+ * trusted.
+ *
+ * It mattered. gw_test_isolate_end restores MEM1 and then called this again on the theory that
+ * the restore had undone it. It had not: game globals are not in MEM1 (melee-pc.map puts them at
+ * 0x106Fxxxx, in the exe's own data section) and the restore never touches them. So every test
+ * flipped all 19781 pointers, and from then on the game globals alternated between correct and
+ * byte-swapped with the PARITY OF THE TEST INDEX. Tests that touch no game global never noticed;
+ * one that did passed or faulted purely according to how many tests were registered before it,
+ * which is how adding an unrelated test to the suite broke a different one. */
+static int gw_fixups_applied;
+
 void gw_apply_fixups(void) {
   uint32_t **p = (uint32_t **)(gw_fixups_start + 1);
   uint32_t **end = (uint32_t **)gw_fixups_end;
   size_t count = 0;
+  if (gw_fixups_applied) {
+    return;
+  }
   for (; p < end; ++p) {
     if (*p == NULL) {
       continue; /* alignment padding between object-file contributions */
@@ -33,6 +50,7 @@ void gw_apply_fixups(void) {
     **p = gw_bswap32(**p);
     ++count;
   }
+  gw_fixups_applied = 1;
   gw_log("gw: byte-swapped %zu link-time pointers in game globals", count);
 }
 

@@ -2827,6 +2827,75 @@ void gw_mex_ftfunction_runtime_tests_register(void);
  * CharacterKind. If they do, one character's row overwrites the other's and the CSS shows one of
  * them twice while the other vanishes. Logged in full so the chain can be read off a --test run
  * without the game's CSS ever being entered. Skipped on a disc without MxDt.dat. */
+/* The m-ex CSS grid packer, over every unlock state.
+ *
+ * Locked characters are a shipping configuration, not an error, and the packer is what decides
+ * where the remaining icons go. It is also the only piece of CSS layout that is pure arithmetic,
+ * which is why mncharsel.c exposes mnCharSel_MexPackRows - the screen itself cannot be entered
+ * from a headless run, but this can be checked exhaustively here.
+ *
+ * Two invariants, and the second is the one with teeth:
+ *   - no row is given more icons than it has slots;
+ *   - EVERY available icon is placed, whenever the grid has room for them all. An icon that is
+ *     not placed keeps its own position and bounds while another icon is moved on top of it, so
+ *     two icons claim overlapping bounds and the cursor's first-match hit test can select the one
+ *     underneath - a silent wrong-character selection, not a visible glitch.
+ *
+ * Cases: Akaneia's and ACE's real 11/11/10 layout at all 33 unlock levels (this is the "some
+ * characters locked" question), a single row, and a deliberately lopsided layout whose short row
+ * cannot hold an even share - which is what the old last-row-takes-the-remainder rule dropped
+ * icons on. Pure arithmetic, so it needs no disc and runs everywhere. */
+static int test_mex_css_pack_rows(void) {
+    /* Game code: the arrays it reads and writes are big-endian guest memory. */
+    extern int gw_mnCharSel_MexPackRows(const void *row_cap, int rows, int n_avail, void *take);
+    static const int caps_real[3] = {11, 11, 10};  /* Akaneia / ACE */
+    static const int caps_lopsided[3] = {5, 20, 7};
+    static const int caps_single[1] = {10};
+    const int *cases[3];
+    int ncase[3], i, c, rc = 0;
+    uint32_t cap_buf[8], take_buf[8];
+
+    cases[0] = caps_real;      ncase[0] = 3;
+    cases[1] = caps_lopsided;  ncase[1] = 3;
+    cases[2] = caps_single;    ncase[2] = 1;
+
+    for (c = 0; c < 3; ++c) {
+        int rows = ncase[c], total_slots = 0, n;
+        for (i = 0; i < rows; ++i) {
+            gw_w32(&cap_buf[i], (uint32_t) cases[c][i]);
+            total_slots += cases[c][i];
+        }
+        for (n = 0; n <= total_slots; ++n) {
+            int got = gw_mnCharSel_MexPackRows(cap_buf, rows, n, take_buf);
+            int sum = 0;
+            for (i = 0; i < rows; ++i) {
+                int take = (int) gw_r32(&take_buf[i]);
+                if (take < 0 || take > cases[c][i]) {
+                    gw_test_fail("pack(case %d, %d icons): row %d takes %d of %d slots", c, n, i,
+                                 take, cases[c][i]);
+                    rc = 1;
+                }
+                sum += take;
+            }
+            if (got != n || sum != n) {
+                gw_test_fail("pack(case %d, %d icons): placed %d (rows sum to %d) - %d icon(s) "
+                             "would keep stale bounds under another icon",
+                             c, n, got, sum, n - got);
+                rc = 1;
+            }
+        }
+    }
+    /* More icons than slots: it must fill the grid and say so rather than run away. */
+    for (i = 0; i < 3; ++i) {
+        gw_w32(&cap_buf[i], (uint32_t) caps_real[i]);
+    }
+    if (gw_mnCharSel_MexPackRows(cap_buf, 3, 99, take_buf) != 32) {
+        gw_test_fail("pack(11/11/10, 99 icons) should fill all 32 slots");
+        rc = 1;
+    }
+    return rc;
+}
+
 static int test_mex_css_icon_map(void) {
     uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
     uint32_t root, tbl;
@@ -2908,6 +2977,8 @@ static int test_mex_ftdata_rows(void) {
         return 0;
     }
     gw_mexdt = root;
+    gw_log("test mex_ftdata_rows: mexData at 0x%08X (%u bytes); calling ftData_MexInitKinds",
+           gw_mexdt_base, gw_mexdt_size);
     gw_ftData_MexInitKinds();
 
     for (fk = 0; fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS; ++fk) {
@@ -3591,6 +3662,7 @@ static int test_mex_demo_table_bounded(void) {
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
+    gw_test_register("mex_css_pack_rows", test_mex_css_pack_rows);
     gw_test_register("mex_css_icon_map", test_mex_css_icon_map);
     gw_test_register("mex_ftdata_rows", test_mex_ftdata_rows);
     gw_test_register("bridge_lookup_memcpy", test_bridge_lookup_memcpy);

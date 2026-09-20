@@ -15,7 +15,35 @@
 /* 2238D8 */ static void grTseak_OnLoad(void);
 /* 2238DC */ static void grTseak_OnStart(void);
 /* 223900 */ static bool grTSeak_80223900(void);
+#if defined(TARGET_PC)
+/* 223908 */
+/**
+ * EXTERNAL ON PURPOSE - the m-ex custom-stage path does not work without it.
+ *
+ * This is the generic map-gobj creator that every m-ex custom stage's interpreted @c onInit
+ * calls; m-ex standardised on it, which is why the only creator it patches is this one
+ * (@c "SSS Expansion/grFunction References/Create_map_gobj/GrTSk.asm"). All 25 of Akaneia's
+ * added stages call guest @c 0x80223908 and no other creator.
+ *
+ * The guest->native bridge invokes every target through @c gw_ppc_native_fn, which is cdecl:
+ * arguments on the stack. That is correct for the gwtool-retargeted game functions, which are
+ * external and get the platform C ABI. It is NOT correct for a function that is @c static in its
+ * TU - the backend may give an internal function a private convention, and on i686 LLVM passes
+ * the first argument in ECX. This one did; its prologue was @c "mov edi, ecx". So the bridge
+ * pushed @c map_id on the stack, the callee read ECX, and all three calls arrived as 0:
+ * Meta Crystal built map model 0 three times and never built 1 or 2, so two of its three stage
+ * gobjs never reached @c GObj_SetupGXLink and the screen stayed black.
+ *
+ * External linkage forces the platform C ABI, which is what the bridge already assumes. Kept
+ * under #TARGET_PC so the matching build is untouched.
+ *
+ * It is not the only one: @c tools/mex_port/audit_bridge_abi.py finds 31 such targets. The other
+ * 30 are latent until something bridges to them.
+ */
+HSD_GObj* grTSeak_80223908(int);
+#else
 /* 223908 */ static HSD_GObj* grTSeak_80223908(int);
+#endif
 /* 2239F0 */ static void stageGObj0_OnInit(Ground_GObj*);
 /* 223A1C */ static bool grTSeak_80223A1C(Ground_GObj*);
 /* 223A24 */ static void grTSeak_80223A24(Ground_GObj*);

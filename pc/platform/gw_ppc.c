@@ -16,6 +16,7 @@
 #include "gw_mex_bridge.h"
 
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -138,7 +139,119 @@ static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {
     return 1;
 }
 
-static void gw_ppc_access_violation(uint32_t ip, uint32_t ea) {
+/* ---- fault dump ------------------------------------------------------------------------
+ * A guest access violation is almost always "a register holds the wrong thing", and the two
+ * numbers the panic used to carry - the guest pc and the effective address - name only the
+ * symptom: which instruction dereferenced a bad value, never which register held it or what the
+ * value actually points at. Reproducing an m-ex fault costs a whole windowed run, so the one dump
+ * has to answer the next question as well. It prints the register file, the instruction stream
+ * around the fault, the interpreted call chain, and a short big-endian hexdump at every distinct
+ * register value that looks like a guest pointer - which is what identifies the object a bad
+ * pointer really names (a Fighter, a GObj, an Item, a float array, ...).
+ *
+ * It must be safe on the panic path: every guest read is bounds-checked here, never through the
+ * ld helpers (those panic again, which would recurse). */
+
+#define GW_PPC_DUMP_PTRS 10 /* distinct pointer-looking registers to hexdump */
+
+static int gw_ppc_looks_guest(uint32_t v) {
+    /* Plausible-pointer test, deliberately loose: word-aligned, inside MEM1, and with room for
+     * the 0x40 bytes the hexdump reads. A false positive costs two extra lines. */
+    return (v & 3u) == 0u && gw_ppc_ea_ok(v, 0x40u);
+}
+
+/* 0x40 bytes at a guest address, two lines of eight big-endian words. 0x40 rather than 0x20
+ * because that is what tells the engine's structures apart by eye: an HSD_JObj's scale sits at
+ * +0x2C..+0x34 and a Fighter's facing_dir at +0x2C, and a pointer holding the wrong KIND of
+ * object is the usual reason an interpreted load faults. */
+static void gw_ppc_dump_mem(const char *label, uint32_t v) {
+    int k;
+    for (k = 0; k < 2; ++k) {
+        uint32_t a = v + (uint32_t)(0x20 * k);
+        gw_log("ppc:   %s+0x%02X 0x%08X: %08X %08X %08X %08X %08X %08X %08X %08X", label,
+               0x20 * k, a, gw_r32((const void *)(uintptr_t)(a + 0x00)),
+               gw_r32((const void *)(uintptr_t)(a + 0x04)),
+               gw_r32((const void *)(uintptr_t)(a + 0x08)),
+               gw_r32((const void *)(uintptr_t)(a + 0x0C)),
+               gw_r32((const void *)(uintptr_t)(a + 0x10)),
+               gw_r32((const void *)(uintptr_t)(a + 0x14)),
+               gw_r32((const void *)(uintptr_t)(a + 0x18)),
+               gw_r32((const void *)(uintptr_t)(a + 0x1C)));
+    }
+}
+
+static void gw_ppc_dump_state(const gw_ppc_machine *m, uint32_t ip) {
+    const gw_ppc_ctx *c = &m->cpu;
+    uint32_t seen[GW_PPC_DUMP_PTRS];
+    int n_seen = 0;
+    int i;
+    int j;
+
+    gw_log("ppc: --- interpreter state at the fault ---");
+    gw_log("ppc:   ip  = %s", gw_ppc_describe(ip));
+    gw_log("ppc:   pc  = 0x%08X  lr = %s", c->pc, gw_ppc_describe(c->lr));
+    gw_log("ppc:   ctr = 0x%08X  cr = 0x%08X  xer = 0x%08X", c->ctr, c->cr, c->xer);
+    gw_log("ppc:   blob code range [0x%08X,0x%08X)  depth = %d", m->code_lo, m->code_hi,
+           gw_ppc_depth);
+
+    /* The instruction stream: four words before the faulting one and four after. The faulting
+     * word is marked, so the raw encoding can be pasted straight into tools/mex_port/ppc_disasm.py
+     * without a second dump of the blob. */
+    for (i = -4; i <= 4; ++i) {
+        uint32_t a = (uint32_t)((int32_t)ip + 4 * i);
+        if (!gw_ppc_ea_ok(a, 4)) {
+            continue;
+        }
+        gw_log("ppc:   %s 0x%08X  %08X", (i == 0) ? "->" : "  ", a,
+               gw_r32((const void *)(uintptr_t)a));
+    }
+
+    for (i = 0; i < 32; i += 4) {
+        gw_log("ppc:   r%-2d 0x%08X  r%-2d 0x%08X  r%-2d 0x%08X  r%-2d 0x%08X", i, c->gpr[i],
+               i + 1, c->gpr[i + 1], i + 2, c->gpr[i + 2], i + 3, c->gpr[i + 3]);
+    }
+    /* f0..f13 only: the PowerPC ABI passes and returns floats in f1..f8 and f0/f9..f13 are the
+     * scratch a callback actually uses, so the high FPRs are noise on this path. Both the double
+     * value and the raw halves are printed - a single-precision bit pattern that has landed in a
+     * GPR (the shape this dump exists to catch) is recognisable only in the raw word. */
+    for (i = 0; i <= 13; i += 2) {
+        gw_log("ppc:   f%-2d %-16g 0x%08X%08X   f%-2d %-16g 0x%08X%08X", i, c->fpr[i].d,
+               c->fpr[i].u32[0], c->fpr[i].u32[1], i + 1, c->fpr[i + 1].d, c->fpr[i + 1].u32[0],
+               c->fpr[i + 1].u32[1]);
+    }
+
+    for (i = gw_ppc_depth - 1; i >= 0; --i) {
+        gw_log("ppc:   called from entry[%d] = %s", i, gw_ppc_describe(gw_ppc_entry[i]));
+    }
+
+    /* Hexdump at each distinct pointer-looking register. gw_r32 is used directly (not the ld
+     * helpers) because a second access violation on the panic path would recurse. */
+    for (i = 0; i < 32 && n_seen < GW_PPC_DUMP_PTRS; ++i) {
+        uint32_t v = c->gpr[i];
+        int dup = 0;
+        if (!gw_ppc_looks_guest(v)) {
+            continue;
+        }
+        for (j = 0; j < n_seen; ++j) {
+            if (seen[j] == v) {
+                dup = 1;
+            }
+        }
+        if (dup) {
+            continue;
+        }
+        seen[n_seen++] = v;
+        {
+            char label[8];
+            snprintf(label, sizeof label, "r%d", i);
+            gw_ppc_dump_mem(label, v);
+        }
+    }
+    gw_log("ppc: --- end of interpreter state ---");
+}
+
+static void gw_ppc_access_violation(const gw_ppc_machine *m, uint32_t ip, uint32_t ea) {
+    gw_ppc_dump_state(m, ip);
     gw_panic("ppc: guest access violation at ip=%s ea=0x%08X", gw_ppc_describe(ip), ea);
 }
 
@@ -148,7 +261,7 @@ static uint8_t gw_ppc_ld8(gw_ppc_machine *m, uint32_t ea) {
         return gw_r8((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 1)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r8((const void *)(uintptr_t)ea);
 }
@@ -158,7 +271,7 @@ static uint16_t gw_ppc_ld16(gw_ppc_machine *m, uint32_t ea) {
         return gw_r16((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 2)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r16((const void *)(uintptr_t)ea);
 }
@@ -168,7 +281,7 @@ static uint32_t gw_ppc_ld32(gw_ppc_machine *m, uint32_t ea) {
         return gw_r32((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 4)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r32((const void *)(uintptr_t)ea);
 }
@@ -178,7 +291,7 @@ static uint64_t gw_ppc_ld64(gw_ppc_machine *m, uint32_t ea) {
         return gw_r64((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 8)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r64((const void *)(uintptr_t)ea);
 }
@@ -189,7 +302,7 @@ static void gw_ppc_st8(gw_ppc_machine *m, uint32_t ea, uint8_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 1)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w8((void *)(uintptr_t)ea, v);
 }
@@ -200,7 +313,7 @@ static void gw_ppc_st16(gw_ppc_machine *m, uint32_t ea, uint16_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 2)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w16((void *)(uintptr_t)ea, v);
 }
@@ -211,7 +324,7 @@ static void gw_ppc_st32(gw_ppc_machine *m, uint32_t ea, uint32_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 4)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w32((void *)(uintptr_t)ea, v);
 }
@@ -222,14 +335,17 @@ static void gw_ppc_st64(gw_ppc_machine *m, uint32_t ea, uint64_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 8)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w64((void *)(uintptr_t)ea, v);
 }
 
 /* ---- panics --------------------------------------------------------------------------- */
 
-static void gw_ppc_bad_opcode(uint32_t ip, uint32_t insn) {
+static void gw_ppc_bad_opcode(const gw_ppc_machine *m, uint32_t ip, uint32_t insn) {
+    /* Same reasoning as the access violation: an unimplemented opcode is cheap to add, but only
+     * if the one run that hit it says what the surrounding code was doing. */
+    gw_ppc_dump_state(m, ip);
     gw_panic("ppc: unimplemented opcode at ip=%s word=0x%08X", gw_ppc_describe(ip), insn);
 }
 
@@ -299,6 +415,8 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
     int fpr_i = 1; /* float args start at f1 */
     int gpr_i = 3; /* integer args start at r3 */
     uint32_t i;
+    uint32_t fmask;
+    int variadic;
 
     if (m->resolve == NULL) {
         gw_panic("ppc: branch to 0x%08X outside blob with no resolver (ip=0x%08X)", guest_addr,
@@ -315,6 +433,8 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
         gw_panic("ppc: resolver reported %u args (>8) for guest address 0x%08X", sig.n_args,
                  guest_addr);
     }
+    fmask = sig.float_args & GW_PPC_SIG_SLOT_MASK;
+    variadic = (sig.float_args & GW_PPC_SIG_VARARGS) != 0;
     /* Marshal each native argument from its PowerPC register: a float argument takes the next
      * FPR (f1..f8), an integer/pointer argument the next GPR (r3..r10). The float's IEEE-754
      * bits are passed in the uint32 slot, which on i686 cdecl lands verbatim in the callee's
@@ -323,11 +443,53 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
         args[i] = 0;
     }
     for (i = 0; i < sig.n_args; ++i) {
-        if (sig.float_args & (1u << i)) {
+        if (fmask & (1u << i)) {
             float f = (float)c->fpr[fpr_i].d;
             memcpy(&args[i], &f, 4);
             ++fpr_i;
         } else {
+            args[i] = c->gpr[gpr_i];
+            ++gpr_i;
+        }
+    }
+    /* ---- the variadic tail -------------------------------------------------------------
+     * A variadic callee does not read its arguments from a signature, so neither can the
+     * bridge: the number and the types of the values past `n_args` are a property of the CALL
+     * SITE, not of the function. The PowerPC EABI hands us exactly the one bit that matters.
+     * A variadic caller must record in CR bit 6 whether it passed any argument in an FPR -
+     * `creqv 6,6,6` (crset) when it did, `crxor 6,6,6` (crclr) when it did not - and MWCC emits
+     * that instruction immediately before every variadic `bl`, so it is still live here.
+     *
+     * The native callee is i686 cdecl and walks its varargs along a flat stack, where the
+     * default argument promotions have already turned a float into an EIGHT-byte double. So:
+     *
+     *   CR6 clear -> every variadic value is a word: the remaining GPRs are already in the
+     *                right order, which is why all-pointer varargs (efSync_Spawn) happened to
+     *                work under the old integer default.
+     *   CR6 set   -> the first variadic value is a double in the next FPR: it occupies TWO
+     *                native slots, and the words that follow come from the GPRs after it.
+     *
+     * Only the FIRST variadic value's class is knowable this way. A call passing a float
+     * vararg followed by more values of mixed classes cannot be expressed, because the PowerPC
+     * register assignment has already lost their relative order; such a target needs a
+     * hand-written adapter. No call site in the shipped content does that today. */
+    if (variadic) {
+        if (gw_ppc_cr_bit(c, 6)) {
+            double d = c->fpr[fpr_i].d;
+            if (sig.n_args + 2u > 8u) {
+                gw_panic("ppc: variadic call to 0x%08X has %u fixed args - no room for the "
+                         "8-byte float vararg (ip=0x%08X)",
+                         guest_addr, sig.n_args, c->pc - 4);
+            }
+            memcpy(&args[sig.n_args], &d, sizeof d);
+            ++fpr_i;
+            i = sig.n_args + 2u;
+            if (gw_ppc_trace_fp) {
+                gw_log("ppc: variadic %s: %u fixed args + float vararg %.6f",
+                       gw_ppc_describe(guest_addr), sig.n_args, d);
+            }
+        }
+        for (; i < 8u && gpr_i <= 10; ++i) {
             args[i] = c->gpr[gpr_i];
             ++gpr_i;
         }
@@ -343,7 +505,7 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
             memcpy(&a1, &args[1], 4);
             gw_log("ppc: fp-call %s(%.6f, %.6f) -> %.6f  [nargs=%u mask=0x%X]",
                    gw_ppc_describe(guest_addr),
-                   (double) a0, (double) a1, (double) r, sig.n_args, sig.float_args);
+                   (double) a0, (double) a1, (double) r, sig.n_args, fmask);
         }
         c->fpr[1].d = (double)r;
     } else {
@@ -591,7 +753,7 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
     /* ---- compare immediate ---------------------------------------------------------- */
     case 11: /* cmpwi (L=0) / cmpi (L=1, 64-bit - unimplemented) */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         ra = (insn >> 16) & 0x1F;
         imm = (int32_t)(int16_t)(insn & 0xFFFF);
@@ -599,7 +761,7 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         break;
     case 10: /* cmplwi */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         ra = (insn >> 16) & 0x1F;
         imm = (uint32_t)(insn & 0xFFFF);
@@ -807,7 +969,7 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         return gw_ppc_execute_fp(m, insn, 0);
 
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }
@@ -826,13 +988,13 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
     switch (xo) {
     case 0:  /* cmp / cmpw (L=0); L=1 is 64-bit, unimplemented */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         gw_ppc_cmp(c, (insn >> 23) & 7, c->gpr[ra], c->gpr[rb], 0);
         break;
     case 32: /* cmpl / cmplw */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         gw_ppc_cmp(c, (insn >> 23) & 7, c->gpr[ra], c->gpr[rb], 1);
         break;
@@ -1001,7 +1163,7 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
         uint32_t ea = (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb];
         uint32_t v = c->gpr[rs];
         if (!gw_ppc_ea_ok(ea, 4)) {
-            gw_ppc_access_violation(ip, ea);
+            gw_ppc_access_violation(m, ip, ea);
         }
         {
             uint8_t *p = (uint8_t *)(uintptr_t)ea;
@@ -1159,7 +1321,7 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
     }
 
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }
@@ -1221,7 +1383,7 @@ static int gw_ppc_execute_cr(gw_ppc_machine *m, uint32_t insn) {
         gw_ppc_cr_set_bit(c, bt, r);
         break;
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }
@@ -1362,7 +1524,7 @@ static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
     }
 
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }
@@ -1620,6 +1782,102 @@ static int test_ppc_float_bridge(void) {
             gw_test_fail("float bridge stored %.6f, expected %.6f", got, expected);
             return 1;
         }
+    }
+    return 0;
+}
+
+/* ---- variadic bridge test -----------------------------------------------------------------
+ * A variadic callee reads its arguments from no signature, so neither can the bridge: what the
+ * tail contains belongs to the CALL SITE. The PowerPC EABI makes the caller say so out loud -
+ * `creqv 6,6,6` before the bl when an argument went into an FPR, `crxor 6,6,6` when none did -
+ * and gw_ppc_bridge_call marshals from that bit, because the native i686 callee walks a flat
+ * stack on which a float vararg has already been promoted to an eight-byte double.
+ *
+ * Both halves matter and both are checked here. The crclr half is the behaviour that the old
+ * integer default happened to get right (all-pointer varargs, e.g. efSync_Spawn) and must not
+ * regress; the crset half is the one it silently dropped, which is what made
+ * HSD_ForeachAnim(..., AOBJ_ARG_AF, frame) request a garbage animation frame.
+ *
+ * The helper is genuinely variadic and is called through the bridge's fixed-arity cdecl pointer,
+ * exactly as every real vararg target is: on i686 cdecl the caller builds and cleans the stack,
+ * so the shapes agree. */
+
+#define GW_PPC_TEST_VCODE_F 0x80300200u       /* blob: float vararg (crset) */
+#define GW_PPC_TEST_VCODE_W 0x80300240u       /* blob: word vararg (crclr) */
+#define GW_PPC_TEST_VHELPER_GUEST 0x80380368u /* fake guest address of the variadic helper */
+
+static uint32_t gw_ppc_test_vhelper(uint32_t kind, uint32_t unused, ...) {
+    va_list ap;
+    uint32_t r;
+    (void)unused;
+    va_start(ap, unused);
+    if (kind == 1u) {
+        /* The default argument promotions make a float vararg a double. */
+        double d = va_arg(ap, double);
+        r = (uint32_t)(int32_t)(d * 100.0);
+    } else {
+        r = va_arg(ap, uint32_t);
+    }
+    va_end(ap);
+    return r;
+}
+
+static gw_ppc_native_fn gw_ppc_test_vresolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
+    (void)ctx;
+    if (guest_addr == GW_PPC_TEST_VHELPER_GUEST) {
+        sig->float_args = GW_PPC_SIG_VARARGS; /* no fixed float; variadic tail */
+        sig->n_args = 2;                      /* kind, unused */
+        sig->ret_float = 0;
+        return (gw_ppc_native_fn)(uintptr_t)gw_ppc_test_vhelper;
+    }
+    return NULL;
+}
+
+static int test_ppc_varargs_bridge(void) {
+    /* mflr r0; lis r9,0x8030; lfs f1,0x150(r9); li r3,1; li r4,0; creqv 6,6,6; bl helper;
+     * lis r9,0x8030; stw r3,0x154(r9); mtlr r0; blr */
+    static const uint32_t blob_f[] = {
+        0x7C0802A6u, 0x3D208030u, 0xC0290150u, 0x38600001u, 0x38800000u, 0x4CC63242u,
+        0x48000000u | ((GW_PPC_TEST_VHELPER_GUEST - (GW_PPC_TEST_VCODE_F + 24)) & 0x03FFFFFCu) |
+            1u,
+        0x3D208030u, 0x90690154u, 0x7C0803A6u, 0x4E800020u,
+    };
+    /* mflr r0; li r3,2; li r4,0; lis r5,0x00C0; ori r5,r5,0xFFEE; crxor 6,6,6; bl helper;
+     * lis r9,0x8030; stw r3,0x158(r9); mtlr r0; blr */
+    static const uint32_t blob_w[] = {
+        0x7C0802A6u, 0x38600002u, 0x38800000u, 0x3CA000C0u, 0x60A5FFEEu, 0x4CC63182u,
+        0x48000000u | ((GW_PPC_TEST_VHELPER_GUEST - (GW_PPC_TEST_VCODE_W + 24)) & 0x03FFFFFCu) |
+            1u,
+        0x3D208030u, 0x90690158u, 0x7C0803A6u, 0x4E800020u,
+    };
+    const float f = 3.5f;
+    unsigned i;
+    uint32_t got;
+
+    for (i = 0; i < sizeof blob_f / sizeof blob_f[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_VCODE_F + 4 * i), blob_f[i]);
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_VCODE_W + 4 * i), blob_w[i]);
+    }
+    gw_wf32((void *)(uintptr_t)0x80300150u, f);
+    gw_w32((void *)(uintptr_t)0x80300154u, 0u);
+    gw_w32((void *)(uintptr_t)0x80300158u, 0u);
+
+    gw_ppc_set_bridge(gw_ppc_test_vresolve, NULL, GW_PPC_TEST_VCODE_F,
+                      GW_PPC_TEST_VCODE_F + (uint32_t)sizeof blob_f);
+    gw_ppc_call(GW_PPC_TEST_VCODE_F, NULL, 0, 0, GW_PPC_TEST_STACK);
+    got = gw_r32((const void *)(uintptr_t)0x80300154u);
+    if (got != 350u) {
+        gw_test_fail("float vararg (crset) arrived as %u, expected 350 (3.5 * 100)", got);
+        return 1;
+    }
+
+    gw_ppc_set_bridge(gw_ppc_test_vresolve, NULL, GW_PPC_TEST_VCODE_W,
+                      GW_PPC_TEST_VCODE_W + (uint32_t)sizeof blob_w);
+    gw_ppc_call(GW_PPC_TEST_VCODE_W, NULL, 0, 0, GW_PPC_TEST_STACK);
+    got = gw_r32((const void *)(uintptr_t)0x80300158u);
+    if (got != 0x00C0FFEEu) {
+        gw_test_fail("word vararg (crclr) arrived as 0x%08X, expected 0x00C0FFEE", got);
+        return 1;
     }
     return 0;
 }
@@ -1929,6 +2187,7 @@ static int test_ppc_xoris_int_to_float(void) {
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
+    gw_test_register("ppc_varargs_bridge", test_ppc_varargs_bridge);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
     gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
     gw_test_register("ppc_fp_aform_decode", test_ppc_fp_aform_decode);

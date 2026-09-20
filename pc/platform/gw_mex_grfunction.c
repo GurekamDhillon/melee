@@ -133,6 +133,92 @@ void gw_Mex_GrInvalidate(void) {
     gr_int_count = gr_ext_count = 0;
 }
 
+/* ---- stage BGM (Arch_Map_Playlists) ---------------------------------------------------- */
+
+#define GW_MEX_GR_MAP_PLAYLISTS 0x14u
+/* mexData's bgm_count is 139 on Akaneia and 231 on ACE; this is a loose upper bound whose
+ * only job is to stop a misread word reaching the audio path. */
+#define GW_MEX_GR_BGM_MAX 1024
+
+/* Guest address of this stage's playlist row {s32 count; entries*}, or 0. */
+static uint32_t gr_playlist_row(int grkind, int *out_count) {
+    uint32_t tbl, row;
+    int count;
+    if (out_count != NULL) {
+        *out_count = 0;
+    }
+    if (!gr_tables() || grkind < 0 || grkind >= gr_int_count) {
+        return 0u;
+    }
+    tbl = gr_rd(gr_map + GW_MEX_GR_MAP_PLAYLISTS);
+    if (tbl == 0u) {
+        return 0u;
+    }
+    row = tbl + (uint32_t) grkind * 8u;
+    if (!gr_in(row, 8u)) {
+        return 0u;
+    }
+    count = (int) gr_rd(row);
+    if (count <= 0 || count > 64) {
+        return 0u;
+    }
+    if (out_count != NULL) {
+        *out_count = count;
+    }
+    return row;
+}
+
+int gw_Mex_GrBgmCount(int grkind) {
+    int count = 0;
+    (void) gr_playlist_row(grkind, &count);
+    return count;
+}
+
+/* Entry `i` of this stage's playlist, as {u16 bgm_id; u16 chance}. Returns -1 / 0 when there is
+ * no such entry or the bytes are not plausible.
+ *
+ * These return values rather than filling out-parameters, and that is deliberate. An out-param
+ * points at GAME memory, and gwtool-compiled game code reads its locals BIG-ENDIAN while a native
+ * shim writes host order - so `*bgm = 98` came back to the game as 0x62000000 and faulted inside
+ * mpLib_800569EC. A return value travels in a register and has no byte order. Any future shim
+ * that writes through a pointer into game memory has to byte-swap; returning is safer. */
+static int gr_bgm_word(int grkind, int i, int want_chance) {
+    int count = 0;
+    uint32_t row = gr_playlist_row(grkind, &count);
+    uint32_t entries, e;
+    const uint8_t *p;
+    int id, ch;
+
+    if (row == 0u || i < 0 || i >= count) {
+        return want_chance ? 0 : -1;
+    }
+    entries = gr_rd(row + 4u);
+    e = entries + (uint32_t) i * 4u;
+    if (entries == 0u || !gr_in(e, 4u)) {
+        return want_chance ? 0 : -1;
+    }
+    /* Dumped from Akaneia: internal 76 is `00 62 00 64` = bgm 0x62 chance 100; internal 7 is
+     * `00 4B 00 5A` / `00 82 00 32` / `00 01 00 10`. Byte 2 is the HIGH byte of a 16-bit chance,
+     * not padding - reading it as {u16; u8; u8} only works because it is always zero here. */
+    p = (const uint8_t *) (uintptr_t) e;
+    id = (int) (((uint32_t) p[0] << 8) | p[1]);
+    ch = (int) (((uint32_t) p[2] << 8) | p[3]);
+
+    if (id <= 0 || id >= GW_MEX_GR_BGM_MAX) {
+        gw_log("grfunction: stage %d playlist entry %d has implausible bgm id %d "
+               "(bytes %02X %02X %02X %02X) - ignoring it",
+               grkind, i, id, p[0], p[1], p[2], p[3]);
+        return want_chance ? 0 : -1;
+    }
+    if (ch < 0 || ch > 10000) {
+        ch = 0;
+    }
+    return want_chance ? ch : id;
+}
+
+int gw_Mex_GrBgmId(int grkind, int i) { return gr_bgm_word(grkind, i, 0); }
+int gw_Mex_GrBgmChance(int grkind, int i) { return gr_bgm_word(grkind, i, 1); }
+
 /* Guest address of internal stage `grkind`'s 13-word StageData row, or 0. */
 static uint32_t gr_row(int grkind) {
     uint32_t p;

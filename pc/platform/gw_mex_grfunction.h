@@ -74,6 +74,13 @@ enum {
 /* Drop the cached stage tables; the next call re-resolves them. See
  * gw_Mex_InvalidateAfterMem1Restore() - the tables live in MEM1 but the pointers do not. */
 void gw_Mex_GrInvalidate(void);
+/* Stage BGM, from Arch_Map_Playlists[INTERNAL grkind]. Count is 0 when this stage has no
+ * playlist (or on a disc with no mexData). gw_Mex_GrBgmEntry fills *bgm and *chance for entry
+ * `i`; the weighted draw itself stays in game code so it uses the game's own RNG. */
+int gw_Mex_GrBgmCount(int grkind);
+int gw_Mex_GrBgmId(int grkind, int i);     /* -1 when there is no such entry */
+int gw_Mex_GrBgmChance(int grkind, int i); /*  0 when there is no such entry */
+
 int gw_Mex_GrInternalCount(void);
 int gw_Mex_GrExternalCount(void);
 

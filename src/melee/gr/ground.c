@@ -230,6 +230,9 @@ extern u32 Mex_GrFlags2(int grkind);
 extern void Mex_GrSelect(int grkind);
 extern void Mex_GrFunctionInit(void* archive, int grkind);
 extern void* Mex_GrCallbacks(void);
+extern int Mex_GrBgmCount(int grkind);
+extern int Mex_GrBgmId(int grkind, int i);
+extern int Mex_GrBgmChance(int grkind, int i);
 extern void Mex_GrOnInit(void);
 extern void Mex_GrOnDemoInit(int arg);
 extern void Mex_GrOnLoad(void);
@@ -1793,6 +1796,40 @@ static bool Ground_801C24F8(StKind stkind, u32 arg1, s32* arg2)
             break;
         }
     }
+#if defined(TARGET_PC)
+    /* An m-ex ADDED stage has no row in the vanilla BGM table, so the search above leaves bgm
+     * undefined and the assert fires - that is what stopped Meta Crystal rendering. Its music
+     * lives in mexData instead: Arch_Map_Playlists[INTERNAL grkind], a weighted list of
+     * {bgm_id, chance}. The draw is here rather than in the shim so it uses the game's own RNG
+     * stream, the same split the menu playlist uses. */
+    if (bgm == BGM_Undefined) {
+        int n = Mex_GrBgmCount(stage_info.grkind);
+        if (n > 0) {
+            s32 total = 0, roll = 0, acc = 0, i;
+            for (i = 0; i < n; i++) {
+                if (Mex_GrBgmId(stage_info.grkind, i) > 0) {
+                    total += Mex_GrBgmChance(stage_info.grkind, i);
+                }
+            }
+            if (total > 0) {
+                roll = (s32) HSD_Randi(total);
+            }
+            for (i = 0; i < n; i++) {
+                s32 id = Mex_GrBgmId(stage_info.grkind, i);
+                if (id <= 0) {
+                    continue;
+                }
+                acc += Mex_GrBgmChance(stage_info.grkind, i);
+                if (total <= 0 || roll < acc) {
+                    bgm = id;
+                    break;
+                }
+            }
+            OSReport("Ground: m-ex stage grkind=%d picked bgm %d of %d entries\n",
+                     stage_info.grkind, bgm, n);
+        }
+    }
+#endif
     HSD_ASSERT(2242, bgm!=BGM_Undefined);
     if (bgm == -2) {
         *arg2 = lbAudioAx_8002305C(Player_GetPlayerCharacter(0), HSD_Randi(2));
@@ -1842,7 +1879,52 @@ void Ground_801C28CC(s32* arg0, StKind stkind)
         param++;
     }
 
+#if defined(TARGET_PC)
+    /* An m-ex ADDED stage does not carry a row for its own StKind: its ground serves exactly one
+     * stage, so the row is a wildcard. Dumped from Akaneia's 25 added stages: 12 carry a single
+     * row with stkind == -1 (GrOMc, every GrT* target stage, GrFc, GrSp, GrSv, GrOSz...), one
+     * (GrDo) carries none at all, and the rest reuse a real vanilla id. Vanilla grounds that
+     * serve several stages - GrIz has 10 rows, GrNBa 18 - always match exactly, so this never
+     * changes their behaviour.
+     *
+     * Accept an explicit -1 wildcard, or a lone row whatever it claims. */
+    {
+        StageParam* fallback = NULL;
+        param = stage_info.param->stage_params;
+        for (i = 0; i < count; i++, param++) {
+            if (param->stkind == -1) {
+                fallback = param;
+                break;
+            }
+        }
+        if (fallback == NULL && count == 1) {
+            fallback = stage_info.param->stage_params;
+        }
+        if (fallback != NULL) {
+            s32 j;
+            for (j = 0; 35 > j; j++) {
+                arg0[j] = ((s16*) stage_info.param)[53 + j] *
+                          ((s16*) fallback)[13 + j];
+            }
+            return;
+        }
+    }
+    /* Still nothing. Vanilla's panic path is `while (true) {}`, which in this port is an
+     * unkillable spin with no output rather than a console hang someone is watching - so report
+     * it and carry on with zeroed params instead of wedging the process. */
+    OSReport("Ground_801C28CC: no stage param for grkind=%d stkind=%d (%d rows) - "
+             "continuing with zeros\n",
+             stage_info.grkind, stkind, (int) count);
+    {
+        s32 j;
+        for (j = 0; 35 > j; j++) {
+            arg0[j] = 0;
+        }
+    }
+    return;
+#else
     panicMissingStageParam(stkind, count);
+#endif
 }
 
 s32* Ground_801C2AD8(void)

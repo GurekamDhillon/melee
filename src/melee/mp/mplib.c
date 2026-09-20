@@ -5152,15 +5152,44 @@ bool mpGetSpeed(int line_id, Vec3* pos, Vec3* speed)
     return true;
 }
 
+#if defined(TARGET_PC)
+/* mpLib_803BF248 is [0x47] = 71 rows, one per VANILLA stage, indexed straight by
+ * stage_info.grkind. An m-ex added stage is grkind >= 71 and reads off the end - Meta Crystal
+ * (76) faulted here with an ACCESS_VIOLATION inside mpLib_800569EC as soon as it had music to
+ * play. This is the same "a new index is outside every vanilla-sized per-index structure" trap
+ * the fighter side hit repeatedly; see docs/HANDOFF.md section 6.
+ *
+ * Added stages have no row of their own, so fall back to the first row rather than read out of
+ * bounds. That is not the right MUSIC, but it is in-bounds and audible, and the alternative is a
+ * crash. Wiring the real per-stage data is the remaining stage-audio work. */
+static int mpLib_StageRow(void)
+{
+    static int warned = -1;
+    int grkind = stage_info.grkind;
+    if (grkind >= 0 && grkind < (int) ARRAY_SIZE(mpLib_803BF248)) {
+        return grkind;
+    }
+    if (warned != grkind) {
+        warned = grkind;
+        OSReport("mpLib: stage grkind=%d has no row in mpLib_803BF248[%d] - using row 0\n",
+                 grkind, (int) ARRAY_SIZE(mpLib_803BF248));
+    }
+    return 0;
+}
+#define MPLIB_STAGE_ROW mpLib_StageRow()
+#else
+#define MPLIB_STAGE_ROW stage_info.grkind
+#endif
+
 float mpLib_800569EC(u32 unk)
 {
-    return (*mpLib_803BF248[stage_info.grkind].x4)[(u8) unk]->x0;
+    return (*mpLib_803BF248[MPLIB_STAGE_ROW].x4)[(u8) unk]->x0;
 }
 
 int* mpLib_80056A1C(int arg0, int* arg1)
 {
     struct mpLib_803BF248_t_x4* temp =
-        (*mpLib_803BF248[stage_info.grkind].x4)[(u8) arg0];
+        (*mpLib_803BF248[MPLIB_STAGE_ROW].x4)[(u8) arg0];
     *arg1 = temp->x14[0];
     return temp->x4;
 }
@@ -5168,7 +5197,7 @@ int* mpLib_80056A1C(int arg0, int* arg1)
 int mpLib_80056A54(int arg0, int* arg1)
 {
     struct mpLib_803BF248_t_x4* temp =
-        (*mpLib_803BF248[stage_info.grkind].x4)[(u8) arg0];
+        (*mpLib_803BF248[MPLIB_STAGE_ROW].x4)[(u8) arg0];
     *arg1 = temp->x14[2];
     return temp->x14[1];
 }
@@ -5176,7 +5205,7 @@ int mpLib_80056A54(int arg0, int* arg1)
 int* mpLib_80056A8C(int arg0, int* arg1)
 {
     struct mpLib_803BF248_t_x4* temp =
-        (*mpLib_803BF248[stage_info.grkind].x4)[(u8) arg0];
+        (*mpLib_803BF248[MPLIB_STAGE_ROW].x4)[(u8) arg0];
     *arg1 = temp->x30[0];
     return temp->x20;
 }
@@ -5184,7 +5213,7 @@ int* mpLib_80056A8C(int arg0, int* arg1)
 int mpLib_80056AC4(int arg0, int* arg1)
 {
     struct mpLib_803BF248_t_x4* temp =
-        (*mpLib_803BF248[stage_info.grkind].x4)[(u8) arg0];
+        (*mpLib_803BF248[MPLIB_STAGE_ROW].x4)[(u8) arg0];
     *arg1 = temp->x30[2];
     return temp->x30[1];
 }
@@ -5192,7 +5221,7 @@ int mpLib_80056AC4(int arg0, int* arg1)
 int* mpLib_80056AFC(int arg0, int* arg1)
 {
     struct mpLib_803BF248_t_x4* temp =
-        (*mpLib_803BF248[stage_info.grkind].x4)[(u8) arg0];
+        (*mpLib_803BF248[MPLIB_STAGE_ROW].x4)[(u8) arg0];
     *arg1 = temp->x4C[0];
     return temp->x3C;
 }
@@ -5200,7 +5229,7 @@ int* mpLib_80056AFC(int arg0, int* arg1)
 int mpLib_80056B34(int arg0, int* arg1)
 {
     struct mpLib_803BF248_t_x4* temp =
-        (*mpLib_803BF248[stage_info.grkind].x4)[(u8) arg0];
+        (*mpLib_803BF248[MPLIB_STAGE_ROW].x4)[(u8) arg0];
     *arg1 = temp->x4C[2];
     return temp->x4C[1];
 }

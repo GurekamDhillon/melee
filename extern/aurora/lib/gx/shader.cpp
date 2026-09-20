@@ -568,6 +568,34 @@ std::string vtx_attr(const ShaderConfig& config, GXAttr attr) {
     if (attr == GX_VA_CLR0 || attr == GX_VA_CLR1) {
       return "vec4f(0.0, 0.0, 0.0, 0.0)"s;
     }
+    if (attr >= GX_VA_TEX0 && attr <= GX_VA_TEX7) {
+      // Same shape as attr_load_nbt_slice below: a texgen whose source attribute the vertex
+      // descriptor does not declare is UNDEFINED on hardware, not illegal. The XF keeps whatever
+      // was last written into that texcoord row, so a GameCube draws *something*; killing the
+      // process is strictly worse. Substitute (0,0).
+      const auto texIdx = static_cast<u32>(attr - GX_VA_TEX0);
+      static std::array<bool, 8> texWarned{};
+      if (!texWarned[texIdx]) {
+        texWarned[texIdx] = true;
+        std::string decl;
+        for (u32 a = 0; a < MaxVtxAttr; ++a) {
+          if (config.attrs[a].attrType != GX_NONE) {
+            decl += fmt::format(" {}:t{}c{}", a, config.attrs[a].attrType, config.attrs[a].cnt);
+          }
+        }
+        std::string tcg;
+        for (u32 t = 0; t < MaxTexCoord; ++t) {
+          if (config.tcgs[t].src != GX_MAX_TEXGENSRC) {
+            tcg += fmt::format(" tcg{}(src={},type={},mtx={})", t, underlying(config.tcgs[t].src),
+                               underlying(config.tcgs[t].type), underlying(config.tcgs[t].mtx));
+          }
+        }
+        Log.warn("vtx_attr: a texgen sources GX_VA_TEX{} but the vertex descriptor does not "
+                 "declare it - substituting (0,0). declared:{} ; texgens:{}",
+                 texIdx, decl, tcg);
+      }
+      return "vec2f(0.0, 0.0)"s;
+    }
     UNLIKELY FATAL("unmapped vtx attr {}", underlying(attr));
   }
   if (attr == GX_VA_POS) {

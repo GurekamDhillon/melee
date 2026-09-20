@@ -201,6 +201,18 @@ static bool mnCharSel_StcAttached;   /* 1P stock dots (regend 53..57) use m-ex S
 static HSD_JObj* mnCharSel_IconRoot; /* the joint tree icons[].joint_id_* resolve in */
 static u8 mnCharSel_IconUnavail[CSS_ICON_MAX]; /* m-ex icon whose fighter the port lacks */
 #define MNCS_ICON_ROOT(retail) (mnCharSel_IconRoot != NULL ? mnCharSel_IconRoot : (retail))
+/* One-shot CSS diagnostic. The m-ex CSS is the one screen that cannot be reached from a headless
+ * --test run, so the whole icon -> CharacterKind -> availability -> grid-slot chain is logged on
+ * every CSS entry instead. MELEE_CSS_TRACE=0 silences it. It is a few dozen lines per visit to
+ * the character select screen, which is nothing next to having to guess. */
+extern void OSReport(char*, ...);
+extern int Mex_CssTraceEnabled(void);
+#define MNCS_TRACE(...)                                                                      \
+    do {                                                                                     \
+        if (Mex_CssTraceEnabled()) {                                                         \
+            OSReport(__VA_ARGS__);                                                           \
+        }                                                                                    \
+    } while (0)
 #else
 #define MNCS_ICON_ROOT(retail) (retail)
 #define MNCS_NUM 0x19
@@ -4421,9 +4433,16 @@ static void mnCharSel_MexSetup(void)
         {
             mnCharSel_IconUnavail[i] = 1;
         }
+        MNCS_TRACE("mexcss: icon %2d ext %2d -> CKind %3d  unavail %d  joint vs %2d 1p %2d  "
+                   "bounds [%d..%d, %d..%d]\n",
+                   i, icons[i].char_kind, ck, mnCharSel_IconUnavail[i], icons[i].joint_id_vs,
+                   icons[i].joint_id_1p, (int) icons[i].bound_l, (int) icons[i].bound_r,
+                   (int) icons[i].bound_d, (int) icons[i].bound_u);
         icons[i].char_kind = (ck < 0) ? retail_none.char_kind : (u8) ck;
         icons[i].anim_timer = 0;
     }
+    MNCS_TRACE("mexcss: %d icons, mode %d (1 = 1P/Training, 4 = VS), match_type %d\n", n,
+               mnCharSel_804D6CF5, mnCharSel_804D6CB0->match_type);
     icons[n] = retail_none;
     mnCharSel_IconCount = (u8) n;
 
@@ -4471,6 +4490,11 @@ static void mnCharSel_MexSetup(void)
                 avail[n_avail++] = i;
             }
         }
+        MNCS_TRACE("mexcss: packing %d of %d icons over %d rows\n", n_avail, n, rows);
+        for (r = 0; r < rows; r++) {
+            MNCS_TRACE("mexcss:   row %d: slots %d..%d (%d wide)\n", r, row_start[r],
+                       row_start[r] + row_cap[r] - 1, row_cap[r]);
+        }
         /* Spread the icons EVENLY over the rows (25 over 3 -> 9, 8, 8), each row centred, rather
          * than filling rows greedily (11, 11, 3 - user: "not best fit"). Falls back to greedy only
          * if an even share would not fit a row. */
@@ -4493,6 +4517,8 @@ static void mnCharSel_MexSetup(void)
                 j = NULL;
                 lb_80011E24(root, &j, mnCharSel_804D6CF5 == 1 ? icons[icon].joint_id_1p
                                                               : icons[icon].joint_id_vs, -1);
+                MNCS_TRACE("mexcss:   icon %2d -> slot %2d  joint %s\n", icon, slot,
+                           j != NULL ? "ok" : "MISSING");
                 if (j != NULL) {
                     HSD_JObjSetTranslate(j, &pos[slot]);
                 }
@@ -4785,6 +4811,10 @@ s32 mnCharSel_802640A0(void)
             } else {
                 icons[icon].state = 2;
             }
+            MNCS_TRACE("mexcss: final icon %2d CKind %3d state %d %s joint %s\n", icon,
+                       icons[icon].char_kind, icons[icon].state,
+                       icons[icon].state == 0 ? "HIDDEN " : "visible",
+                       sp108 != NULL ? "ok" : "MISSING");
             continue;
         }
 #endif

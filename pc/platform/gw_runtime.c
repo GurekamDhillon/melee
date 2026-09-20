@@ -849,6 +849,23 @@ int gw_TestTrainingCKind(void) {
   return state;
 }
 
+/* Dev/debug hook: MELEE_STAGE=<external StKind int> overrides the stage MELEE_TRAINING boots
+ * into, which is otherwise hard-coded to Izumi. This is the only way to reach an m-ex custom
+ * stage until the SSS expansion lands, since those stages exist in the tables but are not
+ * selectable: Meta Crystal is MELEE_STAGE=293 (internal 76). Returns -1 when unset. Read once. */
+int gw_TestStageStKind(void) {
+  static int state = -2;
+  if (state == -2) {
+    const char *v = getenv("MELEE_STAGE");
+    state = (v == NULL || v[0] == '\0') ? -1 : atoi(v);
+    if (state >= 0) {
+      gw_log("gw: MELEE_STAGE=\"%s\" -> external stkind %d (overriding the training stage)", v,
+             state);
+    }
+  }
+  return state;
+}
+
 /* Dev/debug hook: MELEE_CONTENT_PROBE=<file.dat> loads that file through the game's own HSD archive
  * loader at boot and logs whether it parsed. This is the m-ex content-pipeline proof of life: the
  * file comes from the disc FST and is parsed by lbArchive_LoadArchive, so a Sonic file loading here

@@ -301,9 +301,17 @@ void gm_Mode_Training_OnLoad(void)
             vs->start.players[1].ckind = (s8) ckind;
             vs->start.players[1].color = 1;
             vs->start.players[1].cpu_kind = 0;
-            vs->start.rules.stkind = St_Kind_Izumi;
-            gm_80473814.stage_id = St_Kind_Izumi;
-            lbDvd_GetPreloadCacheScene()->game_cache.stkind = St_Kind_Izumi;
+            /* MELEE_STAGE overrides the default, so a custom m-ex stage can be reached before
+             * the SSS expansion makes it selectable. Every one of the three seeds below has to
+             * agree or lbDvd_SetupVsPreloadCache caches the wrong file. */
+            extern int TestStageStKind(void);
+            int stkind = TestStageStKind();
+            if (stkind < 0) {
+                stkind = St_Kind_Izumi;
+            }
+            vs->start.rules.stkind = (StKind) stkind;
+            gm_80473814.stage_id = (s16) stkind;
+            lbDvd_GetPreloadCacheScene()->game_cache.stkind = (StKind) stkind;
             lbDvd_GetPreloadCacheScene()->game_cache.entries[0].char_id = ckind;
             lbDvd_GetPreloadCacheScene()->game_cache.entries[0].color = 0;
             lbDvd_SetupVsPreloadCache();

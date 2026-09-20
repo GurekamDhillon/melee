@@ -151,7 +151,20 @@ struct HSD_TObj {
     HSD_AObj* aobj;
     struct HSD_ImageDesc** imagetbl;
     struct _HSD_Tlut** tluttbl;
+#if defined(TARGET_PC)
+    /* RETAIL: u8. The index a TObj texture animation selects in `tluttbl`, and retail's
+     * largest such animation is MnSlChr's 118-frame portrait strip, so a byte was enough.
+     * An m-ex disc is not: mexSelectChr's portrait animation has 221 frames on Akaneia and
+     * **388 on ACE**, each with its own 256-entry RGB5A3 palette (tools/mex_port dumps, and
+     * the headless test `mex_csp_frame_map`). Truncating to a byte gives frame 300 the
+     * palette of frame 44 - the right pixels under an unrelated character's colours, which
+     * is exactly what "rainbow corruption" looks like. Widened here, not worked around at
+     * the call site, because every CI8 animation on an m-ex disc has the same exposure.
+     * The struct does not change size: the u8 was followed by three bytes of padding. */
+    s32 tlut_no;
+#else
     u8 tlut_no;
+#endif
     Mtx mtx;
     GXTexCoordID coord;
     struct _HSD_TObjTev* tev;
@@ -184,6 +197,14 @@ typedef struct _HSD_Tlut {
     u32 tlut_name;
     u16 n_entries;
 } HSD_Tlut;
+
+/* "no animated TLUT - use tobj->tlut". Retail spells it (u8) -1; the PC build's tlut_no is
+   wider, so the sentinel has to widen with it or a 255th frame would read as "none". */
+#if defined(TARGET_PC)
+#define TOBJ_TLUT_NONE (-1)
+#else
+#define TOBJ_TLUT_NONE ((u8) -1)
+#endif
 
 typedef struct _HSD_TlutDesc {
     void* lut;

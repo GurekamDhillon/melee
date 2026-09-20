@@ -151,7 +151,12 @@ static void TObjUpdateFunc(void* obj, enum_t type, HSD_ObjData* val)
     } break;
     case HSD_A_T_TCLT: {
         if (tobj->tluttbl) {
+#if defined(TARGET_PC)
+            /* See tobj.h: the retail (u8) truncates every m-ex portrait frame past 255. */
+            tobj->tlut_no = (s32) val->fv;
+#else
             tobj->tlut_no = (u8) val->fv;
+#endif
         }
     } break;
     case HSD_A_T_BLEND:
@@ -271,7 +276,7 @@ static int TObjLoad(HSD_TObj* tobj, HSD_TObjDesc* td)
     tobj->lod = td->lod;
     tobj->aobj = NULL;
     tobj->flags |= TEX_MTX_DIRTY;
-    tobj->tlut_no = (u8) -1;
+    tobj->tlut_no = TOBJ_TLUT_NONE;
     tobj->tev = HSD_TObjTevLoadDesc(td->tev);
 
     return 0;
@@ -1181,7 +1186,7 @@ void HSD_TObjSetup(HSD_TObj* tobj)
         case GX_TF_C14X2: {
             HSD_Tlut* tlut;
 
-            if (tobj->tlut_no != (u8) -1) {
+            if (tobj->tlut_no != TOBJ_TLUT_NONE) {
                 tlut = tobj->tluttbl[tobj->tlut_no];
             } else {
                 tlut = tobj->tlut;

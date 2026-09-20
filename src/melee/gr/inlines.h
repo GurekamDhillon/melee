@@ -59,6 +59,24 @@ static inline void Ground_SetupStageCallbacks(Ground_GObj* gobj,
     gp->x8_callback = NULL;
     gp->xC_callback = NULL;
     GObj_SetupGXLink(gobj, grDisplay_801C5DB0, 3, 0);
+#if defined(TARGET_PC)
+    /* An m-ex stage's StageCallbacks[] lives inside its grFunction blob, so these three fields may
+     * be GUEST PPC addresses. Bind each one before the engine stores or calls it; Mex_GrBind
+     * passes an ordinary native pointer straight through, so the vanilla path is unchanged. */
+    {
+        extern void* Mex_GrBind(void* fn);
+        if (callbacks->callback3 != NULL) {
+            gp->x1C_callback = (HSD_GObjEvent) Mex_GrBind((void*) callbacks->callback3);
+        }
+        if (callbacks->on_init != NULL) {
+            ((HSD_GObjEvent) Mex_GrBind((void*) callbacks->on_init))(gobj);
+        }
+        if (callbacks->gobj_proc != NULL) {
+            HSD_GObj_SetupProc(gobj,
+                               (HSD_GObjEvent) Mex_GrBind((void*) callbacks->gobj_proc), 4);
+        }
+    }
+#else
     if (callbacks->callback3 != NULL) {
         gp->x1C_callback = callbacks->callback3;
     }
@@ -68,6 +86,7 @@ static inline void Ground_SetupStageCallbacks(Ground_GObj* gobj,
     if (callbacks->gobj_proc != NULL) {
         HSD_GObj_SetupProc(gobj, callbacks->gobj_proc, 4);
     }
+#endif
 }
 
 static inline void Ground_InitScene(void)

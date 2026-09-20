@@ -20,6 +20,18 @@ struct StageSelection {
     struct StageIdMapEntry* entry;
 };
 
+#if defined(TARGET_PC)
+/* m-ex widens the EXTERNAL stage space (the one #StKind and the stage-select screen use) from the
+ * vanilla 286 ids to 313. A new external id falls outside every vanilla-sized per-id structure,
+ * and stage_id_map[] is the first of them - so the array is given m-ex's size and the tail is
+ * filled from `mexData.stage.StageIDs`, which is the same {grkind, unk1, unk2} entry.
+ * Vanilla externals keep their compiled-in rows; only the ids past the initializer are written. */
+#define ST_MEX_EXT_MAX 313
+extern int Mex_GrExternalCount(void);
+extern int Mex_GrKindForExt(int ext);
+void Stage_MexInitIds(void);
+#endif
+
 struct StageSelection selected_stage = { St_Kind_Izumi, NULL };
 StageIdPair default_stage_pair = { Gr_Kind_Izumi, St_Kind_Izumi };
 
@@ -337,7 +349,11 @@ StKind Stage_80225194(void)
 }
 
 /// Indexed by #StKind.
+#if defined(TARGET_PC)
+struct StageIdMapEntry stage_id_map[ST_MEX_EXT_MAX] = {
+#else
 struct StageIdMapEntry stage_id_map[] = {
+#endif
     { Gr_Kind_Unk00, 0, 0 },        { Gr_Kind_Test, 0, 0 },
     { Gr_Kind_Izumi, 0, 0 },        { Gr_Kind_PStadium, 0, 0 },
     { Gr_Kind_Castle, 0, 0 },       { Gr_Kind_Kongo, 0, 0 },
@@ -483,13 +499,45 @@ struct StageIdMapEntry stage_id_map[] = {
     { Gr_Kind_Shrine, 0, 0 },       { Gr_Kind_Battle, 0, 0 },
 };
 
+#if defined(TARGET_PC)
+/* Fill the external ids past the vanilla initializer from mexData. Idempotent; a vanilla disc
+ * leaves the whole tail zeroed, which reads as Gr_Kind_Unk00 exactly as the vanilla array's
+ * implicit tail would. */
+void Stage_MexInitIds(void)
+{
+    static bool done;
+    int e, n;
+
+    if (done) {
+        return;
+    }
+    done = true;
+    n = Mex_GrExternalCount();
+    if (n > ST_MEX_EXT_MAX) {
+        n = ST_MEX_EXT_MAX;
+    }
+    for (e = 0; e < n; e++) {
+        int k = Mex_GrKindForExt(e);
+        if (k >= 0) {
+            stage_id_map[e].grkind = (GrKind) k;
+        }
+    }
+}
+#endif
+
 GrKind Stage_8022519C(StKind stkind)
 {
+#if defined(TARGET_PC)
+    Stage_MexInitIds();
+#endif
     return stage_id_map[stkind].grkind;
 }
 
 void Stage_802251B4(StKind stkind)
 {
+#if defined(TARGET_PC)
+    Stage_MexInitIds();
+#endif
     Ground_801C06B8(stage_id_map[stkind].grkind);
 }
 
@@ -497,6 +545,9 @@ void Stage_802251E8(StKind stkind, s32* _)
 {
     StageIdPair local_data;
 
+#if defined(TARGET_PC)
+    Stage_MexInitIds();
+#endif
     selected_stage.stkind = stkind;
     selected_stage.entry = &stage_id_map[stkind];
 

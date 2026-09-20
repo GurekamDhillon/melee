@@ -139,6 +139,8 @@ typedef struct gw_mex_kind {
 static gw_mex_kind gw_mex_kinds[GW_MEX_SLOTS];
 static gw_mex_kind *gw_mex_k = &gw_mex_kinds[0];
 static uint32_t gw_mex_r2;            /* shared Arch_FighterFunc holder: every blob's r2 */
+static uint32_t gw_mex_mexdata_base;  /* that region's base; 0 = runtime not initialised yet */
+static uint32_t gw_mex_stack_base;    /* shared guest stack, low end */
 static int gw_mex_any_installed;      /* any fighter's code is installed (exec trap guard) */
 static uint32_t gw_mex_stack_top;     /* guest stack top (r1), shared */
 static uint32_t gw_mex_getdata_buf;   /* guest buffer backing the MEX_GetData(8) shim */
@@ -2067,9 +2069,73 @@ static const char *gw_mex_symbolize(uint32_t guest_addr) {
  *
  * A reload first unwinds the previous install: its code ranges, thunks and symbols point into the
  * previous (now freed) copy of the file. */
-void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size) {
-    static uint32_t mexdata_base, stack_base;
+/* One-time, process-lifetime setup of the m-ex PPC runtime: the shared mexData /
+ * Arch_FighterFunc holder (which is also every blob's r2), the guest stack, the MEX_GetData
+ * scratch buffer, the interpreter bridge and symbolizer, MxDt.dat, and the guest-execute trap.
+ * Idempotent.
+ *
+ * Exported because the STAGE runtime (gw_mex_grfunction.c) needs exactly this environment: m-ex's
+ * grFunction blobs are ordinary MEXFunctions and run on the same interpreter. Whichever of the
+ * two loads first pays for it; a stage-only run never touches the fighter path at all. */
+void gw_Mex_RuntimeInit(void) {
     uint32_t getdata_base;
+    if (gw_mex_mexdata_base != 0u) {
+        return;
+    }
+    gw_mex_mexdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_MEXDATA_SIZE);
+    gw_mex_stack_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_STACK_SIZE);
+    getdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_GETDATA_SIZE);
+    gw_mex_getdata_buf = getdata_base;
+    {
+        /* Make every per-kind slot of the synthetic costume table point at a zeroed sub-region,
+         * so onLoad's costume lookup dereferences valid guest memory and reads NULL (skips). */
+        uint32_t i;
+        for (i = 0; i < 0x400u / 4u; ++i) {
+            gw_w32((void *)(uintptr_t)(getdata_base + 4u * i), getdata_base + 0x400u);
+        }
+    }
+    gw_mex_stack_top = gw_mex_stack_base + GW_MEX_STACK_SIZE - 0x100u;
+    gw_mex_r2 = gw_mex_mexdata_base;
+    gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, 0u, 0u); /* code lives in added ranges */
+    gw_mexdt_load();
+    /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every panic,
+     * budget dump and trace names a guest function instead of a bare address. */
+    gw_ppc_set_symbolizer(gw_mex_symbolize);
+    /* First in the chain, so it runs before the port's own crash handling - which it defers to
+     * for anything that is not an execute fault inside the blob. */
+    if (AddVectoredExceptionHandler(1, gw_mex_exec_trap) == NULL) {
+        gw_log("interp: could not install the guest execute trap - direct native calls into "
+               "guest code will crash");
+    }
+}
+
+/* The shared rtoc (r2) and guest stack top every interpreted m-ex blob runs on. Both are 0 until
+ * gw_Mex_RuntimeInit() has run. */
+uint32_t gw_Mex_Rtoc(void) { return gw_mex_r2; }
+
+/* The loaded mexData root, plus the guest range of MxDt.dat's data section for bounds checks.
+ * 0 when MxDt.dat is not on this disc. The stage runtime reads its own tables out of this rather
+ * than loading a second copy of the archive. */
+uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size) {
+    if (base != NULL) {
+        *base = gw_mexdt_base;
+    }
+    if (size != NULL) {
+        *size = gw_mexdt_size;
+    }
+    return gw_mexdt;
+}
+uint32_t gw_Mex_StackTop(void) { return gw_mex_stack_top; }
+
+/* Public form of gw_mex_callable(): bind a guest code address to something native code can call.
+ * Blob code gets a thunk from the shared pool - so a stage's callbacks are released by the same
+ * gw_mex_release_thunks path as a fighter's - and a bridged engine address passes straight
+ * through. Anything else panics, naming `why`. */
+uint32_t gw_Mex_Callable(uint32_t guest, const char *why) {
+    return gw_mex_callable(guest, why);
+}
+
+void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size) {
     int rc, slot = gw_mex_slot_of_port(kind), internal;
     const char *dat;
     void *prev;
@@ -2091,35 +2157,7 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
         return;
     }
 
-    if (mexdata_base == 0u) {
-        /* One-time, process-lifetime setup. */
-        mexdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_MEXDATA_SIZE);
-        stack_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_STACK_SIZE);
-        getdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_GETDATA_SIZE);
-        gw_mex_getdata_buf = getdata_base;
-        {
-            /* Make every per-kind slot of the synthetic costume table point at a zeroed
-             * sub-region, so onLoad's costume lookup dereferences valid guest memory and reads
-             * NULL (skips). */
-            uint32_t i;
-            for (i = 0; i < 0x400u / 4u; ++i) {
-                gw_w32((void *)(uintptr_t)(getdata_base + 4u * i), getdata_base + 0x400u);
-            }
-        }
-        gw_mex_stack_top = stack_base + GW_MEX_STACK_SIZE - 0x100u;
-        gw_mex_r2 = mexdata_base;
-        gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, 0u, 0u); /* code lives in added ranges */
-        gw_mexdt_load();
-        /* Back the interpreter's symbolizer with the blob's own debug symbol table, so every
-         * panic, budget dump and trace names a guest function instead of a bare address. */
-        gw_ppc_set_symbolizer(gw_mex_symbolize);
-        /* First in the chain, so it runs before the port's own crash handling - which it defers
-         * to for anything that is not an execute fault inside the blob. */
-        if (AddVectoredExceptionHandler(1, gw_mex_exec_trap) == NULL) {
-            gw_log("interp: could not install the guest execute trap - direct native calls into "
-                   "guest code will crash");
-        }
-    }
+    gw_Mex_RuntimeInit();
 
     if (gw_mex_installed == 1) {
         /* Unwind the previous residency. Its file is gone; nothing may reach its code. */
@@ -2148,7 +2186,7 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
 
     rc = gw_ftfunction_load_in_archive(dat, (uint32_t) internal,
                                        (uint32_t) (uintptr_t) arch_data, arch_data_size,
-                                       mexdata_base, &gw_mex_ff);
+                                       gw_mex_mexdata_base, &gw_mex_ff);
     if (rc == GW_FTFUNC_ERR_NO_SYMBOL) {
         /* A fighter with no ftFunction runs entirely on its base's vanilla callbacks. */
         gw_log("interp: %s has no ftFunction - vanilla callbacks only", dat);
@@ -2229,7 +2267,7 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
     gw_log("interp: installed %s ftFunction for kind %d / m-ex %d (code 0x%08X..0x%08X, "
            "mexData 0x%08X, stack 0x%08X, %d overrides)",
            dat, kind, internal, gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size,
-           mexdata_base, stack_base, gw_mex_ff.override_count);
+           gw_mex_mexdata_base, gw_mex_stack_base, gw_mex_ff.override_count);
     gw_Mex_RestoreKind(prev);
 }
 

@@ -203,6 +203,101 @@ static StageData* stage_datas[] = {
     &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
 };
 
+#if defined(TARGET_PC)
+/* ---- m-ex custom stages -------------------------------------------------------------
+ * m-ex widens the internal stage space past the vanilla stages the port compiles in. Rows for the
+ * added stages are not authored here: they are built from `mexData.stage_desc` (m-ex's
+ * `Arch_grFunction`), which ships one 13-word row per internal stage laid out byte-for-byte like
+ * `StageData`. See pc/platform/gw_mex_grfunction.c.
+ *
+ * DENSE, like the fighter path: a row is only installed when the stage's file is actually on this
+ * disc. A declared-but-absent stage keeps the vanilla filler entry instead of getting a row that
+ * would send the first load at a missing file.
+ *
+ * The seven function fields get the wrappers below rather than the row's own words, because an
+ * m-ex stage's handler may be interpreted PPC from its grFunction blob. Each wrapper runs the
+ * blob's override when there is one and the CLONE BASE function the row names when there is not -
+ * an unoverridden slot silently running the base's handler is m-ex's real behaviour, not a bug.
+ */
+#define GR_MEX_FIRST_NEW 71 /* first m-ex-added internal stage id */
+#define GR_MEX_ROWS 64      /* synthesised rows; bounded by ARRAY_SIZE(stage_datas) as well */
+
+extern int Mex_GrInternalCount(void);
+extern int Mex_GrIsMex(int grkind);
+extern const char* Mex_GrFile(int grkind);
+extern void* Mex_GrVanillaFn(int grkind, int slot);
+extern u32 Mex_GrFlags2(int grkind);
+extern void Mex_GrSelect(int grkind);
+extern void Mex_GrFunctionInit(void* archive, int grkind);
+extern void* Mex_GrCallbacks(void);
+extern void Mex_GrOnInit(void);
+extern void Mex_GrOnDemoInit(int arg);
+extern void Mex_GrOnLoad(void);
+extern void Mex_GrOnStart(void);
+extern int Mex_GrCallback4(void);
+extern void* Mex_GrOnTouchLine(int index);
+extern int Mex_GrOnCheckShadowRender(void* pos, int arg1, void* jobj);
+
+static StageData Ground_MexStageDatas[GR_MEX_ROWS];
+
+/* Thin wrappers so stage_datas[] holds ordinary game-side function pointers with the exact
+ * vanilla signatures; the shim's returns are int (the native/game bool boundary). */
+static void Ground_MexOnInit(void) { Mex_GrOnInit(); }
+static void Ground_MexOnDemoInit(int arg) { Mex_GrOnDemoInit(arg); }
+static void Ground_MexOnLoad(void) { Mex_GrOnLoad(); }
+static void Ground_MexOnStart(void) { Mex_GrOnStart(); }
+static bool Ground_MexCallback4(void) { return Mex_GrCallback4() != 0; }
+static DynamicsDesc* Ground_MexOnTouchLine(int index)
+{
+    return (DynamicsDesc*) Mex_GrOnTouchLine(index);
+}
+static bool Ground_MexOnCheckShadowRender(Vec3* pos, int arg1, HSD_JObj* jobj)
+{
+    return Mex_GrOnCheckShadowRender(pos, arg1, jobj) != 0;
+}
+
+void Ground_MexInitStages(void)
+{
+    static bool done;
+    int k, n;
+
+    if (done) {
+        return;
+    }
+    done = true;
+    n = Mex_GrInternalCount();
+    if (n > (int) ARRAY_SIZE(stage_datas)) {
+        n = (int) ARRAY_SIZE(stage_datas);
+    }
+    if (n > GR_MEX_FIRST_NEW + GR_MEX_ROWS) {
+        n = GR_MEX_FIRST_NEW + GR_MEX_ROWS;
+    }
+    for (k = GR_MEX_FIRST_NEW; k < n; k++) {
+        StageData* sd;
+        if (!Mex_GrIsMex(k)) {
+            continue;
+        }
+        sd = &Ground_MexStageDatas[k - GR_MEX_FIRST_NEW];
+        sd->grkind = (GrKind) k;
+        /* Filled from the blob's `map_gobjs` once the stage's file loads; NULL until then, and
+         * nothing reads it before Ground_801C0800. */
+        sd->callbacks = NULL;
+        sd->data1 = (char*) Mex_GrFile(k);
+        sd->on_init = Ground_MexOnInit;
+        sd->on_demo_init = Ground_MexOnDemoInit;
+        sd->on_load = Ground_MexOnLoad;
+        sd->on_start = Ground_MexOnStart;
+        sd->callback4 = Ground_MexCallback4;
+        sd->on_touch_line = Ground_MexOnTouchLine;
+        sd->on_check_shadow_render = Ground_MexOnCheckShadowRender;
+        sd->flags2 = Mex_GrFlags2(k);
+        sd->joints = NULL;
+        sd->joint_count = 0;
+        stage_datas[k] = sd;
+    }
+}
+#endif
+
 static u8* Ground_804D6950;
 
 static ssize_t const buffer_size = 64;
@@ -446,6 +541,9 @@ GXColor* Ground_801C06A4(void)
 
 void Ground_801C06B8(GrKind arg0)
 {
+#if defined(TARGET_PC)
+    Ground_MexInitStages();
+#endif
     if (stage_datas[arg0] == NULL) {
         return;
     }
@@ -469,6 +567,10 @@ void Ground_801C0754(StageIdPair* pair)
     StageData* stage;
     s32 arg3;
 #if defined(TARGET_PC)
+    Ground_MexInitStages();
+    /* Tell the m-ex stage runtime whose row the StageData trampolines belong to, before anything
+     * can call one. Harmless for a vanilla stage. */
+    Mex_GrSelect(pair->grkind);
     if (stage_datas[pair->grkind] == NULL) {
         return;
     }
@@ -478,6 +580,16 @@ void Ground_801C0754(StageIdPair* pair)
     stage = stage_datas[pair->grkind];
     arg3 = (pair->stkind == St_Kind_Heal) ? 0 : 1;
     grDatFiles_801C6038(stage->data1, 0, arg3);
+#if defined(TARGET_PC)
+    /* The stage's archive is loaded now, so this is m-ex's "Init grFunction" point: relocate the
+     * file's grFunction in place and overload this row's StageData words with it. The blob owns
+     * the StageCallbacks[] table (`map_gobjs`), so take it back out afterwards. */
+    if (Mex_GrIsMex(pair->grkind)) {
+        UnkArchiveStruct* mex_arc = grDatFiles_GetArchive();
+        Mex_GrFunctionInit(mex_arc != NULL ? (void*) mex_arc->unk0 : NULL, pair->grkind);
+        stage_datas[pair->grkind]->callbacks = (StageCallbacks*) Mex_GrCallbacks();
+    }
+#endif
     Ground_801C28CC(&stage_info.xA0, pair->stkind);
     stage_info.on_touch_line = stage->on_touch_line;
     stage_info.on_check_shadow_render = stage->on_check_shadow_render;

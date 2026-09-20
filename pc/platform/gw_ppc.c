@@ -138,7 +138,103 @@ static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {
     return 1;
 }
 
-static void gw_ppc_access_violation(uint32_t ip, uint32_t ea) {
+/* ---- fault dump ------------------------------------------------------------------------
+ * A guest access violation is almost always "a register holds the wrong thing", and the two
+ * numbers the panic used to carry - the guest pc and the effective address - name only the
+ * symptom: which instruction dereferenced a bad value, never which register held it or what the
+ * value actually points at. Reproducing an m-ex fault costs a whole windowed run, so the one dump
+ * has to answer the next question as well. It prints the register file, the instruction stream
+ * around the fault, the interpreted call chain, and a short big-endian hexdump at every distinct
+ * register value that looks like a guest pointer - which is what identifies the object a bad
+ * pointer really names (a Fighter, a GObj, an Item, a float array, ...).
+ *
+ * It must be safe on the panic path: every guest read is bounds-checked here, never through the
+ * ld helpers (those panic again, which would recurse). */
+
+#define GW_PPC_DUMP_PTRS 10 /* distinct pointer-looking registers to hexdump */
+
+static int gw_ppc_looks_guest(uint32_t v) {
+    /* Plausible-pointer test, deliberately loose: word-aligned, inside MEM1, and with room for
+     * the 0x20 bytes the hexdump reads. A false positive costs one extra line. */
+    return (v & 3u) == 0u && gw_ppc_ea_ok(v, 0x20u);
+}
+
+static void gw_ppc_dump_state(const gw_ppc_machine *m, uint32_t ip) {
+    const gw_ppc_ctx *c = &m->cpu;
+    uint32_t seen[GW_PPC_DUMP_PTRS];
+    int n_seen = 0;
+    int i;
+    int j;
+
+    gw_log("ppc: --- interpreter state at the fault ---");
+    gw_log("ppc:   ip  = %s", gw_ppc_describe(ip));
+    gw_log("ppc:   pc  = 0x%08X  lr = %s", c->pc, gw_ppc_describe(c->lr));
+    gw_log("ppc:   ctr = 0x%08X  cr = 0x%08X  xer = 0x%08X", c->ctr, c->cr, c->xer);
+    gw_log("ppc:   blob code range [0x%08X,0x%08X)  depth = %d", m->code_lo, m->code_hi,
+           gw_ppc_depth);
+
+    /* The instruction stream: four words before the faulting one and four after. The faulting
+     * word is marked, so the raw encoding can be pasted straight into tools/mex_port/ppc_disasm.py
+     * without a second dump of the blob. */
+    for (i = -4; i <= 4; ++i) {
+        uint32_t a = (uint32_t)((int32_t)ip + 4 * i);
+        if (!gw_ppc_ea_ok(a, 4)) {
+            continue;
+        }
+        gw_log("ppc:   %s 0x%08X  %08X", (i == 0) ? "->" : "  ", a,
+               gw_r32((const void *)(uintptr_t)a));
+    }
+
+    for (i = 0; i < 32; i += 4) {
+        gw_log("ppc:   r%-2d 0x%08X  r%-2d 0x%08X  r%-2d 0x%08X  r%-2d 0x%08X", i, c->gpr[i],
+               i + 1, c->gpr[i + 1], i + 2, c->gpr[i + 2], i + 3, c->gpr[i + 3]);
+    }
+    /* f0..f13 only: the PowerPC ABI passes and returns floats in f1..f8 and f0/f9..f13 are the
+     * scratch a callback actually uses, so the high FPRs are noise on this path. Both the double
+     * value and the raw halves are printed - a single-precision bit pattern that has landed in a
+     * GPR (the shape this dump exists to catch) is recognisable only in the raw word. */
+    for (i = 0; i <= 13; i += 2) {
+        gw_log("ppc:   f%-2d %-16g 0x%08X%08X   f%-2d %-16g 0x%08X%08X", i, c->fpr[i].d,
+               c->fpr[i].u32[0], c->fpr[i].u32[1], i + 1, c->fpr[i + 1].d, c->fpr[i + 1].u32[0],
+               c->fpr[i + 1].u32[1]);
+    }
+
+    for (i = gw_ppc_depth - 1; i >= 0; --i) {
+        gw_log("ppc:   called from entry[%d] = %s", i, gw_ppc_describe(gw_ppc_entry[i]));
+    }
+
+    /* Hexdump at each distinct pointer-looking register. gw_r32 is used directly (not the ld
+     * helpers) because a second access violation on the panic path would recurse. */
+    for (i = 0; i < 32 && n_seen < GW_PPC_DUMP_PTRS; ++i) {
+        uint32_t v = c->gpr[i];
+        int dup = 0;
+        if (!gw_ppc_looks_guest(v)) {
+            continue;
+        }
+        for (j = 0; j < n_seen; ++j) {
+            if (seen[j] == v) {
+                dup = 1;
+            }
+        }
+        if (dup) {
+            continue;
+        }
+        seen[n_seen++] = v;
+        gw_log("ppc:   [r%d] 0x%08X: %08X %08X %08X %08X %08X %08X %08X %08X", i, v,
+               gw_r32((const void *)(uintptr_t)(v + 0x00)),
+               gw_r32((const void *)(uintptr_t)(v + 0x04)),
+               gw_r32((const void *)(uintptr_t)(v + 0x08)),
+               gw_r32((const void *)(uintptr_t)(v + 0x0C)),
+               gw_r32((const void *)(uintptr_t)(v + 0x10)),
+               gw_r32((const void *)(uintptr_t)(v + 0x14)),
+               gw_r32((const void *)(uintptr_t)(v + 0x18)),
+               gw_r32((const void *)(uintptr_t)(v + 0x1C)));
+    }
+    gw_log("ppc: --- end of interpreter state ---");
+}
+
+static void gw_ppc_access_violation(const gw_ppc_machine *m, uint32_t ip, uint32_t ea) {
+    gw_ppc_dump_state(m, ip);
     gw_panic("ppc: guest access violation at ip=%s ea=0x%08X", gw_ppc_describe(ip), ea);
 }
 
@@ -148,7 +244,7 @@ static uint8_t gw_ppc_ld8(gw_ppc_machine *m, uint32_t ea) {
         return gw_r8((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 1)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r8((const void *)(uintptr_t)ea);
 }
@@ -158,7 +254,7 @@ static uint16_t gw_ppc_ld16(gw_ppc_machine *m, uint32_t ea) {
         return gw_r16((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 2)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r16((const void *)(uintptr_t)ea);
 }
@@ -168,7 +264,7 @@ static uint32_t gw_ppc_ld32(gw_ppc_machine *m, uint32_t ea) {
         return gw_r32((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 4)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r32((const void *)(uintptr_t)ea);
 }
@@ -178,7 +274,7 @@ static uint64_t gw_ppc_ld64(gw_ppc_machine *m, uint32_t ea) {
         return gw_r64((const void *)(uintptr_t)native);
     }
     if (!gw_ppc_ea_ok(ea, 8)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     return gw_r64((const void *)(uintptr_t)ea);
 }
@@ -189,7 +285,7 @@ static void gw_ppc_st8(gw_ppc_machine *m, uint32_t ea, uint8_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 1)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w8((void *)(uintptr_t)ea, v);
 }
@@ -200,7 +296,7 @@ static void gw_ppc_st16(gw_ppc_machine *m, uint32_t ea, uint16_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 2)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w16((void *)(uintptr_t)ea, v);
 }
@@ -211,7 +307,7 @@ static void gw_ppc_st32(gw_ppc_machine *m, uint32_t ea, uint32_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 4)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w32((void *)(uintptr_t)ea, v);
 }
@@ -222,14 +318,17 @@ static void gw_ppc_st64(gw_ppc_machine *m, uint32_t ea, uint64_t v) {
         return;
     }
     if (!gw_ppc_ea_ok(ea, 8)) {
-        gw_ppc_access_violation(m->cpu.pc - 4, ea);
+        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
     }
     gw_w64((void *)(uintptr_t)ea, v);
 }
 
 /* ---- panics --------------------------------------------------------------------------- */
 
-static void gw_ppc_bad_opcode(uint32_t ip, uint32_t insn) {
+static void gw_ppc_bad_opcode(const gw_ppc_machine *m, uint32_t ip, uint32_t insn) {
+    /* Same reasoning as the access violation: an unimplemented opcode is cheap to add, but only
+     * if the one run that hit it says what the surrounding code was doing. */
+    gw_ppc_dump_state(m, ip);
     gw_panic("ppc: unimplemented opcode at ip=%s word=0x%08X", gw_ppc_describe(ip), insn);
 }
 
@@ -591,7 +690,7 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
     /* ---- compare immediate ---------------------------------------------------------- */
     case 11: /* cmpwi (L=0) / cmpi (L=1, 64-bit - unimplemented) */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         ra = (insn >> 16) & 0x1F;
         imm = (int32_t)(int16_t)(insn & 0xFFFF);
@@ -599,7 +698,7 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         break;
     case 10: /* cmplwi */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         ra = (insn >> 16) & 0x1F;
         imm = (uint32_t)(insn & 0xFFFF);
@@ -807,7 +906,7 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         return gw_ppc_execute_fp(m, insn, 0);
 
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }
@@ -826,13 +925,13 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
     switch (xo) {
     case 0:  /* cmp / cmpw (L=0); L=1 is 64-bit, unimplemented */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         gw_ppc_cmp(c, (insn >> 23) & 7, c->gpr[ra], c->gpr[rb], 0);
         break;
     case 32: /* cmpl / cmplw */
         if ((insn >> 21) & 1) {
-            gw_ppc_bad_opcode(ip, insn);
+            gw_ppc_bad_opcode(m, ip, insn);
         }
         gw_ppc_cmp(c, (insn >> 23) & 7, c->gpr[ra], c->gpr[rb], 1);
         break;
@@ -1001,7 +1100,7 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
         uint32_t ea = (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb];
         uint32_t v = c->gpr[rs];
         if (!gw_ppc_ea_ok(ea, 4)) {
-            gw_ppc_access_violation(ip, ea);
+            gw_ppc_access_violation(m, ip, ea);
         }
         {
             uint8_t *p = (uint8_t *)(uintptr_t)ea;
@@ -1159,7 +1258,7 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
     }
 
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }
@@ -1221,7 +1320,7 @@ static int gw_ppc_execute_cr(gw_ppc_machine *m, uint32_t insn) {
         gw_ppc_cr_set_bit(c, bt, r);
         break;
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }
@@ -1362,7 +1461,7 @@ static int gw_ppc_execute_fp(gw_ppc_machine *m, uint32_t insn, int single) {
     }
 
     default:
-        gw_ppc_bad_opcode(ip, insn);
+        gw_ppc_bad_opcode(m, ip, insn);
     }
     return 0;
 }

@@ -39,6 +39,28 @@
 #define GET_FIGHTER(gobj) ((Fighter*) HSD_GObjGetUserData(gobj))
 #endif
 
+#if defined(TARGET_PC)
+/* The row a fighter's costume uses in the fighter's OWN per-costume tables.
+ *
+ * Retail these are the same number, and every such table is sized to the fighter's retail
+ * costume count. An m-ex disc raises the count without extending the tables - Akaneia gives
+ * every one of the 26 retail fighters two more costumes, and its PlFx.dat is byte-identical to
+ * vanilla's in this region - so the raw id runs off the end of each of them. m-ex's answer is
+ * costume_file[k][costume].visibility_lookup_idx: the retail costumes map to themselves and
+ * every added one maps to 0, verified for all 26 fighters on both Akaneia and ACE
+ * (tools/mex_port/dump_mxdt.py). Mex_CostumeVisIdx returns the raw id when there is no mexData
+ * or no row, so a vanilla disc is unchanged.
+ *
+ * USE THIS FOR THE FIGHTER'S OWN DISC DATA ONLY. The port's own runtime arrays
+ * (CostumeListsForeachCharacter[k].costume_list, ftData_803C2360[k]) are rebuilt with 16 rows by
+ * ftData_MexInitKinds and must keep being indexed by the real costume id, or two costumes would
+ * share one archive slot. */
+int Mex_CostumeVisIdx(int fk, int costume);
+#define FT_COSTUME_VIS_IDX(fp) Mex_CostumeVisIdx((fp)->kind, (fp)->x619_costume_id)
+#else
+#define FT_COSTUME_VIS_IDX(fp) ((fp)->x619_costume_id)
+#endif
+
 static inline void Fighter_SetEffectHitlagCallbacks(Fighter* fp)
 {
     fp->pre_hitlag_cb = efLib_PauseAll;

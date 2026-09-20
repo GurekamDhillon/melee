@@ -536,7 +536,7 @@ void ftGw_Init_OnLoad(HSD_GObj* gobj)
         fp->x34_scale.z = da->x0_GAMEWATCH_WIDTH;
         fp->x610_color_rgba[1] = da->x14_GAMEWATCH_OUTLINE;
         ftMaterial_800BFB4C(gobj,
-                            &da->x4_GAMEWATCH_COLOR[fp->x619_costume_id]);
+                            &da->x4_GAMEWATCH_COLOR[FT_COSTUME_VIS_IDX(fp)]);
         fp->x5AC.xC[4] = items[10];
 
         it_8026B3F8(items[0], It_Kind_GameWatch_Greenhouse);
@@ -632,7 +632,10 @@ void ftGw_Init_8014A7F4(HSD_GObj* gobj, ItemModStruct* item_mod)
     Fighter* fp = GET_FIGHTER(gobj);
     ftGameWatchAttributes* gawAttrs = getFtSpecialAttrs(fp);
 
-    item_mod->x0_unk = gawAttrs->x4_GAMEWATCH_COLOR[fp->x619_costume_id];
+    /* GAMEWATCH_COLOR has one entry per RETAIL costume (four); Akaneia gives him six, all of
+     * them PlGwNr.dat with only the colour differing, so the raw id read two entries past the
+     * end of the attribute struct. Akaneia maps his costumes 0,1,2,3,0,0. */
+    item_mod->x0_unk = gawAttrs->x4_GAMEWATCH_COLOR[FT_COSTUME_VIS_IDX(fp)];
 }
 
 /// 0x8014A814

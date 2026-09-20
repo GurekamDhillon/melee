@@ -1007,8 +1007,15 @@ void ftAnim_80070200(Fighter* fp, ftData_x8_x8* r4, CostumeTObjList* r5,
     if (r5->n_costume_tobjs > ARRAY_SIZE(r5->costume_tobjs)) {
         HSD_ASSERTREPORT(1228, 0, "fighter tobj num over!\n");
     }
-    r5->x5D0 =
-        r4->xC[fp->x619_costume_id] ? r4->xC[fp->x619_costume_id] : r4->xC[0];
+    {
+        /* r4->xC is the fighter's own per-costume texture-animation table, sized to its RETAIL
+         * costume count - Fox has four rows and Akaneia gives him six costumes. Indexing it by
+         * the raw id read past the end and handed the loop below a garbage u16* (user-found:
+         * Fox costume 4 and 5 faulted here, costume 3 was fine). Same table shape, same fix as
+         * ftParts_800749CC's vis_table. */
+        u32 vis = FT_COSTUME_VIS_IDX(fp);
+        r5->x5D0 = r4->xC[vis] ? r4->xC[vis] : r4->xC[0];
+    }
 
     for (i = 0; i < r5->n_costume_tobjs; i++) {
         r5->costume_tobjs[i] = ftParts_80075240(r6, r5->x5D0[i]);

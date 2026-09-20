@@ -461,31 +461,36 @@ void ftPr_Init_8013C360(HSD_GObj* gobj)
 {
     HSD_Joint** joints = ft_8045A1E0;
     Fighter* fp = GET_FIGHTER(gobj);
+    /* Jigglypuff's hat: ftPr_Init_803D05B4 has one entry per RETAIL costume (five) and
+     * ft_8045A1E0 six, while Akaneia gives her seven. The hat joint, its cache and the hat's own
+     * part-visibility table are all the fighter's own per-costume data, so all three take the
+     * costume's visibility row. Akaneia maps her costumes 0,1,2,3,4,0,0. The costume ARCHIVE
+     * below is the port's runtime array and keeps the real id. */
+    u32 vis = FT_COSTUME_VIS_IDX(fp);
 
-    if (ftPr_Init_803D05B4[fp->x619_costume_id]) {
+    if (ftPr_Init_803D05B4[vis]) {
         /// @todo clean up memory accesses - this looks similar to
         /// ftKb_SpecialN_800EFB4C
         UNK_T* items = fp->ft_data->x48_items;
         UNK_T* items_shifted = items[1];
 
-        if (!joints[fp->x619_costume_id]) {
+        if (!joints[vis]) {
             UnkCostumeStruct* costume_list =
                 CostumeListsForeachCharacter[fp->kind].costume_list;
-            joints[fp->x619_costume_id] = HSD_ArchiveGetPublicAddress(
+            joints[vis] = HSD_ArchiveGetPublicAddress(
                 costume_list[fp->x619_costume_id].x14_archive,
-                ftPr_Init_803D05B4[fp->x619_costume_id]);
+                ftPr_Init_803D05B4[vis]);
         }
 
         fp->u.pr.x2240.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);
         ftPartsPObjSetDefaultClass();
-        fp->u.pr.x223C = HSD_JObjLoadJoint(joints[fp->x619_costume_id]);
+        fp->u.pr.x223C = HSD_JObjLoadJoint(joints[vis]);
         fp->x2225_b2 = true;
         ftPartsPObjClearDefaultClass();
         ftParts_80075650(gobj, fp->u.pr.x223C, &fp->u.pr.x2240);
 
-        ftParts_8007487C((FtPartsDesc*) &items_shifted[1], &fp->u.pr.x2248,
-                         fp->x619_costume_id, &fp->u.pr.x2240,
-                         &fp->u.pr.x2240);
+        ftParts_8007487C((FtPartsDesc*) &items_shifted[1], &fp->u.pr.x2248, vis,
+                         &fp->u.pr.x2240, &fp->u.pr.x2240);
         ftCo_8009DC54(fp);
         return;
     }

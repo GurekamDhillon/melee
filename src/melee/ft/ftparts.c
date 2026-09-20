@@ -544,21 +544,11 @@ void ftParts_800749CC(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     int i;
 
-#if defined(TARGET_PC)
-    {
-        /* Ported from m-ex: a costume indexes the fighter's part-visibility tables through
-         * costume_file[k][costume].visibility_lookup_idx. Several costumes share a table (Fox:
-         * 0,1,2,3,0,0; every Sonic costume uses 0) - indexing by the raw costume id read past a
-         * fighter's tables (user-found crash on Sonic's 7th costume). Retail id when not m-ex. */
-        extern int Mex_CostumeVisIdx(int fk, int costume);
-        ftParts_8007487C(&fp->ft_data->x8->x0, &fp->x5AC,
-                         Mex_CostumeVisIdx(fp->kind, fp->x619_costume_id), &fp->dobj_list,
-                         &fp->x203C);
-    }
-#else
-    ftParts_8007487C(&fp->ft_data->x8->x0, &fp->x5AC, fp->x619_costume_id,
-                     &fp->dobj_list, &fp->x203C);
-#endif
+    /* The fighter's part-visibility tables are indexed by the costume's visibility row, not by
+     * the raw costume id - see FT_COSTUME_VIS_IDX (inlines.h). On a vanilla disc the two are the
+     * same number and this is the original expression. */
+    ftParts_8007487C(&fp->ft_data->x8->x0, &fp->x5AC, FT_COSTUME_VIS_IDX(fp), &fp->dobj_list,
+                     &fp->x203C);
     for (i = 0; i < fp->x5AC.model_num; i++) {
         fp->x5F4_arr[i].prev = -1;
     }

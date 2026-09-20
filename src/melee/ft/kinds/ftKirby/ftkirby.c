@@ -2885,7 +2885,9 @@ void ftKb_SpecialN_800EF040(Fighter_GObj* gobj, int arg1, KirbyHatStruct* hat)
         Fighter* fp = GET_FIGHTER(gobj);
         struct Fighter_804D6540_t* ft_data = Fighter_804D6540[fp->kind];
         int count = ft_data->x4;
-        HSD_Joint* joint = ftKb_Init_803C9FC8[arg1][fp->x619_costume_id].joint;
+        /* Each row of ftKb_Init_803C9FC8 is sized to KIRBY's retail costume count (six) and
+         * is indexed by Kirby's own costume; Akaneia gives him eight, mapped 0..5,0,0. */
+        HSD_Joint* joint = ftKb_Init_803C9FC8[arg1][FT_COSTUME_VIS_IDX(fp)].joint;
         struct Fighter_804D6540_x0_t* parts = ft_data->x0;
         int i;
         for (i = 0; i < count; i++, parts++) {
@@ -2960,7 +2962,7 @@ void ftKb_SpecialN_800EF0E4(Fighter_GObj* gobj, int arg1, u8* arg2)
     s32 byte_base;
 
     ftPartsPObjSetDefaultClass();
-    root = ftKb_Init_803C9FC8[arg1][fp->x619_costume_id].joint;
+    root = ftKb_Init_803C9FC8[arg1][FT_COSTUME_VIS_IDX(fp)].joint;
     ftKb_SpecialN_insert_joint_refs(&total_dobjs, root, fp, &insert_part_idx,
                                     &current_joint, &joint_idx, &byte_base);
     joint_idx = 0;
@@ -3027,7 +3029,7 @@ void ftKb_SpecialN_800EF35C(Fighter_GObj* gobj, int arg1, u8* arg2)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     ftKirby_CostumeArchive* costume_data = ftKb_Init_803C9FC8[arg1];
-    HSD_MatAnimJoint* matanimjoint = costume_data[fp->x619_costume_id].matanim;
+    HSD_MatAnimJoint* matanimjoint = costume_data[FT_COSTUME_VIS_IDX(fp)].matanim;
     int idx = 0;
     arg1 = 0;
     PAD_STACK(4);
@@ -4199,7 +4201,7 @@ void ftKb_SpecialN_800F1BAC(Fighter_GObj* gobj, s32 kind, bool arg2)
          * it_804D6D38, so spawning the copied move dereferences a NULL article at
          * Item_80267AA8. Reload the copied kind's hat on demand. */
         if (((KirbyHatStruct**) &ft_80459B88)[kind] == NULL) {
-            ftKb_SpecialN_800EED50(kind, fp->x619_costume_id);
+            ftKb_SpecialN_800EED50(kind, FT_COSTUME_VIS_IDX(fp));
         }
 #endif
         fp->u.kb.hat.kind = kind;

@@ -179,3 +179,18 @@ fabric.properties
 # .bat scripts (which the *.bat and build/ rules above would otherwise drop).
 !pc/build/
 !pc/build/**
+
+# ---- NEVER COMMIT GAME DATA ------------------------------------------------
+# Nintendo's, or derived from a Nintendo disc, or m-ex's (NO LICENCE - it is a
+# SPECIFICATION ONLY for this port, never vendored). All of it is regenerable
+# from a user-supplied clean ISO. Belt-and-braces on top of "never git add -A".
+*.iso
+*.gcm
+*.dol
+*.dat
+*.usd
+*.ssm
+*.sem
+*.hps
+*.thp
+*.gci

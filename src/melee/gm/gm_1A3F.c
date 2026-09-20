@@ -22,6 +22,7 @@
 #include <sysdolphin/baselib/devcom.h>
 #include <sysdolphin/baselib/sislib.h>
 #include <sysdolphin/baselib/video.h>
+#include "gmscenelaunch.h"
 
 struct routingInfo {
     u8 curr_mode;     ///< ::GameModeKind
@@ -167,6 +168,11 @@ void gm_801A4014(GameMode* mode)
     state = findState(mode->states);
     sm->routing.curr_state_id = state->id;
 
+#if defined(TARGET_PC)
+    /* Scene trace: every mode/state transition, named. An unattended run has nobody
+     * watching the window, so the log has to say where the game actually is. */
+    SceneReport_State(0, mode->kind, state->id, state->info.scene_kind);
+#endif
     preloadState(state);
     if (state->on_enter != NULL) {
         state->on_enter(state);
@@ -187,6 +193,9 @@ void gm_801A4014(GameMode* mode)
         scene->on_enter(info->enter_data);
     }
     gm_801A4D34(scene->on_frame, info);
+#if defined(TARGET_PC)
+    SceneReport_State(1, mode->kind, state->id, info->scene_kind);
+#endif
     if (!gmMainLib_8046B0F0.resetting && scene->on_exit != NULL) {
         scene->on_exit(info->exit_data);
     }

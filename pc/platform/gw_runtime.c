@@ -677,14 +677,9 @@ static int tt_ieq(const char *a, const char *b) {
   return *a == *b;
 }
 
-/* Maps a `character` value to the decomp's CharacterKind enum (ft/forward.h): either a bare
- * integer (the ckind itself) or a case-insensitive name. */
-static int tt_parse_ckind(const char *v) {
-  char *end;
-  long n = strtol(v, &end, 0);
-  if (end != v && *end == '\0') {
-    return (int)n;
-  }
+/* A case-insensitive character NAME -> the decomp's CharacterKind enum (ft/forward.h), or -1.
+ * Names are the one character grammar that cannot be read in the wrong index space. */
+static int tt_lookup_ckind_name(const char *v) {
   static const struct {
     const char *name;
     int ckind;
@@ -705,6 +700,18 @@ static int tt_parse_ckind(const char *v) {
     if (tt_ieq(v, table[i].name)) return table[i].ckind;
   }
   return -1;
+}
+
+/* The legacy "integer or name" grammar, kept for MELEE_TARGET_TEST / MELEE_TRAINING and the
+ * .tt mod files: a bare integer here is a CharacterKind. MELEE_SCENE deliberately does NOT
+ * accept a bare integer - see the SCENE LAUNCH block at the end of this file for why. */
+static int tt_parse_ckind(const char *v) {
+  char *end;
+  long n = strtol(v, &end, 0);
+  if (end != v && *end == '\0') {
+    return (int)n;
+  }
+  return tt_lookup_ckind_name(v);
 }
 
 static void tt_parse_file(const char *path, const char *fname) {
@@ -821,50 +828,15 @@ int gw_TTMod_Count(void) {
  * "not set / not a known character". Read once and cached; returns the CharacterKind (ft/forward.h)
  * or -1. Reuses tt_parse_ckind so the integer/name grammar matches the .tt mod files. */
 int gw_TestTargetTestCKind(void) {
-  static int state = -2; /* -2 = unread, -1 = unset/invalid, >=0 = ckind */
-  if (state == -2) {
-    const char *v = getenv("MELEE_TARGET_TEST");
-    state = (v == NULL || v[0] == '\0') ? -1 : tt_parse_ckind(v);
-    if (state >= 0) {
-      gw_log("gw: MELEE_TARGET_TEST=\"%s\" -> ckind %d (booting straight into Target Test)",
-             v, state);
-    }
-  }
-  return state;
+  extern int gw_SceneLaunch_TargetTestCKind(void);
+  /* Not cached in a static any more: the scene config is the single source of truth, it is
+   * itself read once, and a test can replace it without restarting the process. */
+  return gw_SceneLaunch_TargetTestCKind();
 }
 
-/* Dev/debug hook: MELEE_TRAINING=<ckind int or name like mario/fox/zelda> boots straight into
- * Training Mode with that character, skipping the menus and the CSS. Same shape and grammar as
- * MELEE_TARGET_TEST above; game code calls the unprefixed `TestTrainingCKind`. Read once. */
-int gw_TestTrainingCKind(void) {
-  static int state = -2;
-  if (state == -2) {
-    const char *v = getenv("MELEE_TRAINING");
-    state = (v == NULL || v[0] == '\0') ? -1 : tt_parse_ckind(v);
-    if (state >= 0) {
-      gw_log("gw: MELEE_TRAINING=\"%s\" -> ckind %d (booting straight into Training Mode)", v,
-             state);
-    }
-  }
-  return state;
-}
-
-/* Dev/debug hook: MELEE_STAGE=<external StKind int> overrides the stage MELEE_TRAINING boots
- * into, which is otherwise hard-coded to Izumi. This is the only way to reach an m-ex custom
- * stage until the SSS expansion lands, since those stages exist in the tables but are not
- * selectable: Meta Crystal is MELEE_STAGE=293 (internal 76). Returns -1 when unset. Read once. */
-int gw_TestStageStKind(void) {
-  static int state = -2;
-  if (state == -2) {
-    const char *v = getenv("MELEE_STAGE");
-    state = (v == NULL || v[0] == '\0') ? -1 : atoi(v);
-    if (state >= 0) {
-      gw_log("gw: MELEE_STAGE=\"%s\" -> external stkind %d (overriding the training stage)", v,
-             state);
-    }
-  }
-  return state;
-}
+/* MELEE_TRAINING and MELEE_STAGE used to have hooks of their own here. They are now read by
+ * the scene config (gw_sl_load_legacy, at the end of this file) and folded into the same
+ * seeding path as MELEE_SCENE, so there is exactly one place that decides what boots. */
 
 /* Dev/debug hook: MELEE_CONTENT_PROBE=<file.dat> loads that file through the game's own HSD archive
  * loader at boot and logs whether it parsed. This is the m-ex content-pipeline proof of life: the
@@ -1265,4 +1237,1004 @@ static void gw_mex_demo_register(void) {
 int gw_Env1(const char *name) {
   const char *v = getenv(name);
   return v != NULL && v[0] == '1';
+}
+
+/* ================================================================================================
+ * SCENE LAUNCH -- boot straight into any screen, in any configuration
+ * ================================================================================================
+ *
+ * The full grammar lives in _research/scene-launch.md. The short version:
+ *
+ *   MELEE_SCENE="mode=training;at=match;p1=fox;p2=ck:38/cpu9;stage=ext:293"
+ *   MELEE_SCENE_FILE=<path>     the same text, one `key value` or `key=value` per line
+ *
+ * THE RULE THAT MATTERS: a number in a character or stage field MUST name its index space.
+ * There are four fighter index spaces in this port and two stage ones, and a bare integer is
+ * right in one of them and silently wrong in the others. `p1=37` is therefore REJECTED; write
+ * `p1=ck:37` (port CharacterKind, which is Lucas) or `p1=fk:37` (port FighterKind, which is
+ * Sonic) and say what you meant. Names (`p1=fox`) are always unambiguous and always accepted.
+ *
+ *   ck:N      port CharacterKind   -- what PlayerInitData::ckind holds. m-ex slot i = 0x22 + i.
+ *   fk:N      port FighterKind     -- what Fighter::kind holds.        m-ex slot i = 0x21 + i.
+ *   mex:N     m-ex INTERNAL id     -- MxDt.dat's own numbering (Akaneia's added seven are 27..33).
+ *   mexext:N  m-ex EXTERNAL id     -- MxDt.dat's CSS/ui numbering (Akaneia's added seven 26..32).
+ *   ext:N     external StKind      -- what StartMeleeRules::stkind holds. Meta Crystal = 293.
+ *   int:N     internal GrKind      -- the port's own stage id.          Meta Crystal = 76.
+ *
+ * The legacy single-purpose variables MELEE_TRAINING / MELEE_TARGET_TEST / MELEE_STAGE still
+ * work and are translated into an equivalent scene config, so there is exactly one seeding path.
+ * They keep their historical "a bare integer is a CharacterKind / an external StKind" grammar,
+ * and now say so in the log.
+ *
+ * Parsing is a pure function of a string (gw_sl_parse), which is what makes it testable: the
+ * environment is read once into gw_sl_cfg, and a test can build any other config without
+ * touching the process environment. gw_SceneLaunch_LoadForTest() is that entry point.
+ */
+
+#define GW_SL_SLOTS 4
+
+/* Gm_PKind (src/melee/pl/forward.h). */
+#define GW_SL_PK_HUMAN 0
+#define GW_SL_PK_CPU 1
+#define GW_SL_PK_DEMO 2
+#define GW_SL_PK_NA 3
+
+#define GW_SL_CK_NONE 0x21 /* ChKind_None */
+#define GW_SL_CK_MEX0 0x22 /* ChKind_Mex0 */
+#define GW_SL_FK_MEX0 0x21 /* Ft_Kind_Mex0 */
+#define GW_SL_CK_PLAYABLE 26 /* CKind_Playable_Count */
+
+/* Entry state ids. Both GM_VS and GM_TRAINING number their states CSS 0, SSS 1, match 2. */
+#define GW_SL_AT_CSS 0
+#define GW_SL_AT_SSS 1
+#define GW_SL_AT_MATCH 2
+
+typedef struct {
+  int ckind;     /* port CharacterKind, or -1 for "slot not configured" */
+  int random;    /* pick a random playable CharacterKind when the scene is seeded */
+  int slot_type; /* Gm_PKind, or -1 to let the seeder choose */
+  int color;
+  int cpu_kind;
+  int cpu_level;
+  int handicap;
+  int team;
+  int stocks;
+  int nametag;
+} GwSlPlayer;
+
+typedef struct {
+  int configured;   /* a scene was requested at all */
+  int game_mode;    /* GameModeKind to boot into, or -1 */
+  int vs_mode;      /* GmVsMode index into gmMainLib_804D3EE0->modes.table, or -1 */
+  int entry_state;  /* GW_SL_AT_*, or -1 to leave the state machine alone */
+  int stage_ext;    /* external StKind, or -1 */
+  int tt_ckind;     /* Target Test character (CharacterKind), or -1 */
+  int skip_memcard; /* -1 = auto (skip whenever a scene is configured) */
+  int teams;        /* -1 = leave alone */
+  int time_limit;   /* seconds, -1 = leave alone */
+  int item_freq;    /* -1 = leave alone */
+  int errors;       /* count of rejected fields; a config with errors is still used */
+  GwSlPlayer p[GW_SL_SLOTS];
+} GwSceneConfig;
+
+static GwSceneConfig gw_sl_cfg;
+static int gw_sl_loaded;
+
+/* CharacterKind -> FighterKind for the retail cast, transcribed from ftMapping_list
+ * (src/melee/pl/player.c). The two orders are DIFFERENT permutations - CKind_Fox is 2 and
+ * Ft_Kind_Fox is 1 - which is why this table exists at all and why the test
+ * scene_ckind_fkind_table checks every row against the game's own ftMapping_list. */
+static const signed char gw_sl_ck_to_fk[GW_SL_CK_NONE] = {
+    /* 00 Captain   */ 2,  /* 01 Donkey    */ 3,  /* 02 Fox       */ 1,
+    /* 03 GameWatch */ 24, /* 04 Kirby     */ 4,  /* 05 Koopa     */ 5,
+    /* 06 Link      */ 6,  /* 07 Luigi     */ 17, /* 08 Mario     */ 0,
+    /* 09 Mars      */ 18, /* 0A Mewtwo    */ 16, /* 0B Ness      */ 8,
+    /* 0C Peach     */ 9,  /* 0D Pikachu   */ 12, /* 0E PopoNana  */ 10,
+    /* 0F Purin     */ 15, /* 10 Samus     */ 13, /* 11 Yoshi     */ 14,
+    /* 12 Zelda     */ 19, /* 13 Seak      */ 7,  /* 14 Falco     */ 22,
+    /* 15 CLink     */ 20, /* 16 DrMario   */ 21, /* 17 Emblem    */ 26,
+    /* 18 Pichu     */ 23, /* 19 Ganon     */ 25, /* 1A MasterH   */ 27,
+    /* 1B Boy       */ 29, /* 1C Girl      */ 30, /* 1D GKoops    */ 31,
+    /* 1E CrezyH    */ 28, /* 1F Sandbag   */ 32, /* 20 Popo      */ 10,
+};
+
+/* Retail stage names -> external StKind (gr/forward.h). Aliases first-come-first-served. */
+static const struct {
+  const char *name;
+  int stkind;
+} gw_sl_stage_names[] = {
+    {"izumi", 2},        {"fountain", 2},   {"fod", 2},        {"pstadium", 3},
+    {"stadium", 3},      {"ps", 3},         {"castle", 4},     {"kongo", 5},
+    {"jungle", 5},       {"zebes", 6},      {"brinstar", 6},   {"corneria", 7},
+    {"story", 8},        {"yoshistory", 8}, {"ys", 8},         {"onett", 9},
+    {"mutecity", 10},    {"rcruise", 11},   {"garden", 12},    {"kingdom2", 12},
+    {"greatbay", 13},    {"shrine", 14},    {"temple", 14},    {"kraid", 15},
+    {"yoster", 16},      {"yoshiisland", 16}, {"greens", 17},  {"dreamland", 17},
+    {"dl", 17},          {"fourside", 18},  {"inishie1", 19},  {"inishie2", 20},
+    {"akaneia", 21},     {"venom", 22},     {"pura", 23},      {"pokefloats", 23},
+    {"bigblue", 24},     {"icemt", 25},     {"icetop", 26},    {"flatzone", 27},
+    {"oldpupupu", 28},   {"dreamland64", 28}, {"oldyoshi", 29}, {"oldkongo", 30},
+    {"battle", 31},      {"battlefield", 31}, {"bf", 31},      {"final", 32},
+    {"fd", 32},          {"finaldestination", 32},
+};
+
+/* Scene "mode" keywords -> {GameModeKind, GmVsMode}. GmVsMode is the index of the VsModeData row
+ * the mode seeds from; -1 means the mode has no VsModeData of its own. */
+static const struct {
+  const char *name;
+  int game_mode; /* GameModeKind */
+  int vs_mode;   /* GmVsMode, or -1 */
+} gw_sl_modes[] = {
+    {"training", 0x1C, 6},  /* GM_TRAINING, GmVsMode_Training */
+    {"vs", 0x02, 0},        /* GM_VS,       GmVsMode_Melee */
+    {"melee", 0x02, 0},
+    {"targettest", 0x0F, -1}, /* GM_TARGET_TEST */
+    {"tt", 0x0F, -1},
+    {"title", 0x00, -1},    /* GM_TITLE */
+    {"menu", 0x01, -1},     /* GM_MENU */
+    {"tiny", 0x1D, 7},      /* GM_TINY_VS,    GmVsMode_Tiny */
+    {"giant", 0x1E, 8},     /* GM_GIANT_VS,   GmVsMode_Giant */
+    {"stamina", 0x1F, 9},   /* GM_STAMINA_VS, GmVsMode_Stamina */
+    {"camera", 0x2A, 3},    /* GM_CAMERA_VS,  GmVsMode_Camera */
+    {"ssd", 0x10, 1},       /* GM_SUPER_SUDDEN_DEATH_VS */
+    {"invisible", 0x11, 2}, /* GM_INVISIBLE_VS */
+    {"slomo", 0x12, 10},    /* GM_SLOMO_VS */
+    {"lightning", 0x13, 11},/* GM_LIGHTNING_VS */
+};
+
+static void gw_sl_player_init(GwSlPlayer *p) {
+  p->ckind = -1;
+  p->random = 0;
+  p->slot_type = -1;
+  p->color = -1;
+  p->cpu_kind = -1;
+  p->cpu_level = -1;
+  p->handicap = -1;
+  p->team = -1;
+  p->stocks = -1;
+  p->nametag = -1;
+}
+
+static void gw_sl_config_init(GwSceneConfig *c) {
+  int i;
+  memset(c, 0, sizeof *c);
+  c->game_mode = -1;
+  c->vs_mode = -1;
+  c->entry_state = -1;
+  c->stage_ext = -1;
+  c->tt_ckind = -1;
+  c->skip_memcard = -1;
+  c->teams = -1;
+  c->time_limit = -1;
+  c->item_freq = -1;
+  for (i = 0; i < GW_SL_SLOTS; ++i) {
+    gw_sl_player_init(&c->p[i]);
+  }
+}
+
+/* Case-insensitive prefix test; returns the rest of `s` past `prefix`, or NULL. */
+static const char *gw_sl_after(const char *s, const char *prefix) {
+  size_t i;
+  for (i = 0; prefix[i] != '\0'; ++i) {
+    char a = s[i], b = prefix[i];
+    if (a >= 'A' && a <= 'Z') a = (char)(a + ('a' - 'A'));
+    if (a != b) return NULL;
+  }
+  return s + i;
+}
+
+static int gw_sl_all_digits(const char *s) {
+  if (*s == '-' || *s == '+') s++;
+  if (*s == '\0') return 0;
+  for (; *s != '\0'; ++s) {
+    if (*s < '0' || *s > '9') return 0;
+  }
+  return 1;
+}
+
+/* Port FighterKind -> port CharacterKind. Retail kinds go through the inverse of
+ * gw_sl_ck_to_fk; m-ex slot i is Ft_Kind_Mex0 + i on one side and ChKind_Mex0 + i on the
+ * other, so the conversion there is +1 - and THAT is the whole "Sonic is 37 or 38" confusion:
+ * he is FighterKind 37 and CharacterKind 38, and both statements are true. */
+int gw_SceneLaunch_FKindToCKind(int fk) {
+  int i;
+  if (fk >= GW_SL_FK_MEX0 && fk < GW_SL_FK_MEX0 + 31) {
+    return GW_SL_CK_MEX0 + (fk - GW_SL_FK_MEX0);
+  }
+  for (i = 0; i < GW_SL_CK_NONE; ++i) {
+    /* Popo appears twice (CKind_PopoNana and ChKind_Popo); the first, playable row wins. */
+    if (gw_sl_ck_to_fk[i] == fk) return i;
+  }
+  return -1;
+}
+
+int gw_SceneLaunch_CKindToFKind(int ck) {
+  if (ck >= GW_SL_CK_MEX0 && ck < GW_SL_CK_MEX0 + 31) {
+    return GW_SL_FK_MEX0 + (ck - GW_SL_CK_MEX0);
+  }
+  return (ck >= 0 && ck < GW_SL_CK_NONE) ? gw_sl_ck_to_fk[ck] : -1;
+}
+
+/* m-ex INTERNAL id -> port CharacterKind, via the fighter runtime's slot table. */
+static int gw_sl_mexint_to_ck(int internal) {
+  extern int gw_Mex_PortKindForInternal(int k);
+  int fk = gw_Mex_PortKindForInternal(internal);
+  return fk >= 0 ? gw_SceneLaunch_FKindToCKind(fk) : -1;
+}
+
+/* Parses a character reference into a CharacterKind. Returns 0 on success.
+ * `*random` is set for the "random" keyword, which is resolved when the scene is seeded. */
+static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
+  extern int gw_Mex_ExtToPortCKind(int ext);
+  const char *rest;
+  int n;
+  *random_out = 0;
+  if (gw_sl_after(v, "random") != NULL && v[6] == '\0') {
+    *ck_out = -1;
+    *random_out = 1;
+    return 0;
+  }
+  if (gw_sl_after(v, "none") != NULL && v[4] == '\0') {
+    *ck_out = GW_SL_CK_NONE;
+    return 0;
+  }
+  if ((rest = gw_sl_after(v, "ck:")) != NULL && gw_sl_all_digits(rest)) {
+    *ck_out = atoi(rest);
+    return 0;
+  }
+  if ((rest = gw_sl_after(v, "fk:")) != NULL && gw_sl_all_digits(rest)) {
+    n = gw_SceneLaunch_FKindToCKind(atoi(rest));
+    if (n < 0) return -1;
+    *ck_out = n;
+    return 0;
+  }
+  if ((rest = gw_sl_after(v, "mexext:")) != NULL && gw_sl_all_digits(rest)) {
+    n = gw_Mex_ExtToPortCKind(atoi(rest));
+    if (n < 0) return -1;
+    *ck_out = n;
+    return 0;
+  }
+  if ((rest = gw_sl_after(v, "mexint:")) == NULL) {
+    rest = gw_sl_after(v, "mex:");
+  }
+  if (rest != NULL && gw_sl_all_digits(rest)) {
+    n = gw_sl_mexint_to_ck(atoi(rest));
+    if (n < 0) return -1;
+    *ck_out = n;
+    return 0;
+  }
+  n = tt_lookup_ckind_name(v);
+  if (n >= 0) {
+    *ck_out = n;
+    return 0;
+  }
+  return -1;
+}
+
+/* Parses a stage reference into an external StKind. Returns 0 on success. */
+static int gw_sl_parse_stage(const char *v, int *ext_out) {
+  extern int gw_Mex_GrKindForExt(int ext);
+  extern int gw_Mex_GrExternalCount(void);
+  const char *rest;
+  size_t i;
+  if ((rest = gw_sl_after(v, "ext:")) != NULL && gw_sl_all_digits(rest)) {
+    *ext_out = atoi(rest);
+    return 0;
+  }
+  if ((rest = gw_sl_after(v, "int:")) != NULL && gw_sl_all_digits(rest)) {
+    /* Only mexData knows the internal <-> external stage map, and it exposes only the forward
+     * direction, so walk it. Without mexData (a vanilla disc) there is no map at all and the two
+     * spaces coincide for the retail stages, which is why the fallback is the identity. */
+    int want = atoi(rest), e, n = gw_Mex_GrExternalCount();
+    for (e = 0; e < n; ++e) {
+      if (gw_Mex_GrKindForExt(e) == want) {
+        *ext_out = e;
+        return 0;
+      }
+    }
+    *ext_out = want;
+    return 0;
+  }
+  for (i = 0; i < sizeof gw_sl_stage_names / sizeof gw_sl_stage_names[0]; ++i) {
+    if (tt_ieq(v, gw_sl_stage_names[i].name)) {
+      *ext_out = gw_sl_stage_names[i].stkind;
+      return 0;
+    }
+  }
+  return -1;
+}
+
+/* One `pN=` value: `<charref>[/<opt>]...`. Returns 0 on success. */
+static int gw_sl_parse_player(const char *v, GwSlPlayer *p) {
+  char buf[128];
+  char *tok, *next;
+  size_t n = strlen(v);
+  if (n >= sizeof buf) return -1;
+  memcpy(buf, v, n + 1);
+  tok = buf;
+  next = strchr(tok, '/');
+  if (next != NULL) *next++ = '\0';
+  if (gw_sl_parse_char(tok, &p->ckind, &p->random) != 0) return -1;
+  while (next != NULL) {
+    const char *rest;
+    tok = next;
+    next = strchr(tok, '/');
+    if (next != NULL) *next++ = '\0';
+    if ((rest = gw_sl_after(tok, "c")) != NULL && gw_sl_all_digits(rest)) {
+      p->color = atoi(rest);
+    } else if ((rest = gw_sl_after(tok, "cpu")) != NULL && gw_sl_all_digits(rest)) {
+      p->slot_type = GW_SL_PK_CPU;
+      p->cpu_level = atoi(rest);
+    } else if (tt_ieq(tok, "cpu")) {
+      p->slot_type = GW_SL_PK_CPU;
+    } else if (tt_ieq(tok, "human") || tt_ieq(tok, "hu")) {
+      p->slot_type = GW_SL_PK_HUMAN;
+    } else if (tt_ieq(tok, "demo") || tt_ieq(tok, "dummy")) {
+      p->slot_type = GW_SL_PK_DEMO;
+    } else if (tt_ieq(tok, "off") || tt_ieq(tok, "na")) {
+      p->slot_type = GW_SL_PK_NA;
+    } else if ((rest = gw_sl_after(tok, "hmp")) != NULL && gw_sl_all_digits(rest)) {
+      p->handicap = atoi(rest);
+    } else if ((rest = gw_sl_after(tok, "team")) != NULL && gw_sl_all_digits(rest)) {
+      p->team = atoi(rest);
+    } else if ((rest = gw_sl_after(tok, "stocks")) != NULL && gw_sl_all_digits(rest)) {
+      p->stocks = atoi(rest);
+    } else if ((rest = gw_sl_after(tok, "kind")) != NULL && gw_sl_all_digits(rest)) {
+      p->cpu_kind = atoi(rest);
+    } else if ((rest = gw_sl_after(tok, "nametag")) != NULL && gw_sl_all_digits(rest)) {
+      p->nametag = atoi(rest);
+    } else {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+/* One `key=value` (or `key value`) pair. Returns 0 on success, -1 when the field is rejected. */
+static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
+  size_t i;
+  if (tt_ieq(key, "mode")) {
+    for (i = 0; i < sizeof gw_sl_modes / sizeof gw_sl_modes[0]; ++i) {
+      if (tt_ieq(val, gw_sl_modes[i].name)) {
+        c->game_mode = gw_sl_modes[i].game_mode;
+        c->vs_mode = gw_sl_modes[i].vs_mode;
+        c->configured = 1;
+        return 0;
+      }
+    }
+    return -1;
+  }
+  if (tt_ieq(key, "at") || tt_ieq(key, "screen")) {
+    if (tt_ieq(val, "css") || tt_ieq(val, "chars")) {
+      c->entry_state = GW_SL_AT_CSS;
+    } else if (tt_ieq(val, "sss") || tt_ieq(val, "stages")) {
+      c->entry_state = GW_SL_AT_SSS;
+    } else if (tt_ieq(val, "match") || tt_ieq(val, "game") || tt_ieq(val, "play")) {
+      c->entry_state = GW_SL_AT_MATCH;
+    } else {
+      return -1;
+    }
+    return 0;
+  }
+  if (tt_ieq(key, "stage")) {
+    return gw_sl_parse_stage(val, &c->stage_ext);
+  }
+  if (key[0] == 'p' && key[1] >= '1' && key[1] <= '4' && key[2] == '\0') {
+    return gw_sl_parse_player(val, &c->p[key[1] - '1']);
+  }
+  if (tt_ieq(key, "skipmemcard")) {
+    c->skip_memcard = (val[0] == '1');
+    return 0;
+  }
+  if (tt_ieq(key, "teams")) {
+    c->teams = (val[0] == '1');
+    return 0;
+  }
+  if (tt_ieq(key, "time")) {
+    if (!gw_sl_all_digits(val)) return -1;
+    c->time_limit = atoi(val);
+    return 0;
+  }
+  if (tt_ieq(key, "items")) {
+    if (!gw_sl_all_digits(val)) return -1;
+    c->item_freq = atoi(val);
+    return 0;
+  }
+  return -1;
+}
+
+/* Parses a whole config string. Separators: ';', ',' or newline. `#` comments to end of line.
+ * A rejected field is logged and counted but does not throw the rest of the config away. */
+static void gw_sl_parse(GwSceneConfig *c, const char *text, const char *source) {
+  const char *s = text;
+  gw_sl_config_init(c);
+  while (*s != '\0') {
+    char key[64], val[160];
+    const char *start;
+    size_t klen = 0, vlen = 0;
+    while (*s == ' ' || *s == '\t' || *s == ';' || *s == ',' || *s == '\n' || *s == '\r') s++;
+    if (*s == '#') {
+      while (*s != '\0' && *s != '\n') s++;
+      continue;
+    }
+    if (*s == '\0') break;
+    start = s;
+    while (*s != '\0' && *s != '=' && *s != ' ' && *s != '\t' && *s != ';' && *s != ',' &&
+           *s != '\n' && *s != '\r') {
+      s++;
+    }
+    klen = (size_t)(s - start);
+    if (klen >= sizeof key) klen = sizeof key - 1;
+    memcpy(key, start, klen);
+    key[klen] = '\0';
+    while (*s == '=' || *s == ' ' || *s == '\t') s++;
+    start = s;
+    while (*s != '\0' && *s != ';' && *s != ',' && *s != '\n' && *s != '\r' && *s != '#') s++;
+    vlen = (size_t)(s - start);
+    while (vlen > 0 && (start[vlen - 1] == ' ' || start[vlen - 1] == '\t')) vlen--;
+    if (vlen >= sizeof val) vlen = sizeof val - 1;
+    memcpy(val, start, vlen);
+    val[vlen] = '\0';
+    if (key[0] == '\0') continue;
+    if (gw_sl_apply(c, key, val) != 0) {
+      c->errors++;
+      gw_log("gw: scene: %s: rejected \"%s=%s\" -- a number in a character or stage field must "
+             "name its index space (ck:/fk:/mex:/mexext:, ext:/int:)",
+             source, key, val);
+    }
+  }
+}
+
+/* The legacy single-purpose variables, folded into the same config so there is one seeding path. */
+static void gw_sl_load_legacy(GwSceneConfig *c) {
+  const char *v;
+  if ((v = getenv("MELEE_TRAINING")) != NULL && v[0] != '\0') {
+    int ck = tt_parse_ckind(v);
+    if (ck >= 0) {
+      c->configured = 1;
+      c->game_mode = 0x1C; /* GM_TRAINING */
+      c->vs_mode = 6;      /* GmVsMode_Training */
+      c->entry_state = GW_SL_AT_MATCH;
+      c->p[0].ckind = ck;
+      gw_log("gw: MELEE_TRAINING=\"%s\" -> CharacterKind %d (= FighterKind %d). Training Mode.",
+             v, ck, gw_SceneLaunch_CKindToFKind(ck));
+    } else {
+      gw_log("gw: MELEE_TRAINING=\"%s\" is not a CharacterKind or a known name -- ignored", v);
+    }
+  }
+  if ((v = getenv("MELEE_TARGET_TEST")) != NULL && v[0] != '\0') {
+    int ck = tt_parse_ckind(v);
+    if (ck >= 0) {
+      c->configured = 1;
+      c->game_mode = 0x0F; /* GM_TARGET_TEST */
+      c->vs_mode = -1;
+      c->tt_ckind = ck;
+      gw_log("gw: MELEE_TARGET_TEST=\"%s\" -> CharacterKind %d (= FighterKind %d). Target Test.",
+             v, ck, gw_SceneLaunch_CKindToFKind(ck));
+    }
+  }
+  if ((v = getenv("MELEE_STAGE")) != NULL && v[0] != '\0') {
+    if (gw_sl_parse_stage(v, &c->stage_ext) != 0 && gw_sl_all_digits(v)) {
+      c->stage_ext = atoi(v); /* historical grammar: a bare integer is an external StKind */
+    }
+    gw_log("gw: MELEE_STAGE=\"%s\" -> external StKind %d", v, c->stage_ext);
+  }
+}
+
+static void gw_sl_log_config(const GwSceneConfig *c) {
+  int i;
+  if (!c->configured) {
+    gw_log("gw: scene: no scene requested (MELEE_SCENE / MELEE_SCENE_FILE / MELEE_TRAINING / "
+           "MELEE_TARGET_TEST unset) -- booting normally");
+    return;
+  }
+  gw_log("gw: scene: mode=%d vsmode=%d at=%d stage=ext:%d skip_memcard=%d errors=%d",
+         c->game_mode, c->vs_mode, c->entry_state, c->stage_ext,
+         c->skip_memcard < 0 ? 1 : c->skip_memcard, c->errors);
+  for (i = 0; i < GW_SL_SLOTS; ++i) {
+    const GwSlPlayer *p = &c->p[i];
+    if (p->ckind < 0 && !p->random) continue;
+    gw_log("gw: scene:   p%d ck=%d (fk=%d) random=%d type=%d color=%d cpu=%d/%d hmp=%d team=%d",
+           i + 1, p->ckind, p->ckind >= 0 ? gw_SceneLaunch_CKindToFKind(p->ckind) : -1, p->random,
+           p->slot_type, p->color, p->cpu_kind, p->cpu_level, p->handicap, p->team);
+  }
+}
+
+static void gw_sl_load(void) {
+  const char *text;
+  char filebuf[4096];
+  if (gw_sl_loaded) return;
+  gw_sl_loaded = 1;
+  gw_sl_config_init(&gw_sl_cfg);
+  text = getenv("MELEE_SCENE");
+  if (text == NULL || text[0] == '\0') {
+    const char *path = getenv("MELEE_SCENE_FILE");
+    if (path != NULL && path[0] != '\0') {
+      FILE *f = fopen(path, "rb");
+      size_t n = 0;
+      if (f != NULL) {
+        n = fread(filebuf, 1, sizeof filebuf - 1, f);
+        fclose(f);
+      } else {
+        gw_log("gw: scene: cannot open MELEE_SCENE_FILE=\"%s\"", path);
+      }
+      filebuf[n] = '\0';
+      text = filebuf;
+      if (n != 0) {
+        gw_log("gw: scene: MELEE_SCENE_FILE=\"%s\" (%u bytes)", path, (unsigned)n);
+      }
+    }
+  } else {
+    gw_log("gw: scene: MELEE_SCENE=\"%s\"", text);
+  }
+  if (text != NULL && text[0] != '\0') {
+    gw_sl_parse(&gw_sl_cfg, text, "MELEE_SCENE");
+  }
+  gw_sl_load_legacy(&gw_sl_cfg);
+  /* Target Test has no VsModeData; gmmultiman.c asks for the character directly, so lift it
+   * out of player 1 when the config spelled it that way. */
+  if (gw_sl_cfg.game_mode == 0x0F && gw_sl_cfg.tt_ckind < 0) {
+    gw_sl_cfg.tt_ckind = gw_sl_cfg.p[0].ckind;
+  }
+  gw_sl_log_config(&gw_sl_cfg);
+}
+
+/* Test entry point: replace the live config with one parsed from `text`, bypassing the
+ * environment entirely. Passing NULL restores "nothing configured". This is what makes every
+ * getenv-backed switch here testable more than once per process - the thing the old
+ * read-once-into-a-static hooks could not do. */
+void gw_SceneLaunch_LoadForTest(const char *text) {
+  gw_sl_loaded = 1;
+  gw_sl_config_init(&gw_sl_cfg);
+  if (text != NULL) {
+    gw_sl_parse(&gw_sl_cfg, text, "test");
+  }
+}
+
+const void *gw_SceneLaunch_ConfigForTest(void) {
+  gw_sl_load();
+  return &gw_sl_cfg;
+}
+
+/* ---- the surface game code calls (gwtool maps `SceneLaunch_X` to `gw_SceneLaunch_X`) ------- */
+
+int gw_SceneLaunch_Active(void) {
+  gw_sl_load();
+  return gw_sl_cfg.configured;
+}
+
+/* The GameModeKind the boot scene should hand over to, or -1 to boot normally. */
+int gw_SceneLaunch_BootGameMode(void) {
+  gw_sl_load();
+  return gw_sl_cfg.configured ? gw_sl_cfg.game_mode : -1;
+}
+
+/* GmVsMode index of the VsModeData row this scene seeds, or -1. */
+int gw_SceneLaunch_VsModeIndex(void) {
+  gw_sl_load();
+  return gw_sl_cfg.configured ? gw_sl_cfg.vs_mode : -1;
+}
+
+/* 0 = CSS, 1 = SSS, 2 = match; -1 leaves the mode's own state machine alone. Defaults to the
+ * match, because "boot into a screen" without further qualification means the playable one. */
+int gw_SceneLaunch_EntryStateId(void) {
+  gw_sl_load();
+  if (!gw_sl_cfg.configured || gw_sl_cfg.vs_mode < 0) return -1;
+  return gw_sl_cfg.entry_state < 0 ? GW_SL_AT_MATCH : gw_sl_cfg.entry_state;
+}
+
+int gw_SceneLaunch_StageExternal(void) {
+  gw_sl_load();
+  return gw_sl_cfg.stage_ext;
+}
+
+int gw_SceneLaunch_TargetTestCKind(void) {
+  gw_sl_load();
+  return gw_sl_cfg.tt_ckind;
+}
+
+int gw_SceneLaunch_Teams(void) {
+  gw_sl_load();
+  return gw_sl_cfg.teams;
+}
+
+int gw_SceneLaunch_TimeLimit(void) {
+  gw_sl_load();
+  return gw_sl_cfg.time_limit;
+}
+
+int gw_SceneLaunch_ItemFreq(void) {
+  gw_sl_load();
+  return gw_sl_cfg.item_freq;
+}
+
+/* The boot memory-card prompt blocks forever without input, and it runs BEFORE the boot scene's
+ * exit handler - which is where the scene hand-over happens. That is exactly why three scripted
+ * launches produced no scene at all: the game was sitting on "there is no save data, create
+ * one?" with Yes highlighted. A scene launch therefore skips the prompt (and disables saving)
+ * by default; `skipmemcard=0` opts back in, and MELEE_SKIP_MEMCARD=1 skips it with no scene. */
+int gw_SceneLaunch_SkipMemcard(void) {
+  gw_sl_load();
+  if (gw_sl_cfg.skip_memcard >= 0) return gw_sl_cfg.skip_memcard;
+  if (gw_sl_cfg.configured) return 1;
+  return gw_Env1("MELEE_SKIP_MEMCARD");
+}
+
+/* Resolves slot `n`'s CharacterKind, drawing a random playable one if the config asked for it.
+ * Called once per slot per seed, so `random` really is random per launch. */
+int gw_SceneLaunch_PlayerCKind(int n) {
+  gw_sl_load();
+  if (n < 0 || n >= GW_SL_SLOTS) return -1;
+  if (gw_sl_cfg.p[n].random) {
+    return (int)(((unsigned)rand()) % GW_SL_CK_PLAYABLE);
+  }
+  return gw_sl_cfg.p[n].ckind;
+}
+
+int gw_SceneLaunch_PlayerSlotType(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].slot_type : -1;
+}
+int gw_SceneLaunch_PlayerColor(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].color : -1;
+}
+int gw_SceneLaunch_PlayerCpuKind(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].cpu_kind : -1;
+}
+int gw_SceneLaunch_PlayerCpuLevel(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].cpu_level : -1;
+}
+int gw_SceneLaunch_PlayerHandicap(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].handicap : -1;
+}
+int gw_SceneLaunch_PlayerTeam(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].team : -1;
+}
+int gw_SceneLaunch_PlayerStocks(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].stocks : -1;
+}
+int gw_SceneLaunch_PlayerNametag(int n) {
+  gw_sl_load();
+  return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].nametag : -1;
+}
+
+/* ================================================================================================
+ * SCENE REPORT -- "what screen am I on, and what is highlighted?"
+ * ================================================================================================
+ * An unattended run has no eyes on it, so the log has to say where the game is. Every mode/state
+ * transition is reported, and so is every change to a cursor a scene chooses to publish. Both are
+ * edge-triggered: a static screen costs one line, not one line a frame. MELEE_SCENE_TRACE=0
+ * turns it off.
+ */
+
+static int gw_sr_enabled = -1;
+
+int gw_SceneReport_Enabled(void) {
+  if (gw_sr_enabled < 0) {
+    const char *v = getenv("MELEE_SCENE_TRACE");
+    gw_sr_enabled = (v == NULL || v[0] != '0');
+  }
+  return gw_sr_enabled;
+}
+
+static const char *gw_sr_mode_name(int m) {
+  static const char *const names[] = {
+      "GM_TITLE", "GM_MENU", "GM_VS", "GM_CLASSIC", "GM_ADVENTURE", "GM_ALLSTAR", "GM_DEBUG",
+      "GM_DEBUG_SOUND_TEST", "GM_HANYU_CSS", "GM_HANYU_SSS", "GM_CAMERA_MODE", "GM_TOY_GALLERY",
+      "GM_TOY_LOTTERY", "GM_TOY_COLLECTION", "GM_DEBUG_VS", "GM_TARGET_TEST",
+      "GM_SUPER_SUDDEN_DEATH_VS", "GM_INVISIBLE_VS", "GM_SLOMO_VS", "GM_LIGHTNING_VS",
+      "GM_CHALLENGER_APPROACH", "GM_CLASSIC_GOVER", "GM_ADVENTURE_GOVER", "GM_ALLSTAR_GOVER",
+      "GM_OPENING_MV", "GM_DEBUG_CUTSCENE", "GM_DEBUG_GOVER", "GM_TOURNAMENT", "GM_TRAINING",
+      "GM_TINY_VS", "GM_GIANT_VS", "GM_STAMINA_VS", "GM_HOME_RUN_CONTEST", "GM_10MAN_VS",
+      "GM_100MAN_VS", "GM_3MIN_VS", "GM_15MIN_VS", "GM_ENDLESS_VS", "GM_CRUEL_VS",
+      "GM_PROGRESSIVE_SCAN", "GM_BOOT", "GM_MEMCARD", "GM_CAMERA_VS", "GM_EVENT",
+      "GM_SINGLE_BUTTON_VS"};
+  return (m >= 0 && m < (int)(sizeof names / sizeof names[0])) ? names[m] : "GM_?";
+}
+
+static const char *gw_sr_scene_name(int s) {
+  static const char *const names[] = {
+      "GS_TITLE", "GS_MENU", "GS_VS", "GS_SUDDEN_DEATH", "GS_TRAINING", "GS_RESULTS", "GS_0x6",
+      "GS_DEBUG_MENU", "GS_CSS", "GS_SSS", "GS_UNK10", "GS_TOY_GALLERY", "GS_TOY_LOTTERY",
+      "GS_TOY_COLLECTION", "GS_INTRO_NORMAL", "GS_REGEND_TOYFALL", "GS_REGEND_CONGRATS",
+      "GS_CUTSCENE_LUIGI", "GS_CUTSCENE_BRINSTAR", "GS_CUTSCENE_EXPLOSION", "GS_CUTSCENE_3KIRBYS",
+      "GS_CUTSCENE_GIANTKIRBY", "GS_CUTSCENE_STARFOX", "GS_CUTSCENE_FZERO", "GS_CUTSCENE_METAL",
+      "GS_CUTSCENE_BOWSERTOY", "GS_CUTSCENE_GIGATRANSFORM", "GS_CUTSCENE_GIGADEFEATED",
+      "GS_MOVIE_OPENING", "GS_MOVIE_END", "GS_MOVIE_HOWTO", "GS_MOVIE_OMAKE15", "GS_INTRO_EASY",
+      "GS_INTRO_ALLSTAR", "GS_GAMEOVER", "GS_COMING_SOON", "GS_TOU_SETUP", "GS_TOU_BRACKET",
+      "GS_TOU_ALT", "GS_PRIZE_INTERFACE", "GS_PROG_SCAN", "GS_APPROACH", "GS_MEMCARD",
+      "GS_STAFFROLL", "GS_CAMERA_VS"};
+  return (s >= 0 && s < (int)(sizeof names / sizeof names[0])) ? names[s] : "GS_?";
+}
+
+/* Called from the mode state machine as each scene is entered and left. `phase` is 0 for enter
+ * and 1 for leave. */
+void gw_SceneReport_State(int phase, int mode, int state_id, int scene_kind) {
+  if (!gw_SceneReport_Enabled()) return;
+  gw_log("scene: %s mode=%s(%d) state=%d screen=%s(%d)", phase == 0 ? "enter" : "leave ",
+         gw_sr_mode_name(mode), mode, state_id, gw_sr_scene_name(scene_kind), scene_kind);
+}
+
+/* Edge-triggered cursor/selection report. `what` names the screen ("memcard", "menu", ...) and
+ * `a`/`b` are whatever that screen's own state is - a highlighted index, a sub-state. Only a
+ * change is logged, so a screen that sits still costs nothing. */
+void gw_SceneReport_Cursor(const char *what, int a, int b) {
+  static const char *last_what;
+  static int last_a = -0x7FFFFFFF, last_b = -0x7FFFFFFF;
+  if (!gw_SceneReport_Enabled()) return;
+  if (what == last_what && a == last_a && b == last_b) return;
+  last_what = what;
+  last_a = a;
+  last_b = b;
+  gw_log("scene: cursor %s a=%d b=%d", what != NULL ? what : "?", a, b);
+}
+
+/* The memory-card prompt, named so an agent reading the log can tell the blocking screen from a
+ * passing one. `decision` is gmscmemcard.c's tickDecision; `option` is 0 = left/Yes, 1 =
+ * right/No. Decision 2/3/5 and 11 are the ones that wait for a button. */
+void gw_SceneReport_Memcard(int decision, int option) {
+  static int last_d = -1, last_o = -1;
+  if (!gw_SceneReport_Enabled()) return;
+  if (decision == last_d && option == last_o) return;
+  last_d = decision;
+  last_o = option;
+  gw_log("scene: cursor memcard decision=%d option=%d (%s) -- %s", decision, option,
+         option == 0 ? "Yes/left" : "No/right",
+         (decision == 2 || decision == 3 || decision == 5 || decision == 11)
+             ? "WAITING FOR A BUTTON"
+             : "working");
+}
+
+/* The main menu tree. `kind` is MenuKind, `hovered`/`confirmed` are MenuFlow's own fields. */
+void gw_SceneReport_Menu(int kind, int hovered, int confirmed) {
+  static int last_k = -1, last_h = -1, last_c = -1;
+  if (!gw_SceneReport_Enabled()) return;
+  if (kind == last_k && hovered == last_h && confirmed == last_c) return;
+  last_k = kind;
+  last_h = hovered;
+  last_c = confirmed;
+  gw_log("scene: cursor menu kind=%d hovered=%d confirmed=%d", kind, hovered, confirmed);
+}
+
+/* ---- scene-launch tests -------------------------------------------------------------------
+ * Headless (`--test`), so they parallelise freely. They cover the two things that actually go
+ * wrong: the index-space conversions, and the grammar's refusal to guess which space a bare
+ * number is in. Parsing is a pure function of a string, so every case here runs in one process -
+ * the thing the old read-once-getenv-into-a-static hooks made impossible. */
+
+#include "gw_test.h"
+
+/* The game's own CharacterKind -> FighterKind table, in the exe's data section (not MEM1, so the
+ * per-test snapshot restore does not touch it). {s8 internal_id, s8 extra_internal_id, s8
+ * has_transformation}, stride 3. Bytes, so no endian accessor is needed. */
+extern const signed char gw_ftMapping_list[];
+
+static int test_scene_ckind_fkind_table(void) {
+  int ck;
+  for (ck = 0; ck < GW_SL_CK_NONE; ++ck) {
+    int want = gw_ftMapping_list[ck * 3];
+    if (gw_sl_ck_to_fk[ck] != want) {
+      gw_test_fail("ck %d: table says FighterKind %d, ftMapping_list says %d", ck,
+                   gw_sl_ck_to_fk[ck], want);
+      return 1;
+    }
+    if (gw_SceneLaunch_CKindToFKind(ck) != want) {
+      gw_test_fail("CKindToFKind(%d) = %d, want %d", ck, gw_SceneLaunch_CKindToFKind(ck), want);
+      return 1;
+    }
+  }
+  /* The permutation really is a permutation, not the identity: Fox is CharacterKind 2 and
+   * FighterKind 1. If this ever stops holding, every "is it 37 or 38" answer changes. */
+  if (gw_SceneLaunch_CKindToFKind(2) != 1 || gw_SceneLaunch_FKindToCKind(1) != 2) {
+    gw_test_fail("Fox: ck 2 <-> fk 1 broken");
+    return 1;
+  }
+  /* m-ex slot i: FighterKind 0x21+i, CharacterKind 0x22+i. Sonic is Akaneia's slot 4, so he is
+   * FighterKind 37 AND CharacterKind 38, and MELEE_TRAINING takes the 38. */
+  if (gw_SceneLaunch_FKindToCKind(37) != 38 || gw_SceneLaunch_CKindToFKind(38) != 37) {
+    gw_test_fail("m-ex slot 4: fk 37 <-> ck 38 broken (got %d / %d)",
+                 gw_SceneLaunch_FKindToCKind(37), gw_SceneLaunch_CKindToFKind(38));
+    return 1;
+  }
+  if (gw_SceneLaunch_FKindToCKind(0x21) != 0x22) {
+    gw_test_fail("m-ex slot 0: fk 0x21 -> ck %d, want 0x22", gw_SceneLaunch_FKindToCKind(0x21));
+    return 1;
+  }
+  return 0;
+}
+
+static int test_scene_parse_training(void) {
+  const GwSceneConfig *c;
+  gw_SceneLaunch_LoadForTest("mode=training;p1=fox");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (!c->configured || c->game_mode != 0x1C || c->vs_mode != 6) {
+    gw_test_fail("mode=training gave mode %d vsmode %d", c->game_mode, c->vs_mode);
+    return 1;
+  }
+  if (c->p[0].ckind != 2) {
+    gw_test_fail("p1=fox gave CharacterKind %d, want 2", c->p[0].ckind);
+    return 1;
+  }
+  if (c->errors != 0) {
+    gw_test_fail("clean config reported %d errors", c->errors);
+    return 1;
+  }
+  /* No `at=`: the default screen is the playable one, state 2 in both GM_VS and GM_TRAINING. */
+  if (gw_SceneLaunch_EntryStateId() != 2) {
+    gw_test_fail("default entry state is %d, want 2", gw_SceneLaunch_EntryStateId());
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
+static int test_scene_index_spaces(void) {
+  const GwSceneConfig *c;
+  /* ck: and fk: name DIFFERENT characters for the same number, which is the whole point. */
+  gw_SceneLaunch_LoadForTest("mode=training;p1=ck:38;p2=fk:37;p3=ck:37");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->p[0].ckind != 38 || c->p[1].ckind != 38) {
+    gw_test_fail("ck:38 -> %d and fk:37 -> %d, both should be CharacterKind 38", c->p[0].ckind,
+                 c->p[1].ckind);
+    return 1;
+  }
+  if (c->p[2].ckind != 37) {
+    gw_test_fail("ck:37 -> %d, want 37 (a DIFFERENT fighter from fk:37)", c->p[2].ckind);
+    return 1;
+  }
+  /* A bare integer is refused rather than guessed. This is the bug this whole mechanism exists
+   * to make impossible: 37 is Sonic's FighterKind and Lucas's CharacterKind. */
+  gw_SceneLaunch_LoadForTest("mode=training;p1=37");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors != 1 || c->p[0].ckind != -1) {
+    gw_test_fail("bare `p1=37` was accepted (errors=%d ckind=%d)", c->errors, c->p[0].ckind);
+    return 1;
+  }
+  /* Names never need a space. */
+  gw_SceneLaunch_LoadForTest("mode=vs;p1=falco;p2=Ganondorf");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->p[0].ckind != 20 || c->p[1].ckind != 25) {
+    gw_test_fail("names: falco -> %d (want 20), ganondorf -> %d (want 25)", c->p[0].ckind,
+                 c->p[1].ckind);
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
+static int test_scene_parse_vs_four(void) {
+  const GwSceneConfig *c;
+  gw_SceneLaunch_LoadForTest(
+      "mode=vs;at=css;p1=fox/c1/hu;p2=falco/cpu5;p3=random/cpu3/team2;p4=marth/cpu9/hmp4;"
+      "stage=fd;teams=1;time=180");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->game_mode != 0x02 || c->vs_mode != 0) {
+    gw_test_fail("mode=vs gave mode %d vsmode %d", c->game_mode, c->vs_mode);
+    return 1;
+  }
+  if (c->entry_state != 0 || gw_SceneLaunch_EntryStateId() != 0) {
+    gw_test_fail("at=css gave entry state %d", c->entry_state);
+    return 1;
+  }
+  if (c->p[0].ckind != 2 || c->p[0].color != 1 || c->p[0].slot_type != GW_SL_PK_HUMAN) {
+    gw_test_fail("p1=fox/c1/hu -> ck %d color %d type %d", c->p[0].ckind, c->p[0].color,
+                 c->p[0].slot_type);
+    return 1;
+  }
+  if (c->p[1].slot_type != GW_SL_PK_CPU || c->p[1].cpu_level != 5) {
+    gw_test_fail("p2=falco/cpu5 -> type %d level %d", c->p[1].slot_type, c->p[1].cpu_level);
+    return 1;
+  }
+  if (!c->p[2].random || c->p[2].team != 2) {
+    gw_test_fail("p3=random/cpu3/team2 -> random %d team %d", c->p[2].random, c->p[2].team);
+    return 1;
+  }
+  if (c->p[3].ckind != 9 || c->p[3].handicap != 4 || c->p[3].cpu_level != 9) {
+    gw_test_fail("p4=marth/cpu9/hmp4 -> ck %d hmp %d level %d", c->p[3].ckind, c->p[3].handicap,
+                 c->p[3].cpu_level);
+    return 1;
+  }
+  if (c->stage_ext != 32 || c->teams != 1 || c->time_limit != 180) {
+    gw_test_fail("rules: stage %d teams %d time %d", c->stage_ext, c->teams, c->time_limit);
+    return 1;
+  }
+  /* A `random` slot resolves to a playable CharacterKind, fresh on each read. */
+  {
+    int i, k;
+    for (i = 0; i < 64; ++i) {
+      k = gw_SceneLaunch_PlayerCKind(2);
+      if (k < 0 || k >= GW_SL_CK_PLAYABLE) {
+        gw_test_fail("random slot produced CharacterKind %d, outside 0..%d", k,
+                     GW_SL_CK_PLAYABLE - 1);
+        return 1;
+      }
+    }
+  }
+  if (c->errors != 0) {
+    gw_test_fail("clean 4-player config reported %d errors", c->errors);
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
+static int test_scene_parse_stage(void) {
+  const GwSceneConfig *c;
+  gw_SceneLaunch_LoadForTest("mode=training;p1=fox;stage=ext:293");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->stage_ext != 293) {
+    gw_test_fail("stage=ext:293 -> %d", c->stage_ext);
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=training;p1=fox;stage=battlefield");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->stage_ext != 31) {
+    gw_test_fail("stage=battlefield -> %d, want 31", c->stage_ext);
+    return 1;
+  }
+  /* Stages have two spaces too (internal GrKind vs external StKind), so a bare number is
+   * refused here for the same reason it is for characters. */
+  gw_SceneLaunch_LoadForTest("mode=training;p1=fox;stage=293");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors != 1 || c->stage_ext != -1) {
+    gw_test_fail("bare `stage=293` was accepted (errors=%d stage=%d)", c->errors, c->stage_ext);
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
+static int test_scene_memcard_default(void) {
+  /* The boot memory-card prompt blocks a headless run forever, so a configured scene skips it
+   * unless the config says otherwise. With no scene, nothing changes. */
+  gw_SceneLaunch_LoadForTest("mode=training;p1=fox");
+  if (!gw_SceneLaunch_SkipMemcard()) {
+    gw_test_fail("a configured scene does not skip the memcard prompt");
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=training;p1=fox;skipmemcard=0");
+  if (gw_SceneLaunch_SkipMemcard()) {
+    gw_test_fail("skipmemcard=0 did not opt back into the prompt");
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest(NULL);
+  if (gw_SceneLaunch_Active()) {
+    gw_test_fail("an empty config still reports a scene");
+    return 1;
+  }
+  return 0;
+}
+
+static int test_scene_parse_file_form(void) {
+  /* MELEE_SCENE_FILE uses the same grammar with newlines and `#` comments, and `key value` is
+   * accepted alongside `key=value` so a config file reads like the .tt mod files. */
+  const GwSceneConfig *c;
+  gw_SceneLaunch_LoadForTest("# a scene file\nmode training\np1 ck:38\nstage ext:293\n"
+                             "at match   # trailing comment\n");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->game_mode != 0x1C || c->p[0].ckind != 38 || c->stage_ext != 293 ||
+      c->entry_state != 2 || c->errors != 0)
+  {
+    gw_test_fail("file form: mode %d ck %d stage %d at %d errors %d", c->game_mode,
+                 c->p[0].ckind, c->stage_ext, c->entry_state, c->errors);
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
+void gw_scene_tests_register(void) {
+  gw_test_register("scene_ckind_fkind_table", test_scene_ckind_fkind_table);
+  gw_test_register("scene_parse_training", test_scene_parse_training);
+  gw_test_register("scene_index_spaces", test_scene_index_spaces);
+  gw_test_register("scene_parse_vs_four", test_scene_parse_vs_four);
+  gw_test_register("scene_parse_stage", test_scene_parse_stage);
+  gw_test_register("scene_memcard_default", test_scene_memcard_default);
+  gw_test_register("scene_parse_file_form", test_scene_parse_file_form);
 }

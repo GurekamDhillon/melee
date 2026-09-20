@@ -9,6 +9,7 @@
 #include <melee/lb/lblanguage.h>
 #include <melee/mn/inlines.h>
 #include <sysdolphin/baselib/controller.h>
+#include "gmscenelaunch.h"
 
 typedef struct {
     bool unk0;
@@ -291,6 +292,12 @@ void gm_Scene_MemCard_OnFrame(void)
         return;
     }
 
+#if defined(TARGET_PC)
+    /* "What screen am I on, and what is highlighted?" for the one screen that blocks a boot.
+     * Edge-triggered on the port side, so a prompt that sits still costs one log line. */
+    SceneReport_Memcard(enter_data.decision, enter_data.unk1C);
+#endif
+
     switch (enter_data.decision) {
     case 0:
         temp_r29 = lb_8001CBBC();
@@ -302,10 +309,25 @@ void gm_Scene_MemCard_OnFrame(void)
          * 0xD) the patch branches straight to the "disable saving and exit" tail instead of
          * showing the prompt. Opt-in: MELEE_MEX=skip_memcard_prompt. */
         extern int Mex_Enabled(const char *);
-        if (Mex_Enabled("skip_memcard_prompt") && (temp_r29 == 0xF || temp_r29 == 0xD)) {
+        /* THE BOOT BLOCKER. This scene is the boot mode's only state, and it waits for a
+         * button whenever the card is missing OR holds no Melee save ("There is no save
+         * data. Create one?", with Yes highlighted). Nothing past it runs until someone
+         * presses A - including gmboot.c's bootOnLeave, which is where a scene launch
+         * hands over to its game mode. An unattended run therefore sat on this prompt
+         * forever and looked exactly like "the scene hook never fired".
+         *
+         * So: a configured scene launch (or MELEE_SKIP_MEMCARD=1) takes the prompt's own
+         * "disable saving and carry on" exit for ANY status, not just the no-card statuses
+         * the m-ex patch covers. Saving is off for that run, which is correct - the run
+         * never answered the question. Set skipmemcard=0 in MELEE_SCENE to opt back in. */
+        if (SceneLaunch_SkipMemcard() ||
+            (Mex_Enabled("skip_memcard_prompt") &&
+             (temp_r29 == 0xF || temp_r29 == 0xD)))
+        {
             enter_data.unk8.unk0 = 0;
             enter_data.decision = tickDecision_20;
             lbCardGame_SetCardStatus(4);
+            SceneReport_Cursor("memcard-skipped", temp_r29, 0);
             break;
         }
 #endif

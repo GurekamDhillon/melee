@@ -21,6 +21,8 @@
 #include <sysdolphin/baselib/leak.h>
 #include <sysdolphin/baselib/perf.h>
 #include <sysdolphin/baselib/sobjlib.h>
+#include <melee/mn/mnmain.h>
+#include "gmscenelaunch.h"
 
 /* 479D30 */ static HSD_GObjLibInitDataType gobj_init_data;
 /* 479D58 */ static struct gm_80479D58_t gm_80479D58;
@@ -286,6 +288,15 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
     lbCardGame_InitScene();
 
     while (temp_r25->unk_C == 0) {
+#if defined(TARGET_PC)
+        /* Which menu, and what is hovered on it. MenuFlow is the menu tree's own state, so
+         * this covers every screen that runs through mnmain - the main menu, the VS and 1P
+         * submenus, the rules screens. Reported edge-triggered, so it is a handful of lines
+         * per run rather than one a frame. The CSS and SSS keep their cursors elsewhere and
+         * are NOT covered yet (see _research/scene-launch.md). */
+        SceneReport_Menu(mn_804A04F0.cur_menu, mn_804A04F0.hovered_selection,
+                         mn_804A04F0.confirmed_selection);
+#endif
         hsd_80392E80();
         gmMainLib_8046B0F0.xC = false;
 

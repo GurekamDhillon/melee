@@ -255,89 +255,69 @@ static void gw_ppc_access_violation(const gw_ppc_machine *m, uint32_t ip, uint32
     gw_panic("ppc: guest access violation at ip=%s ea=0x%08X", gw_ppc_describe(ip), ea);
 }
 
-static uint8_t gw_ppc_ld8(gw_ppc_machine *m, uint32_t ea) {
+/* Resolve an interpreted effective address to the native address that really holds those `size`
+ * bytes, or panic cleanly. Three cases, tried in order:
+ *
+ *   1. a GUEST address naming a game static -> its native storage, through the bridge's exact-base
+ *      guest->native lookup: the statics live in this exe's .data, not in MEM1;
+ *   2. a GUEST address inside MEM1          -> itself (heap, stack, blob code and blob data);
+ *   3. an address that is ALREADY NATIVE    -> itself, when it lies wholly inside a game global.
+ *
+ * Case 3 is not a special case for one function; it is the missing half of case 1. The bridge
+ * translates guest->native at the point of ACCESS, but an engine function reached over the bridge
+ * can RETURN a pointer to a global - grDatFiles_801C6330 ends `return &grDatFiles_8049EE10[i]` -
+ * and nothing translates a returned pointer. Testing the ADDRESS rather than its provenance is
+ * what makes that work no matter how far the pointer travels first: guest code may store it into
+ * a struct in MEM1 and dereference it many frames later, and the load still resolves.
+ *
+ * It is a RANGE test, not an exact-base one, because `&global[i]` is interior for every i != 0 -
+ * an exact-base reverse lookup would miss those and succeed only for i == 0, which is the kind of
+ * half-working that hides a bug rather than reporting it.
+ *
+ * All three cases go through the same big-endian gw_rN/gw_wN accessors: gwtool byte-swaps every
+ * game memory access, so a static's native storage holds big-endian bytes exactly as MEM1 does.
+ *
+ * Note the asymmetry: case 1 cannot bound the access (a bridge entry carries no size), while
+ * cases 2 and 3 do. Case 1 is reached only from an exact symbol base, so it is already as narrow
+ * as the table can express. */
+static uint32_t gw_ppc_resolve_ea(gw_ppc_machine *m, uint32_t ea, uint32_t size) {
     uint32_t native = gw_ppc_static_native(ea);
     if (native != 0) {
-        return gw_r8((const void *)(uintptr_t)native);
+        return native;
     }
-    if (!gw_ppc_ea_ok(ea, 1)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
+    if (gw_ppc_ea_ok(ea, size)) {
+        return ea;
     }
-    return gw_r8((const void *)(uintptr_t)ea);
+    if (gw_mex_bridge_is_native_data(ea, size)) {
+        return ea;
+    }
+    gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
+    return 0; /* not reached: gw_panic does not return */
+}
+
+static uint8_t gw_ppc_ld8(gw_ppc_machine *m, uint32_t ea) {
+    return gw_r8((const void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 1));
 }
 static uint16_t gw_ppc_ld16(gw_ppc_machine *m, uint32_t ea) {
-    uint32_t native = gw_ppc_static_native(ea);
-    if (native != 0) {
-        return gw_r16((const void *)(uintptr_t)native);
-    }
-    if (!gw_ppc_ea_ok(ea, 2)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
-    }
-    return gw_r16((const void *)(uintptr_t)ea);
+    return gw_r16((const void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 2));
 }
 static uint32_t gw_ppc_ld32(gw_ppc_machine *m, uint32_t ea) {
-    uint32_t native = gw_ppc_static_native(ea);
-    if (native != 0) {
-        return gw_r32((const void *)(uintptr_t)native);
-    }
-    if (!gw_ppc_ea_ok(ea, 4)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
-    }
-    return gw_r32((const void *)(uintptr_t)ea);
+    return gw_r32((const void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 4));
 }
 static uint64_t gw_ppc_ld64(gw_ppc_machine *m, uint32_t ea) {
-    uint32_t native = gw_ppc_static_native(ea);
-    if (native != 0) {
-        return gw_r64((const void *)(uintptr_t)native);
-    }
-    if (!gw_ppc_ea_ok(ea, 8)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
-    }
-    return gw_r64((const void *)(uintptr_t)ea);
+    return gw_r64((const void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 8));
 }
 static void gw_ppc_st8(gw_ppc_machine *m, uint32_t ea, uint8_t v) {
-    uint32_t native = gw_ppc_static_native(ea);
-    if (native != 0) {
-        gw_w8((void *)(uintptr_t)native, v);
-        return;
-    }
-    if (!gw_ppc_ea_ok(ea, 1)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
-    }
-    gw_w8((void *)(uintptr_t)ea, v);
+    gw_w8((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 1), v);
 }
 static void gw_ppc_st16(gw_ppc_machine *m, uint32_t ea, uint16_t v) {
-    uint32_t native = gw_ppc_static_native(ea);
-    if (native != 0) {
-        gw_w16((void *)(uintptr_t)native, v);
-        return;
-    }
-    if (!gw_ppc_ea_ok(ea, 2)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
-    }
-    gw_w16((void *)(uintptr_t)ea, v);
+    gw_w16((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 2), v);
 }
 static void gw_ppc_st32(gw_ppc_machine *m, uint32_t ea, uint32_t v) {
-    uint32_t native = gw_ppc_static_native(ea);
-    if (native != 0) {
-        gw_w32((void *)(uintptr_t)native, v);
-        return;
-    }
-    if (!gw_ppc_ea_ok(ea, 4)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
-    }
-    gw_w32((void *)(uintptr_t)ea, v);
+    gw_w32((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 4), v);
 }
 static void gw_ppc_st64(gw_ppc_machine *m, uint32_t ea, uint64_t v) {
-    uint32_t native = gw_ppc_static_native(ea);
-    if (native != 0) {
-        gw_w64((void *)(uintptr_t)native, v);
-        return;
-    }
-    if (!gw_ppc_ea_ok(ea, 8)) {
-        gw_ppc_access_violation(m, m->cpu.pc - 4, ea);
-    }
-    gw_w64((void *)(uintptr_t)ea, v);
+    gw_w64((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 8), v);
 }
 
 /* ---- panics --------------------------------------------------------------------------- */
@@ -1162,7 +1142,12 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
     {
         uint32_t ea = (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb];
         uint32_t v = c->gpr[rs];
-        if (!gw_ppc_ea_ok(ea, 4)) {
+        /* Not gw_ppc_resolve_ea: stwbrx writes raw little-endian bytes, so it addresses memory
+         * directly instead of through the big-endian accessors. It still has to accept the same
+         * three address cases, minus case 1 - a guest static's bytes are not at its guest
+         * address, and a byte-reversed store to one would need the translated pointer, which this
+         * path does not take today (no content does it). */
+        if (!gw_ppc_ea_ok(ea, 4) && !gw_mex_bridge_is_native_data(ea, 4)) {
             gw_ppc_access_violation(m, ip, ea);
         }
         {
@@ -1949,6 +1934,79 @@ static int test_ppc_static_bridge(void) {
     return 0;
 }
 
+/* ---- native-pointer test -------------------------------------------------------------------
+ * The other direction of the static bridge. `ppc_static_bridge` proves that a GUEST address
+ * naming a game static reaches its native storage. This proves the half that was missing: an
+ * address that is ALREADY native, because a bridged engine function RETURNED a pointer to a
+ * global. grDatFiles_801C6330 ends `return &grDatFiles_8049EE10[i]`, and nothing translates a
+ * returned pointer - the guest simply got a host address and dereferenced it, which used to
+ * fault (`ea=0x107819A0`, the Gamecube stage blob).
+ *
+ * The offset is deliberately INTERIOR and not a symbol base: `&global[i]` is interior for every
+ * i != 0, so a reverse lookup keyed on the base would pass this test only by accident at i == 0.
+ *
+ * The address is put in a register with lis/ori, exactly as guest code would hold a pointer it
+ * was handed, so nothing about it says "static" at the point of use - only its VALUE does. */
+
+#define GW_PPC_TEST_NCODE 0x80300280u /* guest code base */
+#define GW_PPC_TEST_NOFF 0x2Cu        /* interior offset into ftData_803C52A0 (size 0x1C0) */
+
+static int test_ppc_native_pointer(void) {
+    int kind = 0;
+    uint32_t native = gw_mex_bridge_lookup(GW_PPC_TEST_STATIC_GUEST, &kind);
+    uint32_t at, expected, got;
+    uint32_t blob[4];
+    unsigned i;
+
+    if (native == 0 || kind != 0) {
+        gw_test_fail("bridge lookup of ftData_803C52A0 (0x803C52A0) failed: native=0x%08X kind=%d",
+                     native, kind);
+        return 1;
+    }
+    at = native + GW_PPC_TEST_NOFF;
+
+    /* The range query must accept the whole interior access and reject one past the object. */
+    if (!gw_mex_bridge_is_native_data(at, 4)) {
+        gw_test_fail("native 0x%08X (ftData_803C52A0+0x%X) not recognised as a game global", at,
+                     GW_PPC_TEST_NOFF);
+        return 1;
+    }
+    /* One past ftData_803C52A0 is NOT a useful negative: the runs are merged, and the next
+     * global starts exactly where this one ends, so the address is legitimately inside the same
+     * run. (That is what the merge is for - .data is contiguous.) The bounds that can be asserted
+     * without pinning a link-order detail are the two that matter: the exe's image base, which is
+     * PE headers rather than game data, and a guest address, which must never be mistaken for a
+     * native one - the two windows are 0x8xxxxxxx and 0x1xxxxxxx and must not overlap. */
+    if (gw_mex_bridge_is_native_data(0x10000000u, 4)) {
+        gw_test_fail("the exe's image base was accepted as game-global storage");
+        return 1;
+    }
+    if (gw_mex_bridge_is_native_data(GW_PPC_TEST_STACK, 4)) {
+        gw_test_fail("guest address 0x%08X was accepted as native game-global storage",
+                     GW_PPC_TEST_STACK);
+        return 1;
+    }
+
+    /* lis r9,hi ; ori r9,r9,lo ; lwz r3,0(r9) ; blr */
+    blob[0] = 0x3D200000u | (at >> 16);
+    blob[1] = 0x61290000u | (at & 0xFFFFu);
+    blob[2] = 0x80690000u;
+    blob[3] = 0x4E800020u;
+    for (i = 0; i < 4; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_NCODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(NULL, NULL, GW_PPC_TEST_NCODE, GW_PPC_TEST_NCODE + (uint32_t)sizeof blob);
+
+    expected = gw_r32((const void *)(uintptr_t)at);
+    got = gw_ppc_call(GW_PPC_TEST_NCODE, NULL, 0, 0, GW_PPC_TEST_STACK);
+    if (got != expected) {
+        gw_test_fail("load through a native pointer returned 0x%08X, expected 0x%08X", got,
+                     expected);
+        return 1;
+    }
+    return 0;
+}
+
 /* ---- re-entry cap test -------------------------------------------------------------------
  * Regression test for the double-jump crash: Sonic's onDoubleJump override calls the very engine
  * function whose dispatch site invoked it, so the interpreter re-entered itself without bound and
@@ -2189,6 +2247,7 @@ void gw_ppc_tests_register(void) {
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
     gw_test_register("ppc_varargs_bridge", test_ppc_varargs_bridge);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
+    gw_test_register("ppc_native_pointer", test_ppc_native_pointer);
     gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
     gw_test_register("ppc_fp_aform_decode", test_ppc_fp_aform_decode);
     gw_test_register("ppc_fcmpu_orderings", test_ppc_fcmpu_orderings);

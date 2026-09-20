@@ -914,6 +914,32 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         imm = (int32_t)(int16_t)(insn & 0xFFFF);
         c->fpr[rd].u64 = gw_ppc_ld64(m, (ra == 0 ? 0 : c->gpr[ra]) + (uint32_t)imm);
         break;
+    /* The update forms of the same two loads. lfs/lfd/stfs/stfsu/stfd were here and lfsu, lfdu
+     * and stfdu were not - an asymmetry with no reason behind it, so it is closed here with the
+     * indexed family rather than left for the next blob to find. */
+    case 49: /* lfsu fD, d(rA) */
+        rd = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            uint32_t bits = gw_ppc_ld32(m, ea);
+            float f;
+            memcpy(&f, &bits, 4);
+            c->fpr[rd].d = (double)f;
+            c->gpr[ra] = ea;
+        }
+        break;
+    case 51: /* lfdu fD, d(rA) */
+        rd = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            c->fpr[rd].u64 = gw_ppc_ld64(m, ea);
+            c->gpr[ra] = ea;
+        }
+        break;
 
     /* ---- stores --------------------------------------------------------------------- */
     case 36: /* stw rS, d(rA) */
@@ -973,6 +999,16 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         ra = (insn >> 16) & 0x1F;
         imm = (int32_t)(int16_t)(insn & 0xFFFF);
         gw_ppc_st64(m, (ra == 0 ? 0 : c->gpr[ra]) + (uint32_t)imm, c->fpr[rs].u64);
+        break;
+    case 55: /* stfdu fS, d(rA) */
+        rs = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            gw_ppc_st64(m, ea, c->fpr[rs].u64);
+            c->gpr[ra] = ea;
+        }
         break;
 
     /* ---- multiple load/store -------------------------------------------------------- */
@@ -1444,6 +1480,76 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
         break;
     }
 
+    /* ---- the X-form floating load/store family ----------------------------------------
+     * ACE's external stage 357 died on `unimplemented opcode word=0x7D87FC2E`, which is
+     * lfsx f12, r7, r31 (primary 31, extended 535). stfiwx below was the only member of this
+     * family the interpreter had, because it is the one the float-to-int idiom needs and that
+     * is the only one content had used. The other eight are the same two address modes
+     * (indexed, indexed-with-update) over the same two widths (single, double) as the d-form
+     * lfs/lfd/stfs/stfd already here, so all of them go in at once rather than waiting for
+     * eight more stages to each find their own.
+     *
+     * The update forms write the effective address back to rA. rA == 0 is an invalid form for
+     * them (there is no r0 base), so, unlike the non-update forms, they do not special-case it.
+     * A single-precision load widens to the double the FPR model stores; a single store
+     * narrows. That is the same conversion the d-form cases do, and it is what `frsp`-free
+     * content depends on. */
+    case 535: /* lfsx fD, rA, rB */
+    {
+        uint32_t bits = gw_ppc_ld32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]);
+        float f;
+        memcpy(&f, &bits, 4);
+        c->fpr[rd].d = (double) f;
+        break;
+    }
+    case 567: /* lfsux fD, rA, rB */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        uint32_t bits = gw_ppc_ld32(m, ea);
+        float f;
+        memcpy(&f, &bits, 4);
+        c->fpr[rd].d = (double) f;
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 599: /* lfdx fD, rA, rB */
+        c->fpr[rd].u64 = gw_ppc_ld64(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]);
+        break;
+    case 631: /* lfdux fD, rA, rB */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        c->fpr[rd].u64 = gw_ppc_ld64(m, ea);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 663: /* stfsx fS, rA, rB */
+    {
+        float f = (float) c->fpr[rs].d;
+        uint32_t bits;
+        memcpy(&bits, &f, 4);
+        gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], bits);
+        break;
+    }
+    case 695: /* stfsux fS, rA, rB */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        float f = (float) c->fpr[rs].d;
+        uint32_t bits;
+        memcpy(&bits, &f, 4);
+        gw_ppc_st32(m, ea, bits);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 727: /* stfdx fS, rA, rB */
+        gw_ppc_st64(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], c->fpr[rs].u64);
+        break;
+    case 759: /* stfdux fS, rA, rB */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        gw_ppc_st64(m, ea, c->fpr[rs].u64);
+        c->gpr[ra] = ea;
+        break;
+    }
     case 983: /* stfiwx fS, rA, rB: store the low 32 bits of fS as a word */
         gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], c->fpr[rs].u32[1]);
         break;
@@ -1726,12 +1832,178 @@ static uint32_t gw_ppc_run(gw_ppc_machine *m) {
     }
 }
 
+/* ---- host-stack arguments to interpreted code -------------------------------------------
+ *
+ * A native engine call site may hand a callback a pointer to one of ITS OWN STACK LOCALS as an
+ * out-parameter. ftcoll.c does it twice:
+ *
+ *     ft_80459A8C[i].active_cb(ground, gobj, (Vec3*) &desc)   ftColl_8007BAC0
+ *     ft_80459A68[i].active_cb(grp, fgp, &wind)               ftColl_GetWindOffsetVec
+ *
+ * On a GameCube that is unremarkable. Here the callback may be an m-ex stage's PPC blob running
+ * on this interpreter, and every interpreted load and store is bounds-checked against guest
+ * MEM1 - which the host stack is not part of. So the callback's `stw r9,0(r30)` dies as
+ *
+ *     ppc: guest access violation at ip=0x81155088 ea=0x001AFDA4
+ *
+ * and takes the stage down with it.
+ *
+ * THE MECHANISM LIVES HERE, not at the call sites, because gw_ppc_call is the one funnel every
+ * native->guest entry in the port passes through: the thunk pool, the execute trap's
+ * trampoline, the Arch_FighterFunc override slots, MoveLogic's four per-state callbacks, the
+ * fighter callback fields and the stage callbacks all end up in this function. Patching the two
+ * call sites we know about would leave the third to be rediscovered from a crash log. Any
+ * argument that points into this thread's host stack, in a frame ABOVE our own, is mirrored
+ * into a scratch block carved off the guest stack; the guest is handed that guest address, and
+ * the bytes are copied back when it returns.
+ *
+ * BYTE ORDER: the copy is RAW in both directions, and that is deliberate, not an oversight.
+ * gwtool byte-swaps EVERY memory access in a game TU, including accesses to that TU's own stack
+ * locals, so a game-compiled function's locals are big-endian exactly like the heap is. From
+ * llvm-objdump of this tree's own object for the wind site above:
+ *
+ *     6a36: 8b 44 24 08   movl 0x8(%esp), %eax     ; wind.z - a plain stack local
+ *     6a3a: 0f c8         bswapl %eax              ; ...read big-endian
+ *
+ * The interpreter already stores big-endian into the scratch, so a raw copy back is exactly
+ * what the caller then reads correctly. Swapping here would hand ftColl_8007BAC0 a byte-
+ * reversed DynamicsDesc pointer, which is the same crash one indirection later.
+ *
+ * WINDOW: the call site knows the object's size and we do not, so a fixed window is mirrored.
+ * That is safe precisely because it is a mirror - bytes the guest never writes are copied back
+ * unchanged, and no frame above us can move while we are running inside it. The window is
+ * clamped to the top of the stack so the copy cannot run off the end.
+ *
+ * FALSE POSITIVES: an integer argument that is not a pointer but happens to land in the live
+ * stack range and be 4-byte aligned would be rewritten. Host stack addresses here are ~1.7 MB,
+ * a magnitude engine callbacks do not pass as counts or flags, and every distinct one is logged
+ * the first time, so a mistake shows up as a log line rather than as silence.
+ */
+#define GW_PPC_HOST_ARG_WINDOW 64u  /* bytes mirrored per host-stack argument */
+#define GW_PPC_HOST_ARG_MAX 8       /* at most one per integer argument */
+#define GW_PPC_HOST_ARG_GUARD 0x40u /* keep the guest's own r1 clear of the scratch */
+
+typedef struct {
+    int n;
+    uint32_t host[GW_PPC_HOST_ARG_MAX];  /* the host address the caller passed */
+    uint32_t guest[GW_PPC_HOST_ARG_MAX]; /* the guest scratch it was replaced with */
+    uint32_t size[GW_PPC_HOST_ARG_MAX];
+} gw_ppc_host_args;
+
+/* Declared by hand rather than pulling <windows.h> into the interpreter: this file is otherwise
+ * free of Windows headers and their macros. kernel32 is already linked. */
+extern __declspec(dllimport) void __stdcall GetCurrentThreadStackLimits(uintptr_t *low,
+                                                                        uintptr_t *high);
+
+/* Mirror every host-stack argument into guest scratch. Returns the guest stack pointer the run
+ * should use (lowered past the scratch when anything was mirrored). */
+static uint32_t gw_ppc_host_args_in(gw_ppc_host_args *hb, uint32_t guest_fn, uint32_t *a, int n,
+                                    uint32_t sp, uint32_t own_frame) {
+    static int logged;
+    uintptr_t slo_p = 0, shi_p = 0;
+    uint32_t slo, shi, top;
+    int i, j;
+
+    hb->n = 0;
+    if (n <= 0) {
+        return sp;
+    }
+    /* The scratch comes off the guest stack, so there has to be a sane one. */
+    if (sp < GW_PPC_MEM1_BASE + 0x1000u ||
+        (uint64_t) sp > (uint64_t) GW_PPC_MEM1_BASE + (uint64_t) gw_mem1_size) {
+        return sp;
+    }
+    /* AND it has to be PLAIN MEM1. gw_ppc_resolve_ea sends any guest address that falls inside
+     * a game global's extent to that global's NATIVE storage instead (gw_ppc_static_native), so
+     * a scratch carved out of such a range is written by the guest somewhere other than where
+     * the copy-back reads it from - which comes back as an out-parameter full of zeros, not as
+     * an error. The statics occupy 0x803B7280..0x804DEA9C and the m-ex guest stack lives at the
+     * top of MEM1, far above them, so this rejects only a misconfigured stack; it says so once
+     * rather than quietly handing the caller nothing. */
+    {
+        uint32_t need = (uint32_t) GW_PPC_HOST_ARG_MAX *
+                        ((GW_PPC_HOST_ARG_WINDOW + 15u) & ~15u);
+        if (sp < GW_PPC_MEM1_BASE + need || !gw_ppc_ea_ok(sp - need, need) ||
+            gw_ppc_static_native(sp - need) != 0u || gw_ppc_static_native(sp - 4u) != 0u) {
+            static int moaned;
+            if (!moaned) {
+                moaned = 1;
+                gw_log("ppc: guest stack 0x%08X cannot hold the host-argument mirror (it is not "
+                       "plain MEM1) - a host-stack out-parameter to guest code will fault",
+                       sp);
+            }
+            return sp;
+        }
+    }
+    GetCurrentThreadStackLimits(&slo_p, &shi_p);
+    slo = (uint32_t) slo_p;
+    shi = (uint32_t) shi_p;
+    if (shi <= slo) {
+        return sp;
+    }
+    /* Only frames ABOVE this one: our own frame and everything below it is scratch that no
+     * caller can be pointing into, and rewriting an argument that names it would be wrong. */
+    if (own_frame > slo) {
+        slo = own_frame;
+    }
+
+    top = sp;
+    for (i = 0; i < n && i < GW_PPC_HOST_ARG_MAX; ++i) {
+        uint32_t v = a[i], sz;
+        if (v < slo || v >= shi || (v & 3u) != 0u) {
+            continue;
+        }
+        for (j = 0; j < hb->n; ++j) {
+            if (hb->host[j] == v) {
+                break; /* the same local passed twice: one mirror, one copy-back */
+            }
+        }
+        if (j < hb->n) {
+            a[i] = hb->guest[j];
+            continue;
+        }
+        sz = GW_PPC_HOST_ARG_WINDOW;
+        if (shi - v < sz) {
+            sz = shi - v;
+        }
+        top -= (sz + 15u) & ~15u;
+        memcpy((void *) (uintptr_t) top, (const void *) (uintptr_t) v, sz);
+        hb->host[hb->n] = v;
+        hb->guest[hb->n] = top;
+        hb->size[hb->n] = sz;
+        ++hb->n;
+        a[i] = top;
+        if (logged < 16) {
+            ++logged;
+            gw_log("ppc: host-stack arg %d (0x%08X) to guest %s mirrored into guest 0x%08X "
+                   "(%u bytes, copied back on return)",
+                   i, v, gw_ppc_describe(guest_fn), top, sz);
+        }
+    }
+    if (hb->n == 0) {
+        return sp;
+    }
+    /* The guest's prologue writes the back chain at r1+0 and the saved LR at r1+4, so leave the
+     * PowerPC linkage area between its stack pointer and the scratch above it. */
+    return top - GW_PPC_HOST_ARG_GUARD;
+}
+
+static void gw_ppc_host_args_out(const gw_ppc_host_args *hb) {
+    int i;
+    for (i = 0; i < hb->n; ++i) {
+        memcpy((void *) (uintptr_t) hb->host[i], (const void *) (uintptr_t) hb->guest[i],
+               hb->size[i]);
+    }
+}
+
 uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,
                      uint32_t sp) {
     gw_ppc_machine saved = gw_ppc_m; /* full reentrant save (cpu + bridge) */
     gw_ppc_ctx *c = &gw_ppc_m.cpu;
+    gw_ppc_host_args hb;
+    uint32_t a[8];
     uint32_t r3;
-    int i;
+    int i, na;
 
     /* Refuse to recurse past the cap, and log the guest chain that got here. */
     if (gw_ppc_depth >= GW_PPC_MAX_DEPTH) {
@@ -1761,6 +2033,17 @@ uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uin
     gw_ppc_entry[gw_ppc_depth] = guest_fn;
     ++gw_ppc_depth;
 
+    /* Copy the arguments out before anything can rewrite one: an argument that points into the
+     * host stack is unusable by interpreted code and gets mirrored into guest memory. */
+    na = 0;
+    if (gpr_args != NULL) {
+        for (i = 0; i < nargs && i < 8; ++i) {
+            a[i] = gpr_args[i];
+        }
+        na = nargs < 8 ? nargs : 8;
+    }
+    sp = gw_ppc_host_args_in(&hb, guest_fn, a, na, sp, (uint32_t) (uintptr_t) &saved);
+
     memset(c, 0, sizeof *c);
     for (i = 0; i < 32; ++i) {
         c->fpr[i].u64 = 0;
@@ -1769,13 +2052,12 @@ uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uin
     c->gpr[2] = rtoc;
     c->lr = 0; /* sentinel: a blr to this returns to the native caller */
     c->pc = guest_fn;
-    if (gpr_args != NULL) {
-        for (i = 0; i < nargs && i < 8; ++i) {
-            c->gpr[3 + i] = gpr_args[i];
-        }
+    for (i = 0; i < na; ++i) {
+        c->gpr[3 + i] = a[i];
     }
 
     r3 = gw_ppc_run(&gw_ppc_m);
+    gw_ppc_host_args_out(&hb);
     --gw_ppc_depth;
     gw_ppc_m = saved;
     return r3;
@@ -1798,6 +2080,9 @@ uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uin
 #define GW_PPC_TEST_CODE 0x80300000u   /* guest code base (inside MEM1) */
 #define GW_PPC_TEST_RESULT 0x80300040u /* guest scratch word the blob writes */
 #define GW_PPC_TEST_STACK 0x80400000u  /* guest stack (unused by this leaf) */
+/* A guest stack that really is MEM1: the game's statics span 0x803B7280..0x804DEA9C, so
+ * GW_PPC_TEST_STACK above is inside one of them. Only tests that actually use the stack care. */
+#define GW_PPC_TEST_STACK_MEM1 0x80380000u
 #define GW_PPC_TEST_HELPER_GUEST 0x80380358u /* fake guest address of the native helper */
 
 static uint32_t gw_ppc_test_helper(uint32_t x, uint32_t a1, uint32_t a2, uint32_t a3,
@@ -2408,6 +2693,132 @@ static int test_ppc_xoris_int_to_float(void) {
     return 0;
 }
 
+/* ---- the X-form floating load/store family ----------------------------------------------
+ * ACE stage 357 needed lfsx and the interpreter had only stfiwx of that family. The blob below
+ * walks all four widths/modes: lfsx and lfdx read, stfsx and stfdx write back, and the *ux
+ * update forms are checked through the base register they are required to advance. A missing
+ * member of this family panics, so reaching the end at all is most of the assertion; the value
+ * and base-register checks catch a member that is present but decoded to the wrong width.
+ *
+ * r5 = scratch base; r6/r7/r8/r9/r10 = 0/8/16/24/32. The *ux forms advance r5 by a NON-ZERO
+ * amount each time, so a member that ignores its base write-back lands its store in the wrong
+ * place and the last two assertions fail.
+ */
+static int test_ppc_fp_indexed(void) {
+    static const uint32_t blob[] = {
+        0x7C25342Eu, /* lfsx   f1, r5, r6   ; f1 = single at +0             */
+        0x7C453CAEu, /* lfdx   f2, r5, r7   ; f2 = double at +8             */
+        0x7C45452Eu, /* stfsx  f2, r5, r8   ; single at +16 = f2            */
+        0x7C254DAEu, /* stfdx  f1, r5, r9   ; double at +24 = f1            */
+        0x7C65546Eu, /* lfsux  f3, r5, r10  ; r5 += 32, f3 = single at +32  */
+        0x7C653D6Eu, /* stfsux f3, r5, r7   ; r5 += 8,  single at +40 = f3  */
+        0x7C853CEEu, /* lfdux  f4, r5, r7   ; r5 += 8,  f4 = double at +48  */
+        0x7C853DEEu, /* stfdux f4, r5, r7   ; r5 += 8,  double at +56 = f4  */
+        0x4E800020u, /* blr                                                 */
+    };
+    uint32_t args[8];
+    unsigned i;
+    float got_s;
+    double got_d;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t) sizeof blob);
+
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 0), 2.5f);
+    gw_wf64((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 8), -7.25);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 16), 0.0f);
+    gw_wf64((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 24), 0.0);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 32), 1.75f);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 40), 0.0f);
+    gw_wf64((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 48), 3.5);
+    gw_wf64((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 56), 0.0);
+
+    args[0] = 0u;                    /* r3  */
+    args[1] = 0u;                    /* r4  */
+    args[2] = GW_PPC_TEST_FDATA;     /* r5  */
+    args[3] = 0u;                    /* r6  */
+    args[4] = 8u;                    /* r7  */
+    args[5] = 16u;                   /* r8  */
+    args[6] = 24u;                   /* r9  */
+    args[7] = 32u;                   /* r10 */
+    gw_ppc_call(GW_PPC_TEST_CODE, args, 8, 0, GW_PPC_TEST_STACK);
+
+    got_s = gw_rf32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 16));
+    if (got_s != -7.25f) {
+        gw_test_fail("stfsx stored %.4f at +16, expected -7.25 (lfdx/stfsx)", (double) got_s);
+        return 1;
+    }
+    got_d = gw_rf64((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 24));
+    if (got_d != 2.5) {
+        gw_test_fail("stfdx stored %.4f at +24, expected 2.5 (lfsx widened to double)", got_d);
+        return 1;
+    }
+    got_s = gw_rf32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 40));
+    if (got_s != 1.75f) {
+        gw_test_fail("stfsux stored %.4f at +40, expected 1.75 - lfsux/stfsux did not advance "
+                     "their base register",
+                     (double) got_s);
+        return 1;
+    }
+    got_d = gw_rf64((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 56));
+    if (got_d != 3.5) {
+        gw_test_fail("stfdux stored %.4f at +56, expected 3.5 - lfdux/stfdux did not advance "
+                     "their base register",
+                     got_d);
+        return 1;
+    }
+    return 0;
+}
+
+/* ---- a HOST-stack out-parameter reaching interpreted code --------------------------------
+ * The whole of stage failure class 1: a native engine call site passes a pointer to one of its
+ * own stack locals into a callback that turns out to be an m-ex blob, e.g.
+ *   ft_80459A8C[i].active_cb(ground, gobj, (Vec3*) &desc)      ftcoll.c, ftColl_8007BAC0
+ * Interpreted stores are bounds-checked against guest MEM1, so without the mirror in
+ * gw_ppc_call that store dies as "guest access violation ... ea=0x001AFxxx".
+ *
+ * This test IS the byte-order claim, not just the plumbing: the local is checked with gw_r32,
+ * i.e. read BIG-ENDIAN, because gwtool byte-swaps a game TU's accesses to its own stack locals
+ * exactly as it does its accesses to the heap. A copy-back that swapped would fail here.
+ */
+static int test_ppc_host_stack_out_param(void) {
+    static const uint32_t blob[] = {
+        0x90640000u, /* stw r3, 0(r4)  -- r4 is the caller's stack local */
+        0x4E800020u, /* blr */
+    };
+    volatile uint32_t out_param = 0u; /* a HOST stack local, exactly like ftcoll.c's `desc` */
+    const uint32_t value = 0x12345678u;
+    uint32_t args[2];
+    unsigned i;
+    uint32_t got;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t) sizeof blob);
+
+    args[0] = value;                                   /* r3 */
+    args[1] = (uint32_t) (uintptr_t) &out_param;       /* r4: a host stack address */
+    /* NOT GW_PPC_TEST_STACK. That address, 0x80400000, sits inside a game global's guest extent,
+     * which the other tests never notice because none of them touches the stack. The mirror does
+     * - it is carved off the stack top - and there an interpreted store goes to the global's
+     * native storage while the copy-back reads MEM1, so the test failed with a zero. */
+    gw_ppc_call(GW_PPC_TEST_CODE, args, 2, 0, GW_PPC_TEST_STACK_MEM1);
+
+    got = gw_r32((const void *) (uintptr_t) &out_param);
+    if (got != value) {
+        gw_test_fail("host-stack out-parameter holds 0x%08X (raw 0x%08X), expected 0x%08X "
+                     "big-endian - the mirror or its copy-back is wrong",
+                     got, (unsigned) out_param, value);
+        return 1;
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
@@ -2418,4 +2829,6 @@ void gw_ppc_tests_register(void) {
     gw_test_register("ppc_fp_aform_decode", test_ppc_fp_aform_decode);
     gw_test_register("ppc_fcmpu_orderings", test_ppc_fcmpu_orderings);
     gw_test_register("ppc_xoris_int_to_float", test_ppc_xoris_int_to_float);
+    gw_test_register("ppc_fp_indexed", test_ppc_fp_indexed);
+    gw_test_register("ppc_host_stack_out_param", test_ppc_host_stack_out_param);
 }

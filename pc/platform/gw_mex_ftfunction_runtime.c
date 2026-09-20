@@ -120,6 +120,16 @@ static int gw_mex_slot_of_internal(int k);
  * (m-ex "Standalone Functions/calloc.asm"). Dedede's and Lucas's OnLoad call it; without it
  * the interpreter's resolver returned NULL and the run died at 0x803D706C. */
 #define GW_MEX_GUEST_CALLOC       0x803D706Cu /* m-ex calloc(size) */
+/* m-ex SFX_PlayStageSFX(sfx_id): play a sound from the CURRENT STAGE's own bank, by an index
+ * relative to that bank rather than by a global sfx id. Akaneia's and ACE's GrOPz (Planet Zebes
+ * 64, external 291) call it and died on "resolver returned NULL for guest address 0x803D7078".
+ *
+ * Reimplemented from the behaviour of m-ex's own C2 payload, disassembled out of codes.gct
+ * (`dump_gct.py --addr 0x803D7078 --disasm`), not from its source: it reads `stage_info.grkind`,
+ * indexes m-ex's Arch_Map_Audio table (stride 3) at byte 0 to get that stage's sfx GROUP, and
+ * calls the retail `Ground_801C53EC(group * 10000 + sfx_id)`. The *10000 encoding is the vanilla
+ * one - grbigblueroute.c passes 0x77A16 = group 49, sound 518 - so nothing new is invented here. */
+#define GW_MEX_GUEST_PLAY_STAGE_SFX 0x803D7078u
 #define GW_MEX_GUEST_HSD_MEMALLOC 0x8037F1E4u /* vanilla HSD_MemAlloc, called by the above */
 #define GW_MEX_GUEST_GXLINK_CLEAR 0x8039084Cu /* HSD_GObjGXLink_8039084C (gobj->gx_link is NONE) */
 #define GW_MEX_GUEST_SETUP_GXLINK 0x8039069Cu /* GObj_SetupGXLink(cb=guest 0x80000BDC) */
@@ -1636,19 +1646,124 @@ void *gw_Mex_ItemCustomLogic(int kind) {
     return (void *) (uintptr_t) entry;
 }
 
+/* MEX_GetData(id) - m-ex's one accessor for everything in MxDt.dat, by an index into its own
+ * `enum MEX_GETDATA` (MexTK/include/mxdt.h). This shim used to answer id 8 and return NULL for
+ * every other id, and NULL is not a refusal a blob checks: m-ex's own MEX_GetMexData() is
+ * `MEX_GetData(MXDT_MEXDATA)` and the caller dereferences the result immediately. That is stage
+ * failure classes 2 and 3 in their entirety - six stages across the two discs, all dying inside
+ * their own code on a NULL base:
+ *
+ *   ak 301/304/305, ace 304   ea=0x00000028   lwz r9,0x28(r28)  = mexData->Arch_Map
+ *   ak 302/308                ea=0x00000008   a different field off the same NULL
+ *
+ * Three different blob IPs, two missing return values: MXDT_MEXDATA (16) and MXDT_FTNAME (12).
+ *
+ * The id -> value mapping is not guessed. m-ex ships MEX_GetData as a C2 payload at guest
+ * 0x803D7094 and it is a 19-entry jump table of rtoc-relative loads; disassembling it
+ * (`tools/mex_port/dump_gct.py --addr 0x803D7094 --disasm`) shows that ids 10..16 are all
+ * reachable from ONE pointer - the mexData root at rtoc+376:
+ *
+ *   16 MXDT_MEXDATA        rtoc+376                      = the root
+ *   10 MXDT_GREXTLOOKUP    root->[0x28]->[0x00]          (0x28 is Arch_Map, as gw_mex_graudio.c
+ *   11 MXDT_GRNAME         root->[0x28]->[0x10]           already assumes)
+ *   12 MXDT_FTNAME         root->[0x08]->[0x00]          (0x08 is Arch_Fighter)
+ *   13 MXDT_FTDAT          root->[0x08]->[0x04]
+ *   15 MXDT_FTEMBLEMLOOKUP root->[0x08]->[0x08]
+ *   14 MXDT_FTKINDDESC     root->[0x08]->[0x0C]
+ *
+ * so all seven are answered here for the price of the root the port already has. The remaining
+ * ids are separate rtoc slots the port does not build; they still return 0, but each distinct
+ * one is now named in the log the first time it is asked for. That is the difference between
+ * "the next gap is a crash somewhere in a blob" and "the next gap is MXDT_GRDESC". */
+enum {
+    GW_MXDT_FTCOSTUMEARCHIVE = 8, /* OFST_Char_CostumeRuntimePointers - its own rtoc slot */
+    GW_MXDT_GREXTLOOKUP = 10,     /* Arch_Map + 0x00 : internal stage id -> external id */
+    GW_MXDT_GRNAME = 11,          /* Arch_Map + 0x10 : stage names */
+    GW_MXDT_FTNAME = 12,          /* Arch_Fighter + 0x00 : fighter names, by external id */
+    GW_MXDT_FTDAT = 13,           /* Arch_Fighter + 0x04 : fighter file descs, by internal id */
+    GW_MXDT_FTEMBLEMLOOKUP = 14,  /* Arch_Fighter + 0x08 */
+    GW_MXDT_FTKINDDESC = 15,      /* Arch_Fighter + 0x0C */
+    GW_MXDT_MEXDATA = 16          /* the MxDt.dat root itself */
+};
+
+/* A big-endian pointer read out of mexData, validated as guest memory. Anything that is not a
+ * plausible MEM1 address comes back as 0 rather than as a wild pointer one dereference later. */
+static uint32_t gw_mex_mexdt_ptr(uint32_t at) {
+    uint32_t v;
+    if (at < 0x80000000u || at + 4u > 0x80000000u + gw_mem1_size) {
+        return 0u;
+    }
+    v = gw_r32((const void *) (uintptr_t) at);
+    if (v < 0x80000000u || v >= 0x80000000u + gw_mem1_size) {
+        return 0u;
+    }
+    return v;
+}
+
+/* mexData -> one of its sub-archives -> a field of that sub-archive, the two-step m-ex's own
+ * jump table does for ids 10..15. `arch` is the mexData field holding the sub-archive pointer
+ * (0x08 Arch_Fighter, 0x28 Arch_Map) and `field` the offset within it. */
+static uint32_t gw_mex_mexdt_field(uint32_t root, uint32_t arch, uint32_t field) {
+    uint32_t a = gw_mex_mexdt_ptr(root + arch);
+    return a != 0u ? gw_mex_mexdt_ptr(a + field) : 0u;
+}
+
 static uint32_t gw_mex_shim_get_data(uint32_t id, uint32_t a1, uint32_t a2, uint32_t a3,
                                      uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
-    static int logged;
+    static uint32_t moaned;
     (void)a1; (void)a2; (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
-    if (!logged) {
-        logged = 1;
-        gw_log("interp: MEX_GetData(id=%u) -> synthetic buffer 0x%08X (OFST_* metadata not built)",
-               id, gw_mex_getdata_buf);
+    {
+        extern uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size);
+        uint32_t root = gw_Mex_MexData(NULL, NULL);
+        uint32_t r = 0u;
+        int known = 1;
+        switch (id) {
+        case GW_MXDT_MEXDATA:
+            r = root;
+            break;
+        case GW_MXDT_GREXTLOOKUP:
+            r = gw_mex_mexdt_field(root, 0x28u, 0x00u);
+            break;
+        case GW_MXDT_GRNAME:
+            r = gw_mex_mexdt_field(root, 0x28u, 0x10u);
+            break;
+        case GW_MXDT_FTNAME:
+            r = gw_mex_mexdt_field(root, 0x08u, 0x00u);
+            break;
+        case GW_MXDT_FTDAT:
+            r = gw_mex_mexdt_field(root, 0x08u, 0x04u);
+            break;
+        case GW_MXDT_FTEMBLEMLOOKUP:
+            r = gw_mex_mexdt_field(root, 0x08u, 0x08u);
+            break;
+        case GW_MXDT_FTKINDDESC:
+            r = gw_mex_mexdt_field(root, 0x08u, 0x0Cu);
+            break;
+        case GW_MXDT_FTCOSTUMEARCHIVE:
+            /* Its own rtoc slot, not a mexData field: the port has no real one, so hand back the
+             * synthetic buffer whose per-kind slots point at a zeroed sub-region - onLoad's
+             * costume lookup then reads NULL and skips instead of faulting on an unbuilt table. */
+            r = gw_mex_getdata_buf;
+            break;
+        default:
+            known = 0;
+            break;
+        }
+        if (known) {
+            if (id < 32u && (moaned & (1u << id)) == 0u) {
+                moaned |= 1u << id;
+                gw_log("interp: MEX_GetData(id=%u) -> 0x%08X", id, r);
+            }
+            return r;
+        }
     }
-    /* id 8 = CostumeSymbol = OFST_Char_CostumeRuntimePointers. Hand back the synthetic buffer,
-     * whose per-kind slots point at a zeroed sub-region so onLoad's costume lookup reads NULL and
-     * skips (rather than faulting on an unbuilt table). Other ids are unused by onLoad. */
-    return (id == 8u) ? gw_mex_getdata_buf : 0u;
+    if (id < 32u && (moaned & (1u << id)) == 0u) {
+        moaned |= 1u << id;
+        gw_log("interp: MEX_GetData(id=%u) is not built in the port yet - returning NULL. If a "
+               "blob dereferences it the fault will be a small offset off address 0.",
+               id);
+    }
+    return 0u;
 }
 
 /* MEX_GetFtItemID(fighter_gobj, n): the fighter's n-th article as a GLOBAL item kind. A pure
@@ -1930,6 +2045,33 @@ static uint32_t gw_mex_call_native(uint32_t guest_addr, uint32_t a0, uint32_t a1
     return ((gw_ppc_native_fn) (uintptr_t) native)(a0, a1, a2, a3, 0, 0, 0, 0);
 }
 
+/* SFX_PlayStageSFX(sfx_id) - see GW_MEX_GUEST_PLAY_STAGE_SFX above for where the formula comes
+ * from. Returns 0 and logs once if the stage has no audio row, which is what happens on a disc
+ * whose mexData carries no Arch_Map_Audio: no sound is better than a dead run. */
+static uint32_t gw_mex_shim_play_stage_sfx(uint32_t sfx_id, uint32_t a1, uint32_t a2, uint32_t a3,
+                                           uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    extern uint8_t gw_stage_info[]; /* StageInfo, guest 0x8049E6C8, a native game global */
+    extern int gw_Mex_GrAudioByte(int grkind, int which);
+    extern void gw_Ground_801C53EC(int sfx_id);
+    static int moaned;
+    int grkind, group;
+    (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+
+    grkind = (int) gw_r32(gw_stage_info + 0x88); /* stage_info.grkind, big-endian like all of it */
+    group = gw_Mex_GrAudioByte(grkind, 0);
+    if (group <= 0) {
+        if (!moaned) {
+            moaned = 1;
+            gw_log("interp: SFX_PlayStageSFX(%u): internal stage %d has no m-ex audio group - "
+                   "the stage runs, its own sounds stay silent",
+                   sfx_id, grkind);
+        }
+        return 0u;
+    }
+    gw_Ground_801C53EC(group * 10000 + (int) sfx_id);
+    return 0u;
+}
+
 /* HSD_GObjGXLink_8039084C(gobj): no callback argument, so no translation is needed. It used to
  * be skipped outright; it is a plain engine call and now runs for real. */
 static uint32_t gw_mex_shim_gxlink_clear(uint32_t gobj, uint32_t a1, uint32_t a2, uint32_t a3,
@@ -2092,6 +2234,8 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
         return gw_mex_shim_get_data;
     case GW_MEX_GUEST_CALLOC:
         return gw_mex_shim_calloc;
+    case GW_MEX_GUEST_PLAY_STAGE_SFX:
+        return gw_mex_shim_play_stage_sfx;
     case GW_MEX_GUEST_GXLINK_CLEAR:
         return gw_mex_shim_gxlink_clear;
     case GW_MEX_GUEST_SETUP_GXLINK:

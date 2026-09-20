@@ -20,6 +20,17 @@ uint32_t gw_mex_bridge_lookup(uint32_t guest_addr, int *kind);
 /* Number of entries (for tests/diagnostics). */
 uint32_t gw_mex_bridge_count(void);
 
+/* The reverse question, by RANGE: does [native_addr, native_addr + size) lie wholly inside one of
+ * the game's globals as this exe lays them out? A bridged engine function can RETURN a pointer to
+ * a global (grDatFiles_801C6330 ends `return &grDatFiles_8049EE10[i]`), and that pointer is a host
+ * address, because the game's globals live in the exe's .data rather than in MEM1. Interpreted
+ * code then dereferences it - possibly long after, out of a field it was stored in - so the
+ * interpreter must recognise such an address on the ordinary load/store path.
+ *
+ * By range and not by base: `&global[i]` is interior for every i != 0, so an exact-base lookup
+ * would miss those and succeed only for i == 0. */
+int gw_mex_bridge_is_native_data(uint32_t native_addr, uint32_t size);
+
 #ifdef __cplusplus
 }
 #endif

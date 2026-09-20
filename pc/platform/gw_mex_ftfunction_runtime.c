@@ -666,6 +666,14 @@ int gw_Mex_AnnouncerForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 
  * grid is denser than retail's 25, so the retail hand covers too much of it). params[2] is the
  * 1P level-text Y offset (AdjustLevelTextOffset). 1.0 when there is no mexData, so a caller can
  * multiply unconditionally. */
+/* MELEE_CSS_TRACE=0 silences the CSS diagnostic in mncharsel.c; anything else (or unset) leaves
+ * it on. It is the only view we have of the character select screen's state, because that screen
+ * cannot be reached from a headless --test run. */
+int gw_Mex_CssTraceEnabled(void) {
+    const char *v = getenv("MELEE_CSS_TRACE");
+    return (v == NULL || v[0] != '0') ? 1 : 0;
+}
+
 float gw_Mex_MenuParamF(int i) {
     uint32_t menu, params, p;
     if (i < 0 || i > 7 || gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
@@ -2811,6 +2819,146 @@ void gw_mex_ftfunction_runtime_tests_register(void);
  * internal-kind (31) mapping. Get the mapping wrong and it returns another fighter's item. Skips
  * on a disc without MxDt.dat (vanilla). Loads at a fixed scratch address, not the HSD heap. */
 #define GW_MEXDT_TEST_BASE 0x80600000u
+/* The CSS icon table's index chain, end to end: icon -> m-ex EXTERNAL id -> INTERNAL id -> port
+ * slot -> port CharacterKind, which is what mnCharSel_MexSetup writes into icons[].char_kind and
+ * what everything downstream (unlock state, portrait, the selected fighter) keys off.
+ *
+ * The invariant that matters is INJECTIVITY: two icons must never resolve to the same port
+ * CharacterKind. If they do, one character's row overwrites the other's and the CSS shows one of
+ * them twice while the other vanishes. Logged in full so the chain can be read off a --test run
+ * without the game's CSS ever being entered. Skipped on a disc without MxDt.dat. */
+static int test_mex_css_icon_map(void) {
+    uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
+    uint32_t root, tbl;
+    int rc = 0, n, i, j;
+    int ext[64], internal[64], slot[64], ck[64];
+    root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base,
+                           &gw_mexdt_size);
+    if (root == 0u) {
+        gw_log("test mex_css_icon_map: no MxDt.dat on this disc - skipped");
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 0;
+    }
+    gw_mexdt = root;
+    n = gw_Mex_CssIconCount();
+    tbl = (uint32_t) (uintptr_t) gw_Mex_CssIconTable();
+    if (n <= 0 || n > 64 || tbl == 0u) {
+        gw_test_fail("CSS icon table unavailable (count %d, table 0x%08X)", n, tbl);
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 1;
+    }
+    for (i = 0; i < n; ++i) {
+        /* CSSIcon (mn/types.h, stride 0x1C): +0x01 char_kind is the m-ex EXTERNAL id. */
+        ext[i] = *(const uint8_t *) (uintptr_t) (tbl + (uint32_t) i * 0x1Cu + 1u);
+        internal[i] = gw_Mex_InternalForExt(ext[i]);
+        slot[i] = internal[i] >= 0 ? gw_mex_slot_of_internal(internal[i]) : -1;
+        ck[i] = gw_Mex_ExtToPortCKind(ext[i]);
+        gw_log("test mex_css_icon_map: icon %2d ext %2d internal %3d slot %3d -> CKind %3d  %s",
+               i, ext[i], internal[i], slot[i], ck[i],
+               internal[i] >= 0 ? (gw_Mex_FtPlFile(internal[i]) != NULL
+                                       ? gw_Mex_FtPlFile(internal[i])
+                                       : "(retail)")
+                                : "(no internal)");
+    }
+    for (i = 0; i < n; ++i) {
+        if (ck[i] < 0) {
+            continue; /* the port does not have this fighter: hidden, not a collision */
+        }
+        for (j = i + 1; j < n; ++j) {
+            if (ck[j] == ck[i]) {
+                gw_test_fail("CSS icons %d (ext %d) and %d (ext %d) both resolve to CKind %d - "
+                             "one overwrites the other's row",
+                             i, ext[i], j, ext[j], ck[i]);
+                rc = 1;
+            }
+        }
+    }
+    gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+    return rc;
+}
+
+/* What ftData_MexInitKinds() actually leaves in the port's per-kind fighter tables.
+ *
+ * The CSS symptoms (a character missing from the grid, another unselectable) and the in-match
+ * symptoms (a character rendering as the wrong model, another with the wrong colours) would both
+ * follow from one fighter's row displacing another's. This runs the REAL registration against the
+ * REAL disc and prints the rows, so that question is answered from the tables themselves rather
+ * than from a screenshot.
+ *
+ * mexData is put at the test base FIRST, so the registration reads it without needing the game's
+ * heaps. Every table below is game memory: big-endian, read through gw_r32.
+ *
+ * The assertion is narrow and structural - each kind's Pl file must be the one MxDt.dat names for
+ * it, and each kind's costume files must belong to that same fighter (they share the Pl file's
+ * "PlXx" stem). A row that has picked up another fighter's data fails on the stem. */
+static int test_mex_ftdata_rows(void) {
+    extern void gw_ftData_MexInitKinds(void);
+    extern uint8_t gw_ftData_803C1F40[];   /* StringPair[Ft_Kind_Max]        {file, symbol} */
+    extern uint8_t gw_ftData_803C2360[];   /* Fighter_CostumeStrings*[Ft_Kind_Max]          */
+    extern uint8_t gw_CostumeListsForeachCharacter[]; /* {UnkCostumeStruct*; u8 n} [Ft_Kind_Max] */
+    uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
+    uint32_t root;
+    int rc = 0, fk;
+
+    root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base,
+                           &gw_mexdt_size);
+    if (root == 0u) {
+        gw_log("test mex_ftdata_rows: no MxDt.dat on this disc - skipped");
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 0;
+    }
+    gw_mexdt = root;
+    gw_ftData_MexInitKinds();
+
+    for (fk = 0; fk < GW_PORT_FT_MEX0 + GW_MEX_SLOTS; ++fk) {
+        uint32_t pl = gw_r32(gw_ftData_803C1F40 + (uint32_t) fk * 8u);
+        uint32_t sym = gw_r32(gw_ftData_803C1F40 + (uint32_t) fk * 8u + 4u);
+        uint32_t strs = gw_r32(gw_ftData_803C2360 + (uint32_t) fk * 4u);
+        uint32_t ncost = gw_r8(gw_CostumeListsForeachCharacter + (uint32_t) fk * 8u + 4u);
+        const char *plname = pl != 0u ? (const char *) (uintptr_t) pl : NULL;
+        char stem[8];
+        uint32_t c;
+        int internal = gw_Mex_InternalForPortKind(fk);
+        const char *want = internal >= 0 ? gw_Mex_FtPlFile(internal) : NULL;
+
+        if (plname == NULL) {
+            continue; /* an empty m-ex slot, or a kind this disc does not define */
+        }
+        /* "PlFx.dat" -> "PlFx": the stem every one of that fighter's costume files starts with. */
+        memcpy(stem, plname, 4);
+        stem[4] = '\0';
+        gw_log("test mex_ftdata_rows: kind %2d internal %3d  %-9s %-16s %u costumes", fk, internal,
+               plname, sym != 0u ? (const char *) (uintptr_t) sym : "(none)", ncost);
+        if (want != NULL && strcmp(want, plname) != 0) {
+            gw_test_fail("kind %d has Pl file %s but MxDt.dat gives internal %d the file %s", fk,
+                         plname, internal, want);
+            rc = 1;
+        }
+        for (c = 0; c < ncost && strs != 0u; ++c) {
+            uint32_t f = gw_r32((const void *) (uintptr_t) (strs + c * 12u));
+            uint32_t jn = gw_r32((const void *) (uintptr_t) (strs + c * 12u + 4u));
+            uint32_t mn = gw_r32((const void *) (uintptr_t) (strs + c * 12u + 8u));
+            const char *fn = f != 0u ? (const char *) (uintptr_t) f : NULL;
+            gw_log("test mex_ftdata_rows:     costume %u  %-12s %-22s %s", c,
+                   fn != NULL ? fn : "(none)",
+                   jn != 0u ? (const char *) (uintptr_t) jn : "(none)",
+                   mn != 0u ? (const char *) (uintptr_t) mn : "(none)");
+            if (fn == NULL) {
+                gw_test_fail("kind %d (%s) costume %u has no file", fk, plname, c);
+                rc = 1;
+                continue;
+            }
+            if (strncmp(fn, stem, 4) != 0) {
+                gw_test_fail("kind %d (%s) costume %u is %s - another fighter's file", fk, plname,
+                             c, fn);
+                rc = 1;
+            }
+        }
+    }
+    gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+    return rc;
+}
+
 static int test_mex_ft_item_id_sonic(void) {
     uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
     uint32_t root, got;
@@ -3334,6 +3482,8 @@ static int test_mex_all_override_slots_wired(void) {
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
+    gw_test_register("mex_css_icon_map", test_mex_css_icon_map);
+    gw_test_register("mex_ftdata_rows", test_mex_ftdata_rows);
     gw_test_register("bridge_lookup_memcpy", test_bridge_lookup_memcpy);
     gw_test_register("bridge_lookup_global", test_bridge_lookup_global);
     gw_test_register("bridge_lookup_miss", test_bridge_lookup_miss);

@@ -500,3 +500,22 @@ int gw_CARDGetXferredBytes(int chan) {
   }
   return (int)CARDGetXferredBytes(chan);
 }
+
+/* __CARDSync(chan): block until the channel's current operation finishes, and return its result.
+ *
+ * It is an INTERNAL CARD symbol, not part of the public API, so nothing in the port defined it and
+ * the bridge had no entry - a guest blob branching there died with "resolver returned NULL for
+ * guest address 0x80353424". Akaneia's /GrGc.dat (internal stage 89) does exactly that: 34,844
+ * bytes of stage code, against 300-1,300 for an ordinary stage, and it reads the memory card.
+ *
+ * The contract is satisfiable here rather than guessed at. Every operation this shim offers
+ * completes INLINE before it returns - the file header above says so, and CARDRead/CARDWrite do
+ * the work and then queue the game's callback - so by the time any caller can reach __CARDSync
+ * there is nothing left in flight. CARD_RESULT_READY is therefore the true answer, not a
+ * placeholder, and CARD_RESULT_NOCARD when no card is mounted keeps it honest for the one case
+ * where it would be a lie.
+ */
+int gw___CARDSync(int chan) {
+  (void)chan;
+  return gw_card_ready ? CARD_RESULT_READY : CARD_RESULT_NOCARD;
+}

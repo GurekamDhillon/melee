@@ -2320,10 +2320,10 @@ static void lbAudioAx_MexStageAudio(void)
     extern int Mex_GrAudioByte(int, int);
     int cap = ARRAY_SIZE(s32_arr_803BB6B0);
     int n = Mex_GrAudioCount();
-    int i, k, filled;
+    int i, k, filled, tail;
 
-    if (n <= 0) {
-        return;
+    if (n < 0) {
+        n = 0;
     }
     if (n > cap) {
         OSReport("lbAudioAx: m-ex has %d internal stages, the port's audio table holds %d\n", n,
@@ -2347,13 +2347,20 @@ static void lbAudioAx_MexStageAudio(void)
             s32_arr_803BB6B0[i][1] = s32_arr_803BB6B0[i][2] = 1;
         }
     }
-    /* Rows past the last real stage would otherwise be zero - and bank 0 is a real bank, not
-     * "none". Make them explicitly empty so a stray index is silent rather than wrong. */
-    for (i = n; i < cap; i++) {
+    /* Rows past the last real stage would otherwise be ZERO - and bank 0 is a real bank, not
+     * "none". Make them explicitly empty so a stray index is silent rather than wrong.
+     *
+     * With no mexData (a vanilla disc) nothing above was rewritten, so the tail starts at 0x6F,
+     * the end of the compiled-in initialiser: the rows THIS PORT added past retail. Starting it
+     * at n = 0 there would wipe the retail table. */
+    tail = n > 0x6F ? n : 0x6F;
+    for (i = tail; i < cap; i++) {
         s32_arr_803BB6B0[i][0] = 55;
         s32_arr_803BB6B0[i][1] = s32_arr_803BB6B0[i][2] = 1;
     }
-    OSReport("lbAudioAx: %d stage audio rows from mexData (%d read cleanly)\n", n, filled);
+    if (n != 0) {
+        OSReport("lbAudioAx: %d stage audio rows from mexData (%d read cleanly)\n", n, filled);
+    }
 }
 #endif
 

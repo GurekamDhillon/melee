@@ -541,9 +541,15 @@ void gw_GXCopyDisp(void *dest, u8 clear) {
   ++gw_gx_copydisp_count;
   gw_frame_mark_content();
   /* A copy with no primitives behind it is a black clear - which is exactly the boot screen the
-   * loading overlay covers. Tell the overlay the running primitive count so it can stand down the
-   * moment the game actually draws something. */
-  gw_Overlay_NoteContent(gw_gx_prim_count);
+   * loading overlay covers. Tell the overlay what the game has drawn so it can stand down the
+   * moment something real appears.
+   *
+   * DISPLAY LISTS COUNT TOO. A screen built entirely from dlists submits zero primitives, so
+   * the prim count alone reads as a still-booting black frame forever: the trophy collection
+   * room is one (its own DIAG line says prim=0 dlist=129), and a "LOADING ... TyQuesD.dat"
+   * panel sat over a perfectly good screen for a whole run. Nothing was stuck; the heuristic
+   * simply could not see that kind of frame. */
+  gw_Overlay_NoteContent(gw_gx_prim_count + gw_gx_dlist_count);
 }
 
 /* TEMP DIAG: GXCopyTex resolves the EFB into a texture and, when clear is set, CLEARS the EFB

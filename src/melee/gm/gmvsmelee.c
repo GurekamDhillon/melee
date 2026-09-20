@@ -18,6 +18,7 @@
 #include <melee/lb/lbdvd.h>
 #include <melee/lb/lbtime.h>
 #include <melee/mn/types.h>
+#include "gmscenelaunch.h"
 
 /* 1A5360 */ static u8 findSmallestLoser(MatchEnd*);
 /* 4807B0 */ CSSData gmVsMelee_CssData;
@@ -120,6 +121,10 @@ void gmVsMelee_Mode_OnLoad(void)
     if (Mex_Enabled("keep_ko_stars")) {
         return;
     }
+    /* Scene launch: MELEE_SCENE=mode=vs;p1=...;p2=...;stage=... . GM_VS numbers its states
+     * CSS 0 -> SSS 1 -> GS_VS 2 exactly as Training does, so at=css lands on the character
+     * select with the configured players already chosen, and at=match starts the game. */
+    SceneLaunch_SeedVs(&gmMainLib_804D3EE0->modes.table[GmVsMode_Melee], false);
 #endif
     gmVsMelee_ResetKOCounts();
 }

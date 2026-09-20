@@ -6,6 +6,7 @@
 #include <melee/lb/lbcardnew.h>
 #include <melee/lb/lblanguage.h>
 #include <melee/ty/toy.h>
+#include "gmscenelaunch.h"
 
 /* 1BF948 */ static void bootOnLoad(GameModeState*);
 /* 1BF9A8 */ static void bootOnLeave(GameModeState*);
@@ -81,16 +82,21 @@ void bootOnLeave(GameModeState* data)
     gm_ChangeGameModeAfterCurrentScene(scene_data->mode_id);
 #if defined(TARGET_PC)
     {
-        extern int TestTrainingCKind(void);
-        extern int TestTargetTestCKind(void);
         extern const char *ContentProbeName(void);
         extern void ContentProbeResult(const char *name, void *archive);
         extern void *lbArchive_LoadArchive(const char *filename);
 
-        if (TestTrainingCKind() >= 0) {
-            gm_SetPendingGameMode(GM_TRAINING);
-        } else if (TestTargetTestCKind() >= 0) {
-            gm_SetPendingGameMode(GM_TARGET_TEST);
+        /* Scene launch (_research/scene-launch.md). One env var names the mode; the mode
+         * seeds itself from the same config in its own on_load. This runs in the boot
+         * scene's EXIT handler, so it is reached only once the boot scene ends - and the
+         * boot scene is the memory-card prompt, which waits for a button forever when the
+         * card holds no save. That is why three scripted launches produced no scene at
+         * all; SceneLaunch_SkipMemcard() in gmscmemcard.c is the other half of the fix. */
+        {
+            int mode = SceneLaunch_BootGameMode();
+            if (mode >= 0) {
+                gm_SetPendingGameMode((u8) mode);
+            }
         }
 
         /* m-ex content proof of life: load the file named by MELEE_CONTENT_PROBE through the game's

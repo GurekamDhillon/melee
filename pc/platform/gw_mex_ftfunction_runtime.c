@@ -228,21 +228,26 @@ static uint32_t gw_mex_override_target(uint32_t slot) {
  * code) comes from here, NOT HSD_MemAlloc: it is loaded once and must outlive the scene that
  * loaded it. See GW_MEX_PERSIST_SIZE in shim_os.c. A bump allocator - nothing is ever freed, which
  * is correct: each blob is loaded exactly once per process. Zero-filled. */
+/* File-scope rather than function-local so gw_Mex_InvalidateAfterMem1Restore can rewind `used`.
+ * This is a bump allocator that never frees, so without the rewind a caller that re-initialises
+ * the runtime (the test harness, after it restores its MEM1 snapshot) exhausts the region in a
+ * handful of cycles. */
+static uint32_t gw_mex_persist_base, gw_mex_persist_cap, gw_mex_persist_used;
+
 static void *gw_mex_persist_alloc(uint32_t size) {
     extern void gw_mex_persist_region(uint32_t *base, uint32_t *size);
-    static uint32_t base, cap, used;
     uint32_t p;
-    if (cap == 0u) {
-        gw_mex_persist_region(&base, &cap);
+    if (gw_mex_persist_cap == 0u) {
+        gw_mex_persist_region(&gw_mex_persist_base, &gw_mex_persist_cap);
     }
     size = (size + 31u) & ~31u;
-    if (size > cap - used) {
+    if (size > gw_mex_persist_cap - gw_mex_persist_used) {
         gw_panic("mex: persistent guest memory exhausted (%u of %u bytes used, %u requested) - "
                  "raise GW_MEX_PERSIST_SIZE in shim_os.c",
-                 used, cap, size);
+                 gw_mex_persist_used, gw_mex_persist_cap, size);
     }
-    p = base + used;
-    used += size;
+    p = gw_mex_persist_base + gw_mex_persist_used;
+    gw_mex_persist_used += size;
     memset((void *) (uintptr_t) p, 0, size);
     return (void *) (uintptr_t) p;
 }
@@ -2353,6 +2358,31 @@ uint32_t gw_Mex_Rtoc(void) { return gw_mex_r2; }
 /* The loaded mexData root, plus the guest range of MxDt.dat's data section for bounds checks.
  * 0 when MxDt.dat is not on this disc. The stage runtime reads its own tables out of this rather
  * than loading a second copy of the archive. */
+/* Drop every cached pointer into MEM1, so the next use re-loads mexData and re-allocates the
+ * persist region. gw_test.c calls this after it restores its MEM1 snapshot.
+ *
+ * Why it is needed: the archive and the persist region both live in MEM1, but the pointers to
+ * them are platform statics, which the snapshot does not restore ("a test must set up any
+ * platform state it depends on", gw_test.c). Without this, everything downstream keeps reading
+ * an address whose contents are gone. It showed up as grfunction_rows: mexData loaded during one
+ * test, the next test restored MEM1 over it, and the stage tables still pointed at 0x817C1E0C,
+ * where all 104,948 bytes now read as zero. The fighter accessors merely degraded to "no
+ * mexData" instead of failing, which is why this went unseen until a stage read it. */
+void gw_Mex_GrInvalidate(void); /* pc/platform/gw_mex_grfunction.h */
+
+void gw_Mex_InvalidateAfterMem1Restore(void) {
+    gw_mexdt = 0u;
+    gw_mexdt_base = 0u;
+    gw_mexdt_size = 0u;
+    gw_mex_mexdata_base = 0u; /* re-runs gw_Mex_RuntimeInit, re-allocating the persist region */
+    gw_mex_stack_base = 0u;
+    gw_mex_stack_top = 0u;
+    gw_mex_getdata_buf = 0u;
+    gw_mex_r2 = 0u;
+    gw_mex_persist_used = 0u; /* the region's CONTENTS were restored too; rewind, do not leak */
+    gw_Mex_GrInvalidate();
+}
+
 uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size) {
     if (base != NULL) {
         *base = gw_mexdt_base;

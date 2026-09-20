@@ -71,6 +71,9 @@ enum {
  * unconditionally. */
 
 /* mexData.metadata internal/external stage counts, or 0. */
+/* Drop the cached stage tables; the next call re-resolves them. See
+ * gw_Mex_InvalidateAfterMem1Restore() - the tables live in MEM1 but the pointers do not. */
+void gw_Mex_GrInvalidate(void);
 int gw_Mex_GrInternalCount(void);
 int gw_Mex_GrExternalCount(void);
 

@@ -127,6 +127,12 @@ static int gr_tables(void) {
     return 1;
 }
 
+void gw_Mex_GrInvalidate(void) {
+    gr_tables_ready = 0;
+    gr_root = gr_base = gr_size = gr_map = gr_desc = 0u;
+    gr_int_count = gr_ext_count = 0;
+}
+
 /* Guest address of internal stage `grkind`'s 13-word StageData row, or 0. */
 static uint32_t gr_row(int grkind) {
     uint32_t p;
@@ -540,6 +546,15 @@ static int test_grfunction_rows(void) {
         gw_test_fail("internal stage %d is %s, expected /GrOMc.dat", GW_MEX_GR_TEST_STAGE,
                      f ? f : "(none)");
         return 1;
+    }
+    /* A row naming a file is not the same as the file being here. Akaneia's MxDt.dat also ships
+     * in the Sonic mod, so a VANILLA disc has the full 96-row table and none of the 25 added
+     * stage files - and the dense-row rule then correctly reports "not m-ex". Only assert the
+     * positive case when the file is actually on this disc. */
+    if (gw_DVDConvertPathToEntrynum(f) < 0) {
+        gw_log("grfunction: %s declared but not on this disc - skipping the m-ex row assertion",
+               f);
+        return 0;
     }
     if (!gw_Mex_GrIsMex(GW_MEX_GR_TEST_STAGE)) {
         gw_test_fail("internal stage %d (%s) is on this disc but was not reported as m-ex",

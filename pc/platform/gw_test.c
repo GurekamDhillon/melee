@@ -64,6 +64,8 @@ static void gw_test_isolate_begin(void) {
   }
 }
 
+void gw_Mex_InvalidateAfterMem1Restore(void); /* pc/platform/gw_mex_ftfunction_runtime.c */
+
 /* Restoring MEM1 puts the link-time pointers back to their pre-fixup values, so the fixups have to
  * run again or every game global points at its unrelocated self. Platform-side statics are not in
  * MEM1 and are deliberately not restored: a test must set up any platform state it depends on. */
@@ -73,6 +75,10 @@ static void gw_test_isolate_end(void) {
   }
   memcpy(gw_mem1, gw_test_mem_snapshot, gw_mem1_size);
   gw_apply_fixups();
+  /* The m-ex runtime caches guest pointers - the loaded mexData archive and its persist region -
+   * in platform statics, which the restore above does not touch even though their CONTENTS are
+   * now gone. Drop them so the next user re-loads rather than reading a wiped address. */
+  gw_Mex_InvalidateAfterMem1Restore();
 }
 
 /* Bridge for game-side tests. gwtool prefixes every game symbol, so a game translation unit that

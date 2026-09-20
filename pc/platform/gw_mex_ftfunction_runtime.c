@@ -279,6 +279,10 @@ static void *gw_mex_persist_alloc(uint32_t size) {
 #define GW_MEXDT_ITEM_OFF_CUSTOM 0x10u
 #define GW_MEXDT_ITEM_OFF_RUNTIME_INDEX 0x14u
 #define GW_MEX_CUSTOM_ITEM_START 237u /* m-ex CustomItemStart: global item kinds >= this are custom */
+/* MexKirbyFunction has nine per-kind tables; efAsync_DatEntries (src/melee/ef/efasync.c) is 50
+ * entries and rejects anything outside it, so that is the bound an effect id must satisfy. */
+#define GW_MEX_KIRBY_FUNC_SLOTS 9
+#define GW_MEX_EFFECT_BANK_MAX 50u
 
 static uint32_t gw_mexdt;        /* guest address of the mexData root; 0 = not loaded */
 static uint32_t gw_mexdt_base;   /* guest address of the loaded data section */
@@ -911,6 +915,146 @@ void *gw_Mex_FtFunc(int slot, int k) {
     if (native == 0u) {
         gw_log("mexdata: fighter_function[%d][%d] = 0x%08X has no native counterpart - left empty",
                slot, k, g);
+        return NULL;
+    }
+    return (void *) (uintptr_t) native;
+}
+
+
+/* ---- Kirby copy-ability (MexData.kirby_data / kirby_function) -------------------------------
+ *
+ * mexData +0x20 -> kirby_data, an eight-word struct of arrays indexed by INTERNAL fighter kind
+ * (m-ex MexTK/include/mxdt.h `MexKirbyData`):
+ *
+ *   +0x00 capfiles[k]        { char *filename; char *symbol; }   stride 8
+ *   +0x04 capruntime         m-ex's own loaded-archive array     (the port has ft_80459B88.hats)
+ *   +0x08 costumes[k]        Fighter_CostumeStrings *            stride 4
+ *   +0x0C costumeruntime     m-ex's own                          (the port has ftKb_Init_803C9FC8)
+ *   +0x10 effectids[k]       u8                                  stride 1
+ *   +0x14 ftcmd[k]           FtAction **                         stride 4
+ *
+ * mexData +0x24 -> kirby_function, nine per-kind function-pointer TABLES (`MexKirbyFunction`):
+ * OnAbilityGain, OnAbilityLose, OnSpecialN, OnSpecialAirN, OnHit, OnItemInit, move_logic,
+ * OnDeath, OnFrame. Each word is a vanilla guest address, so it goes through the bridge exactly
+ * like fighter_function does.
+ *
+ * VERIFIED against the port's own vanilla tables rather than assumed: capfiles[k] reproduces
+ * ftKb_Init_803CA9D0[k] name for name for all 27 vanilla kinds, NULLs at 4 and 11 included.
+ *
+ * Every accessor RETURNS its value. None of them takes an out-parameter: an out-parameter points
+ * at game memory, gwtool-compiled code reads it big-endian, and a native shim would write host
+ * order - a class of bug that has already cost this port a fault in the music player. A return
+ * value travels in a register and has no byte order.
+ */
+#define GW_MEXDT_OFF_KIRBY_DATA 0x20u
+#define GW_MEXDT_OFF_KIRBY_FUNC 0x24u
+#define GW_MEX_KIRBY_EFFECT_NONE 0xFFu /* m-ex's "this hat loads no effect bank" */
+
+static uint32_t gw_mex_kirbyfield(uint32_t off) {
+    uint32_t kd;
+    if (gw_Mex_CssIconCount() == 0) { /* loads mexData lazily */
+        return 0u;
+    }
+    kd = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_KIRBY_DATA));
+    return gw_mexdt_in(kd + off, 4u) ? gw_r32((const void *) (uintptr_t) (kd + off)) : 0u;
+}
+
+/* kirby_data.capfiles[k].filename ("PlKbCpWf.dat") as it is written in MxDt.dat, without
+ * checking whether the file exists. Only the loader gate below and diagnostics want this. */
+static const char *gw_mex_kirby_cap_file_raw(int k) {
+    return k < 0 ? NULL
+                 : gw_mex_cstr(gw_mex_word(gw_mex_kirbyfield(0x00u), (uint32_t) k, 8u));
+}
+
+/* kirby_data.capfiles[k].filename, or NULL when there is no row OR the archive is not on this
+ * disc (or in a mod).
+ *
+ * The disc check belongs here rather than at the call site. A name that does not resolve would
+ * be installed into ftKb_Init_803CA9D0 and only fault much later, inside the archive loader, the
+ * first time Kirby swallows that fighter - and with nothing there to say which kind asked for
+ * it. This is not hypothetical: the vanilla disc plus the `sonic` mod registers Sonic and ships
+ * no PlKbCpSn.dat. Returning NULL makes ftKb_MexCopyKindData keep the clone base's row, which is
+ * merely wrong-looking instead of fatal. */
+const char *gw_Mex_KirbyCapFile(int k) {
+    extern int gw_DVDConvertPathToEntrynum(const char *path);
+    const char *dat = gw_mex_kirby_cap_file_raw(k);
+    if (dat == NULL || dat[0] == '\0') {
+        return NULL;
+    }
+    if (gw_DVDConvertPathToEntrynum(dat) < 0) {
+        static int logged[64];
+        if (k >= 0 && k < 64 && !logged[k]) {
+            logged[k] = 1;
+            gw_log("mexdata: internal kind %d's Kirby hat %s is not on the disc or in a mod - "
+                   "the clone base's hat is kept", k, dat);
+        }
+        return NULL;
+    }
+    return dat;
+}
+
+/* kirby_data.capfiles[k].symbol ("ftDataKirbyCopyWolf"), or NULL. */
+const char *gw_Mex_KirbyCapSymbol(int k) {
+    uint32_t tbl = gw_mex_kirbyfield(0x00u);
+    return (k < 0 || tbl == 0u)
+               ? NULL
+               : gw_mex_cstr(gw_mex_word(tbl + 4u, (uint32_t) k, 8u));
+}
+
+/* kirby_data.costumes[k]: the guest Fighter_CostumeStrings[] for this hat's per-costume models,
+ * or NULL. Only a handful of vanilla kinds have one (DK, Link, Samus, Yoshi, Mewtwo) and NONE of
+ * Akaneia's seven added fighters does - but the port reads it rather than hardcoding that, since
+ * the next build may differ. */
+void *gw_Mex_KirbyCostumes(int k) {
+    uint32_t p = k < 0 ? 0u : gw_mex_word(gw_mex_kirbyfield(0x08u), (uint32_t) k, 4u);
+    return (p != 0u && gw_mexdt_in(p, 16u)) ? (void *) (uintptr_t) p : NULL;
+}
+
+/* kirby_data.effectids[k], or -1 when the hat loads no effect bank.
+ *
+ * 255 is NOT an index - it is m-ex's "none", and Wolf is 255 on Akaneia. It is normalised to -1
+ * here, at the one place that knows the encoding, so a raw 255 can never travel further and fault
+ * inside the effect loader instead. The upper bound is checked too: a byte out of the table, or
+ * an id past what this build's effect bank array can hold, is treated the same way. */
+int gw_Mex_KirbyEffectId(int k) {
+    uint32_t tbl = gw_mex_kirbyfield(0x10u);
+    uint32_t a = tbl + (uint32_t) k;
+    unsigned v;
+    if (k < 0 || tbl == 0u || !gw_mexdt_in(a, 1u)) {
+        return -1;
+    }
+    v = *(const uint8_t *) (uintptr_t) a;
+    if (v == GW_MEX_KIRBY_EFFECT_NONE) {
+        return -1;
+    }
+    if (v >= GW_MEX_EFFECT_BANK_MAX) {
+        gw_log("mexdata: kirby effect id %u for internal kind %d is past this build's %u-entry "
+               "effect bank table - treated as none",
+               v, k, (unsigned) GW_MEX_EFFECT_BANK_MAX);
+        return -1;
+    }
+    return (int) v;
+}
+
+/* kirby_function[slot][k] as a native function pointer, or NULL when the row is empty or the
+ * guest address is not bridged. Same shape and same caveat as gw_Mex_FtFunc: the entry is a
+ * vanilla engine address, and a kind whose row is 0 keeps the clone base's callback. */
+void *gw_Mex_KirbyFunc(int slot, int k) {
+    uint32_t kf, tbl, g, native;
+    int kind = -1;
+    if (k < 0 || slot < 0 || slot >= GW_MEX_KIRBY_FUNC_SLOTS || gw_Mex_CssIconCount() == 0) {
+        return NULL;
+    }
+    kf = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_KIRBY_FUNC));
+    tbl = gw_mex_word(kf, (uint32_t) slot, 4u);
+    g = gw_mex_word(tbl, (uint32_t) k, 4u);
+    if (g == 0u) {
+        return NULL;
+    }
+    native = gw_mex_bridge_lookup(g, &kind);
+    if (native == 0u || kind != 1) {
+        gw_log("mexdata: kirby_function[%d][%d] = 0x%08X has no native counterpart - the clone "
+               "base's callback is kept", slot, k, g);
         return NULL;
     }
     return (void *) (uintptr_t) native;
@@ -2876,6 +3020,186 @@ static int test_mex_ft_item_ids_all(void) {
     return rc;
 }
 
+
+/* Every added fighter's Kirby copy-ability row must be usable.
+ *
+ * Kirby swallowing a custom fighter is something only a person watching can really confirm, so
+ * this checks the part that IS checkable from the disc: that each of the seven has a hat archive
+ * and symbol, that the archive is really on the disc (a name that is not there would fault later,
+ * inside the archive loader, with nothing to say which kind asked for it), and that the effect id
+ * is either a usable index or the "none" the loader ignores.
+ *
+ * It also pins the 255 case. m-ex writes 255 for "this hat loads no effect bank" and Wolf is 255
+ * on Akaneia; 255 is not an index, and the whole point of gw_Mex_KirbyEffectId is that it can
+ * never leave here. If someone later "simplifies" it into a plain byte read, this fails. */
+static int test_mex_kirby_hats(void) {
+    extern int gw_DVDConvertPathToEntrynum(const char *path);
+    unsigned f;
+    int loaded = 0, rc = 0;
+    uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
+    uint32_t root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base,
+                                    &gw_mexdt_size);
+    if (root == 0u) {
+        gw_log("test mex_kirby_hats: no MxDt.dat on this disc - skipped");
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 0;
+    }
+    gw_mexdt = root;
+    for (f = 0; f < sizeof gw_mex_test_fighters / sizeof gw_mex_test_fighters[0]; ++f) {
+        int k = (int) gw_mex_test_fighters[f].internal;
+        const char *name = gw_mex_test_fighters[f].name;
+        const char *raw = gw_mex_kirby_cap_file_raw(k);
+        const char *dat = gw_Mex_KirbyCapFile(k);
+        const char *sym = gw_Mex_KirbyCapSymbol(k);
+        int eff = gw_Mex_KirbyEffectId(k);
+        if (gw_mex_slot_of_internal(k) < 0) {
+            continue; /* this disc does not have the fighter at all */
+        }
+        ++loaded;
+        if (raw == NULL || raw[0] == '\0' || sym == NULL) {
+            gw_test_fail("%s: kirby_data.capfiles[%d] is empty (dat=%s sym=%s)", name, k,
+                         raw != NULL ? raw : "(null)", sym != NULL ? sym : "(null)");
+            rc = 1;
+            continue;
+        }
+        if (eff < -1 || eff >= (int) GW_MEX_EFFECT_BANK_MAX) {
+            gw_test_fail("%s: Kirby effect id %d is neither none nor a usable index", name, eff);
+            rc = 1;
+        }
+        /* Not a failure: a mod may register a fighter without shipping its hat, and that case is
+         * handled (the clone base's row is kept). It is worth saying out loud, though. */
+        gw_log("test mex_kirby_hats: %s (internal %d): %s / %s, effect %d%s", name, k, raw, sym,
+               eff, dat == NULL ? "  [archive NOT on this disc - base hat kept]" : "");
+    }
+    /* Wolf's 255 must arrive as -1, not as 255. */
+    if (loaded != 0 && gw_mex_slot_of_internal(27) >= 0 && gw_Mex_KirbyEffectId(27) != -1) {
+        gw_test_fail("Wolf's Kirby effect id is %d; m-ex writes 255 there, meaning none",
+                     gw_Mex_KirbyEffectId(27));
+        rc = 1;
+    }
+    if (loaded == 0) {
+        gw_log("test mex_kirby_hats: no m-ex fighters on this disc - skipped");
+    }
+    gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+    return rc;
+}
+
+
+/* The rows actually reach the engine's per-kind Kirby tables.
+ *
+ * mex_kirby_hats covers the accessors; this covers the wiring, which is a different thing and
+ * the one an off-by-one in the index space would break silently.
+ *
+ * It calls the two functions under test rather than ftData_MexInitKinds, which is what calls them
+ * during boot. That was the first attempt and it faulted: the init does far more than these rows
+ * (costume string tables, the retail costume-extension pass, the character-kind mapping) and is
+ * written to run at one specific point in boot, so dragging it into a test says more about the
+ * test than about the code. Kind 0 stands in for the clone base; only the m-ex-derived fields are
+ * checked, and those do not depend on it.
+ *
+ * ftKb_Init_803CA9D0 is GAME memory, so its pointers are big-endian and have to be read with
+ * gw_rptr. Reading them natively would give a byte-swapped address that happens to be readable
+ * often enough to look like it works. MEM1 is restored after every test, so the rows this writes
+ * do not leak into the next one. */
+static int test_mex_kirby_tables_wired(void) {
+    extern void gw_ftKb_MexCopyKindHat(int dst, int src, int internal);
+    extern void gw_ftKb_MexCopyKindData(int dst, int src, int internal);
+    extern uint8_t gw_ftKb_Init_803CB46C[];
+    extern uint8_t gw_ftKb_Init_803CA9D0[]; /* ftKirby_CopyName[], 8 bytes each */
+    extern uint8_t gw_ftKb_Init_803C9CC8[]; /* 2 per kind: ability gained / lost */
+    extern uint8_t gw_ftKb_Init_803C9DD0[]; /* copied neutral-B  */
+    extern uint8_t gw_ftKb_Init_803C9E54[]; /* copied aerial neutral-B */
+    unsigned f;
+    int checked = 0, rc = 0;
+
+    if (gw_Mex_CssIconCount() == 0) {
+        gw_log("test mex_kirby_tables_wired: no mexData on this disc - skipped");
+        return 0;
+    }
+
+    for (f = 0; f < sizeof gw_mex_test_fighters / sizeof gw_mex_test_fighters[0]; ++f) {
+        int k = (int) gw_mex_test_fighters[f].internal;
+        const char *name = gw_mex_test_fighters[f].name;
+        int slot = gw_mex_slot_of_internal(k);
+        int port;
+        const char *want_dat, *want_sym, *got_dat, *got_sym;
+        int want_eff, got_eff;
+        if (slot < 0) {
+            continue;
+        }
+        port = GW_PORT_FT_MEX0 + slot;
+        want_dat = gw_Mex_KirbyCapFile(k);
+        want_sym = gw_Mex_KirbyCapSymbol(k);
+        want_eff = gw_Mex_KirbyEffectId(k);
+        if (want_dat == NULL) {
+            /* No usable hat on this disc (the vanilla disc plus the `sonic` mod is exactly this
+             * case): the clone base's row is kept on purpose and there is nothing here to
+             * compare against. Covered by mex_kirby_hats, which reports it. */
+            continue;
+        }
+        gw_ftKb_MexCopyKindHat(port, 0, k);
+        gw_ftKb_MexCopyKindData(port, 0, k);
+        got_dat = (const char *) gw_rptr(gw_ftKb_Init_803CA9D0 + (size_t) port * 8u);
+        got_sym = (const char *) gw_rptr(gw_ftKb_Init_803CA9D0 + (size_t) port * 8u + 4u);
+        got_eff = gw_ftKb_Init_803CB46C[port] == 0xFFu ? -1 : (int) gw_ftKb_Init_803CB46C[port];
+        ++checked;
+
+        if (got_dat == NULL || strcmp(got_dat, want_dat) != 0) {
+            gw_test_fail("%s (port kind %d): ftKb_Init_803CA9D0 filename is %s, expected %s",
+                         name, port, got_dat != NULL ? got_dat : "(null)", want_dat);
+            rc = 1;
+        }
+        if (want_sym != NULL && (got_sym == NULL || strcmp(got_sym, want_sym) != 0)) {
+            gw_test_fail("%s (port kind %d): ftKb_Init_803CA9D0 symbol is %s, expected %s", name,
+                         port, got_sym != NULL ? got_sym : "(null)", want_sym);
+            rc = 1;
+        }
+        if (got_eff != want_eff) {
+            gw_test_fail("%s (port kind %d): ftKb_Init_803CB46C is %d, expected %d", name, port,
+                         got_eff, want_eff);
+            rc = 1;
+        }
+        /* The four copied-ability callbacks, in the order ftKb_MexCopyKindHat writes them. An
+         * empty m-ex row must stay empty: that is what makes Kirby fall back to his own inhale
+         * rather than the clone base's special. */
+        {
+            static const struct {
+                int slot;
+                uint32_t stride;
+                uint32_t bias;
+                const char *table;
+            } rows[4] = {
+                {0, 8u, 0u, "803C9CC8[kind*2]"},
+                {1, 8u, 4u, "803C9CC8[kind*2+1]"},
+                {2, 4u, 0u, "803C9DD0"},
+                {3, 4u, 0u, "803C9E54"},
+            };
+            uint8_t *bases[4];
+            int i;
+            bases[0] = gw_ftKb_Init_803C9CC8;
+            bases[1] = gw_ftKb_Init_803C9CC8;
+            bases[2] = gw_ftKb_Init_803C9DD0;
+            bases[3] = gw_ftKb_Init_803C9E54;
+            gw_log("test mex_kirby_tables_wired: %s (port kind %d): copied-ability callbacks "
+                   "%p %p %p %p", name, port, gw_Mex_KirbyFunc(0, k), gw_Mex_KirbyFunc(1, k),
+                   gw_Mex_KirbyFunc(2, k), gw_Mex_KirbyFunc(3, k));
+            for (i = 0; i < 4; ++i) {
+                void *want = gw_Mex_KirbyFunc(rows[i].slot, k);
+                void *got = gw_rptr(bases[i] + (size_t) port * rows[i].stride + rows[i].bias);
+                if (got != want) {
+                    gw_test_fail("%s (port kind %d): %s is %p, expected %p", name, port,
+                                 rows[i].table, got, want);
+                    rc = 1;
+                }
+            }
+        }
+    }
+    if (checked == 0) {
+        gw_log("test mex_kirby_tables_wired: no m-ex fighters on this disc - skipped");
+    }
+    return rc;
+}
+
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
@@ -2885,4 +3209,6 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("resolver_mex_shims", test_resolver_mex_shims);
     gw_test_register("mex_blob_targets_resolve", test_mex_blob_targets_resolve);
     gw_test_register("mex_ft_item_ids_all", test_mex_ft_item_ids_all);
+    gw_test_register("mex_kirby_hats", test_mex_kirby_hats);
+    gw_test_register("mex_kirby_tables_wired", test_mex_kirby_tables_wired);
 }

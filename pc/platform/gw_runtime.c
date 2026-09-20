@@ -1661,7 +1661,19 @@ static int gw_sl_parse_player(const char *v, GwSlPlayer *p) {
     next = strchr(tok, '/');
     if (next != NULL) *next++ = '\0';
     if ((rest = gw_sl_after(tok, "c")) != NULL && gw_sl_all_digits(rest)) {
-      p->color = atoi(rest);
+      /* A costume id has a hard ceiling that does not depend on the disc: every per-costume
+       * runtime array the port rebuilds for an m-ex disc has sixteen rows, and
+       * ftData_MexInitKinds clamps a fighter's count to that. Refuse anything above it HERE -
+       * a bad costume used to travel all the way into the animation path and fault there
+       * (ftAnim_80070200), which is a miserable way to learn you typed c9 for a six-costume
+       * fighter. The per-fighter count is not known at parse time (it comes from MxDt.dat,
+       * which is not mounted yet); ftData_80085820 reports that one. */
+      int c = atoi(rest);
+      if (c < 0 || c >= 16) {
+        gw_log("gw: scene: rejected \"%s\" -- a costume id must be 0..15", tok);
+        return -1;
+      }
+      p->color = c;
     } else if ((rest = gw_sl_after(tok, "cpu")) != NULL && gw_sl_all_digits(rest)) {
       p->slot_type = GW_SL_PK_CPU;
       p->cpu_level = atoi(rest);

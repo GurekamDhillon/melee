@@ -629,6 +629,21 @@ static uint32_t gw_ppc_mask(uint32_t mb, uint32_t me) {
     return (0xFFFFFFFFu << (31 - me)) | (0xFFFFFFFFu >> mb);
 }
 
+/* A branch with LK clear that leaves the blob is a TAIL CALL: the native callee's return goes to
+ * OUR caller, not to the word after the branch. Bridging it and then falling through executes
+ * whatever function happens to be laid out next - Akaneia's PlWf.dat onLoad ends `b
+ * MEX_IndexFighterItem` and the fall-through ran onRespawn with r3 = 0, killing the port on
+ * entering a VS match as Wolf. So after the call, return the way a blr would. */
+static int gw_ppc_bridge_tail(gw_ppc_machine *m, uint32_t target) {
+    gw_ppc_ctx *c = &m->cpu;
+    gw_ppc_bridge_call(m, target);
+    if (gw_ppc_in_blob(m, c->lr)) {
+        c->pc = c->lr;
+        return 0;
+    }
+    return 1; /* an out-of-blob LR: return to the native caller, r3 already set */
+}
+
 /* ---- forward declarations for the sub-dispatch ---------------------------------------- */
 
 static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn);          /* opcode 31 */
@@ -920,8 +935,10 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         }
         if (gw_ppc_in_blob(m, target)) {
             c->pc = target;
-        } else {
+        } else if (lk) {
             gw_ppc_bridge_call(m, target);
+        } else {
+            return gw_ppc_bridge_tail(m, target);
         }
         break;
     }
@@ -939,8 +956,10 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
             }
             if (gw_ppc_in_blob(m, target)) {
                 c->pc = target;
-            } else {
+            } else if (lk) {
                 gw_ppc_bridge_call(m, target);
+            } else {
+                return gw_ppc_bridge_tail(m, target);
             }
         }
         break;
@@ -965,8 +984,11 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
                     c->pc = target;
                 } else if (!is_ctr && !lk) {
                     return 1; /* blr to an out-of-blob LR: return to the native caller */
-                } else {
+                } else if (lk) {
                     gw_ppc_bridge_call(m, target);
+                } else {
+                    /* bctr with LK clear: a tail call through a function pointer. */
+                    return gw_ppc_bridge_tail(m, target);
                 }
             }
         }

@@ -27,13 +27,8 @@
 #include <melee/if/textdraw.h>
 #include <melee/if/textlib.h>
 #include <melee/if/types.h>
-#include <sysdolphin/baselib/gobjgxlink.h>
-#include <sysdolphin/baselib/gobjobject.h>
 #include <sysdolphin/baselib/gobjplink.h>
-#include <sysdolphin/baselib/memory.h>
-#include <sysdolphin/baselib/tobj.h>
 #include <dolphin/gx.h>
-#include <dolphin/mtx.h>
 #include <dolphin/os.h>
 #endif
 
@@ -269,7 +264,7 @@ void gm_801A4BD4(void)
  * WHAT IS ACTUALLY WRONG. Booting into a match gives a black period in which the stage and the
  * fighters arrive part by part. It is NOT stutter - the frame loop stays at full speed the whole
  * time. Aurora creates a WebGPU render pipeline the first time a draw needs one, compiles it on a
- * worker thread, and SKIPS that draw until it is ready; so the first frames of a cold scene are
+ * worker thread, and SKIPS that draw until it is ready, so the first frames of a cold scene are
  * missing whatever has not finished compiling. gw_Gfx_PipelinesPending / PipelinesCreated report
  * that directly (pc/platform/gw_runtime.c).
  *
@@ -295,17 +290,29 @@ void gm_801A4BD4(void)
  *     bug wearing a panel.
  *
  * And a wall-clock ceiling on top of all of it, because a machine that never settles - a driver
- * compiling in the background, a GPU being shared - must still boot into its match.
+ * compiling in the background, a GPU being shared - must still boot into its match. Measured on
+ * a cold boot into Training on Final Destination: the hold lasts about 205 frames and 56
+ * pipelines get compiled inside it.
  *
- * THE ART IS OPTIONAL. MELEE_MENUTEX_DIR names a directory of .gxtex files (pc/tools/png2gx.py);
- * with it unset every GxTex_Open fails, no sprite is placed, and the hold plus the caption still
- * do their job. Nothing on the disc is involved either way.
+ * WHAT IT DRAWS, AND WHY IT IS THE DEBUG FONT RATHER THAN THE PNG ART. Everything here goes
+ * through DevText (src/melee/if/textdraw.c), which is the game's own screen-space 2D: one text
+ * box with its background and no text is a filled rectangle, which is the panel; a second with
+ * its background and text is the caption on its plate. It is set up once per scene by
+ * gm_801A4BD4 -> un_802FF78C and drawn by its own camera on gx_link 17, so there is nothing to
+ * initialise and nothing to tear down but the boxes.
  *
- * WHY SObjs ON THE GXLinkMax LIST: see mnCharSel_MenuTexSetup in src/melee/mn/mncharsel.c, which
- * is the worked example this follows. One gobj carries all of them; HSD_SObjLib_803A49E0 walks
- * its list in ascending priority, so 0x10/0x20/0x30/0x40 is back-to-front. Render priority 10 on
- * the max list puts the panel above the match and its HUD (priorities 0..9) and below the
- * DevText camera (11), which is how the caption lands on top of the panel rather than under it.
+ * The .gxtex art in _build/menutex (panel_bg, the 9-sliced frame, the cursor) is NOT drawn here
+ * yet, and the reason is worth recording because it cost most of this session. The HSD_SObj path
+ * from mnCharSel_MenuTexSetup works - the same binary, the same scene and the same .gxtex file
+ * put its quad on screen when mncharsel creates it. The identical code called from HERE does
+ * not: the callback runs, the sobj list walks correctly (11 sprites, right rectangles, right
+ * scales, right GX formats, image pointers in MEM1), 803A4A68 emits the quads, and nothing
+ * appears. Ruled out by experiment, not by argument: render priority (10 and 0xFF), the raw-GX
+ * viewport/projection/position-matrix prologue copied verbatim from mncharsel, an HSD_CObj set
+ * up exactly like DevText's plus an explicit GXLoadPosMtxImm, drawing inside DevText's own
+ * camera pass on gx_link 17 instead of standing alone on the GXLinkMax list, the stage's fog,
+ * one sprite instead of eleven, and 1x art instead of 2x. The remaining difference between the
+ * two call sites is the call site itself. Captures: _build/runs/ldscr1..ldscr11.
  */
 
 /* Native entry points. gwtool prefixes every game symbol with `gw_`, so the unprefixed name here
@@ -313,180 +320,31 @@ void gm_801A4BD4(void)
 extern int Gfx_PipelinesPending(void);
 extern int Gfx_PipelinesCreated(void);
 extern int Gfx_LoadScreenEnabled(void);
-extern int GxTex_Open(const char* name);
-extern int GxTex_Width(int handle);
-extern int GxTex_Height(int handle);
-extern int GxTex_Format(int handle);
-extern int GxTex_ImageSize(int handle);
-extern int GxTex_TlutSize(int handle);
-extern int GxTex_TlutFormat(int handle);
-extern int GxTex_TlutEntries(int handle);
-extern void GxTex_CopyImage(int handle, void* dst);
-extern void GxTex_CopyTlut(int handle, void* dst);
-extern void GxTex_Close(int handle);
 
 #define LOADSCREEN_MIN_FRAMES 20
 #define LOADSCREEN_SETTLE_FRAMES 30
 #define LOADSCREEN_CEILING_SECONDS 10
 #define LOADSCREEN_DOT_FRAMES 15
 
-enum {
-    LS_PANEL,
-    LS_CORNER_TL,
-    LS_CORNER_TR,
-    LS_CORNER_BL,
-    LS_CORNER_BR,
-    LS_EDGE_H,
-    LS_EDGE_V,
-    LS_CURSOR,
-    LS_TEX_MAX,
-};
+/* The panel has to cover the whole visible frame, which is a little LARGER than 640x480: the
+   DevText camera's ortho box runs -20..660 by -20..500, so a box placed at 0,0 at exactly
+   640x480 leaves a strip of the match showing down each edge. 72x36 cells at the 10x16 default
+   scale is 720x576, started off-screen at -24,-24. */
+#define LOADSCREEN_PANEL_COLS 72
+#define LOADSCREEN_PANEL_ROWS 36
+#define LOADSCREEN_PANEL_X (-24)
+#define LOADSCREEN_PANEL_Y (-24)
+#define LOADSCREEN_CAPTION_COLS 16
 
-typedef struct mnLoadScreenTex {
-    HSD_ImageDesc image;
-    HSD_Tlut tlut;
-    HSD_SObjDesc desc;
-    int loaded;
-} mnLoadScreenTex;
-
-static mnLoadScreenTex mnLoadScreen_tex[LS_TEX_MAX];
-static HSD_GObj* mnLoadScreen_gobj;
+static DevText* mnLoadScreen_panel;
 static DevText* mnLoadScreen_text;
-static char mnLoadScreen_textbuf[2 * 16];
+static char mnLoadScreen_panelbuf[2 * LOADSCREEN_PANEL_COLS * LOADSCREEN_PANEL_ROWS];
+static char mnLoadScreen_textbuf[2 * LOADSCREEN_CAPTION_COLS];
 static int mnLoadScreen_holding;
 static int mnLoadScreen_frames;
 static int mnLoadScreen_settled;
 static int mnLoadScreen_created;
 static OSTime mnLoadScreen_started;
-
-static void mnLoadScreen_Draw(HSD_GObj* gobj, int pass)
-{
-    Mtx44 proj;
-    Mtx view;
-
-    /* 640x480 in screen pixels with Y growing downwards, which is the space HSD_SObj's quad is
-       written in: it emits GXPosition2f32(x, -y). */
-    GXSetViewport(0.0F, 0.0F, 640.0F, 480.0F, 0.0F, 1.0F);
-    GXSetScissor(0, 0, 640, 480);
-    MTXOrtho((MtxPtr) proj, 0.0F, -480.0F, 0.0F, 640.0F, 0.0F, 2.0F);
-    GXSetProjection(proj, GX_ORTHOGRAPHIC);
-    view[0][0] = 1.0F; view[0][1] = 0.0F; view[0][2] = 0.0F; view[0][3] = 0.0F;
-    view[1][0] = 0.0F; view[1][1] = 1.0F; view[1][2] = 0.0F; view[1][3] = 0.0F;
-    view[2][0] = 0.0F; view[2][1] = 0.0F; view[2][2] = 1.0F; view[2][3] = -1.0F;
-    GXLoadPosMtxImm(view, GX_PNMTX0);
-    GXSetCurrentMtx(GX_PNMTX0);
-
-    /* The sprite draw sets its own TEV stages, vertex descriptor and blend mode but inherits the
-       texgen and the colour channel. A TEV stage naming GX_COLOR0A0 with no channel enabled is
-       undefined rather than merely unused, so the channel is a constant white here. */
-    GXSetNumChans(1);
-    GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL,
-                  GX_DF_NONE, GX_AF_NONE);
-    {
-        GXColor white = { 255, 255, 255, 255 };
-        GXSetChanMatColor(GX_COLOR0A0, white);
-    }
-    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
-                      GX_DISABLE, GX_PTIDENTITY);
-
-    HSD_SObjLib_803A49E0(gobj, pass);
-}
-
-/* The bytes are copied into the game heap because that is what an HSD_ImageDesc points at and
-   what GXInitTexObj records; the loader's own copy is released straight away. */
-static void mnLoadScreen_Load(int slot, const char* name)
-{
-    mnLoadScreenTex* t = &mnLoadScreen_tex[slot];
-    void* bits;
-    void* lut;
-    int handle;
-    int tlut_fmt;
-
-    t->loaded = 0;
-    t->image.image_ptr = NULL;
-    t->tlut.lut = NULL;
-    t->desc.tlut = NULL;
-
-    handle = GxTex_Open(name);
-    if (handle < 0) {
-        return;
-    }
-    bits = HSD_MemAlloc(GxTex_ImageSize(handle));
-    if (bits == NULL) {
-        GxTex_Close(handle);
-        return;
-    }
-    GxTex_CopyImage(handle, bits);
-
-    t->image.image_ptr = bits;
-    t->image.width = (u16) GxTex_Width(handle);
-    t->image.height = (u16) GxTex_Height(handle);
-    t->image.format = (GXTexFmt) GxTex_Format(handle);
-    t->image.mipmap = 0;
-    t->image.minLOD = 0.0F;
-    t->image.maxLOD = 0.0F;
-    t->desc.image = &t->image;
-
-    tlut_fmt = GxTex_TlutFormat(handle);
-    if (tlut_fmt >= 0) {
-        lut = HSD_MemAlloc(GxTex_TlutSize(handle));
-        if (lut == NULL) {
-            HSD_Free(bits);
-            t->image.image_ptr = NULL;
-            GxTex_Close(handle);
-            return;
-        }
-        GxTex_CopyTlut(handle, lut);
-        t->tlut.lut = lut;
-        t->tlut.fmt = (GXTlutFmt) tlut_fmt;
-        t->tlut.n_entries = (u16) GxTex_TlutEntries(handle);
-        /* GX_TLUT0, because the sprite draw hardcodes GXLoadTlut(..., GX_TLUT0) for a CI
-           texture. A different name here would load the palette into a bank nothing samples. */
-        t->tlut.tlut_name = GX_TLUT0;
-        t->desc.tlut = &t->tlut;
-    }
-    GxTex_Close(handle);
-    t->loaded = 1;
-}
-
-/* w and h are the rectangle wanted on the 640x480 screen; the scale comes from the texture's own
-   size, so the same layout holds whether the art was converted at 1x or at 2x. */
-static void mnLoadScreen_Place(int slot, f32 x, f32 y, f32 w, f32 h, u8 priority)
-{
-    mnLoadScreenTex* t = &mnLoadScreen_tex[slot];
-    HSD_SObj* sobj;
-
-    if (!t->loaded || mnLoadScreen_gobj == NULL) {
-        return;
-    }
-    sobj = HSD_SObjLib_803A477C(mnLoadScreen_gobj, &t->desc, GX_CLAMP, GX_CLAMP, priority, 0);
-    if (sobj == NULL) {
-        return;
-    }
-    sobj->x10 = x;
-    sobj->x14 = y;
-    sobj->x1C = w / (f32) t->image.width;
-    sobj->x20 = h / (f32) t->image.height;
-}
-
-static void mnLoadScreen_Unload(void)
-{
-    int i;
-
-    for (i = 0; i < LS_TEX_MAX; i++) {
-        mnLoadScreenTex* t = &mnLoadScreen_tex[i];
-        if (t->tlut.lut != NULL) {
-            HSD_Free(t->tlut.lut);
-        }
-        if (t->image.image_ptr != NULL) {
-            HSD_Free(t->image.image_ptr);
-        }
-        t->tlut.lut = NULL;
-        t->image.image_ptr = NULL;
-        t->desc.tlut = NULL;
-        t->loaded = 0;
-    }
-}
 
 static void mnLoadScreen_Release(char* why)
 {
@@ -494,15 +352,25 @@ static void mnLoadScreen_Release(char* why)
         return;
     }
     mnLoadScreen_holding = 0;
+    /* Hidden AND removed, in that order and deliberately. DevText_Remove takes the address of a
+       list head - that is how it unlinks the first entry - and every caller in the game passes
+       the address of its own handle instead, which leaves devtext_drawlist naming a box that has
+       already gone back on the free list when that box happens to be the head. Hiding it first
+       makes the box draw nothing whatever the unlink does, so the loader cannot outlive its hold
+       and leave a black screen over the match. The pool itself is re-initialised per scene by
+       gm_801A4BD4 -> DevText_Setup, so nothing accumulates. */
     if (mnLoadScreen_text != NULL) {
+        DevText_HideText(mnLoadScreen_text);
+        DevText_HideBackground(mnLoadScreen_text);
         DevText_Remove(&mnLoadScreen_text);
         mnLoadScreen_text = NULL;
     }
-    if (mnLoadScreen_gobj != NULL) {
-        HSD_GObjFree(mnLoadScreen_gobj);
-        mnLoadScreen_gobj = NULL;
+    if (mnLoadScreen_panel != NULL) {
+        DevText_HideText(mnLoadScreen_panel);
+        DevText_HideBackground(mnLoadScreen_panel);
+        DevText_Remove(&mnLoadScreen_panel);
+        mnLoadScreen_panel = NULL;
     }
-    mnLoadScreen_Unload();
     OSReport("loadscreen: released (%s) after %d frames, %d pipelines created\n", why,
              mnLoadScreen_frames, Gfx_PipelinesCreated());
 }
@@ -512,7 +380,7 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
     HSD_GObj* text_gobj;
 
     mnLoadScreen_holding = 0;
-    mnLoadScreen_gobj = NULL;
+    mnLoadScreen_panel = NULL;
     mnLoadScreen_text = NULL;
     if (info == NULL || !Gfx_LoadScreenEnabled()) {
         return;
@@ -532,47 +400,28 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
     mnLoadScreen_started = OSGetTime();
     mnLoadScreen_holding = 1;
 
-    mnLoadScreen_gobj = GObj_Create(0xE, 0xF, 0);
-    if (mnLoadScreen_gobj != NULL) {
-        HSD_GObjObject_80390A70(mnLoadScreen_gobj, HSD_SObjLib_804D7960, NULL);
-        GObj_SetupGXLinkMax(mnLoadScreen_gobj, mnLoadScreen_Draw, 10);
-
-        mnLoadScreen_Load(LS_PANEL, "panel_bg");
-        mnLoadScreen_Load(LS_CORNER_TL, "frame_corner_tl");
-        mnLoadScreen_Load(LS_CORNER_TR, "frame_corner_tr");
-        mnLoadScreen_Load(LS_CORNER_BL, "frame_corner_bl");
-        mnLoadScreen_Load(LS_CORNER_BR, "frame_corner_br");
-        mnLoadScreen_Load(LS_EDGE_H, "frame_edge_h");
-        mnLoadScreen_Load(LS_EDGE_V, "frame_edge_v");
-        mnLoadScreen_Load(LS_CURSOR, "cursor_hand");
-
-        /* Back to front. The panel is drawn twice from one copy of its texture: once stretched
-           over the whole screen, because whatever is behind the loader has to stop being the
-           thing the player is looking at, and once at its authored 512x256 as the caption plate
-           the text sits on. */
-        mnLoadScreen_Place(LS_PANEL, 0.0F, 0.0F, 640.0F, 480.0F, 0x10);
-        mnLoadScreen_Place(LS_EDGE_H, 64.0F, 0.0F, 512.0F, 16.0F, 0x20);
-        mnLoadScreen_Place(LS_EDGE_H, 64.0F, 464.0F, 512.0F, 16.0F, 0x20);
-        mnLoadScreen_Place(LS_EDGE_V, 0.0F, 64.0F, 16.0F, 352.0F, 0x20);
-        mnLoadScreen_Place(LS_EDGE_V, 624.0F, 64.0F, 16.0F, 352.0F, 0x20);
-        mnLoadScreen_Place(LS_CORNER_TL, 0.0F, 0.0F, 64.0F, 64.0F, 0x20);
-        mnLoadScreen_Place(LS_CORNER_TR, 576.0F, 0.0F, 64.0F, 64.0F, 0x20);
-        mnLoadScreen_Place(LS_CORNER_BL, 0.0F, 416.0F, 64.0F, 64.0F, 0x20);
-        mnLoadScreen_Place(LS_CORNER_BR, 576.0F, 416.0F, 64.0F, 64.0F, 0x20);
-        mnLoadScreen_Place(LS_PANEL, 64.0F, 112.0F, 512.0F, 256.0F, 0x30);
-        mnLoadScreen_Place(LS_CURSOR, 400.0F, 220.0F, 32.0F, 32.0F, 0x40);
-    }
-
-    /* The game's own text system, set up once per scene by gm_801A4BD4 -> un_802FF78C, so there
-       is nothing to initialise here. Its camera draws on gx_link 17 after the panel. */
     text_gobj = DevText_GetGObj();
     if (text_gobj != NULL) {
-        mnLoadScreen_text =
-            DevText_Create(0x4C, 250, 230, 16, 1, mnLoadScreen_textbuf);
+        /* Created panel first, caption second: DevText_AddToList appends, and the list is drawn
+           in order, so the panel is behind. */
+        mnLoadScreen_panel =
+            DevText_Create(0x4A, LOADSCREEN_PANEL_X, LOADSCREEN_PANEL_Y, LOADSCREEN_PANEL_COLS,
+                           LOADSCREEN_PANEL_ROWS,
+                           mnLoadScreen_panelbuf);
+        if (mnLoadScreen_panel != NULL) {
+            GXColor panel = { 12, 12, 20, 255 };
+            DevText_Show(text_gobj, mnLoadScreen_panel);
+            DevText_HideCursor(mnLoadScreen_panel);
+            DevText_HideText(mnLoadScreen_panel);
+            DevText_SetBGColor(mnLoadScreen_panel, panel);
+        }
+        mnLoadScreen_text = DevText_Create(0x4B, 250, 230, LOADSCREEN_CAPTION_COLS, 1,
+                                           mnLoadScreen_textbuf);
         if (mnLoadScreen_text != NULL) {
+            GXColor plate = { 40, 48, 80, 255 };
             DevText_Show(text_gobj, mnLoadScreen_text);
             DevText_HideCursor(mnLoadScreen_text);
-            DevText_HideBackground(mnLoadScreen_text);
+            DevText_SetBGColor(mnLoadScreen_text, plate);
             DevText_SetScale(mnLoadScreen_text, 10.0F, 16.0F);
         }
     }
@@ -581,7 +430,7 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
 }
 
 /* True while the scene is being held, which is the caller's cue to skip the scene's own frame.
-   The caption's ellipsis is animated from here - one line of scene-proc state rather than four
+   The caption's ellipsis is animated from here - one line of scene state rather than four
    textures - so it keeps moving while the renderer works. */
 static bool mnLoadScreen_Frame(void)
 {

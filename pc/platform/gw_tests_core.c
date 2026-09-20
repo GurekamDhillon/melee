@@ -1,7 +1,16 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "gw.h"
 #include "gw_test.h"
+
+int gw_Mex_CssIconCount(void);
+void *gw_Mex_CssIconTable(void);
+int gw_Mex_InternalCount(void);
+int gw_Mex_InternalForExt(int ext);
+int gw_Mex_FtCostumeCount(int internal);
+int gw_Mex_InternalForPortKind(int fk);
+int gw_Mex_CostumeVisIdx(int fk, int costume);
 
 static int test_u32_roundtrip(void) {
   unsigned char buf[8];
@@ -133,6 +142,230 @@ static int test_mex_env_enables(void) {
   return 0;
 }
 
+
+/* ------------------------------------------------------------------ m-ex CSS portraits -----
+ *
+ * The character-select screen cannot be reached headless, so what CAN be checked here is the
+ * DATA the portrait code indexes: mexSelectChr's single CSP material animation inside
+ * MnSlChr, read straight off the mounted disc.
+ *
+ * What it pins, and why it is worth pinning: the port used to compute the portrait frame as
+ * `external_id + costume * mexSelectChr.csp_stride`. Both m-ex discs say that is wrong. The
+ * animation is laid out in m-ex INTERNAL kind order with each kind's costumes CONSECUTIVE, so
+ * the frame is the cumulative costume index. Decoding individual frames out of ACE's MnSlChr
+ * confirms it by eye - frame 0 is Mario, 30 is Kirby's third costume, 201 is Sonic, 324 is
+ * Knuckles - and this test states the same thing in a form that fails if it ever drifts:
+ * the costume counts in mexData, summed over the leading internal kinds, land exactly on the
+ * animation's own image count (221 on Akaneia, 388 on ACE).
+ *
+ * It also records the number that made the bug LOOK like corruption rather than a mix-up:
+ * ACE's animation has 388 CI8 frames with 388 separate palettes, and HSD_TObj::tlut_no was a
+ * u8, so every frame past 255 drew the right pixels through some other character's palette.
+ */
+
+/* An HSD archive header, big-endian: file size, data size, reloc count, public count, extern
+ * count, then 12 reserved bytes; data at 0x20. */
+#define GW_HSD_HDR 0x20
+
+static const unsigned char *gw_hsd_public(const unsigned char *ar, uint32_t size,
+                                          const char *want, uint32_t *out_off) {
+  uint32_t data_size, nb_reloc, nb_public, nb_extern, o_public, o_symbols, i;
+  if (ar == NULL || size < GW_HSD_HDR) {
+    return NULL;
+  }
+  data_size = gw_r32(ar + 0x04);
+  nb_reloc = gw_r32(ar + 0x08);
+  nb_public = gw_r32(ar + 0x0C);
+  nb_extern = gw_r32(ar + 0x10);
+  o_public = GW_HSD_HDR + data_size + nb_reloc * 4u;
+  o_symbols = o_public + (nb_public + nb_extern) * 8u;
+  if (o_symbols > size) {
+    return NULL;
+  }
+  for (i = 0; i < nb_public; ++i) {
+    const uint32_t off = gw_r32(ar + o_public + i * 8u);
+    const uint32_t sym = gw_r32(ar + o_public + i * 8u + 4u);
+    if (o_symbols + sym < size && strcmp((const char *)ar + o_symbols + sym, want) == 0) {
+      if (out_off != NULL) {
+        *out_off = off;
+      }
+      return ar + GW_HSD_HDR;
+    }
+  }
+  return NULL;
+}
+
+static int test_mex_csp_frame_map(void) {
+  static const char *const paths[] = { "/MnSlChr.usd", "/MnSlChr.dat" };
+  unsigned char *ar = NULL;
+  uint32_t size = 0, data_size = 0, sel = 0;
+  const unsigned char *data;
+  uint32_t matanim, texanim, imagetbl, tluttbl, stride;
+  int n_img, n_lut, i, internal, total, kinds, n_internal, rc = 0;
+
+  if (gw_Mex_CssIconCount() == 0) {
+    return 0; /* a retail disc: no mexData, no m-ex CSS */
+  }
+  for (i = 0; i < 2 && ar == NULL; ++i) {
+    ar = gw_DVDReadFileAlloc(paths[i], &size);
+  }
+  if (ar == NULL) {
+    gw_test_fail("no MnSlChr on this disc");
+    return 1;
+  }
+  data_size = gw_r32(ar + 0x04);
+  data = gw_hsd_public(ar, size, "mexSelectChr", &sel);
+  if (data == NULL) {
+    /* An m-ex disc whose MnSlChr has no mexSelectChr runs the retail CSS; nothing to check. */
+    gw_log("test mex_csp_frame_map: MnSlChr has no mexSelectChr - retail CSS path");
+    free(ar);
+    return 0;
+  }
+  matanim = gw_r32(data + sel + 0x0C);
+  stride = gw_r32(data + sel + 0x10);
+  if (matanim == 0u || matanim + 0x10u > data_size) {
+    gw_test_fail("mexSelectChr CSP matanim offset %u is outside the data section", matanim);
+    free(ar);
+    return 1;
+  }
+  texanim = gw_r32(data + matanim + 0x08);
+  if (texanim == 0u || texanim + 0x18u > data_size) {
+    gw_test_fail("CSP matanim has no texanim (offset %u)", texanim);
+    free(ar);
+    return 1;
+  }
+  imagetbl = gw_r32(data + texanim + 0x0C);
+  tluttbl = gw_r32(data + texanim + 0x10);
+  n_img = (int)gw_r16(data + texanim + 0x14);
+  n_lut = (int)gw_r16(data + texanim + 0x16);
+  gw_log("test mex_csp_frame_map: %d CSP frames, %d TLUTs, csp_stride field %u",
+         n_img, n_lut, stride);
+  if (n_img <= 0 || n_img != n_lut) {
+    gw_test_fail("CSP animation has %d images and %d TLUTs - the portrait code assumes one "
+                 "palette per frame", n_img, n_lut);
+    rc = 1;
+  }
+
+  /* Every frame is a CI8 image of one size with its own palette. That is the premise of the
+   * whole layout: costumes of one fighter SHARE a pixel buffer and differ only by TLUT. */
+  for (i = 0; rc == 0 && i < n_img; ++i) {
+    uint32_t desc = gw_r32(data + imagetbl + (uint32_t)i * 4u);
+    uint32_t lut = gw_r32(data + tluttbl + (uint32_t)i * 4u);
+    if (desc == 0u || desc + 0x18u > data_size || lut == 0u || lut + 0x10u > data_size) {
+      gw_test_fail("CSP frame %d has no image or no TLUT descriptor", i);
+      rc = 1;
+      break;
+    }
+    if (gw_r32(data + desc + 0x08) != 9u) { /* GX_TF_C8 */
+      gw_test_fail("CSP frame %d is format %u, not CI8 - a non-paletted frame would not need "
+                   "tlut_no at all", i, gw_r32(data + desc + 0x08));
+      rc = 1;
+    }
+  }
+
+  /* The mapping itself: cumulative costume counts over INTERNAL kinds must land exactly on
+   * the frame count. `kinds` is how many leading kinds have portraits; the handful of
+   * non-selectable kinds after them (Master Hand, the wireframes, Sandbag) have none. */
+  n_internal = gw_Mex_InternalCount();
+  total = 0;
+  kinds = -1;
+  for (i = 0; i < n_internal; ++i) {
+    if (total == n_img) {
+      kinds = i;
+      break;
+    }
+    total += gw_Mex_FtCostumeCount(i);
+  }
+  if (kinds < 0 && total == n_img) {
+    kinds = n_internal;
+  }
+  if (kinds < 0) {
+    gw_test_fail("no prefix of the %d internal kinds' costume counts sums to the %d CSP "
+                 "frames (total %d) - the portrait frame is not the cumulative costume index",
+                 n_internal, n_img, total);
+    rc = 1;
+  } else {
+    gw_log("test mex_csp_frame_map: internal kinds 0..%d carry all %d frames", kinds - 1, n_img);
+  }
+
+  /* Every fighter the CSS can actually select must fall inside that range, at every costume. */
+  for (i = 0; rc == 0 && kinds >= 0 && i < gw_Mex_CssIconCount(); ++i) {
+    int base = 0, j, count;
+    int ext;
+    const unsigned char *icons = (const unsigned char *)gw_Mex_CssIconTable();
+    if (icons == NULL) {
+      break;
+    }
+    ext = (int)icons[(uint32_t)i * 0x1Cu + 1u]; /* CSSIcon +0x01 is the m-ex external id */
+    internal = gw_Mex_InternalForExt(ext);
+    if (internal < 0 || internal >= kinds) {
+      gw_test_fail("CSS icon %d (external %d) is internal kind %d, outside the %d kinds that "
+                   "have portraits", i, ext, internal, kinds);
+      rc = 1;
+      break;
+    }
+    for (j = 0; j < internal; ++j) {
+      base += gw_Mex_FtCostumeCount(j);
+    }
+    count = gw_Mex_FtCostumeCount(internal);
+    if (count <= 0 || base + count > n_img) {
+      gw_test_fail("internal kind %d has costumes %d..%d, past the %d CSP frames",
+                   internal, base, base + count - 1, n_img);
+      rc = 1;
+      break;
+    }
+  }
+
+  if (rc == 0 && n_img > 256) {
+    gw_log("test mex_csp_frame_map: %d frames - frames 256..%d need a tlut_no wider than the "
+           "retail u8 (see sysdolphin/baselib/tobj.h)", n_img, n_img - 1);
+  }
+  free(ar);
+  return rc;
+}
+
+
+/* The Kirby copy-hat tables are sized to Kirby's RETAIL costume count, and the count that
+ * drives them comes from mexData. This is the data half of that mismatch: it states what the
+ * discs give Kirby and that m-ex maps every one of those costumes back onto a retail row.
+ * ftKb_CopyCostumeRow (ft/kinds/ftKirby/ftkirby.c) is what applies the mapping; it clamps as
+ * well, so a disc that broke this assertion would be wrong but no longer fatal. */
+#define GW_FTKIND_KIRBY 4
+#define GW_FTKB_COPY_COSTUMES 6
+
+static int test_mex_kirby_costume_rows(void) {
+  int internal, count, c, over = 0, rc = 0;
+
+  if (gw_Mex_CssIconCount() == 0) {
+    return 0; /* retail disc */
+  }
+  internal = gw_Mex_InternalForPortKind(GW_FTKIND_KIRBY);
+  if (internal < 0) {
+    gw_test_fail("no m-ex internal kind for Kirby (port FighterKind %d)", GW_FTKIND_KIRBY);
+    return 1;
+  }
+  count = gw_Mex_FtCostumeCount(internal);
+  if (count <= 0) {
+    gw_test_fail("m-ex gives Kirby %d costumes", count);
+    return 1;
+  }
+  for (c = 0; c < count; ++c) {
+    const int row = gw_Mex_CostumeVisIdx(GW_FTKIND_KIRBY, c);
+    if (c >= GW_FTKB_COPY_COSTUMES) {
+      over++;
+    }
+    if (row < 0 || row >= GW_FTKB_COPY_COSTUMES) {
+      gw_test_fail("Kirby costume %d maps to copy-hat row %d, outside the %d rows every "
+                   "ftKb_Init_803C9FC8 / ftKb_Init_803CB3E8 entry has",
+                   c, row, GW_FTKB_COPY_COSTUMES);
+      rc = 1;
+    }
+  }
+  gw_log("test mex_kirby_costume_rows: Kirby has %d costumes, %d of them past the %d rows the "
+         "copy-hat tables carry", count, over, GW_FTKB_COPY_COSTUMES);
+  return rc;
+}
+
 void gw_tests_register_all(void) {
   extern void gw_MexTestRegisterAll(void);
   extern void gw_ppc_tests_register(void);
@@ -160,4 +393,6 @@ void gw_tests_register_all(void) {
   gw_test_register("endian_wf32_is_big_endian", test_wf32_is_big_endian);
   gw_test_register("mem1_at_guest_base", test_mem1_at_guest_base);
   gw_test_register("mem1_aram_distinct", test_mem1_aram_distinct);
+  gw_test_register("mex_csp_frame_map", test_mex_csp_frame_map);
+  gw_test_register("mex_kirby_costume_rows", test_mex_kirby_costume_rows);
 }

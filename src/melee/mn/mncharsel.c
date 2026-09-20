@@ -42,6 +42,7 @@
 #include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/sislib.h>
+#include <sysdolphin/baselib/tobj.h>
 
 static u8 mnCharSel_804D50C8[4] = { 1, 2, 4, 8 };
 static u8 mnCharSel_804D50CC[4] = { 1, 0, 0, 2 };
@@ -1273,10 +1274,71 @@ static inline s32 getHandicapValue(int port)
 #if defined(TARGET_PC)
 /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/CSS Expansion/HUD/ - "Use External ID
  * For CSP" and "CSS - Costume Change Rewrite". With an m-ex CSS the portrait is a frame of
- * mexSelectChr's one CSP material animation, frame = ext + costume * csp_stride (41 on Akaneia),
- * and the emblem is a frame of IfAll's Eblm_matanim_joint, frame = insignia[ext]. Retail used one
- * frame for both (ft_hudindex + costume * 30), which on Akaneia showed a stale portrait: Akaneia
- * stripped every retail portrait animation. */
+ * mexSelectChr's one CSP material animation (see mnCharSel_MexCspFrame for how that frame is
+ * arrived at), and the emblem is a frame of IfAll's Eblm_matanim_joint, frame = insignia[ext].
+ * Retail used one frame for both (ft_hudindex + costume * 30), which on Akaneia showed a stale
+ * portrait: Akaneia stripped every retail portrait animation. */
+
+/* The frame of one fighter's portrait inside mexSelectChr's single CSP material animation.
+ *
+ * NOT `ext + costume * csp_stride`. That formula came from reading m-ex's "CSS Expansion/HUD"
+ * patch names, and BOTH DISCS SAY IT IS WRONG. Decoded straight out of MnSlChr.usd
+ * (tools/mex_port/dump_css.py plus a CI8 decode of individual frames):
+ *
+ *   - the animation is laid out in m-ex INTERNAL kind order, each kind's costumes CONSECUTIVE;
+ *   - so frame(kind k, costume c) = (sum of costume counts of internal kinds 0..k-1) + c;
+ *   - ACE: frame 0 is Mario c0 (internal 0), 30 is Kirby c2 (internal 4, base 28), 201 is
+ *     Sonic c0 (internal 31, base 201), 324 is Knuckles c0 (internal 50, base 324);
+ *   - and the cumulative total over the kinds that have portraits is exactly the animation's
+ *     own image count: 221 on Akaneia, 388 on ACE.
+ *
+ * Under the old formula every character on the screen showed somebody else's portrait - on ACE
+ * `ext + costume * 65` sent Mario (ext 8) to frame 8, which decodes to orange Fox - and a
+ * costume past the third ran the index past the end of the image table entirely.
+ *
+ * The `csp_stride` field is left alone: it equals the external id count on both discs (41 and
+ * 65) and nothing here needs it, so what it is actually for is still unknown.
+ *
+ * The result is bounded by the animation's own `n_imagetbl`, because HSD_A_T_TIMG indexes
+ * `tobj->imagetbl` with no bound of its own. */
+static int mnCharSel_MexCspFrame(int ext, int costume)
+{
+    extern int Mex_InternalForExt(int);
+    extern int Mex_InternalCount(void);
+    extern int Mex_FtCostumeCount(int);
+    int internal = Mex_InternalForExt(ext);
+    int count = Mex_InternalCount();
+    int frame = 0;
+    int k;
+    int limit = 0;
+
+    if (internal < 0 || internal >= count) {
+        return 0;
+    }
+    for (k = 0; k < internal; k++) {
+        frame += Mex_FtCostumeCount(k);
+    }
+    if (costume > 0 && costume < Mex_FtCostumeCount(internal)) {
+        frame += costume;
+    }
+    if (mnCharSel_Mex != NULL && mnCharSel_Mex->csp_matanim != NULL &&
+        mnCharSel_Mex->csp_matanim->texanim != NULL)
+    {
+        limit = mnCharSel_Mex->csp_matanim->texanim->n_imagetbl;
+    }
+    if (limit > 0 && frame >= limit) {
+        MNCS_TRACE("css: portrait ext %d costume %d -> frame %d is past the %d-frame "
+                   "animation - using 0\n",
+                   ext, costume, frame, limit);
+        return 0;
+    }
+    /* The CSS is the one screen a headless run cannot reach, so say what was computed. With
+       rendering working this one line settles whether a portrait is the right one. */
+    MNCS_TRACE("css: portrait ext %d internal %d costume %d -> CSP frame %d of %d\n", ext,
+               internal, costume, frame, limit);
+    return frame;
+}
+
 static void mnCharSel_MexPortrait(int door, int icon, int costume, int retail_frame)
 {
     extern int Mex_PortCKindToExt(int);
@@ -1312,14 +1374,14 @@ static void mnCharSel_MexPortrait(int door, int icon, int costume, int retail_fr
             }
         }
         j = animateJoint(root, cj, TOBJ_MASK,
-                         (float) (ext + costume * mnCharSel_Mex->csp_stride));
+                         (float) mnCharSel_MexCspFrame(ext, costume));
         sethidden(j, 0);
         j = animateJoint(root, ej, TOBJ_MASK, (float) (emblem >= 0 ? emblem : 0));
         sethidden(j, emblem < 0);
         return;
     }
     j = animateJoint(mnCharSel_804D6CC0, mnCharSel_803F0DFC.doors[door].costume_joint,
-                     TOBJ_MASK, (float) (ext + costume * mnCharSel_Mex->csp_stride));
+                     TOBJ_MASK, (float) mnCharSel_MexCspFrame(ext, costume));
     sethidden(j, 0);
     j = animateJoint(mnCharSel_804D6CC0, mnCharSel_803F0DFC.doors[door].emblem_joint,
                      TOBJ_MASK, (float) (emblem >= 0 ? emblem : 0));

@@ -1562,8 +1562,8 @@ void ftData_MexInitKinds(void)
     extern void* Mex_FtFunc(int slot, int k);
     extern int Mex_FtBaseKind(int k);
     extern void Player_MexSetMapping(int ckind, int fkind);
-    extern void ftKb_MexCopyKindData(int dst, int src);
-    extern void ftKb_MexCopyKindHat(int dst, int src);
+    extern void ftKb_MexCopyKindData(int dst, int src, int internal);
+    extern void ftKb_MexCopyKindHat(int dst, int src, int internal);
     static bool done;
     int slot, n = 0;
 
@@ -1728,8 +1728,11 @@ void ftData_MexInitKinds(void)
         ftData_UnkIntPairs[fk].count = ftData_UnkIntPairs[base].count;
         ftData_UnkBytePerCharacter[fk] = ftData_UnkBytePerCharacter[base];
         ftData_UnkCallbackPairs0[fk] = ftData_UnkCallbackPairs0[base];
-        ftKb_MexCopyKindHat(fk, base);
-        ftKb_MexCopyKindData(fk, base);
+        /* Kirby's copy ability for this fighter: its own hat archive, hat costumes, effect
+         * bank and copied-special callbacks come from MxDt.dat, indexed by the m-ex INTERNAL
+         * kind. Only the runtime costume-archive row still follows the clone base. */
+        ftKb_MexCopyKindHat(fk, base, k);
+        ftKb_MexCopyKindData(fk, base, k);
         Player_MexSetMapping(ChKind_Mex0 + slot, fk);
         n++;
     }

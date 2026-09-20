@@ -2277,7 +2277,12 @@ MotionState ftKb_Init_MotionStateTable[ftKb_MS_SelfCount] = {
     },
 };
 
-HSD_GObjEvent ftKb_Init_803C9CC8[] = {
+/* Two per kind: [kind * 2] is called when Kirby GAINS this ability, [kind * 2 + 1] when he
+ * loses it (m-ex MexKirbyFunction.OnAbilityGain / OnAbilityLose). Sized by Ft_Kind_Max, which is
+ * the retail 0x21 on a vanilla build and 64 here - the 66-entry initializer below is unchanged,
+ * and the m-ex rows are filled from MxDt.dat by ftKb_MexCopyKindHat. Before this it was a bare
+ * [], so an m-ex fighter's kind indexed 66..79 words into whatever followed and called it. */
+HSD_GObjEvent ftKb_Init_803C9CC8[Ft_Kind_Max * 2] = {
     ftKb_SpecialN_800EFA40,
     ftKb_SpecialN_800EFAF0,
     ftKb_SpecialN_800EFB4C,
@@ -2346,7 +2351,11 @@ HSD_GObjEvent ftKb_Init_803C9CC8[] = {
     NULL,
 };
 
-HSD_GObjEvent ftKb_Init_803C9DD0[] = {
+/* Kirby's neutral-B while wearing kind K's hat (m-ex MexKirbyFunction.OnSpecialN). NULL means
+ * "no copied move", and ftKb_SpecialN_Enter then runs Kirby's own inhale - which is the correct
+ * behaviour for a swallowed fighter m-ex gives no special, so an empty row is never filled from
+ * the clone base. */
+HSD_GObjEvent ftKb_Init_803C9DD0[Ft_Kind_Max] = {
     ftKb_SpecialN_800F9110,
     ftKb_SpecialNFx_800FE100,
     ftKb_SpecialNCa_800F99BC,
@@ -2382,7 +2391,8 @@ HSD_GObjEvent ftKb_Init_803C9DD0[] = {
     NULL,
 };
 
-HSD_GObjEvent ftKb_Init_803C9E54[] = {
+/* The aerial half of the above (m-ex MexKirbyFunction.OnSpecialAirN). */
+HSD_GObjEvent ftKb_Init_803C9E54[Ft_Kind_Max] = {
     ftKb_SpecialNMr_800F93CC,
     ftKb_SpecialNFx_800FE240,
     ftKb_SpecialNCa_800F9A54,
@@ -4300,9 +4310,43 @@ void ftKb_SpecialN_800F1F1C(Fighter_GObj* gobj, Vec3* pos)
 }
 
 #if defined(TARGET_PC)
-/* ftData_MexInitKinds: an m-ex fighter kind takes its clone base's Kirby hat costume archive. */
-void ftKb_MexCopyKindHat(int dst, int src)
+/* ftData_MexInitKinds: fill fighter kind `dst`'s Kirby copy-ability callbacks from MxDt.dat's
+ * MexData.kirby_function, for m-ex INTERNAL kind `internal`. `src` is the clone base.
+ *
+ * Taking the base's row - which is what this used to do, for every table - is wrong here, and
+ * visibly so: Mex_FtBaseKind answers 0 (Mario) for six of Akaneia's seven added fighters, because
+ * it matches on the slot-0 default pointer and six of them have none. Kirby swallowing Wolf got
+ * Mario's cap and Mario's fireball.
+ *
+ * An EMPTY m-ex row is not a reason to fall back either. m-ex leaves OnSpecialN/OnSpecialAirN at
+ * 0 for six of the seven (only Charizard has them, pointed at Bowser's flame breath), and a NULL
+ * row is exactly how ftKb_SpecialN_Enter is told to run Kirby's own inhale instead. Falling back
+ * to the base would reintroduce the fireball. So these four rows are m-ex's values verbatim.
+ *
+ * The costume-archive row still comes from the base, because it is a RUNTIME array the port owns
+ * rather than data m-ex ships; it is NULL for every kind that has no per-costume hat model, which
+ * is all seven. */
+void ftKb_MexCopyKindHat(int dst, int src, int internal)
 {
+    extern void* Mex_KirbyFunc(int slot, int internal);
+    extern void* Mex_KirbyCostumes(int internal);
+
     ftKb_Init_803C9FC8[dst] = ftKb_Init_803C9FC8[src];
+
+    /* The hat's per-costume models (m-ex kirby_data.costumes). NULL for every Akaneia fighter,
+     * and read rather than assumed so the next build can differ. It is set here, beside the
+     * runtime array it has to agree with: ftKb_SpecialN_800EED50 only reaches
+     * ftKb_Init_803C9FC8[kind][costume] when this row is non-NULL, so a row with no runtime
+     * array behind it would index a NULL table. */
+    ftKb_Init_803CB3E8[dst] = (Fighter_CostumeStrings*) Mex_KirbyCostumes(internal);
+    if (ftKb_Init_803CB3E8[dst] != NULL && ftKb_Init_803C9FC8[dst] == NULL) {
+        OSReport("gw: kind %d has m-ex Kirby hat costumes but no runtime array - ignored\n", dst);
+        ftKb_Init_803CB3E8[dst] = NULL;
+    }
+
+    ftKb_Init_803C9CC8[dst * 2] = (HSD_GObjEvent) Mex_KirbyFunc(0, internal);
+    ftKb_Init_803C9CC8[dst * 2 + 1] = (HSD_GObjEvent) Mex_KirbyFunc(1, internal);
+    ftKb_Init_803C9DD0[dst] = (HSD_GObjEvent) Mex_KirbyFunc(2, internal);
+    ftKb_Init_803C9E54[dst] = (HSD_GObjEvent) Mex_KirbyFunc(3, internal);
 }
 #endif

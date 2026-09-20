@@ -206,7 +206,11 @@ Fighter_CostumeStrings ftKb_Init_803CB3A0[] = {
     { ftKb_Init_803CB358, ftKb_Init_803CB368, ftKb_Init_803CB380 },
 };
 
-Fighter_CostumeStrings* ftKb_Init_803CB3E8[] = {
+/* Per-kind Kirby hat COSTUME models (m-ex MexData.kirby_data.costumes). Only a few vanilla
+ * kinds have one. Sized by Ft_Kind_Max - retail 0x21, 64 here - because ftKb_SpecialN_800EEC34
+ * and ftKb_SpecialN_800EED50 index it by the swallowed fighter's kind, and as a bare [] an m-ex
+ * kind read past the end and then dereferenced whatever it found as a costume-string table. */
+Fighter_CostumeStrings* ftKb_Init_803CB3E8[Ft_Kind_Max] = {
     NULL,
     NULL,
     NULL,
@@ -248,10 +252,51 @@ u8 ftKb_Init_803CB46C[Ft_Kind_Max] = {
 };
 
 #if defined(TARGET_PC)
-/* ftData_MexInitKinds: an m-ex fighter kind takes its clone base's Kirby copy-name row. */
-void ftKb_MexCopyKindData(int dst, int src)
+/* ftData_MexInitKinds: fill fighter kind `dst`'s Kirby hat archive and effect bank from
+ * MxDt.dat's MexData.kirby_data, for m-ex INTERNAL kind `internal`. `src` is the clone base,
+ * used only when the disc has no row.
+ *
+ * Akaneia ships all seven: PlKbCpWf.dat/ftDataKirbyCopyWolf and so on, every file on the disc.
+ * The identification is not a guess - capfiles[k] reproduces this very table for all 27 vanilla
+ * kinds, name for name, NULLs at 4 and 11 included.
+ *
+ * The effect id is the trap. m-ex encodes "this hat loads no effect bank" as 255, and Wolf is
+ * 255; the vanilla table spells the same thing (char)-1, which is the same byte, so the id is
+ * stored as 0xFF and ftKb_SpecialN_800EEC34's existing guard covers it. Mex_KirbyEffectId does
+ * the normalising and the range check, so a raw 255 cannot reach efAsync_LoadSync and fault
+ * there instead of here.
+ *
+ * Only the m-ex kinds are touched. Akaneia's effectids disagree with the retail table for seven
+ * VANILLA kinds (Link, Ness, Peach, Yoshi, Jigglypuff, Mewtwo, Young Link are all 255 there), and
+ * whether that is a renumbering or a quirk of this build is not established - so the retail rows
+ * are left exactly as they are rather than rewritten from a table that is not understood. */
+void ftKb_MexCopyKindData(int dst, int src, int internal)
 {
-    ftKb_Init_803CA9D0[dst] = ftKb_Init_803CA9D0[src];
-    ftKb_Init_803CB46C[dst] = ftKb_Init_803CB46C[src];
+    extern char* Mex_KirbyCapFile(int internal);
+    extern char* Mex_KirbyCapSymbol(int internal);
+    extern int Mex_KirbyEffectId(int internal);
+
+    char* file = Mex_KirbyCapFile(internal);
+    char* symbol = Mex_KirbyCapSymbol(internal);
+    int effect = Mex_KirbyEffectId(internal);
+
+    if (file != NULL && symbol != NULL) {
+        ftKb_Init_803CA9D0[dst].filename = file;
+        ftKb_Init_803CA9D0[dst].name = symbol;
+    } else {
+        ftKb_Init_803CA9D0[dst] = ftKb_Init_803CA9D0[src];
+    }
+
+    ftKb_Init_803CB46C[dst] = (u8) (effect < 0 ? 0xFF : effect);
+
+    /* One line per added fighter, so a play-test log says which hat each kind actually got -
+     * the accessors are covered by mex_kirby_hats, but nothing headless can see this wiring.
+     *
+     * It prints what m-ex supplied, NOT ftKb_Init_803CA9D0[dst] read back. Reading the row back
+     * would dereference the clone base's pointer on the fallback path, and a diagnostic must
+     * never be the thing that faults. */
+    OSReport("gw: kind %d Kirby hat: %s / %s, effect %d\n", dst,
+             file != NULL ? file : "(clone base)", symbol != NULL ? symbol : "(clone base)",
+             effect);
 }
 #endif

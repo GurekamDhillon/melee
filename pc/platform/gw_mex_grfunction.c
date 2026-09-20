@@ -61,6 +61,7 @@ extern void gw_Mex_RuntimeInit(void);
 extern uint32_t gw_Mex_Rtoc(void);
 extern uint32_t gw_Mex_StackTop(void);
 extern uint32_t gw_Mex_Callable(uint32_t guest, const char *why);
+extern void gw_Mex_NoteGuestCodeInstalled(void);
 extern void gw_Mex_ReleaseThunks(uint32_t lo, uint32_t hi);
 extern uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size);
 extern int gw_DVDConvertPathToEntrynum(const char *path);
@@ -483,6 +484,13 @@ void gw_Mex_GrFunctionInit(void *archive, int grkind) {
     gr_code_hi = code_base + code_size;
     gr_loaded = grkind;
     gw_ppc_add_code_range(gr_code_lo, gr_code_hi);
+    /* Arm the interpreter's execute trap. A stage blob hands code addresses to native engine
+     * code the same way a fighter blob does - a map gobj's callbacks, or an address stored
+     * straight into engine data - and until the trap is armed the first such call is a fatal
+     * access violation inside MEM1 instead of an interpreted call. gw_Mex_FtFunctionInstall()
+     * used to be the only thing that armed it, so a stage run with a vanilla fighter never did.
+     */
+    gw_Mex_NoteGuestCodeInstalled();
     gw_log("grfunction: %s (internal stage %d) installed: code 0x%08X..0x%08X (%u bytes), %u "
            "instruction relocs, %d of %u overloads",
            file, grkind, gr_code_lo, gr_code_hi, code_size, irt_count, n, frt_count);

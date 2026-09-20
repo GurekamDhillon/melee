@@ -167,7 +167,7 @@ static gw_mex_kind *gw_mex_k = &gw_mex_kinds[0];
 static uint32_t gw_mex_r2;            /* shared Arch_FighterFunc holder: every blob's r2 */
 static uint32_t gw_mex_mexdata_base;  /* that region's base; 0 = runtime not initialised yet */
 static uint32_t gw_mex_stack_base;    /* shared guest stack, low end */
-static int gw_mex_any_installed;      /* any fighter's code is installed (exec trap guard) */
+static int gw_mex_any_installed;      /* any m-ex guest code is installed (exec trap guard) */
 static uint32_t gw_mex_stack_top;     /* guest stack top (r1), shared */
 static uint32_t gw_mex_getdata_buf;   /* guest buffer backing the MEX_GetData(8) shim */
 
@@ -1636,7 +1636,7 @@ static uint32_t gw_mex_trap_trampoline(uint32_t a0, uint32_t a1, uint32_t a2, ui
     return r3;
 }
 
-static void gw_mex_trap_note(uint32_t eip) {
+static void gw_mex_trap_note(uint32_t eip, const uint32_t *frame) {
     int i;
     for (i = 0; i < gw_mex_trap_seen_n; ++i) {
         if (gw_mex_trap_seen[i] == eip) {
@@ -1653,7 +1653,16 @@ static void gw_mex_trap_note(uint32_t eip) {
         gw_mex_trap_seen_count[gw_mex_trap_seen_n] = 1u;
         ++gw_mex_trap_seen_n;
     }
-    gw_log("interp: trap: native code called guest %s directly - %s", gw_ppc_describe(eip),
+    /* Name the NATIVE caller and the first four arguments. Without them a trap line says only
+     * that some engine field held a guest address; with them the field is identifiable from the
+     * map (mapsym.sh on the return address), and an argument that is a HOST STACK pointer -
+     * which interpreted code cannot read or write - is visible as such instead of surfacing
+     * later as an unexplained guest access violation. */
+    gw_log("interp: trap: native code called guest %s directly (from rva 0x%08X, args %08X %08X "
+           "%08X %08X) - %s",
+           gw_ppc_describe(eip), frame != NULL ? frame[0] : 0u,
+           frame != NULL ? frame[1] : 0u, frame != NULL ? frame[2] : 0u,
+           frame != NULL ? frame[3] : 0u, frame != NULL ? frame[4] : 0u,
            gw_mex_in_blob(eip) ? "interpreting" : "redirected to its native build");
 }
 
@@ -1683,11 +1692,11 @@ static LONG CALLBACK gw_mex_exec_trap(PEXCEPTION_POINTERS ep) {
         if (native == 0u || kind != 1) {
             return EXCEPTION_CONTINUE_SEARCH; /* not a known function: a real crash */
         }
-        gw_mex_trap_note(eip);
+        gw_mex_trap_note(eip, (const uint32_t *) (uintptr_t) ep->ContextRecord->Esp);
         ep->ContextRecord->Eip = (DWORD) native;
         return EXCEPTION_CONTINUE_EXECUTION;
     }
-    gw_mex_trap_note(eip);
+    gw_mex_trap_note(eip, (const uint32_t *) (uintptr_t) ep->ContextRecord->Esp);
     gw_mex_trap_target = eip;
     ep->ContextRecord->Eip = (DWORD) (uintptr_t) gw_mex_trap_trampoline;
     return EXCEPTION_CONTINUE_EXECUTION;
@@ -2649,6 +2658,16 @@ uint32_t gw_Mex_StackTop(void) { return gw_mex_stack_top; }
 uint32_t gw_Mex_Callable(uint32_t guest, const char *why) {
     return gw_mex_callable(guest, why);
 }
+
+/* THE EXEC TRAP IS NOT FIGHTER-ONLY, AND ITS GUARD USED TO BE.
+ * gw_mex_exec_trap() is the general answer to "native code called a guest address directly",
+ * but it was armed only by gw_Mex_FtFunctionInstall(). A stage's grFunction blob is guest code
+ * loaded by a completely different path, and a training run with a VANILLA fighter installs no
+ * ftFunction at all - so on every added stage the guard was 0, the trap declined the fault, and
+ * the process died with "FATAL ACCESS_VIOLATION at 81xxxxxx (no module) (in MEM1)". That is
+ * where the whole "(in MEM1)" failure class came from: one missing arm, not a missing bind per
+ * stage. Any loader that registers a guest code range must call this. */
+void gw_Mex_NoteGuestCodeInstalled(void) { gw_mex_any_installed = 1; }
 
 /* Public form of gw_mex_release_thunks(): drop every thunk bound into [lo, hi), because that
  * guest code is going away. The stage runtime needs this for the same reason the fighter path

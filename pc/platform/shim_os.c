@@ -71,10 +71,43 @@ static void gw_arena_ensure(void) {
   }
 }
 
+/* The last GW_GUEST_SCRATCH_SIZE bytes of the withheld region are not the m-ex runtime's; see
+ * gw_guest_scratch below. Everything above still belongs to gw_mex_persist_alloc. */
+#define GW_GUEST_SCRATCH_SIZE 0x100u
+#define GW_GUEST_SCRATCH_SLOT 0x20u
+
 /* The withheld region: [base, base + size). Never touched by the game. */
 void gw_mex_persist_region(uint32_t *base, uint32_t *size) {
   *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE);
-  *size = GW_MEX_PERSIST_SIZE;
+  *size = GW_MEX_PERSIST_SIZE - GW_GUEST_SCRATCH_SIZE;
+}
+
+/* ---- guest scratch for pointer arguments handed to GUEST callbacks -------------------------
+ * A native function that passes `&local` to a callback is fine as long as the callee is native
+ * too. It is NOT fine when the callee is an interpreted m-ex blob: a host stack address is
+ * outside MEM1, so the interpreter's first load through it is a guest access violation - or,
+ * before the interpreter got its bounds check, a fault deep inside VCRUNTIME140's memcpy.
+ * sysdolphin hits this wherever an animation update function comes from the disc rather than
+ * from the engine: HSD_ObjUpdateFunc in fobj.c/robj.c, reached from an m-ex stage's grFunction.
+ *
+ * This hands out small, permanently mapped GUEST buffers instead. It is a round robin, not an
+ * allocator: nothing is freed and slots are reused, which is correct because every caller uses
+ * its slot for exactly the duration of one call and the few slots cover the nesting that one
+ * callback re-entering the animation system can produce. Contents are undefined on entry; the
+ * caller writes the value it wants the callee to see. Living inside the withheld top of MEM1
+ * means it survives a scene change and the test harness's MEM1 restore, and needs no
+ * invalidation hook. */
+void *gw_guest_scratch(uint32_t size) {
+  static uint32_t next;
+  uint32_t base;
+  if (size > GW_GUEST_SCRATCH_SLOT) {
+    gw_panic("gw_guest_scratch: %u bytes requested, slot is %u", size,
+             (uint32_t)GW_GUEST_SCRATCH_SLOT);
+  }
+  base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_GUEST_SCRATCH_SIZE);
+  base += (next % (GW_GUEST_SCRATCH_SIZE / GW_GUEST_SCRATCH_SLOT)) * GW_GUEST_SCRATCH_SLOT;
+  ++next;
+  return (void *)(uintptr_t)base;
 }
 
 void *gw_OSGetArenaLo(void) {

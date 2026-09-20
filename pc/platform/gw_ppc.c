@@ -154,10 +154,30 @@ static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {
 
 #define GW_PPC_DUMP_PTRS 10 /* distinct pointer-looking registers to hexdump */
 
-static int gw_ppc_looks_guest(uint32_t v) {
-    /* Plausible-pointer test, deliberately loose: word-aligned, inside MEM1, and with room for
-     * the 0x40 bytes the hexdump reads. A false positive costs two extra lines. */
-    return (v & 3u) == 0u && gw_ppc_ea_ok(v, 0x40u);
+/* Defined with the code-range table further down; declared here so the fault dump can name the
+ * ranges. It has to: a blob installed through gw_ppc_add_code_range leaves the machine's own
+ * [code_lo, code_hi) at [0, 0), so printing only that pair says "no code" about a blob that is
+ * running perfectly well. The stage path does exactly this. */
+static void gw_ppc_log_code_ranges(void);
+
+/* What a register value looks like: 0 = not a pointer worth dumping, 1 = guest MEM1,
+ * 2 = a NATIVE address inside one of the game's globals. Telling those two apart in the dump is
+ * the whole diagnosis for a bridged function that returned a pointer to a global - it is what
+ * turns "ea=0x107819A0" into "r3 is grDatFiles_8049EE10's native storage". */
+static int gw_ppc_ptr_kind(uint32_t v) {
+    if ((v & 3u) != 0u) {
+        return 0;
+    }
+    if (gw_ppc_ea_ok(v, 0x40u)) {
+        return 1;
+    }
+    /* Only 4 bytes need to be inside the object: the 0x40-byte hexdump may run past a small
+     * global into whatever .data follows it, which is mapped image memory and cannot fault -
+     * and seeing the neighbours is usually what identifies the object anyway. */
+    if (gw_mex_bridge_is_native_data(v, 4)) {
+        return 2;
+    }
+    return 0;
 }
 
 /* 0x40 bytes at a guest address, two lines of eight big-endian words. 0x40 rather than 0x20
@@ -191,8 +211,9 @@ static void gw_ppc_dump_state(const gw_ppc_machine *m, uint32_t ip) {
     gw_log("ppc:   ip  = %s", gw_ppc_describe(ip));
     gw_log("ppc:   pc  = 0x%08X  lr = %s", c->pc, gw_ppc_describe(c->lr));
     gw_log("ppc:   ctr = 0x%08X  cr = 0x%08X  xer = 0x%08X", c->ctr, c->cr, c->xer);
-    gw_log("ppc:   blob code range [0x%08X,0x%08X)  depth = %d", m->code_lo, m->code_hi,
+    gw_log("ppc:   bridge code range [0x%08X,0x%08X)  depth = %d", m->code_lo, m->code_hi,
            gw_ppc_depth);
+    gw_ppc_log_code_ranges();
 
     /* The instruction stream: four words before the faulting one and four after. The faulting
      * word is marked, so the raw encoding can be pasted straight into tools/mex_port/ppc_disasm.py
@@ -229,7 +250,8 @@ static void gw_ppc_dump_state(const gw_ppc_machine *m, uint32_t ip) {
     for (i = 0; i < 32 && n_seen < GW_PPC_DUMP_PTRS; ++i) {
         uint32_t v = c->gpr[i];
         int dup = 0;
-        if (!gw_ppc_looks_guest(v)) {
+        int kind = gw_ppc_ptr_kind(v);
+        if (kind == 0) {
             continue;
         }
         for (j = 0; j < n_seen; ++j) {
@@ -242,8 +264,8 @@ static void gw_ppc_dump_state(const gw_ppc_machine *m, uint32_t ip) {
         }
         seen[n_seen++] = v;
         {
-            char label[8];
-            snprintf(label, sizeof label, "r%d", i);
+            char label[24];
+            snprintf(label, sizeof label, "r%d%s", i, (kind == 2) ? " NATIVE-GLOBAL" : "");
             gw_ppc_dump_mem(label, v);
         }
     }
@@ -546,6 +568,17 @@ void gw_ppc_remove_code_range(uint32_t lo, uint32_t hi) {
             gw_ppc_range_hi[i] = gw_ppc_range_hi[gw_ppc_range_count];
             return;
         }
+    }
+}
+
+/* Every blob currently installed. gw_ppc_set_bridge's own pair is [0, 0) for both the fighter and
+ * the stage paths, which register their code here instead, so this is where a fault dump's "which
+ * blob was running" actually lives. */
+static void gw_ppc_log_code_ranges(void) {
+    int i;
+    for (i = 0; i < gw_ppc_range_count; ++i) {
+        gw_log("ppc:   registered code range [0x%08X,0x%08X)", gw_ppc_range_lo[i],
+               gw_ppc_range_hi[i]);
     }
 }
 

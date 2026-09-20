@@ -61,10 +61,19 @@ typedef struct gw_ppc_ctx {
 typedef uint32_t (*gw_ppc_native_fn)(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
                                      uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7);
 
+/* Set in `float_args` to mark the target VARIADIC. Argument slots are 0..7, so the mask's high
+ * bits are free, and using one keeps the wire format of every existing signature table byte-for-
+ * byte unchanged - a table that knows nothing about varargs keeps working untouched. With it set,
+ * `n_args` counts only the FIXED parameters and the variadic tail is marshalled as described at
+ * gw_ppc_bridge_call. */
+#define GW_PPC_SIG_VARARGS 0x80000000u
+#define GW_PPC_SIG_SLOT_MASK 0xFFu
+
 /* Calling signature of a bridged target. `float_args` is a bitmask: bit i set => native argument
- * slot i is a float sourced from the next FPR (f1..f8) rather than the next GPR (r3..r10).
- * `n_args` bounds the walk (0..8; 0 for a no-argument function like HSD_Randf); `ret_float` set => the callee returns a float, captured into
- * FPR 1 instead of the word return in r3. */
+ * slot i is a float sourced from the next FPR (f1..f8) rather than the next GPR (r3..r10), plus
+ * the GW_PPC_SIG_VARARGS flag above. `n_args` bounds the walk (0..8; 0 for a no-argument function
+ * like HSD_Randf, and for a variadic target the count of FIXED parameters); `ret_float` set => the
+ * callee returns a float, captured into FPR 1 instead of the word return in r3. */
 typedef struct gw_ppc_sig {
     uint32_t float_args;
     uint32_t n_args;

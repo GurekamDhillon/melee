@@ -17,8 +17,9 @@
 
 typedef struct gw_mex_gen_sig {
     uint32_t guest;      /* guest address, as in config/GALE01/symbols.txt */
-    uint32_t float_args; /* bit i => arg slot i is a float from the next FPR */
-    uint32_t n_args;     /* 0..8 */
+    uint32_t float_args; /* bit i => arg slot i is a float from the next FPR;
+                          * | 0x80000000 (GW_PPC_SIG_VARARGS) => variadic */
+    uint32_t n_args;     /* 0..8; for a variadic target, the FIXED count */
     int      ret_float;  /* callee returns a float, captured into f1 */
 } gw_mex_gen_sig;
 
@@ -39,6 +40,7 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x80034110u, 0x00u, 1, 0 }, /* Player_GetEntity */
     { 0x8004B108u, 0x00u, 1, 0 }, /* mpColl_8004B108 */
     { 0x8005B880u, 0x00u, 1, 0 }, /* efLib_DestroyAll */
+    { 0x8005FDDCu, 0x80000000u, 2, 0 }, /* efSync_Spawn */
     { 0x800693ACu, 0x38u, 7, 0 }, /* Fighter_ChangeMotionState */
     { 0x8006EBA4u, 0x00u, 1, 0 }, /* ftAnim_8006EBA4 */
     { 0x8006F238u, 0x00u, 1, 0 }, /* ftAnim_IsFramesRemaining */
@@ -132,6 +134,7 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x80361FC4u, 0x00u, 1, 0 }, /* HSD_StateInvalidate */
     { 0x803624D8u, 0x00u, 0, 0 }, /* HSD_StateInitTev */
     { 0x80364340u, 0x03u, 2, 1 }, /* fmodf */
+    { 0x80364C08u, 0x80000000u, 5, 0 }, /* HSD_ForeachAnim */
     { 0x8036A288u, 0x00u, 0, 0 }, /* HSD_CObjGetCurrent */
     { 0x8036C244u, 0x00u, 0, 0 }, /* HSD_ClearVtxDesc */
     { 0x80370928u, 0x00u, 1, 0 }, /* HSD_JObjAnimAll */

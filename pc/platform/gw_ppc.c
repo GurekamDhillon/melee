@@ -16,6 +16,7 @@
 #include "gw_mex_bridge.h"
 
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -398,6 +399,8 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
     int fpr_i = 1; /* float args start at f1 */
     int gpr_i = 3; /* integer args start at r3 */
     uint32_t i;
+    uint32_t fmask;
+    int variadic;
 
     if (m->resolve == NULL) {
         gw_panic("ppc: branch to 0x%08X outside blob with no resolver (ip=0x%08X)", guest_addr,
@@ -414,6 +417,8 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
         gw_panic("ppc: resolver reported %u args (>8) for guest address 0x%08X", sig.n_args,
                  guest_addr);
     }
+    fmask = sig.float_args & GW_PPC_SIG_SLOT_MASK;
+    variadic = (sig.float_args & GW_PPC_SIG_VARARGS) != 0;
     /* Marshal each native argument from its PowerPC register: a float argument takes the next
      * FPR (f1..f8), an integer/pointer argument the next GPR (r3..r10). The float's IEEE-754
      * bits are passed in the uint32 slot, which on i686 cdecl lands verbatim in the callee's
@@ -422,11 +427,53 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
         args[i] = 0;
     }
     for (i = 0; i < sig.n_args; ++i) {
-        if (sig.float_args & (1u << i)) {
+        if (fmask & (1u << i)) {
             float f = (float)c->fpr[fpr_i].d;
             memcpy(&args[i], &f, 4);
             ++fpr_i;
         } else {
+            args[i] = c->gpr[gpr_i];
+            ++gpr_i;
+        }
+    }
+    /* ---- the variadic tail -------------------------------------------------------------
+     * A variadic callee does not read its arguments from a signature, so neither can the
+     * bridge: the number and the types of the values past `n_args` are a property of the CALL
+     * SITE, not of the function. The PowerPC EABI hands us exactly the one bit that matters.
+     * A variadic caller must record in CR bit 6 whether it passed any argument in an FPR -
+     * `creqv 6,6,6` (crset) when it did, `crxor 6,6,6` (crclr) when it did not - and MWCC emits
+     * that instruction immediately before every variadic `bl`, so it is still live here.
+     *
+     * The native callee is i686 cdecl and walks its varargs along a flat stack, where the
+     * default argument promotions have already turned a float into an EIGHT-byte double. So:
+     *
+     *   CR6 clear -> every variadic value is a word: the remaining GPRs are already in the
+     *                right order, which is why all-pointer varargs (efSync_Spawn) happened to
+     *                work under the old integer default.
+     *   CR6 set   -> the first variadic value is a double in the next FPR: it occupies TWO
+     *                native slots, and the words that follow come from the GPRs after it.
+     *
+     * Only the FIRST variadic value's class is knowable this way. A call passing a float
+     * vararg followed by more values of mixed classes cannot be expressed, because the PowerPC
+     * register assignment has already lost their relative order; such a target needs a
+     * hand-written adapter. No call site in the shipped content does that today. */
+    if (variadic) {
+        if (gw_ppc_cr_bit(c, 6)) {
+            double d = c->fpr[fpr_i].d;
+            if (sig.n_args + 2u > 8u) {
+                gw_panic("ppc: variadic call to 0x%08X has %u fixed args - no room for the "
+                         "8-byte float vararg (ip=0x%08X)",
+                         guest_addr, sig.n_args, c->pc - 4);
+            }
+            memcpy(&args[sig.n_args], &d, sizeof d);
+            ++fpr_i;
+            i = sig.n_args + 2u;
+            if (gw_ppc_trace_fp) {
+                gw_log("ppc: variadic %s: %u fixed args + float vararg %.6f",
+                       gw_ppc_describe(guest_addr), sig.n_args, d);
+            }
+        }
+        for (; i < 8u && gpr_i <= 10; ++i) {
             args[i] = c->gpr[gpr_i];
             ++gpr_i;
         }
@@ -442,7 +489,7 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
             memcpy(&a1, &args[1], 4);
             gw_log("ppc: fp-call %s(%.6f, %.6f) -> %.6f  [nargs=%u mask=0x%X]",
                    gw_ppc_describe(guest_addr),
-                   (double) a0, (double) a1, (double) r, sig.n_args, sig.float_args);
+                   (double) a0, (double) a1, (double) r, sig.n_args, fmask);
         }
         c->fpr[1].d = (double)r;
     } else {
@@ -1723,6 +1770,102 @@ static int test_ppc_float_bridge(void) {
     return 0;
 }
 
+/* ---- variadic bridge test -----------------------------------------------------------------
+ * A variadic callee reads its arguments from no signature, so neither can the bridge: what the
+ * tail contains belongs to the CALL SITE. The PowerPC EABI makes the caller say so out loud -
+ * `creqv 6,6,6` before the bl when an argument went into an FPR, `crxor 6,6,6` when none did -
+ * and gw_ppc_bridge_call marshals from that bit, because the native i686 callee walks a flat
+ * stack on which a float vararg has already been promoted to an eight-byte double.
+ *
+ * Both halves matter and both are checked here. The crclr half is the behaviour that the old
+ * integer default happened to get right (all-pointer varargs, e.g. efSync_Spawn) and must not
+ * regress; the crset half is the one it silently dropped, which is what made
+ * HSD_ForeachAnim(..., AOBJ_ARG_AF, frame) request a garbage animation frame.
+ *
+ * The helper is genuinely variadic and is called through the bridge's fixed-arity cdecl pointer,
+ * exactly as every real vararg target is: on i686 cdecl the caller builds and cleans the stack,
+ * so the shapes agree. */
+
+#define GW_PPC_TEST_VCODE_F 0x80300200u       /* blob: float vararg (crset) */
+#define GW_PPC_TEST_VCODE_W 0x80300240u       /* blob: word vararg (crclr) */
+#define GW_PPC_TEST_VHELPER_GUEST 0x80380368u /* fake guest address of the variadic helper */
+
+static uint32_t gw_ppc_test_vhelper(uint32_t kind, uint32_t unused, ...) {
+    va_list ap;
+    uint32_t r;
+    (void)unused;
+    va_start(ap, unused);
+    if (kind == 1u) {
+        /* The default argument promotions make a float vararg a double. */
+        double d = va_arg(ap, double);
+        r = (uint32_t)(int32_t)(d * 100.0);
+    } else {
+        r = va_arg(ap, uint32_t);
+    }
+    va_end(ap);
+    return r;
+}
+
+static gw_ppc_native_fn gw_ppc_test_vresolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
+    (void)ctx;
+    if (guest_addr == GW_PPC_TEST_VHELPER_GUEST) {
+        sig->float_args = GW_PPC_SIG_VARARGS; /* no fixed float; variadic tail */
+        sig->n_args = 2;                      /* kind, unused */
+        sig->ret_float = 0;
+        return (gw_ppc_native_fn)(uintptr_t)gw_ppc_test_vhelper;
+    }
+    return NULL;
+}
+
+static int test_ppc_varargs_bridge(void) {
+    /* mflr r0; lis r9,0x8030; lfs f1,0x150(r9); li r3,1; li r4,0; creqv 6,6,6; bl helper;
+     * lis r9,0x8030; stw r3,0x154(r9); mtlr r0; blr */
+    static const uint32_t blob_f[] = {
+        0x7C0802A6u, 0x3D208030u, 0xC0290150u, 0x38600001u, 0x38800000u, 0x4CC63242u,
+        0x48000000u | ((GW_PPC_TEST_VHELPER_GUEST - (GW_PPC_TEST_VCODE_F + 24)) & 0x03FFFFFCu) |
+            1u,
+        0x3D208030u, 0x90690154u, 0x7C0803A6u, 0x4E800020u,
+    };
+    /* mflr r0; li r3,2; li r4,0; lis r5,0x00C0; ori r5,r5,0xFFEE; crxor 6,6,6; bl helper;
+     * lis r9,0x8030; stw r3,0x158(r9); mtlr r0; blr */
+    static const uint32_t blob_w[] = {
+        0x7C0802A6u, 0x38600002u, 0x38800000u, 0x3CA000C0u, 0x60A5FFEEu, 0x4CC63182u,
+        0x48000000u | ((GW_PPC_TEST_VHELPER_GUEST - (GW_PPC_TEST_VCODE_W + 24)) & 0x03FFFFFCu) |
+            1u,
+        0x3D208030u, 0x90690158u, 0x7C0803A6u, 0x4E800020u,
+    };
+    const float f = 3.5f;
+    unsigned i;
+    uint32_t got;
+
+    for (i = 0; i < sizeof blob_f / sizeof blob_f[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_VCODE_F + 4 * i), blob_f[i]);
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_VCODE_W + 4 * i), blob_w[i]);
+    }
+    gw_wf32((void *)(uintptr_t)0x80300150u, f);
+    gw_w32((void *)(uintptr_t)0x80300154u, 0u);
+    gw_w32((void *)(uintptr_t)0x80300158u, 0u);
+
+    gw_ppc_set_bridge(gw_ppc_test_vresolve, NULL, GW_PPC_TEST_VCODE_F,
+                      GW_PPC_TEST_VCODE_F + (uint32_t)sizeof blob_f);
+    gw_ppc_call(GW_PPC_TEST_VCODE_F, NULL, 0, 0, GW_PPC_TEST_STACK);
+    got = gw_r32((const void *)(uintptr_t)0x80300154u);
+    if (got != 350u) {
+        gw_test_fail("float vararg (crset) arrived as %u, expected 350 (3.5 * 100)", got);
+        return 1;
+    }
+
+    gw_ppc_set_bridge(gw_ppc_test_vresolve, NULL, GW_PPC_TEST_VCODE_W,
+                      GW_PPC_TEST_VCODE_W + (uint32_t)sizeof blob_w);
+    gw_ppc_call(GW_PPC_TEST_VCODE_W, NULL, 0, 0, GW_PPC_TEST_STACK);
+    got = gw_r32((const void *)(uintptr_t)0x80300158u);
+    if (got != 0x00C0FFEEu) {
+        gw_test_fail("word vararg (crclr) arrived as 0x%08X, expected 0x00C0FFEE", got);
+        return 1;
+    }
+    return 0;
+}
+
 /* ---- static-global bridge test -----------------------------------------------------------
  * The interpreter must route a load/store of a bridge-table data object (kind 0) through the
  * NATIVE storage, not raw MEM1. ftData_803C52A0 (guest 0x803C52A0) is a game .data table whose
@@ -2028,6 +2171,7 @@ static int test_ppc_xoris_int_to_float(void) {
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
+    gw_test_register("ppc_varargs_bridge", test_ppc_varargs_bridge);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
     gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
     gw_test_register("ppc_fp_aform_decode", test_ppc_fp_aform_decode);

@@ -5,6 +5,13 @@
 #include "debug.h"
 #include "spline.h"
 
+#if defined(TARGET_PC)
+/* Native shims define gw_X; a game TU calls the UNPREFIXED name and gwtool adds the prefix.
+ * gw_ppc_is_guest_code lives in pc/platform/gw_ppc.c, gw_guest_scratch in shim_os.c. */
+int ppc_is_guest_code(u32 addr);
+void* guest_scratch(u32 size);
+#endif
+
 HSD_ObjAllocData fobj_alloc_data;
 
 HSD_ObjAllocData* HSD_FObjGetAllocData(void)
@@ -384,6 +391,25 @@ void FObjUpdateAnim(HSD_FObj* fobj, void* obj, HSD_ObjUpdateFunc obj_update)
     default:
         break;
     }
+#if defined(TARGET_PC)
+    /* `obj_update` is whatever installed the animation, and on an m-ex disc that can be a
+     * GUEST function: a custom stage's grFunction registers its own HSD_ObjUpdateFunc, which
+     * the port runs in the PowerPC interpreter. `&fobjdata` is a HOST STACK address, outside
+     * MEM1, so the interpreted callee's first load through it faults - as a guest access
+     * violation at the callback's entry, or, before the interpreter bounds-checked its loads,
+     * somewhere inside VCRUNTIME140's memcpy with no caller in sight. Seen on ACE's ext:307.
+     *
+     * Hand a guest callee a GUEST buffer instead. The copy back keeps the (native) contract
+     * that a callback may write through the pointer; gwtool byte-swaps every access in this
+     * TU, so both copies are big-endian exactly as the interpreter expects. */
+    if (ppc_is_guest_code((u32) obj_update)) {
+        HSD_ObjData* shared = (HSD_ObjData*) guest_scratch(sizeof(HSD_ObjData));
+        *shared = fobjdata;
+        obj_update(obj, fobj->obj_type, shared);
+        fobjdata = *shared;
+        return;
+    }
+#endif
     obj_update(obj, fobj->obj_type, &fobjdata);
 }
 

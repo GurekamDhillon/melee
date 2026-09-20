@@ -582,6 +582,27 @@ void gw_install_crash_handler(void) {
 #define GW_WATCHDOG_STATS_EVERY 20 /* one full stats line every ~2s */
 
 static HANDLE gw_game_thread;
+/* How long the same PC has to persist before the watchdog calls it a spin. Ten samples a second.
+ *
+ * Four seconds is right for one game with the machine to itself. It is WRONG when several runs
+ * share the CPU: the sweep runs four at a time now, and a stage that loaded fine on its own
+ * started reporting "spinning" at frame 240 purely because the load took longer than four
+ * seconds of wall clock. That is a false fault, and a false fault in an unattended sweep is
+ * worse than no check at all. MELEE_SPIN_SECONDS lets the harness scale it with -Parallel. */
+static int gw_spin_ticks(void) {
+  static int ticks = -1;
+  if (ticks < 0) {
+    const char *v = getenv("MELEE_SPIN_SECONDS");
+    long secs = (v != NULL) ? strtol(v, NULL, 10) : 0;
+    if (secs < 1 || secs > 120) {
+      secs = 4;
+    }
+    ticks = (int)(secs * 10);
+  }
+  return ticks;
+}
+
+
 
 static DWORD WINAPI gw_watchdog(LPVOID unused) {
   uintptr_t last_pc = 0;
@@ -615,8 +636,8 @@ static DWORD WINAPI gw_watchdog(LPVOID unused) {
       if (strcmp(where, last_where) != 0) {
         gw_log("gw: at %s", where);
         snprintf(last_where, sizeof last_where, "%s", where);
-      } else if (same == 40) {
-        gw_log("gw: still at %s after 4s - spinning", where);
+      } else if (same == gw_spin_ticks()) {
+        gw_log("gw: still at %s after %ds - spinning", where, gw_spin_ticks() / 10);
       }
       if (++stats_tick >= GW_WATCHDOG_STATS_EVERY) {
         uint32_t retrace, presented, waits, alarms_active, alarms_fired;

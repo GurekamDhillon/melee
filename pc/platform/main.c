@@ -145,6 +145,40 @@ static AuroraBackend gw_desired_backend(void) {
   return BACKEND_D3D11;
 }
 
+/* Dawn's compiled-pipeline cache, kept OUT of the shared per-user prefs directory.
+ *
+ * aurora defaults cachePath to SDL_GetPrefPath("Melee PC"), so EVERY melee-pc process on the
+ * machine writes one SQLite database - whatever sandbox, build or agent it belongs to. Two runs
+ * at once corrupt it, and from then on every later run reads the poisoned entry and dies at its
+ * first draw with "aurora::gfx::gx: unmapped vtx attr 13", long before any game code is
+ * involved. It cost hours: a whole sweep silently produced frame-0 failures, a binary that had
+ * rendered fifteen minutes earlier stopped rendering, and it looked exactly like a GPU or driver
+ * fault - I recommended a reboot, which would not have helped.
+ *
+ * run.sh and selftest.ps1 already isolate the exe, the log, the memory card and the mods dir per
+ * sandbox; this was the one shared mutable file left. Default it next to the executable, which is
+ * per-sandbox by construction, and let MELEE_CACHE_DIR override.
+ */
+static const char *gw_cache_path(void) {
+  static char buf[MAX_PATH];
+  const char *env = getenv("MELEE_CACHE_DIR");
+  DWORD n;
+  char *slash;
+  if (env != NULL && env[0] != '\0') {
+    return env;
+  }
+  n = GetModuleFileNameA(NULL, buf, (DWORD)sizeof buf);
+  if (n == 0 || n >= sizeof buf) {
+    return NULL; /* let aurora fall back to its default */
+  }
+  slash = strrchr(buf, '\\');
+  if (slash == NULL) {
+    return NULL;
+  }
+  slash[1] = '\0';
+  return buf;
+}
+
 int main(int argc, char *argv[]) {
   gw_install_crash_handler();
   gw_log("melee-pc: starting");
@@ -205,6 +239,7 @@ int main(int argc, char *argv[]) {
 
   const AuroraConfig config = {
       .appName = "Melee PC",
+      .cachePath = gw_cache_path(),
       /* Dawn's D3D12 backend (v20260807.225922, 32-bit x86) crashes a few seconds into
        * first-frame rendering: wgpuSurfaceGetCurrentTexture -> d3d12::Queue::WaitForSerial
        * dereferences a queue-serial value as a pointer (near-NULL read, webgpu_dawn.dll

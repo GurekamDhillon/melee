@@ -5,6 +5,8 @@
 #include "shim_os.h"
 #include "shim_vi.h"
 
+#include <aurora/gfx.h>
+
 #include <intrin.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2551,6 +2553,37 @@ void gw_GxTex_Close(int h) {
     free(t->blob);
     memset(t, 0, sizeof *t);
   }
+}
+
+/* ---- "is the renderer warm yet?" ------------------------------------------------------------
+ *
+ * Aurora creates a WebGPU render pipeline the first time a draw needs one and compiles it on a
+ * worker thread. Until it is ready that draw is SKIPPED, so a cold scene fills in over several
+ * frames - the frame loop stays smooth and the model arrives part by part. That is what the
+ * loading screen exists to hide, and hiding it needs a truthful answer to "are there still
+ * pipelines in flight".
+ *
+ * NO AURORA PATCH WAS NEEDED. aurora_get_stats() is already public (extern/aurora/include/
+ * aurora/gfx.h) and already carries the two numbers that answer it: queuedPipelines is
+ * incremented where find_pipeline_impl queues a compile and decremented in notify_pipeline_ready
+ * (lib/gfx/pipeline_cache.cpp), so it IS the in-flight count; createdPipelines only ever rises.
+ * Forcing creation instead - walking the stage's and the fighters' materials before the match -
+ * was the alternative, and it is strictly worse: it would have to reproduce every TEV and
+ * vertex-format permutation the real draw picks, and any permutation it guessed wrong would
+ * still pop in during the match while the loader sat there reporting success. Reading the
+ * counter cannot be wrong about that.
+ *
+ * A zero on its own means nothing, because it is also what the counter reads before the scene's
+ * first draw has asked for anything. The caller therefore also waits for createdPipelines to
+ * stop moving; see mnLoadScreen_Frame in src/melee/gm/gmscene.c. */
+int gw_Gfx_PipelinesPending(void) {
+  const AuroraStats *s = aurora_get_stats();
+  return s != NULL ? (int) s->queuedPipelines : 0;
+}
+
+int gw_Gfx_PipelinesCreated(void) {
+  const AuroraStats *s = aurora_get_stats();
+  return s != NULL ? (int) s->createdPipelines : 0;
 }
 
 static int test_gxtex_header_and_copy(void) {

@@ -4536,6 +4536,39 @@ static void mnCharSel_MexSetup(void)
     mnCharSel_IconRoot = root;
     mnCharSel_Mex = mex;
 }
+
+/* Ported from m-ex (https://github.com/akaneia/m-ex): CSS Expansion/mexSelectChr/CursorScale -
+ * Hand.asm and - Puck.asm. mexSelectChr's icon grid is denser than retail's 25 icons, so both
+ * cursors are scaled by mexData's menu param 0 (Akaneia: 0.95). The hand's graphic hangs off a
+ * child joint while the joint itself is the hot spot, so shrinking it alone would move the
+ * pointing finger; m-ex compensates by translating the child by (1 - scale) * the hand's tip
+ * offset, which is the same (2.7, -2) its Cursor Detection patch adds to the cursor position.
+ * The puck has no child and needs no shift. Retail (no mexSelectChr) is untouched. */
+static void mnCharSel_MexScaleCursor(HSD_JObj* jobj, bool is_hand)
+{
+    extern float Mex_MenuParamF(int i);
+    f32 s;
+    HSD_JObj* target;
+    if (mnCharSel_Mex == NULL || jobj == NULL) {
+        return;
+    }
+    s = Mex_MenuParamF(0);
+    if (!(s > 0.0f) || s == 1.0f) {
+        return;
+    }
+    target = is_hand ? jobj->child : jobj;
+    if (target == NULL) {
+        return;
+    }
+    target->scale.x *= s;
+    target->scale.y *= s;
+    target->scale.z *= s;
+    if (is_hand) {
+        target->translate.x = (1.0f - s) * 2.7f;
+        target->translate.y = (1.0f - s) * -2.0f;
+        HSD_JObjSetMtxDirtySub(jobj);
+    }
+}
 #endif
 
 s32 mnCharSel_802640A0(void)
@@ -4868,6 +4901,9 @@ s32 mnCharSel_802640A0(void)
         struct CSSCursorData* cursor;
         cursor_gobj = GObj_Create(4, 5, 0x80);
         jobj = HSD_JObjLoadJoint(css_models->hand.joint);
+#if defined(TARGET_PC)
+        mnCharSel_MexScaleCursor(jobj, true);
+#endif
         cursor = HSD_MemAlloc(sizeof(*cursor));
         HSD_GObjObject_80390A70(cursor_gobj, HSD_GObj_JObjKind, jobj);
         GObj_SetupGXLink(cursor_gobj, HSD_GObj_JObjCallback, 3, 0x80);
@@ -4896,6 +4932,9 @@ s32 mnCharSel_802640A0(void)
         {
             HSD_GObj* model_gobj = GObj_Create(4, 5, 0x80);
             jobj = HSD_JObjLoadJoint(css_models->token.joint);
+#if defined(TARGET_PC)
+            mnCharSel_MexScaleCursor(jobj, false);
+#endif
             {
                 int player;
                 struct CSSCharModel* model = HSD_MemAlloc(sizeof(*model));

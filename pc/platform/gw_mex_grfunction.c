@@ -100,12 +100,15 @@ static int gr_tables(void) {
     }
     gr_int_count = (int) gr_rd(meta + GW_MEXDT_META_INT_STAGES);
     gr_ext_count = (int) gr_rd(meta + GW_MEXDT_META_EXT_STAGES);
+    /* The external bound was a loose 4096 and should not have been: stage_id_map[] is indexed by
+     * a raw StKind out of mexData at several sites with no check of their own, so the real limit
+     * is the port's own table. Both bounds are now the compiled-in table sizes. */
     if (gr_int_count <= 0 || gr_int_count > GW_MEX_GR_MAX || gr_ext_count <= 0 ||
-        gr_ext_count > 4096)
+        gr_ext_count > GW_MEX_GR_EXT_MAX)
     {
         gw_log("grfunction: implausible stage counts (internal %d, external %d; the port's "
-               "stage_datas[] holds %d rows) - m-ex stages stay off",
-               gr_int_count, gr_ext_count, GW_MEX_GR_MAX);
+               "stage_datas[] holds %d rows and stage_id_map[] %d) - m-ex stages stay off",
+               gr_int_count, gr_ext_count, GW_MEX_GR_MAX, GW_MEX_GR_EXT_MAX);
         gr_int_count = gr_ext_count = 0;
         return 0;
     }

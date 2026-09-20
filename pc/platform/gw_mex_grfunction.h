@@ -59,9 +59,20 @@ enum {
     GW_MEX_GR_SLOT_COUNT = 13
 };
 
-/* The port's `stage_datas[]` has 111 rows, so every m-ex internal stage id (0..95 on Akaneia)
- * already fits. This bound exists to reject a build whose table grew past it. */
-#define GW_MEX_GR_MAX 111
+/* Must equal ARRAY_SIZE(stage_datas) in src/melee/gr/ground.c: this bound exists to reject a disc
+ * whose internal stage count would index past that table.
+ *
+ * SIZED AGAINST ACE, NOT AKANEIA. The vanilla 111 rows look "already big enough" at Akaneia's 96
+ * internal stages and are not at ACE's 155 - which is exactly why ACE's stages were silently off.
+ * 160 = ACE's 155 plus a little slack, and ground.c's stage_datas[] is declared with that many
+ * rows under TARGET_PC. Grow both together or the guard stops meaning anything. */
+#define GW_MEX_GR_MAX 160
+
+/* Must equal ST_MEX_EXT_MAX in src/melee/gr/stage.c, i.e. ARRAY_SIZE(stage_id_map). Every
+ * external->internal lookup indexes that array by a raw StKind taken from mexData, so a disc
+ * declaring more external ids than the port compiled rows for has to be refused here rather than
+ * read off the end later. Akaneia declares 313, ACE 372. */
+#define GW_MEX_GR_EXT_MAX 384
 
 /* First m-ex-ADDED internal stage id: 0..70 are the vanilla stages the port compiles in. */
 #define GW_MEX_GR_FIRST_NEW 71

@@ -34,6 +34,10 @@ static bool mnStageSel_MexActive;
 /// same on Akaneia and ACE). Retail ids are below it, and they are the only
 /// ones with a bit in the save file's random-stage mask.
 #define SSS_EXT_MEX_FIRST 288
+/// Rows in `lbl_803B7808[]` (gm/gm_1601.static.h), which an icon's `xA` is an
+/// index into. Retail never produces an out-of-range one; a disc's own table
+/// can, so #sss_random_ok checks it.
+#define SSS_RANDOM_ID_COUNT 30
 #else
 #define NUM_STAGES NUM_STAGES_RETAIL
 #define SSS_ICON_COUNT SSS_ICON_COUNT_RETAIL

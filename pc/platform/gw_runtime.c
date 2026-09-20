@@ -912,6 +912,14 @@ const char *gw_ContentProbeName(void) {
 /* MELEE_LOG_MOTION=1 turns on the per-action-state trace in Fighter_ChangeMotionState. The
  * game TU asks here rather than calling getenv itself: gwtool renames every game symbol,
  * so a bare getenv there links as gw_getenv and fails. */
+/* MELEE_HEAP_TRACE=1 turns on the HSD heap census in sysdolphin/baselib/memory.c. Same
+ * arrangement as the motion trace: a game TU gets no hosted <stdlib.h>, and gwtool would
+ * rename a bare getenv there to gw_getenv. */
+int gw_PcTraceHeapEnabled(void) {
+  const char *v = getenv("MELEE_HEAP_TRACE");
+  return (v != NULL && v[0] != '0') ? 1 : 0;
+}
+
 int gw_PcTraceMotionEnabled(void) {
   const char *v = getenv("MELEE_LOG_MOTION");
   return (v != NULL && v[0] != '0') ? 1 : 0;

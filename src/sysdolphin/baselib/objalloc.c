@@ -28,6 +28,45 @@ s32 HSD_ObjAllocAddFree(HSD_ObjAllocData* data, u32 num)
     u8 _[4];
 
     HSD_ASSERT(0xEE, data);
+#if defined(TARGET_PC)
+    /* MELEE_HEAP_TRACE=1: which object allocator is refilling. AddFree(data, 1) means one
+     * HSD_MemAlloc per object, so a runaway count here IS a runaway spawn - 62,547 of them on
+     * Akaneia's ext:302, about 227 a frame. A PER-ALLOCATOR TABLE, not a consecutive-run
+     * counter: allocators interleave, so a run counter resets constantly and never reports.
+     * The data pointer identifies the owner; the map resolves it to gobj_alloc_data,
+     * aobj_alloc_data and so on. */
+    {
+        extern int PcTraceHeapEnabled(void);
+        static int oa_trace = -1;
+        static void *oa_who[8];
+        static int oa_hits[8];
+        static int oa_size[8];
+        static int oa_total;
+        int k, worst = 0;
+        if (oa_trace < 0) {
+            oa_trace = PcTraceHeapEnabled();
+        }
+        if (oa_trace != 0) {
+            for (k = 0; k < 8; k++) {
+                if (oa_who[k] == (void *) data) { oa_hits[k]++; break; }
+                if (oa_hits[k] < oa_hits[worst]) { worst = k; }
+            }
+            if (k == 8) {
+                oa_who[worst] = (void *) data;
+                oa_hits[worst] = 1;
+                oa_size[worst] = (int) data->size;
+            }
+            if ((++oa_total % 8192) == 0) {
+                for (k = 0; k < 8; k++) {
+                    if (oa_hits[k] > 256) {
+                        OSReport("objalloc: %p size %d x%d\n", oa_who[k],
+                                 oa_size[k], oa_hits[k]);
+                    }
+                }
+            }
+        }
+    }
+#endif
     pool_size = data->size * num;
     if (obj_heap.top != 0) {
         pool_end = obj_heap.top + obj_heap.size;

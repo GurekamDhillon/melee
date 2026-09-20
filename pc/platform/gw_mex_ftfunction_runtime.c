@@ -1484,13 +1484,22 @@ static uint32_t gw_mex_thunk_run(int k, uint32_t a0, uint32_t a1, uint32_t a2, u
     return gw_ppc_call(gw_mex_thunk_guest[k], args, 4, gw_mex_r2, gw_mex_stack_top);
 }
 
-#define GW_MEX_THUNK(k) \
-    static uint32_t gw_mex_thunk_##k(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) { \
-        return gw_mex_thunk_run(k, a0, a1, a2, a3); \
+/* The pool index a thunk passes to gw_mex_thunk_run MUST equal its position in gw_mex_thunks[],
+ * because that is the slot gw_mex_callable wrote the guest address into.
+ *
+ * The two-digit name is built from b (0..7) and n (0..7), so the index is written as the OCTAL
+ * literal 0bn - `0##b##n` - which is exactly b*8+n and covers 0..63 densely. Spelling it `b##n`
+ * instead silently yields a DECIMAL number: name 10 would pass 10 rather than 8, so thunk 8 read
+ * gw_mex_thunk_guest[10] (never assigned, so 0) and gw_ppc_call ran with pc=0; name 77 would pass
+ * 77 and read six words past the end of a 64-entry array. Only the first eight were right, which
+ * is why this survived until a stage needed nine (three map gobjs x three callbacks). */
+#define GW_MEX_THUNK(b, n) \
+    static uint32_t gw_mex_thunk_##b##n(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) { \
+        return gw_mex_thunk_run(0##b##n, a0, a1, a2, a3); \
     }
 #define GW_MEX_THUNK8(b) \
-    GW_MEX_THUNK(b##0) GW_MEX_THUNK(b##1) GW_MEX_THUNK(b##2) GW_MEX_THUNK(b##3) \
-    GW_MEX_THUNK(b##4) GW_MEX_THUNK(b##5) GW_MEX_THUNK(b##6) GW_MEX_THUNK(b##7)
+    GW_MEX_THUNK(b, 0) GW_MEX_THUNK(b, 1) GW_MEX_THUNK(b, 2) GW_MEX_THUNK(b, 3) \
+    GW_MEX_THUNK(b, 4) GW_MEX_THUNK(b, 5) GW_MEX_THUNK(b, 6) GW_MEX_THUNK(b, 7)
 GW_MEX_THUNK8(0) GW_MEX_THUNK8(1) GW_MEX_THUNK8(2) GW_MEX_THUNK8(3)
 GW_MEX_THUNK8(4) GW_MEX_THUNK8(5) GW_MEX_THUNK8(6) GW_MEX_THUNK8(7)
 
@@ -2545,6 +2554,12 @@ uint32_t gw_Mex_StackTop(void) { return gw_mex_stack_top; }
 uint32_t gw_Mex_Callable(uint32_t guest, const char *why) {
     return gw_mex_callable(guest, why);
 }
+
+/* Public form of gw_mex_release_thunks(): drop every thunk bound into [lo, hi), because that
+ * guest code is going away. The stage runtime needs this for the same reason the fighter path
+ * does - a blob relocated inside an archive dies when the scene frees the archive, and a thunk
+ * still pointing there would interpret whatever replaces it. */
+void gw_Mex_ReleaseThunks(uint32_t lo, uint32_t hi) { gw_mex_release_thunks(lo, hi); }
 
 void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size) {
     int rc, slot = gw_mex_slot_of_port(kind), internal;

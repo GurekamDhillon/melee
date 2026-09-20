@@ -59,6 +59,7 @@ extern void gw_Mex_RuntimeInit(void);
 extern uint32_t gw_Mex_Rtoc(void);
 extern uint32_t gw_Mex_StackTop(void);
 extern uint32_t gw_Mex_Callable(uint32_t guest, const char *why);
+extern void gw_Mex_ReleaseThunks(uint32_t lo, uint32_t hi);
 extern uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size);
 extern int gw_DVDConvertPathToEntrynum(const char *path);
 
@@ -318,6 +319,12 @@ static uint32_t gr_slot[GW_MEX_GR_SLOT_COUNT];       /* Overload results, guest 
 static void gr_unload(void) {
     if (gr_code_hi != 0u) {
         gw_ppc_remove_code_range(gr_code_lo, gr_code_hi);
+        /* The thunks bound to this stage's StageCallbacks outlive the code they point at: the
+         * blob was relocated inside the stage's archive, and that archive is freed with the
+         * scene. Releasing them is the stage half of the discipline the fighter path already
+         * keeps on reinstall - without it, a stale gobj proc from the previous stage would
+         * interpret whatever now occupies that memory. */
+        gw_Mex_ReleaseThunks(gr_code_lo, gr_code_hi);
     }
     gr_code_lo = gr_code_hi = 0u;
     gr_loaded = -1;
@@ -748,8 +755,65 @@ static int test_grfunction_load_gromc(void) {
     return rc;
 }
 
+/* The shared thunk pool, past the first eight.
+ *
+ * A stage needs nine thunks at once - three map gobjs, each with an on_init, a gobj_proc and a
+ * callback3 - and that is the first content in the port to need more than eight. It found a
+ * numbering bug in gw_mex_ftfunction_runtime.c's thunk table: entry N called
+ * gw_mex_thunk_run with a DECIMAL two-digit index instead of an octal one, so thunk 8 read
+ * gw_mex_thunk_guest[10] (never assigned, hence pc=0) and thunk 63 read past the array.
+ *
+ * This binds more than eight distinct guest addresses and checks each thunk reaches ITS OWN one,
+ * which is the invariant the numbering broke. Pure interpreter + pool: no disc, no mexData, so it
+ * runs on every disc. */
+#define GW_MEX_GR_THUNK_TEST_BASE 0x81000000u
+#define GW_MEX_GR_THUNK_TEST_N 12
+
+typedef uint32_t (*gw_gr_thunk_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
+
+static int test_grfunction_thunk_pool_beyond_8(void) {
+    uint32_t base = GW_MEX_GR_THUNK_TEST_BASE;
+    uint32_t bound[GW_MEX_GR_THUNK_TEST_N];
+    int i, rc = 0;
+
+    gw_Mex_RuntimeInit();
+    if (gw_Mex_StackTop() == 0u) {
+        gw_test_fail("m-ex PPC runtime did not initialise (stack top 0)");
+        return 1;
+    }
+    /* Each stub is `li r3, 0x100+i ; blr` - eight bytes, distinct return value. */
+    for (i = 0; i < GW_MEX_GR_THUNK_TEST_N; ++i) {
+        gw_w32((void *) (uintptr_t) (base + (uint32_t) i * 8u), 0x38600000u | (0x100u + (uint32_t) i));
+        gw_w32((void *) (uintptr_t) (base + (uint32_t) i * 8u + 4u), 0x4E800020u);
+    }
+    gw_ppc_add_code_range(base, base + GW_MEX_GR_THUNK_TEST_N * 8u);
+
+    for (i = 0; i < GW_MEX_GR_THUNK_TEST_N; ++i) {
+        bound[i] = gw_Mex_Callable(base + (uint32_t) i * 8u, "grfunction thunk pool test");
+        if (bound[i] == 0u) {
+            gw_test_fail("thunk %d did not bind", i);
+            rc = 1;
+            goto done;
+        }
+    }
+    for (i = 0; i < GW_MEX_GR_THUNK_TEST_N; ++i) {
+        uint32_t got = ((gw_gr_thunk_fn) (uintptr_t) bound[i])(0u, 0u, 0u, 0u);
+        if (got != 0x100u + (uint32_t) i) {
+            gw_test_fail("thunk %d ran the wrong guest function: returned 0x%X, expected 0x%X "
+                         "(the pool index it passes does not match its table position)",
+                         i, got, 0x100u + (uint32_t) i);
+            rc = 1;
+            goto done;
+        }
+    }
+done:
+    gw_ppc_remove_code_range(base, base + GW_MEX_GR_THUNK_TEST_N * 8u);
+    return rc;
+}
+
 void gw_mex_grfunction_tests_register(void) {
     gw_test_register("grfunction_tables", test_grfunction_tables);
     gw_test_register("grfunction_rows", test_grfunction_rows);
     gw_test_register("grfunction_load_gromc", test_grfunction_load_gromc);
+    gw_test_register("grfunction_thunk_pool_beyond_8", test_grfunction_thunk_pool_beyond_8);
 }

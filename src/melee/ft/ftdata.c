@@ -1880,16 +1880,47 @@ void ftData_8008572C(FighterKind kind)
              * HSD_JObjAddAnim the first time the spring spawned. So trust the DATA instead of
              * the count: every real motion has a subaction script (xC), including the holes
              * that have no figatree, and PlSn.dat's table is followed by structs whose xC word
-             * is zero - so the first entry without one ends the table. */
+             * is zero - so the first entry without one ends the table.
+             *
+             * That heuristic is NECESSARY BUT NOT SUFFICIENT, and Tails proved it (user-found,
+             * crash in ftData_80085A14: "fighter figatree over! c000000"). PlTs.dat puts the
+             * ftData struct itself directly after the demo table, and ftData+0x8 - which lands
+             * on entry 14's xC word - is the parts table, a perfectly non-NULL pointer. So the
+             * walk sailed past the end and entry 14's x10 field, which is ftData+0xC, IS
+             * `fd->xC`: the rewrite replaced the pointer to the main animation table with
+             * (xC & ~0x3F) | kind. ftData_80085A14 then read x8 through that mangled, unaligned
+             * pointer on its very first iteration and got garbage. Dedede has the same layout
+             * and was being corrupted the same way, two entries deep, without having crashed yet.
+             *
+             * So bound the walk by the DATA's own landmarks as well: every pointer field in the
+             * ftData struct (all 24 words of it are pointers) that lands above the table marks
+             * something that is not the table, and so does the struct itself. The nearest of
+             * them is the furthest the table can possibly reach. Erring low is safe - a motion
+             * whose flags are left alone still animates, through the cross-kind path - while
+             * erring high corrupts whatever follows. */
             if (fd->x14 != NULL) {
                 u8* arch_lo = (u8*) ftData_LoadedArchive->data;
                 u8* arch_hi = arch_lo + ftData_LoadedArchive->header.data_size;
+                u8* demo_lo = (u8*) fd->x14;
+                u8* demo_hi = arch_hi;
                 int n_demo = 0;
+                int w;
+
+                if ((u8*) fd > demo_lo && (u8*) fd < demo_hi) {
+                    demo_hi = (u8*) fd;
+                }
+                for (w = 0; w < (int) (sizeof(ftData) / 4); w++) {
+                    u8* p = (u8*) ((void**) fd)[w];
+                    if (p > demo_lo && p < demo_hi && p >= arch_lo && p < arch_hi) {
+                        demo_hi = p;
+                    }
+                }
+
                 for (i = 0; i < ftData_UnkIntPairs[kind].count; i++) {
                     u8* entry = (u8*) &fd->x14[i];
                     u32 flags;
                     if (entry < arch_lo || entry + sizeof(fd->x14[0]) > arch_hi ||
-                        fd->x14[i].xC == NULL)
+                        entry + sizeof(fd->x14[0]) > demo_hi || fd->x14[i].xC == NULL)
                     {
                         break;
                     }

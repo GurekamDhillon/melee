@@ -797,6 +797,34 @@ void Ground_801C0800(StageIdPair* pair)
     Ground_801C1E94();
     Ground_801C466C();
     stage_data->on_init();
+#if defined(TARGET_PC)
+    if (Mex_GrTrace()) {
+        size_t k;
+        int n = 0;
+        for (k = 0; k < ARRAY_SIZE(stage_info.map_gobjs); k++) {
+            if (stage_info.map_gobjs[k] != NULL) {
+                n++;
+            }
+        }
+        /* The two things a black screen most wants to know: how many map gobjs actually exist
+         * after on_init, and whether the camera and blast ranges are the stage's own (set by
+         * Ground_801C39C0/801C3BB4 out of the map's markers) or still Ground_801BFFB0's
+         * defaults - +-170 x 120/-60, which frames nothing on a stage whose geometry sits
+         * thousands of units out. */
+        OSReport("grtrace: stage init done: grkind=%d map_gobjs=%d scale=%d/1000\n",
+                 stage_info.grkind, n, (int) (Ground_801C0498() * 1000.0f));
+        OSReport("grtrace:   cam_bounds L/R/T/B = %d %d %d %d  offset %d %d\n",
+                 (int) stage_info.cam_info.cam_bounds.left,
+                 (int) stage_info.cam_info.cam_bounds.right,
+                 (int) stage_info.cam_info.cam_bounds.top,
+                 (int) stage_info.cam_info.cam_bounds.bottom,
+                 (int) stage_info.cam_info.cam_x_offset,
+                 (int) stage_info.cam_info.cam_y_offset);
+        OSReport("grtrace:   blast_zone L/R/T/B = %d %d %d %d\n",
+                 (int) stage_info.blast_zone.left, (int) stage_info.blast_zone.right,
+                 (int) stage_info.blast_zone.top, (int) stage_info.blast_zone.bottom);
+    }
+#endif
 }
 
 static bool Ground_801C0A70(Vec3* pos)

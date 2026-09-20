@@ -247,6 +247,7 @@ static StageData* stage_datas[] = {
  * an unoverridden slot silently running the base's handler is m-ex's real behaviour, not a bug.
  */
 extern int Mex_GrTrace(void);
+extern unsigned int Mex_GuestLr(void);
 
 #define GR_MEX_FIRST_NEW 71 /* first m-ex-added internal stage id */
 /* Synthesised rows, sized against ACE (155 internal stages, so 155-71 = 84 added) and not
@@ -1282,7 +1283,7 @@ Ground_GObj* Ground_GetStageGObj(int map_id)
 
 #if defined(TARGET_PC)
     if (Mex_GrTrace()) {
-        OSReport("grtrace: GetStageGObj(%d): map models unkC=%d -> %s\n", map_id,
+        OSReport("grtrace: GetStageGObj(%d) from %08x: map models unkC=%d -> %s\n", map_id, Mex_GuestLr(),
                  archive->unk4->unkC,
                  map_id < archive->unk4->unkC ? "build model" : "identity jobj only");
     }
@@ -3528,6 +3529,11 @@ LightList** Ground_801C49B4(void)
 
 void* Ground_GetYakumonoParam(void)
 {
+#if defined(TARGET_PC)
+    if (Mex_GrTrace()) {
+        OSReport("grtrace: yakumono_param = %p\n", stage_info.yakumono_param);
+    }
+#endif
     return stage_info.yakumono_param;
 }
 

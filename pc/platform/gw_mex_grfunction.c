@@ -30,6 +30,7 @@
 #include "gw_mex_ftfunction.h"
 #include "gw_mex_grfunction.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -492,6 +493,25 @@ void gw_Mex_GrFunctionInit(void *archive, int grkind) {
      * access violation inside MEM1 instead of an interpreted call. gw_Mex_FtFunctionInstall()
      * used to be the only thing that armed it, so a stage run with a vanilla fighter never did.
      */
+    /* MELEE_GR_DUMP_CODE=<path> writes the RELOCATED stage blob, the same way
+     * MELEE_MEX_DUMP_CODE does for a fighter blob, so a call site the trace names can be
+     * disassembled offline:
+     *   python tools/mex_port/ppc_disasm.py --raw <path> --base <gr_code_lo> --start <va> --count N
+     * The disc bytes are no use for this - their branch and address operands are unrelocated. */
+    {
+        const char *gr_dump = getenv("MELEE_GR_DUMP_CODE");
+        if (gr_dump != NULL && gr_dump[0] != 0) {
+            FILE *gf = fopen(gr_dump, "wb");
+            if (gf == NULL) {
+                gw_log("grfunction: MELEE_GR_DUMP_CODE: cannot open %s", gr_dump);
+            } else {
+                size_t wrote = fwrite((const void *)(uintptr_t)code_base, 1, code_size, gf);
+                fclose(gf);
+                gw_log("grfunction: dumped %u bytes of relocated stage code (base 0x%08X) to %s",
+                       (unsigned)wrote, code_base, gr_dump);
+            }
+        }
+    }
     gw_Mex_NoteGuestCodeInstalled();
     gw_log("grfunction: %s (internal stage %d) installed: code 0x%08X..0x%08X (%u bytes), %u "
            "instruction relocs, %d of %u overloads",
@@ -555,6 +575,11 @@ void *gw_Mex_GrCallbacks(void) {
 /* MELEE_GR_TRACE=1: narrate the m-ex stage bring-up (which map gobjs get created and set up,
  * which StageCallbacks table each one used, and what the lighting and fog scans selected).
  * Off by default and read once - these sit on paths every stage walks. */
+/* The blob call site that reached the native function now running, for tracing a stage whose own
+ * code drives the call. A map gobj created 300 times says the loop is in the blob, not the
+ * engine; this says WHERE in the blob. Zero when the engine itself is the caller. */
+unsigned int gw_Mex_GuestLr(void) { return gw_ppc_guest_lr(); }
+
 int gw_Mex_GrTrace(void) {
     static int v = -1;
     if (v < 0) {

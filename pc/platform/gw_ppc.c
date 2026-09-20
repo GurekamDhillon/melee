@@ -609,6 +609,11 @@ static int gw_ppc_in_extra_range(uint32_t a) {
     return 0;
 }
 
+/* The blob address that called into native code: LR at the moment of the bridge call. Zero when
+ * no guest frame is executing, so a native function can tell "a blob asked for this" from "the
+ * engine asked for this", and name the exact call site inside the blob. */
+uint32_t gw_ppc_guest_lr(void) { return gw_ppc_m.cpu.lr; }
+
 int gw_ppc_is_guest_code(uint32_t a) {
     return (a >= gw_ppc_m.code_lo && a < gw_ppc_m.code_hi) || gw_ppc_in_extra_range(a);
 }

@@ -1052,7 +1052,19 @@ HSD_AObj* grAnime_801C8318(HSD_GObj* gobj, int arg1, u32 arg2)
 {
     HSD_JObj* jobj;
     enum _HSD_TypeMask var_r30 = 0;
+#if defined(TARGET_PC)
+    /* VOLATILE, and it has to be. fn_801C82E8 writes through this pointer and then longjmps
+     * back to the setjmp below, and C says an automatic object modified between setjmp and
+     * longjmp has an indeterminate value afterwards unless it is volatile. MWCC happened to
+     * reload it; clang caches the initial NULL in a register and returns that, so this
+     * function reported "no animation" for every model whose scan longjmped out - which is
+     * to say, every model that HAS one. A stage that despawns a background model when its
+     * animation reports finished then never despawns anything: GrGh (ext:302) spawned 580
+     * Amy/Tails/Knuckles over 265 frames, 62,547 HSD objects, and died on a full heap. */
+    HSD_AObj* volatile sp14 = NULL;
+#else
     HSD_AObj* sp14 = NULL;
+#endif
     jobj = Ground_801C3FA4(gobj, arg1);
     if (jobj == NULL) {
         return 0;

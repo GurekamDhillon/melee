@@ -103,6 +103,9 @@ void gw_ppc_remove_code_range(uint32_t lo, uint32_t hi);
  * interpret-vs-bridge decision and fetch guard, and by the m-ex runtime's execute trap. */
 int gw_ppc_is_guest_code(uint32_t a);
 
+/* Blob return address of the innermost guest->native call, or 0 outside guest code. */
+uint32_t gw_ppc_guest_lr(void);
+
 /* Run guest_fn (a guest address) until it returns via blr, yielding r3. gpr_args[0..nargs-1] are
  * placed in r3, r4, ...; rtoc -> r2; sp -> r1. Reentrant: the active machine is saved/restored. */
 uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,

@@ -5155,24 +5155,39 @@ bool mpGetSpeed(int line_id, Vec3* pos, Vec3* speed)
 #if defined(TARGET_PC)
 /* mpLib_803BF248 is [0x47] = 71 rows, one per VANILLA stage, indexed straight by
  * stage_info.grkind. An m-ex added stage is grkind >= 71 and reads off the end - Meta Crystal
- * (76) faulted here with an ACCESS_VIOLATION inside mpLib_800569EC as soon as it had music to
- * play. This is the same "a new index is outside every vanilla-sized per-index structure" trap
- * the fighter side hit repeatedly; see docs/HANDOFF.md section 6.
+ * (76) faulted here with an ACCESS_VIOLATION inside mpLib_800569EC as soon as it had a line to
+ * ask about. This is the same "a new index is outside every vanilla-sized per-index structure"
+ * trap the fighter side hit repeatedly; see docs/HANDOFF.md section 6.
  *
- * Added stages have no row of their own, so fall back to the first row rather than read out of
- * bounds. That is not the right MUSIC, but it is in-bounds and audible, and the alternative is a
- * crash. Wiring the real per-stage data is the remaining stage-audio work. */
+ * The real data is m-ex's `Arch_Map_LineTypeData` (mexData Arch_Map +0x08), which is this very
+ * table extended: stride 8, INTERNAL-indexed, {s32 index; void* rows}, with index == grkind on
+ * every row of both shipped discs. Its `rows` word is an absolute VANILLA guest address - m-ex
+ * does not author new line-type data, it points each added stage at an existing stage's set - so
+ * an added stage's row is always some vanilla row, and the platform side hands it back as that
+ * row's INDEX. Nothing here takes a pointer from a shim: an index into the table this file
+ * already holds cannot be mis-swapped and cannot point anywhere new.
+ *
+ * -1 (no mexData, or a pointer that matches no vanilla row) keeps the old fallback to row 0:
+ * wrong data but in-bounds, where the alternative is a crash. */
 static int mpLib_StageRow(void)
 {
+    extern int Mex_GrLineTypeRow(int);
     static int warned = -1;
     int grkind = stage_info.grkind;
+    int row;
+
     if (grkind >= 0 && grkind < (int) ARRAY_SIZE(mpLib_803BF248)) {
         return grkind;
     }
+    row = Mex_GrLineTypeRow(grkind);
+    if (row >= 0 && row < (int) ARRAY_SIZE(mpLib_803BF248)) {
+        return row;
+    }
     if (warned != grkind) {
         warned = grkind;
-        OSReport("mpLib: stage grkind=%d has no row in mpLib_803BF248[%d] - using row 0\n",
-                 grkind, (int) ARRAY_SIZE(mpLib_803BF248));
+        OSReport("mpLib: stage grkind=%d has no row in mpLib_803BF248[%d] and mexData gave "
+                 "%d - using row 0\n",
+                 grkind, (int) ARRAY_SIZE(mpLib_803BF248), row);
     }
     return 0;
 }

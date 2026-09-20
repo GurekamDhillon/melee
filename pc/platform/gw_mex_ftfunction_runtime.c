@@ -110,6 +110,7 @@ static int gw_mex_slot_of_internal(int k);
 #define GW_MEX_GUEST_GET_FT_ITEM_ID 0x803D7088u /* m-ex MEX_GetFtItemID (no vanilla symbol) */
 #define GW_MEX_GUEST_GET_DATA     0x803D7094u /* m-ex MEX_GetData (no vanilla symbol) */
 #define GW_MEX_GUEST_GET_GR_ITEM_ID 0x803D708Cu /* m-ex MEX_GetGrItemID (stage article) */
+#define GW_MEX_GUEST_GET_GR_PLAYLIST 0x803D707Cu /* m-ex MEX_GetStagePlaylist */
 /* m-ex CALLOC. The block 0x803D7058..0x803D709C is m-ex's own helper region: its installer
  * overwrites vanilla's `gmResultCharacterData` (a 0x890-byte DATA object) with a table of
  * branch trampolines, one per MexTK API (m-ex's MexTK/links/melee.link lists them). So an
@@ -305,6 +306,7 @@ static void *gw_mex_persist_alloc(uint32_t size) {
 #define GW_MEXDT_OFF_ITEM 0x1Cu
 #define GW_MEXDT_OFF_STAGE 0x28u         /* MexData.stage, m-ex's Arch_Map */
 #define GW_MEXDT_STAGE_OFF_ITEM_LOOKUP 0x0Cu /* stage item_lookup, {u32 count; u16* ids} */
+#define GW_MEXDT_STAGE_OFF_PLAYLISTS 0x14u   /* stage Playlists, {s32 count; PlaylistEntry*} */
 #define GW_MEX_GUEST_STAGE_INFO 0x8049E6C8u  /* gr/ground.h stage_info (.bss) */
 #define GW_STAGE_INFO_OFF_GRKIND 0x88u       /* StageInfo.grkind, gr/types.h */
 #define GW_MEXDT_FIGHTER_OFF_ITEM_LOOKUP 0x4Cu
@@ -489,6 +491,36 @@ static int32_t gw_mex_gr_item_global(int grkind, uint32_t n, const char *why) {
         return -1;
     }
     return (int32_t) gw_r16((const void *) (uintptr_t) (ids + n * 2u));
+}
+
+/* MEX_GetStagePlaylist(): a GUEST pointer to the current stage's music playlist row.
+ *
+ * Decoded from m-ex's own C2 payload (dump_gct.py --addr 0x803D707C --disasm), not from its
+ * source: it reads stage_info.grkind, walks mexData->stage->Playlists, and returns the address
+ * of entry[grkind] - an 8-byte {s32 count; PlaylistEntry*} row that _research/mex-stages.md
+ * already documents at stage +0x14. The blob dereferences the result immediately, so this must
+ * hand back a GUEST address: the row lives inside the loaded MxDt.dat archive in MEM1, and
+ * interpreted code reads it with ordinary guest loads.
+ *
+ * Returning 0 would be read as a valid pointer and dereferenced at once, so a stage whose
+ * playlist cannot be located says so and gets no row rather than a null one.
+ */
+static uint32_t gw_mex_shim_get_gr_playlist(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
+                                            uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    uint32_t stage, playlists, entry;
+    int grkind;
+    (void) a0; (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    grkind = gw_mex_current_grkind("MEX_GetStagePlaylist");
+    if (gw_mexdt == 0u || grkind < 0) {
+        gw_panic("mexdata: MEX_GetStagePlaylist: no MxDt.dat or no current stage");
+    }
+    stage = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_STAGE));
+    playlists = gw_r32((const void *) (uintptr_t) (stage + GW_MEXDT_STAGE_OFF_PLAYLISTS));
+    entry = playlists + (uint32_t) grkind * 8u;
+    if (!gw_mexdt_in(entry, 8u)) {
+        gw_panic("mexdata: MEX_GetStagePlaylist: playlists[%d] is outside MxDt.dat", grkind);
+    }
+    return entry;
 }
 
 /* MEX_GetGrItemID(n): the CURRENT stage's n-th article as a global item kind. The stage twin of
@@ -2230,6 +2262,8 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
         return gw_mex_shim_get_ft_item_id;
     case GW_MEX_GUEST_GET_GR_ITEM_ID:
         return gw_mex_shim_get_gr_item_id;
+    case GW_MEX_GUEST_GET_GR_PLAYLIST:
+        return gw_mex_shim_get_gr_playlist;
     case GW_MEX_GUEST_GET_DATA:
         return gw_mex_shim_get_data;
     case GW_MEX_GUEST_CALLOC:

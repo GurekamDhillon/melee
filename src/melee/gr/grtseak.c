@@ -99,14 +99,29 @@ HSD_GObj* grTSeak_80223908(int arg0)
      * Mex_GrCallbacks returns NULL for a vanilla stage, which keeps the line above. */
     {
         extern void* Mex_GrCallbacks(void);
+        extern int Mex_GrTrace(void);
         StageCallbacks* mex_cbs = (StageCallbacks*) Mex_GrCallbacks();
         if (mex_cbs != NULL) {
             callbacks = &mex_cbs[arg0];
+        }
+        if (Mex_GrTrace()) {
+            OSReport("grtrace: create_map_gobj(%d): mex_cbs=%p callbacks=%p "
+                     "on_init=%p proc=%p cb3=%p flags=0x%08X\n",
+                     arg0, mex_cbs, callbacks, callbacks->on_init,
+                     callbacks->gobj_proc, callbacks->callback3, callbacks->flags);
         }
     }
 #endif
 
     gobj = Ground_GetStageGObj(arg0);
+#if defined(TARGET_PC)
+    {
+        extern int Mex_GrTrace(void);
+        if (Mex_GrTrace()) {
+            OSReport("grtrace: create_map_gobj(%d): gobj=%p\n", arg0, gobj);
+        }
+    }
+#endif
 
     if (gobj != NULL) {
         Ground_SetupStageCallbacks(gobj, callbacks);

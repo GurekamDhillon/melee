@@ -219,6 +219,8 @@ static StageData* stage_datas[] = {
  * blob's override when there is one and the CLONE BASE function the row names when there is not -
  * an unoverridden slot silently running the base's handler is m-ex's real behaviour, not a bug.
  */
+extern int Mex_GrTrace(void);
+
 #define GR_MEX_FIRST_NEW 71 /* first m-ex-added internal stage id */
 #define GR_MEX_ROWS 64      /* synthesised rows; bounded by ARRAY_SIZE(stage_datas) as well */
 
@@ -1176,6 +1178,13 @@ Ground_GObj* Ground_GetStageGObj(int map_id)
     archive = grDatFiles_GetArchive();
     HSD_ASSERT(1358, archive);
 
+#if defined(TARGET_PC)
+    if (Mex_GrTrace()) {
+        OSReport("grtrace: GetStageGObj(%d): map models unkC=%d -> %s\n", map_id,
+                 archive->unk4->unkC,
+                 map_id < archive->unk4->unkC ? "build model" : "identity jobj only");
+    }
+#endif
     if (map_id < archive->unk4->unkC) {
         archive = grDatFiles_801C6330(map_id);
         temp_r24 = archive->unk4->unk8[map_id].unk0;
@@ -1402,9 +1411,22 @@ static inline HSD_FogDesc* foo(void)
     for (i = 0; i < temp_r30; i++) {
         phi_r29 = &temp_r29[i];
         if (phi_r29->flags_b1 == 1) {
+#if defined(TARGET_PC)
+            if (Mex_GrTrace()) {
+                OSReport("grtrace: fog scan: matched entry %d, fogdesc=%p\n", i,
+                         grDatFiles_801C6330(i)->unk4->unk8[i].x1C);
+            }
+#endif
             return grDatFiles_801C6330(i)->unk4->unk8[i].x1C;
         }
     }
+#if defined(TARGET_PC)
+    if (Mex_GrTrace()) {
+        OSReport("grtrace: fog scan: no entry had flags_b1 over %d models "
+                 "- background clears to black\n",
+                 temp_r30);
+    }
+#endif
     return NULL;
 }
 
@@ -3198,15 +3220,32 @@ void Ground_801C466C(void)
     callbacks = stage_datas[stage_info.grkind]->callbacks;
     count = archive->unk4->unkC;
     archive = grDatFiles_GetArchive();
+#if defined(TARGET_PC)
+    if (Mex_GrTrace()) {
+        OSReport("grtrace: light scan: grkind=%d callbacks=%p count=%d\n",
+                 stage_info.grkind, callbacks, count);
+    }
+#endif
     for (i = 0; i < count; i++) {
         if (callbacks->flags_b0 == 1) {
             archive = grDatFiles_801C6330(i);
             selected = Ground_801C20E0(archive, archive->unk4->unk8[i].x18);
+#if defined(TARGET_PC)
+            if (Mex_GrTrace()) {
+                OSReport("grtrace: light scan: matched entry %d, lightset=%p -> %p\n", i,
+                         archive->unk4->unk8[i].x18, selected);
+            }
+#endif
             goto light_selected;
         }
         callbacks++;
     }
     selected = NULL;
+#if defined(TARGET_PC)
+    if (Mex_GrTrace()) {
+        OSReport("grtrace: light scan: NO entry had flags_b0 - default white light\n");
+    }
+#endif
 light_selected:
     if ((r28_carrier.lights = selected) == NULL) {
         r28_carrier.lights = Ground_803E06C8;

@@ -135,6 +135,9 @@ int gw_Mex_GrCallback4(void);
 void *gw_Mex_GrOnTouchLine(int index);
 int gw_Mex_GrOnCheckShadowRender(void *pos, int arg1, void *jobj);
 
+/* MELEE_GR_TRACE=1: narrate the m-ex stage bring-up. Diagnostics only. */
+int gw_Mex_GrTrace(void);
+
 /* Registers this module's self-contained tests with the in-engine suite. */
 void gw_mex_grfunction_tests_register(void);
 

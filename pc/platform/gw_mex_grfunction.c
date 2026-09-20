@@ -454,6 +454,18 @@ void *gw_Mex_GrCallbacks(void) {
     return (void *) (uintptr_t) gr_slot[GW_MEX_GR_SLOT_CALLBACKS];
 }
 
+/* MELEE_GR_TRACE=1: narrate the m-ex stage bring-up (which map gobjs get created and set up,
+ * which StageCallbacks table each one used, and what the lighting and fog scans selected).
+ * Off by default and read once - these sit on paths every stage walks. */
+int gw_Mex_GrTrace(void) {
+    static int v = -1;
+    if (v < 0) {
+        const char *e = getenv("MELEE_GR_TRACE");
+        v = (e != NULL && e[0] != 0 && e[0] != '0') ? 1 : 0;
+    }
+    return v;
+}
+
 void *gw_Mex_GrBind(void *fn) {
     uint32_t a = (uint32_t) (uintptr_t) fn;
     if (a == 0u || !gw_ppc_is_guest_code(a)) {
@@ -474,10 +486,20 @@ static uint32_t gr_target(int slot) {
 
 static uint32_t gr_run(int slot, const uint32_t *args, int nargs) {
     uint32_t t = gr_target(slot);
+    uint32_t r;
     if (t == 0u) {
         return 0u;
     }
-    return gw_ppc_call(t, args, nargs, gw_Mex_Rtoc(), gw_Mex_StackTop());
+    if (!gw_Mex_GrTrace()) {
+        return gw_ppc_call(t, args, nargs, gw_Mex_Rtoc(), gw_Mex_StackTop());
+    }
+    /* Bracket the call. If an interpreted StageData handler stops early - a bridge gap, the
+     * interpreter's depth cap, a guarded load - the "enter" line is there and "leave" is not,
+     * which is exactly the question map-gobj 1 and 2 never being set up poses. */
+    gw_log("grtrace: enter StageData word %d -> %s (stage %d)", slot, gw_ppc_describe(t), gr_cur);
+    r = gw_ppc_call(t, args, nargs, gw_Mex_Rtoc(), gw_Mex_StackTop());
+    gw_log("grtrace: leave StageData word %d, r3=0x%08X", slot, r);
+    return r;
 }
 
 typedef void (*gr_void_fn)(void);

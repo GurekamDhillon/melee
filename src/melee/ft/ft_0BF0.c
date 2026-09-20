@@ -35,6 +35,16 @@ void ftCo_800BF034(Fighter_GObj* gobj)
     default:
         break;
     }
+#if defined(TARGET_PC)
+    /* m-ex onIntroL (slot 41), injected at 0x800BF0EC - the function's epilogue, so it runs
+     * AFTER the per-kind work above. The Fox and Ness cases return early here while on hardware
+     * they fall into the same epilogue; that difference cannot reach an m-ex fighter, because
+     * the dispatch is per kind and neither Fox nor Ness can have an m-ex hook. */
+    {
+        extern void Mex_OnIntroLDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnIntroLDispatch(fp->kind, gobj, NULL);
+    }
+#endif
 }
 
 void ftCo_800BF108(Fighter_GObj* gobj)

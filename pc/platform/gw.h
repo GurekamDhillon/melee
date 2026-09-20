@@ -205,6 +205,16 @@ enum {
     GW_MEX_EVENT_ON_ITEM_DROP_EXT,    /* ftData_OnItemDropExt (m-ex OnItemRelease, slot 16)  */
     GW_MEX_EVENT_ON_ITEM_PICKUP2,     /* ftData_OnItemPickup  (m-ex OnItemCatch, slot 17)    */
     GW_MEX_EVENT_ON_ITEM_DROP,        /* ftData_OnItemDrop (m-ex onUnknownItemRelated, 18)   */
+    /* m-ex CATEGORY 2: hooks with no vanilla per-kind table behind them. m-ex injects each at one
+     * exact instruction in the DOL, and the port puts the dispatch at the matching point in the
+     * decomp. The address in each comment is m-ex's own "#To be inserted @" line. */
+    GW_MEX_EVENT_ON_MODEL_RENDER,     /* ftData_UnkMtxFunc0 call sites (slot 26) @80080BA0 */
+    GW_MEX_EVENT_ON_ZAIR,             /* ftCo_800C3B10 (slot 33) @800C3B54 */
+    GW_MEX_EVENT_ON_LANDING,          /* Fighter_ChangeMotionState (slot 34) @80069924 */
+    GW_MEX_EVENT_ON_FSMASH,           /* ftCo_AttackS4 decideFighter (slot 35) @8008C360 */
+    GW_MEX_EVENT_ON_INTRO_L,          /* ftCo_800BF034 (slot 41) @800BF0EC */
+    GW_MEX_EVENT_ON_TAUNT,            /* ftCo_800DEBD0 (slot 43) @800DECDC */
+    GW_MEX_EVENT_ON_CATCH,            /* ftCo_800D8C54 (slot 44) @800D8CB4 */
     GW_MEX_EVENT_COUNT
 };
 
@@ -222,6 +232,18 @@ int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn);
  * decomp table entry already byte-swapped to native by the game call site. */
 void gw_Mex_GObjDispatch(int event, int kind, void* gobj, void* vanilla);
 void gw_Mex_GObjDispatch2(int event, int kind, void* gobj, void* arg1, void* vanilla);
+void gw_Mex_GObjDispatch3(int event, int kind, void* gobj, void* arg1, void* arg2, void* vanilla);
+
+/* Is a hook registered for (event, kind)? Two Category 2 sites need to know BEFORE dispatching,
+ * because m-ex's injected code skips vanilla work when the hook exists: onFSmash replaces the
+ * whole per-kind switch, and onZair turns a "not a tether character" early-out into a successful
+ * tether. Everywhere else the hook is additive and the site just dispatches.
+ *
+ * Those two sites use the per-event wrappers below rather than this, so an event id still never
+ * appears in game code. */
+int gw_Mex_HasHook(int event, int kind);
+int gw_Mex_HasZairHook(int kind);
+int gw_Mex_HasFSmashHook(int kind);
 
 /* Predicate dispatch for the Category 2 events (OnFloat and friends), whose return value decides
  * whether the behaviour fires: returns the registered predicate's result, else `vanilla`'s, else 0.
@@ -261,6 +283,13 @@ void* gw_Mex_MoveLogicTable(int kind, void* vanilla);
 void gw_Mex_FighterCallbackDispatch(void* gobj, void* cb);
 void gw_Mex_OnDoubleJumpDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnUSmashDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnModelRenderDispatch(int kind, void* gobj, void* arg1, void* mtx, void* vanilla);
+void gw_Mex_OnZairDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnLandingDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnFSmashDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnIntroLDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnTauntDispatch(int kind, void* gobj, void* vanilla);
+void gw_Mex_OnCatchDispatch(int kind, void* gobj, void* vanilla);
 void gw_Mex_OnItemPickupDispatch(int kind, void* gobj, void* arg1, void* vanilla);
 void gw_Mex_OnItemDropExtDispatch(int kind, void* gobj, void* arg1, void* vanilla);
 void gw_Mex_OnItemPickup2Dispatch(int kind, void* gobj, void* arg1, void* vanilla);

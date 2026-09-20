@@ -248,9 +248,22 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
         mtx = ftDrawCommon_8008051C_inline(gobj, &sp54, &v, sp18, sp78);
 
         HSD_JObjDispAll(GET_JOBJ(gobj), mtx, HSD_GObj_80390EB8(arg1), 0);
+#if defined(TARGET_PC)
+        /* m-ex onModelRender (slot 26), injected at 0x80080BA0 - this very table lookup, with
+         * the base swapped for m-ex's own. ftData_MexInitKinds already fills the table for a
+         * NATIVE target; the dispatch is what lets a fighter's own blob override it. Passing the
+         * table entry as `vanilla` keeps the NULL case exact. */
+        {
+            extern void Mex_OnModelRenderDispatch(int kind, void* gobj, void* arg1, void* mtx,
+                                                  void* vanilla);
+            Mex_OnModelRenderDispatch(fighter->kind, gobj, (void*) arg1, mtx,
+                                      (void*) ftData_UnkMtxFunc0[fighter->kind]);
+        }
+#else
         if (ftData_UnkMtxFunc0[fighter->kind] != NULL) {
             ftData_UnkMtxFunc0[fighter->kind](gobj, arg1, mtx);
         }
+#endif
         ftCo_800C8AF0(fighter);
         ftCo_8009F7F8(fighter);
     }
@@ -294,9 +307,19 @@ void ftDrawCommon_80080C28(HSD_GObj* gobj, int flag_index)
 
             jobj = GET_JOBJ(gobj);
             HSD_JObjDispAll(jobj, vmtx, HSD_GObj_80390EB8(flag_index), 0);
+#if defined(TARGET_PC)
+            /* The same hook's second site - m-ex's "Model - Offscreen" patch, 0x80080D9C. */
+            {
+                extern void Mex_OnModelRenderDispatch(int kind, void* gobj, void* arg1,
+                                                      void* mtx, void* vanilla);
+                Mex_OnModelRenderDispatch(fighter->kind, gobj, (void*) flag_index, vmtx,
+                                          (void*) ftData_UnkMtxFunc0[fighter->kind]);
+            }
+#else
             if (ftData_UnkMtxFunc0[fighter->kind] != NULL) {
                 ftData_UnkMtxFunc0[fighter->kind](gobj, flag_index, vmtx);
             }
+#endif
             ftCo_800C8AF0(fighter);
             ftCo_8009F7F8(fighter);
         }

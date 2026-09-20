@@ -1214,6 +1214,15 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     }
 
     if (fp->ground_or_air == GA_Ground) {
+#if defined(TARGET_PC)
+        /* m-ex onLanding (Arch_FighterFunc slot 34), injected at 0x80069924: "runs when a
+         * character enters any grounded state". On hardware it also skips the Peach line below;
+         * an m-ex kind is never Peach, so the line is left where it is. */
+        {
+            extern void Mex_OnLandingDispatch(int kind, void* gobj, void* vanilla);
+            Mex_OnLandingDispatch(fp->kind, gobj, NULL);
+        }
+#endif
         if (fp->kind == Ft_Kind_Peach) {
             fp->u.pe.has_float = true;
         }

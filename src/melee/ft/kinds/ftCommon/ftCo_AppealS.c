@@ -101,6 +101,14 @@ void ftCo_800DEBD0(Fighter_GObj* gobj)
         ftKb_SpecialN_800F5D04(gobj, true);
     }
     ftCo_800DEAE8(gobj, ftCo_MS_AppealSR, ftCo_MS_AppealSL);
+#if defined(TARGET_PC)
+    /* m-ex onTaunt (slot 43), injected at 0x800DECDC - this function's epilogue, so after the
+     * taunt motion state has been entered. */
+    {
+        extern void Mex_OnTauntDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnTauntDispatch(fp->kind, gobj, NULL);
+    }
+#endif
 }
 
 void ftCo_AppealS_Anim(Fighter_GObj* gobj)

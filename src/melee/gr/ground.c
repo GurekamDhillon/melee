@@ -201,6 +201,33 @@ static StageData* stage_datas[] = {
     &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
     &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
     &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+#if defined(TARGET_PC)
+    /* Rows 111..159, m-ex only. Retail's table stops at 111 and Akaneia's 96
+     * internal stages fit inside that, which is why this looked "already big
+     * enough"; ACE has 155 and did not fit, so its stages were rejected
+     * wholesale by the grfunction guard. These rows carry the same
+     * grTe_StageData filler rows 71..110 already do, and
+     * Ground_MexInitStages() overwrites the ones this disc actually ships.
+     * ARRAY_SIZE of this table must stay equal to GW_MEX_GR_MAX
+     * (pc/platform/gw_mex_grfunction.h). */
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,       &grTe_StageData,       &grTe_StageData,
+    &grTe_StageData,
+#endif
 };
 
 #if defined(TARGET_PC)
@@ -222,7 +249,10 @@ static StageData* stage_datas[] = {
 extern int Mex_GrTrace(void);
 
 #define GR_MEX_FIRST_NEW 71 /* first m-ex-added internal stage id */
-#define GR_MEX_ROWS 64      /* synthesised rows; bounded by ARRAY_SIZE(stage_datas) as well */
+/* Synthesised rows, sized against ACE (155 internal stages, so 155-71 = 84 added) and not
+ * against Akaneia (96, i.e. 25 added) - the number that made 64 look sufficient. Kept equal to
+ * ARRAY_SIZE(stage_datas) - GR_MEX_FIRST_NEW so neither bound can silently be the tighter one. */
+#define GR_MEX_ROWS 89
 
 extern int Mex_GrInternalCount(void);
 extern int Mex_GrIsMex(int grkind);
@@ -271,6 +301,15 @@ void Ground_MexInitStages(void)
     }
     done = true;
     n = Mex_GrInternalCount();
+    /* Both clamps below used to be silent, which is how a table sized off Akaneia could look
+     * fine while dropping stages on a bigger disc. Say so once instead. The grfunction guard
+     * (GW_MEX_GR_MAX) normally rejects such a disc outright and n is 0 here; this only fires if
+     * the two bounds have drifted apart. */
+    if (n > (int) ARRAY_SIZE(stage_datas) || n > GR_MEX_FIRST_NEW + GR_MEX_ROWS) {
+        OSReport("grfunction: %d internal stages but stage_datas[] holds %d and "
+                 "Ground_MexStageDatas[] %d - truncating\n",
+                 n, (int) ARRAY_SIZE(stage_datas), GR_MEX_FIRST_NEW + GR_MEX_ROWS);
+    }
     if (n > (int) ARRAY_SIZE(stage_datas)) {
         n = (int) ARRAY_SIZE(stage_datas);
     }

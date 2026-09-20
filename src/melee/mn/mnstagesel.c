@@ -130,6 +130,15 @@ static bool sss_random_ok(int i)
         if (mnStageSel_803F06D0[i].stkind >= SSS_EXT_MEX_FIRST) {
             return false;
         }
+        /* xA indexes `lbl_803B7808[30]`, and gm_80164330() truncates it to u8
+         * before doing so, so a row carrying anything but a retail random id
+         * reads past that table. m-ex's rows 0..28 reproduce retail's, but
+         * nothing in mexData constrains a row naming a vanilla external id to
+         * do the same - and ACE ships 163 rows where Akaneia ships 67. Refuse
+         * rather than read off the end. */
+        if (mnStageSel_803F06D0[i].xA >= SSS_RANDOM_ID_COUNT) {
+            return false;
+        }
     }
     return gm_80164330(mnStageSel_803F06D0[i].xA) != 0;
 }

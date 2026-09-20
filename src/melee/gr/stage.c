@@ -22,11 +22,16 @@ struct StageSelection {
 
 #if defined(TARGET_PC)
 /* m-ex widens the EXTERNAL stage space (the one #StKind and the stage-select screen use) from the
- * vanilla 286 ids to 313. A new external id falls outside every vanilla-sized per-id structure,
- * and stage_id_map[] is the first of them - so the array is given m-ex's size and the tail is
+ * vanilla 286 ids. A new external id falls outside every vanilla-sized per-id structure, and
+ * stage_id_map[] is the first of them - so the array is given m-ex's size and the tail is
  * filled from `mexData.stage.StageIDs`, which is the same {grkind, unk1, unk2} entry.
- * Vanilla externals keep their compiled-in rows; only the ids past the initializer are written. */
-#define ST_MEX_EXT_MAX 313
+ * Vanilla externals keep their compiled-in rows; only the ids past the initializer are written.
+ *
+ * SIZED AGAINST ACE, NOT AKANEIA: Akaneia has 313 external ids, ACE has 372. Every caller of
+ * Stage_8022519C() indexes this array by a raw StKind with no bounds check of its own (the
+ * stage-select screen hands it ids straight out of mexData), so the array must cover the largest
+ * disc, not the one that happened to be tested. 384 = ACE's 372 plus slack. */
+#define ST_MEX_EXT_MAX 384
 extern int Mex_GrExternalCount(void);
 extern int Mex_GrKindForExt(int ext);
 void Stage_MexInitIds(void);
@@ -514,6 +519,14 @@ void Stage_MexInitIds(void)
     done = true;
     n = Mex_GrExternalCount();
     if (n > ST_MEX_EXT_MAX) {
+        /* The grfunction guard (GW_MEX_GR_EXT_MAX) is supposed to have refused such a disc
+         * already, and the two constants carry comments saying they must match. If this ever
+         * fires they have drifted, and the danger is not here - clamping the fill is safe - but
+         * in every OTHER site that indexes stage_id_map[] by a raw StKind out of mexData. Say so
+         * rather than clamp in silence. */
+        OSReport("stage: %d external stage ids but stage_id_map[] holds %d - ids %d and up will "
+                 "read off the end\n",
+                 n, ST_MEX_EXT_MAX, ST_MEX_EXT_MAX);
         n = ST_MEX_EXT_MAX;
     }
     for (e = 0; e < n; e++) {

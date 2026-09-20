@@ -493,6 +493,45 @@ void gw_Mex_GrFunctionInit(void *archive, int grkind) {
     }
 }
 
+void *gw_Mex_GrRowCallbacks(int grkind) {
+    uint32_t row = gr_row(grkind), g, native;
+    int kind = -1;
+    static uint32_t moaned[16];
+    static int nmoaned;
+    int i;
+
+    if (row == 0u) {
+        return NULL;
+    }
+    g = gr_rd(row + (uint32_t) GW_MEX_GR_SLOT_CALLBACKS * 4u);
+    if (g == 0u || g == 0xFFFFFFFFu) {
+        return NULL;
+    }
+    /* The word is a GUEST address. A vanilla StageCallbacks[] is a static in the retargeted
+     * exe, not in MEM1, so it has to come back through the bridge as a DATA object (kind 0) -
+     * the same translation gw_ppc_static_native() does for an interpreted load. A guest
+     * address that is not an exact bridge base cannot be translated, and a raw guest value
+     * stored into a StageData row would be dereferenced by native game code as if it were a
+     * host pointer, so refuse rather than guess. */
+    native = gw_mex_bridge_lookup(g, &kind);
+    if (native != 0u && kind == 0) {
+        return (void *) (uintptr_t) native;
+    }
+    for (i = 0; i < nmoaned; ++i) {
+        if (moaned[i] == g) {
+            return NULL;
+        }
+    }
+    if (nmoaned < (int) (sizeof moaned / sizeof moaned[0])) {
+        moaned[nmoaned++] = g;
+    }
+    gw_log("grfunction: internal stage %d names StageCallbacks[] at guest 0x%08X, which has "
+           "no data entry in the bridge - this stage gets no fog, lighting or per-model "
+           "camera",
+           grkind, g);
+    return NULL;
+}
+
 void *gw_Mex_GrCallbacks(void) {
     if (gr_loaded < 0 || gr_loaded != gr_cur) {
         return NULL;
@@ -825,6 +864,62 @@ static int test_grfunction_load_gromc(void) {
 
 typedef uint32_t (*gw_gr_thunk_fn)(uint32_t, uint32_t, uint32_t, uint32_t);
 
+/* THE ROW'S OWN StageCallbacks[] WORD MUST SURVIVE THE GUEST->NATIVE BOUNDARY.
+ *
+ * An m-ex row that CLONES a vanilla stage names that stage's compiled-in StageCallbacks[] in
+ * StageData word 1, as a GUEST address. The port dropped that word and set the synthesised row's
+ * `callbacks` to NULL, which ground.c's fog scan then dereferenced - `foo()`/Ground_801C1E94 read
+ * 0x10 and killed every ACE run that reached internal stage 96 or above.
+ *
+ * Akaneia cannot see this: all 25 of its added rows ship word 1 as 0 and let the blob supply the
+ * table. ACE's added rows mostly do the opposite. So the test is written to say which disc it is
+ * looking at rather than to assert one disc's shape: it fails only if rows DO carry the word and
+ * not one of them translates, which is the mechanism being broken rather than the disc being
+ * different. Anything that does not translate is named, because each one is a stage that silently
+ * loses fog, lighting and its per-model camera. */
+static int test_grfunction_row_callbacks(void) {
+    int k, n, with_word = 0, resolved = 0;
+
+    if (gw_iso_path() == NULL || (n = gw_Mex_GrInternalCount()) == 0) {
+        gw_log("grfunction: no m-ex stage tables on this disc - skipping");
+        return 0;
+    }
+    for (k = GW_MEX_GR_FIRST_NEW; k < n && k < GW_MEX_GR_MAX; k++) {
+        uint32_t row = gr_row(k), g;
+        void *native;
+        if (row == 0u) {
+            continue;
+        }
+        g = gr_rd(row + (uint32_t) GW_MEX_GR_SLOT_CALLBACKS * 4u);
+        if (g == 0u || g == 0xFFFFFFFFu) {
+            continue;
+        }
+        ++with_word;
+        native = gw_Mex_GrRowCallbacks(k);
+        if (native == NULL) {
+            continue;
+        }
+        ++resolved;
+        /* A raw guest value stored into a StageData row would be dereferenced by native game
+         * code as a host pointer. Translation must actually have happened. */
+        if ((uint32_t) (uintptr_t) native == g) {
+            gw_test_fail("internal stage %d returned its raw guest StageCallbacks[] 0x%08X "
+                         "instead of a native address",
+                         k, g);
+            return 1;
+        }
+    }
+    gw_log("grfunction: %d of %d added rows name a StageCallbacks[] of their own; %d translated",
+           with_word, n - GW_MEX_GR_FIRST_NEW, resolved);
+    if (with_word > 0 && resolved == 0) {
+        gw_test_fail("%d added rows name a StageCallbacks[] and none translated - the guest->native "
+                     "data bridge lookup is not working",
+                     with_word);
+        return 1;
+    }
+    return 0;
+}
+
 static int test_grfunction_thunk_pool_beyond_8(void) {
     uint32_t base = GW_MEX_GR_THUNK_TEST_BASE;
     uint32_t bound[GW_MEX_GR_THUNK_TEST_N];
@@ -997,6 +1092,7 @@ static int test_grfunction_added_rows_parse(void) {
 void gw_mex_grfunction_tests_register(void) {
     gw_test_register("grfunction_tables", test_grfunction_tables);
     gw_test_register("grfunction_rows", test_grfunction_rows);
+    gw_test_register("grfunction_row_callbacks", test_grfunction_row_callbacks);
     gw_test_register("grfunction_load_gromc", test_grfunction_load_gromc);
     gw_test_register("grfunction_thunk_pool_beyond_8", test_grfunction_thunk_pool_beyond_8);
     gw_test_register("grfunction_added_rows_parse", test_grfunction_added_rows_parse);

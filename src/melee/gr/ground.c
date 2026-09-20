@@ -262,6 +262,32 @@ extern u32 Mex_GrFlags2(int grkind);
 extern void Mex_GrSelect(int grkind);
 extern void Mex_GrFunctionInit(void* archive, int grkind);
 extern void* Mex_GrCallbacks(void);
+extern void* Mex_GrRowCallbacks(int grkind);
+
+/* A SYNTHESISED ROW MAY HAVE NO StageCallbacks[] AND A VANILLA ONE NEVER CAN.
+ * Every compiled-in StageData points at a real table, so the three scans below were written
+ * to dereference it unconditionally - and an m-ex row whose MxDt word 1 is empty and whose
+ * blob does not override slot 1 has none. That read 0x10 (the flags at offset 0x10 of
+ * entry 0) and killed every ACE run that reached internal stage 96 or above. The scans now
+ * treat "no table" as "nothing matched", which is what the loop would have concluded
+ * anyway, and say so once per stage so it is visible rather than silent. */
+static StageCallbacks* Ground_MexStageCallbacks(int grkind)
+{
+    static int moaned = -1;
+    StageCallbacks* cb;
+    if (stage_datas[grkind] == NULL) {
+        return NULL;
+    }
+    cb = stage_datas[grkind]->callbacks;
+    if (cb == NULL && moaned != grkind) {
+        moaned = grkind;
+        OSReport("grfunction: internal stage %d has no StageCallbacks[] (neither its MxDt "
+                 "row nor its grFunction supplies one) - no fog, lighting or per-model "
+                 "camera on it\n",
+                 grkind);
+    }
+    return cb;
+}
 extern int Mex_GrBgmCount(int grkind);
 extern int Mex_GrBgmId(int grkind, int i);
 extern int Mex_GrBgmChance(int grkind, int i);
@@ -323,9 +349,10 @@ void Ground_MexInitStages(void)
         }
         sd = &Ground_MexStageDatas[k - GR_MEX_FIRST_NEW];
         sd->grkind = (GrKind) k;
-        /* Filled from the blob's `map_gobjs` once the stage's file loads; NULL until then, and
-         * nothing reads it before Ground_801C0800. */
-        sd->callbacks = NULL;
+        /* The clone base's table, from the MxDt row's own word 1. The blob's `map_gobjs`
+         * replaces it in Ground_801C0754 IF this stage's blob overrides slot 1; ACE's rows
+         * mostly do not, and a NULL here is what the fog scan below faulted on. */
+        sd->callbacks = (StageCallbacks*) Mex_GrRowCallbacks(k);
         sd->data1 = (char*) Mex_GrFile(k);
         sd->on_init = Ground_MexOnInit;
         sd->on_demo_init = Ground_MexOnDemoInit;
@@ -631,7 +658,15 @@ void Ground_801C0754(StageIdPair* pair)
     if (Mex_GrIsMex(pair->grkind)) {
         UnkArchiveStruct* mex_arc = grDatFiles_GetArchive();
         Mex_GrFunctionInit(mex_arc != NULL ? (void*) mex_arc->unk0 : NULL, pair->grkind);
-        stage_datas[pair->grkind]->callbacks = (StageCallbacks*) Mex_GrCallbacks();
+        {
+            /* An OVERRIDE, not an assignment: a blob that does not override StageData word
+             * 1 must keep the clone base's table, not lose it. */
+            StageCallbacks* cb = (StageCallbacks*) Mex_GrCallbacks();
+            if (cb == NULL) {
+                cb = (StageCallbacks*) Mex_GrRowCallbacks(pair->grkind);
+            }
+            stage_datas[pair->grkind]->callbacks = cb;
+        }
     }
 #endif
     Ground_801C28CC(&stage_info.xA0, pair->stkind);
@@ -1269,8 +1304,14 @@ Ground_GObj* Ground_GetStageGObj(int map_id)
             OSReport("%s:%d: couldn t get jobj\n", __FILE__, 0x55D);
             return NULL;
         }
+#if defined(TARGET_PC)
+        StageCallbacks* map_cb = Ground_MexStageCallbacks(stageinfo->grkind);
+        if (map_cb != NULL && map_cb[map_id].flags_b2 == 1 &&
+            archive->unk4->unk8[map_id].x10 != NULL)
+#else
         if (stage_datas[stageinfo->grkind]->callbacks[map_id].flags_b2 == 1 &&
             archive->unk4->unk8[map_id].x10 != NULL)
+#endif
         {
             HSD_GObj* temp_r23_2 = GObj_Create(17, 19, 0);
             temp_r27 = lb_80013B14(archive->unk4->unk8[map_id].x10);
@@ -1472,7 +1513,14 @@ static inline HSD_FogDesc* foo(void)
     grDatFiles_GetArchive();
     archive = grDatFiles_GetArchive();
     kind = stage_info.grkind;
+#if defined(TARGET_PC)
+    temp_r29 = Ground_MexStageCallbacks(kind);
+    if (temp_r29 == NULL) {
+        return NULL;
+    }
+#else
     temp_r29 = stage_datas[kind]->callbacks;
+#endif
     temp_r30 = archive->unk4->unkC;
     grDatFiles_GetArchive();
     for (i = 0; i < temp_r30; i++) {
@@ -3339,8 +3387,17 @@ void Ground_801C466C(void)
     LightList** selected;
 
     archive = grDatFiles_GetArchive();
+#if defined(TARGET_PC)
+    callbacks = Ground_MexStageCallbacks(stage_info.grkind);
+#else
     callbacks = stage_datas[stage_info.grkind]->callbacks;
+#endif
     count = archive->unk4->unkC;
+#if defined(TARGET_PC)
+    if (callbacks == NULL) {
+        count = 0;
+    }
+#endif
     archive = grDatFiles_GetArchive();
 #if defined(TARGET_PC)
     if (Mex_GrTrace()) {

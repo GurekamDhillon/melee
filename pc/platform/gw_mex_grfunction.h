@@ -134,6 +134,20 @@ void gw_Mex_GrFunctionInit(void *archive, int grkind);
  * standalone function (guest 0x803D7068), which every custom stage's map-gobj creator calls. */
 void *gw_Mex_GrCallbacks(void);
 
+/* The MxDt row's OWN StageCallbacks[] word (StageData word 1), translated from its guest
+ * address to the native object the bridge names, or NULL when the row has none or it does
+ * not resolve.
+ *
+ * THIS IS THE CLONE BASE'S TABLE AND IT IS NOT OPTIONAL. Akaneia's 25 added rows all ship
+ * word 1 as 0 and let the blob supply the table - which is where this header's claim that an
+ * added row carries 0xFFFFFFFF came from, and it is true only of that disc. ACE's 59 added
+ * rows do the opposite: they CLONE a vanilla stage, so word 1 names that stage's compiled-in
+ * StageCallbacks[] (internal 96 GrAr.dat -> guest 0x803E94B8 = grTSk_StageCallbacks) and the
+ * blob overrides only the seven function words. Drop word 1 and the row's `callbacks` stays
+ * NULL, which ground.c's fog, light and map-gobj scans dereference unconditionally because a
+ * vanilla row can never have one. */
+void *gw_Mex_GrRowCallbacks(int grkind);
+
 /* Bind a StageCallbacks entry (on_init / gobj_proc / callback3) to something native code can
  * call: blob code becomes a thunk, a native pointer passes through unchanged. */
 void *gw_Mex_GrBind(void *fn);

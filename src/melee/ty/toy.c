@@ -5761,7 +5761,16 @@ void Toy_80310324(void)
     if (tg->x50 == NULL) {
         tg->x50 = lbArchive_LoadSymbols(
             lbLang_IsSavedLanguageJP() ? "TyMnView.dat" : "TyMnView.usd",
+#if defined(TARGET_PC)
+            /* Retail writes the symbol through `sym + 4`, four elements past a one-element
+             * local. That only works because of where the compiler happened to put the
+             * neighbouring slot; on any other frame layout it is a stack smash, and the
+             * value is discarded here anyway - lbArchive_LoadSymbols' RETURN is what is
+             * kept. Write it inside the array. */
+            sym, _Toy_803FDEA0[0], NULL);
+#else
             sym + 4, _Toy_803FDEA0[0], NULL);
+#endif
     }
 
     memzero(_Toy_sbss_804D6E68, sizeof(*_Toy_sbss_804D6E68));

@@ -1,0 +1,27 @@
+Subject: [PATCH] pc: the loading overlay must count display lists, not only prims
+
+pc/platform/shim_gx.c belongs to the aurora/rendering agent, so this is left as a patch
+rather than applied from the trophy branch.
+
+The trophy COLLECTION room draws entirely through display lists: its own DIAG line reads
+`copy #2670  since-last prim=0 dlist=129`. gw_Overlay_NoteContent() is handed only
+gw_gx_prim_count, so it stays at zero, the overlay concludes the game is still booting, and
+a "LOADING ... TyQuesD.dat" panel sits over a perfectly good screen for the entire run --
+see _build/runs/tysave/frame_40s.png against _build/runs/tygal, which draws prims and does
+stand down. Nothing is actually stuck; the heuristic just cannot see dlist-only frames.
+
+--- a/pc/platform/shim_gx.c
++++ b/pc/platform/shim_gx.c
+@@ around line 540
+   GXCopyDisp(dest, (GXBool)clear);
+   ++gw_gx_copydisp_count;
+   gw_frame_mark_content();
+   /* A copy with no primitives behind it is a black clear - which is exactly the boot screen the
+    * loading overlay covers. Tell the overlay the running primitive count so it can stand down the
+    * moment the game actually draws something. */
+-  gw_Overlay_NoteContent(gw_gx_prim_count);
++  /* ...and the display-list count too: a screen built entirely from dlists (the trophy
++   * collection room is one) submits zero prims and would otherwise look like a still-booting
++   * black frame forever. */
++  gw_Overlay_NoteContent(gw_gx_prim_count + gw_gx_dlist_count);
+ }

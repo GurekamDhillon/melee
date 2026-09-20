@@ -2470,6 +2470,44 @@ ftKirby_CostumeArchive* ftKb_Init_803C9FC8[Ft_Kind_Max] = {
     NULL,
 };
 
+
+#if defined(TARGET_PC)
+/* Which row of a per-costume Kirby COPY-HAT table a Kirby costume uses.
+ *
+ * Every one of those tables is sized to KIRBY'S RETAIL costume count, six: the runtime archive
+ * rows just above (ftKb_Init_803C9ED8 .. ftKb_Init_803C9F98, `[6]` each) and the disc-side
+ * filename rows in ftkirbydata.c (ftKb_Init_803CACB0 and friends, six entries each).
+ *
+ * The count that DRIVES them no longer agrees. ftData_8008578C passes
+ * CostumeListsForeachCharacter[Ft_Kind_Kirby].numCostumes, which ftData_MexInitKinds rebuilds
+ * from mexData - eight on Akaneia. So ftKb_SpecialN_800EEC34 loops `i < 8` over a six-entry
+ * table, and ftKb_SpecialN_800EED50 both reads and WRITES row 6 or 7 of one. The observed
+ * crash was `mode=vs;p1=ck:4/c6/hu;p2=ck:1/c0/cpu1`, faulting in lbFileGetFullName on the
+ * garbage filename two entries past the end of DK's table.
+ *
+ * m-ex's answer to "which retail row does an added costume use" is the one the fighter's own
+ * per-costume data already uses: costume_file[k][c].visibility_lookup_idx, which is what
+ * FT_COSTUME_VIS_IDX reads (inlines.h). That macro was already on three of the sites below and
+ * was CORRECT there - this is not a regression from it. What was missing is the same mapping at
+ * the two entry points, which is where ftlib.c's attract-mode preload, player.c's per-slot
+ * preload and ftdata.c all arrive with a raw costume id. Doing it there fixes every caller at
+ * once instead of one call site at a time.
+ *
+ * Note the contrast with a fighter's own costume archives (CostumeListsForeachCharacter,
+ * ftData_803C2360): those the port REBUILDS with sixteen rows, so they keep the real costume id
+ * and two costumes never share an archive. These tables are not rebuilt, so they cannot. */
+#define FTKB_COPY_COSTUMES 6
+int ftKb_CopyCostumeRow(int costume)
+{
+    extern int Mex_CostumeVisIdx(int, int);
+    int row = Mex_CostumeVisIdx((int) Ft_Kind_Kirby, costume);
+    return (row >= 0 && row < FTKB_COPY_COSTUMES) ? row : 0;
+}
+#define FTKB_COPY_ROW(fp) ftKb_CopyCostumeRow((int) (fp)->x619_costume_id)
+#else
+#define FTKB_COPY_ROW(fp) ((fp)->x619_costume_id)
+#endif
+
 MotionState ftKb_Init_UnkMotionStates0[] = {
     {
         ftCo_SM_RunBrake,
@@ -2762,6 +2800,19 @@ void ftKb_SpecialN_800EEC34(int arg0, int arg1, int arg2)
     int i;
     int lo;
 
+#if defined(TARGET_PC)
+    /* arg1 is a Kirby costume id and arg2 is Kirby's costume COUNT, which on an m-ex disc is
+     * larger than these tables. Map and bound both - see ftKb_CopyCostumeRow. */
+    if (arg0 < 0 || arg0 >= (int) Ft_Kind_Max) {
+        return;
+    }
+    if (arg1 != 0xFF) {
+        arg1 = ftKb_CopyCostumeRow(arg1);
+    }
+    if (arg2 > FTKB_COPY_COSTUMES) {
+        arg2 = FTKB_COPY_COSTUMES;
+    }
+#endif
     if (ftKb_Init_803CA9D0[arg0].filename != NULL) {
         lbDvd_800178E8(2, ftKb_Init_803CA9D0[arg0].filename, 4, 4, 0, 1, 3, 1,
                        0);
@@ -2798,6 +2849,9 @@ void ftKb_SpecialN_800EED50(s32 arg0, s32 arg1)
     if (arg0 < 0 || arg0 >= (s32) Ft_Kind_Max) {
         return;
     }
+    /* arg1 is a raw Kirby costume id from ftlib.c / player.c / ftKb_SpecialN_800F1BAC, and
+     * these tables have only Kirby's six RETAIL rows - see ftKb_CopyCostumeRow. */
+    arg1 = ftKb_CopyCostumeRow(arg1);
 #endif
 
     if (arg0 != -1 && arg0 != 4) {
@@ -2886,8 +2940,9 @@ void ftKb_SpecialN_800EF040(Fighter_GObj* gobj, int arg1, KirbyHatStruct* hat)
         struct Fighter_804D6540_t* ft_data = Fighter_804D6540[fp->kind];
         int count = ft_data->x4;
         /* Each row of ftKb_Init_803C9FC8 is sized to KIRBY's retail costume count (six) and
-         * is indexed by Kirby's own costume; Akaneia gives him eight, mapped 0..5,0,0. */
-        HSD_Joint* joint = ftKb_Init_803C9FC8[arg1][FT_COSTUME_VIS_IDX(fp)].joint;
+         * is indexed by Kirby's own costume; Akaneia gives him eight. FTKB_COPY_ROW maps and
+         * bounds - see ftKb_CopyCostumeRow. */
+        HSD_Joint* joint = ftKb_Init_803C9FC8[arg1][FTKB_COPY_ROW(fp)].joint;
         struct Fighter_804D6540_x0_t* parts = ft_data->x0;
         int i;
         for (i = 0; i < count; i++, parts++) {
@@ -2962,7 +3017,7 @@ void ftKb_SpecialN_800EF0E4(Fighter_GObj* gobj, int arg1, u8* arg2)
     s32 byte_base;
 
     ftPartsPObjSetDefaultClass();
-    root = ftKb_Init_803C9FC8[arg1][FT_COSTUME_VIS_IDX(fp)].joint;
+    root = ftKb_Init_803C9FC8[arg1][FTKB_COPY_ROW(fp)].joint;
     ftKb_SpecialN_insert_joint_refs(&total_dobjs, root, fp, &insert_part_idx,
                                     &current_joint, &joint_idx, &byte_base);
     joint_idx = 0;
@@ -3029,7 +3084,7 @@ void ftKb_SpecialN_800EF35C(Fighter_GObj* gobj, int arg1, u8* arg2)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     ftKirby_CostumeArchive* costume_data = ftKb_Init_803C9FC8[arg1];
-    HSD_MatAnimJoint* matanimjoint = costume_data[FT_COSTUME_VIS_IDX(fp)].matanim;
+    HSD_MatAnimJoint* matanimjoint = costume_data[FTKB_COPY_ROW(fp)].matanim;
     int idx = 0;
     arg1 = 0;
     PAD_STACK(4);
@@ -4201,7 +4256,7 @@ void ftKb_SpecialN_800F1BAC(Fighter_GObj* gobj, s32 kind, bool arg2)
          * it_804D6D38, so spawning the copied move dereferences a NULL article at
          * Item_80267AA8. Reload the copied kind's hat on demand. */
         if (((KirbyHatStruct**) &ft_80459B88)[kind] == NULL) {
-            ftKb_SpecialN_800EED50(kind, FT_COSTUME_VIS_IDX(fp));
+            ftKb_SpecialN_800EED50(kind, (s32) fp->x619_costume_id);
         }
 #endif
         fp->u.kb.hat.kind = kind;

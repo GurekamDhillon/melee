@@ -9,6 +9,8 @@ void *gw_Mex_CssIconTable(void);
 int gw_Mex_InternalCount(void);
 int gw_Mex_InternalForExt(int ext);
 int gw_Mex_FtCostumeCount(int internal);
+int gw_Mex_InternalForPortKind(int fk);
+int gw_Mex_CostumeVisIdx(int fk, int costume);
 
 static int test_u32_roundtrip(void) {
   unsigned char buf[8];
@@ -323,6 +325,47 @@ static int test_mex_csp_frame_map(void) {
 }
 
 
+/* The Kirby copy-hat tables are sized to Kirby's RETAIL costume count, and the count that
+ * drives them comes from mexData. This is the data half of that mismatch: it states what the
+ * discs give Kirby and that m-ex maps every one of those costumes back onto a retail row.
+ * ftKb_CopyCostumeRow (ft/kinds/ftKirby/ftkirby.c) is what applies the mapping; it clamps as
+ * well, so a disc that broke this assertion would be wrong but no longer fatal. */
+#define GW_FTKIND_KIRBY 4
+#define GW_FTKB_COPY_COSTUMES 6
+
+static int test_mex_kirby_costume_rows(void) {
+  int internal, count, c, over = 0, rc = 0;
+
+  if (gw_Mex_CssIconCount() == 0) {
+    return 0; /* retail disc */
+  }
+  internal = gw_Mex_InternalForPortKind(GW_FTKIND_KIRBY);
+  if (internal < 0) {
+    gw_test_fail("no m-ex internal kind for Kirby (port FighterKind %d)", GW_FTKIND_KIRBY);
+    return 1;
+  }
+  count = gw_Mex_FtCostumeCount(internal);
+  if (count <= 0) {
+    gw_test_fail("m-ex gives Kirby %d costumes", count);
+    return 1;
+  }
+  for (c = 0; c < count; ++c) {
+    const int row = gw_Mex_CostumeVisIdx(GW_FTKIND_KIRBY, c);
+    if (c >= GW_FTKB_COPY_COSTUMES) {
+      over++;
+    }
+    if (row < 0 || row >= GW_FTKB_COPY_COSTUMES) {
+      gw_test_fail("Kirby costume %d maps to copy-hat row %d, outside the %d rows every "
+                   "ftKb_Init_803C9FC8 / ftKb_Init_803CB3E8 entry has",
+                   c, row, GW_FTKB_COPY_COSTUMES);
+      rc = 1;
+    }
+  }
+  gw_log("test mex_kirby_costume_rows: Kirby has %d costumes, %d of them past the %d rows the "
+         "copy-hat tables carry", count, over, GW_FTKB_COPY_COSTUMES);
+  return rc;
+}
+
 void gw_tests_register_all(void) {
   extern void gw_MexTestRegisterAll(void);
   extern void gw_ppc_tests_register(void);
@@ -351,4 +394,5 @@ void gw_tests_register_all(void) {
   gw_test_register("mem1_at_guest_base", test_mem1_at_guest_base);
   gw_test_register("mem1_aram_distinct", test_mem1_aram_distinct);
   gw_test_register("mex_csp_frame_map", test_mex_csp_frame_map);
+  gw_test_register("mex_kirby_costume_rows", test_mex_kirby_costume_rows);
 }

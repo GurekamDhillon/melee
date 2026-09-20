@@ -1123,6 +1123,13 @@ void Toy_SetUnlockState(enum_t trophyId, bool addValue)
     idx = (s16) trophyId;
     byteOffset = idx * 2;
 
+#if defined(TARGET_PC)
+    /* One line per unlock. TY_TROPHY_COUNT is the size of every per-trophy array in the save
+     * and in Toy, so an id at or past it corrupts whatever follows - say so loudly. */
+    OSReport("ty: unlock trophy %d (add=%d)%s\n", idx, (int) addValue,
+             (idx < 0 || idx >= TY_TROPHY_COUNT) ? "  *** OUT OF RANGE ***" : "");
+#endif
+
     if ((u8) * (u16*) ((u8*) table + byteOffset) == 0) {
         if (gm_IsCurrently1PMode() ||
             gm_GetCurrentGameMode() == GM_TOY_LOTTERY)
@@ -2065,25 +2072,50 @@ void Toy_80306D70(s32 arg0)
 
     {
         LightList** sp14;
+#if !defined(TARGET_PC)
         TyLightFile* base;
+#endif
         ToyCameraControl* data;
         char* sym;
         s32 idx;
         u8 kind;
 
+#if defined(TARGET_PC)
+        /* THE LIGHT TABLE IS NOT WHERE THE CAST SAYS IT IS.
+         *
+         * Retail reaches this table by aliasing the string symbol that happens to precede it
+         * in .data: _Toy_str_TyLight_dat sits at 0x3FDD18 and _Toy_803FDDE4 at 0x3FDDE4,
+         * exactly TyLightFile::pad0[0xCC] apart, so `(TyLightFile*) _Toy_str_TyLight_dat`
+         * lands on the real symbol/index table. Nothing makes the port's linker reproduce
+         * that adjacency, so on PC the read walked off the end of a 12-byte string and the
+         * trophy lottery faulted in HSD_ArchiveGetPublicAddress on entry.
+         *
+         * The two declarations describe the same bytes: TyLightFile::symbols[6] (8 bytes
+         * each) is lbl_803FDDE4_t::symbols[6], and TyLightFile::entries[] (stride 0xC) is
+         * ::values[6] = {int index; GXColor color; bool flag;}. Name the real symbol. */
+        idx = _Toy_803FDDE4.values[arg0].index;
+        sym = _Toy_803FDDE4.symbols[idx].name;
+        OSReport("ty: light set %d -> idx %d %s\n", arg0, idx,
+                 sym != NULL ? sym : "(null)");
+#else
         base = (TyLightFile*) _Toy_str_TyLight_dat;
+#endif
         data = Toy_sbss_804D6ED4;
 
         if (data->archive != NULL && data->x04 != NULL) {
             HSD_GObjProc_RemoveAllProcs(data->x04);
             HSD_GObjFree(data->x04);
             data->x04 = NULL;
+#if !defined(TARGET_PC)
             idx = base->entries[arg0].idx;
             sym = base->symbols[idx].name;
+#endif
             sp14 = HSD_ArchiveGetPublicAddress(data->archive, sym);
         } else {
+#if !defined(TARGET_PC)
             idx = base->entries[arg0].idx;
             sym = base->symbols[idx].name;
+#endif
             data->archive =
                 lbArchive_80016DBC(_Toy_str_TyLight_dat, &sp14, sym, 0);
         }
@@ -2102,8 +2134,10 @@ void Toy_80306D70(s32 arg0)
                 HSD_GObj_80390CD4(data->x04);
             }
         } else {
+#if !defined(TARGET_PC)
             idx = base->entries[arg0].idx;
             sym = base->symbols[idx].name;
+#endif
             OSReport("*** Can not Load Light Label(%s)\n", sym);
             HSD_ASSERT(2253, 0);
         }
@@ -2343,7 +2377,13 @@ void Toy_80307470(s32 arg0)
 
     PAD_STACK(16);
 
+#if defined(TARGET_PC)
+    /* Same .data aliasing as Toy_80306D70: `_Toy_str_TyLight_dat + arg0*4 + 0x188` is
+     * `_Toy_803FDEA0[arg0]` (0x3FDD18 + 0x188 == 0x3FDEA0). Every caller passes 0. */
+    data = NULL;
+#else
     data = (ToyPanelLabelData*) _Toy_str_TyLight_dat;
+#endif
     tg = (ToyGlobalsS_*) Toy_sbss_804D6ED8;
 
     if (tg->x50 == NULL) {
@@ -2356,8 +2396,13 @@ void Toy_80307470(s32 arg0)
         tg->x0 = NULL;
     }
 
+#if defined(TARGET_PC)
+    label = &_Toy_803FDEA0[arg0];
+#else
     label = &data->ptrs[arg0];
-    joint[0] = HSD_ArchiveGetPublicAddress(tg->x50, *(label += 0x188 / 4));
+    label += 0x188 / 4;
+#endif
+    joint[0] = HSD_ArchiveGetPublicAddress(tg->x50, *label);
 
     if (joint[0] != NULL) {
         tg->x0 = GObj_Create(9, 9, 0);
@@ -2400,7 +2445,14 @@ void _Toy_803075E8(s32 arg0)
 
     PAD_STACK(88);
 
+#if defined(TARGET_PC)
+    /* Same .data aliasing again: `_Toy_str_TyLight_dat + arg0*4 + 0x69*4` is
+     * `_Toy_803FDEBC[arg0]` (0x3FDD18 + 0x1A4 == 0x3FDEBC), a 6-entry table indexed by the
+     * same light-set id as _Toy_803FDFA8 below. */
+    data = NULL;
+#else
     data = _Toy_str_TyLight_dat;
+#endif
     td = Toy_sbss_804D6ED8;
 
     if (td->archive == NULL) {
@@ -2420,8 +2472,13 @@ void _Toy_803075E8(s32 arg0)
         Toy_sbss_804D6ED8->x8->x28->x4->x4->x40 = 9;
     }
 
+#if defined(TARGET_PC)
+    ptr = &_Toy_803FDEBC[arg0];
+#else
     ptr = (char**) (data + arg0 * 4);
-    if (*(ptr += 0x69) != NULL) {
+    ptr += 0x69;
+#endif
+    if (*ptr != NULL) {
         joint = HSD_ArchiveGetPublicAddress(td->archive, *ptr);
         if (joint != NULL) {
             td->gobj = GObj_Create(4, 7, 0);
@@ -5704,7 +5761,16 @@ void Toy_80310324(void)
     if (tg->x50 == NULL) {
         tg->x50 = lbArchive_LoadSymbols(
             lbLang_IsSavedLanguageJP() ? "TyMnView.dat" : "TyMnView.usd",
+#if defined(TARGET_PC)
+            /* Retail writes the symbol through `sym + 4`, four elements past a one-element
+             * local. That only works because of where the compiler happened to put the
+             * neighbouring slot; on any other frame layout it is a stack smash, and the
+             * value is discarded here anyway - lbArchive_LoadSymbols' RETURN is what is
+             * kept. Write it inside the array. */
+            sym, _Toy_803FDEA0[0], NULL);
+#else
             sym + 4, _Toy_803FDEA0[0], NULL);
+#endif
     }
 
     memzero(_Toy_sbss_804D6E68, sizeof(*_Toy_sbss_804D6E68));

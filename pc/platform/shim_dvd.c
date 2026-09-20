@@ -28,6 +28,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 #include "shim_vi.h"
+#include "gw_overlay.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -354,6 +355,8 @@ int gw_DVDConvertPathToEntrynum(const char *path) {
       gw_log("gw: dvd: %s -> %s", path, m != NULL ? m->mod : "disc");
     }
   }
+  /* Feeds the loading overlay's file counter and "currently loading" line. */
+  gw_Overlay_NoteFile(path);
   if (m != NULL) {
     return m->entrynum;
   }
@@ -546,6 +549,8 @@ int gw_DVDReadAsyncPrio(void *file_info, void *addr, int length, int offset, voi
      * no crash handler runs and nothing is logged. A NULL destination here means a game
      * allocation failed upstream, which is worth reporting as itself rather than as a silent
      * disappearance. */
+    gw_Overlay_NoteBytes(want);
+
     if (want != 0 && addr == NULL) {
       gw_log("gw: DVDReadAsyncPrio with a NULL destination (%u bytes at offset %d) - the caller's "
              "allocation failed",

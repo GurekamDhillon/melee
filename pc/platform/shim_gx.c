@@ -25,6 +25,7 @@
 
 #include "shim_gx.h"
 #include "shim_vi.h"
+#include "gw_overlay.h"
 
 #include <aurora/gfx.h>
 #include <dolphin/gx/GXCpu2Efb.h> /* TEMP DIAG: aurora_get_stats */
@@ -539,6 +540,10 @@ void gw_GXCopyDisp(void *dest, u8 clear) {
   GXCopyDisp(dest, (GXBool)clear);
   ++gw_gx_copydisp_count;
   gw_frame_mark_content();
+  /* A copy with no primitives behind it is a black clear - which is exactly the boot screen the
+   * loading overlay covers. Tell the overlay the running primitive count so it can stand down the
+   * moment the game actually draws something. */
+  gw_Overlay_NoteContent(gw_gx_prim_count);
 }
 
 /* TEMP DIAG: GXCopyTex resolves the EFB into a texture and, when clear is set, CLEARS the EFB

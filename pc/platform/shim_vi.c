@@ -13,6 +13,7 @@
 #include "shim_ax.h"
 #include "shim_gx.h"
 #include "shim_os.h"
+#include "gw_overlay.h"
 
 #include <aurora/aurora.h>
 #include <aurora/event.h>
@@ -376,6 +377,9 @@ void gw_frame_tick(void) {
   }
 
   if (gw_frame_has_content && gw_frame_begun) {
+    /* Composited over the game's output by Aurora's ImGui pass, which is why this must happen
+     * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
+    gw_Overlay_Draw();
     gw_pace_field();
     aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
     gw_frame_begun = false;

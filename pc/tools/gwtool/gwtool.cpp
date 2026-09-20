@@ -47,6 +47,8 @@
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/PassBuilder.h"
+#include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
@@ -86,6 +88,9 @@ cl::opt<bool> NoSafeArith("no-safe-arith",
                           cl::init(false));
 cl::opt<bool> NoSwap("no-swap", cl::desc("Debug: do not byte-swap memory accesses"),
                      cl::init(false));
+cl::opt<bool> NoAbiPin("no-abi-pin",
+                       cl::desc("Debug: do not pin internal functions to the C ABI"),
+                       cl::init(false));
 
 [[noreturn]] void fatal(const Twine &Msg) {
   errs() << "gwtool: error: " << InputFilename << ": " << Msg << "\n";
@@ -500,6 +505,118 @@ private:
 };
 
 // ---------------------------------------------------------------------------
+// The bridge's ABI pin
+// ---------------------------------------------------------------------------
+// The port's guest->native bridge (pc/platform/gw_ppc.c) calls engine functions BY ADDRESS. It
+// resolves a guest PPC address to a native one through melee-pc.map and calls it as cdecl,
+// through gw_ppc_native_fn. LLVM cannot see those call sites: to it, a function that is `static`
+// in its TU and only ever called directly has no other callers in the universe, so every
+// interprocedural pass is free to rewrite its interface.
+//
+// And they do. GlobalOpt retargets such a function to `fastcc` - on i686 the first two integer
+// arguments in ECX and EDX, floats in XMM0-2 - while the bridge is still pushing them on the
+// stack. DeadArgumentElimination deletes arguments it believes nobody passes, shifting the rest
+// down. ArgumentPromotion turns a pointer parameter into loaded values. IPSCCP replaces a
+// parameter with the constant every VISIBLE caller happens to pass.
+//
+// Every one of those is silent and bizarre at the far end rather than loud. grTSeak_80223908
+// was the first found: its prologue became `mov edi, ecx`, so all three of a custom stage's
+// map-gobj calls arrived with map_id == 0 and Meta Crystal rendered black. An audit of the
+// linked exe (tools/mex_port/audit_bridge_abi.py) then found 294 more internal functions that
+// the bridge can reach and that read an argument register the bridge never sets.
+//
+// So tell LLVM the truth instead of patching the symptoms one function at a time: the address
+// of every internal function IS taken, from outside this module. One external, address-taking
+// global per TU says exactly that, and every pass above checks precisely that property
+// (`hasAddressTaken`) before it rewrites an interface. It is not a heuristic and it cannot
+// misclassify: no internal function can acquire a private convention, whether or not anything
+// bridges to it today.
+//
+// Cost: the internal functions keep the platform C ABI and stay alive in the image. Inlining is
+// unaffected (inlining an internal function does not change the out-of-line copy's interface),
+// and the pointer array itself is a few bytes per TU.
+//
+// It is built AFTER GlobalSwapper has run, deliberately. The swapper rewrites pointer-sized
+// link-time values in global initializers into the __gw_fixups table because game memory is
+// big-endian; this array is host data that game code never reads, and must not be swapped.
+GlobalVariable *pinInternalAbi(Module &M) {
+  LLVMContext &Ctx = M.getContext();
+  PointerType *P = PointerType::getUnqual(Ctx);
+  SmallVector<Constant *, 64> Pins;
+  for (Function &F : M) {
+    if (F.isDeclaration() || F.isIntrinsic() || !F.hasLocalLinkage())
+      continue;
+    Pins.push_back(&F);
+  }
+  if (Pins.empty())
+    return nullptr;
+  // One symbol per TU, named after the TU, so two objects can never collide.
+  std::string Tag = M.getSourceFileName();
+  if (Tag.empty())
+    Tag = M.getModuleIdentifier();
+  for (char &C : Tag)
+    if (!((C >= '0' && C <= '9') || (C >= 'A' && C <= 'Z') || (C >= 'a' && C <= 'z')))
+      C = '_';
+  auto *AT = ArrayType::get(P, Pins.size());
+  auto *GV = new GlobalVariable(M, AT, /*isConstant=*/true, GlobalValue::ExternalLinkage,
+                                ConstantArray::get(AT, Pins), "__gw_abi_pin_" + Tag);
+  GV->setAlignment(Align(4));
+  return GV;
+}
+
+// The pin's invariant, checked rather than assumed: after the pipeline, every function this
+// module defines still has the calling convention and the exact signature it was compiled with.
+//
+// This is what makes the pin trustworthy. It is an exact comparison, not a guess about
+// prologues, and it fires inside the compiler - at the moment and in the TU where a pass would
+// have rewritten an interface - rather than months later as a wrong argument in a bridged call.
+// If LLVM grows a pass that rewrites an interface some other way, or someone passes
+// --no-abi-pin, this fails the TU and says so by name.
+using AbiSnapshot = StringMap<std::pair<FunctionType *, CallingConv::ID>>;
+
+AbiSnapshot snapshotAbi(Module &M) {
+  AbiSnapshot S;
+  for (Function &F : M)
+    if (!F.isDeclaration() && !F.isIntrinsic())
+      S[F.getName()] = {F.getFunctionType(), F.getCallingConv()};
+  return S;
+}
+
+void checkAbiUnchanged(Module &M, const AbiSnapshot &Before) {
+  for (Function &F : M) {
+    if (F.isDeclaration() || F.isIntrinsic())
+      continue;
+    auto It = Before.find(F.getName());
+    if (It == Before.end())
+      continue; // a pass invented it; nothing outside this module can call it by address
+    if (F.getCallingConv() != It->second.second)
+      fatal("optimization gave " + F.getName() +
+            " a private calling convention; the guest->native bridge calls it as cdecl "
+            "(see pinInternalAbi)");
+    if (F.getFunctionType() != It->second.first)
+      fatal("optimization rewrote the signature of " + F.getName() +
+            "; the guest->native bridge calls it with its original one (see pinInternalAbi)");
+  }
+}
+
+// Drop the pin once every interprocedural pass has run, and let GlobalDCE reclaim the internal
+// functions that were inlined away everywhere - the pin kept them alive, and without this a
+// typical TU's object grew about 20%. Nothing can rewrite an interface after this point: the
+// optimization pipeline is over and only codegen follows, so the functions that survive keep the
+// C ABI the pin won them.
+void unpinInternalAbi(Module &M, GlobalVariable *Pin) {
+  if (Pin == nullptr)
+    return;
+  Pin->eraseFromParent();
+  ModuleAnalysisManager MAM;
+  PassBuilder PB;
+  PB.registerModuleAnalyses(MAM);
+  ModulePassManager MPM;
+  MPM.addPass(GlobalDCEPass());
+  MPM.run(M, MAM);
+}
+
+// ---------------------------------------------------------------------------
 // Symbols, attributes, target details
 // ---------------------------------------------------------------------------
 void renameSymbols(Module &M) {
@@ -698,6 +815,9 @@ int main(int argc, char **argv) {
       swapMemoryAccesses(F, NewDL, LC);
   }
 
+  GlobalVariable *AbiPin = NoAbiPin ? nullptr : pinInternalAbi(*M);
+  AbiSnapshot AbiBefore = snapshotAbi(*M);
+
   if (verifyModule(*M, &errs()))
     fatal("module verification failed after transform");
 
@@ -718,6 +838,9 @@ int main(int argc, char **argv) {
     ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(OL);
     MPM.run(*M, MAM);
   }
+  if (AbiPin != nullptr)
+    checkAbiUnchanged(*M, AbiBefore);
+  unpinInternalAbi(*M, AbiPin);
 
   writeImports(*M);
 

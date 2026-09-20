@@ -37,8 +37,14 @@
  * External linkage forces the platform C ABI, which is what the bridge already assumes. Kept
  * under #TARGET_PC so the matching build is untouched.
  *
- * It is not the only one: @c tools/mex_port/audit_bridge_abi.py finds 31 such targets. The other
- * 30 are latent until something bridges to them.
+ * It was not the only one - @c tools/mex_port/audit_bridge_abi.py found 33 - so the class is now
+ * closed in the compiler instead of one function at a time: gwtool's @c pinInternalAbi gives
+ * every internal function an external, address-taking reference before the optimization
+ * pipeline, which is the exact property (@c hasAddressTaken) that GlobalOpt, DeadArgumentElim,
+ * ArgumentPromotion and IPSCCP all check before rewriting an interface. gwtool then verifies per
+ * TU that no function's convention or signature changed, and @c tools/port/build.sh re-checks the
+ * linked exe. This declaration is now belt-and-braces; it is left in place because it is also the
+ * documentation of what the failure looked like.
  */
 HSD_GObj* grTSeak_80223908(int);
 #else

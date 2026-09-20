@@ -519,6 +519,14 @@ void Stage_MexInitIds(void)
     done = true;
     n = Mex_GrExternalCount();
     if (n > ST_MEX_EXT_MAX) {
+        /* The grfunction guard (GW_MEX_GR_EXT_MAX) is supposed to have refused such a disc
+         * already, and the two constants carry comments saying they must match. If this ever
+         * fires they have drifted, and the danger is not here - clamping the fill is safe - but
+         * in every OTHER site that indexes stage_id_map[] by a raw StKind out of mexData. Say so
+         * rather than clamp in silence. */
+        OSReport("stage: %d external stage ids but stage_id_map[] holds %d - ids %d and up will "
+                 "read off the end\n",
+                 n, ST_MEX_EXT_MAX, ST_MEX_EXT_MAX);
         n = ST_MEX_EXT_MAX;
     }
     for (e = 0; e < n; e++) {

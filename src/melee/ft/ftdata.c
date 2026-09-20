@@ -1966,8 +1966,24 @@ void ftData_800857E0(FighterKind kind)
 
 void ftData_80085820(FighterKind kind, int costume_id)
 {
+#if defined(TARGET_PC)
+    UnkCostumeStruct* temp_r5;
+    /* The port's per-costume runtime arrays have sixteen rows and the rows past this fighter's
+     * count are zeroed, so a costume it does not have loads a NULL filename and dies inside the
+     * DVD layer with nothing in the log that names the costume. Say what happened and use
+     * costume 0, which every fighter has. MELEE_SCENE refuses an id above 15 at parse time; this
+     * is the per-fighter half of the same check, and it is the only place that can make it. */
+    if (costume_id < 0 ||
+        costume_id >= (int) CostumeListsForeachCharacter[kind].numCostumes) {
+        OSReport("gw: kind %d has no costume %d (%d costumes) - using 0\n", kind, costume_id,
+                 (int) CostumeListsForeachCharacter[kind].numCostumes);
+        costume_id = 0;
+    }
+    temp_r5 = &CostumeListsForeachCharacter[kind].costume_list[costume_id];
+#else
     UnkCostumeStruct* temp_r5 =
         &CostumeListsForeachCharacter[kind].costume_list[costume_id];
+#endif
 #if defined(TARGET_PC)
     if (ftData_IsMexKind(kind)) {
         OSReport("gw: ftData_80085820 kind=%d costume=%d file=%s joint=%s\n",

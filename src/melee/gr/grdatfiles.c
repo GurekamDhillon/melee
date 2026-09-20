@@ -11,7 +11,21 @@
 #include <sysdolphin/baselib/psstructs.h>
 
 /* 1C6228 */ static void grDatFiles_801C6228(UnkStageDat*);
+#if defined(TARGET_PC)
+/* An m-ex stage blob CALLS this address (Akaneia external stage 300 does, on its first frame),
+ * and the interpreter can only reach a native function the bridge can name. A `static` whose only
+ * two callers are in this same file is inlined into both and emitted nowhere, so the bridge has
+ * no entry and the call dies as "resolver returned NULL for guest address 0x801C62B4". Giving it
+ * external linkage costs one symbol and keeps ONE definition of the logic, where a native shim
+ * would be a second copy to keep in step. The definition below is already non-static; this only
+ * makes the declaration agree with it.
+ *
+ * This is a class, not one function: any decomp static that an m-ex blob calls by address has the
+ * same problem, and the symptom is always this same resolver message with a .text address. */
+/* 1C62B4 */ UnkArchiveStruct* grDatFiles_801C62B4(void);
+#else
 /* 1C62B4 */ static UnkArchiveStruct* grDatFiles_801C62B4(void);
+#endif
 
 /// @todo Merge declaration and definition
 /* static */ extern GroundParam grDatFiles_803E0848;

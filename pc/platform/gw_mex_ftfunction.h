@@ -79,6 +79,16 @@ int gw_ftfunction_load_at(const char *dat_path, uint32_t internal_id, uint32_t c
 
 /* Apply a MEXFunction's instruction-reloc table to code already copied to code_base. Shared with
  * the itFunction (item article) loader: an article is an ordinary MEXFunction. */
+
+/* Load / drop a custom STAGE's item articles (its archive's `itFunction`). Defined in
+ * gw_mex_ftfunction_runtime.c, called from gw_mex_grfunction.c. */
+void gw_Mex_LoadStageItems(const char *dat_path, int grkind, void *arch_data,
+                           uint32_t arch_data_size);
+void gw_Mex_UnloadStageItems(void);
+
+/* Raise the execute trap's gate. Call it from anywhere that registers a guest code
+ * range - a fighter blob, a stage blob or an item article. */
+void gw_Mex_NoteGuestCodeInstalled(void);
 int gw_ftfunction_reloc(const unsigned char *dat, size_t dat_size, uint32_t irt_data_off,
                         uint32_t irt_count, uint32_t code_base, uint32_t code_size);
 

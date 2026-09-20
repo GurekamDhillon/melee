@@ -698,6 +698,33 @@ void mpCollInterpolateECB(CollData* coll, float time)
         fpclassify(coll->ecb.right.x) == FP_NAN ||
         fpclassify(coll->ecb.right.y) == FP_NAN)
     {
+#if defined(TARGET_PC)
+        /* The bare "error" tells you only that SOME ECB corner is NaN, which is the end of the
+         * story rather than the start of it. Name the owner and say which input was already NaN:
+         * `time`, the interpolation TARGET (desired_ecb, i.e. whoever last loaded the ECB), or the
+         * previous ecb that we interpolated FROM. Diagnosis only - nothing is clamped, and the
+         * assert below still fires, because a clamp here would hide the producer. */
+        OSReport("mpcoll: ECB NaN: gobj=%p classifier=%d p_link=%d itkind=%d time=%f\n",
+                 (void*) coll->x0_gobj,
+                 coll->x0_gobj != NULL ? coll->x0_gobj->classifier : -1,
+                 coll->x0_gobj != NULL ? coll->x0_gobj->p_link : -1,
+                 (coll->x0_gobj != NULL && coll->x0_gobj->p_link == 9)
+                     ? itGetKind(coll->x0_gobj)
+                     : -1,
+                 time);
+        OSReport("mpcoll:   pos(%f,%f) ecb T(%f,%f) B(%f,%f) L(%f,%f) R(%f,%f)\n",
+                 coll->cur_pos.x, coll->cur_pos.y, coll->ecb.top.x, coll->ecb.top.y,
+                 coll->ecb.bottom.x, coll->ecb.bottom.y, coll->ecb.left.x, coll->ecb.left.y,
+                 coll->ecb.right.x, coll->ecb.right.y);
+        OSReport("mpcoll:   desired T(%f,%f) B(%f,%f) L(%f,%f) R(%f,%f)\n",
+                 coll->desired_ecb.top.x, coll->desired_ecb.top.y, coll->desired_ecb.bottom.x,
+                 coll->desired_ecb.bottom.y, coll->desired_ecb.left.x, coll->desired_ecb.left.y,
+                 coll->desired_ecb.right.x, coll->desired_ecb.right.y);
+        OSReport("mpcoll:   prev    T(%f,%f) B(%f,%f) L(%f,%f) R(%f,%f)\n",
+                 coll->prev_ecb.top.x, coll->prev_ecb.top.y, coll->prev_ecb.bottom.x,
+                 coll->prev_ecb.bottom.y, coll->prev_ecb.left.x, coll->prev_ecb.left.y,
+                 coll->prev_ecb.right.x, coll->prev_ecb.right.y);
+#endif
         HSD_ASSERTREPORT(1193, 0, "error\n");
     }
 }

@@ -210,6 +210,21 @@ void it_8026B3F8(Article* article, s32 kind)
 /// Store Stage Item article pointer to table
 void it_8026B40C(Article* article, s32 kind)
 {
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): its C2 hook on this function, read out
+     * of the shipped codes.gct. A custom stage registers its own articles through this same call,
+     * passing 5000 + article index instead of an item kind; the index is resolved against
+     * MexData.stage's item_lookup for the CURRENT stage and the descriptor goes into
+     * item.RuntimeIndex, which is where Item_80267978 reads it back for kinds >= 237.
+     *
+     * Not an optimisation: without this branch `kind - It_Kind_Old_Kuri` is 4792 for article 0,
+     * and the store below lands far outside the 30-entry table. */
+    if (kind >= 5000) {
+        extern void Mex_IndexStageItem(void* article, int article_index);
+        Mex_IndexStageItem(article, kind - 5000);
+        return;
+    }
+#endif
     it_804A0F60[kind - It_Kind_Old_Kuri] = article;
 }
 

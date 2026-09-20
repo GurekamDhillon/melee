@@ -333,6 +333,8 @@ static void gr_unload(void) {
     }
     gr_code_lo = gr_code_hi = 0u;
     gr_loaded = -1;
+    /* The stage's item articles were relocated into the same archive and die with it. */
+    gw_Mex_UnloadStageItems();
     memset(gr_slot, 0, sizeof gr_slot);
 }
 
@@ -483,6 +485,7 @@ void gw_Mex_GrFunctionInit(void *archive, int grkind) {
     gr_code_hi = code_base + code_size;
     gr_loaded = grkind;
     gw_ppc_add_code_range(gr_code_lo, gr_code_hi);
+    gw_Mex_NoteGuestCodeInstalled();
     gw_log("grfunction: %s (internal stage %d) installed: code 0x%08X..0x%08X (%u bytes), %u "
            "instruction relocs, %d of %u overloads",
            file, grkind, gr_code_lo, gr_code_hi, code_size, irt_count, n, frt_count);
@@ -491,6 +494,9 @@ void gw_Mex_GrFunctionInit(void *archive, int grkind) {
             gw_log("grfunction:   StageData word %u -> %s", i, gw_ppc_describe(gr_slot[i]));
         }
     }
+    /* A stage's own item articles ship in the same archive under `itFunction`, exactly as a
+     * fighter's do, and fill item.Custom for the global kinds MEX_GetGrItemID hands out. */
+    gw_Mex_LoadStageItems(file, grkind, (void *) (uintptr_t) arch_data, arch_data_size);
 }
 
 void *gw_Mex_GrRowCallbacks(int grkind) {

@@ -109,6 +109,7 @@ static int gw_mex_slot_of_internal(int k);
 #define GW_MEX_GUEST_INDEX_ITEM   0x803D7058u /* m-ex MEX_IndexFighterItem (no vanilla symbol) */
 #define GW_MEX_GUEST_GET_FT_ITEM_ID 0x803D7088u /* m-ex MEX_GetFtItemID (no vanilla symbol) */
 #define GW_MEX_GUEST_GET_DATA     0x803D7094u /* m-ex MEX_GetData (no vanilla symbol) */
+#define GW_MEX_GUEST_GET_GR_ITEM_ID 0x803D708Cu /* m-ex MEX_GetGrItemID (stage article) */
 /* m-ex CALLOC. The block 0x803D7058..0x803D709C is m-ex's own helper region: its installer
  * overwrites vanilla's `gmResultCharacterData` (a 0x890-byte DATA object) with a table of
  * branch trampolines, one per MexTK API (m-ex's MexTK/links/melee.link lists them). So an
@@ -163,11 +164,26 @@ typedef struct gw_mex_kind {
 } gw_mex_kind;
 
 static gw_mex_kind gw_mex_kinds[GW_MEX_SLOTS];
+/* Stage articles get their own residency. The fighter ones live in gw_mex_k, which is per
+ * FIGHTER KIND and is selected around every fighter hook; a stage has no kind to select, and
+ * hanging its articles off whichever fighter happened to be current would unload them the next
+ * time that fighter's blob was reinstalled. */
+static gw_mex_kind gw_mex_gr_articles;
+
 static gw_mex_kind *gw_mex_k = &gw_mex_kinds[0];
 static uint32_t gw_mex_r2;            /* shared Arch_FighterFunc holder: every blob's r2 */
 static uint32_t gw_mex_mexdata_base;  /* that region's base; 0 = runtime not initialised yet */
 static uint32_t gw_mex_stack_base;    /* shared guest stack, low end */
-static int gw_mex_any_installed;      /* any fighter's code is installed (exec trap guard) */
+static int gw_mex_any_installed;      /* ANY m-ex guest code is installed (exec trap gate) */
+
+/* The exec trap's gate. It used to be raised only by the FIGHTER install, which made it a lie the
+ * moment a stage grew guest code of its own: on a custom stage with an article and no m-ex
+ * fighter in the match, the trap declined the fault and the article's onSpawn was executed as
+ * x86. Anything that registers a guest code range must raise it, so it is a function rather than
+ * an assignment buried in one install path. */
+void gw_Mex_NoteGuestCodeInstalled(void) {
+    gw_mex_any_installed = 1;
+}
 static uint32_t gw_mex_stack_top;     /* guest stack top (r1), shared */
 static uint32_t gw_mex_getdata_buf;   /* guest buffer backing the MEX_GetData(8) shim */
 
@@ -284,6 +300,10 @@ static void *gw_mex_persist_alloc(uint32_t size) {
 
 #define GW_MEXDT_OFF_FIGHTER 0x08u
 #define GW_MEXDT_OFF_ITEM 0x1Cu
+#define GW_MEXDT_OFF_STAGE 0x28u         /* MexData.stage, m-ex's Arch_Map */
+#define GW_MEXDT_STAGE_OFF_ITEM_LOOKUP 0x0Cu /* stage item_lookup, {u32 count; u16* ids} */
+#define GW_MEX_GUEST_STAGE_INFO 0x8049E6C8u  /* gr/ground.h stage_info (.bss) */
+#define GW_STAGE_INFO_OFF_GRKIND 0x88u       /* StageInfo.grkind, gr/types.h */
 #define GW_MEXDT_FIGHTER_OFF_ITEM_LOOKUP 0x4Cu
 #define GW_MEXDT_ITEM_OFF_CUSTOM 0x10u
 #define GW_MEXDT_ITEM_OFF_RUNTIME_INDEX 0x14u
@@ -421,6 +441,106 @@ static uint32_t gw_mex_ft_item_global(uint32_t port_kind, uint32_t n, const char
         gw_panic("mexdata: %s: fighter item %u out of range (kind %u has %d)", why, n, mk, count);
     }
     return gw_r16((const void *) (uintptr_t) (ids + n * 2u));
+}
+
+/* The internal stage id the engine is currently running, read out of the game's own
+ * stage_info.grkind exactly as m-ex's stage helpers do. stage_info is a retargeted-exe static,
+ * not MEM1, so its address comes back through the bridge as a DATA object (kind 0) and its bytes
+ * are BIG-ENDIAN like every other game global - hence gw_r32, not a native load. Returns -1 when
+ * the bridge cannot name it, so callers report rather than index by garbage. */
+static int gw_mex_current_grkind(const char *why) {
+    uint32_t native;
+    int kind = -1;
+    native = gw_mex_bridge_lookup(GW_MEX_GUEST_STAGE_INFO, &kind);
+    if (native == 0u || kind != 0) {
+        gw_log("mexdata: %s: stage_info (guest 0x%08X) has no data entry in the bridge", why,
+               GW_MEX_GUEST_STAGE_INFO);
+        return -1;
+    }
+    return (int) gw_r32((const void *) (uintptr_t) (native + GW_STAGE_INFO_OFF_GRKIND));
+}
+
+/* stage item_lookup[grkind].ids[n], the stage twin of gw_mex_ft_item_global. Same {u32 count;
+ * u16* ids} entry shape, reached through MexData.stage instead of MexData.fighter (checked
+ * offline against Akaneia's MxDt.dat: 8 internal stages declare articles, global kinds 237..252,
+ * which sits exactly below the fighter articles' 253..285). Returns -1 rather than panicking:
+ * the loader walks every article a file declares and must be able to skip one. */
+static int32_t gw_mex_gr_item_global(int grkind, uint32_t n, const char *why) {
+    uint32_t stage, lookup, entry, ids;
+    int32_t count;
+    if (gw_mexdt == 0u || grkind < 0) {
+        return -1;
+    }
+    stage = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_STAGE));
+    lookup = gw_r32((const void *) (uintptr_t) (stage + GW_MEXDT_STAGE_OFF_ITEM_LOOKUP));
+    entry = lookup + (uint32_t) grkind * 8u;
+    if (!gw_mexdt_in(entry, 8u)) {
+        gw_log("mexdata: %s: stage item_lookup[%d] is outside MxDt.dat", why, grkind);
+        return -1;
+    }
+    count = (int32_t) gw_r32((const void *) (uintptr_t) entry);
+    ids = gw_r32((const void *) (uintptr_t) (entry + 4u));
+    if ((int32_t) n < 0 || (int32_t) n >= count || !gw_mexdt_in(ids + n * 2u, 2u)) {
+        gw_log("mexdata: %s: stage %d article %u out of range (it declares %d)", why, grkind, n,
+               count);
+        return -1;
+    }
+    return (int32_t) gw_r16((const void *) (uintptr_t) (ids + n * 2u));
+}
+
+/* MEX_GetGrItemID(n): the CURRENT stage's n-th article as a global item kind. The stage twin of
+ * MEX_GetFtItemID, and the one m-ex API entry point five Akaneia stages call on their own init -
+ * without it the resolver returned NULL and the stage died before it drew a frame. m-ex asserts
+ * here ("stage %d does not have item %d"); so do we, because returning 0 would spawn item kind 0,
+ * a real and completely different item. */
+static uint32_t gw_mex_shim_get_gr_item_id(uint32_t n, uint32_t a1, uint32_t a2, uint32_t a3,
+                                           uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    int grkind = gw_mex_current_grkind("MEX_GetGrItemID");
+    int32_t global;
+    (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    global = gw_mex_gr_item_global(grkind, n, "MEX_GetGrItemID");
+    if (global < 0) {
+        gw_panic("mexdata: MEX_GetGrItemID(%u): internal stage %d has no such article", n,
+                 grkind);
+    }
+    return (uint32_t) global;
+}
+
+/* The stage twin of MEX_IndexFighterItem, reached from it_8026B40C rather than from an m-ex
+ * API address, because m-ex overloads the VANILLA registration function instead of adding one:
+ * it_8026B40C(article, kind) keeps its meaning for kind < 5000 and means "article number
+ * kind - 5000 OF THE CURRENT STAGE" at or above it. (Read out of Akaneia's codes.gct, the C2 hook
+ * on 0x8026B40C; the same 5000 convention m-ex uses for spawning an article by index.)
+ *
+ * Getting this wrong is not quiet. Vanilla it_8026B40C does `it_804A0F60[kind - 208] = article`
+ * into a 30-entry table, so a stage that registered article 0 as kind 5000 was writing a pointer
+ * 4792 entries past the end of that table - a stray store into unrelated globals on every custom
+ * stage that owns an article. */
+void gw_Mex_IndexStageItem(void *article, int article_index) {
+    int grkind = gw_mex_current_grkind("Mex_IndexStageItem");
+    int32_t global;
+    uint32_t item, rt, slot;
+
+    global = gw_mex_gr_item_global(grkind, (uint32_t) article_index, "Mex_IndexStageItem");
+    if (global < 0) {
+        gw_panic("mexdata: Mex_IndexStageItem: internal stage %d has no article %d", grkind,
+                 article_index);
+    }
+    if (global < (int32_t) GW_MEX_CUSTOM_ITEM_START) {
+        gw_panic("mexdata: Mex_IndexStageItem: global item kind %d is not a custom kind", global);
+    }
+    item = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_ITEM));
+    rt = gw_r32((const void *) (uintptr_t) (item + GW_MEXDT_ITEM_OFF_RUNTIME_INDEX));
+    slot = rt + ((uint32_t) global - GW_MEX_CUSTOM_ITEM_START) * 4u;
+    if (!gw_mexdt_in(slot, 4u)) {
+        gw_panic("mexdata: Mex_IndexStageItem: RuntimeIndex[%d] is outside MxDt.dat",
+                 global - (int32_t) GW_MEX_CUSTOM_ITEM_START);
+    }
+    gw_w32((void *) (uintptr_t) slot, (uint32_t) (uintptr_t) article);
+    gw_log("mexdata: Mex_IndexStageItem(stage %d, article %d) -> global item kind %d, "
+           "RuntimeIndex[%d] = article 0x%08X",
+           grkind, article_index, global, global - (int32_t) GW_MEX_CUSTOM_ITEM_START,
+           (uint32_t) (uintptr_t) article);
 }
 
 /* MEX_IndexFighterItem(fighter_kind, ItemDesc *desc, item_id): register a fighter article's
@@ -1194,15 +1314,15 @@ int gw_Mex_PortCKindToExt(int ckind) {
 
 /* Article symbols and code ranges live in the per-fighter state (gw_mex_kind). */
 
-static void gw_mex_article_symbols(const unsigned char *dat, uint32_t dat_size, uint32_t mf,
-                                   uint32_t code) {
+static void gw_mex_article_symbols_in(gw_mex_kind *own, const unsigned char *dat,
+                                      uint32_t dat_size, uint32_t mf, uint32_t code) {
     /* +0x18 count, +0x1C table data offset; entries {start, END, name}, stride 12. */
     uint32_t n = gw_r32(dat + mf + 0x18), off = gw_r32(dat + mf + 0x1C), i;
     uint32_t tbl = 0x20u + off;
     if (n == 0u || (uint64_t) tbl + (uint64_t) n * 12u > dat_size) {
         return;
     }
-    for (i = 0; i < n && gw_mex_article_sym_count < GW_MEX_MAX_ARTICLE_SYMS; ++i) {
+    for (i = 0; i < n && own->art_sym_count < GW_MEX_MAX_ARTICLE_SYMS; ++i) {
         const unsigned char *e = dat + tbl + i * 12u;
         uint32_t np = 0x20u + gw_r32(e + 8), len = 0;
         char *copy;
@@ -1218,10 +1338,10 @@ static void gw_mex_article_symbols(const unsigned char *dat, uint32_t dat_size, 
         }
         memcpy(copy, dat + np, len);
         copy[len] = 0;
-        gw_mex_article_syms[gw_mex_article_sym_count].start = code + gw_r32(e + 0);
-        gw_mex_article_syms[gw_mex_article_sym_count].end = code + gw_r32(e + 4);
-        gw_mex_article_syms[gw_mex_article_sym_count].name = copy;
-        ++gw_mex_article_sym_count;
+        own->art_syms[own->art_sym_count].start = code + gw_r32(e + 0);
+        own->art_syms[own->art_sym_count].end = code + gw_r32(e + 4);
+        own->art_syms[own->art_sym_count].name = copy;
+        ++own->art_sym_count;
     }
 }
 
@@ -1232,9 +1352,34 @@ static const char *gw_mex_article_symbol_name(uint32_t a) {
             return gw_mex_article_syms[i].name;
         }
     }
+    /* Stage articles are not in any fighter's residency, so a log line about one would otherwise
+     * print a bare address just when it matters most. */
+    for (i = 0; i < gw_mex_gr_articles.art_sym_count; ++i) {
+        if (a >= gw_mex_gr_articles.art_syms[i].start &&
+            a < gw_mex_gr_articles.art_syms[i].end) {
+            return gw_mex_gr_articles.art_syms[i].name;
+        }
+    }
     return NULL;
 }
 
+
+static void gw_mex_unload_items_in(gw_mex_kind *k) {
+    uint32_t i;
+    int j;
+    for (j = 0; j < k->art_count; ++j) {
+        gw_ppc_remove_code_range(k->art_lo[j], k->art_hi[j]);
+    }
+    k->art_count = 0;
+    for (i = 0; i < k->art_sym_count; ++i) {
+        free((void *) k->art_syms[i].name);
+    }
+    k->art_sym_count = 0;
+}
+
+void gw_Mex_UnloadStageItems(void) {
+    gw_mex_unload_items_in(&gw_mex_gr_articles);
+}
 
 static void gw_mex_unload_items(void) {
     uint32_t i;
@@ -1249,11 +1394,17 @@ static void gw_mex_unload_items(void) {
     gw_mex_article_sym_count = 0;
 }
 
-/* Load every article of `dat_path`'s itFunction for port fighter `port_kind`. Needs mexData.
- * With `arch_data` (the game's loaded copy of the same file, data section) each article's code is
- * relocated in place there, as m-ex does; otherwise it is copied into persistent memory. */
-static void gw_mex_load_items(const char *dat_path, uint32_t port_kind, uint32_t arch_data,
-                              uint32_t arch_data_size) {
+/* Load every article of `dat_path`'s itFunction. Needs mexData. With `arch_data` (the game's
+ * loaded copy of the same file, data section) each article's code is relocated in place there, as
+ * m-ex does; otherwise it is copied into persistent memory.
+ *
+ * `is_stage` picks which of m-ex's two item_lookup tables names the article's global item kind -
+ * MexData.fighter for a fighter, MexData.stage for a stage - and which residency the code range
+ * is recorded in. m-ex's own loader takes the same flag (its third argument, 0 fighter / 1
+ * stage); the rest of the work is identical, which is why this is one function and not two. */
+static void gw_mex_load_items_for(const char *dat_path, int is_stage, uint32_t owner_kind,
+                                  uint32_t arch_data, uint32_t arch_data_size) {
+    gw_mex_kind *own = is_stage ? &gw_mex_gr_articles : gw_mex_k;
     extern void *gw_HSD_MemAlloc(uint32_t size);
     extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
     uint32_t dat_size = 0, data_size, top, count, n;
@@ -1301,6 +1452,41 @@ static void gw_mex_load_items(const char *dat_path, uint32_t port_kind, uint32_t
         frt_off = gw_r32(dat + mf + 0x0C);
         frt_count = gw_r32(dat + mf + 0x10);
         code_size = gw_r32(dat + mf + 0x14);
+        /* Same recovery ftFunction already does: a blob built by a MexTK older than the codeSize
+         * field ships 0 there. Refusing the article is not conservative - it leaves item.Custom[]
+         * zeroed, and the first spawn then panics on an empty logic table. That is how three whole
+         * ACE fighter groups scored 0/7. An article IS an ordinary MEXFunction, so the ftFunction
+         * recovery applies verbatim: the code ends at the next structure the archive names, and
+         * must at least cover the last word the instruction relocs touch. Checked offline against
+         * both discs - every codeSize-0 article recovers (Akaneia PlLz x3; ACE PlLb, PlSd x3,
+         * PlFy x7, PlTd, ...), so this closes the class, not one fighter. */
+        if (code_size == 0u && code_off < data_size) {
+            uint32_t others[4], bound, need;
+            int n_other = 0;
+            others[n_other++] = art; /* the article's own MEXFunction struct */
+            if (irt_count != 0u) {
+                others[n_other++] = irt_off;
+            }
+            if (frt_count != 0u) {
+                others[n_other++] = frt_off;
+            }
+            if (gw_r32(dat + mf + 0x18) != 0u) { /* debugSymbolNum != 0 -> debugSymbol is real */
+                others[n_other++] = gw_r32(dat + mf + 0x1C);
+            }
+            bound = gw_ftfunction_code_bound(dat, dat_size, code_off, others, n_other);
+            need = gw_ftfunction_reloc_extent(dat, dat_size, irt_off, irt_count);
+            if (bound <= code_off || bound - code_off < need || need == 0u) {
+                gw_log("itfunction: article %u has codeSize 0 and the archive layout does not "
+                       "recover it (code 0x%X, next structure 0x%X, instruction relocs need 0x%X)",
+                       n, code_off, bound, need);
+                continue;
+            }
+            code_size = bound - code_off;
+            gw_log("itfunction: article %u codeSize is 0 (a MexTK older than the field); "
+                   "recovered 0x%X from the archive layout - code 0x%X..0x%X, instruction relocs "
+                   "reach 0x%X",
+                   n, code_size, code_off, bound, need);
+        }
         if (code_size == 0u || code_off > data_size || code_size > data_size - code_off ||
             (uint64_t) frt_off + (uint64_t) frt_count * 8u > data_size) {
             gw_log("itfunction: article %u has an out-of-range code/reloc table", n);
@@ -1328,14 +1514,23 @@ static void gw_mex_load_items(const char *dat_path, uint32_t port_kind, uint32_t
         /* Register BEFORE anything can run it: the interpreter must treat a bl between two
          * functions of this article as in-guest, not as a native call. */
         gw_ppc_add_code_range(code, code + code_size);
-        if (gw_mex_article_count < GW_MEX_MAX_ARTICLES) {
-            gw_mex_article_lo[gw_mex_article_count] = code;
-            gw_mex_article_hi[gw_mex_article_count] = code + code_size;
-            ++gw_mex_article_count;
+        gw_Mex_NoteGuestCodeInstalled();
+        if (own->art_count < GW_MEX_MAX_ARTICLES) {
+            own->art_lo[own->art_count] = code;
+            own->art_hi[own->art_count] = code + code_size;
+            ++own->art_count;
         }
-        gw_mex_article_symbols(dat, dat_size, mf, code);
+        gw_mex_article_symbols_in(own, dat, dat_size, mf, code);
 
-        global = gw_mex_ft_item_global(port_kind, n, "itFunction");
+        if (is_stage) {
+            int32_t g = gw_mex_gr_item_global((int) owner_kind, n, "itFunction");
+            if (g < 0) {
+                continue; /* already reported; the stage simply has fewer articles than code */
+            }
+            global = (uint32_t) g;
+        } else {
+            global = gw_mex_ft_item_global(owner_kind, n, "itFunction");
+        }
         if (global < GW_MEX_CUSTOM_ITEM_START) {
             gw_log("itfunction: article %u maps to vanilla item kind %u - not a custom item", n,
                    global);
@@ -1363,6 +1558,22 @@ static void gw_mex_load_items(const char *dat_path, uint32_t port_kind, uint32_t
                dat_path, n, global, code, code_size, irt_count, frt_count, global - 237u);
     }
     free(dat);
+}
+
+static void gw_mex_load_items(const char *dat_path, uint32_t port_kind, uint32_t arch_data,
+                              uint32_t arch_data_size) {
+    gw_mex_load_items_for(dat_path, 0, port_kind, arch_data, arch_data_size);
+}
+
+/* The stage half, called from gw_mex_grfunction.c once a stage's grFunction is in. A custom stage
+ * that spawns its own article needs item.Custom filled for exactly the same reason a fighter does:
+ * MEX_GetGrItemID hands out a kind >= 237, and Item_80267978 then reads item.Custom[kind-237],
+ * which ships zeroed in MxDt.dat. */
+void gw_Mex_LoadStageItems(const char *dat_path, int grkind, void *arch_data,
+                           uint32_t arch_data_size) {
+    gw_mex_unload_items_in(&gw_mex_gr_articles);
+    gw_mex_load_items_for(dat_path, 1, (uint32_t) grkind, (uint32_t) (uintptr_t) arch_data,
+                          arch_data_size);
 }
 
 /* ---- custom item creation (the native half of m-ex's Create Item patch) --------------------
@@ -1810,12 +2021,23 @@ static const gw_mex_sig_entry gw_mex_sigs[] = {
     {0x800693ACu, (1u << 3) | (1u << 4) | (1u << 5), 7, 0},
 };
 
-/* The prototype-derived set (tools/mex_port/gen_sigs.py), covering 96 of the blob's 101 bridged
- * targets versus the 12 above. Regenerate with:
- *   python tools/mex_port/gen_sigs.py --blob _build/sonic_ftfunction_reloc.bin \
- *          --blob-base 0x807F4D60 --out-c melee/pc/platform/gw_mex_sigs_gen.inc
+/* The prototype-derived set (tools/mex_port/gen_sigs.py). Regenerate with:
+ *   python tools/mex_port/gen_sigs.py --all-symbols \
+ *          --out-c melee/pc/platform/gw_mex_sigs_gen.inc
  * It refuses varargs and doubles rather than guessing, and exits non-zero if it ever disagrees
- * with the hand table above. */
+ * with the hand table above.
+ *
+ * SCOPE IS NOW EVERY FUNCTION SYMBOL, not the targets of one blob. It used to be generated from
+ * Sonic's two blobs (115 targets), and that is a per-fighter table dressed up as a general one:
+ * every OTHER fighter's blob, and every item article, bridges to functions Sonic never calls, and
+ * each of those silently fell back to the integer default. Measured on Akaneia's 22 item-article
+ * blobs alone: 94 distinct bridged targets, 43 of them outside the old table, including
+ * `it_80274658(Item_GObj*, f32)` - which Diddy's peanut calls every physics frame, and which was
+ * therefore taking its float from r4. A per-blob scope cannot be right for a loader that will run
+ * any fighter and any stage on two discs, so the scope is the decomp, and the table is ~19.4k
+ * rows (~310 KB, binary-searched once per bridged call). 472 symbols still resolve to nothing -
+ * by-value structs, doubles, >8 argument slots - and those keep the integer default and are
+ * listed with their reason in gw_mex_sigs_gen.inc.report.txt. */
 #include "gw_mex_sigs_gen.inc"
 
 /* Hand table first, so a deliberate hand entry always wins; then the generated table. A target in
@@ -1862,6 +2084,8 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
         return gw_mex_shim_index_item;
     case GW_MEX_GUEST_GET_FT_ITEM_ID:
         return gw_mex_shim_get_ft_item_id;
+    case GW_MEX_GUEST_GET_GR_ITEM_ID:
+        return gw_mex_shim_get_gr_item_id;
     case GW_MEX_GUEST_GET_DATA:
         return gw_mex_shim_get_data;
     case GW_MEX_GUEST_CALLOC:
@@ -2722,7 +2946,7 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
     }
 
     gw_ppc_add_code_range(gw_mex_ff.code_base, gw_mex_ff.code_base + gw_mex_ff.code_size);
-    gw_mex_any_installed = 1;
+    gw_Mex_NoteGuestCodeInstalled();
     gw_mex_load_items(dat, (uint32_t) kind, (uint32_t) (uintptr_t) arch_data, arch_data_size);
 
     gw_mex_movelogic_setup();

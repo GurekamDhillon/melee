@@ -514,7 +514,22 @@ int gw_Mex_GrTrace(void) {
 
 void *gw_Mex_GrBind(void *fn) {
     uint32_t a = (uint32_t) (uintptr_t) fn;
-    if (a == 0u || !gw_ppc_is_guest_code(a)) {
+    if (a == 0u) {
+        return fn;
+    }
+    /* A STAGE'S CALLBACKS TABLE IS NOT ALL BLOB CODE. gw_ppc_is_guest_code answers only
+     * "is this inside a registered blob range", so guarding on it let a VANILLA guest
+     * address through untouched - and the engine then called it as a native function
+     * pointer. Akaneia's GrOPz.dat overloads three StageData words with blob code and
+     * leaves the rest of its StageCallbacks pointing at the retail engine, so
+     * stageGObj0_OnInit arrived as guest 0x802239F0 and the process jumped into MEM1.
+     * It killed six stages on Akaneia alone, every one of them before a fighter loaded.
+     *
+     * The real question is "is this a GUEST address", not "is this blob code":
+     * anything inside MEM1 needs binding, and gw_Mex_Callable already knows how to
+     * answer both halves - a thunk for blob code, the bridged native for an engine
+     * address. A native pointer is outside MEM1 and passes straight through. */
+    if (a < 0x80000000u || a >= 0x80000000u + gw_mem1_size) {
         return fn;
     }
     return (void *) (uintptr_t) gw_Mex_Callable(a, "m-ex stage callback");

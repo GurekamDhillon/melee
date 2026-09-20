@@ -133,9 +133,8 @@ int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size,
  * property that matters: over-copying dead padding is harmless, truncating a function is not.
  * The lower bound is asserted against it, so a blob whose layout does not fit this shape is
  * refused rather than half-loaded. */
-static uint32_t gw_ftfunction_code_bound(const unsigned char *dat, size_t dat_size,
-                                         uint32_t code_off, const uint32_t *others,
-                                         int others_n) {
+uint32_t gw_ftfunction_code_bound(const unsigned char *dat, size_t dat_size, uint32_t code_off,
+                                  const uint32_t *others, int others_n) {
     uint32_t data_size = gw_r32(dat + 0x04);
     uint32_t nb_reloc = gw_r32(dat + 0x08);
     uint32_t nb_public = gw_r32(dat + 0x0C);
@@ -185,8 +184,8 @@ static uint32_t gw_ftfunction_code_bound(const unsigned char *dat, size_t dat_si
 
 /* max(instruction-reloc code offset) + 4: the lower bound described above. 0 when there are no
  * instruction relocs, which is itself suspicious for a blob with no declared size. */
-static uint32_t gw_ftfunction_reloc_extent(const unsigned char *dat, size_t dat_size,
-                                           uint32_t irt_data_off, uint32_t irt_count) {
+uint32_t gw_ftfunction_reloc_extent(const unsigned char *dat, size_t dat_size,
+                                    uint32_t irt_data_off, uint32_t irt_count) {
     uint32_t i, max = 0;
     for (i = 0; i < irt_count; ++i) {
         uint32_t e = GW_HSD_HEADER_SIZE + irt_data_off + i * 8u;

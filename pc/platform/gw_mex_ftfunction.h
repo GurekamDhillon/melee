@@ -86,6 +86,22 @@ int gw_ftfunction_reloc(const unsigned char *dat, size_t dat_size, uint32_t irt_
  * loader in gw_mex_ftfunction_runtime.c. */
 int32_t gw_ftfunction_find_public(const unsigned char *dat, size_t dat_size, const char *symbol);
 
+/* ---- recovering a MEXFunction's codeSize when the blob declares 0 -------------------------
+ * A MexTK older than the codeSize field writes 0 there. It happens on both sides - 16 of ACE's
+ * 31 fighter blobs and 10 of its 42 stage blobs - so both loaders need this.
+ *
+ * gw_ftfunction_code_bound() returns the smallest data-section offset above `code_off` that any
+ * other structure in the archive occupies: an UPPER bound on where the code can end, and the one
+ * to use as the size. `others` lists the MEXFunction's own tables, which the caller knows and
+ * this function cannot see. gw_ftfunction_reloc_extent() returns max(instruction-reloc code
+ * offset) + 4, a LOWER bound the result must clear; it under-reads the truth by up to 0x7A
+ * because a function's epilogue needs no relocation, so it is a check and never the answer.
+ * The measurements behind both are at the definitions in gw_mex_ftfunction.c. */
+uint32_t gw_ftfunction_code_bound(const unsigned char *dat, size_t dat_size, uint32_t code_off,
+                                  const uint32_t *others, int others_n);
+uint32_t gw_ftfunction_reloc_extent(const unsigned char *dat, size_t dat_size,
+                                    uint32_t irt_data_off, uint32_t irt_count);
+
 /* Resolve a guest address to the name of the blob function containing it, or NULL. Cheap linear
  * scan: this is only ever called on a panic/trace path. */
 const char *gw_ftfunction_symbol_name(const gw_ftfunction *ff, uint32_t guest_addr);

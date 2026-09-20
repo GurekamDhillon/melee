@@ -98,9 +98,12 @@ int gw_Mex_GrExternalCount(void);
 /* Arch_Map_StageIDs[ext].grkind, or -1 when out of range / no mexData. */
 int gw_Mex_GrKindForExt(int ext);
 
-/* The stage's "/GrXx.dat" path, or NULL when the row is empty OR the file is not on this disc.
- * The disc check is what makes the added rows DENSE in practice: a build that declares a stage it
- * does not ship must not get a StageData row, or the first load walks off into a missing file. */
+/* The stage's "/GrXx.dat" path as the MxDt row names it, or NULL when the row is empty. This
+ * does NOT say the file is on this disc - gw_Mex_GrIsMex() below is what adds the disc check,
+ * and it is the one that decides whether a row gets synthesised. The distinction is real and
+ * easy to get wrong: a VANILLA disc run with the mods folder on reads Akaneia's full 96-row
+ * MxDt.dat out of the sonic mod and carries none of the stage files, so every added row here
+ * names a path that cannot be read. */
 const char *gw_Mex_GrFile(int grkind);
 
 /* Non-zero when `grkind` is an m-ex-added stage whose file is on this disc, i.e. a row the port

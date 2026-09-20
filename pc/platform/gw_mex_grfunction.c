@@ -42,6 +42,8 @@
 #define GRFUNC_OFF_FUNC_RELOC 0x0Cu
 #define GRFUNC_OFF_FUNC_RELOC_COUNT 0x10u
 #define GRFUNC_OFF_CODE_SIZE 0x14u
+#define GRFUNC_OFF_SYMBOL_COUNT 0x18u
+#define GRFUNC_OFF_SYMBOL_TABLE 0x1Cu
 
 /* mexData root words. */
 #define GW_MEXDT_OFF_METADATA 0x00u
@@ -396,6 +398,40 @@ void gw_Mex_GrFunctionInit(void *archive, int grkind) {
     frt_off = gw_r32(dat + sym + GRFUNC_OFF_FUNC_RELOC);
     frt_count = gw_r32(dat + sym + GRFUNC_OFF_FUNC_RELOC_COUNT);
     code_size = gw_r32(dat + sym + GRFUNC_OFF_CODE_SIZE);
+
+    /* 10 of ACE's 42 added-stage blobs declare codeSize 0 - the same older MexTK that produced
+     * the fighter-side blobs with no size. Recover it from the archive layout; the derivation and
+     * the measurements behind it are in gw_mex_ftfunction.h / .c. */
+    if (code_size == 0u && code_off < arch_data_size) {
+        uint32_t others[4], bound, need;
+        int on = 0;
+        others[on++] = (uint32_t) pub;
+        if (irt_count != 0u) {
+            others[on++] = irt_off;
+        }
+        if (frt_count != 0u) {
+            others[on++] = frt_off;
+        }
+        /* The struct is only guaranteed to 0x18 above; the symbol words are two more. */
+        if ((uint32_t) pub + 0x20u <= arch_data_size &&
+            gw_r32(dat + sym + GRFUNC_OFF_SYMBOL_COUNT) != 0u)
+        {
+            others[on++] = gw_r32(dat + sym + GRFUNC_OFF_SYMBOL_TABLE);
+        }
+        bound = gw_ftfunction_code_bound(dat, dat_size, code_off, others, on);
+        need = gw_ftfunction_reloc_extent(dat, dat_size, irt_off, irt_count);
+        if (bound > code_off && need != 0u && bound - code_off >= need) {
+            code_size = bound - code_off;
+            gw_log("grfunction: %s declares codeSize 0 (a MexTK older than the field); recovered "
+                   "0x%X from the archive layout - code 0x%X..0x%X, instruction relocs reach 0x%X",
+                   file, code_size, code_off, bound, need);
+        } else {
+            gw_log("grfunction: %s declares codeSize 0 and the archive layout does not recover it "
+                   "(code 0x%X, next structure 0x%X, instruction relocs need 0x%X) - clone-base "
+                   "handlers only",
+                   file, code_off, bound, need);
+        }
+    }
 
     if (code_size == 0u || code_off > arch_data_size || code_size > arch_data_size - code_off ||
         (irt_count != 0u &&
@@ -814,9 +850,139 @@ done:
     return rc;
 }
 
+/* Every m-ex-ADDED stage this disc actually ships must parse. GrOMc (above) is one stage on one
+ * disc; this walks the whole added range, which is 25 rows on Akaneia and 84 on ACE - and ACE's
+ * 96..154 were unreachable until the port's tables were sized for them, so nothing had ever
+ * looked at them. Header-level only: the file is read, grFunction is located, and its code and
+ * both reloc tables are required to lie inside the data section with every Overload slot naming
+ * a real StageData word (0..12). That is exactly what gw_Mex_GrFunctionInit() will trust at load
+ * time, and it is cheap enough to run over every stage on the disc. */
+static int test_grfunction_added_rows_parse(void) {
+    int k, n, checked = 0, nofile = 0, nosym = 0, recovered = 0;
+
+    if (gw_iso_path() == NULL || (n = gw_Mex_GrInternalCount()) == 0) {
+        gw_log("grfunction: no m-ex stage tables on this disc - skipping");
+        return 0;
+    }
+    for (k = GW_MEX_GR_FIRST_NEW; k < n; k++) {
+        const char *path = gw_Mex_GrFile(k);
+        unsigned char *dat;
+        uint32_t dat_size = 0, data_size, sym, code_off, code_size, irt_off, irt_count;
+        uint32_t frt_off, frt_count, i;
+        int32_t pub;
+        int bad = 0;
+
+        /* gw_Mex_GrFile() answers from the table alone - it does NOT check the disc; only
+         * gw_Mex_GrIsMex() does, and that is what decides whether a row is synthesised. A
+         * vanilla disc run with the mods folder on sees Akaneia's full 96-row table out of the
+         * sonic mod and none of the stage files, so this is the normal case there, not an edge. */
+        if (path == NULL || !gw_Mex_GrIsMex(k)) {
+            ++nofile;
+            continue;
+        }
+        dat = (unsigned char *) gw_DVDReadFileAlloc(path, &dat_size);
+        if (dat == NULL) {
+            gw_test_fail("internal stage %d names %s, which gw_Mex_GrFile() said is on this disc "
+                         "but could not be read",
+                         k, path);
+            return 1;
+        }
+        data_size = dat_size >= 0x20u ? gw_r32(dat + 0x04) : 0u;
+        pub = gw_ftfunction_find_public(dat, dat_size, "grFunction");
+        if (pub < 0) {
+            /* Legal: a row can be a plain stage file with no code of its own, running entirely
+             * on its clone base's handlers. Counted so it is visible rather than assumed. */
+            ++nosym;
+            free(dat);
+            continue;
+        }
+        sym = 0x20u + (uint32_t) pub;
+        if ((uint32_t) pub + 0x18u > data_size) {
+            gw_test_fail("%s (internal %d): grFunction struct past the data section", path, k);
+            free(dat);
+            return 1;
+        }
+        code_off = gw_r32(dat + sym + GRFUNC_OFF_CODE);
+        code_size = gw_r32(dat + sym + GRFUNC_OFF_CODE_SIZE);
+        irt_off = gw_r32(dat + sym + GRFUNC_OFF_INSTR_RELOC);
+        irt_count = gw_r32(dat + sym + GRFUNC_OFF_INSTR_RELOC_COUNT);
+        frt_off = gw_r32(dat + sym + GRFUNC_OFF_FUNC_RELOC);
+        frt_count = gw_r32(dat + sym + GRFUNC_OFF_FUNC_RELOC_COUNT);
+        if (code_size == 0u && code_off < data_size) {
+            uint32_t others[4], b, need;
+            int on = 0;
+            others[on++] = (uint32_t) pub;
+            if (irt_count != 0u) {
+                others[on++] = irt_off;
+            }
+            if (frt_count != 0u) {
+                others[on++] = frt_off;
+            }
+            if ((uint32_t) pub + 0x20u <= data_size &&
+                gw_r32(dat + sym + GRFUNC_OFF_SYMBOL_COUNT) != 0u)
+            {
+                others[on++] = gw_r32(dat + sym + GRFUNC_OFF_SYMBOL_TABLE);
+            }
+            b = gw_ftfunction_code_bound(dat, dat_size, code_off, others, on);
+            need = gw_ftfunction_reloc_extent(dat, dat_size, irt_off, irt_count);
+            if (b <= code_off || need == 0u || b - code_off < need) {
+                gw_test_fail("%s (internal %d): declares codeSize 0 and the archive layout does "
+                             "not recover it (code 0x%X, next structure 0x%X, relocs need 0x%X)",
+                             path, k, code_off, b, need);
+                free(dat);
+                return 1;
+            }
+            code_size = b - code_off;
+            ++recovered;
+        }
+
+        if (code_size == 0u || code_off > data_size || code_size > data_size - code_off) {
+            gw_test_fail("%s (internal %d): code [0x%X,+0x%X) outside the 0x%X-byte data section",
+                         path, k, code_off, code_size, data_size);
+            bad = 1;
+        } else if (irt_count != 0u &&
+                   (irt_off > data_size || irt_count * 8u > data_size - irt_off)) {
+            gw_test_fail("%s (internal %d): instruction reloc table outside the data section",
+                         path, k);
+            bad = 1;
+        } else if (frt_count == 0u || frt_off > data_size ||
+                   frt_count * 8u > data_size - frt_off) {
+            gw_test_fail("%s (internal %d): function reloc table (%u entries) outside the data "
+                         "section, or empty",
+                         path, k, frt_count);
+            bad = 1;
+        }
+        for (i = 0; bad == 0 && i < frt_count; ++i) {
+            uint32_t slot = gw_r32(dat + 0x20u + frt_off + i * 8u);
+            uint32_t with = gw_r32(dat + 0x20u + frt_off + i * 8u + 4u);
+            if (slot >= GW_MEX_GR_SLOT_COUNT) {
+                gw_test_fail("%s (internal %d): Overload entry %u names StageData word %u, but a "
+                             "row is only %d words",
+                             path, k, i, slot, GW_MEX_GR_SLOT_COUNT);
+                bad = 1;
+            } else if (with >= code_size) {
+                gw_test_fail("%s (internal %d): Overload entry %u points at code+0x%X, past the "
+                             "0x%X-byte blob",
+                             path, k, i, with, code_size);
+                bad = 1;
+            }
+        }
+        free(dat);
+        if (bad) {
+            return 1;
+        }
+        ++checked;
+    }
+    gw_log("test grfunction_added_rows_parse: %d added stage blob(s) parse (%d with a recovered "
+           "codeSize); %d row(s) not on this disc, %d file(s) with no grFunction of their own",
+           checked, recovered, nofile, nosym);
+    return 0;
+}
+
 void gw_mex_grfunction_tests_register(void) {
     gw_test_register("grfunction_tables", test_grfunction_tables);
     gw_test_register("grfunction_rows", test_grfunction_rows);
     gw_test_register("grfunction_load_gromc", test_grfunction_load_gromc);
     gw_test_register("grfunction_thunk_pool_beyond_8", test_grfunction_thunk_pool_beyond_8);
+    gw_test_register("grfunction_added_rows_parse", test_grfunction_added_rows_parse);
 }

@@ -838,6 +838,20 @@ int gw_TestTargetTestCKind(void) {
  * the scene config (gw_sl_load_legacy, at the end of this file) and folded into the same
  * seeding path as MELEE_SCENE, so there is exactly one place that decides what boots. */
 
+/* Dev/debug hook: MELEE_CSS_CURSOR_SCALE=0 disables the m-ex CSS cursor scaling. Default on.
+ * Game code calls the unprefixed `Mex_CssCursorScaleEnabled`. Read once. */
+int gw_Mex_CssCursorScaleEnabled(void) {
+  static int cached = -1;
+  if (cached < 0) {
+    const char *v = getenv("MELEE_CSS_CURSOR_SCALE");
+    cached = (v != NULL && v[0] == '0') ? 0 : 1;
+    if (!cached) {
+      gw_log("gw: MELEE_CSS_CURSOR_SCALE=0 - m-ex CSS cursor scaling disabled");
+    }
+  }
+  return cached;
+}
+
 /* Dev/debug hook: MELEE_CONTENT_PROBE=<file.dat> loads that file through the game's own HSD archive
  * loader at boot and logs whether it parsed. This is the m-ex content-pipeline proof of life: the
  * file comes from the disc FST and is parsed by lbArchive_LoadArchive, so a Sonic file loading here

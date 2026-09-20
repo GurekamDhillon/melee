@@ -4552,6 +4552,18 @@ static void mnCharSel_MexScaleCursor(HSD_JObj* jobj, bool is_hand)
     if (mnCharSel_Mex == NULL || jobj == NULL) {
         return;
     }
+    /* MELEE_CSS_CURSOR_SCALE=0 turns this off. It exists because scaling the cursor is the only
+     * CSS change since m-ex fighters were last selectable, and "I hover Sonic but select an empty
+     * cell / get a random character" is exactly what a cursor whose HOT SPOT has moved away from
+     * its graphic looks like. m-ex pairs this with a Cursor Detection patch that adds the same
+     * (2.7, -2) to the cursor POSITION; only the visual half is ported, so the two halves may
+     * disagree. Toggle it to find out rather than reasoning about it. */
+    {
+        extern int Mex_CssCursorScaleEnabled(void);
+        if (!Mex_CssCursorScaleEnabled()) {
+            return;
+        }
+    }
     s = Mex_MenuParamF(0);
     if (!(s > 0.0f) || s == 1.0f) {
         return;

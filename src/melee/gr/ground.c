@@ -1731,15 +1731,63 @@ static const int BGM_Undefined = -1;
 
 #define RANDI_MAX (100)
 
+#if defined(TARGET_PC)
+/* THREE functions search grGroundParam's rows for one matching a StKind, and an m-ex ADDED stage
+ * has no row for its own id - its ground serves exactly one stage, so the row is a wildcard.
+ * Dumped from all 25 of Akaneia's added stages: 12 carry a single row with stkind == -1 (GrOMc,
+ * every GrT*, GrFc, GrSp, GrSv, GrOSz), GrDo carries none, the rest reuse a real vanilla id.
+ *
+ * Each of the three fails differently and all three are silent-to-nasty: Ground_801C28CC used to
+ * hit `panicMissingStageParam`, Ground_801C2AE8 spins in `while (1) {}` - which in this port is
+ * an unkillable freeze with no output, and is exactly how Meta Crystal hung after the FIRST of
+ * these was fixed in isolation - and Ground_801C24F8 silently leaves the BGM undefined.
+ *
+ * So resolve the id ONCE, here, and let all three keep their original shape: return the id that
+ * actually has a row. Vanilla grounds that serve several stages (GrIz has 10 rows, GrNBa 18)
+ * always match exactly, so their behaviour is unchanged. */
+static StKind Ground_MexParamStkind(StKind stkind)
+{
+    StageParam* p;
+    ssize_t count, i;
+
+    if (stage_info.param == NULL) {
+        return stkind;
+    }
+    p = stage_info.param->stage_params;
+    count = stage_info.param->stage_param_count;
+    if (p == NULL || count <= 0) {
+        return stkind;
+    }
+    for (i = 0; i < count; i++) {
+        if (p[i].stkind == stkind) {
+            return stkind; /* the normal case, including every vanilla stage */
+        }
+    }
+    for (i = 0; i < count; i++) {
+        if (p[i].stkind == -1) {
+            return p[i].stkind; /* explicit wildcard */
+        }
+    }
+    if (count == 1) {
+        return p[0].stkind; /* a ground serving exactly one stage, whatever it claims */
+    }
+    return stkind; /* no row; the caller's own reporting path handles it */
+}
+#endif
+
 static bool Ground_801C24F8(StKind stkind, u32 arg1, s32* arg2)
 {
     bool temp_r25;
+
     /// @todo @c phi_r30 probably belongs to an @c inline.
     StageParam* phi_r30;
     StageParam* phi_r30_0 = stage_info.param->stage_params;
     enum_t bgm = BGM_Undefined;
     bool result = false;
     int i;
+#if defined(TARGET_PC)
+    stkind = Ground_MexParamStkind(stkind);
+#endif
     for (i = 0; i < stage_info.param->stage_param_count; i++) {
         phi_r30 = &phi_r30_0[i];
         if (phi_r30->stkind == stkind) {
@@ -1956,6 +2004,10 @@ void Ground_801C28CC(s32* arg0, StKind stkind)
     ssize_t count = stage_info.param->stage_param_count;
     ssize_t i;
 
+#if defined(TARGET_PC)
+    stkind = Ground_MexParamStkind(stkind);
+#endif
+
     for (i = 0; i < count; i++) {
         if (param->stkind == stkind) {
             s32 j;
@@ -2025,6 +2077,9 @@ float Ground_801C2AE8(StKind stkind)
 {
     StageParam* phi_r5 = stage_info.param->stage_params;
     int i;
+#if defined(TARGET_PC)
+    stkind = Ground_MexParamStkind(stkind);
+#endif
     for (i = 0; i < stage_info.param->stage_param_count; i++) {
         if (phi_r5->stkind == stkind) {
             return (0.01f * stage_info.param->x68) * (0.01f * phi_r5->x18);

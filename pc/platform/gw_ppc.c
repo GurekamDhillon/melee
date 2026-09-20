@@ -848,6 +848,48 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
         imm = (int32_t)(int16_t)(insn & 0xFFFF);
         c->gpr[rd] = gw_ppc_ld8(m, (ra == 0 ? 0 : c->gpr[ra]) + (uint32_t)imm);
         break;
+    /* The update forms write the computed address back to rA, so rA is never treated as 0 here
+     * the way it is in the non-update forms - `lbzu rD, d(0)` is invalid, not an absolute load. */
+    case 35: /* lbzu */
+        rd = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            c->gpr[rd] = gw_ppc_ld8(m, ea);
+            c->gpr[ra] = ea;
+        }
+        break;
+    case 41: /* lhzu */
+        rd = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            c->gpr[rd] = gw_ppc_ld16(m, ea);
+            c->gpr[ra] = ea;
+        }
+        break;
+    case 39: /* stbu */
+        rs = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            gw_ppc_st8(m, ea, (uint8_t)c->gpr[rs]);
+            c->gpr[ra] = ea;
+        }
+        break;
+    case 45: /* sthu */
+        rs = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            gw_ppc_st16(m, ea, (uint16_t)c->gpr[rs]);
+            c->gpr[ra] = ea;
+        }
+        break;
     case 48: /* lfs fD, d(rA) */
         rd = (insn >> 21) & 0x1F;
         ra = (insn >> 16) & 0x1F;
@@ -904,6 +946,19 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
             uint32_t bits;
             memcpy(&bits, &f, 4);
             gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + (uint32_t)imm, bits);
+        }
+        break;
+    case 53: /* stfsu fS, d(rA) */
+        rs = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            float f = (float)c->fpr[rs].d;
+            uint32_t bits;
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            memcpy(&bits, &f, 4);
+            gw_ppc_st32(m, ea, bits);
+            c->gpr[ra] = ea;
         }
         break;
     case 54: /* stfd fS, d(rA) */
@@ -1074,6 +1129,20 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
             gw_ppc_cr0_cmp(c, c->gpr[rd]);
         }
         break;
+    case 75: /* mulhw: the HIGH 32 bits of the signed product */
+        c->gpr[rd] =
+            (uint32_t)(((int64_t)(int32_t)c->gpr[ra] * (int64_t)(int32_t)c->gpr[rb]) >> 32);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    case 11: /* mulhwu: the same, unsigned */
+        c->gpr[rd] =
+            (uint32_t)(((uint64_t)c->gpr[ra] * (uint64_t)c->gpr[rb]) >> 32);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
     case 491: /* divw: signed divide; division by zero / INT_MIN/-1 handled like the hardware */
         if (c->gpr[rb] == 0) {
             c->gpr[rd] = 0;
@@ -1202,6 +1271,25 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
 
     case 23: /* lwzx */
         c->gpr[rd] = gw_ppc_ld32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]);
+        break;
+    /* The indexed byte/halfword forms, found by the moveset sweep: nine stage and fighter blobs
+     * across both discs died on stbx alone. They are ordinary loads and stores - the interpreter
+     * simply never needed them until custom stages started running. */
+    case 87: /* lbzx */
+        c->gpr[rd] = gw_ppc_ld8(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]);
+        break;
+    case 215: /* stbx */
+        gw_ppc_st8(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], (uint8_t)c->gpr[rs]);
+        break;
+    case 279: /* lhzx */
+        c->gpr[rd] = gw_ppc_ld16(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]);
+        break;
+    case 407: /* sthx */
+        gw_ppc_st16(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], (uint16_t)c->gpr[rs]);
+        break;
+    case 343: /* lhax: like lhzx but SIGN-extended */
+        c->gpr[rd] =
+            (uint32_t)(int32_t)(int16_t)gw_ppc_ld16(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]);
         break;
     case 151: /* stwx */
         gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], c->gpr[rs]);

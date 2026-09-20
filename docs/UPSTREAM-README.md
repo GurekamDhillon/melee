@@ -1,3 +1,9 @@
+<!-- The upstream doldecomp/melee README, kept for reference.
+     It used to live at .github/README.md, where GitHub PREFERS it over the root
+     README.md - so this fork's front page showed the upstream project and none of
+     the port. Moved here rather than deleted: it is still the decomp's own
+     documentation, and the port is a fork of that work. -->
+
 Super Smash Bros Melee \
 [![Build Status]][actions]
 [![Discord Badge]][discord]

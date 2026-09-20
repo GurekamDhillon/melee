@@ -7,25 +7,60 @@
 
 #include <melee/sc/types.h>
 
-/// Number of actual (selectable) stages on the stage-select screen.
-/// Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/SSS Expansion/
-/// RandomStage - Rewrite.s @ 0x802599EC reads the stage count from
-/// `OFST_Metadata_SSSIconCount` (minus 1 to exclude the "Random" icon).
-#define NUM_STAGES 29
-/// Number of stage-select icons: ::NUM_STAGES stages plus the trailing
-/// "Random" entry at index ::NUM_STAGES.
-#define SSS_ICON_COUNT (NUM_STAGES + 1)
+/// Number of actual (selectable) stages on the retail stage-select screen.
+#define NUM_STAGES_RETAIL 29
+/// Retail stage-select icons: ::NUM_STAGES_RETAIL stages plus the trailing
+/// "Random" entry at index ::NUM_STAGES_RETAIL.
+#define SSS_ICON_COUNT_RETAIL (NUM_STAGES_RETAIL + 1)
+
+#if defined(TARGET_PC)
+/// Rows #mnStageSel_803F06D0 is compiled for. Akaneia ships 67 icons and ACE
+/// 163; `Mex_SssIconCount()` rejects anything past GW_MEX_SSS_MAX, which is
+/// this same number, so disc data can never overrun the table.
+#define SSS_ICON_MAX 256
+/// Live icon counts, read from `mexData.metadata.sss_icon_count`. Ported from
+/// m-ex (https://github.com/akaneia/m-ex): asm/m-ex/SSS Expansion/, whose
+/// MnSlMap References/ patches replace retail's constant 29/30 with that count
+/// at ~40 call sites. These hold the retail values until mnStageSel_MexSetup()
+/// finds an m-ex table, so a vanilla disc behaves exactly as it did.
+static int mnStageSel_NumStages = NUM_STAGES_RETAIL;
+static int mnStageSel_IconCount = SSS_ICON_COUNT_RETAIL;
+/// Non-zero once the table came from mexData. Guards the places where retail's
+/// fixed 30-icon screen geometry is assumed.
+static bool mnStageSel_MexActive;
+#define NUM_STAGES mnStageSel_NumStages
+#define SSS_ICON_COUNT mnStageSel_IconCount
+/// First m-ex-ADDED external stage id (external 288+k -> internal 71+k, the
+/// same on Akaneia and ACE). Retail ids are below it, and they are the only
+/// ones with a bit in the save file's random-stage mask.
+#define SSS_EXT_MEX_FIRST 288
+#else
+#define NUM_STAGES NUM_STAGES_RETAIL
+#define SSS_ICON_COUNT SSS_ICON_COUNT_RETAIL
+#endif
 /// Iteration cap for the random-stage picker in mnStageSel_802599EC.
 #define MAX_ITER 100000
 
+/// One stage-select icon: model joint, random-picker cooldown, type/preview/
+/// random-slot bytes, the external stage id, then the cursor's half-width and
+/// half-height and the cursor's x/y scale.
+///
+/// Under TARGET_PC `stkind` is an `s32`: m-ex's external stage space is 313
+/// ids on Akaneia and 372 on ACE, and neither fits the retail `u8`. m-ex made
+/// the same change - in its own table the byte is always zero and the id lives
+/// in a word of its own at +0x1C. The field ORDER is left alone so the retail
+/// rows below read identically in both builds.
 struct stagelistinfo {
     HSD_JObj* x0;
     int x4;
+#if defined(TARGET_PC)
+    u8 x8, x9, xA;
+    s32 stkind;
+    f32 xC, x10, x14, x18;
+} mnStageSel_803F06D0[SSS_ICON_MAX] = {
+#else
     u8 x8, x9, xA, stkind;
     f32 xC, x10, x14, x18;
-#if defined(TARGET_PC)
-} mnStageSel_803F06D0[SSS_ICON_COUNT] = {
-#else
 } mnStageSel_803F06D0[30] = {
 #endif
     { 0, 0, 0x2, 0x00, 0x00, 0x04, 3.1F, 2.7F, 1.0F, 1.0F },
@@ -86,11 +121,22 @@ static u32 mnStageSel_804D6CA4;
 static s32 mnStageSel_804D6CA8;
 static s8 mnStageSel_804D6CAC;
 static s8 mnStageSel_804D6CAD;
+#if defined(TARGET_PC)
+/* The hovered icon, with #SSS_ICON_COUNT as the "nothing hovered" sentinel. A
+ * u8 still holds ACE's 163, but nothing in the data caps the count at 255, and
+ * an index that wraps silently hovers a different stage. */
+static s32 mnStageSel_804D6CAE;
+#else
 static u8 mnStageSel_804D6CAE;
+#endif
 static u8 mnStageSel_804D6CAF;
 
 #ifndef M2CTX
+#if defined(TARGET_PC)
+ASSERT_SIZE(mnStageSel_803F06D0[0], 0x20);
+#else
 ASSERT_SIZE(mnStageSel_803F06D0[0], 0x1C);
+#endif
 #endif
 
 struct StageSelUserData {

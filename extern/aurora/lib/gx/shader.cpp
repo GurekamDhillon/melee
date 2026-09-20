@@ -751,7 +751,26 @@ enum class NbtSlice : u8 {
 auto attr_load_nbt_slice(const ShaderConfig& config, NbtSlice slice, std::string_view vidx) -> std::string {
   const auto& mapping = config.attrs[GX_VA_NRM];
   if (mapping.attrType == GX_NONE || mapping.cnt != 9) {
-    Log.fatal("attr_load_nbt_slice: GX_TG_BINRM/TANGENT requires GX_NRM_NBT or GX_NRM_NBT3");
+    // Not an API error. The XF loads its binormal and tangent rows from the vertex only for a
+    // GX_NRM_NBT/NBT3 normal; with GX_NRM_XYZ they are simply not written, and a binormal or
+    // tangent texgen - including every emboss texgen, which needs both - reads whatever is
+    // there. Melee relies on exactly this: it drives all of its bump-mapped materials with
+    // GX_TG_BUMP0..7 over plain XYZ normals and never declares NBT at all.
+    //
+    // Substitute zero rather than aborting. For emboss that makes the offset term vanish, so the
+    // coordinate falls back to the texgen's source - a stable, unlit result instead of a dead
+    // process. The normal slice still comes from the attribute itself.
+    if (slice == NbtSlice::N) {
+      return attr_load(config, GX_VA_NRM, vidx);
+    }
+    static bool warned = false;
+    if (!warned) {
+      warned = true;
+      Log.warn("attr_load_nbt_slice: binormal/tangent requested with a non-NBT normal "
+               "(attrType {}, cnt {}) - substituting zero",
+               static_cast<u32>(mapping.attrType), static_cast<u32>(mapping.cnt));
+    }
+    return "vec3f(0.0)";
   }
   const auto sliceIdx = static_cast<u32>(slice);
   const auto compsize = comp_type_size(GX_VA_NRM, static_cast<GXCompType>(mapping.compType));

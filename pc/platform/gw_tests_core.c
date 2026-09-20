@@ -149,14 +149,17 @@ static int test_mex_env_enables(void) {
  * DATA the portrait code indexes: mexSelectChr's single CSP material animation inside
  * MnSlChr, read straight off the mounted disc.
  *
- * What it pins, and why it is worth pinning: the port used to compute the portrait frame as
- * `external_id + costume * mexSelectChr.csp_stride`. Both m-ex discs say that is wrong. The
- * animation is laid out in m-ex INTERNAL kind order with each kind's costumes CONSECUTIVE, so
- * the frame is the cumulative costume index. Decoding individual frames out of ACE's MnSlChr
- * confirms it by eye - frame 0 is Mario, 30 is Kirby's third costume, 201 is Sonic, 324 is
- * Knuckles - and this test states the same thing in a form that fails if it ever drifts:
- * the costume counts in mexData, summed over the leading internal kinds, land exactly on the
- * animation's own image count (221 on Akaneia, 388 on ACE).
+ * What it pins, and why it is worth pinning: the value the portrait code hands animateJoint is
+ * an ANIMATION FRAME, and the CSP animation's HSD_A_T_TIMG key track is an authored lookup that
+ * turns that frame into an image-table index. The frame space is `external_id + costume *
+ * mexSelectChr.csp_stride` - one row of external ids per costume - while the image table is in
+ * m-ex INTERNAL kind order with each kind's costumes consecutive. The two spaces are unrelated,
+ * and passing an image index as a frame is exactly the bug this test now guards: it drew clean,
+ * plausible portraits of the wrong characters (ACE sent Metal Sonic's image index 318 in as a
+ * frame, and the track mapped it to image 386, Bowser).
+ *
+ * So what is checked is the frame space: csp_stride covers every external id the CSS can select,
+ * and every icon's costume-0 frame is inside the animation.
  *
  * It also records the number that made the bug LOOK like corruption rather than a mix-up:
  * ACE's animation has 388 CI8 frames with 388 separate palettes, and HSD_TObj::tlut_no was a
@@ -200,8 +203,8 @@ static int test_mex_csp_frame_map(void) {
   unsigned char *ar = NULL;
   uint32_t size = 0, data_size = 0, sel = 0;
   const unsigned char *data;
-  uint32_t matanim, texanim, imagetbl, tluttbl, stride;
-  int n_img, n_lut, i, internal, total, kinds, n_internal, rc = 0;
+  uint32_t matanim, texanim, imagetbl, tluttbl, stride, aobjdesc;
+  int n_img, n_lut, i, end_frame, max_ext, rc = 0;
 
   if (gw_Mex_CssIconCount() == 0) {
     return 0; /* a retail disc: no mexData, no m-ex CSS */
@@ -263,57 +266,42 @@ static int test_mex_csp_frame_map(void) {
     }
   }
 
-  /* The mapping itself: cumulative costume counts over INTERNAL kinds must land exactly on
-   * the frame count. `kinds` is how many leading kinds have portraits; the handful of
-   * non-selectable kinds after them (Master Hand, the wireframes, Sandbag) have none. */
-  n_internal = gw_Mex_InternalCount();
-  total = 0;
-  kinds = -1;
-  for (i = 0; i < n_internal; ++i) {
-    if (total == n_img) {
-      kinds = i;
-      break;
-    }
-    total += gw_Mex_FtCostumeCount(i);
+  /* The frame space. `csp_stride` is one costume row's width, so it must cover every external
+   * id the CSS offers, and the animation must be long enough to hold at least that row. */
+  aobjdesc = gw_r32(data + texanim + 0x08);
+  if (aobjdesc == 0u || aobjdesc + 0x10u > data_size) {
+    gw_test_fail("CSP texanim has no aobjdesc (offset %u) - nothing maps a frame to an image",
+                 aobjdesc);
+    free(ar);
+    return 1;
   }
-  if (kinds < 0 && total == n_img) {
-    kinds = n_internal;
-  }
-  if (kinds < 0) {
-    gw_test_fail("no prefix of the %d internal kinds' costume counts sums to the %d CSP "
-                 "frames (total %d) - the portrait frame is not the cumulative costume index",
-                 n_internal, n_img, total);
+  end_frame = (int)gw_rf32(data + aobjdesc + 0x04);
+  gw_log("test mex_csp_frame_map: frames 0..%d, csp_stride %u", end_frame, stride);
+  if (stride == 0u) {
+    gw_test_fail("mexSelectChr.csp_stride is 0 - every costume would show costume 0");
     rc = 1;
-  } else {
-    gw_log("test mex_csp_frame_map: internal kinds 0..%d carry all %d frames", kinds - 1, n_img);
   }
-
-  /* Every fighter the CSS can actually select must fall inside that range, at every costume. */
-  for (i = 0; rc == 0 && kinds >= 0 && i < gw_Mex_CssIconCount(); ++i) {
-    int base = 0, j, count;
-    int ext;
+  max_ext = -1;
+  for (i = 0; rc == 0 && i < gw_Mex_CssIconCount(); ++i) {
     const unsigned char *icons = (const unsigned char *)gw_Mex_CssIconTable();
+    int ext;
     if (icons == NULL) {
       break;
     }
     ext = (int)icons[(uint32_t)i * 0x1Cu + 1u]; /* CSSIcon +0x01 is the m-ex external id */
-    internal = gw_Mex_InternalForExt(ext);
-    if (internal < 0 || internal >= kinds) {
-      gw_test_fail("CSS icon %d (external %d) is internal kind %d, outside the %d kinds that "
-                   "have portraits", i, ext, internal, kinds);
+    if (ext > max_ext) {
+      max_ext = ext;
+    }
+    if (ext > end_frame) {
+      gw_test_fail("CSS icon %d is external %d, past the animation's last frame %d",
+                   i, ext, end_frame);
       rc = 1;
-      break;
     }
-    for (j = 0; j < internal; ++j) {
-      base += gw_Mex_FtCostumeCount(j);
-    }
-    count = gw_Mex_FtCostumeCount(internal);
-    if (count <= 0 || base + count > n_img) {
-      gw_test_fail("internal kind %d has costumes %d..%d, past the %d CSP frames",
-                   internal, base, base + count - 1, n_img);
-      rc = 1;
-      break;
-    }
+  }
+  if (rc == 0 && max_ext >= 0 && (uint32_t)max_ext >= stride) {
+    gw_test_fail("csp_stride %u does not cover external id %d - costume 1 would land on "
+                 "another fighter's row", stride, max_ext);
+    rc = 1;
   }
 
   if (rc == 0 && n_img > 256) {

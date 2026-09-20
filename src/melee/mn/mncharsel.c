@@ -1281,61 +1281,70 @@ static inline s32 getHandicapValue(int port)
 
 /* The frame of one fighter's portrait inside mexSelectChr's single CSP material animation.
  *
- * NOT `ext + costume * csp_stride`. That formula came from reading m-ex's "CSS Expansion/HUD"
- * patch names, and BOTH DISCS SAY IT IS WRONG. Decoded straight out of MnSlChr.usd
- * (tools/mex_port/dump_css.py plus a CI8 decode of individual frames):
+ * `ext + costume * csp_stride`, which is what m-ex's "CSS Expansion/HUD - Use External ID For
+ * CSP" says - and it is an ANIMATION FRAME, not an index into the animation's image table.
+ * Those are two different spaces and conflating them is what made every added character's
+ * portrait wrong.
  *
- *   - the animation is laid out in m-ex INTERNAL kind order, each kind's costumes CONSECUTIVE;
- *   - so frame(kind k, costume c) = (sum of costume counts of internal kinds 0..k-1) + c;
- *   - ACE: frame 0 is Mario c0 (internal 0), 30 is Kirby c2 (internal 4, base 28), 201 is
- *     Sonic c0 (internal 31, base 201), 324 is Knuckles c0 (internal 50, base 324);
- *   - and the cumulative total over the kinds that have portraits is exactly the animation's
- *     own image count: 221 on Akaneia, 388 on ACE.
+ * Read out of ACE's MnSlChr.usd by walking the CSP HSD_TexAnim's HSD_A_T_TIMG FObj key stream
+ * in fobj.c's own format: it is an authored lookup of 400 keys over frames 0..699. Frames 0..64
+ * are costume 0 of external ids 0..64 (65 = `csp_stride`), 65..129 are costume 1, and so on.
+ * The VALUE at each key is the image-table index, and THAT table is laid out differently again:
+ * m-ex INTERNAL kind order with each kind's costumes consecutive. The animation is what converts
+ * between them.
  *
- * Under the old formula every character on the screen showed somebody else's portrait - on ACE
- * `ext + costume * 65` sent Mario (ext 8) to frame 8, which decodes to orange Fox - and a
- * costume past the third ran the index past the end of the image table entirely.
+ *   frame(ext 48 Metal Sonic, c0) = 48        -> image 318, which decodes to Metal Sonic
+ *   frame(ext 34 Wario,       c0) = 34        -> image 225, which decodes to Wario
+ *   frame(ext 26 Wolf,        c1) = 26 + 65   -> image 308, Wolf's second costume
  *
- * The `csp_stride` field is left alone: it equals the external id count on both discs (41 and
- * 65) and nothing here needs it, so what it is actually for is still unknown.
+ * An earlier version computed the IMAGE index - the cumulative costume index over internal
+ * kinds - and passed it as the frame. Every statement it made about the image table was true;
+ * none of it was about the frame. The track then mapped its "Metal Sonic" 318 to image 386,
+ * which is Bowser, so the portraits were clean, plausible and someone else's. Settled by
+ * reading `tobj->imagedesc` back in a real run and decoding the same indices off the disc.
  *
- * The result is bounded by the animation's own `n_imagetbl`, because HSD_A_T_TIMG indexes
- * `tobj->imagetbl` with no bound of its own. */
+ * Bounded by the animation's own `end_frame`: a costume past the last authored row would run
+ * off the end of the key stream, and HSD_A_T_TIMG indexes `imagetbl` with no bound of its own.
+ * (The retail `u8 tlut_no` had to be widened for the same reason - see tobj.h - because the
+ * values this track yields run to 387.) */
 static int mnCharSel_MexCspFrame(int ext, int costume)
 {
-    extern int Mex_InternalForExt(int);
-    extern int Mex_InternalCount(void);
-    extern int Mex_FtCostumeCount(int);
-    int internal = Mex_InternalForExt(ext);
-    int count = Mex_InternalCount();
-    int frame = 0;
-    int k;
-    int limit = 0;
+    int stride;
+    int frame;
+    int end = 0;
 
-    if (internal < 0 || internal >= count) {
+    if (ext < 0 || mnCharSel_Mex == NULL) {
         return 0;
     }
-    for (k = 0; k < internal; k++) {
-        frame += Mex_FtCostumeCount(k);
+    stride = mnCharSel_Mex->csp_stride;
+    if (stride < 0) {
+        stride = 0;
     }
-    if (costume > 0 && costume < Mex_FtCostumeCount(internal)) {
-        frame += costume;
+    if (costume < 0) {
+        costume = 0;
     }
-    if (mnCharSel_Mex != NULL && mnCharSel_Mex->csp_matanim != NULL &&
-        mnCharSel_Mex->csp_matanim->texanim != NULL)
+    frame = ext + costume * stride;
+    if (mnCharSel_Mex->csp_matanim != NULL &&
+        mnCharSel_Mex->csp_matanim->texanim != NULL &&
+        mnCharSel_Mex->csp_matanim->texanim->aobjdesc != NULL)
     {
-        limit = mnCharSel_Mex->csp_matanim->texanim->n_imagetbl;
+        end = (int) mnCharSel_Mex->csp_matanim->texanim->aobjdesc->end_frame;
     }
-    if (limit > 0 && frame >= limit) {
-        MNCS_TRACE("css: portrait ext %d costume %d -> frame %d is past the %d-frame "
-                   "animation - using 0\n",
-                   ext, costume, frame, limit);
-        return 0;
+    if (end > 0 && frame > end) {
+        /* Past the last authored costume row: fall back to this fighter's costume 0 rather
+         * than to frame 0, which is somebody else's portrait. */
+        MNCS_TRACE("css: portrait ext %d costume %d -> frame %d is past the animation's last "
+                   "frame %d - using costume 0\n",
+                   ext, costume, frame, end);
+        frame = ext;
+        if (frame > end) {
+            return 0;
+        }
     }
     /* The CSS is the one screen a headless run cannot reach, so say what was computed. With
        rendering working this one line settles whether a portrait is the right one. */
-    MNCS_TRACE("css: portrait ext %d internal %d costume %d -> CSP frame %d of %d\n", ext,
-               internal, costume, frame, limit);
+    MNCS_TRACE("css: portrait ext %d costume %d stride %d -> CSP frame %d of %d\n", ext,
+               costume, stride, frame, end);
     return frame;
 }
 
@@ -4410,11 +4419,20 @@ static void mnCharSel_MexAttach(MexSelectChr* mex, HSD_JObj* root, int csp_joint
     }
     j = NULL;
     lb_80011E24(root, &j, csp_joint, -1);
+    MNCS_TRACE("mexcss: attach csp joint %d: jobj %s dobj %s matanim %s\n", csp_joint,
+               j != NULL ? "ok" : "MISSING",
+               (j != NULL && j->u.dobj != NULL) ? "ok" : "MISSING",
+               mex->csp_matanim != NULL ? "ok" : "MISSING");
     if (j != NULL && j->u.dobj != NULL && mex->csp_matanim != NULL) {
         HSD_DObjAddAnimAll(j->u.dobj, mex->csp_matanim, NULL);
     }
     j = NULL;
     lb_80011E24(root, &j, emblem_joint, -1);
+    MNCS_TRACE("mexcss: attach eblm joint %d: jobj %s dobj %s next %s eblm %s\n", emblem_joint,
+               j != NULL ? "ok" : "MISSING",
+               (j != NULL && j->u.dobj != NULL) ? "ok" : "MISSING",
+               (j != NULL && j->u.dobj != NULL && j->u.dobj->next != NULL) ? "ok" : "MISSING",
+               eblm != NULL ? "ok" : "MISSING");
     if (j != NULL && j->u.dobj != NULL && j->u.dobj->next != NULL && eblm != NULL) {
         HSD_DObjAddAnimAll(j->u.dobj->next, eblm->matanim, NULL);
     }

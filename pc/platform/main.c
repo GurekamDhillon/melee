@@ -283,6 +283,12 @@ int main(int argc, char *argv[]) {
   if (!gw_frame_init()) {
     gw_panic("could not start the frame driver");
   }
+  /* From here there is a renderer whose pipelines compile lazily, so the game's loading screen
+   * has something to wait for. A --test run has already returned above and never reaches this. */
+  {
+    extern void gw_Gfx_SetLive(int live);
+    gw_Gfx_SetLive(1);
+  }
 
   gw_log("melee-pc: entering game main()");
   gw_start_watchdog();

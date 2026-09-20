@@ -23,6 +23,14 @@
 #include <sysdolphin/baselib/sobjlib.h>
 #include <melee/mn/mnmain.h>
 #include "gmscenelaunch.h"
+#if defined(TARGET_PC)
+#include <melee/if/textdraw.h>
+#include <melee/if/textlib.h>
+#include <melee/if/types.h>
+#include <sysdolphin/baselib/gobjplink.h>
+#include <dolphin/gx.h>
+#include <dolphin/os.h>
+#endif
 
 /* 479D30 */ static HSD_GObjLibInitDataType gobj_init_data;
 /* 479D58 */ static struct gm_80479D58_t gm_80479D58;
@@ -249,6 +257,232 @@ void gm_801A4BD4(void)
     lb_80014534();
 }
 
+#if defined(TARGET_PC)
+
+/* ---- The loading screen ---------------------------------------------------------------------
+ *
+ * WHAT IS ACTUALLY WRONG. Booting into a match gives a black period in which the stage and the
+ * fighters arrive part by part. It is NOT stutter - the frame loop stays at full speed the whole
+ * time. Aurora creates a WebGPU render pipeline the first time a draw needs one, compiles it on a
+ * worker thread, and SKIPS that draw until it is ready, so the first frames of a cold scene are
+ * missing whatever has not finished compiling. gw_Gfx_PipelinesPending / PipelinesCreated report
+ * that directly (pc/platform/gw_runtime.c).
+ *
+ * WHY THE HOLD IS HERE AND NOT IN A SCENE OF ITS OWN. The only thing that compiles a match's
+ * pipelines is drawing that match, so a separate loading scene in front of it would warm its own
+ * pipelines and none of the ones that matter. What this does instead is let the scene the game
+ * already has - GS_VS, GS_SUDDEN_DEATH, GS_TRAINING - enter, render and queue its pipelines with
+ * the match's own clock stopped, behind a panel. Nothing new is scheduled, nothing is preloaded,
+ * and no permutation has to be guessed: the frames that warm the renderer are the real ones.
+ * Concretely, the scene's on_frame is skipped, so the match state machine does not advance; the
+ * rest of the loop - pads, gobj procs, HSD_StartRender - runs untouched.
+ *
+ * WHEN IT LETS GO. `pending == 0` means nothing on its own, because it is also what the counter
+ * reads before the scene's first draw has asked for anything. So all three of these must hold:
+ *
+ *   - at least LOADSCREEN_MIN_FRAMES frames have been drawn, so "nothing in flight" is an answer
+ *     about this scene rather than about the moment before it started;
+ *   - nothing is in flight now;
+ *   - createdPipelines has not moved for LOADSCREEN_SETTLE_FRAMES frames. Half a second, because
+ *     a compile finishing un-skips a draw that can itself ask for the NEXT pipeline, so the count
+ *     rises in chains; the wait has to outlast a link of that chain, and a queue-to-ready is tens
+ *     of milliseconds. Shorter than this and the loader steps aside mid-chain, which is the whole
+ *     bug wearing a panel.
+ *
+ * And a wall-clock ceiling on top of all of it, because a machine that never settles - a driver
+ * compiling in the background, a GPU being shared - must still boot into its match. Measured on
+ * a cold boot into Training on Final Destination: the hold lasts about 205 frames and 56
+ * pipelines get compiled inside it.
+ *
+ * WHAT IT DRAWS, AND WHY IT IS THE DEBUG FONT RATHER THAN THE PNG ART. Everything here goes
+ * through DevText (src/melee/if/textdraw.c), which is the game's own screen-space 2D: one text
+ * box with its background and no text is a filled rectangle, which is the panel; a second with
+ * its background and text is the caption on its plate. It is set up once per scene by
+ * gm_801A4BD4 -> un_802FF78C and drawn by its own camera on gx_link 17, so there is nothing to
+ * initialise and nothing to tear down but the boxes.
+ *
+ * The .gxtex art in _build/menutex (panel_bg, the 9-sliced frame, the cursor) is NOT drawn here
+ * yet, and the reason is worth recording because it cost most of this session. The HSD_SObj path
+ * from mnCharSel_MenuTexSetup works - the same binary, the same scene and the same .gxtex file
+ * put its quad on screen when mncharsel creates it. The identical code called from HERE does
+ * not: the callback runs, the sobj list walks correctly (11 sprites, right rectangles, right
+ * scales, right GX formats, image pointers in MEM1), 803A4A68 emits the quads, and nothing
+ * appears. Ruled out by experiment, not by argument: render priority (10 and 0xFF), the raw-GX
+ * viewport/projection/position-matrix prologue copied verbatim from mncharsel, an HSD_CObj set
+ * up exactly like DevText's plus an explicit GXLoadPosMtxImm, drawing inside DevText's own
+ * camera pass on gx_link 17 instead of standing alone on the GXLinkMax list, the stage's fog,
+ * one sprite instead of eleven, and 1x art instead of 2x. The remaining difference between the
+ * two call sites is the call site itself. Captures: _build/runs/ldscr1..ldscr11.
+ */
+
+/* Native entry points. gwtool prefixes every game symbol with `gw_`, so the unprefixed name here
+ * binds to the shim of the same name in pc/platform/gw_runtime.c. */
+extern int Gfx_PipelinesPending(void);
+extern int Gfx_PipelinesCreated(void);
+extern int Gfx_LoadScreenEnabled(void);
+
+#define LOADSCREEN_MIN_FRAMES 20
+#define LOADSCREEN_SETTLE_FRAMES 30
+#define LOADSCREEN_CEILING_SECONDS 10
+#define LOADSCREEN_DOT_FRAMES 15
+
+/* The panel has to cover the whole visible frame, which is a little LARGER than 640x480: the
+   DevText camera's ortho box runs -20..660 by -20..500, so a box placed at 0,0 at exactly
+   640x480 leaves a strip of the match showing down each edge. 72x36 cells at the 10x16 default
+   scale is 720x576, started off-screen at -24,-24. */
+#define LOADSCREEN_PANEL_COLS 72
+#define LOADSCREEN_PANEL_ROWS 36
+#define LOADSCREEN_PANEL_X (-24)
+#define LOADSCREEN_PANEL_Y (-24)
+#define LOADSCREEN_CAPTION_COLS 16
+
+static DevText* mnLoadScreen_panel;
+static DevText* mnLoadScreen_text;
+static char mnLoadScreen_panelbuf[2 * LOADSCREEN_PANEL_COLS * LOADSCREEN_PANEL_ROWS];
+static char mnLoadScreen_textbuf[2 * LOADSCREEN_CAPTION_COLS];
+static int mnLoadScreen_holding;
+static int mnLoadScreen_frames;
+static int mnLoadScreen_settled;
+static int mnLoadScreen_created;
+static OSTime mnLoadScreen_started;
+
+static void mnLoadScreen_Release(char* why)
+{
+    if (!mnLoadScreen_holding) {
+        return;
+    }
+    mnLoadScreen_holding = 0;
+    /* Hidden AND removed, in that order and deliberately. DevText_Remove takes the address of a
+       list head - that is how it unlinks the first entry - and every caller in the game passes
+       the address of its own handle instead, which leaves devtext_drawlist naming a box that has
+       already gone back on the free list when that box happens to be the head. Hiding it first
+       makes the box draw nothing whatever the unlink does, so the loader cannot outlive its hold
+       and leave a black screen over the match. The pool itself is re-initialised per scene by
+       gm_801A4BD4 -> DevText_Setup, so nothing accumulates. */
+    if (mnLoadScreen_text != NULL) {
+        DevText_HideText(mnLoadScreen_text);
+        DevText_HideBackground(mnLoadScreen_text);
+        DevText_Remove(&mnLoadScreen_text);
+        mnLoadScreen_text = NULL;
+    }
+    if (mnLoadScreen_panel != NULL) {
+        DevText_HideText(mnLoadScreen_panel);
+        DevText_HideBackground(mnLoadScreen_panel);
+        DevText_Remove(&mnLoadScreen_panel);
+        mnLoadScreen_panel = NULL;
+    }
+    OSReport("loadscreen: released (%s) after %d frames, %d pipelines created\n", why,
+             mnLoadScreen_frames, Gfx_PipelinesCreated());
+}
+
+static void mnLoadScreen_Begin(GameSceneInfo* info)
+{
+    HSD_GObj* text_gobj;
+
+    mnLoadScreen_holding = 0;
+    mnLoadScreen_panel = NULL;
+    mnLoadScreen_text = NULL;
+    if (info == NULL || !Gfx_LoadScreenEnabled()) {
+        return;
+    }
+    switch (info->scene_kind) {
+    case GS_VS:
+    case GS_SUDDEN_DEATH:
+    case GS_TRAINING:
+        break;
+    default:
+        return;
+    }
+
+    mnLoadScreen_frames = 0;
+    mnLoadScreen_settled = 0;
+    mnLoadScreen_created = Gfx_PipelinesCreated();
+    mnLoadScreen_started = OSGetTime();
+    mnLoadScreen_holding = 1;
+
+    text_gobj = DevText_GetGObj();
+    if (text_gobj != NULL) {
+        /* Created panel first, caption second: DevText_AddToList appends, and the list is drawn
+           in order, so the panel is behind. */
+        mnLoadScreen_panel =
+            DevText_Create(0x4A, LOADSCREEN_PANEL_X, LOADSCREEN_PANEL_Y, LOADSCREEN_PANEL_COLS,
+                           LOADSCREEN_PANEL_ROWS,
+                           mnLoadScreen_panelbuf);
+        if (mnLoadScreen_panel != NULL) {
+            GXColor panel = { 12, 12, 20, 255 };
+            DevText_Show(text_gobj, mnLoadScreen_panel);
+            DevText_HideCursor(mnLoadScreen_panel);
+            DevText_HideText(mnLoadScreen_panel);
+            DevText_SetBGColor(mnLoadScreen_panel, panel);
+        }
+        mnLoadScreen_text = DevText_Create(0x4B, 250, 230, LOADSCREEN_CAPTION_COLS, 1,
+                                           mnLoadScreen_textbuf);
+        if (mnLoadScreen_text != NULL) {
+            GXColor plate = { 40, 48, 80, 255 };
+            DevText_Show(text_gobj, mnLoadScreen_text);
+            DevText_HideCursor(mnLoadScreen_text);
+            DevText_SetBGColor(mnLoadScreen_text, plate);
+            DevText_SetScale(mnLoadScreen_text, 10.0F, 16.0F);
+        }
+    }
+    OSReport("loadscreen: holding scene %d, %d pipelines created so far\n",
+             (int) info->scene_kind, mnLoadScreen_created);
+}
+
+/* True while the scene is being held, which is the caller's cue to skip the scene's own frame.
+   The caption's ellipsis is animated from here - one line of scene state rather than four
+   textures - so it keeps moving while the renderer works. */
+static bool mnLoadScreen_Frame(void)
+{
+    int created;
+    int dots;
+
+    if (!mnLoadScreen_holding) {
+        return false;
+    }
+    mnLoadScreen_frames++;
+
+    created = Gfx_PipelinesCreated();
+    if (created != mnLoadScreen_created) {
+        mnLoadScreen_created = created;
+        mnLoadScreen_settled = 0;
+    } else if (Gfx_PipelinesPending() != 0) {
+        mnLoadScreen_settled = 0;
+    } else {
+        mnLoadScreen_settled++;
+    }
+
+    if (mnLoadScreen_text != NULL) {
+        DevText_Erase(mnLoadScreen_text);
+        DevText_SetCursorXY(mnLoadScreen_text, 0, 0);
+        DevText_Print(mnLoadScreen_text, "NOW LOADING");
+        dots = (mnLoadScreen_frames / LOADSCREEN_DOT_FRAMES) % 3;
+        DevText_Print(mnLoadScreen_text, ".");
+        if (dots >= 1) {
+            DevText_Print(mnLoadScreen_text, ".");
+        }
+        if (dots >= 2) {
+            DevText_Print(mnLoadScreen_text, ".");
+        }
+    }
+
+    if (mnLoadScreen_frames >= LOADSCREEN_MIN_FRAMES &&
+        mnLoadScreen_settled >= LOADSCREEN_SETTLE_FRAMES)
+    {
+        mnLoadScreen_Release("warm");
+        return false;
+    }
+    if (OSGetTime() - mnLoadScreen_started >
+        (OSTime) OSSecondsToTicks(LOADSCREEN_CEILING_SECONDS))
+    {
+        mnLoadScreen_Release("ceiling");
+        return false;
+    }
+    return true;
+}
+
+#endif /* TARGET_PC */
+
 GameScene* gm_FindGameSceneHandler(u8 kind)
 {
     GameScene* cur;
@@ -286,6 +520,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
     gm_80479D58.unk_C = 0;
     HSD_PadFlushQueue(HSD_PAD_FLUSH_QUEUE_LEAVE1);
     lbCardGame_InitScene();
+#if defined(TARGET_PC)
+    mnLoadScreen_Begin(info);
+#endif
 
     while (temp_r25->unk_C == 0) {
 #if defined(TARGET_PC)
@@ -327,7 +564,14 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     gm_EvaluateAllControllerInputs();
                 }
                 if (lb_80019A30(0) && on_frame != NULL) {
-                    on_frame();
+#if defined(TARGET_PC)
+                    /* While the loading screen holds, the scene renders but its clock does not
+                       advance: everything else in this loop still runs. */
+                    if (!mnLoadScreen_Frame())
+#endif
+                    {
+                        on_frame();
+                    }
                 }
             }
             if (gm_80479D58.unk_10.x0 != gm_80479D58.unk_10.x1 ||
@@ -392,5 +636,8 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         HSD_PerfSetTotalTime();
         HSD_PerfInitStat();
     }
+#if defined(TARGET_PC)
+    mnLoadScreen_Release("scene ended");
+#endif
     HSD_VIWaitXFBFlush();
 }

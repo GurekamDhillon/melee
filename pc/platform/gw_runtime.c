@@ -2594,6 +2594,25 @@ int gw_Gfx_PipelinesCreated(void) {
   return s != NULL ? (int) s->createdPipelines : 0;
 }
 
+/* A windowed run has a renderer whose pipelines can be cold; a headless `--test` run returns from
+ * main() long before aurora_initialize and never draws at all. The loading screen must not hold a
+ * scene in that second case - aurora_get_stats() cannot tell them apart, because it hands back the
+ * address of a static that reads all-zero when nothing has been initialised, and "zero created,
+ * zero pending" is indistinguishable from "warm". So the frame driver says so explicitly.
+ *
+ * MELEE_LOADSCREEN=0 turns it off in a windowed run, for comparing against the old behaviour. */
+static int gw_gfx_live;
+
+void gw_Gfx_SetLive(int live) { gw_gfx_live = live ? 1 : 0; }
+
+int gw_Gfx_LoadScreenEnabled(void) {
+  const char *v = getenv("MELEE_LOADSCREEN");
+  if (v != NULL && v[0] == '0' && v[1] == '\0') {
+    return 0;
+  }
+  return gw_gfx_live;
+}
+
 static int test_gxtex_header_and_copy(void) {
   /* Build a two-texel-tile .gxtex in memory, write it, read it back through the real loader.
      This is the boundary that matters: the bytes a game TU ends up holding must be the bytes

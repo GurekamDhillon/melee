@@ -3106,6 +3106,9 @@ static int test_mex_kirby_tables_wired(void) {
     extern void gw_ftKb_MexCopyKindData(int dst, int src, int internal);
     extern uint8_t gw_ftKb_Init_803CB46C[];
     extern uint8_t gw_ftKb_Init_803CA9D0[]; /* ftKirby_CopyName[], 8 bytes each */
+    extern uint8_t gw_ftKb_Init_803C9CC8[]; /* 2 per kind: ability gained / lost */
+    extern uint8_t gw_ftKb_Init_803C9DD0[]; /* copied neutral-B  */
+    extern uint8_t gw_ftKb_Init_803C9E54[]; /* copied aerial neutral-B */
     unsigned f;
     int checked = 0, rc = 0;
 
@@ -3155,6 +3158,40 @@ static int test_mex_kirby_tables_wired(void) {
             gw_test_fail("%s (port kind %d): ftKb_Init_803CB46C is %d, expected %d", name, port,
                          got_eff, want_eff);
             rc = 1;
+        }
+        /* The four copied-ability callbacks, in the order ftKb_MexCopyKindHat writes them. An
+         * empty m-ex row must stay empty: that is what makes Kirby fall back to his own inhale
+         * rather than the clone base's special. */
+        {
+            static const struct {
+                int slot;
+                uint32_t stride;
+                uint32_t bias;
+                const char *table;
+            } rows[4] = {
+                {0, 8u, 0u, "803C9CC8[kind*2]"},
+                {1, 8u, 4u, "803C9CC8[kind*2+1]"},
+                {2, 4u, 0u, "803C9DD0"},
+                {3, 4u, 0u, "803C9E54"},
+            };
+            uint8_t *bases[4];
+            int i;
+            bases[0] = gw_ftKb_Init_803C9CC8;
+            bases[1] = gw_ftKb_Init_803C9CC8;
+            bases[2] = gw_ftKb_Init_803C9DD0;
+            bases[3] = gw_ftKb_Init_803C9E54;
+            gw_log("test mex_kirby_tables_wired: %s (port kind %d): copied-ability callbacks "
+                   "%p %p %p %p", name, port, gw_Mex_KirbyFunc(0, k), gw_Mex_KirbyFunc(1, k),
+                   gw_Mex_KirbyFunc(2, k), gw_Mex_KirbyFunc(3, k));
+            for (i = 0; i < 4; ++i) {
+                void *want = gw_Mex_KirbyFunc(rows[i].slot, k);
+                void *got = gw_rptr(bases[i] + (size_t) port * rows[i].stride + rows[i].bias);
+                if (got != want) {
+                    gw_test_fail("%s (port kind %d): %s is %p, expected %p", name, port,
+                                 rows[i].table, got, want);
+                    rc = 1;
+                }
+            }
         }
     }
     if (checked == 0) {

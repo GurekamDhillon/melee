@@ -3532,6 +3532,19 @@ void* Ground_GetYakumonoParam(void)
 #if defined(TARGET_PC)
     if (Mex_GrTrace()) {
         OSReport("grtrace: yakumono_param = %p\n", stage_info.yakumono_param);
+        if (stage_info.yakumono_param != NULL) {
+            /* GrGh reads floats out of this block at +0x70, +0x78 and +0x7C and compares
+             * HSD_Randf() against them to decide whether to spawn a background model this
+             * frame. Print them x1000 - OSReport has no %f - so a threshold that is 30x too
+             * permissive is visible without a debugger. */
+            f32* f = (f32*) stage_info.yakumono_param;
+            int i;
+            for (i = 0x18; i < 0x24; i += 3) {
+                OSReport("grtrace:   yaku[+0x%02X..] = %d %d %d (x1000)\n", i * 4,
+                         (int) (f[i] * 1000.0f), (int) (f[i + 1] * 1000.0f),
+                         (int) (f[i + 2] * 1000.0f));
+            }
+        }
     }
 #endif
     return stage_info.yakumono_param;

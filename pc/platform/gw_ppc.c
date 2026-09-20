@@ -1556,7 +1556,16 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
         break;
     }
     case 983: /* stfiwx fS, rA, rB: store the low 32 bits of fS as a word */
-        gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], c->fpr[rs].u32[1]);
+        /* u32[0], not u32[1]. On big-endian PowerPC the LOW half of a 64-bit FPR is word 1;
+         * on this little-endian host it is word 0, and gw_ppc_fpr is a host-order union. The
+         * pair `fctiwz fD,fS` + `stfiwx fD,rA,rB` is how every PowerPC compiler spells
+         * (int)some_float, so reading the wrong half stored a constant 0 for any value whose
+         * double bit pattern has a zero low word - which is every integer-valued float a
+         * timer is ever set from. GrGh (ext:302) re-arms its background-model spawn timer
+         * this way from a stage parameter of 900.0; the timer read back 0 every frame, so the
+         * stage spawned a model on ~90% of frames instead of one per 900, and exhausted the
+         * HSD heap at frame ~270. */
+        gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], c->fpr[rs].u32[0]);
         break;
 
     /* cache / synchronisation instructions are no-ops in the interpreter (single-threaded);
@@ -2824,6 +2833,48 @@ static int test_ppc_host_stack_out_param(void) {
     return 0;
 }
 
+/* fctiwz + stfiwx: how every PowerPC compiler spells (int)some_float. The value matters -
+ * 900.0 is 0x408C200000000000, whose LOW 32 bits are 0 and whose HIGH 32 bits are 0x408C2000,
+ * so a stfiwx that reads the wrong half of the FPR stores 0 here and 0 for every other
+ * integer-valued float too. That is not a decode failure, so nothing panics; the guest just
+ * sees a counter that never arms. */
+static int test_ppc_fctiwz_stfiwx(void) {
+    static const uint32_t blob[] = {
+        0xC0250000u, /* lfs    f1, 0(r5)      ; f1 = 900.0f                 */
+        0xFC20081Eu, /* fctiwz f1, f1         ; low word of f1 = 900        */
+        0x7C2537AEu, /* stfiwx f1, r5, r6     ; word at +4 = 900            */
+        0x4E800020u, /* blr                                                 */
+    };
+    uint32_t args[8];
+    unsigned i;
+    uint32_t got;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t) sizeof blob);
+
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 0), 900.0f);
+    gw_w32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 4), 0xDEADBEEFu);
+
+    for (i = 0; i < 8; ++i) {
+        args[i] = 0u;
+    }
+    args[2] = GW_PPC_TEST_FDATA; /* r5 */
+    args[3] = 4u;                /* r6 */
+    gw_ppc_call(GW_PPC_TEST_CODE, args, 8, 0, GW_PPC_TEST_STACK);
+
+    got = gw_r32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 4));
+    if (got != 900u) {
+        gw_test_fail("fctiwz+stfiwx stored 0x%08X, expected 900 - stfiwx read the wrong half "
+                     "of the FPR",
+                     got);
+        return 1;
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
@@ -2835,5 +2886,6 @@ void gw_ppc_tests_register(void) {
     gw_test_register("ppc_fcmpu_orderings", test_ppc_fcmpu_orderings);
     gw_test_register("ppc_xoris_int_to_float", test_ppc_xoris_int_to_float);
     gw_test_register("ppc_fp_indexed", test_ppc_fp_indexed);
+    gw_test_register("ppc_fctiwz_stfiwx", test_ppc_fctiwz_stfiwx);
     gw_test_register("ppc_host_stack_out_param", test_ppc_host_stack_out_param);
 }

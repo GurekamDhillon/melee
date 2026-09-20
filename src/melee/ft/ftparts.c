@@ -600,6 +600,33 @@ void ftParts_80074B0C(Fighter_GObj* gobj, int model_idx, int val)
     }
 }
 
+#if defined(TARGET_PC)
+/* The part-visibility tables index `dobj_list->data` with a u8 and carry no bound of their own,
+ * so a table belonging to a different costume - or one row short of the costume count the port
+ * rebuilt - writes flags through whatever pointer happens to follow the array. That is not a
+ * hypothetical: Kirby's copy hats carry his six RETAIL rows while his m-ex numCostumes is eight,
+ * and costume 6 faulted here in HSD_DObjSetFlags. Say which list and index went out of range
+ * once, then skip it, so the next table that is short is a log line and not a crash. */
+static HSD_DObj* ftParts_DObjAt(DObjList* dobj_list, int idx, const char* where)
+{
+    static int complained;
+    if (dobj_list == NULL || dobj_list->data == NULL || idx < 0 ||
+        (u32) idx >= dobj_list->count)
+    {
+        if (complained < 8) {
+            complained++;
+            OSReport("ftparts: %s: dobj index %d is outside the %d-entry list - skipped\n",
+                     where, idx, dobj_list != NULL ? (int) dobj_list->count : -1);
+        }
+        return NULL;
+    }
+    return dobj_list->data[idx];
+}
+#define FT_DOBJ_AT(list, idx) ftParts_DObjAt((list), (int) (idx), __func__)
+#else
+#define FT_DOBJ_AT(list, idx) ((list)->data[idx])
+#endif
+
 void ftParts_80074B6C(Fighter* fp, FtPartsVis* vis, int idx,
                       DObjList* dobj_list)
 {
@@ -615,12 +642,12 @@ void ftParts_80074B6C(Fighter* fp, FtPartsVis* vis, int idx,
                 if (j == r25) {
                     int k; // r20
                     for (k = 0; k < r27->x0; k++) {
-                        HSD_DObjClearFlags(dobj_list->data[r0[k]], 1);
+                        HSD_DObjClearFlags(FT_DOBJ_AT(dobj_list, r0[k]), 1);
                     }
                 } else {
                     int k; // r20
                     for (k = 0; k < r27->x0; k++) {
-                        HSD_DObjSetFlags(dobj_list->data[r0[k]], 1);
+                        HSD_DObjSetFlags(FT_DOBJ_AT(dobj_list, r0[k]), 1);
                     }
                 }
             }
@@ -643,7 +670,7 @@ void ftParts_80074CA0(FtPartsVis* vis, int idx, DObjList* dobj_list)
                 r26 = &lookup[i].x4[j];
                 r29 = r26->x4;
                 for (k = 0; k < r26->x0; k++) {
-                    HSD_DObjClearFlags(dobj_list->data[r29[k]], 1);
+                    HSD_DObjClearFlags(FT_DOBJ_AT(dobj_list, r29[k]), 1);
                 }
             }
         }
@@ -665,7 +692,7 @@ void ftParts_80074D7C(FtPartsVis* vis, int idx, DObjList* dobj_list)
                 r26 = &lookup[i].x4[j];
                 r29 = r26->x4;
                 for (k = 0; k < r26->x0; k++) {
-                    HSD_DObjSetFlags(dobj_list->data[r29[k]], 1);
+                    HSD_DObjSetFlags(FT_DOBJ_AT(dobj_list, r29[k]), 1);
                 }
             }
         }

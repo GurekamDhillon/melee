@@ -3691,7 +3691,7 @@ void ftKb_SpecialN_800F0F5C(Fighter_GObj* gobj)
         ftKb_SpecialN_800EF35C(gobj, (kind) + 1, part_dobj_indices);          \
         ftKb_SpecialN_800EF438(gobj, hat);                                    \
         ftParts_8007487C((FtPartsDesc*) (hat), &(fp)->u.kb.hat.x24,           \
-                         (fp)->x619_costume_id, &(fp)->u.kb.hat.x14,          \
+                         (u32) FTKB_COPY_ROW(fp), &(fp)->u.kb.hat.x14,        \
                          &(fp)->u.kb.hat.x1C);                                \
         ftAnim_80070200(fp, (ftData_x8_x8*) &(hat)->desc.vis_table,           \
                         &(fp)->u.kb.x44, &(fp)->u.kb.hat.x14);                \

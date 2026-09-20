@@ -3605,6 +3605,73 @@ static int test_mex_demo_table_bounded(void) {
     return rc;
 }
 
+
+/* An out-of-blob `b` is a TAIL CALL, not a call-and-continue.
+ *
+ * The PowerPC EABI lets a function end with `b callee` after restoring LR: the callee's own blr
+ * then returns straight to OUR caller. Akaneia's PlWf.dat does exactly that - its onLoad ends
+ *
+ *     lwz r0,20(r1); mtspr lr,r0; addi r1,r1,16; b MEX_IndexFighterItem
+ *
+ * - and the interpreter, seeing a target outside the blob, bridged the call and then carried on
+ * at the NEXT guest word, which is onRespawn: `li r5,0; li r4,0; b ftParts_80074A4C`. r3 was
+ * MEX_IndexFighterItem's return, 0, so ftParts_80074A4C read gobj->user_data at 0x2C through a
+ * null gobj and the port died entering a VS match as Wolf (user-found).
+ *
+ * The blob below is that shape with a poison word after the tail branch: correct behaviour never
+ * executes it. The same applies to a `bc` or `bctr` with LK clear - see gw_ppc.c's case 18/16/19.
+ */
+#define GW_MEXTAIL_CODE 0x80310000u          /* guest code base, clear of gw_ppc.c's own tests */
+#define GW_MEXTAIL_POISON 0x80310040u        /* guest word only a fall-through would write */
+#define GW_MEXTAIL_STACK 0x80410000u
+#define GW_MEXTAIL_HELPER 0x80380368u        /* fake guest address of the native helper */
+
+static uint32_t gw_mextail_helper(uint32_t x, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4,
+                                  uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    return x + 1u;
+}
+
+static gw_ppc_native_fn gw_mextail_resolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
+    (void) ctx;
+    (void) sig;
+    return guest_addr == GW_MEXTAIL_HELPER ? gw_mextail_helper : NULL;
+}
+
+static int test_ppc_tail_branch_returns(void) {
+    static const uint32_t blob[] = {
+        0x48000000u | ((GW_MEXTAIL_HELPER - GW_MEXTAIL_CODE) & 0x03FFFFFCu), /* b helper (LK=0) */
+        0x90640000u, /* stw r3, 0(r4)  -- POISON: reached only on a fall-through */
+        0x4E800020u, /* blr */
+    };
+    const uint32_t input = 41u;
+    uint32_t args[2], r3;
+    unsigned i;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_MEXTAIL_CODE + 4u * i), blob[i]);
+    }
+    gw_w32((void *) (uintptr_t) GW_MEXTAIL_POISON, 0u);
+
+    args[0] = input;
+    args[1] = GW_MEXTAIL_POISON;
+    gw_ppc_set_bridge(gw_mextail_resolve, NULL, GW_MEXTAIL_CODE,
+                      GW_MEXTAIL_CODE + (uint32_t) sizeof blob);
+    r3 = gw_ppc_call(GW_MEXTAIL_CODE, args, 2, 0u, GW_MEXTAIL_STACK);
+
+    if (gw_r32((const void *) (uintptr_t) GW_MEXTAIL_POISON) != 0u) {
+        gw_test_fail("a tail `b` into native code fell through to the next guest word "
+                     "(poison 0x%08X): the interpreter must return to LR instead",
+                     gw_r32((const void *) (uintptr_t) GW_MEXTAIL_POISON));
+        return 1;
+    }
+    if (r3 != input + 1u) {
+        gw_test_fail("tail `b` gave r3=0x%08X, expected 0x%08X", r3, input + 1u);
+        return 1;
+    }
+    return 0;
+}
+
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
@@ -3620,4 +3687,5 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_kirby_tables_wired", test_mex_kirby_tables_wired);
     gw_test_register("mex_all_override_slots_wired", test_mex_all_override_slots_wired);
     gw_test_register("mex_demo_table_bounded", test_mex_demo_table_bounded);
+    gw_test_register("ppc_tail_branch_returns", test_ppc_tail_branch_returns);
 }

@@ -2370,7 +2370,258 @@ static int test_scene_parse_file_form(void) {
   return 0;
 }
 
+/* ---- .gxtex: host-side GX textures for custom menus ---------------------------------------
+ *
+ * Melee's own art arrives inside HSD archives on the disc. Anything the port adds cannot, so
+ * this reads a `.gxtex` written by pc/tools/png2gx.py: a 64-byte big-endian header followed by
+ * GX-tiled image bytes and, for a colour-indexed format, its TLUT.
+ *
+ * WHY THE GAME NEVER SEES THE FILE. gwtool byte-swaps every memory access in a game TU, so a
+ * game-side reader would swap the texels on the way in and hand GX a shuffled texture. Here the
+ * payload is moved with memcpy, which is byte-for-byte in either world, into a buffer the game
+ * allocated - and GX texture data is big-endian to begin with, which is exactly what survives
+ * that copy. Everything else crosses the boundary as a return value rather than through an
+ * out-pointer, for the same reason.
+ *
+ * MELEE_MENUTEX_DIR names the directory. Unset, GxTex_Open always fails and every caller is a
+ * no-op, which is how this stays off in a normal run. */
+#define GW_GXTEX_MAGIC 0x47585458u /* "GXTX" */
+#define GW_GXTEX_VERSION 1
+#define GW_GXTEX_MAX 8
+
+typedef struct {
+  unsigned char *blob;
+  uint32_t size;
+  uint32_t format, width, height;
+  uint32_t tlut_fmt, tlut_entries;
+  uint32_t image_off, image_size;
+  uint32_t tlut_off, tlut_size;
+} GwGxTex;
+
+static GwGxTex gw_gxtex[GW_GXTEX_MAX];
+
+static GwGxTex *gw_gxtex_get(int handle) {
+  if (handle < 0 || handle >= GW_GXTEX_MAX || gw_gxtex[handle].blob == NULL) {
+    return NULL;
+  }
+  return &gw_gxtex[handle];
+}
+
+/* The header is big-endian like the payload, so the whole file is one byte order. */
+static uint32_t gw_gxtex_be32(const unsigned char *p) {
+  return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | p[3];
+}
+
+int gw_GxTex_Open(const char *name) {
+  const char *dir = getenv("MELEE_MENUTEX_DIR");
+  char path[1024];
+  FILE *f;
+  long len;
+  unsigned char *blob;
+  GwGxTex t;
+  int i;
+
+  if (dir == NULL || *dir == '\0' || name == NULL) {
+    return -1;
+  }
+  for (i = 0; i < GW_GXTEX_MAX; i++) {
+    if (gw_gxtex[i].blob == NULL) {
+      break;
+    }
+  }
+  if (i == GW_GXTEX_MAX) {
+    gw_log("gxtex: no free slot for '%s' (%d open)", name, GW_GXTEX_MAX);
+    return -1;
+  }
+  if (snprintf(path, sizeof path, "%s/%s.gxtex", dir, name) >= (int)sizeof path) {
+    gw_log("gxtex: path for '%s' is too long", name);
+    return -1;
+  }
+  f = fopen(path, "rb");
+  if (f == NULL) {
+    gw_log("gxtex: cannot open %s", path);
+    return -1;
+  }
+  fseek(f, 0, SEEK_END);
+  len = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  if (len < 64) {
+    gw_log("gxtex: %s is %ld bytes, too short for a header", path, len);
+    fclose(f);
+    return -1;
+  }
+  blob = (unsigned char *)malloc((size_t)len);
+  if (blob == NULL || fread(blob, 1, (size_t)len, f) != (size_t)len) {
+    gw_log("gxtex: short read on %s", path);
+    free(blob);
+    fclose(f);
+    return -1;
+  }
+  fclose(f);
+
+  memset(&t, 0, sizeof t);
+  if (gw_gxtex_be32(blob) != GW_GXTEX_MAGIC || gw_gxtex_be32(blob + 4) != GW_GXTEX_VERSION) {
+    gw_log("gxtex: %s is not a v%d .gxtex", path, GW_GXTEX_VERSION);
+    free(blob);
+    return -1;
+  }
+  t.format = gw_gxtex_be32(blob + 8);
+  t.width = gw_gxtex_be32(blob + 12);
+  t.height = gw_gxtex_be32(blob + 16);
+  t.tlut_fmt = gw_gxtex_be32(blob + 20);
+  t.tlut_entries = gw_gxtex_be32(blob + 24);
+  t.image_size = gw_gxtex_be32(blob + 28);
+  t.tlut_size = gw_gxtex_be32(blob + 32);
+  t.image_off = gw_gxtex_be32(blob + 36);
+  t.tlut_off = gw_gxtex_be32(blob + 40);
+  /* Bounds-check before anything can copy out of the blob: a truncated or hand-edited file
+     would otherwise read past the allocation inside GxTex_CopyImage, far from here. */
+  if ((uint64_t)t.image_off + t.image_size > (uint64_t)len ||
+      (t.tlut_size != 0 && (uint64_t)t.tlut_off + t.tlut_size > (uint64_t)len))
+  {
+    gw_log("gxtex: %s: image %u@%u tlut %u@%u do not fit in %ld bytes", path,
+           (unsigned)t.image_size, (unsigned)t.image_off, (unsigned)t.tlut_size,
+           (unsigned)t.tlut_off, len);
+    free(blob);
+    return -1;
+  }
+  t.blob = blob;
+  t.size = (uint32_t)len;
+  gw_gxtex[i] = t;
+  gw_log("gxtex: %s -> handle %d: %ux%u fmt %u, image %u B, tlut %u entries fmt %u", path, i,
+         (unsigned)t.width, (unsigned)t.height, (unsigned)t.format, (unsigned)t.image_size,
+         (unsigned)t.tlut_entries, (unsigned)t.tlut_fmt);
+  return i;
+}
+
+/* MELEE_MENUTEX names the element. The game asks for "the one the environment names" rather
+   than passing a string, so no game TU ever reads host bytes through a swapped access. */
+int gw_GxTex_OpenEnv(void) {
+  const char *name = getenv("MELEE_MENUTEX");
+  return (name == NULL || *name == '\0') ? -1 : gw_GxTex_Open(name);
+}
+
+int gw_GxTex_Width(int h) { GwGxTex *t = gw_gxtex_get(h); return t ? (int)t->width : 0; }
+int gw_GxTex_Height(int h) { GwGxTex *t = gw_gxtex_get(h); return t ? (int)t->height : 0; }
+int gw_GxTex_Format(int h) { GwGxTex *t = gw_gxtex_get(h); return t ? (int)t->format : -1; }
+int gw_GxTex_ImageSize(int h) { GwGxTex *t = gw_gxtex_get(h); return t ? (int)t->image_size : 0; }
+int gw_GxTex_TlutSize(int h) { GwGxTex *t = gw_gxtex_get(h); return t ? (int)t->tlut_size : 0; }
+
+int gw_GxTex_TlutFormat(int h) {
+  GwGxTex *t = gw_gxtex_get(h);
+  /* 0xFFFFFFFF in the file means "no TLUT"; say so as -1, which is what C code tests. */
+  return (t == NULL || t->tlut_size == 0) ? -1 : (int)t->tlut_fmt;
+}
+
+int gw_GxTex_TlutEntries(int h) {
+  GwGxTex *t = gw_gxtex_get(h);
+  return (t == NULL || t->tlut_size == 0) ? 0 : (int)t->tlut_entries;
+}
+
+/* `dst` is a game-heap pointer. A byte copy is the whole point: GX texture data is already in
+   the byte order the hardware (and Aurora's decoder) wants, so nothing must reinterpret it. */
+void gw_GxTex_CopyImage(int h, void *dst) {
+  GwGxTex *t = gw_gxtex_get(h);
+  if (t != NULL && dst != NULL) {
+    memcpy(dst, t->blob + t->image_off, t->image_size);
+  }
+}
+
+void gw_GxTex_CopyTlut(int h, void *dst) {
+  GwGxTex *t = gw_gxtex_get(h);
+  if (t != NULL && dst != NULL && t->tlut_size != 0) {
+    memcpy(dst, t->blob + t->tlut_off, t->tlut_size);
+  }
+}
+
+void gw_GxTex_Close(int h) {
+  GwGxTex *t = gw_gxtex_get(h);
+  if (t != NULL) {
+    free(t->blob);
+    memset(t, 0, sizeof *t);
+  }
+}
+
+static int test_gxtex_header_and_copy(void) {
+  /* Build a two-texel-tile .gxtex in memory, write it, read it back through the real loader.
+     This is the boundary that matters: the bytes a game TU ends up holding must be the bytes
+     in the file, in that order, with nothing swapped on the way. */
+  static const unsigned char image[32] = {
+      0x80, 0x01, 0x80, 0x02, 0x80, 0x03, 0x80, 0x04, 0x80, 0x05, 0x80,
+      0x06, 0x80, 0x07, 0x80, 0x08, 0x80, 0x09, 0x80, 0x0A, 0x80, 0x0B,
+      0x80, 0x0C, 0x80, 0x0D, 0x80, 0x0E, 0x80, 0x0F, 0x80, 0x10,
+  };
+  unsigned char file[64 + 32];
+  unsigned char got[32];
+  char dir[1024];
+  char path[1024];
+  const char *tmp = getenv("TEMP");
+  const char *saved = getenv("MELEE_MENUTEX_DIR");
+  char restore[1024];
+  FILE *f;
+  int h, rc = 0;
+  unsigned i;
+  static const uint32_t header[] = { GW_GXTEX_MAGIC, GW_GXTEX_VERSION, 5, 4, 4, 0xFFFFFFFFu,
+                                     0, 32, 0, 64, 96 };
+
+  if (tmp == NULL) {
+    return 0; /* no writable scratch: nothing to prove, and nothing to fail either */
+  }
+  snprintf(restore, sizeof restore, "MELEE_MENUTEX_DIR=%s", saved ? saved : "");
+  snprintf(dir, sizeof dir, "%s", tmp);
+  snprintf(path, sizeof path, "%s/gw_gxtex_test.gxtex", dir);
+
+  memset(file, 0, sizeof file);
+  for (i = 0; i < sizeof header / sizeof header[0]; i++) {
+    file[i * 4 + 0] = (unsigned char)(header[i] >> 24);
+    file[i * 4 + 1] = (unsigned char)(header[i] >> 16);
+    file[i * 4 + 2] = (unsigned char)(header[i] >> 8);
+    file[i * 4 + 3] = (unsigned char)header[i];
+  }
+  memcpy(file + 64, image, 32);
+  f = fopen(path, "wb");
+  if (f == NULL) {
+    gw_test_fail("gxtex: cannot write %s", path);
+    return 1;
+  }
+  fwrite(file, 1, sizeof file, f);
+  fclose(f);
+
+  _putenv_s("MELEE_MENUTEX_DIR", dir);
+  h = gw_GxTex_Open("gw_gxtex_test");
+  if (h < 0) {
+    gw_test_fail("gxtex: GxTex_Open failed on %s", path);
+    rc = 1;
+  } else {
+    if (gw_GxTex_Width(h) != 4 || gw_GxTex_Height(h) != 4 || gw_GxTex_Format(h) != 5 ||
+        gw_GxTex_ImageSize(h) != 32 || gw_GxTex_TlutFormat(h) != -1 ||
+        gw_GxTex_TlutEntries(h) != 0)
+    {
+      gw_test_fail("gxtex: header read back as %dx%d fmt %d image %d tlut %d/%d",
+                   gw_GxTex_Width(h), gw_GxTex_Height(h), gw_GxTex_Format(h),
+                   gw_GxTex_ImageSize(h), gw_GxTex_TlutFormat(h), gw_GxTex_TlutEntries(h));
+      rc = 1;
+    }
+    memset(got, 0, sizeof got);
+    gw_GxTex_CopyImage(h, got);
+    if (memcmp(got, image, sizeof image) != 0) {
+      gw_test_fail("gxtex: image bytes changed in the copy: %02X %02X vs %02X %02X", got[0],
+                   got[1], image[0], image[1]);
+      rc = 1;
+    }
+    gw_GxTex_Close(h);
+    if (gw_GxTex_Width(h) != 0) {
+      gw_test_fail("gxtex: handle %d still live after Close", h);
+      rc = 1;
+    }
+  }
+  _putenv(restore);
+  remove(path);
+  return rc;
+}
+
 void gw_scene_tests_register(void) {
+  gw_test_register("gxtex_header_and_copy", test_gxtex_header_and_copy);
   gw_test_register("scene_ckind_fkind_table", test_scene_ckind_fkind_table);
   gw_test_register("scene_parse_training", test_scene_parse_training);
   gw_test_register("scene_index_spaces", test_scene_index_spaces);

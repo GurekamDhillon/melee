@@ -43,6 +43,11 @@
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/sislib.h>
 #include <sysdolphin/baselib/tobj.h>
+#if defined(TARGET_PC)
+#include <dolphin/gx.h>
+#include <dolphin/mtx.h>
+#include <sysdolphin/baselib/sobjlib.h>
+#endif
 
 static u8 mnCharSel_804D50C8[4] = { 1, 2, 4, 8 };
 static u8 mnCharSel_804D50CC[4] = { 1, 0, 0, 2 };
@@ -4501,6 +4506,172 @@ int mnCharSel_MexPackRows(const int* row_cap, int rows, int n_avail, int* take)
     return placed;
 }
 
+/* ---- PNG -> GX texture -> HSD scene ---------------------------------------------------------
+ *
+ * The smallest end-to-end proof that the port can put its own art on screen: read a `.gxtex`
+ * written by pc/tools/png2gx.py, hand the bytes to HSD as an HSD_ImageDesc (+ HSD_Tlut for a
+ * colour-indexed format) and draw it as one textured quad. Nothing in the port could do this
+ * before; every custom-menu idea - a loading screen, a trophy popup, a modpack selector - is
+ * downstream of it.
+ *
+ * WHY AN SObj AND NOT A JObj/DObj/MObj/TObj TREE. HSD_SObj is sysdolphin's own 2D sprite: it is
+ * an HSD_ImageDesc plus a screen rectangle, it already picks the right TEV setup per GX format,
+ * and it already loads a TLUT for GX_TF_C4/C8. A JObj tree would additionally need a PObj with
+ * a hand-built GX display list to say the same thing. When the real menus arrive they will be
+ * authored models with TObj animation tracks (the CSS portraits above are the worked example);
+ * this is the layer underneath that, which is the part that did not exist.
+ *
+ * WHY IT DRAWS ON THE GXLinkMax LIST. The camera gobj renders gx_links 0..4 (gxlink_prios 0x1F)
+ * and then HSD_CObjEndCurrent() flushes the sorted translucent list, so a callback inside those
+ * links that changes the projection changes it for everything drawn after it in the same frame.
+ * The max list runs after every camera (gmscene.c's HSD_GObj_80390FC0), so an orthographic
+ * projection set here disturbs nothing, and priority 0xFF puts the quad above the CSS text that
+ * sislib puts on the same list.
+ *
+ * MELEE_MENUTEX_DIR names the directory of .gxtex files and MELEE_MENUTEX the element to draw.
+ * Both are read on the native side by GxTex_OpenEnv: an environment string is host state, and
+ * handing its pointer into a game TU would mean reading native bytes through gwtool's swapped
+ * accesses. Unset, GxTex_OpenEnv fails and this is a no-op, which is how it stays out of a
+ * normal run. */
+extern int GxTex_OpenEnv(void);
+extern int GxTex_Width(int handle);
+extern int GxTex_Height(int handle);
+extern int GxTex_Format(int handle);
+extern int GxTex_ImageSize(int handle);
+extern int GxTex_TlutSize(int handle);
+extern int GxTex_TlutFormat(int handle);
+extern int GxTex_TlutEntries(int handle);
+extern void GxTex_CopyImage(int handle, void* dst);
+extern void GxTex_CopyTlut(int handle, void* dst);
+extern void GxTex_Close(int handle);
+
+static HSD_ImageDesc mnCharSel_MenuTexImage;
+static HSD_Tlut mnCharSel_MenuTexTlut;
+static HSD_SObjDesc mnCharSel_MenuTexDesc;
+
+static void mnCharSel_MenuTexDraw(HSD_GObj* gobj, int pass)
+{
+    Mtx44 proj;
+    Mtx view;
+
+    /* 640x480 in screen pixels with Y growing downwards, which is the space HSD_SObj's quad is
+       written in: it emits GXPosition2f32(x, -y). Near/far 0..2 with the view matrix one unit
+       down the -Z axis puts the quad inside the frustum. */
+    GXSetViewport(0.0F, 0.0F, 640.0F, 480.0F, 0.0F, 1.0F);
+    GXSetScissor(0, 0, 640, 480);
+    MTXOrtho((MtxPtr) proj, 0.0F, -480.0F, 0.0F, 640.0F, 0.0F, 2.0F);
+    GXSetProjection(proj, GX_ORTHOGRAPHIC);
+    view[0][0] = 1.0F; view[0][1] = 0.0F; view[0][2] = 0.0F; view[0][3] = 0.0F;
+    view[1][0] = 0.0F; view[1][1] = 1.0F; view[1][2] = 0.0F; view[1][3] = 0.0F;
+    view[2][0] = 0.0F; view[2][1] = 0.0F; view[2][2] = 1.0F; view[2][3] = -1.0F;
+    GXLoadPosMtxImm(view, GX_PNMTX0);
+    GXSetCurrentMtx(GX_PNMTX0);
+
+    /* HSD_SObj's draw sets its own TEV stages, vertex descriptor and blend mode but inherits the
+       texgen and the colour channel, so those are established here. The channel is a constant
+       white register colour: the sprite TEV paths read TEXC/TEXA and the konst registers, never
+       the rasterised colour, but a TEV stage that names GX_COLOR0A0 with no channels enabled is
+       undefined rather than merely unused. */
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_DISABLE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL,
+                  GX_DF_NONE, GX_AF_NONE);
+    {
+        GXColor white = { 255, 255, 255, 255 };
+        GXSetChanMatColor(GX_COLOR0A0, white);
+    }
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY,
+                      GX_DISABLE, GX_PTIDENTITY);
+
+    HSD_SObjLib_803A49E0(gobj, pass);
+}
+
+static void mnCharSel_MenuTexSetup(void)
+{
+    HSD_GObj* gobj;
+    HSD_SObj* sobj;
+    void* image;
+    void* lut;
+    int handle;
+    int w, h, fmt, tfmt, tents;
+    int scale_shift;
+    f32 scale;
+
+    handle = GxTex_OpenEnv();
+    if (handle < 0) {
+        return;
+    }
+    w = GxTex_Width(handle);
+    h = GxTex_Height(handle);
+    fmt = GxTex_Format(handle);
+    tfmt = GxTex_TlutFormat(handle);
+    tents = GxTex_TlutEntries(handle);
+
+    /* The texture data is copied into the game heap because that is what an HSD_ImageDesc points
+       at and what GXInitTexObj records; the loader's own copy is released immediately after, so
+       nothing holds the file open for the life of the scene. OSAlloc hands back 32-byte-aligned
+       blocks, which is GX's alignment requirement for both a texture and a TLUT. */
+    image = HSD_MemAlloc(GxTex_ImageSize(handle));
+    if (image == NULL) {
+        GxTex_Close(handle);
+        return;
+    }
+    GxTex_CopyImage(handle, image);
+
+    mnCharSel_MenuTexImage.image_ptr = image;
+    mnCharSel_MenuTexImage.width = (u16) w;
+    mnCharSel_MenuTexImage.height = (u16) h;
+    mnCharSel_MenuTexImage.format = (GXTexFmt) fmt;
+    mnCharSel_MenuTexImage.mipmap = 0;
+    mnCharSel_MenuTexImage.minLOD = 0.0F;
+    mnCharSel_MenuTexImage.maxLOD = 0.0F;
+    mnCharSel_MenuTexDesc.image = &mnCharSel_MenuTexImage;
+    mnCharSel_MenuTexDesc.tlut = NULL;
+
+    if (tfmt >= 0) {
+        lut = HSD_MemAlloc(GxTex_TlutSize(handle));
+        if (lut == NULL) {
+            GxTex_Close(handle);
+            return;
+        }
+        GxTex_CopyTlut(handle, lut);
+        mnCharSel_MenuTexTlut.lut = lut;
+        mnCharSel_MenuTexTlut.fmt = (GXTlutFmt) tfmt;
+        mnCharSel_MenuTexTlut.n_entries = (u16) tents;
+        /* GX_TLUT0, because HSD_SObj's draw hardcodes GXLoadTlut(..., GX_TLUT0) for a CI
+           texture. A different name here would load the palette into a bank nothing samples. */
+        mnCharSel_MenuTexTlut.tlut_name = GX_TLUT0;
+        mnCharSel_MenuTexDesc.tlut = &mnCharSel_MenuTexTlut;
+    }
+    GxTex_Close(handle);
+
+    gobj = GObj_Create(0xE, 0xF, 0);
+    HSD_GObjObject_80390A70(gobj, HSD_SObjLib_804D7960, NULL);
+    GObj_SetupGXLinkMax(gobj, mnCharSel_MenuTexDraw, 0xFF);
+    sobj = HSD_SObjLib_803A477C(gobj, &mnCharSel_MenuTexDesc, GX_CLAMP, GX_CLAMP, 0x80, 0);
+
+    /* Fit inside 640x480 and centre it: the art is authored at 2x, so a 1024x512 panel is a
+       512x256 rectangle on a 640x480 screen. Halving is a texture filter, not a crop, so the
+       capture still shows every texel of the source - which is the point of the exercise. */
+    scale_shift = 0;
+    while ((w >> scale_shift) > 640 || (h >> scale_shift) > 480) {
+        scale_shift++;
+    }
+    scale = 1.0F;
+    while (scale_shift-- > 0) {
+        scale *= 0.5F;
+    }
+    sobj->x1C = scale;
+    sobj->x20 = scale;
+    sobj->x10 = (640.0F - (f32) w * scale) * 0.5F;
+    sobj->x14 = (480.0F - (f32) h * scale) * 0.5F;
+    /* Integers only: a float vararg through OSReport goes through the bridge's unfinished
+       float-vararg path (docs/HANDOFF.md section 4). The numbers that matter are integral
+       anyway, and this one line is what says the texture reached the scene at all. */
+    OSReport("menutex: %dx%d fmt %d tlut fmt %d entries %d -> quad at %d,%d size %dx%d\n", w, h,
+             fmt, tfmt, tents, (int) sobj->x10, (int) sobj->x14, (int) ((f32) w * scale),
+             (int) ((f32) h * scale));
+}
+
 static void mnCharSel_MexSetup(void)
 {
     extern int Mex_CssIconCount(void);
@@ -4896,6 +5067,7 @@ s32 mnCharSel_802640A0(void)
 
 #if defined(TARGET_PC)
     mnCharSel_MexSetup();
+    mnCharSel_MenuTexSetup();
     /* The retail Luigi-row relocation moves retail icon joints and rewrites two retail rows'
      * bounds; with an m-ex CSS the layout and bounds come from mexData instead. */
     if (mnCharSel_Mex == NULL) {

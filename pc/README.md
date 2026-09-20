@@ -14,7 +14,7 @@ and the C library — is provided by the native shims in `pc/platform`.
 ```
 pc/platform/     native shims: GX→Aurora, OS, PAD, CARD, AX (DSP-ADPCM mixer), DVD, AR, VI, libc
 pc/gameworld/    game-world code compiled through the PPC retarget (gekko_fp.c, mtx_pc.c)
-pc/tools/        gwtool (the PPC→x86 retargeter) and asset extraction
+pc/tools/        gwtool (the PPC→x86 retargeter), asset extraction, png2gx (PNG → GX texture)
 ```
 
 Rendering goes through [Aurora](https://github.com/encounter/aurora) (a GameCube/Wii SDK

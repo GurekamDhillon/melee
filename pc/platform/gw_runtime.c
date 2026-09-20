@@ -886,6 +886,14 @@ const char *gw_ContentProbeName(void) {
   return cached;
 }
 
+/* MELEE_LOG_MOTION=1 turns on the per-action-state trace in Fighter_ChangeMotionState. The
+ * game TU asks here rather than calling getenv itself: gwtool renames every game symbol,
+ * so a bare getenv there links as gw_getenv and fails. */
+int gw_PcTraceMotionEnabled(void) {
+  const char *v = getenv("MELEE_LOG_MOTION");
+  return (v != NULL && v[0] != '0') ? 1 : 0;
+}
+
 void gw_ContentProbeResult(const char *name, void *archive) {
   gw_log("gw: content probe: %s -> %s", name != NULL ? name : "(null)",
          archive != NULL ? "parsed by lbArchive_LoadArchive"

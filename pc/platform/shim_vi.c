@@ -380,6 +380,7 @@ void gw_frame_tick(void) {
     /* Composited over the game's output by Aurora's ImGui pass, which is why this must happen
      * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
     gw_Overlay_Draw();
+    gw_Overlay_DrawPanel();
     gw_pace_field();
     aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
     gw_frame_begun = false;

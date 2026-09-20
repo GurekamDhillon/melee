@@ -10,6 +10,10 @@
 
 #include <imgui.h>
 
+/* Only for GetAsyncKeyState: the overlay needs a key that does not go through the game's
+ * pad path, and this port is Windows-only. */
+#include <windows.h>
+
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -31,8 +35,20 @@ struct State {
   uint32_t     files = 0;
   uint64_t     bytes = 0;
   double       last_read_at = 0.0;
+  double       last_geometry_at = 0.0;  /* when the game last DREW something */
+  uint32_t     last_prims = 0;
   double       first_frame_at = 0.0;
   char         current[96] = {0};
+  /* F9 panel + toast. Pad state is mirrored in rather than read back out of game memory: the
+   * PADStatus array is big-endian guest memory and the overlay has no business swapping it. */
+  bool         panel = false;
+  bool         f9_was_down = false;
+  char         toast[96] = {0};
+  double       toast_at = 0.0;
+  unsigned     pad_buttons[4] = {0, 0, 0, 0};
+  int          pad_sx[4] = {0, 0, 0, 0};
+  int          pad_sy[4] = {0, 0, 0, 0};
+  uint32_t     frames = 0;
 };
 
 State g;
@@ -58,13 +74,21 @@ bool overlay_enabled() {
   return g.enabled;
 }
 
-/* Show while the game has not yet drawn anything, and afterwards for a short tail whenever the
- * disc is being read - so in-game loads get the overlay too, not just boot. */
+/* A loading screen belongs on frames where the game is NOT DRAWING. Keying it on "a disc read
+ * happened recently" was wrong: a match streams files continuously, so the overlay sat on top of
+ * live gameplay - visible in _build/runs/mcvs/frame_22s.png, over a running Meta Crystal match.
+ *
+ * So: show until the game first draws, and afterwards only when geometry has stopped arriving AND
+ * the disc is busy. That is what a load actually looks like from here, and normal play can never
+ * satisfy it. */
 bool should_show() {
+  double t;
   if (!g.content_seen) {
     return true;
   }
-  return g.last_read_at != 0.0 && (now_seconds() - g.last_read_at) < 0.35;
+  t = now_seconds();
+  return (t - g.last_geometry_at) > 0.40 && g.last_read_at != 0.0 &&
+         (t - g.last_read_at) < 1.00;
 }
 
 void human_bytes(char *out, size_t n, uint64_t b) {
@@ -95,6 +119,10 @@ extern "C" void gw_Overlay_NoteBytes(uint32_t bytes) {
 }
 
 extern "C" void gw_Overlay_NoteContent(uint32_t prims) {
+  if (prims != g.last_prims) {
+    g.last_prims = prims;
+    g.last_geometry_at = now_seconds();
+  }
   if (!g.content_seen && prims > 0) {
     g.content_seen = true;
     gw_log("gw: overlay: first geometry at %.2fs after %u files / %llu bytes - overlay stands down",
@@ -159,6 +187,88 @@ extern "C" void gw_Overlay_Draw(void) {
     dl->AddRectFilled(ImVec2(p.x + bar_w * x0, p.y), ImVec2(p.x + bar_w * x1, p.y + bar_h),
                       IM_COL32(255, 255, 255, 190), 3.0f);
     ImGui::Dummy(ImVec2(bar_w, bar_h));
+  }
+  ImGui::End();
+}
+
+extern "C" void gw_Overlay_Toast(const char *msg) {
+  if (msg == nullptr) {
+    return;
+  }
+  std::snprintf(g.toast, sizeof g.toast, "%s", msg);
+  g.toast_at = now_seconds();
+}
+
+extern "C" void gw_Overlay_NotePad(int chan, unsigned buttons, int sx, int sy) {
+  if (chan < 0 || chan > 3) {
+    return;
+  }
+  g.pad_buttons[chan] = buttons;
+  g.pad_sx[chan] = sx;
+  g.pad_sy[chan] = sy;
+}
+
+/* Drawn after the loading panel so it sits on top of it, and independent of should_show(): the
+ * whole point is to be reachable mid-match. */
+extern "C" void gw_Overlay_DrawPanel(void) {
+  if (!overlay_enabled() || !imgui_ready()) {
+    return;
+  }
+  ++g.frames;
+
+  /* Edge-detected, so holding F9 toggles once rather than 60 times a second. */
+  const bool down = (GetAsyncKeyState(VK_F9) & 0x8000) != 0;
+  if (down && !g.f9_was_down) {
+    g.panel = !g.panel;
+    gw_log("gw: overlay: F9 panel %s", g.panel ? "open" : "closed");
+  }
+  g.f9_was_down = down;
+
+  const ImGuiIO &io = ImGui::GetIO();
+
+  if (g.toast[0] != ' ' && (now_seconds() - g.toast_at) < 2.5) {
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, 28.0f), ImGuiCond_Always,
+                            ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowBgAlpha(0.78f);
+    if (ImGui::Begin("##gw_toast", nullptr,
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs |
+                         ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav)) {
+      ImGui::TextUnformatted(g.toast);
+    }
+    ImGui::End();
+  }
+
+  if (!g.panel) {
+    return;
+  }
+
+  ImGui::SetNextWindowPos(ImVec2(16.0f, 16.0f), ImGuiCond_FirstUseEver);
+  ImGui::SetNextWindowSize(ImVec2(372.0f, 0.0f), ImGuiCond_FirstUseEver);
+  ImGui::SetNextWindowBgAlpha(0.86f);
+  if (ImGui::Begin("GD's Melee  (F9)", nullptr,
+                   ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings)) {
+    const char *scene = std::getenv("MELEE_SCENE");
+    const char *pad = std::getenv("MELEE_PAD_SCRIPT");
+
+    ImGui::Text("frames  %u", g.frames);
+    ImGui::Text("files   %u   %.1f MB", g.files, (double)g.bytes / (1024.0 * 1024.0));
+    if (g.current[0] != ' ') {
+      ImGui::TextDisabled("last file  %s", g.current);
+    }
+    ImGui::Separator();
+    ImGui::TextWrapped("scene  %s", scene != nullptr ? scene : "(none - booted to the menu)");
+    if (pad != nullptr) {
+      const char *leaf = std::strrchr(pad, '\\');
+      ImGui::TextDisabled("pad    %s", leaf != nullptr ? leaf + 1 : pad);
+    }
+    ImGui::Separator();
+    for (int c = 0; c < 4; ++c) {
+      ImGui::Text("p%d  btn %04X  stick %4d,%4d", c + 1, g.pad_buttons[c], g.pad_sx[c],
+                  g.pad_sy[c]);
+    }
+    ImGui::Separator();
+    ImGui::TextDisabled("L+R+Y+X+Start recalibrates on release");
   }
   ImGui::End();
 }

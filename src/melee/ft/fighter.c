@@ -1026,6 +1026,32 @@ Fighter_GObj* Fighter_Create(struct plAllocInfo* input)
     return gobj;
 }
 
+#if defined(TARGET_PC)
+/* Reads the env var once. player_id is the port slot, so a four-player run reads apart. */
+extern int PcTraceMotionEnabled(void); /* pc/platform/gw_runtime.c */
+static void ft_PcTraceMotion(Fighter_GObj* gobj, FtMotionId msid)
+{
+    static int enabled = -1;
+    Fighter* fp;
+    /* The env read lives on the platform side: a game TU gets no hosted <stdlib.h>, and
+     * gwtool would rename a bare getenv to gw_getenv. Reading the FIELDS stays here, where
+     * gwtool gets their byte order right - a native shim would have to swap by hand. */
+    if (enabled < 0) {
+        enabled = PcTraceMotionEnabled();
+    }
+    if (enabled == 0) {
+        return;
+    }
+    fp = GET_FIGHTER(gobj);
+    if (fp->motion_id == msid) {
+        return;
+    }
+    OSReport("motion: p%d kind=%d %d -> %d\n", (int) fp->player_id,
+             (int) fp->kind,
+             (int) fp->motion_id, (int) msid);
+}
+#endif
+
 void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
                                MotionFlags flags, f32 anim_start,
                                f32 anim_speed, f32 anim_blend,
@@ -1040,6 +1066,14 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     bool animflags_bool;
     union Struct2070 x2070;
 
+#if defined(TARGET_PC)
+    /* The only choke point every action state passes through, so it is the one honest answer
+     * to "did that input actually produce a move?". The unattended moveset suite could not tell
+     * a fighter that performed 33 actions from one that stood still for 48 seconds: both ran to
+     * the end with no fault, and both were reported OK. MELEE_LOG_MOTION=1 turns it on; it is
+     * off by default because it is a line per state change per fighter, far too much for play. */
+    ft_PcTraceMotion(gobj, msid);
+#endif
     fp->motion_id = msid;
     fp->facing_dir1 = fp->facing_dir;
 

@@ -95,12 +95,15 @@ static int lbl_80433780[17];
  * retail. Bank 55 stays the "no bank" value - on m-ex it is null.ssm, an empty bank. */
 #define LBAX_CAP 160 /* ACE has 103 banks */
 #define LBAX_SSM_DIM LBAX_CAP
+/* Internal stage rows: 155 on ACE, 96 on Akaneia, 71 real ones on retail. */
+#define LBAX_STAGE_CAP 256
 static int lbAx_N = 55;
 #define LBAX_N lbAx_N
 #else
 #define LBAX_CAP 0x38
 #define LBAX_SSM_DIM
 #define LBAX_N 55
+#define LBAX_STAGE_CAP 0x6F
 #endif
 
 static int lbl_804337C4[LBAX_CAP];
@@ -161,7 +164,14 @@ static s8 s32_arr_803BB5D0[LBAX_CAP][4] = {
     { 0x01, 0x05, 0x05, 0x00 },
 };
 
-static u8 s32_arr_803BB6B0[0x6F][3] = {
+/* Per-stage audio, INTERNAL-indexed (GrKind): {u8 ssm_id; u8 echo; u8 echo2}. ssm 55 is the
+ * "no bank" value. Retail has 0x6F = 111 rows for 71 real stages.
+ *
+ * SIZE THIS AGAINST ACE, NOT AKANEIA. The vanilla 111 rows happen to cover Akaneia's 96 internal
+ * stages, which made it look "already big enough" - it is not: ACE has 155. LBAX_STAGE_CAP is the
+ * ceiling gw_mex_graudio.c also enforces on mexData's internal_stage_count, so no disc it accepts
+ * can overflow this. Rows past the last initialiser are filled by lbAudioAx_MexStageAudio(). */
+static u8 s32_arr_803BB6B0[LBAX_STAGE_CAP][3] = {
     { 0x37, 0x01, 0x01 }, { 0x37, 0x01, 0x01 }, { 0x22, 0x01, 0x01 },
     { 0x37, 0x01, 0x01 }, { 0x25, 0x01, 0x01 }, { 0x29, 0x01, 0x01 },
     { 0x24, 0x01, 0x01 }, { 0x37, 0x18, 0x18 }, { 0x28, 0x40, 0x40 },

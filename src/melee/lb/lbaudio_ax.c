@@ -941,9 +941,35 @@ void lbAudioAx_80024D50(void)
     lbl_804D641C = 1;
 }
 
+#if defined(TARGET_PC)
+/* s32_arr_803BB6B0 is indexed straight by the INTERNAL stage id at four sites and every one of
+ * them was unguarded. An m-ex added stage is grkind >= 71 (to 95 on Akaneia, 154 on ACE), so the
+ * table is now LBAX_STAGE_CAP rows and filled from mexData - but a misread id still must not
+ * reach the audio path, because a bad bank id faults inside the mixer rather than here. */
+static int lbAudioAx_StageAudioByte(int grkind, int which)
+{
+    static int warned = -1;
+    if (grkind >= 0 && grkind < (int) ARRAY_SIZE(s32_arr_803BB6B0)) {
+        return s32_arr_803BB6B0[grkind][which];
+    }
+    if (warned != grkind) {
+        warned = grkind;
+        OSReport("lbAudioAx: stage grkind=%d is outside s32_arr_803BB6B0[%d]\n", grkind,
+                 (int) ARRAY_SIZE(s32_arr_803BB6B0));
+    }
+    return which == 0 ? 55 : 1; /* 55 = no bank; echo 1 = none */
+}
+
+/* Banks whose index is past the u64 mask, to be requested BY INDEX. See lbAudioAx_80026EBC. */
+static u8 lbAx_stage_pending[LBAX_CAP];
+#define LBAX_STAGE_BYTE(g, w) lbAudioAx_StageAudioByte((g), (w))
+#else
+#define LBAX_STAGE_BYTE(g, w) s32_arr_803BB6B0[(g)][(w)]
+#endif
+
 void lbAudioAx_80024D78(int arg0)
 {
-    lbl_804D38D8 = s32_arr_803BB6B0[Stage_8022519C(Stage_80225194())][arg0];
+    lbl_804D38D8 = LBAX_STAGE_BYTE(Stage_8022519C(Stage_80225194()), arg0);
 }
 
 void lbAudioAx_80024DC4(int arg0)
@@ -1752,9 +1778,24 @@ u64 lbAudioAx_80026EBC(StKind stkind)
     if (grkind < 0 || grkind >= imax) {
         return 0;
     }
-    if ((shift = s32_arr_803BB6B0[grkind][0]) == 55) {
+    if ((shift = LBAX_STAGE_BYTE(grkind, 0)) == 55) {
         return 0;
     }
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex): the same fix the fighter side needed in
+     * lbAudioAx_80026E84 / 8002785C. Added stages' SSM ids run to 77 on Akaneia and 100 on ACE
+     * (11 of ACE's 84 added stages are above 63), and `1ULL << 77` is undefined - on x86 the
+     * shift count wraps, so it used to set a bit belonging to some unrelated bank and the stage's
+     * own bank never loaded. A bank past the mask has no bit, so mark it for the by-index request
+     * that lbAudioAx_8002702C drains, and contribute nothing to the mask. */
+    if (shift < 0 || shift >= LBAX_N) {
+        return 0;
+    }
+    if (shift >= 64) {
+        lbAx_stage_pending[shift] = 1;
+        return 0;
+    }
+#endif
     return 1ULL << shift;
 }
 
@@ -1833,6 +1874,19 @@ void lbAudioAx_8002702C(u32 flags, u64 mask)
         result >>= 1;
         mask >>= 1;
     }
+
+#if defined(TARGET_PC)
+    /* Every caller that asks lbAudioAx_80026EBC for a stage's banks passes the result here, so
+     * this is the one place the by-index banks have to be applied - which keeps the ten scene
+     * files that build such a mask (training, classic, adventure, all-star, event, tournament...)
+     * untouched. Requests are consumed, never accumulated: the set is rebuilt per stage. */
+    for (i = 64; i < LBAX_N && i < (int) ARRAY_SIZE(lbAx_stage_pending); i++) {
+        if (lbAx_stage_pending[i]) {
+            lbAx_stage_pending[i] = 0;
+            lbl_804337C4[i] = 1;
+        }
+    }
+#endif
 }
 
 static inline void lbAudioAx_80027168_inline(void)
@@ -1949,7 +2003,7 @@ void lbAudioAx_8002785C(void)
         result |= 0xC00;
     }
 
-    lbl_804D38D8 = s32_arr_803BB6B0[Stage_8022519C(stkind)][1];
+    lbl_804D38D8 = LBAX_STAGE_BYTE(Stage_8022519C(stkind), 1);
     result |= lbAudioAx_80026EBC(stkind);
 
 #if defined(TARGET_PC)
@@ -2253,6 +2307,54 @@ static void lbAudioAx_MexTables(void)
         }
     }
 }
+
+/* Ported from m-ex (https://github.com/akaneia/m-ex): StageAudio References/GetStageSSMID.asm
+ * and SetEcho.asm read bytes 0 and 1 of `Arch_Map_Audio[internal_stage_id]`, which is this table
+ * extended past the 71 vanilla stages. Dumped from both discs, rows 0..70 of Arch_Map_Audio are
+ * BYTE-IDENTICAL to the rows compiled in above (0 mismatches on Akaneia and on ACE), which is
+ * what proves the stride and the index space - so the whole table is rewritten, exactly as
+ * lbAudioAx_MexTables does for the sound banks. No mexData: the retail rows stay. */
+static void lbAudioAx_MexStageAudio(void)
+{
+    extern int Mex_GrAudioCount(void);
+    extern int Mex_GrAudioByte(int, int);
+    int cap = ARRAY_SIZE(s32_arr_803BB6B0);
+    int n = Mex_GrAudioCount();
+    int i, k, filled;
+
+    if (n <= 0) {
+        return;
+    }
+    if (n > cap) {
+        OSReport("lbAudioAx: m-ex has %d internal stages, the port's audio table holds %d\n", n,
+                 cap);
+        n = cap;
+    }
+    for (i = filled = 0; i < n; i++) {
+        int ok = 1;
+        for (k = 0; k < 3; k++) {
+            int b = Mex_GrAudioByte(i, k);
+            if (b < 0) {
+                ok = 0;
+                break;
+            }
+            s32_arr_803BB6B0[i][k] = (u8) b;
+        }
+        filled += ok;
+        if (!ok) {
+            /* a row that would not read is left at 55 = no bank, not at whatever it held */
+            s32_arr_803BB6B0[i][0] = 55;
+            s32_arr_803BB6B0[i][1] = s32_arr_803BB6B0[i][2] = 1;
+        }
+    }
+    /* Rows past the last real stage would otherwise be zero - and bank 0 is a real bank, not
+     * "none". Make them explicitly empty so a stray index is silent rather than wrong. */
+    for (i = n; i < cap; i++) {
+        s32_arr_803BB6B0[i][0] = 55;
+        s32_arr_803BB6B0[i][1] = s32_arr_803BB6B0[i][2] = 1;
+    }
+    OSReport("lbAudioAx: %d stage audio rows from mexData (%d read cleanly)\n", n, filled);
+}
 #endif
 
 void lbAudioAx_8002838C(void)
@@ -2269,6 +2371,7 @@ void lbAudioAx_8002838C(void)
 
 #if defined(TARGET_PC)
     lbAudioAx_MexTables();
+    lbAudioAx_MexStageAudio();
 #endif
 
     lbl_804D643C = offsets_arr_803BC4E4[0][0];

@@ -113,6 +113,14 @@ void ftCo_800D8C54(Fighter_GObj* gobj, FtMotionId msid)
     fp->mv.co.catch_.x0 = 0.0F;
     Fighter_ChangeMotionState(gobj, msid, 0, 0.0F, 1.0F, 0.0F, NULL);
     ftCommon_8007E2D0(fp, 1, fn_800D9CE8, fn_800D8BFC, fn_800DAADC);
+#if defined(TARGET_PC)
+    /* m-ex onCatch (slot 44), injected at 0x800D8CB4 - this function's epilogue, after the grab
+     * motion state and its callbacks are set. */
+    {
+        extern void Mex_OnCatchDispatch(int kind, void* gobj, void* vanilla);
+        Mex_OnCatchDispatch(fp->kind, gobj, NULL);
+    }
+#endif
 }
 
 void ftCo_Catch_Anim(Fighter_GObj* gobj)

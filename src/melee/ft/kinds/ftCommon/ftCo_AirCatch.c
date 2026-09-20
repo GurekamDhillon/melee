@@ -60,6 +60,27 @@ bool ftCo_800C3B10(Fighter_GObj* gobj)
     if (fp->kind != Ft_Kind_Link && fp->kind != Ft_Kind_CLink &&
         fp->kind != Ft_Kind_Samus)
     {
+#if defined(TARGET_PC)
+        /* m-ex onZair (slot 33), injected at 0x800C3B54 - exactly this early-out, which is where
+         * the engine gives up on a fighter that is not one of the three tether characters. With
+         * a hook installed it becomes a successful tether instead: call the fighter's own zair
+         * and take the same tail the vanilla path takes (used_tether + true).
+         *
+         * The two input tests are m-ex's, and they are the same pair the vanilla tether path
+         * applies below - m-ex repeats them here because the injection sits BEFORE them. */
+        {
+            extern int Mex_HasZairHook(int kind);
+            extern void Mex_OnZairDispatch(int kind, void* gobj, void* vanilla);
+            if (Mex_HasZairHook(fp->kind) &&
+                fp->input.held_buttons[0] & HSD_PAD_LR &&
+                fp->input.pressed_buttons & HSD_PAD_A)
+            {
+                Mex_OnZairDispatch(fp->kind, gobj, NULL);
+                fp->used_tether = true;
+                return true;
+            }
+        }
+#endif
         return false;
     }
     if (fp->accessory2_cb != NULL || fp->death1_cb != NULL ||

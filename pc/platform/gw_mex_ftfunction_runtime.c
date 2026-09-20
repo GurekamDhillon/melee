@@ -95,6 +95,15 @@ static int gw_mex_slot_of_internal(int k);
 #define GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM 20  /* ftData_UnkMotionStates2 */
 #define GW_MEX_SLOT_ON_DOUBLE_JUMP 32
 #define GW_MEX_SLOT_ON_USMASH 36
+/* The rest of m-ex's Category 2: no vanilla per-kind table, one injected call site each. Tails
+ * overrides 26 and 34; Lucas overrides 33, 35, 41, 43 and 44. */
+#define GW_MEX_SLOT_ON_MODEL_RENDER 26
+#define GW_MEX_SLOT_ON_ZAIR 33
+#define GW_MEX_SLOT_ON_LANDING 34
+#define GW_MEX_SLOT_ON_FSMASH 35
+#define GW_MEX_SLOT_ON_INTRO_L 41
+#define GW_MEX_SLOT_ON_TAUNT 43
+#define GW_MEX_SLOT_ON_CATCH 44
 
 /* onLoad's absolute bl targets (see the disassembly in the evidence log). */
 #define GW_MEX_GUEST_INDEX_ITEM   0x803D7058u /* m-ex MEX_IndexFighterItem (no vanilla symbol) */
@@ -1896,6 +1905,18 @@ static uint32_t gw_mex_interp_run2(uint32_t slot, void *gobj, uint32_t arg1) {
     return gw_ppc_call(target, args, 2, gw_mex_r2, gw_mex_stack_top);
 }
 
+static uint32_t gw_mex_interp_run3(uint32_t slot, void *gobj, uint32_t arg1, uint32_t arg2) {
+    uint32_t target = gw_mex_override_target(slot);
+    uint32_t args[3];
+    if (target == 0) {
+        return 0;
+    }
+    args[0] = (uint32_t)(uintptr_t)gobj;
+    args[1] = arg1;
+    args[2] = arg2;
+    return gw_ppc_call(target, args, 3, gw_mex_r2, gw_mex_stack_top);
+}
+
 /* ---- MoveLogic (slot 3) move-table runtime -------------------------------------------
  * MoveLogic is NOT code: it is a MotionState[] table the engine indexes by `motion_id - fp->x18`
  * (fighter.c:1235) to drive each action state's anim/phys/coll/cam callbacks. m-ex swaps
@@ -2325,6 +2346,36 @@ static void gw_mex_interp_remove_head_item(void *gobj) {
     gw_mex_interp_run_logged(GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM, "onRemoveHeadItem", gobj);
 }
 
+/* m-ex Category 2. Each is dispatched from the decomp point that matches m-ex's own injection
+ * address, which is recorded beside the event id in gw.h and in the comment at each call site.
+ *
+ * onModelRender (26) is the odd one: it DOES have a vanilla per-kind table (ftData_UnkMtxFunc0,
+ * 0x803C20CC - m-ex's Model.asm swaps that very table base), so ftData_MexInitKinds already fills
+ * it for a native target. What it lacks is a way to reach a GUEST override, which is this hook.
+ * Its entries are called as (gobj, flag_index, mtx), so it needs the three-argument path. */
+static void gw_mex_interp_model_render(void *gobj, void *arg1, void *mtx) {
+    gw_mex_interp_run3(GW_MEX_SLOT_ON_MODEL_RENDER, gobj, (uint32_t)(uintptr_t)arg1,
+                       (uint32_t)(uintptr_t)mtx);
+}
+static void gw_mex_interp_zair(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_ZAIR, "onZair", gobj);
+}
+static void gw_mex_interp_landing(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_LANDING, "onLanding", gobj);
+}
+static void gw_mex_interp_fsmash(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_FSMASH, "onFSmash", gobj);
+}
+static void gw_mex_interp_intro_l(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_INTRO_L, "onIntroL", gobj);
+}
+static void gw_mex_interp_taunt(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_TAUNT, "onTaunt", gobj);
+}
+static void gw_mex_interp_catch(void *gobj) {
+    gw_mex_interp_run_logged(GW_MEX_SLOT_ON_CATCH, "onCatch", gobj);
+}
+
 /* onItemPickup (slot 13) - dispatched from ftpickupitem_800948A8 (ftpickupitem.c) with the picked
  * item gobj. Fires only when the fighter picks up an item, so in Target Test it cannot fire. */
 static void gw_mex_interp_item_pickup(void *gobj, void *arg1) {
@@ -2419,7 +2470,12 @@ static const char *gw_mex_slot_name(uint32_t slot) {
     }
 }
 
-/* Slots this build dispatches. Anything else the blob overrides is reported, once per install. */
+/* Slots this build dispatches. Anything else the blob overrides is reported, once per install.
+ *
+ * KEEP THIS IN STEP WITH THE REGISTRATION LIST in gw_Mex_FtFunctionInstall. It has drifted once
+ * already: 16/17/18 were wired and this was not updated, so every install logged three false
+ * "does not dispatch" warnings. mex_all_override_slots_wired fails when the two disagree about a
+ * slot a fighter on the disc really overrides, which is how that was caught. */
 static int gw_mex_slot_is_wired(uint32_t slot) {
     switch (slot) {
     case GW_MEX_SLOT_ON_LOAD: case GW_MEX_SLOT_ON_RESPAWN: case GW_MEX_SLOT_ON_DESTROY:
@@ -2427,11 +2483,16 @@ static int gw_mex_slot_is_wired(uint32_t slot) {
     case GW_MEX_SLOT_SPECIAL_S: case GW_MEX_SLOT_SPECIAL_S_AIR: case GW_MEX_SLOT_SPECIAL_HI:
     case GW_MEX_SLOT_SPECIAL_HI_AIR: case GW_MEX_SLOT_SPECIAL_LW: case GW_MEX_SLOT_SPECIAL_LW_AIR:
     case GW_MEX_SLOT_ON_ABSORB: case GW_MEX_SLOT_ON_ITEM_PICKUP:
+    case GW_MEX_SLOT_ON_ITEM_DROP_EXT: case GW_MEX_SLOT_ON_ITEM_PICKUP2:
+    case GW_MEX_SLOT_ON_ITEM_DROP:
     case GW_MEX_SLOT_ON_ITEM_INVISIBLE: case GW_MEX_SLOT_ON_ITEM_VISIBLE:
     case GW_MEX_SLOT_ON_APPLY_HEAD_ITEM: case GW_MEX_SLOT_ON_REMOVE_HEAD_ITEM:
     case GW_MEX_SLOT_ON_KNOCKBACK_ENTER: case GW_MEX_SLOT_ON_KNOCKBACK_EXIT:
     case GW_MEX_SLOT_ON_FRAME: case GW_MEX_SLOT_ON_ACTION_STATE_CHANGE:
     case GW_MEX_SLOT_ON_REAPPLY_ATTR: case GW_MEX_SLOT_ON_DOUBLE_JUMP: case GW_MEX_SLOT_ON_USMASH:
+    case GW_MEX_SLOT_ON_MODEL_RENDER: case GW_MEX_SLOT_ON_ZAIR: case GW_MEX_SLOT_ON_LANDING:
+    case GW_MEX_SLOT_ON_FSMASH: case GW_MEX_SLOT_ON_INTRO_L: case GW_MEX_SLOT_ON_TAUNT:
+    case GW_MEX_SLOT_ON_CATCH:
         return 1;
     default:
         return 0;
@@ -2681,6 +2742,16 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
     gw_mex_hook(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind, GW_MEX_SLOT_ON_DOUBLE_JUMP,
                 gw_mex_interp_double_jump);
     gw_mex_hook(GW_MEX_EVENT_ON_USMASH, kind, GW_MEX_SLOT_ON_USMASH, gw_mex_interp_usmash);
+    gw_mex_hook(GW_MEX_EVENT_ON_ZAIR, kind, GW_MEX_SLOT_ON_ZAIR, gw_mex_interp_zair);
+    gw_mex_hook(GW_MEX_EVENT_ON_LANDING, kind, GW_MEX_SLOT_ON_LANDING, gw_mex_interp_landing);
+    gw_mex_hook(GW_MEX_EVENT_ON_FSMASH, kind, GW_MEX_SLOT_ON_FSMASH, gw_mex_interp_fsmash);
+    gw_mex_hook(GW_MEX_EVENT_ON_INTRO_L, kind, GW_MEX_SLOT_ON_INTRO_L, gw_mex_interp_intro_l);
+    gw_mex_hook(GW_MEX_EVENT_ON_TAUNT, kind, GW_MEX_SLOT_ON_TAUNT, gw_mex_interp_taunt);
+    gw_mex_hook(GW_MEX_EVENT_ON_CATCH, kind, GW_MEX_SLOT_ON_CATCH, gw_mex_interp_catch);
+    if (gw_mex_override_target(GW_MEX_SLOT_ON_MODEL_RENDER) != 0u) {
+        extern int gw_Mex_HookRegister3(int event, int kind, void (*fn)(void *, void *, void *));
+        gw_Mex_HookRegister3(GW_MEX_EVENT_ON_MODEL_RENDER, kind, gw_mex_interp_model_render);
+    }
     if (gw_mex_override_target(GW_MEX_SLOT_ON_ITEM_PICKUP) != 0u) {
         gw_Mex_HookRegister2(GW_MEX_EVENT_ON_ITEM_PICKUP, kind, gw_mex_interp_item_pickup);
     }
@@ -3215,6 +3286,51 @@ static int test_mex_kirby_tables_wired(void) {
     return rc;
 }
 
+
+/* No fighter on the disc overrides a slot this build does not dispatch.
+ *
+ * This is the whole per-fighter goal stated as a test. An unwired slot is the quiet failure the
+ * handoff warns about - the clone base's handler runs and nothing says so - and until now the
+ * only way to learn about one was to read an install log. The blobs' override tables are static
+ * data, so the question can be answered from the disc with no window and no fighter loaded.
+ *
+ * It also fails in the useful direction for ACE: a new fighter there that overrides a slot
+ * nobody has wired yet shows up here instead of as a character that silently behaves like its
+ * clone base. */
+static int test_mex_all_override_slots_wired(void) {
+    unsigned f;
+    int loaded = 0, rc = 0;
+    for (f = 0; f < sizeof gw_mex_test_fighters / sizeof gw_mex_test_fighters[0]; ++f) {
+        gw_ftfunction ff;
+        int i, unwired = 0;
+        memset(&ff, 0, sizeof ff);
+        if (gw_ftfunction_load(gw_mex_test_fighters[f].dat, gw_mex_test_fighters[f].internal,
+                               &ff) != GW_FTFUNC_OK) {
+            continue; /* not on this disc */
+        }
+        ++loaded;
+        for (i = 0; i < ff.override_count; ++i) {
+            uint32_t slot = ff.overrides[i].slot;
+            const char *sname;
+            if (ff.overrides[i].is_func_addr || gw_mex_slot_is_wired(slot)) {
+                continue;
+            }
+            sname = gw_mex_slot_name(slot);
+            gw_test_fail("%s overrides slot %u (%s), which this build does not dispatch",
+                         gw_mex_test_fighters[f].name, slot, sname != NULL ? sname : "unknown");
+            ++unwired;
+            rc = 1;
+        }
+        gw_log("test mex_all_override_slots_wired: %s: %d override(s), %d unwired",
+               gw_mex_test_fighters[f].name, ff.override_count, unwired);
+        gw_ftfunction_free(&ff);
+    }
+    if (loaded == 0) {
+        gw_log("test mex_all_override_slots_wired: no m-ex fighters on this disc - skipped");
+    }
+    return rc;
+}
+
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
@@ -3226,4 +3342,5 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_ids_all", test_mex_ft_item_ids_all);
     gw_test_register("mex_kirby_hats", test_mex_kirby_hats);
     gw_test_register("mex_kirby_tables_wired", test_mex_kirby_tables_wired);
+    gw_test_register("mex_all_override_slots_wired", test_mex_all_override_slots_wired);
 }

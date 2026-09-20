@@ -1021,6 +1021,8 @@ int gw_Mex_Enabled(const char *name) {
 
 static gwmex_gobj_fn gw_mex_gobj_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 static gwmex_gobj_fn2 gw_mex_gobj_hooks2[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
+typedef void (*gwmex_gobj_fn3)(void*, void*, void*);
+static gwmex_gobj_fn3 gw_mex_gobj_hooks3[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 static gwmex_gobj_pred gw_mex_pred_hooks[GW_MEX_EVENT_COUNT][GW_MEX_KIND_MAX];
 
 /* Hook re-entry. An m-ex override is written as a REPLACEMENT for the engine function it hooks,
@@ -1050,6 +1052,23 @@ int gw_Mex_HookRegister2(int event, int kind, gwmex_gobj_fn2 fn) {
   }
   gw_mex_gobj_hooks2[event][kind] = fn;
   return 1;
+}
+
+int gw_Mex_HookRegister3(int event, int kind, void (*fn)(void*, void*, void*)) {
+  if ((unsigned)event >= GW_MEX_EVENT_COUNT || (unsigned)kind >= GW_MEX_KIND_MAX) {
+    return 0;
+  }
+  gw_mex_gobj_hooks3[event][kind] = (gwmex_gobj_fn3)fn;
+  return 1;
+}
+
+int gw_Mex_HasHook(int event, int kind) {
+  if ((unsigned)event >= GW_MEX_EVENT_COUNT || (unsigned)kind >= GW_MEX_KIND_MAX) {
+    return 0;
+  }
+  return gw_mex_gobj_hooks[event][kind] != NULL ||
+         gw_mex_gobj_hooks2[event][kind] != NULL ||
+         gw_mex_gobj_hooks3[event][kind] != NULL;
 }
 
 int gw_Mex_PredicateRegister(int event, int kind, gwmex_gobj_pred fn) {
@@ -1096,6 +1115,25 @@ void gw_Mex_GObjDispatch2(int event, int kind, void *gobj, void *arg1, void *van
     gw_Mex_RestoreKind(prev);
   } else if (vanilla != NULL) {
     ((gwmex_gobj_fn2)vanilla)(gobj, arg1);
+  }
+}
+
+/* Three-argument dispatch: onModelRender's table entry is called as (gobj, flag_index, mtx). */
+void gw_Mex_GObjDispatch3(int event, int kind, void *gobj, void *arg1, void *arg2,
+                          void *vanilla) {
+  gwmex_gobj_fn3 fn = NULL;
+  int in_range = ((unsigned)event < GW_MEX_EVENT_COUNT && (unsigned)kind < GW_MEX_KIND_MAX);
+  if (in_range && !gw_mex_hook_active[event][kind]) {
+    fn = gw_mex_gobj_hooks3[event][kind];
+  }
+  if (fn != NULL) {
+    void *prev = gw_Mex_SelectKind(kind);
+    gw_mex_hook_active[event][kind] = 1;
+    fn(gobj, arg1, arg2);
+    gw_mex_hook_active[event][kind] = 0;
+    gw_Mex_RestoreKind(prev);
+  } else if (vanilla != NULL) {
+    ((gwmex_gobj_fn3)vanilla)(gobj, arg1, arg2);
   }
 }
 
@@ -1189,6 +1227,36 @@ void gw_Mex_MoveLogicDispatch(int kind, void *gobj, void *vanilla) {
 void gw_Mex_OnDoubleJumpDispatch(int kind, void *gobj, void *vanilla) {
   gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_DOUBLE_JUMP, kind, gobj, vanilla);
 }
+/* ---- m-ex Category 2 ------------------------------------------------------------------
+ * These have no vanilla per-kind table, so every call site passes vanilla = NULL: the hook is an
+ * addition to what the engine already does, not a replacement for a table entry. The two sites
+ * where m-ex's injected code DOES skip vanilla work ask gw_Mex_HasHook first and do the skipping
+ * themselves, in the decomp, where it is readable. */
+void gw_Mex_OnModelRenderDispatch(int kind, void *gobj, void *arg1, void *mtx, void *vanilla) {
+  gw_Mex_GObjDispatch3(GW_MEX_EVENT_ON_MODEL_RENDER, kind, gobj, arg1, mtx, vanilla);
+}
+int gw_Mex_HasZairHook(int kind) { return gw_Mex_HasHook(GW_MEX_EVENT_ON_ZAIR, kind); }
+int gw_Mex_HasFSmashHook(int kind) { return gw_Mex_HasHook(GW_MEX_EVENT_ON_FSMASH, kind); }
+
+void gw_Mex_OnZairDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_ZAIR, kind, gobj, vanilla);
+}
+void gw_Mex_OnLandingDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_LANDING, kind, gobj, vanilla);
+}
+void gw_Mex_OnFSmashDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_FSMASH, kind, gobj, vanilla);
+}
+void gw_Mex_OnIntroLDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_INTRO_L, kind, gobj, vanilla);
+}
+void gw_Mex_OnTauntDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_TAUNT, kind, gobj, vanilla);
+}
+void gw_Mex_OnCatchDispatch(int kind, void *gobj, void *vanilla) {
+  gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_CATCH, kind, gobj, vanilla);
+}
+
 void gw_Mex_OnUSmashDispatch(int kind, void *gobj, void *vanilla) {
   gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_USMASH, kind, gobj, vanilla);
 }

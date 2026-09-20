@@ -146,6 +146,20 @@ void decideFighter(HSD_GObj* gobj, float stick_x_sign, float stick_angle)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     fp->facing_dir = stick_x_sign;
+#if defined(TARGET_PC)
+    /* m-ex onFSmash (slot 35), injected at 0x8008C360 - immediately after the facing_dir store
+     * and branching to the epilogue afterwards, so the hook REPLACES the switch below rather
+     * than running before it. Hence the HasHook test: dispatching unconditionally would run the
+     * fighter's own forward smash AND the vanilla default. */
+    {
+        extern int Mex_HasFSmashHook(int kind);
+        extern void Mex_OnFSmashDispatch(int kind, void* gobj, void* vanilla);
+        if (Mex_HasFSmashHook(fp->kind)) {
+            Mex_OnFSmashDispatch(fp->kind, gobj, NULL);
+            return;
+        }
+    }
+#endif
     switch (fp->kind) {
     case Ft_Kind_Ness:
         ftNs_AttackS4_Enter(gobj);

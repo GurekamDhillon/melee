@@ -36,16 +36,81 @@ struct MnItemSwTable {
     /* 0xF8 */ u8 item_order[32];
 };
 
+struct MnItemSwAnimTable {
+    /* 0x00 */ f32 x30[18];
+    /* 0x48 */ f32 items[32];
+};
+
+#if defined(TARGET_PC)
+/* THE THREE BLOCKS BELOW MUST BE ONE OBJECT.
+ *
+ * mnItemSw_GetTable() casts the first of them to the whole struct MnItemSwTable, because on
+ * hardware the linker laid them out adjacently and exactly matching it:
+ *
+ *     0x803ED340  mnItemSw_803ED340   -> x00[4][3]   (0x00)
+ *     0x803ED370  mnItemSw_AnimTable  -> x30[18]     (0x30)
+ *     0x803ED3B8                       + items[32]   (0x78)
+ *     0x803ED438  mnItemSw_803ED438   -> item_order  (0xF8)
+ *
+ * The port's linker has no reason to honour that and does not: the two landed in different
+ * sections about 1.1 MB apart, so every tbl->x30[6 + freq * 2] read - the item FREQUENCY
+ * animations - fetched whatever followed a 48-byte array. Defining one object makes the cast
+ * correct by construction instead of by luck.
+ *
+ * Any other `(struct X*)` cast over a smaller array in this decomp has the same latent bug. */
+static struct MnItemSwTable mnItemSw_Table = {
+    {
+        { 0.0f, 9.0f, -0.1f },
+        { 0.0f, 0.0f, -0.1f },
+        { 0.0f, 0.0f, -0.1f },
+        { 0.0f, 0.0f, -0.1f },
+    },
+    {
+        0.0f,
+        10.0f,
+        -0.1f,
+        0.0f,
+        199.0f,
+        0.0f,
+        10.0f,
+        11.0f,
+        8.0f,
+        9.0f,
+        6.0f,
+        7.0f,
+        4.0f,
+        5.0f,
+        2.0f,
+        3.0f,
+        0.0f,
+        1.0f,
+    },
+    {
+        0.0f,  1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,
+        8.0f,  9.0f,  10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f,
+        16.0f, 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f,
+        25.0f, 24.0f, 26.0f, 27.0f, 29.0f, 28.0f, 30.0f, 31.0f,
+    },
+    {
+    0x05, 0x12, 0x0A, 0x1E, 0x0D, 0x18, 0x03, 0x0E, 0x17, 0x1B, 0x01,
+    0x09, 0x08, 0x07, 0x15, 0x04, 0x06, 0x02, 0x0F, 0x00, 0x11, 0x0B,
+    0x1F, 0x1A, 0x14, 0x19, 0x10, 0x16, 0x13, 0x1D, 0x0C, 0x00,
+    },
+};
+
+/* The original names, so every use site below is unchanged. MnItemSwTable and
+ * MnItemSwAnimTable both spell these members `x30` and `items`, so the alias is exact. */
+#define mnItemSw_803ED340 (mnItemSw_Table.x00)
+#define mnItemSw_AnimTable mnItemSw_Table
+#define mnItemSw_803ED438 (mnItemSw_Table.item_order)
+
+#else
+
 static f32 mnItemSw_803ED340[4][3] = {
     { 0.0f, 9.0f, -0.1f },
     { 0.0f, 0.0f, -0.1f },
     { 0.0f, 0.0f, -0.1f },
     { 0.0f, 0.0f, -0.1f },
-};
-
-struct MnItemSwAnimTable {
-    /* 0x00 */ f32 x30[18];
-    /* 0x48 */ f32 items[32];
 };
 
 static struct MnItemSwAnimTable mnItemSw_AnimTable = {
@@ -82,13 +147,18 @@ u8 mnItemSw_803ED438[32] = {
     0x09, 0x08, 0x07, 0x15, 0x04, 0x06, 0x02, 0x0F, 0x00, 0x11, 0x0B,
     0x1F, 0x1A, 0x14, 0x19, 0x10, 0x16, 0x13, 0x1D, 0x0C, 0x00,
 };
+#endif
 
 static f32 mnItemSw_804D4BA0[2] = { 0.0f, 1.0f };
 
 // Some routines address the adjacent data blocks as one table.
 static inline struct MnItemSwTable* mnItemSw_GetTable(void)
 {
+#if defined(TARGET_PC)
+    return &mnItemSw_Table;
+#else
     return (struct MnItemSwTable*) mnItemSw_803ED340;
+#endif
 }
 
 #ifdef MUST_MATCH

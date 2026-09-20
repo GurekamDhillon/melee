@@ -31,6 +31,12 @@ uint32_t gw_mex_bridge_count(void);
  * would miss those and succeed only for i == 0. */
 int gw_mex_bridge_is_native_data(uint32_t native_addr, uint32_t size);
 
+/* The forward question by RANGE: for a GUEST address that may be interior to one of the game's
+ * globals, the native address of that same byte, or 0. The exact-base lookup above misses
+ * `global[i]` for every i != 0, which made the interpreter read MEM1 instead of this exe's
+ * .data - silently, and wrongly, on every interior access. */
+uint32_t gw_mex_bridge_guest_data(uint32_t guest_addr);
+
 #ifdef __cplusplus
 }
 #endif

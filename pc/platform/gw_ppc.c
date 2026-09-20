@@ -124,7 +124,14 @@ static uint32_t gw_ppc_static_native(uint32_t ea) {
     if (native != 0 && kind == 0) {
         return native;
     }
-    return 0;
+    /* INTERIOR ADDRESSES. The lookup above matches an object's BASE only, so `global[i]` for
+     * every i != 0 missed it and fell through to MEM1 - where the object is not. That is a
+     * silent wrong read on every interior access to a game global, and it is the forward
+     * direction of exactly the problem gw_mex_bridge_is_native_data already solves for
+     * pointers coming back the other way. Two of the stage sweep's resolver failures were
+     * branches to gmResultCharacterData +0x20 and +0x34, which is what a garbage read out of
+     * a global looks like once the value is used. */
+    return gw_mex_bridge_guest_data(ea);
 }
 
 static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {

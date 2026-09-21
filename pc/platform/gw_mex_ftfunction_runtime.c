@@ -2349,6 +2349,37 @@ static uint32_t gw_mex_shim_it_snap_ground(uint32_t gobj, uint32_t pos, uint32_t
     return gw_mex_call_native(GW_MEX_GUEST_IT_SNAP_GROUND, gobj, pos, 0u, 0u);
 }
 
+/* ftColl_80079EA8(fp, hit, unk_count) -> knockback. ACE's GrSb.dat (Fighter_ShootBarrel) builds a
+ * HitCapsule on its stack with lbColl_80008D30 and then calls this without setting r5 - found by
+ * tools/mex_port/scan_leftover_args.py. On hardware r5 is lbColl_80008D30's leftover: its last
+ * load into r5 is the source's damage word, which it also stores as hit->unk_count, so the real
+ * game computes with unk_count. The guest's own r5 here still holds a pointer, which as a count
+ * scales the knockback by ~2^31. Every vanilla caller passes hit->unk_count, so an implausible
+ * count (> 0xFFFF) is replaced by it. Returns in f1: the resolver tags it with its float sig. */
+#define GW_MEX_GUEST_FT_KNOCKBACK 0x80079EA8u
+static float gw_mex_shim_ft_knockback(uint32_t fp, uint32_t hit, uint32_t count, uint32_t a3,
+                                      uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    int kind = 0;
+    uint32_t native = gw_mex_bridge_lookup(GW_MEX_GUEST_FT_KNOCKBACK, &kind);
+    (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    if (count > 0xFFFFu && hit >= 0x80000000u && hit + 12u <= 0x80000000u + gw_mem1_size) {
+        static int logged;
+        uint32_t fixed = gw_r32((const void *) (uintptr_t) (hit + 8u)); /* HitCapsule.unk_count */
+        if (!logged) {
+            logged = 1;
+            gw_log("interp: ftColl_80079EA8 called with unk_count=0x%08X (no third argument) - "
+                   "using hit->unk_count %u, the value hardware leaves in r5",
+                   count, fixed);
+        }
+        count = fixed;
+    }
+    if (native == 0u || kind != 1) {
+        gw_panic("interp: no native engine function for guest 0x%08X", GW_MEX_GUEST_FT_KNOCKBACK);
+    }
+    return ((float (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                       uint32_t))(uintptr_t) native)(fp, hit, count, 0, 0, 0, 0, 0);
+}
+
 /* Guest 0x80005358 is the closing `blr` of __init_registers - the same word on vanilla, Akaneia and
  * ACE. m-ex content uses it as a do-nothing function (ACE ext:290's stage article calls it from
  * MainAnim), and there is no gw_ symbol for the middle of an init routine. A bare blr returns with
@@ -2415,6 +2446,9 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
         return gw_mex_shim_bare_blr;
     case GW_MEX_GUEST_IT_SNAP_GROUND:
         return gw_mex_shim_it_snap_ground;
+    case GW_MEX_GUEST_FT_KNOCKBACK:
+        (void) gw_mex_sig_lookup(guest_addr, sig); /* float return, captured into f1 */
+        return (gw_ppc_native_fn) gw_mex_shim_ft_knockback;
     case GW_MEX_GUEST_CK_NAME:
         return gw_mex_shim_ck_name;
     case GW_MEX_GUEST_CK_NAME_SHORT:

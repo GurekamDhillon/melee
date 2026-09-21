@@ -23,6 +23,7 @@
 #include <sysdolphin/baselib/sislib.h>
 #include <sysdolphin/baselib/video.h>
 #include "gmscenelaunch.h"
+#include "gmfrontend.h"
 
 struct routingInfo {
     u8 curr_mode;     ///< ::GameModeKind
@@ -401,6 +402,13 @@ void gm_801A4510(void)
         if (gmMainLib_8046B0F0.resetting) {
             gmMainLib_8046B0F0.resetting = false;
         }
+#if defined(TARGET_PC)
+        /* The port's frontend: a screen placed between this mode and the next one is entered
+           first, and continues to next_mode (or back) when it is done. gmfrontend.c. */
+        else {
+            next_mode = gmFrontend_Route(state_machine.routing.curr_mode, next_mode);
+        }
+#endif
         gamestate->routing.prev_mode = gamestate->routing.curr_mode;
         gamestate->routing.curr_mode = next_mode;
     }

@@ -28,6 +28,7 @@
 #include "gmresult.h"
 #include "gmsinglebutton.h"
 #include "gmslomo.h"
+#include "gmfrontend.h"
 #include "gmstaffroll.h"
 #include "gmstamina.h"
 #include "gmsupersudden.h"
@@ -371,6 +372,16 @@ static GameScene scenes[] = {
         gm_Scene_CameraVs_OnExit,
         NULL,
     },
+#if defined(TARGET_PC)
+    /* The port's frontend screens (gmfrontend.c). Past the retail kinds, before the terminator. */
+    {
+        GS_FRONTEND,
+        gm_Scene_Frontend_OnFrame,
+        gm_Scene_Frontend_OnEnter,
+        gm_Scene_Frontend_OnExit,
+        NULL,
+    },
+#endif
     {
         GS_COUNT,
         NULL,
@@ -741,6 +752,16 @@ static GameMode modes[] = {
         gm_Mode_SingleButtonVs_OnInit,
         gm_Mode_SingleButtonVs_States,
     },
+#if defined(TARGET_PC)
+    {
+        false,
+        GM_FRONTEND,
+        NULL,
+        NULL,
+        NULL,
+        gm_Mode_Frontend_States,
+    },
+#endif
     {
         false,
         GM_COUNT,

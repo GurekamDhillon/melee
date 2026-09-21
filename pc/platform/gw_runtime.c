@@ -920,6 +920,12 @@ int gw_PcTraceHeapEnabled(void) {
   return (v != NULL && v[0] != '0') ? 1 : 0;
 }
 
+/* MELEE_FRONTEND=0 turns the port's own frontend screens off (src/melee/gm/gmfrontend.c). */
+int gw_PcFrontendEnabled(void) {
+  const char *v = getenv("MELEE_FRONTEND");
+  return (v == NULL || v[0] != '0') ? 1 : 0;
+}
+
 int gw_PcTraceMotionEnabled(void) {
   const char *v = getenv("MELEE_LOG_MOTION");
   return (v != NULL && v[0] != '0') ? 1 : 0;

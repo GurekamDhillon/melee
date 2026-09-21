@@ -67,6 +67,10 @@ static u8 ifMagnify_803F984C[16][4] = {
     { 6, 6, 6, 6 }, { 6, 7, 6, 7 }, { 7, 8, 7, 8 }, { 8, 8, 8, 8 },
 };
 
+#if defined(TARGET_PC)
+static bool ifMagnify_LogicArmed;
+#endif
+
 static inline bool ifMagnify_IsHUDVisible(void)
 {
     if ((gmVs_GetSceneController()->state.hud_enabled == 0) ||
@@ -524,6 +528,9 @@ void ifMagnify_802FC618(void)
     cobj = lb_80013B14((HSD_CameraDescPerspective*) &ifMagnify_803F97E8);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj);
     GObj_SetupGXLinkMax(gobj, (GObj_RenderFunc) (Event) ifMagnify_802FBBDC, 0);
+#if defined(TARGET_PC)
+    ifMagnify_LogicArmed = true; /* see ifMagnify_UpdateLogicOffscreen */
+#endif
     gobj->gxlink_prios = 0x10;
 
     idesc = player0->idesc;
@@ -623,7 +630,55 @@ void ifMagnify_802FC940(void)
     }
 }
 
+#if defined(TARGET_PC)
+/* The off-screen flag, computed by LOGIC rather than by the render pass.
+ *
+ * ifMagnify_802FBBDC sets is_offscreen while it RENDERS each magnifier bubble, and game logic reads
+ * it back (ifMagnify_802FC998 -> Fighter_8006A1BC's 1%-per-interval off-screen damage). On the
+ * console logic and render alternate one to one, so logic frame N sees the flag of the render that
+ * followed logic frame N-1. The port catches up with several logic frames per render under load,
+ * and rollback resimulates frames that are never rendered at all - either way logic read a stale
+ * flag, and two runs of one replay parted ways on a 1% hit (found by .slp playback).
+ *
+ * So the render pass's own predicate is evaluated here at the end of every logic frame (gmscene.c,
+ * after HSD_GObj_RunProcs) - exactly the state that render would see - and that snapshot is what
+ * logic reads. The render pass keeps setting is_offscreen for the bubble drawing. Armed when the
+ * magnifier is created for a match, disarmed on every scene init. */
+static u8 ifMagnify_LogicOffscreen[6];
+
+void ifMagnify_LogicDisarm(void)
+{
+    int i;
+    ifMagnify_LogicArmed = false;
+    for (i = 0; i < 6; i++) {
+        ifMagnify_LogicOffscreen[i] = 0;
+    }
+}
+
+void ifMagnify_UpdateLogicOffscreen(void)
+{
+    ifMagnify* magnify = &ifMagnify_804A1DE0;
+    bool show;
+    int i;
+    if (!ifMagnify_LogicArmed) {
+        return;
+    }
+    show = ifMagnify_IsHUDVisible();
+    for (i = 0; i < 6; i++) {
+        HSD_GObj* fighter_gobj = Player_GetEntity(i);
+        ifMagnify_LogicOffscreen[i] =
+            show && !magnify->player[i].state.ignore_offscreen && fighter_gobj != NULL &&
+            ftLib_80086B64(fighter_gobj) && ftLib_80086ED0(fighter_gobj);
+    }
+}
+#endif
+
 bool ifMagnify_802FC998(s32 ply_slot)
 {
+#if defined(TARGET_PC)
+    if (ifMagnify_LogicArmed) {
+        return ifMagnify_LogicOffscreen[ply_slot];
+    }
+#endif
     return ifMagnify_804A1DE0.player[ply_slot].state.is_offscreen;
 }

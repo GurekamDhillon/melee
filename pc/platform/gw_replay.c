@@ -645,6 +645,7 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
     }
     r = &rp.in[(f - rp.first) * GW_RP_SLOTS + port * 2];
     return r->present ? r->raw[which] : 0;
+}
 
 /* <trace>.rand.csv: every RNG draw while a replay is armed - frame, caller (native return address),
  * seed after, and whether it drew the global seed or a redirected one (HSD_RandSeedPtr). */

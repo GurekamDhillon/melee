@@ -234,6 +234,12 @@ void fn_801A4BD0(HSD_GObj* gobj) {}
 void gm_801A4BD4(void)
 {
     PAD_STACK(0x18);
+#if defined(TARGET_PC)
+    {
+        extern void ifMagnify_LogicDisarm(void);
+        ifMagnify_LogicDisarm(); /* the magnifier re-arms when a match creates it */
+    }
+#endif
 
     gm_SetDbPauseInputHandlers(fn_801A46F4, fn_801A47E4);
     gm_SetPreGObjProcCallback(NULL);
@@ -852,6 +858,13 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     temp_r25->unk_10.pre_gobj_proc();
                 }
                 HSD_GObj_RunProcs();
+#if defined(TARGET_PC)
+                {
+                    /* logic-side off-screen flag for the next logic frame (ifmagnify.c) */
+                    extern void ifMagnify_UpdateLogicOffscreen(void);
+                    ifMagnify_UpdateLogicOffscreen();
+                }
+#endif
             }
             if (temp_r25->unk_0 != -2) {
                 temp_r25->unk_0++;

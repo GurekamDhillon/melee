@@ -2821,6 +2821,23 @@ static inline float Fighter_GetPosY(Fighter* fp)
     return fp->cur_pos.y;
 }
 
+#if defined(TARGET_PC)
+/* One post-frame trace row, from whichever proc this replay's Slippi recorded in. */
+static void ftReplay_TraceFighter(Fighter* fp)
+{
+    extern int Replay_Tracing(void);
+    extern void Replay_TraceFighter(int port, int follower, int ckind, int action, float x,
+                                    float y, float facing, float percent, int stocks, float air_x,
+                                    float air_y, float kb_x, float kb_y, float ground_x);
+    if (Replay_Tracing()) {
+        Replay_TraceFighter(fp->player_id, fp->is_sub_fighter, fp->kind, fp->motion_id,
+                            fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir, fp->dmg.x1830_percent,
+                            Player_GetStocks(fp->player_id), fp->self_vel.x, fp->self_vel.y,
+                            fp->x8c_kb_vel.x, fp->x8c_kb_vel.y, fp->gr_vel);
+    }
+}
+#endif
+
 void Fighter_procMap(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -2861,6 +2878,14 @@ void Fighter_procMap(Fighter_GObj* gobj)
 
         HSD_JObjSetTranslate(gobj->hsd_obj, &fp->cur_pos);
     }
+#if defined(TARGET_PC)
+    {   /* the 1.x/2.x post-frame point (0x8006C5D8); see ftReplay_TraceFighter */
+        extern int Replay_TraceAtProcMap(void);
+        if (Replay_TraceAtProcMap()) {
+            ftReplay_TraceFighter(fp);
+        }
+    }
+#endif
 }
 
 void Fighter_8006C5F4(Fighter_GObj* gobj)
@@ -3437,20 +3462,14 @@ void Fighter_UnkCallCameraCallback_8006D9EC(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
     {
         /* MELEE_STATE_TRACE (pc/platform/gw_replay.c): the fields Slippi's post-frame records,
-           from the point it records them - SendGamePostFrame.asm hooks 0x8006DA34, this proc's
-           epilogue (priority 0x12), so the frame's hits (Fighter_ProcessHit_8006D1EC, 0xE) are
-           already applied. Tracing from Fighter_procMap (6) instead showed every hit a frame late. */
-        extern int Replay_Tracing(void);
-        extern void Replay_TraceFighter(int port, int follower, int ckind, int action, float x,
-                                        float y, float facing, float percent, int stocks,
-                                        float air_x, float air_y, float kb_x, float kb_y,
-                                        float ground_x);
-        if (Replay_Tracing()) {
-            Replay_TraceFighter(fp->player_id, fp->is_sub_fighter, fp->kind, fp->motion_id,
-                                fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir,
-                                fp->dmg.x1830_percent, Player_GetStocks(fp->player_id),
-                                fp->self_vel.x, fp->self_vel.y, fp->x8c_kb_vel.x,
-                                fp->x8c_kb_vel.y, fp->gr_vel);
+           from the point THAT REPLAY'S Slippi recorded them: 3.x hooks 0x8006DA34, this proc's
+           epilogue (priority 0x12), after the frame's hits (Fighter_ProcessHit_8006D1EC, 0xE);
+           1.x/2.x hooked 0x8006C5D8, Fighter_procMap's epilogue (priority 6), before them. Using
+           the wrong one puts every hit a frame out - a 1.x replay's damage looked one frame late
+           in the port (e.g. Gang-Steals/14/150543 frame 82 vs 83, positions identical). */
+        extern int Replay_TraceAtProcMap(void);
+        if (!Replay_TraceAtProcMap()) {
+            ftReplay_TraceFighter(fp);
         }
     }
 #endif

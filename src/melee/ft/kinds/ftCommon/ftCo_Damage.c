@@ -495,6 +495,37 @@ bool ftCo_Damage_CheckAirMotion(Fighter* fp)
     }
 }
 
+#if defined(TARGET_PC)
+/* UCF 0.84 SDI (Slippi External/UCF 0.84/UCF/UCF SDI.asm, @ 0x8008E54C - replacing the y-timer
+ * test below): when neither stick timer is inside the SDI window, SDI still happens if one of the
+ * sticky timers is 0 or 1, the stick was inside the SDI threshold last frame, and the raw stick
+ * moved more than 62 units (squared distance > 3844) against two frames earlier in UCF's pad
+ * buffer (fighter.c). Found by .slp playback: a two-frame flick SDI'd on console, not here. */
+static bool ftCo_Ucf084Sdi(Fighter* fp)
+{
+    extern int Replay_UcfVersion(int port);
+    extern int ftUcf_PadRaw(int port, int which_y, int back);
+    int port = fp->x618_player_id;
+    int dx, dy;
+    f32 yy, prev, thr;
+    if (Replay_UcfVersion(port) != 84) {
+        return false;
+    }
+    if (fp->active_sticky.lstick.x > 1 && fp->active_sticky.lstick.y > 1) {
+        return false;
+    }
+    yy = fp->input.lstick[1].y * fp->input.lstick[1].y;
+    prev = fp->input.lstick[1].x * fp->input.lstick[1].x + yy; /* fmadds */
+    thr = p_ftCommonData->sdi_min_stick_mag * p_ftCommonData->sdi_min_stick_mag;
+    if (!(thr > prev)) {
+        return false;
+    }
+    dx = ftUcf_PadRaw(port, 0, 0) - ftUcf_PadRaw(port, 0, 2);
+    dy = ftUcf_PadRaw(port, 1, 0) - ftUcf_PadRaw(port, 1, 2);
+    return dx * dx + dy * dy > 3844;
+}
+#endif
+
 void ftCo_Damage_OnEveryHitlag(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -502,7 +533,11 @@ void ftCo_Damage_OnEveryHitlag(Fighter_GObj* gobj)
         VEC2_SQ_LEN(fp->input.lstick[0]) >=
             SQ(p_ftCommonData->sdi_min_stick_mag) &&
         (fp->active_timer.lstick.x < p_ftCommonData->sdi_stick_window ||
-         fp->active_timer.lstick.y < p_ftCommonData->sdi_stick_window))
+         fp->active_timer.lstick.y < p_ftCommonData->sdi_stick_window
+#if defined(TARGET_PC)
+         || ftCo_Ucf084Sdi(fp)
+#endif
+             ))
     {
         float scaled_lstick_x =
             fp->input.lstick[0].x * p_ftCommonData->sdi_pos_scale;

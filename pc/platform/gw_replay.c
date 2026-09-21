@@ -570,6 +570,15 @@ void gw_Replay_CheckSeed(uint32_t port_seed) {
     }
 }
 
+/* Where this replay's Slippi recorded post-frame state: 1.x/2.x at Fighter_procMap's epilogue
+ * (0x8006C5D8), 3.x at Fighter_UnkCallCameraCallback_8006D9EC's (0x8006DA34, after hits). */
+int gw_Replay_TraceAtProcMap(void) {
+    if (rp.active) {
+        return rp.version[0] < 3;
+    }
+    return 0;
+}
+
 int gw_Replay_Tracing(void) {
     return (rp.trace != NULL && rp.frame != GW_RP_UNARMED) ||
            (rec.f != NULL && rec.frame != GW_RP_UNARMED);

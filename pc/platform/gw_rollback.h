@@ -111,6 +111,13 @@ int gw_RB_Iterations(int count);
  * side effects (sound, rumble) while resimulating. */
 void gw_RB_IterStart(void);
 
+/* gmscene.c, at the start of every scene: a session governs VS matches only. */
+void gw_RB_SceneBegin(int scene_kind);
+
+/* gmscene.c: is a rollback session configured (before it is armed)? Chooses which of SyncTest's
+ * and the session's hooks the scene loop runs. */
+int gw_RB_Enabled(void);
+
 /* gw_replay.c: the session's input for (port, follower) at `frame`, or NULL when the fighter
  * should read the live pad. */
 const GwRbInput *gw_RB_InputFor(int port, int follower, int frame);

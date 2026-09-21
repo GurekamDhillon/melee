@@ -19383,3 +19383,86 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
 };
 
 #define GW_MEX_GEN_SIG_COUNT ((uint32_t)(sizeof gw_mex_gen_sigs / sizeof gw_mex_gen_sigs[0]))
+
+/* EXTENDED signatures (gw_ppc_sig.ext, see gw_ppc.h): targets the word slots
+ * above cannot express - more than 8 argument slots, doubles, by-value aggregates.
+ * Consulted only when gw_mex_gen_sigs has no entry. "<ret>:<args>", one class per
+ * parameter. Sorted by guest address; binary-searchable. */
+typedef struct gw_mex_gen_xsig {
+    uint32_t guest;
+    const char *sig;
+} gw_mex_gen_xsig;
+
+static const gw_mex_gen_xsig gw_mex_gen_xsigs[] = {
+    { 0x80006E58u, "i:iiiiiiiiifff" }, /* lbColl_80006E58 */
+    { 0x800077A0u, "i:iiiiiiiff" }, /* lbColl_800077A0 */
+    { 0x80008FC8u, "i:a12a12iif" }, /* lbColl_80008FC8 */
+    { 0x800096B4u, "i:ia12a12iif" }, /* lbColl_800096B4 */
+    { 0x80011A50u, "i:iifffffff" }, /* lb_80011A50 */
+    { 0x80017740u, "i:iiiiiiiii" }, /* lbDvd_80017740 */
+    { 0x800178E8u, "i:iiiiiiiii" }, /* lbDvd_800178E8 */
+    { 0x800263E8u, "i:fiiiiiiiiii" }, /* lbAudioAx_800263E8 */
+    { 0x80030758u, "i:" }, /* Camera_GetBackgroundColor */
+    { 0x80042078u, "i:iiiiiiiiif" }, /* mpColl_SetECBSource_JObj */
+    { 0x8004E97Cu, "i:ffffffffii" }, /* mpLineIntersection */
+    { 0x8004EBF8u, "i:iifffffff" }, /* mpLineIntersectionH */
+    { 0x8004F008u, "i:fffffiiiiiiiii" }, /* mpCheckFloor */
+    { 0x8004F400u, "i:fffffiiiiiiiii" }, /* mpCheckFloorRemap */
+    { 0x8004F8A4u, "i:ffffiiiiii" }, /* mpCheckCeiling */
+    { 0x8004FC2Cu, "i:ffffiiiiii" }, /* mpCheckCeilingRemap */
+    { 0x80050068u, "i:iifffffff" }, /* mpLineIntersectionV */
+    { 0x800501CCu, "i:ffffiiiiii" }, /* mpCheckLeftWall */
+    { 0x8005057Cu, "i:ffffiiiiii" }, /* mpCheckLeftWallRemap */
+    { 0x800509B8u, "i:ffffiiiiii" }, /* mpCheckRightWall */
+    { 0x80050D68u, "i:ffffiiiiii" }, /* mpCheckRightWallRemap */
+    { 0x800511A4u, "i:ffffffffiii" }, /* mpLib_800511A4_RightWall */
+    { 0x800515A0u, "i:ffffffffiii" }, /* mpLib_800515A0_LeftWall */
+    { 0x80051BA8u, "i:iiiiiffff" }, /* mpLib_80051BA8_Floor */
+    { 0x80051EC8u, "i:ffffiiiiiii" }, /* mpCheckMultiple */
+    { 0x800524DCu, "i:iiiiiiffff" }, /* mpCheckAllRemap */
+    { 0x80052508u, "i:iiiiiiffff" }, /* mpCheckAll */
+    { 0x80058ACCu, "i:a4" }, /* mpLib_SetupDraw */
+    { 0x80059FE0u, "i:iia4" }, /* mpLib_DrawCrosses */
+    { 0x8007861Cu, "i:iiiiiiiii" }, /* ftColl_8007861C */
+    { 0x800A0FB0u, "i:iiiiiiifffff" }, /* ftCo_800A0FB0 */
+    { 0x800DFCA4u, "i:iiiffffffff" }, /* ftWalkCommon_800DFCA4 */
+    { 0x80160968u, "i:i" }, /* gm_80160968 */
+    { 0x80166A98u, "i:iiiiiiiiii" }, /* gm_80166A98 */
+    { 0x8017507Cu, "i:i" }, /* fn_8017507C */
+    { 0x8017CE34u, "i:iiiiiiiiii" }, /* gm_8017CE34 */
+    { 0x8017DB88u, "i:iiiiiiiiiii" }, /* gm_8017DB88 */
+    { 0x801855BCu, "d:d" }, /* fn_801855BC */
+    { 0x8021C40Cu, "i:ia4f" }, /* grLast_8021C40C */
+    { 0x8027BBF4u, "i:iidf" }, /* it_8027BBF4 */
+    { 0x8027C0F0u, "i:iidf" }, /* it_8027C0F0 */
+    { 0x802E6AECu, "i:iiiiiiiii" }, /* it_802E6AEC */
+    { 0x802F23ACu, "d:ii" }, /* it_802F23AC */
+    { 0x80302B64u, "i:ia4" }, /* DevText_SetTextColor */
+    { 0x80302B90u, "i:ia4" }, /* DevText_SetBGColor */
+    { 0x803228C0u, "i:d" }, /* __cvt_fp2unsigned */
+    { 0x803230A8u, "i:idi" }, /* __num2dec */
+    { 0x80326118u, "d:di" }, /* frexp */
+    { 0x8033D8A0u, "i:a4i" }, /* GXSetCopyClear */
+    { 0x8033E11Cu, "i:ia4" }, /* GXInitLightColor */
+    { 0x8033E28Cu, "i:ia4" }, /* GXSetChanAmbColor */
+    { 0x8033E3F4u, "i:ia4" }, /* GXSetChanMatColor */
+    { 0x8033EC24u, "i:iiiiiiiii" }, /* GXInitTexObjCI */
+    { 0x8033EC6Cu, "i:iiifffiii" }, /* GXInitTexObjLOD */
+    { 0x8033F758u, "i:iiiiiiiiii" }, /* GXSetTevIndirect */
+    { 0x803401ECu, "i:ia4" }, /* GXSetTevColor */
+    { 0x803402D4u, "i:ia4" }, /* GXSetTevKColor */
+    { 0x803407C4u, "i:iffffa4" }, /* GXSetFog */
+    { 0x80341148u, "i:fffiiiiii" }, /* GXProject */
+    { 0x80342A20u, "i:iffffffff" }, /* MTXLightOrtho */
+    { 0x8034F63Cu, "i:iiiiiiiii" }, /* setVerticalRegs */
+    { 0x80361A20u, "i:a4a4a4f" }, /* HSD_SetMaterialColor */
+    { 0x80365820u, "i:ia4f" }, /* HSD_LObjSetup */
+    { 0x80366CA4u, "i:ia4" }, /* HSD_LObjSetColor */
+    { 0x80383A64u, "i:iiiiiiiii" }, /* HSD_TExpColorIn */
+    { 0x80383F50u, "i:iiiiiiiii" }, /* HSD_TExpAlphaIn */
+    { 0x80385944u, "i:iiiiiiiiiii" }, /* order_dag */
+    { 0x80389334u, "i:iiiiiifffff" }, /* HSD_Synth_80389334 */
+    { 0x803896F0u, "i:iiiiiiifffff" }, /* HSD_SynthSFXPlayWithGroup */
+    { 0x803922FCu, "i:iiiiiiiii" }, /* hsd_803922FC */
+    { 0x80394544u, "i:iiiiiiiiiiii" }, /* hsd_80394544 */
+};

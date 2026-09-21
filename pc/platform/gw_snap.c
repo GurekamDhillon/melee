@@ -1099,6 +1099,68 @@ uint64_t gw_snap_frame_hash(int frame) {
     return s != NULL ? s->hash : 0;
 }
 
+/* ---- curated gameplay hash (MELEE_SYNCTEST_CURATED=1) --------------------------------------------
+ *
+ * The strict SyncTest compares every byte of MEM1 and the game's globals (with the render-owned
+ * masks) and needs the resimulated frame to run the render pass too. This mode is the experiment the
+ * coordinator asked for (_research/yampp-comparison.md): compare only a CURATED set of gameplay
+ * fields - the RNG seed and, per fighter, position, velocity, action state, percent, hitlag, timers
+ * and inputs - and resimulate WITHOUT any render calls. Game code feeds the fields through
+ * gw_Snap_CuratedMix at the points it simulates (fighter.c's Fighter_procMap, gmscene.c's seed
+ * check); the accumulator is a commutative sum of per-record hashes, so fighter order does not
+ * matter. The first pass records each frame's value; a resimulated iteration compares its own. */
+static int sn_curated = -1;
+static uint64_t sn_cur_acc;
+static struct {
+    int frame;
+    uint64_t h;
+} sn_cur_ring[32];
+static long sn_cur_mismatch, sn_cur_checked;
+
+int gw_Snap_Curated(void) {
+    if (sn_curated < 0) {
+        const char *e = getenv("MELEE_SYNCTEST_CURATED");
+        sn_curated = e != NULL && e[0] == '1';
+    }
+    return sn_curated && sn.enabled;
+}
+
+void gw_Snap_CuratedMix(const uint32_t *w, int n) {
+    if (gw_Snap_Curated()) {
+        sn_cur_acc += sn_h64((const uint8_t *) w, (size_t) n * 4, 0x5EED5EEDull);
+    }
+}
+
+/* Top of a logic iteration: the previous iteration simulated frame gw_Replay_Frame(); its
+ * accumulator is the first pass's record (recorded) or a resimulation's (compared). */
+static void sn_cur_take(void) {
+    int f = gw_Replay_Frame();
+    int slot = (f & 0x7FFFFFFF) % 32;
+    uint64_t h = sn_cur_acc;
+    sn_cur_acc = 0;
+    if (f < -123) {
+        return;
+    }
+    if (sn.cur_is_resim) {
+        if (sn_cur_ring[slot].frame == f) {
+            sn_cur_checked++;
+            sn.checked++;
+            if (sn_cur_ring[slot].h != h) {
+                sn_cur_mismatch++;
+                sn.mismatches++;
+                if (sn_cur_mismatch <= 8) {
+                    gw_log("snap: CURATED MISMATCH frame %d (resimulated %d back from %d): first pass %016llX resim %016llX",
+                           f, sn.target - f, sn.target, (unsigned long long) sn_cur_ring[slot].h,
+                           (unsigned long long) h);
+                }
+            }
+        }
+    } else {
+        sn_cur_ring[slot].frame = f;
+        sn_cur_ring[slot].h = h;
+    }
+}
+
 /* ---- SyncTest --------------------------------------------------------------------------------- */
 
 static void sn_sfx_rewind(int frame);
@@ -1225,6 +1287,9 @@ void gw_SyncTest_IterStart(void) {
        the render pass, the deferred queue and the asynchronous DVD/stream completions touched in
        between is state a resimulated frame never reproduces, so it stops being compared. */
     sn_mark_window();
+    if (gw_Snap_Curated()) {
+        sn_cur_take();
+    }
     next = gw_Replay_Frame() + 1;
     if (sn.plan_rollback) {
         sn.plan_rollback = 0;
@@ -1237,7 +1302,7 @@ void gw_SyncTest_IterStart(void) {
         return;
     }
     if (sn.resim) {
-        int d = sn_compare(next);
+        int d = gw_Snap_Curated() ? 0 : sn_compare(next);
         if (d != 0) {
             sn.mismatches++;
             if (sn.mismatches == 1 && getenv("MELEE_SYNCTEST_DUMP") != NULL) {
@@ -1291,6 +1356,10 @@ void gw_SyncTest_IterStart(void) {
                        sn_t[2] / (sn_tn[2] ? sn_tn[2] : 1), sn_t[3] / (sn_tn[3] ? sn_tn[3] : 1),
                        sn_t[4] / (sn_tn[4] ? sn_tn[4] : 1), sn_t[5] / (sn_tn[5] ? sn_tn[5] : 1),
                        sn_t[6] / (sn_tn[6] ? sn_tn[6] : 1), sn.n_verify_fail);
+                if (gw_Snap_Curated()) {
+                    gw_log("snap: curated hash: %ld compared, %ld mismatching, resim iteration (logic only) %.2f ms",
+                           sn_cur_checked, sn_cur_mismatch, sn_t[2] / (sn_tn[2] ? sn_tn[2] : 1));
+                }
                 if (sn_cb_on == 1) {
                     int a, b, top[8], nt = 0;
                     for (a = 0; a < 8 && a < sn_ncb; ++a) {
@@ -1367,6 +1436,11 @@ int gw_Snap_SkipRenderCb(void *cb) {
 
 /* Should a resimulated frame's render pass skip submitting display lists (shim_gx.c)?
  * MELEE_SNAP_RESIM_DRAWS=1 keeps them, to tell a draw-owned difference apart. */
+/* In curated mode a resimulated frame runs NO render calls at all (gmscene.c). */
+int gw_Snap_CuratedNoRender(void) {
+    return gw_Snap_Curated();
+}
+
 int gw_Snap_SuppressDraws(void) {
     static int v = -1;
     if (v < 0) {

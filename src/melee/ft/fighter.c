@@ -2917,8 +2917,47 @@ void Fighter_procMap(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
     {   /* the 1.x/2.x post-frame point (0x8006C5D8); see ftReplay_TraceFighter */
         extern int Replay_TraceAtProcMap(void);
+        extern int Snap_Curated(void);
+        extern void Snap_CuratedMix(const u32* w, int n);
         if (Replay_TraceAtProcMap()) {
             ftReplay_TraceFighter(fp);
+        }
+        if (Snap_Curated()) {
+            /* MELEE_SYNCTEST_CURATED: the fighter's curated gameplay record (gw_snap.c) */
+            union {
+                f32 f;
+                u32 u;
+            } c[26];
+            u32 w[26];
+            int i = 0, n;
+            w[i++] = (u32) fp->player_id;
+            w[i++] = (u32) fp->is_sub_fighter;
+            w[i++] = (u32) fp->kind;
+            w[i++] = (u32) fp->motion_id;
+            w[i++] = (u32) fp->ground_or_air;
+            w[i++] = (u32) Player_GetStocks(fp->player_id);
+            w[i++] = (u32) fp->input.held_buttons[0];
+            c[0].f = fp->cur_pos.x;
+            c[1].f = fp->cur_pos.y;
+            c[2].f = fp->cur_pos.z;
+            c[3].f = fp->facing_dir;
+            c[4].f = fp->dmg.x1830_percent;
+            c[5].f = fp->self_vel.x;
+            c[6].f = fp->self_vel.y;
+            c[7].f = fp->x8c_kb_vel.x;
+            c[8].f = fp->x8c_kb_vel.y;
+            c[9].f = fp->gr_vel;
+            c[10].f = fp->dmg.x195c_hitlag_frames;
+            c[11].f = fp->shield_health;
+            c[12].f = fp->input.lstick[0].x;
+            c[13].f = fp->input.lstick[0].y;
+            c[14].f = fp->input.cstick[0].x;
+            c[15].f = fp->input.cstick[0].y;
+            c[16].f = fp->x3E4_fighterCmdScript.frame_count;
+            for (n = 0; n < 17; ++n) {
+                w[i++] = c[n].u;
+            }
+            Snap_CuratedMix(w, i);
         }
     }
 #endif

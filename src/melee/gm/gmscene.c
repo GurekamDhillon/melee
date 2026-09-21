@@ -882,6 +882,14 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                             *HSD_RandSeedPtr = s;
                         }
                         Replay_CheckSeed(*HSD_RandSeedPtr);
+                        {
+                            extern int Snap_Curated(void);
+                            extern void Snap_CuratedMix(const u32* w, int n);
+                            if (Snap_Curated()) {
+                                u32 sw = *HSD_RandSeedPtr;
+                                Snap_CuratedMix(&sw, 1);
+                            }
+                        }
                     }
                 }
 #endif
@@ -925,8 +933,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                  * as the real render below, without HSD_VICopyXFBAsync. Its draw commands are
                  * discarded with the frame by aurora, so the picture is unaffected. */
                 extern int Snap_Resimulating(void);
+                extern int Snap_CuratedNoRender(void);
                 extern void SyncTest_PreRender(void);
-                if (Snap_Resimulating()) {
+                if (Snap_Resimulating() && !Snap_CuratedNoRender()) {
                     extern void Snap_Time(int what, int begin);
                     Snap_Time(2, 0); /* a resimulated iteration's logic, end of IterStart -> here */
                     SyncTest_PreRender(); /* open the between-frames window here too */

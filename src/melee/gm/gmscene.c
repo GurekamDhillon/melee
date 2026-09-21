@@ -768,6 +768,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 pad_queue_count = 1;
             }
         }
+        {
+            /* MELEE_SYNCTEST (pc/platform/gw_snap.c): k+1 logic iterations this tick - roll back
+               k frames, resimulate them, then run the new frame */
+            extern int SyncTest_Iterations(int count);
+            pad_queue_count = SyncTest_Iterations(pad_queue_count);
+        }
 #endif
 
         if (HSD_PadGetResetSwitch()) {
@@ -778,6 +784,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         for (i = 0; i < pad_queue_count; i++) {
 #if defined(TARGET_PC)
             bool held = false; /* the loading screen is holding this frame */
+            {
+                /* the logic-frame boundary: SyncTest saves, loads or compares here */
+                extern void SyncTest_IterStart(void);
+                SyncTest_IterStart();
+            }
 #endif
             HSD_PerfSetStartTime();
             lb_800198E0();
@@ -864,7 +875,14 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 {
                     /* logic-side off-screen flag for the next logic frame (ifmagnify.c) */
                     extern void ifMagnify_UpdateLogicOffscreen(void);
+                    extern void Camera_RefreshViewingMtx(void);
+                    /* refill the pools the render pass drains, so IT never allocates from the
+                     * shared heap - a resimulated frame does not render, and an allocation there
+                     * would shift every later address (objalloc.c) */
+                    extern void HSD_ObjAllocTopUp(void);
                     ifMagnify_UpdateLogicOffscreen();
+                    Camera_RefreshViewingMtx();
+                    HSD_ObjAllocTopUp();
                 }
 #endif
             }
@@ -880,6 +898,27 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     temp_r25->unk_8++;
                 }
             }
+#if defined(TARGET_PC)
+            {
+                /* SyncTest: a resimulated frame must ALSO render, minus the present. The render
+                 * pass is part of a frame - it moves object pools, fills matrix caches, clears
+                 * dirty flags - and the first pass did it, so a resimulation that skips it lands
+                 * in a different state (the whole "render-owned" chase in gw_snap.c). Same calls
+                 * as the real render below, without HSD_VICopyXFBAsync. Its draw commands are
+                 * discarded with the frame by aurora, so the picture is unaffected. */
+                extern int Snap_Resimulating(void);
+                extern void SyncTest_PreRender(void);
+                if (Snap_Resimulating()) {
+                    SyncTest_PreRender(); /* open the between-frames window here too */
+                    lb_800195D0();
+                    GXInvalidateVtxCache();
+                    GXInvalidateTexAll();
+                    HSD_StartRender(HSD_RP_SCREEN);
+                    HSD_GObj_80390FC0();
+                    HSD_Init_803755A8();
+                }
+            }
+#endif
             HSD_PerfSetCPUTime();
             if (DbLevel >= DbLKind_DebugRom) {
                 OSCheckActiveThreads();
@@ -893,6 +932,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             break;
         }
 
+#if defined(TARGET_PC)
+        {
+            extern void SyncTest_PreRender(void); /* gw_snap.c: measure render-owned state */
+            SyncTest_PreRender();
+        }
+#endif
         lb_800195D0();
         GXInvalidateVtxCache();
         GXInvalidateTexAll();
@@ -915,6 +960,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         if (temp_r25->unk_4 != -2U) {
             temp_r25->unk_4++;
         }
+#if defined(TARGET_PC)
+        {
+            extern void SyncTest_PostRender(void);
+            SyncTest_PostRender();
+        }
+#endif
         db_TakeScreenshotIfPending();
         HSD_PerfSetTotalTime();
         HSD_PerfInitStat();

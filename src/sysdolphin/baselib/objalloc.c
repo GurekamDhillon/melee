@@ -10,6 +10,58 @@ static objheap obj_heap = { 0, 0, -1, -1 };
 
 static HSD_ObjAllocData* alloc_datas;
 
+#if defined(TARGET_PC)
+/* ROLLBACK (pc/platform/gw_snap.c). A pool that runs dry calls HSD_ObjAllocAddFree, which calls
+ * HSD_MemAlloc - so when that happens inside the RENDER pass it moves the shared heap's free
+ * list. A resimulated frame renders nothing, so its next allocation lands in a different cell,
+ * and a SyncTest that compares memory byte for byte sees a whole object in the wrong place.
+ *
+ * So the pools the render pass draws from are kept stocked from LOGIC, at the end of every logic
+ * frame - a point a resimulated frame executes too. The decision must depend only on state that
+ * a rollback restores, or the first pass and its resimulation disagree about whether to grow:
+ * the list of render pools lives in gw_snap.c (native, never rolled back) and the target is a
+ * constant, not a learned high-water mark (which the first version kept in a static here, and
+ * which a load un-learned - the resimulation then grew a pool the first pass had not). */
+#define SNAP_POOL_STOCK 512
+
+static void snap_note_render(HSD_ObjAllocData* data, int delta)
+{
+    extern int Snap_InRender(void);
+    extern void Snap_NoteRenderPool(void* data);
+    if (!Snap_InRender()) {
+        return;
+    }
+    /* Registration is off: SyncTest now UNDOES the render pass's writes (gw_snap.c), so a pool
+     * the render drains needs no special treatment. Kept so the alternative can be re-enabled. */
+    (void) delta;
+    (void) data;
+    (void) Snap_NoteRenderPool;
+}
+
+/* Called at the end of each logic frame (gmscene.c). */
+void HSD_ObjAllocTopUp(void)
+{
+    extern int Snap_RenderPoolCount(void);
+    extern void* Snap_RenderPoolAt(int i);
+    int i, n = Snap_RenderPoolCount();
+    for (i = 0; i < n; ++i) {
+        HSD_ObjAllocData* d = Snap_RenderPoolAt(i);
+        if ((int) d->free >= SNAP_POOL_STOCK) {
+            continue;
+        }
+        if (d->num_limit_flag && (int) (d->used + SNAP_POOL_STOCK) > (int) d->num_limit) {
+            continue;
+        }
+        {
+            extern int Snap_Resimulating(void);
+            OSReport("snap: top-up pool %p from free=%d used=%d (resim %d)\n", d, (int) d->free,
+                     (int) d->used, Snap_Resimulating());
+        }
+        HSD_ObjAllocAddFree(d, (u32) (SNAP_POOL_STOCK - (int) d->free));
+    }
+}
+#endif
+
 void HSD_ObjSetHeap(u32 size, void* ptr)
 {
     obj_heap.curr = (u32) ptr;
@@ -104,6 +156,15 @@ s32 HSD_ObjAllocAddFree(HSD_ObjAllocData* data, u32 num)
 
     data->freehead = (HSD_ObjAllocLink*) pool_start;
     data->free += num;
+#if defined(TARGET_PC)
+    {
+        /* Tell the savestate layer where this pool's cells live. A pool the RENDER pass draws
+         * from rotates through fresh cells every frame, so masking render-written bytes by
+         * address never catches up - the mask has to cover the whole arena (gw_snap.c). */
+        extern void Snap_NoteArena(void* data, void* start, unsigned size);
+        Snap_NoteArena(data, pool_start, num * data->size);
+    }
+#endif
     return num;
 }
 
@@ -146,6 +207,13 @@ void* HSD_ObjAlloc(HSD_ObjAllocData* data)
         }
     }
     cur = data->freehead;
+#if defined(TARGET_PC)
+    {
+        extern void Snap_NoteObj(void* data, void* obj, int freeing);
+        Snap_NoteObj(data, cur, 0);
+        snap_note_render(data, 1);
+    }
+#endif
     data->freehead = cur->next;
     data->used += 1;
     data->free -= 1;
@@ -158,6 +226,13 @@ void* HSD_ObjAlloc(HSD_ObjAllocData* data)
 void HSD_ObjFree(HSD_ObjAllocData* data, void* obj)
 {
     HSD_ObjAllocLink* link = obj;
+#if defined(TARGET_PC)
+    {
+        extern void Snap_NoteObj(void* data, void* obj, int freeing);
+        Snap_NoteObj(data, obj, 1);
+        snap_note_render(data, -1);
+    }
+#endif
     link->next = data->freehead;
     data->freehead = link;
     data->free += 1;

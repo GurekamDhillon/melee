@@ -107,6 +107,9 @@ void gw_defer(gw_deferred_fn fn, void *a, void *b, uint32_t c) {
   ++gw_deferred_count;
 }
 
+void gw_Snap_AsyncBegin(void);
+void gw_Snap_AsyncEnd(void);
+
 void gw_run_deferred(void) {
   /* Callbacks may queue more work; run only what was pending on entry. */
   int n = gw_deferred_count;
@@ -118,9 +121,11 @@ void gw_run_deferred(void) {
     return;
   }
   running = true;
+  gw_Snap_AsyncBegin(); /* gw_snap.c: what deferred work writes is the async world's, not the render pass's */
   for (int i = 0; i < n; ++i) {
     gw_deferred[i].fn(gw_deferred[i].a, gw_deferred[i].b, gw_deferred[i].c);
   }
+  gw_Snap_AsyncEnd();
   int left = gw_deferred_count - n;
   for (int i = 0; i < left; ++i) {
     gw_deferred[i] = gw_deferred[n + i];

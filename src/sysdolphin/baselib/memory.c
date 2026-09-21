@@ -118,6 +118,10 @@ static void hsd_note(int size, int freeing)
 void HSD_Free(void* ptr)
 {
 #if defined(TARGET_PC)
+    {
+        extern void Snap_NoteMem(int size, void* ptr, unsigned caller, int freeing);
+        Snap_NoteMem(0, ptr, (unsigned) (uintptr_t) __builtin_return_address(0), 1);
+    }
     hsd_note(0, 1);
 #endif
     OSFreeToHeap(HSD_GetHeap(), ptr);
@@ -133,6 +137,11 @@ void* HSD_MemAlloc(ssize_t size)
 
     adr = OSAllocFromHeap(HSD_GetHeap(), size);
 #if defined(TARGET_PC)
+    {
+        extern void Snap_NoteMem(int size, void* ptr, unsigned caller, int freeing);
+        Snap_NoteMem((int) size, adr,
+                     (unsigned) (uintptr_t) __builtin_return_address(0), 0);
+    }
     hsd_note((int) size, 0);
     /* Frame 0 HERE is HSD_MemAlloc's own caller, which is the thing that wants memory.
      * Taking it inside hsd_note() gave HSD_MemAlloc itself, and asking for frame 1 there

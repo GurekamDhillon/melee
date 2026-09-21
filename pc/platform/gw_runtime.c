@@ -2507,18 +2507,52 @@ static uint32_t gw_gxtex_be32(const unsigned char *p) {
   return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | p[3];
 }
 
+static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet);
+
 int gw_GxTex_Open(const char *name) {
   const char *dir = getenv("MELEE_MENUTEX_DIR");
+  if (dir == NULL || *dir == '\0' || name == NULL) {
+    return -1;
+  }
+  return gw_gxtex_open_dir(dir, name, 0);
+}
+
+/* The frontend's own art (tools/port/make_frontend_art.py -> _build/ui). MELEE_MENUTEX_DIR wins
+ * when set; otherwise `ui` beside the exe, then two levels up - a run sandbox is
+ * _build/runs/<tag>/, so that is _build/ui. A missing texture is not an error: the frontend draws
+ * its flat look instead. */
+int gw_GxTex_OpenUI(const char *name) {
+  char dir[MAX_PATH];
+  DWORD n;
+  char *slash;
+  int h;
+  if (name == NULL) {
+    return -1;
+  }
+  if (getenv("MELEE_MENUTEX_DIR") != NULL) {
+    return gw_GxTex_Open(name);
+  }
+  n = GetModuleFileNameA(NULL, dir, (DWORD)sizeof dir);
+  slash = (n > 0 && n < sizeof dir) ? strrchr(dir, '\\') : NULL;
+  if (slash == NULL) {
+    return -1;
+  }
+  snprintf(slash + 1, sizeof dir - (size_t)(slash + 1 - dir), "ui");
+  h = gw_gxtex_open_dir(dir, name, 1);
+  if (h < 0) {
+    snprintf(slash + 1, sizeof dir - (size_t)(slash + 1 - dir), "..\\..\\ui");
+    h = gw_gxtex_open_dir(dir, name, 1);
+  }
+  return h;
+}
+
+static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet) {
   char path[1024];
   FILE *f;
   long len;
   unsigned char *blob;
   GwGxTex t;
   int i;
-
-  if (dir == NULL || *dir == '\0' || name == NULL) {
-    return -1;
-  }
   for (i = 0; i < GW_GXTEX_MAX; i++) {
     if (gw_gxtex[i].blob == NULL) {
       break;
@@ -2534,7 +2568,9 @@ int gw_GxTex_Open(const char *name) {
   }
   f = fopen(path, "rb");
   if (f == NULL) {
-    gw_log("gxtex: cannot open %s", path);
+    if (!quiet) {
+      gw_log("gxtex: cannot open %s", path);
+    }
     return -1;
   }
   fseek(f, 0, SEEK_END);

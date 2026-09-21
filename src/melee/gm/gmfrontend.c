@@ -14,7 +14,9 @@
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjgxlink.h>
 #include <sysdolphin/baselib/hsd_3915.h>
+#include <sysdolphin/baselib/memory.h>
 #include <sysdolphin/baselib/sislib.h>
+#include <sysdolphin/baselib/state.h>
 
 #include <stdio.h>
 
@@ -212,6 +214,8 @@ static struct {
     HSD_Text* subtitle;
     HSD_Text* help;
     HSD_Text* hints;
+    HSD_Text* hint_change;
+    HSD_Text* hint_back;
     HSD_Text* label[FE_MAX_ROWS];
     HSD_Text* value[FE_MAX_ROWS];
     char label_str[FE_MAX_ROWS][FE_STR]; ///< what each text currently shows
@@ -289,6 +293,10 @@ u8 gmFrontend_ReportedMode(void)
 #define FE_ROW_STEP 40.0F
 #define FE_VALUE_X 548.0F ///< right edge of the value column
 #define FE_FADE_FRAMES 10
+#define FE_HINT_Y 436.0F
+#define FE_HINT_A_X 56.0F
+#define FE_HINT_LR_X 214.0F
+#define FE_HINT_B_X 396.0F
 #define FE_LABEL_COLOR fe_rgba(245, 247, 255, 255)
 #define FE_VALUE_COLOR fe_rgba(205, 222, 255, 255)
 #define FE_HELP_COLOR fe_rgba(160, 168, 190, 255)
@@ -340,6 +348,95 @@ static void fe_arrow(float x, float y, float size, int dir, GXColor c)
     GXColor4u8(c.r, c.g, c.b, c.a);
 }
 
+/* ---- HD art --------------------------------------------------------------------------------
+ * PNGs made by tools/port/make_frontend_art.py, converted to GX texture data (.gxtex) and found
+ * beside the exe (gw_GxTex_OpenUI). Loaded into the scene heap on every enter, since the heap is
+ * rebuilt per scene. A texture that is not there simply is not drawn: the flat look remains. */
+typedef struct FeTex {
+    void* data;
+    u16 w, h;
+    bool ok;
+    GXTexObj obj;
+} FeTex;
+
+static FeTex fe_tex_backdrop;
+static FeTex fe_tex_btn_a;
+static FeTex fe_tex_btn_b;
+
+static void fe_tex_load(FeTex* t, const char* name)
+{
+    extern int GxTex_OpenUI(const char* name);
+    extern int GxTex_Width(int h);
+    extern int GxTex_Height(int h);
+    extern int GxTex_Format(int h);
+    extern int GxTex_ImageSize(int h);
+    extern void GxTex_CopyImage(int h, void* dst);
+    extern void GxTex_Close(int h);
+    int h = GxTex_OpenUI(name);
+    t->ok = false;
+    if (h < 0) {
+        return;
+    }
+    t->data = HSD_MemAlloc(GxTex_ImageSize(h));
+    if (t->data != NULL) {
+        GxTex_CopyImage(h, t->data);
+        t->w = (u16) GxTex_Width(h);
+        t->h = (u16) GxTex_Height(h);
+        GXInitTexObj(&t->obj, t->data, t->w, t->h, (GXTexFmt) GxTex_Format(h), GX_CLAMP,
+                     GX_CLAMP, GX_FALSE);
+        GXInitTexObjLOD(&t->obj, GX_LINEAR, GX_LINEAR, 0.0F, 0.0F, 0.0F, GX_FALSE, GX_FALSE,
+                        GX_ANISO_1);
+        t->ok = true;
+    }
+    GxTex_Close(h);
+}
+
+/* A textured quad, tinted by `c`. It sets its own GX state (one texture stage, modulated by the
+ * vertex colour) and then invalidates HSD's state cache and restores the untextured vertex-colour
+ * setup the rest of the panels draw with - raw GX calls go around that cache. */
+static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
+{
+    if (!t->ok) {
+        return;
+    }
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+    GXSetNumIndStages(0);
+    GXSetNumTevStages(1);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_NONE,
+                  GX_AF_NONE);
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetCullMode(GX_CULL_NONE);
+    GXLoadTexObj(&t->obj, GX_TEXMAP0);
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    GXPosition2f32(x, -y);
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXTexCoord2f32(0.0F, 0.0F);
+    GXPosition2f32(x + w, -y);
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXTexCoord2f32(1.0F, 0.0F);
+    GXPosition2f32(x + w, -(y + h));
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXTexCoord2f32(1.0F, 1.0F);
+    GXPosition2f32(x, -(y + h));
+    GXColor4u8(c.r, c.g, c.b, c.a);
+    GXTexCoord2f32(0.0F, 1.0F);
+    HSD_StateInvalidate(-1);
+    hsd_80391A04(1.0F, 1.0F, 1);
+}
+
 /* Ease-out cubic over [0,1]. */
 static float fe_ease(float t)
 {
@@ -381,9 +478,13 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     }
     hsd_80391A04(1.0F, 1.0F, 1);
 
-    /* backdrop, header band and its accent rule, footer band */
-    fe_rect(0, 0, FE_W, FE_H, fe_rgba(20, 26, 46, 255), fe_rgba(5, 6, 12, 255));
-    fe_rect(0, 0, FE_W, 92, fe_rgba(34, 44, 80, 255), fe_rgba(20, 26, 46, 255));
+    /* backdrop (the HD art, or its flat stand-in), header band and its accent rule, footer band */
+    if (fe_tex_backdrop.ok) {
+        fe_tex_quad(&fe_tex_backdrop, 0, 0, FE_W, FE_H, fe_rgba(255, 255, 255, 255));
+    } else {
+        fe_rect(0, 0, FE_W, FE_H, fe_rgba(20, 26, 46, 255), fe_rgba(5, 6, 12, 255));
+    }
+    fe_rect(0, 0, FE_W, 92, fe_rgba(34, 44, 80, 190), fe_rgba(20, 26, 46, 110));
     fe_solid(0, 92, FE_W, 2, fe_rgba(96, 150, 255, 255));
     fe_rect(0, 94, FE_W, 10, fe_rgba(96, 150, 255, 60), fe_rgba(96, 150, 255, 0));
     fe_rect(0, 436, FE_W, 44, fe_rgba(0, 0, 0, 120), fe_rgba(0, 0, 0, 200));
@@ -454,6 +555,12 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
             fe_solid(on ? px + 23 : px + 3, py + 3, 14, 12, fe_rgba(255, 255, 255, 255));
         }
     }
+
+    /* footer hints: the controller's own buttons beside their labels */
+    fe_tex_quad(&fe_tex_btn_a, FE_HINT_A_X, FE_HINT_Y, 24, 24, fe_rgba(255, 255, 255, 255));
+    fe_arrow(FE_HINT_LR_X, FE_HINT_Y + 12, 12, -1, fe_rgba(220, 226, 240, 255));
+    fe_arrow(FE_HINT_LR_X + 18, FE_HINT_Y + 12, 12, +1, fe_rgba(220, 226, 240, 255));
+    fe_tex_quad(&fe_tex_btn_b, FE_HINT_B_X, FE_HINT_Y, 24, 24, fe_rgba(255, 255, 255, 255));
 
     /* scroll marks, when the list runs past the rows shown */
     if (fe.scroll > 0) {
@@ -655,6 +762,10 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     if (gobj != NULL) {
         GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
     }
+    fe_tex_load(&fe_tex_backdrop, "fe_backdrop");
+    fe_tex_load(&fe_tex_btn_a, "fe_btn_a");
+    fe_tex_load(&fe_tex_btn_b, "fe_btn_b");
+    OSReport("frontend: art %s\n", fe_tex_backdrop.ok ? "loaded" : "not found - flat look");
 
     if (fe.loading) {
         extern int Gfx_PipelinesCreated(void);
@@ -694,9 +805,12 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     fe.help = fe_text(56, 398, 0.5F, 0, FE_HELP_COLOR, " ");
     fe.help_str[0] = ' ';
     fe.help_str[1] = '\0';
-    /* the SIS font has no slash */
-    fe.hints = fe_text(56, 442, 0.5F, 0, fe_rgba(200, 206, 224, 255),
-                       "A  Select        Left  Right  Change        B  Back");
+    fe.hints = fe_text(FE_HINT_A_X + 32, FE_HINT_Y + 2, 0.5F, 0, fe_rgba(200, 206, 224, 255),
+                       "Select");
+    fe.hint_change = fe_text(FE_HINT_LR_X + 34, FE_HINT_Y + 2, 0.5F, 0,
+                             fe_rgba(200, 206, 224, 255), "Change");
+    fe.hint_back =
+        fe_text(FE_HINT_B_X + 32, FE_HINT_Y + 2, 0.5F, 0, fe_rgba(200, 206, 224, 255), "Back");
     fe_refresh_rows();
 }
 
@@ -884,7 +998,14 @@ void gm_Scene_Frontend_OnExit(void* exit_data)
     if (fe.hints != NULL) {
         HSD_SisLib_803A5CC4(fe.hints);
     }
-    fe.title = fe.subtitle = fe.help = fe.hints = NULL;
+    if (fe.hint_change != NULL) {
+        HSD_SisLib_803A5CC4(fe.hint_change);
+    }
+    if (fe.hint_back != NULL) {
+        HSD_SisLib_803A5CC4(fe.hint_back);
+    }
+    fe.title = fe.subtitle = fe.help = fe.hints = fe.hint_change = fe.hint_back = NULL;
+    fe_tex_backdrop.ok = fe_tex_btn_a.ok = fe_tex_btn_b.ok = false; /* the scene heap goes */
     fe.loading = false;
 }
 

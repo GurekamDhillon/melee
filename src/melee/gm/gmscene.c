@@ -352,23 +352,21 @@ static void mnLoadScreen_Release(char* why)
         return;
     }
     mnLoadScreen_holding = 0;
-    /* Hidden AND removed, in that order and deliberately. DevText_Remove takes the address of a
-       list head - that is how it unlinks the first entry - and every caller in the game passes
-       the address of its own handle instead, which leaves devtext_drawlist naming a box that has
-       already gone back on the free list when that box happens to be the head. Hiding it first
-       makes the box draw nothing whatever the unlink does, so the loader cannot outlive its hold
-       and leave a black screen over the match. The pool itself is re-initialised per scene by
-       gm_801A4BD4 -> DevText_Setup, so nothing accumulates. */
+    /* DevText_Unlink, not DevText_Remove. The loading screen's boxes are the first two on the
+       draw list, and DevText_Remove(&handle) on the head box never updates devtext_drawlist: it
+       kept naming the freed box, whose next is the free pool, and every box behind it - the F9
+       panel, the toast, the run label - vanished the moment the match started. The pool itself
+       is re-initialised per scene by gm_801A4BD4 -> DevText_Setup, so nothing accumulates. */
     if (mnLoadScreen_text != NULL) {
         DevText_HideText(mnLoadScreen_text);
         DevText_HideBackground(mnLoadScreen_text);
-        DevText_Remove(&mnLoadScreen_text);
+        DevText_Unlink(mnLoadScreen_text);
         mnLoadScreen_text = NULL;
     }
     if (mnLoadScreen_panel != NULL) {
         DevText_HideText(mnLoadScreen_panel);
         DevText_HideBackground(mnLoadScreen_panel);
-        DevText_Remove(&mnLoadScreen_panel);
+        DevText_Unlink(mnLoadScreen_panel);
         mnLoadScreen_panel = NULL;
     }
     OSReport("loadscreen: released (%s) after %d frames, %d pipelines created\n", why,
@@ -600,10 +598,40 @@ static void mnOverlay_Line(DevText* t, char* str)
     DevText_ShowBackground(t);
 }
 
+/* F10: put every overlay box back on screen. A box that fell out of DevText's draw list is
+   re-listed; one that is still listed is left alone (listing it twice would loop the list). */
+static void mnOverlay_Reshow(void)
+{
+    extern int Overlay_GetReshowCount(void);
+    static int seen;
+    HSD_GObj* gobj;
+    int n = Overlay_GetReshowCount();
+    if (n == seen) {
+        return;
+    }
+    seen = n;
+    gobj = DevText_GetGObj();
+    if (gobj == NULL) {
+        return;
+    }
+    if (mnOverlay_caption != NULL && !DevText_IsListed(mnOverlay_caption)) {
+        DevText_Show(gobj, mnOverlay_caption);
+    }
+    if (mnOverlay_toast != NULL && !DevText_IsListed(mnOverlay_toast)) {
+        DevText_Show(gobj, mnOverlay_toast);
+    }
+    if (mnOverlay_panel != NULL && !DevText_IsListed(mnOverlay_panel)) {
+        DevText_Show(gobj, mnOverlay_panel);
+    }
+    OSReport("overlay: F10 - boxes re-shown\n");
+}
+
 static void mnOverlay_Frame(void)
 {
     int i;
     int rows;
+
+    mnOverlay_Reshow();
 
     mnOverlay_Line(mnOverlay_caption, Overlay_GetRunLabel());
     mnOverlay_Line(mnOverlay_toast, Overlay_GetToast());

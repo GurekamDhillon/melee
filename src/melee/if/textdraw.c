@@ -162,6 +162,44 @@ void DevText_Remove(DevText** ptext)
     devtext_poolhead = text;
 }
 
+#if defined(TARGET_PC)
+/* DevText_Remove takes the address of a LIST HEAD: unlinking the first entry writes the new head
+ * through ptext. Callers pass the address of their own handle instead, so removing the box at the
+ * head of devtext_drawlist updated the caller's variable and left devtext_drawlist naming a box
+ * that was now back on the free list - whose `next` is the pool. Every box behind it fell off the
+ * screen. The loading screen's two boxes are created first, so releasing it took the F9 panel,
+ * the toast and the run label with it the moment a match started. This unlinks by the box. */
+void DevText_Unlink(DevText* text)
+{
+    if (text == NULL) {
+        return;
+    }
+    if (text->next != NULL) {
+        text->next->prev = text->prev;
+    }
+    if (text->prev != NULL) {
+        text->prev->next = text->next;
+    } else if (devtext_drawlist == text) {
+        devtext_drawlist = text->next;
+    }
+    text->next = devtext_poolhead;
+    text->prev = NULL;
+    devtext_poolhead = text;
+}
+
+/* True while `text` is on the draw list. */
+bool DevText_IsListed(DevText* text)
+{
+    DevText* cur;
+    for (cur = devtext_drawlist; cur != NULL; cur = cur->next) {
+        if (cur == text) {
+            return true;
+        }
+    }
+    return false;
+}
+#endif
+
 void DevText_SetupCObj(void)
 {
     if (devtext_cobj == NULL) {

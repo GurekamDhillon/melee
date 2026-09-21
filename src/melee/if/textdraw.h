@@ -9,6 +9,10 @@
 /* 301FB4 */ HSD_GObj* DevText_GetGObj(void);
 /* 301FBC */ void DevText_InitPool(void);
 /* 3020FC */ void DevText_Remove(DevText** ptext);
+#if defined(TARGET_PC)
+void DevText_Unlink(DevText* text);
+bool DevText_IsListed(DevText* text);
+#endif
 /* 302164 */ void DevText_SetupCObj(void);
 /* 3022BC */ void DevText_Draw(DevText* text);
 /* 302608 */ void DevText_DrawAll(HSD_GObj* gobj, int pass);

@@ -10,8 +10,9 @@
  *   +3  u8  flags (bit0: t_echo valid)  +16 u16 echo_delay_ms  how long we held it
  *   +4  u32 session id (0 in HELLO)
  *
- * followed by a type-specific body (see put_/get_ pairs below). t_send/t_echo/echo_delay give an RTT
- * sample on every packet, TCP-timestamp style, with no dedicated ping.
+ * followed by a type-specific body (see the send_* / on_* pairs below). t_send/t_echo/echo_delay
+ * give an RTT sample on every packet, TCP-timestamp style, with no dedicated ping. Frames on the
+ * wire are INDEXES from cfg.first_frame (u32); the API speaks the session's signed frame numbers.
  */
 #include "gw_net.h"
 
@@ -40,6 +41,7 @@ enum {
 #define MIN_SEND_GAP_MS 4u
 #define MAX_CHECKSUMS 8
 #define ADV_EMA 0.125f
+#define MAX_PULL_PER_POLL 64
 
 /* ---- byte helpers --------------------------------------------------------------------------- */
 
@@ -56,20 +58,6 @@ static uint32_t get32(const uint8_t **p) {
   return v;
 }
 static uint64_t get64(const uint8_t **p) { uint64_t lo = get32(p); uint64_t hi = get32(p); return lo | (hi << 32); }
-
-static void put_pad(uint8_t **p, const gw_net_pad *d) {
-  put16(p, d->buttons);
-  *(*p)++ = (uint8_t)d->stick_x; *(*p)++ = (uint8_t)d->stick_y;
-  *(*p)++ = (uint8_t)d->cstick_x; *(*p)++ = (uint8_t)d->cstick_y;
-  *(*p)++ = d->trig_l; *(*p)++ = d->trig_r; *(*p)++ = (uint8_t)d->err;
-}
-static void get_pad(const uint8_t **p, gw_net_pad *d) {
-  d->buttons = (uint16_t)get16(p);
-  d->stick_x = (int8_t)*(*p)++; d->stick_y = (int8_t)*(*p)++;
-  d->cstick_x = (int8_t)*(*p)++; d->cstick_y = (int8_t)*(*p)++;
-  d->trig_l = *(*p)++; d->trig_r = *(*p)++; d->err = (int8_t)*(*p)++;
-}
-#define PAD_WIRE 9
 
 /* ---- hashing -------------------------------------------------------------------------------- */
 
@@ -198,39 +186,42 @@ struct gw_net {
   uint32_t t_begin, next_hello, next_ready, next_start;
   uint32_t start_time;
   int start_time_valid, start_acked, started_fired;
-  uint8_t host_ports, guest_ports;
+  uint8_t host_slots, guest_slots;
   uint32_t seed;
   uint8_t input_delay;
   uint8_t blob[GW_NET_MAX_BLOB];
   uint16_t blob_len;
   int have_remote_cfg;
 
-  /* ports */
-  int lports[GW_NET_MAX_PORTS], nl, rports[GW_NET_MAX_PORTS], nr;
+  /* slots and framing */
+  int32_t first;                     /* the session's first frame number */
+  int pb;                            /* payload bytes per slot per frame */
+  int lslots[GW_NET_MAX_SLOTS], nl, rslots[GW_NET_MAX_SLOTS], nr;
   int max_per_packet;
 
-  /* local inputs (sent, awaiting ack) */
-  gw_net_pad local[GW_NET_RING][GW_NET_MAX_PORTS];
-  uint32_t local_next;               /* next frame the session will submit */
-  uint32_t peer_ack;                 /* frames < peer_ack are acknowledged */
+  /* local inputs (sent, awaiting ack): [frame % RING][slot][payload] */
+  uint8_t (*local)[GW_NET_MAX_SLOTS][GW_NET_MAX_PAYLOAD];
+  uint32_t local_next;               /* next frame index the session will supply */
+  uint32_t peer_ack;                 /* frame indexes < peer_ack are acknowledged */
 
   /* remote inputs (received) */
-  gw_net_pad remote[GW_NET_RING][GW_NET_MAX_PORTS];
-  uint32_t rtag[GW_NET_RING];        /* frame + 1 held in the slot, 0 = empty */
-  uint32_t remote_next;              /* next frame to deliver */
+  uint8_t (*remote)[GW_NET_MAX_SLOTS][GW_NET_MAX_PAYLOAD];
+  uint32_t rtag[GW_NET_RING];        /* frame index + 1 held in the slot, 0 = empty */
+  uint32_t remote_next;              /* next frame index to deliver */
 
   /* time sync */
-  uint32_t local_frame;
+  uint32_t local_frame;              /* index */
   float adv_local, adv_remote;
   int have_adv;
   int cooldown;
   float frame_ms;
 
-  /* checksums */
+  /* checksums (by frame index) */
   uint32_t lchk[GW_NET_RING], lchk_tag[GW_NET_RING];
   uint32_t rchk[GW_NET_RING], rchk_tag[GW_NET_RING];
   uint32_t recent[MAX_CHECKSUMS];
   int nrecent;
+  uint32_t next_chk;                 /* pull model: next frame index to ask the session for */
   int32_t desync_frame;
   int desync_fired;
 
@@ -247,6 +238,7 @@ static uint32_t wall_now_ms(void *user) {
 
 static uint32_t now(const gw_net *n) { return n->now_fn(n->cfg.cb.user); }
 static int reached(uint32_t t, uint32_t at) { return (int32_t)(t - at) >= 0; }
+static int32_t to_frame(const gw_net *n, uint32_t idx) { return n->first + (int32_t)idx; }
 
 static void set_reason(gw_net *n, const char *msg) {
   strncpy(n->reason, msg != NULL ? msg : "", sizeof n->reason - 1);
@@ -309,6 +301,8 @@ static void send_hello(gw_net *n) {
   put64(&p, n->cfg.exe_hash);
   put64(&p, n->cfg.iso_hash);
   put64(&p, n->cfg.mods_hash);
+  *p++ = (uint8_t)n->pb;
+  put32(&p, (uint32_t)n->first);
   send_packet(n, buf, (int)(p - buf));
 }
 
@@ -318,8 +312,8 @@ static void send_accept(gw_net *n) {
   put16(&p, GW_NET_PROTOCOL_VERSION);
   put32(&p, n->seed);
   *p++ = n->input_delay;
-  *p++ = n->host_ports;
-  *p++ = n->guest_ports;
+  *p++ = n->host_slots;
+  *p++ = n->guest_slots;
   put16(&p, n->blob_len);
   memcpy(p, n->blob, n->blob_len);
   p += n->blob_len;
@@ -335,6 +329,8 @@ static void send_start(gw_net *n) {
   send_packet(n, buf, (int)(p - buf));
 }
 
+/* INPUT body: u32 local_frame idx | s8 adv | u32 ack_next | u32 first idx | u8 count |
+ *             count x (nl x payload bytes) | u8 nchk | nchk x (u32 frame idx, u32 hash) */
 static void send_inputs(gw_net *n) {
   uint8_t buf[MAX_PACKET];
   uint8_t *p = begin_packet(n, buf, T_INPUT);
@@ -351,7 +347,10 @@ static void send_inputs(gw_net *n) {
   put32(&p, first);
   *p++ = (uint8_t)count;
   for (i = 0; i < count; ++i)
-    for (j = 0; j < n->nl; ++j) put_pad(&p, &n->local[(first + i) % GW_NET_RING][n->lports[j]]);
+    for (j = 0; j < n->nl; ++j) {
+      memcpy(p, n->local[(first + i) % GW_NET_RING][n->lslots[j]], (size_t)n->pb);
+      p += n->pb;
+    }
   {
     int c = n->nrecent;
     *p++ = (uint8_t)c;
@@ -365,39 +364,48 @@ static void send_inputs(gw_net *n) {
   send_packet(n, buf, (int)(p - buf));
 }
 
-/* ---- port lists ----------------------------------------------------------------------------- */
+/* ---- slot lists ----------------------------------------------------------------------------- */
 
-static void ports_from_mask(uint8_t mask, int *list, int *count) {
+static void slots_from_mask(uint8_t mask, int *list, int *count) {
   int i;
   *count = 0;
-  for (i = 0; i < GW_NET_MAX_PORTS; ++i)
+  for (i = 0; i < GW_NET_MAX_SLOTS; ++i)
     if (mask & (1u << i)) list[(*count)++] = i;
 }
 
-static void setup_ports(gw_net *n) {
-  uint8_t lm = n->is_host ? n->host_ports : n->guest_ports;
-  uint8_t rm = n->is_host ? n->guest_ports : n->host_ports;
-  ports_from_mask(lm, n->lports, &n->nl);
-  ports_from_mask(rm, n->rports, &n->nr);
-  n->max_per_packet = n->nl > 0 ? 1000 / (PAD_WIRE * n->nl) : 1;
+static void setup_slots(gw_net *n) {
+  uint8_t lm = n->is_host ? n->host_slots : n->guest_slots;
+  uint8_t rm = n->is_host ? n->guest_slots : n->host_slots;
+  slots_from_mask(lm, n->lslots, &n->nl);
+  slots_from_mask(rm, n->rslots, &n->nr);
+  n->max_per_packet = n->nl > 0 ? 1000 / (n->pb * n->nl) : 1;
   if (n->max_per_packet > GW_NET_MAX_INPUTS_PER_PACKET) n->max_per_packet = GW_NET_MAX_INPUTS_PER_PACKET;
+  if (n->max_per_packet < 1) n->max_per_packet = 1;
 }
 
 /* ---- construction --------------------------------------------------------------------------- */
 
 static gw_net *make(const gw_net_config *cfg, const gw_net_transport *t, int is_host) {
   gw_net *n;
+  int pb;
   if (cfg == NULL || t == NULL || t->send == NULL || t->recv == NULL) return NULL;
+  pb = cfg->payload_bytes != 0 ? cfg->payload_bytes : GW_NET_DEFAULT_PAYLOAD;
+  if (pb > GW_NET_MAX_PAYLOAD) return NULL;
   n = (gw_net *)calloc(1, sizeof *n);
   if (n == NULL) return NULL;
+  n->local = (uint8_t (*)[GW_NET_MAX_SLOTS][GW_NET_MAX_PAYLOAD])calloc(GW_NET_RING, sizeof *n->local);
+  n->remote = (uint8_t (*)[GW_NET_MAX_SLOTS][GW_NET_MAX_PAYLOAD])calloc(GW_NET_RING, sizeof *n->remote);
+  if (n->local == NULL || n->remote == NULL) { free(n->local); free(n->remote); free(n); return NULL; }
   n->cfg = *cfg;
   n->tp = *t;
   n->is_host = is_host;
+  n->pb = pb;
+  n->first = cfg->first_frame;
   n->now_fn = cfg->now_ms != NULL ? cfg->now_ms : wall_now_ms;
   if (n->cfg.disconnect_timeout_ms == 0) n->cfg.disconnect_timeout_ms = 5000;
   if (n->cfg.notify_timeout_ms == 0) n->cfg.notify_timeout_ms = 1000;
   n->frame_ms = (cfg->frame_us != 0 ? cfg->frame_us : 16667u) / 1000.0f;
-  n->desync_frame = -1;
+  n->desync_frame = GW_NET_NO_FRAME;
   n->t_begin = now(n);
   n->last_rx_ms = n->t_begin;
   return n;
@@ -405,21 +413,21 @@ static gw_net *make(const gw_net_config *cfg, const gw_net_transport *t, int is_
 
 gw_net *gw_net_host(const gw_net_config *cfg, const gw_net_transport *t) {
   gw_net *n;
-  if (cfg == NULL || (cfg->host_ports & cfg->guest_ports) != 0 || cfg->host_ports == 0 ||
-      cfg->guest_ports == 0 || cfg->match_blob_len > GW_NET_MAX_BLOB ||
+  if (cfg == NULL || (cfg->host_slots & cfg->guest_slots) != 0 || cfg->host_slots == 0 ||
+      cfg->guest_slots == 0 || cfg->match_blob_len > GW_NET_MAX_BLOB ||
       (cfg->match_blob_len != 0 && cfg->match_blob == NULL))
     return NULL;
   n = make(cfg, t, 1);
   if (n == NULL) return NULL;
   n->state = GW_NET_LISTENING;
-  n->host_ports = cfg->host_ports;
-  n->guest_ports = cfg->guest_ports;
+  n->host_slots = cfg->host_slots;
+  n->guest_slots = cfg->guest_slots;
   n->seed = cfg->seed;
   n->input_delay = cfg->input_delay;
   n->blob_len = cfg->match_blob_len;
   if (n->blob_len != 0) memcpy(n->blob, cfg->match_blob, n->blob_len);
   n->have_remote_cfg = 1;
-  setup_ports(n);
+  setup_slots(n);
   return n;
 }
 
@@ -443,6 +451,8 @@ void gw_net_free(gw_net *n) {
     for (i = 0; i < 3; ++i) send_simple(n, T_QUIT);
   }
   if (n->tp.close != NULL) n->tp.close(n->tp.ctx);
+  free(n->local);
+  free(n->remote);
   free(n);
 }
 
@@ -456,11 +466,12 @@ static void rtt_sample(gw_net *n, uint32_t t_echo, uint32_t echo_delay) {
   n->rtt_ms = n->rtt_ms == 0 ? (uint32_t)s : (n->rtt_ms * 7u + (uint32_t)s + 4u) / 8u;
 }
 
-static void check_checksum_pair(gw_net *n, uint32_t frame) {
-  uint32_t slot = frame % GW_NET_RING;
-  if (n->lchk_tag[slot] != frame + 1 || n->rchk_tag[slot] != frame + 1) return;
+static void check_checksum_pair(gw_net *n, uint32_t idx) {
+  uint32_t slot = idx % GW_NET_RING;
+  int32_t frame = to_frame(n, idx);
+  if (n->lchk_tag[slot] != idx + 1 || n->rchk_tag[slot] != idx + 1) return;
   if (n->lchk[slot] == n->rchk[slot]) return;
-  if (n->desync_frame < 0 || frame < (uint32_t)n->desync_frame) n->desync_frame = (int32_t)frame;
+  if (n->desync_frame == GW_NET_NO_FRAME || frame < n->desync_frame) n->desync_frame = frame;
   if (!n->desync_fired) {
     n->desync_fired = 1;
     if (n->cfg.cb.desync != NULL) n->cfg.cb.desync(n->cfg.cb.user, frame, n->lchk[slot], n->rchk[slot]);
@@ -481,7 +492,7 @@ static void deliver_remote(gw_net *n) {
     if (n->rtag[slot] != n->remote_next + 1) break;
     for (j = 0; j < n->nr; ++j)
       if (n->cfg.cb.remote_input != NULL)
-        n->cfg.cb.remote_input(n->cfg.cb.user, n->remote_next, n->rports[j], &n->remote[slot][j]);
+        n->cfg.cb.remote_input(n->cfg.cb.user, to_frame(n, n->remote_next), n->rslots[j], n->remote[slot][n->rslots[j]]);
     n->rtag[slot] = 0;
     n->remote_next++;
     n->st.inputs_delivered++;
@@ -492,6 +503,7 @@ static void on_input(gw_net *n, const uint8_t *p, const uint8_t *end) {
   uint32_t lf, ack_next, first, count, i, nchk;
   int adv_remote;
   int j, gap = 0;
+  size_t per_frame = (size_t)n->nr * (size_t)n->pb;
   if (n->state != GW_NET_STARTING && n->state != GW_NET_RUNNING) return;
   if (end - p < 4 + 1 + 4 + 4 + 1) { n->st.bad_packets++; return; }
   lf = get32(&p);
@@ -499,7 +511,7 @@ static void on_input(gw_net *n, const uint8_t *p, const uint8_t *end) {
   ack_next = get32(&p);
   first = get32(&p);
   count = *p++;
-  if ((size_t)(end - p) < (size_t)count * (size_t)n->nr * PAD_WIRE + 1) { n->st.bad_packets++; return; }
+  if ((size_t)(end - p) < (size_t)count * per_frame + 1) { n->st.bad_packets++; return; }
   n->start_acked = 1;                    /* an input packet also acknowledges START */
 
   if (ack_next > n->peer_ack && ack_next <= n->local_next) n->peer_ack = ack_next;
@@ -508,21 +520,24 @@ static void on_input(gw_net *n, const uint8_t *p, const uint8_t *end) {
     uint32_t frame = first + i;
     uint32_t slot = frame % GW_NET_RING;
     if (frame < n->remote_next) {        /* already delivered: a redundant resend */
-      p += (size_t)n->nr * PAD_WIRE;
+      p += per_frame;
       n->st.duplicates++;
       continue;
     }
     if (frame >= n->remote_next + GW_NET_RING) {
-      p += (size_t)n->nr * PAD_WIRE;     /* too far ahead to buffer; it will be resent */
+      p += per_frame;                    /* too far ahead to buffer; it will be resent */
       continue;
     }
     if (frame > n->remote_next) gap = 1;
     if (n->rtag[slot] == frame + 1) {
-      p += (size_t)n->nr * PAD_WIRE;
+      p += per_frame;
       n->st.duplicates++;
       continue;
     }
-    for (j = 0; j < n->nr; ++j) get_pad(&p, &n->remote[slot][j]);
+    for (j = 0; j < n->nr; ++j) {
+      memcpy(n->remote[slot][n->rslots[j]], p, (size_t)n->pb);
+      p += n->pb;
+    }
     n->rtag[slot] = frame + 1;
   }
   if (gap) n->st.out_of_order++;
@@ -551,7 +566,7 @@ static void on_input(gw_net *n, const uint8_t *p, const uint8_t *end) {
 }
 
 static const char *refuse_check(gw_net *n, uint32_t ver, uint64_t exe, uint64_t iso, uint64_t mods,
-                                char *why, size_t cap) {
+                                int pb, int32_t first, char *why, size_t cap) {
   if (ver != GW_NET_PROTOCOL_VERSION) {
     snprintf(why, cap, "protocol version mismatch (host %u, you %u)", GW_NET_PROTOCOL_VERSION, ver);
     return why;
@@ -567,6 +582,11 @@ static const char *refuse_check(gw_net *n, uint32_t ver, uint64_t exe, uint64_t 
   }
   if (mods != n->cfg.mods_hash) {
     snprintf(why, cap, "different mod pack (host %08x, you %08x)", (unsigned)n->cfg.mods_hash, (unsigned)mods);
+    return why;
+  }
+  if (pb != n->pb || first != n->first) {
+    snprintf(why, cap, "different netplay settings (input size %d vs %d, first frame %d vs %d)", n->pb, pb,
+             (int)n->first, (int)first);
     return why;
   }
   return NULL;
@@ -591,9 +611,13 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
     char why[96];
     uint32_t ver;
     uint64_t exe, iso, mods;
-    if (type != T_HELLO || end - p < 2 + 24) return;
+    int pb;
+    int32_t first;
+    if (type != T_HELLO || end - p < 2 + 24 + 1 + 4) return;
     ver = get16(&p); exe = get64(&p); iso = get64(&p); mods = get64(&p);
-    if (refuse_check(n, ver, exe, iso, mods, why, sizeof why) != NULL) {
+    pb = *p++;
+    first = (int32_t)get32(&p);
+    if (refuse_check(n, ver, exe, iso, mods, pb, first, why, sizeof why) != NULL) {
       send_refuse_to(n, from, 1, why);
       return;                            /* stay listening: a refused guest does not consume the slot */
     }
@@ -649,15 +673,15 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
       }
       n->seed = get32(&p);
       n->input_delay = *p++;
-      n->host_ports = *p++;
-      n->guest_ports = *p++;
+      n->host_slots = *p++;
+      n->guest_slots = *p++;
       bl = get16(&p);
       if (bl > GW_NET_MAX_BLOB || (size_t)(end - p) < bl) { n->st.bad_packets++; return; }
       n->blob_len = (uint16_t)bl;
       memcpy(n->blob, p, bl);
       n->session = session;
       n->have_remote_cfg = 1;
-      setup_ports(n);
+      setup_slots(n);
       n->state = GW_NET_ACCEPTED;
       n->last_rx_ms = now(n);
       n->last_rx_tsend = t_send; n->last_rx_at = now(n); n->have_echo = 1;
@@ -718,15 +742,70 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
   }
 }
 
+/* ---- pulling from the session --------------------------------------------------------------- */
+
+static int accept_local(gw_net *n, uint32_t idx, const uint8_t (*src)[GW_NET_MAX_PAYLOAD]) {
+  int j;
+  if (idx != n->local_next || n->local_next - n->peer_ack >= GW_NET_RING - 8) return -1;
+  for (j = 0; j < n->nl; ++j) memcpy(n->local[idx % GW_NET_RING][n->lslots[j]], src[n->lslots[j]], (size_t)n->pb);
+  n->local_next++;
+  return 0;
+}
+
+static void pull_local(gw_net *n) {
+  int k, j;
+  if (n->cfg.cb.local_input == NULL || !n->have_remote_cfg || n->nl == 0) return;
+  for (k = 0; k < MAX_PULL_PER_POLL; ++k) {
+    uint8_t tmp[GW_NET_MAX_SLOTS][GW_NET_MAX_PAYLOAD];
+    int ok = 1;
+    if (n->local_next - n->peer_ack >= GW_NET_RING - 8) break;
+    for (j = 0; j < n->nl && ok; ++j)
+      ok = n->cfg.cb.local_input(n->cfg.cb.user, to_frame(n, n->local_next), n->lslots[j], tmp[n->lslots[j]]);
+    if (!ok) break;
+    accept_local(n, n->local_next, (const uint8_t (*)[GW_NET_MAX_PAYLOAD])tmp);
+  }
+}
+
+static void report_idx(gw_net *n, uint32_t idx, uint32_t hash) {
+  uint32_t slot = idx % GW_NET_RING;
+  int i;
+  n->lchk[slot] = hash;
+  n->lchk_tag[slot] = idx + 1;
+  if (n->nrecent == MAX_CHECKSUMS) {
+    for (i = 1; i < MAX_CHECKSUMS; ++i) n->recent[i - 1] = n->recent[i];
+    n->nrecent--;
+  }
+  n->recent[n->nrecent++] = idx;
+  check_checksum_pair(n, idx);
+}
+
+/* The state at the START of frame f depends on the inputs of frames < f, so f is final once every
+ * remote input below it has been delivered: f <= remote_next. */
+static void pull_checksums(gw_net *n) {
+  int k;
+  if (n->cfg.cb.checksum == NULL) return;
+  for (k = 0; k < 8 && n->next_chk <= n->remote_next; ++k) {
+    uint32_t h;
+    if (n->cfg.cb.checksum(n->cfg.cb.user, to_frame(n, n->next_chk), &h)) {
+      report_idx(n, n->next_chk, h);
+      n->next_chk++;
+    } else if (n->remote_next - n->next_chk > 8) {
+      n->next_chk++;                     /* too old: the session no longer has it */
+    } else {
+      break;                             /* not simulated yet: ask again next poll */
+    }
+  }
+}
+
 /* ---- the frame poll ------------------------------------------------------------------------- */
 
-void gw_net_poll(gw_net *n, uint32_t local_frame) {
+void gw_net_poll(gw_net *n, int32_t local_frame) {
   uint8_t buf[MAX_PACKET + 64];
   gw_net_addr from;
   int i, r;
   uint32_t t;
   if (n == NULL || n->state == GW_NET_DEAD || n->state == GW_NET_REFUSED) return;
-  n->local_frame = local_frame;
+  n->local_frame = local_frame > n->first ? (uint32_t)(local_frame - n->first) : 0u;
   if (n->cooldown > 0) n->cooldown--;
 
   for (i = 0; i < 64; ++i) {
@@ -761,26 +840,29 @@ void gw_net_poll(gw_net *n, uint32_t local_frame) {
     if (silent >= n->cfg.notify_timeout_ms && !n->interrupted) { n->interrupted = 1; fire(n, GW_NET_EV_INTERRUPTED, NULL); }
   }
 
-  if (n->state == GW_NET_RUNNING && reached(t, n->last_send_ms + MIN_SEND_GAP_MS)) send_inputs(n);
+  if (n->state == GW_NET_RUNNING) {
+    pull_local(n);
+    pull_checksums(n);
+    if (reached(t, n->last_send_ms + MIN_SEND_GAP_MS)) send_inputs(n);
+  }
 }
 
 /* ---- session-facing API --------------------------------------------------------------------- */
 
-int gw_net_submit_local(gw_net *n, uint32_t frame, const gw_net_pad pads[GW_NET_MAX_PORTS]) {
+int gw_net_submit_local(gw_net *n, int32_t frame, const gw_net_input in[GW_NET_MAX_SLOTS]) {
+  uint8_t tmp[GW_NET_MAX_SLOTS][GW_NET_MAX_PAYLOAD];
   int j;
   if (n == NULL || !n->have_remote_cfg || n->nl == 0) return -1;
-  if (frame != n->local_next) return -2;
-  if (n->local_next - n->peer_ack >= GW_NET_RING - 8) return -3;
-  for (j = 0; j < n->nl; ++j) n->local[frame % GW_NET_RING][n->lports[j]] = pads[n->lports[j]];
-  n->local_next++;
-  return 0;
+  if (frame < n->first || (uint32_t)(frame - n->first) != n->local_next) return -2;
+  for (j = 0; j < n->nl; ++j) memcpy(tmp[n->lslots[j]], in[n->lslots[j]].b, GW_NET_MAX_PAYLOAD);
+  return accept_local(n, n->local_next, (const uint8_t (*)[GW_NET_MAX_PAYLOAD])tmp) == 0 ? 0 : -3;
 }
 
 int gw_net_state(const gw_net *n) { return n != NULL ? n->state : GW_NET_IDLE; }
 int gw_net_started(const gw_net *n) { return n != NULL && n->state == GW_NET_RUNNING; }
 uint32_t gw_net_start_time_ms(const gw_net *n) { return n->start_time; }
-uint8_t gw_net_local_ports(const gw_net *n) { return n->is_host ? n->host_ports : n->guest_ports; }
-uint8_t gw_net_remote_ports(const gw_net *n) { return n->is_host ? n->guest_ports : n->host_ports; }
+uint8_t gw_net_local_slots(const gw_net *n) { return n->is_host ? n->host_slots : n->guest_slots; }
+uint8_t gw_net_remote_slots(const gw_net *n) { return n->is_host ? n->guest_slots : n->host_slots; }
 const char *gw_net_last_reason(const gw_net *n) { return n->reason; }
 
 int gw_net_remote_config(const gw_net *n, gw_net_config *out_cfg, void *blob_buf, int blob_cap) {
@@ -789,15 +871,17 @@ int gw_net_remote_config(const gw_net *n, gw_net_config *out_cfg, void *blob_buf
     memset(out_cfg, 0, sizeof *out_cfg);
     out_cfg->seed = n->seed;
     out_cfg->input_delay = n->input_delay;
-    out_cfg->host_ports = n->host_ports;
-    out_cfg->guest_ports = n->guest_ports;
+    out_cfg->host_slots = n->host_slots;
+    out_cfg->guest_slots = n->guest_slots;
     out_cfg->match_blob_len = n->blob_len;
+    out_cfg->first_frame = n->first;
+    out_cfg->payload_bytes = (uint8_t)n->pb;
   }
   if (blob_buf != NULL && blob_cap >= (int)n->blob_len) memcpy(blob_buf, n->blob, n->blob_len);
   return 1;
 }
 
-int32_t gw_net_remote_confirmed_frame(const gw_net *n) { return (int32_t)n->remote_next - 1; }
+int32_t gw_net_remote_confirmed_frame(const gw_net *n) { return n->first + (int32_t)n->remote_next - 1; }
 uint32_t gw_net_unacked(const gw_net *n) { return n->local_next - n->peer_ack; }
 uint32_t gw_net_rtt_ms(const gw_net *n) { return n->rtt_ms; }
 uint32_t gw_net_silent_ms(const gw_net *n) { return now(n) - n->last_rx_ms; }
@@ -817,17 +901,9 @@ int gw_net_recommend_wait(gw_net *n) {
   return w;
 }
 
-void gw_net_report_checksum(gw_net *n, uint32_t frame, uint32_t hash) {
-  uint32_t slot = frame % GW_NET_RING;
-  int i;
-  n->lchk[slot] = hash;
-  n->lchk_tag[slot] = frame + 1;
-  if (n->nrecent == MAX_CHECKSUMS) {
-    for (i = 1; i < MAX_CHECKSUMS; ++i) n->recent[i - 1] = n->recent[i];
-    n->nrecent--;
-  }
-  n->recent[n->nrecent++] = frame;
-  check_checksum_pair(n, frame);
+void gw_net_report_checksum(gw_net *n, int32_t frame, uint32_t hash) {
+  if (frame < n->first) return;
+  report_idx(n, (uint32_t)(frame - n->first), hash);
 }
 
 int32_t gw_net_desync_frame(const gw_net *n) { return n->desync_frame; }

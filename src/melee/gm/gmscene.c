@@ -633,7 +633,9 @@ static void mnOverlay_Frame(void)
 
     mnOverlay_Reshow();
 
-    mnOverlay_Line(mnOverlay_caption, Overlay_GetRunLabel());
+    /* The run label names a test run for whoever watches it; it belongs with the rest of the debug
+       view, so it shows only while the F9 panel is open - never over normal play. */
+    mnOverlay_Line(mnOverlay_caption, Overlay_GetPanelOpen() ? Overlay_GetRunLabel() : NULL);
     mnOverlay_Line(mnOverlay_toast, Overlay_GetToast());
 
     if (mnOverlay_panel == NULL) {

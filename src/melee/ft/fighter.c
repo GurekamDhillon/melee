@@ -1735,39 +1735,6 @@ void Fighter_8006A360(Fighter_GObj* gobj)
             }
         }
 
-#if defined(TARGET_PC)
-        {   /* TEMPORARY probe: off-screen damage inputs, replay frames 2250..2370 */
-            extern int Replay_Frame(void);
-            int rf = Replay_Frame();
-            if (rf >= 2250 && rf <= 2370 && fp->player_id == 1 && !fp->is_sub_fighter) {
-                {
-                    extern HSD_GObj* Camera_80030A50(void);
-                    HSD_GObj* cg = Camera_80030A50();
-                    CmSubject* box = fp->x890_cameraBox;
-                    Vec3 eye, interest, scr;
-                    Scissor sc;
-                    if (cg != NULL && box != NULL) {
-                        HSD_CObj* c = GET_COBJ(cg);
-                        HSD_CObjGetEyePosition(c, &eye);
-                        HSD_CObjGetInterest(c, &interest);
-                        HSD_CObjGetScissor(c, &sc);
-                        scr.x = scr.y = scr.z = -99999.0F;
-                        lbVector_WorldToScreen(c, &box->bone_pos, &scr, 1);
-                        OSReport("camdbg: f%d box %.1f %.1f %.1f scr %.1f %.1f sciss %d %d %d %d "
-                                 "eye %.1f %.1f %.1f int %.1f %.1f %.1f\n",
-                                 rf, box->bone_pos.x, box->bone_pos.y, box->bone_pos.z, scr.x,
-                                 scr.y, sc.left, sc.right, sc.top, sc.bottom, eye.x, eye.y, eye.z,
-                                 interest.x, interest.y, interest.z);
-                    }
-                }
-                OSReport("offdbg: f%d cam %.3f mag %d bit3 %d x1910 %d b0 %d thr %d pos %.1f %.1f\n",
-                         rf, Camera_80031144(), ifMagnify_802FC998(fp->player_id),
-                         Player_GetMoreFlagsBit3(fp->player_id) != 0, fp->dmg.x1910,
-                         fp->x221F_b0, p_ftCommonData->x7AC,
-                         fp->cur_pos.x, fp->cur_pos.y);
-            }
-        }
-#endif
         if (!fp->is_sub_fighter && Camera_80031144() == 1.0f) {
             if (fp->dmg.x1830_percent < p_ftCommonData->x7B0) {
                 if (ifMagnify_802FC998(fp->player_id) &&

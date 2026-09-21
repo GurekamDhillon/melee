@@ -50,6 +50,13 @@ typedef struct {
     uint8_t *mem1;
     uint8_t *globals;
     int replay_cursor[4];
+    /* DIRTY-PAGE MODE: a superset of the pages where the live MEM1 may differ from this slot's
+       copy (1 bit per 4 KB page). Live writes (GetWriteWatch) are OR'd into every slot's set; a
+       save copies only the pages in the chosen slot's set; a load copies only the pages in the
+       target's set back and folds that set into every other slot's (their difference from the new
+       live state is at most (their set) | (the target's)). */
+    uint64_t *dirty;
+    uint64_t hash; /* gw_snap_hash() at save time, 0 in full mode */
 } GwSnapSlot;
 
 /* rumble state: reset to idle on every load (see sn_scatter) */
@@ -93,8 +100,22 @@ static struct {
     int passes;
     double ms_save, ms_load, ms_cmp;
     int n_save, n_load, n_cmp;
+    /* dirty-page tracking (MELEE_SNAP_MODE=dirty, the default; =full copies everything) */
+    int dirty_mode, verify, hash_on;
+    uint32_t npages;
+    uint64_t *hash_dirty;     /* pages written since gw_snap_hash last looked */
+    uint64_t *page_h;         /* the live pages' hashes as of that look */
+    uint64_t hash_mem;        /* combined page hashes (MEM1 part) */
+    uint32_t hash_node_pg[64]; /* pages forced dirty last call (async nodes zeroed in the hash) */
+    int n_hash_node_pg;
+    uint64_t hash_ready;
+    double ms_poll, ms_hash;
+    long n_poll, n_dirty_pages, n_copy_pages, n_hash_pages, n_hash_calls;
+    long n_verify_fail;
 } sn = { 0 };
 
+uint64_t gw_snap_hash(void);
+void gw_Snap_Time(int what, int begin);
 extern int gw_Replay_Frame(void);
 extern void gw_Replay_GetCursor(int out[4]);
 extern void gw_Replay_SetCursor(const int in[4]);
@@ -255,7 +276,12 @@ static int sn_load_map(void) {
             ++sn.ncmp_skip;
         } else if (strcmp(s->name, "_gw_HSD_PadMasterStatus") == 0 ||
                    strcmp(s->name, "_gw_HSD_PadGameStatus") == 0 ||
-                   strcmp(s->name, "_gw_HSD_PadCopyStatus") == 0) {
+                   strcmp(s->name, "_gw_HSD_PadCopyStatus") == 0 ||
+                   strcmp(s->name, "_controller_map") == 0) {
+            /* _controller_map (gm_1A36.c) is the menu button/trigger/repeat map that
+               gm_EvaluateAllControllerInputs rebuilds every frame from the live pad - the same
+               family as the pad statuses. SyncTest k=7 found it (frame 2148: one byte, 0x00 vs
+               0x20, from the live pad's state at the moment of the resimulated frame). */
             /* INPUTS, renewed from the live pad queue each logic frame: during playback fighters
                take the replay's inputs instead, so these are not state to compare */
             sn.cmp_skip[sn.ncmp_skip].va = s->va;
@@ -284,6 +310,130 @@ static int sn_load_map(void) {
     gw_log("snap: %d section-3 symbols, %d game ranges, %u bytes of game globals; MEM1 %u bytes",
            sn.nsyms, sn.nranges, sn.globals_len, gw_mem1_size);
     return 0;
+}
+
+/* ---- write-watch: which MEM1 pages changed ------------------------------------------------- */
+
+#define SN_PAGE 4096u
+#define SN_BM_WORDS(n) (((n) + 63u) / 64u)
+
+extern int gw_mem1_watched;
+
+static void sn_bm_set(uint64_t *bm, uint32_t pg) { bm[pg >> 6] |= 1ull << (pg & 63); }
+static int sn_bm_test(const uint64_t *bm, uint32_t pg) { return (int) ((bm[pg >> 6] >> (pg & 63)) & 1); }
+static void sn_bm_fill(uint64_t *bm, uint32_t npages) {
+    uint32_t i;
+    memset(bm, 0, SN_BM_WORDS(npages) * 8);
+    for (i = 0; i < npages; ++i) {
+        sn_bm_set(bm, i);
+    }
+}
+
+/* Ask Windows which pages changed since the last poll (and reset the watch), and record them in
+ * every slot's dirty set and the hash's. Everything that reads or writes the sets calls this first. */
+static void sn_poll(void) {
+    static PVOID addrs[6144 + 64];
+    ULONG_PTR count = sn.npages;
+    DWORD gran = 0;
+    double t0 = sn_ms();
+    UINT r;
+    int i;
+    ULONG_PTR c;
+    if (!sn.dirty_mode) {
+        return;
+    }
+    r = GetWriteWatch(WRITE_WATCH_FLAG_RESET, (PVOID) (uintptr_t) 0x80000000u, gw_mem1_size, addrs,
+                      &count, &gran);
+    if (r != 0) {
+        /* cannot tell: everything is suspect */
+        for (i = 0; i < sn.nslots; ++i) {
+            sn_bm_fill(sn.slot[i].dirty, sn.npages);
+        }
+        if (sn.hash_dirty != NULL) {
+            sn_bm_fill(sn.hash_dirty, sn.npages);
+        }
+        return;
+    }
+    for (c = 0; c < count; ++c) {
+        uint32_t pg = (uint32_t) (((uintptr_t) addrs[c] - 0x80000000u) / SN_PAGE);
+        if (pg >= sn.npages) {
+            continue;
+        }
+        for (i = 0; i < sn.nslots; ++i) {
+            sn_bm_set(sn.slot[i].dirty, pg);
+        }
+        if (sn.hash_dirty != NULL) {
+            sn_bm_set(sn.hash_dirty, pg);
+        }
+    }
+    sn.n_poll++;
+    sn.n_dirty_pages += (long) count;
+    sn.ms_poll += sn_ms() - t0;
+}
+
+static void sn_watch_reset(void) {
+    if (sn.dirty_mode) {
+        ResetWriteWatch((PVOID) (uintptr_t) 0x80000000u, gw_mem1_size);
+    }
+}
+
+/* Copy every page of `bm` between `live` and `slot` (dir 0: live -> slot, 1: slot -> live), merging
+ * neighbours into one memcpy. Returns the pages copied. */
+static uint32_t sn_copy_pages(const uint64_t *bm, uint8_t *slot, int dir) {
+    uint8_t *live = (uint8_t *) (uintptr_t) 0x80000000u;
+    uint32_t pg = 0, copied = 0;
+    while (pg < sn.npages) {
+        uint32_t start, n;
+        if (!sn_bm_test(bm, pg)) {
+            /* skip whole clear words fast */
+            if ((pg & 63) == 0 && bm[pg >> 6] == 0) {
+                pg += 64;
+            } else {
+                ++pg;
+            }
+            continue;
+        }
+        start = pg;
+        while (pg < sn.npages && sn_bm_test(bm, pg)) {
+            ++pg;
+        }
+        n = pg - start;
+        if (dir == 0) {
+            memcpy(slot + (size_t) start * SN_PAGE, live + (size_t) start * SN_PAGE, (size_t) n * SN_PAGE);
+        } else {
+            memcpy(live + (size_t) start * SN_PAGE, slot + (size_t) start * SN_PAGE, (size_t) n * SN_PAGE);
+        }
+        copied += n;
+    }
+    return copied;
+}
+
+/* ---- a fast hash, and the incremental state hash ------------------------------------------------
+ *
+ * 64-bit, four independent lanes of multiply/xorshift over 32-byte blocks (~6-8 GB/s single
+ * thread; a 4 KB page is ~0.6 us). Self-contained: no dependency. Not cryptographic - it detects
+ * desyncs and differences, nothing more. */
+static uint64_t sn_h64(const uint8_t *p, size_t n, uint64_t seed) {
+    const uint64_t K1 = 0x9E3779B185EBCA87ull, K2 = 0xC2B2AE3D27D4EB4Full;
+    uint64_t a = seed + K1, b = seed ^ K2, c = seed * K1 + 1, d = ~seed;
+    size_t i;
+    for (i = 0; i + 32 <= n; i += 32) {
+        uint64_t w0, w1, w2, w3;
+        memcpy(&w0, p + i, 8);
+        memcpy(&w1, p + i + 8, 8);
+        memcpy(&w2, p + i + 16, 8);
+        memcpy(&w3, p + i + 24, 8);
+        a = (a ^ w0) * K1; a ^= a >> 31;
+        b = (b ^ w1) * K2; b ^= b >> 29;
+        c = (c ^ w2) * K1; c ^= c >> 32;
+        d = (d ^ w3) * K2; d ^= d >> 27;
+    }
+    for (; i < n; ++i) {
+        a = (a ^ p[i]) * K1;
+    }
+    a ^= (b << 21 | b >> 43) + (c << 42 | c >> 22) * K2 + d;
+    a ^= a >> 33; a *= K2; a ^= a >> 29; a *= K1; a ^= a >> 32;
+    return a;
 }
 
 /* ---- save / load / compare -------------------------------------------------------------------- */
@@ -347,6 +497,7 @@ static void sn_scatter(const uint8_t *in) {
  * already completed, and the run died inside HSD_DevComDVDMemCallback. So the nodes are lifted
  * out of the live memory before a load and put straight back afterwards. */
 #define SN_DEVCOM_NODE 0x24
+#define SN_NODE_LEN SN_DEVCOM_NODE
 #define SN_DEVCOM_MAX 32
 static struct {
     uint32_t va;
@@ -402,6 +553,17 @@ static struct {
     uint32_t va, len;
     uint8_t bytes[0x400];
 } sn_fixed[SN_FIXED_ASYNC_MAX];
+static double sn_t[8];
+static long sn_tn[8];
+static struct {
+    uintptr_t cb;
+    double ms;
+    long n;
+} sn_cb[64];
+static int sn_ncb;
+static double sn_cb_t0;
+static int sn_cb_on = -1, sn_cb_window;
+
 static int sn_nfixed;
 
 static void sn_fixed_init(void) {
@@ -471,16 +633,53 @@ static GwSnapSlot *sn_slot_for(int frame, int create) {
     return create ? oldest : NULL;
 }
 
+static void sn_verify_equal(const GwSnapSlot *s, const char *what) {
+    /* MELEE_SNAP_VERIFY=1: after a dirty-mode save or load the live MEM1 must equal the slot on
+       EVERY page - the cross-check that the dirty sets are complete. */
+    const uint8_t *live = (const uint8_t *) (uintptr_t) 0x80000000u;
+    uint32_t pg, bad = 0, first = 0;
+    for (pg = 0; pg < sn.npages; ++pg) {
+        if (memcmp(live + (size_t) pg * SN_PAGE, s->mem1 + (size_t) pg * SN_PAGE, SN_PAGE) != 0) {
+            if (bad++ == 0) {
+                first = pg;
+            }
+        }
+    }
+    if (bad != 0) {
+        uint32_t o;
+        const uint8_t *a = live + (size_t) first * SN_PAGE, *b = s->mem1 + (size_t) first * SN_PAGE;
+        for (o = 0; o < SN_PAGE && a[o] == b[o]; ++o) {
+        }
+        sn.n_verify_fail++;
+        if (sn.n_verify_fail <= 8) {
+            gw_log("snap: VERIFY FAIL after %s (frame %d): %u page(s) differ, first 0x%08X +0x%X (live %02X slot %02X)",
+                   what, s->frame, bad, 0x80000000u + first * SN_PAGE, o, a[o], b[o]);
+        }
+    }
+}
+
 void gw_snap_save(int frame) {
     double t0 = sn_ms();
     GwSnapSlot *s = sn_slot_for(frame, 1);
     sn_boundary_asserts("save");
     s->frame = frame;
-    memcpy(s->mem1, (const void *) (uintptr_t) 0x80000000u, gw_mem1_size);
+    if (sn.dirty_mode) {
+        sn_poll();
+        sn.n_copy_pages += (long) sn_copy_pages(s->dirty, s->mem1, 0);
+        memset(s->dirty, 0, SN_BM_WORDS(sn.npages) * 8);
+        if (sn.verify) {
+            sn_verify_equal(s, "save");
+        }
+    } else {
+        memcpy(s->mem1, (const void *) (uintptr_t) 0x80000000u, gw_mem1_size);
+    }
     sn_gather(s->globals);
     gw_Replay_GetCursor(s->replay_cursor);
     sn.ms_save += sn_ms() - t0;
     sn.n_save++;
+    if (sn.hash_on) {
+        s->hash = gw_snap_hash();
+    }
 }
 
 int gw_snap_load(int frame) {
@@ -492,7 +691,36 @@ int gw_snap_load(int frame) {
     sn_boundary_asserts("load");
     sn_async_collect();
     sn_fixed_collect();
-    memcpy((void *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size);
+    if (sn.dirty_mode) {
+        int u;
+        sn_poll();
+        sn.n_copy_pages += (long) sn_copy_pages(s->dirty, s->mem1, 1);
+        /* live now equals this slot: every other slot differs from live at most where it differed
+           from live before, or where this slot did */
+        for (u = 0; u < sn.nslots; ++u) {
+            uint32_t w;
+            if (&sn.slot[u] == s) {
+                continue;
+            }
+            for (w = 0; w < SN_BM_WORDS(sn.npages); ++w) {
+                sn.slot[u].dirty[w] |= s->dirty[w];
+            }
+        }
+        if (sn.hash_dirty != NULL) {
+            /* the pages the copy rewrote are the ones that were dirty: their hashes are stale */
+            uint32_t w;
+            for (w = 0; w < SN_BM_WORDS(sn.npages); ++w) {
+                sn.hash_dirty[w] |= s->dirty[w];
+            }
+        }
+        memset(s->dirty, 0, SN_BM_WORDS(sn.npages) * 8);
+        sn_watch_reset(); /* the copy's own writes are not news */
+        if (sn.verify) {
+            sn_verify_equal(s, "load");
+        }
+    } else {
+        memcpy((void *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size);
+    }
     sn_scatter(s->globals);
     sn_async_put_back();
     sn_fixed_put_back();
@@ -600,6 +828,32 @@ static int sn_masked(uint32_t va, uint32_t *end) {
     return 0;
 }
 
+/* Does any page that could differ actually differ? (Full mode: any page at all.) */
+static int sn_any_diff(const GwSnapSlot *s) {
+    const uint8_t *live = (const uint8_t *) (uintptr_t) 0x80000000u;
+    uint32_t pg = 0;
+    if (!sn.dirty_mode) {
+        return memcmp(s->mem1, live, gw_mem1_size) != 0;
+    }
+    while (pg < sn.npages) {
+        uint32_t start, n;
+        if (!sn_bm_test(s->dirty, pg)) {
+            pg += ((pg & 63) == 0 && s->dirty[pg >> 6] == 0) ? 64 : 1;
+            continue;
+        }
+        start = pg;
+        while (pg < sn.npages && sn_bm_test(s->dirty, pg)) {
+            ++pg;
+        }
+        n = pg - start;
+        if (memcmp(s->mem1 + (size_t) start * SN_PAGE, live + (size_t) start * SN_PAGE,
+                   (size_t) n * SN_PAGE) != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* Compare the live state with the snapshot of `frame`; log up to a few differing runs. */
 static int sn_compare(int frame) {
     GwSnapSlot *s = sn_slot_for(frame, 0);
@@ -610,13 +864,24 @@ static int sn_compare(int frame) {
         return 0;
     }
     sn.checked++;
-    if (memcmp(s->mem1, live, gw_mem1_size) != 0) {
+    sn_poll();
+    if (sn_any_diff(s)) {
         uint32_t off = 0;
         sn.nmask = 0;
         sn_mask_particles(NULL, NULL);
         sn_mask_particles(s->mem1, s->globals);
         while (off < gw_mem1_size) {
             uint32_t mend;
+            if (sn.dirty_mode && !sn_bm_test(s->dirty, off / SN_PAGE)) {
+                /* a clean page (nothing wrote it since this slot last matched live): skip to the
+                   next dirty one */
+                uint32_t pg = off / SN_PAGE;
+                while (pg < sn.npages && !sn_bm_test(s->dirty, pg)) {
+                    pg += ((pg & 63) == 0 && s->dirty[pg >> 6] == 0) ? 64 : 1;
+                }
+                off = pg >= sn.npages ? gw_mem1_size : pg * SN_PAGE;
+                continue;
+            }
             if (s->mem1[off] != live[off] && (sn.rmask_mem1[off >> 3] & (1u << (off & 7)))) {
                 ++off;
                 continue;
@@ -719,39 +984,171 @@ static int sn_compare(int frame) {
     return diffs;
 }
 
+/* ---- the state hash -----------------------------------------------------------------------------
+ *
+ * gw_snap_hash(): a 64-bit hash of the LIVE game state - MEM1 (per-page hashes, only the pages
+ * written since the last call are rehashed) combined with the game's globals (hashed each call, ~1 MB,
+ * minus the render-owned/pad/rumble ranges SyncTest also does not compare). The streaming DVD block
+ * and devcom's request nodes are hashed as zero: they are the disc's state, not the simulation's.
+ * Two peers that ran the same inputs through the same code should agree on it frame for frame; the
+ * render-owned bytes (object-pool cells the render pass takes, particle display state) are INCLUDED,
+ * so it is a peer-to-peer checksum, not a way to compare a resimulation with its first pass -
+ * SyncTest keeps the byte compare with its masks for that. */
+static int sn_range_overlap(uint32_t a, uint32_t alen, uint32_t b, uint32_t blen) {
+    return a < b + blen && b < a + alen;
+}
+
+uint64_t gw_snap_hash(void) {
+    double t0 = sn_ms();
+    const uint8_t *live = (const uint8_t *) (uintptr_t) 0x80000000u;
+    uint8_t tmp[SN_PAGE];
+    uint32_t pg, i;
+    uint64_t total, g = 0x1234ABCDull;
+    if (!sn.enabled || sn.page_h == NULL) {
+        return 0;
+    }
+    sn_poll();
+    /* async request nodes move around the heap: force their pages (and last time's) to be looked at */
+    sn_async_collect();
+    for (i = 0; i < (uint32_t) sn.n_hash_node_pg; ++i) {
+        sn_bm_set(sn.hash_dirty, sn.hash_node_pg[i]);
+    }
+    sn.n_hash_node_pg = 0;
+    for (i = 0; i < (uint32_t) sn_nasync; ++i) {
+        uint32_t pgn = (sn_async[i].va - 0x80000000u) / SN_PAGE;
+        uint32_t pge = (sn_async[i].va + SN_NODE_LEN - 1 - 0x80000000u) / SN_PAGE;
+        for (; pgn <= pge && pgn < sn.npages; ++pgn) {
+            sn_bm_set(sn.hash_dirty, pgn);
+            if (sn.n_hash_node_pg < 64) {
+                sn.hash_node_pg[sn.n_hash_node_pg++] = pgn;
+            }
+        }
+    }
+    for (pg = 0; pg < sn.npages; ++pg) {
+        uint64_t h;
+        int needs_zero = 0, f;
+        uint32_t va = 0x80000000u + pg * SN_PAGE;
+        if (!sn_bm_test(sn.hash_dirty, pg)) {
+            if ((pg & 63) == 0 && sn.hash_dirty[pg >> 6] == 0) {
+                pg += 63;
+            }
+            continue;
+        }
+        for (f = 0; f < sn_nfixed && !needs_zero; ++f) {
+            needs_zero = sn_range_overlap(va, SN_PAGE, sn_fixed[f].va, sn_fixed[f].len);
+        }
+        for (i = 0; i < (uint32_t) sn_nasync && !needs_zero; ++i) {
+            needs_zero = sn_range_overlap(va, SN_PAGE, sn_async[i].va, SN_NODE_LEN);
+        }
+        if (needs_zero) {
+            memcpy(tmp, live + (size_t) pg * SN_PAGE, SN_PAGE);
+            for (f = 0; f < sn_nfixed; ++f) {
+                if (sn_range_overlap(va, SN_PAGE, sn_fixed[f].va, sn_fixed[f].len)) {
+                    uint32_t lo = sn_fixed[f].va > va ? sn_fixed[f].va : va;
+                    uint32_t hi = sn_fixed[f].va + sn_fixed[f].len < va + SN_PAGE ? sn_fixed[f].va + sn_fixed[f].len : va + SN_PAGE;
+                    memset(tmp + (lo - va), 0, hi - lo);
+                }
+            }
+            for (i = 0; i < (uint32_t) sn_nasync; ++i) {
+                if (sn_range_overlap(va, SN_PAGE, sn_async[i].va, SN_NODE_LEN)) {
+                    uint32_t lo = sn_async[i].va > va ? sn_async[i].va : va;
+                    uint32_t hi = sn_async[i].va + SN_NODE_LEN < va + SN_PAGE ? sn_async[i].va + SN_NODE_LEN : va + SN_PAGE;
+                    memset(tmp + (lo - va), 0, hi - lo);
+                }
+            }
+            h = sn_h64(tmp, SN_PAGE, pg + 1);
+        } else {
+            h = sn_h64(live + (size_t) pg * SN_PAGE, SN_PAGE, pg + 1);
+        }
+        sn.hash_mem ^= sn.page_h[pg] ^ h;
+        sn.page_h[pg] = h;
+        sn.n_hash_pages++;
+    }
+    memset(sn.hash_dirty, 0, SN_BM_WORDS(sn.npages) * 8);
+    /* globals: every game range, minus the ranges SyncTest does not compare */
+    for (i = 0; i < (uint32_t) sn.nranges; ++i) {
+        uint32_t a = sn.ranges[i].va, e = a + sn.ranges[i].len;
+        while (a < e) {
+            uint32_t next = e;
+            int k, skipped = 0;
+            for (k = 0; k < sn.ncmp_skip; ++k) {
+                uint32_t sa = sn.cmp_skip[k].va, se = sa + sn.cmp_skip[k].len;
+                if (a >= sa && a < se) {
+                    next = se < e ? se : e;
+                    skipped = 1;
+                    break;
+                }
+                if (sa > a && sa < next) {
+                    next = sa;
+                }
+            }
+            if (!skipped) {
+                g = sn_h64((const uint8_t *) (uintptr_t) a, next - a, g);
+            }
+            a = next;
+        }
+    }
+    total = sn.hash_mem * 0x9E3779B97F4A7C15ull ^ (g << 17 | g >> 47);
+    sn.n_hash_calls++;
+    sn.ms_hash += sn_ms() - t0;
+    return total;
+}
+
+uint64_t gw_snap_frame_hash(int frame) {
+    GwSnapSlot *s = sn_slot_for(frame, 0);
+    return s != NULL ? s->hash : 0;
+}
+
 /* ---- SyncTest --------------------------------------------------------------------------------- */
 
 static void sn_sfx_rewind(int frame);
 static void sn_mark_window(void);
 
-static void sn_init(void) {
-    const char *v;
+/* gw_snap_open(k): set the snapshot machinery up with a ring of k+2 slots (enough to save the
+ * frame about to run and roll back k frames). Idempotent; MELEE_SYNCTEST=<k> calls it at the first
+ * scene-loop tick, and so can a rollback session. Returns 0 on success.
+ *   MELEE_SNAP_MODE=full|dirty   dirty (default): write-watch dirty pages; full: copy all of MEM1
+ *   MELEE_SNAP_VERIFY=1          after every dirty save/load, memcmp live against the slot
+ *   MELEE_SNAP_HASH=0            do not hash at save time (gw_snap_hash() is still callable) */
+int gw_snap_open(int k) {
     int i;
-    if (sn.tried) {
-        return;
+    const char *v;
+    if (sn.enabled) {
+        return 0;
     }
-    sn.tried = 1;
-    v = getenv("MELEE_SYNCTEST");
-    if (v == NULL || v[0] == '\0' || atoi(v) <= 0) {
-        return;
+    if (k <= 0) {
+        return -1;
     }
-    sn.k = atoi(v);
-    if (sn.k > GW_SNAP_MAX_SLOTS - 2) {
-        sn.k = GW_SNAP_MAX_SLOTS - 2;
-    }
+    sn.k = k > GW_SNAP_MAX_SLOTS - 2 ? GW_SNAP_MAX_SLOTS - 2 : k;
     if (sn_load_map() != 0) {
-        return;
+        return -1;
     }
     sn.nslots = sn.k + 2;
+    sn.npages = gw_mem1_size / SN_PAGE;
+    v = getenv("MELEE_SNAP_MODE");
+    sn.dirty_mode = gw_mem1_watched && !(v != NULL && strcmp(v, "full") == 0);
+    v = getenv("MELEE_SNAP_VERIFY");
+    sn.verify = sn.dirty_mode && v != NULL && v[0] == '1';
+    v = getenv("MELEE_SNAP_HASH");
+    sn.hash_on = sn.dirty_mode && !(v != NULL && v[0] == '0');
     for (i = 0; i < sn.nslots; ++i) {
         sn.slot[i].frame = -0x7FFFFFFF - 1;
         sn.slot[i].mem1 = (uint8_t *) malloc(gw_mem1_size);
         sn.slot[i].globals = (uint8_t *) malloc(sn.globals_len);
-        if (sn.slot[i].mem1 == NULL || sn.slot[i].globals == NULL) {
+        sn.slot[i].dirty = (uint64_t *) malloc(SN_BM_WORDS(sn.npages) * 8);
+        if (sn.slot[i].mem1 == NULL || sn.slot[i].globals == NULL || sn.slot[i].dirty == NULL) {
             gw_log("snap: out of memory for %d slots", sn.nslots);
-            return;
+            return -1;
         }
+        sn_bm_fill(sn.slot[i].dirty, sn.npages); /* never synced: every page differs */
     }
+    sn.hash_dirty = (uint64_t *) malloc(SN_BM_WORDS(sn.npages) * 8);
+    sn.page_h = (uint64_t *) calloc(sn.npages, 8);
+    if (sn.hash_dirty == NULL || sn.page_h == NULL) {
+        gw_log("snap: out of memory for the hash tables");
+        return -1;
+    }
+    sn_bm_fill(sn.hash_dirty, sn.npages);
     sn.cmp_globals = (uint8_t *) malloc(sn.globals_len);
     sn.pre_mem1 = (uint8_t *) malloc(gw_mem1_size);
     sn.pre_globals = (uint8_t *) malloc(sn.globals_len);
@@ -761,11 +1158,27 @@ static void sn_init(void) {
     if (sn.pre_mem1 == NULL || sn.pre_globals == NULL || sn.rmask_mem1 == NULL ||
         sn.rmask_globals == NULL) {
         gw_log("snap: out of memory for the render mask");
-        return;
+        return -1;
     }
     sn.enabled = 1;
-    gw_log("snap: SyncTest k=%d (%d slots of %u bytes)", sn.k, sn.nslots,
-           gw_mem1_size + sn.globals_len);
+    sn_watch_reset(); /* start counting writes from here; every slot starts all-dirty */
+    gw_log("snap: SyncTest k=%d (%d slots of %u bytes), %s mode%s%s", sn.k, sn.nslots,
+           gw_mem1_size + sn.globals_len, sn.dirty_mode ? "dirty-page" : "full-copy",
+           sn.verify ? ", verify" : "", sn.hash_on ? ", hash" : "");
+    return 0;
+}
+
+static void sn_init(void) {
+    const char *v;
+    if (sn.tried) {
+        return;
+    }
+    sn.tried = 1;
+    v = getenv("MELEE_SYNCTEST");
+    if (v == NULL || v[0] == '\0' || atoi(v) <= 0) {
+        return;
+    }
+    gw_snap_open(atoi(v));
 }
 
 /* The replay has run at least one frame: the loading hold is over and the match is live. */
@@ -820,6 +1233,7 @@ void gw_SyncTest_IterStart(void) {
         sn.resim = 1;
         sn.cur_is_resim = 1;
         sn_sfx_rewind(sn.target - sn.k);
+        gw_Snap_Time(2, 1);
         return;
     }
     if (sn.resim) {
@@ -853,6 +1267,7 @@ void gw_SyncTest_IterStart(void) {
         sn.cur_is_resim = next < sn.target;
         if (sn.cur_is_resim) {
             sn_sfx_rewind(next);
+            gw_Snap_Time(2, 1);
         }
         if (next >= sn.target) {
             sn.resim = 0;
@@ -864,12 +1279,117 @@ void gw_SyncTest_IterStart(void) {
                        sn.ms_save / (sn.n_save ? sn.n_save : 1),
                        sn.ms_load / (sn.n_load ? sn.n_load : 1),
                        sn.ms_cmp / (sn.n_cmp ? sn.n_cmp : 1));
+                gw_log("snap: costs (per call): poll %.3f ms (%.0f dirty pages), copy %.0f pages per "
+                       "save/load, hash %.3f ms (%.0f pages hashed), resim render %.2f ms, real render "
+                       "%.2f ms, resim logic %.2f ms [render parts: idle+inval %.3f, StartRender %.3f, GObjDraw %.3f, Init %.3f], verify fails %ld",
+                       sn.ms_poll / (sn.n_poll ? sn.n_poll : 1),
+                       (double) sn.n_dirty_pages / (sn.n_poll ? sn.n_poll : 1),
+                       (double) sn.n_copy_pages / ((sn.n_save + sn.n_load) ? (sn.n_save + sn.n_load) : 1),
+                       sn.ms_hash / (sn.n_hash_calls ? sn.n_hash_calls : 1),
+                       (double) sn.n_hash_pages / (sn.n_hash_calls ? sn.n_hash_calls : 1),
+                       sn_t[0] / (sn_tn[0] ? sn_tn[0] : 1), sn_t[1] / (sn_tn[1] ? sn_tn[1] : 1),
+                       sn_t[2] / (sn_tn[2] ? sn_tn[2] : 1), sn_t[3] / (sn_tn[3] ? sn_tn[3] : 1),
+                       sn_t[4] / (sn_tn[4] ? sn_tn[4] : 1), sn_t[5] / (sn_tn[5] ? sn_tn[5] : 1),
+                       sn_t[6] / (sn_tn[6] ? sn_tn[6] : 1), sn.n_verify_fail);
+                if (sn_cb_on == 1) {
+                    int a, b, top[8], nt = 0;
+                    for (a = 0; a < 8 && a < sn_ncb; ++a) {
+                        int best = -1;
+                        for (b = 0; b < sn_ncb; ++b) {
+                            int seen = 0, q;
+                            for (q = 0; q < nt; ++q) {
+                                if (top[q] == b) seen = 1;
+                            }
+                            if (!seen && (best < 0 || sn_cb[b].ms > sn_cb[best].ms)) best = b;
+                        }
+                        top[nt++] = best;
+                        gw_log("snap:   render cb %p: %.3f ms per resim frame (%ld calls)",
+                               (void *) sn_cb[best].cb,
+                               sn_cb[best].ms / (sn_tn[0] ? sn_tn[0] : 1), sn_cb[best].n);
+                    }
+                }
             }
         }
         return;
     }
     sn.cur_is_resim = 0;
     gw_snap_save(next);
+}
+
+/* Per render-callback time inside a resimulated frame's GObj draw walk (gobj.c): while
+ * MELEE_SNAP_CBTIME=1, the periodic log lists the costliest callbacks by native address (resolve
+ * against melee-pc.map). Only counted while the resimulated render is running (sn_t[5] open). */
+
+void gw_Snap_CbTime(void *cb, int begin) {
+    int i;
+    if (sn_cb_on < 0) {
+        const char *e = getenv("MELEE_SNAP_CBTIME");
+        sn_cb_on = e != NULL && e[0] == '1';
+    }
+    if (!sn_cb_on || !sn_cb_window) {
+        return;
+    }
+    if (begin) {
+        sn_cb_t0 = sn_ms();
+        return;
+    }
+    for (i = 0; i < sn_ncb; ++i) {
+        if (sn_cb[i].cb == (uintptr_t) cb) {
+            break;
+        }
+    }
+    if (i == sn_ncb) {
+        if (sn_ncb >= 64) {
+            return;
+        }
+        sn_cb[sn_ncb].cb = (uintptr_t) cb;
+        ++sn_ncb;
+    }
+    sn_cb[i].ms += sn_ms() - sn_cb_t0;
+    sn_cb[i].n++;
+}
+
+/* Render callbacks a RESIMULATED frame does not run at all (gobj.c). Only callbacks whose whole job
+ * is the picture: Fountain's water reflection (grIzumi_801CCEA0) re-renders the scene from a mirrored
+ * camera into a texture. MELEE_SNAP_SKIP_CB=reflect enables it (default off until SyncTest passes
+ * with it: a callback that also clears dirty flags or fills matrix caches cannot be skipped). */
+extern void gw_grIzumi_801CCEA0(void *gobj, int pass);
+
+int gw_Snap_SkipRenderCb(void *cb) {
+    static int mode = -1;
+    if (mode < 0) {
+        const char *e = getenv("MELEE_SNAP_SKIP_CB");
+        mode = (e != NULL && strstr(e, "reflect") != NULL) ? 1 : 0;
+    }
+    return mode && sn_cb_window && cb == (void *) (uintptr_t) gw_grIzumi_801CCEA0;
+}
+
+/* Should a resimulated frame's render pass skip submitting display lists (shim_gx.c)?
+ * MELEE_SNAP_RESIM_DRAWS=1 keeps them, to tell a draw-owned difference apart. */
+int gw_Snap_SuppressDraws(void) {
+    static int v = -1;
+    if (v < 0) {
+        const char *e = getenv("MELEE_SNAP_RESIM_DRAWS");
+        v = (e != NULL && e[0] == '1') ? 0 : 1;
+    }
+    return v;
+}
+
+/* gmscene.c times the render pass of a resimulated frame (what 0) and of the real one (what 1). */
+void gw_Snap_Time(int what, int begin) {
+    static double t0[8];
+    if (!sn.enabled || what < 0 || what > 7) {
+        return;
+    }
+    if (what == 5) {
+        sn_cb_window = begin;
+    }
+    if (begin) {
+        t0[what] = sn_ms();
+    } else {
+        sn_t[what] += sn_ms() - t0[what];
+        sn_tn[what]++;
+    }
 }
 
 /* The first pass's sound handles, per frame, for resimulated frames to get back (axdriver.c). */
@@ -1268,9 +1788,14 @@ int gw_Snap_HasFrame(int frame) {
     return sn_slot_for(frame, 0) != NULL;
 }
 
-/* A 32-bit checksum of the snapshot taken at the start of `frame`: MEM1 and the game's globals,
- * hashed 8 bytes at a time. 0 when there is no such snapshot. The whole snapshot is hashed (no
- * masks): two peers running the same build see the same render-owned bytes too. */
+/* A 32-bit checksum of the snapshot taken at the start of `frame`. 0 when there is no such
+ * snapshot. In dirty-page mode (the default) it is a fold of gw_snap_hash() as computed at save time:
+ * incremental (~0.25 ms per frame, only pages written since the last call are rehashed), with the
+ * disc's asynchronous state (DVD stream blocks, devcom request nodes) hashed as zero and the pad /
+ * rumble / render-display globals left out - state that legitimately differs between two peers'
+ * machines. In full-copy mode (MELEE_SNAP_MODE=full, or MELEE_SNAP_HASH=0) it falls back to hashing
+ * the whole slot, every byte, several milliseconds. Either way the render-owned bytes are included:
+ * two peers running the same build see the same ones. */
 uint32_t gw_Snap_Checksum(int frame) {
     GwSnapSlot *sl = sn_slot_for(frame, 0);
     uint64_t h = 0x9E3779B97F4A7C15ull;
@@ -1278,6 +1803,9 @@ uint32_t gw_Snap_Checksum(int frame) {
     const uint64_t *w;
     if (sl == NULL) {
         return 0;
+    }
+    if (sn.hash_on && sl->hash != 0) {
+        return (uint32_t) (sl->hash ^ (sl->hash >> 32)) | 1u;
     }
     w = (const uint64_t *) sl->mem1;
     for (i = 0; i < gw_mem1_size / 8; ++i) {

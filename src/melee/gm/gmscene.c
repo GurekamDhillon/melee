@@ -927,13 +927,29 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 extern int Snap_Resimulating(void);
                 extern void SyncTest_PreRender(void);
                 if (Snap_Resimulating()) {
+                    extern void Snap_Time(int what, int begin);
+                    Snap_Time(2, 0); /* a resimulated iteration's logic, end of IterStart -> here */
                     SyncTest_PreRender(); /* open the between-frames window here too */
+                    extern void Gx_SuppressDraws(int on);
+                    extern int Snap_SuppressDraws(void);
+                    Snap_Time(0, 1);
+                    Snap_Time(3, 1);
                     lb_800195D0();
                     GXInvalidateVtxCache();
                     GXInvalidateTexAll();
+                    Snap_Time(3, 0);
+                    Snap_Time(4, 1);
                     HSD_StartRender(HSD_RP_SCREEN);
+                    Snap_Time(4, 0);
+                    Snap_Time(5, 1);
+                    Gx_SuppressDraws(Snap_SuppressDraws());
                     HSD_GObj_80390FC0();
+                    Gx_SuppressDraws(0);
+                    Snap_Time(5, 0);
+                    Snap_Time(6, 1);
                     HSD_Init_803755A8();
+                    Snap_Time(6, 0);
+                    Snap_Time(0, 0);
                 }
             }
 #endif
@@ -953,7 +969,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
         {
             extern void SyncTest_PreRender(void); /* gw_snap.c: measure render-owned state */
+            extern void Snap_Time(int what, int begin);
             SyncTest_PreRender();
+            Snap_Time(1, 1);
         }
 #endif
         lb_800195D0();
@@ -981,7 +999,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
         {
             extern void SyncTest_PostRender(void);
+            extern void Snap_Time(int what, int begin);
             extern void RB_TickEnd(void);
+            Snap_Time(1, 0);
             SyncTest_PostRender();
             RB_TickEnd();
         }

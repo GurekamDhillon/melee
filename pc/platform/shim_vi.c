@@ -17,6 +17,7 @@
 
 #include <aurora/aurora.h>
 #include <aurora/event.h>
+#include <aurora/gfx.h> /* AuroraStats: MELEE_PROFILE_FRAMES */
 #include <dolphin/gx.h>
 #include <dolphin/vi.h>
 
@@ -218,6 +219,8 @@ static int gw_prof_spikes;
 /* Upper bounds in ms. 16.67 is the target; the buckets either side of it are what matter. */
 static const double gw_prof_edges[GW_PROF_BUCKETS] = { 14.0, 16.0, 17.5, 20.0, 25.0, 34.0, 50.0, 1e9 };
 
+static uint32_t gw_wait_idle_count;
+
 static long long gw_prof_now(void) {
   LARGE_INTEGER t;
   QueryPerformanceCounter(&t);
@@ -401,6 +404,21 @@ static struct { uint32_t eip, caller, tidx, count; } gw_sample_tab[GW_SAMPLE_SLO
 static uint32_t gw_sample_text_lo, gw_sample_text_hi; /* melee-pc.exe's code section */
 static uint32_t gw_sample_total[GW_SAMPLE_THREADS];
 
+/* MELEE_PROFILE_SPIKE=<ms>: the frame thread's samples also go into a timestamped ring, and when a
+ * frame's game time exceeds <ms> the frame's window of that ring is copied into a spike-only table
+ * (melee-pc.spike.samples, same format as melee-pc.samples, thread 0). An ordinary sampled
+ * profile is an average over all frames and hides a tail that is 5% of them; this one is the
+ * profile of only the slow frames. */
+#define GW_SPIKE_RING 8192u
+#define GW_SPIKE_SLOTS 16384u
+#define GW_CHAIN 8
+static struct { long long qpc; uint32_t eip, caller, chain[GW_CHAIN]; } gw_spike_ring[GW_SPIKE_RING];
+static struct { uint32_t chain[GW_CHAIN], count; } gw_chain_tab[GW_SPIKE_SLOTS];
+static volatile uint32_t gw_spike_ring_head;
+static struct { uint32_t eip, caller, count; } gw_spike_tab[GW_SPIKE_SLOTS];
+static uint32_t gw_spike_total, gw_spike_frames;
+static double gw_spike_threshold_ms;
+
 /* Every thread of the process except the sampler, found again at each dump so threads the
  * renderer starts late are picked up. Thread 0 in the output is always the game (frame) thread. */
 static void gw_sample_enum_threads(void) {
@@ -523,6 +541,34 @@ static DWORD WINAPI gw_sample_thread(LPVOID arg) {
             }
           }
         }
+        if (t == 0 && gw_spike_threshold_ms > 0.0) {
+          const uint32_t r = gw_spike_ring_head & (GW_SPIKE_RING - 1u);
+          gw_spike_ring[r].qpc = gw_prof_now();
+          gw_spike_ring[r].eip = eip;
+          gw_spike_ring[r].caller = caller;
+          {
+            MEMORY_BASIC_INFORMATION cm;
+            const uint32_t sp0 = (uint32_t)ctx.Esp;
+            int nc = 0, k;
+            for (k = 0; k < GW_CHAIN; ++k) {
+              gw_spike_ring[r].chain[k] = 0u;
+            }
+            if (VirtualQuery((LPCVOID)(uintptr_t)sp0, &cm, sizeof cm) != 0) {
+              const uint32_t ctop = (uint32_t)(uintptr_t)cm.BaseAddress + (uint32_t)cm.RegionSize;
+              uint32_t q;
+              for (q = sp0; q + 4u <= ctop && q < sp0 + 16384u && nc < GW_CHAIN; q += 4u) {
+                const uint32_t v = *(const uint32_t *)(uintptr_t)q;
+                if (v >= gw_sample_text_lo + 6u && v < gw_sample_text_hi) {
+                  const uint8_t *b = (const uint8_t *)(uintptr_t)v;
+                  if (b[-5] == 0xE8u || b[-6] == 0xFFu || b[-2] == 0xFFu || b[-3] == 0xFFu) {
+                    gw_spike_ring[r].chain[nc++] = v - gw_sample_text_lo;
+                  }
+                }
+              }
+            }
+          }
+          ++gw_spike_ring_head;
+        }
         h = ((eip ^ caller ^ ((uint32_t)t << 27)) * 2654435761u) >> 15;
         while (gw_sample_tab[h].count != 0u &&
                (gw_sample_tab[h].eip != eip || gw_sample_tab[h].tidx != (uint32_t)t ||
@@ -557,6 +603,10 @@ static void gw_sample_maybe_start(void) {
     return;
   }
   gw_sample_main_tid = GetCurrentThreadId();
+  {
+    const char *sp = getenv("MELEE_PROFILE_SPIKE");
+    gw_spike_threshold_ms = (sp != NULL && sp[0] != '\0') ? atof(sp) : 0.0;
+  }
   /* the frame thread first, so it is thread 0 */
   gw_sample_thr[0].tid = gw_sample_main_tid;
   gw_sample_thr[0].h = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT, FALSE,
@@ -564,6 +614,100 @@ static void gw_sample_maybe_start(void) {
   gw_sample_nthr = gw_sample_thr[0].h != NULL ? 1 : 0;
   CreateThread(NULL, 0, gw_sample_thread, (LPVOID)(uintptr_t)(atoi(v) * 1000), 0, NULL);
 }
+
+/* Copy the ring samples that fall in (t0, t1] into the spike table. */
+static void gw_spike_collect(long long t0, long long t1) {
+  const uint32_t head = gw_spike_ring_head;
+  uint32_t n = head < GW_SPIKE_RING ? head : GW_SPIKE_RING;
+  uint32_t i;
+  ++gw_spike_frames;
+  for (i = 0; i < n; ++i) {
+    const uint32_t r = (head - 1u - i) & (GW_SPIKE_RING - 1u);
+    uint32_t h;
+    if (gw_spike_ring[r].qpc <= t0) {
+      break;
+    }
+    if (gw_spike_ring[r].qpc > t1) {
+      continue;
+    }
+    {
+      uint32_t ch = 2166136261u, kk;
+      for (kk = 0; kk < 5; ++kk) {
+        ch = (ch ^ gw_spike_ring[r].chain[kk]) * 16777619u;
+      }
+      ch = (ch >> 18) & (GW_SPIKE_SLOTS - 1u);
+      while (gw_chain_tab[ch].count != 0u &&
+             memcmp(gw_chain_tab[ch].chain, gw_spike_ring[r].chain, 5 * sizeof(uint32_t)) != 0) {
+        ch = (ch + 1u) & (GW_SPIKE_SLOTS - 1u);
+      }
+      memcpy(gw_chain_tab[ch].chain, gw_spike_ring[r].chain, 5 * sizeof(uint32_t));
+      ++gw_chain_tab[ch].count;
+    }
+    h = ((gw_spike_ring[r].eip ^ gw_spike_ring[r].caller) * 2654435761u) >> 18;
+    while (gw_spike_tab[h].count != 0u && (gw_spike_tab[h].eip != gw_spike_ring[r].eip ||
+                                            gw_spike_tab[h].caller != gw_spike_ring[r].caller)) {
+      h = (h + 1u) & (GW_SPIKE_SLOTS - 1u);
+    }
+    gw_spike_tab[h].eip = gw_spike_ring[r].eip;
+    gw_spike_tab[h].caller = gw_spike_ring[r].caller;
+    ++gw_spike_tab[h].count;
+    ++gw_spike_total;
+  }
+}
+
+static void gw_spike_dump(void) {
+  FILE *f = fopen("melee-pc.spike.samples.tmp", "w");
+  uint32_t i;
+  if (f == NULL) {
+    return;
+  }
+  fprintf(f, "# thread 0 tid 0 total %u\n", gw_spike_total);
+  for (i = 0; i < GW_SPIKE_SLOTS; ++i) {
+    HMODULE mod = NULL;
+    char path[MAX_PATH], *base;
+    if (gw_spike_tab[i].count == 0u) {
+      continue;
+    }
+    path[0] = '\0';
+    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                               GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           (LPCSTR)(uintptr_t)gw_spike_tab[i].eip, &mod) &&
+        GetModuleFileNameA(mod, path, sizeof path) != 0) {
+      base = strrchr(path, '\\');
+      base = (base != NULL) ? base + 1 : path;
+    } else {
+      base = "?";
+      mod = NULL;
+    }
+    fprintf(f, "0 %u %s %08X %08X\n", gw_spike_tab[i].count, base,
+            gw_spike_tab[i].eip - (uint32_t)(uintptr_t)mod,
+            gw_spike_tab[i].caller != 0u
+                ? gw_spike_tab[i].caller - (uint32_t)(uintptr_t)GetModuleHandleA(NULL)
+                : 0u);
+  }
+  fclose(f);
+  MoveFileExA("melee-pc.spike.samples.tmp", "melee-pc.spike.samples", MOVEFILE_REPLACE_EXISTING);
+  {
+    FILE *cf = fopen("melee-pc.spike.chains", "w");
+    if (cf != NULL) {
+      for (i = 0; i < GW_SPIKE_SLOTS; ++i) {
+        if (gw_chain_tab[i].count != 0u) {
+          fprintf(cf, "%u %X %X %X %X %X\n", gw_chain_tab[i].count, gw_chain_tab[i].chain[0],
+                  gw_chain_tab[i].chain[1], gw_chain_tab[i].chain[2], gw_chain_tab[i].chain[3],
+                  gw_chain_tab[i].chain[4]);
+        }
+      }
+      fclose(cf);
+    }
+  }
+  gw_log("gw: PROF spike profile: %u spike frames, %u samples -> melee-pc.spike.samples",
+         gw_spike_frames, gw_spike_total);
+}
+
+/* MELEE_PROFILE_FRAMES=<file>: one CSV row per presented frame - the split, texture inits, GX
+ * counters and aurora's pipeline counters - so a spike can be lined up with what the frame did. */
+static FILE *gw_prof_csv;
+static int gw_prof_csv_tried;
 
 void gw_frame_tick(void) {
   const int prof = gw_prof_on();
@@ -636,6 +780,52 @@ void gw_frame_tick(void) {
         gw_prof_sum_begin += gw_prof_ms(t_events, t_begin);
         ++gw_prof_frames;
         gw_prof_record(total);
+        if (!gw_prof_csv_tried) {
+          const char *cv = getenv("MELEE_PROFILE_FRAMES");
+          gw_prof_csv_tried = 1;
+          if (cv != NULL && cv[0] != '\0') {
+            gw_prof_csv = fopen(cv, "w");
+            if (gw_prof_csv != NULL) {
+              fprintf(gw_prof_csv,
+                      "frame,total_ms,game_ms,present_ms,texobj_inits,prims,dlists,queued_pipes,"
+                      "created_pipes,urgent_pipes,drawcalls,vert_kb,storage_kb,texupload_kb,pad_calls,pad_aurora_ms,"
+                      "pad_adapter_ms,pad_rest_ms,wait_idle_calls\n");
+            }
+          }
+        }
+        if (gw_prof_csv != NULL) {
+          extern uint32_t gw_gx_texobj_inits;
+          static uint32_t last_inits;
+          uint32_t copies, prims, dlists;
+          const AuroraStats *as = aurora_get_stats();
+          gw_gx_get_stats(&copies, &prims, &dlists);
+          extern double gw_pad_prof_aurora_ms, gw_pad_prof_adapter_ms, gw_pad_prof_rest_ms;
+          extern uint32_t gw_pad_prof_calls;
+          static uint32_t last_waits;
+          fprintf(gw_prof_csv, "%u,%.3f,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%.3f,%u\n",
+                  gw_presented_count, total, game, gw_prof_ms(t_enter, t_present),
+                  gw_gx_texobj_inits - last_inits, prims, dlists,
+                  as != NULL ? as->queuedPipelines : 0u, as != NULL ? as->createdPipelines : 0u,
+                  as != NULL ? as->urgentPipelinesPending : 0u,
+                  as != NULL ? as->drawCallCount : 0u, as != NULL ? as->lastVertSize / 1024u : 0u,
+                  as != NULL ? as->lastStorageSize / 1024u : 0u,
+                  as != NULL ? as->lastTextureUploadSize / 1024u : 0u, gw_pad_prof_calls,
+                  gw_pad_prof_aurora_ms, gw_pad_prof_adapter_ms, gw_pad_prof_rest_ms,
+                  gw_wait_idle_count - last_waits);
+          last_waits = gw_wait_idle_count;
+          gw_pad_prof_aurora_ms = gw_pad_prof_adapter_ms = gw_pad_prof_rest_ms = 0.0;
+          gw_pad_prof_calls = 0u;
+          last_inits = gw_gx_texobj_inits;
+          {
+            static uint32_t rows;
+            if ((++rows % 60u) == 0u) {
+              fflush(gw_prof_csv);
+            }
+          }
+        }
+        if (gw_spike_threshold_ms > 0.0 && game > gw_spike_threshold_ms) {
+          gw_spike_collect(gw_prof_last_end, t_enter);
+        }
         /* The per-component averages cannot explain a bimodal distribution: they describe the
          * typical frame, while the judder lives in the tail. Attribute the slow frames
          * individually so it is clear whether a 33 ms frame is game work or a stalled present. */
@@ -647,6 +837,9 @@ void gw_frame_tick(void) {
         }
         if ((gw_prof_frames % 180u) == 0u) {
           gw_prof_report();
+          if (gw_spike_threshold_ms > 0.0) {
+            gw_spike_dump();
+          }
         }
       }
       gw_prof_last_end = t_begin;
@@ -680,8 +873,6 @@ void gw_frame_tick(void) {
   gw_ax_frame_tick();
 }
 
-static uint32_t gw_wait_idle_count;
-
 void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
   *retrace = gw_retrace_count;
   *presented = gw_presented_count;
@@ -694,6 +885,18 @@ void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
 void gw_wait_idle(void) {
   const uint64_t now = GetTickCount64();
   ++gw_wait_idle_count;
+  /* A queued completion is already DUE: the DVD/ARQ shims do the transfer inline and only defer
+   * the callback out of the starter's stack (gw_defer). The game's synchronous waits are
+   * `while (state != DONE) wait_idle();` (lbArq_80014BD0 above all - every fighter action-state
+   * change loads its animation from ARAM this way), and nothing but this call can set DONE, so
+   * gating it on the clock made each such load wait for GetTickCount64 to change. That is a
+   * millisecond at best and a whole 15.6 ms system tick when the timer resolution is coarse: in a
+   * real 4-player fight, several motion changes a frame stacked into 20-90 ms game-thread spins
+   * (~10 million wait_idle calls) and a p99 of 45 ms. Run the queue at once; the clock gate stays
+   * for alarms, which are genuinely time-driven. */
+  if (gw_deferred_count != 0) {
+    gw_run_deferred();
+  }
   if (now == gw_last_advance_ms) {
     return;
   }

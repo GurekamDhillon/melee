@@ -65,6 +65,7 @@ static struct {
     uint32_t ucf_dashback[4]; /* Game Start per-port UCF toggles: 0 off, 1 UCF, 2 arduino */
     uint32_t ucf_shield[4];
     int resync;
+    int frozen_ps; /* Game Start Frozen PS (2.0+) */
     int online; /* Game Start major scene 8: Slippi online, which forces the seed every frame */
     FILE *trace;
     FILE *vel; /* <trace>.vel.csv: the velocities Slippi 3.5+ post-frame records */
@@ -128,6 +129,7 @@ static int rp_parse(const uint8_t *d, size_t n) {
                 memcpy(rp.game_info, b + 5, GW_RP_GAME_INFO);
                 rp.seed = rp_be32(b + 0x13D);
                 rp.online = sz >= 0x1A4 && b[0x1A4] == 8; /* major scene, 3.7.0+ */
+                rp.frozen_ps = sz >= 0x1A2 && b[0x1A2] != 0; /* 2.0.0+ */
                 if (sz >= 0x160) { /* 1.0.0+ */
                     int p;
                     for (p = 0; p < 4; ++p) {
@@ -717,4 +719,18 @@ int gw_Slippi_Version(void) {
         return 999999;
     }
     return rp.version[0] * 10000 + rp.version[1] * 100 + rp.version[2];
+}
+
+/* Slippi's Frozen PS: the recording says so in its Game Start (Frozen PS, 2.0+); outside playback
+ * MELEE_SLIPPI_FROZEN_PS=1 enables it (the console codeset g_stages_stadium is opt-in too). */
+int gw_Slippi_FrozenStadium(void) {
+    static int live = -1;
+    if (gw_Replay_Active()) {
+        return rp.frozen_ps;
+    }
+    if (live < 0) {
+        const char *v = getenv("MELEE_SLIPPI_FROZEN_PS");
+        live = v != NULL && v[0] == '1';
+    }
+    return live;
 }

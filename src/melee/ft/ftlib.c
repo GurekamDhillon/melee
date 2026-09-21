@@ -264,6 +264,18 @@ float ftLib_800864A8(Vec3* v, HSD_GObj* gobj)
                 continue;
             }
 
+#if defined(TARGET_PC)
+            {
+                /* Slippi online's WhispyBlowDirFix (Online/Core/WhispyBlowDirFix, @ 0x8008653C):
+                   a fighter in a Dead animation (motion <= 0xB, e.g. a camera KO) counts for
+                   neither side when Whispy picks a direction. Its bone positions are unreliable
+                   during a rollback's fast-forward, and this function's tie-break draws the RNG. */
+                extern int Slippi_Codes(void);
+                if (Slippi_Codes() == 2 && cur_fp->motion_id <= 0xB) {
+                    continue;
+                }
+            }
+#endif
             ftLib_800866DC(cur, &vec);
             result += sgn(vec.x - v->x);
         }

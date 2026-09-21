@@ -774,14 +774,20 @@ void gw_GXGetViewportv(void *vp) {
 
 /* ---- texture ------------------------------------------------------------------------------ */
 
+/* Counted for MELEE_PROFILE: each init mints a fresh aurora texObjId, and aurora's object cache
+ * keeps an entry per id for ObjectCacheIdleFrames, so this rate sizes that cache. */
+uint32_t gw_gx_texobj_inits;
+
 void gw_GXInitTexObj(GXTexObj *obj, const void *image, u16 width, u16 height, u32 format,
                      u32 wrap_s, u32 wrap_t, u8 mipmap) {
+  ++gw_gx_texobj_inits;
   GXInitTexObj(obj, image, width, height, (GXTexFmt)format, (GXTexWrapMode)wrap_s,
                (GXTexWrapMode)wrap_t, (GXBool)mipmap);
 }
 
 void gw_GXInitTexObjCI(GXTexObj *obj, const void *image, u16 width, u16 height, u32 format,
                        u32 wrap_s, u32 wrap_t, u8 mipmap, u32 tlut_name) {
+  ++gw_gx_texobj_inits;
   GXInitTexObjCI(obj, image, width, height, (GXCITexFmt)format, (GXTexWrapMode)wrap_s,
                  (GXTexWrapMode)wrap_t, (GXBool)mipmap, tlut_name);
 }

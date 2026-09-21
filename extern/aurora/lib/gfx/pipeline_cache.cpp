@@ -47,6 +47,7 @@ struct CachedPipeline {
 struct PendingPipeline {
   PipelineRef hash;
   NewPipelineCallback create;
+  bool seed = false; // queued by the seed warm-up (Background priority)
 };
 
 struct PipelineCacheWrite {
@@ -337,6 +338,7 @@ static bool register_sdl_vfs() {
 #if defined(__cpp_lib_atomic_ref)
 static std::atomic_ref queuedPipelines{detail::resources().stats.queuedPipelines};
 static std::atomic_ref createdPipelines{detail::resources().stats.createdPipelines};
+static std::atomic_ref seedPipelinesBuilt{detail::resources().stats.seedPipelinesBuilt};
 #else
 struct AtomicStatRef {
   uint32_t& ref;
@@ -351,6 +353,7 @@ struct AtomicStatRef {
 };
 static AtomicStatRef queuedPipelines{detail::resources().stats.queuedPipelines};
 static AtomicStatRef createdPipelines{detail::resources().stats.createdPipelines};
+static AtomicStatRef seedPipelinesBuilt{detail::resources().stats.seedPipelinesBuilt};
 #endif
 
 template <typename PipelineConfig>
@@ -490,6 +493,7 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
       PendingPipeline pending{
           .hash = runtimeKey,
           .create = std::move(cb),
+          .seed = priority == PipelinePriority::Background,
       };
       switch (priority) {
       case PipelinePriority::Background:
@@ -986,6 +990,9 @@ static void pipeline_worker() {
     }
     if (!g_hasPipelineThread) {
       ++g_pipelinesPerFrame;
+    }
+    if (pending.seed) {
+      ++seedPipelinesBuilt;
     }
     notify_pipeline_ready(true);
   }

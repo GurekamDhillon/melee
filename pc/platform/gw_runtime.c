@@ -2663,6 +2663,38 @@ int gw_Gfx_PipelinesPending(void) {
   return s != NULL ? (int) s->queuedPipelines : 0;
 }
 
+/* How many pipelines at the front of the seed are the "core" - the ones most matches use
+ * (tools/port/build_pipeline_seed.py writes the count to initial_pipeline_cache.core beside the
+ * exe). Aurora warms the seed in that order, so the loading screen waits for this many. 0 when
+ * there is no seed. */
+int gw_Gfx_SeedCoreCount(void) {
+  static int core = -1;
+  if (core < 0) {
+    char path[MAX_PATH];
+    DWORD n = GetModuleFileNameA(NULL, path, (DWORD)sizeof path);
+    char *slash = (n > 0 && n < sizeof path) ? strrchr(path, '\\') : NULL;
+    FILE *f;
+    core = 0;
+    if (slash != NULL) {
+      snprintf(slash + 1, sizeof path - (size_t)(slash + 1 - path), "initial_pipeline_cache.core");
+      f = fopen(path, "r");
+      if (f != NULL) {
+        if (fscanf(f, "%d", &core) != 1 || core < 0) {
+          core = 0;
+        }
+        fclose(f);
+      }
+    }
+  }
+  return core;
+}
+
+/* Pipelines built out of the seed warm-up so far, in the seed's order (aurora's own count). */
+int gw_Gfx_SeedPipelinesBuilt(void) {
+  const AuroraStats *s = aurora_get_stats();
+  return s != NULL ? (int) s->seedPipelinesBuilt : 0;
+}
+
 int gw_Gfx_PipelinesCreated(void) {
   const AuroraStats *s = aurora_get_stats();
   return s != NULL ? (int) s->createdPipelines : 0;

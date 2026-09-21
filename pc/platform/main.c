@@ -179,6 +179,18 @@ static const char *gw_cache_path(void) {
   return buf;
 }
 
+/* This executable's folder, with a trailing separator - where the pipeline seed sits. */
+static const char *gw_exe_dir(void) {
+  static char buf[MAX_PATH];
+  DWORD n = GetModuleFileNameA(NULL, buf, (DWORD)sizeof buf);
+  char *slash;
+  if (n == 0 || n >= sizeof buf || (slash = strrchr(buf, '\\')) == NULL) {
+    return NULL;
+  }
+  slash[1] = '\0';
+  return buf;
+}
+
 int main(int argc, char *argv[]) {
   gw_install_crash_handler();
   gw_log("melee-pc: starting");
@@ -240,6 +252,11 @@ int main(int argc, char *argv[]) {
   const AuroraConfig config = {
       .appName = "Melee PC",
       .cachePath = gw_cache_path(),
+      /* The exe's own folder: aurora loads its pipeline seed, initial_pipeline_cache.db, from
+       * here and warms every pipeline in it in the background. The seed is built from a full
+       * sweep (tools/port/build_pipeline_seed.py), so the loading screen - which holds until the
+       * warm-up queue is empty - releases into a match whose pipelines already exist. */
+      .resourcesPath = gw_exe_dir(),
       /* Dawn's D3D12 backend (v20260807.225922, 32-bit x86) crashes a few seconds into
        * first-frame rendering: wgpuSurfaceGetCurrentTexture -> d3d12::Queue::WaitForSerial
        * dereferences a queue-serial value as a pointer (near-NULL read, webgpu_dawn.dll

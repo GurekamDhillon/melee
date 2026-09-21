@@ -173,6 +173,24 @@ static const FrontendScreen fe_screen_vs_setup = {
     sizeof fe_items_vs_setup / sizeof fe_items_vs_setup[0],
 };
 
+/* THE LOADING SCREEN. No items: a title, a progress bar and a status line. Aurora compiles a
+ * render pipeline the first time a draw needs one and skips that draw until it is ready, so a
+ * match on cold pipelines arrives piece by piece. It also warms every pipeline in its seed
+ * (initial_pipeline_cache.db beside the exe, built from a full sweep) in the background, and
+ * counts that work as pending. So this screen holds until nothing is pending - with a minimum
+ * so it never flashes, and a ceiling so a stuck queue cannot trap the player - and the match
+ * then enters with its pipelines built. */
+static const FrontendScreen fe_screen_loading = {
+    "GET READY",
+    "LOADING",
+    NULL,
+    0,
+};
+
+#define FE_LOAD_MIN_FRAMES 45
+#define FE_LOAD_SETTLE_FRAMES 20
+#define FE_LOAD_CEILING_FRAMES (8 * 60)
+
 /* WHERE SCREENS GO. One line per placement: Title > VS. Mode > Melee enters GM_VS from GM_MENU,
  * and GM_VS's first state is the CSS - so this screen sits between "Melee" and the CSS. */
 static const FrontendRule fe_rules[] = {
@@ -208,7 +226,27 @@ static struct {
     int leaving; ///< 0 still here, 1 continue, 2 back
     float hl_y;  ///< the highlight's drawn row position, easing toward the cursor
     int help_item;
+    bool loading;    ///< this scene is the loading screen, a state inside a mode
+    bool warmed;     ///< the loading screen has run; the in-match hold can stand down
+    int load_base;   ///< pipelines already created when the loading screen began
+    int load_core;   ///< pipelines built since boot that mean the seed's core is warm
+    int load_settled; ///< frames with nothing pending
+    float progress;  ///< 0..1, drawn by the bar
+    int percent;     ///< what the status line shows
 } fe;
+
+void gmFrontend_BeginLoading(void)
+{
+    fe.screen = &fe_screen_loading;
+    fe.loading = true;
+}
+
+bool gmFrontend_TakeWarmed(void)
+{
+    bool w = fe.warmed;
+    fe.warmed = false;
+    return w;
+}
 
 u8 gmFrontend_Route(u8 from, u8 to)
 {
@@ -352,6 +390,20 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
 
     pulse = (float) (fe.frames % 60) / 60.0F;
     pulse = pulse < 0.5F ? pulse * 2.0F : (1.0F - pulse) * 2.0F;
+
+    if (fe.loading) {
+        /* the progress bar: a track, the fill, and a highlight sweeping along the fill */
+        float bx = 120, by = 300, bw = 400, bh = 10;
+        float fill = bw * fe.progress;
+        float sweep = (float) (fe.frames % 90) / 90.0F;
+        fe_solid(bx - 2, by - 2, bw + 4, bh + 4, fe_rgba(255, 255, 255, 30));
+        fe_rect(bx, by, fill, bh, fe_rgba(120, 170, 255, 255), fe_rgba(70, 110, 220, 255));
+        if (fill > 24) {
+            fe_solid(bx + (fill - 24) * sweep, by, 24, bh, fe_rgba(255, 255, 255, 90));
+        }
+        fe_solid(bx + fill - 2, by - 4, 4, bh + 8, fe_rgba(255, 255, 255, (u8) (160 + 90 * pulse)));
+        return;
+    }
 
     /* the highlight, drawn where it currently is on its way to the cursor */
     if (fe.n_vis > 0) {
@@ -604,6 +656,30 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
     }
 
+    if (fe.loading) {
+        extern int Gfx_PipelinesCreated(void);
+        fe.title = fe_text(320, 214, 1.2F, 1, fe_rgba(255, 255, 255, 255), fe.screen->title);
+        fe.subtitle =
+            fe_text(320, 258, 0.55F, 1, fe_rgba(150, 185, 255, 255), fe.screen->subtitle);
+        fe.help = fe_text(320, 326, 0.5F, 1, FE_HELP_COLOR, " ");
+        fe.help_str[0] = ' ';
+        fe.help_str[1] = '\0';
+        fe.load_base = Gfx_PipelinesCreated();
+        {
+            extern int Gfx_SeedCoreCount(void);
+            extern int Gfx_PipelinesPending(void);
+            extern int Gfx_SeedPipelinesBuilt(void);
+            fe.load_core = Gfx_SeedCoreCount();
+            OSReport("frontend: loading screen - %d pipelines built so far (%d from the seed), "
+                     "%d pending, seed core %d\n",
+                     fe.load_base, Gfx_SeedPipelinesBuilt(), Gfx_PipelinesPending(),
+                     fe.load_core);
+        }
+        fe.load_settled = 0;
+        fe.progress = 0.0F;
+        fe.percent = -1;
+        return;
+    }
     fe.title = fe_text(56, 24, 1.1F, 0, fe_rgba(255, 255, 255, 255), fe.screen->title);
     fe.subtitle = fe_text(58, 62, 0.55F, 0, fe_rgba(150, 185, 255, 255), fe.screen->subtitle);
     for (slot = 0; slot < FE_MAX_ROWS; slot++) {
@@ -651,12 +727,79 @@ static void fe_change(const FrontendItem* it, int dir)
     fe_rebuild_visible(); /* a value can show or hide other rows */
 }
 
+static void fe_loading_frame(void)
+{
+    extern int Gfx_PipelinesPending(void);
+    extern int Gfx_PipelinesCreated(void);
+    extern int Gfx_LoadScreenEnabled(void);
+    extern int Gfx_SeedPipelinesBuilt(void);
+    int pending, done;
+    float target;
+    char buf[FE_STR];
+
+    if (fe.leaving != 0) {
+        if (++fe.fade >= FE_FADE_FRAMES) {
+            fe.warmed = true;
+            gm_801A4B60(); /* the state's on_exit picks the match */
+        }
+        return;
+    }
+    if (fe.fade > 0) {
+        fe.fade--;
+    }
+
+    /* Warm means the seed's core is built - aurora compiles the seed in its own order, which is
+       most-used first, and counts what it has built (Gfx_SeedPipelinesBuilt) - or that nothing
+       is pending at all. */
+    pending = Gfx_PipelinesPending();
+    done = Gfx_PipelinesCreated();
+    if (pending > 0 && fe.load_core > 0 && Gfx_SeedPipelinesBuilt() < fe.load_core) {
+        target = (float) Gfx_SeedPipelinesBuilt() / (float) fe.load_core;
+        fe.load_settled = 0;
+    } else if (pending > 0 && fe.load_core == 0) {
+        target = (float) (done - fe.load_base) / (float) (done - fe.load_base + pending);
+        fe.load_settled = 0;
+    } else {
+        target = 1.0F;
+        fe.load_settled++;
+    }
+    if (target > fe.progress) {
+        fe.progress += (target - fe.progress) * 0.2F;
+    }
+    if (fe.load_settled > 0 && fe.progress > 0.995F) {
+        fe.progress = 1.0F;
+    }
+    if (fe.percent != (int) (fe.progress * 100.0F)) {
+        fe.percent = (int) (fe.progress * 100.0F);
+        if (fe.progress < 1.0F) {
+            sprintf(buf, "Warming up the renderer");
+        } else {
+            sprintf(buf, "Ready");
+        }
+        fe_set_text(&fe.help, fe.help_str, FE_STR, buf, FE_HELP_COLOR);
+    }
+
+    if (!Gfx_LoadScreenEnabled() || fe.frames >= FE_LOAD_CEILING_FRAMES ||
+        (fe.frames >= FE_LOAD_MIN_FRAMES && fe.load_settled >= FE_LOAD_SETTLE_FRAMES))
+    {
+        OSReport("frontend: loading screen done after %d frames (%d pipelines built since boot, "
+                 "%d while here, %d still pending, core target %d, %s)\n",
+                 fe.frames, done, done - fe.load_base, pending, fe.load_core,
+                 fe.load_settled > 0 ? "warm" : "ceiling");
+        fe.leaving = 1;
+    }
+}
+
 void gm_Scene_Frontend_OnFrame(void)
 {
     u32 in;
     const FrontendItem* it;
 
     fe.frames++;
+    if (fe.loading) {
+        fe_loading_frame();
+        return;
+    }
     if (fe.screen == NULL) {
         gm_ChangeGameModeAfterCurrentScene(fe.continue_to);
         gm_801A4B60();
@@ -742,6 +885,7 @@ void gm_Scene_Frontend_OnExit(void* exit_data)
         HSD_SisLib_803A5CC4(fe.hints);
     }
     fe.title = fe.subtitle = fe.help = fe.hints = NULL;
+    fe.loading = false;
 }
 
 static u8 fe_enter_data[4];

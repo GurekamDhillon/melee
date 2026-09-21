@@ -26,6 +26,9 @@ typedef struct {
   uint32_t lastIndexSize;
   uint32_t lastStorageSize;
   uint32_t lastTextureUploadSize;
+  /// Pipelines built that were queued by the seed warm-up (initial pipeline cache), in the
+  /// seed's own order. A frontend can wait on this to know the seed's first N are ready.
+  uint32_t seedPipelinesBuilt;
 } AuroraStats;
 
 const AuroraStats* aurora_get_stats();

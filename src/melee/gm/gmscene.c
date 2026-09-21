@@ -23,6 +23,7 @@
 #include <sysdolphin/baselib/sobjlib.h>
 #include <melee/mn/mnmain.h>
 #include "gmscenelaunch.h"
+#include "gmfrontend.h"
 #if defined(TARGET_PC)
 #include <melee/if/textdraw.h>
 #include <melee/if/textlib.h>
@@ -381,6 +382,11 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
     mnLoadScreen_panel = NULL;
     mnLoadScreen_text = NULL;
     if (info == NULL || !Gfx_LoadScreenEnabled()) {
+        return;
+    }
+    /* The frontend's loading screen (after the SSS) has already warmed the renderer and held the
+       player; holding again here would only let the match run behind a second screen. */
+    if (gmFrontend_TakeWarmed()) {
         return;
     }
     switch (info->scene_kind) {

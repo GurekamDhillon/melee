@@ -24,6 +24,11 @@
 /* 1B1688 */ static void onExitSuddenDeath(GameModeState*);
 /* 1B16A8 */ static void onEnterResults(GameModeState*);
 /* 1B16C8 */ static void onExitResults(GameModeState*);
+#if defined(TARGET_PC)
+#include "gmfrontend.h"
+static void onEnterLoading(GameModeState*);
+static void onExitLoading(GameModeState*);
+#endif
 
 GameModeState gm_Mode_Vs_States[] = {
     {
@@ -122,6 +127,22 @@ GameModeState gm_Mode_Vs_States[] = {
             NULL,
         },
     },
+#if defined(TARGET_PC)
+    /* The loading screen: the SSS jumps here on "start" (onExitSss), and it continues to the
+       match. Same preload set as the match, so the match's files stay wanted meanwhile. */
+    {
+        gmVsMode_State_Loading,
+        lbDvdPreload_3,
+        0,
+        onEnterLoading,
+        onExitLoading,
+        {
+            GS_FRONTEND,
+            NULL,
+            NULL,
+        },
+    },
+#endif
     { GM_GAMEMODESTATE_TERMINATE },
 };
 
@@ -211,7 +232,27 @@ void onEnterSss(GameModeState* state)
 void onExitSss(GameModeState* state)
 {
     gmVsMelee_ExitSss(state, gmVsMelee_GetVsData(), gmVsMode_State_Css);
+#if defined(TARGET_PC)
+    /* Starting the match goes through the loading screen first. */
+    if (((SSSData*) gm_GetGameModeStateExitData(state))->start_game) {
+        gm_SetNextGameModeStateId(gmVsMode_State_Loading);
+    }
+#endif
 }
+
+#if defined(TARGET_PC)
+static void onEnterLoading(GameModeState* state)
+{
+    (void) state;
+    gmFrontend_BeginLoading();
+}
+
+static void onExitLoading(GameModeState* state)
+{
+    (void) state;
+    gm_SetNextGameModeStateId(gmVsMode_State_Vs);
+}
+#endif
 
 void onEnterVs(GameModeState* state)
 {

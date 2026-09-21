@@ -27,6 +27,15 @@ u8 gmFrontend_Route(u8 from, u8 to);
  * player came from - the main menu's cursor - acts as if the player had backed out of it. */
 u8 gmFrontend_ReportedMode(void);
 
+/* The loading screen, as a state inside a mode (VS: between the SSS and the match). The state's
+ * on_enter calls this; the scene ends by itself once the renderer is warm, and the state's
+ * on_exit picks the next state. */
+void gmFrontend_BeginLoading(void);
+
+/* True once, after the loading screen has run: the in-match hold (gmscene.c) then has nothing
+ * left to warm and stands down. */
+bool gmFrontend_TakeWarmed(void);
+
 #endif
 
 #endif

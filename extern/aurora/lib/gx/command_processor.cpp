@@ -450,11 +450,22 @@ static bool reuse_array_upload(AttrArray& array, u32 needed) noexcept {
   if (it == sArrayUploads.end() || it->second.size < needed) {
     return false;
   }
+  // Compare, and take, only the prefix this draw needs. A grown snapshot of a MEM1 array can run
+  // to megabytes, and comparing all of it on every miss cost 12-14 ms a frame on the FIFO thread
+  // (_research/perf-baseline-2026-09-21.md). When the array already holds a validated prefix of
+  // this same snapshot - a model drawn as many indexed draws with a growing max index - only the
+  // new tail is compared; the prefix cannot have changed without a GXInvalidateVtxCache, which
+  // revalidates it.
   const uint8_t* snap = gfx::storage_data(it->second);
-  if (snap == nullptr || std::memcmp(snap, array.data, it->second.size) != 0) {
+  u32 from = 0;
+  if (array.cachedRange.size != 0 && array.cachedRange.offset == it->second.offset) {
+    from = array.cachedRange.size;
+  }
+  if (snap == nullptr || std::memcmp(snap + from, static_cast<const uint8_t*>(array.data) + from,
+                                     needed - from) != 0) {
     return false;
   }
-  array.cachedRange = it->second;
+  array.cachedRange = gfx::Range{it->second.offset, needed};
   return true;
 }
 

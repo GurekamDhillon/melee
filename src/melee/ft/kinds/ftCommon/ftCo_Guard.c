@@ -713,6 +713,32 @@ void ftCo_80092F2C(HSD_GObj* gobj, bool arg1)
     }
 }
 
+#if defined(TARGET_PC)
+/* UCF 0.84 Shield SDI (Slippi External/UCF 0.84/UCF/UCF Shield SDI.asm, @ 0x80093294 - the
+ * `active_timer.lstick.x < sdi_stick_window` test in shield SDI). Where the window has closed the
+ * SDI still happens if the x sticky timer is 0 or 1, last frame's |stick x| was inside the SDI
+ * threshold, and the raw x moved by more than 62 units (squared distance > 3844) against two
+ * entries back in UCF's pad buffer (fighter.c). */
+static bool ftCo_Ucf084ShieldSdi(Fighter* fp)
+{
+    extern int Replay_UcfVersion(int port);
+    extern int ftUcf_PadRaw(int port, int which_y, int back);
+    int port = fp->x618_player_id, d;
+    f32 prev = fp->input.lstick[1].x;
+    if (Replay_UcfVersion(port) != 84) {
+        return false;
+    }
+    if (fp->active_sticky.lstick.x > 1) {
+        return false;
+    }
+    if (!(ABS(prev) < p_ftCommonData->sdi_min_stick_mag)) {
+        return false;
+    }
+    d = ftUcf_PadRaw(port, 0, 0) - ftUcf_PadRaw(port, 0, 2);
+    return d * d > 3844;
+}
+#endif
+
 void ftCo_80093240(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -720,7 +746,11 @@ void ftCo_80093240(Fighter_GObj* gobj)
         if ((fp->input.lstick[0].x < 0 ? -fp->input.lstick[0].x
                                        : fp->input.lstick[0].x) >=
                 p_ftCommonData->sdi_min_stick_mag &&
-            fp->active_timer.lstick.x < p_ftCommonData->sdi_stick_window)
+            (fp->active_timer.lstick.x < p_ftCommonData->sdi_stick_window
+#if defined(TARGET_PC)
+             || ftCo_Ucf084ShieldSdi(fp)
+#endif
+                 ))
         {
             float scl = p_ftCommonData->x4C0 * (fp->input.lstick[0].x *
                                                 p_ftCommonData->sdi_pos_scale);

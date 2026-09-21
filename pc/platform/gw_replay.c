@@ -527,6 +527,19 @@ static int rp_frame_seed(uint32_t *out) {
 uint32_t gw_Replay_ResyncSeed(void) {
     uint32_t s;
     if (rp.active && rp.frame == GW_RP_FIRST_FRAME) {
+        /* A replay without Frame Start events (Slippi < 2.2) records its seed in each PRE-frame
+         * instead. The first one is the seed the console actually entered frame -123 with: on the
+         * 2019 corpus it is the Game Start seed advanced 11 times (setup draws the port makes only
+         * 5-6 of), so the Game Start seed would leave the port's RNG behind from frame one and every
+         * later random pick (DamageFlyTop, tech direction...) would go the other way. */
+        const GwRpInput *r0 = rp_cur(0, 0);
+        int p;
+        for (p = 0; p < 4 && r0 == NULL; ++p) {
+            r0 = rp_cur(p, 0);
+        }
+        if (r0 != NULL && !rp.fs_has[0] && r0->seed != 0) {
+            return r0->seed;
+        }
         return rp.seed;
     }
     /* Slippi online does not let the RNG run on: every frame starts from
@@ -536,11 +549,54 @@ uint32_t gw_Replay_ResyncSeed(void) {
     if ((rp.online || rp.resync) && rp_frame_seed(&s)) {
         return s;
     }
+    /* No Frame Start events (Slippi < 2.2): each frame's PRE-frame seed carries the same
+     * information, so resync from it - the way an online replay's forced per-frame seed is
+     * reproduced above. The port's RNG stream cannot be kept in step by construction here: the
+     * particle system draws tens of values per frame for effects, and a difference of a few draws
+     * per frame (measured: 21 console vs 29 port at frame -106 of a Battlefield replay, from
+     * hsd_8039DAD4/hsd_8039EE24 spawn effects) shifts every later random pick - DamageFlyTop, techs,
+     * CPU choices - for the rest of the game, starting a chain of unrelated divergences. Resyncing
+     * once per frame keeps those picks aligned; the first frame the un-resynced stream left the
+     * console's is logged (gw_Replay_CheckSeed), so a real cause stays visible. */
+    if (rp.active && !rp.fs_has[0] && rp.frame > GW_RP_FIRST_FRAME) {
+        int p;
+        for (p = 0; p < 4; ++p) {
+            const GwRpInput *r = rp_cur(p, 0);
+            if (r != NULL && r->seed != 0) {
+                return r->seed;
+            }
+        }
+    }
     return 0;
 }
 
 /* The RNG is the earliest thing to diverge: any difference in what consumed it shows here frames
  * before a position does. Called at the start of each running frame with the port's seed. */
+/* The seed the port's stream reached on its own, before any per-frame resync: compared with the
+ * console's for this frame, the first difference is where the port's RNG consumption first leaves
+ * the console's - logged once, whether or not a resync then hides it from the rest of the run. */
+void gw_Replay_NoteSeed(uint32_t arrived) {
+    static int noted;
+    uint32_t want = 0;
+    if (!noted) {
+        const GwRpInput *r = NULL;
+        int p;
+        for (p = 0; p < 4 && r == NULL; ++p) {
+            const GwRpInput *c = rp_cur(p, 0);
+            if (c != NULL && c->seed != 0) {
+                r = c;
+            }
+        }
+        want = rp_frame_seed(&want) ? want : (r != NULL ? r->seed : 0);
+        if (want != 0 && rp.frame > GW_RP_FIRST_FRAME + 1 && arrived != want) {
+            noted = 1;
+            gw_log("replay: port RNG stream first left the console's at frame %d (port 0x%08X, "
+                   "console 0x%08X)%s", rp.frame, arrived, want,
+                   rp.online || !rp.fs_has[0] ? " - resynced per frame from here on" : "");
+        }
+    }
+}
+
 void gw_Replay_CheckSeed(uint32_t port_seed) {
     uint32_t want;
     rec_tick(port_seed);

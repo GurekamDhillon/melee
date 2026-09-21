@@ -110,6 +110,31 @@ void ftCo_80090780(HSD_GObj* gobj)
 
 void ftCo_DamageFall_Anim(Fighter_GObj* gobj) {}
 
+#if defined(TARGET_PC)
+/* UCF 0.84 Tumble (Slippi External/UCF 0.84/UCF/UCF Tumble.asm, @ 0x800908F4 - the
+ * `active_timer.lstick.x < x214` window test in the tumble's stick-out cancel). Same idea as UCF's
+ * SDI: where the normal window has closed, the input still counts if last frame's stick x was inside
+ * the threshold (|lstick[1].x| < x210, the stick just crossed it) and the raw x moved by more than 75
+ * units (squared distance > 5625) against two entries back in UCF's pad buffer (fighter.c).
+ * Found by .slp playback of 1.x/3.x tournament replays: knockdown/tumble states the console left
+ * (console Down vs port DamageFall) around frames 941-3953. */
+static bool ftCo_Ucf084Tumble(Fighter* fp)
+{
+    extern int Replay_UcfVersion(int port);
+    extern int ftUcf_PadRaw(int port, int which_y, int back);
+    int port = fp->x618_player_id, d;
+    f32 prev = fp->input.lstick[1].x;
+    if (Replay_UcfVersion(port) != 84) {
+        return false;
+    }
+    if (!(ABS(prev) < p_ftCommonData->x210)) {
+        return false;
+    }
+    d = ftUcf_PadRaw(port, 0, 0) - ftUcf_PadRaw(port, 0, 2);
+    return d * d > 5625;
+}
+#endif
+
 void ftCo_DamageFall_IASA(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -122,7 +147,11 @@ void ftCo_DamageFall_IASA(HSD_GObj* gobj)
         RETURN_IF(ftCo_800D705C(gobj));
         RETURN_IF(ftCo_800CB870(gobj));
         if (ABS(fp->input.lstick[0].x) >= p_ftCommonData->x210 &&
-            fp->active_timer.lstick.x < p_ftCommonData->x214)
+            (fp->active_timer.lstick.x < p_ftCommonData->x214
+#if defined(TARGET_PC)
+             || ftCo_Ucf084Tumble(fp)
+#endif
+                 ))
         {
             ftCo_Fall_Enter(gobj);
             return;

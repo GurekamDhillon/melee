@@ -85,6 +85,10 @@ static struct {
        before the next tick is not in it), by rollback depth of the tick: 0 = no rollback */
     double tick_t0, tk_sum[16], tk_max[16];
     int tk_n[16], tk_over[16], tick_depth;
+    /* where a tick's time goes: snapshot saves, the load, resimulated iterations (logic+render inside
+       the loop), the new frame's iteration, and the rest (the render pass after the loop) */
+    double c_save, c_load, c_resim, c_new;
+    double d_save[16], d_load[16], d_resim[16], d_new[16];
     double iter_t0;
     int iter_kind;                    /* 0 none, 1 new, 2 resim */
     double cur_extra_ms;              /* load + resimulated iterations of the current rollback */
@@ -487,9 +491,13 @@ int gw_RB_Iterations(int count) {
         int d;
         for (d = 0; d < 16; ++d) {
             if (rb.tk_n[d] != 0) {
-                gw_log("rb: tick work, depth %2d: %5d ticks, avg %6.2f ms, max %6.2f ms, over 16.7 ms: "
-                       "%d (%.0f%%)", d, rb.tk_n[d], rb.tk_sum[d] / rb.tk_n[d], rb.tk_max[d],
-                       rb.tk_over[d], 100.0 * rb.tk_over[d] / rb.tk_n[d]);
+                double n = rb.tk_n[d];
+                gw_log("rb: tick work, depth %2d: %5d ticks, avg %6.2f ms (save %5.2f, load %5.2f, "
+                       "resim iters %6.2f, new iter %6.2f, other %6.2f), max %6.2f, over 16.7 ms: %d (%.0f%%)",
+                       d, rb.tk_n[d], rb.tk_sum[d] / n, rb.d_save[d] / n, rb.d_load[d] / n,
+                       rb.d_resim[d] / n, rb.d_new[d] / n,
+                       (rb.tk_sum[d] - rb.d_save[d] - rb.d_load[d] - rb.d_resim[d] - rb.d_new[d]) / n,
+                       rb.tk_max[d], rb.tk_over[d], 100.0 * rb.tk_over[d] / n);
             }
         }
     }
@@ -515,6 +523,19 @@ void gw_RB_TickEnd(void) {
     d = rb_ms() - rb.tick_t0;
     rb.tick_t0 = 0;
     k = rb.tick_depth;
+    if (rb.iter_kind != 0) { /* the tick's last iteration ends here, render included */
+        double di = rb_ms() - rb.iter_t0;
+        if (rb.iter_kind == 2) {
+            rb.c_resim += di;
+        } else {
+            rb.c_new += di;
+        }
+    }
+    rb.d_save[k] += rb.c_save;
+    rb.d_load[k] += rb.c_load;
+    rb.d_resim[k] += rb.c_resim;
+    rb.d_new[k] += rb.c_new;
+    rb.c_save = rb.c_load = rb.c_resim = rb.c_new = 0;
     rb.tk_n[k]++;
     rb.tk_sum[k] += d;
     if (d > rb.tk_max[k]) {
@@ -576,15 +597,18 @@ void gw_RB_IterStart(void) {
         double d = now - rb.iter_t0;
         if (rb.iter_kind == 2) {
             rb.ms_resim += d;
+            rb.c_resim += d;
             rb.cur_extra_ms += d;
         } else {
             rb.ms_new += d;
+            rb.c_new += d;
         }
     }
     if (rb.plan.i == 0 && rb.plan.rollback) {
         double t0 = rb_ms();
         gw_snap_load(rb.plan.first);
         rb.ms_load += rb_ms() - t0;
+        rb.c_load += rb_ms() - t0;
         rb.cur_extra_ms += rb_ms() - t0;
     }
     next = gw_Replay_Frame() + 1;
@@ -595,6 +619,7 @@ void gw_RB_IterStart(void) {
         double t0 = rb_ms();
         gw_snap_save(next);
         rb.ms_save += rb_ms() - t0;
+        rb.c_save += rb_ms() - t0;
         if (!resim) {
             rb.n_new++;
         }

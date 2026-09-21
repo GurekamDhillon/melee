@@ -20,11 +20,14 @@
 #include <dolphin/gx.h>
 #include <dolphin/vi.h>
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <timeapi.h> /* timeBeginPeriod: see gw_pace_field */
+#include <tlhelp32.h> /* the sampling profiler's thread list */
 
 typedef void (*gw_retrace_cb)(uint32_t retraceCount);
 typedef void (*gw_drawdone_cb)(void);
@@ -201,6 +204,8 @@ static int gw_prof_count;
 static int gw_prof_head;
 static double gw_prof_sum_game, gw_prof_sum_present, gw_prof_sum_events, gw_prof_sum_begin;
 static double gw_prof_sum_cpu;
+static double gw_prof_sum_pace, gw_prof_sum_submit; /* present = overlay + pace + submit */
+static long long gw_prof_t_pace0, gw_prof_t_pace1;
 static uint32_t gw_prof_frames, gw_prof_empty;
 static uint32_t gw_prof_hist[GW_PROF_BUCKETS];
 static int gw_prof_spikes;
@@ -271,6 +276,15 @@ static void gw_prof_report(void) {
   gw_log("gw: PROF split ms  game=%.2f present=%.2f events=%.2f begin=%.2f  empty_ticks=%u",
          gw_prof_sum_game / gw_prof_frames, gw_prof_sum_present / gw_prof_frames,
          gw_prof_sum_events / gw_prof_frames, gw_prof_sum_begin / gw_prof_frames, gw_prof_empty);
+  {
+    extern uint32_t gw_gx_texobj_inits;
+    static uint32_t last_inits;
+    gw_log("gw: PROF texobj   inits/frame=%.1f (each a new aurora cache entry kept 600 frames)",
+           (double)(gw_gx_texobj_inits - last_inits) / gw_prof_frames);
+    last_inits = gw_gx_texobj_inits;
+  }
+  gw_log("gw: PROF present   pace_wait=%.2f submit=%.2f (aurora_end_frame; >1 ms = render back-pressure)",
+         gw_prof_sum_pace / gw_prof_frames, gw_prof_sum_submit / gw_prof_frames);
   gw_log("gw: PROF cpu ms    game_cpu=%.2f  of_game_wall=%.2f  wait=%.2f",
          gw_prof_sum_cpu / gw_prof_frames, gw_prof_sum_game / gw_prof_frames,
          (gw_prof_sum_game - gw_prof_sum_cpu) / gw_prof_frames);
@@ -280,6 +294,7 @@ static void gw_prof_report(void) {
 
   gw_prof_sum_game = gw_prof_sum_present = gw_prof_sum_events = gw_prof_sum_begin = 0.0;
   gw_prof_sum_cpu = 0.0;
+  gw_prof_sum_pace = gw_prof_sum_submit = 0.0;
   gw_prof_frames = 0u;
   gw_prof_empty = 0u;
   gw_prof_spikes = 0;
@@ -365,8 +380,190 @@ static void gw_pace_field(void) {
   gw_last_field_tick = now;
 }
 
+/* ---- sampling profiler (MELEE_PROFILE_SAMPLE=<start seconds>) ------------------------------
+ * A background thread suspends the frame thread about once a millisecond, reads its EIP and
+ * counts it. Every 5 s it rewrites melee-pc.samples (in the working directory) with the running
+ * totals as `count module offset` lines; tools/port/prof_report.py resolves the exe's offsets
+ * against melee-pc.map. The start delay skips boot and menus so a scripted match is what gets
+ * measured. Samples that land in Sleep (frame pacing) show up under ntdll/KERNELBASE and are
+ * idle, not work. Off unless the variable is set. */
+#define GW_SAMPLE_SLOTS 131072u
+#define GW_SAMPLE_THREADS 128
+static DWORD gw_sample_main_tid;
+static struct { DWORD tid; HANDLE h; } gw_sample_thr[GW_SAMPLE_THREADS];
+static int gw_sample_nthr;
+static struct { uint32_t eip, caller, tidx, count; } gw_sample_tab[GW_SAMPLE_SLOTS];
+static uint32_t gw_sample_text_lo, gw_sample_text_hi; /* melee-pc.exe's code section */
+static uint32_t gw_sample_total[GW_SAMPLE_THREADS];
+
+/* Every thread of the process except the sampler, found again at each dump so threads the
+ * renderer starts late are picked up. Thread 0 in the output is always the game (frame) thread. */
+static void gw_sample_enum_threads(void) {
+  HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+  THREADENTRY32 te;
+  if (snap == INVALID_HANDLE_VALUE) {
+    return;
+  }
+  te.dwSize = sizeof te;
+  if (Thread32First(snap, &te)) {
+    do {
+      int i, known = 0;
+      if (te.th32OwnerProcessID != GetCurrentProcessId() || te.th32ThreadID == GetCurrentThreadId()) {
+        continue;
+      }
+      for (i = 0; i < gw_sample_nthr; ++i) {
+        known |= gw_sample_thr[i].tid == te.th32ThreadID;
+      }
+      if (!known && gw_sample_nthr < GW_SAMPLE_THREADS) {
+        HANDLE h = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT, FALSE, te.th32ThreadID);
+        if (h != NULL) {
+          gw_sample_thr[gw_sample_nthr].tid = te.th32ThreadID;
+          gw_sample_thr[gw_sample_nthr].h = h;
+          ++gw_sample_nthr;
+        }
+      }
+    } while (Thread32Next(snap, &te));
+  }
+  CloseHandle(snap);
+}
+
+static void gw_sample_dump(void) {
+  FILE *f = fopen("melee-pc.samples.tmp", "w");
+  uint32_t i;
+  int t;
+  if (f == NULL) {
+    return;
+  }
+  for (t = 0; t < gw_sample_nthr; ++t) {
+    fprintf(f, "# thread %d tid %lu total %u\n", t, (unsigned long)gw_sample_thr[t].tid,
+            gw_sample_total[t]);
+  }
+  for (i = 0; i < GW_SAMPLE_SLOTS; ++i) {
+    HMODULE mod = NULL;
+    char path[MAX_PATH], *base;
+    if (gw_sample_tab[i].count == 0u) {
+      continue;
+    }
+    path[0] = '\0';
+    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                               GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           (LPCSTR)(uintptr_t)gw_sample_tab[i].eip, &mod) &&
+        GetModuleFileNameA(mod, path, sizeof path) != 0) {
+      base = strrchr(path, '\\');
+      base = (base != NULL) ? base + 1 : path;
+    } else {
+      base = "?";
+      mod = NULL;
+    }
+    fprintf(f, "%u %u %s %08X %08X\n", gw_sample_tab[i].tidx, gw_sample_tab[i].count, base,
+            gw_sample_tab[i].eip - (uint32_t)(uintptr_t)mod,
+            gw_sample_tab[i].caller != 0u
+                ? gw_sample_tab[i].caller - (uint32_t)(uintptr_t)GetModuleHandleA(NULL)
+                : 0u);
+  }
+  fclose(f);
+  MoveFileExA("melee-pc.samples.tmp", "melee-pc.samples", MOVEFILE_REPLACE_EXISTING);
+}
+
+static DWORD WINAPI gw_sample_thread(LPVOID arg) {
+  const DWORD start_ms = (DWORD)(uintptr_t)arg;
+  DWORD last_dump;
+  timeBeginPeriod(1);
+  {
+    const uint8_t *base = (const uint8_t *)GetModuleHandleA(NULL);
+    const IMAGE_NT_HEADERS *nt =
+        (const IMAGE_NT_HEADERS *)(base + ((const IMAGE_DOS_HEADER *)base)->e_lfanew);
+    const IMAGE_SECTION_HEADER *sec = IMAGE_FIRST_SECTION(nt);
+    unsigned i;
+    for (i = 0; i < nt->FileHeader.NumberOfSections; ++i, ++sec) {
+      if (sec->Characteristics & IMAGE_SCN_CNT_CODE) {
+        gw_sample_text_lo = (uint32_t)(uintptr_t)(base + sec->VirtualAddress);
+        gw_sample_text_hi = gw_sample_text_lo + sec->Misc.VirtualSize;
+        break;
+      }
+    }
+  }
+  Sleep(start_ms);
+  gw_sample_enum_threads();
+  last_dump = GetTickCount();
+  gw_log("gw: PROF sampler started (%d threads)", gw_sample_nthr);
+  for (;;) {
+    int t;
+    Sleep(1);
+    for (t = 0; t < gw_sample_nthr; ++t) {
+      CONTEXT ctx;
+      if (SuspendThread(gw_sample_thr[t].h) == (DWORD)-1) {
+        continue;
+      }
+      ctx.ContextFlags = CONTEXT_CONTROL;
+      if (GetThreadContext(gw_sample_thr[t].h, &ctx)) {
+        uint32_t eip = (uint32_t)ctx.Eip;
+        uint32_t caller = 0u;
+        uint32_t h;
+        if (eip < gw_sample_text_lo || eip >= gw_sample_text_hi) {
+          /* Outside our code (a wait in the OS, a driver, the CRT): the nearest return address
+           * into melee-pc.exe on the stack says who is waiting. A heuristic stack scan - no frame
+           * pointers to walk - but the first hit is almost always the true caller. */
+          MEMORY_BASIC_INFORMATION mbi;
+          const uint32_t esp = (uint32_t)ctx.Esp;
+          if (VirtualQuery((LPCVOID)(uintptr_t)esp, &mbi, sizeof mbi) != 0) {
+            const uint32_t top = (uint32_t)(uintptr_t)mbi.BaseAddress + (uint32_t)mbi.RegionSize;
+            uint32_t p;
+            for (p = esp; p + 4u <= top && p < esp + 8192u; p += 4u) {
+              const uint32_t v = *(const uint32_t *)(uintptr_t)p;
+              if (v >= gw_sample_text_lo && v < gw_sample_text_hi) {
+                caller = v;
+                break;
+              }
+            }
+          }
+        }
+        h = ((eip ^ caller ^ ((uint32_t)t << 27)) * 2654435761u) >> 15;
+        while (gw_sample_tab[h].count != 0u &&
+               (gw_sample_tab[h].eip != eip || gw_sample_tab[h].tidx != (uint32_t)t ||
+                gw_sample_tab[h].caller != caller)) {
+          h = (h + 1u) & (GW_SAMPLE_SLOTS - 1u);
+        }
+        gw_sample_tab[h].eip = eip;
+        gw_sample_tab[h].caller = caller;
+        gw_sample_tab[h].tidx = (uint32_t)t;
+        ++gw_sample_tab[h].count;
+        ++gw_sample_total[t];
+      }
+      ResumeThread(gw_sample_thr[t].h);
+    }
+    if (GetTickCount() - last_dump >= 5000u) {
+      last_dump = GetTickCount();
+      gw_sample_dump();
+      gw_sample_enum_threads();
+    }
+  }
+}
+
+static void gw_sample_maybe_start(void) {
+  static int done;
+  const char *v;
+  if (done) {
+    return;
+  }
+  done = 1;
+  v = getenv("MELEE_PROFILE_SAMPLE");
+  if (v == NULL || v[0] == '\0') {
+    return;
+  }
+  gw_sample_main_tid = GetCurrentThreadId();
+  /* the frame thread first, so it is thread 0 */
+  gw_sample_thr[0].tid = gw_sample_main_tid;
+  gw_sample_thr[0].h = OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT, FALSE,
+                                  gw_sample_main_tid);
+  gw_sample_nthr = gw_sample_thr[0].h != NULL ? 1 : 0;
+  CreateThread(NULL, 0, gw_sample_thread, (LPVOID)(uintptr_t)(atoi(v) * 1000), 0, NULL);
+}
+
 void gw_frame_tick(void) {
   const int prof = gw_prof_on();
+
+  gw_sample_maybe_start();
   long long t_enter = 0, t_present = 0, t_events = 0, t_begin = 0;
   int presented = 0;
 
@@ -381,7 +578,13 @@ void gw_frame_tick(void) {
      * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
     gw_Overlay_Draw();
     gw_Overlay_DrawPanel();
+    if (prof) {
+      gw_prof_t_pace0 = gw_prof_now();
+    }
     gw_pace_field();
+    if (prof) {
+      gw_prof_t_pace1 = gw_prof_now();
+    }
     aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
     gw_frame_begun = false;
     gw_frame_has_content = false;
@@ -422,6 +625,8 @@ void gw_frame_tick(void) {
         gw_prof_sum_game += game;
         gw_prof_sum_cpu += cpu;
         gw_prof_sum_present += gw_prof_ms(t_enter, t_present);
+        gw_prof_sum_pace += gw_prof_ms(gw_prof_t_pace0, gw_prof_t_pace1);
+        gw_prof_sum_submit += gw_prof_ms(gw_prof_t_pace1, t_present);
         gw_prof_sum_events += gw_prof_ms(t_present, t_events);
         gw_prof_sum_begin += gw_prof_ms(t_events, t_begin);
         ++gw_prof_frames;

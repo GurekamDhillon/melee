@@ -768,6 +768,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 pad_queue_count = 1;
             }
         }
+        {
+            /* MELEE_SYNCTEST (pc/platform/gw_snap.c): k+1 logic iterations this tick - roll back
+               k frames, resimulate them, then run the new frame */
+            extern int SyncTest_Iterations(int count);
+            pad_queue_count = SyncTest_Iterations(pad_queue_count);
+        }
 #endif
 
         if (HSD_PadGetResetSwitch()) {
@@ -778,6 +784,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         for (i = 0; i < pad_queue_count; i++) {
 #if defined(TARGET_PC)
             bool held = false; /* the loading screen is holding this frame */
+            {
+                /* the logic-frame boundary: SyncTest saves, loads or compares here */
+                extern void SyncTest_IterStart(void);
+                SyncTest_IterStart();
+            }
 #endif
             HSD_PerfSetStartTime();
             lb_800198E0();

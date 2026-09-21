@@ -536,8 +536,36 @@ static HSD_SM* AXDriverAssignVVoice(void)
     }
 }
 
+#if defined(TARGET_PC)
+static int HSD_AudioSFXStartParam_impl(int sound_id, u8 volume, u8 pan,
+                                       int track, int channel);
+
+/* Rollback (pc/platform/gw_snap.c): a resimulated frame must not play its
+ * sounds again, but game logic keeps the voice handle this returns - so the
+ * first pass records each frame's (sound, handle) sequence and a resimulated
+ * frame gets the same handles back without touching a voice (Slippi's
+ * instance-id reuse, Online/Core/Sound). */
 int HSD_AudioSFXStartParam(int sound_id, u8 volume, u8 pan, int track,
                            int channel)
+{
+    extern int Snap_Resimulating(void);
+    extern int Snap_SfxTake(int sound_id);
+    extern void Snap_SfxPut(int sound_id, int result);
+    int r;
+    if (Snap_Resimulating()) {
+        return Snap_SfxTake(sound_id);
+    }
+    r = HSD_AudioSFXStartParam_impl(sound_id, volume, pan, track, channel);
+    Snap_SfxPut(sound_id, r);
+    return r;
+}
+
+static int HSD_AudioSFXStartParam_impl(int sound_id, u8 volume, u8 pan,
+                                       int track, int channel)
+#else
+int HSD_AudioSFXStartParam(int sound_id, u8 volume, u8 pan, int track,
+                           int channel)
+#endif
 {
     HSD_SM* v;
     int sample_idx;

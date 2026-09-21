@@ -541,6 +541,10 @@ uint32_t gw_Replay_ResyncSeed(void) {
  * before a position does. Called at the start of each running frame with the port's seed. */
 void gw_Replay_CheckSeed(uint32_t port_seed) {
     uint32_t want;
+    extern int gw_Snap_Resimulating(void);
+    if (gw_Snap_Resimulating()) {
+        return;
+    }
     rec_tick(port_seed);
     /* <trace>.seed.csv: the port's seed at the start of every frame, so two port runs of the same
        replay can be diffed for the first frame they part ways (port-vs-port determinism) */
@@ -578,6 +582,10 @@ int gw_Replay_Tracing(void) {
 void gw_Replay_TraceFighter(int port, int follower, int ckind, int action, float x, float y,
                             float facing, float percent, int stocks, float air_x, float air_y,
                             float kb_x, float kb_y, float ground_x) {
+    extern int gw_Snap_Resimulating(void);
+    if (gw_Snap_Resimulating()) {
+        return; /* SyncTest re-running a frame already traced */
+    }
     rec_post(port, follower, ckind, action, x, y, facing, percent, stocks, air_x, air_y, kb_x,
              kb_y, ground_x);
     if (rp.trace == NULL || rp.frame == GW_RP_UNARMED) {
@@ -592,6 +600,20 @@ void gw_Replay_TraceFighter(int port, int follower, int ckind, int action, float
     if (rp.frame > rp.last) {
         fflush(rp.trace);
     }
+}
+
+/* The replay's cursor, for savestates (gw_snap.c): a rollback must rewind which inputs the next
+ * frame gets along with the game state. */
+void gw_Replay_GetCursor(int out[4]) {
+    out[0] = rp.frame;
+    out[1] = rp.seed_diverged;
+    out[2] = 0;
+    out[3] = 0;
+}
+
+void gw_Replay_SetCursor(const int in[4]) {
+    rp.frame = in[0];
+    rp.seed_diverged = in[1];
 }
 
 /* The Slippi frame now running, or a large negative number before the match. */
@@ -652,6 +674,10 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
 void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
     static FILE *rf;
     static int tried;
+    extern int gw_Snap_Resimulating(void);
+    if (gw_Snap_Resimulating()) {
+        return;
+    }
     if (!rp.active || rp.frame == GW_RP_UNARMED) {
         return;
     }

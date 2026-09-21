@@ -2811,32 +2811,6 @@ void Fighter_procMap(Fighter_GObj* gobj)
         }
 
         HSD_JObjSetTranslate(gobj->hsd_obj, &fp->cur_pos);
-#if defined(TARGET_PC)
-        {
-            /* MELEE_STATE_TRACE (pc/platform/gw_replay.c): the fields Slippi's post-frame
-               records, from the point it records them (0x8006C5D8), for replay_compare.py. */
-            extern int Replay_Tracing(void);
-            extern void Replay_TraceFighter(int port, int follower, int ckind, int action,
-                                            float x, float y, float facing, float percent,
-                                            int stocks, float air_x, float air_y, float kb_x,
-                                            float kb_y, float ground_x);
-            extern int Replay_Frame(void);
-            if (Replay_Tracing() && fp->player_id == 0 && Replay_Frame() >= -37 &&
-                Replay_Frame() <= -30)
-            {
-                OSReport("replaydbg: f%d floor line %d normal (%.6f, %.6f) gr_vel %.6f self_vel.x %.6f x %.6f\n",
-                         Replay_Frame(), fp->coll_data.floor.index, fp->coll_data.floor.normal.x,
-                         fp->coll_data.floor.normal.y, fp->gr_vel, fp->self_vel.x, fp->cur_pos.x);
-            }
-            if (Replay_Tracing()) {
-                Replay_TraceFighter(fp->player_id, fp->is_sub_fighter, fp->kind, fp->motion_id,
-                                    fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir,
-                                    fp->dmg.x1830_percent, Player_GetStocks(fp->player_id),
-                                    fp->self_vel.x, fp->self_vel.y, fp->x8c_kb_vel.x,
-                                    fp->x8c_kb_vel.y, fp->gr_vel);
-            }
-        }
-#endif
     }
 }
 
@@ -3417,6 +3391,26 @@ void Fighter_UnkCallCameraCallback_8006D9EC(Fighter_GObj* gobj)
             fp->cam_cb(gobj);
         }
     }
+#if defined(TARGET_PC)
+    {
+        /* MELEE_STATE_TRACE (pc/platform/gw_replay.c): the fields Slippi's post-frame records,
+           from the point it records them - SendGamePostFrame.asm hooks 0x8006DA34, this proc's
+           epilogue (priority 0x12), so the frame's hits (Fighter_ProcessHit_8006D1EC, 0xE) are
+           already applied. Tracing from Fighter_procMap (6) instead showed every hit a frame late. */
+        extern int Replay_Tracing(void);
+        extern void Replay_TraceFighter(int port, int follower, int ckind, int action, float x,
+                                        float y, float facing, float percent, int stocks,
+                                        float air_x, float air_y, float kb_x, float kb_y,
+                                        float ground_x);
+        if (Replay_Tracing()) {
+            Replay_TraceFighter(fp->player_id, fp->is_sub_fighter, fp->kind, fp->motion_id,
+                                fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir,
+                                fp->dmg.x1830_percent, Player_GetStocks(fp->player_id),
+                                fp->self_vel.x, fp->self_vel.y, fp->x8c_kb_vel.x,
+                                fp->x8c_kb_vel.y, fp->gr_vel);
+        }
+    }
+#endif
 }
 
 void Fighter_8006DA4C(Fighter_GObj* gobj)

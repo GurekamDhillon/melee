@@ -1741,6 +1741,20 @@ void Fighter_8006A360(Fighter_GObj* gobj)
             }
         }
 
+#if defined(TARGET_PC)
+        {   /* TEMPORARY probe: off-screen damage inputs, replay frames 2250..2370 */
+            extern int Replay_Frame(void);
+            extern bool ftLib_LogicOffCamera(HSD_GObj * gobj);
+            int rf = Replay_Frame();
+            if (rf >= 2250 && rf <= 2370 && fp->player_id == 1 && !fp->is_sub_fighter) {
+                OSReport("offdbg: f%d cam %.3f mag %d bit3 %d x1910 %d b0 %d logic %d thr %d pos %.1f %.1f\n",
+                         rf, Camera_80031144(), ifMagnify_802FC998(fp->player_id),
+                         Player_GetMoreFlagsBit3(fp->player_id) != 0, fp->dmg.x1910,
+                         fp->x221F_b0, ftLib_LogicOffCamera(gobj), p_ftCommonData->x7AC,
+                         fp->cur_pos.x, fp->cur_pos.y);
+            }
+        }
+#endif
         if (!fp->is_sub_fighter && Camera_80031144() == 1.0f) {
             if (fp->dmg.x1830_percent < p_ftCommonData->x7B0) {
                 if (ifMagnify_802FC998(fp->player_id) &&

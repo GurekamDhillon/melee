@@ -584,11 +584,13 @@ static int test_api_misc(void) {
   sim_init(s, 2);
   make_pair(s, &h, &g, 0);
   for (i = 0; i < 400 && !gw_net_started(h.net); ++i) pair_tick(s, &h, &g);
-  if (gw_net_submit_local(h.net, 5, pads) >= 0) { gw_test_fail("out-of-sequence submit accepted"); rv = 1; }
-  if (gw_net_submit_local(h.net, 0, pads) != 0) { gw_test_fail("in-sequence submit rejected"); rv = 1; }
+  h.limit = 0;                            /* the test session stops submitting; the API is driven by hand */
+  if (gw_net_submit_local(h.net, h.frame + 5, pads) >= 0) { gw_test_fail("out-of-sequence submit accepted"); rv = 1; }
+  if (gw_net_submit_local(h.net, h.frame, pads) != 0) { gw_test_fail("in-sequence submit rejected"); rv = 1; }
+  h.frame++;
   /* fill the send window with the peer silent: submit must eventually refuse */
   s->blackhole = 1;
-  for (i = 1; i < 400; ++i) if (gw_net_submit_local(h.net, (uint32_t)i, pads) < 0) break;
+  for (i = 0; i < 400; ++i) if (gw_net_submit_local(h.net, h.frame++, pads) < 0) break;
   if (i >= 400) { gw_test_fail("send window never filled"); rv = 1; }
   /* invalid configs are refused up front */
   memset(&bad, 0, sizeof bad);
@@ -607,16 +609,15 @@ static int test_udp_loopback(void) {
   gw_net_config hc, gc;
   peer h, g;
   gw_net_addr haddr;
-  simnet dummy;
+  simnet *dummy = (simnet *)calloc(1, sizeof *dummy);   /* peers want a simnet pointer; ~5 MB, so not on the stack */
   uint32_t deadline, frame_h = 0, frame_g = 0;
   int rv = 0;
-  memset(&dummy, 0, sizeof dummy);
   if (gw_net_udp_open(0x7F000001u, 0, &ht) != 0 || gw_net_udp_open(0x7F000001u, 0, &gt) != 0) {
-    gw_test_fail("could not open UDP sockets on 127.0.0.1"); return 1;
+    gw_test_fail("could not open UDP sockets on 127.0.0.1"); free(dummy); return 1;
   }
   haddr.ip = 0x7F000001u; haddr.port = gw_net_udp_local_port(&ht);
   init_blob();
-  peer_init(&h, &dummy, 0, 0); peer_init(&g, &dummy, 1, 0);
+  peer_init(&h, dummy, 0, 0); peer_init(&g, dummy, 1, 0);
   hc = peer_cfg(&h, 0x1111, 0x2222, 0x3333);
   gc = peer_cfg(&g, 0x1111, 0x2222, 0x3333);
   hc.now_ms = NULL; gc.now_ms = NULL;                          /* the real clock */
@@ -649,6 +650,7 @@ static int test_udp_loopback(void) {
   }
   gw_net_free(h.net);
   gw_net_free(g.net);
+  free(dummy);
   return rv;
 }
 

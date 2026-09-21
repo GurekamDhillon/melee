@@ -102,7 +102,10 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         if (v >= 0) {
             vs->start.players[i].cpu_kind = (u8) v;
         } else if (vs->start.players[i].slot_type == Gm_PKind_Cpu) {
-            vs->start.players[i].cpu_kind = 0;
+            /* VS mode's own CPUs are kind 4, the fighting AI (gmvsmode.c); 0 is Training's
+               stand-still dummy, which is what every scene-launched VS CPU used to get - they
+               never moved (GD). Training keeps 0. */
+            vs->start.players[i].cpu_kind = dummy_fallback ? 0 : 4;
         }
         v = SceneLaunch_PlayerCpuLevel(i);
         if (v >= 0) {

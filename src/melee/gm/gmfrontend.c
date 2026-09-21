@@ -165,7 +165,6 @@ static const FrontendItem fe_items_vs_setup[] = {
       1 },
     { FE_TOGGLE, 0, "Pause", "Allow pausing during the match.", fe_get_pause, fe_set_pause, 0, 1,
       1 },
-    { FE_ACTION, FE_DO_BACK, "Back to Main Menu", "Return without starting." },
 };
 
 static const FrontendScreen fe_screen_vs_setup = {
@@ -221,8 +220,10 @@ static struct {
     char label_str[FE_MAX_ROWS][FE_STR]; ///< what each text currently shows
     char value_str[FE_MAX_ROWS][FE_STR];
     char help_str[FE_STR];
-    int vis[FE_MAX_ITEMS]; ///< indices of the visible items, in order
+    int vis[FE_MAX_ITEMS]; ///< indices of the visible items: the list, then the button
     int n_vis;
+    int n_list;      ///< how many of vis are list rows; vis[n_list] is the button, if any
+    bool has_button; ///< the screen's continue action is drawn as the CONTINUE button
     int cursor;  ///< index into vis
     int scroll;  ///< first visible row
     int frames;
@@ -286,20 +287,37 @@ u8 gmFrontend_ReportedMode(void)
 #define FE_GX_LINK 14
 #define FE_W 640.0F
 #define FE_H 480.0F
-#define FE_ROW_X 56.0F
-#define FE_ROW_Y 112.0F
-#define FE_ROW_W 528.0F
-#define FE_ROW_H 34.0F
-#define FE_ROW_STEP 40.0F
-#define FE_VALUE_X 548.0F ///< right edge of the value column
+#define FE_FRAME_M 8.0F ///< the 9-slice frame's inset from the screen edge
+#define FE_PANEL_X 28.0F
+#define FE_PANEL_Y 68.0F
+#define FE_PANEL_W 584.0F
+#define FE_PANEL_H 320.0F
+#define FE_ROW_X 64.0F
+#define FE_ROW_Y 114.0F
+#define FE_ROW_W 512.0F ///< row_ng/row_sel at 1x; the plate is the top 28px, a shadow the rest
+#define FE_ROW_H 32.0F
+#define FE_ROW_STEP 34.0F
+#define FE_VALUE_X (FE_ROW_X + FE_ROW_W - 40.0F) ///< right edge of the value column
+#define FE_BTN_W 204.0F ///< btn_continue at 0.8 of its 1x size
+#define FE_BTN_H 51.0F
+#define FE_BTN_X (FE_PANEL_X + FE_PANEL_W - FE_BTN_W - 18.0F)
+#define FE_BTN_Y (FE_PANEL_Y + FE_PANEL_H - 26.0F)
 #define FE_FADE_FRAMES 10
-#define FE_HINT_Y 436.0F
-#define FE_HINT_A_X 56.0F
-#define FE_HINT_LR_X 214.0F
-#define FE_HINT_B_X 396.0F
-#define FE_LABEL_COLOR fe_rgba(245, 247, 255, 255)
-#define FE_VALUE_COLOR fe_rgba(205, 222, 255, 255)
-#define FE_HELP_COLOR fe_rgba(160, 168, 190, 255)
+#define FE_HINT_Y 424.0F
+#define FE_HINT_A_X 44.0F
+#define FE_HINT_LR_X 196.0F
+#define FE_HINT_B_X 372.0F
+/* the art pack's palette (its style.css) */
+#define FE_INK fe_rgba(10, 14, 24, 255)
+#define FE_COBALT_DK fe_rgba(20, 38, 92, 255)
+#define FE_COBALT fe_rgba(30, 58, 140, 255)
+#define FE_COBALT_LT fe_rgba(47, 85, 184, 255)
+#define FE_GOLD fe_rgba(240, 180, 41, 255)
+#define FE_GOLD_LT fe_rgba(255, 215, 102, 255)
+#define FE_BONE fe_rgba(242, 239, 228, 255)
+#define FE_LABEL_COLOR FE_BONE
+#define FE_VALUE_COLOR FE_GOLD_LT
+#define FE_HELP_COLOR fe_rgba(150, 162, 184, 255)
 
 static GXColor fe_rgba(u8 r, u8 g, u8 b, u8 a)
 {
@@ -349,19 +367,35 @@ static void fe_arrow(float x, float y, float size, int dir, GXColor c)
 }
 
 /* ---- HD art --------------------------------------------------------------------------------
- * PNGs made by tools/port/make_frontend_art.py, converted to GX texture data (.gxtex) and found
- * beside the exe (gw_GxTex_OpenUI). Loaded into the scene heap on every enter, since the heap is
- * rebuilt per scene. A texture that is not there simply is not drawn: the flat look remains. */
+ * The menu art pack (cobalt/gold: panel, 9-slice frame, rows, buttons, glyphs, cursor) is made
+ * by its own HTML/CSS generator and converted, each element at its manifest format, with
+ *     python pc/tools/png2gx.py --manifest <menu>/out/manifest.json --outdir _build/ui
+ * then found beside the exe (gw_GxTex_OpenUI). Everything is authored at 2x, i.e. 1:1 with a
+ * 1280x960 window, and drawn here at its 1x size. Loaded into the scene heap on every enter,
+ * since the heap is rebuilt per scene; a missing texture falls back to a flat fill. */
 typedef struct FeTex {
     void* data;
+    void* lut;
     u16 w, h;
     bool ok;
     GXTexObj obj;
+    GXTlutObj tlut;
 } FeTex;
 
-static FeTex fe_tex_backdrop;
-static FeTex fe_tex_btn_a;
-static FeTex fe_tex_btn_b;
+enum {
+    FT_FRAME_TL, FT_FRAME_TR, FT_FRAME_BL, FT_FRAME_BR, FT_EDGE_H, FT_EDGE_V,
+    FT_PANEL, FT_ROW, FT_ROW_SEL, FT_BTN, FT_BTN_HOVER, FT_BTN_PRESS,
+    FT_GLYPH_A, FT_GLYPH_B, FT_CURSOR, FT_COUNT
+};
+
+static const char* const fe_tex_names[FT_COUNT] = {
+    "frame_corner_tl", "frame_corner_tr", "frame_corner_bl", "frame_corner_br",
+    "frame_edge_h", "frame_edge_v", "panel_bg", "row_ng", "row_sel",
+    "btn_continue_ng", "btn_continue_hover", "btn_continue_press",
+    "glyph_a", "glyph_b", "cursor_hand",
+};
+
+static FeTex fe_tex[FT_COUNT];
 
 static void fe_tex_load(FeTex* t, const char* name)
 {
@@ -370,20 +404,38 @@ static void fe_tex_load(FeTex* t, const char* name)
     extern int GxTex_Height(int h);
     extern int GxTex_Format(int h);
     extern int GxTex_ImageSize(int h);
+    extern int GxTex_TlutSize(int h);
+    extern int GxTex_TlutFormat(int h);
+    extern int GxTex_TlutEntries(int h);
     extern void GxTex_CopyImage(int h, void* dst);
+    extern void GxTex_CopyTlut(int h, void* dst);
     extern void GxTex_Close(int h);
     int h = GxTex_OpenUI(name);
+    int tfmt;
     t->ok = false;
+    t->lut = NULL;
     if (h < 0) {
         return;
     }
     t->data = HSD_MemAlloc(GxTex_ImageSize(h));
-    if (t->data != NULL) {
+    tfmt = GxTex_TlutFormat(h);
+    if (tfmt >= 0) {
+        t->lut = HSD_MemAlloc(GxTex_TlutSize(h));
+    }
+    if (t->data != NULL && (tfmt < 0 || t->lut != NULL)) {
         GxTex_CopyImage(h, t->data);
         t->w = (u16) GxTex_Width(h);
         t->h = (u16) GxTex_Height(h);
-        GXInitTexObj(&t->obj, t->data, t->w, t->h, (GXTexFmt) GxTex_Format(h), GX_CLAMP,
-                     GX_CLAMP, GX_FALSE);
+        if (tfmt >= 0) {
+            /* a colour-indexed texture: its palette loads into TLUT0 before each draw */
+            GxTex_CopyTlut(h, t->lut);
+            GXInitTlutObj(&t->tlut, t->lut, (GXTlutFmt) tfmt, (u16) GxTex_TlutEntries(h));
+            GXInitTexObjCI(&t->obj, t->data, t->w, t->h, (GXTexFmt) GxTex_Format(h),
+                           GX_CLAMP, GX_CLAMP, GX_FALSE, GX_TLUT0);
+        } else {
+            GXInitTexObj(&t->obj, t->data, t->w, t->h, (GXTexFmt) GxTex_Format(h), GX_CLAMP,
+                         GX_CLAMP, GX_FALSE);
+        }
         GXInitTexObjLOD(&t->obj, GX_LINEAR, GX_LINEAR, 0.0F, 0.0F, 0.0F, GX_FALSE, GX_FALSE,
                         GX_ANISO_1);
         t->ok = true;
@@ -391,10 +443,12 @@ static void fe_tex_load(FeTex* t, const char* name)
     GxTex_Close(h);
 }
 
-/* A textured quad, tinted by `c`. It sets its own GX state (one texture stage, modulated by the
- * vertex colour) and then invalidates HSD's state cache and restores the untextured vertex-colour
- * setup the rest of the panels draw with - raw GX calls go around that cache. */
-static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
+/* A textured quad with explicit texture coordinates (a flipped 9-slice edge swaps them), tinted
+ * by `c`. It sets its own GX state (one texture stage, modulated by the vertex colour) and then
+ * invalidates HSD's state cache and restores the untextured vertex-colour setup the rest of the
+ * panels draw with - raw GX calls go around that cache. */
+static void fe_tex_quad_uv(FeTex* t, float x, float y, float w, float h, float u0, float v0,
+                           float u1, float v1, GXColor c)
 {
     if (!t->ok) {
         return;
@@ -419,22 +473,40 @@ static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
     GXSetCullMode(GX_CULL_NONE);
+    if (t->lut != NULL) {
+        GXLoadTlut(&t->tlut, GX_TLUT0);
+    }
     GXLoadTexObj(&t->obj, GX_TEXMAP0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition2f32(x, -y);
     GXColor4u8(c.r, c.g, c.b, c.a);
-    GXTexCoord2f32(0.0F, 0.0F);
+    GXTexCoord2f32(u0, v0);
     GXPosition2f32(x + w, -y);
     GXColor4u8(c.r, c.g, c.b, c.a);
-    GXTexCoord2f32(1.0F, 0.0F);
+    GXTexCoord2f32(u1, v0);
     GXPosition2f32(x + w, -(y + h));
     GXColor4u8(c.r, c.g, c.b, c.a);
-    GXTexCoord2f32(1.0F, 1.0F);
+    GXTexCoord2f32(u1, v1);
     GXPosition2f32(x, -(y + h));
     GXColor4u8(c.r, c.g, c.b, c.a);
-    GXTexCoord2f32(0.0F, 1.0F);
+    GXTexCoord2f32(u0, v1);
     HSD_StateInvalidate(-1);
     hsd_80391A04(1.0F, 1.0F, 1);
+}
+
+static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
+{
+    fe_tex_quad_uv(t, x, y, w, h, 0.0F, 0.0F, 1.0F, 1.0F, c);
+}
+
+/* An element at its authored size (1x = half its 2x texel size), or a flat stand-in. */
+static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXColor fallback)
+{
+    if (fe_tex[which].ok) {
+        fe_tex_quad(&fe_tex[which], x, y, w, h, fe_rgba(255, 255, 255, 255));
+    } else {
+        fe_solid(x, y, w, h, fallback);
+    }
 }
 
 /* Ease-out cubic over [0,1]. */
@@ -465,7 +537,27 @@ static float fe_row_y(int slot)
 
 static int fe_rows_shown(void)
 {
-    return fe.n_vis < FE_MAX_ROWS ? fe.n_vis : FE_MAX_ROWS;
+    return fe.n_list < FE_MAX_ROWS ? fe.n_list : FE_MAX_ROWS;
+}
+
+/* The 9-slice frame around the screen: four corners at 64x64 and the two edge pieces stretched
+ * between them, the bottom and right ones mirrored - the art pack's own preview composes it so. */
+static void fe_draw_frame(void)
+{
+    const float m = FE_FRAME_M, c = 64.0F, e = 16.0F;
+    const float sx = FE_W - 2 * m - 2 * c, sy = FE_H - 2 * m - 2 * c;
+    GXColor w = fe_rgba(255, 255, 255, 255);
+    if (!fe_tex[FT_EDGE_H].ok || !fe_tex[FT_FRAME_TL].ok) {
+        return;
+    }
+    fe_tex_quad_uv(&fe_tex[FT_EDGE_H], m + c, m, sx, e, 0, 0, 1, 1, w);
+    fe_tex_quad_uv(&fe_tex[FT_EDGE_H], m + c, FE_H - m - e, sx, e, 0, 1, 1, 0, w);
+    fe_tex_quad_uv(&fe_tex[FT_EDGE_V], m, m + c, e, sy, 0, 0, 1, 1, w);
+    fe_tex_quad_uv(&fe_tex[FT_EDGE_V], FE_W - m - e, m + c, e, sy, 1, 0, 0, 1, w);
+    fe_tex_quad(&fe_tex[FT_FRAME_TL], m, m, c, c, w);
+    fe_tex_quad(&fe_tex[FT_FRAME_TR], FE_W - m - c, m, c, c, w);
+    fe_tex_quad(&fe_tex[FT_FRAME_BL], m, FE_H - m - c, c, c, w);
+    fe_tex_quad(&fe_tex[FT_FRAME_BR], FE_W - m - c, FE_H - m - c, c, c, w);
 }
 
 static void fe_draw_panels(HSD_GObj* gobj, int pass)
@@ -478,39 +570,39 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     }
     hsd_80391A04(1.0F, 1.0F, 1);
 
-    /* backdrop (the HD art, or its flat stand-in), header band and its accent rule, footer band */
-    if (fe_tex_backdrop.ok) {
-        fe_tex_quad(&fe_tex_backdrop, 0, 0, FE_W, FE_H, fe_rgba(255, 255, 255, 255));
-    } else {
-        fe_rect(0, 0, FE_W, FE_H, fe_rgba(20, 26, 46, 255), fe_rgba(5, 6, 12, 255));
-    }
-    fe_rect(0, 0, FE_W, 92, fe_rgba(34, 44, 80, 190), fe_rgba(20, 26, 46, 110));
-    fe_solid(0, 92, FE_W, 2, fe_rgba(96, 150, 255, 255));
-    fe_rect(0, 94, FE_W, 10, fe_rgba(96, 150, 255, 60), fe_rgba(96, 150, 255, 0));
-    fe_rect(0, 436, FE_W, 44, fe_rgba(0, 0, 0, 120), fe_rgba(0, 0, 0, 200));
+    fe_solid(0, 0, FE_W, FE_H, FE_INK);
+    fe_draw_frame();
 
     pulse = (float) (fe.frames % 60) / 60.0F;
     pulse = pulse < 0.5F ? pulse * 2.0F : (1.0F - pulse) * 2.0F;
 
     if (fe.loading) {
-        /* the progress bar: a track, the fill, and a highlight sweeping along the fill */
-        float bx = 120, by = 300, bw = 400, bh = 10;
+        /* the panel at its native size, and a hard-edged progress bar on it */
+        float bx = 128, by = 268, bw = 384, bh = 12;
         float fill = bw * fe.progress;
-        float sweep = (float) (fe.frames % 90) / 90.0F;
-        fe_solid(bx - 2, by - 2, bw + 4, bh + 4, fe_rgba(255, 255, 255, 30));
-        fe_rect(bx, by, fill, bh, fe_rgba(120, 170, 255, 255), fe_rgba(70, 110, 220, 255));
-        if (fill > 24) {
-            fe_solid(bx + (fill - 24) * sweep, by, 24, bh, fe_rgba(255, 255, 255, 90));
+        fe_tex_or_solid(FT_PANEL, 64, 112, 512, 256, FE_COBALT);
+        fe_solid(bx - 4, by - 4, bw + 8, bh + 8, FE_INK);
+        fe_solid(bx, by, bw, bh, FE_COBALT_DK);
+        fe_solid(bx, by, fill, bh, FE_GOLD);
+        fe_solid(bx, by, fill, 3, FE_GOLD_LT);
+        if (fill > 4) {
+            fe_solid(bx + fill - 4, by - 2, 4, bh + 4, fe_rgba(242, 239, 228, (u8) (150 + 105 * pulse)));
         }
-        fe_solid(bx + fill - 2, by - 4, 4, bh + 8, fe_rgba(255, 255, 255, (u8) (160 + 90 * pulse)));
         return;
     }
 
-    /* the highlight, drawn where it currently is on its way to the cursor */
-    if (fe.n_vis > 0) {
+    fe_tex_or_solid(FT_PANEL, FE_PANEL_X, FE_PANEL_Y, FE_PANEL_W, FE_PANEL_H, FE_COBALT);
+
+    for (slot = 0; slot < fe_rows_shown(); slot++) {
+        fe_tex_or_solid(FT_ROW, FE_ROW_X + fe_row_offset(slot), fe_row_y(slot), FE_ROW_W,
+                        FE_ROW_H, FE_COBALT_DK);
+    }
+    /* the cursor's plate, drawn where it currently is on its way to the cursor */
+    if (fe.cursor < fe.n_list) {
         float y = FE_ROW_Y + FE_ROW_STEP * fe.hl_y;
-        u8 glow = (u8) (40 + 50 * pulse);
-        fe_solid(FE_ROW_X - 6, y - 6, FE_ROW_W + 12, FE_ROW_H + 12, fe_rgba(96, 150, 255, glow));
+        int s0 = (int) (fe.hl_y + 0.5F);
+        fe_tex_or_solid(FT_ROW_SEL, FE_ROW_X + fe_row_offset(s0), y, FE_ROW_W, FE_ROW_H,
+                        FE_COBALT_LT);
     }
 
     for (slot = 0; slot < fe_rows_shown(); slot++) {
@@ -518,57 +610,58 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
         const FrontendItem* it = &fe.screen->items[idx];
         float x = FE_ROW_X + fe_row_offset(slot);
         float y = fe_row_y(slot);
+        float cy = y + 14.0F; /* the plate's middle */
         int selected = (fe.scroll + slot) == fe.cursor;
-
-        if (selected) {
-            fe_rect(x, y, FE_ROW_W, FE_ROW_H, fe_rgba(84, 132, 240, 245),
-                    fe_rgba(52, 88, 190, 245));
-            fe_rect(x, y, 5, FE_ROW_H, fe_rgba(255, 255, 255, 255), fe_rgba(200, 220, 255, 255));
-        } else if (it->kind == FE_ACTION) {
-            fe_rect(x, y, FE_ROW_W, FE_ROW_H, fe_rgba(96, 150, 255, 40),
-                    fe_rgba(96, 150, 255, 20));
-        } else {
-            fe_rect(x, y, FE_ROW_W, FE_ROW_H, fe_rgba(255, 255, 255, 22),
-                    fe_rgba(255, 255, 255, 10));
-        }
 
         /* change arrows on the selected value */
         if (selected && (it->kind == FE_CHOICE || it->kind == FE_SLIDER)) {
-            GXColor ac = fe_rgba(255, 255, 255, 230);
-            float cy = y + FE_ROW_H * 0.5F;
-            fe_arrow(x + FE_ROW_W - 14, cy, 10, +1, ac);
-            fe_arrow(it->kind == FE_SLIDER ? x + 236 : x + 330, cy, 10, -1, ac);
+            fe_arrow(x + FE_ROW_W - 28, cy, 10, +1, FE_GOLD_LT);
+            fe_arrow(it->kind == FE_SLIDER ? x + 226 : x + 318, cy, 10, -1, FE_GOLD_LT);
         }
 
-        /* the value's own furniture: a slider track, a toggle pill */
+        /* the value's own furniture: a slider track, a toggle pill - ink-outlined, hard stops */
         if (it->kind == FE_SLIDER && it->get != NULL && it->max > it->min) {
             float frac = (float) (it->get() - it->min) / (float) (it->max - it->min);
-            float tx = x + 250, tw = 150, ty = y + FE_ROW_H * 0.5F - 2;
-            fe_solid(tx, ty, tw, 4, fe_rgba(255, 255, 255, 50));
-            fe_solid(tx, ty, tw * frac, 4,
-                     selected ? fe_rgba(255, 255, 255, 255) : fe_rgba(120, 170, 255, 255));
-            fe_solid(tx + tw * frac - 3, ty - 5, 6, 14, fe_rgba(255, 255, 255, 255));
+            float tx = x + 240, tw = 150, ty = cy - 3;
+            fe_solid(tx - 2, ty - 2, tw + 4, 10, FE_INK);
+            fe_solid(tx, ty, tw * frac, 6, FE_GOLD);
+            fe_solid(tx + tw * frac - 5, ty - 6, 10, 18, FE_INK);
+            fe_solid(tx + tw * frac - 3, ty - 4, 6, 14, FE_BONE);
         } else if (it->kind == FE_TOGGLE && it->get != NULL) {
             int on = it->get() != 0;
-            float px = x + 250, py = y + 8;
-            fe_solid(px, py, 40, 18, on ? fe_rgba(90, 220, 150, 255) : fe_rgba(255, 255, 255, 50));
-            fe_solid(on ? px + 23 : px + 3, py + 3, 14, 12, fe_rgba(255, 255, 255, 255));
+            float px = x + 240, py = cy - 9;
+            fe_solid(px - 2, py - 2, 44, 22, FE_INK);
+            fe_solid(px, py, 40, 18, on ? FE_GOLD : FE_COBALT_DK);
+            fe_solid(on ? px + 23 : px + 3, py + 3, 14, 12, FE_BONE);
+        }
+    }
+
+    /* CONTINUE, overlapping the panel's corner: hover while the cursor is on it, pressed as the
+       screen leaves through it; the hand points at it */
+    if (fe.has_button) {
+        int on = fe.cursor == fe.n_vis - 1;
+        int which = fe.leaving == 1 ? FT_BTN_PRESS : on ? FT_BTN_HOVER : FT_BTN;
+        fe_tex_or_solid(which, FE_BTN_X, FE_BTN_Y, FE_BTN_W, FE_BTN_H,
+                        on ? FE_COBALT_LT : FE_COBALT);
+        if (on && fe.leaving == 0) {
+            float bob = 3.0F * pulse;
+            fe_tex_quad(&fe_tex[FT_CURSOR], FE_BTN_X + FE_BTN_W * 0.82F,
+                        FE_BTN_Y + FE_BTN_H * 0.48F + bob, 32, 32, fe_rgba(255, 255, 255, 255));
         }
     }
 
     /* footer hints: the controller's own buttons beside their labels */
-    fe_tex_quad(&fe_tex_btn_a, FE_HINT_A_X, FE_HINT_Y, 24, 24, fe_rgba(255, 255, 255, 255));
-    fe_arrow(FE_HINT_LR_X, FE_HINT_Y + 12, 12, -1, fe_rgba(220, 226, 240, 255));
-    fe_arrow(FE_HINT_LR_X + 18, FE_HINT_Y + 12, 12, +1, fe_rgba(220, 226, 240, 255));
-    fe_tex_quad(&fe_tex_btn_b, FE_HINT_B_X, FE_HINT_Y, 24, 24, fe_rgba(255, 255, 255, 255));
+    fe_tex_quad(&fe_tex[FT_GLYPH_A], FE_HINT_A_X, FE_HINT_Y, 24, 24, fe_rgba(255, 255, 255, 255));
+    fe_arrow(FE_HINT_LR_X + 6, FE_HINT_Y + 12, 12, -1, FE_GOLD);
+    fe_arrow(FE_HINT_LR_X + 24, FE_HINT_Y + 12, 12, +1, FE_GOLD);
+    fe_tex_quad(&fe_tex[FT_GLYPH_B], FE_HINT_B_X, FE_HINT_Y, 24, 24, fe_rgba(255, 255, 255, 255));
 
     /* scroll marks, when the list runs past the rows shown */
     if (fe.scroll > 0) {
-        fe_solid(FE_W * 0.5F - 12, FE_ROW_Y - 14, 24, 3, fe_rgba(150, 185, 255, 200));
+        fe_solid(FE_W * 0.5F - 12, FE_ROW_Y - 9, 24, 4, FE_GOLD);
     }
-    if (fe.scroll + fe_rows_shown() < fe.n_vis) {
-        fe_solid(FE_W * 0.5F - 12, fe_row_y(FE_MAX_ROWS) - 2, 24, 3,
-                 fe_rgba(150, 185, 255, 200));
+    if (fe.scroll + fe_rows_shown() < fe.n_list) {
+        fe_solid(FE_W * 0.5F - 12, fe_row_y(FE_MAX_ROWS) + 1, 24, 4, FE_GOLD);
     }
 }
 
@@ -683,11 +776,11 @@ static void fe_refresh_rows(void)
             l = fe.label[slot];
             v = fe.value[slot];
             l->hidden = 0;
-            l->pos_x = FE_ROW_X + 20 + dx;
-            l->pos_y = fe_row_y(slot) + 7;
+            l->pos_x = FE_ROW_X + 32 + dx;
+            l->pos_y = fe_row_y(slot) + 4;
             v->hidden = buf[0] == '\0';
             v->pos_x = FE_VALUE_X + dx;
-            v->pos_y = fe_row_y(slot) + 7;
+            v->pos_y = fe_row_y(slot) + 4;
         }
     }
     if (fe.n_vis > 0) {
@@ -701,29 +794,47 @@ static void fe_refresh_rows(void)
  * same item where it can. */
 static void fe_rebuild_visible(void)
 {
-    int keep = fe.n_vis > 0 ? fe.vis[fe.cursor] : 0;
+    int keep = fe.n_vis > 0 ? fe.vis[fe.cursor] : -1;
+    int button = -1;
     int i;
-    fe.n_vis = 0;
-    for (i = 0; i < fe.screen->n_items && fe.n_vis < FE_MAX_ITEMS; i++) {
+    fe.n_list = 0;
+    for (i = 0; i < fe.screen->n_items && fe.n_list < FE_MAX_ITEMS - 1; i++) {
         const FrontendItem* it = &fe.screen->items[i];
-        if (it->visible == NULL || it->visible()) {
-            fe.vis[fe.n_vis++] = i;
+        if (it->visible != NULL && !it->visible()) {
+            continue;
+        }
+        if (it->kind == FE_ACTION && it->action == FE_DO_CONTINUE) {
+            button = i; /* drawn as the CONTINUE button, not a row */
+        } else {
+            fe.vis[fe.n_list++] = i;
         }
     }
+    fe.n_vis = fe.n_list;
+    fe.has_button = button >= 0;
+    if (fe.has_button) {
+        fe.vis[fe.n_vis++] = button;
+    }
+    /* the same item where it is still visible, else the nearest list row above it */
     fe.cursor = 0;
     for (i = 0; i < fe.n_vis; i++) {
-        if (fe.vis[i] <= keep) {
+        if (fe.vis[i] == keep) {
+            fe.cursor = i;
+            break;
+        }
+        if (i < fe.n_list && fe.vis[i] <= keep) {
             fe.cursor = i;
         }
     }
-    if (fe.cursor < fe.scroll) {
-        fe.scroll = fe.cursor;
+    if (fe.cursor < fe.n_list) {
+        if (fe.cursor < fe.scroll) {
+            fe.scroll = fe.cursor;
+        }
+        if (fe.cursor >= fe.scroll + FE_MAX_ROWS) {
+            fe.scroll = fe.cursor - FE_MAX_ROWS + 1;
+        }
     }
-    if (fe.cursor >= fe.scroll + FE_MAX_ROWS) {
-        fe.scroll = fe.cursor - FE_MAX_ROWS + 1;
-    }
-    if (fe.scroll > fe.n_vis - fe_rows_shown()) {
-        fe.scroll = fe.n_vis - fe_rows_shown();
+    if (fe.scroll > fe.n_list - fe_rows_shown()) {
+        fe.scroll = fe.n_list - fe_rows_shown();
     }
     if (fe.scroll < 0) {
         fe.scroll = 0;
@@ -750,6 +861,9 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         return;
     }
     fe_rebuild_visible();
+    if (fe.has_button) {
+        fe.cursor = fe.n_vis - 1; /* A straight away continues, as the menus do */
+    }
 
     /* The text canvas makes its own 640x480 orthographic camera; the panels draw on its link
        below the text, the fade above it. */
@@ -762,17 +876,21 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     if (gobj != NULL) {
         GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
     }
-    fe_tex_load(&fe_tex_backdrop, "fe_backdrop");
-    fe_tex_load(&fe_tex_btn_a, "fe_btn_a");
-    fe_tex_load(&fe_tex_btn_b, "fe_btn_b");
-    OSReport("frontend: art %s\n", fe_tex_backdrop.ok ? "loaded" : "not found - flat look");
+    {
+        int i, n = 0;
+        for (i = 0; i < FT_COUNT; i++) {
+            fe_tex_load(&fe_tex[i], fe_tex_names[i]);
+            n += fe_tex[i].ok;
+        }
+        OSReport("frontend: %d of %d art elements loaded%s\n", n, FT_COUNT,
+                 n < FT_COUNT ? " - the missing ones draw flat" : "");
+    }
 
     if (fe.loading) {
         extern int Gfx_PipelinesCreated(void);
-        fe.title = fe_text(320, 214, 1.2F, 1, fe_rgba(255, 255, 255, 255), fe.screen->title);
-        fe.subtitle =
-            fe_text(320, 258, 0.55F, 1, fe_rgba(150, 185, 255, 255), fe.screen->subtitle);
-        fe.help = fe_text(320, 326, 0.5F, 1, FE_HELP_COLOR, " ");
+        fe.title = fe_text(320, 196, 1.2F, 1, FE_BONE, fe.screen->title);
+        fe.subtitle = fe_text(76, 114, 0.55F, 0, FE_INK, fe.screen->subtitle); /* on the tab */
+        fe.help = fe_text(320, 296, 0.5F, 1, FE_BONE, " ");
         fe.help_str[0] = ' ';
         fe.help_str[1] = '\0';
         fe.load_base = Gfx_PipelinesCreated();
@@ -791,26 +909,24 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         fe.percent = -1;
         return;
     }
-    fe.title = fe_text(56, 24, 1.1F, 0, fe_rgba(255, 255, 255, 255), fe.screen->title);
-    fe.subtitle = fe_text(58, 62, 0.55F, 0, fe_rgba(150, 185, 255, 255), fe.screen->subtitle);
+    fe.title = fe_text(44, 24, 0.9F, 0, FE_BONE, fe.screen->title);
+    fe.subtitle = /* on the panel's gold tab */
+        fe_text(FE_PANEL_X + 44, FE_PANEL_Y + 7, 0.55F, 0, FE_INK, fe.screen->subtitle);
     for (slot = 0; slot < FE_MAX_ROWS; slot++) {
         fe.label[slot] =
-            fe_text(FE_ROW_X + 20, fe_row_y(slot) + 7, 0.62F, 0, FE_LABEL_COLOR, " ");
-        fe.value[slot] = fe_text(FE_VALUE_X, fe_row_y(slot) + 7, 0.62F, 2, FE_VALUE_COLOR, " ");
+            fe_text(FE_ROW_X + 32, fe_row_y(slot) + 4, 0.56F, 0, FE_LABEL_COLOR, " ");
+        fe.value[slot] = fe_text(FE_VALUE_X, fe_row_y(slot) + 4, 0.56F, 2, FE_VALUE_COLOR, " ");
         fe.label_str[slot][0] = ' ';
         fe.label_str[slot][1] = '\0';
         fe.value_str[slot][0] = ' ';
         fe.value_str[slot][1] = '\0';
     }
-    fe.help = fe_text(56, 398, 0.5F, 0, FE_HELP_COLOR, " ");
+    fe.help = fe_text(44, FE_PANEL_Y + FE_PANEL_H + 8, 0.5F, 0, FE_HELP_COLOR, " ");
     fe.help_str[0] = ' ';
     fe.help_str[1] = '\0';
-    fe.hints = fe_text(FE_HINT_A_X + 32, FE_HINT_Y + 2, 0.5F, 0, fe_rgba(200, 206, 224, 255),
-                       "Select");
-    fe.hint_change = fe_text(FE_HINT_LR_X + 34, FE_HINT_Y + 2, 0.5F, 0,
-                             fe_rgba(200, 206, 224, 255), "Change");
-    fe.hint_back =
-        fe_text(FE_HINT_B_X + 32, FE_HINT_Y + 2, 0.5F, 0, fe_rgba(200, 206, 224, 255), "Back");
+    fe.hints = fe_text(FE_HINT_A_X + 32, FE_HINT_Y + 2, 0.5F, 0, FE_BONE, "Select");
+    fe.hint_change = fe_text(FE_HINT_LR_X + 40, FE_HINT_Y + 2, 0.5F, 0, FE_BONE, "Change");
+    fe.hint_back = fe_text(FE_HINT_B_X + 32, FE_HINT_Y + 2, 0.5F, 0, FE_BONE, "Back");
     fe_refresh_rows();
 }
 
@@ -933,7 +1049,9 @@ void gm_Scene_Frontend_OnFrame(void)
         fe.fade--;
     }
 
-    fe.hl_y += ((float) (fe.cursor - fe.scroll) - fe.hl_y) * 0.35F;
+    if (fe.cursor < fe.n_list) {
+        fe.hl_y += ((float) (fe.cursor - fe.scroll) - fe.hl_y) * 0.35F;
+    }
 
     if (fe.frames >= 4 && fe.n_vis > 0) { /* let the button that brought us here go */
         in = mn_80229624(4);
@@ -964,7 +1082,9 @@ void gm_Scene_Frontend_OnFrame(void)
             sfxBack();
             fe.leaving = 2;
         }
-        if (fe.cursor < fe.scroll) {
+        if (fe.cursor >= fe.n_list) {
+            /* on the button: the plate waits on the row the cursor will come back to */
+        } else if (fe.cursor < fe.scroll) {
             fe.scroll = fe.cursor;
         } else if (fe.cursor >= fe.scroll + FE_MAX_ROWS) {
             fe.scroll = fe.cursor - FE_MAX_ROWS + 1;
@@ -1005,7 +1125,12 @@ void gm_Scene_Frontend_OnExit(void* exit_data)
         HSD_SisLib_803A5CC4(fe.hint_back);
     }
     fe.title = fe.subtitle = fe.help = fe.hints = fe.hint_change = fe.hint_back = NULL;
-    fe_tex_backdrop.ok = fe_tex_btn_a.ok = fe_tex_btn_b.ok = false; /* the scene heap goes */
+    {
+        int i;
+        for (i = 0; i < FT_COUNT; i++) {
+            fe_tex[i].ok = false; /* the scene heap goes */
+        }
+    }
     fe.loading = false;
 }
 

@@ -52,6 +52,9 @@ typedef struct {
     int replay_cursor[4];
 } GwSnapSlot;
 
+/* rumble state: reset to idle on every load (see sn_scatter) */
+static GwSnapRange sn_rumble[64];
+static int sn_nrumble;
 static uint32_t sn_devcom_roots[16]; /* devcom list heads, resolved from the map */
 static int sn_ndevcom_roots;
 
@@ -266,6 +269,11 @@ static int sn_load_map(void) {
             sn.cmp_skip[sn.ncmp_skip].va = s->va;
             sn.cmp_skip[sn.ncmp_skip].len = s->len;
             ++sn.ncmp_skip;
+            if (sn_nrumble < 64) {
+                sn_rumble[sn_nrumble].va = s->va;
+                sn_rumble[sn_nrumble].len = s->len;
+                ++sn_nrumble;
+            }
         } else if (strcmp(s->name, "_gm_80479D58") == 0) {
             sn.cmp_skip[sn.ncmp_skip].va = s->va + 4; /* unk_4, the render counter */
             sn.cmp_skip[sn.ncmp_skip].len = 4;
@@ -322,6 +330,12 @@ static void sn_scatter(const uint8_t *in) {
     for (i = 0; i < sn.nranges; ++i) {
         memcpy((void *) (uintptr_t) sn.ranges[i].va, in, sn.ranges[i].len);
         in += sn.ranges[i].len;
+    }
+    /* Rumble is a cosmetic, pad-side script interpreter: restoring it mid-script rolled its
+       cursor back into a loop (k=7 hung inside HSD_PadRumbleInterpret1) and leaving it stale
+       crashed on freed heap. Idle (all zero) is the only state that is always safe. */
+    for (i = 0; i < sn_nrumble; ++i) {
+        memset((void *) (uintptr_t) sn_rumble[i].va, 0, sn_rumble[i].len);
     }
 }
 

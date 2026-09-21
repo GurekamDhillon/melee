@@ -61,6 +61,7 @@ static int sn_ndevcom_roots;
 static struct {
     int tried, enabled, k;
     int ready;
+    int session; /* a rollback session (gw_rollback.c) owns the snapshots: no SyncTest measuring */
     GwSnapRange ranges[GW_SNAP_MAX_RANGES];
     int nranges;
     uint32_t globals_len;
@@ -1063,7 +1064,7 @@ static uint8_t *sn_async_mem1, *sn_async_globals, *sn_amask_mem1, *sn_amask_glob
 
 void gw_SyncTest_PreRender(void) {
     sn_in_render = 1;
-    if (!sn.enabled || !sn_live()) {
+    if (!sn.enabled || !sn_live() || sn.session) {
         return;
     }
     memcpy(sn.pre_mem1, (const void *) (uintptr_t) 0x80000000u, gw_mem1_size);
@@ -1242,4 +1243,51 @@ int gw_Snap_SuppressSfx(void) {
         on = (v != NULL && *v == '1') ? 0 : 1;
     }
     return on && sn.enabled && sn.cur_is_resim;
+}
+
+/* ---- for the rollback session (gw_rollback.c) --------------------------------------------------
+ * The session drives save/load itself; it needs the slots allocated (sn_init reads
+ * MELEE_SYNCTEST, so it is set here), the resimulation flag that gates sound, and a checksum. */
+int gw_Snap_OpenSession(int k) {
+    char b[16];
+    snprintf(b, sizeof b, "%d", k);
+    _putenv_s("MELEE_SYNCTEST", b);
+    sn_init();
+    sn.session = sn.enabled;
+    return sn.enabled ? sn.nslots : 0;
+}
+
+void gw_Snap_SessionResim(int on, int frame) {
+    sn.cur_is_resim = on;
+    if (on) {
+        sn_sfx_rewind(frame);
+    }
+}
+
+int gw_Snap_HasFrame(int frame) {
+    return sn_slot_for(frame, 0) != NULL;
+}
+
+/* A 32-bit checksum of the snapshot taken at the start of `frame`: MEM1 and the game's globals,
+ * hashed 8 bytes at a time. 0 when there is no such snapshot. The whole snapshot is hashed (no
+ * masks): two peers running the same build see the same render-owned bytes too. */
+uint32_t gw_Snap_Checksum(int frame) {
+    GwSnapSlot *sl = sn_slot_for(frame, 0);
+    uint64_t h = 0x9E3779B97F4A7C15ull;
+    uint32_t i;
+    const uint64_t *w;
+    if (sl == NULL) {
+        return 0;
+    }
+    w = (const uint64_t *) sl->mem1;
+    for (i = 0; i < gw_mem1_size / 8; ++i) {
+        h = (h ^ w[i]) * 0x100000001B3ull;
+        h ^= h >> 29;
+    }
+    w = (const uint64_t *) sl->globals;
+    for (i = 0; i < sn.globals_len / 8; ++i) {
+        h = (h ^ w[i]) * 0x100000001B3ull;
+        h ^= h >> 29;
+    }
+    return (uint32_t) (h ^ (h >> 32)) | 1u;
 }

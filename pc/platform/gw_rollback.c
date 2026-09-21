@@ -48,6 +48,7 @@ typedef struct {
 
 static struct {
     int tried, on;
+    int log;              /* MELEE_RB_LOG=<n>: log the first n rollbacks and mismatches */
     int in_match;         /* the scene now running is a VS match (gw_RB_SceneBegin) */
     int delay, maxb;
     int fake_lat, fake_jit, fake_loss;
@@ -124,6 +125,7 @@ static void rb_init(void) {
     if (rb.maxb < 1) rb.maxb = 1;
     if (rb.maxb > 12) rb.maxb = 12;
     rb.first_wrong = RB_NONE;
+    rb.log = getenv("MELEE_RB_LOG") != NULL ? atoi(getenv("MELEE_RB_LOG")) : 0;
     rb.on = 1;
     gw_log("rb: session ON (fake network: latency %d, jitter %d, loss %d%%; input delay %d, max "
            "rollback %d, remote ports 0x%X)", rb.fake_lat, rb.fake_jit, rb.fake_loss, rb.delay,
@@ -222,6 +224,13 @@ void gw_rb_submit_remote_input(int slot, int frame, const GwRbInput *in) {
     if (u != NULL) {
         /* the frame was already simulated with something else? */
         if (!rb_same(&u->in, &t->in)) {
+            if (rb.log > 0) {
+                rb.log--;
+                gw_log("rb: input for slot %d frame %d arrived at tick %ld and differs from what was used "
+                       "(used lx %.3f ly %.3f btn %08X pred=%d; true lx %.3f ly %.3f btn %08X)", slot,
+                       frame, rb.tk, u->in.lx, u->in.ly, u->in.buttons, !u->in.confirmed, t->in.lx,
+                       t->in.ly, t->in.buttons);
+            }
             if (frame < rb.first_wrong) {
                 rb.first_wrong = frame;
             }
@@ -432,6 +441,11 @@ int gw_RB_Iterations(int count) {
                 rb.plan.rollback = 1;
                 rb.plan.first = f;
                 rb.plan.k = n - f;
+                if (rb.log > 0) {
+                    rb.log--;
+                    gw_log("rb: rollback to frame %d (k=%d) at next frame %d, tick %ld, confirmed %d", f,
+                           n - f, n, rb.tk, conf);
+                }
             }
         }
     }

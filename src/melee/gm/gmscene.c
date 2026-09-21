@@ -731,6 +731,10 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
     mnLoadScreen_Begin(info);
     mnOverlay_Begin();
+    if (info != NULL) {
+        extern void RB_SceneBegin(int scene_kind);
+        RB_SceneBegin((int) info->scene_kind); /* a rollback session governs VS matches only */
+    }
 #endif
 
     while (temp_r25->unk_C == 0) {
@@ -772,7 +776,15 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             /* MELEE_SYNCTEST (pc/platform/gw_snap.c): k+1 logic iterations this tick - roll back
                k frames, resimulate them, then run the new frame */
             extern int SyncTest_Iterations(int count);
-            pad_queue_count = SyncTest_Iterations(pad_queue_count);
+            /* MELEE_RB_FAKE (pc/platform/gw_rollback.c): the rollback session decides instead -
+               k resimulated iterations plus the new one, or none while it stalls */
+            extern int RB_Enabled(void);
+            extern int RB_Iterations(int count);
+            if (RB_Enabled()) {
+                pad_queue_count = RB_Iterations(pad_queue_count);
+            } else {
+                pad_queue_count = SyncTest_Iterations(pad_queue_count);
+            }
         }
 #endif
 
@@ -787,7 +799,13 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             {
                 /* the logic-frame boundary: SyncTest saves, loads or compares here */
                 extern void SyncTest_IterStart(void);
-                SyncTest_IterStart();
+                extern int RB_Enabled(void);
+                extern void RB_IterStart(void);
+                if (RB_Enabled()) {
+                    RB_IterStart();
+                } else {
+                    SyncTest_IterStart();
+                }
             }
 #endif
             HSD_PerfSetStartTime();
@@ -982,8 +1000,10 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         {
             extern void SyncTest_PostRender(void);
             extern void Snap_Time(int what, int begin);
+            extern void RB_TickEnd(void);
             Snap_Time(1, 0);
             SyncTest_PostRender();
+            RB_TickEnd();
         }
 #endif
         db_TakeScreenshotIfPending();

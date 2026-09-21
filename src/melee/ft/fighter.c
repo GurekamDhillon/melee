@@ -2151,6 +2151,20 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                     fp->input.triggers[0] = Replay_Trigger(port, fol);
                     fp->input.held_buttons[0] = Replay_Buttons(port, fol);
                 }
+                {
+                    /* MELEE_SLP_RECORD: the inputs as the fighter holds them here - what
+                       playback writes back at this same point */
+                    extern void Replay_RecordInput(int port, int follower, float lx, float ly,
+                                                   float cx, float cy, float trigger,
+                                                   u32 buttons, int action, float x, float y,
+                                                   float facing, float percent);
+                    Replay_RecordInput(port, fol, fp->input.lstick[0].x,
+                                       fp->input.lstick[0].y, fp->input.cstick[0].x,
+                                       fp->input.cstick[0].y, fp->input.triggers[0],
+                                       fp->input.held_buttons[0], fp->motion_id,
+                                       fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir,
+                                       fp->dmg.x1830_percent);
+                }
             }
 #endif
             Fighter_Spaghetti_8006AD10_Inner1(fp);

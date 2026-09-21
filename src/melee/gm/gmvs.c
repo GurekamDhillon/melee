@@ -2193,9 +2193,12 @@ void fn_8016E730(StartMeleeData* arg0)
            players and RNG seed - at the point Slippi's RestoreGameInfo.asm restores it. */
         extern int Replay_Active(void);
         extern u32 Replay_ApplyMatch(void* start_melee_data);
+        extern void Replay_RecordMatch(void* start_melee_data, u32 seed);
         if (Replay_Active()) {
             *HSD_RandSeedPtr = Replay_ApplyMatch(arg0);
         }
+        /* MELEE_SLP_RECORD: the same point, for the port's own replays */
+        Replay_RecordMatch(arg0, *HSD_RandSeedPtr);
     }
 #endif
     db_Setup();

@@ -817,11 +817,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     /* MELEE_SLP playback: count the frame (Slippi numbers them from -123), force
                        the console's seed under MELEE_SLP_RESYNC, and report the first frame the
                        port's RNG leaves the console's. */
-                    extern int Replay_Active(void);
+                    extern int Replay_Enabled(void);
                     extern int Replay_Tick(void);
                     extern u32 Replay_ResyncSeed(void);
                     extern void Replay_CheckSeed(u32 port_seed);
-                    if (Replay_Active()) {
+                    if (Replay_Enabled()) {
                         u32 s;
                         Replay_Tick();
                         s = Replay_ResyncSeed();

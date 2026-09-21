@@ -272,6 +272,176 @@ uint32_t gw_Replay_ApplyMatch(void *start_melee_data) {
     return rp.seed;
 }
 
+
+/* ---- recording: MELEE_SLP_RECORD=<file> ----------------------------------------------------
+ * Writes the port's own match as a Slippi replay, from the same points playback reads: the
+ * StartMeleeData and seed at fn_8016E730, each frame's start seed, each character's processed
+ * inputs at the pre-frame point, and the post-frame state at Slippi's post-frame point. Event sizes
+ * and framing are Slippi 3.19.1's, so the file is also readable by Slippi's tools; fields the port
+ * has no source for (raw pad bytes, shield size, combo counters...) are zero.
+ *
+ * A port recording played back on the same build must reproduce every frame bit for bit - that is
+ * the self-consistency test rollback rests on (tools/replay/first_div.py against the recording).
+ * The raw-block length is written as 0 up front (Slippi's own convention for a replay still being
+ * written) and patched at exit, so a run that dies mid-match still leaves a playable file. */
+#define GW_RP_SZ_START 0x2F8
+#define GW_RP_SZ_PRE 0x42
+#define GW_RP_SZ_POST 0x54
+#define GW_RP_SZ_END 0x6
+#define GW_RP_SZ_FSTART 0xC
+
+static struct {
+    int tried;
+    FILE *f;
+    long raw_len_at;  /* file offset of the raw block's u32 length */
+    long raw_start;   /* file offset of the first event byte */
+    int frame;        /* the recording's own frame counter, GW_RP_UNARMED before the match */
+    uint32_t seed;    /* this frame's start seed, repeated in each pre-frame */
+} rec = { .frame = GW_RP_UNARMED };
+
+static void rec_be32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t) (v >> 24); p[1] = (uint8_t) (v >> 16); p[2] = (uint8_t) (v >> 8);
+    p[3] = (uint8_t) v;
+}
+static void rec_bef(uint8_t *p, float f) {
+    uint32_t u;
+    memcpy(&u, &f, 4);
+    rec_be32(p, u);
+}
+
+static void rec_close(void) {
+    long end;
+    uint8_t ev[1 + GW_RP_SZ_END], len[4];
+    static const char meta[] = "U\x08metadata{U\x08playedOnSU\x08melee-pc}}";
+    if (rec.f == NULL) {
+        return;
+    }
+    memset(ev, 0, sizeof ev);
+    ev[0] = 0x39;
+    ev[1] = 7; /* game end method: no contest - the port does not know how the run ended */
+    fwrite(ev, 1, sizeof ev, rec.f);
+    end = ftell(rec.f);
+    fwrite(meta, 1, sizeof meta - 1, rec.f);
+    rec_be32(len, (uint32_t) (end - rec.raw_start));
+    fseek(rec.f, rec.raw_len_at, SEEK_SET);
+    fwrite(len, 1, 4, rec.f);
+    fclose(rec.f);
+    rec.f = NULL;
+    gw_log("replay: recording closed (%ld event bytes)", end - rec.raw_start);
+}
+
+int gw_Replay_Recording(void) {
+    if (!rec.tried) {
+        const char *path = getenv("MELEE_SLP_RECORD");
+        rec.tried = 1;
+        if (path != NULL && path[0] != '\0') {
+            rec.f = fopen(path, "wb");
+            if (rec.f == NULL) {
+                gw_log("replay: cannot open MELEE_SLP_RECORD=\"%s\"", path);
+            } else {
+                static const uint8_t head[] = { '{', 'U', 3, 'r', 'a', 'w', '[', '$', 'U', '#', 'l' };
+                static const uint8_t sizes[] = { 0x35, 16,
+                    0x36, GW_RP_SZ_START >> 8, GW_RP_SZ_START & 0xFF,
+                    0x37, 0, GW_RP_SZ_PRE, 0x38, 0, GW_RP_SZ_POST,
+                    0x39, 0, GW_RP_SZ_END, 0x3A, 0, GW_RP_SZ_FSTART };
+                uint8_t zero[4] = { 0, 0, 0, 0 };
+                fwrite(head, 1, sizeof head, rec.f);
+                rec.raw_len_at = ftell(rec.f);
+                fwrite(zero, 1, 4, rec.f);
+                rec.raw_start = ftell(rec.f);
+                fwrite(sizes, 1, sizeof sizes, rec.f);
+                atexit(rec_close);
+                gw_log("replay: recording to %s", path);
+            }
+        }
+    }
+    return rec.f != NULL;
+}
+
+/* fn_8016E730: the match as it starts, and its seed. Arms the recording's frame counter. */
+void gw_Replay_RecordMatch(void *start_melee_data, uint32_t seed) {
+    uint8_t ev[1 + GW_RP_SZ_START];
+    if (!gw_Replay_Recording()) {
+        return;
+    }
+    memset(ev, 0, sizeof ev);
+    ev[0] = 0x36;
+    ev[1] = 3; ev[2] = 19; ev[3] = 1; ev[4] = 0;
+    memcpy(ev + 5, start_melee_data, GW_RP_GAME_INFO);
+    rec_be32(ev + 0x13D, seed);
+    ev[0x1A3] = 2;    /* minor scene: in-game */
+    ev[0x1A4] = 2;    /* major scene: VS */
+    fwrite(ev, 1, sizeof ev, rec.f);
+    rec.frame = GW_RP_FIRST_FRAME - 1;
+    gw_log("replay: recording the match (seed 0x%08X)", seed);
+}
+
+static void rec_tick(uint32_t seed) {
+    uint8_t ev[1 + GW_RP_SZ_FSTART];
+    if (rec.f == NULL || rec.frame == GW_RP_UNARMED) {
+        return;
+    }
+    fflush(rec.f); /* a killed run loses at most the frame in flight */
+    ++rec.frame;
+    rec.seed = seed;
+    memset(ev, 0, sizeof ev);
+    ev[0] = 0x3A;
+    rec_be32(ev + 1, (uint32_t) rec.frame);
+    rec_be32(ev + 5, seed);
+    fwrite(ev, 1, sizeof ev, rec.f);
+}
+
+void gw_Replay_RecordInput(int port, int follower, float lx, float ly, float cx, float cy,
+                           float trigger, uint32_t buttons, int action, float x, float y,
+                           float facing, float percent) {
+    uint8_t ev[1 + GW_RP_SZ_PRE];
+    if (rec.f == NULL || rec.frame == GW_RP_UNARMED) {
+        return;
+    }
+    memset(ev, 0, sizeof ev);
+    ev[0] = 0x37;
+    rec_be32(ev + 1, (uint32_t) rec.frame);
+    ev[5] = (uint8_t) port;
+    ev[6] = (uint8_t) (follower != 0);
+    rec_be32(ev + 0x7, rec.seed);
+    ev[0xB] = (uint8_t) (action >> 8); ev[0xC] = (uint8_t) action;
+    rec_bef(ev + 0xD, x); rec_bef(ev + 0x11, y); rec_bef(ev + 0x15, facing);
+    rec_bef(ev + 0x19, lx); rec_bef(ev + 0x1D, ly);
+    rec_bef(ev + 0x21, cx); rec_bef(ev + 0x25, cy);
+    rec_bef(ev + 0x29, trigger);
+    rec_be32(ev + 0x2D, buttons);
+    rec_bef(ev + 0x3C, percent);
+    fwrite(ev, 1, sizeof ev, rec.f);
+}
+
+static void rec_post(int port, int follower, int ckind, int action, float x, float y, float facing,
+                     float percent, int stocks, float air_x, float air_y, float kb_x, float kb_y,
+                     float ground_x) {
+    uint8_t ev[1 + GW_RP_SZ_POST];
+    if (rec.f == NULL || rec.frame == GW_RP_UNARMED) {
+        return;
+    }
+    memset(ev, 0, sizeof ev);
+    ev[0] = 0x38;
+    rec_be32(ev + 1, (uint32_t) rec.frame);
+    ev[5] = (uint8_t) port;
+    ev[6] = (uint8_t) (follower != 0);
+    ev[7] = (uint8_t) ckind;
+    ev[8] = (uint8_t) (action >> 8); ev[9] = (uint8_t) action;
+    rec_bef(ev + 0xA, x); rec_bef(ev + 0xE, y); rec_bef(ev + 0x12, facing);
+    rec_bef(ev + 0x16, percent);
+    ev[0x21] = (uint8_t) stocks;
+    rec_bef(ev + 0x35, air_x); rec_bef(ev + 0x39, air_y);
+    rec_bef(ev + 0x3D, kb_x); rec_bef(ev + 0x41, kb_y);
+    rec_bef(ev + 0x45, ground_x);
+    fwrite(ev, 1, sizeof ev, rec.f);
+}
+
+/* Playback or recording: the scene loop's per-frame hooks run for either. */
+int gw_Replay_Enabled(void) {
+    return gw_Replay_Active() || gw_Replay_Recording();
+}
+
 /* Once per logic frame that runs the fighters. Returns the frame now running. */
 int gw_Replay_Tick(void) {
     if (!rp.active || rp.frame == GW_RP_UNARMED) {
@@ -324,6 +494,7 @@ uint32_t gw_Replay_ResyncSeed(void) {
  * before a position does. Called at the start of each running frame with the port's seed. */
 void gw_Replay_CheckSeed(uint32_t port_seed) {
     uint32_t want;
+    rec_tick(port_seed);
     /* <trace>.seed.csv: the port's seed at the start of every frame, so two port runs of the same
        replay can be diffed for the first frame they part ways (port-vs-port determinism) */
     static FILE *seedf;
@@ -352,11 +523,16 @@ void gw_Replay_CheckSeed(uint32_t port_seed) {
     }
 }
 
-int gw_Replay_Tracing(void) { return rp.trace != NULL && rp.frame != GW_RP_UNARMED; }
+int gw_Replay_Tracing(void) {
+    return (rp.trace != NULL && rp.frame != GW_RP_UNARMED) ||
+           (rec.f != NULL && rec.frame != GW_RP_UNARMED);
+}
 
 void gw_Replay_TraceFighter(int port, int follower, int ckind, int action, float x, float y,
                             float facing, float percent, int stocks, float air_x, float air_y,
                             float kb_x, float kb_y, float ground_x) {
+    rec_post(port, follower, ckind, action, x, y, facing, percent, stocks, air_x, air_y, kb_x,
+             kb_y, ground_x);
     if (rp.trace == NULL || rp.frame == GW_RP_UNARMED) {
         return;
     }

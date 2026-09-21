@@ -2414,6 +2414,35 @@ static int gw_mex_is_native_code(uint32_t a) {
     return a >= lo && a < hi;
 }
 
+/* The MexTK API entries in m-ex's helper region, by guest address (m-ex's MexTK/links/melee.link
+ * names 12 of the 20 four-byte slots; itFunctionInit and MenuThink are named after the m-ex
+ * payloads at those slots, see _research/mex-item-spawn.md and mex-tier-c-hook-surface.md).
+ * tools/mex_port/scan_api_calls.py
+ * counts which ones disc content actually calls: on Akaneia and ACE v2.0.0 only IndexFighterItem,
+ * calloc, SFX_PlayStageSFX, GetPlaylist, GetFtItemID, GetGrItemID and GetData - all shimmed
+ * above. The others are called only from m-ex's own codes.gct hooks, whose behaviour the port
+ * reimplements natively (the itFunction loader, Reloc, the stock-icon frame, ...), so no blob
+ * reaches them; this names one in the log if a new disc ever does. */
+static const char *gw_mex_api_name(uint32_t guest_addr) {
+    switch (guest_addr) {
+    case 0x803D7058u: return "MEX_IndexFighterItem";
+    case 0x803D7060u: return "Mex_GetStockIconFrame";
+    case 0x803D706Cu: return "calloc";
+    case 0x803D7070u: return "itFunctionInit";
+    case 0x803D7074u: return "MEX_RelocRelArchive";
+    case 0x803D7078u: return "SFX_PlayStageSFX";
+    case 0x803D707Cu: return "MEX_GetPlaylist";
+    case 0x803D7080u: return "KirbyStateChange";
+    case 0x803D7084u: return "MEX_GetKirbyCpData";
+    case 0x803D7088u: return "MEX_GetFtItemID";
+    case 0x803D708Cu: return "MEX_GetGrItemID";
+    case 0x803D7090u: return "MenuThink";
+    case 0x803D7094u: return "MEX_GetData";
+    case 0x803D709Cu: return "MEX_LoadRelArchive";
+    default: return "unnamed slot";
+    }
+}
+
 /* guest -> native resolver: m-ex-only helpers and guest-callback installers resolve to the native
  * shims above; everything else resolves through the build-time bridge table, tagged with its
  * float signature when gw_mex_sigs has one. */
@@ -2461,10 +2490,10 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
         (void) gw_mex_sig_lookup(guest_addr, sig);
         return (gw_ppc_native_fn)(uintptr_t)native;
     }
-    if (guest_addr >= 0x803D7058u && guest_addr < 0x803D70A0u) {
-        gw_log("interp: unresolved m-ex helper call 0x%08X - this is m-ex's own API region "
+    if (guest_addr >= 0x803D7058u && guest_addr < 0x803D70A8u) {
+        gw_log("interp: unresolved m-ex helper call 0x%08X (%s) - this is m-ex's own API region "
                "(MexTK/links/melee.link), not a vanilla symbol; it needs a native shim",
-               guest_addr);
+               guest_addr, gw_mex_api_name(guest_addr));
         return NULL;
     }
     if (gw_mex_is_native_code(guest_addr)) {

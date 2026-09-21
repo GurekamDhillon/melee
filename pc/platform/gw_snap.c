@@ -52,6 +52,9 @@ typedef struct {
     int replay_cursor[4];
 } GwSnapSlot;
 
+static uint32_t sn_devcom_roots[16]; /* devcom list heads, resolved from the map */
+static int sn_ndevcom_roots;
+
 static struct {
     int tried, enabled, k;
     int ready;
@@ -192,6 +195,19 @@ static int sn_load_map(void) {
             if (sec3_base == 0) sec3_base = va - off;
             if (strcmp(a, "_gw_deferred_count") == 0) sn.deferred_count = (volatile int *) (uintptr_t) va;
             if (strcmp(a, "_particle_list") == 0) sn.particle_list = va;
+            /* devcom's request-list heads (devcom.static.h): every HSD_DevCom reachable from
+               these is asynchronous state that a load must leave alone. */
+            if (strcmp(a, "_devComStatus") == 0 || strcmp(a, "_HSD_DevCom_804C6330") == 0 ||
+                strcmp(a, "_HSD_DevCom_804D77F0") == 0 || strcmp(a, "_HSD_DevCom_804D77FC") == 0 ||
+                strcmp(a, "_dvdDC") == 0 || strcmp(a, "_aramDC") == 0) {
+                int slots = strcmp(a, "_devComStatus") == 0 || strcmp(a, "_HSD_DevCom_804C6330") == 0
+                                ? 4
+                                : (strcmp(a, "_HSD_DevCom_804D77FC") == 0 ? 2 : 1);
+                int k;
+                for (k = 0; k < slots && sn_ndevcom_roots < 16; ++k) {
+                    sn_devcom_roots[sn_ndevcom_roots++] = va + 4u * (uint32_t) k;
+                }
+            }
             if (strcmp(a, "_gw_ppc_depth") == 0) sn.ppc_depth = (volatile int *) (uintptr_t) va;
         }
     }
@@ -262,11 +278,8 @@ static void sn_gather(uint8_t *out) {
     }
 }
 
-/* Restore, leaving alone every byte measured as NOT WRITTEN BY LOGIC (the mask that compare also
- * skips). Those bytes belong to the render pass and to the asynchronous world - the DVD/stream
- * queue above all - and putting an older value back under an in-flight read is not a rollback,
- * it is corruption: restoring them crashed the run inside HSD_DevComDVDMemCallback. Rollback
- * only has to rewind the simulation; the audio and the disc keep going forward. */
+/* NOT used for the ordinary restore - see gw_snap_load. Kept for the places that want the
+ * not-written-by-logic mask honoured. */
 static void sn_restore(uint8_t *dst, const uint8_t *src, uint32_t len, const uint8_t *mask,
                        uint32_t bit0) {
     uint32_t off;
@@ -297,12 +310,67 @@ static void sn_restore(uint8_t *dst, const uint8_t *src, uint32_t len, const uin
 
 static void sn_scatter(const uint8_t *in) {
     int i;
-    uint32_t base = 0;
     for (i = 0; i < sn.nranges; ++i) {
-        sn_restore((uint8_t *) (uintptr_t) sn.ranges[i].va, in, sn.ranges[i].len, sn.rmask_globals,
-                   base);
+        memcpy((void *) (uintptr_t) sn.ranges[i].va, in, sn.ranges[i].len);
         in += sn.ranges[i].len;
-        base += sn.ranges[i].len;
+    }
+}
+
+/* THE ASYNCHRONOUS WORLD IS NOT ROLLED BACK. A load rewinds the simulation; the disc head does
+ * not rewind with it. devcom's request nodes (HSD_DevCom, 0x24 bytes) live on the game heap and
+ * are linked from devcom's own statics - which are NOT saved, being an excluded object. Restoring
+ * the nodes under statics that were not restored left the queue pointing at requests that had
+ * already completed, and the run died inside HSD_DevComDVDMemCallback. So the nodes are lifted
+ * out of the live memory before a load and put straight back afterwards. */
+#define SN_DEVCOM_NODE 0x24
+#define SN_DEVCOM_MAX 32
+static struct {
+    uint32_t va;
+    uint8_t bytes[SN_DEVCOM_NODE];
+} sn_async[SN_DEVCOM_MAX];
+static int sn_nasync;
+
+/* Game memory is big-endian wherever it lives - the game's own statics included. */
+static uint32_t sn_be32_at(uintptr_t addr) {
+    const uint8_t *p = (const uint8_t *) addr;
+    return ((uint32_t) p[0] << 24) | ((uint32_t) p[1] << 16) | ((uint32_t) p[2] << 8) | p[3];
+}
+
+static uint32_t sn_be32(uint32_t va) {
+    if (va < 0x80000000u || va + 4 > 0x80000000u + gw_mem1_size) {
+        return 0;
+    }
+    return sn_be32_at((uintptr_t) va);
+}
+
+/* Collect every node reachable from devcom's list heads. */
+static void sn_async_collect(void) {
+    int i, guard;
+    sn_nasync = 0;
+    for (i = 0; i < sn_ndevcom_roots; ++i) {
+        uint32_t node = sn_be32_at((uintptr_t) sn_devcom_roots[i]);
+        for (guard = 0; node >= 0x80000000u && guard < SN_DEVCOM_MAX; ++guard) {
+            int j;
+            for (j = 0; j < sn_nasync; ++j) {
+                if (sn_async[j].va == node) {
+                    break;
+                }
+            }
+            if (j == sn_nasync && sn_nasync < SN_DEVCOM_MAX) {
+                sn_async[sn_nasync].va = node;
+                memcpy(sn_async[sn_nasync].bytes, (const void *) (uintptr_t) node,
+                       SN_DEVCOM_NODE);
+                ++sn_nasync;
+            }
+            node = sn_be32(node); /* HSD_DevCom.next is the first field */
+        }
+    }
+}
+
+static void sn_async_put_back(void) {
+    int i;
+    for (i = 0; i < sn_nasync; ++i) {
+        memcpy((void *) (uintptr_t) sn_async[i].va, sn_async[i].bytes, SN_DEVCOM_NODE);
     }
 }
 
@@ -348,8 +416,10 @@ int gw_snap_load(int frame) {
         return -1;
     }
     sn_boundary_asserts("load");
-    sn_restore((uint8_t *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size, sn.rmask_mem1, 0);
+    sn_async_collect();
+    memcpy((void *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size);
     sn_scatter(s->globals);
+    sn_async_put_back();
     gw_Replay_SetCursor(s->replay_cursor);
     sn.ms_load += sn_ms() - t0;
     sn.n_load++;

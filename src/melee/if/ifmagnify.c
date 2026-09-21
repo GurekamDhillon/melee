@@ -663,6 +663,17 @@ void ifMagnify_UpdateLogicOffscreen(void)
     if (!ifMagnify_LogicArmed) {
         return;
     }
+    /* the fighters' off-camera flag first, as the render's camera pass precedes the magnifier's:
+       the camera cobj as fn_800301D0 sets it up, then each fighter's main-camera test */
+    if (Camera_80030A50() != NULL) {
+        Camera_8002A4AC(Camera_80030A50());
+    }
+    for (i = 0; i < 6; i++) {
+        HSD_GObj* fighter_gobj = Player_GetEntity(i);
+        if (fighter_gobj != NULL) {
+            ftLib_UpdateLogicOffCamera(fighter_gobj);
+        }
+    }
     show = ifMagnify_IsHUDVisible();
     for (i = 0; i < 6; i++) {
         HSD_GObj* fighter_gobj = Player_GetEntity(i);

@@ -24,6 +24,7 @@
 #include <melee/mn/mnmain.h>
 #include "gmscenelaunch.h"
 #include "gmfrontend.h"
+#include "gmvs.h"
 #if defined(TARGET_PC)
 #include <melee/if/textdraw.h>
 #include <melee/if/textlib.h>
@@ -318,12 +319,19 @@ void gm_801A4BD4(void)
 
 /* Native entry points. gwtool prefixes every game symbol with `gw_`, so the unprefixed name here
  * binds to the shim of the same name in pc/platform/gw_runtime.c. */
-extern int Gfx_PipelinesPending(void);
+extern int Gfx_PipelinesUrgent(void);
 extern int Gfx_PipelinesCreated(void);
 extern int Gfx_LoadScreenEnabled(void);
 
+/* Settled means nothing the frozen frame draws is still compiling (Gfx_PipelinesUrgent) - NOT
+   "nothing queued at all": the pipeline seed's background warm-up keeps thousands queued for
+   minutes, and waiting on that pinned every hold to its ceiling while the match ran underneath.
+   After the frontend's loading screen the seed's core is already built, so the hold only has
+   to cover the first frame's own stragglers. */
 #define LOADSCREEN_MIN_FRAMES 20
 #define LOADSCREEN_SETTLE_FRAMES 30
+#define LOADSCREEN_WARM_MIN_FRAMES 2
+#define LOADSCREEN_WARM_SETTLE_FRAMES 8
 #define LOADSCREEN_CEILING_SECONDS 10
 #define LOADSCREEN_DOT_FRAMES 15
 
@@ -345,6 +353,7 @@ static int mnLoadScreen_holding;
 static int mnLoadScreen_frames;
 static int mnLoadScreen_settled;
 static int mnLoadScreen_created;
+static bool mnLoadScreen_warm; ///< the frontend's loading screen ran first
 static OSTime mnLoadScreen_started;
 
 static void mnLoadScreen_Release(char* why)
@@ -370,8 +379,10 @@ static void mnLoadScreen_Release(char* why)
         DevText_Unlink(mnLoadScreen_panel);
         mnLoadScreen_panel = NULL;
     }
-    OSReport("loadscreen: released (%s) after %d frames, %d pipelines created\n", why,
-             mnLoadScreen_frames, Gfx_PipelinesCreated());
+    /* the match clock, which the freeze keeps where it started */
+    OSReport("loadscreen: released (%s) after %d frames, %d pipelines created, clock %u.%02u\n",
+             why, mnLoadScreen_frames, Gfx_PipelinesCreated(), gm_8016AEEC(),
+             (u32) gm_8016AF0C());
 }
 
 static void mnLoadScreen_Begin(GameSceneInfo* info)
@@ -384,11 +395,9 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
     if (info == NULL || !Gfx_LoadScreenEnabled()) {
         return;
     }
-    /* The frontend's loading screen (after the SSS) has already warmed the renderer and held the
-       player; holding again here would only let the match run behind a second screen. */
-    if (gmFrontend_TakeWarmed()) {
-        return;
-    }
+    /* After the frontend's loading screen (after the SSS) the renderer is warm; the hold still
+       runs, briefly, so the match's first frame is complete before its clock starts. */
+    mnLoadScreen_warm = gmFrontend_TakeWarmed();
     switch (info->scene_kind) {
     case GS_VS:
     case GS_SUDDEN_DEATH:
@@ -413,7 +422,7 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
                            LOADSCREEN_PANEL_ROWS,
                            mnLoadScreen_panelbuf);
         if (mnLoadScreen_panel != NULL) {
-            GXColor panel = { 12, 12, 20, 255 };
+            GXColor panel = { 10, 14, 24, 255 }; /* the menu art's ink */
             DevText_Show(text_gobj, mnLoadScreen_panel);
             DevText_HideCursor(mnLoadScreen_panel);
             DevText_HideText(mnLoadScreen_panel);
@@ -422,7 +431,7 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
         mnLoadScreen_text = DevText_Create(0x4B, 250, 230, LOADSCREEN_CAPTION_COLS, 1,
                                            mnLoadScreen_textbuf);
         if (mnLoadScreen_text != NULL) {
-            GXColor plate = { 40, 48, 80, 255 };
+            GXColor plate = { 20, 38, 92, 255 }; /* its dark cobalt */
             DevText_Show(text_gobj, mnLoadScreen_text);
             DevText_HideCursor(mnLoadScreen_text);
             DevText_SetBGColor(mnLoadScreen_text, plate);
@@ -447,10 +456,8 @@ static bool mnLoadScreen_Frame(void)
     mnLoadScreen_frames++;
 
     created = Gfx_PipelinesCreated();
-    if (created != mnLoadScreen_created) {
-        mnLoadScreen_created = created;
-        mnLoadScreen_settled = 0;
-    } else if (Gfx_PipelinesPending() != 0) {
+    mnLoadScreen_created = created;
+    if (Gfx_PipelinesUrgent() != 0) {
         mnLoadScreen_settled = 0;
     } else {
         mnLoadScreen_settled++;
@@ -470,8 +477,10 @@ static bool mnLoadScreen_Frame(void)
         }
     }
 
-    if (mnLoadScreen_frames >= LOADSCREEN_MIN_FRAMES &&
-        mnLoadScreen_settled >= LOADSCREEN_SETTLE_FRAMES)
+    if (mnLoadScreen_frames >=
+            (mnLoadScreen_warm ? LOADSCREEN_WARM_MIN_FRAMES : LOADSCREEN_MIN_FRAMES) &&
+        mnLoadScreen_settled >=
+            (mnLoadScreen_warm ? LOADSCREEN_WARM_SETTLE_FRAMES : LOADSCREEN_SETTLE_FRAMES))
     {
         mnLoadScreen_Release("warm");
         return false;
@@ -744,6 +753,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         }
 
         for (i = 0; i < pad_queue_count; i++) {
+#if defined(TARGET_PC)
+            bool held = false; /* the loading screen is holding this frame */
+#endif
             HSD_PerfSetStartTime();
             lb_800198E0();
             if (DbLevel >= DbLKind_DebugRom) {
@@ -761,9 +773,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 }
                 if (lb_80019A30(0) && on_frame != NULL) {
 #if defined(TARGET_PC)
-                    /* While the loading screen holds, the scene renders but its clock does not
-                       advance: everything else in this loop still runs. */
-                    if (!mnLoadScreen_Frame())
+                    /* While the loading screen holds, the scene renders (that is what warms the
+                       renderer) but does not advance: no on_frame here, and no GObj procs
+                       below - those run the fighters, the stage and the timer, and running them
+                       let a match play out behind the loading screen. */
+                    held = mnLoadScreen_Frame();
+                    if (!held)
 #endif
                     {
                         on_frame();
@@ -792,14 +807,23 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 db_CheckScreenshot();
             }
             lbAudioAx_80027DF8();
-            if (temp_r25->unk_10.pre_gobj_proc != NULL) {
-                temp_r25->unk_10.pre_gobj_proc();
+#if defined(TARGET_PC)
+            if (!held)
+#endif
+            {
+                if (temp_r25->unk_10.pre_gobj_proc != NULL) {
+                    temp_r25->unk_10.pre_gobj_proc();
+                }
+                HSD_GObj_RunProcs();
             }
-            HSD_GObj_RunProcs();
             if (temp_r25->unk_0 != -2) {
                 temp_r25->unk_0++;
             }
+#if defined(TARGET_PC)
+            if (!held && gm_80479D58.unk_10.unk_38_0 && lb_80019A30(0)) {
+#else
             if (gm_80479D58.unk_10.unk_38_0 && lb_80019A30(0)) {
+#endif
                 if (temp_r25->unk_8 != -2) {
                     temp_r25->unk_8++;
                 }

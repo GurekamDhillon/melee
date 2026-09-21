@@ -48,6 +48,7 @@ struct PendingPipeline {
   PipelineRef hash;
   NewPipelineCallback create;
   bool seed = false; // queued by the seed warm-up (Background priority)
+  bool urgent = false; // counted in urgentPipelinesPending until built
 };
 
 struct PipelineCacheWrite {
@@ -339,6 +340,7 @@ static bool register_sdl_vfs() {
 static std::atomic_ref queuedPipelines{detail::resources().stats.queuedPipelines};
 static std::atomic_ref createdPipelines{detail::resources().stats.createdPipelines};
 static std::atomic_ref seedPipelinesBuilt{detail::resources().stats.seedPipelinesBuilt};
+static std::atomic_ref urgentPipelinesPending{detail::resources().stats.urgentPipelinesPending};
 #else
 struct AtomicStatRef {
   uint32_t& ref;
@@ -354,6 +356,7 @@ struct AtomicStatRef {
 static AtomicStatRef queuedPipelines{detail::resources().stats.queuedPipelines};
 static AtomicStatRef createdPipelines{detail::resources().stats.createdPipelines};
 static AtomicStatRef seedPipelinesBuilt{detail::resources().stats.seedPipelinesBuilt};
+static AtomicStatRef urgentPipelinesPending{detail::resources().stats.urgentPipelinesPending};
 #endif
 
 template <typename PipelineConfig>
@@ -403,6 +406,10 @@ static void promote_pending_pipeline(PipelineRef hash, PipelinePriority priority
   auto backgroundIt = find_pending_pipeline(g_backgroundPipelineQueue, hash);
   if (backgroundIt == g_backgroundPipelineQueue.end()) {
     return;
+  }
+  if (!backgroundIt->urgent) {
+    backgroundIt->urgent = true;
+    ++urgentPipelinesPending;
   }
   if (priority == PipelinePriority::Blocking) {
     g_pipelineQueue.emplace_front(std::move(*backgroundIt));
@@ -474,6 +481,9 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
       if (blocking && !g_hasPipelineThread) {
         auto pending = take_pending_pipeline(runtimeKey);
         if (pending) {
+          if (pending->urgent) {
+            --urgentPipelinesPending;
+          }
           g_pipelines.try_emplace(runtimeKey, CachedPipeline{.pipeline = pending->create()});
           pipelineReady = true;
           ++g_pipelinesPerFrame;
@@ -494,7 +504,11 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
           .hash = runtimeKey,
           .create = std::move(cb),
           .seed = priority == PipelinePriority::Background,
+          .urgent = priority != PipelinePriority::Background,
       };
+      if (pending.urgent) {
+        ++urgentPipelinesPending;
+      }
       switch (priority) {
       case PipelinePriority::Background:
         g_backgroundPipelineQueue.emplace_back(std::move(pending));
@@ -994,6 +1008,9 @@ static void pipeline_worker() {
     if (pending.seed) {
       ++seedPipelinesBuilt;
     }
+    if (pending.urgent) {
+      --urgentPipelinesPending;
+    }
     notify_pipeline_ready(true);
   }
 }
@@ -1182,6 +1199,7 @@ void shutdown_pipeline_cache() {
   g_pendingPipelines.clear();
 
   queuedPipelines = 0;
+  urgentPipelinesPending = 0;
   createdPipelines = 0;
 }
 

@@ -29,6 +29,11 @@ typedef struct {
   /// Pipelines built that were queued by the seed warm-up (initial pipeline cache), in the
   /// seed's own order. A frontend can wait on this to know the seed's first N are ready.
   uint32_t seedPipelinesBuilt;
+  /// Pipelines something is drawing with right now that are not built yet: queued at normal or
+  /// blocking priority (or promoted out of the background queue) and not finished. Unlike
+  /// queuedPipelines this ignores the seed's background warm-up, so it reaches 0 as soon as
+  /// the current frame has everything it draws - what a loading screen should wait on.
+  uint32_t urgentPipelinesPending;
 } AuroraStats;
 
 const AuroraStats* aurora_get_stats();

@@ -2726,6 +2726,13 @@ int gw_Gfx_SeedCoreCount(void) {
 }
 
 /* Pipelines built out of the seed warm-up so far, in the seed's order (aurora's own count). */
+/* Pipelines something is drawing with that are not built yet - the queue minus the seed's background
+ * warm-up (AuroraStats.urgentPipelinesPending). A loading hold waits for this to reach 0. */
+int gw_Gfx_PipelinesUrgent(void) {
+  const AuroraStats *s = aurora_get_stats();
+  return s != NULL ? (int) s->urgentPipelinesPending : 0;
+}
+
 int gw_Gfx_SeedPipelinesBuilt(void) {
   const AuroraStats *s = aurora_get_stats();
   return s != NULL ? (int) s->seedPipelinesBuilt : 0;

@@ -1286,6 +1286,16 @@ static void gw_mex_register_base_articles(int kind, void *gobj, void *base_onloa
   if (fp < 0x80000000u) {
     return;
   }
+  {
+    /* A clone with no article list of its own has nothing to register, and the base onLoad would
+       index that list through NULL: ACE's PlWr (a Mario clone) faulted in ftMr_Init_OnLoad's
+       items[0] and took down every match it was in. */
+    uint32_t ft_data = gw_r32((const void *)(uintptr_t)(fp + 0x10Cu)); /* fp->ft_data */
+    if (ft_data < 0x80000000u ||
+        gw_r32((const void *)(uintptr_t)(ft_data + 0x48u)) < 0x80000000u) { /* ->x48_items */
+      return;
+    }
+  }
   memcpy(saved, (const void *)(uintptr_t)fp, GW_FIGHTER_SIZE);
   gw_it_nrecords = 0;
   gw_it_recording = 1;

@@ -215,7 +215,11 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
     for (i = 0; i < Ft_Kind_Max; ++i) {
         int k = Mex_InternalForPortKind(i);
         if (k < 0) {
-            k = i < Ft_Kind_Mex0 ? i : -1; /* vanilla disc: retail layout, no m-ex rows */
+            /* vanilla disc: retail layout, no m-ex rows - but retail's row 0x21 is real: Captain
+               Falcon's throws put figatrees authored for kind 0x21 on the victim (x597_bits), so
+               blanking it made every Falcon throw on a vanilla disc fault in ftPartsRemap. Found
+               by .slp playback (Marth vs Falcon, frame 555). */
+            k = i <= Ft_Kind_Mex0 ? i : -1;
         }
         out[i] = k >= 0 ? loaded[k] : NULL;
     }

@@ -26,6 +26,9 @@
 void *gw_memcpy(void *dst, const void *src, size_t n) { return memcpy(dst, src, n); }
 void *gw_memset(void *dst, int val, size_t n) { return memset(dst, val, n); }
 int gw_memcmp(const void *a, const void *b, size_t n) { return memcmp(a, b, n); }
+/* No game TU calls memmove, so nothing defined it and the bridge had no entry for guest
+ * 0x80323938 - ACE's ck:34 specials call it from their blob and died on a NULL resolve. */
+void *gw_memmove(void *dst, const void *src, size_t n) { return memmove(dst, src, n); }
 
 /* ---- string ------------------------------------------------------------------------------- */
 

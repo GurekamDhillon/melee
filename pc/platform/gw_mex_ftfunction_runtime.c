@@ -578,6 +578,34 @@ void gw_Mex_IndexStageItem(void *article, int article_index) {
            (uint32_t) (uintptr_t) article);
 }
 
+/* The native half of m-ex's SpawnMEXItem patch (C2 @ 0x80268648), called from Item_8026862C for a
+ * spawn kind >= 5000. Decoded from the shipped payload:
+ *   parent class 4 (fighter)          -> MexData.fighter item_lookup[parent's kind]
+ *   no parent, or class 3 (stage)     -> MexData.stage item_lookup[stage_info.grkind]
+ *   any other class                   -> the kind is left as it is
+ * and an index past the row's count is m-ex's "MxDt does not have article ID %d" assert. */
+int gw_Mex_SpawnArticleKind(int article, int owner_class, int fighter_kind) {
+    int32_t global;
+    if (owner_class == 4) {
+        return (int) gw_mex_ft_item_global((uint32_t) fighter_kind, (uint32_t) article,
+                                           "SpawnMEXItem");
+    }
+    if (owner_class != -1 && owner_class != 3) {
+        gw_log("mexdata: SpawnMEXItem: article %d spawned by a class-%d gobj - kind left as %d, "
+               "as m-ex leaves it",
+               article, owner_class, article + 5000);
+        return article + 5000;
+    }
+    global = gw_mex_gr_item_global(gw_mex_current_grkind("SpawnMEXItem"), (uint32_t) article,
+                                   "SpawnMEXItem");
+    if (global < 0) {
+        gw_panic("mexdata: SpawnMEXItem: MxDt does not have article ID %d for the current stage "
+                 "(m-ex asserts here too)",
+                 article);
+    }
+    return (int) global;
+}
+
 /* MEX_IndexFighterItem(fighter_kind, ItemDesc *desc, item_id): register a fighter article's
  * descriptor in item.RuntimeIndex so item creation can find it. m-ex's Create Item patch ASSERTS
  * if the slot for a custom kind is NULL, so this is not optional. Called from the fighter's own
@@ -1657,6 +1685,18 @@ void *gw_Mex_ItemCustomDesc(int kind) {
     return (void *) (uintptr_t) desc;
 }
 
+/* m-ex's "item not initialized" assert, for the vanilla ranges (Item_80267978). A fighter article
+ * (kinds 43..160) is registered by its owner's onLoad through it_8026B3F8; a NULL here means no
+ * loaded fighter registered this kind - typically an m-ex fighter whose own onLoad replaced its
+ * clone base's and whose moves still reach a base move that spawns the base's article. */
+void gw_Mex_ItemNotInitialized(int kind) {
+    const char *range = kind < 43 ? "common" : kind < 161 ? "fighter" : kind < 208 ? "pokemon"
+                                                                                  : "stage";
+    gw_panic("mexdata: item kind %d (%s range) has no article descriptor - nothing registered it "
+             "(m-ex asserts \"item not initialized\" here too)",
+             kind, range);
+}
+
 /* Logic table (ItemGObjData+0xB8) for a custom item kind: &item.Custom[idx]. */
 void *gw_Mex_ItemCustomLogic(int kind) {
     uint32_t idx, entry;
@@ -2248,6 +2288,101 @@ static int gw_mex_sig_lookup(uint32_t guest_addr, gw_ppc_sig *sig) {
     return 0;
 }
 
+/* gm_80160980 / fn_801609E0 (character name by CharacterKind) as GUEST code sees them. m-ex
+ * replaces the name table these read (04 write @0x801609A8: `lwz r4,4(r2)`), so on hardware both
+ * return MxDt's own string for every character, byte for byte. The port's native versions return
+ * its UTF-8 full-width forms instead - three bytes a character where the disc's SJIS has two - and
+ * guest code that measures a name sees a longer string than it was written for: ACE's GrWWLL2.dat
+ * (ext:356) asserts "fighter name over 20 characters" on strlen of exactly this call. So guest
+ * callers get the MxDt string, and only a character MxDt has no row for falls through to the
+ * native function. */
+#define GW_MEX_GUEST_CK_NAME 0x80160980u
+#define GW_MEX_GUEST_CK_NAME_SHORT 0x801609E0u
+static uint32_t gw_mex_ck_name(uint32_t guest_fn, uint32_t ck) {
+    const char *s = gw_Mex_FighterName(gw_Mex_PortCKindToExt((int) (ck & 0xFFu)));
+    if (s != NULL) {
+        return (uint32_t) (uintptr_t) s;
+    }
+    {
+        int kind;
+        uint32_t native = gw_mex_bridge_lookup(guest_fn, &kind);
+        if (native == 0u || kind != 1) {
+            gw_panic("mexdata: character name for ck %u: no MxDt row and no native build of 0x%08X",
+                     ck & 0xFFu, guest_fn);
+        }
+        return ((uint32_t (*)(uint32_t))(uintptr_t) native)(ck & 0xFFu);
+    }
+}
+static uint32_t gw_mex_shim_ck_name(uint32_t ck, uint32_t a1, uint32_t a2, uint32_t a3,
+                                    uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    return gw_mex_ck_name(GW_MEX_GUEST_CK_NAME, ck);
+}
+static uint32_t gw_mex_shim_ck_name_short(uint32_t ck, uint32_t a1, uint32_t a2, uint32_t a3,
+                                          uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    return gw_mex_ck_name(GW_MEX_GUEST_CK_NAME_SHORT, ck);
+}
+
+/* it_80276174(item_gobj, Vec3* pos) - snap an item to the ground below it. ACE's PlSc.dat calls
+ * it without setting r4, i.e. its headers declare it one-argument, so on hardware `pos` is whatever
+ * the previous call left in r4: it_80274658, which leaves the Item pointer there, so the real game
+ * reads the Item header as a position and then overwrites item->pos from the collision pass. The
+ * bridge leaves guest r4 untouched across native calls, so here it arrived as 0 and the native
+ * function read through NULL (ACE ck:46 specials). An unreadable pos gets the item's own position,
+ * which is the value the collision pass settles on either way. */
+#define GW_MEX_GUEST_IT_SNAP_GROUND 0x80276174u
+static uint32_t gw_mex_shim_it_snap_ground(uint32_t gobj, uint32_t pos, uint32_t a2, uint32_t a3,
+                                           uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    if (pos < 0x80000000u || pos + 12u > 0x80000000u + gw_mem1_size) {
+        static int logged;
+        uint32_t item = gw_r32((const void *) (uintptr_t) (gobj + 0x2Cu));
+        if (!logged) {
+            logged = 1;
+            gw_log("interp: it_80276174 called with pos=0x%08X (no second argument) - using the "
+                   "item's own position",
+                   pos);
+        }
+        pos = item + 0x4Cu; /* Item.pos */
+    }
+    return gw_mex_call_native(GW_MEX_GUEST_IT_SNAP_GROUND, gobj, pos, 0u, 0u);
+}
+
+/* Guest 0x80005358 is the closing `blr` of __init_registers - the same word on vanilla, Akaneia and
+ * ACE. m-ex content uses it as a do-nothing function (ACE ext:290's stage article calls it from
+ * MainAnim), and there is no gw_ symbol for the middle of an init routine. A bare blr returns with
+ * every register as it found it, so r3 goes back unchanged. */
+#define GW_MEX_GUEST_BARE_BLR 0x80005358u
+static uint32_t gw_mex_shim_bare_blr(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
+                                     uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void) a1; (void) a2; (void) a3; (void) a4; (void) a5; (void) a6; (void) a7;
+    return a0;
+}
+
+/* True when `a` lies in this executable's code section (from its own PE header, read once). */
+static int gw_mex_is_native_code(uint32_t a) {
+    static uint32_t lo, hi;
+    if (hi == 0u) {
+        const uint8_t *base = (const uint8_t *)GetModuleHandleA(NULL);
+        const IMAGE_NT_HEADERS *nt =
+            (const IMAGE_NT_HEADERS *)(base + ((const IMAGE_DOS_HEADER *)base)->e_lfanew);
+        const IMAGE_SECTION_HEADER *s = IMAGE_FIRST_SECTION(nt);
+        unsigned i;
+        for (i = 0; i < nt->FileHeader.NumberOfSections; ++i, ++s) {
+            if (s->Characteristics & IMAGE_SCN_CNT_CODE) {
+                lo = (uint32_t)(uintptr_t)(base + s->VirtualAddress);
+                hi = lo + s->Misc.VirtualSize;
+                break;
+            }
+        }
+        if (hi == 0u) {
+            hi = 1u; /* no code section found: never match */
+        }
+    }
+    return a >= lo && a < hi;
+}
+
 /* guest -> native resolver: m-ex-only helpers and guest-callback installers resolve to the native
  * shims above; everything else resolves through the build-time bridge table, tagged with its
  * float signature when gw_mex_sigs has one. */
@@ -2276,6 +2411,14 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
         return gw_mex_shim_setup_gxlink;
     case GW_MEX_GUEST_SETUP_PROC:
         return gw_mex_shim_setup_proc;
+    case GW_MEX_GUEST_BARE_BLR:
+        return gw_mex_shim_bare_blr;
+    case GW_MEX_GUEST_IT_SNAP_GROUND:
+        return gw_mex_shim_it_snap_ground;
+    case GW_MEX_GUEST_CK_NAME:
+        return gw_mex_shim_ck_name;
+    case GW_MEX_GUEST_CK_NAME_SHORT:
+        return gw_mex_shim_ck_name_short;
     default:
         break;
     }
@@ -2290,8 +2433,42 @@ static gw_ppc_native_fn gw_mex_interp_resolve(uint32_t guest_addr, void *ctx, gw
                guest_addr);
         return NULL;
     }
+    if (gw_mex_is_native_code(guest_addr)) {
+        /* Not a guest address at all: a NATIVE function pointer the guest loaded out of game data
+         * and branched to. The engine stores its own callbacks (fp->coll_cb and friends) as host
+         * pointers, so m-ex code that reads one back and calls it - Akaneia ck:38's air special
+         * reading ftCo_StopCeil_Coll - hands the interpreter an address in this exe's .text. */
+        return (gw_ppc_native_fn)(uintptr_t)guest_addr;
+    }
     gw_log("interp: unresolved guest call target 0x%08X (no bridge entry)", guest_addr);
     return NULL;
+}
+
+/* GetTrailData (Arch_FighterFunc +0xB4, slot 45) for an m-ex fighter, as m-ex's afterimage hooks
+ * call it: the fighter's own override if its ftFunction has one, else MxDt's default entry for the
+ * kind, else NULL - which the caller treats as "this fighter draws no trail", exactly as m-ex's
+ * 04 patches do. The result is a guest pointer to the sword-trail parameter block. */
+#define GW_MEX_SLOT_GET_TRAIL_DATA 45u
+static uint32_t gw_mex_interp_run(uint32_t slot, void *gobj);
+void *gw_Mex_FtTrailData(void *gobj) {
+    int fk = gw_mex_gobj_kind(gobj);
+    int k = fk >= 0 ? gw_Mex_InternalForPortKind(fk) : -1;
+    uint32_t r = 0u;
+    void *prev;
+    if (k < 0) {
+        return NULL;
+    }
+    prev = gw_Mex_SelectKind(fk);
+    if (gw_mex_override_target(GW_MEX_SLOT_GET_TRAIL_DATA) != 0u) {
+        r = gw_mex_interp_run(GW_MEX_SLOT_GET_TRAIL_DATA, gobj);
+    } else {
+        void *fn = gw_Mex_FtFunc((int) GW_MEX_SLOT_GET_TRAIL_DATA, k);
+        if (fn != NULL) {
+            r = (uint32_t) (uintptr_t) ((void *(*)(void *)) fn)(gobj);
+        }
+    }
+    gw_Mex_RestoreKind(prev);
+    return (void *) (uintptr_t) r;
 }
 
 /* Run one override slot through the interpreter: gobj -> r3, r2 = mexData, r1 = guest stack. */
@@ -3226,9 +3403,17 @@ void gw_Mex_FtFunctionInstall(int kind, void *arch_data, uint32_t arch_data_size
      * Dumping the relocated image rather than the on-disc section matters - the disc bytes still
      * have unrelocated branch/address operands, so they disassemble into misleading targets. */
     {
-        const char *dump_path = getenv("MELEE_MEX_DUMP_CODE");
-        if (dump_path != NULL && dump_path[0] != '\0') {
-            FILE *df = fopen(dump_path, "wb");
+        const char *dump_env = getenv("MELEE_MEX_DUMP_CODE");
+        if (dump_env != NULL && dump_env[0] != '\0') {
+            /* a %d in the path takes the fighter kind, so a four-fighter match dumps all four */
+            char dump_path[512];
+            FILE *df;
+            if (strstr(dump_env, "%d") != NULL) {
+                snprintf(dump_path, sizeof dump_path, dump_env, kind);
+            } else {
+                snprintf(dump_path, sizeof dump_path, "%s", dump_env);
+            }
+            df = fopen(dump_path, "wb");
             if (df == NULL) {
                 gw_log("interp: MELEE_MEX_DUMP_CODE: cannot open %s", dump_path);
             } else {

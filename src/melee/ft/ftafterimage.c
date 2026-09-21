@@ -113,6 +113,19 @@ void ftCo_800C2600(Fighter_GObj* gobj, u32 arg1)
     GXSetCullMode(GX_CULL_NONE);
 
     params = ftCo_800C2600_get_params(fp);
+#if defined(TARGET_PC)
+    /* Ported from m-ex (C2 @ 0x800C278C and the 04 write @ 0x800C2798, read out of the shipped
+     * codes.gct): an m-ex fighter's trail parameters come from its GetTrailData function, and a
+     * fighter without one draws no trail at all - the kind switch above has no case for it and
+     * would leave params uninitialised (ACE ck:54 read through NULL here). */
+    if (!fp->x2101_bits_8 && fp->kind >= Ft_Kind_Mex0) {
+        extern void* Mex_FtTrailData(HSD_GObj* gobj);
+        params = Mex_FtTrailData(gobj);
+        if (params == NULL) {
+            return;
+        }
+    }
+#endif
 
     {
         s32 remaining;
@@ -405,6 +418,16 @@ void ftCo_800C2FD8(Fighter_GObj* gobj)
         }
         jobj = it_80285314(fp->item_gobj);
     } else {
+#if defined(TARGET_PC)
+        /* m-ex C2 @ 0x800C3098 / 04 @ 0x800C30A4: GetTrailData, or no trail. */
+        if (fp->kind >= Ft_Kind_Mex0) {
+            extern void* Mex_FtTrailData(HSD_GObj* gobj);
+            attrs = Mex_FtTrailData(gobj);
+            if (attrs == NULL) {
+                return;
+            }
+        } else
+#endif
         switch (fp->kind) {
         case Ft_Kind_Seak:
         case Ft_Kind_Ness:

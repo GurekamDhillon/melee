@@ -2150,6 +2150,12 @@ static void Ground_801C2BBC(Ground_GObj* map_gobj, int index)
     stage_info.map_gobjs[index] = map_gobj;
 }
 
+#if defined(TARGET_PC)
+/* Kept out of line: its one engine caller inlines it and the body was then dropped, which
+ * left the bridge nothing to resolve when m-ex fighter code (ACE ck:58) calls guest
+ * 0x801C2BD4 directly. */
+__attribute__((used, noinline))
+#endif
 static void Ground_801C2BD4(void* arg0)
 {
     int i;

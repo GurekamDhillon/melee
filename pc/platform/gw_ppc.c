@@ -134,6 +134,17 @@ static uint32_t gw_ppc_static_native(uint32_t ea) {
     return gw_mex_bridge_guest_data(ea);
 }
 
+/* A word argument crossing into NATIVE code. The interpreter re-routes its own accesses to a game
+ * static (above), but a static's guest address handed to a native function as a POINTER argument
+ * used to arrive raw, and the native side then read MEM1 at that address - where the static is not.
+ * GrSp.dat (ext:307) does `HSD_SetupTevStageAll(&tev$297)` with the vanilla static at guest
+ * 0x80407370; the TEV descriptor read back as garbage and HSD_TevStage2Num asserted on a stage
+ * number above 15. Heap and stack addresses miss the lookup and pass through unchanged. */
+static uint32_t gw_ppc_arg_word(uint32_t v) {
+    uint32_t native = gw_ppc_static_native(v);
+    return native != 0u ? native : v;
+}
+
 static int gw_ppc_ea_ok(uint32_t ea, uint32_t size) {
     /* Every interpreted access must land wholly in MEM1. Use 64-bit to avoid wraparound. */
     uint64_t end = (uint64_t)ea + (uint64_t)size;
@@ -336,16 +347,43 @@ static uint32_t gw_ppc_ld32(gw_ppc_machine *m, uint32_t ea) {
 static uint64_t gw_ppc_ld64(gw_ppc_machine *m, uint32_t ea) {
     return gw_r64((const void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 8));
 }
+/* The GX write-gather pipe. Guest code built against the SDK's GXVert.h writes vertex data with
+ * plain stores to 0xCC008000 (GXPosition3f32 & co. are static inlines there); Akaneia's GrMVb.dat
+ * (ext:294) draws its ball trail that way. Each store is forwarded to Aurora's FIFO, which takes
+ * host-order values and appends them big-endian - the same bytes the pipe would have received. A
+ * float store arrives here as its IEEE bits, which is exactly what the pipe carries. */
+#define GW_PPC_GX_WGPIPE 0xCC008000u
+extern void GXCmd1u8(unsigned char x);
+extern void GXCmd1u16(unsigned short x);
+extern void GXCmd1u32(unsigned int x);
+
 static void gw_ppc_st8(gw_ppc_machine *m, uint32_t ea, uint8_t v) {
+    if (ea == GW_PPC_GX_WGPIPE) {
+        GXCmd1u8(v);
+        return;
+    }
     gw_w8((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 1), v);
 }
 static void gw_ppc_st16(gw_ppc_machine *m, uint32_t ea, uint16_t v) {
+    if (ea == GW_PPC_GX_WGPIPE) {
+        GXCmd1u16(v);
+        return;
+    }
     gw_w16((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 2), v);
 }
 static void gw_ppc_st32(gw_ppc_machine *m, uint32_t ea, uint32_t v) {
+    if (ea == GW_PPC_GX_WGPIPE) {
+        GXCmd1u32(v);
+        return;
+    }
     gw_w32((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 4), v);
 }
 static void gw_ppc_st64(gw_ppc_machine *m, uint32_t ea, uint64_t v) {
+    if (ea == GW_PPC_GX_WGPIPE) {
+        GXCmd1u32((unsigned int)(v >> 32));
+        GXCmd1u32((unsigned int)v);
+        return;
+    }
     gw_w64((void *)(uintptr_t)gw_ppc_resolve_ea(m, ea, 8), v);
 }
 
@@ -416,6 +454,115 @@ static void gw_ppc_cmp(gw_ppc_ctx *c, uint32_t crfd, uint32_t a, uint32_t b, int
 
 /* ---- branch helpers ------------------------------------------------------------------- */
 
+/* The variadic tail of a printf-family call, in the order its format string names it.
+ *
+ * The CR6 rule below can only say whether the FIRST vararg is a float, so a call that passes a
+ * word before a double - `OSReport("%s in %fms\n", name, ms)`, which GrGc.dat (ext:306) makes on
+ * load - had the double's bits placed where the %s pointer belonged. Akaneia printed " in
+ * -0.000ms"; ACE handed 0xA0000000 to %s and faulted inside ucrtbase. For printf-family targets the
+ * call site's order is not lost at all: it is written in the format string, which is the last fixed
+ * argument. So when that argument is a readable guest string containing a conversion, walk it and
+ * take each value from the register file its class uses - a word from the next GPR, a double from
+ * the next FPR (two i686 slots), a long long from the next odd-aligned GPR pair (two slots, low word
+ * first). Returns 0 when the last fixed argument is not such a string, and the caller falls back to
+ * the CR6 rule (efSync_Spawn and the other non-format varargs). */
+static int gw_ppc_guest_byte(gw_ppc_machine *m, uint32_t a, uint8_t *out) {
+    if (!gw_ppc_ea_ok(a, 1) && !gw_mex_bridge_is_native_data(a, 1)) {
+        return 0;
+    }
+    *out = gw_ppc_ld8(m, a);
+    return 1;
+}
+
+static int gw_ppc_varargs_from_format(gw_ppc_machine *m, uint32_t fmt, uint32_t *args,
+                                      uint32_t slot, int *gpr_i, int *fpr_i) {
+    gw_ppc_ctx *c = &m->cpu;
+    uint32_t p;
+    uint8_t ch;
+    int any = 0;
+    uint32_t n;
+
+    /* A format string first: readable, NUL-terminated within a sane bound, and naming at least
+     * one conversion. Anything else is not ours to interpret. */
+    for (n = 0; n < 1024u; ++n) {
+        if (!gw_ppc_guest_byte(m, fmt + n, &ch)) {
+            return 0;
+        }
+        if (ch == 0) {
+            break;
+        }
+        if (ch == '%') {
+            any = 1;
+        }
+    }
+    if (n == 1024u || !any) {
+        return 0;
+    }
+
+    for (p = fmt; gw_ppc_guest_byte(m, p, &ch) && ch != 0; ++p) {
+        int longs = 0;
+        if (ch != '%') {
+            continue;
+        }
+        ++p;
+        (void)gw_ppc_guest_byte(m, p, &ch);
+        if (ch == '%') {
+            continue;
+        }
+        while (ch == '-' || ch == '+' || ch == ' ' || ch == '#' || ch == '0') {
+            (void)gw_ppc_guest_byte(m, ++p, &ch);
+        }
+        /* '*' width/precision consume an int argument each */
+        for (;;) {
+            if (ch == '*') {
+                if (slot < 8u && *gpr_i <= 10) {
+                    args[slot++] = c->gpr[(*gpr_i)++];
+                }
+                (void)gw_ppc_guest_byte(m, ++p, &ch);
+            } else if ((ch >= '0' && ch <= '9') || ch == '.') {
+                (void)gw_ppc_guest_byte(m, ++p, &ch);
+            } else {
+                break;
+            }
+        }
+        while (ch == 'h' || ch == 'l' || ch == 'L' || ch == 'q' || ch == 'j' || ch == 'z' ||
+               ch == 't') {
+            if (ch == 'l' || ch == 'q' || ch == 'L') {
+                ++longs;
+            }
+            (void)gw_ppc_guest_byte(m, ++p, &ch);
+        }
+        if (ch == 0) {
+            break;
+        }
+        switch (ch) {
+        case 'f': case 'F': case 'e': case 'E': case 'g': case 'G': case 'a': case 'A':
+            if (slot + 2u <= 8u && *fpr_i <= 8) {
+                double d = c->fpr[(*fpr_i)++].d;
+                memcpy(&args[slot], &d, sizeof d);
+                slot += 2u;
+            }
+            break;
+        default:
+            if (longs >= 2 && ch != 's' && ch != 'c' && ch != 'p' && ch != 'n') {
+                /* long long: an odd-aligned GPR pair, high word first on PowerPC */
+                if (((*gpr_i - 3) & 1) != 0) {
+                    ++*gpr_i;
+                }
+                if (slot + 2u <= 8u && *gpr_i + 1 <= 10) {
+                    args[slot++] = c->gpr[*gpr_i + 1];
+                    args[slot++] = c->gpr[*gpr_i];
+                    *gpr_i += 2;
+                }
+            } else if (slot < 8u && *gpr_i <= 10) {
+                args[slot++] = gw_ppc_arg_word(c->gpr[(*gpr_i)++]);
+            }
+            break;
+        }
+    }
+    return 1;
+}
+
 static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
     gw_ppc_ctx *c = &m->cpu;
     gw_ppc_native_fn fn;
@@ -457,7 +604,7 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
             memcpy(&args[i], &f, 4);
             ++fpr_i;
         } else {
-            args[i] = c->gpr[gpr_i];
+            args[i] = gw_ppc_arg_word(c->gpr[gpr_i]);
             ++gpr_i;
         }
     }
@@ -482,7 +629,10 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
      * vararg followed by more values of mixed classes cannot be expressed, because the PowerPC
      * register assignment has already lost their relative order; such a target needs a
      * hand-written adapter. No call site in the shipped content does that today. */
-    if (variadic) {
+    if (variadic && sig.n_args >= 1u && !(fmask & (1u << (sig.n_args - 1u))) &&
+        gw_ppc_varargs_from_format(m, args[sig.n_args - 1u], args, sig.n_args, &gpr_i, &fpr_i)) {
+        /* laid out in format order; see gw_ppc_varargs_from_format */
+    } else if (variadic) {
         if (gw_ppc_cr_bit(c, 6)) {
             double d = c->fpr[fpr_i].d;
             if (sig.n_args + 2u > 8u) {
@@ -499,8 +649,20 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
             }
         }
         for (; i < 8u && gpr_i <= 10; ++i) {
-            args[i] = c->gpr[gpr_i];
+            args[i] = gw_ppc_arg_word(c->gpr[gpr_i]);
             ++gpr_i;
+        }
+    }
+    {   /* MELEE_PPC_TRACE_BRIDGE=1: every guest->native call, with its call site and first args.
+         * The last line before a native fault names the function and arguments that faulted. */
+        static int trace_bridge = -1;
+        if (trace_bridge < 0) {
+            const char *v = getenv("MELEE_PPC_TRACE_BRIDGE");
+            trace_bridge = (v != NULL && v[0] == '1');
+        }
+        if (trace_bridge) {
+            gw_log("ppc: bridge %s from ip=0x%08X (%08X %08X %08X %08X)",
+                   gw_ppc_describe(guest_addr), c->pc - 4, args[0], args[1], args[2], args[3]);
         }
     }
     if (sig.ret_float) {
@@ -882,6 +1044,16 @@ static int gw_ppc_execute(gw_ppc_machine *m, uint32_t insn) {
             c->gpr[ra] = ea;
         }
         break;
+    case 43: /* lhau */
+        rd = (insn >> 21) & 0x1F;
+        ra = (insn >> 16) & 0x1F;
+        imm = (int32_t)(int16_t)(insn & 0xFFFF);
+        {
+            uint32_t ea = c->gpr[ra] + (uint32_t)imm;
+            c->gpr[rd] = (uint32_t)(int32_t)(int16_t)gw_ppc_ld16(m, ea);
+            c->gpr[ra] = ea;
+        }
+        break;
     case 39: /* stbu */
         rs = (insn >> 21) & 0x1F;
         ra = (insn >> 16) & 0x1F;
@@ -1204,6 +1376,37 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
         }
         break;
 
+    case 459: /* divwu: unsigned divide; x/0 is undefined on hardware, 0 here like divw */
+        c->gpr[rd] = c->gpr[rb] == 0 ? 0 : c->gpr[ra] / c->gpr[rb];
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+
+    case 60: /* andc */
+        c->gpr[ra] = c->gpr[rs] & ~c->gpr[rb];
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        }
+        break;
+    case 412: /* orc */
+        c->gpr[ra] = c->gpr[rs] | ~c->gpr[rb];
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        }
+        break;
+    case 476: /* nand */
+        c->gpr[ra] = ~(c->gpr[rs] & c->gpr[rb]);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        }
+        break;
+    case 284: /* eqv */
+        c->gpr[ra] = ~(c->gpr[rs] ^ c->gpr[rb]);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[ra]);
+        }
+        break;
     case 28: /* and */
         c->gpr[ra] = c->gpr[rs] & c->gpr[rb];
         if (insn & 1) {
@@ -1345,25 +1548,74 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
     case 790: /* lhbrx: load halfword byte-reversed (i.e. little-endian) */
         c->gpr[rd] = gw_bswap16(gw_ppc_ld16(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]));
         break;
-    case 918: /* stwbrx: store word byte-reversed */
+    /* The byte-reversed family. Byte-reversing a big-endian access is the same as the ordinary
+     * accessor followed by a host swap, so these go through gw_ppc_ld/st like everything else and
+     * inherit its address translation. XO 918 used to be labelled stwbrx and stored four bytes;
+     * 918 is sthbrx (two bytes) and stwbrx is 662, so a halfword store clobbered the next two
+     * bytes. */
+    case 534: /* lwbrx */
+        c->gpr[rd] = gw_bswap32(gw_ppc_ld32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb]));
+        break;
+    case 662: /* stwbrx */
+        gw_ppc_st32(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb], gw_bswap32(c->gpr[rs]));
+        break;
+    case 918: /* sthbrx */
+        gw_ppc_st16(m, (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb],
+                    gw_bswap16((uint16_t)c->gpr[rs]));
+        break;
+
+    /* Indexed-with-update integer loads and stores. ext:306 died on `stwux r10, r1, r9` - the
+     * aligned-stack-frame prologue a compiler emits for a function with an over-aligned local
+     * (r9 = -(frame size) rounded to the alignment). Treating it as a no-op left r1 unmoved, so
+     * the callee's frame overlapped its caller's. As with the d-form update loads, rA is the base
+     * and is written back; rA == 0 is an invalid form, not an absolute address. */
+    case 55: /* lwzux */
     {
-        uint32_t ea = (ra == 0 ? 0 : c->gpr[ra]) + c->gpr[rb];
-        uint32_t v = c->gpr[rs];
-        /* Not gw_ppc_resolve_ea: stwbrx writes raw little-endian bytes, so it addresses memory
-         * directly instead of through the big-endian accessors. It still has to accept the same
-         * three address cases, minus case 1 - a guest static's bytes are not at its guest
-         * address, and a byte-reversed store to one would need the translated pointer, which this
-         * path does not take today (no content does it). */
-        if (!gw_ppc_ea_ok(ea, 4) && !gw_mex_bridge_is_native_data(ea, 4)) {
-            gw_ppc_access_violation(m, ip, ea);
-        }
-        {
-            uint8_t *p = (uint8_t *)(uintptr_t)ea;
-            p[0] = (uint8_t)v;
-            p[1] = (uint8_t)(v >> 8);
-            p[2] = (uint8_t)(v >> 16);
-            p[3] = (uint8_t)(v >> 24);
-        }
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        c->gpr[rd] = gw_ppc_ld32(m, ea);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 119: /* lbzux */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        c->gpr[rd] = gw_ppc_ld8(m, ea);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 311: /* lhzux */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        c->gpr[rd] = gw_ppc_ld16(m, ea);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 375: /* lhaux */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        c->gpr[rd] = (uint32_t)(int32_t)(int16_t)gw_ppc_ld16(m, ea);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 183: /* stwux */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        gw_ppc_st32(m, ea, c->gpr[rs]);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 247: /* stbux */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        gw_ppc_st8(m, ea, (uint8_t)c->gpr[rs]);
+        c->gpr[ra] = ea;
+        break;
+    }
+    case 439: /* sthux */
+    {
+        uint32_t ea = c->gpr[ra] + c->gpr[rb];
+        gw_ppc_st16(m, ea, (uint16_t)c->gpr[rs]);
+        c->gpr[ra] = ea;
         break;
     }
 
@@ -1468,6 +1720,26 @@ static int gw_ppc_execute_x(gw_ppc_machine *m, uint32_t insn) {
         uint32_t res = c->gpr[ra] + ca;
         gw_ppc_xer_set_ca(c, (uint64_t)c->gpr[ra] + ca >= 0x100000000u);
         c->gpr[rd] = res;
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    }
+    case 10: /* addc rD, rA, rB: CA = carry out */
+    {
+        uint64_t sum = (uint64_t)c->gpr[ra] + c->gpr[rb];
+        c->gpr[rd] = (uint32_t)sum;
+        gw_ppc_xer_set_ca(c, sum >= 0x100000000u);
+        if (insn & 1) {
+            gw_ppc_cr0_cmp(c, c->gpr[rd]);
+        }
+        break;
+    }
+    case 138: /* adde rD, rA, rB: rD = rA + rB + CA */
+    {
+        uint64_t sum = (uint64_t)c->gpr[ra] + c->gpr[rb] + gw_ppc_xer_ca(c);
+        c->gpr[rd] = (uint32_t)sum;
+        gw_ppc_xer_set_ca(c, sum >= 0x100000000u);
         if (insn & 1) {
             gw_ppc_cr0_cmp(c, c->gpr[rd]);
         }
@@ -2272,8 +2544,26 @@ static uint32_t gw_ppc_test_vhelper(uint32_t kind, uint32_t unused, ...) {
     return r;
 }
 
+#define GW_PPC_TEST_VCODE_S 0x80300280u       /* blob: printf-style, word then double */
+#define GW_PPC_TEST_FMT_GUEST 0x8038036Cu     /* fake guest address of the format helper */
+static char gw_ppc_test_fmt_out[64];
+
+static uint32_t gw_ppc_test_fmthelper(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(gw_ppc_test_fmt_out, sizeof gw_ppc_test_fmt_out, fmt, ap);
+    va_end(ap);
+    return (uint32_t)strlen(gw_ppc_test_fmt_out);
+}
+
 static gw_ppc_native_fn gw_ppc_test_vresolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
     (void)ctx;
+    if (guest_addr == GW_PPC_TEST_FMT_GUEST) {
+        sig->float_args = GW_PPC_SIG_VARARGS;
+        sig->n_args = 1; /* fmt */
+        sig->ret_float = 0;
+        return (gw_ppc_native_fn)(uintptr_t)gw_ppc_test_fmthelper;
+    }
     if (guest_addr == GW_PPC_TEST_VHELPER_GUEST) {
         sig->float_args = GW_PPC_SIG_VARARGS; /* no fixed float; variadic tail */
         sig->n_args = 2;                      /* kind, unused */
@@ -2327,6 +2617,40 @@ static int test_ppc_varargs_bridge(void) {
     got = gw_r32((const void *)(uintptr_t)0x80300158u);
     if (got != 0x00C0FFEEu) {
         gw_test_fail("word vararg (crclr) arrived as 0x%08X, expected 0x00C0FFEE", got);
+        return 1;
+    }
+    return 0;
+}
+
+/* A word BEFORE a double: `OSReport("%s in %.2fms", name, ms)`, the call GrGc.dat (ext:306) makes.
+ * The CR6 rule alone put the double first and handed its bits to %s. */
+static int test_ppc_varargs_format_order(void) {
+    /* mflr r0; lis r3,0x8030; ori r3,r3,0x300; lis r4,0x8030; ori r4,r4,0x310;
+     * lis r9,0x8030; lfs f1,0x150(r9); creqv 6,6,6; bl helper; mtlr r0; blr */
+    static const uint32_t blob[] = {
+        0x7C0802A6u, 0x3C608030u, 0x60630300u, 0x3C808030u, 0x60840310u, 0x3D208030u,
+        0xC0290150u, 0x4CC63242u,
+        0x48000000u | ((GW_PPC_TEST_FMT_GUEST - (GW_PPC_TEST_VCODE_S + 32)) & 0x03FFFFFCu) | 1u,
+        0x7C0803A6u, 0x4E800020u,
+    };
+    static const char fmt[] = "%s in %.2fms";
+    static const char name[] = "abc";
+    unsigned i;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_VCODE_S + 4 * i), blob[i]);
+    }
+    memcpy((void *)(uintptr_t)0x80300300u, fmt, sizeof fmt);
+    memcpy((void *)(uintptr_t)0x80300310u, name, sizeof name);
+    gw_wf32((void *)(uintptr_t)0x80300150u, 2.5f);
+    gw_ppc_test_fmt_out[0] = 0;
+
+    gw_ppc_set_bridge(gw_ppc_test_vresolve, NULL, GW_PPC_TEST_VCODE_S,
+                      GW_PPC_TEST_VCODE_S + (uint32_t)sizeof blob);
+    gw_ppc_call(GW_PPC_TEST_VCODE_S, NULL, 0, 0, GW_PPC_TEST_STACK);
+    if (strcmp(gw_ppc_test_fmt_out, "abc in 2.50ms") != 0) {
+        gw_test_fail("format-ordered varargs printed \"%s\", expected \"abc in 2.50ms\"",
+                     gw_ppc_test_fmt_out);
         return 1;
     }
     return 0;
@@ -2875,10 +3199,115 @@ static int test_ppc_fctiwz_stfiwx(void) {
     return 0;
 }
 
+/* A game static's guest address passed as a pointer argument must reach native code as the static's
+ * NATIVE storage (ext:307's HSD_SetupTevStageAll(&tev$297)). */
+#define GW_PPC_TEST_ARGHELPER_GUEST 0x80380370u
+static uint32_t gw_ppc_test_arg_seen;
+static uint32_t gw_ppc_test_arghelper(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3,
+                                      uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
+    (void)a1; (void)a2; (void)a3; (void)a4; (void)a5; (void)a6; (void)a7;
+    gw_ppc_test_arg_seen = a0;
+    return 0;
+}
+static gw_ppc_native_fn gw_ppc_test_argresolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
+    (void)ctx;
+    if (guest_addr == GW_PPC_TEST_ARGHELPER_GUEST) {
+        sig->float_args = 0;
+        sig->n_args = 1;
+        sig->ret_float = 0;
+        return gw_ppc_test_arghelper;
+    }
+    return NULL;
+}
+static int test_ppc_static_pointer_arg(void) {
+    static const uint32_t blob[] = {
+        0x7C0802A6u, /* mflr r0              */
+        0x3C60803Cu, /* lis  r3, 0x803C      */
+        0x606352A0u, /* ori  r3, r3, 0x52A0  ; &ftData_803C52A0, a game static */
+        0x48000000u | ((GW_PPC_TEST_ARGHELPER_GUEST - (GW_PPC_TEST_CODE + 12)) & 0x03FFFFFCu) | 1u,
+        0x7C0803A6u, /* mtlr r0              */
+        0x4E800020u, /* blr                  */
+    };
+    int kind = -1;
+    uint32_t native = gw_mex_bridge_lookup(GW_PPC_TEST_STATIC_GUEST, &kind);
+    unsigned i;
+
+    if (native == 0 || kind != 0) {
+        gw_test_fail("bridge lookup of 0x%08X failed", GW_PPC_TEST_STATIC_GUEST);
+        return 1;
+    }
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *)(uintptr_t)(GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_argresolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t)sizeof blob);
+    gw_ppc_test_arg_seen = 0;
+    gw_ppc_call(GW_PPC_TEST_CODE, NULL, 0, 0, GW_PPC_TEST_STACK);
+    if (gw_ppc_test_arg_seen != native) {
+        gw_test_fail("static pointer argument arrived as 0x%08X, expected native 0x%08X",
+                     gw_ppc_test_arg_seen, native);
+        return 1;
+    }
+    return 0;
+}
+
+/* stwux must move its base register (ext:306's aligned-frame prologue is `stwux r10, r1, r9`),
+ * and sthbrx must store two bytes, not the four it used to when XO 918 was mislabelled stwbrx. */
+static int test_ppc_update_indexed_and_brx(void) {
+    static const uint32_t blob[] = {
+        0x7D45316Eu, /* stwux  r10, r5, r6    ; [r5-8] = r10, r5 -= 8       */
+        0x90A50004u, /* stw    r5, 4(r5)      ; record the updated base     */
+        0x7C803F2Cu, /* sthbrx r4, 0, r7      ; two bytes, swapped          */
+        0x4E800020u, /* blr                                                 */
+    };
+    uint32_t args[8];
+    unsigned i;
+    uint32_t got;
+
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_CODE + 4 * i), blob[i]);
+    }
+    gw_ppc_set_bridge(gw_ppc_test_resolve, NULL, GW_PPC_TEST_CODE,
+                      GW_PPC_TEST_CODE + (uint32_t) sizeof blob);
+
+    for (i = 0; i < 4; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_FDATA + 4 * i), 0xDEADBEEFu);
+    }
+    for (i = 0; i < 8; ++i) {
+        args[i] = 0u;
+    }
+    args[1] = 0x1234u;                  /* r4  */
+    args[2] = GW_PPC_TEST_FDATA + 16u;  /* r5  */
+    args[3] = 0xFFFFFFF8u;              /* r6 = -8 */
+    args[4] = GW_PPC_TEST_FDATA;        /* r7  */
+    args[7] = 0xCAFEF00Du;              /* r10 */
+    gw_ppc_call(GW_PPC_TEST_CODE, args, 8, 0, GW_PPC_TEST_STACK);
+
+    got = gw_r32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 8));
+    if (got != 0xCAFEF00Du) {
+        gw_test_fail("stwux stored 0x%08X at base-8, expected 0xCAFEF00D", got);
+        return 1;
+    }
+    got = gw_r32((const void *) (uintptr_t) (GW_PPC_TEST_FDATA + 12));
+    if (got != GW_PPC_TEST_FDATA + 8u) {
+        gw_test_fail("stwux left the base at 0x%08X, expected 0x%08X", got,
+                     GW_PPC_TEST_FDATA + 8u);
+        return 1;
+    }
+    got = gw_r32((const void *) (uintptr_t) GW_PPC_TEST_FDATA);
+    if (got != 0x3412BEEFu) {
+        gw_test_fail("sthbrx left 0x%08X, expected 0x3412BEEF (two swapped bytes, rest intact)",
+                     got);
+        return 1;
+    }
+    return 0;
+}
+
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
     gw_test_register("ppc_varargs_bridge", test_ppc_varargs_bridge);
+    gw_test_register("ppc_varargs_format_order", test_ppc_varargs_format_order);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);
     gw_test_register("ppc_native_pointer", test_ppc_native_pointer);
     gw_test_register("ppc_reentry_cap", test_ppc_reentry_cap);
@@ -2888,4 +3317,6 @@ void gw_ppc_tests_register(void) {
     gw_test_register("ppc_fp_indexed", test_ppc_fp_indexed);
     gw_test_register("ppc_fctiwz_stfiwx", test_ppc_fctiwz_stfiwx);
     gw_test_register("ppc_host_stack_out_param", test_ppc_host_stack_out_param);
+    gw_test_register("ppc_update_indexed_and_brx", test_ppc_update_indexed_and_brx);
+    gw_test_register("ppc_static_pointer_arg", test_ppc_static_pointer_arg);
 }

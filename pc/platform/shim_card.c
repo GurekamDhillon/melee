@@ -519,3 +519,19 @@ int gw___CARDSync(int chan) {
   (void)chan;
   return gw_card_ready ? CARD_RESULT_READY : CARD_RESULT_NOCARD;
 }
+
+/* __CARDSyncCallback / __CARDDefaultApiCallback: the SDK's internal completion callbacks. The
+ * first wakes the thread parked in __CARDSync, the second does nothing. GrGc.dat (ext:306) hands
+ * __CARDSyncCallback's GUEST address to CARD*Async as its callback, so the deferred completion
+ * above called 0x80352274 as a host function pointer and faulted executing MEM1. With a native
+ * build here the execute trap redirects that call instead. Nothing is ever parked, because every
+ * operation in this file completes inline, so both are honest no-ops. */
+void gw___CARDSyncCallback(s32 chan, s32 result) {
+  (void)chan;
+  (void)result;
+}
+
+void gw___CARDDefaultApiCallback(s32 chan, s32 result) {
+  (void)chan;
+  (void)result;
+}

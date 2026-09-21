@@ -575,6 +575,15 @@ void Item_80267978(HSD_GObj* gobj)
                 686, 0, "not found zako model data! check ground dat file!\n");
         }
     }
+#if defined(TARGET_PC)
+    /* m-ex's Create Item patch asserts "item not initialized" on a NULL descriptor in EVERY
+     * range, not only the stage range vanilla checks. Without it a fighter article nobody
+     * registered (it_8026B3F8) became a NULL read in Item_80267AA8 with no kind attached. */
+    if (item_data->xC4_article_data == NULL) {
+        extern void Mex_ItemNotInitialized(int kind);
+        Mex_ItemNotInitialized(item_data->kind);
+    }
+#endif
     item_data->xBC_itemStateContainer = item_data->xB8_itemLogicTable->states;
 }
 
@@ -942,6 +951,47 @@ HSD_GObj* Item_8026862C(SpawnItem* spawnItem)
     HSD_GObj* gobj;
 
     void* user_data;
+
+#if defined(TARGET_PC)
+    /* Ported from m-ex (asm/m-ex/Item Extension/SpawnMEXItem, C2 @ 0x80268648, read out of the
+     * shipped codes.gct): a spawn kind >= 5000 is not an item kind but "article kind - 5000 of
+     * whoever is spawning it". A fighter parent resolves it against its own article list, no
+     * parent or a stage parent against the current stage's; any other parent leaves the kind
+     * alone, as m-ex does. It must happen before Item_8026784C, which already reads the kind.
+     * Without it ext:294's stage article reached Item_80267978 as kind 5000. */
+    if (spawnItem->kind >= 5000) {
+        extern int Mex_SpawnArticleKind(int article, int owner_class, int fighter_kind);
+        HSD_GObj* parent = spawnItem->x0_parent_gobj;
+        int cls = parent != NULL ? (int) parent->classifier : -1;
+        int fk = cls == HSD_GOBJ_CLASS_FIGHTER ? (int) ftLib_GetKind(parent) : -1;
+        spawnItem->kind = Mex_SpawnArticleKind(spawnItem->kind - 5000, cls, fk);
+    }
+#endif
+#if defined(TARGET_PC)
+    /* A vanilla-range item with no registered article. m-ex asserts "item not initialized" for
+     * this, and on a console it only works if an earlier match left the kind registered - the
+     * table lives in ItCo.dat, which stays loaded. ACE clones hit it from a fresh boot: Raichu's
+     * aerial down-B runs Pikachu's own code, which spawns thunder (kind 81), and Raichu's onLoad
+     * registers its articles as custom kinds only. Refuse the spawn instead - the same NULL
+     * Item_8026784C returns at the item limit, which every caller already handles. */
+    if (spawnItem->kind < It_Kind_Old_Kuri) {
+        Article* article =
+            spawnItem->kind < It_Kind_Kuriboh ? it_804D6D24[spawnItem->kind]
+            : spawnItem->kind < It_PKind_Start
+                ? it_804D6D38[spawnItem->kind - It_Kind_Kuriboh]
+                : it_804D6D30[spawnItem->kind - It_PKind_Start];
+        if (article == NULL) {
+            static u8 reported[It_Kind_Old_Kuri];
+            if (!reported[spawnItem->kind]) {
+                reported[spawnItem->kind] = 1;
+                OSReport("item: kind %d has no article registered - spawn refused (m-ex would "
+                         "assert here)\n",
+                         (int) spawnItem->kind);
+            }
+            return NULL;
+        }
+    }
+#endif
 
     if (Item_8026784C(spawnItem->hold_kind, spawnItem->kind) != 0) {
         return NULL;

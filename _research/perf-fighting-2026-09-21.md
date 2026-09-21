@@ -109,12 +109,13 @@ Akaneia, `mode=vs;p1=ck:38/cpu9;p2=ck:39/cpu9;p3=ck:36/cpu9;p4=fox/cpu9;time=180
 
 ## What remains
 
-* Akaneia still has a small tail (p99 up to 21 ms, max ~31 ms): a handful of frames per run. Not
-  yet attributed; run `MELEE_PROFILE_SPIKE=19` with the Akaneia scene to profile them. Candidates:
-  the m-ex interpreter on the frame that a fighter's code first runs, first-sight pipeline
-  compiles, or the remaining `lbDvd_GetPreloadedArchive` path (7.7% of spike samples before the
-  fix: `lbFile_800168A0` resolves a path through `DVDConvertPathToEntrynum`, a linear FST scan plus
-  the mod lookup, ~4 times a frame — `IfAll.usd`).
+* Akaneia's remaining tail is tiny: a 60 s profile with `MELEE_PROFILE_SPIKE=19` finds **4 frames** in
+  ~3600 whose game time exceeds 19 ms (0.1%), with only 7 samples between them, all in the pad-queue
+  wait (`lb_80019894`, `lb_800192A8`) — frame-boundary waiting, not work. The p99 of 18-21 ms in the
+  600-frame windows is those frames plus ordinary jitter. Nothing left to chase there.
+* `lbFile_800168A0` still resolves `IfAll.usd` through `DVDConvertPathToEntrynum` (a linear FST scan
+  plus the mod lookup) ~4 times a frame; it was 7.7% of the spike samples before the fix but is not
+  measurable in a frame now.
 * The earlier baseline's open items are unchanged: `texture::sweep_object_caches` (~2 ms/frame on
   the game thread), and the seed warm-up's compiler thread holding a core for minutes.
 * The `GetTickCount64` gate is still used for alarms; if a load-bearing alarm wait exists anywhere

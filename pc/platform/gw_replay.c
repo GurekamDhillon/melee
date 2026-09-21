@@ -65,6 +65,7 @@ static struct {
     uint32_t ucf_dashback[4]; /* Game Start per-port UCF toggles: 0 off, 1 UCF, 2 arduino */
     uint32_t ucf_shield[4];
     int resync;
+    int online; /* Game Start major scene 8: Slippi online, which forces the seed every frame */
     FILE *trace;
     FILE *vel; /* <trace>.vel.csv: the velocities Slippi 3.5+ post-frame records */
     char scene[256];
@@ -124,6 +125,7 @@ static int rp_parse(const uint8_t *d, size_t n) {
                 memcpy(rp.version, b + 1, 4);
                 memcpy(rp.game_info, b + 5, GW_RP_GAME_INFO);
                 rp.seed = rp_be32(b + 0x13D);
+                rp.online = sz >= 0x1A4 && b[0x1A4] == 8; /* major scene, 3.7.0+ */
                 if (sz >= 0x160) { /* 1.0.0+ */
                     int p;
                     for (p = 0; p < 4; ++p) {
@@ -224,9 +226,9 @@ static void rp_load(void) {
             len += snprintf(rp.scene + len, sizeof rp.scene - (size_t) len, ";p%d=ck:%u/c%u/%s",
                             p + 1, pl[0], pl[3], pl[1] == 1 ? "cpu" : "hu");
         }
-        gw_log("replay: %s - Slippi %u.%u.%u, frames %d..%d, seed 0x%08X, scene \"%s\"%s", path,
+        gw_log("replay: %s - Slippi %u.%u.%u, frames %d..%d, seed 0x%08X, scene \"%s\"%s%s", path,
                rp.version[0], rp.version[1], rp.version[2], rp.first, rp.last, rp.seed, rp.scene,
-               rp.resync ? ", resync on" : "");
+               rp.online ? ", online (per-frame seed)" : "", rp.resync ? ", resync on" : "");
     }
     free(d);
     path = getenv("MELEE_STATE_TRACE");
@@ -314,10 +316,27 @@ static int rp_frame_seed(uint32_t *out) {
     return 1;
 }
 
-/* MELEE_SLP_RESYNC: the seed to force at the start of this frame, or 0 to leave it. */
+/* The seed to force at the start of this frame, or 0 to leave it.
+ *
+ * Frame -123 always gets the Game Start seed: it is recorded AFTER match setup's own draws (on
+ * Fountain of Dreams, grIzumi_801CC358 x2, ftCo_800A101C x2 and ftCo_800B9704 x2 - six), so the
+ * early restore in fn_8016E730 alone leaves the port six draws past the console by the first frame.
+ * Slippi's playback restores it twice for exactly this reason: RestoreGameInfo.asm at 0x8016E748,
+ * then RestoreInitialRNG.s from a proc created at match start, before anything animates.
+ * Under MELEE_SLP_RESYNC every later frame gets the console's own Frame Start seed too. */
 uint32_t gw_Replay_ResyncSeed(void) {
     uint32_t s;
-    return rp.resync && rp_frame_seed(&s) ? s : 0;
+    if (rp.active && rp.frame == GW_RP_FIRST_FRAME) {
+        return rp.seed;
+    }
+    /* Slippi online does not let the RNG run on: every frame starts from
+     * seed + ((frame + 123) << 16) (Frame Start, 0x3A, carries it - 0x0000F8BC, 0x0001F8BC, ...).
+     * So for an online replay the console itself forced this seed each frame, and restoring it is
+     * reproduction, not resync. */
+    if ((rp.online || rp.resync) && rp_frame_seed(&s)) {
+        return s;
+    }
+    return 0;
 }
 
 /* The RNG is the earliest thing to diverge: any difference in what consumed it shows here frames
@@ -373,3 +392,4 @@ int gw_Replay_RawStick(int port, int which) {
     const GwRpInput *r = rp_cur(port, 0);
     return r != NULL && which >= 0 && which < 4 ? r->raw[which] : 0;
 }
+

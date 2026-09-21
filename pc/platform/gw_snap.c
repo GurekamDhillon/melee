@@ -275,7 +275,12 @@ static int sn_load_map(void) {
             ++sn.ncmp_skip;
         } else if (strcmp(s->name, "_gw_HSD_PadMasterStatus") == 0 ||
                    strcmp(s->name, "_gw_HSD_PadGameStatus") == 0 ||
-                   strcmp(s->name, "_gw_HSD_PadCopyStatus") == 0) {
+                   strcmp(s->name, "_gw_HSD_PadCopyStatus") == 0 ||
+                   strcmp(s->name, "_controller_map") == 0) {
+            /* _controller_map (gm_1A36.c) is the menu button/trigger/repeat map that
+               gm_EvaluateAllControllerInputs rebuilds every frame from the live pad - the same
+               family as the pad statuses. SyncTest k=7 found it (frame 2148: one byte, 0x00 vs
+               0x20, from the live pad's state at the moment of the resimulated frame). */
             /* INPUTS, renewed from the live pad queue each logic frame: during playback fighters
                take the replay's inputs instead, so these are not state to compare */
             sn.cmp_skip[sn.ncmp_skip].va = s->va;

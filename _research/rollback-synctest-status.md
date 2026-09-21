@@ -77,3 +77,43 @@ frame gets the same handles back without touching a voice.
   footprint. The compare is 5 ms and would be a hash.
 * Only one replay was used for the pass. The other Gang-Steals replays (different stages/characters/items)
   are not run; expect item/stage-specific state (grounds, effects) to show up there.
+
+## STATE / NEXT STEPS (agent/snapcost, paused at the session limit)
+
+**Works (built, SyncTest k=1 run, 0 mismatches, verify fails 0; k=3/k=7 and the full replay NOT yet re-run
+with the new snapshot path).** `pc/platform/gw_snap.c`, `gw_runtime.c`, `shim_gx.c`, `gmscene.c`, `gobj.c`:
+- MEM1 is allocated with `MEM_WRITE_WATCH` (`gw_mem1_watched`). `MELEE_SNAP_MODE=full|dirty` (default dirty),
+  `MELEE_SNAP_VERIFY=1` (memcmp live vs slot after every dirty save/load), `MELEE_SNAP_HASH=0`.
+- Each slot keeps a superset dirty-page set; `sn_poll` (GetWriteWatch+reset) ORs written pages into every
+  slot's set; save copies only the chosen slot's pages; load copies the target's pages back, folds its set into
+  the others', clears it, resets the watch; the compare only scans dirty pages.
+- `gw_snap_open(k)`, `gw_snap_save(frame)`, `gw_snap_load(frame)`, `uint64_t gw_snap_hash(void)` (live state,
+  incremental per-page hash + globals, ~0.26 ms), `uint64_t gw_snap_frame_hash(int frame)` (hash stored at save).
+- `gmscene.c`: a resimulated frame's render suppresses display-list submission (`gw_Gx_SuppressDraws`,
+  `MELEE_SNAP_RESIM_DRAWS=1` keeps them) and is timed in parts; `MELEE_SNAP_CBTIME=1` lists the costliest
+  render callbacks (gobj.c `Snap_CbTime`).
+
+**Measured** (RustyJuicyElephant, k=1, 2 fighters; per call, ms):
+
+| | full copy | dirty-page |
+|---|---|---|
+| save | 2.46 | 0.26 |
+| load | 2.34 | 0.31 |
+| compare (SyncTest only) | 5.15 | 0.73 |
+| write-watch poll | - | 0.053 (105 dirty pages/frame) |
+| state hash (peer checksum) | - | 0.26 (235 pages + 0.86 MB globals) |
+| resim logic | 0.34 | 0.34 |
+| resim render (no display lists) | 0.90 | 0.84 |
+
+Resim frame ~ 0.34 logic + 0.84 render = ~1.2 ms, so k=7 = save 0.26 + hash 0.26 + load 0.31 + 7 x 1.2 ~= 9.3 ms
+(2-fighter match; 4 players will cost more). Display-list suppression saved only ~0.06 ms: the render CPU is
+the GObj draw walk (0.76 ms), dominated by two callbacks: `fn_800301D0` (0.42 ms, a stage/camera-related
+render callback - not yet identified) and `gw_grIzumi_801CCEA0` (Fountain stage, 0.23 ms), everything else
+< 0.04 ms each.
+
+**Next, in order:** (1) run SyncTest k=3 and k=7 over the whole replay in dirty mode (~7 min each) with
+`MELEE_SNAP_VERIFY=1` once, then without; confirm 2600 rollbacks / 0 mismatching and the heartbeat. (2) Identify
+`fn_800301D0` and `grIzumi_801CCEA0`: which state do they write that logic reads? If only GX/matrix scratch,
+skip them in resim (a per-callback allow-list in gobj.c). (3) Run the headless tests. (4) Update the API notes
+here. Build state is clean: build the worktree with `--shim gw_runtime.c --shim gw_replay.c --shim gw_snap.c
+--shim shim_gx.c` plus `--tu src/melee/gm/gmscene.c --tu src/sysdolphin/baselib/gobj.c`.

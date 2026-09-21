@@ -114,6 +114,7 @@ static struct {
 } sn = { 0 };
 
 uint64_t gw_snap_hash(void);
+void gw_Snap_Time(int what, int begin);
 extern int gw_Replay_Frame(void);
 extern void gw_Replay_GetCursor(int out[4]);
 extern void gw_Replay_SetCursor(const int in[4]);
@@ -546,8 +547,17 @@ static struct {
     uint32_t va, len;
     uint8_t bytes[0x400];
 } sn_fixed[SN_FIXED_ASYNC_MAX];
-static double sn_t[4];
-static long sn_tn[4];
+static double sn_t[8];
+static long sn_tn[8];
+static struct {
+    uintptr_t cb;
+    double ms;
+    long n;
+} sn_cb[64];
+static int sn_ncb;
+static double sn_cb_t0;
+static int sn_cb_on = -1, sn_cb_window;
+
 static int sn_nfixed;
 
 static void sn_fixed_init(void) {
@@ -1217,6 +1227,7 @@ void gw_SyncTest_IterStart(void) {
         sn.resim = 1;
         sn.cur_is_resim = 1;
         sn_sfx_rewind(sn.target - sn.k);
+        gw_Snap_Time(2, 1);
         return;
     }
     if (sn.resim) {
@@ -1250,6 +1261,7 @@ void gw_SyncTest_IterStart(void) {
         sn.cur_is_resim = next < sn.target;
         if (sn.cur_is_resim) {
             sn_sfx_rewind(next);
+            gw_Snap_Time(2, 1);
         }
         if (next >= sn.target) {
             sn.resim = 0;
@@ -1263,14 +1275,33 @@ void gw_SyncTest_IterStart(void) {
                        sn.ms_cmp / (sn.n_cmp ? sn.n_cmp : 1));
                 gw_log("snap: costs (per call): poll %.3f ms (%.0f dirty pages), copy %.0f pages per "
                        "save/load, hash %.3f ms (%.0f pages hashed), resim render %.2f ms, real render "
-                       "%.2f ms, verify fails %ld",
+                       "%.2f ms, resim logic %.2f ms [render parts: idle+inval %.3f, StartRender %.3f, GObjDraw %.3f, Init %.3f], verify fails %ld",
                        sn.ms_poll / (sn.n_poll ? sn.n_poll : 1),
                        (double) sn.n_dirty_pages / (sn.n_poll ? sn.n_poll : 1),
                        (double) sn.n_copy_pages / ((sn.n_save + sn.n_load) ? (sn.n_save + sn.n_load) : 1),
                        sn.ms_hash / (sn.n_hash_calls ? sn.n_hash_calls : 1),
                        (double) sn.n_hash_pages / (sn.n_hash_calls ? sn.n_hash_calls : 1),
                        sn_t[0] / (sn_tn[0] ? sn_tn[0] : 1), sn_t[1] / (sn_tn[1] ? sn_tn[1] : 1),
-                       sn.n_verify_fail);
+                       sn_t[2] / (sn_tn[2] ? sn_tn[2] : 1), sn_t[3] / (sn_tn[3] ? sn_tn[3] : 1),
+                       sn_t[4] / (sn_tn[4] ? sn_tn[4] : 1), sn_t[5] / (sn_tn[5] ? sn_tn[5] : 1),
+                       sn_t[6] / (sn_tn[6] ? sn_tn[6] : 1), sn.n_verify_fail);
+                if (sn_cb_on == 1) {
+                    int a, b, top[8], nt = 0;
+                    for (a = 0; a < 8 && a < sn_ncb; ++a) {
+                        int best = -1;
+                        for (b = 0; b < sn_ncb; ++b) {
+                            int seen = 0, q;
+                            for (q = 0; q < nt; ++q) {
+                                if (top[q] == b) seen = 1;
+                            }
+                            if (!seen && (best < 0 || sn_cb[b].ms > sn_cb[best].ms)) best = b;
+                        }
+                        top[nt++] = best;
+                        gw_log("snap:   render cb %p: %.3f ms per resim frame (%ld calls)",
+                               (void *) sn_cb[best].cb,
+                               sn_cb[best].ms / (sn_tn[0] ? sn_tn[0] : 1), sn_cb[best].n);
+                    }
+                }
             }
         }
         return;
@@ -1279,11 +1310,58 @@ void gw_SyncTest_IterStart(void) {
     gw_snap_save(next);
 }
 
+/* Per render-callback time inside a resimulated frame's GObj draw walk (gobj.c): while
+ * MELEE_SNAP_CBTIME=1, the periodic log lists the costliest callbacks by native address (resolve
+ * against melee-pc.map). Only counted while the resimulated render is running (sn_t[5] open). */
+
+void gw_Snap_CbTime(void *cb, int begin) {
+    int i;
+    if (sn_cb_on < 0) {
+        const char *e = getenv("MELEE_SNAP_CBTIME");
+        sn_cb_on = e != NULL && e[0] == '1';
+    }
+    if (!sn_cb_on || !sn_cb_window) {
+        return;
+    }
+    if (begin) {
+        sn_cb_t0 = sn_ms();
+        return;
+    }
+    for (i = 0; i < sn_ncb; ++i) {
+        if (sn_cb[i].cb == (uintptr_t) cb) {
+            break;
+        }
+    }
+    if (i == sn_ncb) {
+        if (sn_ncb >= 64) {
+            return;
+        }
+        sn_cb[sn_ncb].cb = (uintptr_t) cb;
+        ++sn_ncb;
+    }
+    sn_cb[i].ms += sn_ms() - sn_cb_t0;
+    sn_cb[i].n++;
+}
+
+/* Should a resimulated frame's render pass skip submitting display lists (shim_gx.c)?
+ * MELEE_SNAP_RESIM_DRAWS=1 keeps them, to tell a draw-owned difference apart. */
+int gw_Snap_SuppressDraws(void) {
+    static int v = -1;
+    if (v < 0) {
+        const char *e = getenv("MELEE_SNAP_RESIM_DRAWS");
+        v = (e != NULL && e[0] == '1') ? 0 : 1;
+    }
+    return v;
+}
+
 /* gmscene.c times the render pass of a resimulated frame (what 0) and of the real one (what 1). */
 void gw_Snap_Time(int what, int begin) {
-    static double t0[4];
-    if (!sn.enabled || what < 0 || what > 3) {
+    static double t0[8];
+    if (!sn.enabled || what < 0 || what > 7) {
         return;
+    }
+    if (what == 5) {
+        sn_cb_window = begin;
     }
     if (begin) {
         t0[what] = sn_ms();

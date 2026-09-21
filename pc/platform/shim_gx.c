@@ -580,7 +580,17 @@ void gw_GXBegin(u32 type, u32 vtxfmt, u16 nverts) {
   GXBegin((GXPrimitive)type, (GXVtxFmt)vtxfmt, nverts);
 }
 
+/* A resimulated frame (gw_snap.c) runs the render calls for their side effects on game state - pool
+ * cells, matrix caches, dirty flags - and its picture is thrown away. Display lists are where nearly
+ * all of the render CPU goes (aurora parses and copies every byte into its FIFO), and submitting one
+ * changes no game state, so those are skipped while this is set. */
+int gw_gx_suppress_draws;
+void gw_Gx_SuppressDraws(int on) { gw_gx_suppress_draws = on; }
+
 void gw_GXCallDisplayList(void *list, u32 nbytes) {
+  if (gw_gx_suppress_draws) {
+    return;
+  }
   ++gw_gx_dlist_count;
   GXCallDisplayList(list, nbytes);
 }

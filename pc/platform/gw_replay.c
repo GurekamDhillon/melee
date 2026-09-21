@@ -690,6 +690,7 @@ void gw_Replay_TraceBeginIter(int iter) {
 
 /* Write iterations gw_tb_next..iter (those still buffered), in order. */
 void gw_Replay_TraceFlushUpTo(int iter) {
+    int wrote = gw_tb_next <= iter && gw_tb_next != -0x7FFFFFFF;
     while (gw_tb_next <= iter && gw_tb_next != -0x7FFFFFFF) {
         GwTbSlot *t = &gw_tb[(unsigned) gw_tb_next % GW_TB_RING];
         if (t->iter == gw_tb_next) {
@@ -703,6 +704,15 @@ void gw_Replay_TraceFlushUpTo(int iter) {
             }
         }
         ++gw_tb_next;
+    }
+    if (wrote) {
+        int k;
+        for (k = 0; k < GW_TB_FILES; ++k) {
+            FILE *f = gw_tb_file(k);
+            if (f != NULL) {
+                fflush(f); /* the harness ends a run by killing it */
+            }
+        }
     }
 }
 

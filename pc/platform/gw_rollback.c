@@ -411,6 +411,17 @@ int gw_RB_Iterations(int count) {
         rb.cur_extra_ms = 0;
     }
 
+    /* Frames whose inputs were all confirmed BEFORE this tick's deliveries are final: any wrong one
+       was already resimulated by the previous tick's iterations, so their trace rows are the
+       post-rollback ones. (Flushing after planning would write the old timeline's rows of frames
+       this tick is about to resimulate.) */
+    {
+        int c = rb_conf();
+        if (c == INT_MAX || c > frame) {
+            c = frame;
+        }
+        gw_Replay_TraceFlushUpTo(c);
+    }
     if (!rb.started) {
         if (frame >= RB_FIRST) {
             rb.started = 1;
@@ -465,8 +476,6 @@ int gw_RB_Iterations(int count) {
         }
         rb.cur_depth = rb.plan.k;
     }
-    /* frames whose inputs are all confirmed are final: write their trace rows */
-    gw_Replay_TraceFlushUpTo(conf < frame ? conf : frame);
     rb.n_ticks++;
     if ((rb.n_ticks % 300) == 0) {
         gw_log("rb: tick %d frame %d confirmed %d | rollbacks %d (avg depth %.2f, max %d), resim "

@@ -2023,6 +2023,19 @@ void grStadium_801D4548(Ground_GObj* gobj)
     case 0:
         temp_r3_4 = temp_r31->u.stadium.xD8;
         temp_r31->u.stadium.xD8 = temp_r3_4 - 1;
+#if defined(TARGET_PC)
+        {
+            /* Slippi's Frozen PS (External/Frozen PS/Core/FreezePokemon.asm, @ 0x801D45FC: the
+               branch past the whole transformation decision). The countdown still ticks; the
+               decision - and the HSD_Randi draws that pick the transformation - never happens.
+               A replay says so in its Game Start (Frozen PS, Slippi 2.0+); outside playback
+               MELEE_SLIPPI_FROZEN_PS=1 turns it on. */
+            extern int Slippi_FrozenStadium(void);
+            if (Slippi_FrozenStadium()) {
+                break;
+            }
+        }
+#endif
         if (temp_r3_4 < 0) {
             if (temp_r31->u.stadium.xDE == 5) {
                 int sp60[] = { 3, 4, 6, 9 };

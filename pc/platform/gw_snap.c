@@ -759,11 +759,18 @@ static int sn_live(void) {
 }
 
 /* Before the scene loop's logic iterations for this render tick. */
-static int sn_last_pool_frame = -0x7FFFFFF0; /* frame a render pool was last discovered */
+static int sn_last_pool_frame = -1000000; /* frame a render pool was last discovered */
 int gw_SyncTest_Iterations(int count) {
     sn_init();
     if (!sn.enabled || !sn_live()) {
         return count;
+    }
+    {
+        static int ticks;
+        if ((++ticks % 250) == 0) {
+            gw_log("snap: heartbeat tick %d frame %d rollbacks %d mismatching %d slot(F-k)=%s", ticks, gw_Replay_Frame(),
+                   sn.passes, sn.mismatches, sn_slot_for(gw_Replay_Frame() + 1 - sn.k, 0) != NULL ? "yes" : "no");
+        }
     }
     sn.target = gw_Replay_Frame() + 1;
     /* A render pool discovered this recently has not been stocked by logic in the frames a

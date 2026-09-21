@@ -411,7 +411,9 @@ static uint32_t gw_sample_total[GW_SAMPLE_THREADS];
  * profile of only the slow frames. */
 #define GW_SPIKE_RING 8192u
 #define GW_SPIKE_SLOTS 16384u
-static struct { long long qpc; uint32_t eip, caller; } gw_spike_ring[GW_SPIKE_RING];
+#define GW_CHAIN 8
+static struct { long long qpc; uint32_t eip, caller, chain[GW_CHAIN]; } gw_spike_ring[GW_SPIKE_RING];
+static struct { uint32_t chain[GW_CHAIN], count; } gw_chain_tab[GW_SPIKE_SLOTS];
 static volatile uint32_t gw_spike_ring_head;
 static struct { uint32_t eip, caller, count; } gw_spike_tab[GW_SPIKE_SLOTS];
 static uint32_t gw_spike_total, gw_spike_frames;
@@ -544,6 +546,27 @@ static DWORD WINAPI gw_sample_thread(LPVOID arg) {
           gw_spike_ring[r].qpc = gw_prof_now();
           gw_spike_ring[r].eip = eip;
           gw_spike_ring[r].caller = caller;
+          {
+            MEMORY_BASIC_INFORMATION cm;
+            const uint32_t sp0 = (uint32_t)ctx.Esp;
+            int nc = 0, k;
+            for (k = 0; k < GW_CHAIN; ++k) {
+              gw_spike_ring[r].chain[k] = 0u;
+            }
+            if (VirtualQuery((LPCVOID)(uintptr_t)sp0, &cm, sizeof cm) != 0) {
+              const uint32_t ctop = (uint32_t)(uintptr_t)cm.BaseAddress + (uint32_t)cm.RegionSize;
+              uint32_t q;
+              for (q = sp0; q + 4u <= ctop && q < sp0 + 16384u && nc < GW_CHAIN; q += 4u) {
+                const uint32_t v = *(const uint32_t *)(uintptr_t)q;
+                if (v >= gw_sample_text_lo + 6u && v < gw_sample_text_hi) {
+                  const uint8_t *b = (const uint8_t *)(uintptr_t)v;
+                  if (b[-5] == 0xE8u || b[-6] == 0xFFu || b[-2] == 0xFFu || b[-3] == 0xFFu) {
+                    gw_spike_ring[r].chain[nc++] = v - gw_sample_text_lo;
+                  }
+                }
+              }
+            }
+          }
           ++gw_spike_ring_head;
         }
         h = ((eip ^ caller ^ ((uint32_t)t << 27)) * 2654435761u) >> 15;
@@ -607,6 +630,19 @@ static void gw_spike_collect(long long t0, long long t1) {
     if (gw_spike_ring[r].qpc > t1) {
       continue;
     }
+    {
+      uint32_t ch = 2166136261u, kk;
+      for (kk = 0; kk < 5; ++kk) {
+        ch = (ch ^ gw_spike_ring[r].chain[kk]) * 16777619u;
+      }
+      ch = (ch >> 18) & (GW_SPIKE_SLOTS - 1u);
+      while (gw_chain_tab[ch].count != 0u &&
+             memcmp(gw_chain_tab[ch].chain, gw_spike_ring[r].chain, 5 * sizeof(uint32_t)) != 0) {
+        ch = (ch + 1u) & (GW_SPIKE_SLOTS - 1u);
+      }
+      memcpy(gw_chain_tab[ch].chain, gw_spike_ring[r].chain, 5 * sizeof(uint32_t));
+      ++gw_chain_tab[ch].count;
+    }
     h = ((gw_spike_ring[r].eip ^ gw_spike_ring[r].caller) * 2654435761u) >> 18;
     while (gw_spike_tab[h].count != 0u && (gw_spike_tab[h].eip != gw_spike_ring[r].eip ||
                                             gw_spike_tab[h].caller != gw_spike_ring[r].caller)) {
@@ -651,6 +687,19 @@ static void gw_spike_dump(void) {
   }
   fclose(f);
   MoveFileExA("melee-pc.spike.samples.tmp", "melee-pc.spike.samples", MOVEFILE_REPLACE_EXISTING);
+  {
+    FILE *cf = fopen("melee-pc.spike.chains", "w");
+    if (cf != NULL) {
+      for (i = 0; i < GW_SPIKE_SLOTS; ++i) {
+        if (gw_chain_tab[i].count != 0u) {
+          fprintf(cf, "%u %X %X %X %X %X\n", gw_chain_tab[i].count, gw_chain_tab[i].chain[0],
+                  gw_chain_tab[i].chain[1], gw_chain_tab[i].chain[2], gw_chain_tab[i].chain[3],
+                  gw_chain_tab[i].chain[4]);
+        }
+      }
+      fclose(cf);
+    }
+  }
   gw_log("gw: PROF spike profile: %u spike frames, %u samples -> melee-pc.spike.samples",
          gw_spike_frames, gw_spike_total);
 }
@@ -836,6 +885,18 @@ void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
 void gw_wait_idle(void) {
   const uint64_t now = GetTickCount64();
   ++gw_wait_idle_count;
+  /* A queued completion is already DUE: the DVD/ARQ shims do the transfer inline and only defer
+   * the callback out of the starter's stack (gw_defer). The game's synchronous waits are
+   * `while (state != DONE) wait_idle();` (lbArq_80014BD0 above all - every fighter action-state
+   * change loads its animation from ARAM this way), and nothing but this call can set DONE, so
+   * gating it on the clock made each such load wait for GetTickCount64 to change. That is a
+   * millisecond at best and a whole 15.6 ms system tick when the timer resolution is coarse: in a
+   * real 4-player fight, several motion changes a frame stacked into 20-90 ms game-thread spins
+   * (~10 million wait_idle calls) and a p99 of 45 ms. Run the queue at once; the clock gate stays
+   * for alarms, which are genuinely time-driven. */
+  if (gw_deferred_count != 0) {
+    gw_run_deferred();
+  }
   if (now == gw_last_advance_ms) {
     return;
   }

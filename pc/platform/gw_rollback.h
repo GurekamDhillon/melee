@@ -37,6 +37,13 @@
  *   MELEE_RB_REMOTE=<hex> mask of ports whose inputs arrive over the (fake) network (default 2:
  *                         port 1); all other present ports are local
  *   MELEE_RB_SEED=<n>     seed for the fake network's jitter and loss (default 12345)
+ *   MELEE_RB_INPUT=replay|padgen|live   where the players' inputs come from (default replay):
+ *        replay  the .slp's recorded PROCESSED inputs (the acceptance test)
+ *        padgen  a deterministic per-frame RAW pad generator (MELEE_RB_PADSEED), through the game's
+ *                own pad pipeline - the automated test of the raw-controller path
+ *        live    the real controllers (PADRead), latched between logic frames; every present port
+ *                is read locally, and the ports in MELEE_RB_REMOTE are delivered through the fake
+ *                network - two humans on one machine standing in for a remote peer
  */
 #ifndef GW_ROLLBACK_H
 #define GW_ROLLBACK_H
@@ -55,6 +62,14 @@ typedef struct GwRbInput {
     int8_t raw[4];      /* raw stick bytes x, y, c-x, c-y (what UCF reads); 0 when unknown */
     uint8_t present;    /* 0: no input for this slot - the fighter reads the live pad */
     uint8_t confirmed;  /* 1: the real input; 0: a prediction (session ring only) */
+    /* RAW CONTROLLER entries (is_raw = 1): a whole PADStatus - buttons = the 16-bit button word,
+     * raw[] = stickX, stickY, substickX, substickY, the fields below = the rest. The floats are
+     * unused. The session then feeds the game's own pad pipeline (HSD_PadRenewMasterStatus), so
+     * deadzones, calibration and UCF's raw-byte reads all run as on a console, and fighters read
+     * their pad normally instead of a replay-style processed input. */
+    uint8_t is_raw;
+    uint8_t pad_l, pad_r, pad_a, pad_b; /* triggerLeft/Right, analogA/B */
+    int8_t pad_err;                     /* PADStatus.err (0 = ok) */
 } GwRbInput;
 
 /* ======================= THE NETWORK-FACING INTERFACE ======================================== */
@@ -121,9 +136,27 @@ void gw_RB_SceneBegin(int scene_kind);
  * and the session's hooks the scene loop runs. */
 int gw_RB_Enabled(void);
 
-/* gw_replay.c: the session's input for (port, follower) at `frame`, or NULL when the fighter
- * should read the live pad. */
+/* gw_replay.c: the session's PROCESSED input for (port, follower) at `frame` (replay-style
+ * entries), or NULL when the fighter should read the pad pipeline (raw entries, or none). */
 const GwRbInput *gw_RB_InputFor(int port, int follower, int frame);
+
+/* gw_replay.c (UCF): the session's entry for (port, leader) at `frame` INCLUDING raw-controller
+ * ones - what UCF reads raw stick bytes from. NULL when there is none. */
+const GwRbInput *gw_RB_InputAny(int port, int frame);
+
+/* controller.c, HSD_PadRenewRawStatus, after PADRead: latch one poll of one port. Between two
+ * logic frames the latch ORs the button edges, keeps the trigger/analog peak and takes the newest
+ * stick position - a tap or an air-dodge press that begins and ends between two logic frames is
+ * not lost. Ignored unless MELEE_RB_INPUT=live. */
+void gw_RB_PadLatch(int port, int button, int sx, int sy, int cx, int cy, int l, int r, int a,
+                    int b, int err);
+
+/* controller.c, HSD_PadRenewMasterStatus: does the session feed this logic iteration's pad
+ * status (raw-controller sources), and, if so, its fields for `port`
+ * (which: 0 button, 1 stickX, 2 stickY, 3 substickX, 4 substickY, 5 triggerL, 6 triggerR,
+ * 7 analogA, 8 analogB, 9 err). Scalars only: the game side byte-swaps its own memory. */
+int gw_RB_PadGoverned(void);
+int gw_RB_PadField(int port, int which);
 
 /* gw_replay.c: the replay's recorded input for (slot, frame) - the "player" side of the fake
  * network. Returns 0 when the replay has none. */

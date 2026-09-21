@@ -50,6 +50,23 @@ static struct {
     int tried, on;
     int log;              /* MELEE_RB_LOG=<n>: log the first n rollbacks and mismatches */
     int in_match;         /* the scene now running is a VS match (gw_RB_SceneBegin) */
+    int src;              /* input source: 0 replay (processed), 1 pad generator, 2 live pads */
+    unsigned gen_seed;
+    /* live pads: one latch per port, fed by every PADRead */
+    struct {
+        int have;
+        uint16_t bacc, bnew;                /* buttons: OR since the last sample / newest poll */
+        int8_t sx, sy, cx, cy, err;         /* newest */
+        uint8_t l, r, a, b;                 /* newest */
+        uint8_t lpk, rpk, apk, bpk;         /* peaks since the last sample */
+    } latch[4];
+    /* live pads: remote ports' samples in flight on the fake network */
+    struct {
+        int slot, frame;
+        long arrival;
+        GwRbInput in;
+    } pend[128];
+    int npend;
     int delay, maxb;
     int fake_lat, fake_jit, fake_loss;
     unsigned seed;
@@ -133,11 +150,16 @@ static void rb_init(void) {
     if (rb.maxb < 1) rb.maxb = 1;
     if (rb.maxb > 12) rb.maxb = 12;
     rb.first_wrong = RB_NONE;
+    {
+        const char *sv = getenv("MELEE_RB_INPUT");
+        rb.src = (sv != NULL && (sv[0] == 'p' || sv[0] == 'P')) ? 1 : (sv != NULL && (sv[0] == 'l' || sv[0] == 'L')) ? 2 : 0;
+        rb.gen_seed = getenv("MELEE_RB_PADSEED") != NULL ? (unsigned) atoi(getenv("MELEE_RB_PADSEED")) : 777u;
+    }
     rb.log = getenv("MELEE_RB_LOG") != NULL ? atoi(getenv("MELEE_RB_LOG")) : 0;
     rb.on = 1;
     gw_log("rb: session ON (fake network: latency %d, jitter %d, loss %d%%; input delay %d, max "
-           "rollback %d, remote ports 0x%X)", rb.fake_lat, rb.fake_jit, rb.fake_loss, rb.delay,
-           rb.maxb, rb.remote_mask);
+           "rollback %d, remote ports 0x%X; inputs from %s)", rb.fake_lat, rb.fake_jit, rb.fake_loss,
+           rb.delay, rb.maxb, rb.remote_mask, rb.src == 2 ? "live pads" : rb.src == 1 ? "the pad generator" : "the replay");
 }
 
 int gw_RB_Enabled(void) {
@@ -167,6 +189,8 @@ void gw_RB_SceneBegin(int scene_kind) {
         rb.first_wrong = RB_NONE;
         memset(&rb.plan, 0, sizeof rb.plan);
         rb.iter_kind = 0;
+        rb.npend = 0;
+        memset(rb.latch, 0, sizeof rb.latch);
         for (s = 0; s < GW_RB_SLOTS; ++s) {
             rb.conf_slot[s] = RB_FIRST - 1;
         }
@@ -196,8 +220,71 @@ static RbEntry *rb_at(RbEntry ring[RB_RING], int frame, int create) {
 }
 
 static int rb_same(const GwRbInput *a, const GwRbInput *b) {
-    return a->present == b->present && memcmp(&a->lx, &b->lx, 5 * sizeof(float)) == 0 &&
-           a->buttons == b->buttons && memcmp(a->raw, b->raw, 4) == 0;
+    return a->present == b->present && a->is_raw == b->is_raw &&
+           memcmp(&a->lx, &b->lx, 5 * sizeof(float)) == 0 && a->buttons == b->buttons &&
+           memcmp(a->raw, b->raw, 4) == 0 && a->pad_l == b->pad_l && a->pad_r == b->pad_r &&
+           a->pad_a == b->pad_a && a->pad_b == b->pad_b && a->pad_err == b->pad_err;
+}
+
+/* A neutral raw controller: present, sticks centred, nothing held. */
+static void rb_neutral_raw(GwRbInput *o) {
+    memset(o, 0, sizeof *o);
+    o->present = 1;
+    o->is_raw = 1;
+    o->confirmed = 1;
+}
+
+/* THE PAD GENERATOR (MELEE_RB_INPUT=padgen): a raw controller state that is a pure function of
+ * (seed, port, frame), so both ends of the fake network (and every resimulation) derive the same
+ * input. Eight-frame blocks pick a move (run, jump, attack, special, shield, ...); sticks jitter
+ * by a few raw units every frame so a prediction (the last input repeated) is usually a little
+ * wrong and rollbacks are exercised constantly. */
+static unsigned rb_hash(unsigned a, unsigned b, unsigned c);
+static void rb_gen(int slot, int frame, GwRbInput *o) {
+    int port = slot >> 1, sx = 0, sy = 0, cx = 0, cy = 0, l = 0, r = 0;
+    unsigned btn = 0;
+    unsigned blk = (unsigned) ((frame - RB_FIRST) >> 3);
+    unsigned h = rb_hash(rb.gen_seed + (unsigned) port * 7919u, blk, 0x51u);
+    unsigned j = rb_hash(rb.gen_seed + (unsigned) port * 104729u, (unsigned) frame, 0x77u);
+    int mag = 40 + (int) ((h >> 8) & 0x2F);
+    rb_neutral_raw(o);
+    if (frame < RB_FIRST + 24) {
+        return; /* intro */
+    }
+    switch (h & 7u) {
+    case 0: break;                                             /* stand */
+    case 1: sx = -mag - 30; break;                             /* run left */
+    case 2: sx = mag + 30; break;                              /* run right */
+    case 3: btn = 0x0400u; sx = ((h >> 4) & 1u) ? mag : -mag; break; /* jump */
+    case 4: btn = 0x0100u; sx = ((h >> 4) & 1u) ? 30 : -30; break;   /* A (tilt/jab) */
+    case 5: btn = 0x0200u; sy = ((h >> 4) & 1u) ? 70 : -70; sx = ((h >> 5) & 1u) ? 60 : -60; break; /* B */
+    case 6: btn = 0x0020u; r = 200; sx = (int) ((h >> 4) & 0x3F) - 32; break;                  /* shield */
+    default: cx = ((h >> 4) & 1u) ? 85 : -85; cy = (int) ((h >> 5) & 0x1F) - 16; break;           /* smash */
+    }
+    if (((h >> 12) & 3u) == 0u) {
+        btn |= 0x0100u; /* sometimes press A on top */
+    }
+    sx += (int) (j & 7u) - 3;
+    sy += (int) ((j >> 3) & 7u) - 3;
+    o->buttons = btn;
+    o->raw[0] = (int8_t) sx;
+    o->raw[1] = (int8_t) sy;
+    o->raw[2] = (int8_t) cx;
+    o->raw[3] = (int8_t) cy;
+    o->pad_l = (uint8_t) l;
+    o->pad_r = (uint8_t) r;
+}
+
+/* Where a slot's TRUE input for `frame` comes from in the fake-network modes. */
+static int rb_src_peek(int slot, int frame, GwRbInput *out) {
+    if (rb.src == 1) {
+        if ((slot & 1) || !rb.slot_present[slot]) {
+            return 0;
+        }
+        rb_gen(slot, frame, out);
+        return 1;
+    }
+    return gw_Replay_PeekInput(slot, frame, out);
 }
 
 static int rb_conf(void) {
@@ -300,7 +387,146 @@ const GwRbInput *gw_RB_InputFor(int port, int follower, int frame) {
         return NULL;
     }
     e = rb_at(rb.used[slot], frame, 0);
+    return e != NULL && e->in.present && !e->in.is_raw ? &e->in : NULL;
+}
+
+const GwRbInput *gw_RB_InputAny(int port, int frame) {
+    RbEntry *e;
+    if (!rb.on || port < 0 || port > 3) {
+        return NULL;
+    }
+    e = rb_at(rb.used[port * 2], frame, 0);
     return e != NULL && e->in.present ? &e->in : NULL;
+}
+
+/* ---- live pads and the pad pipeline ---------------------------------------------------------- */
+
+void gw_RB_PadLatch(int port, int button, int sx, int sy, int cx, int cy, int l, int r, int a, int b,
+                    int err) {
+    rb_init();
+    if (!rb.on || rb.src != 2 || port < 0 || port > 3) {
+        return;
+    }
+    {
+        typeof(rb.latch[0]) *L = &rb.latch[port];
+        if (!L->have) {
+            L->bacc = (uint16_t) button;
+            L->lpk = (uint8_t) l;
+            L->rpk = (uint8_t) r;
+            L->apk = (uint8_t) a;
+            L->bpk = (uint8_t) b;
+        } else {
+            L->bacc |= (uint16_t) button;
+            if ((uint8_t) l > L->lpk) L->lpk = (uint8_t) l;
+            if ((uint8_t) r > L->rpk) L->rpk = (uint8_t) r;
+            if ((uint8_t) a > L->apk) L->apk = (uint8_t) a;
+            if ((uint8_t) b > L->bpk) L->bpk = (uint8_t) b;
+        }
+        L->have = 1;
+        L->bnew = (uint16_t) button;
+        L->sx = (int8_t) sx;
+        L->sy = (int8_t) sy;
+        L->cx = (int8_t) cx;
+        L->cy = (int8_t) cy;
+        L->l = (uint8_t) l;
+        L->r = (uint8_t) r;
+        L->a = (uint8_t) a;
+        L->b = (uint8_t) b;
+        L->err = (int8_t) err;
+    }
+}
+
+int gw_RB_PadGoverned(void) {
+    return rb.on && rb.in_match && rb.opened && rb.src != 0 && gw_Replay_Frame() >= RB_FIRST - 1;
+}
+
+int gw_RB_PadField(int port, int which) {
+    RbEntry *e;
+    const GwRbInput *in;
+    if (port < 0 || port > 3) {
+        return 0;
+    }
+    e = rb_at(rb.used[port * 2], gw_Replay_Frame() + 1, 0);
+    if (e == NULL || !e->in.present) {
+        return 0; /* no such pad: neutral */
+    }
+    in = &e->in;
+    switch (which) {
+    case 0: return (int) (in->buttons & 0xFFFFu);
+    case 1: return in->raw[0];
+    case 2: return in->raw[1];
+    case 3: return in->raw[2];
+    case 4: return in->raw[3];
+    case 5: return in->pad_l;
+    case 6: return in->pad_r;
+    case 7: return in->pad_a;
+    case 8: return in->pad_b;
+    default: return in->pad_err;
+    }
+}
+
+/* Take this frame's live sample: for frame `next` + D. Local ports' samples are inputs the
+ * moment they are taken; remote ports' travel on the fake network first. */
+static void rb_live_sample(int next) {
+    int s, ff = next + rb.delay;
+    for (s = 0; s < GW_RB_SLOTS; s += 2) {
+        int p = s >> 1, i, dup = 0;
+        GwRbInput in;
+        typeof(rb.latch[0]) *L = &rb.latch[p];
+        if (!rb.slot_present[s] || rb_at(rb.truth[s], ff, 0) != NULL) {
+            continue; /* not in the match, or this frame is already sampled (a held frame) */
+        }
+        for (i = 0; i < rb.npend; ++i) {
+            if (rb.pend[i].slot == s && rb.pend[i].frame == ff) {
+                dup = 1;
+            }
+        }
+        if (dup) {
+            continue;
+        }
+        rb_neutral_raw(&in);
+        if (L->have) {
+            in.buttons = L->bacc;
+            in.raw[0] = L->sx;
+            in.raw[1] = L->sy;
+            in.raw[2] = L->cx;
+            in.raw[3] = L->cy;
+            in.pad_l = L->lpk;
+            in.pad_r = L->rpk;
+            in.pad_a = L->apk;
+            in.pad_b = L->bpk;
+            in.pad_err = L->err;
+            /* the next sample starts from what is held now: a held button persists, a press that
+               began and ended in between was reported once, in this one */
+            L->bacc = L->bnew;
+            L->lpk = L->l;
+            L->rpk = L->r;
+            L->apk = L->a;
+            L->bpk = L->b;
+        }
+        if (!rb.slot_remote[s]) {
+            rb_at(rb.truth[s], ff, 1)->in = in;
+        } else if (rb.npend < (int) (sizeof rb.pend / sizeof rb.pend[0])) {
+            int j = 0;
+            long at;
+            if (rb.fake_jit > 0) {
+                j = (int) (rb_hash(rb.seed, (unsigned) ff, (unsigned) s) % (unsigned) (2 * rb.fake_jit + 1)) - rb.fake_jit;
+            }
+            at = rb.tk + rb.fake_lat + j;
+            if (rb.fake_loss > 0 &&
+                (int) (rb_hash(rb.seed ^ 0xA5A5u, (unsigned) ff, (unsigned) s) % 100u) < rb.fake_loss) {
+                at += 2L * rb.fake_lat + 3;
+            }
+            if (at < rb.tk) {
+                at = rb.tk;
+            }
+            rb.pend[rb.npend].slot = s;
+            rb.pend[rb.npend].frame = ff;
+            rb.pend[rb.npend].arrival = at;
+            rb.pend[rb.npend].in = in;
+            rb.npend++;
+        }
+    }
 }
 
 /* ---- the fake network -------------------------------------------------------------------- */
@@ -329,6 +555,20 @@ static long rb_arrival(int slot, int frame) {
 
 static void rb_fake_deliver(void) {
     int s;
+    if (rb.src == 2) {
+        int i = 0;
+        while (i < rb.npend) {
+            if (rb.pend[i].arrival <= rb.tk) {
+                GwRbInput in = rb.pend[i].in;
+                int sl = rb.pend[i].slot, fr = rb.pend[i].frame;
+                rb.pend[i] = rb.pend[--rb.npend];
+                gw_rb_submit_remote_input(sl, fr, &in);
+            } else {
+                ++i;
+            }
+        }
+        return;
+    }
     for (s = 0; s < GW_RB_SLOTS; ++s) {
         int f, top;
         if (!rb.slot_present[s] || !rb.slot_remote[s]) {
@@ -348,7 +588,7 @@ static void rb_fake_deliver(void) {
             if (rb_arrival(s, f) > rb.tk) {
                 continue;
             }
-            if (!gw_Replay_PeekInput(s, f, &in)) {
+            if (!rb_src_peek(s, f, &in)) {
                 memset(&in, 0, sizeof in);
                 in.present = 0;
             }
@@ -380,7 +620,7 @@ int gw_RB_Iterations(int count) {
         for (s = 0; s < GW_RB_SLOTS; ++s) {
             GwRbInput probe;
             int p = s >> 1;
-            rb.slot_present[s] = gw_Replay_PeekInput(s, RB_FIRST, &probe);
+            rb.slot_present[s] = gw_Replay_PeekInput(s, RB_FIRST, &probe) && (rb.src == 0 || !(s & 1));
             rb.slot_remote[s] = (rb.remote_mask >> p) & 1u;
             rb.conf_slot[s] = RB_FIRST - 1;
             {
@@ -388,6 +628,23 @@ int gw_RB_Iterations(int count) {
                 for (q = 0; q < RB_RING; ++q) {
                     rb.used[s][q].frame = INT_MIN;
                     rb.truth[s][q].frame = INT_MIN;
+                }
+            }
+        }
+        if (rb.src == 2 && rb.delay > 0) {
+            /* live pads: the first D frames have no sample behind them (a sample taken at frame F
+               is for F + D): both peers agree they are neutral */
+            for (s = 0; s < GW_RB_SLOTS; ++s) {
+                int f;
+                if (!rb.slot_present[s]) {
+                    continue;
+                }
+                for (f = RB_FIRST; f < RB_FIRST + rb.delay; ++f) {
+                    RbEntry *e = rb_at(rb.truth[s], f, 1);
+                    rb_neutral_raw(&e->in);
+                }
+                if (rb.slot_remote[s]) {
+                    rb.conf_slot[s] = RB_FIRST + rb.delay - 1;
                 }
             }
         }
@@ -561,11 +818,14 @@ static void rb_prepare(int next) {
         if (t != NULL) {
             in = t->in;
         } else if (!rb.slot_remote[s]) {
-            /* a local slot: the fake "player" (the replay) provides it, D frames ahead of use */
-            if (gw_Replay_PeekInput(s, next, &in)) {
+            /* a local slot: the fake "player" (the replay or the generator) provides it; live pads
+               were sampled D frames ago (rb_live_sample) and only a hole reaches here */
+            if (rb.src != 2 && rb_src_peek(s, next, &in)) {
                 RbEntry *nt = rb_at(rb.truth[s], next, 1);
                 nt->in = in;
                 nt->in.confirmed = 1;
+            } else if (rb.src != 0) {
+                rb_neutral_raw(&in);
             } else {
                 memset(&in, 0, sizeof in);
             }
@@ -578,6 +838,7 @@ static void rb_prepare(int next) {
             } else {
                 memset(&in, 0, sizeof in);
                 in.present = 1; /* neutral */
+                in.is_raw = rb.src != 0;
             }
             in.confirmed = 0;
             in.seed = 0;
@@ -613,6 +874,9 @@ void gw_RB_IterStart(void) {
     }
     next = gw_Replay_Frame() + 1;
     resim = rb.plan.rollback && next < rb.plan.n;
+    if (!resim && rb.src == 2) {
+        rb_live_sample(next);
+    }
     rb_prepare(next);
     gw_Replay_TraceBeginIter(next);
     if (!(rb.plan.i == 0 && rb.plan.rollback)) {

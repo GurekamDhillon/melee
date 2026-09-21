@@ -811,7 +811,7 @@ int gw_Replay_UcfCardinals(int port) {
 
 /* This frame's raw stick byte (0 x, 1 y, 2 c-x, 3 c-y) for the port. */
 int gw_Replay_RawStick(int port, int which) {
-    const GwRpInput *r = rp_cur(port, 0);
+    const GwRpInput *r = gw_rb_active() ? gw_RB_InputAny(port, rp.frame) : rp_cur(port, 0);
     return r != NULL && which >= 0 && which < 4 ? r->raw[which] : 0;
 }
 
@@ -843,7 +843,7 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
     int f = rp.frame - back;
     if (gw_rb_active()) {
         /* what the session USED for that frame - a predicted input's raw bytes, not the truth */
-        r = gw_RB_InputFor(port, 0, f);
+        r = gw_RB_InputAny(port, f);
         return r != NULL && which >= 0 && which < 4 ? r->raw[which] : 0;
     }
     if (!rp.active || f < rp.first || f > rp.last || port < 0 || port > 3 || which < 0 ||

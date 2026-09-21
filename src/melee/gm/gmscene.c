@@ -843,9 +843,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     extern int Replay_Tick(void);
                     extern u32 Replay_ResyncSeed(void);
                     extern void Replay_CheckSeed(u32 port_seed);
+                    extern void Replay_NoteSeed(u32 arrived_seed);
                     if (Replay_Enabled()) {
                         u32 s;
                         Replay_Tick();
+                        Replay_NoteSeed(*HSD_RandSeedPtr); /* the seed the port ARRIVED with */
                         s = Replay_ResyncSeed();
                         if (s != 0) {
                             *HSD_RandSeedPtr = s;

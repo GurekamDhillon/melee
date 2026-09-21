@@ -264,6 +264,18 @@ float ftLib_800864A8(Vec3* v, HSD_GObj* gobj)
                 continue;
             }
 
+#if defined(TARGET_PC)
+            {
+                /* Slippi online's WhispyBlowDirFix (Online/Core/WhispyBlowDirFix, @ 0x8008653C):
+                   a fighter in a Dead animation (motion <= 0xB, e.g. a camera KO) counts for
+                   neither side when Whispy picks a direction. Its bone positions are unreliable
+                   during a rollback's fast-forward, and this function's tie-break draws the RNG. */
+                extern int Slippi_Codes(void);
+                if (Slippi_Codes() == 2 && cur_fp->motion_id <= 0xB) {
+                    continue;
+                }
+            }
+#endif
             ftLib_800866DC(cur, &vec);
             result += sgn(vec.x - v->x);
         }
@@ -548,6 +560,31 @@ bool ftLib_80086A8C(HSD_GObj* gobj)
     fp->x221F_b0 = false;
     return true;
 }
+
+#if defined(TARGET_PC)
+/* ftLib_80086A8C's flag write, from LOGIC (called by ifMagnify_UpdateLogicOffscreen at the end of
+ * every logic frame, after Camera_8002A4AC has refreshed the game camera's cobj exactly as its
+ * render callback does first). The original runs only inside the fighter's draw callback
+ * (ftDrawCommon_80080E18) while the game camera is HSD_CObjGetCurrent(), and Fighter_8006A1BC's
+ * off-screen damage reads the result - so logic depended on rendering: catch-up frames under load,
+ * and rollback resimulation, which renders nothing. Every fighter draw of a match render happens
+ * inside the game camera's CObjSetCurrent block (fn_800301D0), so the render's final value is the
+ * main-camera test, which is what this computes; the projection (Camera_80030CD8 ->
+ * lbVector_WorldToScreen with d=1 -> GXProject) is pure math on the cobj's fields, no GX state.
+ * The draw callback keeps writing the same value when it renders. */
+void ftLib_UpdateLogicOffCamera(HSD_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->x221F_b3) {
+        return; /* ftDrawCommon_80080E18 skips the test then too */
+    }
+    if (!fp->x2229_b3 && !fp->x2220_b7 && Camera_80030A50() != NULL) {
+        fp->x221F_b0 = !Camera_80030CD8(fp->x890_cameraBox, &fp->x2188);
+    } else {
+        fp->x221F_b0 = false;
+    }
+}
+#endif
 
 bool ftLib_80086B64(HSD_GObj* gobj)
 {

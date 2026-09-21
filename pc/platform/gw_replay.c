@@ -65,6 +65,7 @@ static struct {
     uint32_t ucf_dashback[4]; /* Game Start per-port UCF toggles: 0 off, 1 UCF, 2 arduino */
     uint32_t ucf_shield[4];
     int resync;
+    int frozen_ps; /* Game Start Frozen PS (2.0+) */
     int online; /* Game Start major scene 8: Slippi online, which forces the seed every frame */
     FILE *trace;
     FILE *vel; /* <trace>.vel.csv: the velocities Slippi 3.5+ post-frame records */
@@ -128,6 +129,7 @@ static int rp_parse(const uint8_t *d, size_t n) {
                 memcpy(rp.game_info, b + 5, GW_RP_GAME_INFO);
                 rp.seed = rp_be32(b + 0x13D);
                 rp.online = sz >= 0x1A4 && b[0x1A4] == 8; /* major scene, 3.7.0+ */
+                rp.frozen_ps = sz >= 0x1A2 && b[0x1A2] != 0; /* 2.0.0+ */
                 if (sz >= 0x160) { /* 1.0.0+ */
                     int p;
                     for (p = 0; p < 4; ++p) {
@@ -574,6 +576,15 @@ void gw_Replay_CheckSeed(uint32_t port_seed) {
     }
 }
 
+/* Where this replay's Slippi recorded post-frame state: 1.x/2.x at Fighter_procMap's epilogue
+ * (0x8006C5D8), 3.x at Fighter_UnkCallCameraCallback_8006D9EC's (0x8006DA34, after hits). */
+int gw_Replay_TraceAtProcMap(void) {
+    if (rp.active) {
+        return rp.version[0] < 3;
+    }
+    return 0;
+}
+
 int gw_Replay_Tracing(void) {
     return (rp.trace != NULL && rp.frame != GW_RP_UNARMED) ||
            (rec.f != NULL && rec.frame != GW_RP_UNARMED);
@@ -671,12 +682,30 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
 
 /* <trace>.rand.csv: every RNG draw while a replay is armed - frame, caller (native return address),
  * seed after, and whether it drew the global seed or a redirected one (HSD_RandSeedPtr). */
+/* Set by gmscene.c around the render section of the scene loop. */
+static int gw_det_in_render;
+void gw_Det_SetInRender(int on) { gw_det_in_render = on; }
+
 void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
     static FILE *rf;
     static int tried;
     extern int gw_Snap_Resimulating(void);
     if (gw_Snap_Resimulating()) {
         return;
+    }
+    if (gw_det_in_render && global) {
+        /* render code drawing from the GLOBAL seed: simulation state consumed by rendering, so a
+           frame that renders and one that does not (catch-up, rollback resimulation) diverge.
+           Logged once per caller; resolve the address against melee-pc.map. */
+        static uint32_t seen[64];
+        static int nseen;
+        int k;
+        for (k = 0; k < nseen && seen[k] != caller; ++k) {
+        }
+        if (k == nseen && nseen < 64) {
+            seen[nseen++] = caller;
+            gw_log("det: RNG draw during render from 0x%08X (frame %d)", caller, rp.frame);
+        }
     }
     if (!rp.active || rp.frame == GW_RP_UNARMED) {
         return;
@@ -711,4 +740,50 @@ int gw_Det_Enabled(void) {
         gw_log("det: deterministic mode %s", cached ? "ON" : "off");
     }
     return cached;
+}
+
+/* ---- Slippi's gameplay codes -----------------------------------------------------------------
+ * Which of Slippi's gameplay-affecting codes are in force (_research/slippi-gameplay-codes.md):
+ *   0 none, 1 the console/tournament codeset, 2 the online codeset.
+ * During .slp playback it is the recording's own: major scene 8 (online) -> 2, any other replay
+ * -> 1 (each code gates itself further by the replay's Slippi version, gw_Slippi_Version).
+ * Outside playback MELEE_SLIPPI_CODES=tournament|online|off picks it (default off, i.e. vanilla).
+ */
+int gw_Slippi_Codes(void) {
+    static int cached = -1;
+    if (cached < 0) {
+        const char *v = getenv("MELEE_SLIPPI_CODES");
+        if (v != NULL && v[0] != '\0') {
+            cached = (v[0] == 'o' || v[0] == 'O') ? 2 : (v[0] == 't' || v[0] == 'T' || v[0] == 'c') ? 1 : 0;
+        } else if (gw_Replay_Active()) {
+            cached = rp.online ? 2 : 1;
+        } else {
+            cached = 0;
+        }
+        gw_log("slippi: gameplay codes %s", cached == 2 ? "online" : cached == 1 ? "tournament" : "off");
+    }
+    return cached;
+}
+
+/* The replay's Slippi version as major*10000 + minor*100 + build (3.19.1 -> 31901), or a large
+ * number outside playback (live play gets the current codes). */
+int gw_Slippi_Version(void) {
+    if (!gw_Replay_Active()) {
+        return 999999;
+    }
+    return rp.version[0] * 10000 + rp.version[1] * 100 + rp.version[2];
+}
+
+/* Slippi's Frozen PS: the recording says so in its Game Start (Frozen PS, 2.0+); outside playback
+ * MELEE_SLIPPI_FROZEN_PS=1 enables it (the console codeset g_stages_stadium is opt-in too). */
+int gw_Slippi_FrozenStadium(void) {
+    static int live = -1;
+    if (gw_Replay_Active()) {
+        return rp.frozen_ps;
+    }
+    if (live < 0) {
+        const char *v = getenv("MELEE_SLIPPI_FROZEN_PS");
+        live = v != NULL && v[0] == '1';
+    }
+    return live;
 }

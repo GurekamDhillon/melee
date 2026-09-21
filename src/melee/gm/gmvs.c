@@ -2080,7 +2080,16 @@ void fn_8016E2BC(void)
                  * spawn point with the per-stage neutral spawn layout. Opt-in:
                  * MELEE_MEX=neutral_spawn. */
                 extern int Mex_Enabled(const char *);
-                if (Mex_Enabled("neutral_spawn") && !gm_IsCurrently1PMode_inline() && i < 5) {
+                /* Slippi's console and online codesets carry the same Neutral Spawn
+                   (slippi-ssbm-asm External/NeutralSpawn/NeutralSpawn.asm, same hook, same table):
+                   every singles replay checked - the 2019 1.7.1 corpus and 3.19 online - starts
+                   its fighters on these points (plus each character's own x offset). So a .slp
+                   playback always uses it; without it Battlefield replays started a fighter at
+                   (0, 8) instead of (-38.8, 35.2). */
+                extern int Replay_Active(void);
+                if ((Mex_Enabled("neutral_spawn") || Replay_Active()) &&
+                    !gm_IsCurrently1PMode_inline() && i < 5)
+                {
                     bool neutral_is_teams = controller.start.is_teams == true;
                     if (neutral_is_teams) {
                         bool is_2v2 = true;

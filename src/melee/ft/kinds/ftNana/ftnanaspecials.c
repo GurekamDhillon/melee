@@ -63,7 +63,22 @@ bool ftNn_Init_80123954(Fighter_GObj* nana_gobj, GroundOrAir pp_ga)
         case 11:
         case 12:
         case 13:
+#if defined(TARGET_PC)
+            {
+                /* Slippi's FreezeGlitchFix (External/FreezeGlitchFix, @ 0x801239A8: this store
+                   nop'd) - clearing Nana's grab link here is what the freeze glitch rides on.
+                   In the online codeset and in console codesets from 2020-07 (Slippi 2.x on). */
+                extern int Slippi_Codes(void);
+                extern int Slippi_Version(void);
+                if (!(Slippi_Codes() == 2 ||
+                      (Slippi_Codes() == 1 && Slippi_Version() >= 20000)))
+                {
+                    nana_fp->x1A5C = NULL;
+                }
+            }
+#else
             nana_fp->x1A5C = NULL;
+#endif
             ret = true;
             break;
         default: {

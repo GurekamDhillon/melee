@@ -670,6 +670,21 @@ void ifMagnify_UpdateLogicOffscreen(void)
             show && !magnify->player[i].state.ignore_offscreen && fighter_gobj != NULL &&
             ftLib_80086B64(fighter_gobj) && ftLib_80086ED0(fighter_gobj);
     }
+    /* THEN the fighters' off-camera flag for the next frame. Render order is ascending gxlink
+       priority on the camera link (HSD_GObj_80390FC0 walks head to tail): the magnifier (priority
+       0) renders before the game camera (fn_800301D0, priority 2), so the magnifier above read
+       the flag the PREVIOUS render's camera pass left - and this is the value the camera pass of
+       the render following this logic frame writes: the camera cobj as fn_800301D0 sets it up
+       (Camera_8002A4AC), then each fighter's main-camera test. */
+    if (Camera_80030A50() != NULL) {
+        Camera_8002A4AC(Camera_80030A50());
+    }
+    for (i = 0; i < 6; i++) {
+        HSD_GObj* fighter_gobj = Player_GetEntity(i);
+        if (fighter_gobj != NULL) {
+            ftLib_UpdateLogicOffCamera(fighter_gobj);
+        }
+    }
 }
 #endif
 

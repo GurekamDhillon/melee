@@ -918,11 +918,22 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         lb_800195D0();
         GXInvalidateVtxCache();
         GXInvalidateTexAll();
+#if defined(TARGET_PC)
+        {
+            /* render-section marker for the determinism audit: an RNG draw made while it is set is
+               render code consuming simulation state (gw_replay.c, gw_Replay_RandTrace) */
+            extern void Det_SetInRender(int on);
+            Det_SetInRender(1);
+#endif
         HSD_StartRender(HSD_RP_SCREEN);
         HSD_GObj_80390FC0();
         HSD_Init_803755A8();
         HSD_PerfSetDrawTime();
         HSD_VICopyXFBAsync(HSD_RP_SCREEN);
+#if defined(TARGET_PC)
+            Det_SetInRender(0);
+        }
+#endif
         if (temp_r25->unk_4 != -2U) {
             temp_r25->unk_4++;
         }

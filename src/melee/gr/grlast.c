@@ -365,7 +365,20 @@ static void grLast_8021AAB0(Ground_GObj* gobj)
 {
     Ground* gp = GET_GROUND(gobj);
     if (!gp->u.map.xC4_b1 && !gp->u.map.xC4_b0) {
+#if defined(TARGET_PC)
+        /* Slippi online's DesyncProofBGTransformations (Online/Core/Hacks/FD, @ 0x8021AAE4): Final
+           Destination's background think draws the RNG, and whether it runs at all depends on a
+           per-user visual toggle - so online wraps it in a save/restore of the seed, making the
+           draw invisible to everything downstream. */
+        extern int Slippi_Codes(void);
+        u32 fd_seed = *HSD_RandSeedPtr;
         grLast_8021B2E8(gobj);
+        if (Slippi_Codes() == 2) {
+            *HSD_RandSeedPtr = fd_seed;
+        }
+#else
+        grLast_8021B2E8(gobj);
+#endif
         if (gp->u.map.xC4_b26) {
             int tmp = grLast_8021B5C4(gobj);
             if (tmp != 0) {

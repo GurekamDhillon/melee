@@ -67,6 +67,7 @@
 #include <melee/gm/gmmultiman.h>
 #include <melee/gr/ground.h>
 #include <melee/gr/stage.h>
+#include <melee/gm/gm_1A3F.h>
 #include <melee/if/ifmagnify.h>
 #include <melee/it/it_26B1.h>
 #include <melee/it/it_279C.h>
@@ -95,9 +96,6 @@
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/mtx.h>
 #include <sysdolphin/baselib/random.h>
-#if defined(TARGET_PC)
-static void ftReplayDbg(const char* where, Fighter* fp);
-#endif
 
 extern MotionState* ftData_CharacterStateTables[Ft_Kind_Max];
 
@@ -948,6 +946,13 @@ Fighter_GObj* Fighter_Create(struct plAllocInfo* input)
      * contents. For example, Luigi's @c x222C_cycloneCharge.
      */
     fp = HSD_ObjAlloc(&fighter_alloc_data);
+#if defined(TARGET_PC)
+    /* Slippi's Init Player Data (Common/Initialize Player Data, @ 0x80068EEC) zeroes the block
+       right here, in EVERY codeset it ships - so every Slippi recording, console or online, ran
+       with a cleared Fighter. It also removes the stale-heap nondeterminism the @bug above
+       describes, which is why it is unconditional here rather than gated on the codeset. */
+    memset(fp, 0, sizeof *fp);
+#endif
     fp->dat_attrs_backup = HSD_ObjAlloc(&fighter_dat_attrs_alloc_data);
     GObj_InitUserData(gobj, 4U, &Fighter_Unload_8006DABC, fp);
     ftData_8008572C(input->internal_id);
@@ -1539,9 +1544,6 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
 void Fighter_8006A1BC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("p0", fp);
-#endif
 
     if (!fp->x221F_b3) {
         if (fp->dmg.x1954 > 0.0f) {
@@ -1589,6 +1591,34 @@ void Fighter_8006A1BC(Fighter_GObj* gobj)
         fp->x2219_b6 = fp->x2219_b5;
     }
 }
+
+#if defined(TARGET_PC)
+/* Slippi online's BrawlOffscreenDamage (project-slippi/slippi-ssbm-asm Online/Core/
+ * BrawlOffscreenDamage.asm, @ 0x8006A880 in Fighter_8006A360 - the ifMagnify_802FC998 call): in the
+ * online codeset a fighter is "offscreen" for the 1%-per-interval damage when its position is
+ * outside the stage's camera limits, not when the magnifier bubble was drawn - a pure function of
+ * logic state, which rollback needs. Never in the Home-Run Contest (Sandbag), never while dead
+ * (x221F_b1) or in a star/screen KO (motions 4 and 6). Vanilla and the console codesets keep the
+ * magnifier's flag. */
+static bool ftSlippi_IsOffscreen(Fighter* fp)
+{
+    extern int Slippi_Codes(void);
+    if (Slippi_Codes() != 2) {
+        return ifMagnify_802FC998(fp->player_id);
+    }
+    if (gm_GetCurrentGameMode() == GM_HOME_RUN_CONTEST || fp->x221F_b1 ||
+        fp->motion_id == 4 || fp->motion_id == 6)
+    {
+        return false;
+    }
+    return fp->cur_pos.x < Stage_GetCamBoundsLeftOffset() ||
+           fp->cur_pos.x > Stage_GetCamBoundsRightOffset() ||
+           fp->cur_pos.y > Stage_GetCamBoundsTopOffset() ||
+           fp->cur_pos.y < Stage_GetCamBoundsBottomOffset();
+}
+#else
+#define ftSlippi_IsOffscreen(fp) ifMagnify_802FC998((fp)->player_id)
+#endif
 
 void Fighter_8006A360(Fighter_GObj* gobj)
 {
@@ -1743,7 +1773,7 @@ void Fighter_8006A360(Fighter_GObj* gobj)
 
         if (!fp->is_sub_fighter && Camera_80031144() == 1.0f) {
             if (fp->dmg.x1830_percent < p_ftCommonData->x7B0) {
-                if (ifMagnify_802FC998(fp->player_id) &&
+                if (ftSlippi_IsOffscreen(fp) &&
                     (Player_GetMoreFlagsBit3(fp->player_id) != 0))
                 {
                     fp->dmg.x1910++;
@@ -2013,21 +2043,6 @@ static void ftUcf_Cardinal(int x, int y, Vec2* out)
         }
         out->x = 0.0F;
         out->y = y < 0 ? -1.0F : 1.0F;
-    }
-}
-#endif
-
-#if defined(TARGET_PC)
-/* TEMPORARY .slp divergence probe: one line per fighter per proc on the replay frames asked for
- * (MELEE_SLP playback only). */
-static void ftReplayDbg(const char* where, Fighter* fp)
-{
-    extern int Replay_Frame(void);
-    int f = Replay_Frame();
-    if (f >= -11 && f <= -7) {
-        OSReport("procdbg: f%d P%d %-10s motion %d pct %.1f x %.6f kb %.6f hitlag %.1f\n", f,
-                 fp->player_id, where, fp->motion_id, fp->dmg.x1830_percent, fp->cur_pos.x,
-                 fp->x8c_kb_vel.x, fp->dmg.x195c_hitlag_frames);
     }
 }
 #endif
@@ -2522,9 +2537,6 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
 void Fighter_procUpdate(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("p4upd", fp);
-#endif
     Vec3 windOffset;
 
     if (fp->x221F_b3) {
@@ -2845,12 +2857,26 @@ static inline float Fighter_GetPosY(Fighter* fp)
     return fp->cur_pos.y;
 }
 
+#if defined(TARGET_PC)
+/* One post-frame trace row, from whichever proc this replay's Slippi recorded in. */
+static void ftReplay_TraceFighter(Fighter* fp)
+{
+    extern int Replay_Tracing(void);
+    extern void Replay_TraceFighter(int port, int follower, int ckind, int action, float x,
+                                    float y, float facing, float percent, int stocks, float air_x,
+                                    float air_y, float kb_x, float kb_y, float ground_x);
+    if (Replay_Tracing()) {
+        Replay_TraceFighter(fp->player_id, fp->is_sub_fighter, fp->kind, fp->motion_id,
+                            fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir, fp->dmg.x1830_percent,
+                            Player_GetStocks(fp->player_id), fp->self_vel.x, fp->self_vel.y,
+                            fp->x8c_kb_vel.x, fp->x8c_kb_vel.y, fp->gr_vel);
+    }
+}
+#endif
+
 void Fighter_procMap(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("p6map", fp);
-#endif
 
     if (!fp->x221F_b3) {
         if (fp->ecb_lock) {
@@ -2888,6 +2914,14 @@ void Fighter_procMap(Fighter_GObj* gobj)
 
         HSD_JObjSetTranslate(gobj->hsd_obj, &fp->cur_pos);
     }
+#if defined(TARGET_PC)
+    {   /* the 1.x/2.x post-frame point (0x8006C5D8); see ftReplay_TraceFighter */
+        extern int Replay_TraceAtProcMap(void);
+        if (Replay_TraceAtProcMap()) {
+            ftReplay_TraceFighter(fp);
+        }
+    }
+#endif
 }
 
 void Fighter_8006C5F4(Fighter_GObj* gobj)
@@ -3001,9 +3035,6 @@ void Fighter_UnkProcessGrab_8006CA5C(Fighter_GObj* gobj)
 void Fighter_8006CB94(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("pDhit", fp);
-#endif
     float func_8007BBCC_float_output;
 
     if (!fp->x221F_b3 && !fp->x2219_b1) {
@@ -3189,9 +3220,6 @@ void Fighter_8006D10C(Fighter_GObj* gobj)
 void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("pEproc", fp);
-#endif
     bool bool1 = 0;
     s32 motion_state_index = fp->motion_id;
     bool bool2 = 0;
@@ -3470,20 +3498,14 @@ void Fighter_UnkCallCameraCallback_8006D9EC(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
     {
         /* MELEE_STATE_TRACE (pc/platform/gw_replay.c): the fields Slippi's post-frame records,
-           from the point it records them - SendGamePostFrame.asm hooks 0x8006DA34, this proc's
-           epilogue (priority 0x12), so the frame's hits (Fighter_ProcessHit_8006D1EC, 0xE) are
-           already applied. Tracing from Fighter_procMap (6) instead showed every hit a frame late. */
-        extern int Replay_Tracing(void);
-        extern void Replay_TraceFighter(int port, int follower, int ckind, int action, float x,
-                                        float y, float facing, float percent, int stocks,
-                                        float air_x, float air_y, float kb_x, float kb_y,
-                                        float ground_x);
-        if (Replay_Tracing()) {
-            Replay_TraceFighter(fp->player_id, fp->is_sub_fighter, fp->kind, fp->motion_id,
-                                fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir,
-                                fp->dmg.x1830_percent, Player_GetStocks(fp->player_id),
-                                fp->self_vel.x, fp->self_vel.y, fp->x8c_kb_vel.x,
-                                fp->x8c_kb_vel.y, fp->gr_vel);
+           from the point THAT REPLAY'S Slippi recorded them: 3.x hooks 0x8006DA34, this proc's
+           epilogue (priority 0x12), after the frame's hits (Fighter_ProcessHit_8006D1EC, 0xE);
+           1.x/2.x hooked 0x8006C5D8, Fighter_procMap's epilogue (priority 6), before them. Using
+           the wrong one puts every hit a frame out - a 1.x replay's damage looked one frame late
+           in the port (e.g. Gang-Steals/14/150543 frame 82 vs 83, positions identical). */
+        extern int Replay_TraceAtProcMap(void);
+        if (!Replay_TraceAtProcMap()) {
+            ftReplay_TraceFighter(fp);
         }
     }
 #endif

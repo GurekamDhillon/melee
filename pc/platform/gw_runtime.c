@@ -1229,7 +1229,75 @@ int gw_Mex_GObjPredDispatch(int event, int kind, void *gobj, void *vanilla) {
   return 0;
 }
 
+/* ---- a clone's base articles ------------------------------------------------------------------
+ * An m-ex fighter that overrides onLoad replaces its clone base's onLoad entirely (m-ex's own
+ * per-kind table, @0x800690F0), and with it the base's article registrations - yet the fighter's
+ * moves can still run the base's vanilla code, which spawns the base's article kinds. ACE Raichu's
+ * aerial down-B is Pikachu's, spawning thunder (kind 81); Luigi Boo's side-B is Mario's cape (83).
+ * Nothing registered either, so m-ex asserts and the port refused the spawn.
+ *
+ * Which of the clone's articles is which base kind is exactly what the base's onLoad says - often
+ * through an attribute (Mario's cape_kind, Pikachu's xDC), so it cannot be tabulated. So the base
+ * onLoad runs first in RECORD-ONLY mode: it_8026B3F8 captures (article, kind) instead of writing,
+ * the Fighter struct is restored afterwards so nothing else it did survives, and the captured
+ * articles - the clone's own, from its own ft_data item list - fill only empty slots. Bases whose
+ * onLoad reaches outside the Fighter struct (Kirby, Young Link, Game & Watch, the bosses) are
+ * skipped. */
+#define GW_FIGHTER_SIZE 0x23ECu
+static int gw_it_recording;
+static int gw_it_nrecords;
+static struct {
+  void *article;
+  int kind;
+} gw_it_records[32];
+
+int gw_Mex_ItRecord(void *article, int kind) {
+  if (!gw_it_recording) {
+    return 0;
+  }
+  if (gw_it_nrecords < (int)(sizeof gw_it_records / sizeof gw_it_records[0])) {
+    gw_it_records[gw_it_nrecords].article = article;
+    gw_it_records[gw_it_nrecords].kind = kind;
+    ++gw_it_nrecords;
+  }
+  return 1;
+}
+
+static void gw_mex_register_base_articles(int kind, void *gobj, void *base_onload) {
+  extern int gw_Mex_InternalForPortKind(int fk);
+  extern int gw_Mex_FtBaseKind(int k);
+  extern void gw_it_Mex_RegisterIfEmpty(void *article, int kind);
+  static uint8_t saved[GW_FIGHTER_SIZE];
+  int internal = gw_Mex_InternalForPortKind(kind);
+  int base = internal >= 0 ? gw_Mex_FtBaseKind(internal) : -1;
+  uint32_t fp;
+  int i;
+  /* FighterKind: Kirby 4, Young Link 20, Game & Watch 24, the bosses 27.. */
+  if (base < 0 || base == 4 || base == 20 || base == 24 || base >= 27) {
+    return;
+  }
+  fp = gw_r32((const void *)(uintptr_t)((uintptr_t)gobj + 0x2Cu)); /* gobj->user_data */
+  if (fp < 0x80000000u) {
+    return;
+  }
+  memcpy(saved, (const void *)(uintptr_t)fp, GW_FIGHTER_SIZE);
+  gw_it_nrecords = 0;
+  gw_it_recording = 1;
+  ((gwmex_gobj_fn)base_onload)(gobj);
+  gw_it_recording = 0;
+  memcpy((void *)(uintptr_t)fp, saved, GW_FIGHTER_SIZE);
+  for (i = 0; i < gw_it_nrecords; ++i) {
+    if (gw_it_records[i].article != NULL) {
+      gw_it_Mex_RegisterIfEmpty(gw_it_records[i].article, gw_it_records[i].kind);
+    }
+  }
+}
+
 void gw_Mex_OnLoadDispatch(int kind, void *gobj, void *vanilla) {
+  if (vanilla != NULL && (unsigned)kind < GW_MEX_KIND_MAX &&
+      gw_mex_gobj_hooks[GW_MEX_EVENT_ON_LOAD][kind] != NULL) {
+    gw_mex_register_base_articles(kind, gobj, vanilla);
+  }
   gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_LOAD, kind, gobj, vanilla);
 }
 void gw_Mex_OnDeathDispatch(int kind, void *gobj, void *vanilla) {

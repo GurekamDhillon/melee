@@ -204,8 +204,30 @@ int it_8026B3C0(ItemKind kind)
 /// Store Item article pointer to table
 void it_8026B3F8(Article* article, s32 kind)
 {
+#if defined(TARGET_PC)
+    /* While an m-ex clone's base onLoad runs in record-only mode (gw_runtime.c,
+     * gw_Mex_OnLoadDispatch), registrations are captured instead of written. */
+    extern int Mex_ItRecord(Article * article, s32 kind);
+    if (Mex_ItRecord(article, kind)) {
+        return;
+    }
+#endif
     it_804D6D38[kind - It_Kind_Kuriboh] = article;
 }
+
+#if defined(TARGET_PC)
+/* Register a fighter article only where no loaded fighter already has: a clone's copy of its
+ * base's article must not displace the base fighter's own when both are in the match. */
+void it_Mex_RegisterIfEmpty(Article* article, s32 kind)
+{
+    if (kind >= It_Kind_Kuriboh && kind < It_PKind_Start &&
+        it_804D6D38[kind - It_Kind_Kuriboh] == NULL)
+    {
+        it_804D6D38[kind - It_Kind_Kuriboh] = article;
+        OSReport("item: kind %d registered from an m-ex clone's own article\n", (int) kind);
+    }
+}
+#endif
 
 /// Store Stage Item article pointer to table
 void it_8026B40C(Article* article, s32 kind)

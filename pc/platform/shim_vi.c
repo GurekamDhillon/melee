@@ -219,6 +219,8 @@ static int gw_prof_spikes;
 /* Upper bounds in ms. 16.67 is the target; the buckets either side of it are what matter. */
 static const double gw_prof_edges[GW_PROF_BUCKETS] = { 14.0, 16.0, 17.5, 20.0, 25.0, 34.0, 50.0, 1e9 };
 
+static uint32_t gw_wait_idle_count;
+
 static long long gw_prof_now(void) {
   LARGE_INTEGER t;
   QueryPerformanceCounter(&t);
@@ -737,7 +739,8 @@ void gw_frame_tick(void) {
             if (gw_prof_csv != NULL) {
               fprintf(gw_prof_csv,
                       "frame,total_ms,game_ms,present_ms,texobj_inits,prims,dlists,queued_pipes,"
-                      "created_pipes,urgent_pipes,drawcalls,vert_kb,storage_kb,texupload_kb\n");
+                      "created_pipes,urgent_pipes,drawcalls,vert_kb,storage_kb,texupload_kb,pad_calls,pad_aurora_ms,"
+                      "pad_adapter_ms,pad_rest_ms,wait_idle_calls\n");
             }
           }
         }
@@ -747,17 +750,28 @@ void gw_frame_tick(void) {
           uint32_t copies, prims, dlists;
           const AuroraStats *as = aurora_get_stats();
           gw_gx_get_stats(&copies, &prims, &dlists);
-          fprintf(gw_prof_csv, "%u,%.3f,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u\n",
+          extern double gw_pad_prof_aurora_ms, gw_pad_prof_adapter_ms, gw_pad_prof_rest_ms;
+          extern uint32_t gw_pad_prof_calls;
+          static uint32_t last_waits;
+          fprintf(gw_prof_csv, "%u,%.3f,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%.3f,%u\n",
                   gw_presented_count, total, game, gw_prof_ms(t_enter, t_present),
                   gw_gx_texobj_inits - last_inits, prims, dlists,
                   as != NULL ? as->queuedPipelines : 0u, as != NULL ? as->createdPipelines : 0u,
                   as != NULL ? as->urgentPipelinesPending : 0u,
                   as != NULL ? as->drawCallCount : 0u, as != NULL ? as->lastVertSize / 1024u : 0u,
                   as != NULL ? as->lastStorageSize / 1024u : 0u,
-                  as != NULL ? as->lastTextureUploadSize / 1024u : 0u);
+                  as != NULL ? as->lastTextureUploadSize / 1024u : 0u, gw_pad_prof_calls,
+                  gw_pad_prof_aurora_ms, gw_pad_prof_adapter_ms, gw_pad_prof_rest_ms,
+                  gw_wait_idle_count - last_waits);
+          last_waits = gw_wait_idle_count;
+          gw_pad_prof_aurora_ms = gw_pad_prof_adapter_ms = gw_pad_prof_rest_ms = 0.0;
+          gw_pad_prof_calls = 0u;
           last_inits = gw_gx_texobj_inits;
-          if ((gw_presented_count & 255u) == 0u) {
-            fflush(gw_prof_csv);
+          {
+            static uint32_t rows;
+            if ((++rows % 60u) == 0u) {
+              fflush(gw_prof_csv);
+            }
           }
         }
         if (gw_spike_threshold_ms > 0.0 && game > gw_spike_threshold_ms) {
@@ -809,8 +823,6 @@ void gw_frame_tick(void) {
    * shim_ax.c and drives HSD_SynthCallback + voice mixing). */
   gw_ax_frame_tick();
 }
-
-static uint32_t gw_wait_idle_count;
 
 void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
   *retrace = gw_retrace_count;

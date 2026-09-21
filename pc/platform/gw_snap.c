@@ -440,6 +440,9 @@ static const GwSnapSym *sn_sym_at(uint32_t va) {
     return best >= 0 ? &sn.syms[best] : NULL;
 }
 
+static int sn_in_render_pool_desc(uint32_t va);
+static int sn_in_render_arena(uint32_t va, uint32_t *end);
+
 static int sn_skip_global(uint32_t va) {
     int i;
     for (i = 0; i < sn.ncmp_skip; ++i) {
@@ -447,7 +450,9 @@ static int sn_skip_global(uint32_t va) {
             return 1;
         }
     }
-    return 0;
+    /* a render-owned pool's own HSD_ObjAllocData (0x2C bytes): its free list is the render
+       pass's, and a resimulated frame never touches it */
+    return sn_in_render_pool_desc(va);
 }
 
 /* Particles and their AppSRTs are drawn - and written - by the render pass (psdisp.c: frame
@@ -860,6 +865,82 @@ int gw_Snap_InRender(void) {
     return sn_in_render;
 }
 
+/* ---- render-owned object pools ---------------------------------------------------------------
+ *
+ * The HSD matrix pools (HSD_Mtx_804C2310/233C) and the display SList pool are drawn from by the
+ * render pass and by nothing else: at the end of a render pass they still held 145 and 1 cells.
+ * A resimulated frame renders nothing, so those cells - and the pool's own free list - are always
+ * going to differ, and they say nothing about whether the simulation rolled back correctly.
+ *
+ * Masking the bytes the render wrote is not enough here, because the render takes DIFFERENT cells
+ * every frame: an address-based mask never catches up with a rotating allocation. So the skip is
+ * by POOL - every arena objalloc.c ever handed that pool, plus the pool descriptor itself. */
+#define SN_MAX_ARENAS 512
+static struct {
+    uint32_t pool, va, len;
+} sn_arena[SN_MAX_ARENAS];
+static int sn_narenas;
+static uint32_t sn_render_pool[16];
+static int sn_nrender_pools;
+
+void gw_Snap_NoteArena(void *data, void *start, unsigned size) {
+    if (sn_narenas >= SN_MAX_ARENAS) {
+        return;
+    }
+    sn_arena[sn_narenas].pool = (uint32_t) (uintptr_t) data;
+    sn_arena[sn_narenas].va = (uint32_t) (uintptr_t) start;
+    sn_arena[sn_narenas].len = size;
+    ++sn_narenas;
+}
+
+void gw_Snap_NoteRenderPool(void *data) {
+    int i;
+    uint32_t p = (uint32_t) (uintptr_t) data;
+    for (i = 0; i < sn_nrender_pools; ++i) {
+        if (sn_render_pool[i] == p) {
+            return;
+        }
+    }
+    if (sn_nrender_pools < 16) {
+        sn_render_pool[sn_nrender_pools++] = p;
+        gw_log("snap: pool %p is render-owned; its arenas stop being compared", data);
+    }
+}
+
+static int sn_render_owned_pool(uint32_t pool) {
+    int i;
+    for (i = 0; i < sn_nrender_pools; ++i) {
+        if (sn_render_pool[i] == pool) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Inside a render-owned pool's HSD_ObjAllocData (0x2C bytes)? */
+static int sn_in_render_pool_desc(uint32_t va) {
+    int i;
+    for (i = 0; i < sn_nrender_pools; ++i) {
+        if (va >= sn_render_pool[i] && va < sn_render_pool[i] + 0x2Cu) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* MEM1 address inside an arena of a render-owned pool? *end gets the arena's end. */
+static int sn_in_render_arena(uint32_t va, uint32_t *end) {
+    int i;
+    for (i = 0; i < sn_narenas; ++i) {
+        if (va >= sn_arena[i].va && va < sn_arena[i].va + sn_arena[i].len &&
+            sn_render_owned_pool(sn_arena[i].pool)) {
+            *end = sn_arena[i].va + sn_arena[i].len;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void gw_SyncTest_PreRender(void) {
     sn_in_render = 1;
     if (!sn.enabled || !sn_live()) {
@@ -889,6 +970,10 @@ static uint32_t sn_mark(const uint8_t *before, const uint8_t *after, uint32_t le
 }
 
 void gw_SyncTest_PostRender(void) {
+    extern void gw_HSD_ObjAllocRenderEnd(void);
+    if (sn.enabled) {
+        gw_HSD_ObjAllocRenderEnd();
+    }
     sn_in_render = 0;
 }
 

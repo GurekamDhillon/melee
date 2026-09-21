@@ -41,9 +41,11 @@ static void snap_note_render(HSD_ObjAllocData* data, int delta)
         }
     }
     if (i == snap_npools) {
+        extern void Snap_NoteRenderPool(void* data);
         if (snap_npools == (int) (sizeof snap_pools / sizeof snap_pools[0])) {
             return;
         }
+        Snap_NoteRenderPool(data);
         snap_pools[snap_npools].data = data;
         snap_pools[snap_npools].live = 0;
         snap_pools[snap_npools].hwm = 0;
@@ -52,6 +54,19 @@ static void snap_note_render(HSD_ObjAllocData* data, int delta)
     snap_pools[i].live += delta;
     if (snap_pools[i].live > snap_pools[i].hwm) {
         snap_pools[i].hwm = snap_pools[i].live;
+    }
+}
+
+/* Called at the end of the render pass (gw_snap.c): does the render pass give every cell back?
+ * If it does, its effect on these pools is a transaction and can simply be undone. */
+void HSD_ObjAllocRenderEnd(void)
+{
+    int i;
+    for (i = 0; i < snap_npools; ++i) {
+        if (snap_pools[i].live != 0) {
+            OSReport("snap: pool %p still holds %d cell(s) after the render pass\n",
+                     snap_pools[i].data, snap_pools[i].live);
+        }
     }
 }
 
@@ -68,6 +83,12 @@ void HSD_ObjAllocTopUp(void)
         }
         if (d->num_limit_flag && (int) (d->used + want) > (int) d->num_limit) {
             continue;
+        }
+        {
+            extern int Snap_Resimulating(void);
+            OSReport("snap: top-up pool %p +%d (free %d, hwm %d, resim %d)\n", d,
+                     want - (int) d->free, (int) d->free, snap_pools[i].hwm,
+                     Snap_Resimulating());
         }
         HSD_ObjAllocAddFree(d, (u32) (want - (int) d->free));
     }
@@ -168,6 +189,15 @@ s32 HSD_ObjAllocAddFree(HSD_ObjAllocData* data, u32 num)
 
     data->freehead = (HSD_ObjAllocLink*) pool_start;
     data->free += num;
+#if defined(TARGET_PC)
+    {
+        /* Tell the savestate layer where this pool's cells live. A pool the RENDER pass draws
+         * from rotates through fresh cells every frame, so masking render-written bytes by
+         * address never catches up - the mask has to cover the whole arena (gw_snap.c). */
+        extern void Snap_NoteArena(void* data, void* start, unsigned size);
+        Snap_NoteArena(data, pool_start, num * data->size);
+    }
+#endif
     return num;
 }
 

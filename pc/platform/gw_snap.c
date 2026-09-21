@@ -262,11 +262,47 @@ static void sn_gather(uint8_t *out) {
     }
 }
 
+/* Restore, leaving alone every byte measured as NOT WRITTEN BY LOGIC (the mask that compare also
+ * skips). Those bytes belong to the render pass and to the asynchronous world - the DVD/stream
+ * queue above all - and putting an older value back under an in-flight read is not a rollback,
+ * it is corruption: restoring them crashed the run inside HSD_DevComDVDMemCallback. Rollback
+ * only has to rewind the simulation; the audio and the disc keep going forward. */
+static void sn_restore(uint8_t *dst, const uint8_t *src, uint32_t len, const uint8_t *mask,
+                       uint32_t bit0) {
+    uint32_t off;
+    for (off = 0; off < len; off += 4096) {
+        uint32_t n = len - off < 4096 ? len - off : 4096, j;
+        /* the mask BYTES covering this block, so the common clean block costs one memcmp-sized
+           scan of 512 bytes rather than 4096 bit tests */
+        uint32_t mb = (bit0 + off) >> 3, me = (bit0 + off + n - 1) >> 3;
+        int dirty = 0;
+        for (j = mb; j <= me; ++j) {
+            if (mask[j] != 0) {
+                dirty = 1;
+                break;
+            }
+        }
+        if (!dirty) {
+            memcpy(dst + off, src + off, n);
+            continue;
+        }
+        for (j = 0; j < n; ++j) {
+            uint32_t b = bit0 + off + j;
+            if (!(mask[b >> 3] & (1u << (b & 7)))) {
+                dst[off + j] = src[off + j];
+            }
+        }
+    }
+}
+
 static void sn_scatter(const uint8_t *in) {
     int i;
+    uint32_t base = 0;
     for (i = 0; i < sn.nranges; ++i) {
-        memcpy((void *) (uintptr_t) sn.ranges[i].va, in, sn.ranges[i].len);
+        sn_restore((uint8_t *) (uintptr_t) sn.ranges[i].va, in, sn.ranges[i].len, sn.rmask_globals,
+                   base);
         in += sn.ranges[i].len;
+        base += sn.ranges[i].len;
     }
 }
 
@@ -312,7 +348,7 @@ int gw_snap_load(int frame) {
         return -1;
     }
     sn_boundary_asserts("load");
-    memcpy((void *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size);
+    sn_restore((uint8_t *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size, sn.rmask_mem1, 0);
     sn_scatter(s->globals);
     gw_Replay_SetCursor(s->replay_cursor);
     sn.ms_load += sn_ms() - t0;
@@ -519,6 +555,7 @@ static int sn_compare(int frame) {
 /* ---- SyncTest --------------------------------------------------------------------------------- */
 
 static void sn_sfx_rewind(int frame);
+static void sn_mark_window(void);
 
 static void sn_init(void) {
     const char *v;
@@ -588,6 +625,10 @@ void gw_SyncTest_IterStart(void) {
     if (!sn.enabled || !sn_live()) {
         return;
     }
+    /* Close the "not written by logic" window opened when the last logic pass ended. Everything
+       the render pass, the deferred queue and the asynchronous DVD/stream completions touched in
+       between is state a resimulated frame never reproduces, so it stops being compared. */
+    sn_mark_window();
     next = gw_Replay_Frame() + 1;
     if (sn.plan_rollback) {
         sn.plan_rollback = 0;
@@ -696,7 +737,61 @@ int gw_Snap_SfxTake(int sound_id) {
 }
 
 /* Around the render pass (gmscene.c): whatever it changes is render-owned. */
+/* Does the render pass take cells out of the HSD object pools? A pool free list is LIFO, so a
+ * render-time alloc/free pair reverses it and the NEXT logic allocation lands in a different
+ * cell - which a resimulated frame (which never renders) does not reproduce. objalloc.c calls
+ * this so the evidence is in the log rather than inferred from addresses. */
+static int sn_in_render;
+static int sn_obj_notes;
+
+static int sn_alloc_trace(void) {
+    static int trace = -1;
+    if (trace < 0) {
+        const char *v = getenv("MELEE_SYNCTEST_ALLOC");
+        trace = (v != NULL && *v == '1') ? 1 : 0;
+    }
+    return trace;
+}
+
+/* The same question for the OSAlloc heap (memory.c), whose free list is what actually drifted. */
+void gw_Snap_NoteMem(int size, void *ptr, unsigned caller, int freeing) {
+    if (!sn_alloc_trace() || !sn.enabled || sn_obj_notes >= 400000) {
+        return;
+    }
+    ++sn_obj_notes;
+    gw_log("memtrace f=%d r=%d%s %s size %d ptr %p from %08X", gw_Replay_Frame(),
+           sn.cur_is_resim ? 1 : 0, sn_in_render ? " R" : "", freeing ? "free " : "alloc", size,
+           ptr, caller);
+}
+
+void gw_Snap_NoteObj(void *data, void *obj, int freeing) {
+    int trace = sn_alloc_trace();
+    /* MELEE_SYNCTEST_ALLOC=1: every pool operation, tagged with the frame, whether it happened
+       inside the render pass and whether this is the first pass or a resimulation - diff the two
+       sequences for one frame and the pool whose order drifted names itself. */
+    if (trace && sn.enabled && sn_obj_notes < 400000) {
+        ++sn_obj_notes;
+        gw_log("objtrace f=%d r=%d%s %s pool %p cell %p", gw_Replay_Frame(),
+               sn.cur_is_resim ? 1 : 0, sn_in_render ? " R" : "", freeing ? "free " : "alloc",
+               data, obj);
+        return;
+    }
+    if (!sn_in_render || sn_obj_notes >= 64) {
+        return;
+    }
+    ++sn_obj_notes;
+    gw_log("snap: render pass Obj%s pool %p cell %p (frame %d)", freeing ? "Free " : "Alloc",
+           data, obj, gw_Replay_Frame());
+}
+
+/* objalloc.c asks, so it can bill a pool's cells to the render pass and refill them during logic
+ * instead (HSD_ObjAllocTopUp). */
+int gw_Snap_InRender(void) {
+    return sn_in_render;
+}
+
 void gw_SyncTest_PreRender(void) {
+    sn_in_render = 1;
     if (!sn.enabled || !sn_live()) {
         return;
     }
@@ -724,6 +819,16 @@ static uint32_t sn_mark(const uint8_t *before, const uint8_t *after, uint32_t le
 }
 
 void gw_SyncTest_PostRender(void) {
+    sn_in_render = 0;
+}
+
+/* Called at the top of the next logic frame (gw_SyncTest_IterStart), not at the end of the render
+ * pass: the render pass is not the only thing that runs between two logic frames. The deferred
+ * callback queue and the asynchronous DVD/stream completions also write - the first mismatch this
+ * chased down was the stream-header read queue (lbdvd + synth pstream), whose two entries swap
+ * every other frame. All of it is state a resimulated frame cannot reproduce, because a
+ * resimulated frame runs logic and nothing else. */
+static void sn_mark_window(void) {
     uint32_t a, g;
     if (!sn.enabled || !sn.pre_valid) {
         return;
@@ -734,12 +839,24 @@ void gw_SyncTest_PostRender(void) {
     g = sn_mark(sn.pre_globals, sn.cmp_globals, sn.globals_len, sn.rmask_globals);
     sn.rmask_bytes += a + g;
     if ((a + g) != 0 && sn.passes < 4) {
-        gw_log("snap: render pass wrote %u new MEM1 bytes and %u global bytes (%u render-owned so far)",
+        gw_log("snap: between logic frames: %u new MEM1 bytes and %u global bytes (%u not-logic so far)",
                a, g, sn.rmask_bytes);
     }
 }
 
-/* Sound effects must not replay while resimulating (lbaudio_ax.c). */
+/* Sound effects must not replay while resimulating (lbaudio_ax.c). MELEE_SYNCTEST_SFX=1 lets them
+ * play again, to tell an audio-owned mismatch apart from a logic one. */
 int gw_Snap_Resimulating(void) {
     return sn.enabled && sn.cur_is_resim;
+}
+
+/* The audio gate only (axdriver.c): separate from gw_Snap_Resimulating so that turning sound back
+ * on for an experiment does not also re-enable the replay traces. */
+int gw_Snap_SuppressSfx(void) {
+    static int on = -1;
+    if (on < 0) {
+        const char *v = getenv("MELEE_SYNCTEST_SFX");
+        on = (v != NULL && *v == '1') ? 0 : 1;
+    }
+    return on && sn.enabled && sn.cur_is_resim;
 }

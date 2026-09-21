@@ -874,8 +874,13 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     /* logic-side off-screen flag for the next logic frame (ifmagnify.c) */
                     extern void ifMagnify_UpdateLogicOffscreen(void);
                     extern void Camera_RefreshViewingMtx(void);
+                    /* refill the pools the render pass drains, so IT never allocates from the
+                     * shared heap - a resimulated frame does not render, and an allocation there
+                     * would shift every later address (objalloc.c) */
+                    extern void HSD_ObjAllocTopUp(void);
                     ifMagnify_UpdateLogicOffscreen();
                     Camera_RefreshViewingMtx();
+                    HSD_ObjAllocTopUp();
                 }
 #endif
             }

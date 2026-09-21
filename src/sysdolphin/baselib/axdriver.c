@@ -548,11 +548,11 @@ static int HSD_AudioSFXStartParam_impl(int sound_id, u8 volume, u8 pan,
 int HSD_AudioSFXStartParam(int sound_id, u8 volume, u8 pan, int track,
                            int channel)
 {
-    extern int Snap_Resimulating(void);
+    extern int Snap_SuppressSfx(void);
     extern int Snap_SfxTake(int sound_id);
     extern void Snap_SfxPut(int sound_id, int result);
     int r;
-    if (Snap_Resimulating()) {
+    if (Snap_SuppressSfx()) {
         return Snap_SfxTake(sound_id);
     }
     r = HSD_AudioSFXStartParam_impl(sound_id, volume, pan, track, channel);

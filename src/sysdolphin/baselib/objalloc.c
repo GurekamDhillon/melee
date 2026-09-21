@@ -10,6 +10,70 @@ static objheap obj_heap = { 0, 0, -1, -1 };
 
 static HSD_ObjAllocData* alloc_datas;
 
+#if defined(TARGET_PC)
+/* ROLLBACK (pc/platform/gw_snap.c). A pool that runs dry calls HSD_ObjAllocAddFree, which calls
+ * HSD_MemAlloc - so when that happens inside the RENDER pass it moves the shared heap's free
+ * list. A resimulated frame renders nothing, so its next allocation lands in a different cell,
+ * and a SyncTest that compares memory byte for byte sees a whole object in the wrong place. It
+ * is harmless to the simulation and fatal to the comparison.
+ *
+ * So: remember how many cells each pool hands out during a render pass, and top those pools up
+ * at the END OF EVERY LOGIC FRAME instead - a point resimulated frames execute too. The render
+ * pass then always finds free cells and never touches the heap. The high-water mark is learned,
+ * so the first frames after a pool's usage grows still refill late; it settles within a frame. */
+static struct {
+    HSD_ObjAllocData* data;
+    int live; /* cells taken during the current render pass */
+    int hwm;  /* most ever taken during one render pass */
+} snap_pools[48];
+static int snap_npools;
+
+static void snap_note_render(HSD_ObjAllocData* data, int delta)
+{
+    int i;
+    extern int Snap_InRender(void);
+    if (!Snap_InRender()) {
+        return;
+    }
+    for (i = 0; i < snap_npools; ++i) {
+        if (snap_pools[i].data == data) {
+            break;
+        }
+    }
+    if (i == snap_npools) {
+        if (snap_npools == (int) (sizeof snap_pools / sizeof snap_pools[0])) {
+            return;
+        }
+        snap_pools[snap_npools].data = data;
+        snap_pools[snap_npools].live = 0;
+        snap_pools[snap_npools].hwm = 0;
+        ++snap_npools;
+    }
+    snap_pools[i].live += delta;
+    if (snap_pools[i].live > snap_pools[i].hwm) {
+        snap_pools[i].hwm = snap_pools[i].live;
+    }
+}
+
+/* Called at the end of each logic frame (gmscene.c). */
+void HSD_ObjAllocTopUp(void)
+{
+    int i;
+    for (i = 0; i < snap_npools; ++i) {
+        HSD_ObjAllocData* d = snap_pools[i].data;
+        int want = snap_pools[i].hwm + 2;
+        snap_pools[i].live = 0;
+        if (d == NULL || (int) d->free >= want) {
+            continue;
+        }
+        if (d->num_limit_flag && (int) (d->used + want) > (int) d->num_limit) {
+            continue;
+        }
+        HSD_ObjAllocAddFree(d, (u32) (want - (int) d->free));
+    }
+}
+#endif
+
 void HSD_ObjSetHeap(u32 size, void* ptr)
 {
     obj_heap.curr = (u32) ptr;
@@ -146,6 +210,13 @@ void* HSD_ObjAlloc(HSD_ObjAllocData* data)
         }
     }
     cur = data->freehead;
+#if defined(TARGET_PC)
+    {
+        extern void Snap_NoteObj(void* data, void* obj, int freeing);
+        Snap_NoteObj(data, cur, 0);
+        snap_note_render(data, 1);
+    }
+#endif
     data->freehead = cur->next;
     data->used += 1;
     data->free -= 1;
@@ -158,6 +229,13 @@ void* HSD_ObjAlloc(HSD_ObjAllocData* data)
 void HSD_ObjFree(HSD_ObjAllocData* data, void* obj)
 {
     HSD_ObjAllocLink* link = obj;
+#if defined(TARGET_PC)
+    {
+        extern void Snap_NoteObj(void* data, void* obj, int freeing);
+        Snap_NoteObj(data, obj, 1);
+        snap_note_render(data, -1);
+    }
+#endif
     link->next = data->freehead;
     data->freehead = link;
     data->free += 1;

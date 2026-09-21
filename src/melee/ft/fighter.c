@@ -1937,6 +1937,66 @@ static void Fighter_Spaghetti_8006AD10_Inner1(Fighter* fp)
 }
 
 #if defined(TARGET_PC)
+/* UCF 0.84's per-port pad buffer, kept by "Pad Buffer + 1.0 Cardinals" (@ 0x8006B460) in its own
+ * data block: a 4-deep ring of the raw stick (x, y) bytes, the ring index of the newest entry
+ * (block byte 8), and a flick counter (byte 9) that UCF 0.84's Shield Drop Extended reads. Updated
+ * once per human fighter input frame, at the same point as the cardinal snap. */
+static struct {
+    s8 x[4], y[4];
+    u8 idx;
+    u8 counter;
+} ftUcf_Pad[4];
+
+static void ftUcf_PadBufferPush(int port, int x, int y)
+{
+    u8 i = (u8) ((ftUcf_Pad[port].idx + 1) & 3);
+    ftUcf_Pad[port].idx = i;
+    ftUcf_Pad[port].x[i] = (s8) x;
+    ftUcf_Pad[port].y[i] = (s8) y;
+}
+
+/* The ring's raw x or y `back` entries before the newest (0 = newest). */
+int ftUcf_PadRaw(int port, int which_y, int back)
+{
+    int i = (ftUcf_Pad[port].idx - back) & 3;
+    return which_y ? ftUcf_Pad[port].y[i] : ftUcf_Pad[port].x[i];
+}
+
+int ftUcf_FlickCounter(int port)
+{
+    return ftUcf_Pad[port].counter;
+}
+
+/* trunc(|v| * 80 - 1e-4) + 2, as UCF computes it: fmsubs (exact product, one rounding - exact in
+ * double here, then rounded to single) and fctiwz. */
+static int ftUcf_RimUnits(f32 v)
+{
+    f32 t = (f32) ((double) (v < 0.0F ? -v : v) * 80.0 - (double) 9.99999974738e-05F);
+    return (int) t + 2;
+}
+
+/* The flick counter: 0 unless the stick (after the cardinal snap) is down past -0.609375 and on
+ * the rim (rim units squared summed > 6400); then it counts up every frame once started, and it
+ * starts (at 1) only on a frame whose y-timer is 0 or 1 and whose raw y moved by more than 44
+ * against two ring entries earlier. */
+static void ftUcf_FlickCount(Fighter* fp, int port)
+{
+    int c = 0;
+    if (!(fp->input.lstick[0].y > -0.609375F)) {
+        int rx = ftUcf_RimUnits(fp->input.lstick[0].x);
+        int ry = ftUcf_RimUnits(fp->input.lstick[0].y);
+        if (rx * rx + ry * ry > 6400) {
+            if (ftUcf_Pad[port].counter != 0) {
+                c = (u8) (ftUcf_Pad[port].counter + 1);
+            } else if (fp->active_timer.lstick.y <= 1) {
+                int dy = ftUcf_PadRaw(port, 1, 0) - ftUcf_PadRaw(port, 1, 2);
+                c = dy * dy > 1936 ? 1 : 0;
+            }
+        }
+    }
+    ftUcf_Pad[port].counter = (u8) c;
+}
+
 /* UCF 0.84's cardinal snap on one stick, from its raw signed bytes: |x| >= 80 with |y| <= 6 gives
  * (+-1, 0); |y| >= 80 with |x| <= 6 gives (0, +-1); anything else is left as processed. */
 static void ftUcf_Cardinal(int x, int y, Vec2* out)
@@ -2330,13 +2390,15 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                 extern int Replay_UcfCardinals(int port);
                 extern int Replay_RawStick(int port, int which);
                 int port = fp->x618_player_id;
-                if (!ftCo_IsCpuControlled(fp) && Replay_UcfCardinals(port) &&
-                    !(fp->kind == 0x13 && fp->motion_id == 0x15D))
-                {
-                    ftUcf_Cardinal(Replay_RawStick(port, 0), Replay_RawStick(port, 1),
-                                   &fp->input.lstick[0]);
-                    ftUcf_Cardinal(Replay_RawStick(port, 2), Replay_RawStick(port, 3),
-                                   &fp->input.cstick[0]);
+                if (!ftCo_IsCpuControlled(fp) && Replay_UcfCardinals(port)) {
+                    ftUcf_PadBufferPush(port, Replay_RawStick(port, 0), Replay_RawStick(port, 1));
+                    if (!(fp->kind == 0x13 && fp->motion_id == 0x15D)) {
+                        ftUcf_Cardinal(Replay_RawStick(port, 0), Replay_RawStick(port, 1),
+                                       &fp->input.lstick[0]);
+                        ftUcf_Cardinal(Replay_RawStick(port, 2), Replay_RawStick(port, 3),
+                                       &fp->input.cstick[0]);
+                    }
+                    ftUcf_FlickCount(fp, port);
                 }
             }
 #endif

@@ -463,6 +463,18 @@ static int sn_compare(int frame) {
                     gw_log("snap:   MEM1 0x%08X +%u: first pass %02X.. now %02X..  [%s +0x%X]",
                            0x80000000u + start, off - start, s->mem1[start], live[start],
                            cls ? cls->name : "?", cls ? 0x80000000u + start - owner : 0);
+                    if (sn.mismatches < 1 && logged < 2) {
+                        /* context for the first mismatch: 32 words around it, both images */
+                        uint32_t w0 = (start & ~0x3Fu) >= 0x40 ? (start & ~0x3Fu) - 0x40 : 0, w;
+                        for (w = w0; w < w0 + 0x80 && w + 16 <= gw_mem1_size; w += 16) {
+                            gw_log("snap:     %08X  pass1 %08X %08X %08X %08X  now %08X %08X %08X %08X",
+                                   0x80000000u + w, sn_rd32(s->mem1, 0x80000000u + w),
+                                   sn_rd32(s->mem1, 0x80000004u + w), sn_rd32(s->mem1, 0x80000008u + w),
+                                   sn_rd32(s->mem1, 0x8000000Cu + w), sn_rd32(NULL, 0x80000000u + w),
+                                   sn_rd32(NULL, 0x80000004u + w), sn_rd32(NULL, 0x80000008u + w),
+                                   sn_rd32(NULL, 0x8000000Cu + w));
+                        }
+                    }
                     ++logged;
                 }
             } else {
@@ -590,6 +602,24 @@ void gw_SyncTest_IterStart(void) {
         int d = sn_compare(next);
         if (d != 0) {
             sn.mismatches++;
+            if (sn.mismatches == 1 && getenv("MELEE_SYNCTEST_DUMP") != NULL) {
+                /* both MEM1 images of the first mismatch, for offline analysis */
+                GwSnapSlot *sl = sn_slot_for(next, 0);
+                char p[600];
+                FILE *df;
+                snprintf(p, sizeof p, "%s.pass1.bin", getenv("MELEE_SYNCTEST_DUMP"));
+                if (sl != NULL && (df = fopen(p, "wb")) != NULL) {
+                    fwrite(sl->mem1, 1, gw_mem1_size, df);
+                    fclose(df);
+                }
+                snprintf(p, sizeof p, "%s.resim.bin", getenv("MELEE_SYNCTEST_DUMP"));
+                if ((df = fopen(p, "wb")) != NULL) {
+                    fwrite((const void *) (uintptr_t) 0x80000000u, 1, gw_mem1_size, df);
+                    fclose(df);
+                }
+                gw_log("snap: dumped both MEM1 images of the first mismatch to %s.*.bin",
+                       getenv("MELEE_SYNCTEST_DUMP"));
+            }
             if (sn.mismatches <= 8) {
                 gw_log("snap: SYNCTEST MISMATCH at the start of frame %d (resimulated %d back from "
                        "%d): %d differing runs",

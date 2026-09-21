@@ -873,7 +873,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 {
                     /* logic-side off-screen flag for the next logic frame (ifmagnify.c) */
                     extern void ifMagnify_UpdateLogicOffscreen(void);
+                    extern void Camera_RefreshViewingMtx(void);
                     ifMagnify_UpdateLogicOffscreen();
+                    Camera_RefreshViewingMtx();
                 }
 #endif
             }

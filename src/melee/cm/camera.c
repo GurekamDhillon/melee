@@ -4294,6 +4294,25 @@ bool Camera_800307D0(f32* left, f32* center, f32* right)
     return result;
 }
 
+#if defined(TARGET_PC)
+/* Rollback / determinism (pc/platform/gw_snap.c): the camera's viewing matrix is a CACHE that the
+ * render pass refreshes when it makes the camera current, and game logic reads it back through
+ * lbVector_WorldToScreen (the name tags project the player's position with it). A resimulated frame
+ * is never rendered, and a rollback restores a clean-but-stale cache, so logic read an older matrix
+ * than the first pass did - a SyncTest mismatch in the name tag joints. Refreshing it at the end of
+ * every logic frame puts it where the console's render leaves it: computed from this frame's camera.
+ */
+void Camera_RefreshViewingMtx(void)
+{
+    if (game_camera.gobj != NULL) {
+        /* the two steps the render callback (fn_800301D0) takes before it draws: push
+           game_camera's transform into the HSD_CObj, then refresh the viewing-matrix cache */
+        Camera_8002A4AC(game_camera.gobj);
+        HSD_CObjGetViewingMtxPtr(GET_COBJ(game_camera.gobj));
+    }
+}
+#endif
+
 HSD_GObj* Camera_80030A50(void)
 {
     return game_camera.gobj;

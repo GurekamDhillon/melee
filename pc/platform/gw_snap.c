@@ -64,7 +64,18 @@ static struct {
     int nslots;
     uint8_t *cmp_globals; /* scratch for gathering the live globals */
     volatile int *deferred_count;
+    uint32_t particle_list; /* psdisp.c's particle_list[17] */
+    GwSnapRange cmp_skip[64]; /* saved and restored, but render-owned: not compared */
+    int ncmp_skip;
+    GwSnapRange mask[8192];   /* per compare: live render-owned heap objects */
+    int nmask;
     volatile int *ppc_depth;
+    /* RENDER-OWNED bytes, measured: every byte the render pass changes is masked out of
+       comparisons from then on (it is still saved and restored) */
+    uint8_t *pre_mem1, *pre_globals;
+    uint8_t *rmask_mem1, *rmask_globals; /* 1 bit per byte */
+    int pre_valid;
+    uint32_t rmask_bytes;
     /* the tick plan */
     int plan_rollback; /* the next iteration loads S[F-k] */
     int target;        /* F: the new frame of this tick */
@@ -110,6 +121,8 @@ static int sn_game_object(const char *obj, const char *name) {
         "_gw_HSD_PadLibData", /* the raw pad queue: filled by the pad alarm, not by logic */
         "_gmMain_8046B108",   /* its storage */
         "_gw_HSD_Rumble_804C22E0",
+        "_gw_HSD_VIData",     /* VI retrace/XFB bookkeeping: the renderer's, not the game's */
+        "_gw_start_time",     /* wall-clock play time (lbtime) - differs between any two passes */
     };
     size_t i;
     int game = strncmp(obj, "src_melee_", 10) == 0 || strncmp(obj, "src_sysdolphin_", 15) == 0 ||
@@ -178,6 +191,7 @@ static int sn_load_map(void) {
             }
             if (sec3_base == 0) sec3_base = va - off;
             if (strcmp(a, "_gw_deferred_count") == 0) sn.deferred_count = (volatile int *) (uintptr_t) va;
+            if (strcmp(a, "_particle_list") == 0) sn.particle_list = va;
             if (strcmp(a, "_gw_ppc_depth") == 0) sn.ppc_depth = (volatile int *) (uintptr_t) va;
         }
     }
@@ -205,6 +219,33 @@ static int sn_load_map(void) {
             ++sn.nranges;
         }
         sn.globals_len += s->len;
+    }
+    /* RENDER-OWNED state: advanced by the render pass, which resimulated frames never get.
+       Saved and restored with everything else (so it stays consistent with MEM1), but not
+       compared - a difference there is not a logic difference. Evidence: SyncTest k=1's first
+       mismatch (frame -121) was entirely psdisp.c (the particle DISPLAY: sort lists, per-render
+       frame stamps, view matrices) plus gm_80479D58.unk_4, the scene loop's render counter. */
+    sn.ncmp_skip = 0;
+    for (i = 0; i < sn.nsyms && sn.ncmp_skip < 64; ++i) {
+        GwSnapSym *s = &sn.syms[i];
+        if (s->len == 0) continue;
+        if (strcmp(s->obj, "src_sysdolphin_baselib_psdisp.c.obj") == 0) {
+            sn.cmp_skip[sn.ncmp_skip].va = s->va;
+            sn.cmp_skip[sn.ncmp_skip].len = s->len;
+            ++sn.ncmp_skip;
+        } else if (strcmp(s->name, "_gw_HSD_PadMasterStatus") == 0 ||
+                   strcmp(s->name, "_gw_HSD_PadGameStatus") == 0 ||
+                   strcmp(s->name, "_gw_HSD_PadCopyStatus") == 0) {
+            /* INPUTS, renewed from the live pad queue each logic frame: during playback fighters
+               take the replay's inputs instead, so these are not state to compare */
+            sn.cmp_skip[sn.ncmp_skip].va = s->va;
+            sn.cmp_skip[sn.ncmp_skip].len = s->len;
+            ++sn.ncmp_skip;
+        } else if (strcmp(s->name, "_gm_80479D58") == 0) {
+            sn.cmp_skip[sn.ncmp_skip].va = s->va + 4; /* unk_4, the render counter */
+            sn.cmp_skip[sn.ncmp_skip].len = 4;
+            ++sn.ncmp_skip;
+        }
     }
     gw_log("snap: %d section-3 symbols, %d game ranges, %u bytes of game globals; MEM1 %u bytes",
            sn.nsyms, sn.nranges, sn.globals_len, gw_mem1_size);
@@ -293,6 +334,85 @@ static const GwSnapSym *sn_sym_at(uint32_t va) {
     return best >= 0 ? &sn.syms[best] : NULL;
 }
 
+static int sn_skip_global(uint32_t va) {
+    int i;
+    for (i = 0; i < sn.ncmp_skip; ++i) {
+        if (va >= sn.cmp_skip[i].va && va < sn.cmp_skip[i].va + sn.cmp_skip[i].len) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Particles and their AppSRTs are drawn - and written - by the render pass (psdisp.c: frame
+ * stamps, sort links, matrices), so their bytes are render-owned too. They live in HSD ObjAlloc
+ * pools anywhere on the heap, so mask them per compare by walking the display lists, in the live
+ * memory and in the snapshot image (`img`, the snapshot's MEM1 copy, or NULL for live). */
+static uint32_t sn_rd32(const uint8_t *img, uint32_t va) {
+    const uint8_t *p;
+    if (va < 0x80000000u || va + 4 > 0x80000000u + gw_mem1_size) {
+        return 0;
+    }
+    p = img != NULL ? img + (va - 0x80000000u) : (const uint8_t *) (uintptr_t) va;
+    return ((uint32_t) p[0] << 24) | ((uint32_t) p[1] << 16) | ((uint32_t) p[2] << 8) | p[3];
+}
+
+static void sn_add_mask(uint32_t va, uint32_t len) {
+    if (va >= 0x80000000u && sn.nmask < (int) (sizeof sn.mask / sizeof sn.mask[0])) {
+        sn.mask[sn.nmask].va = va;
+        sn.mask[sn.nmask].len = len;
+        ++sn.nmask;
+    }
+}
+
+static void sn_mask_particles(const uint8_t *img, const uint8_t *globals_img) {
+    int l, n;
+    if (sn.particle_list == 0) {
+        return;
+    }
+    for (l = 0; l < 17; ++l) {
+        uint32_t head;
+        if (globals_img != NULL) {
+            /* the list head as the snapshot saved it: find it inside the gathered globals */
+            uint32_t base = 0;
+            int i;
+            head = 0;
+            for (i = 0; i < sn.nranges; ++i) {
+                uint32_t a = sn.particle_list + 4u * (uint32_t) l;
+                if (a >= sn.ranges[i].va && a + 4 <= sn.ranges[i].va + sn.ranges[i].len) {
+                    const uint8_t *p = globals_img + base + (a - sn.ranges[i].va);
+                    head = ((uint32_t) p[0] << 24) | ((uint32_t) p[1] << 16) |
+                           ((uint32_t) p[2] << 8) | p[3];
+                    break;
+                }
+                base += sn.ranges[i].len;
+            }
+        } else {
+            const uint8_t *p = (const uint8_t *) (uintptr_t) (sn.particle_list + 4u * (uint32_t) l);
+            head = ((uint32_t) p[0] << 24) | ((uint32_t) p[1] << 16) | ((uint32_t) p[2] << 8) | p[3];
+        }
+        for (n = 0; head != 0 && n < 4096; ++n) {
+            uint32_t srt = sn_rd32(img, head + 0x8C);
+            sn_add_mask(head, 0x98);
+            if (srt != 0) {
+                sn_add_mask(srt, 0xA4);
+            }
+            head = sn_rd32(img, head);
+        }
+    }
+}
+
+static int sn_masked(uint32_t va, uint32_t *end) {
+    int i;
+    for (i = 0; i < sn.nmask; ++i) {
+        if (va >= sn.mask[i].va && va < sn.mask[i].va + sn.mask[i].len) {
+            *end = sn.mask[i].va + sn.mask[i].len;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* Compare the live state with the snapshot of `frame`; log up to a few differing runs. */
 static int sn_compare(int frame) {
     GwSnapSlot *s = sn_slot_for(frame, 0);
@@ -305,14 +425,44 @@ static int sn_compare(int frame) {
     sn.checked++;
     if (memcmp(s->mem1, live, gw_mem1_size) != 0) {
         uint32_t off = 0;
+        sn.nmask = 0;
+        sn_mask_particles(NULL, NULL);
+        sn_mask_particles(s->mem1, s->globals);
         while (off < gw_mem1_size) {
+            uint32_t mend;
+            if (s->mem1[off] != live[off] && (sn.rmask_mem1[off >> 3] & (1u << (off & 7)))) {
+                ++off;
+                continue;
+            }
+            if (s->mem1[off] != live[off] && sn_masked(0x80000000u + off, &mend)) {
+                off = mend - 0x80000000u;
+                continue;
+            }
             if (s->mem1[off] != live[off]) {
                 uint32_t start = off;
-                while (off < gw_mem1_size && s->mem1[off] != live[off] && off - start < 4096) ++off;
+                while (off < gw_mem1_size && s->mem1[off] != live[off] &&
+                       !(sn.rmask_mem1[off >> 3] & (1u << (off & 7))) && off - start < 4096) ++off;
                 ++diffs;
                 if (logged < 12) {
-                    gw_log("snap:   MEM1 0x%08X +%u: first pass %02X.. now %02X..", 0x80000000u + start,
-                           off - start, s->mem1[start], live[start]);
+                    /* name the heap object: HSD objects begin with a pointer to their class info
+                       in the native image, which the map names */
+                    uint32_t back, owner = 0;
+                    const GwSnapSym *cls = NULL;
+                    for (back = start & ~3u; back + 0x400 > start && back >= 4; back -= 4) {
+                        uint32_t w = sn_rd32(NULL, 0x80000000u + back);
+                        if (w >= 0x10000000u && w < 0x11000000u) {
+                            const GwSnapSym *c = sn_sym_at(w);
+                            if (c != NULL && strstr(c->name, "Class") != NULL) {
+                                cls = c;
+                                owner = 0x80000000u + back;
+                                break;
+                            }
+                        }
+                        if (back == 0) break;
+                    }
+                    gw_log("snap:   MEM1 0x%08X +%u: first pass %02X.. now %02X..  [%s +0x%X]",
+                           0x80000000u + start, off - start, s->mem1[start], live[start],
+                           cls ? cls->name : "?", cls ? 0x80000000u + start - owner : 0);
                     ++logged;
                 }
             } else {
@@ -326,7 +476,9 @@ static int sn_compare(int frame) {
         for (i = 0; i < sn.nranges; ++i) {
             uint32_t j;
             for (j = 0; j < sn.ranges[i].len; ++j) {
-                if (s->globals[base + j] != sn.cmp_globals[base + j]) {
+                if (s->globals[base + j] != sn.cmp_globals[base + j] &&
+                    !(sn.rmask_globals[(base + j) >> 3] & (1u << ((base + j) & 7))) &&
+                    !sn_skip_global(sn.ranges[i].va + j)) {
                     uint32_t va = sn.ranges[i].va + j;
                     const GwSnapSym *sym = sn_sym_at(va);
                     ++diffs;
@@ -385,6 +537,15 @@ static void sn_init(void) {
         }
     }
     sn.cmp_globals = (uint8_t *) malloc(sn.globals_len);
+    sn.pre_mem1 = (uint8_t *) malloc(gw_mem1_size);
+    sn.pre_globals = (uint8_t *) malloc(sn.globals_len);
+    sn.rmask_mem1 = (uint8_t *) calloc(gw_mem1_size / 8 + 1, 1);
+    sn.rmask_globals = (uint8_t *) calloc(sn.globals_len / 8 + 1, 1);
+    if (sn.pre_mem1 == NULL || sn.pre_globals == NULL || sn.rmask_mem1 == NULL ||
+        sn.rmask_globals == NULL) {
+        gw_log("snap: out of memory for the render mask");
+        return;
+    }
     sn.enabled = 1;
     gw_log("snap: SyncTest k=%d (%d slots of %u bytes)", sn.k, sn.nslots,
            gw_mem1_size + sn.globals_len);
@@ -502,6 +663,50 @@ int gw_Snap_SfxTake(int sound_id) {
         gw_log("snap: resimulated frame %d played sound %d the first pass did not", f, sound_id);
     }
     return -1;
+}
+
+/* Around the render pass (gmscene.c): whatever it changes is render-owned. */
+void gw_SyncTest_PreRender(void) {
+    if (!sn.enabled || !sn_live()) {
+        return;
+    }
+    memcpy(sn.pre_mem1, (const void *) (uintptr_t) 0x80000000u, gw_mem1_size);
+    sn_gather(sn.pre_globals);
+    sn.pre_valid = 1;
+}
+
+static uint32_t sn_mark(const uint8_t *before, const uint8_t *after, uint32_t len, uint8_t *mask) {
+    uint32_t off, added = 0;
+    for (off = 0; off < len; off += 4096) {
+        uint32_t n = len - off < 4096 ? len - off : 4096, j;
+        if (memcmp(before + off, after + off, n) == 0) {
+            continue;
+        }
+        for (j = 0; j < n; ++j) {
+            uint32_t b = off + j;
+            if (before[b] != after[b] && !(mask[b >> 3] & (1u << (b & 7)))) {
+                mask[b >> 3] |= (uint8_t) (1u << (b & 7));
+                ++added;
+            }
+        }
+    }
+    return added;
+}
+
+void gw_SyncTest_PostRender(void) {
+    uint32_t a, g;
+    if (!sn.enabled || !sn.pre_valid) {
+        return;
+    }
+    sn.pre_valid = 0;
+    a = sn_mark(sn.pre_mem1, (const uint8_t *) (uintptr_t) 0x80000000u, gw_mem1_size, sn.rmask_mem1);
+    sn_gather(sn.cmp_globals);
+    g = sn_mark(sn.pre_globals, sn.cmp_globals, sn.globals_len, sn.rmask_globals);
+    sn.rmask_bytes += a + g;
+    if ((a + g) != 0 && sn.passes < 4) {
+        gw_log("snap: render pass wrote %u new MEM1 bytes and %u global bytes (%u render-owned so far)",
+               a, g, sn.rmask_bytes);
+    }
 }
 
 /* Sound effects must not replay while resimulating (lbaudio_ax.c). */

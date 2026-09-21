@@ -902,6 +902,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             break;
         }
 
+#if defined(TARGET_PC)
+        {
+            extern void SyncTest_PreRender(void); /* gw_snap.c: measure render-owned state */
+            SyncTest_PreRender();
+        }
+#endif
         lb_800195D0();
         GXInvalidateVtxCache();
         GXInvalidateTexAll();
@@ -913,6 +919,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         if (temp_r25->unk_4 != -2U) {
             temp_r25->unk_4++;
         }
+#if defined(TARGET_PC)
+        {
+            extern void SyncTest_PostRender(void);
+            SyncTest_PostRender();
+        }
+#endif
         db_TakeScreenshotIfPending();
         HSD_PerfSetTotalTime();
         HSD_PerfInitStat();

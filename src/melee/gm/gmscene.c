@@ -747,6 +747,22 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             lb_800195D0();
         }
         lb_800195D0();
+#if defined(TARGET_PC)
+        {
+            /* MELEE_DETERMINISTIC (pc/platform/gw_replay.c): one logic frame per render, as on
+               the console at full speed. Catching up with several logic frames per render made
+               render-coupled state go stale for game logic - the magnifier's off-screen flag is
+               set in its render callback (ifMagnify_802FBBDC) and read every logic frame by the
+               1%-per-interval off-screen damage (Fighter_8006A1BC), so under load that 1% landed a
+               frame early or late and two runs of one replay parted ways. The rest of the queue
+               stays queued and runs next iteration: the game slows under load instead of
+               skipping renders. */
+            extern int Det_Enabled(void);
+            if (pad_queue_count > 1 && Det_Enabled()) {
+                pad_queue_count = 1;
+            }
+        }
+#endif
 
         if (HSD_PadGetResetSwitch()) {
             gmMainLib_8046B0F0.resetting = true;

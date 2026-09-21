@@ -473,6 +473,11 @@ int gw_Replay_Tick(void) {
         return GW_RP_UNARMED;
     }
     ++rp.frame;
+    if ((rp.frame & 63) == 0) {
+        /* the harness ends a run by killing it: without this a trace loses its buffered tail,
+           and a shorter trace than the other run reads like a divergence */
+        fflush(NULL);
+    }
     if (rp.frame == rp.last + 1) {
         gw_log("replay: past the replay's last frame (%d)", rp.last);
         if (rp.trace != NULL) {
@@ -550,7 +555,7 @@ void gw_Replay_CheckSeed(uint32_t port_seed) {
             seedf = fopen(sp, "w");
         }
     }
-    if (seedf != NULL) {
+    if (seedf != NULL && rp.frame != GW_RP_UNARMED) {
         fprintf(seedf, "%d,%08X\n", rp.frame, port_seed);
     }
     if (rp.seed_diverged || !rp_frame_seed(&want)) {
@@ -640,4 +645,43 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
     }
     r = &rp.in[(f - rp.first) * GW_RP_SLOTS + port * 2];
     return r->present ? r->raw[which] : 0;
+
+/* <trace>.rand.csv: every RNG draw while a replay is armed - frame, caller (native return address),
+ * seed after, and whether it drew the global seed or a redirected one (HSD_RandSeedPtr). */
+void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
+    static FILE *rf;
+    static int tried;
+    if (!rp.active || rp.frame == GW_RP_UNARMED) {
+        return;
+    }
+    if (!tried) {
+        const char *tp = getenv("MELEE_STATE_TRACE");
+        tried = 1;
+        if (tp != NULL && tp[0] != '\0') {
+            char p[600];
+            snprintf(p, sizeof p, "%s.rand.csv", tp);
+            rf = fopen(p, "w");
+        }
+    }
+    if (rf != NULL) {
+        fprintf(rf, "%d,%08X,%08X,%d\n", rp.frame, caller, seed_after, (int) global);
+    }
+}
+
+/* MELEE_DETERMINISTIC: game-visible state must depend only on the logic frame count, never on
+ * wall-clock timing. On by default during .slp playback (MELEE_DETERMINISTIC=0 turns it off), and
+ * on for any run with MELEE_DETERMINISTIC=1. What it changes is listed where each change is made;
+ * gw_Det_OneLogicPerRender is the first. */
+int gw_Det_Enabled(void) {
+    static int cached = -1;
+    if (cached < 0) {
+        const char *v = getenv("MELEE_DETERMINISTIC");
+        if (v != NULL && v[0] != '\0') {
+            cached = v[0] == '1';
+        } else {
+            cached = gw_Replay_Active();
+        }
+        gw_log("det: deterministic mode %s", cached ? "ON" : "off");
+    }
+    return cached;
 }

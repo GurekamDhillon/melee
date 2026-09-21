@@ -2285,6 +2285,23 @@ static int gw_mex_sig_lookup(uint32_t guest_addr, gw_ppc_sig *sig) {
         sig->ret_float = gw_mex_gen_sigs[lo].ret_float;
         return 1;
     }
+    /* Then the extended table: signatures the word slots cannot express (more than eight
+     * argument slots, doubles, by-value aggregates). See `ext` in gw_ppc.h. */
+    lo = 0;
+    hi = (unsigned) (sizeof gw_mex_gen_xsigs / sizeof gw_mex_gen_xsigs[0]);
+    while (lo < hi) {
+        unsigned mid = lo + (hi - lo) / 2u;
+        if (gw_mex_gen_xsigs[mid].guest < guest_addr) {
+            lo = mid + 1u;
+        } else {
+            hi = mid;
+        }
+    }
+    if (lo < (unsigned) (sizeof gw_mex_gen_xsigs / sizeof gw_mex_gen_xsigs[0]) &&
+        gw_mex_gen_xsigs[lo].guest == guest_addr) {
+        sig->ext = gw_mex_gen_xsigs[lo].sig;
+        return 1;
+    }
     return 0;
 }
 

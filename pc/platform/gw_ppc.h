@@ -78,7 +78,24 @@ typedef struct gw_ppc_sig {
     uint32_t float_args;
     uint32_t n_args;
     int ret_float;
+    /* EXTENDED signature, for what the three fields above cannot say. NULL (the default the
+     * bridge sets before resolving) keeps the word-slot path, so every existing signature is
+     * untouched. Otherwise a string "<ret>:<args>", one class per C parameter:
+     *   i       a word from the next GPR (r3..r10), then from the caller's stack parameter area
+     *           at r1+8, as the PowerPC EABI spills a ninth integer argument
+     *   f       a float from the next FPR (f1..f8), one native word
+     *   d       a double from the next FPR, TWO native words (i686 cdecl passes it inline)
+     *   a<N>    an N-byte aggregate BY VALUE: PowerPC passes a pointer to a copy in the next GPR,
+     *           i686 cdecl passes the bytes themselves inline, rounded up to words. The bytes are
+     *           copied raw - gwtool's callers materialise that copy big-endian, so the callee
+     *           expects exactly the guest's bytes (docs/DEVLOG.md, "Struct-by-value ABI").
+     * and <ret> is i (word, pointer, void, or an aggregate of at most 4 bytes - PowerPC returns
+     * that in r3 and the retargeted callee in EAX as the same big-endian word), f (float) or d
+     * (double), the latter two captured into f1. Up to GW_PPC_EXT_MAX_WORDS native words. */
+    const char *ext;
 } gw_ppc_sig;
+
+#define GW_PPC_EXT_MAX_WORDS 16u
 
 /* Resolver: guest target address -> native function pointer, or NULL (which panics). When the
  * function is resolved, *sig is filled with its calling signature. `ctx` is the opaque pointer

@@ -563,6 +563,117 @@ static int gw_ppc_varargs_from_format(gw_ppc_machine *m, uint32_t fmt, uint32_t 
     return 1;
 }
 
+/* The extended-signature call: see `ext` in gw_ppc_sig. Walks the C parameters in order, taking
+ * each from where the PowerPC EABI put it, and lays them out as the i686 cdecl callee reads them.
+ * A ninth integer argument is the case the word path could never express - PowerPC has only eight
+ * GPR argument registers and spills the rest to the caller's parameter area at r1+8 (r1 is still
+ * the caller's frame at the `bl`), while cdecl just keeps going along the stack. */
+typedef uint32_t (*gw_ppc_ext_ifn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                                   uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                                   uint32_t, uint32_t, uint32_t, uint32_t);
+typedef float (*gw_ppc_ext_ffn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                                uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                                uint32_t, uint32_t, uint32_t, uint32_t);
+typedef double (*gw_ppc_ext_dfn)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                                 uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t,
+                                 uint32_t, uint32_t, uint32_t, uint32_t);
+
+static void gw_ppc_bridge_call_ext(gw_ppc_machine *m, uint32_t guest_addr, gw_ppc_native_fn fn,
+                                   const char *ext) {
+    gw_ppc_ctx *c = &m->cpu;
+    uint32_t w[GW_PPC_EXT_MAX_WORDS];
+    uint32_t nw = 0, overflow = c->gpr[1] + 8u;
+    int gpr_i = 3, fpr_i = 1;
+    const char *p = ext + 2;
+    char ret = ext[0];
+
+    memset(w, 0, sizeof w);
+    if (ext[0] == '\0' || ext[1] != ':') {
+        gw_panic("ppc: malformed extended signature \"%s\" for 0x%08X", ext, guest_addr);
+    }
+    while (*p != '\0') {
+        char cls = *p++;
+        uint32_t need = 1, word = 0, size = 0;
+        double d = 0.0;
+        if (cls == 'd') {
+            need = 2;
+        } else if (cls == 'a') {
+            while (*p >= '0' && *p <= '9') {
+                size = size * 10u + (uint32_t) (*p++ - '0');
+            }
+            need = (size + 3u) / 4u;
+        }
+        if (nw + need > GW_PPC_EXT_MAX_WORDS) {
+            gw_panic("ppc: extended signature \"%s\" for 0x%08X needs more than %u native words",
+                     ext, guest_addr, GW_PPC_EXT_MAX_WORDS);
+        }
+        if (cls == 'f' || cls == 'd') {
+            if (fpr_i > 8) {
+                /* Past f8 the EABI spills to the parameter area; gen_sigs never emits one. */
+                gw_panic("ppc: extended signature \"%s\" for 0x%08X has more than 8 FPR arguments",
+                         ext, guest_addr);
+            }
+            d = c->fpr[fpr_i++].d;
+        } else if (gpr_i <= 10) {
+            word = c->gpr[gpr_i++];
+        } else {
+            word = gw_ppc_ld32(m, overflow);
+            overflow += 4u;
+        }
+        switch (cls) {
+        case 'i':
+            w[nw] = gw_ppc_arg_word(word);
+            break;
+        case 'f': {
+            float f = (float) d;
+            memcpy(&w[nw], &f, 4);
+            break;
+        }
+        case 'd':
+            memcpy(&w[nw], &d, 8);
+            break;
+        case 'a':
+            if (size != 0u) {
+                memcpy(&w[nw],
+                       (const void *) (uintptr_t) gw_ppc_resolve_ea(m, word, size),
+                       size);
+            }
+            break;
+        default:
+            gw_panic("ppc: unknown class '%c' in extended signature \"%s\" for 0x%08X", cls, ext,
+                     guest_addr);
+        }
+        nw += need;
+    }
+    {
+        static int trace_bridge = -1;
+        if (trace_bridge < 0) {
+            const char *v = getenv("MELEE_PPC_TRACE_BRIDGE");
+            trace_bridge = (v != NULL && v[0] == '1');
+        }
+        if (trace_bridge) {
+            gw_log("ppc: bridge %s [%s] from ip=0x%08X (%08X %08X %08X %08X)",
+                   gw_ppc_describe(guest_addr), ext, c->pc - 4, w[0], w[1], w[2], w[3]);
+        }
+    }
+    if (ret == 'f') {
+        c->fpr[1].d = (double) ((gw_ppc_ext_ffn) (void *) fn)(
+            w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7], w[8], w[9], w[10], w[11], w[12], w[13],
+            w[14], w[15]);
+    } else if (ret == 'd') {
+        c->fpr[1].d = ((gw_ppc_ext_dfn) (void *) fn)(w[0], w[1], w[2], w[3], w[4], w[5], w[6],
+                                                     w[7], w[8], w[9], w[10], w[11], w[12], w[13],
+                                                     w[14], w[15]);
+    } else if (ret == 'i') {
+        c->gpr[3] = ((gw_ppc_ext_ifn) (void *) fn)(w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7],
+                                                   w[8], w[9], w[10], w[11], w[12], w[13], w[14],
+                                                   w[15]);
+    } else {
+        gw_panic("ppc: unknown return class '%c' in extended signature \"%s\" for 0x%08X", ret, ext,
+                 guest_addr);
+    }
+}
+
 static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
     gw_ppc_ctx *c = &m->cpu;
     gw_ppc_native_fn fn;
@@ -581,9 +692,14 @@ static void gw_ppc_bridge_call(gw_ppc_machine *m, uint32_t guest_addr) {
     sig.float_args = 0;
     sig.n_args = 8;
     sig.ret_float = 0;
+    sig.ext = NULL;
     fn = m->resolve(guest_addr, m->bridge_ctx, &sig);
     if (fn == NULL) {
         gw_panic("ppc: resolver returned NULL for guest address 0x%08X", guest_addr);
+    }
+    if (sig.ext != NULL) {
+        gw_ppc_bridge_call_ext(m, guest_addr, fn, sig.ext);
+        return;
     }
     if (sig.n_args > 8) {
         gw_panic("ppc: resolver reported %u args (>8) for guest address 0x%08X", sig.n_args,
@@ -2508,6 +2624,141 @@ static int test_ppc_float_bridge(void) {
     return 0;
 }
 
+/* ---- extended-signature bridge tests ------------------------------------------------------
+ * The two things the word-slot path cannot express, each end to end through the interpreter:
+ *   1. a ninth and tenth integer argument, which PowerPC spills to the caller's parameter area
+ *      at r1+8 while cdecl just keeps going along the stack (mpCheckFloor, GXSetTevIndirect);
+ *   2. by-value aggregates (PowerPC passes a pointer to a copy, cdecl the bytes inline), a double
+ *      argument (two native words) and a double return (x87 -> f1).
+ * Each helper weights every argument by its position, so a slot off by one word fails loudly. */
+
+#define GW_PPC_TEST_XCODE_A 0x80300600u      /* blob: aggregates + doubles */
+#define GW_PPC_TEST_XCODE_S 0x80300640u      /* blob: ten ints, two on the stack */
+#define GW_PPC_TEST_XDATA 0x80300700u        /* colour, Vec3, double, float, results */
+#define GW_PPC_TEST_XAGG_GUEST 0x80380380u   /* fake guest address of the aggregate helper */
+#define GW_PPC_TEST_XSTACK_GUEST 0x80380384u /* fake guest address of the ten-int helper */
+#define GW_PPC_TEST_BL(pc, target) (0x48000001u | (((target) - (pc)) & 0x03FFFFFCu))
+
+typedef struct { uint8_t r, g, b, a; } gw_ppc_test_rgba;
+typedef struct { float x, y, z; } gw_ppc_test_vec3;
+
+static uint32_t gw_ppc_test_xstack(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5,
+                                   uint32_t a6, uint32_t a7, uint32_t a8, uint32_t a9,
+                                   uint32_t a10) {
+    return a1 * 1u + a2 * 2u + a3 * 3u + a4 * 4u + a5 * 5u + a6 * 6u + a7 * 7u + a8 * 8u +
+           a9 * 9u + a10 * 10u;
+}
+
+/* The inline copy is the guest's raw big-endian bytes - what a gwtool-retargeted callee expects,
+ * because its loads byte-swap - so the float fields are read the way that callee reads them. */
+static double gw_ppc_test_xagg(uint32_t tag, gw_ppc_test_rgba c, gw_ppc_test_vec3 v, double d,
+                               float f) {
+    double x = gw_rf32(&v.x), y = gw_rf32(&v.y), z = gw_rf32(&v.z);
+    return (double) tag + c.r + 2.0 * c.g + 3.0 * c.b + 4.0 * c.a + x + 10.0 * y + 100.0 * z +
+           1000.0 * d + 10000.0 * f;
+}
+
+static gw_ppc_native_fn gw_ppc_test_xresolve(uint32_t guest_addr, void *ctx, gw_ppc_sig *sig) {
+    (void) ctx;
+    if (guest_addr == GW_PPC_TEST_XAGG_GUEST) {
+        sig->ext = "d:ia4a12df";
+        return (gw_ppc_native_fn) (void *) gw_ppc_test_xagg;
+    }
+    if (guest_addr == GW_PPC_TEST_XSTACK_GUEST) {
+        sig->ext = "i:iiiiiiiiii";
+        return (gw_ppc_native_fn) (void *) gw_ppc_test_xstack;
+    }
+    return NULL;
+}
+
+static int test_ppc_ext_stack_args(void) {
+    static uint32_t blob[] = {
+        0x9421FFE0u, /* stwu r1, -32(r1) */
+        0x7C0802A6u, /* mflr r0 */
+        0x90010024u, /* stw r0, 36(r1) */
+        0x38000009u, /* li r0, 9 */
+        0x90010008u, /* stw r0, 8(r1)   -- ninth argument, parameter area */
+        0x3800000Au, /* li r0, 10 */
+        0x9001000Cu, /* stw r0, 12(r1)  -- tenth */
+        0x38600001u, 0x38800002u, 0x38A00003u, 0x38C00004u, /* li r3..r6, 1..4 */
+        0x38E00005u, 0x39000006u, 0x39200007u, 0x39400008u, /* li r7..r10, 5..8 */
+        0u,          /* bl helper (patched below) */
+        0x3D208030u, /* lis r9, 0x8030 */
+        0x90690780u, /* stw r3, 0x780(r9) */
+        0x80010024u, /* lwz r0, 36(r1) */
+        0x7C0803A6u, /* mtlr r0 */
+        0x38210020u, /* addi r1, r1, 32 */
+        0x4E800020u, /* blr */
+    };
+    const uint32_t expected = 1 + 4 + 9 + 16 + 25 + 36 + 49 + 64 + 81 + 100; /* 385 */
+    unsigned i;
+    uint32_t got;
+
+    blob[15] = GW_PPC_TEST_BL(GW_PPC_TEST_XCODE_S + 15u * 4u, GW_PPC_TEST_XSTACK_GUEST);
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_XCODE_S + 4 * i), blob[i]);
+    }
+    gw_w32((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 0x80), 0u);
+    gw_ppc_set_bridge(gw_ppc_test_xresolve, NULL, GW_PPC_TEST_XCODE_S,
+                      GW_PPC_TEST_XCODE_S + (uint32_t) sizeof blob);
+    gw_ppc_call(GW_PPC_TEST_XCODE_S, NULL, 0, 0 /* rtoc */, GW_PPC_TEST_STACK);
+    got = gw_r32((const void *) (uintptr_t) (GW_PPC_TEST_XDATA + 0x80));
+    if (got != expected) {
+        gw_test_fail("ten-int bridge returned %u, expected %u (stack-spilled args misplaced)", got,
+                     expected);
+        return 1;
+    }
+    return 0;
+}
+
+static int test_ppc_ext_aggregate_double(void) {
+    static uint32_t blob[] = {
+        0x7C0802A6u, /* mflr r0 */
+        0x3D208030u, /* lis r9, 0x8030 */
+        0x38890700u, /* addi r4, r9, 0x700  -- &colour */
+        0x38A90704u, /* addi r5, r9, 0x704  -- &Vec3 */
+        0x38600007u, /* li r3, 7 */
+        0xC8290710u, /* lfd f1, 0x710(r9)   -- double */
+        0xC0490718u, /* lfs f2, 0x718(r9)   -- float */
+        0u,          /* bl helper (patched below) */
+        0x3D208030u, /* lis r9, 0x8030 */
+        0xD8290720u, /* stfd f1, 0x720(r9) */
+        0x7C0803A6u, /* mtlr r0 */
+        0x4E800020u, /* blr */
+    };
+    const double d = 0.125, expected_d = 7.0 + 1 + 2.0 * 2 + 3.0 * 3 + 4.0 * 4 + 0.5 + 10.0 * 1.5 +
+                                         100.0 * 2.5 + 1000.0 * d + 10000.0 * 0.25;
+    uint64_t bits;
+    double got;
+    unsigned i;
+
+    blob[7] = GW_PPC_TEST_BL(GW_PPC_TEST_XCODE_A + 7u * 4u, GW_PPC_TEST_XAGG_GUEST);
+    for (i = 0; i < sizeof blob / sizeof blob[0]; ++i) {
+        gw_w32((void *) (uintptr_t) (GW_PPC_TEST_XCODE_A + 4 * i), blob[i]);
+    }
+    gw_w8((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 0), 1); /* GXColor r g b a */
+    gw_w8((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 1), 2);
+    gw_w8((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 2), 3);
+    gw_w8((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 3), 4);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 4), 0.5f); /* Vec3 */
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 8), 1.5f);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 12), 2.5f);
+    memcpy(&bits, &d, 8);
+    gw_w64((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 0x10), bits);
+    gw_wf32((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 0x18), 0.25f);
+    gw_w64((void *) (uintptr_t) (GW_PPC_TEST_XDATA + 0x20), 0u);
+    gw_ppc_set_bridge(gw_ppc_test_xresolve, NULL, GW_PPC_TEST_XCODE_A,
+                      GW_PPC_TEST_XCODE_A + (uint32_t) sizeof blob);
+    gw_ppc_call(GW_PPC_TEST_XCODE_A, NULL, 0, 0 /* rtoc */, GW_PPC_TEST_STACK);
+    bits = gw_r64((const void *) (uintptr_t) (GW_PPC_TEST_XDATA + 0x20));
+    memcpy(&got, &bits, 8);
+    if (got != expected_d) {
+        gw_test_fail("aggregate/double bridge returned %.9f, expected %.9f", got, expected_d);
+        return 1;
+    }
+    return 0;
+}
+
 /* ---- variadic bridge test -----------------------------------------------------------------
  * A variadic callee reads its arguments from no signature, so neither can the bridge: what the
  * tail contains belongs to the CALL SITE. The PowerPC EABI makes the caller say so out loud -
@@ -3306,6 +3557,8 @@ static int test_ppc_update_indexed_and_brx(void) {
 void gw_ppc_tests_register(void) {
     gw_test_register("ppc_call_bridged_helper", test_ppc_call_bridged_helper);
     gw_test_register("ppc_float_bridge", test_ppc_float_bridge);
+    gw_test_register("ppc_ext_stack_args", test_ppc_ext_stack_args);
+    gw_test_register("ppc_ext_aggregate_double", test_ppc_ext_aggregate_double);
     gw_test_register("ppc_varargs_bridge", test_ppc_varargs_bridge);
     gw_test_register("ppc_varargs_format_order", test_ppc_varargs_format_order);
     gw_test_register("ppc_static_bridge", test_ppc_static_bridge);

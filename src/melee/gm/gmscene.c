@@ -981,7 +981,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
         {
             extern void SyncTest_PostRender(void);
+            extern void RB_TickEnd(void);
             SyncTest_PostRender();
+            RB_TickEnd();
         }
 #endif
         db_TakeScreenshotIfPending();

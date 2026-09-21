@@ -111,6 +111,9 @@ int gw_RB_Iterations(int count);
  * side effects (sound, rumble) while resimulating. */
 void gw_RB_IterStart(void);
 
+/* gmscene.c: after the tick's render pass; closes the per-tick work measurement. */
+void gw_RB_TickEnd(void);
+
 /* gmscene.c, at the start of every scene: a session governs VS matches only. */
 void gw_RB_SceneBegin(int scene_kind);
 

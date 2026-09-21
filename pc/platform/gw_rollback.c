@@ -81,6 +81,10 @@ static struct {
     double ms_save, ms_load, ms_resim, ms_new;
     double rb_extra_ms_max[16], rb_extra_ms_sum[16];
     int rb_extra_n[16];
+    /* whole-tick WORK time (RB_Iterations entry to the end of the render pass; the vsync wait
+       before the next tick is not in it), by rollback depth of the tick: 0 = no rollback */
+    double tick_t0, tk_sum[16], tk_max[16];
+    int tk_n[16], tk_over[16], tick_depth;
     double iter_t0;
     int iter_kind;                    /* 0 none, 1 new, 2 resim */
     double cur_extra_ms;              /* load + resimulated iterations of the current rollback */
@@ -477,6 +481,18 @@ int gw_RB_Iterations(int count) {
         rb.cur_depth = rb.plan.k;
     }
     rb.n_ticks++;
+    rb.tick_t0 = rb_ms();
+    rb.tick_depth = rb.plan.rollback ? (rb.plan.k > 15 ? 15 : rb.plan.k) : 0;
+    if ((rb.n_ticks % 1200) == 0) {
+        int d;
+        for (d = 0; d < 16; ++d) {
+            if (rb.tk_n[d] != 0) {
+                gw_log("rb: tick work, depth %2d: %5d ticks, avg %6.2f ms, max %6.2f ms, over 16.7 ms: "
+                       "%d (%.0f%%)", d, rb.tk_n[d], rb.tk_sum[d] / rb.tk_n[d], rb.tk_max[d],
+                       rb.tk_over[d], 100.0 * rb.tk_over[d] / rb.tk_n[d]);
+            }
+        }
+    }
     if ((rb.n_ticks % 300) == 0) {
         gw_log("rb: tick %d frame %d confirmed %d | rollbacks %d (avg depth %.2f, max %d), resim "
                "frames %d, stalls %d, desyncs %d | ms: save %.2f/load %.2f per op, resim %.2f/iter, "
@@ -487,6 +503,26 @@ int gw_RB_Iterations(int count) {
                rb.n_resim ? rb.ms_resim / rb.n_resim : 0.0, rb.n_new ? rb.ms_new / rb.n_new : 0.0);
     }
     return (rb.plan.rollback ? rb.plan.k : 0) + (rb.plan.new_frame ? 1 : 0);
+}
+
+/* gmscene.c: after the render pass - the tick's work is done. */
+void gw_RB_TickEnd(void) {
+    double d;
+    int k;
+    if (!rb.on || !rb.in_match || !rb.opened || rb.tick_t0 == 0) {
+        return;
+    }
+    d = rb_ms() - rb.tick_t0;
+    rb.tick_t0 = 0;
+    k = rb.tick_depth;
+    rb.tk_n[k]++;
+    rb.tk_sum[k] += d;
+    if (d > rb.tk_max[k]) {
+        rb.tk_max[k] = d;
+    }
+    if (d > 16.7) {
+        rb.tk_over[k]++;
+    }
 }
 
 /* Fix the inputs frame `next` will use: the local ones (confirmed) and the remote ones

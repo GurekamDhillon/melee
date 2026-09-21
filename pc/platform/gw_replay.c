@@ -324,6 +324,22 @@ uint32_t gw_Replay_ResyncSeed(void) {
  * before a position does. Called at the start of each running frame with the port's seed. */
 void gw_Replay_CheckSeed(uint32_t port_seed) {
     uint32_t want;
+    /* <trace>.seed.csv: the port's seed at the start of every frame, so two port runs of the same
+       replay can be diffed for the first frame they part ways (port-vs-port determinism) */
+    static FILE *seedf;
+    static int seed_tried;
+    if (!seed_tried) {
+        const char *tp = getenv("MELEE_STATE_TRACE");
+        seed_tried = 1;
+        if (tp != NULL && tp[0] != '\0') {
+            char sp[600];
+            snprintf(sp, sizeof sp, "%s.seed.csv", tp);
+            seedf = fopen(sp, "w");
+        }
+    }
+    if (seedf != NULL) {
+        fprintf(seedf, "%d,%08X\n", rp.frame, port_seed);
+    }
     if (rp.seed_diverged || !rp_frame_seed(&want)) {
         return;
     }

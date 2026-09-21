@@ -86,6 +86,11 @@ cl::opt<std::string> FeatureStr("mattr", cl::desc("x86 features"),
 cl::opt<bool> NoSafeArith("no-safe-arith",
                           cl::desc("Keep trapping division, UB shifts and poison fptosi"),
                           cl::init(false));
+cl::opt<bool> NoExactFMulAdd("no-exact-fmuladd",
+                             cl::desc("Leave llvm.fmuladd to the backend (unfused without FMA3, "
+                                      "fused with it) instead of lowering it to Gekko's fused "
+                                      "single-precision multiply-add"),
+                             cl::init(false));
 cl::opt<bool> NoSwap("no-swap", cl::desc("Debug: do not byte-swap memory accesses"),
                      cl::init(false));
 cl::opt<bool> NoAbiPin("no-abi-pin",
@@ -269,6 +274,45 @@ unsigned swapMemoryAccesses(Function &F, const DataLayout &DL, LayoutChecker &LC
     }
   }
   return Count;
+}
+
+// ---------------------------------------------------------------------------
+// Gekko's fused multiply-add, on any x86.
+//
+// MWCC emits fmadds/fmsubs/fnmadds/fnmsubs for a*b+c, and the Gekko computes those with ONE
+// rounding to single precision. clang marks exactly those expressions llvm.fmuladd (-ffp-contract=
+// on), but the backend lowers fmuladd to a separate multiply and add - two roundings - unless the
+// target has FMA3, and then the result depends on which CPU built the exe. Knockback vectors and
+// sin/cos polynomials are one-ULP off either way, and a replay or a rollback peer drifts from there
+// (found by .slp playback, see pc/platform/gw_replay.c).
+//
+// So lower f32 fmuladd to fptrunc(fpext(a) * fpext(b) + fpext(c)) in double: the product of two
+// floats is exact in double's 53 bits, so the only roundings are the double add and the final
+// narrowing - Dolphin's own model of fmadds, and bit-identical on every SSE2 CPU. f64 fmuladd (the
+// Gekko's fmadd) becomes a true llvm.fma, which the CRT computes exactly when there is no FMA3.
+// ---------------------------------------------------------------------------
+unsigned lowerFMulAdd(Function &F) {
+  SmallVector<IntrinsicInst *, 16> Work;
+  for (Instruction &I : instructions(F))
+    if (auto *II = dyn_cast<IntrinsicInst>(&I))
+      if (II->getIntrinsicID() == Intrinsic::fmuladd && !II->getType()->isVectorTy())
+        Work.push_back(II);
+  for (IntrinsicInst *II : Work) {
+    IRBuilder<> B(II);
+    Value *A = II->getArgOperand(0), *Bv = II->getArgOperand(1), *C = II->getArgOperand(2);
+    Value *R;
+    if (II->getType()->isFloatTy()) {
+      Type *D = B.getDoubleTy();
+      Value *P = B.CreateFMul(B.CreateFPExt(A, D), B.CreateFPExt(Bv, D));
+      R = B.CreateFPTrunc(B.CreateFAdd(P, B.CreateFPExt(C, D)), II->getType());
+    } else {
+      R = B.CreateIntrinsic(Intrinsic::fma, {II->getType()}, {A, Bv, C});
+    }
+    R->takeName(II);
+    II->replaceAllUsesWith(R);
+    II->eraseFromParent();
+  }
+  return Work.size();
 }
 
 // ---------------------------------------------------------------------------
@@ -811,6 +855,8 @@ int main(int argc, char **argv) {
       continue;
     if (!NoSafeArith)
       makeArithmeticSafe(F);
+    if (!NoExactFMulAdd)
+      lowerFMulAdd(F);
     if (!NoSwap)
       swapMemoryAccesses(F, NewDL, LC);
   }

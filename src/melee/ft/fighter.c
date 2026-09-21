@@ -1930,6 +1930,87 @@ static void Fighter_Spaghetti_8006AD10_Inner1(Fighter* fp)
     }
 }
 
+#if defined(TARGET_PC)
+/* UCF 0.84's per-port pad buffer, kept by "Pad Buffer + 1.0 Cardinals" (@ 0x8006B460) in its own
+ * data block: a 4-deep ring of the raw stick (x, y) bytes, the ring index of the newest entry
+ * (block byte 8), and a flick counter (byte 9) that UCF 0.84's Shield Drop Extended reads. Updated
+ * once per human fighter input frame, at the same point as the cardinal snap. */
+static struct {
+    s8 x[4], y[4];
+    u8 idx;
+    u8 counter;
+} ftUcf_Pad[4];
+
+static void ftUcf_PadBufferPush(int port, int x, int y)
+{
+    u8 i = (u8) ((ftUcf_Pad[port].idx + 1) & 3);
+    ftUcf_Pad[port].idx = i;
+    ftUcf_Pad[port].x[i] = (s8) x;
+    ftUcf_Pad[port].y[i] = (s8) y;
+}
+
+/* The ring's raw x or y `back` entries before the newest (0 = newest). */
+int ftUcf_PadRaw(int port, int which_y, int back)
+{
+    int i = (ftUcf_Pad[port].idx - back) & 3;
+    return which_y ? ftUcf_Pad[port].y[i] : ftUcf_Pad[port].x[i];
+}
+
+int ftUcf_FlickCounter(int port)
+{
+    return ftUcf_Pad[port].counter;
+}
+
+/* trunc(|v| * 80 - 1e-4) + 2, as UCF computes it: fmsubs (exact product, one rounding - exact in
+ * double here, then rounded to single) and fctiwz. */
+static int ftUcf_RimUnits(f32 v)
+{
+    f32 t = (f32) ((double) (v < 0.0F ? -v : v) * 80.0 - (double) 9.99999974738e-05F);
+    return (int) t + 2;
+}
+
+/* The flick counter: 0 unless the stick (after the cardinal snap) is down past -0.609375 and on
+ * the rim (rim units squared summed > 6400); then it counts up every frame once started, and it
+ * starts (at 1) only on a frame whose y-timer is 0 or 1 and whose raw y moved by more than 44
+ * against two ring entries earlier. */
+static void ftUcf_FlickCount(Fighter* fp, int port)
+{
+    int c = 0;
+    if (!(fp->input.lstick[0].y > -0.609375F)) {
+        int rx = ftUcf_RimUnits(fp->input.lstick[0].x);
+        int ry = ftUcf_RimUnits(fp->input.lstick[0].y);
+        if (rx * rx + ry * ry > 6400) {
+            if (ftUcf_Pad[port].counter != 0) {
+                c = (u8) (ftUcf_Pad[port].counter + 1);
+            } else if (fp->active_timer.lstick.y <= 1) {
+                int dy = ftUcf_PadRaw(port, 1, 0) - ftUcf_PadRaw(port, 1, 2);
+                c = dy * dy > 1936 ? 1 : 0;
+            }
+        }
+    }
+    ftUcf_Pad[port].counter = (u8) c;
+}
+
+/* UCF 0.84's cardinal snap on one stick, from its raw signed bytes: |x| >= 80 with |y| <= 6 gives
+ * (+-1, 0); |y| >= 80 with |x| <= 6 gives (0, +-1); anything else is left as processed. */
+static void ftUcf_Cardinal(int x, int y, Vec2* out)
+{
+    if (x >= 80 || x <= -80) {
+        if (y > 6 || y < -6) {
+            return;
+        }
+        out->x = x < 0 ? -1.0F : 1.0F;
+        out->y = 0.0F;
+    } else if (y >= 80 || y <= -80) {
+        if (x > 6 || x < -6) {
+            return;
+        }
+        out->x = 0.0F;
+        out->y = y < 0 ? -1.0F : 1.0F;
+    }
+}
+#endif
+
 void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -2088,6 +2169,43 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                 }
             }
 
+#if defined(TARGET_PC)
+            {
+                /* MELEE_SLP playback (pc/platform/gw_replay.c): this frame's recorded inputs, as
+                   the console's fighter held them at this same point - Slippi's
+                   RestoreGameFrame.asm writes fp+0x620..0x65C at 0x8006B0DC. */
+                extern int Replay_HasInput(int port, int follower);
+                extern float Replay_StickX(int port, int follower);
+                extern float Replay_StickY(int port, int follower);
+                extern float Replay_CStickX(int port, int follower);
+                extern float Replay_CStickY(int port, int follower);
+                extern float Replay_Trigger(int port, int follower);
+                extern u32 Replay_Buttons(int port, int follower);
+                int port = fp->player_id, fol = fp->is_sub_fighter;
+                if (Replay_HasInput(port, fol)) {
+                    fp->input.lstick[0].x = Replay_StickX(port, fol);
+                    fp->input.lstick[0].y = Replay_StickY(port, fol);
+                    fp->input.cstick[0].x = Replay_CStickX(port, fol);
+                    fp->input.cstick[0].y = Replay_CStickY(port, fol);
+                    fp->input.triggers[0] = Replay_Trigger(port, fol);
+                    fp->input.held_buttons[0] = Replay_Buttons(port, fol);
+                }
+                {
+                    /* MELEE_SLP_RECORD: the inputs as the fighter holds them here - what
+                       playback writes back at this same point */
+                    extern void Replay_RecordInput(int port, int follower, float lx, float ly,
+                                                   float cx, float cy, float trigger,
+                                                   u32 buttons, int action, float x, float y,
+                                                   float facing, float percent);
+                    Replay_RecordInput(port, fol, fp->input.lstick[0].x,
+                                       fp->input.lstick[0].y, fp->input.cstick[0].x,
+                                       fp->input.cstick[0].y, fp->input.triggers[0],
+                                       fp->input.held_buttons[0], fp->motion_id,
+                                       fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir,
+                                       fp->dmg.x1830_percent);
+                }
+            }
+#endif
             Fighter_Spaghetti_8006AD10_Inner1(fp);
 
 #if defined(TARGET_PC)
@@ -2240,6 +2358,29 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                 fp->activity_timer.lstick.x = 0;
             }
 
+#if defined(TARGET_PC)
+            /* UCF 0.84 "Pad Buffer + 1.0 Cardinals" (Slippi External/UCF 0.84, @ 0x8006B460 - here,
+               after the stick timers and before the trigger's): a human stick held within 6 raw
+               units of a cardinal, at 80 or more along it, reads exactly +-1.0 on that axis and 0
+               on the other; the same for the C-stick. The raw bytes are the pad's own - for
+               MELEE_SLP playback, the replay's, which Slippi's playback restores for this code to
+               read. Zelda's transform (kind 0x13, motion 0x15D) is left alone, as UCF does. */
+            {
+                extern int Replay_UcfCardinals(int port);
+                extern int Replay_RawStick(int port, int which);
+                int port = fp->x618_player_id;
+                if (!ftCo_IsCpuControlled(fp) && Replay_UcfCardinals(port)) {
+                    ftUcf_PadBufferPush(port, Replay_RawStick(port, 0), Replay_RawStick(port, 1));
+                    if (!(fp->kind == 0x13 && fp->motion_id == 0x15D)) {
+                        ftUcf_Cardinal(Replay_RawStick(port, 0), Replay_RawStick(port, 1),
+                                       &fp->input.lstick[0]);
+                        ftUcf_Cardinal(Replay_RawStick(port, 2), Replay_RawStick(port, 3),
+                                       &fp->input.cstick[0]);
+                    }
+                    ftUcf_FlickCount(fp, port);
+                }
+            }
+#endif
             // Fighter_ClampSpecificValue
             fp->active_duration.trigger++;
             if (fp->active_duration.trigger > 254) {
@@ -3293,6 +3434,26 @@ void Fighter_UnkCallCameraCallback_8006D9EC(Fighter_GObj* gobj)
             fp->cam_cb(gobj);
         }
     }
+#if defined(TARGET_PC)
+    {
+        /* MELEE_STATE_TRACE (pc/platform/gw_replay.c): the fields Slippi's post-frame records,
+           from the point it records them - SendGamePostFrame.asm hooks 0x8006DA34, this proc's
+           epilogue (priority 0x12), so the frame's hits (Fighter_ProcessHit_8006D1EC, 0xE) are
+           already applied. Tracing from Fighter_procMap (6) instead showed every hit a frame late. */
+        extern int Replay_Tracing(void);
+        extern void Replay_TraceFighter(int port, int follower, int ckind, int action, float x,
+                                        float y, float facing, float percent, int stocks,
+                                        float air_x, float air_y, float kb_x, float kb_y,
+                                        float ground_x);
+        if (Replay_Tracing()) {
+            Replay_TraceFighter(fp->player_id, fp->is_sub_fighter, fp->kind, fp->motion_id,
+                                fp->cur_pos.x, fp->cur_pos.y, fp->facing_dir,
+                                fp->dmg.x1830_percent, Player_GetStocks(fp->player_id),
+                                fp->self_vel.x, fp->self_vel.y, fp->x8c_kb_vel.x,
+                                fp->x8c_kb_vel.y, fp->gr_vel);
+        }
+    }
+#endif
 }
 
 void Fighter_8006DA4C(Fighter_GObj* gobj)

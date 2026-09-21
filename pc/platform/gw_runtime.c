@@ -1994,6 +1994,10 @@ static void gw_sl_load(void) {
   gw_sl_config_init(&gw_sl_cfg);
   text = getenv("MELEE_SCENE");
   if (text == NULL || text[0] == '\0') {
+    extern const char *gw_replay_scene(void); /* gw_replay.c: a MELEE_SLP replay implies its match */
+    text = gw_replay_scene();
+  }
+  if (text == NULL || text[0] == '\0') {
     const char *path = getenv("MELEE_SCENE_FILE");
     if (path != NULL && path[0] != '\0') {
       FILE *f = fopen(path, "rb");

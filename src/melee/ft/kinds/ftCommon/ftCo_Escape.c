@@ -205,10 +205,89 @@ static inline bool inlineB0(Fighter* fp)
     return false;
 }
 
+#if defined(TARGET_PC)
+/* UCF 0.73 shield drop, as Slippi's console codes ran it in 2019 ("UCF 0.73 Shield Drop - Check
+ * for Toggle.asm", slippi-ssbm-asm eb9abdc, @ 0x800998A4 = the entry of ftCo_80099894, which it
+ * aborts so the spotdodge check below returns false): when the C-stick is not what pulled the
+ * shield down, the control stick is on the rim ((trunc(|x|*80 - 1e-5) + 2) / 80 per axis, summed
+ * squares >= 1), its x-timer is past 3, and y is above -walk_fast_stick_threshold (-0.8), the
+ * spotdodge does not happen - the shield drop does. Applied for MELEE_SLP playback of ports whose
+ * recording had UCF on. */
+static f32 ftCo_Ucf073RimAxis(f32 v)
+{
+    f32 t = (v < 0.0F ? -v : v) * 80.0F - 9.953975677490234e-06F;
+    return (f32) ((int) t + 2) / 80.0F;
+}
+
+static bool ftCo_Ucf073BlocksSpotdodge(Fighter* fp)
+{
+    extern int Replay_UcfVersion(int port);
+    f32 x, y;
+    if (Replay_UcfVersion(fp->x618_player_id) != 73) {
+        return false;
+    }
+    if (!(fp->input.cstick[0].y > p_ftCommonData->x314)) {
+        return false;
+    }
+    x = ftCo_Ucf073RimAxis(fp->input.lstick[0].x);
+    y = ftCo_Ucf073RimAxis(fp->input.lstick[0].y);
+    if (!(y * y + x * x >= 1.0F)) {
+        return false;
+    }
+    if (fp->active_timer.lstick.x <= 3) {
+        return false;
+    }
+    if (-p_ftCommonData->walk_fast_stick_threshold >= fp->input.lstick[0].y) {
+        return false;
+    }
+    return true;
+}
+/* UCF 0.84 shield drop (Slippi External/UCF 0.84/UCF/UCF Shield Drop.asm, @ 0x800998A4 - the entry
+ * of ftCo_80099894, from which it returns past the caller's "return true", so the spotdodge check
+ * returns false). On a platform (floor line flag 0x100), when the C-stick is not what pulled the
+ * shield down, the stick's x-timer has reached ftCommonData x320, y is above -0.8, and the stick
+ * is on the rim (UCF's rim units, squared and summed, over 6400), the spotdodge does not happen -
+ * the shield drop through the platform does. */
+static int ftCo_Ucf084RimUnits(f32 v)
+{
+    f32 t = (f32) ((double) (v < 0.0F ? -v : v) * 80.0 - (double) 9.99999974738e-05F);
+    return (int) t + 2;
+}
+
+static bool ftCo_Ucf084BlocksSpotdodge(Fighter* fp)
+{
+    extern int Replay_UcfVersion(int port);
+    int rx, ry;
+    if (Replay_UcfVersion(fp->x618_player_id) != 84) {
+        return false;
+    }
+    if (!(fp->input.cstick[0].y > p_ftCommonData->x314)) {
+        return false;
+    }
+    if (fp->active_timer.lstick.x < p_ftCommonData->x320) {
+        return false;
+    }
+    if (!(fp->input.lstick[0].y > -0.8F)) {
+        return false;
+    }
+    if (fp->coll_data.floor.index == -1 || !(fp->coll_data.floor.flags & 0x100)) {
+        return false;
+    }
+    ry = ftCo_Ucf084RimUnits(fp->input.lstick[0].y);
+    rx = ftCo_Ucf084RimUnits(fp->input.lstick[0].x);
+    return ry * ry + rx * rx > 6400;
+}
+#endif
+
 bool ftCo_80099794(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
     if (fp->input.held_buttons[0] & HSD_PAD_LR && inlineB0(fp)) {
+#if defined(TARGET_PC)
+        if (ftCo_Ucf073BlocksSpotdodge(fp) || ftCo_Ucf084BlocksSpotdodge(fp)) {
+            return false;
+        }
+#endif
         ftCo_80099894(gobj);
         return true;
     }
@@ -219,6 +298,11 @@ bool ftCo_8009980C(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
     if (inlineB0(fp) || ftCo_800DF8E8(fp)) {
+#if defined(TARGET_PC)
+        if (ftCo_Ucf073BlocksSpotdodge(fp) || ftCo_Ucf084BlocksSpotdodge(fp)) {
+            return false;
+        }
+#endif
         ftCo_80099894(gobj);
         return true;
     }

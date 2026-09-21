@@ -25,6 +25,7 @@
 #include "gmscenelaunch.h"
 #include "gmfrontend.h"
 #include "gmvs.h"
+#include <sysdolphin/baselib/random.h>
 #if defined(TARGET_PC)
 #include <melee/if/textdraw.h>
 #include <melee/if/textlib.h>
@@ -233,6 +234,12 @@ void fn_801A4BD0(HSD_GObj* gobj) {}
 void gm_801A4BD4(void)
 {
     PAD_STACK(0x18);
+#if defined(TARGET_PC)
+    {
+        extern void ifMagnify_LogicDisarm(void);
+        ifMagnify_LogicDisarm(); /* the magnifier re-arms when a match creates it */
+    }
+#endif
 
     gm_SetDbPauseInputHandlers(fn_801A46F4, fn_801A47E4);
     gm_SetPreGObjProcCallback(NULL);
@@ -746,6 +753,22 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             lb_800195D0();
         }
         lb_800195D0();
+#if defined(TARGET_PC)
+        {
+            /* MELEE_DETERMINISTIC (pc/platform/gw_replay.c): one logic frame per render, as on
+               the console at full speed. Catching up with several logic frames per render made
+               render-coupled state go stale for game logic - the magnifier's off-screen flag is
+               set in its render callback (ifMagnify_802FBBDC) and read every logic frame by the
+               1%-per-interval off-screen damage (Fighter_8006A1BC), so under load that 1% landed a
+               frame early or late and two runs of one replay parted ways. The rest of the queue
+               stays queued and runs next iteration: the game slows under load instead of
+               skipping renders. */
+            extern int Det_Enabled(void);
+            if (pad_queue_count > 1 && Det_Enabled()) {
+                pad_queue_count = 1;
+            }
+        }
+#endif
 
         if (HSD_PadGetResetSwitch()) {
             gmMainLib_8046B0F0.resetting = true;
@@ -811,10 +834,37 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             if (!held)
 #endif
             {
+#if defined(TARGET_PC)
+                {
+                    /* MELEE_SLP playback: count the frame (Slippi numbers them from -123), force
+                       the console's seed under MELEE_SLP_RESYNC, and report the first frame the
+                       port's RNG leaves the console's. */
+                    extern int Replay_Enabled(void);
+                    extern int Replay_Tick(void);
+                    extern u32 Replay_ResyncSeed(void);
+                    extern void Replay_CheckSeed(u32 port_seed);
+                    if (Replay_Enabled()) {
+                        u32 s;
+                        Replay_Tick();
+                        s = Replay_ResyncSeed();
+                        if (s != 0) {
+                            *HSD_RandSeedPtr = s;
+                        }
+                        Replay_CheckSeed(*HSD_RandSeedPtr);
+                    }
+                }
+#endif
                 if (temp_r25->unk_10.pre_gobj_proc != NULL) {
                     temp_r25->unk_10.pre_gobj_proc();
                 }
                 HSD_GObj_RunProcs();
+#if defined(TARGET_PC)
+                {
+                    /* logic-side off-screen flag for the next logic frame (ifmagnify.c) */
+                    extern void ifMagnify_UpdateLogicOffscreen(void);
+                    ifMagnify_UpdateLogicOffscreen();
+                }
+#endif
             }
             if (temp_r25->unk_0 != -2) {
                 temp_r25->unk_0++;

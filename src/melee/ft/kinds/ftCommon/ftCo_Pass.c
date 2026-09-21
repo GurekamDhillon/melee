@@ -50,11 +50,33 @@ bool ftCo_80099F9C(Fighter_GObj* gobj)
     return false;
 }
 
+#if defined(TARGET_PC)
+/* ftCo_80099F1C as retail inlines it into ftCo_8009A080, with UCF 0.84's Shield Drop Extended
+ * (Slippi External/UCF 0.84/UCF/UCF Shield Drop Extended.asm, @ 0x8009A0B8, on the `y <= -x464`
+ * compare of that inlined copy only): the stick-down test also passes while UCF's flick counter
+ * (the pad buffer's byte 9, fighter.c) is above 1. */
+static bool ftCo_8009A080_Check(Fighter_GObj* gobj)
+{
+    extern int Replay_UcfVersion(int port);
+    extern int ftUcf_FlickCounter(int port);
+    Fighter* fp = gobj->user_data;
+    bool down = fp->input.lstick[0].y <= -p_ftCommonData->x464;
+    if (!down && Replay_UcfVersion(fp->x618_player_id) == 84) {
+        down = ftUcf_FlickCounter(fp->x618_player_id) > 1;
+    }
+    return down && fp->active_timer.lstick.y < p_ftCommonData->x468 &&
+           mpColl_IsOnPlatform(&fp->coll_data);
+}
+#define ftCo_80099F1C_8009A080 ftCo_8009A080_Check
+#else
+#define ftCo_80099F1C_8009A080 ftCo_80099F1C
+#endif
+
 bool ftCo_8009A080(Fighter_GObj* gobj)
 {
     u8 _[8];
     Fighter* fp = gobj->user_data;
-    if (fp->input.held_buttons[0] & HSD_PAD_LR && ftCo_80099F1C(gobj)) {
+    if (fp->input.held_buttons[0] & HSD_PAD_LR && ftCo_80099F1C_8009A080(gobj)) {
         ftCo_8009A228(gobj);
         return true;
     }

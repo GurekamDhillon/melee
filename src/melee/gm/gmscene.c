@@ -25,6 +25,7 @@
 #include "gmscenelaunch.h"
 #include "gmfrontend.h"
 #include "gmvs.h"
+#include <sysdolphin/baselib/random.h>
 #if defined(TARGET_PC)
 #include <melee/if/textdraw.h>
 #include <melee/if/textlib.h>
@@ -811,6 +812,26 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             if (!held)
 #endif
             {
+#if defined(TARGET_PC)
+                {
+                    /* MELEE_SLP playback: count the frame (Slippi numbers them from -123), force
+                       the console's seed under MELEE_SLP_RESYNC, and report the first frame the
+                       port's RNG leaves the console's. */
+                    extern int Replay_Active(void);
+                    extern int Replay_Tick(void);
+                    extern u32 Replay_ResyncSeed(void);
+                    extern void Replay_CheckSeed(u32 port_seed);
+                    if (Replay_Active()) {
+                        u32 s;
+                        Replay_Tick();
+                        s = Replay_ResyncSeed();
+                        if (s != 0) {
+                            *HSD_RandSeedPtr = s;
+                        }
+                        Replay_CheckSeed(*HSD_RandSeedPtr);
+                    }
+                }
+#endif
                 if (temp_r25->unk_10.pre_gobj_proc != NULL) {
                     temp_r25->unk_10.pre_gobj_proc();
                 }

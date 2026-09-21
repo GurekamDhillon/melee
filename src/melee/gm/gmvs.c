@@ -1,4 +1,5 @@
 #include "gmvs.h"
+#include <sysdolphin/baselib/random.h>
 #include "gmvsmode.h"
 #include "gmvsmelee.h"
 
@@ -2186,6 +2187,17 @@ void fn_8016E730(StartMeleeData* arg0)
     HSD_GObj* temp_r30;
     VsSceneController* r30;
 
+#if defined(TARGET_PC)
+    {
+        /* MELEE_SLP playback (pc/platform/gw_replay.c): the match the console started - rules,
+           players and RNG seed - at the point Slippi's RestoreGameInfo.asm restores it. */
+        extern int Replay_Active(void);
+        extern u32 Replay_ApplyMatch(void* start_melee_data);
+        if (Replay_Active()) {
+            *HSD_RandSeedPtr = Replay_ApplyMatch(arg0);
+        }
+    }
+#endif
     db_Setup();
     gm_SetDbPauseInputHandlers(gm_AnyControllerPressedStart,
                                gm_AnyControllerPressedZ);

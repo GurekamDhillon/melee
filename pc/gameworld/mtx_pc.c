@@ -388,21 +388,52 @@ void PSVECScale(Vec* src, Vec* dst, f32 scale)
     dst->z = (src->z * scale);
 }
 
+/* Dolphin's Force25Bit: a single-precision multiply's frC operand keeps 25 mantissa bits,
+ * rounded (Source/Core/Core/PowerPC/Interpreter/Interpreter_FPUtils.h). */
+static double gekko_force25(double d)
+{
+    union {
+        double d;
+        unsigned long long u;
+    } v;
+    v.d = d;
+    v.u = (v.u & 0xFFFFFFFFF8000000ULL) + (v.u & 0x8000000ULL);
+    return v.d;
+}
+
+/* The SDK's paired-single PSVECNormalize, operation for operation:
+ *     ps_mul   xx_yy = v.xy * v.xy
+ *     ps_madd  xx_zz = v.z * v.z + xx_yy        (psq_l of z sets ps1 = 1.0)
+ *     ps_sum0  sqsum = xx_zz.ps0 + xx_yy.ps1    = (z*z + x*x) + y*y
+ *     frsqrte  rsqrt = estimate(sqsum)
+ *     fmuls    n0 = rsqrt * rsqrt ; fmuls n1 = rsqrt * 0.5
+ *     fnmsubs  n0 = -(n0 * sqsum - 3)
+ *     fmuls    rsqrt = n0 * n1                  (ONE Newton step)
+ *     ps_muls0 v * rsqrt
+ * One refinement of the hardware estimate is not correctly rounded: a flat floor line normalizes
+ * to y = 0.99999988, not 1. That value multiplies every grounded fighter's speed
+ * (ftCommon_SetSelfMovementFromGroundedMovement), so the correctly rounded 1/sqrtf the port used
+ * before moved fighters a few ULPs further per frame than the console - found by .slp playback,
+ * where it was the first thing to diverge. Fused steps (ps_madd, fnmsubs) are exact in double here:
+ * their single-precision operands' products fit in 53 bits.
+ *
+ * A zero-length input still yields a non-finite scale, as on the console (frsqrte(0) = +inf,
+ * refined into a NaN); callers never feed it one, so do not "fix" it. */
 void PSVECNormalize(Vec* vec1, Vec* dst)
 {
-    f32 mag;
-
-    mag = (vec1->z * vec1->z) + ((vec1->x * vec1->x) + (vec1->y * vec1->y));
-
-    /* A zero-length input yields a non-finite scale here, and so produces the
-     * same garbage the original does: the paired-single version refines
-     * frsqrte(0) == +inf into a NaN, and C_VECNormalize divides by sqrtf(0).
-     * Callers relied on never feeding it one (debug builds assert), so do not
-     * "fix" it -- clamping would silently diverge from the console. */
-    mag = 1.0f / sqrtf(mag);
-    dst->x = vec1->x * mag;
-    dst->y = vec1->y * mag;
-    dst->z = vec1->z * mag;
+    f32 x = vec1->x, y = vec1->y, z = vec1->z;
+    f32 xx = x * x;
+    f32 yy = y * y;
+    f32 xz = (f32) ((double) z * (double) z + (double) xx);
+    f32 sqsum = xz + yy;
+    double est = __frsqrte((double) sqsum);
+    f32 n0 = (f32) (est * gekko_force25(est));
+    f32 n1 = (f32) (est * 0.5);
+    f32 n2 = (f32) (-((double) n0 * (double) sqsum - 3.0));
+    f32 rsqrt = n2 * n1;
+    dst->x = x * rsqrt;
+    dst->y = y * rsqrt;
+    dst->z = z * rsqrt;
 }
 
 f32 PSVECMag(Vec* v)

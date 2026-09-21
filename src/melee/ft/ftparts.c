@@ -730,6 +730,17 @@ Fighter_Part ftParts_GetBoneIndex(Fighter* fp, Fighter_Part part)
 int ftPartsRemap(size_t to_table_idx, size_t from_table_idx, size_t joint_idx)
 {
     FighterPartsTable* from_table = ftPartsTable[from_table_idx];
+#if defined(TARGET_PC)
+    if (from_table == NULL || ftPartsTable[to_table_idx] == NULL) {
+        static int logged;
+        if (logged++ < 4) {
+            OSReport("ftPartsRemap: no parts table (to kind %d %s, from kind %d %s, joint %d)\n",
+                     (int) to_table_idx, ftPartsTable[to_table_idx] ? "ok" : "NULL",
+                     (int) from_table_idx, from_table ? "ok" : "NULL", (int) joint_idx);
+        }
+        return FTPART_INVALID;
+    }
+#endif
     if (joint_idx < from_table->parts_num) {
         size_t part_idx = from_table->joint_to_part[joint_idx];
         if (part_idx != FTPART_INVALID) {

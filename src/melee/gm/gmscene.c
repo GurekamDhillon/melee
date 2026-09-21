@@ -896,6 +896,25 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     temp_r25->unk_8++;
                 }
             }
+#if defined(TARGET_PC)
+            {
+                /* SyncTest: a resimulated frame must ALSO render, minus the present. The render
+                 * pass is part of a frame - it moves object pools, fills matrix caches, clears
+                 * dirty flags - and the first pass did it, so a resimulation that skips it lands
+                 * in a different state (the whole "render-owned" chase in gw_snap.c). Same calls
+                 * as the real render below, without HSD_VICopyXFBAsync. Its draw commands are
+                 * discarded with the frame by aurora, so the picture is unaffected. */
+                extern int Snap_Resimulating(void);
+                if (Snap_Resimulating()) {
+                    lb_800195D0();
+                    GXInvalidateVtxCache();
+                    GXInvalidateTexAll();
+                    HSD_StartRender(HSD_RP_SCREEN);
+                    HSD_GObj_80390FC0();
+                    HSD_Init_803755A8();
+                }
+            }
+#endif
             HSD_PerfSetCPUTime();
             if (DbLevel >= DbLKind_DebugRom) {
                 OSCheckActiveThreads();

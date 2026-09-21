@@ -112,6 +112,7 @@ static int sn_game_object(const char *obj, const char *name) {
         "src_sysdolphin_baselib_audio.c.obj",
         "src_sysdolphin_baselib_video.c.obj",     /* VI / XFB */
         "src_sysdolphin_baselib_perf.c.obj",
+        "src_sysdolphin_baselib_memory.c.obj",   /* heap-usage diagnostics only (hsd_allocs, caller_hits) */
         "src_sysdolphin_baselib_devcom.c.obj",
         "src_melee_lb_lbcardgame.c.obj",          /* memory card */
         "src_melee_lb_lbcardnew.c.obj",
@@ -685,12 +686,20 @@ static int sn_live(void) {
 }
 
 /* Before the scene loop's logic iterations for this render tick. */
+static int sn_last_pool_frame = -0x7FFFFFF0; /* frame a render pool was last discovered */
 int gw_SyncTest_Iterations(int count) {
     sn_init();
     if (!sn.enabled || !sn_live()) {
         return count;
     }
     sn.target = gw_Replay_Frame() + 1;
+    /* A render pool discovered this recently has not been stocked by logic in the frames a
+       rollback would resimulate, so the first pass and the resimulation would disagree about
+       whether the heap grew (objalloc.c HSD_ObjAllocTopUp). Let the frames pass unrolled until
+       every rollback window sees the same set of render pools. */
+    if (sn.target - sn_last_pool_frame <= sn.k + 2) {
+        return count;
+    }
     if (sn_slot_for(sn.target - sn.k, 0) != NULL) {
         sn.plan_rollback = 1;
         return sn.k + 1;
@@ -885,6 +894,7 @@ static struct {
 } sn_arena[SN_MAX_ARENAS];
 static int sn_narenas;
 static uint32_t sn_render_pool[16];
+
 static int sn_nrender_pools;
 
 void gw_Snap_NoteArena(void *data, void *start, unsigned size) {
@@ -906,9 +916,19 @@ void gw_Snap_NoteRenderPool(void *data) {
         }
     }
     if (sn_nrender_pools < 16) {
+        sn_last_pool_frame = gw_Replay_Frame();
         sn_render_pool[sn_nrender_pools++] = p;
-        gw_log("snap: pool %p is render-owned; its arenas stop being compared", data);
+        gw_log("snap: pool %p is render-owned (frame %d); its arenas stop being compared", data, gw_Replay_Frame());
     }
+}
+
+/* objalloc.c's top-up walks this list; it is native, so a load never un-registers a pool. */
+int gw_Snap_RenderPoolCount(void) {
+    return sn_nrender_pools;
+}
+
+void *gw_Snap_RenderPoolAt(int i) {
+    return (void *) (uintptr_t) sn_render_pool[i];
 }
 
 static int sn_render_owned_pool(uint32_t pool) {
@@ -945,6 +965,8 @@ static int sn_in_render_arena(uint32_t va, uint32_t *end) {
     return 0;
 }
 
+static uint8_t *sn_async_mem1, *sn_async_globals, *sn_amask_mem1, *sn_amask_globals;
+
 void gw_SyncTest_PreRender(void) {
     sn_in_render = 1;
     if (!sn.enabled || !sn_live()) {
@@ -953,6 +975,10 @@ void gw_SyncTest_PreRender(void) {
     memcpy(sn.pre_mem1, (const void *) (uintptr_t) 0x80000000u, gw_mem1_size);
     sn_gather(sn.pre_globals);
     sn.pre_valid = 1;
+    if (sn_amask_mem1 != NULL) {
+        memset(sn_amask_mem1, 0, gw_mem1_size / 8 + 1);
+        memset(sn_amask_globals, 0, sn.globals_len / 8 + 1);
+    }
 }
 
 static uint32_t sn_mark(const uint8_t *before, const uint8_t *after, uint32_t len, uint8_t *mask) {
@@ -973,12 +999,116 @@ static uint32_t sn_mark(const uint8_t *before, const uint8_t *after, uint32_t le
     return added;
 }
 
-void gw_SyncTest_PostRender(void) {
-    extern void gw_HSD_ObjAllocRenderEnd(void);
-    if (sn.enabled) {
-        gw_HSD_ObjAllocRenderEnd();
+/* THE RENDER PASS IS UNDONE. Everything the render pass writes to MEM1 or to the game's globals
+ * is put back the way it was before it ran. That makes rendering a pure function of the
+ * simulation state - which is what a resimulated frame, that never renders, needs it to be - and
+ * it is far stronger than masking: the first design masked render-written bytes out of the
+ * comparison, then chased the consequences (pools growing at different times, cell addresses
+ * rotating, a pool the render drains being also drained by logic) for a dozen rounds. Undoing
+ * the writes removes the whole class.
+ *
+ * What it costs: any state the render pass computes and LOGIC later reads is lost each frame, so
+ * logic sees it as stale in the first pass and in the resimulation alike - deterministic, but
+ * different from a normal run. Those are the render->logic couplings (x221F_b0, the camera
+ * matrix cache, the magnifier flag ...); each is listed by MELEE_SYNCTEST_RENDER=report. This is a
+ * SyncTest-only mode. MELEE_SYNCTEST_RENDER=keep leaves the render writes in place. */
+static int sn_render_mode(void) {
+    static int mode = -1; /* 0 undo, 1 keep, 2 report (undo + list what render wrote) */
+    if (mode < 0) {
+        const char *v = getenv("MELEE_SYNCTEST_RENDER");
+        mode = v == NULL ? 1 : (strcmp(v, "keep") == 0 ? 1 : (strcmp(v, "report") == 0 ? 2 : (strcmp(v, "mem1") == 0 ? 3 : (strcmp(v, "globals") == 0 ? 4 : 0))));
     }
+    return mode;
+}
+
+/* Deferred callbacks (DVD completions, alarms) run from inside the render window, in the
+ * present call. What THEY write is the asynchronous world's and must survive the undo below, so
+ * each run is bracketed and its writes are recorded in a second mask. */
+
+void gw_Snap_AsyncBegin(void) {
+    if (!sn.enabled || !sn.pre_valid || sn_render_mode() == 1) {
+        return;
+    }
+    if (sn_async_mem1 == NULL) {
+        sn_async_mem1 = (uint8_t *) malloc(gw_mem1_size);
+        sn_async_globals = (uint8_t *) malloc(sn.globals_len);
+        sn_amask_mem1 = (uint8_t *) calloc(gw_mem1_size / 8 + 1, 1);
+        sn_amask_globals = (uint8_t *) calloc(sn.globals_len / 8 + 1, 1);
+        if (!sn_async_mem1 || !sn_async_globals || !sn_amask_mem1 || !sn_amask_globals) {
+            sn_async_mem1 = NULL;
+            return;
+        }
+    }
+    memcpy(sn_async_mem1, (const void *) (uintptr_t) 0x80000000u, gw_mem1_size);
+    sn_gather(sn_async_globals);
+}
+
+void gw_Snap_AsyncEnd(void) {
+    if (!sn.enabled || !sn.pre_valid || sn_render_mode() == 1 || sn_async_mem1 == NULL) {
+        return;
+    }
+    sn_mark(sn_async_mem1, (const uint8_t *) (uintptr_t) 0x80000000u, gw_mem1_size, sn_amask_mem1);
+    sn_gather(sn.cmp_globals);
+    sn_mark(sn_async_globals, sn.cmp_globals, sn.globals_len, sn_amask_globals);
+}
+
+static int sn_rr, sn_rr_logged;
+void gw_SyncTest_PostRender(void) {
+    ++sn_rr;
     sn_in_render = 0;
+    if (!sn.enabled || !sn.pre_valid || sn_render_mode() == 1) {
+        return;
+    }
+    {
+        uint32_t off, undone = 0;
+        uint8_t *live = (uint8_t *) (uintptr_t) 0x80000000u;
+        int i;
+        uint32_t base = 0;
+        for (off = 0; off < gw_mem1_size && sn_render_mode() != 4; off += 4096) {
+            uint32_t n = gw_mem1_size - off < 4096 ? gw_mem1_size - off : 4096;
+            if (memcmp(sn.pre_mem1 + off, live + off, n) != 0) {
+                uint32_t j;
+                for (j = 0; j < n; ++j) {
+                    if (sn_render_mode() == 2 && sn_rr == 200 && sn_rr_logged < 60 &&
+                        sn.pre_mem1[off + j] != live[off + j] && (j == 0 || sn.pre_mem1[off + j - 1] == live[off + j - 1])) {
+                        const uint8_t *q = live + off + j;
+                        gw_log("snap: render wrote MEM1 %08X: %02X%02X%02X%02X.. was %02X%02X%02X%02X", 0x80000000u + off + j,
+                               q[0], q[1], q[2], q[3], sn.pre_mem1[off + j], sn.pre_mem1[off + j + 1], sn.pre_mem1[off + j + 2], sn.pre_mem1[off + j + 3]);
+                        ++sn_rr_logged;
+                    }
+                    if (sn.pre_mem1[off + j] != live[off + j] &&
+                        !(sn_amask_mem1 != NULL && (sn_amask_mem1[(off + j) >> 3] & (1u << ((off + j) & 7))))) {
+                        live[off + j] = sn.pre_mem1[off + j];
+                        ++undone;
+                    }
+                }
+            }
+        }
+        for (i = 0; i < sn.nranges && sn_render_mode() != 3; ++i) {
+            uint8_t *g = (uint8_t *) (uintptr_t) sn.ranges[i].va;
+            const uint8_t *pre = sn.pre_globals + base;
+            if (memcmp(pre, g, sn.ranges[i].len) != 0) {
+                uint32_t j;
+                for (j = 0; j < sn.ranges[i].len; ++j) {
+                    uint32_t gb = base + j;
+                    if (pre[j] != g[j] &&
+                        !(sn_amask_globals != NULL && (sn_amask_globals[gb >> 3] & (1u << (gb & 7))))) {
+                        if (sn_render_mode() == 2 && sn.passes < 3) {
+                            const GwSnapSym *y = sn_sym_at(sn.ranges[i].va + j);
+                            gw_log("snap: render wrote global %s+0x%X", y ? y->name : "?",
+                                   y ? sn.ranges[i].va + j - y->va : 0);
+                        }
+                        g[j] = pre[j];
+                        ++undone;
+                    }
+                }
+            }
+            base += sn.ranges[i].len;
+        }
+        if (undone != 0 && sn.passes < 4) {
+            gw_log("snap: render pass undone: %u bytes put back", undone);
+        }
+    }
 }
 
 /* Called at the top of the next logic frame (gw_SyncTest_IterStart), not at the end of the render

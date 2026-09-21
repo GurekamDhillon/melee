@@ -14,83 +14,50 @@ static HSD_ObjAllocData* alloc_datas;
 /* ROLLBACK (pc/platform/gw_snap.c). A pool that runs dry calls HSD_ObjAllocAddFree, which calls
  * HSD_MemAlloc - so when that happens inside the RENDER pass it moves the shared heap's free
  * list. A resimulated frame renders nothing, so its next allocation lands in a different cell,
- * and a SyncTest that compares memory byte for byte sees a whole object in the wrong place. It
- * is harmless to the simulation and fatal to the comparison.
+ * and a SyncTest that compares memory byte for byte sees a whole object in the wrong place.
  *
- * So: remember how many cells each pool hands out during a render pass, and top those pools up
- * at the END OF EVERY LOGIC FRAME instead - a point resimulated frames execute too. The render
- * pass then always finds free cells and never touches the heap. The high-water mark is learned,
- * so the first frames after a pool's usage grows still refill late; it settles within a frame. */
-static struct {
-    HSD_ObjAllocData* data;
-    int live; /* cells taken during the current render pass */
-    int hwm;  /* most ever taken during one render pass */
-} snap_pools[48];
-static int snap_npools;
+ * So the pools the render pass draws from are kept stocked from LOGIC, at the end of every logic
+ * frame - a point a resimulated frame executes too. The decision must depend only on state that
+ * a rollback restores, or the first pass and its resimulation disagree about whether to grow:
+ * the list of render pools lives in gw_snap.c (native, never rolled back) and the target is a
+ * constant, not a learned high-water mark (which the first version kept in a static here, and
+ * which a load un-learned - the resimulation then grew a pool the first pass had not). */
+#define SNAP_POOL_STOCK 512
 
 static void snap_note_render(HSD_ObjAllocData* data, int delta)
 {
-    int i;
     extern int Snap_InRender(void);
+    extern void Snap_NoteRenderPool(void* data);
     if (!Snap_InRender()) {
         return;
     }
-    for (i = 0; i < snap_npools; ++i) {
-        if (snap_pools[i].data == data) {
-            break;
-        }
-    }
-    if (i == snap_npools) {
-        extern void Snap_NoteRenderPool(void* data);
-        if (snap_npools == (int) (sizeof snap_pools / sizeof snap_pools[0])) {
-            return;
-        }
-        Snap_NoteRenderPool(data);
-        snap_pools[snap_npools].data = data;
-        snap_pools[snap_npools].live = 0;
-        snap_pools[snap_npools].hwm = 0;
-        ++snap_npools;
-    }
-    snap_pools[i].live += delta;
-    if (snap_pools[i].live > snap_pools[i].hwm) {
-        snap_pools[i].hwm = snap_pools[i].live;
-    }
-}
-
-/* Called at the end of the render pass (gw_snap.c): does the render pass give every cell back?
- * If it does, its effect on these pools is a transaction and can simply be undone. */
-void HSD_ObjAllocRenderEnd(void)
-{
-    int i;
-    for (i = 0; i < snap_npools; ++i) {
-        if (snap_pools[i].live != 0) {
-            OSReport("snap: pool %p still holds %d cell(s) after the render pass\n",
-                     snap_pools[i].data, snap_pools[i].live);
-        }
-    }
+    /* Registration is off: SyncTest now UNDOES the render pass's writes (gw_snap.c), so a pool
+     * the render drains needs no special treatment. Kept so the alternative can be re-enabled. */
+    (void) delta;
+    (void) data;
+    (void) Snap_NoteRenderPool;
 }
 
 /* Called at the end of each logic frame (gmscene.c). */
 void HSD_ObjAllocTopUp(void)
 {
-    int i;
-    for (i = 0; i < snap_npools; ++i) {
-        HSD_ObjAllocData* d = snap_pools[i].data;
-        int want = snap_pools[i].hwm + 2;
-        snap_pools[i].live = 0;
-        if (d == NULL || (int) d->free >= want) {
+    extern int Snap_RenderPoolCount(void);
+    extern void* Snap_RenderPoolAt(int i);
+    int i, n = Snap_RenderPoolCount();
+    for (i = 0; i < n; ++i) {
+        HSD_ObjAllocData* d = Snap_RenderPoolAt(i);
+        if ((int) d->free >= SNAP_POOL_STOCK) {
             continue;
         }
-        if (d->num_limit_flag && (int) (d->used + want) > (int) d->num_limit) {
+        if (d->num_limit_flag && (int) (d->used + SNAP_POOL_STOCK) > (int) d->num_limit) {
             continue;
         }
         {
             extern int Snap_Resimulating(void);
-            OSReport("snap: top-up pool %p +%d (free %d, hwm %d, resim %d)\n", d,
-                     want - (int) d->free, (int) d->free, snap_pools[i].hwm,
-                     Snap_Resimulating());
+            OSReport("snap: top-up pool %p from free=%d used=%d (resim %d)\n", d, (int) d->free,
+                     (int) d->used, Snap_Resimulating());
         }
-        HSD_ObjAllocAddFree(d, (u32) (want - (int) d->free));
+        HSD_ObjAllocAddFree(d, (u32) (SNAP_POOL_STOCK - (int) d->free));
     }
 }
 #endif

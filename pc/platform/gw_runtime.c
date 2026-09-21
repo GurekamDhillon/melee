@@ -67,9 +67,21 @@ uint32_t gw_aram_size;
 #define GW_MEM1_SIZE (24u * 1024u * 1024u)
 #define GW_ARAM_SIZE (16u * 1024u * 1024u)
 
+/* Nonzero when MEM1 was allocated with MEM_WRITE_WATCH (gw_snap.c's dirty-page savestates use
+ * GetWriteWatch/ResetWriteWatch on it). Tracking is free - the CPU's own dirty bits - and a
+ * kernel write into the region (ReadFile from the DVD shim) is tracked too. */
+int gw_mem1_watched;
+
 bool gw_mem_init(void) {
-  gw_mem1 = (unsigned char *)VirtualAlloc(GW_MEM1_BASE, GW_MEM1_SIZE, MEM_RESERVE | MEM_COMMIT,
+  gw_mem1 = (unsigned char *)VirtualAlloc(GW_MEM1_BASE, GW_MEM1_SIZE,
+                                          MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH,
                                           PAGE_READWRITE);
+  gw_mem1_watched = gw_mem1 != NULL;
+  if (gw_mem1 == NULL) {
+    /* MEM_WRITE_WATCH is an optimisation for savestates, never a requirement */
+    gw_mem1 = (unsigned char *)VirtualAlloc(GW_MEM1_BASE, GW_MEM1_SIZE, MEM_RESERVE | MEM_COMMIT,
+                                            PAGE_READWRITE);
+  }
   if (gw_mem1 == NULL) {
     /* Fatal, not a fallback. Game code tells main memory from ARAM by comparing against
      * 0x80000000 (lbmemory.c:68), and so does the port (gw_ar_addr, shim_gx.c's array bounds).

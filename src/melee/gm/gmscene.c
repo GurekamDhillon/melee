@@ -909,13 +909,16 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 extern int Snap_Resimulating(void);
                 extern void SyncTest_PreRender(void);
                 if (Snap_Resimulating()) {
+                    extern void Snap_Time(int what, int begin);
                     SyncTest_PreRender(); /* open the between-frames window here too */
+                    Snap_Time(0, 1);
                     lb_800195D0();
                     GXInvalidateVtxCache();
                     GXInvalidateTexAll();
                     HSD_StartRender(HSD_RP_SCREEN);
                     HSD_GObj_80390FC0();
                     HSD_Init_803755A8();
+                    Snap_Time(0, 0);
                 }
             }
 #endif
@@ -935,7 +938,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
         {
             extern void SyncTest_PreRender(void); /* gw_snap.c: measure render-owned state */
+            extern void Snap_Time(int what, int begin);
             SyncTest_PreRender();
+            Snap_Time(1, 1);
         }
 #endif
         lb_800195D0();
@@ -963,6 +968,8 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
         {
             extern void SyncTest_PostRender(void);
+            extern void Snap_Time(int what, int begin);
+            Snap_Time(1, 0);
             SyncTest_PostRender();
         }
 #endif

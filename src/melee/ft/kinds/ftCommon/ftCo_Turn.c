@@ -94,6 +94,46 @@ void ftCo_Turn_Anim(Fighter_GObj* gobj)
     }
 }
 
+#if defined(TARGET_PC)
+/* UCF 0.73 dashback, as Slippi's console codes ran it in 2019 ("UCF 0.73 Dashback - Check for
+ * Toggle.asm", slippi-ssbm-asm eb9abdc, @ 0x800C9A44 = the first facing flip below): on the turn
+ * frame whose script frame count is 2, with the stick past the dash threshold in the new direction
+ * and its x-timer under 2, a raw X swing of more than 75 units against two frames earlier turns
+ * the tilt turn into a dash (has_turned and just_turned set; the dash check further down then
+ * fires). Applied for MELEE_SLP playback of ports whose recording had UCF on. Not ported: the
+ * Ice Climbers branch that retroactively points Nana's follow input the new way. */
+static void ftCo_Turn_Ucf073Dashback(Fighter* fp)
+{
+    extern int Replay_UcfVersion(int port);
+    extern int Replay_RawStickBack(int port, int which, int back);
+    union {
+        f32 f;
+        u32 u;
+    } fc;
+    int port = fp->player_id, d;
+    if (Replay_UcfVersion(fp->x618_player_id) != 73) {
+        return;
+    }
+    fc.f = fp->x3E4_fighterCmdScript.frame_count;
+    if ((fc.u >> 16) != 0x4000) {
+        return;
+    }
+    if (!(fp->input.lstick[0].x * fp->mv.co.turn.facing_after >=
+          p_ftCommonData->dash_smash_stick_threshold))
+    {
+        return;
+    }
+    if (fp->active_timer.lstick.x >= 2 || fp->is_sub_fighter) {
+        return;
+    }
+    d = Replay_RawStickBack(port, 0, 0) - Replay_RawStickBack(port, 0, 2);
+    if (d * d > 0x15F9) {
+        fp->mv.co.turn.just_turned = true;
+        fp->mv.co.turn.has_turned = true;
+    }
+}
+#endif
+
 void ftCo_Turn_IASA(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -102,6 +142,9 @@ void ftCo_Turn_IASA(Fighter_GObj* gobj)
         fp->input.pressed_buttons |= fp->mv.co.turn.x1C;
     }
     if (!fp->mv.co.turn.has_turned) {
+#if defined(TARGET_PC)
+        ftCo_Turn_Ucf073Dashback(fp);
+#endif
         fp->facing_dir = -fp->facing_dir;
     }
 

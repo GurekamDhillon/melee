@@ -481,6 +481,162 @@ static bool mnLoadScreen_Frame(void)
     return true;
 }
 
+/* ---- the F9 panel, the toast and the run label, in the game's own 2D ----------------------
+ *
+ * These were Dear ImGui windows, composited by Aurora over the finished frame. They are drawn
+ * here instead, with DevText - the same screen-space text the loading screen above uses, and the
+ * same thing the retail debug builds used. The port's only C++ TU keeps the parts the game
+ * cannot see (the F9 key, the environment, the DVD counters, the mirrored pad state) and
+ * formats the lines; everything visible is now the engine's.
+ *
+ * The boundary is pull-only and scalar-only, on purpose. A game TU's memory accesses are
+ * byte-swapped by gwtool - including to its own stack - so a host function writing through a
+ * pointer this file passes it would land byte-reversed. Strings are bytes, so a const char*
+ * coming back the other way is safe, and that is all that crosses.
+ *
+ * Lifetime is the scene's. DevText's pool is re-initialised per scene by gm_801A4BD4, so the
+ * boxes are created in mnOverlay_Begin next to the loading screen's and are never freed here;
+ * they go away with the pool. Creating them AFTER the loading screen's panel matters, because
+ * DevText_AddToList appends and the list draws in order: the caption has to sit on top of the
+ * loader, not behind it.
+ */
+
+extern char* Overlay_GetRunLabel(void);
+extern char* Overlay_GetToast(void);
+extern int Overlay_GetPanelOpen(void);
+extern int Overlay_GetPanelLineCount(void);
+extern char* Overlay_GetPanelLine(int i);
+extern int Overlay_GetPanelLineDim(int i);
+
+/* 8x12 rather than DevText's 10x16 default: the panel is 44 columns of diagnostics and at the
+   default scale it would be 440 points wide on a 640-point screen. */
+#define OVERLAY_CELL_W 8.0F
+#define OVERLAY_CELL_H 12.0F
+#define OVERLAY_PANEL_COLS 44
+#define OVERLAY_PANEL_ROWS 20
+#define OVERLAY_CAPTION_COLS 48
+
+/* DevText reads the colour index out of the TOP TWO BITS of each cell's attribute byte
+   (textdraw.c: `(buf[index + 1] & 0xC0) >> 6`) while DevText_StoreColorIndex writes whatever
+   it is given, so a palette slot has to be pre-shifted to select it when printing. Slot 0 is
+   left white; slot 3 is re-coloured grey for the lines the ImGui panel drew with TextDisabled. */
+#define OVERLAY_COLOR_NORMAL 0x00
+#define OVERLAY_COLOR_DIM (3 << 6)
+
+static DevText* mnOverlay_panel;
+static DevText* mnOverlay_caption;
+static DevText* mnOverlay_toast;
+static char mnOverlay_panelbuf[2 * OVERLAY_PANEL_COLS * OVERLAY_PANEL_ROWS];
+static char mnOverlay_captionbuf[2 * OVERLAY_CAPTION_COLS];
+static char mnOverlay_toastbuf[2 * OVERLAY_CAPTION_COLS];
+
+static DevText* mnOverlay_Make(HSD_GObj* gobj, char id, int x, int y, int w, int h, char* buf,
+                               GXColor bg)
+{
+    GXColor dim = { 150, 150, 160, 255 };
+    DevText* t = DevText_Create(id, x, y, w, h, buf);
+    if (t == NULL) {
+        return NULL;
+    }
+    DevText_Show(gobj, t);
+    DevText_HideCursor(t);
+    DevText_SetScale(t, OVERLAY_CELL_W, OVERLAY_CELL_H);
+    DevText_SetBGColor(t, bg);
+    /* Recolour palette slot 3 while the index is still unshifted - SetTextColor indexes
+       text_colors[current_color], so it must not be called once the index carries the shift. */
+    DevText_StoreColorIndex(t, 3);
+    DevText_SetTextColor(t, dim);
+    DevText_StoreColorIndex(t, OVERLAY_COLOR_NORMAL);
+    DevText_HideText(t);
+    return t;
+}
+
+static void mnOverlay_Begin(void)
+{
+    GXColor panel = { 10, 10, 16, 220 };
+    GXColor plate = { 20, 24, 40, 180 };
+    HSD_GObj* gobj;
+
+    mnOverlay_panel = NULL;
+    mnOverlay_caption = NULL;
+    mnOverlay_toast = NULL;
+
+    gobj = DevText_GetGObj();
+    if (gobj == NULL) {
+        return;
+    }
+    mnOverlay_caption = mnOverlay_Make(gobj, 0x4C, 8, 6, OVERLAY_CAPTION_COLS, 1,
+                                       mnOverlay_captionbuf, plate);
+    mnOverlay_toast = mnOverlay_Make(gobj, 0x4D, 160, 28, OVERLAY_CAPTION_COLS, 1,
+                                     mnOverlay_toastbuf, plate);
+    mnOverlay_panel = mnOverlay_Make(gobj, 0x4E, 16, 28, OVERLAY_PANEL_COLS,
+                                     OVERLAY_PANEL_ROWS, mnOverlay_panelbuf, panel);
+}
+
+/* A one-line box, sized to the text so its plate is not a full-width bar behind six
+   characters. DevText fixes w at create time, but w is only ever used as a stride and a
+   bound, and the buffer is allocated for the widest case, so narrowing it is safe. */
+static void mnOverlay_Line(DevText* t, char* str)
+{
+    int n;
+
+    if (t == NULL) {
+        return;
+    }
+    if (str == NULL) {
+        DevText_HideText(t);
+        DevText_HideBackground(t);
+        return;
+    }
+    n = 0;
+    while (str[n] != '\0' && n < OVERLAY_CAPTION_COLS) {
+        n++;
+    }
+    t->w = n > 0 ? n : 1;
+    DevText_Erase(t);
+    DevText_SetCursorXY(t, 0, 0);
+    DevText_Print(t, str);
+    DevText_ShowText(t);
+    DevText_ShowBackground(t);
+}
+
+static void mnOverlay_Frame(void)
+{
+    int i;
+    int rows;
+
+    mnOverlay_Line(mnOverlay_caption, Overlay_GetRunLabel());
+    mnOverlay_Line(mnOverlay_toast, Overlay_GetToast());
+
+    if (mnOverlay_panel == NULL) {
+        return;
+    }
+    if (!Overlay_GetPanelOpen()) {
+        DevText_HideText(mnOverlay_panel);
+        DevText_HideBackground(mnOverlay_panel);
+        return;
+    }
+    DevText_Erase(mnOverlay_panel);
+    rows = Overlay_GetPanelLineCount();
+    if (rows > OVERLAY_PANEL_ROWS) {
+        rows = OVERLAY_PANEL_ROWS;
+    }
+    for (i = 0; i < rows; i++) {
+        char* line = Overlay_GetPanelLine(i);
+        if (line == NULL) {
+            continue;
+        }
+        DevText_SetCursorXY(mnOverlay_panel, 0, i);
+        DevText_StoreColorIndex(mnOverlay_panel, Overlay_GetPanelLineDim(i)
+                                                     ? OVERLAY_COLOR_DIM
+                                                     : OVERLAY_COLOR_NORMAL);
+        DevText_Print(mnOverlay_panel, line);
+    }
+    DevText_StoreColorIndex(mnOverlay_panel, OVERLAY_COLOR_NORMAL);
+    DevText_ShowText(mnOverlay_panel);
+    DevText_ShowBackground(mnOverlay_panel);
+}
+
 #endif /* TARGET_PC */
 
 GameScene* gm_FindGameSceneHandler(u8 kind)
@@ -522,6 +678,7 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
     lbCardGame_InitScene();
 #if defined(TARGET_PC)
     mnLoadScreen_Begin(info);
+    mnOverlay_Begin();
 #endif
 
     while (temp_r25->unk_C == 0) {
@@ -533,6 +690,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
          * are NOT covered yet (see _research/scene-launch.md). */
         SceneReport_Menu(mn_804A04F0.cur_menu, mn_804A04F0.hovered_selection,
                          mn_804A04F0.confirmed_selection);
+        /* Outside everything below: the caption, the toast and the panel have to stay live
+           while the loading screen holds and while the debug pause has the scene stopped. */
+        mnOverlay_Frame();
 #endif
         hsd_80392E80();
         gmMainLib_8046B0F0.xC = false;

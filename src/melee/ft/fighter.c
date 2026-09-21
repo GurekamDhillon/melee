@@ -67,6 +67,7 @@
 #include <melee/gm/gmmultiman.h>
 #include <melee/gr/ground.h>
 #include <melee/gr/stage.h>
+#include <melee/gm/gm_1A3F.h>
 #include <melee/if/ifmagnify.h>
 #include <melee/it/it_26B1.h>
 #include <melee/it/it_279C.h>
@@ -1584,6 +1585,34 @@ void Fighter_8006A1BC(Fighter_GObj* gobj)
     }
 }
 
+#if defined(TARGET_PC)
+/* Slippi online's BrawlOffscreenDamage (project-slippi/slippi-ssbm-asm Online/Core/
+ * BrawlOffscreenDamage.asm, @ 0x8006A880 in Fighter_8006A360 - the ifMagnify_802FC998 call): in the
+ * online codeset a fighter is "offscreen" for the 1%-per-interval damage when its position is
+ * outside the stage's camera limits, not when the magnifier bubble was drawn - a pure function of
+ * logic state, which rollback needs. Never in the Home-Run Contest (Sandbag), never while dead
+ * (x221F_b1) or in a star/screen KO (motions 4 and 6). Vanilla and the console codesets keep the
+ * magnifier's flag. */
+static bool ftSlippi_IsOffscreen(Fighter* fp)
+{
+    extern int Slippi_Codes(void);
+    if (Slippi_Codes() != 2) {
+        return ifMagnify_802FC998(fp->player_id);
+    }
+    if (gm_GetCurrentGameMode() == GM_HOME_RUN_CONTEST || fp->x221F_b1 ||
+        fp->motion_id == 4 || fp->motion_id == 6)
+    {
+        return false;
+    }
+    return fp->cur_pos.x < Stage_GetCamBoundsLeftOffset() ||
+           fp->cur_pos.x > Stage_GetCamBoundsRightOffset() ||
+           fp->cur_pos.y > Stage_GetCamBoundsTopOffset() ||
+           fp->cur_pos.y < Stage_GetCamBoundsBottomOffset();
+}
+#else
+#define ftSlippi_IsOffscreen(fp) ifMagnify_802FC998((fp)->player_id)
+#endif
+
 void Fighter_8006A360(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -1737,7 +1766,7 @@ void Fighter_8006A360(Fighter_GObj* gobj)
 
         if (!fp->is_sub_fighter && Camera_80031144() == 1.0f) {
             if (fp->dmg.x1830_percent < p_ftCommonData->x7B0) {
-                if (ifMagnify_802FC998(fp->player_id) &&
+                if (ftSlippi_IsOffscreen(fp) &&
                     (Player_GetMoreFlagsBit3(fp->player_id) != 0))
                 {
                     fp->dmg.x1910++;

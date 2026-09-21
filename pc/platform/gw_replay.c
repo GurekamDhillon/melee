@@ -686,3 +686,35 @@ int gw_Det_Enabled(void) {
     }
     return cached;
 }
+
+/* ---- Slippi's gameplay codes -----------------------------------------------------------------
+ * Which of Slippi's gameplay-affecting codes are in force (_research/slippi-gameplay-codes.md):
+ *   0 none, 1 the console/tournament codeset, 2 the online codeset.
+ * During .slp playback it is the recording's own: major scene 8 (online) -> 2, any other replay
+ * -> 1 (each code gates itself further by the replay's Slippi version, gw_Slippi_Version).
+ * Outside playback MELEE_SLIPPI_CODES=tournament|online|off picks it (default off, i.e. vanilla).
+ */
+int gw_Slippi_Codes(void) {
+    static int cached = -1;
+    if (cached < 0) {
+        const char *v = getenv("MELEE_SLIPPI_CODES");
+        if (v != NULL && v[0] != '\0') {
+            cached = (v[0] == 'o' || v[0] == 'O') ? 2 : (v[0] == 't' || v[0] == 'T' || v[0] == 'c') ? 1 : 0;
+        } else if (gw_Replay_Active()) {
+            cached = rp.online ? 2 : 1;
+        } else {
+            cached = 0;
+        }
+        gw_log("slippi: gameplay codes %s", cached == 2 ? "online" : cached == 1 ? "tournament" : "off");
+    }
+    return cached;
+}
+
+/* The replay's Slippi version as major*10000 + minor*100 + build (3.19.1 -> 31901), or a large
+ * number outside playback (live play gets the current codes). */
+int gw_Slippi_Version(void) {
+    if (!gw_Replay_Active()) {
+        return 999999;
+    }
+    return rp.version[0] * 10000 + rp.version[1] * 100 + rp.version[2];
+}

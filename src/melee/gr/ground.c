@@ -482,6 +482,16 @@ float Ground_801C0498(void)
 static Ground* alloc_user_data_ground(void)
 {
     Ground* gp = HSD_MemAlloc(sizeof(*gp));
+#if defined(TARGET_PC)
+    /* Slippi's Init Stage Data (Common/Initialize Stage Data, @ 0x801C154C) zeroes this block -
+       516 bytes, sizeof(Ground) - and ships in every codeset, so every Slippi recording, console
+       or online, ran with a cleared Ground. Done in the allocator so all three call sites get it,
+       and unconditionally: it also removes the stale-heap nondeterminism the @bug notes at the
+       call sites describe. */
+    if (gp != NULL) {
+        memset(gp, 0, sizeof *gp);
+    }
+#endif
     if (gp == NULL) {
         OSReport("%s:%d: couldn t get user data(Ground)\n", __FILE__, 474);
     }

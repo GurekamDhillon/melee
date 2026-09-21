@@ -946,6 +946,13 @@ Fighter_GObj* Fighter_Create(struct plAllocInfo* input)
      * contents. For example, Luigi's @c x222C_cycloneCharge.
      */
     fp = HSD_ObjAlloc(&fighter_alloc_data);
+#if defined(TARGET_PC)
+    /* Slippi's Init Player Data (Common/Initialize Player Data, @ 0x80068EEC) zeroes the block
+       right here, in EVERY codeset it ships - so every Slippi recording, console or online, ran
+       with a cleared Fighter. It also removes the stale-heap nondeterminism the @bug above
+       describes, which is why it is unconditional here rather than gated on the codeset. */
+    memset(fp, 0, sizeof *fp);
+#endif
     fp->dat_attrs_backup = HSD_ObjAlloc(&fighter_dat_attrs_alloc_data);
     GObj_InitUserData(gobj, 4U, &Fighter_Unload_8006DABC, fp);
     ftData_8008572C(input->internal_id);

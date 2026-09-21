@@ -83,10 +83,9 @@ float gw_sqrtf(float x) {
   return x;
 }
 
-float gw_sinf(float x) { return sinf(x); }
-float gw_cosf(float x) { return cosf(x); }
-float gw_tanf(float x) { return tanf(x); }
-float gw_atanf(float x) { return atanf(x); }
+/* sinf/cosf/tanf are MSL's, reproduced in pc/gameworld/gekko_fp.c, and atanf is the game's own
+ * (src/melee/lb/lbtrigf.c): the CRT's differ in the last bits, which .slp playback measured as
+ * rotated knockback vectors. logf has no game caller and stays on the CRT. */
 float gw_logf(float x) { return logf(x); }
 /* The decomp only has fmodf as a static inline (src/MSL/math.h), so it never reaches the map and
  * guest 0x80364340 had no bridge entry. m-ex fighter blobs (Tails' side-B and slerp) call it as a

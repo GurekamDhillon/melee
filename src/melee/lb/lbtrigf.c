@@ -240,4 +240,97 @@ float atanf(float x)
     BITWISE(result) |= sign_bit_x;
     return result;
 }
+#elif defined(TARGET_PC)
+/* The same atanf for the port - it used to fall through to the Windows CRT's, which differs in
+ * the last bits and so bent every atan2f-derived angle (knockback, DI, camera). The retail code
+ * (0x80022E68) computes every a*b+c here FUSED: the two __fnmsubs, and the polynomial as a chain
+ * of fmadds ending in fmadds(result * rs, poly, result). lbTrigf_Fmadds reproduces a fused single
+ * multiply-add without FMA hardware (float factors multiply exactly in double; the sum is rounded
+ * to float once more), and the control flow and table offsets are the original's. */
+static float lbTrigf_Fmadds(float a, float c, float b)
+{
+    return (float) ((double) a * (double) c + (double) b);
+}
+
+static float lbTrigf_Fnmsubs(float a, float c, float b)
+{
+    return (float) -((double) a * (double) c - (double) b);
+}
+
+float atanf(float x)
+{
+    float const silver_ratio = 2.4142136573791504f;
+    float const silver_ratio_conjugate = 0.4142135679721832f;
+
+    float result;
+    float result_squared;
+    float poly;
+    const float* lookup_ptr;
+    s32 lookup_index = -1;
+    bool x_ge_ratio = false;
+    s32 sign_bit_x = BITWISE(x) & SIGN_BIT;
+
+    BITWISE(x) &= ~SIGN_BIT;
+
+    if (x >= silver_ratio) {
+        x_ge_ratio = true;
+        result = 1.0f / x;
+    } else if (silver_ratio_conjugate < x) {
+        lookup_index = 0;
+        switch (BITWISE(x) & BITWISE_INF) {
+        case BITWISE_0_5:
+            if (!(SIGNED_BITWISE(x) < BITWISE_THRESHOLD_0)) {
+                lookup_index = 1;
+            }
+            if (!(SIGNED_BITWISE(x) < BITWISE_THRESHOLD_1)) {
+                lookup_index += 1;
+            }
+            break;
+        case BITWISE_1_0:
+            lookup_index = 2;
+            if (!(SIGNED_BITWISE(x) < BITWISE_THRESHOLD_2)) {
+                lookup_index = 3;
+            }
+            if (!(SIGNED_BITWISE(x) < BITWISE_THRESHOLD_3)) {
+                lookup_index += 1;
+            }
+            break;
+        case BITWISE_2_0:
+            lookup_index = 4;
+            break;
+        }
+        {
+            float offset_39;
+            float offset_33;
+            lookup_ptr = &atanf_lookup[lookup_index];
+            offset_39 = lookup_ptr[39];
+            offset_33 = lookup_ptr[33];
+
+            result = 1.0f / (offset_33 + (x + offset_39));
+            result = lbTrigf_Fnmsubs(result, lookup_ptr[7], offset_33) +
+                     lbTrigf_Fnmsubs(result, lookup_ptr[13], offset_39);
+        }
+    } else {
+        result = x;
+    }
+
+    result_squared = result * result;
+    lookup_ptr = &atanf_lookup[lookup_index];
+    poly = lbTrigf_Fmadds(result_squared, atanf_lookup[6], atanf_lookup[5]);
+    poly = lbTrigf_Fmadds(result_squared, poly, atanf_lookup[4]);
+    poly = lbTrigf_Fmadds(result_squared, poly, atanf_lookup[3]);
+    poly = lbTrigf_Fmadds(result_squared, poly, atanf_lookup[2]);
+    poly = lbTrigf_Fmadds(result_squared, poly, atanf_lookup[1]);
+    result = lbTrigf_Fmadds(result * result_squared, poly, result);
+    result += lookup_ptr[27];
+    result += lookup_ptr[20];
+
+    if (x_ge_ratio) {
+        result -= (float) M_PI_2;
+        return sign_bit_x ? result : -result;
+    }
+
+    BITWISE(result) |= sign_bit_x;
+    return result;
+}
 #endif

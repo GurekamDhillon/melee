@@ -183,3 +183,119 @@ double __fres(double val)
 
     return gekko_bits_to_double((u64_t) integral);
 }
+
+/* ---- MSL sinf / cosf / tanf ----------------------------------------------------------------
+ *
+ * The game's trig is MSL's (src/MSL/trigf.c + math_data.c, both Matching), not a correctly rounded
+ * libm: a four-term range reduction into eighth-turns and two short polynomials, every a*b+c step
+ * of which the retail binary computes with a FUSED fmadds / fnmsubs / fnmadds (checked against
+ * the DOL: sinf @ 0x803263D4, cosf @ 0x80326240). The port used to forward these to the Windows
+ * CRT, whose results differ in the last bits - a knockback angle's sin/cos then rotated the
+ * launch vector by an ULP (found by .slp playback: Falcon's frame-52 knockback, x smaller and y
+ * larger than the console's by one ULP each).
+ *
+ * gk_fmadds reproduces a fused single-precision multiply-add without FMA hardware: both factors
+ * are floats, so their product is exact in double (48 bits), and the sum is rounded to double and
+ * then once more to float - the same model Dolphin's interpreter uses. Tables and constants are
+ * math_data.c's and trigf.c's, whose literals the Matching build proves produce the retail bits;
+ * __four_over_pi_m1 is what trigf.c's static constructor copies out of tmp_float. */
+static float gk_fmadds(float a, float c, float b)
+{
+    return (float) ((double) a * (double) c + (double) b);
+}
+
+static const float gk_sincos_on_quadrant[] = { 0, 1, 1, 0, 0, -1, -1, 0 };
+static const float gk_sincos_poly[] = {
+    0.0000035287617, 0.0000003089747, -0.0003259365, -0.00003657235, 0.015854323,
+    0.0024903931,    -0.30842513,     -0.08074551,   1,              0.7853982,
+};
+static const float gk_four_over_pi_m1[] = { 0.25f, 0.0232393741608f, 1.70555722434e-7f,
+                                            1.86736494323e-11f };
+#define GK_SINCOS_EPSILON 3.45266983e-4f
+
+/* x in eighth-turns: y = (4/pi)x - 2n, as x - 2n + x*(4/pi - 1) in four fused steps. */
+static float gk_sincos_reduce(float x, int* quadrant)
+{
+    union {
+        float f;
+        unsigned int u;
+    } bits;
+    float z = (2.0f / 3.14159265358979323846f) * x;
+    int n;
+    float y;
+    bits.f = x;
+    n = (bits.u & 0x80000000u) ? (int) (z - 0.5f) : (int) (z + 0.5f);
+    y = x - (float) (n * 2);
+    y = gk_fmadds(gk_four_over_pi_m1[0], x, y);
+    y = gk_fmadds(gk_four_over_pi_m1[1], x, y);
+    y = gk_fmadds(gk_four_over_pi_m1[2], x, y);
+    y = gk_fmadds(gk_four_over_pi_m1[3], x, y);
+    *quadrant = n & 3;
+    return y;
+}
+
+/* ((((p0 ysq + p2) ysq + p4) ysq + p6) ysq + p8) */
+static float gk_sincos_even(float ysq)
+{
+    const float* p = gk_sincos_poly;
+    float z = gk_fmadds(p[0], ysq, p[2]);
+    z = gk_fmadds(z, ysq, p[4]);
+    z = gk_fmadds(z, ysq, p[6]);
+    return gk_fmadds(z, ysq, p[8]);
+}
+
+/* (((p1 ysq + p3) ysq + p5) ysq + p7), the odd polynomial before its last step */
+static float gk_sincos_odd_head(float ysq)
+{
+    const float* p = gk_sincos_poly;
+    float z = gk_fmadds(p[1], ysq, p[3]);
+    z = gk_fmadds(z, ysq, p[5]);
+    return gk_fmadds(z, ysq, p[7]);
+}
+
+float sinf(float x)
+{
+    int n;
+    float y = gk_sincos_reduce(x, &n);
+    float ysq;
+    if ((y < 0.0f ? -y : y) < GK_SINCOS_EPSILON) {
+        n <<= 1;
+        return gk_fmadds(gk_sincos_poly[9], gk_sincos_on_quadrant[n + 1] * y,
+                         gk_sincos_on_quadrant[n]);
+    }
+    ysq = y * y;
+    if (n & 1) {
+        n <<= 1;
+        return gk_sincos_even(ysq) * gk_sincos_on_quadrant[n];
+    }
+    n <<= 1;
+    return (gk_fmadds(gk_sincos_odd_head(ysq), ysq, gk_sincos_poly[9]) * y) *
+           gk_sincos_on_quadrant[n + 1];
+}
+
+float cosf(float x)
+{
+    int n;
+    float y = gk_sincos_reduce(x, &n);
+    float ysq;
+    if ((y < 0.0f ? -y : y) < GK_SINCOS_EPSILON) {
+        n <<= 1;
+        /* fnmsubs: q[n+1] - y*q[n], fused */
+        return (float) ((double) gk_sincos_on_quadrant[n + 1] -
+                        (double) y * (double) gk_sincos_on_quadrant[n]);
+    }
+    ysq = y * y;
+    if (n & 1) {
+        n <<= 1;
+        /* fnmadds: -(t*ysq + p9), fused, then * y, then * the quadrant */
+        return (y * -gk_fmadds(gk_sincos_odd_head(ysq), ysq, gk_sincos_poly[9])) *
+               gk_sincos_on_quadrant[n];
+    }
+    n <<= 1;
+    return gk_sincos_even(ysq) * gk_sincos_on_quadrant[n + 1];
+}
+
+float tanf(float x)
+{
+    return sinf(x) / cosf(x);
+}

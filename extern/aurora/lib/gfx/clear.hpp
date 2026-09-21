@@ -13,6 +13,9 @@ struct DrawData {
   PipelineRef pipeline;
   wgpu::Color color;
   float depth = 0.f;
+  // When set, clear only this rectangle (an EFB copy clears its source rectangle, not the EFB).
+  bool scissored = false;
+  ClipRect rect{};
 };
 
 constexpr uint32_t ClearPipelineConfigVersion = 5;

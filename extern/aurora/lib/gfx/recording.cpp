@@ -602,6 +602,7 @@ RecordedFrame end_recording() {
 
   for (auto& array : gx::g_gxState.arrays) {
     array.cachedRange = {};
+    array.stale = false;
   }
 #if defined(AURORA_GFX_DEBUG_GROUPS)
   if (!g_recorder.debugGroupStack.empty()) {
@@ -840,6 +841,12 @@ void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bo
       static_cast<float>(rect.height) / srcH,
   };
   prevPass.resolveUniformRange = push_uniform(uvTransform);
+  // An EFB copy with clear clears its SOURCE RECTANGLE, not the whole EFB. Clearing the full target
+  // for a small copy - a shadow or refraction capture - wiped everything drawn earlier in the frame
+  // outside that rectangle: the engine's own 2D (DevText, the loading screen) drew until gameplay
+  // started capturing and then vanished. A copy that covers the target keeps the load-op clear.
+  const bool fullRect = rect.x <= 0 && rect.y <= 0 && static_cast<float>(rect.x + rect.width) >= srcW &&
+                        static_cast<float>(rect.y + rect.height) >= srcH;
   enqueue_pass(current_frame_packet(), g_recorder.currentRenderPass);
 
   // Populate new render pass from previous
@@ -856,11 +863,11 @@ void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bo
       .copySourceNormalTexture = prevPass.copySourceNormalTexture,
       .msaaSamples = msaaSamples,
       .clearDepthValue = clearDepthValue,
-      .clearDepth = clearDepth,
+      .clearDepth = clearDepth && fullRect,
       .hasDepth = prevPass.hasDepth,
       .hasStencil = prevPass.hasStencil,
   };
-  const bool fullColorClear = clearColor && clearAlpha;
+  const bool fullColorClear = clearColor && clearAlpha && fullRect;
   for (uint32_t i = 0; i < newPass.colorAttachmentCount; ++i) {
     auto& color = newPass.colorAttachments[i];
     color.loadOp = wgpu::LoadOp::Undefined;
@@ -879,7 +886,26 @@ void resolve_pass_into(TextureHandle texture, ClipRect rect, bool clearColor, bo
   current_render_passes().emplace_back(std::move(newPass));
   ++g_recorder.currentRenderPass;
 
-  if (!fullColorClear && (clearColor || clearAlpha)) {
+  if (!fullRect && (clearColor || clearAlpha || clearDepth)) {
+    // A partial copy: clear exactly its rectangle, as the hardware does.
+    push_draw_command(clear::DrawData{
+        .pipeline = pipeline_ref(clear::PipelineConfig{
+            .clearColor = clearColor,
+            .clearAlpha = clearAlpha,
+            .clearDepth = clearDepth,
+        }),
+        .color =
+            wgpu::Color{
+                .r = clearColorValue.x(),
+                .g = clearColorValue.y(),
+                .b = clearColorValue.z(),
+                .a = clearColorValue.w(),
+            },
+        .depth = clearDepthValue,
+        .scissored = true,
+        .rect = rect,
+    });
+  } else if (!fullColorClear && (clearColor || clearAlpha)) {
     // If we're only clearing color _or_ alpha, perform a clear draw
     push_draw_command(clear::DrawData{
         .pipeline = pipeline_ref(clear::PipelineConfig{
@@ -1186,6 +1212,14 @@ Range push_storage(const uint8_t* data, size_t length) {
     return {};
   }
   return push(current_frame_packet().storage, data, length, resources().limits.minStorageBufferOffsetAlignment);
+}
+
+const uint8_t* storage_data(const Range& range) {
+  auto& storage = current_frame_packet().storage;
+  if (range.size == 0 || static_cast<size_t>(range.offset) + range.size > storage.size()) {
+    return nullptr;
+  }
+  return storage.data() + range.offset;
 }
 
 Range push_texture_data(const uint8_t* data, u32 bytesPerRow, u32 rowsPerImage) {

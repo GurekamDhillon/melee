@@ -300,6 +300,9 @@ struct AttrArray {
   u8 stride;
   bool le = true;
   gfx::Range cachedRange;
+  // Set by GXInvalidateVtxCache: cachedRange may no longer match the array's bytes. Checked (and
+  // cleared) the next time a draw uses the array; see revalidate_array in command_processor.cpp.
+  bool stale = false;
 };
 inline bool operator==(const AttrArray& lhs, const AttrArray& rhs) {
   return lhs.data == rhs.data && lhs.size == rhs.size && lhs.stride == rhs.stride && lhs.le == rhs.le;

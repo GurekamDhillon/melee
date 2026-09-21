@@ -16,7 +16,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <span>
+#include <unordered_map>
 #include <vector>
 
 namespace aurora::gx::fifo {
@@ -283,8 +285,14 @@ ProcessResult process(const u8* data, u32 size) noexcept {
     }
 
     case CP_CMD_INVAL_VTX: {
+      // Melee invalidates the vertex cache before nearly every PObj. Dropping every snapshot here
+      // re-uploaded each array once per draw; a stage drawing many PObjs from one 100 KB array
+      // (ACE ext:338, GrMe) overran the 8 MiB frame storage buffer and aborted. The invalidate only
+      // matters if the CPU rewrote the array, so mark the snapshot for a byte comparison instead.
       for (auto& array : g_gxState.arrays) {
-        array.cachedRange = {};
+        if (array.cachedRange.size != 0) {
+          array.stale = true;
+        }
       }
       g_gxState.dirty |= DirtyImmediates;
       break;
@@ -426,6 +434,41 @@ static u32 max_index_for_attr(int attr, GXVtxFmt fmt, std::span<const uint8_t> v
   return maxIndex;
 }
 
+// After GXInvalidateVtxCache: keep the array's snapshot only if the array still holds the same
+// bytes. The snapshot was copied from this same memory, so a byte comparison is exact, and it
+// costs no more than the re-upload it usually saves.
+// Uploads of indexed-attribute arrays made this frame, by array address. An array's own
+// cachedRange is dropped whenever GXSetArray points it somewhere else, so a scene that alternates
+// between models re-uploaded the same arrays once per switch - ACE ext:338 (GrMe) pushed one
+// 100 KB array past the 8 MiB frame storage buffer that way, and aurora aborts on overflow. A
+// reuse is taken only when the stored bytes still equal the array's, which also makes an entry
+// left over from an earlier frame harmless: it simply fails the comparison.
+static std::unordered_map<const void*, gfx::Range> sArrayUploads;
+
+static bool reuse_array_upload(AttrArray& array, u32 needed) noexcept {
+  const auto it = sArrayUploads.find(array.data);
+  if (it == sArrayUploads.end() || it->second.size < needed) {
+    return false;
+  }
+  const uint8_t* snap = gfx::storage_data(it->second);
+  if (snap == nullptr || std::memcmp(snap, array.data, it->second.size) != 0) {
+    return false;
+  }
+  array.cachedRange = it->second;
+  return true;
+}
+
+static void revalidate_array(AttrArray& array) noexcept {
+  if (!array.stale) {
+    return;
+  }
+  array.stale = false;
+  const uint8_t* snap = gfx::storage_data(array.cachedRange);
+  if (snap == nullptr || std::memcmp(snap, array.data, array.cachedRange.size) != 0) {
+    array.cachedRange = {};
+  }
+}
+
 static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
                          gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
   auto& state = g_gxState;
@@ -437,13 +480,14 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
       continue;
     }
     auto& array = state.arrays[i];
+    revalidate_array(array);
     const auto& attrFmt = state.vtxFmts[fmt].attrs[i];
     const u32 needed = max_index_for_attr(i, fmt, vertexData, vtxCount) * array.stride +
                        comp_type_size(static_cast<GXAttr>(i), attrFmt.type) *
                            comp_cnt_count(static_cast<GXAttr>(i), attrFmt.cnt);
     AURORA_ASSERT(needed <= array.size, "indexed attr {} references {} bytes, array is {} bytes", i, needed,
                   array.size);
-    if (array.cachedRange.size < needed) {
+    if (array.cachedRange.size < needed && !reuse_array_upload(array, needed)) {
       // A GC GXSetArray carries no array size; the port's shim reports MEM1 arrays as
       // [base, end-of-MEM1) and anything else as UINT32_MAX. A model drawn as many
       // per-triangle indexed draws (Melee's envelope path, e.g. Sonic) references a
@@ -463,6 +507,10 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
         }
       }
       array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), pushSize);
+      if (sArrayUploads.size() > 4096) {
+        sArrayUploads.clear();
+      }
+      sArrayUploads[array.data] = array.cachedRange;
     }
     immediates.arrayStart[i - GX_VA_POS] = array.cachedRange.offset;
   }
@@ -593,7 +641,8 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& 
       if (g_gxState.vtxDesc[i] != GX_INDEX8 && g_gxState.vtxDesc[i] != GX_INDEX16) {
         continue;
       }
-      const auto& array = g_gxState.arrays[i];
+      auto& array = g_gxState.arrays[i];
+      revalidate_array(array);
       const auto& attrFmt = g_gxState.vtxFmts[fmt].attrs[i];
       const auto attr = static_cast<GXAttr>(i);
       const u32 needed = max_index_for_attr(i, fmt, vertexData, vtxCount) * array.stride +
@@ -706,6 +755,7 @@ void handle_aurora(ByteReader& reader) noexcept {
       array.size = arraySize;
       array.le = le;
       array.cachedRange = {};
+      array.stale = false;
       g_gxState.dirty |= DirtyImmediates;
     }
   } else if (subCmd == GX_AURORA_LOAD_TEXOBJ) {

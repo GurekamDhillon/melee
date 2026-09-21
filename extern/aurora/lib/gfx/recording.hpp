@@ -90,6 +90,8 @@ Range push_storage(const T& data) {
   return push_storage(reinterpret_cast<const uint8_t*>(&data), sizeof(T));
 }
 Range push_texture_data(const uint8_t* data, uint32_t bytesPerRow, uint32_t rowsPerImage);
+// The bytes a push_storage range holds this frame, or nullptr if the range is not in it.
+const uint8_t* storage_data(const Range& range);
 
 template <typename DrawData>
 void push_draw_command(DrawData data);

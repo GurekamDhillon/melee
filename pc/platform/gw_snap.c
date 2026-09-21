@@ -545,6 +545,10 @@ static int sn_compare(int frame) {
                 ++off;
                 continue;
             }
+            if (s->mem1[off] != live[off] && sn_in_render_arena(0x80000000u + off, &mend)) {
+                off = mend - 0x80000000u;
+                continue;
+            }
             if (s->mem1[off] != live[off] && sn_masked(0x80000000u + off, &mend)) {
                 off = mend - 0x80000000u;
                 continue;

@@ -1348,6 +1348,21 @@ void gw_Snap_CbTime(void *cb, int begin) {
     sn_cb[i].n++;
 }
 
+/* Render callbacks a RESIMULATED frame does not run at all (gobj.c). Only callbacks whose whole job
+ * is the picture: Fountain's water reflection (grIzumi_801CCEA0) re-renders the scene from a mirrored
+ * camera into a texture. MELEE_SNAP_SKIP_CB=reflect enables it (default off until SyncTest passes
+ * with it: a callback that also clears dirty flags or fills matrix caches cannot be skipped). */
+extern void gw_grIzumi_801CCEA0(void *gobj, int pass);
+
+int gw_Snap_SkipRenderCb(void *cb) {
+    static int mode = -1;
+    if (mode < 0) {
+        const char *e = getenv("MELEE_SNAP_SKIP_CB");
+        mode = (e != NULL && strstr(e, "reflect") != NULL) ? 1 : 0;
+    }
+    return mode && sn_cb_window && cb == (void *) (uintptr_t) gw_grIzumi_801CCEA0;
+}
+
 /* Should a resimulated frame's render pass skip submitting display lists (shim_gx.c)?
  * MELEE_SNAP_RESIM_DRAWS=1 keeps them, to tell a draw-owned difference apart. */
 int gw_Snap_SuppressDraws(void) {

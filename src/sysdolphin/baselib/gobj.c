@@ -195,9 +195,12 @@ void HSD_GObj_80390FC0(void)
 #if defined(TARGET_PC)
             {
                 extern void Snap_CbTime(void* cb, int begin);
-                Snap_CbTime((void*) cur->render_cb, 1);
-                cur->render_cb(cur, 0);
-                Snap_CbTime((void*) cur->render_cb, 0);
+                extern int Snap_SkipRenderCb(void* cb);
+                if (!Snap_SkipRenderCb((void*) cur->render_cb)) {
+                    Snap_CbTime((void*) cur->render_cb, 1);
+                    cur->render_cb(cur, 0);
+                    Snap_CbTime((void*) cur->render_cb, 0);
+                }
             }
 #else
             cur->render_cb(cur, 0);

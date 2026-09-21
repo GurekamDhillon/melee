@@ -410,6 +410,11 @@ void gm_801A4510(void)
         }
 #endif
         gamestate->routing.prev_mode = gamestate->routing.curr_mode;
+#if defined(TARGET_PC)
+        if (gamestate->routing.curr_mode == GM_FRONTEND) {
+            gamestate->routing.prev_mode = gmFrontend_ReportedMode();
+        }
+#endif
         gamestate->routing.curr_mode = next_mode;
     }
 }

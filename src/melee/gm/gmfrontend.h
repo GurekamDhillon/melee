@@ -22,6 +22,11 @@ void gm_Scene_Frontend_OnExit(void* exit_data);
  * frontend screen is placed between `from` and `to`. */
 u8 gmFrontend_Route(u8 from, u8 to);
 
+/* The mode a screen stands in for (the one it continues to). The loop records this as the
+ * previous mode instead of GM_FRONTEND, so a native screen that positions itself by where the
+ * player came from - the main menu's cursor - acts as if the player had backed out of it. */
+u8 gmFrontend_ReportedMode(void);
+
 #endif
 
 #endif

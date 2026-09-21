@@ -373,3 +373,37 @@ int gw_Replay_RawStick(int port, int which) {
     const GwRpInput *r = rp_cur(port, 0);
     return r != NULL && which >= 0 && which < 4 ? r->raw[which] : 0;
 }
+
+/* Which UCF the recording console ran for this port: 0 off, 73, or 84 (Slippi's per-port Game
+ * Start dashback toggle, 1 = UCF). Slippi's console codes shipped UCF 0.73 "Check for Toggle" from
+ * Jan 2019 until 0.74 in Sep 2019 (slippi-ssbm-asm acc6f71, b89e160), 0.8 from Mar 2021 (bb86519)
+ * and 0.84 with 3.x - so 1.x replays are 0.73. 2.x (0.74/0.8) is approximated as 0.73. */
+int gw_Replay_UcfVersion(int port) {
+    if (!rp.active || port < 0 || port > 3 || rp.ucf_dashback[port] != 1) {
+        return 0;
+    }
+    if (rp.version[0] >= 3) {
+        return 84;
+    }
+    {   /* MELEE_SLP_NO_UCF073=1: leave 0.73 out, for before/after measurements */
+        static int off = -1;
+        if (off < 0) {
+            const char *v = getenv("MELEE_SLP_NO_UCF073");
+            off = v != NULL && v[0] == '1';
+        }
+        return off ? 0 : 73;
+    }
+}
+
+/* The port's raw stick byte `back` frames before the one running (0 = this frame), as the pad
+ * queue held it - UCF's dashback compares this frame's raw X with the one two frames earlier. */
+int gw_Replay_RawStickBack(int port, int which, int back) {
+    const GwRpInput *r;
+    int f = rp.frame - back;
+    if (!rp.active || f < rp.first || f > rp.last || port < 0 || port > 3 || which < 0 ||
+        which > 3) {
+        return 0;
+    }
+    r = &rp.in[(f - rp.first) * GW_RP_SLOTS + port * 2];
+    return r->present ? r->raw[which] : 0;
+}

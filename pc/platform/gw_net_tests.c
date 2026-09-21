@@ -3,7 +3,7 @@
  * Two REAL gw_net instances talk over a simulated network in deterministic virtual time: loss,
  * duplication, jitter (hence reordering) and per-peer clock offsets - one of which wraps the
  * uint32 millisecond clock mid-run. One test also runs over real UDP on 127.0.0.1. Nothing here
- * touches game memory.
+ * touches game memory. Frames are the session's signed numbers, starting at FIRST (-123).
  */
 #include "gw_net.h"
 #include "gw_test.h"
@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+
+#define FIRST (-123)
 
 /* ---- simulated network ---------------------------------------------------------------------- */
 
@@ -110,68 +112,74 @@ static gw_net_transport sim_transport(simnet *s, int id) {
 
 /* ---- a test peer: a stand-in for the rollback session --------------------------------------- */
 
-#define HOST_PORTS 0x05                  /* the host controls ports 0 and 2 */
-#define GUEST_PORTS 0x0A                 /* the guest controls ports 1 and 3 */
+#define HOST_SLOTS 0x13                  /* slots 0, 1 (port 0 and its follower) and 4 (port 2) */
+#define GUEST_SLOTS 0x44                 /* slots 2 and 6 (ports 1 and 3) */
+
+static int g_pb = GW_NET_DEFAULT_PAYLOAD;   /* payload bytes for the test being run */
 
 typedef struct peer {
   simnet *sim;
-  int id, sender_id;                     /* sender_id: whose pads we expect to receive */
+  int id, sender_id;                     /* sender_id: whose payloads we expect to receive */
   uint32_t offset;                       /* this peer's clock = sim.now + offset */
   gw_net *net;
   int events[32], nev;
   char reasons[32][100];
   /* the "session" */
-  uint32_t frame, limit;
+  int32_t frame, limit;                  /* next frame to produce; stop before `limit` */
   float speed, acc;
   int stall, use_sync, stalls_taken;
-  uint32_t diverge_at;                   /* report a wrong checksum from this frame on */
-  int report_checksums;
+  int32_t diverge_at;                    /* report a wrong checksum from this frame on */
+  int report_checksums, pull;            /* pull: the callbacks supply inputs/checksums */
   /* delivery check */
-  int rports[GW_NET_MAX_PORTS], nrports;
-  uint32_t exp_frame, delivered;
+  int rslots[GW_NET_MAX_SLOTS], nrslots;
+  int32_t exp_frame;
+  uint32_t delivered;
   int exp_idx, bad;
   char bad_msg[100];
   int desync_calls;
-  uint32_t desync_frame;
+  int32_t desync_frame;
 } peer;
 
-static gw_net_pad mk_pad(uint32_t frame, int port, int who) {
-  uint32_t h = frame * 2654435761u ^ ((uint32_t)port * 40503u) ^ ((uint32_t)(who + 1) * 0x9E3779B1u);
-  gw_net_pad p;
-  h ^= h >> 15; h *= 2246822519u; h ^= h >> 13;
-  p.buttons = (uint16_t)h;
-  p.stick_x = (int8_t)(h >> 3); p.stick_y = (int8_t)(h >> 7);
-  p.cstick_x = (int8_t)(h >> 11); p.cstick_y = (int8_t)(h >> 15);
-  p.trig_l = (uint8_t)(h >> 19); p.trig_r = (uint8_t)(h >> 23);
-  p.err = (int8_t)((int)((h >> 27) % 3) - 1);
-  return p;
+static void mk_payload(int32_t frame, int slot, int who, uint8_t *out) {
+  uint32_t h = (uint32_t)frame * 2654435761u ^ ((uint32_t)slot * 40503u) ^ ((uint32_t)(who + 1) * 0x9E3779B1u);
+  int i;
+  for (i = 0; i < g_pb; ++i) { h ^= h >> 15; h *= 2246822519u; h ^= h >> 13; out[i] = (uint8_t)(h >> (i & 7)); }
 }
-static int pad_eq(const gw_net_pad *a, const gw_net_pad *b) {
-  return a->buttons == b->buttons && a->stick_x == b->stick_x && a->stick_y == b->stick_y &&
-         a->cstick_x == b->cstick_x && a->cstick_y == b->cstick_y && a->trig_l == b->trig_l &&
-         a->trig_r == b->trig_r && a->err == b->err;
-}
-static uint32_t chk_of(uint32_t f) { return f * 2654435761u ^ 0x5BD1E995u; }
+static uint32_t chk_of(int32_t f) { return (uint32_t)f * 2654435761u ^ 0x5BD1E995u; }
 
 static uint32_t peer_now(void *user) { peer *p = (peer *)user; return p->sim->now + p->offset; }
 
-static void peer_remote_input(void *user, uint32_t frame, int port, const gw_net_pad *pad) {
+static void peer_remote_input(void *user, int32_t frame, int slot, const uint8_t *payload) {
   peer *p = (peer *)user;
-  gw_net_pad want;
+  uint8_t want[GW_NET_MAX_PAYLOAD];
   if (p->bad) return;
-  if (frame != p->exp_frame || port != p->rports[p->exp_idx]) {
-    snprintf(p->bad_msg, sizeof p->bad_msg, "delivered frame %u port %d, expected frame %u port %d",
-             frame, port, p->exp_frame, p->rports[p->exp_idx]);
+  if (frame != p->exp_frame || slot != p->rslots[p->exp_idx]) {
+    snprintf(p->bad_msg, sizeof p->bad_msg, "delivered frame %d slot %d, expected frame %d slot %d",
+             (int)frame, slot, (int)p->exp_frame, p->rslots[p->exp_idx]);
     p->bad = 1;
     return;
   }
-  want = mk_pad(frame, port, p->sender_id);
-  if (!pad_eq(pad, &want)) {
-    snprintf(p->bad_msg, sizeof p->bad_msg, "frame %u port %d: wrong pad contents", frame, port);
+  mk_payload(frame, slot, p->sender_id, want);
+  if (memcmp(payload, want, (size_t)g_pb) != 0) {
+    snprintf(p->bad_msg, sizeof p->bad_msg, "frame %d slot %d: wrong payload contents", (int)frame, slot);
     p->bad = 1;
     return;
   }
-  if (++p->exp_idx == p->nrports) { p->exp_idx = 0; p->exp_frame++; p->delivered++; }
+  if (++p->exp_idx == p->nrslots) { p->exp_idx = 0; p->exp_frame++; p->delivered++; }
+}
+
+static int peer_local_input(void *user, int32_t frame, int slot, uint8_t *out) {
+  peer *p = (peer *)user;
+  if (frame >= p->frame) return 0;       /* the session has not produced that frame yet */
+  mk_payload(frame, slot, p->id, out);
+  return 1;
+}
+
+static int peer_checksum(void *user, int32_t frame, uint32_t *out) {
+  peer *p = (peer *)user;
+  if (frame >= p->frame) return 0;
+  *out = chk_of(frame) ^ (frame >= p->diverge_at ? 0xDEADBEEFu : 0);
+  return 1;
 }
 
 static void peer_event(void *user, int ev, const char *msg) {
@@ -193,7 +201,7 @@ static const char *event_msg(const peer *p, int ev) {
   return "";
 }
 
-static void peer_desync(void *user, uint32_t frame, uint32_t local, uint32_t remote) {
+static void peer_desync(void *user, int32_t frame, uint32_t local, uint32_t remote) {
   peer *p = (peer *)user;
   (void)local; (void)remote;
   p->desync_calls++;
@@ -204,10 +212,11 @@ static void peer_init(peer *p, simnet *s, int id, uint32_t offset) {
   int i;
   memset(p, 0, sizeof *p);
   p->sim = s; p->id = id; p->sender_id = id == 0 ? 1 : 0; p->offset = offset;
-  p->speed = 1.0f; p->limit = 0xFFFFFFFFu; p->diverge_at = 0xFFFFFFFFu; p->report_checksums = 1;
+  p->speed = 1.0f; p->frame = FIRST; p->exp_frame = FIRST;
+  p->limit = 0x7FFFFFFF; p->diverge_at = 0x7FFFFFFF; p->report_checksums = 1;
   {
-    uint8_t rmask = (id == 0) ? GUEST_PORTS : HOST_PORTS;
-    for (i = 0; i < GW_NET_MAX_PORTS; ++i) if (rmask & (1u << i)) p->rports[p->nrports++] = i;
+    uint8_t rmask = (id == 0) ? GUEST_SLOTS : HOST_SLOTS;
+    for (i = 0; i < GW_NET_MAX_SLOTS; ++i) if (rmask & (1u << i)) p->rslots[p->nrslots++] = i;
   }
 }
 
@@ -217,7 +226,8 @@ static gw_net_config peer_cfg(peer *p, uint64_t exe, uint64_t iso, uint64_t mods
   gw_net_config c;
   memset(&c, 0, sizeof c);
   c.exe_hash = exe; c.iso_hash = iso; c.mods_hash = mods;
-  c.seed = 0xC0FFEE11u; c.input_delay = 2; c.host_ports = HOST_PORTS; c.guest_ports = GUEST_PORTS;
+  c.first_frame = FIRST; c.payload_bytes = (uint8_t)g_pb;
+  c.seed = 0xC0FFEE11u; c.input_delay = 2; c.host_slots = HOST_SLOTS; c.guest_slots = GUEST_SLOTS;
   c.match_blob = g_blob; c.match_blob_len = sizeof g_blob;
   c.cb.user = p;
   c.cb.remote_input = peer_remote_input;
@@ -232,15 +242,20 @@ static void init_blob(void) {
   for (i = 0; i < (int)sizeof g_blob; ++i) g_blob[i] = (uint8_t)(i * 7 + 3);
 }
 
-static void make_pair(simnet *s, peer *host, peer *guest, uint32_t guest_offset) {
+static void make_pair(simnet *s, peer *host, peer *guest, uint32_t guest_offset, int pull) {
   gw_net_config hc, gc;
   gw_net_transport ht = sim_transport(s, 0), gt = sim_transport(s, 1);
   gw_net_addr haddr = sim_addr(0);
   init_blob();
   peer_init(host, s, 0, 0);
   peer_init(guest, s, 1, guest_offset);
+  host->pull = guest->pull = pull;
   hc = peer_cfg(host, 0x1111, 0x2222, 0x3333);
   gc = peer_cfg(guest, 0x1111, 0x2222, 0x3333);
+  if (pull) {
+    hc.cb.local_input = gc.cb.local_input = peer_local_input;
+    hc.cb.checksum = gc.cb.checksum = peer_checksum;
+  }
   host->net = gw_net_host(&hc, &ht);
   guest->net = gw_net_join(&gc, &gt, &haddr);
 }
@@ -256,17 +271,19 @@ static void session_tick(peer *p) {
   }
   p->acc += p->speed;
   while (p->acc >= 1.0f) {
-    gw_net_pad pads[GW_NET_MAX_PORTS];
-    int port;
     p->acc -= 1.0f;
     if (p->frame >= p->limit || gw_net_unacked(p->net) >= 60) break;
-    memset(pads, 0, sizeof pads);
-    for (port = 0; port < GW_NET_MAX_PORTS; ++port)
-      if (gw_net_local_ports(p->net) & (1u << port)) pads[port] = mk_pad(p->frame, port, p->id);
-    if (gw_net_submit_local(p->net, p->frame, pads) != 0) break;
-    if (p->report_checksums)
-      gw_net_report_checksum(p->net, p->frame, chk_of(p->frame) ^ (p->frame >= p->diverge_at ? 0xDEADBEEFu : 0));
-    p->frame++;
+    if (!p->pull) {
+      gw_net_input in[GW_NET_MAX_SLOTS];
+      int slot;
+      memset(in, 0, sizeof in);
+      for (slot = 0; slot < GW_NET_MAX_SLOTS; ++slot)
+        if (gw_net_local_slots(p->net) & (1u << slot)) mk_payload(p->frame, slot, p->id, in[slot].b);
+      if (gw_net_submit_local(p->net, p->frame, in) != 0) break;
+      if (p->report_checksums)
+        gw_net_report_checksum(p->net, p->frame, chk_of(p->frame) ^ (p->frame >= p->diverge_at ? 0xDEADBEEFu : 0));
+    }
+    p->frame++;                          /* in pull mode this is what makes the frame available */
   }
 }
 
@@ -300,8 +317,9 @@ static int test_handshake(void) {
   gw_net_config rc;
   uint8_t blob[GW_NET_MAX_BLOB];
   int i, rv = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   sim_init(s, 1);
-  make_pair(s, &h, &g, 0xFFFFF000u);      /* the guest's clock wraps 4 s in */
+  make_pair(s, &h, &g, 0xFFFFF000u, 0);   /* the guest's clock wraps 4 s in */
   for (i = 0; i < 400 && !(gw_net_started(h.net) && gw_net_started(g.net)); ++i) pair_tick(s, &h, &g);
   if (!gw_net_started(h.net) || !gw_net_started(g.net)) {
     gw_test_fail("handshake did not complete (host state %d, guest state %d)", gw_net_state(h.net), gw_net_state(g.net));
@@ -311,14 +329,15 @@ static int test_handshake(void) {
              !has_event(&g, GW_NET_EV_STARTED)) {
     gw_test_fail("missing lifecycle event"); rv = 1;
   } else if (!gw_net_remote_config(g.net, &rc, blob, sizeof blob) || rc.seed != 0xC0FFEE11u ||
-             rc.input_delay != 2 || rc.host_ports != HOST_PORTS || rc.guest_ports != GUEST_PORTS ||
+             rc.input_delay != 2 || rc.host_slots != HOST_SLOTS || rc.guest_slots != GUEST_SLOTS ||
+             rc.first_frame != FIRST || rc.payload_bytes != g_pb ||
              rc.match_blob_len != sizeof g_blob || memcmp(blob, g_blob, sizeof g_blob) != 0) {
     gw_test_fail("guest did not receive the host's match config intact"); rv = 1;
-  } else if (gw_net_local_ports(g.net) != GUEST_PORTS || gw_net_remote_ports(g.net) != HOST_PORTS) {
-    gw_test_fail("port masks"); rv = 1;
+  } else if (gw_net_local_slots(g.net) != GUEST_SLOTS || gw_net_remote_slots(g.net) != HOST_SLOTS) {
+    gw_test_fail("slot masks"); rv = 1;
   } else {
-    /* both peers agree on when frame 0 began, in real time (the guest's clock is offset) */
-    int32_t hs = (int32_t)(gw_net_start_time_ms(h.net) - 0);
+    /* both peers agree on when frame FIRST began, in real time (the guest's clock is offset) */
+    int32_t hs = (int32_t)gw_net_start_time_ms(h.net);
     int32_t gs = (int32_t)(gw_net_start_time_ms(g.net) - g.offset);
     int32_t d = hs > gs ? hs - gs : gs - hs;
     if (d > 6) { gw_test_fail("start times differ by %d ms", (int)d); rv = 1; }
@@ -330,6 +349,7 @@ static int test_handshake(void) {
   return rv;
 }
 
+/* which: 0 exe, 1 iso, 2 mods, 3 input size */
 static int refuse_case(int which, const char *needle) {
   simnet *s = (simnet *)malloc(sizeof *s);
   peer h, g, g2;
@@ -337,11 +357,13 @@ static int refuse_case(int which, const char *needle) {
   gw_net_transport ht, gt, g2t;
   gw_net_addr haddr = sim_addr(0);
   int i, rv = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   sim_init(s, 7);
   init_blob();
   peer_init(&h, s, 0, 0); peer_init(&g, s, 1, 0); peer_init(&g2, s, 1, 0);
   hc = peer_cfg(&h, 0x1111, 0x2222, 0x3333);
   gc = peer_cfg(&g, which == 0 ? 0x9999 : 0x1111, which == 1 ? 0x9999 : 0x2222, which == 2 ? 0x9999 : 0x3333);
+  if (which == 3) gc.payload_bytes = 12;
   ht = sim_transport(s, 0); gt = sim_transport(s, 1); g2t = sim_transport(s, 2);
   h.net = gw_net_host(&hc, &ht);
   g.net = gw_net_join(&gc, &gt, &haddr);
@@ -390,35 +412,37 @@ static int refuse_case(int which, const char *needle) {
   free(s);
   return rv;
 }
-static int test_refuse_exe(void) { return refuse_case(0, "melee-pc.exe"); }
-static int test_refuse_iso(void) { return refuse_case(1, "disc"); }
+static int test_refuse_exe(void)  { return refuse_case(0, "melee-pc.exe"); }
+static int test_refuse_iso(void)  { return refuse_case(1, "disc"); }
 static int test_refuse_mods(void) { return refuse_case(2, "mod pack"); }
+static int test_refuse_settings(void) { return refuse_case(3, "netplay settings"); }
 
 /* N frames each way, exactly once and in order, over a hostile network. */
-static int inputs_case(int loss, uint32_t jitter, int dup, uint32_t frames, uint64_t seed) {
+static int inputs_case(int loss, uint32_t jitter, int dup, int32_t frames, uint64_t seed, int pb, int pull) {
   simnet *s = (simnet *)malloc(sizeof *s);
   peer h, g;
   uint32_t t, ticks = 0;
   int rv = 0;
   gw_net_stats hs;
+  g_pb = pb;
   sim_init(s, seed);
-  make_pair(s, &h, &g, 0xFFFFF000u);
+  make_pair(s, &h, &g, 0xFFFFF000u, pull);
   s->loss_pct = loss; s->jitter_ms = jitter; s->dup_pct = dup;
-  h.limit = g.limit = frames;
+  h.limit = g.limit = FIRST + frames;
   h.report_checksums = g.report_checksums = 0;
-  for (t = 0; t < frames + 4000; ++t) {
+  for (t = 0; t < (uint32_t)frames + 4000u; ++t) {
     pair_tick(s, &h, &g);
     ticks++;
-    if (h.delivered >= frames && g.delivered >= frames) break;
+    if (h.delivered >= (uint32_t)frames && g.delivered >= (uint32_t)frames) break;
   }
   if (h.bad || g.bad) {
     gw_test_fail("%s", h.bad ? h.bad_msg : g.bad_msg); rv = 1;
-  } else if (h.delivered != frames || g.delivered != frames) {
-    gw_test_fail("loss %d%% jitter %ums: delivered host %u / guest %u of %u frames after %u ticks",
-                 loss, jitter, h.delivered, g.delivered, frames, ticks);
+  } else if (h.delivered != (uint32_t)frames || g.delivered != (uint32_t)frames) {
+    gw_test_fail("loss %d%% jitter %ums payload %d: delivered host %u / guest %u of %d frames after %u ticks",
+                 loss, jitter, pb, h.delivered, g.delivered, (int)frames, ticks);
     rv = 1;
-  } else if (gw_net_remote_confirmed_frame(h.net) != (int32_t)frames - 1) {
-    gw_test_fail("remote_confirmed_frame %d, expected %d", (int)gw_net_remote_confirmed_frame(h.net), (int)frames - 1);
+  } else if (gw_net_remote_confirmed_frame(h.net) != FIRST + frames - 1) {
+    gw_test_fail("remote_confirmed_frame %d, expected %d", (int)gw_net_remote_confirmed_frame(h.net), (int)(FIRST + frames - 1));
     rv = 1;
   }
   gw_net_get_stats(h.net, &hs);
@@ -426,11 +450,13 @@ static int inputs_case(int loss, uint32_t jitter, int dup, uint32_t frames, uint
   if (rv == 0 && dup > 0 && hs.duplicates == 0) { gw_test_fail("duplicates were not detected"); rv = 1; }
   free_pair(&h, &g);
   free(s);
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   return rv;
 }
-static int test_inputs_clean(void)   { return inputs_case(0, 0, 0, 10000, 11); }
-static int test_inputs_lossy(void)   { return inputs_case(20, 50, 10, 10000, 22); }
-static int test_inputs_hostile(void) { return inputs_case(50, 150, 10, 10000, 33); }
+static int test_inputs_clean(void)   { return inputs_case(0, 0, 0, 10000, 11, 9, 0); }
+static int test_inputs_lossy(void)   { return inputs_case(20, 50, 10, 10000, 22, 28, 0); }   /* GwRbInput-sized payloads */
+static int test_inputs_hostile(void) { return inputs_case(50, 150, 10, 10000, 33, 9, 0); }
+static int test_inputs_pull(void)    { return inputs_case(10, 30, 5, 3000, 44, 28, 1); }    /* callbacks supply inputs */
 
 /* One peer runs slow. With time sync the fast one waits and the frame gap stays small; without it
  * the gap grows without bound (the control run proves the test measures something). */
@@ -439,8 +465,9 @@ static int sync_case(int use_sync, int32_t *max_gap_tail, int32_t *final_gap, in
   peer h, g;
   uint32_t t;
   int32_t worst = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   sim_init(s, 5);
-  make_pair(s, &h, &g, 0x00001000u);
+  make_pair(s, &h, &g, 0x00001000u, 0);
   s->base_ms = 50; s->jitter_ms = 10; s->loss_pct = 5;
   g.speed = 0.85f;
   h.use_sync = g.use_sync = use_sync;
@@ -448,13 +475,13 @@ static int sync_case(int use_sync, int32_t *max_gap_tail, int32_t *final_gap, in
   for (t = 0; t < 3600; ++t) {
     pair_tick(s, &h, &g);
     if (t >= 2400) {
-      int32_t d = (int32_t)h.frame - (int32_t)g.frame;
+      int32_t d = h.frame - g.frame;
       if (d < 0) d = -d;
       if (d > worst) worst = d;
     }
   }
   *max_gap_tail = worst;
-  *final_gap = (int32_t)h.frame - (int32_t)g.frame;
+  *final_gap = h.frame - g.frame;
   *stalls = h.stalls_taken + g.stalls_taken;
   free_pair(&h, &g);
   free(s);
@@ -476,8 +503,9 @@ static int test_interrupt_resume(void) {
   peer h, g;
   uint32_t t;
   int rv = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   sim_init(s, 9);
-  make_pair(s, &h, &g, 0);
+  make_pair(s, &h, &g, 0, 0);
   for (t = 0; t < 1500; ++t) {
     if (t == 300) s->blackhole = 1;
     if (t == 300 + 90) s->blackhole = 0;   /* 1.5 s of silence: interrupted, not disconnected */
@@ -504,8 +532,9 @@ static int test_peer_timeout(void) {
   peer h, g;
   uint32_t t, dead_at = 0;
   int rv = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   sim_init(s, 4);
-  make_pair(s, &h, &g, 0);
+  make_pair(s, &h, &g, 0, 0);
   for (t = 0; t < 900; ++t) {
     if (t == 200) s->blackhole = 1;
     pair_tick(s, &h, &g);
@@ -523,44 +552,48 @@ static int test_peer_timeout(void) {
   return rv;
 }
 
-static int test_desync(void) {
+static int desync_case(int pull) {
   simnet *s = (simnet *)malloc(sizeof *s);
   peer h, g;
   uint32_t t;
   int rv = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   sim_init(s, 3);
-  make_pair(s, &h, &g, 0);
+  make_pair(s, &h, &g, 0, pull);
   s->loss_pct = 20; s->jitter_ms = 40;
-  g.diverge_at = 700;                     /* the guest's simulation goes wrong at frame 700 */
+  g.diverge_at = FIRST + 700;             /* the guest's simulation goes wrong at this frame */
   for (t = 0; t < 1400; ++t) pair_tick(s, &h, &g);
   if (h.desync_calls != 1 || g.desync_calls != 1) {
     gw_test_fail("desync callback fired %d / %d times, expected once each", h.desync_calls, g.desync_calls); rv = 1;
-  } else if (h.desync_frame != 700 || g.desync_frame != 700 || gw_net_desync_frame(h.net) != 700) {
-    gw_test_fail("desync reported at frame %u / %u, expected 700", h.desync_frame, g.desync_frame); rv = 1;
+  } else if (h.desync_frame != FIRST + 700 || g.desync_frame != FIRST + 700 || gw_net_desync_frame(h.net) != FIRST + 700) {
+    gw_test_fail("desync reported at frame %d / %d, expected %d", (int)h.desync_frame, (int)g.desync_frame, FIRST + 700); rv = 1;
   }
   free_pair(&h, &g);
   free(s);
   /* and no false alarm when both agree */
   s = (simnet *)malloc(sizeof *s);
   sim_init(s, 3);
-  make_pair(s, &h, &g, 0);
+  make_pair(s, &h, &g, 0, pull);
   s->loss_pct = 30; s->jitter_ms = 60;
   for (t = 0; t < 1500; ++t) pair_tick(s, &h, &g);
-  if (h.desync_calls != 0 || g.desync_calls != 0 || gw_net_desync_frame(h.net) != -1) {
+  if (h.desync_calls != 0 || g.desync_calls != 0 || gw_net_desync_frame(h.net) != GW_NET_NO_FRAME) {
     gw_test_fail("false desync alarm with identical checksums"); rv = 1;
   }
   free_pair(&h, &g);
   free(s);
   return rv;
 }
+static int test_desync(void)      { return desync_case(0); }
+static int test_desync_pull(void) { return desync_case(1); }   /* checksums fetched through the callback */
 
 static int test_quit(void) {
   simnet *s = (simnet *)malloc(sizeof *s);
   peer h, g;
   uint32_t t;
   int rv = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   sim_init(s, 6);
-  make_pair(s, &h, &g, 0);
+  make_pair(s, &h, &g, 0, 0);
   for (t = 0; t < 200; ++t) pair_tick(s, &h, &g);
   gw_net_free(g.net);                     /* the guest leaves */
   g.net = NULL;
@@ -576,28 +609,32 @@ static int test_quit(void) {
 static int test_api_misc(void) {
   simnet *s = (simnet *)malloc(sizeof *s);
   peer h, g;
-  gw_net_pad pads[GW_NET_MAX_PORTS];
+  gw_net_input in[GW_NET_MAX_SLOTS];
   gw_net_config bad;
   gw_net_transport t = sim_transport(s, 0);
   int i, rv = 0;
-  memset(pads, 0, sizeof pads);
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
+  memset(in, 0, sizeof in);
   sim_init(s, 2);
-  make_pair(s, &h, &g, 0);
+  make_pair(s, &h, &g, 0, 0);
   for (i = 0; i < 400 && !gw_net_started(h.net); ++i) pair_tick(s, &h, &g);
-  h.limit = 0;                            /* the test session stops submitting; the API is driven by hand */
-  if (gw_net_submit_local(h.net, h.frame + 5, pads) >= 0) { gw_test_fail("out-of-sequence submit accepted"); rv = 1; }
-  if (gw_net_submit_local(h.net, h.frame, pads) != 0) { gw_test_fail("in-sequence submit rejected"); rv = 1; }
+  h.limit = h.frame;                      /* the test session stops submitting; the API is driven by hand */
+  if (gw_net_submit_local(h.net, h.frame + 5, in) >= 0) { gw_test_fail("out-of-sequence submit accepted"); rv = 1; }
+  if (gw_net_submit_local(h.net, h.frame - 1, in) >= 0) { gw_test_fail("already-submitted frame accepted"); rv = 1; }
+  if (gw_net_submit_local(h.net, h.frame, in) != 0) { gw_test_fail("in-sequence submit rejected"); rv = 1; }
   h.frame++;
   /* fill the send window with the peer silent: submit must eventually refuse */
   s->blackhole = 1;
-  for (i = 0; i < 400; ++i) if (gw_net_submit_local(h.net, h.frame++, pads) < 0) break;
+  for (i = 0; i < 400; ++i) if (gw_net_submit_local(h.net, h.frame++, in) < 0) break;
   if (i >= 400) { gw_test_fail("send window never filled"); rv = 1; }
   /* invalid configs are refused up front */
   memset(&bad, 0, sizeof bad);
-  bad.host_ports = 0x03; bad.guest_ports = 0x02;              /* overlap */
-  if (gw_net_host(&bad, &t) != NULL) { gw_test_fail("overlapping port masks accepted"); rv = 1; }
-  bad.host_ports = 0x01; bad.guest_ports = 0x00;              /* the guest controls nothing */
-  if (gw_net_host(&bad, &t) != NULL) { gw_test_fail("empty guest ports accepted"); rv = 1; }
+  bad.host_slots = 0x03; bad.guest_slots = 0x02;              /* overlap */
+  if (gw_net_host(&bad, &t) != NULL) { gw_test_fail("overlapping slot masks accepted"); rv = 1; }
+  bad.host_slots = 0x01; bad.guest_slots = 0x00;              /* the guest controls nothing */
+  if (gw_net_host(&bad, &t) != NULL) { gw_test_fail("empty guest slots accepted"); rv = 1; }
+  bad.host_slots = 0x01; bad.guest_slots = 0x02; bad.payload_bytes = GW_NET_MAX_PAYLOAD + 1;
+  if (gw_net_host(&bad, &t) != NULL) { gw_test_fail("oversized payload accepted"); rv = 1; }
   free_pair(&h, &g);
   free(s);
   return rv;
@@ -610,8 +647,10 @@ static int test_udp_loopback(void) {
   peer h, g;
   gw_net_addr haddr;
   simnet *dummy = (simnet *)calloc(1, sizeof *dummy);   /* peers want a simnet pointer; ~5 MB, so not on the stack */
-  uint32_t deadline, frame_h = 0, frame_g = 0;
+  uint32_t deadline;
+  int32_t frame_h = FIRST, frame_g = FIRST;
   int rv = 0;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
   if (gw_net_udp_open(0x7F000001u, 0, &ht) != 0 || gw_net_udp_open(0x7F000001u, 0, &gt) != 0) {
     gw_test_fail("could not open UDP sockets on 127.0.0.1"); free(dummy); return 1;
   }
@@ -625,19 +664,19 @@ static int test_udp_loopback(void) {
   g.net = gw_net_join(&gc, &gt, &haddr);
   deadline = GetTickCount() + 8000;
   while ((int32_t)(deadline - GetTickCount()) > 0) {
-    gw_net_pad pads[GW_NET_MAX_PORTS];
-    int port;
+    gw_net_input in[GW_NET_MAX_SLOTS];
+    int slot;
     gw_net_poll(h.net, frame_h);
     gw_net_poll(g.net, frame_g);
-    if (gw_net_started(h.net) && gw_net_unacked(h.net) < 30 && frame_h < 200) {
-      memset(pads, 0, sizeof pads);
-      for (port = 0; port < 4; ++port) if (HOST_PORTS & (1u << port)) pads[port] = mk_pad(frame_h, port, 0);
-      gw_net_submit_local(h.net, frame_h++, pads);
+    if (gw_net_started(h.net) && gw_net_unacked(h.net) < 30 && frame_h < FIRST + 200) {
+      memset(in, 0, sizeof in);
+      for (slot = 0; slot < GW_NET_MAX_SLOTS; ++slot) if (HOST_SLOTS & (1u << slot)) mk_payload(frame_h, slot, 0, in[slot].b);
+      gw_net_submit_local(h.net, frame_h++, in);
     }
-    if (gw_net_started(g.net) && gw_net_unacked(g.net) < 30 && frame_g < 200) {
-      memset(pads, 0, sizeof pads);
-      for (port = 0; port < 4; ++port) if (GUEST_PORTS & (1u << port)) pads[port] = mk_pad(frame_g, port, 1);
-      gw_net_submit_local(g.net, frame_g++, pads);
+    if (gw_net_started(g.net) && gw_net_unacked(g.net) < 30 && frame_g < FIRST + 200) {
+      memset(in, 0, sizeof in);
+      for (slot = 0; slot < GW_NET_MAX_SLOTS; ++slot) if (GUEST_SLOTS & (1u << slot)) mk_payload(frame_g, slot, 1, in[slot].b);
+      gw_net_submit_local(g.net, frame_g++, in);
     }
     if (h.delivered >= 200 && g.delivered >= 200) break;
     Sleep(1);
@@ -660,13 +699,16 @@ void gw_net_tests_register(void) {
   gw_test_register("net_refuse_exe", test_refuse_exe);
   gw_test_register("net_refuse_iso", test_refuse_iso);
   gw_test_register("net_refuse_mods", test_refuse_mods);
+  gw_test_register("net_refuse_settings", test_refuse_settings);
   gw_test_register("net_inputs_clean", test_inputs_clean);
   gw_test_register("net_inputs_lossy", test_inputs_lossy);
   gw_test_register("net_inputs_hostile", test_inputs_hostile);
+  gw_test_register("net_inputs_pull", test_inputs_pull);
   gw_test_register("net_frame_sync", test_frame_sync);
   gw_test_register("net_interrupt_resume", test_interrupt_resume);
   gw_test_register("net_peer_timeout", test_peer_timeout);
   gw_test_register("net_desync", test_desync);
+  gw_test_register("net_desync_pull", test_desync_pull);
   gw_test_register("net_quit", test_quit);
   gw_test_register("net_api_misc", test_api_misc);
   gw_test_register("net_udp_loopback", test_udp_loopback);

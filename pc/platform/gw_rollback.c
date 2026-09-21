@@ -34,6 +34,7 @@ extern int gw_Snap_OpenSession(int k);
 extern void gw_Snap_SessionResim(int on, int frame);
 extern int gw_Snap_HasFrame(int frame);
 extern uint32_t gw_Snap_Checksum(int frame);
+extern int gw_Snap_SfxFrameEnd(int frame);
 extern void gw_Replay_TraceBeginIter(int iter);
 extern void gw_Replay_TraceFlushUpTo(int iter);
 
@@ -108,6 +109,8 @@ static struct {
     double d_save[16], d_load[16], d_resim[16], d_new[16];
     double iter_t0;
     int iter_kind;                    /* 0 none, 1 new, 2 resim */
+    int iter_frame;                   /* the frame the iteration in progress simulates */
+    int n_sfx_killed;                 /* abandoned-timeline sounds released */
     double cur_extra_ms;              /* load + resimulated iterations of the current rollback */
     int cur_depth;
 } rb;
@@ -760,10 +763,10 @@ int gw_RB_Iterations(int count) {
     }
     if ((rb.n_ticks % 300) == 0) {
         gw_log("rb: tick %d frame %d confirmed %d | rollbacks %d (avg depth %.2f, max %d), resim "
-               "frames %d, stalls %d, desyncs %d | ms: save %.2f/load %.2f per op, resim %.2f/iter, "
-               "new %.2f/iter", rb.n_ticks, frame, conf, rb.n_rollbacks,
+               "frames %d, stalls %d, desyncs %d, abandoned sounds released %d | ms: save %.2f/load %.2f per op, "
+               "resim %.2f/iter, new %.2f/iter", rb.n_ticks, frame, conf, rb.n_rollbacks,
                rb.n_rollbacks ? (double) rb.depth_sum / rb.n_rollbacks : 0.0, rb.depth_max,
-               rb.n_resim, rb.n_stall_ticks, rb.n_desync,
+               rb.n_resim, rb.n_stall_ticks, rb.n_desync, rb.n_sfx_killed,
                rb.ms_save / (rb.n_new ? rb.n_new : 1), rb.n_rollbacks ? rb.ms_load / rb.n_rollbacks : 0.0,
                rb.n_resim ? rb.ms_resim / rb.n_resim : 0.0, rb.n_new ? rb.ms_new / rb.n_new : 0.0);
     }
@@ -780,6 +783,9 @@ void gw_RB_TickEnd(void) {
     d = rb_ms() - rb.tick_t0;
     rb.tick_t0 = 0;
     k = rb.tick_depth;
+    if (rb.iter_kind == 2) {
+        rb.n_sfx_killed += gw_Snap_SfxFrameEnd(rb.iter_frame);
+    }
     if (rb.iter_kind != 0) { /* the tick's last iteration ends here, render included */
         double di = rb_ms() - rb.iter_t0;
         if (rb.iter_kind == 2) {
@@ -854,6 +860,9 @@ void gw_RB_IterStart(void) {
         return;
     }
     now = rb_ms();
+    if (rb.iter_kind == 2) {
+        rb.n_sfx_killed += gw_Snap_SfxFrameEnd(rb.iter_frame);
+    }
     if (rb.iter_kind != 0) {
         double d = now - rb.iter_t0;
         if (rb.iter_kind == 2) {
@@ -890,6 +899,7 @@ void gw_RB_IterStart(void) {
     }
     gw_Snap_SessionResim(resim, next);
     rb.iter_kind = resim ? 2 : 1;
+    rb.iter_frame = next;
     rb.iter_t0 = rb_ms();
     rb.plan.i++;
 }

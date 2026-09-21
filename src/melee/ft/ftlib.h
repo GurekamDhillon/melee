@@ -50,6 +50,9 @@
 /* 086A58 */ bool ftLib_80086A58(HSD_GObj*, S32Vec2*);
 /* 086A8C */ bool ftLib_80086A8C(HSD_GObj*);
 /* 086B64 */ bool ftLib_80086B64(HSD_GObj*);
+#if defined(TARGET_PC)
+void ftLib_UpdateLogicOffCamera(HSD_GObj*);
+#endif
 /* 086B74 */ CmSubject* ftLib_80086B74(HSD_GObj*);
 /* 086B80 */ float ftLib_80086B80(HSD_GObj*);
 /* 086B90 */ void ftLib_80086B90(HSD_GObj*, Vec3* v);

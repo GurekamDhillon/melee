@@ -95,9 +95,6 @@
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/mtx.h>
 #include <sysdolphin/baselib/random.h>
-#if defined(TARGET_PC)
-static void ftReplayDbg(const char* where, Fighter* fp);
-#endif
 
 extern MotionState* ftData_CharacterStateTables[Ft_Kind_Max];
 
@@ -1539,9 +1536,6 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
 void Fighter_8006A1BC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("p0", fp);
-#endif
 
     if (!fp->x221F_b3) {
         if (fp->dmg.x1954 > 0.0f) {
@@ -2027,21 +2021,6 @@ static void ftUcf_Cardinal(int x, int y, Vec2* out)
         }
         out->x = 0.0F;
         out->y = y < 0 ? -1.0F : 1.0F;
-    }
-}
-#endif
-
-#if defined(TARGET_PC)
-/* TEMPORARY .slp divergence probe: one line per fighter per proc on the replay frames asked for
- * (MELEE_SLP playback only). */
-static void ftReplayDbg(const char* where, Fighter* fp)
-{
-    extern int Replay_Frame(void);
-    int f = Replay_Frame();
-    if (f >= -11 && f <= -7) {
-        OSReport("procdbg: f%d P%d %-10s motion %d pct %.1f x %.6f kb %.6f hitlag %.1f\n", f,
-                 fp->player_id, where, fp->motion_id, fp->dmg.x1830_percent, fp->cur_pos.x,
-                 fp->x8c_kb_vel.x, fp->dmg.x195c_hitlag_frames);
     }
 }
 #endif
@@ -2536,9 +2515,6 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
 void Fighter_procUpdate(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("p4upd", fp);
-#endif
     Vec3 windOffset;
 
     if (fp->x221F_b3) {
@@ -2862,9 +2838,6 @@ static inline float Fighter_GetPosY(Fighter* fp)
 void Fighter_procMap(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("p6map", fp);
-#endif
 
     if (!fp->x221F_b3) {
         if (fp->ecb_lock) {
@@ -3015,9 +2988,6 @@ void Fighter_UnkProcessGrab_8006CA5C(Fighter_GObj* gobj)
 void Fighter_8006CB94(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("pDhit", fp);
-#endif
     float func_8007BBCC_float_output;
 
     if (!fp->x221F_b3 && !fp->x2219_b1) {
@@ -3203,9 +3173,6 @@ void Fighter_8006D10C(Fighter_GObj* gobj)
 void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-#if defined(TARGET_PC)
-    ftReplayDbg("pEproc", fp);
-#endif
     bool bool1 = 0;
     s32 motion_state_index = fp->motion_id;
     bool bool2 = 0;

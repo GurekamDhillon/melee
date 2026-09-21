@@ -649,9 +649,27 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
 
 /* <trace>.rand.csv: every RNG draw while a replay is armed - frame, caller (native return address),
  * seed after, and whether it drew the global seed or a redirected one (HSD_RandSeedPtr). */
+/* Set by gmscene.c around the render section of the scene loop. */
+static int gw_det_in_render;
+void gw_Det_SetInRender(int on) { gw_det_in_render = on; }
+
 void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
     static FILE *rf;
     static int tried;
+    if (gw_det_in_render && global) {
+        /* render code drawing from the GLOBAL seed: simulation state consumed by rendering, so a
+           frame that renders and one that does not (catch-up, rollback resimulation) diverge.
+           Logged once per caller; resolve the address against melee-pc.map. */
+        static uint32_t seen[64];
+        static int nseen;
+        int k;
+        for (k = 0; k < nseen && seen[k] != caller; ++k) {
+        }
+        if (k == nseen && nseen < 64) {
+            seen[nseen++] = caller;
+            gw_log("det: RNG draw during render from 0x%08X (frame %d)", caller, rp.frame);
+        }
+    }
     if (!rp.active || rp.frame == GW_RP_UNARMED) {
         return;
     }

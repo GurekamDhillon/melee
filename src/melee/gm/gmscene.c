@@ -905,7 +905,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                  * as the real render below, without HSD_VICopyXFBAsync. Its draw commands are
                  * discarded with the frame by aurora, so the picture is unaffected. */
                 extern int Snap_Resimulating(void);
+                extern void SyncTest_PreRender(void);
                 if (Snap_Resimulating()) {
+                    SyncTest_PreRender(); /* open the between-frames window here too */
                     lb_800195D0();
                     GXInvalidateVtxCache();
                     GXInvalidateTexAll();

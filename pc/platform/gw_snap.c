@@ -112,6 +112,7 @@ static int sn_game_object(const char *obj, const char *name) {
         "src_sysdolphin_baselib_audio.c.obj",
         "src_sysdolphin_baselib_video.c.obj",     /* VI / XFB */
         "src_sysdolphin_baselib_perf.c.obj",
+        "src_sysdolphin_baselib_state.c.obj",    /* shadow of the HOST GX state: restoring it desyncs from the GPU */
         "src_sysdolphin_baselib_memory.c.obj",   /* heap-usage diagnostics only (hsd_allocs, caller_hits) */
         "src_sysdolphin_baselib_devcom.c.obj",
         "src_melee_lb_lbcardgame.c.obj",          /* memory card */
@@ -119,12 +120,10 @@ static int sn_game_object(const char *obj, const char *name) {
         "src_melee_lb_lbmthp.c.obj",              /* movies */
         "src_melee_lb_lbsnap.c.obj",
         "libs_dolphin_src_dolphin_thp_THPDec.c.obj",
-        "src_sysdolphin_baselib_rumble.c.obj",
     };
     static const char *const excl_sym[] = {
         "_gw_HSD_PadLibData", /* the raw pad queue: filled by the pad alarm, not by logic */
         "_gmMain_8046B108",   /* its storage */
-        "_gw_HSD_Rumble_804C22E0",
         "_gw_HSD_VIData",     /* VI retrace/XFB bookkeeping: the renderer's, not the game's */
         "_gw_start_time",     /* wall-clock play time (lbtime) - differs between any two passes */
     };
@@ -258,6 +257,15 @@ static int sn_load_map(void) {
             sn.cmp_skip[sn.ncmp_skip].va = s->va;
             sn.cmp_skip[sn.ncmp_skip].len = s->len;
             ++sn.ncmp_skip;
+        } else if (strcmp(s->obj, "src_sysdolphin_baselib_rumble.c.obj") == 0 ||
+                   strcmp(s->name, "_gw_HSD_Rumble_804C22E0") == 0 ||
+                   strcmp(s->name, "_gmMain_8046B1F8") == 0) {
+            /* rumble: advanced by the pad side (per host poll, not per logic frame). It is SAVED and
+               restored - its scripts point into the heap, and leaving it stale crashed the run in
+               HSD_PadRumbleInterpret1 - but a difference in it is not a logic difference. */
+            sn.cmp_skip[sn.ncmp_skip].va = s->va;
+            sn.cmp_skip[sn.ncmp_skip].len = s->len;
+            ++sn.ncmp_skip;
         } else if (strcmp(s->name, "_gm_80479D58") == 0) {
             sn.cmp_skip[sn.ncmp_skip].va = s->va + 4; /* unk_4, the render counter */
             sn.cmp_skip[sn.ncmp_skip].len = 4;
@@ -368,6 +376,56 @@ static void sn_async_collect(void) {
     }
 }
 
+/* FIXED ASYNC RANGES: the DVD command blocks of the streaming reads (music), allocated at boot
+ * from the low arena. shim_dvd completes those reads on its own schedule, so their state advances
+ * with the disc, not with the simulation: they are neither compared nor rolled back. The default
+ * is where the measured mismatches sat (0x801711A8..0x801711C9, the pstream header queue); it is
+ * a boot-time allocation, so it is stable for one build/disc. MELEE_SNAP_ASYNC="hexva+hexlen,..."
+ * overrides it. */
+#define SN_FIXED_ASYNC_MAX 8
+static struct {
+    uint32_t va, len;
+    uint8_t bytes[0x400];
+} sn_fixed[SN_FIXED_ASYNC_MAX];
+static int sn_nfixed;
+
+static void sn_fixed_init(void) {
+    const char *v = getenv("MELEE_SNAP_ASYNC");
+    if (v == NULL) {
+        v = "80171160+70";
+    }
+    while (*v != 0 && sn_nfixed < SN_FIXED_ASYNC_MAX) {
+        char *e;
+        unsigned long va = strtoul(v, &e, 16);
+        unsigned long len;
+        if (*e != '+') {
+            break;
+        }
+        len = strtoul(e + 1, &e, 16);
+        if (len > 0x400) {
+            len = 0x400;
+        }
+        sn_fixed[sn_nfixed].va = (uint32_t) va;
+        sn_fixed[sn_nfixed].len = (uint32_t) len;
+        ++sn_nfixed;
+        v = *e == ',' ? e + 1 : e;
+    }
+}
+
+static void sn_fixed_collect(void) {
+    int i;
+    for (i = 0; i < sn_nfixed; ++i) {
+        memcpy(sn_fixed[i].bytes, (const void *) (uintptr_t) sn_fixed[i].va, sn_fixed[i].len);
+    }
+}
+
+static void sn_fixed_put_back(void) {
+    int i;
+    for (i = 0; i < sn_nfixed; ++i) {
+        memcpy((void *) (uintptr_t) sn_fixed[i].va, sn_fixed[i].bytes, sn_fixed[i].len);
+    }
+}
+
 static void sn_async_put_back(void) {
     int i;
     for (i = 0; i < sn_nasync; ++i) {
@@ -418,9 +476,11 @@ int gw_snap_load(int frame) {
     }
     sn_boundary_asserts("load");
     sn_async_collect();
+    sn_fixed_collect();
     memcpy((void *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size);
     sn_scatter(s->globals);
     sn_async_put_back();
+    sn_fixed_put_back();
     gw_Replay_SetCursor(s->replay_cursor);
     sn.ms_load += sn_ms() - t0;
     sn.n_load++;
@@ -546,6 +606,18 @@ static int sn_compare(int frame) {
                 ++off;
                 continue;
             }
+            if (s->mem1[off] != live[off]) {
+                int f;
+                for (f = 0; f < sn_nfixed; ++f) {
+                    if (0x80000000u + off >= sn_fixed[f].va && 0x80000000u + off < sn_fixed[f].va + sn_fixed[f].len) {
+                        break;
+                    }
+                }
+                if (f < sn_nfixed) {
+                    off = sn_fixed[f].va + sn_fixed[f].len - 0x80000000u;
+                    continue;
+                }
+            }
             if (s->mem1[off] != live[off] && sn_in_render_arena(0x80000000u + off, &mend)) {
                 off = mend - 0x80000000u;
                 continue;
@@ -669,6 +741,7 @@ static void sn_init(void) {
     sn.pre_mem1 = (uint8_t *) malloc(gw_mem1_size);
     sn.pre_globals = (uint8_t *) malloc(sn.globals_len);
     sn.rmask_mem1 = (uint8_t *) calloc(gw_mem1_size / 8 + 1, 1);
+    sn_fixed_init();
     sn.rmask_globals = (uint8_t *) calloc(sn.globals_len / 8 + 1, 1);
     if (sn.pre_mem1 == NULL || sn.pre_globals == NULL || sn.rmask_mem1 == NULL ||
         sn.rmask_globals == NULL) {
@@ -762,7 +835,7 @@ void gw_SyncTest_IterStart(void) {
         if (next >= sn.target) {
             sn.resim = 0;
             sn.passes++;
-            if ((sn.passes % 600) == 0) {
+            if ((sn.passes % 100) == 0) {
                 gw_log("snap: frame %d, %d rollbacks, %d checks, %d mismatching; per frame save "
                        "%.2f ms, load %.2f ms, compare %.2f ms",
                        next, sn.passes, sn.checked, sn.mismatches,

@@ -71,6 +71,8 @@ static struct {
     char scene[256];
 } rp = { .frame = GW_RP_UNARMED };
 
+static const GwRpInput *rp_cur(int port, int follower);
+
 static uint32_t rp_be32(const uint8_t *p) {
     return ((uint32_t) p[0] << 24) | ((uint32_t) p[1] << 16) | ((uint32_t) p[2] << 8) | p[3];
 }
@@ -373,6 +375,18 @@ void gw_Replay_RecordMatch(void *start_melee_data, uint32_t seed) {
     rec_be32(ev + 0x13D, seed);
     ev[0x1A3] = 2;    /* minor scene: in-game */
     ev[0x1A4] = 2;    /* major scene: VS */
+    if (rp.active) {
+        /* recording while playing a replay back: carry what playback itself consumes, so the
+           port's recording replays exactly as the original did - its Slippi version (UCF gating),
+           per-port UCF toggles, and online-ness (per-frame seeds, carried by Frame Start) */
+        int p;
+        memcpy(ev + 1, rp.version, 4);
+        for (p = 0; p < 4; ++p) {
+            rec_be32(ev + 0x141 + 8 * p, rp.ucf_dashback[p]);
+            rec_be32(ev + 0x145 + 8 * p, rp.ucf_shield[p]);
+        }
+        ev[0x1A4] = rp.online ? 8 : 2;
+    }
     fwrite(ev, 1, sizeof ev, rec.f);
     rec.frame = GW_RP_FIRST_FRAME - 1;
     gw_log("replay: recording the match (seed 0x%08X)", seed);
@@ -413,6 +427,15 @@ void gw_Replay_RecordInput(int port, int follower, float lx, float ly, float cx,
     rec_bef(ev + 0x29, trigger);
     rec_be32(ev + 0x2D, buttons);
     rec_bef(ev + 0x3C, percent);
+    {
+        const GwRpInput *r = rp_cur(port, follower); /* the raw bytes UCF read, when playing back */
+        if (r != NULL) {
+            ev[0x3B] = (uint8_t) r->raw[0];
+            ev[0x40] = (uint8_t) r->raw[1];
+            ev[0x41] = (uint8_t) r->raw[2];
+            ev[0x42] = (uint8_t) r->raw[3];
+        }
+    }
     fwrite(ev, 1, sizeof ev, rec.f);
 }
 

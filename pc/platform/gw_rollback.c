@@ -759,6 +759,19 @@ int gw_RB_Iterations(int count) {
                            (rb.slot_present[3] << 3) | (rb.slot_present[4] << 4) |
                            (rb.slot_present[5] << 5) | (rb.slot_present[6] << 6) |
                            (rb.slot_present[7] << 7)));
+        {
+            /* A remote mask that names no player in this match means nothing is ever late: the run
+               silently tests nothing. Slots are two per port, so port p is slots 2p and 2p+1. */
+            int any = 0;
+            for (s = 0; s < GW_RB_SLOTS; ++s) {
+                any |= rb.slot_present[s] && rb.slot_remote[s];
+            }
+            if (!any) {
+                gw_log("rb: WARNING remote ports 0x%X match no player in this match - no input is "
+                       "delayed, so nothing rolls back (set MELEE_RB_REMOTE to a port mask, port p = "
+                       "bit p)", rb.remote_mask);
+            }
+        }
     }
     /* close the previous tick's last iteration for the timing statistics */
     if (rb.iter_kind != 0) {

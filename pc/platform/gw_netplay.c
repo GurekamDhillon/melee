@@ -34,6 +34,27 @@
 #include "gw_net.h"
 #include "gw_rollback.h"
 #include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
+#include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
+#include <stdio.h>
+#include <stdint.h>
+
+/* The must-match set: the global game data (gw_mexid.c) and every enabled gameplay-affecting
+ * script (gw_script.c; cosmetic/overlay scripts are not in it). Used for the room handshake
+ * (cfg.mods_hash, refused with a message naming both) and for random matchmaking (the server
+ * only pairs identical hashes). */
+static uint64_t np_global_hash(void) {
+    const uint64_t g = gw_MexId_GlobalHash();
+    const uint64_t sc = gw_Script_GameplayHash();
+    return sc == 0 ? g : g ^ (sc * 0x9E3779B97F4A7C15ull + 0x5CB1u);
+}
+
+static const char *np_global_describe(void) {
+    static char buf[1024];
+    const char *sc = gw_Script_GameplayDescribe();
+    if (sc == NULL || sc[0] == '\0') return gw_MexId_GlobalDescribe();
+    snprintf(buf, sizeof buf, "%s; gameplay scripts: %s", gw_MexId_GlobalDescribe(), sc);
+    return buf;
+}
 #include "gw_mods.h"
 
 /* gw_net.c refuse_check's text for a mods_hash (= global game data) mismatch; the host's
@@ -222,9 +243,21 @@ static void np_cb_event(void *user, int ev, const char *msg) {
         /* delta: a global-data mismatch names what differs (gw_mexid.c) */
         if (ev == GW_NET_EV_REFUSED && msg != NULL &&
             strncmp(msg, NP_GLOBAL_REFUSAL, strlen(NP_GLOBAL_REFUSAL)) == 0) {
-            char diff[160];
-            gw_MexId_GlobalDiff(msg + strlen(NP_GLOBAL_REFUSAL), diff, sizeof diff);
-            np_status("Refused: game data differs from the host's: %s", diff);
+            char diff[160], peer[256];
+            const char *mine = gw_Script_GameplayDescribe();
+            char *sc;
+            snprintf(peer, sizeof peer, "%s", msg + strlen(NP_GLOBAL_REFUSAL));
+            sc = strstr(peer, "; gameplay scripts: "); /* np_global_describe's script part */
+            if (sc != NULL) *sc = '\0';
+            diff[0] = '\0';
+            gw_MexId_GlobalDiff(peer, diff, sizeof diff);
+            if (diff[0] != '\0') {
+                np_status("Refused: game data differs from the host's: %s", diff);
+            } else {
+                np_status("Refused: gameplay scripts differ - host: %s; you: %s",
+                          sc != NULL ? sc + strlen("; gameplay scripts: ") : "none",
+                          mine != NULL && mine[0] != '\0' ? mine : "none");
+            }
         }
     }
 }
@@ -1550,8 +1583,8 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
        one by content identity and the match offers only what both have (gw_mexid.h). So a mod
        ISO and a vanilla ISO with the same content as loose mods can play each other. */
     cfg.iso_hash = 0;
-    cfg.mods_hash = gw_MexId_GlobalHash();
-    cfg.mods_desc = gw_MexId_GlobalDescribe();
+    cfg.mods_hash = np_global_hash();
+    cfg.mods_desc = np_global_describe();
     gw_MexId_PeerReset();
     gw_log("netplay: global game data %s; %d fighter/stage identities; mods: %s", cfg.mods_desc,
            gw_MexId_Count(), gw_Mods_Describe()[0] != '\0' ? gw_Mods_Describe() : "none");
@@ -1763,7 +1796,7 @@ static void np_rand_poll(void) {
         if ((int32_t) (now - rnd.next_send) >= 0) {
             char lan[64], msg[128];
             np_rdv_lan(lan, sizeof lan);
-            snprintf(msg, sizeof msg, "RAND %016llx %s", (unsigned long long) gw_MexId_GlobalHash(), lan);
+            snprintf(msg, sizeof msg, "RAND %016llx %s", (unsigned long long) np_global_hash(), lan);
             np_rdv_ctl(msg);
             rnd.next_send = now + 2000;
         }

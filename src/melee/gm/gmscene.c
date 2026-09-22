@@ -442,8 +442,12 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
             DevText_HideText(mnLoadScreen_panel);
             DevText_SetBGColor(mnLoadScreen_panel, panel);
         }
-        mnLoadScreen_text = DevText_Create(0x4B, 250, 230, LOADSCREEN_CAPTION_COLS, 1,
-                                           mnLoadScreen_textbuf);
+        /* After the frontend's loading screen (it said what is loading) the hold is a few
+           frames of plain ink - no second, older-looking caption flashing up. */
+        mnLoadScreen_text = mnLoadScreen_warm ? NULL
+                                              : DevText_Create(0x4B, 250, 230,
+                                                               LOADSCREEN_CAPTION_COLS, 1,
+                                                               mnLoadScreen_textbuf);
         if (mnLoadScreen_text != NULL) {
             GXColor plate = { 20, 38, 92, 255 }; /* its dark cobalt */
             DevText_Show(text_gobj, mnLoadScreen_text);

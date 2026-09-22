@@ -5,6 +5,9 @@
 #include "gm_1A3F.h"
 #include "gmmain_lib.h"
 #include "gmscene.h"
+#include "gmvsmelee.h"
+#include <melee/ft/forward.h>
+#include <melee/pl/forward.h>
 #include <dolphin/gx.h>
 #include <dolphin/os.h>
 #include <melee/gm/gm_1601.h>
@@ -257,6 +260,8 @@ void Netplay_LobbyStageAct(int i);
 void Netplay_LobbyReady(int on);
 int Netplay_LobbyActive(void);
 int Netplay_FighterAvailable(int ck);
+int Netplay_LobbyStageExt(int i);
+void Netplay_StageNameExt(int ext, char* out, int cap);
 
 enum { FE_NP_IDLE, FE_NP_WORKING, FE_NP_CONNECTED, FE_NP_FAILED, FE_NP_RUNNING, FE_NP_LOBBY };
 /* gw_netplay.c's lobby phases and stage states */
@@ -502,7 +507,10 @@ static const FrontendScreen fe_screen_loading = {
     "LOADING",
     NULL,
     0,
+    4, /* FL_LOAD: drawn from loading_layout.json (gmfrontend_online.inc) */
 };
+/* The same screen after the online lobby's countdown, inside the lobby's own scene. */
+static const FrontendScreen fe_screen_online_load = { "GET READY", "LOADING", NULL, 0, 4 };
 
 #define FE_LOAD_MIN_FRAMES 45
 #define FE_LOAD_SETTLE_FRAMES 20
@@ -551,6 +559,7 @@ static struct {
     int load_base;   ///< pipelines already created when the loading screen began
     int load_core;   ///< pipelines built since boot that mean the seed's core is warm
     int load_settled; ///< frames with nothing pending
+    int load_frames;  ///< frames of warm-up so far
     float progress;  ///< 0..1, drawn by the bar
     int percent;     ///< what the status line shows
     u8 reported;     ///< the previous mode the loop records when this scene leaves
@@ -938,6 +947,8 @@ static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXCol
 
 static void fe_match_setup_from_menus(void);
 static void fe_online_from_menus(void);
+static void fe_load_begin(void);
+static bool fe_load_step(void);
 static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS hub tile
 
 #include "gmfrontend_player.inc"
@@ -1108,21 +1119,6 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
 
     pulse = (float) (fe.frames % 60) / 60.0F;
     pulse = pulse < 0.5F ? pulse * 2.0F : (1.0F - pulse) * 2.0F;
-
-    if (fe.loading) {
-        /* the panel at its native size, and a hard-edged progress bar on it */
-        float bx = 128, by = 268, bw = 384, bh = 12;
-        float fill = bw * fe.progress;
-        fe_tex_or_solid(FT_PANEL, 64, 112, 512, 256, FE_COBALT);
-        fe_solid(bx - 4, by - 4, bw + 8, bh + 8, FE_INK);
-        fe_solid(bx, by, bw, bh, FE_COBALT_DK);
-        fe_solid(bx, by, fill, bh, FE_GOLD);
-        fe_solid(bx, by, fill, 3, FE_GOLD_LT);
-        if (fill > 4) {
-            fe_solid(bx + fill - 4, by - 2, 4, bh + 4, fe_rgba(242, 239, 228, (u8) (150 + 105 * pulse)));
-        }
-        return;
-    }
 
     fe_tex_or_solid(FT_PANEL, FE_PANEL_X, FE_PANEL_Y, FE_PANEL_W, FE_PANEL_H, FE_COBALT);
 
@@ -1473,29 +1469,6 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
                  n < FT_COUNT ? " - the missing ones draw flat" : "");
     }
 
-    if (fe.loading) {
-        extern int Gfx_PipelinesCreated(void);
-        fe.title = fe_text(320, 196, 1.2F, 1, FE_BONE, fe.screen->title);
-        fe.subtitle = fe_text(76, 114, 0.55F, 0, FE_INK, fe.screen->subtitle); /* on the tab */
-        fe.help = fe_text(320, 296, 0.5F, 1, FE_BONE, " ");
-        fe.help_str[0] = ' ';
-        fe.help_str[1] = '\0';
-        fe.load_base = Gfx_PipelinesCreated();
-        {
-            extern int Gfx_SeedCoreCount(void);
-            extern int Gfx_PipelinesPending(void);
-            extern int Gfx_SeedPipelinesBuilt(void);
-            fe.load_core = Gfx_SeedCoreCount();
-            OSReport("frontend: loading screen - %d pipelines built so far (%d from the seed), "
-                     "%d pending, seed core %d\n",
-                     fe.load_base, Gfx_SeedPipelinesBuilt(), Gfx_PipelinesPending(),
-                     fe.load_core);
-        }
-        fe.load_settled = 0;
-        fe.progress = 0.0F;
-        fe.percent = -1;
-        return;
-    }
     fe.title = fe_text(44, 24, 0.9F, 0, FE_BONE, fe.screen->title);
     fe.subtitle = /* on the panel's gold tab */
         fe_text(FE_PANEL_X + 44, FE_PANEL_Y + 7, 0.55F, 0, FE_INK, fe.screen->subtitle);
@@ -1614,7 +1587,31 @@ static void fe_change(const FrontendItem* it, int dir)
     fe_rebuild_visible(); /* a value can show or hide other rows */
 }
 
-static void fe_loading_frame(void)
+/* The warm-up behind the loading screen (VS mode's loading state, and the online lobby's): start
+ * counting from what is built now. */
+static void fe_load_begin(void)
+{
+    extern int Gfx_PipelinesCreated(void);
+    fe.load_frames = 0;
+    fe.load_base = Gfx_PipelinesCreated();
+    {
+        extern int Gfx_SeedCoreCount(void);
+        extern int Gfx_PipelinesPending(void);
+        extern int Gfx_SeedPipelinesBuilt(void);
+        fe.load_core = Gfx_SeedCoreCount();
+        OSReport("frontend: loading screen - %d pipelines built so far (%d from the seed), "
+                 "%d pending, seed core %d\n",
+                 fe.load_base, Gfx_SeedPipelinesBuilt(), Gfx_PipelinesPending(),
+                 fe.load_core);
+    }
+    fe.load_settled = 0;
+    fe.progress = 0.0F;
+    fe.percent = -1;
+}
+
+/* One frame of the warm-up: the progress bar's value (fe.progress, fe.percent). True when it is
+ * time to go. */
+static bool fe_load_step(void)
 {
     extern int Gfx_PipelinesPending(void);
     extern int Gfx_PipelinesCreated(void);
@@ -1622,19 +1619,8 @@ static void fe_loading_frame(void)
     extern int Gfx_SeedPipelinesBuilt(void);
     int pending, done;
     float target;
-    char buf[FE_STR];
 
-    if (fe.leaving != 0) {
-        if (++fe.fade >= FE_FADE_FRAMES) {
-            fe.warmed = true;
-            gm_801A4B60(); /* the state's on_exit picks the match */
-        }
-        return;
-    }
-    if (fe.fade > 0) {
-        fe.fade--;
-    }
-
+    fe.load_frames++;
     /* Warm means the seed's core is built - aurora compiles the seed in its own order, which is
        most-used first, and counts what it has built (Gfx_SeedPipelinesBuilt) - or that nothing
        is pending at all. */
@@ -1656,25 +1642,39 @@ static void fe_loading_frame(void)
     if (fe.load_settled > 0 && fe.progress > 0.995F) {
         fe.progress = 1.0F;
     }
-    if (fe.percent != (int) (fe.progress * 100.0F)) {
-        fe.percent = (int) (fe.progress * 100.0F);
-        if (fe.progress < 1.0F) {
-            sprintf(buf, "Warming up the renderer");
-        } else {
-            sprintf(buf, "Ready");
-        }
-        fe_set_text(&fe.help, fe.help_str, FE_STR, buf, FE_HELP_COLOR);
-    }
+    fe.percent = (int) (fe.progress * 100.0F);
 
-    if (!Gfx_LoadScreenEnabled() || fe.frames >= FE_LOAD_CEILING_FRAMES ||
-        (fe.frames >= FE_LOAD_MIN_FRAMES && fe.load_settled >= FE_LOAD_SETTLE_FRAMES))
+    if (!Gfx_LoadScreenEnabled() || fe.load_frames >= FE_LOAD_CEILING_FRAMES ||
+        (fe.load_frames >= FE_LOAD_MIN_FRAMES && fe.load_settled >= FE_LOAD_SETTLE_FRAMES))
     {
         OSReport("frontend: loading screen done after %d frames (%d pipelines built since boot, "
                  "%d while here, %d still pending, core target %d, %s)\n",
-                 fe.frames, done, done - fe.load_base, pending, fe.load_core,
+                 fe.load_frames, done, done - fe.load_base, pending, fe.load_core,
                  fe.load_settled > 0 ? "warm" : "ceiling");
+        return true;
+    }
+    return false;
+}
+
+
+/* VS mode's loading state: the warm-up, then the state's exit picks the match. */
+static void fe_loading_frame(void)
+{
+    if (fe.leaving != 0) {
+        if (++fe.fade >= FE_FADE_FRAMES) {
+            fe.warmed = true;
+            gm_801A4B60(); /* the state's on_exit picks the match */
+        }
+        fl_frame_anim();
+        return;
+    }
+    if (fe.fade > 0) {
+        fe.fade--;
+    }
+    if (fe_load_step()) {
         fe.leaving = 1;
     }
+    fl_frame();
 }
 
 void gm_Scene_Frontend_OnFrame(void)

@@ -32,7 +32,23 @@
  * lent to the player as textures. Stage art is optional in the layout and not captured yet (the
  * tile draws its flat stand-in). */
 
-enum { FL_NONE, FL_CODE, FL_WAIT, FL_LOBBY };
+enum { FL_NONE, FL_CODE, FL_WAIT, FL_LOBBY, FL_LOAD };
+
+/* THE LOADING SCREEN (FL_LOAD, loading_layout.json): who fights where, and the warm-up's
+ * progress. VS mode's loading state (after the SSS) and the online lobby (after its countdown)
+ * both show it; fe_load_step (gmfrontend.c) measures the warm-up. */
+static struct {
+    int n;                   ///< fighters shown (2 = big cards and the VS mark; 3-4 compact)
+    int ck[4], color[4], cpu[4], port[4];
+    int online, me;          ///< online: this machine's card
+    int ext;                 ///< the stage (external id)
+    int game, s1, s2;        ///< online: the set
+    char room[8];
+    int ready, built;
+    int q_fill, q_pct;       ///< the bar's fill and readout quads, updated every frame
+    float fill_w;            ///< the fill's full width
+    float pct_x;             ///< the readout's right edge
+} fl_ld;
 
 typedef struct FlEl {
     const FjNode* el;      ///< the element: quads, slots, states, lift_joint(s)
@@ -452,7 +468,13 @@ static void fl_finish(void)
 
 /* ---- motion: a few of the layouts' events, played on the fresh model --------------------- */
 
+static void fl_play_at(const char* file, const char* event, const FlEl* e, int delay);
 static void fl_play(const char* file, const char* event, const FlEl* e)
+{
+    fl_play_at(file, event, e, 0);
+}
+
+static void fl_play_at(const char* file, const char* event, const FlEl* e, int delay)
 {
     void *t, *p;
     const FjNode* M = fj_load(file, &t, &p);
@@ -520,7 +542,7 @@ static void fl_play(const char* file, const char* event, const FlEl* e)
             continue; /* a move that ends lifted: the state's offset is built into the model */
         }
         if (n > 0) {
-            fp_start(chan, fp.frame, k, n);
+            fp_start(chan, fp.frame + delay, k, n);
         }
     }
     if (t != NULL) HSD_Free(t);
@@ -571,6 +593,46 @@ static int fl_char_tex(int ck)
     return fp.ntex++;
 }
 
+/* The icon the SSS captured when the stage was picked (fe_np_icon[1]), lent to the player. */
+static int fl_icon_tex(int which)
+{
+    FeNpIcon* ic = &fe_np_icon[which & 1];
+    FpTex* tx;
+    int i;
+    if (!ic->ok) {
+        return -1;
+    }
+    for (i = 0; i < fp.ntex; i++) {
+        if (strcmp(fp.tex[i].name, which ? "@stage" : "@char") == 0) {
+            return i;
+        }
+    }
+    if (fp.ntex >= FP_MAX_TEX) {
+        return -1;
+    }
+    tx = &fp.tex[fp.ntex];
+    memset(tx, 0, sizeof *tx);
+    fp_copy(tx->name, which ? "@stage" : "@char", FP_ID);
+    tx->borrowed = true;
+    tx->t.data = ic->data;
+    tx->t.w = ic->w;
+    tx->t.h = ic->h;
+    if (ic->tlut_n != 0) {
+        tx->t.lut = ic->lut;
+        GXInitTlutObj(&tx->t.tlut, ic->lut, (GXTlutFmt) ic->tlut_fmt, (u16) ic->tlut_n);
+        GXInitTexObjCI(&tx->t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP, GX_CLAMP,
+                       GX_FALSE, GX_TLUT0);
+    } else {
+        GXInitTexObj(&tx->t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP, GX_CLAMP,
+                     GX_FALSE);
+    }
+    GXInitTexObjLOD(&tx->t.obj, GX_LINEAR, GX_LINEAR, 0.0F, 0.0F, 0.0F, GX_FALSE, GX_FALSE,
+                    GX_ANISO_1);
+    tx->t.ok = true;
+    tx->mask = false;
+    return fp.ntex++;
+}
+
 /* A quad at an unsheared rect, sheared like the rest. */
 static int fl_rect_quad(const char* id, int tex, float x0, float y0, float x1, float y1,
                         const float* rgb, int joint)
@@ -589,7 +651,13 @@ static int fl_rect_quad(const char* id, int tex, float x0, float y0, float x1, f
 
 /* ---- the screens' state ------------------------------------------------------------------- */
 
-static int fl_ck(int who) { return Netplay_LobbyPlayer(who, 0); }
+static int fl_ck(int who)
+{
+    if (fl.art == FL_LOAD) {
+        return who >= 0 && who < 4 ? fl_ld.ck[who] : -1;
+    }
+    return Netplay_LobbyPlayer(who, 0);
+}
 
 static bool fl_reconnecting(void)
 {
@@ -690,6 +758,13 @@ static const char* fl_action_state(void)
 static const char* fl_axis_state(const FlEl* e, const char* a)
 {
     const char* id = fj_str(fj_get(e->el, "id"));
+    if (fl.art == FL_LOAD) {
+        if (strcmp(a, "you") == 0) return fl_ld.online && e->who == fl_ld.me ? "yes" : "no";
+        if (strcmp(a, "kind") == 0) return fl_ld.cpu[e->who & 3] ? "cpu" : "human";
+        if (strcmp(a, "view") == 0) return fl_ld.online ? "online" : "local";
+        if (strcmp(a, "bar") == 0) return fl_ld.ready ? "ready" : "working";
+        return NULL;
+    }
     if (fl.art == FL_LOBBY) {
         if (strcmp(a, "phase") == 0) {
             int p = fl_phase();
@@ -855,6 +930,46 @@ static const char* fl_slot_text(const FlEl* e, const char* id)
         sprintf(fl_buf[7], "%d ms", ms);
         return fl_buf[7];
     }
+    if (fl.art == FL_LOAD) {
+        int w = e->who & 3;
+        if (strcmp(id, "port_label") == 0) {
+            sprintf(b, "P%d", fl_ld.port[w] + 1);
+            return b;
+        }
+        if (strcmp(id, "you_tag") == 0) return "YOU";
+        if (strcmp(id, "tag") == 0) {
+            if (fl_ld.online) return w == 0 ? "HOST" : "GUEST";
+            return fl_ld.cpu[w] ? "CPU" : NULL;
+        }
+        if (strcmp(id, "cpu_text") == 0) {
+            sprintf(b, "CPU LV %d", fl_ld.cpu[w]);
+            return b;
+        }
+        if (strcmp(id, "name") == 0) {
+            Netplay_FighterName(fl_ld.ck[w], b, 24);
+            return b;
+        }
+        if (strcmp(id, "vs_text") == 0) return "VS";
+        if (strcmp(id, "stage_label") == 0) return "STAGE";
+        if (strcmp(id, "stage_name") == 0) {
+            Netplay_StageNameExt(fl_ld.ext, fl_buf[5], FE_STR);
+            return fl_buf[5];
+        }
+        if (strcmp(id, "set_line") == 0) {
+            sprintf(fl_buf[6], "GAME %d - SET %d - %d", fl_ld.game, fl_ld.s1, fl_ld.s2);
+            return fl_buf[6];
+        }
+        if (strcmp(id, "room_line") == 0) {
+            sprintf(fl_buf[7], "ROOM %s", fl_ld.room);
+            return fl_buf[7];
+        }
+        if (strcmp(id, "bar_label") == 0) return fl_ld.ready ? "READY" : "WARMING UP";
+        if (strcmp(id, "bar_pct") == 0) {
+            sprintf(b, "%d%%", fe.percent < 0 ? 0 : fe.percent);
+            return b;
+        }
+        return NULL;
+    }
     if (fl.art == FL_WAIT) {
         char code[8];
         Netplay_RoomCode(code, sizeof code);
@@ -985,8 +1100,11 @@ static bool fl_special_quad(FlEl* e, const FjNode* q, const char* id, float dx, 
                 fm_tok("@face_hi", KS_VERSUS, rgb);
                 fl_rect_quad(qid, -1, x0, y0, x1, y1, rgb, joint);
             }
+        } else if (fl.art == FL_LOAD && !fl_ld.online && fl_icon_tex(1) >= 0) {
+            float white[3] = { 1, 1, 1 };
+            fl_rect_quad(qid, fl_icon_tex(1), x0, y0, x1, y1, white, joint); /* the SSS's icon */
         } else {
-            /* stage art: not captured yet - the layout's flat stand-in */
+            /* stage art: not captured (online: no SSS) - the layout's flat stand-in */
             const FjNode* op = fl_val(e, fj_get(q, "opacity"));
             int qi;
             fm_tok("@face_hi", KS_VERSUS, rgb);
@@ -1253,6 +1371,129 @@ static void fl_build_lobby(void)
     if (pp != NULL) HSD_Free(pp);
 }
 
+/* Who fights where: the online lobby's two players, or VS mode's players and stage. */
+static void fl_load_init(void)
+{
+    int i;
+    memset(&fl_ld, 0, sizeof fl_ld);
+    fl_ld.q_fill = fl_ld.q_pct = -1;
+    if (fe.screen == &fe_screen_online_load) {
+        fl_ld.online = 1;
+        fl_ld.n = 2;
+        fl_ld.me = Netplay_LobbyMe();
+        for (i = 0; i < 2; i++) {
+            fl_ld.ck[i] = Netplay_LobbyPlayer(i, 0);
+            fl_ld.color[i] = Netplay_LobbyPlayer(i, 1);
+            fl_ld.port[i] = i;
+        }
+        fl_ld.ext = Netplay_LobbyStageExt(Netplay_LobbyInfo(7) >= 0 ? Netplay_LobbyInfo(7) : 0);
+        fl_ld.game = Netplay_LobbyInfo(0);
+        fl_ld.s1 = Netplay_LobbyInfo(2);
+        fl_ld.s2 = Netplay_LobbyInfo(3);
+        Netplay_RoomCode(fl_ld.room, sizeof fl_ld.room);
+        return;
+    }
+    {
+        struct VsModeData* vs = gmVsMelee_GetVsData();
+        for (i = 0; i < 4 && vs != NULL; i++) {
+            PlayerInitData* pl = &vs->start.players[i];
+            if ((pl->slot_type != Gm_PKind_Human && pl->slot_type != Gm_PKind_Cpu) ||
+                pl->ckind < 0 || pl->ckind == ChKind_None)
+            {
+                continue;
+            }
+            fl_ld.ck[fl_ld.n] = pl->ckind;
+            fl_ld.color[fl_ld.n] = pl->color;
+            fl_ld.cpu[fl_ld.n] =
+                pl->slot_type == Gm_PKind_Cpu ? (pl->cpu_level > 0 ? pl->cpu_level : 1) : 0;
+            fl_ld.port[fl_ld.n] = i;
+            fl_ld.n++;
+        }
+        fl_ld.ext = vs != NULL ? vs->start.rules.stkind : 0;
+    }
+    if (fl_ld.n < 1) {
+        fl_ld.n = 1;
+    }
+}
+
+static void fl_build_load(void)
+{
+    const char* crumbs[3];
+    char room[16];
+    void *t, *p;
+    const FjNode* L;
+    const FjNode* C;
+    const FjNode* O;
+    FlEl e;
+    int i, n = fl_ld.n;
+    if (fl_ld.online) {
+        sprintf(room, "ROOM %s", fl_ld.room);
+        crumbs[0] = "VERSUS";
+        crumbs[1] = "ONLINE PLAY";
+        crumbs[2] = room;
+    } else {
+        crumbs[0] = "VERSUS";
+        crumbs[1] = "MELEE";
+        crumbs[2] = "LOADING";
+    }
+    fm_chrome_with("GET READY", crumbs, 3, KS_VERSUS, 0, NULL, NULL);
+    fl_desc(fl_ld.ready ? "Here we go!" : "Loading the match...");
+    L = fj_load("loading_layout.json", &t, &p);
+    C = fj_get(fj_get(L, "cards"), n == 2 ? "big" : "small");
+    O = fj_get(fj_get(fj_get(L, "card_places"), n == 2 ? "two" : "up_to_four"), "origins");
+    memset(&e, 0, sizeof e);
+    for (i = 0; i < n && i < 4; i++) {
+        const FjNode* o = fj_idx(O, i);
+        e.el = C;
+        /* three compact cards centre as a group; one sits in the middle */
+        e.ox = fj_num(fj_idx(o, 0), 92) + (n == 3 ? 60.0F : n == 1 ? 180.0F : 0.0F);
+        e.oy = fj_num(fj_idx(o, 1), 84);
+        e.who = i;
+        sprintf(e.port, "p%d", fl_ld.port[i] + 1);
+        sprintf(e.pre, "c%d_", i);
+        fl_el(&e);
+    }
+    memset(&e, 0, sizeof e);
+    if (n == 2) {
+        e.el = fj_get(L, "vs_mark");
+        sprintf(e.pre, "vs_");
+        fl_el(&e);
+    }
+    e.el = fj_get(L, "stage_plate");
+    sprintf(e.pre, "st_");
+    fl_el(&e);
+    e.el = fj_get(L, "progress");
+    sprintf(e.pre, "pg_");
+    fl_el(&e);
+    if (t != NULL) HSD_Free(t);
+    if (p != NULL) HSD_Free(p);
+    fl_ld.q_fill = fp_find_quad("pg_bar_fill");
+    fl_ld.q_pct = fp_find_quad("pg_bar_pct");
+    if (fl_ld.q_fill >= 0) {
+        FpQuad* q = &fp.q[fl_ld.q_fill];
+        fl_ld.fill_w = q->v[1][0] - q->v[0][0];
+    }
+    if (fl_ld.q_pct >= 0) {
+        FpQuad* d = &fp.q[fl_ld.q_pct];
+        fl_ld.pct_x = d->ax + (d->ff_role >= 0 ? ff_width(d->ff_role, d->text) : 0.0F);
+    }
+}
+
+/* Every frame: the bar's fill follows the warm-up, and so does its readout. */
+static void fl_load_update(void)
+{
+    if (fl_ld.q_fill >= 0) {
+        FpQuad* q = &fp.q[fl_ld.q_fill];
+        q->v[1][0] = q->v[0][0] + fl_ld.fill_w * fe.progress;
+        q->v[2][0] = q->v[3][0] + fl_ld.fill_w * fe.progress;
+    }
+    if (fl_ld.q_pct >= 0) {
+        char b[8];
+        sprintf(b, "%d%%", fe.percent < 0 ? 0 : fe.percent);
+        fk_retext(fl_ld.q_pct, b, fl_ld.pct_x, 2, 60.0F);
+    }
+}
+
 /* What the current screen shows, as a string: a rebuild whenever it changes. */
 static void fl_signature(char* sig)
 {
@@ -1283,6 +1524,11 @@ static void fl_signature(char* sig)
         fl_sig_add(sig, b);
         fl_sig_int(sig, fl.frames < fl.copied_until);
         fl_sig_int(sig, Netplay_Ping() / 25);
+    } else if (fl.art == FL_LOAD) {
+        fl_sig_int(sig, fl_ld.ready);
+        for (i = 0; i < fl_ld.n; i++) {
+            fl_sig_int(sig, fe_np_char_icon[fl_ld.ck[i] & (FE_NP_MAX_CK - 1)].ok);
+        }
     } else if (fl.art == FL_CODE) {
         for (i = 0; i < 4; i++) {
             fl_sig_int(sig, Netplay_CodeChar(i));
@@ -1306,10 +1552,25 @@ static void fl_build(void)
     case FL_WAIT: fl_build_wait(); break;
     case FL_CODE: fl_build_code(); break;
     case FL_LOBBY: fl_build_lobby(); break;
+    case FL_LOAD: fl_build_load(); break;
     default: break;
     }
     fl_finish();
     fl.on = true;
+    if (fl.art == FL_LOAD) {
+        FlEl e;
+        memset(&e, 0, sizeof e);
+        if (!fl_ld.built) {
+            /* arriving: the cards slide in, the VS mark pops, the stage plate rises */
+            fl_play("loading_motion.json", "cards_in", &e);
+            fl_play("loading_motion.json", "vs_pop", &e);
+            fl_play("loading_motion.json", "stage_in", &e);
+            fl_ld.built = 1;
+        } else if (fl_ld.ready) {
+            fl_play("loading_motion.json", "ready", &e);
+        }
+        fl_load_update();
+    }
     /* the event this change deserves */
     switch (fl.pend_event) {
     case FLE_STRIKE:
@@ -1363,6 +1624,10 @@ static void fl_build(void)
 
 static void fl_open(int art)
 {
+    if (art == FL_LOAD) {
+        fe_load_begin();
+        fl_load_init();
+    }
     fl.art = art;
     fl.frames = 0;
     fl.sig[0] = '\0';
@@ -1613,11 +1878,8 @@ static void fl_frame_lobby(u32 in)
         return;
     }
     if (fe_np_phase == FE_NP_CONNECTED) {
-        /* the agreed match is the configured scene: VS mode seeds it and starts at the match */
-        Netplay_MenuLaunch();
-        fe.continue_to = GM_VS;
-        fe.leaving = 1;
-        fe_np_phase = FE_NP_IDLE;
+        /* the match is agreed: the loading screen warms the renderer, then the match */
+        fe_switch_screen(&fe_screen_online_load);
         return;
     }
     fl_lobby_events();
@@ -1690,6 +1952,30 @@ static void fl_frame_lobby(u32 in)
     }
 }
 
+/* The online loading screen: the warm-up, then the match (the transport holds its start until
+ * both machines have loaded). VS mode's loading state runs fe_loading_frame instead. */
+static void fl_frame_load(void)
+{
+    fl_ld.ready = fe.progress >= 1.0F;
+    if (fe.screen != &fe_screen_online_load) {
+        return;
+    }
+    fe_np_phase = Netplay_MenuPoll();
+    if (fe_np_phase == FE_NP_FAILED) {
+        char why[FE_STR];
+        Netplay_MenuStatus(why, FE_STR);
+        fl_leave_room(Netplay_PeerLeft() ? "Your opponent left before the match." : why, true);
+        return;
+    }
+    if (fe_load_step()) {
+        Netplay_MenuLaunch(); /* the agreed match is the configured scene */
+        fe.warmed = true;     /* the match's own hold only covers its first frame */
+        fe.continue_to = GM_VS;
+        fe.leaving = 1;
+        fe_np_phase = FE_NP_IDLE;
+    }
+}
+
 static void fl_frame(void)
 {
     u32 in = 0;
@@ -1701,6 +1987,7 @@ static void fl_frame(void)
     case FL_CODE: fl_frame_code(in); break;
     case FL_WAIT: fl_frame_wait(in); break;
     case FL_LOBBY: fl_frame_lobby(in); break;
+    case FL_LOAD: fl_frame_load(); break;
     default: break;
     }
     if (fe.screen == NULL || fe.screen->art != fl.art || fe.leaving != 0) {
@@ -1713,6 +2000,22 @@ static void fl_frame(void)
             memcpy(fl.sig, sig, sizeof sig);
             fl_build();
         }
+    }
+    if (fl.art == FL_LOAD) {
+        fl_load_update();
+    }
+    fp.frame++;
+    fp_evaluate(fp.frame);
+}
+
+/* A screen that is leaving keeps its motion running. */
+static void fl_frame_anim(void)
+{
+    if (!fl.on) {
+        return;
+    }
+    if (fl.art == FL_LOAD) {
+        fl_load_update();
     }
     fp.frame++;
     fp_evaluate(fp.frame);

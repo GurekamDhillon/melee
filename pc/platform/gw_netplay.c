@@ -1000,10 +1000,6 @@ enum { LB_FREE = 0, LB_STRUCK_P1 = 1, LB_STRUCK_P2 = 2, LB_BANNED = 3, LB_PICKED
 #define LB_MAX_STAGES 32
 #define LB_COUNTDOWN 180 /* 3-2-1 */
 static const int lb_default_ext[] = { 31, 28, 32, 2, 3, 8 };
-static const char *const lb_default_name[] = { "Battlefield", "Dream Land", "Final Destination",
-                                               "Fountain of Dreams", "Pokemon Stadium",
-                                               "Yoshi's Story" };
-
 static struct {
     int phase, game, winner, score[2];
     int turn;            /* whose action it is (strike/ban/pick/char counterpick) */
@@ -1370,8 +1366,17 @@ static void np_lobby_tick(void) {
     }
 }
 
+/* Every scene frame (gmscene.c). The lobby's own tick; and between the agreed match and its
+ * start (the loading screen, the match loading) the connection is kept serviced, so a longer
+ * warm-up on one side never looks like a dead peer to the other. */
 void gw_Netplay_Background(void) {
     np_mx_pump(); /* delta: the identity lists, while the lobby sits on the CSS */
+    if (np.phase == NP_CONNECTED && np.use_lobby && np.net != NULL) {
+        gw_net_poll(np.net, NP_FIRST_FRAME);
+        np_rdv_service();
+        if (np.dead) np_peer_gone();
+        return;
+    }
     np_lobby_tick();
 }
 
@@ -1807,19 +1812,27 @@ int gw_Netplay_LobbyInfo(int what) {
 }
 int gw_Netplay_LobbyStage(int i) { return i >= 0 && i < lb.nstages ? lb.stage[i] : 0; }
 int gw_Netplay_LobbyStageExt(int i) { return i >= 0 && i < lb.nstages ? lb.stage_ext[i] : 0; }
-void gw_Netplay_LobbyStageName(int i, char *out, int cap) {
-    int k, ext = gw_Netplay_LobbyStageExt(i);
-    for (k = 0; k < (int) (sizeof lb_default_ext / sizeof lb_default_ext[0]); ++k) {
-        if (lb_default_ext[k] == ext) {
-            np_copy(out, cap, lb_default_name[k]);
-            return;
-        }
-    }
-    {
+/* A stage's display name by its external id (the stage select's numbering; m-ex stages past the
+ * retail ones are "Stage n" until their names are read from the disc). */
+void gw_Netplay_StageNameExt(int ext, char *out, int cap) {
+    static const char *const retail[] = {
+        "", "Test", "Fountain of Dreams", "Pokemon Stadium", "Princess Peach's Castle",
+        "Kongo Jungle", "Brinstar", "Corneria", "Yoshi's Story", "Onett", "Mute City",
+        "Rainbow Cruise", "Jungle Japes", "Great Bay", "Hyrule Temple", "Brinstar Depths",
+        "Yoshi's Island", "Green Greens", "Fourside", "Mushroom Kingdom", "Mushroom Kingdom II",
+        "Akaneia", "Venom", "Poke Floats", "Big Blue", "Icicle Mountain", "Icetop", "Flat Zone",
+        "Dream Land", "Yoshi's Island N64", "Kongo Jungle N64", "Battlefield", "Final Destination",
+    };
+    if (ext > 0 && ext < (int) (sizeof retail / sizeof retail[0])) {
+        np_copy(out, cap, retail[ext]);
+    } else {
         char buf[24];
         snprintf(buf, sizeof buf, "Stage %d", ext);
         np_copy(out, cap, buf);
     }
+}
+void gw_Netplay_LobbyStageName(int i, char *out, int cap) {
+    gw_Netplay_StageNameExt(gw_Netplay_LobbyStageExt(i), out, cap);
 }
 int gw_Netplay_LobbyPlayer(int who, int what) {
     if (who < 0 || who > 1) return 0;

@@ -1547,7 +1547,13 @@ typedef struct {
   int skip_memcard; /* -1 = auto (skip whenever a scene is configured) */
   int teams;        /* -1 = leave alone */
   int time_limit;   /* seconds, -1 = leave alone */
-  int item_freq;    /* -1 = leave alone */
+  int item_freq;    /* -1 = leave alone; -2 = items off */
+  /* the saved VS rules (GameRules) - VS mode rebuilds each match's rules from them, so a match
+     setting that is not written there is lost (gm_80167BC8). -1 = leave alone. */
+  int rule_match;   /* 0 time, 1 stock */
+  int rule_stocks;
+  int rule_minutes; /* 0 = no limit */
+  int rule_pause;   /* 0 off, 1 on */
   int errors;       /* count of rejected fields; a config with errors is still used */
   GwSlPlayer p[GW_SL_SLOTS];
 } GwSceneConfig;
@@ -1653,6 +1659,10 @@ static void gw_sl_config_init(GwSceneConfig *c) {
   c->teams = -1;
   c->time_limit = -1;
   c->item_freq = -1;
+  c->rule_match = -1;
+  c->rule_stocks = -1;
+  c->rule_minutes = -1;
+  c->rule_pause = -1;
   for (i = 0; i < GW_SL_SLOTS; ++i) {
     gw_sl_player_init(&c->p[i]);
   }
@@ -1894,8 +1904,33 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
     return 0;
   }
   if (tt_ieq(key, "items")) {
+    if (tt_ieq(val, "off") || tt_ieq(val, "none")) {
+      c->item_freq = -2;
+      return 0;
+    }
     if (!gw_sl_all_digits(val)) return -1;
     c->item_freq = atoi(val);
+    return 0;
+  }
+  /* The saved VS rules: match=stock|time, stocks=N, minutes=N (0 = no limit), pause=0|1. */
+  if (tt_ieq(key, "match")) {
+    if (tt_ieq(val, "stock")) c->rule_match = 1;
+    else if (tt_ieq(val, "time")) c->rule_match = 0;
+    else return -1;
+    return 0;
+  }
+  if (tt_ieq(key, "stocks")) {
+    if (!gw_sl_all_digits(val)) return -1;
+    c->rule_stocks = atoi(val);
+    return 0;
+  }
+  if (tt_ieq(key, "minutes")) {
+    if (!gw_sl_all_digits(val)) return -1;
+    c->rule_minutes = atoi(val);
+    return 0;
+  }
+  if (tt_ieq(key, "pause")) {
+    c->rule_pause = (val[0] == '1');
     return 0;
   }
   return -1;
@@ -2004,6 +2039,16 @@ static void gw_sl_load(void) {
   if (gw_sl_loaded) return;
   gw_sl_loaded = 1;
   gw_sl_config_init(&gw_sl_cfg);
+  {
+    /* netplay (gw_netplay.c): connect first; the match the two players agreed on is the scene */
+    extern const char *gw_Netplay_Scene(void);
+    text = gw_Netplay_Scene();
+    if (text != NULL) {
+      gw_log("gw: scene: netplay \"%s\"", text);
+      gw_sl_parse(&gw_sl_cfg, text, "netplay");
+      goto parsed;
+    }
+  }
   text = getenv("MELEE_SCENE");
   if (text == NULL || text[0] == '\0') {
     extern const char *gw_replay_scene(void); /* gw_replay.c: a MELEE_SLP replay implies its match */
@@ -2032,6 +2077,7 @@ static void gw_sl_load(void) {
   if (text != NULL && text[0] != '\0') {
     gw_sl_parse(&gw_sl_cfg, text, "MELEE_SCENE");
   }
+parsed:
   gw_sl_load_legacy(&gw_sl_cfg);
   /* Target Test has no VsModeData; gmmultiman.c asks for the character directly, so lift it
    * out of player 1 when the config spelled it that way. */
@@ -2059,6 +2105,18 @@ const void *gw_SceneLaunch_ConfigForTest(void) {
 }
 
 /* ---- the surface game code calls (gwtool maps `SceneLaunch_X` to `gw_SceneLaunch_X`) ------- */
+
+/* At runtime (the online menu, gw_netplay.c): make `text` the configured scene, so the next VS
+ * mode entry seeds its match from it exactly as a boot-time MELEE_SCENE would - or clear it, so
+ * later offline play is untouched. */
+void gw_SceneLaunch_SetText(const char *text) {
+  gw_sl_loaded = 1;
+  gw_sl_config_init(&gw_sl_cfg);
+  if (text != NULL && text[0] != ' ') {
+    gw_log("gw: scene: set at runtime \"%s\"", text);
+    gw_sl_parse(&gw_sl_cfg, text, "runtime");
+  }
+}
 
 int gw_SceneLaunch_Active(void) {
   gw_sl_load();
@@ -2108,6 +2166,26 @@ int gw_SceneLaunch_TimeLimit(void) {
 int gw_SceneLaunch_ItemFreq(void) {
   gw_sl_load();
   return gw_sl_cfg.item_freq;
+}
+
+int gw_SceneLaunch_RuleMatch(void) {
+  gw_sl_load();
+  return gw_sl_cfg.rule_match;
+}
+
+int gw_SceneLaunch_RuleStocks(void) {
+  gw_sl_load();
+  return gw_sl_cfg.rule_stocks;
+}
+
+int gw_SceneLaunch_RuleMinutes(void) {
+  gw_sl_load();
+  return gw_sl_cfg.rule_minutes;
+}
+
+int gw_SceneLaunch_RulePause(void) {
+  gw_sl_load();
+  return gw_sl_cfg.rule_pause;
 }
 
 /* The boot memory-card prompt blocks forever without input, and it runs BEFORE the boot scene's

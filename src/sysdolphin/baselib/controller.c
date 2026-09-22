@@ -63,6 +63,19 @@ void HSD_PadRenewRawStatus(bool err_check)
 
     HSD_PadRumbleInterpret();
     PADRead(now.stat);
+#if defined(TARGET_PC)
+    {
+        /* rollback session, live pads (gw_rollback.c): latch this poll of every port */
+        extern void RB_PadLatch(int port, int button, int sx, int sy, int cx, int cy, int l,
+                                int r, int a, int b, int err);
+        for (i = 0; i < 4; i++) {
+            RB_PadLatch(i, now.stat[i].button, now.stat[i].stickX, now.stat[i].stickY,
+                        now.stat[i].substickX, now.stat[i].substickY, now.stat[i].triggerLeft,
+                        now.stat[i].triggerRight, now.stat[i].analogA, now.stat[i].analogB,
+                        now.stat[i].err);
+        }
+    }
+#endif
     if (err_check) {
         for (i = 0; i < 4; i++) {
             if (!now.stat[i].err) {
@@ -352,14 +365,53 @@ void HSD_PadRenewMasterStatus(void)
     int i;
 
     bool intr;
+#if defined(TARGET_PC)
+    PADStatus rbpad[4];
+    int rb_pads = 0;
+    {
+        /* rollback session with raw-controller sources (gw_rollback.c): this logic iteration's
+           statuses come from the session's per-frame ring, not the pad queue - so a resimulated
+           frame reads the same pads the first pass did. Everything below (clamp, deadzone, scale,
+           the trigger/release edges) then runs as on a console. */
+        extern int RB_PadGoverned(void);
+        extern int RB_PadField(int port, int which);
+        rb_pads = RB_PadGoverned();
+        if (rb_pads) {
+            for (i = 0; i < 4; i++) {
+                rbpad[i].button = RB_PadField(i, 0);
+                rbpad[i].stickX = RB_PadField(i, 1);
+                rbpad[i].stickY = RB_PadField(i, 2);
+                rbpad[i].substickX = RB_PadField(i, 3);
+                rbpad[i].substickY = RB_PadField(i, 4);
+                rbpad[i].triggerLeft = RB_PadField(i, 5);
+                rbpad[i].triggerRight = RB_PadField(i, 6);
+                rbpad[i].analogA = RB_PadField(i, 7);
+                rbpad[i].analogB = RB_PadField(i, 8);
+                rbpad[i].err = RB_PadField(i, 9);
+            }
+        }
+    }
+#endif
 
     p = &HSD_PadLibData;
     mp = &HSD_PadMasterStatus[0];
     intr = OSDisableInterrupts();
+#if defined(TARGET_PC)
+    if (p->qcount != 0 || rb_pads) {
+        if (p->qcount != 0) {
+            qread = &p->queue->stat[p->qread * 4];
+            HSD_PadRawQueueShift(p->qnum, &p->qread);
+            p->qcount -= 1;
+        }
+        if (rb_pads) {
+            qread = rbpad;
+        }
+#else
     if (p->qcount != 0) {
         qread = &p->queue->stat[p->qread * 4];
         HSD_PadRawQueueShift(p->qnum, &p->qread);
         p->qcount -= 1;
+#endif
 
         for (i = 0; i < 4; i++, mp += 1, qread += 1) {
             mp->last_button = mp->button;

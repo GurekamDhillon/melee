@@ -47,6 +47,10 @@ int SceneLaunch_TargetTestCKind(void);
 int SceneLaunch_Teams(void);
 int SceneLaunch_TimeLimit(void);
 int SceneLaunch_ItemFreq(void);
+int SceneLaunch_RuleMatch(void);
+int SceneLaunch_RuleStocks(void);
+int SceneLaunch_RuleMinutes(void);
+int SceneLaunch_RulePause(void);
 int SceneLaunch_SkipMemcard(void);
 int SceneLaunch_PlayerCKind(int slot);
 int SceneLaunch_PlayerSlotType(int slot);
@@ -127,7 +131,13 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         if (v >= 0) {
             vs->start.players[i].nametag = (u8) v;
         }
-        vs->start.players[i].slot = (u8) i;
+        /* What the CSS would have written (gmvs.c's player setup reads both):
+         *  - slot = the player id + 1 (0 = "its own index"), i.e. the P1..P4 tag. Writing the bare
+         *    index made port 2 player id 0: two "P1"s.
+         *  - sub_color (misnamed: it is the CONTROLLER the player reads, the port that picked the
+         *    character). Left at 0, every human read controller 1. */
+        vs->start.players[i].slot = (u8) (i + 1);
+        vs->start.players[i].sub_color = (u8) i;
         seeded++;
     }
 
@@ -141,7 +151,8 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         vs->start.players[1].cpu_kind = 0;
         vs->start.players[1].cpu_level = 0;
         vs->start.players[1].color = 1;
-        vs->start.players[1].slot = 1;
+        vs->start.players[1].slot = 2;
+        vs->start.players[1].sub_color = 1;
     }
 
     if (SceneLaunch_Teams() >= 0) {
@@ -153,6 +164,45 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
     }
     if (SceneLaunch_ItemFreq() >= 0) {
         vs->start.rules.item_freq = (s8) SceneLaunch_ItemFreq();
+    }
+
+    /* The saved rules. VS mode rebuilds every match's rules from GameRules/GamePrefs when it
+     * starts the match (gm_80167BC8), so a time or stock count set only in vs->start is lost -
+     * the "time=480 but the clock says 2:00" bug. Anything configured is written there too,
+     * which also makes two netplay peers agree whatever their memory cards hold. */
+    {
+        GameRules* gr = gmMainLib_GetGameRules();
+        struct GamePrefs* gp = gmMainLib_GetGamePrefs();
+        bool any = false;
+        if (SceneLaunch_RuleMatch() >= 0) {
+            gr->mode = (u8) SceneLaunch_RuleMatch();
+            any = true;
+        }
+        if (SceneLaunch_RuleStocks() >= 0) {
+            gr->stock_count = (u8) SceneLaunch_RuleStocks();
+            any = true;
+        }
+        if (SceneLaunch_RuleMinutes() >= 0) {
+            gr->time_limit = (u8) SceneLaunch_RuleMinutes();
+            gr->stock_time_limit = (u8) SceneLaunch_RuleMinutes();
+            any = true;
+        } else if (SceneLaunch_TimeLimit() >= 0) {
+            gr->time_limit = (u8) (SceneLaunch_TimeLimit() / 60);
+            gr->stock_time_limit = (u8) (SceneLaunch_TimeLimit() / 60);
+            any = true;
+        }
+        if (SceneLaunch_RulePause() >= 0) {
+            gr->pause = (u8) SceneLaunch_RulePause();
+        }
+        if (SceneLaunch_ItemFreq() != -1) {
+            /* -2 = off: the frequency byte's "none" is 0xFF (-1 as a signed byte) */
+            gp->item_freq = (u8) (SceneLaunch_ItemFreq() == -2 ? 0xFF : SceneLaunch_ItemFreq());
+        }
+        if (any) {
+            /* the rest of a clean competitive rule set: no handicap, 1.0x damage */
+            gr->handicap = 0;
+            gr->damage_ratio = 10;
+        }
     }
 
     /* The three stage seeds, which must agree. */

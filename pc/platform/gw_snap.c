@@ -1484,6 +1484,7 @@ void gw_Snap_Time(int what, int begin) {
 static struct {
     int frame, n, taken;
     int id[GW_SNAP_SFX_PER_FRAME], res[GW_SNAP_SFX_PER_FRAME];
+    unsigned char claimed[GW_SNAP_SFX_PER_FRAME]; /* re-emitted by the resimulation now running */
 } sn_sfx[GW_SNAP_SFX_FRAMES];
 static int sn_sfx_misses;
 
@@ -1501,6 +1502,7 @@ void gw_Snap_SfxPut(int sound_id, int result) {
     if (sn_sfx[s].n < GW_SNAP_SFX_PER_FRAME) {
         sn_sfx[s].id[sn_sfx[s].n] = sound_id;
         sn_sfx[s].res[sn_sfx[s].n] = result;
+        sn_sfx[s].claimed[sn_sfx[s].n] = 1;
         sn_sfx[s].n++;
     }
 }
@@ -1509,20 +1511,73 @@ static void sn_sfx_rewind(int frame) {
     int s = (frame & 0x7FFFFFFF) % GW_SNAP_SFX_FRAMES;
     if (sn_sfx[s].frame == frame) {
         sn_sfx[s].taken = 0;
+        memset(sn_sfx[s].claimed, 0, sizeof sn_sfx[s].claimed); /* all candidates again */
     }
 }
 
+/* A resimulated frame starts a sound: if the first pass (or an earlier resimulation) already
+ * played one with this id in this frame and nothing has claimed it yet, this IS that sound - it is
+ * already playing, so hand back its handle. Matching is by id, not by order: a corrected timeline
+ * that emits the same sounds in a different order must not double-play them. GW_SFX_PLAY_NEW (-2):
+ * a sound this timeline plays that the abandoned one did not - the caller plays it for real. */
 int gw_Snap_SfxTake(int sound_id) {
     int f = gw_Replay_Frame();
     int s = (f & 0x7FFFFFFF) % GW_SNAP_SFX_FRAMES;
-    if (sn_sfx[s].frame == f && sn_sfx[s].taken < sn_sfx[s].n &&
-        sn_sfx[s].id[sn_sfx[s].taken] == sound_id) {
-        return sn_sfx[s].res[sn_sfx[s].taken++];
+    if (sn_sfx[s].frame == f) {
+        int i;
+        for (i = 0; i < sn_sfx[s].n; ++i) {
+            if (!sn_sfx[s].claimed[i] && sn_sfx[s].id[i] == sound_id) {
+                sn_sfx[s].claimed[i] = 1;
+                return sn_sfx[s].res[i];
+            }
+        }
     }
     if (sn_sfx_misses++ < 8) {
-        gw_log("snap: resimulated frame %d played sound %d the first pass did not", f, sound_id);
+        gw_log("snap: resimulated frame %d starts sound %d the first pass did not - playing it", f, sound_id);
     }
-    return -1;
+    return -2;
+}
+
+/* The sound the caller just played for real during a resimulated frame: remembered (claimed), so a
+ * later resimulation of the same frame finds it. */
+void gw_Snap_SfxAdd(int sound_id, int result) {
+    int f = gw_Replay_Frame();
+    int s = (f & 0x7FFFFFFF) % GW_SNAP_SFX_FRAMES;
+    if (sn_sfx[s].frame != f) {
+        sn_sfx[s].frame = f;
+        sn_sfx[s].n = 0;
+    }
+    if (sn_sfx[s].n < GW_SNAP_SFX_PER_FRAME) {
+        sn_sfx[s].id[sn_sfx[s].n] = sound_id;
+        sn_sfx[s].res[sn_sfx[s].n] = result;
+        sn_sfx[s].claimed[sn_sfx[s].n] = 1;
+        sn_sfx[s].n++;
+    }
+}
+
+/* The end of a resimulated frame: sounds the abandoned timeline started in it that this one did
+ * not are still playing - release them (the game's own key-off) and forget them. */
+extern int gw_HSD_AudioSFXKeyOff(int vid);
+int gw_Snap_SfxFrameEnd(int frame) {
+    int s = (frame & 0x7FFFFFFF) % GW_SNAP_SFX_FRAMES, i, j = 0, killed = 0;
+    if (sn_sfx[s].frame != frame) {
+        return 0;
+    }
+    for (i = 0; i < sn_sfx[s].n; ++i) {
+        if (!sn_sfx[s].claimed[i]) {
+            if (sn_sfx[s].res[i] >= 0) {
+                gw_HSD_AudioSFXKeyOff(sn_sfx[s].res[i]);
+            }
+            ++killed;
+            continue;
+        }
+        sn_sfx[s].id[j] = sn_sfx[s].id[i];
+        sn_sfx[s].res[j] = sn_sfx[s].res[i];
+        sn_sfx[s].claimed[j] = 1;
+        ++j;
+    }
+    sn_sfx[s].n = j;
+    return killed;
 }
 
 /* Around the render pass (gmscene.c): whatever it changes is render-owned. */
@@ -1859,6 +1914,11 @@ int gw_Snap_OpenSession(int k) {
     snprintf(b, sizeof b, "%d", k);
     _putenv_s("MELEE_SYNCTEST", b);
     sn_init();
+    /* sn_init decides once, at the first scene-loop tick after boot. A session armed later (netplay
+       from the online menu) finds it already decided "off": open directly. */
+    if (!sn.enabled) {
+        gw_snap_open(k);
+    }
     sn.session = sn.enabled;
     return sn.enabled ? sn.nslots : 0;
 }

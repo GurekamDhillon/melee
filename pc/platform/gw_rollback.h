@@ -37,6 +37,13 @@
  *   MELEE_RB_REMOTE=<hex> mask of ports whose inputs arrive over the (fake) network (default 2:
  *                         port 1); all other present ports are local
  *   MELEE_RB_SEED=<n>     seed for the fake network's jitter and loss (default 12345)
+ *   MELEE_RB_INPUT=replay|padgen|live   where the players' inputs come from (default replay):
+ *        replay  the .slp's recorded PROCESSED inputs (the acceptance test)
+ *        padgen  a deterministic per-frame RAW pad generator (MELEE_RB_PADSEED), through the game's
+ *                own pad pipeline - the automated test of the raw-controller path
+ *        live    the real controllers (PADRead), latched between logic frames; every present port
+ *                is read locally, and the ports in MELEE_RB_REMOTE are delivered through the fake
+ *                network - two humans on one machine standing in for a remote peer
  */
 #ifndef GW_ROLLBACK_H
 #define GW_ROLLBACK_H
@@ -55,6 +62,14 @@ typedef struct GwRbInput {
     int8_t raw[4];      /* raw stick bytes x, y, c-x, c-y (what UCF reads); 0 when unknown */
     uint8_t present;    /* 0: no input for this slot - the fighter reads the live pad */
     uint8_t confirmed;  /* 1: the real input; 0: a prediction (session ring only) */
+    /* RAW CONTROLLER entries (is_raw = 1): a whole PADStatus - buttons = the 16-bit button word,
+     * raw[] = stickX, stickY, substickX, substickY, the fields below = the rest. The floats are
+     * unused. The session then feeds the game's own pad pipeline (HSD_PadRenewMasterStatus), so
+     * deadzones, calibration and UCF's raw-byte reads all run as on a console, and fighters read
+     * their pad normally instead of a replay-style processed input. */
+    uint8_t is_raw;
+    uint8_t pad_l, pad_r, pad_a, pad_b; /* triggerLeft/Right, analogA/B */
+    int8_t pad_err;                     /* PADStatus.err (0 = ok) */
 } GwRbInput;
 
 /* ======================= THE NETWORK-FACING INTERFACE ======================================== */
@@ -66,8 +81,11 @@ int gw_rb_active(void);
  * for any frame (redelivery is harmless). If the frame was already simulated with a different
  * input, a rollback is scheduled for the next render tick. `slot` = port * 2 + follower. Frames
  * older than the session's snapshot window that differ are counted as a desync
- * (gw_rb_desyncs()). Thread: game thread only (call it from the scene loop's hook, not from a
- * socket thread - queue and drain). */
+ * (gw_rb_desyncs()). Frames more than 56 ahead of the simulation are REFUSED (the input rings
+ * hold 64 frames): a peer stalls at MAX frames ahead of what it has confirmed, so this never
+ * happens with a conforming transport - keep the lookahead window within it and resend.
+ * Thread: game thread only (call it from the scene loop's hook, not from a socket thread - queue
+ * and drain). */
 void gw_rb_submit_remote_input(int slot, int frame, const GwRbInput *in);
 
 /* The LOCAL input the session used (or will use) for `frame`, for sending to the peer. Valid for
@@ -91,10 +109,31 @@ int gw_rb_current_frame(void);
  * (GGPO's "frame advantage"). Positive: we are ahead. */
 int gw_rb_frame_advantage(void);
 
-/* A checksum of the simulation state at the START of `frame` (32-bit; the same on both peers iff
- * they are in sync). Valid for the last few confirmed frames still in the snapshot window;
- * 0 otherwise. Exchange them and compare for desync detection. */
+/* The CURATED GAMEPLAY checksum of the state at the START of `frame` of the current epoch
+ * (32-bit, never 0): the RNG seed plus, per fighter, motion, position, velocity, damage and facing
+ * (ftRb hash in fighter.c). It is what two real machines must agree on; it deliberately leaves out
+ * render-owned bytes, sound handles and heap addresses, which legitimately differ. Published only
+ * for FINAL frames - every input before `frame` confirmed and no correction pending - else 0.
+ * Exchange them and compare for desync detection. (The whole-state hash SyncTest uses is
+ * gw_rb_checksum_full: valid within one process only.) */
 uint32_t gw_rb_checksum(int frame);
+uint32_t gw_rb_checksum_full(int frame);
+
+/* EPOCHS. Frames are numbered per scene (a VS match: -123.. again each time) and every scene
+ * begins a new epoch; a (epoch, frame) pair is never reused, so a hash or an input labelled with an
+ * old epoch can never be mistaken for the new scene's. gw_rb_epoch() is the current one (0 before
+ * any scene). The _e variants drop labels from an earlier epoch and hold back ones from a later
+ * epoch (a peer that entered the scene first) until this side reaches it. The plain functions
+ * above mean "the current epoch". */
+int gw_rb_epoch(void);
+void gw_rb_submit_remote_input_e(int epoch, int slot, int frame, const GwRbInput *in);
+uint32_t gw_rb_checksum_e(int epoch, int frame);
+
+/* TIME SYNC, applied. The transport (gw_net) estimates who is ahead and by how much; the ahead
+ * peer gives back half the gap. This is the actuator: skip the next `frames` NEW-frame iterations
+ * (rollbacks and rendering still run, so the picture does not freeze), one per render tick. Not
+ * counted as stalls. Calls add up; negative values are ignored. */
+void gw_rb_request_wait(int frames);
 
 /* Statistics since the session began. */
 int gw_rb_rollbacks(void);
@@ -121,9 +160,27 @@ void gw_RB_SceneBegin(int scene_kind);
  * and the session's hooks the scene loop runs. */
 int gw_RB_Enabled(void);
 
-/* gw_replay.c: the session's input for (port, follower) at `frame`, or NULL when the fighter
- * should read the live pad. */
+/* gw_replay.c: the session's PROCESSED input for (port, follower) at `frame` (replay-style
+ * entries), or NULL when the fighter should read the pad pipeline (raw entries, or none). */
 const GwRbInput *gw_RB_InputFor(int port, int follower, int frame);
+
+/* gw_replay.c (UCF): the session's entry for (port, leader) at `frame` INCLUDING raw-controller
+ * ones - what UCF reads raw stick bytes from. NULL when there is none. */
+const GwRbInput *gw_RB_InputAny(int port, int frame);
+
+/* controller.c, HSD_PadRenewRawStatus, after PADRead: latch one poll of one port. Between two
+ * logic frames the latch ORs the button edges, keeps the trigger/analog peak and takes the newest
+ * stick position - a tap or an air-dodge press that begins and ends between two logic frames is
+ * not lost. Ignored unless MELEE_RB_INPUT=live. */
+void gw_RB_PadLatch(int port, int button, int sx, int sy, int cx, int cy, int l, int r, int a,
+                    int b, int err);
+
+/* controller.c, HSD_PadRenewMasterStatus: does the session feed this logic iteration's pad
+ * status (raw-controller sources), and, if so, its fields for `port`
+ * (which: 0 button, 1 stickX, 2 stickY, 3 substickX, 4 substickY, 5 triggerL, 6 triggerR,
+ * 7 analogA, 8 analogB, 9 err). Scalars only: the game side byte-swaps its own memory. */
+int gw_RB_PadGoverned(void);
+int gw_RB_PadField(int port, int which);
 
 /* gw_replay.c: the replay's recorded input for (slot, frame) - the "player" side of the fake
  * network. Returns 0 when the replay has none. */

@@ -1,0 +1,1004 @@
+/* gw_netplay.c - online play: the game-side adapter between the rollback session (gw_rollback.c)
+ * and the transport (gw_net.c), plus what it takes to reach a friend on another network.
+ *
+ * HOW A MATCH COMES TOGETHER
+ *   1. Set up: the ONLINE PLAY screen (gmfrontend.c) calls Netplay_Begin with the player's choices
+ *      (host or join, character, costume; the host also stage and rules). Scripted runs set the same
+ *      through MELEE_NETPLAY* instead, and connect at boot (gw_Netplay_Scene).
+ *   2. Connect: the host opens UDP port 51500, finds its public address (STUN) and asks the router to
+ *      forward the port (UPnP); its "code" is that address, copied to the clipboard. The guest pastes
+ *      it and dials. If neither router lets the other in, each side pastes the other's code and both
+ *      punch a hole (the guest's HELLOs and the host's punch packets open both NATs).
+ *   3. Agree: the guest's character travels in its HELLO; the host folds it into the match (a scene
+ *      string, gmscenelaunch.h grammar, with the rules) and sends it back in the ACCEPT with a seed.
+ *   4. Load: both seed VS mode from that scene and load the match. The transport holds the start
+ *      (hold_start) until both have loaded, then agrees a start time.
+ *   5. Play: at the point a replay would restore its match struct (gw_Replay_ApplyMatch) each side
+ *      releases the hold and waits for the start; from there gw_Netplay_Tick runs every render tick
+ *      inside gw_RB_Iterations - remote inputs in, ours out, checksums, time sync.
+ *   6. When the match scene ends the session closes; the next match starts again from step 1 (the
+ *      menu remembers everything, so a rematch is Host / Connect again).
+ *
+ * Inputs travel as raw controller statuses, so both machines run the game's own pad pipeline -
+ * calibration, deadzones, UCF - on identical bytes. Protocol: _research/rollback-net.md.
+ *
+ * Scripted (two windows on one machine: _build/netplay_local.ps1):
+ *   MELEE_NETPLAY=host[:port] | join:<ip>[:port]     connect at boot
+ *   MELEE_NETPLAY_CHAR / _COLOR / _STAGE / _STOCKS / _MINUTES / _DELAY
+ *   MELEE_NETPLAY_BIND=<ip>                           local address (default 127.0.0.1 for a local peer)
+ *   MELEE_NET_SIM / MELEE_NET_SIM_FILE                simulated network conditions (see below)
+ */
+#include "gw.h"
+#include "gw_net.h"
+#include "gw_rollback.h"
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <windows.h>
+
+#define NP_DEFAULT_PORT 51500
+#define NP_PAYLOAD 11 /* buttons u16, stick x/y, c-stick x/y, L, R, analog A, analog B, err */
+#define NP_FIRST_FRAME (-123)
+
+extern void gw_RB_SetDelay(int d);
+extern void gw_SceneLaunch_SetText(const char *text);
+extern void gw_Replay_ArmLive(int on);
+
+enum { NP_IDLE, NP_WORKING, NP_CONNECTED, NP_FAILED, NP_RUNNING };
+
+static struct {
+    int env_tried;
+    int enabled;          /* a netplay match is agreed and armed (the session and live mode run) */
+    int host;
+    /* the setup */
+    int ck, color, stage_ext, stocks, minutes, delay;
+    char peer_code[64];   /* guest: the host's code; host: the guest's code, for hole punching */
+    uint16_t port;
+    /* the connection */
+    gw_net *net;
+    gw_net_transport t;
+    int phase;
+    char status[96];
+    char code[64];        /* this side's code: public address:port */
+    char scene[400];      /* the agreed match */
+    char info[64];        /* guest: its choices, sent in the HELLO */
+    uint32_t seed;
+    int started, dead, accepted;
+    long ticks;
+    int desync_frame;
+    /* hole punching */
+    gw_net_addr punch;
+    int punch_on;
+    uint32_t next_punch;
+    /* UPnP */
+    HANDLE upnp_proc;
+    char upnp_out[MAX_PATH];
+    int upnp_state;       /* 0 not tried, 1 working, 2 opened, 3 unavailable */
+} np = { .phase = NP_IDLE, .desync_frame = GW_NET_NO_FRAME };
+
+int gw_Netplay_Enabled(void) { return np.enabled; }
+int gw_Netplay_LocalPort(void) { return np.host ? 0 : 1; }
+int gw_Netplay_RemotePort(void) { return np.host ? 1 : 0; }
+int gw_Netplay_Delay(void) { return np.delay; }
+
+static void np_status(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(np.status, sizeof np.status, fmt, ap);
+    va_end(ap);
+    gw_log("netplay: %s", np.status);
+}
+
+/* ---- the wire format of one slot's input ----------------------------------------------------- */
+
+static void np_encode(const GwRbInput *in, uint8_t *o) {
+    o[0] = (uint8_t) (in->buttons >> 8);
+    o[1] = (uint8_t) in->buttons;
+    o[2] = (uint8_t) in->raw[0];
+    o[3] = (uint8_t) in->raw[1];
+    o[4] = (uint8_t) in->raw[2];
+    o[5] = (uint8_t) in->raw[3];
+    o[6] = in->pad_l;
+    o[7] = in->pad_r;
+    o[8] = in->pad_a;
+    o[9] = in->pad_b;
+    o[10] = (uint8_t) in->pad_err;
+}
+
+static void np_decode(const uint8_t *b, GwRbInput *in) {
+    memset(in, 0, sizeof *in);
+    in->present = 1;
+    in->is_raw = 1;
+    in->confirmed = 1;
+    in->buttons = ((uint32_t) b[0] << 8) | b[1];
+    in->raw[0] = (int8_t) b[2];
+    in->raw[1] = (int8_t) b[3];
+    in->raw[2] = (int8_t) b[4];
+    in->raw[3] = (int8_t) b[5];
+    in->pad_l = b[6];
+    in->pad_r = b[7];
+    in->pad_a = b[8];
+    in->pad_b = b[9];
+    in->pad_err = (int8_t) b[10];
+}
+
+/* ---- the match both sides play ---------------------------------------------------------------
+ * A scene string (gmscenelaunch.h / _research/scene-launch.md). The rules are part of it, and the
+ * scene launcher writes them into the saved rules, so both peers play the same match whatever
+ * their memory cards say. */
+static void np_build_scene(char *out, size_t cap, int host_ck, int host_c, int guest_ck, int guest_c) {
+    snprintf(out, cap,
+             "mode=vs;at=match;p1=ck:%d/c%d/hu;p2=ck:%d/c%d/hu;stage=ext:%d;match=stock;stocks=%d;"
+             "minutes=%d;items=off;pause=0",
+             host_ck, host_c, guest_ck, guest_c, np.stage_ext, np.stocks, np.minutes);
+}
+
+/* ---- transport callbacks --------------------------------------------------------------------- */
+
+static void np_cb_remote(void *user, int32_t frame, int slot, const uint8_t *payload) {
+    GwRbInput in;
+    (void) user;
+    np_decode(payload, &in);
+    gw_rb_submit_remote_input(slot, frame, &in);
+}
+
+static int np_cb_local(void *user, int32_t frame, int slot, uint8_t *out) {
+    GwRbInput in;
+    (void) user;
+    if (!gw_rb_local_input_for_send(slot, frame, &in)) {
+        return 0;
+    }
+    np_encode(&in, out);
+    return 1;
+}
+
+static int np_cb_checksum(void *user, int32_t frame, uint32_t *out) {
+    uint32_t h;
+    (void) user;
+    h = gw_rb_checksum(frame);
+    *out = h;
+    return h != 0;
+}
+
+static void np_cb_event(void *user, int ev, const char *msg) {
+    static const char *const names[] = { "?", "accepted", "starting", "started", "refused",
+                                         "interrupted", "resumed", "disconnected" };
+    (void) user;
+    gw_log("netplay: %s%s%s", ev >= 1 && ev <= 7 ? names[ev] : "?", msg != NULL ? " - " : "",
+           msg != NULL ? msg : "");
+    if (ev == GW_NET_EV_STARTED) {
+        np.started = 1;
+    }
+    if (ev == GW_NET_EV_REFUSED || ev == GW_NET_EV_DISCONNECTED) {
+        np.dead = 1;
+        np_status("%s: %s", ev == GW_NET_EV_REFUSED ? "Refused" : "Disconnected",
+                  msg != NULL ? msg : "the other player left");
+    }
+}
+
+static void np_cb_desync(void *user, int32_t frame, uint32_t local, uint32_t remote) {
+    (void) user;
+    np.desync_frame = frame;
+    gw_log("netplay: DESYNC at frame %d - local checksum %08X, peer %08X", frame, local, remote);
+}
+
+/* Host: the guest's HELLO carried its choices ("ck:N/cM"); make the match. */
+static void np_cb_guest_hello(void *user, const uint8_t *info, int info_len, uint8_t *blob,
+                              uint16_t *blob_len, int cap) {
+    char s[65];
+    int gck = 9, gc = 0;
+    (void) user;
+    if (info_len > 64) info_len = 64;
+    memcpy(s, info, (size_t) info_len);
+    s[info_len] = '\0';
+    if (sscanf(s, "ck:%d/c%d", &gck, &gc) < 1 || gck < 0 || gck > 25) {
+        gck = 9;
+    }
+    if (gc < 0 || gc > 5) gc = 0;
+    np_build_scene(np.scene, sizeof np.scene, np.ck, np.color, gck, gc);
+    snprintf((char *) blob, (size_t) cap, "%s", np.scene);
+    *blob_len = (uint16_t) (strlen(np.scene) + 1);
+    gw_log("netplay: the guest picked \"%s\" - match \"%s\"", s, np.scene);
+}
+
+/* ---- network conditions simulator ------------------------------------------------------------
+ * Wraps the real UDP transport, so everything above it - handshake, redundancy, resends, time
+ * sync, the rollback session - meets the conditions exactly as it would on a bad connection.
+ * Applied to what THIS copy sends, so each direction takes its sender's settings (the launcher
+ * gives both copies the same ones: round trip = 2 x lag).
+ *
+ *   MELEE_NET_SIM="lag=60,jitter=15,loss=5"     at start
+ *   MELEE_NET_SIM_FILE=<path>                   same syntax, re-read every second: edit it live
+ *
+ *   lag=<ms>       one-way delay added to every packet
+ *   jitter=<ms>    +- random extra delay per packet (so packets also arrive out of order)
+ *   loss=<%>       packets dropped at random
+ *   burst=<n>      a drop also takes the next n-1 packets (bursty loss, as on Wi-Fi)
+ *   dup=<%>        packets delivered twice
+ *   spike=<every_ms>:<len_ms>   every `every_ms`, hold ALL packets for `len_ms` (a lag spike)
+ *   off            no simulation (the same as an empty setting)
+ */
+typedef struct NpSimPkt {
+    uint32_t due;
+    gw_net_addr to;
+    int len;
+    uint8_t data[1500];
+} NpSimPkt;
+
+#define NP_SIM_MAX 2048
+
+static struct {
+    int on;
+    int lag, jitter, loss, burst, dup, spike_every, spike_len;
+    gw_net_transport inner;
+    NpSimPkt *q[NP_SIM_MAX];
+    int nq;
+    uint32_t rng;
+    int burst_left;
+    uint32_t spike_next, spike_end;
+    const char *file;
+    FILETIME file_time;
+    uint32_t file_checked;
+    uint32_t n_sent, n_dropped, n_dup;
+    int changed; /* settings changed since the window title last showed them */
+} sim;
+
+static uint32_t np_ms(void) {
+    static LARGE_INTEGER f;
+    LARGE_INTEGER c;
+    if (f.QuadPart == 0) {
+        QueryPerformanceFrequency(&f);
+    }
+    QueryPerformanceCounter(&c);
+    return (uint32_t) (c.QuadPart * 1000 / f.QuadPart);
+}
+
+static uint32_t np_rand(void) {
+    sim.rng ^= sim.rng << 13;
+    sim.rng ^= sim.rng >> 17;
+    sim.rng ^= sim.rng << 5;
+    return sim.rng;
+}
+
+static void np_sim_parse(const char *s) {
+    char buf[256];
+    char *tok, *ctx = NULL;
+    sim.lag = sim.jitter = sim.loss = sim.burst = sim.dup = sim.spike_every = sim.spike_len = 0;
+    snprintf(buf, sizeof buf, "%s", s != NULL ? s : "");
+    for (tok = strtok_s(buf, ",; \t\r\n", &ctx); tok != NULL; tok = strtok_s(NULL, ",; \t\r\n", &ctx)) {
+        char *eq = strchr(tok, '=');
+        int v = eq != NULL ? atoi(eq + 1) : 0;
+        if (strncmp(tok, "lag", 3) == 0 || strncmp(tok, "delay", 5) == 0) sim.lag = v;
+        else if (strncmp(tok, "jitter", 6) == 0) sim.jitter = v;
+        else if (strncmp(tok, "loss", 4) == 0 || strncmp(tok, "drop", 4) == 0) sim.loss = v;
+        else if (strncmp(tok, "burst", 5) == 0) sim.burst = v;
+        else if (strncmp(tok, "dup", 3) == 0) sim.dup = v;
+        else if (strncmp(tok, "spike", 5) == 0 && eq != NULL) {
+            sim.spike_every = atoi(eq + 1);
+            sim.spike_len = strchr(eq, ':') != NULL ? atoi(strchr(eq, ':') + 1) : 250;
+        }
+    }
+    if (sim.lag < 0) sim.lag = 0;
+    if (sim.jitter < 0) sim.jitter = 0;
+    if (sim.loss > 100) sim.loss = 100;
+    if (sim.dup > 100) sim.dup = 100;
+    sim.spike_next = sim.spike_every > 0 ? np_ms() + (uint32_t) sim.spike_every : 0;
+    sim.changed = 1;
+    gw_log("netplay: network sim - lag %d ms, jitter %d ms, loss %d%% (burst %d), dup %d%%, "
+           "spike %d ms every %d ms", sim.lag, sim.jitter, sim.loss, sim.burst, sim.dup,
+           sim.spike_len, sim.spike_every);
+}
+
+/* MELEE_NET_SIM_FILE: re-read when it changes, checked once a second. */
+static void np_sim_poll_file(void) {
+    WIN32_FILE_ATTRIBUTE_DATA a;
+    uint32_t now = np_ms();
+    if (sim.file == NULL || now - sim.file_checked < 1000u) {
+        return;
+    }
+    sim.file_checked = now;
+    if (!GetFileAttributesExA(sim.file, GetFileExInfoStandard, &a) ||
+        CompareFileTime(&a.ftLastWriteTime, &sim.file_time) == 0) {
+        return;
+    }
+    sim.file_time = a.ftLastWriteTime;
+    {
+        char buf[256] = { 0 };
+        FILE *f = fopen(sim.file, "r");
+        if (f != NULL) {
+            size_t n = fread(buf, 1, sizeof buf - 1, f);
+            buf[n] = '\0';
+            fclose(f);
+            np_sim_parse(buf);
+        }
+    }
+}
+
+/* Send everything due, in due order (the queue is small; a linear scan is fine). */
+static void np_sim_flush(void) {
+    uint32_t now = np_ms();
+    int i = 0;
+    if (sim.spike_every > 0 && sim.spike_len > 0 && (int32_t) (now - sim.spike_next) >= 0) {
+        sim.spike_end = now + (uint32_t) sim.spike_len;
+        sim.spike_next = now + (uint32_t) sim.spike_every;
+        gw_log("netplay: network sim - lag spike, %d ms", sim.spike_len);
+    }
+    if ((int32_t) (now - sim.spike_end) < 0) {
+        return; /* inside a spike: everything waits */
+    }
+    while (i < sim.nq) {
+        NpSimPkt *p = sim.q[i];
+        if ((int32_t) (now - p->due) >= 0) {
+            sim.inner.send(sim.inner.ctx, &p->to, p->data, p->len);
+            free(p);
+            sim.q[i] = sim.q[--sim.nq];
+        } else {
+            ++i;
+        }
+    }
+}
+
+static void np_sim_enqueue(const gw_net_addr *to, const void *data, int len) {
+    NpSimPkt *p;
+    int j = 0;
+    if (sim.nq >= NP_SIM_MAX || len > (int) sizeof p->data) {
+        sim.n_dropped++;
+        return;
+    }
+    p = (NpSimPkt *) malloc(sizeof *p);
+    if (p == NULL) {
+        return;
+    }
+    if (sim.jitter > 0) {
+        j = (int) (np_rand() % (uint32_t) (2 * sim.jitter + 1)) - sim.jitter;
+    }
+    p->due = np_ms() + (uint32_t) (sim.lag + j > 0 ? sim.lag + j : 0);
+    p->to = *to;
+    p->len = len;
+    memcpy(p->data, data, (size_t) len);
+    sim.q[sim.nq++] = p;
+}
+
+static int np_sim_send(void *ctx, const gw_net_addr *to, const void *data, int len) {
+    (void) ctx;
+    np_sim_poll_file();
+    sim.n_sent++;
+    if (sim.burst_left > 0) {
+        sim.burst_left--;
+        sim.n_dropped++;
+    } else if (sim.loss > 0 && (int) (np_rand() % 100u) < sim.loss) {
+        sim.n_dropped++;
+        sim.burst_left = sim.burst > 1 ? sim.burst - 1 : 0;
+    } else {
+        np_sim_enqueue(to, data, len);
+        if (sim.dup > 0 && (int) (np_rand() % 100u) < sim.dup) {
+            sim.n_dup++;
+            np_sim_enqueue(to, data, len);
+        }
+    }
+    np_sim_flush();
+    return len; /* the caller only learns about loss the way it would on a real network */
+}
+
+static int np_sim_recv(void *ctx, gw_net_addr *from, void *buf, int cap) {
+    (void) ctx;
+    np_sim_flush();
+    return sim.inner.recv(sim.inner.ctx, from, buf, cap);
+}
+
+static void np_sim_close(void *ctx) {
+    int i;
+    (void) ctx;
+    for (i = 0; i < sim.nq; ++i) {
+        free(sim.q[i]);
+    }
+    sim.nq = 0;
+    sim.inner.close(sim.inner.ctx);
+}
+
+/* Wrap `t` in the simulator when MELEE_NET_SIM or MELEE_NET_SIM_FILE is set. */
+static void np_sim_wrap(gw_net_transport *t) {
+    const char *v = getenv("MELEE_NET_SIM");
+    const char *f = getenv("MELEE_NET_SIM_FILE");
+    if ((v == NULL || v[0] == '\0') && (f == NULL || f[0] == '\0')) {
+        return;
+    }
+    sim.on = 1;
+    sim.rng = (uint32_t) GetCurrentProcessId() * 2654435761u | 1u;
+    sim.inner = *t;
+    sim.file = f != NULL && f[0] != '\0' ? f : NULL;
+    np_sim_parse(v);
+    np_sim_poll_file();
+    t->ctx = &sim;
+    t->send = np_sim_send;
+    t->recv = np_sim_recv;
+    t->close = np_sim_close;
+}
+
+
+/* ---- reaching the other network ---------------------------------------------------------------- */
+
+/* STUN (RFC 5389) over the game's own socket: the public address and port the router gave THIS
+ * socket - exactly what the friend must dial. Before the session starts, so nothing else reads
+ * the socket yet. Returns 1 and fills `out` on success. */
+static int np_stun(gw_net_transport *t, gw_net_addr *out) {
+    static const char *const servers[][2] = {
+        { "stun.l.google.com", "19302" },
+        { "stun1.l.google.com", "19302" },
+        { "stun.cloudflare.com", "3478" },
+    };
+    int s;
+    for (s = 0; s < 3; ++s) {
+        struct addrinfo hints, *res = NULL;
+        uint8_t req[20], rsp[512];
+        gw_net_addr to, from;
+        DWORD t0;
+        int k;
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_DGRAM;
+        if (getaddrinfo(servers[s][0], servers[s][1], &hints, &res) != 0 || res == NULL) {
+            continue;
+        }
+        to.ip = ntohl(((struct sockaddr_in *) res->ai_addr)->sin_addr.s_addr);
+        to.port = ntohs(((struct sockaddr_in *) res->ai_addr)->sin_port);
+        freeaddrinfo(res);
+        memset(req, 0, sizeof req);
+        req[1] = 0x01;                                   /* Binding Request, length 0 */
+        req[4] = 0x21; req[5] = 0x12; req[6] = 0xA4; req[7] = 0x42; /* magic cookie */
+        for (k = 8; k < 20; ++k) {
+            req[k] = (uint8_t) (rand() ^ (GetTickCount() >> k));
+        }
+        t0 = GetTickCount();
+        t->send(t->ctx, &to, req, 20);
+        while (GetTickCount() - t0 < 1500) {
+            int n = t->recv(t->ctx, &from, rsp, (int) sizeof rsp);
+            if (n <= 0) {
+                Sleep(5);
+                if (GetTickCount() - t0 > 500 && GetTickCount() - t0 < 520) {
+                    t->send(t->ctx, &to, req, 20); /* one retry */
+                }
+                continue;
+            }
+            if (n >= 20 && rsp[0] == 0x01 && rsp[1] == 0x01 && memcmp(rsp + 4, req + 4, 16) == 0) {
+                int off = 20;
+                while (off + 4 <= n) {
+                    int type = (rsp[off] << 8) | rsp[off + 1];
+                    int len = (rsp[off + 2] << 8) | rsp[off + 3];
+                    const uint8_t *v = rsp + off + 4;
+                    if (off + 4 + len > n) break;
+                    if ((type == 0x0020 || type == 0x0001) && len >= 8 && v[1] == 0x01) {
+                        uint16_t port = (uint16_t) ((v[2] << 8) | v[3]);
+                        uint32_t ip = ((uint32_t) v[4] << 24) | ((uint32_t) v[5] << 16) |
+                                      ((uint32_t) v[6] << 8) | v[7];
+                        if (type == 0x0020) {
+                            port ^= 0x2112;
+                            ip ^= 0x2112A442u;
+                        }
+                        out->ip = ip;
+                        out->port = port;
+                        gw_log("netplay: STUN %s says this socket is %u.%u.%u.%u:%u", servers[s][0],
+                               ip >> 24, (ip >> 16) & 255, (ip >> 8) & 255, ip & 255, port);
+                        return 1;
+                    }
+                    off += 4 + ((len + 3) & ~3);
+                }
+            }
+        }
+    }
+    gw_log("netplay: STUN - no answer from any server (offline, or UDP blocked)");
+    return 0;
+}
+
+/* This machine's LAN address: the interface the default route uses. 0 if none. */
+static uint32_t np_lan_ip(void) {
+    SOCKET s = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in a;
+    int len = sizeof a;
+    uint32_t ip = 0;
+    if (s == INVALID_SOCKET) return 0;
+    memset(&a, 0, sizeof a);
+    a.sin_family = AF_INET;
+    a.sin_port = htons(53);
+    a.sin_addr.s_addr = htonl(0x08080808u);
+    if (connect(s, (struct sockaddr *) &a, sizeof a) == 0 &&
+        getsockname(s, (struct sockaddr *) &a, &len) == 0) {
+        ip = ntohl(a.sin_addr.s_addr);
+    }
+    closesocket(s);
+    return ip;
+}
+
+/* UPnP: ask the router to forward the UDP port to this machine, through Windows' own UPnP client
+ * (HNetCfg.NATUPnP), in a hidden PowerShell so the game never waits on the router. */
+static void np_upnp_start(uint16_t port) {
+    char cmd[1024], tmp[MAX_PATH];
+    uint32_t lan = np_lan_ip();
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
+    if (lan == 0) {
+        np.upnp_state = 3;
+        return;
+    }
+    GetTempPathA(sizeof tmp, tmp);
+    snprintf(np.upnp_out, sizeof np.upnp_out, "%sgdmelee_upnp_%lu.txt", tmp, GetCurrentProcessId());
+    DeleteFileA(np.upnp_out);
+    snprintf(cmd, sizeof cmd,
+             "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command \"try { "
+             "$m = (New-Object -ComObject HNetCfg.NATUPnP).StaticPortMappingCollection; "
+             "if ($m) { try { $m.Remove(%u,'UDP') } catch {}; $m.Add(%u,'UDP',%u,'%u.%u.%u.%u',$true,"
+             "'GD Melee netplay') | Out-Null; 'ok' } else { 'none' } } catch { 'none' }\" > \"%s\"",
+             port, port, port, lan >> 24, (lan >> 16) & 255, (lan >> 8) & 255, lan & 255,
+             np.upnp_out);
+    memset(&si, 0, sizeof si);
+    si.cb = sizeof si;
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+    {
+        char full[1200];
+        snprintf(full, sizeof full, "cmd.exe /c %s", cmd);
+        if (CreateProcessA(NULL, full, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+            CloseHandle(pi.hThread);
+            np.upnp_proc = pi.hProcess;
+            np.upnp_state = 1;
+        } else {
+            np.upnp_state = 3;
+        }
+    }
+}
+
+static void np_upnp_poll(void) {
+    if (np.upnp_state != 1 || np.upnp_proc == NULL ||
+        WaitForSingleObject(np.upnp_proc, 0) != WAIT_OBJECT_0) {
+        return;
+    }
+    CloseHandle(np.upnp_proc);
+    np.upnp_proc = NULL;
+    {
+        char buf[64] = { 0 };
+        FILE *f = fopen(np.upnp_out, "r");
+        if (f != NULL) {
+            fread(buf, 1, sizeof buf - 1, f);
+            fclose(f);
+        }
+        DeleteFileA(np.upnp_out);
+        np.upnp_state = strstr(buf, "ok") != NULL ? 2 : 3;
+    }
+    gw_log("netplay: UPnP port forwarding %s", np.upnp_state == 2 ? "opened" : "not available");
+}
+
+/* The clipboard (CF_TEXT). */
+static int np_clip_get(char *out, int cap) {
+    int ok = 0;
+    out[0] = '\0';
+    if (OpenClipboard(NULL)) {
+        HANDLE h = GetClipboardData(CF_TEXT);
+        if (h != NULL) {
+            const char *p = (const char *) GlobalLock(h);
+            if (p != NULL) {
+                int i = 0;
+                while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+                while (*p != '\0' && *p != '\r' && *p != '\n' && i < cap - 1) out[i++] = *p++;
+                while (i > 0 && (out[i - 1] == ' ' || out[i - 1] == '\t')) i--;
+                out[i] = '\0';
+                ok = i > 0;
+                GlobalUnlock(h);
+            }
+        }
+        CloseClipboard();
+    }
+    return ok;
+}
+
+static void np_clip_set(const char *s) {
+    size_t n = strlen(s) + 1;
+    HGLOBAL g;
+    if (!OpenClipboard(NULL)) return;
+    EmptyClipboard();
+    g = GlobalAlloc(GMEM_MOVEABLE, n);
+    if (g != NULL) {
+        memcpy(GlobalLock(g), s, n);
+        GlobalUnlock(g);
+        SetClipboardData(CF_TEXT, g);
+    }
+    CloseClipboard();
+}
+
+static void np_fmt_addr(char *out, size_t cap, const gw_net_addr *a) {
+    snprintf(out, cap, "%u.%u.%u.%u:%u", a->ip >> 24, (a->ip >> 16) & 255, (a->ip >> 8) & 255,
+             a->ip & 255, a->port);
+}
+
+/* ---- starting and running a connection --------------------------------------------------------- */
+
+static void np_close(void) {
+    if (np.net != NULL) {
+        gw_net_free(np.net); /* sends QUIT; closes the transport */
+        np.net = NULL;
+    }
+    if (np.upnp_proc != NULL) {
+        CloseHandle(np.upnp_proc);
+        np.upnp_proc = NULL;
+    }
+    np.punch_on = 0;
+}
+
+static uint64_t np_exe_hash(void) {
+    char path[MAX_PATH];
+    DWORD n = GetModuleFileNameA(NULL, path, sizeof path);
+    return n > 0 && n < sizeof path ? gw_net_hash_file(path, 0) : 0;
+}
+
+/* Start hosting or joining with the current setup. 0 on success (the connection proceeds in
+ * Netplay_Poll), -1 with np.status saying why. */
+static int np_begin(int bind_local) {
+    gw_net_config cfg;
+    gw_net_addr peer, pub;
+    uint32_t bind_ip = 0;
+    np_close();
+    memset(&cfg, 0, sizeof cfg);
+    memset(&peer, 0, sizeof peer);
+    np.started = np.dead = np.accepted = 0;
+    np.enabled = 0;
+    np.desync_frame = GW_NET_NO_FRAME;
+    np.code[0] = '\0';
+    np.upnp_state = 0;
+    if (!np.host) {
+        if (gw_net_addr_parse(np.peer_code, NP_DEFAULT_PORT, &peer) != 0 || peer.ip == 0) {
+            np_status("Paste the host's code first (it looks like 1.2.3.4:51500)");
+            np.phase = NP_FAILED;
+            return -1;
+        }
+        if ((peer.ip >> 24) == 127) bind_ip = 0x7F000001u;
+    }
+    if (bind_local) bind_ip = 0x7F000001u;
+    {
+        const char *b = getenv("MELEE_NETPLAY_BIND");
+        gw_net_addr ba;
+        if (b != NULL && b[0] != '\0' && gw_net_addr_parse(b, 1, &ba) == 0) bind_ip = ba.ip;
+    }
+    if (gw_net_udp_open(bind_ip, np.host ? np.port : 0, &np.t) != 0) {
+        np_status("Could not open UDP port %u (is another copy hosting?)", np.host ? np.port : 0);
+        np.phase = NP_FAILED;
+        return -1;
+    }
+    /* this side's code: the public address the friend dials (or the LAN one if STUN fails) */
+    if (bind_ip != 0x7F000001u && np_stun(&np.t, &pub)) {
+        if (np.host && pub.port != np.port) {
+            gw_log("netplay: the router maps port %u to %u (a symmetric or port-shifting NAT)",
+                   np.port, pub.port);
+        }
+        np_fmt_addr(np.code, sizeof np.code, &pub);
+    } else {
+        gw_net_addr lan;
+        lan.ip = bind_ip == 0x7F000001u ? 0x7F000001u : np_lan_ip();
+        lan.port = np.host ? np.port : gw_net_udp_local_port(&np.t);
+        np_fmt_addr(np.code, sizeof np.code, &lan);
+    }
+    np_sim_wrap(&np.t);
+
+    cfg.exe_hash = np_exe_hash();
+    {
+        /* both must play the same disc: its header, apploader and the start of the DOL are
+           enough to tell versions and modified discs apart (the transport refuses a mismatch) */
+        extern const char *gw_iso_path(void);
+        const char *iso = gw_iso_path();
+        cfg.iso_hash = iso != NULL ? gw_net_hash_file(iso, 4u << 20) : 0;
+    }
+    cfg.first_frame = NP_FIRST_FRAME;
+    cfg.payload_bytes = NP_PAYLOAD;
+    cfg.hold_start = 1;
+    cfg.handshake_timeout_ms = 180000u; /* the host may be waiting on a friend's router */
+    cfg.cb.remote_input = np_cb_remote;
+    cfg.cb.local_input = np_cb_local;
+    cfg.cb.checksum = np_cb_checksum;
+    cfg.cb.event = np_cb_event;
+    cfg.cb.desync = np_cb_desync;
+    cfg.cb.guest_hello = np_cb_guest_hello;
+    if (np.host) {
+        LARGE_INTEGER c;
+        QueryPerformanceCounter(&c);
+        np.seed = (uint32_t) (c.QuadPart * 2654435761u) ^ GetCurrentProcessId();
+        if (np.seed == 0) np.seed = 1;
+        cfg.seed = np.seed;
+        cfg.input_delay = (uint8_t) np.delay;
+        cfg.host_slots = (uint8_t) (1u << (2 * 0));
+        cfg.guest_slots = (uint8_t) (1u << (2 * 1));
+        np_build_scene(np.scene, sizeof np.scene, np.ck, np.color, 9, 0); /* until the guest says */
+        cfg.match_blob = np.scene;
+        cfg.match_blob_len = (uint16_t) (strlen(np.scene) + 1);
+        np.net = gw_net_host(&cfg, &np.t);
+        if (bind_ip != 0x7F000001u) np_upnp_start(np.port);
+        np_clip_set(np.code);
+        np_status("Hosting. Your code %s is copied - send it to your friend", np.code);
+    } else {
+        snprintf(np.info, sizeof np.info, "ck:%d/c%d", np.ck, np.color);
+        cfg.guest_info = np.info;
+        cfg.guest_info_len = (uint8_t) strlen(np.info);
+        np.net = gw_net_join(&cfg, &np.t, &peer);
+        np_clip_set(np.code);
+        np_status("Connecting to %s ...", np.peer_code);
+    }
+    if (np.net == NULL) {
+        np.t.close(np.t.ctx);
+        np_status("Could not start the session");
+        np.phase = NP_FAILED;
+        return -1;
+    }
+    np.phase = NP_WORKING;
+    return 0;
+}
+
+/* Arm everything for the agreed match: the scene, live mode, the rollback session. */
+static void np_arm(void) {
+    np.enabled = 1;
+    gw_Replay_ArmLive(1);
+    gw_log("netplay: match agreed - \"%s\" (seed 0x%08X, input delay %d)", np.scene, np.seed,
+           np.delay);
+}
+
+/* One step of connecting (menu frames, or the boot wait). Returns the phase. */
+static int np_poll(void) {
+    if (np.net == NULL || np.phase != NP_WORKING) {
+        return np.phase;
+    }
+    gw_net_poll(np.net, NP_FIRST_FRAME);
+    np_upnp_poll();
+    if (np.host && np.punch_on && (int32_t) (GetTickCount() - np.next_punch) >= 0) {
+        static const uint8_t punch[4] = { 'G', 'D', 'P', 'H' };
+        np.t.send(np.t.ctx, &np.punch, punch, 4); /* opens our router toward the guest */
+        np.next_punch = GetTickCount() + 200;
+    }
+    if (np.dead) {
+        np.phase = NP_FAILED;
+        np_close();
+        return np.phase;
+    }
+    if (!np.accepted) {
+        int st = gw_net_state(np.net);
+        if (st >= GW_NET_ACCEPTED && st <= GW_NET_RUNNING) {
+            if (!np.host) {
+                gw_net_config hc;
+                char blob[GW_NET_MAX_BLOB];
+                if (!gw_net_remote_config(np.net, &hc, blob, sizeof blob)) {
+                    return np.phase;
+                }
+                blob[sizeof blob - 1] = '\0';
+                snprintf(np.scene, sizeof np.scene, "%s", blob);
+                np.seed = hc.seed;
+                np.delay = hc.input_delay;
+                gw_RB_SetDelay(np.delay);
+            }
+            np.accepted = 1;
+            np.phase = NP_CONNECTED;
+            np_status("Connected! Starting the match...");
+            np_arm();
+        } else if (np.host) {
+            const char *u = np.upnp_state == 1 ? "checking your router..."
+                          : np.upnp_state == 2 ? "router port opened, friend can join directly"
+                          : np.upnp_state == 3 ? "no auto port forward - if they can't join, paste their code"
+                                               : "";
+            snprintf(np.status, sizeof np.status, "Waiting for friend (code %s copied) - %s", np.code, u);
+        } else {
+            snprintf(np.status, sizeof np.status,
+                     "Connecting to %s... If it takes long, send your code %s to the host", np.peer_code,
+                     np.code);
+        }
+    }
+    return np.phase;
+}
+
+/* ---- the in-game ONLINE PLAY menu (gmfrontend.c) ----------------------------------------------
+ * Game code calls these without the gw_ prefix (gwtool adds it). Integers in, text out by copy. */
+int gw_Netplay_MenuBegin(int host, int ck, int color, int stage_ext, int stocks, int minutes, int delay) {
+    np.host = host != 0;
+    np.ck = ck;
+    np.color = color;
+    np.stage_ext = stage_ext;
+    np.stocks = stocks;
+    np.minutes = minutes;
+    np.delay = delay;
+    np.port = NP_DEFAULT_PORT;
+    return np_begin(0);
+}
+
+/* Paste a code from the clipboard: the guest's is the host's code; the host's is the guest's code
+ * (for when neither router lets the other in: the host then punches toward it). 1 if one was read. */
+int gw_Netplay_MenuPaste(int as_host) {
+    char buf[64];
+    gw_net_addr a;
+    if (!np_clip_get(buf, sizeof buf) || gw_net_addr_parse(buf, NP_DEFAULT_PORT, &a) != 0 || a.ip == 0) {
+        np_status("The clipboard doesn't hold a code (like 1.2.3.4:51500)");
+        return 0;
+    }
+    if (as_host) {
+        np.punch = a;
+        np.punch_on = 1;
+        np.next_punch = 0;
+        np_status("Opening a path to %s - ask your friend to press Connect again", buf);
+    } else {
+        snprintf(np.peer_code, sizeof np.peer_code, "%s", buf);
+        np_status("Host code %s pasted - press Connect", buf);
+    }
+    return 1;
+}
+
+int gw_Netplay_MenuPoll(void) { return np_poll(); }
+
+void gw_Netplay_MenuCancel(void) {
+    np_close();
+    np.phase = NP_IDLE;
+    np.enabled = 0;
+    np_status("Cancelled");
+}
+
+/* Once connected: make the agreed match the configured scene (VS mode seeds from it). */
+void gw_Netplay_MenuLaunch(void) {
+    gw_SceneLaunch_SetText(np.scene);
+}
+
+static void np_copy(char *out, int cap, const char *s) {
+    int i = 0;
+    for (; s[i] != '\0' && i < cap - 1; ++i) out[i] = s[i];
+    out[i] = '\0';
+}
+void gw_Netplay_MenuStatus(char *out, int cap) { np_copy(out, cap, np.status); }
+void gw_Netplay_MenuCode(char *out, int cap) { np_copy(out, cap, np.code[0] ? np.code : "-"); }
+void gw_Netplay_MenuPeer(char *out, int cap) { np_copy(out, cap, np.peer_code[0] ? np.peer_code : "(none - press A to paste)"); }
+
+/* ---- scripted: MELEE_NETPLAY connects at boot ---------------------------------------------------- */
+
+static int np_env_int(const char *name, int dflt) {
+    const char *v = getenv(name);
+    return v != NULL && v[0] != '\0' ? atoi(v) : dflt;
+}
+
+/* gw_sl_load (gw_runtime.c), before MELEE_SCENE: with MELEE_NETPLAY set, connect now and return the
+ * agreed match as the boot scene. NULL otherwise. */
+const char *gw_Netplay_Scene(void) {
+    const char *v;
+    if (np.env_tried) return NULL;
+    np.env_tried = 1;
+    v = getenv("MELEE_NETPLAY");
+    if (v == NULL || v[0] == '\0' || v[0] == '0') return NULL;
+    np.port = NP_DEFAULT_PORT;
+    if (strncmp(v, "host", 4) == 0) {
+        np.host = 1;
+        if (v[4] == ':') np.port = (uint16_t) atoi(v + 5);
+    } else if (strncmp(v, "join:", 5) == 0) {
+        np.host = 0;
+        snprintf(np.peer_code, sizeof np.peer_code, "%s", v + 5);
+    } else {
+        gw_log("netplay: MELEE_NETPLAY=\"%s\" not understood (host[:port] or join:<ip>[:port])", v);
+        return NULL;
+    }
+    np.ck = np_env_int("MELEE_NETPLAY_CHAR", np.host ? 2 : 9); /* Fox / Marth */
+    np.color = np_env_int("MELEE_NETPLAY_COLOR", 0);
+    np.stage_ext = np_env_int("MELEE_NETPLAY_STAGE", 31);     /* Battlefield */
+    np.stocks = np_env_int("MELEE_NETPLAY_STOCKS", 4);
+    np.minutes = np_env_int("MELEE_NETPLAY_MINUTES", 8);
+    np.delay = np_env_int("MELEE_NETPLAY_DELAY", 2);
+    if (np_begin(0) != 0) return NULL;
+    {
+        DWORD t0 = GetTickCount();
+        while (np_poll() == NP_WORKING && GetTickCount() - t0 < 600000u) {
+            MSG m;
+            while (PeekMessageA(&m, NULL, 0, 0, PM_REMOVE)) {
+                TranslateMessage(&m);
+                DispatchMessageA(&m);
+            }
+            Sleep(2);
+        }
+    }
+    if (np.phase != NP_CONNECTED) {
+        gw_log("netplay: not connected - %s", np.status);
+        return NULL;
+    }
+    return np.scene;
+}
+
+/* ---- the match ------------------------------------------------------------------------------------ */
+
+static BOOL CALLBACK np_title_cb(HWND w, LPARAM title) {
+    if (IsWindowVisible(w)) SetWindowTextA(w, (const char *) title);
+    return TRUE;
+}
+static void np_set_title(const char *t) {
+    EnumThreadWindows(GetCurrentThreadId(), np_title_cb, (LPARAM) t);
+}
+
+static void np_connected_title(char *title, size_t cap) {
+    size_t n;
+    snprintf(title, cap, "Melee netplay - %s (P%d) - input delay %d, ping %u ms",
+             np.host ? "HOST" : "GUEST", gw_Netplay_LocalPort() + 1, np.delay,
+             np.net != NULL ? gw_net_rtt_ms(np.net) : 0);
+    if (sim.on) {
+        n = strlen(title);
+        snprintf(title + n, cap - n, " | SIMULATED: lag %d, jitter %d, loss %d%%, dup %d%%%s%s",
+                 sim.lag, sim.jitter, sim.loss, sim.dup, sim.spike_every > 0 ? ", spikes" : "",
+                 sim.file != NULL ? " (live file)" : "");
+    }
+    sim.changed = 0;
+    np_set_title(title);
+}
+
+/* gw_Replay_ApplyMatch, live mode, just before frame -123: this side has loaded the match. Release
+ * the hold and wait for the agreed start. Returns the seed. */
+uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
+    DWORD t0 = GetTickCount();
+    (void) d; (void) len; (void) keep_off; (void) keep_len;
+    if (np.net == NULL) {
+        return np.seed;
+    }
+    gw_net_release(np.net);
+    np_set_title("Melee netplay - waiting for the other player to load...");
+    while (!np.started && !np.dead && GetTickCount() - t0 < GW_NET_HOLD_TIMEOUT_MS) {
+        MSG m;
+        gw_net_poll(np.net, NP_FIRST_FRAME);
+        while (PeekMessageA(&m, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&m);
+            DispatchMessageA(&m);
+        }
+        Sleep(1);
+    }
+    if (!np.started) {
+        gw_log("netplay: the match never started (%s)", gw_net_last_reason(np.net));
+        np_set_title("Melee netplay - NOT CONNECTED");
+        return np.seed;
+    }
+    np.phase = NP_RUNNING;
+    {
+        char title[200];
+        np_connected_title(title, sizeof title);
+        gw_log("netplay: %s", title);
+    }
+    return np.seed;
+}
+
+/* The match scene is over (gw_RB_SceneBegin saw a non-VS scene after a live match): close the
+ * session and put everything back for offline play. */
+void gw_Netplay_MatchOver(void) {
+    if (!np.enabled) return;
+    gw_log("netplay: match over - closing the session");
+    np_close();
+    np.enabled = 0;
+    np.phase = NP_IDLE;
+    gw_Replay_ArmLive(0);
+    gw_SceneLaunch_SetText(NULL);
+    np_set_title("Melee");
+}
+
+/* Once per render tick during the match (gw_RB_Iterations). */
+void gw_Netplay_Tick(void) {
+    int w;
+    if (np.net == NULL) {
+        return;
+    }
+    gw_net_poll(np.net, gw_rb_current_frame());
+    w = gw_net_recommend_wait(np.net);
+    if (w > 0) {
+        gw_rb_request_wait(w);
+    }
+    if ((sim.changed || (np.ticks % 300) == 0) && np.started) {
+        char title[200];
+        np_connected_title(title, sizeof title);
+    }
+    if ((++np.ticks % 600) == 0) {
+        gw_net_stats s;
+        gw_net_get_stats(np.net, &s);
+        gw_log("netplay: frame %d, rtt %u ms, advantage %.1f, remote confirmed %d, rollbacks %d, "
+               "desyncs %d, packets %u/%u, resent %u%s", gw_rb_current_frame(), gw_net_rtt_ms(np.net),
+               gw_net_frame_advantage(np.net), gw_net_remote_confirmed_frame(np.net),
+               gw_rb_rollbacks(), gw_rb_desyncs(), s.packets_sent, s.packets_received,
+               s.resent_frames, np.desync_frame != GW_NET_NO_FRAME ? " - CHECKSUM DESYNC" : "");
+        if (sim.on) {
+            gw_log("netplay: network sim - %u sent, %u dropped, %u duplicated, %d in flight",
+                   sim.n_sent, sim.n_dropped, sim.n_dup, sim.nq);
+        }
+    }
+}

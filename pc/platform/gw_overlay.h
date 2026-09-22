@@ -44,6 +44,9 @@ void gw_Overlay_Draw(void);
  * top, and unconditional - it has to be reachable during a match, not just a load. */
 void gw_Overlay_DrawPanel(void);
 
+/* A one-box frame-rate readout in the top-left corner (shim_vi.c decides when). */
+void gw_Overlay_DrawStats(const char *text);
+
 #ifdef __cplusplus
 }
 #endif

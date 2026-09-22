@@ -356,6 +356,25 @@ extern "C" void gw_Overlay_DrawPanel(void) {
   }
 }
 
+/* Frame-rate readout (MELEE_SHOW_FPS / video.cfg show_fps, drawn by shim_vi.c every presented
+ * frame, replays included): a small box in the top-left corner. Host-side ImGui, so it shows
+ * what is actually presented rather than what the game drew. */
+extern "C" void gw_Overlay_DrawStats(const char *text) {
+  if (text == nullptr || !imgui_ready()) {
+    return;
+  }
+  const ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                                 ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs |
+                                 ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav |
+                                 ImGuiWindowFlags_AlwaysAutoResize;
+  ImGui::SetNextWindowPos(ImVec2(8.0f, 8.0f), ImGuiCond_Always);
+  ImGui::SetNextWindowBgAlpha(0.55f);
+  if (ImGui::Begin("##gw_stats", nullptr, flags)) {
+    ImGui::TextUnformatted(text);
+  }
+  ImGui::End();
+}
+
 /* ---- getters for the native overlay. gwtool prefixes every game symbol with gw_, so the game
  * declares these without it (extern const char* Overlay_GetRunLabel(void); and so on). ---- */
 

@@ -199,6 +199,13 @@ static void gw_handle_events(void) {
  * frontend's menu row. */
 static float gw_video_scale;
 static int gw_video_loaded;
+/* Frame rate: 60 = the game's own rate, one presented frame per simulated frame (default).
+ * 0 = uncapped and N > 60 = at most N presents a second: the simulation stays at exactly 60 Hz and
+ * the frames in between are the last game frame drawn again with interpolated transforms
+ * (gw_uncap_*, aurora_frame_replay). */
+static int gw_video_fps = 60;
+static int gw_video_vsync = 1;
+static int gw_video_show_fps;
 
 static const char *gw_video_cfg_path(void) {
   static char buf[MAX_PATH];
@@ -243,8 +250,15 @@ static void gw_video_load(void) {
   if (f != NULL) {
     while (fgets(line, sizeof line, f) != NULL) {
       float v;
+      int iv;
       if (sscanf(line, " render_scale = %f", &v) == 1) {
         gw_video_scale = gw_video_clamp_scale(v);
+      } else if (sscanf(line, " fps = %d", &iv) == 1) {
+        gw_video_fps = iv;
+      } else if (sscanf(line, " vsync = %d", &iv) == 1) {
+        gw_video_vsync = iv != 0;
+      } else if (sscanf(line, " show_fps = %d", &iv) == 1) {
+        gw_video_show_fps = iv != 0;
       }
     }
     fclose(f);
@@ -252,6 +266,21 @@ static void gw_video_load(void) {
   env = getenv("MELEE_RENDER_SCALE");
   if (env != NULL && env[0] != '\0') {
     gw_video_scale = (env[0] == 'a' || env[0] == 'A') ? 0.0f : gw_video_clamp_scale((float)atof(env));
+  }
+  env = getenv("MELEE_FPS");
+  if (env != NULL && env[0] != '\0') {
+    gw_video_fps = (env[0] == 'u' || env[0] == 'U') ? 0 : atoi(env);
+  }
+  if (gw_video_fps != 0 && gw_video_fps <= 60) {
+    gw_video_fps = 60;
+  }
+  env = getenv("MELEE_VSYNC");
+  if (env != NULL && env[0] != '\0') {
+    gw_video_vsync = atoi(env) != 0;
+  }
+  env = getenv("MELEE_SHOW_FPS");
+  if (env != NULL && env[0] != '\0') {
+    gw_video_show_fps = atoi(env) != 0;
   }
 }
 
@@ -264,6 +293,10 @@ static void gw_video_save(void) {
   fprintf(f, "# melee-pc video settings (the game rewrites this file)\n");
   fprintf(f, "# render_scale: internal resolution x 640x480; 0 = match the window\n");
   fprintf(f, "render_scale = %g\n", gw_video_scale);
+  fprintf(f, "# fps: 60 = one frame per game frame; 0 = uncapped; N = at most N (interpolated)\n");
+  fprintf(f, "fps = %d\n", gw_video_fps);
+  fprintf(f, "vsync = %d\n", gw_video_vsync);
+  fprintf(f, "show_fps = %d\n", gw_video_show_fps);
   fclose(f);
 }
 
@@ -279,6 +312,76 @@ static void gw_video_apply_scale(void) {
   } else {
     gw_log("gw: video: render scale Auto (the window's pixel size)");
   }
+}
+
+/* Aurora entry points added by this port's Aurora patch (PORT_PATCHES.md group 5). An older
+ * aurora_gx.lib resolves them to these instead: no replay is ever available, so frame
+ * interpolation quietly stays off and the build still links. */
+void gw_aurora_frame_replay_enable_none(bool v) { (void)v; }
+bool gw_aurora_frame_replay_available_none(void) { return false; }
+void gw_aurora_frame_set_alpha_none(float v) { (void)v; }
+void gw_aurora_frame_replay_mark_none(bool v) { (void)v; }
+bool gw_aurora_frame_replay_none(float v) { (void)v; return false; }
+bool gw_aurora_frame_slot_available_none(void) { return true; }
+void gw_aurora_frame_interp_stats_none(uint32_t *b, uint32_t *r, uint32_t *m) { *b = *r = *m = 0; }
+#pragma comment(linker, "/alternatename:_aurora_frame_interp_stats=_gw_aurora_frame_interp_stats_none")
+#pragma comment(linker, "/alternatename:_aurora_frame_replay_enable=_gw_aurora_frame_replay_enable_none")
+#pragma comment(linker, "/alternatename:_aurora_frame_replay_available=_gw_aurora_frame_replay_available_none")
+#pragma comment(linker, "/alternatename:_aurora_frame_set_alpha=_gw_aurora_frame_set_alpha_none")
+#pragma comment(linker, "/alternatename:_aurora_frame_replay_mark=_gw_aurora_frame_replay_mark_none")
+#pragma comment(linker, "/alternatename:_aurora_frame_replay=_gw_aurora_frame_replay_none")
+#pragma comment(linker, "/alternatename:_aurora_frame_slot_available=_gw_aurora_frame_slot_available_none")
+
+static int gw_uncap_on(void) { return gw_video_fps != 60; }
+
+static void gw_video_apply_rate(void) {
+  const int on = gw_uncap_on();
+  aurora_frame_replay_enable(on);
+  /* The game's own frame is drawn at the previous frame's pose (blend 0); the replays that follow
+   * move it toward its own pose as the field goes by. Off: no blending at all. */
+  aurora_frame_set_alpha(on ? 0.0f : 1.0f);
+  if (on && gw_video_fps == 0) {
+    gw_log("gw: video: frame rate uncapped (simulation stays 60 Hz; in-between frames interpolated)");
+  } else if (on) {
+    gw_log("gw: video: frame rate up to %d (simulation stays 60 Hz; in-between frames interpolated)",
+           gw_video_fps);
+  }
+}
+
+/* Frame rate: 60 = the game's own (default); 0 = uncapped; N > 60 = at most N presents a second. */
+int gw_Video_FrameRate(void) {
+  gw_video_load();
+  return gw_video_fps;
+}
+
+void gw_Video_SetFrameRate(int fps) {
+  gw_video_load();
+  gw_video_fps = (fps != 0 && fps <= 60) ? 60 : fps;
+  gw_video_apply_rate();
+  gw_video_save();
+}
+
+int gw_Video_Vsync(void) {
+  gw_video_load();
+  return gw_video_vsync;
+}
+
+void gw_Video_SetVsync(int on) {
+  gw_video_load();
+  gw_video_vsync = on != 0;
+  aurora_enable_vsync(gw_video_vsync != 0);
+  gw_video_save();
+}
+
+int gw_Video_ShowFps(void) {
+  gw_video_load();
+  return gw_video_show_fps;
+}
+
+void gw_Video_SetShowFps(int on) {
+  gw_video_load();
+  gw_video_show_fps = on != 0;
+  gw_video_save();
 }
 
 /* The current render scale; 0 = Auto (window resolution). */
@@ -299,6 +402,10 @@ void gw_Video_SetRenderScale(float scale) {
 bool gw_frame_init(void) {
   gw_video_load();
   gw_video_apply_scale();
+  gw_video_apply_rate();
+  if (!gw_video_vsync) {
+    aurora_enable_vsync(false);
+  }
   gw_handle_events();
   gw_frame_begun = aurora_begin_frame();
   return true;
@@ -508,6 +615,7 @@ static int gw_inprof_on(void) {
 static gw_inprof_ring gw_ip_age, gw_ip_late, gw_ip_sdl, gw_ip_p2s, gw_ip_ivl, gw_ip_over, gw_ip_begin;
 static gw_inprof_ring gw_ip_p2q, gw_ip_endf, gw_ip_p2p;
 static uint32_t gw_presented_count; /* defined with the frame driver below */
+static uint32_t gw_end_frames;      /* every aurora_end_frame, interpolated replays included */
 static void gw_ip_push(gw_inprof_ring *r, double v);
 static long long gw_ip_submit_cand;
 
@@ -625,11 +733,13 @@ static void gw_inprof_report(void) {
 /* gw_PADRead, once per poll, after the adapter has been read (always called: the pacer counts
  * polls; the profiling below is MELEE_INPUT_PROFILE only). */
 static uint32_t gw_polls_since_pace; /* gw_pace_field: pad polls since the last wait ended */
+static uint64_t gw_last_poll_tick;    /* when the newest game frame's pad sample was taken */
 
 void gw_inprof_poll(void) {
   extern long long gw_gc_adapter_report_qpc(void);
   long long now, rep;
   ++gw_polls_since_pace;
+  gw_last_poll_tick = gw_time_ticks();
   if (!gw_inprof_on()) {
     return;
   }
@@ -676,7 +786,7 @@ static void gw_inprof_submitted(void) {
   const long long now = gw_prof_now();
   gw_ip_push(&gw_ip_endf, gw_prof_ms(gw_ip_last_submit, now));
   if (gw_ip_submit_cand != 0) {
-    const uint32_t id = gw_presented_count + 1u; /* this end_frame's 1-based number */
+    const uint32_t id = gw_end_frames; /* this end_frame's 1-based number, replays included */
     gw_ip_push(&gw_ip_p2q, gw_prof_ms(gw_ip_submit_cand, now));
     gw_ip_ring_poll[id % GW_IP_PRESENT_RING] = gw_ip_submit_cand;
     gw_ip_ring_id[id % GW_IP_PRESENT_RING] = id;
@@ -770,6 +880,99 @@ static void gw_pace_nap(uint64_t ticks) {
  * The wait naps on a high-resolution waitable timer in <=1 ms steps, pumping alarms and deferred
  * work between naps as before, and spins only the final ~1 ms (3 ms with the Sleep(1) fallback),
  * so the core is released for almost all of the field. */
+/* ---- uncapped frame rate: interpolated in-between frames -----------------------------------
+ * The simulation never runs faster than the 60 Hz pad alarm. While gw_pace_field waits for the
+ * next pad deadline, the last game frame is drawn again (aurora_frame_replay) with every position/
+ * normal matrix and projection blended between the previous game frame's value and its own, by how
+ * far into the field the replay starts. The game's own frame is drawn at blend 0, so what is on
+ * screen trails the simulation by one field (16.7 ms) - the price of interpolation, which is why
+ * it is opt-in. A replay only starts if it can finish before the deadline and the render worker
+ * has a free frame slot, so the pad sample, and so input latency of the game itself, is never
+ * delayed by it. */
+static uint64_t gw_uncap_cost = 6u * (GW_TIMER_CLOCK / 1000u); /* EMA of one replay's game-thread cost */
+static uint64_t gw_uncap_next;                                 /* earliest start of the next present (cap) */
+static uint32_t gw_stat_presents, gw_stat_sims, gw_stat_replays;
+static uint64_t gw_stat_t0;
+static char gw_stat_text[96];
+
+static void gw_stats_note_present(int replay) {
+  const uint64_t now = gw_time_ticks();
+  ++gw_stat_presents;
+  if (replay) {
+    ++gw_stat_replays;
+  } else {
+    ++gw_stat_sims;
+  }
+  if (gw_stat_t0 == 0) {
+    gw_stat_t0 = now;
+  } else if (now - gw_stat_t0 >= GW_TIMER_CLOCK / 2u) {
+    const double secs = (double)(now - gw_stat_t0) / GW_TIMER_CLOCK;
+    snprintf(gw_stat_text, sizeof gw_stat_text, "%.0f fps  %.2f ms   game %.0f Hz%s", gw_stat_presents / secs,
+             gw_stat_presents ? secs * 1000.0 / gw_stat_presents : 0.0, gw_stat_sims / secs,
+             gw_uncap_on() ? "  interp" : "");
+    {
+      static int windows;
+      if (gw_uncap_on() && (++windows % 20) == 0) {
+        uint32_t b, r, m;
+        aurora_frame_interp_stats(&b, &r, &m);
+        gw_log("gw: interp: %s | matrix loads blended %u, implausible pairing %u, unmatched %u"
+               " | replay cost %.2f ms",
+               gw_stat_text, b, r, m, (double)gw_uncap_cost * 1000.0 / GW_TIMER_CLOCK);
+      }
+    }
+    gw_stat_presents = gw_stat_sims = gw_stat_replays = 0;
+    gw_stat_t0 = now;
+  }
+}
+
+static void gw_stats_draw(void) {
+  if (gw_video_show_fps && gw_stat_text[0] != '\0') {
+    gw_Overlay_DrawStats(gw_stat_text);
+  }
+}
+
+static void gw_uncap_replay(uint64_t now) {
+  const uint64_t t0 = now;
+  float alpha = (float)((double)(now - gw_last_poll_tick) / (double)GW_TICKS_PER_FIELD);
+  if (alpha < 0.0f) {
+    alpha = 0.0f;
+  }
+  if (alpha > 1.0f) {
+    alpha = 1.0f;
+  }
+  aurora_frame_replay_mark(true);
+  if (aurora_begin_frame()) {
+    gw_Overlay_Draw();
+    gw_stats_draw();
+    aurora_frame_replay(alpha);
+    aurora_end_frame();
+    ++gw_end_frames;
+    gw_stats_note_present(1);
+  }
+  aurora_frame_replay_mark(false);
+  now = gw_time_ticks();
+  gw_uncap_cost = (gw_uncap_cost * 7u + (now - t0)) / 8u;
+  gw_uncap_next = gw_video_fps > 60 ? t0 + GW_TIMER_CLOCK / (uint64_t)gw_video_fps : 0;
+}
+
+/* Called from the pacing wait: draw an in-between frame if there is time for one. */
+static int gw_uncap_try(uint64_t now, uint64_t target) {
+  if (!gw_uncap_on() || gw_pace_legacy() || !aurora_frame_replay_available()) {
+    return 0;
+  }
+  if (target <= now || target - now < gw_uncap_cost + GW_TIMER_CLOCK / 1000u) {
+    return 0;
+  }
+  if (gw_uncap_next != 0 && now < gw_uncap_next) {
+    return 0;
+  }
+  if (!aurora_frame_slot_available()) {
+    return 0;
+  }
+  gw_uncap_replay(now);
+  return 1;
+}
+
 static void gw_pace_field(void) {
   uint64_t now = gw_time_ticks();
   uint64_t last_pump;
@@ -816,6 +1019,9 @@ static void gw_pace_field(void) {
         last_pump = now;
         gw_os_run_alarms(now);
         gw_run_deferred();
+      }
+      if (gw_uncap_try(now, target)) {
+        continue;
       }
       if (target - now > spin) {
         uint64_t nap = target - now - spin;
@@ -1171,6 +1377,11 @@ void gw_frame_tick(void) {
      * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
     gw_Overlay_Draw();
     gw_Overlay_DrawPanel();
+    gw_stats_draw();
+    gw_stats_note_present(0);
+    if (gw_video_fps > 60) {
+      gw_uncap_next = gw_time_ticks() + GW_TIMER_CLOCK / (uint64_t)gw_video_fps;
+    }
     if (prof) {
       gw_prof_t_pace0 = gw_prof_now();
     }
@@ -1184,6 +1395,7 @@ void gw_frame_tick(void) {
       gw_inprof_submit();
     }
     aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
+    ++gw_end_frames;
     if (gw_inprof_on()) {
       gw_inprof_submitted();
     }

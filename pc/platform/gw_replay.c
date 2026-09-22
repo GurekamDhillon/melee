@@ -32,7 +32,9 @@
  * byte order on both sides - exactly what memcpy is right for.
  */
 #include "gw.h"
+#include "gw_rollback.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,13 +44,12 @@
 #define GW_RP_FIRST_FRAME (-123)
 #define GW_RP_UNARMED (-0x7FFFFFFF)
 
-typedef struct GwRpInput {
-    float lx, ly, cx, cy, trigger;
-    uint32_t buttons;
-    uint32_t seed;
-    int8_t raw[4]; /* raw stick bytes: x, y, c-x, c-y (0 where the replay predates the field) */
-    uint8_t present;
-} GwRpInput;
+/* the replay's per-frame input and the rollback session's are one type (gw_rollback.h) */
+typedef GwRbInput GwRpInput;
+
+/* trace buffering for a rollback session (defined below, before the trace functions' users) */
+static FILE *gw_seedf, *gw_randf;
+static void gw_tb_printf(int which, FILE *plain, const char *fmt, ...);
 
 static struct {
     int tried;
@@ -491,6 +492,10 @@ int gw_Replay_Tick(void) {
 
 static const GwRpInput *rp_cur(int port, int follower) {
     const GwRpInput *r;
+    if (gw_rb_active()) {
+        /* a rollback session decides what each fighter reads: confirmed or predicted inputs */
+        return gw_RB_InputFor(port, follower, rp.frame);
+    }
     if (!rp.active || rp.frame < rp.first || rp.frame > rp.last || port < 0 || port > 3) {
         return NULL;
     }
@@ -600,25 +605,24 @@ void gw_Replay_NoteSeed(uint32_t arrived) {
 void gw_Replay_CheckSeed(uint32_t port_seed) {
     uint32_t want;
     extern int gw_Snap_Resimulating(void);
-    if (gw_Snap_Resimulating()) {
+    static int seed_tried;
+    if (!gw_rb_active() && gw_Snap_Resimulating()) {
         return;
     }
     rec_tick(port_seed);
     /* <trace>.seed.csv: the port's seed at the start of every frame, so two port runs of the same
        replay can be diffed for the first frame they part ways (port-vs-port determinism) */
-    static FILE *seedf;
-    static int seed_tried;
     if (!seed_tried) {
         const char *tp = getenv("MELEE_STATE_TRACE");
         seed_tried = 1;
         if (tp != NULL && tp[0] != '\0') {
             char sp[600];
             snprintf(sp, sizeof sp, "%s.seed.csv", tp);
-            seedf = fopen(sp, "w");
+            gw_seedf = fopen(sp, "w");
         }
     }
-    if (seedf != NULL && rp.frame != GW_RP_UNARMED) {
-        fprintf(seedf, "%d,%08X\n", rp.frame, port_seed);
+    if (gw_seedf != NULL && rp.frame != GW_RP_UNARMED) {
+        gw_tb_printf(2, gw_seedf, "%d,%08X\n", rp.frame, port_seed);
     }
     if (rp.seed_diverged || !rp_frame_seed(&want)) {
         return;
@@ -629,6 +633,115 @@ void gw_Replay_CheckSeed(uint32_t port_seed) {
                port_seed, want);
     } else if (rp.frame == rp.last) {
         gw_log("replay: RNG seed matched the console on every frame through %d", rp.last);
+    }
+}
+
+/* ---- trace buffering for a rollback session --------------------------------------------------
+ * Without a session every trace row is written as it is produced. With one, a frame can be
+ * simulated more than once (predicted, then corrected), so rows are buffered PER LOGIC ITERATION -
+ * the session calls gw_Replay_TraceBeginIter(next) at the top of each - and only iterations whose
+ * inputs are all confirmed are written (gw_Replay_TraceFlushUpTo), in order. A resimulated
+ * iteration replaces its buffer. The file then holds exactly what a plain playback of the same
+ * replay would have written, which is the session's acceptance test. Rows keep the frame number
+ * they were produced under (rows drawn before the frame counter ticks carry the previous one, as
+ * in the plain run). Four files: 0 trace, 1 vel, 2 seed, 3 rand. */
+#define GW_TB_FILES 4
+#define GW_TB_RING 64
+typedef struct {
+    int iter;
+    char *buf[GW_TB_FILES];
+    size_t len[GW_TB_FILES], cap[GW_TB_FILES];
+} GwTbSlot;
+static GwTbSlot gw_tb[GW_TB_RING];
+static int gw_tb_cur = -0x7FFFFFFF, gw_tb_next = -0x7FFFFFFF;
+
+static FILE *gw_tb_file(int which) {
+    switch (which) {
+    case 0: return rp.trace;
+    case 1: return rp.vel;
+    case 2: return gw_seedf;
+    default: return gw_randf;
+    }
+}
+
+static GwTbSlot *gw_tb_slot(int iter) {
+    GwTbSlot *t = &gw_tb[(unsigned) iter % GW_TB_RING];
+    if (t->iter != iter) {
+        int k;
+        for (k = 0; k < GW_TB_FILES; ++k) {
+            t->len[k] = 0;
+        }
+        t->iter = iter;
+    }
+    return t;
+}
+
+void gw_Replay_TraceBeginIter(int iter) {
+    GwTbSlot *t = gw_tb_slot(iter);
+    int k;
+    for (k = 0; k < GW_TB_FILES; ++k) {
+        t->len[k] = 0; /* a resimulated iteration replaces its rows */
+    }
+    gw_tb_cur = iter;
+    if (gw_tb_next == -0x7FFFFFFF) {
+        gw_tb_next = iter;
+    }
+}
+
+/* Write iterations gw_tb_next..iter (those still buffered), in order. */
+void gw_Replay_TraceFlushUpTo(int iter) {
+    int wrote = gw_tb_next <= iter && gw_tb_next != -0x7FFFFFFF;
+    while (gw_tb_next <= iter && gw_tb_next != -0x7FFFFFFF) {
+        GwTbSlot *t = &gw_tb[(unsigned) gw_tb_next % GW_TB_RING];
+        if (t->iter == gw_tb_next) {
+            int k;
+            for (k = 0; k < GW_TB_FILES; ++k) {
+                FILE *f = gw_tb_file(k);
+                if (f != NULL && t->len[k] != 0) {
+                    fwrite(t->buf[k], 1, t->len[k], f);
+                }
+                t->len[k] = 0;
+            }
+        }
+        ++gw_tb_next;
+    }
+    if (wrote) {
+        int k;
+        for (k = 0; k < GW_TB_FILES; ++k) {
+            FILE *f = gw_tb_file(k);
+            if (f != NULL) {
+                fflush(f); /* the harness ends a run by killing it */
+            }
+        }
+    }
+}
+
+static void gw_tb_printf(int which, FILE *plain, const char *fmt, ...) {
+    va_list ap;
+    char line[512];
+    int n;
+    va_start(ap, fmt);
+    if (!gw_rb_active()) {
+        if (plain != NULL) {
+            vfprintf(plain, fmt, ap);
+        }
+        va_end(ap);
+        return;
+    }
+    n = vsnprintf(line, sizeof line, fmt, ap);
+    va_end(ap);
+    if (n > 0 && gw_tb_cur != -0x7FFFFFFF) {
+        GwTbSlot *t = gw_tb_slot(gw_tb_cur);
+        if (t->len[which] + (size_t) n + 1 > t->cap[which]) {
+            size_t nc = t->cap[which] ? t->cap[which] * 2 : 4096;
+            while (nc < t->len[which] + (size_t) n + 1) {
+                nc *= 2;
+            }
+            t->buf[which] = (char *) realloc(t->buf[which], nc);
+            t->cap[which] = nc;
+        }
+        memcpy(t->buf[which] + t->len[which], line, (size_t) n);
+        t->len[which] += (size_t) n;
     }
 }
 
@@ -650,7 +763,7 @@ void gw_Replay_TraceFighter(int port, int follower, int ckind, int action, float
                             float facing, float percent, int stocks, float air_x, float air_y,
                             float kb_x, float kb_y, float ground_x) {
     extern int gw_Snap_Resimulating(void);
-    if (gw_Snap_Resimulating()) {
+    if (!gw_rb_active() && gw_Snap_Resimulating()) {
         return; /* SyncTest re-running a frame already traced */
     }
     rec_post(port, follower, ckind, action, x, y, facing, percent, stocks, air_x, air_y, kb_x,
@@ -658,11 +771,11 @@ void gw_Replay_TraceFighter(int port, int follower, int ckind, int action, float
     if (rp.trace == NULL || rp.frame == GW_RP_UNARMED) {
         return;
     }
-    fprintf(rp.trace, "%d,%d,%d,%d,%d,%.17g,%.17g,%.17g,%.17g,%d\n", rp.frame, port, follower != 0,
-            ckind, action, x, y, facing, percent, stocks);
+    gw_tb_printf(0, rp.trace, "%d,%d,%d,%d,%d,%.17g,%.17g,%.17g,%.17g,%d\n", rp.frame, port,
+                 follower != 0, ckind, action, x, y, facing, percent, stocks);
     if (rp.vel != NULL) {
-        fprintf(rp.vel, "%d,%d,%d,%.17g,%.17g,%.17g,%.17g,%.17g\n", rp.frame, port, follower != 0,
-                air_x, air_y, kb_x, kb_y, ground_x);
+        gw_tb_printf(1, rp.vel, "%d,%d,%d,%.17g,%.17g,%.17g,%.17g,%.17g\n", rp.frame, port,
+                     follower != 0, air_x, air_y, kb_x, kb_y, ground_x);
     }
     if (rp.frame > rp.last) {
         fflush(rp.trace);
@@ -728,6 +841,11 @@ int gw_Replay_UcfVersion(int port) {
 int gw_Replay_RawStickBack(int port, int which, int back) {
     const GwRpInput *r;
     int f = rp.frame - back;
+    if (gw_rb_active()) {
+        /* what the session USED for that frame - a predicted input's raw bytes, not the truth */
+        r = gw_RB_InputFor(port, 0, f);
+        return r != NULL && which >= 0 && which < 4 ? r->raw[which] : 0;
+    }
     if (!rp.active || f < rp.first || f > rp.last || port < 0 || port > 3 || which < 0 ||
         which > 3) {
         return 0;
@@ -736,6 +854,25 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
     return r->present ? r->raw[which] : 0;
 }
 
+/* The replay's recorded input for (slot, frame): the "player" side of the session's fake network.
+ * Returns 0 when the replay has none. */
+int gw_Replay_PeekInput(int slot, int frame, GwRbInput *out) {
+    const GwRpInput *r;
+    if (!rp.active || frame < rp.first || frame > rp.last || slot < 0 || slot >= GW_RP_SLOTS) {
+        return 0;
+    }
+    r = &rp.in[(frame - rp.first) * GW_RP_SLOTS + slot];
+    if (!r->present) {
+        return 0;
+    }
+    *out = *r;
+    out->confirmed = 1;
+    return 1;
+}
+
+/* The replay's frame range and whether it is armed - the session's fake network needs both. */
+int gw_Replay_LastFrame(void) { return rp.active ? rp.last : 0; }
+
 /* <trace>.rand.csv: every RNG draw while a replay is armed - frame, caller (native return address),
  * seed after, and whether it drew the global seed or a redirected one (HSD_RandSeedPtr). */
 /* Set by gmscene.c around the render section of the scene loop. */
@@ -743,10 +880,9 @@ static int gw_det_in_render;
 void gw_Det_SetInRender(int on) { gw_det_in_render = on; }
 
 void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
-    static FILE *rf;
     static int tried;
     extern int gw_Snap_Resimulating(void);
-    if (gw_Snap_Resimulating()) {
+    if (!gw_rb_active() && gw_Snap_Resimulating()) {
         return;
     }
     if (gw_det_in_render && global) {
@@ -772,11 +908,11 @@ void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
         if (tp != NULL && tp[0] != '\0') {
             char p[600];
             snprintf(p, sizeof p, "%s.rand.csv", tp);
-            rf = fopen(p, "w");
+            gw_randf = fopen(p, "w");
         }
     }
-    if (rf != NULL) {
-        fprintf(rf, "%d,%08X,%08X,%d\n", rp.frame, caller, seed_after, (int) global);
+    if (gw_randf != NULL) {
+        gw_tb_printf(3, gw_randf, "%d,%08X,%08X,%d\n", rp.frame, caller, seed_after, (int) global);
     }
 }
 

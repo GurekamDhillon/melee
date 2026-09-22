@@ -731,6 +731,10 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
     mnLoadScreen_Begin(info);
     mnOverlay_Begin();
+    if (info != NULL) {
+        extern void RB_SceneBegin(int scene_kind);
+        RB_SceneBegin((int) info->scene_kind); /* a rollback session governs VS matches only */
+    }
 #endif
 
     while (temp_r25->unk_C == 0) {
@@ -772,7 +776,15 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             /* MELEE_SYNCTEST (pc/platform/gw_snap.c): k+1 logic iterations this tick - roll back
                k frames, resimulate them, then run the new frame */
             extern int SyncTest_Iterations(int count);
-            pad_queue_count = SyncTest_Iterations(pad_queue_count);
+            /* MELEE_RB_FAKE (pc/platform/gw_rollback.c): the rollback session decides instead -
+               k resimulated iterations plus the new one, or none while it stalls */
+            extern int RB_Enabled(void);
+            extern int RB_Iterations(int count);
+            if (RB_Enabled()) {
+                pad_queue_count = RB_Iterations(pad_queue_count);
+            } else {
+                pad_queue_count = SyncTest_Iterations(pad_queue_count);
+            }
         }
 #endif
 
@@ -787,7 +799,13 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             {
                 /* the logic-frame boundary: SyncTest saves, loads or compares here */
                 extern void SyncTest_IterStart(void);
-                SyncTest_IterStart();
+                extern int RB_Enabled(void);
+                extern void RB_IterStart(void);
+                if (RB_Enabled()) {
+                    RB_IterStart();
+                } else {
+                    SyncTest_IterStart();
+                }
             }
 #endif
             HSD_PerfSetStartTime();
@@ -864,6 +882,14 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                             *HSD_RandSeedPtr = s;
                         }
                         Replay_CheckSeed(*HSD_RandSeedPtr);
+                        {
+                            extern int Snap_Curated(void);
+                            extern void Snap_CuratedMix(const u32* w, int n);
+                            if (Snap_Curated()) {
+                                u32 sw = *HSD_RandSeedPtr;
+                                Snap_CuratedMix(&sw, 1);
+                            }
+                        }
                     }
                 }
 #endif
@@ -907,15 +933,32 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                  * as the real render below, without HSD_VICopyXFBAsync. Its draw commands are
                  * discarded with the frame by aurora, so the picture is unaffected. */
                 extern int Snap_Resimulating(void);
+                extern int Snap_CuratedNoRender(void);
                 extern void SyncTest_PreRender(void);
-                if (Snap_Resimulating()) {
+                if (Snap_Resimulating() && !Snap_CuratedNoRender()) {
+                    extern void Snap_Time(int what, int begin);
+                    Snap_Time(2, 0); /* a resimulated iteration's logic, end of IterStart -> here */
                     SyncTest_PreRender(); /* open the between-frames window here too */
+                    extern void Gx_SuppressDraws(int on);
+                    extern int Snap_SuppressDraws(void);
+                    Snap_Time(0, 1);
+                    Snap_Time(3, 1);
                     lb_800195D0();
                     GXInvalidateVtxCache();
                     GXInvalidateTexAll();
+                    Snap_Time(3, 0);
+                    Snap_Time(4, 1);
                     HSD_StartRender(HSD_RP_SCREEN);
+                    Snap_Time(4, 0);
+                    Snap_Time(5, 1);
+                    Gx_SuppressDraws(Snap_SuppressDraws());
                     HSD_GObj_80390FC0();
+                    Gx_SuppressDraws(0);
+                    Snap_Time(5, 0);
+                    Snap_Time(6, 1);
                     HSD_Init_803755A8();
+                    Snap_Time(6, 0);
+                    Snap_Time(0, 0);
                 }
             }
 #endif
@@ -935,7 +978,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
         {
             extern void SyncTest_PreRender(void); /* gw_snap.c: measure render-owned state */
+            extern void Snap_Time(int what, int begin);
             SyncTest_PreRender();
+            Snap_Time(1, 1);
         }
 #endif
         lb_800195D0();
@@ -963,7 +1008,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 #if defined(TARGET_PC)
         {
             extern void SyncTest_PostRender(void);
+            extern void Snap_Time(int what, int begin);
+            extern void RB_TickEnd(void);
+            Snap_Time(1, 0);
             SyncTest_PostRender();
+            RB_TickEnd();
         }
 #endif
         db_TakeScreenshotIfPending();

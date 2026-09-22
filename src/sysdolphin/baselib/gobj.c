@@ -192,7 +192,19 @@ void HSD_GObj_80390FC0(void)
         if (cur->render_cb != NULL) {
             saved = HSD_GObj_804D7818;
             HSD_GObj_804D7818 = cur;
+#if defined(TARGET_PC)
+            {
+                extern void Snap_CbTime(void* cb, int begin);
+                extern int Snap_SkipRenderCb(void* cb);
+                if (!Snap_SkipRenderCb((void*) cur->render_cb)) {
+                    Snap_CbTime((void*) cur->render_cb, 1);
+                    cur->render_cb(cur, 0);
+                    Snap_CbTime((void*) cur->render_cb, 0);
+                }
+            }
+#else
             cur->render_cb(cur, 0);
+#endif
             HSD_GObj_804D7818 = saved;
         }
         cur = cur->next_gx;

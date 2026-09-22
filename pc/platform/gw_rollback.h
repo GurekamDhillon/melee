@@ -1,0 +1,132 @@
+/* gw_rollback.h - the rollback SESSION layer: per-port input sources, input delay, prediction,
+ * rollback and stalls, on top of gw_snap.c's savestates.
+ *
+ * The transport (gw_net.c, another agent) talks to the session ONLY through the functions in
+ * "THE NETWORK-FACING INTERFACE" below. Everything else here is the session's own wiring into the
+ * scene loop (gmscene.c) and the replay module (gw_replay.c).
+ *
+ * MODEL
+ *   Time is the LOGIC FRAME number, Slippi's numbering: the first frame fighters run is -123.
+ *   Every frame, each fighter slot (port 0..3, leader/follower) gets one processed input - the
+ *   same six fields the fighter holds after the game's own deadzone/UCF processing, plus the raw
+ *   stick bytes UCF reads (GwRbInput). A slot's input for a frame is either
+ *     CONFIRMED  - it is the real input (local, or a remote one that has arrived), or
+ *     PREDICTED  - a remote input that has not arrived yet: the last confirmed one, repeated.
+ *   The session records what it USED for every frame. When a remote input arrives for a frame
+ *   that was already simulated and it differs from what was used, the session rolls back to the
+ *   earliest such frame (load its snapshot, resimulate forward with the corrected inputs) - at
+ *   most MAX frames (MELEE_RB_MAX, default 7). It never lets the simulation run more than MAX
+ *   frames ahead of the newest frame whose remote inputs are all confirmed: it STALLS instead.
+ *
+ * INPUT DELAY. A local input sampled at frame t takes effect at frame t + D (MELEE_RB_DELAY,
+ *   default 2). The peer therefore receives, at time t, the input for t + D; it costs nothing
+ *   until the network latency exceeds D frames, after which the difference is rolled back.
+ *
+ * WHERE INPUTS ARE INJECTED. At the fighter's pad read (Fighter_Spaghetti_8006AD10), through
+ *   gw_replay.c's accessors, exactly as .slp playback does; with a session active they read the
+ *   session's per-frame ring instead of the replay. (Live pads join the ring through
+ *   gw_rb_submit_local_input - see below - which is where the game's deadzone/calibration
+ *   processing has already run.)
+ *
+ * CONFIGURATION (environment)
+ *   MELEE_RB_FAKE=<lat>[,<jitter>[,<loss%>]]   fake network for the acceptance test: plays the
+ *        MELEE_SLP replay with the "remote" ports' inputs delivered <lat> frames late, +-<jitter>,
+ *        losing <loss>% of first transmissions (redelivered after a timeout).
+ *   MELEE_RB_DELAY=<D>    input delay in frames (default 2)
+ *   MELEE_RB_MAX=<M>      maximum rollback depth / prediction window (default 7, at most 12)
+ *   MELEE_RB_REMOTE=<hex> mask of ports whose inputs arrive over the (fake) network (default 2:
+ *                         port 1); all other present ports are local
+ *   MELEE_RB_SEED=<n>     seed for the fake network's jitter and loss (default 12345)
+ */
+#ifndef GW_ROLLBACK_H
+#define GW_ROLLBACK_H
+
+#include <stdint.h>
+
+#define GW_RB_SLOTS 8 /* 4 ports x (leader, follower): slot = port * 2 + follower */
+
+/* One frame of one fighter slot's input, in the form the fighter consumes it. */
+typedef struct GwRbInput {
+    float lx, ly;       /* main stick, after the game's deadzone processing */
+    float cx, cy;       /* c-stick */
+    float trigger;      /* analog trigger */
+    uint32_t buttons;   /* held buttons (processed: L/R/Z folded as the fighter sees them) */
+    uint32_t seed;      /* replay's frame seed, when known (playback only; 0 otherwise) */
+    int8_t raw[4];      /* raw stick bytes x, y, c-x, c-y (what UCF reads); 0 when unknown */
+    uint8_t present;    /* 0: no input for this slot - the fighter reads the live pad */
+    uint8_t confirmed;  /* 1: the real input; 0: a prediction (session ring only) */
+} GwRbInput;
+
+/* ======================= THE NETWORK-FACING INTERFACE ======================================== */
+
+/* True while a rollback session is running (a match is live and a session was configured). */
+int gw_rb_active(void);
+
+/* Deliver a REMOTE peer's input for `frame`. May be called any number of times, in any order,
+ * for any frame (redelivery is harmless). If the frame was already simulated with a different
+ * input, a rollback is scheduled for the next render tick. `slot` = port * 2 + follower. Frames
+ * older than the session's snapshot window that differ are counted as a desync
+ * (gw_rb_desyncs()). Thread: game thread only (call it from the scene loop's hook, not from a
+ * socket thread - queue and drain). */
+void gw_rb_submit_remote_input(int slot, int frame, const GwRbInput *in);
+
+/* The LOCAL input the session used (or will use) for `frame`, for sending to the peer. Valid for
+ * frames up to gw_rb_current_frame() + delay. Returns 0 when there is none yet. */
+int gw_rb_local_input_for_send(int slot, int frame, GwRbInput *out);
+
+/* Feed a local input sampled NOW (live pads): it takes effect at gw_rb_current_frame() + delay
+ * + 1... i.e. `frame` must be the frame it is FOR; the caller (the pad hook) computes it as
+ * next simulated frame + delay. Replaced if submitted twice. */
+void gw_rb_submit_local_input(int slot, int frame, const GwRbInput *in);
+
+/* The newest frame F such that every remote slot's input is confirmed for all frames <= F. The
+ * simulation may be at most MAX frames beyond it. -124 before the match. */
+int gw_rb_confirmed_frame(void);
+
+/* The frame the simulation will run next (the newest simulated frame + 1). */
+int gw_rb_current_frame(void);
+
+/* Frames the local side is AHEAD of the remote (simulated frame minus the newest frame the peer
+ * has confirmed having received/sent) - what a time-sync layer slows the local clock by
+ * (GGPO's "frame advantage"). Positive: we are ahead. */
+int gw_rb_frame_advantage(void);
+
+/* A checksum of the simulation state at the START of `frame` (32-bit; the same on both peers iff
+ * they are in sync). Valid for the last few confirmed frames still in the snapshot window;
+ * 0 otherwise. Exchange them and compare for desync detection. */
+uint32_t gw_rb_checksum(int frame);
+
+/* Statistics since the session began. */
+int gw_rb_rollbacks(void);
+int gw_rb_desyncs(void);
+
+/* ======================= SESSION WIRING (game side) ========================================== */
+
+/* gmscene.c: how many logic iterations to run this render tick (0 = stalled; k+1 = a rollback of
+ * k frames plus the new frame). Called once per tick, before the iterations. */
+int gw_RB_Iterations(int count);
+
+/* gmscene.c: at the top of every logic iteration. Loads the snapshot on a rollback's first
+ * iteration, prepares the frame's inputs, saves the snapshot of the frame about to run and gates
+ * side effects (sound, rumble) while resimulating. */
+void gw_RB_IterStart(void);
+
+/* gmscene.c: after the tick's render pass; closes the per-tick work measurement. */
+void gw_RB_TickEnd(void);
+
+/* gmscene.c, at the start of every scene: a session governs VS matches only. */
+void gw_RB_SceneBegin(int scene_kind);
+
+/* gmscene.c: is a rollback session configured (before it is armed)? Chooses which of SyncTest's
+ * and the session's hooks the scene loop runs. */
+int gw_RB_Enabled(void);
+
+/* gw_replay.c: the session's input for (port, follower) at `frame`, or NULL when the fighter
+ * should read the live pad. */
+const GwRbInput *gw_RB_InputFor(int port, int follower, int frame);
+
+/* gw_replay.c: the replay's recorded input for (slot, frame) - the "player" side of the fake
+ * network. Returns 0 when the replay has none. */
+int gw_Replay_PeekInput(int slot, int frame, GwRbInput *out);
+
+#endif

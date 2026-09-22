@@ -327,12 +327,33 @@ static struct {
     char fit[FM_MAX_VIS + 2][40];
 } fm;
 
-/* ---- generated layouts -------------------------------------------------------------------- */
+/* ---- generated layouts (the kit's chrome and list template, the hub's tiles) -------------- */
 
-/* SIS font metrics in 640x480 units per unit of font_size (calibrated against a window capture:
- * the menu font's capitals are ~0.72 of the cell, the cell is 32 at font_size 1). */
+/* SisLib fallback metrics (only when the atlas is missing): 640x480 units per unit of
+ * font_size - capitals are ~22 units tall at font_size 1. */
 #define FM_SIS_CAP 22.0F
-#define FM_SIS_ADV 0.78F ///< average capital advance / cap height, bold uppercase
+#define FM_SIS_ADV 0.78F
+
+static int fm_section_of(int kind)
+{
+    switch (kind) {
+    case MENU_KIND_1P:
+    case MENU_KIND_REG:
+    case MENU_KIND_STADIUM:
+    case MENU_KIND_MULTI_VS:
+    case MENU_KIND_EVENT:
+        return KS_SOLO;
+    case MENU_KIND_TOY:
+        return KS_COLLECTION;
+    case MENU_KIND_SETTINGS:
+        return KS_OPTIONS;
+    case MENU_KIND_DATA:
+    case MENU_KIND_RECORDS:
+        return KS_DATA;
+    default:
+        return KS_VERSUS; /* VS, Special Melee, and the main menu's own backdrop */
+    }
+}
 
 static void fm_shear_rect(float x0, float y0, float x1, float y1, float v[4][2])
 {
@@ -341,6 +362,20 @@ static void fm_shear_rect(float x0, float y0, float x1, float y1, float v[4][2])
     v[1][0] = x1 + (y - y0) * s; v[1][1] = y0;
     v[2][0] = x1 + (y - y1) * s; v[2][1] = y1;
     v[3][0] = x0 + (y - y1) * s; v[3][1] = y1;
+}
+
+static void fm_rgb(float* dst, const float* src)
+{
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+}
+
+static void fm_tok(const char* tok, int section, float* rgb)
+{
+    if (!kit_colour(tok, section, rgb)) {
+        rgb[0] = rgb[1] = rgb[2] = 1.0F;
+    }
 }
 
 static int fm_flat(const char* id, u8 role, int tile, float x0, float y0, float x1, float y1,
@@ -353,172 +388,266 @@ static int fm_flat(const char* id, u8 role, int tile, float x0, float y0, float 
     fm_shear_rect(x0, y0, x1, y1, fp.q[q].v);
     if (rgb != NULL) {
         fp.q[q].has_colour = true;
-        fp.q[q].rgb[0] = rgb[0];
-        fp.q[q].rgb[1] = rgb[1];
-        fp.q[q].rgb[2] = rgb[2];
+        fm_rgb(fp.q[q].rgb, rgb);
     }
     return q;
 }
 
-static float fm_text_width(const char* s, float h)
+static int fm_textured(const char* id, u8 role, int tile, const char* tex, float x0, float y0,
+                       float x1, float y1, const float* rgb)
 {
-    return (float) strlen(s) * h * FM_SIS_ADV;
-}
-
-static int fm_text(const char* id, u8 role, int tile, float x0, float y0, float h,
-                   const char* s, const float* rgb, float max_w)
-{
-    int q;
-    float w;
-    if (max_w > 0.0F && fm_text_width(s, h) > max_w) {
-        h = max_w / ((float) strlen(s) * FM_SIS_ADV); /* the fit rule: shrink to the slot */
+    int t = fp_tex(tex), q;
+    if (t < 0) {
+        return -1;
     }
-    w = fm_text_width(s, h);
-    q = fp_add_quad(id, FPK_TEXT, role, tile);
+    q = fp_add_quad(id, FPK_TEX, role, tile);
     if (q < 0) {
         return -1;
     }
-    fm_shear_rect(x0, y0, x0 + w, y0 + h, fp.q[q].v);
-    fp.q[q].text = s;
-    fp.q[q].text_h = h;
+    fm_shear_rect(x0, y0, x1, y1, fp.q[q].v);
+    fp.q[q].tex = (s8) t;
     fp.q[q].has_colour = true;
-    fp.q[q].rgb[0] = rgb[0];
-    fp.q[q].rgb[1] = rgb[1];
-    fp.q[q].rgb[2] = rgb[2];
+    fm_rgb(fp.q[q].rgb, rgb);
     return q;
 }
 
-/* The shared palette, from hub_layout.json's own chrome (so a palette change there reaches the
- * generated screens), with the prototype's values when the file is missing. */
-static float fm_band[3] = { 0.102F, 0.188F, 0.478F };
-static float fm_ink[3] = { 0.039F, 0.055F, 0.094F };
-static float fm_gold[3] = { 0.941F, 0.706F, 0.161F };
-static float fm_bone[3] = { 0.949F, 0.937F, 0.894F };
+/* A text quad: role from the kit's type scale, left-aligned at an unsheared baseline anchor,
+ * fitted to max_w by the manifest's rule. Returns the quad; its advance is fm.last_w. */
+static float fm_last_w;
 
-static void fm_palette_from(const FjNode* L)
+static int fm_text(const char* id, u8 role, int tile, const char* ff_name, float ax, float ay,
+                   const char* s, const float* rgb, float max_w)
 {
-    const FjNode* n;
-    for (n = fj_first(fj_get(L, "quads")); n != NULL; n = fj_next(n)) {
-        const char* id = fj_str(fj_get(n, "id"));
-        const char* c = fj_str(fj_get(n, "colour"));
-        if (id == NULL) continue;
-        if (strcmp(id, "band_l") == 0) fp_hex(c, fm_band);
-        if (strcmp(id, "backplate") == 0) fp_hex(c, fm_ink);
-        if (strcmp(id, "header_slab") == 0) fp_hex(c, fm_gold);
+    int q = fp_add_quad(id, FPK_TEXT, role, tile);
+    FpQuad* d;
+    float w, asc, desc;
+    if (q < 0) {
+        return -1;
     }
-    n = fj_first(fj_get(L, "tiles"));
-    if (n != NULL) {
-        fp_hex(fj_str(fj_get(fj_get(n, "desc"), "colour")), fm_bone);
+    d = &fp.q[q];
+    d->has_colour = true;
+    fm_rgb(d->rgb, rgb);
+    d->ax = ax;
+    d->ay = ay;
+    d->ff_role = (s8) ff_role(ff_name);
+    if (d->ff_role >= 0) {
+        d->ff_role = (s8) ff_fit(d->ff_role, s, max_w, d->textbuf, (int) sizeof d->textbuf);
+        d->text = d->textbuf;
+        w = ff_width(d->ff_role, d->text);
+        asc = ff.r[d->ff_role].ascent;
+        desc = ff.r[d->ff_role].descent;
+        d->text_h = ff.r[d->ff_role].cap;
+    } else {
+        /* SisLib: its size from the role's nominal size, shrunk to fit */
+        float h = 0.66F * (strcmp(ff_name, "hero") == 0    ? 44.0F
+                           : strcmp(ff_name, "title") == 0 ? 24.0F
+                           : strcmp(ff_name, "label") == 0 ? 20.0F
+                           : strcmp(ff_name, "row") == 0   ? 16.0F
+                                                           : 14.0F);
+        fp_copy(d->textbuf, s, (int) sizeof d->textbuf);
+        d->text = d->textbuf;
+        w = (float) strlen(s) * h * FM_SIS_ADV;
+        if (max_w > 0.0F && w > max_w) {
+            h *= max_w / w;
+            w = max_w;
+        }
+        d->text_h = h;
+        asc = h;
+        desc = h * 0.3F;
     }
+    fm_shear_rect(ax, ay - asc, ax + w, ay + desc, d->v);
+    fm_last_w = w;
+    return q;
 }
 
-static void fm_default_states(void)
+static void fm_default_states(int section)
 {
-    static const float ngf[3] = { 0.118F, 0.227F, 0.549F }, ngi[3] = { 0.290F, 0.478F, 0.878F };
-    static const float sf[3] = { 0.941F, 0.706F, 0.161F }, si[3] = { 0.663F, 0.463F, 0.102F };
-    static const float clr[3] = { 0.078F, 0.149F, 0.361F };
-    memcpy(fp.ng_face, ngf, sizeof ngf);
-    memcpy(fp.ng_icon, ngi, sizeof ngi);
-    memcpy(fp.ng_label, fm_bone, sizeof fm_bone);
-    memcpy(fp.sel_face, sf, sizeof sf);
-    memcpy(fp.sel_icon, si, sizeof si);
-    memcpy(fp.sel_label, fm_ink, sizeof fm_ink);
-    memcpy(fp.sel_plate, si, sizeof si);
-    memcpy(fp.clear, clr, sizeof clr);
+    float gold[3], gold_dk[3], ink[3], bone[3];
+    fm_tok("gold", section, gold);
+    fm_tok("gold_dk", section, gold_dk);
+    fm_tok("ink", section, ink);
+    fm_tok("bone", section, bone);
+    fm_rgb(fp.sel_face, gold);
+    fm_rgb(fp.sel_icon, gold_dk);
+    fm_rgb(fp.sel_label, ink);
+    fm_rgb(fp.sel_plate, gold_dk);
+    fm_rgb(fp.ng_label, bone);
+    fm_tok("@face", section, fp.ng_face);
+    fm_tok("@face_hi", section, fp.ng_icon);
+    fm_tok("@bg", section, fp.clear);
     fp.sel_offset[0] = fp.sel_offset[1] = -5.0F;
 }
 
-/* One tile: plate, face, icon, label, and its footer description. */
-static void fm_tile(int slot, const FeMenuItem* it, int rank, float x0, float y0, float x1,
-                    float y1, bool hero, bool row)
+/* One tile or row: plate, face, icon, label, and its description in the strip. */
+static void fm_tile(int slot, const FeMenuItem* it, int section, int rank, float x0, float y0,
+                    float x1, float y1, bool hero, bool row)
 {
     FpTile* t = &fp.tile[fp.nt];
     char id[FP_ID], qid[FP_ID];
     float h = y1 - y0, w = x1 - x0;
-    float pad = hero ? 16.0F : row ? 12.0F : 10.0F;
-    float lh, icon = 0.0F;
-    int tex = -1;
+    float pad = hero ? 16.0F : 10.0F, icon = 0.0F, ink[3], bone[3];
+    const char* role;
+    fm_tok("ink", section, ink);
+    fm_tok("bone", section, bone);
     sprintf(id, "t%d", slot);
     fp_copy(t->id, id, FP_ID);
     t->rank = rank;
+    fm_tok("@face", section, t->ng_face);
+    fm_tok("@face_hi", section, t->ng_icon);
     fm.tile_of[slot] = fp.nt;
     sprintf(qid, "%s_plate", id);
     t->q_plate = fm_flat(qid, FPR_PLATE, fp.nt, x0, y0, x1, y1, NULL);
     sprintf(qid, "%s_face", id);
-    t->q_face = fm_flat(qid, FPR_FACE, fp.nt, x0, y0, x1, y1, fp.ng_face);
+    t->q_face = fm_flat(qid, FPR_FACE, fp.nt, x0, y0, x1, y1, t->ng_face);
     t->q_icon = -1;
     if (!row && it->icon != NULL) {
-        tex = fp_tex(it->icon);
         icon = hero ? 128.0F : 64.0F;
-        if (icon > h - 2 * pad) {
-            icon = h - 2 * pad;
+        if (icon > h - 2 * pad - (hero ? 40.0F : 0.0F)) {
+            icon = h - 2 * pad - (hero ? 40.0F : 0.0F);
         }
-        if (tex >= 0 && icon > 8.0F) {
+        if (icon > 8.0F) {
             sprintf(qid, "%s_icon", id);
-            t->q_icon = fp_add_quad(qid, FPK_TEX, FPR_ICON, fp.nt);
-            fm_shear_rect(x1 - pad - icon, y0 + pad, x1 - pad, y0 + pad + icon,
-                          fp.q[t->q_icon].v);
-            fp.q[t->q_icon].tex = (s8) tex;
-            fp.q[t->q_icon].has_colour = true;
-            memcpy(fp.q[t->q_icon].rgb, fp.ng_icon, sizeof fp.ng_icon);
+            t->q_icon = fm_textured(qid, FPR_ICON, fp.nt, it->icon, x1 - pad - icon, y0 + pad,
+                                    x1 - pad, y0 + pad + icon, t->ng_icon);
         }
-    }
-    /* label: bottom left, the hero's large; shrunk to fit the tile */
-    lh = hero ? 32.0F : row ? (h * 0.5F < 15.0F ? h * 0.5F : 15.0F) : (h >= 80.0F ? 16.0F : h * 0.2F);
-    if (lh < 9.0F) {
-        lh = 9.0F;
+        if (t->q_icon < 0) {
+            icon = 0.0F; /* missing art: the label takes the room (logged by fp_tex) */
+        }
     }
     sprintf(qid, "%s_label", id);
-    t->q_label = fm_text(qid, FPR_LABEL, fp.nt, x0 + pad + 2,
-                         row ? y0 + (h - lh) * 0.5F : y1 - pad - lh, lh, it->label, fp.ng_label,
-                         w - 2 * pad - 4 - ((!row && h < lh + icon + 2 * pad) ? icon + 6 : 0));
+    if (row) {
+        float max_w = kit.row_label_max > w - 2 * kit.row_label_x ? kit.row_label_max
+                                                                   : w - 2 * kit.row_label_x;
+        t->q_label = fm_text(qid, FPR_LABEL, fp.nt, kit.row_role, x0 + kit.row_label_x,
+                             y0 + kit.row_label_base, it->label, bone, max_w);
+    } else {
+        /* the hero's label in the hero role; the others in label, or row on a short tile */
+        role = hero ? "hero" : h >= 48.0F ? "label" : "row";
+        t->q_label =
+            fm_text(qid, FPR_LABEL, fp.nt, role, x0 + pad + 2, y1 - pad, it->label, bone,
+                    w - 2 * pad - 4 - (h < 2 * pad + icon + 28.0F ? icon + 6.0F : 0.0F));
+    }
     sprintf(qid, "%s_desc", id);
-    t->q_desc = fm_text(qid, FPR_DESC, fp.nt, 90 + 32, 430 + 7, 12.0F, it->desc, fm_bone, 470);
+    t->q_desc = fm_text(qid, FPR_DESC, fp.nt, kit.desc_role, kit.desc_anchor[0],
+                        kit.desc_anchor[1], it->desc, bone, kit.desc_max);
     fp.nt++;
 }
 
-/* The chrome every generated screen shares: backdrop bands, header slab + title + rule, the
- * backplate behind the tiles, the footer strip and its mark (hub_layout.py's build()). */
-static void fm_chrome(const char* title, float bx0, float by0, float bx1, float by1)
+/* The chrome (chrome_layout.json): the section's backdrop and band rhythm, the header slab
+ * sized by its title, the breadcrumb with the section icon at its root, the description strip,
+ * and the footer with the A/B hints. */
+static void fm_chrome(const FeMenu* m, int section)
 {
-    float tw = fm_text_width(title, 12.0F);
-    float slab_x1 = 84 + 16 + tw + 20;
-    fm_flat("band_l", FPR_DECOR, -1, 18, -40, 40, 520, fm_band);
-    fm_flat("band_r", FPR_DECOR, -1, 572, -40, 612, 520, fm_band);
-    fm_flat("header_rule", FPR_CHROME, -1, slab_x1 - 4, 46, 550, 52, fm_ink);
-    fm_flat("header_slab", FPR_CHROME, -1, 84, 24, slab_x1, 52, fm_gold);
-    fm_text("header_title", FPR_TITLE, -1, 84 + 16, 32, 12.0F, title, fm_ink, 0);
-    fm_flat("backplate", FPR_CHROME, -1, bx0 - 6, by0 - 6, bx1 + 6, by1 + 6, fm_ink);
-    fm_flat("footer_strip", FPR_CHROME, -1, 90, 430, 596, 456, fm_ink);
-    fm_flat("footer_mark", FPR_CHROME, -1, 100, 437, 112, 449, fm_gold);
+    const KitSection* ks = &kit.sec[section];
+    float ink[3], gold[3], muted[3], bone[3], ok[3], danger[3];
+    const FeMenu* path[6];
+    int np = 0, i, q;
+    float x, slab_x1;
+    char id[FP_ID];
+    fm_tok("ink", section, ink);
+    fm_tok("gold", section, gold);
+    fm_tok("muted", section, muted);
+    fm_tok("bone", section, bone);
+    fm_tok("ok", section, ok);
+    fm_tok("danger", section, danger);
+    for (i = 0; i < ks->nbands; i++) {
+        sprintf(id, "band_%d", i);
+        fm_flat(id, FPR_DECOR, -1, ks->band_x[i], -40, ks->band_x[i] + ks->band_w[i], 520,
+                ks->band);
+    }
+    /* header: the title decides the slab's width */
+    q = fm_text("header_title", FPR_TITLE, -1, kit.title_role, kit.title_anchor[0],
+                kit.title_anchor[1], m->title, ink, kit.title_max);
+    slab_x1 = kit.title_anchor[0] + fm_last_w + 20.0F;
+    fm_flat("header_rule", FPR_CHROME, -1, slab_x1 - 4, kit.rule[1], kit.rule[2], kit.rule[3],
+            ink);
+    fm_flat("header_slab", FPR_CHROME, -1, kit.slab[0], kit.slab[1], slab_x1, kit.slab[3], gold);
+    /* the title draws over its slab */
+    if (q >= 0) {
+        FpQuad tmp = fp.q[q];
+        int n = fp.nq - 1;
+        for (i = q; i < n; i++) {
+            fp.q[i] = fp.q[i + 1];
+        }
+        fp.q[n] = tmp;
+    }
+    /* breadcrumb: the section icon, then the path of menus to here */
+    {
+        char icon[FP_ID];
+        sprintf(icon, "ico_%s", kit_section_names[section]);
+        fm_textured("crumb_icon", FPR_CHROME, -1, icon, kit.crumb_icon[0], kit.crumb_icon[1],
+                    kit.crumb_icon[2], kit.crumb_icon[3], ks->face_hi);
+    }
+    for (path[np++] = m; np < 6 && path[np - 1]->back_kind != 0xFF; np++) {
+        path[np] = fm_find(path[np - 1]->back_kind);
+        if (path[np] == NULL || path[np]->kind == MENU_KIND_MAIN) {
+            break;
+        }
+    }
+    x = kit.crumb_anchor[0];
+    for (i = np - 1; i >= 0; i--) {
+        sprintf(id, "crumb_%d", i);
+        fm_text(id, FPR_CHROME, -1, kit.crumb_role, x, kit.crumb_anchor[1], path[i]->title,
+                i == 0 ? bone : muted, kit.crumb_anchor[0] + kit.crumb_max - x);
+        x += fm_last_w;
+        if (i > 0) {
+            sprintf(id, "crumb_bar_%d", i);
+            fm_flat(id, FPR_CHROME, -1, x + 6, kit.crumb_anchor[1] - 10, x + 8,
+                    kit.crumb_anchor[1], gold);
+            x += 14;
+        }
+    }
+    fm_flat("desc_strip", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1], kit.desc_strip[2],
+            kit.desc_strip[3], ink);
+    fm_flat("footer_strip", FPR_CHROME, -1, kit.footer[0], kit.footer[1], kit.footer[2],
+            kit.footer[3], ink);
+    fm_flat("footer_mark", FPR_CHROME, -1, kit.footer_mark[0], kit.footer_mark[1],
+            kit.footer_mark[2], kit.footer_mark[3], gold);
+    /* hints: glyph (A in ok, B in danger - the kit's suggested tints), 4px, text, 12px */
+    {
+        static const char* const glyph[2] = { "glyph_a", "glyph_b" };
+        static const char* const text[2] = { "Select", "Back" };
+        x = kit.footer[0] + 24;
+        for (i = 0; i < 2; i++) {
+            int t = fp_tex(glyph[i]);
+            float gw = kit.hint_glyph_h;
+            if (t >= 0 && fp.tex[t].t.h > 0) {
+                gw = kit.hint_glyph_h * (float) fp.tex[t].t.w / (float) fp.tex[t].t.h;
+            }
+            sprintf(id, "hint_%d_glyph", i);
+            fm_textured(id, FPR_CHROME, -1, glyph[i], x, kit.hint_glyph_y0, x + gw,
+                        kit.hint_glyph_y0 + kit.hint_glyph_h, i == 0 ? ok : danger);
+            x += gw + 4;
+            sprintf(id, "hint_%d_text", i);
+            fm_text(id, FPR_CHROME, -1, kit.hint_role, x, kit.hint_anchor_y, text[i], bone,
+                    kit.hint_max);
+            x += fm_last_w + 12;
+        }
+    }
 }
 
 /* THE HUB LAYOUT RULE (the engine's stand-in until brief section 2 delivers the art's): one hero
- * tile the full height of the cluster, the others stacked in a column beside it with their
- * heights stepping down by 0.76 each (the prototype's 144 -> 110 -> 82 for three is this rule),
- * 8px gutters. One item fills the cluster; lists are equal rows. */
-static void fm_build(const FeMenu* m)
+ * tile the full height of the cluster, the others stacked in a column beside it with heights
+ * stepping down by 0.76 each (the prototype's 144 -> 110 -> 82 for three is this rule), 8px
+ * gutters; the cluster sits between the kit's breadcrumb and description strip. LISTS are the
+ * kit's list template: rows at its pitch from rows_top, `visible` at a time, scrolling. */
+static void fm_build(const FeMenu* m, int section)
 {
     int n = fm.nvis, k, i;
-    float X0 = 90, X1 = 556, Y0 = 68, Y1 = 420, HX1 = 352, SX0 = 360, G = 8;
-    int order[FM_MAX_VIS]; /* slots in rank order */
-    fm_chrome(m->title, X0, Y0, X1, m->style == FM_LIST ? Y0 : Y1);
+    float X0 = 90, X1 = 556, Y0 = 82, Y1 = 390, HX1 = 352, SX0 = 360, G = 8;
+    int order[FM_MAX_VIS];
+    float ink[3];
+    fm_tok("ink", section, ink);
+    fm_chrome(m, section);
     if (m->style == FM_LIST) {
-        float gap = 6, rh = (Y1 - Y0 - gap * (n - 1)) / (float) n;
-        int bp = fp_find_quad("backplate");
-        if (rh > 40.0F) {
-            rh = 40.0F;
-        }
         for (i = 0; i < n; i++) {
-            float y = Y0 + i * (rh + gap);
-            fm_tile(i, &m->items[fm.vis[i]], i, X0, y, X1, y + rh, false, true);
-        }
-        if (bp >= 0) { /* the backplate hugs the rows */
-            fm_shear_rect(X0 - 6, Y0 - 6, X1 + 6, Y0 + n * (rh + gap) - gap + 6, fp.q[bp].v);
+            float y = kit.rows_top + i * kit.pitch;
+            fm_tile(i, &m->items[fm.vis[i]], section, i, kit.row_x0, y, kit.row_x1,
+                    y + kit.row_h, false, true);
         }
         return;
     }
-    /* rank: the hero first, then the rest in vanilla order */
+    fm_flat("backplate", FPR_CHROME, -1, X0 - 6, Y0 - 6, X1 + 6, Y1 + 6, ink);
     k = 0;
     for (i = 0; i < n; i++) {
         if (m->items[fm.vis[i]].sel == m->hero) {
@@ -533,11 +662,15 @@ static void fm_build(const FeMenu* m)
             order[k++] = i;
         }
     }
+#define FM_TILE_SECTION(slot)                                                                 \
+    (m->kind == MENU_KIND_MAIN ? fm_section_of(m->items[fm.vis[slot]].arg) : section)
     if (n == 1) {
-        fm_tile(order[0], &m->items[fm.vis[order[0]]], 0, X0, Y0, X1, Y1, true, false);
+        fm_tile(order[0], &m->items[fm.vis[order[0]]], FM_TILE_SECTION(order[0]), 0, X0, Y0, X1,
+                Y1, true, false);
         return;
     }
-    fm_tile(order[0], &m->items[fm.vis[order[0]]], 0, X0, Y0, HX1, Y1, true, false);
+    fm_tile(order[0], &m->items[fm.vis[order[0]]], FM_TILE_SECTION(order[0]), 0, X0, Y0, HX1, Y1,
+            true, false);
     {
         int s = n - 1;
         float avail = Y1 - Y0 - G * (s - 1), wsum = 0.0F, wgt = 1.0F, y = Y0;
@@ -550,14 +683,15 @@ static void fm_build(const FeMenu* m)
             if (i == s - 1) {
                 h = Y1 - y;
             }
-            fm_tile(order[i + 1], &m->items[fm.vis[order[i + 1]]], i + 1, SX0, y, X1, y + h,
-                    false, false);
+            fm_tile(order[i + 1], &m->items[fm.vis[order[i + 1]]], FM_TILE_SECTION(order[i + 1]),
+                    i + 1, SX0, y, X1, y + h, false, false);
             y += h + G;
         }
     }
+#undef FM_TILE_SECTION
 }
 
-/* ---- SisLib text for the text quads ------------------------------------------------------- */
+/* ---- SisLib text, only when the atlas is missing ------------------------------------------ */
 
 static void fm_texts_create(void)
 {
@@ -565,7 +699,7 @@ static void fm_texts_create(void)
     for (i = 0; i < fp.nq; i++) {
         FpQuad* q = &fp.q[i];
         GXColor c;
-        if (q->kind != FPK_TEXT) {
+        if (q->kind != FPK_TEXT || q->ff_role >= 0) {
             continue;
         }
         c.r = fp_u8(q->rgb[0]);
@@ -589,8 +723,6 @@ static void fm_texts_create(void)
     }
 }
 
-/* Follow each text quad's evaluated transform: position (its sheared quad's bottom-left x, so
- * the upright text sits where the italic would), scale with the joint, colour, visibility. */
 static void fm_texts_update(void)
 {
     int i;
@@ -637,14 +769,17 @@ static void fm_close(void)
     fp.ok = false;
 }
 
-/* Load hub_layout.json (palette, states) and hub_motion.json (events, sequences) and build the
- * current screen; `sel` is the vanilla selection the cursor starts on. */
+static int fm_rows_joint = -1;
+static int fm_scroll;
+
 static void fm_open(const FeMenu* m, int sel)
 {
     void *lt, *lp, *mt, *mp;
     const FjNode* L;
     const FjNode* M;
-    int i;
+    int i, section = fm_section_of(m->kind);
+    kit_load();
+    ff_load();
     fm.menu = m;
     fm.nvis = 0;
     for (i = 0; i < m->n && fm.nvis < FM_MAX_VIS; i++) {
@@ -659,42 +794,94 @@ static void fm_open(const FeMenu* m, int sel)
         }
     }
     fp_reset();
-    fm_default_states();
     L = fj_load("hub_layout.json", &lt, &lp);
     if (L != NULL) {
-        fp_read_states(L);
-        fm_palette_from(L);
+        fp_read_states(L); /* the shear, the selection offset and the hub's ng numbers */
     }
     if (lt != NULL) HSD_Free(lt);
     if (lp != NULL) HSD_Free(lp);
-    fm_build(m);
+    fm_default_states(section);
+    if (m->style == FM_LIST) {
+        fp.sel_offset[0] = kit.row_sel_offset[0];
+        fp.sel_offset[1] = kit.row_sel_offset[1];
+        fm_rows_joint = fp_add_joint("rows", -1, NULL); /* scrolls the rows; first in order */
+    } else {
+        fm_rows_joint = -1;
+    }
+    fp.recolour = true;
+    fm_build(m, section);
     M = fj_load("hub_motion.json", &mt, &mp);
     if (M != NULL) {
         fp_read_motion(M, true);
-    } else {
-        /* no motion: plain joints so the selection still reads (lift + colours) */
+    }
+    if (mt != NULL) HSD_Free(mt);
+    if (mp != NULL) HSD_Free(mp);
+    if (m->style == FM_LIST) {
+        kit_read_motion(section);
+    }
+    if (M == NULL) {
+        /* no motion file: plain joints so the selection still reads (lift + colours) */
         for (i = 0; i < fp.nt; i++) {
             char nm[FP_ID];
             FpTile* t = &fp.tile[i];
             sprintf(nm, "lift_%s", t->id);
             t->j_lift = fp_add_joint(nm, -1, NULL);
-            t->j_tile = t->j_desc = -1;
-            sprintf(nm, "plate_%s", t->id);
-            t->j_plate = fp_add_joint(nm, -1, NULL);
+            t->j_tile = -1;
             fp_joint_draws(t->j_lift, fp.q[t->q_face].id);
             if (t->q_icon >= 0) fp_joint_draws(t->j_lift, fp.q[t->q_icon].id);
             fp_joint_draws(t->j_lift, fp.q[t->q_label].id);
+            sprintf(nm, "plate_%s", t->id);
+            t->j_plate = fp_add_joint(nm, -1, NULL);
             fp_joint_draws(t->j_plate, fp.q[t->q_plate].id);
             sprintf(nm, "desc_%s", t->id);
             t->j_desc = fp_add_joint(nm, -1, NULL);
             fp_joint_draws(t->j_desc, fp.q[t->q_desc].id);
         }
     }
-    if (mt != NULL) HSD_Free(mt);
-    if (mp != NULL) HSD_Free(mp);
+    /* the kit's chrome rides the header and footer joints the hub motion slides */
+    {
+        int hj = fp_find_joint("header"), fj2 = fp_find_joint("footer");
+        for (i = 0; i < fp.nq; i++) {
+            const char* id = fp.q[i].id;
+            if (fp.q[i].tile >= 0 || fp.q[i].joint >= 0) {
+                continue;
+            }
+            if (strncmp(id, "crumb", 5) == 0 || strncmp(id, "header", 6) == 0) {
+                fp.q[i].joint = (s8) hj;
+            } else if (strncmp(id, "hint", 4) == 0 || strncmp(id, "desc_strip", 10) == 0 ||
+                       strncmp(id, "footer", 6) == 0)
+            {
+                fp.q[i].joint = (s8) fj2;
+            }
+        }
+    }
+    if (fm_rows_joint >= 0) {
+        for (i = 0; i < fp.nt; i++) {
+            if (fp.tile[i].j_tile >= 0) {
+                fp.j[fp.tile[i].j_tile].parent = (s8) fm_rows_joint;
+            }
+        }
+    }
+    /* the atlas pages this screen sets text in, loaded now rather than mid-draw */
+    for (i = 0; i < fp.nq; i++) {
+        if (fp.q[i].kind == FPK_TEXT && fp.q[i].ff_role >= 0) {
+            int p;
+            for (p = 0; p < ff.r[fp.q[i].ff_role].npages; p++) {
+                fp_tex(ff.r[fp.q[i].ff_role].page[p]);
+            }
+        }
+    }
     fp_reset_channels();
     fp.ok = true;
     fp.frame = 0;
+    fm_scroll = 0;
+    if (m->style == FM_LIST && fm.cursor >= kit.visible - 1) {
+        fm_scroll = fm.cursor - (kit.visible - 2);
+        if (fm_scroll > fm.nvis - kit.visible) {
+            fm_scroll = fm.nvis - kit.visible;
+        }
+        fp_set(fp_jch(fm_rows_joint, FJC_TRA_Y), 0, -kit.pitch * fm_scroll);
+    }
     if (fm.nvis > 0) {
         fp_select_initial(fm.tile_of[fm.cursor], 0);
     }
@@ -704,10 +891,71 @@ static void fm_open(const FeMenu* m, int sel)
     fm.ready_at = 8;
     fm.leave_at = 0;
     fm.pend_kind = 0;
-    OSReport("frontend: menu %s (kind %d), %d of %d items shown, cursor on \"%s\"%s\n",
-             m->title, m->kind, fm.nvis, m->n,
+    OSReport("frontend: menu %s (kind %d, %s), %d of %d items shown, cursor on \"%s\"%s%s\n",
+             m->title, m->kind, m->style == FM_HUB ? "hub" : "list", fm.nvis, m->n,
              fm.nvis > 0 ? m->items[fm.vis[fm.cursor]].label : "-",
-             fp.motion_ok ? "" : " - no hub_motion.json, static");
+             fp.motion_ok ? "" : " - no hub_motion.json, static",
+             ff.state == 1 ? "" : " - no font atlas, SisLib text");
+}
+
+/* Lists: keep the cursor at least one row from either edge of the visible window, sliding the
+ * rows as the kit's scroll event does (7 frames, spline). Rows outside the window are hidden
+ * after evaluation (fm_clip_rows). */
+static void fm_list_scroll(void)
+{
+    int want = fm_scroll;
+    FpKey k[2];
+    if (fm.menu->style != FM_LIST || fm.nvis <= kit.visible || fm_rows_joint < 0) {
+        return;
+    }
+    if (fm.cursor < want + 1) {
+        want = fm.cursor - 1;
+    }
+    if (fm.cursor > want + kit.visible - 2) {
+        want = fm.cursor - (kit.visible - 2);
+    }
+    if (want < 0) {
+        want = 0;
+    }
+    if (want > fm.nvis - kit.visible) {
+        want = fm.nvis - kit.visible;
+    }
+    if (want == fm_scroll) {
+        return;
+    }
+    fm_scroll = want;
+    k[0].frame = 0;
+    k[0].interp = FPI_SPL;
+    k[0].from_current = 1;
+    k[0].v = 0.0F;
+    k[0].slope = 0.0F;
+    k[1] = k[0];
+    k[1].frame = 6;
+    k[1].from_current = 0;
+    k[1].v = -kit.pitch * (float) fm_scroll;
+    fp_start(fp_jch(fm_rows_joint, FJC_TRA_Y), fp.frame, k, 2);
+}
+
+static void fm_clip_rows(void)
+{
+    int i;
+    float top = kit.rows_top - kit.pitch * 0.5F;
+    float bot = kit.rows_top + (kit.visible - 1) * kit.pitch + kit.pitch * 0.5F;
+    if (fm.menu == NULL || fm.menu->style != FM_LIST || fm.nvis <= kit.visible) {
+        return;
+    }
+    for (i = 0; i < fp.nt; i++) {
+        FpTile* t = &fp.tile[i];
+        float y = fm_rows_joint >= 0 ? fp.q[t->q_plate].v[0][1] +
+                                           fp_value(fp_jch(fm_rows_joint, FJC_TRA_Y), fp.frame)
+                                     : 0.0F;
+        if (y < top || y > bot) {
+            fp.q[t->q_plate].wa = fp.q[t->q_face].wa = 0.0F;
+            if (t->q_label >= 0) {
+                fp.q[t->q_label].wa = 0.0F;
+            }
+        }
+    }
 }
 
 /* ---- the hub demo (MELEE_FE_HUBDEMO): out_hub's own screen and pipeline/hub_motion.py's
@@ -1004,7 +1252,20 @@ static void fm_scene_frame(void)
             if (to != fm.cursor) {
                 sfxMove();
                 fm.cursor = to;
-                if (fp.motion_ok) {
+                fm_list_scroll();
+                if (fp.motion_ok && fm.menu->style == FM_LIST &&
+                    fp_find_event("row_select") >= 0)
+                {
+                    /* the kit's list_cursor_move: row_deselect / row_select, with the hub's
+                       description fade for the strip */
+                    int old = fp.sel;
+                    fp.prev = old;
+                    fp.sel = fm.tile_of[to];
+                    fp_event("row_deselect", old, fp.frame, -1);
+                    fp_event("desc_out", old, fp.frame, -1);
+                    fp_event("row_select", fp.sel, fp.frame, -1);
+                    fp_event("desc_in", fp.sel, fp.frame, -1);
+                } else if (fp.motion_ok) {
                     fp_cursor_move(fm.tile_of[to], fp.frame);
                 } else {
                     fp_reset_channels();
@@ -1015,6 +1276,7 @@ static void fm_scene_frame(void)
     }
     fm_mirror_flow();
     fp_evaluate(fp.frame);
+    fm_clip_rows();
     fm_texts_update();
 }
 

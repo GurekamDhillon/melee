@@ -396,6 +396,7 @@ def convert_layout(layout_path, outdir, res):
     import shutil
     with open(layout_path, encoding="utf-8") as f:
         layout = json.load(f)
+    # A texture list can also be a whole art section's manifest.json (out_kit): same fields.
     here = os.path.dirname(os.path.abspath(layout_path))
     root = os.path.dirname(here)
     os.makedirs(outdir, exist_ok=True)
@@ -465,8 +466,16 @@ def main(argv=None):
         lp.add_argument("--layout", required=True, action="append")
         lp.add_argument("--outdir", required=True)
         lp.add_argument("--res", default="2x", choices=["1x", "2x"])
+        lp.add_argument("--copy", nargs="*", default=[],
+                        help="more JSON files the frontend reads (kit.json, font_manifest.json, "
+                             "*_layout.json templates), copied into outdir as they are")
         a = lp.parse_args(sys.argv[1:])
-        return max(convert_layout(p, a.outdir, a.res) for p in a.layout)
+        rc = max(convert_layout(p, a.outdir, a.res) for p in a.layout)
+        import shutil
+        for c in a.copy:
+            shutil.copyfile(c, os.path.join(a.outdir, os.path.basename(c)))
+            print("%-20s copied" % os.path.basename(c))
+        return rc
     if argv is None and "--manifest" in sys.argv[1:]:
         mp = argparse.ArgumentParser()
         mp.add_argument("--manifest", required=True)

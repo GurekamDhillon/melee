@@ -297,6 +297,7 @@ static const FjNode* fj_load(const char* name, void** mem_text, void** mem_pool)
     char* text;
     int root;
     *mem_text = *mem_pool = NULL;
+    fj.pool = NULL;
     if (size <= 0) {
         OSReport("frontend: %s not found beside the exe (ui/) - run pc/tools/png2gx.py "
                  "--layout\n",
@@ -304,14 +305,38 @@ static const FjNode* fj_load(const char* name, void** mem_text, void** mem_pool)
         return NULL;
     }
     text = HSD_MemAlloc(size + 1);
-    fj.cap = size / 5 + 64; /* every value costs at least ~5 bytes of JSON */
-    fj.pool = HSD_MemAlloc(fj.cap * (int) sizeof(FjNode));
-    if (text == NULL || fj.pool == NULL) {
+    if (text == NULL) {
         OSReport("frontend: no heap for %s (%d bytes)\n", name, size);
         return NULL;
     }
     UiFile_Read(name, text, size);
     text[size] = '\0';
+    /* at most one value per ',' '[' '{' outside strings, plus the root */
+    {
+        int i, n = 2;
+        bool in_str = false;
+        for (i = 0; i < size; i++) {
+            char c = text[i];
+            if (in_str) {
+                if (c == '\\') {
+                    i++;
+                } else if (c == '"') {
+                    in_str = false;
+                }
+            } else if (c == '"') {
+                in_str = true;
+            } else if (c == ',' || c == '[' || c == '{') {
+                n++;
+            }
+        }
+        fj.cap = n;
+    }
+    fj.pool = HSD_MemAlloc(fj.cap * (int) sizeof(FjNode));
+    if (fj.pool == NULL) {
+        OSReport("frontend: no heap for %s's %d nodes\n", name, fj.cap);
+        HSD_Free(text);
+        return NULL;
+    }
     *mem_text = text;
     *mem_pool = fj.pool;
     fj.p = text;
@@ -380,6 +405,9 @@ typedef struct FpQuad {
     float rgb[3];
     /* FPK_TEXT */
     const char* text;
+    char textbuf[64]; ///< the fitted string (the fit rule may truncate it)
+    s8 ff_role;       ///< atlas role, -1 = SisLib
+    float ax, ay;     ///< unsheared baseline anchor
     float text_h;  ///< cap height in 640x480 units
     u8 align;      ///< 0 left, 1 centre
     HSD_Text* sis;
@@ -397,6 +425,7 @@ typedef struct FpTile {
     int rank;
     int q_plate, q_face, q_icon, q_label, q_desc; ///< quad indices, -1 none
     int j_tile, j_lift, j_plate, j_desc;          ///< joint indices, -1 none
+    float ng_face[3], ng_icon[3];                 ///< this tile's rest colours (its section)
 } FpTile;
 
 typedef struct FpJoint {
@@ -464,6 +493,8 @@ static struct {
     float ng_face[3], ng_icon[3], ng_label[3];
     float sel_face[3], sel_icon[3], sel_label[3], sel_plate[3];
     float sel_offset[2];
+    float hub_face[3], hub_icon[3]; ///< hub_layout.json's ng colours, as its motion writes them
+    bool recolour;                  ///< substitute those in events with each tile's own
     FpQuad q[FP_MAX_QUADS];
     int nq;
     FpTile tile[FP_MAX_TILES];
@@ -494,10 +525,10 @@ static struct {
 static void fp_cat(char* dst, const char* src)
 {
     int n = (int) strlen(dst);
-    while (*src != ' ' && n < FP_ID - 1) {
+    while (*src != '\0' && n < FP_ID - 1) {
         dst[n++] = *src++;
     }
-    dst[n] = ' ';
+    dst[n] = '\0';
 }
 
 static const char* fp_strstr(const char* s, const char* sub)
@@ -699,6 +730,7 @@ static void fp_free_textures(void)
 static void fp_reset(void)
 {
     fp.ok = fp.motion_ok = false;
+    fp.recolour = false;
     fp.nq = fp.nt = fp.nj = fp.nev = fp.nmat = 0;
     fp.n_cursor_move = 0;
     fp.frame = 0;
@@ -726,6 +758,7 @@ static int fp_add_quad(const char* id, u8 kind, u8 role, int tile)
     q->tile = (s8) tile;
     q->tex = -1;
     q->joint = -1;
+    q->ff_role = -1;
     q->uv[2] = q->uv[3] = 1.0F;
     return fp.nq++;
 }
@@ -772,6 +805,8 @@ static void fp_read_states(const FjNode* L)
     const FjNode* sh = fj_get(L, "shear");
     fp_hex(fj_str(fj_get(L, "clear_colour")), fp.clear);
     fp_state_colours(fj_get(st, "ng"), fp.ng_face, fp.ng_icon, fp.ng_label);
+    memcpy(fp.hub_face, fp.ng_face, sizeof fp.hub_face);
+    memcpy(fp.hub_icon, fp.ng_icon, sizeof fp.hub_icon);
     fp_state_colours(sel, fp.sel_face, fp.sel_icon, fp.sel_label);
     fp_hex(fj_str(fj_get(sel, "plate")), fp.sel_plate);
     fp.sel_offset[0] = fj_num(fj_idx(fj_get(sel, "offset"), 0), -5.0F);
@@ -1292,7 +1327,25 @@ static void fp_event(const char* name, int ti, int f, int joint_override)
             }
         }
         if (q >= 0) {
-            fp_start(fp_mch(q, t->channel == FJC_ALPHA ? FMC_ALPHA : t->channel), f, t->k, t->n);
+            int ch = t->channel == FJC_ALPHA ? FMC_ALPHA : t->channel;
+            if (fp.recolour && ch < 3 && ti >= 0) {
+                /* the hub's motion names its ng colours as numbers; on a screen whose tiles
+                   wear their section's colours, those numbers mean the tile's own */
+                FpKey keys[FP_MAX_KEYS];
+                int i;
+                for (i = 0; i < t->n; i++) {
+                    float d0 = t->k[i].v - fp.hub_face[ch], d1 = t->k[i].v - fp.hub_icon[ch];
+                    keys[i] = t->k[i];
+                    if (d0 > -0.003F && d0 < 0.003F) {
+                        keys[i].v = fp.tile[ti].ng_face[ch];
+                    } else if (d1 > -0.003F && d1 < 0.003F) {
+                        keys[i].v = fp.tile[ti].ng_icon[ch];
+                    }
+                }
+                fp_start(fp_mch(q, ch), f, keys, t->n);
+            } else {
+                fp_start(fp_mch(q, ch), f, t->k, t->n);
+            }
             continue;
         }
         /* a material track on a target that names a joint (plate_<id>, desc_<id>) drives that
@@ -1588,11 +1641,23 @@ static void fp_textured(FpTex* tx, const float w[4][2], const float* uv, GXColor
     hsd_80391A04(1.0F, 1.0F, 1);
 }
 
+static void fp_draw_text(FpQuad* q);
+
 static void fp_draw_quad(int i)
 {
-    FpQuad* q = &fp.q[i];
+    FpQuad* q;
     GXColor c;
-    if (i < 0 || q->kind == FPK_TEXT || q->wa <= 0.01F) {
+    if (i < 0) {
+        return;
+    }
+    q = &fp.q[i];
+    if (q->wa <= 0.01F) {
+        return;
+    }
+    if (q->kind == FPK_TEXT) {
+        if (q->ff_role >= 0) {
+            fp_draw_text(q);
+        }
         return;
     }
     if (q->kind == FPK_FLAT && !q->has_colour && q->role != FPR_PLATE) {

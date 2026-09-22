@@ -573,6 +573,7 @@ static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXCol
 static void fe_match_setup_from_menus(void);
 
 #include "gmfrontend_player.inc"
+#include "gmfrontend_kit.inc"
 #include "gmfrontend_menus.inc"
 
 static void fm_route_to_menus(u8 kind, u8 sel)

@@ -302,6 +302,21 @@ uint32_t gw_Replay_ApplyMatch(void *start_melee_data) {
            seed; the guest takes both (keeping its own callback pointers, as for a replay). */
         extern uint32_t gw_Netplay_Handshake(uint8_t *start_melee_data, int len, int keep_off,
                                              int keep_len);
+        {
+            /* Netplay needs port p to be player p on controller p: PlayerInitData +4 (`slot`,
+               player id + 1: the P1..P4 tag) and +7 (`sub_color`, really the controller index).
+               The scene launcher sets both now; a match set up any other way is corrected. */
+            int p;
+            for (p = 0; p < 4; ++p) {
+                uint8_t *pl = d + 0x60 + 0x24 * p;
+                if (pl[1] != 3 && (pl[4] != (uint8_t) (p + 1) || pl[7] != (uint8_t) p)) {
+                    gw_log("replay: live match - player %d had player slot %d / controller %d, now "
+                           "%d / %d", p + 1, pl[4], pl[7], p + 1, p);
+                    pl[4] = (uint8_t) (p + 1);
+                    pl[7] = (uint8_t) p;
+                }
+            }
+        }
         rp.seed = gw_Netplay_Handshake(d, GW_RP_GAME_INFO, 0x38, (int) sizeof keep);
         memcpy(rp.game_info, d, GW_RP_GAME_INFO);
         rp.frame = GW_RP_FIRST_FRAME - 1;

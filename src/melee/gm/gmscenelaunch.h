@@ -127,7 +127,13 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         if (v >= 0) {
             vs->start.players[i].nametag = (u8) v;
         }
-        vs->start.players[i].slot = (u8) i;
+        /* What the CSS would have written (gmvs.c's player setup reads both):
+         *  - slot = the player id + 1 (0 = "its own index"), i.e. the P1..P4 tag. Writing the bare
+         *    index made port 2 player id 0: two "P1"s.
+         *  - sub_color (misnamed: it is the CONTROLLER the player reads, the port that picked the
+         *    character). Left at 0, every human read controller 1. */
+        vs->start.players[i].slot = (u8) (i + 1);
+        vs->start.players[i].sub_color = (u8) i;
         seeded++;
     }
 
@@ -141,7 +147,8 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         vs->start.players[1].cpu_kind = 0;
         vs->start.players[1].cpu_level = 0;
         vs->start.players[1].color = 1;
-        vs->start.players[1].slot = 1;
+        vs->start.players[1].slot = 2;
+        vs->start.players[1].sub_color = 1;
     }
 
     if (SceneLaunch_Teams() >= 0) {

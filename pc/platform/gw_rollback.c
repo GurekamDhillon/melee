@@ -86,6 +86,8 @@ static struct {
     int opened;
     int started;          /* frame -123 has been simulated: the network clock runs */
     long tk;              /* the fake network clock: render ticks since the match began */
+    int prev_frame, prev_planned_new; /* last tick: frame seen and whether a new frame was planned */
+    int n_held;           /* ticks the game itself held the frame (loading hold): clock paused */
     int last;             /* the replay's last frame (fake) */
 
     int slot_present[GW_RB_SLOTS];
@@ -806,9 +808,16 @@ int gw_RB_Iterations(int count) {
             rb.started = 1;
             rb.tk = 1;
         }
+    } else if (rb.prev_planned_new && frame == rb.prev_frame) {
+        /* the last tick planned a new frame and the game did not run it: the scene held the frame
+           (the loading hold freezes the match until its pipelines are built). A real peer is held
+           by the same hold, so the fake network's clock pauses too - otherwise it runs ahead and
+           delivers every input early, and nothing is ever predicted. */
+        rb.n_held++;
     } else {
         rb.tk++;
     }
+    rb.prev_frame = frame;
     rb_fake_deliver();
 
     n = frame + 1; /* the next frame to simulate */
@@ -849,6 +858,7 @@ int gw_RB_Iterations(int count) {
         rb.plan.new_frame = 0;
     }
     rb.plan.active = rb.plan.rollback || rb.plan.new_frame;
+    rb.prev_planned_new = rb.plan.new_frame;
     if (rb.plan.rollback) {
         rb.n_rollbacks++;
         rb.n_resim += rb.plan.k;
@@ -888,10 +898,10 @@ int gw_RB_Iterations(int count) {
     }
     if ((rb.n_ticks % 300) == 0) {
         gw_log("rb: tick %d frame %d confirmed %d | rollbacks %d (avg depth %.2f, max %d), resim "
-               "frames %d, stalls %d, desyncs %d, abandoned sounds released %d | ms: save %.2f/load %.2f per op, "
+               "frames %d, stalls %d, held %d, desyncs %d, abandoned sounds released %d | ms: save %.2f/load %.2f per op, "
                "resim %.2f/iter, new %.2f/iter", rb.n_ticks, frame, conf, rb.n_rollbacks,
                rb.n_rollbacks ? (double) rb.depth_sum / rb.n_rollbacks : 0.0, rb.depth_max,
-               rb.n_resim, rb.n_stall_ticks, rb.n_desync, rb.n_sfx_killed,
+               rb.n_resim, rb.n_stall_ticks, rb.n_held, rb.n_desync, rb.n_sfx_killed,
                rb.ms_save / (rb.n_new ? rb.n_new : 1), rb.n_rollbacks ? rb.ms_load / rb.n_rollbacks : 0.0,
                rb.n_resim ? rb.ms_resim / rb.n_resim : 0.0, rb.n_new ? rb.ms_new / rb.n_new : 0.0);
     }

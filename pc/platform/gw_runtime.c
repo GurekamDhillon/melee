@@ -1,5 +1,6 @@
 /* Core runtime for the game world: startup fixups, memory regions, logging. */
 #include "gw.h"
+#include "gw_uigen.h"
 
 #include "shim_gx.h"
 #include "shim_os.h"
@@ -1740,6 +1741,42 @@ static int gw_sl_mexint_to_ck(int internal) {
   return fk >= 0 ? gw_SceneLaunch_FKindToCKind(fk) : -1;
 }
 
+/* Letters and digits only, lower case: "Captain Falcon" and "captainfalcon" compare equal. */
+static void gw_sl_norm(const char *s, char *out, size_t cap) {
+  size_t k = 0;
+  for (; s != NULL && *s != 0 && k + 1 < cap; ++s) {
+    char c = *s;
+    if (c >= 'A' && c <= 'Z') c = (char)(c + ('a' - 'A'));
+    if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) out[k++] = c;
+  }
+  out[k] = 0;
+}
+
+/* A fighter NAME on an m-ex disc: the disc's own names first (ext -> port CharacterKind), then a
+ * retail name only when the disc's fighter in that slot still answers to it. Returns the kind, -1
+ * for a name the disc does not have, or -2 when there is no m-ex table (the retail names apply). */
+static int gw_sl_mex_name(const char *v) {
+  extern int gw_Mex_PortCKindToExt(int ckind);
+  extern const char *gw_Mex_FighterName(int ext);
+  char want[64], have[64];
+  int i, n = gw_UI_FighterCount(), rk;
+  if (n <= 0) return -2;
+  gw_sl_norm(v, want, sizeof want);
+  for (i = 0; i < n; ++i) {
+    GwUiFighter f;
+    if (!gw_UI_FighterAt(i, &f) || f.kind < 0) continue;
+    gw_sl_norm(gw_Mex_FighterName(f.external_id), have, sizeof have);
+    if (have[0] != 0 && strcmp(have, want) == 0) return f.kind;
+  }
+  rk = tt_lookup_ckind_name(v);
+  if (rk < 0) return -1;
+  gw_sl_norm(gw_Mex_FighterName(gw_Mex_PortCKindToExt(rk)), have, sizeof have);
+  if (have[0] == 0 || strstr(have, want) != NULL || strstr(want, have) != NULL) return rk;
+  gw_log("scene: '%s' is not on this disc (its CharacterKind %d is '%s' here) - use a name the "
+         "disc has, or ck:/id:", v, rk, gw_Mex_FighterName(gw_Mex_PortCKindToExt(rk)));
+  return -1;
+}
+
 /* Parses a character reference into a CharacterKind. Returns 0 on success.
  * `*random` is set for the "random" keyword, which is resolved when the scene is seeded. */
 static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
@@ -1789,6 +1826,14 @@ static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
   }
   if (rest != NULL && gw_sl_all_digits(rest)) {
     n = gw_sl_mexint_to_ck(atoi(rest));
+    if (n < 0) return -1;
+    *ck_out = n;
+    return 0;
+  }
+  n = gw_sl_mex_name(v);
+  if (n != -2) {
+    /* an m-ex disc names its fighters itself: its name wins, and a retail name the disc no longer
+       carries in that slot (ACE has no Marth) fails loudly instead of loading someone else */
     if (n < 0) return -1;
     *ck_out = n;
     return 0;

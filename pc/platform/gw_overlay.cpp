@@ -109,17 +109,86 @@ void human_bytes(char *out, size_t n, uint64_t b) {
  * genuine repeat looks like progress. The harness knows exactly what each one is - the tag, the
  * disc, the unit, the stage, the fighters - so it should say so on the window rather than only
  * in a log nobody reads while watching. Read once; the value never changes within a run. */
-const char *run_label() {
-  static const char *label = nullptr;
-  static bool checked = false;
-  if (!checked) {
-    checked = true;
-    label = std::getenv("MELEE_RUN_LABEL");
-    if (label != nullptr && label[0] == '\0') {
-      label = nullptr;
-    }
+/* The label, in order: set at runtime (console "label <text>", gd.label), MELEE_RUN_LABEL, else
+ * derived from where the exe runs - a sandbox under _build\agents\<lane>\runs\<name>\ reads
+ * "<lane> / <name>", _build\runs\<name>\ reads "main / <name>". A real install shows nothing. */
+char g_label[160] = {0};
+int g_label_state = 0; /* 0 = not decided, 1 = decided (g_label may be empty) */
+int g_label_serial = 0; /* bumps when the label changes: the window title follows */
+
+void derive_label_from_exe() {
+  wchar_t wpath[MAX_PATH];
+  char path[MAX_PATH * 2];
+  DWORD n = GetModuleFileNameW(nullptr, wpath, MAX_PATH);
+  if (n == 0 || n >= MAX_PATH) {
+    return;
   }
-  return label;
+  WideCharToMultiByte(CP_UTF8, 0, wpath, -1, path, (int) sizeof path, nullptr, nullptr);
+  for (char *c = path; *c != '\0'; ++c) {
+    if (*c == '/') *c = '\\';
+  }
+  /* find "\_build\" case-insensitively */
+  char lower[MAX_PATH * 2];
+  std::snprintf(lower, sizeof lower, "%s", path);
+  for (char *c = lower; *c != '\0'; ++c) {
+    if (*c >= 'A' && *c <= 'Z') *c = (char) (*c + 32);
+  }
+  const char *b = std::strstr(lower, "\\_build\\");
+  if (b == nullptr) {
+    return;
+  }
+  const char *rest = path + (b - lower) + 8; /* after "\_build\" */
+  char lane[64] = "main", name[96] = "";
+  if (_strnicmp(rest, "agents\\", 7) == 0) {
+    const char *l = rest + 7, *e = std::strchr(l, '\\');
+    if (e == nullptr || _strnicmp(e, "\\runs\\", 6) != 0) return;
+    std::snprintf(lane, sizeof lane, "%.*s", (int) (e - l), l);
+    rest = e + 6;
+  } else if (_strnicmp(rest, "runs\\", 5) == 0) {
+    rest += 5;
+  } else {
+    return;
+  }
+  const char *e = std::strchr(rest, '\\');
+  if (e == nullptr) return; /* the exe itself must sit inside the sandbox folder */
+  std::snprintf(name, sizeof name, "%.*s", (int) (e - rest), rest);
+  if (name[0] != '\0') {
+    std::snprintf(g_label, sizeof g_label, "%s / %s", lane, name);
+  }
+}
+
+const char *run_label() {
+  if (g_label_state == 0) {
+    g_label_state = 1;
+    const char *env = std::getenv("MELEE_RUN_LABEL");
+    if (env != nullptr && env[0] != '\0') {
+      std::snprintf(g_label, sizeof g_label, "%s", env);
+    } else {
+      derive_label_from_exe();
+    }
+    ++g_label_serial;
+  }
+  return g_label[0] != '\0' ? g_label : nullptr;
+}
+
+BOOL CALLBACK title_cb(HWND w, LPARAM title) {
+  if (IsWindowVisible(w)) SetWindowTextA(w, (const char *) title);
+  return TRUE;
+}
+
+/* The window title carries the label too ("Melee PC - charlie / c3live"). */
+void apply_title() {
+  static int applied = 0;
+  run_label();
+  if (applied == g_label_serial) return;
+  char title[200];
+  if (g_label[0] != '\0') {
+    std::snprintf(title, sizeof title, "Melee PC - %s", g_label);
+  } else {
+    std::snprintf(title, sizeof title, "Melee PC");
+  }
+  EnumThreadWindows(GetCurrentThreadId(), title_cb, (LPARAM) title);
+  applied = g_label_serial;
 }
 
 } // namespace
@@ -317,7 +386,11 @@ void build_panel() {
 /* Once per presented frame, from VIWaitForRetrace. Counts frames, edge-detects F9 (holding it
  * toggles once, not 60 times a second) and refreshes the panel text while it is open. Draws
  * nothing - the game draws. */
+extern "C" void gw_Console_Draw(void); /* gw_console.cpp: the console and script drawing */
+
 extern "C" void gw_Overlay_DrawPanel(void) {
+  gw_Console_Draw(); /* independent of MELEE_OVERLAY */
+  apply_title();
   if (!overlay_enabled()) {
     return;
   }
@@ -404,4 +477,12 @@ extern "C" const char *gw_Overlay_GetPanelLine(int i) {
 /* 1 for the secondary lines the ImGui panel drew with TextDisabled - drawn grey. */
 extern "C" int gw_Overlay_GetPanelLineDim(int i) {
   return (i >= 0 && i < panel_count) ? panel_dim[i] : 0;
+}
+
+/* Set the run label at runtime (console "label <text>", Lua gd.label): scripted tests say what
+ * step they are on. An empty text clears it. */
+extern "C" void gw_Overlay_SetRunLabel(const char *text) {
+  run_label();
+  std::snprintf(g_label, sizeof g_label, "%s", text != nullptr ? text : "");
+  ++g_label_serial;
 }

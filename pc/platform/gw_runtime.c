@@ -2341,6 +2341,10 @@ static const char *gw_sr_scene_name(int s) {
 
 /* Called from the mode state machine as each scene is entered and left. `phase` is 0 for enter
  * and 1 for leave. */
+/* The same names for the scripting API (gw_script.c: gd.scene()). */
+const char *gw_SceneReport_ModeName(int mode) { return gw_sr_mode_name(mode); }
+const char *gw_SceneReport_SceneName(int scene_kind) { return gw_sr_scene_name(scene_kind); }
+
 void gw_SceneReport_State(int phase, int mode, int state_id, int scene_kind) {
   if (!gw_SceneReport_Enabled()) return;
   gw_log("scene: %s mode=%s(%d) state=%d screen=%s(%d)", phase == 0 ? "enter" : "leave ",

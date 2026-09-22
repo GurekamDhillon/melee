@@ -746,6 +746,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         extern void RB_SceneBegin(int scene_kind);
         RB_SceneBegin((int) info->scene_kind); /* a rollback session governs VS matches only */
     }
+    {
+        /* the Lua scripting engine (pc/platform/gw_script.c): on_scene / on_match_end */
+        extern void Script_SceneBegin(int scene_kind);
+        Script_SceneBegin(info != NULL ? (int) info->scene_kind : -1);
+    }
 #endif
 
     while (temp_r25->unk_C == 0) {
@@ -760,6 +765,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         /* Outside everything below: the caption, the toast and the panel have to stay live
            while the loading screen holds and while the debug pause has the scene stopped. */
         mnOverlay_Frame();
+        {
+            /* scripting: console + socket commands, on_tick, on_draw (gw_script.c) */
+            extern void Script_Tick(void);
+            Script_Tick();
+        }
 #endif
         hsd_80392E80();
         gmMainLib_8046B0F0.xC = false;
@@ -797,6 +807,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 pad_queue_count = SyncTest_Iterations(pad_queue_count);
             }
         }
+        {
+            /* scripting: pause / frame advance (never during a rollback session) */
+            extern int Script_Iterations(int count);
+            pad_queue_count = Script_Iterations(pad_queue_count);
+        }
 #endif
 
         if (HSD_PadGetResetSwitch()) {
@@ -817,6 +832,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                 } else {
                     SyncTest_IterStart();
                 }
+            }
+            {
+                /* scripting, at the logic-frame boundary: pending savestate/loadstate and
+                   on_frame_pre (not on a resimulated frame) */
+                extern void Script_FramePre(void);
+                Script_FramePre();
             }
 #endif
             HSD_PerfSetStartTime();
@@ -922,6 +943,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     ifMagnify_UpdateLogicOffscreen();
                     Camera_RefreshViewingMtx();
                     HSD_ObjAllocTopUp();
+                }
+                {
+                    /* scripting: on_frame, input-script tasks, match start (gw_script.c) */
+                    extern void Script_FramePost(void);
+                    Script_FramePost();
                 }
 #endif
             }

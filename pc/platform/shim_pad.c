@@ -146,157 +146,8 @@ void gw_diag_pad_values(const void *status) {
   }
 }
 
-/* Programmatic controller input (MELEE_PAD_SCRIPT=<path>). The file has one segment per line:
- *     <frames> <buttons_hex> [stickX stickY [triggerL triggerR]]
- *   e.g.  20 0100 0 0     -> hold A for 20 samples
- *         10 0000 0 0     -> release for 10
- * '#' starts a comment. Each PADRead (one per pad sample, 60/s) consumes one frame; the last
- * segment holds. This overrides channel 0 regardless of the physical adapter, so a script can
- * drive menus unattended. Button bits: A 0x100, B 0x200, X 0x400, Y 0x800, Start 0x1000,
- * L 0x40, R 0x20, Z 0x10, Up 0x8, Down 0x4, Left 0x1, Right 0x2. */
-#define GW_SCRIPT_MAX 8192
-static struct {
-  int frames;
-  uint16_t buttons;
-  int8_t sx, sy;
-  uint8_t tl, tr;
-} gw_script[GW_SCRIPT_MAX];
-static int gw_script_count;
-static int gw_script_cursor;
-static int gw_script_left;
-static int gw_script_loaded;
-static unsigned gw_script_chan_mask = 1u; /* MELEE_PAD_CHANNELS, e.g. "0123" */
-
-static void gw_pad_script_load(void) {
-  const char *path;
-  FILE *f;
-  char line[256];
-
-  gw_script_loaded = 1;
-  {
-    const char *chans = getenv("MELEE_PAD_CHANNELS");
-    if (chans != NULL && chans[0] != '\0') {
-      const char *c;
-      gw_script_chan_mask = 0;
-      for (c = chans; *c != '\0'; ++c) {
-        if (*c >= '0' && *c <= '3') {
-          gw_script_chan_mask |= 1u << (*c - '0');
-        }
-      }
-      if (gw_script_chan_mask == 0) {
-        gw_script_chan_mask = 1u;
-      }
-    }
-  }
-  path = getenv("MELEE_PAD_SCRIPT");
-  if (path == NULL || path[0] == '\0') {
-    return;
-  }
-  f = fopen(path, "r");
-  if (f == NULL) {
-    gw_log("gw: pad script: cannot open %s", path);
-    return;
-  }
-  while (fgets(line, sizeof line, f) != NULL && gw_script_count < GW_SCRIPT_MAX) {
-    char *p = line;
-    int frames = 0;
-    unsigned int buttons = 0;
-    int sx = 0, sy = 0, tl = 0, tr = 0;
-    int n;
-
-    while (*p == ' ' || *p == '\t') {
-      ++p;
-    }
-    if (*p == '#' || *p == '\n' || *p == '\r' || *p == '\0') {
-      continue;
-    }
-    n = sscanf(p, "%d %x %d %d %d %d", &frames, &buttons, &sx, &sy, &tl, &tr);
-    if (n < 2 || frames <= 0) {
-      continue;
-    }
-    gw_script[gw_script_count].frames = frames;
-    gw_script[gw_script_count].buttons = (uint16_t)buttons;
-    gw_script[gw_script_count].sx = (int8_t)sx;
-    gw_script[gw_script_count].sy = (int8_t)sy;
-    gw_script[gw_script_count].tl = (uint8_t)tl;
-    gw_script[gw_script_count].tr = (uint8_t)tr;
-    ++gw_script_count;
-  }
-  fclose(f);
-  gw_log("gw: pad script: %d segments from %s", gw_script_count, path);
-}
-
-static void gw_pad_script_apply(PADStatus *st) {
-  int idx;
-  int ch;
-
-  if (!gw_script_loaded) {
-    gw_pad_script_load();
-  }
-  if (gw_script_count == 0) {
-    return;
-  }
-  if (gw_script_cursor >= gw_script_count) {
-    gw_script_cursor = gw_script_count - 1;
-  }
-  if (gw_script_left == 0) {
-    gw_script_left = gw_script[gw_script_cursor].frames;
-  }
-  idx = gw_script_cursor;
-
-  /* Broadcast to every channel MELEE_PAD_CHANNELS names (default "0"). Four fighters driven
-   * through the same moveset in one match is a 4x cut in wall-clock for the sweep, and it also
-   * exercises the thing a single-fighter run never does: four of them allocating articles,
-   * effects and item slots at once. The default stays channel 0 so existing scripts are
-   * unaffected. */
-  for (ch = 0; ch < 4; ++ch) {
-    if ((gw_script_chan_mask & (1u << ch)) == 0) {
-      continue;
-    }
-    st[ch].stickX = gw_script[idx].sx;
-    st[ch].stickY = gw_script[idx].sy;
-    st[ch].substickX = 0;
-    st[ch].substickY = 0;
-    st[ch].triggerLeft = gw_script[idx].tl;
-    st[ch].triggerRight = gw_script[idx].tr;
-    gw_w16(&st[ch].button, gw_script[idx].buttons);
-    st[ch].err = 0;
-  }
-
-  if (--gw_script_left == 0) {
-    ++gw_script_cursor;
-  }
-}
-
-/* Live input (MELEE_PAD_LIVE=<path>): re-read the file on every PADRead and apply it, so inputs
- * can be driven in real time without restarting the game. Format: <buttons_hex> [sx sy [tl tr]],
- * same bit layout as MELEE_PAD_SCRIPT. Polled, not cached: writing the file changes the next
- * frame. Takes precedence over the script and the keyboard overlay. */
-static void gw_pad_live_apply(PADStatus *st) {
-  const char *path = getenv("MELEE_PAD_LIVE");
-  char line[128];
-  FILE *f;
-  unsigned int buttons = 0;
-  int sx = 0, sy = 0, tl = 0, tr = 0;
-
-  if (path == NULL || path[0] == '\0') {
-    return;
-  }
-  f = fopen(path, "r");
-  if (f == NULL) {
-    return;
-  }
-  if (fgets(line, sizeof line, f) != NULL &&
-      sscanf(line, "%x %d %d %d %d", &buttons, &sx, &sy, &tl, &tr) >= 1) {
-    st[PAD_CHAN0].stickX = (int8_t)sx;
-    st[PAD_CHAN0].stickY = (int8_t)sy;
-    st[PAD_CHAN0].triggerLeft = (uint8_t)tl;
-    st[PAD_CHAN0].triggerRight = (uint8_t)tr;
-    gw_w16(&st[PAD_CHAN0].button, (uint16_t)buttons);
-    st[PAD_CHAN0].err = 0;
-  }
-  fclose(f);
-}
+/* MELEE_PAD_SCRIPT (.txt or .lua), MELEE_PAD_LIVE and gd.input: gw_script_pad.c. */
+#include "gw_script.h"
 
 /* L + R + Y + X + Start recalibrates every controller - ON RELEASE, not on press.
  *
@@ -522,8 +373,7 @@ int gw_PADRead(void *status) {
   }
 
 /* Scripted and live input take precedence over the adapter and the keyboard overlay. */
-  gw_pad_script_apply(st);
-  gw_pad_live_apply(st);
+  gw_Script_PadApply(st);
 
   gw_pad_reset_combo(st);
 

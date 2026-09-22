@@ -354,6 +354,52 @@ static int test_mex_kirby_costume_rows(void) {
   return rc;
 }
 
+/* Unlock everything (MELEE_UNLOCK_ALL, forced on in netplay): the getters report all 11
+ * characters, all 11 stages and the rule/feature unlocks, and the game's own unlock WRITES land
+ * in a scratch copy - the memory card's save data must not change. */
+extern int gw_PcUnlockAll_force;
+extern unsigned short *gw_gmMainLib_GetUnlockedCharactersBitmaskPtr(void);
+extern unsigned short *gw_gmMainLib_8015EDA4(void);
+extern int gw_gmMainLib_8015EDD4(void);
+extern int gw_gmMainLib_8015EE0C(void);
+extern int gw_gmMainLib_8015EE44(void);
+extern int gw_gmMainLib_8015EE90(void);
+static int test_unlock_all(void) {
+  const int saved = gw_PcUnlockAll_force;
+  unsigned short *real_c, *real_s, *c, *s;
+  unsigned real_cv, real_sv;
+  int rc = 0;
+  gw_PcUnlockAll_force = 0;
+  real_c = gw_gmMainLib_GetUnlockedCharactersBitmaskPtr();
+  real_s = gw_gmMainLib_8015EDA4();
+  real_cv = gw_r16(real_c);
+  real_sv = gw_r16(real_s);
+  gw_PcUnlockAll_force = 1;
+  c = gw_gmMainLib_GetUnlockedCharactersBitmaskPtr();
+  s = gw_gmMainLib_8015EDA4();
+  if ((gw_r16(c) & 0x7FF) != 0x7FF || (gw_r16(s) & 0x7FF) != 0x7FF) {
+    gw_test_fail("unlock-all masks: characters %04X stages %04X", gw_r16(c), gw_r16(s));
+    rc = 1;
+  }
+  if (!gw_gmMainLib_8015EDD4() || !gw_gmMainLib_8015EE0C() || !gw_gmMainLib_8015EE44() ||
+      !gw_gmMainLib_8015EE90()) {
+    gw_test_fail("a feature unlock (sound test / score display / random stage / all-star) is off");
+    rc = 1;
+  }
+  if (c == real_c || s == real_s) {
+    gw_test_fail("unlock-all hands out the card's own masks");
+    rc = 1;
+  }
+  gw_w16(c, 0); /* what a game-side unlock/lock write would do */
+  gw_w16(s, 0);
+  if (gw_r16(real_c) != real_cv || gw_r16(real_s) != real_sv) {
+    gw_test_fail("unlock-all changed the card's save data");
+    rc = 1;
+  }
+  gw_PcUnlockAll_force = saved;
+  return rc;
+}
+
 void gw_tests_register_all(void) {
   extern void gw_MexTestRegisterAll(void);
   extern void gw_ppc_tests_register(void);
@@ -387,4 +433,5 @@ void gw_tests_register_all(void) {
   gw_test_register("mem1_aram_distinct", test_mem1_aram_distinct);
   gw_test_register("mex_csp_frame_map", test_mex_csp_frame_map);
   gw_test_register("mex_kirby_costume_rows", test_mex_kirby_costume_rows);
+  gw_test_register("unlock_all", test_unlock_all);
 }

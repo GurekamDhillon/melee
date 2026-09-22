@@ -1011,8 +1011,26 @@ void gmMainLib_8015ED80(s8 arg0)
     gmMainLib_GetGamePrefs()->sound_balance = arg0;
 }
 
+#if defined(TARGET_PC)
+/* Unlock everything (MELEE_UNLOCK_ALL, forced on in netplay): pc/platform/gw_runtime.c. While it
+ * is on, the unlock getters below report everything unlocked and hand out a scratch copy of the
+ * character/stage masks, so the game's own unlock writes (new challengers, stage unlocks) land
+ * in the copy and the memory card's real save data is never changed. */
+extern int PcUnlockAll(void);
+static u16 gmMainLib_PcUnlockedChars;
+static u16 gmMainLib_PcUnlockedStages;
+#endif
+
 u16* gmMainLib_GetUnlockedCharactersBitmaskPtr(void)
 {
+#if defined(TARGET_PC)
+    if (PcUnlockAll()) {
+        gmMainLib_PcUnlockedChars =
+            gmMainLib_GetCardData()->save_data.unlocked_characters |
+            0x7FF; /* the 11 unlockable characters */
+        return &gmMainLib_PcUnlockedChars;
+    }
+#endif
     return &gmMainLib_GetCardData()->save_data.unlocked_characters;
 }
 
@@ -1023,6 +1041,13 @@ struct gmm_retval_ED98* gmMainLib_8015ED98(void)
 
 u16* gmMainLib_8015EDA4(void)
 {
+#if defined(TARGET_PC)
+    if (PcUnlockAll()) {
+        gmMainLib_PcUnlockedStages = gmMainLib_GetCardData()->save_data.x186A |
+                                     0x7FF; /* the 11 unlockable stages */
+        return &gmMainLib_PcUnlockedStages;
+    }
+#endif
     return &gmMainLib_GetCardData()->save_data.x186A;
 }
 
@@ -1049,7 +1074,7 @@ s32 gmMainLib_8015EDD4(void)
      * stock `rlwinm r3,r0,0,29,29` extracts the sound-test unlock bit; the patch's `li r3,1`
      * makes the feature report unlocked. Opt-in: MELEE_MEX=unlock_sound_test. */
     extern int Mex_Enabled(const char *);
-    if (Mex_Enabled("unlock_sound_test")) {
+    if (Mex_Enabled("unlock_sound_test") || PcUnlockAll()) {
         return 1;
     }
 #endif
@@ -1074,7 +1099,7 @@ s32 gmMainLib_8015EE0C(void)
      * 0x8015EE14. The stock `clrlwi r3,r0,31` extracts the score-display unlock bit; the patch's
      * `li r3,1` makes it report unlocked. Opt-in: MELEE_MEX=unlock_score_display. */
     extern int Mex_Enabled(const char *);
-    if (Mex_Enabled("unlock_score_display")) {
+    if (Mex_Enabled("unlock_score_display") || PcUnlockAll()) {
         return 1;
     }
 #endif
@@ -1100,7 +1125,7 @@ s32 gmMainLib_8015EE44(void)
      * bit; the patch's `li r3,1` makes it report unlocked. Opt-in:
      * MELEE_MEX=unlock_random_stage_select. */
     extern int Mex_Enabled(const char *);
-    if (Mex_Enabled("unlock_random_stage_select")) {
+    if (Mex_Enabled("unlock_random_stage_select") || PcUnlockAll()) {
         return 1;
     }
 #endif
@@ -1127,7 +1152,7 @@ s32 gmMainLib_8015EE90(void)
      * `rlwinm r3,r0,0,28,28` extracts the All-Star unlock bit; the patch's `li r3,1` makes it
      * report unlocked. Opt-in: MELEE_MEX=unlock_all_star. */
     extern int Mex_Enabled(const char *);
-    if (Mex_Enabled("unlock_all_star")) {
+    if (Mex_Enabled("unlock_all_star") || PcUnlockAll()) {
         return 1;
     }
 #endif

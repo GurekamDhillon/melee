@@ -943,6 +943,28 @@ int gw_PcTraceMotionEnabled(void) {
   return (v != NULL && v[0] != '0') ? 1 : 0;
 }
 
+/* MELEE_UNLOCK_ALL=1 (the launcher's "Unlock everything", on by default there): every character,
+ * stage and unlockable rule/feature reports unlocked (src/melee/gm/gmmain_lib.c), WITHOUT touching
+ * the memory card - the real save data is never written. Forced on for any netplay or rollback
+ * session, so both peers get the same roster whatever their cards hold. */
+extern int gw_Netplay_Enabled(void);
+extern int gw_RB_Enabled(void);
+int gw_PcUnlockAll_force = -1; /* tests: 0/1 overrides the env and the session */
+int gw_PcUnlockAll(void) {
+  static int env = -1;
+  if (gw_PcUnlockAll_force >= 0) {
+    return gw_PcUnlockAll_force;
+  }
+  if (env < 0) {
+    const char *v = getenv("MELEE_UNLOCK_ALL");
+    env = (v != NULL && v[0] != '\0' && v[0] != '0') ? 1 : 0;
+    if (env) {
+      gw_log("gw: unlock-all: every character, stage and feature reports unlocked (MELEE_UNLOCK_ALL)");
+    }
+  }
+  return env || gw_Netplay_Enabled() || gw_RB_Enabled();
+}
+
 void gw_ContentProbeResult(const char *name, void *archive) {
   gw_log("gw: content probe: %s -> %s", name != NULL ? name : "(null)",
          archive != NULL ? "parsed by lbArchive_LoadArchive"
@@ -2112,7 +2134,7 @@ const void *gw_SceneLaunch_ConfigForTest(void) {
 void gw_SceneLaunch_SetText(const char *text) {
   gw_sl_loaded = 1;
   gw_sl_config_init(&gw_sl_cfg);
-  if (text != NULL && text[0] != ' ') {
+  if (text != NULL && text[0] != '\0') {
     gw_log("gw: scene: set at runtime \"%s\"", text);
     gw_sl_parse(&gw_sl_cfg, text, "runtime");
   }

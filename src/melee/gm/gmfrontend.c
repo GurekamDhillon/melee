@@ -16,7 +16,11 @@
 #include <melee/mn/forward.h>
 #include <melee/mn/inlines.h>
 #include <melee/mn/mnmain.h>
+#include <sysdolphin/baselib/dobj.h>
 #include <sysdolphin/baselib/gobj.h>
+#include <sysdolphin/baselib/jobj.h>
+#include <sysdolphin/baselib/mobj.h>
+#include <sysdolphin/baselib/tobj.h>
 #include <sysdolphin/baselib/gobjgxlink.h>
 #include <sysdolphin/baselib/hsd_3915.h>
 #include <sysdolphin/baselib/memory.h>
@@ -228,6 +232,10 @@ void Netplay_MenuLaunch(void);
 void Netplay_MenuStatus(char* out, int cap);
 void Netplay_MenuCode(char* out, int cap);
 void Netplay_MenuPeer(char* out, int cap);
+int Netplay_MenuHasServer(void);
+static int fe_np_stage_id(void);
+int Netplay_MenuGetLetter(int i);
+void Netplay_MenuSetLetter(int i, int v);
 
 enum { FE_NP_IDLE, FE_NP_WORKING, FE_NP_CONNECTED, FE_NP_FAILED };
 
@@ -278,18 +286,17 @@ static int fe_np_zero(void) { return 0; }
 static void fe_np_fmt_code(int v, char* out)
 {
     (void) v;
-    Netplay_MenuCode(out, 40);
+    Netplay_MenuCode(out, 64);
 }
 static void fe_np_fmt_peer(int v, char* out)
 {
     (void) v;
-    Netplay_MenuPeer(out, 40);
+    Netplay_MenuPeer(out, 64);
 }
 static void fe_np_start(void)
 {
-    if (Netplay_MenuBegin(fe_np_role == 0, fe_np_ck, fe_np_color,
-                          fe_np_stage_ext[fe_np_stage], fe_np_stocks, fe_np_minutes,
-                          fe_np_delay) == 0)
+    if (Netplay_MenuBegin(fe_np_role == 0, fe_np_ck, fe_np_color, fe_np_stage_id(),
+                          fe_np_stocks, fe_np_minutes, fe_np_delay) == 0)
     {
         fe_np_phase = FE_NP_WORKING;
     } else {
@@ -297,17 +304,143 @@ static void fe_np_start(void)
     }
 }
 static void fe_np_paste_host(void) { Netplay_MenuPaste(0); }
+
+/* ---- picking on Melee's own screens ---------------------------------------------------------
+ * Character opens the real character select screen (VS mode's CSS, seeded with the current pick)
+ * and Stage the real stage select screen. Confirming there returns HERE instead of going on:
+ * gmvsmelee.c's CSS/SSS exit handlers ask Frontend_OnlinePick() and hand the result back through
+ * Frontend_OnlinePicked. At the moment of confirming, the screen copies the chosen icon's texture
+ * (Frontend_CaptureIcon) so this screen can show it after the CSS/SSS art is freed. m-ex fighters
+ * and stages come for free: they are whatever the disc's own screens offer. */
+void SceneLaunch_SetText(const char* text);
+
+static int fe_np_pick; ///< 0 none, 1 picking a character, 2 picking a stage
+static int fe_np_stage_pick = -1; ///< the external stage id picked on the SSS, -1 = the list's
+
+typedef struct FeNpIcon {
+    bool ok;
+    u16 w, h;
+    int fmt, tlut_fmt, tlut_n;
+    u8 data[64 * 1024] ATTRIBUTE_ALIGN(32);
+    u8 lut[512] ATTRIBUTE_ALIGN(32);
+    GXTexObj obj;
+    GXTlutObj tlut;
+} FeNpIcon;
+static FeNpIcon fe_np_icon[2]; ///< 0 the character, 1 the stage
+
+int Frontend_OnlinePick(void) { return fe_np_pick; }
+
+/* Copy the biggest texture under `root` - the icon the player just confirmed. */
+static void fe_np_find_tex(HSD_JObj* j, HSD_TObj** best, int* area, int depth)
+{
+    /* the chosen icon and its own subtree - not its siblings, which are the other icons */
+    for (; j != NULL && depth < 12; j = depth == 0 ? NULL : HSD_JObjGetNext(j)) {
+        HSD_DObj* d = HSD_JObjGetDObj(j);
+        for (; d != NULL; d = d->next) {
+            HSD_TObj* t = d->mobj != NULL ? d->mobj->tobj : NULL;
+            for (; t != NULL; t = t->next) {
+                if (t->imagedesc != NULL && t->imagedesc->image_ptr != NULL) {
+                    /* colour beats intensity: an icon's plate/outline is an I4/IA4 mask, the
+                       portrait a colour (usually CI8) texture of the same size */
+                    int fmt = t->imagedesc->format;
+                    int a = t->imagedesc->width * t->imagedesc->height * (fmt >= 4 ? 4 : 1);
+                    if (a > *area) {
+                        *area = a;
+                        *best = t;
+                    }
+                }
+            }
+        }
+        fe_np_find_tex(HSD_JObjGetChild(j), best, area, depth + 1);
+    }
+}
+
+void Frontend_CaptureIcon(int which, HSD_JObj* root)
+{
+    FeNpIcon* ic;
+    HSD_TObj* t = NULL;
+    int area = 0;
+    u32 size;
+    if (which < 0 || which > 1 || root == NULL) {
+        return;
+    }
+    ic = &fe_np_icon[which];
+    fe_np_find_tex(root, &t, &area, 0);
+    if (t == NULL) {
+        OSReport("frontend: online pick - no texture under the chosen icon\n");
+        return;
+    }
+    size = GXGetTexBufferSize(t->imagedesc->width, t->imagedesc->height, t->imagedesc->format,
+                              GX_FALSE, 0);
+    if (size == 0 || size > sizeof ic->data) {
+        return;
+    }
+    memcpy(ic->data, t->imagedesc->image_ptr, size);
+    ic->w = t->imagedesc->width;
+    ic->h = t->imagedesc->height;
+    ic->fmt = t->imagedesc->format;
+    ic->tlut_n = 0;
+    if (t->tlut != NULL && t->tlut->lut != NULL && t->tlut->n_entries * 2 <= (int) sizeof ic->lut) {
+        ic->tlut_n = t->tlut->n_entries;
+        ic->tlut_fmt = t->tlut->fmt;
+        memcpy(ic->lut, t->tlut->lut, (size_t) ic->tlut_n * 2);
+    }
+    ic->ok = true;
+    OSReport("frontend: online pick - captured the %s icon, %dx%d format %d%s\n",
+             which == 0 ? "character" : "stage", ic->w, ic->h, ic->fmt,
+             ic->tlut_n != 0 ? " (palette)" : "");
+}
+
+static void fe_np_open(int which, const char* scene);
+
+static char fe_np_scene[160];
+static void fe_np_pick_char(void)
+{
+    /* a CPU in port 2: the CSS shows "Ready to fight" only with two fighters */
+    sprintf(fe_np_scene, "mode=vs;at=css;p1=ck:%d/c%d/hu;p2=ck:%d/c%d/cpu", fe_np_ck, fe_np_color,
+            fe_np_ck == 2 ? 20 : 2, 1);
+    fe_np_open(1, fe_np_scene);
+}
+static void fe_np_pick_stage(void)
+{
+    sprintf(fe_np_scene, "mode=vs;at=sss;p1=ck:%d/c%d/hu;p2=ck:%d/c%d/hu", fe_np_ck, fe_np_color,
+            fe_np_ck, (fe_np_color + 1) % 4);
+    fe_np_open(2, fe_np_scene);
+}
+static int fe_np_stage_id(void)
+{
+    return fe_np_stage_pick >= 0 ? fe_np_stage_pick : fe_np_stage_ext[fe_np_stage];
+}
+
+static void fe_np_draw_icon(int which, int item_index, float row_top, float pitch, float row_h,
+                            float row_x1, int scroll, int nrows);
+
+/* ROOM CODES (a matchmaking server is configured): the join code is four letters, each picked with
+ * left/right - no typing needed with a controller - or pasted. */
+static const char* const fe_np_letters[] = {
+    "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R",
+    "S", "T", "U", "V", "W", "X", "Y", "Z", "2", "3", "4", "5", "6", "7", "8", "9",
+};
+static int fe_np_join_room(void) { return fe_np_role == 1 && Netplay_MenuHasServer(); }
+static int fe_np_join_addr(void) { return fe_np_role == 1 && !Netplay_MenuHasServer(); }
+static int fe_np_l0(void) { return Netplay_MenuGetLetter(0); }
+static int fe_np_l1(void) { return Netplay_MenuGetLetter(1); }
+static int fe_np_l2(void) { return Netplay_MenuGetLetter(2); }
+static int fe_np_l3(void) { return Netplay_MenuGetLetter(3); }
+static void fe_np_s0(int v) { Netplay_MenuSetLetter(0, v); }
+static void fe_np_s1(int v) { Netplay_MenuSetLetter(1, v); }
+static void fe_np_s2(int v) { Netplay_MenuSetLetter(2, v); }
+static void fe_np_s3(int v) { Netplay_MenuSetLetter(3, v); }
 static void fe_np_paste_friend(void) { Netplay_MenuPaste(1); }
 
 static const FrontendItem fe_items_online[] = {
     { FE_CHOICE, 0, "Play As", "Host a match, or join a friend's.", fe_np_get_role,
       fe_np_set_role, 0, 1, 1, fe_np_roles },
-    { FE_CHOICE, 0, "Character", "Who you play.", fe_np_get_ck, fe_np_set_ck, 0, 25, 1,
-      fe_np_chars },
-    { FE_SLIDER, 0, "Costume", "Your fighter's colors.", fe_np_get_color, fe_np_set_color, 0, 3,
-      1, NULL, fe_np_fmt_color },
-    { FE_CHOICE, 0, "Stage", "Where you both play.", fe_np_get_stage, fe_np_set_stage, 0, 5, 1,
-      fe_np_stages, NULL, fe_np_is_host },
+    { FE_ACTION, FE_DO_CALL, "Character",
+      "Pick your fighter and costume on the character select screen.", NULL, NULL, 0, 0, 0, NULL,
+      NULL, NULL, fe_np_pick_char },
+    { FE_ACTION, FE_DO_CALL, "Stage", "Pick the stage on the stage select screen.", NULL, NULL, 0,
+      0, 0, NULL, NULL, fe_np_is_host, fe_np_pick_stage },
     { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", fe_np_get_stocks,
       fe_np_set_stocks, 1, 9, 1, NULL, NULL, fe_np_is_host },
     { FE_SLIDER, 0, "Time Limit", "The match clock.", fe_np_get_minutes, fe_np_set_minutes, 1,
@@ -316,8 +449,16 @@ static const FrontendItem fe_items_online[] = {
       fe_np_get_delay, fe_np_set_delay, 0, 8, 1, NULL, fe_np_fmt_delay, fe_np_is_host },
     { FE_ACTION, FE_DO_CALL, "Paste Host Code", "Copy your friend's code, then press A here.",
       NULL, NULL, 0, 0, 0, NULL, NULL, fe_np_is_join, fe_np_paste_host },
+    { FE_CHOICE, 0, "Room Code 1", "The room code your friend sent you.", fe_np_l0, fe_np_s0, 0,
+      31, 1, fe_np_letters, NULL, fe_np_join_room },
+    { FE_CHOICE, 0, "Room Code 2", "The room code your friend sent you.", fe_np_l1, fe_np_s1, 0,
+      31, 1, fe_np_letters, NULL, fe_np_join_room },
+    { FE_CHOICE, 0, "Room Code 3", "The room code your friend sent you.", fe_np_l2, fe_np_s2, 0,
+      31, 1, fe_np_letters, NULL, fe_np_join_room },
+    { FE_CHOICE, 0, "Room Code 4", "The room code your friend sent you.", fe_np_l3, fe_np_s3, 0,
+      31, 1, fe_np_letters, NULL, fe_np_join_room },
     { FE_SLIDER, 0, "Host Code", "The code you pasted.", fe_np_zero, NULL, 0, 0, 0, NULL,
-      fe_np_fmt_peer, fe_np_is_join },
+      fe_np_fmt_peer, fe_np_join_addr },
     { FE_ACTION, FE_DO_CALL, "Host Match", "Start hosting; your code is copied for your friend.",
       NULL, NULL, 0, 0, 0, NULL, NULL, fe_np_is_host, fe_np_start },
     { FE_ACTION, FE_DO_CALL, "Connect", "Join the host whose code you pasted.", NULL, NULL, 0, 0,
@@ -404,6 +545,30 @@ static struct {
     bool next_menus; ///< the next GS_FRONTEND scene is the menu tree (gmfrontend_menus.inc)
 } fe;
 
+void Frontend_OnlinePicked(int which, int a, int b)
+{
+    if (which == 1 && a >= 0) {
+        fe_np_ck = a;
+        fe_np_color = b;
+    } else if (which == 2 && a >= 0) {
+        fe_np_stage_pick = a;
+    }
+    fe_np_pick = 0;
+    SceneLaunch_SetText(NULL);
+    fe.screen = &fe_screen_online;
+    fe.continue_to = GM_VS;
+    fe.back_to = GM_MENU;
+}
+
+static void fe_np_open(int which, const char* scene)
+{
+    fe_np_pick = which;
+    SceneLaunch_SetText(scene);
+    fe.continue_to = GM_VS;
+    fe.leaving = 1; /* fade out into VS mode, which opens at the CSS / SSS */
+}
+
+
 void gmFrontend_BeginLoading(void)
 {
     fe.screen = &fe_screen_loading;
@@ -451,6 +616,10 @@ static bool fm_route_position(u8 previous, u8* kind, u8* sel);
 u8 gmFrontend_Route(u8 from, u8 to)
 {
     int i;
+    if (fe_np_pick != 0 && to == GM_MENU) {
+        fe_np_pick = 0; /* left the CSS/SSS for the main menu: the online pick is abandoned */
+        SceneLaunch_SetText(NULL);
+    }
     if (!fe_enabled()) {
         return to;
     }
@@ -714,6 +883,50 @@ static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
     fe_tex_quad_uv(t, x, y, w, h, 0.0F, 0.0F, 1.0F, 1.0F, c);
 }
 
+/* The captured icons, beside their rows (drawn over the kit's rows). */
+static void fe_np_draw_icon(int which, int item_index, float row_top, float pitch, float row_h,
+                            float row_x1, int scroll, int nrows)
+{
+    FeNpIcon* ic = &fe_np_icon[which];
+    int v, r = -1;
+    float y, h, w, x;
+    if (!ic->ok) {
+        return;
+    }
+    for (v = 0; v < fe.n_vis; v++) {
+        if (fe.vis[v] == item_index) {
+            r = v - scroll;
+        }
+    }
+    if (r < 0 || r >= nrows) {
+        return;
+    }
+    h = row_h + 6.0F;
+    w = h * (float) ic->w / (float) ic->h;
+    y = row_top + r * pitch - 3.0F;
+    x = row_x1 - w - 36.0F + (240.0F - (y + h * 0.5F)) * 0.25F; /* follow the rows' lean */
+    {
+        FeTex t;
+        memset(&t, 0, sizeof t);
+        t.data = ic->data;
+        t.w = ic->w;
+        t.h = ic->h;
+        t.ok = true;
+        if (ic->tlut_n != 0) {
+            t.lut = ic->lut;
+            GXInitTlutObj(&t.tlut, ic->lut, (GXTlutFmt) ic->tlut_fmt, (u16) ic->tlut_n);
+            GXInitTexObjCI(&t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP,
+                           GX_CLAMP, GX_FALSE, GX_TLUT0);
+        } else {
+            GXInitTexObj(&t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP, GX_CLAMP,
+                         GX_FALSE);
+        }
+        GXInitTexObjLOD(&t.obj, GX_LINEAR, GX_LINEAR, 0.0F, 0.0F, 0.0F, GX_FALSE, GX_FALSE,
+                        GX_ANISO_1);
+        fe_tex_quad(&t, x, y, w, h, (GXColor) { 255, 255, 255, 255 });
+    }
+}
+
 /* An element at its authored size (1x = half its 2x texel size), or a flat stand-in. */
 static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXColor fallback)
 {
@@ -882,6 +1095,12 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     }
     if (fm.active || fk.on) {
         fp_draw();
+        if (fk.on && fe.screen == &fe_screen_online) {
+            fe_np_draw_icon(0, 1, kit.rows_top, kit.pitch, kit.row_h, kit.row_x1, fk.scroll,
+                            fk.nrows);
+            fe_np_draw_icon(1, 2, kit.rows_top, kit.pitch, kit.row_h, kit.row_x1, fk.scroll,
+                            fk.nrows);
+        }
         return;
     }
     if (fe.screen == NULL) {

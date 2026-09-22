@@ -6235,6 +6235,32 @@ void mnCharSel_Scene_OnFrame(void)
             }
         }
         if (mnCharSel_804D6CF6 != 0) {
+#if defined(TARGET_PC)
+            {
+                /* ONLINE PLAY is picking: keep the chosen fighter's icon for its row */
+                extern int Frontend_OnlinePick(void);
+                extern void Frontend_CaptureIcon(int which, HSD_JObj* root);
+                if (Frontend_OnlinePick() == 1) {
+                    int p, k;
+                    for (p = 0; p < 4; p++) {
+                        PlayerInitData* pl = &mnCharSel_804D6CB0->vs.start.players[p];
+                        if (pl->slot_type != Gm_PKind_Human || pl->ckind == ChKind_None) {
+                            continue;
+                        }
+                        for (k = 0; k < MNCS_NUM_SK; k++) {
+                            if (icons[k].char_kind == pl->ckind) {
+                                HSD_JObj* ij = NULL;
+                                lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &ij,
+                                            icons[k].joint_id_vs, -1);
+                                Frontend_CaptureIcon(0, ij);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+#endif
             gm_801A4B60();
             if (mnCharSel_804D6CF5 == 4) {
                 lbAudioAx_8002411C(0x147);

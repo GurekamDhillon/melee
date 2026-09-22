@@ -1239,6 +1239,16 @@ void mnStageSel_Scene_OnFrame(void)
     if (mnStageSel_804D6CAF == 2) {
         sss_data->vs.start.rules.stkind =
             mnStageSel_803F06D0[mnStageSel_804D6CAE].stkind;
+#if defined(TARGET_PC)
+        {
+            /* ONLINE PLAY is picking: keep the chosen stage's icon for its row */
+            extern int Frontend_OnlinePick(void);
+            extern void Frontend_CaptureIcon(int which, HSD_JObj* root);
+            if (Frontend_OnlinePick() == 2) {
+                Frontend_CaptureIcon(1, (HSD_JObj*) mnStageSel_803F06D0[mnStageSel_804D6CAE].x0);
+            }
+        }
+#endif
         gm_801A4B60();
     }
 }

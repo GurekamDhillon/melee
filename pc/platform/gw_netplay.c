@@ -57,17 +57,21 @@ static struct {
     int host;
     /* the setup */
     int ck, color, stage_ext, stocks, minutes, delay;
-    char peer_code[64];   /* guest: the host's code; host: the guest's code, for hole punching */
+    char peer_code[96];   /* guest: the host's code; host: the guest's code, for hole punching */
     uint16_t port;
     /* the connection */
     gw_net *net;
     gw_net_transport t;
     int phase;
     char status[96];
-    char code[64];        /* this side's code: public address:port */
+    char code[96];        /* this side's code: "public:port/lan:port" (see np_parse_code) */
+    gw_net_addr mypub;    /* this socket's public address, from STUN */
+    int have_mypub;
     char scene[400];      /* the agreed match */
     char info[64];        /* guest: its choices, sent in the HELLO */
     uint32_t seed;
+    gw_net_config cfg;    /* kept: a guest joins only once the server has introduced the host */
+    int t_open;           /* np.t is open and not yet owned by a gw_net */
     int started, dead, accepted;
     long ticks;
     int desync_frame;
@@ -196,10 +200,12 @@ static void np_cb_guest_hello(void *user, const uint8_t *info, int info_len, uin
     if (info_len > 64) info_len = 64;
     memcpy(s, info, (size_t) info_len);
     s[info_len] = '\0';
-    if (sscanf(s, "ck:%d/c%d", &gck, &gc) < 1 || gck < 0 || gck > 25) {
+    /* any CharacterKind the disc has: m-ex builds add fighters past the 26 retail ones (ACE's run
+       to 0x40); both peers play the same disc, so the guest's pick is valid for the host too */
+    if (sscanf(s, "ck:%d/c%d", &gck, &gc) < 1 || gck < 0 || gck > 0x7F || gck == 0x21) {
         gck = 9;
     }
-    if (gc < 0 || gc > 5) gc = 0;
+    if (gc < 0 || gc > 15) gc = 0;
     np_build_scene(np.scene, sizeof np.scene, np.ck, np.color, gck, gc);
     snprintf((char *) blob, (size_t) cap, "%s", np.scene);
     *blob_len = (uint16_t) (strlen(np.scene) + 1);
@@ -614,13 +620,291 @@ static void np_fmt_addr(char *out, size_t cap, const gw_net_addr *a) {
              a->ip & 255, a->port);
 }
 
+/* A CODE is "public:port/lan:port" - where the internet reaches this socket, and where this network
+ * reaches it. A plain "ip[:port]" (a Tailscale address, say) works too. Returns 0 on success. */
+static int np_parse_code(const char *s, gw_net_addr *pub, gw_net_addr *lan, int *has_lan) {
+    char a[96];
+    char *slash;
+    snprintf(a, sizeof a, "%s", s);
+    slash = strchr(a, '/');
+    *has_lan = 0;
+    if (slash != NULL) {
+        *slash = '\0';
+        if (gw_net_addr_parse(slash + 1, NP_DEFAULT_PORT, lan) == 0 && lan->ip != 0) {
+            *has_lan = 1;
+        }
+    }
+    return gw_net_addr_parse(a, NP_DEFAULT_PORT, pub) == 0 && pub->ip != 0 ? 0 : -1;
+}
+
+/* Which of a peer's addresses to dial. Behind the same public address as us, the peer is on our
+ * own network - often this very machine - and most routers do not loop a connection to their own
+ * public address back inside ("NAT hairpinning"), so the local address is the one that works. */
+static gw_net_addr np_pick(const gw_net_addr *pub, const gw_net_addr *lan, int has_lan) {
+    if (has_lan && (!np.have_mypub || np.mypub.ip == pub->ip)) {
+        gw_log("netplay: the other side is on this network - using its local address");
+        return *lan;
+    }
+    return *pub;
+}
+
+/* ---- the matchmaking server (tools/netplay/server) -------------------------------------------------
+ * With a server configured (netplay_server.txt next to the exe, or MELEE_NETPLAY_SERVER), the
+ * player never sees an address: the host gets a 4-letter ROOM CODE, the guest types it, and the
+ * server introduces them. They then connect directly (each punching toward the other, local
+ * addresses when they share a network) and fall back to the server's RELAY if no direct packet has
+ * arrived after NP_RELAY_AFTER_MS. The layer sits under the netcode as a transport wrapper: it eats
+ * the server's control packets, and in relay mode it wraps outgoing traffic for the server and
+ * unwraps what comes back as if it came from the peer - gw_net never knows. */
+#define NP_SERVER_DEFAULT_PORT 51600
+#define NP_RELAY_AFTER_MS 3000u
+static const char NP_ALPHABET[] = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+int gw_Netplay_MenuHasServer(void);
+void gw_Netplay_MenuSetLetter(int i, int v);
+
+static struct {
+    int configured;           /* a server address is set and resolved */
+    char name[128];
+    gw_net_addr srv;
+    gw_net_transport inner;   /* the real socket */
+    int on;                   /* the layer wraps np.t */
+    int have_code, have_peer, relay, got_direct;
+    char code[8];
+    char err[80];
+    gw_net_addr peer;         /* where gw_net thinks the peer is (the address we dial/punch) */
+    uint32_t next_send, peer_at;
+    int letters[4];           /* the join code as the menu shows it: indexes into NP_ALPHABET */
+} rdv;
+
+/* The server address: MELEE_NETPLAY_SERVER, else netplay_server.txt beside the exe. */
+static int np_rdv_config(void) {
+    char buf[160] = { 0 };
+    const char *v = getenv("MELEE_NETPLAY_SERVER");
+    struct addrinfo hints, *res = NULL;
+    char host[128], port[16];
+    char *colon;
+    if (v != NULL && v[0] != '\0') {
+        snprintf(buf, sizeof buf, "%s", v);
+    } else {
+        char path[MAX_PATH];
+        DWORD k = GetModuleFileNameA(NULL, path, sizeof path);
+        char *slash = k > 0 && k < sizeof path ? strrchr(path, '\\') : NULL;
+        if (slash != NULL) {
+            FILE *f;
+            snprintf(slash + 1, sizeof path - (size_t) (slash + 1 - path), "netplay_server.txt");
+            f = fopen(path, "r");
+            if (f != NULL) {
+                size_t m = fread(buf, 1, sizeof buf - 1, f);
+                buf[m] = '\0';
+                fclose(f);
+            }
+        }
+    }
+    {   /* trim */
+        char *s = buf, *e;
+        while (*s == ' ' || *s == '\t' || *s == '\r' || *s == '\n') s++;
+        e = s + strlen(s);
+        while (e > s && (e[-1] == ' ' || e[-1] == '\t' || e[-1] == '\r' || e[-1] == '\n')) *--e = '\0';
+        memmove(buf, s, strlen(s) + 1);
+    }
+    rdv.configured = 0;
+    if (buf[0] == '\0' || buf[0] == '#') return 0;
+    snprintf(rdv.name, sizeof rdv.name, "%s", buf);
+    snprintf(host, sizeof host, "%s", buf);
+    snprintf(port, sizeof port, "%d", NP_SERVER_DEFAULT_PORT);
+    colon = strrchr(host, ':');
+    if (colon != NULL) {
+        *colon = '\0';
+        snprintf(port, sizeof port, "%s", colon + 1);
+    }
+    {
+        /* the menu asks before any socket exists, and getaddrinfo needs Winsock started */
+        static int wsa;
+        WSADATA w;
+        if (!wsa && WSAStartup(MAKEWORD(2, 2), &w) == 0) wsa = 1;
+    }
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    if (getaddrinfo(host, port, &hints, &res) != 0 || res == NULL) {
+        gw_log("netplay: cannot resolve the server \"%s\" (%d)", buf, WSAGetLastError());
+        return 0;
+    }
+    rdv.srv.ip = ntohl(((struct sockaddr_in *) res->ai_addr)->sin_addr.s_addr);
+    rdv.srv.port = ntohs(((struct sockaddr_in *) res->ai_addr)->sin_port);
+    freeaddrinfo(res);
+    rdv.configured = 1;
+    return 1;
+}
+
+static void np_rdv_ctl(const char *text) {
+    uint8_t b[200];
+    size_t l = strlen(text);
+    if (l > sizeof b - 4) l = sizeof b - 4;
+    memcpy(b, "GDMR", 4);
+    memcpy(b + 4, text, l);
+    rdv.inner.send(rdv.inner.ctx, &rdv.srv, b, (int) (4 + l));
+}
+
+static void np_rdv_lan(char *out, size_t cap) {
+    gw_net_addr lan;
+    lan.ip = np_lan_ip();
+    lan.port = np.host ? np.port : gw_net_udp_local_port(&rdv.inner);
+    if (lan.ip == 0) snprintf(out, cap, "-"); else np_fmt_addr(out, cap, &lan);
+}
+
+static void np_rdv_handle(const char *msg) {
+    char w0[16] = { 0 }, w1[64] = { 0 }, w2[64] = { 0 };
+    sscanf(msg, "%15s %63s %63s", w0, w1, w2);
+    if (strcmp(w0, "CODE") == 0 && !rdv.have_code) {
+        gw_net_addr me;
+        snprintf(rdv.code, sizeof rdv.code, "%.4s", w1);
+        rdv.have_code = 1;
+        if (gw_net_addr_parse(w2, 1, &me) == 0 && !np.have_mypub) {
+            np.mypub = me; /* the server saw it: as good as STUN */
+            np.have_mypub = 1;
+        }
+        snprintf(np.code, sizeof np.code, "%s", rdv.code);
+        np_clip_set(rdv.code);
+        np_status("Room %s - copied. Send it to your friend", rdv.code);
+    } else if (strcmp(w0, "PEER") == 0 && !rdv.have_peer) {
+        gw_net_addr pub, lan;
+        int has_lan = strcmp(w2, "-") != 0 && gw_net_addr_parse(w2, 1, &lan) == 0 && lan.ip != 0;
+        if (gw_net_addr_parse(w1, 1, &pub) != 0) return;
+        rdv.peer = np_pick(&pub, &lan, has_lan);
+        rdv.have_peer = 1;
+        rdv.peer_at = GetTickCount();
+        np.punch = rdv.peer;       /* both sides punch toward the other */
+        np.punch_on = 1;
+        np.next_punch = 0;
+        gw_log("netplay: the server introduced %s (dialling %u.%u.%u.%u:%u)", w1, rdv.peer.ip >> 24,
+               (rdv.peer.ip >> 16) & 255, (rdv.peer.ip >> 8) & 255, rdv.peer.ip & 255, rdv.peer.port);
+    } else if (strcmp(w0, "RELAY") == 0) {
+        if (!rdv.relay) gw_log("netplay: the other side asked for the relay");
+        rdv.relay = 1;
+    } else if (strcmp(w0, "ERR") == 0) {
+        const char *r = strchr(msg, ' ');
+        snprintf(rdv.err, sizeof rdv.err, "%s", r != NULL ? r + 1 : "server error");
+        np_status("Server: %s", rdv.err);
+    } else if (strcmp(w0, "BYE") == 0) {
+        np_status("Your friend left the room");
+    }
+}
+
+static int np_rdv_send(void *ctx, const gw_net_addr *to, const void *data, int len) {
+    (void) ctx;
+    if (rdv.relay) {
+        uint8_t b[1600];
+        if (len > (int) sizeof b - 4) return -1;
+        memcpy(b, "GDMD", 4);
+        memcpy(b + 4, data, (size_t) len);
+        rdv.inner.send(rdv.inner.ctx, &rdv.srv, b, len + 4);
+        return len;
+    }
+    return rdv.inner.send(rdv.inner.ctx, to, data, len);
+}
+
+static int np_rdv_recv(void *ctx, gw_net_addr *from, void *buf, int cap) {
+    uint8_t b[1600];
+    (void) ctx;
+    for (;;) {
+        int n = rdv.inner.recv(rdv.inner.ctx, from, b, (int) sizeof b);
+        if (n <= 0) return n;
+        if (from->ip == rdv.srv.ip && from->port == rdv.srv.port) {
+            if (n >= 4 && memcmp(b, "GDMR", 4) == 0) {
+                char msg[200];
+                int l = n - 4 < (int) sizeof msg - 1 ? n - 4 : (int) sizeof msg - 1;
+                memcpy(msg, b + 4, (size_t) l);
+                msg[l] = '\0';
+                np_rdv_handle(msg);
+                continue;
+            }
+            if (n >= 4 && memcmp(b, "GDMD", 4) == 0) {
+                if (!rdv.have_peer) continue;
+                if (n - 4 > cap) continue;
+                memcpy(buf, b + 4, (size_t) (n - 4));
+                *from = rdv.peer;       /* as if it came straight from the peer */
+                return n - 4;
+            }
+            continue;
+        }
+        if (rdv.have_peer && from->ip == rdv.peer.ip) {
+            rdv.got_direct = 1;
+        }
+        if (n > cap) continue;
+        memcpy(buf, b, (size_t) n);
+        return n;
+    }
+}
+
+static void np_rdv_close(void *ctx) {
+    (void) ctx;
+    if (rdv.have_code || rdv.have_peer) np_rdv_ctl("BYE");
+    rdv.inner.close(rdv.inner.ctx);
+    rdv.on = 0;
+}
+
+static void np_rdv_wrap(gw_net_transport *t) {
+    rdv.inner = *t;
+    rdv.on = 1;
+    rdv.have_code = rdv.have_peer = rdv.relay = rdv.got_direct = 0;
+    rdv.err[0] = '\0';
+    rdv.next_send = 0;
+    t->ctx = &rdv;
+    t->send = np_rdv_send;
+    t->recv = np_rdv_recv;
+    t->close = np_rdv_close;
+}
+
+/* Registration, joining, keepalives and the relay decision; call every poll. Before the netcode
+ * exists (a guest waiting for its introduction) this also drains the socket itself. */
+static void np_rdv_service(void) {
+    uint32_t now = GetTickCount();
+    char lan[64], msg[128];
+    if (!rdv.on) return;
+    if (np.net == NULL) {
+        gw_net_addr from;
+        uint8_t b[1600];
+        while (np_rdv_recv(NULL, &from, b, (int) sizeof b) > 0) {
+        }
+    }
+    if ((int32_t) (now - rdv.next_send) >= 0) {
+        np_rdv_lan(lan, sizeof lan);
+        if (np.host && !rdv.have_code) {
+            snprintf(msg, sizeof msg, "REG %s", lan);
+            np_rdv_ctl(msg);
+            rdv.next_send = now + 500;
+        } else if (!np.host && !rdv.have_peer) {
+            snprintf(msg, sizeof msg, "JOIN %s %s", np.peer_code, lan);
+            np_rdv_ctl(msg);
+            rdv.next_send = now + 500;
+        } else {
+            np_rdv_ctl("KA");
+            rdv.next_send = now + 3000;
+        }
+    }
+    if (rdv.have_peer && !rdv.relay && getenv("MELEE_NETPLAY_FORCE_RELAY") != NULL) {
+        rdv.relay = 1; /* testing: take the relay path from the start */
+        np_rdv_ctl("RELAY");
+        gw_log("netplay: relay forced (MELEE_NETPLAY_FORCE_RELAY)");
+    }
+    if (rdv.have_peer && !rdv.relay && !rdv.got_direct && now - rdv.peer_at > NP_RELAY_AFTER_MS) {
+        rdv.relay = 1;
+        np_rdv_ctl("RELAY");
+        gw_log("netplay: no direct path after %u ms - relaying through the server", NP_RELAY_AFTER_MS);
+    }
+}
+
 /* ---- starting and running a connection --------------------------------------------------------- */
 
 static void np_close(void) {
     if (np.net != NULL) {
         gw_net_free(np.net); /* sends QUIT; closes the transport */
         np.net = NULL;
+    } else if (np.t_open) {
+        np.t.close(np.t.ctx); /* a guest still waiting for the server: nothing owns the socket yet */
     }
+    np.t_open = 0;
     if (np.upnp_proc != NULL) {
         CloseHandle(np.upnp_proc);
         np.upnp_proc = NULL;
@@ -638,7 +922,8 @@ static uint64_t np_exe_hash(void) {
  * Netplay_Poll), -1 with np.status saying why. */
 static int np_begin(int bind_local) {
     gw_net_config cfg;
-    gw_net_addr peer, pub;
+    gw_net_addr peer, pub, ppub, plan;
+    int phas_lan = 0;
     uint32_t bind_ip = 0;
     np_close();
     memset(&cfg, 0, sizeof cfg);
@@ -648,13 +933,20 @@ static int np_begin(int bind_local) {
     np.desync_frame = GW_NET_NO_FRAME;
     np.code[0] = '\0';
     np.upnp_state = 0;
-    if (!np.host) {
-        if (gw_net_addr_parse(np.peer_code, NP_DEFAULT_PORT, &peer) != 0 || peer.ip == 0) {
+    np.have_mypub = 0;
+    np_rdv_config();
+    if (!np.host && rdv.configured && strlen(np.peer_code) == 4 && strchr(np.peer_code, '.') == NULL) {
+        /* a room code: the server knows where the host is */
+        memset(&ppub, 0, sizeof ppub);
+    } else if (!np.host) {
+        rdv.configured = 0; /* an address was typed: dial it directly */
+        if (np_parse_code(np.peer_code, &ppub, &plan, &phas_lan) != 0) {
             np_status("Paste the host's code first (it looks like 1.2.3.4:51500)");
             np.phase = NP_FAILED;
             return -1;
         }
-        if ((peer.ip >> 24) == 127) bind_ip = 0x7F000001u;
+        peer = ppub;
+        if ((ppub.ip >> 24) == 127) bind_ip = 0x7F000001u;
     }
     if (bind_local) bind_ip = 0x7F000001u;
     {
@@ -667,18 +959,36 @@ static int np_begin(int bind_local) {
         np.phase = NP_FAILED;
         return -1;
     }
-    /* this side's code: the public address the friend dials (or the LAN one if STUN fails) */
-    if (bind_ip != 0x7F000001u && np_stun(&np.t, &pub)) {
-        if (np.host && pub.port != np.port) {
-            gw_log("netplay: the router maps port %u to %u (a symmetric or port-shifting NAT)",
-                   np.port, pub.port);
-        }
-        np_fmt_addr(np.code, sizeof np.code, &pub);
-    } else {
+    np.t_open = 1;
+    /* this side's code: the public address the friend dials, then the local one for players on
+       the same network ("public:port/lan:port"; just the local one if STUN fails) */
+    {
         gw_net_addr lan;
         lan.ip = bind_ip == 0x7F000001u ? 0x7F000001u : np_lan_ip();
         lan.port = np.host ? np.port : gw_net_udp_local_port(&np.t);
-        np_fmt_addr(np.code, sizeof np.code, &lan);
+        if (bind_ip != 0x7F000001u && np_stun(&np.t, &pub)) {
+            size_t len;
+            np.mypub = pub;
+            np.have_mypub = 1;
+            if (np.host && pub.port != np.port) {
+                gw_log("netplay: the router maps port %u to %u (a symmetric or port-shifting NAT)",
+                       np.port, pub.port);
+            }
+            np_fmt_addr(np.code, sizeof np.code, &pub);
+            if (lan.ip != 0) {
+                len = strlen(np.code);
+                np.code[len] = '/';
+                np_fmt_addr(np.code + len + 1, sizeof np.code - len - 1, &lan);
+            }
+        } else {
+            np_fmt_addr(np.code, sizeof np.code, &lan);
+        }
+    }
+    if (!np.host && !rdv.configured) {
+        peer = np_pick(&ppub, &plan, phas_lan);
+    }
+    if (rdv.configured) {
+        np_rdv_wrap(&np.t); /* under the simulator: simulated conditions apply to relayed traffic too */
     }
     np_sim_wrap(&np.t);
 
@@ -713,13 +1023,25 @@ static int np_begin(int bind_local) {
         cfg.match_blob = np.scene;
         cfg.match_blob_len = (uint16_t) (strlen(np.scene) + 1);
         np.net = gw_net_host(&cfg, &np.t);
-        if (bind_ip != 0x7F000001u) np_upnp_start(np.port);
-        np_clip_set(np.code);
-        np_status("Hosting. Your code %s is copied - send it to your friend", np.code);
+        if (rdv.configured) {
+            np.code[0] = '\0';
+            np_status("Asking the server for a room...");
+        } else {
+            if (bind_ip != 0x7F000001u) np_upnp_start(np.port);
+            np_clip_set(np.code);
+            np_status("Hosting. Your code %s is copied - send it to your friend", np.code);
+        }
     } else {
         snprintf(np.info, sizeof np.info, "ck:%d/c%d", np.ck, np.color);
         cfg.guest_info = np.info;
         cfg.guest_info_len = (uint8_t) strlen(np.info);
+        if (rdv.configured) {
+            np.cfg = cfg;   /* joins in np_poll once the server has introduced the host */
+            np.cfg.guest_info = np.info;
+            np.phase = NP_WORKING;
+            np_status("Looking for room %s...", np.peer_code);
+            return 0;
+        }
         np.net = gw_net_join(&cfg, &np.t, &peer);
         np_clip_set(np.code);
         np_status("Connecting to %s ...", np.peer_code);
@@ -744,14 +1066,34 @@ static void np_arm(void) {
 
 /* One step of connecting (menu frames, or the boot wait). Returns the phase. */
 static int np_poll(void) {
-    if (np.net == NULL || np.phase != NP_WORKING) {
+    if (np.phase != NP_WORKING) {
         return np.phase;
+    }
+    np_rdv_service();
+    if (rdv.on && rdv.err[0] != '\0') {
+        np.phase = NP_FAILED;
+        np_close();
+        return np.phase;
+    }
+    if (np.net == NULL) {
+        if (!rdv.on || !rdv.have_peer) {
+            return np.phase; /* a guest waiting for the server's introduction */
+        }
+        np.net = gw_net_join(&np.cfg, &np.t, &rdv.peer);
+        if (np.net == NULL) {
+            np_status("Could not start the session");
+            np.phase = NP_FAILED;
+            return np.phase;
+        }
+        np_status("Found room %s - connecting...", np.peer_code);
     }
     gw_net_poll(np.net, NP_FIRST_FRAME);
     np_upnp_poll();
-    if (np.host && np.punch_on && (int32_t) (GetTickCount() - np.next_punch) >= 0) {
+    if (np.punch_on && (np.host || rdv.on) && (int32_t) (GetTickCount() - np.next_punch) >= 0 &&
+        !(rdv.on && rdv.relay)) {
         static const uint8_t punch[4] = { 'G', 'D', 'P', 'H' };
-        np.t.send(np.t.ctx, &np.punch, punch, 4); /* opens our router toward the guest */
+        gw_net_transport *raw = rdv.on ? &rdv.inner : &np.t;
+        raw->send(raw->ctx, &np.punch, punch, 4); /* opens our router toward the other side */
         np.next_punch = GetTickCount() + 200;
     }
     if (np.dead) {
@@ -778,6 +1120,16 @@ static int np_poll(void) {
             np.phase = NP_CONNECTED;
             np_status("Connected! Starting the match...");
             np_arm();
+        } else if (rdv.on) {
+            if (np.host) {
+                if (rdv.have_code && !rdv.have_peer)
+                    snprintf(np.status, sizeof np.status, "Room %s - waiting for your friend", rdv.code);
+                else if (rdv.have_peer)
+                    snprintf(np.status, sizeof np.status, "Friend found - connecting%s", rdv.relay ? " (relay)" : "...");
+            } else if (rdv.have_peer) {
+                snprintf(np.status, sizeof np.status, "Room %s found - connecting%s", np.peer_code,
+                         rdv.relay ? " (relay)" : "...");
+            }
         } else if (np.host) {
             const char *u = np.upnp_state == 1 ? "checking your router..."
                           : np.upnp_state == 2 ? "router port opened, friend can join directly"
@@ -810,14 +1162,30 @@ int gw_Netplay_MenuBegin(int host, int ck, int color, int stage_ext, int stocks,
 /* Paste a code from the clipboard: the guest's is the host's code; the host's is the guest's code
  * (for when neither router lets the other in: the host then punches toward it). 1 if one was read. */
 int gw_Netplay_MenuPaste(int as_host) {
-    char buf[64];
-    gw_net_addr a;
-    if (!np_clip_get(buf, sizeof buf) || gw_net_addr_parse(buf, NP_DEFAULT_PORT, &a) != 0 || a.ip == 0) {
+    char buf[96];
+    gw_net_addr a, lan;
+    int has_lan;
+    if (!as_host && gw_Netplay_MenuHasServer() && np_clip_get(buf, sizeof buf)) {
+        /* a room code: 4 letters from the alphabet, spaces and dashes ignored */
+        char c[5];
+        int k = 0, j;
+        for (j = 0; buf[j] != '\0' && k < 5; ++j) {
+            char ch = buf[j] >= 'a' && buf[j] <= 'z' ? (char) (buf[j] - 32) : buf[j];
+            const char *p = ch != '\0' ? strchr(NP_ALPHABET, ch) : NULL;
+            if (p != NULL) c[k++] = ch; else if (ch != ' ' && ch != '-') { k = 99; break; }
+        }
+        if (k == 4) {
+            for (j = 0; j < 4; ++j) gw_Netplay_MenuSetLetter(j, (int) (strchr(NP_ALPHABET, c[j]) - NP_ALPHABET));
+            np_status("Room code %s pasted - press Connect", np.peer_code);
+            return 1;
+        }
+    }
+    if (!np_clip_get(buf, sizeof buf) || np_parse_code(buf, &a, &lan, &has_lan) != 0) {
         np_status("The clipboard doesn't hold a code (like 1.2.3.4:51500)");
         return 0;
     }
     if (as_host) {
-        np.punch = a;
+        np.punch = np_pick(&a, &lan, has_lan);
         np.punch_on = 1;
         np.next_punch = 0;
         np_status("Opening a path to %s - ask your friend to press Connect again", buf);
@@ -848,6 +1216,21 @@ static void np_copy(char *out, int cap, const char *s) {
     out[i] = '\0';
 }
 void gw_Netplay_MenuStatus(char *out, int cap) { np_copy(out, cap, np.status); }
+/* Room codes (a server is configured): the menu edits the join code letter by letter. */
+int gw_Netplay_MenuHasServer(void) {
+    static int checked = -1;
+    if (checked < 0) checked = np_rdv_config();
+    return checked;
+}
+int gw_Netplay_MenuGetLetter(int i) { return i >= 0 && i < 4 ? rdv.letters[i] : 0; }
+void gw_Netplay_MenuSetLetter(int i, int v) {
+    int k;
+    if (i < 0 || i > 3) return;
+    rdv.letters[i] = ((v % 32) + 32) % 32;
+    for (k = 0; k < 4; ++k) np.peer_code[k] = NP_ALPHABET[rdv.letters[k]];
+    np.peer_code[4] = '\0';
+}
+
 void gw_Netplay_MenuCode(char *out, int cap) { np_copy(out, cap, np.code[0] ? np.code : "-"); }
 void gw_Netplay_MenuPeer(char *out, int cap) { np_copy(out, cap, np.peer_code[0] ? np.peer_code : "(none - press A to paste)"); }
 
@@ -940,6 +1323,7 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
     while (!np.started && !np.dead && GetTickCount() - t0 < GW_NET_HOLD_TIMEOUT_MS) {
         MSG m;
         gw_net_poll(np.net, NP_FIRST_FRAME);
+        np_rdv_service();
         while (PeekMessageA(&m, NULL, 0, 0, PM_REMOVE)) {
             TranslateMessage(&m);
             DispatchMessageA(&m);
@@ -980,6 +1364,9 @@ void gw_Netplay_Tick(void) {
         return;
     }
     gw_net_poll(np.net, gw_rb_current_frame());
+    if (rdv.on && (np.ticks % 60) == 0) {
+        np_rdv_service(); /* keepalives: the room and the router mapping stay open */
+    }
     w = gw_net_recommend_wait(np.net);
     if (w > 0) {
         gw_rb_request_wait(w);

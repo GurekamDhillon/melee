@@ -11,6 +11,9 @@
 #include "gmresult.h"
 #include "gmresultplayer.h"
 #include "gmvsmode.h"
+#if defined(TARGET_PC)
+#include "gmfrontend.h"
+#endif
 #include "types.h"
 #include <melee/lb/inlines.h>
 #include <melee/lb/lb_00B0.h>
@@ -144,6 +147,31 @@ void gmVsMelee_EnterCss(GameModeState* state, VsModeData* vs,
 void gmVsMelee_ExitCss(GameModeState* state, VsModeData* vs)
 {
     CSSData* css = gm_GetGameModeStateExitData(state);
+#if defined(TARGET_PC)
+    {
+        /* ONLINE PLAY sent the player here to pick a fighter: back to it, not on to the SSS */
+        extern int Frontend_OnlinePick(void);
+        extern void Frontend_OnlinePicked(int which, int a, int b);
+        if (Frontend_OnlinePick() == 1) {
+            int i, ck = -1, color = 0;
+            if (css->pending_scene_change == 0) {
+                for (i = 0; i < 4; i++) {
+                    if (css->vs.start.players[i].slot_type == Gm_PKind_Human &&
+                        css->vs.start.players[i].ckind >= 0 &&
+                        css->vs.start.players[i].ckind != ChKind_None)
+                    {
+                        ck = css->vs.start.players[i].ckind;
+                        color = css->vs.start.players[i].color;
+                        break;
+                    }
+                }
+            }
+            Frontend_OnlinePicked(1, ck, color);
+            gm_ChangeGameModeAfterCurrentScene(GM_FRONTEND);
+            return;
+        }
+    }
+#endif
     if (css->pending_scene_change == CSSPendingSceneChange_2) {
         gm_ChangeGameModeAfterCurrentScene(GM_MENU);
         return;
@@ -173,6 +201,18 @@ void gmVsMelee_ExitSss(GameModeState* state, VsModeData* vs,
                        u8 cancel_state_id)
 {
     SSSData* sss = gm_GetGameModeStateExitData(state);
+#if defined(TARGET_PC)
+    {
+        /* ONLINE PLAY sent the host here to pick the stage: back to it, not into a match */
+        extern int Frontend_OnlinePick(void);
+        extern void Frontend_OnlinePicked(int which, int a, int b);
+        if (Frontend_OnlinePick() == 2) {
+            Frontend_OnlinePicked(2, sss->start_game ? (int) sss->vs.start.rules.stkind : -1, 0);
+            gm_ChangeGameModeAfterCurrentScene(GM_FRONTEND);
+            return;
+        }
+    }
+#endif
     if (sss->start_game) {
         *vs = sss->vs;
         lbAudioAx_80026F2C(24);

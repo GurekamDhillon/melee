@@ -570,6 +570,7 @@ static void fm_chrome(const FeMenu* m, int section)
             fp.q[i] = fp.q[i + 1];
         }
         fp.q[n] = tmp;
+        fp.q[n].text = fp.q[n].textbuf; /* it pointed into its old slot */
     }
     /* breadcrumb: the section icon, then the path of menus to here */
     {

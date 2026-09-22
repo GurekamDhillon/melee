@@ -266,6 +266,12 @@ void Netplay_LobbyReady(int on);
 int Netplay_LobbyActive(void);
 int Netplay_FighterAvailable(int ck);
 int Netplay_LobbyStageExt(int i);
+void Netplay_SetStageMode(int mode);
+int Netplay_StageMode(void);
+int Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay);
+void Netplay_RandomCancel(void);
+int Netplay_RandomStatus(void);
+int Netplay_RandomSeconds(void);
 void Netplay_StageNameExt(int ext, char* out, int cap);
 
 enum { FE_NP_IDLE, FE_NP_WORKING, FE_NP_CONNECTED, FE_NP_FAILED, FE_NP_RUNNING, FE_NP_LOBBY };
@@ -288,11 +294,6 @@ static int fe_np_get_delay(void) { return fe_np_delay; }
 static void fe_np_set_delay(int v) { fe_np_delay = v; }
 static void fe_np_fmt_delay(int v, char* out) { sprintf(out, "%d frames", v); }
 static int fe_np_zero(void) { return 0; }
-static void fe_np_fmt_soon(int v, char* out)
-{
-    (void) v;
-    sprintf(out, "Coming soon");
-}
 
 /* ---- picking on Melee's own screen -----------------------------------------------------------
  * The lobby's character picks open the real character select screen (VS mode's CSS, seeded with
@@ -353,6 +354,49 @@ static void fe_np_find_tex(HSD_JObj* j, HSD_TObj** best, int* area, int depth)
         }
         fe_np_find_tex(HSD_JObjGetChild(j), best, area, depth + 1);
     }
+}
+
+/* Keep a copy of an image off the disc (the select screens' art) - the lobby and the loading
+ * screen show it after the archive it lives in is freed. which: 0..FE_NP_MAX_CK-1 a fighter's
+ * icon, -1 the chosen stage's icon. */
+static void fe_np_store(int which, HSD_ImageDesc* im, HSD_Tlut* tl)
+{
+    u8* data;
+    u8* lut;
+    int cap, lcap;
+    bool* ok;
+    u16 *w, *h;
+    int *fmt, *tfmt, *tn;
+    u32 size;
+    if (im == NULL || im->image_ptr == NULL) {
+        return;
+    }
+    if (which < 0) {
+        FeNpIcon* ic = &fe_np_icon[1];
+        data = ic->data; cap = sizeof ic->data; lut = ic->lut; lcap = sizeof ic->lut;
+        ok = &ic->ok; w = &ic->w; h = &ic->h; fmt = &ic->fmt; tfmt = &ic->tlut_fmt; tn = &ic->tlut_n;
+    } else if (which < FE_NP_MAX_CK) {
+        FeNpCharIcon* ic = &fe_np_char_icon[which];
+        data = ic->data; cap = sizeof ic->data; lut = ic->lut; lcap = sizeof ic->lut;
+        ok = &ic->ok; w = &ic->w; h = &ic->h; fmt = &ic->fmt; tfmt = &ic->tlut_fmt; tn = &ic->tlut_n;
+    } else {
+        return;
+    }
+    size = GXGetTexBufferSize(im->width, im->height, im->format, GX_FALSE, 0);
+    if (size == 0 || (int) size > cap) {
+        return;
+    }
+    memcpy(data, im->image_ptr, size);
+    *w = im->width;
+    *h = im->height;
+    *fmt = im->format;
+    *tn = 0;
+    if (tl != NULL && tl->lut != NULL && tl->n_entries * 2 <= lcap) {
+        *tn = tl->n_entries;
+        *tfmt = tl->fmt;
+        memcpy(lut, tl->lut, (size_t) *tn * 2);
+    }
+    *ok = true;
 }
 
 void Frontend_CaptureCharIcon(int ck, HSD_JObj* root)
@@ -472,6 +516,25 @@ static void fe_ol_host(void)
         fe_np_phase = FE_NP_IDLE;
     }
 }
+static const char* const fe_np_stage_modes[] = { "Competitive", "All Stages" };
+static int fe_np_get_stage_mode(void) { return Netplay_StageMode(); }
+static void fe_np_set_stage_mode(int v) { Netplay_SetStageMode(v); }
+
+/* Random Opponent: the server pairs us with whoever else is looking; the waiting room shows the
+ * search, then the lobby as for a room. */
+static void fe_ol_random(void)
+{
+    if (Netplay_RandomBegin(fe_np_ck, fe_np_color, fe_np_stocks, fe_np_minutes, fe_np_delay) == 0) {
+        fe_np_phase = FE_NP_WORKING;
+        fe_switch_screen(&fe_screen_wait);
+    } else {
+        char why[FE_STR];
+        Netplay_MenuStatus(why, FE_STR);
+        fe_ol_notice(why, true);
+        fe_np_phase = FE_NP_IDLE;
+    }
+}
+
 static void fe_ol_join(void)
 {
     if (!Netplay_MenuHasServer()) {
@@ -488,8 +551,10 @@ static const FrontendItem fe_items_online[] = {
       NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_host },
     { FE_ACTION, FE_DO_CALL, "Join a Room", "Type in the room code your opponent sent you.", NULL,
       NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_join },
-    { FE_ACTION, FE_DO_CALL, "Random Opponent", "Play someone at random - coming soon.", NULL,
-      NULL, 0, 0, 0, NULL, fe_np_fmt_soon, NULL, NULL, fe_np_zero },
+    { FE_ACTION, FE_DO_CALL, "Random Opponent", "Play whoever else is looking right now.", NULL,
+      NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_random },
+    { FE_CHOICE, 0, "Stage List", "Stages in rooms you host: the legal six, or every stage you both have.",
+      fe_np_get_stage_mode, fe_np_set_stage_mode, 0, 1, 1, fe_np_stage_modes },
     { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", fe_np_get_stocks,
       fe_np_set_stocks, 1, 9, 1 },
     { FE_SLIDER, 0, "Time Limit", "Minutes per game, in rooms you host.", fe_np_get_minutes,

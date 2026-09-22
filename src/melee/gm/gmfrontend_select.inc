@@ -54,6 +54,14 @@ static struct {
     int nchr, nmap;
 } fa;
 
+/* the stage select's icons by external id (fs_stage_art_tex) */
+static struct {
+    int n;
+    int ext[256];
+    FsArt art[256];
+    int built;
+} fa_st;
+
 static void fa_close(void)
 {
     if (fa.chr != NULL) {
@@ -64,6 +72,7 @@ static void fa_close(void)
     }
     fa.chr = fa.map = NULL;
     fa.nchr = fa.nmap = 0;
+    fa_st.built = 0;
 }
 
 static int fa_chr_open(void)
@@ -136,6 +145,33 @@ static void fs_drop_borrowed(void)
         }
     }
     fp.ntex = k;
+}
+
+/* The stage select's icon for a stage (its EXTERNAL id), lent to the player; -1 if none. The
+   icon table is read once per scene (the lobby opens MnSlMap for its stage tiles). */
+static int fs_stage_art_tex(int ext)
+{
+    int i;
+    if (fa.map == NULL || !fa_st.built) {
+        int n = fa_map_open();
+        fa_st.n = 0;
+        for (i = 0; i < n && fa_st.n < FS_MAX_STAGES; i++) {
+            int e = 0, type = 0;
+            FsArt a;
+            if (mnStageSel_PcArtIcon(i, &e, &type, &a.img, &a.tl) && type == 2 && a.img != NULL) {
+                fa_st.ext[fa_st.n] = e;
+                fa_st.art[fa_st.n] = a;
+                fa_st.n++;
+            }
+        }
+        fa_st.built = 1;
+    }
+    for (i = 0; i < fa_st.n; i++) {
+        if (fa_st.ext[i] == ext) {
+            return fs_art_tex(fa_st.art[i]);
+        }
+    }
+    return -1;
 }
 
 /* A quad showing a texture inside a rect, keeping the texture's aspect (centred). */
@@ -423,6 +459,9 @@ static void fs_css_finish(int go)
     int p;
     CSSData* css = fcs.css;
     fcs.done = 1;
+    for (p = 0; p < fcs.n; p++) {
+        fe_np_store(fcs.ck[p], fcs.icon[p].img, fcs.icon[p].tl); /* the lobby's and loading screen's portraits */
+    }
     if (css != NULL) {
         if (go) {
             for (p = 0; p < 4; p++) {
@@ -989,10 +1028,16 @@ static void fs_sss_open(SSSData* sss)
 static void fs_sss_finish(int go, int ext)
 {
     SSSData* sss = fcs.sss;
+    int i;
     fcs.done = 1;
     if (sss != NULL) {
         sss->start_game = go != 0;
         if (go) {
+            for (i = 0; i < fcs.ns; i++) {
+                if (fcs.st_ext[i] == ext) {
+                    fe_np_store(-1, fcs.st_icon[i].img, fcs.st_icon[i].tl); /* the loading screen's */
+                }
+            }
             sss->vs.start.rules.stkind = (u16) ext;
             OSReport("frontend: stage select - stage %d\n", ext);
         }

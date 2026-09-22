@@ -106,6 +106,7 @@ static struct {
     uint32_t rejoin_until;/* a returning guest keeps asking for the room until then (GetTickCount) */
     int peer_left;        /* the connection ended because the opponent left (not an error of ours) */
     int use_lobby;        /* the menu path: connected players meet in the pick/ban lobby first */
+    int stage_mode;       /* rooms this side hosts: 0 competitive stage list, 1 all stages */
     int t_open_session;   /* random matchmaking: the session on the queue socket has started */
     int started, dead, accepted;
     long ticks;
@@ -1064,14 +1065,23 @@ static void np_rdv_service(void) {
  *   Then both press Ready (either can take it back); a 3-second countdown; the match.
  * Players: 0 = host (P1), 1 = guest (P2).
  *
+ * STAGE LISTS - the host picks one when hosting (gw_Netplay_SetStageMode):
+ *   0 Competitive: the six legal stages, the strike/ban rules above.
+ *   1 All stages: every stage both players have (delta's content identities). Striking a long
+ *     list would take forever, so every game is ban-and-pick: game 1 the coin winner bans 2 and
+ *     the other picks; game 2+ the last winner bans 2 and the loser picks.
+ * The host builds the list (only stages both have, once the peer's identity list is in - rebuilt
+ * then if nothing was struck yet) and sends it as identities ("L" chunks); each side maps them
+ * to its own external ids, so the grids match whatever each install numbers them.
+ *
  * The rules are pure functions of `lb` (lb_new_set / lb_reset_game / lb_apply), so they are tested
- * headless (gw_netplay_tests_register). The stage list is data (lb.nstages, up to LB_MAX_STAGES),
- * so a longer list can replace the default six. */
+ * headless (gw_netplay_tests_register). */
 static void np_close(void);
 static void np_copy(char *out, int cap, const char *s);
 enum { LB_OFF, LB_CHAR_BLIND, LB_STRIKE, LB_BAN, LB_PICK, LB_CHAR_WINNER, LB_CHAR_LOSER, LB_READY, LB_GO };
 enum { LB_FREE = 0, LB_STRUCK_P1 = 1, LB_STRUCK_P2 = 2, LB_BANNED = 3, LB_PICKED = 4 };
-#define LB_MAX_STAGES 32
+#define LB_MAX_STAGES 256
+#define LB_LIST_CHUNK 8 /* identity tokens per "L" message (they are 19 bytes each) */
 #define LB_COUNTDOWN 180 /* 3-2-1 */
 static const int lb_default_ext[] = { 31, 28, 32, 2, 3, 8 };
 static struct {
@@ -1080,8 +1090,14 @@ static struct {
     int left;            /* actions left in this turn */
     int step;            /* game 1 striking: which entry of the 1-2-2 order */
     int first;           /* game 1: who strikes first (the coin flip) */
+    int mode;            /* the stage list: 0 competitive, 1 all stages */
     int nstages;
     int stage_ext[LB_MAX_STAGES];
+    int list_id;         /* the list's version (host counts; the guest's copy says which it holds) */
+    int list_final;      /* host: built with the peer's identities in (no more rebuilds) */
+    int list_tx;         /* host: next index to send in "L" chunks, -1 = all sent */
+    int rx_id, rx_total, rx_count; /* guest: the list arriving */
+    int list_ok;         /* guest: holds the list the host's state names */
     int stage[LB_MAX_STAGES];
     int chosen;          /* index of the stage the game is on, -1 none yet */
     int ck[2], color[2], locked[2], ready[2];
@@ -1107,6 +1123,32 @@ static void lb_default_stages(void) {
     for (i = 0; i < (int) (sizeof lb_default_ext / sizeof lb_default_ext[0]); ++i) {
         if (gw_Netplay_StageAvailable(lb_default_ext[i])) lb.stage_ext[lb.nstages++] = lb_default_ext[i];
     }
+}
+
+/* Host: the stage list for the room's mode - only stages both players have (a stage whose peer
+   answer is not in yet counts, and the list is rebuilt once it is). */
+static void lb_build_list(void) {
+    int i, n;
+    if (lb.mode == 0) {
+        lb_default_stages();
+    } else {
+        lb.nstages = 0;
+        n = gw_MexId_Count();
+        for (i = 0; i < n && lb.nstages < LB_MAX_STAGES; ++i) {
+            int ext, k, dup = 0;
+            if (gw_MexId_Kind(i) != GW_MEXID_STAGE) continue;
+            ext = gw_MexId_LocalId(i);
+            if (ext <= 0 || !gw_Netplay_StageAvailable(ext)) continue;
+            for (k = 0; k < lb.nstages; ++k) dup |= lb.stage_ext[k] == ext;
+            if (!dup) lb.stage_ext[lb.nstages++] = ext;
+        }
+        if (lb.nstages == 0) lb_default_stages();
+    }
+    lb.list_id++;
+    lb.list_tx = 0;
+    lb.list_final = gw_MexId_PeerReady();
+    gw_log("netplay: lobby - stage list %d (%s): %d stages%s", lb.list_id, lb.mode ? "all" : "competitive",
+           lb.nstages, lb.list_final ? "" : " (the opponent's stages are not in yet)");
 }
 
 /* A new opponent: game 1, no winner, 0-0. */
@@ -1170,7 +1212,15 @@ static int lb_apply_(int who, const char *act, int a, int b) {
             lb.ck[who] = a;
             lb.color[who] = b;
             lb.locked[who] = 1;
-            if (lb.locked[0] && lb.locked[1]) lb.phase = LB_STRIKE;
+            if (lb.locked[0] && lb.locked[1]) {
+                if (lb.mode == 1) {
+                    lb.phase = LB_BAN; /* all stages: the coin winner bans 2, the other picks */
+                    lb.turn = lb.first;
+                    lb.left = 2;
+                } else {
+                    lb.phase = LB_STRIKE;
+                }
+            }
             return 1;
         }
         if ((lb.phase == LB_CHAR_WINNER || lb.phase == LB_CHAR_LOSER) && lb.turn == who) {
@@ -1258,32 +1308,103 @@ static int lb_countdown_at(int elapsed) {
     return 0;
 }
 
-/* "S ..." - the whole state, host to guest. The stage states are one digit each. */
+/* "S ..." - the whole state, host to guest. Stage states travel sparse ("i.s,i.s", "-" when every
+   stage is free), so a long list fits one message; the list itself (mode, length, version) is at
+   the end and arrives separately ("L"). */
 static void lb_encode(char *m, int cap) {
-    char st[LB_MAX_STAGES + 1];
-    int i;
-    for (i = 0; i < lb.nstages; ++i) st[i] = (char) ('0' + lb.stage[i]);
-    st[lb.nstages] = '\0';
-    snprintf(m, (size_t) cap, "S %d %d %d %d %d %d %d %d %d %s %d %d %d %d %d %d %d %d %d %d", lb.phase,
+    char st[120];
+    int i, o = 0;
+    st[0] = '\0';
+    for (i = 0; i < lb.nstages && o < (int) sizeof st - 12; ++i) {
+        if (lb.stage[i] != LB_FREE) o += snprintf(st + o, sizeof st - (size_t) o, "%s%d.%d", o ? "," : "", i, lb.stage[i]);
+    }
+    snprintf(m, (size_t) cap, "S %d %d %d %d %d %d %d %d %d %s %d %d %d %d %d %d %d %d %d %d %d %d %d", lb.phase,
              lb.game, lb.winner, lb.score[0], lb.score[1], lb.turn, lb.left, lb.step, lb.first,
-             lb.nstages > 0 ? st : "-", lb.chosen, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1],
-             lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1], lb.countdown);
+             o ? st : "-", lb.chosen, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1],
+             lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1], lb.countdown, lb.mode, lb.nstages,
+             lb.list_id);
 }
 
 static int lb_decode(const char *m) {
-    char st[LB_MAX_STAGES + 2] = { 0 };
-    int k = sscanf(m + 2, "%d %d %d %d %d %d %d %d %d %33s %d %d %d %d %d %d %d %d %d %d", &lb.phase,
+    char st[124] = { 0 };
+    int mode = 0, n = 0, id = 0;
+    int k = sscanf(m + 2, "%d %d %d %d %d %d %d %d %d %123s %d %d %d %d %d %d %d %d %d %d %d %d %d", &lb.phase,
                    &lb.game, &lb.winner, &lb.score[0], &lb.score[1], &lb.turn, &lb.left, &lb.step,
                    &lb.first, st, &lb.chosen, &lb.ck[0], &lb.color[0], &lb.ck[1], &lb.color[1],
-                   &lb.locked[0], &lb.locked[1], &lb.ready[0], &lb.ready[1], &lb.countdown);
+                   &lb.locked[0], &lb.locked[1], &lb.ready[0], &lb.ready[1], &lb.countdown, &mode, &n, &id);
     if (k >= 10) {
+        const char *c = st;
         int i;
-        for (i = 0; i < LB_MAX_STAGES && st[i] >= '0' && st[i] <= '9'; ++i) lb.stage[i] = st[i] - '0';
-        if (i > 0) lb.nstages = i; /* the list's length travels as the digit count */
+        for (i = 0; i < LB_MAX_STAGES; ++i) lb.stage[i] = LB_FREE;
+        while (*c != '\0' && *c != '-') {
+            int ix = 0, v = 0, used = 0;
+            if (sscanf(c, "%d.%d%n", &ix, &v, &used) < 2 || used <= 0) break;
+            if (ix >= 0 && ix < LB_MAX_STAGES) lb.stage[ix] = v;
+            c += used;
+            if (*c == ',') c++;
+        }
+    }
+    if (k >= 23) {
+        lb.mode = mode;
+        /* the grid is the list with that version - until it has arrived, say so */
+        lb.list_ok = id == lb.rx_id && lb.rx_count >= lb.rx_total && lb.rx_total == n;
+        if (lb.list_ok) lb.nstages = n;
     }
     lb.have_state = 1;
     lb.seq++;
     return k;
+}
+
+/* Guest: one "L <id> <start> <total> <tok,tok,...>" chunk of the host's stage list. Tokens are
+   content identities ("id:<hex>", or "ext:<n>" for a stage without one), mapped to this install's
+   own external ids. Returns 1 when the list is complete. */
+static int lb_list_rx(const char *m) {
+    int id = 0, start = 0, total = 0, used = 0;
+    const char *c;
+    if (sscanf(m + 2, "%d %d %d %n", &id, &start, &total, &used) < 3) return 0;
+    if (total < 0 || total > LB_MAX_STAGES) return 0;
+    if (id != lb.rx_id) {
+        lb.rx_id = id;
+        lb.rx_total = total;
+        lb.rx_count = 0;
+    }
+    c = m + 2 + used;
+    while (*c != '\0' && start < total) {
+        char tok[40];
+        int k = 0, ext = -1;
+        while (*c != '\0' && *c != ',' && k < (int) sizeof tok - 1) tok[k++] = *c++;
+        tok[k] = '\0';
+        if (*c == ',') c++;
+        if (strncmp(tok, "id:", 3) == 0) ext = gw_MexId_ExtForHex(tok + 3);
+        else if (strncmp(tok, "ext:", 4) == 0) ext = atoi(tok + 4);
+        lb.stage_ext[start++] = ext;
+        lb.rx_count++;
+    }
+    return lb.rx_count >= lb.rx_total;
+}
+
+/* The "L" chunk of the list from `start`; returns the index after it. */
+static int lb_list_encode(int start, char *m, int cap, int *len) {
+    int o, i, end = start + LB_LIST_CHUNK;
+    if (end > lb.nstages) end = lb.nstages;
+    o = snprintf(m, (size_t) cap, "L %d %d %d ", lb.list_id, start, lb.nstages);
+    for (i = start; i < end; ++i) {
+        o += snprintf(m + o, (size_t) cap - (size_t) o, "%s%s", i > start ? "," : "",
+                      gw_MexId_TokenForExt(lb.stage_ext[i]));
+    }
+    *len = o;
+    return end;
+}
+
+/* Host: send what is left of the list, a chunk at a time while the lobby channel has room. */
+static void lb_list_pump(void) {
+    while (np.net != NULL && lb.list_tx >= 0 && lb.list_tx < lb.nstages) {
+        char m[GW_NET_LOBBY_MAX];
+        int len, end = lb_list_encode(lb.list_tx, m, sizeof m, &len);
+        if (gw_net_lobby_send(np.net, m, len) != 0) return; /* the queue is full: next tick */
+        lb.list_tx = end;
+    }
+    if (lb.list_tx >= lb.nstages) lb.list_tx = -1;
 }
 
 static void lb_send(const char *msg) {
@@ -1341,6 +1462,11 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
         if (act[0] != '\0' && lb_apply(1, act, a, b)) {
             lb.seq++;
             lb_broadcast();
+        }
+    } else if (!np.host && m[0] == 'L') {
+        if (lb_list_rx(m)) {
+            gw_log("netplay: lobby - stage list %d: %d stages", lb.rx_id, lb.rx_total);
+            lb.seq++;
         }
     } else if (!np.host && m[0] == 'S') {
         lb_decode(m);
@@ -1408,6 +1534,22 @@ static void np_lobby_tick(void) {
             }
         }
     }
+    if (np.host) {
+        lb_list_pump();
+        if (!lb.list_final && gw_MexId_PeerReady()) {
+            /* the opponent's stages are in: the list can now hold only what both have */
+            int i, touched = 0;
+            for (i = 0; i < lb.nstages; ++i) touched |= lb.stage[i] != LB_FREE;
+            if (!touched) {
+                lb_build_list();
+                lb.seq++;
+                lb_list_pump();
+                lb_broadcast();
+            } else {
+                lb.list_final = 1;
+            }
+        }
+    }
     if (lb.countdown > 0 && lb.cd_t0 == 0) {
         /* started (host: both just readied; guest: the host's state says so): the clock's zero,
            back-dated by what already ran */
@@ -1457,6 +1599,13 @@ void gw_Netplay_Background(void) {
 static void np_lobby_enter(void) {
     np.phase = NP_LOBBY;
     lb.seed = np.seed;
+    if (np.host) {
+        if (lb.game <= 0) lb.mode = np.stage_mode; /* a new set takes the room's stage list */
+        lb_build_list();
+    } else if (!lb.have_state) {
+        lb.rx_id = -1; /* the host sends its list on this connection */
+        lb.list_ok = 0;
+    }
     if (lb.nstages <= 0 || lb.stage_ext[0] == 0) lb_default_stages();
     if (np.host || !lb.have_state) {
         /* the host starts the game; a guest shows the same start until the host's state arrives
@@ -1464,7 +1613,10 @@ static void np_lobby_enter(void) {
         if (lb.game <= 0) lb_new_set(np.host ? np.ck : 2, np.host ? 9 : np.ck);
         lb_reset_game();
     }
-    if (np.host) lb_broadcast();
+    if (np.host) {
+        lb_list_pump();
+        lb_broadcast();
+    }
     np_status("Opponent found! Opening the lobby...");
 }
 
@@ -2002,6 +2154,10 @@ void gw_Netplay_FighterName(int ck, char *out, int cap) {
     }
 }
 
+/* The stage list of rooms this side hosts (0 competitive, 1 all stages). */
+void gw_Netplay_SetStageMode(int mode) { np.stage_mode = mode ? 1 : 0; }
+int gw_Netplay_StageMode(void) { return np.stage_mode; }
+
 /* ---- the lobby, for the menu ---- */
 int gw_Netplay_LobbyPhase(void) { return np.phase == NP_LOBBY || np.phase == NP_CONNECTED ? lb.phase : LB_OFF; }
 int gw_Netplay_LobbySeq(void) { return (int) lb.seq; }
@@ -2019,6 +2175,8 @@ int gw_Netplay_LobbyInfo(int what) {
     case 8: return (lb.countdown + 59) / 60;
     case 9: return lb.nstages;
     case 10: return lb.countdown;
+    case 11: return lb.mode;
+    case 12: return np.host || lb.list_ok; /* the stage list is here (a guest waits for it) */
     default: return 0;
     }
 }
@@ -2509,7 +2667,54 @@ static int test_lobby_wire(void) {
     return 0;
 }
 
+/* All stages: game 1 is ban-and-pick from the coin winner; the list travels as identities in
+   chunks and comes back as the same external ids; the state names the list it goes with. */
+static int test_lobby_all_stages(void) {
+    char m[GW_NET_LOBBY_MAX];
+    int host_ext[LB_MAX_STAGES], n = 20, i, first, len;
+    lbt_start(1u << 7);
+    lb.mode = 1;
+    lb.nstages = n;
+    for (i = 0; i < n; ++i) lb.stage_ext[i] = i + 1;
+    lb_reset_game();
+    first = lb.first;
+    lb_apply_(0, "CHAR", 34, 0);
+    lb_apply_(1, "CHAR", 38, 0);
+    if (lb.phase != LB_BAN || lb.turn != first || lb.left != 2) return lbt_fail("all stages: the coin winner bans 2");
+    if (lb_apply_(first, "STRIKE", 0, 0)) return lbt_fail("no striking in all-stages mode");
+    if (!lb_apply_(first, "BAN", 3, 0) || !lb_apply_(first, "BAN", 17, 0)) return lbt_fail("two bans");
+    if (lb.phase != LB_PICK || lb.turn != 1 - first) return lbt_fail("then the other picks");
+    if (!lb_apply_(1 - first, "PICK", 12, 0) || lb.phase != LB_READY || lb.chosen != 12)
+        return lbt_fail("the pick settles game 1");
+    /* the list on the wire */
+    lb.list_id = 7;
+    memcpy(host_ext, lb.stage_ext, sizeof host_ext);
+    {
+        int start = 0, host_n = lb.nstages;
+        char chunks[4][GW_NET_LOBBY_MAX];
+        int nc = 0;
+        while (start < host_n && nc < 4) start = lb_list_encode(start, chunks[nc++], GW_NET_LOBBY_MAX, &len);
+        lb_encode(m, sizeof m);
+        memset(lb.stage_ext, 0, sizeof lb.stage_ext);
+        lb.rx_id = -1;
+        for (i = 0; i < nc; ++i) {
+            if (strlen(chunks[i]) >= GW_NET_LOBBY_MAX) return lbt_fail("a list chunk overflows a lobby message");
+            lb_list_rx(chunks[i]);
+        }
+        for (i = 0; i < host_n; ++i) {
+            if (lb.stage_ext[i] != host_ext[i]) return lbt_fail("the list round-trips as identities");
+        }
+        lb.nstages = 0;
+        lb_decode(m);
+        if (!lb.list_ok || lb.nstages != host_n || lb.mode != 1) return lbt_fail("the state takes the list it names");
+        if (lb.stage[3] != LB_BANNED || lb.stage[17] != LB_BANNED || lb.stage[12] != LB_PICKED)
+            return lbt_fail("sparse stage states round-trip");
+    }
+    return 0;
+}
+
 void gw_netplay_tests_register(void) {
+    gw_test_register("netplay_lobby_all_stages", test_lobby_all_stages);
     gw_test_register("netplay_lobby_game1", test_lobby_game1);
     gw_test_register("netplay_lobby_game2", test_lobby_game2);
     gw_test_register("netplay_lobby_wire", test_lobby_wire);

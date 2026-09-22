@@ -44,6 +44,12 @@ static void fs_build_sss(void);
 static void fs_css_sig(char* sig);
 static void fs_sss_sig(char* sig);
 static void fa_close(void);
+static int fs_stage_art_tex(int ext);
+static int fs_tex_fit(const char* id, int tex, float x0, float y0, float x1, float y1, const float* rgb);
+static void fs_drop_borrowed(void);
+static void fl_dense_grid(void);
+#define FL_DENSE_COLS 6
+#define FL_DENSE_ROWS 3
 
 /* THE LOADING SCREEN (FL_LOAD, loading_layout.json): who fights where, and the warm-up's
  * progress. VS mode's loading state (after the SSS) and the online lobby (after its countdown)
@@ -687,7 +693,8 @@ static bool fl_my_stage_turn(void)
 {
     int p = fl_phase();
     return (p == LBP_STRIKE || p == LBP_BAN || p == LBP_PICK) &&
-           Netplay_LobbyInfo(4) == Netplay_LobbyMe() && fl.frames >= fl.coin_until;
+           Netplay_LobbyInfo(4) == Netplay_LobbyMe() && fl.frames >= fl.coin_until &&
+           Netplay_LobbyInfo(12);
 }
 
 static bool fl_can_pick_char(void)
@@ -804,7 +811,7 @@ static const char* fl_axis_state(const FlEl* e, const char* a)
     }
     if (fl.art == FL_WAIT) {
         bool host = Netplay_IsHost() != 0;
-        if (strcmp(a, "view") == 0) return host ? "host" : "guest";
+        if (strcmp(a, "view") == 0) return host && Netplay_RandomStatus() != 1 ? "host" : "guest";
         if (strcmp(a, "plate") == 0) {
             if (fe_np_phase == FE_NP_FAILED) return "failed";
             if (!host) return "joining";
@@ -860,7 +867,10 @@ static void fl_instruction(char* out)
         else sprintf(out, "P%d strikes %d stage%s.", turn + 1, left, pl);
         break;
     case LBP_BAN:
-        if (mine) sprintf(out, "You won: ban %d stage%s, then P%d picks.", left, pl, 2 - me);
+        if (!Netplay_LobbyInfo(12)) sprintf(out, "%s", "Getting the stage list...");
+        else if (Netplay_LobbyInfo(0) <= 1 && mine) sprintf(out, "You won the coin flip: ban %d stage%s.", left, pl);
+        else if (Netplay_LobbyInfo(0) <= 1) sprintf(out, "P%d won the coin flip: bans %d stage%s.", turn + 1, left, pl);
+        else if (mine) sprintf(out, "You won: ban %d stage%s, then P%d picks.", left, pl, 2 - me);
         else sprintf(out, "P%d (last game's winner) bans %d stage%s.", turn + 1, left, pl);
         break;
     case LBP_PICK:
@@ -895,8 +905,8 @@ static const char* fl_phase_title(void)
     case LBP_CHAR_WINNER:
     case LBP_CHAR_LOSER: return "CHARACTER PICK";
     case LBP_STRIKE: return "STAGE STRIKING";
-    case LBP_BAN:
-    case LBP_PICK: return "COUNTERPICK";
+    case LBP_BAN: return Netplay_LobbyInfo(0) <= 1 ? "STAGE BAN" : "COUNTERPICK";
+    case LBP_PICK: return Netplay_LobbyInfo(0) <= 1 ? "STAGE PICK" : "COUNTERPICK";
     case LBP_READY: return "READY CHECK";
     case LBP_GO: return "GET READY";
     default: return "RECONNECTING";
@@ -912,7 +922,11 @@ static void fl_status_line(char* out)
         return;
     }
     Netplay_RoomCode(code, sizeof code);
-    if (fl.art == FL_LOBBY && !fl_reconnecting()) {
+    if (fl.art == FL_LOBBY && !fl_reconnecting() && Netplay_LobbyInfo(9) > 6 && Netplay_LobbyInfo(12)) {
+        int per = FL_DENSE_COLS * FL_DENSE_ROWS, n = Netplay_LobbyInfo(9);
+        sprintf(out, "Room %s. Stages page %d of %d (L/R). B twice leaves.", code, fl.cur / per + 1,
+                (n + per - 1) / per);
+    } else if (fl.art == FL_LOBBY && !fl_reconnecting()) {
         sprintf(out, "Room %s. You are P%d%s. B twice leaves.", code, Netplay_LobbyMe() + 1,
                 Netplay_IsHost() ? " (host)" : "");
     } else {
@@ -996,6 +1010,15 @@ static const char* fl_slot_text(const FlEl* e, const char* id)
         if (strcmp(id, "copy_text") == 0) {
             const FjNode* n = fl_lookup(e, "<copy.text_string>");
             return fj_str(n);
+        }
+        if (Netplay_RandomStatus() == 1) {
+            if (strcmp(id, "code_label") == 0) return "RANDOM OPPONENT";
+            if (strncmp(id, "char_", 5) == 0) return NULL;
+            if (strcmp(id, "share_line") == 0) {
+                sprintf(b, "Looking for an opponent... %ds", Netplay_RandomSeconds());
+                return b;
+            }
+            if (strcmp(id, "sub_line") == 0) return "B stops looking.";
         }
         if (strcmp(id, "share_line") == 0) {
             if (Netplay_IsHost()) return code[0] != '\0' ? "Send it to your opponent. They pick Join and type it in."
@@ -1114,6 +1137,15 @@ static bool fl_special_quad(FlEl* e, const FjNode* q, const char* id, float dx, 
         } else if (fl.art == FL_LOAD && !fl_ld.online && fl_icon_tex(1) >= 0) {
             float white[3] = { 1, 1, 1 };
             fl_rect_quad(qid, fl_icon_tex(1), x0, y0, x1, y1, white, joint); /* the SSS's icon */
+        } else if (fl.art == FL_LOBBY && fs_stage_art_tex(Netplay_LobbyStageExt(e->who)) >= 0) {
+            /* the stage's select icon, off the disc's MnSlMap */
+            const FjNode* op = fl_val(e, fj_get(q, "opacity"));
+            float white[3] = { 1, 1, 1 };
+            int qi = fs_tex_fit(qid, fs_stage_art_tex(Netplay_LobbyStageExt(e->who)), x0, y0, x1, y1, white);
+            if (qi >= 0) {
+                fp.q[qi].joint = (s8) joint;
+                fp.q[qi].wa = -fj_num(op, 1.0F);
+            }
         } else {
             /* stage art: not captured (online: no SSS) - the layout's flat stand-in */
             const FjNode* op = fl_val(e, fj_get(q, "opacity"));
@@ -1215,13 +1247,19 @@ static void fl_build_wait(void)
     static const char* const ht_g[1] = { "Cancel" };
     const char* crumbs_h[3] = { "VERSUS", "ONLINE PLAY", "HOST" };
     const char* crumbs_g[3] = { "VERSUS", "ONLINE PLAY", "JOIN" };
-    bool host = Netplay_IsHost() != 0;
+    const char* crumbs_r[3] = { "VERSUS", "ONLINE PLAY", "RANDOM" };
+    bool host = Netplay_IsHost() != 0, rnd = Netplay_RandomStatus() == 1;
     void *t, *p;
     const FjNode* L;
     FlEl e;
-    fm_chrome_with(host ? "WAITING ROOM" : "JOINING ROOM", host ? crumbs_h : crumbs_g, 3, KS_VERSUS,
-                   host ? 2 : 1, host ? hg_h : hg_g, host ? ht_h : ht_g);
-    fl_desc(host ? "Your room stays open until you leave." : "The host sees you as soon as you're in.");
+    if (rnd) {
+        fm_chrome_with("FINDING OPPONENT", crumbs_r, 3, KS_VERSUS, 1, hg_g, ht_g);
+        fl_desc("You'll meet in a lobby as soon as someone else is looking.");
+    } else {
+        fm_chrome_with(host ? "WAITING ROOM" : "JOINING ROOM", host ? crumbs_h : crumbs_g, 3, KS_VERSUS,
+                       host ? 2 : 1, host ? hg_h : hg_g, host ? ht_h : ht_g);
+        fl_desc(host ? "Your room stays open until you leave." : "The host sees you as soon as you're in.");
+    }
     L = fj_load("waiting_room_layout.json", &t, &p);
     memset(&e, 0, sizeof e);
     e.el = fj_get(L, "room_plate");
@@ -1339,6 +1377,13 @@ static void fl_build_lobby(void)
     G = fj_get(L, "stage_grid");
     n = Netplay_LobbyInfo(9);
     cols = (int) fj_num(fj_get(G, "columns"), 3);
+    if (!Netplay_LobbyInfo(12)) {
+        n = 0; /* the host's stage list is still on its way */
+    }
+    if (n > 6) {
+        fl_dense_grid(); /* a long list (all stages): smaller tiles, pages */
+        n = 0;
+    }
     {
         float tw = fj_num(fj_idx(fj_get(G, "tile"), 0), 148), th = fj_num(fj_idx(fj_get(G, "tile"), 1), 86);
         float gx = fj_num(fj_idx(fj_get(G, "gutter"), 0), 12), gy = fj_num(fj_idx(fj_get(G, "gutter"), 1), 8);
@@ -1370,7 +1415,7 @@ static void fl_build_lobby(void)
         e.port[0] = '\0';
         e.idx[0] = '\0';
     }
-    if (p == LBP_STRIKE && fl.frames < fl.coin_until) {
+    if ((p == LBP_STRIKE || p == LBP_BAN) && fl.frames < fl.coin_until) {
         FL_EL("coin_badge", "cb_");
     }
     if (p == LBP_READY && Netplay_LobbyInfo(8) > 0) {
@@ -1505,6 +1550,68 @@ static void fl_load_update(void)
     }
 }
 
+/* A long stage list (all stages): 6 x 3 small tiles a page, the stage art, the name, the same
+   marks as the big tiles (P1 cross, P2 ring, padlock for a ban, gold for the pick). */
+static void fl_dense_grid(void)
+{
+    int n = Netplay_LobbyInfo(9), per = FL_DENSE_COLS * FL_DENSE_ROWS, page, i, first, last;
+    float x0 = 88, y0 = 214, gx = 6, gy = 6;
+    float w = (468 - (FL_DENSE_COLS - 1) * gx) / FL_DENSE_COLS, h = (180 - (FL_DENSE_ROWS - 1) * gy) / FL_DENSE_ROWS;
+    float ink[3], face[3], gold[3], bone[3], muted[3], white[3] = { 1, 1, 1 }, p1[3], p2[3];
+    char id[FP_ID], name[40], buf[24];
+    if (fl.cur >= n) fl.cur = n - 1;
+    if (fl.cur < 0) fl.cur = 0;
+    page = fl.cur / per;
+    first = page * per;
+    last = first + per < n ? first + per : n;
+    fm_tok("ink", KS_VERSUS, ink);
+    fm_tok("@face", KS_VERSUS, face);
+    fm_tok("gold", KS_VERSUS, gold);
+    fm_tok("bone", KS_VERSUS, bone);
+    fm_tok("muted", KS_VERSUS, muted);
+    kit_colour("port:p1", KS_VERSUS, p1);
+    kit_colour("port:p2", KS_VERSUS, p2);
+    for (i = first; i < last; i++) {
+        int s_ = Netplay_LobbyStage(i), k = i - first, tex;
+        float rx = x0 + (k % FL_DENSE_COLS) * (w + gx), ry = y0 + (k / FL_DENSE_COLS) * (h + gy);
+        bool hov = fl_my_stage_turn() && fl.cur == i;
+        bool out = s_ == LBS_P1 || s_ == LBS_P2 || s_ == LBS_BANNED;
+        sprintf(id, "dg%d", i);
+        fm_flat(id, FPR_OTHER, -1, rx - 3, ry - 3, rx + w + 3, ry + h + 3,
+                hov || s_ == LBS_PICKED ? gold : ink);
+        sprintf(id, "df%d", i);
+        fm_flat(id, FPR_OTHER, -1, rx, ry, rx + w, ry + h, out ? ink : face);
+        tex = fs_stage_art_tex(Netplay_LobbyStageExt(i));
+        if (tex >= 0) {
+            int q;
+            sprintf(id, "da%d", i);
+            q = fs_tex_fit(id, tex, rx + 2, ry + 2, rx + w - 2, ry + h - 13, white);
+            if (q >= 0 && out) fp.q[q].wa = -0.3F;
+        }
+        sprintf(id, "dn%d", i);
+        Netplay_LobbyStageName(i, name, sizeof name);
+        fl_text_at(id, "caption", rx + w * 0.5F, ry + h - 3, "centre", w - 4, name, out ? muted : bone, -1);
+        if (out) {
+            int t = fp_tex(s_ == LBS_P1 ? "ico_strike_x" : s_ == LBS_P2 ? "ico_strike_o" : "ico_lock");
+            const float* c = s_ == LBS_P1 ? p1 : s_ == LBS_P2 ? p2 : Netplay_LobbyInfo(1) == 1 ? p2 : p1;
+            if (t >= 0) {
+                sprintf(id, "dm%d", i);
+                fl_rect_quad(id, t, rx + w * 0.5F - 13, ry + 6, rx + w * 0.5F + 13, ry + 32, c, -1);
+            }
+        }
+        if (s_ == LBS_PICKED) {
+            int t = fp_tex("ico_pick");
+            sprintf(id, "dp%d", i);
+            fm_flat(id, FPR_OTHER, -1, rx + w - 18, ry, rx + w, ry + 14, ink);
+            if (t >= 0) {
+                sprintf(id, "dq%d", i);
+                fl_rect_quad(id, t, rx + w - 16, ry + 1, rx + w - 4, ry + 13, gold, -1);
+            }
+        }
+    }
+    (void) buf;
+}
+
 /* What the current screen shows, as a string: a rebuild whenever it changes. */
 static void fl_signature(char* sig)
 {
@@ -1534,6 +1641,7 @@ static void fl_signature(char* sig)
         Netplay_MenuStatus(b, FE_STR);
         fl_sig_add(sig, b);
         fl_sig_int(sig, fl.frames < fl.copied_until);
+        fl_sig_int(sig, Netplay_RandomStatus() * 1000 + Netplay_RandomSeconds());
         fl_sig_int(sig, Netplay_Ping() / 25);
     } else if (fl.art == FL_CSS) {
         fs_css_sig(sig);
@@ -1561,6 +1669,7 @@ static void fl_build(void)
     kit_widgets_load();
     kw_section = KS_VERSUS;
     fp_reset(); /* the textures stay loaded: rebuilds come often */
+    fs_drop_borrowed(); /* but the lent ones (disc art) are lent again by this build */
     fm_default_states(KS_VERSUS);
     fp.recolour = false;
     switch (fl.art) {
@@ -1790,6 +1899,19 @@ static void fl_frame_wait(u32 in)
             return;
         }
     }
+    if (Netplay_RandomStatus() >= 3 || (fe_np_phase == FE_NP_FAILED && Netplay_RandomStatus() != 0 &&
+                                          Netplay_RandomStatus() != 2)) {
+        /* nobody was looking (3), or the search failed (4) */
+        char why[FE_STR];
+        if (Netplay_RandomStatus() == 3) sprintf(why, "%s", "Nobody else is looking right now - try again soon.");
+        else Netplay_MenuStatus(why, FE_STR);
+        Netplay_RandomCancel();
+        Netplay_Leave();
+        fe_np_phase = FE_NP_IDLE;
+        fe_ol_notice(why, true);
+        fe_switch_screen(&fe_screen_online);
+        return;
+    }
     if (fe_np_phase == FE_NP_FAILED && !host) {
         /* a bad code or a dead room: back to the code, marked */
         Netplay_MenuStatus(fl.code_msg, FE_STR);
@@ -1803,6 +1925,14 @@ static void fl_frame_wait(u32 in)
         Netplay_CopyCode();
         fl.copied_until = fl.frames + 40;
         sfxForward();
+    }
+    if ((in & MenuInput_Back) && Netplay_RandomStatus() == 1) {
+        sfxBack();
+        Netplay_RandomCancel();
+        fe_np_phase = FE_NP_IDLE;
+        fe_ol_notice("You stopped looking for an opponent.", false);
+        fe_switch_screen(&fe_screen_online);
+        return;
     }
     if (in & MenuInput_Back) {
         sfxBack();
@@ -1831,7 +1961,8 @@ static void fl_lobby_events(void)
         for (i = 0; i < n; i++) {
             none_struck = none_struck && Netplay_LobbyStage(i) == LBS_FREE;
         }
-        if (p == LBP_STRIKE && Netplay_LobbyInfo(0) <= 1 && none_struck && !fl_coin_done) {
+        if ((p == LBP_STRIKE || (p == LBP_BAN && Netplay_LobbyInfo(11) == 1)) && Netplay_LobbyInfo(0) <= 1 &&
+            none_struck && !fl_coin_done) {
             /* the coin flip, then the striking - also for the player who locked last and only
                sees the lobby again once the striking has begun */
             fl.coin_until = fl.frames + 150;
@@ -1943,7 +2074,28 @@ static void fl_frame_lobby(u32 in)
         fe_np_pick_char(); /* the real CSS; the pick comes back through Frontend_OnlinePicked */
         return;
     }
-    if (fl_my_stage_turn()) {
+    if (fl_my_stage_turn() && Netplay_LobbyInfo(9) > 6) {
+        int n = Netplay_LobbyInfo(9), per = FL_DENSE_COLS * FL_DENSE_ROWS, c = fl.cur;
+        if (in & MenuInput_LTrigger) c = c - per < 0 ? c : c - per;
+        else if (in & MenuInput_RTrigger) c = c + per >= n ? n - 1 : c + per;
+        else if (in & MenuInput_Left) c = c > 0 ? c - 1 : n - 1;
+        else if (in & MenuInput_Right) c = c < n - 1 ? c + 1 : 0;
+        else if (in & MenuInput_Up) c = c - FL_DENSE_COLS >= 0 ? c - FL_DENSE_COLS : c;
+        else if (in & MenuInput_Down) c = c + FL_DENSE_COLS < n ? c + FL_DENSE_COLS : c;
+        if (c != fl.cur) {
+            fl.cur = c;
+            sfxMove();
+        }
+        if (in & MenuInput_Confirm) {
+            if (Netplay_LobbyStage(fl.cur) == LBS_FREE) {
+                sfxForward();
+                Netplay_LobbyStageAct(fl.cur);
+            } else {
+                sfxBack();
+                fl_toast("That stage is already out - pick another.", true, 90);
+            }
+        }
+    } else if (fl_my_stage_turn()) {
         int n = Netplay_LobbyInfo(9), cols = 3, c = fl.cur;
         if (in & MenuInput_Left) c = c % cols == 0 ? c + cols - 1 : c - 1;
         else if (in & MenuInput_Right) c = c % cols == cols - 1 ? c - cols + 1 : c + 1;

@@ -17,7 +17,9 @@
  *   { "id": "ace-wolf", "name": "Wolf", "version": "2.0.0", "kind": "fighter",
  *     "pack": "ace", "description": "...", "requires": ["ace-base"], "conflicts": [],
  *     "hash": "<content digest written by the packer>" }
- * kind is one of base | fighter | stage | misc. At most ONE "base" mod mounts: a base carries
+ * kind is one of base | fighter | stage | misc | script. A "script" mod carries only Lua scripts
+ * (<id>/scripts/*.lua, run by gw_script.c; any kind of mod may also ship a scripts/ folder, which
+ * is never mounted as disc files). At most ONE "base" mod mounts: a base carries
  * MxDt.dat (m-ex's content tables), and there is exactly one of those per boot.
  *
  * RESOLUTION at boot: start from the enabled set; drop a mod whose "requires" are not all
@@ -55,7 +57,7 @@ int gw_Mods_Count(void);                 /* mods found in the folder, enabled or
 const char *gw_Mods_Id(int i);           /* folder name; "" when i is out of range */
 const char *gw_Mods_Name(int i);         /* mod.json name, else the id */
 const char *gw_Mods_Version(int i);      /* "" when unknown */
-const char *gw_Mods_Kind(int i);         /* "base" | "fighter" | "stage" | "misc" */
+const char *gw_Mods_Kind(int i);         /* "base" | "fighter" | "stage" | "misc" | "script" */
 const char *gw_Mods_Pack(int i);         /* e.g. "ace", "akaneia"; "" when unknown */
 const char *gw_Mods_Description(int i);  /* "" when none */
 const char *gw_Mods_Requires(int i);     /* comma-separated ids, "" when none */

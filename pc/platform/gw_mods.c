@@ -288,7 +288,8 @@ static void mod_load_meta(gw_mod *m, const char *moddir) {
     }
     if (m->name[0] == '\0') copy_str(m->name, sizeof m->name, m->id);
     if (m->kind[0] == '\0' || (strcmp(m->kind, "base") != 0 && strcmp(m->kind, "fighter") != 0 &&
-                               strcmp(m->kind, "stage") != 0 && strcmp(m->kind, "misc") != 0)) {
+                               strcmp(m->kind, "stage") != 0 && strcmp(m->kind, "misc") != 0 &&
+                               strcmp(m->kind, "script") != 0)) {
         if (m->kind[0] != '\0') gw_log("gw: mods: %s: unknown kind \"%s\" - treated as misc", m->id, m->kind);
         copy_str(m->kind, sizeof m->kind, "misc");
     }
@@ -334,7 +335,7 @@ static void set_read_enabled(gw_mods_set *s) {
 
 static int kind_rank(const gw_mod *m) {
     if (strcmp(m->kind, "base") == 0) return 0;
-    if (strcmp(m->kind, "misc") == 0) return 1;
+    if (strcmp(m->kind, "misc") == 0 || strcmp(m->kind, "script") == 0) return 1;
     return 2;
 }
 

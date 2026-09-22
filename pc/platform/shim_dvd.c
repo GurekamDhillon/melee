@@ -209,6 +209,8 @@ static void gw_mods_scan(int mod_index, const char *mod, const char *host_dir, c
     if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0) continue;
     /* a legacy-layout mod (no files/ folder) keeps its mod.json beside its disc files */
     if (skip_meta && rel[0] == '\0' && _stricmp(fd.cFileName, "mod.json") == 0) continue;
+    /* ...and its Lua scripts (gw_script.c runs <mod>/scripts/*.lua; they are not disc files) */
+    if (skip_meta && rel[0] == '\0' && _stricmp(fd.cFileName, "scripts") == 0) continue;
     snprintf(host, sizeof host, "%s\\%s", host_dir, fd.cFileName);
     snprintf(disc, sizeof disc, "%s%s", rel, fd.cFileName);
     if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {

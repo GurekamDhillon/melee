@@ -994,7 +994,14 @@ static void lb_after_stage(void) {
 }
 
 /* Host: apply one player's action. Returns 1 if the state changed. */
+static int lb_apply_(int who, const char *act, int a, int b);
 static int lb_apply(int who, const char *act, int a, int b) {
+    int before = lb.phase, r = lb_apply_(who, act, a, b);
+    gw_log("netplay: lobby - P%d %s %d %d -> %s (phase %d -> %d, turn P%d, %d left)", who + 1, act, a, b,
+           r ? "applied" : "REFUSED", before, lb.phase, lb.turn + 1, lb.left);
+    return r;
+}
+static int lb_apply_(int who, const char *act, int a, int b) {
     if (strcmp(act, "CHAR") == 0) {
         if (lb.phase == LB_CHAR_BLIND && !lb.locked[who]) {
             lb.ck[who] = a;
@@ -1085,6 +1092,7 @@ static void lb_action(const char *act, int a, int b) {
         char m[64];
         snprintf(m, sizeof m, "A %s %d %d", act, a, b);
         lb_send(m);
+        gw_log("netplay: lobby - asking the host: %s %d %d", act, a, b);
     }
 }
 
@@ -1115,6 +1123,8 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
             for (i = 0; i < LB_NSTAGES && st[i] != '\0'; ++i) lb.stage[i] = st[i] - '0';
         }
         lb.seq++;
+        gw_log("netplay: lobby - state from the host: phase %d, turn P%d, %d left, stages %s, locked %d/%d, ready %d/%d",
+               lb.phase, lb.turn + 1, lb.left, st, lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1]);
     } else if (!np.host && m[0] == 'G') {
         unsigned seed = 0;
         int off = 0;

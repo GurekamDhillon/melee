@@ -607,6 +607,7 @@ static const FrontendScreen fe_screen_wait = {
 };
 
 static int fe_lb_me(void) { return Netplay_LobbyMe(); }
+static int fe_lb_can_pick_char(void);
 static int fe_lb_phase(void) { return Netplay_LobbyPhase(); }
 static bool fe_lb_revealed(void)
 {
@@ -638,8 +639,19 @@ static void fe_lb_player(int who, char* out)
 }
 static void fe_lb_you(int v, char* out)
 {
+    int p = fe_lb_phase(), me = fe_lb_me();
+    bool mine = Netplay_LobbyInfo(4) == me;
     (void) v;
-    fe_lb_player(fe_lb_me(), out);
+    if ((p == LBP_STRIKE || p == LBP_BAN || p == LBP_PICK) && mine) {
+        sprintf(out, "YOUR TURN: %s %d stage%s below", p == LBP_STRIKE ? "strike" : p == LBP_BAN ? "ban" : "pick",
+                Netplay_LobbyInfo(5), Netplay_LobbyInfo(5) == 1 ? "" : "s");
+    } else if (p == LBP_READY && !Netplay_LobbyPlayer(me, 3)) {
+        sprintf(out, "%s", "press Ready below");
+    } else if (fe_lb_can_pick_char()) {
+        sprintf(out, "%s", "pick your character below");
+    } else {
+        fe_lb_player(me, out);
+    }
 }
 static void fe_lb_opp(int v, char* out)
 {
@@ -2098,8 +2110,27 @@ void gm_Scene_Frontend_OnFrame(void)
             fe_switch_screen(&fe_screen_lobby); /* the other player is in */
         }
         if (fe.screen == &fe_screen_lobby && Netplay_LobbySeq() != seq) {
+            int want = -1, i, p = fe_lb_phase(), me = fe_lb_me();
             seq = Netplay_LobbySeq();
             fe_rebuild_visible(); /* rows come and go with the phase */
+            /* the cursor goes where this player's move is: a free stage on their turn, Ready,
+               or Pick Character */
+            if ((p == LBP_STRIKE || p == LBP_BAN || p == LBP_PICK) && Netplay_LobbyInfo(4) == me) {
+                for (i = 0; i < 6 && want < 0; i++) {
+                    if (Netplay_LobbyStage(i) == LBS_FREE) {
+                        want = 4 + i;
+                    }
+                }
+            } else if (p == LBP_READY) {
+                want = 10;
+            } else if (fe_lb_can_pick_char()) {
+                want = 3;
+            }
+            for (i = 0; want >= 0 && i < fe.n_vis; i++) {
+                if (fe.vis[i] == want) {
+                    fe.cursor = i;
+                }
+            }
         }
         if (fe_np_phase == FE_NP_FAILED) {
             fe_switch_screen(&fe_screen_online);

@@ -6,6 +6,8 @@
  *   MELEE_NETPLAY_DELAY=<frames>       host: input delay for both sides (default 2)
  *   MELEE_NETPLAY_BIND=<ip>            local address to bind (default: 127.0.0.1 when the peer is
  *                                      on this machine, else all interfaces)
+ *   MELEE_NET_SIM / MELEE_NET_SIM_FILE simulated lag, jitter, loss, duplication and lag spikes on
+ *                                      this copy's outgoing packets (see the simulator below)
  *
  * Both sides boot straight into the match with the same MELEE_SCENE (gmscenelaunch.h). At the
  * point a replay would restore its match struct (gw_Replay_ApplyMatch, fn_8016E730) the peers
@@ -169,6 +171,220 @@ static void np_cb_desync(void *user, int32_t frame, uint32_t local, uint32_t rem
     gw_log("netplay: DESYNC at frame %d - local checksum %08X, peer %08X", frame, local, remote);
 }
 
+/* ---- network conditions simulator ------------------------------------------------------------
+ * Wraps the real UDP transport, so everything above it - handshake, redundancy, resends, time
+ * sync, the rollback session - meets the conditions exactly as it would on a bad connection.
+ * Applied to what THIS copy sends, so each direction takes its sender's settings (the launcher
+ * gives both copies the same ones: round trip = 2 x lag).
+ *
+ *   MELEE_NET_SIM="lag=60,jitter=15,loss=5"     at start
+ *   MELEE_NET_SIM_FILE=<path>                   same syntax, re-read every second: edit it live
+ *
+ *   lag=<ms>       one-way delay added to every packet
+ *   jitter=<ms>    +- random extra delay per packet (so packets also arrive out of order)
+ *   loss=<%>       packets dropped at random
+ *   burst=<n>      a drop also takes the next n-1 packets (bursty loss, as on Wi-Fi)
+ *   dup=<%>        packets delivered twice
+ *   spike=<every_ms>:<len_ms>   every `every_ms`, hold ALL packets for `len_ms` (a lag spike)
+ *   off            no simulation (the same as an empty setting)
+ */
+typedef struct NpSimPkt {
+    uint32_t due;
+    gw_net_addr to;
+    int len;
+    uint8_t data[1500];
+} NpSimPkt;
+
+#define NP_SIM_MAX 2048
+
+static struct {
+    int on;
+    int lag, jitter, loss, burst, dup, spike_every, spike_len;
+    gw_net_transport inner;
+    NpSimPkt *q[NP_SIM_MAX];
+    int nq;
+    uint32_t rng;
+    int burst_left;
+    uint32_t spike_next, spike_end;
+    const char *file;
+    FILETIME file_time;
+    uint32_t file_checked;
+    uint32_t n_sent, n_dropped, n_dup;
+    int changed; /* settings changed since the window title last showed them */
+} sim;
+
+static uint32_t np_ms(void) {
+    static LARGE_INTEGER f;
+    LARGE_INTEGER c;
+    if (f.QuadPart == 0) {
+        QueryPerformanceFrequency(&f);
+    }
+    QueryPerformanceCounter(&c);
+    return (uint32_t) (c.QuadPart * 1000 / f.QuadPart);
+}
+
+static uint32_t np_rand(void) {
+    sim.rng ^= sim.rng << 13;
+    sim.rng ^= sim.rng >> 17;
+    sim.rng ^= sim.rng << 5;
+    return sim.rng;
+}
+
+static void np_sim_parse(const char *s) {
+    char buf[256];
+    char *tok, *ctx = NULL;
+    sim.lag = sim.jitter = sim.loss = sim.burst = sim.dup = sim.spike_every = sim.spike_len = 0;
+    snprintf(buf, sizeof buf, "%s", s != NULL ? s : "");
+    for (tok = strtok_s(buf, ",; \t\r\n", &ctx); tok != NULL; tok = strtok_s(NULL, ",; \t\r\n", &ctx)) {
+        char *eq = strchr(tok, '=');
+        int v = eq != NULL ? atoi(eq + 1) : 0;
+        if (strncmp(tok, "lag", 3) == 0 || strncmp(tok, "delay", 5) == 0) sim.lag = v;
+        else if (strncmp(tok, "jitter", 6) == 0) sim.jitter = v;
+        else if (strncmp(tok, "loss", 4) == 0 || strncmp(tok, "drop", 4) == 0) sim.loss = v;
+        else if (strncmp(tok, "burst", 5) == 0) sim.burst = v;
+        else if (strncmp(tok, "dup", 3) == 0) sim.dup = v;
+        else if (strncmp(tok, "spike", 5) == 0 && eq != NULL) {
+            sim.spike_every = atoi(eq + 1);
+            sim.spike_len = strchr(eq, ':') != NULL ? atoi(strchr(eq, ':') + 1) : 250;
+        }
+    }
+    if (sim.lag < 0) sim.lag = 0;
+    if (sim.jitter < 0) sim.jitter = 0;
+    if (sim.loss > 100) sim.loss = 100;
+    if (sim.dup > 100) sim.dup = 100;
+    sim.spike_next = sim.spike_every > 0 ? np_ms() + (uint32_t) sim.spike_every : 0;
+    sim.changed = 1;
+    gw_log("netplay: network sim - lag %d ms, jitter %d ms, loss %d%% (burst %d), dup %d%%, "
+           "spike %d ms every %d ms", sim.lag, sim.jitter, sim.loss, sim.burst, sim.dup,
+           sim.spike_len, sim.spike_every);
+}
+
+/* MELEE_NET_SIM_FILE: re-read when it changes, checked once a second. */
+static void np_sim_poll_file(void) {
+    WIN32_FILE_ATTRIBUTE_DATA a;
+    uint32_t now = np_ms();
+    if (sim.file == NULL || now - sim.file_checked < 1000u) {
+        return;
+    }
+    sim.file_checked = now;
+    if (!GetFileAttributesExA(sim.file, GetFileExInfoStandard, &a) ||
+        CompareFileTime(&a.ftLastWriteTime, &sim.file_time) == 0) {
+        return;
+    }
+    sim.file_time = a.ftLastWriteTime;
+    {
+        char buf[256] = { 0 };
+        FILE *f = fopen(sim.file, "r");
+        if (f != NULL) {
+            size_t n = fread(buf, 1, sizeof buf - 1, f);
+            buf[n] = '\0';
+            fclose(f);
+            np_sim_parse(buf);
+        }
+    }
+}
+
+/* Send everything due, in due order (the queue is small; a linear scan is fine). */
+static void np_sim_flush(void) {
+    uint32_t now = np_ms();
+    int i = 0;
+    if (sim.spike_every > 0 && sim.spike_len > 0 && (int32_t) (now - sim.spike_next) >= 0) {
+        sim.spike_end = now + (uint32_t) sim.spike_len;
+        sim.spike_next = now + (uint32_t) sim.spike_every;
+        gw_log("netplay: network sim - lag spike, %d ms", sim.spike_len);
+    }
+    if ((int32_t) (now - sim.spike_end) < 0) {
+        return; /* inside a spike: everything waits */
+    }
+    while (i < sim.nq) {
+        NpSimPkt *p = sim.q[i];
+        if ((int32_t) (now - p->due) >= 0) {
+            sim.inner.send(sim.inner.ctx, &p->to, p->data, p->len);
+            free(p);
+            sim.q[i] = sim.q[--sim.nq];
+        } else {
+            ++i;
+        }
+    }
+}
+
+static void np_sim_enqueue(const gw_net_addr *to, const void *data, int len) {
+    NpSimPkt *p;
+    int j = 0;
+    if (sim.nq >= NP_SIM_MAX || len > (int) sizeof p->data) {
+        sim.n_dropped++;
+        return;
+    }
+    p = (NpSimPkt *) malloc(sizeof *p);
+    if (p == NULL) {
+        return;
+    }
+    if (sim.jitter > 0) {
+        j = (int) (np_rand() % (uint32_t) (2 * sim.jitter + 1)) - sim.jitter;
+    }
+    p->due = np_ms() + (uint32_t) (sim.lag + j > 0 ? sim.lag + j : 0);
+    p->to = *to;
+    p->len = len;
+    memcpy(p->data, data, (size_t) len);
+    sim.q[sim.nq++] = p;
+}
+
+static int np_sim_send(void *ctx, const gw_net_addr *to, const void *data, int len) {
+    (void) ctx;
+    np_sim_poll_file();
+    sim.n_sent++;
+    if (sim.burst_left > 0) {
+        sim.burst_left--;
+        sim.n_dropped++;
+    } else if (sim.loss > 0 && (int) (np_rand() % 100u) < sim.loss) {
+        sim.n_dropped++;
+        sim.burst_left = sim.burst > 1 ? sim.burst - 1 : 0;
+    } else {
+        np_sim_enqueue(to, data, len);
+        if (sim.dup > 0 && (int) (np_rand() % 100u) < sim.dup) {
+            sim.n_dup++;
+            np_sim_enqueue(to, data, len);
+        }
+    }
+    np_sim_flush();
+    return len; /* the caller only learns about loss the way it would on a real network */
+}
+
+static int np_sim_recv(void *ctx, gw_net_addr *from, void *buf, int cap) {
+    (void) ctx;
+    np_sim_flush();
+    return sim.inner.recv(sim.inner.ctx, from, buf, cap);
+}
+
+static void np_sim_close(void *ctx) {
+    int i;
+    (void) ctx;
+    for (i = 0; i < sim.nq; ++i) {
+        free(sim.q[i]);
+    }
+    sim.nq = 0;
+    sim.inner.close(sim.inner.ctx);
+}
+
+/* Wrap `t` in the simulator when MELEE_NET_SIM or MELEE_NET_SIM_FILE is set. */
+static void np_sim_wrap(gw_net_transport *t) {
+    const char *v = getenv("MELEE_NET_SIM");
+    const char *f = getenv("MELEE_NET_SIM_FILE");
+    if ((v == NULL || v[0] == '\0') && (f == NULL || f[0] == '\0')) {
+        return;
+    }
+    sim.on = 1;
+    sim.rng = (uint32_t) GetCurrentProcessId() * 2654435761u | 1u;
+    sim.inner = *t;
+    sim.file = f != NULL && f[0] != '\0' ? f : NULL;
+    np_sim_parse(v);
+    np_sim_poll_file();
+    t->ctx = &sim;
+    t->send = np_sim_send;
+    t->recv = np_sim_recv;
+    t->close = np_sim_close;
+}
+
 /* ---- the handshake --------------------------------------------------------------------------- */
 
 static void np_pump(void) {
@@ -188,6 +404,21 @@ static BOOL CALLBACK np_title_cb(HWND w, LPARAM title) {
 
 static void np_set_title(const char *t) {
     EnumThreadWindows(GetCurrentThreadId(), np_title_cb, (LPARAM) t);
+}
+
+/* The window title once connected: role, port, delay, and the simulated conditions if any. */
+static void np_connected_title(char *title, size_t cap) {
+    size_t n;
+    snprintf(title, cap, "Melee netplay - %s (P%d) - connected, input delay %d",
+             np.host ? "HOST" : "GUEST", gw_Netplay_LocalPort() + 1, np.delay);
+    if (sim.on) {
+        n = strlen(title);
+        snprintf(title + n, cap - n, " | SIMULATED: lag %d, jitter %d, loss %d%%, dup %d%%%s%s",
+                 sim.lag, sim.jitter, sim.loss, sim.dup, sim.spike_every > 0 ? ", spikes" : "",
+                 sim.file != NULL ? " (live file)" : "");
+    }
+    sim.changed = 0;
+    np_set_title(title);
 }
 
 static uint64_t np_exe_hash(void) {
@@ -235,6 +466,7 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
         np.dead = 1;
         return 0;
     }
+    np_sim_wrap(&t);
 
     cfg.exe_hash = np_exe_hash();
     cfg.first_frame = NP_FIRST_FRAME;
@@ -310,9 +542,7 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
         np_set_title("Melee netplay - NOT CONNECTED");
         return seed;
     }
-    snprintf(title, sizeof title, "Melee netplay - %s (P%d) - connected, input delay %d",
-             np.host ? "HOST" : "GUEST", gw_Netplay_LocalPort() + 1, np.delay);
-    np_set_title(title);
+    np_connected_title(title, sizeof title);
     gw_log("netplay: %s, rtt %u ms", title, gw_net_rtt_ms(np.net));
     return seed;
 }
@@ -328,6 +558,10 @@ void gw_Netplay_Tick(void) {
     if (w > 0) {
         gw_rb_request_wait(w);
     }
+    if (sim.changed && np.started) {
+        char title[200];
+        np_connected_title(title, sizeof title);
+    }
     if ((++np.ticks % 600) == 0) {
         gw_net_stats s;
         gw_net_get_stats(np.net, &s);
@@ -336,5 +570,9 @@ void gw_Netplay_Tick(void) {
                gw_net_frame_advantage(np.net), gw_net_remote_confirmed_frame(np.net),
                gw_rb_rollbacks(), gw_rb_desyncs(), s.packets_sent, s.packets_received,
                s.resent_frames, np.desync_frame != GW_NET_NO_FRAME ? " - CHECKSUM DESYNC" : "");
+        if (sim.on) {
+            gw_log("netplay: network sim - %u sent, %u dropped, %u duplicated, %d in flight",
+                   sim.n_sent, sim.n_dropped, sim.n_dup, sim.nq);
+        }
     }
 }

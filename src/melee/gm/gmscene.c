@@ -237,7 +237,14 @@ void gm_801A4BD4(void)
 #if defined(TARGET_PC)
     {
         extern void ifMagnify_LogicDisarm(void);
+        extern void Camera_ForgetGameCamera(void);
         ifMagnify_LogicDisarm(); /* the magnifier re-arms when a match creates it */
+        /* ...and the game camera: the logic-side refresh after HSD_GObj_RunProcs
+           (Camera_RefreshViewingMtx, determinism work) runs in EVERY scene and trusts
+           game_camera.gobj, which vanilla never clears - after a match it points into the freed
+           scene. User-found: idle on the title > attract demo > Start > the title screen wrote
+           through the demo's camera and crashed. A match's camera setup assigns it again. */
+        Camera_ForgetGameCamera();
     }
 #endif
 

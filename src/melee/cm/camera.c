@@ -4302,6 +4302,13 @@ bool Camera_800307D0(f32* left, f32* center, f32* right)
  * than the first pass did - a SyncTest mismatch in the name tag joints. Refreshing it at the end of
  * every logic frame puts it where the console's render leaves it: computed from this frame's camera.
  */
+/* Every scene begins without a game camera (gmscene.c): the previous scene's is freed with it.
+ * The match's camera setup assigns game_camera.gobj again. */
+void Camera_ForgetGameCamera(void)
+{
+    game_camera.gobj = NULL;
+}
+
 void Camera_RefreshViewingMtx(void)
 {
     if (game_camera.gobj != NULL) {

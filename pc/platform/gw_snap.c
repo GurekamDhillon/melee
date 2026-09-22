@@ -1127,7 +1127,15 @@ int gw_Snap_Curated(void) {
 
 void gw_Snap_CuratedMix(const uint32_t *w, int n) {
     if (gw_Snap_Curated()) {
+        static int poison = -1;
         sn_cur_acc += sn_h64((const uint8_t *) w, (size_t) n * 4, 0x5EED5EEDull);
+        if (poison < 0) {
+            const char *e = getenv("MELEE_SYNCTEST_CURATED_POISON");
+            poison = e != NULL && e[0] == '1';
+        }
+        if (poison && sn.cur_is_resim) {
+            sn_cur_acc += 1; /* NEGATIVE CONTROL: every resimulated frame must now mismatch */
+        }
     }
 }
 
@@ -1288,6 +1296,9 @@ void gw_SyncTest_IterStart(void) {
        between is state a resimulated frame never reproduces, so it stops being compared. */
     sn_mark_window();
     if (gw_Snap_Curated()) {
+        if (sn.cur_is_resim) {
+            gw_Snap_Time(2, 0); /* the resimulated iteration ends here: there is no render block */
+        }
         sn_cur_take();
     }
     next = gw_Replay_Frame() + 1;

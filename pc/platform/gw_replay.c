@@ -54,6 +54,7 @@ static void gw_tb_printf(int which, FILE *plain, const char *fmt, ...);
 static struct {
     int tried;
     int active;
+    int live; /* netplay: armed by a live match, no recording behind it (see rp_load) */
     uint8_t game_info[GW_RP_GAME_INFO];
     uint32_t seed;
     uint8_t version[4];
@@ -198,6 +199,31 @@ static void rp_load(void) {
     rp.tried = 1;
     path = getenv("MELEE_SLP");
     if (path == NULL || path[0] == '\0') {
+        extern int gw_Netplay_Enabled(void);
+        if (gw_Netplay_Enabled()) {
+            /* LIVE MODE (netplay). The rollback session runs on this module's machinery - the
+             * Slippi frame counter, the per-frame seed, the input accessors - so a live match arms
+             * it the way a replay does, only with no recorded inputs and no last frame. The match
+             * itself comes from the scene launcher (MELEE_SCENE); the seed, and for the guest the
+             * match struct, come from the host in gw_Replay_ApplyMatch. It plays as Slippi online
+             * does: the online codeset, UCF 0.84 on every port, and a seed forced every frame. */
+            int p;
+            rp.active = 1;
+            rp.live = 1;
+            rp.first = GW_RP_FIRST_FRAME;
+            rp.last = 0x3FFFFFFF;
+            rp.online = 1;
+            rp.version[0] = 3;
+            rp.version[1] = 19;
+            rp.version[2] = 1;
+            for (p = 0; p < 4; ++p) {
+                rp.ucf_dashback[p] = 1;
+                rp.ucf_shield[p] = 1;
+            }
+            rp.scene[0] = '\0';
+            gw_log("replay: live mode (netplay) - frames counted from %d, online codes, UCF 0.84",
+                   rp.first);
+        }
         return;
     }
     f = fopen(path, "rb");
@@ -254,7 +280,7 @@ static void rp_load(void) {
 /* For gw_sl_load (gw_runtime.c): the scene a replay implies, or NULL. */
 const char *gw_replay_scene(void) {
     rp_load();
-    return rp.active ? rp.scene : NULL;
+    return rp.active && !rp.live ? rp.scene : NULL;
 }
 
 int gw_Replay_Active(void) {
@@ -270,6 +296,17 @@ uint32_t gw_Replay_ApplyMatch(void *start_melee_data) {
     uint8_t keep[0x5C - 0x38];
     if (!gw_Replay_Active()) {
         return 0;
+    }
+    if (rp.live) {
+        /* netplay: connect here, before the first frame. The host sends its match struct and a
+           seed; the guest takes both (keeping its own callback pointers, as for a replay). */
+        extern uint32_t gw_Netplay_Handshake(uint8_t *start_melee_data, int len, int keep_off,
+                                             int keep_len);
+        rp.seed = gw_Netplay_Handshake(d, GW_RP_GAME_INFO, 0x38, (int) sizeof keep);
+        memcpy(rp.game_info, d, GW_RP_GAME_INFO);
+        rp.frame = GW_RP_FIRST_FRAME - 1;
+        gw_log("replay: live match armed, seed 0x%08X", rp.seed);
+        return rp.seed;
     }
     memcpy(keep, d + 0x38, sizeof keep);
     memcpy(d, rp.game_info, GW_RP_GAME_INFO);
@@ -496,7 +533,7 @@ static const GwRpInput *rp_cur(int port, int follower) {
         /* a rollback session decides what each fighter reads: confirmed or predicted inputs */
         return gw_RB_InputFor(port, follower, rp.frame);
     }
-    if (!rp.active || rp.frame < rp.first || rp.frame > rp.last || port < 0 || port > 3) {
+    if (!rp.active || rp.live || rp.frame < rp.first || rp.frame > rp.last || port < 0 || port > 3) {
         return NULL;
     }
     r = &rp.in[(rp.frame - rp.first) * GW_RP_SLOTS + port * 2 + (follower != 0)];
@@ -514,7 +551,8 @@ uint32_t gw_Replay_Buttons(int port, int follower) { return rp_cur(port, followe
 /* The seed the console had at the start of the frame now running (Frame Start, 0x3A), and whether
  * the replay has one. */
 static int rp_frame_seed(uint32_t *out) {
-    if (!rp.active || rp.frame < rp.first || rp.frame > rp.last || !rp.fs_has[rp.frame - rp.first]) {
+    if (!rp.active || rp.live || rp.frame < rp.first || rp.frame > rp.last ||
+        !rp.fs_has[rp.frame - rp.first]) {
         return 0;
     }
     *out = rp.fs_seed[rp.frame - rp.first];
@@ -531,6 +569,16 @@ static int rp_frame_seed(uint32_t *out) {
  * Under MELEE_SLP_RESYNC every later frame gets the console's own Frame Start seed too. */
 uint32_t gw_Replay_ResyncSeed(void) {
     uint32_t s;
+    if (rp.live) {
+        /* Slippi online's rule: every frame starts from seed + ((frame + 123) << 16). Both peers
+           force it, so an RNG draw that only one of them makes (render-side effects) cannot carry
+           into the next frame. */
+        if (rp.frame == GW_RP_UNARMED) {
+            return 0;
+        }
+        s = rp.seed + ((uint32_t) (rp.frame - GW_RP_FIRST_FRAME) << 16);
+        return s != 0 ? s : 1;
+    }
     if (rp.active && rp.frame == GW_RP_FIRST_FRAME) {
         /* A replay without Frame Start events (Slippi < 2.2) records its seed in each PRE-frame
          * instead. The first one is the seed the console actually entered frame -123 with: on the
@@ -563,7 +611,7 @@ uint32_t gw_Replay_ResyncSeed(void) {
      * CPU choices - for the rest of the game, starting a chain of unrelated divergences. Resyncing
      * once per frame keeps those picks aligned; the first frame the un-resynced stream left the
      * console's is logged (gw_Replay_CheckSeed), so a real cause stays visible. */
-    if (rp.active && !rp.fs_has[0] && rp.frame > GW_RP_FIRST_FRAME) {
+    if (rp.active && !rp.live && !rp.fs_has[0] && rp.frame > GW_RP_FIRST_FRAME) {
         int p;
         for (p = 0; p < 4; ++p) {
             const GwRpInput *r = rp_cur(p, 0);
@@ -846,7 +894,7 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
         r = gw_RB_InputAny(port, f);
         return r != NULL && which >= 0 && which < 4 ? r->raw[which] : 0;
     }
-    if (!rp.active || f < rp.first || f > rp.last || port < 0 || port > 3 || which < 0 ||
+    if (!rp.active || rp.live || f < rp.first || f > rp.last || port < 0 || port > 3 || which < 0 ||
         which > 3) {
         return 0;
     }
@@ -858,7 +906,8 @@ int gw_Replay_RawStickBack(int port, int which, int back) {
  * Returns 0 when the replay has none. */
 int gw_Replay_PeekInput(int slot, int frame, GwRbInput *out) {
     const GwRpInput *r;
-    if (!rp.active || frame < rp.first || frame > rp.last || slot < 0 || slot >= GW_RP_SLOTS) {
+    if (!rp.active || rp.live || frame < rp.first || frame > rp.last || slot < 0 ||
+        slot >= GW_RP_SLOTS) {
         return 0;
     }
     r = &rp.in[(frame - rp.first) * GW_RP_SLOTS + slot];
@@ -872,6 +921,16 @@ int gw_Replay_PeekInput(int slot, int frame, GwRbInput *out) {
 
 /* The replay's frame range and whether it is armed - the session's fake network needs both. */
 int gw_Replay_LastFrame(void) { return rp.active ? rp.last : 0; }
+
+/* Live mode (netplay): whether it is on, and whether port p is a HUMAN player in the armed match
+ * (StartMeleeData player type 0) - the session's slot list when there is no recording. */
+int gw_Replay_Live(void) { return rp.live; }
+int gw_Replay_PortHuman(int p) {
+    if (!rp.active || p < 0 || p > 3) {
+        return 0;
+    }
+    return rp.game_info[0x60 + 0x24 * p + 1] == 0;
+}
 
 /* <trace>.rand.csv: every RNG draw while a replay is armed - frame, caller (native return address),
  * seed after, and whether it drew the global seed or a redirected one (HSD_RandSeedPtr). */

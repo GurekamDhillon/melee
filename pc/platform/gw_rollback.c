@@ -28,6 +28,14 @@
 extern int gw_Replay_Active(void);
 extern int gw_Replay_Frame(void);
 extern int gw_Replay_LastFrame(void);
+extern int gw_Replay_Live(void);
+extern int gw_Replay_PortHuman(int p);
+/* netplay (gw_netplay.c): a real peer instead of the fake network */
+extern int gw_Netplay_Enabled(void);
+extern int gw_Netplay_LocalPort(void);
+extern int gw_Netplay_RemotePort(void);
+extern int gw_Netplay_Delay(void);
+extern void gw_Netplay_Tick(void);
 extern void gw_snap_save(int frame);
 extern int gw_snap_load(int frame);
 extern int gw_Snap_OpenSession(int k);
@@ -91,6 +99,7 @@ static struct {
     int prev_idle;        /* the last tick was the session's own stall or time-sync wait */
     int n_held;           /* ticks the game itself held the frame (loading hold): clock paused */
     int last;             /* the replay's last frame (fake) */
+    int net;              /* netplay: a real peer delivers the remote port's inputs (gw_netplay.c) */
 
     int slot_present[GW_RB_SLOTS];
     int slot_remote[GW_RB_SLOTS];
@@ -147,8 +156,12 @@ static void rb_init(void) {
     }
     rb.tried = 1;
     v = getenv("MELEE_RB_FAKE");
-    if (v == NULL || v[0] == '\0' || !gw_Replay_Active()) {
+    rb.net = gw_Netplay_Enabled() && gw_Replay_Active();
+    if (!rb.net && (v == NULL || v[0] == '\0' || !gw_Replay_Active())) {
         return;
+    }
+    if (rb.net) {
+        v = "0";
     }
     rb.fake_lat = atoi(v);
     if (strchr(v, ',') != NULL) {
@@ -174,10 +187,26 @@ static void rb_init(void) {
         rb.gen_seed = getenv("MELEE_RB_PADSEED") != NULL ? (unsigned) atoi(getenv("MELEE_RB_PADSEED")) : 777u;
     }
     rb.log = getenv("MELEE_RB_LOG") != NULL ? atoi(getenv("MELEE_RB_LOG")) : 0;
+    if (rb.net) {
+        /* netplay: live pads, the peer owns the other port, and both sides use the host's delay */
+        rb.src = 2;
+        rb.remote_mask = 1u << gw_Netplay_RemotePort();
+        rb.delay = gw_Netplay_Delay();
+        rb.fake_lat = rb.fake_jit = rb.fake_loss = 0;
+        gw_log("rb: netplay - local port %d, remote port %d", gw_Netplay_LocalPort() + 1,
+               gw_Netplay_RemotePort() + 1);
+    }
     rb.on = 1;
     gw_log("rb: session ON (fake network: latency %d, jitter %d, loss %d%%; input delay %d, max "
            "rollback %d, remote ports 0x%X; inputs from %s)", rb.fake_lat, rb.fake_jit, rb.fake_loss,
            rb.delay, rb.maxb, rb.remote_mask, rb.src == 2 ? "live pads" : rb.src == 1 ? "the pad generator" : "the replay");
+}
+
+/* Netplay: the guest adopts the host's input delay once the handshake has it (before frame -123). */
+void gw_RB_SetDelay(int d) {
+    if (d < 0) d = 0;
+    if (d > 8) d = 8;
+    rb.delay = d;
 }
 
 int gw_RB_Enabled(void) {
@@ -488,6 +517,14 @@ void gw_RB_PadLatch(int port, int button, int sx, int sy, int cx, int cy, int l,
     if (!rb.on || rb.src != 2 || port < 0 || port > 3) {
         return;
     }
+    if (rb.net) {
+        /* netplay: this machine's one controller is on channel 0 (MELEE_INPUT picks which device
+           that is) and plays the local port; every other port is the peer's */
+        if (port != 0) {
+            return;
+        }
+        port = gw_Netplay_LocalPort();
+    }
     {
         typeof(rb.latch[0]) *L = &rb.latch[port];
         if (!L->have) {
@@ -556,6 +593,9 @@ static void rb_live_sample(int next) {
         typeof(rb.latch[0]) *L = &rb.latch[p];
         if (!rb.slot_present[s] || rb_at(rb.truth[s], ff, 0) != NULL) {
             continue; /* not in the match, or this frame is already sampled (a held frame) */
+        }
+        if (rb.net && rb.slot_remote[s]) {
+            continue; /* the peer samples its own port and sends it */
         }
         for (i = 0; i < rb.npend; ++i) {
             if (rb.pend[i].slot == s && rb.pend[i].frame == ff) {
@@ -711,7 +751,9 @@ int gw_RB_Iterations(int count) {
         for (s = 0; s < GW_RB_SLOTS; ++s) {
             GwRbInput probe;
             int p = s >> 1;
-            rb.slot_present[s] = gw_Replay_PeekInput(s, RB_FIRST, &probe) && (rb.src == 0 || !(s & 1));
+            rb.slot_present[s] = gw_Replay_Live()
+                                     ? (!(s & 1) && gw_Replay_PortHuman(p))
+                                     : gw_Replay_PeekInput(s, RB_FIRST, &probe) && (rb.src == 0 || !(s & 1));
             rb.slot_remote[s] = (rb.remote_mask >> p) & 1u;
             rb.conf_slot[s] = RB_FIRST - 1;
             {
@@ -844,7 +886,11 @@ int gw_RB_Iterations(int count) {
         gw_log("rb: clock tk %ld frame %d lead %ld held %d count %d", rb.tk, frame,
                rb.tk - (long) (frame - RB_FIRST), rb.n_held, count);
     }
-    rb_fake_deliver();
+    if (rb.net) {
+        gw_Netplay_Tick(); /* receive, deliver remote inputs, send ours, time sync */
+    } else {
+        rb_fake_deliver();
+    }
 
     n = frame + 1; /* the next frame to simulate */
     conf = rb_conf();

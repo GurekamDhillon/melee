@@ -81,8 +81,11 @@ int gw_rb_active(void);
  * for any frame (redelivery is harmless). If the frame was already simulated with a different
  * input, a rollback is scheduled for the next render tick. `slot` = port * 2 + follower. Frames
  * older than the session's snapshot window that differ are counted as a desync
- * (gw_rb_desyncs()). Thread: game thread only (call it from the scene loop's hook, not from a
- * socket thread - queue and drain). */
+ * (gw_rb_desyncs()). Frames more than 56 ahead of the simulation are REFUSED (the input rings
+ * hold 64 frames): a peer stalls at MAX frames ahead of what it has confirmed, so this never
+ * happens with a conforming transport - keep the lookahead window within it and resend.
+ * Thread: game thread only (call it from the scene loop's hook, not from a socket thread - queue
+ * and drain). */
 void gw_rb_submit_remote_input(int slot, int frame, const GwRbInput *in);
 
 /* The LOCAL input the session used (or will use) for `frame`, for sending to the peer. Valid for

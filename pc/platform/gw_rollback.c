@@ -330,6 +330,17 @@ void gw_rb_submit_remote_input(int slot, int frame, const GwRbInput *in) {
     if (!rb.on || slot < 0 || slot >= GW_RB_SLOTS || in == NULL) {
         return;
     }
+    if (rb.opened && frame > gw_Replay_Frame() + RB_RING - 8) {
+        /* further ahead than the ring can hold without evicting frames not yet simulated: refuse.
+           The transport must keep its lookahead window (maxb + delay + slack) inside this and
+           resend - a peer never legitimately runs this far ahead. */
+        static int warned;
+        if (warned++ < 4) {
+            gw_log("rb: remote input for frame %d refused: %d frames ahead of the simulation (ring %d)",
+                   frame, frame - gw_Replay_Frame(), RB_RING);
+        }
+        return;
+    }
     t = rb_at(rb.truth[slot], frame, 1);
     t->in = *in;
     t->in.confirmed = 1;
@@ -642,6 +653,16 @@ static void rb_fake_deliver(void) {
         top = (int) (rb.tk + RB_FIRST + rb.delay);
         if (top > rb.last) {
             top = rb.last;
+        }
+        /* A real peer stops sending when it is MAX frames ahead of what it has confirmed from us
+           (it stalls): it cannot run arbitrarily far ahead of a slow receiver. Without this cap a
+           local side that waits (time sync) or stalls gets remote inputs hundreds of frames early,
+           and the per-slot input rings (RB_RING frames) evict them before they are simulated. */
+        {
+            int cap = gw_Replay_Frame() + 1 + rb.maxb + rb.delay;
+            if (top > cap) {
+                top = cap;
+            }
         }
         for (f = rb.conf_slot[s] + 1; f <= top; ++f) {
             GwRbInput in;

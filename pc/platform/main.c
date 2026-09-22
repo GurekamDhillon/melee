@@ -243,6 +243,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  /* MELEE_VSYNC=0 presents without waiting for the display's refresh (Aurora picks Mailbox, else
+   * Immediate): the lowest present latency, at the cost of tearing with Immediate. The game still
+   * runs at exactly 60 Hz either way (gw_pace_field); vsync only decides when a finished frame
+   * reaches the screen. Default on. */
+  int vsync = 1;
+  (void)gw_env_int("MELEE_VSYNC", &vsync);
   int win_x = 0, win_y = 0, win_w = 1280, win_h = 960;
   bool have_x = gw_env_int("MELEE_WINDOW_X", &win_x);
   bool have_y = gw_env_int("MELEE_WINDOW_Y", &win_y);
@@ -262,7 +268,7 @@ int main(int argc, char *argv[]) {
        * dereferences a queue-serial value as a pointer (near-NULL read, webgpu_dawn.dll
        * +0x363548). D3D11's queue/serial path does not, so pin it until Dawn is fixed. */
       .desiredBackend = gw_desired_backend(),
-      .vsync = true,
+      .vsync = vsync != 0,
       /* Aurora reads a negative x or y as "undefined"; those are applied after init instead
        * (gw_apply_window_env), so pass -1 to keep its centring default in that case. */
       .windowPosX = (have_x && win_x >= 0) ? win_x : -1,

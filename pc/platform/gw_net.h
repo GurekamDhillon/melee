@@ -126,6 +126,9 @@ typedef struct gw_net_callbacks {
 typedef struct gw_net_config {
   /* identity: a mismatch on any refuses the session */
   uint64_t exe_hash, iso_hash, mods_hash;
+  /* optional: the mod set in words (gw_Mods_Describe). A host that refuses a guest for a
+   * mods_hash mismatch sends it in the refusal, so the guest can name the difference. */
+  const char *mods_desc;
   /* both peers must agree (mismatch refuses): */
   int32_t first_frame;             /* the session's first frame number (-123) */
   uint8_t payload_bytes;           /* 0 = GW_NET_DEFAULT_PAYLOAD; at most GW_NET_MAX_PAYLOAD */

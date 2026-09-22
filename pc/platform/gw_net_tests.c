@@ -362,6 +362,7 @@ static int refuse_case(int which, const char *needle) {
   init_blob();
   peer_init(&h, s, 0, 0); peer_init(&g, s, 1, 0); peer_init(&g2, s, 1, 0);
   hc = peer_cfg(&h, 0x1111, 0x2222, 0x3333);
+  hc.mods_desc = "plco#12ab,itco#34cd";
   gc = peer_cfg(&g, which == 0 ? 0x9999 : 0x1111, which == 1 ? 0x9999 : 0x2222, which == 2 ? 0x9999 : 0x3333);
   if (which == 3) gc.payload_bytes = 12;
   ht = sim_transport(s, 0); gt = sim_transport(s, 1); g2t = sim_transport(s, 2);
@@ -414,7 +415,8 @@ static int refuse_case(int which, const char *needle) {
 }
 static int test_refuse_exe(void)  { return refuse_case(0, "melee-pc.exe"); }
 static int test_refuse_iso(void)  { return refuse_case(1, "disc"); }
-static int test_refuse_mods(void) { return refuse_case(2, "mod pack"); }
+/* the host's global-data components travel in the refusal so the guest can name the difference */
+static int test_refuse_mods(void) { return refuse_case(2, "different global game data; host has: plco#12ab,itco#34cd"); }
 static int test_refuse_settings(void) { return refuse_case(3, "netplay settings"); }
 
 /* N frames each way, exactly once and in order, over a hostile network. */

@@ -342,7 +342,7 @@ static void send_refuse_to(gw_net *n, const gw_net_addr *to, int code, const cha
   n->session = 0;
   p = begin_packet(n, buf, T_REFUSE);
   n->session = save;
-  if (len > 90) len = 90;
+  if (len > 230) len = 230;             /* long enough for a handful of mod ids */
   *p++ = (uint8_t)code;
   *p++ = (uint8_t)len;
   memcpy(p, msg, (size_t)len);
@@ -667,7 +667,12 @@ static const char *refuse_check(gw_net *n, uint32_t ver, uint64_t exe, uint64_t 
     return why;
   }
   if (mods != n->cfg.mods_hash) {
-    snprintf(why, cap, "different mod pack (host %08x, you %08x)", (unsigned)n->cfg.mods_hash, (unsigned)mods);
+    /* mods_hash is the GLOBAL game data (gw_mexid.c); the host's per-component list follows
+       so the guest can say exactly what differs (gw_MexId_GlobalDiff) */
+    const char *d = n->cfg.mods_desc != NULL && n->cfg.mods_desc[0] != '\0' ? n->cfg.mods_desc : "none";
+    size_t c = cap < 231 ? cap : 231;    /* what send_refuse_to sends; a cut list ends "..." */
+    int w = snprintf(why, c, "different global game data; host has: %s", d);
+    if (w >= (int)c && c > 4) memcpy(why + c - 4, "...", 4);
     return why;
   }
   if (pb != n->pb || first != n->first) {
@@ -694,7 +699,7 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
 
   /* Host, not yet locked to a guest: only a HELLO means anything. */
   if (n->is_host && !n->peer_locked) {
-    char why[96];
+    char why[240];
     uint32_t ver;
     uint64_t exe, iso, mods;
     int pb;
@@ -743,11 +748,11 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
     /* the guest hears only ACCEPT or REFUSE from the host it dialled */
     if (type == T_REFUSE && end - p >= 2) {
       int l;
-      char why[96];
+      char why[240];
       p++;                               /* code */
       l = *p++;
       if (l > end - p) l = (int)(end - p);
-      if (l > 90) l = 90;
+      if (l > 230) l = 230;
       memcpy(why, p, (size_t)l);
       why[l] = 0;
       n->state = GW_NET_REFUSED;

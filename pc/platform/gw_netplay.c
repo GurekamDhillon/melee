@@ -33,6 +33,12 @@
 #include "gw.h"
 #include "gw_net.h"
 #include "gw_rollback.h"
+#include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
+#include "gw_mods.h"
+
+/* gw_net.c refuse_check's text for a mods_hash (= global game data) mismatch; the host's
+ * gw_MexId_GlobalDescribe follows it */
+#define NP_GLOBAL_REFUSAL "different global game data; host has: "
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -143,10 +149,33 @@ static void np_decode(const uint8_t *b, GwRbInput *in) {
  * scene launcher writes them into the saved rules, so both peers play the same match whatever
  * their memory cards say. */
 static void np_build_scene(char *out, size_t cap, int host_ck, int host_c, int guest_ck, int guest_c) {
+    /* delta: fighters and the stage by CONTENT IDENTITY ("id:<hex>"), so each side loads its own
+       local ids for them - they differ between installs with different mods (gw_mexid.c) */
+    char hk[24], gk[24], sk[24];
+    snprintf(hk, sizeof hk, "%s", gw_MexId_TokenForCk(host_ck));
+    snprintf(gk, sizeof gk, "%s", gw_MexId_TokenForCk(guest_ck));
+    snprintf(sk, sizeof sk, "%s", gw_MexId_TokenForExt(np.stage_ext));
     snprintf(out, cap,
-             "mode=vs;at=match;p1=ck:%d/c%d/hu;p2=ck:%d/c%d/hu;stage=ext:%d;match=stock;stocks=%d;"
+             "mode=vs;at=match;p1=%s/c%d/hu;p2=%s/c%d/hu;stage=%s;match=stock;stocks=%d;"
              "minutes=%d;items=off;pause=0",
-             host_ck, host_c, guest_ck, guest_c, np.stage_ext, np.stocks, np.minutes);
+             hk, host_c, gk, guest_c, sk, np.stocks, np.minutes);
+}
+
+static void np_cb_lobby_any(void *user, const uint8_t *data, int len); /* delta */
+static void np_mx_pump(void); /* delta */
+
+/* delta: a CharacterKind in the PEER's install -> ours, through the identity lists (gw_mexid.c).
+ * Before they arrive only the retail kinds are trusted to mean the same thing. */
+static int np_ck_from_peer(int ck) {
+    int m;
+    if (ck < 0) return ck; /* nothing picked yet */
+    m = gw_MexId_LocalCkForPeer(ck);
+    if (m >= 0) return m;
+    if (gw_MexId_PeerReady() || ck >= 0x22) {
+        gw_log("netplay: the peer's fighter %d is not on this install - using Marth", ck);
+        return 9;
+    }
+    return ck;
 }
 
 /* ---- transport callbacks --------------------------------------------------------------------- */
@@ -189,6 +218,13 @@ static void np_cb_event(void *user, int ev, const char *msg) {
         np.dead = 1;
         np_status("%s: %s", ev == GW_NET_EV_REFUSED ? "Refused" : "Disconnected",
                   msg != NULL ? msg : "the other player left");
+        /* delta: a global-data mismatch names what differs (gw_mexid.c) */
+        if (ev == GW_NET_EV_REFUSED && msg != NULL &&
+            strncmp(msg, NP_GLOBAL_REFUSAL, strlen(NP_GLOBAL_REFUSAL)) == 0) {
+            char diff[160];
+            gw_MexId_GlobalDiff(msg + strlen(NP_GLOBAL_REFUSAL), diff, sizeof diff);
+            np_status("Refused: game data differs from the host's: %s", diff);
+        }
     }
 }
 
@@ -209,7 +245,15 @@ static void np_cb_guest_hello(void *user, const uint8_t *info, int info_len, uin
     s[info_len] = '\0';
     /* any CharacterKind the disc has: m-ex builds add fighters past the 26 retail ones (ACE's run
        to 0x40); both peers play the same disc, so the guest's pick is valid for the host too */
-    if (sscanf(s, "ck:%d/c%d", &gck, &gc) < 1 || gck < 0 || gck > 0x7F || gck == 0x21) {
+    if (strncmp(s, "id:", 3) == 0) { /* delta: the guest names its fighter by identity */
+        char *slash = strchr(s, '/');
+        gck = gw_MexId_CkForHex(s + 3);
+        if (slash != NULL) sscanf(slash, "/c%d", &gc);
+        if (gck < 0) {
+            gw_log("netplay: the guest's fighter %s is not on this install - using Marth", s);
+            gck = 9;
+        }
+    } else if (sscanf(s, "ck:%d/c%d", &gck, &gc) < 1 || gck < 0 || gck > 0x7F || gck == 0x21) {
         gck = 9;
     }
     if (gc < 0 || gc > 15) gc = 0;
@@ -1222,12 +1266,18 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
     if (np.host && m[0] == 'A') {
         char act[16] = { 0 };
         int a = 0, b = 0;
-        if (sscanf(m + 2, "%15s %d %d", act, &a, &b) >= 1 && lb_apply(1, act, a, b)) {
+        if (sscanf(m + 2, "%15s %d %d", act, &a, &b) >= 1 && strcmp(act, "CHAR") == 0) {
+            a = np_ck_from_peer(a); /* delta: the guest's CharacterKind -> the host's */
+        }
+        if (act[0] != '\0' && lb_apply(1, act, a, b)) {
             lb.seq++;
             lb_broadcast();
         }
     } else if (!np.host && m[0] == 'S') {
         lb_decode(m);
+        /* delta: the host's CharacterKinds -> ours (gw_mexid.c) */
+        lb.ck[0] = np_ck_from_peer(lb.ck[0]);
+        lb.ck[1] = np_ck_from_peer(lb.ck[1]);
         gw_log("netplay: lobby - state from the host: phase %d, turn P%d, %d left, locked %d/%d, ready %d/%d",
                lb.phase, lb.turn + 1, lb.left, lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1]);
     } else if (!np.host && m[0] == 'G') {
@@ -1320,7 +1370,10 @@ static void np_lobby_tick(void) {
     }
 }
 
-void gw_Netplay_Background(void) { np_lobby_tick(); }
+void gw_Netplay_Background(void) {
+    np_mx_pump(); /* delta: the identity lists, while the lobby sits on the CSS */
+    np_lobby_tick();
+}
 
 /* Entering the lobby: a fresh room (or a new opponent) starts at game 1; a rematch keeps the set. */
 static void np_lobby_enter(void) {
@@ -1437,13 +1490,16 @@ static int np_begin(int bind_local) {
     np_sim_wrap(&np.t);
 
     cfg.exe_hash = np_exe_hash();
-    {
-        /* both must play the same disc: its header, apploader and the start of the DOL are
-           enough to tell versions and modified discs apart (the transport refuses a mismatch) */
-        extern const char *gw_iso_path(void);
-        const char *iso = gw_iso_path();
-        cfg.iso_hash = iso != NULL ? gw_net_hash_file(iso, 4u << 20) : 0;
-    }
+    /* delta: the disc image is no longer compared. Only GLOBAL game data must match (PlCo.dat's
+       global tables, ItCo.dat, the m-ex feature flags); fighters and stages are matched one by
+       one by content identity and the match offers only what both have (gw_mexid.h). So a mod
+       ISO and a vanilla ISO with the same content as loose mods can play each other. */
+    cfg.iso_hash = 0;
+    cfg.mods_hash = gw_MexId_GlobalHash();
+    cfg.mods_desc = gw_MexId_GlobalDescribe();
+    gw_MexId_PeerReset();
+    gw_log("netplay: global game data %s; %d fighter/stage identities; mods: %s", cfg.mods_desc,
+           gw_MexId_Count(), gw_Mods_Describe()[0] != '\0' ? gw_Mods_Describe() : "none");
     cfg.first_frame = NP_FIRST_FRAME;
     cfg.payload_bytes = NP_PAYLOAD;
     cfg.hold_start = 1;
@@ -1454,7 +1510,7 @@ static int np_begin(int bind_local) {
     cfg.cb.event = np_cb_event;
     cfg.cb.desync = np_cb_desync;
     cfg.cb.guest_hello = np_cb_guest_hello;
-    if (np.use_lobby) cfg.cb.lobby_msg = np_cb_lobby;
+    cfg.cb.lobby_msg = np_cb_lobby_any; /* delta: the identity lists travel on it too */
     if (np.host) {
         LARGE_INTEGER c;
         QueryPerformanceCounter(&c);
@@ -1477,7 +1533,7 @@ static int np_begin(int bind_local) {
             np_status("Hosting. Your code %s is copied - send it to your friend", np.code);
         }
     } else {
-        snprintf(np.info, sizeof np.info, "ck:%d/c%d", np.ck, np.color);
+        snprintf(np.info, sizeof np.info, "%s/c%d", gw_MexId_TokenForCk(np.ck), np.color); /* delta */
         cfg.guest_info = np.info;
         cfg.guest_info_len = (uint8_t) strlen(np.info);
         if (rdv.configured) {
@@ -1509,8 +1565,28 @@ static void np_arm(void) {
            np.delay);
 }
 
+/* delta: every lobby message goes past the identity exchange first (gw_mexid.c). */
+static void np_cb_lobby_any(void *user, const uint8_t *data, int len) {
+    if (gw_MexId_WireFeed(data, len)) return;
+    if (np.use_lobby) np_cb_lobby(user, data, len);
+}
+
+/* delta: send this install's identity list, one lobby chunk every few polls so the lobby's own
+ * messages always find room in the channel's queue. */
+static void np_mx_pump(void) {
+    static unsigned tick;
+    uint8_t m[GW_NET_LOBBY_MAX];
+    int st, len;
+    if (np.net == NULL || (++tick & 3u) != 0) return;
+    st = gw_net_state(np.net);
+    if (st != GW_NET_ACCEPTED && st != GW_NET_STARTING) return;
+    len = gw_MexId_WireNext(m, sizeof m);
+    if (len > 0 && gw_net_lobby_send(np.net, m, len) == 0) gw_MexId_WireSent();
+}
+
 /* One step of connecting (menu frames, or the boot wait). Returns the phase. */
 static int np_poll(void) {
+    np_mx_pump();
     if (np.phase == NP_LOBBY) {
         return np.phase; /* ticked once a frame from every scene (gw_Netplay_Background) */
     }
@@ -1560,6 +1636,17 @@ static int np_poll(void) {
                 }
                 blob[sizeof blob - 1] = '\0';
                 snprintf(np.scene, sizeof np.scene, "%s", blob);
+                {
+                    /* delta: the host names m-ex content by identity; if this install lacks one
+                       of them, say which instead of failing to load the match (gw_mexid.c) */
+                    char why[160];
+                    if (gw_MexId_SceneCheck(np.scene, why, sizeof why) > 0) {
+                        np_status("The host's match uses content you don't have: %s", why);
+                        np.phase = NP_FAILED;
+                        np_close();
+                        return np.phase;
+                    }
+                }
                 np.seed = hc.seed;
                 np.delay = hc.input_delay;
                 gw_RB_SetDelay(np.delay);

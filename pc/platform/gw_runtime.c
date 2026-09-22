@@ -1760,6 +1760,18 @@ static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
     *ck_out = atoi(rest);
     return 0;
   }
+  if ((rest = gw_sl_after(v, "id:")) != NULL) {
+    /* a fighter by CONTENT IDENTITY (gw_mexid.h) - netplay names m-ex fighters this way because
+       their CharacterKind differs between installs with different mods */
+    extern int gw_MexId_CkForHex(const char *hex16);
+    n = gw_MexId_CkForHex(rest);
+    if (n < 0) {
+      gw_log("scene: fighter id:%s is not on this install", rest);
+      return -1;
+    }
+    *ck_out = n;
+    return 0;
+  }
   if ((rest = gw_sl_after(v, "fk:")) != NULL && gw_sl_all_digits(rest)) {
     n = gw_SceneLaunch_FKindToCKind(atoi(rest));
     if (n < 0) return -1;
@@ -1797,6 +1809,16 @@ static int gw_sl_parse_stage(const char *v, int *ext_out) {
   size_t i;
   if ((rest = gw_sl_after(v, "ext:")) != NULL && gw_sl_all_digits(rest)) {
     *ext_out = atoi(rest);
+    return 0;
+  }
+  if ((rest = gw_sl_after(v, "id:")) != NULL) { /* a stage by content identity (gw_mexid.h) */
+    extern int gw_MexId_ExtForHex(const char *hex16);
+    int e = gw_MexId_ExtForHex(rest);
+    if (e < 0) {
+      gw_log("scene: stage id:%s is not on this install", rest);
+      return -1;
+    }
+    *ext_out = e;
     return 0;
   }
   if ((rest = gw_sl_after(v, "int:")) != NULL && gw_sl_all_digits(rest)) {

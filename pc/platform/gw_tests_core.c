@@ -412,6 +412,8 @@ void gw_tests_register_all(void) {
   extern void gw_scene_tests_register(void);
   extern void gw_net_tests_register(void);
   extern void gw_netplay_tests_register(void);
+  extern void gw_mods_tests_register(void);
+  extern void gw_mexid_tests_register(void);
   gw_MexTestRegisterAll();
   gw_ppc_tests_register();
   gw_ftfunction_tests_register();
@@ -423,6 +425,8 @@ void gw_tests_register_all(void) {
   gw_scene_tests_register();
   gw_net_tests_register();
   gw_netplay_tests_register();
+  gw_mods_tests_register();
+  gw_mexid_tests_register();
   gw_test_register("mex_flag_unknown_is_off", test_mex_flag_unknown_is_off);
   gw_test_register("mex_flags_default_off", test_mex_flags_default_off);
   gw_test_register("mex_env_enables", test_mex_env_enables);

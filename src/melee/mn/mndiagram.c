@@ -124,8 +124,26 @@ typedef struct mnDiagram_AnimTable {
     /* 0x94 */ char user_data_name[0x14];    ///< "user_data"
 } mnDiagram_AnimTable;
 
+#if defined(TARGET_PC)
+/* The run this overlays is only adjacent on retail; on PC the fields past points[] (the cursor
+ * animation, the assert strings) read whatever followed. One real object with the same data. */
+static mnDiagram_AnimTable mnDiagram_PcAnimTable = {
+    { { 4.0F, 1.0F, 0.0F }, { -3.0F, 0.8F, 0.0F }, { -1.0F, 0.7F, 0.0F } },
+    { 8, 1, 6, 0x10, 0x11, 4, 2, 0xD, 0xB, 0, 5, 0xC, 0xE, 0x12, 7, 0xF, 0xA, 9, 3, 0x15,
+      0x18, 0x13, 0x14, 0x17, 0x16, 0, 0, 0 },
+    { 0.0f, 9.0f, -0.1f },
+    { 10.0f, 19.0f, -0.1f },
+    { 0.0f, 199.0f, 0.0f },
+    { 0.0f, 10.0f, -0.1f },
+    "Can't get user_data.\n",
+    "mndiagram.c",
+    "user_data",
+};
+#define GET_DIAGRAM_ANIM_TABLE() (&mnDiagram_PcAnimTable)
+#else
 #define GET_DIAGRAM_ANIM_TABLE()                                              \
     ((mnDiagram_AnimTable*) &mnDiagram_PopupTextOffsets)
+#endif
 
 static GXColor mnDiagram_PopupTextColor = { 0, 0, 0, 0xFF };
 char mnDiagram_StringTerminator[1] = "";

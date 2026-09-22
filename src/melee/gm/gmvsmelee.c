@@ -154,7 +154,8 @@ void gmVsMelee_ExitCss(GameModeState* state, VsModeData* vs)
         extern void Frontend_OnlinePicked(int which, int a, int b);
         if (Frontend_OnlinePick() == 1) {
             int i, ck = -1, color = 0;
-            if (css->pending_scene_change == 0) {
+            /* confirmed (START: 1), not backed out (2) */
+            if (css->pending_scene_change != CSSPendingSceneChange_2) {
                 for (i = 0; i < 4; i++) {
                     if (css->vs.start.players[i].slot_type == Gm_PKind_Human &&
                         css->vs.start.players[i].ckind >= 0 &&

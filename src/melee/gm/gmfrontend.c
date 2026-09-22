@@ -111,6 +111,7 @@ typedef struct FrontendItem {
     void (*format)(int value, char* out); ///< FE_SLIDER text; default "%d"
     int (*visible)(void);               ///< NULL = always shown
     void (*call)(void);                 ///< FE_DO_CALL
+    int (*enabled)(void);               ///< NULL = enabled; a disabled row shows greyed, A bumps
 } FrontendItem;
 
 typedef struct FrontendScreen {
@@ -118,6 +119,7 @@ typedef struct FrontendScreen {
     const char* subtitle;
     const FrontendItem* items;
     int n_items;
+    int art; ///< a room screen drawn from its layout (gmfrontend_online.inc: FL_*), 0 = rows
 } FrontendScreen;
 
 typedef struct FrontendRule {
@@ -184,13 +186,9 @@ static void fe_set_ff(int v)
 static int fe_get_pause(void) { return gmMainLib_GetGameRules()->pause != 0; }
 static void fe_set_pause(int v) { gmMainLib_GetGameRules()->pause = (u8) (v != 0); }
 
-static void fe_open_online(void);
-
 static const FrontendItem fe_items_vs_setup[] = {
     { FE_ACTION, FE_DO_CONTINUE, "Continue to Character Select",
       "Pick fighters with these rules." },
-    { FE_ACTION, FE_DO_CALL, "Online Play", "Play a friend over the internet.", NULL, NULL, 0, 0,
-      0, NULL, NULL, NULL, fe_open_online },
     { FE_CHOICE, 0, "Mode", "How a match is won.", fe_get_mode, fe_set_mode, 0, 3, 1,
       fe_opt_mode },
     { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", fe_get_stocks, fe_set_stocks, 1,
@@ -218,29 +216,34 @@ static const FrontendScreen fe_screen_vs_setup = {
     sizeof fe_items_vs_setup / sizeof fe_items_vs_setup[0],
 };
 
-/* ---- ONLINE PLAY: host or join a match over the internet -------------------------------------
- * The connection itself is pc/platform/gw_netplay.c (its header explains codes, UPnP and hole
- * punching). This screen only collects the choices and shows progress: Host Match copies this
- * machine's code to the clipboard for the friend; the friend pastes it and presses Connect. Once
- * the two are connected both go straight into the agreed match. */
-int Netplay_MenuBegin(int host, int ck, int color, int stage_ext, int stocks, int minutes,
-                      int delay);
-int Netplay_MenuPaste(int as_host);
+#define FE_STR 80 ///< longest string a row, value or help line shows
+
+/* ---- ONLINE: rooms over the internet --------------------------------------------------------
+ * VERSUS > ONLINE opens this screen (toolkit rows): Host a Room, Join a Room, Random Opponent
+ * (coming soon) and the rules of rooms this player hosts. The room screens after it - code entry,
+ * waiting room, lobby - are drawn from the art pipeline's layouts by gmfrontend_online.inc, which
+ * also describes the whole flow. The connection itself is pc/platform/gw_netplay.c. */
+int Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, int delay);
 int Netplay_MenuPoll(void);
-void Netplay_MenuCancel(void);
 void Netplay_MenuLaunch(void);
 void Netplay_MenuStatus(char* out, int cap);
-void Netplay_MenuCode(char* out, int cap);
-void Netplay_MenuPeer(char* out, int cap);
 int Netplay_MenuHasServer(void);
 int Netplay_RematchPending(void);
-void Netplay_RematchTaken(void);
+int Netplay_Rejoin(void);
+void Netplay_Leave(void);
+int Netplay_IsHost(void);
+int Netplay_PeerLeft(void);
+int Netplay_Ping(void);
+void Netplay_RoomCode(char* out, int cap);
+void Netplay_CopyCode(void);
+void Netplay_FighterName(int ck, char* out, int cap);
 int Netplay_CodeSlot(void);
+int Netplay_CodeChar(int i);
 void Netplay_CodeStep(int dir);
-void Netplay_CodeNext(void);
+int Netplay_CodeMove(int dir);
 int Netplay_CodeComplete(void);
-void Netplay_CodeText(char* out, int cap);
-int Netplay_CodeAutofill(void);
+int Netplay_CodeFirstEmpty(void);
+int Netplay_CodePaste(void);
 int Netplay_CodeKeys(void);
 int Netplay_LobbyPhase(void);
 int Netplay_LobbySeq(void);
@@ -249,61 +252,23 @@ int Netplay_LobbyInfo(int what);
 int Netplay_LobbyStage(int i);
 void Netplay_LobbyStageName(int i, char* out, int cap);
 int Netplay_LobbyPlayer(int who, int what);
-void Netplay_LobbyCode(char* out, int cap);
 void Netplay_LobbyChar(int ck, int color);
 void Netplay_LobbyStageAct(int i);
 void Netplay_LobbyReady(int on);
 int Netplay_LobbyActive(void);
-static int fe_np_stage_id(void);
-int Netplay_MenuGetLetter(int i);
-void Netplay_MenuSetLetter(int i, int v);
+int Netplay_FighterAvailable(int ck);
 
 enum { FE_NP_IDLE, FE_NP_WORKING, FE_NP_CONNECTED, FE_NP_FAILED, FE_NP_RUNNING, FE_NP_LOBBY };
+/* gw_netplay.c's lobby phases and stage states */
+enum { LBP_OFF, LBP_CHAR_BLIND, LBP_STRIKE, LBP_BAN, LBP_PICK, LBP_CHAR_WINNER, LBP_CHAR_LOSER,
+       LBP_READY, LBP_GO };
+enum { LBS_FREE, LBS_P1, LBS_P2, LBS_BANNED, LBS_PICKED };
+#define LB_MAX_UI_STAGES 32
 
-/* CharacterKind order */
-static const char* const fe_np_chars[] = {
-    "Captain Falcon", "Donkey Kong", "Fox", "Mr. Game & Watch", "Kirby", "Bowser", "Link",
-    "Luigi", "Mario", "Marth", "Mewtwo", "Ness", "Peach", "Pikachu", "Ice Climbers",
-    "Jigglypuff", "Samus", "Yoshi", "Zelda", "Sheik", "Falco", "Young Link", "Dr. Mario", "Roy",
-    "Pichu", "Ganondorf",
-};
-static void fe_np_char_name(int ck, char* out)
-{
-    if (ck >= 0 && ck <= 25) {
-        sprintf(out, "%s", fe_np_chars[ck]);
-    } else {
-        sprintf(out, "Fighter %d", ck); /* an m-ex fighter: its icon says who */
-    }
-}
-static const char* const fe_np_stages[] = { "Battlefield", "Final Destination", "Dream Land",
-                                            "Yoshi's Story", "Fountain of Dreams",
-                                            "Pokemon Stadium" };
-static const int fe_np_stage_ext[] = { 31, 32, 28, 8, 2, 3 };
-static const char* const fe_np_roles[] = { "Host", "Join" };
-
-static int fe_np_role, fe_np_ck = 2, fe_np_color, fe_np_stage, fe_np_stocks = 4,
-                       fe_np_minutes = 8, fe_np_delay = 2;
+/* the fighter this player last picked (the lobby's CSS), and the rules of rooms it hosts */
+static int fe_np_ck = 2, fe_np_color, fe_np_stocks = 4, fe_np_minutes = 8, fe_np_delay = 2;
 static int fe_np_phase; ///< FE_NP_*, from Netplay_MenuPoll
 
-static int fe_np_get_role(void) { return fe_np_role; }
-static void fe_np_set_role(int v)
-{
-    if (fe_np_phase == FE_NP_WORKING) {
-        Netplay_MenuCancel();
-        fe_np_phase = FE_NP_IDLE;
-    }
-    fe_np_role = v;
-    if (v == 1 && Netplay_MenuHasServer()) {
-        Netplay_CodeAutofill(); /* a code your friend sent, already copied? */
-    }
-}
-static int fe_np_get_ck(void) { return fe_np_ck; }
-static void fe_np_set_ck(int v) { fe_np_ck = v; }
-static int fe_np_get_color(void) { return fe_np_color; }
-static void fe_np_set_color(int v) { fe_np_color = v; }
-static void fe_np_fmt_color(int v, char* out) { sprintf(out, "Color %d", v + 1); }
-static int fe_np_get_stage(void) { return fe_np_stage; }
-static void fe_np_set_stage(int v) { fe_np_stage = v; }
 static int fe_np_get_stocks(void) { return fe_np_stocks; }
 static void fe_np_set_stocks(int v) { fe_np_stocks = v; }
 static int fe_np_get_minutes(void) { return fe_np_minutes; }
@@ -312,42 +277,24 @@ static void fe_np_fmt_minutes(int v, char* out) { sprintf(out, "%d min", v); }
 static int fe_np_get_delay(void) { return fe_np_delay; }
 static void fe_np_set_delay(int v) { fe_np_delay = v; }
 static void fe_np_fmt_delay(int v, char* out) { sprintf(out, "%d frames", v); }
-static int fe_np_is_host(void) { return fe_np_role == 0; }
-static int fe_np_is_join(void) { return fe_np_role == 1; }
 static int fe_np_zero(void) { return 0; }
-static void fe_np_fmt_code(int v, char* out)
+static void fe_np_fmt_soon(int v, char* out)
 {
     (void) v;
-    Netplay_MenuCode(out, 64);
+    sprintf(out, "Coming soon");
 }
-static void fe_np_fmt_peer(int v, char* out)
-{
-    (void) v;
-    Netplay_MenuPeer(out, 64);
-}
-static void fe_np_start(void)
-{
-    if (Netplay_MenuBegin(fe_np_role == 0, fe_np_ck, fe_np_color, fe_np_stage_id(),
-                          fe_np_stocks, fe_np_minutes, fe_np_delay) == 0)
-    {
-        fe_np_phase = FE_NP_WORKING;
-    } else {
-        fe_np_phase = FE_NP_FAILED;
-    }
-}
-static void fe_np_paste_host(void) { Netplay_MenuPaste(0); }
 
-/* ---- picking on Melee's own screens ---------------------------------------------------------
- * Character opens the real character select screen (VS mode's CSS, seeded with the current pick)
- * and Stage the real stage select screen. Confirming there returns HERE instead of going on:
- * gmvsmelee.c's CSS/SSS exit handlers ask Frontend_OnlinePick() and hand the result back through
- * Frontend_OnlinePicked. At the moment of confirming, the screen copies the chosen icon's texture
- * (Frontend_CaptureIcon) so this screen can show it after the CSS/SSS art is freed. m-ex fighters
- * and stages come for free: they are whatever the disc's own screens offer. */
+/* ---- picking on Melee's own screen -----------------------------------------------------------
+ * The lobby's character picks open the real character select screen (VS mode's CSS, seeded with
+ * this player's last pick). Confirming there returns HERE instead of going on: gmvsmelee.c's CSS
+ * exit handler asks Frontend_OnlinePick() and hands the result back through
+ * Frontend_OnlinePicked. While the CSS is open for this, one fighter is enough to confirm
+ * (mncharsel.c). At the moment of confirming, the CSS copies every fighter's icon
+ * (Frontend_CaptureCharIcon) so the lobby can show both players' portraits after the CSS art is
+ * freed. m-ex fighters come for free: they are whatever the disc's own screen offers. */
 void SceneLaunch_SetText(const char* text);
 
-static int fe_np_pick; ///< 0 none, 1 picking a character, 2 picking a stage
-static int fe_np_stage_pick = -1; ///< the external stage id picked on the SSS, -1 = the list's
+static int fe_np_pick; ///< 0 none, 1 picking a character (2, the stage screen, is unused now)
 
 typedef struct FeNpIcon {
     bool ok;
@@ -368,7 +315,7 @@ typedef struct FeNpCharIcon {
     u8 data[4096] ATTRIBUTE_ALIGN(32);
     u8 lut[512] ATTRIBUTE_ALIGN(32);
 } FeNpCharIcon;
-#define FE_NP_MAX_CK 0x48
+#define FE_NP_MAX_CK 0x80
 static FeNpCharIcon fe_np_char_icon[FE_NP_MAX_CK];
 
 int Frontend_OnlinePick(void) { return fe_np_pick; }
@@ -461,9 +408,6 @@ void Frontend_CaptureIcon(int which, HSD_JObj* root)
         memcpy(ic->lut, t->tlut->lut, (size_t) ic->tlut_n * 2);
     }
     ic->ok = true;
-    OSReport("frontend: online pick - captured the %s icon, %dx%d format %d%s\n",
-             which == 0 ? "character" : "stage", ic->w, ic->h, ic->fmt,
-             ic->tlut_n != 0 ? " (palette)" : "");
 }
 
 static void fe_np_open(int which, const char* scene);
@@ -472,91 +416,66 @@ static void fe_switch_screen(const FrontendScreen* s);
 static char fe_np_scene[160];
 static void fe_np_pick_char(void)
 {
-    /* a CPU in port 2: the CSS shows "Ready to fight" only with two fighters */
-    sprintf(fe_np_scene, "mode=vs;at=css;p1=ck:%d/c%d/hu;p2=ck:%d/c%d/cpu", fe_np_ck, fe_np_color,
-            fe_np_ck == 2 ? 20 : 2, 1);
+    sprintf(fe_np_scene, "mode=vs;at=css;p1=ck:%d/c%d/hu", fe_np_ck, fe_np_color);
     fe_np_open(1, fe_np_scene);
 }
-static void fe_np_pick_stage(void)
+
+/* ---- the ONLINE screen ------------------------------------------------------------------------ */
+static char fe_ol_note[FE_STR]; ///< a notice over the description strip ("You left the room.")
+static bool fe_ol_note_bad;
+static int fe_ol_note_frames;
+static void fe_ol_notice(const char* s, bool bad)
 {
-    sprintf(fe_np_scene, "mode=vs;at=sss;p1=ck:%d/c%d/hu;p2=ck:%d/c%d/hu", fe_np_ck, fe_np_color,
-            fe_np_ck, (fe_np_color + 1) % 4);
-    fe_np_open(2, fe_np_scene);
-}
-static int fe_np_stage_id(void)
-{
-    return fe_np_stage_pick >= 0 ? fe_np_stage_pick : fe_np_stage_ext[fe_np_stage];
+    int i = 0;
+    for (; s != NULL && s[i] != '\0' && i < FE_STR - 1; i++) fe_ol_note[i] = s[i];
+    fe_ol_note[i] = '\0';
+    fe_ol_note_bad = bad;
+    fe_ol_note_frames = 0;
 }
 
-static void fe_np_draw_icon(int which, int item_index, float row_top, float pitch, float row_h,
-                            float row_x1, int scroll, int nrows);
-static void fe_np_draw_char_icon(int ck, int item_index, float row_top, float pitch, float row_h,
-                                 float row_x1, int scroll, int nrows);
+static const FrontendScreen fe_screen_code;
+static const FrontendScreen fe_screen_wait;
+static const FrontendScreen fe_screen_lobby;
+static void fl_code_reset(void);
 
-/* ROOM CODES (a matchmaking server is configured): the join code is four letters, each picked with
- * left/right - no typing needed with a controller - or pasted. */
-static const char* const fe_np_letters[] = {
-    "A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R",
-    "S", "T", "U", "V", "W", "X", "Y", "Z", "2", "3", "4", "5", "6", "7", "8", "9",
-};
-static int fe_np_join_room(void) { return fe_np_role == 1 && Netplay_MenuHasServer(); }
-/* the code field: Left/Right changes the active slot's letter, A moves on, typing fills it */
-static int fe_np_code_v;
-static int fe_np_code_get(void) { return fe_np_code_v; }
-static void fe_np_code_set(int v)
+static void fe_ol_host(void)
 {
-    Netplay_CodeStep(v > fe_np_code_v ? 1 : -1);
-    fe_np_code_v = 0;
+    if (Netplay_MenuBegin(1, fe_np_ck, fe_np_color, fe_np_stocks, fe_np_minutes, fe_np_delay) ==
+        0)
+    {
+        fe_np_phase = FE_NP_WORKING;
+        fe_switch_screen(&fe_screen_wait);
+    } else {
+        char why[FE_STR];
+        Netplay_MenuStatus(why, FE_STR);
+        fe_ol_notice(why, true);
+        fe_np_phase = FE_NP_IDLE;
+    }
 }
-static void fe_np_code_fmt(int v, char* out)
+static void fe_ol_join(void)
 {
-    (void) v;
-    Netplay_CodeText(out, 40);
+    if (!Netplay_MenuHasServer()) {
+        fe_ol_notice("Online play needs the server address (netplay_server.txt beside the game).",
+                     true);
+        return;
+    }
+    fl_code_reset();
+    fe_switch_screen(&fe_screen_code);
 }
-static bool fe_np_code_open; ///< the code entry popup is up: keys are text, the menu waits
-static void fe_np_code_next(void) { fe_np_code_open = true; }
-static int fe_np_join_addr(void) { return fe_np_role == 1 && !Netplay_MenuHasServer(); }
-static int fe_np_l0(void) { return Netplay_MenuGetLetter(0); }
-static int fe_np_l1(void) { return Netplay_MenuGetLetter(1); }
-static int fe_np_l2(void) { return Netplay_MenuGetLetter(2); }
-static int fe_np_l3(void) { return Netplay_MenuGetLetter(3); }
-static void fe_np_s0(int v) { Netplay_MenuSetLetter(0, v); }
-static void fe_np_s1(int v) { Netplay_MenuSetLetter(1, v); }
-static void fe_np_s2(int v) { Netplay_MenuSetLetter(2, v); }
-static void fe_np_s3(int v) { Netplay_MenuSetLetter(3, v); }
-static void fe_np_paste_friend(void) { Netplay_MenuPaste(1); }
 
 static const FrontendItem fe_items_online[] = {
-    { FE_CHOICE, 0, "Play As", "Host a match, or join a friend's.", fe_np_get_role,
-      fe_np_set_role, 0, 1, 1, fe_np_roles },
-    { FE_ACTION, FE_DO_CALL, "Character",
-      "Pick your fighter and costume on the character select screen.", NULL, NULL, 0, 0, 0, NULL,
-      NULL, NULL, fe_np_pick_char },
-    { FE_ACTION, FE_DO_CALL, "Stage", "Pick the stage on the stage select screen.", NULL, NULL, 0,
-      0, 0, NULL, NULL, fe_np_is_host, fe_np_pick_stage },
-    { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", fe_np_get_stocks,
-      fe_np_set_stocks, 1, 9, 1, NULL, NULL, fe_np_is_host },
-    { FE_SLIDER, 0, "Time Limit", "The match clock.", fe_np_get_minutes, fe_np_set_minutes, 1,
-      20, 1, NULL, fe_np_fmt_minutes, fe_np_is_host },
-    { FE_SLIDER, 0, "Input Delay", "2 suits most connections; raise it if it stutters.",
-      fe_np_get_delay, fe_np_set_delay, 0, 8, 1, NULL, fe_np_fmt_delay, fe_np_is_host },
-    { FE_ACTION, FE_DO_CALL, "Paste Host Code", "Copy your friend's code, then press A here.",
-      NULL, NULL, 0, 0, 0, NULL, NULL, fe_np_is_join, fe_np_paste_host },
-    { FE_CHOICE, 0, "Room Code",
-      "A to enter the code: type or paste (Ctrl+V), or Left/Right + A per letter.",
-      fe_np_code_get, fe_np_code_set, -1000, 1000, 1, NULL, fe_np_code_fmt, fe_np_join_room,
-      fe_np_code_next },
-    { FE_SLIDER, 0, "Host Code", "The code you pasted.", fe_np_zero, NULL, 0, 0, 0, NULL,
-      fe_np_fmt_peer, fe_np_join_addr },
-    { FE_ACTION, FE_DO_CALL, "Host Match", "Start hosting; your code is copied for your friend.",
-      NULL, NULL, 0, 0, 0, NULL, NULL, fe_np_is_host, fe_np_start },
-    { FE_ACTION, FE_DO_CALL, "Connect", "Join the host whose code you pasted.", NULL, NULL, 0, 0,
-      0, NULL, NULL, fe_np_is_join, fe_np_start },
-    { FE_SLIDER, 0, "Your Code", "Your address; it is copied to the clipboard.", fe_np_zero,
-      NULL, 0, 0, 0, NULL, fe_np_fmt_code },
-    { FE_ACTION, FE_DO_CALL, "Paste Friend's Code",
-      "Only if they can't connect: paste their code here.", NULL, NULL, 0, 0, 0, NULL, NULL,
-      fe_np_is_host, fe_np_paste_friend },
+    { FE_ACTION, FE_DO_CALL, "Host a Room", "Open a room and get a code to send your opponent.",
+      NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_host },
+    { FE_ACTION, FE_DO_CALL, "Join a Room", "Type in the room code your opponent sent you.", NULL,
+      NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_join },
+    { FE_ACTION, FE_DO_CALL, "Random Opponent", "Play someone at random - coming soon.", NULL,
+      NULL, 0, 0, 0, NULL, fe_np_fmt_soon, NULL, NULL, fe_np_zero },
+    { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", fe_np_get_stocks,
+      fe_np_set_stocks, 1, 9, 1 },
+    { FE_SLIDER, 0, "Time Limit", "Minutes per game, in rooms you host.", fe_np_get_minutes,
+      fe_np_set_minutes, 1, 20, 1, NULL, fe_np_fmt_minutes },
+    { FE_SLIDER, 0, "Input Delay", "Frames of delay in rooms you host. 2 suits most connections.",
+      fe_np_get_delay, fe_np_set_delay, 0, 8, 1, NULL, fe_np_fmt_delay },
 };
 
 static const FrontendScreen fe_screen_online = {
@@ -566,217 +485,10 @@ static const FrontendScreen fe_screen_online = {
     sizeof fe_items_online / sizeof fe_items_online[0],
 };
 
-/* ---- THE WAITING ROOM and THE LOBBY (online) ------------------------------------------------
- * Host Match / Connect lead to the WAITING ROOM (the room code, big, and the status); once the
- * other player is in, both go to the LOBBY: competitive pick/ban run by gw_netplay.c's rules -
- * Game 1 characters double-blind on the real CSS, then stage striking 1-2-2 after a coin flip;
- * Game 2+ the winner bans 2 stages, the loser picks, then winner and loser pick characters. Then
- * both press Ready and the match starts. Art for these screens: menu/out_lobby (LOBBY.md). */
-enum { LBP_OFF, LBP_CHAR_BLIND, LBP_STRIKE, LBP_BAN, LBP_PICK, LBP_CHAR_WINNER, LBP_CHAR_LOSER,
-       LBP_READY, LBP_GO };
-enum { LBS_FREE, LBS_P1, LBS_P2, LBS_BANNED, LBS_PICKED };
-
-static void fe_wr_code(int v, char* out)
-{
-    (void) v;
-    Netplay_LobbyCode(out, 40);
-}
-static void fe_wr_status(int v, char* out)
-{
-    (void) v;
-    Netplay_MenuStatus(out, 60);
-}
-static void fe_wr_leave(void)
-{
-    Netplay_MenuCancel();
-    fe_np_phase = FE_NP_IDLE;
-    fe_switch_screen(&fe_screen_online);
-}
-static const FrontendItem fe_items_wait[] = {
-    { FE_SLIDER, 0, "Room Code", "Send this code to your friend - it is on your clipboard.",
-      fe_np_zero, NULL, 0, 0, 0, NULL, fe_wr_code },
-    { FE_SLIDER, 0, "Status", "", fe_np_zero, NULL, 0, 0, 0, NULL, fe_wr_status },
-    { FE_ACTION, FE_DO_CALL, "Leave Room", "Close the room and go back.", NULL, NULL, 0, 0, 0,
-      NULL, NULL, NULL, fe_wr_leave },
-};
-static const FrontendScreen fe_screen_wait = {
-    "ONLINE",
-    "WAITING ROOM",
-    fe_items_wait,
-    sizeof fe_items_wait / sizeof fe_items_wait[0],
-};
-
-static int fe_lb_me(void) { return Netplay_LobbyMe(); }
-static int fe_lb_can_pick_char(void);
-static int fe_lb_phase(void) { return Netplay_LobbyPhase(); }
-static bool fe_lb_revealed(void)
-{
-    int p = fe_lb_phase();
-    return p != LBP_CHAR_BLIND; /* blind picks stay hidden until both are locked */
-}
-static void fe_lb_set(int v, char* out)
-{
-    int me = fe_lb_me();
-    (void) v;
-    sprintf(out, "Game %d    You %d - %d Opponent", Netplay_LobbyInfo(0), Netplay_LobbyInfo(2 + me),
-            Netplay_LobbyInfo(2 + (1 - me)));
-}
-static void fe_lb_player(int who, char* out)
-{
-    char name[32];
-    int locked = Netplay_LobbyPlayer(who, 2), ready = Netplay_LobbyPlayer(who, 3);
-    int mine = who == fe_lb_me();
-    const char* st;
-    fe_np_char_name(Netplay_LobbyPlayer(who, 0), name);
-    st = ready ? "READY" : locked ? "LOCKED IN" : "PICKING";
-    if (!mine && !fe_lb_revealed()) {
-        sprintf(out, "%s", locked ? "LOCKED IN" : "PICKING...");
-    } else if (fe_lb_phase() >= LBP_READY) {
-        sprintf(out, "%s - %s", name, ready ? "READY" : "not ready");
-    } else {
-        sprintf(out, "%s - %s", name, st);
-    }
-}
-static void fe_lb_you(int v, char* out)
-{
-    int p = fe_lb_phase(), me = fe_lb_me();
-    bool mine = Netplay_LobbyInfo(4) == me;
-    (void) v;
-    if ((p == LBP_STRIKE || p == LBP_BAN || p == LBP_PICK) && mine) {
-        sprintf(out, "YOUR TURN: %s %d stage%s below", p == LBP_STRIKE ? "strike" : p == LBP_BAN ? "ban" : "pick",
-                Netplay_LobbyInfo(5), Netplay_LobbyInfo(5) == 1 ? "" : "s");
-    } else if (p == LBP_READY && !Netplay_LobbyPlayer(me, 3)) {
-        sprintf(out, "%s", "press Ready below");
-    } else if (fe_lb_can_pick_char()) {
-        sprintf(out, "%s", "pick your character below");
-    } else {
-        fe_lb_player(me, out);
-    }
-}
-static void fe_lb_opp(int v, char* out)
-{
-    (void) v;
-    fe_lb_player(1 - fe_lb_me(), out);
-}
-static int fe_lb_can_pick_char(void)
-{
-    int p = fe_lb_phase(), me = fe_lb_me();
-    if (p == LBP_CHAR_BLIND) {
-        return !Netplay_LobbyPlayer(me, 2);
-    }
-    return (p == LBP_CHAR_WINNER || p == LBP_CHAR_LOSER) && Netplay_LobbyInfo(4) == me;
-}
-static void fe_lb_pick_char(void)
-{
-    if (fe_lb_can_pick_char()) {
-        fe_np_pick_char(); /* the real CSS; the pick comes back through Frontend_OnlinePicked */
-    }
-}
-static int fe_lb_stage_phase(void)
-{
-    int p = fe_lb_phase();
-    return p == LBP_STRIKE || p == LBP_BAN || p == LBP_PICK;
-}
-static void fe_lb_stage_fmt(int i, char* out)
-{
-    static const char* const st[] = { "", "struck by P1", "struck by P2", "BANNED", "PICKED" };
-    int s = Netplay_LobbyStage(i);
-    sprintf(out, "%s", s >= 0 && s <= 4 ? st[s] : "");
-}
-#define FE_LB_STAGE(i)                                                                            \
-    static void fe_lb_sf##i(int v, char* out) { (void) v; fe_lb_stage_fmt(i, out); }             \
-    static void fe_lb_sa##i(void)                                                                 \
-    {                                                                                             \
-        if (fe_lb_stage_phase() && Netplay_LobbyInfo(4) == fe_lb_me() &&                          \
-            Netplay_LobbyStage(i) == LBS_FREE)                                                    \
-            Netplay_LobbyStageAct(i);                                                             \
-    }
-FE_LB_STAGE(0)
-FE_LB_STAGE(1)
-FE_LB_STAGE(2)
-FE_LB_STAGE(3)
-FE_LB_STAGE(4)
-FE_LB_STAGE(5)
-static int fe_lb_ready_phase(void) { return fe_lb_phase() == LBP_READY; }
-static void fe_lb_ready_fmt(int v, char* out)
-{
-    int me = fe_lb_me();
-    (void) v;
-    if (Netplay_LobbyInfo(8) > 0) {
-        sprintf(out, "Starting in %d...", Netplay_LobbyInfo(8));
-    } else {
-        sprintf(out, "%s", Netplay_LobbyPlayer(me, 3) ? "READY - waiting" : "press A");
-    }
-}
-static void fe_lb_ready(void) { Netplay_LobbyReady(!Netplay_LobbyPlayer(fe_lb_me(), 3)); }
-static void fe_lb_leave(void)
-{
-    Netplay_MenuCancel();
-    fe_np_phase = FE_NP_IDLE;
-    fe_switch_screen(&fe_screen_online);
-}
-static const FrontendItem fe_items_lobby[] = {
-    { FE_SLIDER, 0, "Set", "", fe_np_zero, NULL, 0, 0, 0, NULL, fe_lb_set },
-    { FE_SLIDER, 0, "You", "", fe_np_zero, NULL, 0, 0, 0, NULL, fe_lb_you },
-    { FE_SLIDER, 0, "Opponent", "", fe_np_zero, NULL, 0, 0, 0, NULL, fe_lb_opp },
-    { FE_ACTION, FE_DO_CALL, "Pick Character", "Pick your fighter on the character select screen.",
-      NULL, NULL, 0, 0, 0, NULL, NULL, fe_lb_can_pick_char, fe_lb_pick_char },
-    { FE_ACTION, FE_DO_CALL, "Battlefield", "", NULL, NULL, 0, 0, 0, NULL, fe_lb_sf0, NULL, fe_lb_sa0 },
-    { FE_ACTION, FE_DO_CALL, "Dream Land", "", NULL, NULL, 0, 0, 0, NULL, fe_lb_sf1, NULL, fe_lb_sa1 },
-    { FE_ACTION, FE_DO_CALL, "Final Destination", "", NULL, NULL, 0, 0, 0, NULL, fe_lb_sf2, NULL,
-      fe_lb_sa2 },
-    { FE_ACTION, FE_DO_CALL, "Fountain of Dreams", "", NULL, NULL, 0, 0, 0, NULL, fe_lb_sf3, NULL,
-      fe_lb_sa3 },
-    { FE_ACTION, FE_DO_CALL, "Pokemon Stadium", "", NULL, NULL, 0, 0, 0, NULL, fe_lb_sf4, NULL,
-      fe_lb_sa4 },
-    { FE_ACTION, FE_DO_CALL, "Yoshi's Story", "", NULL, NULL, 0, 0, 0, NULL, fe_lb_sf5, NULL,
-      fe_lb_sa5 },
-    { FE_ACTION, FE_DO_CALL, "Ready", "Both players ready starts the match.", NULL, NULL, 0, 0, 0,
-      NULL, fe_lb_ready_fmt, fe_lb_ready_phase, fe_lb_ready },
-    { FE_ACTION, FE_DO_CALL, "Leave Room", "Leave the room.", NULL, NULL, 0, 0, 0, NULL, NULL, NULL,
-      fe_lb_leave },
-};
-static const FrontendScreen fe_screen_lobby = {
-    "ONLINE",
-    "LOBBY",
-    fe_items_lobby,
-    sizeof fe_items_lobby / sizeof fe_items_lobby[0],
-};
-
-/* What the lobby asks of this player right now - the help line. */
-static void fe_lb_instruction(char* out)
-{
-    int p = fe_lb_phase(), me = fe_lb_me(), turn = Netplay_LobbyInfo(4), left = Netplay_LobbyInfo(5);
-    bool mine = turn == me;
-    switch (p) {
-    case LBP_CHAR_BLIND:
-        sprintf(out, "%s", Netplay_LobbyPlayer(me, 2) ? "Locked in - waiting for your opponent"
-                                                      : "Pick your character (hidden until both lock in)");
-        break;
-    case LBP_STRIKE:
-        sprintf(out, mine ? "Your turn: strike %d stage%s (coin flip: P%d strikes first)"
-                          : "Opponent is striking %d stage%s (coin flip: P%d strikes first)",
-                left, left == 1 ? "" : "s", Netplay_LobbyInfo(6) + 1);
-        break;
-    case LBP_BAN:
-        sprintf(out, mine ? "You won the last game: ban %d stage%s" : "Opponent (last winner) bans %d stage%s",
-                left, left == 1 ? "" : "s");
-        break;
-    case LBP_PICK:
-        sprintf(out, "%s", mine ? "Your counterpick: choose the stage" : "Opponent is picking the stage");
-        break;
-    case LBP_CHAR_WINNER:
-    case LBP_CHAR_LOSER:
-        sprintf(out, "%s", mine ? "Your turn: pick your character" : "Opponent is picking their character");
-        break;
-    case LBP_READY:
-        sprintf(out, "%s", "Both press Ready to start");
-        break;
-    default:
-        sprintf(out, "%s", "Starting...");
-        break;
-    }
-}
+/* The room screens (gmfrontend_online.inc draws and runs them). */
+static const FrontendScreen fe_screen_code = { "ONLINE", "JOIN ROOM", NULL, 0, 1 };
+static const FrontendScreen fe_screen_wait = { "ONLINE", "WAITING ROOM", NULL, 0, 2 };
+static const FrontendScreen fe_screen_lobby = { "ONLINE", "LOBBY", NULL, 0, 3 };
 
 /* THE LOADING SCREEN. No items: a title, a progress bar and a status line. Aurora compiles a
  * render pipeline the first time a draw needs one and skips that draw until it is ready, so a
@@ -806,7 +518,6 @@ static const FrontendRule fe_rules[] = {
 
 #define FE_MAX_ROWS 7 ///< row slots on screen; longer screens scroll
 #define FE_MAX_ITEMS 24
-#define FE_STR 80 ///< longest string a row, value or help line shows
 
 static struct {
     const FrontendScreen* screen;
@@ -846,38 +557,48 @@ static struct {
     bool next_menus; ///< the next GS_FRONTEND scene is the menu tree (gmfrontend_menus.inc)
 } fe;
 
+static void fl_rejoin_reset(void);
+static void fl_lobby_notice(const char* s);
+
+/* Back from the CSS the lobby sent this player to: tell the room, and back to the lobby. */
 void Frontend_OnlinePicked(int which, int a, int b)
 {
     if (which == 1 && a >= 0) {
         fe_np_ck = a;
         fe_np_color = b;
-    } else if (which == 2 && a >= 0) {
-        fe_np_stage_pick = a;
     }
+    OSReport("frontend: online pick %d -> %d/%d%s\n", which, a, b,
+             Netplay_LobbyActive() ? "" : " (the room is gone)");
     fe_np_pick = 0;
     SceneLaunch_SetText(NULL);
-    fe.screen = &fe_screen_online;
     if (Netplay_LobbyActive()) {
-        /* picked in the lobby: tell the room, and back to the lobby */
-        if (which == 1 && a >= 0) {
+        if (which == 1 && a >= 0 && !Netplay_FighterAvailable(a)) {
+            fl_lobby_notice("Your opponent doesn't have that fighter - pick another.");
+        } else if (which == 1 && a >= 0) {
             Netplay_LobbyChar(a, b);
         }
         fe.screen = &fe_screen_lobby;
+    } else {
+        /* the room went away while this player was on the CSS */
+        fe.screen = &fe_screen_online;
     }
     fe.continue_to = GM_VS;
     fe.back_to = GM_MENU;
     fe.next_menus = false;
 }
 
-/* After an online match in a room (persistent rooms): the results screen comes back here. */
+/* After an online match in a room (persistent rooms): the results screen comes back to the lobby,
+ * which reconnects to the room by itself. */
 void Frontend_BackToOnline(void)
 {
     fe_np_pick = 0;
+    fe_np_phase = FE_NP_IDLE;
     SceneLaunch_SetText(NULL);
-    fe.screen = &fe_screen_online;
+    fe.screen = &fe_screen_lobby;
     fe.continue_to = GM_VS;
     fe.back_to = GM_MENU;
     fe.next_menus = false;
+    fl_rejoin_reset();
 }
 
 static void fe_np_open(int which, const char* scene)
@@ -1203,95 +924,6 @@ static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
     fe_tex_quad_uv(t, x, y, w, h, 0.0F, 0.0F, 1.0F, 1.0F, c);
 }
 
-/* A fighter's captured CSS icon beside a row of the lobby. */
-static void fe_np_draw_char_icon(int ck, int item_index, float row_top, float pitch, float row_h,
-                                 float row_x1, int scroll, int nrows)
-{
-    FeNpCharIcon* ic;
-    int v, r = -1;
-    float y, h, w, x;
-    if (ck < 0 || ck >= FE_NP_MAX_CK || !fe_np_char_icon[ck].ok) {
-        return;
-    }
-    ic = &fe_np_char_icon[ck];
-    for (v = 0; v < fe.n_vis; v++) {
-        if (fe.vis[v] == item_index) {
-            r = v - scroll;
-        }
-    }
-    if (r < 0 || r >= nrows) {
-        return;
-    }
-    h = row_h + 6.0F;
-    w = h * (float) ic->w / (float) ic->h;
-    y = row_top + r * pitch - 3.0F;
-    x = row_x1 - w - 36.0F + (240.0F - (y + h * 0.5F)) * 0.25F;
-    {
-        FeTex t;
-        memset(&t, 0, sizeof t);
-        t.data = ic->data;
-        t.w = ic->w;
-        t.h = ic->h;
-        t.ok = true;
-        if (ic->tlut_n != 0) {
-            t.lut = ic->lut;
-            GXInitTlutObj(&t.tlut, ic->lut, (GXTlutFmt) ic->tlut_fmt, (u16) ic->tlut_n);
-            GXInitTexObjCI(&t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP, GX_CLAMP,
-                           GX_FALSE, GX_TLUT0);
-        } else {
-            GXInitTexObj(&t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP, GX_CLAMP,
-                         GX_FALSE);
-        }
-        GXInitTexObjLOD(&t.obj, GX_LINEAR, GX_LINEAR, 0.0F, 0.0F, 0.0F, GX_FALSE, GX_FALSE,
-                        GX_ANISO_1);
-        fe_tex_quad(&t, x, y, w, h, (GXColor) { 255, 255, 255, 255 });
-    }
-}
-
-/* The captured icons, beside their rows (drawn over the kit's rows). */
-static void fe_np_draw_icon(int which, int item_index, float row_top, float pitch, float row_h,
-                            float row_x1, int scroll, int nrows)
-{
-    FeNpIcon* ic = &fe_np_icon[which];
-    int v, r = -1;
-    float y, h, w, x;
-    if (!ic->ok) {
-        return;
-    }
-    for (v = 0; v < fe.n_vis; v++) {
-        if (fe.vis[v] == item_index) {
-            r = v - scroll;
-        }
-    }
-    if (r < 0 || r >= nrows) {
-        return;
-    }
-    h = row_h + 6.0F;
-    w = h * (float) ic->w / (float) ic->h;
-    y = row_top + r * pitch - 3.0F;
-    x = row_x1 - w - 36.0F + (240.0F - (y + h * 0.5F)) * 0.25F; /* follow the rows' lean */
-    {
-        FeTex t;
-        memset(&t, 0, sizeof t);
-        t.data = ic->data;
-        t.w = ic->w;
-        t.h = ic->h;
-        t.ok = true;
-        if (ic->tlut_n != 0) {
-            t.lut = ic->lut;
-            GXInitTlutObj(&t.tlut, ic->lut, (GXTlutFmt) ic->tlut_fmt, (u16) ic->tlut_n);
-            GXInitTexObjCI(&t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP,
-                           GX_CLAMP, GX_FALSE, GX_TLUT0);
-        } else {
-            GXInitTexObj(&t.obj, ic->data, ic->w, ic->h, (GXTexFmt) ic->fmt, GX_CLAMP, GX_CLAMP,
-                         GX_FALSE);
-        }
-        GXInitTexObjLOD(&t.obj, GX_LINEAR, GX_LINEAR, 0.0F, 0.0F, 0.0F, GX_FALSE, GX_FALSE,
-                        GX_ANISO_1);
-        fe_tex_quad(&t, x, y, w, h, (GXColor) { 255, 255, 255, 255 });
-    }
-}
-
 /* An element at its authored size (1x = half its 2x texel size), or a flat stand-in. */
 static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXColor fallback)
 {
@@ -1305,11 +937,14 @@ static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXCol
 /* ---- the layout + motion player and the menu tree (split out for size; same TU) ---------- */
 
 static void fe_match_setup_from_menus(void);
+static void fe_online_from_menus(void);
+static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS hub tile
 
 #include "gmfrontend_player.inc"
 #include "gmfrontend_kit.inc"
 #include "gmfrontend_menus.inc"
 #include "gmfrontend_kitlist.inc"
+#include "gmfrontend_online.inc"
 
 /* The toolkit screens are drawn with the kit when its files are there (fe_kit), with the old
  * art pack and SisLib otherwise. */
@@ -1349,6 +984,7 @@ static void fe_match_setup_from_menus(void)
     fe.continue_to = GM_VS;
     fe.back_to = GM_MENU;
     fe.reported = GM_MENU;
+    fm_back_to_online_item = false;
     fe.next_menus = false;
     fm_leave_scene(GM_FRONTEND);
 }
@@ -1458,23 +1094,8 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     if (pass != 0) {
         return;
     }
-    if (fm.active || fk.on) {
+    if (fm.active || fk.on || fl.on) {
         fp_draw();
-        if (fk.on && fe.screen == &fe_screen_lobby) {
-            int me = Netplay_LobbyMe();
-            fe_np_draw_char_icon(Netplay_LobbyPlayer(me, 0), 1, kit.rows_top, kit.pitch, kit.row_h,
-                                 kit.row_x1, fk.scroll, fk.nrows);
-            if (Netplay_LobbyPhase() != 1) {
-                fe_np_draw_char_icon(Netplay_LobbyPlayer(1 - me, 0), 2, kit.rows_top, kit.pitch,
-                                     kit.row_h, kit.row_x1, fk.scroll, fk.nrows);
-            }
-        }
-        if (fk.on && fe.screen == &fe_screen_online) {
-            fe_np_draw_icon(0, 1, kit.rows_top, kit.pitch, kit.row_h, kit.row_x1, fk.scroll,
-                            fk.nrows);
-            fe_np_draw_icon(1, 2, kit.rows_top, kit.pitch, kit.row_h, kit.row_x1, fk.scroll,
-                            fk.nrows);
-        }
         return;
     }
     if (fe.screen == NULL) {
@@ -1715,15 +1336,8 @@ static void fe_refresh_rows(void)
     if (fe.n_vis > 0) {
         int idx = fe.vis[fe.cursor];
         const char* h = fe.screen->items[idx].help;
-        if ((fe.screen == &fe_screen_online || fe.screen == &fe_screen_wait) &&
-            fe_np_phase != FE_NP_IDLE)
-        {
-            Netplay_MenuStatus(buf, FE_STR);
-            h = buf;
-        }
-        if (fe.screen == &fe_screen_lobby) {
-            fe_lb_instruction(buf);
-            h = buf;
+        if (fe.screen == &fe_screen_online && fe_ol_note[0] != '\0') {
+            h = fe_ol_note;
         }
         fe_set_text(&fe.help, fe.help_str, FE_STR, h != NULL ? h : "", FE_HELP_COLOR);
     }
@@ -1815,6 +1429,20 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         return;
     }
     fe_kit = !fe.loading && fe_kit_available();
+    if (fe.screen->art != 0) {
+        /* a room screen: its own model, drawn on the panels' link */
+        fe.canvas = HSD_SisLib_803A611C(0, NULL, 0x13, 0x14, 0, FE_GX_LINK, 10, 0);
+        gobj = GObj_Create(0xE, 0xF, 0);
+        if (gobj != NULL) {
+            GObj_SetupGXLink(gobj, fe_draw_panels, FE_GX_LINK, 0);
+        }
+        gobj = GObj_Create(0xE, 0xF, 0);
+        if (gobj != NULL) {
+            GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
+        }
+        fl_open(fe.screen->art);
+        return;
+    }
     fe_rebuild_visible();
     if (fe.has_button) {
         fe.cursor = fe.n_vis - 1; /* A straight away continues, as the menus do */
@@ -1892,6 +1520,31 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
 /* Show another screen in the same scene: the rows, title and subtitle follow. */
 static void fe_switch_screen(const FrontendScreen* s)
 {
+    if (s->art != 0 || (fe.screen != NULL && fe.screen->art != 0)) {
+        /* to or from a room screen: the model is rebuilt either way */
+        const FrontendScreen* from = fe.screen;
+        fe.screen = s;
+        fe.cursor = 0;
+        fe.scroll = 0;
+        fe.n_vis = 0;
+        if (s->art != 0) {
+            if (from == NULL || from->art == 0) {
+                fk_exit(); /* the rows' model goes; the room screen builds its own */
+                fe_kit = false;
+            }
+            fl_open(s->art);
+            return;
+        }
+        fl.on = false;
+        fp_free_textures();
+        fp.ok = false;
+        fe_kit = fe_kit_available();
+        fe_rebuild_visible();
+        if (fe_kit) {
+            fk_build(true);
+        }
+        return;
+    }
     fe.screen = s;
     fe.cursor = 0;
     fe.scroll = 0;
@@ -1913,10 +1566,19 @@ static void fe_switch_screen(const FrontendScreen* s)
     fe_refresh_rows();
 }
 
-static void fe_open_online(void)
+/* VERSUS > ONLINE from the menus: the ONLINE screen as its own GS_FRONTEND scene; backing out
+ * goes to GM_MENU, which routes back to the VS hub on ONLINE. */
+
+static void fe_online_from_menus(void)
 {
+    fe.screen = &fe_screen_online;
+    fe.continue_to = GM_VS;
+    fe.back_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.next_menus = false;
     fe_np_phase = FE_NP_IDLE;
-    fe_switch_screen(&fe_screen_online);
+    fm_back_to_online_item = true;
+    fm_leave_scene(GM_FRONTEND);
 }
 
 static void fe_change(const FrontendItem* it, int dir)
@@ -2044,6 +1706,11 @@ void gm_Scene_Frontend_OnFrame(void)
             gm_ChangeGameModeAfterCurrentScene(fe.leaving == 1 ? fe.continue_to : fe.back_to);
             gm_801A4B60();
         }
+        if (fe.screen->art != 0) {
+            fp.frame++;
+            fp_evaluate(fp.frame);
+            return;
+        }
         fe_refresh_rows();
         if (fe_kit) {
             fk_frame();
@@ -2058,90 +1725,12 @@ void gm_Scene_Frontend_OnFrame(void)
         fe.hl_y += ((float) (fe.cursor - fe.scroll) - fe.hl_y) * 0.35F;
     }
 
-    if (fe.screen == &fe_screen_online && fe_np_phase == FE_NP_IDLE && Netplay_RematchPending() &&
-        fe.frames >= (fe_np_role == 0 ? 30 : 150))
-    {
-        /* back from a match in a room: reconnect to it - the host re-hosts the same code first,
-           the guest follows a couple of seconds later */
-        Netplay_RematchTaken();
-        fe_np_start();
-    }
-    if (fe.screen == &fe_screen_online && fe_np_phase == FE_NP_WORKING) {
-        fe_switch_screen(&fe_screen_wait); /* Host Match / Connect: into the waiting room */
-    }
-    if (fe_np_code_open) {
-        /* THE CODE ENTRY: keyboard keys are text while it is open (and only then); a controller
-           changes the active letter with Left/Right, A moves on (and closes after the last
-           slot), B or Enter/Esc closes. The rest of the menu waits. */
-        u32 cin = mn_80229624(4);
-        int k = fe.screen == &fe_screen_online ? Netplay_CodeKeys() : 2;
-        if (cin & MenuInput_Left) {
-            Netplay_CodeStep(-1);
-            sfxMove();
-        } else if (cin & MenuInput_Right) {
-            Netplay_CodeStep(+1);
-            sfxMove();
-        } else if (cin & MenuInput_Confirm) {
-            if (Netplay_CodeSlot() == 3 && Netplay_CodeComplete()) {
-                k = 2;
-            } else {
-                Netplay_CodeNext();
-            }
-            sfxForward();
-        } else if (cin & MenuInput_Back) {
-            k = 2;
-            sfxBack();
-        }
-        if (k == 2) {
-            fe_np_code_open = false;
-        }
-        fe_refresh_rows();
-        if (fe_kit) {
-            fk_frame(); /* the field redraws as it is typed */
-        }
+    if (fe.screen->art != 0) {
+        fl_frame(); /* a room screen: its own input and model */
         return;
     }
-    if ((fe.screen == &fe_screen_wait || fe.screen == &fe_screen_lobby) &&
-        (fe_np_phase == FE_NP_WORKING || fe_np_phase == FE_NP_LOBBY))
-    {
-        static int seq = -1;
-        fe_np_phase = Netplay_MenuPoll();
-        if (fe_np_phase == FE_NP_LOBBY && fe.screen != &fe_screen_lobby) {
-            fe_switch_screen(&fe_screen_lobby); /* the other player is in */
-        }
-        if (fe.screen == &fe_screen_lobby && Netplay_LobbySeq() != seq) {
-            int want = -1, i, p = fe_lb_phase(), me = fe_lb_me();
-            seq = Netplay_LobbySeq();
-            fe_rebuild_visible(); /* rows come and go with the phase */
-            /* the cursor goes where this player's move is: a free stage on their turn, Ready,
-               or Pick Character */
-            if ((p == LBP_STRIKE || p == LBP_BAN || p == LBP_PICK) && Netplay_LobbyInfo(4) == me) {
-                for (i = 0; i < 6 && want < 0; i++) {
-                    if (Netplay_LobbyStage(i) == LBS_FREE) {
-                        want = 4 + i;
-                    }
-                }
-            } else if (p == LBP_READY) {
-                want = 10;
-            } else if (fe_lb_can_pick_char()) {
-                want = 3;
-            }
-            for (i = 0; want >= 0 && i < fe.n_vis; i++) {
-                if (fe.vis[i] == want) {
-                    fe.cursor = i;
-                }
-            }
-        }
-        if (fe_np_phase == FE_NP_FAILED) {
-            fe_switch_screen(&fe_screen_online);
-        }
-        if (fe_np_phase == FE_NP_CONNECTED) {
-            /* the agreed match is the configured scene: VS mode seeds it and starts at the match */
-            Netplay_MenuLaunch();
-            fe.continue_to = GM_VS;
-            fe.leaving = 1;
-            fe_np_phase = FE_NP_IDLE;
-        }
+    if (fe.screen == &fe_screen_online && fe_ol_note[0] != '\0' && ++fe_ol_note_frames > 300) {
+        fe_ol_note[0] = '\0'; /* a notice stays five seconds */
     }
 
     if (fe.frames >= 4 && fe.n_vis > 0) { /* let the button that brought us here go */
@@ -2158,7 +1747,12 @@ void gm_Scene_Frontend_OnFrame(void)
         } else if (in & MenuInput_Right) {
             fe_change(it, +1);
         } else if (in & MenuInput_Confirm) {
-            if (it->kind == FE_ACTION) {
+            if (it->enabled != NULL && !it->enabled()) {
+                sfxBack(); /* greyed out: says why in its help line */
+                if (fe_kit) {
+                    fk_bump(1);
+                }
+            } else if (it->kind == FE_ACTION) {
                 if (it->action == FE_DO_CALL) {
                     sfxForward();
                     if (it->call != NULL) {
@@ -2181,16 +1775,7 @@ void gm_Scene_Frontend_OnFrame(void)
             }
         } else if (in & MenuInput_Back) {
             sfxBack();
-            if (fe.screen == &fe_screen_online) {
-                if (fe_np_phase == FE_NP_WORKING) {
-                    Netplay_MenuCancel();
-                    fe_np_phase = FE_NP_IDLE;
-                } else {
-                    fe_switch_screen(&fe_screen_vs_setup);
-                }
-            } else {
-                fe.leaving = 2;
-            }
+            fe.leaving = 2; /* ONLINE backs out to the VERSUS menu; MATCH SETUP to where it came from */
         }
         if (fe.cursor >= fe.n_list) {
             /* on the button: the plate waits on the row the cursor will come back to */
@@ -2215,6 +1800,7 @@ void gm_Scene_Frontend_OnExit(void* exit_data)
         return;
     }
     fk_exit();
+    fl_exit();
     fe_kit = false;
     for (slot = 0; slot < FE_MAX_ROWS; slot++) {
         if (fe.label[slot] != NULL) {

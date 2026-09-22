@@ -187,7 +187,10 @@ static void fk_build(bool animate_in)
     fp.sel_offset[1] = kit.row_sel_offset[1];
     fp.recolour = true;
     fk.rows_joint = fp_add_joint("rows", -1, NULL);
-    fm_chrome_with(fe.screen->subtitle, crumbs, fe.screen == &fe_screen_online ? 4 : 3, section,
+    if (fe.screen == &fe_screen_online) {
+        crumbs[1] = "ONLINE PLAY"; /* VERSUS > ONLINE */
+    }
+    fm_chrome_with(fe.screen->subtitle, crumbs, fe.screen == &fe_screen_online ? 2 : 3, section,
                    3, hg, ht);
 
     fk.nrows = fe.n_vis < FK_MAX_ROWS ? fe.n_vis : FK_MAX_ROWS;
@@ -392,6 +395,14 @@ static void fk_build(bool animate_in)
         }
         if (fk.q_cvo[r] >= 0) fp_mch(fk.q_cvo[r], FMC_ALPHA)->rest = 0.0F;
         fk_row_state(r, 0, 0);
+        if (it->enabled != NULL && !it->enabled()) {
+            int lq = fp.tile[fk.tile[r]].q_label, c;
+            float rgb[3];
+            fm_tok("disabled", KS_VERSUS, rgb);
+            for (c = 0; c < 3 && lq >= 0; c++) {
+                fp_mch(lq, c)->rest = rgb[c];
+            }
+        }
     }
     fp_jch(fk.toast_joint, FJC_TRA_X)->rest = 600.0F;
     fk.toast_up = false;
@@ -549,26 +560,18 @@ static void fk_frame(void)
         }
         fp_copy(fk.val[r], now, FE_STR);
     }
-    /* the connection status as the kit's toast */
-    if (fe.screen == &fe_screen_online || fe.screen == &fe_screen_wait ||
-        fe.screen == &fe_screen_lobby)
-    {
-        bool want = fe_np_phase != FE_NP_IDLE || fe.screen == &fe_screen_lobby;
+    /* ONLINE's notice ("You left the room.", a server error) as the kit's toast */
+    if (fe.screen == &fe_screen_online) {
+        bool want = fe_ol_note[0] != 0;
         if (want) {
-            char st[FE_STR];
-            if (fe.screen == &fe_screen_lobby) {
-                fe_lb_instruction(st); /* what the lobby asks of this player now */
-            } else {
-                Netplay_MenuStatus(st, FE_STR);
-            }
-            if (strcmp(st, fk.toast_str) != 0) {
-                fp_copy(fk.toast_str, st, FE_STR);
-                fk_retext(fk.q_toast_text, st, kit.desc_anchor[0], 0, kit.desc_max);
+            if (strcmp(fe_ol_note, fk.toast_str) != 0) {
+                fp_copy(fk.toast_str, fe_ol_note, FE_STR);
+                fk_retext(fk.q_toast_text, fe_ol_note, kit.desc_anchor[0], 0, kit.desc_max);
             }
             if (fk.q_toast_accent >= 0) {
                 float rgb[3];
                 int c;
-                fm_tok(fe_np_phase == FE_NP_FAILED ? "danger" : "ok", KS_VERSUS, rgb);
+                fm_tok(fe_ol_note_bad ? "danger" : "ok", KS_VERSUS, rgb);
                 for (c = 0; c < 3; c++) {
                     fp_set(fp_mch(fk.q_toast_accent, c), fp.frame, rgb[c]);
                 }

@@ -36,7 +36,8 @@
  */
 
 enum { FM_HUB, FM_LIST };
-enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP };
+enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE };
+#define SEL_VS_ONLINE 0x40 ///< not a vanilla selection: VERSUS > ONLINE is the port's
 #define FMF_PORT 1  ///< gm_801677E8(the port that pressed A) before acting, as vanilla does
 #define FMF_NOSFX 2 ///< no sfxForward (Data > Sound Test stops the music instead)
 
@@ -123,6 +124,8 @@ static const FeMenuItem fm_multi[] = {
 static const FeMenuItem fm_vs[] = {
     { "MELEE", "Up to four players. Your rules, your stage.", "ico_melee", SEL_VS_MELEE,
       FA_MATCH_SETUP, GM_VS },
+    { "ONLINE", "Play someone over the internet: host a room or join one.", "ico_online",
+      SEL_VS_ONLINE, FA_ONLINE, GM_VS },
     { "TOURNAMENT", "A bracket for up to 64 players.", "ico_tournament", SEL_VS_TOURNAMENT,
       FA_MODE, GM_TOURNAMENT },
     { "SPECIAL MELEE", "Melee with a twist.", "ico_special", SEL_VS_SPECIAL, FA_SUB,
@@ -279,6 +282,15 @@ static void fm_position_for(u8 previous_mode, u8* kind, u8* sel)
     };
     int i;
     GameRules* rules = gmMainLib_GetGameRules();
+    if (fm_back_to_online_item) {
+        /* backing out of ONLINE (or its rooms): the VS hub, on ONLINE */
+        fm_back_to_online_item = false;
+        if (previous_mode == GM_VS && rules->force_main_menu == 0) {
+            *kind = MENU_KIND_VS;
+            *sel = SEL_VS_ONLINE;
+            return;
+        }
+    }
     if (rules->force_main_menu != 0) {
         rules->force_main_menu = 0;
         *kind = MENU_KIND_MAIN;
@@ -1091,6 +1103,10 @@ static void fm_do_pending(void)
         OSReport("frontend: -> MATCH SETUP, then GM_VS\n");
         fe_match_setup_from_menus();
         return;
+    case 5:
+        OSReport("frontend: -> ONLINE\n");
+        fe_online_from_menus();
+        return;
     }
 }
 
@@ -1133,6 +1149,9 @@ static void fm_confirm(void)
     case FA_MATCH_SETUP:
         fm.pend_kind = fe_rules_enabled() ? 4 : 2;
         fm.pend_a = it->arg;
+        break;
+    case FA_ONLINE:
+        fm.pend_kind = 5;
         break;
     }
     if (fp.motion_ok) {

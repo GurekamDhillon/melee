@@ -354,10 +354,10 @@ static const FjNode* fj_load(const char* name, void** mem_text, void** mem_pool)
 
 /* ---- the model --------------------------------------------------------------------------- */
 
-#define FP_MAX_QUADS 200
+#define FP_MAX_QUADS 256
 #define FP_MAX_JOINTS 128
 #define FP_MAX_TILES 12
-#define FP_MAX_TEX 24
+#define FP_MAX_TEX 48
 #define FP_MAX_EVENTS 20
 #define FP_MAX_TRACKS 16
 #define FP_MAX_KEYS 6
@@ -462,7 +462,8 @@ typedef struct FpEvent {
 typedef struct FpTex {
     char name[FP_ID];
     FeTex t;
-    bool mask; ///< I4/IA4: RGB from the material, alpha from the texture
+    bool mask;     ///< I4/IA4: RGB from the material, alpha from the texture
+    bool borrowed; ///< the pixels belong to someone else (a captured CSS icon): not freed here
 } FpTex;
 
 typedef struct FpSeqBar {
@@ -716,6 +717,7 @@ static int fp_tex(const char* name)
     fp_copy(fp.tex[i].name, name, FP_ID);
     fe_tex_load(&fp.tex[i].t, name);
     fp.tex[i].mask = false;
+    fp.tex[i].borrowed = false;
     if (fp.tex[i].t.ok) {
         int h = GxTex_OpenUI(name);
         int f = h >= 0 ? GxTex_Format(h) : -1;
@@ -745,7 +747,7 @@ static void fp_free_textures(void)
 {
     int i;
     for (i = 0; i < fp.ntex; i++) {
-        if (fp.tex[i].t.ok) {
+        if (fp.tex[i].t.ok && !fp.tex[i].borrowed) {
             HSD_Free(fp.tex[i].t.data);
             if (fp.tex[i].t.lut != NULL) {
                 HSD_Free(fp.tex[i].t.lut);

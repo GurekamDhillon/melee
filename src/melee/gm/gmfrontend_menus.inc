@@ -491,6 +491,7 @@ static void fm_tile(int slot, const FeMenuItem* it, int section, int rank, float
     fm_tok("bone", section, bone);
     sprintf(id, "t%d", slot);
     fp_copy(t->id, id, FP_ID);
+    t->nextra = 0;
     t->rank = rank;
     fm_tok("@face", section, t->ng_face);
     fm_tok("@face_hi", section, t->ng_icon);
@@ -534,14 +535,16 @@ static void fm_tile(int slot, const FeMenuItem* it, int section, int rank, float
 }
 
 /* The chrome (chrome_layout.json): the section's backdrop and band rhythm, the header slab
- * sized by its title, the breadcrumb with the section icon at its root, the description strip,
- * and the footer with the A/B hints. */
-static void fm_chrome(const FeMenu* m, int section)
+ * sized by its title, the breadcrumb (`crumbs`, root first) with the section icon at its root,
+ * the description strip, and the footer hints (glyph + text; A in `ok`, B in `danger`, the
+ * kit's suggested tints, anything else bone). */
+static void fm_chrome_with(const char* title, const char* const* crumbs, int ncrumbs,
+                           int section, int nhints, const char* const* hglyph,
+                           const char* const* htext)
 {
     const KitSection* ks = &kit.sec[section];
     float ink[3], gold[3], muted[3], bone[3], ok[3], danger[3];
-    const FeMenu* path[6];
-    int np = 0, i, q;
+    int i, q;
     float x, slab_x1;
     char id[FP_ID];
     fm_tok("ink", section, ink);
@@ -557,7 +560,7 @@ static void fm_chrome(const FeMenu* m, int section)
     }
     /* header: the title decides the slab's width */
     q = fm_text("header_title", FPR_TITLE, -1, kit.title_role, kit.title_anchor[0],
-                kit.title_anchor[1], m->title, ink, kit.title_max);
+                kit.title_anchor[1], title, ink, kit.title_max);
     slab_x1 = kit.title_anchor[0] + fm_last_w + 20.0F;
     fm_flat("header_rule", FPR_CHROME, -1, slab_x1 - 4, kit.rule[1], kit.rule[2], kit.rule[3],
             ink);
@@ -572,26 +575,19 @@ static void fm_chrome(const FeMenu* m, int section)
         fp.q[n] = tmp;
         fp.q[n].text = fp.q[n].textbuf; /* it pointed into its old slot */
     }
-    /* breadcrumb: the section icon, then the path of menus to here */
     {
         char icon[FP_ID];
         sprintf(icon, "ico_%s", kit_section_names[section]);
         fm_textured("crumb_icon", FPR_CHROME, -1, icon, kit.crumb_icon[0], kit.crumb_icon[1],
                     kit.crumb_icon[2], kit.crumb_icon[3], ks->face_hi);
     }
-    for (path[np++] = m; np < 6 && path[np - 1]->back_kind != 0xFF; np++) {
-        path[np] = fm_find(path[np - 1]->back_kind);
-        if (path[np] == NULL || path[np]->kind == MENU_KIND_MAIN) {
-            break;
-        }
-    }
     x = kit.crumb_anchor[0];
-    for (i = np - 1; i >= 0; i--) {
+    for (i = 0; i < ncrumbs; i++) {
         sprintf(id, "crumb_%d", i);
-        fm_text(id, FPR_CHROME, -1, kit.crumb_role, x, kit.crumb_anchor[1], path[i]->title,
-                i == 0 ? bone : muted, kit.crumb_anchor[0] + kit.crumb_max - x);
+        fm_text(id, FPR_CHROME, -1, kit.crumb_role, x, kit.crumb_anchor[1], crumbs[i],
+                i == ncrumbs - 1 ? bone : muted, kit.crumb_anchor[0] + kit.crumb_max - x);
         x += fm_last_w;
-        if (i > 0) {
+        if (i < ncrumbs - 1) {
             sprintf(id, "crumb_bar_%d", i);
             fm_flat(id, FPR_CHROME, -1, x + 6, kit.crumb_anchor[1] - 10, x + 8,
                     kit.crumb_anchor[1], gold);
@@ -604,27 +600,45 @@ static void fm_chrome(const FeMenu* m, int section)
             kit.footer[3], ink);
     fm_flat("footer_mark", FPR_CHROME, -1, kit.footer_mark[0], kit.footer_mark[1],
             kit.footer_mark[2], kit.footer_mark[3], gold);
-    /* hints: glyph (A in ok, B in danger - the kit's suggested tints), 4px, text, 12px */
-    {
-        static const char* const glyph[2] = { "glyph_a", "glyph_b" };
-        static const char* const text[2] = { "Select", "Back" };
-        x = kit.footer[0] + 24;
-        for (i = 0; i < 2; i++) {
-            int t = fp_tex(glyph[i]);
-            float gw = kit.hint_glyph_h;
-            if (t >= 0 && fp.tex[t].t.h > 0) {
-                gw = kit.hint_glyph_h * (float) fp.tex[t].t.w / (float) fp.tex[t].t.h;
-            }
-            sprintf(id, "hint_%d_glyph", i);
-            fm_textured(id, FPR_CHROME, -1, glyph[i], x, kit.hint_glyph_y0, x + gw,
-                        kit.hint_glyph_y0 + kit.hint_glyph_h, i == 0 ? ok : danger);
-            x += gw + 4;
-            sprintf(id, "hint_%d_text", i);
-            fm_text(id, FPR_CHROME, -1, kit.hint_role, x, kit.hint_anchor_y, text[i], bone,
-                    kit.hint_max);
-            x += fm_last_w + 12;
+    /* hints: glyph, 4px, text, 12px */
+    x = kit.footer[0] + 24;
+    for (i = 0; i < nhints; i++) {
+        int t = fp_tex(hglyph[i]);
+        float gw = kit.hint_glyph_h;
+        const float* tint = strcmp(hglyph[i], "glyph_a") == 0   ? ok
+                            : strcmp(hglyph[i], "glyph_b") == 0 ? danger
+                                                                : bone;
+        if (t >= 0 && fp.tex[t].t.h > 0) {
+            gw = kit.hint_glyph_h * (float) fp.tex[t].t.w / (float) fp.tex[t].t.h;
+        }
+        sprintf(id, "hint_%d_glyph", i);
+        fm_textured(id, FPR_CHROME, -1, hglyph[i], x, kit.hint_glyph_y0, x + gw,
+                    kit.hint_glyph_y0 + kit.hint_glyph_h, tint);
+        x += gw + 4;
+        sprintf(id, "hint_%d_text", i);
+        fm_text(id, FPR_CHROME, -1, kit.hint_role, x, kit.hint_anchor_y, htext[i], bone,
+                kit.hint_max);
+        x += fm_last_w + 12;
+    }
+}
+
+static void fm_chrome(const FeMenu* m, int section)
+{
+    static const char* const hg[2] = { "glyph_a", "glyph_b" };
+    static const char* const ht[2] = { "Select", "Back" };
+    const FeMenu* path[6];
+    const char* crumbs[6];
+    int np = 0, i;
+    for (path[np++] = m; np < 6 && path[np - 1]->back_kind != 0xFF; np++) {
+        path[np] = fm_find(path[np - 1]->back_kind);
+        if (path[np] == NULL || path[np]->kind == MENU_KIND_MAIN) {
+            break;
         }
     }
+    for (i = 0; i < np; i++) {
+        crumbs[i] = path[np - 1 - i]->title;
+    }
+    fm_chrome_with(m->title, crumbs, np, section, 2, hg, ht);
 }
 
 /* THE HUB LAYOUT RULE (the engine's stand-in until brief section 2 delivers the art's): one hero
@@ -1150,9 +1164,8 @@ static void fm_back(void)
     }
 }
 
-/* The slot a direction moves to. Lists: up/down in order. Hubs: up/down run through the tiles
- * in rank order (hero, then the column top to bottom) and wrap, as vanilla's lists do;
- * left/right cross between the hero and the column. */
+/* The slot a direction moves to. Up/down: vanilla's item order, wrapping. Hubs: left/right
+ * cross between the hero and the column. */
 static int fm_move(u32 in)
 {
     int n = fm.nvis, i, r = -1, rank_of[FM_MAX_VIS], by_rank[FM_MAX_VIS];
@@ -1164,11 +1177,13 @@ static int fm_move(u32 in)
         by_rank[rank_of[i]] = i;
     }
     r = rank_of[fm.cursor];
+    /* up/down in vanilla's own order, wrapping, as its menus do (and as players' hands and the
+       netplay pad scripts expect) */
     if (in & MenuInput_Up) {
-        return by_rank[(r + n - 1) % n];
+        return (fm.cursor + n - 1) % n;
     }
     if (in & MenuInput_Down) {
-        return by_rank[(r + 1) % n];
+        return (fm.cursor + 1) % n;
     }
     if (fm.menu->style == FM_HUB) {
         if ((in & MenuInput_Left) && r > 0) {

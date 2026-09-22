@@ -30,8 +30,9 @@
 /* ---- font ------------------------------------------------------------------------------- */
 
 #define FF_ROLES 10
-#define FF_NCH 96 /* 0x20..0x7E, then the ellipsis */
+#define FF_NCH 100 /* 0x20..0x7E, then the ellipsis and the four arrows */
 #define FF_ELLIPSIS 95
+#define FF_ARROW 96 /* <- -> up down; written in strings as bytes 0x02..0x05 */
 #define FF_MAX_KERN 12000
 
 typedef struct FfGlyph {
@@ -76,6 +77,9 @@ static int ff_char(const char* key)
     }
     if (k[0] == 0xE2 && k[1] == 0x80 && k[2] == 0xA6 && k[3] == 0) { /* U+2026 */
         return FF_ELLIPSIS;
+    }
+    if (k[0] == 0xE2 && k[1] == 0x86 && k[2] >= 0x90 && k[2] <= 0x93 && k[3] == 0) {
+        return FF_ARROW + (k[2] - 0x90); /* U+2190..2193 */
     }
     return -1;
 }
@@ -181,7 +185,7 @@ static int ff_role(const char* name)
 static float ff_kern(const FfRole* r, int prev, int ch)
 {
     int i;
-    if (prev < 0 || prev >= 95 || ch >= 95) {
+    if (prev < 0 || prev >= 95 || ch >= 95 || prev >= FF_NCH) {
         return 0.0F;
     }
     for (i = r->kern_first[prev]; i < r->kern_first[prev] + r->kern_count[prev]; i++) {
@@ -201,6 +205,8 @@ static int ff_slot(const FfRole* r, u8 c)
     }
     if (c == 0x01) {
         s = FF_ELLIPSIS; /* our internal marker for the ellipsis */
+    } else if (c >= 0x02 && c <= 0x05) {
+        s = FF_ARROW + (c - 0x02);
     } else {
         s = (c >= 0x20 && c < 0x7F) ? c - 0x20 : -1;
     }
@@ -501,6 +507,75 @@ static void kit_load(void)
              "using the delivery's values", kit.npal);
 }
 
+/* widgets_layout.json's colour names per row state (ng / sel), as kit tokens. */
+#define KW_NAMES 11
+static const char* const kw_names[KW_NAMES] = { "row",  "text",  "aux",         "track",
+                                                "track_text", "fill", "knob", "toggle_knob",
+                                                "knob_text",  "plate", "plate_glyph" };
+static char kw_tok[3][KW_NAMES][12]; /* ng, sel, disabled */
+static int kw_state = 0;
+
+static void kit_widgets_load(void)
+{
+    void *t, *p;
+    const FjNode* W;
+    static const char* const st[3] = { "ng", "sel", "disabled" };
+    static const char* const def[3][KW_NAMES] = {
+        { "@face", "bone", "muted", "ink", "muted", "@face_hi", "bone", "bone", "ink", "ink",
+          "bone" },
+        { "gold", "ink", "ink", "ink", "gold_dk", "gold_dk", "ink", "gold_lt", "ink", "ink",
+          "gold_lt" },
+        { "@face", "disabled", "disabled", "ink", "disabled", "disabled", "disabled", "disabled",
+          "ink", "ink", "disabled" },
+    };
+    int i, k;
+    if (kw_state != 0) {
+        return;
+    }
+    kw_state = 1;
+    for (i = 0; i < 3; i++) {
+        for (k = 0; k < KW_NAMES; k++) {
+            fp_copy(kw_tok[i][k], def[i][k], 12);
+        }
+    }
+    W = fj_load("widgets_layout.json", &t, &p);
+    for (i = 0; W != NULL && i < 3; i++) {
+        const FjNode* c = fj_get(fj_get(W, "colours"), st[i]);
+        for (k = 0; k < KW_NAMES; k++) {
+            const char* v = fj_str(fj_get(c, kw_names[k]));
+            if (v != NULL) {
+                fp_copy(kw_tok[i][k], v, 12);
+            }
+        }
+    }
+    if (t != NULL) HSD_Free(t);
+    if (p != NULL) HSD_Free(p);
+}
+
+static int kw_section = KS_VERSUS;
+
+/* A widget colour name in a row state (0 ng, 1 sel, 2 disabled) -> rgb. */
+static void kit_widget_state_colour(int state, const char* name, float* rgb)
+{
+    int k;
+    for (k = 0; k < KW_NAMES; k++) {
+        if (strcmp(kw_names[k], name) == 0) {
+            if (!kit_colour(kw_tok[state][k], kw_section, rgb)) {
+                rgb[0] = rgb[1] = rgb[2] = 1.0F;
+            }
+            return;
+        }
+    }
+    rgb[0] = rgb[1] = rgb[2] = 1.0F;
+}
+
+/* In a motion key, a widget name ("aux") means the selected row's colour: value changes happen
+ * on the row the cursor is on. */
+static void kit_widget_colour(const char* name, float* rgb)
+{
+    kit_widget_state_colour(1, name, rgb);
+}
+
 /* kit_motion.json's events into fp's event table, for a screen of `section`. Targets are the
  * list row's ("row", "row_plate", "row_face", "row_label"), rewritten to the player's per-tile
  * names; COLOUR tracks become DIFFUSE_R/G/B with the tokens resolved for the section. Events
@@ -521,8 +596,12 @@ static void kit_read_motion(int section)
     for (e = fj_first(fj_get(M, "events")); e != NULL && fp.nev < FP_MAX_EVENTS; e = fj_next(e)) {
         FpEvent* ev;
         const FjNode* tr;
-        if (strcmp(e->key, "row_select") != 0 && strcmp(e->key, "row_deselect") != 0) {
-            continue; /* the other kit events drive widgets, dialogs and cursors - not used yet */
+        if (strcmp(e->key, "row_select") != 0 && strcmp(e->key, "row_deselect") != 0 &&
+            strcmp(e->key, "choice_step") != 0 && strcmp(e->key, "slider_step") != 0 &&
+            strcmp(e->key, "toggle_set") != 0 && strcmp(e->key, "bump") != 0 &&
+            strcmp(e->key, "toast_in") != 0 && strcmp(e->key, "toast_out") != 0)
+        {
+            continue; /* dialogs, cells, cursors and the stepper: not on a screen yet */
         }
         ev = &fp.ev[fp.nev++];
         fp_copy(ev->name, e->key, 16);
@@ -532,12 +611,22 @@ static void kit_read_motion(int section)
             const char* target = fj_str(fj_get(tr, "target"));
             const char* kind = fj_str(fj_get(tr, "kind"));
             const char* ch = fj_str(fj_get(tr, "channel"));
+            /* the kit's widget joints and materials, per row: see gmfrontend_kitlist.inc */
             const char* mapped = target == NULL                    ? NULL
                                  : strcmp(target, "row") == 0       ? "lift_<id>"
                                  : strcmp(target, "row_plate") == 0 ? "plate_<id>"
                                  : strcmp(target, "row_face") == 0  ? "face_<id>"
                                  : strcmp(target, "row_label") == 0 ? "label_<id>"
-                                                                    : NULL;
+                                 : strcmp(target, "choice_value_out") == 0 ? "cvo_<id>"
+                                 : strcmp(target, "choice_value") == 0     ? "cv_<id>"
+                                 : strcmp(target, "choice_arrow_<dir>") == 0 ? "ca<dir>_<id>"
+                                 : strcmp(target, "<blocked_arrow>") == 0  ? "ca<dir>_<id>"
+                                 : strcmp(target, "<value>") == 0          ? "<value>_<id>"
+                                 : strcmp(target, "toggle_knob") == 0      ? "tk_<id>"
+                                 : strcmp(target, "slider_fill") == 0      ? "sf_<id>"
+                                 : strcmp(target, "slider_knob") == 0      ? "sk_<id>"
+                                 : strcmp(target, "toast") == 0            ? "toast"
+                                                                           : NULL;
             bool colour = ch != NULL && strcmp(ch, "COLOUR") == 0;
             int c, nc = colour ? 3 : 1;
             if (mapped == NULL) {
@@ -546,6 +635,7 @@ static void kit_read_motion(int section)
             for (c = 0; c < nc && ev->n < FP_MAX_TRACKS; c++) {
                 FpTrack* k = &ev->t[ev->n++];
                 const FjNode* key;
+                k->expr_mask = 0;
                 fp_copy(k->target, mapped, FP_ID);
                 k->is_material = kind != NULL && strcmp(kind, "material") == 0;
                 k->channel = colour ? (u8) c : fp_channel(ch, &k->recoil);
@@ -561,10 +651,17 @@ static void kit_read_motion(int section)
                     d->interp = fp_interp(fj_str(fj_get(key, "interp")));
                     d->slope = fj_num(fj_get(key, "slope"), 0);
                     d->from_current = fc != NULL && fc->type == FJ_TRUE;
-                    if (v != NULL && v->type == FJ_STR) {
+                    if (v != NULL && v->type == FJ_STR && !colour) {
+                        /* an expression ("60*dir", "value/max"), evaluated when played */
+                        k->expr_mask |= (u8) (1 << (k->n - 1));
+                        fp_copy(k->expr[k->n - 1], v->s, 24);
+                        d->v = 0.0F;
+                    } else if (v != NULL && v->type == FJ_STR) {
                         float rgb[3] = { 0, 0, 0 };
-                        kit_colour(v->s, section, rgb);
-                        d->v = colour ? rgb[c] : 0.0F;
+                        if (!kit_colour(v->s, section, rgb)) {
+                            kit_widget_colour(v->s, rgb); /* "aux" and the other widget names */
+                        }
+                        d->v = rgb[c];
                     } else {
                         d->v = fj_num(v, 0);
                     }

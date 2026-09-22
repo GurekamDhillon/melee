@@ -354,14 +354,14 @@ static const FjNode* fj_load(const char* name, void** mem_text, void** mem_pool)
 
 /* ---- the model --------------------------------------------------------------------------- */
 
-#define FP_MAX_QUADS 112
-#define FP_MAX_JOINTS 64
+#define FP_MAX_QUADS 200
+#define FP_MAX_JOINTS 128
 #define FP_MAX_TILES 12
 #define FP_MAX_TEX 24
-#define FP_MAX_EVENTS 12
+#define FP_MAX_EVENTS 20
 #define FP_MAX_TRACKS 16
 #define FP_MAX_KEYS 6
-#define FP_PLAYS 4
+#define FP_PLAYS 3
 #define FP_ID 28
 
 enum { FPK_FLAT, FPK_TEX, FPK_TEXT };
@@ -400,6 +400,7 @@ typedef struct FpQuad {
     s8 tex;   ///< FpTex index, -1 none/missing
     s8 joint; ///< the joint that draws it, -1 none
     bool has_colour;
+    bool late;     ///< drawn after everything else (the toast over the description strip)
     float v[4][2]; ///< TL TR BR BL at rest
     float uv[4];   ///< u0 v0 u1 v1
     float rgb[3];
@@ -426,6 +427,8 @@ typedef struct FpTile {
     int q_plate, q_face, q_icon, q_label, q_desc; ///< quad indices, -1 none
     int j_tile, j_lift, j_plate, j_desc;          ///< joint indices, -1 none
     float ng_face[3], ng_icon[3];                 ///< this tile's rest colours (its section)
+    int extra[10];                                ///< more quads drawn with it (a row's widget)
+    int nextra;
 } FpTile;
 
 typedef struct FpJoint {
@@ -445,6 +448,8 @@ typedef struct FpTrack {
     u8 recoil;
     u8 n;
     FpKey k[FP_MAX_KEYS];
+    u8 expr_mask;              ///< keys whose value is an expression (kit_motion: "60*dir")
+    char expr[FP_MAX_KEYS][24];
 } FpTrack;
 
 typedef struct FpEvent {
@@ -504,8 +509,8 @@ static struct {
     FpTex tex[FP_MAX_TEX];
     int ntex;
     /* materials: target name pattern -> quad id pattern, with "<id>" where the tile id goes */
-    char mat_key[8][FP_ID];
-    char mat_val[8][FP_ID];
+    char mat_key[16][FP_ID];
+    char mat_val[16][FP_ID];
     int nmat;
     FpEvent ev[FP_MAX_EVENTS];
     int nev;
@@ -518,6 +523,10 @@ static struct {
     FpChan ch[FP_MAX_JOINTS * FJC_N + FP_MAX_QUADS * FMC_N];
     int frame;
     int sel, prev; ///< tile indices, -1 none
+    /* the variables kit_motion's expressions and templated targets use, set by the caller of
+       fp_event: dir (+1/-1), value, max, and the names <dir> / <value> stand for */
+    float v_dir, v_value, v_max;
+    char n_dir[4], n_value[8];
 } fp;
 
 /* -- helpers -- */
@@ -608,12 +617,23 @@ static void fp_subst(char* out, const char* pat, const char* id)
 {
     int o = 0;
     while (*pat != '\0' && o < FP_ID - 1) {
+        const char* s = NULL;
+        int skip = 0;
         if (pat[0] == '<' && strncmp(pat, "<id>", 4) == 0) {
-            const char* s = id;
+            s = id;
+            skip = 4;
+        } else if (pat[0] == '<' && strncmp(pat, "<dir>", 5) == 0) {
+            s = fp.n_dir;
+            skip = 5;
+        } else if (pat[0] == '<' && strncmp(pat, "<value>", 7) == 0) {
+            s = fp.n_value;
+            skip = 7;
+        }
+        if (s != NULL) {
             while (*s != '\0' && o < FP_ID - 1) {
                 out[o++] = *s++;
             }
-            pat += 4;
+            pat += skip;
         } else {
             out[o++] = *pat++;
         }
@@ -840,6 +860,7 @@ static void fp_build_from_layout(const FjNode* L)
         fp_copy(t->id, fj_str(fj_get(n, "id")), FP_ID);
         t->rank = (int) fj_num(fj_get(n, "rank"), (float) fp.nt);
         t->q_plate = t->q_face = t->q_icon = t->q_label = t->q_desc = -1;
+        t->nextra = 0;
         for (qn = fj_first(fj_get(n, "quads")); qn != NULL; qn = fj_next(qn)) {
             int qi = fp_quad_from_json(qn, fp.nt);
             if (qi < 0) {
@@ -1314,6 +1335,76 @@ static void fp_reset_channels(void)
 
 /* Play an event on tile `ti` from frame f. `joint_override` sends every joint track to that
  * joint instead (the cluster's backplate rides the tiles' slide). */
+/* kit_motion's value expressions: numbers, dir / value / max, + - * / and parentheses. */
+static const char* fx_p;
+
+static float fx_sum(void);
+
+static float fx_atom(void)
+{
+    float v = 0.0F;
+    while (*fx_p == ' ') fx_p++;
+    if (*fx_p == '(') {
+        fx_p++;
+        v = fx_sum();
+        if (*fx_p == ')') fx_p++;
+        return v;
+    }
+    if (*fx_p == '-') {
+        fx_p++;
+        return -fx_atom();
+    }
+    if ((*fx_p >= '0' && *fx_p <= '9') || *fx_p == '.') {
+        float frac = 0.1F;
+        while (*fx_p >= '0' && *fx_p <= '9') v = v * 10.0F + (float) (*fx_p++ - '0');
+        if (*fx_p == '.') {
+            fx_p++;
+            while (*fx_p >= '0' && *fx_p <= '9') {
+                v += (float) (*fx_p++ - '0') * frac;
+                frac *= 0.1F;
+            }
+        }
+        return v;
+    }
+    if (strncmp(fx_p, "dir", 3) == 0) { fx_p += 3; return fp.v_dir; }
+    if (strncmp(fx_p, "value", 5) == 0) { fx_p += 5; return fp.v_value; }
+    if (strncmp(fx_p, "max", 3) == 0) { fx_p += 3; return fp.v_max != 0.0F ? fp.v_max : 1.0F; }
+    while (*fx_p != '\0' && *fx_p != ' ' && *fx_p != '+' && *fx_p != '-' && *fx_p != '*' &&
+           *fx_p != '/' && *fx_p != ')')
+    {
+        fx_p++; /* an unknown name (delta, target): 0 */
+    }
+    return 0.0F;
+}
+
+static float fx_prod(void)
+{
+    float v = fx_atom();
+    for (;;) {
+        while (*fx_p == ' ') fx_p++;
+        if (*fx_p == '*') { fx_p++; v *= fx_atom(); }
+        else if (*fx_p == '/') { float d; fx_p++; d = fx_atom(); v = d != 0.0F ? v / d : 0.0F; }
+        else return v;
+    }
+}
+
+static float fx_sum(void)
+{
+    float v = fx_prod();
+    for (;;) {
+        while (*fx_p == ' ') fx_p++;
+        if (*fx_p == '+') { fx_p++; v += fx_prod(); }
+        else if (*fx_p == '-') { fx_p++; v -= fx_prod(); }
+        else return v;
+    }
+}
+
+static float fx_eval(const char* e)
+{
+    fx_p = e;
+    return fx_sum();
+}
+
 static void fp_event(const char* name, int ti, int f, int joint_override)
 {
     int e = fp_find_event(name), k;
@@ -1322,9 +1413,21 @@ static void fp_event(const char* name, int ti, int f, int joint_override)
         return;
     }
     for (k = 0; k < fp.ev[e].n; k++) {
-        FpTrack* t = &fp.ev[e].t[k];
+        FpTrack* t0 = &fp.ev[e].t[k];
+        FpTrack tx;
+        FpTrack* t = t0;
         char target[FP_ID];
         int m, q = -1, j = -1;
+        if (t0->expr_mask != 0) {
+            int i;
+            tx = *t0;
+            for (i = 0; i < tx.n; i++) {
+                if (tx.expr_mask & (1 << i)) {
+                    tx.k[i].v = fx_eval(tx.expr[i]);
+                }
+            }
+            t = &tx;
+        }
         fp_subst(target, t->target, id);
         if (t->is_material) {
             for (m = 0; m < fp.nmat; m++) {
@@ -1707,7 +1810,7 @@ static void fp_draw(void)
     clear.a = 255;
     fp_flat(bg, clear);
     for (i = 0; i < fp.nq; i++) {
-        if (fp.q[i].tile < 0) {
+        if (fp.q[i].tile < 0 && !fp.q[i].late) {
             fp_draw_quad(i);
         }
     }
@@ -1724,8 +1827,19 @@ static void fp_draw(void)
         fp_draw_quad(t->q_face);
         fp_draw_quad(t->q_icon);
         fp_draw_quad(t->q_label);
+        {
+            int e;
+            for (e = 0; e < t->nextra; e++) {
+                fp_draw_quad(t->extra[e]);
+            }
+        }
     }
     for (i = 0; i < fp.nt; i++) {
         fp_draw_quad(fp.tile[i].q_desc);
+    }
+    for (i = 0; i < fp.nq; i++) {
+        if (fp.q[i].late) {
+            fp_draw_quad(i);
+        }
     }
 }

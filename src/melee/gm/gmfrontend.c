@@ -731,6 +731,18 @@ static void fe_match_setup_from_menus(void);
 #include "gmfrontend_player.inc"
 #include "gmfrontend_kit.inc"
 #include "gmfrontend_menus.inc"
+#include "gmfrontend_kitlist.inc"
+
+/* The toolkit screens are drawn with the kit when its files are there (fe_kit), with the old
+ * art pack and SisLib otherwise. */
+static bool fe_kit;
+
+static bool fe_kit_available(void)
+{
+    kit_load();
+    ff_load();
+    return ff.state == 1 && kit.state == 1;
+}
 
 static void fm_route_to_menus(u8 kind, u8 sel)
 {
@@ -868,7 +880,7 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     if (pass != 0) {
         return;
     }
-    if (fm.active) {
+    if (fm.active || fk.on) {
         fp_draw();
         return;
     }
@@ -1124,8 +1136,8 @@ static void fe_rebuild_visible(void)
         if (it->visible != NULL && !it->visible()) {
             continue;
         }
-        if (it->kind == FE_ACTION && it->action == FE_DO_CONTINUE) {
-            button = i; /* drawn as the CONTINUE button, not a row */
+        if (it->kind == FE_ACTION && it->action == FE_DO_CONTINUE && !fe_kit) {
+            button = i; /* drawn as the CONTINUE button, not a row (on the kit: the first row) */
         } else {
             fe.vis[fe.n_list++] = i;
         }
@@ -1196,6 +1208,7 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     if (fe.screen == NULL) {
         return;
     }
+    fe_kit = !fe.loading && fe_kit_available();
     fe_rebuild_visible();
     if (fe.has_button) {
         fe.cursor = fe.n_vis - 1; /* A straight away continues, as the menus do */
@@ -1211,6 +1224,10 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     gobj = GObj_Create(0xE, 0xF, 0);
     if (gobj != NULL) {
         GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
+    }
+    if (fe_kit) {
+        fk_build(true);
+        return;
     }
     {
         int i, n = 0;
@@ -1275,6 +1292,10 @@ static void fe_switch_screen(const FrontendScreen* s)
     fe.hl_y = 0.0F;
     fe.n_vis = 0;
     fe_rebuild_visible();
+    if (fe_kit) {
+        fk_build(true); /* the same scene, the next screen sliding in */
+        return;
+    }
     if (fe.title != NULL) {
         HSD_SisLib_803A5CC4(fe.title);
     }
@@ -1313,6 +1334,12 @@ static void fe_change(const FrontendItem* it, int dir)
         break;
     default:
         return;
+    }
+    if (fe_kit) {
+        fk_note_dir(dir);
+        if (it->kind == FE_SLIDER && v == it->get()) {
+            fk_bump(dir); /* held at an end: the kit's "can't go further" */
+        }
     }
     it->set(v);
     sfxMove();
@@ -1412,6 +1439,9 @@ void gm_Scene_Frontend_OnFrame(void)
             gm_801A4B60();
         }
         fe_refresh_rows();
+        if (fe_kit) {
+            fk_frame();
+        }
         return;
     }
     if (fe.fade > 0) {
@@ -1486,6 +1516,9 @@ void gm_Scene_Frontend_OnFrame(void)
         }
     }
     fe_refresh_rows();
+    if (fe_kit) {
+        fk_frame();
+    }
 }
 
 void gm_Scene_Frontend_OnExit(void* exit_data)
@@ -1496,6 +1529,8 @@ void gm_Scene_Frontend_OnExit(void* exit_data)
         fm_scene_exit();
         return;
     }
+    fk_exit();
+    fe_kit = false;
     for (slot = 0; slot < FE_MAX_ROWS; slot++) {
         if (fe.label[slot] != NULL) {
             HSD_SisLib_803A5CC4(fe.label[slot]);

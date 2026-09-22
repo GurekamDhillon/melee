@@ -85,6 +85,7 @@ static struct {
     uint32_t rejoin_until;/* a returning guest keeps asking for the room until then (GetTickCount) */
     int peer_left;        /* the connection ended because the opponent left (not an error of ours) */
     int use_lobby;        /* the menu path: connected players meet in the pick/ban lobby first */
+    int t_open_session;   /* random matchmaking: the session on the queue socket has started */
     int started, dead, accepted;
     long ticks;
     int desync_frame;
@@ -806,9 +807,49 @@ static void np_rdv_lan(char *out, size_t cap) {
     if (lan.ip == 0) snprintf(out, cap, "-"); else np_fmt_addr(out, cap, &lan);
 }
 
+/* ---- random matchmaking (lane beta, B1) ----------------------------------------------------------
+ * RandomBegin opens the session's socket and queues it on the server ("RAND <global-data hash>
+ * <lan>", repeated every 2 s); the server pairs two players whose GLOBAL game data matches
+ * (fighters and stages are intersected per match, so different mod sets pair fine) and answers
+ * "MATCH HOST|GUEST <code> <other-public> <other-lan>". The pair is an ordinary persistent room
+ * with that code, so from there on it is exactly the room-code path on the same socket: the host
+ * hosts (and keeps the code across rematches), the guest joins the code. */
+enum { NP_RAND_OFF, NP_RAND_WAITING, NP_RAND_MATCHED, NP_RAND_TIMEOUT, NP_RAND_FAILED };
+static struct {
+    int state;
+    int host;                 /* the role the server gave */
+    char code[8];
+    char peer_pub[64], peer_lan[64];
+    int waiting;              /* players waiting with this global data, as the server last said */
+    uint32_t since, next_send;
+} rnd;
+
 static void np_rdv_handle(const char *msg) {
     char w0[16] = { 0 }, w1[64] = { 0 }, w2[64] = { 0 };
     sscanf(msg, "%15s %63s %63s", w0, w1, w2);
+    if (strcmp(w0, "QUEUED") == 0 && rnd.state == NP_RAND_WAITING) {
+        rnd.waiting = atoi(w1);
+        return;
+    }
+    if (strcmp(w0, "MATCH") == 0 && rnd.state == NP_RAND_WAITING) {
+        char w3[64] = { 0 }, w4[64] = { 0 };
+        sscanf(msg, "%*s %*s %63s %63s %63s", w3, w4, w2);
+        rnd.host = strcmp(w1, "HOST") == 0;
+        snprintf(rnd.code, sizeof rnd.code, "%.4s", w3);
+        snprintf(rnd.peer_pub, sizeof rnd.peer_pub, "%s", w4);
+        snprintf(rnd.peer_lan, sizeof rnd.peer_lan, "%s", w2[0] != '\0' ? w2 : "-");
+        rnd.state = NP_RAND_MATCHED;
+        gw_log("netplay: random: matched as %s in room %s with %s", rnd.host ? "HOST" : "GUEST", rnd.code,
+               rnd.peer_pub);
+        return;
+    }
+    if (strcmp(w0, "TIMEOUT") == 0 && rnd.state == NP_RAND_WAITING) {
+        rnd.state = NP_RAND_TIMEOUT;
+        return;
+    }
+    if (strcmp(w0, "CANCELED") == 0) {
+        return;
+    }
     if (strcmp(w0, "CODE") == 0 && !rdv.have_code) {
         gw_net_addr me;
         snprintf(rdv.code, sizeof rdv.code, "%.4s", w1);
@@ -1419,13 +1460,14 @@ static uint64_t np_exe_hash(void) {
 
 /* Start hosting or joining with the current setup. 0 on success (the connection proceeds in
  * Netplay_Poll), -1 with np.status saying why. */
+static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip);
+static void np_rand_poll(void);
 static int np_begin(int bind_local) {
-    gw_net_config cfg;
     gw_net_addr peer, pub, ppub, plan;
     int phas_lan = 0;
     uint32_t bind_ip = 0;
     np_close();
-    memset(&cfg, 0, sizeof cfg);
+    rnd.state = NP_RAND_OFF; /* a room-code session: not random matchmaking */
     memset(&peer, 0, sizeof peer);
     np.started = np.dead = np.accepted = 0;
     lb.have_state = 0;
@@ -1492,7 +1534,16 @@ static int np_begin(int bind_local) {
         np_rdv_wrap(&np.t); /* under the simulator: simulated conditions apply to relayed traffic too */
     }
     np_sim_wrap(&np.t);
+    return np_start_session(&peer, bind_ip);
+}
 
+/* The session on np.t, which is open (and wrapped for the server when there is one): the netcode's
+ * config, then host, or join now (an address) / later (np_poll, once the server introduced the
+ * host). Shared by np_begin and random matchmaking (np_rand_matched). */
+static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
+    gw_net_config cfg;
+    gw_net_addr peer = *peer_in;
+    memset(&cfg, 0, sizeof cfg);
     cfg.exe_hash = np_exe_hash();
     /* delta: the disc image is no longer compared. Only GLOBAL game data must match (PlCo.dat's
        global tables, ItCo.dat, the m-ex feature flags); fighters and stages are matched one by
@@ -1528,7 +1579,9 @@ static int np_begin(int bind_local) {
         cfg.match_blob = np.scene;
         cfg.match_blob_len = (uint16_t) (strlen(np.scene) + 1);
         np.net = gw_net_host(&cfg, &np.t);
-        if (rdv.configured) {
+        if (rnd.state == NP_RAND_MATCHED) {
+            np_status("Opponent found - connecting...");
+        } else if (rdv.configured) {
             np.code[0] = '\0';
             np_status("Asking the server for a room...");
         } else {
@@ -1595,6 +1648,15 @@ static int np_poll(void) {
         return np.phase; /* ticked once a frame from every scene (gw_Netplay_Background) */
     }
     if (np.phase != NP_WORKING) {
+        return np.phase;
+    }
+    if (rnd.state == NP_RAND_WAITING || (rnd.state == NP_RAND_MATCHED && !np.t_open_session)) {
+        np_rand_poll();
+        if (rnd.state == NP_RAND_TIMEOUT || rnd.state == NP_RAND_FAILED) {
+            if (rnd.state == NP_RAND_TIMEOUT) np_status("No opponent found - try again in a moment");
+            np.phase = NP_FAILED;
+            np_close();
+        }
         return np.phase;
     }
     np_rdv_service();
@@ -1688,6 +1750,122 @@ static int np_poll(void) {
     return np.phase;
 }
 
+/* Random matchmaking, one poll step while queued. */
+static void np_rand_poll(void) {
+    uint32_t now = GetTickCount();
+    if (np.net == NULL && rdv.on) {
+        gw_net_addr from;
+        uint8_t b[1600];
+        while (np_rdv_recv(NULL, &from, b, (int) sizeof b) > 0) {
+        }
+    }
+    if (rnd.state == NP_RAND_WAITING) {
+        if ((int32_t) (now - rnd.next_send) >= 0) {
+            char lan[64], msg[128];
+            np_rdv_lan(lan, sizeof lan);
+            snprintf(msg, sizeof msg, "RAND %016llx %s", (unsigned long long) gw_MexId_GlobalHash(), lan);
+            np_rdv_ctl(msg);
+            rnd.next_send = now + 2000;
+        }
+        snprintf(np.status, sizeof np.status, "Looking for an opponent... %us%s", (now - rnd.since) / 1000u,
+                 rnd.waiting > 1 ? " (someone else is looking)" : "");
+        if (rdv.err[0] != '\0') {
+            rnd.state = NP_RAND_FAILED;
+            np_status("Server: %s", rdv.err);
+        }
+        return;
+    }
+    if (rnd.state == NP_RAND_MATCHED && np.net == NULL && np.phase == NP_WORKING && !np.t_open_session) {
+        /* the pair is a room: continue exactly as that room's host or guest, on this socket */
+        char intro[160];
+        gw_net_addr none;
+        np.host = rnd.host;
+        snprintf(np.peer_code, sizeof np.peer_code, "%s", rnd.code);
+        snprintf(rdv.code, sizeof rdv.code, "%s", rnd.code);
+        snprintf(np.code, sizeof np.code, "%s", rnd.code);
+        rdv.have_code = np.host;
+        snprintf(intro, sizeof intro, "PEER %s %s", rnd.peer_pub, rnd.peer_lan);
+        np_rdv_handle(intro); /* sets rdv.peer and starts punching, as the server's PEER would */
+        memset(&none, 0, sizeof none);
+        np.t_open_session = 1;
+        if (np_start_session(&none, 0) != 0) {
+            rnd.state = NP_RAND_FAILED;
+        }
+    }
+}
+
+/* Start looking for a random opponent with these settings (the lobby then works as for a room).
+ * 0 = queued; -1 = np.status says why. Poll with gw_Netplay_MenuPoll as for a room; while queued
+ * the phase is NP_WORKING and gw_Netplay_RandomStatus says how it is going. */
+int gw_Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay) {
+    uint16_t port = NP_DEFAULT_PORT;
+    np_close();
+    memset(&rnd, 0, sizeof rnd);
+    np.ck = ck;
+    np.color = color;
+    np.stage_ext = 31;
+    np.stocks = stocks;
+    np.minutes = minutes;
+    np.delay = delay;
+    np.use_lobby = 1;
+    np.rejoining = np.peer_left = np.rematch = 0;
+    np.started = np.dead = np.accepted = 0;
+    np.enabled = 0;
+    np.desync_frame = GW_NET_NO_FRAME;
+    np.code[0] = np.peer_code[0] = '\0';
+    np.have_mypub = 0;
+    np.t_open_session = 0;
+    lb.have_state = 0;
+    lb.game = 0;
+    if (!np_rdv_config()) {
+        np_status("Online play needs the server address (netplay_server.txt beside the game)");
+        np.phase = NP_FAILED;
+        return -1;
+    }
+    /* the host's port if it is free (a random pair may become the host, and a rematch reopens the
+       same port so the server keeps the room), else any */
+    if (gw_net_udp_open(0, port, &np.t) != 0) {
+        port = 0;
+        if (gw_net_udp_open(0, 0, &np.t) != 0) {
+            np_status("Could not open a UDP port");
+            np.phase = NP_FAILED;
+            return -1;
+        }
+    }
+    np.t_open = 1;
+    np.port = port != 0 ? port : gw_net_udp_local_port(&np.t);
+    np_rdv_wrap(&np.t);
+    np_sim_wrap(&np.t);
+    rnd.state = NP_RAND_WAITING;
+    rnd.since = GetTickCount();
+    rnd.next_send = 0;
+    np.phase = NP_WORKING;
+    np_status("Looking for an opponent...");
+    return 0;
+}
+
+/* Stop looking (a no-op once matched: use gw_Netplay_Leave to leave the room). */
+void gw_Netplay_RandomCancel(void) {
+    if (rnd.state == NP_RAND_WAITING && rdv.on) {
+        np_rdv_ctl("RANDCANCEL");
+    }
+    if (rnd.state != NP_RAND_MATCHED) {
+        rnd.state = NP_RAND_OFF;
+        np_close();
+        np.phase = NP_IDLE;
+        np_status("Stopped looking for an opponent");
+    }
+}
+
+/* 0 off, 1 looking, 2 matched (the room/lobby flow has taken over), 3 nobody found in time,
+ * 4 failed (np.status says why). */
+int gw_Netplay_RandomStatus(void) { return rnd.state; }
+
+/* Seconds spent looking so far. */
+int gw_Netplay_RandomSeconds(void) {
+    return rnd.state == NP_RAND_WAITING ? (int) ((GetTickCount() - rnd.since) / 1000u) : 0;
+}
+
 /* ---- the in-game ONLINE screens (gmfrontend.c) --------------------------------------------------
  * Game code calls these without the gw_ prefix (gwtool adds it). Integers in, text out by copy.
  *
@@ -1740,6 +1918,8 @@ int gw_Netplay_Rejoin(void) {
 
 /* Leave the room, whatever the step: the connection closes, the set is over. */
 void gw_Netplay_Leave(void) {
+    if (rnd.state == NP_RAND_WAITING && rdv.on) np_rdv_ctl("RANDCANCEL");
+    rnd.state = NP_RAND_OFF;
     np_close();
     np.phase = NP_IDLE;
     np.enabled = 0;

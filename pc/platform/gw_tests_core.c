@@ -412,6 +412,7 @@ void gw_tests_register_all(void) {
   extern void gw_scene_tests_register(void);
   extern void gw_net_tests_register(void);
   extern void gw_netplay_tests_register(void);
+  extern void gw_settings_tests_register(void);
   extern void gw_mods_tests_register(void);
   extern void gw_mexid_tests_register(void);
   extern void gw_script_tests_register(void);
@@ -426,6 +427,7 @@ void gw_tests_register_all(void) {
   gw_scene_tests_register();
   gw_net_tests_register();
   gw_netplay_tests_register();
+  gw_settings_tests_register();
   gw_mods_tests_register();
   gw_mexid_tests_register();
   gw_script_tests_register();

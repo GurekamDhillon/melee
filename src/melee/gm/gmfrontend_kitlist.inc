@@ -168,7 +168,7 @@ static void fk_build(bool animate_in)
     void *lt, *lp, *mt, *mp;
     const FjNode* L;
     const FjNode* M;
-    int section = KS_VERSUS, r, i;
+    int section = fe_is_settings(fe.screen) ? KS_OPTIONS : KS_VERSUS, r, i;
     kit_load();
     ff_load();
     kit_widgets_load();
@@ -190,8 +190,13 @@ static void fk_build(bool animate_in)
     if (fe.screen == &fe_screen_online) {
         crumbs[1] = "ONLINE PLAY"; /* VERSUS > ONLINE */
     }
-    fm_chrome_with(fe.screen->subtitle, crumbs, fe.screen == &fe_screen_online ? 2 : 3, section,
-                   3, hg, ht);
+    if (fe_is_settings(fe.screen)) {
+        crumbs[0] = "SETTINGS"; /* SETTINGS > <page> */
+        crumbs[1] = fe.screen->subtitle;
+    }
+    fm_chrome_with(fe.screen->subtitle, crumbs,
+                   fe.screen == &fe_screen_online || fe_is_settings(fe.screen) ? 2 : 3, section, 3, hg,
+                   ht);
 
     fk.nrows = fe.n_vis < FK_MAX_ROWS ? fe.n_vis : FK_MAX_ROWS;
     for (r = 0; r < fk.nrows; r++) {
@@ -561,7 +566,7 @@ static void fk_frame(void)
         fp_copy(fk.val[r], now, FE_STR);
     }
     /* ONLINE's notice ("You left the room.", a server error) as the kit's toast */
-    if (fe.screen == &fe_screen_online) {
+    if (fe.screen == &fe_screen_online || fe_is_settings(fe.screen)) {
         bool want = fe_ol_note[0] != 0;
         if (want) {
             if (strcmp(fe_ol_note, fk.toast_str) != 0) {

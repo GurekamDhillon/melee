@@ -804,7 +804,11 @@ static const char* fl_axis_state(const FlEl* e, const char* a)
         if (strcmp(a, "crown") == 0) {
             return Netplay_LobbyInfo(0) > 1 && Netplay_LobbyInfo(1) == e->who ? "yes" : "no";
         }
-        if (strcmp(a, "you") == 0) return e->who == Netplay_LobbyMe() ? "yes" : "no";
+        if (strcmp(a, "you") == 0) {
+            char nm[24];
+            Netplay_PlayerName(e->who, nm, sizeof nm);
+            return e->who == Netplay_LobbyMe() || nm[0] != 0 ? "yes" : "no";
+        }
         if (strcmp(a, "tile") == 0) return fl_tile_state(e->who);
         if (strcmp(a, "coin") == 0) return Netplay_LobbyInfo(6) == 0 ? "p1" : "p2";
         return NULL;
@@ -963,7 +967,10 @@ static const char* fl_slot_text(const FlEl* e, const char* id)
         }
         if (strcmp(id, "you_tag") == 0) return "YOU";
         if (strcmp(id, "tag") == 0) {
-            if (fl_ld.online) return w == 0 ? "HOST" : "GUEST";
+            if (fl_ld.online) {
+                Netplay_PlayerName(w, b, 18);
+                return b[0] != 0 ? b : w == 0 ? "HOST" : "GUEST";
+            }
             return fl_ld.cpu[w] ? "CPU" : NULL;
         }
         if (strcmp(id, "cpu_text") == 0) {
@@ -1068,7 +1075,12 @@ static const char* fl_slot_text(const FlEl* e, const char* id)
     if (strncmp(el, "card", 4) == 0) {
         int w = e->who;
         if (strcmp(id, "port_label") == 0) return w == 0 ? "P1" : "P2";
-        if (strcmp(id, "you_tag") == 0) return "YOU";
+        if (strcmp(id, "you_tag") == 0) {
+            /* the player's name tag (SETTINGS > Online > Player Name), else YOU on your card */
+            Netplay_PlayerName(w, b, 18);
+            if (b[0] == 0) sprintf(b, "%s", w == Netplay_LobbyMe() ? "YOU" : "");
+            return b;
+        }
         if (strcmp(id, "hidden_mark") == 0) return "?";
         if (strcmp(id, "name") == 0) {
             const char* pt = fl_card_portrait(w);

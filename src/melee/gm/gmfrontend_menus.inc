@@ -36,7 +36,7 @@
  */
 
 enum { FM_HUB, FM_LIST };
-enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE };
+enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE };
 #define SEL_VS_ONLINE 0x40 ///< not a vanilla selection: VERSUS > ONLINE is the port's
 #define FMF_PORT 1  ///< gm_801677E8(the port that pressed A) before acting, as vanilla does
 #define FMF_NOSFX 2 ///< no sfxForward (Data > Sound Test stops the music instead)
@@ -71,7 +71,7 @@ static const FeMenuItem fm_main[] = {
       MENU_KIND_VS },
     { "COLLECTION", "Trophies: gallery, lottery and your collection.", "ico_collection",
       SEL_MAIN_TOY, FA_SUB, MENU_KIND_TOY },
-    { "OPTIONS", "Rumble, sound, display, language and save data.", "ico_options",
+    { "SETTINGS", "Video, audio, controls, online, mods and the game's options.", "ico_options",
       SEL_MAIN_SETTINGS, FA_SUB, MENU_KIND_SETTINGS },
     { "DATA", "Snapshots, movies, sound test, records, messages.", "ico_data", SEL_MAIN_DATA,
       FA_SUB, MENU_KIND_DATA },
@@ -165,9 +165,14 @@ static const FeMenuItem fm_toy[] = {
 };
 
 static const FeMenuItem fm_settings[] = {
+    /* the port's pages (gmfrontend_settings.inc); the game's own options follow */
+    { "VIDEO", "Render scale, frame rate, vsync, FPS readout.", NULL, 0x41, FA_PAGE, 0 },
+    { "AUDIO", "Master volume, music and effects mix, stereo or mono.", NULL, 0x42, FA_PAGE, 1 },
+    { "CONTROLS", "Input device, adapter recalibration, keyboard layout.", NULL, 0x43, FA_PAGE, 2 },
+    { "ONLINE", "Your player name, the server, input delay, stage list.", NULL, 0x44, FA_PAGE, 3 },
+    { "MODS", "Turn mods on or off.", NULL, 0x45, FA_PAGE, 4 },
+    { "GAMEPLAY", "Unlock everything, the default match rules.", NULL, 0x46, FA_PAGE, 5 },
     { "RUMBLE", "Turn controller rumble on or off.", NULL, SEL_SETTINGS_RUMBLE, FA_NATIVE },
-    { "SOUND", "Stereo or mono, music and effects balance.", NULL, SEL_SETTINGS_SOUND,
-      FA_NATIVE },
     { "SCREEN DISPLAY", "Flicker filter.", NULL, SEL_SETTINGS_DISPLAY, FA_NATIVE },
     { "LANGUAGE", "English or Japanese.", NULL, SEL_SETTINGS_LANG, FA_NATIVE },
     { "ERASE DATA", "Delete save data.", NULL, SEL_SETTINGS_ERASE, FA_NATIVE },
@@ -207,7 +212,7 @@ static const FeMenu fm_menus[] = {
       fm_special, FM_N(fm_special) },
     { MENU_KIND_TOY, FM_HUB, SEL_TOY_COLLECTION, MENU_KIND_MAIN, SEL_MAIN_TOY, 1,
       "COLLECTION", fm_toy, FM_N(fm_toy) },
-    { MENU_KIND_SETTINGS, FM_LIST, 0, MENU_KIND_MAIN, SEL_MAIN_SETTINGS, 0, "OPTIONS",
+    { MENU_KIND_SETTINGS, FM_LIST, 0, MENU_KIND_MAIN, SEL_MAIN_SETTINGS, 0, "SETTINGS",
       fm_settings, FM_N(fm_settings) },
     { MENU_KIND_DATA, FM_HUB, SEL_DATA_RECORDS, MENU_KIND_MAIN, SEL_MAIN_DATA, 0, "DATA",
       fm_data, FM_N(fm_data) },
@@ -282,6 +287,15 @@ static void fm_position_for(u8 previous_mode, u8* kind, u8* sel)
     };
     int i;
     GameRules* rules = gmMainLib_GetGameRules();
+    if (fm_back_kind >= 0) {
+        /* backing out of a SETTINGS page: the list, on its item */
+        *kind = (u8) fm_back_kind;
+        *sel = (u8) fm_back_sel;
+        fm_back_kind = -1;
+        if (rules->force_main_menu == 0) {
+            return;
+        }
+    }
     if (fm_back_to_online_item) {
         /* backing out of ONLINE (or its rooms): the VS hub, on ONLINE */
         fm_back_to_online_item = false;
@@ -1107,6 +1121,10 @@ static void fm_do_pending(void)
         OSReport("frontend: -> ONLINE\n");
         fe_online_from_menus();
         return;
+    case 6:
+        OSReport("frontend: -> SETTINGS page %d\n", fm.pend_a);
+        fe_settings_from_menus(fm.pend_a);
+        return;
     }
 }
 
@@ -1136,6 +1154,9 @@ static void fm_confirm(void)
         fm.pend_kind = 1;
         fm.pend_a = it->arg;
         fm.pend_b = 0; /* vanilla enters every submenu on its first item */
+        if (it->arg == MENU_KIND_SETTINGS) {
+            fm.pend_b = 0x41; /* ours starts on the port's first page (VIDEO) */
+        }
         break;
     case FA_MODE:
         fm.pend_kind = 2;
@@ -1152,6 +1173,10 @@ static void fm_confirm(void)
         break;
     case FA_ONLINE:
         fm.pend_kind = 5;
+        break;
+    case FA_PAGE:
+        fm.pend_kind = 6;
+        fm.pend_a = it->arg;
         break;
     }
     if (fp.motion_ok) {

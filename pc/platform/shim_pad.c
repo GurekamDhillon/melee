@@ -33,7 +33,14 @@ enum { GW_INPUT_ANY, GW_INPUT_GC, GW_INPUT_KEYBOARD };
 static int gw_input_mode(void) {
   static int cached = -1;
   if (cached < 0) {
+    extern int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt);
+    char saved[16];
     const char *v = getenv("MELEE_INPUT");
+    if (v == NULL || v[0] == '\0') {
+      /* SETTINGS > Controls > Input Device (settings.cfg), from the next start */
+      gw_Settings_Str("input", saved, sizeof saved, "");
+      v = saved;
+    }
     cached = GW_INPUT_ANY;
     if (v != NULL && (v[0] == 'g' || v[0] == 'G')) {
       cached = GW_INPUT_GC;

@@ -951,19 +951,25 @@ int gw_PcTraceMotionEnabled(void) {
 extern int gw_Netplay_Enabled(void);
 extern int gw_RB_Enabled(void);
 int gw_PcUnlockAll_force = -1; /* tests: 0/1 overrides the env and the session */
+static int gw_pc_unlock_env = -1;
+/* SETTINGS changed the saved value: read it again (the environment still wins). */
+void gw_PcUnlockAll_Reload(void) { gw_pc_unlock_env = -1; }
 int gw_PcUnlockAll(void) {
-  static int env = -1;
+#define env gw_pc_unlock_env
   if (gw_PcUnlockAll_force >= 0) {
     return gw_PcUnlockAll_force;
   }
   if (env < 0) {
+    extern int gw_Settings_Int(const char *key, int dflt);
     const char *v = getenv("MELEE_UNLOCK_ALL");
-    env = (v != NULL && v[0] != '\0' && v[0] != '0') ? 1 : 0;
+    /* the environment wins; else SETTINGS > Gameplay > Unlock Everything (settings.cfg) */
+    env = v != NULL && v[0] != '\0' ? (v[0] != '0') : gw_Settings_Int("unlock_all", 0) != 0;
     if (env) {
       gw_log("gw: unlock-all: every character, stage and feature reports unlocked (MELEE_UNLOCK_ALL)");
     }
   }
   return env || gw_Netplay_Enabled() || gw_RB_Enabled();
+#undef env
 }
 
 void gw_ContentProbeResult(const char *name, void *archive) {

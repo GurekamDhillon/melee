@@ -267,6 +267,7 @@ int Netplay_LobbyActive(void);
 int Netplay_FighterAvailable(int ck);
 int Netplay_LobbyStageExt(int i);
 void Netplay_SetStageMode(int mode);
+void Netplay_PlayerName(int who, char* out, int cap);
 int Netplay_StageMode(void);
 int Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay);
 void Netplay_RandomCancel(void);
@@ -1057,6 +1058,9 @@ static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXCol
 
 static void fe_match_setup_from_menus(void);
 static void fe_online_from_menus(void);
+static void fe_settings_from_menus(int page);
+static bool fe_is_settings(const FrontendScreen* s);
+static int fm_back_kind = -1, fm_back_sel; ///< backing out of a frontend scene lands on this menu item
 static void fe_load_begin(void);
 static bool fe_load_step(void);
 static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS hub tile
@@ -1067,6 +1071,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_kitlist.inc"
 #include "gmfrontend_online.inc"
 #include "gmfrontend_select.inc"
+#include "gmfrontend_settings.inc"
 
 /* The toolkit screens are drawn with the kit when its files are there (fe_kit), with the old
  * art pack and SisLib otherwise. */
@@ -1443,7 +1448,7 @@ static void fe_refresh_rows(void)
     if (fe.n_vis > 0) {
         int idx = fe.vis[fe.cursor];
         const char* h = fe.screen->items[idx].help;
-        if (fe.screen == &fe_screen_online && fe_ol_note[0] != '\0') {
+        if ((fe.screen == &fe_screen_online || fe_is_settings(fe.screen)) && fe_ol_note[0] != '\0') {
             h = fe_ol_note;
         }
         fe_set_text(&fe.help, fe.help_str, FE_STR, h != NULL ? h : "", FE_HELP_COLOR);
@@ -1668,6 +1673,29 @@ static void fe_online_from_menus(void)
     fe.next_menus = false;
     fe_np_phase = FE_NP_IDLE;
     fm_back_to_online_item = true;
+    fe_settings_apply_online(); /* the saved input delay and stage list */
+    fm_leave_scene(GM_FRONTEND);
+}
+
+/* SETTINGS > a page from the menus: that page as its own GS_FRONTEND scene; backing out returns
+ * to the SETTINGS list on the same item. */
+static void fe_settings_from_menus(int page)
+{
+    if (page < 0 || page >= FSP_COUNT) {
+        return;
+    }
+    if (page == FSP_MODS) {
+        fsm_fill();
+    }
+    fe_settings_apply_online();
+    fe_ol_note[0] = 0; /* a notice from the last page stays behind */
+    fe.screen = &fe_screen_settings[page];
+    fe.continue_to = GM_MENU;
+    fe.back_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.next_menus = false;
+    fm_back_kind = MENU_KIND_SETTINGS;
+    fm_back_sel = 0x41 + page;
     fm_leave_scene(GM_FRONTEND);
 }
 
@@ -1846,7 +1874,18 @@ void gm_Scene_Frontend_OnFrame(void)
         fl_frame(); /* a room screen: its own input and model */
         return;
     }
-    if (fe.screen == &fe_screen_online && fe_ol_note[0] != '\0' && ++fe_ol_note_frames > 300) {
+    if (fte.on) {
+        /* a text setting is being typed: the keys are text until it ends */
+        fte_frame();
+        fe_refresh_rows();
+        if (fe_kit) {
+            fk_frame();
+        }
+        return;
+    }
+    if ((fe.screen == &fe_screen_online || fe_is_settings(fe.screen)) && fe_ol_note[0] != '\0' &&
+        ++fe_ol_note_frames > 300)
+    {
         fe_ol_note[0] = '\0'; /* a notice stays five seconds */
     }
 

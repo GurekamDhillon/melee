@@ -38,6 +38,7 @@ typedef struct FsArt {
     HSD_Tlut* tl;
 } FsArt;
 extern int Mex_GrKindForExt(int ext);
+extern int Settings_Str(const char* key, char* out, int cap, const char* dflt);
 extern const char* Mex_GrFile(int grkind);
 
 #define FS_MAX_FIGHTERS 80
@@ -873,6 +874,12 @@ static void fs_build_css(void)
             sprintf(buf, "CPU LV %d", s->cpu_lv);
         } else {
             sprintf(buf, "%s", s->kind == FS_HMN ? (fcs.online ? "YOU" : "HMN") : "");
+            if (s->kind == FS_HMN && p == 0) {
+                /* P1's name tag: SETTINGS > Online > Player Name */
+                char nm[24];
+                Settings_Str("name", nm, sizeof nm, "");
+                if (nm[0] != 0) sprintf(buf, "%s", nm);
+            }
         }
         fl_text_at(id, "caption", r[2] - 8, r[1] + 22.5F, "right", 70, buf, s->kind == FS_CPU ? gold : muted, -1);
         pr[0] = r[0] + 8;

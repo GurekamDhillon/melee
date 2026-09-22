@@ -87,6 +87,7 @@ static struct {
     /* the setup */
     int ck, color, stage_ext, stocks, minutes, delay;
     char peer_code[96];   /* guest: the host's code; host: the guest's code, for hole punching */
+    char peer_name[24];   /* the opponent's player name (lobby "N"), "" none */
     uint16_t port;
     /* the connection */
     gw_net *net;
@@ -765,6 +766,7 @@ static struct {
 } rdv;
 
 /* The server address: MELEE_NETPLAY_SERVER, else netplay_server.txt beside the exe. */
+extern int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt);
 static int np_rdv_config(void) {
     char buf[160] = { 0 };
     const char *v = getenv("MELEE_NETPLAY_SERVER");
@@ -773,6 +775,8 @@ static int np_rdv_config(void) {
     char *colon;
     if (v != NULL && v[0] != '\0') {
         snprintf(buf, sizeof buf, "%s", v);
+    } else if (gw_Settings_Str("server", buf, sizeof buf, "") && buf[0] != '\0') {
+        /* SETTINGS > Online > Server (settings.cfg) */
     } else {
         char path[MAX_PATH];
         DWORD k = GetModuleFileNameA(NULL, path, sizeof path);
@@ -1495,6 +1499,16 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
     if (len > GW_NET_LOBBY_MAX) len = GW_NET_LOBBY_MAX;
     memcpy(m, data, (size_t) len);
     m[len] = '\0';
+    if (m[0] == 'N' && m[1] == ' ') {
+        /* the opponent's player name (SETTINGS > Online > Player Name) - printable ASCII only */
+        int i, k = 0;
+        for (i = 2; m[i] != '\0' && k < (int) sizeof np.peer_name - 1; ++i) {
+            if (m[i] >= 32 && m[i] < 127) np.peer_name[k++] = m[i];
+        }
+        np.peer_name[k] = '\0';
+        lb.seq++;
+        return;
+    }
     if (np.host && m[0] == 'A') {
         char act[16] = { 0 };
         int a = 0, b = 0;
@@ -1618,7 +1632,15 @@ void gw_Netplay_Background(void) {
 
 /* Entering the lobby: a fresh room (or a new opponent) starts at game 1; a rematch keeps the set. */
 static void np_lobby_enter(void) {
+    char nm[40];
     np.phase = NP_LOBBY;
+    np.peer_name[0] = '\0';
+    gw_Settings_Str("name", nm + 2, (int) sizeof nm - 2, "");
+    if (nm[2] != '\0') {
+        nm[0] = 'N';
+        nm[1] = ' ';
+        lb_send(nm); /* this player's name, for the opponent's cards */
+    }
     lb.seed = np.seed;
     if (np.host) {
         if (lb.game <= 0) lb.mode = np.stage_mode; /* a new set takes the room's stage list */
@@ -2193,6 +2215,16 @@ void gw_Netplay_FighterName(int ck, char *out, int cap) {
 void gw_Netplay_SetStageMode(int mode) { np.stage_mode = mode ? 1 : 0; }
 int gw_Netplay_StageMode(void) { return np.stage_mode; }
 
+/* A player's name in the room (who: 0 host, 1 guest): this side's from SETTINGS, the opponent's
+ * as they sent it. "" when there is none. */
+void gw_Netplay_PlayerName(int who, char *out, int cap) {
+    if (who == (np.host ? 0 : 1)) {
+        gw_Settings_Str("name", out, cap, "");
+    } else {
+        np_copy(out, cap, np.peer_name);
+    }
+}
+
 /* ---- the lobby, for the menu ---- */
 int gw_Netplay_LobbyPhase(void) { return np.phase == NP_LOBBY || np.phase == NP_CONNECTED ? lb.phase : LB_OFF; }
 int gw_Netplay_LobbySeq(void) { return (int) lb.seq; }
@@ -2290,10 +2322,17 @@ static void np_copy(char *out, int cap, const char *s) {
 }
 void gw_Netplay_MenuStatus(char *out, int cap) { np_copy(out, cap, np.status); }
 /* A matchmaking server is configured (room codes). */
+static int np_server_checked = -1;
 int gw_Netplay_MenuHasServer(void) {
-    static int checked = -1;
-    if (checked < 0) checked = np_rdv_config();
-    return checked;
+    if (np_server_checked < 0) np_server_checked = np_rdv_config();
+    return np_server_checked;
+}
+/* SETTINGS changed the server: resolve it again next time. */
+void gw_Netplay_ReloadServer(void) { np_server_checked = -1; }
+/* The server in use, for the SETTINGS readout ("" none). */
+void gw_Netplay_ServerName(char *out, int cap) {
+    gw_Netplay_MenuHasServer();
+    np_copy(out, cap, rdv.configured ? rdv.name : "");
 }
 static void np_code_init(void) {
     if (!rdv.letters_init) {

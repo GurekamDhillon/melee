@@ -813,26 +813,14 @@ static int l_label(lua_State *L) {
     return 0;
 }
 
-/* Screenshots: beta's gw_Screenshot(path) (final-frame readback to PNG, arriving with the Aurora
- * rebuild). Until it links, /alternatename binds the name to a stub that says so - no rebuild of
- * this file is needed when it lands. Returns 0 on success. */
-int gw_Screenshot_missing(const char *path) {
-    (void) path;
-    return -2;
-}
-#pragma comment(linker, "/alternatename:_gw_Screenshot=_gw_Screenshot_missing")
-extern int gw_Screenshot(const char *path);
+/* Screenshots: beta's gw_Screenshot (shim_vi.h): the NEXT presented frame is written as a PNG at
+ * render resolution, overlays excluded, without blocking - the file appears a few frames later. */
+#include "shim_vi.h"
 
 static int gs_screenshot(const char *path) {
-    int rc = gw_Screenshot(path);
-    if (rc == -2) {
-        gw_Console_Print(GS_YELLOW, "screenshot: not available yet (gw_Screenshot is not in this build)");
-    } else if (rc != 0) {
-        gw_Console_Print(GS_RED, "screenshot: failed (%d) for %s", rc, path);
-    } else {
-        gw_Console_Print(GS_GREEN, "screenshot: %s", path);
-    }
-    return rc;
+    gw_Screenshot(path);
+    gw_Console_Print(GS_GREEN, "screenshot queued: %s (written in a few frames)", path);
+    return 0;
 }
 
 /* gd.screenshot(name): into the script's data folder (a bare file name, .png added) */

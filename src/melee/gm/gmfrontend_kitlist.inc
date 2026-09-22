@@ -222,7 +222,7 @@ static void fk_build(bool animate_in)
             sprintf(id, "%s_cv", fp.tile[fk.tile[r]].id);
             fk.q_cv[r] = fk_wtext(r, id, ox + 95, oy + 5.28F, 1, 122.4F, fk.val[r], "text");
             sprintf(id, "%s_car", fp.tile[fk.tile[r]].id);
-            fk_wtext(r, id, ox + 190, oy + 5.28F, 2, 12, "\x03", "aux");
+            fk_wtext(r, id, ox + 190, oy + 5.28F, 2, 12, "\x04", "aux"); /* U+2192 */
             break;
         case FKW_SLIDER:
             sprintf(id, "%s_trk", fp.tile[fk.tile[r]].id);

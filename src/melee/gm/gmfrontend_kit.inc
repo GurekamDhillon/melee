@@ -32,7 +32,7 @@
 #define FF_ROLES 10
 #define FF_NCH 100 /* 0x20..0x7E, then the ellipsis and the four arrows */
 #define FF_ELLIPSIS 95
-#define FF_ARROW 96 /* <- -> up down; written in strings as bytes 0x02..0x05 */
+#define FF_ARROW 96 /* U+2190..2193 (left, up, right, down); in strings bytes 0x02..0x05 */
 #define FF_MAX_KERN 12000
 
 typedef struct FfGlyph {

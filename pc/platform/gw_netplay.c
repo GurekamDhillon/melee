@@ -1020,13 +1020,12 @@ static struct {
 
 static const int lb_strike_counts[3] = { 1, 2, 2 }; /* 1-2-2 */
 
-/* MODS ONLINE (the seam for delta's content identities): whether both players have this fighter
- * (port CharacterKind) / stage (external stage id). Once the handshake carries each side's
- * available set, these answer from the intersection; the lobby's stage list and the online CSS
- * pick already ask them. Until then both players run the same disc (the handshake refuses a
- * mismatch), so everything on it is available. */
-int gw_Netplay_FighterAvailable(int ck) { return ck >= 0; }
-int gw_Netplay_StageAvailable(int ext) { return ext >= 0; }
+/* MODS ONLINE: whether both players have this fighter (port CharacterKind) / stage (external
+ * stage id), from delta's content identities (gw_mexid.c): 1 both have it, 0 not common, -1 the
+ * peer's list is not in yet (counted as available until it is). The lobby's stage list and the
+ * online CSS pick ask these; A2's online CSS/SSS grey out what they refuse. */
+int gw_Netplay_FighterAvailable(int ck) { return ck >= 0 && gw_MexId_OnlineFighter(ck) != 0; }
+int gw_Netplay_StageAvailable(int ext) { return ext >= 0 && gw_MexId_OnlineStage(ext) != 0; }
 
 static void lb_default_stages(void) {
     int i;

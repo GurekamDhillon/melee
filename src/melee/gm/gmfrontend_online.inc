@@ -1142,7 +1142,7 @@ static bool fl_special_quad(FlEl* e, const FjNode* q, const char* id, float dx, 
         fl_rect_quad(qid, t, 491 - 4 - adv - 16, 284, 491 - 4 - adv, 300, rgb, joint);
         return true;
     }
-    if (strncmp(id, "bar_", 4) == 0) {
+    if (strncmp(id, "bar_", 4) == 0 && id[4] >= '1' && id[4] <= '4' && id[5] == 0) {
         /* ping bars: the first `bars` lit in the level's colour, the rest unlit */
         int ms = Netplay_Ping(), bars, n = id[4] - '0', t;
         const char* col;

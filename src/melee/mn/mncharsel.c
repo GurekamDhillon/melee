@@ -6251,14 +6251,19 @@ void mnCharSel_Scene_OnFrame(void)
                 extern int Frontend_OnlinePick(void);
                 extern void Frontend_CaptureIcon(int which, HSD_JObj* root);
                 extern void Frontend_CaptureCharIcon(int ck, HSD_JObj* root);
-                if (Frontend_OnlinePick() == 1) {
-                    int p, k;
-                    for (k = 0; k < MNCS_NUM_SK; k++) { /* every fighter: the lobby shows both */
+                {
+                    /* every fighter's icon, on every confirm: the loading screen and the online
+                       lobby show them after the CSS art is freed */
+                    int k;
+                    for (k = 0; k < MNCS_NUM_SK; k++) {
                         HSD_JObj* aj = NULL;
                         lb_80011E24(MNCS_ICON_ROOT(mnCharSel_804D6CC0), &aj, icons[k].joint_id_vs,
                                     -1);
                         Frontend_CaptureCharIcon(icons[k].char_kind, aj);
                     }
+                }
+                if (Frontend_OnlinePick() == 1) {
+                    int p, k;
                     for (p = 0; p < 4; p++) {
                         PlayerInitData* pl = &mnCharSel_804D6CB0->vs.start.players[p];
                         if (pl->slot_type != Gm_PKind_Human || pl->ckind == ChKind_None) {

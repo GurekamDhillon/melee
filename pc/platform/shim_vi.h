@@ -33,6 +33,9 @@ void gw_time_advance_field(void);
  * roughly one field per real frame period, then runs due alarms and deferred callbacks, so the
  * periodic pad alarm and queued DVD/ARQ completions still make progress. */
 void gw_wait_idle(void);
+/* Write the next presented frame to a PNG at `path` (render resolution, no host overlay).
+ * Asynchronous: the file appears a few frames later. See also MELEE_SHOT_AT in shim_vi.c. */
+void gw_Screenshot(const char *path);
 /* Diagnostics: retraces counted, frames actually presented, gw_wait_idle calls. */
 void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits);
 

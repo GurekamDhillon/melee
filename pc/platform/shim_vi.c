@@ -384,6 +384,75 @@ void gw_Video_SetShowFps(int on) {
   gw_video_save();
 }
 
+/* ---- screenshots ----------------------------------------------------------------------------
+ * gw_Screenshot(path) writes the next presented frame to a PNG: the final image at the render
+ * scale, without the host ImGui overlay (the game's own DevText overlay is part of the frame).
+ * Aurora copies it into a readback buffer inside the frame's own command buffer and a worker thread
+ * writes the file, so no frame waits; the file appears a few frames later.
+ * MELEE_SHOT_AT="<frame>:<path>[,<frame>:<path>...]" takes shots unattended; <frame> counts game
+ * frames presented since boot (gw_presented_count, the number the heartbeat log prints). */
+void gw_aurora_request_screenshot_none(const char *path) {
+  gw_log("gw: screenshot: this aurora_gx.lib has no screenshot support (%s not written)", path);
+}
+#pragma comment(linker, "/alternatename:_aurora_request_screenshot=_gw_aurora_request_screenshot_none")
+
+void gw_Screenshot(const char *path) {
+  if (path == NULL || path[0] == '\0') {
+    return;
+  }
+  gw_log("gw: screenshot requested: %s", path);
+  aurora_request_screenshot(path);
+}
+
+#define GW_SHOT_MAX 32
+static struct {
+  uint32_t frame;
+  char path[MAX_PATH];
+} gw_shots[GW_SHOT_MAX];
+static int gw_shot_count, gw_shot_next, gw_shot_loaded;
+
+static void gw_shots_load(void) {
+  const char *env = getenv("MELEE_SHOT_AT");
+  gw_shot_loaded = 1;
+  while (env != NULL && *env != '\0' && gw_shot_count < GW_SHOT_MAX) {
+    const char *colon = strchr(env, ':');
+    const char *comma;
+    size_t n;
+    if (colon == NULL) {
+      break;
+    }
+    /* a Windows drive letter is part of the path: the frame number is everything before the
+     * first colon, and the path runs to the next comma */
+    comma = strchr(colon + 1, ',');
+    n = comma != NULL ? (size_t)(comma - (colon + 1)) : strlen(colon + 1);
+    if (n >= MAX_PATH) {
+      n = MAX_PATH - 1;
+    }
+    gw_shots[gw_shot_count].frame = (uint32_t)strtoul(env, NULL, 10);
+    memcpy(gw_shots[gw_shot_count].path, colon + 1, n);
+    gw_shots[gw_shot_count].path[n] = '\0';
+    ++gw_shot_count;
+    env = comma != NULL ? comma + 1 : NULL;
+  }
+  if (gw_shot_count > 0) {
+    gw_log("gw: MELEE_SHOT_AT: %d screenshot(s) scheduled", gw_shot_count);
+  }
+}
+
+/* Once per presented game frame, before aurora_end_frame. */
+static void gw_shots_tick(uint32_t frame) {
+  int i;
+  if (!gw_shot_loaded) {
+    gw_shots_load();
+  }
+  for (i = 0; i < gw_shot_count; ++i) {
+    if (gw_shots[i].frame == frame) {
+      gw_Screenshot(gw_shots[i].path);
+    }
+  }
+  (void)gw_shot_next;
+}
+
 /* The current render scale; 0 = Auto (window resolution). */
 float gw_Video_RenderScale(void) {
   gw_video_load();
@@ -1379,6 +1448,7 @@ void gw_frame_tick(void) {
     gw_Overlay_DrawPanel();
     gw_stats_draw();
     gw_stats_note_present(0);
+    gw_shots_tick(gw_presented_count + 1u);
     if (gw_video_fps > 60) {
       gw_uncap_next = gw_time_ticks() + GW_TIMER_CLOCK / (uint64_t)gw_video_fps;
     }

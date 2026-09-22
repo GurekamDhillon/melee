@@ -35,6 +35,7 @@ extern void gw_Snap_SessionResim(int on, int frame);
 extern int gw_Snap_HasFrame(int frame);
 extern uint32_t gw_Snap_Checksum(int frame);
 extern int gw_Snap_SfxFrameEnd(int frame);
+extern uint32_t gw_RB_GameHash(void); /* fighter.c: the curated gameplay hash */
 extern void gw_Replay_TraceBeginIter(int iter);
 extern void gw_Replay_TraceFlushUpTo(int iter);
 
@@ -51,6 +52,16 @@ static struct {
     int tried, on;
     int log;              /* MELEE_RB_LOG=<n>: log the first n rollbacks and mismatches */
     int in_match;         /* the scene now running is a VS match (gw_RB_SceneBegin) */
+    int epoch;            /* increments at every scene */
+    int wait_ticks;       /* time sync: new-frame iterations still to skip */
+    /* the curated gameplay hash of the state at the start of each recent frame (overwritten by a
+       resimulation) and the optional log of the final ones (MELEE_RB_HASHLOG) */
+    struct { int frame; uint32_t h; } hring[RB_RING];
+    int hlog_next;
+    FILE *hlog;
+    /* inputs stamped with a later epoch: a peer that entered the scene first */
+    struct { int epoch, slot, frame; GwRbInput in; } early[256];
+    int nearly;
     int src;              /* input source: 0 replay (processed), 1 pad generator, 2 live pads */
     unsigned gen_seed;
     /* live pads: one latch per port, fed by every PADRead */
@@ -183,6 +194,8 @@ void gw_RB_SceneBegin(int scene_kind) {
     if (!rb.on) {
         return;
     }
+    rb.epoch++;
+    rb.wait_ticks = 0;
     rb.in_match = scene_kind == 2;
     if (rb.in_match) {
         int s;
@@ -196,6 +209,16 @@ void gw_RB_SceneBegin(int scene_kind) {
         memset(rb.latch, 0, sizeof rb.latch);
         for (s = 0; s < GW_RB_SLOTS; ++s) {
             rb.conf_slot[s] = RB_FIRST - 1;
+        }
+        {
+            int q;
+            for (q = 0; q < RB_RING; ++q) {
+                rb.hring[q].frame = INT_MIN;
+            }
+        }
+        rb.hlog_next = RB_FIRST;
+        if (rb.hlog == NULL && getenv("MELEE_RB_HASHLOG") != NULL) {
+            rb.hlog = fopen(getenv("MELEE_RB_HASHLOG"), "w");
         }
     }
 }
@@ -373,11 +396,49 @@ int gw_rb_frame_advantage(void) {
     return gw_Replay_Frame() - gw_rb_confirmed_frame();
 }
 
+/* A frame's curated hash is final when every input BEFORE it is confirmed (the state at its start
+   depends on frames < it) and no correction reaching back to it is pending. */
+static int rb_hash_final(int frame) {
+    return frame - 1 <= gw_rb_confirmed_frame() && frame <= gw_Replay_Frame() &&
+           !(rb.first_wrong != RB_NONE && rb.first_wrong < frame);
+}
+
 uint32_t gw_rb_checksum(int frame) {
+    if (!rb.on || !rb_hash_final(frame) || rb.hring[(unsigned) frame % RB_RING].frame != frame) {
+        return 0;
+    }
+    return rb.hring[(unsigned) frame % RB_RING].h;
+}
+
+uint32_t gw_rb_checksum_full(int frame) {
     if (frame > gw_rb_confirmed_frame()) {
-        return 0; /* not final: the inputs it depends on are not all confirmed */
+        return 0;
     }
     return gw_Snap_Checksum(frame);
+}
+
+int gw_rb_epoch(void) { return rb.epoch; }
+
+uint32_t gw_rb_checksum_e(int epoch, int frame) {
+    return epoch == rb.epoch ? gw_rb_checksum(frame) : 0;
+}
+
+void gw_rb_submit_remote_input_e(int epoch, int slot, int frame, const GwRbInput *in) {
+    if (epoch == rb.epoch) {
+        gw_rb_submit_remote_input(slot, frame, in);
+    } else if (epoch > rb.epoch && rb.nearly < (int) (sizeof rb.early / sizeof rb.early[0]) && in != NULL) {
+        rb.early[rb.nearly].epoch = epoch;
+        rb.early[rb.nearly].slot = slot;
+        rb.early[rb.nearly].frame = frame;
+        rb.early[rb.nearly].in = *in;
+        rb.nearly++;
+    } /* an earlier epoch: dropped */
+}
+
+void gw_rb_request_wait(int frames) {
+    if (frames > 0) {
+        rb.wait_ticks += frames;
+    }
 }
 
 int gw_rb_rollbacks(void) { return rb.n_rollbacks; }
@@ -651,6 +712,21 @@ int gw_RB_Iterations(int count) {
                 }
             }
         }
+        {
+            int q = 0;
+            while (q < rb.nearly) {
+                if (rb.early[q].epoch == rb.epoch) {
+                    GwRbInput e = rb.early[q].in;
+                    int sl = rb.early[q].slot, fr = rb.early[q].frame;
+                    rb.early[q] = rb.early[--rb.nearly];
+                    gw_rb_submit_remote_input(sl, fr, &e);
+                } else if (rb.early[q].epoch < rb.epoch) {
+                    rb.early[q] = rb.early[--rb.nearly];
+                } else {
+                    ++q;
+                }
+            }
+        }
         gw_log("rb: snapshots open (%d), slots present 0x%02X", rb.maxb + 3,
                (unsigned) ((rb.slot_present[0]) | (rb.slot_present[1] << 1) | (rb.slot_present[2] << 2) |
                            (rb.slot_present[3] << 3) | (rb.slot_present[4] << 4) |
@@ -679,6 +755,20 @@ int gw_RB_Iterations(int count) {
         rb.cur_extra_ms = 0;
     }
 
+    if (rb.hlog != NULL) {
+        int c = rb_conf(), f;
+        if (c == INT_MAX || c > frame) {
+            c = frame;
+        }
+        for (f = rb.hlog_next; f <= c + 1 && f <= frame; ++f) { /* frame = the last simulated: its hash exists */
+            uint32_t h = rb.hring[(unsigned) f % RB_RING].frame == f ? rb.hring[(unsigned) f % RB_RING].h : 0;
+            if (h != 0) {
+                fprintf(rb.hlog, "%d,%08X\n", f, h);
+            }
+        }
+        rb.hlog_next = f;
+        fflush(rb.hlog);
+    }
     /* Frames whose inputs were all confirmed BEFORE this tick's deliveries are final: any wrong one
        was already resimulated by the previous tick's iterations, so their trace rows are the
        post-rollback ones. (Flushing after planning would write the old timeline's rows of frames
@@ -733,6 +823,9 @@ int gw_RB_Iterations(int count) {
     if (frame >= RB_FIRST && (n - conf > rb.maxb || (n > rb.last && conf < rb.last))) {
         rb.plan.new_frame = 0;
         rb.n_stall_ticks++;
+    } else if (rb.wait_ticks > 0 && frame >= RB_FIRST) {
+        rb.wait_ticks--; /* time sync: give a frame back (gw_rb_request_wait) */
+        rb.plan.new_frame = 0;
     }
     rb.plan.active = rb.plan.rollback || rb.plan.new_frame;
     if (rb.plan.rollback) {
@@ -745,6 +838,17 @@ int gw_RB_Iterations(int count) {
         rb.cur_depth = rb.plan.k;
     }
     rb.n_ticks++;
+    {
+        /* MELEE_RB_WAITTEST=1: ask for two frames of waiting every 40 ticks, as a time-sync layer
+           would - waiting is pure timing, so the confirmed trace must not change */
+        static int waittest = -1;
+        if (waittest < 0) {
+            waittest = getenv("MELEE_RB_WAITTEST") != NULL && atoi(getenv("MELEE_RB_WAITTEST")) != 0;
+        }
+        if (waittest && (rb.n_ticks % 40) == 0) {
+            gw_rb_request_wait(2);
+        }
+    }
     rb.tick_t0 = rb_ms();
     rb.tick_depth = rb.plan.rollback ? (rb.plan.k > 15 ? 15 : rb.plan.k) : 0;
     if ((rb.n_ticks % 1200) == 0) {
@@ -888,6 +992,8 @@ void gw_RB_IterStart(void) {
     }
     rb_prepare(next);
     gw_Replay_TraceBeginIter(next);
+    rb.hring[(unsigned) next % RB_RING].frame = next;
+    rb.hring[(unsigned) next % RB_RING].h = gw_RB_GameHash() | 1u;
     if (!(rb.plan.i == 0 && rb.plan.rollback)) {
         double t0 = rb_ms();
         gw_snap_save(next);

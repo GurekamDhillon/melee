@@ -106,10 +106,31 @@ int gw_rb_current_frame(void);
  * (GGPO's "frame advantage"). Positive: we are ahead. */
 int gw_rb_frame_advantage(void);
 
-/* A checksum of the simulation state at the START of `frame` (32-bit; the same on both peers iff
- * they are in sync). Valid for the last few confirmed frames still in the snapshot window;
- * 0 otherwise. Exchange them and compare for desync detection. */
+/* The CURATED GAMEPLAY checksum of the state at the START of `frame` of the current epoch
+ * (32-bit, never 0): the RNG seed plus, per fighter, motion, position, velocity, damage and facing
+ * (ftRb hash in fighter.c). It is what two real machines must agree on; it deliberately leaves out
+ * render-owned bytes, sound handles and heap addresses, which legitimately differ. Published only
+ * for FINAL frames - every input before `frame` confirmed and no correction pending - else 0.
+ * Exchange them and compare for desync detection. (The whole-state hash SyncTest uses is
+ * gw_rb_checksum_full: valid within one process only.) */
 uint32_t gw_rb_checksum(int frame);
+uint32_t gw_rb_checksum_full(int frame);
+
+/* EPOCHS. Frames are numbered per scene (a VS match: -123.. again each time) and every scene
+ * begins a new epoch; a (epoch, frame) pair is never reused, so a hash or an input labelled with an
+ * old epoch can never be mistaken for the new scene's. gw_rb_epoch() is the current one (0 before
+ * any scene). The _e variants drop labels from an earlier epoch and hold back ones from a later
+ * epoch (a peer that entered the scene first) until this side reaches it. The plain functions
+ * above mean "the current epoch". */
+int gw_rb_epoch(void);
+void gw_rb_submit_remote_input_e(int epoch, int slot, int frame, const GwRbInput *in);
+uint32_t gw_rb_checksum_e(int epoch, int frame);
+
+/* TIME SYNC, applied. The transport (gw_net) estimates who is ahead and by how much; the ahead
+ * peer gives back half the gap. This is the actuator: skip the next `frames` NEW-frame iterations
+ * (rollbacks and rendering still run, so the picture does not freeze), one per render tick. Not
+ * counted as stalls. Calls add up; negative values are ignored. */
+void gw_rb_request_wait(int frames);
 
 /* Statistics since the session began. */
 int gw_rb_rollbacks(void);

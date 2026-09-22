@@ -87,6 +87,8 @@ static struct {
     int started;          /* frame -123 has been simulated: the network clock runs */
     long tk;              /* the fake network clock: render ticks since the match began */
     int prev_frame, prev_planned_new; /* last tick: frame seen and whether a new frame was planned */
+    int newest;           /* the newest frame ever simulated this match */
+    int prev_idle;        /* the last tick was the session's own stall or time-sync wait */
     int n_held;           /* ticks the game itself held the frame (loading hold): clock paused */
     int last;             /* the replay's last frame (fake) */
 
@@ -204,6 +206,8 @@ void gw_RB_SceneBegin(int scene_kind) {
         rb.opened = 0;
         rb.started = 0;
         rb.tk = 0;
+        rb.newest = INT_MIN;
+        rb.prev_idle = 0;
         rb.first_wrong = RB_NONE;
         memset(&rb.plan, 0, sizeof rb.plan);
         rb.iter_kind = 0;
@@ -808,16 +812,25 @@ int gw_RB_Iterations(int count) {
             rb.started = 1;
             rb.tk = 1;
         }
-    } else if (rb.prev_planned_new && frame == rb.prev_frame) {
-        /* the last tick planned a new frame and the game did not run it: the scene held the frame
-           (the loading hold freezes the match until its pipelines are built). A real peer is held
-           by the same hold, so the fake network's clock pauses too - otherwise it runs ahead and
-           delivers every input early, and nothing is ever predicted. */
-        rb.n_held++;
-    } else {
+    } else if (frame > rb.newest || rb.prev_idle) {
+        /* The fake network's clock is the match's own progress: it advances when a NEW frame was
+           simulated, or on the session's own stall/wait ticks (time passes for the peer while we
+           wait for it). Ticks where the scene held the frame (the loading hold freezes the match
+           until its pipelines are built) do not advance it - a real peer is held by the same hold
+           - nor does the frame counter moving back and forth under a rollback during such a hold.
+           Otherwise the clock runs ahead, every input arrives early and nothing is predicted. */
         rb.tk++;
+    } else {
+        rb.n_held++;
+    }
+    if (frame > rb.newest) {
+        rb.newest = frame;
     }
     rb.prev_frame = frame;
+    if (rb.log > 0 && rb.started && ((rb.tk % 200) == 0 || (rb.tk < 400 && (rb.tk % 20) == 0))) {
+        gw_log("rb: clock tk %ld frame %d lead %ld held %d count %d", rb.tk, frame,
+               rb.tk - (long) (frame - RB_FIRST), rb.n_held, count);
+    }
     rb_fake_deliver();
 
     n = frame + 1; /* the next frame to simulate */
@@ -859,6 +872,7 @@ int gw_RB_Iterations(int count) {
     }
     rb.plan.active = rb.plan.rollback || rb.plan.new_frame;
     rb.prev_planned_new = rb.plan.new_frame;
+    rb.prev_idle = frame >= RB_FIRST && !rb.plan.new_frame;
     if (rb.plan.rollback) {
         rb.n_rollbacks++;
         rb.n_resim += rb.plan.k;

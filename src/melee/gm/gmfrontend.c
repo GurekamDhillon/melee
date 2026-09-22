@@ -16,6 +16,11 @@
 #include <melee/lb/lbcardgame.h>
 #include <melee/lb/lbcardnew.h>
 #include <melee/lb/lbdvd.h>
+#include <melee/lb/lbarchive.h>
+#include <melee/lb/lblanguage.h>
+#include <melee/gm/gm_1A36.h>
+#include <sysdolphin/baselib/controller.h>
+#include <sysdolphin/baselib/random.h>
 #include <melee/mn/forward.h>
 #include <melee/mn/inlines.h>
 #include <melee/mn/mnmain.h>
@@ -374,10 +379,15 @@ void Frontend_CaptureCharIcon(int ck, HSD_JObj* root)
     ic->h = t->imagedesc->height;
     ic->fmt = t->imagedesc->format;
     ic->tlut_n = 0;
-    if (t->tlut != NULL && t->tlut->lut != NULL && t->tlut->n_entries * 2 <= (int) sizeof ic->lut) {
-        ic->tlut_n = t->tlut->n_entries;
-        ic->tlut_fmt = t->tlut->fmt;
-        memcpy(ic->lut, t->tlut->lut, (size_t) ic->tlut_n * 2);
+    {
+        /* an animated palette is tluttbl[tlut_no] (tobj.c) */
+        HSD_Tlut* tl = t->tlut_no != TOBJ_TLUT_NONE && t->tluttbl != NULL ? t->tluttbl[t->tlut_no]
+                                                                          : t->tlut;
+        if (tl != NULL && tl->lut != NULL && tl->n_entries * 2 <= (int) sizeof ic->lut) {
+            ic->tlut_n = tl->n_entries;
+            ic->tlut_fmt = tl->fmt;
+            memcpy(ic->lut, tl->lut, (size_t) ic->tlut_n * 2);
+        }
     }
     ic->ok = true;
 }
@@ -407,10 +417,15 @@ void Frontend_CaptureIcon(int which, HSD_JObj* root)
     ic->h = t->imagedesc->height;
     ic->fmt = t->imagedesc->format;
     ic->tlut_n = 0;
-    if (t->tlut != NULL && t->tlut->lut != NULL && t->tlut->n_entries * 2 <= (int) sizeof ic->lut) {
-        ic->tlut_n = t->tlut->n_entries;
-        ic->tlut_fmt = t->tlut->fmt;
-        memcpy(ic->lut, t->tlut->lut, (size_t) ic->tlut_n * 2);
+    {
+        /* an animated palette is tluttbl[tlut_no] (tobj.c) */
+        HSD_Tlut* tl = t->tlut_no != TOBJ_TLUT_NONE && t->tluttbl != NULL ? t->tluttbl[t->tlut_no]
+                                                                          : t->tlut;
+        if (tl != NULL && tl->lut != NULL && tl->n_entries * 2 <= (int) sizeof ic->lut) {
+            ic->tlut_n = tl->n_entries;
+            ic->tlut_fmt = tl->fmt;
+            memcpy(ic->lut, tl->lut, (size_t) ic->tlut_n * 2);
+        }
     }
     ic->ok = true;
 }
@@ -509,6 +524,9 @@ static const FrontendScreen fe_screen_loading = {
     0,
     4, /* FL_LOAD: drawn from loading_layout.json (gmfrontend_online.inc) */
 };
+/* VS mode's character and stage select (gmfrontend_select.inc), in their states' own scene. */
+static const FrontendScreen fe_screen_css = { "VERSUS", "CHARACTERS", NULL, 0, 5 };
+static const FrontendScreen fe_screen_sss = { "VERSUS", "STAGES", NULL, 0, 6 };
 /* The same screen after the online lobby's countdown, inside the lobby's own scene. */
 static const FrontendScreen fe_screen_online_load = { "GET READY", "LOADING", NULL, 0, 4 };
 
@@ -618,6 +636,15 @@ static void fe_np_open(int which, const char* scene)
     fe.leaving = 1; /* fade out into VS mode, which opens at the CSS / SSS */
 }
 
+
+void gmFrontend_SelectScene(struct GameModeState* state, int sss)
+{
+    extern int Frontend_NativeSelect(void);
+    if (state == NULL) {
+        return;
+    }
+    state->info.scene_kind = Frontend_NativeSelect() ? (sss ? GS_SSS : GS_CSS) : GS_FRONTEND;
+}
 
 void gmFrontend_BeginLoading(void)
 {
@@ -956,6 +983,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_menus.inc"
 #include "gmfrontend_kitlist.inc"
 #include "gmfrontend_online.inc"
+#include "gmfrontend_select.inc"
 
 /* The toolkit screens are drawn with the kit when its files are there (fe_kit), with the old
  * art pack and SisLib otherwise. */
@@ -1406,6 +1434,12 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     fe.hl_y = 0.0F;
     fe.n_vis = 0;
     fe.help_item = -1;
+    if (enter_data != NULL && (enter_data == &gmVsMelee_CssData || enter_data == &gmVsMelee_SssData)) {
+        /* VS mode's CSS / SSS state runs this scene in place of the native screen */
+        fe.screen = enter_data == &gmVsMelee_CssData ? &fe_screen_css : &fe_screen_sss;
+        fe.next_menus = false;
+        fe.loading = false;
+    }
     if (fe.next_menus) {
         fe.next_menus = false;
         fe.canvas = HSD_SisLib_803A611C(0, NULL, 0x13, 0x14, 0, FE_GX_LINK, 10, 0);

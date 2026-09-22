@@ -217,6 +217,9 @@ void onEnterDebugVs(GameModeState* state)
 void onEnterCss(GameModeState* state)
 {
     gmVsMelee_EnterCss(state, gmVsMelee_GetVsData(), VS_MELEE);
+#if defined(TARGET_PC)
+    gmFrontend_SelectScene(state, 0); /* the port's own character select */
+#endif
 }
 
 void onExitCss(GameModeState* state)
@@ -227,6 +230,9 @@ void onExitCss(GameModeState* state)
 void onEnterSss(GameModeState* state)
 {
     gmVsMelee_EnterSss(state, gmVsMelee_GetVsData());
+#if defined(TARGET_PC)
+    gmFrontend_SelectScene(state, 1); /* the port's own stage select */
+#endif
 }
 
 void onExitSss(GameModeState* state)

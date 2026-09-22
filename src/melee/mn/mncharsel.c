@@ -6391,3 +6391,173 @@ void mnCharSel_Scene_OnExit(void* unused)
     lbAudioAx_8002702C(4, tmp);
     lbAudioAx_80027168();
 }
+
+#if defined(TARGET_PC)
+/* ---- the port's own character select (gmfrontend_select.inc) ------------------------------
+ *
+ * The frontend draws its CSS itself, with the disc's own art: this loads the icon model and the
+ * portrait joint out of the MnSlChr archive the frontend opened, the same models this screen
+ * uses (retail's menu model, or m-ex's mexSelectChr icon model + CSP animation), animates them
+ * with no GObj - nothing is drawn - and hands back the texture objects the animation selected.
+ * The frontend only borrows their image and palette pointers, which live in the archive. */
+static HSD_JObj* mnCharSel_PcMenu;   /* the menu model: retail icons, the portrait joint */
+static HSD_JObj* mnCharSel_PcIcons;  /* where icon joints resolve (m-ex's icon model or the menu) */
+static MexSelectChr* mnCharSel_PcMex;
+static CSSIcon* mnCharSel_PcTable;
+static int mnCharSel_PcCount;
+
+/* The biggest colour texture under `j` (its own subtree) - an icon's art, not its I4 plate. */
+static void mnCharSel_PcBestTex(HSD_JObj* j, HSD_TObj** best, int* area, int depth)
+{
+    for (; j != NULL && depth < 12; j = depth == 0 ? NULL : HSD_JObjGetNext(j)) {
+        HSD_DObj* d = HSD_JObjGetDObj(j);
+        for (; d != NULL; d = d->next) {
+            HSD_TObj* t = d->mobj != NULL ? d->mobj->tobj : NULL;
+            for (; t != NULL; t = t->next) {
+                if (t->imagedesc != NULL && t->imagedesc->image_ptr != NULL) {
+                    int fmt = t->imagedesc->format;
+                    int a = t->imagedesc->width * t->imagedesc->height * (fmt >= 4 ? 4 : 1);
+                    if (a > *area) {
+                        *area = a;
+                        *best = t;
+                    }
+                }
+            }
+        }
+        mnCharSel_PcBestTex(HSD_JObjGetChild(j), best, area, depth + 1);
+    }
+}
+
+/* Open the art: `archive` is MnSlChr, loaded by the caller for the scene. Returns how many icons
+ * the roster has (retail 25, m-ex mexData's count), 0 on failure. */
+int mnCharSel_PcArtOpen(HSD_Archive* archive)
+{
+    extern int Mex_CssIconCount(void);
+    extern void* Mex_CssIconTable(void);
+    MnSelectChrDataTable* tbl;
+    MnSelectChrModels* m;
+    int n;
+    mnCharSel_PcMenu = mnCharSel_PcIcons = NULL;
+    mnCharSel_PcMex = NULL;
+    mnCharSel_PcTable = icons;
+    mnCharSel_PcCount = 0;
+    if (archive == NULL) {
+        return 0;
+    }
+    tbl = HSD_ArchiveGetPublicAddress(archive, "MnSelectChrDataTable");
+    if (tbl == NULL) {
+        return 0;
+    }
+    m = &tbl->models;
+    mnCharSel_PcMenu = HSD_JObjLoadJoint(m->menu.joint);
+    HSD_JObjAddAnimAll(mnCharSel_PcMenu, m->menu.animjoint, m->menu.matanim_joint,
+                       m->menu.shapeanim_joint);
+    HSD_JObjReqAnimAll(mnCharSel_PcMenu, 0.0F);
+    HSD_JObjAnimAll(mnCharSel_PcMenu);
+    mnCharSel_PcIcons = mnCharSel_PcMenu;
+    mnCharSel_PcCount = SELKIND_COUNT; /* retail: icons[] as authored (never rewritten there) */
+
+    mnCharSel_PcMex = HSD_ArchiveGetPublicAddress(archive, "mexSelectChr");
+    n = mnCharSel_PcMex != NULL ? Mex_CssIconCount() : 0;
+    if (n > 0 && n <= CSS_ICON_MAX && Mex_CssIconTable() != NULL) {
+        mnCharSel_PcTable = Mex_CssIconTable(); /* char_kind is the EXTERNAL id here */
+        mnCharSel_PcCount = n;
+        mnCharSel_PcIcons = HSD_JObjLoadJoint(mnCharSel_PcMex->icon_joint);
+        HSD_JObjAddAnimAll(mnCharSel_PcIcons, mnCharSel_PcMex->icon_animjoint,
+                           mnCharSel_PcMex->icon_matanim, NULL);
+        HSD_JObjReqAnimAll(mnCharSel_PcIcons, 0.0F);
+        HSD_JObjAnimAll(mnCharSel_PcIcons);
+        {
+            HSD_JObj* j = NULL;
+            lb_80011E24(mnCharSel_PcMenu, &j, mnCharSel_803F0DFC.doors[0].costume_joint, -1);
+            if (j != NULL && j->u.dobj != NULL && mnCharSel_PcMex->csp_matanim != NULL) {
+                HSD_DObjAddAnimAll(j->u.dobj, mnCharSel_PcMex->csp_matanim, NULL);
+            }
+        }
+    } else {
+        mnCharSel_PcMex = NULL;
+    }
+    return mnCharSel_PcCount;
+}
+
+/* Icon i of the roster: its CharacterKind (-1 = the port has no such fighter), its m-ex external
+ * id (-1 retail), and the texture showing it. Returns 0 past the end. */
+/* A texture object's current image and palette (an animated palette is tluttbl[tlut_no]). */
+static void mnCharSel_PcImage(HSD_TObj* t, HSD_ImageDesc** img, HSD_Tlut** tlut)
+{
+    *img = t != NULL ? t->imagedesc : NULL;
+    *tlut = t == NULL                                                  ? NULL
+            : t->tlut_no != TOBJ_TLUT_NONE && t->tluttbl != NULL ? t->tluttbl[t->tlut_no]
+                                                                   : t->tlut;
+}
+
+int mnCharSel_PcArtIcon(int i, int* ck, int* ext, HSD_ImageDesc** img, HSD_Tlut** tlut)
+{
+    extern int Mex_ExtToPortCKind(int);
+    CSSIcon* row;
+    HSD_JObj* j = NULL;
+    HSD_TObj* t = NULL;
+    int area = 0;
+    if (i < 0 || i >= mnCharSel_PcCount || mnCharSel_PcIcons == NULL) {
+        return 0;
+    }
+    row = &mnCharSel_PcTable[i];
+    if (mnCharSel_PcMex != NULL) {
+        *ext = row->char_kind;
+        *ck = Mex_ExtToPortCKind(row->char_kind);
+    } else {
+        *ext = -1;
+        *ck = row->char_kind;
+    }
+    lb_80011E24(mnCharSel_PcIcons, &j, row->joint_id_vs, -1);
+    if (j != NULL) {
+        mnCharSel_PcBestTex(j, &t, &area, 0);
+    }
+    mnCharSel_PcImage(t, img, tlut);
+    return 1;
+}
+
+/* The portrait (CSP) of fighter `ck` in `costume`: the portrait joint animated to its frame. */
+int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD_Tlut** tlut)
+{
+    extern int Mex_PortCKindToExt(int);
+    HSD_JObj* j = NULL;
+    HSD_TObj* t = NULL;
+    int frame = -1, i, area = 0;
+    *img = NULL;
+    *tlut = NULL;
+    if (mnCharSel_PcMenu == NULL || ck < 0) {
+        return 0;
+    }
+    if (costume < 0) {
+        costume = 0;
+    }
+    if (mnCharSel_PcMex != NULL) {
+        MexSelectChr* saved = mnCharSel_Mex;
+        int ext = Mex_PortCKindToExt(ck);
+        if (ext < 0) {
+            return 0;
+        }
+        mnCharSel_Mex = mnCharSel_PcMex; /* the frame rule reads the CSS's descriptor */
+        frame = mnCharSel_MexCspFrame(ext, costume);
+        mnCharSel_Mex = saved;
+    } else {
+        for (i = 0; i < SELKIND_COUNT; i++) {
+            if (icons[i].char_kind == ck) {
+                frame = icons[i].ft_hudindex + costume * 0x1E;
+                break;
+            }
+        }
+        if (frame < 0) {
+            return 0;
+        }
+    }
+    j = animateJoint(mnCharSel_PcMenu, mnCharSel_803F0DFC.doors[0].costume_joint, TOBJ_MASK,
+                     (f32) frame);
+    if (j != NULL) {
+        mnCharSel_PcBestTex(j, &t, &area, 0);
+    }
+    mnCharSel_PcImage(t, img, tlut);
+    return t != NULL;
+}
+#endif

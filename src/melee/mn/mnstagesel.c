@@ -28,6 +28,9 @@
 #include <sysdolphin/baselib/random.h>
 #if defined(TARGET_PC)
 #include <sysdolphin/baselib/robj.h>
+#include <sysdolphin/baselib/dobj.h>
+#include <sysdolphin/baselib/mobj.h>
+#include <sysdolphin/baselib/tobj.h>
 #endif
 
 /// @todo .sdata2 order hack
@@ -1287,3 +1290,197 @@ int mnStageSel_8025BC08(int idx)
 {
     return mnStageSel_803F06D0[idx].stkind;
 }
+
+#if defined(TARGET_PC)
+/* ---- the port's own stage select (gmfrontend_select.inc) ----------------------------------
+ *
+ * As mncharsel.c's PcArt: the icon models out of the MnSlMap archive the frontend opened -
+ * retail's three icon models at their authored frames, or m-ex's shared icon model at frame
+ * row + 2 - animated with no GObj, and the texture each icon shows handed back for the frontend
+ * to borrow. */
+static HSD_JObj* mnStageSel_PcMexIcon;
+static MexMapData* mnStageSel_PcMex;
+static int mnStageSel_PcCount;
+
+static void mnStageSel_PcBestTex(HSD_JObj* j, HSD_TObj** best, int* area, int depth)
+{
+    for (; j != NULL && depth < 12; j = depth == 0 ? NULL : HSD_JObjGetNext(j)) {
+        HSD_DObj* d = HSD_JObjGetDObj(j);
+        for (; d != NULL; d = d->next) {
+            HSD_TObj* t = d->mobj != NULL ? d->mobj->tobj : NULL;
+            for (; t != NULL; t = t->next) {
+                if (t->imagedesc != NULL && t->imagedesc->image_ptr != NULL) {
+                    int fmt = t->imagedesc->format;
+                    int a = t->imagedesc->width * t->imagedesc->height * (fmt >= 4 ? 4 : 1);
+                    if (a > *area) {
+                        *area = a;
+                        *best = t;
+                    }
+                }
+            }
+        }
+        mnStageSel_PcBestTex(HSD_JObjGetChild(j), best, area, depth + 1);
+    }
+}
+
+static void mnStageSel_PcImage(HSD_TObj* t, HSD_ImageDesc** img, HSD_Tlut** tlut)
+{
+    *img = t != NULL ? t->imagedesc : NULL;
+    *tlut = t == NULL                                                  ? NULL
+            : t->tlut_no != TOBJ_TLUT_NONE && t->tluttbl != NULL ? t->tluttbl[t->tlut_no]
+                                                                   : t->tlut;
+}
+
+static HSD_JObj* mnStageSel_PcModel(StaticModelDesc* m)
+{
+    HSD_JObj* j = HSD_JObjLoadJoint(m->joint);
+    HSD_JObjAddAnimAll(j, m->animjoint, m->matanim_joint, m->shapeanim_joint);
+    return j;
+}
+
+/* Open the art: `archive` is MnSlMap. Returns the icon count (retail 30, m-ex's table). */
+int mnStageSel_PcArtOpen(HSD_Archive* archive)
+{
+    struct {
+        void* unk0;
+        void* unk4;
+        void* unk8;
+        void* unkC;
+        struct mnStageSel_804D6C98_t x10;
+    }* data;
+    int n;
+    mnStageSel_PcMexIcon = NULL;
+    mnStageSel_PcMex = NULL;
+    mnStageSel_PcCount = 0;
+    if (archive == NULL) {
+        return 0;
+    }
+    data = HSD_ArchiveGetPublicAddress(archive, "MnSelectStageDataTable");
+    if (data == NULL) {
+        return 0;
+    }
+    mnStageSel_804D6C98 = &data->x10;
+    mnStageSel_PcCount = SSS_ICON_COUNT_RETAIL;
+    mnStageSel_PcMex = HSD_ArchiveGetPublicAddress(archive, "mexMapData");
+    n = Mex_SssIconCount();
+    if (mnStageSel_PcMex != NULL && mnStageSel_PcMex->icon_joint != NULL &&
+        n > SSS_ICON_COUNT_RETAIL && n <= SSS_ICON_MAX && Mex_SssTable() != NULL)
+    {
+        mnStageSel_PcCount = n;
+        mnStageSel_PcMexIcon = HSD_JObjLoadJoint(mnStageSel_PcMex->icon_joint);
+        HSD_JObjAddAnimAll(mnStageSel_PcMexIcon, mnStageSel_PcMex->icon_animjoint,
+                           mnStageSel_PcMex->icon_matanim, NULL);
+    } else {
+        mnStageSel_PcMex = NULL;
+    }
+    return mnStageSel_PcCount;
+}
+
+static void mnStageSel_PcWidest(HSD_JObj* j, HSD_TObj** best, int* bw, int depth)
+{
+    for (; j != NULL && depth < 12; j = HSD_JObjGetNext(j)) {
+        HSD_DObj* d = HSD_JObjGetDObj(j);
+        for (; d != NULL; d = d->next) {
+            HSD_TObj* t = d->mobj != NULL ? d->mobj->tobj : NULL;
+            for (; t != NULL; t = t->next) {
+                if (t->imagedesc != NULL && t->imagedesc->image_ptr != NULL &&
+                    t->imagedesc->width > *bw)
+                {
+                    *bw = t->imagedesc->width;
+                    *best = t;
+                }
+            }
+        }
+        mnStageSel_PcWidest(HSD_JObjGetChild(j), best, bw, depth + 1);
+    }
+}
+
+/* The stage-name strip for icon i (the SSS's own name art: m-ex one frame per icon, retail
+ * 20 x preview id): the widest texture of the name model at that frame. NULL if none. */
+int mnStageSel_PcArtName(int i, HSD_ImageDesc** img, HSD_Tlut** tlut)
+{
+    static HSD_JObj* name;
+    static void* name_for;
+    HSD_TObj* best = NULL;
+    int bw = 0;
+    *img = NULL;
+    *tlut = NULL;
+    if (i < 0 || i >= mnStageSel_PcCount || mnStageSel_804D6C98 == NULL) {
+        return 0;
+    }
+    if (name == NULL || name_for != (void*) mnStageSel_804D6C98) {
+        StaticModelDesc* m = &mnStageSel_804D6C98->x30;
+        name = HSD_JObjLoadJoint(m->joint);
+        HSD_JObjAddAnimAll(name, m->animjoint,
+                           mnStageSel_PcMex != NULL ? mnStageSel_PcMex->stagename_matanim
+                                                    : m->matanim_joint,
+                           m->shapeanim_joint);
+        name_for = mnStageSel_804D6C98;
+    }
+    if (mnStageSel_PcMex != NULL) {
+        do_anim(name, i);
+    } else {
+        do_anim(name, 20 * mnStageSel_803F06D0[i].x9);
+    }
+    mnStageSel_PcWidest(name, &best, &bw, 0);
+    mnStageSel_PcImage(best, img, tlut);
+    return best != NULL;
+}
+
+/* Icon i: its EXTERNAL stage id, its type (0 hidden, 1 blank/locked slot, 2 a stage, 3 Random)
+ * and the texture it shows. Returns 0 past the end. The caller decides what is unlocked. */
+int mnStageSel_PcArtIcon(int i, int* ext, int* type, HSD_ImageDesc** img, HSD_Tlut** tlut)
+{
+    HSD_JObj* j = NULL;
+    HSD_JObj* at = NULL;
+    HSD_TObj* t = NULL;
+    int area = 0;
+    *img = NULL;
+    *tlut = NULL;
+    if (i < 0 || i >= mnStageSel_PcCount || mnStageSel_804D6C98 == NULL) {
+        return 0;
+    }
+    if (mnStageSel_PcMex != NULL) {
+        MexSssIcon* row = &((MexSssIcon*) Mex_SssTable())[i];
+        *ext = row->stkind;
+        *type = row->type;
+        if (row->type == 0) {
+            return 1;
+        }
+        if (row->type == 3) {
+            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x10);
+            do_anim(j, 2);
+        } else {
+            at = j = mnStageSel_PcMexIcon;
+            do_anim(j, row->type == 1 ? 1 : i + 2);
+        }
+    } else {
+        struct stagelistinfo* row = &mnStageSel_803F06D0[i];
+        *ext = row->stkind;
+        *type = i == NUM_STAGES_RETAIL ? 3 : 2;
+        if (i < 22) {
+            /* the pair model: the even row is the second child, the odd row the first */
+            j = mnStageSel_PcModel(&mnStageSel_804D6C98->x40);
+            at = (i & 1) ? j->child : j->child->next;
+            HSD_JObjReqAnimAll(j, 0.0F);
+            HSD_JObjReqAnimAllByFlags(at, 0x10, row->x9 / 2 + 2);
+            HSD_JObjAnimAll(j);
+        } else if (i < 24) {
+            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x0);
+            do_anim(j, row->x9 - 0x14);
+        } else if (i < NUM_STAGES_RETAIL) {
+            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x20);
+            do_anim(j, row->x9 - 0x16);
+        } else {
+            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x10);
+            do_anim(j, 2);
+        }
+    }
+    if (at != NULL) {
+        mnStageSel_PcBestTex(at, &t, &area, 0);
+    }
+    /* the image and palette pointers live in the archive; the (shared) model moves on */
+    mnStageSel_PcImage(t, img, tlut);
+    return 1;
+}
+#endif

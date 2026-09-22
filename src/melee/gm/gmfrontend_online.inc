@@ -32,7 +32,18 @@
  * lent to the player as textures. Stage art is optional in the layout and not captured yet (the
  * tile draws its flat stand-in). */
 
-enum { FL_NONE, FL_CODE, FL_WAIT, FL_LOBBY, FL_LOAD };
+enum { FL_NONE, FL_CODE, FL_WAIT, FL_LOBBY, FL_LOAD, FL_CSS, FL_SSS };
+
+/* the character and stage select (gmfrontend_select.inc) */
+static void fs_css_open(CSSData* css);
+static void fs_sss_open(SSSData* sss);
+static void fs_css_frame(void);
+static void fs_sss_frame(void);
+static void fs_build_css(void);
+static void fs_build_sss(void);
+static void fs_css_sig(char* sig);
+static void fs_sss_sig(char* sig);
+static void fa_close(void);
 
 /* THE LOADING SCREEN (FL_LOAD, loading_layout.json): who fights where, and the warm-up's
  * progress. VS mode's loading state (after the SSS) and the online lobby (after its countdown)
@@ -1524,6 +1535,10 @@ static void fl_signature(char* sig)
         fl_sig_add(sig, b);
         fl_sig_int(sig, fl.frames < fl.copied_until);
         fl_sig_int(sig, Netplay_Ping() / 25);
+    } else if (fl.art == FL_CSS) {
+        fs_css_sig(sig);
+    } else if (fl.art == FL_SSS) {
+        fs_sss_sig(sig);
     } else if (fl.art == FL_LOAD) {
         fl_sig_int(sig, fl_ld.ready);
         for (i = 0; i < fl_ld.n; i++) {
@@ -1553,6 +1568,8 @@ static void fl_build(void)
     case FL_CODE: fl_build_code(); break;
     case FL_LOBBY: fl_build_lobby(); break;
     case FL_LOAD: fl_build_load(); break;
+    case FL_CSS: fs_build_css(); break;
+    case FL_SSS: fs_build_sss(); break;
     default: break;
     }
     fl_finish();
@@ -1624,6 +1641,11 @@ static void fl_build(void)
 
 static void fl_open(int art)
 {
+    if (art == FL_CSS) {
+        fs_css_open(&gmVsMelee_CssData);
+    } else if (art == FL_SSS) {
+        fs_sss_open(&gmVsMelee_SssData);
+    }
     if (art == FL_LOAD) {
         fe_load_begin();
         fl_load_init();
@@ -1988,6 +2010,8 @@ static void fl_frame(void)
     case FL_WAIT: fl_frame_wait(in); break;
     case FL_LOBBY: fl_frame_lobby(in); break;
     case FL_LOAD: fl_frame_load(); break;
+    case FL_CSS: fs_css_frame(); break;
+    case FL_SSS: fs_sss_frame(); break;
     default: break;
     }
     if (fe.screen == NULL || fe.screen->art != fl.art || fe.leaving != 0) {
@@ -2023,6 +2047,7 @@ static void fl_frame_anim(void)
 
 static void fl_exit(void)
 {
+    fa_close(); /* the select screens' archives */
     if (fl.on) {
         fp_free_textures();
         fp.ok = false;

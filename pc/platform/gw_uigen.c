@@ -157,6 +157,13 @@ int gw_GenUI_Active(void) {
     return v != NULL && strcmp(v, "0") != 0;
 }
 
+/* MELEE_NATIVE_CSS=1: VS mode keeps the native character / stage select instead of the port's
+ * own (gmfrontend_select.inc) - for comparison while the new ones prove themselves. */
+int gw_Frontend_NativeSelect(void) {
+    const char *v = getenv("MELEE_NATIVE_CSS");
+    return v != NULL && v[0] != '\0' && strcmp(v, "0") != 0;
+}
+
 /* ---- content enumeration ------------------------------------------------------------------ */
 
 int gw_UI_FighterCount(void) {

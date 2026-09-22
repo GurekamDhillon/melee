@@ -48,6 +48,11 @@ bool gmFrontend_NativeReturn(int kind, int sel);
  * left to warm and stands down. */
 bool gmFrontend_TakeWarmed(void);
 
+/* VS mode's CSS / SSS state on_enter (gmvsmode.c): run the port's own screen (the frontend
+ * scene) in place of the native one, unless MELEE_NATIVE_CSS=1. `sss` 0 = CSS, 1 = SSS. */
+struct GameModeState;
+void gmFrontend_SelectScene(struct GameModeState* state, int sss);
+
 #endif
 
 #endif

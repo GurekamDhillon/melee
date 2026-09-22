@@ -354,10 +354,10 @@ static const FjNode* fj_load(const char* name, void** mem_text, void** mem_pool)
 
 /* ---- the model --------------------------------------------------------------------------- */
 
-#define FP_MAX_QUADS 256
+#define FP_MAX_QUADS 512
 #define FP_MAX_JOINTS 128
 #define FP_MAX_TILES 12
-#define FP_MAX_TEX 48
+#define FP_MAX_TEX 128
 #define FP_MAX_EVENTS 20
 #define FP_MAX_TRACKS 16
 #define FP_MAX_KEYS 6

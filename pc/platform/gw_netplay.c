@@ -2035,7 +2035,11 @@ void gw_Netplay_StageNameExt(int ext, char *out, int cap) {
         "Akaneia", "Venom", "Poke Floats", "Big Blue", "Icicle Mountain", "Icetop", "Flat Zone",
         "Dream Land", "Yoshi's Island N64", "Kongo Jungle N64", "Battlefield", "Final Destination",
     };
-    if (ext > 0 && ext < (int) (sizeof retail / sizeof retail[0])) {
+    int mi = gw_MexId_FindStage(ext);
+    const char *mn = mi >= 0 ? gw_MexId_Name(mi) : NULL;
+    if (mn != NULL && mn[0] != '?' && mn[0] != 0 && !(ext > 0 && ext < 33)) {
+        np_copy(out, cap, mn); /* an added stage: the disc's own name */
+    } else if (ext > 0 && ext < (int) (sizeof retail / sizeof retail[0])) {
         np_copy(out, cap, retail[ext]);
     } else {
         char buf[24];

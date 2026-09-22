@@ -58,6 +58,7 @@ typedef enum FrontendItemKind {
 typedef enum FrontendAction {
     FE_DO_CONTINUE, ///< go on to the mode the rule interrupted
     FE_DO_BACK,     ///< return to the mode the player came from
+    FE_DO_CALL,     ///< run the item's `call` (the screen stays)
 } FrontendAction;
 
 typedef struct FrontendItem {
@@ -71,6 +72,7 @@ typedef struct FrontendItem {
     const char* const* options;         ///< FE_CHOICE labels, index = value - min
     void (*format)(int value, char* out); ///< FE_SLIDER text; default "%d"
     int (*visible)(void);               ///< NULL = always shown
+    void (*call)(void);                 ///< FE_DO_CALL
 } FrontendItem;
 
 typedef struct FrontendScreen {
@@ -144,9 +146,13 @@ static void fe_set_ff(int v)
 static int fe_get_pause(void) { return gmMainLib_GetGameRules()->pause != 0; }
 static void fe_set_pause(int v) { gmMainLib_GetGameRules()->pause = (u8) (v != 0); }
 
+static void fe_open_online(void);
+
 static const FrontendItem fe_items_vs_setup[] = {
     { FE_ACTION, FE_DO_CONTINUE, "Continue to Character Select",
       "Pick fighters with these rules." },
+    { FE_ACTION, FE_DO_CALL, "Online Play", "Play a friend over the internet.", NULL, NULL, 0, 0,
+      0, NULL, NULL, NULL, fe_open_online },
     { FE_CHOICE, 0, "Mode", "How a match is won.", fe_get_mode, fe_set_mode, 0, 3, 1,
       fe_opt_mode },
     { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", fe_get_stocks, fe_set_stocks, 1,
@@ -172,6 +178,128 @@ static const FrontendScreen fe_screen_vs_setup = {
     "MATCH SETUP",
     fe_items_vs_setup,
     sizeof fe_items_vs_setup / sizeof fe_items_vs_setup[0],
+};
+
+/* ---- ONLINE PLAY: host or join a match over the internet -------------------------------------
+ * The connection itself is pc/platform/gw_netplay.c (its header explains codes, UPnP and hole
+ * punching). This screen only collects the choices and shows progress: Host Match copies this
+ * machine's code to the clipboard for the friend; the friend pastes it and presses Connect. Once
+ * the two are connected both go straight into the agreed match. */
+int Netplay_MenuBegin(int host, int ck, int color, int stage_ext, int stocks, int minutes,
+                      int delay);
+int Netplay_MenuPaste(int as_host);
+int Netplay_MenuPoll(void);
+void Netplay_MenuCancel(void);
+void Netplay_MenuLaunch(void);
+void Netplay_MenuStatus(char* out, int cap);
+void Netplay_MenuCode(char* out, int cap);
+void Netplay_MenuPeer(char* out, int cap);
+
+enum { FE_NP_IDLE, FE_NP_WORKING, FE_NP_CONNECTED, FE_NP_FAILED };
+
+/* CharacterKind order */
+static const char* const fe_np_chars[] = {
+    "Captain Falcon", "Donkey Kong", "Fox", "Mr. Game & Watch", "Kirby", "Bowser", "Link",
+    "Luigi", "Mario", "Marth", "Mewtwo", "Ness", "Peach", "Pikachu", "Ice Climbers",
+    "Jigglypuff", "Samus", "Yoshi", "Zelda", "Sheik", "Falco", "Young Link", "Dr. Mario", "Roy",
+    "Pichu", "Ganondorf",
+};
+static const char* const fe_np_stages[] = { "Battlefield", "Final Destination", "Dream Land",
+                                            "Yoshi's Story", "Fountain of Dreams",
+                                            "Pokemon Stadium" };
+static const int fe_np_stage_ext[] = { 31, 32, 28, 8, 2, 3 };
+static const char* const fe_np_roles[] = { "Host", "Join" };
+
+static int fe_np_role, fe_np_ck = 2, fe_np_color, fe_np_stage, fe_np_stocks = 4,
+                       fe_np_minutes = 8, fe_np_delay = 2;
+static int fe_np_phase; ///< FE_NP_*, from Netplay_MenuPoll
+
+static int fe_np_get_role(void) { return fe_np_role; }
+static void fe_np_set_role(int v)
+{
+    if (fe_np_phase == FE_NP_WORKING) {
+        Netplay_MenuCancel();
+        fe_np_phase = FE_NP_IDLE;
+    }
+    fe_np_role = v;
+}
+static int fe_np_get_ck(void) { return fe_np_ck; }
+static void fe_np_set_ck(int v) { fe_np_ck = v; }
+static int fe_np_get_color(void) { return fe_np_color; }
+static void fe_np_set_color(int v) { fe_np_color = v; }
+static void fe_np_fmt_color(int v, char* out) { sprintf(out, "Color %d", v + 1); }
+static int fe_np_get_stage(void) { return fe_np_stage; }
+static void fe_np_set_stage(int v) { fe_np_stage = v; }
+static int fe_np_get_stocks(void) { return fe_np_stocks; }
+static void fe_np_set_stocks(int v) { fe_np_stocks = v; }
+static int fe_np_get_minutes(void) { return fe_np_minutes; }
+static void fe_np_set_minutes(int v) { fe_np_minutes = v; }
+static void fe_np_fmt_minutes(int v, char* out) { sprintf(out, "%d min", v); }
+static int fe_np_get_delay(void) { return fe_np_delay; }
+static void fe_np_set_delay(int v) { fe_np_delay = v; }
+static void fe_np_fmt_delay(int v, char* out) { sprintf(out, "%d frames", v); }
+static int fe_np_is_host(void) { return fe_np_role == 0; }
+static int fe_np_is_join(void) { return fe_np_role == 1; }
+static int fe_np_zero(void) { return 0; }
+static void fe_np_fmt_code(int v, char* out)
+{
+    (void) v;
+    Netplay_MenuCode(out, 40);
+}
+static void fe_np_fmt_peer(int v, char* out)
+{
+    (void) v;
+    Netplay_MenuPeer(out, 40);
+}
+static void fe_np_start(void)
+{
+    if (Netplay_MenuBegin(fe_np_role == 0, fe_np_ck, fe_np_color,
+                          fe_np_stage_ext[fe_np_stage], fe_np_stocks, fe_np_minutes,
+                          fe_np_delay) == 0)
+    {
+        fe_np_phase = FE_NP_WORKING;
+    } else {
+        fe_np_phase = FE_NP_FAILED;
+    }
+}
+static void fe_np_paste_host(void) { Netplay_MenuPaste(0); }
+static void fe_np_paste_friend(void) { Netplay_MenuPaste(1); }
+
+static const FrontendItem fe_items_online[] = {
+    { FE_CHOICE, 0, "Play As", "Host a match, or join a friend's.", fe_np_get_role,
+      fe_np_set_role, 0, 1, 1, fe_np_roles },
+    { FE_CHOICE, 0, "Character", "Who you play.", fe_np_get_ck, fe_np_set_ck, 0, 25, 1,
+      fe_np_chars },
+    { FE_SLIDER, 0, "Costume", "Your fighter's colors.", fe_np_get_color, fe_np_set_color, 0, 3,
+      1, NULL, fe_np_fmt_color },
+    { FE_CHOICE, 0, "Stage", "Where you both play.", fe_np_get_stage, fe_np_set_stage, 0, 5, 1,
+      fe_np_stages, NULL, fe_np_is_host },
+    { FE_SLIDER, 0, "Stocks", "Lives each player starts with.", fe_np_get_stocks,
+      fe_np_set_stocks, 1, 9, 1, NULL, NULL, fe_np_is_host },
+    { FE_SLIDER, 0, "Time Limit", "The match clock.", fe_np_get_minutes, fe_np_set_minutes, 1,
+      20, 1, NULL, fe_np_fmt_minutes, fe_np_is_host },
+    { FE_SLIDER, 0, "Input Delay", "2 suits most connections; raise it if it stutters.",
+      fe_np_get_delay, fe_np_set_delay, 0, 8, 1, NULL, fe_np_fmt_delay, fe_np_is_host },
+    { FE_ACTION, FE_DO_CALL, "Paste Host Code", "Copy your friend's code, then press A here.",
+      NULL, NULL, 0, 0, 0, NULL, NULL, fe_np_is_join, fe_np_paste_host },
+    { FE_SLIDER, 0, "Host Code", "The code you pasted.", fe_np_zero, NULL, 0, 0, 0, NULL,
+      fe_np_fmt_peer, fe_np_is_join },
+    { FE_ACTION, FE_DO_CALL, "Host Match", "Start hosting; your code is copied for your friend.",
+      NULL, NULL, 0, 0, 0, NULL, NULL, fe_np_is_host, fe_np_start },
+    { FE_ACTION, FE_DO_CALL, "Connect", "Join the host whose code you pasted.", NULL, NULL, 0, 0,
+      0, NULL, NULL, fe_np_is_join, fe_np_start },
+    { FE_SLIDER, 0, "Your Code", "Your address; it is copied to the clipboard.", fe_np_zero,
+      NULL, 0, 0, 0, NULL, fe_np_fmt_code },
+    { FE_ACTION, FE_DO_CALL, "Paste Friend's Code",
+      "Only if they can't connect: paste their code here.", NULL, NULL, 0, 0, 0, NULL, NULL,
+      fe_np_is_host, fe_np_paste_friend },
+};
+
+static const FrontendScreen fe_screen_online = {
+    "ONLINE",
+    "ONLINE PLAY",
+    fe_items_online,
+    sizeof fe_items_online / sizeof fe_items_online[0],
 };
 
 /* THE LOADING SCREEN. No items: a title, a progress bar and a status line. Aurora compiles a
@@ -202,7 +330,7 @@ static const FrontendRule fe_rules[] = {
 
 #define FE_MAX_ROWS 7 ///< row slots on screen; longer screens scroll
 #define FE_MAX_ITEMS 24
-#define FE_STR 48 ///< longest string a row, value or help line shows
+#define FE_STR 80 ///< longest string a row, value or help line shows
 
 static struct {
     const FrontendScreen* screen;
@@ -755,7 +883,7 @@ static void fe_value_string(const FrontendItem* it, char* out)
 static void fe_refresh_rows(void)
 {
     int slot;
-    char buf[48];
+    char buf[FE_STR];
     for (slot = 0; slot < FE_MAX_ROWS; slot++) {
         HSD_Text* l = fe.label[slot];
         HSD_Text* v = fe.value[slot];
@@ -786,6 +914,10 @@ static void fe_refresh_rows(void)
     if (fe.n_vis > 0) {
         int idx = fe.vis[fe.cursor];
         const char* h = fe.screen->items[idx].help;
+        if (fe.screen == &fe_screen_online && fe_np_phase != FE_NP_IDLE) {
+            Netplay_MenuStatus(buf, FE_STR);
+            h = buf;
+        }
         fe_set_text(&fe.help, fe.help_str, FE_STR, h != NULL ? h : "", FE_HELP_COLOR);
     }
 }
@@ -930,6 +1062,32 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     fe_refresh_rows();
 }
 
+/* Show another screen in the same scene: the rows, title and subtitle follow. */
+static void fe_switch_screen(const FrontendScreen* s)
+{
+    fe.screen = s;
+    fe.cursor = 0;
+    fe.scroll = 0;
+    fe.hl_y = 0.0F;
+    fe.n_vis = 0;
+    fe_rebuild_visible();
+    if (fe.title != NULL) {
+        HSD_SisLib_803A5CC4(fe.title);
+    }
+    if (fe.subtitle != NULL) {
+        HSD_SisLib_803A5CC4(fe.subtitle);
+    }
+    fe.title = fe_text(44, 24, 0.9F, 0, FE_BONE, s->title);
+    fe.subtitle = fe_text(FE_PANEL_X + 44, FE_PANEL_Y + 7, 0.55F, 0, FE_INK, s->subtitle);
+    fe_refresh_rows();
+}
+
+static void fe_open_online(void)
+{
+    fe_np_phase = FE_NP_IDLE;
+    fe_switch_screen(&fe_screen_online);
+}
+
 static void fe_change(const FrontendItem* it, int dir)
 {
     int v, n;
@@ -1053,6 +1211,17 @@ void gm_Scene_Frontend_OnFrame(void)
         fe.hl_y += ((float) (fe.cursor - fe.scroll) - fe.hl_y) * 0.35F;
     }
 
+    if (fe.screen == &fe_screen_online && fe_np_phase == FE_NP_WORKING) {
+        fe_np_phase = Netplay_MenuPoll();
+        if (fe_np_phase == FE_NP_CONNECTED) {
+            /* the agreed match is the configured scene: VS mode seeds it and starts at the match */
+            Netplay_MenuLaunch();
+            fe.continue_to = GM_VS;
+            fe.leaving = 1;
+            fe_np_phase = FE_NP_IDLE;
+        }
+    }
+
     if (fe.frames >= 4 && fe.n_vis > 0) { /* let the button that brought us here go */
         in = mn_80229624(4);
         it = &fe.screen->items[fe.vis[fe.cursor]];
@@ -1068,7 +1237,13 @@ void gm_Scene_Frontend_OnFrame(void)
             fe_change(it, +1);
         } else if (in & MenuInput_Confirm) {
             if (it->kind == FE_ACTION) {
-                if (it->action == FE_DO_CONTINUE) {
+                if (it->action == FE_DO_CALL) {
+                    sfxForward();
+                    if (it->call != NULL) {
+                        it->call();
+                    }
+                    fe_rebuild_visible();
+                } else if (it->action == FE_DO_CONTINUE) {
                     sfxForward();
                     fe.leaving = 1;
                 } else {
@@ -1080,7 +1255,16 @@ void gm_Scene_Frontend_OnFrame(void)
             }
         } else if (in & MenuInput_Back) {
             sfxBack();
-            fe.leaving = 2;
+            if (fe.screen == &fe_screen_online) {
+                if (fe_np_phase == FE_NP_WORKING) {
+                    Netplay_MenuCancel();
+                    fe_np_phase = FE_NP_IDLE;
+                } else {
+                    fe_switch_screen(&fe_screen_vs_setup);
+                }
+            } else {
+                fe.leaving = 2;
+            }
         }
         if (fe.cursor >= fe.n_list) {
             /* on the button: the plate waits on the row the cursor will come back to */

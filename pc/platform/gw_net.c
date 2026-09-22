@@ -192,6 +192,8 @@ struct gw_net {
   uint8_t blob[GW_NET_MAX_BLOB];
   uint16_t blob_len;
   int have_remote_cfg;
+  int held;                          /* cfg.hold_start and gw_net_release not called yet */
+  int peer_ready;                    /* host: the guest's READY arrived while we were held */
 
   /* slots and framing */
   int32_t first;                     /* the session's first frame number */
@@ -303,7 +305,24 @@ static void send_hello(gw_net *n) {
   put64(&p, n->cfg.mods_hash);
   *p++ = (uint8_t)n->pb;
   put32(&p, (uint32_t)n->first);
+  /* optional tail (older hosts ignore it): the guest's own choices */
+  *p++ = n->cfg.guest_info_len;
+  if (n->cfg.guest_info_len != 0) {
+    memcpy(p, n->cfg.guest_info, n->cfg.guest_info_len);
+    p += n->cfg.guest_info_len;
+  }
   send_packet(n, buf, (int)(p - buf));
+}
+
+/* Host: agree the start time (the guest is ready, and so are we). */
+static void begin_start(gw_net *n) {
+  uint32_t delay = 2u * n->rtt_ms + 150u;
+  if (delay < 300u) delay = 300u;
+  n->start_time = now(n) + delay;
+  n->start_time_valid = 1;
+  n->state = GW_NET_STARTING;
+  n->next_start = now(n);
+  fire(n, GW_NET_EV_STARTING, NULL);
 }
 
 static void send_accept(gw_net *n) {
@@ -408,7 +427,19 @@ static gw_net *make(const gw_net_config *cfg, const gw_net_transport *t, int is_
   n->desync_frame = GW_NET_NO_FRAME;
   n->t_begin = now(n);
   n->last_rx_ms = n->t_begin;
+  n->held = cfg->hold_start != 0;
+  if (n->cfg.guest_info_len > GW_NET_MAX_GUEST_INFO) n->cfg.guest_info_len = GW_NET_MAX_GUEST_INFO;
   return n;
+}
+
+void gw_net_release(gw_net *n) {
+  if (n == NULL || !n->held) return;
+  n->held = 0;
+  if (n->is_host) {
+    if (n->state == GW_NET_ACCEPTED && n->peer_ready) begin_start(n);
+  } else {
+    n->next_ready = now(n);              /* READY goes out on the next poll */
+  }
 }
 
 gw_net *gw_net_host(const gw_net_config *cfg, const gw_net_transport *t) {
@@ -621,6 +652,14 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
       send_refuse_to(n, from, 1, why);
       return;                            /* stay listening: a refused guest does not consume the slot */
     }
+    {
+      int il = end - p >= 1 ? *p++ : 0;
+      if (il > end - p) il = (int)(end - p);
+      if (il > GW_NET_MAX_GUEST_INFO) il = GW_NET_MAX_GUEST_INFO;
+      if (n->cfg.cb.guest_hello != NULL) {
+        n->cfg.cb.guest_hello(n->cfg.cb.user, p, il, n->blob, &n->blob_len, GW_NET_MAX_BLOB);
+      }
+    }
     n->peer = *from;
     n->peer_locked = 1;
     n->session = (now(n) * 2654435761u) ^ (from->ip * 40503u) ^ ((uint32_t)from->port << 16) ^
@@ -707,13 +746,11 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
     break;                               /* a duplicate */
   case T_READY:
     if (n->is_host && (n->state == GW_NET_ACCEPTED)) {
-      uint32_t delay = 2u * n->rtt_ms + 150u;
-      if (delay < 300u) delay = 300u;
-      n->start_time = now(n) + delay;
-      n->start_time_valid = 1;
-      n->state = GW_NET_STARTING;
-      n->next_start = now(n);
-      fire(n, GW_NET_EV_STARTING, NULL);
+      if (n->held) {
+        n->peer_ready = 1;               /* start once we are released */
+      } else {
+        begin_start(n);
+      }
     }
     break;
   case T_START:
@@ -819,10 +856,10 @@ void gw_net_poll(gw_net *n, int32_t local_frame) {
 
   /* handshake timers */
   if (n->state == GW_NET_CONNECTING) {
-    if (reached(t, n->t_begin + HANDSHAKE_TIMEOUT_MS)) { go_dead(n, "handshake timed out (no host answered)"); return; }
+    if (reached(t, n->t_begin + (n->cfg.handshake_timeout_ms != 0 ? n->cfg.handshake_timeout_ms : HANDSHAKE_TIMEOUT_MS))) { go_dead(n, "handshake timed out (no host answered)"); return; }
     if (reached(t, n->next_hello)) { send_hello(n); n->next_hello = t + HELLO_INTERVAL_MS; }
   } else if (n->state == GW_NET_ACCEPTED) {
-    if (!n->is_host && reached(t, n->next_ready)) { send_simple(n, T_READY); n->next_ready = t + READY_INTERVAL_MS; }
+    if (!n->is_host && !n->held && reached(t, n->next_ready)) { send_simple(n, T_READY); n->next_ready = t + READY_INTERVAL_MS; }
   } else if (n->state == GW_NET_STARTING) {
     if (n->is_host && !n->start_acked && reached(t, n->next_start)) { send_start(n); n->next_start = t + START_INTERVAL_MS; }
   }
@@ -836,7 +873,10 @@ void gw_net_poll(gw_net *n, int32_t local_frame) {
   /* silence */
   if (n->peer_locked && n->state >= GW_NET_ACCEPTED && n->state < GW_NET_DEAD) {
     uint32_t silent = t - n->last_rx_ms;
-    if (silent >= n->cfg.disconnect_timeout_ms) { go_dead(n, "peer timed out"); return; }
+    /* before the start (hold_start): the peer may be loading the match and not polling at all */
+    uint32_t limit = (n->cfg.hold_start && n->state < GW_NET_STARTING) ? GW_NET_HOLD_TIMEOUT_MS
+                                                                      : n->cfg.disconnect_timeout_ms;
+    if (silent >= limit) { go_dead(n, "peer timed out"); return; }
     if (silent >= n->cfg.notify_timeout_ms && !n->interrupted) { n->interrupted = 1; fire(n, GW_NET_EV_INTERRUPTED, NULL); }
   }
 

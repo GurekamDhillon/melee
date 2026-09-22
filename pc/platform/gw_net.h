@@ -49,6 +49,8 @@ extern "C" {
 #define GW_NET_RING 256            /* frames of input history/lookahead */
 #define GW_NET_MAX_INPUTS_PER_PACKET 40
 #define GW_NET_NO_FRAME ((int32_t)0x80000000)
+#define GW_NET_MAX_GUEST_INFO 64
+#define GW_NET_HOLD_TIMEOUT_MS 90000u
 
 /* One slot's input for one frame, exactly cfg.payload_bytes long. */
 typedef struct gw_net_input { uint8_t b[GW_NET_MAX_PAYLOAD]; } gw_net_input;
@@ -111,6 +113,11 @@ typedef struct gw_net_callbacks {
   void (*event)(void *user, int event, const char *msg);
   /* Both peers reported a checksum for `frame` and they differ. Fires once (the first). */
   void (*desync)(void *user, int32_t frame, uint32_t local, uint32_t remote);
+  /* Host (optional): a guest's HELLO has been accepted. `info` is the guest's cfg.guest_info (its
+   * own choices, e.g. a character). The host may rewrite the match blob it is about to send:
+   * blob[0..*blob_len) in, at most `cap` bytes out. Called before the ACCEPT goes out. */
+  void (*guest_hello)(void *user, const uint8_t *info, int info_len, uint8_t *blob, uint16_t *blob_len,
+                      int cap);
 } gw_net_callbacks;
 
 typedef struct gw_net_config {
@@ -126,10 +133,18 @@ typedef struct gw_net_config {
   uint8_t guest_slots;             /* bitmask of slots the guest controls */
   const void *match_blob;
   uint16_t match_blob_len;         /* <= GW_NET_MAX_BLOB */
+  /* guest only: its own choices, sent in the HELLO (see cb.guest_hello) */
+  const void *guest_info;
+  uint8_t guest_info_len;          /* <= GW_NET_MAX_GUEST_INFO */
+  /* both: 1 = stop at ACCEPTED (connected, match agreed) until gw_net_release - so the peers can
+   * load the match before the start time is agreed. While either side holds, silence up to
+   * GW_NET_HOLD_TIMEOUT_MS is tolerated (the other may be loading). */
+  uint8_t hold_start;
   /* both */
   gw_net_callbacks cb;
   uint32_t (*now_ms)(void *user);  /* NULL = the wall clock (QueryPerformanceCounter) */
   uint32_t disconnect_timeout_ms;  /* 0 = 5000 */
+  uint32_t handshake_timeout_ms;   /* guest: give up dialling after this; 0 = 10000 */
   uint32_t notify_timeout_ms;      /* 0 = 1000 */
   uint32_t frame_us;               /* 0 = 16667 (60 Hz) */
 } gw_net_config;
@@ -147,6 +162,10 @@ void gw_net_free(gw_net *n);       /* sends QUIT if still connected */
  * dispatches callbacks, pulls local inputs/checksums (if the callbacks are set), sends.
  * `local_frame` = the frame the session will simulate next (for the frame-advantage estimate). */
 void gw_net_poll(gw_net *n, int32_t local_frame);
+
+/* cfg.hold_start: this side is ready (the match is loaded) - agree the start time once the peer
+ * is ready too. */
+void gw_net_release(gw_net *n);
 
 /* PUSH model: this peer's inputs for `frame`, indexed by slot (only owned slots are read). Frames
  * must be submitted contiguously from first_frame. Returns 0, or < 0 if the send window is full

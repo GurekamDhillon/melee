@@ -1914,6 +1914,11 @@ int gw_Snap_OpenSession(int k) {
     snprintf(b, sizeof b, "%d", k);
     _putenv_s("MELEE_SYNCTEST", b);
     sn_init();
+    /* sn_init decides once, at the first scene-loop tick after boot. A session armed later (netplay
+       from the online menu) finds it already decided "off": open directly. */
+    if (!sn.enabled) {
+        gw_snap_open(k);
+    }
     sn.session = sn.enabled;
     return sn.enabled ? sn.nslots : 0;
 }

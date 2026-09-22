@@ -199,31 +199,6 @@ static void rp_load(void) {
     rp.tried = 1;
     path = getenv("MELEE_SLP");
     if (path == NULL || path[0] == '\0') {
-        extern int gw_Netplay_Enabled(void);
-        if (gw_Netplay_Enabled()) {
-            /* LIVE MODE (netplay). The rollback session runs on this module's machinery - the
-             * Slippi frame counter, the per-frame seed, the input accessors - so a live match arms
-             * it the way a replay does, only with no recorded inputs and no last frame. The match
-             * itself comes from the scene launcher (MELEE_SCENE); the seed, and for the guest the
-             * match struct, come from the host in gw_Replay_ApplyMatch. It plays as Slippi online
-             * does: the online codeset, UCF 0.84 on every port, and a seed forced every frame. */
-            int p;
-            rp.active = 1;
-            rp.live = 1;
-            rp.first = GW_RP_FIRST_FRAME;
-            rp.last = 0x3FFFFFFF;
-            rp.online = 1;
-            rp.version[0] = 3;
-            rp.version[1] = 19;
-            rp.version[2] = 1;
-            for (p = 0; p < 4; ++p) {
-                rp.ucf_dashback[p] = 1;
-                rp.ucf_shield[p] = 1;
-            }
-            rp.scene[0] = '\0';
-            gw_log("replay: live mode (netplay) - frames counted from %d, online codes, UCF 0.84",
-                   rp.first);
-        }
         return;
     }
     f = fopen(path, "rb");
@@ -275,6 +250,41 @@ static void rp_load(void) {
             }
         }
     }
+}
+
+/* LIVE MODE (netplay, gw_netplay.c). The rollback session runs on this module's machinery - the
+ * Slippi frame counter, the per-frame seed, the input accessors - so a live match arms it the way
+ * a replay does, only with no recorded inputs and no last frame. The match itself comes from the
+ * scene launcher; the seed from the host, in gw_Replay_ApplyMatch. It plays as Slippi online does:
+ * the online codeset, UCF 0.84 on every port, and a seed forced every frame. Off again when the
+ * match is over. */
+void gw_Replay_ArmLive(int on) {
+    int p;
+    rp_load();
+    if (rp.active && !rp.live) {
+        return; /* a replay is playing: leave it */
+    }
+    if (!on) {
+        rp.active = 0;
+        rp.live = 0;
+        rp.frame = GW_RP_UNARMED;
+        return;
+    }
+    rp.active = 1;
+    rp.live = 1;
+    rp.first = GW_RP_FIRST_FRAME;
+    rp.last = 0x3FFFFFFF;
+    rp.online = 1;
+    rp.version[0] = 3;
+    rp.version[1] = 19;
+    rp.version[2] = 1;
+    for (p = 0; p < 4; ++p) {
+        rp.ucf_dashback[p] = 1;
+        rp.ucf_shield[p] = 1;
+    }
+    rp.scene[0] = ' ';
+    rp.frame = GW_RP_UNARMED;
+    gw_log("replay: live mode (netplay) - frames counted from %d, online codes, UCF 0.84", rp.first);
 }
 
 /* For gw_sl_load (gw_runtime.c): the scene a replay implies, or NULL. */
@@ -996,6 +1006,9 @@ void gw_Replay_RandTrace(uint32_t caller, uint32_t seed_after, int32_t global) {
  * gw_Det_OneLogicPerRender is the first. */
 int gw_Det_Enabled(void) {
     static int cached = -1;
+    if (rp.live) {
+        return 1; /* netplay: both peers must advance one logic frame per render */
+    }
     if (cached < 0) {
         const char *v = getenv("MELEE_DETERMINISTIC");
         if (v != NULL && v[0] != '\0') {
@@ -1017,6 +1030,9 @@ int gw_Det_Enabled(void) {
  */
 int gw_Slippi_Codes(void) {
     static int cached = -1;
+    if (rp.live) {
+        return 2; /* netplay plays the online codeset on both sides */
+    }
     if (cached < 0) {
         const char *v = getenv("MELEE_SLIPPI_CODES");
         if (v != NULL && v[0] != '\0') {

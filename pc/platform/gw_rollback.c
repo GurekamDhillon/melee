@@ -223,7 +223,20 @@ int gw_rb_active(void) {
 /* gmscene.c, at the start of every scene: a session governs VS matches only. A new match starts a
  * fresh session state (the snapshot slots are kept). GS_VS is scene kind 2. */
 void gw_RB_SceneBegin(int scene_kind) {
+    extern void gw_Netplay_MatchOver(void);
     rb_init();
+    /* Netplay is armed from the online menu at runtime, long after the first rb_init: start the
+       session now (and stand it down once the netplay match is over). */
+    if (!rb.on && gw_Netplay_Enabled() && gw_Replay_Active()) {
+        rb.tried = 0;
+        rb_init();
+    }
+    if (rb.on && rb.net && scene_kind != 2 && rb.in_match) {
+        gw_Netplay_MatchOver(); /* the match scene ended: results next, offline again */
+        rb.on = 0;
+        rb.in_match = 0;
+        return;
+    }
     if (!rb.on) {
         return;
     }

@@ -3,7 +3,7 @@
 This directory is a vendored copy of [encounter/aurora](https://github.com/encounter/aurora)
 (MIT — see [`LICENSE`](LICENSE)), taken at upstream commit
 `cb0e279` ("Fix imgui texture upload race", updated from `749d6ee7a22bdfab78c8ece9047bca5d79aa72ca`).
-Seven files carry changes made for this port. They fall into four groups.
+Nine files carry changes made for this port. They fall into five groups.
 
 To update: clone upstream, commit the port's changed files onto the old base commit (with LF
 line endings), rebase onto the new upstream head, then replace this tree with the result
@@ -69,3 +69,17 @@ through `uintptr_t`:
 The port's earlier card patches (`openFile` returning `NOFILE`, `deleteFile`, `renameFile`)
 were dropped at the `cb0e279` update: upstream's card rewrite ("CARD: Fix error handling &
 bugs, use temp files") implements all three.
+
+## 5. Input latency (lane beta, B2)
+
+- `lib/gx/command_processor.cpp` — `bytes_equal`, an SSE2 64-bytes-per-iteration equality test,
+  replaces `std::memcmp` in `reuse_array_upload` and `revalidate_array`. Those snapshot checks
+  compare tens of megabytes a frame in a match and the compiler inlined memcmp 4 bytes at a time;
+  the FIFO thread spent ~5.8 ms a frame there, which the game thread waits out in `fifo::drain`
+  at the end of every frame. Measured on ACE (MELEE_PROFILE_SAMPLE): 5318 -> 2792 samples,
+  `aurora_end_frame` 7.7 -> 6.0 ms. It is memory-bound now; the rest needs fewer comparisons, not
+  faster ones.
+- `lib/gfx/frame.cpp`, `include/aurora/gfx.h` — `aurora_get_last_present_ns()` and
+  `aurora_get_present_count()`: when the render worker last returned from `Present()`, so the
+  port can measure input-to-present latency (MELEE_INPUT_PROFILE). The port links against an
+  older library too (`/alternatename` fallbacks in `shim_vi.c`).

@@ -115,6 +115,7 @@ std::mutex g_presentStatsMutex;
 std::deque<PresentClock::time_point> g_presentTimes;
 std::atomic_bool g_processEventsQueued = false;
 std::atomic_int64_t g_lastPresentNs = 0;
+std::atomic_uint32_t g_presentCount = 0;
 std::atomic_int64_t g_presentPeriodNs = 0;
 std::atomic_int64_t g_cpuFrameTimeNs = 0;
 PresentClock::time_point g_cpuFrameStart;
@@ -716,6 +717,7 @@ void after_present() noexcept {
   const auto now = PresentClock::now();
   const int64_t nowNs = timestamp_ns(now);
   const int64_t previousPresentNs = g_lastPresentNs.exchange(nowNs, std::memory_order_acq_rel);
+  g_presentCount.fetch_add(1, std::memory_order_acq_rel);
   if (previousPresentNs != 0) {
     update_ema(g_presentPeriodNs, nowNs - previousPresentNs);
     const double presentPeriodMs = static_cast<double>(g_presentPeriodNs.load(std::memory_order_acquire)) / 1'000'000.0;
@@ -744,3 +746,7 @@ float calculate_fps() noexcept {
 
 const AuroraStats* aurora_get_stats() { return &aurora::gfx::detail::resources().stats; }
 float aurora_get_fps() { return aurora::gfx::calculate_fps(); }
+int64_t aurora_get_last_present_ns() {
+  return aurora::gfx::g_lastPresentNs.load(std::memory_order_acquire);
+}
+uint32_t aurora_get_present_count() { return aurora::gfx::g_presentCount.load(std::memory_order_acquire); }

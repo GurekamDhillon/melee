@@ -38,6 +38,10 @@ typedef struct {
 
 const AuroraStats* aurora_get_stats();
 float aurora_get_fps();
+/// steady_clock time (ns) at which the render worker last returned from Present(), and how many
+/// presents have completed. Lets an application measure input-to-present latency.
+int64_t aurora_get_last_present_ns();
+uint32_t aurora_get_present_count();
 
 void aurora_enable_vsync(bool enabled);
 

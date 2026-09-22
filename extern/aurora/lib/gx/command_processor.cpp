@@ -21,6 +21,11 @@
 #include <unordered_map>
 #include <vector>
 
+#if defined(__SSE2__) || defined(_M_IX86) || defined(_M_X64)
+#include <emmintrin.h>
+#define AURORA_BYTES_EQUAL_SSE2 1
+#endif
+
 namespace aurora::gx::fifo {
 namespace {
 constexpr Module Log{"aurora::gx::fifo"};
@@ -445,6 +450,42 @@ static u32 max_index_for_attr(int attr, GXVtxFmt fmt, std::span<const uint8_t> v
 // left over from an earlier frame harmless: it simply fails the comparison.
 static std::unordered_map<const void*, gfx::Range> sArrayUploads;
 
+// Equality of two byte ranges, 64 bytes per iteration. The array-snapshot checks below compare
+// tens of megabytes a frame in a 4-player match (every PObj re-binds and re-checks its arrays), and
+// the compiler's inlined memcmp does that 4 bytes at a time: MELEE_PROFILE_SAMPLE put ~5.8 ms of
+// every frame on the FIFO thread inside reuse_array_upload - time the game thread then waits out in
+// fifo::drain at the end of the frame, i.e. input latency.
+static bool bytes_equal(const uint8_t* a, const uint8_t* b, size_t n) noexcept {
+#if AURORA_BYTES_EQUAL_SSE2
+  while (n >= 64) {
+    const __m128i e0 = _mm_cmpeq_epi8(_mm_loadu_si128(reinterpret_cast<const __m128i*>(a)),
+                                      _mm_loadu_si128(reinterpret_cast<const __m128i*>(b)));
+    const __m128i e1 = _mm_cmpeq_epi8(_mm_loadu_si128(reinterpret_cast<const __m128i*>(a + 16)),
+                                      _mm_loadu_si128(reinterpret_cast<const __m128i*>(b + 16)));
+    const __m128i e2 = _mm_cmpeq_epi8(_mm_loadu_si128(reinterpret_cast<const __m128i*>(a + 32)),
+                                      _mm_loadu_si128(reinterpret_cast<const __m128i*>(b + 32)));
+    const __m128i e3 = _mm_cmpeq_epi8(_mm_loadu_si128(reinterpret_cast<const __m128i*>(a + 48)),
+                                      _mm_loadu_si128(reinterpret_cast<const __m128i*>(b + 48)));
+    if (_mm_movemask_epi8(_mm_and_si128(_mm_and_si128(e0, e1), _mm_and_si128(e2, e3))) != 0xFFFF) {
+      return false;
+    }
+    a += 64;
+    b += 64;
+    n -= 64;
+  }
+  while (n >= 16) {
+    if (_mm_movemask_epi8(_mm_cmpeq_epi8(_mm_loadu_si128(reinterpret_cast<const __m128i*>(a)),
+                                         _mm_loadu_si128(reinterpret_cast<const __m128i*>(b)))) != 0xFFFF) {
+      return false;
+    }
+    a += 16;
+    b += 16;
+    n -= 16;
+  }
+#endif
+  return n == 0 || std::memcmp(a, b, n) == 0;
+}
+
 static bool reuse_array_upload(AttrArray& array, u32 needed) noexcept {
   const auto it = sArrayUploads.find(array.data);
   if (it == sArrayUploads.end() || it->second.size < needed) {
@@ -461,8 +502,8 @@ static bool reuse_array_upload(AttrArray& array, u32 needed) noexcept {
   if (array.cachedRange.size != 0 && array.cachedRange.offset == it->second.offset) {
     from = array.cachedRange.size;
   }
-  if (snap == nullptr || std::memcmp(snap + from, static_cast<const uint8_t*>(array.data) + from,
-                                     needed - from) != 0) {
+  if (snap == nullptr ||
+      !bytes_equal(snap + from, static_cast<const uint8_t*>(array.data) + from, needed - from)) {
     return false;
   }
   array.cachedRange = gfx::Range{it->second.offset, needed};
@@ -475,7 +516,8 @@ static void revalidate_array(AttrArray& array) noexcept {
   }
   array.stale = false;
   const uint8_t* snap = gfx::storage_data(array.cachedRange);
-  if (snap == nullptr || std::memcmp(snap, array.data, array.cachedRange.size) != 0) {
+  if (snap == nullptr ||
+      !bytes_equal(snap, static_cast<const uint8_t*>(array.data), array.cachedRange.size)) {
     array.cachedRange = {};
   }
 }

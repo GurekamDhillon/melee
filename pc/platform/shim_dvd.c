@@ -16,19 +16,21 @@
  * half-updated request. gw_wait_idle (called from DVDGetDriveStatus) and the frame tick both drain
  * the queue.
  *
- * Mods folder: every directory under mods/ (next to the executable, or MELEE_MODS_DIR) is a mod,
- * and each file in it answers the disc path of its position inside the mod: mods/sonic/PlSn.dat
- * is /PlSn.dat, mods/sonic/audio/us/sonic.ssm is /audio/us/sonic.ssm. A path that exists on the
+ * Mods folder: gw_mods.c reads mods/ (next to the executable, or MELEE_MODS_DIR), mods/enabled.txt
+ * and each mod's mod.json, and says which mods mount and in what order (see gw_mods.h). Each file
+ * in a mounting mod's payload folder (mods/<id>/files/, or mods/<id>/ itself for the legacy
+ * layout) answers the disc path of its position inside it: mods/sonic/files/PlSn.dat is
+ * /PlSn.dat, .../files/audio/us/sonic.ssm is /audio/us/sonic.ssm. A path that exists on the
  * disc is overridden (it keeps its disc entrynum, so nothing that cached the number notices); any
- * other path is added with a new entrynum past the disc FST. Mods apply in name order and a later
- * mod wins a path both provide (logged). Names match case-insensitively. mods/targettest holds
- * Target Test layouts, not disc files, and is skipped. MELEE_MODS=0 disables the overlay. A
+ * other path is added with a new entrynum past the disc FST. A later mod in mount order wins a
+ * path both provide (logged). Names match case-insensitively. MELEE_MODS=0 mounts nothing. A
  * FastOpen'd mod file carries GW_MOD_OFFSET_FLAG | index in the disc-offset field (real disc
  * offsets stay below 2 GiB), and reads of it go to the host file instead of the image. */
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 #include "shim_vi.h"
 #include "gw_overlay.h"
+#include "gw_mods.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -144,13 +146,13 @@ static bool gw_name_matches(const char *name, const char *component, size_t leng
 
 #define GW_MOD_OFFSET_FLAG 0x80000000u
 #define GW_MOD_MAX_FILES 4096
-#define GW_MOD_MAX_MODS 64
 #define GW_MOD_PATH_MAX 260
 
 typedef struct gw_mod_file {
   char disc[GW_MOD_PATH_MAX]; /* disc path, '/'-separated, no leading slash */
   char host[MAX_PATH];
   char mod[64];
+  int mod_index; /* gw_Mods_* index of the mod that won this path */
   uint32_t size;
   int entrynum;
 } gw_mod_file;
@@ -193,7 +195,8 @@ static gw_mod_file *gw_mod_by_entrynum(int entrynum) {
   return NULL;
 }
 
-static void gw_mods_scan(const char *mod, const char *host_dir, const char *rel) {
+static void gw_mods_scan(int mod_index, const char *mod, const char *host_dir, const char *rel,
+                         int skip_meta) {
   char pattern[MAX_PATH];
   WIN32_FIND_DATAA fd;
   HANDLE h;
@@ -204,12 +207,14 @@ static void gw_mods_scan(const char *mod, const char *host_dir, const char *rel)
     char host[MAX_PATH], disc[GW_MOD_PATH_MAX];
     gw_mod_file *m;
     if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0) continue;
+    /* a legacy-layout mod (no files/ folder) keeps its mod.json beside its disc files */
+    if (skip_meta && rel[0] == '\0' && _stricmp(fd.cFileName, "mod.json") == 0) continue;
     snprintf(host, sizeof host, "%s\\%s", host_dir, fd.cFileName);
     snprintf(disc, sizeof disc, "%s%s", rel, fd.cFileName);
     if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
       char sub[GW_MOD_PATH_MAX];
       snprintf(sub, sizeof sub, "%s/", disc);
-      gw_mods_scan(mod, host, sub);
+      gw_mods_scan(mod_index, mod, host, sub, skip_meta);
       continue;
     }
     if (fd.nFileSizeHigh != 0) {
@@ -229,67 +234,31 @@ static void gw_mods_scan(const char *mod, const char *host_dir, const char *rel)
     }
     strncpy(m->host, host, sizeof m->host - 1);
     strncpy(m->mod, mod, sizeof m->mod - 1);
+    m->mod_index = mod_index;
     m->size = fd.nFileSizeLow;
   } while (FindNextFileA(h, &fd));
   FindClose(h);
 }
 
-static int gw_mods_name_cmp(const void *a, const void *b) {
-  return _stricmp((const char *)a, (const char *)b);
-}
-
+/* Mount the enabled mods (gw_mods.c decides which, and in what order) over the disc. */
 static void gw_mods_load(void) {
-  static char names[GW_MOD_MAX_MODS][64];
-  const char *enable = getenv("MELEE_MODS");
-  const char *dir_env = getenv("MELEE_MODS_DIR");
-  char dir[MAX_PATH], pattern[MAX_PATH];
-  WIN32_FIND_DATAA fd;
-  HANDLE h;
-  int n = 0, i, next;
+  int n, k, i, next;
 
   if (gw_mods_loaded || !gw_iso_open()) return;
   gw_mods_loaded = true;
-  if (enable != NULL && enable[0] == '0') {
-    gw_log("gw: mods: disabled (MELEE_MODS=0)");
+  n = gw_Mods_ActiveCount();
+  if (n == 0) {
+    if (gw_Mods_Count() > 0) gw_log("gw: mods: none of the %d installed mods is mounting", gw_Mods_Count());
     return;
   }
-  if (dir_env != NULL && dir_env[0] != '\0') {
-    strncpy(dir, dir_env, sizeof dir - 1);
-    dir[sizeof dir - 1] = '\0';
-  } else {
-    DWORD len = GetModuleFileNameA(NULL, dir, (DWORD)sizeof dir);
-    char *slash = (len > 0 && len < sizeof dir) ? strrchr(dir, '\\') : NULL;
-    if (slash != NULL) {
-      slash[1] = '\0';
-      strncat(dir, "mods", sizeof dir - strlen(dir) - 1);
-    } else {
-      strcpy(dir, "mods");
-    }
-  }
-
-  snprintf(pattern, sizeof pattern, "%s\\*", dir);
-  h = FindFirstFileA(pattern, &fd);
-  if (h == INVALID_HANDLE_VALUE) return; /* no mods folder: nothing to do */
-  do {
-    if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || fd.cFileName[0] == '.') continue;
-    if (_stricmp(fd.cFileName, "targettest") == 0) continue; /* Target Test layouts, not disc files */
-    if (n < GW_MOD_MAX_MODS) {
-      strncpy(names[n], fd.cFileName, sizeof names[n] - 1);
-      ++n;
-    }
-  } while (FindNextFileA(h, &fd));
-  FindClose(h);
-  if (n == 0) return;
-  qsort(names, (size_t)n, sizeof names[0], gw_mods_name_cmp);
 
   gw_mod_files = (gw_mod_file *)calloc(GW_MOD_MAX_FILES, sizeof *gw_mod_files);
   if (gw_mod_files == NULL) return;
-  for (i = 0; i < n; ++i) {
-    char host[MAX_PATH];
+  for (k = 0; k < n; ++k) {
+    int idx = gw_Mods_ActiveAt(k);
     int before = gw_mod_count;
-    snprintf(host, sizeof host, "%s\\%s", dir, names[i]);
-    gw_mods_scan(names[i], host, "");
-    gw_log("gw: mods: %s (%d new paths)", names[i], gw_mod_count - before);
+    gw_mods_scan(idx, gw_Mods_Id(idx), gw_Mods_PayloadDir(idx), "", gw_Mods_PayloadIsModDir(idx));
+    gw_log("gw: mods: %s (%d new paths)", gw_Mods_Id(idx), gw_mod_count - before);
   }
 
   /* Entrynums: an override keeps the disc's number; an addition gets one past the FST. */
@@ -297,6 +266,8 @@ static void gw_mods_load(void) {
   for (i = 0; i < gw_mod_count; ++i) {
     gw_mod_file *m = &gw_mod_files[i];
     int e = gw_iso_lookup(m->disc);
+    /* the netplay fingerprint covers exactly the files the game will read, and who won each */
+    gw_Mods_NoteFile(m->mod_index, m->disc, m->size);
     if (e >= 0 && gw_fst_kind((uint32_t)e) == 0) {
       m->entrynum = e;
       gw_log("gw: mods:   /%s <- %s (overrides the disc file, %u bytes)", m->disc, m->mod, m->size);
@@ -304,6 +275,18 @@ static void gw_mods_load(void) {
       m->entrynum = next++;
       gw_log("gw: mods:   /%s <- %s (new file, %u bytes)", m->disc, m->mod, m->size);
     }
+  }
+}
+
+/* 1 when `path` exists on the disc or in a mounted mod. Unlike DVDConvertPathToEntrynum it does
+ * not count as a load for the loading overlay, so presence checks can call it freely. */
+int gw_DVDFileExists(const char *path) {
+  if (path == NULL || !gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  if (gw_mod_by_path(path) != NULL) return 1;
+  {
+    int e = gw_iso_lookup(path);
+    return e >= 0 && gw_fst_kind((uint32_t)e) == 0;
   }
 }
 

@@ -66,6 +66,7 @@ extern void gw_Mex_NoteGuestCodeInstalled(void);
 extern void gw_Mex_ReleaseThunks(uint32_t lo, uint32_t hi);
 extern uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size);
 extern int gw_DVDConvertPathToEntrynum(const char *path);
+extern int gw_DVDFileExists(const char *path);
 
 /* ---- mexData reads, bounds-checked ---------------------------------------------------- */
 
@@ -262,7 +263,18 @@ const char *gw_Mex_GrFile(int grkind) {
     s = (const char *) (uintptr_t) p;
     for (i = 0; gr_in(p + i, 1u) && i < 64u; ++i) {
         if (s[i] == '\0') {
-            return i > 1u ? s : NULL;
+            if (i <= 1u) {
+                return NULL;
+            }
+            /* An ADDED stage whose file is not on the disc or in a mounted mod has no file: the
+             * row is in MxDt.dat (the base mod ships every row), but its per-stage mod is off.
+             * Returning NULL here is what hides it from the SSS (mnStageSel_MexScanUnlocked)
+             * and keeps it out of the stage tables (gw_Mex_GrIsMex). Vanilla rows are always
+             * on the disc and are not checked. */
+            if (grkind >= GW_MEX_GR_FIRST_NEW && !gw_DVDFileExists(s)) {
+                return NULL;
+            }
+            return s;
         }
     }
     return NULL;
@@ -275,8 +287,9 @@ int gw_Mex_GrIsMex(int grkind) {
     }
     f = gw_Mex_GrFile(grkind);
     /* A declared stage whose file this disc does not carry must NOT get a row: the first load
-     * would walk into a missing file. This is the stage side of the fighter path's dense slots. */
-    return f != NULL && gw_DVDConvertPathToEntrynum(f) >= 0;
+     * would walk into a missing file. This is the stage side of the fighter path's dense slots.
+     * gw_Mex_GrFile already returns NULL for an added stage whose file is absent. */
+    return f != NULL;
 }
 
 uint32_t gw_Mex_GrFlags2(int grkind) {
@@ -787,20 +800,20 @@ static int test_grfunction_rows(void) {
         gw_test_fail("a vanilla internal stage must not be reported as m-ex");
         return 1;
     }
+    /* A row naming a file is not the same as the file being here: a vanilla disc under a
+     * base mod has the full table and only the stage files whose mods are enabled, and then
+     * gw_Mex_GrFile correctly answers NULL for the rest (gw_mods.h). Assert only when the
+     * stage's file is actually present. */
+    if (!gw_DVDFileExists("/GrOMc.dat")) {
+        gw_log("grfunction: /GrOMc.dat not on this disc or in a mounted mod - skipping the row "
+               "assertions");
+        return 0;
+    }
     f = gw_Mex_GrFile(GW_MEX_GR_TEST_STAGE);
     if (f == NULL || strcmp(f, "/GrOMc.dat") != 0) {
         gw_test_fail("internal stage %d is %s, expected /GrOMc.dat", GW_MEX_GR_TEST_STAGE,
                      f ? f : "(none)");
         return 1;
-    }
-    /* A row naming a file is not the same as the file being here. Akaneia's MxDt.dat also ships
-     * in the Sonic mod, so a VANILLA disc has the full 96-row table and none of the 25 added
-     * stage files - and the dense-row rule then correctly reports "not m-ex". Only assert the
-     * positive case when the file is actually on this disc. */
-    if (gw_DVDConvertPathToEntrynum(f) < 0) {
-        gw_log("grfunction: %s declared but not on this disc - skipping the m-ex row assertion",
-               f);
-        return 0;
     }
     if (!gw_Mex_GrIsMex(GW_MEX_GR_TEST_STAGE)) {
         gw_test_fail("internal stage %d (%s) is on this disc but was not reported as m-ex",

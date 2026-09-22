@@ -27,6 +27,7 @@
 /* From gw_mex_ftfunction_runtime.c (the shared m-ex runtime environment). */
 extern void gw_Mex_RuntimeInit(void);
 extern uint32_t gw_Mex_MexData(uint32_t *base, uint32_t *size);
+extern int gw_DVDFileExists(const char *path);
 
 #define SSS_OFF_METADATA 0x00u
 #define SSS_OFF_MENU 0x04u
@@ -177,6 +178,11 @@ static int test_mex_sss_meta_crystal(void) {
                 gw_test_fail("sss row %d is Meta Crystal but its type byte is %u (not shown)", i,
                              (unsigned) ((sss_word(tbl, i, 2) >> 24) & 0xFFu));
                 return 1;
+            }
+            if (k >= 0 && gw_Mex_GrFile(k) == NULL && !gw_DVDFileExists("/GrOMc.dat")) {
+                /* the table names it, but its stage mod is not mounted (gw_mods.h) */
+                gw_log("test mex_sss_meta_crystal: /GrOMc.dat is not mounted - skipping");
+                return 0;
             }
             if (k < 0 || gw_Mex_GrFile(k) == NULL) {
                 gw_test_fail("sss row %d names external 293, which maps to internal %d with no "

@@ -70,8 +70,9 @@ int gw_Script_DrawCount(void);
 const GwScriptDraw *gw_Script_DrawAt(int i);
 
 /* ---- netplay (delta's handshake fingerprint) ------------------------------------------------- */
-/* 64-bit digest of every loaded script whose manifest says "gameplay": true (id, version and
- * source), 0 when there is none: two peers whose gameplay scripts differ must not match. */
+/* 64-bit digest of every loaded script whose manifest says "gameplay": true AND "rollback_safe":
+ * true (id, version and source) - the only scripts that may write gameplay during a netplay
+ * session - 0 when there is none: two peers whose such scripts differ must not match. */
 uint64_t gw_Script_GameplayHash(void);
 /* "id@version#hhhh,..." of the same set, "" when none. */
 const char *gw_Script_GameplayDescribe(void);

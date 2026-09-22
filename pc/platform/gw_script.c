@@ -474,6 +474,108 @@ static int l_scene(lua_State *L) {
     return 1;
 }
 
+/* ---- menus and online (B4: state-waiting test drivers) ---------------------------------------- */
+extern int gw_SceneReport_MenuKind, gw_SceneReport_MenuHovered;
+extern const char *gw_Frontend_ScreenTitle(void);
+extern const char *gw_Frontend_ScreenSubtitle(void);
+extern int gw_Frontend_Cursor(void);
+extern const char *gw_Frontend_CursorLabel(void);
+extern int gw_Netplay_Phase(void);
+extern const char *gw_Netplay_Status(void);
+extern const char *gw_Netplay_Code(void);
+extern int gw_Netplay_IsHost(void);
+extern int gw_Netplay_LobbyPhase(void);
+extern int gw_Netplay_LobbyMe(void);
+extern int gw_Netplay_LobbyInfo(int what);
+extern int gw_Netplay_LobbyPlayer(int who, int what);
+extern int gw_Netplay_LobbyStage(int i);
+extern int gw_Netplay_RematchPending(void);
+extern int gw_Netplay_RandomStatus(void);
+extern int gw_Netplay_LocalCk(void);
+extern int gw_Netplay_LocalColor(void);
+extern void gw_Netplay_LobbyChar(int ck, int color);
+extern void gw_Netplay_LobbyStageAct(int i);
+extern void gw_Netplay_LobbyReady(int on);
+extern int gw_Netplay_SetCode(const char *code);
+
+/* gd.menu() -> {frontend = {title, screen, cursor, item} (the port's own menus: gmfrontend.c),
+ * native = {menu, hovered} (Melee's menu tree)}. Which one is live follows gd.scene(). */
+static int l_menu(lua_State *L) {
+    lua_createtable(L, 0, 6);
+    gs_setstr(L, "title", gw_Frontend_ScreenTitle());
+    gs_setstr(L, "screen", gw_Frontend_ScreenSubtitle());
+    gs_setint(L, "cursor", gw_Frontend_Cursor());
+    gs_setstr(L, "item", gw_Frontend_CursorLabel());
+    gs_setint(L, "native_menu", gw_SceneReport_MenuKind);
+    gs_setint(L, "native_hovered", gw_SceneReport_MenuHovered);
+    return 1;
+}
+
+static const char *const gs_np_phase[] = {"idle", "working", "connected", "failed", "running", "lobby"};
+static const char *const gs_lb_phase[] = {"off", "char_blind", "strike", "ban", "pick",
+                                          "char_winner", "char_loser", "ready", "go"};
+static const char *const gs_rnd_state[] = {"off", "looking", "matched", "timeout", "failed"};
+
+/* gd.netplay() -> the connection and the lobby, read-only. */
+static int l_netplay(lua_State *L) {
+    int ph = gw_Netplay_Phase(), lp = gw_Netplay_LobbyPhase(), rs = gw_Netplay_RandomStatus(), i;
+    int n = gw_Netplay_LobbyInfo(9);
+    lua_createtable(L, 0, 16);
+    gs_setstr(L, "phase", ph >= 0 && ph < 6 ? gs_np_phase[ph] : "?");
+    gs_setstr(L, "status", gw_Netplay_Status());
+    gs_setstr(L, "code", gw_Netplay_Code());
+    gs_setbool(L, "host", gw_Netplay_IsHost());
+    gs_setbool(L, "rematch", gw_Netplay_RematchPending());
+    gs_setstr(L, "random", rs >= 0 && rs < 5 ? gs_rnd_state[rs] : "?");
+    gs_setstr(L, "lobby", lp >= 0 && lp < 9 ? gs_lb_phase[lp] : "?");
+    gs_setint(L, "me", gw_Netplay_LobbyMe());
+    gs_setint(L, "game", gw_Netplay_LobbyInfo(0));
+    gs_setint(L, "turn", gw_Netplay_LobbyInfo(4));
+    gs_setint(L, "left", gw_Netplay_LobbyInfo(5));
+    gs_setint(L, "countdown", gw_Netplay_LobbyInfo(8));
+    gs_setint(L, "ck", gw_Netplay_LocalCk());
+    gs_setint(L, "color", gw_Netplay_LocalColor());
+    lua_createtable(L, 2, 0); /* players[1] = host, [2] = guest: {ck, color, locked, ready} */
+    for (i = 0; i < 2; ++i) {
+        lua_createtable(L, 0, 4);
+        gs_setint(L, "ck", gw_Netplay_LobbyPlayer(i, 0));
+        gs_setint(L, "color", gw_Netplay_LobbyPlayer(i, 1));
+        gs_setbool(L, "locked", gw_Netplay_LobbyPlayer(i, 2));
+        gs_setbool(L, "ready", gw_Netplay_LobbyPlayer(i, 3));
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "players");
+    lua_createtable(L, n, 0); /* stages[i] = 0 free, 1/2 struck by P1/P2, 3 banned, 4 picked */
+    for (i = 0; i < n; ++i) {
+        lua_pushinteger(L, gw_Netplay_LobbyStage(i));
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "stages");
+    return 1;
+}
+
+/* gd.netplay_act("char", ck, color) | ("stage", i) (1-based: strike, ban or pick, whichever the
+ * lobby is in) | ("ready", on) | ("code", "ABCD") (the join code). Lobby actions go through the
+ * same rules as a player's (the host validates them). Returns true when accepted locally. */
+static int l_netplay_act(lua_State *L) {
+    const char *what = luaL_checkstring(L, 1);
+    int ok = 1;
+    if (_stricmp(what, "char") == 0) {
+        gw_Netplay_LobbyChar((int) luaL_optinteger(L, 2, gw_Netplay_LocalCk()),
+                             (int) luaL_optinteger(L, 3, gw_Netplay_LocalColor()));
+    } else if (_stricmp(what, "stage") == 0) {
+        gw_Netplay_LobbyStageAct((int) luaL_checkinteger(L, 2) - 1);
+    } else if (_stricmp(what, "ready") == 0) {
+        gw_Netplay_LobbyReady(lua_isnone(L, 2) ? 1 : lua_toboolean(L, 2));
+    } else if (_stricmp(what, "code") == 0) {
+        ok = gw_Netplay_SetCode(luaL_checkstring(L, 2));
+    } else {
+        return luaL_error(L, "gd.netplay_act: unknown action \"%s\" (char, stage, ready, code)", what);
+    }
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
 static int l_match(lua_State *L) {
     lua_createtable(L, 0, 4);
     gs_setbool(L, "active", gs.match_active);
@@ -1146,6 +1248,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"key_pressed", l_key_pressed}, {"command", l_command}, {"run", l_run},
     {"data_read", l_data_read}, {"data_write", l_data_write}, {"script", l_script_info},
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
+    {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -1746,6 +1849,11 @@ static void gs_init(void) {
             }
         }
     }
+    v = getenv("MELEE_LOBBY_AUTOPLAY"); /* the old native test switch is this built-in now */
+    if (v != NULL && v[0] != '\0' && v[0] != '0') {
+        int i = gs_load_named("builtin:lobby_autoplay");
+        if (i >= 0) snprintf(gs.s[i].origin, sizeof gs.s[i].origin, "env");
+    }
     v = gw_script_pad_lua_path(); /* MELEE_PAD_SCRIPT=<file>.lua: an input script */
     if (v != NULL) {
         int i = gs_load_script("pad_script", v, "{\"gameplay\": true}", "env");
@@ -1900,7 +2008,11 @@ uint64_t gw_Script_GameplayHash(void) {
     gs.describe[0] = '\0';
     for (i = 0; i < gs.n; ++i) { /* order-independent: XOR of per-script digests */
         GsScript *s = &gs.s[i];
-        if (s->used && s->gameplay && i != gs.console && !s->disabled) {
+        /* Only scripts that can change a netplay match count: gameplay AND rollback_safe. A
+           gameplay script that is not rollback_safe is refused every gameplay write during a
+           session (gs_require_gameplay), so it cannot make two peers' matches differ - e.g. the
+           menu-driving input scripts of the netplay tests (np_host / np_guest). */
+        if (s->used && s->gameplay && s->rollback_safe && i != gs.console && !s->disabled) {
             uint64_t sh = gs_fnv(s->src_hash, s->version, strlen(s->version));
             int n;
             h ^= sh;

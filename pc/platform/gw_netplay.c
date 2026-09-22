@@ -252,7 +252,7 @@ static void np_cb_event(void *user, int ev, const char *msg) {
             if (sc != NULL) *sc = '\0';
             diff[0] = '\0';
             gw_MexId_GlobalDiff(peer, diff, sizeof diff);
-            if (diff[0] != '\0') {
+            if (diff[0] != '\0' && strncmp(diff, "same", 4) != 0) {
                 np_status("Refused: game data differs from the host's: %s", diff);
             } else {
                 np_status("Refused: gameplay scripts differ - host: %s; you: %s",
@@ -980,6 +980,48 @@ static int np_rdv_recv(void *ctx, gw_net_addr *from, void *buf, int cap) {
 }
 
 static int np_keep_room; /* close without leaving the room (persistent rooms, between matches) */
+
+/* ---- the room between matches ----------------------------------------------------------------
+ * The session socket is closed while the players sit on the results screen; the server still
+ * holds the room (15 min for a paired room), but a keepalive from the same address keeps it, and
+ * the router's mapping for that port, fresh however long the results take. From
+ * gw_Netplay_Background (every scene), until the next session opens (np_close). */
+static struct {
+    int on;
+    gw_net_transport t;
+    uint32_t next;
+} ka;
+
+static void np_ka_stop(void) {
+    if (ka.on) {
+        ka.t.close(ka.t.ctx);
+        ka.on = 0;
+    }
+}
+
+static void np_ka_start(uint16_t port) {
+    np_ka_stop();
+    if (!rdv.configured || port == 0) return;
+    if (gw_net_udp_open(0, port, &ka.t) == 0) {
+        ka.on = 1;
+        ka.next = 0;
+        gw_log("netplay: holding the room from port %u until the next game", port);
+    }
+}
+
+static void np_ka_tick(void) {
+    uint32_t now = GetTickCount();
+    uint8_t b[64];
+    gw_net_addr from;
+    if (!ka.on) return;
+    while (ka.t.recv(ka.t.ctx, &from, b, (int) sizeof b) > 0) {
+    }
+    if ((int32_t) (now - ka.next) >= 0) {
+        memcpy(b, "GDMRKA", 6);
+        ka.t.send(ka.t.ctx, &rdv.srv, b, 6);
+        ka.next = now + 3000;
+    }
+}
 static void np_rdv_close(void *ctx) {
     (void) ctx;
     /* Only the host closes the room. The server drops the whole room on a BYE, so a guest that
@@ -1510,30 +1552,8 @@ static void np_lobby_tick(void) {
         np_peer_gone();
         return;
     }
-    {
-        /* TESTING: MELEE_LOBBY_AUTOPLAY=1 - act whenever it is this side's move (lock the current
-           fighter, strike/ban/pick the first free stage, ready up), about half a second apart */
-        static int ap = -1, wait;
-        if (ap < 0) ap = getenv("MELEE_LOBBY_AUTOPLAY") != NULL;
-        if (ap && ++wait >= 30) {
-            int me = np.host ? 0 : 1, i;
-            wait = 0;
-            if (lb.phase == LB_CHAR_BLIND && !lb.locked[me]) {
-                lb_action("CHAR", np.ck, np.color);
-            } else if ((lb.phase == LB_CHAR_WINNER || lb.phase == LB_CHAR_LOSER) && lb.turn == me) {
-                lb_action("CHAR", np.ck, np.color);
-            } else if ((lb.phase == LB_STRIKE || lb.phase == LB_BAN || lb.phase == LB_PICK) &&
-                       lb.turn == me) {
-                for (i = 0; i < lb.nstages && lb.stage[i] != LB_FREE; ++i) {
-                }
-                if (i < lb.nstages) {
-                    lb_action(lb.phase == LB_BAN ? "BAN" : lb.phase == LB_PICK ? "PICK" : "STRIKE", i, 0);
-                }
-            } else if (lb.phase == LB_READY && !lb.ready[me]) {
-                lb_action("READY", 1, 0);
-            }
-        }
-    }
+    /* MELEE_LOBBY_AUTOPLAY is now the built-in script lobby_autoplay (pc/scripts/examples),
+       which gw_script.c loads when the variable is set; it acts through gd.netplay_act. */
     if (np.host) {
         lb_list_pump();
         if (!lb.list_final && gw_MexId_PeerReady()) {
@@ -1585,6 +1605,7 @@ static void np_lobby_tick(void) {
  * start (the loading screen, the match loading) the connection is kept serviced, so a longer
  * warm-up on one side never looks like a dead peer to the other. */
 void gw_Netplay_Background(void) {
+    np_ka_tick();
     np_mx_pump(); /* delta: the identity lists, while the lobby sits on the CSS */
     if (np.phase == NP_CONNECTED && np.use_lobby && np.net != NULL) {
         gw_net_poll(np.net, NP_FIRST_FRAME);
@@ -1623,6 +1644,7 @@ static void np_lobby_enter(void) {
 /* ---- starting and running a connection --------------------------------------------------------- */
 
 static void np_close(void) {
+    np_ka_stop();
     if (np.net != NULL) {
         gw_net_free(np.net); /* sends QUIT; closes the transport */
         np.net = NULL;
@@ -2118,6 +2140,19 @@ void gw_Netplay_Leave(void) {
 }
 
 int gw_Netplay_MenuPoll(void) { return np_poll(); }
+static void np_code_init(void);
+static int np_code_from_text(const char *s);
+/* For scripts (gd.netplay): the connection phase without advancing it, and the room code. */
+int gw_Netplay_Phase(void) { return np.phase; }
+const char *gw_Netplay_Status(void) { return np.status; }
+const char *gw_Netplay_Code(void) { return np.host ? rdv.code : np.peer_code; }
+int gw_Netplay_LocalCk(void) { return np.ck; }
+int gw_Netplay_LocalColor(void) { return np.color; }
+/* Fill the join code from text (scripts, test drivers); 1 when it was a valid room code. */
+int gw_Netplay_SetCode(const char *code) {
+    np_code_init();
+    return code != NULL && np_code_from_text(code);
+}
 int gw_Netplay_IsHost(void) { return np.host; }
 int gw_Netplay_PeerLeft(void) { return np.peer_left; }
 int gw_Netplay_Rejoining(void) { return np.rejoining; }
@@ -2518,12 +2553,14 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
 /* The match scene is over (gw_RB_SceneBegin saw a non-VS scene after a live match): close the
  * session and put everything back for offline play. */
 void gw_Netplay_MatchOver(void) {
+    uint16_t port = rdv.on ? gw_net_udp_local_port(&rdv.inner) : 0;
     if (!np.enabled) return;
     gw_log("netplay: match over - closing the session%s", rdv.on ? ", keeping the room" : "");
     np.rematch = rdv.on; /* PERSISTENT ROOMS: back to ONLINE PLAY, same room, reconnect */
     np_keep_room = rdv.on;
     np_close();
     np_keep_room = 0;
+    if (np.rematch) np_ka_start(port); /* keep the room through the results screen */
     np.enabled = 0;
     np.phase = NP_IDLE;
     gw_Replay_ArmLive(0);

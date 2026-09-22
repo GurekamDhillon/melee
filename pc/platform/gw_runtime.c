@@ -2427,8 +2427,11 @@ void gw_SceneReport_Memcard(int decision, int option) {
 }
 
 /* The main menu tree. `kind` is MenuKind, `hovered`/`confirmed` are MenuFlow's own fields. */
+int gw_SceneReport_MenuKind = -1, gw_SceneReport_MenuHovered = -1; /* gd.menu (gw_script.c) */
 void gw_SceneReport_Menu(int kind, int hovered, int confirmed) {
   static int last_k = -1, last_h = -1, last_c = -1;
+  gw_SceneReport_MenuKind = kind;
+  gw_SceneReport_MenuHovered = hovered;
   if (!gw_SceneReport_Enabled()) return;
   if (kind == last_k && hovered == last_h && confirmed == last_c) return;
   last_k = kind;

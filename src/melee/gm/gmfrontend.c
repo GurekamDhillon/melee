@@ -649,6 +649,24 @@ static struct {
     bool next_menus; ///< the next GS_FRONTEND scene is the menu tree (gmfrontend_menus.inc)
 } fe;
 
+/* Read-only view for the scripting engine (gd.menu, gw_script.c) - lane beta, B4. The strings
+ * are the screen's own constants; the item is the row the cursor is on ("" on a room screen). */
+const char* Frontend_ScreenTitle(void) { return fe.screen != NULL ? fe.screen->title : ""; }
+const char* Frontend_ScreenSubtitle(void) { return fe.screen != NULL ? fe.screen->subtitle : ""; }
+int Frontend_Cursor(void) { return fe.screen != NULL && fe.n_vis > 0 ? fe.cursor : -1; }
+const char* Frontend_CursorLabel(void)
+{
+    int idx;
+    if (fe.screen == NULL || fe.n_vis <= 0 || fe.screen->items == NULL) {
+        return "";
+    }
+    if (fe.has_button && fe.cursor >= fe.n_list) {
+        return "CONTINUE";
+    }
+    idx = fe.vis[fe.cursor];
+    return idx >= 0 && idx < fe.screen->n_items ? fe.screen->items[idx].label : "";
+}
+
 static void fl_rejoin_reset(void);
 static void fl_lobby_notice(const char* s);
 

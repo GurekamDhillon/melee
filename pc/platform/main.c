@@ -319,6 +319,9 @@ int main(int argc, char *argv[]) {
 
   gw_log("melee-pc: game main() returned");
   gw_dump_stub_summary();
-  aurora_shutdown();
+  {
+    extern void gw_exit_clean(int code); /* shim_vi.c: guarded teardown, then TerminateProcess */
+    gw_exit_clean(0);
+  }
   return 0;
 }

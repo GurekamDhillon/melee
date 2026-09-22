@@ -138,6 +138,31 @@ void gw_run_deferred(void) {
 
 /* ---- frame driver ------------------------------------------------------------------------- */
 
+/* ---- clean exit ---------------------------------------------------------------------------
+ * Closing the window used to end in an access violation inside webgpu_dawn.dll (+0x363548, "Device
+ * lost: Device was destroyed") and a crash log every time: Aurora's teardown releases the queue,
+ * the surface and the device in an order Dawn's D3D11 backend faults on. Everything worth keeping
+ * is already safe by the time that runs - the memory card is written synchronously, the log is
+ * flushed per line, and gfx::shutdown (which stops the pipeline-cache writer) comes before the
+ * WebGPU part of aurora_shutdown. So the teardown is run under a structured-exception guard, and
+ * the process then ends with TerminateProcess(0): the CRT's exit path would run static destructors
+ * that release the same Dawn objects a second time. */
+static void gw_aurora_shutdown_guarded(void) {
+  __try {
+    aurora_shutdown();
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    gw_log("melee-pc: aurora teardown faulted inside Dawn (0x%08lX); ignored at exit",
+           (unsigned long)GetExceptionCode());
+  }
+}
+
+void gw_exit_clean(int code) {
+  gw_aurora_shutdown_guarded();
+  gw_log("melee-pc: exit %d", code);
+  fflush(NULL);
+  TerminateProcess(GetCurrentProcess(), (UINT)code);
+}
+
 static void gw_handle_events(void) {
   const AuroraEvent *event = aurora_update();
   while (event != NULL && event->type != AURORA_NONE) {
@@ -157,12 +182,123 @@ static void gw_handle_events(void) {
       aurora_end_frame();
       gw_frame_begun = false;
     }
-    aurora_shutdown();
-    exit(0);
+    gw_exit_clean(0);
   }
 }
 
+/* ---- video settings ----------------------------------------------------------------------
+ * Render scale: the internal resolution as a multiple of the game's own 640x480 EFB, like
+ * Dolphin's Internal Resolution (1 = native, 2 = 1280x960, 3 = 1920x1440, fractions allowed),
+ * independent of the window. 0 = "Auto": render at the window's own pixel size (what the port has
+ * always done). This goes through Aurora's VISetFrameBufferScale, which sizes Aurora's render
+ * targets; the game's GXRenderModeObj is never touched, so layout, EFB copies and XFB behave
+ * exactly as at native resolution and only the pixel density changes.
+ *
+ * Sources, strongest first: MELEE_RENDER_SCALE, then video.cfg next to the exe (MELEE_VIDEO_CFG
+ * overrides the path), then 0. gw_Video_SetRenderScale changes it live and saves video.cfg, for the
+ * frontend's menu row. */
+static float gw_video_scale;
+static int gw_video_loaded;
+
+static const char *gw_video_cfg_path(void) {
+  static char buf[MAX_PATH];
+  const char *env = getenv("MELEE_VIDEO_CFG");
+  char *slash;
+  if (env != NULL && env[0] != '\0') {
+    return env;
+  }
+  if (buf[0] == '\0') {
+    DWORD n = GetModuleFileNameA(NULL, buf, (DWORD)sizeof buf);
+    if (n == 0 || n >= sizeof buf || (slash = strrchr(buf, '\\')) == NULL) {
+      strcpy(buf, "video.cfg");
+    } else {
+      strcpy(slash + 1, "video.cfg");
+    }
+  }
+  return buf;
+}
+
+static float gw_video_clamp_scale(float v) {
+  if (!(v > 0.0f)) {
+    return 0.0f; /* 0, negative or NaN: Auto */
+  }
+  if (v < 0.5f) {
+    v = 0.5f;
+  }
+  if (v > 8.0f) {
+    v = 8.0f; /* 5120x3840: the largest a D3D11 texture this format comfortably allows */
+  }
+  return v;
+}
+
+static void gw_video_load(void) {
+  FILE *f;
+  char line[128];
+  const char *env;
+  if (gw_video_loaded) {
+    return;
+  }
+  gw_video_loaded = 1;
+  f = fopen(gw_video_cfg_path(), "r");
+  if (f != NULL) {
+    while (fgets(line, sizeof line, f) != NULL) {
+      float v;
+      if (sscanf(line, " render_scale = %f", &v) == 1) {
+        gw_video_scale = gw_video_clamp_scale(v);
+      }
+    }
+    fclose(f);
+  }
+  env = getenv("MELEE_RENDER_SCALE");
+  if (env != NULL && env[0] != '\0') {
+    gw_video_scale = (env[0] == 'a' || env[0] == 'A') ? 0.0f : gw_video_clamp_scale((float)atof(env));
+  }
+}
+
+static void gw_video_save(void) {
+  FILE *f = fopen(gw_video_cfg_path(), "w");
+  if (f == NULL) {
+    gw_log("gw: video: cannot write %s", gw_video_cfg_path());
+    return;
+  }
+  fprintf(f, "# melee-pc video settings (the game rewrites this file)\n");
+  fprintf(f, "# render_scale: internal resolution x 640x480; 0 = match the window\n");
+  fprintf(f, "render_scale = %g\n", gw_video_scale);
+  fclose(f);
+}
+
+static void gw_video_apply_scale(void) {
+  VISetFrameBufferScale(gw_video_scale);
+  /* Supersampled (scale >= 2, larger than a usual window) is shrunk to the window with an area
+   * filter - bilinear only reads the 2x2 texels nearest each output pixel, so fine texture lines
+   * alias into moire stripes at 3x. Upscaling (1x, fractional) stays bilinear. */
+  aurora_set_resampler(gw_video_scale >= 2.0f ? SAMPLER_AREA : SAMPLER_BILINEAR);
+  if (gw_video_scale > 0.0f) {
+    gw_log("gw: video: render scale %gx (%dx%d internal)", gw_video_scale,
+           (int)(640.0f * gw_video_scale + 0.5f), (int)(480.0f * gw_video_scale + 0.5f));
+  } else {
+    gw_log("gw: video: render scale Auto (the window's pixel size)");
+  }
+}
+
+/* The current render scale; 0 = Auto (window resolution). */
+float gw_Video_RenderScale(void) {
+  gw_video_load();
+  return gw_video_scale;
+}
+
+/* Change the render scale now (Aurora resizes its targets at the next frame boundary) and remember
+ * it in video.cfg. 0 = Auto; otherwise clamped to 0.5..8. */
+void gw_Video_SetRenderScale(float scale) {
+  gw_video_load();
+  gw_video_scale = gw_video_clamp_scale(scale);
+  gw_video_apply_scale();
+  gw_video_save();
+}
+
 bool gw_frame_init(void) {
+  gw_video_load();
+  gw_video_apply_scale();
   gw_handle_events();
   gw_frame_begun = aurora_begin_frame();
   return true;

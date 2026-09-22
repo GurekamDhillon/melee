@@ -358,7 +358,16 @@ void gmVsMelee_ExitResults(GameModeState* state, VsModeData* vs, u8 state_id)
         /* an online match in a room: back to ONLINE PLAY (same room) instead of the CSS */
         extern int Netplay_RematchPending(void);
         extern void Frontend_BackToOnline(void);
+        extern void Netplay_GameResult(int winner);
         if (Netplay_RematchPending()) {
+            /* the set: one winner in port 1 or 2 (a tie or a cancel counts for nobody) */
+            int w = -1;
+            if (!gm_WasMatchCanceled(match_end->outcome) && match_end->n_winners == 1 &&
+                match_end->winners[0] <= 1)
+            {
+                w = match_end->winners[0];
+            }
+            Netplay_GameResult(w);
             gmVsMelee_UpdateKOCounts(ko, match_end);
             Frontend_BackToOnline();
             gm_ChangeGameModeAfterCurrentScene(GM_FRONTEND);

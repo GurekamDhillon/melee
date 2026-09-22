@@ -118,6 +118,9 @@ typedef struct gw_net_callbacks {
    * blob[0..*blob_len) in, at most `cap` bytes out. Called before the ACCEPT goes out. */
   void (*guest_hello)(void *user, const uint8_t *info, int info_len, uint8_t *blob, uint16_t *blob_len,
                       int cap);
+  /* LOBBY (optional): a message the peer sent with gw_net_lobby_send - delivered exactly once, in
+   * order, while connected and before the match starts (states ACCEPTED/STARTING). */
+  void (*lobby_msg)(void *user, const uint8_t *data, int len);
 } gw_net_callbacks;
 
 typedef struct gw_net_config {
@@ -166,6 +169,12 @@ void gw_net_poll(gw_net *n, int32_t local_frame);
 /* cfg.hold_start: this side is ready (the match is loaded) - agree the start time once the peer
  * is ready too. */
 void gw_net_release(gw_net *n);
+
+/* LOBBY: a small reliable, ordered message channel between accepting and starting (pick/ban,
+ * ready-up). Resent until acknowledged; heartbeats keep the connection alive while the players sit
+ * in the lobby. Returns 0, or < 0 if the queue is full or the message too long. */
+#define GW_NET_LOBBY_MAX 200
+int gw_net_lobby_send(gw_net *n, const void *data, int len);
 
 /* PUSH model: this peer's inputs for `frame`, indexed by slot (only owned slots are read). Frames
  * must be submitted contiguously from first_frame. Returns 0, or < 0 if the send window is full

@@ -61,6 +61,7 @@ static u8 fk_widget_of(const FrontendItem* it)
     case FE_CHOICE: return FKW_CHOICE;
     case FE_TOGGLE: return FKW_TOGGLE;
     case FE_SLIDER: return it->set != NULL ? FKW_SLIDER : FKW_READOUT;
+    case FE_ACTION: return it->format != NULL ? FKW_READOUT : FKW_NONE; /* an action with a status */
     default: return FKW_NONE;
     }
 }
@@ -549,11 +550,17 @@ static void fk_frame(void)
         fp_copy(fk.val[r], now, FE_STR);
     }
     /* the connection status as the kit's toast */
-    if (fe.screen == &fe_screen_online) {
-        bool want = fe_np_phase != FE_NP_IDLE;
+    if (fe.screen == &fe_screen_online || fe.screen == &fe_screen_wait ||
+        fe.screen == &fe_screen_lobby)
+    {
+        bool want = fe_np_phase != FE_NP_IDLE || fe.screen == &fe_screen_lobby;
         if (want) {
             char st[FE_STR];
-            Netplay_MenuStatus(st, FE_STR);
+            if (fe.screen == &fe_screen_lobby) {
+                fe_lb_instruction(st); /* what the lobby asks of this player now */
+            } else {
+                Netplay_MenuStatus(st, FE_STR);
+            }
             if (strcmp(st, fk.toast_str) != 0) {
                 fp_copy(fk.toast_str, st, FE_STR);
                 fk_retext(fk.q_toast_text, st, kit.desc_anchor[0], 0, kit.desc_max);

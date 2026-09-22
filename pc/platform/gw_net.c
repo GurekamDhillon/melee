@@ -30,7 +30,7 @@
 #define HDR_LEN 18
 
 enum {
-  T_HELLO = 1, T_ACCEPT, T_REFUSE, T_READY, T_START, T_START_ACK, T_INPUT, T_QUIT
+  T_HELLO = 1, T_ACCEPT, T_REFUSE, T_READY, T_START, T_START_ACK, T_INPUT, T_QUIT, T_LOBBY
 };
 
 #define MAX_PACKET 1200
@@ -193,6 +193,12 @@ struct gw_net {
   uint16_t blob_len;
   int have_remote_cfg;
   int held;                          /* cfg.hold_start and gw_net_release not called yet */
+  /* lobby channel: outgoing messages kept until the peer acknowledges them */
+  struct { uint16_t seq; uint8_t len; uint8_t data[GW_NET_LOBBY_MAX]; } lq[32];
+  int nlq;
+  uint16_t lseq_next;                /* our next outgoing lobby seq */
+  uint16_t lrecv_next;               /* the peer's next lobby seq we expect */
+  uint32_t next_lobby;               /* when to (re)send lobby packets / heartbeat */
   int peer_ready;                    /* host: the guest's READY arrived while we were held */
 
   /* slots and framing */
@@ -277,6 +283,55 @@ static void send_simple(gw_net *n, int type) {
   uint8_t buf[MAX_PACKET];
   uint8_t *p = begin_packet(n, buf, type);
   send_packet(n, buf, (int)(p - buf));
+}
+
+/* One lobby packet: our ack of the peer's messages, then every unacknowledged message of ours. */
+static void send_lobby(gw_net *n) {
+  uint8_t buf[MAX_PACKET];
+  uint8_t *p = begin_packet(n, buf, T_LOBBY);
+  int i;
+  put16(&p, n->lrecv_next);                      /* everything before this seq has arrived */
+  for (i = 0; i < n->nlq; ++i) {
+    if ((p - buf) + 3 + n->lq[i].len > MAX_PACKET) break;
+    put16(&p, n->lq[i].seq);
+    *p++ = n->lq[i].len;
+    memcpy(p, n->lq[i].data, n->lq[i].len);
+    p += n->lq[i].len;
+  }
+  send_packet(n, buf, (int)(p - buf));
+}
+
+static void on_lobby(gw_net *n, const uint8_t *p, const uint8_t *end) {
+  uint16_t ack;
+  int i, k;
+  if (end - p < 2) return;
+  ack = get16(&p);
+  /* drop what the peer has acknowledged (wrap-safe: seq older than ack) */
+  for (i = k = 0; i < n->nlq; ++i) {
+    if ((int16_t)(n->lq[i].seq - ack) >= 0) n->lq[k++] = n->lq[i];
+  }
+  n->nlq = k;
+  while (end - p >= 3) {
+    uint16_t seq = get16(&p);
+    int len = *p++;
+    if (len > end - p) break;
+    if (seq == n->lrecv_next) {
+      n->lrecv_next++;
+      if (n->cfg.cb.lobby_msg != NULL) n->cfg.cb.lobby_msg(n->cfg.cb.user, p, len);
+    }
+    p += len;                                    /* older: a resend, already delivered */
+  }
+}
+
+int gw_net_lobby_send(gw_net *n, const void *data, int len) {
+  if (n == NULL || len < 0 || len > GW_NET_LOBBY_MAX || n->nlq >= (int)(sizeof n->lq / sizeof n->lq[0]))
+    return -1;
+  n->lq[n->nlq].seq = n->lseq_next++;
+  n->lq[n->nlq].len = (uint8_t)len;
+  memcpy(n->lq[n->nlq].data, data, (size_t)len);
+  n->nlq++;
+  n->next_lobby = now(n);                        /* out on the next poll */
+  return 0;
 }
 
 static void send_refuse_to(gw_net *n, const gw_net_addr *to, int code, const char *msg) {
@@ -770,6 +825,9 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
   case T_INPUT:
     on_input(n, p, end);
     break;
+  case T_LOBBY:
+    on_lobby(n, p, end);
+    break;
   case T_QUIT:
     go_dead(n, "peer quit");
     break;
@@ -878,6 +936,12 @@ void gw_net_poll(gw_net *n, int32_t local_frame) {
                                                                       : n->cfg.disconnect_timeout_ms;
     if (silent >= limit) { go_dead(n, "peer timed out"); return; }
     if (silent >= n->cfg.notify_timeout_ms && !n->interrupted) { n->interrupted = 1; fire(n, GW_NET_EV_INTERRUPTED, NULL); }
+  }
+
+  if ((n->state == GW_NET_ACCEPTED || n->state == GW_NET_STARTING) && n->session != 0 &&
+      (n->cfg.cb.lobby_msg != NULL || n->nlq != 0) && reached(t, n->next_lobby)) {
+    send_lobby(n);                               /* resends + ack, doubling as a heartbeat */
+    n->next_lobby = t + (n->nlq != 0 ? 100u : 500u);
   }
 
   if (n->state == GW_NET_RUNNING) {

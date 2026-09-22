@@ -913,6 +913,8 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                      * shared heap - a resimulated frame does not render, and an allocation there
                      * would shift every later address (objalloc.c) */
                     extern void HSD_ObjAllocTopUp(void);
+                    extern void Netplay_Background(void);
+                    Netplay_Background(); /* an online lobby stays connected on the CSS too */
                     ifMagnify_UpdateLogicOffscreen();
                     Camera_RefreshViewingMtx();
                     HSD_ObjAllocTopUp();

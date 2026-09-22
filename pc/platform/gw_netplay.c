@@ -2246,6 +2246,17 @@ const char *gw_Netplay_Scene(void) {
     v = getenv("MELEE_NETPLAY");
     if (v == NULL || v[0] == '\0' || v[0] == '0') return NULL;
     np.port = NP_DEFAULT_PORT;
+    if (strcmp(v, "random") == 0) {
+        /* random matchmaking through the server, straight into the match (no lobby) */
+        if (gw_Netplay_RandomBegin(np_env_int("MELEE_NETPLAY_CHAR", 2), np_env_int("MELEE_NETPLAY_COLOR", 0),
+                                   np_env_int("MELEE_NETPLAY_STOCKS", 4), np_env_int("MELEE_NETPLAY_MINUTES", 8),
+                                   np_env_int("MELEE_NETPLAY_DELAY", 2)) != 0) {
+            return NULL;
+        }
+        np.use_lobby = 0;
+        np.stage_ext = np_env_int("MELEE_NETPLAY_STAGE", 31);
+        goto wait;
+    }
     if (strncmp(v, "host", 4) == 0) {
         np.host = 1;
         if (v[4] == ':') np.port = (uint16_t) atoi(v + 5);
@@ -2253,7 +2264,7 @@ const char *gw_Netplay_Scene(void) {
         np.host = 0;
         snprintf(np.peer_code, sizeof np.peer_code, "%s", v + 5);
     } else {
-        gw_log("netplay: MELEE_NETPLAY=\"%s\" not understood (host[:port] or join:<ip>[:port])", v);
+        gw_log("netplay: MELEE_NETPLAY=\"%s\" not understood (host[:port], join:<ip>[:port] or random)", v);
         return NULL;
     }
     np.ck = np_env_int("MELEE_NETPLAY_CHAR", np.host ? 2 : 9); /* Fox / Marth */
@@ -2264,6 +2275,7 @@ const char *gw_Netplay_Scene(void) {
     np.delay = np_env_int("MELEE_NETPLAY_DELAY", 2);
     np.use_lobby = 0;
     if (np_begin(0) != 0) return NULL;
+wait:
     {
         DWORD t0 = GetTickCount();
         while (np_poll() == NP_WORKING && GetTickCount() - t0 < 600000u) {

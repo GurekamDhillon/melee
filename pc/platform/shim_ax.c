@@ -47,6 +47,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h> /* GetModuleFileNameA: audio.cfg beside the exe */
+
 /* ---- voice pool ---------------------------------------------------------------------------
  * AXAcquireVoice cannot return NULL: the synth's stream path (HSD_Synth_8038B5AC) reads
  * voice->index immediately after acquiring, so NULL faults at NULL+0x18 the moment the game starts
@@ -636,6 +639,70 @@ static void SDLCALL gw_ax_sdl_callback(void *userdata, SDL_AudioStream *stream,
     }
 }
 
+/* ---- master volume ---------------------------------------------------------------------------
+ * MELEE_VOLUME=0..100 (percent; 0 = silent), else audio.cfg next to the exe ("volume = N"), else
+ * 100. Applied as the output stream's gain, so it scales exactly what reaches the speakers (a
+ * MELEE_AUDIO_DUMP capture stays at full scale). gw_Audio_SetVolume changes it live and saves
+ * audio.cfg, for the settings menu. */
+static int gw_ax_volume = -1;
+
+static const char *gw_ax_cfg_path(void) {
+    static char buf[MAX_PATH];
+    char *slash;
+    if (buf[0] == '\0') {
+        DWORD n = GetModuleFileNameA(NULL, buf, (DWORD) sizeof buf);
+        if (n == 0 || n >= sizeof buf || (slash = strrchr(buf, '\\')) == NULL) {
+            strcpy(buf, "audio.cfg");
+        } else {
+            strcpy(slash + 1, "audio.cfg");
+        }
+    }
+    return buf;
+}
+
+static int gw_ax_clamp_volume(int v) { return v < 0 ? 0 : (v > 100 ? 100 : v); }
+
+int gw_Audio_Volume(void) {
+    if (gw_ax_volume < 0) {
+        const char *env = getenv("MELEE_VOLUME");
+        FILE *f;
+        gw_ax_volume = 100;
+        f = fopen(gw_ax_cfg_path(), "r");
+        if (f != NULL) {
+            char line[64];
+            int v;
+            while (fgets(line, sizeof line, f) != NULL) {
+                if (sscanf(line, " volume = %d", &v) == 1) {
+                    gw_ax_volume = gw_ax_clamp_volume(v);
+                }
+            }
+            fclose(f);
+        }
+        if (env != NULL && env[0] != '\0') {
+            gw_ax_volume = gw_ax_clamp_volume(atoi(env));
+        }
+    }
+    return gw_ax_volume;
+}
+
+static void gw_ax_apply_volume(void) {
+    if (gw_ax_stream != NULL) {
+        SDL_SetAudioStreamGain(gw_ax_stream, (float) gw_Audio_Volume() / 100.0f);
+    }
+}
+
+void gw_Audio_SetVolume(int percent) {
+    FILE *f;
+    gw_ax_volume = gw_ax_clamp_volume(percent);
+    gw_ax_apply_volume();
+    f = fopen(gw_ax_cfg_path(), "w");
+    if (f != NULL) {
+        fprintf(f, "# melee-pc audio settings (the game rewrites this file)\nvolume = %d\n", gw_ax_volume);
+        fclose(f);
+    }
+    gw_log("gw: AX: master volume %d%%", gw_ax_volume);
+}
+
 /* ---- optional WAV capture (MELEE_AUDIO_DUMP) ------------------------------------------------ */
 static FILE *gw_ax_wav;
 static uint32_t gw_ax_wav_bytes;
@@ -730,6 +797,8 @@ static void gw_ax_open_device(void) {
         gw_log("gw: AX: SDL_OpenAudioDeviceStream failed: %s", SDL_GetError());
         return;
     }
+    gw_ax_apply_volume();
+    gw_log("gw: AX: master volume %d%%", gw_Audio_Volume());
     SDL_ResumeAudioStreamDevice(gw_ax_stream);
     gw_ax_dev_ok = true;
     gw_log("gw: AX: audio device open (32 kHz stereo s16, %u ms target latency)",

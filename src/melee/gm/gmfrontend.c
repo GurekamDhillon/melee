@@ -50,7 +50,35 @@
  * DRAWING. Melee's own systems: the text canvas (HSD_SisLib - the menus' font, with its own
  * orthographic 640x480 camera) and GX link callbacks on that camera: the panels below the text
  * (pass 0), the fade above it (pass 2, after the text, which draws in pass 2 at a lower priority).
- * Everything renders through aurora at the window's resolution. */
+ * Everything renders through aurora at the window's resolution.
+ *
+ * THE MENU TREE (gmfrontend_menus.inc, MELEE_FRONTEND_MENUS, default on). GM_MENU's list screens
+ * - Main, Solo (1P), Regular Match, Stadium, Multi-Man, Versus, Special Melee, Collection
+ * (trophies), Options, Data, Records - are frontend screens: one GS_FRONTEND scene holds the
+ * whole tree, and a screen is (MenuKind, selection) exactly as vanilla positions it.
+ *   routing   gmFrontend_Route turns every mode change INTO GM_MENU into GM_FRONTEND, opening
+ *             where gmmenumode.c would have (previous mode -> (kind, selection); force_main_menu;
+ *             the language change) - unless that is a screen not drawn here (the Event list).
+ *   items     each item does what its mnmain.c think does: the same GM_* mode, gm_801677E8(port)
+ *             where vanilla calls it, sfxForward/sfxBack/sfxMove, B to the same parent item;
+ *             locks are mn_80229938 and hide the item as vanilla does. VS > Melee goes through
+ *             MATCH SETUP (a toolkit screen, its own GS_FRONTEND scene) to GM_VS.
+ *   native    screens not replaced yet run natively in GM_MENU: the frontend leaves with a
+ *             request (gmFrontend_NativeRequest); gmmenumode.c positions the menu and mnmain.c
+ *             opens the screen as the parent's think would (mn_PcOpenNative). Their back-out
+ *             (mn_80229894) returns here through gmFrontend_NativeReturn.
+ *   arrival   as mnMain_Scene_OnEnter: the menu music and lbCardGame_SaveChanges(); the state's
+ *             on_enter does gmmenumode's card work area and preload-cache bookkeeping.
+ *   trace     MenuFlow mirrors the frontend's (kind, selection), so the scene trace's
+ *             "scene: cursor menu" lines cover it; the log names every screen and action.
+ *
+ * THE PLAYER (gmfrontend_player.inc) plays the art pipeline's *_layout.json / *_motion.json at
+ * runtime (JSON read from ui/ beside the exe via gw_UiFile_Read; png2gx.py --layout converts
+ * the textures and copies the JSON). THE KIT (gmfrontend_kit.inc) is brief section 1: atlas
+ * text from font_manifest.json, section palettes from kit.json, chrome_layout / list_layout,
+ * kit_motion's row events. MELEE_FE_HUBDEMO=<frame> shows out_hub's own hub frozen at a frame
+ * of the pipeline's preview script, for comparison with its preview sheets.
+ * Design notes and the art still expected: _research/frontend-menus.md. */
 
 /* ---- the toolkit's data ------------------------------------------------------------------- */
 

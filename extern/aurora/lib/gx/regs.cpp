@@ -3,7 +3,9 @@
 #include "gx_fmt.hpp"
 #include "texture.hpp"
 
+#include <algorithm>
 #include <bit>
+#include <vector>
 #include <cmath>
 
 namespace aurora::gx::fifo {
@@ -980,7 +982,229 @@ void handle_cp(u8 addr, u32 value) noexcept {
   }
 }
 
+namespace interp {
+namespace {
+struct Vals {
+  f32 v[12];
+};
+bool sActive = false;
+bool sRecord = false;
+f32 sAlpha = 1.f;
+// Per (XF address, POS array) pair: that pair's loads in draw order, this frame (sTo) and the
+// previous one (sFrom).
+absl::flat_hash_map<u64, std::vector<Vals>> sFrom;
+absl::flat_hash_map<u64, std::vector<Vals>> sTo;
+absl::flat_hash_map<u64, u32> sOcc;
+u32 sBlended, sRejected, sMissing;
+u32 sPendingPos = 0; // matrix slots loaded since the last draw
+u32 sPendingNrm = 0;
+
+u64 pair_key(u32 addr) noexcept {
+  const auto ptr = static_cast<u32>(reinterpret_cast<uintptr_t>(g_gxState.arrays[GX_VA_POS].data));
+  return (static_cast<u64>(addr & 0x1FFF) << 32) | ptr;
+}
+
+// A pairing between two different objects (the draw list changed shape between the frames) shows
+// up as a large jump; those are not blended.
+bool plausible(const f32* a, const f32* b, u32 len, bool affine) noexcept {
+  // Linear part (every non-translation element): the change must stay well under the matrix's own
+  // size - a turn of less than ~30 degrees in a field. Translation: under 40 units plus half its
+  // distance from the camera (a mismatched pair is usually a different object somewhere else).
+  f32 dl = 0.f, na = 0.f, nb = 0.f, dt = 0.f, nt = 0.f;
+  for (u32 i = 0; i < len; ++i) {
+    const f32 d = a[i] - b[i];
+    if (affine && (i % 4) == 3) {
+      dt += d * d;
+      nt += b[i] * b[i];
+    } else {
+      dl += d * d;
+      na += a[i] * a[i];
+      nb += b[i] * b[i];
+    }
+  }
+  if (dl > 0.25f * std::max(na, nb) + 1e-6f) {
+    return false;
+  }
+  if (affine && std::sqrt(dt) > 40.f + 0.5f * std::sqrt(nt)) {
+    return false;
+  }
+  return true;
+}
+
+f32 distance2(const f32* a, const f32* b, u32 len) noexcept {
+  f32 d = 0.f;
+  for (u32 i = 0; i < len; ++i) {
+    d += (a[i] - b[i]) * (a[i] - b[i]);
+  }
+  return d;
+}
+
+// The previous frame's value for this load. Usually the load with the same position in the
+// pair's list; when the draw order changed (HSD depth-sorts translucent objects, objects come and
+// go), the nearest of that pair's previous values instead.
+const Vals* match(u64 pair, u32 occ, const f32* v, u32 len, bool affine) noexcept {
+  const auto it = sFrom.find(pair);
+  if (it == sFrom.end() || it->second.empty()) {
+    ++sMissing;
+    return nullptr;
+  }
+  const auto& list = it->second;
+  if (occ < list.size() && plausible(list[occ].v, v, len, affine) &&
+      (list.size() == 1 || distance2(list[occ].v, v, len) < 1e-2f * (1.f + distance2(v, v, 0)))) {
+    ++sBlended;
+    return &list[occ];
+  }
+  const Vals* best = nullptr;
+  f32 bestD = 0.f;
+  const size_t n = std::min<size_t>(list.size(), 256);
+  for (size_t i = 0; i < n; ++i) {
+    const f32 d = distance2(list[i].v, v, len);
+    if (best == nullptr || d < bestD) {
+      best = &list[i];
+      bestD = d;
+    }
+  }
+  if (best == nullptr || !plausible(best->v, v, len, affine)) {
+    ++sRejected;
+    return nullptr;
+  }
+  ++sBlended;
+  return best;
+}
+
+void blend(u32 addr, f32* v, u32 len, bool affine) noexcept {
+  const u64 pair = pair_key(addr);
+  const u32 occ = sOcc[pair]++;
+  if (sRecord) {
+    Vals to{};
+    std::memcpy(to.v, v, len * sizeof(f32));
+    sTo[pair].push_back(to);
+  }
+  if (sAlpha >= 1.f) {
+    return;
+  }
+  const Vals* from = match(pair, occ, v, len, affine);
+  if (from == nullptr) {
+    return;
+  }
+  const f32 a = sAlpha < 0.f ? 0.f : sAlpha;
+  for (u32 i = 0; i < len; ++i) {
+    v[i] = from->v[i] + (v[i] - from->v[i]) * a;
+  }
+}
+} // namespace
+
+void begin_real_frame(bool enabled, float alpha) noexcept {
+  if (!enabled) {
+    sFrom.clear();
+    sTo.clear();
+    sActive = false;
+    sRecord = false;
+    return;
+  }
+  sFrom.swap(sTo);
+  for (auto& [key, list] : sTo) {
+    list.clear();
+  }
+  sOcc.clear();
+  sPendingPos = sPendingNrm = 0;
+  sActive = true;
+  sRecord = true;
+  sAlpha = alpha;
+}
+
+void begin_replay(float alpha) noexcept {
+  sOcc.clear();
+  sPendingPos = sPendingNrm = 0;
+  sActive = true;
+  sRecord = false;
+  sAlpha = alpha;
+}
+
+void end() noexcept {
+  sActive = false;
+  sRecord = false;
+}
+
+bool active() noexcept { return sActive; }
+
+void take_stats(u32* blended, u32* rejected, u32* missing) noexcept {
+  *blended = sBlended;
+  *rejected = sRejected;
+  *missing = sMissing;
+  sBlended = sRejected = sMissing = 0;
+}
+
+// Position/normal matrix slots loaded since the last draw. They are blended when the next draw
+// uses them, keyed by the POS array that draw reads - the object's own geometry - rather than at
+// load time: HSD loads a PObj's matrices before it binds that PObj's arrays.
+
+void note_load(u32 addr) noexcept {
+  if (addr < 0x78) {
+    sPendingPos |= 1u << (addr / 12);
+  } else {
+    sPendingNrm |= 1u << ((addr - 0x400) / 9);
+  }
+}
+
+void before_draw() noexcept {
+  if (!sActive || (sPendingPos | sPendingNrm) == 0) {
+    return;
+  }
+  for (u32 slot = 0; slot < MaxPnMtx; ++slot) {
+    if (sPendingPos & (1u << slot)) {
+      blend(slot * 12, reinterpret_cast<f32*>(&g_gxState.pnMtx[slot].pos), 12, true);
+    }
+    if (sPendingNrm & (1u << slot)) {
+      f32 v[9];
+      f32* flat = reinterpret_cast<f32*>(&g_gxState.pnMtx[slot].nrm);
+      for (u32 i = 0; i < 9; ++i) {
+        v[i] = flat[(i / 3) * 4 + i % 3];
+      }
+      blend(0x400 + slot * 9, v, 9, false);
+      for (u32 i = 0; i < 9; ++i) {
+        flat[(i / 3) * 4 + i % 3] = v[i];
+      }
+    }
+  }
+  sPendingPos = sPendingNrm = 0;
+  g_gxState.dirty |= DirtyUniform;
+}
+
+// Blends a projection block (6 floats + type) in place.
+void xf_projection(u8* words) noexcept {
+  f32 v[12] = {};
+  for (u32 i = 0; i < 6; ++i) {
+    v[i] = std::bit_cast<f32>(read_bits<u32>(words + i * 4));
+  }
+  v[6] = std::bit_cast<f32>(read_bits<u32>(words + 24)); // the type, compared bit-exactly below
+  const u64 pair = static_cast<u64>(0x1020) << 32;
+  const u32 occ = sOcc[pair]++;
+  if (sRecord) {
+    Vals to{};
+    std::memcpy(to.v, v, sizeof v);
+    sTo[pair].push_back(to);
+  }
+  if (sAlpha >= 1.f) {
+    return;
+  }
+  const Vals* from = match(pair, occ, v, 7, false);
+  if (from == nullptr || std::bit_cast<u32>(from->v[6]) != std::bit_cast<u32>(v[6])) {
+    return;
+  }
+  const f32 a = sAlpha < 0.f ? 0.f : sAlpha;
+  for (u32 i = 0; i < 6; ++i) {
+    const f32 b = from->v[i] + (v[i] - from->v[i]) * a;
+    const u32 bits = bswap(std::bit_cast<u32>(b));
+    std::memcpy(words + i * 4, &bits, 4);
+  }
+}
+} // namespace interp
+
 bool copy_xf_data(u32 addr, const u8* data, u32 len, std::endian e) noexcept {
+  if (interp::active() && ((addr < 0x78 && len == 12) || (addr >= 0x400 && addr < 0x45A && len == 9))) {
+    interp::note_load(addr); // blended at the next draw (interp::before_draw)
+  }
   if (addr < 0x78) {
     // Position matrices (0x0000-0x0077)
     u32 mtxIdx = addr / 12;
@@ -1151,6 +1375,12 @@ void handle_xf(u16 addr, std::span<const u8> data) noexcept {
     }
     // Projection depends only on its XF block, so identical loads can dedupe
     if (reg == 0x20 && count - i >= 7) {
+      u8 blended[7 * 4];
+      if (interp::active()) {
+        std::memcpy(blended, wordData, sizeof blended);
+        interp::xf_projection(blended);
+        wordData = blended;
+      }
       if (!xf_block_unchanged(0x20, wordData, 7)) {
         xf_load_projection(wordData);
       }

@@ -31,6 +31,8 @@ void shutdown();
 
 void begin_frame() noexcept;
 void end_frame() noexcept;
+// True while aurora_frame_replay is re-processing a recorded frame (port patch).
+bool replaying() noexcept;
 
 // Out-of-line slow path: grows internal buffer then appends data
 void write_data_grow(const void* data, uint32_t length);

@@ -1,4 +1,5 @@
 #include "command_processor.hpp"
+#include "fifo.hpp"
 
 #include "../gfx/depth_peek.hpp"
 #include "../gfx/recording.hpp"
@@ -524,6 +525,7 @@ static void revalidate_array(AttrArray& array) noexcept {
 
 static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
                          gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
+  interp::before_draw();
   auto& state = g_gxState;
   auto& cache = sDrawCache;
 
@@ -894,7 +896,9 @@ void handle_aurora(ByteReader& reader) noexcept {
   } else if (subCmd == GX_AURORA_LOAD_COPY_DEST) {
     g_gxState.texCopyDest = reinterpret_cast<const void*>(static_cast<uintptr_t>(reader.read<u64>()));
   } else if (subCmd == GX_AURORA_REQUEST_DEPTH_SNAPSHOT) {
-    gfx::depth_peek::request_snapshot();
+    if (!replaying()) { // a replayed frame's depth is not the game's to read back
+      gfx::depth_peek::request_snapshot();
+    }
   } else if (subCmd == GX_AURORA_BEGIN_OFFSCREEN) {
     const u32 width = reader.read<u32>();
     const u32 height = reader.read<u32>();

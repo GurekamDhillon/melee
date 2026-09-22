@@ -750,3 +750,4 @@ int64_t aurora_get_last_present_ns() {
   return aurora::gfx::g_lastPresentNs.load(std::memory_order_acquire);
 }
 uint32_t aurora_get_present_count() { return aurora::gfx::g_presentCount.load(std::memory_order_acquire); }
+bool aurora_frame_slot_available() { return aurora::gfx::g_frameSlots.free_count() != 0; }

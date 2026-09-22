@@ -2,6 +2,10 @@
 
 #include "../thread.hpp"
 #include "command_processor.hpp"
+#include "regs.hpp"
+
+#include <memory>
+#include <vector>
 
 #include <algorithm>
 #include <atomic>
@@ -36,6 +40,18 @@ std::mutex sBufferMutex;
 std::atomic<uint32_t> sWorkerWake{0};
 thread::Thread sWorkerThread;
 std::atomic<DrawDoneCallback> sDrawDoneCallback{nullptr};
+
+// Frame replay (port patch): each real frame's command stream and the GX state it started from are
+// kept, so the frame can be drawn again with blended matrices (aurora_frame_replay).
+bool sReplayEnabled = false;
+bool sReplayFrame = false; // the Aurora frame in progress is a replay, not a game frame
+bool sReplaying = false;   // aurora_frame_replay is processing right now
+float sRealAlpha = 1.f;
+std::vector<uint8_t> sRecCur;
+std::vector<uint8_t> sRecLast;
+std::unique_ptr<GXState> sStartCur;
+std::unique_ptr<GXState> sStartLast;
+bool sHaveLast = false;
 
 void dispatch_draw_done() noexcept {
   if (const auto callback = sDrawDoneCallback.load(std::memory_order_acquire); callback != nullptr) {
@@ -139,12 +155,36 @@ void init() {
 
 void shutdown() { stop_worker(); }
 
-void begin_frame() noexcept { sFrameActive = true; }
+void begin_frame() noexcept {
+  sFrameActive = true;
+  if (sReplayFrame) {
+    return;
+  }
+  if (sReplayEnabled) {
+    sRecCur.clear();
+    if (!sStartCur) {
+      sStartCur = std::make_unique<GXState>();
+    }
+    *sStartCur = g_gxState;
+  }
+  interp::begin_real_frame(sReplayEnabled, sRealAlpha);
+}
 
 void end_frame() noexcept {
   sFrameActive = false;
   clear_draw_cache(); // command_processor
+  if (sReplayFrame) {
+    return;
+  }
+  interp::end();
+  if (sReplayEnabled) {
+    std::swap(sRecCur, sRecLast);
+    std::swap(sStartCur, sStartLast);
+    sHaveLast = !sRecLast.empty() && sStartLast != nullptr;
+  }
 }
+
+bool replaying() noexcept { return sReplaying; }
 
 void write_data_grow(const void* data, uint32_t length) {
   const uint64_t needed64 = static_cast<uint64_t>(detail::sBufferSize) + length;
@@ -260,6 +300,9 @@ void drain() {
   }
   }
 
+  if (sReplayEnabled && !sReplayFrame && sFrameActive) {
+    sRecCur.insert(sRecCur.end(), detail::sBufferData, detail::sBufferData + detail::sBufferSize);
+  }
   {
     std::lock_guard lock{sBufferMutex};
     sStreamBase = target;
@@ -282,3 +325,75 @@ void clear_buffer() {
 }
 
 } // namespace aurora::gx::fifo
+
+// ---- frame replay / interpolation (port patch) -------------------------------------------------
+using namespace aurora::gx;
+using namespace aurora::gx::fifo;
+
+extern "C" {
+void aurora_frame_replay_enable(bool enable) {
+  sReplayEnabled = enable;
+  if (!enable) {
+    sHaveLast = false;
+    sRecCur.clear();
+    sRecLast.clear();
+    sRecCur.shrink_to_fit();
+    sRecLast.shrink_to_fit();
+  }
+}
+
+bool aurora_frame_replay_available() { return sReplayEnabled && sHaveLast; }
+
+void aurora_frame_interp_stats(uint32_t* blended, uint32_t* rejected, uint32_t* missing) {
+  interp::take_stats(blended, rejected, missing);
+}
+
+void aurora_frame_set_alpha(float alpha) { sRealAlpha = alpha; }
+
+void aurora_frame_replay_mark(bool replayFrame) { sReplayFrame = replayFrame; }
+
+bool aurora_frame_replay(float alpha) {
+  if (!sReplayFrame || !sHaveLast || !sFrameActive) {
+    return false;
+  }
+  drain(); // nothing should be pending in a replay frame; keep the FIFO empty regardless
+  // Draw from the state the frame started in, then put the real state back: the game's next frame
+  // continues from where its own last frame left GX, not from the replay.
+  GXState saved = g_gxState;
+  g_gxState = *sStartLast;
+  for (auto& array : g_gxState.arrays) {
+    array.cachedRange = {};
+    array.stale = false;
+  }
+  g_gxState.dirty = DirtyAll;
+  g_gxState.clearVtxSizeCache();
+  clear_draw_cache();
+  interp::begin_replay(alpha);
+  sReplaying = true;
+  const uint8_t* p = sRecLast.data();
+  auto left = static_cast<uint32_t>(sRecLast.size());
+  while (left != 0) {
+    const auto result = process(p, left); // a draw-done here is the recorded frame's: not dispatched
+    if (result.bytesProcessed == 0) {
+      break;
+    }
+    p += result.bytesProcessed;
+    left -= result.bytesProcessed;
+  }
+  sReplaying = false;
+  interp::end();
+  clear_draw_cache();
+  auto copyCache = std::move(g_gxState.copyTextureCache);
+  g_gxState = std::move(saved);
+  for (auto& [key, ref] : copyCache) {
+    g_gxState.copyTextureCache.try_emplace(key, ref); // keep copy targets the replay created
+  }
+  for (auto& array : g_gxState.arrays) {
+    array.cachedRange = {};
+    array.stale = false;
+  }
+  g_gxState.dirty = DirtyAll;
+  g_gxState.clearVtxSizeCache();
+  return true;
+}
+}

@@ -62,6 +62,8 @@ VERSION = 1
 HEADER_SIZE = 64
 PAYLOAD_ALIGN = 32  # GX wants texture data and TLUTs 32-byte aligned
 
+GX_TF_I4 = 0x0
+GX_TF_IA4 = 0x2
 GX_TF_RGB5A3 = 0x5
 GX_TF_RGBA8 = 0x6
 GX_TF_C8 = 0x9
@@ -226,7 +228,46 @@ def choose_format(img):
     return "rgb5a3" if worst <= 8 else "rgba8"
 
 
-ENCODERS = {"rgb5a3": encode_rgb5a3, "ci8": encode_ci8, "rgba8": encode_rgba8}
+def _mask_level(r, g, b, a):
+    """A mask texel's coverage. The art ships masks as white + alpha (hub.py's whiten), so
+    coverage is alpha; a mask drawn as opaque grey-on-black instead carries it in luma. Using
+    min() of the two reads either kind correctly."""
+    return min(a, (r * 299 + g * 587 + b * 114) // 1000) if a == 255 else a
+
+
+def encode_i4(img):
+    """GX_TF_I4: 4bpp intensity, 8x8 tiles, high nibble first. For a white mask intensity IS
+    coverage (the pipeline's own i4() preview: round(a / 255 * 15)). GX expands I4 to I in all
+    four channels, so the frontend's TEV takes RGB from the material colour and only alpha from
+    the texture (hub README, "I4 needs a specific TEV setup")."""
+    px = img.load()
+    w, h = img.size
+    out = bytearray()
+    for tx, ty in _tiles(w, h, 8, 8):
+        for y in range(ty, ty + 8):
+            for x in range(tx, tx + 8, 2):
+                a = (_mask_level(*px[x, y]) * 15 + 127) // 255
+                b = (_mask_level(*px[x + 1, y]) * 15 + 127) // 255
+                out.append((a << 4) | b)
+    return GX_TF_I4, bytes(out), None, 0, b"", None
+
+
+def encode_ia4(img):
+    """GX_TF_IA4: 8bpp, 8x4 tiles, alpha in the high nibble, intensity fixed at 15 - the
+    hub's listed fallback for a mask when the I4 TEV setup is unavailable."""
+    px = img.load()
+    w, h = img.size
+    out = bytearray()
+    for tx, ty in _tiles(w, h, 8, 4):
+        for y in range(ty, ty + 4):
+            for x in range(tx, tx + 8):
+                a = (_mask_level(*px[x, y]) * 15 + 127) // 255
+                out.append((a << 4) | 0xF)
+    return GX_TF_IA4, bytes(out), None, 0, b"", None
+
+
+ENCODERS = {"rgb5a3": encode_rgb5a3, "ci8": encode_ci8, "rgba8": encode_rgba8,
+            "i4": encode_i4, "ia4": encode_ia4}
 
 
 def write_gxtex(path, width, height, fmt, image, tlut_fmt, tlut_entries, tlut):
@@ -291,6 +332,21 @@ def decode_gxtex(path):
                 for x in range(tx, tx + 8):
                     px[x, y] = pal[image[i]]
                     i += 1
+    elif fmt == GX_TF_I4:
+        i = 0
+        for tx, ty in _tiles(width, height, 8, 8):
+            for y in range(ty, ty + 8):
+                for x in range(tx, tx + 8, 2):
+                    for k, v in enumerate((image[i] >> 4, image[i] & 15)):
+                        px[x + k, y] = (255, 255, 255, v * 17)
+                    i += 1
+    elif fmt == GX_TF_IA4:
+        i = 0
+        for tx, ty in _tiles(width, height, 8, 4):
+            for y in range(ty, ty + 4):
+                for x in range(tx, tx + 8):
+                    px[x, y] = (255, 255, 255, (image[i] >> 4) * 17)
+                    i += 1
     else:
         raise ValueError("format %d has no decoder here" % fmt)
     return out
@@ -325,7 +381,48 @@ MANIFEST_FORMATS = {
     "CI8": "ci8",
     "RGB5A3": "rgb5a3",
     "RGBA8": "rgba8",
+    "I4": "i4",
+    "IA4": "ia4",
 }
+
+
+def convert_layout(layout_path, outdir, res):
+    """A frontend screen from the art pack: its *_layout.json lists every texture with its GX
+    format ("textures": [{name, file_2x, file_1x, format}]). Convert each, then copy the layout
+    and its sibling *_motion.json into outdir, where the frontend reads them by name
+    (gw_UiFile_Read). Paths in the layout are relative to the pack root (the layout's parent's
+    parent when it sits in out_*/)."""
+    import json
+    import shutil
+    with open(layout_path, encoding="utf-8") as f:
+        layout = json.load(f)
+    here = os.path.dirname(os.path.abspath(layout_path))
+    root = os.path.dirname(here)
+    os.makedirs(outdir, exist_ok=True)
+    failures = 0
+    for t in layout.get("textures", []):
+        src = os.path.join(root, t["file_%s" % res])
+        fmt = MANIFEST_FORMATS.get(t.get("format", ""))
+        if fmt is None:
+            print("%-20s SKIPPED - format %r" % (t["name"], t.get("format")))
+            failures += 1
+            continue
+        try:
+            main([src, os.path.join(outdir, t["name"] + ".gxtex"), "--format", fmt])
+        except SystemExit as e:
+            if e.code:
+                print("%-20s FAILED: %s" % (t["name"], e.code))
+                failures += 1
+    base = os.path.basename(layout_path)
+    copies = [layout_path]
+    if base.endswith("_layout.json"):
+        m = os.path.join(here, base[: -len("_layout.json")] + "_motion.json")
+        if os.path.exists(m):
+            copies.append(m)
+    for c in copies:
+        shutil.copyfile(c, os.path.join(outdir, os.path.basename(c)))
+        print("%-20s copied" % os.path.basename(c))
+    return 1 if failures else 0
 
 
 def convert_manifest(manifest_path, outdir, res, verify_dir):
@@ -363,6 +460,13 @@ def convert_manifest(manifest_path, outdir, res, verify_dir):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    if argv is None and "--layout" in sys.argv[1:]:
+        lp = argparse.ArgumentParser()
+        lp.add_argument("--layout", required=True, action="append")
+        lp.add_argument("--outdir", required=True)
+        lp.add_argument("--res", default="2x", choices=["1x", "2x"])
+        a = lp.parse_args(sys.argv[1:])
+        return max(convert_layout(p, a.outdir, a.res) for p in a.layout)
     if argv is None and "--manifest" in sys.argv[1:]:
         mp = argparse.ArgumentParser()
         mp.add_argument("--manifest", required=True)
@@ -374,7 +478,7 @@ def main(argv=None):
     ap.add_argument("png")
     ap.add_argument("gxtex")
     ap.add_argument("--format", default="auto",
-                    choices=["auto", "rgb5a3", "ci8", "rgba8"])
+                    choices=["auto", "rgb5a3", "ci8", "rgba8", "i4", "ia4"])
     ap.add_argument("--verify", metavar="PNG",
                     help="decode the written .gxtex back to this PNG and report the "
                          "round-trip error")

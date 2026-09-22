@@ -50,6 +50,9 @@
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/memory.h>
 #include <sysdolphin/baselib/mobj.h>
+#if defined(TARGET_PC)
+#include <melee/gm/gmfrontend.h>
+#endif
 
 /* 22C068 */ static void mn_8022C068(HSD_LObj*, int, int);
 
@@ -692,6 +695,21 @@ void mn_80229894(s32 arg0, u16 arg1, s32 arg2)
 {
     HSD_GObjProc* temp_r3;
     void (*temp_r0)(HSD_GObj*);
+
+#if defined(TARGET_PC)
+    /* Every native screen backs out through here. When the menu it returns to is drawn by the
+       port's frontend, leave GM_MENU for it (positioned on the same item) instead. */
+    if (gmFrontend_NativeReturn(arg0, arg1)) {
+        MenuExitData* exit = gm_GetCurrentSceneExitData();
+        mn_804D6BC8.cooldown = 5;
+        mn_804A04F0.cur_menu = arg0;
+        mn_804A04F0.hovered_selection = arg1;
+        exit->pending_mode = GM_FRONTEND;
+        gm_801A4B60();
+        HSD_GObjFree(HSD_GObj_CurrentInvokedProcGObj);
+        return;
+    }
+#endif
 
     mn_804D6BC8.cooldown = 5;
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;
@@ -2736,6 +2754,74 @@ void mnMain_Scene_OnFrame(void)
     }
 }
 
+#if defined(TARGET_PC)
+/* Open the native screen behind (kind, selection) exactly as that menu's think does on A - the
+ * same call with the same arguments - for the port's frontend, which drew the menu itself and
+ * already played the confirm sound (and, for Sound Test, stopped the music as that think does
+ * first; it is stopped again here because this scene has just started the menu music). The
+ * screen backs out through mn_80229894 as always. */
+static void mn_PcOpenNative(u8 kind, u8 sel)
+{
+    mn_804D6BC8.cooldown = 5;
+    mn_804A04F0.entering_menu = 1;
+    mn_804A04F0.cur_menu = kind;
+    mn_804A04F0.hovered_selection = sel;
+    OSReport("mnmain: frontend opens native screen kind %d selection %d\n", kind, sel);
+    switch (kind) {
+    case MENU_KIND_1P:
+        if (sel == SEL_1P_EVENT) {
+            mnEvent_8024E838(0, true);
+            return;
+        }
+        break;
+    case MENU_KIND_VS:
+        if (sel == SEL_VS_RULES) {
+            mn_80231714();
+            return;
+        }
+        if (sel == SEL_VS_NAME) {
+            mnName_8023AC40();
+            return;
+        }
+        break;
+    case MENU_KIND_SETTINGS:
+        switch (sel) {
+        case SEL_SETTINGS_RUMBLE: mnVibration_Init(1); return;
+        case SEL_SETTINGS_SOUND: mnSound_8024A09C(1); return;
+        case SEL_SETTINGS_DISPLAY: mnDeflicker_8024A6C4(1); return;
+        case SEL_SETTINGS_LANG: mnLanguage_8024C5C0((HSD_GObj*) 1); return;
+        case SEL_SETTINGS_ERASE: mnDataDel_80250170(); return;
+        }
+        break;
+    case MENU_KIND_DATA:
+        switch (sel) {
+        case SEL_DATA_SNAP: mnSnap_80257F24(); return;
+        case SEL_DATA_ARCHIVES: mnGallery_80259868(); return;
+        case SEL_DATA_SOUND:
+            lbAudioAx_80023694();
+            lbAudioAx_800236DC();
+            mnSoundTest_8024BEE0(1);
+            return;
+        case SEL_DATA_SPECIAL: mnInfo_80252758(); return;
+        }
+        break;
+    case MENU_KIND_RECORDS:
+        switch (sel) {
+        case SEL_RECORDS_VS: mnDiagram_Init(1, 1); return;
+        case SEL_RECORDS_BONUS: mnInfoBonus_80252F8C(); return;
+        case SEL_RECORDS_MISC: mnCount_Create(); return;
+        }
+        break;
+    }
+    /* not a native screen: that menu's own think */
+    OSReport("mnmain: no native screen for kind %d selection %d - opening the menu\n", kind, sel);
+    HSD_GObj_SetupProc(GObj_Create(0, 1, 0x80),
+                       mn_803EB6B0[kind].think != NULL ? mn_803EB6B0[kind].think : mn_8022DB10,
+                       0);
+    mn_8022B3A0(0);
+}
+#endif
+
 static inline void mn_8022DDA8_inline(const u16* sp2B4)
 {
     int temp_r29;
@@ -2761,6 +2847,10 @@ void mnMain_Scene_OnEnter(void* user_data)
     u8 menu_kind;
     void (*var_r4)(HSD_GObj*);
     MenuEnterData* data = user_data;
+#if defined(TARGET_PC)
+    bool pc_native = false;
+    u8 pc_native_kind = 0, pc_native_sel = 0;
+#endif
 
     u8 _[0x14];
 
@@ -2949,6 +3039,12 @@ void mnMain_Scene_OnEnter(void* user_data)
         mnHyaku_8024CD64(data->hovered_selection);
         break;
     default:
+#if defined(TARGET_PC)
+        if (gmFrontend_NativeRequest(&pc_native_kind, &pc_native_sel)) {
+            pc_native = true; /* opened below, after the music, as the think would */
+            break;
+        }
+#endif
         temp_r3_8 = GObj_Create(0, 1, 0x80);
         if (!(var_r4 = mn_803EB6B0[mn_804A04F0.cur_menu].think)) {
             var_r4 = mn_8022DB10;
@@ -2958,6 +3054,11 @@ void mnMain_Scene_OnEnter(void* user_data)
         break;
     }
     lbAudioAx_80023F28(gmMainLib_8015ECB0());
+#if defined(TARGET_PC)
+    if (pc_native && gmFrontend_TakeNativeRequest(&pc_native_kind, &pc_native_sel)) {
+        mn_PcOpenNative(pc_native_kind, pc_native_sel);
+    }
+#endif
     lbCardGame_SaveChanges();
 }
 

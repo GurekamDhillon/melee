@@ -7,7 +7,12 @@
 #include "gmscene.h"
 #include <dolphin/gx.h>
 #include <dolphin/os.h>
+#include <melee/gm/gm_1601.h>
+#include <melee/gm/gm_16F1.h>
 #include <melee/lb/lbaudio_ax.h>
+#include <melee/lb/lbcardgame.h>
+#include <melee/lb/lbcardnew.h>
+#include <melee/lb/lbdvd.h>
 #include <melee/mn/forward.h>
 #include <melee/mn/inlines.h>
 #include <melee/mn/mnmain.h>
@@ -19,6 +24,7 @@
 #include <sysdolphin/baselib/state.h>
 
 #include <stdio.h>
+#include <string.h>
 
 /* ---- The port's frontend: screens placed anywhere in Melee's menu flow ------------------------
  *
@@ -44,7 +50,35 @@
  * DRAWING. Melee's own systems: the text canvas (HSD_SisLib - the menus' font, with its own
  * orthographic 640x480 camera) and GX link callbacks on that camera: the panels below the text
  * (pass 0), the fade above it (pass 2, after the text, which draws in pass 2 at a lower priority).
- * Everything renders through aurora at the window's resolution. */
+ * Everything renders through aurora at the window's resolution.
+ *
+ * THE MENU TREE (gmfrontend_menus.inc, MELEE_FRONTEND_MENUS, default on). GM_MENU's list screens
+ * - Main, Solo (1P), Regular Match, Stadium, Multi-Man, Versus, Special Melee, Collection
+ * (trophies), Options, Data, Records - are frontend screens: one GS_FRONTEND scene holds the
+ * whole tree, and a screen is (MenuKind, selection) exactly as vanilla positions it.
+ *   routing   gmFrontend_Route turns every mode change INTO GM_MENU into GM_FRONTEND, opening
+ *             where gmmenumode.c would have (previous mode -> (kind, selection); force_main_menu;
+ *             the language change) - unless that is a screen not drawn here (the Event list).
+ *   items     each item does what its mnmain.c think does: the same GM_* mode, gm_801677E8(port)
+ *             where vanilla calls it, sfxForward/sfxBack/sfxMove, B to the same parent item;
+ *             locks are mn_80229938 and hide the item as vanilla does. VS > Melee goes through
+ *             MATCH SETUP (a toolkit screen, its own GS_FRONTEND scene) to GM_VS.
+ *   native    screens not replaced yet run natively in GM_MENU: the frontend leaves with a
+ *             request (gmFrontend_NativeRequest); gmmenumode.c positions the menu and mnmain.c
+ *             opens the screen as the parent's think would (mn_PcOpenNative). Their back-out
+ *             (mn_80229894) returns here through gmFrontend_NativeReturn.
+ *   arrival   as mnMain_Scene_OnEnter: the menu music and lbCardGame_SaveChanges(); the state's
+ *             on_enter does gmmenumode's card work area and preload-cache bookkeeping.
+ *   trace     MenuFlow mirrors the frontend's (kind, selection), so the scene trace's
+ *             "scene: cursor menu" lines cover it; the log names every screen and action.
+ *
+ * THE PLAYER (gmfrontend_player.inc) plays the art pipeline's *_layout.json / *_motion.json at
+ * runtime (JSON read from ui/ beside the exe via gw_UiFile_Read; png2gx.py --layout converts
+ * the textures and copies the JSON). THE KIT (gmfrontend_kit.inc) is brief section 1: atlas
+ * text from font_manifest.json, section palettes from kit.json, chrome_layout / list_layout,
+ * kit_motion's row events. MELEE_FE_HUBDEMO=<frame> shows out_hub's own hub frozen at a frame
+ * of the pipeline's preview script, for comparison with its preview sheets.
+ * Design notes and the art still expected: _research/frontend-menus.md. */
 
 /* ---- the toolkit's data ------------------------------------------------------------------- */
 
@@ -366,12 +400,15 @@ static struct {
     int load_settled; ///< frames with nothing pending
     float progress;  ///< 0..1, drawn by the bar
     int percent;     ///< what the status line shows
+    u8 reported;     ///< the previous mode the loop records when this scene leaves
+    bool next_menus; ///< the next GS_FRONTEND scene is the menu tree (gmfrontend_menus.inc)
 } fe;
 
 void gmFrontend_BeginLoading(void)
 {
     fe.screen = &fe_screen_loading;
     fe.loading = true;
+    fe.next_menus = false;
 }
 
 bool gmFrontend_TakeWarmed(void)
@@ -381,15 +418,63 @@ bool gmFrontend_TakeWarmed(void)
     return w;
 }
 
-u8 gmFrontend_Route(u8 from, u8 to)
+static int fe_enabled(void)
 {
     static int enabled = -1;
-    int i;
     if (enabled < 0) {
         extern int PcFrontendEnabled(void);
         enabled = PcFrontendEnabled();
     }
-    if (!enabled || from == GM_FRONTEND) {
+    return enabled;
+}
+
+/* The menu tree replaces GM_MENU's list screens: MELEE_FRONTEND_MENUS (default on). */
+static int fe_menus_on(void)
+{
+    static int on = -1;
+    if (on < 0) {
+        extern int PcFrontendMenusEnabled(void);
+        on = fe_enabled() && PcFrontendMenusEnabled();
+    }
+    return on;
+}
+
+static int fe_rules_enabled(void)
+{
+    return fe_enabled();
+}
+
+static void fm_route_to_menus(u8 kind, u8 sel);
+static bool fm_route_native(void);
+static bool fm_route_position(u8 previous, u8* kind, u8* sel);
+
+u8 gmFrontend_Route(u8 from, u8 to)
+{
+    int i;
+    if (!fe_enabled()) {
+        return to;
+    }
+    if (fe_menus_on()) {
+        if (to == GM_MENU) {
+            u8 kind, sel;
+            if (fm_route_native()) {
+                return to; /* the frontend asked GM_MENU for one of its native screens */
+            }
+            /* wherever GM_MENU would open, the frontend opens instead - unless that is a screen
+               it does not draw (the Event list after an event), which stays native */
+            if (fm_route_position(from == GM_FRONTEND ? fe.reported : from, &kind, &sel)) {
+                fm_route_to_menus(kind, sel);
+                OSReport("frontend: mode %d -> GM_MENU becomes the menus (kind %d, sel %d)\n",
+                         from, kind, sel);
+                return GM_FRONTEND;
+            }
+            return to;
+        }
+        if (to == GM_FRONTEND) {
+            return to; /* a native screen backed out to a menu of ours, or MATCH SETUP */
+        }
+    }
+    if (from == GM_FRONTEND) {
         return to; /* leaving a screen goes exactly where it chose */
     }
     for (i = 0; i < (int) (sizeof fe_rules / sizeof fe_rules[0]); i++) {
@@ -397,6 +482,8 @@ u8 gmFrontend_Route(u8 from, u8 to)
             fe.screen = fe_rules[i].screen;
             fe.continue_to = to;
             fe.back_to = from;
+            fe.reported = to;
+            fe.next_menus = false;
             OSReport("frontend: mode %d -> %d, showing \"%s\" first\n", from, to,
                      fe.screen->subtitle);
             return GM_FRONTEND;
@@ -407,7 +494,7 @@ u8 gmFrontend_Route(u8 from, u8 to)
 
 u8 gmFrontend_ReportedMode(void)
 {
-    return fe.continue_to;
+    return fe.reported;
 }
 
 /* ---- layout and drawing -------------------------------------------------------------------- */
@@ -637,6 +724,103 @@ static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXCol
     }
 }
 
+/* ---- the layout + motion player and the menu tree (split out for size; same TU) ---------- */
+
+static void fe_match_setup_from_menus(void);
+
+#include "gmfrontend_player.inc"
+#include "gmfrontend_kit.inc"
+#include "gmfrontend_menus.inc"
+#include "gmfrontend_kitlist.inc"
+
+/* The toolkit screens are drawn with the kit when its files are there (fe_kit), with the old
+ * art pack and SisLib otherwise. */
+static bool fe_kit;
+
+static bool fe_kit_available(void)
+{
+    kit_load();
+    ff_load();
+    return ff.state == 1 && kit.state == 1;
+}
+
+static void fm_route_to_menus(u8 kind, u8 sel)
+{
+    fm.start_kind = kind;
+    fm.start_sel = sel;
+    fe.next_menus = true;
+}
+
+static bool fm_route_native(void)
+{
+    return fm.native_req;
+}
+
+static bool fm_route_position(u8 previous, u8* kind, u8* sel)
+{
+    fm_position_for(previous, kind, sel);
+    return fm_replaced(*kind);
+}
+
+/* VS > Melee from the menus: the MATCH SETUP screen as its own GS_FRONTEND scene, continuing to
+ * GM_VS; backing out goes to GM_MENU, which routes back to the VS hub on Melee (the reported
+ * mode is GM_VS, as it was when the native menu led here). */
+static void fe_match_setup_from_menus(void)
+{
+    fe.screen = &fe_screen_vs_setup;
+    fe.continue_to = GM_VS;
+    fe.back_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.next_menus = false;
+    fm_leave_scene(GM_FRONTEND);
+}
+
+bool gmFrontend_NativeRequest(u8* kind, u8* sel)
+{
+    if (!fm.native_req) {
+        return false;
+    }
+    *kind = fm.native_kind;
+    *sel = fm.native_sel;
+    return true;
+}
+
+bool gmFrontend_TakeNativeRequest(u8* kind, u8* sel)
+{
+    if (!gmFrontend_NativeRequest(kind, sel)) {
+        return false;
+    }
+    fm.native_req = false;
+    return true;
+}
+
+bool gmFrontend_NativeReturn(int kind, int sel)
+{
+    if (!fe_menus_on() || !fm_replaced(kind)) {
+        return false;
+    }
+    OSReport("frontend: native screen backs out to (kind %d, sel %d) - back to the menus\n", kind,
+             sel);
+    fm_route_to_menus((u8) kind, (u8) sel);
+    return true;
+}
+
+/* The state's on_enter: when this scene is the menu tree, what gmmenumode.c's onEnter does
+ * before the menu scene - the memory-card work area and archive (the scene saves on arrival,
+ * as mnMain_Scene_OnEnter does) and the preload-cache bookkeeping of a mode change. */
+static void fe_state_enter(GameModeState* state)
+{
+    (void) state;
+    if (!fe.next_menus) {
+        return;
+    }
+    lbCardNew_AllocWorkArea();
+    lbCardGame_LoadArchive(0);
+    lbDvd_80018C6C();
+    lbDvd_8001823C();
+    lbDvd_80018254();
+}
+
 /* Ease-out cubic over [0,1]. */
 static float fe_ease(float t)
 {
@@ -693,7 +877,14 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     int slot;
     float pulse;
     (void) gobj;
-    if (pass != 0 || fe.screen == NULL) {
+    if (pass != 0) {
+        return;
+    }
+    if (fm.active || fk.on) {
+        fp_draw();
+        return;
+    }
+    if (fe.screen == NULL) {
         return;
     }
     hsd_80391A04(1.0F, 1.0F, 1);
@@ -796,7 +987,17 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
 static void fe_draw_fade(HSD_GObj* gobj, int pass)
 {
     (void) gobj;
-    if (pass != 2 || fe.fade <= 0) {
+    if (pass != 2) {
+        return;
+    }
+    if (fm.active) {
+        if (fm.fade > 0) {
+            hsd_80391A04(1.0F, 1.0F, 1);
+            fe_solid(0, 0, FE_W, FE_H, fe_rgba(0, 0, 0, (u8) (255 * fm.fade / FM_FADE)));
+        }
+        return;
+    }
+    if (fe.fade <= 0) {
         return;
     }
     hsd_80391A04(1.0F, 1.0F, 1);
@@ -935,8 +1136,8 @@ static void fe_rebuild_visible(void)
         if (it->visible != NULL && !it->visible()) {
             continue;
         }
-        if (it->kind == FE_ACTION && it->action == FE_DO_CONTINUE) {
-            button = i; /* drawn as the CONTINUE button, not a row */
+        if (it->kind == FE_ACTION && it->action == FE_DO_CONTINUE && !fe_kit) {
+            button = i; /* drawn as the CONTINUE button, not a row (on the kit: the first row) */
         } else {
             fe.vis[fe.n_list++] = i;
         }
@@ -989,9 +1190,25 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     fe.hl_y = 0.0F;
     fe.n_vis = 0;
     fe.help_item = -1;
+    if (fe.next_menus) {
+        fe.next_menus = false;
+        fe.canvas = HSD_SisLib_803A611C(0, NULL, 0x13, 0x14, 0, FE_GX_LINK, 10, 0);
+        gobj = GObj_Create(0xE, 0xF, 0);
+        if (gobj != NULL) {
+            GObj_SetupGXLink(gobj, fe_draw_panels, FE_GX_LINK, 0);
+        }
+        gobj = GObj_Create(0xE, 0xF, 0);
+        if (gobj != NULL) {
+            GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
+        }
+        fm_scene_enter();
+        return;
+    }
+    fm.active = false;
     if (fe.screen == NULL) {
         return;
     }
+    fe_kit = !fe.loading && fe_kit_available();
     fe_rebuild_visible();
     if (fe.has_button) {
         fe.cursor = fe.n_vis - 1; /* A straight away continues, as the menus do */
@@ -1007,6 +1224,10 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     gobj = GObj_Create(0xE, 0xF, 0);
     if (gobj != NULL) {
         GObj_SetupGXLink(gobj, fe_draw_fade, FE_GX_LINK, 20);
+    }
+    if (fe_kit) {
+        fk_build(true);
+        return;
     }
     {
         int i, n = 0;
@@ -1071,6 +1292,10 @@ static void fe_switch_screen(const FrontendScreen* s)
     fe.hl_y = 0.0F;
     fe.n_vis = 0;
     fe_rebuild_visible();
+    if (fe_kit) {
+        fk_build(true); /* the same scene, the next screen sliding in */
+        return;
+    }
     if (fe.title != NULL) {
         HSD_SisLib_803A5CC4(fe.title);
     }
@@ -1109,6 +1334,12 @@ static void fe_change(const FrontendItem* it, int dir)
         break;
     default:
         return;
+    }
+    if (fe_kit) {
+        fk_note_dir(dir);
+        if (it->kind == FE_SLIDER && v == it->get()) {
+            fk_bump(dir); /* held at an end: the kit's "can't go further" */
+        }
     }
     it->set(v);
     sfxMove();
@@ -1183,6 +1414,10 @@ void gm_Scene_Frontend_OnFrame(void)
     u32 in;
     const FrontendItem* it;
 
+    if (fm.active) {
+        fm_scene_frame();
+        return;
+    }
     fe.frames++;
     if (fe.loading) {
         fe_loading_frame();
@@ -1197,10 +1432,16 @@ void gm_Scene_Frontend_OnFrame(void)
     /* fades: in on arrival, out before leaving */
     if (fe.leaving != 0) {
         if (++fe.fade >= FE_FADE_FRAMES) {
+            /* continuing, the next mode sees GM_MENU before it, as from the native menu; backing
+               out, the menus position themselves by the mode this screen stood in for */
+            fe.reported = (fe.leaving == 1 && fe_menus_on()) ? GM_MENU : fe.continue_to;
             gm_ChangeGameModeAfterCurrentScene(fe.leaving == 1 ? fe.continue_to : fe.back_to);
             gm_801A4B60();
         }
         fe_refresh_rows();
+        if (fe_kit) {
+            fk_frame();
+        }
         return;
     }
     if (fe.fade > 0) {
@@ -1275,12 +1516,21 @@ void gm_Scene_Frontend_OnFrame(void)
         }
     }
     fe_refresh_rows();
+    if (fe_kit) {
+        fk_frame();
+    }
 }
 
 void gm_Scene_Frontend_OnExit(void* exit_data)
 {
     int slot;
     (void) exit_data;
+    if (fm.active) {
+        fm_scene_exit();
+        return;
+    }
+    fk_exit();
+    fe_kit = false;
     for (slot = 0; slot < FE_MAX_ROWS; slot++) {
         if (fe.label[slot] != NULL) {
             HSD_SisLib_803A5CC4(fe.label[slot]);
@@ -1325,7 +1575,7 @@ GameModeState gm_Mode_Frontend_States[] = {
         0,
         lbDvdPreload_2,
         0,
-        NULL,
+        fe_state_enter,
         NULL,
         {
             GS_FRONTEND,

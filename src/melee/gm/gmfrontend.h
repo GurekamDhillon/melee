@@ -32,6 +32,18 @@ u8 gmFrontend_ReportedMode(void);
  * on_exit picks the next state. */
 void gmFrontend_BeginLoading(void);
 
+/* THE MENU TREE (gmfrontend_menus.inc). When the frontend wants one of GM_MENU's native screens
+ * it leaves for GM_MENU with a request: gmmenumode.c positions the menu at (kind, selection) -
+ * the parent menu and the item - via gmFrontend_NativeRequest, and mnmain.c takes the request
+ * and opens that item's screen as the parent's think would (gmFrontend_TakeNativeRequest). */
+bool gmFrontend_NativeRequest(u8* kind, u8* sel);
+bool gmFrontend_TakeNativeRequest(u8* kind, u8* sel);
+
+/* mnmain.c's mn_80229894 - a native screen backing out to (kind, selection) - asks this first:
+ * true when that menu is drawn by the frontend, which has then been told where to open, and the
+ * caller leaves GM_MENU for GM_FRONTEND instead of starting the native menu's think. */
+bool gmFrontend_NativeReturn(int kind, int sel);
+
 /* True once, after the loading screen has run: the in-match hold (gmscene.c) then has nothing
  * left to warm and stands down. */
 bool gmFrontend_TakeWarmed(void);

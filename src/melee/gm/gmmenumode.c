@@ -3,6 +3,9 @@
 #include "gm_1A3F.h"
 #include "gm_unsplit.h"
 #include "gmmain_lib.h"
+#if defined(TARGET_PC)
+#include "gmfrontend.h"
+#endif
 #include "types.h"
 #include <melee/if/soundtest.h>
 #include <melee/lb/lbcardgame.h>
@@ -91,6 +94,19 @@ void onEnter(GameModeState* scene)
     lbDvd_8001823C();
     lbDvd_80018254();
     mnGallery_80258940();
+#if defined(TARGET_PC)
+    /* The frontend's menus asked for one of this tree's native screens (Rules, the Event list,
+       Options' screens...): open the menu at that item; mnMain_Scene_OnEnter opens the screen. */
+    {
+        u8 kind, sel;
+        if (gmFrontend_NativeRequest(&kind, &sel)) {
+            data->menu_kind = kind;
+            data->hovered_selection = sel;
+            data->load_assets = 1;
+            return;
+        }
+    }
+#endif
     rules = gmMainLib_GetGameRules();
     if (rules->force_main_menu != 0) {
         rules->force_main_menu = 0;

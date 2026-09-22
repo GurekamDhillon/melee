@@ -2275,6 +2275,7 @@ static const char *gw_sr_mode_name(int m) {
       "GM_100MAN_VS", "GM_3MIN_VS", "GM_15MIN_VS", "GM_ENDLESS_VS", "GM_CRUEL_VS",
       "GM_PROGRESSIVE_SCAN", "GM_BOOT", "GM_MEMCARD", "GM_CAMERA_VS", "GM_EVENT",
       "GM_SINGLE_BUTTON_VS"};
+  if (m == (int)(sizeof names / sizeof names[0]) + 1) return "GM_FRONTEND"; /* GM_COUNT + 1 */
   return (m >= 0 && m < (int)(sizeof names / sizeof names[0])) ? names[m] : "GM_?";
 }
 
@@ -2290,6 +2291,7 @@ static const char *gw_sr_scene_name(int s) {
       "GS_INTRO_ALLSTAR", "GS_GAMEOVER", "GS_COMING_SOON", "GS_TOU_SETUP", "GS_TOU_BRACKET",
       "GS_TOU_ALT", "GS_PRIZE_INTERFACE", "GS_PROG_SCAN", "GS_APPROACH", "GS_MEMCARD",
       "GS_STAFFROLL", "GS_CAMERA_VS"};
+  if (s == (int)(sizeof names / sizeof names[0]) + 1) return "GS_FRONTEND"; /* GS_COUNT + 1 */
   return (s >= 0 && s < (int)(sizeof names / sizeof names[0])) ? names[s] : "GS_?";
 }
 
@@ -2647,7 +2649,75 @@ int gw_GxTex_OpenUI(const char *name) {
     snprintf(slash + 1, sizeof dir - (size_t)(slash + 1 - dir), "..\\..\\ui");
     h = gw_gxtex_open_dir(dir, name, 1);
   }
+  if (h < 0) {
+    /* an agent build's sandbox is _build/agents/<name>/runs/<tag>/: the shared _build/ui */
+    snprintf(slash + 1, sizeof dir - (size_t)(slash + 1 - dir), "..\\..\\..\\..\\ui");
+    h = gw_gxtex_open_dir(dir, name, 1);
+  }
   return h;
+}
+
+/* A text file from the same UI directories as GxTex_OpenUI - the frontend's *_layout.json and
+ * *_motion.json (pc/tools/png2gx.py --layout copies them there beside the textures). Returns the
+ * file's size; copies it into `dst` only when `cap` holds all of it, so the game asks once for
+ * the size, allocates in its own heap, then asks again. The payload is bytes, which read the
+ * same on both sides of gwtool's byte-swapped boundary. -1 when no directory has the file. */
+int gw_UiFile_Read(const char *name, void *dst, int cap) {
+  char dir[MAX_PATH], path[MAX_PATH + 64];
+  static const char *const rel[] = {"ui", "..\\..\\ui", "..\\..\\..\\..\\ui"};
+  const char *env = getenv("MELEE_MENUTEX_DIR");
+  DWORD n;
+  char *slash;
+  int i;
+  if (name == NULL) {
+    return -1;
+  }
+  n = GetModuleFileNameA(NULL, dir, (DWORD)sizeof dir);
+  slash = (n > 0 && n < sizeof dir) ? strrchr(dir, '\\') : NULL;
+  for (i = -1; i < 3; i++) {
+    FILE *f;
+    long len;
+    if (i < 0) {
+      if (env == NULL || *env == '\0') continue;
+      snprintf(path, sizeof path, "%s/%s", env, name);
+    } else {
+      if (slash == NULL) break;
+      snprintf(slash + 1, sizeof dir - (size_t)(slash + 1 - dir), "%s", rel[i]);
+      snprintf(path, sizeof path, "%s\\%s", dir, name);
+    }
+    f = fopen(path, "rb");
+    if (f == NULL) continue;
+    fseek(f, 0, SEEK_END);
+    len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (dst != NULL && cap >= len) {
+      if (fread(dst, 1, (size_t)len, f) != (size_t)len) {
+        gw_log("uifile: short read on %s", path);
+        len = -1;
+      }
+    }
+    fclose(f);
+    return (int)len;
+  }
+  return -1;
+}
+
+/* MELEE_FRONTEND_MENUS=0 keeps Melee's own main-menu tree; anything else (or unset) replaces it
+ * with the frontend's screens (gmfrontend.c). Needs MELEE_FRONTEND on as well. */
+int gw_PcFrontendMenusEnabled(void) {
+  const char *v = getenv("MELEE_FRONTEND_MENUS");
+  return (v == NULL || v[0] != '0') ? 1 : 0;
+}
+
+/* MELEE_FE_HUBDEMO=<frame>: the frontend shows out_hub's own 4-tile hub from hub_layout.json and
+ * plays the art pipeline's preview script (pipeline/hub_motion.py main()), frozen at <frame>, so
+ * a window capture can be compared with the preview sheets frame for frame. -1 = off. A value
+ * of "play" (or any non-number) runs the script live and loops it. */
+int gw_PcFeHubDemo(void) {
+  const char *v = getenv("MELEE_FE_HUBDEMO");
+  if (v == NULL || *v == '\0') return -1;
+  if (v[0] < '0' || v[0] > '9') return 100000;
+  return atoi(v);
 }
 
 static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet) {

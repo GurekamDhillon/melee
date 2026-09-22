@@ -57,7 +57,19 @@ int gw_sprintf(char *s, const char *fmt, ...) {
   return r;
 }
 
-int gw_vsnprintf(char *s, size_t n, const char *fmt, va_list ap) {
+/* Game code's va_list is the 12-byte PowerPC one; llvm.va_start (lowered by the x86 backend) puts
+ * the NATIVE pointer to the first variadic argument in its word 0 (src/MSL/stdarg.h). What arrives
+ * here is the address of that object, so the native list is word 0 - passing the address itself
+ * printed a stack address for every %d (the "1768720" VS results stats, KO/Falls/SDs/Total). The
+ * pointer is read natively, like gw___va_arg does, and never advanced: the caller's va_list is not
+ * reused after vsnprintf. */
+int gw_vsnprintf(char *s, size_t n, const char *fmt, void *game_va_list) {
+  va_list ap = game_va_list != NULL ? *(va_list *)game_va_list : NULL;
+  if (ap == NULL) {
+    gw_log("gw: vsnprintf(\"%s\") on an uninitialised va_list", fmt != NULL ? fmt : "(null)");
+    if (s != NULL && n > 0) s[0] = '\0';
+    return 0;
+  }
   return vsnprintf(s, n, fmt, ap);
 }
 

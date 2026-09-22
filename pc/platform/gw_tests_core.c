@@ -96,6 +96,37 @@ extern int gw_Mex_Enabled(const char *name);
 /* The whole m-ex port rests on "off unless explicitly requested". If this ever reported true for
  * an unrequested feature, every ported behaviour would be on by default and the promise that a
  * stock build is unchanged would be silently broken. */
+/* Game code formats text through its OWN va_list (a variadic game function, va_start, then the
+ * vsnprintf shim) - the path HSD_SisLib_803A6B98 and every results-screen number take. This drives
+ * the real gwtool-compiled DevText_Printf (if/textlib.c) with a DevText built here in big-endian
+ * layout and checks the glyphs it wrote. Before the gw_vsnprintf fix the first %d printed the
+ * address of the first variadic argument (VS results showed "1768720"). */
+extern void gw_DevText_Printf(void *text, const char *format, ...);
+
+static int test_game_va_list_vsnprintf(void) {
+  static unsigned char text[0x34];
+  static unsigned char glyphs[64 * 2];
+  const char *want = "42 abc -7 3.50";
+  char got[32];
+  int i;
+  memset(text, 0, sizeof text);
+  memset(glyphs, 0, sizeof glyphs);
+  text[4] = 64; /* w */
+  text[5] = 1;  /* h */
+  text[0x26] = 1; /* flags: DEVTEXT_FLAG_NOWRAP-ish; one line is enough either way */
+  gw_w32(text + 0x28, (uint32_t) (uintptr_t) glyphs);
+  gw_DevText_Printf(text, "%d %s %d %.2f", 42, "abc", -7, 3.5);
+  for (i = 0; i < (int) sizeof got - 1 && glyphs[i * 2] != 0; ++i) {
+    got[i] = (char) glyphs[i * 2];
+  }
+  got[i] = '\0';
+  if (strcmp(got, want) != 0) {
+    gw_test_fail("game-side vsnprintf wrote \"%s\", expected \"%s\"", got, want);
+    return 1;
+  }
+  return 0;
+}
+
 static int test_mex_flag_unknown_is_off(void) {
   if (gw_Mex_Enabled("zzz_not_a_real_feature")) {
     gw_test_fail("unknown feature reported enabled");
@@ -431,6 +462,7 @@ void gw_tests_register_all(void) {
   gw_mods_tests_register();
   gw_mexid_tests_register();
   gw_script_tests_register();
+  gw_test_register("game_va_list_vsnprintf", test_game_va_list_vsnprintf);
   gw_test_register("mex_flag_unknown_is_off", test_mex_flag_unknown_is_off);
   gw_test_register("mex_flags_default_off", test_mex_flags_default_off);
   gw_test_register("mex_env_enables", test_mex_env_enables);

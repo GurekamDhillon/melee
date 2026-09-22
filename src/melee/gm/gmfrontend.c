@@ -233,6 +233,8 @@ void Netplay_MenuStatus(char* out, int cap);
 void Netplay_MenuCode(char* out, int cap);
 void Netplay_MenuPeer(char* out, int cap);
 int Netplay_MenuHasServer(void);
+int Netplay_RematchPending(void);
+void Netplay_RematchTaken(void);
 static int fe_np_stage_id(void);
 int Netplay_MenuGetLetter(int i);
 void Netplay_MenuSetLetter(int i, int v);
@@ -558,6 +560,18 @@ void Frontend_OnlinePicked(int which, int a, int b)
     fe.screen = &fe_screen_online;
     fe.continue_to = GM_VS;
     fe.back_to = GM_MENU;
+    fe.next_menus = false;
+}
+
+/* After an online match in a room (persistent rooms): the results screen comes back here. */
+void Frontend_BackToOnline(void)
+{
+    fe_np_pick = 0;
+    SceneLaunch_SetText(NULL);
+    fe.screen = &fe_screen_online;
+    fe.continue_to = GM_VS;
+    fe.back_to = GM_MENU;
+    fe.next_menus = false;
 }
 
 static void fe_np_open(int which, const char* scene)
@@ -1671,6 +1685,14 @@ void gm_Scene_Frontend_OnFrame(void)
         fe.hl_y += ((float) (fe.cursor - fe.scroll) - fe.hl_y) * 0.35F;
     }
 
+    if (fe.screen == &fe_screen_online && fe_np_phase == FE_NP_IDLE && Netplay_RematchPending() &&
+        fe.frames >= (fe_np_role == 0 ? 30 : 150))
+    {
+        /* back from a match in a room: reconnect to it - the host re-hosts the same code first,
+           the guest follows a couple of seconds later */
+        Netplay_RematchTaken();
+        fe_np_start();
+    }
     if (fe.screen == &fe_screen_online && fe_np_phase == FE_NP_WORKING) {
         fe_np_phase = Netplay_MenuPoll();
         if (fe_np_phase == FE_NP_CONNECTED) {

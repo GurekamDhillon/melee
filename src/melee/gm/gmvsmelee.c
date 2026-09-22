@@ -353,6 +353,19 @@ void gmVsMelee_ExitResults(GameModeState* state, VsModeData* vs, u8 state_id)
     u16 foo;
 
     match_end = &gmVsMelee_VsExitInfo.match_end;
+#if defined(TARGET_PC)
+    {
+        /* an online match in a room: back to ONLINE PLAY (same room) instead of the CSS */
+        extern int Netplay_RematchPending(void);
+        extern void Frontend_BackToOnline(void);
+        if (Netplay_RematchPending()) {
+            gmVsMelee_UpdateKOCounts(ko, match_end);
+            Frontend_BackToOnline();
+            gm_ChangeGameModeAfterCurrentScene(GM_FRONTEND);
+            return;
+        }
+    }
+#endif
     if (!gm_WasMatchCanceled(match_end->outcome)) {
         gm_80168638(match_end);
         gm_80168710(match_end, vs);

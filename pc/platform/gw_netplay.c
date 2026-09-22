@@ -72,6 +72,7 @@ static struct {
     uint32_t seed;
     gw_net_config cfg;    /* kept: a guest joins only once the server has introduced the host */
     int t_open;           /* np.t is open and not yet owned by a gw_net */
+    int rematch;          /* a room-code match just ended: the menu reconnects to the same room */
     int started, dead, accepted;
     long ticks;
     int desync_frame;
@@ -837,9 +838,10 @@ static int np_rdv_recv(void *ctx, gw_net_addr *from, void *buf, int cap) {
     }
 }
 
+static int np_keep_room; /* close without leaving the room (persistent rooms, between matches) */
 static void np_rdv_close(void *ctx) {
     (void) ctx;
-    if (rdv.have_code || rdv.have_peer) np_rdv_ctl("BYE");
+    if ((rdv.have_code || rdv.have_peer) && !np_keep_room) np_rdv_ctl("BYE");
     rdv.inner.close(rdv.inner.ctx);
     rdv.on = 0;
 }
@@ -1198,6 +1200,11 @@ int gw_Netplay_MenuPaste(int as_host) {
 
 int gw_Netplay_MenuPoll(void) { return np_poll(); }
 
+/* Persistent rooms: after a room-code match both players come back to ONLINE PLAY, which
+ * reconnects them to the same room (the host re-hosts at once, the guest follows a moment later). */
+int gw_Netplay_RematchPending(void) { return np.rematch; }
+void gw_Netplay_RematchTaken(void) { np.rematch = 0; }
+
 void gw_Netplay_MenuCancel(void) {
     np_close();
     np.phase = NP_IDLE;
@@ -1348,8 +1355,11 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
  * session and put everything back for offline play. */
 void gw_Netplay_MatchOver(void) {
     if (!np.enabled) return;
-    gw_log("netplay: match over - closing the session");
+    gw_log("netplay: match over - closing the session%s", rdv.on ? ", keeping the room" : "");
+    np.rematch = rdv.on; /* PERSISTENT ROOMS: back to ONLINE PLAY, same room, reconnect */
+    np_keep_room = rdv.on;
     np_close();
+    np_keep_room = 0;
     np.enabled = 0;
     np.phase = NP_IDLE;
     gw_Replay_ArmLive(0);

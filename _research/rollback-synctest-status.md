@@ -78,42 +78,90 @@ frame gets the same handles back without touching a voice.
 * Only one replay was used for the pass. The other Gang-Steals replays (different stages/characters/items)
   are not run; expect item/stage-specific state (grounds, effects) to show up there.
 
-## STATE / NEXT STEPS (agent/snapcost, paused at the session limit)
+## Snapshot cost, dirty-page mode (agent/snapcost)
 
-**Works (built, SyncTest k=1 run, 0 mismatches, verify fails 0; k=3/k=7 and the full replay NOT yet re-run
-with the new snapshot path).** `pc/platform/gw_snap.c`, `gw_runtime.c`, `shim_gx.c`, `gmscene.c`, `gobj.c`:
-- MEM1 is allocated with `MEM_WRITE_WATCH` (`gw_mem1_watched`). `MELEE_SNAP_MODE=full|dirty` (default dirty),
-  `MELEE_SNAP_VERIFY=1` (memcmp live vs slot after every dirty save/load), `MELEE_SNAP_HASH=0`.
-- Each slot keeps a superset dirty-page set; `sn_poll` (GetWriteWatch+reset) ORs written pages into every
-  slot's set; save copies only the chosen slot's pages; load copies the target's pages back, folds its set into
-  the others', clears it, resets the watch; the compare only scans dirty pages.
-- `gw_snap_open(k)`, `gw_snap_save(frame)`, `gw_snap_load(frame)`, `uint64_t gw_snap_hash(void)` (live state,
-  incremental per-page hash + globals, ~0.26 ms), `uint64_t gw_snap_frame_hash(int frame)` (hash stored at save).
-- `gmscene.c`: a resimulated frame's render suppresses display-list submission (`gw_Gx_SuppressDraws`,
-  `MELEE_SNAP_RESIM_DRAWS=1` keeps them) and is timed in parts; `MELEE_SNAP_CBTIME=1` lists the costliest
-  render callbacks (gobj.c `Snap_CbTime`).
+**Results, RustyJuicyElephant, WHOLE replay (-123..9522, ~9,600 rollbacks per run), dirty-page mode:**
 
-**Measured** (RustyJuicyElephant, k=1, 2 fighters; per call, ms):
+| run | rollbacks | checks | mismatching |
+|---|---|---|---|
+| strict byte compare, k=1, `MELEE_SNAP_VERIFY=1` | 9600 | 9600 | 0 (verify fails 0) |
+| strict, k=3 | 9600 | 28800 | 0 |
+| strict, k=7 | 9600 | 67200 | 0 |
+| **curated hash, no resim render**, k=1 / k=3 / k=7 | 9700 / 9600 / 9600 | 9700 / 28800 / 67200 | 0 / 0 / 0 |
+| curated + poison negative control (40 s) | 1300 | 3900 | 3900 (as intended) |
+
+(An earlier "k=7 passes" only covered the first ~2,600 frames. Over the whole replay k=7 found one more
+input-derived global, `_controller_map` (gm_1A36.c, rebuilt every frame from the live pad), now skipped in
+the compare like the pad statuses. Headless tests 76/76 on vanilla, Akaneia and ACE on the final tree.)
+
+**What each piece costs, ms per call (2 fighters, Fountain; full-copy -> dirty-page):**
 
 | | full copy | dirty-page |
 |---|---|---|
-| save | 2.46 | 0.26 |
-| load | 2.34 | 0.31 |
-| compare (SyncTest only) | 5.15 | 0.73 |
-| write-watch poll | - | 0.053 (105 dirty pages/frame) |
-| state hash (peer checksum) | - | 0.26 (235 pages + 0.86 MB globals) |
-| resim logic | 0.34 | 0.34 |
-| resim render (no display lists) | 0.90 | 0.84 |
+| `gw_snap_save` | 2.46 | 0.22 |
+| `gw_snap_load` | 2.34 | 0.30 |
+| SyncTest compare (SyncTest only) | 5.15 | 0.74 |
+| write-watch poll (`GetWriteWatch`+reset) | - | 0.05 (105-170 dirty pages/frame) |
+| `gw_snap_hash()` (peer checksum) | 5+ (whole slot) | 0.25 (235 pages + 0.86 MB globals) |
+| resimulated frame, strict: logic + render | 0.34 + 0.90 | 0.34 + 0.63 |
+| resimulated frame, curated: logic only | - | **0.18-0.33** |
 
-Resim frame ~ 0.34 logic + 0.84 render = ~1.2 ms, so k=7 = save 0.26 + hash 0.26 + load 0.31 + 7 x 1.2 ~= 9.3 ms
-(2-fighter match; 4 players will cost more). Display-list suppression saved only ~0.06 ms: the render CPU is
-the GObj draw walk (0.76 ms), dominated by two callbacks: `fn_800301D0` (0.42 ms, a stage/camera-related
-render callback - not yet identified) and `gw_grIzumi_801CCEA0` (Fountain stage, 0.23 ms), everything else
-< 0.04 ms each.
+Worst case per tick at k=7: strict = save 0.22 + hash 0.25 + load 0.30 + 7 x ~1.0 = ~7.8 ms; curated =
+0.77 + 7 x ~0.2 = ~2.2 ms, both well inside 16.7 ms for this match (4 fighters and item-heavy stages will cost
+more: logic scales with fighters).
 
-**Next, in order:** (1) run SyncTest k=3 and k=7 over the whole replay in dirty mode (~7 min each) with
-`MELEE_SNAP_VERIFY=1` once, then without; confirm 2600 rollbacks / 0 mismatching and the heartbeat. (2) Identify
-`fn_800301D0` and `grIzumi_801CCEA0`: which state do they write that logic reads? If only GX/matrix scratch,
-skip them in resim (a per-callback allow-list in gobj.c). (3) Run the headless tests. (4) Update the API notes
-here. Build state is clean: build the worktree with `--shim gw_runtime.c --shim gw_replay.c --shim gw_snap.c
---shim shim_gx.c` plus `--tu src/melee/gm/gmscene.c --tu src/sysdolphin/baselib/gobj.c`.
+**Where the resim render time goes** (`MELEE_SNAP_CBTIME=1`): the GObj draw walk is 0.66 of the 0.75 ms.
+`fn_800301D0` (camera.c:4071, the main game camera's render callback: the whole world draw, ground, fog;
+0.42 ms) cannot be skipped - it also refreshes the camera and clears dirty flags. `grIzumi_801CCEA0`
+(Fountain's water reflection: a second scene render from a mirrored camera into a texture; 0.23 ms) only
+feeds the picture: **skipped in resimulated frames by default** (`MELEE_SNAP_SKIP_CB=none` to disable);
+SyncTest k=3 passed 5,600 rollbacks with it. Suppressing display-list submission (`gw_Gx_SuppressDraws`)
+saved only ~0.06 ms (aurora's FIFO is not the cost; the CPU is the callbacks' own JObj/matrix walk).
+
+**Curated mode (`MELEE_SYNCTEST_CURATED=1`, the coordinator's experiment from yampp-comparison.md).**
+Compares only a curated set - the RNG seed plus per fighter: player/kind/motion id, ground-or-air, stocks,
+held buttons, position x/y/z, facing, percent, self and knockback velocity, ground velocity, hitlag, shield
+health, both sticks, the motion script frame counter - and the resimulated frame runs NO render calls at all.
+It passes the whole replay at k=1/3/7 (above) and cuts a resim iteration from ~1.0 to ~0.2 ms. What it does
+NOT cover: items, stage state (Fountain platforms), projectiles, camera, effects, heap/pool state - all
+covered by the strict mode. So: **keep strict as the default for development and CI**; use curated as the
+in-game rollback path (where cost matters) only alongside the periodic incremental state hash
+(`gw_snap_hash`, 0.25 ms) that catches drift the curated set misses. Caveat: this replay has 2 fighters, no
+items, and a stage without moving hazards; an item- or Stadium-heavy replay is the next thing to try, and
+the curated set should grow (item core fields, stage/timer) before trusting it there.
+
+## API (pc/platform/gw_snap.c)
+
+```c
+int      gw_snap_open(int k);          /* ring of k+2 slots; idempotent; 0 on success. MELEE_SYNCTEST=<k> calls it. */
+void     gw_snap_save(int frame);      /* the state at the START of `frame` into a slot (oldest slot reused) */
+int      gw_snap_load(int frame);      /* restore it; -1 if that frame is not in the ring */
+uint64_t gw_snap_hash(void);           /* 64-bit hash of the LIVE state; incremental (~0.25 ms) */
+uint64_t gw_snap_frame_hash(int frame);/* the hash taken at that slot's save (0 in full mode / MELEE_SNAP_HASH=0) */
+/* rbsession's entry points, kept compatible: */
+int      gw_Snap_OpenSession(int k);   uint32_t gw_Snap_Checksum(int frame);  /* folds gw_snap_frame_hash in dirty mode */
+void     gw_Snap_SessionResim(int on, int frame);   int gw_Snap_HasFrame(int frame);
+```
+Env: `MELEE_SNAP_MODE=full|dirty` (default dirty; full copies all of MEM1 and is the cross-check),
+`MELEE_SNAP_VERIFY=1` (memcmp live vs slot after every dirty save/load), `MELEE_SNAP_HASH=0`,
+`MELEE_SNAP_SKIP_CB=none`, `MELEE_SNAP_RESIM_DRAWS=1`, `MELEE_SNAP_CBTIME=1`,
+`MELEE_SYNCTEST_CURATED=1` (+ `_POISON=1`, a negative control). Dirty mode needs MEM1 allocated with
+`MEM_WRITE_WATCH` (gw_runtime.c; falls back to full copy if that allocation fails).
+
+**Design of dirty mode:** each slot keeps a superset bitmap of the 4 KB pages where live MEM1 may differ from
+its copy. `sn_poll` ORs `GetWriteWatch` results into every slot's set. Save copies only the chosen slot's
+pages; load copies the target's pages back and folds its set into the others'. The hash keeps a hash per page
+and rehashes only pages written since the last call; the disc's asynchronous state (streaming DVD block,
+devcom request nodes) is hashed as zero, and pad / rumble / particle-display / controller-map globals are left
+out. Globals (~0.86 MB) are copied/hashed every call.
+
+## Remaining
+
+* Curated set only tried on one 2-fighter, item-free replay. Grow it (items, stage, timer) and try a 4-player
+  and a Stadium/item replay.
+* The strict compare masks are still measured (render-written bytes between logic frames), and the fixed async
+  range `0x80171160+0x70` is an address, not a symbol.
+* Dirty-page tracking assumes nothing but the main thread writes MEM1 between polls except via the kernel
+  (ReadFile into MEM1 is tracked by write-watch too); the audio thread reads it only. `MELEE_SNAP_VERIFY=1`
+  is the check if that ever changes.
+* Rollback needs the input-delay / prediction session (rbsession, merged here) and the transport (netcode).

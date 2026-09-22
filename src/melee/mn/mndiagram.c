@@ -71,8 +71,19 @@ typedef struct mnDiagram_PopupAnimTableHead {
     /* 0x00 */ Point3d points[3];
 } mnDiagram_PopupAnimTableHead;
 
+#if defined(TARGET_PC)
+/* mnDiagram_Assets overlays the two display-order arrays AND the archive pointers that retail's
+ * .bss places right after them (every (mnDiagram_Assets*) &mnDiagram_FighterDisplayOrder). The PC
+ * link does not keep that run together, so VS. Records loaded its joints into whatever followed
+ * the fighter order and sorted names into a different array than it read - an empty screen and
+ * a crash on scrolling. Here the whole run is one object; the two names are views into it. */
+static mnDiagram_Assets mnDiagram_PcBlock;
+#define mnDiagram_FighterDisplayOrder (*(u8(*)[0x1C]) mnDiagram_PcBlock.sorted_fighters)
+#define mnDiagram_NameDisplayOrder (mnDiagram_PcBlock.sorted_names)
+#else
 u8 mnDiagram_FighterDisplayOrder[0x1C];
 u8 mnDiagram_NameDisplayOrder[0x78];
+#endif
 
 static mnDiagram_PopupAnimTableHead mnDiagram_PopupTextOffsets = {
     {
@@ -2883,6 +2894,37 @@ void mnDiagram_Init(u8 arg0, u8 arg1)
             "MenMainConB3_Top_matanim_joint", &assets->ConB3[3],
             "MenMainConB3_Top_shapeanim_joint", &assets->CursorB3[0],
             "MenMainCursorB3_Top_joint", 0);
+#if defined(TARGET_PC)
+        /* Retail's MenMain*_Top globals ARE these overlay fields (same addresses); on PC they are
+         * separate objects, so hand them what was just loaded. mndiagram2.c/mndiagram3.c read
+         * ConB2/ConB3/CursorB3 through the same globals. */
+        {
+            static const struct {
+                StaticModelDesc* dst;
+                int field;
+            } map[] = {
+                { &MenMainSubB1_Top, 0 },  { &MenMainNmB_Top, 1 },   { &MenMainFaceB_Top, 2 },
+                { &MenMainCursorB1_Top, 3 }, { &MenMainConB1_Top, 4 }, { &MenMainConB2_Top, 5 },
+                { &MenMainConB3_Top, 6 },  { &MenMainCursorB3_Top, 7 },
+            };
+            void** src[8];
+            int k;
+            src[0] = assets->SubB1;
+            src[1] = assets->NmB;
+            src[2] = assets->FaceB;
+            src[3] = assets->CursorB1;
+            src[4] = assets->ConB1;
+            src[5] = assets->ConB2;
+            src[6] = assets->ConB3;
+            src[7] = assets->CursorB3;
+            for (k = 0; k < (int) ARRAY_SIZE(map); k++) {
+                map[k].dst->joint = (HSD_Joint*) src[map[k].field][0];
+                map[k].dst->animjoint = (HSD_AnimJoint*) src[map[k].field][1];
+                map[k].dst->matanim_joint = (HSD_MatAnimJoint*) src[map[k].field][2];
+                map[k].dst->shapeanim_joint = (HSD_ShapeAnimJoint*) src[map[k].field][3];
+            }
+        }
+#endif
     }
 
     mnDiagram_SortFightersByKOs();

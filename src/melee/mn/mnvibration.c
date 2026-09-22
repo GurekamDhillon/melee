@@ -157,6 +157,39 @@ static char mnVibration_803EEEB8[0x20] = "MenMainCursorVi_Top_joint";
 #pragma pop
 #endif
 
+#if defined(TARGET_PC)
+/* Retail reads the three anim settings, the vector and every string above as ONE struct through
+ * &mnVibration_803EECE0, which works because the linker lays those objects out back to back. The
+ * PC link does not, so the symbol-name fields read whatever follows the first object: garbage
+ * names ("Cannot find symbol ..."), NULL joints, and the jobj assert that killed Options > Rumble.
+ * Here the block is one object with the same contents. */
+static MnVibrationDataLayout mnVibration_PcLayout = {
+    { 0.0f, 20.0f, -0.1f },
+    { 50.0f, 70.0f, -0.1f },
+    { 0.0f, 14.0f, -0.1f },
+    { -0.4f, 0.5f, 0.0f },
+    "Can't get user_data.\n",
+    "mnvibration.c",
+    "user_data",
+    "MenMainConVi_Top_joint",
+    "MenMainConVi_Top_animjoint",
+    "MenMainConVi_Top_matanim_joint",
+    "MenMainConVi_Top_shapeanim_joint",
+    "MenMainCtlVi_Top_joint",
+    "MenMainCtlVi_Top_animjoint",
+    "MenMainCtlVi_Top_matanim_joint",
+    "MenMainCtlVi_Top_shapeanim_joint",
+    "MenMainOnoffVi_Top_joint",
+    "MenMainOnoffVi_Top_animjoint",
+    "MenMainOnoffVi_Top_matanim_joint",
+    "MenMainOnoffVi_Top_shapeanim_joint",
+    "MenMainCursorVi_Top_joint",
+};
+#define MNVIB_LAYOUT (&mnVibration_PcLayout)
+#else
+#define MNVIB_LAYOUT ((MnVibrationDataLayout*) &mnVibration_803EECE0)
+#endif
+
 // --- Globals ---
 HSD_GObj* mnVibration_804D6C28;
 
@@ -185,10 +218,21 @@ typedef struct MnVibrationData {
 } MnVibrationData;
 
 // The asset blocks are also addressed as a contiguous array in Init.
+#if defined(TARGET_PC)
+/* mnVibration_Init fills these four as ONE array through &mnVibration_804A0868 (assets[0..3]);
+ * retail's .bss keeps them adjacent, the PC link does not, so assets[1..3] were written past the
+ * first object and the screen then loaded a NULL joint (the jobj assert in Options > Rumble). */
+static MnVibrationJointAssets mnVibration_PcAssets[4];
+#define mnVibration_804A0868 (mnVibration_PcAssets[0])
+#define mnVibration_804A0878 (mnVibration_PcAssets[1])
+#define mnVibration_804A0888 (mnVibration_PcAssets[2])
+#define mnVibration_804A0898 (mnVibration_PcAssets[3])
+#else
 static MnVibrationJointAssets mnVibration_804A0868;
 static MnVibrationJointAssets mnVibration_804A0878;
 static MnVibrationJointAssets mnVibration_804A0888;
 static MnVibrationJointAssets mnVibration_804A0898;
+#endif
 
 /// --- Function Implementation ---
 
@@ -628,7 +672,7 @@ void mnVibration_UpdatePortPanel(HSD_JObj* arg0, u8 arg1, u8 arg2)
     HSD_JObj* sp10;
     u8 temp_ret;
     MnVibrationDataLayout* floats =
-        (MnVibrationDataLayout*) &mnVibration_803EECE0;
+        MNVIB_LAYOUT;
 
     lb_80011E24(arg0, &sp14, 1, -1);
     if (arg2 != 0) {
@@ -1069,7 +1113,7 @@ void mnVibration_CreateScreen(s32 arg0)
     s32 i;
     MnVibrationData* data;
     MnVibrationDataLayout* layout =
-        (MnVibrationDataLayout*) &mnVibration_803EECE0;
+        MNVIB_LAYOUT;
 
     (void) arg0;
     PAD_STACK(24);
@@ -1134,7 +1178,7 @@ void mnVibration_Init(int arg0)
     MnVibrationJointAssets* assets;
     MnVibrationDataLayout* strings;
 
-    strings = (MnVibrationDataLayout*) &mnVibration_803EECE0;
+    strings = MNVIB_LAYOUT;
     assets = (&mnVibration_804A0868);
     mn_804D6BC8.cooldown = 5;
     mn_804A04F0.prev_menu = mn_804A04F0.cur_menu;

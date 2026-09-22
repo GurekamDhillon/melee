@@ -83,8 +83,18 @@ static u16 mnDataDel_803EF8C8[] = {
     0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC6,
 };
 static Vec3 lbl_803EF8D4 = { -5.5F, -2.8F, 23 };
+#if defined(TARGET_PC)
+/* mnDataDel_80250170 loads all three through &mnDataDel_804A0918 as assets[0..2]; retail's .bss
+ * keeps them adjacent, the PC link does not, so [1] and [2] landed past the first object and
+ * Erase Data then built its cursor from a NULL joint (access violation in mn_8022F298). */
+static StaticModelDesc mnDataDel_PcAssets[3];
+#define mnDataDel_804A0918 (mnDataDel_PcAssets[0])
+#define mnDataDel_804A0928 (mnDataDel_PcAssets[1])
+#define mnDataDel_804A0938 (mnDataDel_PcAssets[2])
+#else
 static StaticModelDesc mnDataDel_804A0918;
 static StaticModelDesc mnDataDel_804A0928;
 static StaticModelDesc mnDataDel_804A0938;
+#endif
 
 #endif

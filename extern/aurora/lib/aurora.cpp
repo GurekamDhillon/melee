@@ -4,6 +4,7 @@
 #ifdef AURORA_ENABLE_GX
 #include "gfx/resources.hpp"
 #include "gfx/frame.hpp"
+#include "gfx/png_io.hpp"
 #include "gfx/recording.hpp"
 #include "gfx/render_worker.hpp"
 #include "gx/command_processor.hpp"
@@ -367,6 +368,7 @@ void end_frame() noexcept {
       Log.info("Skipping present; window not presentable");
     }
     webgpu::gpu_prof::frame_end(encoder);
+    gfx::png::encode_screenshot(encoder); // port patch: MELEE_SHOT_AT / gw_Screenshot
     const wgpu::CommandBufferDescriptor cmdBufDescriptor{.label = "Redraw command buffer"};
     const auto buffer = encoder.Finish(&cmdBufDescriptor);
     {
@@ -374,6 +376,7 @@ void end_frame() noexcept {
       g_queue.Submit(1, &buffer);
     }
     webgpu::gpu_prof::after_submit();
+    gfx::png::after_submit_screenshot();
     if (canPresent && g_surface) {
       ZoneScopedN("Present");
       wgpu::ConvertibleStatus status = wgpu::Status::Error;

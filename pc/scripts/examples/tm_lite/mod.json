@@ -1,0 +1,12 @@
+{
+  "id": "tm_lite",
+  "name": "TM-lite",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Save and load the match state with hotkeys (keyboard F5-F8, or hold D-pad Down and press L/R on port 1), reset percent.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "main.lua"
+}

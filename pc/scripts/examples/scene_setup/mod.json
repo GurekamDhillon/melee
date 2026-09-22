@@ -1,0 +1,11 @@
+{
+  "id": "scene_setup",
+  "name": "Scene setup: Fox vs Falco on Final Destination",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Console command 'fdtrain' boots Training on Final Destination, Fox vs a Falco CPU, then sets both to 60% once the match is live.",
+  "api_version": 1,
+  "gameplay": true,
+  "entry": "main.lua"
+}

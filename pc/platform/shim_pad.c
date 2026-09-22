@@ -402,6 +402,10 @@ int gw_PADRead(void *status) {
     gw_gc_adapter_read(st);
     gw_gc_adapter_diag();
   }
+  {
+    extern void gw_inprof_poll(void); /* shim_vi.c, MELEE_INPUT_PROFILE */
+    gw_inprof_poll();
+  }
   gw_pad_prof_aurora_ms += gw_pad_prof_ms(tp0, tp1);
   gw_pad_prof_adapter_ms += gw_pad_prof_ms(tp2, gw_pad_prof_now());
   gw_pad_prof_t0 = gw_pad_prof_now();

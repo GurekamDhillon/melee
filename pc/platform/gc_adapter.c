@@ -123,6 +123,72 @@ static volatile LONG gw_gc_lost;
 void gw_gc_adapter_shutdown(void);
 static DWORD WINAPI gw_gc_reader(LPVOID arg);
 
+/* MELEE_INPUT_PROFILE (shim_vi.c): when each report arrived, and the spacing between reports.
+ * The official adapter reports at 125 Hz (8 ms); an overclocked one (HIDUSBF / a patched
+ * bInterval) at up to 1000 Hz. Whatever the rate, the game takes the newest report, so this is
+ * what says how old that report can be. Written by the reader thread only. */
+#define GW_GC_IVL_BUCKETS 9
+static const double gw_gc_ivl_edges[GW_GC_IVL_BUCKETS] = { 0.75, 1.5, 3.0, 5.0, 7.0, 9.0, 12.0, 20.0, 1e9 };
+static volatile LONGLONG gw_gc_report_qpc;
+static LONGLONG gw_gc_prev_qpc;
+static unsigned gw_gc_ivl_hist[GW_GC_IVL_BUCKETS];
+static unsigned gw_gc_ivl_count, gw_gc_ivl_changed;
+static double gw_gc_ivl_min = 1e9, gw_gc_ivl_max;
+static unsigned char gw_gc_prev_payload[GC_PAYLOAD_SIZE];
+
+/* The reader calls this, under the lock, for every good report. */
+static void gw_gc_stamp(const unsigned char *payload) {
+  static double freq;
+  LARGE_INTEGER now;
+  QueryPerformanceCounter(&now);
+  if (freq == 0.0) {
+    LARGE_INTEGER f;
+    QueryPerformanceFrequency(&f);
+    freq = (double)f.QuadPart;
+  }
+  if (gw_gc_prev_qpc != 0) {
+    const double ms = (double)(now.QuadPart - gw_gc_prev_qpc) * 1000.0 / freq;
+    int b;
+    for (b = 0; b < GW_GC_IVL_BUCKETS; ++b) {
+      if (ms < gw_gc_ivl_edges[b]) {
+        ++gw_gc_ivl_hist[b];
+        break;
+      }
+    }
+    if (ms < gw_gc_ivl_min) gw_gc_ivl_min = ms;
+    if (ms > gw_gc_ivl_max) gw_gc_ivl_max = ms;
+    ++gw_gc_ivl_count;
+    if (memcmp(payload, gw_gc_prev_payload, GC_PAYLOAD_SIZE) != 0) {
+      ++gw_gc_ivl_changed;
+    }
+  }
+  memcpy(gw_gc_prev_payload, payload, GC_PAYLOAD_SIZE);
+  gw_gc_prev_qpc = now.QuadPart;
+  InterlockedExchange64(&gw_gc_report_qpc, now.QuadPart);
+}
+
+/* QPC time the newest report arrived (0: none yet). */
+long long gw_gc_adapter_report_qpc(void) {
+  return (long long)InterlockedCompareExchange64(&gw_gc_report_qpc, 0, 0);
+}
+
+/* Copy out and reset the interval statistics. Racy against the reader by design: diagnostics. */
+void gw_gc_adapter_take_stats(unsigned *hist9, unsigned *count, unsigned *changed, double *min_ms,
+                              double *max_ms) {
+  int b;
+  for (b = 0; b < GW_GC_IVL_BUCKETS; ++b) {
+    hist9[b] = gw_gc_ivl_hist[b];
+    gw_gc_ivl_hist[b] = 0;
+  }
+  *count = gw_gc_ivl_count;
+  *changed = gw_gc_ivl_changed;
+  *min_ms = gw_gc_ivl_count ? gw_gc_ivl_min : 0.0;
+  *max_ms = gw_gc_ivl_max;
+  gw_gc_ivl_count = gw_gc_ivl_changed = 0;
+  gw_gc_ivl_min = 1e9;
+  gw_gc_ivl_max = 0.0;
+}
+
 static void gw_gc_close(void) {
   if (gw_gc_usb != NULL) {
     WinUsb_Free(gw_gc_usb);
@@ -539,6 +605,7 @@ static int gw_gc_read_blocking(void) {
         EnterCriticalSection(&gw_gc_lock);
         memcpy(gw_gc_payload, buf, GC_PAYLOAD_SIZE);
         gw_gc_payload_valid = 1;
+        gw_gc_stamp(buf);
         LeaveCriticalSection(&gw_gc_lock);
         return 1;
       }
@@ -577,6 +644,7 @@ static int gw_gc_read_blocking(void) {
           EnterCriticalSection(&gw_gc_lock);
           memcpy(gw_gc_payload, buf + off, GC_PAYLOAD_SIZE);
           gw_gc_payload_valid = 1;
+          gw_gc_stamp(buf + off);
           LeaveCriticalSection(&gw_gc_lock);
           return 1;
         }
@@ -693,6 +761,7 @@ int gw_gc_adapter_read(void *status) {
   int chan;
   int any = 0;
   int recal;
+  unsigned char snap[GC_PAYLOAD_SIZE];
 
   if (!gw_gc_ready || st == NULL) {
     return 0;
@@ -701,10 +770,18 @@ int gw_gc_adapter_read(void *status) {
     return 0;
   }
 
+  /* Take the newest report whole. The reader thread overwrites gw_gc_payload under the lock at
+   * whatever rate the adapter reports (125 Hz stock, up to 1000 Hz overclocked); decoding it in
+   * place, outside the lock, could mix two reports - one port's buttons from one and its stick
+   * from the next. */
+  EnterCriticalSection(&gw_gc_lock);
+  memcpy(snap, gw_gc_payload, GC_PAYLOAD_SIZE);
+  LeaveCriticalSection(&gw_gc_lock);
+
   recal = InterlockedExchange(&gw_gc_recal, 0) != 0;
 
   for (chan = 0; chan < GC_PORTS; ++chan) {
-    const unsigned char *p = &gw_gc_payload[1 + chan * 9];
+    const unsigned char *p = &snap[1 + chan * 9];
     const int type = p[0] >> 4;
     u16 btn = 0;
     unsigned char b1;

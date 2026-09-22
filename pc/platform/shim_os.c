@@ -303,6 +303,7 @@ void gw_OSCancelAlarm(void *alarm) {
 }
 
 static uint32_t gw_alarm_fire_count;
+uint64_t gw_os_alarm_late_ticks; /* lateness of the alarm now firing, in OS ticks */
 
 void gw_os_alarm_stats(uint32_t *active, uint32_t *fired) {
   uint32_t n = 0;
@@ -313,6 +314,18 @@ void gw_os_alarm_stats(uint32_t *active, uint32_t *fired) {
   }
   *active = n;
   *fired = gw_alarm_fire_count;
+}
+
+int gw_os_pad_alarm_deadline(uint64_t period_ticks, uint64_t *fire_at) {
+  for (int i = 0; i < GW_MAX_ALARMS; ++i) {
+    const gw_alarm *a = &gw_alarms[i];
+    if (a->handle != NULL && a->handler != NULL && a->period != 0 &&
+        a->period * 10u >= period_ticks * 9u && a->period * 10u <= period_ticks * 11u) {
+      *fire_at = a->fire_at;
+      return 1;
+    }
+  }
+  return 0;
 }
 
 void gw_os_run_alarms(uint64_t ticks) {
@@ -334,6 +347,9 @@ void gw_os_run_alarms(uint64_t ticks) {
       /* Handlers are void(void) functions cast to OSAlarmHandler; the extra arguments are
        * ignored on both ABIs. */
       ++gw_alarm_fire_count;
+      /* MELEE_INPUT_PROFILE (shim_vi.c): how late this firing is against its deadline. The pad
+       * alarm's lateness is exactly the extra age of the controller sample it takes. */
+      gw_os_alarm_late_ticks = gw_time_ticks() - fire_at;
       ((void (*)(void *, void *))handler)(handle, NULL);
       /* A handler may cancel the alarm (OSCancelAlarm clears handler), or re-arm a one-shot by
        * calling OSSetAlarm with the same handler -- lbMemory's chunked memcpy (fn_80015184) does

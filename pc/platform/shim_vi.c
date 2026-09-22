@@ -58,6 +58,7 @@ static bool gw_exiting;
 static uint64_t gw_qpc_freq;
 static uint64_t gw_qpc_base;
 static uint64_t gw_last_advance_ms;
+static uint64_t gw_last_alarm_tick; /* gw_wait_idle's alarm gate, OS ticks */
 
 uint64_t gw_time_ticks(void) {
   LARGE_INTEGER now;
@@ -212,6 +213,7 @@ static double gw_prof_sum_game, gw_prof_sum_present, gw_prof_sum_events, gw_prof
 static double gw_prof_sum_cpu;
 static double gw_prof_sum_pace, gw_prof_sum_submit; /* present = overlay + pace + submit */
 static long long gw_prof_t_pace0, gw_prof_t_pace1;
+static double gw_prof_sum_pace_after; /* pacing after the submit (the default order) */
 static uint32_t gw_prof_frames, gw_prof_empty;
 static uint32_t gw_prof_hist[GW_PROF_BUCKETS];
 static int gw_prof_spikes;
@@ -291,8 +293,10 @@ static void gw_prof_report(void) {
            (double)(gw_gx_texobj_inits - last_inits) / gw_prof_frames);
     last_inits = gw_gx_texobj_inits;
   }
-  gw_log("gw: PROF present   pace_wait=%.2f submit=%.2f (aurora_end_frame; >1 ms = render back-pressure)",
-         gw_prof_sum_pace / gw_prof_frames, gw_prof_sum_submit / gw_prof_frames);
+  gw_log("gw: PROF present   pace_wait=%.2f submit=%.2f (aurora_end_frame; >1 ms = render back-pressure)"
+         "  of which pacing after submit=%.2f",
+         gw_prof_sum_pace / gw_prof_frames, gw_prof_sum_submit / gw_prof_frames,
+         gw_prof_sum_pace_after / gw_prof_frames);
   gw_log("gw: PROF cpu ms    game_cpu=%.2f  of_game_wall=%.2f  wait=%.2f",
          gw_prof_sum_cpu / gw_prof_frames, gw_prof_sum_game / gw_prof_frames,
          (gw_prof_sum_game - gw_prof_sum_cpu) / gw_prof_frames);
@@ -302,7 +306,7 @@ static void gw_prof_report(void) {
 
   gw_prof_sum_game = gw_prof_sum_present = gw_prof_sum_events = gw_prof_sum_begin = 0.0;
   gw_prof_sum_cpu = 0.0;
-  gw_prof_sum_pace = gw_prof_sum_submit = 0.0;
+  gw_prof_sum_pace = gw_prof_sum_submit = gw_prof_sum_pace_after = 0.0;
   gw_prof_frames = 0u;
   gw_prof_empty = 0u;
   gw_prof_spikes = 0;
@@ -326,51 +330,350 @@ static void gw_prof_record(double total) {
   }
 }
 
+
+/* ---- input-latency profiler (MELEE_INPUT_PROFILE=1) ---------------------------------------
+ * Measures the path from a controller report to the frame that shows it, in the port's own
+ * terms, every 600 presented frames:
+ *   adapter ivl   spacing of the GC adapter's reports (gc_adapter.c; 8 ms stock, 1 ms overclocked)
+ *   report age    how old the newest adapter report is when the game polls (gw_PADRead)
+ *   alarm late    how late the 60 Hz pad alarm fired against its deadline (shim_os.c) - the extra
+ *                 age of the sample on top of the report age
+ *   sdl age       time since SDL last pumped events (aurora_update): how stale Aurora's SDL pads
+ *                 are at the poll
+ *   poll->drawn   from the newest poll the frame's logic consumed to the game finishing that
+ *                 frame's GX commands (aurora_end_frame is called)
+ *   end_frame     aurora_end_frame itself: mostly waiting for Aurora's FIFO thread to finish
+ *                 turning the frame's GX commands into draws
+ *   poll->queued  poll to aurora_end_frame returning: the frame is with the render worker, which
+ *                 encodes, acquires the swapchain image, blits and presents asynchronously
+ *   poll->present poll to the render worker returning from Present() for that frame; the image
+ *                 then waits for the display's next refresh under vsync (<= 6.9 ms at 144 Hz)
+ *   submit ivl    frame-to-frame spacing of aurora_end_frame calls
+ *   pace over     how far past the 60 Hz boundary the pacing wait woke
+ *   begin wait    aurora_begin_frame: frame-slot back-pressure from the render worker/swapchain
+ *   polls/frame   pad polls between two presents (anything but 1 is a doubled or dropped input frame)
+ *   queue         the raw pad queue depth (HSD_PadLibData.qcount) when a present returns to the game:
+ *                 every entry beyond one is a whole frame of added input latency */
+#define GW_INPROF_N 600
+typedef struct {
+  float v[GW_INPROF_N];
+  int n;
+} gw_inprof_ring;
+
+static int gw_inprof_on(void) {
+  static int cached = -1;
+  if (cached < 0) {
+    const char *v = getenv("MELEE_INPUT_PROFILE");
+    cached = (v != NULL && v[0] == '1') ? 1 : 0;
+  }
+  return cached;
+}
+
+static gw_inprof_ring gw_ip_age, gw_ip_late, gw_ip_sdl, gw_ip_p2s, gw_ip_ivl, gw_ip_over, gw_ip_begin;
+static gw_inprof_ring gw_ip_p2q, gw_ip_endf, gw_ip_p2p;
+static uint32_t gw_presented_count; /* defined with the frame driver below */
+static void gw_ip_push(gw_inprof_ring *r, double v);
+static long long gw_ip_submit_cand;
+
+/* Present times come from Aurora's render worker (aurora_get_last_present_ns, added by this port).
+ * An aurora_gx.lib from before that addition resolves them to these instead, which report nothing,
+ * so the shim still links against either. */
+int64_t gw_aurora_last_present_ns_none(void) { return 0; }
+uint32_t gw_aurora_present_count_none(void) { return 0; }
+#pragma comment(linker, "/alternatename:_aurora_get_last_present_ns=_gw_aurora_last_present_ns_none")
+#pragma comment(linker, "/alternatename:_aurora_get_present_count=_gw_aurora_present_count_none")
+#define GW_IP_PRESENT_RING 64
+static long long gw_ip_ring_poll[GW_IP_PRESENT_RING];
+static uint32_t gw_ip_ring_id[GW_IP_PRESENT_RING];
+static uint32_t gw_ip_presents_seen;
+
+/* QPC -> the nanosecond scale of MSVC's steady_clock, which is what Aurora stamps presents with. */
+static long long gw_ip_qpc_ns(long long c) {
+  static long long f;
+  if (f == 0) {
+    LARGE_INTEGER q;
+    QueryPerformanceFrequency(&q);
+    f = q.QuadPart;
+  }
+  return (c / f) * 1000000000ll + ((c % f) * 1000000000ll) / f;
+}
+
+/* Called once a frame: attribute a newly completed Present() to the frame it showed. The n-th
+ * present is the n-th aurora_end_frame, barring a frame Aurora could not present. */
+static void gw_ip_check_present(void) {
+  const uint32_t n = aurora_get_present_count();
+  if (n == 0 || n == gw_ip_presents_seen) {
+    return;
+  }
+  gw_ip_presents_seen = n;
+  if (gw_ip_ring_id[n % GW_IP_PRESENT_RING] == n) {
+    const long long pres = aurora_get_last_present_ns();
+    const long long poll = gw_ip_qpc_ns(gw_ip_ring_poll[n % GW_IP_PRESENT_RING]);
+    if (pres > poll) {
+      gw_ip_push(&gw_ip_p2p, (double)(pres - poll) / 1e6);
+    }
+  }
+}
+static uint32_t gw_ip_polls_hist[4], gw_ip_queue_hist[4];
+static uint32_t gw_ip_polls_this_frame, gw_ip_late_frames;
+static long long gw_ip_last_poll, gw_ip_cand, gw_ip_last_submit, gw_ip_last_events;
+static int gw_ip_have_cand, gw_ip_waiting_first;
+extern uint64_t gw_os_alarm_late_ticks;
+extern unsigned char gw_HSD_PadLibData[];
+
+static void gw_ip_push(gw_inprof_ring *r, double v) {
+  if (r->n < GW_INPROF_N) {
+    r->v[r->n++] = (float)v;
+  }
+}
+
+static int gw_ip_cmpf(const void *a, const void *b) {
+  const float x = *(const float *)a, y = *(const float *)b;
+  return (x < y) ? -1 : ((x > y) ? 1 : 0);
+}
+
+static void gw_ip_line(const char *name, gw_inprof_ring *r) {
+  if (r->n == 0) {
+    gw_log("gw: INPROF %-12s (no samples)", name);
+    return;
+  }
+  {
+    const int n = r->n;
+    double sum = 0.0;
+    int i;
+    for (i = 0; i < n; ++i) {
+      sum += r->v[i];
+    }
+    qsort(r->v, (size_t)n, sizeof(float), gw_ip_cmpf);
+    gw_log("gw: INPROF %-12s ms  mean=%.2f p50=%.2f p95=%.2f p99=%.2f max=%.2f min=%.2f (n=%d)", name,
+           sum / n, r->v[(int)(0.50 * (n - 1))], r->v[(int)(0.95 * (n - 1))],
+           r->v[(int)(0.99 * (n - 1))], r->v[n - 1], r->v[0], n);
+  }
+  r->n = 0;
+}
+
+static void gw_inprof_report(void) {
+  extern int gw_gc_adapter_present(void);
+  extern void gw_gc_adapter_take_stats(unsigned *hist9, unsigned *count, unsigned *changed,
+                                       double *min_ms, double *max_ms);
+  if (gw_gc_adapter_present()) {
+    unsigned h[9], count, changed;
+    double mn, mx;
+    gw_gc_adapter_take_stats(h, &count, &changed, &mn, &mx);
+    gw_log("gw: INPROF adapter ivl ms  <0.75:%u <1.5:%u <3:%u <5:%u <7:%u <9:%u <12:%u <20:%u 20+:%u"
+           "  min=%.2f max=%.2f reports=%u changed=%u",
+           h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], h[8], mn, mx, count, changed);
+  } else {
+    gw_log("gw: INPROF adapter      (no GC adapter open)");
+  }
+  gw_ip_line("report age", &gw_ip_age);
+  gw_ip_line("alarm late", &gw_ip_late);
+  gw_ip_line("sdl age", &gw_ip_sdl);
+  gw_ip_line("poll->drawn", &gw_ip_p2s);
+  gw_ip_line("end_frame", &gw_ip_endf);
+  gw_ip_line("poll->queued", &gw_ip_p2q);
+  gw_ip_line("poll->present", &gw_ip_p2p);
+  gw_ip_line("submit ivl", &gw_ip_ivl);
+  gw_ip_line("pace over", &gw_ip_over);
+  gw_ip_line("begin wait", &gw_ip_begin);
+  gw_log("gw: INPROF polls/frame  0:%u 1:%u 2:%u 3+:%u   queue at return 0:%u 1:%u 2:%u 3+:%u"
+         "   frames already late at pacing: %u",
+         gw_ip_polls_hist[0], gw_ip_polls_hist[1], gw_ip_polls_hist[2], gw_ip_polls_hist[3],
+         gw_ip_queue_hist[0], gw_ip_queue_hist[1], gw_ip_queue_hist[2], gw_ip_queue_hist[3],
+         gw_ip_late_frames);
+  memset(gw_ip_polls_hist, 0, sizeof gw_ip_polls_hist);
+  memset(gw_ip_queue_hist, 0, sizeof gw_ip_queue_hist);
+  gw_ip_late_frames = 0;
+}
+
+/* gw_PADRead, once per poll, after the adapter has been read (always called: the pacer counts
+ * polls; the profiling below is MELEE_INPUT_PROFILE only). */
+static uint32_t gw_polls_since_pace; /* gw_pace_field: pad polls since the last wait ended */
+
+void gw_inprof_poll(void) {
+  extern long long gw_gc_adapter_report_qpc(void);
+  long long now, rep;
+  ++gw_polls_since_pace;
+  if (!gw_inprof_on()) {
+    return;
+  }
+  now = gw_prof_now();
+  rep = gw_gc_adapter_report_qpc();
+  if (rep != 0) {
+    gw_ip_push(&gw_ip_age, gw_prof_ms(rep, now));
+  }
+  gw_ip_push(&gw_ip_late, (double)gw_os_alarm_late_ticks / (GW_TIMER_CLOCK / 1000.0));
+  if (gw_ip_last_events != 0) {
+    gw_ip_push(&gw_ip_sdl, gw_prof_ms(gw_ip_last_events, now));
+  }
+  ++gw_ip_polls_this_frame;
+  gw_ip_last_poll = now;
+  if (gw_ip_waiting_first) {
+    gw_ip_cand = now;
+    gw_ip_have_cand = 1;
+    gw_ip_waiting_first = 0;
+  }
+}
+
+/* frame tick, immediately before aurora_end_frame. */
+static void gw_inprof_submit(void) {
+  const long long now = gw_prof_now();
+  gw_ip_check_present();
+  if (gw_ip_last_submit != 0) {
+    gw_ip_push(&gw_ip_ivl, gw_prof_ms(gw_ip_last_submit, now));
+  }
+  gw_ip_last_submit = now;
+  gw_ip_submit_cand = 0;
+  if (gw_ip_have_cand) {
+    gw_ip_push(&gw_ip_p2s, gw_prof_ms(gw_ip_cand, now));
+    gw_ip_submit_cand = gw_ip_cand;
+    gw_ip_have_cand = 0;
+  }
+  ++gw_ip_polls_hist[gw_ip_polls_this_frame < 3 ? gw_ip_polls_this_frame : 3];
+  gw_ip_polls_this_frame = 0;
+}
+
+/* Right after aurora_end_frame returns: the GX FIFO has been drained (Aurora's FIFO thread has
+ * turned every command into draws) and the frame is queued to the render worker, which only has
+ * to encode, acquire the swapchain image, blit and present. */
+static void gw_inprof_submitted(void) {
+  const long long now = gw_prof_now();
+  gw_ip_push(&gw_ip_endf, gw_prof_ms(gw_ip_last_submit, now));
+  if (gw_ip_submit_cand != 0) {
+    const uint32_t id = gw_presented_count + 1u; /* this end_frame's 1-based number */
+    gw_ip_push(&gw_ip_p2q, gw_prof_ms(gw_ip_submit_cand, now));
+    gw_ip_ring_poll[id % GW_IP_PRESENT_RING] = gw_ip_submit_cand;
+    gw_ip_ring_id[id % GW_IP_PRESENT_RING] = id;
+  }
+}
+
+/* End of a presenting frame tick, as control returns to the game loop: the next logic frame
+ * consumes whatever is queued now, or else the first poll to arrive. */
+static void gw_inprof_return(void) {
+  const unsigned q = gw_HSD_PadLibData[3]; /* qcount, a byte: no swap */
+  ++gw_ip_queue_hist[q < 3 ? q : 3];
+  if (q > 0 && gw_ip_last_poll != 0) {
+    gw_ip_cand = gw_ip_last_poll;
+    gw_ip_have_cand = 1;
+    gw_ip_waiting_first = 0;
+  } else {
+    gw_ip_have_cand = 0;
+    gw_ip_waiting_first = 1;
+  }
+  if (gw_ip_ivl.n >= GW_INPROF_N) {
+    gw_inprof_report();
+  }
+}
+
 static uint32_t gw_presented_count;
 
-/* Field pacing. A GameCube's VI gives the game a hard 16.667 ms boundary. Here the present is
- * asynchronous (aurora_end_frame only enqueues to the render worker) and a VRR display lets
- * Present() return without back-pressure, so nothing holds the game to 60 Hz and it free-runs at
- * its own frame cost (~15.6 ms). The 1/60 pad alarm is only a soft reference, so every ~13
- * free-run frames the pad queue drains and the game stalls a whole period -- the 15.6/30.6 ms
- * bimodal judder. Wait out the boundary here against the free-running virtual clock, with
- * catch-up so a long frame (map load) does not accumulate a deficit.
- *
- * The wait used to be a pure YieldProcessor() spin for the whole remainder. Measured with
- * MELEE_PROFILE=1 plus per-thread CPU accounting (Get-Process): game logic and the GPU submit
- * together cost well under 1 ms of the 16.67 ms frame, and the game thread nonetheless burned
- * 0.96 of a full CPU core, continuously -- the other ~16 ms of "present" was 100% spin, for a
- * boundary that is milliseconds away and nothing productive to do while waiting for it. That is
- * wasted heat, battery and fan noise for no smoothness benefit, and on a machine with few cores
- * it can steal cycles from the render worker or any other app running alongside the game.
- *
- * Sleep() releases the core for everything but the final stretch, where only a spin can hit the
- * boundary precisely (a Sleep wakeup is scheduled, not exact). GW_PACE_SPIN_TICKS sizes that
- * stretch well above Sleep(1)'s typical overshoot under load, so the frame-time percentiles this
- * replaces (measured p50=16.67 p95=16.97-17.02 p99=17.05-17.15) do not move; the periodic pump of
- * alarms/deferred work keeps the same ~1 ms cadence it always had, just checked after each wake
- * instead of after each spin iteration. */
-#define GW_PACE_SPIN_TICKS (3u * (GW_TIMER_CLOCK / 1000u)) /* spin only the final ~3 ms */
+#define GW_PACE_SPIN_TICKS (3u * (GW_TIMER_CLOCK / 1000u)) /* Sleep(1) fallback: spin the final ~3 ms */
+#define GW_PACE_SPIN_TICKS_HR (GW_TIMER_CLOCK / 1000u)     /* high-resolution timer: spin ~1 ms */
 
 static uint64_t gw_last_field_tick;
 static bool gw_pace_timer_res_set;
+static HANDLE gw_pace_timer;
 
+#ifndef CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
+#define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION 0x00000002
+#endif
+
+/* MELEE_PACE=legacy restores the old frame order (render -> wait for the boundary -> submit), for
+ * A/B measurement with MELEE_INPUT_PROFILE. */
+static int gw_pace_legacy(void) {
+  static int cached = -1;
+  if (cached < 0) {
+    const char *v = getenv("MELEE_PACE");
+    cached = (v != NULL && v[0] == 'l') ? 1 : 0;
+    if (cached) {
+      gw_log("gw: pacing: legacy order (wait before submit)");
+    }
+  }
+  return cached;
+}
+
+/* Sleep for about `ticks` (at most ~1 ms). A high-resolution waitable timer (Windows 10 1803+)
+ * wakes within a few hundred microseconds; Sleep(1) under timeBeginPeriod(1) can overshoot by a
+ * millisecond or more, which is why the spin that follows it has to be longer. */
+static void gw_pace_nap(uint64_t ticks) {
+  if (gw_pace_timer != NULL) {
+    LARGE_INTEGER due;
+    due.QuadPart = -(LONGLONG)((ticks * 10000000ull) / GW_TIMER_CLOCK); /* 100 ns units, relative */
+    if (due.QuadPart < -10000) {
+      due.QuadPart = -10000;
+    }
+    if (due.QuadPart > -1) {
+      due.QuadPart = -1;
+    }
+    if (SetWaitableTimer(gw_pace_timer, &due, 0, NULL, NULL, FALSE)) {
+      WaitForSingleObject(gw_pace_timer, 5);
+      return;
+    }
+  }
+  Sleep(1);
+}
+
+/* Field pacing: hold the game to 60 Hz. A GameCube's VI gives the game a hard 16.667 ms boundary;
+ * here the present is asynchronous (aurora_end_frame only enqueues to the render worker) and a
+ * VRR display lets Present() return without back-pressure, so without this nothing holds the game
+ * to 60 Hz.
+ *
+ * WHERE the wait sits is what decides input latency. It used to sit between the render and the
+ * submit: the game polled the pad, ran its logic and rendered in ~1-2 ms, and then the finished
+ * frame waited out the rest of the field (~14 ms) before aurora_end_frame. Measured with
+ * MELEE_INPUT_PROFILE on ACE: poll -> submit 17.4-18.5 ms, every frame. Now the frame is submitted
+ * the moment it is drawn, and the wait happens BEFORE the next frame instead - and it waits for
+ * the deadline of the game's own 60 Hz pad alarm (lb_80019628), so the controllers are sampled
+ * the instant the wait ends and logic, render and submit follow at once. Nothing about the
+ * simulation changes: the same alarm still produces exactly one pad sample per logic frame.
+ *
+ * If a sample was already taken mid-frame (a slow frame let the deadline pass), there is nothing
+ * to wait for - the game should consume it now rather than sit on a stale input. Without an armed pad
+ * alarm (boot, some scene transitions) the old free-running 60 Hz grid applies.
+ *
+ * The wait naps on a high-resolution waitable timer in <=1 ms steps, pumping alarms and deferred
+ * work between naps as before, and spins only the final ~1 ms (3 ms with the Sleep(1) fallback),
+ * so the core is released for almost all of the field. */
 static void gw_pace_field(void) {
   uint64_t now = gw_time_ticks();
   uint64_t last_pump;
+  uint64_t spin = GW_PACE_SPIN_TICKS;
+  uint64_t target;
+  uint64_t deadline;
   if (gw_last_field_tick == 0) {
     gw_last_field_tick = now;
     return;
   }
   if (!gw_pace_timer_res_set) {
-    /* Raise the OS timer resolution for the life of the process, so the Sleep(1) below actually
-     * wakes in ~1-2 ms rather than the ~15.6 ms default tick. Windows resets a process's timer
+    /* Raise the OS timer resolution for the life of the process, so the Sleep(1) fallback wakes
+     * in ~1-2 ms rather than the ~15.6 ms default tick. Windows resets a process's timer
      * resolution request automatically on exit, so there is no matching timeEndPeriod. */
     timeBeginPeriod(1);
+    gw_pace_timer = CreateWaitableTimerExW(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
+                                           TIMER_ALL_ACCESS);
+    gw_log("gw: pacing: %s", gw_pace_timer != NULL ? "high-resolution waitable timer"
+                                                   : "Sleep(1) (no high-resolution timer)");
     gw_pace_timer_res_set = true;
   }
+  if (gw_pace_timer != NULL) {
+    spin = GW_PACE_SPIN_TICKS_HR;
+  }
+  target = gw_last_field_tick + GW_TICKS_PER_FIELD;
+  if (!gw_pace_legacy() && gw_os_pad_alarm_deadline(GW_TICKS_PER_FIELD, &deadline)) {
+    target = deadline;
+    /* Normally exactly one poll happened since the last wait ended: the one right after it, which
+     * this frame's logic consumed. A second one means the frame ran long, the deadline passed and
+     * the alarm fired mid-frame: that sample is waiting, so go now. (Not "the pad queue is
+     * non-empty": a rollback stall or time-sync tick leaves the queue alone on purpose, and those
+     * ticks must still take one field each.) */
+    if (gw_polls_since_pace >= 2u || target > now + 2u * GW_TICKS_PER_FIELD) {
+      target = now;
+    }
+  }
   {
-    const uint64_t target = gw_last_field_tick + GW_TICKS_PER_FIELD;
+    if (gw_inprof_on() && now >= target) {
+      ++gw_ip_late_frames;
+    }
     last_pump = now;
     while ((now = gw_time_ticks()) < target) {
       if (now - last_pump >= GW_TIMER_CLOCK / 1000u) {
@@ -378,14 +681,19 @@ static void gw_pace_field(void) {
         gw_os_run_alarms(now);
         gw_run_deferred();
       }
-      if (target - now > GW_PACE_SPIN_TICKS) {
-        Sleep(1);
+      if (target - now > spin) {
+        uint64_t nap = target - now - spin;
+        gw_pace_nap(nap < GW_TIMER_CLOCK / 1000u ? nap : GW_TIMER_CLOCK / 1000u);
       } else {
         YieldProcessor();
       }
     }
+    if (gw_inprof_on() && now >= target) {
+      gw_ip_push(&gw_ip_over, (double)(now - target) / (GW_TIMER_CLOCK / 1000.0));
+    }
   }
   gw_last_field_tick = now;
+  gw_polls_since_pace = 0;
 }
 
 /* ---- sampling profiler (MELEE_PROFILE_SAMPLE=<start seconds>) ------------------------------
@@ -730,15 +1038,31 @@ void gw_frame_tick(void) {
     if (prof) {
       gw_prof_t_pace0 = gw_prof_now();
     }
-    gw_pace_field();
+    if (gw_pace_legacy()) {
+      gw_pace_field();
+    }
     if (prof) {
       gw_prof_t_pace1 = gw_prof_now();
     }
+    if (gw_inprof_on()) {
+      gw_inprof_submit();
+    }
     aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
+    if (gw_inprof_on()) {
+      gw_inprof_submitted();
+    }
     gw_frame_begun = false;
     gw_frame_has_content = false;
     ++gw_presented_count;
     presented = 1;
+    if (!gw_pace_legacy()) {
+      /* submitted as soon as it was drawn; now wait for the next pad sample (gw_pace_field) */
+      long long tp = prof ? gw_prof_now() : 0;
+      gw_pace_field();
+      if (prof) {
+        gw_prof_sum_pace_after += gw_prof_ms(tp, gw_prof_now());
+      }
+    }
   } else {
     /* A wait that produced no new frame: don't burn a core spinning. */
     Sleep(1);
@@ -754,9 +1078,15 @@ void gw_frame_tick(void) {
   if (prof) {
     t_events = gw_prof_now();
   }
+  if (gw_inprof_on()) {
+    gw_ip_last_events = gw_prof_now();
+  }
 
   if (!gw_frame_begun) {
     gw_frame_begun = aurora_begin_frame();
+  }
+  if (gw_inprof_on() && presented) {
+    gw_ip_push(&gw_ip_begin, gw_prof_ms(gw_ip_last_events, gw_prof_now()));
   }
 
   if (prof) {
@@ -871,6 +1201,10 @@ void gw_frame_tick(void) {
   /* Audio: generate zero or more 5 ms AX sub-frames on the game thread (the AX mixer lives in
    * shim_ax.c and drives HSD_SynthCallback + voice mixing). */
   gw_ax_frame_tick();
+
+  if (presented && gw_inprof_on()) {
+    gw_inprof_return();
+  }
 }
 
 void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
@@ -897,11 +1231,20 @@ void gw_wait_idle(void) {
   if (gw_deferred_count != 0) {
     gw_run_deferred();
   }
-  if (now == gw_last_advance_ms) {
-    return;
+  /* Alarms are checked on the high-resolution clock, at most every quarter millisecond.
+   * GetTickCount64 only moves once per system tick (~15.6 ms, whatever timeBeginPeriod says), and
+   * gating on it let the pad alarm fire up to a whole tick late whenever the game was waiting in
+   * its pad-queue spin (MELEE_INPUT_PROFILE, loading into a match: alarm lateness p95 11.9 ms,
+   * max 24 ms). */
+  (void)now;
+  {
+    const uint64_t t = gw_time_ticks();
+    if (t - gw_last_alarm_tick < GW_TIMER_CLOCK / 4000u) {
+      return;
+    }
+    gw_last_alarm_tick = t;
+    gw_os_run_alarms(t);
   }
-  gw_last_advance_ms = now;
-  gw_os_run_alarms(gw_time_ticks());
   gw_run_deferred();
 }
 

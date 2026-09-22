@@ -3614,3 +3614,57 @@ void Fighter_Unload_8006DABC(void* user_data)
     HSD_ObjFree(&fighter_dat_attrs_alloc_data, fp->dat_attrs_backup);
     HSD_ObjFree(&fighter_alloc_data, fp);
 }
+
+#if defined(TARGET_PC)
+/* The CURATED GAMEPLAY HASH (pc/platform/gw_rollback.c, gw_rb_checksum): what two peers must agree
+ * on for the match to be the same match - the RNG seed and, per fighter (leader and follower), the
+ * fields that decide what happens next: motion, position, velocity, damage, facing. It leaves out
+ * everything two real machines may legitimately hold differently (render-owned bytes, sound
+ * handles, heap addresses, cached matrices); gw_snap.c's whole-state hash is for SyncTest, where
+ * both runs are one process. Read at the start of a logic frame. */
+static u32 ftRb_Mix(u32 h, u32 v)
+{
+    h ^= v;
+    h *= 0x01000193u;
+    h ^= h >> 15;
+    return h;
+}
+
+static u32 ftRb_Bits(f32 f)
+{
+    union {
+        f32 f;
+        u32 u;
+    } c;
+    c.f = f;
+    return c.u;
+}
+
+u32 RB_GameHash(void)
+{
+    extern u32* HSD_RandSeedPtr;
+    u32 h = 0x811C9DC5u;
+    int i, j;
+    h = ftRb_Mix(h, *HSD_RandSeedPtr);
+    for (i = 0; i < 6; i++) {
+        for (j = 0; j < 2; j++) {
+            HSD_GObj* g = Player_GetEntityAtIndex(i, j);
+            Fighter* fp;
+            if (g == NULL) {
+                continue;
+            }
+            fp = g->user_data;
+            h = ftRb_Mix(h, (u32) (i * 2 + j) + 0x100u);
+            h = ftRb_Mix(h, (u32) fp->motion_id);
+            h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.x));
+            h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.y));
+            h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.z));
+            h = ftRb_Mix(h, ftRb_Bits(fp->self_vel.x));
+            h = ftRb_Mix(h, ftRb_Bits(fp->self_vel.y));
+            h = ftRb_Mix(h, ftRb_Bits(fp->dmg.x1830_percent));
+            h = ftRb_Mix(h, ftRb_Bits(fp->facing_dir));
+        }
+    }
+    return h;
+}
+#endif

@@ -551,9 +551,17 @@ int HSD_AudioSFXStartParam(int sound_id, u8 volume, u8 pan, int track,
     extern int Snap_SuppressSfx(void);
     extern int Snap_SfxTake(int sound_id);
     extern void Snap_SfxPut(int sound_id, int result);
+    extern void Snap_SfxAdd(int sound_id, int result);
     int r;
     if (Snap_SuppressSfx()) {
-        return Snap_SfxTake(sound_id);
+        r = Snap_SfxTake(sound_id);
+        if (r != -2) {
+            return r; /* the first pass already started this one: it is playing, same handle */
+        }
+        /* a sound only the corrected timeline plays: play it, and remember it */
+        r = HSD_AudioSFXStartParam_impl(sound_id, volume, pan, track, channel);
+        Snap_SfxAdd(sound_id, r);
+        return r;
     }
     r = HSD_AudioSFXStartParam_impl(sound_id, volume, pan, track, channel);
     Snap_SfxPut(sound_id, r);

@@ -306,6 +306,24 @@ block_70:
         return;
     }
     default:
+#if defined(TARGET_PC)
+        /* Ported from m-ex (https://github.com/akaneia/m-ex).
+         * Source patch: asm/m-ex/Effect Expansion/AsyncEffect.asm ("@ 800a0070").
+         * Behaviour: a subaction effect id 5000..8999 is one of this fighter's own effects: queue
+         * it with the bone, the (randomised) offset, the facing direction and the ground
+         * orientation, and let the behaviour table place it (efasync.c). */
+        if (EF_MEX_IS_CUSTOM(gfx_id)) {
+            f32 orientation = 0.0f;
+            if (fp->ground_or_air == GA_Ground) {
+                orientation = atan2f(-fp->coll_data.floor.normal.x,
+                                     fp->coll_data.floor.normal.y);
+            }
+            efAsync_MexSpawn(gobj, &GET_FIGHTER(gobj)->x60C, gfx_id,
+                             fp->parts[part].joint, &sp84, fp->facing_dir,
+                             orientation);
+            return;
+        }
+#endif
         OSReport("no effect from animlist %d\n", gfx_id);
         return;
     }

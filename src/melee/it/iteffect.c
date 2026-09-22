@@ -175,6 +175,23 @@ void it_80278800(Item_GObj* item_gobj, s32 ef_id, s32 arg2, Vec3* arg3,
     sp74 = *arg3;
     it_80278800_rand_vec(&sp74, arg4);
     lb_8000B1CC(it_80272CC0(item_gobj, arg2), &sp74, &sp68);
+#if defined(TARGET_PC)
+    /* Ported from m-ex (https://github.com/akaneia/m-ex).
+     * Source patch: asm/m-ex/Effect Expansion/Item/AsyncEffect.asm ("@ 80278ca0").
+     * Behaviour: an item script's effect id 5000..8999 is one of its ORIGINAL owner's own
+     * effects (an m-ex fighter's article): queued on the item like a fighter's (efasync.c). */
+    if (EF_MEX_IS_CUSTOM(ef_id)) {
+        f32 orientation = 0.0f;
+        if (item->ground_or_air == GA_Ground) {
+            orientation = atan2f(-item->x378_itemColl.floor.normal.x,
+                                 item->x378_itemColl.floor.normal.y);
+        }
+        efAsync_MexSpawn(item_gobj, &((Item*) item_gobj->user_data)->xBC0, ef_id,
+                         it_80272CC0(item_gobj, arg2), &sp74, item->facing_dir,
+                         orientation);
+        return;
+    }
+#endif
     if (ef_id < 0x250) {
         if (arg5 == 1) {
             efSync_Spawn(ef_id, item_gobj, &sp68);

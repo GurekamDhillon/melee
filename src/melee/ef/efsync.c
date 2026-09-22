@@ -14,7 +14,11 @@
 #include <sysdolphin/baselib/psstructs.h>
 #include <sysdolphin/baselib/random.h>
 
+#if defined(TARGET_PC)
+extern EF_DAT_Entry efAsync_DatEntries[EF_BANK_MAX];
+#else
 extern EF_DAT_Entry efAsync_DatEntries[51];
+#endif
 
 static inline EF_Effect* efSync_GetEffect(void* ret_obj)
 {
@@ -40,6 +44,114 @@ static inline HSD_Generator* efSync_GetGenerator(HSD_Generator* generator)
 //
 // Effects attach to a parent gobj and optionally a jobj for
 // position/rotation inheritance. Note there's variadic args!
+#if defined(TARGET_PC)
+#include <melee/ft/types.h>
+#include <melee/lb/lb_00B0.h>
+
+/* Ported from m-ex (https://github.com/akaneia/m-ex).
+ * Source patch: asm/m-ex/Effect Expansion/SyncEffect.asm ("#To be inserted @ 8005ff38").
+ * Behaviour: an effect id 5000..8999 names one of the spawning fighter's OWN models (5xxx) or
+ * particle generators (6xxx) - index xxx of its effect bank, or of the copied fighter's bank for
+ * Kirby (7xxx/8xxx on other fighters). The bank's effBehaviorTable says how each is placed; the
+ * va_list carries what that placement needs, as for the retail ids. */
+static void* efSync_MexSpawn(s32 gfx_id, HSD_GObj* gobj, va_list vlist)
+{
+    s32 id;
+    int is_ptcl;
+    HSD_GObj* owner;
+    int type = efAsync_MexResolve(gobj, gfx_id, &id, &is_ptcl, &owner);
+    EF_Effect* eff = NULL;
+    HSD_Generator* gen;
+    HSD_JObj* jobj;
+    Vec3* pos;
+    Vec3 wpos;
+    f32 f;
+
+    if (type < 0) {
+        return NULL;
+    }
+    if (!is_ptcl) {
+        switch (type) {
+        case 0: /* DefinePosRot: (pos, &rot_z) */
+            eff = efLib_Create_Attach_Pos(id, gobj, va_arg(vlist, Vec3*));
+            if (eff != NULL) {
+                HSD_JObjSetRotationZ(GET_JOBJ(eff->gobj), *va_arg(vlist, f32*));
+            }
+            break;
+        case 1: /* UseJointPos: (pos) - takes the spawner's scale */
+            eff = efLib_Create_Attach_Pos(id, gobj, va_arg(vlist, Vec3*));
+            if (eff != NULL) {
+                HSD_JObjSetScale(GET_JOBJ(eff->gobj), &GET_JOBJ(gobj)->scale);
+            }
+            break;
+        case 2: /* UseJointPos_GroundOrientation: (pos, &rot_z) */
+            eff = efLib_Create_Attach_Pos(id, gobj, va_arg(vlist, Vec3*));
+            if (eff != NULL) {
+                HSD_JObjSetRotationZ(GET_JOBJ(eff->gobj), *va_arg(vlist, f32*));
+            }
+            break;
+        case 3: /* UseJointPosRot: (jobj) - at the joint, its roll, no yaw */
+            jobj = va_arg(vlist, HSD_JObj*);
+            lb_8000B1CC(jobj, NULL, &wpos);
+            eff = efLib_Create_Attach_Pos(id, gobj, &wpos);
+            if (eff != NULL) {
+                HSD_JObjSetRotationY(GET_JOBJ(eff->gobj), 0.0f);
+                HSD_JObjSetRotationZ(GET_JOBJ(eff->gobj), jobj->rotate.z);
+            }
+            break;
+        case 4: /* UseJointPosFtDir: (pos, &facing) - yaw from the facing, spawner's scale */
+            pos = va_arg(vlist, Vec3*);
+            eff = efLib_Create_Attach_Pos(id, gobj, pos);
+            if (eff != NULL) {
+                f = *va_arg(vlist, f32*);
+                HSD_JObjSetRotationY(GET_JOBJ(eff->gobj), f < 0.0f ? -M_PI_2 : M_PI_2);
+                HSD_JObjSetScale(GET_JOBJ(eff->gobj), &GET_JOBJ(gobj)->scale);
+            }
+            break;
+        case 5: /* FollowJointPos: (jobj) */
+            eff = efLib_Create_Attach_Scale(id, gobj, va_arg(vlist, HSD_JObj*));
+            break;
+        case 6: /* FollowJointPosRot: (jobj) */
+            eff = efLib_Create_AttachChild_Scale(id, gobj, va_arg(vlist, HSD_JObj*));
+            break;
+        default:
+            return NULL;
+        }
+        /* the models freeze with the fighter in hitlag */
+        GET_FIGHTER(owner)->pre_hitlag_cb = efLib_PauseAll;
+        GET_FIGHTER(owner)->post_hitlag_cb = efLib_ResumeAll;
+        return eff;
+    }
+    switch (type) {
+    case 0: /* UseJointPos: (pos) */
+        pos = va_arg(vlist, Vec3*);
+        gen = hsd_8039F05C(0, id / 1000, id);
+        if (gen != NULL) {
+            gen->pos = *pos;
+        }
+        return gen;
+    case 1: /* UseJointPosRot          } (pos, &facing): placed and turned */
+    case 2: /* UseJointPosRot_Ground   } to the facing direction          */
+    case 3: /* UseJointPosFtDir        }                                   */
+        pos = va_arg(vlist, Vec3*);
+        f = *va_arg(vlist, f32*);
+        return efLib_CreateGenerator_Translate_FacingDir(id, pos, f);
+    case 5: /* FollowJointPos: (jobj) - particle size scaled by the spawner */
+        gen = hsd_8039EFAC(0, id / 1000, id, va_arg(vlist, HSD_JObj*));
+        if (gen != NULL) {
+            gen->size *= GET_JOBJ(gobj)->scale.x;
+        }
+        return gen;
+    case 6: /* FollowJointPos_FtDir: (jobj, &facing) */
+        return efLib_CreateGenerator_AppSRT_SetFacingDir(id, vlist);
+    case 7: /* FollowJointPos_CopyGObjScale: (jobj) */
+        return efLib_CreateGenerator_Attach_Scale(id, vlist, gobj);
+    default: /* 4 (UseJointPos_FtDir_Ground) is empty in m-ex too */
+        return NULL;
+    }
+}
+#endif
+
 void* efSync_Spawn(s32 gfx_id, HSD_GObj* gobj, ...)
 {
     va_list vlist;
@@ -82,6 +194,12 @@ void* efSync_Spawn(s32 gfx_id, HSD_GObj* gobj, ...)
         return efAlt_Spawn(gfx_id, gobj, vlist);
     }
     efLib_LoadKind = EF_LOADKIND_SYNC;
+#if defined(TARGET_PC)
+    if (EF_MEX_IS_CUSTOM(gfx_id)) {
+        ret_obj = efSync_MexSpawn(gfx_id, gobj, vlist);
+        goto mex_spawned;
+    }
+#endif
     switch (gfx_id) {
     case 0x4BB:
         ret_obj = efLib_Create_Attach_Scale_FacingDir(0x1770, gobj,
@@ -651,6 +769,9 @@ void* efSync_Spawn(s32 gfx_id, HSD_GObj* gobj, ...)
                                                       va_arg(vlist, void*));
         break;
     }
+#if defined(TARGET_PC)
+mex_spawned:
+#endif
     while (efLib_AnimCount != 0) {
         cnt_2 = efLib_AnimCount - 1;
         efLib_AnimCount = cnt_2;

@@ -811,6 +811,41 @@ const char *gw_Mex_BgmFile(int i) {
     return (const char *) (uintptr_t) gw_r32((const void *) (uintptr_t) (names + 4u * (uint32_t) i));
 }
 
+/* ---- m-ex effect banks (mexData.effect, root +0x18) ----------------------------------------------
+ * mexData.effect +0x00 is m-ex's replacement for the game's effect file table
+ * (efAsync_DatEntries): rows of {char *file; char *symbol; u32 runtime}, stride 12, exactly the
+ * game's EF_DAT_Entry layout, with the retail rows at their retail indices and the build's own
+ * banks in the retail holes (22..30) and after them. metadata.effect_count bounds it. The other
+ * eight root words are m-ex's own runtime arrays; the port keeps its retail 65-bank particle
+ * arrays instead. Ported from m-ex (https://github.com/akaneia/m-ex),
+ * asm/m-ex/MnSlChrData - Effect File Names/: behaviour only, no code. */
+#define GW_MEXDT_OFF_EFFECT 0x18u
+static uint32_t gw_mex_word(uint32_t tbl, uint32_t index, uint32_t stride);
+static const char *gw_mex_cstr(uint32_t p);
+
+int gw_Mex_EffectCount(void) {
+    uint32_t md;
+    int n;
+    if (gw_Mex_CssIconCount() == 0) {
+        return 0;
+    }
+    md = gw_r32((const void *) (uintptr_t) gw_mexdt);
+    n = gw_mexdt_in(md, 0x28u) ? (int) gw_r32((const void *) (uintptr_t) (md + 0x24u)) : 0;
+    return (n > 0 && n <= 256) ? n : 0;
+}
+
+/* Row i's file name (which = 0) or data-table symbol (which = 1), or NULL. */
+const char *gw_Mex_EffectString(int i, int which) {
+    uint32_t eff, tbl, p;
+    if (i < 0 || i >= gw_Mex_EffectCount() || which < 0 || which > 1) {
+        return NULL;
+    }
+    eff = gw_r32((const void *) (uintptr_t) (gw_mexdt + GW_MEXDT_OFF_EFFECT));
+    tbl = gw_mexdt_in(eff, 4u) ? gw_r32((const void *) (uintptr_t) eff) : 0u;
+    p = gw_mex_word(tbl, (uint32_t) i * 3u + (uint32_t) which, 4u);
+    return gw_mex_cstr(p);
+}
+
 /* fighter-table s32 at `field_off`, indexed by the port CharacterKind's external id; `fallback`
  * when unavailable. */
 static int gw_mex_fighter_s32_for_ck(int ck, uint32_t field_off, int fallback) {
@@ -3779,6 +3814,54 @@ static int test_mex_ft_item_id_sonic(void) {
  * offset is garbage that happens not to crash - the checks are therefore range checks over the
  * whole table, not a single spot value, and the real values are logged for eyeballing. Skipped on
  * a disc without MxDt.dat. Disc-agnostic on purpose: Akaneia and ACE ship different playlists. */
+/* The effect bank table (mexData.effect) the game's efAsync_DatEntries is filled from: the retail
+ * rows sit at their retail indices (0 EfCoData, 1 EfMrData, 3 EfFxData, 49 EfFeData), every
+ * m-ex fighter's effect_index names a row with a file or is 255, and the count fits the port's
+ * 65 particle banks. Disc-agnostic: skipped without MxDt.dat. */
+static int test_mex_effect_banks(void) {
+    uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
+    uint32_t root;
+    int rc = 0, n, k, nint, custom = 0;
+    static const struct { int i; const char *file; } retail[] = {
+        { 0, "EfCoData.dat" }, { 1, "EfMrData.dat" }, { 3, "EfFxData.dat" }, { 49, "EfFeData.dat" } };
+    root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base,
+                           &gw_mexdt_size);
+    if (root == 0u) {
+        gw_log("test mex_effect_banks: no MxDt.dat on this disc - skipped");
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 0;
+    }
+    gw_mexdt = root;
+    n = gw_Mex_EffectCount();
+    if (n < 51 || n > 65) {
+        gw_test_fail("effect_count %d: expected at least the 51 retail rows and at most 65 banks", n);
+        rc = 1;
+    }
+    for (k = 0; rc == 0 && k < (int) (sizeof retail / sizeof retail[0]); ++k) {
+        const char *f = gw_Mex_EffectString(retail[k].i, 0);
+        if (f == NULL || strcmp(f, retail[k].file) != 0) {
+            gw_test_fail("effect row %d is %s, expected the retail %s", retail[k].i, f ? f : "(none)",
+                         retail[k].file);
+            rc = 1;
+        }
+    }
+    nint = gw_Mex_InternalCount();
+    for (k = 27; rc == 0 && k < nint - 6; ++k) {
+        int e = gw_Mex_FtEffectIndex(k);
+        if (e == 255 || gw_Mex_FtPlFile(k) == NULL) {
+            continue;
+        }
+        if (e < 0 || e >= n || gw_Mex_EffectString(e, 0) == NULL || gw_Mex_EffectString(e, 1) == NULL) {
+            gw_test_fail("m-ex fighter %d (%s) has effect bank %d with no file", k, gw_Mex_FtPlFile(k), e);
+            rc = 1;
+        }
+        ++custom;
+    }
+    gw_log("test mex_effect_banks: %d banks, %d m-ex fighters with their own bank", n, custom);
+    gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+    return rc;
+}
+
 static int test_mex_music_tables(void) {
     uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
     uint32_t root;
@@ -4451,6 +4534,7 @@ static int test_ppc_tail_branch_returns(void) {
 void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_ft_item_id_sonic", test_mex_ft_item_id_sonic);
     gw_test_register("mex_music_tables", test_mex_music_tables);
+    gw_test_register("mex_effect_banks", test_mex_effect_banks);
     gw_test_register("mex_css_pack_rows", test_mex_css_pack_rows);
     gw_test_register("mex_css_icon_map", test_mex_css_icon_map);
     gw_test_register("mex_ftdata_rows", test_mex_ftdata_rows);

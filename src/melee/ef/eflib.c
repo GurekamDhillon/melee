@@ -34,7 +34,11 @@
 #include <sysdolphin/baselib/state.h>
 // externs
 
+#if defined(TARGET_PC)
+extern EF_DAT_Entry efAsync_DatEntries[EF_BANK_MAX];
+#else
 extern EF_DAT_Entry efAsync_DatEntries[51];
+#endif
 
 // forward declarations to avoid sdata2 pollution
 void HSD_MtxGetScale(Mtx, Vec3*);

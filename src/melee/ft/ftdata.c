@@ -1726,7 +1726,21 @@ void ftData_MexInitKinds(void)
         ftData_Table_Unk1[fk] = ftData_Table_Unk1[base];
         ftData_UnkMotionStates5[fk] = ftData_UnkMotionStates5[base];
         ftData_UnkIntPairs[fk].count = ftData_UnkIntPairs[base].count;
-        ftData_UnkBytePerCharacter[fk] = ftData_UnkBytePerCharacter[base];
+        /* Ported from m-ex (https://github.com/akaneia/m-ex).
+         * Source patch: asm/m-ex/MnSlChrData - Effect ID Table/ (EffectID.asm, Fighter_LoadSync.asm).
+         * Behaviour: a fighter's effect bank is MxDt's effect_index[internal], not the clone
+         * base's - it holds the fighter's own models and generators (efasync.c, ids >= 5000).
+         * 255 (none) or a bank the effect table has no file for keeps the clone base's. */
+        {
+            extern int Mex_FtEffectIndex(int k);
+            extern const char* Mex_EffectString(int i, int which);
+            int eb = Mex_FtEffectIndex(k);
+            if (eb >= 0 && eb < EF_BANK_MAX && Mex_EffectString(eb, 0) != NULL) {
+                ftData_UnkBytePerCharacter[fk] = (u8) eb;
+            } else {
+                ftData_UnkBytePerCharacter[fk] = ftData_UnkBytePerCharacter[base];
+            }
+        }
         ftData_UnkCallbackPairs0[fk] = ftData_UnkCallbackPairs0[base];
         /* Kirby's copy ability for this fighter: its own hat archive, hat costumes, effect
          * bank and copied-special callbacks come from MxDt.dat, indexed by the m-ex INTERNAL

@@ -20,6 +20,11 @@
 
 HSD_ObjAllocData efAsync_AllocData;
 
+#if defined(TARGET_PC)
+static void efAsync_MexNoteArchive(int bank, HSD_Archive* archive);
+static void efAsync_MexProcessDeferred(HSD_GObj* gobj, EF_QueuedEffect* q);
+#endif
+
 static inline HSD_JObj* efAsync_GetEffectJObj(EF_Effect* effect)
 {
     return GET_JOBJ(effect->gobj);
@@ -1202,7 +1207,11 @@ static char efAsync_803C0220[] = "effKirbyEmblemDataTable";
 static char efAsync_803C0238[] = "EfFeData.dat";
 static char efAsync_803C0248[] = "effEmblemDataTable";
 
+#if defined(TARGET_PC)
+/* 3C025C */ EF_DAT_Entry efAsync_DatEntries[EF_BANK_MAX] = {
+#else
 /* 3C025C */ EF_DAT_Entry efAsync_DatEntries[51] = {
+#endif
     { efAsync_803BFD68, efAsync_803BFD78, NULL },
     { efAsync_803BFD8C, efAsync_803BFD9C, NULL },
     { efAsync_803BFDB0, efAsync_803BFDC0, NULL },
@@ -1259,9 +1268,16 @@ static char efAsync_803C0248[] = "effEmblemDataTable";
 void efAsync_LoadAsync(int index)
 {
     EF_DAT_Entry* entry = &efAsync_DatEntries[index];
+#if defined(TARGET_PC)
+    efAsync_MexInit();
+    if (index >= EF_BANK_MAX || index < 0) {
+        return;
+    }
+#else
     if (index >= 50 || index < 0) {
         return;
     }
+#endif
 
     if (entry->ef_DAT_file == NULL) {
         return;
@@ -1277,6 +1293,9 @@ void efAsync_OnLoad(HSD_Archive* archive, u8* data, u32 length, int index)
     lbArchive_InitializeDAT(archive, data, length);
     result = HSD_ArchiveGetPublicAddress(
         archive, efAsync_DatEntries[index].effDataTable_name);
+#if defined(TARGET_PC)
+    efAsync_MexNoteArchive(index, archive);
+#endif
     if ((u32) result->ef_DAT_file | (u32) result->effDataTable_name) {
         psInitDataBankLocate((HSD_Archive*) result->ef_DAT_file,
                              (HSD_Archive*) result->effDataTable_name, NULL);
@@ -1289,9 +1308,16 @@ void efAsync_LoadSync(int idx)
     EF_DAT_Entry* lookup;
     lookup = &efAsync_DatEntries[idx];
 
+#if defined(TARGET_PC)
+    efAsync_MexInit();
+    if (idx >= EF_BANK_MAX || idx < 0) {
+        return;
+    }
+#else
     if (idx >= 50 || idx < 0) {
         return;
     }
+#endif
     if (!lookup->ef_DAT_file) {
         return;
     }
@@ -1299,8 +1325,15 @@ void efAsync_LoadSync(int idx)
         return;
     }
     {
+#if defined(TARGET_PC)
+        HSD_Archive* ef_archive = NULL;
+        bool chk = lbArchive_80017040(&ef_archive, lookup->ef_DAT_file, &spC,
+                                      lookup->effDataTable_name, 0);
+        efAsync_MexNoteArchive(idx, ef_archive);
+#else
         bool chk = lbArchive_80017040(NULL, lookup->ef_DAT_file, &spC,
                                       lookup->effDataTable_name, 0);
+#endif
         if ((u32) spC->ef_DAT_file | (u32) spC->effDataTable_name) {
             if (chk) {
                 psInitDataBankLoad(idx, (void*) spC->ef_DAT_file,
@@ -1365,6 +1398,11 @@ void efAsync_QueueProcessDeferred(HSD_GObj* gobj,
         lb_8000B1CC(jobj, &queued_effect->params, &sp10);
         Camera_RequestQuake(gfx_id, &sp10);
         break;
+#if defined(TARGET_PC)
+    case EF_SPAWN_MEX:
+        efAsync_MexProcessDeferred(gobj, queued_effect);
+        break;
+#endif
     default:
         HSD_ASSERTREPORT(0x7CU, 0, "[EfASync] unknown type %d\n", spawn_kind,
                          jobj);
@@ -1469,3 +1507,257 @@ void efAsync_QueueInit(void)
     HSD_ObjAllocInit(&efAsync_AllocData, sizeof(EF_QueuedEffect),
                      sizeof(EF_QueuedEffect*));
 }
+
+#if defined(TARGET_PC)
+#include <melee/ft/fighter.h>
+#include <melee/ft/types.h>
+#include <melee/it/types.h>
+
+extern int Mex_EffectCount(void);
+extern const char* Mex_EffectString(int i, int which);
+extern u8 ftData_UnkBytePerCharacter[];
+
+/* Ported from m-ex (https://github.com/akaneia/m-ex).
+ * Source patches: asm/m-ex/Effect Expansion/{SyncEffect,AsyncEffect,AsyncToSync,Item/AsyncEffect}.asm,
+ * asm/m-ex/Standalone Functions/Effect_CreateAsyncObject.asm,
+ * asm/m-ex/MnSlChrData - Effect File Names/ (incl. Index effBehaviorTable).
+ * Behaviour: effect ids 5000..8999 are a fighter's OWN effects, relative to its effect bank. */
+
+/// effBehaviorTable, the public symbol an m-ex effect archive carries next to its data table:
+/// how each of its models / particle generators is placed (the "behaviour type").
+typedef struct EfMexBehavior {
+    /* +0 */ s32 mdl_num;
+    /* +4 */ u8* mdl_type;
+    /* +8 */ s32 ptcl_num;
+    /* +C */ u8* ptcl_type;
+} EfMexBehavior;
+
+static EfMexBehavior* efAsync_MexBhv[EF_BANK_MAX];
+static bool efAsync_MexReady;
+
+/// Fill the effect bank table from MxDt.dat (m-ex's table replaces the game's). Retail rows sit at
+/// their retail indices on both known builds; a row MxDt leaves empty keeps the retail entry.
+void efAsync_MexInit(void)
+{
+    int n, i;
+    if (efAsync_MexReady) {
+        return;
+    }
+    efAsync_MexReady = true;
+    n = Mex_EffectCount();
+    if (n > EF_BANK_MAX) {
+        OSReport("mexeffect: %d effect banks, the particle system holds %d - the rest are "
+                 "left out\n",
+                 n, EF_BANK_MAX);
+        n = EF_BANK_MAX;
+    }
+    for (i = 0; i < n; i++) {
+        char* file = (char*) Mex_EffectString(i, 0);
+        char* sym = (char*) Mex_EffectString(i, 1);
+        if (file == NULL || sym == NULL) {
+            continue;
+        }
+        efAsync_DatEntries[i].ef_DAT_file = file;
+        efAsync_DatEntries[i].effDataTable_name = sym;
+    }
+    if (n > 0) {
+        OSReport("mexeffect: %d effect banks from MxDt.dat\n", n);
+    }
+}
+
+/// An effect archive just loaded: remember its effBehaviorTable (m-ex's "Index effBehaviorTable").
+static void efAsync_MexNoteArchive(int bank, HSD_Archive* archive)
+{
+    EfMexBehavior* bhv;
+    if (bank < 0 || bank >= EF_BANK_MAX || archive == NULL) {
+        return;
+    }
+    bhv = HSD_ArchiveGetPublicAddress(archive, "effBehaviorTable");
+    if (bhv != efAsync_MexBhv[bank] && bhv != NULL) {
+        OSReport("mexeffect: bank %d (%s): %d model(s), %d particle generator(s) with a "
+                 "behaviour\n",
+                 bank, efAsync_DatEntries[bank].ef_DAT_file, bhv->mdl_num,
+                 bhv->ptcl_num);
+    }
+    efAsync_MexBhv[bank] = bhv;
+}
+
+/// Say a miss once per (fighter kind, id): which fighter wanted which effect and why it was not
+/// drawn is the whole point of the log.
+static void efAsync_MexMiss(int kind, s32 gfx_id, const char* why)
+{
+    static s32 seen[256];
+    static int nseen;
+    s32 key = (kind * 10000 + gfx_id % 100000) * 2 + (gfx_id >= 100000);
+    int i;
+    for (i = 0; i < nseen; i++) {
+        if (seen[i] == key) {
+            return;
+        }
+    }
+    if (nseen < (int) ARRAY_SIZE(seen)) {
+        seen[nseen++] = key;
+    }
+    if (gfx_id >= 100000) {
+        OSReport("mexeffect: fighter kind %d effect %d %s\n", kind, gfx_id - 100000, why);
+        return;
+    }
+    OSReport("mexeffect: fighter kind %d effect %d not drawn - %s\n", kind, gfx_id, why);
+}
+
+int efAsync_MexResolve(HSD_GObj* gobj, s32 gfx_id, s32* final_id, int* is_ptcl,
+                       HSD_GObj** owner)
+{
+    Fighter* fp;
+    int kind, src_kind, bank, int_id, copy, type;
+    EfMexBehavior* bhv;
+
+    if (gobj == NULL || !EF_MEX_IS_CUSTOM(gfx_id)) {
+        return -1;
+    }
+    /* an item's effect belongs to the fighter that ORIGINALLY owned it */
+    if (gobj->classifier == HSD_GOBJ_CLASS_ITEM) {
+        gobj = ((Item*) gobj->user_data)->mex_original_owner;
+        if (gobj == NULL || gobj->classifier != HSD_GOBJ_CLASS_FIGHTER) {
+            return -1;
+        }
+    }
+    if (gobj->classifier != HSD_GOBJ_CLASS_FIGHTER) {
+        return -1;
+    }
+    fp = GET_FIGHTER(gobj);
+    kind = fp->kind;
+    if (kind == Ft_Kind_Kirby) {
+        /* Kirby's own ids are the copied fighter's: 5xxx model, 6xxx generator */
+        if (gfx_id >= EF_MEX_CPMDL_START) {
+            return -1;
+        }
+        copy = true;
+        *is_ptcl = gfx_id >= EF_MEX_PTCL_START;
+        int_id = gfx_id - (*is_ptcl ? EF_MEX_PTCL_START : EF_MEX_MDL_START);
+    } else {
+        copy = gfx_id >= EF_MEX_CPMDL_START;
+        *is_ptcl = (gfx_id >= EF_MEX_PTCL_START && gfx_id < EF_MEX_CPMDL_START) ||
+                   gfx_id >= EF_MEX_CPPTCL_START;
+        int_id = gfx_id % 1000;
+    }
+    src_kind = copy ? (int) fp->u.kb.hat.kind : kind;
+    if (src_kind < 0 || src_kind >= Ft_Kind_Max) {
+        return -1;
+    }
+    bank = ftData_UnkBytePerCharacter[src_kind];
+    if (bank < 0 || bank >= EF_BANK_MAX || bank == 0xFF) {
+        efAsync_MexMiss(kind, gfx_id, "no effect bank");
+        return -1;
+    }
+    bhv = efAsync_MexBhv[bank];
+    if (bhv == NULL || efAsync_DatEntries[bank].data == NULL) {
+        if (kind != Ft_Kind_Kirby) {
+            efAsync_MexMiss(kind, gfx_id, "its effect bank has no effBehaviorTable (not loaded?)");
+        }
+        return -1;
+    }
+    if (int_id >= (*is_ptcl ? bhv->ptcl_num : bhv->mdl_num)) {
+        efAsync_MexMiss(kind, gfx_id, "past the bank's behaviour table");
+        return -1;
+    }
+    type = (*is_ptcl ? bhv->ptcl_type : bhv->mdl_type)[int_id];
+    *final_id = bank * 1000 + int_id;
+    *owner = gobj;
+    {
+        /* first use of each (fighter, id): which effect it became - the trace that says a
+           custom effect ran at all */
+        static char buf[128];
+        sprintf(buf, "drawn as bank %d (%s) %s %d, behaviour %d, in motion %d", bank,
+                efAsync_DatEntries[bank].ef_DAT_file, *is_ptcl ? "generator" : "model", int_id,
+                type, (int) fp->motion_id);
+        efAsync_MexMiss(kind, gfx_id + 100000, buf);
+    }
+    return type;
+}
+
+/// Effect_CreateAsyncObject + the fighter-command hook: a custom id from a subaction queues one
+/// EF_SPAWN_MEX entry on the fighter's effect queue, or spawns it at once outside the fighter
+/// procs - exactly like efAsync_Spawn.
+void efAsync_MexSpawn(HSD_GObj* gobj, void* queue_head, s32 gfx_id, HSD_JObj* jobj,
+                      Vec3* offset, f32 facing, f32 orientation)
+{
+    EF_QueuedEffect* q;
+    s32 final_id;
+    int is_ptcl;
+    HSD_GObj* owner;
+    if (efAsync_MexResolve(gobj, gfx_id, &final_id, &is_ptcl, &owner) < 0) {
+        return;
+    }
+    q = HSD_ObjAlloc(&efAsync_AllocData);
+    if (q == NULL) {
+        return;
+    }
+    q->spawn_kind = EF_SPAWN_MEX;
+    q->gfx_id = gfx_id;
+    q->jobj = jobj;
+    q->params = *offset;
+    q->extra1 = facing;
+    q->extra2 = orientation;
+    if (HSD_GObj_CurrentInvokedProc != NULL && HSD_GObj_CurrentInvokedProc->s_link < 9U) {
+        q->next = ((EF_QueuedEffect*) queue_head)->next;
+        ((EF_QueuedEffect*) queue_head)->next = q;
+        return;
+    }
+    efAsync_QueueProcessDeferred(gobj, q);
+}
+
+/// AsyncToSync: turn the queued entry into the efSync_Spawn call its behaviour type expects.
+/// Types m-ex leaves unimplemented from the async path spawn nothing, as there.
+static void efAsync_MexProcessDeferred(HSD_GObj* gobj, EF_QueuedEffect* q)
+{
+    Vec3 pos;
+    s32 final_id;
+    int is_ptcl, type;
+    HSD_GObj* owner;
+    s32 id = q->gfx_id;
+
+    type = efAsync_MexResolve(gobj, id, &final_id, &is_ptcl, &owner);
+    if (type < 0) {
+        return;
+    }
+    if (!is_ptcl) {
+        switch (type) {
+        case 0: /* DefinePosRot   } all placed at the bone + offset,  */
+        case 1: /* UseJointPos    } with facing direction and ground  */
+        case 2: /* ..._Ground     } orientation for the sync side     */
+        case 3: /* UseJointPosRot */
+        case 4: /* UseJointPosFtDir */
+            lb_8000B1CC(q->jobj, &q->params, &pos);
+            efSync_Spawn(id, gobj, &pos, &q->extra1, &q->extra2);
+            break;
+        case 5: /* FollowJointPos */
+        case 6: /* FollowJointPosRot */
+            efSync_Spawn(id, gobj, q->jobj);
+            break;
+        default:
+            break;
+        }
+        return;
+    }
+    switch (type) {
+    case 0: /* UseJointPos */
+        lb_8000B1CC(q->jobj, &q->params, &pos);
+        efSync_Spawn(id, gobj, &pos, &q->extra1, &q->extra2);
+        break;
+    case 3: /* UseJointPosFtDir */
+        lb_8000B1CC(q->jobj, &q->params, &pos);
+        efSync_Spawn(id, gobj, &pos, &q->extra1);
+        break;
+    case 5: /* FollowJointPos */
+    case 7: /* FollowJointPos_CopyGObjScale */
+        efSync_Spawn(id, gobj, q->jobj);
+        break;
+    case 6: /* FollowJointPos_FtDir */
+        efSync_Spawn(id, gobj, q->jobj, &q->extra1);
+        break;
+    default: /* 1, 2, 4: nothing from the async path in m-ex either */
+        break;
+    }
+}
+#endif

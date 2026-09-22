@@ -2,22 +2,24 @@
  * and the transport (gw_net.c), plus what it takes to reach a friend on another network.
  *
  * HOW A MATCH COMES TOGETHER
- *   1. Set up: the ONLINE PLAY screen (gmfrontend.c) calls Netplay_Begin with the player's choices
- *      (host or join, character, costume; the host also stage and rules). Scripted runs set the same
- *      through MELEE_NETPLAY* instead, and connect at boot (gw_Netplay_Scene).
- *   2. Connect: the host opens UDP port 51500, finds its public address (STUN) and asks the router to
- *      forward the port (UPnP); its "code" is that address, copied to the clipboard. The guest pastes
- *      it and dials. If neither router lets the other in, each side pastes the other's code and both
- *      punch a hole (the guest's HELLOs and the host's punch packets open both NATs).
- *   3. Agree: the guest's character travels in its HELLO; the host folds it into the match (a scene
- *      string, gmscenelaunch.h grammar, with the rules) and sends it back in the ACCEPT with a seed.
+ *   1. Set up: VERSUS > ONLINE (gmfrontend.c) hosts a room or joins one by its code
+ *      (gw_Netplay_MenuBegin; the host also sets the rules). Scripted runs set the same through
+ *      MELEE_NETPLAY* instead, and connect at boot (gw_Netplay_Scene), without the lobby.
+ *   2. Connect: the matchmaking server (netplay_server.txt) gives the host a 4-character room code
+ *      and introduces the guest who types it; both punch toward each other and fall back to the
+ *      server's relay when no direct path opens (the rendezvous layer below). Without a server the
+ *      scripted path still dials an address directly (host: STUN + UPnP; guest: the host's code).
+ *   3. Agree: in the LOBBY (menu path) the host runs the pick/ban rules and sends the match (a scene
+ *      string, gmscenelaunch.h grammar, with the rules) once both are ready; the scripted path
+ *      folds the guest's HELLO choice into the match straight away.
  *   4. Load: both seed VS mode from that scene and load the match. The transport holds the start
  *      (hold_start) until both have loaded, then agrees a start time.
  *   5. Play: at the point a replay would restore its match struct (gw_Replay_ApplyMatch) each side
  *      releases the hold and waits for the start; from there gw_Netplay_Tick runs every render tick
  *      inside gw_RB_Iterations - remote inputs in, ours out, checksums, time sync.
- *   6. When the match scene ends the session closes; the next match starts again from step 1 (the
- *      menu remembers everything, so a rematch is Host / Connect again).
+ *   6. When the match scene ends the session closes, but a room-code room stays open on the server:
+ *      after the results both players land back in the lobby, which reconnects them to the same
+ *      room (gw_Netplay_Rejoin) and carries on with the set.
  *
  * Inputs travel as raw controller statuses, so both machines run the game's own pad pipeline -
  * calibration, deadzones, UCF - on identical bytes. Protocol: _research/rollback-net.md.
@@ -72,7 +74,10 @@ static struct {
     uint32_t seed;
     gw_net_config cfg;    /* kept: a guest joins only once the server has introduced the host */
     int t_open;           /* np.t is open and not yet owned by a gw_net */
-    int rematch;          /* a room-code match just ended: the menu reconnects to the same room */
+    int rematch;          /* a room-code match just ended: the lobby reconnects to the same room */
+    int rejoining;        /* this connection is a return to the room after a match (gw_Netplay_Rejoin) */
+    uint32_t rejoin_until;/* a returning guest keeps asking for the room until then (GetTickCount) */
+    int peer_left;        /* the connection ended because the opponent left (not an error of ours) */
     int use_lobby;        /* the menu path: connected players meet in the pick/ban lobby first */
     int started, dead, accepted;
     long ticks;
@@ -662,7 +667,7 @@ static gw_net_addr np_pick(const gw_net_addr *pub, const gw_net_addr *lan, int h
 #define NP_RELAY_AFTER_MS 3000u
 static const char NP_ALPHABET[] = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 int gw_Netplay_MenuHasServer(void);
-void gw_Netplay_MenuSetLetter(int i, int v);
+int gw_Netplay_CodeComplete(void);
 
 static struct {
     int configured;           /* a server address is set and resolved */
@@ -770,7 +775,7 @@ static void np_rdv_handle(const char *msg) {
         }
         snprintf(np.code, sizeof np.code, "%s", rdv.code);
         np_clip_set(rdv.code);
-        np_status("Room %s - copied. Send it to your friend", rdv.code);
+        np_status("Waiting for an opponent to join...");
     } else if (strcmp(w0, "PEER") == 0 && !rdv.have_peer) {
         gw_net_addr pub, lan;
         int has_lan = strcmp(w2, "-") != 0 && gw_net_addr_parse(w2, 1, &lan) == 0 && lan.ip != 0;
@@ -788,10 +793,24 @@ static void np_rdv_handle(const char *msg) {
         rdv.relay = 1;
     } else if (strcmp(w0, "ERR") == 0) {
         const char *r = strchr(msg, ' ');
+        if (!np.host && np.rejoining && (int32_t) (np.rejoin_until - GetTickCount()) > 0) {
+            /* back from a match before the host: its room answers again once it has re-registered */
+            snprintf(np.status, sizeof np.status, "Waiting for the host to come back...");
+            rdv.next_send = GetTickCount() + 1000;
+            return;
+        }
         snprintf(rdv.err, sizeof rdv.err, "%s", r != NULL ? r + 1 : "server error");
-        np_status("Server: %s", rdv.err);
+        if (!np.host && strstr(rdv.err, "no room") != NULL) {
+            np_status("No room %s. Check the code with your host.", np.peer_code);
+        } else {
+            np_status("Server: %s", rdv.err);
+        }
     } else if (strcmp(w0, "BYE") == 0) {
-        np_status("Your friend left the room");
+        /* the host closed the room (a guest leaving never sends BYE: see np_rdv_close) */
+        if (!np.host) {
+            np.dead = 1;
+            np_status("The host closed the room");
+        }
     }
 }
 
@@ -844,7 +863,10 @@ static int np_rdv_recv(void *ctx, gw_net_addr *from, void *buf, int cap) {
 static int np_keep_room; /* close without leaving the room (persistent rooms, between matches) */
 static void np_rdv_close(void *ctx) {
     (void) ctx;
-    if ((rdv.have_code || rdv.have_peer) && !np_keep_room) np_rdv_ctl("BYE");
+    /* Only the host closes the room. The server drops the whole room on a BYE, so a guest that
+       leaves just goes quiet (its QUIT tells the host) and the host keeps its code for the next
+       opponent. */
+    if (np.host && rdv.have_code && !np_keep_room) np_rdv_ctl("BYE");
     rdv.inner.close(rdv.inner.ctx);
     rdv.on = 0;
 }
@@ -888,6 +910,14 @@ static void np_rdv_service(void) {
             rdv.next_send = now + 3000;
         }
     }
+    if (!np.host && np.rejoining && rdv.have_peer && !np.accepted && now - rdv.peer_at > 5000) {
+        /* a returning guest introduced before the host was back (the host re-registering empties
+           the seat): ask again so the server introduces us to the host that is listening now */
+        rdv.have_peer = 0;
+        rdv.relay = rdv.got_direct = 0; /* and give the new introduction its own chance at a direct path */
+        rdv.next_send = now;
+        gw_log("netplay: not accepted 5 s after the introduction - asking for the room again");
+    }
     if (rdv.have_peer && !rdv.relay && getenv("MELEE_NETPLAY_FORCE_RELAY") != NULL) {
         rdv.relay = 1; /* testing: take the relay path from the start */
         np_rdv_ctl("RELAY");
@@ -907,23 +937,28 @@ static void np_rdv_service(void) {
  * ready the host sends the match ("G <seed> <scene>") and both go into it. Messages travel on the
  * transport's lobby channel (reliable, ordered).
  *
- * The rules (a common modern singles ruleset; see LB_* below):
+ * The rules (a common modern singles ruleset):
  *   Game 1: characters double-blind (each picks on the real CSS; revealed when both are locked),
- *           then stage striking over the six legal stages - a coin flip picks who strikes first,
- *           strikes go 1-2-2 until one stage remains.
+ *           then stage striking over the legal stages - a coin flip picks who strikes first,
+ *           strikes go 1-2-2 (then alternate 2s) until one stage remains.
  *   Game 2+: the previous game's winner bans 2 stages, the loser picks one of the rest; then the
  *           winner picks a character, then the loser (counterpick, not blind).
- *   Then both press Ready; a short countdown; the match.
- * Players: 0 = host (P1), 1 = guest (P2). */
+ *   Then both press Ready (either can take it back); a 3-second countdown; the match.
+ * Players: 0 = host (P1), 1 = guest (P2).
+ *
+ * The rules are pure functions of `lb` (lb_new_set / lb_reset_game / lb_apply), so they are tested
+ * headless (gw_netplay_tests_register). The stage list is data (lb.nstages, up to LB_MAX_STAGES),
+ * so a longer list can replace the default six. */
 static void np_close(void);
 static void np_copy(char *out, int cap, const char *s);
 enum { LB_OFF, LB_CHAR_BLIND, LB_STRIKE, LB_BAN, LB_PICK, LB_CHAR_WINNER, LB_CHAR_LOSER, LB_READY, LB_GO };
-#define LB_NSTAGES 6
-static const int lb_stage_ext[LB_NSTAGES] = { 31, 28, 32, 2, 3, 8 };
-static const char *const lb_stage_name[LB_NSTAGES] = { "Battlefield", "Dream Land", "Final Destination",
-                                                       "Fountain of Dreams", "Pokemon Stadium",
-                                                       "Yoshi's Story" };
 enum { LB_FREE = 0, LB_STRUCK_P1 = 1, LB_STRUCK_P2 = 2, LB_BANNED = 3, LB_PICKED = 4 };
+#define LB_MAX_STAGES 32
+#define LB_COUNTDOWN 180 /* 3-2-1 */
+static const int lb_default_ext[] = { 31, 28, 32, 2, 3, 8 };
+static const char *const lb_default_name[] = { "Battlefield", "Dream Land", "Final Destination",
+                                               "Fountain of Dreams", "Pokemon Stadium",
+                                               "Yoshi's Story" };
 
 static struct {
     int phase, game, winner, score[2];
@@ -931,18 +966,54 @@ static struct {
     int left;            /* actions left in this turn */
     int step;            /* game 1 striking: which entry of the 1-2-2 order */
     int first;           /* game 1: who strikes first (the coin flip) */
-    int stage[LB_NSTAGES];
+    int nstages;
+    int stage_ext[LB_MAX_STAGES];
+    int stage[LB_MAX_STAGES];
     int chosen;          /* index of the stage the game is on, -1 none yet */
     int ck[2], color[2], locked[2], ready[2];
     int countdown;       /* frames, once both are ready */
+    uint32_t seed;       /* the coin flip's source (the host's session seed; the same on both) */
+    int have_state;      /* guest: the host's state has arrived on this connection */
+    uint32_t cd_t0;      /* GetTickCount at the countdown's zero, 0 = not running */
     uint32_t seq;        /* state version, for the menu to notice changes */
 } lb;
 
 static const int lb_strike_counts[3] = { 1, 2, 2 }; /* 1-2-2 */
 
+/* MODS ONLINE (the seam for delta's content identities): whether both players have this fighter
+ * (port CharacterKind) / stage (external stage id). Once the handshake carries each side's
+ * available set, these answer from the intersection; the lobby's stage list and the online CSS
+ * pick already ask them. Until then both players run the same disc (the handshake refuses a
+ * mismatch), so everything on it is available. */
+int gw_Netplay_FighterAvailable(int ck) { return ck >= 0; }
+int gw_Netplay_StageAvailable(int ext) { return ext >= 0; }
+
+static void lb_default_stages(void) {
+    int i;
+    lb.nstages = 0;
+    for (i = 0; i < (int) (sizeof lb_default_ext / sizeof lb_default_ext[0]); ++i) {
+        if (gw_Netplay_StageAvailable(lb_default_ext[i])) lb.stage_ext[lb.nstages++] = lb_default_ext[i];
+    }
+}
+
+/* A new opponent: game 1, no winner, 0-0. */
+static void lb_new_set(int host_ck, int guest_ck) {
+    lb.game = 1;
+    lb.winner = -1;
+    lb.score[0] = lb.score[1] = 0;
+    lb.ck[0] = host_ck;
+    lb.ck[1] = guest_ck;
+    lb.color[0] = lb.color[1] = 0;
+    if (lb.nstages <= 0) lb_default_stages();
+    lb.seq++;
+}
+
+/* The next game of the set: game 1 (or after a game nobody won) starts with blind characters;
+   otherwise the last winner bans. */
 static void lb_reset_game(void) {
     int i;
-    for (i = 0; i < LB_NSTAGES; ++i) lb.stage[i] = LB_FREE;
+    if (lb.nstages <= 0) lb_default_stages();
+    for (i = 0; i < LB_MAX_STAGES; ++i) lb.stage[i] = LB_FREE;
     lb.chosen = -1;
     lb.locked[0] = lb.locked[1] = 0;
     lb.ready[0] = lb.ready[1] = 0;
@@ -950,7 +1021,7 @@ static void lb_reset_game(void) {
     lb.step = 0;
     if (lb.game <= 1 || lb.winner < 0) {
         lb.phase = LB_CHAR_BLIND;
-        lb.first = (int) ((np.seed >> 7) & 1u); /* the coin flip: from the host's seed, same for both */
+        lb.first = (int) ((lb.seed >> 7) & 1u); /* the coin flip: from the host's seed, same for both */
         lb.turn = lb.first;
         lb.left = lb_strike_counts[0];
     } else {
@@ -961,24 +1032,9 @@ static void lb_reset_game(void) {
     lb.seq++;
 }
 
-static void lb_send(const char *msg) {
-    if (np.net != NULL) gw_net_lobby_send(np.net, msg, (int) strlen(msg));
-}
-
-/* Host: the whole state for the guest. */
-static void lb_broadcast(void) {
-    char m[GW_NET_LOBBY_MAX];
-    snprintf(m, sizeof m, "S %d %d %d %d %d %d %d %d %d %d%d%d%d%d%d %d %d %d %d %d %d %d %d %d %d",
-             lb.phase, lb.game, lb.winner, lb.score[0], lb.score[1], lb.turn, lb.left, lb.step, lb.first,
-             lb.stage[0], lb.stage[1], lb.stage[2], lb.stage[3], lb.stage[4], lb.stage[5], lb.chosen,
-             lb.ck[0], lb.color[0], lb.ck[1], lb.color[1], lb.locked[0], lb.locked[1], lb.ready[0],
-             lb.ready[1], lb.countdown);
-    lb_send(m);
-}
-
 static int lb_stages_free(void) {
     int i, k = 0;
-    for (i = 0; i < LB_NSTAGES; ++i) k += lb.stage[i] == LB_FREE;
+    for (i = 0; i < lb.nstages; ++i) k += lb.stage[i] == LB_FREE;
     return k;
 }
 
@@ -993,15 +1049,9 @@ static void lb_after_stage(void) {
     }
 }
 
-/* Host: apply one player's action. Returns 1 if the state changed. */
-static int lb_apply_(int who, const char *act, int a, int b);
-static int lb_apply(int who, const char *act, int a, int b) {
-    int before = lb.phase, r = lb_apply_(who, act, a, b);
-    gw_log("netplay: lobby - P%d %s %d %d -> %s (phase %d -> %d, turn P%d, %d left)", who + 1, act, a, b,
-           r ? "applied" : "REFUSED", before, lb.phase, lb.turn + 1, lb.left);
-    return r;
-}
+/* Apply one player's action (host). Returns 1 if the state changed. */
 static int lb_apply_(int who, const char *act, int a, int b) {
+    if (who < 0 || who > 1) return 0;
     if (strcmp(act, "CHAR") == 0) {
         if (lb.phase == LB_CHAR_BLIND && !lb.locked[who]) {
             lb.ck[who] = a;
@@ -1024,56 +1074,120 @@ static int lb_apply_(int who, const char *act, int a, int b) {
         }
         return 0;
     }
-    if (a < 0 || a >= LB_NSTAGES) {
-        if (strcmp(act, "READY") != 0) return 0;
+    if (strcmp(act, "READY") == 0) {
+        if (lb.phase != LB_READY || lb.ready[who] == (a != 0)) return 0;
+        lb.ready[who] = a != 0;
+        lb.countdown = lb.ready[0] && lb.ready[1] ? LB_COUNTDOWN : 0;
+        return 1;
     }
-    if (strcmp(act, "STRIKE") == 0 && lb.phase == LB_STRIKE && lb.turn == who && lb.stage[a] == LB_FREE) {
+    if (a < 0 || a >= lb.nstages || lb.turn != who || lb.stage[a] != LB_FREE) return 0;
+    if (strcmp(act, "STRIKE") == 0 && lb.phase == LB_STRIKE) {
         lb.stage[a] = who == 0 ? LB_STRUCK_P1 : LB_STRUCK_P2;
         if (--lb.left <= 0 && lb_stages_free() > 1) {
             lb.step++;
             lb.turn = 1 - lb.turn;
             lb.left = lb_strike_counts[lb.step < 3 ? lb.step : 2];
         }
+        if (lb.left > lb_stages_free() - 1) lb.left = lb_stages_free() - 1;
         if (lb_stages_free() == 1) {
             int i;
-            for (i = 0; i < LB_NSTAGES; ++i) {
+            for (i = 0; i < lb.nstages; ++i) {
                 if (lb.stage[i] == LB_FREE) {
                     lb.stage[i] = LB_PICKED;
                     lb.chosen = i;
                 }
             }
+            lb.left = 0;
             lb_after_stage();
         }
         return 1;
     }
-    if (strcmp(act, "BAN") == 0 && lb.phase == LB_BAN && lb.turn == who && lb.stage[a] == LB_FREE) {
+    if (strcmp(act, "BAN") == 0 && lb.phase == LB_BAN) {
         lb.stage[a] = LB_BANNED;
-        if (--lb.left <= 0) {
+        if (--lb.left <= 0 || lb_stages_free() <= 1) {
             lb.phase = LB_PICK;
             lb.turn = 1 - who;
             lb.left = 1;
         }
         return 1;
     }
-    if (strcmp(act, "PICK") == 0 && lb.phase == LB_PICK && lb.turn == who && lb.stage[a] == LB_FREE) {
+    if (strcmp(act, "PICK") == 0 && lb.phase == LB_PICK) {
         lb.stage[a] = LB_PICKED;
         lb.chosen = a;
+        lb.left = 0;
         lb_after_stage();
-        return 1;
-    }
-    if (strcmp(act, "READY") == 0 && lb.phase == LB_READY) {
-        lb.ready[who] = a != 0;
-        if (lb.ready[0] && lb.ready[1]) lb.countdown = 180; /* 3-2-1 */
-        else lb.countdown = 0;
         return 1;
     }
     return 0;
 }
 
+static int lb_apply(int who, const char *act, int a, int b) {
+    int before = lb.phase, r = lb_apply_(who, act, a, b);
+    gw_log("netplay: lobby - P%d %s %d %d -> %s (phase %d -> %d, turn P%d, %d left)", who + 1, act, a, b,
+           r ? "applied" : "refused", before, lb.phase, lb.turn + 1, lb.left);
+    return r;
+}
+
+/* The countdown, by the clock: `elapsed` frames (1/60 s) since both became ready. Wall time, not
+   frames counted by whoever calls, so it lasts three seconds at any frame rate. Returns 1 when it
+   ran out with both still ready: the match starts. */
+static int lb_countdown_at(int elapsed) {
+    if (lb.phase != LB_READY || lb.countdown <= 0) return 0;
+    if (!(lb.ready[0] && lb.ready[1])) {
+        lb.countdown = 0;
+        return 0;
+    }
+    lb.countdown = LB_COUNTDOWN - (elapsed < 0 ? 0 : elapsed);
+    if (lb.countdown <= 0) {
+        lb.countdown = 0;
+        return 1;
+    }
+    return 0;
+}
+
+/* "S ..." - the whole state, host to guest. The stage states are one digit each. */
+static void lb_encode(char *m, int cap) {
+    char st[LB_MAX_STAGES + 1];
+    int i;
+    for (i = 0; i < lb.nstages; ++i) st[i] = (char) ('0' + lb.stage[i]);
+    st[lb.nstages] = '\0';
+    snprintf(m, (size_t) cap, "S %d %d %d %d %d %d %d %d %d %s %d %d %d %d %d %d %d %d %d %d", lb.phase,
+             lb.game, lb.winner, lb.score[0], lb.score[1], lb.turn, lb.left, lb.step, lb.first,
+             lb.nstages > 0 ? st : "-", lb.chosen, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1],
+             lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1], lb.countdown);
+}
+
+static int lb_decode(const char *m) {
+    char st[LB_MAX_STAGES + 2] = { 0 };
+    int k = sscanf(m + 2, "%d %d %d %d %d %d %d %d %d %33s %d %d %d %d %d %d %d %d %d %d", &lb.phase,
+                   &lb.game, &lb.winner, &lb.score[0], &lb.score[1], &lb.turn, &lb.left, &lb.step,
+                   &lb.first, st, &lb.chosen, &lb.ck[0], &lb.color[0], &lb.ck[1], &lb.color[1],
+                   &lb.locked[0], &lb.locked[1], &lb.ready[0], &lb.ready[1], &lb.countdown);
+    if (k >= 10) {
+        int i;
+        for (i = 0; i < LB_MAX_STAGES && st[i] >= '0' && st[i] <= '9'; ++i) lb.stage[i] = st[i] - '0';
+        if (i > 0) lb.nstages = i; /* the list's length travels as the digit count */
+    }
+    lb.have_state = 1;
+    lb.seq++;
+    return k;
+}
+
+static void lb_send(const char *msg) {
+    if (np.net != NULL) gw_net_lobby_send(np.net, msg, (int) strlen(msg));
+}
+
+/* Host: the whole state for the guest. */
+static void lb_broadcast(void) {
+    char m[GW_NET_LOBBY_MAX];
+    lb_encode(m, sizeof m);
+    lb_send(m);
+}
+
 /* The match, once the countdown is over (host). */
 static void lb_go(void) {
     char m[GW_NET_LOBBY_MAX];
-    np.stage_ext = lb_stage_ext[lb.chosen >= 0 ? lb.chosen : 0];
+    np.stage_ext = lb.stage_ext[lb.chosen >= 0 ? lb.chosen : 0];
     np_build_scene(np.scene, sizeof np.scene, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1]);
     lb.phase = LB_GO;
     snprintf(m, sizeof m, "G %u %s", np.seed, np.scene);
@@ -1113,18 +1227,9 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
             lb_broadcast();
         }
     } else if (!np.host && m[0] == 'S') {
-        char st[8] = { 0 };
-        int k = sscanf(m + 2, "%d %d %d %d %d %d %d %d %d %7s %d %d %d %d %d %d %d %d %d %d", &lb.phase,
-                       &lb.game, &lb.winner, &lb.score[0], &lb.score[1], &lb.turn, &lb.left, &lb.step,
-                       &lb.first, st, &lb.chosen, &lb.ck[0], &lb.color[0], &lb.ck[1], &lb.color[1],
-                       &lb.locked[0], &lb.locked[1], &lb.ready[0], &lb.ready[1], &lb.countdown);
-        if (k >= 10) {
-            int i;
-            for (i = 0; i < LB_NSTAGES && st[i] != '\0'; ++i) lb.stage[i] = st[i] - '0';
-        }
-        lb.seq++;
-        gw_log("netplay: lobby - state from the host: phase %d, turn P%d, %d left, stages %s, locked %d/%d, ready %d/%d",
-               lb.phase, lb.turn + 1, lb.left, st, lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1]);
+        lb_decode(m);
+        gw_log("netplay: lobby - state from the host: phase %d, turn P%d, %d left, locked %d/%d, ready %d/%d",
+               lb.phase, lb.turn + 1, lb.left, lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1]);
     } else if (!np.host && m[0] == 'G') {
         unsigned seed = 0;
         int off = 0;
@@ -1137,6 +1242,18 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
     }
 }
 
+/* The opponent is gone (a disconnect, a QUIT, or the server's BYE). The host keeps its room open
+   for the next opponent (same code); the guest is out. */
+static void np_peer_gone(void) {
+    int keep = np.host && rdv.on;
+    np.phase = NP_FAILED;
+    np.peer_left = 1;
+    np_keep_room = keep;
+    np_close();
+    np_keep_room = 0;
+    lb.game = 0; /* the next opponent starts a new set */
+}
+
 /* Every frame while in the lobby - also while a player is away on the CSS (gmscene.c calls
  * Netplay_Background from every scene): keep the connection alive, run the countdown, and hand
  * the match to the menu once it is agreed. */
@@ -1145,8 +1262,7 @@ static void np_lobby_tick(void) {
     gw_net_poll(np.net, NP_FIRST_FRAME);
     np_rdv_service();
     if (np.dead) {
-        np.phase = NP_FAILED;
-        np_close();
+        np_peer_gone();
         return;
     }
     {
@@ -1163,9 +1279,9 @@ static void np_lobby_tick(void) {
                 lb_action("CHAR", np.ck, np.color);
             } else if ((lb.phase == LB_STRIKE || lb.phase == LB_BAN || lb.phase == LB_PICK) &&
                        lb.turn == me) {
-                for (i = 0; i < LB_NSTAGES && lb.stage[i] != LB_FREE; ++i) {
+                for (i = 0; i < lb.nstages && lb.stage[i] != LB_FREE; ++i) {
                 }
-                if (i < LB_NSTAGES) {
+                if (i < lb.nstages) {
                     lb_action(lb.phase == LB_BAN ? "BAN" : lb.phase == LB_PICK ? "PICK" : "STRIKE", i, 0);
                 }
             } else if (lb.phase == LB_READY && !lb.ready[me]) {
@@ -1173,17 +1289,29 @@ static void np_lobby_tick(void) {
             }
         }
     }
-    if (np.host && lb.phase == LB_READY && lb.countdown > 0) {
-        if (!(lb.ready[0] && lb.ready[1])) {
-            lb.countdown = 0;
-        } else if (--lb.countdown == 0) {
-            lb_go();
-        } else if ((lb.countdown % 60) == 0) {
-            lb.seq++;
-            lb_broadcast(); /* the guest's countdown follows */
+    if (lb.countdown > 0 && lb.cd_t0 == 0) {
+        /* started (host: both just readied; guest: the host's state says so): the clock's zero,
+           back-dated by what already ran */
+        lb.cd_t0 = GetTickCount() - (uint32_t) ((LB_COUNTDOWN - lb.countdown) * 1000 / 60);
+        if (lb.cd_t0 == 0) lb.cd_t0 = 1;
+    } else if (lb.countdown <= 0) {
+        lb.cd_t0 = 0;
+    }
+    if (lb.countdown > 0) {
+        int was = (lb.countdown + 59) / 60;
+        int elapsed = (int) ((GetTickCount() - lb.cd_t0) * 60 / 1000);
+        if (np.host) {
+            if (lb_countdown_at(elapsed)) {
+                gw_log("netplay: lobby - countdown done after %u ms", GetTickCount() - lb.cd_t0);
+                lb_go();
+            } else if (lb.countdown == 0 || (lb.countdown + 59) / 60 != was) {
+                lb.seq++;
+                lb_broadcast(); /* the guest's numerals follow */
+            }
+        } else if (lb.phase == LB_READY && elapsed < LB_COUNTDOWN - 1) {
+            lb.countdown = LB_COUNTDOWN - elapsed; /* the host's GO ends it */
+            if ((lb.countdown + 59) / 60 != was) lb.seq++;
         }
-    } else if (!np.host && lb.phase == LB_READY && lb.countdown > 0) {
-        lb.countdown--;
     }
     if (lb.phase == LB_GO && np.phase == NP_LOBBY) {
         np.phase = NP_CONNECTED; /* the menu launches the match */
@@ -1194,20 +1322,19 @@ static void np_lobby_tick(void) {
 
 void gw_Netplay_Background(void) { np_lobby_tick(); }
 
-/* Entering the lobby: a fresh room starts at game 1; a rematch keeps the set going. */
+/* Entering the lobby: a fresh room (or a new opponent) starts at game 1; a rematch keeps the set. */
 static void np_lobby_enter(void) {
     np.phase = NP_LOBBY;
-    if (lb.game <= 0) {
-        lb.game = 1;
-        lb.winner = -1;
-        lb.score[0] = lb.score[1] = 0;
-        lb.ck[0] = np.host ? np.ck : 2;
-        lb.ck[1] = np.host ? 9 : np.ck;
-        lb.color[0] = lb.color[1] = 0;
+    lb.seed = np.seed;
+    if (lb.nstages <= 0 || lb.stage_ext[0] == 0) lb_default_stages();
+    if (np.host || !lb.have_state) {
+        /* the host starts the game; a guest shows the same start until the host's state arrives
+           (it may already have: the state can overtake the handshake's last step) */
+        if (lb.game <= 0) lb_new_set(np.host ? np.ck : 2, np.host ? 9 : np.ck);
+        lb_reset_game();
     }
-    lb_reset_game();
     if (np.host) lb_broadcast();
-    np_status("Connected - pick and ban!");
+    np_status("Opponent found! Opening the lobby...");
 }
 
 /* ---- starting and running a connection --------------------------------------------------------- */
@@ -1244,6 +1371,7 @@ static int np_begin(int bind_local) {
     memset(&cfg, 0, sizeof cfg);
     memset(&peer, 0, sizeof peer);
     np.started = np.dead = np.accepted = 0;
+    lb.have_state = 0;
     np.enabled = 0;
     np.desync_frame = GW_NET_NO_FRAME;
     np.code[0] = '\0';
@@ -1384,8 +1512,7 @@ static void np_arm(void) {
 /* One step of connecting (menu frames, or the boot wait). Returns the phase. */
 static int np_poll(void) {
     if (np.phase == NP_LOBBY) {
-        np_lobby_tick();
-        return np.phase;
+        return np.phase; /* ticked once a frame from every scene (gw_Netplay_Background) */
     }
     if (np.phase != NP_WORKING) {
         return np.phase;
@@ -1448,9 +1575,9 @@ static int np_poll(void) {
         } else if (rdv.on) {
             if (np.host) {
                 if (rdv.have_code && !rdv.have_peer)
-                    snprintf(np.status, sizeof np.status, "Room %s - waiting for your friend", rdv.code);
+                    snprintf(np.status, sizeof np.status, "Waiting for an opponent to join...");
                 else if (rdv.have_peer)
-                    snprintf(np.status, sizeof np.status, "Friend found - connecting%s", rdv.relay ? " (relay)" : "...");
+                    snprintf(np.status, sizeof np.status, "Opponent found - connecting%s", rdv.relay ? " (relay)" : "...");
             } else if (rdv.have_peer) {
                 snprintf(np.status, sizeof np.status, "Room %s found - connecting%s", np.peer_code,
                          rdv.relay ? " (relay)" : "...");
@@ -1470,19 +1597,105 @@ static int np_poll(void) {
     return np.phase;
 }
 
-/* ---- the in-game ONLINE PLAY menu (gmfrontend.c) ----------------------------------------------
- * Game code calls these without the gw_ prefix (gwtool adds it). Integers in, text out by copy. */
-int gw_Netplay_MenuBegin(int host, int ck, int color, int stage_ext, int stocks, int minutes, int delay) {
+/* ---- the in-game ONLINE screens (gmfrontend.c) --------------------------------------------------
+ * Game code calls these without the gw_ prefix (gwtool adds it). Integers in, text out by copy.
+ *
+ *   ONLINE      Host a Room -> gw_Netplay_MenuBegin(1, ...)        -> waiting room (host)
+ *               Join a Room -> code entry -> gw_Netplay_MenuBegin(0, ...) -> waiting room (guest)
+ *   waiting     gw_Netplay_MenuPoll until NP_LOBBY (or NP_FAILED: gw_Netplay_MenuStatus says why)
+ *   lobby       gw_Netplay_Lobby* (state) and LobbyChar / LobbyStageAct / LobbyReady (actions);
+ *               NP_CONNECTED = the match is agreed: gw_Netplay_MenuLaunch, then VS mode
+ *   after       results -> the lobby again: gw_Netplay_RematchPending -> gw_Netplay_Rejoin
+ *   leaving     gw_Netplay_Leave at any step (the host's room closes; a guest just goes) */
+int gw_Netplay_MenuBegin(int host, int ck, int color, int stocks, int minutes, int delay) {
     np.host = host != 0;
     np.ck = ck;
     np.color = color;
-    np.stage_ext = stage_ext;
+    np.stage_ext = 31;
     np.stocks = stocks;
     np.minutes = minutes;
     np.delay = delay;
     np.port = NP_DEFAULT_PORT;
     np.use_lobby = 1;
+    np.rejoining = 0;
+    np.peer_left = 0;
+    np.rematch = 0;
+    if (!gw_Netplay_MenuHasServer()) {
+        np_status("Online play needs the server address (netplay_server.txt beside the game)");
+        np.phase = NP_FAILED;
+        return -1;
+    }
+    if (!np.host && !gw_Netplay_CodeComplete()) {
+        np_status("Enter the 4-character room code first");
+        np.phase = NP_FAILED;
+        return -1;
+    }
+    lb.game = 0; /* a new room: a new set */
     return np_begin(0);
+}
+
+/* Back into the same room after a match (or, for a host, after the opponent left): the same
+ * settings, the same code. A returning guest keeps asking for the room for a while, since the
+ * host may still be on its results screen. */
+int gw_Netplay_Rejoin(void) {
+    np.rematch = 0;
+    np.peer_left = 0;
+    np.rejoining = 1;
+    np.rejoin_until = GetTickCount() + 30000u;
+    np_status(np.host ? "Reopening room %s..." : "Getting back into room %s...",
+              np.host ? rdv.code : np.peer_code);
+    return np_begin(0);
+}
+
+/* Leave the room, whatever the step: the connection closes, the set is over. */
+void gw_Netplay_Leave(void) {
+    np_close();
+    np.phase = NP_IDLE;
+    np.enabled = 0;
+    np.rematch = 0;
+    np.rejoining = 0;
+    np.peer_left = 0;
+    lb.game = 0;
+    lb.phase = LB_OFF;
+    lb.seq++;
+    np_status("You left the room");
+}
+
+int gw_Netplay_MenuPoll(void) { return np_poll(); }
+int gw_Netplay_IsHost(void) { return np.host; }
+int gw_Netplay_PeerLeft(void) { return np.peer_left; }
+int gw_Netplay_Rejoining(void) { return np.rejoining; }
+int gw_Netplay_Ping(void) { return np.net != NULL ? (int) gw_net_rtt_ms(np.net) : -1; }
+/* The room: the server's code (host), the code typed (guest). */
+void gw_Netplay_RoomCode(char *out, int cap) {
+    np_copy(out, cap, np.host ? (rdv.have_code ? rdv.code : "") : np.peer_code);
+}
+/* Put the room code on the clipboard again (the waiting room's X). */
+void gw_Netplay_CopyCode(void) {
+    if (np.host && rdv.have_code) np_clip_set(rdv.code);
+}
+
+/* A fighter's display name: the m-ex fighter table's for m-ex fighters, the retail name
+ * otherwise. */
+void gw_Netplay_FighterName(int ck, char *out, int cap) {
+    static const char *const retail[] = {
+        "Captain Falcon", "Donkey Kong", "Fox", "Mr. Game & Watch", "Kirby", "Bowser", "Link",
+        "Luigi", "Mario", "Marth", "Mewtwo", "Ness", "Peach", "Pikachu", "Ice Climbers",
+        "Jigglypuff", "Samus", "Yoshi", "Zelda", "Sheik", "Falco", "Young Link", "Dr. Mario", "Roy",
+        "Pichu", "Ganondorf",
+    };
+    extern const char *gw_Mex_FighterName(int ext);
+    extern int gw_Mex_PortCKindToExt(int ckind);
+    const char *m = ck >= 0 ? gw_Mex_FighterName(gw_Mex_PortCKindToExt(ck)) : NULL;
+    char buf[32];
+    if (m != NULL && m[0] != '\0') {
+        np_copy(out, cap, m);
+    } else if (ck >= 0 && ck < (int) (sizeof retail / sizeof retail[0])) {
+        np_copy(out, cap, retail[ck]);
+    } else {
+        snprintf(buf, sizeof buf, "Fighter %d", ck);
+        np_copy(out, cap, buf);
+    }
 }
 
 /* ---- the lobby, for the menu ---- */
@@ -1500,13 +1713,26 @@ int gw_Netplay_LobbyInfo(int what) {
     case 6: return lb.first;
     case 7: return lb.chosen;
     case 8: return (lb.countdown + 59) / 60;
+    case 9: return lb.nstages;
+    case 10: return lb.countdown;
     default: return 0;
     }
 }
-int gw_Netplay_LobbyStage(int i) { return i >= 0 && i < LB_NSTAGES ? lb.stage[i] : 0; }
-int gw_Netplay_LobbyStageExt(int i) { return i >= 0 && i < LB_NSTAGES ? lb_stage_ext[i] : 0; }
+int gw_Netplay_LobbyStage(int i) { return i >= 0 && i < lb.nstages ? lb.stage[i] : 0; }
+int gw_Netplay_LobbyStageExt(int i) { return i >= 0 && i < lb.nstages ? lb.stage_ext[i] : 0; }
 void gw_Netplay_LobbyStageName(int i, char *out, int cap) {
-    np_copy(out, cap, i >= 0 && i < LB_NSTAGES ? lb_stage_name[i] : "");
+    int k, ext = gw_Netplay_LobbyStageExt(i);
+    for (k = 0; k < (int) (sizeof lb_default_ext / sizeof lb_default_ext[0]); ++k) {
+        if (lb_default_ext[k] == ext) {
+            np_copy(out, cap, lb_default_name[k]);
+            return;
+        }
+    }
+    {
+        char buf[24];
+        snprintf(buf, sizeof buf, "Stage %d", ext);
+        np_copy(out, cap, buf);
+    }
 }
 int gw_Netplay_LobbyPlayer(int who, int what) {
     if (who < 0 || who > 1) return 0;
@@ -1518,55 +1744,19 @@ int gw_Netplay_LobbyPlayer(int who, int what) {
     default: return 0;
     }
 }
-void gw_Netplay_LobbyCode(char *out, int cap) { np_copy(out, cap, rdv.on && rdv.code[0] ? rdv.code : np.code); }
-void gw_Netplay_LobbyChar(int ck, int color) { lb_action("CHAR", ck, color); }
+void gw_Netplay_LobbyChar(int ck, int color) {
+    np.ck = ck; /* remembered for the next room too */
+    np.color = color;
+    lb_action("CHAR", ck, color);
+}
 void gw_Netplay_LobbyStageAct(int i) {
     lb_action(lb.phase == LB_BAN ? "BAN" : lb.phase == LB_PICK ? "PICK" : "STRIKE", i, 0);
 }
 void gw_Netplay_LobbyReady(int on) { lb_action("READY", on != 0, 0); }
 int gw_Netplay_LobbyActive(void) { return np.phase == NP_LOBBY; }
 
-/* Paste a code from the clipboard: the guest's is the host's code; the host's is the guest's code
- * (for when neither router lets the other in: the host then punches toward it). 1 if one was read. */
-int gw_Netplay_MenuPaste(int as_host) {
-    char buf[96];
-    gw_net_addr a, lan;
-    int has_lan;
-    if (!as_host && gw_Netplay_MenuHasServer() && np_clip_get(buf, sizeof buf)) {
-        /* a room code: 4 letters from the alphabet, spaces and dashes ignored */
-        char c[5];
-        int k = 0, j;
-        for (j = 0; buf[j] != '\0' && k < 5; ++j) {
-            char ch = buf[j] >= 'a' && buf[j] <= 'z' ? (char) (buf[j] - 32) : buf[j];
-            const char *p = ch != '\0' ? strchr(NP_ALPHABET, ch) : NULL;
-            if (p != NULL) c[k++] = ch; else if (ch != ' ' && ch != '-') { k = 99; break; }
-        }
-        if (k == 4) {
-            for (j = 0; j < 4; ++j) gw_Netplay_MenuSetLetter(j, (int) (strchr(NP_ALPHABET, c[j]) - NP_ALPHABET));
-            np_status("Room code %s pasted - press Connect", np.peer_code);
-            return 1;
-        }
-    }
-    if (!np_clip_get(buf, sizeof buf) || np_parse_code(buf, &a, &lan, &has_lan) != 0) {
-        np_status("The clipboard doesn't hold a code (like 1.2.3.4:51500)");
-        return 0;
-    }
-    if (as_host) {
-        np.punch = np_pick(&a, &lan, has_lan);
-        np.punch_on = 1;
-        np.next_punch = 0;
-        np_status("Opening a path to %s - ask your friend to press Connect again", buf);
-    } else {
-        snprintf(np.peer_code, sizeof np.peer_code, "%s", buf);
-        np_status("Host code %s pasted - press Connect", buf);
-    }
-    return 1;
-}
-
-int gw_Netplay_MenuPoll(void) { return np_poll(); }
-
-/* Persistent rooms: after a room-code match both players come back to ONLINE PLAY, which
- * reconnects them to the same room (the host re-hosts at once, the guest follows a moment later). */
+/* Persistent rooms: after a room-code match both players come back to the lobby, which
+ * reconnects them to the same room (gw_Netplay_Rejoin). */
 int gw_Netplay_RematchPending(void) { return np.rematch; }
 /* The game's winner (0 host/P1, 1 guest/P2, -1 none), from the results screen: the next game's
  * rules (winner bans, loser picks) and the set score. */
@@ -1575,15 +1765,8 @@ void gw_Netplay_GameResult(int winner) {
     lb.winner = winner;
     if (winner == 0 || winner == 1) lb.score[winner]++;
     lb.game++;
+    lb.seq++;
     gw_log("netplay: game over - winner P%d, set %d-%d, next game %d", winner + 1, lb.score[0], lb.score[1], lb.game);
-}
-void gw_Netplay_RematchTaken(void) { np.rematch = 0; }
-
-void gw_Netplay_MenuCancel(void) {
-    np_close();
-    np.phase = NP_IDLE;
-    np.enabled = 0;
-    np_status("Cancelled");
 }
 
 /* Once connected: make the agreed match the configured scene (VS mode seeds from it). */
@@ -1597,7 +1780,7 @@ static void np_copy(char *out, int cap, const char *s) {
     out[i] = '\0';
 }
 void gw_Netplay_MenuStatus(char *out, int cap) { np_copy(out, cap, np.status); }
-/* Room codes (a server is configured): the menu edits the join code letter by letter. */
+/* A matchmaking server is configured (room codes). */
 int gw_Netplay_MenuHasServer(void) {
     static int checked = -1;
     if (checked < 0) checked = np_rdv_config();
@@ -1615,25 +1798,27 @@ static void np_code_sync(void) {
     for (k = 0; k < 4; ++k) np.peer_code[k] = rdv.letters[k] >= 0 ? NP_ALPHABET[rdv.letters[k]] : '?';
     np.peer_code[4] = '\0';
 }
-int gw_Netplay_MenuGetLetter(int i) { np_code_init(); return i >= 0 && i < 4 ? rdv.letters[i] : 0; }
-void gw_Netplay_MenuSetLetter(int i, int v) {
-    np_code_init();
-    if (i < 0 || i > 3) return;
-    rdv.letters[i] = ((v % 32) + 32) % 32;
-    np_code_sync();
-}
 
-/* ---- the single code field: slots, a caret, typing, pasting ---- */
+/* ---- the code entry: four slots, a caret, typing, pasting ---- */
 int gw_Netplay_CodeSlot(void) { np_code_init(); return rdv.slot; }
-void gw_Netplay_CodeStep(int dir) {        /* left/right: the active slot's letter */
+/* The character in slot i, or 0 when it is empty. */
+int gw_Netplay_CodeChar(int i) {
+    np_code_init();
+    return i >= 0 && i < 4 && rdv.letters[i] >= 0 ? NP_ALPHABET[rdv.letters[i]] : 0;
+}
+void gw_Netplay_CodeStep(int dir) {        /* up/down: the active slot's letter, wrapping */
     np_code_init();
     rdv.letters[rdv.slot] = rdv.letters[rdv.slot] < 0 ? (dir > 0 ? 0 : 31)
                                                       : ((rdv.letters[rdv.slot] + dir) % 32 + 32) % 32;
     np_code_sync();
 }
-void gw_Netplay_CodeNext(void) {           /* A: on to the next slot (wraps) */
+int gw_Netplay_CodeMove(int dir) {         /* left/right: the active slot; 0 at an end */
+    int to;
     np_code_init();
-    rdv.slot = (rdv.slot + 1) % 4;
+    to = rdv.slot + (dir > 0 ? 1 : -1);
+    if (to < 0 || to > 3) return 0;
+    rdv.slot = to;
+    return 1;
 }
 int gw_Netplay_CodeComplete(void) {
     int k;
@@ -1641,54 +1826,58 @@ int gw_Netplay_CodeComplete(void) {
     for (k = 0; k < 4; ++k) if (rdv.letters[k] < 0) return 0;
     return 1;
 }
-void gw_Netplay_CodeText(char *out, int cap) { /* "K Q [7] _" */
-    char b[32];
-    int k, o = 0;
+/* The first empty slot (A with gaps moves the caret there), -1 when the code is complete. */
+int gw_Netplay_CodeFirstEmpty(void) {
+    int k;
     np_code_init();
     for (k = 0; k < 4; ++k) {
-        char ch = rdv.letters[k] >= 0 ? NP_ALPHABET[rdv.letters[k]] : '_';
-        if (k == rdv.slot) { b[o++] = '['; b[o++] = ch; b[o++] = ']'; }
-        else b[o++] = ch;
-        if (k < 3) b[o++] = ' ';
+        if (rdv.letters[k] < 0) {
+            rdv.slot = k;
+            return k;
+        }
     }
-    b[o] = '\0';
-    np_copy(out, cap, b);
+    return -1;
 }
-/* A room code on the clipboard fills the field (4 letters of the alphabet, spaces/dashes ignored). */
+void gw_Netplay_CodeClear(void) {
+    np_code_init();
+    rdv.letters[0] = rdv.letters[1] = rdv.letters[2] = rdv.letters[3] = -1;
+    rdv.slot = 0;
+    np_code_sync();
+}
+/* A room code on the clipboard fills the field (the first 4 alphabet characters; case folded,
+ * spaces and dashes dropped). */
 static int np_code_from_text(const char *buf) {
     char c[5];
     int k = 0, j;
     for (j = 0; buf[j] != '\0' && k < 5; ++j) {
         char ch = buf[j] >= 'a' && buf[j] <= 'z' ? (char) (buf[j] - 32) : buf[j];
         if (ch != '\0' && strchr(NP_ALPHABET, ch) != NULL) c[k++] = ch;
-        else if (ch != ' ' && ch != '-') return 0;
+        else if (ch != ' ' && ch != '-' && ch != '\r' && ch != '\n') return 0;
     }
     if (k != 4) return 0;
     for (j = 0; j < 4; ++j) rdv.letters[j] = (int) (strchr(NP_ALPHABET, c[j]) - NP_ALPHABET);
-    rdv.slot = 0;
+    rdv.slot = 3;
     np_code_sync();
     return 1;
 }
-int gw_Netplay_CodeAutofill(void) {
+/* Y / Ctrl+V. 1 when the clipboard held a room code. */
+int gw_Netplay_CodePaste(void) {
     char buf[96];
     np_code_init();
-    if (np_clip_get(buf, sizeof buf) && np_code_from_text(buf)) {
-        np_status("Room code %s filled in from the clipboard - press Connect", np.peer_code);
-        return 1;
-    }
-    return 0;
+    return np_clip_get(buf, sizeof buf) && np_code_from_text(buf);
 }
 
-/* Typing, while the menu's cursor is on the code field: letters/digits fill the active slot and
- * move on, Backspace clears and moves back, Ctrl+V pastes. Keys only count while this window has
- * focus, and the keyboard-as-controller mapping stands down meanwhile (shim_pad.c). Returns 1
- * when the code changed. */
+/* Typing, while the code entry is open: letters/digits fill the active slot and move on,
+ * Backspace clears and moves back, arrows move/step, Ctrl+V pastes. Keys only count while this
+ * window has focus, and the keyboard-as-controller mapping stands down meanwhile (shim_pad.c).
+ * Returns 0 nothing, 1 the code changed, 2 Enter (join), 3 Escape (back), 4 refused (a key
+ * outside the alphabet, or an arrow at an end: the slot bumps). */
 int gw_TextEntryUntil; /* GetTickCount deadline: shim_pad skips its keyboard mapping until then */
 int gw_Netplay_CodeKeys(void) {
     static unsigned char was[256];
     HWND fg = GetForegroundWindow();
     DWORD pid = 0;
-    int changed = 0, vk;
+    int r = 0, vk;
     np_code_init();
     if (fg != NULL) GetWindowThreadProcessId(fg, &pid);
     if (pid != GetCurrentProcessId()) return 0;
@@ -1697,31 +1886,37 @@ int gw_Netplay_CodeKeys(void) {
         int down = (GetAsyncKeyState(vk) & 0x8000) != 0;
         int edge = down && !was[vk];
         was[vk] = (unsigned char) down;
-        if (!edge) continue;
-        if (vk == VK_RETURN || vk == VK_ESCAPE) {
-            return 2; /* done: the menu closes the code entry */
-        }
-        if (vk == 'V' && (GetAsyncKeyState(VK_CONTROL) & 0x8000)) {
-            changed |= gw_Netplay_CodeAutofill();
+        if (!edge || r >= 2) continue;
+        if (vk == VK_RETURN) {
+            r = 2;
+        } else if (vk == VK_ESCAPE) {
+            r = 3;
+        } else if (vk == 'V' && (GetAsyncKeyState(VK_CONTROL) & 0x8000)) {
+            r = gw_Netplay_CodePaste() ? 1 : 4;
         } else if (vk == VK_BACK) {
             if (rdv.letters[rdv.slot] < 0 && rdv.slot > 0) rdv.slot--;
             rdv.letters[rdv.slot] = -1;
-            changed = 1;
-        } else if ((vk >= 'A' && vk <= 'Z') || (vk >= '2' && vk <= '9')) {
+            r = 1;
+        } else if (vk == VK_LEFT || vk == VK_RIGHT) {
+            r = gw_Netplay_CodeMove(vk == VK_RIGHT ? 1 : -1) ? 1 : 4;
+        } else if (vk == VK_UP || vk == VK_DOWN) {
+            gw_Netplay_CodeStep(vk == VK_UP ? 1 : -1);
+            r = 1;
+        } else if ((vk >= 'A' && vk <= 'Z') || (vk >= '0' && vk <= '9')) {
             const char *p = strchr(NP_ALPHABET, (char) vk);
-            if (p != NULL && !(GetAsyncKeyState(VK_CONTROL) & 0x8000)) {
+            if (GetAsyncKeyState(VK_CONTROL) & 0x8000) continue;
+            if (p != NULL) {
                 rdv.letters[rdv.slot] = (int) (p - NP_ALPHABET);
                 if (rdv.slot < 3) rdv.slot++;
-                changed = 1;
+                r = 1;
+            } else {
+                r = 4; /* I, O, 0 and 1 are not in room codes */
             }
         }
     }
-    if (changed) np_code_sync();
-    return changed;
+    np_code_sync();
+    return r;
 }
-
-void gw_Netplay_MenuCode(char *out, int cap) { np_copy(out, cap, np.code[0] ? np.code : "-"); }
-void gw_Netplay_MenuPeer(char *out, int cap) { np_copy(out, cap, np.peer_code[0] ? np.peer_code : "(none - press A to paste)"); }
 
 /* ---- scripted: MELEE_NETPLAY connects at boot ---------------------------------------------------- */
 
@@ -1881,4 +2076,113 @@ void gw_Netplay_Tick(void) {
                    sim.n_sent, sim.n_dropped, sim.n_dup, sim.nq);
         }
     }
+}
+
+/* ---- tests: the lobby rules (headless; registered from gw_tests_core.c) ---------------------- */
+#include "gw_test.h"
+
+static int lbt_fail(const char *what) {
+    gw_test_fail("%s (phase %d, turn P%d, left %d)", what, lb.phase, lb.turn + 1, lb.left);
+    return 1;
+}
+
+static void lbt_start(uint32_t seed) {
+    memset(&lb, 0, sizeof lb);
+    lb.seed = seed;
+    lb_default_stages();
+    lb_new_set(2, 9);
+    lb_reset_game();
+}
+
+/* Game 1: blind characters, then 1-2-2 strikes from the coin winner, the survivor is picked,
+   then Ready from both runs the countdown out. */
+static int test_lobby_game1(void) {
+    int first, i, n = 0;
+    lbt_start(1u << 7); /* the coin: P2 strikes first */
+    first = lb.first;
+    if (lb.phase != LB_CHAR_BLIND || first != 1) return lbt_fail("game 1 starts blind, coin from the seed");
+    if (lb_apply_(0, "STRIKE", 0, 0)) return lbt_fail("a strike before the characters");
+    if (!lb_apply_(0, "CHAR", 34, 1) || lb.phase != LB_CHAR_BLIND) return lbt_fail("P1 locks, still blind");
+    if (lb_apply_(0, "CHAR", 35, 0) || lb.ck[0] != 34) return lbt_fail("a locked blind pick is final");
+    if (!lb_apply_(1, "CHAR", 36, 2) || lb.phase != LB_STRIKE) return lbt_fail("both locked -> strike");
+    if (lb.turn != first || lb.left != 1) return lbt_fail("the coin winner strikes 1");
+    if (lb_apply_(1 - first, "STRIKE", 0, 0)) return lbt_fail("striking out of turn");
+    /* 1-2-2: first 1, other 2, first 2 */
+    {
+        static const int order[5][2] = { { 1, 0 }, { 0, 1 }, { 0, 2 }, { 1, 3 }, { 1, 4 } };
+        for (i = 0; i < 5; ++i) {
+            int who = order[i][0] == 1 ? first : 1 - first;
+            if (lb.turn != who) return lbt_fail("1-2-2 order");
+            if (!lb_apply_(who, "STRIKE", order[i][1], 0)) return lbt_fail("a legal strike refused");
+            if (i == 1 && lb_apply_(who, "STRIKE", order[i][1], 0)) return lbt_fail("striking a struck stage");
+        }
+    }
+    if (lb.phase != LB_READY || lb.chosen != 5 || lb.stage[5] != LB_PICKED) return lbt_fail("the last stage is picked");
+    for (i = 0; i < lb.nstages; ++i) n += lb.stage[i] == LB_STRUCK_P1 || lb.stage[i] == LB_STRUCK_P2;
+    if (n != 5) return lbt_fail("five strikes");
+    if (!lb_apply_(0, "READY", 1, 0) || lb.countdown != 0) return lbt_fail("one ready: no countdown");
+    if (lb_apply_(0, "READY", 1, 0)) return lbt_fail("ready twice is no change");
+    if (!lb_apply_(1, "READY", 1, 0) || lb.countdown != LB_COUNTDOWN) return lbt_fail("both ready: countdown");
+    if (!lb_apply_(1, "READY", 0, 0) || lb.countdown != 0) return lbt_fail("un-ready stops the countdown");
+    lb_apply_(1, "READY", 1, 0);
+    if (lb_countdown_at(LB_COUNTDOWN - 1) || lb.countdown != 1) return lbt_fail("the countdown ends early");
+    if (!lb_countdown_at(LB_COUNTDOWN)) return lbt_fail("the countdown ends after 3 s");
+    return 0;
+}
+
+/* Game 2+: the winner bans 2, the loser picks, then the winner's character, then the loser's. */
+static int test_lobby_game2(void) {
+    lbt_start(0);
+    lb.winner = 0;
+    lb.score[0] = 1;
+    lb.game = 2;
+    lb_reset_game();
+    if (lb.phase != LB_BAN || lb.turn != 0 || lb.left != 2) return lbt_fail("the winner bans 2");
+    if (lb_apply_(1, "BAN", 0, 0)) return lbt_fail("the loser cannot ban");
+    if (!lb_apply_(0, "BAN", 0, 0) || !lb_apply_(0, "BAN", 2, 0)) return lbt_fail("two bans");
+    if (lb.phase != LB_PICK || lb.turn != 1) return lbt_fail("then the loser picks");
+    if (lb_apply_(1, "PICK", 2, 0)) return lbt_fail("picking a banned stage");
+    if (!lb_apply_(1, "PICK", 4, 0) || lb.chosen != 4) return lbt_fail("the counterpick");
+    if (lb.phase != LB_CHAR_WINNER || lb.turn != 0) return lbt_fail("the winner picks a character first");
+    if (lb_apply_(1, "CHAR", 35, 0)) return lbt_fail("the loser waits");
+    if (!lb_apply_(0, "CHAR", 34, 0) || lb.phase != LB_CHAR_LOSER || lb.turn != 1) return lbt_fail("then the loser");
+    if (!lb_apply_(1, "CHAR", 35, 0) || lb.phase != LB_READY) return lbt_fail("then ready");
+    if (lb_apply_(0, "STRIKE", 1, 0) || lb_apply_(0, "CHAR", 1, 0)) return lbt_fail("nothing else in READY");
+    return 0;
+}
+
+/* The state message round-trips (host -> guest), and a new set / a game nobody won restart at
+   blind characters. */
+static int test_lobby_wire(void) {
+    char m[GW_NET_LOBBY_MAX];
+    int stage[LB_MAX_STAGES], i;
+    lbt_start(0);
+    lb_apply_(0, "CHAR", 34, 1);
+    lb_apply_(1, "CHAR", 59, 3);
+    lb_apply_(lb.turn, "STRIKE", 2, 0);
+    lb_encode(m, sizeof m);
+    memcpy(stage, lb.stage, sizeof stage);
+    {
+        int phase = lb.phase, turn = lb.turn, left = lb.left, ck1 = lb.ck[1], col1 = lb.color[1];
+        memset(&lb, 0, sizeof lb);
+        lb.nstages = 6;
+        if (lb_decode(m) < 20) return lbt_fail("the state message parses");
+        if (lb.phase != phase || lb.turn != turn || lb.left != left || lb.ck[1] != ck1 ||
+            lb.color[1] != col1)
+            return lbt_fail("the state message round-trips");
+        for (i = 0; i < 6; ++i) {
+            if (lb.stage[i] != stage[i]) return lbt_fail("the stage states round-trip");
+        }
+    }
+    lb.game = 3;
+    lb.winner = -1;
+    lb_reset_game();
+    if (lb.phase != LB_CHAR_BLIND) return lbt_fail("a game nobody won restarts blind");
+    return 0;
+}
+
+void gw_netplay_tests_register(void) {
+    gw_test_register("netplay_lobby_game1", test_lobby_game1);
+    gw_test_register("netplay_lobby_game2", test_lobby_game2);
+    gw_test_register("netplay_lobby_wire", test_lobby_wire);
 }

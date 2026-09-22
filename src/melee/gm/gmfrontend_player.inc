@@ -705,8 +705,19 @@ static int fp_tex(const char* name)
         fp.tex[i].mask = f == GX_TF_I4 || f == GX_TF_IA4 || f == GX_TF_I8 || f == GX_TF_IA8;
         return i;
     }
-    OSReport("frontend: art missing: %s.gxtex - expected from %s; drawing without it\n", name,
-             fp_expected_from(name));
+    {
+        /* once per name per run: the list of art still expected, not a line per screen */
+        static char logged[48][FP_ID];
+        static int nlogged;
+        int k;
+        for (k = 0; k < nlogged && strcmp(logged[k], name) != 0; k++) {
+        }
+        if (k == nlogged && nlogged < 48) {
+            fp_copy(logged[nlogged++], name, FP_ID);
+            OSReport("frontend: art missing: %s.gxtex - expected from %s; drawing without it\n",
+                     name, fp_expected_from(name));
+        }
+    }
     return -1;
 }
 

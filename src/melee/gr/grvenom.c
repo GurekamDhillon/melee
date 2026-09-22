@@ -560,9 +560,16 @@ Ground_GObj* grVenom_80203EAC(int gobj_id)
 {
     Ground_GObj* gobj;
     Ground* gp;
+#if defined(TARGET_PC)
+    /* base + 0x44 is grVe_StageCallbacks on retail (the .data run grVe_803E5348, grVe_803E5380,
+     * grVe_StageCallbacks); the PC link does not keep them adjacent, so this read 0x44 bytes past
+     * the 0x38-byte grVe_803E5348 and called a non-function - Venom crashed on load. */
+    StageCallbacks* callbacks = &grVe_StageCallbacks[gobj_id];
+#else
     grVe_Data* base = &grVe_803E5348;
     StageCallbacks* callbacks =
         &((StageCallbacks*) ((char*) base + 0x44))[gobj_id];
+#endif
 
     gobj = Ground_GetStageGObj(gobj_id);
 

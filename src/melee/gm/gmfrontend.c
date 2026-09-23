@@ -267,6 +267,8 @@ void Netplay_LobbyReady(int on);
 int Netplay_LobbyActive(void);
 int Netplay_FighterAvailable(int ck);
 int Netplay_LobbyStageExt(int i);
+int Netplay_LobbyStageGroup(int i);
+int Netplay_LobbyStageOpen(int i);
 void Netplay_SetStageMode(int mode);
 void Netplay_PlayerName(int who, char* out, int cap);
 int Netplay_StageMode(void);

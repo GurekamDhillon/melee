@@ -47,9 +47,6 @@ static void fa_close(void);
 static int fs_stage_art_tex(int ext);
 static int fs_tex_fit(const char* id, int tex, float x0, float y0, float x1, float y1, const float* rgb);
 static void fs_drop_borrowed(void);
-static void fl_dense_grid(void);
-#define FL_DENSE_COLS 6
-#define FL_DENSE_ROWS 3
 
 /* THE LOADING SCREEN (FL_LOAD, loading_layout.json): who fights where, and the warm-up's
  * progress. VS mode's loading state (after the SSS) and the online lobby (after its countdown)
@@ -847,6 +844,367 @@ static const char* fl_axis_state(const FlEl* e, const char* a)
 
 static char fl_buf[8][FE_STR];
 
+/* ---- the stage grid: starters and counterpicks ---------------------------------------------
+ * The rules put the list's starters first (gw_netplay.c); Netplay_LobbyStageGroup says which
+ * group each stage is in. Three layouts share the grid's rect (88,214)-(556,394):
+ *   TEMPLATE  up to six stages with no counterpicks: the layout's own 3 x 2 big tiles.
+ *   SPLIT     up to six stages with counterpicks (the competitive list): the starters in a block
+ *             on the left, a divider, the counterpicks in a column on the right, each block under
+ *             its label. In game 1 the counterpicks are dimmed: striking is over the starters.
+ *   FLOW      a longer list (all stages): rows of six small tiles, in pages, each group starting
+ *             on a fresh row under its label (the label repeats on a page the group continues on).
+ * The cursor moves over the stages the player may act on (Netplay_LobbyStageOpen): left/right in
+ * list order, up/down to the nearest open stage in the next row of the page; both wrap round. */
+enum { FL_GRID_TEMPLATE, FL_GRID_SPLIT, FL_GRID_FLOW };
+#define FL_GRID_MAX 256
+#define FL_GRID_X0 88.0F
+#define FL_GRID_Y0 214.0F
+#define FL_GRID_W 468.0F
+#define FL_GRID_H 180.0F
+#define FL_GRID_HEAD 13.0F /* a group label's strip */
+#define FL_GRID_DIV 18.0F  /* the gap the split layout's divider sits in */
+
+typedef struct FlGridHead {
+    float x0, x1, y; ///< the strip (y = its top)
+    int page, group, count;
+} FlGridHead;
+
+static struct {
+    int kind, n, pages, starters;
+    float r[FL_GRID_MAX][4];
+    int page[FL_GRID_MAX];
+    int nhead;
+    FlGridHead head[48];
+    float div_x;      ///< SPLIT: the divider's x, 0 = none
+} flg;
+
+static void fl_grid_head(float x0, float x1, float y, int page, int group, int count)
+{
+    FlGridHead* h;
+    if (flg.nhead >= (int) (sizeof flg.head / sizeof flg.head[0])) {
+        return;
+    }
+    h = &flg.head[flg.nhead++];
+    h->x0 = x0;
+    h->x1 = x1;
+    h->y = y;
+    h->page = page;
+    h->group = group;
+    h->count = count;
+}
+
+static void fl_grid_layout(void)
+{
+    int n = Netplay_LobbyInfo(9), i, s = 0, c;
+    if (!Netplay_LobbyInfo(12)) {
+        n = 0; /* the host's stage list is still on its way */
+    }
+    if (n > FL_GRID_MAX) {
+        n = FL_GRID_MAX;
+    }
+    memset(&flg, 0, sizeof flg);
+    flg.n = n;
+    flg.pages = 1;
+    for (i = 0; i < n; i++) {
+        s += Netplay_LobbyStageGroup(i) == 0;
+    }
+    flg.starters = s;
+    c = n - s;
+    if (n <= 6 && c == 0) {
+        /* the layout's big tiles (fl_build_lobby places them): positions for the cursor only */
+        flg.kind = FL_GRID_TEMPLATE;
+        for (i = 0; i < n; i++) {
+            flg.r[i][0] = FL_GRID_X0 + 160.0F * (float) (i % 3);
+            flg.r[i][1] = FL_GRID_Y0 + 94.0F * (float) (i / 3);
+            flg.r[i][2] = flg.r[i][0] + 148.0F;
+            flg.r[i][3] = flg.r[i][1] + 86.0F;
+        }
+        return;
+    }
+    if (n <= 6) {
+        /* SPLIT: the starters' block (up to 3 columns x 2 rows), a divider, the counterpicks'
+           columns (2 rows each) */
+        int sc = s > 3 ? 3 : s < 1 ? 1 : s, cc = (c + 1) / 2, k;
+        float g = 8.0F, w, h, cx0;
+        w = (FL_GRID_W - (float) (sc - 1) * g - (float) (cc - 1) * g - FL_GRID_DIV) / (float) (sc + cc);
+        h = (FL_GRID_H - FL_GRID_HEAD - g) * 0.5F;
+        cx0 = FL_GRID_X0 + (float) sc * (w + g) - g + FL_GRID_DIV;
+        flg.kind = FL_GRID_SPLIT;
+        flg.div_x = cx0 - FL_GRID_DIV * 0.5F;
+        fl_grid_head(FL_GRID_X0, cx0 - FL_GRID_DIV, FL_GRID_Y0, 0, 0, s);
+        fl_grid_head(cx0, FL_GRID_X0 + FL_GRID_W, FL_GRID_Y0, 0, 1, c);
+        for (i = 0, k = 0; i < n; i++) {
+            int col, row;
+            float x;
+            if (Netplay_LobbyStageGroup(i) == 0) {
+                col = k % sc;
+                row = k / sc;
+                x = FL_GRID_X0 + (float) col * (w + g);
+                k++;
+            } else {
+                int j = i - k; /* the counterpicks follow the starters */
+                col = j % cc;
+                row = j / cc;
+                x = cx0 + (float) col * (w + g);
+            }
+            flg.r[i][0] = x;
+            flg.r[i][1] = FL_GRID_Y0 + FL_GRID_HEAD + (float) row * (h + g);
+            flg.r[i][2] = x + w;
+            flg.r[i][3] = flg.r[i][1] + h;
+        }
+        return;
+    }
+    {
+        /* FLOW: rows of six; a group starts a fresh row under its label; pages of 180 px */
+        bool grouped = s > 0 && c > 0;
+        float g = 5.0F, gx = 6.0F, w = (FL_GRID_W - 5.0F * gx) / 6.0F;
+        float h = grouped ? 48.0F : (FL_GRID_H - 2.0F * g) / 3.0F;
+        float y = FL_GRID_Y0;
+        int page = 0, col = 0, grp = -1;
+        flg.kind = FL_GRID_FLOW;
+        for (i = 0; i < n; i++) {
+            int gi = Netplay_LobbyStageGroup(i);
+            bool new_group = gi != grp;
+            if (new_group || col == 6) {
+                /* a new row */
+                float need = h + (grouped && new_group ? FL_GRID_HEAD : 0.0F);
+                if (i > 0) {
+                    y += h + g;
+                }
+                if (i > 0 && y + need > FL_GRID_Y0 + FL_GRID_H + 0.5F) {
+                    page++;
+                    y = FL_GRID_Y0;
+                    if (grouped && !new_group) {
+                        fl_grid_head(FL_GRID_X0, FL_GRID_X0 + FL_GRID_W, y, page, gi, gi == 0 ? s : c);
+                        y += FL_GRID_HEAD;
+                    }
+                }
+                if (grouped && new_group) {
+                    fl_grid_head(FL_GRID_X0, FL_GRID_X0 + FL_GRID_W, y, page, gi, gi == 0 ? s : c);
+                    y += FL_GRID_HEAD;
+                }
+                col = 0;
+                grp = gi;
+            }
+            flg.r[i][0] = FL_GRID_X0 + (float) col * (w + gx);
+            flg.r[i][1] = y;
+            flg.r[i][2] = flg.r[i][0] + w;
+            flg.r[i][3] = y + h;
+            flg.page[i] = page;
+            col++;
+        }
+        flg.pages = page + 1;
+    }
+}
+
+static bool fl_stage_open(int i) { return Netplay_LobbyStageOpen(i) != 0; }
+
+/* The first open stage from `from` in direction `dir` (1/-1), wrapping; `from` itself if open. */
+static int fl_free_stage(int from, int dir)
+{
+    int n = Netplay_LobbyInfo(9), k;
+    for (k = 0; k < n; k++) {
+        int i = ((from + dir * k) % n + n) % n;
+        if (fl_stage_open(i)) return i;
+    }
+    return from;
+}
+
+/* The next open stage after `from` in list order (dir 1/-1), wrapping round; `from` if none. */
+static int fl_step_open(int from, int dir)
+{
+    int n = Netplay_LobbyInfo(9), k;
+    for (k = 1; k <= n; k++) {
+        int i = ((from + dir * k) % n + n) % n;
+        if (fl_stage_open(i)) return i;
+    }
+    return from;
+}
+
+/* Up (dir -1) or down (1): the nearest open stage in the nearest row that way on this page, the
+   closest across; past the last row, round to the far side of the page. `from` if none. */
+static int fl_step_row(int from, int dir)
+{
+    int i, best = -1, wrap = -1;
+    float cy, cx, bdy = 0, bdx = 0, wdy = 0, wdx = 0;
+    if (from < 0 || from >= flg.n) {
+        return from;
+    }
+    cx = (flg.r[from][0] + flg.r[from][2]) * 0.5F;
+    cy = (flg.r[from][1] + flg.r[from][3]) * 0.5F;
+    for (i = 0; i < flg.n; i++) {
+        float dy, dx;
+        if (i == from || flg.page[i] != flg.page[from] || !fl_stage_open(i)) {
+            continue;
+        }
+        dy = ((flg.r[i][1] + flg.r[i][3]) * 0.5F - cy) * (float) dir;
+        dx = (flg.r[i][0] + flg.r[i][2]) * 0.5F - cx;
+        dx = dx < 0 ? -dx : dx;
+        if (dy > 1.0F) {
+            if (best < 0 || dy < bdy - 1.0F || (dy < bdy + 1.0F && dx < bdx)) {
+                best = i;
+                bdy = dy;
+                bdx = dx;
+            }
+        } else if (dy < -1.0F) {
+            /* the other way: the farthest row wins (the wrap target) */
+            if (wrap < 0 || dy < wdy - 1.0F || (dy < wdy + 1.0F && dx < wdx)) {
+                wrap = i;
+                wdy = dy;
+                wdx = dx;
+            }
+        }
+    }
+    return best >= 0 ? best : wrap >= 0 ? wrap : from;
+}
+
+/* L/R: the first open stage on the previous / next page (wrapping); `from` if none. */
+static int fl_step_page(int from, int dir)
+{
+    int p, k, i;
+    if (flg.pages <= 1 || from < 0 || from >= flg.n) {
+        return from;
+    }
+    for (k = 1; k < flg.pages; k++) {
+        p = ((flg.page[from] + dir * k) % flg.pages + flg.pages) % flg.pages;
+        for (i = 0; i < flg.n; i++) {
+            if (flg.page[i] == p && fl_stage_open(i)) {
+                return i;
+            }
+        }
+    }
+    return from;
+}
+
+/* A name in a tile: one line, or two split at a space when one would not fit. */
+static void fl_tile_name(int i, float cx, float ybot, float max_w, const char* name, const float* rgb)
+{
+    char id[FP_ID], a[40], b[40];
+    int r = ff_role("caption"), k, cut = -1, len = (int) strlen(name);
+    if (r >= 0 && ff_width(r, name) > max_w) {
+        /* the space nearest the middle */
+        for (k = 1; k < len - 1; k++) {
+            if (name[k] == ' ' && (cut < 0 || (k > len / 2 ? k - len / 2 : len / 2 - k) < (cut > len / 2 ? cut - len / 2 : len / 2 - cut))) {
+                cut = k;
+            }
+        }
+    }
+    if (cut > 0 && cut < (int) sizeof a) {
+        float lh = ff.r[r].ascent + ff.r[r].descent;
+        memcpy(a, name, (size_t) cut);
+        a[cut] = '\0';
+        fp_copy(b, name + cut + 1, (int) sizeof b);
+        sprintf(id, "dn%d", i);
+        fl_text_at(id, "caption", cx, ybot - lh, "centre", max_w, a, rgb, -1);
+        sprintf(id, "do%d", i);
+        fl_text_at(id, "caption", cx, ybot, "centre", max_w, b, rgb, -1);
+    } else {
+        sprintf(id, "dn%d", i);
+        fl_text_at(id, "caption", cx, ybot, "centre", max_w, name, rgb, -1);
+    }
+}
+
+/* The SPLIT and FLOW layouts' tiles (TEMPLATE uses the layout's own): the stage art, the name,
+   the marks of the big tiles (P1 cross, P2 ring, padlock for a ban, gold for the pick) and the
+   tab naming who struck or banned it. */
+static void fl_grid_draw(void)
+{
+    int n = flg.n, page, i, cur = fl.cur;
+    bool strike = fl_phase() == LBP_STRIKE, two_lines = flg.kind == FL_GRID_SPLIT;
+    float ink[3], face[3], gold[3], bone[3], muted[3], white[3] = { 1, 1, 1 }, p1[3], p2[3];
+    char id[FP_ID], name[40], buf[40];
+    if (n <= 0) {
+        return;
+    }
+    if (cur >= n) cur = n - 1;
+    if (cur < 0) cur = 0;
+    page = flg.page[cur];
+    fm_tok("ink", KS_VERSUS, ink);
+    fm_tok("@face", KS_VERSUS, face);
+    fm_tok("gold", KS_VERSUS, gold);
+    fm_tok("bone", KS_VERSUS, bone);
+    fm_tok("muted", KS_VERSUS, muted);
+    kit_colour("port:p1", KS_VERSUS, p1);
+    kit_colour("port:p2", KS_VERSUS, p2);
+    /* the group labels */
+    for (i = 0; i < flg.nhead; i++) {
+        const FlGridHead* h = &flg.head[i];
+        const char* what;
+        if (h->page != page) {
+            continue;
+        }
+        what = h->group == 0 ? (h->count == 1 ? "STARTER" : "STARTERS")
+                             : (h->count == 1 ? "COUNTERPICK" : "COUNTERPICKS");
+        sprintf(id, "gh%d", i);
+        fl_text_at(id, "caption", h->x0 + 2, h->y + 10, "left", h->x1 - h->x0 - 4, what, gold, -1);
+        if (h->group == 1 && Netplay_LobbyInfo(0) <= 1 && Netplay_LobbyInfo(11) == 0) {
+            /* game 1 of the competitive list: the counterpicks sit it out */
+            sprintf(id, "gn%d", i);
+            fl_text_at(id, "caption", h->x1 - 2, h->y + 10, "right", 90, "GAME 2+", muted, -1);
+        }
+    }
+    if (flg.div_x > 0) {
+        fm_flat("gdv", FPR_OTHER, -1, flg.div_x - 1.0F, FL_GRID_Y0 + 2.0F, flg.div_x + 1.0F,
+                FL_GRID_Y0 + FL_GRID_H - 2.0F, muted);
+    }
+    for (i = 0; i < n; i++) {
+        int s_ = Netplay_LobbyStage(i), tex;
+        float rx = flg.r[i][0], ry = flg.r[i][1], w = flg.r[i][2] - rx, h = flg.r[i][3] - ry;
+        float name_h = two_lines ? 24.0F : 13.0F;
+        bool hov = fl_my_stage_turn() && fl.cur == i;
+        bool out = s_ == LBS_P1 || s_ == LBS_P2 || s_ == LBS_BANNED;
+        bool sits = strike && s_ == LBS_FREE && Netplay_LobbyStageGroup(i) != 0; /* game 1 counterpick */
+        if (flg.page[i] != page) {
+            continue;
+        }
+        sprintf(id, "dg%d", i);
+        fm_flat(id, FPR_OTHER, -1, rx - 3, ry - 3, rx + w + 3, ry + h + 3,
+                hov || s_ == LBS_PICKED ? gold : ink);
+        sprintf(id, "df%d", i);
+        fm_flat(id, FPR_OTHER, -1, rx, ry, rx + w, ry + h, out || sits ? ink : face);
+        tex = fs_stage_art_tex(Netplay_LobbyStageExt(i));
+        if (tex >= 0) {
+            int q;
+            sprintf(id, "da%d", i);
+            q = fs_tex_fit(id, tex, rx + 2, ry + 2, rx + w - 2, ry + h - name_h, white);
+            if (q >= 0 && (out || sits)) fp.q[q].wa = -0.3F;
+        }
+        Netplay_LobbyStageName(i, name, sizeof name);
+        if (two_lines) {
+            fl_tile_name(i, rx + w * 0.5F, ry + h - 4, w - 6, name, out || sits ? muted : bone);
+        } else {
+            sprintf(id, "dn%d", i);
+            fl_text_at(id, "caption", rx + w * 0.5F, ry + h - 3, "centre", w - 4, name, out || sits ? muted : bone, -1);
+        }
+        if (out) {
+            int t = fp_tex(s_ == LBS_P1 ? "ico_strike_x" : s_ == LBS_P2 ? "ico_strike_o" : "ico_lock");
+            int banner = Netplay_LobbyInfo(1) == 1; /* a ban is the banning player's (the last winner) */
+            const float* c = s_ == LBS_P1 ? p1 : s_ == LBS_P2 ? p2 : banner ? p2 : p1;
+            float m = h - name_h - 8 < 26 ? h - name_h - 8 : 26, my = ry + (h - name_h - m) * 0.5F;
+            if (m < 12) m = 12;
+            if (t >= 0) {
+                sprintf(id, "dm%d", i);
+                fl_rect_quad(id, t, rx + w * 0.5F - m * 0.5F, my, rx + w * 0.5F + m * 0.5F, my + m, c, -1);
+            }
+            /* the tab: who */
+            sprintf(id, "dt%d", i);
+            fm_flat(id, FPR_OTHER, -1, rx + w - 22, ry, rx + w, ry + 12, c);
+            sprintf(id, "du%d", i);
+            sprintf(buf, "P%d", s_ == LBS_P1 ? 1 : s_ == LBS_P2 ? 2 : banner ? 2 : 1);
+            fl_text_at(id, "caption", rx + w - 11, ry + 10, "centre", 20, buf, ink, -1);
+        }
+        if (s_ == LBS_PICKED) {
+            int t = fp_tex("ico_pick");
+            sprintf(id, "dp%d", i);
+            fm_flat(id, FPR_OTHER, -1, rx + w - 18, ry, rx + w, ry + 14, ink);
+            if (t >= 0) {
+                sprintf(id, "dq%d", i);
+                fl_rect_quad(id, t, rx + w - 16, ry + 1, rx + w - 4, ry + 13, gold, -1);
+            }
+        }
+    }
+}
+
 static const char* fl_stage_name(int i)
 {
     static char n[40];
@@ -926,10 +1284,10 @@ static void fl_status_line(char* out)
         return;
     }
     Netplay_RoomCode(code, sizeof code);
-    if (fl.art == FL_LOBBY && !fl_reconnecting() && Netplay_LobbyInfo(9) > 6 && Netplay_LobbyInfo(12)) {
-        int per = FL_DENSE_COLS * FL_DENSE_ROWS, n = Netplay_LobbyInfo(9);
-        sprintf(out, "Room %s. Stages page %d of %d (L/R). B twice leaves.", code, fl.cur / per + 1,
-                (n + per - 1) / per);
+    fl_grid_layout();
+    if (fl.art == FL_LOBBY && !fl_reconnecting() && flg.pages > 1 && fl.cur >= 0 && fl.cur < flg.n) {
+        sprintf(out, "Room %s. Stages page %d of %d (L/R). B twice leaves.", code, flg.page[fl.cur] + 1,
+                flg.pages);
     } else if (fl.art == FL_LOBBY && !fl_reconnecting()) {
         sprintf(out, "Room %s. You are P%d%s. B twice leaves.", code, Netplay_LobbyMe() + 1,
                 Netplay_IsHost() ? " (host)" : "");
@@ -1387,13 +1745,11 @@ static void fl_build_lobby(void)
     /* the stage grid: tile_0 is the template, placed per index on the grid's columns, so the list
        can be as long as the rules make it (rows beyond the second belong to a scrolling list) */
     G = fj_get(L, "stage_grid");
-    n = Netplay_LobbyInfo(9);
     cols = (int) fj_num(fj_get(G, "columns"), 3);
-    if (!Netplay_LobbyInfo(12)) {
-        n = 0; /* the host's stage list is still on its way */
-    }
-    if (n > 6) {
-        fl_dense_grid(); /* a long list (all stages): smaller tiles, pages */
+    fl_grid_layout();
+    n = flg.n;
+    if (flg.kind != FL_GRID_TEMPLATE) {
+        fl_grid_draw(); /* starters and counterpicks, or a long list: the grouped tiles */
         n = 0;
     }
     {
@@ -1560,68 +1916,6 @@ static void fl_load_update(void)
         sprintf(b, "%d%%", fe.percent < 0 ? 0 : fe.percent);
         fk_retext(fl_ld.q_pct, b, fl_ld.pct_x, 2, 60.0F);
     }
-}
-
-/* A long stage list (all stages): 6 x 3 small tiles a page, the stage art, the name, the same
-   marks as the big tiles (P1 cross, P2 ring, padlock for a ban, gold for the pick). */
-static void fl_dense_grid(void)
-{
-    int n = Netplay_LobbyInfo(9), per = FL_DENSE_COLS * FL_DENSE_ROWS, page, i, first, last;
-    float x0 = 88, y0 = 214, gx = 6, gy = 6;
-    float w = (468 - (FL_DENSE_COLS - 1) * gx) / FL_DENSE_COLS, h = (180 - (FL_DENSE_ROWS - 1) * gy) / FL_DENSE_ROWS;
-    float ink[3], face[3], gold[3], bone[3], muted[3], white[3] = { 1, 1, 1 }, p1[3], p2[3];
-    char id[FP_ID], name[40], buf[24];
-    if (fl.cur >= n) fl.cur = n - 1;
-    if (fl.cur < 0) fl.cur = 0;
-    page = fl.cur / per;
-    first = page * per;
-    last = first + per < n ? first + per : n;
-    fm_tok("ink", KS_VERSUS, ink);
-    fm_tok("@face", KS_VERSUS, face);
-    fm_tok("gold", KS_VERSUS, gold);
-    fm_tok("bone", KS_VERSUS, bone);
-    fm_tok("muted", KS_VERSUS, muted);
-    kit_colour("port:p1", KS_VERSUS, p1);
-    kit_colour("port:p2", KS_VERSUS, p2);
-    for (i = first; i < last; i++) {
-        int s_ = Netplay_LobbyStage(i), k = i - first, tex;
-        float rx = x0 + (k % FL_DENSE_COLS) * (w + gx), ry = y0 + (k / FL_DENSE_COLS) * (h + gy);
-        bool hov = fl_my_stage_turn() && fl.cur == i;
-        bool out = s_ == LBS_P1 || s_ == LBS_P2 || s_ == LBS_BANNED;
-        sprintf(id, "dg%d", i);
-        fm_flat(id, FPR_OTHER, -1, rx - 3, ry - 3, rx + w + 3, ry + h + 3,
-                hov || s_ == LBS_PICKED ? gold : ink);
-        sprintf(id, "df%d", i);
-        fm_flat(id, FPR_OTHER, -1, rx, ry, rx + w, ry + h, out ? ink : face);
-        tex = fs_stage_art_tex(Netplay_LobbyStageExt(i));
-        if (tex >= 0) {
-            int q;
-            sprintf(id, "da%d", i);
-            q = fs_tex_fit(id, tex, rx + 2, ry + 2, rx + w - 2, ry + h - 13, white);
-            if (q >= 0 && out) fp.q[q].wa = -0.3F;
-        }
-        sprintf(id, "dn%d", i);
-        Netplay_LobbyStageName(i, name, sizeof name);
-        fl_text_at(id, "caption", rx + w * 0.5F, ry + h - 3, "centre", w - 4, name, out ? muted : bone, -1);
-        if (out) {
-            int t = fp_tex(s_ == LBS_P1 ? "ico_strike_x" : s_ == LBS_P2 ? "ico_strike_o" : "ico_lock");
-            const float* c = s_ == LBS_P1 ? p1 : s_ == LBS_P2 ? p2 : Netplay_LobbyInfo(1) == 1 ? p2 : p1;
-            if (t >= 0) {
-                sprintf(id, "dm%d", i);
-                fl_rect_quad(id, t, rx + w * 0.5F - 13, ry + 6, rx + w * 0.5F + 13, ry + 32, c, -1);
-            }
-        }
-        if (s_ == LBS_PICKED) {
-            int t = fp_tex("ico_pick");
-            sprintf(id, "dp%d", i);
-            fm_flat(id, FPR_OTHER, -1, rx + w - 18, ry, rx + w, ry + 14, ink);
-            if (t >= 0) {
-                sprintf(id, "dq%d", i);
-                fl_rect_quad(id, t, rx + w - 16, ry + 1, rx + w - 4, ry + 13, gold, -1);
-            }
-        }
-    }
-    (void) buf;
 }
 
 /* What the current screen shows, as a string: a rebuild whenever it changes. */
@@ -1829,17 +2123,6 @@ static void fl_leave_room(const char* why, bool bad)
     fe_switch_screen(&fe_screen_online);
 }
 
-/* The first free stage from `from` in direction `dir` (1/-1), wrapping; `from` itself if free. */
-static int fl_free_stage(int from, int dir)
-{
-    int n = Netplay_LobbyInfo(9), k;
-    for (k = 0; k < n; k++) {
-        int i = ((from + dir * k) % n + n) % n;
-        if (Netplay_LobbyStage(i) == LBS_FREE) return i;
-    }
-    return from;
-}
-
 static void fl_frame_code(u32 in)
 {
     int k = Netplay_CodeKeys(), before[5], i;
@@ -1994,7 +2277,7 @@ static void fl_lobby_events(void)
             if (s == LBS_BANNED) { fl.pend_event = FLE_BAN; fl.pend_arg = i; }
             if (s == LBS_PICKED) { fl.pend_event = FLE_PICK; fl.pend_arg = i; }
             fl.stage_prev[i] = s;
-            if (Netplay_LobbyStage(fl.cur) != LBS_FREE) fl.cur = fl_free_stage(fl.cur, 1);
+            if (!fl_stage_open(fl.cur)) fl.cur = fl_free_stage(fl.cur, 1);
         }
     }
     for (i = 0; i < 2; i++) {
@@ -2086,48 +2369,31 @@ static void fl_frame_lobby(u32 in)
         fe_np_pick_char(); /* the real CSS; the pick comes back through Frontend_OnlinePicked */
         return;
     }
-    if (fl_my_stage_turn() && Netplay_LobbyInfo(9) > 6) {
-        int n = Netplay_LobbyInfo(9), per = FL_DENSE_COLS * FL_DENSE_ROWS, c = fl.cur;
-        if (in & MenuInput_LTrigger) c = c - per < 0 ? c : c - per;
-        else if (in & MenuInput_RTrigger) c = c + per >= n ? n - 1 : c + per;
-        else if (in & MenuInput_Left) c = c > 0 ? c - 1 : n - 1;
-        else if (in & MenuInput_Right) c = c < n - 1 ? c + 1 : 0;
-        else if (in & MenuInput_Up) c = c - FL_DENSE_COLS >= 0 ? c - FL_DENSE_COLS : c;
-        else if (in & MenuInput_Down) c = c + FL_DENSE_COLS < n ? c + FL_DENSE_COLS : c;
+    if (fl_my_stage_turn()) {
+        int c = fl.cur;
+        fl_grid_layout();
+        if (c < 0 || c >= flg.n || !fl_stage_open(c)) {
+            c = fl_free_stage(c < 0 || c >= flg.n ? 0 : c, 1);
+        }
+        if (in & MenuInput_LTrigger) c = fl_step_page(c, -1);
+        else if (in & MenuInput_RTrigger) c = fl_step_page(c, 1);
+        else if (in & MenuInput_Left) c = fl_step_open(c, -1);
+        else if (in & MenuInput_Right) c = fl_step_open(c, 1);
+        else if (in & MenuInput_Up) c = fl_step_row(c, -1);
+        else if (in & MenuInput_Down) c = fl_step_row(c, 1);
         if (c != fl.cur) {
             fl.cur = c;
             sfxMove();
         }
         if (in & MenuInput_Confirm) {
-            if (Netplay_LobbyStage(fl.cur) == LBS_FREE) {
+            if (fl_stage_open(fl.cur)) {
                 sfxForward();
                 Netplay_LobbyStageAct(fl.cur);
             } else {
                 sfxBack();
-                fl_toast("That stage is already out - pick another.", true, 90);
-            }
-        }
-    } else if (fl_my_stage_turn()) {
-        int n = Netplay_LobbyInfo(9), cols = 3, c = fl.cur;
-        if (in & MenuInput_Left) c = c % cols == 0 ? c + cols - 1 : c - 1;
-        else if (in & MenuInput_Right) c = c % cols == cols - 1 ? c - cols + 1 : c + 1;
-        else if (in & MenuInput_Up) c -= cols;
-        else if (in & MenuInput_Down) c += cols;
-        if (c != fl.cur) {
-            if (c < 0) c += ((n + cols - 1) / cols) * cols;
-            if (c >= n) c = c % cols < n ? c % cols : n - 1;
-            if (c >= 0 && c < n) {
-                fl.cur = c;
-                sfxMove();
-            }
-        }
-        if (in & MenuInput_Confirm) {
-            if (Netplay_LobbyStage(fl.cur) == LBS_FREE) {
-                sfxForward();
-                Netplay_LobbyStageAct(fl.cur);
-            } else {
-                sfxBack();
-                fl_toast("That stage is already out - pick another.", true, 90);
+                fl_toast(Netplay_LobbyStage(fl.cur) == LBS_FREE ? "Game 1 is struck from the starters."
+                                                                : "That stage is already out - pick another.",
+                         true, 90);
             }
         }
     } else if (in & MenuInput_Confirm) {

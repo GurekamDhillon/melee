@@ -881,7 +881,8 @@ rate_decay 1.5, w16 spin_frames 70 (int), w17 late_decay 2.0, w18 end_rate 10, w
 **drill** (MK paramSpecialS; ids 4017-4020, 24002): w00 start_vx_mul 0.5, w01 start_vy 1.0, w02
 start_gravity -0.08, w03 steer 3.0 (deg per frame at full stick), w04 end_frames 10 (int), w05 -.
 Extras: `speed` 2.0 (used when the clip has no root motion), `angle_max` 0 (0 = no limit, as
-Brawl), `bounce` 7 (1 wall, 2 hit, 4 shield), `pop_vx` 1.0, `pop_vy` 2.1, `end_helpless` 1.
+Brawl), `bounce` 0 (v3; was 7 in v2: 1 wall, 2 hit, 4 shield - Brawl has no such check, 17.5),
+`pop_vx` 1.0, `pop_vy` 2.1, `end_helpless` 1 (v3: FallSpecial after an air end, hit or not).
 
 The param-id numbering is now confirmed (fn_111_81A8's getters): float ids count only the float
 words (4011 = N w12, 4012 = N w13, ..., 4015 = N w17, 4016 = N w18, 4017-4020 = S w00-w03), int
@@ -939,7 +940,8 @@ none - its 45-frame clip bounds it to +-135); velocity = the clip's root motion 
 to level (x(1 - 2/w04) per frame); in the air a pop back/up (pop_vx / pop_vy: Brawl's air-end
 momentum -1 / +2.1), then helpless unless the rush hit something (Brawl's SpecialSEnd enters both
 Fall and FallSpecial; which one when is inferred). **Bounce** (a Geno addition: Brawl's code has none
-besides that end pop): wall / hit / shield (`bounce` mask) -> DrillEnd at once.
+besides that end pop): wall / hit / shield (`bounce` mask) -> DrillEnd at once. **v3 corrects this
+from Brawl's code: 17.5** (no bounce by default, the air end is always helpless, ends by situation).
 
 **Approximations / not recovered:** the stall-recovery branch (w11, w19) is ported but the stall
 ends the glide first (as Brawl's action does); Glide_Landing's extra thresholds (common params
@@ -974,3 +976,141 @@ idempotently at every spawn from the registry (same bytes every time); all behav
   exits, stall -> GlideEnd), `geno_v2_specials` (tornado sink / lift cooldown / rise cap / drift,
   drill steering limit, bounce -> DrillEnd moving back).
 - Demo and netplay: `_build/agents/beta/NOTES.md` (Geno v2 entry).
+
+## 17. v3: root-motion states, Dimensional Cape, Drill Rush from Brawl's code (STABLE reference)
+
+Status: **built** (v3, `"geno": 3`; every v3 key is additive, a v2 exe reads the v2 keys and logs
+the rest). Code: `pc/geno/geno_game_v2.inc` (geno.anim_motion, the KEEP_FRAME carry, the glide
+start frame), `geno_game_specials.inc` (cape, drill), `geno_game_glide.inc` (helpless glide),
+registry `pc/platform/geno_registry.c`. MK translator copy: `experiment/brawl-metaknight/
+geno_v2_encodings.md` section 6.
+
+### 17.1 geno.anim_motion: the clip's root motion, on the ground and in the air
+
+Brawl moves many specials by the clip's TransN (Shuttle Loop, the cape's reappears). Melee extracts
+TransN only on subaction rows whose flags have `0x80000000` (`fp->x594_b0`: the model's TransN is
+zeroed and the per-frame delta lands in `fp->x6A4_transNOffset`, z forward / y up, already
+model-scaled), and only a few ground helpers use it. `geno.anim_motion` (anim `next`, phys and coll
+`anim_motion`) uses it everywhere:
+
+| situation | rule |
+|---|---|
+| ground | `gr_vel = forward x facing`; with `"liftoff"` (default on) an upward delta takes off and the air rule moves that frame; walking off an edge = airborne, same state |
+| air | `self_vel = (forward x facing, up) + gravity`; `gravity` = the state's `"gravity"` multiplier of Melee's gravity, accumulated from the state's start (0 = pure root motion, Brawl's motion kinetics), overridden per action by `MOTION_GRAVITY` |
+| no root motion (row flag clear) | ground: friction; air without gravity: holds still (Brawl's "stall" start frames) |
+| first frame | `"origin"`: also moves by the clip's frame-0 offset (Brawl clips whose frame 0 already sits one frame into the motion: SpecialHi z 0.77, SpecialHiLoop y 6.3 / z 6.7) |
+| facing | `"facing": "entry"`: the travel keeps the facing the state was entered with, so a mid-clip Reverse Direction turns the model and the hitboxes, not the path |
+| ledge | this action's ledge grab: `LEDGE` value if a script set it (PSA Allow/Disallow Ledgegrab), else the state's `"ledge"`: `none` / `front` (Melee's own) / `both` (mpColl tests both ledges, dir 0; ftCliffCommon turns MK to the ledge). Melee only catches a ledge while falling |
+| landing | the state's `"land"` (a Geno state, a motion; `"stay"` = only become grounded, the state goes on) or Melee's landing (`"landing_lag"` -> LandingFallSpecial with that lag) |
+
+New state keys: `"ledge"`, `"liftoff"`, `"origin"`, `"gravity"`, `"facing"`; new target `"stay"`.
+
+**KEEP_FRAME entries** (`CHG ... -> GENO(n) KEEP_FRAME`, and the engine's own ground / air swaps)
+carry the root-motion progress (no second origin step, the same entry facing, the gravity so far,
+the ledge setting) and set `GenoState.enter_keep`, so behaviours skip their entry setup on a swap.
+
+### 17.2 Engine values (v3)
+
+| id | name | type | W | meaning |
+|---|---|---|---|---|
+| 0x30 | LEDGE | i | W | this action's ledge grab: 0 none, 1 front, 2 front and back; -1 = the state's default. Cleared by every action change (Brawl's Allow/Disallow Ledgegrab values 1 / 2 map 1:1 - inferred) |
+| 0x31 | HIDDEN | i | W | 1 = the fighter is not drawn (Melee's FighterVis flag `x221E_b5`: model, shadow). Kept across Geno states (re-applied on every Geno state entry: ChangeMotionState clears the flag), cleared by any non-Geno action (damage, death show the fighter) |
+| 0x32 | TRANSN_FWD | f | | this frame's root motion, forward (0 without root motion) |
+| 0x33 | TRANSN_UP | f | | this frame's root motion, up |
+| 0x34 | MOTION_GRAVITY | f | W | this action's `geno.anim_motion` gravity multiplier; -1 = the state's (PSA Disable / Enable Horizontal Gravity) |
+
+Melee already hides the whole fighter with FighterVis (script op 37 / `x221E_b5`: the body model,
+shadow and nametag checks all read it); HIDDEN is Geno's way to keep it across a move of several
+states. Both live in the Fighter struct / GenoState: rollback-safe.
+
+### 17.3 Behaviours (v3)
+
+| behaviour | anim | iasa | phys | coll | next | land |
+|---|---|---|---|---|---|---|
+| `geno.anim_motion` | next | none | anim_motion | anim_motion | auto | Landing |
+| `geno.cape` | cape | none | cape | cape | (decides at `decide_frame`) | (stays) |
+| `geno.cape.attack` | next | none | anim_motion | cape.after | helpless | stay |
+| `geno.cape.end` | next | interrupt | anim_motion | cape.after | helpless | stay |
+
+New callback names: anim `glide.after`, `cape`; iasa `interrupt` (Melee's IASA command opens
+Wait's / Fall's interrupts, as Melee's attacks do); phys `anim_motion`, `cape`; coll
+`anim_motion`, `cape`, `cape.after`, `drill.start`. Glide attack / end use `glide.after`.
+
+**Order conventions.** Paired states are found by declaration order among the profile's states
+with that behaviour: `geno.cape` (start ground, start air), `geno.cape.attack` (N, N air, F, F air,
+B, B air), `geno.cape.end` (ground, air), `geno.drill.start` (ground, air), `geno.drill.end`
+(ground, air). A ground state that leaves the ground, or an air one that lands, swaps to its
+partner with the frame kept (Brawl's ground / air subaction loops).
+
+### 17.4 Dimensional Cape (Brawl actions 0x115 / 0x11B / 0x11C, recovered)
+
+Sources: the PSA (actions 277 / 283 / 284, subactions 472-481) and MK's kinetic types in
+`sora_melee fn_27_359014` (0x69 / 0x6A read paramSpecialLw, ids 4021-4026; nothing else reads them).
+
+- **Start** (`geno.cape`, 20-frame clip, the script runs to 26): the momentum is kept at w00 (x 0.5)
+  / w01 (y 0.4) with no gravity (kinetic 0x69); frame 12 hides MK (HIDDEN) and switches to kinetic
+  0x6A: each axis accelerates by w02 / w04 (0.5) toward stick x w03 / w05 (2.5), capped at 2.5, no
+  gravity (on the ground only x steers; stick up takes off). Intangible from 17 (script). At
+  `decide_frame` 26: Special or Attack **held** (`attack_buttons`, Brawl requirement 0x32) -> the
+  slash reappear; the variant is the stick x relative to the facing at that frame: |x| <
+  `neutral_x` (0.3, inferred) N, back -> Brawl's "F" clips, forward -> "B" clips; nothing held ->
+  the plain reappear.
+- **Slash reappear** (`geno.cape.attack`, 56 frames): root motion (the clips' TransN; MK's "F" and
+  "B" clips travel 15 / 17 toward the stick), `"facing": "entry"`; visible and tangible at frame 1;
+  N and B turn around at 1 (PUT FACING 0); 14% f6-7 (two TopN boxes). Ground -> Wait, air ->
+  FallSpecial.
+- **Plain reappear** (`geno.cape.end`, 36 frames): visible at 0, ledge grab both, ground IASA 28
+  (iasa `interrupt`), air falls from 10 (MOTION_GRAVITY 0 then 1). Ground -> Wait, air -> FallSpecial.
+- Parameters (`"cape"`): w00 keep_vx 0.5, w01 keep_vy 0.4, w02 steer_accel_x 0.5, w03 steer_max_x
+  2.5, w04 steer_accel_y 0.5, w05 steer_max_y 2.5; steer_frame 12, decide_frame 26, neutral_x 0.3,
+  attack_buttons 3 (special | attack).
+- Not ported / open: Brawl's air-N PSA also has `Change Action Fall` on requirement 0x0F ("button
+  tap?") after its Bit16 at frame 2 - read as "not always" (the slash would never hit otherwise);
+  the vanish's kept stick energy into the reappear (0E04 at 5 / 20) is not modelled (the reappear
+  moves by its clip only); the cape article's separate clips (the cape is MK's own merged mesh,
+  ModelVis(0, 2)).
+
+### 17.5 Drill Rush, from Brawl's code (v2 corrected)
+
+Sources: `ft_metaknight.rel` SpecialSRush (exec C710, exit C820), SpecialSEnd (exec C9B8, exit
+CB48), sora kinetic types 0x66-0x68 and the drill angle hook `fn_27_359CE4`, the motion energy
+update `fn_27_15DC14`; neither class reacts to a hit (checkDamage returns 0, checkAttack is empty).
+
+| | Brawl | Geno v2 | Geno v3 |
+|---|---|---|---|
+| hit / shield / wall during the rush | nothing: the rush always runs its 45-frame clip (hitlag pauses it), rehit 6 | ended the rush (bounce 7) | nothing (`bounce` default 0; the option stays) |
+| pitch | stick Y x 3 deg a frame, no limit (<= 135 over the clip), rotates the TransN vector, up climbs for either facing | same | same |
+| speed | the clip's TransN delta (about 2 u/f), no gravity | same (abs) | same (signed) |
+| on the floor | situation forced to air; the floor blocks it (slides) | could only pitch up | pitch accumulates, slides along the floor, takes off when pitched up |
+| rush ledge grab | Allow Ledgegrab 1 at 20 | none | PUT LEDGE 1 at 20 |
+| end choice | at the floor -> SpecialSEnd, else SpecialAirSEnd | air end + CHG GROUND ONCE | the end state of the situation (ground first, then air) |
+| air end | velocity (-1 x facing, +2.1), FallSpecial at the end, LandingFallSpecial on landing, ledge grab 2 | FallSpecial unless the rush hit | FallSpecial always; landing -> LandingFallSpecial; ledge both |
+| ground end | Wait at the end, off an edge -> Fall | Wait | Wait; off an edge -> Fall |
+| start | ground: vx x 0.5 (ground brake); air: vx x 0.5, vy = 1.0, gravity -0.08; ground / air swap with the frame kept, no second x 0.5 | one state per situation, no swap | swap with the frame kept (coll `drill.start`), speeds untouched |
+| pitch ease in the end | x (1 - 2 / 10) a frame | same | same |
+
+### 17.6 Glide fixes (v3)
+
+- **Entry pop**: a Glide state now starts its clip at `pose_center - angle` (the glide always starts
+  level: frame 90 of MK's 181-frame GlideDirection). Before, the entry frame showed clip frame 0
+  (nose straight up) until the phys callback scrubbed it the next frame.
+- **Helpless after a script-entered glide**: Brawl's Shuttle Loop sets LA-Bit61 on its way into the
+  common Glide, and that glide ends helpless. `glide.script_entry_helpless` (default 1): a Glide
+  entered from anything but the GlideStart state is marked (`move_i[4]`); its GlideEnd /
+  GlideAttack go to FallSpecial at their end and land in LandingFallSpecial.
+
+### 17.7 Limits and state count
+
+`GENO_MAX_STATES` is 48 (was 16). Rows are game state (`Geno_Rows[32][48]` MotionState, about 48 KB
+more per snapshot, rebuilt idempotently at spawn). MK uses 30.
+
+### 17.8 v3 verification
+
+- Tests (`--test`, ACE, 161/161): `geno_v3_anim_motion` (air both facings, ground, lift-off, origin,
+  gravity, ledge default / PUT LEDGE / reset, savestate), `geno_v3_hidden_glide` (HIDDEN across
+  states, the glide start frame, helpless script-entered glide), `geno_v3_many_states` (40 states),
+  `geno_v3_cape` (momentum kept, steering, decision, partner swap keeps the counter, entry facing),
+  `geno_v3_drill` (start swap, unlimited pitch, a hit does not end the rush, the end by situation,
+  helpless air end), `geno_lab_stale_fighter`.
+- In game (Meta Knight, `experiment/brawl-metaknight/tools/ingame_v2.py`, "v3" plans) and netplay:
+  `_build/agents/beta/NOTES.md` (Geno v3 entry).

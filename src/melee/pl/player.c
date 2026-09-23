@@ -157,7 +157,7 @@ static void func_8008688C_wrapper(StaticPlayer* player)
 void Player_80031900(void)
 {
     int slot;
-    for (slot = 0; slot < 6; slot++) {
+    for (slot = 0; slot < Gm_Player_NumMax; slot++) {
         StaticPlayer* player = &player_slots[slot];
         Player_CheckSlot(slot);
         func_8008688C_wrapper(player);
@@ -301,7 +301,7 @@ void Player_80031DA8(s32 param_1, s32 param_2)
 void Player_80031DC8(void func_arg(s32, s32))
 {
     int slot;
-    for (slot = 0; slot < 6; slot++) {
+    for (slot = 0; slot < Gm_Player_NumMax; slot++) {
         Player_CheckSlot(slot);
 
         if (player_slots[slot].player_state) {
@@ -2125,5 +2125,21 @@ void Player_MexSetMapping(int ckind, int fkind)
     ftMapping_list[ckind].internal_id = fkind;
     ftMapping_list[ckind].extra_internal_id = -1;
     ftMapping_list[ckind].has_transformation = 0;
+}
+
+/* Every scene begins without fighters (gmscene.c, gm_801A4BD4). A fighter freed on its own
+ * (HSD_GObjFree) clears its slot through Fighter_Unload_8006DABC -> Player_80031FB0, but a scene
+ * change drops the whole GObj world with its heap and runs no destructors, so vanilla leaves every
+ * slot's player_entity pointing into the freed scene. Retail never reads them before the next
+ * Fighter_Create; the port's own readers do (the Lua script API polls every slot each frame, and
+ * read the 0x8B8B8B8B fill after training exited to the CSS). */
+void Player_ForgetEntities(void)
+{
+    int slot, i;
+    for (slot = 0; slot < Gm_Player_NumMax; slot++) {
+        for (i = 0; i < PL_MAX_SUB_FIGHTERS; i++) {
+            player_slots[slot].player_entity[i] = NULL;
+        }
+    }
 }
 #endif

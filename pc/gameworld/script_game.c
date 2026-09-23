@@ -20,6 +20,7 @@
 #include <melee/gr/ground.h>
 #include <melee/gr/types.h>
 #include <melee/pl/player.h>
+#include <sysdolphin/baselib/gobj.h>
 
 enum {
     SCRIPT_F_X = 0,
@@ -43,6 +44,25 @@ enum {
     SCRIPT_I_SLOT_TYPE, /* 0 human, 1 cpu, 2 demo, 3 none */
 };
 
+/* A slot's fighter counts only while its gobj is in the live fighter list. The scene start clears
+ * the player table (Player_ForgetEntities, gmscene.c) and a fighter freed mid-scene clears its
+ * own slot (Fighter_Unload_8006DABC), so the table should never hold a freed fighter; this is the
+ * second line, because every script read and write goes through here and a stale pointer means
+ * reading freed memory (the 0x8B8B8B8B fill). At most six fighters, so the walk is cheap. */
+static int script_gobj_live(HSD_GObj* gobj)
+{
+    HSD_GObj* cur;
+    if (gobj == NULL || HSD_GObjPLinkHead == NULL) {
+        return 0;
+    }
+    for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
+        if (cur == gobj) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static Fighter* script_fighter(int slot)
 {
     HSD_GObj* gobj;
@@ -50,7 +70,7 @@ static Fighter* script_fighter(int slot)
         return NULL;
     }
     gobj = Player_GetEntity(slot);
-    if (gobj == NULL) {
+    if (!script_gobj_live(gobj)) {
         return NULL;
     }
     return GET_FIGHTER(gobj);

@@ -571,6 +571,9 @@ static int fl_char_tex(int ck)
     FeNpCharIcon* ic;
     FpTex* tx;
     int i;
+    if (ck == CKind_Seak && !fe_np_char_icon[ck].ok) {
+        ck = CKind_Zelda; /* no Sheik icon on a retail roster: she shares Zelda's */
+    }
     if (ck < 0 || ck >= FE_NP_MAX_CK || !fe_np_char_icon[ck].ok) {
         return -1;
     }

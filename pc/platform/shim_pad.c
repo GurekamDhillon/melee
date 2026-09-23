@@ -27,28 +27,46 @@ extern void gw_gc_adapter_recalibrate(void);
  * (netplay testing) must not both read every controller:
  *   gc        the GameCube controller only (the raw adapter, else SDL's pads); keys do nothing
  *   keyboard  the keyboard only, on channel 0: the adapter is never opened and SDL's pads are
- *             dropped; the full play mapping below applies
+ *             dropped; the full play mapping below applies. For tools that run a keyboard window
+ *             next to a controller window (netplay_local.ps1) - it must not grab the adapter.
+ *   keyboard+ the full keyboard mapping on the first port with no controller in it, and every
+ *             controller still works. What players get: the launcher's "Keyboard controls" box
+ *             and SETTINGS > Controls > Input Device = Keyboard both mean this. (A tester once
+ *             ticked the box and lost their adapter entirely under the old keyboard-only meaning.)
  *   (unset)   everything, as before. */
-enum { GW_INPUT_ANY, GW_INPUT_GC, GW_INPUT_KEYBOARD };
+enum { GW_INPUT_ANY, GW_INPUT_GC, GW_INPUT_KEYBOARD, GW_INPUT_KEYBOARD_PLUS };
+extern int gw_gc_adapter_device_plugged(void);
+extern void gw_gc_adapter_start_hotplug(void);
 static int gw_input_mode(void) {
   static int cached = -1;
   if (cached < 0) {
     extern int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt);
     char saved[16];
+    int from_settings = 0;
     const char *v = getenv("MELEE_INPUT");
     if (v == NULL || v[0] == '\0') {
       /* SETTINGS > Controls > Input Device (settings.cfg), from the next start */
       gw_Settings_Str("input", saved, sizeof saved, "");
       v = saved;
+      from_settings = 1;
     }
     cached = GW_INPUT_ANY;
     if (v != NULL && (v[0] == 'g' || v[0] == 'G')) {
       cached = GW_INPUT_GC;
     } else if (v != NULL && (v[0] == 'k' || v[0] == 'K')) {
-      cached = GW_INPUT_KEYBOARD;
+      /* a player's setting never switches controllers off; only the env var's plain
+       * "keyboard" (tools) does */
+      cached = (from_settings || strchr(v, '+') != NULL) ? GW_INPUT_KEYBOARD_PLUS : GW_INPUT_KEYBOARD;
     }
-    if (cached != GW_INPUT_ANY) {
+    if (cached == GW_INPUT_KEYBOARD_PLUS) {
+      gw_log("gw: input: keyboard on the first empty port, controllers still active");
+    } else if (cached != GW_INPUT_ANY) {
       gw_log("gw: input pinned to the %s", cached == GW_INPUT_GC ? "GameCube controller" : "keyboard");
+    }
+    if (cached == GW_INPUT_KEYBOARD && gw_gc_adapter_device_plugged()) {
+      gw_log("gw: input: NOTE a GameCube adapter is plugged in but this window is keyboard-only "
+             "(MELEE_INPUT=keyboard), so the adapter is ignored. Use MELEE_INPUT=keyboard+ or "
+             "leave it unset to play with it.");
     }
   }
   return cached;
@@ -61,6 +79,7 @@ int gw_PADInit(void) {
    * driver opens the same device, and whichever side gets there first locks the other out. */
   if (gw_input_mode() != GW_INPUT_KEYBOARD) {
     gw_gc_adapter_init();
+    gw_gc_adapter_start_hotplug(); /* plugged in later, or moved to another port: picked up */
   }
   ret = (int)PADInit();
   return ret;
@@ -208,6 +227,22 @@ static long long gw_pad_prof_now(void) {
   return t.QuadPart;
 }
 
+/* Which port the keyboard plays on: always port 1 when keyboard-only; with keyboard+ the first
+ * port no controller is using (err != 0 after the adapter and SDL have filled the array), so a
+ * GameCube controller in port 1 keeps it and the keyboard becomes the next player. */
+static int gw_keyboard_channel(const PADStatus *st) {
+  int i;
+  if (gw_input_mode() != GW_INPUT_KEYBOARD_PLUS) {
+    return PAD_CHAN0;
+  }
+  for (i = 0; i < PAD_CHANMAX; ++i) {
+    if (st[i].err != 0) {
+      return i;
+    }
+  }
+  return PAD_CHANMAX - 1; /* every port has a controller: the keyboard shares the last one */
+}
+
 int gw_PADRead(void *status) {
   PADStatus *st = (PADStatus *)status;
   long long tp0 = gw_pad_prof_now(), tp1, tp2;
@@ -283,7 +318,7 @@ int gw_PADRead(void *status) {
   extern int gw_TextEntryUntil;
   if ((int) (GetTickCount() - (DWORD) gw_TextEntryUntil) < 0) {
     /* nothing: the keyboard mapping stands down */
-  } else if (gw_input_mode() == GW_INPUT_KEYBOARD) {
+  } else if (gw_input_mode() == GW_INPUT_KEYBOARD || gw_input_mode() == GW_INPUT_KEYBOARD_PLUS) {
     /* The full play mapping (keyboard-pinned windows). Focus-gated like the overlay below.
      *   W A S D     control stick (Left Shift: half tilt, for walking and tilts)
      *   arrow keys  C-stick
@@ -292,7 +327,7 @@ int gw_PADRead(void *status) {
      *   Enter = Start   T F G H = D-pad up/left/down/right */
     HWND fg = GetForegroundWindow();
     DWORD pid = 0;
-    PADStatus *k = &st[PAD_CHAN0];
+    PADStatus *k = &st[gw_keyboard_channel(st)];
     u16 btn = 0;
     int sx = 0, sy = 0, cx = 0, cy = 0;
 

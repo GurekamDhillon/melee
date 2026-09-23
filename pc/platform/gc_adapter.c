@@ -41,8 +41,13 @@
 #define GC_ADAPTER_VID 0x057E
 #define GC_ADAPTER_PID 0x0337
 
-#define GC_EP_IN 0x81
-#define GC_EP_OUT 0x02
+/* Endpoint addresses: read from the interface descriptor when the adapter opens (Dolphin does the
+ * same), so a clone that numbers its pipes differently still works. These are the official
+ * adapter's, kept as the fallback. */
+static UCHAR gw_gc_ep_in = 0x81;
+static UCHAR gw_gc_ep_out = 0x02;
+#define GC_EP_IN gw_gc_ep_in
+#define GC_EP_OUT gw_gc_ep_out
 
 #define GC_PAYLOAD_SIZE 37
 #define GC_PORTS 4
@@ -563,6 +568,24 @@ int gw_gc_adapter_init(void) {
     return 1;
   }
 
+  /* Find the interrupt pipes from the descriptor instead of assuming the official adapter's. */
+  {
+    USB_INTERFACE_DESCRIPTOR ifd;
+    if (WinUsb_QueryInterfaceSettings(gw_gc_usb, 0, &ifd)) {
+      UCHAR i;
+      for (i = 0; i < ifd.bNumEndpoints; ++i) {
+        WINUSB_PIPE_INFORMATION pipe;
+        if (WinUsb_QueryPipe(gw_gc_usb, 0, i, &pipe) && pipe.PipeType == UsbdPipeTypeInterrupt) {
+          if (pipe.PipeId & 0x80) {
+            gw_gc_ep_in = pipe.PipeId;
+          } else {
+            gw_gc_ep_out = pipe.PipeId;
+          }
+        }
+      }
+    }
+  }
+
   /* Short read timeout: the pad is polled once per frame from the game thread, and a stalled
    * read must never hold up the frame. RAW_IO keeps WinUSB from buffering partial packets. */
   WinUsb_SetPipePolicy(gw_gc_usb, GC_EP_IN, PIPE_TRANSFER_TIMEOUT, sizeof(timeout), &timeout);
@@ -584,6 +607,63 @@ int gw_gc_adapter_init(void) {
 }
 
 int gw_gc_adapter_present(void) { return gw_gc_ready; }
+
+/* Is a WUP-028 (057E:0337) plugged in right now, whatever driver it has? A SetupAPI walk of the
+ * present USB devices - cheap, and it opens nothing, so it can't disturb another program. */
+int gw_gc_adapter_device_plugged(void) {
+  HDEVINFO set = SetupDiGetClassDevsA(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
+  SP_DEVINFO_DATA info;
+  char id[512];
+  DWORD i;
+  int found = 0;
+
+  if (set == INVALID_HANDLE_VALUE) {
+    return 0;
+  }
+  info.cbSize = sizeof(info);
+  for (i = 0; !found && SetupDiEnumDeviceInfo(set, i, &info); ++i) {
+    if (SetupDiGetDeviceInstanceIdA(set, &info, id, sizeof(id), NULL)) {
+      char *p;
+      for (p = id; *p != '\0'; ++p) *p = (char)toupper((unsigned char)*p);
+      found = strstr(id, "VID_057E&PID_0337") != NULL;
+    }
+  }
+  SetupDiDestroyDeviceInfoList(set);
+  return found;
+}
+
+/* Hotplug, the way Dolphin handles it: while no adapter is open (never found at startup, or
+ * unplugged), a low-priority thread checks once a second whether one is plugged in and opens it,
+ * so plugging the adapter in or moving it to another USB port mid-session just works. The full
+ * open (and its logging) only runs when the device is actually present; after a failed open
+ * (another program holding it, say) it waits 30 s before trying again. */
+static HANDLE gw_gc_scan_thread;
+static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
+  DWORD retry_at = 0;
+  (void)arg;
+  for (;;) {
+    Sleep(1000);
+    if (gw_gc_ready || (int)(GetTickCount() - retry_at) < 0 || !gw_gc_adapter_device_plugged()) {
+      continue;
+    }
+    gw_log("gw: gc adapter: an adapter is plugged in - opening it");
+    gw_gc_tried = 0;
+    if (gw_gc_adapter_init()) {
+      InterlockedExchange(&gw_gc_recal, 1); /* re-sample the resting sticks and triggers */
+    } else {
+      retry_at = GetTickCount() + 30000;
+    }
+  }
+  return 0;
+}
+void gw_gc_adapter_start_hotplug(void) {
+  if (gw_gc_scan_thread == NULL) {
+    gw_gc_scan_thread = CreateThread(NULL, 0, gw_gc_scanner, NULL, 0, NULL);
+    if (gw_gc_scan_thread != NULL) {
+      SetThreadPriority(gw_gc_scan_thread, THREAD_PRIORITY_LOWEST);
+    }
+  }
+}
 
 /* Re-sample the resting state on the next read. Safe to call at any time; it only latches a
  * flag, and the capture itself happens on the game thread inside gw_gc_adapter_read. */

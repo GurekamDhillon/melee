@@ -68,6 +68,7 @@ static TestGenoState* t_setup(void)
     t_fp.frame_speed_mul = 1.0f;
     t_fp.ft_data = &t_ftdata;
     t_fp.dat_attrs = t_dat_attrs;
+    t_fp.dat_attrs_backup = t_dat_attrs;
     t_fp.x18 = 341;
     t_fp.x1C_actionStateList = t_rows;
     t_fp.x20_actionStateList = t_rows;
@@ -637,7 +638,7 @@ static int test_geno_v1_change_action(void)
         TestFail("VAR 2.0 > 1.5 should change to 81");
         rc = 1;
     }
-    /* a Geno-state target (v2) changes nothing; the check stays */
+    /* a Geno-state target (v2) changes nothing and the check stays; a later check still wins */
     n = 0;
     s[n++] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, 0);
     s[n++] = GENO_TARGET(GENO_TGT_GENO, 1);
@@ -648,6 +649,19 @@ static int test_geno_v1_change_action(void)
         TestFail("a Geno-state target must be ignored in v1");
         rc = 1;
     }
+    s[0] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, 0);
+    s[1] = GENO_TARGET(GENO_TGT_MOTION, 35); /* the fallback, registered after it */
+    s[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    if (Geno_PreAnim(&t_gobj) != 1 || t_fp.motion_id != 35) {
+        TestFail("a fallback check after a Geno-state check must still fire in v1");
+        rc = 1;
+    }
+    n = 0;
+    s[n++] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, 0);
+    s[n++] = GENO_TARGET(GENO_TGT_GENO, 1);
+    s[n++] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
     /* CHGCLR, then the limit: 9 distinct checks -> 8 kept */
     t_script[0] = GENO_W0(GENO_SUB_CHGCLR, 1, 0);
     t_script[1] = 0;

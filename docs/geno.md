@@ -1,6 +1,6 @@
 # Geno - GD's Melee's fighter-extension layer
 
-Status: **v0** (foundation), private branch `private/geno` in the melee fork. Working name, approved by GD.
+Status: **v1** (v0 foundation + the Meta Knight script features, section 15), private branch `private/geno` in the melee fork. Working name, approved by GD.
 Nothing here may reach a public branch until GD says so.
 
 ## 1. What Geno is, and what it is not
@@ -90,11 +90,12 @@ dispatch). Geno never edits m-ex's tables, slot numbering or hook registration.
 | file | half | what |
 |---|---|---|
 | `pc/geno/geno.h` | shared | constants: escape encoding, banks, sub-commands, hook numbers, events |
-| `pc/geno/geno_game.c` | game (gwtool) | state block, escape interpreter, hooks, attributes, multi-jump |
+| `pc/geno/geno_state.h` | game (gwtool) | the `GenoState` block layout (shared by geno_game.c and geno_tests.c) |
+| `pc/geno/geno_game.c` | game (gwtool) | state block, escape interpreter, hooks, attributes, multi-jump; v1: engine values, change action, rehit, autolink, landing edges, special attributes, script overlays |
 | `pc/platform/geno_registry.c` | native | JSON reader, geno.json loading, stable ids, target resolution, scalar API, registry tests |
 | `pc/geno/geno_tests.c` | game (gwtool) | escape / loops / resets / multi-jump / savestate tests |
 | `pc/geno/tools/scan_ftcmd_opcodes.py` | tool | opcode census of every fighter script on a disc |
-| engine sites | game | `ftaction.c` (3 loops), `fighter.c` (reset, action change, on_frame), `ftchangeparam.c` (attributes), `ftCo_JumpAerialF1.c` (multi-jump) |
+| engine sites | game | `ftaction.c` (3 loops), `fighter.c` (reset, action change, on_frame; v1: pre-anim checks, around the collision callback), `ftchangeparam.c` (attributes), `ftCo_JumpAerialF1.c` (multi-jump); v1: `ftcommon.c` (landing / take-off edges), `ftcoll.c` (autolink) |
 | `gw_snap.c`, `gw_mexid.c`, `gw_tests_core.c` | native | snapshot coverage, netplay identity salt, test registration |
 
 Link: the three objects are listed in `_build/agents/beta/melee_link_objects_geno.rsp` (beta's list
@@ -293,8 +294,8 @@ Geno version - data-driven, drawn natively, no fighter code:
 
 | version | adds |
 |---|---|
-| v0 (this) | registry + stable ids + netplay salt, state block, escape (vars, if/else, CALL), 4 hooks, 3 dispatch points, attribute overrides, multi-jump past the table, tests, opcode census |
-| v1 | subaction script overlays (Phase 1 moves); escape subs to read engine values into vars (percent, velocity, ground/air, facing, motion, frame) and to write a few back; DIV and a game-RNG random sub; special-attribute (`dat_attrs`) overrides; `air_vy` for non-multi-jump fighters; `on_hit` / `on_land` dispatch |
+| v0 | registry + stable ids + netplay salt, state block, escape (vars, if/else, CALL), 4 hooks, 3 dispatch points, attribute overrides, multi-jump past the table, tests, opcode census |
+| v1 (built, section 15) | subaction script overlays; engine values GET/PUT/IFV; DIV, RAND; change action (Brawl requirements, persistent/once, CHGAND); REHIT; LINK (autolink 365); special-attribute overrides; `on_land` (script checks, geno.json map, hooks). Not done from the old v1 list: `air_vy` for non-multi-jump fighters, `on_hit` |
 | v2 | Geno action states (section 11): glide, then crawl and wall cling; Meta Knight on top |
 | v2.5 | HUD elements (section 11b): data-driven meters/icons bound to Geno variables |
 | v3 | `define`: brand-new fighters with Geno-native registration (their own kind range and content ids, independent of m-ex's dense slots), CSS/SSS entries via gw_uigen |
@@ -465,3 +466,317 @@ focused fighter's move at its scrub frame), `R` mirror P1's controller onto P2. 
 <motion id> [frame]`, `lab events [port]` (the decoded script).
 
 Not built: live edits written back to `experiment/brawl-kirby/tuning.json` (the "later" item).
+
+## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
+
+This section is the contract the Brawl -> Geno script translator (experiment/brawl-metaknight/)
+emits against. A copy lives at `experiment/brawl-metaknight/geno_v1_encodings.md`; this section
+wins if they differ. **Numbers here never change**: new features get new sub / value / condition
+ids. Constants: `pc/geno/geno.h`. Everything is ftcmd opcode 59 (first byte 0xEC-0xEF), words
+big-endian like any Pl file script:
+
+```
+word0  [31:26] 59   [25:20] sub   [19:16] len (total words incl. word0, 1-15)   [15:0] sub-specific
+```
+
+Unknown subs are skipped by `len`, so always set `len` correctly.
+
+### 15.1 Variables (v0, unchanged)
+
+A **var ref** is 8 bits: `[7:6] bank, [5:0] index`. Banks: `0` LA int, `1` RA int, `2` LA float,
+`3` RA float (64 vars each). LA = kept across actions (reset at spawn/respawn), RA = cleared on
+every action change. PSA bit vars are bits of int vars (translator's choice of packing, e.g.
+`RA.Bit[n]` -> RA int `n / 32`, bit `n % 32`).
+
+Variable-sub layout of word0 `[15:0]`: `[15:8] var A`, `[7] B is a var`, `[6:4] cmp`, `[3:0] 0`.
+`B` (word1) is an immediate (int, or float bits when A is a float var) or, with `[7]` set, a var
+ref in `[7:0]` (converted to A's type).
+
+| sub | name | len | effect |
+|---|---|---|---|
+| 0x00 | NOP | any | nothing |
+| 0x01 | SET | 2 | `A = B` |
+| 0x02 | ADD | 2 | `A += B` |
+| 0x03 | SUB | 2 | `A -= B` |
+| 0x04 | MUL | 2 | `A *= B` |
+| 0x05 | SETBIT | 2 | `A |= 1 << B` |
+| 0x06 | CLRBIT | 2 | `A &= ~(1 << B)` |
+| 0x07 | DIV | 2 | `A /= B` (B == 0: A unchanged) **v1** |
+| 0x0A | RAND | 2 | int A: `A = random 0..B-1` (B <= 0: 0); float A: `A = random [0, B)`. Game RNG (rollback-safe) **v1** |
+| 0x10 | IF | 3 | if `!(A cmp B)` skip `word2` words (counted from the end of this command) |
+| 0x11 | SKIP | 2 | skip `word1` words forward |
+| 0x20 | CALL | 3 | native hook `word1` with argument `word2` |
+
+cmp: `0` EQ, `1` NE, `2` LT, `3` LE, `4` GT, `5` GE, `6` BIT (`A & (1 << B)`), `7` NOBIT.
+
+`if (c) {T} else {E}` = `IF !c ->skip |T|+2 ; T ; SKIP |E| ; E`. Skips only go forward. For a
+backward jump (a loop) use Melee's own goto/loop commands (they wait frames), guarded by an IF.
+
+### 15.2 Engine values (v1)
+
+| sub | name | len | layout |
+|---|---|---|---|
+| 0x08 | GET | 2 | word0 `[15:8]` var A; word1 = value id. `A = value` (converted to A's type) |
+| 0x09 | PUT | 3 | word0 `[7]` B is a var; word1 = value id; word2 = B (immediate in the **value's** type, or a var ref). `value = B`. Read-only values ignore it (logged once) |
+| 0x12 | IFV | 4 | word0 `[7]` B is a var, `[6:4]` cmp; word1 = value id; word2 = B (value's type or var); word3 = words to skip when `!(value cmp B)` |
+
+Value ids (type: `f` float, `i` int; `W` = writable):
+
+| id | name | type | W | meaning |
+|---|---|---|---|---|
+| 0x00 | AIR | i | W | 1 in the air, 0 on the ground. Writing 1 on the ground makes the fighter airborne (Melee's own "become airborne"); writing 0 is ignored (landing needs a floor: use the ground check / on_land) |
+| 0x01 | FACING | f | W | +1 right, -1 left. Writing: sign sets the facing, **0 turns around** (PSA "Reverse Direction") |
+| 0x02 | VEL_X | f | W | self velocity x (world) |
+| 0x03 | VEL_Y | f | W | self velocity y |
+| 0x04 | GROUND_VEL | f | W | ground velocity (along the floor) |
+| 0x05 | FWD_VEL | f | W | self velocity x times facing (forward-positive; PSA "Set Horizontal Speed") |
+| 0x06 | KB_VEL_X | f |  | knockback velocity x |
+| 0x07 | KB_VEL_Y | f |  | knockback velocity y |
+| 0x08 | STICK_X | f |  | control stick x, -1..1 (world) |
+| 0x09 | STICK_Y | f |  | control stick y |
+| 0x0A | STICK_FWD | f |  | stick x times facing (forward-positive) |
+| 0x0B | CSTICK_X | f |  | C-stick x |
+| 0x0C | CSTICK_Y | f |  | C-stick y |
+| 0x0D | ANIM_FRAME | f |  | current animation frame (0-based, as Melee counts it) |
+| 0x0E | ACTION_FRAME | i |  | frames spent in the current action (1 on its first frame) |
+| 0x0F | MOTION | i |  | current Melee motion (action state) id |
+| 0x10 | PERCENT | f |  | damage percent |
+| 0x11 | JUMPS_USED | i | W | jumps used (ground jump counts; 1 in the air after leaving the ground) |
+| 0x12 | JUMPS_MAX | i |  | max jumps |
+| 0x13 | BUTTONS_HELD | i |  | Geno button mask (section 3) of held buttons |
+| 0x14 | BUTTONS_PRESSED | i |  | Geno button mask of buttons pressed this frame |
+| 0x15 | POS_X | f |  | position x |
+| 0x16 | POS_Y | f |  | position y |
+| 0x17-0x1A | CMD_VAR0-3 | i | W | Melee's script variables `fp->cmd_vars[0..3]` (what Melee's own "set cmd var" writes and special states read) |
+| 0x1B | ANIM_RATE | f |  | animation speed |
+| 0x1C | FAST_FALL | i |  | 1 while fast-falling |
+| 0x1D | TRIGGER | f |  | analog shield trigger, 0..1 |
+| 0x1000 + i | SPECIAL_F[i] | f |  | special attribute word i (`fp->dat_attrs`), read as float, i < 265 |
+| 0x2000 + i | SPECIAL_I[i] | i |  | special attribute word i, read as int |
+
+### 15.3 Change action (v1)
+
+| sub | name | len | layout |
+|---|---|---|---|
+| 0x30 | CHG | 2-4 | word0 `[15:8]` condition, `[7]` B is a var, `[6:4]` cmp, `[3]` NOT, `[2]` ONCE; word1 = **target**; word2 = arg1; word3 = arg2 |
+| 0x31 | CHGAND | 1-3 | word0 `[15:8]` condition, `[7]`, `[6:4]`, `[3]` NOT as CHG; word1 = arg1; word2 = arg2. Adds an AND condition to the most recent CHG of this action (PSA "Additional Change Action Requirement"). Max 3 conditions per CHG |
+| 0x32 | CHGCLR | 1 | removes every change-action check of this action |
+
+Semantics (Brawl's): a CHG **registers** a check. Without `ONCE` it is checked **every frame for
+the rest of the action** (cleared by any action change). With `ONCE` it is checked once, at the end
+of the frame it was registered in, then dropped. Checks are tested in registration order, first
+match wins. Registered checks run every frame after the animation and script advance and **before
+the state's own animation callback**, so an "animation end" check beats the state's own anim-end
+transition. Up to 8 checks per fighter (a 9th is dropped, logged). `CHG ALWAYS ONCE` = "change
+action now" (at the end of this frame's script pass - never in the middle of a script).
+
+Landing: a registered check whose (first) condition is GROUND is also tested **at the moment of
+landing** inside the collision callback, and wins over the state's own landing transition (it runs
+right after the callback). Likewise AIR at the moment of leaving the ground there. So PSA
+`Change Action X, requirement On Ground` is exactly `CHG GROUND -> X`.
+
+Conditions (`[15:8]`):
+
+| id | name | arg1 | arg2 |
+|---|---|---|---|
+| 0 | ALWAYS | | |
+| 1 | ANIM_END | | | the animation has no frames left |
+| 2 | GROUND | | | on the ground |
+| 3 | AIR | | | in the air |
+| 4 | PRESSED | Geno button mask | | any of the buttons pressed this frame |
+| 5 | HELD | Geno button mask | | any of the buttons held |
+| 6 | BIT | var ref | bit index | bit set (NOT for "bit clear") |
+| 7 | VAR | var ref A | B (A's type, or var ref with `[7]`) | `A cmp B` |
+| 8 | FRAME | frame N (int) | | animation frame >= N |
+| 9 | VALUE | value id (section 2) | B (value's type, or var ref with `[7]`) | `value cmp B` |
+
+Geno button mask: bit 0 ATTACK (A), bit 1 SPECIAL (B), bit 2 JUMP (X or Y), bit 3 SHIELD (L or
+R, digital or the analog trigger past Melee's shield threshold), bit 4 GRAB (Z), bit 5 TAUNT
+(D-pad up). Brawl's requirement button ids 0-5 are these bits (`1 << id`).
+
+**Target word:**
+
+```
+[31:28] kind   0 MOTION  id = Melee motion id (common 0-340, fighter specials 341+)
+               1 SPECIAL id = the fighter's special action n (motion = first special + n)
+               2 GENO    id = Geno state (v2; v1 skips such a check - logged - and a later
+                         matching check still fires, so emit a fallback CHG after it)
+[27]    RAW        plain Fighter_ChangeMotionState, even for the common states below
+[26]    KEEP_FRAME continue at the current animation frame with Melee's mid-move transition
+                   flags (hitboxes, GFX, SFX kept) - Melee's way to swap the air/ground version of
+                   a move, i.e. Brawl's "Change Subaction" to the other-situation variant. Implies RAW
+[25:16] 0
+[15:0]  id
+```
+
+Without RAW, these common states enter through Melee's own entry function (so they are set up
+the way the game sets them up): Wait (on the ground; in the air it becomes Fall), Fall,
+FallSpecial (helpless fall, default landing lag), Landing, LandingFallSpecial. Every other target
+is a plain `Fighter_ChangeMotionState(id, 0, frame 0, speed 1, blend 0)` into that motion's row -
+the state's callbacks run, its special entry code (if any) does not.
+
+### 15.4 Hitbox helpers (v1)
+
+| sub | name | len | layout |
+|---|---|---|---|
+| 0x38 | REHIT | 2 | word0 `[15:8]` hitbox mask (bit i = Melee hitbox id i, 0-3); word1 = N frames (0 = stop) |
+| 0x39 | LINK | 2 | word0 `[15:8]` hitbox mask; word1 = mode: 0 off, 1 autolink direction, 2 direction + speed |
+
+**REHIT** = Brawl's rehit rate: every N frames (counted from the command, frozen during the
+attacker's hitlag) the victim lists of those hitboxes are cleared - exactly what Melee's
+multi-hit moves get by re-creating a hitbox. Lives until the action ends or `REHIT mask 0`.
+Emit it right after the hitbox creation (Brawl: `Offensive Collision ... rehit rate 6` ->
+Melee hitbox + `REHIT mask(id) 6`).
+
+**LINK** = Brawl angle 365 for these hitboxes (keep Melee's angle field at any value, e.g. 361 or
+the Brawl number - LINK overrides it for Geno fighters only; without LINK a Melee hitbox angle is
+used as Melee uses it). On a hit, the victim is launched along the attacker's momentum (its air
+velocity, or its ground velocity along the floor); when the attacker is nearly still (speed below
+0.05) the hitbox's own Melee angle applies unchanged. Mode 1 keeps the hitbox's Melee knockback magnitude (hitstun as Melee
+computes it). Mode 2 also raises the knockback so the victim's launch speed is at least the
+attacker's speed. This is the agreed approximation of Brawl's 365, not a bit-exact copy.
+Lives until the action ends or `LINK mask 0`.
+
+### 15.5 Script overlays and on_land (geno.json)
+
+```json
+"subactions": [ { "index": 87, "words": ["0xEC220001", 5, "0x08000014"] },
+                { "index": 88, "file": "geno/mk_fair.txt" } ],
+"special_attributes": [ { "index": 13, "float": 16.0 }, { "offset": "0x2C", "int": 10 } ],
+"on_land": [ { "from": "special:4", "to": "special:6" },
+             { "from": 66, "to": 43, "keep_frame": false } ],
+"hooks": { "on_land": ["geno.count_frames:5"] }
+```
+
+- `subactions`: replace subaction (animation + script) `index`'s **script** with these words
+  (numbers or "0x.." strings; a `file` is whitespace-separated words, `#` comments). Loaded once at
+  boot, read-only. Inside an overlay, sub **0x13 ORIG** (len 1) continues with the fighter's
+  original script of that subaction from its start - so an overlay can be "Geno prefix + ORIG".
+- `special_attributes`: override the fighter's special attribute block (`dat_attrs`) word by word
+  (`index` = word, or `offset` = bytes); the value is `float` or `int`. Applied before the
+  fighter's own attribute setup copies/scales them, at every spawn and attribute re-apply.
+- `on_land`: when the fighter lands while in action `from`, it goes to `to` (after any script
+  GROUND check, which wins). Targets: a number (motion id), `"special:N"`, `"motion:N"`,
+  `"geno:N"` (v2). `keep_frame` = the KEEP_FRAME bit.
+- `hooks.on_land`: native hooks at the moment of landing.
+
+### 15.6 Brawl PSA -> Geno cheat sheet
+
+| PSA | Geno |
+|---|---|
+| Change Action X, req R | `CHG R -> X` |
+| Additional Change Action Requirement R | `CHGAND R` |
+| Change Subaction X, req On Ground / In Air | the Melee action whose subaction is X, `KEEP_FRAME` (or a plain target) |
+| Change Action Status 10000/10002 (Wait/Fall group) | `CHG ... -> Wait` / `-> Fall` (common entry) |
+| If On Ground / In Air | `IFV AIR EQ 0/1` |
+| If Compare IC.x | `GET` the value into a var, then `IF`, or `IFV` directly |
+| If Button Pressed n | `IFV BUTTONS_PRESSED BIT n` |
+| Set Air/Ground (to air) | `PUT AIR 1` |
+| Reverse Direction | `PUT FACING 0` |
+| Set/Add Horizontal Speed | `PUT FWD_VEL` (add: GET, ADD, PUT) |
+| Set Vertical Speed | `PUT VEL_Y` |
+| Offensive Collision rehit N | Melee hitbox + `REHIT mask N` |
+| Offensive Collision angle 365 | Melee hitbox + `LINK mask 1` |
+| Roll A Die n | `RAND A n` |
+
+### 15.7 How v1 hooks into the engine (and why it stays m-ex compatible)
+
+| site | what | inert fighters |
+|---|---|---|
+| `fighter.c` `Fighter_8006A360`, before `anim_cb` | `Geno_PreAnim`: action frame +1, REHIT timers, registered CHG checks (first match changes the action; the old state's anim callback is then skipped, as when it changes state itself) | returns 0 at once |
+| `fighter.c` `Fighter_procMap`, around `coll_cb` | `Geno_CollBegin` / `Geno_CollEnd`: a landing / take-off inside the callback may pick a target, performed right after it | return at once |
+| `ftcommon.c` `ftCommon_8007D6A4` (land), `8007D5D4` / `8007D60C` (become airborne) | `Geno_GroundEdge`: on_land hooks; GROUND / AIR checks; geno.json `on_land` | return at once |
+| `ftcoll.c` `ftColl_8007A06C` (fighter hitbox won the hit) | `Geno_Autolink`: LINK rewrites dir / angle (/ kb) | returns 0 at once |
+| `ftchangeparam.c` (existing) | special attributes written with the common ones, before the fighter's own attribute code | profile -1: return |
+| `Fighter_UnkInitReset_80067C98` (existing) | subaction overlays installed (idempotent) | profile -1: nothing |
+
+"Inert" = no geno.json profile for the kind and no escape ever executed by its scripts - every
+vanilla and m-ex fighter. Edges outside a collision callback (a hit launching a grounded fighter,
+a state entry calling "become airborne") never pick a change target, so a GROUND/AIR check can
+never hijack a damage state.
+
+**Rollback / determinism.** Every v1 field is in `GenoState` (`pc/geno/geno_state.h`): action
+frame, up to 8 checks (target + 3 conditions each), REHIT period/count and LINK mode per hitbox,
+the collision-edge scratch. The overlay pool (`Geno_ScriptPool`) and the original-script table are
+game globals too, written only with the same values (idempotent). RAND uses the game's RNG (not
+drawn in the fast-forward pass). No host pointers, no host time. Tests `geno_state_savestate`
+(v1 fields survive a gw_snap round trip) and the netplay_local run in section 15.9.
+
+### 15.8 Approximations and limits (read before translating)
+
+- **Autolink 365** is an approximation: direction = attacker's momentum (air velocity, or ground
+  velocity along the floor), Melee knockback magnitude (mode 1) or at least the attacker's speed
+  (mode 2). Hitstun, DI, SDI, meteor rules stay Melee's. Brawl's exact 365 math (victim velocity
+  set relative to the attacker each frame) is not reproduced. Attacker speed below 0.05: the
+  hitbox's own Melee angle.
+- **REHIT** clears the victim list on a fixed period from the REHIT command (frozen in the
+  attacker's hitlag). Brawl counts per victim from its last hit; for a victim hit on the first
+  frame (the usual case) they agree; a victim entering mid-window can be rehit up to N-1 frames
+  earlier than in Brawl.
+- **Change action** into a special state enters its motion row (callbacks) but not its own entry
+  function: a special that needs setup (m-ex state variables) should be entered with a script /
+  MoveLogic that sets itself up on its first frame. The common Wait / Fall / FallSpecial /
+  Landing / LandingFallSpecial go through Melee's entry functions. Special targets are bounded to
+  256 past the first special; the row must exist. Geno-state targets (kind 2) are v2: ignored.
+- **Brawl "Change Subaction"** (same action, other animation) has no v1 opcode: use the Melee
+  action that plays that subaction, with KEEP_FRAME for the air/ground-variant case.
+- Overlays cannot hold Melee commands with **absolute pointers** (goto / subroutine into the Pl
+  file); use Geno SKIP/IF for forward jumps, Melee's loop commands for loops, ORIG to continue with
+  the original script.
+- PRESSED SHIELD sees digital L/R only (HELD also sees the analog trigger).
+- Not in v1: `on_hit` dispatch, `air_vy` for non-multi-jump fighters, a "change subaction" op.
+
+
+### 15.9 v1 verification
+
+- Tests (`--test`, 149/149 on ACE, vanilla and Akaneia): `geno_registry_v1` (native parse of the
+  v1 keys), `geno_v1_values`, `geno_v1_change_action`, `geno_v1_ground_edge`, `geno_v1_rehit`,
+  `geno_v1_autolink`, `geno_v1_special_attrs`, `geno_v1_overlay`, `geno_v1_inert`, and the v1
+  fields in `geno_state_savestate`.
+- Demo mod `_build/agents/beta/mods-geno-v1/geno-v1-demo` (not committed): vanilla Kirby on the
+  ACE disc. Nair (subaction 68) overlay = REHIT 4 + LINK + PUT VEL_Y hop + IFV STICK_FWD boost +
+  GET special word + CHG GROUND -> LandingFallSpecial + CHG ANIM_END & AIR -> FallSpecial + CHG
+  A & FRAME >= 12 -> fair, then ORIG; `on_land` fair -> ftilt; `special_attributes` word 5 (first
+  air jump 3.0). Pad `geno_v1_pad.txt`; log lines `geno: ... rehit`, `autolink`, `change action`,
+  `landed in motion 66 -> target 0x00000035`; shot `_build/agents/beta/shots/geno_v1_1500.png`.
+- Rollback: `_build/netplay_local.ps1 -Disc ace` with the demo mod on both sides (EnvHost /
+  EnvGuest `MELEE_MODS_DIR`), Kirby (pad-driven, v1 features) vs Wolf; results in NOTES.md.
+
+## 16. v2 design note: glide as a Geno state, and entering a Geno state from a script
+
+(Design only; not built. Refines section 11 with what v1 settled.)
+
+**Geno states.** A Geno state is a motion id past the fighter's own specials:
+`geno_first = x18 + special_count_of_kind`, allocated per profile from a geno.json list
+(`"states": [{"name": "Glide", "subaction": 450, "logic": "geno.glide", ...}]`). Each gets a
+`MotionState` row built at install from native callbacks in a const table (anim / input / phys /
+coll per logic id), appended to a per-kind copy of the special-state table the same way m-ex swaps
+MoveLogic (`Mex_MoveLogicTable`), so vanilla and m-ex rows stay untouched and a kind without Geno
+states keeps its own table pointer. The v1 target kind 2 (`GENO_TGT_GENO`, id = index in that
+list) then resolves to `geno_first + id` in `geno_target_motion` - the only v1 change needed; every
+v1 path (CHG, on_land, KEEP_FRAME) works unchanged. Until then kind 2 is a logged no-op.
+
+**Glide states** (MK, Pit, Charizard): GlideStart, Glide, GlideAttack, GlideLanding, GlideEnd.
+Parameters from geno.json `"glide"`, defaulting to MK's Misc Glide block (22 words, IR
+`behavior.attributes.special.fields` `glide.w00..w21`): w00 80 / w01 -70 (angle limits, deg,
+inferred), w02-w19 speeds, accelerations and angle rates (unnamed; to be named from
+`ftStatusUniqProcessGlide` in sora_melee or measured in Dolphin), w20 44 (int, likely a frame
+count: the glide's GlideStart length or the attack window), w21 0. The per-frame state (angle,
+speed, frames gliding) lives in the RA float/int banks of the fighter's GenoState (reserved
+indices 60-63), so it is snapshotted with no new code; the physics callback is plain C over those
+vars and `self_vel` (no host state, no RNG).
+
+**Entries.**
+- Jump-hold (Brawl rule, IR `glide window 16`): a native `on_frame` hook `geno.glide.entry` counts
+  frames with jump held after an air jump's apex in the JumpAerial / multi-jump states and does
+  `geno_do_change(GENO_TARGET(GENO_TGT_GENO, glide_start))`.
+- From a script (Shuttle Loop, PSA "Change Action 0x85 on Animation End + In Air"): exactly the
+  v1 encoding `CHG ANIM_END -> GENO(glide_start)` + `CHGAND AIR`. The translator can emit it
+  today; v1 ignores it (MK falls through to its FallSpecial fallback if the script also registers
+  one after it - emit the fallback CHG *after* the Geno one so it only wins while v1 is running).
+- Exits: Glide -> GlideLanding via a GROUND edge (v1 mechanism), GlideAttack via PRESSED(ATTACK),
+  GlideEnd -> FallSpecial via shield / timer, all expressible as v1 checks registered by the glide
+  states' own scripts.
+
+Melee's global rules still apply: no new air dodge or ledge behaviour; the glide is only a
+character state.

@@ -414,7 +414,13 @@ static void geno_apply_special(Fighter* fp, int p)
         return;
     }
     src = fp->ft_data != NULL ? (u32*) fp->ft_data->ext_attr : NULL;
+    /* the fighter's own buffer only when dat_attrs already points at it: fighters made for menus
+       and the results screen (ftDemo_CreateFighter) re-apply attributes before dat_attrs is set,
+       and it holds garbage then (a netplay results screen faulted on exactly that) */
     dst = (u32*) fp->dat_attrs;
+    if (dst != (u32*) fp->dat_attrs_backup) {
+        dst = NULL;
+    }
     for (i = 0; i < n; i++) {
         int idx = Geno_SpecialIndex(p, i);
         u32 bits = (u32) Geno_SpecialBits(p, i);
@@ -1163,6 +1169,11 @@ int Geno_PreAnim(Fighter_GObj* gobj)
     }
     for (i = 0; i < n && i < GENO_MAX_CHECKS; i++) {
         if (geno_check_true(gobj, fp, st, &st->checks[i], 0)) {
+            if ((st->checks[i].target >> 28) == GENO_TGT_GENO) {
+                /* a Geno state (v2): not performable yet - logged, and a later check may win */
+                Geno_Event(8, fp->kind, fp->player_id, (int) (st->checks[i].target & 0xFFFF), 0);
+                continue;
+            }
             hit = (s32) i;
             target = st->checks[i].target;
             break;
@@ -1224,7 +1235,7 @@ void Geno_GroundEdge(Fighter* fp, int landing)
     for (i = 0; i < st->nchecks && i < GENO_MAX_CHECKS; i++) {
         GenoCheck* k = &st->checks[i];
         if (((k->cond[0].head >> 8) & 0xFF) == (u32) want && !(k->cond[0].head & GENO_CHG_NOT) &&
-            geno_check_true(gobj, fp, st, k, 1))
+            (k->target >> 28) != GENO_TGT_GENO && geno_check_true(gobj, fp, st, k, 1))
         {
             st->edge_pending = 1;
             st->edge_target = k->target;

@@ -1140,10 +1140,16 @@ static void fl_grid_draw(void)
                              : (h->count == 1 ? "COUNTERPICK" : "COUNTERPICKS");
         sprintf(id, "gh%d", i);
         fl_text_at(id, "caption", h->x0 + 2, h->y + 10, "left", h->x1 - h->x0 - 4, what, gold, -1);
-        if (h->group == 1 && Netplay_LobbyInfo(0) <= 1 && Netplay_LobbyInfo(11) == 0) {
-            /* game 1 of the competitive list: the counterpicks sit it out */
+        if (h->group == 1 && Netplay_LobbyInfo(0) <= 1 && Netplay_LobbyInfo(11) == 0 &&
+            flg.kind == FL_GRID_SPLIT && h->count <= 1)
+        {
+            /* game 1 of the competitive list: the counterpick sits it out - said in the empty
+               cell under it */
+            float cx = (h->x0 + h->x1) * 0.5F, cy = FL_GRID_Y0 + FL_GRID_HEAD + (FL_GRID_H - FL_GRID_HEAD) * 0.75F;
             sprintf(id, "gn%d", i);
-            fl_text_at(id, "caption", h->x1 - 2, h->y + 10, "right", 90, "GAME 2+", muted, -1);
+            fl_text_at(id, "caption", cx, cy - 2, "centre", h->x1 - h->x0 - 4, "Opens from", muted, -1);
+            sprintf(id, "go%d", i);
+            fl_text_at(id, "caption", cx, cy + 11, "centre", h->x1 - h->x0 - 4, "game 2", muted, -1);
         }
     }
     if (flg.div_x > 0) {

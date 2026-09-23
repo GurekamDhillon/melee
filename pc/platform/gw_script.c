@@ -188,6 +188,10 @@ static struct {
     int cam_stamp, cam_fetched, cam_have;
     float cam[LAB_CAM_COUNT];
     int stage_zones; /* LAB_STAGE_ZONES has no getter: remember what we wrote */
+    int set_motion[6]; /* gd.set_motion: motion + 1 to enter at the next frame boundary */
+    float set_rate[6];
+    float set_lift[6];
+    int lab_request;   /* the frontend's LAB entry / MELEE_LAB=1 asked for the Lab */
     /* keys */
     unsigned char key_now[256], key_prev[256];
     /* console */
@@ -485,6 +489,7 @@ static const char *gs_char_name(int c) {
 
 /* ---- Geno Lab: names and extra player fields ------------------------------------------------ */
 static void gs_push_hit_fields(lua_State *L, const int *hi, const float *hf);
+static const char *gs_element_name(int e);
 /* "PlyKirby5K_Share_ACTION_AttackAirF_figatree" -> "AttackAirF"; the whole symbol when it has
    another shape; "" for none. */
 static void gs_anim_name(const char *sym, char *out, size_t cap) {
@@ -1698,6 +1703,346 @@ static int l_motion_name(lua_State *L) {
     return 1;
 }
 
+/* ---- Stage 2: subaction-script timeline (read-only walk of the guest script words) ------------ */
+static int gs_motion_ok(int slot, int motion);
+extern int gw_ScriptGame_LabMotionAnim(int slot, int msid);
+extern int gw_ScriptGame_LabCommonCount(int slot);
+extern const void *gw_ScriptGame_LabScript(int slot, int anim);
+extern const char *gw_ScriptGame_LabAnimSymbolFor(int slot, int anim);
+extern float gw_ScriptGame_LabAnimEnd(int slot);
+extern int gw_ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits);
+
+/* Command lengths in words for opcodes 10-58 (ftaction.c ftAction_803C0870) and the names the
+   community decoders use (HSDRawViewer command_fighter.yml; checked against the decomp's handlers). */
+static const unsigned char gs_cmd_len[49] = {5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                             1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 7, 4, 1, 1, 1, 1,
+                                             1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 1, 4};
+static const char *const gs_cmd_names[64] = {
+    "end", "wait", "wait_until", "loop", "loop_end", "call", "return", "goto", "wait_anim",
+    "bg_flash", "gfx", "hitbox", "hitbox_damage", "hitbox_size", "hitbox_flags", "hitbox_remove",
+    "hitboxes_clear", "sfx", "smash_sfx", "cmd_var", "throw_flag", "throw_flag_b1",
+    "throw_flag_b2", "iasa", "throw_flag_b0", "air_state", "body_state", "hurtboxes_state",
+    "hurtbox_state", "jab_combo", "jab_rapid", "model_state", "models_revert", "models_remove",
+    "throw", "item_visibility", "article_visibility", "visibility", "random_sfx", "pitch_sfx",
+    "tex_anim", "part_anim", "parasol", "rumble", "rumble_stop", "color_anim", "color_overlay",
+    "color_overlay_off", "flag_221E", "sword_trail", "anim_part", "self_damage", "continuation",
+    "flag_2225", "footstep_fx", "landing_fx", "smash_charge", "unk_57", "wind", "geno",
+    "op_60", "op_61", "op_62", "op_63"};
+
+static int gs_guest_ok(uint32_t addr, uint32_t len) {
+    uint32_t base = (uint32_t) (uintptr_t) gw_mem1;
+    return gw_mem1 != NULL && addr >= base && addr + len <= base + gw_mem1_size && addr + len > addr;
+}
+static uint32_t gs_guest_word(uint32_t addr) {
+    const unsigned char *p = (const unsigned char *) (uintptr_t) addr;
+    return ((uint32_t) p[0] << 24) | ((uint32_t) p[1] << 16) | ((uint32_t) p[2] << 8) | p[3];
+}
+static int gs_sbits(uint32_t v, int hi, int n) { /* signed field: n bits ending `hi` bits down */
+    int32_t x = (int32_t) ((v << hi) & 0xFFFFFFFFu);
+    return (int) (x >> (32 - n));
+}
+#define GS_UBITS(v, shift, n) ((int) (((v) >> (shift)) & ((1u << (n)) - 1u)))
+
+/* one command as a Lua table on the stack top's list; `t` = the frame it runs (1-based) */
+static void gs_push_cmd(lua_State *L, uint32_t addr, int op, float t, int len) {
+    uint32_t w0 = gs_guest_word(addr);
+    int k;
+    lua_createtable(L, 0, 16);
+    gs_setnum(L, "frame", t + 1.0f);
+    gs_setint(L, "op", op);
+    gs_setstr(L, "name", gs_cmd_names[op & 63]);
+    gs_setint(L, "addr", (lua_Integer) addr);
+    lua_createtable(L, len, 0);
+    for (k = 0; k < len; ++k) {
+        lua_pushinteger(L, (lua_Integer) gs_guest_word(addr + 4u * (uint32_t) k));
+        lua_rawseti(L, -2, k + 1);
+    }
+    lua_setfield(L, -2, "words");
+    switch (op) {
+    case 10: /* gfx */
+        gs_setint(L, "bone", GS_UBITS(w0, 18, 8));
+        gs_setint(L, "gfx", GS_UBITS(gs_guest_word(addr + 4), 16, 16));
+        break;
+    case 11: { /* hitbox */
+        uint32_t w1 = gs_guest_word(addr + 4), w2 = gs_guest_word(addr + 8);
+        uint32_t w3 = gs_guest_word(addr + 12), w4 = gs_guest_word(addr + 16);
+        gs_setint(L, "id", GS_UBITS(w0, 23, 3));
+        gs_setint(L, "group", GS_UBITS(w0, 20, 3));
+        gs_setint(L, "bone", GS_UBITS(w0, 11, 8));
+        gs_setint(L, "damage", GS_UBITS(w0, 0, 10));
+        gs_setnum(L, "size", GS_UBITS(w1, 16, 16) / 256.0);
+        gs_setnum(L, "oz", gs_sbits(w1, 16, 16) / 256.0);
+        gs_setnum(L, "oy", gs_sbits(w2, 0, 16) / 256.0);
+        gs_setnum(L, "ox", gs_sbits(w2, 16, 16) / 256.0);
+        gs_setint(L, "angle", GS_UBITS(w3, 23, 9));
+        gs_setint(L, "kbg", GS_UBITS(w3, 14, 9));
+        gs_setint(L, "wbk", GS_UBITS(w3, 5, 9));
+        gs_setint(L, "bkb", GS_UBITS(w4, 23, 9));
+        gs_setint(L, "element", GS_UBITS(w4, 18, 5));
+        gs_setstr(L, "element_name", gs_element_name(GS_UBITS(w4, 18, 5)));
+        gs_setint(L, "shield_damage", gs_sbits(w4, 14, 8));
+        gs_setbool(L, "hit_ground", GS_UBITS(w4, 1, 1));
+        gs_setbool(L, "hit_air", GS_UBITS(w4, 0, 1));
+        break;
+    }
+    case 12: case 13: /* hitbox_damage / hitbox_size */
+        gs_setint(L, "id", GS_UBITS(w0, 23, 3));
+        gs_setint(L, "value", GS_UBITS(w0, 0, 23));
+        break;
+    case 15: /* hitbox_remove */
+        gs_setint(L, "id", GS_UBITS(w0, 0, 26));
+        break;
+    case 17: /* sfx */
+        gs_setint(L, "sfx", (lua_Integer) gs_guest_word(addr + 4));
+        break;
+    case 19: /* cmd_var */
+        gs_setint(L, "index", GS_UBITS(w0, 24, 2));
+        gs_setint(L, "value", GS_UBITS(w0, 0, 24));
+        break;
+    case 26: case 27: case 37: case 36: case 35: /* states / visibility: one value */
+    case 25: case 29: case 30:
+        gs_setint(L, "value", GS_UBITS(w0, 0, 26));
+        break;
+    case 28: /* hurtbox_state */
+        gs_setint(L, "bone", GS_UBITS(w0, 18, 8));
+        gs_setint(L, "value", GS_UBITS(w0, 0, 18));
+        break;
+    default:
+        break;
+    }
+}
+
+/* Walk the script from `start` the way ftAction's interpreter times it: wait (1) adds frames,
+   wait_until (2) jumps to an animation frame, loops (3/4) and calls (5/6/7) are followed, and
+   the walk stops at end (0), wait_anim (8), 2000 commands or frame 1000. Pushes the event list;
+   returns the last frame reached. */
+static float gs_walk_script(lua_State *L, uint32_t start, int *truncated) {
+    uint32_t pc = start, ret[8], loop_body[8];
+    int loop_left[8], nret = 0, nloop = 0, steps = 0, n = 0;
+    float t = 0.0f;
+    *truncated = 0;
+    lua_newtable(L);
+    while (gs_guest_ok(pc, 4)) {
+        uint32_t w0 = gs_guest_word(pc);
+        int op = (int) (w0 >> 26), len;
+        if (++steps > 2000 || t > 1000.0f) {
+            *truncated = 1;
+            break;
+        }
+        switch (op) {
+        case 0:
+            return t;
+        case 1:
+            t += (float) (w0 & 0x3FFFFFFu);
+            pc += 4;
+            continue;
+        case 2: {
+            float at = (float) (w0 & 0x3FFFFFFu);
+            if (at > t) t = at;
+            pc += 4;
+            continue;
+        }
+        case 3:
+            if (nloop < 8) {
+                loop_body[nloop] = pc + 4;
+                loop_left[nloop] = (int) (w0 & 0x3FFFFFFu);
+                nloop++;
+            }
+            pc += 4;
+            continue;
+        case 4:
+            if (nloop > 0 && --loop_left[nloop - 1] > 0) {
+                pc = loop_body[nloop - 1];
+            } else {
+                if (nloop > 0) nloop--;
+                pc += 4;
+            }
+            continue;
+        case 5:
+            if (nret < 8 && gs_guest_ok(pc + 4, 4)) {
+                ret[nret++] = pc + 8;
+                pc = gs_guest_word(pc + 4);
+            } else {
+                return t;
+            }
+            continue;
+        case 6:
+            if (nret == 0) return t;
+            pc = ret[--nret];
+            continue;
+        case 7:
+            if (!gs_guest_ok(pc + 4, 4)) return t;
+            pc = gs_guest_word(pc + 4);
+            continue;
+        case 8:
+            *truncated = 2; /* waits for the animation to end */
+            return t;
+        case 9:
+            pc += 4;
+            continue;
+        default:
+            break;
+        }
+        if (op == 59) {
+            len = (int) ((w0 >> 16) & 0xF);
+            if (len == 0) len = 1;
+        } else if (op >= 10 && op <= 58) {
+            len = gs_cmd_len[op - 10];
+        } else {
+            len = 1;
+        }
+        if (!gs_guest_ok(pc, 4u * (uint32_t) len)) break;
+        gs_push_cmd(L, pc, op, t, len);
+        lua_rawseti(L, -2, ++n);
+        pc += 4u * (uint32_t) len;
+    }
+    return t;
+}
+
+/* gd.timeline(port [, motion]) -> {motion, motion_name, anim_id, anim_name, end_frame, length,
+   events = {{frame, op, name, words, ...decoded fields}}, truncated}
+   The script of the fighter's current action, or of `motion` (its row in the fighter's tables). */
+static int l_timeline(lua_State *L) {
+    int slot = gs_present_arg(L, 1), motion, anim, name_kind, truncated = 0;
+    const void *script;
+    char anim_name[128], buf[32];
+    float t;
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    name_kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND);
+    if (lua_isnoneornil(L, 2)) {
+        motion = gw_ScriptGame_FighterI(slot, SI_ACTION);
+        anim = gw_ScriptGame_LabI(slot, LAB_I_ANIM_ID);
+    } else {
+        motion = (int) luaL_checkinteger(L, 2);
+        if (!gs_motion_ok(slot, motion)) {
+            lua_pushnil(L);
+            lua_pushstring(L, "no such motion for this fighter");
+            return 2;
+        }
+        anim = gw_ScriptGame_LabMotionAnim(slot, motion);
+    }
+    lua_createtable(L, 0, 10);
+    gs_setint(L, "motion", motion);
+    gs_setint(L, "anim_id", anim);
+    gs_anim_name(anim >= 0 ? gw_ScriptGame_LabAnimSymbolFor(slot, anim) : NULL, anim_name,
+                 sizeof anim_name);
+    gs_setstr(L, "anim_name", anim_name);
+    gs_setstr(L, "motion_name", gs_motion_name(name_kind, motion, anim_name, buf, sizeof buf));
+    if (lua_isnoneornil(L, 2)) {
+        gs_setnum(L, "end_frame", gw_ScriptGame_LabAnimEnd(slot));
+    }
+    script = anim >= 0 ? gw_ScriptGame_LabScript(slot, anim) : NULL;
+    if (script == NULL || !gs_guest_ok((uint32_t) (uintptr_t) script, 4)) {
+        lua_newtable(L);
+        lua_setfield(L, -2, "events");
+        gs_setnum(L, "length", 0);
+        return 1;
+    }
+    gs_setint(L, "script", (lua_Integer) (uintptr_t) script);
+    t = gs_walk_script(L, (uint32_t) (uintptr_t) script, &truncated);
+    lua_setfield(L, -2, "events");
+    gs_setnum(L, "length", t + 1.0f);
+    gs_setstr(L, "stop", truncated == 1 ? "limit" : truncated == 2 ? "anim_end" : "end");
+    return 1;
+}
+
+/* a motion id the fighter really has a row for: common states, or a special in the decomp's
+   table for its kind (Kirby clones use Kirby's) - so a script never enters a garbage row */
+static int gs_motion_ok(int slot, int motion) {
+    int common = gw_ScriptGame_LabCommonCount(slot);
+    int kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND);
+    if (motion < 0 || common <= 0) return 0;
+    if (motion < common) return gw_ScriptGame_LabMotionAnim(slot, motion) >= -1;
+    if (kind >= 0 && kind < (int) (sizeof gw_motion_special / sizeof gw_motion_special[0]) &&
+        motion - common < gw_motion_special[kind].count) {
+        return gw_ScriptGame_LabMotionAnim(slot, motion) >= -1;
+    }
+    return 0;
+}
+
+/* gd.set_motion(port | {ports}, motion [, frame [, rate [, lift]]]) -> true | false, why. Offline,
+   gameplay.
+   `lift` (units, e.g. 40) first puts a grounded fighter in the air that much higher - for aerials,
+   which the next collision check would otherwise land at once.
+   At the next frame boundary the fighter enters `motion` (the plain Fighter_ChangeMotionState its
+   entry function would make; states whose entry does more may not behave), then the game runs
+   the frames up to `frame` (default 1; entering is frame 1, as frame-data sites count) and
+   pauses: the fighter shows that frame of the move with everything its script did on the way
+   (hitboxes included). Ports set before the same boundary start together: lock-step. */
+static int l_set_motion(lua_State *L) {
+    int slots[6], n = 0, k;
+    int motion = (int) luaL_checkinteger(L, 2);
+    int frame = (int) luaL_optinteger(L, 3, 1);
+    float rate = (float) luaL_optnumber(L, 4, 1.0);
+    float lift = (float) luaL_optnumber(L, 5, 0.0);
+    gs_require_offline(L, "set_motion");
+    if (lua_istable(L, 1)) { /* {1, 2}: several ports at once - lock-step */
+        lua_Integer i, len = (lua_Integer) lua_rawlen(L, 1);
+        for (i = 1; i <= len && n < 6; ++i) {
+            lua_rawgeti(L, 1, i);
+            slots[n++] = gs_present_arg(L, lua_gettop(L));
+            lua_pop(L, 1);
+        }
+    } else {
+        slots[n++] = gs_present_arg(L, 1);
+    }
+    for (k = 0; k < n; ++k) {
+        if (slots[k] < 0) {
+            lua_pushboolean(L, 0);
+            lua_pushstring(L, "no fighter on that port");
+            return 2;
+        }
+        if (!gs_motion_ok(slots[k], motion)) {
+            lua_pushboolean(L, 0);
+            lua_pushstring(L, "no such motion for this fighter");
+            return 2;
+        }
+    }
+    if (frame < 1) frame = 1;
+    if (frame > 600) frame = 600;
+    gs.step = 0; /* a new request replaces one still stepping */
+    for (k = 0; k < n; ++k) {
+        gs.set_motion[slots[k]] = motion + 1;
+        gs.set_rate[slots[k]] = rate;
+        gs.set_lift[slots[k]] = lift;
+    }
+    gs.paused = 1;
+    gs.step = frame - 1; /* entering is frame 1 */
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+extern void gw_script_pad_mirror(int from, int to);
+/* gd.mirror_pad(from, to) / gd.mirror_pad(): port `to` gets exactly what port `from` sends (for
+   comparing two fighters under the same inputs; `to` must be a human slot). Offline, gameplay. */
+static int l_mirror_pad(lua_State *L) {
+    gs_require_offline(L, "mirror_pad");
+    if (lua_isnoneornil(L, 1)) {
+        gw_script_pad_mirror(-1, -1);
+        return 0;
+    }
+    {
+        int from = gs_slot_arg(L, 1), to = gs_slot_arg(L, 2);
+        if (from > 3 || to > 3 || from == to) {
+            luaL_error(L, "gd.mirror_pad: two different ports 1-4");
+        }
+        gw_script_pad_mirror(from, to);
+    }
+    return 0;
+}
+
+/* gd.lab_request([clear]) -> true when the frontend's LAB entry (or MELEE_LAB=1) asked for the
+   Lab this session; `clear` resets it */
+static int l_lab_request(lua_State *L) {
+    int clear = lua_toboolean(L, 1); /* before the push: with no argument index 1 IS the push */
+    lua_pushboolean(L, gs.lab_request);
+    if (clear) gs.lab_request = 0;
+    return 1;
+}
+
 static int gs_ring_find(int tag);
 static int gs_ring_now(void);
 static int gs_snap_ensure(int slots);
@@ -1786,6 +2131,8 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
     {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"project", l_project}, {"attrs", l_attrs},
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
+    {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
+    {"lab_request", l_lab_request},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -2373,6 +2720,11 @@ static void gs_init(void) {
         snprintf(gs.scripts_dir, sizeof gs.scripts_dir, "%s\\scripts", gs.exe_dir);
     }
     snprintf(gs.data_dir, sizeof gs.data_dir, "%s\\scripts-data", gs.exe_dir);
+    v = getenv("MELEE_LAB"); /* the Geno Lab on from the start (as the frontend's LAB entry) */
+    gs.lab_request = v != NULL && v[0] != '\0' && v[0] != '0';
+    if (gs.lab_request) {
+        gw_log("script: MELEE_LAB: the Geno Lab is requested for this session");
+    }
     v = getenv("MELEE_SCRIPT_BUDGET");
     gs.budget_per_call = (v != NULL && atoi(v) > 0) ? atoi(v) : 2000000;
     v = getenv("MELEE_SCRIPT_MS");
@@ -2500,6 +2852,7 @@ static void gs_finish_draw(void) {
 }
 
 static void gs_apply_pending(void);
+static void gs_apply_set_motion(void);
 
 void gw_Script_Tick(void) {
     gs_init();
@@ -2529,7 +2882,23 @@ void gw_Script_Tick(void) {
     if (gs.paused && gs.step == 0 && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
         gs_apply_pending();
     }
+    if (gs.paused && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+        gs_apply_set_motion(); /* before this tick's frames: then exactly `frame - 1` run */
+    }
 }
+
+/* the frontend's LAB entry (gmfrontend_menus.inc): shown when a Lab script is loaded */
+int gw_Script_LabAvailable(void) {
+    int i;
+    gs_init();
+    for (i = 0; i < gs.n; ++i) {
+        if (gs.s[i].used && !gs.s[i].disabled && _strnicmp(gs.s[i].id, "geno-lab/", 9) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+void gw_Script_LabRequest(void) { gs.lab_request = 1; }
 
 void gw_Script_PostRender(void) {
     if (gs.L == NULL) {
@@ -2542,9 +2911,11 @@ int gw_Script_Iterations(int count) {
     if (!gs.paused || gw_RB_Enabled() || gw_Netplay_Enabled()) {
         return count;
     }
-    if (gs.step > 0) {
-        gs.step--;
-        return count > 0 ? 1 : 0;
+    if (gs.step > 0 && count > 0) {
+        /* up to 30 frames per rendered tick, so gd.set_motion / long steps land quickly */
+        int n = gs.step < 30 ? gs.step : 30;
+        gs.step -= n;
+        return n;
     }
     return 0;
 }
@@ -2650,12 +3021,32 @@ static void gs_ring_save(void) {
     gs.ring[k].tag = tag;
 }
 
+/* pending gd.set_motion calls, at a frame boundary (the loop top when paused, else FramePre) */
+static void gs_apply_set_motion(void) {
+{
+    int slot;
+    for (slot = 0; slot < 6; ++slot) {
+        if (gs.set_motion[slot] > 0 && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+            union {
+                float f;
+                int i;
+            } r, lift;
+            r.f = gs.set_rate[slot] > 0.0f ? gs.set_rate[slot] : 1.0f;
+            lift.f = gs.set_lift[slot];
+            gw_ScriptGame_LabSetMotion(slot, gs.set_motion[slot] - 1, r.i, lift.i);
+        }
+        gs.set_motion[slot] = 0;
+    }
+}
+}
+
 void gw_Script_FramePre(void) {
     if (gs.L == NULL) {
         return;
     }
     gs_apply_pending();
     gs_ring_save();
+    gs_apply_set_motion();
     gs_hook_all("on_frame_pre", 0, 0, 0);
 }
 
@@ -3501,6 +3892,18 @@ static int test_script_lab_api(void) {
         return 1;
     }
     {
+        /* reading the LAB request must not clear it (it once did: the push became argument 1) */
+        int prev = gs.lab_request;
+        gs.lab_request = 1;
+        t_exec("= gd.lab_request(), gd.lab_request(), gd.lab_request(true), gd.lab_request()", out,
+               sizeof out);
+        gs.lab_request = prev;
+        if (strstr(out, "true\ntrue\ntrue\nfalse") == NULL) {
+            gw_test_fail("gd.lab_request read/clear: \"%s\"", out);
+            return 1;
+        }
+    }
+    {
         char a[64];
         gs_anim_name("PlyKirby5K_Share_ACTION_AttackAirF_figatree", a, sizeof a);
         if (strcmp(a, "AttackAirF") != 0) {
@@ -3591,6 +3994,75 @@ static int test_script_lab_events(void) {
     return 0;
 }
 
+/* the subaction-script walk (gd.timeline) on a hand-made script at the top of MEM1 */
+static int test_script_lab_timeline(void) {
+    static const uint32_t words[] = {
+        0x04000005u,                                     /* wait 5 */
+        0x2C80100Cu, 0x04000000u, 0u, 0xB4990000u, 0x0A000000u, /* hitbox #1 bone 2 12% ... */
+        0x0800000Au,                                     /* wait_until 10 */
+        0x40000000u,                                     /* hitboxes_clear */
+        0x5C000000u,                                     /* iasa */
+        0x0C000002u,                                     /* loop 2 */
+        0x04000003u,                                     /* wait 3 */
+        0x10000000u,                                     /* loop_end */
+        0x00000000u};                                    /* end */
+    unsigned char saved[sizeof words * 4];
+    unsigned char *at;
+    uint32_t addr;
+    size_t i;
+    int truncated = 0, rc = 0, top;
+    float t;
+    lua_State *L = gs.L;
+    if (gw_mem1 == NULL || gw_mem1_size < 0x1000) {
+        return 0; /* no guest memory in this run */
+    }
+    at = gw_mem1 + gw_mem1_size - 0x400;
+    addr = (uint32_t) (uintptr_t) at;
+    memcpy(saved, at, sizeof saved);
+    for (i = 0; i < sizeof words / sizeof words[0]; ++i) {
+        at[4 * i] = (unsigned char) (words[i] >> 24);
+        at[4 * i + 1] = (unsigned char) (words[i] >> 16);
+        at[4 * i + 2] = (unsigned char) (words[i] >> 8);
+        at[4 * i + 3] = (unsigned char) words[i];
+    }
+    top = lua_gettop(L);
+    t = gs_walk_script(L, addr, &truncated);
+    /* hitbox at frame 6, clear + iasa at 11, then 2 x wait 3: the script ends at t = 16 */
+    if (t != 16.0f || truncated != 0 || lua_rawlen(L, -1) != 3) {
+        gw_test_fail("walk: t=%.1f truncated=%d events=%d", t, truncated, (int) lua_rawlen(L, -1));
+        rc = 1;
+    } else {
+        lua_rawgeti(L, -1, 1);
+        lua_getfield(L, -1, "frame");
+        lua_getfield(L, -2, "damage");
+        lua_getfield(L, -3, "angle");
+        lua_getfield(L, -4, "kbg");
+        lua_getfield(L, -5, "bkb");
+        lua_getfield(L, -6, "size");
+        lua_getfield(L, -7, "id");
+        if (lua_tonumber(L, -7) != 6.0 || lua_tointeger(L, -6) != 12 || lua_tointeger(L, -5) != 361 ||
+            lua_tointeger(L, -4) != 100 || lua_tointeger(L, -3) != 20 || lua_tonumber(L, -2) != 4.0 ||
+            lua_tointeger(L, -1) != 1) {
+            gw_test_fail("hitbox decoded wrong: frame %.1f dmg %d ang %d kbg %d bkb %d size %.2f id %d",
+                         lua_tonumber(L, -7), (int) lua_tointeger(L, -6), (int) lua_tointeger(L, -5),
+                         (int) lua_tointeger(L, -4), (int) lua_tointeger(L, -3), lua_tonumber(L, -2),
+                         (int) lua_tointeger(L, -1));
+            rc = 1;
+        }
+        lua_settop(L, top + 1);
+        lua_rawgeti(L, -1, 3);
+        lua_getfield(L, -1, "name");
+        lua_getfield(L, -2, "frame");
+        if (strcmp(lua_tostring(L, -2), "iasa") != 0 || lua_tonumber(L, -1) != 11.0) {
+            gw_test_fail("iasa event: %s at %.1f", lua_tostring(L, -2), lua_tonumber(L, -1));
+            rc = 1;
+        }
+    }
+    lua_settop(L, top);
+    memcpy(at, saved, sizeof saved);
+    return rc;
+}
+
 /* on_draw runs after the render and its list is the one the overlay gets */
 static int test_script_lab_draw_pass(void) {
     char out[256];
@@ -3626,4 +4098,5 @@ void gw_script_tests_register(void) {
     gw_test_register("script_lab_project", test_script_lab_project);
     gw_test_register("script_lab_events", test_script_lab_events);
     gw_test_register("script_lab_draw_pass", test_script_lab_draw_pass);
+    gw_test_register("script_lab_timeline", test_script_lab_timeline);
 }

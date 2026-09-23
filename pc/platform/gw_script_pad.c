@@ -217,6 +217,17 @@ void gw_script_pad_state(int ch, unsigned *buttons, int *sx, int *sy, int *cx, i
   *r = gw_seen[ch].tr;
 }
 
+/* gd.mirror_pad (the Geno Lab): port `to` receives exactly what port `from` sends, after every
+ * other source - two fighters under the same inputs. Off during any netplay/rollback session. */
+static int gw_mirror_from = -1, gw_mirror_to = -1;
+void gw_script_pad_mirror(int from, int to) {
+  gw_mirror_from = from;
+  gw_mirror_to = to;
+}
+
+extern int gw_RB_Enabled(void);
+extern int gw_Netplay_Enabled(void);
+
 void gw_Script_PadApply(void *pad_status_array) {
   PADStatus *st = (PADStatus *)pad_status_array;
   int ch;
@@ -234,6 +245,12 @@ void gw_Script_PadApply(void *pad_status_array) {
       st[ch].err = 0;
       gw_ovr[ch].samples--;
     }
+  }
+  if (gw_mirror_from >= 0 && gw_mirror_from < 4 && gw_mirror_to >= 0 && gw_mirror_to < 4 &&
+      !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+    st[gw_mirror_to] = st[gw_mirror_from];
+  }
+  for (ch = 0; ch < 4; ++ch) {
     gw_seen[ch].buttons = gw_r16(&st[ch].button);
     gw_seen[ch].sx = st[ch].stickX;
     gw_seen[ch].sy = st[ch].stickY;

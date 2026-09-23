@@ -560,6 +560,106 @@ int ScriptGame_LabStageDraw(int mask, int value)
     return now;
 }
 
+/* ---- Stage 2: subaction scripts, motions ---------------------------------------------------- */
+#include <melee/ft/ftanim.h>
+#include <melee/ft/ftcommon.h>
+
+static MotionState* lab_motion_row(Fighter* fp, int msid)
+{
+    if (msid < 0) {
+        return NULL;
+    }
+    if (msid >= fp->x18) {
+        return fp->x20_actionStateList != NULL ? &fp->x20_actionStateList[msid - fp->x18] : NULL;
+    }
+    return fp->x1C_actionStateList != NULL ? &fp->x1C_actionStateList[msid] : NULL;
+}
+
+/* The animation (subaction) index a motion plays, -2 when the motion has no row. The native side
+ * bounds `msid` (the decomp's name tables) before asking. */
+int ScriptGame_LabMotionAnim(int slot, int msid)
+{
+    Fighter* fp = script_fighter(slot);
+    MotionState* ms;
+    if (fp == NULL || (ms = lab_motion_row(fp, msid)) == NULL) {
+        return -2;
+    }
+    return (int) ms->anim_id;
+}
+
+/* The number of common motion states (fp->x18): special states start here. */
+int ScriptGame_LabCommonCount(int slot)
+{
+    Fighter* fp = script_fighter(slot);
+    return fp != NULL ? (int) fp->x18 : -1;
+}
+
+/* The subaction script of animation `anim` (-1 = the one playing), as its guest address. Never
+ * the live cursor: the start of the script, which the native side walks read-only. */
+const void* ScriptGame_LabScript(int slot, int anim)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL || fp->x24 == NULL) {
+        return NULL;
+    }
+    if (anim < 0) {
+        anim = (int) fp->anim_id;
+    }
+    if (anim < 0 || anim > 0x3FF) {
+        return NULL;
+    }
+    return fp->x24[anim].xC;
+}
+
+const char* ScriptGame_LabAnimSymbolFor(int slot, int anim)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL || fp->x24 == NULL || anim < 0 || anim > 0x3FF) {
+        return NULL;
+    }
+    return fp->x24[anim].x0;
+}
+
+/* The playing animation's last frame. */
+float ScriptGame_LabAnimEnd(int slot)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL || (int) fp->anim_id < 0) {
+        return 0.0f;
+    }
+    return ftAnim_8006F484(fp->gobj);
+}
+
+/* Offline only (gw_script.c refuses it in a session and calls it at a frame boundary): put the
+ * fighter into motion `msid` from its first frame, the plain Fighter_ChangeMotionState a state's
+ * entry function would make. `lift` > 0: airborne and that much higher first (aerials). Floats
+ * arrive as bits. Returns 0, or -1 without a fighter / row. */
+int ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits)
+{
+    Fighter* fp = script_fighter(slot);
+    MotionState* ms;
+    union {
+        int i;
+        float f;
+    } rate, lift;
+    if (fp == NULL || (ms = lab_motion_row(fp, msid)) == NULL) {
+        return -1;
+    }
+    rate.i = rate_bits;
+    lift.i = lift_bits;
+    if (lift.f > 0.0f) {
+        /* an aerial: into the air `lift` units up first (ftCommon_8007D5D4, "become airborne"),
+           or the next collision check lands it at once */
+        if (fp->ground_or_air == GA_Ground) {
+            ftCommon_8007D5D4(fp);
+        }
+        fp->cur_pos.y += lift.f;
+        fp->self_vel.x = fp->self_vel.y = 0.0f;
+    }
+    Fighter_ChangeMotionState(fp->gobj, msid, 0, 0.0f, rate.f, 0.0f, NULL);
+    return 0;
+}
+
 /* ---- attributes (ftCo_DatAttrs by decomp name, as the fighter has them now) ---------------- */
 #define LAB_ATTR(field, is_int) { #field, (int) __builtin_offsetof(ftCo_DatAttrs, field), is_int }
 

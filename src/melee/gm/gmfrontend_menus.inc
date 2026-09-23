@@ -38,6 +38,7 @@
 enum { FM_HUB, FM_LIST };
 enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE };
 #define SEL_VS_ONLINE 0x40 ///< not a vanilla selection: VERSUS > ONLINE is the port's
+#define SEL_1P_LAB 0x42    ///< not a vanilla selection: SOLO > LAB (the Geno Lab, private build)
 #define FMF_PORT 1  ///< gm_801677E8(the port that pressed A) before acting, as vanilla does
 #define FMF_NOSFX 2 ///< no sfxForward (Data > Sound Test stops the music instead)
 
@@ -86,6 +87,8 @@ static const FeMenuItem fm_1p[] = {
       FA_SUB, MENU_KIND_STADIUM },
     { "TRAINING", "Practice against a dummy, any stage, any speed.", "ico_training",
       SEL_1P_TRAINING, FA_MODE, GM_TRAINING },
+    { "LAB", "Training with the Geno Lab: frame-step, hitboxes, timelines.", "ico_training",
+      SEL_1P_LAB, FA_MODE, GM_TRAINING },
 };
 
 static const FeMenuItem fm_reg[] = {
@@ -243,6 +246,11 @@ static bool fm_visible(const FeMenu* m, const FeMenuItem* it)
 {
     if (m->kind == MENU_KIND_MULTI_VS) {
         return true;
+    }
+    if (it->sel == SEL_1P_LAB) {
+        /* only when the Geno Lab script mod is loaded (gw_script.c) */
+        extern int Script_LabAvailable(void);
+        return Script_LabAvailable() != 0;
     }
     return mn_80229938((MenuKind) m->kind, it->sel) != false;
 }
@@ -1161,6 +1169,11 @@ static void fm_confirm(void)
     case FA_MODE:
         fm.pend_kind = 2;
         fm.pend_a = it->arg;
+        if (it->sel == SEL_1P_LAB) {
+            /* Training, with the Lab asked for: the Lab script turns itself on in the match */
+            extern void Script_LabRequest(void);
+            Script_LabRequest();
+        }
         break;
     case FA_NATIVE:
         fm.pend_kind = 3;

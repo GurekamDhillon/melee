@@ -31,7 +31,7 @@ extern int gw_Mex_ExtForInternal(int k);
 extern const char *gw_Mex_FighterName(int ext);
 
 #define MX_CK_MEX0 0x22 /* ChKind_Mex0: m-ex slot s is CharacterKind 0x22 + s */
-#define MX_MEX_SLOTS 31
+#define MX_MEX_SLOTS GW_MEX_SLOT_COUNT
 #define MX_MAX 512
 #define MX_WIRE_HASH_BYTES 6 /* 48 bits on the wire: accidental collisions are not a concern */
 #define MX_WIRE_ENTRY (1 + MX_WIRE_HASH_BYTES + 2)

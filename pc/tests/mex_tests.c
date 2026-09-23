@@ -13,13 +13,16 @@ extern void TestFail(const char *msg);
 
 static int test_external_special_range(void) {
     /* ChKind_Max is the retail "none" sentinel and must keep its value (it is stored and compared
-     * everywhere); the m-ex character kinds follow it. Fighter kinds, retail + the m-ex slots, must
-     * stay below 64: the animation code compares fp->kind with a 6-bit field (x597_bits). */
+     * everywhere); the m-ex character kinds follow it. Kinds live in s8 fields (ftMapping_list,
+     * MatchEnd, PlayerInitData), so the largest m-ex CharacterKind (ChKind_Cap - 1) and
+     * Ft_Kind_None must stay <= 127. Kinds past 63 are handled by FT_ANIM_KIND_SELF. */
     if ((int)ChKind_Max != 0x21 || (int)ChKind_Mex0 != 0x22 || (int)Ft_Kind_Mex0 != 0x21 ||
-        (int)Ft_Kind_Max > 64)
+        (int)Ft_Kind_Max > 127 || (int)ChKind_Cap > 128 ||
+        (int)Ft_Kind_Max - (int)Ft_Kind_Mex0 != (int)ChKind_Cap - (int)ChKind_Mex0)
     {
         TestFail("kind layout: expected ChKind_Max 0x21, ChKind_Mex0 0x22, Ft_Kind_Mex0 0x21, "
-                 "Ft_Kind_Max <= 64");
+                 "Ft_Kind_Max <= 127, ChKind_Cap <= 128, as many m-ex FighterKinds as "
+                 "CharacterKinds");
         return 1;
     }
     if ((int)ChKind_Max - (int)CKind_Playable_Count != MEX_SPECIAL_COUNT) {

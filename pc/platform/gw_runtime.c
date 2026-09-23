@@ -1650,7 +1650,7 @@ static int gw_sl_all_digits(const char *s) {
  * he is FighterKind 37 and CharacterKind 38, and both statements are true. */
 int gw_SceneLaunch_FKindToCKind(int fk) {
   int i;
-  if (fk >= GW_SL_FK_MEX0 && fk < GW_SL_FK_MEX0 + 31) {
+  if (fk >= GW_SL_FK_MEX0 && fk < GW_SL_FK_MEX0 + GW_MEX_SLOT_COUNT) {
     return GW_SL_CK_MEX0 + (fk - GW_SL_FK_MEX0);
   }
   for (i = 0; i < GW_SL_CK_NONE; ++i) {
@@ -1661,7 +1661,7 @@ int gw_SceneLaunch_FKindToCKind(int fk) {
 }
 
 int gw_SceneLaunch_CKindToFKind(int ck) {
-  if (ck >= GW_SL_CK_MEX0 && ck < GW_SL_CK_MEX0 + 31) {
+  if (ck >= GW_SL_CK_MEX0 && ck < GW_SL_CK_MEX0 + GW_MEX_SLOT_COUNT) {
     return GW_SL_FK_MEX0 + (ck - GW_SL_CK_MEX0);
   }
   return (ck >= 0 && ck < GW_SL_CK_NONE) ? gw_sl_ck_to_fk[ck] : -1;

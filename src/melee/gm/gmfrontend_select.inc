@@ -41,7 +41,7 @@ extern int Mex_GrKindForExt(int ext);
 extern int Settings_Str(const char* key, char* out, int cap, const char* dflt);
 extern const char* Mex_GrFile(int grkind);
 
-#define FS_MAX_FIGHTERS 80
+#define FS_MAX_FIGHTERS 128 /* CSS_ICON_MAX */
 #define FS_MAX_STAGES 256
 #define FS_CK_NONE (-1)
 #define FS_CK_RANDOM (-2)

@@ -19,6 +19,21 @@
 #include <sysdolphin/baselib/mtx.h>
 #include <sysdolphin/baselib/object.h>
 
+/* The FighterKind the current motion's figatree was authored for (Fighter::x597_bits, 6 bits of
+ * the motion's flags). An m-ex fighter whose kind is 64 or more cannot be written there, so its
+ * own motions carry FT_ANIM_KIND_SELF (ftData_MexAnimFlags, ftdata.c), meaning "the fighter
+ * playing it". Only such a fighter decodes it: for everyone else the value is Sandbag's kind, and
+ * only Sandbag plays Sandbag's motions, so reading it literally was already the same thing. */
+static inline FighterKind ftAnim_AuthorKind(Fighter* fp)
+{
+#if defined(TARGET_PC)
+    if (fp->x597_bits == FT_ANIM_KIND_SELF && fp->kind >= 64) {
+        return fp->kind;
+    }
+#endif
+    return fp->x597_bits;
+}
+
 static HSD_AnimJoint* ftAnim_804590D8[30];
 static HSD_MatAnimJoint* ftAnim_804590D8_unk[30];
 static HSD_Joint* ftAnim_804590D8_F0[30];
@@ -653,7 +668,7 @@ void ftAnim_8006F628(Fighter* fp, Fighter_Part part, bool do_blending)
     cur_node = tree->nodes;
     x594_bits = fp->x594_bits;
     cur_track = tree->tracks;
-    kind = fp->x597_bits;
+    kind = ftAnim_AuthorKind(fp);
     temp_r25 = fp->parts[part].xC;
 
     while (i < part) {
@@ -774,7 +789,7 @@ void ftAnim_8006F7C8(Fighter* ft, Fighter_Part part, int arg2, FigaTree* tree)
 void ftAnim_8006F954(Fighter* fp, Fighter_Part part, bool do_blending,
                      FigaTree* unused)
 {
-    if (fp->kind != fp->x597_bits) {
+    if (fp->kind != ftAnim_AuthorKind(fp)) {
         ftAnim_8006F628(fp, part, do_blending);
     } else {
         ftAnim_8006F7C8(fp, part, do_blending, fp->x590);
@@ -871,7 +886,7 @@ void ftAnim_8006FCE4(Fighter* fp, bool do_blending)
     cur_node = tree->nodes;
     x594_bits = fp->x594_bits;
     cur_track = tree->tracks;
-    kind = fp->x597_bits;
+    kind = ftAnim_AuthorKind(fp);
 
     while (*cur_node != -1) {
         int part;
@@ -906,7 +921,7 @@ void ftAnim_8006FCE4(Fighter* fp, bool do_blending)
 
 void ftAnim_8006FE08(Fighter* fp, bool do_blending)
 {
-    if (fp->kind != fp->x597_bits) {
+    if (fp->kind != ftAnim_AuthorKind(fp)) {
         ftAnim_8006FCE4(fp, do_blending);
     } else {
         ftAnim_8006F4C8(fp, do_blending, fp->x590);

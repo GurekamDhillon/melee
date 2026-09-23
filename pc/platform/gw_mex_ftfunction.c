@@ -27,7 +27,7 @@
  * instead. Both addresses sit in free MEM1 well below the phase-1 test scratch (0x80300000+). */
 #define GW_FTFUNC_CODE_BASE 0x802F0000u    /* relocated code */
 #define GW_FTFUNC_MEXDATA_BASE 0x802E0000u /* r2 base: Arch_FighterFunc + per-kind arrays */
-#define GW_FTFUNC_KIND_MAX 96              /* per-kind array width (m-ex internal ids; ACE has 65) */
+#define GW_FTFUNC_KIND_MAX 128             /* per-kind array width: m-ex internal ids are s8 (ACE has 65) */
 #define GW_FTFUNC_SLOT_COUNT 46            /* Arch_FighterFunc word slots (Header.s) */
 #define GW_FTFUNC_PERKIND_STRIDE (GW_FTFUNC_KIND_MAX * 4u)
 
@@ -301,6 +301,11 @@ static int gw_ftfunction_overload(const unsigned char *dat, size_t dat_size, uin
             uint32_t perkind;
             if (slot >= GW_FTFUNC_SLOT_COUNT) {
                 gw_log("ftfunction: function-reloc entry %u slot %u out of range", i, slot);
+                return GW_FTFUNC_ERR_BAD_SLOT;
+            }
+            if (internal_id >= GW_FTFUNC_KIND_MAX) {
+                gw_log("ftfunction: ERROR internal id %u is past the %u the per-kind tables hold",
+                       internal_id, (unsigned) GW_FTFUNC_KIND_MAX);
                 return GW_FTFUNC_ERR_BAD_SLOT;
             }
             perkind = gw_r32((void *)(uintptr_t)(mexdata_base + slot * 4u));

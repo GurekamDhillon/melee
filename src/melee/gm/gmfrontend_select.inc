@@ -455,6 +455,32 @@ static int fs_random_ck(void)
     return fcs.ck[0];
 }
 
+/* The preload cache has to hear who is playing and where, as the native screens tell it
+ * (mncharsel.c every frame, mnstagesel.c on start). Without it nothing is preloaded, and the
+ * match loads each fighter's animation file on demand into the ARAM heap - which a VS state
+ * leaves at ~160 KB, so any fighter ended in lbMemory's "memp_kouho" assert. */
+static void fs_preload_players(const CSSData* css)
+{
+    struct GameCache* cache = &lbDvd_GetPreloadCacheScene()->game_cache;
+    int p;
+    for (p = 0; p < 4; p++) {
+        const PlayerInitData* pl = &css->vs.start.players[p];
+        if (pl->slot_type == Gm_PKind_Human || pl->slot_type == Gm_PKind_Cpu) {
+            cache->entries[p].char_id = pl->ckind;
+            cache->entries[p].color = pl->color;
+        } else {
+            cache->entries[p].char_id = ChKind_None;
+        }
+    }
+    lbDvd_80018254();
+}
+
+static void fs_preload_stage(int ext)
+{
+    lbDvd_GetPreloadCacheScene()->game_cache.stkind = ext;
+    lbDvd_80018254();
+}
+
 static void fs_css_finish(int go)
 {
     int p;
@@ -489,6 +515,7 @@ static void fs_css_finish(int go)
                          s->kind == FS_HMN ? "human" : "CPU", ck, pl->color,
                          s->ck == FS_CK_RANDOM ? " (random)" : "");
             }
+            fs_preload_players(css);
             css->pending_scene_change = 1;
         } else {
             css->pending_scene_change = CSSPendingSceneChange_2;
@@ -1046,6 +1073,7 @@ static void fs_sss_finish(int go, int ext)
                 }
             }
             sss->vs.start.rules.stkind = (u16) ext;
+            fs_preload_stage(ext);
             OSReport("frontend: stage select - stage %d\n", ext);
         }
     }

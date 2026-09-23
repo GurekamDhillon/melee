@@ -1,0 +1,39 @@
+/* ------------------------------------------------------------------
+   Geno Lab - compact in-match panel (9-slice), kit rules:
+   flat fills, hard edges, no blur, no soft shadow, no gradients.
+   One translucent colour (glass, exact in RGB5A3's RGB444 + A3 path);
+   ink and accent are opaque. Authored at 2x; 1x is a filtered downscale.
+   Pieces are 32x32 @2x (16 @1x). The chamfer (12 @2x) runs at 45 deg.
+   ------------------------------------------------------------------ */
+:root{
+  --ink:    #0a0e18;
+  --glass:  rgba(17,17,34,0.8588);   /* #111122 at 219/255 */
+  --accent: #38c9d9;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:transparent}
+.el{position:relative;overflow:hidden}
+.lyr{position:absolute;inset:0}
+.fill{position:absolute;inset:0}
+
+/* rotation wrapper: every corner is the tl drawing turned; square corners use .sq */
+.rot{position:absolute;inset:0;transform-origin:50% 50%}
+
+/* chamfered corner (tl orientation): outer cut x+y=12, inner cut x+y=17.66.
+   The ink is a band, never a plate under the glass: translucent glass over opaque ink
+   would composite to opaque. */
+.ch .ink   {background:var(--ink);   clip-path:polygon(12px 0,100% 0,100% 4px,13.66px 4px,4px 13.66px,4px 100%,0 100%,0 12px)}
+.ch .glass {background:var(--glass); clip-path:polygon(13.66px 4px,100% 4px,100% 100%,4px 100%,4px 13.66px)}
+.ch .cap   {background:var(--accent);clip-path:polygon(13.66px 4px,24px 4px,4px 24px,4px 13.66px)}
+
+/* square corner (tl orientation) */
+.sq .ink   {background:var(--ink);   clip-path:polygon(0 0,100% 0,100% 4px,4px 4px,4px 100%,0 100%)}
+.sq .glass {background:var(--glass); clip-path:polygon(4px 4px,100% 4px,100% 100%,4px 100%)}
+
+/* edges: the ink band sits on the outside (top for _h, left for _v) */
+.eh .ink   {position:absolute;left:0;right:0;top:0;height:4px;background:var(--ink)}
+.eh .glass {position:absolute;left:0;right:0;top:4px;bottom:0;background:var(--glass)}
+.ev .ink   {position:absolute;top:0;bottom:0;left:0;width:4px;background:var(--ink)}
+.ev .glass {position:absolute;top:0;bottom:0;left:4px;right:0;background:var(--glass)}
+
+.fl .glass {position:absolute;inset:0;background:var(--glass)}

@@ -1,0 +1,1953 @@
+{
+ "name": "geno-lab UI art",
+ "private": "Geno build only (branch private/geno)",
+ "provenance": "Original drawings in pc/geno/mods/geno-lab/art (SVG on the kit's 64 grid, HTML/CSS), rendered by headless Chromium; nothing traced, sampled or referenced from Melee or any other game.",
+ "authoring": "2x; draw every texture at its size_1x on the 640x480 script screen",
+ "naming": {
+  "icons": "ico_lab_<name>: gd.kit.icon('lab_<name>') -> ico_lab_<name>.gxtex",
+  "menu_icon": "ico_lab (the kit's ui/, not only the mod's: see art/README.md)",
+  "markers": "lab_mk_<event>",
+  "timeline": "lab_tl_*",
+  "keycap": "lab_key_*",
+  "panel": "lab_frame_* (same slots as the kit's frame_*: corner_tl/tr/bl/br, edge_h, edge_v, + fill)"
+ },
+ "masks": "I4 white masks: TEV RGB from the material/vertex colour, alpha = texture alpha x colour alpha (the kit's 'I4 needs a specific TEV setup'); IA4 is the fallback",
+ "palette": {
+  "units": "sRGB hex; u32 = 0xRRGGBBAA as gd.fill/gd.text take it",
+  "kit_tokens_used": [
+   "ink",
+   "bone",
+   "muted",
+   "disabled",
+   "gold",
+   "ok",
+   "danger"
+  ],
+  "lab": {
+   "glass": {
+    "hex": "#111122",
+    "u32": "0x111122DB"
+   },
+   "track": {
+    "hex": "#232b40",
+    "u32": "0x232B40FF"
+   },
+   "tick": {
+    "hex": "#7d88a6",
+    "u32": "0x7D88A6FF"
+   },
+   "accent": {
+    "hex": "#38c9d9",
+    "u32": "0x38C9D9FF"
+   },
+   "accent_dk": {
+    "hex": "#16707c",
+    "u32": "0x16707CFF"
+   },
+   "off": {
+    "hex": "#7d88a6",
+    "u32": "0x7D88A6FF"
+   },
+   "running": {
+    "hex": "#27b88a",
+    "u32": "0x27B88AFF"
+   },
+   "paused": {
+    "hex": "#f0b429",
+    "u32": "0xF0B429FF"
+   },
+   "warn": {
+    "hex": "#e5483b",
+    "u32": "0xE5483BFF"
+   },
+   "playhead": {
+    "hex": "#f0b429",
+    "u32": "0xF0B429FF"
+   }
+  },
+  "glass_alpha": 219,
+  "hit": {
+   "hit0": {
+    "hex": "#e5483b",
+    "u32": "0xE5483BFF"
+   },
+   "hit1": {
+    "hex": "#f5902e",
+    "u32": "0xF5902EFF"
+   },
+   "hit2": {
+    "hex": "#e24fb7",
+    "u32": "0xE24FB7FF"
+   },
+   "hit3": {
+    "hex": "#8e72ff",
+    "u32": "0x8E72FFFF"
+   },
+   "thrown": {
+    "hex": "#b8c2dc",
+    "u32": "0xB8C2DCFF"
+   }
+  },
+  "marks": {
+   "iasa": {
+    "hex": "#27b88a",
+    "u32": "0x27B88AFF",
+    "texture": "lab_mk_iasa"
+   },
+   "invinc": {
+    "hex": "#f2efe4",
+    "u32": "0xF2EFE4FF",
+    "texture": "lab_mk_invinc"
+   },
+   "gfx": {
+    "hex": "#4d8dff",
+    "u32": "0x4D8DFFFF",
+    "texture": "lab_mk_gfx"
+   },
+   "sfx": {
+    "hex": "#e8a6ff",
+    "u32": "0xE8A6FFFF",
+    "texture": "lab_mk_sfx"
+   },
+   "vis": {
+    "hex": "#f7df5e",
+    "u32": "0xF7DF5EFF",
+    "texture": "lab_mk_vis"
+   }
+  },
+  "lanes": {
+   "above": [
+    "iasa",
+    "invinc"
+   ],
+   "below": [
+    "gfx",
+    "sfx",
+    "vis"
+   ]
+  },
+  "rules": [
+   "Gold is still selection: in the Lab that is the playhead (the frame shown) and the focused fighter's highlight. The accent is Lab chrome only.",
+   "Toggle icons: ON = accent (or bone), OFF = off + the lab_slash overlay; colour is never the only cue.",
+   "Timeline markers pair a colour with a shape (lab_mk_*); hitbox windows are flat quads in hit colours, one bar per id row or stacked.",
+   "Panels: glass at glass_alpha, ink border, accent corner (lab_frame_*)."
+  ],
+  "checks": {
+   "on_glass": {
+    "bone": 10.79,
+    "muted": 6.97,
+    "accent": 6.23,
+    "gold": 6.66,
+    "ok": 4.92,
+    "danger": 3.15,
+    "disabled": 3.52
+   },
+   "ink_on_accent": 9.67,
+   "ink_on_bone": 16.75,
+   "on_track": {
+    "hit0": 3.57,
+    "hit1": 5.98,
+    "hit2": 4.05,
+    "hit3": 4.02,
+    "thrown": 7.91,
+    "iasa": 5.57,
+    "invinc": 12.23,
+    "gfx": 4.41,
+    "sfx": 7.6,
+    "vis": 10.51,
+    "playhead": 7.56,
+    "tick": 3.99
+   },
+   "hit_closest": {
+    "normal": [
+     21.5,
+     "hit2",
+     "hit3"
+    ],
+    "deuteranopia": [
+     12.5,
+     "hit0",
+     "hit1"
+    ],
+    "protanopia": [
+     10.5,
+     "hit2",
+     "hit3"
+    ],
+    "tritanopia": [
+     11.3,
+     "hit1",
+     "hit2"
+    ]
+   },
+   "mark_closest": {
+    "normal": [
+     13.0,
+     "vis",
+     "playhead"
+    ],
+    "deuteranopia": [
+     7.4,
+     "vis",
+     "playhead"
+    ],
+    "protanopia": [
+     9.3,
+     "vis",
+     "playhead"
+    ],
+    "tritanopia": [
+     12.3,
+     "iasa",
+     "gfx"
+    ]
+   },
+   "accent_vs": [
+    [
+     21.9,
+     "p4"
+    ],
+    [
+     22.6,
+     "thrown"
+    ],
+    [
+     27.3,
+     "cpu"
+    ]
+   ]
+  }
+ },
+ "panel": {
+  "piece_1x": 16,
+  "border_1x": 2,
+  "chamfer_1x": 6,
+  "corners": "tl, br chamfered (tl carries the accent cap); tr, bl square",
+  "min_size_1x": [
+   32,
+   32
+  ],
+  "content_inset_1x": 6,
+  "title_slab": "optional: a flat accent quad under the top edge, ink text, caption/body role"
+ },
+ "timeline": {
+  "track": {
+   "height_1x": 8,
+   "colour": "track",
+   "caps": "lab_tl_cap_l / _r at 8x16 @1x drawn 8 px tall (scale V) or 16 tall for a double-height track"
+  },
+  "windows": "flat quads in palette.hit[<id>], 6 px tall inside the track; min 2 px wide",
+  "ticks": {
+   "colour": "tick",
+   "minor": {
+    "every": 5,
+    "size_1x": [
+     1,
+     2
+    ]
+   },
+   "major": {
+    "every": 10,
+    "size_1x": [
+     1,
+     4
+    ]
+   }
+  },
+  "playhead": {
+   "texture": "lab_tl_playhead",
+   "size_1x": [
+    16,
+    32
+   ],
+   "anchor_1x": [
+    8,
+    0
+   ],
+   "note": "stem centred on the frame's x; ink shadow at +1,+1 first"
+  },
+  "markers": {
+   "size_1x": [
+    8,
+    8
+   ],
+   "lanes": {
+    "above": [
+     "iasa",
+     "invinc"
+    ],
+    "below": [
+     "gfx",
+     "sfx",
+     "vis"
+    ]
+   },
+   "note": "lab_mk_* at 8 px (or 12 with room); ink shadow +1,+1"
+  }
+ },
+ "key_chip": {
+  "h_1x": 16,
+  "cap_w_1x": 8,
+  "top": [
+   1,
+   12
+  ],
+  "radius_1x": 3,
+  "lip_1x": 4,
+  "side_1x": 1,
+  "label_role": "caption",
+  "label_colour": "ink",
+  "body_tint": "muted",
+  "top_tint": "bone",
+  "held_body_tint": "accent",
+  "layout": "w = max(16, text advance + 8); body: lab_key_l, flat body quad (muted), lab_key_r; top: lab_key_top_l, flat quad over top rows 1..12, lab_key_top_r; label baseline centres its cap height in the top face. Pressed: top face and label +1 px down."
+ },
+ "textures": [
+  {
+   "name": "ico_lab_play",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_play.png",
+   "file_1x": "out/1x/ico_lab_play.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "resume (P while paused)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_pause",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_pause.png",
+   "file_1x": "out/1x/ico_lab_pause.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "pause (P while running)",
+   "tint": "bone",
+   "alpha_levels_i4": 2,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_step",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_step.png",
+   "file_1x": "out/1x/ico_lab_step.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "step 1 frame forward (N; hold = slow play)",
+   "tint": "bone",
+   "alpha_levels_i4": 6,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_step_back",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_step_back.png",
+   "file_1x": "out/1x/ico_lab_step_back.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "step 1 frame back (B; hold = slow rewind)",
+   "tint": "bone",
+   "alpha_levels_i4": 6,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_rewind",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_rewind.png",
+   "file_1x": "out/1x/ico_lab_rewind.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "rewind (hold B / CTRL+B = 10 frames back)",
+   "tint": "bone",
+   "alpha_levels_i4": 8,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_forward",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_forward.png",
+   "file_1x": "out/1x/ico_lab_forward.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "fast step (CTRL+N = 10 frames forward)",
+   "tint": "bone",
+   "alpha_levels_i4": 8,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_slowmo",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_slowmo.png",
+   "file_1x": "out/1x/ico_lab_slowmo.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "slow play: a snail",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     2
+    ],
+    "at_2x_draw": [
+     2,
+     2
+    ],
+    "at_1x_draw": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_history",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_history.png",
+   "file_1x": "out/1x/ico_lab_history.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "step-back history (the snapshot ring): a clock with a back-arrow",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_record",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_record.png",
+   "file_1x": "out/1x/ico_lab_record.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "record / history on",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_hitbox",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_hitbox.png",
+   "file_1x": "out/1x/ico_lab_hitbox.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "1: hitboxes (a burst; the hurtbox is the capsule)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_hurtbox",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_hurtbox.png",
+   "file_1x": "out/1x/ico_lab_hurtbox.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "1: hurtboxes (a capsule around a bone)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_ecb",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_ecb.png",
+   "file_1x": "out/1x/ico_lab_ecb.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "5: ECB (the diamond)",
+   "tint": "bone",
+   "alpha_levels_i4": 13,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_stage",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_stage.png",
+   "file_1x": "out/1x/ico_lab_stage.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "6: stage collision lines (cycles lines / ledges / terrain)",
+   "tint": "bone",
+   "alpha_levels_i4": 14,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_ledge",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_ledge.png",
+   "file_1x": "out/1x/ico_lab_ledge.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "6: ledges (a stage corner and its grab box)",
+   "tint": "bone",
+   "alpha_levels_i4": 5,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_model",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_model.png",
+   "file_1x": "out/1x/ico_lab_model.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "2: model on/off (a figure)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_skeleton",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_skeleton.png",
+   "file_1x": "out/1x/ico_lab_skeleton.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "3: skeleton (joints and bones)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     3,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_joints",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_joints.png",
+   "file_1x": "out/1x/ico_lab_joints.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "4: joint numbers (a joint with a label tag)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_hitlabels",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_hitlabels.png",
+   "file_1x": "out/1x/ico_lab_hitlabels.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "9: hitbox labels (a hitbox with a label tag)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     2
+    ],
+    "at_2x_draw": [
+     2,
+     2
+    ],
+    "at_1x_draw": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_timeline",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_timeline.png",
+   "file_1x": "out/1x/ico_lab_timeline.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "M: move timeline (track, ticks, playhead)",
+   "tint": "bone",
+   "alpha_levels_i4": 3,
+   "legibility": {
+    "full": [
+     6,
+     0
+    ],
+    "at_2x_draw": [
+     6,
+     0
+    ],
+    "at_1x_draw": [
+     6,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_info",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_info.png",
+   "file_1x": "out/1x/ico_lab_info.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "7: info panel (the info mark)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_log",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_log.png",
+   "file_1x": "out/1x/ico_lab_log.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "8: event log (a console)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     4,
+     1
+    ],
+    "at_2x_draw": [
+     4,
+     1
+    ],
+    "at_1x_draw": [
+     4,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_attrs",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_attrs.png",
+   "file_1x": "out/1x/ico_lab_attrs.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "0: attribute compare (paired bars)",
+   "tint": "bone",
+   "alpha_levels_i4": 2,
+   "legibility": {
+    "full": [
+     4,
+     0
+    ],
+    "at_2x_draw": [
+     4,
+     0
+    ],
+    "at_1x_draw": [
+     4,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_lockstep",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_lockstep.png",
+   "file_1x": "out/1x/ico_lab_lockstep.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "C: lock-step compare (two tracks on one frame)",
+   "tint": "bone",
+   "alpha_levels_i4": 3,
+   "legibility": {
+    "full": [
+     6,
+     0
+    ],
+    "at_2x_draw": [
+     6,
+     0
+    ],
+    "at_1x_draw": [
+     6,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_mirror",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_mirror.png",
+   "file_1x": "out/1x/ico_lab_mirror.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "R: mirror P1's pad onto P2 (a pad reflected across an axis)",
+   "tint": "bone",
+   "alpha_levels_i4": 13,
+   "legibility": {
+    "full": [
+     9,
+     0
+    ],
+    "at_2x_draw": [
+     9,
+     0
+    ],
+    "at_1x_draw": [
+     9,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_focus",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_focus.png",
+   "file_1x": "out/1x/ico_lab_focus.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "TAB: focus the next fighter (brackets on a figure)",
+   "tint": "bone",
+   "alpha_levels_i4": 15,
+   "legibility": {
+    "full": [
+     6,
+     0
+    ],
+    "at_2x_draw": [
+     6,
+     0
+    ],
+    "at_1x_draw": [
+     6,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_save",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_save.png",
+   "file_1x": "out/1x/ico_lab_save.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "F5: save state (into the slot)",
+   "tint": "bone",
+   "alpha_levels_i4": 13,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_load",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_load.png",
+   "file_1x": "out/1x/ico_lab_load.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "F6: load state (out of the slot)",
+   "tint": "bone",
+   "alpha_levels_i4": 13,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_help",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_help.png",
+   "file_1x": "out/1x/ico_lab_help.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "F3: help (the question mark is the symbol)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_power",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_power.png",
+   "file_1x": "out/1x/ico_lab_power.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "X: Lab on / off",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_slash",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_slash.png",
+   "file_1x": "out/1x/ico_lab_slash.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "overlay on any Lab icon when its toggle is OFF (tint: off); colour is never the only cue",
+   "tint": "off",
+   "alpha_levels_i4": 5,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_slash_gap",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_slash_gap.png",
+   "file_1x": "out/1x/ico_lab_slash_gap.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "drawn first under ico_lab_slash in the backdrop colour (glass), so the slash cuts the icon",
+   "tint": "glass",
+   "alpha_levels_i4": 6,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab",
+   "group": "menu",
+   "file_2x": "out/2x/ico_lab.png",
+   "file_1x": "out/1x/ico_lab.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "min_draw_1x": 16,
+   "use": "SOLO > LAB menu tile, LAB breadcrumb: a flask (replaces ico_training on that entry)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     3
+    ],
+    "at_2x_draw": [
+     1,
+     3
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "lab_mk_iasa",
+   "group": "marker",
+   "file_2x": "out/2x/lab_mk_iasa.png",
+   "file_1x": "out/1x/lab_mk_iasa.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 12,
+   "use": "IASA: interruptible from this frame (a flag)",
+   "tint": "iasa",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_mk_invinc",
+   "group": "marker",
+   "file_2x": "out/2x/lab_mk_invinc.png",
+   "file_1x": "out/1x/lab_mk_invinc.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 12,
+   "use": "body / hurtbox state change (a shield)",
+   "tint": "invinc",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_mk_gfx",
+   "group": "marker",
+   "file_2x": "out/2x/lab_mk_gfx.png",
+   "file_1x": "out/1x/lab_mk_gfx.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 12,
+   "use": "GFX spawned (a spark)",
+   "tint": "gfx",
+   "alpha_levels_i4": 13,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_mk_sfx",
+   "group": "marker",
+   "file_2x": "out/2x/lab_mk_sfx.png",
+   "file_1x": "out/1x/lab_mk_sfx.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 12,
+   "use": "SFX played (a speaker)",
+   "tint": "sfx",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     4,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_mk_vis",
+   "group": "marker",
+   "file_2x": "out/2x/lab_mk_vis.png",
+   "file_1x": "out/1x/lab_mk_vis.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 12,
+   "use": "model visibility change (an eye)",
+   "tint": "vis",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     3,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_mk_hitbox",
+   "group": "marker",
+   "file_2x": "out/2x/lab_mk_hitbox.png",
+   "file_1x": "out/1x/lab_mk_hitbox.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 12,
+   "use": "legend swatch for a hitbox window (windows themselves are flat quads)",
+   "tint": "hitbox",
+   "alpha_levels_i4": 5,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_tl_playhead",
+   "group": "timeline",
+   "file_2x": "out/2x/lab_tl_playhead.png",
+   "file_1x": "out/1x/lab_tl_playhead.png",
+   "size_2x": [
+    32,
+    64
+   ],
+   "size_1x": [
+    16,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 1024,
+   "min_draw_1x": 16,
+   "use": "the frame shown: head + 2px stem; tint playhead (gold), draw once in ink at +1,+1 1x first",
+   "tint": "playhead",
+   "alpha_levels_i4": 14
+  },
+  {
+   "name": "lab_tl_cap_l",
+   "group": "timeline",
+   "file_2x": "out/2x/lab_tl_cap_l.png",
+   "file_1x": "out/1x/lab_tl_cap_l.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "track left end, slanted at the kit shear (0.25); the track body is a flat quad",
+   "tint": "track",
+   "alpha_levels_i4": 6
+  },
+  {
+   "name": "lab_tl_cap_r",
+   "group": "timeline",
+   "file_2x": "out/2x/lab_tl_cap_r.png",
+   "file_1x": "out/1x/lab_tl_cap_r.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "track right end (see cap_l)",
+   "tint": "track",
+   "alpha_levels_i4": 6
+  },
+  {
+   "name": "lab_key_l",
+   "group": "key",
+   "file_2x": "out/2x/lab_key_l.png",
+   "file_1x": "out/1x/lab_key_l.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "keycap body, left end (tint muted; accent when held)",
+   "tint": "muted",
+   "alpha_levels_i4": 10
+  },
+  {
+   "name": "lab_key_r",
+   "group": "key",
+   "file_2x": "out/2x/lab_key_r.png",
+   "file_1x": "out/1x/lab_key_r.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "keycap body, right end",
+   "tint": "muted",
+   "alpha_levels_i4": 9
+  },
+  {
+   "name": "lab_key_top_l",
+   "group": "key",
+   "file_2x": "out/2x/lab_key_top_l.png",
+   "file_1x": "out/1x/lab_key_top_l.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "keycap top face, left end (tint bone)",
+   "tint": "bone",
+   "alpha_levels_i4": 6
+  },
+  {
+   "name": "lab_key_top_r",
+   "group": "key",
+   "file_2x": "out/2x/lab_key_top_r.png",
+   "file_1x": "out/1x/lab_key_top_r.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "keycap top face, right end",
+   "tint": "bone",
+   "alpha_levels_i4": 6
+  },
+  {
+   "name": "lab_frame_corner_tl",
+   "group": "panel",
+   "file_2x": "out/2x/lab_frame_corner_tl.png",
+   "file_1x": "out/1x/lab_frame_corner_tl.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "RGB5A3",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "corner, per orientation (no UV flips needed)",
+   "rgb5a3": {
+    "max_rgb_delta_opaque": 4,
+    "max_alpha_delta": 18,
+    "colours_before": 13,
+    "colours_after": 11,
+    "alpha_values": [
+     0,
+     116,
+     126,
+     219,
+     223,
+     234,
+     237,
+     239,
+     243,
+     245,
+     247,
+     255
+    ]
+   }
+  },
+  {
+   "name": "lab_frame_corner_tr",
+   "group": "panel",
+   "file_2x": "out/2x/lab_frame_corner_tr.png",
+   "file_1x": "out/1x/lab_frame_corner_tr.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "RGB5A3",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "corner, per orientation (no UV flips needed)",
+   "rgb5a3": {
+    "max_rgb_delta_opaque": 2,
+    "max_alpha_delta": 0,
+    "colours_before": 2,
+    "colours_after": 2,
+    "alpha_values": [
+     219,
+     255
+    ]
+   }
+  },
+  {
+   "name": "lab_frame_corner_br",
+   "group": "panel",
+   "file_2x": "out/2x/lab_frame_corner_br.png",
+   "file_1x": "out/1x/lab_frame_corner_br.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "RGB5A3",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "corner, per orientation (no UV flips needed)",
+   "rgb5a3": {
+    "max_rgb_delta_opaque": 4,
+    "max_alpha_delta": 18,
+    "colours_before": 12,
+    "colours_after": 11,
+    "alpha_values": [
+     0,
+     127,
+     139,
+     219,
+     234,
+     237,
+     239,
+     243,
+     245,
+     247,
+     255
+    ]
+   }
+  },
+  {
+   "name": "lab_frame_corner_bl",
+   "group": "panel",
+   "file_2x": "out/2x/lab_frame_corner_bl.png",
+   "file_1x": "out/1x/lab_frame_corner_bl.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "RGB5A3",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "corner, per orientation (no UV flips needed)",
+   "rgb5a3": {
+    "max_rgb_delta_opaque": 2,
+    "max_alpha_delta": 0,
+    "colours_before": 2,
+    "colours_after": 2,
+    "alpha_values": [
+     219,
+     255
+    ]
+   }
+  },
+  {
+   "name": "lab_frame_edge_h",
+   "group": "panel",
+   "file_2x": "out/2x/lab_frame_edge_h.png",
+   "file_1x": "out/1x/lab_frame_edge_h.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "RGB5A3",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "top edge; bottom = V-flipped; stretch on X",
+   "rgb5a3": {
+    "max_rgb_delta_opaque": 2,
+    "max_alpha_delta": 0,
+    "colours_before": 2,
+    "colours_after": 2,
+    "alpha_values": [
+     219,
+     255
+    ]
+   }
+  },
+  {
+   "name": "lab_frame_edge_v",
+   "group": "panel",
+   "file_2x": "out/2x/lab_frame_edge_v.png",
+   "file_1x": "out/1x/lab_frame_edge_v.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "RGB5A3",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "left edge; right = U-flipped; stretch on Y",
+   "rgb5a3": {
+    "max_rgb_delta_opaque": 2,
+    "max_alpha_delta": 0,
+    "colours_before": 2,
+    "colours_after": 2,
+    "alpha_values": [
+     219,
+     255
+    ]
+   }
+  },
+  {
+   "name": "lab_frame_fill",
+   "group": "panel",
+   "file_2x": "out/2x/lab_frame_fill.png",
+   "file_1x": "out/1x/lab_frame_fill.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "RGB5A3",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "centre; stretch both ways (or a flat glass quad)",
+   "rgb5a3": {
+    "max_rgb_delta_opaque": 0,
+    "max_alpha_delta": 0,
+    "colours_before": 1,
+    "colours_after": 1,
+    "alpha_values": [
+     219
+    ]
+   }
+  }
+ ]
+}

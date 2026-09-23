@@ -33,5 +33,9 @@ PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTarge
 PipelineRef find_pipeline(const rmlui::PipelineConfig& config);
 
 bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline);
+// Blocks until `ref` (already requested through find_pipeline) is compiled: a queued or
+// background-seeded request jumps to the front of the queue. For draws that must not be skipped
+// (GXSetPipelineWaitAURORA). Returns at once when the pipeline is ready or there is no worker.
+void wait_pipeline(PipelineRef ref);
 
 } // namespace aurora::gfx

@@ -27,6 +27,11 @@ void GXPushDebugGroup(const char* label) {
 
 void GXPopDebugGroup() { GX_WRITE_AURORA(GX_AURORA_DEBUG_GROUP_POP); }
 
+void GXSetPipelineWaitAURORA(u8 on) {
+  GX_WRITE_AURORA(GX_AURORA_PIPELINE_WAIT);
+  GX_WRITE_U8(on ? 1 : 0);
+}
+
 void GXInsertDebugMarker(const char* label) {
   GX_WRITE_AURORA(GX_AURORA_DEBUG_MARKER_INSERT);
   GXWriteString(label);

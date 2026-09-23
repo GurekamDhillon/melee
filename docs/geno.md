@@ -323,6 +323,7 @@ API 1; `gd.lab_api == 1` says the build has it (nil on public builds).
 | `pc/platform/gw_snap.c` | native | slots by index (`gw_snap_reserve`, `gw_snap_save_index`, `gw_snap_load_index`), max 48 slots |
 | engine sites | game | `fighter.c` (action change, hitlag enter/leave), `ftcoll.c` (hit), `ftcommon.c` (land), `gmscene.c` (`Script_PostRender`) |
 | `pc/geno/mods/geno-lab/` | mod | the Lab: `mod.json` + `scripts/lab.lua` |
+| `gmfrontend_menus.inc`, `gw_script_pad.c` | game / native | SOLO > LAB entry; `gd.mirror_pad` |
 
 These are shared-code files (no Geno object needed): the non-Geno link list builds them too.
 
@@ -438,8 +439,29 @@ keyboard play key):
 Console: `lab help | lab port N | lab history N | lab back [N] | lab dump [N] | lab set <key> <value>`.
 Online the Lab only reads (the status bar says so).
 
-### 14.7 Stage 2 (not built)
+### 14.7 Stage 2: timelines, set motion, lock-step, LAB menu entry
 
-Move timeline from the subaction events with a scrubber; set any fighter to any motion/frame
-(offline); lock-step comparison of two ports; a "Lab" entry in the frontend menu; live edits
-written back to `experiment/brawl-kirby/tuning.json`.
+| function | |
+|---|---|
+| `gd.timeline(port [, motion])` | the subaction script of the current action (or of `motion`'s row), walked read-only the way ftAction times it: `wait` adds frames, `wait_until` jumps to an animation frame, loops / calls / gotos are followed; stops at `end`, `wait_anim` ("anim_end"), 2000 commands or frame 1000 ("limit"). Returns `{motion, motion_name, anim_id, anim_name, end_frame, length, stop, script, events}`; each event `{frame (1-based, as frame-data sites count), op, name, addr, words, ...}` with decoded fields for `hitbox` (`id, group, bone, damage, size, ox/oy/oz, angle, kbg, wbk, bkb, element, element_name, shield_damage, hit_ground, hit_air`), `gfx`, `sfx`, `hitbox_damage/size`, `hitbox_remove`, `cmd_var`, `body_state`, `hurtbox_state`, `visibility`, ... Names for opcodes 10-58 follow the community decoders, checked against the decomp's handlers; 59 is Geno's escape (skipped by its length) |
+| `gd.set_motion(port or {ports}, motion [, frame [, rate [, lift]]])` | offline, gameplay. At the next boundary (at once when paused) the fighter enters `motion` - the plain `Fighter_ChangeMotionState` its entry function would make - then the game runs up to `frame` (default 1; entering is frame 1) and pauses, so the fighter shows that frame **with everything its script did on the way** (hitboxes included). `lift` > 0 puts a grounded fighter in the air that high first (aerials would land at once). Several ports in one call (or calls before the same boundary) start together: **lock-step**. Motions are bounded by the decomp's tables (common states; a vanilla fighter's specials, Kirby clones use Kirby's) so a garbage row is never entered. States whose entry function sets more up than the motion change itself may misbehave (specials with state variables) |
+| `gd.mirror_pad(from, to)` / `gd.mirror_pad()` | offline, gameplay: port `to` gets exactly what port `from` sends (after every other source) - two fighters under the same inputs; `to` must be a human port (CPUs ignore pads) |
+| `gd.lab_request([clear])` | true when SOLO > LAB (or `MELEE_LAB=1`) asked for the Lab |
+
+`gd.step(n)` now runs up to 30 frames per rendered tick (it was 1), so long steps and
+`set_motion` land quickly.
+
+**SOLO > LAB** (`gmfrontend_menus.inc`, selection 0x42): shown only when a `geno-lab/*` script is
+loaded; it sets the request and goes to Training's CSS. The Lab turns itself on in matches when
+requested (setting `always` turns it on everywhere) and drops the request when the menus come
+back after a Lab match.
+
+Lab keys added: `M` move timeline (a bar per fighter: hitbox windows coloured by id, IASA green,
+body/hurtbox state white, GFX blue, SFX purple, visibility yellow, the red cursor = the frame
+shown; a text line lists every window `fN-M #id dmg% angle kbg bkb wbk radius`), `PAGEUP` /
+`PAGEDOWN` scrub the focused fighter's move one frame (replays it from frame 1 via
+`set_motion`; hold to repeat), `HOME` replay from frame 1, `C` lock-step (every fighter into the
+focused fighter's move at its scrub frame), `R` mirror P1's controller onto P2. Console: `lab move
+<motion id> [frame]`, `lab events [port]` (the decoded script).
+
+Not built: live edits written back to `experiment/brawl-kirby/tuning.json` (the "later" item).

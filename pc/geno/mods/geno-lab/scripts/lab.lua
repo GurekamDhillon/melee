@@ -11,6 +11,11 @@
 --   1 hit/hurtboxes   2 model   3 skeleton   4 joint numbers   5 ECB   6 stage collision
 --   7 info panel      8 event log   9 hitbox labels   0 attributes
 --   F5 / F6   save / load state 1
+--   M         move timeline (the subaction script: hitboxes, IASA, GFX/SFX, body state...)
+--   PAGEUP / PAGEDOWN   scrub the focused fighter's move one frame back / forward (replays it)
+--   HOME      replay the move from frame 1        C   both fighters into this move, lock-step
+--   R         mirror P1's controller onto P2 (P2 must be a human port)
+-- The Lab runs in matches started from SOLO > LAB (or MELEE_LAB=1), or after X.
 -- Console: "lab help".
 
 if gd.lab_api == nil then
@@ -21,7 +26,9 @@ end
 local cfg = {
   on = true, hit = true, model = true, skel = false, joints = false, ecb = false, stage = 0,
   info = true, log = true, labels = true, attrs = false, help = false, history = 20,
+  timeline = true, always = false,
 }
+local NOT_SAVED = { help = true, on = true }
 local SETTINGS = "settings.txt"
 local focus = 1            -- the focused port (1-6)
 local log_lines = {}       -- {frame, text, color}
@@ -42,13 +49,14 @@ local STAGE_NAMES = { [0] = "off", "lines+ECB", "ledges", "terrain" }
 local function save_settings()
   local out = {}
   for k, v in pairs(cfg) do
-    if k ~= "help" then out[#out + 1] = k .. "=" .. tostring(v) end
+    if not NOT_SAVED[k] then out[#out + 1] = k .. "=" .. tostring(v) end
   end
   table.sort(out)
   pcall(gd.data_write, SETTINGS, table.concat(out, "\n") .. "\n")
 end
 
 local function load_settings()
+cfg.on = cfg.always or gd.lab_request()
   local ok, text = pcall(gd.data_read, SETTINGS)
   if not ok or text == nil then return end
   for k, v in text:gmatch("([%w_]+)=([^\r\n]+)") do
@@ -148,6 +156,96 @@ local function toggle(key, name)
   save_settings()
 end
 
+-- ---- Stage 2: timelines, scrubbing, lock-step compare, mirrored input --------------------------
+local tl_cache = {}      -- port -> {key, tl, windows, marks, len}
+local scrub = {}         -- port -> {motion, frame}
+local mirror = false
+local lab_matched = false   -- a match ran with the LAB request since it was made
+
+-- aerials (and other air states) need the fighter in the air, or it lands at once
+local AIR_MOTIONS = { AttackAirN = true, AttackAirF = true, AttackAirB = true, AttackAirHi = true,
+  AttackAirLw = true, EscapeAir = true, Fall = true, FallAerial = true }
+local function lift_for(port, motion)
+  local name = gd.motion_name(motion, port)
+  if AIR_MOTIONS[name] or name:find("Air") and not name:find("Landing") then return 40 end
+  return 0
+end
+
+-- hitbox windows etc. from a timeline's events (frames are 1-based, like frame-data sites)
+local function analyse(tl)
+  local len = math.max(tl.length or 1, (tl.end_frame or 0) + 1)
+  local open, windows, marks = {}, {}, {}
+  local function close(id, at)
+    local w = open[id]
+    if w then w.to = math.max(w.from, at - 1) windows[#windows + 1] = w open[id] = nil end
+  end
+  for _, e in ipairs(tl.events) do
+    if e.name == "hitbox" then
+      close(e.id, e.frame)
+      open[e.id] = { id = e.id, from = e.frame, dmg = e.damage, angle = e.angle, kbg = e.kbg,
+        bkb = e.bkb, wbk = e.wbk, size = e.size, bone = e.bone, element = e.element_name }
+    elseif e.name == "hitbox_remove" then
+      close(e.id, e.frame)
+    elseif e.name == "hitboxes_clear" then
+      local ids = {}
+      for id in pairs(open) do ids[#ids + 1] = id end
+      for _, id in ipairs(ids) do close(id, e.frame) end
+    elseif e.name == "hitbox_damage" and open[e.id] then
+      open[e.id].dmg = e.value
+    else
+      marks[#marks + 1] = e
+    end
+    if e.frame > len then len = e.frame end
+  end
+  local ids = {}
+  for id in pairs(open) do ids[#ids + 1] = id end
+  for _, id in ipairs(ids) do close(id, len + 1) end
+  table.sort(windows, function(a, b) return a.from < b.from or (a.from == b.from and a.id < b.id) end)
+  return windows, marks, len
+end
+
+local function timeline_of(p)
+  local key = p.action .. ":" .. p.anim_id
+  local c = tl_cache[p.port]
+  if c and c.key == key then return c end
+  local tl = gd.timeline(p.port)
+  if tl == nil then return nil end
+  local windows, marks, len = analyse(tl)
+  c = { key = key, tl = tl, windows = windows, marks = marks, len = len }
+  tl_cache[p.port] = c
+  return c
+end
+
+-- replay a fighter's move up to `frame` (set_motion runs it from frame 1, then pauses)
+local function scrub_to(port, frame)
+  local p = gd.player(port)
+  if p == nil or not offline() then return end
+  local s0 = scrub[port]
+  local motion = (s0 and s0.motion) or p.action
+  if frame < 1 then frame = 1 end
+  local ok, why = gd.set_motion(port, motion, frame, 1, lift_for(port, motion))
+  if ok then
+    scrub[port] = { motion = motion, frame = frame }
+    say(string.format("%s frame %d", gd.motion_name(motion, port), frame))
+  else
+    say("scrub: " .. tostring(why), RED)
+  end
+end
+
+-- every fighter into the focused fighter's move at the same frame, together (lock-step)
+local function compare()
+  local a = gd.player(focus)
+  if a == nil or not offline() then return end
+  local motion = (scrub[focus] and scrub[focus].motion) or a.action
+  local frame = (scrub[focus] and scrub[focus].frame) or 1
+  local n = 0
+  for _, p in ipairs(gd.players()) do
+    local ok = gd.set_motion(p.port, motion, frame, 1, lift_for(p.port, motion))
+    if ok then scrub[p.port] = { motion = motion, frame = frame } n = n + 1 end
+  end
+  say(string.format("lock-step: %d fighters in %s, frame %d", n, gd.motion_name(motion, focus), frame))
+end
+
 function on_tick()
   if gd.key_pressed("X") then
     cfg.on = not cfg.on
@@ -179,6 +277,22 @@ function on_tick()
     local big = gd.key("CTRL") and 10 or 1
     if repeat_key("N") then step(big) end
     if repeat_key("B") then back(big) end
+    if gd.key_pressed("M") then toggle("timeline", "move timeline") end
+    if repeat_key("PAGEDOWN") then
+      local s0 = scrub[focus]
+      scrub_to(focus, s0 and s0.frame + 1 or 1)
+    end
+    if repeat_key("PAGEUP") then
+      local s0 = scrub[focus]
+      scrub_to(focus, s0 and s0.frame - 1 or 1)
+    end
+    if gd.key_pressed("HOME") then scrub[focus] = nil scrub_to(focus, 1) end
+    if gd.key_pressed("C") then compare() end
+    if gd.key_pressed("R") then
+      mirror = not mirror
+      if mirror then gd.mirror_pad(1, 2) else gd.mirror_pad() end
+      say(mirror and "P2 mirrors P1's controller (P2 must be a human port)" or "mirror off")
+    end
     if gd.key_pressed("F5") then gd.savestate(1) end
     if gd.key_pressed("F6") then
       local ok, err = pcall(gd.loadstate, 1)
@@ -232,6 +346,26 @@ function on_match_start()
   history_on = false
   log_lines = {}
   focus = 1
+  tl_cache, scrub = {}, {}
+  cfg.on = cfg.always or gd.lab_request()
+  if gd.lab_request() then lab_matched = true end
+end
+
+function on_scene(kind, name)
+  -- back at the menus: a later plain TRAINING does not bring the Lab
+  if lab_matched and (name == "GS_MENU" or name == "GS_TITLE") then
+    gd.lab_request(true)
+    lab_matched = false
+  end
+  if mirror and offline() then mirror = false gd.mirror_pad() end
+end
+
+-- the scrub position belongs to the move: when the fighter leaves it, forget it
+function on_frame()
+  for port, s0 in pairs(scrub) do
+    local p = gd.player(port)
+    if p == nil or p.action ~= s0.motion then scrub[port] = nil end
+  end
 end
 
 function on_loadstate(slot)
@@ -360,13 +494,57 @@ local function draw_attrs(list)
   end
 end
 
+local function draw_timeline(p, y, color)
+  local c = timeline_of(p)
+  if c == nil then return y end
+  local x0, w = 8, 624
+  local len = math.max(c.len, 1)
+  local sx = w / len
+  local now = p.anim_frame_f + 1
+  gd.fill(x0 - 4, y - 2, w + 8, 38, 0x000000B8)
+  gd.text(x0, y, string.format("P%d %s  (%s)  %d frames  script %s", p.port, c.tl.motion_name,
+    c.tl.anim_name, math.floor(len + 0.5), c.tl.stop or "-"), color, 0.68)
+  local by = y + 11
+  gd.fill(x0, by, w, 8, 0x303040FF)
+  for f = 5, len, 5 do gd.line(x0 + (f - 1) * sx, by + 8, x0 + (f - 1) * sx, by + 10, DIM) end
+  for _, hw in ipairs(c.windows) do
+    local col = HIT_COLORS[hw.id] or WHITE
+    gd.fill(x0 + (hw.from - 1) * sx, by + 1, math.max(2, (hw.to - hw.from + 1) * sx), 6, col)
+  end
+  for _, e in ipairs(c.marks) do
+    local mx = x0 + (e.frame - 1) * sx
+    if e.name == "iasa" then gd.fill(mx, by - 3, 2, 14, GREEN)
+    elseif e.name == "gfx" then gd.fill(mx, by + 8, 2, 3, 0x40A0FFFF)
+    elseif e.name:find("sfx") then gd.fill(mx, by - 3, 2, 3, 0xC77DFFFF)
+    elseif e.name == "body_state" or e.name == "hurtbox_state" or e.name == "hurtboxes_state" then
+      gd.fill(mx, by - 3, 2, 14, 0xFFFFFFFF)
+    elseif e.name == "visibility" or e.name == "model_state" then gd.fill(mx, by + 8, 2, 3, YELLOW)
+    end
+  end
+  gd.fill(x0 + (now - 1) * sx - 1, by - 4, 2, 16, 0xFF3030FF)
+  -- the windows as text: frames, id, damage, angle, growth, base, weight-set, size
+  local parts = {}
+  for _, hw in ipairs(c.windows) do
+    parts[#parts + 1] = string.format("f%d-%d #%d %d%% a%d g%d b%d w%d r%.1f", hw.from, hw.to, hw.id,
+      hw.dmg, hw.angle, hw.kbg, hw.bkb, hw.wbk, hw.size)
+  end
+  local iasa
+  for _, e in ipairs(c.marks) do if e.name == "iasa" then iasa = e.frame break end end
+  local line = string.format("now %.1f  %s%s", now, iasa and ("IASA f" .. iasa .. "  ") or "",
+    table.concat(parts, "  "))
+  gd.text(x0, by + 12, line:sub(1, 150), GREY, 0.62)
+  return y + 40
+end
+
 local HELP = {
   "Geno Lab - keys (game window focused, console closed)",
   "P pause/resume   N step (hold = slow play, CTRL = 10)   B step back (hold, CTRL = 10)",
   "TAB focus next fighter   X Lab on/off   F5/F6 save/load state 1   F3 this help",
   "1 hit/hurtboxes  2 model  3 skeleton  4 joint numbers  5 ECB  6 stage collision",
   "7 info panel  8 event log  9 hitbox labels  0 attributes (differences in yellow)",
-  "console: lab help | lab port N | lab history N | lab back N | lab dump [N]",
+  "M move timeline   PAGEUP/PAGEDOWN scrub the move   HOME replay from frame 1",
+  "C both fighters into this move at this frame (lock-step)   R mirror P1's pad onto P2",
+  "console: lab help | port N | history N | back N | dump [N] | move <id> [frame] | events",
 }
 
 local function draw_status(m)
@@ -396,6 +574,14 @@ function on_draw()
   draw_status(m)
   if cfg.info then draw_info(list) end
   if cfg.attrs then draw_attrs(list) end
+  if cfg.timeline then
+    local y = 300
+    local a = gd.player(focus)
+    if a then y = draw_timeline(a, y, PORT_COLORS[a.port]) end
+    for _, p in ipairs(list) do
+      if p.port ~= focus then draw_timeline(p, y, PORT_COLORS[p.port]) break end
+    end
+  end
   if cfg.log and #log_lines > 0 then
     local y0 = 470 - #log_lines * 10
     gd.fill(0, y0 - 2, 640, #log_lines * 10 + 4, 0x00000090)
@@ -444,6 +630,28 @@ gd.command("lab", function(arg)
     back(n or 1)
   elseif cmd == "dump" then
     dump(n or focus)
+  elseif cmd == "move" then
+    local id, fr = rest:match("^(%d+)%s*(%d*)$")
+    if id then
+      local ok, why = gd.set_motion(focus, tonumber(id), tonumber(fr) or 1, 1, lift_for(focus, tonumber(id)))
+      if ok then scrub[focus] = { motion = tonumber(id), frame = tonumber(fr) or 1 } end
+      gd.log(ok and ("P" .. focus .. " -> " .. gd.motion_name(tonumber(id), focus)) or tostring(why))
+    else
+      gd.log("lab move <motion id> [frame]")
+    end
+  elseif cmd == "events" then
+    local p = gd.player(n or focus)
+    local tl = p and gd.timeline(p.port)
+    if tl then
+      gd.log(string.format("%s (%s) %d events, length %.0f, %s", tl.motion_name, tl.anim_name,
+        #tl.events, tl.length, tl.stop or "-"))
+      for _, e in ipairs(tl.events) do
+        local extra = e.name == "hitbox" and string.format(" #%d b%d %d%% a%d g%d b%d w%d r%.2f %s",
+          e.id, e.bone, e.damage, e.angle, e.kbg, e.bkb, e.wbk, e.size, e.element_name) or
+          (e.value and (" " .. e.value) or "")
+        gd.log(string.format("  f%-3d %s%s", e.frame, e.name, extra))
+      end
+    end
   elseif cmd == "set" then
     local k, v = rest:match("^(%S+)%s+(%S+)$")
     if k and cfg[k] ~= nil then

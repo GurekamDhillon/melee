@@ -110,7 +110,9 @@ enum {
                                      Melee's FighterVis flag), kept across action changes */
     GENO_VAL_TRANSN_FWD = 0x32,   /* f: this frame's root motion (TransN), forward */
     GENO_VAL_TRANSN_UP = 0x33,    /* f: this frame's root motion (TransN), up */
-    GENO_VAL_COUNT = 0x34,
+    GENO_VAL_MOTION_GRAVITY = 0x34, /* f W: this action's root-motion gravity multiplier (PSA
+                                     Disable / Enable Horizontal Gravity); -1 = the state's */
+    GENO_VAL_COUNT = 0x35,
     GENO_VAL_SPECIAL_F = 0x1000,  /* + word index: fp->dat_attrs word as float */
     GENO_VAL_SPECIAL_I = 0x2000,  /* + word index: fp->dat_attrs word as int */
 };
@@ -152,6 +154,7 @@ enum {
 /* v2, geno.json only ("auto" / "helpless"): Wait on the ground, else Fall / FallSpecial */
 #define GENO_TGT_AUTO 0xFFFFFFFEu
 #define GENO_TGT_HELPLESS 0xFFFFFFFDu
+#define GENO_TGT_STAY 0xFFFFFFFCu /* v3 "stay" ("land": landing only grounds; the state goes on) */
 #define GENO_TGT_RAW 0x08000000u
 #define GENO_TGT_KEEP_FRAME 0x04000000u
 #define GENO_TARGET(kind, id) ((((unsigned) (kind) & 15u) << 28) | ((unsigned) (id) & 0xFFFFu))
@@ -254,6 +257,11 @@ enum {
     GENO_BHV_DRILL = 30,        /* "geno.drill": Drill Rush (steered dash, bounce on hit / wall) */
     GENO_BHV_DRILL_END = 31,    /* "geno.drill.end": the flip after the rush */
     GENO_BHV_DRILL_START = 32,  /* "geno.drill.start": the wind-up before the rush (optional) */
+    GENO_BHV_CAPE = 40,         /* v3 "geno.cape": Dimensional Cape start + vanish (stick-steered) */
+    GENO_BHV_CAPE_ATTACK = 41,  /* v3 "geno.cape.attack": a reappear with the slash (root motion);
+                                   the profile's 6 in order: N, N air, F, F air, B, B air */
+    GENO_BHV_CAPE_END = 42,     /* v3 "geno.cape.end": the reappear without the slash; 2 in order:
+                                   ground, air */
     GENO_BHV_MAX = 32
 };
 
@@ -285,6 +293,11 @@ enum {
     GENO_P_GLIDE_SCRIPT_HELPLESS = 0x50, /* glide.script_entry_helpless: a Glide entered straight
                                           from another action (not GlideStart; Brawl's up-B sets
                                           LA-Bit61) ends helpless: GlideEnd / GlideAttack -> FallSpecial */
+    GENO_P_CAPE_W0 = 0x58,        /* cape.w00..w05: Brawl paramSpecialLw (ids 4021-4026), 0x58..0x5D */
+    GENO_P_CAPE_STEER_FRAME = 0x60, /* cape.steer_frame: the vanish (stick steering) starts (12) */
+    GENO_P_CAPE_DECIDE_FRAME = 0x61, /* cape.decide_frame: the reappear is chosen (26) */
+    GENO_P_CAPE_NEUTRAL_X = 0x62, /* cape.neutral_x: |stick x| below it = the neutral reappear */
+    GENO_P_CAPE_BUTTONS = 0x63,   /* cape.attack_buttons: GENO_BTN mask held = the slash (B | A) */
 };
 
 /* v3: per-state root-motion options ("geno.anim_motion"; geno.json state keys "ledge", "liftoff",
@@ -292,6 +305,9 @@ enum {
 #define GENO_MOTION_LEDGE_MASK 3u   /* default ledge grab: 0 none, 1 front, 2 front and back */
 #define GENO_MOTION_LIFTOFF 4u      /* on the ground, upward root motion takes off */
 #define GENO_MOTION_ORIGIN 8u       /* the first frame also moves by the clip's frame-0 offset */
+#define GENO_MOTION_ENTRY_FACING 16u /* "facing": "entry": the root motion keeps the facing the state
+                                       was entered with (a mid-clip Reverse Direction turns the model
+                                       and the hitboxes, not the travel) */
 
 /* v2: specials bound to Geno states ("specials": {"n": "geno:5", "air_s": "geno:7", ...}) */
 enum {

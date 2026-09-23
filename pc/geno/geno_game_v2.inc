@@ -119,11 +119,23 @@ static const GenoParamDef geno_params[] = {
     { "drill", "w05", GENO_P_DRILL_W0 + 5, 0.0f },
     { "drill", "speed", GENO_P_DRILL_SPEED, 2.0f },
     { "drill", "angle_max", GENO_P_DRILL_ANGLE_MAX, 0.0f },
-    { "drill", "bounce", GENO_P_DRILL_BOUNCE, 7.0f },
+    { "drill", "bounce", GENO_P_DRILL_BOUNCE, 0.0f }, /* v3: Brawl never ends the rush early */
     { "drill", "pop_vx", GENO_P_DRILL_POP_VX, 1.0f },
     { "drill", "pop_vy", GENO_P_DRILL_POP_VY, 2.1f },
     { "drill", "end_helpless", GENO_P_DRILL_END_HELPLESS, 1.0f },
     { "glide", "script_entry_helpless", GENO_P_GLIDE_SCRIPT_HELPLESS, 1.0f },
+    /* cape (v3): MK's paramSpecialLw (param ids 4021-4026, read only by MK kinetic types 0x69 /
+       0x6A in sora_melee fn_27_359014) + the PSA's frames */
+    { "cape", "keep_vx", GENO_P_CAPE_W0 + 0, 0.5f },
+    { "cape", "keep_vy", GENO_P_CAPE_W0 + 1, 0.4f },
+    { "cape", "steer_accel_x", GENO_P_CAPE_W0 + 2, 0.5f },
+    { "cape", "steer_max_x", GENO_P_CAPE_W0 + 3, 2.5f },
+    { "cape", "steer_accel_y", GENO_P_CAPE_W0 + 4, 0.5f },
+    { "cape", "steer_max_y", GENO_P_CAPE_W0 + 5, 2.5f },
+    { "cape", "steer_frame", GENO_P_CAPE_STEER_FRAME, 12.0f },
+    { "cape", "decide_frame", GENO_P_CAPE_DECIDE_FRAME, 26.0f },
+    { "cape", "neutral_x", GENO_P_CAPE_NEUTRAL_X, 0.3f },
+    { "cape", "attack_buttons", GENO_P_CAPE_BUTTONS, (f32) (GENO_BTN_SPECIAL | GENO_BTN_ATTACK) },
 };
 #define GENO_NPARAMDEFS ((int) (sizeof(geno_params) / sizeof(geno_params[0])))
 
@@ -149,6 +161,9 @@ int GenoGame_ParamFind(const char* family, const char* name)
         }
         if (geno_streq(family, "drill") && w <= 5) {
             return GENO_P_DRILL_W0 + w;
+        }
+        if (geno_streq(family, "cape") && w <= 5) {
+            return GENO_P_CAPE_W0 + w;
         }
     }
     return -1;
@@ -383,6 +398,10 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
 {
     const GenoBhvDef* b = geno_bhv_def(Geno_StateBehavior(st->profile, s));
     int from = (int) fp->motion_id;
+    /* a KEEP_FRAME swap (the same move's ground / air version) carries the root-motion progress:
+       no second origin step, the same travel facing, the gravity accumulated so far */
+    s32 k_started = st->motion_started, k_ledge = st->ledge;
+    f32 k_vy = st->motion_vy, k_facing = st->motion_facing, k_grav = st->motion_gravity;
     if (st->profile >= GENO_MAX_PROFILES || s >= Geno_RowCount[st->profile]) {
         Geno_Event(8, fp->kind, fp->player_id, s, 0);
         return 0;
@@ -390,6 +409,7 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
     st->changes++;
     st->state_entries++;
     st->enter_from = from;
+    st->enter_keep = (target & GENO_TGT_KEEP_FRAME) != 0;
     Geno_Event(16, fp->kind, fp->player_id, s, from);
     if (geno_test_capture) {
         geno_test_target = target;
@@ -405,6 +425,13 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
     }
     if (st->hidden) {
         fp->x221E_b5 = 1; /* v3 HIDDEN survives Geno-to-Geno changes (ChangeMotionState clears it) */
+    }
+    if (st->enter_keep) {
+        st->motion_started = k_started;
+        st->motion_vy = k_vy;
+        st->motion_facing = k_facing;
+        st->motion_gravity = k_grav;
+        st->ledge = k_ledge;
     }
     if (b->enter != NULL) {
         b->enter(gobj, fp, st, s);
@@ -630,9 +657,15 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
     GenoState* st = geno_state(fp);
     int s = geno_cur_state(fp, st);
     u32 o = geno_motion_opts(st, s);
-    f32 g = geno_motion_gravity(st, s);
+    f32 g = st->motion_gravity >= 0.0f ? st->motion_gravity : geno_motion_gravity(st, s);
     f32 fwd = 0.0f, up = 0.0f;
     f32 lr = fp->facing_dir < 0.0f ? -1.0f : 1.0f;
+    if (o & GENO_MOTION_ENTRY_FACING) {
+        if (!st->motion_started) {
+            st->motion_facing = lr;
+        }
+        lr = st->motion_facing < 0.0f ? -1.0f : 1.0f;
+    }
     if (fp->x594_b0) {
         fwd = fp->x6A4_transNOffset.z;
         up = fp->x6A4_transNOffset.y;
@@ -678,6 +711,10 @@ static void geno_motion_land(Fighter_GObj* gobj)
     GenoState* st = geno_state(fp);
     int s = geno_cur_state(fp, st);
     Geno_Event(24, fp->kind, fp->player_id, s, s >= 0 ? (int) geno_land_of(st, s) : -1);
+    if (s >= 0 && geno_land_of(st, s) == GENO_TGT_STAY) {
+        ftCommon_8007D7FC(fp); /* grounded; the state (and a script's GROUND check) goes on */
+        return;
+    }
     geno_land(gobj);
 }
 
@@ -773,6 +810,9 @@ enum {
     GENO_CBID_BOTH = 10,
     GENO_CBID_AUTO = 11,
     GENO_CBID_ANIM_MOTION = 12, /* v3 */
+    GENO_CBID_INTERRUPT = 13,   /* v3 */
+    GENO_CBID_CAPE = 50,        /* v3 */
+    GENO_CBID_CAPE_AFTER = 51,  /* v3 */
     GENO_CBID_GLIDE_AFTER = 25, /* v3 */
     GENO_CBID_GLIDE_START = 20,
     GENO_CBID_GLIDE = 21,
@@ -795,6 +835,11 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_DRILL, GENO_CB_ANIM, "drill", geno_drill_anim },
     { GENO_CBID_DRILL_END, GENO_CB_ANIM, "drill.end", geno_drill_end_anim },
     { GENO_CBID_GLIDE_AFTER, GENO_CB_ANIM, "glide.after", geno_glide_after_anim },
+    { GENO_CBID_CAPE, GENO_CB_ANIM, "cape", geno_cape_anim },
+    { GENO_CBID_INTERRUPT, GENO_CB_IASA, "interrupt", geno_cb_iasa_interrupt },
+    { GENO_CBID_CAPE, GENO_CB_PHYS, "cape", geno_cape_phys },
+    { GENO_CBID_CAPE, GENO_CB_COLL, "cape", geno_cape_coll },
+    { GENO_CBID_CAPE_AFTER, GENO_CB_COLL, "cape.after", geno_cape_after_coll },
     { GENO_CBID_NONE, GENO_CB_IASA, "none", geno_cb_nothing },
     { GENO_CBID_GLIDE, GENO_CB_IASA, "glide", geno_glide_iasa },
     { GENO_CBID_NONE, GENO_CB_PHYS, "none", geno_cb_nothing },
@@ -820,6 +865,7 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_ANIM_MOTION, GENO_CB_COLL, "anim_motion", geno_cb_coll_anim_motion },
     { GENO_CBID_GLIDE, GENO_CB_COLL, "glide", geno_glide_coll },
     { GENO_CBID_DRILL, GENO_CB_COLL, "drill", geno_drill_coll },
+    { GENO_CBID_DRILL_START, GENO_CB_COLL, "drill.start", geno_drill_start_coll },
 };
 #define GENO_NCBS ((int) (sizeof(geno_cbs) / sizeof(geno_cbs[0])))
 
@@ -863,8 +909,17 @@ static const GenoBhvDef geno_bhvs[] = {
     { GENO_BHV_DRILL_END, "geno.drill.end",
       { GENO_CBID_DRILL_END, GENO_CBID_NONE, GENO_CBID_DRILL_END, GENO_CBID_BOTH },
       geno_drill_end_enter, GENO_NONE_T, GENO_AUTO, ftCo_MS_Fall },
+    { GENO_BHV_CAPE, "geno.cape",
+      { GENO_CBID_CAPE, GENO_CBID_NONE, GENO_CBID_CAPE, GENO_CBID_CAPE },
+      geno_cape_enter, GENO_NONE_T, GENO_AUTO, ftCo_MS_Fall },
+    { GENO_BHV_CAPE_ATTACK, "geno.cape.attack",
+      { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_ANIM_MOTION, GENO_CBID_CAPE_AFTER },
+      NULL, GENO_TGT_HELPLESS, GENO_TGT_STAY, ftCo_MS_Fall },
+    { GENO_BHV_CAPE_END, "geno.cape.end",
+      { GENO_CBID_NEXT, GENO_CBID_INTERRUPT, GENO_CBID_ANIM_MOTION, GENO_CBID_CAPE_AFTER },
+      NULL, GENO_TGT_HELPLESS, GENO_TGT_STAY, ftCo_MS_Fall },
     { GENO_BHV_DRILL_START, "geno.drill.start",
-      { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_DRILL_START, GENO_CBID_BOTH },
+      { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_DRILL_START, GENO_CBID_DRILL_START },
       geno_drill_start_enter, BHV(GENO_BHV_DRILL), GENO_AUTO, ftCo_MS_Fall },
 };
 #define GENO_NBHVS ((int) (sizeof(geno_bhvs) / sizeof(geno_bhvs[0])))

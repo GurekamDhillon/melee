@@ -1704,6 +1704,271 @@ static int test_geno_v3_many_states(void)
     return rc;
 }
 
+/* ---- v3: Dimensional Cape --------------------------------------------------------------------- */
+
+extern int GenoGame_TestPairSwap(Fighter* fp, int bhv);
+
+#define TC_START 0
+#define TC_START_AIR 1
+#define TC_N 2 /* attack states: N, N air, F, F air, B, B air = 2..7 */
+#define TC_END 8
+#define TC_END_AIR 9
+
+static const char t_cape_json[] =
+    "{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"CapeStart\",\"behavior\":\"geno.cape\",\"subaction\":30},"
+    "{\"name\":\"CapeStartAir\",\"behavior\":\"geno.cape\",\"subaction\":31},"
+    "{\"name\":\"CapeN\",\"behavior\":\"geno.cape.attack\",\"subaction\":32,\"facing\":\"entry\"},"
+    "{\"name\":\"CapeNAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":33,\"facing\":\"entry\"},"
+    "{\"name\":\"CapeF\",\"behavior\":\"geno.cape.attack\",\"subaction\":34},"
+    "{\"name\":\"CapeFAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":35},"
+    "{\"name\":\"CapeB\",\"behavior\":\"geno.cape.attack\",\"subaction\":36},"
+    "{\"name\":\"CapeBAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":37},"
+    "{\"name\":\"CapeEnd\",\"behavior\":\"geno.cape.end\",\"subaction\":38},"
+    "{\"name\":\"CapeEndAir\",\"behavior\":\"geno.cape.end\",\"subaction\":39}],"
+    "\"cape\":{\"w00\":0.5,\"w01\":0.4,\"w02\":0.5,\"w03\":2.5,\"w04\":0.5,\"w05\":2.5},"
+    "\"specials\":{\"lw\":\"geno:CapeStart\",\"air_lw\":\"geno:CapeStartAir\"}}]}";
+
+/* The start keeps half the momentum without gravity, the vanish steers on both axes (accel 0.5 to
+ * stick x 2.5), B held at frame 26 picks the slash (stick back -> the "F" states), no button the
+ * plain reappear; ground / air partners swap with the frame kept (the move's counter survives);
+ * the root motion of a reappear keeps the entry facing through a Reverse Direction. */
+static int test_geno_v3_cape(void)
+{
+    TestGenoState* st;
+    MotionState* r;
+    int f, rc = 0;
+    if (Geno_TestInstall(t_cape_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the cape profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.facing_dir = 1.0f;
+    t_fp.self_vel.x = 2.0f;
+    t_fp.self_vel.y = -1.0f;
+    t_fp.motion_id = ftCo_MS_Fall;
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_LW) != 1 || t_fp.motion_id != T_MS(TC_START_AIR)) {
+        TestFail("specials.air_lw -> CapeStartAir");
+        GenoGame_TestCapture(0, 0);
+        Geno_TestRestore();
+        return 1;
+    }
+    if (t_fp.self_vel.x != 1.0f || !t_near(t_fp.self_vel.y, -0.4f)) {
+        TestFail("cape start must keep the momentum at 0.5 x / 0.4 y");
+        rc = 1;
+    }
+    r = Geno_MotionRow(&t_fp, T_MS(TC_START_AIR));
+    /* frames 0-11: the kept momentum, no gravity */
+    t_fp.input.lstick[0].x = -1.0f;
+    t_fp.input.lstick[0].y = 1.0f;
+    for (f = 0; f < 12; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    if (t_fp.self_vel.x != 1.0f || !t_near(t_fp.self_vel.y, -0.4f)) {
+        TestFail("cape frames 0-11 must hold the kept momentum (no gravity, no steering)");
+        rc = 1;
+    }
+    /* frame 12: steering, 0.5 a frame toward (-2.5, 2.5) */
+    r->phys_cb(&t_gobj);
+    if (!t_near(t_fp.self_vel.x, 0.5f) || !t_near(t_fp.self_vel.y, 0.1f)) {
+        TestFail("cape frame 12 must steer by 0.5 toward the stick (vel 0.5, 0.1)");
+        rc = 1;
+    }
+    for (f = 0; f < 10; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    if (!t_near(t_fp.self_vel.x, -2.5f) || !t_near(t_fp.self_vel.y, 2.5f)) {
+        TestFail("cape steering must reach stick x 2.5 on both axes");
+        rc = 1;
+    }
+    /* before frame 26 nothing is decided */
+    t_fp.input.held_buttons[0] = HSD_PAD_B;
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(TC_START_AIR)) {
+        TestFail("cape must not reappear before frame 26");
+        rc = 1;
+    }
+    /* a landing swaps to the ground start with the frame kept (the counter goes on) */
+    t_fp.ground_or_air = GA_Ground;
+    if (GenoGame_TestPairSwap(&t_fp, GENO_BHV_CAPE) != 1 || t_fp.motion_id != T_MS(TC_START) ||
+        !st->enter_keep || st->move_i[0] != 23)
+    {
+        TestFail("a landed cape start must swap to CapeStart, frame and counter kept");
+        rc = 1;
+    }
+    t_fp.ground_or_air = GA_Air;
+    GenoGame_TestPairSwap(&t_fp, GENO_BHV_CAPE);
+    r = Geno_MotionRow(&t_fp, T_MS(TC_START_AIR));
+    for (f = 0; f < 3; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    /* frame 26, B held, stick back (x -1 facing right) -> the "F" state, air */
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(TC_N + 3) || st->move_i[1] != 12) {
+        TestFail("B held + stick back at frame 26 (air) must reappear in CapeFAir");
+        rc = 1;
+    }
+    /* again, nothing held, on the ground -> the plain reappear */
+    t_fp.motion_id = ftCo_MS_Wait;
+    t_fp.ground_or_air = GA_Ground;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_LW);
+    r = Geno_MotionRow(&t_fp, T_MS(TC_START));
+    t_fp.input.held_buttons[0] = 0;
+    t_fp.input.lstick[0].x = 0.0f;
+    t_fp.input.lstick[0].y = 0.0f;
+    for (f = 0; f < 26; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(TC_END) || st->move_i[1] != 0) {
+        TestFail("nothing held at frame 26 on the ground must reappear in CapeEnd");
+        rc = 1;
+    }
+    /* neutral with A held -> N; its root motion keeps the entry facing through a turn */
+    t_fp.motion_id = ftCo_MS_Fall;
+    t_fp.ground_or_air = GA_Air;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_LW);
+    r = Geno_MotionRow(&t_fp, T_MS(TC_START_AIR));
+    t_fp.input.held_buttons[0] = HSD_PAD_A;
+    for (f = 0; f < 26; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    r->anim_cb(&t_gobj);
+    t_fp.input.held_buttons[0] = 0;
+    if (t_fp.motion_id != T_MS(TC_N + 1)) {
+        TestFail("A held with a neutral stick (air) must reappear in CapeNAir");
+        rc = 1;
+    }
+    r = Geno_MotionRow(&t_fp, T_MS(TC_N + 1));
+    t_fp.x594_b0 = 1;
+    t_fp.x6A4_transNOffset.z = 2.0f;
+    t_fp.x6A4_transNOffset.y = 0.0f;
+    r->phys_cb(&t_gobj);
+    t_fp.facing_dir = -1.0f; /* Brawl's Reverse Direction at frame 1 */
+    r->phys_cb(&t_gobj);
+    if (t_fp.self_vel.x != 2.0f) {
+        TestFail("facing \"entry\": the reappear's travel must keep the entry facing after a turn");
+        rc = 1;
+    }
+    t_fp.x594_b0 = 0;
+    t_fp.facing_dir = 1.0f;
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
+/* ---- v3: Drill Rush (Brawl's code) ------------------------------------------------------------- */
+
+#define TD_START 0
+#define TD_START_AIR 1
+#define TD_RUSH 2
+#define TD_END 3
+#define TD_END_AIR 4
+
+static const char t_drill_json[] =
+    "{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"DrillStart\",\"behavior\":\"geno.drill.start\",\"subaction\":40},"
+    "{\"name\":\"DrillStartAir\",\"behavior\":\"geno.drill.start\",\"subaction\":41},"
+    "{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},"
+    "{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},"
+    "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],"
+    "\"drill\":{\"w00\":0.5,\"w01\":1.0,\"w02\":-0.08,\"w03\":3.0,\"w04\":10},"
+    "\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}";
+
+/* The start's ground / air versions swap with the frame kept and the speeds untouched; the rush's
+ * pitch has no limit (3 deg a frame, 45 frames -> 135); a hit does not end the rush; the rush ends
+ * in the end state of its situation; the air end pops back and up and is helpless. */
+static int test_geno_v3_drill(void)
+{
+    TestGenoState* st;
+    MotionState* r;
+    int f, rc = 0;
+    if (Geno_TestInstall(t_drill_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the drill profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.facing_dir = 1.0f;
+    t_fp.self_vel.x = 2.0f;
+    t_fp.self_vel.y = -1.0f;
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_S);
+    if (t_fp.motion_id != T_MS(TD_START_AIR) || t_fp.self_vel.x != 1.0f || t_fp.self_vel.y != 1.0f) {
+        TestFail("air drill start: vx x 0.5, vy = 1.0");
+        rc = 1;
+    }
+    t_fp.ground_or_air = GA_Ground;
+    t_fp.gr_vel = 0.7f;
+    if (GenoGame_TestPairSwap(&t_fp, GENO_BHV_DRILL_START) != 1 || t_fp.motion_id != T_MS(TD_START) ||
+        t_fp.gr_vel != 0.7f)
+    {
+        TestFail("a landed drill start must swap to the ground start, speeds untouched");
+        rc = 1;
+    }
+    /* the rush */
+    t_fp.ground_or_air = GA_Air;
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_S);
+    t_script[0] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, GENO_CHG_ONCE);
+    t_script[1] = GENO_TARGET(GENO_TGT_GENO, TD_RUSH);
+    t_script[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    Geno_PreAnim(&t_gobj);
+    r = Geno_MotionRow(&t_fp, T_MS(TD_RUSH));
+    if (t_fp.motion_id != T_MS(TD_RUSH)) {
+        TestFail("could not enter the rush");
+        GenoGame_TestCapture(0, 0);
+        Geno_TestRestore();
+        return 1;
+    }
+    t_fp.input.lstick[0].y = 1.0f;
+    for (f = 0; f < 45; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    if (!t_near(st->move_f[0], 135.0f) || !(t_fp.self_vel.x < 0.0f) || !(t_fp.self_vel.y > 0.0f)) {
+        TestFail("45 frames of stick up must pitch the rush to 135 deg (no limit): back and up");
+        rc = 1;
+    }
+    t_fp.input.lstick[0].y = 0.0f;
+    /* a hit does not end the rush (no bounce by default) */
+    t_fp.deal_dmg_cb(&t_gobj);
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(TD_RUSH) || st->move_i[1] != 1) {
+        TestFail("a hit must be recorded but must not end the rush");
+        rc = 1;
+    }
+    /* the clip ends in the air -> the air end: pop back / up; then helpless */
+    GenoGame_TestCapture(1, 1);
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(TD_END_AIR) || t_fp.self_vel.x != -1.0f || !t_near(t_fp.self_vel.y, 2.1f)) {
+        TestFail("the rush ending in the air must go to the air end with the pop (-1, 2.1)");
+        rc = 1;
+    }
+    Geno_MotionRow(&t_fp, T_MS(TD_END_AIR))->anim_cb(&t_gobj);
+    if (GenoGame_TestLastTarget() != GENO_TARGET(GENO_TGT_MOTION, ftCo_MS_FallSpecial)) {
+        TestFail("the air end must end in FallSpecial even after a hit");
+        rc = 1;
+    }
+    /* a rush ending on the floor -> the ground end */
+    GenoGame_TestCapture(1, 0);
+    t_fp.motion_id = T_MS(TD_RUSH);
+    Geno_OnActionChange(&t_gobj);
+    t_fp.ground_or_air = GA_Ground;
+    GenoGame_TestCapture(1, 1);
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(TD_END)) {
+        TestFail("the rush ending on the floor must go to the ground end");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
 /* Geno Lab: a player slot whose fighter the scene has freed (the player table keeps the pointer
  * after a match; the Lab crashed in ScriptGame_FighterI from Script_FramePost on the CSS) must
  * read as "no fighter", never dereference it. */
@@ -1754,5 +2019,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v3_anim_motion", test_geno_v3_anim_motion);
     TestRegister("geno_v3_hidden_glide", test_geno_v3_hidden_glide);
     TestRegister("geno_v3_many_states", test_geno_v3_many_states);
+    TestRegister("geno_v3_cape", test_geno_v3_cape);
+    TestRegister("geno_v3_drill", test_geno_v3_drill);
     TestRegister("geno_lab_stale_fighter", test_geno_lab_stale_fighter);
 }

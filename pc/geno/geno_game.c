@@ -31,6 +31,7 @@
 #include <melee/ft/kinds/ftCommon/ftCo_Fall.h>
 #include <melee/ft/kinds/ftCommon/ftCo_FallSpecial.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Landing.h>
+#include <melee/ft/kinds/ftCommon/ftCo_Wait.h>
 #include <melee/ft/types.h>
 #include <melee/lb/lbcollision.h>
 #include <melee/lb/types.h>
@@ -309,6 +310,8 @@ static void geno_clear_action(GenoState* st)
     st->motion_started = 0;
     st->motion_vy = 0.0f;
     st->motion_land = 0;
+    st->motion_facing = 0.0f;
+    st->motion_gravity = -1.0f;
 }
 
 /* Fighter_UnkInitReset_80067C98: spawn, respawn, and the Zelda/Sheik swap. */
@@ -888,6 +891,9 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
     case GENO_VAL_TRANSN_UP:
         r.f = fp->x594_b0 ? fp->x6A4_transNOffset.y : 0.0f;
         break;
+    case GENO_VAL_MOTION_GRAVITY:
+        r.f = st->motion_gravity;
+        break;
     default:
         if (id >= GENO_VAL_MOVE_F0 && id <= GENO_VAL_MOVE_F7) {
             r.f = st->move_f[id - GENO_VAL_MOVE_F0];
@@ -917,6 +923,9 @@ static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
     case GENO_VAL_HIDDEN:
         geno_state(fp)->hidden = v.i != 0;
         fp->x221E_b5 = v.i != 0;
+        return 1;
+    case GENO_VAL_MOTION_GRAVITY:
+        geno_state(fp)->motion_gravity = v.f < 0.0f ? -1.0f : v.f;
         return 1;
     case GENO_VAL_AIR:
         if (v.i != 0 && fp->ground_or_air == GA_Ground) {

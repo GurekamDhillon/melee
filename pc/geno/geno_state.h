@@ -60,6 +60,10 @@ typedef struct GenoState {
     s32 motion_started;              /* geno.anim_motion: the first frame has been applied */
     f32 motion_vy;                   /* geno.anim_motion: gravity accumulated on top of the clip */
     s32 motion_land;                 /* frames the root motion has been grounded (diagnostics) */
+    f32 motion_facing;               /* geno.anim_motion "facing": "entry": the travel's facing */
+    f32 motion_gravity;              /* GENO_VAL_MOTION_GRAVITY: -1 = the state's "gravity" */
+    s32 enter_keep;                  /* the current Geno state was entered with KEEP_FRAME (a
+                                        ground/air swap of the same move: behaviours keep their vars) */
 } GenoState;
 
 #define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */

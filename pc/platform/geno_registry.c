@@ -480,6 +480,10 @@ static int gn_target_p(const jdoc *d, int x, uint32_t *out, const gn_profile *p)
         *out = GENO_TGT_HELPLESS;
         return 1;
     }
+    if (_stricmp(s, "stay") == 0) { /* v3 ("land"): landing grounds the fighter, the state goes on */
+        *out = GENO_TGT_STAY;
+        return 1;
+    }
     if (_strnicmp(s, "motion:", 7) == 0) kind = GENO_TGT_MOTION, s += 7;
     else if (_strnicmp(s, "special:", 8) == 0) kind = GENO_TGT_SPECIAL, s += 8;
     else if (_strnicmp(s, "geno:", 5) == 0) kind = GENO_TGT_GENO, s += 5;
@@ -752,6 +756,9 @@ static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
                 p->st_motion[k] |= GENO_MOTION_ORIGIN;
             if ((v = jd_get(d, c, "gravity")) >= 0 && d->n[v].type == JN_NUM)
                 p->st_grav[k] = gn_fbits(d->n[v].num);
+            if ((v = jd_get(d, c, "facing")) >= 0 && d->n[v].type == JN_STR &&
+                strcmp(d->n[v].str, "entry") == 0)
+                p->st_motion[k] |= GENO_MOTION_ENTRY_FACING;
             for (slot = 0; slot < GENO_CB_SLOTS; ++slot) {
                 v = jd_get(d, c, cb_keys[slot]);
                 if (v < 0 || d->n[v].type != JN_STR) continue;
@@ -1146,6 +1153,8 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d root motion: state %d took off at action frame %d",        /* 23 */
         "geno: kind %d player %d root motion: state %d landed -> target 0x%08x",             /* 24 */
         "geno: kind %d player %d root motion: state %d grabbed the ledge (mode %d)",         /* 25 */
+        "geno: kind %d player %d cape: vanished at frame %d (stick x100 %d)",               /* 26 */
+        "geno: kind %d player %d cape: reappear %d (0 end, 1 N, 2 F, 3 B; +10 air) held 0x%x", /* 27 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

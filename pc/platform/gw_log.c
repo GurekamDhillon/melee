@@ -48,6 +48,7 @@
 #include "gw_test.h"
 
 #include <ctype.h>
+#include <intrin.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -847,6 +848,36 @@ void gw_crash_report(const char *kind, const char *reason) {
   FILE *in, *out;
   gw_log_crash_begin();
   gl_lock();
+  if (strncmp(kind, "panic", 5) == 0) {
+    /* an assert has no fault frames of its own: walk this stack (frames in the exe only, as map
+     * rvas, so the report symbolizes them) */
+    uintptr_t frames[32];
+    const unsigned char *base = (const unsigned char *)GetModuleHandleA(NULL);
+    const IMAGE_NT_HEADERS *nt = (const IMAGE_NT_HEADERS *)(base + ((const IMAGE_DOS_HEADER *)base)->e_lfanew);
+    int n = 0, i;
+    char line[96];
+    {
+      /* a stack scan, as the fault handler does: every word between here and the stack's base
+       * that points into the exe's code (optimised frames keep no frame-pointer chain) */
+      ULONG_PTR lo = 0, hi = 0;
+      const uintptr_t *p = (const uintptr_t *)_AddressOfReturnAddress();
+      uintptr_t code_lo = (uintptr_t)base + nt->OptionalHeader.BaseOfCode;
+      uintptr_t code_hi = code_lo + nt->OptionalHeader.SizeOfCode;
+      GetCurrentThreadStackLimits(&lo, &hi);
+      for (; (uintptr_t)p + sizeof *p <= hi && n < 32 && (uintptr_t)p - (uintptr_t)_AddressOfReturnAddress() < 16384; ++p) {
+        if (*p >= code_lo && *p < code_hi) frames[n++] = *p;
+      }
+    }
+    gl_write("gw:   stack scan (image addresses, innermost first):");
+    for (i = 0; i < n; ++i) {
+      uintptr_t a = frames[i];
+      if (a >= (uintptr_t)base && a < (uintptr_t)base + nt->OptionalHeader.SizeOfImage) {
+        snprintf(line, sizeof line, "gw:     melee-pc.map rva 0x%08X",
+                 (unsigned)(a - (uintptr_t)base + 0x10000000u));
+        gl_write(line);
+      }
+    }
+  }
   GetLocalTime(&st);
   CreateDirectoryA("crashlogs", NULL);
   snprintf(stem, sizeof stem, "crashlogs\\crash-%04u%02u%02u-%02u%02u%02u", st.wYear, st.wMonth, st.wDay,

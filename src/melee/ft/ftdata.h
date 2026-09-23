@@ -70,6 +70,10 @@
 /* 3C2800 */ extern MotionState ftData_MotionStateList[ftCo_MS_Count];
 /* 3C52A0 */ extern MotionState ftData_803C52A0[14];
 /* 4598B8 */ extern ftData* gFtDataList[Ft_Kind_Max];
+/* Kirby's loaded fighter data for code with no fighter at hand (thrown-by-Kirby star timers, Yoshi
+ * egg, ...): vanilla Kirby's when loaded, else a loaded Kirby clone's (FTKB_IS_KIRBY), else NULL -
+ * on retail exactly gFtDataList[Ft_Kind_Kirby]. */
+ftData* ftKb_KirbyFtData(void);
 
 #if defined(TARGET_PC)
 /* True when the loaded disc carries Sonic's own data (PlSn.dat and its costumes), i.e. a

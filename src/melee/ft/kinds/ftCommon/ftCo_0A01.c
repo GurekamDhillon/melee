@@ -1720,7 +1720,7 @@ bool ftCo_IsGrabbing(Fighter* fp)
             return true;
         }
     }
-    if (fp->kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(fp->kind)) {
         if (fp->motion_id >= ftKb_MS_SpecialNCapture0 &&
             fp->motion_id <= ftKb_MS_EatTurnAir)
         {
@@ -5864,7 +5864,7 @@ void ftCo_800ACD5C(Fighter* fp)
             ftCo_CpuStartCharging(fp);
             return;
         }
-    } else if (fp->kind == Ft_Kind_Kirby) {
+    } else if (FTKB_IS_KIRBY(fp->kind)) {
         if (fp->u.kb.hat.kind == Ft_Kind_Donkey) {
             if (fp->motion_id != ftKb_MS_DkSpecialNLoop && fp->u.kb.xBC == 0) {
                 ftCo_CpuStartCharging(fp);
@@ -6045,7 +6045,7 @@ void ftCo_800ADC28(Fighter* fp)
         {
             ftCo_CpuTapRAndWait(fp);
         }
-    } else if (fp->kind == Ft_Kind_Kirby) {
+    } else if (FTKB_IS_KIRBY(fp->kind)) {
         FighterKind kind = fp->u.kb.hat.kind;
         if (kind == Ft_Kind_Donkey && fp->motion_id == ftKb_MS_DkSpecialNLoop)
         {

@@ -1627,7 +1627,7 @@ int efAsync_MexResolve(HSD_GObj* gobj, s32 gfx_id, s32* final_id, int* is_ptcl,
     }
     fp = GET_FIGHTER(gobj);
     kind = fp->kind;
-    if (kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(kind)) {
         /* Kirby's own ids are the copied fighter's: 5xxx model, 6xxx generator */
         if (gfx_id >= EF_MEX_CPMDL_START) {
             return -1;
@@ -1652,7 +1652,7 @@ int efAsync_MexResolve(HSD_GObj* gobj, s32 gfx_id, s32* final_id, int* is_ptcl,
     }
     bhv = efAsync_MexBhv[bank];
     if (bhv == NULL || efAsync_DatEntries[bank].data == NULL) {
-        if (kind != Ft_Kind_Kirby) {
+        if (!FTKB_IS_KIRBY(kind)) {
             efAsync_MexMiss(kind, gfx_id, "its effect bank has no effBehaviorTable (not loaded?)");
         }
         return -1;

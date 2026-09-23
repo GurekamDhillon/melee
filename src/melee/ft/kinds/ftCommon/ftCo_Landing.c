@@ -45,7 +45,7 @@ void ftCo_Landing_Enter(Fighter_GObj* gobj, FtMotionId msid,
     Fighter_ChangeMotionState(gobj, msid, flags, anim_start, anim_speed, 0.0F,
                               NULL);
     fp->mv.co.landing.allow_interrupt = allow_interrupt;
-    switch (fp->kind) {
+    switch (FTKB_CANON_KIND(fp->kind)) {
     case Ft_Kind_Mario:
     case Ft_Kind_DrMario:
         fp->u.mr.x2234_tornadoCharge = false;

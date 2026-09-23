@@ -48,7 +48,7 @@ bool ftCo_AttackDash_CheckInput(HSD_GObj* gobj)
 
 static void decideFighter(Fighter_GObj* gobj)
 {
-    switch (GET_FIGHTER(gobj)->kind) {
+    switch (FTKB_CANON_KIND(GET_FIGHTER(gobj)->kind)) {
     case Ft_Kind_Kirby:
         ftKb_SpecialN_800F1F68(gobj);
         return;

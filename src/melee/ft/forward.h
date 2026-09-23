@@ -136,6 +136,20 @@ typedef enum FighterKind {
     Ft_Kind_Max = Ft_Kind_None
 } FighterKind;
 
+/* "Is this Kirby?" for the ~30 places the game special-cases Kirby by kind (copy loss on hit and on
+ * spit, taunt dropping the ability, hat dynamics, thrown-by-Kirby, dash attack, landing resets, AI).
+ * On the port an m-ex fighter whose clone base is Kirby (MxDt.dat fighter_function[0] = Kirby's
+ * onLoad, e.g. the "Brawl Kirby" slot) runs Kirby's code and must take the same branches; retail
+ * builds and every other m-ex fighter are unaffected (their base is never Kirby). */
+#if defined(TARGET_PC)
+int ftKb_MexKirbyLike(int kind); /* ftkirby.c */
+#define FTKB_IS_KIRBY(k)                                                                         ((int) (k) == Ft_Kind_Kirby ||                                                              ((int) (k) >= Ft_Kind_Mex0 && (int) (k) < Ft_Kind_Max && ftKb_MexKirbyLike((int) (k))))
+#else
+#define FTKB_IS_KIRBY(k) ((int) (k) == Ft_Kind_Kirby)
+#endif
+/* for switch (kind): Kirby-based kinds take the Kirby case */
+#define FTKB_CANON_KIND(k) (FTKB_IS_KIRBY(k) ? Ft_Kind_Kirby : (k))
+
 typedef enum CharacterKind {
     /* 00 */ CKind_Captain,   // Captain Falcon (Captain)
     /* 01 */ CKind_Donkey,    // Donkey Kong (Donkey)

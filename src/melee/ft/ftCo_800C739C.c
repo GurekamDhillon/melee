@@ -25,7 +25,7 @@ void ftCo_800C739C(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     ftCommon_MotionState ms;
-    if (fp->kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(fp->kind)) {
         ms = ftCo_MS_WalkFast;
     } else {
         inlineB2(gobj);

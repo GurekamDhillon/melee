@@ -97,7 +97,7 @@ void ftCo_800DEBD0(Fighter_GObj* gobj)
             ftZd_Init_801395C8(gobj);
         }
     }
-    if (fp->kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(fp->kind)) {
         ftKb_SpecialN_800F5D04(gobj, true);
     }
     ftCo_800DEAE8(gobj, ftCo_MS_AppealSR, ftCo_MS_AppealSL);

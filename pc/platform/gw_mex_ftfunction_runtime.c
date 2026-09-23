@@ -3686,6 +3686,43 @@ static int test_mex_css_icon_map(void) {
     return rc;
 }
 
+/* FTKB_IS_KIRBY (ft/forward.h) treats an m-ex fighter as Kirby when its clone base is Kirby. That
+ * must never catch a fighter that is not a Kirby clone: on the retail ACE/Akaneia discs no m-ex row
+ * is Kirby-based, so the helper changes nothing there. Checks the base-kind inference the helper uses
+ * on the disc's (or a mod's) MxDt.dat: Kirby's own row is Kirby-based, Mario's is not, and every
+ * Kirby-based m-ex row is logged (a Kirby-clone mod such as "Brawl Kirby" shows up here). */
+static int test_mex_kirby_like(void) {
+    uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
+    uint32_t root;
+    int rc = 0, n, k, clones = 0;
+    root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base, &gw_mexdt_size);
+    if (root == 0u) {
+        gw_log("test mex_kirby_like: no MxDt.dat on this disc - skipped");
+        gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+        return 0;
+    }
+    gw_mexdt = root;
+    if (gw_Mex_FtBaseKind(4) != 4) {
+        gw_test_fail("Kirby's own row (internal 4) infers base %d, not Kirby", gw_Mex_FtBaseKind(4));
+        rc = 1;
+    }
+    if (gw_Mex_FtBaseKind(0) == 4) {
+        gw_test_fail("Mario's row (internal 0) infers base Kirby");
+        rc = 1;
+    }
+    n = gw_Mex_InternalCount();
+    for (k = GW_MEX_FIRST_NEW; k < n; ++k) {
+        if (gw_Mex_FtBaseKind(k) == 4) {
+            const char *pl = gw_Mex_FtPlFile(k);
+            gw_log("test mex_kirby_like: m-ex internal %d (%s) is Kirby-based", k, pl ? pl : "(no Pl file)");
+            ++clones;
+        }
+    }
+    gw_log("test mex_kirby_like: %d Kirby-based m-ex fighter(s) of %d rows", clones, n);
+    gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
+    return rc;
+}
+
 /* What ftData_MexInitKinds() actually leaves in the port's per-kind fighter tables.
  *
  * The CSS symptoms (a character missing from the grid, another unselectable) and the in-match
@@ -4537,6 +4574,7 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_effect_banks", test_mex_effect_banks);
     gw_test_register("mex_css_pack_rows", test_mex_css_pack_rows);
     gw_test_register("mex_css_icon_map", test_mex_css_icon_map);
+    gw_test_register("mex_kirby_like", test_mex_kirby_like);
     gw_test_register("mex_ftdata_rows", test_mex_ftdata_rows);
     gw_test_register("bridge_lookup_memcpy", test_bridge_lookup_memcpy);
     gw_test_register("bridge_lookup_global", test_bridge_lookup_global);

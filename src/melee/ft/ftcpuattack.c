@@ -834,7 +834,7 @@ bool ftCo_800B630C(Fighter* fp)
         if (fp->motion_id <= ftDk_MS_ThrowAirFLw) {
             return false;
         }
-    } else if (fp->kind == Ft_Kind_Kirby) {
+    } else if (FTKB_IS_KIRBY(fp->kind)) {
         // Any of Kirby's common moves, or air jump / dash attack?
         if (fp->motion_id <= ftKb_MS_AttackDashAir) {
             return false;
@@ -1065,7 +1065,7 @@ void ftCo_800B683C(Fighter* fp)
                fp->motion_id == 0x15E)
     {
         var_r30 = true;
-    } else if (fp->kind == Ft_Kind_Kirby && fp->motion_id >= 0x164 &&
+    } else if (FTKB_IS_KIRBY(fp->kind) && fp->motion_id >= 0x164 &&
                fp->motion_id <= 0x17E)
     {
         if (fp->victim_gobj != NULL) {
@@ -1073,7 +1073,7 @@ void ftCo_800B683C(Fighter* fp)
         } else {
             var_r3 = NULL;
         }
-        if (var_r3 != NULL && var_r3->kind == Ft_Kind_Kirby) {
+        if (var_r3 != NULL && FTKB_IS_KIRBY(var_r3->kind)) {
             ftCo_800B46B8(fp, CpuCmd_SetLstickY, 0);
             ftCo_800B46B8(fp, CpuCmd_SetLstickX, 0);
             ftCo_800B46B8(fp, CpuCmd_WaitFor, 1);
@@ -1436,7 +1436,7 @@ void ftCo_800B77E8(Fighter* fp)
             tmp->xEC++;
         }
     }
-    switch (fp->kind) {
+    switch (FTKB_CANON_KIND(fp->kind)) {
     case Ft_Kind_Mario:
         target = fp->cpu.x44;
         can_attack = ftCo_CpuCanUseRangedAttack(fp, target, &c1, 22.0f);
@@ -1790,7 +1790,7 @@ bool ftCo_800B8A9C(Fighter* fp)
                     tmp->xEC++;
                 }
             }
-            if (fp->kind == Ft_Kind_Kirby) {
+            if (FTKB_IS_KIRBY(fp->kind)) {
                 struct CpuFighter* tmp = &fp->cpu;
                 if (*xec < 8U) {
                     tmp->xCC_array[tmp->xEC] = 0x11;

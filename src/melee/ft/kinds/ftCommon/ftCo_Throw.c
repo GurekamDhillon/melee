@@ -142,7 +142,7 @@ void ftCo_800DD398(Fighter_GObj* gobj, FtMotionId msid, FtMotionId victim_msid,
     ftAnim_8006EBA4(gobj);
     ftCommon_8007E2F4(fp, 0x1FF);
     ftCo_800DE3FC(fp->victim_gobj, victim_msid, anim_speed);
-    switch (fp->kind) {
+    switch (FTKB_CANON_KIND(fp->kind)) {
     case Ft_Kind_Kirby:
         if (msid == 221) {
             Fighter* victim = GET_FIGHTER(fp->victim_gobj);
@@ -285,7 +285,7 @@ void ftCo_800DD724(Fighter_GObj* gobj)
         if (fp->victim_gobj != NULL) {
             ftCo_800DE920(fp->victim_gobj, fp->cur_anim_frame);
         }
-        if (fp->kind == Ft_Kind_Kirby && fp->motion_id == 221) {
+        if (FTKB_IS_KIRBY(fp->kind) && fp->motion_id == 221) {
             fp->x2219_b2 = 0;
             if (fp->victim_gobj != NULL) {
                 GET_FIGHTER(fp->victim_gobj)->x2219_b2 = 0;
@@ -439,7 +439,7 @@ void ftCo_ThrowHi_Coll(Fighter_GObj* gobj)
 void ftCo_ThrowHi_Cam(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    if (fp->kind == Ft_Kind_Kirby && fp->motion_id == 221) {
+    if (FTKB_IS_KIRBY(fp->kind) && fp->motion_id == 221) {
         ftCamera_800762F4(gobj);
     } else {
         ftCamera_UpdateCameraBox(gobj);

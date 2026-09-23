@@ -491,7 +491,7 @@ void ftCo_8009E140(Fighter* fp, bool arg1)
 {
     ssize_t i;
     PAD_STACK(2 * 4);
-    if (fp->kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(fp->kind)) {
         return;
     }
     if (fp->kind == Ft_Kind_Purin) {
@@ -650,7 +650,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
         s32 var_r3;
         u32 cached_b6;
         if ((cached_b6 = fp->x2227_b6)) {
-            if (fp->kind != Ft_Kind_Kirby) {
+            if (!FTKB_IS_KIRBY(fp->kind)) {
                 if (fp->kind == Ft_Kind_Purin) {
                     ftCo_8009CB40(fp, 0, 0, NULL);
                     return;
@@ -670,7 +670,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
                 }
             }
             if (var_r3) {
-                if (fp->kind != Ft_Kind_Kirby) {
+                if (!FTKB_IS_KIRBY(fp->kind)) {
                     if (fp->kind == Ft_Kind_Purin) {
                         ftCo_8009CB40(fp, 0, 1, NULL);
                         return;
@@ -711,7 +711,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
                     return;
                 } else {
                     if (fp->x594_b3) {
-                        if (fp->kind != Ft_Kind_Kirby) {
+                        if (!FTKB_IS_KIRBY(fp->kind)) {
                             if (fp->kind == Ft_Kind_Purin) {
                                 ftCo_8009CB40(fp, 0, 0, NULL);
                                 return;
@@ -721,7 +721,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
                             }
                         }
                     } else {
-                        if (fp->kind != Ft_Kind_Kirby) {
+                        if (!FTKB_IS_KIRBY(fp->kind)) {
                             if (fp->kind == Ft_Kind_Purin) {
                                 ftCo_8009CB40(fp, 0, 1, NULL);
                                 return;
@@ -734,7 +734,7 @@ void ftCo_8009E7B4(Fighter* fp, u8 (*arg1)[2])
                 }
             }
         }
-    } else if (fp->x2227_b6 && fp->kind != Ft_Kind_Kirby) {
+    } else if (fp->x2227_b6 && !FTKB_IS_KIRBY(fp->kind)) {
         if (fp->kind == Ft_Kind_Purin) {
             ftCo_8009CB40(fp, 0, 0, NULL);
             return;

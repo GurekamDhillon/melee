@@ -33,7 +33,7 @@ void ftCo_800DE3FC(Fighter_GObj* gobj, FtMotionId msid, float anim_speed)
     if (thrower_fp->kind == Ft_Kind_Yoshi) {
         ftColl_8007B62C(gobj, 2);
     }
-    if (thrower_fp->kind != Ft_Kind_Kirby || msid - ftCo_MS_ThrownF > 1U) {
+    if (!FTKB_IS_KIRBY(thrower_fp->kind) || msid - ftCo_MS_ThrownF > 1U) {
         pl_80040614(thrower_fp->player_id, thrower_fp->is_sub_fighter,
                     fp->grab_timer);
         fp->grab_timer = 0.0f;
@@ -122,7 +122,7 @@ void ftCo_ThrownHi_Cam(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     Fighter* victim = GET_FIGHTER(fp->victim_gobj);
-    if (victim->kind == Ft_Kind_Kirby && victim->motion_id == ftCo_MS_ThrowHi)
+    if (FTKB_IS_KIRBY(victim->kind) && victim->motion_id == ftCo_MS_ThrowHi)
     {
         ftCamera_800762F4(gobj);
 

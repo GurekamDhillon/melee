@@ -4303,7 +4303,7 @@ void ftKb_SpecialN_800F1D24(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     s32 x60;
     CollData* coll = &fp->coll_data;
-    if (fp->kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(fp->kind)) {
         x60 = fp->u.kb.x60;
         if (x60 != 0) {
             fp->u.kb.x60 = x60 - 1;
@@ -4361,12 +4361,38 @@ void ftKb_SpecialN_800F1DAC(HSD_GObj* gobj)
 void ftKb_SpecialN_800F1F1C(Fighter_GObj* gobj, Vec3* pos)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    if (fp->kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(fp->kind)) {
         efAsync_Spawn(gobj, &fp->x60C, 2, 0x49E, fp->parts[0].joint, pos);
     }
 }
 
 #if defined(TARGET_PC)
+/* FTKB_IS_KIRBY (ft/forward.h): is m-ex kind `kind` a Kirby clone (its clone base, inferred from
+ * MxDt.dat's onLoad default, is Kirby)? Cached per kind once mexData answers; before the m-ex slots
+ * exist the answer is "no" and nothing is cached. */
+int ftKb_MexKirbyLike(int kind)
+{
+    extern int Mex_InternalForPortKind(int fk);
+    extern int Mex_FtBaseKind(int k);
+    static signed char cache[Ft_Kind_Max];
+    int k;
+    if (kind < Ft_Kind_Mex0 || kind >= Ft_Kind_Max) {
+        return 0;
+    }
+    if (cache[kind] == 0) {
+        k = Mex_InternalForPortKind(kind);
+        if (k < 0) {
+            return 0;
+        }
+        cache[kind] = Mex_FtBaseKind(k) == Ft_Kind_Kirby ? 1 : -1;
+        if (cache[kind] > 0) {
+            OSReport("ftKb: kind %d (m-ex internal %d) is Kirby-based - takes Kirby's code paths\n",
+                     kind, k);
+        }
+    }
+    return cache[kind] > 0;
+}
+
 /* ftData_MexInitKinds: fill fighter kind `dst`'s Kirby copy-ability callbacks from MxDt.dat's
  * MexData.kirby_function, for m-ex INTERNAL kind `internal`. `src` is the clone base.
  *

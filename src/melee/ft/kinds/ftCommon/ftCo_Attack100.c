@@ -371,7 +371,7 @@ void ftCo_800D71D8(Fighter_GObj* gobj)
 
 s32 ftCo_800D7268(Fighter* fp)
 {
-    if (fp->kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(fp->kind)) {
         return ftKb_SpecialN_800F1CD8(fp->gobj);
     }
     return 0;

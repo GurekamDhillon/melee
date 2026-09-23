@@ -45,7 +45,7 @@ FighterKind ftCo_800BD9E0(Fighter_GObj* gobj, Fighter_GObj* victim_gobj)
     ftKb_Fighter* fp = GET_FIGHTER(gobj);
     Fighter* victim_fp = GET_FIGHTER(victim_gobj);
     FighterKind victim_kind = victim_fp->kind;
-    if (victim_kind == Ft_Kind_Kirby) {
+    if (FTKB_IS_KIRBY(victim_kind)) {
         ftCo_800BDA50(victim_gobj);
         return victim_fp->u.kb.hat.kind;
     }
@@ -269,7 +269,7 @@ void ftCo_800BE494(Fighter_GObj* gobj)
         } else {
             fp->self_vel.x = self_vel.x * (fp->self_vel.x < 0 ? -1 : +1);
         }
-    } else if (fp->kind == Ft_Kind_Kirby && fp->mv.co.thrownkirby.x18_b1 &&
+    } else if (FTKB_IS_KIRBY(fp->kind) && fp->mv.co.thrownkirby.x18_b1 &&
                !fp->u.kb.hat.x8_b0)
     {
         ftKb_SpecialN_800F190C(gobj, fp->u.kb.hat.kind);

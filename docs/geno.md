@@ -47,8 +47,9 @@ dispatch). Geno never edits m-ex's tables, slot numbering or hook registration.
 1. **m-ex content is unchanged.** Every engine call site Geno adds is under `TARGET_PC` and returns
    immediately for a fighter with no Geno profile whose scripts never used the escape. Verified:
    test suite 133/133 on ACE, Akaneia and vanilla; all 157 ACE netplay identities (fighters and
-   stages) bit-identical to the pre-Geno build; ACE fighter crash sweep A/B against the pc-port
-   exe (see the report for the exact numbers).
+   stages) bit-identical to the pre-Geno build; ACE fighter crash sweep (15 CPU matches) A/B
+   against the pc-port exe: the same failures in both, all the known CPU-AI crash
+   (`ftCo_800B4AB0+0x7A`, flaky between runs); every vanilla-fighter group passes.
 2. **Geno is opt-in per fighter / per mod.** Only a `geno.json` in a *mounting* mod activates
    anything. No `geno.json` anywhere = Geno is inert (test `geno_registry_empty_is_inert`).
 3. **The script escape collides with nothing shipped.** Opcode 59 is past the end of the retail

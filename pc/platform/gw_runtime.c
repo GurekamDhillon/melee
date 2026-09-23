@@ -1727,7 +1727,16 @@ static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
     return 0;
   }
   if ((rest = gw_sl_after(v, "ck:")) != NULL && gw_sl_all_digits(rest)) {
-    *ck_out = atoi(rest);
+    n = atoi(rest);
+    if (n == GW_SL_CK_NONE) {
+      /* ck:33 reads like "the first m-ex fighter" (m-ex's own external numbering starts its
+         added fighters at 33) but in the port it is ChKind_None, which builds Mario with nothing
+         preloaded and dies as ALLOC_FAIL heap 1. Say so instead of loading someone else. */
+      gw_log("scene: ck:%d is ChKind_None, not a fighter - write `none` for an empty slot; "
+             "m-ex fighters start at ck:%d (or use a name, id:, mexext:)", n, GW_SL_CK_NONE + 1);
+      return -1;
+    }
+    *ck_out = n;
     return 0;
   }
   if ((rest = gw_sl_after(v, "id:")) != NULL) {
@@ -2465,6 +2474,17 @@ static int test_scene_index_spaces(void) {
   c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
   if (c->errors != 1 || c->p[0].ckind != -1) {
     gw_test_fail("bare `p1=37` was accepted (errors=%d ckind=%d)", c->errors, c->p[0].ckind);
+    return 1;
+  }
+  /* ck:33 is ChKind_None, not "the first m-ex fighter": refused (it built Mario with nothing
+   * preloaded - ALLOC_FAIL heap 1). `none` stays the way to write an empty slot. */
+  gw_SceneLaunch_LoadForTest("mode=training;p1=ck:33;p2=none;p3=ck:34");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors != 1 || c->p[0].ckind != -1 || c->p[1].ckind != GW_SL_CK_NONE ||
+      c->p[2].ckind != 34)
+  {
+    gw_test_fail("ck:33 / none / ck:34: errors=%d p1=%d p2=%d p3=%d (want 1, -1, 33, 34)",
+                 c->errors, c->p[0].ckind, c->p[1].ckind, c->p[2].ckind);
     return 1;
   }
   /* Names never need a space. */

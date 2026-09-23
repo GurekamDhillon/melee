@@ -27,6 +27,7 @@
 
 #if defined(TARGET_PC)
 
+#include <dolphin/os.h>
 #include <melee/gm/forward.h>
 #include <melee/lb/lbdvd.h>
 #include <melee/lb/types.h>
@@ -34,6 +35,7 @@
 #include <melee/pl/forward.h>
 #include <melee/gr/forward.h>
 
+#include "gm_1601.h"
 #include "gm_1884.h"
 #include "gm_1A3F.h"
 
@@ -99,7 +101,11 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         vs->start.players[i].ckind = (s8) ckind;
         /* A named slot is a human by default; the seeder only overrides what was asked for. */
         v = SceneLaunch_PlayerSlotType(i);
-        vs->start.players[i].slot_type = (u8) (v >= 0 ? v : Gm_PKind_Human);
+        /* `none` (ChKind_None) is an empty slot, as on the CSS - never a fighter: its
+         * ftMapping_list row is zeros, so a Human/CPU "none" would build Mario with nothing
+         * preloaded (see the extra-CPU note below). */
+        vs->start.players[i].slot_type =
+            (u8) (v >= 0 ? v : ckind == ChKind_None ? Gm_PKind_NA : Gm_PKind_Human);
         v = SceneLaunch_PlayerColor(i);
         vs->start.players[i].color = (u8) (v >= 0 ? v : i);
         v = SceneLaunch_PlayerCpuKind(i);
@@ -153,6 +159,37 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         vs->start.players[1].color = 1;
         vs->start.players[1].slot = 2;
         vs->start.players[1].sub_color = 1;
+    }
+
+    /* Training's extra CPUs (the pause menu's CPU count, 2 and 3 - gm_1884.c fn_80188550). The
+     * CSS exit (gm_801B1C24) fills players[2..3] with copies of the CPU in the next free costumes
+     * and names them in the preload cache; jumping straight to the match skips it, so they stayed
+     * ChKind_None. ChKind_None's ftMapping_list row is all zeros in the port (retail reads past
+     * the table), so the first extra CPU built Mario: none of his files were preloaded, and
+     * lbFile_800168A0 put PlMrAJ.dat (1.2 MB) in the ARAM heap 1, which only has ~155 KB -
+     * ALLOC_FAIL heap 1 and a crash. Do what the CSS exit does; a slot the scene names keeps it. */
+    if (dummy_fallback && vs->start.players[1].ckind >= 0 &&
+        vs->start.players[1].ckind != ChKind_None)
+    {
+        for (i = 2; i < 4; i++) {
+            PlayerInitData* p = &vs->start.players[i];
+            u8 ncost;
+            if (SceneLaunch_PlayerCKind(i) >= 0) {
+                continue;
+            }
+            *p = vs->start.players[1];
+            ncost = gm_GetNumCostumesForCKind(p->ckind);
+            if (ncost == 0) {
+                ncost = 1;
+            }
+            p->color = (vs->start.players[i - 1].color + 1) % ncost;
+            if (p->color == vs->start.players[0].color) {
+                p->color = (p->color + 1) % ncost;
+            }
+            p->slot_type = Gm_PKind_NA; /* the menu turns them on (fn_80188550) */
+            p->slot = (u8) (i + 1);
+            p->sub_color = (u8) i;
+        }
     }
 
     if (SceneLaunch_Teams() >= 0) {
@@ -222,6 +259,14 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
     lbDvd_SetupVsPreloadCache();
 
     entry = SceneLaunch_EntryStateId();
+    if (dummy_fallback && entry == 2 && (vs->start.players[0].ckind < 0 ||
+                       vs->start.players[0].ckind == ChKind_None))
+    {
+        /* Training with no player 1 fighter (the field was refused or never given): the match
+         * would build ChKind_None - Mario, unpreloaded. Open the CSS instead. */
+        OSReport("gw: scene: player 1 has no fighter - opening the CSS instead of the match\n");
+        entry = 0;
+    }
     if (entry >= 0) {
         /* CSS is 0, SSS is 1 and the playable state is 2 in both GM_VS and GM_TRAINING. Entering
          * at the CSS or the SSS keeps the seed as that screen's starting selection. */

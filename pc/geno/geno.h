@@ -282,6 +282,11 @@ enum {
     GENO_P_TORNADO_W0 = 0x20,     /* tornado.w00..w19: Brawl paramSpecialN, 0x20..0x33 */
     GENO_P_TORNADO_MAX_SPEED = 0x38, /* tornado.max_speed: hard horizontal cap (Brawl 2.5) */
     GENO_P_TORNADO_END_HELPLESS = 0x39, /* tornado.end_helpless: air end -> FallSpecial */
+    GENO_P_TORNADO_SPIN_ANIM = 0x3A, /* v4 tornado.spin_anim: the spin clip plays at spin_anim x the
+                                        spin rate (Brawl: Frame Speed Modifier = the rate, 1 clip
+                                        frame = 1 degree); 0 = rate 1 (v3) */
+    GENO_P_TORNADO_SPIN_PERIOD = 0x3B, /* v4 tornado.spin_period: the clip loops at this frame (MK 360:
+                                          frame 360 = frame 0); 0 = at the clip's end */
     GENO_P_DRILL_W0 = 0x40,       /* drill.w00..w05: Brawl paramSpecialS, 0x40..0x45 */
     GENO_P_DRILL_SPEED = 0x48,    /* drill.speed: travel speed when the clip has no root motion */
     GENO_P_DRILL_ANGLE_MAX = 0x49,/* drill.angle_max: steering limit, degrees (0 = none, Brawl) */
@@ -289,6 +294,9 @@ enum {
     GENO_P_DRILL_POP_VX = 0x4B,   /* drill.pop_vx: DrillEnd's backward pop (Brawl 1.0) */
     GENO_P_DRILL_POP_VY = 0x4C,   /* drill.pop_vy: DrillEnd's upward pop (Brawl 2.1) */
     GENO_P_DRILL_END_HELPLESS = 0x4D, /* drill.end_helpless: 1 = FallSpecial unless it hit */
+    GENO_P_DRILL_PITCH_MODEL = 0x4E, /* v4 drill.pitch_model: 1 = the model (TopN) turns with the
+                                        rush pitch, hitboxes and hurtboxes with it (Brawl's posture
+                                        rot.x); 0 = the model stays level (v3) */
     /* v3 */
     GENO_P_GLIDE_SCRIPT_HELPLESS = 0x50, /* glide.script_entry_helpless: a Glide entered straight
                                           from another action (not GlideStart; Brawl's up-B sets

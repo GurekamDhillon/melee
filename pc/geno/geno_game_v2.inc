@@ -109,6 +109,8 @@ static const GenoParamDef geno_params[] = {
     { "tornado", "w19", GENO_P_TORNADO_W0 + 19, 0.0f },
     { "tornado", "max_speed", GENO_P_TORNADO_MAX_SPEED, 2.5f },
     { "tornado", "end_helpless", GENO_P_TORNADO_END_HELPLESS, 1.0f },
+    { "tornado", "spin_anim", GENO_P_TORNADO_SPIN_ANIM, 0.0f },     /* v4 (MK: 1) */
+    { "tornado", "spin_period", GENO_P_TORNADO_SPIN_PERIOD, 0.0f }, /* v4 (MK: 360) */
     /* drill: MK's paramSpecialS (param ids 4017-4020 / 24002), read by SpecialSRush / SpecialSEnd
        (ft_metaknight.rel) and MK's kinetic types 0x66-0x68 */
     { "drill", "start_vx_mul", GENO_P_DRILL_W0 + 0, 0.5f },
@@ -123,6 +125,7 @@ static const GenoParamDef geno_params[] = {
     { "drill", "pop_vx", GENO_P_DRILL_POP_VX, 1.0f },
     { "drill", "pop_vy", GENO_P_DRILL_POP_VY, 2.1f },
     { "drill", "end_helpless", GENO_P_DRILL_END_HELPLESS, 1.0f },
+    { "drill", "pitch_model", GENO_P_DRILL_PITCH_MODEL, 1.0f }, /* v4: Brawl turns the model */
     { "glide", "script_entry_helpless", GENO_P_GLIDE_SCRIPT_HELPLESS, 1.0f },
     /* cape (v3): MK's paramSpecialLw (param ids 4021-4026, read only by MK kinetic types 0x69 /
        0x6A in sora_melee fn_27_359014) + the PSA's frames */

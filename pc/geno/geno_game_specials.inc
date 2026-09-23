@@ -13,8 +13,33 @@
  *            move_i[1] hit something        move_i[2] bounce request  move_i[3] bounce reason
  */
 
+#include <sysdolphin/baselib/aobj.h>
+#include <sysdolphin/baselib/jobj.h>
+#include <sysdolphin/baselib/object.h>
+
 #define TP(i) geno_param(st, GENO_P_TORNADO_W0 + (i))
 #define DP(i) geno_param(st, GENO_P_DRILL_W0 + (i))
+
+/* v4 model pose, for the tests (the fake fighter of --test has no model): the last TopN rotation X
+ * the drill asked for and the last joint animation rate the tornado asked for. */
+static f32 geno_test_rotx;
+static f32 geno_test_joint_rate;
+
+f32 GenoGame_TestModelRotX(void)
+{
+    return geno_test_rotx;
+}
+
+f32 GenoGame_TestJointRate(void)
+{
+    return geno_test_joint_rate;
+}
+
+void GenoGame_TestPoseReset(f32 v)
+{
+    geno_test_rotx = v;
+    geno_test_joint_rate = v;
+}
 
 /* Melee's analog dead zone for the specials' stick reads. */
 static f32 geno_stick_dz(f32 v)
@@ -47,7 +72,79 @@ static void geno_turn(Fighter* fp)
     }
 }
 
-/* ---- Mach Tornado ------------------------------------------------------------------------------ */
+/* ---- Mach Tornado ------------------------------------------------------------------------------ *
+ *
+ * v4 spin animation (tornado.spin_anim): Brawl's spin rate IS the spin clip's playback rate. The
+ * action's entry sets Frame Speed Modifier = param 4002 (80), SpecialNSpin's execStatus reads the
+ * motion rate back (soMotionModule get/setRate, +0x4C), takes the decay / lift from it and writes
+ * it again, and the PSA ends the spin when IC-Basic[24] (the frame speed) is <= 10. MK's
+ * SpecialNSpin clip is 361 frames of YRotN = frame degrees, so the body turns `rate` degrees a
+ * frame: 80 at the start, 10 at the end. Geno sets the rate on the fighter's joint animations
+ * only: fp->frame_speed_mul (the subaction script's clock) stays 1, so the script's hitbox loop
+ * keeps its own timing, and the clip loops at spin_period (AOBJ_LOOP) instead of ending. The rate
+ * is derived every frame from move_f[0] (snapshotted) and the frame itself lives in the joints'
+ * AObjs (game heap, snapshotted): deterministic, rollback-safe. Hitlag skips the fighter's animation
+ * step, so the spin pauses with it, as in Brawl. The whirlwind effect is not touched: Brawl spawns
+ * it once on TopN and never changes its rate (its own 30-frame loop). */
+
+/* func(aobj, v) on every animation of the model and the blend skeleton, as ftAnim_8006F0FC does */
+static void geno_joint_anim_f(Fighter_GObj* gobj, Fighter* fp, void* func, f32 v)
+{
+    HSD_JObj* root = GET_JOBJ(gobj);
+    if (root != NULL) {
+        HSD_ForeachAnim(root, JOBJ_TYPE, 0xFB7F, func, AOBJ_ARG_AF, v);
+    }
+    if (fp->x8AC_animSkeleton != NULL) {
+        HSD_ForeachAnim(fp->x8AC_animSkeleton, JOBJ_TYPE, 0xFB7F, func, AOBJ_ARG_AF, v);
+    }
+}
+
+static void geno_joint_anim_loop(Fighter_GObj* gobj, Fighter* fp)
+{
+    HSD_JObj* root = GET_JOBJ(gobj);
+    if (root != NULL) {
+        HSD_ForeachAnim(root, JOBJ_TYPE, 0xFB7F, HSD_AObjSetFlags, AOBJ_ARG_AU, AOBJ_LOOP);
+    }
+    if (fp->x8AC_animSkeleton != NULL) {
+        HSD_ForeachAnim(fp->x8AC_animSkeleton, JOBJ_TYPE, 0xFB7F, HSD_AObjSetFlags, AOBJ_ARG_AU,
+                        AOBJ_LOOP);
+    }
+}
+
+static int geno_tornado_spin_on(GenoState* st)
+{
+    return geno_param(st, GENO_P_TORNADO_SPIN_ANIM) != 0.0f;
+}
+
+/* the joints play the spin clip at spin_anim x the spin rate (not the script: see above) */
+static void geno_tornado_spin_rate(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
+{
+    f32 rate = geno_param(st, GENO_P_TORNADO_SPIN_ANIM) * st->move_f[0];
+    if (!geno_tornado_spin_on(st)) {
+        return;
+    }
+    geno_test_joint_rate = rate;
+    if (geno_test_capture || fp->x2223_b0) {
+        return; /* no model in the tests; a frozen motion (FreezeState) keeps Melee's rate */
+    }
+    geno_joint_anim_f(gobj, fp, HSD_AObjSetRate, rate);
+}
+
+/* entry: the clip loops (at spin_period) instead of ending, and starts at the start rate */
+static void geno_tornado_spin_start(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
+{
+    f32 period = geno_param(st, GENO_P_TORNADO_SPIN_PERIOD);
+    if (!geno_tornado_spin_on(st)) {
+        return;
+    }
+    if (!geno_test_capture) {
+        geno_joint_anim_loop(gobj, fp);
+        if (period > 0.0f) {
+            geno_joint_anim_f(gobj, fp, HSD_AObjSetEndFrame, period);
+        }
+    }
+    geno_tornado_spin_rate(gobj, fp, st);
+}
 
 static void geno_tornado_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s)
 {
@@ -63,6 +160,7 @@ static void geno_tornado_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, i
     st->move_i[1] = 0;
     st->move_i[2] = 0;
     st->move_i[3] = 0;
+    geno_tornado_spin_start(gobj, fp, st); /* Brawl's entry: Frame Speed Modifier = w02 */
 }
 
 /* The spin ends when its rate has run down to P18 (the PSA's IC-Basic[24] <= 10 check). */
@@ -83,7 +181,10 @@ static void geno_tornado_anim(Fighter_GObj* gobj)
         return;
     }
     if (geno_anim_ended(gobj)) {
-        geno_cb_anim_loop(gobj); /* the spin loops until the rate runs down */
+        /* the spin loops until the rate runs down (with spin_anim the clip loops by itself; a
+           restart would reset its rate: set it up again) */
+        geno_cb_anim_loop(gobj);
+        geno_tornado_spin_start(gobj, fp, st);
     }
 }
 
@@ -118,6 +219,7 @@ static void geno_tornado_phys(Fighter_GObj* gobj)
         }
     }
     st->move_f[0] = r;
+    geno_tornado_spin_rate(gobj, fp, st); /* execStatus: motion setRate(r) */
     if (fp->ground_or_air == GA_Ground) {
         /* ground kinetics (0x64): accel P3 x stick to P4 x |stick|, brake P7 */
         f32 v = geno_accel_brake(fp->gr_vel, sx * TP(3), geno_absf(sx) * TP(4), TP(7));
@@ -221,7 +323,30 @@ static int geno_pair_swap(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int bh
  *          -> the air end: velocity (-1 x facing, +2.1) (Brawl's Set Momentum), FallSpecial at the
  *          end, LandingFallSpecial on landing. The pitch eases x (1 - 2 / w04) a frame.
  * `bounce` (1 wall | 2 hit | 4 shield -> DrillEnd at once) stays available but is 0 by default: it
- * was a Geno v2 addition Brawl does not have. */
+ * was a Geno v2 addition Brawl does not have.
+ *
+ * v4 model pitch (drill.pitch_model, default on): the pitch is not only the travel direction. Brawl
+ * keeps it on the MODEL: SpecialSRush's execStatus does rot = posture.getRot(); rot.x += -stickY x
+ * w03; posture.setRot(rot) (soPostureModule slots 0x40 / 0x44), and MK's kinetic angle hook
+ * (fn_27_359CE4) derives the travel angle from it (-rot.x x lr). The rush's exitStatus clears rot
+ * unless the next status is SpecialSEnd (0x11A); SpecialSEnd eases rot.x (x (1 - 2 / w04) a frame)
+ * and clears it on exit. SpecialSStart never touches it. Melee's equivalent of the posture rot is
+ * TopN's rotation X (as Kirby's Final Cutter / slope tilt): rotX = -pitch turns the nose up for
+ * either facing (TopN's Y rotation holds the facing), so every joint, the sword's hitboxes and the
+ * hurtboxes turn with it. It is set from move_f[0] (snapshotted) whenever the pitch changes and on
+ * every entry; Fighter_ChangeMotionState clears it on any other action (Brawl's exit). */
+
+static void geno_drill_pose(Fighter* fp, GenoState* st)
+{
+    f32 rx = 0.0f;
+    if (geno_param(st, GENO_P_DRILL_PITCH_MODEL) != 0.0f) {
+        rx = -st->move_f[0] * GENO_DEG2RAD;
+    }
+    geno_test_rotx = rx;
+    if (fp->parts != NULL && !geno_test_capture) {
+        ftPartSetRotX(fp, 0, rx);
+    }
+}
 
 static void geno_drill_hit(Fighter_GObj* gobj)
 {
@@ -294,6 +419,7 @@ static void geno_drill_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int
     fp->fall_fast = 0;
     fp->deal_dmg_cb = geno_drill_hit;
     fp->shield_hit_cb = geno_drill_shield;
+    geno_drill_pose(fp, st);
 }
 
 /* The end that matches the situation: the profile's geno.drill.end states in order ground, air
@@ -357,6 +483,7 @@ static void geno_drill_phys(Fighter_GObj* gobj)
         a = geno_clampf(a, -lim, lim);
     }
     st->move_f[0] = a;
+    geno_drill_pose(fp, st); /* Brawl: posture rot.x = -pitch */
     if (fp->x594_b0) {
         spd = fp->x6A4_transNOffset.z;
     }
@@ -395,6 +522,7 @@ static void geno_drill_coll(Fighter_GObj* gobj)
 static void geno_drill_end_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s)
 {
     f32 lr = fp->facing_dir < 0.0f ? -1.0f : 1.0f;
+    geno_drill_pose(fp, st); /* the rush's pitch carries into SpecialSEnd */
     if (st->enter_keep) {
         return;
     }
@@ -435,6 +563,7 @@ static void geno_drill_end_phys(Fighter_GObj* gobj)
     } else {
         st->move_f[0] = 0.0f;
     }
+    geno_drill_pose(fp, st);
     if (fp->ground_or_air == GA_Ground) {
         ft_80084F3C(gobj);
         return;

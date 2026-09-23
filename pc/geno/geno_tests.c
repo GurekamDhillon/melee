@@ -1969,6 +1969,221 @@ static int test_geno_v3_drill(void)
     return rc;
 }
 
+/* ---- v4: the model follows the move ------------------------------------------------------------ */
+
+extern f32 GenoGame_TestModelRotX(void);
+extern f32 GenoGame_TestJointRate(void);
+extern void GenoGame_TestPoseReset(f32 v);
+
+#define T_D2R 0.017453292f
+
+static const char t_drill_flat_json[] =
+    "{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"DrillStart\",\"behavior\":\"geno.drill.start\",\"subaction\":40},"
+    "{\"name\":\"DrillStartAir\",\"behavior\":\"geno.drill.start\",\"subaction\":41},"
+    "{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},"
+    "{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},"
+    "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],"
+    "\"drill\":{\"w03\":3.0,\"w04\":10,\"pitch_model\":0},"
+    "\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}";
+
+/* into the rush from the air start (the script's CHG, as MK's DrillStart does) */
+static MotionState* t_drill_rush(void)
+{
+    t_fp.ground_or_air = GA_Air;
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_S);
+    t_script[0] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, GENO_CHG_ONCE);
+    t_script[1] = GENO_TARGET(GENO_TGT_GENO, TD_RUSH);
+    t_script[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    Geno_PreAnim(&t_gobj);
+    return t_fp.motion_id == T_MS(TD_RUSH) ? Geno_MotionRow(&t_fp, T_MS(TD_RUSH)) : NULL;
+}
+
+/* Drill Rush (Brawl SpecialSRush / SpecialSEnd: posture rot.x): the model's TopN rotation X is
+ * -pitch every frame of the rush (nose up for either facing, the travel along the nose) and of the
+ * end (easing with the pitch); pitch_model 0 keeps the model level. */
+static int test_geno_v4_drill_pose(void)
+{
+    TestGenoState* st;
+    MotionState* r;
+    int f, rc = 0;
+    if (Geno_TestInstall(t_drill_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the drill profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.facing_dir = 1.0f;
+    GenoGame_TestPoseReset(99.0f);
+    if ((r = t_drill_rush()) == NULL || GenoGame_TestModelRotX() != 0.0f) {
+        TestFail("entering the rush must set the model level (rot x 0)");
+        rc = 1;
+    }
+    if (r == NULL) {
+        GenoGame_TestCapture(0, 0);
+        Geno_TestRestore();
+        return 1;
+    }
+    /* facing right, stick up: +3 deg a frame; the model and the travel turn together */
+    t_fp.input.lstick[0].y = 1.0f;
+    for (f = 1; f <= 10; f++) {
+        f32 want, trav;
+        r->phys_cb(&t_gobj);
+        want = 3.0f * f;
+        trav = atan2f(t_fp.self_vel.y, t_fp.self_vel.x * t_fp.facing_dir) / T_D2R;
+        if (!t_near(st->move_f[0], want) || !t_near(GenoGame_TestModelRotX(), -want * T_D2R) ||
+            !(trav - want < 0.01f && want - trav < 0.01f))
+        {
+            TestFail("steering up (facing right): rot x = -pitch, travel angle = pitch, every frame");
+            rc = 1;
+            break;
+        }
+    }
+    /* facing left (a turn mid-rush, as a Reverse Direction would): still nose up, travel to the left */
+    t_fp.facing_dir = -1.0f;
+    for (f = 0; f < 5; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    if (!t_near(st->move_f[0], 45.0f) || !t_near(GenoGame_TestModelRotX(), -45.0f * T_D2R) ||
+        !(t_fp.self_vel.x < 0.0f) || !(t_fp.self_vel.y > 0.0f))
+    {
+        TestFail("facing left: rot x = -45 deg (nose up), travel up-left");
+        rc = 1;
+    }
+    /* stick down: the pitch and the model come back down past level */
+    t_fp.input.lstick[0].y = -1.0f;
+    for (f = 0; f < 20; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    if (!t_near(st->move_f[0], -15.0f) || !t_near(GenoGame_TestModelRotX(), 15.0f * T_D2R) ||
+        !(t_fp.self_vel.y < 0.0f))
+    {
+        TestFail("steering down to -15 deg: rot x = +15 deg (nose down), travel down");
+        rc = 1;
+    }
+    /* the end keeps the pitch on entry and eases it x (1 - 2/10) a frame, the model with it */
+    t_fp.input.lstick[0].y = 0.0f;
+    t_fp.facing_dir = 1.0f;
+    GenoGame_TestCapture(1, 1);
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(TD_END_AIR) || !t_near(GenoGame_TestModelRotX(), 15.0f * T_D2R)) {
+        TestFail("the end must start with the rush's pitch on the model");
+        rc = 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    Geno_MotionRow(&t_fp, T_MS(TD_END_AIR))->phys_cb(&t_gobj);
+    if (!t_near(st->move_f[0], -12.0f) || !t_near(GenoGame_TestModelRotX(), 12.0f * T_D2R)) {
+        TestFail("the end eases the pitch (-15 -> -12) and the model follows");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    /* pitch_model 0: the travel turns, the model does not */
+    if (Geno_TestInstall(t_drill_flat_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the flat drill profile");
+        GenoGame_TestCapture(0, 0);
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.facing_dir = 1.0f;
+    if ((r = t_drill_rush()) != NULL) {
+        t_fp.input.lstick[0].y = 1.0f;
+        for (f = 0; f < 10; f++) {
+            r->phys_cb(&t_gobj);
+        }
+        t_fp.input.lstick[0].y = 0.0f;
+    }
+    if (r == NULL || !t_near(st->move_f[0], 30.0f) || GenoGame_TestModelRotX() != 0.0f) {
+        TestFail("pitch_model 0: the rush pitches (30 deg) with the model level");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
+static const char t_spin_json[] =
+    "{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"Tornado\",\"behavior\":\"geno.tornado\",\"subaction\":15}],"
+    "\"tornado\":{\"spin_anim\":1,\"spin_period\":360},"
+    "\"specials\":{\"n\":\"geno:Tornado\"}}]}";
+
+/* Mach Tornado (Brawl: the spin rate IS SpecialNSpin's frame speed): the joints play the clip at the
+ * spin rate from the entry (80) on, every frame: -1.5 a frame, +16 per lift, 0..80; spin_anim 0
+ * (v3) leaves the animation alone. */
+static int test_geno_v4_tornado_spin(void)
+{
+    TestGenoState* st;
+    MotionState* r;
+    int f, rc = 0, lifts = 0;
+    f32 want = 80.0f;
+    if (Geno_TestInstall(t_spin_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the spin profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    GenoGame_TestPoseReset(-1.0f);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.facing_dir = 1.0f;
+    t_fp.self_vel.x = 0.0f;
+    t_fp.self_vel.y = 0.0f;
+    t_fp.co_attrs.gravity = 0.08f;
+    t_fp.co_attrs.terminal_velocity = 2.0f;
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_N);
+    r = Geno_MotionRow(&t_fp, T_MS(0));
+    if (t_fp.motion_id != T_MS(0) || GenoGame_TestJointRate() != 80.0f) {
+        TestFail("the tornado must start its spin clip at the start rate (80)");
+        rc = 1;
+    }
+    /* B tapped at frames 20 and 24 (the second is inside the 10-frame cooldown: it waits), then
+       none: the rate follows Brawl's formula frame by frame */
+    for (f = 1; f <= 60 && rc == 0; f++) {
+        int tap = f == 20 || f == 24;
+        t_fp.input.pressed_buttons = tap ? HSD_PAD_B : 0;
+        r->phys_cb(&t_gobj);
+        want -= 1.5f;
+        if (f == 20 || f == 30) {
+            want += 16.0f; /* the lift at 20; the tap at 24 is armed and lifts at the cooldown (30) */
+            lifts++;
+        }
+        want = want < 0.0f ? 0.0f : want > 80.0f ? 80.0f : want;
+        if (!t_near(st->move_f[0], want) || !t_near(GenoGame_TestJointRate(), want)) {
+            TestFail("the spin clip's rate must be the spin rate (80 - 1.5 a frame, +16 per lift)");
+            rc = 1;
+        }
+    }
+    if (rc == 0 && st->move_i[3] != lifts) {
+        TestFail("two lifts expected (frames 20 and 30)");
+        rc = 1;
+    }
+    t_fp.input.pressed_buttons = 0;
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    /* spin_anim 0 (the v2 profile): the animation is left alone */
+    if ((st = t_v2_setup()) == NULL) {
+        TestFail("could not install the v2 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    GenoGame_TestPoseReset(-1.0f);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_N);
+    Geno_MotionRow(&t_fp, T_MS(T_TOR))->phys_cb(&t_gobj);
+    if (GenoGame_TestJointRate() != -1.0f) {
+        TestFail("spin_anim 0 must not touch the animation rate");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
 /* Geno Lab: a player slot whose fighter the scene has freed (the player table keeps the pointer
  * after a match; the Lab crashed in ScriptGame_FighterI from Script_FramePost on the CSS) must
  * read as "no fighter", never dereference it. */
@@ -2022,4 +2237,6 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v3_cape", test_geno_v3_cape);
     TestRegister("geno_v3_drill", test_geno_v3_drill);
     TestRegister("geno_lab_stale_fighter", test_geno_lab_stale_fighter);
+    TestRegister("geno_v4_drill_pose", test_geno_v4_drill_pose);
+    TestRegister("geno_v4_tornado_spin", test_geno_v4_tornado_spin);
 }

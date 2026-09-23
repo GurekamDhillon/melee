@@ -6542,8 +6542,10 @@ int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD_Tlut**
         frame = mnCharSel_MexCspFrame(ext, costume);
         mnCharSel_Mex = saved;
     } else {
+        /* retail's CSS has no Sheik: she shares Zelda's slot, so her card shows Zelda's */
+        int want = ck == CKind_Seak ? CKind_Zelda : ck;
         for (i = 0; i < SELKIND_COUNT; i++) {
-            if (icons[i].char_kind == ck) {
+            if (icons[i].char_kind == want) {
                 frame = icons[i].ft_hudindex + costume * 0x1E;
                 break;
             }

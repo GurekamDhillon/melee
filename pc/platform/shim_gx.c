@@ -1099,6 +1099,17 @@ void gw_GXSetTexCopyDst(u16 wd, u16 ht, u32 format, u8 mipmap) {
 
 void gw_GXSetScissor(u32 left, u32 top, u32 wd, u32 ht) { GXSetScissor(left, top, wd, ht); }
 
+/* Aurora skips a draw whose pipeline is still compiling (they compile on a worker thread, in
+ * order, ~60-90 ms each with a cold Dawn cache). An item used for a moment - Kirby's ground
+ * side-B hammer lives ~35 frames - can come and go before its pipeline is ready, so item models
+ * turn this on around their draw (itdraw.c): such a draw waits for its pipeline instead (a
+ * one-off hitch on first use rather than an invisible model). The fallback keeps this shim
+ * linking against an Aurora build without the call. */
+extern void GXSetPipelineWaitAURORA(u8 on);
+void gw_GXSetPipelineWaitAURORA_none(u8 on) { (void) on; }
+#pragma comment(linker, "/alternatename:_GXSetPipelineWaitAURORA=_gw_GXSetPipelineWaitAURORA_none")
+void gw_GXSetPipelineWaitAURORA(u8 on) { GXSetPipelineWaitAURORA(on); }
+
 void gw_GXSetCullMode(u32 mode) { GXSetCullMode((GXCullMode)mode); }
 
 /* ---- manage ------------------------------------------------------------------------------- */

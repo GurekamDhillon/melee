@@ -1218,6 +1218,27 @@ void end_pipeline_frame() {
   }
 }
 
+void wait_pipeline(PipelineRef ref) {
+  if (!g_hasPipelineThread) {
+    return;
+  }
+  std::unique_lock lock{g_pipelineMutex};
+  if (g_pipelines.contains(ref) || !g_pendingPipelines.contains(ref)) {
+    return;
+  }
+  // to the front: out of the background (seed) queue, or ahead of the other urgent requests
+  auto it = find_pending_pipeline(g_pipelineQueue, ref);
+  if (it != g_pipelineQueue.end()) {
+    PendingPipeline pending = std::move(*it);
+    g_pipelineQueue.erase(it);
+    g_pipelineQueue.emplace_front(std::move(pending));
+  } else {
+    promote_pending_pipeline(ref, PipelinePriority::Blocking);
+  }
+  g_pipelineQueueCv.notify_one();
+  g_pipelineReadyCv.wait(lock, [=] { return g_pipelines.contains(ref) || g_pipelineThreadEnd; });
+}
+
 bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
   std::lock_guard guard{g_pipelineMutex};
   const auto it = g_pipelines.find(ref);

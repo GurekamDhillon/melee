@@ -2,6 +2,7 @@
 #include "fifo.hpp"
 
 #include "../gfx/depth_peek.hpp"
+#include "../gfx/pipeline_cache.hpp"
 #include "../gfx/recording.hpp"
 #include "../internal.hpp"
 #include "dolphin/gd/GDGeometry.h"
@@ -523,6 +524,9 @@ static void revalidate_array(AttrArray& array) noexcept {
   }
 }
 
+// GX_AURORA_PIPELINE_WAIT: draws wait for their pipeline instead of being skipped.
+static bool sPipelineWait = false;
+
 static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
                          gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
   interp::before_draw();
@@ -590,6 +594,9 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
         prevSampledIndTextures != cache.shaderInfo.sampledIndTextures) {
       cache.bindGeneration = 0;
     }
+  }
+  if (sPipelineWait) {
+    gfx::wait_pipeline(cache.pipelineRef);
   }
 
   const bool bindGroupsValid =
@@ -760,7 +767,9 @@ void handle_aurora(ByteReader& reader) noexcept {
   ZoneScoped;
   const u16 subCmd = reader.read<u16>();
 
-  if (subCmd == GX_AURORA_LOAD_VIEWPORT_RENDER) {
+  if (subCmd == GX_AURORA_PIPELINE_WAIT) {
+    sPipelineWait = reader.read<u8>() != 0;
+  } else if (subCmd == GX_AURORA_LOAD_VIEWPORT_RENDER) {
     const f32 left = reader.read<f32>();
     const f32 top = reader.read<f32>();
     const f32 width = reader.read<f32>();

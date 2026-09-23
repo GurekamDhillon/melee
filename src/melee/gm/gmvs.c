@@ -1584,6 +1584,10 @@ void gm_Scene_Vs_OnFrame(void)
     }
 }
 
+#if defined(TARGET_PC)
+extern int Netplay_Enabled(void);
+#endif
+
 void fn_8016D8AC(int arg0, struct PlayerInitData* arg1)
 {
     VsSceneController* tmp = gmVs_GetSceneController();
@@ -1602,7 +1606,16 @@ void fn_8016D8AC(int arg0, struct PlayerInitData* arg1)
     } else {
         Player_SetPlayerId(arg0, arg1->slot - 1);
     }
+#if defined(TARGET_PC)
+    /* Holding A as the match loads swaps Zelda and Sheik - but online the lobby has already
+     * agreed who plays (Sheik is picked on the character select), and the pad read here is this
+     * machine's own controller, not the player's: honouring it would let either side change a
+     * fighter on its own machine only, a desync. Online, the agreed fighter stands. */
+    if (!Netplay_Enabled() &&
+        arg1->slot_type == Gm_PKind_Human &&
+#else
     if (arg1->slot_type == Gm_PKind_Human &&
+#endif
         (HSD_PadCopyStatus[(u8) Player_GetPlayerId(arg0)].button &
          HSD_PAD_A) &&
         (Player_GetPlayerCharacter(arg0) == CKind_Zelda ||

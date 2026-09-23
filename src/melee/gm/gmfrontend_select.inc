@@ -272,6 +272,19 @@ static struct {
     int st_cur;
 } fcs;
 
+/* Buttons held now on this port (online: on any port, like fs_css_port's input). */
+static u32 fs_held(int port)
+{
+    u32 b = HSD_PadCopyStatus[port].button;
+    if (fcs.online) {
+        int q;
+        for (q = 0; q < 4; q++) {
+            b |= HSD_PadCopyStatus[q].button;
+        }
+    }
+    return b;
+}
+
 static void fs_toast(const char* s)
 {
     fp_copy(fcs.toast, s, FE_STR);
@@ -279,6 +292,30 @@ static void fs_toast(const char* s)
 }
 
 static int fs_slots(void) { return fcs.n + 1; } /* the fighters and the Random tile */
+
+/* ZELDA / SHEIK. Retail's roster has no Sheik tile: she shares Zelda's, and the game swaps them
+ * when A is held as the match loads (gmvs.c). Here A on the Zelda tile once more swaps the pick
+ * between Zelda and Sheik (the card names which), and online - where the lobby agrees the fighter
+ * before the match, so the load-time swap is off - A held while START locks the pick in gives
+ * Sheik too, the game's own gesture. A disc whose roster has a Sheik tile of its own (an m-ex
+ * layout can) needs none of this. */
+static bool fs_sheik_shares_zelda(void)
+{
+    int i;
+    bool zelda = false;
+    for (i = 0; i < fcs.n; i++) {
+        if (fcs.ck[i] == CKind_Seak) {
+            return false;
+        }
+        zelda |= fcs.ck[i] == CKind_Zelda;
+    }
+    return zelda;
+}
+
+static bool fs_sheik_ok(void)
+{
+    return !fcs.online || Netplay_FighterAvailable(CKind_Seak);
+}
 
 static int fs_slot_ck(int slot)
 {
@@ -349,11 +386,24 @@ static void fs_css_roster(void)
     fcs.pages = (fs_slots() + fcs.per - 1) / fcs.per;
     OSReport("frontend: character select - %d fighters on offer, %d page(s)%s\n", fcs.n, fcs.pages,
              fcs.online ? " (online)" : "");
+    {
+        /* the roster's order, for tests that walk the grid (ck per slot) */
+        char line[FS_MAX_FIGHTERS * 4 + 8];
+        int k, o = 0;
+        for (k = 0; k < fcs.n && o < (int) sizeof line - 5; k++) {
+            o += sprintf(line + o, "%s%d", k ? "," : "", fcs.ck[k]);
+        }
+        line[o] = '\0';
+        OSReport("frontend: character select - roster %s\n", line);
+    }
 }
 
 static int fs_slot_of(int ck)
 {
     int i;
+    if (ck == CKind_Seak && fs_sheik_shares_zelda()) {
+        ck = CKind_Zelda; /* Sheik lives on Zelda's tile */
+    }
     for (i = 0; i < fcs.n; i++) {
         if (fcs.ck[i] == ck) {
             return i;
@@ -538,6 +588,21 @@ static void fs_pick(int port, int slot)
         fs_toast("Your opponent doesn't have this fighter - pick another.");
         return;
     }
+    if (ck == CKind_Zelda && fs_sheik_shares_zelda() && (t->ck == CKind_Zelda || t->ck == CKind_Seak)) {
+        /* A on the Zelda tile again: swap Zelda and Sheik */
+        if (t->ck == CKind_Zelda && !fs_sheik_ok()) {
+            sfxBack();
+            fs_toast("Your opponent doesn't have Sheik.");
+            return;
+        }
+        sfxForward();
+        t->ck = t->ck == CKind_Zelda ? CKind_Seak : CKind_Zelda;
+        t->costume = fs_free_costume(me->target, t->ck, t->costume < fs_costumes(t->ck) ? t->costume : 0, 1);
+        if (me->target != port) {
+            me->target = port;
+        }
+        return;
+    }
     sfxForward();
     t->ck = ck;
     t->costume = ck >= 0 ? fs_free_costume(me->target, ck, 0, 1) : 0;
@@ -700,6 +765,12 @@ static void fs_css_port(int p)
         char buf[FE_STR];
         const char* why = fs_css_blocker(buf);
         if (why == NULL) {
+            if (fcs.online && s->ck == CKind_Zelda && fs_sheik_shares_zelda() && fs_sheik_ok() &&
+                (fs_held(p) & PAD_BUTTON_A))
+            {
+                s->ck = CKind_Seak; /* A held while locking in: Sheik, as when a match loads */
+                s->costume = s->costume < fs_costumes(s->ck) ? s->costume : 0;
+            }
             sfxForward();
             fs_css_finish(1);
         } else {
@@ -771,6 +842,11 @@ static const char* fs_css_hint(char* buf)
         return buf;
     }
     if (fs_css_blocker(why) == NULL) {
+        if ((s->ck == CKind_Zelda || s->ck == CKind_Seak) && fs_sheik_shares_zelda() && fs_sheik_ok()) {
+            sprintf(buf, "A on Zelda again for %s. START %s.", s->ck == CKind_Zelda ? "Sheik" : "Zelda",
+                    fcs.online ? "locks it in" : "chooses the stage");
+            return buf;
+        }
         return fcs.online ? "Press START to lock in this fighter."
                           : "Ready! Press START to choose the stage.";
     }

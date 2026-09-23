@@ -1111,21 +1111,28 @@ static void np_rdv_service(void) {
  *
  * The rules (a common modern singles ruleset):
  *   Game 1: characters double-blind (each picks on the real CSS; revealed when both are locked),
- *           then stage striking over the legal stages - a coin flip picks who strikes first,
- *           strikes go 1-2-2 (then alternate 2s) until one stage remains.
+ *           then stage striking over the STARTERS - a coin flip picks who strikes first, strikes
+ *           go 1-2-2 (then alternate 2s), capped so one stage remains: 1-2-1 over five starters.
+ *           The COUNTERPICKS sit out game 1.
  *   Game 2+: the previous game's winner bans 2 stages, the loser picks one of the rest; then the
  *           winner picks a character, then the loser (counterpick, not blind).
  *   Then both press Ready (either can take it back); a 3-second countdown; the match.
  * Players: 0 = host (P1), 1 = guest (P2).
  *
  * STAGE LISTS - the host picks one when hosting (gw_Netplay_SetStageMode):
- *   0 Competitive: the six legal stages, the strike/ban rules above.
+ *   0 Competitive: the six legal stages, the strike/ban rules above. Starters: Battlefield, Final
+ *     Destination, Dream Land, Yoshi's Story, Fountain of Dreams; counterpick: Pokemon Stadium
+ *     (lb_starter_ext - the one table to change for another ruleset).
  *   1 All stages: every stage both players have (delta's content identities). Striking a long
  *     list would take forever, so every game is ban-and-pick: game 1 the coin winner bans 2 and
  *     the other picks; game 2+ the last winner bans 2 and the loser picks.
  * The host builds the list (only stages both have, once the peer's identity list is in - rebuilt
  * then if nothing was struck yet) and sends it as identities ("L" chunks); each side maps them
  * to its own external ids, so the grids match whatever each install numbers them.
+ * Either list is ordered starters first, then counterpicks; which group a stage is in follows
+ * from its (mapped) external id, so both sides agree without it travelling
+ * (gw_Netplay_LobbyStageGroup). A list with fewer than two starters has no groups: every stage
+ * counts as a starter.
  *
  * The rules are pure functions of `lb` (lb_new_set / lb_reset_game / lb_apply), so they are tested
  * headless (gw_netplay_tests_register). */
@@ -1136,7 +1143,11 @@ enum { LB_FREE = 0, LB_STRUCK_P1 = 1, LB_STRUCK_P2 = 2, LB_BANNED = 3, LB_PICKED
 #define LB_MAX_STAGES 256
 #define LB_LIST_CHUNK 8 /* identity tokens per "L" message (they are 19 bytes each) */
 #define LB_COUNTDOWN 180 /* 3-2-1 */
-static const int lb_default_ext[] = { 31, 28, 32, 2, 3, 8 };
+/* The starters (external ids), in the order the grid shows them: Battlefield, Final Destination,
+   Dream Land, Yoshi's Story, Fountain of Dreams. Every other stage is a counterpick. */
+static const int lb_starter_ext[] = { 31, 32, 28, 8, 2 };
+/* the competitive list: the starters, then the counterpick (Pokemon Stadium) */
+static const int lb_default_ext[] = { 31, 32, 28, 8, 2, 3 };
 static struct {
     int phase, game, winner, score[2];
     int turn;            /* whose action it is (strike/ban/pick/char counterpick) */
@@ -1178,6 +1189,46 @@ static void lb_default_stages(void) {
     }
 }
 
+/* ---- starters and counterpicks ---- */
+static int lb_ext_starter_rank(int ext) {
+    int i;
+    for (i = 0; i < (int) (sizeof lb_starter_ext / sizeof lb_starter_ext[0]); ++i) {
+        if (lb_starter_ext[i] == ext) return i;
+    }
+    return -1;
+}
+
+static int lb_count_starters(void) {
+    int i, k = 0;
+    for (i = 0; i < lb.nstages; ++i) k += lb_ext_starter_rank(lb.stage_ext[i]) >= 0;
+    return k;
+}
+
+/* 1 if list entry i is a starter. A list with fewer than two starters has no groups. */
+static int lb_is_starter(int i) {
+    if (i < 0 || i >= lb.nstages) return 0;
+    if (lb_count_starters() < 2) return 1;
+    return lb_ext_starter_rank(lb.stage_ext[i]) >= 0;
+}
+
+/* Starters first (in lb_starter_ext's order), then the rest in list order. */
+static void lb_order_groups(void) {
+    int tmp[LB_MAX_STAGES], n = 0, r, i;
+    for (r = 0; r < (int) (sizeof lb_starter_ext / sizeof lb_starter_ext[0]); ++r) {
+        for (i = 0; i < lb.nstages; ++i) {
+            if (lb.stage_ext[i] == lb_starter_ext[r]) {
+                tmp[n++] = lb.stage_ext[i];
+                break;
+            }
+        }
+    }
+    for (i = 0; i < lb.nstages; ++i) {
+        if (lb_ext_starter_rank(lb.stage_ext[i]) < 0) tmp[n++] = lb.stage_ext[i];
+    }
+    memcpy(lb.stage_ext, tmp, sizeof tmp[0] * (size_t) n);
+    lb.nstages = n;
+}
+
 /* Host: the stage list for the room's mode - only stages both players have (a stage whose peer
    answer is not in yet counts, and the list is rebuilt once it is). */
 static void lb_build_list(void) {
@@ -1196,6 +1247,7 @@ static void lb_build_list(void) {
             if (!dup) lb.stage_ext[lb.nstages++] = ext;
         }
         if (lb.nstages == 0) lb_default_stages();
+        lb_order_groups();
     }
     lb.list_id++;
     lb.list_tx = 0;
@@ -1243,6 +1295,13 @@ static void lb_reset_game(void) {
 static int lb_stages_free(void) {
     int i, k = 0;
     for (i = 0; i < lb.nstages; ++i) k += lb.stage[i] == LB_FREE;
+    return k;
+}
+
+/* Striking is over the free starters only. */
+static int lb_starters_free(void) {
+    int i, k = 0;
+    for (i = 0; i < lb.nstages; ++i) k += lb.stage[i] == LB_FREE && lb_is_starter(i);
     return k;
 }
 
@@ -1298,17 +1357,18 @@ static int lb_apply_(int who, const char *act, int a, int b) {
     }
     if (a < 0 || a >= lb.nstages || lb.turn != who || lb.stage[a] != LB_FREE) return 0;
     if (strcmp(act, "STRIKE") == 0 && lb.phase == LB_STRIKE) {
+        if (!lb_is_starter(a)) return 0; /* a counterpick: not in game 1 */
         lb.stage[a] = who == 0 ? LB_STRUCK_P1 : LB_STRUCK_P2;
-        if (--lb.left <= 0 && lb_stages_free() > 1) {
+        if (--lb.left <= 0 && lb_starters_free() > 1) {
             lb.step++;
             lb.turn = 1 - lb.turn;
             lb.left = lb_strike_counts[lb.step < 3 ? lb.step : 2];
         }
-        if (lb.left > lb_stages_free() - 1) lb.left = lb_stages_free() - 1;
-        if (lb_stages_free() == 1) {
+        if (lb.left > lb_starters_free() - 1) lb.left = lb_starters_free() - 1;
+        if (lb_starters_free() <= 1) {
             int i;
             for (i = 0; i < lb.nstages; ++i) {
-                if (lb.stage[i] == LB_FREE) {
+                if (lb.stage[i] == LB_FREE && lb_is_starter(i)) {
                     lb.stage[i] = LB_PICKED;
                     lb.chosen = i;
                 }
@@ -2256,6 +2316,13 @@ int gw_Netplay_LobbyInfo(int what) {
 }
 int gw_Netplay_LobbyStage(int i) { return i >= 0 && i < lb.nstages ? lb.stage[i] : 0; }
 int gw_Netplay_LobbyStageExt(int i) { return i >= 0 && i < lb.nstages ? lb.stage_ext[i] : 0; }
+/* A stage's group in the list: 0 starter, 1 counterpick (the list has starters first). */
+int gw_Netplay_LobbyStageGroup(int i) { return lb_is_starter(i) ? 0 : 1; }
+/* Whether the player whose turn it is may act on stage i now: free, and a starter while striking. */
+int gw_Netplay_LobbyStageOpen(int i) {
+    if (i < 0 || i >= lb.nstages || lb.stage[i] != LB_FREE) return 0;
+    return lb.phase != LB_STRIKE || lb_is_starter(i);
+}
 /* A stage's display name by its external id (the stage select's numbering; m-ex stages past the
  * retail ones are "Stage n" until their names are read from the disc). */
 void gw_Netplay_StageNameExt(int ext, char *out, int cap) {
@@ -2663,8 +2730,9 @@ static void lbt_start(uint32_t seed) {
     lb_reset_game();
 }
 
-/* Game 1: blind characters, then 1-2-2 strikes from the coin winner, the survivor is picked,
-   then Ready from both runs the countdown out. */
+/* Game 1: blind characters, then strikes over the five starters from the coin winner (1-2-2,
+   capped to 1-2-1 so one remains), the survivor is picked, then Ready from both runs the
+   countdown out. The counterpick sits game 1 out. */
 static int test_lobby_game1(void) {
     int first, i, n = 0;
     lbt_start(1u << 7); /* the coin: P2 strikes first */
@@ -2676,19 +2744,26 @@ static int test_lobby_game1(void) {
     if (!lb_apply_(1, "CHAR", 36, 2) || lb.phase != LB_STRIKE) return lbt_fail("both locked -> strike");
     if (lb.turn != first || lb.left != 1) return lbt_fail("the coin winner strikes 1");
     if (lb_apply_(1 - first, "STRIKE", 0, 0)) return lbt_fail("striking out of turn");
-    /* 1-2-2: first 1, other 2, first 2 */
+    if (lb.nstages != 6 || lb_count_starters() != 5 || !lb_is_starter(4) || lb_is_starter(5) ||
+        lb.stage_ext[5] != 3)
+        return lbt_fail("the list: five starters, then Pokemon Stadium");
+    if (lb_apply_(first, "STRIKE", 5, 0)) return lbt_fail("striking the counterpick in game 1");
+    if (gw_Netplay_LobbyStageOpen(5) || !gw_Netplay_LobbyStageOpen(0) || gw_Netplay_LobbyStageGroup(5) != 1)
+        return lbt_fail("the counterpick is not open while striking");
+    /* 1-2-1: first 1, other 2, first 1 */
     {
-        static const int order[5][2] = { { 1, 0 }, { 0, 1 }, { 0, 2 }, { 1, 3 }, { 1, 4 } };
-        for (i = 0; i < 5; ++i) {
+        static const int order[4][2] = { { 1, 0 }, { 0, 1 }, { 0, 2 }, { 1, 3 } };
+        for (i = 0; i < 4; ++i) {
             int who = order[i][0] == 1 ? first : 1 - first;
-            if (lb.turn != who) return lbt_fail("1-2-2 order");
+            if (lb.turn != who) return lbt_fail("1-2-1 order");
             if (!lb_apply_(who, "STRIKE", order[i][1], 0)) return lbt_fail("a legal strike refused");
             if (i == 1 && lb_apply_(who, "STRIKE", order[i][1], 0)) return lbt_fail("striking a struck stage");
         }
     }
-    if (lb.phase != LB_READY || lb.chosen != 5 || lb.stage[5] != LB_PICKED) return lbt_fail("the last stage is picked");
+    if (lb.phase != LB_READY || lb.chosen != 4 || lb.stage[4] != LB_PICKED) return lbt_fail("the last starter is picked");
+    if (lb.stage[5] != LB_FREE) return lbt_fail("the counterpick is untouched");
     for (i = 0; i < lb.nstages; ++i) n += lb.stage[i] == LB_STRUCK_P1 || lb.stage[i] == LB_STRUCK_P2;
-    if (n != 5) return lbt_fail("five strikes");
+    if (n != 4) return lbt_fail("four strikes");
     if (!lb_apply_(0, "READY", 1, 0) || lb.countdown != 0) return lbt_fail("one ready: no countdown");
     if (lb_apply_(0, "READY", 1, 0)) return lbt_fail("ready twice is no change");
     if (!lb_apply_(1, "READY", 1, 0) || lb.countdown != LB_COUNTDOWN) return lbt_fail("both ready: countdown");
@@ -2711,7 +2786,8 @@ static int test_lobby_game2(void) {
     if (!lb_apply_(0, "BAN", 0, 0) || !lb_apply_(0, "BAN", 2, 0)) return lbt_fail("two bans");
     if (lb.phase != LB_PICK || lb.turn != 1) return lbt_fail("then the loser picks");
     if (lb_apply_(1, "PICK", 2, 0)) return lbt_fail("picking a banned stage");
-    if (!lb_apply_(1, "PICK", 4, 0) || lb.chosen != 4) return lbt_fail("the counterpick");
+    if (!gw_Netplay_LobbyStageOpen(5)) return lbt_fail("the counterpick is open from game 2");
+    if (!lb_apply_(1, "PICK", 5, 0) || lb.chosen != 5) return lbt_fail("the counterpick");
     if (lb.phase != LB_CHAR_WINNER || lb.turn != 0) return lbt_fail("the winner picks a character first");
     if (lb_apply_(1, "CHAR", 35, 0)) return lbt_fail("the loser waits");
     if (!lb_apply_(0, "CHAR", 34, 0) || lb.phase != LB_CHAR_LOSER || lb.turn != 1) return lbt_fail("then the loser");
@@ -2796,7 +2872,39 @@ static int test_lobby_all_stages(void) {
     return 0;
 }
 
+/* The groups: any list is ordered starters first; a list with fewer than two starters has none. */
+static int test_lobby_groups(void) {
+    int i;
+    lbt_start(0);
+    lb.nstages = 40;
+    for (i = 0; i < 40; ++i) lb.stage_ext[i] = i + 1;
+    lb_order_groups();
+    if (lb.nstages != 40) return lbt_fail("ordering keeps every stage");
+    for (i = 0; i < 5; ++i) {
+        if (lb.stage_ext[i] != lb_starter_ext[i] || !lb_is_starter(i)) return lbt_fail("the starters come first, in order");
+    }
+    for (i = 5; i < 40; ++i) {
+        if (lb_is_starter(i) || gw_Netplay_LobbyStageGroup(i) != 1) return lbt_fail("the rest are counterpicks");
+        if (i > 5 && lb.stage_ext[i] < lb.stage_ext[i - 1]) return lbt_fail("the counterpicks keep their order");
+    }
+    /* one starter only: no groups, strike over everything */
+    lbt_start(0);
+    lb.nstages = 3;
+    lb.stage_ext[0] = 3;
+    lb.stage_ext[1] = 5;
+    lb.stage_ext[2] = 31;
+    lb_reset_game();
+    lb_apply_(0, "CHAR", 2, 0);
+    lb_apply_(1, "CHAR", 9, 0);
+    for (i = 0; i < 3; ++i) {
+        if (!lb_is_starter(i)) return lbt_fail("no groups with one starter");
+    }
+    if (!lb_apply_(lb.turn, "STRIKE", 0, 0)) return lbt_fail("strikes over the whole list");
+    return 0;
+}
+
 void gw_netplay_tests_register(void) {
+    gw_test_register("netplay_lobby_groups", test_lobby_groups);
     gw_test_register("netplay_lobby_all_stages", test_lobby_all_stages);
     gw_test_register("netplay_lobby_game1", test_lobby_game1);
     gw_test_register("netplay_lobby_game2", test_lobby_game2);

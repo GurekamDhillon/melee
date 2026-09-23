@@ -9,6 +9,10 @@
 #include <melee/lb/lbgx.h>
 #include <sysdolphin/baselib/tev.h>
 
+#if defined(TARGET_PC)
+void GXSetPipelineWaitAURORA(u8 on); /* Aurora extension (shim_gx.c) */
+#endif
+
 U8Vec4 it_804D5168 = { 0xFF, 0x40, 0x80, 0x80 };
 
 void it_8026EB18(HSD_GObj* gobj, s32 arg1, Vec3* arg2)
@@ -32,7 +36,18 @@ void it_8026EB18(HSD_GObj* gobj, s32 arg1, Vec3* arg2)
     } else {
         mptr = NULL;
     }
+#if defined(TARGET_PC)
+    /* An item's model is never skipped while its GPU pipeline compiles: the draw waits for it
+     * (a one-off hitch the first time a material is seen). Without this, a short-lived item -
+     * Kirby's ground side-B hammer, which exists ~35 frames - was invisible for its whole life
+     * with a cold pipeline cache, because Aurora drops draws whose pipeline is not built yet and
+     * the worker was still behind that swing's other new effects. See shim_gx.c. */
+    GXSetPipelineWaitAURORA(1);
     HSD_JObjDispAll(GET_JOBJ(gobj), mptr, HSD_GObj_80390EB8(arg1), 0);
+    GXSetPipelineWaitAURORA(0);
+#else
+    HSD_JObjDispAll(GET_JOBJ(gobj), mptr, HSD_GObj_80390EB8(arg1), 0);
+#endif
 }
 
 void it_8026EBC8(HSD_GObj* gobj, u16 arg1, u8* arg2)

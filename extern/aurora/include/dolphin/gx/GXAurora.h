@@ -96,6 +96,13 @@ extern "C" {
  */
 #define GX_AURORA_DRAW_INDEXED 0x0041
 
+/**
+ * Pipeline wait on/off. Followed by a u8: 1 = from here on, a draw whose pipeline is not compiled
+ * yet waits for it (the compile jumps the queue) instead of being skipped; 0 = back to skipping.
+ * For models that must not blink out on first use (GXSetPipelineWaitAURORA).
+ */
+#define GX_AURORA_PIPELINE_WAIT 0x0042
+
 #define GX2_SET_POLYGON_OFFSET 0x1000
 
 
@@ -108,6 +115,12 @@ extern "C" {
  * It is considered an error to have unpopped debug groups at the end of the frame. They will be automatically cleared.
  */
 void GXPushDebugGroup(const char* label);
+
+/**
+ * While on, draws whose pipeline is still compiling wait for it rather than being skipped (a
+ * one-off hitch on first use instead of an invisible model). Off by default.
+ */
+void GXSetPipelineWaitAURORA(u8 on);
 
 /**
  * Pop a debug group previously pushed via GXPushDebugGroup().

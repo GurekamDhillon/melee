@@ -54,6 +54,7 @@ enum {
     LAB_I_JOINTS,         /* number of joints (fp->parts) */
     LAB_I_HURTBOXES,      /* hurt_capsules_len */
     LAB_I_HITSTUN_TOTAL,  /* unused, reserved */
+    LAB_I_HIDDEN,         /* 1 when the fighter is not drawn (FighterVis x221E_b5 or invisible) */
     LAB_I_COUNT
 };
 

@@ -295,6 +295,8 @@ int ScriptGame_LabI(int slot, int field)
         return (int) fp->x21FC_flag.byte;
     case LAB_I_SUB:
         return fp->is_sub_fighter ? 1 : 0;
+    case LAB_I_HIDDEN:
+        return (fp->x221E_b5 || fp->invisible) ? 1 : 0;
     case LAB_I_JOINTS:
         return lab_joint_count(fp);
     case LAB_I_HURTBOXES:

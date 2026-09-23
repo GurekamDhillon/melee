@@ -625,6 +625,7 @@ static void gs_push_lab_fields(lua_State *L, int slot) {
     gs_setint(L, "ledge_cooldown", gw_ScriptGame_LabI(slot, LAB_I_LEDGE_COOLDOWN));
     gs_setint(L, "draw_flags", gw_ScriptGame_LabI(slot, LAB_I_DRAW_FLAGS));
     gs_setint(L, "joint_count", gw_ScriptGame_LabI(slot, LAB_I_JOINTS));
+    gs_setbool(L, "hidden", gw_ScriptGame_LabI(slot, LAB_I_HIDDEN) == 1);
     gs_setint(L, "hurtbox_count", gw_ScriptGame_LabI(slot, LAB_I_HURTBOXES));
     gs_push_hitbox_list(L, slot);
     lua_setfield(L, -2, "hitboxes");

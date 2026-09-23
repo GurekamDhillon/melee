@@ -556,6 +556,15 @@ static void geno_land(Fighter_GObj* gobj)
     int s = geno_cur_state(fp, st);
     u32 t = s >= 0 ? geno_land_of(st, s) : GENO_AUTO;
     f32 lag = s >= 0 ? geno_lag_of(st, s) : 0.0f;
+    if (s >= 0 && st->move_i[4] != 0 &&
+        (Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE_END ||
+         Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE_ATTACK))
+    {
+        /* v3: a helpless glide's GlideEnd / GlideAttack (move_i[4], geno_game_glide.inc) lands as a
+           helpless fall does */
+        ftCo_LandingFallSpecial_Enter_Basic(gobj);
+        return;
+    }
     if (t == GENO_AUTO || t == GENO_NONE_T) {
         if (lag > 0.0f) {
             ftCo_LandingFallSpecial_Enter(gobj, true, lag);

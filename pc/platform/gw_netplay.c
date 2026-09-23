@@ -126,11 +126,12 @@ int gw_Netplay_Enabled(void) { return np.enabled; }
 int gw_Netplay_LocalPort(void) { return np.host ? 0 : 1; }
 int gw_Netplay_RemotePort(void) { return np.host ? 1 : 0; }
 int gw_Netplay_Delay(void) { return np.delay; }
-/* A netplay session is in progress (connecting, lobby, match): the window must keep its input in
- * the background, so shim_pad.c does not release the GC adapter on focus loss. */
+/* A netplay MATCH is running against a connected peer: the window must keep its input in the
+ * background, so shim_pad.c does not release the GC adapter on focus loss. Searching (random
+ * matchmaking), waiting for a guest, the lobby and the menus release normally; if a match starts
+ * while the window is in the background, shim_pad.c takes the adapter back for it. */
 int gw_Netplay_SessionActive(void) {
-    return np.phase == NP_WORKING || np.phase == NP_CONNECTED || np.phase == NP_RUNNING ||
-           np.phase == NP_LOBBY;
+    return np.phase == NP_RUNNING && np.net != NULL;
 }
 
 static void np_status(const char *fmt, ...) {

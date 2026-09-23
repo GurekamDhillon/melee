@@ -236,20 +236,21 @@ void gw_pad_focus_event(int focused) {
   }
 }
 
-/* shim_vi.c, once per frame after the events. A focus loss acts after 250 ms (an alt-tab flicker
- * does nothing); a gain acts at once. */
+/* shim_vi.c, once per frame after the events. A focus loss acts after 100 ms (an alt-tab flicker
+ * does nothing, and the window gaining focus - retrying every 100 ms - gets the adapter quickly);
+ * a gain acts at once. */
 void gw_pad_focus_tick(void) {
   int want;
   if (gw_input_mode() == GW_INPUT_KEYBOARD || !gw_pad_release_on_blur()) {
     return;
   }
   want = 0;
-  if (!gw_focus_have && GetTickCount() - gw_focus_lost_at >= 250u) {
+  if (!gw_focus_have && GetTickCount() - gw_focus_lost_at >= 100u) {
     if (gw_Netplay_SessionActive()) {
       if (!gw_focus_kept_logged) {
         gw_focus_kept_logged = 1;
-        gw_pad_log("gw: pad: window unfocused during a netplay session - GC adapter kept "
-                   "(netplay needs input in the background)");
+        gw_log("gw: pad: window unfocused during a netplay match - GC adapter kept "
+               "(the match needs input in the background)");
       }
     } else {
       want = 1;
@@ -760,6 +761,8 @@ static int test_pad_really_used_thresholds(void) {
 }
 
 void gw_pad_tests_register(void) {
+  extern void gw_gc_adapter_tests_register(void);
+  gw_gc_adapter_tests_register();
   gw_test_register("pad_last_active_wins", test_pad_last_active_wins);
   gw_test_register("pad_really_used_thresholds", test_pad_really_used_thresholds);
 }

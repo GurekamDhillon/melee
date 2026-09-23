@@ -142,6 +142,8 @@ static volatile LONG gw_gc_suspended;
 static volatile LONG gw_gc_resume_pending; /* the next scanner open is a resume: keep calibration */
 static HANDLE gw_gc_scan_wake;             /* auto-reset: wakes the scanner early */
 static volatile LONG gw_gc_reports_total;  /* every good report since start (never reset) */
+static int (*gw_gc_test_open)(void);
+static int gw_gc_open_quiet;               /* scanner retry: skip the per-attempt failure lines */
 
 /* MELEE_INPUT_PROFILE (shim_vi.c): when each report arrived, and the spacing between reports.
  * The official adapter reports at 125 Hz (8 ms); an overclocked one (HIDUSBF / a patched
@@ -423,7 +425,7 @@ static int gw_gc_open(void) {
       if (gw_gc_dev == INVALID_HANDLE_VALUE) {
         /* ERROR_ACCESS_DENIED here almost always means another process (typically SDL, which
          * opens this adapter through its own HIDAPI GameCube driver) already holds the device. */
-        gw_pad_log("gw: gc adapter: found %s but CreateFile failed (error %lu%s)",
+        if (!gw_gc_open_quiet) gw_pad_log("gw: gc adapter: found %s but CreateFile failed (error %lu%s)",
                    detail->DevicePath, (unsigned long)GetLastError(),
                    GetLastError() == ERROR_ACCESS_DENIED ? ": another program holds it" : "");
       } else if (WinUsb_Initialize(gw_gc_dev, &gw_gc_usb)) {
@@ -608,7 +610,21 @@ int gw_gc_adapter_init(void) {
   return r;
 }
 
+static int gw_gc_open_locked(void);
+/* Open under gw_gc_init_srw. Whatever the caller, an open never survives a suspend: suspend sets
+ * the flag under this same lock, so checking it again after the open (which can take a while -
+ * device enumeration, the reader start) closes an adapter a background window must not hold. */
 static int gw_gc_init_locked(void) {
+  int ok = gw_gc_open_locked();
+  if (ok && InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
+    gw_log("gw: gc adapter: opened while suspended - closing it again");
+    gw_gc_shutdown_locked();
+    return 0;
+  }
+  return ok;
+}
+
+static int gw_gc_open_locked(void) {
   unsigned char start = 0x13;
   ULONG written = 0;
   ULONG timeout = 20;
@@ -621,6 +637,9 @@ static int gw_gc_init_locked(void) {
   if (InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
     return 0; /* in the background: leave the adapter to whoever wants it */
   }
+  if (gw_gc_test_open != NULL) {
+    return gw_gc_test_open(); /* tests: a stand-in device (gw_gc_adapter_tests_register) */
+  }
 
   if (gw_gc_open()) {
     gw_gc_backend = GW_GC_WINUSB;
@@ -628,8 +647,10 @@ static int gw_gc_init_locked(void) {
     gw_gc_backend = GW_GC_HID;
   } else {
     static int dumped;
-    gw_pad_log("gw: gc adapter: no WUP-028 adapter found on either WinUSB or HID; using the SDL "
-               "pad path instead.");
+    if (!gw_gc_open_quiet) {
+      gw_pad_log("gw: gc adapter: no WUP-028 adapter found on either WinUSB or HID; using the SDL "
+                 "pad path instead.");
+    }
     if (!dumped) {
       dumped = 1;
       gw_gc_dump_interfaces();
@@ -760,86 +781,119 @@ int gw_gc_adapter_device_plugged(void) {
  * open (and its logging) only runs when the device is actually present; after a failed open
  * (another program holding it, say) it waits 30 s before trying again. */
 static HANDLE gw_gc_scan_thread;
+static volatile LONG gw_gc_resume_gen; /* bumped by every resume: restarts the reclaim chain */
+
+/* The scanner thread is the only place that opens the adapter after startup, so there is only ever
+ * one retry chain. A resume starts (or restarts) the fast chain: every 100 ms for the first 1.5 s
+ * (the window that lost focus lets go within ~100 ms), then every second up to 15 s, then the
+ * ordinary 30 s hotplug backoff. A suspend ends the chain at once. */
 static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
   DWORD retry_at = 0;
-  int fast_left = 0; /* after a resume: retry every second for a while (the other program may
-                        take a moment to let go), then fall back to every 30 s */
+  DWORD chain_start = 0;
+  LONG chain_gen = 0;
+  int chain = 0;
   int attempt = 0;
-  int fast_armed = 0;
   (void)arg;
   for (;;) {
-    int resuming;
-    if (gw_gc_scan_wake != NULL) {
-      WaitForSingleObject(gw_gc_scan_wake, 1000);
-    } else {
-      Sleep(1000);
+    DWORD now;
+    DWORD wait = 1000;
+    int pending;
+    int ok;
+    if (chain) {
+      const int d = (int)(retry_at - GetTickCount());
+      wait = d <= 0 ? 0 : (d > 1000 ? 1000 : (DWORD)d);
     }
+    if (gw_gc_scan_wake != NULL) {
+      WaitForSingleObject(gw_gc_scan_wake, wait);
+    } else {
+      Sleep(wait);
+    }
+    now = GetTickCount();
     if (InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
-      fast_armed = 0;
+      chain = 0;
       continue;
     }
-    resuming = InterlockedCompareExchange(&gw_gc_resume_pending, 0, 0) != 0;
-    if (!resuming) {
-      fast_armed = 0;
-    } else if (!fast_armed) {
-      fast_armed = 1;
-      fast_left = 15;
-      attempt = 0;
-      retry_at = GetTickCount(); /* a resume retries now, whatever the backoff */
+    pending = InterlockedCompareExchange(&gw_gc_resume_pending, 0, 0) != 0;
+    if (!pending) {
+      chain = 0;
+    } else {
+      const LONG gen = InterlockedCompareExchange(&gw_gc_resume_gen, 0, 0);
+      if (!chain || gen != chain_gen) {
+        chain = 1;
+        chain_gen = gen;
+        chain_start = now;
+        attempt = 0;
+        retry_at = now;
+      }
     }
     if (gw_gc_ready) {
       InterlockedExchange(&gw_gc_resume_pending, 0);
-      fast_left = 0;
+      chain = 0;
       attempt = 0;
       continue;
     }
-    if ((int)(GetTickCount() - retry_at) < 0) {
+    if ((int)(now - retry_at) < 0) {
       continue;
     }
     if (!gw_gc_adapter_device_plugged()) {
-      if (resuming) {
+      if (chain) {
         gw_pad_log("gw: gc adapter: resume - no adapter plugged in, nothing to reclaim");
         InterlockedExchange(&gw_gc_resume_pending, 0);
-        fast_left = 0;
+        chain = 0;
       }
       attempt = 0;
       continue;
     }
     ++attempt;
-    if (resuming) {
-      gw_pad_log("gw: gc adapter: reclaiming after focus returned (attempt %d)", attempt);
-    } else if (attempt == 1) {
-      gw_log("gw: gc adapter: an adapter is plugged in - opening it");
-    } else {
-      gw_pad_log("gw: gc adapter: scanner retry %d", attempt);
+    if (!chain) {
+      if (attempt == 1) {
+        gw_log("gw: gc adapter: an adapter is plugged in - opening it");
+      } else {
+        gw_pad_log("gw: gc adapter: scanner retry %d", attempt);
+      }
     }
     AcquireSRWLockExclusive(&gw_gc_init_srw);
+    /* a suspend may have landed between the checks above and taking the lock */
+    if (InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
+      ReleaseSRWLockExclusive(&gw_gc_init_srw);
+      chain = 0;
+      continue;
+    }
     gw_gc_tried = 0;
-    if (gw_gc_init_locked()) {
-      if (resuming) {
+    gw_gc_open_quiet = chain && attempt > 1; /* one "held by another program" line per chain */
+    ok = gw_gc_init_locked();
+    gw_gc_open_quiet = 0;
+    now = GetTickCount();
+    if (ok) {
+      if (chain) {
         /* the controllers never moved: keep their calibration (origins, trigger rests) */
-        gw_pad_log("gw: gc adapter: reclaimed, calibration kept");
+        gw_log("gw: gc adapter: reclaimed after %d attempt(s), %lu ms after focus; calibration kept",
+               attempt, (unsigned long)(now - chain_start));
       } else {
         InterlockedExchange(&gw_gc_recal, 1); /* re-sample the resting sticks and triggers */
       }
       InterlockedExchange(&gw_gc_resume_pending, 0);
-      fast_left = 0;
+      chain = 0;
       attempt = 0;
-    } else if (fast_left > 0) {
-      --fast_left;
-      retry_at = GetTickCount() + 900;
-      if (fast_left > 0) {
-        gw_pad_log("gw: gc adapter: reclaim attempt %d failed; retrying in 1 s (%d left)", attempt,
-                   fast_left);
+    } else if (chain) {
+      const DWORD el = now - chain_start;
+      if (attempt == 1) {
+        gw_pad_log("gw: gc adapter: reclaim - another program still holds it; retrying every "
+                   "100 ms, then every second");
       }
-      if (fast_left == 0) {
-        gw_pad_log("gw: gc adapter: could not reclaim it (another program still holds it?); "
-                   "retrying every 30 s");
+      if (el < 1500u) {
+        retry_at = now + 100;
+      } else if (el < 15000u) {
+        retry_at = now + 1000;
+      } else {
+        gw_log("gw: gc adapter: could not reclaim it in 15 s (%d attempts; another program still "
+               "holds it?) - retrying every 30 s", attempt);
         InterlockedExchange(&gw_gc_resume_pending, 0);
-        retry_at = GetTickCount() + 30000;
+        chain = 0;
+        retry_at = now + 30000;
       }
     } else {
-      retry_at = GetTickCount() + 30000;
+      retry_at = now + 30000;
     }
     ReleaseSRWLockExclusive(&gw_gc_init_srw);
   }
@@ -863,7 +917,7 @@ int gw_gc_adapter_suspend(void) {
     gw_gc_shutdown_locked();
   }
   ReleaseSRWLockExclusive(&gw_gc_init_srw);
-  gw_pad_log("gw: gc adapter: suspended (window in the background) - %s",
+  gw_log("gw: gc adapter: suspended (window in the background) - %s",
              was ? "adapter released for other programs" : "no adapter was open; scanner paused");
   return was;
 }
@@ -875,8 +929,9 @@ void gw_gc_adapter_resume(void) {
   if (InterlockedExchange(&gw_gc_suspended, 0) == 0) {
     return;
   }
+  InterlockedIncrement(&gw_gc_resume_gen);
   InterlockedExchange(&gw_gc_resume_pending, 1);
-  gw_pad_log("gw: gc adapter: resumed (window focused) - reclaiming");
+  gw_log("gw: gc adapter: resumed (window focused) - reclaiming");
   if (gw_gc_scan_wake != NULL) {
     SetEvent(gw_gc_scan_wake);
   }
@@ -1072,6 +1127,13 @@ int gw_gc_adapter_read(void *status) {
   int recal;
   unsigned char snap[GC_PAYLOAD_SIZE];
 
+  if (gw_gc_ready && InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
+    /* can't happen (every open re-checks the flag under the lock) - but if it ever does, a
+     * background window must not keep the adapter from the program in front */
+    gw_log("gw: gc adapter: BUG open while suspended - closing it");
+    gw_gc_adapter_shutdown();
+    return 0;
+  }
   if (!gw_gc_ready || st == NULL) {
     return 0;
   }
@@ -1209,4 +1271,80 @@ void gw_gc_adapter_diag(void) {
     gw_log("gw: DIAG gcraw ch%d type=%d b1=%02X b2=%02X stick=(%u,%u) c=(%u,%u) trig=(%u,%u)",
            chan, p[0] >> 4, p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]);
   }
+}
+
+/* ---- tests: suspend racing a slow open ---------------------------------------------------- */
+#include "gw_test.h"
+
+static volatile LONG gw_gc_t_opens;
+static volatile LONG gw_gc_t_suspend_inside;
+static int gw_gc_t_slow_open(void) {
+  InterlockedIncrement(&gw_gc_t_opens);
+  Sleep(150); /* an enumeration + WinUSB open that takes a while */
+  if (gw_gc_t_suspend_inside) {
+    InterlockedExchange(&gw_gc_suspended, 1); /* as if the flag flipped during the open */
+  }
+  gw_gc_ready = 1;
+  gw_gc_backend = GW_GC_NONE;
+  return 1;
+}
+static DWORD WINAPI gw_gc_t_opener(LPVOID arg) {
+  (void)arg;
+  AcquireSRWLockExclusive(&gw_gc_init_srw);
+  gw_gc_tried = 0;
+  gw_gc_init_locked();
+  ReleaseSRWLockExclusive(&gw_gc_init_srw);
+  return 0;
+}
+
+static int test_gc_suspend_beats_slow_open(void) {
+  HANDLE t;
+  int rc = 0;
+  if (gw_gc_ready || gw_gc_scan_thread != NULL) {
+    return 0; /* a real adapter session is live in this process: nothing to fake */
+  }
+  gw_gc_test_open = gw_gc_t_slow_open;
+  InterlockedExchange(&gw_gc_suspended, 0);
+  InterlockedExchange(&gw_gc_t_opens, 0);
+  gw_gc_t_suspend_inside = 0;
+
+  /* 1. suspend lands while the open is in flight: it waits for the open, then closes it */
+  t = CreateThread(NULL, 0, gw_gc_t_opener, NULL, 0, NULL);
+  Sleep(40);
+  gw_gc_adapter_suspend();
+  WaitForSingleObject(t, 2000);
+  CloseHandle(t);
+  if (gw_gc_ready) { gw_test_fail("adapter open after a suspend that raced the open"); rc = 1; }
+  /* 2. while suspended nothing opens */
+  if (!rc) {
+    InterlockedExchange(&gw_gc_t_opens, 0);
+    gw_gc_tried = 0;
+    if (gw_gc_adapter_init() || gw_gc_ready || gw_gc_t_opens != 0) {
+      gw_test_fail("opened while suspended"); rc = 1;
+    }
+  }
+  /* 3. the flag flips during the open itself: the post-open check backs it out */
+  if (!rc) {
+    InterlockedExchange(&gw_gc_suspended, 0);
+    gw_gc_t_suspend_inside = 1;
+    gw_gc_tried = 0;
+    if (gw_gc_adapter_init() || gw_gc_ready) { gw_test_fail("open survived a mid-open suspend"); rc = 1; }
+  }
+  /* 4. resume + open works again */
+  if (!rc) {
+    gw_gc_t_suspend_inside = 0;
+    gw_gc_adapter_resume();
+    gw_gc_tried = 0;
+    if (!gw_gc_adapter_init() || !gw_gc_ready) { gw_test_fail("no open after resume"); rc = 1; }
+  }
+  gw_gc_adapter_shutdown();
+  InterlockedExchange(&gw_gc_suspended, 0);
+  InterlockedExchange(&gw_gc_resume_pending, 0);
+  gw_gc_tried = 0;
+  gw_gc_test_open = NULL;
+  return rc;
+}
+
+void gw_gc_adapter_tests_register(void) {
+  gw_test_register("gc_suspend_beats_slow_open", test_gc_suspend_beats_slow_open);
 }

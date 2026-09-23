@@ -1627,7 +1627,13 @@ int efAsync_MexResolve(HSD_GObj* gobj, s32 gfx_id, s32* final_id, int* is_ptcl,
     }
     fp = GET_FIGHTER(gobj);
     kind = fp->kind;
-    if (FTKB_IS_KIRBY(kind)) {
+    /* An m-ex Kirby clone with an effect bank of its own (MxDt effect_index is not Kirby's, e.g. the Brawl
+     * Meta Knight slot) spawns its OWN effects with 5xxx / 6xxx, as every other m-ex fighter does; only
+     * Kirby and clones that share Kirby's bank read 5xxx / 6xxx as the copied fighter's. */
+    if (FTKB_IS_KIRBY(kind) &&
+        (kind == Ft_Kind_Kirby ||
+         ftData_UnkBytePerCharacter[kind] == ftData_UnkBytePerCharacter[Ft_Kind_Kirby]))
+    {
         /* Kirby's own ids are the copied fighter's: 5xxx model, 6xxx generator */
         if (gfx_id >= EF_MEX_CPMDL_START) {
             return -1;

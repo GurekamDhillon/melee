@@ -213,6 +213,13 @@ static uint64_t mx_fighter_identity(const char *pl, const char *aj, const char *
     h = mx_mix(h, pl2 != NULL ? mx_file(pl2) : 0);
     h = mx_mix(h, aj2 != NULL ? mx_file(aj2) : 0);
     h = mx_mix(h, cap != NULL ? mx_file(cap) : 0);
+    {
+        /* A Geno overlay (mods/<id>/geno.json) changes how this fighter plays, so its stable id is
+         * part of the identity. 0 - no overlay - leaves the hash exactly as it always was. */
+        extern uint64_t gw_Geno_SaltForPlFile(const char *pl);
+        uint64_t salt = gw_Geno_SaltForPlFile(pl);
+        if (salt != 0) h = mx_mix(h, salt);
+    }
     return h;
 }
 

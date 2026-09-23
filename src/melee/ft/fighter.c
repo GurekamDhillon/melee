@@ -568,6 +568,14 @@ void Fighter_UnkInitReset_80067C98(Fighter* fp)
     fp->x2227_b6 = false;
     fp->x2180 = 6;
     fp->x2229_b4 = true;
+#if defined(TARGET_PC)
+    {
+        /* Geno (pc/geno): reset this fighter's state block and look up its profile. Spawn,
+         * respawn and the Zelda/Sheik swap all come through here. */
+        extern void Geno_FighterReset(Fighter * fp);
+        Geno_FighterReset(fp);
+    }
+#endif
 }
 
 void Fighter_UnkProcessDeath_80068354(Fighter_GObj* gobj)
@@ -1087,6 +1095,14 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     ft_PcTraceMotion(gobj, msid);
 #endif
     fp->motion_id = msid;
+#if defined(TARGET_PC)
+    {
+        /* Geno: per-action (RA) script variables end with the action; on_action hooks. Returns
+         * at once for a fighter with no Geno profile whose scripts never used the escape. */
+        extern void Geno_OnActionChange(Fighter_GObj * gobj);
+        Geno_OnActionChange(gobj);
+    }
+#endif
     fp->facing_dir1 = fp->facing_dir;
 
     HSD_JObjSetTranslate(jobj, &fp->cur_pos);
@@ -1838,6 +1854,11 @@ void Fighter_8006A360(Fighter_GObj* gobj)
             extern void Mex_OnFrameDispatch(int kind, void* gobj, void* vanilla);
             Mex_OnFrameDispatch(fp->kind, gobj,
                                 (void*) ftData_UnkMotionStates3[fp->kind]);
+        }
+        {
+            /* Geno on_frame hooks, after m-ex's onFrame (Geno layers on top of m-ex). */
+            extern void Geno_OnFrame(Fighter_GObj * gobj);
+            Geno_OnFrame(gobj);
         }
 #else
         if (ftData_UnkMotionStates3[fp->kind]) {

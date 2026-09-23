@@ -31,6 +31,11 @@
 #include <sysdolphin/baselib/gobjproc.h>
 #include <sysdolphin/baselib/random.h>
 
+#if defined(TARGET_PC)
+#include "../../../pc/geno/geno.h"
+extern void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode);
+#endif
+
 /* 07121C */ static void ftAction_8007121C(Fighter_GObj* gobj,
                                            CommandInfo* cmd);
 /* 0715EC */ static void ftAction_800715EC(Fighter_GObj* gobj,
@@ -1344,6 +1349,14 @@ void ftAction_80073240(Fighter_GObj* fighter_gobj)
             eventCode =
                 gmScriptEventCast(ftCommand->u, gmScriptEventDefault)->opcode;
             if (Command_Execute(ftCommand, eventCode) == false) {
+#if defined(TARGET_PC)
+                /* Geno's script escape (pc/geno/geno.h): an opcode past the end of the retail
+                 * tables, which no shipped script uses; every other opcode runs as before. */
+                if (eventCode == GENO_FTCMD_OP) {
+                    Geno_FtCmd(fighter_gobj, ftCommand, GENO_MODE_EXEC);
+                    continue;
+                }
+#endif
                 eventCode -= 0xA;
                 ftAction_803C06E8[eventCode](fighter_gobj, ftCommand);
             }
@@ -1380,8 +1393,15 @@ void ftAction_80073354(Fighter_GObj* gobj)
                 eventCode =
                     gmScriptEventCast(cmd->u, gmScriptEventDefault)->opcode;
                 if (Command_Execute(cmd, eventCode) == false) {
-                    eventCode -= 0xA;
-                    ftAction_803C07AC[eventCode](gobj, cmd);
+#if defined(TARGET_PC)
+                    if (eventCode == GENO_FTCMD_OP) {
+                        Geno_FtCmd(gobj, cmd, GENO_MODE_ANIM);
+                    } else
+#endif
+                    {
+                        eventCode -= 0xA;
+                        ftAction_803C07AC[eventCode](gobj, cmd);
+                    }
                 }
                 if (cmd->timer != timer && cmd->timer <= 0.0f) {
                     fp->throw_flags = 0;
@@ -1418,6 +1438,12 @@ void ftAction_8007349C(Fighter_GObj* gobj)
         {
             u32 id = cmd->u->Command_09.id;
             if (!Command_Execute(cmd, id)) {
+#if defined(TARGET_PC)
+                if (id == GENO_FTCMD_OP) {
+                    Geno_FtCmd(gobj, cmd, GENO_MODE_SKIP);
+                    continue;
+                }
+#endif
                 cmd->u += ftAction_803C0870[id - 10];
             }
         }

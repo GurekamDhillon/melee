@@ -6,6 +6,10 @@
 #include "inlines.h"
 #include <sysdolphin/baselib/debug.h>
 
+#if defined(TARGET_PC)
+extern void Geno_ApplyAttrs(Fighter* fp); /* pc/geno/geno_game.c */
+#endif
+
 float ftCo_CalcYScaledKnockback(float arg0, float scale, float arg2)
 {
     HSD_ASSERT(0x1E, scale != 0.0F);
@@ -150,6 +154,9 @@ void ftCo_800D0FA0(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
 
     fp->co_attrs = *fp->ft_data->x0;
+#if defined(TARGET_PC)
+    Geno_ApplyAttrs(fp);
+#endif
     {
         fp->x294_itPickup = *fp->ft_data->x40;
         fp->x2C4 = *fp->ft_data->x50;
@@ -171,6 +178,10 @@ void ftCo_800D105C(Fighter_GObj* fgp)
 
     fp = GET_FIGHTER(fgp);
     fp->co_attrs = *fp->ft_data->x0;
+#if defined(TARGET_PC)
+    /* Geno attribute overrides replace the file's values before the scale/metal/etc. modifiers. */
+    Geno_ApplyAttrs(fp);
+#endif
     fp->x294_itPickup = *fp->ft_data->x40;
     fp->x2C4 = *fp->ft_data->x50;
 

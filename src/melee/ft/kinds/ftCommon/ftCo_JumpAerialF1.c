@@ -102,6 +102,17 @@ void ftCo_800D74A4(Fighter_GObj* gobj)
     tmp = (struct Fighter_x2D0_t*) ((s32*) tmp + ftCo_800D7268(fp));
     vel.y = p->x14[msid - tmp->x2C];
     vel.z = 0.0F;
+#if defined(TARGET_PC)
+    {
+        /* Geno: jumps past the 5-row multi-jump table (and Brawl-number impulses). The retail
+         * code above reads x14[] out of bounds and picks a motion past the multi-jump states
+         * once jumpsUsed > 5; for a fighter with no Geno profile this changes nothing. */
+        extern void Geno_MultiJump(Fighter * fp, int first_state, int* msid, float* vy);
+        int geno_msid = msid2;
+        Geno_MultiJump(fp, msid2 - (fp->x1968_jumpsUsed - 1), &geno_msid, &vel.y);
+        msid2 = geno_msid;
+    }
+#endif
     ftCo_800CBAC4(gobj, msid2, &vel, false);
     if ((fp->input.lstick[0].x * fp->facing_dir) < -p->x4) {
         *(s32*) &fp->mv.ca.specials.grav = p->x0;

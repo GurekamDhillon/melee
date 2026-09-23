@@ -884,6 +884,9 @@ static int l_text(lua_State *L) {
     GwScriptDraw *d = gs_draw_new(GW_SDRAW_TEXT);
     const char *s;
     float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    /* luaL_tolstring pushes the string: with fewer than five arguments it landed in the colour
+       or size slot, so gd.text(x, y, s) and gd.text(x, y, s, colour) raised an error */
+    lua_settop(L, 5);
     luaL_tolstring(L, 3, NULL);
     s = lua_tostring(L, -1);
     if (d != NULL) {
@@ -2645,7 +2648,28 @@ static int test_script_input_task(void) {
     return 0;
 }
 
+static int test_script_text_optional_args(void) {
+    /* gd.text's colour and size are optional (luaL_tolstring's push once landed in their slots) */
+    char out[512];
+    gs.ndraw = 0;
+    if (t_exec("gd.text(10, 20, 'plain')", out, sizeof out) != 0 ||
+        t_exec("gd.text(10, 40, 'red', 0xFF0000FF)", out, sizeof out) != 0 ||
+        t_exec("gd.text(10, 60, 42, 0x00FF00FF, 2)", out, sizeof out) != 0) {
+        gw_test_fail("gd.text with optional arguments left out raised: %s", out);
+        return 1;
+    }
+    if (gs.ndraw != 3 || strcmp(gs.draw[0].text, "plain") != 0 || gs.draw[0].rgba != 0xFFFFFFFFu ||
+        gs.draw[1].rgba != 0xFF0000FFu || gs.draw[1].size != 1.0f || strcmp(gs.draw[2].text, "42") != 0 ||
+        gs.draw[2].size != 2.0f) {
+        gw_test_fail("gd.text draw list wrong (n=%d)", gs.ndraw);
+        return 1;
+    }
+    gs.ndraw = 0;
+    return 0;
+}
+
 void gw_script_tests_register(void) {
+    gw_test_register("script_text_optional_args", test_script_text_optional_args);
     gw_test_register("script_lua_runs", test_script_lua_runs);
     gw_test_register("script_sandbox", test_script_sandbox);
     gw_test_register("script_budget", test_script_budget);

@@ -143,7 +143,8 @@ static volatile LONG gw_gc_resume_pending; /* the next scanner open is a resume:
 static HANDLE gw_gc_scan_wake;             /* auto-reset: wakes the scanner early */
 static volatile LONG gw_gc_reports_total;  /* every good report since start (never reset) */
 static int (*gw_gc_test_open)(void);
-static int gw_gc_open_quiet;               /* scanner retry: skip the per-attempt failure lines */
+static int gw_gc_open_quiet;  /* scanner reclaim chain: skip the per-attempt failure lines */
+static DWORD gw_gc_open_err;  /* last CreateFile error of a WinUSB open */
 
 /* MELEE_INPUT_PROFILE (shim_vi.c): when each report arrived, and the spacing between reports.
  * The official adapter reports at 125 Hz (8 ms); an overclocked one (HIDUSBF / a patched
@@ -423,6 +424,7 @@ static int gw_gc_open(void) {
                               FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
       if (gw_gc_dev == INVALID_HANDLE_VALUE) {
+        gw_gc_open_err = GetLastError();
         /* ERROR_ACCESS_DENIED here almost always means another process (typically SDL, which
          * opens this adapter through its own HIDAPI GameCube driver) already holds the device. */
         if (!gw_gc_open_quiet) gw_pad_log("gw: gc adapter: found %s but CreateFile failed (error %lu%s)",
@@ -860,7 +862,8 @@ static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
       continue;
     }
     gw_gc_tried = 0;
-    gw_gc_open_quiet = chain && attempt > 1; /* one "held by another program" line per chain */
+    gw_gc_open_quiet = chain; /* a reclaim chain logs its own one-line outcome */
+    gw_gc_open_err = 0;
     ok = gw_gc_init_locked();
     gw_gc_open_quiet = 0;
     now = GetTickCount();
@@ -878,8 +881,9 @@ static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
     } else if (chain) {
       const DWORD el = now - chain_start;
       if (attempt == 1) {
-        gw_pad_log("gw: gc adapter: reclaim - another program still holds it; retrying every "
-                   "100 ms, then every second");
+        gw_pad_log("gw: gc adapter: reclaim - adapter busy (error %lu%s); retrying every 100 ms, "
+                   "then every second", (unsigned long)gw_gc_open_err,
+                   gw_gc_open_err == ERROR_ACCESS_DENIED ? ": another program holds it" : "");
       }
       if (el < 1500u) {
         retry_at = now + 100;

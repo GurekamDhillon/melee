@@ -31,7 +31,7 @@
 
 #define GW_SNAP_MAX_RANGES 4096
 #define GW_SNAP_MAX_SYMS 8192
-#define GW_SNAP_MAX_SLOTS 16
+#define GW_SNAP_MAX_SLOTS 48 /* slots are allocated on demand: gw_snap_open, gw_snap_reserve */
 
 typedef struct {
     uint32_t va;
@@ -659,9 +659,8 @@ static void sn_verify_equal(const GwSnapSlot *s, const char *what) {
     }
 }
 
-void gw_snap_save(int frame) {
+static void sn_save_to(GwSnapSlot *s, int frame) {
     double t0 = sn_ms();
-    GwSnapSlot *s = sn_slot_for(frame, 1);
     sn_boundary_asserts("save");
     s->frame = frame;
     if (sn.dirty_mode) {
@@ -683,12 +682,8 @@ void gw_snap_save(int frame) {
     }
 }
 
-int gw_snap_load(int frame) {
+static int sn_load_from(GwSnapSlot *s) {
     double t0 = sn_ms();
-    GwSnapSlot *s = sn_slot_for(frame, 0);
-    if (s == NULL) {
-        return -1;
-    }
     sn_boundary_asserts("load");
     sn_async_collect();
     sn_fixed_collect();
@@ -729,6 +724,72 @@ int gw_snap_load(int frame) {
     sn.ms_load += sn_ms() - t0;
     sn.n_load++;
     return 0;
+}
+
+void gw_snap_save(int frame) { sn_save_to(sn_slot_for(frame, 1), frame); }
+
+int gw_snap_load(int frame) {
+    GwSnapSlot *s = sn_slot_for(frame, 0);
+    return s != NULL ? sn_load_from(s) : -1;
+}
+
+/* ---- slots by INDEX (the Lua savestates and the Geno Lab's history ring, gw_script.c) ----------
+ * The frame-keyed calls above evict the lowest key when a new one arrives, which is right for
+ * SyncTest and rollback but wrong for savestates the user named. These address a slot directly;
+ * `tag` is only stored (it is the slot's "frame" for the keyed calls, so pick tags no session
+ * will ask for - negative ones). gw_snap_reserve(n) makes sure n slots exist: it opens the
+ * machinery with n slots, or grows an open one (up to GW_SNAP_MAX_SLOTS); each slot costs a MEM1
+ * copy (24 MB) plus the game globals. Returns the number of slots now available (0 = failed). */
+int gw_snap_open(int k);
+
+int gw_snap_reserve(int n) {
+    int i;
+    if (n > GW_SNAP_MAX_SLOTS) {
+        n = GW_SNAP_MAX_SLOTS;
+    }
+    if (!sn.enabled) {
+        if (gw_snap_open(n < 3 ? 1 : n - 2) != 0) {
+            return 0;
+        }
+    }
+    for (i = sn.nslots; i < n; ++i) {
+        GwSnapSlot *s = &sn.slot[i];
+        s->frame = -0x7FFFFFFF - 1;
+        s->mem1 = (uint8_t *) malloc(gw_mem1_size);
+        s->globals = (uint8_t *) malloc(sn.globals_len);
+        s->dirty = (uint64_t *) malloc(SN_BM_WORDS(sn.npages) * 8);
+        if (s->mem1 == NULL || s->globals == NULL || s->dirty == NULL) {
+            free(s->mem1);
+            free(s->globals);
+            free(s->dirty);
+            s->mem1 = NULL;
+            s->globals = NULL;
+            s->dirty = NULL;
+            gw_log("snap: out of memory growing to %d slots (have %d)", n, sn.nslots);
+            break;
+        }
+        sn_bm_fill(s->dirty, sn.npages); /* never synced: every page differs */
+        sn.nslots = i + 1;
+    }
+    return sn.nslots;
+}
+
+int gw_snap_slot_count(void) { return sn.enabled ? sn.nslots : 0; }
+
+/* bytes one slot costs */
+uint32_t gw_snap_slot_bytes(void) { return gw_mem1_size + sn.globals_len; }
+
+void gw_snap_save_index(int idx, int tag) {
+    if (sn.enabled && idx >= 0 && idx < sn.nslots) {
+        sn_save_to(&sn.slot[idx], tag);
+    }
+}
+
+int gw_snap_load_index(int idx) {
+    if (!sn.enabled || idx < 0 || idx >= sn.nslots) {
+        return -1;
+    }
+    return sn_load_from(&sn.slot[idx]);
 }
 
 static const GwSnapSym *sn_sym_at(uint32_t va) {

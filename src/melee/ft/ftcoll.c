@@ -710,6 +710,24 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                         inner_ret = true;
                     }
                 }
+#if defined(TARGET_PC)
+                {
+                    /* Lua on_hit: fighter hitbox -> fighter hurtbox (gw_script.c queues it and
+                     * dispatches after the frame, never on a resimulated one; read-only) */
+                    extern void Script_GameEvent(int what, int a, int b, int c, int d);
+                    union {
+                        float f;
+                        int i;
+                    } bits;
+                    int idx = (int) (hit0 - fp0->x914);
+                    bits.f = dmg;
+                    Script_GameEvent(2 /* LAB_EV_HIT */, fp0->player_id, fp1->player_id,
+                                     ((idx >= 0 && idx < 4) ? idx : 0xFF) |
+                                         (fp0->is_sub_fighter ? 0x100 : 0) |
+                                         (fp1->is_sub_fighter ? 0x200 : 0),
+                                     bits.i);
+                }
+#endif
                 ftColl_8007891C(fp0->gobj, fp1->gobj, dmg);
             }
         }
@@ -1328,6 +1346,23 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                     inner_ret = true;
                 }
 
+#if defined(TARGET_PC)
+                {
+                    /* Lua on_hit: item hitbox -> fighter (attacker = the item's owner) */
+                    extern void Script_GameEvent(int what, int a, int b, int c, int d);
+                    union {
+                        float f;
+                        int i;
+                    } bits;
+                    int owner = -1;
+                    if (item->owner != NULL && ftLib_80086960(item->owner)) {
+                        owner = GET_FIGHTER(item->owner)->player_id;
+                    }
+                    bits.f = scaled_dmg;
+                    Script_GameEvent(2 /* LAB_EV_HIT */, owner, fp->player_id,
+                                     0xFF | 0x400 | (fp->is_sub_fighter ? 0x200 : 0), bits.i);
+                }
+#endif
                 ftColl_80078998(item->entity, fp->gobj, scaled_dmg);
             }
 

@@ -15,6 +15,7 @@
 #include "gw.h"
 #include "gw_script.h"
 
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +39,25 @@ extern void gw_ScriptGame_LaunchScene(int game_mode);
 enum { SF_X, SF_Y, SF_VX, SF_VY, SF_PERCENT, SF_FACING, SF_ANIM_FRAME, SF_HITLAG };
 enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTUME, SI_SLOT_TYPE };
 
+/* ---- the Geno Lab's inspection half (script_game.c; field numbers in script_lab.h) ------------ */
+#include "../gameworld/script_lab.h"
+extern float gw_ScriptGame_LabF(int slot, int field);
+extern int gw_ScriptGame_LabI(int slot, int field);
+extern const char *gw_ScriptGame_LabAnimSymbol(int slot);
+extern int gw_ScriptGame_HitI(int slot, int i, int field);
+extern float gw_ScriptGame_HitF(int slot, int i, int field);
+extern int gw_ScriptGame_HurtI(int slot, int i, int field);
+extern float gw_ScriptGame_HurtF(int slot, int i, int field);
+extern float gw_ScriptGame_JointF(int slot, int i, int comp);
+extern int gw_ScriptGame_JointParent(int slot, int i);
+extern float gw_ScriptGame_CameraF(int field);
+extern int gw_ScriptGame_LabDebugDraw(int slot, int set, int value);
+extern int gw_ScriptGame_LabStageDraw(int mask, int value);
+extern int gw_ScriptGame_LabAttrCount(void);
+extern const char *gw_ScriptGame_LabAttrName(int i);
+extern float gw_ScriptGame_LabAttrF(int slot, int i);
+#include "gw_motion_names.inc"
+
 /* ---- the rest of the port --------------------------------------------------------------------- */
 extern void gw_SceneLaunch_SetText(const char *text);
 extern int gw_SceneLaunch_BootGameMode(void);
@@ -46,9 +66,10 @@ extern const char *gw_SceneReport_SceneName(int scene_kind);
 extern int gw_Snap_Resimulating(void);
 extern int gw_RB_Enabled(void);
 extern int gw_Netplay_Enabled(void);
-extern int gw_snap_open(int k);
-extern void gw_snap_save(int frame);
-extern int gw_snap_load(int frame);
+extern int gw_snap_reserve(int n);
+extern void gw_snap_save_index(int idx, int tag);
+extern int gw_snap_load_index(int idx);
+extern uint32_t gw_snap_slot_bytes(void);
 extern int gw_TextEntryUntil;
 /* gw_script_pad.c */
 extern void gw_script_pad_state(int ch, unsigned *buttons, int *sx, int *sy, int *cx, int *cy,
@@ -96,7 +117,28 @@ typedef struct {
     int scene_epoch;
     int frame;
     int match_frame;
+    int last_action[6], state_frame[6]; /* gd.player().action_frame bookkeeping */
 } GsSaveSlot;
+
+/* The Geno Lab's history ring: one snapshot per logic frame (gd.history / gd.step_back). Lives in
+ * gw_snap slots GS_SAVE_SLOTS.. (the user's savestates are slots 0..GS_SAVE_SLOTS-1). `tag` is the
+ * match frame about to run when the snapshot was taken. */
+#define GS_RING_MAX 40
+typedef struct {
+    GsSaveSlot s;
+    int tag;
+} GsRingEntry;
+
+/* events the engine reports mid-frame (Script_GameEvent), dispatched after the frame */
+#define GS_MAX_EVENTS 256
+typedef struct {
+    int what, a, b, c, d;
+    int hit[LAB_HI_COUNT]; /* LAB_EV_HIT: the attacker's hitbox as it was when it connected */
+    float hitf[LAB_HF_COUNT];
+    int has_hit;
+} GsEvent;
+
+#define GS_MAX_DRAW 2048
 
 static struct {
     int inited;
@@ -127,9 +169,25 @@ static struct {
     int pending_save, pending_load; /* slot+1, 0 = none */
     GsSaveSlot slot[GS_SAVE_SLOTS];
     int snap_ready;
-    /* draw list */
-    GwScriptDraw draw[512];
-    int ndraw;
+    /* history ring (Geno Lab) */
+    GsRingEntry ring[GS_RING_MAX];
+    int ring_depth; /* 0 = off */
+    int ring_next;
+    int pending_back; /* ring index + 1 to load, 0 = none */
+    /* engine events (Geno Lab) */
+    GsEvent ev[GS_MAX_EVENTS];
+    int nev, ev_dropped;
+    int want_events; /* some script defines one of the event hooks */
+    int in_event;    /* dispatching an event hook now */
+    /* draw lists: scripts build `draw[build]`, the overlay shows `draw[!build]` (swapped when a
+       frame's list is complete, so a render never shows a half-built or cleared list) */
+    GwScriptDraw draw[2][GS_MAX_DRAW];
+    int ndraw[2];
+    int build;
+    /* the match camera, fetched once per draw pass (gd.project) */
+    int cam_stamp, cam_fetched, cam_have;
+    float cam[LAB_CAM_COUNT];
+    int stage_zones; /* LAB_STAGE_ZONES has no getter: remember what we wrote */
     /* keys */
     unsigned char key_now[256], key_prev[256];
     /* console */
@@ -370,6 +428,19 @@ static void gs_require_gameplay(lua_State *L, const char *fn) {
     if (session && (gs.cur == gs.console || !s->rollback_safe)) {
         luaL_error(L, "gd.%s is not allowed during a netplay/rollback session", fn);
     }
+    if (session && gs.in_event) {
+        /* an event hook reports a frame that rollback may still undo: nothing may follow from it */
+        luaL_error(L, "gd.%s is not allowed from an event hook during a netplay/rollback session", fn);
+    }
+}
+
+/* Offline-only writes (the Geno Lab's cosmetic switches and history): gameplay scripts and the
+ * console, never during a netplay/rollback session - not even for rollback_safe scripts. */
+static void gs_require_offline(lua_State *L, const char *fn) {
+    gs_require_gameplay(L, fn);
+    if (gw_RB_Enabled() || gw_Netplay_Enabled()) {
+        luaL_error(L, "gd.%s is offline-only (refused during a netplay/rollback session)", fn);
+    }
 }
 
 static int gs_slot_arg(lua_State *L, int idx) {
@@ -412,6 +483,148 @@ static const char *gs_char_name(int c) {
     return buf;
 }
 
+/* ---- Geno Lab: names and extra player fields ------------------------------------------------ */
+static void gs_push_hit_fields(lua_State *L, const int *hi, const float *hf);
+/* "PlyKirby5K_Share_ACTION_AttackAirF_figatree" -> "AttackAirF"; the whole symbol when it has
+   another shape; "" for none. */
+static void gs_anim_name(const char *sym, char *out, size_t cap) {
+    const char *p, *e;
+    size_t n;
+    out[0] = '\0';
+    if (sym == NULL) {
+        return;
+    }
+    p = strstr(sym, "_ACTION_");
+    p = p != NULL ? p + 8 : sym;
+    e = strstr(p, "_figatree");
+    n = e != NULL ? (size_t) (e - p) : strlen(p);
+    if (n >= cap) {
+        n = cap - 1;
+    }
+    memcpy(out, p, n);
+    out[n] = '\0';
+}
+
+/* A motion (action-state) id's name: the common states and each vanilla fighter's special states
+   from the decomp's enums (gw_motion_names.inc); for a fighter with no table (m-ex), `fallback`
+   (the animation name) or "Special<n>". `name_kind` is LAB_I_NAME_KIND (Kirby clones -> Kirby). */
+static const char *gs_motion_name(int name_kind, int motion, const char *fallback, char *buf,
+                                  size_t cap) {
+    if (motion < 0) {
+        return "none";
+    }
+    if (motion < GW_MOTION_COMMON_COUNT && gw_motion_common[motion][0] != '\0') {
+        return gw_motion_common[motion];
+    }
+    if (motion >= GW_MOTION_COMMON_COUNT && name_kind >= 0 &&
+        name_kind < (int) (sizeof gw_motion_special / sizeof gw_motion_special[0])) {
+        int k = motion - GW_MOTION_COMMON_COUNT;
+        if (gw_motion_special[name_kind].names != NULL && k < gw_motion_special[name_kind].count &&
+            gw_motion_special[name_kind].names[k][0] != '\0') {
+            return gw_motion_special[name_kind].names[k];
+        }
+    }
+    if (fallback != NULL && fallback[0] != '\0') {
+        return fallback;
+    }
+    snprintf(buf, cap, "Special%d", motion - GW_MOTION_COMMON_COUNT);
+    return buf;
+}
+
+static const char *const gs_body_state_names[] = {"normal", "invincible", "intangible"};
+static const char *gs_body_state(int v) { return v >= 0 && v <= 2 ? gs_body_state_names[v] : "?"; }
+
+static void gs_push_hitbox(lua_State *L, int slot, int i) {
+    int hi[LAB_HI_COUNT], k;
+    float hf[LAB_HF_COUNT];
+    for (k = 0; k < LAB_HI_COUNT; ++k) hi[k] = gw_ScriptGame_HitI(slot, i, k);
+    for (k = 0; k < LAB_HF_COUNT; ++k) hf[k] = gw_ScriptGame_HitF(slot, i, k);
+    lua_createtable(L, 0, 24);
+    gs_setint(L, "id", i);
+    gs_setint(L, "state", hi[LAB_HI_STATE]);
+    gs_setbool(L, "active", hi[LAB_HI_STATE] != 0);
+    gs_setbool(L, "thrown", i == 4);
+    gs_push_hit_fields(L, hi, hf);
+    gs_setnum(L, "ox", hf[LAB_HF_OX]);
+    gs_setnum(L, "oy", hf[LAB_HF_OY]);
+    gs_setnum(L, "oz", hf[LAB_HF_OZ]);
+    gs_setint(L, "sfx_severity", hi[LAB_HI_SFX_SEVERITY]);
+    gs_setint(L, "sfx_kind", hi[LAB_HI_SFX_KIND]);
+    gs_setbool(L, "clank", hi[LAB_HI_CLANK]);
+    gs_setbool(L, "rebound", hi[LAB_HI_REBOUND]);
+}
+
+/* the fighter's hitboxes that are on (0-3, and 4 = the thrown hitbox), as a list */
+static void gs_push_hitbox_list(lua_State *L, int slot) {
+    int i, n = 0;
+    lua_newtable(L);
+    for (i = 0; i < 5; ++i) {
+        if (gw_ScriptGame_HitI(slot, i, LAB_HI_STATE) > 0) {
+            gs_push_hitbox(L, slot, i);
+            lua_rawseti(L, -2, ++n);
+        }
+    }
+}
+
+static void gs_push_xy(lua_State *L, const char *k, float x, float y) {
+    lua_createtable(L, 0, 2);
+    gs_setnum(L, "x", x);
+    gs_setnum(L, "y", y);
+    lua_setfield(L, -2, k);
+}
+
+static void gs_push_lab_fields(lua_State *L, int slot) {
+    char anim[128], buf[32];
+    const char *sym = gw_ScriptGame_LabAnimSymbol(slot);
+    int name_kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND);
+    int action = gw_ScriptGame_FighterI(slot, SI_ACTION);
+    int jumps_used = gw_ScriptGame_LabI(slot, LAB_I_JUMPS_USED);
+    int jumps_max = gw_ScriptGame_LabI(slot, LAB_I_MAX_JUMPS);
+    gs_anim_name(sym, anim, sizeof anim);
+    gs_setstr(L, "motion_name", gs_motion_name(name_kind, action, anim, buf, sizeof buf));
+    gs_setint(L, "anim_id", gw_ScriptGame_LabI(slot, LAB_I_ANIM_ID));
+    gs_setstr(L, "anim_name", anim);
+    gs_setstr(L, "anim_symbol", sym != NULL ? sym : "");
+    gs_setnum(L, "anim_frame_f", gw_ScriptGame_FighterF(slot, SF_ANIM_FRAME));
+    gs_setnum(L, "anim_rate", gw_ScriptGame_LabF(slot, LAB_F_ANIM_RATE));
+    gs_setnum(L, "hitstun", gw_ScriptGame_LabF(slot, LAB_F_HITSTUN));
+    gs_setbool(L, "in_hitlag", gw_ScriptGame_LabI(slot, LAB_I_IN_HITLAG) == 1);
+    gs_setbool(L, "in_hitstun", gw_ScriptGame_LabI(slot, LAB_I_IN_HITSTUN) == 1);
+    gs_setint(L, "intangible", gw_ScriptGame_LabI(slot, LAB_I_INTANG_TIMER));
+    gs_setint(L, "invincible", gw_ScriptGame_LabI(slot, LAB_I_INVINC_TIMER));
+    gs_setstr(L, "body_state", gs_body_state(gw_ScriptGame_LabI(slot, LAB_I_BODY_STATE)));
+    gs_setstr(L, "timed_state", gs_body_state(gw_ScriptGame_LabI(slot, LAB_I_TIMED_STATE)));
+    gs_setnum(L, "kb_vx", gw_ScriptGame_LabF(slot, LAB_F_KB_VX));
+    gs_setnum(L, "kb_vy", gw_ScriptGame_LabF(slot, LAB_F_KB_VY));
+    gs_setnum(L, "ground_vel", gw_ScriptGame_LabF(slot, LAB_F_GR_VEL));
+    gs_setnum(L, "kb_applied", gw_ScriptGame_LabF(slot, LAB_F_KB_APPLIED));
+    gs_setnum(L, "z", gw_ScriptGame_LabF(slot, LAB_F_Z));
+    gs_setnum(L, "scale", gw_ScriptGame_LabF(slot, LAB_F_SCALE));
+    gs_setnum(L, "cmd_timer", gw_ScriptGame_LabF(slot, LAB_F_CMD_TIMER));
+    lua_createtable(L, 0, 4);
+    gs_push_xy(L, "top", gw_ScriptGame_LabF(slot, LAB_F_ECB_TOP_X), gw_ScriptGame_LabF(slot, LAB_F_ECB_TOP_Y));
+    gs_push_xy(L, "bottom", gw_ScriptGame_LabF(slot, LAB_F_ECB_BOTTOM_X),
+               gw_ScriptGame_LabF(slot, LAB_F_ECB_BOTTOM_Y));
+    gs_push_xy(L, "left", gw_ScriptGame_LabF(slot, LAB_F_ECB_LEFT_X),
+               gw_ScriptGame_LabF(slot, LAB_F_ECB_LEFT_Y));
+    gs_push_xy(L, "right", gw_ScriptGame_LabF(slot, LAB_F_ECB_RIGHT_X),
+               gw_ScriptGame_LabF(slot, LAB_F_ECB_RIGHT_Y));
+    lua_setfield(L, -2, "ecb");
+    gs_setint(L, "ecb_lock", gw_ScriptGame_LabI(slot, LAB_I_ECB_LOCK));
+    gs_setint(L, "jumps_used", jumps_used);
+    gs_setint(L, "jumps_max", jumps_max);
+    gs_setint(L, "jumps_left", jumps_max > jumps_used ? jumps_max - jumps_used : 0);
+    gs_setint(L, "walljumps_used", gw_ScriptGame_LabI(slot, LAB_I_WALLJUMPS_USED));
+    gs_setnum(L, "shield", gw_ScriptGame_LabF(slot, LAB_F_SHIELD));
+    gs_setbool(L, "iasa", gw_ScriptGame_LabI(slot, LAB_I_IASA) == 1);
+    gs_setint(L, "ledge_cooldown", gw_ScriptGame_LabI(slot, LAB_I_LEDGE_COOLDOWN));
+    gs_setint(L, "draw_flags", gw_ScriptGame_LabI(slot, LAB_I_DRAW_FLAGS));
+    gs_setint(L, "joint_count", gw_ScriptGame_LabI(slot, LAB_I_JOINTS));
+    gs_setint(L, "hurtbox_count", gw_ScriptGame_LabI(slot, LAB_I_HURTBOXES));
+    gs_push_hitbox_list(L, slot);
+    lua_setfield(L, -2, "hitboxes");
+}
+
 static void gs_push_player(lua_State *L, int slot) {
     lua_createtable(L, 0, 20);
     gs_setint(L, "port", slot + 1);
@@ -432,6 +645,7 @@ static void gs_push_player(lua_State *L, int slot) {
     gs_setnum(L, "anim_frame", gw_ScriptGame_FighterF(slot, SF_ANIM_FRAME));
     gs_setbool(L, "airborne", gw_ScriptGame_FighterI(slot, SI_AIRBORNE) == 1);
     gs_setnum(L, "hitlag", gw_ScriptGame_FighterF(slot, SF_HITLAG));
+    gs_push_lab_fields(L, slot);
 }
 
 static int gs_players_present(int slot) { return gw_ScriptGame_FighterI(slot, SI_PRESENT) == 1; }
@@ -861,10 +1075,10 @@ static uint32_t gs_color_arg(lua_State *L, int idx, uint32_t def) {
 
 static GwScriptDraw *gs_draw_new(int kind) {
     GwScriptDraw *d;
-    if (gs.ndraw >= (int) (sizeof gs.draw / sizeof gs.draw[0])) {
+    if (gs.ndraw[gs.build] >= GS_MAX_DRAW) {
         return NULL;
     }
-    d = &gs.draw[gs.ndraw++];
+    d = &gs.draw[gs.build][gs.ndraw[gs.build]++];
     memset(d, 0, sizeof *d);
     d->kind = kind;
     d->size = 1.0f;
@@ -872,31 +1086,38 @@ static GwScriptDraw *gs_draw_new(int kind) {
 }
 
 static int l_text(lua_State *L) {
-    GwScriptDraw *d = gs_draw_new(GW_SDRAW_TEXT);
+    GwScriptDraw *d;
     const char *s;
     float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    /* the colour and size before luaL_tolstring, which pushes: index 4 would then be the text
+       (every gd.text without a colour used to fail "colours are 0xRRGGBBAA numbers") */
+    uint32_t rgba = gs_color_arg(L, 4, 0xFFFFFFFFu);
+    float size = (float) luaL_optnumber(L, 5, 1.0);
     luaL_tolstring(L, 3, NULL);
     s = lua_tostring(L, -1);
+    d = gs_draw_new(GW_SDRAW_TEXT);
     if (d != NULL) {
         d->x = x;
         d->y = y;
-        d->rgba = gs_color_arg(L, 4, 0xFFFFFFFFu);
-        d->size = (float) luaL_optnumber(L, 5, 1.0);
+        d->rgba = rgba;
+        d->size = size;
         snprintf(d->text, sizeof d->text, "%s", s);
     }
     return 0;
 }
 
 static int gs_rect(lua_State *L, int kind) {
-    GwScriptDraw *d = gs_draw_new(kind);
+    GwScriptDraw *d;
     float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
     float w = (float) luaL_checknumber(L, 3), h = (float) luaL_checknumber(L, 4);
+    uint32_t rgba = gs_color_arg(L, 5, kind == GW_SDRAW_FILL ? 0x000000A0u : 0xFFFFFFFFu);
+    d = gs_draw_new(kind); /* after the checks: a bad call leaves no blank item behind */
     if (d != NULL) {
         d->x = x;
         d->y = y;
         d->w = w;
         d->h = h;
-        d->rgba = gs_color_arg(L, 5, kind == GW_SDRAW_FILL ? 0x000000A0u : 0xFFFFFFFFu);
+        d->rgba = rgba;
     }
     return 0;
 }
@@ -1237,6 +1458,318 @@ static int l_collectgarbage(lua_State *L) {
     return 0;
 }
 
+/* ============================================================================================
+ * the Geno Lab API (docs/geno.md "Geno Lab"): inspection, debug drawing, projection, history
+ * ============================================================================================ */
+static int gs_present_arg(lua_State *L, int idx) {
+    int slot = gs_slot_arg(L, idx);
+    return gs_players_present(slot) ? slot : -1;
+}
+
+/* gd.debug_draw(port) -> flags; gd.debug_draw(port, flags) -> previous flags (offline, gameplay) */
+static int l_debug_draw(lua_State *L) {
+    int slot = gs_present_arg(L, 1), v;
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    if (lua_isnoneornil(L, 2)) {
+        v = gw_ScriptGame_LabDebugDraw(slot, 0, 0);
+    } else {
+        int flags = (int) luaL_checkinteger(L, 2);
+        gs_require_offline(L, "debug_draw");
+        v = gw_ScriptGame_LabDebugDraw(slot, 1, flags & 0xFF);
+    }
+    lua_pushinteger(L, v);
+    return 1;
+}
+
+/* gd.debug_stage() -> flags; gd.debug_stage(flags) -> the flags now set (offline, gameplay) */
+static int l_debug_stage(lua_State *L) {
+    int v;
+    if (lua_isnoneornil(L, 1)) {
+        v = gw_ScriptGame_LabStageDraw(0, 0);
+    } else {
+        int flags = (int) luaL_checkinteger(L, 1) & 31;
+        gs_require_offline(L, "debug_stage");
+        v = gw_ScriptGame_LabStageDraw(31, flags);
+        if (v >= 0) {
+            gs.stage_zones = (flags & LAB_STAGE_ZONES) != 0;
+        }
+    }
+    if (v < 0) {
+        lua_pushnil(L); /* no match camera */
+        return 1;
+    }
+    lua_pushinteger(L, v | (gs.stage_zones ? LAB_STAGE_ZONES : 0));
+    return 1;
+}
+
+/* gd.hitboxes(port [, all]) -> the hitboxes that are on (all = every slot 0-4, on or off) */
+static int l_hitboxes(lua_State *L) {
+    int slot = gs_present_arg(L, 1), i, n = 0;
+    int all = lua_toboolean(L, 2);
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    if (!all) {
+        gs_push_hitbox_list(L, slot);
+        return 1;
+    }
+    lua_newtable(L);
+    for (i = 0; i < 5; ++i) {
+        gs_push_hitbox(L, slot, i);
+        lua_rawseti(L, -2, ++n);
+    }
+    return 1;
+}
+
+/* gd.hurtboxes(port) -> {{id, bone, state, height, grabbable, ax, ay, az, bx, by, bz, radius}} */
+static int l_hurtboxes(lua_State *L) {
+    static const char *const heights[] = {"low", "mid", "high"};
+    int slot = gs_present_arg(L, 1), i, n;
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    n = gw_ScriptGame_LabI(slot, LAB_I_HURTBOXES);
+    lua_createtable(L, n > 0 ? n : 0, 0);
+    for (i = 0; i < n && i < 15; ++i) {
+        int h = gw_ScriptGame_HurtI(slot, i, LAB_UI_HEIGHT);
+        lua_createtable(L, 0, 12);
+        gs_setint(L, "id", i);
+        gs_setint(L, "bone", gw_ScriptGame_HurtI(slot, i, LAB_UI_BONE));
+        gs_setstr(L, "state", gs_body_state(gw_ScriptGame_HurtI(slot, i, LAB_UI_STATE)));
+        gs_setstr(L, "height", h >= 0 && h <= 2 ? heights[h] : "?");
+        gs_setbool(L, "grabbable", gw_ScriptGame_HurtI(slot, i, LAB_UI_GRABBABLE) == 1);
+        gs_setnum(L, "ax", gw_ScriptGame_HurtF(slot, i, LAB_UF_AX));
+        gs_setnum(L, "ay", gw_ScriptGame_HurtF(slot, i, LAB_UF_AY));
+        gs_setnum(L, "az", gw_ScriptGame_HurtF(slot, i, LAB_UF_AZ));
+        gs_setnum(L, "bx", gw_ScriptGame_HurtF(slot, i, LAB_UF_BX));
+        gs_setnum(L, "by", gw_ScriptGame_HurtF(slot, i, LAB_UF_BY));
+        gs_setnum(L, "bz", gw_ScriptGame_HurtF(slot, i, LAB_UF_BZ));
+        gs_setnum(L, "radius", gw_ScriptGame_HurtF(slot, i, LAB_UF_SIZE));
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+
+/* the match camera, fetched once per draw pass */
+static int gs_cam_fetch(void) {
+    int k;
+    if (gs.cam_fetched == gs.cam_stamp) {
+        return gs.cam_have;
+    }
+    gs.cam_fetched = gs.cam_stamp;
+    gs.cam_have = gw_ScriptGame_CameraF(LAB_CAM_OK) != 0.0f;
+    if (gs.cam_have) {
+        for (k = 0; k < LAB_CAM_COUNT; ++k) {
+            gs.cam[k] = gw_ScriptGame_CameraF(k);
+        }
+    }
+    return gs.cam_have;
+}
+
+/* World -> the 640x480 script screen through the match camera: the same maths as the game's
+ * lbVector_WorldToScreen (the viewing matrix, then MTXPerspective / MTXOrtho and GXProject with the
+ * camera's viewport). Returns 1 with the point in front of the camera, 0 behind it or no camera. */
+static int gs_project(float x, float y, float z, float *sx, float *sy, float *depth) {
+    const float *m = &gs.cam[LAB_CAM_VIEW];
+    float ex, ey, ez, xc, yc, wc;
+    float vx, vy, vw, vh;
+    int proj;
+    if (!gs_cam_fetch()) {
+        return 0;
+    }
+    ex = m[0] * x + m[1] * y + m[2] * z + m[3];
+    ey = m[4] * x + m[5] * y + m[6] * z + m[7];
+    ez = m[8] * x + m[9] * y + m[10] * z + m[11];
+    proj = (int) gs.cam[LAB_CAM_PROJ];
+    if (proj == 2) { /* ortho: top, bottom, left, right */
+        float t = gs.cam[LAB_CAM_P0], b = gs.cam[LAB_CAM_P1], l = gs.cam[LAB_CAM_P2],
+              r = gs.cam[LAB_CAM_P3];
+        if (r == l || t == b) return 0;
+        xc = ex * (2.0f / (r - l)) - (r + l) / (r - l);
+        yc = ey * (2.0f / (t - b)) - (t + b) / (t - b);
+        wc = 1.0f;
+    } else if (proj == 0) { /* perspective: fov (degrees), aspect */
+        float fov = gs.cam[LAB_CAM_P0], aspect = gs.cam[LAB_CAM_P1];
+        float cot;
+        if (ez > -0.01f || aspect == 0.0f) {
+            *depth = -ez;
+            return 0; /* at or behind the camera */
+        }
+        cot = 1.0f / tanf(fov * 0.5f * 3.14159265f / 180.0f);
+        xc = ex * (cot / aspect);
+        yc = ey * cot;
+        wc = 1.0f / -ez;
+    } else {
+        return 0; /* frustum cameras: not used by a match */
+    }
+    vx = gs.cam[LAB_CAM_VP_XMIN];
+    vy = gs.cam[LAB_CAM_VP_YMIN];
+    vw = gs.cam[LAB_CAM_VP_XMAX] - vx;
+    vh = gs.cam[LAB_CAM_VP_YMAX] - vy;
+    *sx = vw * 0.5f + vx + wc * xc * vw * 0.5f;
+    *sy = vh * 0.5f + vy - wc * yc * vh * 0.5f;
+    *depth = -ez;
+    return 1;
+}
+
+/* gd.project(x, y [, z]) -> sx, sy, visible, depth  (nil when there is no match camera) */
+static int l_project(lua_State *L) {
+    float sx = 0.0f, sy = 0.0f, depth = 0.0f;
+    float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    float z = (float) luaL_optnumber(L, 3, 0.0);
+    int ok = gs_project(x, y, z, &sx, &sy, &depth);
+    if (!ok && !gs.cam_have) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_pushnumber(L, sx);
+    lua_pushnumber(L, sy);
+    lua_pushboolean(L, ok && sx >= 0.0f && sx < 640.0f && sy >= 0.0f && sy < 480.0f);
+    lua_pushnumber(L, depth);
+    return 4;
+}
+
+/* gd.joints(port) -> {{index, parent, x, y, z, sx, sy, on}, ...}; list position = index + 1 */
+static int l_joints(lua_State *L) {
+    int slot = gs_present_arg(L, 1), n, i;
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    n = gw_ScriptGame_LabI(slot, LAB_I_JOINTS);
+    lua_createtable(L, n > 0 ? n : 0, 0);
+    for (i = 0; i < n; ++i) {
+        float x = gw_ScriptGame_JointF(slot, i, 0), y = gw_ScriptGame_JointF(slot, i, 1);
+        float z = gw_ScriptGame_JointF(slot, i, 2), sx = 0.0f, sy = 0.0f, depth = 0.0f;
+        int parent = gw_ScriptGame_JointParent(slot, i);
+        lua_createtable(L, 0, 8);
+        gs_setint(L, "index", i);
+        gs_setint(L, "parent", parent);
+        gs_setbool(L, "valid", parent != -2);
+        gs_setnum(L, "x", x);
+        gs_setnum(L, "y", y);
+        gs_setnum(L, "z", z);
+        if (parent != -2 && gs_project(x, y, z, &sx, &sy, &depth)) {
+            gs_setnum(L, "sx", sx);
+            gs_setnum(L, "sy", sy);
+            gs_setbool(L, "on", 1);
+        } else {
+            gs_setbool(L, "on", 0);
+        }
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+
+/* gd.attrs(port) -> {name = value} for the 40 named ftCo_DatAttrs fields, as the fighter has them */
+static int l_attrs(lua_State *L) {
+    int slot = gs_present_arg(L, 1), i, n = gw_ScriptGame_LabAttrCount();
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_createtable(L, 0, n);
+    for (i = 0; i < n; ++i) {
+        const char *name = gw_ScriptGame_LabAttrName(i);
+        if (name != NULL) {
+            gs_setnum(L, name, gw_ScriptGame_LabAttrF(slot, i));
+        }
+    }
+    return 1;
+}
+
+/* gd.motion_name(id [, port]) -> the action state's name (the port picks the fighter's table) */
+static int l_motion_name(lua_State *L) {
+    char buf[32];
+    int id = (int) luaL_checkinteger(L, 1);
+    int kind = -1;
+    if (!lua_isnoneornil(L, 2)) {
+        int slot = gs_present_arg(L, 2);
+        if (slot >= 0) {
+            kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND);
+        }
+    }
+    lua_pushstring(L, gs_motion_name(kind, id, NULL, buf, sizeof buf));
+    return 1;
+}
+
+static int gs_ring_find(int tag);
+static int gs_ring_now(void);
+static int gs_snap_ensure(int slots);
+static void gs_ring_clear(void);
+
+static void gs_push_history(lua_State *L) {
+    int k, avail = 0, oldest = -1, now = gs_ring_now();
+    for (k = 0; k < gs.ring_depth; ++k) {
+        if (gs.ring[k].s.used && gs.ring[k].s.scene_epoch == gs.scene_epoch && gs.ring[k].tag < now) {
+            avail++;
+            if (oldest < 0 || gs.ring[k].tag < oldest) oldest = gs.ring[k].tag;
+        }
+    }
+    /* frames you can step back = how far back the entries run without a gap */
+    for (k = 1; k <= gs.ring_depth && gs_ring_find(now - k) >= 0; ++k) {
+    }
+    lua_createtable(L, 0, 6);
+    gs_setint(L, "depth", gs.ring_depth);
+    gs_setint(L, "stored", avail);
+    gs_setint(L, "back", k - 1);
+    gs_setint(L, "now", now);
+    gs_setnum(L, "slot_mb", (double) gw_snap_slot_bytes() / (1024.0 * 1024.0));
+}
+
+/* gd.history([depth]) -> {depth, stored, back, now, slot_mb}: with depth, keep that many frames
+   of per-frame snapshots for gd.step_back (0 = off). Offline, gameplay. Each frame costs a
+   snapshot slot (MEM1 + globals, ~25 MB), allocated once. */
+static int l_history(lua_State *L) {
+    if (!lua_isnoneornil(L, 1)) {
+        int want = (int) luaL_checkinteger(L, 1), got;
+        gs_require_offline(L, "history");
+        if (want < 0) want = 0;
+        if (want > GS_RING_MAX) want = GS_RING_MAX;
+        if (want > 0) {
+            got = gs_snap_ensure(GS_SAVE_SLOTS + want) - GS_SAVE_SLOTS;
+            if (got < want) {
+                gw_Console_Print(GS_YELLOW, "history: only %d frames fit (asked for %d)",
+                                 got < 0 ? 0 : got, want);
+                want = got < 0 ? 0 : got;
+            }
+        }
+        gs_ring_clear();
+        gs.ring_depth = want;
+    }
+    gs_push_history(L);
+    return 1;
+}
+
+/* gd.step_back([n]) -> true | false, why: go back n frames through the history and stay paused.
+   Offline, gameplay. The load happens at once when paused, else at the next frame boundary. */
+static int l_step_back(lua_State *L) {
+    int n = (int) luaL_optinteger(L, 1, 1), k;
+    gs_require_offline(L, "step_back");
+    if (gs.ring_depth <= 0) {
+        lua_pushboolean(L, 0);
+        lua_pushstring(L, "history is off (gd.history(n) turns it on)");
+        return 2;
+    }
+    if (n < 1) n = 1;
+    k = gs_ring_find(gs_ring_now() - n);
+    if (k < 0) {
+        lua_pushboolean(L, 0);
+        lua_pushstring(L, "not that far back in the history");
+        return 2;
+    }
+    gs.pending_back = k + 1;
+    gs.paused = 1;
+    gs.step = 0;
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
 static const luaL_Reg gs_gd_funcs[] = {
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"scene", l_scene}, {"match", l_match},
     {"players", l_players}, {"player", l_player}, {"char_name", l_char_name}, {"pad", l_pad},
@@ -1249,6 +1782,10 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"data_read", l_data_read}, {"data_write", l_data_write}, {"script", l_script_info},
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
     {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
+    /* the Geno Lab (docs/geno.md) */
+    {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
+    {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"project", l_project}, {"attrs", l_attrs},
+    {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -1354,6 +1891,8 @@ static void gs_build_base(lua_State *L) {
     lua_setfield(L, -2, "api_version");
     lua_pushstring(L, "GD's Melee scripting API 1");
     lua_setfield(L, -2, "api_name");
+    lua_pushinteger(L, 1);
+    lua_setfield(L, -2, "lab_api"); /* the Geno Lab API (private build); nil elsewhere */
     lua_newtable(L);
     lua_setfield(L, -2, "deprecated"); /* name -> "use X instead", filled as the API evolves */
     lua_newtable(L);
@@ -1362,6 +1901,32 @@ static void gs_build_base(lua_State *L) {
         lua_setfield(L, -2, gs_buttons[i].name);
     }
     lua_setfield(L, -2, "buttons");
+    {
+        /* Geno Lab: Fighter.x21FC_flag bits (gd.debug_draw) - the byte ftDrawCommon_800805C8 reads
+           (PPC bitfields: b7 is 0x01). HIT and HURT are one switch in the game. */
+        static const struct {
+            const char *name;
+            int bit;
+        } draw[] = {{"MODEL", 0x01}, {"HIT", 0x02}, {"HURT", 0x02}, {"COLL", 0x02},
+                    {"DYNAMICS", 0x04}, {"STOMP", 0x08}, {"CPU", 0x10}, {"ITEM_PICKUP", 0x20},
+                    {"THROWN", 0x40}, {"COIN", 0x80}, {"DEFAULT", 0x01}},
+          stage[] = {{"COLL", LAB_STAGE_COLL}, {"ECB", LAB_STAGE_COLL},
+                     {"TERRAIN", LAB_STAGE_TERRAIN}, {"LEDGES", LAB_STAGE_LEDGES},
+                     {"POINTS", LAB_STAGE_POINTS}, {"ZONES", LAB_STAGE_ZONES}};
+        size_t k;
+        lua_newtable(L);
+        for (k = 0; k < sizeof draw / sizeof draw[0]; ++k) {
+            lua_pushinteger(L, draw[k].bit);
+            lua_setfield(L, -2, draw[k].name);
+        }
+        lua_setfield(L, -2, "draw");
+        lua_newtable(L);
+        for (k = 0; k < sizeof stage / sizeof stage[0]; ++k) {
+            lua_pushinteger(L, stage[k].bit);
+            lua_setfield(L, -2, stage[k].name);
+        }
+        lua_setfield(L, -2, "stage_draw");
+    }
     /* the prelude adds wait / wait_until / press / tilt */
     if (luaL_loadbufferx(L, gs_prelude, sizeof gs_prelude - 1, "=gd.prelude", "t") == LUA_OK) {
         lua_pushvalue(L, -2);
@@ -1792,6 +2357,7 @@ static void gs_init(void) {
         return;
     }
     gs.inited = 1;
+    gs.cam_fetched = -1;
     gs.cur = -1;
     gs.console = -1;
     gs.scene_kind = -1;
@@ -1865,6 +2431,15 @@ static void gs_init(void) {
 /* ============================================================================================
  * scene loop entry points
  * ============================================================================================ */
+static void gs_ring_clear(void) {
+    int k;
+    for (k = 0; k < GS_RING_MAX; ++k) {
+        gs.ring[k].s.used = 0;
+    }
+    gs.ring_next = 0;
+    gs.pending_back = 0;
+}
+
 void gw_Script_SceneBegin(int scene_kind) {
     int prev;
     gs_init();
@@ -1880,6 +2455,8 @@ void gw_Script_SceneBegin(int scene_kind) {
     gs.scene_epoch++;
     gs.paused = 0; /* a scene change always resumes */
     gs.step = 0;
+    gs.nev = 0; /* events from the scene that ended are dropped */
+    gs_ring_clear();
     {
         int i;
         for (i = 0; i < gs.n; ++i) {
@@ -1891,6 +2468,38 @@ void gw_Script_SceneBegin(int scene_kind) {
         }
     }
 }
+
+/* Does any script define one of the event hooks? (checked every tick: cheap, and it follows
+   scripts that define a hook late, e.g. from the console) */
+static void gs_update_want_events(void) {
+    static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land"};
+    int i, k, want = 0;
+    for (i = 0; i < gs.n && !want; ++i) {
+        for (k = 0; k < 4 && !want; ++k) {
+            if (gs_get_hook(i, hooks[k])) {
+                lua_pop(gs.L, 1);
+                want = 1;
+            }
+        }
+    }
+    gs.want_events = want;
+}
+
+/* The draw pass: on_tick opens a list (gw_Script_Tick), on_draw completes it after the render
+   (gw_Script_PostRender) and the overlay is handed the finished list. A scene loop that never
+   reaches PostRender still gets on_draw, at the next tick (the old timing). */
+static int gs_draw_open;
+static void gs_finish_draw(void) {
+    if (!gs_draw_open) {
+        return;
+    }
+    gs.cam_stamp++;
+    gs_hook_all("on_draw", 0, 0, 0);
+    gs.build = !gs.build;
+    gs_draw_open = 0;
+}
+
+static void gs_apply_pending(void);
 
 void gw_Script_Tick(void) {
     gs_init();
@@ -1908,9 +2517,25 @@ void gw_Script_Tick(void) {
         gw_log("script: launching scene (game mode %d)", mode);
         gw_ScriptGame_LaunchScene(mode);
     }
-    gs.ndraw = 0;
+    gs_finish_draw();
+    gs.ndraw[gs.build] = 0;
+    gs_draw_open = 1;
+    gs.cam_stamp++;
+    gs_update_want_events();
     gs_hook_all("on_tick", 0, 0, 0);
-    gs_hook_all("on_draw", 0, 0, 0);
+    /* Paused: no logic frame will run this tick, so there is no frame boundary for a pending
+       savestate / loadstate / step-back to wait for. This point is between frames too (the loop
+       top, before any logic), so apply them now - the render below shows the loaded state. */
+    if (gs.paused && gs.step == 0 && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+        gs_apply_pending();
+    }
+}
+
+void gw_Script_PostRender(void) {
+    if (gs.L == NULL) {
+        return;
+    }
+    gs_finish_draw();
 }
 
 int gw_Script_Iterations(int count) {
@@ -1924,26 +2549,56 @@ int gw_Script_Iterations(int count) {
     return 0;
 }
 
-void gw_Script_FramePre(void) {
-    if (gs.L == NULL) {
-        return;
+static void gs_slot_capture(GsSaveSlot *s) {
+    s->used = 1;
+    s->scene_epoch = gs.scene_epoch;
+    s->frame = gs.frame;
+    s->match_frame = gs.match_frame;
+    memcpy(s->last_action, gs.last_action, sizeof s->last_action);
+    memcpy(s->state_frame, gs.state_frame, sizeof s->state_frame);
+}
+
+static void gs_slot_restore(const GsSaveSlot *s) {
+    gs.match_frame = s->match_frame;
+    memcpy(gs.last_action, s->last_action, sizeof gs.last_action);
+    memcpy(gs.state_frame, s->state_frame, sizeof gs.state_frame);
+}
+
+static int gs_snap_ensure(int slots) {
+    int got = gw_snap_reserve(slots);
+    gs.snap_ready = got >= GS_SAVE_SLOTS;
+    return got;
+}
+
+/* the ring's "now": the match frame about to run */
+static int gs_ring_now(void) { return gs.match_active ? gs.match_frame + 1 : 0; }
+
+static int gs_ring_find(int tag) {
+    int k;
+    for (k = 0; k < gs.ring_depth; ++k) {
+        if (gs.ring[k].s.used && gs.ring[k].s.scene_epoch == gs.scene_epoch && gs.ring[k].tag == tag) {
+            return k;
+        }
     }
-    if ((gs.pending_save || gs.pending_load) && (gw_RB_Enabled() || gw_Netplay_Enabled())) {
+    return -1;
+}
+
+/* pending savestate / loadstate / step-back, at a frame boundary (FramePre, or Tick when paused) */
+static void gs_apply_pending(void) {
+    if ((gs.pending_save || gs.pending_load || gs.pending_back) &&
+        (gw_RB_Enabled() || gw_Netplay_Enabled())) {
         gw_Console_Print(GS_RED, "savestates are off during a netplay/rollback session");
-        gs.pending_save = gs.pending_load = 0;
+        gs.pending_save = gs.pending_load = gs.pending_back = 0;
     }
     if (gs.pending_save) {
         int slot = gs.pending_save - 1;
         gs.pending_save = 0;
         if (!gs.snap_ready) {
-            gs.snap_ready = gw_snap_open(GS_SAVE_SLOTS - 2) == 0;
+            gs_snap_ensure(GS_SAVE_SLOTS + gs.ring_depth);
         }
         if (gs.snap_ready) {
-            gw_snap_save(slot);
-            gs.slot[slot].used = 1;
-            gs.slot[slot].scene_epoch = gs.scene_epoch;
-            gs.slot[slot].frame = gs.frame;
-            gs.slot[slot].match_frame = gs.match_frame;
+            gw_snap_save_index(slot, -1 - slot);
+            gs_slot_capture(&gs.slot[slot]);
             gw_Console_Print(GS_GREEN, "saved state %d (frame %d)", slot + 1, gs.frame);
             gs_hook_all("on_savestate", 1, slot + 1, 0);
         } else {
@@ -1954,15 +2609,192 @@ void gw_Script_FramePre(void) {
         int slot = gs.pending_load - 1;
         gs.pending_load = 0;
         if (gs.slot[slot].used && gs.slot[slot].scene_epoch == gs.scene_epoch &&
-            gw_snap_load(slot) == 0) {
-            gs.match_frame = gs.slot[slot].match_frame;
+            gw_snap_load_index(slot) == 0) {
+            gs_slot_restore(&gs.slot[slot]);
+            gs_ring_clear(); /* the history belongs to the timeline we just left */
             gw_Console_Print(GS_GREEN, "loaded state %d", slot + 1);
             gs_hook_all("on_loadstate", 1, slot + 1, 0);
         } else {
             gw_Console_Print(GS_RED, "could not load state %d", slot + 1);
         }
     }
+    if (gs.pending_back) {
+        int k = gs.pending_back - 1;
+        gs.pending_back = 0;
+        if (k < gs.ring_depth && gs.ring[k].s.used && gs.ring[k].s.scene_epoch == gs.scene_epoch &&
+            gw_snap_load_index(GS_SAVE_SLOTS + k) == 0) {
+            gs_slot_restore(&gs.ring[k].s);
+            gs.nev = 0;
+            gs_hook_all("on_loadstate", 1, 0, 0); /* slot 0 = the history ring */
+        } else {
+            gw_Console_Print(GS_RED, "step back: that frame is no longer in the history");
+        }
+    }
+}
+
+/* one snapshot per logic frame into the history ring (gd.history) */
+static void gs_ring_save(void) {
+    int tag, k;
+    if (gs.ring_depth <= 0 || !gs.match_active || !gs.snap_ready || gw_RB_Enabled() ||
+        gw_Netplay_Enabled()) {
+        return;
+    }
+    tag = gs_ring_now();
+    k = gs_ring_find(tag);
+    if (k < 0) {
+        k = gs.ring_next;
+        gs.ring_next = (gs.ring_next + 1) % gs.ring_depth;
+    }
+    gw_snap_save_index(GS_SAVE_SLOTS + k, -100 - k);
+    gs_slot_capture(&gs.ring[k].s);
+    gs.ring[k].tag = tag;
+}
+
+void gw_Script_FramePre(void) {
+    if (gs.L == NULL) {
+        return;
+    }
+    gs_apply_pending();
+    gs_ring_save();
     gs_hook_all("on_frame_pre", 0, 0, 0);
+}
+
+/* ---- engine events (Script_GameEvent from ft/fighter.c, ft/ftcoll.c, ft/ftcommon.c) ------------ */
+/* Called from inside a logic frame. Only queues: the hooks run after the frame (FramePost), never
+   mid-frame and never for a resimulated frame, so a script cannot change the game while the
+   engine is in the middle of it. Reading the attacker's hitbox here is read-only. */
+void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
+    GsEvent *e;
+    if (gs.L == NULL || !gs.want_events || gw_Snap_Resimulating()) {
+        return;
+    }
+    if (gs.nev >= GS_MAX_EVENTS) {
+        gs.ev_dropped++;
+        return;
+    }
+    e = &gs.ev[gs.nev++];
+    e->what = what;
+    e->a = a;
+    e->b = b;
+    e->c = c;
+    e->d = d;
+    e->has_hit = 0;
+    if (what == LAB_EV_HIT && a >= 0 && a < 6 && (c & LAB_HIT_INDEX_MASK) < 5 &&
+        !(c & (LAB_HIT_ATTACKER_SUB | LAB_HIT_BY_ITEM))) {
+        int k, idx = c & LAB_HIT_INDEX_MASK;
+        for (k = 0; k < LAB_HI_COUNT; ++k) e->hit[k] = gw_ScriptGame_HitI(a, idx, k);
+        for (k = 0; k < LAB_HF_COUNT; ++k) e->hitf[k] = gw_ScriptGame_HitF(a, idx, k);
+        e->has_hit = 1;
+    }
+}
+
+static const char *const gs_element_names[] = {
+    "normal", "fire", "electric", "slash", "coin", "ice", "nap", "sleep", "catch",
+    "ground", "cape", "inert", "disable", "dark", "scball", "lipstick", "leadead"};
+
+static const char *gs_element_name(int e) {
+    return e >= 0 && e < (int) (sizeof gs_element_names / sizeof gs_element_names[0])
+               ? gs_element_names[e]
+               : "?";
+}
+
+static void gs_push_hit_fields(lua_State *L, const int *hi, const float *hf) {
+    gs_setint(L, "group", hi[LAB_HI_GROUP]);
+    gs_setint(L, "bone", hi[LAB_HI_BONE]);
+    gs_setnum(L, "damage", hf[LAB_HF_DAMAGE]);
+    gs_setint(L, "angle", hi[LAB_HI_ANGLE]);
+    gs_setint(L, "kbg", hi[LAB_HI_KBG]);
+    gs_setint(L, "bkb", hi[LAB_HI_BKB]);
+    gs_setint(L, "wbk", hi[LAB_HI_WBK]);
+    gs_setint(L, "element", hi[LAB_HI_ELEMENT]);
+    gs_setstr(L, "element_name", gs_element_name(hi[LAB_HI_ELEMENT]));
+    gs_setint(L, "shield_damage", hi[LAB_HI_SHIELD_DMG]);
+    gs_setnum(L, "radius", hf[LAB_HF_SIZE]);
+    gs_setnum(L, "x", hf[LAB_HF_X]);
+    gs_setnum(L, "y", hf[LAB_HF_Y]);
+    gs_setnum(L, "z", hf[LAB_HF_Z]);
+    gs_setnum(L, "px", hf[LAB_HF_PX]);
+    gs_setnum(L, "py", hf[LAB_HF_PY]);
+    gs_setnum(L, "pz", hf[LAB_HF_PZ]);
+    gs_setbool(L, "hit_air", hi[LAB_HI_HIT_AIR]);
+    gs_setbool(L, "hit_ground", hi[LAB_HI_HIT_GROUND]);
+}
+
+static void gs_dispatch_events(void) {
+    int n = gs.nev, k, i;
+    if (n == 0) {
+        return;
+    }
+    gs.nev = 0;
+    if (gs.ev_dropped > 0) {
+        gw_log("script: %d engine events dropped (queue full)", gs.ev_dropped);
+        gs.ev_dropped = 0;
+    }
+    gs.in_event = 1;
+    for (k = 0; k < n; ++k) {
+        const GsEvent *e = &gs.ev[k];
+        static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land"};
+        if (e->what < 1 || e->what > 4) {
+            continue;
+        }
+        for (i = 0; i < gs.n; ++i) {
+            lua_State *L = gs.L;
+            int nargs;
+            if (!gs_may_run(i) || !gs_get_hook(i, names[e->what])) {
+                continue;
+            }
+            switch (e->what) {
+            case LAB_EV_ACTION: /* (port, old, new, sub) */
+                lua_pushinteger(L, e->a + 1);
+                lua_pushinteger(L, e->b);
+                lua_pushinteger(L, e->c);
+                lua_pushboolean(L, e->d);
+                nargs = 4;
+                break;
+            case LAB_EV_HIT: /* (attacker port or nil, victim port, info) */
+                if (e->a >= 0) {
+                    lua_pushinteger(L, e->a + 1);
+                } else {
+                    lua_pushnil(L);
+                }
+                lua_pushinteger(L, e->b + 1);
+                lua_createtable(L, 0, 24);
+                {
+                    union {
+                        int i;
+                        float f;
+                    } u;
+                    u.i = e->d;
+                    gs_setnum(L, "dealt", u.f);
+                }
+                if ((e->c & LAB_HIT_INDEX_MASK) != LAB_HIT_INDEX_MASK) {
+                    gs_setint(L, "hitbox", e->c & LAB_HIT_INDEX_MASK);
+                }
+                gs_setbool(L, "item", (e->c & LAB_HIT_BY_ITEM) != 0);
+                gs_setbool(L, "attacker_sub", (e->c & LAB_HIT_ATTACKER_SUB) != 0);
+                gs_setbool(L, "victim_sub", (e->c & LAB_HIT_VICTIM_SUB) != 0);
+                if (e->has_hit) {
+                    gs_push_hit_fields(L, e->hit, e->hitf);
+                }
+                nargs = 3;
+                break;
+            case LAB_EV_HITLAG: /* (port, entering, sub) */
+                lua_pushinteger(L, e->a + 1);
+                lua_pushboolean(L, e->b);
+                lua_pushboolean(L, e->c);
+                nargs = 3;
+                break;
+            default: /* LAB_EV_LAND: (port, motion, sub) */
+                lua_pushinteger(L, e->a + 1);
+                lua_pushinteger(L, e->b);
+                lua_pushboolean(L, e->c);
+                nargs = 3;
+                break;
+            }
+            gs_pcall(i, nargs, 0, names[e->what]);
+        }
+    }
+    gs.in_event = 0;
 }
 
 void gw_Script_FramePost(void) {
@@ -1993,12 +2825,15 @@ void gw_Script_FramePost(void) {
     } else if (gs.match_active) {
         gs.match_frame++;
     }
+    gs_dispatch_events();
     gs_hook_all("on_frame", 0, 0, 0);
     gs_run_tasks();
 }
 
-int gw_Script_DrawCount(void) { return gs.ndraw; }
-const GwScriptDraw *gw_Script_DrawAt(int i) { return (i >= 0 && i < gs.ndraw) ? &gs.draw[i] : NULL; }
+int gw_Script_DrawCount(void) { return gs.ndraw[!gs.build]; }
+const GwScriptDraw *gw_Script_DrawAt(int i) {
+    return (i >= 0 && i < gs.ndraw[!gs.build]) ? &gs.draw[!gs.build][i] : NULL;
+}
 
 uint64_t gw_Script_GameplayHash(void) {
     uint64_t h = 0;
@@ -2636,6 +3471,150 @@ static int test_script_input_task(void) {
     return 0;
 }
 
+/* ---- Geno Lab ---------------------------------------------------------------------------------- */
+static int test_script_lab_api(void) {
+    static const struct {
+        const char *expr, *want;
+    } checks[] = {
+        {"= gd.lab_api", "1"},
+        {"= gd.draw.MODEL, gd.draw.HIT, gd.draw.HURT, gd.draw.THROWN", "1\n2\n2\n64"},
+        {"= gd.stage_draw.COLL, gd.stage_draw.ECB, gd.stage_draw.ZONES", "1\n1\n16"},
+        {"= gd.motion_name(14)", "Wait"},
+        {"= gd.motion_name(341)", "Special0"},
+        {"= gd.player(1) == nil and gd.debug_draw(1) == nil and gd.joints(1) == nil", "true"},
+        {"= gd.hitboxes(1) == nil and gd.hurtboxes(1) == nil and gd.attrs(1) == nil", "true"},
+        {"= gd.history().depth", "0"},
+        {"= select(2, gd.step_back(1))", "history is off"},
+    };
+    char out[512];
+    size_t i;
+    for (i = 0; i < sizeof checks / sizeof checks[0]; ++i) {
+        if (t_exec(checks[i].expr, out, sizeof out) != 0 || strstr(out, checks[i].want) == NULL) {
+            gw_test_fail("%s gave \"%s\" (want \"%s\")", checks[i].expr, out, checks[i].want);
+            return 1;
+        }
+    }
+    /* the Kirby table: special state 341 is JumpAerialF1 */
+    if (strcmp(gs_motion_name(4, 341, NULL, out, sizeof out), "JumpAerialF1") != 0 ||
+        strcmp(gs_motion_name(0x21, 400, "AttackAirF", out, sizeof out), "AttackAirF") != 0) {
+        gw_test_fail("motion names: kirby 341 / m-ex fallback wrong");
+        return 1;
+    }
+    {
+        char a[64];
+        gs_anim_name("PlyKirby5K_Share_ACTION_AttackAirF_figatree", a, sizeof a);
+        if (strcmp(a, "AttackAirF") != 0) {
+            gw_test_fail("anim name from symbol: \"%s\"", a);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* gd.project against a hand-built camera: the fighter-origin maths of lbVector_WorldToScreen */
+static int test_script_lab_project(void) {
+    float sx = 0.0f, sy = 0.0f, depth = 0.0f;
+    int k, rc = 0;
+    memset(gs.cam, 0, sizeof gs.cam);
+    gs.cam[LAB_CAM_OK] = 1.0f;
+    /* identity view with the camera 100 units back: eye space z = world z - 100 */
+    gs.cam[LAB_CAM_VIEW + 0] = 1.0f;
+    gs.cam[LAB_CAM_VIEW + 5] = 1.0f;
+    gs.cam[LAB_CAM_VIEW + 10] = 1.0f;
+    gs.cam[LAB_CAM_VIEW + 11] = -100.0f;
+    gs.cam[LAB_CAM_PROJ] = 0.0f;
+    gs.cam[LAB_CAM_P0] = 90.0f; /* fov: cot(45) = 1 */
+    gs.cam[LAB_CAM_P1] = 640.0f / 480.0f;
+    gs.cam[LAB_CAM_VP_XMIN] = 0.0f;
+    gs.cam[LAB_CAM_VP_XMAX] = 640.0f;
+    gs.cam[LAB_CAM_VP_YMIN] = 0.0f;
+    gs.cam[LAB_CAM_VP_YMAX] = 480.0f;
+    gs.cam_have = 1;
+    gs.cam_fetched = gs.cam_stamp;
+    if (!gs_project(0.0f, 0.0f, 0.0f, &sx, &sy, &depth) || fabsf(sx - 320.0f) > 0.01f ||
+        fabsf(sy - 240.0f) > 0.01f || fabsf(depth - 100.0f) > 0.01f) {
+        gw_test_fail("origin projected to %.2f %.2f (depth %.2f), want 320 240 (100)", sx, sy, depth);
+        rc = 1;
+    }
+    /* y = 50 at depth 100 with fov 90: half the way up from the centre */
+    if (!gs_project(0.0f, 50.0f, 0.0f, &sx, &sy, &depth) || fabsf(sy - 120.0f) > 0.01f) {
+        gw_test_fail("(0, 50) projected to y %.2f, want 120", sy);
+        rc = 1;
+    }
+    if (gs_project(0.0f, 0.0f, 150.0f, &sx, &sy, &depth)) {
+        gw_test_fail("a point behind the camera projected as visible");
+        rc = 1;
+    }
+    for (k = 0; k < LAB_CAM_COUNT; ++k) gs.cam[k] = 0.0f;
+    gs.cam_have = 0;
+    gs.cam_fetched = -1;
+    return rc;
+}
+
+/* engine events: queued mid-frame, dispatched after it with the documented arguments */
+static int test_script_lab_events(void) {
+    char out[512];
+    union {
+        float f;
+        int i;
+    } bits;
+    if (t_exec("ev = {}; function on_action_change(p, o, n, sub) ev[#ev+1] = 'a'..p..':'..o..'>'..n end "
+               "function on_hit(a, v, i) ev[#ev+1] = 'h'..tostring(a)..'>'..v..':'..i.dealt..(i.item and 'i' or '') end "
+               "function on_hitlag(p, on) ev[#ev+1] = 'l'..p..(on and '+' or '-') end "
+               "function on_land(p, m) ev[#ev+1] = 'g'..p..':'..m end",
+               out, sizeof out) != 0) {
+        gw_test_fail("defining event hooks failed: %s", out);
+        return 1;
+    }
+    gw_Script_Tick(); /* notices the hooks */
+    gw_Script_GameEvent(LAB_EV_ACTION, 0, 14, 20, 0);
+    bits.f = 12.5f;
+    gw_Script_GameEvent(LAB_EV_HIT, -1, 1, 0xFF | LAB_HIT_BY_ITEM, bits.i);
+    gw_Script_GameEvent(LAB_EV_HITLAG, 1, 1, 0, 0);
+    gw_Script_GameEvent(LAB_EV_LAND, 0, 42, 0, 0);
+    if (t_exec("= #ev", out, sizeof out) != 0 || strstr(out, "0") == NULL) {
+        gw_test_fail("events ran before the frame ended: %s", out);
+        return 1;
+    }
+    gw_Script_FramePost();
+    if (t_exec("= table.concat(ev, ' ')", out, sizeof out) != 0 ||
+        strstr(out, "a1:14>20 hnil>2:12.5i l2+ g1:42") == NULL) {
+        gw_test_fail("event hooks got \"%s\"", out);
+        return 1;
+    }
+    t_exec("on_action_change, on_hit, on_hitlag, on_land, ev = nil", out, sizeof out);
+    gw_Script_Tick();
+    if (gs.want_events) {
+        gw_test_fail("event queue still armed with no hook defined");
+        return 1;
+    }
+    return 0;
+}
+
+/* on_draw runs after the render and its list is the one the overlay gets */
+static int test_script_lab_draw_pass(void) {
+    char out[256];
+    int n0;
+    t_exec("function on_draw() gd.text(1, 2, 'lab-draw-test') end", out, sizeof out);
+    gw_Script_Tick();
+    gw_Script_PostRender();
+    n0 = gw_Script_DrawCount();
+    if (n0 < 1 || strcmp(gw_Script_DrawAt(n0 - 1)->text, "lab-draw-test") != 0) {
+        gw_test_fail("on_draw's text is not in the finished list (%d items)", n0);
+        t_exec("on_draw = nil", out, sizeof out);
+        return 1;
+    }
+    gw_Script_Tick(); /* a new list opens; the overlay still shows the finished one */
+    if (gw_Script_DrawCount() != n0) {
+        gw_test_fail("opening a new list changed the shown one");
+        t_exec("on_draw = nil", out, sizeof out);
+        return 1;
+    }
+    t_exec("on_draw = nil", out, sizeof out);
+    gw_Script_PostRender();
+    return 0;
+}
+
 void gw_script_tests_register(void) {
     gw_test_register("script_lua_runs", test_script_lua_runs);
     gw_test_register("script_sandbox", test_script_sandbox);
@@ -2643,4 +3622,8 @@ void gw_script_tests_register(void) {
     gw_test_register("script_isolation_and_errors", test_script_isolation_and_errors);
     gw_test_register("script_manifest_and_hash", test_script_manifest_and_hash);
     gw_test_register("script_input_task", test_script_input_task);
+    gw_test_register("script_lab_api", test_script_lab_api);
+    gw_test_register("script_lab_project", test_script_lab_project);
+    gw_test_register("script_lab_events", test_script_lab_events);
+    gw_test_register("script_lab_draw_pass", test_script_lab_draw_pass);
 }

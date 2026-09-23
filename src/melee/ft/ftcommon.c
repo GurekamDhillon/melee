@@ -567,6 +567,14 @@ void ftCommon_8007D6A4(Fighter* fp)
         fp->self_vel.x = fp->x6A4_transNOffset.z * fp->facing_dir;
     }
     ftCommon_ClampGroundVel(fp, fp->co_attrs.ground_max_horizontal_velocity);
+#if defined(TARGET_PC)
+    if (fp->ground_or_air == GA_Air) {
+        /* Lua on_land (gw_script.c; dispatched after the frame, never on a resimulated one) */
+        extern void Script_GameEvent(int what, int a, int b, int c, int d);
+        Script_GameEvent(4 /* LAB_EV_LAND */, fp->player_id, fp->motion_id,
+                         fp->is_sub_fighter, 0);
+    }
+#endif
     fp->ground_or_air = GA_Ground;
     fp->gr_vel = fp->self_vel.x;
     fp->x1968_jumpsUsed = 0;

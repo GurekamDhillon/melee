@@ -9,8 +9,10 @@
  *
  * WHERE THE ENGINE RUNS (all on the game thread, from gmscene.c's scene loop):
  *   gw_Script_SceneBegin   a scene started (on_scene, and on_match_end when a match scene ends)
- *   gw_Script_Tick         once per render tick before the logic: console, socket, on_tick,
- *                          on_draw (the draw list is rebuilt here every tick)
+ *   gw_Script_Tick         once per render tick before the logic: console, socket, on_tick
+ *                          (a new draw list is opened here every tick)
+ *   gw_Script_PostRender   after the tick's render pass: on_draw, then the finished list is
+ *                          handed to the overlay
  *   gw_Script_Iterations   pause / frame advance: how many logic frames this tick runs
  *   gw_Script_FramePre     at the logic-frame boundary: pending savestate/loadstate, on_frame_pre
  *   gw_Script_FramePost    after the frame's GObj procs: on_frame, input-script tasks, match
@@ -42,6 +44,11 @@ void gw_Script_Tick(void);
 int gw_Script_Iterations(int count);
 void gw_Script_FramePre(void);
 void gw_Script_FramePost(void);
+void gw_Script_PostRender(void); /* after the render pass: on_draw, then the list is shown */
+/* the engine's event sites (ft/fighter.c, ftcoll.c, ftcommon.c; LAB_EV_* in
+ * pc/gameworld/script_lab.h): queued, dispatched to on_action_change / on_hit / on_hitlag /
+ * on_land after the frame, never for a resimulated frame */
+void gw_Script_GameEvent(int what, int a, int b, int c, int d);
 
 /* ---- input (shim_pad.c) -------------------------------------------------------------------- */
 void gw_Script_PadApply(void *pad_status_array); /* PADStatus[4], button field big-endian */

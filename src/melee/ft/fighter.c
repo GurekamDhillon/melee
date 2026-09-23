@@ -1093,6 +1093,13 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
      * the end with no fault, and both were reported OK. MELEE_LOG_MOTION=1 turns it on; it is
      * off by default because it is a line per state change per fighter, far too much for play. */
     ft_PcTraceMotion(gobj, msid);
+    {
+        /* Lua on_action_change (gw_script.c queues it; dispatched after the frame, never on a
+         * resimulated one). Read-only: nothing here changes the game. */
+        extern void Script_GameEvent(int what, int a, int b, int c, int d);
+        Script_GameEvent(1 /* LAB_EV_ACTION */, fp->player_id, fp->motion_id, msid,
+                         fp->is_sub_fighter);
+    }
 #endif
     fp->motion_id = msid;
 #if defined(TARGET_PC)
@@ -3227,6 +3234,12 @@ void Fighter_UnkRecursiveFunc_8006D044(Fighter_GObj* gobj)
         fp->pre_hitlag_cb(gobj);
     }
 
+#if defined(TARGET_PC)
+    if (!fp->x2219_b5) {
+        extern void Script_GameEvent(int what, int a, int b, int c, int d);
+        Script_GameEvent(3 /* LAB_EV_HITLAG */, fp->player_id, 1, fp->is_sub_fighter, 0);
+    }
+#endif
     fp->x2219_b5 = 1;
 
     if (fp->x1A5C && !fp->x2219_b7) {
@@ -3255,6 +3268,13 @@ static void Fighter_8006D10C_Inline1(Fighter_GObj* gobj)
             if (fp->post_hitlag_cb) {
                 fp->post_hitlag_cb(gobj);
             }
+#if defined(TARGET_PC)
+            if (fp->x2219_b5) {
+                extern void Script_GameEvent(int what, int a, int b, int c, int d);
+                Script_GameEvent(3 /* LAB_EV_HITLAG */, fp->player_id, 0,
+                                 fp->is_sub_fighter, 0);
+            }
+#endif
             fp->x2219_b5 = 0;
             Fighter_8006D10C_Inline2(fp);
         }
@@ -3270,6 +3290,12 @@ void Fighter_8006D10C(Fighter_GObj* gobj)
         fp->post_hitlag_cb(gobj);
     }
 
+#if defined(TARGET_PC)
+    if (fp->x2219_b5) {
+        extern void Script_GameEvent(int what, int a, int b, int c, int d);
+        Script_GameEvent(3 /* LAB_EV_HITLAG */, fp->player_id, 0, fp->is_sub_fighter, 0);
+    }
+#endif
     fp->x2219_b5 = 0;
 
     if (fp->x1A5C != NULL && !fp->x2219_b7) {

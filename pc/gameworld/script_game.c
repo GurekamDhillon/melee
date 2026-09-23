@@ -150,3 +150,488 @@ void ScriptGame_LaunchScene(int game_mode)
     gmMainLib_8046B0F0.resetting = true;
     gm_801A4B60();
 }
+
+/* ============================================================================================
+ * Geno Lab: read-only inspection for the Lua Lab (docs/geno.md "Geno Lab"). Field numbers are
+ * in script_lab.h, shared with gw_script.c. Nothing below writes game state except the two
+ * cosmetic debug-draw switches, which the native side refuses during a netplay session.
+ * ============================================================================================ */
+#include <melee/cm/camera.h>
+#include <melee/ft/ftparts.h>
+#include <melee/lb/types.h>
+#include <sysdolphin/baselib/cobj.h>
+#include <sysdolphin/baselib/jobj.h>
+
+#include "script_lab.h"
+
+float ScriptGame_LabF(int slot, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    CollData* cd;
+    if (fp == NULL) {
+        return 0.0f;
+    }
+    cd = &fp->coll_data;
+    switch (field) {
+    case LAB_F_ANIM_RATE:
+        return fp->frame_speed_mul;
+    case LAB_F_HITSTUN:
+        return fp->x221C_b6 ? fp->mv.co.damage.x0 : 0.0f;
+    case LAB_F_KB_VX:
+        return fp->x8c_kb_vel.x;
+    case LAB_F_KB_VY:
+        return fp->x8c_kb_vel.y;
+    case LAB_F_SHIELD:
+        return fp->shield_health;
+    case LAB_F_ECB_TOP_X:
+        return cd->cur_pos.x + cd->ecb.top.x;
+    case LAB_F_ECB_TOP_Y:
+        return cd->cur_pos.y + cd->ecb.top.y;
+    case LAB_F_ECB_BOTTOM_X:
+        return cd->cur_pos.x + cd->ecb.bottom.x;
+    case LAB_F_ECB_BOTTOM_Y:
+        return cd->cur_pos.y + cd->ecb.bottom.y;
+    case LAB_F_ECB_LEFT_X:
+        return cd->cur_pos.x + cd->ecb.left.x;
+    case LAB_F_ECB_LEFT_Y:
+        return cd->cur_pos.y + cd->ecb.left.y;
+    case LAB_F_ECB_RIGHT_X:
+        return cd->cur_pos.x + cd->ecb.right.x;
+    case LAB_F_ECB_RIGHT_Y:
+        return cd->cur_pos.y + cd->ecb.right.y;
+    case LAB_F_GR_VEL:
+        return fp->gr_vel;
+    case LAB_F_KB_APPLIED:
+        return fp->dmg.kb_applied;
+    case LAB_F_Z:
+        return fp->cur_pos.z;
+    case LAB_F_SCALE:
+        return fp->x34_scale.y;
+    case LAB_F_CMD_TIMER:
+        return fp->cmd_timer;
+    }
+    return 0.0f;
+}
+
+static int lab_joint_count(Fighter* fp)
+{
+    int n;
+    if (fp->parts == NULL || ftPartsTable == NULL || ftPartsTable[fp->kind] == NULL) {
+        return 0;
+    }
+    n = (int) ftPartsTable[fp->kind]->parts_num;
+    return n < 0 ? 0 : n > MAX_FT_PARTS ? MAX_FT_PARTS : n;
+}
+
+static int lab_joint_index(Fighter* fp, HSD_JObj* jobj)
+{
+    int i, n = lab_joint_count(fp);
+    if (jobj == NULL) {
+        return -1;
+    }
+    for (i = 0; i < n; i++) {
+        if (fp->parts[i].joint == jobj) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int ScriptGame_LabI(int slot, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL) {
+        return -1;
+    }
+    switch (field) {
+    case LAB_I_ANIM_ID:
+        return (int) fp->anim_id;
+    case LAB_I_NAME_KIND:
+        return (int) FTKB_CANON_KIND(fp->kind);
+    case LAB_I_INTANG_TIMER:
+        return (int) fp->x1990;
+    case LAB_I_INVINC_TIMER:
+        return (int) fp->x1994;
+    case LAB_I_BODY_STATE:
+        return (int) fp->x1988;
+    case LAB_I_TIMED_STATE:
+        return (int) fp->x198C;
+    case LAB_I_JUMPS_USED:
+        return (int) fp->x1968_jumpsUsed;
+    case LAB_I_MAX_JUMPS:
+        return (int) fp->co_attrs.max_jumps;
+    case LAB_I_WALLJUMPS_USED:
+        return (int) fp->x1969_walljumpUsed;
+    case LAB_I_IN_HITLAG:
+        return fp->x2219_b5 ? 1 : 0;
+    case LAB_I_IN_HITSTUN:
+        return fp->x221C_b6 ? 1 : 0;
+    case LAB_I_IASA:
+        return fp->allow_interrupt ? 1 : 0;
+    case LAB_I_LEDGE_COOLDOWN:
+        return (int) fp->x2064_ledgeCooldown;
+    case LAB_I_ECB_LOCK:
+        return (int) fp->ecb_lock;
+    case LAB_I_DRAW_FLAGS:
+        return (int) fp->x21FC_flag.byte;
+    case LAB_I_SUB:
+        return fp->is_sub_fighter ? 1 : 0;
+    case LAB_I_JOINTS:
+        return lab_joint_count(fp);
+    case LAB_I_HURTBOXES:
+        return (int) fp->hurt_capsules_len;
+    }
+    return -1;
+}
+
+/* The fighter's animation symbol for its current subaction (e.g. "PlyKirby5K_Share_ACTION_Wait1_
+ * figatree"): read from the fighter's own file, so it names m-ex and custom moves too. */
+const char* ScriptGame_LabAnimSymbol(int slot)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL || fp->x24 == NULL || (int) fp->anim_id < 0) {
+        return NULL;
+    }
+    return fp->x24[fp->anim_id].x0;
+}
+
+static HitCapsule* lab_hit(Fighter* fp, int i)
+{
+    if (i >= 0 && i < 4) {
+        return &fp->x914[i];
+    }
+    if (i == 4) {
+        return &fp->x1064_thrownHitbox;
+    }
+    return NULL;
+}
+
+int ScriptGame_HitI(int slot, int i, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    HitCapsule* h;
+    if (fp == NULL || (h = lab_hit(fp, i)) == NULL) {
+        return -1;
+    }
+    switch (field) {
+    case LAB_HI_STATE:
+        /* the thrown hitbox keeps a stale state between throws; it is live only while it has
+           an owner (the thrower) */
+        if (i == 4 && h->owner == NULL) {
+            return 0;
+        }
+        return (int) h->state;
+    case LAB_HI_GROUP:
+        return (int) h->x4;
+    case LAB_HI_BONE:
+        return lab_joint_index(fp, h->jobj);
+    case LAB_HI_ANGLE:
+        return h->kb_angle;
+    case LAB_HI_KBG:
+        return (int) h->x24;
+    case LAB_HI_WBK:
+        return (int) h->x28;
+    case LAB_HI_BKB:
+        return (int) h->x2C;
+    case LAB_HI_ELEMENT:
+        return (int) h->element;
+    case LAB_HI_SHIELD_DMG:
+        return h->x34;
+    case LAB_HI_SFX_SEVERITY:
+        return h->sfx_severity;
+    case LAB_HI_SFX_KIND:
+        return (int) h->sfx_kind;
+    case LAB_HI_HIT_AIR:
+        return h->x40_b2 ? 1 : 0;
+    case LAB_HI_HIT_GROUND:
+        return h->x40_b3 ? 1 : 0;
+    case LAB_HI_CLANK:
+        return h->x40_b0 ? 1 : 0;
+    case LAB_HI_REBOUND:
+        return h->x40_b1 ? 1 : 0;
+    }
+    return -1;
+}
+
+float ScriptGame_HitF(int slot, int i, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    HitCapsule* h;
+    if (fp == NULL || (h = lab_hit(fp, i)) == NULL) {
+        return 0.0f;
+    }
+    switch (field) {
+    case LAB_HF_DAMAGE:
+        return h->damage;
+    case LAB_HF_SIZE:
+        return h->scale;
+    case LAB_HF_X:
+        return h->x4C.x;
+    case LAB_HF_Y:
+        return h->x4C.y;
+    case LAB_HF_Z:
+        return h->x4C.z;
+    case LAB_HF_PX:
+        return h->x58.x;
+    case LAB_HF_PY:
+        return h->x58.y;
+    case LAB_HF_PZ:
+        return h->x58.z;
+    case LAB_HF_OX:
+        return h->b_offset.x;
+    case LAB_HF_OY:
+        return h->b_offset.y;
+    case LAB_HF_OZ:
+        return h->b_offset.z;
+    }
+    return 0.0f;
+}
+
+int ScriptGame_HurtI(int slot, int i, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    FighterHurtCapsule* u;
+    if (fp == NULL || i < 0 || i >= (int) fp->hurt_capsules_len || i >= 15) {
+        return -1;
+    }
+    u = &fp->hurt_capsules[i];
+    switch (field) {
+    case LAB_UI_STATE:
+        return (int) u->capsule.state;
+    case LAB_UI_BONE:
+        return lab_joint_index(fp, u->capsule.bone);
+    case LAB_UI_HEIGHT:
+        return (int) u->height;
+    case LAB_UI_GRABBABLE:
+        return u->is_grabbable ? 1 : 0;
+    }
+    return -1;
+}
+
+float ScriptGame_HurtF(int slot, int i, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    FighterHurtCapsule* u;
+    if (fp == NULL || i < 0 || i >= (int) fp->hurt_capsules_len || i >= 15) {
+        return 0.0f;
+    }
+    u = &fp->hurt_capsules[i];
+    switch (field) {
+    case LAB_UF_AX:
+        return u->capsule.a_pos.x;
+    case LAB_UF_AY:
+        return u->capsule.a_pos.y;
+    case LAB_UF_AZ:
+        return u->capsule.a_pos.z;
+    case LAB_UF_BX:
+        return u->capsule.b_pos.x;
+    case LAB_UF_BY:
+        return u->capsule.b_pos.y;
+    case LAB_UF_BZ:
+        return u->capsule.b_pos.z;
+    case LAB_UF_SIZE:
+        return u->capsule.scale;
+    }
+    return 0.0f;
+}
+
+/* A joint's world position: the translation column of the matrix the last HSD_JObjSetupMatrix
+ * left in it (read as-is, never recomputed here, so reading cannot change the game). comp 0-2 =
+ * x, y, z. */
+float ScriptGame_JointF(int slot, int i, int comp)
+{
+    Fighter* fp = script_fighter(slot);
+    HSD_JObj* j;
+    if (fp == NULL || i < 0 || i >= lab_joint_count(fp) || comp < 0 || comp > 2) {
+        return 0.0f;
+    }
+    j = fp->parts[i].joint;
+    return j != NULL ? j->mtx[comp][3] : 0.0f;
+}
+
+/* The parent joint's index, -1 for the root or a joint outside the table, -2 for no joint. */
+int ScriptGame_JointParent(int slot, int i)
+{
+    Fighter* fp = script_fighter(slot);
+    HSD_JObj* j;
+    if (fp == NULL || i < 0 || i >= lab_joint_count(fp)) {
+        return -2;
+    }
+    j = fp->parts[i].joint;
+    if (j == NULL) {
+        return -2;
+    }
+    return lab_joint_index(fp, j->parent);
+}
+
+float ScriptGame_CameraF(int field)
+{
+    HSD_GObj* gobj = Camera_80030A50();
+    HSD_CObj* c;
+    if (gobj == NULL || (c = GET_COBJ(gobj)) == NULL) {
+        return 0.0f;
+    }
+    if (field >= LAB_CAM_VIEW && field < LAB_CAM_VIEW + 12) {
+        int k = field - LAB_CAM_VIEW;
+        return c->view_mtx[k / 4][k % 4];
+    }
+    switch (field) {
+    case LAB_CAM_OK:
+        return 1.0f;
+    case LAB_CAM_PROJ:
+        return c->projection_type == PROJ_ORTHO     ? 2.0f
+               : c->projection_type == PROJ_FRUSTUM ? 1.0f
+                                                    : 0.0f;
+    case LAB_CAM_P0:
+        return c->projection_param.ortho.top; /* = perspective.fov */
+    case LAB_CAM_P1:
+        return c->projection_param.ortho.bottom; /* = perspective.aspect */
+    case LAB_CAM_P2:
+        return c->projection_param.ortho.left;
+    case LAB_CAM_P3:
+        return c->projection_param.ortho.right;
+    case LAB_CAM_NEAR:
+        return c->near;
+    case LAB_CAM_FAR:
+        return c->far;
+    case LAB_CAM_VP_XMIN:
+        return c->viewport.xmin;
+    case LAB_CAM_VP_XMAX:
+        return c->viewport.xmax;
+    case LAB_CAM_VP_YMIN:
+        return c->viewport.ymin;
+    case LAB_CAM_VP_YMAX:
+        return c->viewport.ymax;
+    }
+    return 0.0f;
+}
+
+/* Fighter.x21FC_flag, the develop-mode visualisation byte (ftdrawcommon.c ftDrawCommon_800805C8,
+ * dbanim.c fn_CheckAnimationInfo). set != 0 writes `value` to every fighter object of the slot
+ * (Nana too). Returns the byte before the write, -1 when the slot has no fighter. */
+int ScriptGame_LabDebugDraw(int slot, int set, int value)
+{
+    Fighter* fp = script_fighter(slot);
+    int old;
+    if (fp == NULL) {
+        return -1;
+    }
+    old = (int) fp->x21FC_flag.byte;
+    if (set) {
+        HSD_GObj* g;
+        for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; g != NULL; g = g->next) {
+            Fighter* f = GET_FIGHTER(g);
+            if (f->player_id == fp->player_id) {
+                f->x21FC_flag.byte = (u8) value;
+            }
+        }
+    }
+    return old;
+}
+
+/* The match camera's collision display (cm/camera.c: mpLib_8005A2DC and friends). `mask` picks
+ * the LAB_STAGE_* bits to write from `value`; returns the bits now set (ZONES has no getter in the
+ * decomp and reads back as 0). */
+int ScriptGame_LabStageDraw(int mask, int value)
+{
+    int now = 0;
+    if (Camera_80030A50() == NULL) {
+        return -1;
+    }
+    if (mask & LAB_STAGE_COLL) {
+        Camera_80030A60((value & LAB_STAGE_COLL) != 0);
+    }
+    if (mask & LAB_STAGE_TERRAIN) {
+        Camera_80030B38((value & LAB_STAGE_TERRAIN) != 0);
+    }
+    if (mask & LAB_STAGE_LEDGES) {
+        Camera_80030B64((value & LAB_STAGE_LEDGES) != 0);
+    }
+    if (mask & LAB_STAGE_POINTS) {
+        Camera_80030B90((value & LAB_STAGE_POINTS) != 0);
+    }
+    if (mask & LAB_STAGE_ZONES) {
+        Camera_80030A8C((value & LAB_STAGE_ZONES) != 0);
+    }
+    now |= Camera_80030A78() ? LAB_STAGE_COLL : 0;
+    now |= Camera_80030B50() ? LAB_STAGE_TERRAIN : 0;
+    now |= Camera_80030B7C() ? LAB_STAGE_LEDGES : 0;
+    now |= Camera_80030BA8() ? LAB_STAGE_POINTS : 0;
+    return now;
+}
+
+/* ---- attributes (ftCo_DatAttrs by decomp name, as the fighter has them now) ---------------- */
+#define LAB_ATTR(field, is_int) { #field, (int) __builtin_offsetof(ftCo_DatAttrs, field), is_int }
+
+static const struct {
+    const char* name;
+    int offset;
+    int is_int;
+} lab_attrs[] = {
+    LAB_ATTR(walk_accel_mul, 0),
+    LAB_ATTR(walk_accel_base, 0),
+    LAB_ATTR(walk_max_vel, 0),
+    LAB_ATTR(slow_walk_max, 0),
+    LAB_ATTR(mid_walk_point, 0),
+    LAB_ATTR(fast_walk_min, 0),
+    LAB_ATTR(ground_friction, 0),
+    LAB_ATTR(dash_initial_velocity, 0),
+    LAB_ATTR(dash_accel_mul, 0),
+    LAB_ATTR(dash_accel_base, 0),
+    LAB_ATTR(dash_max_velocity, 0),
+    LAB_ATTR(run_animation_scaling, 0),
+    LAB_ATTR(max_run_brake_frames, 0),
+    LAB_ATTR(ground_max_horizontal_velocity, 0),
+    LAB_ATTR(jump_startup_time, 0),
+    LAB_ATTR(jump_h_initial_velocity, 0),
+    LAB_ATTR(jump_v_initial_velocity, 0),
+    LAB_ATTR(ground_to_air_jump_momentum_multiplier, 0),
+    LAB_ATTR(jump_h_max_velocity, 0),
+    LAB_ATTR(hop_v_initial_velocity, 0),
+    LAB_ATTR(air_jump_v_multiplier, 0),
+    LAB_ATTR(air_jump_h_multiplier, 0),
+    LAB_ATTR(max_jumps, 1),
+    LAB_ATTR(gravity, 0),
+    LAB_ATTR(terminal_velocity, 0),
+    LAB_ATTR(air_drift_stick_mul, 0),
+    LAB_ATTR(aerial_drift_base, 0),
+    LAB_ATTR(air_drift_max, 0),
+    LAB_ATTR(aerial_friction, 0),
+    LAB_ATTR(fast_fall_velocity, 0),
+    LAB_ATTR(air_max_horizontal_velocity, 0),
+    LAB_ATTR(jab_2_input_window, 0),
+    LAB_ATTR(jab_3_input_window, 0),
+    LAB_ATTR(standing_turn_frames, 0),
+    LAB_ATTR(weight, 0),
+    LAB_ATTR(model_scaling, 0),
+    LAB_ATTR(initial_shield_size, 0),
+    LAB_ATTR(shield_break_initial_velocity, 0),
+    LAB_ATTR(rapid_jab_window, 1),
+    LAB_ATTR(clank_animation_length, 0),
+};
+#define LAB_NATTRS ((int) (sizeof(lab_attrs) / sizeof(lab_attrs[0])))
+
+int ScriptGame_LabAttrCount(void)
+{
+    return LAB_NATTRS;
+}
+
+const char* ScriptGame_LabAttrName(int i)
+{
+    return i >= 0 && i < LAB_NATTRS ? lab_attrs[i].name : NULL;
+}
+
+/* The value as a float (ints converted); 0 without a fighter. */
+float ScriptGame_LabAttrF(int slot, int i)
+{
+    Fighter* fp = script_fighter(slot);
+    u8* base;
+    if (fp == NULL || i < 0 || i >= LAB_NATTRS) {
+        return 0.0f;
+    }
+    base = (u8*) &fp->co_attrs + lab_attrs[i].offset;
+    if (lab_attrs[i].is_int) {
+        return (float) *(s32*) base;
+    }
+    return *(f32*) base;
+}

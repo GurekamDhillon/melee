@@ -1035,6 +1035,14 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         HSD_StartRender(HSD_RP_SCREEN);
         HSD_GObj_80390FC0();
         HSD_Init_803755A8();
+#if defined(TARGET_PC)
+        {
+            /* scripting: on_draw, after the render pass, so script overlays (gd.project,
+               gd.joints) see the camera and joint matrices of the frame being shown */
+            extern void Script_PostRender(void);
+            Script_PostRender();
+        }
+#endif
         HSD_PerfSetDrawTime();
         HSD_VICopyXFBAsync(HSD_RP_SCREEN);
 #if defined(TARGET_PC)

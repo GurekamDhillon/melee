@@ -480,4 +480,11 @@ void gw_tests_register_all(void) {
   gw_test_register("mex_csp_frame_map", test_mex_csp_frame_map);
   gw_test_register("mex_kirby_costume_rows", test_mex_kirby_costume_rows);
   gw_test_register("unlock_all", test_unlock_all);
+  /* Geno last: its savestate test opens gw_snap's snapshot slots for the rest of the process. */
+  {
+    extern void gw_GenoTestRegisterAll(void); /* pc/geno/geno_tests.c (game side) */
+    extern void geno_registry_tests_register(void);
+    geno_registry_tests_register();
+    gw_GenoTestRegisterAll();
+  }
 }

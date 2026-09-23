@@ -226,6 +226,53 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
     }
     return out;
 }
+
+/* The CPU tables in PlCo's Fighter_804D64FC (attack lists, edge-guard lists, distance
+ * thresholds) are kind-indexed too, and the AI read them with the PORT kind: a level-0 CPU Meta
+ * Knight (port kind 58) read past the table into the next one, took a float for a pointer and
+ * crashed in ftCo_800B4AB0. These tables have 32 rows on EVERY disc, ACE and Akaneia included
+ * (0x80 bytes apart in PlCo.dat) - m-ex never extends them; it runs the AI with the fighter's
+ * INTERNAL id (CPU/CPUSpoofs @8006ABD4), which for an added fighter indexes past the end the same
+ * way. So an m-ex fighter takes the rows of the retail fighter it was cloned from
+ * (Mex_FtBaseKind: Meta Knight -> Kirby; Mario when none), and every other kind keeps its own.
+ * Rebuilt into a private copy of the struct on every load (PlCo reloads per scene). */
+static struct Fighter_804D64FC_t* ftCommonData_ExtendCpuTables(struct Fighter_804D64FC_t* src)
+{
+    extern int Mex_InternalForPortKind(int fk);
+    extern int Mex_FtBaseKind(int k);
+    static struct Fighter_804D64FC_t copy;
+    static void* tables[8][Ft_Kind_Max];
+    void*** fields[8];
+    int j, i;
+    if (src == NULL) {
+        return NULL;
+    }
+    copy = *src;
+    fields[0] = (void***) &copy.x4;
+    fields[1] = (void***) &copy.x8;
+    fields[2] = (void***) &copy.xC;
+    fields[3] = (void***) &copy.x10;
+    fields[4] = (void***) &copy.x14;
+    fields[5] = (void***) &copy.x18;
+    fields[6] = (void***) &copy.x1C;
+    fields[7] = (void***) &copy.x20; /* f32 per kind: copied as 4-byte words */
+    for (j = 0; j < 8; j++) {
+        void** loaded = *fields[j];
+        if (loaded == NULL) {
+            continue;
+        }
+        for (i = 0; i < Ft_Kind_Max; i++) {
+            int k = i;
+            if (i >= Ft_Kind_Mex0) {
+                k = Mex_InternalForPortKind(i); /* -1 on a vanilla disc: no row */
+                k = k >= 0 ? Mex_FtBaseKind(k) : -1;
+            }
+            tables[j][i] = k >= 0 ? loaded[k] : NULL;
+        }
+        *fields[j] = tables[j];
+    }
+    return &copy;
+}
 #endif
 
 void Fighter_LoadCommonData(void)
@@ -266,7 +313,11 @@ void Fighter_LoadCommonData(void)
     Fighter_804D6508 = pData[19];
     Fighter_804D6504 = pData[20];
     gCrowdConfig = pData[21];
+#if defined(TARGET_PC)
+    Fighter_804D64FC = ftCommonData_ExtendCpuTables(pData[22]);
+#else
     Fighter_804D64FC = pData[22];
+#endif
 }
 
 void Fighter_UpdateModelScale(Fighter_GObj* gobj)

@@ -1496,11 +1496,15 @@ static inline int fn_80176BF0_inline(u8 arg1)
     /* Series emblem on the VS results screen. An m-ex character kind is not in lbl_803B7B18 (it
      * covers 0x00-0x19): this returned -1, fn_80176BF0 selected no emblem joint and returned
      * NULL, and fn_80176F60 read data->x20->u.dobj (+0x18) through it - a crash entering VS
-     * results after any match Sonic played (user-found). 11 is the only emblem no character maps
-     * to (the match-cancelled one): a neutral stand-in, since this results joint's atlas has no
-     * m-ex emblems. */
+     * results after any match Sonic played (user-found). m-ex (ResultScreen/
+     * GetResultsGetInsignia @80176C40) indexes the emblem models by insignia[external id]
+     * instead, the same numbering as this table for the retail franchises; fn_80176BF0 falls
+     * back to 11 - the only emblem no character maps to (the match-cancelled one), a neutral
+     * stand-in - when the model has no such emblem. */
     if (arg1 >= ChKind_Mex0 && arg1 < ChKind_Cap) {
-        return 11;
+        extern int Mex_PortCKindToExt(int ck);
+        extern int Mex_InsigniaForExt(int ext);
+        return Mex_InsigniaForExt(Mex_PortCKindToExt(arg1));
     }
 #endif
     for (i = 0; i < 33; i++) { ///< @todo `ARRAY_SIZE(lbl_803B7B18)`
@@ -1526,6 +1530,19 @@ HSD_JObj* fn_80176BF0(HSD_JObj* arg0, u8 arg1, int arg2)
     } else {
         var_r29 = fn_80176BF0_inline(arg1);
     }
+#if defined(TARGET_PC)
+    {
+        /* no emblem model at that index (an m-ex insignia past this disc's models): 11 */
+        HSD_JObj* c;
+        int n = 0;
+        for (c = HSD_JObjGetChild(jobj); c != NULL; c = HSD_JObjGetNext(c)) {
+            n++;
+        }
+        if (var_r29 < 0 || var_r29 >= n) {
+            var_r29 = 11;
+        }
+    }
+#endif
     for (jobj = HSD_JObjGetChild(jobj); jobj != NULL;
          jobj = HSD_JObjGetNext(jobj))
     {

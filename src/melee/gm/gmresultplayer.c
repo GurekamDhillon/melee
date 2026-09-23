@@ -25,6 +25,12 @@
 #include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/tobj.h>
 #include <sysdolphin/baselib/wobj.h>
+#if defined(TARGET_PC)
+#include <dolphin/os.h>
+#include <sysdolphin/baselib/archive.h>
+#include <sysdolphin/baselib/fobj.h>
+#include <sysdolphin/baselib/memory.h>
+#endif
 
 extern ResultsData lbl_8046DBE8;
 
@@ -435,6 +441,259 @@ static inline void inline0(HSD_JObj* jobj, float f)
     HSD_JObjAnimAll(jobj);
 }
 
+#if defined(TARGET_PC)
+/* ---- m-ex fighters on the results screen ---------------------------------------------------
+ * Retail picks every per-fighter picture here with gm_80168B34 (the stock-icon formula:
+ * frame = CharacterKind, minus one past Sheik). For an m-ex CharacterKind (ChKind_Mex0 + slot)
+ * that lands on some other fighter's frame - a Meta Knight mod showed "G.BOWSER". m-ex
+ * (https://github.com/akaneia/m-ex, asm/m-ex/ResultScreen, reimplemented here, not copied)
+ * rewires all four pictures by m-ex id:
+ *   - names (RstData_GetTextureNameBig/Small @80178EDC/80178FD8): frame = EXTERNAL id - the
+ *     disc's GmRst carries one name per external id (ACE: 58), and RstFixYellowName @80178F34
+ *     keeps a name past frame 25 on the normal (non-special) winner path;
+ *   - emblem (Replace Results Stock and Emblem Matanim @80175E4C + Change Emblem Frame
+ *     @801777C8): IfAll's Eblm_matanim_joint at frame insignia[external id];
+ *   - stock icon: IfAll's Stc_icns at the stock-icon frame of (internal id, costume).
+ * Only m-ex CharacterKinds take these paths; the retail cast keeps retail's pictures exactly.
+ *
+ * Names need one more rule than m-ex has. A fighter added by a MOD reuses an external id whose
+ * frame in the disc's GmRst is some other fighter's name (MK on ACE's Wolf SSBU row -> WOLF) or
+ * no name of its own (Brawl Kirby on ACE's empty row 33 -> TAILS, the held previous key). Then
+ * the name is drawn from the fighter's MxDt name instead (UI_TextI4) and the name joint shows
+ * that texture whatever frame its animation reaches. */
+extern HSD_Archive* lbDvd_8001819C(const char* basename);
+extern int Mex_PortCKindToExt(int ck);
+extern int Mex_InsigniaForExt(int ext);
+extern int Mex_ResultArtIsOwn(int ck);
+extern const char* Mex_FighterName(int ext);
+extern int UI_TextI4(const char* text, int w, int h, int style, void* dst);
+extern HSD_MatAnimJoint* gm_MexStockMatAnim(void);
+extern f32 gm_MexStockFrame(int fk, int costume);
+
+static bool gmRst_IsMex(int ck)
+{
+    return ck >= ChKind_Mex0 && ck < ChKind_Cap;
+}
+
+/* One key value of an FObj stream (fobj.c's own reader, restated): the format is the top 3 bits
+ * of `frac`, the fixed-point shift the low 5. */
+static f32 gmRst_FObjValue(u8** p, u8 frac)
+{
+    u8* s = *p;
+    f32 scale = (f32) (1 << (frac & 0x1F));
+    switch (frac & 0xE0) {
+    case 0x00: {
+        union {
+            u32 u;
+            f32 f;
+        } v;
+        v.u = ((u32) s[0] << 24) | ((u32) s[1] << 16) | ((u32) s[2] << 8) | s[3];
+        *p = s + 4;
+        return v.f;
+    }
+    case 0x20:
+        *p = s + 2;
+        return (f32) (s16) ((s[0] << 8) | s[1]) / scale;
+    case 0x40:
+        *p = s + 2;
+        return (f32) (u16) ((s[0] << 8) | s[1]) / scale;
+    case 0x60:
+        *p = s + 1;
+        return (f32) (s8) s[0] / scale;
+    default:
+        *p = s + 1;
+        return (f32) s[0] / scale;
+    }
+}
+
+static u32 gmRst_FObjPacked(u8** p)
+{
+    u8* s = *p;
+    u32 v = *s & 0x7F;
+    int shift = 7;
+    while (*s++ & 0x80) {
+        v |= (u32) (*s & 0x7F) << shift;
+        shift += 7;
+    }
+    *p = s;
+    return v;
+}
+
+/* Walk the texture-image track (HSD_A_T_TIMG) of `tobj`'s animation. Returns true when a key
+ * sits exactly on `frame` (a frame with no key of its own just holds the previous name), and
+ * stores the largest image index any key selects in *max_img (-1 when there is no track). */
+static bool gmRst_ImageKeyAt(HSD_TObj* tobj, int frame, int* max_img)
+{
+    HSD_FObj* fo;
+    bool hit = false;
+    *max_img = -1;
+    if (tobj == NULL || tobj->aobj == NULL) {
+        return false;
+    }
+    for (fo = tobj->aobj->fobj; fo != NULL; fo = fo->next) {
+        u8* p;
+        u8* end;
+        f32 t;
+        if (fo->obj_type != HSD_A_T_TIMG || fo->ad_head == NULL) {
+            continue;
+        }
+        p = fo->ad_head;
+        end = p + fo->length;
+        t = (f32) fo->startframe;
+        while (p < end) {
+            u8 b = *p++;
+            int op = b & 0xF;
+            int n = (b >> 4) & 7;
+            int shift = 3;
+            while (b & 0x80) {
+                b = *p++;
+                n += (b & 0x7F) << shift;
+                shift += 7;
+            }
+            for (n += 1; n > 0; n--) {
+                f32 v = 0.0F;
+                u32 wait = 0;
+                switch (op) {
+                case HSD_A_OP_CON:
+                case HSD_A_OP_LIN:
+                case HSD_A_OP_SPL0:
+                    v = gmRst_FObjValue(&p, fo->frac_value);
+                    wait = gmRst_FObjPacked(&p);
+                    break;
+                case HSD_A_OP_SPL:
+                    v = gmRst_FObjValue(&p, fo->frac_value);
+                    gmRst_FObjValue(&p, fo->frac_slope);
+                    wait = gmRst_FObjPacked(&p);
+                    break;
+                case HSD_A_OP_SLP:
+                    gmRst_FObjValue(&p, fo->frac_slope);
+                    continue;
+                case HSD_A_OP_KEY:
+                    v = gmRst_FObjValue(&p, fo->frac_value);
+                    break;
+                default:
+                    return hit;
+                }
+                if ((int) t == frame) {
+                    hit = true;
+                }
+                if ((int) v > *max_img) {
+                    *max_img = (int) v;
+                }
+                t += (f32) wait;
+            }
+        }
+    }
+    return hit;
+}
+
+/* The results name frame of CharacterKind `ck` in the name strip `tobj`: retail's formula for the
+ * retail cast, the external id for an m-ex fighter whose name the loaded GmRst really has, -1
+ * for an m-ex fighter it does not (the caller draws the name then). */
+static int gmRst_NameFrame(HSD_TObj* tobj, int ck, int fk)
+{
+    int ext, max_img;
+    if (!gmRst_IsMex(ck)) {
+        return (int) gm_80168B34((CharacterKind) ck, fk, 0);
+    }
+    ext = Mex_PortCKindToExt(ck);
+    if (ext < 0 || !Mex_ResultArtIsOwn(ck) || !gmRst_ImageKeyAt(tobj, ext, &max_img)) {
+        return -1;
+    }
+    return ext;
+}
+
+/* Give name strip `tobj` a texture of m-ex fighter `ck`'s own name, drawn from its MxDt name,
+ * and point every image its animation can select at it. The strip's current image gives the
+ * size and must be I4 (both GmRst strips are); anything else - or no name - hides nothing and
+ * shows a blank strip rather than another fighter's name. Scene-heap memory: it goes with the
+ * results screen. */
+static void gmRst_DrawName(HSD_TObj* tobj, int ck, int style)
+{
+    HSD_ImageDesc* cur;
+    HSD_ImageDesc* desc;
+    HSD_ImageDesc** tbl;
+    const char* name;
+    char upper[48];
+    int w, h, hp, max_img, i, ext;
+    u8* pix;
+    if (tobj == NULL || (cur = tobj->imagedesc) == NULL) {
+        return;
+    }
+    w = cur->width;
+    h = cur->height;
+    hp = (h + 7) & ~7;
+    ext = Mex_PortCKindToExt(ck);
+    name = ext >= 0 ? Mex_FighterName(ext) : NULL;
+    for (i = 0; name != NULL && name[i] != '\0' && i < (int) sizeof(upper) - 1; i++) {
+        char c = name[i];
+        upper[i] = (c >= 'a' && c <= 'z') ? (char) (c - 'a' + 'A') : c;
+    }
+    upper[i] = '\0';
+    desc = HSD_MemAlloc(sizeof(HSD_ImageDesc));
+    pix = HSD_MemAlloc(w * hp / 2 + 32);
+    gmRst_ImageKeyAt(tobj, -1, &max_img);
+    if (max_img < 0) {
+        max_img = 0;
+    }
+    tbl = HSD_MemAlloc((max_img + 2) * sizeof(HSD_ImageDesc*));
+    if (desc == NULL || pix == NULL || tbl == NULL) {
+        return;
+    }
+    pix = (u8*) (((uintptr_t) pix + 31) & ~(uintptr_t) 31);
+    memzero(pix, w * hp / 2);
+    if (cur->format == GX_TF_I4 && upper[0] != '\0') {
+        UI_TextI4(upper, w, h, style, pix);
+    }
+    OSReport("gw: results: ck %d (m-ex ext %d) has no name art of its own - drawn \"%s\" %dx%d\n",
+             ck, ext, upper, w, h);
+    desc->image_ptr = pix;
+    desc->width = (u16) w;
+    desc->height = (u16) h;
+    desc->format = GX_TF_I4;
+    desc->mipmap = 0;
+    desc->minLOD = 0.0F;
+    desc->maxLOD = 0.0F;
+    for (i = 0; i <= max_img; i++) {
+        tbl[i] = desc;
+    }
+    tbl[max_img + 1] = NULL;
+    tobj->imagetbl = tbl;
+    tobj->imagedesc = desc;
+}
+
+/* m-ex "Replace Results Stock and Emblem Matanim", per player: `jobj`'s DObj `dobj_index` takes
+ * IfAll's `symbol` matanim (the first MatAnim of the MatAnimJoint the symbol names, or of the
+ * Stc_icns struct's). False when the disc's IfAll has no such symbol (a retail disc). */
+static bool gmRst_MexAttach(HSD_JObj* jobj, int dobj_index, bool stock)
+{
+    HSD_MatAnimJoint* maj;
+    HSD_DObj* dobj;
+    if (jobj == NULL || (dobj = jobj->u.dobj) == NULL) {
+        return false;
+    }
+    if (stock) {
+        maj = gm_MexStockMatAnim();
+    } else {
+        HSD_Archive* ifall = lbDvd_8001819C("IfAll");
+        maj = ifall != NULL ? HSD_ArchiveGetPublicAddress(ifall, "Eblm_matanim_joint") : NULL;
+    }
+    if (maj == NULL || maj->matanim == NULL) {
+        return false;
+    }
+    for (; dobj_index > 0 && dobj != NULL; dobj_index--) {
+        dobj = dobj->next;
+    }
+    if (dobj == NULL) {
+        return false;
+    }
+    HSD_DObjAddAnimAll(dobj, maj->matanim, NULL);
+    /* a freshly added AObj does not run until requested; the caller then sets its frame */
+    HSD_DObjReqAnimAll(dobj, 0.0F);
+    return true;
+}
+#endif
+
 void fn_80177748(void)
 {
     MatchEnd* temp_r3;
@@ -450,6 +709,18 @@ void fn_80177748(void)
         if (temp_r3->player_standings[i].pkind != Gm_PKind_NA) {
             ckind = temp_r3->player_standings[i].ckind;
             HSD_JObjClearFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
+#if defined(TARGET_PC)
+            if (gmRst_IsMex(ckind)) {
+                /* m-ex: IfAll's emblem atlas at insignia[external id]; no emblem at all rather
+                 * than another fighter's when the disc has no atlas or no entry. */
+                int emblem = Mex_InsigniaForExt(Mex_PortCKindToExt(ckind));
+                if (emblem >= 0 && gmRst_MexAttach(data->player_data[i].jobjs[0], 0, false)) {
+                    inline0(data->player_data[i].jobjs[0], emblem);
+                } else {
+                    HSD_JObjSetFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
+                }
+            } else
+#endif
             inline0(data->player_data[i].jobjs[0], gm_80168B34(ckind, 0, 0));
             HSD_JObjClearFlagsAll(data->player_data[i].jobjs[4], JOBJ_HIDDEN);
             if (gm_WasMatchCanceled(temp_r3->outcome) != 0) {
@@ -1061,6 +1332,23 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     match_end->is_teams == 0 && (s32) is_big_loser == 0)
                 {
                     ResultsData* d2 = &lbl_8046DBE8;
+#if defined(TARGET_PC)
+                    HSD_TObj* tobj = d2->x30->u.dobj->next->mobj->tobj;
+                    HSD_AObj* aobj = tobj->aobj;
+                    int tex_id = gmRst_NameFrame(tobj, ckind, cid);
+                    bool drawn = tex_id < 0;
+                    if (drawn) {
+                        tex_id = 0; /* any frame: gmRst_DrawName points them all at the name */
+                    }
+                    HSD_TObjReqAnim(tobj, (f32) tex_id);
+                    HSD_TObjAnim(tobj);
+                    if (drawn) {
+                        gmRst_DrawName(tobj, ckind, 1);
+                    }
+                    /* m-ex RstFixYellowName: an m-ex name past frame 25 is still a normal
+                     * winner, not one of retail's special-banner frames. */
+                    if (tex_id < 0x19 || gmRst_IsMex(ckind)) {
+#else
                     int tex_id =
                         (int) gm_80168B34((CharacterKind) ckind, cid, 0);
                     HSD_TObj* tobj = d2->x30->u.dobj->next->mobj->tobj;
@@ -1068,6 +1356,7 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     HSD_TObjReqAnim(tobj, (f32) tex_id);
                     HSD_TObjAnim(d2->x30->u.dobj->next->mobj->tobj);
                     if (tex_id < 0x19) {
+#endif
                         HSD_AObjSetCurrentFrame(aobj, 0.0f);
                         HSD_AObjSetEndFrame(aobj, 29.0f);
                     } else {
@@ -1079,8 +1368,20 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     mn_8022F3D8(d2->x30, 1, TOBJ_MASK);
                 }
 
+#if defined(TARGET_PC)
+                {
+                    HSD_JObj* name_jobj = data->player_data[(*i)].jobjs[5];
+                    HSD_TObj* name_tobj = name_jobj->u.dobj->mobj->tobj;
+                    int name_frame = gmRst_NameFrame(name_tobj, ckind, cid);
+                    fn_80174FD0(name_jobj, name_frame >= 0 ? name_frame : 0);
+                    if (name_frame < 0) {
+                        gmRst_DrawName(name_tobj, ckind, 0);
+                    }
+                }
+#else
                 fn_80174FD0(data->player_data[(*i)].jobjs[5],
                             (s32) gm_80168B34((CharacterKind) ckind, cid, 0));
+#endif
 
                 {
                     u32 rank_val;
@@ -1103,6 +1404,21 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                         match_end->player_standings[(*i)].ftkind,
                         match_end->player_standings[(*i)].x3_b0);
                     HSD_JObj* taunt_jobj = data->player_data[(*i)].jobjs[7];
+#if defined(TARGET_PC)
+                    /* m-ex: the stock icon from IfAll's Stc_icns (the second DObj, as m-ex
+                     * attaches it); none rather than another fighter's without one. */
+                    bool no_stock = false;
+                    if (gmRst_IsMex(ckind)) {
+                        f32 mex = gm_MexStockFrame(
+                            match_end->player_standings[(*i)].ftkind,
+                            match_end->player_standings[(*i)].x3_b0);
+                        if (mex >= 0.0F && gmRst_MexAttach(taunt_jobj, 1, true)) {
+                            taunt_frame = mex;
+                        } else {
+                            no_stock = true;
+                        }
+                    }
+#endif
                     HSD_ForeachAnim(taunt_jobj, JOBJ_TYPE, ALL_TYPE_MASK,
                                     HSD_AObjSetRate, AOBJ_ARG_AF, 0.0);
                     HSD_ForeachAnim(taunt_jobj, JOBJ_TYPE, ALL_TYPE_MASK,
@@ -1113,6 +1429,11 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                                     1.0f);
                     HSD_AObjSetCurrentFrame(
                         data->player_data[(*i)].jobjs[7]->aobj, 0.0f);
+#if defined(TARGET_PC)
+                    if (no_stock) {
+                        HSD_JObjSetFlagsAll(taunt_jobj, JOBJ_HIDDEN);
+                    }
+#endif
                 } else {
                     HSD_JObj* taunt_jobj = data->player_data[(*i)].jobjs[7];
                     HSD_ForeachAnim(taunt_jobj, JOBJ_TYPE, ALL_TYPE_MASK,

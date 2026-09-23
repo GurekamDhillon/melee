@@ -879,6 +879,31 @@ float gw_Mex_ResultScaleForPortCKind(int ck) {
 }
 int gw_Mex_AnnouncerForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 0x34u, -1); }
 
+/* Can the results screen's name art (GmRst's name strips, one frame per m-ex EXTERNAL id) belong
+ * to m-ex fighter `ck`? m-ex just shows frame = external id (ResultScreen/RstData_GetTextureName*),
+ * which is right on a disc built as a whole - MexManager writes a name into GmRst for every
+ * fighter it adds. A fighter a MOD added is different: its row reuses an external id whose frame
+ * in the disc's GmRst holds whatever the disc put there (a Meta Knight mod on ACE's "Wolf SSBU"
+ * row showed WOLF) or nothing of its own. So the art is the fighter's own only when GmRst itself
+ * comes from a mod (the mod set that added the fighter shipped its names), or the fighter's
+ * character file is on the disc proper (the disc's own fighter, named by the disc's own GmRst).
+ * The caller still checks that the frame exists at all. 0 for a non-m-ex kind. */
+int gw_Mex_ResultArtIsOwn(int ck) {
+    extern int gw_DVDFileFromMod(const char *path);
+    extern int gw_DVDFileOnDisc(const char *path);
+    extern const char *gw_Mex_FtPlFile(int k);
+    int ext = gw_Mex_PortCKindToExt(ck);
+    int k = ext >= 0 ? gw_Mex_InternalForExt(ext) : -1;
+    const char *pl = k >= 0 ? gw_Mex_FtPlFile(k) : NULL;
+    if (ck <= 25 || pl == NULL) {
+        return 0;
+    }
+    if (gw_DVDFileFromMod("GmRst.usd") || gw_DVDFileFromMod("GmRst.dat")) {
+        return 1;
+    }
+    return gw_DVDFileOnDisc(pl);
+}
+
 /* ---- m-ex menu params (mexData.menu +0x00) ---------------------------------------------------
  * params[0] is the CSS cursor scale m-ex's CursorScale patches apply (Akaneia: 0.95 - its icon
  * grid is denser than retail's 25, so the retail hand covers too much of it). params[2] is the

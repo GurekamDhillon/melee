@@ -489,6 +489,8 @@ extern int gw_Netplay_LobbyMe(void);
 extern int gw_Netplay_LobbyInfo(int what);
 extern int gw_Netplay_LobbyPlayer(int who, int what);
 extern int gw_Netplay_LobbyStage(int i);
+extern int gw_Netplay_LobbyStageGroup(int i);
+extern int gw_Frontend_LobbyCursor(void);
 extern int gw_Netplay_RematchPending(void);
 extern int gw_Netplay_RandomStatus(void);
 extern int gw_Netplay_LocalCk(void);
@@ -516,7 +518,7 @@ static const char *const gs_lb_phase[] = {"off", "char_blind", "strike", "ban", 
                                           "char_winner", "char_loser", "ready", "go"};
 static const char *const gs_rnd_state[] = {"off", "looking", "matched", "timeout", "failed"};
 
-/* gd.netplay() -> the connection and the lobby, read-only. */
+/* gd.netplay() -> the connection and the lobby, read-only (stages, groups, the screen's cursor). */
 static int l_netplay(lua_State *L) {
     int ph = gw_Netplay_Phase(), lp = gw_Netplay_LobbyPhase(), rs = gw_Netplay_RandomStatus(), i;
     int n = gw_Netplay_LobbyInfo(9);
@@ -551,6 +553,13 @@ static int l_netplay(lua_State *L) {
         lua_rawseti(L, -2, i + 1);
     }
     lua_setfield(L, -2, "stages");
+    lua_createtable(L, n, 0); /* groups[i] = 0 starter, 1 counterpick (the list has starters first) */
+    for (i = 0; i < n; ++i) {
+        lua_pushinteger(L, gw_Netplay_LobbyStageGroup(i));
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "groups");
+    gs_setint(L, "cursor", gw_Frontend_LobbyCursor() + 1); /* the lobby screen's stage cursor, 1-based */
     return 1;
 }
 

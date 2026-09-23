@@ -386,6 +386,16 @@ static void fs_css_roster(void)
     fcs.pages = (fs_slots() + fcs.per - 1) / fcs.per;
     OSReport("frontend: character select - %d fighters on offer, %d page(s)%s\n", fcs.n, fcs.pages,
              fcs.online ? " (online)" : "");
+    {
+        /* the roster's order, for tests that walk the grid (ck per slot) */
+        char line[FS_MAX_FIGHTERS * 4 + 8];
+        int k, o = 0;
+        for (k = 0; k < fcs.n && o < (int) sizeof line - 5; k++) {
+            o += sprintf(line + o, "%s%d", k ? "," : "", fcs.ck[k]);
+        }
+        line[o] = '\0';
+        OSReport("frontend: character select - roster %s\n", line);
+    }
 }
 
 static int fs_slot_of(int ck)

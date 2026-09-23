@@ -2487,3 +2487,6 @@ static void fl_exit(void)
         fl.on = false;
     }
 }
+
+/* The lobby's stage cursor (a stage index), for scripts and tests (gd.netplay().cursor). */
+int Frontend_LobbyCursor(void) { return fl.cur; }

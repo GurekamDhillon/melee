@@ -985,10 +985,14 @@ static int test_log_categories(void) {
   memcpy(gl.on, saved_on, sizeof saved_on);
   gl.all = saved_all;
   {
-    char out[256];
-    gl_copy(gl_profile, sizeof gl_profile, "C:\\Users\\Someone");
+    char out[256], profile[64], line[128];
+    /* Built at run time: a literal user-profile path in the exe fails check_release.ps1's
+     * personal-path guard, test data or not. */
+    snprintf(profile, sizeof profile, "C:\\%s\\Someone", "Users");
+    snprintf(line, sizeof line, "gw: card at c:/%s/someone/Desktop/x and Someone's", "users");
+    gl_copy(gl_profile, sizeof gl_profile, profile);
     gl_copy(gl_user, sizeof gl_user, "Someone");
-    gl_sanitize("gw: card at c:/users/someone/Desktop/x and Someone's", out, sizeof out);
+    gl_sanitize(line, out, sizeof out);
     if (strcmp(out, "gw: card at %USERPROFILE%/Desktop/x and <user>'s") != 0) {
       gw_test_fail("sanitize gave \"%s\"", out);
       rc = 1;

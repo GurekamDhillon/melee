@@ -1114,3 +1114,73 @@ more per snapshot, rebuilt idempotently at spawn). MK uses 30.
   helpless air end), `geno_lab_stale_fighter`.
 - In game (Meta Knight, `experiment/brawl-metaknight/tools/ingame_v2.py`, "v3" plans) and netplay:
   `_build/agents/beta/NOTES.md` (Geno v3 entry).
+
+## 18. v4: the model follows Meta Knight's specials (STABLE reference)
+
+Status: **built** (additive keys; a v3 exe logs them as unknown and keeps its behaviour). Code:
+`pc/geno/geno_game_specials.inc` (`geno_drill_pose`, `geno_tornado_spin_*`). MK: `tools/build_mk.py`
+sets the keys; checks `experiment/brawl-metaknight/tools/ingame_v4.py` (numeric, joints / hitboxes).
+
+### 18.1 Drill Rush turns the model (`drill.pitch_model`, default 1)
+
+Brawl keeps the rush pitch on the **model**, not only on the travel: SpecialSRush's execStatus
+(ft_metaknight C710) is `rot = posture.getRot(); rot.x += -clamp(stickY) * param 4020 (3.0);
+posture.setRot(rot)` (soPostureModule slots 0x40 / 0x44), and MK's kinetic angle hook
+(sora fn_27_359CE4) derives the travel from it: `angle = -rot.x * lr * deg2rad`. The rush's exit
+(C820) clears rot unless the next status is SpecialSEnd (0x11A); SpecialSEnd's exec (C9B8) eases
+`rot.x -= 2 * rot.x / RA-Basic[2]` (the entry sets RA-Basic[2] once from a constant: `end_frames`, 10)
+and its exit (CB48) clears it. SpecialSStart never touches it; nothing else in ft_metaknight.rel
+does (Dimensional Cape and the tornado have no posture rotation).
+
+Geno: TopN's rotation X (`ftPartSetRotX(fp, 0, -pitch)`, Melee's equivalent of the posture rot, as
+Kirby's Final Cutter and the slope tilt use it) is set from `move_f[0]` whenever the rush or the end
+changes the pitch and on every entry (rush, end, both situations). `-pitch` turns the nose up for
+either facing (TopN's Y rotation holds the facing). Every joint, the hitboxes (the sword's) and the
+hurtboxes turn with it, rigidly about TopN (the fighter's position). Any other action clears it
+(Fighter_ChangeMotionState, Brawl's exit). Rollback: derived from snapshotted state every frame.
+Measured in game: the model turn equals pitch x facing within 0.0004 deg, rigid within 0.0002 units,
+hitboxes within 0.002 deg, the airborne travel along the nose within 0.004 deg (18.3).
+
+### 18.2 Mach Tornado's body spins at the spin rate (`tornado.spin_anim`, `tornado.spin_period`)
+
+Brawl's spin rate **is** the SpecialNSpin clip's playback rate: the spin action's entry sets
+`Frame Speed Modifier = IC-Basic[4002]` (w02, 80), SpecialNSpin's execStatus (sora 358CF4) reads it
+back with soMotionModule::getRate (slot 0x20, +0x4C), applies the decay / lift and writes it with
+setRate (0x24), and the PSA ends the spin when IC-Basic[24] (the frame speed) is <= 10. MK's clip is
+361 frames of YRotN rotY = frame degrees, so the body turns `rate` degrees a frame (80 at the start,
+10 at the end). The whirlwind (EfBmData model 20, gfx 5019) is spawned once on TopN (bone 0) and keeps
+its own 30-frame loop: Brawl never touches its rate, and neither does Geno.
+
+Geno (`spin_anim` > 0): the joints' animations (the model and the blend skeleton, as ftAnim_8006F0FC)
+play at `spin_anim x move_f[0]`, set on entry and every phys frame, looping (AOBJ_LOOP) at
+`spin_period` (MK 360: frame 360 = frame 0) instead of ending. `fp->frame_speed_mul`, the subaction
+script's clock, stays 1: the script's hitbox loop keeps its timing (Brawl's own script loop is 180
+clip frames, i.e. a rehit every 180 / rate game frames - not ported, see 18.4). Hitlag skips the
+fighter's animation step, so the spin pauses with it, as in Brawl. The clip frame lives in the joints'
+AObjs (game heap, snapshotted); the rate is re-derived from move_f[0] every frame. `spin_anim` 0 = v3
+(rate 1, the state restarts the clip when it ends).
+
+| key | id | default | MK |
+|---|---|---|---|
+| `drill.pitch_model` | 0x4E | 1 | 1 |
+| `tornado.spin_anim` | 0x3A | 0 | 1 |
+| `tornado.spin_period` | 0x3B | 0 (the clip's end) | 360 |
+
+### 18.3 v4 verification
+
+- Tests (`--test`, ACE, 163/163): `geno_v4_drill_pose` (rot x = -pitch every rush frame, both
+  facings, steering down, the end keeps and eases it, `pitch_model` 0 keeps the model level) and
+  `geno_v4_tornado_spin` (joint rate = the spin rate from the entry, -1.5 a frame, +16 per lift with
+  the cooldown; `spin_anim` 0 leaves the animation alone).
+- In game (`ingame_v4.py`, 13 plans): each steered drill is compared with a straight drill at the
+  same clip frame (joint offsets from TopN, hidden parts whose matrices are not recomputed left out);
+  the tornado's clip frame equals the running sum of the rate rebuilt from the inputs (0.0000 frames)
+  and the shoulders turn about YRotN by the rate every frame (within 0.1 deg). `ingame_v2.py` 34/34.
+
+### 18.4 Open (not changed by v4)
+
+- Tornado rehit: Brawl's SpecialNSpin script re-creates its 4 hitboxes every 180 clip frames (at rate
+  80: every 2.25 game frames; at 10: every 18); the port rehits every 10 game frames.
+- The special's own B press arms the tornado's first lift (the phys reads `pressed_buttons` on the
+  entry frame): +16 at frame 10 (and, on the ground, the lift-off), about 10 frames more spin. Whether
+  Brawl's first execStatus still sees the press as a trigger is not recovered.

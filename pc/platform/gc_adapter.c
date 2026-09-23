@@ -827,7 +827,11 @@ static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
       attempt = 0;
     } else if (fast_left > 0) {
       --fast_left;
-      retry_at = GetTickCount() + 1000;
+      retry_at = GetTickCount() + 900;
+      if (fast_left > 0) {
+        gw_pad_log("gw: gc adapter: reclaim attempt %d failed; retrying in 1 s (%d left)", attempt,
+                   fast_left);
+      }
       if (fast_left == 0) {
         gw_pad_log("gw: gc adapter: could not reclaim it (another program still holds it?); "
                    "retrying every 30 s");

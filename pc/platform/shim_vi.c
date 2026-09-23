@@ -163,6 +163,9 @@ void gw_exit_clean(int code) {
   TerminateProcess(GetCurrentProcess(), (UINT)code);
 }
 
+extern void gw_pad_focus_event(int focused); /* shim_pad.c */
+extern void gw_pad_focus_tick(void);
+
 static void gw_handle_events(void) {
   const AuroraEvent *event = aurora_update();
   while (event != NULL && event->type != AURORA_NONE) {
@@ -170,11 +173,20 @@ static void gw_handle_events(void) {
     case AURORA_EXIT:
       gw_exiting = true;
       break;
+    case AURORA_SDL_EVENT:
+      /* focus: shim_pad.c releases the GC adapter in the background (debounced there) */
+      if (event->sdl.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
+        gw_pad_focus_event(0);
+      } else if (event->sdl.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
+        gw_pad_focus_event(1);
+      }
+      break;
     default:
       break;
     }
     ++event;
   }
+  gw_pad_focus_tick();
   if (gw_exiting) {
     gw_log("melee-pc: window closed, shutting down");
     gw_dump_stub_summary();

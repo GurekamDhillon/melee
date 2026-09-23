@@ -128,6 +128,21 @@ static volatile LONG gw_gc_lost;
 void gw_gc_adapter_shutdown(void);
 static DWORD WINAPI gw_gc_reader(LPVOID arg);
 
+/* shim_pad.c: the level-1 pad log (rate-capped; MELEE_PAD_DIAG / settings pad_diag). */
+extern void gw_pad_log(const char *fmt, ...);
+
+/* Open/close are serialised: the hotplug scanner opens from its own thread, while focus loss
+ * (gw_gc_adapter_suspend, game thread) and a lost device (gw_gc_poll, game thread) close. */
+static SRWLOCK gw_gc_init_srw = SRWLOCK_INIT;
+
+/* Suspended = the game window is in the background and has let go of the adapter so another
+ * program (Dolphin, a second copy of the game) can claim it. The scanner leaves it alone until
+ * gw_gc_adapter_resume. */
+static volatile LONG gw_gc_suspended;
+static volatile LONG gw_gc_resume_pending; /* the next scanner open is a resume: keep calibration */
+static HANDLE gw_gc_scan_wake;             /* auto-reset: wakes the scanner early */
+static volatile LONG gw_gc_reports_total;  /* every good report since start (never reset) */
+
 /* MELEE_INPUT_PROFILE (shim_vi.c): when each report arrived, and the spacing between reports.
  * The official adapter reports at 125 Hz (8 ms); an overclocked one (HIDUSBF / a patched
  * bInterval) at up to 1000 Hz. Whatever the rate, the game takes the newest report, so this is
@@ -170,6 +185,13 @@ static void gw_gc_stamp(const unsigned char *payload) {
   memcpy(gw_gc_prev_payload, payload, GC_PAYLOAD_SIZE);
   gw_gc_prev_qpc = now.QuadPart;
   InterlockedExchange64(&gw_gc_report_qpc, now.QuadPart);
+  InterlockedIncrement(&gw_gc_reports_total);
+}
+
+/* Reports received so far (monotonic; the 10 s pad summary turns it into a rate without
+ * disturbing MELEE_INPUT_PROFILE's resetting statistics). */
+unsigned gw_gc_adapter_report_count(void) {
+  return (unsigned)InterlockedCompareExchange(&gw_gc_reports_total, 0, 0);
 }
 
 /* QPC time the newest report arrived (0: none yet). */
@@ -401,8 +423,9 @@ static int gw_gc_open(void) {
       if (gw_gc_dev == INVALID_HANDLE_VALUE) {
         /* ERROR_ACCESS_DENIED here almost always means another process (typically SDL, which
          * opens this adapter through its own HIDAPI GameCube driver) already holds the device. */
-        gw_log("gw: gc adapter: found %s but CreateFile failed (error %lu)", detail->DevicePath,
-               (unsigned long)GetLastError());
+        gw_pad_log("gw: gc adapter: found %s but CreateFile failed (error %lu%s)",
+                   detail->DevicePath, (unsigned long)GetLastError(),
+                   GetLastError() == ERROR_ACCESS_DENIED ? ": another program holds it" : "");
       } else if (WinUsb_Initialize(gw_gc_dev, &gw_gc_usb)) {
         found = 1;
       } else {
@@ -491,7 +514,7 @@ static void gw_gc_start_reader(void) {
   }
 }
 
-void gw_gc_adapter_shutdown(void) {
+static void gw_gc_shutdown_locked(void) {
   InterlockedExchange(&gw_gc_quit, 1);
   if (gw_gc_thread != NULL) {
     /* The reader is parked in a timeout-bounded read, so it observes the flag promptly. */
@@ -507,9 +530,85 @@ void gw_gc_adapter_shutdown(void) {
     gw_gc_thread = NULL;
   }
   gw_gc_close();
+  /* the last report belongs to the closed session; don't decode it again after a reopen */
+  if (gw_gc_lock_ready) {
+    EnterCriticalSection(&gw_gc_lock);
+    gw_gc_payload_valid = 0;
+    LeaveCriticalSection(&gw_gc_lock);
+  }
 }
 
+void gw_gc_adapter_shutdown(void) {
+  AcquireSRWLockExclusive(&gw_gc_init_srw);
+  gw_gc_shutdown_locked();
+  ReleaseSRWLockExclusive(&gw_gc_init_srw);
+}
+
+/* When no adapter is found: every USB VID:PID present, once per run, so a log from a player whose
+ * adapter "isn't detected" says what IS plugged in (a clone with another PID, an adapter in PC
+ * mode showing up as a generic HID gamepad, nothing at all). */
+static void gw_gc_log_usb_ids_once(void) {
+  static int done;
+  HDEVINFO set;
+  SP_DEVINFO_DATA info;
+  char id[512];
+  char seen[32][18];
+  int nseen = 0;
+  char line[32 * 19 + 1];
+  DWORD i;
+  if (done) {
+    return;
+  }
+  done = 1;
+  set = SetupDiGetClassDevsA(NULL, "USB", NULL, DIGCF_PRESENT | DIGCF_ALLCLASSES);
+  if (set == INVALID_HANDLE_VALUE) {
+    return;
+  }
+  info.cbSize = sizeof(info);
+  for (i = 0; nseen < 32 && SetupDiEnumDeviceInfo(set, i, &info); ++i) {
+    char *p, *v;
+    int k;
+    if (!SetupDiGetDeviceInstanceIdA(set, &info, id, sizeof(id), NULL)) {
+      continue;
+    }
+    for (p = id; *p != '\0'; ++p) *p = (char)toupper((unsigned char)*p);
+    v = strstr(id, "VID_");
+    if (v == NULL || strlen(v) < 17 || strncmp(v + 8, "&PID_", 5) != 0) {
+      continue;
+    }
+    for (k = 0; k < nseen; ++k) {
+      if (strncmp(seen[k], v + 4, 4) == 0 && strncmp(seen[k] + 5, v + 13, 4) == 0) break;
+    }
+    if (k < nseen) {
+      continue;
+    }
+    memcpy(seen[nseen], v + 4, 4);
+    seen[nseen][4] = ':';
+    memcpy(seen[nseen] + 5, v + 13, 4);
+    seen[nseen][9] = '\0';
+    ++nseen;
+  }
+  SetupDiDestroyDeviceInfoList(set);
+  line[0] = '\0';
+  for (i = 0; i < (DWORD)nseen; ++i) {
+    strcat(line, i ? " " : "");
+    strcat(line, seen[i]);
+  }
+  gw_log("gw: gc adapter: not found (057E:0337); USB devices present (VID:PID): %s",
+         nseen ? line : "(none listed)");
+}
+
+int gw_gc_adapter_device_plugged(void);
+static int gw_gc_init_locked(void);
 int gw_gc_adapter_init(void) {
+  int r;
+  AcquireSRWLockExclusive(&gw_gc_init_srw);
+  r = gw_gc_init_locked();
+  ReleaseSRWLockExclusive(&gw_gc_init_srw);
+  return r;
+}
+
+static int gw_gc_init_locked(void) {
   unsigned char start = 0x13;
   ULONG written = 0;
   ULONG timeout = 20;
@@ -519,15 +618,25 @@ int gw_gc_adapter_init(void) {
     return gw_gc_ready;
   }
   gw_gc_tried = 1;
+  if (InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
+    return 0; /* in the background: leave the adapter to whoever wants it */
+  }
 
   if (gw_gc_open()) {
     gw_gc_backend = GW_GC_WINUSB;
   } else if (gw_gc_open_hid()) {
     gw_gc_backend = GW_GC_HID;
   } else {
-    gw_log("gw: gc adapter: no WUP-028 adapter found on either WinUSB or HID; using the SDL pad "
-           "path instead.");
-    gw_gc_dump_interfaces();
+    static int dumped;
+    gw_pad_log("gw: gc adapter: no WUP-028 adapter found on either WinUSB or HID; using the SDL "
+               "pad path instead.");
+    if (!dumped) {
+      dumped = 1;
+      gw_gc_dump_interfaces();
+      if (!gw_gc_adapter_device_plugged()) {
+        gw_gc_log_usb_ids_once();
+      }
+    }
     return 0;
   }
 
@@ -586,6 +695,19 @@ int gw_gc_adapter_init(void) {
     }
   }
 
+  /* A run that ended without closing the adapter (a crash, a kill) can leave a pipe halted or
+   * mid-transfer: the next open succeeds but reads deliver nothing until the adapter is replugged.
+   * Resetting both pipes clears the halt and the data toggle - melee-unlocked's gc_adapter.cpp
+   * does the same with libusb_clear_halt (GPL-2.0-or-later, Hero88go). */
+  if (!WinUsb_ResetPipe(gw_gc_usb, GC_EP_IN)) {
+    gw_pad_log("gw: gc adapter: reset of IN pipe 0x%02X failed (error %lu)", GC_EP_IN,
+               (unsigned long)GetLastError());
+  }
+  if (!WinUsb_ResetPipe(gw_gc_usb, GC_EP_OUT)) {
+    gw_pad_log("gw: gc adapter: reset of OUT pipe 0x%02X failed (error %lu)", GC_EP_OUT,
+               (unsigned long)GetLastError());
+  }
+
   /* Short read timeout: the pad is polled once per frame from the game thread, and a stalled
    * read must never hold up the frame. RAW_IO keeps WinUSB from buffering partial packets. */
   WinUsb_SetPipePolicy(gw_gc_usb, GC_EP_IN, PIPE_TRANSFER_TIMEOUT, sizeof(timeout), &timeout);
@@ -640,23 +762,126 @@ int gw_gc_adapter_device_plugged(void) {
 static HANDLE gw_gc_scan_thread;
 static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
   DWORD retry_at = 0;
+  int fast_left = 0; /* after a resume: retry every second for a while (the other program may
+                        take a moment to let go), then fall back to every 30 s */
+  int attempt = 0;
+  int fast_armed = 0;
   (void)arg;
   for (;;) {
-    Sleep(1000);
-    if (gw_gc_ready || (int)(GetTickCount() - retry_at) < 0 || !gw_gc_adapter_device_plugged()) {
+    int resuming;
+    if (gw_gc_scan_wake != NULL) {
+      WaitForSingleObject(gw_gc_scan_wake, 1000);
+    } else {
+      Sleep(1000);
+    }
+    if (InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
+      fast_armed = 0;
       continue;
     }
-    gw_log("gw: gc adapter: an adapter is plugged in - opening it");
+    resuming = InterlockedCompareExchange(&gw_gc_resume_pending, 0, 0) != 0;
+    if (!resuming) {
+      fast_armed = 0;
+    } else if (!fast_armed) {
+      fast_armed = 1;
+      fast_left = 15;
+      attempt = 0;
+      retry_at = GetTickCount(); /* a resume retries now, whatever the backoff */
+    }
+    if (gw_gc_ready) {
+      InterlockedExchange(&gw_gc_resume_pending, 0);
+      fast_left = 0;
+      attempt = 0;
+      continue;
+    }
+    if ((int)(GetTickCount() - retry_at) < 0) {
+      continue;
+    }
+    if (!gw_gc_adapter_device_plugged()) {
+      if (resuming) {
+        gw_pad_log("gw: gc adapter: resume - no adapter plugged in, nothing to reclaim");
+        InterlockedExchange(&gw_gc_resume_pending, 0);
+        fast_left = 0;
+      }
+      attempt = 0;
+      continue;
+    }
+    ++attempt;
+    if (resuming) {
+      gw_pad_log("gw: gc adapter: reclaiming after focus returned (attempt %d)", attempt);
+    } else if (attempt == 1) {
+      gw_log("gw: gc adapter: an adapter is plugged in - opening it");
+    } else {
+      gw_pad_log("gw: gc adapter: scanner retry %d", attempt);
+    }
+    AcquireSRWLockExclusive(&gw_gc_init_srw);
     gw_gc_tried = 0;
-    if (gw_gc_adapter_init()) {
-      InterlockedExchange(&gw_gc_recal, 1); /* re-sample the resting sticks and triggers */
+    if (gw_gc_init_locked()) {
+      if (resuming) {
+        /* the controllers never moved: keep their calibration (origins, trigger rests) */
+        gw_pad_log("gw: gc adapter: reclaimed, calibration kept");
+      } else {
+        InterlockedExchange(&gw_gc_recal, 1); /* re-sample the resting sticks and triggers */
+      }
+      InterlockedExchange(&gw_gc_resume_pending, 0);
+      fast_left = 0;
+      attempt = 0;
+    } else if (fast_left > 0) {
+      --fast_left;
+      retry_at = GetTickCount() + 1000;
+      if (fast_left == 0) {
+        gw_pad_log("gw: gc adapter: could not reclaim it (another program still holds it?); "
+                   "retrying every 30 s");
+        InterlockedExchange(&gw_gc_resume_pending, 0);
+        retry_at = GetTickCount() + 30000;
+      }
     } else {
       retry_at = GetTickCount() + 30000;
     }
+    ReleaseSRWLockExclusive(&gw_gc_init_srw);
   }
   return 0;
 }
+
+int gw_gc_adapter_suspended(void) {
+  return InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0;
+}
+
+/* Focus lost: let go of the adapter (reader joined, WinUSB/HID handles closed) and keep the
+ * scanner off it, so another program can claim it. Calibration is kept for the resume. Returns
+ * whether an open adapter was released. */
+int gw_gc_adapter_suspend(void) {
+  int was;
+  AcquireSRWLockExclusive(&gw_gc_init_srw);
+  InterlockedExchange(&gw_gc_suspended, 1);
+  InterlockedExchange(&gw_gc_resume_pending, 0);
+  was = gw_gc_ready;
+  if (was) {
+    gw_gc_shutdown_locked();
+  }
+  ReleaseSRWLockExclusive(&gw_gc_init_srw);
+  gw_pad_log("gw: gc adapter: suspended (window in the background) - %s",
+             was ? "adapter released for other programs" : "no adapter was open; scanner paused");
+  return was;
+}
+
+/* Focus back: the scanner reopens the adapter right away (off the game thread, so the frame
+ * never waits on USB enumeration), retrying each second for 15 s if the other program is slow to
+ * let go. */
+void gw_gc_adapter_resume(void) {
+  if (InterlockedExchange(&gw_gc_suspended, 0) == 0) {
+    return;
+  }
+  InterlockedExchange(&gw_gc_resume_pending, 1);
+  gw_pad_log("gw: gc adapter: resumed (window focused) - reclaiming");
+  if (gw_gc_scan_wake != NULL) {
+    SetEvent(gw_gc_scan_wake);
+  }
+}
+
 void gw_gc_adapter_start_hotplug(void) {
+  if (gw_gc_scan_wake == NULL) {
+    gw_gc_scan_wake = CreateEventA(NULL, FALSE, FALSE, NULL);
+  }
   if (gw_gc_scan_thread == NULL) {
     gw_gc_scan_thread = CreateThread(NULL, 0, gw_gc_scanner, NULL, 0, NULL);
     if (gw_gc_scan_thread != NULL) {
@@ -963,17 +1188,13 @@ void gw_gc_adapter_rumble(int chan, int on) {
 }
 
 /* Dump the adapter's raw report bytes, so a mapping question can be settled against what was
- * actually pressed rather than by guessing. Off unless MELEE_PAD_DIAG=1. */
+ * actually pressed rather than by guessing. Verbose level only (MELEE_PAD_DIAG=2 / pad_diag=2). */
 void gw_gc_adapter_diag(void) {
+  extern int gw_pad_diag_level(void);
   static int frames;
-  static int on = -1;
   int chan;
 
-  if (on < 0) {
-    const char *v = getenv("MELEE_PAD_DIAG");
-    on = (v != NULL && v[0] == '1') ? 1 : 0;
-  }
-  if (!on || !gw_gc_ready || !gw_gc_payload_valid || (++frames % 30) != 0) {
+  if (gw_pad_diag_level() < 2 || !gw_gc_ready || !gw_gc_payload_valid || (++frames % 30) != 0) {
     return;
   }
   for (chan = 0; chan < GC_PORTS; ++chan) {

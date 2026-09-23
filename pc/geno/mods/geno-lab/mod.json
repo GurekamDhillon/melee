@@ -1,0 +1,11 @@
+{
+  "id": "geno-lab",
+  "name": "Geno Lab",
+  "version": "0.1.0",
+  "author": "GD",
+  "kind": "script",
+  "description": "Frame-steppable fighter inspection: hit/hurtboxes, skeleton, ECB, action/animation readout, engine events, step back. Offline only. Private (Geno).",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false
+}

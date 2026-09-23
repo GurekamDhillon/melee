@@ -51,7 +51,10 @@ bool ftCo_800D6824(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
         {
             extern void Mex_SpecialNDispatch(int kind, void* gobj, void* vanilla);
-            Mex_SpecialNDispatch(fp->kind, gobj, (void*) ftData_SpecialN[fp->kind]);
+            extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+            if (!Geno_SpecialEnter(gobj, 0 /* GENO_SP_N */)) {
+                Mex_SpecialNDispatch(fp->kind, gobj, (void*) ftData_SpecialN[fp->kind]);
+            }
         }
 #else
         ftData_SpecialN[fp->kind](gobj);
@@ -81,7 +84,10 @@ bool ftCo_800D68C0(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
         {
             extern void Mex_SpecialLwDispatch(int kind, void* gobj, void* vanilla);
-            Mex_SpecialLwDispatch(fp->kind, gobj, (void*) ftData_SpecialLw[fp->kind]);
+            extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+            if (!Geno_SpecialEnter(gobj, 3 /* GENO_SP_LW */)) {
+                Mex_SpecialLwDispatch(fp->kind, gobj, (void*) ftData_SpecialLw[fp->kind]);
+            }
         }
 #else
         ftData_SpecialLw[fp->kind](gobj);
@@ -111,7 +117,10 @@ bool ftCo_Attack100_CheckInput(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
         {
             extern void Mex_SpecialHiDispatch(int kind, void* gobj, void* vanilla);
-            Mex_SpecialHiDispatch(fp->kind, gobj, (void*) ftData_SpecialHi[fp->kind]);
+            extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+            if (!Geno_SpecialEnter(gobj, 2 /* GENO_SP_HI */)) {
+                Mex_SpecialHiDispatch(fp->kind, gobj, (void*) ftData_SpecialHi[fp->kind]);
+            }
         }
 #else
         ftData_SpecialHi[fp->kind](gobj);
@@ -131,7 +140,10 @@ bool ftCo_800D69C4(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
         {
             extern void Mex_SpecialHiAirDispatch(int kind, void* gobj, void* vanilla);
-            Mex_SpecialHiAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirHi[fp->kind]);
+            extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+            if (!Geno_SpecialEnter(gobj, 6 /* GENO_SP_AIR_HI */)) {
+                Mex_SpecialHiAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirHi[fp->kind]);
+            }
         }
 #else
         ftData_SpecialAirHi[fp->kind](gobj);

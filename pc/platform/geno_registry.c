@@ -42,6 +42,10 @@
 extern int gw_GenoGame_AttrFind(const char *name);
 extern int gw_GenoGame_AttrIsInt(int index);
 extern int gw_GenoGame_HookFind(const char *name);
+/* v2 */
+extern int gw_GenoGame_BehaviorFind(const char *name);
+extern int gw_GenoGame_CallbackFind(int slot, const char *name);
+extern int gw_GenoGame_ParamFind(const char *family, const char *name);
 
 extern int gw_Mex_SlotInternal(int slot);
 extern const char *gw_Mex_FtPlFile(int k);
@@ -389,7 +393,27 @@ typedef struct {
     int nov;
     int ov_anim[GENO_MAX_OVERLAYS]; /* subaction index */
     int ov_slot[GENO_MAX_OVERLAYS]; /* registry-wide overlay slot */
+    /* v2: Geno action states, behaviour parameters, specials bound to states */
+    int nstate;
+    char st_name[GENO_MAX_STATES][32];
+    int st_bhv[GENO_MAX_STATES];              /* GENO_BHV_* */
+    int st_cb[GENO_MAX_STATES][GENO_CB_SLOTS];/* callback id per slot, -1 = the behaviour's */
+    int st_anim[GENO_MAX_STATES];             /* subaction index, -1 = from st_anim_from / like */
+    uint32_t st_anim_from[GENO_MAX_STATES];   /* target whose row's subaction to play, ~0 none */
+    uint32_t st_like[GENO_MAX_STATES];        /* target whose row gives flags / move id / cam */
+    int st_flags_set[GENO_MAX_STATES];
+    uint32_t st_flags[GENO_MAX_STATES];       /* MotionState x4_flags */
+    int st_move_id[GENO_MAX_STATES];          /* -1 = the like row's */
+    uint32_t st_next[GENO_MAX_STATES];        /* anim-end target, ~0 = the behaviour's */
+    uint32_t st_land[GENO_MAX_STATES];        /* landing target, ~0 = the behaviour's */
+    uint32_t st_lag[GENO_MAX_STATES];         /* landing lag (float bits), 0 = default */
+    int nparam;
+    int param_id[GENO_PARAMS];
+    uint32_t param_bits[GENO_PARAMS];         /* float bits */
+    uint32_t special[GENO_SP_COUNT];          /* target, ~0 = Melee's / m-ex's own special */
 } gn_profile;
+
+#define GN_NONE 0xFFFFFFFFu
 
 #define GN_MAX_SLOTS 256 /* overlay slots over every profile */
 
@@ -431,8 +455,9 @@ static int gn_hook_ref(const char *s, int *arg) {
     return gw_GenoGame_HookFind(name);
 }
 
-/* A geno.json target: a number (motion id), "motion:N", "special:N" or "geno:N". 1 when valid. */
-static int gn_target(const jdoc *d, int x, uint32_t *out) {
+/* A geno.json target: a number (motion id), "motion:N", "special:N", "geno:N" or (v2)
+ * "geno:<state name>" (a state of profile `p` declared above). 1 when valid. */
+static int gn_target_p(const jdoc *d, int x, uint32_t *out, const gn_profile *p) {
     const char *s;
     unsigned kind;
     long id;
@@ -445,15 +470,34 @@ static int gn_target(const jdoc *d, int x, uint32_t *out) {
     }
     if (d->n[x].type != JN_STR) return 0;
     s = d->n[x].str;
+    if (_stricmp(s, "auto") == 0) { /* v2: Wait on the ground, Fall in the air */
+        *out = GENO_TGT_AUTO;
+        return 1;
+    }
+    if (_stricmp(s, "helpless") == 0) { /* v2: Wait on the ground, FallSpecial in the air */
+        *out = GENO_TGT_HELPLESS;
+        return 1;
+    }
     if (_strnicmp(s, "motion:", 7) == 0) kind = GENO_TGT_MOTION, s += 7;
     else if (_strnicmp(s, "special:", 8) == 0) kind = GENO_TGT_SPECIAL, s += 8;
     else if (_strnicmp(s, "geno:", 5) == 0) kind = GENO_TGT_GENO, s += 5;
     else return 0;
     id = strtol(s, &end, 0);
+    if (end == s && kind == GENO_TGT_GENO && p != NULL) {
+        int i;
+        for (i = 0; i < p->nstate; ++i)
+            if (_stricmp(s, p->st_name[i]) == 0) {
+                *out = GENO_TARGET(GENO_TGT_GENO, (unsigned) i);
+                return 1;
+            }
+        return 0;
+    }
     if (end == s || *end != '\0' || id < 0 || id > 0xFFFF) return 0;
     *out = GENO_TARGET(kind, (unsigned) id);
     return 1;
 }
+
+static int gn_target(const jdoc *d, int x, uint32_t *out) { return gn_target_p(d, x, out, NULL); }
 
 /* One script word: a number (0..2^32-1, or a negative int) or a "0x..." / decimal string. */
 static int gn_word(const jdoc *d, int x, uint32_t *out) {
@@ -559,7 +603,8 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
         for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
             uint32_t from, to;
             int kf = jd_get(d, c, "keep_frame");
-            if (!gn_target(d, jd_get(d, c, "from"), &from) || !gn_target(d, jd_get(d, c, "to"), &to)) {
+            if (!gn_target_p(d, jd_get(d, c, "from"), &from, p) ||
+                !gn_target_p(d, jd_get(d, c, "to"), &to, p)) {
                 gw_log("geno: %s: an on_land entry needs \"from\" and \"to\" (a motion id, "
                        "\"special:N\", \"motion:N\" or \"geno:N\") - ignored", where);
                 continue;
@@ -622,6 +667,109 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
             r->nslot++;
             p->nov++;
         }
+    }
+}
+
+/* v2: "states" (Geno action states), the behaviour parameter blocks, "specials". Parsed before
+ * the v1 keys so on_land / specials can name states ("geno:Glide"). */
+static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
+    static const char *const fams[] = { "glide", "tornado", "drill" };
+    static const char *const cb_keys[GENO_CB_SLOTS] = { "anim", "iasa", "phys", "coll" };
+    static const char *const sp_keys[GENO_SP_COUNT] = { "n", "s", "hi", "lw",
+                                                        "air_n", "air_s", "air_hi", "air_lw" };
+    int x, c, f, k;
+    for (k = 0; k < GENO_SP_COUNT; ++k) p->special[k] = GN_NONE;
+    /* states: [ { "name", "behavior", "subaction", "like", "flags", "move_id", "next", "land",
+                   "landing_lag", "anim" / "iasa" / "phys" / "coll" } ] */
+    x = jd_get(d, e, "states");
+    if (x >= 0 && d->n[x].type == JN_ARR) {
+        /* names first, so a state can name a later one ("next": "geno:Glide") */
+        for (c = d->n[x].first; c >= 0 && p->nstate < GENO_MAX_STATES; c = d->n[c].next) {
+            int nm = jd_get(d, c, "name");
+            snprintf(p->st_name[p->nstate], sizeof p->st_name[0], "%s",
+                     nm >= 0 && d->n[nm].type == JN_STR ? d->n[nm].str : "");
+            p->nstate++;
+        }
+        if (c >= 0) gw_log("geno: %s: more than %d states - the rest are ignored", where, GENO_MAX_STATES);
+        for (c = d->n[x].first, k = 0; c >= 0 && k < p->nstate; c = d->n[c].next, ++k) {
+            int b = jd_get(d, c, "behavior"), sa = jd_get(d, c, "subaction"), v, slot;
+            p->st_bhv[k] = GENO_BHV_NONE;
+            p->st_anim[k] = -1;
+            p->st_anim_from[k] = GN_NONE;
+            p->st_like[k] = GN_NONE;
+            p->st_move_id[k] = -1;
+            p->st_next[k] = GN_NONE;
+            p->st_land[k] = GN_NONE;
+            for (slot = 0; slot < GENO_CB_SLOTS; ++slot) p->st_cb[k][slot] = -1;
+            if (b >= 0 && d->n[b].type == JN_STR) {
+                int id = gw_GenoGame_BehaviorFind(d->n[b].str);
+                if (id < 0) gw_log("geno: %s: state %s: behavior \"%s\" is unknown", where, p->st_name[k],
+                                   d->n[b].str);
+                else p->st_bhv[k] = id;
+            }
+            if (sa >= 0 && d->n[sa].type == JN_NUM && d->n[sa].num >= 0 && d->n[sa].num <= 0x3FF)
+                p->st_anim[k] = (int) d->n[sa].num;
+            else if (sa >= 0 && !gn_target_p(d, sa, &p->st_anim_from[k], NULL))
+                gw_log("geno: %s: state %s: \"subaction\" must be an index or \"motion:N\" / "
+                       "\"special:N\" (that motion's animation) - none used", where, p->st_name[k]);
+            if ((v = jd_get(d, c, "like")) >= 0 && !gn_target_p(d, v, &p->st_like[k], NULL))
+                gw_log("geno: %s: state %s: bad \"like\"", where, p->st_name[k]);
+            if ((v = jd_get(d, c, "flags")) >= 0) {
+                uint32_t w;
+                if (gn_word(d, v, &w)) p->st_flags[k] = w, p->st_flags_set[k] = 1;
+            }
+            if ((v = jd_get(d, c, "move_id")) >= 0 && d->n[v].type == JN_NUM)
+                p->st_move_id[k] = (int) d->n[v].num & 0xFF;
+            if ((v = jd_get(d, c, "next")) >= 0 && !gn_target_p(d, v, &p->st_next[k], p))
+                gw_log("geno: %s: state %s: bad \"next\"", where, p->st_name[k]);
+            if ((v = jd_get(d, c, "land")) >= 0 && !gn_target_p(d, v, &p->st_land[k], p))
+                gw_log("geno: %s: state %s: bad \"land\"", where, p->st_name[k]);
+            if ((v = jd_get(d, c, "landing_lag")) >= 0 && d->n[v].type == JN_NUM)
+                p->st_lag[k] = gn_fbits(d->n[v].num);
+            for (slot = 0; slot < GENO_CB_SLOTS; ++slot) {
+                v = jd_get(d, c, cb_keys[slot]);
+                if (v < 0 || d->n[v].type != JN_STR) continue;
+                p->st_cb[k][slot] = gw_GenoGame_CallbackFind(slot, d->n[v].str);
+                if (p->st_cb[k][slot] < 0)
+                    gw_log("geno: %s: state %s: %s callback \"%s\" is unknown - the behavior's is used",
+                           where, p->st_name[k], cb_keys[slot], d->n[v].str);
+            }
+        }
+    }
+    /* parameter blocks: "glide": { "hold_frames": 16, "w00": 80, ... } */
+    for (f = 0; f < (int) (sizeof fams / sizeof fams[0]); ++f) {
+        x = jd_get(d, e, fams[f]);
+        if (x < 0 || d->n[x].type != JN_OBJ) continue;
+        for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
+            int id = gw_GenoGame_ParamFind(fams[f], d->n[c].key), j;
+            double v;
+            if (d->n[c].type == JN_BOOL || d->n[c].type == JN_NUM) v = d->n[c].num;
+            else continue;
+            if (id < 0) {
+                gw_log("geno: %s: %s.%s is not a parameter Geno knows - ignored", where, fams[f],
+                       d->n[c].key);
+                continue;
+            }
+            for (j = 0; j < p->nparam && p->param_id[j] != id; ++j) {}
+            if (j >= GENO_PARAMS) break;
+            p->param_id[j] = id;
+            p->param_bits[j] = gn_fbits(v);
+            if (j == p->nparam) p->nparam++;
+        }
+    }
+    /* specials: { "n": "geno:Tornado", "air_s": "geno:Drill", ... } (air_* default to the
+       grounded key) */
+    x = jd_get(d, e, "specials");
+    if (x >= 0 && d->n[x].type == JN_OBJ) {
+        for (k = 0; k < GENO_SP_COUNT; ++k) {
+            int v = jd_get(d, x, sp_keys[k]);
+            if (v >= 0 && !gn_target_p(d, v, &p->special[k], p)) {
+                gw_log("geno: %s: specials.%s: bad target", where, sp_keys[k]);
+                p->special[k] = GN_NONE;
+            }
+        }
+        for (k = GENO_SP_AIR_N; k <= GENO_SP_AIR_LW; ++k)
+            if (p->special[k] == GN_NONE) p->special[k] = p->special[k - GENO_SP_AIR_N];
     }
 }
 
@@ -708,10 +856,11 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
             p->nhook[ev]++;
         }
     }
+    gn_add_v2(p, d, e, where);
     gn_add_v1(r, p, d, e, mod, where);
     /* the id covers the whole entry as written - including keys this version ignores, which a
        newer Geno might act on, so two installs never agree on an id while behaving differently */
-    p->id = gn_hash_node(d, e, gn_mix(0x47454E4F00000000ull, GENO_VERSION)); /* "GENO" */
+    p->id = gn_hash_node(d, e, gn_mix(0x47454E4F00000000ull, GENO_ID_VERSION)); /* "GENO" */
     {
         /* script overlays loaded from files are content too: fold their words in (an entry with
            no overlays hashes exactly as before) */
@@ -772,9 +921,11 @@ static void gn_build_kinds(gn_registry *r) {
                    r->p[r->kind_profile[p->kind]].mod);
         r->kind_profile[p->kind] = i;
         gw_log("geno: fighter %s (%s) -> kind %d: id %s, %d attribute(s), max jumps %d, %d air vy, "
-               "hooks %d/%d/%d/%d, %d special attribute(s), %d on_land, %d subaction overlay(s)",
+               "hooks %d/%d/%d/%d, %d special attribute(s), %d on_land, %d subaction overlay(s), "
+               "%d Geno state(s), %d behaviour parameter(s)",
                p->name, p->plfile, p->kind, p->hex, p->nattr, p->max_jumps, p->njvy, p->nhook[0],
-               p->nhook[1], p->nhook[2], p->nhook[3], p->nspec, p->nland, p->nov);
+               p->nhook[1], p->nhook[2], p->nhook[3], p->nspec, p->nland, p->nov, p->nstate,
+               p->nparam);
     }
     r->kinds_built = 1;
 }
@@ -906,6 +1057,36 @@ int gw_Geno_PoolGen(void) {
     return gn_pool_gen;
 }
 
+/* v2: Geno states, parameters, specials */
+#define GN_ST(p, s) (gn_at(p) != NULL && (s) >= 0 && (s) < gn_at(p)->nstate)
+int gw_Geno_StateCount(int p) { return gn_at(p) ? gn_at(p)->nstate : 0; }
+int gw_Geno_StateBehavior(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_bhv[s] : GENO_BHV_NONE; }
+int gw_Geno_StateCb(int p, int s, int slot) {
+    return GN_ST(p, s) && slot >= 0 && slot < GENO_CB_SLOTS ? gn_at(p)->st_cb[s][slot] : -1;
+}
+int gw_Geno_StateAnim(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_anim[s] : -1; }
+int gw_Geno_StateAnimFrom(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_anim_from[s] : -1; }
+int gw_Geno_StateLike(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_like[s] : -1; }
+int gw_Geno_StateFlagsSet(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_flags_set[s] : 0; }
+int gw_Geno_StateFlags(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_flags[s] : 0; }
+int gw_Geno_StateMoveId(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_move_id[s] : -1; }
+int gw_Geno_StateNext(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_next[s] : -1; }
+int gw_Geno_StateLand(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_land[s] : -1; }
+int gw_Geno_StateLagBits(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_lag[s] : 0; }
+int gw_Geno_ParamCount(int p) { return gn_at(p) ? gn_at(p)->nparam : 0; }
+int gw_Geno_ParamId(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nparam ? x->param_id[i] : -1;
+}
+int gw_Geno_ParamBits(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nparam ? (int) x->param_bits[i] : 0;
+}
+int gw_Geno_Special(int p, int which) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && which >= 0 && which < GENO_SP_COUNT ? (int) x->special[which] : -1;
+}
+
 /* Log lines for the game half, which cannot format strings portably. Rate-limited per `what`:
  * rollback resimulates frames, and a per-frame event would flood the log. */
 void gw_Geno_Event(int what, int a, int b, int c, int d) {
@@ -919,7 +1100,7 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d attributes overridden: %d field(s), max_jumps %d",         /* 5 */
         "geno: kind %d player %d air jump %d of %d",                                        /* 6 */
         "geno: kind %d player %d change action: motion %d -> target 0x%08x",                /* 7 */
-        "geno: kind %d player %d change action to Geno state %d: Geno states are v2 - ignored%.0d", /* 8 */
+        "geno: kind %d player %d change action to Geno state %d: no such state - ignored%.0d", /* 8 */
         "geno: kind %d player %d landed in motion %d -> target 0x%08x",                     /* 9 */
         "geno: kind %d player %d rehit: cleared the hit lists of hitbox mask 0x%x (every %d frames)", /* 10 */
         "geno: kind %d player %d autolink: victim launched at angle %d, kb %d",             /* 11 */
@@ -927,6 +1108,13 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d subaction %d script replaced by overlay slot %d",           /* 13 */
         "geno: kind %d player %d engine value 0x%x is read-only or unknown - write ignored%.0d", /* 14 */
         "geno: kind %d player %d too many change-action checks (max %d) - dropped%.0d",      /* 15 */
+        "geno: kind %d player %d entered Geno state %d from motion %d",                     /* 16 */
+        "geno: kind %d player %d glide: jump held %d frames in air jump motion %d",         /* 17 */
+        "geno: kind %d player %d special %d -> Geno target 0x%08x",                         /* 18 */
+        "geno: kind %d player %d drill rush bounce (%d: 1 hit, 2 wall, 3 shield) at frame %d", /* 19 */
+        "geno: kind %d player %d Geno state %d row built: subaction %d",                    /* 20 */
+        "geno: kind %d player %d glide ended (%d: 1 shield, 2 timeout, 3 attack) after %d frames", /* 21 */
+        "geno: kind %d player %d tornado rise %d (vy x100 = %d)",                           /* 22 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {
@@ -1160,7 +1348,76 @@ static int test_geno_registry_v1(void) {
     return 0;
 }
 
+/* v2 keys: states (names, behaviours, callbacks, targets by name), parameter blocks (named and
+ * Brawl "wNN" words), specials (air_* default to the grounded key); the stable id of a v1 entry
+ * is unchanged by v2 (GENO_ID_VERSION). */
+static int test_geno_registry_v2(void) {
+    static gn_registry r;
+    const gn_profile *p;
+    float f;
+    const char *t =
+        "{\"geno\":2,\"fighters\":[{\"attach\":\"kirby\","
+        "\"states\":[{\"name\":\"GlideStart\",\"behavior\":\"geno.glide.start\",\"subaction\":57},"
+        "{\"name\":\"Glide\",\"behavior\":\"geno.glide\",\"subaction\":\"motion:65\",\"land\":\"geno:GlideLanding\"},"
+        "{\"name\":\"GlideLanding\",\"behavior\":\"geno.glide.landing\",\"phys\":\"none\",\"coll\":\"like\","
+        "\"anim\":\"nope\",\"like\":\"motion:43\",\"landing_lag\":12,\"move_id\":7,\"flags\":\"0x10\"},"
+        "{\"name\":\"X\",\"behavior\":\"geno.nope\",\"next\":\"geno:Glide\"}],"
+        "\"glide\":{\"hold_frames\":20,\"w07\":2.5,\"bogus\":1},"
+        "\"tornado\":{\"w13\":17},"
+        "\"specials\":{\"n\":\"geno:Glide\",\"hi\":\"special:3\",\"air_hi\":\"geno:X\",\"lw\":\"geno:Nope\"},"
+        "\"on_land\":[{\"from\":\"geno:Glide\",\"to\":\"geno:GlideLanding\"}]}]}";
+    memset(&r, 0, sizeof r);
+    if (gn_parse_text(&r, t, "v2") != 1) {
+        gw_test_fail("v2 entry not parsed");
+        return 1;
+    }
+    p = &r.p[0];
+    if (p->nstate != 4 || strcmp(p->st_name[1], "Glide") != 0 || p->st_bhv[0] != GENO_BHV_GLIDE_START ||
+        p->st_bhv[1] != GENO_BHV_GLIDE || p->st_bhv[3] != GENO_BHV_NONE || p->st_anim[0] != 57 ||
+        p->st_anim[1] != -1 || p->st_anim_from[1] != GENO_TARGET(GENO_TGT_MOTION, 65)) {
+        gw_test_fail("states: count / names / behaviours / subactions parsed wrong");
+        return 1;
+    }
+    if (p->st_land[1] != GENO_TARGET(GENO_TGT_GENO, 2) || p->st_next[3] != GENO_TARGET(GENO_TGT_GENO, 1) ||
+        p->st_like[2] != GENO_TARGET(GENO_TGT_MOTION, 43) || p->st_move_id[2] != 7 ||
+        !p->st_flags_set[2] || p->st_flags[2] != 0x10) {
+        gw_test_fail("states: targets by name / like / move_id / flags");
+        return 1;
+    }
+    memcpy(&f, &p->st_lag[2], 4);
+    if (f != 12.0f || p->st_cb[2][GENO_CB_PHYS] < 0 || p->st_cb[2][GENO_CB_COLL] != GENO_CB_LIKE ||
+        p->st_cb[2][GENO_CB_ANIM] != -1 || p->st_cb[2][GENO_CB_IASA] != -1) {
+        gw_test_fail("states: landing_lag 12, phys none, coll like, unknown anim -> behaviour's");
+        return 1;
+    }
+    if (p->nparam != 3 || p->param_id[0] != GENO_P_GLIDE_HOLD || p->param_id[1] != GENO_P_GLIDE_W0 + 7 ||
+        p->param_id[2] != GENO_P_TORNADO_W0 + 13) {
+        gw_test_fail("parameters: hold_frames, glide w07, tornado w13 (bogus ignored); got %d", p->nparam);
+        return 1;
+    }
+    memcpy(&f, &p->param_bits[1], 4);
+    if (f != 2.5f) {
+        gw_test_fail("glide.w07 = %g", f);
+        return 1;
+    }
+    if (p->special[GENO_SP_N] != GENO_TARGET(GENO_TGT_GENO, 1) ||
+        p->special[GENO_SP_AIR_N] != GENO_TARGET(GENO_TGT_GENO, 1) ||
+        p->special[GENO_SP_HI] != GENO_TARGET(GENO_TGT_SPECIAL, 3) ||
+        p->special[GENO_SP_AIR_HI] != GENO_TARGET(GENO_TGT_GENO, 3) || p->special[GENO_SP_LW] != GN_NONE ||
+        p->special[GENO_SP_S] != GN_NONE) {
+        gw_test_fail("specials parsed wrong");
+        return 1;
+    }
+    if (p->nland != 1 || p->land_from[0] != GENO_TARGET(GENO_TGT_GENO, 1) ||
+        p->land_to[0] != GENO_TARGET(GENO_TGT_GENO, 2)) {
+        gw_test_fail("on_land with Geno state names");
+        return 1;
+    }
+    return 0;
+}
+
 void geno_registry_tests_register(void) {
+    gw_test_register("geno_registry_v2", test_geno_registry_v2);
     gw_test_register("geno_registry_v1", test_geno_registry_v1);
     gw_test_register("geno_registry_parse", test_geno_registry_parse);
     gw_test_register("geno_registry_stable_ids", test_geno_registry_stable_ids);

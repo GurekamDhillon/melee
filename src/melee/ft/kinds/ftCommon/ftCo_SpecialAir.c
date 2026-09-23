@@ -19,7 +19,10 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
             {
                 extern void Mex_SpecialHiAirDispatch(int kind, void* gobj, void* vanilla);
-                Mex_SpecialHiAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirHi[fp->kind]);
+                extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+                if (!Geno_SpecialEnter(gobj, 6 /* GENO_SP_AIR_HI */)) {
+                    Mex_SpecialHiAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirHi[fp->kind]);
+                }
             }
 #else
             ftData_SpecialAirHi[fp->kind](gobj);
@@ -34,7 +37,10 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
             {
                 extern void Mex_SpecialLwAirDispatch(int kind, void* gobj, void* vanilla);
-                Mex_SpecialLwAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirLw[fp->kind]);
+                extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+                if (!Geno_SpecialEnter(gobj, 7 /* GENO_SP_AIR_LW */)) {
+                    Mex_SpecialLwAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirLw[fp->kind]);
+                }
             }
 #else
             ftData_SpecialAirLw[fp->kind](gobj);
@@ -53,7 +59,10 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
             {
                 extern void Mex_SpecialSAirDispatch(int kind, void* gobj, void* vanilla);
-                Mex_SpecialSAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirS[fp->kind]);
+                extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+                if (!Geno_SpecialEnter(gobj, 5 /* GENO_SP_AIR_S */)) {
+                    Mex_SpecialSAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirS[fp->kind]);
+                }
             }
 #else
             ftData_SpecialAirS[fp->kind](gobj);
@@ -73,7 +82,10 @@ bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
         {
             extern void Mex_SpecialNAirDispatch(int kind, void* gobj, void* vanilla);
-            Mex_SpecialNAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirN[fp->kind]);
+            extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+            if (!Geno_SpecialEnter(gobj, 4 /* GENO_SP_AIR_N */)) {
+                Mex_SpecialNAirDispatch(fp->kind, gobj, (void*) ftData_SpecialAirN[fp->kind]);
+            }
         }
 #else
         ftData_SpecialAirN[fp->kind](gobj);

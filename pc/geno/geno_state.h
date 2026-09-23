@@ -45,6 +45,12 @@ typedef struct GenoState {
     u32 edge_pending;
     u32 edge_target;
     u32 changes; /* Geno-made action changes since the reset (diagnostics) */
+    /* ---- v2 (NOT cleared by action changes: a move's Geno states hand these to each other) ---- */
+    s32 hold_motion;                 /* glide entry: the air jump the hold count belongs to */
+    s32 hold_frames;                 /* frames jump has been held in it, -1 = released */
+    s32 move_i[GENO_MOVE_VARS];      /* behaviour ints (GENO_VAL_MOVE_I0..): timers, counters */
+    f32 move_f[GENO_MOVE_VARS];      /* behaviour floats (GENO_VAL_MOVE_F0..): angle, speed */
+    u32 state_entries;               /* Geno states entered since the reset (diagnostics) */
 } GenoState;
 
 #define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */

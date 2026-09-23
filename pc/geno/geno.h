@@ -13,8 +13,9 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 1 /* geno.json "geno" field and the script encoding (v1 subs are additive) */
-#define GENO_LEVEL 1   /* feature level: 0 = v0 foundation, 1 = v1 (docs/geno.md section 15) */
+#define GENO_VERSION 2    /* newest geno.json "geno" field this build reads (v2 keys are additive) */
+#define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
+#define GENO_LEVEL 2      /* feature level: 0 v0 foundation, 1 v1 (section 15), 2 v2 (section 16) */
 
 /* ---- script escape (ftcmd) ---------------------------------------------------------------------
  * A subaction command's opcode is the top 6 bits of its first word. Retail uses 0-58 (lbCommand
@@ -96,7 +97,13 @@ enum {
     GENO_VAL_ANIM_RATE = 0x1B,    /* f */
     GENO_VAL_FAST_FALL = 0x1C,    /* i */
     GENO_VAL_TRIGGER = 0x1D,      /* f: analog shield trigger */
-    GENO_VAL_COUNT = 0x1E,
+    /* v2 */
+    GENO_VAL_GENO_STATE = 0x1E,   /* i: the Geno state the fighter is in (index), -1 when none */
+    GENO_VAL_MOVE_F0 = 0x20,      /* f W: 0x20..0x27 behaviour floats (glide angle/speed, ...) */
+    GENO_VAL_MOVE_F7 = 0x27,
+    GENO_VAL_MOVE_I0 = 0x28,      /* i W: 0x28..0x2F behaviour ints (timers, counters) */
+    GENO_VAL_MOVE_I7 = 0x2F,
+    GENO_VAL_COUNT = 0x30,
     GENO_VAL_SPECIAL_F = 0x1000,  /* + word index: fp->dat_attrs word as float */
     GENO_VAL_SPECIAL_I = 0x2000,  /* + word index: fp->dat_attrs word as int */
 };
@@ -134,7 +141,10 @@ enum {
 /* The target word: [31:28] kind, [27] RAW, [26] KEEP_FRAME, [15:0] id. */
 #define GENO_TGT_MOTION 0u
 #define GENO_TGT_SPECIAL 1u
-#define GENO_TGT_GENO 2u /* a Geno state (v2): v1 ignores it */
+#define GENO_TGT_GENO 2u /* a Geno state (v2): id = index in the profile's "states" list */
+/* v2, geno.json only ("auto" / "helpless"): Wait on the ground, else Fall / FallSpecial */
+#define GENO_TGT_AUTO 0xFFFFFFFEu
+#define GENO_TGT_HELPLESS 0xFFFFFFFDu
 #define GENO_TGT_RAW 0x08000000u
 #define GENO_TGT_KEEP_FRAME 0x04000000u
 #define GENO_TARGET(kind, id) ((((unsigned) (kind) & 15u) << 28) | ((unsigned) (id) & 0xFFFFu))
@@ -204,5 +214,71 @@ enum {
 #define GENO_MAX_ONLAND 16       /* v1: on_land map entries per profile */
 #define GENO_MAX_OVERLAYS 64     /* v1: subaction script overlays per profile */
 #define GENO_POOL_WORDS 16384    /* v1: all overlay words of every profile (64 KB) */
+
+/* ---- v2: Geno action states (docs/geno.md section 16) ------------------------------------------
+ * A profile's "states" list declares new action states. State n is Melee motion id
+ * GENO_MOTION_BASE + n: past every fighter's own special states (the largest special table,
+ * Kirby's, ends below 0x220), so no vanilla or m-ex range check ever matches it. Its MotionState
+ * row (animation = a subaction of the fighter's own files, flags, move id, and the anim / IASA /
+ * phys / coll callbacks) is built by Geno and handed to Fighter_ChangeMotionState, so the state
+ * lives in Melee's action-state machine like any other: damage, grabs, death, ledges and landing
+ * take the fighter out of it the normal way. */
+#define GENO_MOTION_BASE 0x400
+#define GENO_MAX_STATES 16
+#define GENO_MOVE_VARS 8 /* behaviour floats / ints kept across the states of one move */
+
+/* Callback slots of a state row, and the callbacks a geno.json can name for each (stable ids). */
+enum { GENO_CB_ANIM = 0, GENO_CB_IASA = 1, GENO_CB_PHYS = 2, GENO_CB_COLL = 3, GENO_CB_SLOTS = 4 };
+#define GENO_CB_LIKE 0xFF /* "like": the like-motion's own callback for that slot */
+
+/* Behaviours: a named set of the four callbacks plus an entry routine (stable ids). */
+enum {
+    GENO_BHV_NONE = 0,
+    GENO_BHV_AIR = 1,           /* "geno.air": aerial state, gravity + drift, anim end -> next */
+    GENO_BHV_GROUND = 2,        /* "geno.ground": grounded state, friction, anim end -> next */
+    GENO_BHV_GLIDE_START = 10,  /* "geno.glide.start" */
+    GENO_BHV_GLIDE = 11,        /* "geno.glide" */
+    GENO_BHV_GLIDE_ATTACK = 12, /* "geno.glide.attack" */
+    GENO_BHV_GLIDE_LANDING = 13,/* "geno.glide.landing" */
+    GENO_BHV_GLIDE_END = 14,    /* "geno.glide.end" */
+    GENO_BHV_TORNADO = 20,      /* "geno.tornado": Mach Tornado (tap B to rise, drift, multi-hit) */
+    GENO_BHV_DRILL = 30,        /* "geno.drill": Drill Rush (steered dash, bounce on hit / wall) */
+    GENO_BHV_DRILL_END = 31,    /* "geno.drill.end": the flip after the rush */
+    GENO_BHV_DRILL_START = 32,  /* "geno.drill.start": the wind-up before the rush (optional) */
+    GENO_BHV_MAX = 32
+};
+
+/* Behaviour parameters: per profile, by stable id; geno.json names them "<family>.<name>" inside
+ * the family's block ("glide": {...}, "tornado": {...}, "drill": {...}). Every family also takes
+ * its Brawl block word by word ("w00".."wNN"), which is what the IR / translator has. */
+#define GENO_PARAMS 128
+enum {
+    GENO_P_GLIDE_W0 = 0x00,       /* glide.w00..w21: Brawl's Misc Glide block, 0x00..0x15 */
+    GENO_P_GLIDE_HOLD = 0x18,     /* glide.hold_frames: jump held this long in an air jump */
+    GENO_P_GLIDE_FROM_JUMP = 0x19,/* glide.from_ground_jump: 1 = the ground jump counts too */
+    GENO_P_GLIDE_END_HELPLESS = 0x1A, /* glide.end_helpless: 1 = GlideEnd -> FallSpecial */
+    GENO_P_GLIDE_LANDING_LAG = 0x1B,  /* glide.landing_lag: GlideAttack's landing lag (frames) */
+    GENO_P_GLIDE_ENTRY = 0x1C,    /* glide.entry: 0 = no jump-hold entry (scripts only) */
+    GENO_P_GLIDE_MAX_FRAMES = 0x1D, /* glide.max_frames: a time limit (0 = none, as Brawl) */
+    GENO_P_GLIDE_POSE = 0x1E,     /* glide.pose_center: pose frame = this - angle (0 = off) */
+    GENO_P_GLIDE_END_BUTTONS = 0x1F, /* glide.end_buttons: GENO_BTN_* mask that ends the glide */
+    GENO_P_TORNADO_W0 = 0x20,     /* tornado.w00..w19: Brawl paramSpecialN, 0x20..0x33 */
+    GENO_P_TORNADO_MAX_SPEED = 0x38, /* tornado.max_speed: hard horizontal cap (Brawl 2.5) */
+    GENO_P_TORNADO_END_HELPLESS = 0x39, /* tornado.end_helpless: air end -> FallSpecial */
+    GENO_P_DRILL_W0 = 0x40,       /* drill.w00..w05: Brawl paramSpecialS, 0x40..0x45 */
+    GENO_P_DRILL_SPEED = 0x48,    /* drill.speed: travel speed when the clip has no root motion */
+    GENO_P_DRILL_ANGLE_MAX = 0x49,/* drill.angle_max: steering limit, degrees (0 = none, Brawl) */
+    GENO_P_DRILL_BOUNCE = 0x4A,   /* drill.bounce: 1 wall | 2 hit | 4 shield -> DrillEnd at once */
+    GENO_P_DRILL_POP_VX = 0x4B,   /* drill.pop_vx: DrillEnd's backward pop (Brawl 1.0) */
+    GENO_P_DRILL_POP_VY = 0x4C,   /* drill.pop_vy: DrillEnd's upward pop (Brawl 2.1) */
+    GENO_P_DRILL_END_HELPLESS = 0x4D, /* drill.end_helpless: 1 = FallSpecial unless it hit */
+};
+
+/* v2: specials bound to Geno states ("specials": {"n": "geno:5", "air_s": "geno:7", ...}) */
+enum {
+    GENO_SP_N = 0, GENO_SP_S = 1, GENO_SP_HI = 2, GENO_SP_LW = 3,
+    GENO_SP_AIR_N = 4, GENO_SP_AIR_S = 5, GENO_SP_AIR_HI = 6, GENO_SP_AIR_LW = 7,
+    GENO_SP_COUNT = 8
+};
 
 #endif

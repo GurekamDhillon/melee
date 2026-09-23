@@ -48,7 +48,10 @@ static void doEnter(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
     {
         extern void Mex_SpecialSDispatch(int kind, void* gobj, void* vanilla);
-        Mex_SpecialSDispatch(fp->kind, gobj, (void*) ftData_SpecialS[fp->kind]);
+        extern int Geno_SpecialEnter(Fighter_GObj * gobj, int which); /* pc/geno: v2 */
+        if (!Geno_SpecialEnter(gobj, 1 /* GENO_SP_S */)) {
+            Mex_SpecialSDispatch(fp->kind, gobj, (void*) ftData_SpecialS[fp->kind]);
+        }
     }
 #else
     ftData_SpecialS[fp->kind](gobj);

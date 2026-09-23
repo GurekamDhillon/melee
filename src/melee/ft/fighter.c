@@ -1348,6 +1348,15 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     ftPartSetRotY(fp, 0, (M_PI_2 * fp->facing_dir));
     ftPartSetRotZ(fp, 0, 0.0F);
 
+#if defined(TARGET_PC)
+    if (msid >= 0x400) {
+        /* Geno v2 (pc/geno/geno_game_v2.inc): motion ids from 0x400 (GENO_MOTION_BASE) are Geno
+         * action states declared in a geno.json; their rows are built by Geno. No vanilla or m-ex
+         * fighter ever uses an id this high (Kirby's special table, the largest, ends at 0x220). */
+        extern MotionState* Geno_MotionRow(Fighter * fp, int msid);
+        new_motion_state = Geno_MotionRow(fp, msid);
+    } else
+#endif
     if (msid >= fp->x18) {
         new_motion_state = &fp->x20_actionStateList[(msid - fp->x18)];
     } else {

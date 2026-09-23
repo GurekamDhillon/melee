@@ -1,6 +1,6 @@
 # Geno - GD's Melee's fighter-extension layer
 
-Status: **v1** (v0 foundation + the Meta Knight script features, section 15), private branch `private/geno` in the melee fork. Working name, approved by GD.
+Status: **v2** (v0 foundation, v1 Meta Knight script features (section 15), v2 action states, glide and MK specials (section 16)), private branch `private/geno` in the melee fork. Working name, approved by GD.
 Nothing here may reach a public branch until GD says so.
 
 ## 1. What Geno is, and what it is not
@@ -222,7 +222,7 @@ Demo: `_build/agents/beta/mods-geno/geno-demo-kirby` (not committed) gives vanil
 Run log: `geno: kind 4 player 0 air jump 8 of 8 (beyond Melee's multi-jump table)`; screenshot
 `_build/agents/beta/shots/geno_kirby_1500.png` (Kirby high above Battlefield mid-chain).
 
-## 11. Design: glide (next mechanic, not built)
+## 11. Design: glide (superseded: built in v2, see section 16)
 
 Meta Knight's (and later Pit's/Charizard's) Brawl glide, in Melee terms:
 
@@ -717,7 +717,7 @@ drawn in the fast-forward pass). No host pointers, no host time. Tests `geno_sta
   function: a special that needs setup (m-ex state variables) should be entered with a script /
   MoveLogic that sets itself up on its first frame. The common Wait / Fall / FallSpecial /
   Landing / LandingFallSpecial go through Melee's entry functions. Special targets are bounded to
-  256 past the first special; the row must exist. Geno-state targets (kind 2) are v2: ignored.
+  256 past the first special; the row must exist. Geno-state targets (kind 2): v2, section 16.
 - **Brawl "Change Subaction"** (same action, other animation) has no v1 opcode: use the Melee
   action that plays that subaction, with KEEP_FRAME for the air/ground-variant case.
 - Overlays cannot hold Melee commands with **absolute pointers** (goto / subroutine into the Pl
@@ -742,41 +742,235 @@ drawn in the fast-forward pass). No host pointers, no host time. Tests `geno_sta
 - Rollback: `_build/netplay_local.ps1 -Disc ace` with the demo mod on both sides (EnvHost /
   EnvGuest `MELEE_MODS_DIR`), Kirby (pad-driven, v1 features) vs Wolf; results in NOTES.md.
 
-## 16. v2 design note: glide as a Geno state, and entering a Geno state from a script
+## 16. v2: Geno action states, glide, native specials (STABLE reference)
 
-(Design only; not built. Refines section 11 with what v1 settled.)
+Status: **built** (v2). This section is the contract for geno.json v2 and for the Meta Knight
+translator; a copy of the MK part lives at `experiment/brawl-metaknight/geno_v2_encodings.md`
+(this section wins). Numbers here never change. Code: `pc/geno/geno_game_v2.inc` (states, tables),
+`geno_game_glide.inc`, `geno_game_specials.inc`; registry `pc/platform/geno_registry.c`.
 
-**Geno states.** A Geno state is a motion id past the fighter's own specials:
-`geno_first = x18 + special_count_of_kind`, allocated per profile from a geno.json list
-(`"states": [{"name": "Glide", "subaction": 450, "logic": "geno.glide", ...}]`). Each gets a
-`MotionState` row built at install from native callbacks in a const table (anim / input / phys /
-coll per logic id), appended to a per-kind copy of the special-state table the same way m-ex swaps
-MoveLogic (`Mex_MoveLogicTable`), so vanilla and m-ex rows stay untouched and a kind without Geno
-states keeps its own table pointer. The v1 target kind 2 (`GENO_TGT_GENO`, id = index in that
-list) then resolves to `geno_first + id` in `geno_target_motion` - the only v1 change needed; every
-v1 path (CHG, on_land, KEEP_FRAME) works unchanged. Until then kind 2 is a logged no-op.
+### 16.1 Geno action states
 
-**Glide states** (MK, Pit, Charizard): GlideStart, Glide, GlideAttack, GlideLanding, GlideEnd.
-Parameters from geno.json `"glide"`, defaulting to MK's Misc Glide block (22 words, IR
-`behavior.attributes.special.fields` `glide.w00..w21`): w00 80 / w01 -70 (angle limits, deg,
-inferred), w02-w19 speeds, accelerations and angle rates (unnamed; to be named from
-`ftStatusUniqProcessGlide` in sora_melee or measured in Dolphin), w20 44 (int, likely a frame
-count: the glide's GlideStart length or the attack window), w21 0. The per-frame state (angle,
-speed, frames gliding) lives in the RA float/int banks of the fighter's GenoState (reserved
-indices 60-63), so it is snapshotted with no new code; the physics callback is plain C over those
-vars and `self_vel` (no host state, no RNG).
+A profile's `"states"` list declares new action states. **State n is Melee motion id
+`0x400 + n`** (`GENO_MOTION_BASE`): past every fighter's own specials (Kirby's table, the largest,
+ends at 0x220), so no vanilla or m-ex range check ever matches it. At spawn Geno builds one
+`MotionState` row per state; `Fighter_ChangeMotionState` asks `Geno_MotionRow` for rows in that
+range (one `#if TARGET_PC` branch in fighter.c; any other id takes the vanilla / m-ex path
+untouched). The state is then an ordinary Melee action state: the subaction script runs (hitboxes,
+GFX, SFX, Geno v1 commands), hurtboxes work, and damage, grabs, death, ledge grabs and landing
+leave it through Melee's own code. Geno never edits the vanilla or m-ex tables.
 
-**Entries.**
-- Jump-hold (Brawl rule, IR `glide window 16`): a native `on_frame` hook `geno.glide.entry` counts
-  frames with jump held after an air jump's apex in the JumpAerial / multi-jump states and does
-  `geno_do_change(GENO_TARGET(GENO_TGT_GENO, glide_start))`.
-- From a script (Shuttle Loop, PSA "Change Action 0x85 on Animation End + In Air"): exactly the
-  v1 encoding `CHG ANIM_END -> GENO(glide_start)` + `CHGAND AIR`. The translator can emit it
-  today; v1 ignores it (MK falls through to its FallSpecial fallback if the script also registers
-  one after it - emit the fallback CHG *after* the Geno one so it only wins while v1 is running).
-- Exits: Glide -> GlideLanding via a GROUND edge (v1 mechanism), GlideAttack via PRESSED(ATTACK),
-  GlideEnd -> FallSpecial via shield / timer, all expressible as v1 checks registered by the glide
-  states' own scripts.
+```json
+"states": [
+  { "name": "GlideStart", "behavior": "geno.glide.start", "subaction": 57 },
+  { "name": "Glide",      "behavior": "geno.glide",       "subaction": "motion:29" },
+  { "name": "Plain",      "behavior": "geno.air", "subaction": 18, "like": "motion:65",
+    "flags": "0x55", "move_id": 13, "next": "geno:Glide", "land": "helpless",
+    "landing_lag": 12, "anim": "next", "iasa": "like", "phys": "auto", "coll": "air" }
+]
+```
 
-Melee's global rules still apply: no new air dodge or ledge behaviour; the glide is only a
-character state.
+| key | meaning |
+|---|---|
+| `name` | for targets `"geno:<name>"` (geno.json); scripts use the index |
+| `behavior` | a native behaviour (16.2): the four callbacks + an entry routine + default targets |
+| `subaction` | the animation + script: a subaction index of the fighter's own files, or `"motion:N"` / `"special:N"` = the subaction that motion plays. Omitted: the like motion's |
+| `like` | the motion whose row gives the flags, move id and camera callback (default: Fall for air behaviours, Landing / LandingFallSpecial for ground ones, AttackAirN for GlideAttack) |
+| `flags`, `move_id` | override the row's `x4_flags` / `move_id` (staling / attack id) |
+| `anim` / `iasa` / `phys` / `coll` | override one callback by name (16.2), or `"like"` = the like motion's own callback |
+| `next` | where the state goes when its animation ends (behaviours that use it) |
+| `land` | where it goes when it lands (air collision); default Melee's Landing |
+| `landing_lag` | with the default landing: LandingFallSpecial with this lag |
+
+Targets (everywhere in geno.json: `next`, `land`, `on_land`, `specials`): a motion id, `"motion:N"`,
+`"special:N"`, `"geno:N"`, `"geno:<name>"`, `"auto"` (Wait on the ground, Fall in the air),
+`"helpless"` (Wait / FallSpecial).
+
+**Script entry (v1 encoding, now live).** CHG target kind 2 `GENO` (`0x2000000n`) enters state n:
+`CHG ANIM_END -> GENO(0)` + `CHGAND AIR` is Shuttle Loop's "Change Action Glide on animation end,
+in the air". A GENO target the profile does not declare is still skipped (logged) and a later
+check fires, so the translator's "Geno check first, fallback after" pattern keeps working on any
+exe. KEEP_FRAME works on GENO targets too. GROUND / AIR edges and `on_land` accept GENO targets.
+
+**Specials bound to states.** `"specials": {"n": "geno:Tornado", "s": "geno:Drill"}` (keys `n s hi
+lw air_n air_s air_hi air_lw`; an `air_*` key defaults to its grounded one). The eight special
+dispatch sites (ftCo_Attack100.c, ftCo_SpecialAir.c, ftCo_SpecialS.c) ask `Geno_SpecialEnter`
+first; unbound specials (and every fighter without a profile) run their own / m-ex code.
+
+**Engine values (v2):** `0x1E GENO_STATE` (i: current state index, -1 none), `0x20..0x27 MOVE_F0-7`
+(f W) and `0x28..0x2F MOVE_I0-7` (i W): the behaviour's per-move variables (below), readable and
+writable from scripts (GET / PUT / IFV / VALUE conditions).
+
+### 16.2 Behaviours and callbacks
+
+| behaviour | anim | iasa | phys | coll | next (default) | land |
+|---|---|---|---|---|---|---|
+| `geno.air` | next | none | air | air | auto | Landing |
+| `geno.ground` | next | none | ground | ground | auto | - |
+| `geno.glide.start` | glide.start | none | glide.start | air | the Glide state | GlideLanding |
+| `geno.glide` | glide | glide | glide | glide | the GlideEnd state | GlideLanding |
+| `geno.glide.attack` | next | none | glide.attack | air_noledge | Fall | Landing |
+| `geno.glide.landing` | next | none | ground | ground | Wait | - |
+| `geno.glide.end` | next | none | glide.end | air | auto | Landing |
+| `geno.tornado` | tornado | none | tornado | both | `next`, else helpless | (stays in state) |
+| `geno.drill.start` | next | none | drill.start | both | the Drill state | (stays) |
+| `geno.drill` | drill | none | drill | drill | the DrillEnd state | (stays) |
+| `geno.drill.end` | drill.end | none | drill.end | both | helpless unless it hit | (stays) |
+
+"The Glide state" = the profile's first state with that behaviour. Callback names per slot:
+anim `next loop hold glide.start glide tornado drill drill.end`; iasa `none glide`; phys `none air
+air_nodrift ground auto glide.start glide glide.attack glide.end tornado drill.start drill
+drill.end`; coll `none air air_noledge ground ground_stop both glide drill`; any slot `like`.
+`air` = Melee's aerial physics (gravity, fast fall, drift) / air collision with ledge grab
+(platforms drop-through like FallSpecial). `both` = ground and air without changing state (walk
+off -> airborne, land -> grounded, same state). Stable ids in geno_game_v2.inc.
+
+Per-move variables (`GenoState.move_f[8]` / `move_i[8]`) are **not** cleared by action changes:
+the states of one move hand them on (GlideStart -> Glide -> GlideAttack). Each behaviour's entry
+sets what it needs. `hold_motion` / `hold_frames` are the glide entry's counter.
+
+### 16.3 Parameters
+
+Per profile, in family blocks; each family also takes its Brawl block word by word (`w00`..).
+
+```json
+"glide":   { "hold_frames": 16, "w07": 2.2, "end_buttons": 14 },
+"tornado": { "tap_cooldown": 10 },
+"drill":   { "angle_max": 75, "speed": 2.2 }
+```
+
+**glide** (Brawl Misc Glide block, MK values as defaults):
+
+| word | name | MK | used for |
+|---|---|---|---|
+| w00 | angle_max | 80 | nose-up limit (deg) |
+| w01 | angle_min | -70 | nose-down limit |
+| w02 | start_vy | 0.75 | GlideStart: vy += w02 |
+| w03 | start_gravity | 1.0 | GlideStart gravity multiplier |
+| w04 | start_vx | 1.0 | GlideStart: vx *= w04 |
+| w05 | speed | 1.7 | Glide's initial speed |
+| w06 | speed_accel | 0.04 | speed change per frame at +-90 deg |
+| w07 | max_speed | 2.2 | velocity magnitude cap |
+| w08 | stall_speed | 0.7 | below it the glide stalls (ends) |
+| w09 | sink_accel | 0.03 | sink growth per frame |
+| w10 | max_sink | 0.6 | sink cap |
+| w11 | recover_angle | 15 | Brawl's stall recovery (the stall ends the glide first) |
+| w12 | dive_angle | -25 | steeper dives get a bonus |
+| w13 | dive_bonus | 0.03 | max extra speed per frame (at angle_min) |
+| w14 | - | 0.15 | not read by Brawl's code |
+| w15 | deadzone | 0.25 | stick magnitude dead zone |
+| w16 | pitch_up | 0.55 | angular accel nose up (deg/f^2) |
+| w17 | pitch_down | 0.75 | angular accel nose down |
+| w18 | max_pitch_rate | 7 | deg/f |
+| w19 | stall_pitch | 1.0 | stall auto pitch-up |
+| w20 | wing_node | 44 | Brawl's wing partial-animation joint (not used) |
+| w21 | - | 0 | not read |
+
+Geno extras: `hold_frames` 16 (jump held in an air jump), `from_ground_jump` 0, `entry` 1 (0 = only
+scripts enter), `end_buttons` 14 (GENO_BTN mask: shield 8 + special 2 + jump 4), `max_frames` 0 (no
+time limit, as Brawl), `end_helpless` 0, `pose_center` 0 (16.4), `landing_lag` (unused by the
+defaults).
+
+**tornado** (MK paramSpecialN; param ids 4000-4016 float, 24000-24001 int):
+w00 entry_vy 1.0, w01 entry_vx_mul 0.7, w02 start_rate 80, w03 ground_accel 0.12, w04 ground_speed
+2.0, w05 air_accel 0.1, w06 air_speed 1.7, w07 brake 0.008, w08 gravity -0.08, w09 max_fall 0.5,
+w10 tap_vy 1.0, w11 tap_cooldown 10 (int), w12 max_rise 1.4, w13 tap_rate 16, w14 max_rate 80, w15
+rate_decay 1.5, w16 spin_frames 70 (int), w17 late_decay 2.0, w18 end_rate 10, w19 -. Extras:
+`max_speed` 2.5, `end_helpless` 1.
+
+**drill** (MK paramSpecialS; ids 4017-4020, 24002): w00 start_vx_mul 0.5, w01 start_vy 1.0, w02
+start_gravity -0.08, w03 steer 3.0 (deg per frame at full stick), w04 end_frames 10 (int), w05 -.
+Extras: `speed` 2.0 (used when the clip has no root motion), `angle_max` 0 (0 = no limit, as
+Brawl), `bounce` 7 (1 wall, 2 hit, 4 shield), `pop_vx` 1.0, `pop_vy` 2.1, `end_helpless` 1.
+
+The param-id numbering is now confirmed (fn_111_81A8's getters): float ids count only the float
+words (4011 = N w12, 4012 = N w13, ..., 4015 = N w17, 4016 = N w18, 4017-4020 = S w00-w03), int
+ids 24000 = N w11, 24001 = N w16, 24002 = S w04.
+
+### 16.4 The recovered Brawl logic (what is exact, what is approximated)
+
+Recovered by disassembling `sora_melee.rel` (ftStatusUniqProcessGlide init/exec/fixPos,
+ftMetaknightStatusUniqProcessSpecialNSpin, MK kinetic types 0x64-0x68) and `ft_metaknight.rel`
+(SpecialSRush, SpecialSEnd, the param accessor fn_111_81A8), with an annotated REL disassembler
+over capstone (relocations and rodata resolved). The glide reaches its block through
+`soValueAccesser::getConstantIndefinite(43019)`; common ids used: 3023 gravity, 3024 terminal
+velocity, 3029 max air speed, 3030 air friction, 3032 hard x cap 2.5.
+
+**Glide entry.** Jump (X/Y, or the stick past Melee's tap-jump threshold) held continuously for
+`hold_frames` frames of an air jump (JumpAerialF/B, or a Kirby/Puff multi-jump state) enters
+GlideStart. A release cancels it for that jump. Scripts enter it with CHG GENO.
+
+**GlideStart** (Brawl 0x84): on entry `vy += w02`, `vx *= w04`; per frame Melee gravity x w03 to the
+terminal velocity, vx braked toward 0 by the air friction, |vx| <= 2.5. Animation end -> Glide.
+
+**Glide** (0x85), per frame (exact port of execStatus):
+```
+init:  speed = w05; sink = -vy(entry); angle = rate = 0
+stick: a = stick angle mirrored into the facing frame; mag = |stick|
+  if mag > w15:  acc = (a >= 45 or a < -135) ? +w16 : -w17     (back/up = nose up)
+                 acc *= (mag - w15) / (1 - w15); if rate*acc < 0: rate = 0
+                 rate = clamp(rate + acc, +-w18); angle += rate
+  (neutral: angle and rate hold)
+angle = clamp(angle, w01, w00)
+speed -= w06 * angle / 90   (+ 0.01 penalty while touching a wall); speed >= 0
+if angle < w12: speed += w13 * (w12 - angle) / (w12 - w01)
+v = (facing * speed * cos(angle), speed * sin(angle)); sink = clamp(sink + w09, +-w10); v.y -= sink
+if |v| > w07: v *= w07 / |v|
+if |v| < w08 or speed <= 0: stall -> the glide ends (GlideEnd), as Brawl's action does
+```
+Exits: A -> GlideAttack; a pressed `end_buttons` button (Brawl's PSA: requirement 0x30 args 1 and
+2, read as special / jump; shield added per GD) -> GlideEnd; stall -> GlideEnd; landing ->
+GlideLanding; `max_frames` > 0 adds a time limit (Brawl has none). GlideAttack / GlideEnd -> Fall.
+
+**Mach Tornado** (exact logic; Brawl units used unscaled):
+entry vx *= w01, in the air vy += w00; spin rate r = w02, countdown w16. Per frame: frames-since-lift
++1; while the countdown runs: r -= w15, a B press arms a lift; if armed and >= w11 frames since the
+last lift: lift (grounded -> airborne), r += w13; r in [0, w14]; after the countdown r -= w17.
+Air: an accepted lift adds vy += w10, rise capped at w12, gravity w08 to a fall of w09; drift accel
+stick*w05 (+ Melee's aerial drift base), stable |stick|*w06, brake w07 above it, |vx| <= 2.5.
+Ground: accel stick*w03 to |stick|*w04, brake w07. Moving into a wall reverses vx and turns around.
+The spin ends when r <= w18 -> `next` (MK: TornadoEnd, the final hit) -> helpless in the air.
+Not ported: Brawl drives the spin animation's rate by r (Melee plays the clip at rate 1, looping).
+
+**Drill Rush:** start: vx *= w00, air vy = w01, gravity w02 (optional DrillStart state). Rush:
+pitch += stickY * w03 per frame (up climbs for either facing; `angle_max` optional limit, Brawl has
+none - its 45-frame clip bounds it to +-135); velocity = the clip's root motion (Melee TransN) or
+`speed`, rotated by the pitch; on the ground it can only pitch up (and takes off). End: pitch eases
+to level (x(1 - 2/w04) per frame); in the air a pop back/up (pop_vx / pop_vy: Brawl's air-end
+momentum -1 / +2.1), then helpless unless the rush hit something (Brawl's SpecialSEnd enters both
+Fall and FallSpecial; which one when is inferred). **Bounce** (a Geno addition: Brawl's code has none
+besides that end pop): wall / hit / shield (`bounce` mask) -> DrillEnd at once.
+
+**Approximations / not recovered:** the stall-recovery branch (w11, w19) is ported but the stall
+ends the glide first (as Brawl's action does); Glide_Landing's extra thresholds (common params
+3169/3170) are not applied (every landing -> GlideLanding); Brawl's wing partial animation (w20)
+and Glide_Direction's pose-by-angle need MK's clips: `pose_center` (e.g. 90 with the 181-frame
+Glide_Direction clip) scrubs the animation to `pose_center - angle` (untested until Phase 2 ships
+the clip); the Drill's real speed is its SpecialSDrill TransN curve (needs the converted clip; else
+`speed`); units are not rescaled (Brawl and Melee both use units/frame; tune per fighter).
+
+### 16.5 How v2 hooks in (compatibility)
+
+| site | what | fighters without a profile |
+|---|---|---|
+| fighter.c `Fighter_ChangeMotionState` | motion id >= 0x400 -> `Geno_MotionRow` | never reach it |
+| ftCo_Attack100.c / ftCo_SpecialAir.c / ftCo_SpecialS.c | `Geno_SpecialEnter` before the special dispatch | returns 0 at once |
+| geno_game.c `Geno_PreAnim` | after v1 checks: the glide's jump-hold entry | returns 0 at once (inert) |
+| pc/gameworld/script_game.c (Lab) | motion rows for Geno ids | n/a |
+
+Rollback: rows (`Geno_Rows`), parameters (`Geno_Params`) and row counts are game globals rebuilt
+idempotently at every spawn from the registry (same bytes every time); all behaviour state is in
+`GenoState` (move vars, hold counter) and the Fighter struct. No host state, time or randomness.
+`GENO_ID_VERSION` stays 1: a v1 entry keeps its id; v2 keys are hashed like any key.
+
+### 16.6 v2 verification
+
+- Tests (`--test`, ACE): `geno_registry_v2` (parse: states, names, callbacks, targets by name,
+  parameter blocks and Brawl words, specials), `geno_v2_states` (rows: subaction by index / by
+  motion, like copy, flags, move id, like callbacks, fallback row), `geno_v2_change_to_state` (CHG
+  GENO performed, undeclared falls through, GENO_STATE value, specials bound / unbound / no
+  profile), `geno_v2_glide_entry` (16-frame hold, release cancels, not from Fall),
+  `geno_v2_glide` (pitch limits, dive gains / climb loses, savestate of the move vars, A / shield
+  exits, stall -> GlideEnd), `geno_v2_specials` (tornado sink / lift cooldown / rise cap / drift,
+  drill steering limit, bounce -> DrillEnd moving back).
+- Demo and netplay: `_build/agents/beta/NOTES.md` (Geno v2 entry).

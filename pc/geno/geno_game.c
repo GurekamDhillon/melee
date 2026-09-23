@@ -68,6 +68,23 @@ extern int Geno_SlotLen(int s);
 extern int Geno_PoolWords(void);
 extern int Geno_PoolWord(int i);
 extern int Geno_PoolGen(void);
+/* v2 */
+extern int Geno_StateCount(int p);
+extern int Geno_StateBehavior(int p, int s);
+extern int Geno_StateCb(int p, int s, int slot);
+extern int Geno_StateAnim(int p, int s);
+extern int Geno_StateAnimFrom(int p, int s);
+extern int Geno_StateLike(int p, int s);
+extern int Geno_StateFlagsSet(int p, int s);
+extern int Geno_StateFlags(int p, int s);
+extern int Geno_StateMoveId(int p, int s);
+extern int Geno_StateNext(int p, int s);
+extern int Geno_StateLand(int p, int s);
+extern int Geno_StateLagBits(int p, int s);
+extern int Geno_ParamCount(int p);
+extern int Geno_ParamId(int p, int i);
+extern int Geno_ParamBits(int p, int i);
+extern int Geno_Special(int p, int which);
 
 /* ---- the state block ------------------------------------------------------------------------ */
 
@@ -92,6 +109,13 @@ static void geno_zero(void* p, int n)
         *b++ = 0;
     }
 }
+
+/* v2: Geno action states and behaviours (geno_game_v2.inc, included at the end of this file) */
+static void geno_v2_build(Fighter* fp, int p);
+static int geno_state_valid(GenoState* st, int s);
+static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s, u32 target);
+static int geno_v2_preanim(Fighter_GObj* gobj, Fighter* fp, GenoState* st);
+static int geno_cur_state(Fighter* fp, GenoState* st);
 
 /* ---- native hooks ---------------------------------------------------------------------------- */
 
@@ -291,9 +315,12 @@ void Geno_FighterReset(Fighter* fp)
     st->kind = fp->kind;
     st->last_check = -1;
     st->profile = Geno_ProfileForKind(fp->kind);
+    st->hold_motion = -1;
+    st->hold_frames = -1;
     if (st->profile >= 0) {
         Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
         geno_install_overlays(fp, st->profile);
+        geno_v2_build(fp, st->profile);
         if (fp->gobj != NULL) {
             geno_run_event(fp->gobj, st, GENO_EV_INIT);
         }
@@ -727,8 +754,12 @@ static int geno_val_is_float(u32 id)
     case GENO_VAL_CMD_VAR0 + 2:
     case GENO_VAL_CMD_VAR3:
     case GENO_VAL_FAST_FALL:
+    case GENO_VAL_GENO_STATE:
         return 0;
     default:
+        if (id >= GENO_VAL_MOVE_I0 && id <= GENO_VAL_MOVE_I7) {
+            return 0;
+        }
         return 1;
     }
 }
@@ -829,7 +860,15 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
     case GENO_VAL_TRIGGER:
         r.f = fp->input.triggers[0];
         break;
+    case GENO_VAL_GENO_STATE:
+        r.i = geno_cur_state(fp, st);
+        break;
     default:
+        if (id >= GENO_VAL_MOVE_F0 && id <= GENO_VAL_MOVE_F7) {
+            r.f = st->move_f[id - GENO_VAL_MOVE_F0];
+        } else if (id >= GENO_VAL_MOVE_I0 && id <= GENO_VAL_MOVE_I7) {
+            r.i = st->move_i[id - GENO_VAL_MOVE_I0];
+        }
         break;
     }
     return r;
@@ -838,6 +877,14 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
 /* `v` is in the value's own type. Returns 1 when written. */
 static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
 {
+    if (id >= GENO_VAL_MOVE_F0 && id <= GENO_VAL_MOVE_F7) {
+        geno_state(fp)->move_f[id - GENO_VAL_MOVE_F0] = v.f;
+        return 1;
+    }
+    if (id >= GENO_VAL_MOVE_I0 && id <= GENO_VAL_MOVE_I7) {
+        geno_state(fp)->move_i[id - GENO_VAL_MOVE_I0] = v.i;
+        return 1;
+    }
     switch (id) {
     case GENO_VAL_AIR:
         if (v.i != 0 && fp->ground_or_air == GA_Ground) {
@@ -915,7 +962,7 @@ u32 GenoGame_TestLastTarget(void)
      Ft_MF_UpdateCmd | Ft_MF_SkipNametagVis | Ft_MF_KeepSwordTrail | Ft_MF_SkipItemVis |      \
      Ft_MF_SkipModelPartVis | Ft_MF_SkipAttackCount | Ft_MF_KeepFastFall)
 
-/* The motion a target names, -1 for none (a Geno state, or a bad kind). */
+/* The motion a target names, -1 for none (an undeclared Geno state, or a bad kind). */
 static int geno_target_motion(Fighter* fp, u32 target)
 {
     u32 kind = target >> 28;
@@ -926,16 +973,36 @@ static int geno_target_motion(Fighter* fp, u32 target)
     if (kind == GENO_TGT_SPECIAL) {
         return (int) fp->x18 + id;
     }
+    if (kind == GENO_TGT_GENO && geno_state_valid(geno_state(fp), id)) {
+        return GENO_MOTION_BASE + id;
+    }
     return -1;
+}
+
+/* A target a check may fire: anything but an undeclared Geno state. */
+static int geno_target_ok(Fighter* fp, u32 target)
+{
+    return (target >> 28) != GENO_TGT_GENO ||
+           geno_state_valid(geno_state(fp), (int) (target & 0xFFFF));
 }
 
 /* Perform a change-action target. Returns 1 when the fighter changed action. */
 static int geno_do_change(Fighter_GObj* gobj, Fighter* fp, GenoState* st, u32 target)
 {
     int msid;
+    if (target == GENO_TGT_AUTO || target == GENO_TGT_HELPLESS) {
+        /* v2 geno.json shorthands: Wait on the ground, else Fall / FallSpecial */
+        target = GENO_TARGET(GENO_TGT_MOTION, fp->ground_or_air == GA_Ground ? ftCo_MS_Wait
+                                              : target == GENO_TGT_AUTO     ? ftCo_MS_Fall
+                                                                            : ftCo_MS_FallSpecial);
+    }
     if ((target >> 28) == GENO_TGT_GENO) {
-        Geno_Event(8, fp->kind, fp->player_id, (int) (target & 0xFFFF), 0); /* v2 */
-        return 0;
+        int s = (int) (target & 0xFFFF);
+        if (!geno_state_valid(st, s)) {
+            Geno_Event(8, fp->kind, fp->player_id, s, 0);
+            return 0;
+        }
+        return geno_enter_state(gobj, fp, st, s, target);
     }
     msid = geno_target_motion(fp, target);
     if (msid < 0 || (msid < (int) fp->x18 && fp->x1C_actionStateList == NULL) ||
@@ -1164,13 +1231,11 @@ int Geno_PreAnim(Fighter_GObj* gobj)
     st->action_time++;
     geno_rehit_tick(fp, st);
     n = st->nchecks;
-    if (n == 0) {
-        return 0;
-    }
     for (i = 0; i < n && i < GENO_MAX_CHECKS; i++) {
         if (geno_check_true(gobj, fp, st, &st->checks[i], 0)) {
-            if ((st->checks[i].target >> 28) == GENO_TGT_GENO) {
-                /* a Geno state (v2): not performable yet - logged, and a later check may win */
+            if (!geno_target_ok(fp, st->checks[i].target)) {
+                /* a Geno state this profile does not declare: logged, and a later check (the
+                   translator's fallback) may still win */
                 Geno_Event(8, fp->kind, fp->player_id, (int) (st->checks[i].target & 0xFFFF), 0);
                 continue;
             }
@@ -1179,11 +1244,14 @@ int Geno_PreAnim(Fighter_GObj* gobj)
             break;
         }
     }
-    geno_drop_once(st);
-    if (hit < 0) {
-        return 0;
+    if (n != 0) {
+        geno_drop_once(st);
     }
-    return geno_do_change(gobj, fp, st, target);
+    if (hit >= 0) {
+        return geno_do_change(gobj, fp, st, target);
+    }
+    /* v2: the glide's jump-hold entry (only profiles with Geno states) */
+    return st->profile >= 0 ? geno_v2_preanim(gobj, fp, st) : 0;
 }
 
 /* Fighter_procMap, around the state's collision callback. A landing (or take-off) edge inside it
@@ -1235,7 +1303,7 @@ void Geno_GroundEdge(Fighter* fp, int landing)
     for (i = 0; i < st->nchecks && i < GENO_MAX_CHECKS; i++) {
         GenoCheck* k = &st->checks[i];
         if (((k->cond[0].head >> 8) & 0xFF) == (u32) want && !(k->cond[0].head & GENO_CHG_NOT) &&
-            (k->target >> 28) != GENO_TGT_GENO && geno_check_true(gobj, fp, st, k, 1))
+            geno_target_ok(fp, k->target) && geno_check_true(gobj, fp, st, k, 1))
         {
             st->edge_pending = 1;
             st->edge_target = k->target;
@@ -1440,3 +1508,6 @@ void* GenoGame_StateOf(Fighter* fp)
 {
     return geno_state(fp);
 }
+
+/* ---- v2 ---------------------------------------------------------------------------------------- */
+#include "geno_game_v2.inc"

@@ -44,7 +44,7 @@ static struct ftData t_ftdata;
 static u32 t_ext_attr[16];
 static u32 t_dat_attrs[16];
 static Fighter_WaitAnimData t_subactions[8];
-static MotionState t_rows[4];
+static MotionState t_rows[400]; /* v2: common rows the Geno states' "like" copies */
 
 static void t_zero(void* p, int n)
 {
@@ -1002,6 +1002,424 @@ static int test_geno_v1_inert(void)
     return 0;
 }
 
+/* ---- v2 ------------------------------------------------------------------------------------- */
+
+extern MotionState* Geno_MotionRow(Fighter* fp, int msid);
+extern int Geno_SpecialEnter(Fighter_GObj* gobj, int which);
+
+static void t_cam(Fighter_GObj* gobj) {}
+static void t_input(Fighter_GObj* gobj) {}
+
+#define T_GS 0     /* GlideStart */
+#define T_GL 1     /* Glide */
+#define T_GA 2     /* GlideAttack */
+#define T_GLAND 3  /* GlideLanding */
+#define T_GEND 4   /* GlideEnd */
+#define T_TOR 5    /* Tornado */
+#define T_DRILL 6  /* Drill */
+#define T_DEND 7   /* DrillEnd */
+#define T_PLAIN 8  /* a generic air state */
+#define T_MS(s) (GENO_MOTION_BASE + (s))
+
+static const char t_v2_json[] =
+    "{\"geno\":2,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"GlideStart\",\"behavior\":\"geno.glide.start\",\"subaction\":10},"
+    "{\"name\":\"Glide\",\"behavior\":\"geno.glide\",\"subaction\":\"motion:65\"},"
+    "{\"name\":\"GlideAttack\",\"behavior\":\"geno.glide.attack\",\"subaction\":12,\"move_id\":9},"
+    "{\"name\":\"GlideLanding\",\"behavior\":\"geno.glide.landing\",\"subaction\":13},"
+    "{\"name\":\"GlideEnd\",\"behavior\":\"geno.glide.end\",\"subaction\":14},"
+    "{\"name\":\"Tornado\",\"behavior\":\"geno.tornado\",\"subaction\":15},"
+    "{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":16},"
+    "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":17},"
+    "{\"name\":\"Plain\",\"behavior\":\"geno.air\",\"subaction\":18,\"phys\":\"none\","
+    "\"iasa\":\"like\",\"like\":\"motion:29\",\"next\":\"geno:Glide\",\"flags\":\"0x55\"}],"
+    "\"glide\":{\"hold_frames\":16},\"drill\":{\"angle_max\":60},"
+    "\"specials\":{\"n\":\"geno:Tornado\",\"s\":\"geno:Drill\"}}]}";
+
+static TestGenoState* t_v2_setup(void)
+{
+    t_rows[ftCo_MS_Fall].anim_id = 29;
+    t_rows[ftCo_MS_Fall].x4_flags = 0x1234;
+    t_rows[ftCo_MS_Fall].cam_cb = t_cam;
+    t_rows[ftCo_MS_Fall].input_cb = t_input;
+    t_rows[65].anim_id = 777;
+    if (Geno_TestInstall(t_v2_json) != 1) {
+        return NULL;
+    }
+    return t_setup();
+}
+
+/* Rows: subaction (index or another motion's), like row copy, flags, move id, callbacks. */
+static int test_geno_v2_states(void)
+{
+    TestGenoState* st = t_v2_setup();
+    MotionState* r;
+    int rc = 0;
+    if (st == NULL) {
+        TestFail("could not install the v2 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    r = Geno_MotionRow(&t_fp, T_MS(T_GS));
+    if (r == NULL || r->anim_id != 10 || r->x4_flags != 0x1234 || r->cam_cb != t_cam ||
+        r->phys_cb == NULL || r->anim_cb == NULL || r->coll_cb == NULL)
+    {
+        TestFail("GlideStart row: subaction 10, Fall's flags and camera, Geno callbacks");
+        rc = 1;
+    }
+    r = Geno_MotionRow(&t_fp, T_MS(T_GL));
+    if (r->anim_id != 777) {
+        TestFail("Glide row: \"subaction\": \"motion:65\" must play motion 65's animation (777)");
+        rc = 1;
+    }
+    r = Geno_MotionRow(&t_fp, T_MS(T_GA));
+    if (r->move_id != 9) {
+        TestFail("GlideAttack row: move_id 9");
+        rc = 1;
+    }
+    r = Geno_MotionRow(&t_fp, T_MS(T_PLAIN));
+    if (r->input_cb != t_input || r->x4_flags != 0x55 || r->phys_cb == NULL) {
+        TestFail("Plain row: iasa \"like\" keeps Fall's input callback, flags 0x55, phys \"none\"");
+        rc = 1;
+    }
+    /* an undeclared state: the Fall row, never NULL */
+    if (Geno_MotionRow(&t_fp, T_MS(12)) != &t_rows[ftCo_MS_Fall]) {
+        TestFail("an undeclared Geno motion must fall back to the Fall row");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
+/* Script CHG -> GENO(n): performed now (v1 skipped it); an undeclared state still falls through to
+ * the translator's fallback check; the GENO_STATE value; specials bound to states. */
+static int test_geno_v2_change_to_state(void)
+{
+    TestGenoState* st = t_v2_setup();
+    u32* s = t_script;
+    int n = 0, rc = 0;
+    if (st == NULL) {
+        TestFail("could not install the v2 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 1);
+    t_fp.motion_id = 330;
+    t_fp.ground_or_air = GA_Air;
+    /* CHG ANIM_END -> GENO(12) (undeclared) ; CHG ANIM_END -> GENO(0) ; CHG ANIM_END -> FallSpecial */
+    s[n++] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ANIM_END, 0, 0, 0);
+    s[n++] = GENO_TARGET(GENO_TGT_GENO, 12);
+    s[n++] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ANIM_END, 0, 0, 0);
+    s[n++] = GENO_TARGET(GENO_TGT_GENO, T_GS);
+    s[n++] = GENO_W0_CHG(GENO_SUB_CHGAND, 1, GENO_COND_AIR, 0, 0, 0);
+    s[n++] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ANIM_END, 0, 0, 0);
+    s[n++] = GENO_TARGET(GENO_TGT_MOTION, ftCo_MS_FallSpecial);
+    s[n++] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    if (Geno_PreAnim(&t_gobj) != 1 || t_fp.motion_id != T_MS(T_GS) ||
+        GenoGame_TestLastTarget() != GENO_TARGET(GENO_TGT_GENO, T_GS))
+    {
+        TestFail("CHG ANIM_END & AIR -> GENO(GlideStart) must enter the Geno state");
+        rc = 1;
+    }
+    t_script[0] = GENO_W0_VAR(GENO_SUB_GET, 2, LA(3), 0, 0);
+    t_script[1] = GENO_VAL_GENO_STATE;
+    t_script[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    if (st->la_i[3] != T_GS) {
+        TestFail("GET GENO_STATE in GlideStart must read 0");
+        rc = 1;
+    }
+    /* specials: n -> Tornado, s -> Drill, hi unbound */
+    t_fp.motion_id = 14;
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_N) != 1 || t_fp.motion_id != T_MS(T_TOR)) {
+        TestFail("specials.n -> Tornado");
+        rc = 1;
+    }
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_S) != 1 || t_fp.motion_id != T_MS(T_DRILL)) {
+        TestFail("specials.air_s defaults to specials.s -> Drill");
+        rc = 1;
+    }
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_HI) != 0) {
+        TestFail("an unbound special must be left to the fighter's own code");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    t_setup(); /* no profile */
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_N) != 0) {
+        TestFail("a fighter with no profile: Geno_SpecialEnter must return 0");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    return rc;
+}
+
+/* The jump-hold entry: 16 frames of jump held in an air jump -> GlideStart; a release cancels it
+ * for that jump; the next air jump counts afresh. */
+static int test_geno_v2_glide_entry(void)
+{
+    TestGenoState* st = t_v2_setup();
+    int f, rc = 0;
+    if (st == NULL) {
+        TestFail("could not install the v2 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.motion_id = ftCo_MS_JumpAerialF;
+    Geno_OnActionChange(&t_gobj);
+    t_fp.input.held_buttons[0] = HSD_PAD_X;
+    for (f = 1; f < 16; f++) {
+        if (Geno_PreAnim(&t_gobj) != 0) {
+            TestFail("glide entered before 16 frames of hold");
+            rc = 1;
+            break;
+        }
+    }
+    if (Geno_PreAnim(&t_gobj) != 1 || t_fp.motion_id != T_MS(T_GS)) {
+        TestFail("16th frame of jump held in JumpAerialF must enter GlideStart");
+        rc = 1;
+    }
+    /* a release cancels the hold for that jump */
+    t_fp.motion_id = ftCo_MS_JumpAerialB;
+    Geno_OnActionChange(&t_gobj);
+    for (f = 0; f < 5; f++) {
+        Geno_PreAnim(&t_gobj);
+    }
+    t_fp.input.held_buttons[0] = 0;
+    Geno_PreAnim(&t_gobj);
+    t_fp.input.held_buttons[0] = HSD_PAD_Y;
+    for (f = 0; f < 30; f++) {
+        if (Geno_PreAnim(&t_gobj) != 0) {
+            TestFail("after a release, holding again in the same jump must not glide");
+            rc = 1;
+            break;
+        }
+    }
+    /* not in an air jump (Fall): nothing */
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_OnActionChange(&t_gobj);
+    for (f = 0; f < 30; f++) {
+        if (Geno_PreAnim(&t_gobj) != 0) {
+            TestFail("holding jump in Fall must not glide");
+            rc = 1;
+            break;
+        }
+    }
+    t_fp.input.held_buttons[0] = 0;
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
+/* Glide physics: the stick pitches within the limits; diving gains speed, climbing loses it;
+ * A -> GlideAttack, shield -> GlideEnd. Also the state survives a savestate. */
+static int test_geno_v2_glide(void)
+{
+    TestGenoState* st = t_v2_setup();
+    MotionState* gl;
+    int f, rc = 0;
+    f32 s0, s1;
+    if (st == NULL) {
+        TestFail("could not install the v2 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.self_vel.x = 1.0f;
+    t_fp.self_vel.y = 0.5f;
+    t_fp.co_attrs.gravity = 0.08f;
+    t_fp.co_attrs.terminal_velocity = 2.0f;
+    t_fp.motion_id = ftCo_MS_JumpAerialF;
+    t_script[0] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, GENO_CHG_ONCE);
+    t_script[1] = GENO_TARGET(GENO_TGT_GENO, T_GS);
+    t_script[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    Geno_PreAnim(&t_gobj);
+    if (t_fp.motion_id != T_MS(T_GS)) {
+        TestFail("could not enter GlideStart");
+        GenoGame_TestCapture(0, 0);
+        Geno_TestRestore();
+        return 1;
+    }
+    Geno_MotionRow(&t_fp, T_MS(T_GS))->phys_cb(&t_gobj);
+    /* GlideStart's animation ends -> Glide */
+    GenoGame_TestCapture(1, 1);
+    Geno_MotionRow(&t_fp, T_MS(T_GS))->anim_cb(&t_gobj);
+    GenoGame_TestCapture(1, 0);
+    if (t_fp.motion_id != T_MS(T_GL)) {
+        TestFail("GlideStart's anim end must go to Glide");
+        rc = 1;
+    }
+    gl = Geno_MotionRow(&t_fp, T_MS(T_GL));
+    /* dive: stick down */
+    t_fp.input.lstick[0].y = -1.0f;
+    s0 = st->move_f[1];
+    for (f = 0; f < 90; f++) {
+        gl->phys_cb(&t_gobj);
+    }
+    s1 = st->move_f[1];
+    if (st->move_f[0] > -69.0f || st->move_f[0] < -70.001f) {
+        TestFail("a held stick down must pitch the nose to the lower limit (-70)");
+        rc = 1;
+    }
+    if (!(s1 > s0) || !(t_fp.self_vel.y < 0.0f) || !(t_fp.self_vel.x > 0.0f)) {
+        TestFail("diving must gain speed and move down-forward");
+        rc = 1;
+    }
+    /* climb: stick up */
+    t_fp.input.lstick[0].y = 1.0f;
+    for (f = 0; f < 40; f++) {
+        gl->phys_cb(&t_gobj);
+    }
+    if (!(st->move_f[1] < s1) || st->move_f[0] <= 0.0f) {
+        TestFail("climbing must lose speed");
+        rc = 1;
+    }
+    /* savestate round trip of the move vars */
+    if (snap_open(1) == 0) {
+        f32 a = st->move_f[0];
+        snap_save(0);
+        st->move_f[0] = 123.0f;
+        st->hold_frames = 77;
+        snap_load(0);
+        if (st->move_f[0] != a || st->hold_frames == 77) {
+            TestFail("glide angle / hold count not restored by a savestate load");
+            rc = 1;
+        }
+    }
+    /* A -> GlideAttack */
+    t_fp.input.pressed_buttons = HSD_PAD_A;
+    gl->input_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(T_GA)) {
+        TestFail("A in Glide must go to GlideAttack");
+        rc = 1;
+    }
+    /* shield -> GlideEnd */
+    t_fp.motion_id = T_MS(T_GL);
+    t_fp.input.pressed_buttons = HSD_PAD_R;
+    gl->input_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(T_GEND)) {
+        TestFail("shield in Glide must go to GlideEnd");
+        rc = 1;
+    }
+    t_fp.input.pressed_buttons = 0;
+    /* a fresh glide held nose-up climbs, slows and stalls; the stall ends the glide (GlideEnd) */
+    t_fp.self_vel.y = 0.0f;
+    t_script[0] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, GENO_CHG_ONCE);
+    t_script[1] = GENO_TARGET(GENO_TGT_GENO, T_GL);
+    t_script[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    Geno_PreAnim(&t_gobj);
+    if (t_fp.motion_id != T_MS(T_GL) || st->move_f[1] != 1.7f) {
+        TestFail("entering Glide must start at the glide speed 1.7");
+        rc = 1;
+    }
+    t_fp.input.lstick[0].y = 1.0f;
+    for (f = 0; f < 200 && !st->move_i[2]; f++) {
+        gl->phys_cb(&t_gobj);
+    }
+    gl->anim_cb(&t_gobj);
+    if (f >= 200 || t_fp.motion_id != T_MS(T_GEND) || st->move_i[1] != 2) {
+        TestFail("a nose-up glide must stall and end in GlideEnd (reason 2)");
+        rc = 1;
+    }
+    t_fp.input.lstick[0].y = 0.0f;
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
+/* Mach Tornado: B taps lift, no taps sink; the stick drifts. Drill Rush: the stick steers within
+ * the limits; a bounce request goes to DrillEnd moving back. */
+static int test_geno_v2_specials(void)
+{
+    TestGenoState* st = t_v2_setup();
+    MotionState* r;
+    int f, rc = 0;
+    f32 y0;
+    if (st == NULL) {
+        TestFail("could not install the v2 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.facing_dir = 1.0f;
+    t_fp.self_vel.x = 0.0f;
+    t_fp.self_vel.y = 0.0f;
+    t_fp.co_attrs.gravity = 0.08f;
+    t_fp.co_attrs.terminal_velocity = 2.0f;
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_N);
+    r = Geno_MotionRow(&t_fp, T_MS(T_TOR));
+    /* no taps: sinks (after the entry lift) to the tornado's fall speed */
+    for (f = 0; f < 30; f++) {
+        t_fp.input.pressed_buttons = 0;
+        r->phys_cb(&t_gobj);
+    }
+    if (!(t_fp.self_vel.y < 0.0f) || t_fp.self_vel.y < -0.5001f) {
+        TestFail("tornado without taps must sink, no faster than max_fall 0.5");
+        rc = 1;
+    }
+    /* B mashed: a lift every 10 frames (the cooldown), each +1.0, rise capped at 1.4 */
+    y0 = -10.0f;
+    for (f = 0; f < 20; f++) {
+        t_fp.input.pressed_buttons = HSD_PAD_B;
+        r->phys_cb(&t_gobj);
+        if (t_fp.self_vel.y > y0) {
+            y0 = t_fp.self_vel.y;
+        }
+    }
+    if (!(y0 > 0.0f) || y0 > 1.4001f || st->move_i[3] != 2) {
+        TestFail("tornado mashing B: 2 lifts in 20 frames, rising, capped at 1.4");
+        rc = 1;
+    }
+    /* drift */
+    t_fp.input.pressed_buttons = 0;
+    t_fp.input.lstick[0].x = 1.0f;
+    for (f = 0; f < 20; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    if (!(t_fp.self_vel.x > 0.0f)) {
+        TestFail("tornado must drift with the stick");
+        rc = 1;
+    }
+    t_fp.input.lstick[0].x = 0.0f;
+    /* drill */
+    Geno_SpecialEnter(&t_gobj, GENO_SP_AIR_S);
+    r = Geno_MotionRow(&t_fp, T_MS(T_DRILL));
+    t_fp.input.lstick[0].y = 1.0f;
+    for (f = 0; f < 60; f++) {
+        r->phys_cb(&t_gobj);
+    }
+    if (!(st->move_f[0] > 0.0f) || !(t_fp.self_vel.y > 0.0f) || !(t_fp.self_vel.x > 0.0f)) {
+        TestFail("drill steered up must travel up-forward");
+        rc = 1;
+    }
+    {
+        f32 amax = st->move_f[0];
+        r->phys_cb(&t_gobj);
+        if (st->move_f[0] != amax) {
+            TestFail("drill steering must stop at its limit");
+            rc = 1;
+        }
+    }
+    t_fp.input.lstick[0].y = 0.0f;
+    st->move_i[2] = 1;
+    st->move_i[3] = 2;
+    r->anim_cb(&t_gobj);
+    if (t_fp.motion_id != T_MS(T_DEND) || !(t_fp.self_vel.x < 0.0f)) {
+        TestFail("a drill bounce must go to DrillEnd moving back");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -1019,4 +1437,9 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v1_special_attrs", test_geno_v1_special_attrs);
     TestRegister("geno_v1_overlay", test_geno_v1_overlay);
     TestRegister("geno_v1_inert", test_geno_v1_inert);
+    TestRegister("geno_v2_states", test_geno_v2_states);
+    TestRegister("geno_v2_change_to_state", test_geno_v2_change_to_state);
+    TestRegister("geno_v2_glide_entry", test_geno_v2_glide_entry);
+    TestRegister("geno_v2_glide", test_geno_v2_glide);
+    TestRegister("geno_v2_specials", test_geno_v2_specials);
 }

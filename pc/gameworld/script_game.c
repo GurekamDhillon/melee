@@ -569,6 +569,11 @@ static MotionState* lab_motion_row(Fighter* fp, int msid)
     if (msid < 0) {
         return NULL;
     }
+    if (msid >= 0x400) {
+        /* a Geno v2 action state (pc/geno/geno_game_v2.inc) */
+        extern MotionState* Geno_MotionRowIfAny(Fighter * fp, int msid);
+        return Geno_MotionRowIfAny(fp, msid);
+    }
     if (msid >= fp->x18) {
         return fp->x20_actionStateList != NULL ? &fp->x20_actionStateList[msid - fp->x18] : NULL;
     }

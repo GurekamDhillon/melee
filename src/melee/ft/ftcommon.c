@@ -530,8 +530,17 @@ void ftCommon_UnlockECB(Fighter* fp)
     fp->coll_data.x130_flags &= ~CollData_X130_Locked;
 }
 
+#if defined(TARGET_PC)
+/* Geno v1 (pc/geno/geno_game.c): a landing / take-off edge. Returns at once for a fighter Geno does
+ * not touch, and only picks a change-action target inside a collision callback. */
+extern void Geno_GroundEdge(Fighter* fp, int landing);
+#endif
+
 void ftCommon_8007D5D4(Fighter* fp)
 {
+#if defined(TARGET_PC)
+    int was_ground = fp->ground_or_air == GA_Ground;
+#endif
     fp->ground_or_air = GA_Air;
     fp->gr_vel = 0;
     fp->x98_atk_shield_kb.z = 0;
@@ -540,11 +549,19 @@ void ftCommon_8007D5D4(Fighter* fp)
     fp->x1968_jumpsUsed = 1;
     fp->ecb_lock = 10;
     fp->coll_data.x130_flags |= CollData_X130_Locked;
+#if defined(TARGET_PC)
+    if (was_ground) {
+        Geno_GroundEdge(fp, 0);
+    }
+#endif
 }
 
 void ftCommon_8007D60C(Fighter* fp)
 {
     ftCo_DatAttrs* ca = &fp->co_attrs;
+#if defined(TARGET_PC)
+    int was_ground = fp->ground_or_air == GA_Ground;
+#endif
     if (fp->x2227_b0 && fp->x1968_jumpsUsed <= 1) {
         pl_8003FC44(fp->player_id, fp->is_sub_fighter);
     }
@@ -554,6 +571,11 @@ void ftCommon_8007D60C(Fighter* fp)
     fp->x1968_jumpsUsed = ca->max_jumps;
     fp->ecb_lock = 5;
     fp->coll_data.x130_flags |= CollData_X130_Locked;
+#if defined(TARGET_PC)
+    if (was_ground) {
+        Geno_GroundEdge(fp, 0);
+    }
+#endif
 }
 
 void ftCommon_UseAllJumps(Fighter* fp)
@@ -563,6 +585,9 @@ void ftCommon_UseAllJumps(Fighter* fp)
 
 void ftCommon_8007D6A4(Fighter* fp)
 {
+#if defined(TARGET_PC)
+    int was_air = fp->ground_or_air == GA_Air;
+#endif
     if (fp->x594_b0) {
         fp->self_vel.x = fp->x6A4_transNOffset.z * fp->facing_dir;
     }
@@ -586,6 +611,11 @@ void ftCommon_8007D6A4(Fighter* fp)
                  fp->motion_id);
         HSD_ASSERT(686, 0);
     }
+#if defined(TARGET_PC)
+    if (was_air) {
+        Geno_GroundEdge(fp, 1);
+    }
+#endif
 }
 
 void ftCommon_8007D780(Fighter* fp)

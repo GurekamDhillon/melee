@@ -2897,6 +2897,16 @@ void ftColl_8007A06C(Fighter_GObj* gobj, void* dmg_ptr, void* log, size_t idx,
         angle = (float) angle_int;
     }
 
+#if defined(TARGET_PC)
+    if (best_entry->x0 == 1) {
+        /* Geno v1 LINK (Brawl's autolink angle 365) on this hitbox of a Geno fighter: launch
+         * along the attacker's momentum. Returns 0 (nothing changed) for everyone else. */
+        extern int Geno_Autolink(Fighter * attacker, HitCapsule * hit, float* dir,
+                                 float* angle, float* kb);
+        Geno_Autolink((Fighter*) best_entry->gobj->user_data, best_entry->hit0, &dir,
+                      &angle, &best_kb.v);
+    }
+#endif
     out->dir = dir;
     out->angle = (int) angle;
     out->hurt_height = (int) best_entry->hurt1->height;

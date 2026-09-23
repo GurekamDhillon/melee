@@ -19,12 +19,26 @@
 
 #include <Runtime/platform.h>
 
+#include <math.h>
+
 #include <melee/ft/fighter.h>
+#include <melee/ft/ft_0892.h>
+#include <melee/ft/ftanim.h>
+#include <melee/ft/ftcommon.h>
+#include <melee/ft/ftparts.h>
 #include <melee/ft/inlines.h>
+#include <melee/ft/kinds/ftCommon/forward.h>
+#include <melee/ft/kinds/ftCommon/ftCo_Fall.h>
+#include <melee/ft/kinds/ftCommon/ftCo_FallSpecial.h>
+#include <melee/ft/kinds/ftCommon/ftCo_Landing.h>
 #include <melee/ft/types.h>
+#include <melee/lb/lbcollision.h>
 #include <melee/lb/types.h>
+#include <sysdolphin/baselib/controller.h>
+#include <sysdolphin/baselib/random.h>
 
 #include "geno.h"
+#include "geno_state.h"
 
 /* the native registry (gwtool adds the gw_ prefix to these references) */
 extern int Geno_ProfileForKind(int kind);
@@ -38,23 +52,26 @@ extern int Geno_HookCount(int p, int ev);
 extern int Geno_Hook(int p, int ev, int i);
 extern int Geno_HookArg(int p, int ev, int i);
 extern void Geno_Event(int what, int a, int b, int c, int d);
+/* v1 */
+extern int Geno_SpecialCount(int p);
+extern int Geno_SpecialIndex(int p, int i);
+extern int Geno_SpecialBits(int p, int i);
+extern int Geno_OnLandCount(int p);
+extern int Geno_OnLandFrom(int p, int i);
+extern int Geno_OnLandTo(int p, int i);
+extern int Geno_OverlayCount(int p);
+extern int Geno_OverlayAnim(int p, int i);
+extern int Geno_OverlaySlot(int p, int i);
+extern int Geno_SlotCount(void);
+extern int Geno_SlotOffset(int s);
+extern int Geno_SlotLen(int s);
+extern int Geno_PoolWords(void);
+extern int Geno_PoolWord(int i);
+extern int Geno_PoolGen(void);
 
 /* ---- the state block ------------------------------------------------------------------------ */
 
-typedef struct GenoState {
-    s32 profile;     /* registry profile of this fighter's kind, -1 = none */
-    s32 kind;        /* the kind it was reset for */
-    u32 flags;       /* GENO_SF_* */
-    u32 resets;      /* times this block was reset (diagnostics) */
-    s32 la_i[GENO_VARS_PER_BANK];
-    s32 ra_i[GENO_VARS_PER_BANK];
-    f32 la_f[GENO_VARS_PER_BANK];
-    f32 ra_f[GENO_VARS_PER_BANK];
-    u32 hook_calls;  /* hooks run since the reset */
-    u32 extra_jumps; /* air jumps taken past Melee's multi-jump table */
-} GenoState;
-
-#define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */
+/* GenoState (the per-fighter block) is in geno_state.h, shared with geno_tests.c. */
 
 #define GENO_PLAYERS 6
 /* [player slot][sub-fighter]: one block per fighter object a player can own (Ice Climbers' Nana,
@@ -171,7 +188,98 @@ static void geno_run_event(Fighter_GObj* gobj, GenoState* st, int ev)
     }
 }
 
+/* ---- v1: subaction script overlays -----------------------------------------------------------
+ * geno.json "subactions" replace a subaction's script with words from the mod. The registry holds
+ * every overlay's words in one pool; the game half keeps a copy in guest memory (so the ftAction
+ * loops read it like any Pl file script, in the guest's byte order) and points the fighter's
+ * subaction table rows at it. Both arrays are game globals (snapshotted) and, once filled, never
+ * change during a match: a refill after a rollback writes the same words again. */
+u32 Geno_ScriptPool[GENO_POOL_WORDS];
+s32 Geno_ScriptPoolGen;
+CmdUnion* Geno_OverlayOrig[256]; /* per overlay slot: the script the overlay replaced (ORIG) */
+
+static void geno_pool_sync(void)
+{
+    int gen = Geno_PoolGen();
+    int n, i;
+    if (gen == Geno_ScriptPoolGen) {
+        return;
+    }
+    n = Geno_PoolWords();
+    if (n > GENO_POOL_WORDS) {
+        n = GENO_POOL_WORDS;
+    }
+    for (i = 0; i < n; i++) {
+        Geno_ScriptPool[i] = (u32) Geno_PoolWord(i);
+    }
+    Geno_ScriptPoolGen = gen;
+}
+
+static void geno_install_overlays(Fighter* fp, int p)
+{
+    int n = Geno_OverlayCount(p);
+    int i;
+    Fighter_WaitAnimData* table;
+    if (n <= 0 || fp->ft_data == NULL || (table = fp->ft_data->xC) == NULL) {
+        return;
+    }
+    geno_pool_sync();
+    for (i = 0; i < n; i++) {
+        int anim = Geno_OverlayAnim(p, i);
+        int slot = Geno_OverlaySlot(p, i);
+        int off = Geno_SlotOffset(slot);
+        CmdUnion* mine;
+        if (anim < 0 || slot < 0 || slot >= 256 || off < 0 || off >= GENO_POOL_WORDS) {
+            continue;
+        }
+        mine = (CmdUnion*) &Geno_ScriptPool[off];
+        /* idempotent: the table is the kind's (shared by every fighter of it, kept while the file
+           stays loaded), so a second spawn finds it already pointing at the overlay */
+        if (table[anim].xC != mine) {
+            Geno_OverlayOrig[slot] = table[anim].xC;
+            table[anim].xC = mine;
+            Geno_Event(13, fp->kind, fp->player_id, anim, slot);
+        }
+    }
+}
+
+/* ORIG: the overlay slot whose words contain `w`, -1 when `w` is not in the pool. */
+static int geno_slot_of(u32* w)
+{
+    int off, s, n;
+    if (w < &Geno_ScriptPool[0] || w >= &Geno_ScriptPool[GENO_POOL_WORDS]) {
+        return -1;
+    }
+    off = (int) (w - &Geno_ScriptPool[0]);
+    n = Geno_SlotCount();
+    for (s = 0; s < n && s < 256; s++) {
+        int o = Geno_SlotOffset(s);
+        if (off >= o && off < o + Geno_SlotLen(s)) {
+            return s;
+        }
+    }
+    return -1;
+}
+
 /* ---- dispatch points (called from the engine under TARGET_PC) ------------------------------- */
+
+static int geno_inert(GenoState* st)
+{
+    return st->profile < 0 && !(st->flags & GENO_SF_SCRIPT);
+}
+
+/* The per-action part of the block (v1): checks, rehit timers, autolink flags, the frame count. */
+static void geno_clear_action(GenoState* st)
+{
+    geno_zero(st->ra_i, sizeof(st->ra_i));
+    geno_zero(st->ra_f, sizeof(st->ra_f));
+    st->action_time = 0;
+    st->nchecks = 0;
+    st->last_check = -1;
+    geno_zero(st->rehit_period, sizeof(st->rehit_period));
+    geno_zero(st->rehit_count, sizeof(st->rehit_count));
+    geno_zero(st->link_mode, sizeof(st->link_mode));
+}
 
 /* Fighter_UnkInitReset_80067C98: spawn, respawn, and the Zelda/Sheik swap. */
 void Geno_FighterReset(Fighter* fp)
@@ -181,24 +289,26 @@ void Geno_FighterReset(Fighter* fp)
     geno_zero(st, sizeof(*st));
     st->resets = resets + 1;
     st->kind = fp->kind;
+    st->last_check = -1;
     st->profile = Geno_ProfileForKind(fp->kind);
     if (st->profile >= 0) {
         Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
+        geno_install_overlays(fp, st->profile);
         if (fp->gobj != NULL) {
             geno_run_event(fp->gobj, st, GENO_EV_INIT);
         }
     }
 }
 
-/* Fighter_ChangeMotionState, right after motion_id is set: the RA banks belong to one action. */
+/* Fighter_ChangeMotionState, right after motion_id is set: the RA banks, change-action checks,
+ * rehit timers and autolink flags belong to one action. */
 void Geno_OnActionChange(Fighter_GObj* gobj)
 {
     GenoState* st = geno_state(GET_FIGHTER(gobj));
-    if (st->profile < 0 && !(st->flags & GENO_SF_SCRIPT)) {
+    if (geno_inert(st)) {
         return;
     }
-    geno_zero(st->ra_i, sizeof(st->ra_i));
-    geno_zero(st->ra_f, sizeof(st->ra_f));
+    geno_clear_action(st);
     if (st->profile >= 0) {
         geno_run_event(gobj, st, GENO_EV_ACTION);
     }
@@ -288,6 +398,39 @@ int GenoGame_AttrOffset(int index)
     return index >= 0 && index < GENO_NATTRS ? geno_attrs[index].offset : -1;
 }
 
+/* v1: special attributes (fp->dat_attrs, the fighter's own parameter block) by word index.
+ * Written into the file's block (ft_data->ext_attr), which every fighter copies its dat_attrs
+ * from - so the fighter's own attribute code (ftKindCalcIndiviParamTable / m-ex's
+ * OnReapplyAttributes, which runs right after this) copies and scales the Geno values like the
+ * file's - and into the fighter's own buffer too, for fighters that copy only once, at load.
+ * Idempotent (the same words every time), so spawns, respawns and rollbacks agree. */
+static void geno_apply_special(Fighter* fp, int p)
+{
+    int n = Geno_SpecialCount(p);
+    int i;
+    u32* src;
+    u32* dst;
+    if (n <= 0) {
+        return;
+    }
+    src = fp->ft_data != NULL ? (u32*) fp->ft_data->ext_attr : NULL;
+    dst = (u32*) fp->dat_attrs;
+    for (i = 0; i < n; i++) {
+        int idx = Geno_SpecialIndex(p, i);
+        u32 bits = (u32) Geno_SpecialBits(p, i);
+        if (idx < 0 || idx >= GENO_SPECIAL_WORDS) {
+            continue;
+        }
+        if (src != NULL) {
+            src[idx] = bits;
+        }
+        if (dst != NULL && dst != src) {
+            dst[idx] = bits;
+        }
+    }
+    Geno_Event(12, fp->kind, fp->player_id, n, Geno_SpecialIndex(p, 0));
+}
+
 /* ftchangeparam.c, right after co_attrs is copied from the fighter's data and BEFORE any scaling:
  * a Geno value replaces the file's value, then the engine's own modifiers apply as usual. */
 void Geno_ApplyAttrs(Fighter* fp)
@@ -310,6 +453,7 @@ void Geno_ApplyAttrs(Fighter* fp)
         fp->co_attrs.max_jumps = mj;
     }
     Geno_Event(5, fp->kind, fp->player_id, n, fp->co_attrs.max_jumps);
+    geno_apply_special(fp, p);
 }
 
 /* ---- multi-jump past Melee's table -----------------------------------------------------------
@@ -380,72 +524,88 @@ static void* geno_var(GenoState* st, int ref)
     }
 }
 
-/* Operand B in A's type. */
-static GenoWord geno_operand_b(GenoState* st, int a, u32 w0, u32 w1)
+/* A var read in the wanted type (float or int). */
+static GenoWord geno_var_as(GenoState* st, int ref, int want_f)
 {
     GenoWord r;
-    int want_f = geno_var_is_float(a);
-    if (w0 & 0x80) {
-        int b = w1 & 0xFF;
-        void* pb = geno_var(st, b);
-        if (geno_var_is_float(b)) {
-            if (want_f) {
-                r.f = *(f32*) pb;
-            } else {
-                r.i = (s32) * (f32*) pb;
-            }
-        } else if (want_f) {
-            r.f = (f32) * (s32*) pb;
+    void* pb = geno_var(st, ref);
+    if (geno_var_is_float(ref)) {
+        if (want_f) {
+            r.f = *(f32*) pb;
         } else {
-            r.i = *(s32*) pb;
+            r.i = (s32) * (f32*) pb;
         }
+    } else if (want_f) {
+        r.f = (f32) * (s32*) pb;
     } else {
-        r.u = w1;
+        r.i = *(s32*) pb;
     }
     return r;
 }
 
-static int geno_compare(GenoState* st, int a, int cmp, GenoWord b)
+/* An operand in the wanted type: `word` is an immediate already in that type, or (b_is_var) a var
+ * ref in [7:0], converted. */
+static GenoWord geno_operand(GenoState* st, int want_f, int b_is_var, u32 word)
 {
-    void* pa = geno_var(st, a);
+    GenoWord r;
+    if (b_is_var) {
+        return geno_var_as(st, word & 0xFF, want_f);
+    }
+    r.u = word;
+    return r;
+}
+
+/* Operand B in A's type (the v0 variable subs: [7] of word0 says B is a var). */
+static GenoWord geno_operand_b(GenoState* st, int a, u32 w0, u32 w1)
+{
+    return geno_operand(st, geno_var_is_float(a), (w0 & 0x80) != 0, w1);
+}
+
+/* x cmp y, both in the same type. BIT / NOBIT test bit y of x (as an int). */
+static int geno_cmp(int is_f, GenoWord x, int cmp, GenoWord y)
+{
     if (cmp == GENO_CMP_BIT || cmp == GENO_CMP_NOBIT) {
-        s32 v = geno_var_is_float(a) ? (s32) * (f32*) pa : *(s32*) pa;
-        int set = (v >> (b.i & 31)) & 1;
+        s32 v = is_f ? (s32) x.f : x.i;
+        s32 bit = is_f ? (s32) y.f : y.i;
+        int set = (v >> (bit & 31)) & 1;
         return cmp == GENO_CMP_BIT ? set : !set;
     }
-    if (geno_var_is_float(a)) {
-        f32 x = *(f32*) pa, y = b.f;
+    if (is_f) {
         switch (cmp) {
         case GENO_CMP_EQ:
-            return x == y;
+            return x.f == y.f;
         case GENO_CMP_NE:
-            return x != y;
+            return x.f != y.f;
         case GENO_CMP_LT:
-            return x < y;
+            return x.f < y.f;
         case GENO_CMP_LE:
-            return x <= y;
+            return x.f <= y.f;
         case GENO_CMP_GT:
-            return x > y;
+            return x.f > y.f;
         default:
-            return x >= y;
-        }
-    } else {
-        s32 x = *(s32*) pa, y = b.i;
-        switch (cmp) {
-        case GENO_CMP_EQ:
-            return x == y;
-        case GENO_CMP_NE:
-            return x != y;
-        case GENO_CMP_LT:
-            return x < y;
-        case GENO_CMP_LE:
-            return x <= y;
-        case GENO_CMP_GT:
-            return x > y;
-        default:
-            return x >= y;
+            return x.f >= y.f;
         }
     }
+    switch (cmp) {
+    case GENO_CMP_EQ:
+        return x.i == y.i;
+    case GENO_CMP_NE:
+        return x.i != y.i;
+    case GENO_CMP_LT:
+        return x.i < y.i;
+    case GENO_CMP_LE:
+        return x.i <= y.i;
+    case GENO_CMP_GT:
+        return x.i > y.i;
+    default:
+        return x.i >= y.i;
+    }
+}
+
+static int geno_compare(GenoState* st, int a, int cmp, GenoWord b)
+{
+    int is_f = geno_var_is_float(a);
+    return geno_cmp(is_f, geno_var_as(st, a, is_f), cmp, b);
 }
 
 static void geno_arith(GenoState* st, int sub, int a, GenoWord b)
@@ -465,6 +625,14 @@ static void geno_arith(GenoState* st, int sub, int a, GenoWord b)
             break;
         case GENO_SUB_MUL:
             *x *= b.f;
+            break;
+        case GENO_SUB_DIV:
+            if (b.f != 0.0f) {
+                *x /= b.f;
+            }
+            break;
+        case GENO_SUB_RAND:
+            *x = HSD_Randf() * b.f;
             break;
         }
     } else {
@@ -488,8 +656,649 @@ static void geno_arith(GenoState* st, int sub, int a, GenoWord b)
         case GENO_SUB_CLRBIT:
             *x &= ~(s32) (1u << (b.i & 31));
             break;
+        case GENO_SUB_DIV:
+            if (b.i != 0 && !(b.i == -1 && *x == (s32) 0x80000000)) {
+                *x /= b.i;
+            }
+            break;
+        case GENO_SUB_RAND:
+            *x = b.i > 0 ? HSD_Randi(b.i) : 0;
+            break;
         }
     }
+}
+
+/* ---- v1: engine values ------------------------------------------------------------------------ */
+
+static u32 geno_buttons(Fighter* fp, int pressed)
+{
+    HSD_Pad b = pressed ? fp->input.pressed_buttons : fp->input.held_buttons[0];
+    u32 m = 0;
+    if (b & HSD_PAD_A) {
+        m |= GENO_BTN_ATTACK;
+    }
+    if (b & HSD_PAD_B) {
+        m |= GENO_BTN_SPECIAL;
+    }
+    if (b & HSD_PAD_XY) {
+        m |= GENO_BTN_JUMP;
+    }
+    if (b & (HSD_PAD_L | HSD_PAD_R | HSD_PAD_LR)) {
+        m |= GENO_BTN_SHIELD;
+    }
+    if (!pressed && p_ftCommonData != NULL &&
+        fp->input.triggers[0] >= p_ftCommonData->shield_press_threshold)
+    {
+        m |= GENO_BTN_SHIELD;
+    }
+    if (b & HSD_PAD_Z) {
+        m |= GENO_BTN_GRAB;
+    }
+    if (b & HSD_PAD_DPADUP) {
+        m |= GENO_BTN_TAUNT;
+    }
+    return m;
+}
+
+static int geno_val_is_float(u32 id)
+{
+    if (id >= GENO_VAL_SPECIAL_I) {
+        return 0;
+    }
+    if (id >= GENO_VAL_SPECIAL_F) {
+        return 1;
+    }
+    switch (id) {
+    case GENO_VAL_AIR:
+    case GENO_VAL_ACTION_FRAME:
+    case GENO_VAL_MOTION:
+    case GENO_VAL_JUMPS_USED:
+    case GENO_VAL_JUMPS_MAX:
+    case GENO_VAL_BUTTONS_HELD:
+    case GENO_VAL_BUTTONS_PRESSED:
+    case GENO_VAL_CMD_VAR0:
+    case GENO_VAL_CMD_VAR0 + 1:
+    case GENO_VAL_CMD_VAR0 + 2:
+    case GENO_VAL_CMD_VAR3:
+    case GENO_VAL_FAST_FALL:
+        return 0;
+    default:
+        return 1;
+    }
+}
+
+static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
+{
+    GenoWord r;
+    r.u = 0;
+    if (id >= GENO_VAL_SPECIAL_F && id < GENO_VAL_SPECIAL_I + GENO_SPECIAL_WORDS) {
+        u32 idx = id >= GENO_VAL_SPECIAL_I ? id - GENO_VAL_SPECIAL_I : id - GENO_VAL_SPECIAL_F;
+        if (idx < GENO_SPECIAL_WORDS && fp->dat_attrs != NULL) {
+            r.u = ((u32*) fp->dat_attrs)[idx];
+        }
+        return r;
+    }
+    switch (id) {
+    case GENO_VAL_AIR:
+        r.i = fp->ground_or_air == GA_Air;
+        break;
+    case GENO_VAL_FACING:
+        r.f = fp->facing_dir;
+        break;
+    case GENO_VAL_VEL_X:
+        r.f = fp->self_vel.x;
+        break;
+    case GENO_VAL_VEL_Y:
+        r.f = fp->self_vel.y;
+        break;
+    case GENO_VAL_GROUND_VEL:
+        r.f = fp->gr_vel;
+        break;
+    case GENO_VAL_FWD_VEL:
+        r.f = fp->self_vel.x * fp->facing_dir;
+        break;
+    case GENO_VAL_KB_VEL_X:
+        r.f = fp->x8c_kb_vel.x;
+        break;
+    case GENO_VAL_KB_VEL_Y:
+        r.f = fp->x8c_kb_vel.y;
+        break;
+    case GENO_VAL_STICK_X:
+        r.f = fp->input.lstick[0].x;
+        break;
+    case GENO_VAL_STICK_Y:
+        r.f = fp->input.lstick[0].y;
+        break;
+    case GENO_VAL_STICK_FWD:
+        r.f = fp->input.lstick[0].x * fp->facing_dir;
+        break;
+    case GENO_VAL_CSTICK_X:
+        r.f = fp->input.cstick[0].x;
+        break;
+    case GENO_VAL_CSTICK_Y:
+        r.f = fp->input.cstick[0].y;
+        break;
+    case GENO_VAL_ANIM_FRAME:
+        r.f = fp->cur_anim_frame;
+        break;
+    case GENO_VAL_ACTION_FRAME:
+        r.i = st->action_time;
+        break;
+    case GENO_VAL_MOTION:
+        r.i = (s32) fp->motion_id;
+        break;
+    case GENO_VAL_PERCENT:
+        r.f = fp->dmg.x1830_percent;
+        break;
+    case GENO_VAL_JUMPS_USED:
+        r.i = fp->x1968_jumpsUsed;
+        break;
+    case GENO_VAL_JUMPS_MAX:
+        r.i = fp->co_attrs.max_jumps;
+        break;
+    case GENO_VAL_BUTTONS_HELD:
+        r.i = (s32) geno_buttons(fp, 0);
+        break;
+    case GENO_VAL_BUTTONS_PRESSED:
+        r.i = (s32) geno_buttons(fp, 1);
+        break;
+    case GENO_VAL_POS_X:
+        r.f = fp->cur_pos.x;
+        break;
+    case GENO_VAL_POS_Y:
+        r.f = fp->cur_pos.y;
+        break;
+    case GENO_VAL_CMD_VAR0:
+    case GENO_VAL_CMD_VAR0 + 1:
+    case GENO_VAL_CMD_VAR0 + 2:
+    case GENO_VAL_CMD_VAR3:
+        r.i = (s32) fp->cmd_vars[id - GENO_VAL_CMD_VAR0];
+        break;
+    case GENO_VAL_ANIM_RATE:
+        r.f = fp->frame_speed_mul;
+        break;
+    case GENO_VAL_FAST_FALL:
+        r.i = fp->fall_fast ? 1 : 0;
+        break;
+    case GENO_VAL_TRIGGER:
+        r.f = fp->input.triggers[0];
+        break;
+    default:
+        break;
+    }
+    return r;
+}
+
+/* `v` is in the value's own type. Returns 1 when written. */
+static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
+{
+    switch (id) {
+    case GENO_VAL_AIR:
+        if (v.i != 0 && fp->ground_or_air == GA_Ground) {
+            ftCommon_8007D5D4(fp); /* Melee's own "become airborne" */
+        }
+        return 1;
+    case GENO_VAL_FACING:
+        if (v.f == 0.0f) {
+            fp->facing_dir = -fp->facing_dir;
+        } else {
+            fp->facing_dir = v.f < 0.0f ? -1.0f : 1.0f;
+        }
+        if (fp->parts != NULL) {
+            ftPartSetRotY(fp, 0, 1.5707964f * fp->facing_dir); /* as ChangeMotionState does */
+        }
+        return 1;
+    case GENO_VAL_VEL_X:
+        fp->self_vel.x = v.f;
+        return 1;
+    case GENO_VAL_VEL_Y:
+        fp->self_vel.y = v.f;
+        return 1;
+    case GENO_VAL_GROUND_VEL:
+        fp->gr_vel = v.f;
+        return 1;
+    case GENO_VAL_FWD_VEL:
+        fp->self_vel.x = v.f * fp->facing_dir;
+        return 1;
+    case GENO_VAL_JUMPS_USED:
+        fp->x1968_jumpsUsed = (u8) (v.i < 0 ? 0 : v.i > 255 ? 255 : v.i);
+        return 1;
+    case GENO_VAL_CMD_VAR0:
+    case GENO_VAL_CMD_VAR0 + 1:
+    case GENO_VAL_CMD_VAR0 + 2:
+    case GENO_VAL_CMD_VAR3:
+        fp->cmd_vars[id - GENO_VAL_CMD_VAR0] = (u32) v.i;
+        return 1;
+    default:
+        Geno_Event(14, fp->kind, fp->player_id, (int) id, 0);
+        return 0;
+    }
+}
+
+/* ---- v1: change action ------------------------------------------------------------------------ */
+
+/* Test support (geno_tests.c): with capture on, a change is recorded instead of performed (the test
+ * fighter has no model to change), and ANIM_END reads geno_test_anim_end. Always 0 in the game. */
+static s32 geno_test_capture;
+static s32 geno_test_anim_end;
+static u32 geno_test_target;
+static s32 geno_test_changes;
+
+void GenoGame_TestCapture(int on, int anim_end)
+{
+    geno_test_capture = on;
+    geno_test_anim_end = anim_end;
+    geno_test_changes = 0;
+    geno_test_target = 0;
+}
+
+int GenoGame_TestChanges(void)
+{
+    return geno_test_changes;
+}
+
+u32 GenoGame_TestLastTarget(void)
+{
+    return geno_test_target;
+}
+
+/* The flags Melee's own moves use to swap to the other-situation version of a move mid-way (the
+ * hitboxes, effects, sounds and sword trail carry over; the new script is fast-forwarded). */
+#define GENO_KEEP_FRAME_FLAGS                                                                  \
+    (Ft_MF_KeepGfx | Ft_MF_SkipHit | Ft_MF_SkipMatAnim | Ft_MF_KeepSfx | Ft_MF_SkipColAnim |  \
+     Ft_MF_UpdateCmd | Ft_MF_SkipNametagVis | Ft_MF_KeepSwordTrail | Ft_MF_SkipItemVis |      \
+     Ft_MF_SkipModelPartVis | Ft_MF_SkipAttackCount | Ft_MF_KeepFastFall)
+
+/* The motion a target names, -1 for none (a Geno state, or a bad kind). */
+static int geno_target_motion(Fighter* fp, u32 target)
+{
+    u32 kind = target >> 28;
+    int id = (int) (target & 0xFFFF);
+    if (kind == GENO_TGT_MOTION) {
+        return id;
+    }
+    if (kind == GENO_TGT_SPECIAL) {
+        return (int) fp->x18 + id;
+    }
+    return -1;
+}
+
+/* Perform a change-action target. Returns 1 when the fighter changed action. */
+static int geno_do_change(Fighter_GObj* gobj, Fighter* fp, GenoState* st, u32 target)
+{
+    int msid;
+    if ((target >> 28) == GENO_TGT_GENO) {
+        Geno_Event(8, fp->kind, fp->player_id, (int) (target & 0xFFFF), 0); /* v2 */
+        return 0;
+    }
+    msid = geno_target_motion(fp, target);
+    if (msid < 0 || (msid < (int) fp->x18 && fp->x1C_actionStateList == NULL) ||
+        (msid >= (int) fp->x18 && (fp->x20_actionStateList == NULL || msid - (int) fp->x18 > 0xFF)))
+    {
+        return 0;
+    }
+    st->changes++;
+    Geno_Event(7, fp->kind, fp->player_id, (int) fp->motion_id, (int) target);
+    if (geno_test_capture) {
+        geno_test_target = target;
+        geno_test_changes++;
+        fp->motion_id = msid;
+        Geno_OnActionChange(gobj);
+        return 1;
+    }
+    if (target & GENO_TGT_KEEP_FRAME) {
+        Fighter_ChangeMotionState(gobj, msid, GENO_KEEP_FRAME_FLAGS, fp->cur_anim_frame, 1.0f,
+                                  0.0f, NULL);
+        return 1;
+    }
+    if (!(target & GENO_TGT_RAW)) {
+        /* the common states Geno enters the way the game does */
+        switch (msid) {
+        case ftCo_MS_Wait:
+            if (fp->ground_or_air == GA_Ground) {
+                ft_8008A2BC(gobj);
+            } else {
+                ftCo_Fall_Enter(gobj);
+            }
+            return 1;
+        case ftCo_MS_Fall:
+            ftCo_Fall_Enter(gobj);
+            return 1;
+        case ftCo_MS_FallSpecial:
+            ftCo_800968C8(gobj);
+            return 1;
+        case ftCo_MS_Landing:
+            if (fp->ground_or_air == GA_Ground) {
+                ftCo_Landing_Enter_Basic(gobj);
+                return 1;
+            }
+            break;
+        case ftCo_MS_LandingFallSpecial:
+            if (fp->ground_or_air == GA_Ground) {
+                ftCo_LandingFallSpecial_Enter_Basic(gobj);
+                return 1;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    Fighter_ChangeMotionState(gobj, msid, Ft_MF_None, 0.0f, 1.0f, 0.0f, NULL);
+    return 1;
+}
+
+static int geno_cond(Fighter_GObj* gobj, Fighter* fp, GenoState* st, const GenoCond* c)
+{
+    int kind = (c->head >> 8) & 0xFF;
+    int b_is_var = (c->head & 0x80) != 0;
+    int cmp = (c->head >> 4) & 7;
+    int r = 0;
+    switch (kind) {
+    case GENO_COND_ALWAYS:
+        r = 1;
+        break;
+    case GENO_COND_ANIM_END:
+        r = geno_test_capture ? geno_test_anim_end : !ftAnim_IsFramesRemaining(gobj);
+        break;
+    case GENO_COND_GROUND:
+        r = fp->ground_or_air == GA_Ground;
+        break;
+    case GENO_COND_AIR:
+        r = fp->ground_or_air == GA_Air;
+        break;
+    case GENO_COND_PRESSED:
+        r = (geno_buttons(fp, 1) & c->arg1) != 0;
+        break;
+    case GENO_COND_HELD:
+        r = (geno_buttons(fp, 0) & c->arg1) != 0;
+        break;
+    case GENO_COND_BIT: {
+        GenoWord v = geno_var_as(st, c->arg1 & 0xFF, 0);
+        r = (v.i >> (c->arg2 & 31)) & 1;
+        break;
+    }
+    case GENO_COND_VAR: {
+        int a = c->arg1 & 0xFF;
+        int is_f = geno_var_is_float(a);
+        r = geno_cmp(is_f, geno_var_as(st, a, is_f), cmp,
+                     geno_operand(st, is_f, b_is_var, c->arg2));
+        break;
+    }
+    case GENO_COND_FRAME:
+        r = fp->cur_anim_frame >= (f32) (s32) c->arg1;
+        break;
+    case GENO_COND_VALUE: {
+        int is_f = geno_val_is_float(c->arg1);
+        r = geno_cmp(is_f, geno_val_get(fp, st, c->arg1), cmp,
+                     geno_operand(st, is_f, b_is_var, c->arg2));
+        break;
+    }
+    default:
+        r = 0;
+        break;
+    }
+    return (c->head & GENO_CHG_NOT) ? !r : r;
+}
+
+static int geno_check_true(Fighter_GObj* gobj, Fighter* fp, GenoState* st, const GenoCheck* k,
+                           int from)
+{
+    u32 j;
+    for (j = (u32) from; j < k->ncond && j < GENO_CHECK_CONDS; j++) {
+        if (!geno_cond(gobj, fp, st, &k->cond[j])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* CHG: register (or re-find: a script loop running the same CHG twice registers it once). */
+static void geno_register_check(Fighter* fp, GenoState* st, u32 head, u32 target, u32 a1, u32 a2)
+{
+    u32 i, once = (head & GENO_CHG_ONCE) ? 1u : 0u;
+    GenoCheck* k;
+    head &= 0xFFFFu & ~(u32) GENO_CHG_ONCE;
+    for (i = 0; i < st->nchecks && i < GENO_MAX_CHECKS; i++) {
+        k = &st->checks[i];
+        if (k->target == target && k->once == once && k->cond[0].head == head &&
+            k->cond[0].arg1 == a1 && k->cond[0].arg2 == a2)
+        {
+            st->last_check = (s32) i;
+            return;
+        }
+    }
+    if (st->nchecks >= GENO_MAX_CHECKS) {
+        Geno_Event(15, fp->kind, fp->player_id, GENO_MAX_CHECKS, 0);
+        st->last_check = -1;
+        return;
+    }
+    k = &st->checks[st->nchecks];
+    geno_zero(k, sizeof(*k));
+    k->target = target;
+    k->once = once;
+    k->ncond = 1;
+    k->cond[0].head = head;
+    k->cond[0].arg1 = a1;
+    k->cond[0].arg2 = a2;
+    st->last_check = (s32) st->nchecks;
+    st->nchecks++;
+}
+
+static void geno_and_check(GenoState* st, u32 head, u32 a1, u32 a2)
+{
+    GenoCheck* k;
+    u32 j;
+    if (st->last_check < 0 || (u32) st->last_check >= st->nchecks) {
+        return;
+    }
+    k = &st->checks[st->last_check];
+    head &= 0xFFFFu & ~(u32) GENO_CHG_ONCE;
+    for (j = 0; j < k->ncond; j++) {
+        if (k->cond[j].head == head && k->cond[j].arg1 == a1 && k->cond[j].arg2 == a2) {
+            return; /* already there (a loop re-ran it) */
+        }
+    }
+    if (k->ncond >= GENO_CHECK_CONDS) {
+        return;
+    }
+    k->cond[k->ncond].head = head;
+    k->cond[k->ncond].arg1 = a1;
+    k->cond[k->ncond].arg2 = a2;
+    k->ncond++;
+}
+
+/* Drop the ONCE checks (they have had their one test). */
+static void geno_drop_once(GenoState* st)
+{
+    u32 i, n = 0;
+    for (i = 0; i < st->nchecks && i < GENO_MAX_CHECKS; i++) {
+        if (!st->checks[i].once) {
+            if (n != i) {
+                st->checks[n] = st->checks[i];
+            }
+            n++;
+        }
+    }
+    if (n != st->nchecks) {
+        st->nchecks = n;
+        st->last_check = -1;
+    }
+}
+
+/* ---- v1: rehit -------------------------------------------------------------------------------- */
+
+static void geno_rehit_tick(Fighter* fp, GenoState* st)
+{
+    int i;
+    for (i = 0; i < GENO_MAX_REHIT; i++) {
+        if (st->rehit_period[i] > 0 && ++st->rehit_count[i] >= st->rehit_period[i]) {
+            st->rehit_count[i] = 0;
+            lbColl_80008440(&fp->x914[i]); /* Melee's "clear the hit list" */
+            Geno_Event(10, fp->kind, fp->player_id, 1 << i, st->rehit_period[i]);
+        }
+    }
+}
+
+/* ---- v1 dispatch points ----------------------------------------------------------------------- */
+
+/* fighter.c (Fighter_8006A360), after the animation and the subaction script advanced and BEFORE
+ * the state's anim callback: the frame tick, rehit timers, then the registered change-action
+ * checks. Returns 1 when a check changed the action (the caller then skips the old state's anim
+ * callback, exactly as when that callback itself changes the state). */
+int Geno_PreAnim(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    u32 i, n;
+    s32 hit = -1;
+    u32 target = 0;
+    if (geno_inert(st)) {
+        return 0;
+    }
+    st->action_time++;
+    geno_rehit_tick(fp, st);
+    n = st->nchecks;
+    if (n == 0) {
+        return 0;
+    }
+    for (i = 0; i < n && i < GENO_MAX_CHECKS; i++) {
+        if (geno_check_true(gobj, fp, st, &st->checks[i], 0)) {
+            hit = (s32) i;
+            target = st->checks[i].target;
+            break;
+        }
+    }
+    geno_drop_once(st);
+    if (hit < 0) {
+        return 0;
+    }
+    return geno_do_change(gobj, fp, st, target);
+}
+
+/* Fighter_procMap, around the state's collision callback. A landing (or take-off) edge inside it
+ * picks a target; it is performed right after the callback, so it wins over whatever the state did
+ * on landing. Edges outside the callback (a hit launching a grounded fighter, a state's entry)
+ * never trigger one. */
+void Geno_CollBegin(Fighter_GObj* gobj)
+{
+    GenoState* st = geno_state(GET_FIGHTER(gobj));
+    if (geno_inert(st)) {
+        return;
+    }
+    st->in_coll = 1;
+    st->edge_pending = 0;
+}
+
+void Geno_CollEnd(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    if (geno_inert(st)) {
+        return;
+    }
+    st->in_coll = 0;
+    if (st->edge_pending) {
+        st->edge_pending = 0;
+        geno_do_change(gobj, fp, st, st->edge_target);
+    }
+}
+
+/* ftcommon.c: landed (ftCommon_8007D6A4, landing = 1) or left the ground (ftCommon_8007D5D4 /
+ * 8007D60C, landing = 0). Called after ground_or_air changed. */
+void Geno_GroundEdge(Fighter* fp, int landing)
+{
+    GenoState* st = geno_state(fp);
+    Fighter_GObj* gobj = fp->gobj;
+    u32 i;
+    int want = landing ? GENO_COND_GROUND : GENO_COND_AIR;
+    if (geno_inert(st) || gobj == NULL) {
+        return;
+    }
+    if (landing && st->profile >= 0) {
+        geno_run_event(gobj, st, GENO_EV_LAND); /* on_land hooks: the moment of landing */
+    }
+    if (!st->in_coll || st->edge_pending) {
+        return;
+    }
+    /* 1. the script's own checks whose first condition is this edge */
+    for (i = 0; i < st->nchecks && i < GENO_MAX_CHECKS; i++) {
+        GenoCheck* k = &st->checks[i];
+        if (((k->cond[0].head >> 8) & 0xFF) == (u32) want && !(k->cond[0].head & GENO_CHG_NOT) &&
+            geno_check_true(gobj, fp, st, k, 1))
+        {
+            st->edge_pending = 1;
+            st->edge_target = k->target;
+            Geno_Event(9, fp->kind, fp->player_id, (int) fp->motion_id, (int) k->target);
+            return;
+        }
+    }
+    /* 2. geno.json on_land: from this motion to a target */
+    if (landing && st->profile >= 0) {
+        int n = Geno_OnLandCount(st->profile);
+        int j;
+        for (j = 0; j < n; j++) {
+            if (geno_target_motion(fp, (u32) Geno_OnLandFrom(st->profile, j)) ==
+                (int) fp->motion_id)
+            {
+                st->edge_pending = 1;
+                st->edge_target = (u32) Geno_OnLandTo(st->profile, j);
+                Geno_Event(9, fp->kind, fp->player_id, (int) fp->motion_id, (int) st->edge_target);
+                return;
+            }
+        }
+    }
+}
+
+/* ftcoll.c (ftColl_8007A06C, a fighter's hitbox won the hit): LINK - Brawl's autolink angle 365.
+ * The victim is launched along the attacker's momentum: `dir` / `angle` are rewritten so the
+ * launch vector (-dir * cos(angle), sin(angle)) points where the attacker is going. Mode SPEED
+ * also raises `kb` so the launch speed is at least the attacker's. An attacker slower than 0.05
+ * keeps the hitbox's own Melee angle. Returns 1 when it changed anything. */
+int Geno_Autolink(Fighter* attacker, HitCapsule* hit, float* dir, float* angle, float* kb)
+{
+    GenoState* st;
+    int idx, mode;
+    float vx, vy, speed2, deg;
+    if (attacker == NULL || hit < &attacker->x914[0] || hit >= &attacker->x914[4]) {
+        return 0;
+    }
+    st = geno_state(attacker);
+    if (geno_inert(st)) {
+        return 0;
+    }
+    idx = (int) (hit - &attacker->x914[0]);
+    mode = st->link_mode[idx];
+    if (mode == GENO_LINK_OFF) {
+        return 0;
+    }
+    if (attacker->ground_or_air == GA_Ground) {
+        vx = attacker->gr_vel;
+        vy = 0.0f;
+    } else {
+        vx = attacker->self_vel.x;
+        vy = attacker->self_vel.y;
+    }
+    speed2 = vx * vx + vy * vy;
+    if (speed2 < 0.05f * 0.05f) {
+        return 0;
+    }
+    *dir = vx > 0.0f ? -1.0f : 1.0f;
+    deg = atan2f(vy, vx < 0.0f ? -vx : vx) * 57.29578f;
+    if (deg < 0.0f) {
+        deg += 360.0f;
+    }
+    *angle = (float) (s32) (deg + 0.5f);
+    if (*angle >= 360.0f) {
+        *angle -= 360.0f;
+    }
+    if (mode == GENO_LINK_SPEED && p_ftCommonData != NULL && p_ftCommonData->x100 > 0.0f) {
+        float need = sqrtf(speed2) / p_ftCommonData->x100; /* launch speed = kb * x100 */
+        if (*kb < need) {
+            *kb = need;
+        }
+    }
+    Geno_Event(11, attacker->kind, attacker->player_id, (int) *angle, (int) *kb);
+    return 1;
 }
 
 /* One escape command at cmd->u; advances cmd->u past it (and past any skipped words). Called
@@ -507,6 +1316,7 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
     if (len == 0) {
         len = 1;
     }
+#define GENO_W(i) (len > (i) ? w[i] : 0u)
     st->flags |= GENO_SF_SCRIPT;
     switch (sub) {
     case GENO_SUB_NOP:
@@ -517,28 +1327,97 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
     case GENO_SUB_MUL:
     case GENO_SUB_SETBIT:
     case GENO_SUB_CLRBIT:
-        geno_arith(st, sub, a, geno_operand_b(st, a, w0, len > 1 ? w[1] : 0));
+    case GENO_SUB_DIV:
+        geno_arith(st, sub, a, geno_operand_b(st, a, w0, GENO_W(1)));
         break;
-    case GENO_SUB_IF:
-        if (!geno_compare(st, a, (w0 >> 4) & 7,
-                          geno_operand_b(st, a, w0, len > 1 ? w[1] : 0)))
-        {
-            skip = len > 2 ? w[2] : 0;
+    case GENO_SUB_RAND:
+        /* the fast-forward pass replays commands of frames already gone: no RNG draw there */
+        if (mode != GENO_MODE_SKIP) {
+            geno_arith(st, sub, a, geno_operand_b(st, a, w0, GENO_W(1)));
         }
         break;
-    case GENO_SUB_SKIP:
-        skip = len > 1 ? w[1] : 0;
+    case GENO_SUB_GET: {
+        u32 id = GENO_W(1);
+        int is_f = geno_val_is_float(id);
+        GenoWord v = geno_val_get(fp, st, id);
+        void* pa = geno_var(st, a);
+        if (geno_var_is_float(a)) {
+            *(f32*) pa = is_f ? v.f : (f32) v.i;
+        } else {
+            *(s32*) pa = is_f ? (s32) v.f : v.i;
+        }
         break;
+    }
+    case GENO_SUB_PUT: {
+        u32 id = GENO_W(1);
+        geno_val_put(fp, id, geno_operand(st, geno_val_is_float(id), (w0 & 0x80) != 0, GENO_W(2)));
+        break;
+    }
+    case GENO_SUB_IF:
+        if (!geno_compare(st, a, (w0 >> 4) & 7, geno_operand_b(st, a, w0, GENO_W(1)))) {
+            skip = GENO_W(2);
+        }
+        break;
+    case GENO_SUB_IFV: {
+        u32 id = GENO_W(1);
+        int is_f = geno_val_is_float(id);
+        if (!geno_cmp(is_f, geno_val_get(fp, st, id), (w0 >> 4) & 7,
+                      geno_operand(st, is_f, (w0 & 0x80) != 0, GENO_W(2))))
+        {
+            skip = GENO_W(3);
+        }
+        break;
+    }
+    case GENO_SUB_SKIP:
+        skip = GENO_W(1);
+        break;
+    case GENO_SUB_ORIG: {
+        int slot = geno_slot_of(w);
+        cmd->u = slot >= 0 ? Geno_OverlayOrig[slot] : NULL;
+        return;
+    }
     case GENO_SUB_CALL:
         if (mode != GENO_MODE_SKIP) {
-            GenoGame_CallHook(gobj, len > 1 ? (int) w[1] : 0,
-                              len > 2 ? (s32) w[2] : 0);
+            GenoGame_CallHook(gobj, (int) GENO_W(1), (s32) GENO_W(2));
         }
         break;
+    case GENO_SUB_CHG:
+        if (!(mode == GENO_MODE_SKIP && (w0 & GENO_CHG_ONCE))) {
+            geno_register_check(fp, st, w0 & 0xFFFF, GENO_W(1), GENO_W(2), GENO_W(3));
+        }
+        break;
+    case GENO_SUB_CHGAND:
+        geno_and_check(st, w0 & 0xFFFF, GENO_W(1), GENO_W(2));
+        break;
+    case GENO_SUB_CHGCLR:
+        st->nchecks = 0;
+        st->last_check = -1;
+        break;
+    case GENO_SUB_REHIT: {
+        int i;
+        s32 n = (s32) GENO_W(1);
+        for (i = 0; i < GENO_MAX_REHIT; i++) {
+            if (a & (1 << i)) {
+                st->rehit_period[i] = n > 0 ? n : 0;
+                st->rehit_count[i] = 0;
+            }
+        }
+        break;
+    }
+    case GENO_SUB_LINK: {
+        int i;
+        for (i = 0; i < GENO_MAX_REHIT; i++) {
+            if (a & (1 << i)) {
+                st->link_mode[i] = (s32) GENO_W(1);
+            }
+        }
+        break;
+    }
     default:
         Geno_Event(3, fp->kind, fp->player_id, sub, 0);
         break;
     }
+#undef GENO_W
     if (skip > 0x10000) {
         skip = 0x10000; /* a corrupt count must not send the pointer across the heap */
     }

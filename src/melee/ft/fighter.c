@@ -1910,9 +1910,24 @@ void Fighter_8006A360(Fighter_GObj* gobj)
             }
             ftCo_800DEF38(gobj);
 
+#if defined(TARGET_PC)
+            {
+                /* Geno v1 (pc/geno): registered change-action checks, after the animation and
+                 * script advanced and before the state's anim callback. When one changes the
+                 * action the old state's anim callback is skipped, as if it had changed it
+                 * itself. Returns 0 at once for a fighter Geno does not touch. */
+                extern int Geno_PreAnim(Fighter_GObj * gobj);
+                if (Geno_PreAnim(gobj)) {
+                    goto geno_skip_anim_cb;
+                }
+            }
+#endif
             if (fp->anim_cb) {
                 fp->anim_cb(gobj);
             }
+#if defined(TARGET_PC)
+        geno_skip_anim_cb:;
+#endif
         }
 
         ftCommon_8007E0E4(gobj);
@@ -2919,8 +2934,19 @@ void Fighter_procMap(Fighter_GObj* gobj)
         HSD_JObjSetTranslate(gobj->hsd_obj, &fp->cur_pos);
 
         if (fp->coll_cb) {
+#if defined(TARGET_PC)
+            /* Geno v1: a landing / take-off inside the callback may pick a change-action
+             * target (script GROUND/AIR checks, geno.json on_land), performed right after it.
+             * Both return at once for a fighter Geno does not touch. */
+            extern void Geno_CollBegin(Fighter_GObj * gobj);
+            extern void Geno_CollEnd(Fighter_GObj * gobj);
+            Geno_CollBegin(gobj);
+#endif
             fp->coll_cb(gobj);
             ftKb_SpecialN_800F1D24(gobj);
+#if defined(TARGET_PC)
+            Geno_CollEnd(gobj);
+#endif
         }
 
         if (fp->ground_or_air == GA_Ground) {

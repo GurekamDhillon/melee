@@ -379,7 +379,19 @@ typedef struct {
     int nhook[GENO_EV_COUNT];
     int hook[GENO_EV_COUNT][GENO_EV_MAX_HOOKS];
     int hook_arg[GENO_EV_COUNT][GENO_EV_MAX_HOOKS];
+    /* v1 */
+    int nspec;
+    int spec_index[GENO_MAX_SPECIAL]; /* word index into the special-attribute block */
+    uint32_t spec_bits[GENO_MAX_SPECIAL];
+    int nland;
+    uint32_t land_from[GENO_MAX_ONLAND]; /* target words (GENO_TARGET) */
+    uint32_t land_to[GENO_MAX_ONLAND];
+    int nov;
+    int ov_anim[GENO_MAX_OVERLAYS]; /* subaction index */
+    int ov_slot[GENO_MAX_OVERLAYS]; /* registry-wide overlay slot */
 } gn_profile;
+
+#define GN_MAX_SLOTS 256 /* overlay slots over every profile */
 
 typedef struct {
     gn_profile p[GENO_MAX_PROFILES];
@@ -387,7 +399,15 @@ typedef struct {
     int files;
     int kind_profile[GN_KINDS]; /* FighterKind -> profile index, -1 none */
     int kinds_built;
+    /* v1: every overlay's words, one pool (the game half copies it into guest memory) */
+    uint32_t pool[GENO_POOL_WORDS];
+    int npool;
+    int nslot;
+    int slot_off[GN_MAX_SLOTS];
+    int slot_len[GN_MAX_SLOTS];
 } gn_registry;
+
+static int gn_pool_gen = 1; /* bumped whenever a registry is (re)installed: the game half refills */
 
 static gn_registry gn_boot;
 static int gn_boot_loaded;
@@ -411,8 +431,203 @@ static int gn_hook_ref(const char *s, int *arg) {
     return gw_GenoGame_HookFind(name);
 }
 
+/* A geno.json target: a number (motion id), "motion:N", "special:N" or "geno:N". 1 when valid. */
+static int gn_target(const jdoc *d, int x, uint32_t *out) {
+    const char *s;
+    unsigned kind;
+    long id;
+    char *end;
+    if (x < 0) return 0;
+    if (d->n[x].type == JN_NUM) {
+        if (d->n[x].num < 0 || d->n[x].num > 0xFFFF) return 0;
+        *out = GENO_TARGET(GENO_TGT_MOTION, (unsigned) d->n[x].num);
+        return 1;
+    }
+    if (d->n[x].type != JN_STR) return 0;
+    s = d->n[x].str;
+    if (_strnicmp(s, "motion:", 7) == 0) kind = GENO_TGT_MOTION, s += 7;
+    else if (_strnicmp(s, "special:", 8) == 0) kind = GENO_TGT_SPECIAL, s += 8;
+    else if (_strnicmp(s, "geno:", 5) == 0) kind = GENO_TGT_GENO, s += 5;
+    else return 0;
+    id = strtol(s, &end, 0);
+    if (end == s || *end != '\0' || id < 0 || id > 0xFFFF) return 0;
+    *out = GENO_TARGET(kind, (unsigned) id);
+    return 1;
+}
+
+/* One script word: a number (0..2^32-1, or a negative int) or a "0x..." / decimal string. */
+static int gn_word(const jdoc *d, int x, uint32_t *out) {
+    if (d->n[x].type == JN_NUM) {
+        double v = d->n[x].num;
+        if (v < -2147483648.0 || v > 4294967295.0 || v != (double) (long long) v) return 0;
+        *out = (uint32_t) (long long) v;
+        return 1;
+    }
+    if (d->n[x].type == JN_STR) {
+        char *end;
+        unsigned long long v = strtoull(d->n[x].str, &end, 0);
+        if (end == d->n[x].str || *end != '\0' || v > 0xFFFFFFFFull) return 0;
+        *out = (uint32_t) v;
+        return 1;
+    }
+    return 0;
+}
+
+/* A words file (mods/<id>/<file>): whitespace-separated numbers (0x.. or decimal), '#' comments.
+ * Appends to the pool; returns the word count or -1. */
+static int gn_words_file(gn_registry *r, const char *mod, const char *file, const char *where) {
+    char path[MAX_PATH];
+    const char *dir = gw_Mods_Dir();
+    FILE *f;
+    char tok[64];
+    int n = 0, c, k;
+    if (dir == NULL || dir[0] == '\0' || strstr(file, "..") != NULL) {
+        gw_log("geno: %s: script file \"%s\" refused", where, file);
+        return -1;
+    }
+    snprintf(path, sizeof path, "%s\\%s\\%s", dir, mod, file);
+    f = fopen(path, "r");
+    if (f == NULL) {
+        gw_log("geno: %s: cannot open script file %s", where, path);
+        return -1;
+    }
+    for (;;) {
+        c = fgetc(f);
+        if (c == EOF) break;
+        if (c == '#') {
+            while (c != EOF && c != '\n') c = fgetc(f);
+            continue;
+        }
+        if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == ',') continue;
+        k = 0;
+        while (c != EOF && c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != ',' && c != '#') {
+            if (k < (int) sizeof tok - 1) tok[k++] = (char) c;
+            c = fgetc(f);
+        }
+        tok[k] = '\0';
+        {
+            char *end;
+            unsigned long long v = strtoull(tok, &end, 0);
+            if (end == tok || *end != '\0' || v > 0xFFFFFFFFull || r->npool >= GENO_POOL_WORDS) {
+                gw_log("geno: %s: %s: bad word \"%s\" (or the script pool is full)", where, file, tok);
+                fclose(f);
+                return -1;
+            }
+            r->pool[r->npool++] = (uint32_t) v;
+            n++;
+        }
+        if (c == '#') {
+            while (c != EOF && c != '\n') c = fgetc(f);
+        }
+        if (c == EOF) break;
+    }
+    fclose(f);
+    return n;
+}
+
+static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const char *mod,
+                      const char *where) {
+    int x, c;
+    /* special_attributes: [ { "index": i | "offset": bytes, "float": x | "int": n } ] */
+    x = jd_get(d, e, "special_attributes");
+    if (x >= 0 && d->n[x].type == JN_ARR) {
+        for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
+            int ix = jd_get(d, c, "index"), off = jd_get(d, c, "offset");
+            int vf = jd_get(d, c, "float"), vi = jd_get(d, c, "int");
+            long idx = -1;
+            uint32_t w;
+            if (ix >= 0 && d->n[ix].type == JN_NUM) idx = (long) d->n[ix].num;
+            else if (off >= 0 && gn_word(d, off, &w) && (w & 3) == 0) idx = (long) (w / 4);
+            if (idx < 0 || idx >= GENO_SPECIAL_WORDS ||
+                ((vf < 0 || d->n[vf].type != JN_NUM) && (vi < 0 || d->n[vi].type != JN_NUM))) {
+                gw_log("geno: %s: a special_attributes entry needs \"index\" (0-%d) or a 4-aligned "
+                       "\"offset\", and a \"float\" or \"int\" value - ignored", where,
+                       GENO_SPECIAL_WORDS - 1);
+                continue;
+            }
+            if (p->nspec >= GENO_MAX_SPECIAL) break;
+            p->spec_index[p->nspec] = (int) idx;
+            p->spec_bits[p->nspec] = vf >= 0 && d->n[vf].type == JN_NUM
+                                         ? gn_fbits(d->n[vf].num)
+                                         : (uint32_t) (int32_t) (long long) d->n[vi].num;
+            p->nspec++;
+        }
+    }
+    /* on_land: [ { "from": target, "to": target, "keep_frame": bool } ] */
+    x = jd_get(d, e, "on_land");
+    if (x >= 0 && d->n[x].type == JN_ARR) {
+        for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
+            uint32_t from, to;
+            int kf = jd_get(d, c, "keep_frame");
+            if (!gn_target(d, jd_get(d, c, "from"), &from) || !gn_target(d, jd_get(d, c, "to"), &to)) {
+                gw_log("geno: %s: an on_land entry needs \"from\" and \"to\" (a motion id, "
+                       "\"special:N\", \"motion:N\" or \"geno:N\") - ignored", where);
+                continue;
+            }
+            if (kf >= 0 && d->n[kf].type == JN_BOOL && d->n[kf].num != 0) to |= GENO_TGT_KEEP_FRAME;
+            if (p->nland >= GENO_MAX_ONLAND) break;
+            p->land_from[p->nland] = from;
+            p->land_to[p->nland] = to;
+            p->nland++;
+        }
+    }
+    /* subactions: [ { "index": n, "words": [..] | "file": "geno/x.txt" } ] - script overlays */
+    x = jd_get(d, e, "subactions");
+    if (x >= 0 && d->n[x].type == JN_ARR) {
+        for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
+            int ix = jd_get(d, c, "index"), wl = jd_get(d, c, "words"), fl = jd_get(d, c, "file");
+            int start = r->npool, n = 0, ok = 1, w;
+            if (ix < 0 || d->n[ix].type != JN_NUM || d->n[ix].num < 0 || d->n[ix].num > 0x3FF) {
+                gw_log("geno: %s: a subactions entry needs \"index\" 0-1023 - ignored", where);
+                continue;
+            }
+            if (p->nov >= GENO_MAX_OVERLAYS || r->nslot >= GN_MAX_SLOTS) {
+                gw_log("geno: %s: too many subaction overlays - the rest are ignored", where);
+                break;
+            }
+            if (wl >= 0 && d->n[wl].type == JN_ARR) {
+                for (w = d->n[wl].first; w >= 0; w = d->n[w].next) {
+                    uint32_t v;
+                    if (!gn_word(d, w, &v) || r->npool >= GENO_POOL_WORDS) {
+                        ok = 0;
+                        break;
+                    }
+                    r->pool[r->npool++] = v;
+                    n++;
+                }
+            } else if (fl >= 0 && d->n[fl].type == JN_STR) {
+                n = gn_words_file(r, mod, d->n[fl].str, where);
+                ok = n >= 0;
+            } else {
+                ok = 0;
+            }
+            if (!ok || n == 0) {
+                gw_log("geno: %s: subaction %d: no usable \"words\" / \"file\" - ignored", where,
+                       (int) d->n[ix].num);
+                r->npool = start;
+                continue;
+            }
+            /* an overlay always ends (an End word after it): a script that ran off its last word
+               would read the next overlay */
+            if (r->npool >= GENO_POOL_WORDS) {
+                r->npool = start;
+                continue;
+            }
+            r->pool[r->npool++] = 0;
+            n++;
+            p->ov_anim[p->nov] = (int) d->n[ix].num;
+            p->ov_slot[p->nov] = r->nslot;
+            r->slot_off[r->nslot] = start;
+            r->slot_len[r->nslot] = n;
+            r->nslot++;
+            p->nov++;
+        }
+    }
+}
+
 static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where) {
-    static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action" };
+    static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",
+                                                         "on_land" };
     gn_profile *p;
     int x, c, ev;
     if (d->n[e].type != JN_OBJ) {
@@ -493,9 +708,20 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
             p->nhook[ev]++;
         }
     }
+    gn_add_v1(r, p, d, e, mod, where);
     /* the id covers the whole entry as written - including keys this version ignores, which a
        newer Geno might act on, so two installs never agree on an id while behaving differently */
     p->id = gn_hash_node(d, e, gn_mix(0x47454E4F00000000ull, GENO_VERSION)); /* "GENO" */
+    {
+        /* script overlays loaded from files are content too: fold their words in (an entry with
+           no overlays hashes exactly as before) */
+        int o, w;
+        for (o = 0; o < p->nov; ++o) {
+            int s = p->ov_slot[o];
+            p->id = gn_mix(p->id, 0x4F56000000000000ull | (uint64_t) p->ov_anim[o]);
+            for (w = 0; w < r->slot_len[s]; ++w) p->id = gn_mix(p->id, r->pool[r->slot_off[s] + w]);
+        }
+    }
     if (p->id == 0) p->id = 1;
     snprintf(p->hex, sizeof p->hex, "%016llx", (unsigned long long) p->id);
     r->n++;
@@ -546,8 +772,9 @@ static void gn_build_kinds(gn_registry *r) {
                    r->p[r->kind_profile[p->kind]].mod);
         r->kind_profile[p->kind] = i;
         gw_log("geno: fighter %s (%s) -> kind %d: id %s, %d attribute(s), max jumps %d, %d air vy, "
-               "hooks %d/%d/%d", p->name, p->plfile, p->kind, p->hex, p->nattr, p->max_jumps, p->njvy,
-               p->nhook[0], p->nhook[1], p->nhook[2]);
+               "hooks %d/%d/%d/%d, %d special attribute(s), %d on_land, %d subaction overlay(s)",
+               p->name, p->plfile, p->kind, p->hex, p->nattr, p->max_jumps, p->njvy, p->nhook[0],
+               p->nhook[1], p->nhook[2], p->nhook[3], p->nspec, p->nland, p->nov);
     }
     r->kinds_built = 1;
 }
@@ -639,10 +866,50 @@ int gw_Geno_HookArg(int p, int ev, int i) {
                                                                                    : 0;
 }
 
+/* v1 */
+int gw_Geno_SpecialCount(int p) { return gn_at(p) ? gn_at(p)->nspec : 0; }
+int gw_Geno_SpecialIndex(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nspec ? x->spec_index[i] : -1;
+}
+int gw_Geno_SpecialBits(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nspec ? (int) x->spec_bits[i] : 0;
+}
+int gw_Geno_OnLandCount(int p) { return gn_at(p) ? gn_at(p)->nland : 0; }
+int gw_Geno_OnLandFrom(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nland ? (int) x->land_from[i] : -1;
+}
+int gw_Geno_OnLandTo(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nland ? (int) x->land_to[i] : -1;
+}
+int gw_Geno_OverlayCount(int p) { return gn_at(p) ? gn_at(p)->nov : 0; }
+int gw_Geno_OverlayAnim(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nov ? x->ov_anim[i] : -1;
+}
+int gw_Geno_OverlaySlot(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nov ? x->ov_slot[i] : -1;
+}
+int gw_Geno_SlotCount(void) { return gn_reg()->nslot; }
+int gw_Geno_SlotOffset(int s) { return s >= 0 && s < gn_reg()->nslot ? gn_reg()->slot_off[s] : -1; }
+int gw_Geno_SlotLen(int s) { return s >= 0 && s < gn_reg()->nslot ? gn_reg()->slot_len[s] : 0; }
+int gw_Geno_PoolWords(void) { return gn_reg()->npool; }
+int gw_Geno_PoolWord(int i) { return i >= 0 && i < gn_reg()->npool ? (int) gn_reg()->pool[i] : 0; }
+/* Changes whenever the installed registry changes (tests swap registries): the game half keeps a
+ * copy of the pool in guest memory and refills it when this differs from what it copied. */
+int gw_Geno_PoolGen(void) {
+    gn_reg();
+    return gn_pool_gen;
+}
+
 /* Log lines for the game half, which cannot format strings portably. Rate-limited per `what`:
  * rollback resimulates frames, and a per-frame event would flood the log. */
 void gw_Geno_Event(int what, int a, int b, int c, int d) {
-    static int count[16];
+    static int count[32];
     static const char *const fmt[] = {
         "geno: kind %d player %d reset (profile %d)%.0d",                                  /* 0 */
         "geno: kind %d player %d air jump %d of %d (beyond Melee's multi-jump table)",       /* 1 */
@@ -651,6 +918,15 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d script calls unknown hook %d%.0d",                         /* 4 */
         "geno: kind %d player %d attributes overridden: %d field(s), max_jumps %d",         /* 5 */
         "geno: kind %d player %d air jump %d of %d",                                        /* 6 */
+        "geno: kind %d player %d change action: motion %d -> target 0x%08x",                /* 7 */
+        "geno: kind %d player %d change action to Geno state %d: Geno states are v2 - ignored%.0d", /* 8 */
+        "geno: kind %d player %d landed in motion %d -> target 0x%08x",                     /* 9 */
+        "geno: kind %d player %d rehit: cleared the hit lists of hitbox mask 0x%x (every %d frames)", /* 10 */
+        "geno: kind %d player %d autolink: victim launched at angle %d, kb %d",             /* 11 */
+        "geno: kind %d player %d special attributes: %d word(s) overridden (first word %d)", /* 12 */
+        "geno: kind %d player %d subaction %d script replaced by overlay slot %d",           /* 13 */
+        "geno: kind %d player %d engine value 0x%x is read-only or unknown - write ignored%.0d", /* 14 */
+        "geno: kind %d player %d too many change-action checks (max %d) - dropped%.0d",      /* 15 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {
@@ -694,6 +970,7 @@ int gw_Geno_TestInstall(const char *text) {
     gn_boot_loaded = 1;
     n = gn_parse_text(&gn_boot, text, "test");
     gn_build_kinds(&gn_boot);
+    gn_pool_gen++;
     return n;
 }
 
@@ -702,6 +979,7 @@ void gw_Geno_TestRestore(void) {
     gn_boot = gn_saved;
     gn_boot_loaded = gn_saved_loaded;
     gn_swapped = 0;
+    gn_pool_gen++;
 }
 
 static const char *gn_test_pinned_hex(void) { return "39ebc1bd1de2fc58"; }
@@ -834,7 +1112,56 @@ static int test_geno_registry_empty_is_inert(void) {
     return 0;
 }
 
+/* v1 keys: special_attributes, on_land, subactions (script overlays), hooks.on_land. */
+static int test_geno_registry_v1(void) {
+    static gn_registry r;
+    const gn_profile *p;
+    float f;
+    const char *t =
+        "{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\","
+        "\"special_attributes\":[{\"index\":13,\"float\":16.0},{\"offset\":\"0x2C\",\"int\":10},"
+        "{\"index\":400,\"int\":1},{\"index\":2}],"
+        "\"on_land\":[{\"from\":\"special:4\",\"to\":\"special:6\"},{\"from\":66,\"to\":43,\"keep_frame\":true},"
+        "{\"from\":\"nope:1\",\"to\":1}],"
+        "\"subactions\":[{\"index\":87,\"words\":[\"0xEC220001\",5,4294967295]},{\"index\":2000,\"words\":[1]},"
+        "{\"index\":88,\"words\":[]}],"
+        "\"hooks\":{\"on_land\":[\"geno.count_frames:5\"]}}]}";
+    memset(&r, 0, sizeof r);
+    if (gn_parse_text(&r, t, "v1") != 1) {
+        gw_test_fail("v1 entry not parsed");
+        return 1;
+    }
+    p = &r.p[0];
+    memcpy(&f, &p->spec_bits[0], 4);
+    if (p->nspec != 2 || p->spec_index[0] != 13 || f != 16.0f || p->spec_index[1] != 11 ||
+        p->spec_bits[1] != 10) {
+        gw_test_fail("special_attributes: n %d, [0] %d=%g, [1] %d=%u", p->nspec, p->spec_index[0], f,
+                     p->spec_index[1], p->spec_bits[1]);
+        return 1;
+    }
+    if (p->nland != 2 || p->land_from[0] != GENO_TARGET(GENO_TGT_SPECIAL, 4) ||
+        p->land_to[0] != GENO_TARGET(GENO_TGT_SPECIAL, 6) || p->land_from[1] != 66 ||
+        p->land_to[1] != (43u | GENO_TGT_KEEP_FRAME)) {
+        gw_test_fail("on_land parsed wrong (n %d)", p->nland);
+        return 1;
+    }
+    if (p->nov != 1 || p->ov_anim[0] != 87 || r.nslot != 1 || r.slot_len[0] != 4 ||
+        r.pool[r.slot_off[0]] != 0xEC220001u || r.pool[r.slot_off[0] + 1] != 5 ||
+        r.pool[r.slot_off[0] + 2] != 0xFFFFFFFFu || r.pool[r.slot_off[0] + 3] != 0) {
+        gw_test_fail("subactions: n %d, slots %d, len %d (expected 3 words + End)", p->nov, r.nslot,
+                     r.nslot > 0 ? r.slot_len[0] : -1);
+        return 1;
+    }
+    if (p->nhook[GENO_EV_LAND] != 1 || p->hook[GENO_EV_LAND][0] != GENO_HOOK_COUNT_FRAMES ||
+        p->hook_arg[GENO_EV_LAND][0] != 5) {
+        gw_test_fail("hooks.on_land not parsed");
+        return 1;
+    }
+    return 0;
+}
+
 void geno_registry_tests_register(void) {
+    gw_test_register("geno_registry_v1", test_geno_registry_v1);
     gw_test_register("geno_registry_parse", test_geno_registry_parse);
     gw_test_register("geno_registry_stable_ids", test_geno_registry_stable_ids);
     gw_test_register("geno_registry_bad_json", test_geno_registry_bad_json);

@@ -11,6 +11,7 @@
 #include <melee/ft/inlines.h>
 #include <melee/ft/types.h>
 #include <melee/lb/types.h>
+#include <melee/pl/player.h>
 
 #include "geno.h"
 #include "geno_state.h"
@@ -1703,6 +1704,31 @@ static int test_geno_v3_many_states(void)
     return rc;
 }
 
+/* Geno Lab: a player slot whose fighter the scene has freed (the player table keeps the pointer
+ * after a match; the Lab crashed in ScriptGame_FighterI from Script_FramePost on the CSS) must
+ * read as "no fighter", never dereference it. */
+extern StaticPlayer player_slots[];
+extern int ScriptGame_FighterI(int slot, int field);
+extern float ScriptGame_FighterF(int slot, int field);
+
+static int test_geno_lab_stale_fighter(void)
+{
+    static StaticPlayer saved;
+    int rc = 0;
+    t_setup();
+    saved = player_slots[5];
+    player_slots[5].transformed[0] = 0;
+    player_slots[5].player_entity[0] = &t_gobj; /* a fighter gobj that is not in the live list */
+    if (ScriptGame_FighterI(5, 0) != 0 || ScriptGame_FighterI(5, 3) != -1 ||
+        ScriptGame_FighterF(5, 0) != 0.0f)
+    {
+        TestFail("a slot whose fighter is not in the live fighter list must read as absent");
+        rc = 1;
+    }
+    player_slots[5] = saved;
+    return rc;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -1728,4 +1754,5 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v3_anim_motion", test_geno_v3_anim_motion);
     TestRegister("geno_v3_hidden_glide", test_geno_v3_hidden_glide);
     TestRegister("geno_v3_many_states", test_geno_v3_many_states);
+    TestRegister("geno_lab_stale_fighter", test_geno_lab_stale_fighter);
 }

@@ -20,6 +20,7 @@
 #include <melee/gr/ground.h>
 #include <melee/gr/types.h>
 #include <melee/pl/player.h>
+#include <sysdolphin/baselib/gobj.h>
 
 enum {
     SCRIPT_F_X = 0,
@@ -43,6 +44,24 @@ enum {
     SCRIPT_I_SLOT_TYPE, /* 0 human, 1 cpu, 2 demo, 3 none */
 };
 
+/* The player table keeps its fighter pointers after a scene frees the fighters (leaving a match
+ * for the CSS, the results screen, a window close mid-match): Player_GetEntity then returns freed
+ * memory (the 0x8B8B8B8B fill; the Geno Lab crashed in ScriptGame_FighterI from Script_FramePost on
+ * the CSS after training). A slot's fighter counts only when its gobj is in the live fighter list. */
+static int script_gobj_live(HSD_GObj* gobj)
+{
+    HSD_GObj* cur;
+    if (gobj == NULL || HSD_GObjPLinkHead == NULL) {
+        return 0;
+    }
+    for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
+        if (cur == gobj) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static Fighter* script_fighter(int slot)
 {
     HSD_GObj* gobj;
@@ -50,7 +69,7 @@ static Fighter* script_fighter(int slot)
         return NULL;
     }
     gobj = Player_GetEntity(slot);
-    if (gobj == NULL) {
+    if (!script_gobj_live(gobj)) {
         return NULL;
     }
     return GET_FIGHTER(gobj);

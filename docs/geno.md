@@ -243,6 +243,35 @@ Meta Knight's (and later Pit's/Charizard's) Brawl glide, in Melee terms:
 
 The same "Geno action states" mechanism later carries crawl and wall cling.
 
+## 11b. Design: HUD elements (roadmap, not built)
+
+Evidence (coordinator, experiment/hud-meters/): three ACE fighters hand-roll a HUD meter with the
+same template - S. Mewtwo (`PlSmHUD.dat` / `MgMtr_scene_models`: a 0-10 gauge from `fp+0x22D0`,
+float mode via `fp+0x22E0/0x22E4`), Fay (`PlFyHUD.dat` / `WpInd_scene_models`: weapon icon, frame
+from the int at `fp+0x22F8`), Toad (`Meters.dat` / `Relax_scene_models`: a vertical bar). All three
+render correctly in the port today. The template: load the HUD file and its `*_scene_models`
+symbol, create a JObj GObj with a GX link; every frame hide it if the owner has 0 stocks or the game
+is debug-paused, place it at `ifAll_GetPlayerHUDPosition(port)`, set the animation frame from a
+fighter variable, unhide.
+
+Geno version - data-driven, drawn natively, no fighter code:
+
+```json
+"hud": [ { "file": "PlKbHUD.dat", "symbol": "Meter_scene_models",
+           "value": "LA_INT:3",              // a Geno variable (or a hook-filled one)
+           "map": { "mode": "discrete", "min": 0, "max": 10, "frames": [0, 100] },  // or "continuous"
+           "visible": { "stocks_gt": 0, "hide_when_paused": true },
+           "offset": [0, 12] } ]
+```
+
+- The element's GObj is created at fighter spawn from the (preloaded) file, owned by the fighter's
+  player slot, destroyed with the fighter.
+- Per frame (after on_frame hooks): visibility rules, position from the port's HUD anchor plus
+  offset, frame = map(variable). The only input is the Geno state block, which is rollback state;
+  the HUD object itself is render-side and fully re-derived every frame, so a rollback needs
+  nothing extra (the same reason the existing meters survive rollback).
+- m-ex fighters' own hand-rolled meters keep working untouched; this is for Geno content.
+
 ## 12. How Phase 1 (Brawl-numbers Kirby) plugs in
 
 1. **Numbers** - a `geno.json` overlay on `kirby`: Brawl's common attributes mapped to Melee's
@@ -266,6 +295,7 @@ The same "Geno action states" mechanism later carries crawl and wall cling.
 | v0 (this) | registry + stable ids + netplay salt, state block, escape (vars, if/else, CALL), 4 hooks, 3 dispatch points, attribute overrides, multi-jump past the table, tests, opcode census |
 | v1 | subaction script overlays (Phase 1 moves); escape subs to read engine values into vars (percent, velocity, ground/air, facing, motion, frame) and to write a few back; DIV and a game-RNG random sub; special-attribute (`dat_attrs`) overrides; `air_vy` for non-multi-jump fighters; `on_hit` / `on_land` dispatch |
 | v2 | Geno action states (section 11): glide, then crawl and wall cling; Meta Knight on top |
+| v2.5 | HUD elements (section 11b): data-driven meters/icons bound to Geno variables |
 | v3 | `define`: brand-new fighters with Geno-native registration (their own kind range and content ids, independent of m-ex's dense slots), CSS/SSS entries via gw_uigen |
 | later | an IR emitter/loader for `melee.geno`; per-profile merge rules instead of "later mod wins" |
 

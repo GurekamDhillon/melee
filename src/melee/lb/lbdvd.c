@@ -466,6 +466,32 @@ HSD_Archive* lbDvd_8001819C(const char* basename)
     {
         HSD_ASSERTREPORT(948, 0, "[LbDvd] %s is not PRELOADed.\n", filename);
     }
+#if defined(TARGET_PC)
+    /* Retail's check above only fires at a debug level, so a scene whose files never reach the
+     * preload cache loads them straight off the disc into whatever heap is current - and dies
+     * later as an unexplained ALLOC_FAIL (the kit CSS/SSS once did exactly that, f916654c3).
+     * One line per file names it. */
+    if (preloadCache.preloaded && archive == NULL) {
+        static char warned[48][24];
+        static int nwarned;
+        int i, seen = 0;
+        for (i = 0; i < nwarned; i++) {
+            if (strncmp(warned[i], basename, sizeof warned[i] - 1) == 0) {
+                seen = 1;
+                break;
+            }
+        }
+        if (!seen) {
+            int entry = DVDConvertPathToEntrynum(filename);
+            if (nwarned < (int) ARRAY_SIZE(warned)) {
+                strncpy(warned[nwarned], basename, sizeof warned[nwarned] - 1);
+                nwarned++;
+            }
+            OSReport("lbDvd: %s loaded without a preload (%u bytes)\n", filename,
+                     entry >= 0 ? (unsigned int) lbFile_8001634C(entry) : 0U);
+        }
+    }
+#endif
     return archive;
 }
 

@@ -151,8 +151,36 @@ Handle* lbMemory_80014FC8(Handle* arg0, size_t size)
      * costs nothing in normal operation. The size separates an absurd request (uninitialised
      * field) from the arena genuinely running out of room. See docs/HANDOFF.md, MELEE_TRAINING. */
     if (memp_kouho == NULL) {
-        OSReport("lbMemory_80014FC8: ALLOC_FAIL size=0x%X lo=0x%X hi=0x%X\n", (unsigned int) size,
-                 (unsigned int) arg0->x4_lo, (unsigned int) arg0->x8_hi);
+        extern int lbHeap_IdOfHandle(void* handle, char* name, int cap);
+        extern void lbHeap_80015DF8(void);
+        static int reported;
+        char name[16];
+        int heap = lbHeap_IdOfHandle(arg0, name, sizeof name);
+        u32 largest = 0;
+        Handle* it = (Handle*) &arg0->xC_prev;
+        void* from = arg0->x4_lo;
+        /* the largest hole, the same walk as above: a big total with a small hole is
+         * fragmentation, a small total is a heap that is simply full */
+        while (1) {
+            void* to = (it->x0_next != NULL) ? it->x0_next->x4_lo : arg0->x8_hi;
+            if ((u32) to - (u32) from > largest) {
+                largest = (u32) to - (u32) from;
+            }
+            if (it->x0_next == NULL) {
+                break;
+            }
+            it = it->x0_next;
+            from = (void*) ((u32) it->x4_lo + (u32) it->x8_hi);
+        }
+        OSReport("lbMemory_80014FC8: ALLOC_FAIL heap %d (%s) size=0x%X largest free=0x%X "
+                 "lo=0x%X hi=0x%X\n",
+                 heap, heap >= 0 ? name : "not an lbHeap", (unsigned int) size,
+                 (unsigned int) largest, (unsigned int) arg0->x4_lo,
+                 (unsigned int) arg0->x8_hi);
+        if (!reported) {
+            reported = 1;
+            lbHeap_80015DF8();
+        }
     }
 #endif
     HSD_ASSERT(0xE9, memp_kouho);

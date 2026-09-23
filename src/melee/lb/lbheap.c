@@ -284,6 +284,37 @@ char* lbHeap_803BA448[] = {
 #endif
 };
 
+#if defined(TARGET_PC)
+/* Which lbHeap owns a handle-managed arena (lbMemory's ALLOC_FAIL line names it), -1 if none.
+ * Writes the heap's trimmed report name ("Stay", "AllM", ...) into name. */
+int lbHeap_IdOfHandle(void* handle, char* name, int cap)
+{
+    int i;
+    for (i = 0; i < LBHEAP_HEAP_COUNT; i++) {
+        if (lbHeap_80431FA0.heap_array[i].status == LbHeapStatus_Create &&
+            lbHeap_80431FA0.heap_array[i].type != 0 &&
+            (void*) lbHeap_80431FA0.heap_array[i].handle == handle)
+        {
+            const char* s = lbHeap_803BA448[i];
+            int k = 0;
+            while (*s == ' ') {
+                s++;
+            }
+            while (s[k] != '\0' && k < cap - 1) {
+                name[k] = s[k];
+                k++;
+            }
+            name[k] = '\0';
+            return i;
+        }
+    }
+    if (cap > 0) {
+        name[0] = '\0';
+    }
+    return -1;
+}
+#endif
+
 void lbHeap_80015DF8(void)
 {
     ssize_t bytes;

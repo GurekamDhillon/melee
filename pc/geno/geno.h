@@ -13,9 +13,9 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 2    /* newest geno.json "geno" field this build reads (v2 keys are additive) */
+#define GENO_VERSION 3    /* newest geno.json "geno" field this build reads (v2/v3 keys are additive) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
-#define GENO_LEVEL 2      /* feature level: 0 v0 foundation, 1 v1 (section 15), 2 v2 (section 16) */
+#define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
 
 /* ---- script escape (ftcmd) ---------------------------------------------------------------------
  * A subaction command's opcode is the top 6 bits of its first word. Retail uses 0-58 (lbCommand
@@ -103,7 +103,14 @@ enum {
     GENO_VAL_MOVE_F7 = 0x27,
     GENO_VAL_MOVE_I0 = 0x28,      /* i W: 0x28..0x2F behaviour ints (timers, counters) */
     GENO_VAL_MOVE_I7 = 0x2F,
-    GENO_VAL_COUNT = 0x30,
+    /* v3 */
+    GENO_VAL_LEDGE = 0x30,        /* i W: this action's ledge grab (PSA Allow/Disallow Ledgegrab):
+                                     0 none, 1 front, 2 front and back; -1 = the state's default */
+    GENO_VAL_HIDDEN = 0x31,       /* i W: 1 = the whole fighter is not drawn (model, shadow;
+                                     Melee's FighterVis flag), kept across action changes */
+    GENO_VAL_TRANSN_FWD = 0x32,   /* f: this frame's root motion (TransN), forward */
+    GENO_VAL_TRANSN_UP = 0x33,    /* f: this frame's root motion (TransN), up */
+    GENO_VAL_COUNT = 0x34,
     GENO_VAL_SPECIAL_F = 0x1000,  /* + word index: fp->dat_attrs word as float */
     GENO_VAL_SPECIAL_I = 0x2000,  /* + word index: fp->dat_attrs word as int */
 };
@@ -224,7 +231,7 @@ enum {
  * lives in Melee's action-state machine like any other: damage, grabs, death, ledges and landing
  * take the fighter out of it the normal way. */
 #define GENO_MOTION_BASE 0x400
-#define GENO_MAX_STATES 16
+#define GENO_MAX_STATES 48 /* v3: was 16 (rows: 48 x 32 profiles x 0x20 bytes, game state) */
 #define GENO_MOVE_VARS 8 /* behaviour floats / ints kept across the states of one move */
 
 /* Callback slots of a state row, and the callbacks a geno.json can name for each (stable ids). */
@@ -236,6 +243,8 @@ enum {
     GENO_BHV_NONE = 0,
     GENO_BHV_AIR = 1,           /* "geno.air": aerial state, gravity + drift, anim end -> next */
     GENO_BHV_GROUND = 2,        /* "geno.ground": grounded state, friction, anim end -> next */
+    GENO_BHV_ANIM_MOTION = 3,   /* v3 "geno.anim_motion": moved by the clip's root motion (TransN),
+                                   on the ground and in the air; lift-off, ledge and landing rules */
     GENO_BHV_GLIDE_START = 10,  /* "geno.glide.start" */
     GENO_BHV_GLIDE = 11,        /* "geno.glide" */
     GENO_BHV_GLIDE_ATTACK = 12, /* "geno.glide.attack" */
@@ -272,7 +281,17 @@ enum {
     GENO_P_DRILL_POP_VX = 0x4B,   /* drill.pop_vx: DrillEnd's backward pop (Brawl 1.0) */
     GENO_P_DRILL_POP_VY = 0x4C,   /* drill.pop_vy: DrillEnd's upward pop (Brawl 2.1) */
     GENO_P_DRILL_END_HELPLESS = 0x4D, /* drill.end_helpless: 1 = FallSpecial unless it hit */
+    /* v3 */
+    GENO_P_GLIDE_SCRIPT_HELPLESS = 0x50, /* glide.script_entry_helpless: a Glide entered straight
+                                          from another action (not GlideStart; Brawl's up-B sets
+                                          LA-Bit61) ends helpless: GlideEnd / GlideAttack -> FallSpecial */
 };
+
+/* v3: per-state root-motion options ("geno.anim_motion"; geno.json state keys "ledge", "liftoff",
+ * "origin", "gravity"). Packed as Geno_StateMotion(p, s). */
+#define GENO_MOTION_LEDGE_MASK 3u   /* default ledge grab: 0 none, 1 front, 2 front and back */
+#define GENO_MOTION_LIFTOFF 4u      /* on the ground, upward root motion takes off */
+#define GENO_MOTION_ORIGIN 8u       /* the first frame also moves by the clip's frame-0 offset */
 
 /* v2: specials bound to Geno states ("specials": {"n": "geno:5", "air_s": "geno:7", ...}) */
 enum {

@@ -407,6 +407,8 @@ typedef struct {
     uint32_t st_next[GENO_MAX_STATES];        /* anim-end target, ~0 = the behaviour's */
     uint32_t st_land[GENO_MAX_STATES];        /* landing target, ~0 = the behaviour's */
     uint32_t st_lag[GENO_MAX_STATES];         /* landing lag (float bits), 0 = default */
+    uint32_t st_motion[GENO_MAX_STATES];      /* v3: GENO_MOTION_* (ledge / liftoff / origin) */
+    uint32_t st_grav[GENO_MAX_STATES];        /* v3: gravity multiplier (float bits), 0 = none */
     int nparam;
     int param_id[GENO_PARAMS];
     uint32_t param_bits[GENO_PARAMS];         /* float bits */
@@ -673,7 +675,7 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
 /* v2: "states" (Geno action states), the behaviour parameter blocks, "specials". Parsed before
  * the v1 keys so on_land / specials can name states ("geno:Glide"). */
 static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
-    static const char *const fams[] = { "glide", "tornado", "drill" };
+    static const char *const fams[] = { "glide", "tornado", "drill", "cape" };
     static const char *const cb_keys[GENO_CB_SLOTS] = { "anim", "iasa", "phys", "coll" };
     static const char *const sp_keys[GENO_SP_COUNT] = { "n", "s", "hi", "lw",
                                                         "air_n", "air_s", "air_hi", "air_lw" };
@@ -726,6 +728,30 @@ static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
                 gw_log("geno: %s: state %s: bad \"land\"", where, p->st_name[k]);
             if ((v = jd_get(d, c, "landing_lag")) >= 0 && d->n[v].type == JN_NUM)
                 p->st_lag[k] = gn_fbits(d->n[v].num);
+            /* v3 root-motion options (geno.anim_motion): "ledge": "none" | "front" | "both" (or
+               0 / 1 / 2), "liftoff": bool, "origin": bool, "gravity": multiplier */
+            p->st_motion[k] = GENO_MOTION_LIFTOFF;
+            if ((v = jd_get(d, c, "ledge")) >= 0) {
+                int m = -1;
+                if (d->n[v].type == JN_NUM && d->n[v].num >= 0 && d->n[v].num <= 2) m = (int) d->n[v].num;
+                else if (d->n[v].type == JN_STR) {
+                    m = strcmp(d->n[v].str, "none") == 0    ? 0
+                        : strcmp(d->n[v].str, "front") == 0 ? 1
+                        : strcmp(d->n[v].str, "both") == 0  ? 2
+                                                             : -1;
+                }
+                if (m < 0) gw_log("geno: %s: state %s: \"ledge\" must be none / front / both", where,
+                                  p->st_name[k]);
+                else p->st_motion[k] = (p->st_motion[k] & ~GENO_MOTION_LEDGE_MASK) | (uint32_t) m;
+            }
+            if ((v = jd_get(d, c, "liftoff")) >= 0 && (d->n[v].type == JN_BOOL || d->n[v].type == JN_NUM))
+                p->st_motion[k] = d->n[v].num != 0 ? p->st_motion[k] | GENO_MOTION_LIFTOFF
+                                                   : p->st_motion[k] & ~GENO_MOTION_LIFTOFF;
+            if ((v = jd_get(d, c, "origin")) >= 0 && (d->n[v].type == JN_BOOL || d->n[v].type == JN_NUM) &&
+                d->n[v].num != 0)
+                p->st_motion[k] |= GENO_MOTION_ORIGIN;
+            if ((v = jd_get(d, c, "gravity")) >= 0 && d->n[v].type == JN_NUM)
+                p->st_grav[k] = gn_fbits(d->n[v].num);
             for (slot = 0; slot < GENO_CB_SLOTS; ++slot) {
                 v = jd_get(d, c, cb_keys[slot]);
                 if (v < 0 || d->n[v].type != JN_STR) continue;
@@ -1073,6 +1099,8 @@ int gw_Geno_StateMoveId(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_move_i
 int gw_Geno_StateNext(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_next[s] : -1; }
 int gw_Geno_StateLand(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_land[s] : -1; }
 int gw_Geno_StateLagBits(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_lag[s] : 0; }
+int gw_Geno_StateMotion(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_motion[s] : 0; }
+int gw_Geno_StateGravityBits(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_grav[s] : 0; }
 int gw_Geno_ParamCount(int p) { return gn_at(p) ? gn_at(p)->nparam : 0; }
 int gw_Geno_ParamId(int p, int i) {
     const gn_profile *x = gn_at(p);
@@ -1115,6 +1143,9 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d Geno state %d row built: subaction %d",                    /* 20 */
         "geno: kind %d player %d glide ended (%d: 1 shield, 2 timeout, 3 attack) after %d frames", /* 21 */
         "geno: kind %d player %d tornado rise %d (vy x100 = %d)",                           /* 22 */
+        "geno: kind %d player %d root motion: state %d took off at action frame %d",        /* 23 */
+        "geno: kind %d player %d root motion: state %d landed -> target 0x%08x",             /* 24 */
+        "geno: kind %d player %d root motion: state %d grabbed the ledge (mode %d)",         /* 25 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

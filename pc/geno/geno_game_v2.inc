@@ -23,6 +23,9 @@
 #include <melee/ft/ftchangeparam.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Attack100.h>
 #include <melee/mp/forward.h>
+#include <melee/mp/mpcoll.h>
+#include <melee/ft/ft_0819.h>
+#include <melee/ft/ftcliffcommon.h>
 
 /* ---- game globals: rows and parameters per profile -------------------------------------------- */
 
@@ -120,6 +123,7 @@ static const GenoParamDef geno_params[] = {
     { "drill", "pop_vx", GENO_P_DRILL_POP_VX, 1.0f },
     { "drill", "pop_vy", GENO_P_DRILL_POP_VY, 2.1f },
     { "drill", "end_helpless", GENO_P_DRILL_END_HELPLESS, 1.0f },
+    { "glide", "script_entry_helpless", GENO_P_GLIDE_SCRIPT_HELPLESS, 1.0f },
 };
 #define GENO_NPARAMDEFS ((int) (sizeof(geno_params) / sizeof(geno_params[0])))
 
@@ -361,6 +365,20 @@ MotionState* Geno_MotionRow(Fighter* fp, int msid)
 
 /* ---- entering a state ----------------------------------------------------------------------------- */
 
+/* The animation frame a state starts at. The glide is posed by its angle (pose_center - angle, and
+ * the glide always starts level): starting its clip at frame 0 showed the clip's first pose (nose
+ * straight up) for one frame before the phys callback scrubbed it (v3 fix). */
+static f32 geno_start_frame(Fighter* fp, GenoState* st, int s)
+{
+    if (Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE) {
+        f32 pose = geno_param(st, GENO_P_GLIDE_POSE);
+        if (pose > 0.0f) {
+            return pose; /* - angle, which geno_glide_enter sets to 0 */
+        }
+    }
+    return 0.0f;
+}
+
 static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s, u32 target)
 {
     const GenoBhvDef* b = geno_bhv_def(Geno_StateBehavior(st->profile, s));
@@ -371,6 +389,7 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
     }
     st->changes++;
     st->state_entries++;
+    st->enter_from = from;
     Geno_Event(16, fp->kind, fp->player_id, s, from);
     if (geno_test_capture) {
         geno_test_target = target;
@@ -381,8 +400,11 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
         Fighter_ChangeMotionState(gobj, GENO_MOTION_BASE + s, GENO_KEEP_FRAME_FLAGS,
                                   fp->cur_anim_frame, 1.0f, 0.0f, NULL);
     } else {
-        Fighter_ChangeMotionState(gobj, GENO_MOTION_BASE + s, Ft_MF_None, 0.0f, 1.0f, 0.0f,
-                                  NULL);
+        Fighter_ChangeMotionState(gobj, GENO_MOTION_BASE + s, Ft_MF_None,
+                                  geno_start_frame(fp, st, s), 1.0f, 0.0f, NULL);
+    }
+    if (st->hidden) {
+        fp->x221E_b5 = 1; /* v3 HIDDEN survives Geno-to-Geno changes (ChangeMotionState clears it) */
     }
     if (b->enter != NULL) {
         b->enter(gobj, fp, st, s);
@@ -568,6 +590,159 @@ static void geno_coll_both(Fighter_GObj* gobj)
     }
 }
 
+/* ---- v3: geno.anim_motion (root motion on the ground and in the air) -------------------------------
+ *
+ * Brawl moves many specials by the clip's root motion (TransN) in the air as well as on the ground
+ * (Shuttle Loop, Dimensional Cape's F/B reappear). Melee extracts TransN only on subaction rows whose
+ * flags have 0x80000000 (fp->x594_b0: TransN is zeroed on the model and its per-frame delta lands in
+ * fp->x6A4_transNOffset, z forward / y up) and only a few of its phys helpers consume it. This
+ * behaviour consumes it everywhere:
+ *   ground  gr_vel = forward x facing (Melee's own ft_800850E0); with "liftoff", an upward delta
+ *           takes off (then the air rule applies the same frame); walking off an edge -> airborne,
+ *           same state
+ *   air     self_vel = (forward x facing, up) + gravity x "gravity" accumulated from the state's start
+ *           (0 = pure root motion, Brawl's motion kinetics); "origin": the first frame also moves by
+ *           the clip's frame-0 offset (Brawl clips that start away from the origin)
+ *   ledge   per action: the state's "ledge" default, overridden by scripts (PUT LEDGE, PSA
+ *           Allow/Disallow Ledgegrab): 0 none, 1 front (Melee's own), 2 front and back
+ *   landing the state's "land" target (a Geno state, a motion) or Melee's landing; "landing_lag"
+ *           -> LandingFallSpecial with that lag
+ * A row without 0x80000000 has no root motion: the state then holds still (ground: friction). */
+
+static u32 geno_motion_opts(GenoState* st, int s)
+{
+    return s >= 0 ? (u32) Geno_StateMotion(st->profile, s) : 0u;
+}
+
+static f32 geno_motion_gravity(GenoState* st, int s)
+{
+    union {
+        u32 u;
+        f32 f;
+    } b;
+    b.u = s >= 0 ? (u32) Geno_StateGravityBits(st->profile, s) : 0u;
+    return b.f;
+}
+
+static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    int s = geno_cur_state(fp, st);
+    u32 o = geno_motion_opts(st, s);
+    f32 g = geno_motion_gravity(st, s);
+    f32 fwd = 0.0f, up = 0.0f;
+    f32 lr = fp->facing_dir < 0.0f ? -1.0f : 1.0f;
+    if (fp->x594_b0) {
+        fwd = fp->x6A4_transNOffset.z;
+        up = fp->x6A4_transNOffset.y;
+        if (!st->motion_started && (o & GENO_MOTION_ORIGIN)) {
+            fwd += fp->x68C_transNPos.z; /* the clip's frame-0 offset (already model-scaled) */
+            up += fp->x68C_transNPos.y;
+        }
+    }
+    st->motion_started = 1;
+    if (fp->ground_or_air == GA_Ground) {
+        if (!fp->x594_b0) {
+            ft_80084F3C(gobj); /* no root motion: friction */
+            return;
+        }
+        if ((o & GENO_MOTION_LIFTOFF) && up > 0.001f) {
+            Geno_Event(23, fp->kind, fp->player_id, s, st->action_time);
+            ftCommon_8007D5D4(fp); /* take off: the air rule below moves this frame */
+        } else {
+            fp->gr_vel = fwd * lr;
+            ftCommon_SetSelfMovementFromGroundedMovement(gobj);
+            return;
+        }
+    }
+    if (g != 0.0f) {
+        st->motion_vy -= fp->co_attrs.gravity * g;
+        if (st->motion_vy < -fp->co_attrs.terminal_velocity) {
+            st->motion_vy = -fp->co_attrs.terminal_velocity;
+        }
+    }
+    if (!fp->x594_b0 && g == 0.0f) {
+        fp->self_vel.x = 0.0f; /* no root motion and no gravity: hold still (Brawl's stall) */
+        fp->self_vel.y = 0.0f;
+        return;
+    }
+    fp->self_vel.x = fwd * lr;
+    fp->self_vel.y = up + st->motion_vy;
+}
+
+/* Landing out of a root-motion state (and any state that uses geno_land): as geno_land, logged. */
+static void geno_motion_land(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    int s = geno_cur_state(fp, st);
+    Geno_Event(24, fp->kind, fp->player_id, s, s >= 0 ? (int) geno_land_of(st, s) : -1);
+    geno_land(gobj);
+}
+
+/* Melee's air collision with a ledge grab in the facing direction (dir +-1) or either direction (0:
+ * mpColl then tests both ledges; ftCliffCommon turns the fighter to face the ledge it caught). */
+static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    CollData* coll = &fp->coll_data;
+    bool touched;
+    coll->last_pos = coll->cur_pos;
+    coll->cur_pos = fp->cur_pos;
+    if (fp->x2064_ledgeCooldown || fp->x2224_b2) {
+        touched = mpColl_80047AC8(coll, ftCo_80096CC8, gobj);
+    } else {
+        mpCollSetFacingDir(coll, both ? 0 : (fp->facing_dir < 0.0f ? -1 : 1));
+        touched = mpColl_80047E14(coll, ftCo_80096CC8, gobj);
+    }
+    fp->cur_pos = coll->cur_pos;
+    if (ft_80081A00(gobj)) {
+        return;
+    }
+    if (touched) {
+        land(gobj);
+        return;
+    }
+    if (ftCliffCommon_80081298(gobj)) {
+        Geno_Event(25, fp->kind, fp->player_id, (int) fp->motion_id - GENO_MOTION_BASE, both ? 2 : 1);
+    }
+}
+
+/* This action's ledge grab: a script's PUT LEDGE, else the state's "ledge" default. */
+static int geno_ledge_mode(Fighter* fp, GenoState* st)
+{
+    int s = geno_cur_state(fp, st);
+    return st->ledge >= 0 ? st->ledge : (int) (geno_motion_opts(st, s) & GENO_MOTION_LEDGE_MASK);
+}
+
+int GenoGame_TestLedgeMode(Fighter* fp)
+{
+    return geno_ledge_mode(fp, geno_state(fp));
+}
+
+f32 GenoGame_TestStartFrame(Fighter* fp, int s)
+{
+    return geno_start_frame(fp, geno_state(fp), s);
+}
+
+static void geno_cb_coll_anim_motion(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    int ledge;
+    if (fp->ground_or_air == GA_Ground) {
+        ft_8008403C(gobj, geno_become_air); /* off an edge: airborne, same state */
+        return;
+    }
+    ledge = geno_ledge_mode(fp, st);
+    if (ledge == 0) {
+        ft_80082C74(gobj, geno_motion_land);
+    } else {
+        geno_coll_air_ledge(gobj, ledge == 2, geno_motion_land);
+    }
+}
+
 /* The Brawl-style direction the stick asks for: jump held counts (X/Y), and the stick up past
  * Melee's tap-jump threshold. */
 static int geno_jump_held(Fighter* fp)
@@ -597,6 +772,8 @@ enum {
     GENO_CBID_GROUND_STOP = 9,
     GENO_CBID_BOTH = 10,
     GENO_CBID_AUTO = 11,
+    GENO_CBID_ANIM_MOTION = 12, /* v3 */
+    GENO_CBID_GLIDE_AFTER = 25, /* v3 */
     GENO_CBID_GLIDE_START = 20,
     GENO_CBID_GLIDE = 21,
     GENO_CBID_GLIDE_ATTACK = 22,
@@ -617,6 +794,7 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_TORNADO, GENO_CB_ANIM, "tornado", geno_tornado_anim },
     { GENO_CBID_DRILL, GENO_CB_ANIM, "drill", geno_drill_anim },
     { GENO_CBID_DRILL_END, GENO_CB_ANIM, "drill.end", geno_drill_end_anim },
+    { GENO_CBID_GLIDE_AFTER, GENO_CB_ANIM, "glide.after", geno_glide_after_anim },
     { GENO_CBID_NONE, GENO_CB_IASA, "none", geno_cb_nothing },
     { GENO_CBID_GLIDE, GENO_CB_IASA, "glide", geno_glide_iasa },
     { GENO_CBID_NONE, GENO_CB_PHYS, "none", geno_cb_nothing },
@@ -624,6 +802,7 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_AIR_NODRIFT, GENO_CB_PHYS, "air_nodrift", geno_cb_phys_air_nodrift },
     { GENO_CBID_GROUND, GENO_CB_PHYS, "ground", geno_cb_phys_ground },
     { GENO_CBID_AUTO, GENO_CB_PHYS, "auto", geno_cb_phys_auto },
+    { GENO_CBID_ANIM_MOTION, GENO_CB_PHYS, "anim_motion", geno_cb_phys_anim_motion },
     { GENO_CBID_GLIDE_START, GENO_CB_PHYS, "glide.start", geno_glide_start_phys },
     { GENO_CBID_GLIDE, GENO_CB_PHYS, "glide", geno_glide_phys },
     { GENO_CBID_GLIDE_ATTACK, GENO_CB_PHYS, "glide.attack", geno_glide_attack_phys },
@@ -638,6 +817,7 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_GROUND, GENO_CB_COLL, "ground", geno_cb_coll_ground },
     { GENO_CBID_GROUND_STOP, GENO_CB_COLL, "ground_stop", geno_cb_coll_ground_stop },
     { GENO_CBID_BOTH, GENO_CB_COLL, "both", geno_coll_both },
+    { GENO_CBID_ANIM_MOTION, GENO_CB_COLL, "anim_motion", geno_cb_coll_anim_motion },
     { GENO_CBID_GLIDE, GENO_CB_COLL, "glide", geno_glide_coll },
     { GENO_CBID_DRILL, GENO_CB_COLL, "drill", geno_drill_coll },
 };
@@ -656,6 +836,9 @@ static const GenoBhvDef geno_bhvs[] = {
     { GENO_BHV_GROUND, "geno.ground",
       { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_GROUND, GENO_CBID_GROUND },
       NULL, GENO_AUTO, GENO_AUTO, ftCo_MS_Landing },
+    { GENO_BHV_ANIM_MOTION, "geno.anim_motion",
+      { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_ANIM_MOTION, GENO_CBID_ANIM_MOTION },
+      NULL, GENO_AUTO, GENO_AUTO, ftCo_MS_Fall },
     { GENO_BHV_GLIDE_START, "geno.glide.start",
       { GENO_CBID_GLIDE_START, GENO_CBID_NONE, GENO_CBID_GLIDE_START, GENO_CBID_AIR },
       geno_glide_start_enter, BHV(GENO_BHV_GLIDE), BHV(GENO_BHV_GLIDE_LANDING), ftCo_MS_Fall },
@@ -663,13 +846,13 @@ static const GenoBhvDef geno_bhvs[] = {
       { GENO_CBID_GLIDE, GENO_CBID_GLIDE, GENO_CBID_GLIDE, GENO_CBID_GLIDE },
       geno_glide_enter, BHV(GENO_BHV_GLIDE_END), BHV(GENO_BHV_GLIDE_LANDING), ftCo_MS_Fall },
     { GENO_BHV_GLIDE_ATTACK, "geno.glide.attack",
-      { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_GLIDE_ATTACK, GENO_CBID_AIR_NOLEDGE },
+      { GENO_CBID_GLIDE_AFTER, GENO_CBID_NONE, GENO_CBID_GLIDE_ATTACK, GENO_CBID_AIR_NOLEDGE },
       geno_glide_attack_enter, MOT(ftCo_MS_Fall), GENO_AUTO, ftCo_MS_AttackAirN },
     { GENO_BHV_GLIDE_LANDING, "geno.glide.landing",
       { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_GROUND, GENO_CBID_GROUND },
       geno_glide_landing_enter, GENO_AUTO, GENO_AUTO, ftCo_MS_LandingFallSpecial },
     { GENO_BHV_GLIDE_END, "geno.glide.end",
-      { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_GLIDE_END, GENO_CBID_AIR },
+      { GENO_CBID_GLIDE_AFTER, GENO_CBID_NONE, GENO_CBID_GLIDE_END, GENO_CBID_AIR },
       geno_glide_end_enter, GENO_AUTO, GENO_AUTO, ftCo_MS_Fall },
     { GENO_BHV_TORNADO, "geno.tornado",
       { GENO_CBID_TORNADO, GENO_CBID_NONE, GENO_CBID_TORNADO, GENO_CBID_BOTH },

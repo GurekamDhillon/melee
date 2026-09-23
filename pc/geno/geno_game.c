@@ -81,6 +81,8 @@ extern int Geno_StateMoveId(int p, int s);
 extern int Geno_StateNext(int p, int s);
 extern int Geno_StateLand(int p, int s);
 extern int Geno_StateLagBits(int p, int s);
+extern int Geno_StateMotion(int p, int s);
+extern int Geno_StateGravityBits(int p, int s);
 extern int Geno_ParamCount(int p);
 extern int Geno_ParamId(int p, int i);
 extern int Geno_ParamBits(int p, int i);
@@ -303,6 +305,10 @@ static void geno_clear_action(GenoState* st)
     geno_zero(st->rehit_period, sizeof(st->rehit_period));
     geno_zero(st->rehit_count, sizeof(st->rehit_count));
     geno_zero(st->link_mode, sizeof(st->link_mode));
+    st->ledge = -1;
+    st->motion_started = 0;
+    st->motion_vy = 0.0f;
+    st->motion_land = 0;
 }
 
 /* Fighter_UnkInitReset_80067C98: spawn, respawn, and the Zelda/Sheik swap. */
@@ -317,6 +323,8 @@ void Geno_FighterReset(Fighter* fp)
     st->profile = Geno_ProfileForKind(fp->kind);
     st->hold_motion = -1;
     st->hold_frames = -1;
+    st->ledge = -1;
+    st->enter_from = -1;
     if (st->profile >= 0) {
         Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
         geno_install_overlays(fp, st->profile);
@@ -336,6 +344,9 @@ void Geno_OnActionChange(Fighter_GObj* gobj)
         return;
     }
     geno_clear_action(st);
+    if ((s32) GET_FIGHTER(gobj)->motion_id < GENO_MOTION_BASE) {
+        st->hidden = 0; /* v3: HIDDEN lives only across Geno states (damage etc. show the fighter) */
+    }
     if (st->profile >= 0) {
         geno_run_event(gobj, st, GENO_EV_ACTION);
     }
@@ -755,6 +766,8 @@ static int geno_val_is_float(u32 id)
     case GENO_VAL_CMD_VAR3:
     case GENO_VAL_FAST_FALL:
     case GENO_VAL_GENO_STATE:
+    case GENO_VAL_LEDGE:
+    case GENO_VAL_HIDDEN:
         return 0;
     default:
         if (id >= GENO_VAL_MOVE_I0 && id <= GENO_VAL_MOVE_I7) {
@@ -863,6 +876,18 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
     case GENO_VAL_GENO_STATE:
         r.i = geno_cur_state(fp, st);
         break;
+    case GENO_VAL_LEDGE:
+        r.i = st->ledge;
+        break;
+    case GENO_VAL_HIDDEN:
+        r.i = st->hidden;
+        break;
+    case GENO_VAL_TRANSN_FWD:
+        r.f = fp->x594_b0 ? fp->x6A4_transNOffset.z : 0.0f;
+        break;
+    case GENO_VAL_TRANSN_UP:
+        r.f = fp->x594_b0 ? fp->x6A4_transNOffset.y : 0.0f;
+        break;
     default:
         if (id >= GENO_VAL_MOVE_F0 && id <= GENO_VAL_MOVE_F7) {
             r.f = st->move_f[id - GENO_VAL_MOVE_F0];
@@ -886,6 +911,13 @@ static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
         return 1;
     }
     switch (id) {
+    case GENO_VAL_LEDGE:
+        geno_state(fp)->ledge = v.i < -1 ? -1 : v.i > 2 ? 2 : v.i;
+        return 1;
+    case GENO_VAL_HIDDEN:
+        geno_state(fp)->hidden = v.i != 0;
+        fp->x221E_b5 = v.i != 0;
+        return 1;
     case GENO_VAL_AIR:
         if (v.i != 0 && fp->ground_or_air == GA_Ground) {
             ftCommon_8007D5D4(fp); /* Melee's own "become airborne" */

@@ -51,6 +51,15 @@ typedef struct GenoState {
     s32 move_i[GENO_MOVE_VARS];      /* behaviour ints (GENO_VAL_MOVE_I0..): timers, counters */
     f32 move_f[GENO_MOVE_VARS];      /* behaviour floats (GENO_VAL_MOVE_F0..): angle, speed */
     u32 state_entries;               /* Geno states entered since the reset (diagnostics) */
+    /* ---- v3 ---- */
+    s32 enter_from;                  /* the motion the current Geno state was entered from */
+    s32 hidden;                      /* GENO_VAL_HIDDEN: not drawn; kept across Geno states, cleared
+                                        by any non-Geno action */
+    /* per action (cleared on every action change, like the v1 block) */
+    s32 ledge;                       /* GENO_VAL_LEDGE: -1 = the state's default */
+    s32 motion_started;              /* geno.anim_motion: the first frame has been applied */
+    f32 motion_vy;                   /* geno.anim_motion: gravity accumulated on top of the clip */
+    s32 motion_land;                 /* frames the root motion has been grounded (diagnostics) */
 } GenoState;
 
 #define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */

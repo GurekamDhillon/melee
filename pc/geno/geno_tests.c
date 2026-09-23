@@ -1420,6 +1420,289 @@ static int test_geno_v2_specials(void)
     return rc;
 }
 
+/* ---- v3 ------------------------------------------------------------------------------------- */
+
+extern int GenoGame_TestLedgeMode(Fighter* fp);
+extern f32 GenoGame_TestStartFrame(Fighter* fp, int s);
+
+#define T3_UP 0   /* root motion, no lift-off, front ledge */
+#define T3_LOOP 1 /* root motion, lift-off, both ledges, gravity 0.5, origin */
+#define T3_GS 2   /* GlideStart */
+#define T3_GL 3   /* Glide (posed) */
+#define T3_GEND 4 /* GlideEnd */
+
+static const char t_v3_json[] =
+    "{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"Up\",\"behavior\":\"geno.anim_motion\",\"subaction\":20,\"liftoff\":false,"
+    "\"ledge\":\"front\",\"land\":\"geno:GlideEnd\"},"
+    "{\"name\":\"Loop\",\"behavior\":\"geno.anim_motion\",\"subaction\":21,\"ledge\":\"both\","
+    "\"gravity\":0.5,\"origin\":true,\"landing_lag\":30},"
+    "{\"name\":\"GlideStart\",\"behavior\":\"geno.glide.start\",\"subaction\":10},"
+    "{\"name\":\"Glide\",\"behavior\":\"geno.glide\",\"subaction\":11},"
+    "{\"name\":\"GlideEnd\",\"behavior\":\"geno.glide.end\",\"subaction\":14,\"next\":\"auto\"}],"
+    "\"glide\":{\"pose_center\":90}}]}";
+
+static int t_near(f32 a, f32 b)
+{
+    return a - b < 0.001f && b - a < 0.001f;
+}
+
+/* geno.anim_motion: the clip's TransN delta moves the fighter in the air (both facings) and on the
+ * ground; lift-off; gravity on top; the frame-0 origin; ledge defaults and PUT LEDGE; state rows. */
+static int test_geno_v3_anim_motion(void)
+{
+    TestGenoState* st;
+    MotionState* up;
+    MotionState* loop;
+    int rc = 0;
+    t_rows[ftCo_MS_Fall].anim_id = 29;
+    if (Geno_TestInstall(t_v3_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the v3 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    up = Geno_MotionRow(&t_fp, T_MS(T3_UP));
+    loop = Geno_MotionRow(&t_fp, T_MS(T3_LOOP));
+    if (up->anim_id != 20 || up->phys_cb == NULL || up->coll_cb == NULL || loop->anim_id != 21) {
+        TestFail("anim_motion rows: subactions 20 / 21 with the root-motion callbacks");
+        rc = 1;
+    }
+    t_fp.co_attrs.gravity = 0.1f;
+    t_fp.co_attrs.terminal_velocity = 2.0f;
+    t_fp.x594_b0 = 1;
+    /* air, facing right: self_vel = (fwd, up) */
+    t_fp.motion_id = T_MS(T3_UP);
+    Geno_OnActionChange(&t_gobj);
+    t_fp.ground_or_air = GA_Air;
+    t_fp.facing_dir = 1.0f;
+    t_fp.x6A4_transNOffset.z = 3.0f;
+    t_fp.x6A4_transNOffset.y = 2.0f;
+    up->phys_cb(&t_gobj);
+    if (t_fp.self_vel.x != 3.0f || t_fp.self_vel.y != 2.0f) {
+        TestFail("air root motion facing right must give self_vel (3, 2)");
+        rc = 1;
+    }
+    /* facing left: the forward motion is mirrored */
+    t_fp.facing_dir = -1.0f;
+    up->phys_cb(&t_gobj);
+    if (t_fp.self_vel.x != -3.0f || t_fp.self_vel.y != 2.0f) {
+        TestFail("air root motion facing left must give self_vel (-3, 2)");
+        rc = 1;
+    }
+    /* ground without lift-off: forward only, stays grounded */
+    t_fp.ground_or_air = GA_Ground;
+    t_fp.facing_dir = 1.0f;
+    up->phys_cb(&t_gobj);
+    if (t_fp.ground_or_air != GA_Ground || t_fp.gr_vel != 3.0f) {
+        TestFail("ground root motion (no lift-off) must set gr_vel 3 and stay grounded");
+        rc = 1;
+    }
+    /* ledge: the state default (front), then a script's PUT LEDGE 0 */
+    if (GenoGame_TestLedgeMode(&t_fp) != 1) {
+        TestFail("state \"ledge\": \"front\" must default the ledge grab to 1");
+        rc = 1;
+    }
+    t_script[0] = GENO_W0(GENO_SUB_PUT, 3, 0);
+    t_script[1] = GENO_VAL_LEDGE;
+    t_script[2] = 0;
+    t_script[3] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    if (GenoGame_TestLedgeMode(&t_fp) != 0 || st->ledge != 0) {
+        TestFail("PUT LEDGE 0 must disallow the ledge grab for this action");
+        rc = 1;
+    }
+    /* Loop: an action change resets the per-action ledge; lift-off, origin and gravity */
+    t_fp.motion_id = T_MS(T3_LOOP);
+    Geno_OnActionChange(&t_gobj);
+    if (st->ledge != -1 || GenoGame_TestLedgeMode(&t_fp) != 2) {
+        TestFail("a new action must reset PUT LEDGE; state \"ledge\": \"both\" -> 2");
+        rc = 1;
+    }
+    t_fp.ground_or_air = GA_Ground;
+    t_fp.x68C_transNPos.z = 5.0f;
+    t_fp.x68C_transNPos.y = 1.0f;
+    t_fp.x6A4_transNOffset.z = 1.0f;
+    t_fp.x6A4_transNOffset.y = 2.0f;
+    loop->phys_cb(&t_gobj);
+    /* origin: (1 + 5, 2 + 1), gravity 0.1 x 0.5 = 0.05 */
+    if (t_fp.ground_or_air != GA_Air || !t_near(t_fp.self_vel.x, 6.0f) ||
+        !t_near(t_fp.self_vel.y, 2.95f))
+    {
+        TestFail("lift-off with origin + gravity: airborne, self_vel (6, 2.95)");
+        rc = 1;
+    }
+    loop->phys_cb(&t_gobj);
+    if (!t_near(t_fp.self_vel.x, 1.0f) || !t_near(t_fp.self_vel.y, 1.9f)) {
+        TestFail("second frame: no origin, gravity accumulated: self_vel (1, 1.9)");
+        rc = 1;
+    }
+    /* savestate: the per-action gravity and ledge survive a round trip */
+    if (snap_open(1) == 0) {
+        f32 g = st->motion_vy;
+        snap_save(0);
+        st->motion_vy = 55.0f;
+        st->ledge = 2;
+        snap_load(0);
+        if (st->motion_vy != g || st->ledge != -1) {
+            TestFail("anim_motion gravity / ledge not restored by a savestate load");
+            rc = 1;
+        }
+    }
+    /* no root motion on the row (flag clear), no gravity: hold still in the air */
+    t_fp.motion_id = T_MS(T3_UP);
+    Geno_OnActionChange(&t_gobj);
+    t_fp.x594_b0 = 0;
+    t_fp.ground_or_air = GA_Air;
+    t_fp.self_vel.x = 4.0f;
+    t_fp.self_vel.y = -1.0f;
+    up->phys_cb(&t_gobj);
+    if (t_fp.self_vel.x != 0.0f || t_fp.self_vel.y != 0.0f) {
+        TestFail("an anim_motion state without root motion and gravity must hold still");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
+/* HIDDEN hides the fighter (Melee's FighterVis flag), survives Geno-to-Geno changes and is cleared
+ * by a non-Geno action. The glide starts at its pose frame (the entry pop fix). A glide entered
+ * straight from another action ends helpless; one from GlideStart does not. */
+static int test_geno_v3_hidden_glide(void)
+{
+    TestGenoState* st;
+    int rc = 0;
+    if (Geno_TestInstall(t_v3_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the v3 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.motion_id = T_MS(T3_UP);
+    Geno_OnActionChange(&t_gobj);
+    t_script[0] = GENO_W0(GENO_SUB_PUT, 3, 0);
+    t_script[1] = GENO_VAL_HIDDEN;
+    t_script[2] = 1;
+    t_script[3] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    if (!t_fp.x221E_b5 || st->hidden != 1) {
+        TestFail("PUT HIDDEN 1 must hide the fighter");
+        rc = 1;
+    }
+    t_fp.motion_id = T_MS(T3_LOOP);
+    Geno_OnActionChange(&t_gobj);
+    if (st->hidden != 1) {
+        TestFail("HIDDEN must survive a change to another Geno state");
+        rc = 1;
+    }
+    t_fp.motion_id = ftCo_MS_Fall;
+    Geno_OnActionChange(&t_gobj);
+    if (st->hidden != 0) {
+        TestFail("a non-Geno action must clear HIDDEN");
+        rc = 1;
+    }
+    /* the glide pose: pose_center 90 -> Glide starts its clip at frame 90 (not 0) */
+    if (GenoGame_TestStartFrame(&t_fp, T3_GL) != 90.0f ||
+        GenoGame_TestStartFrame(&t_fp, T3_UP) != 0.0f)
+    {
+        TestFail("Glide must start at pose_center (90); other states at frame 0");
+        rc = 1;
+    }
+    /* a Glide entered straight from the up-B state is helpless; its GlideEnd -> FallSpecial */
+    t_fp.ground_or_air = GA_Air;
+    t_fp.motion_id = T_MS(T3_LOOP);
+    Geno_OnActionChange(&t_gobj);
+    t_script[0] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, GENO_CHG_ONCE);
+    t_script[1] = GENO_TARGET(GENO_TGT_GENO, T3_GL);
+    t_script[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    Geno_PreAnim(&t_gobj);
+    if (t_fp.motion_id != T_MS(T3_GL) || st->move_i[4] != 1 || st->enter_from != T_MS(T3_LOOP)) {
+        TestFail("a Glide entered from the up-B state must be marked helpless");
+        rc = 1;
+    }
+    t_fp.input.pressed_buttons = HSD_PAD_R;
+    Geno_MotionRow(&t_fp, T_MS(T3_GL))->input_cb(&t_gobj);
+    t_fp.input.pressed_buttons = 0;
+    if (t_fp.motion_id != T_MS(T3_GEND)) {
+        TestFail("shield in the Glide must go to GlideEnd");
+        rc = 1;
+    }
+    GenoGame_TestCapture(1, 1);
+    Geno_MotionRow(&t_fp, T_MS(T3_GEND))->anim_cb(&t_gobj);
+    if (GenoGame_TestLastTarget() != GENO_TARGET(GENO_TGT_MOTION, ftCo_MS_FallSpecial)) {
+        TestFail("GlideEnd after a script-entered glide must end in FallSpecial");
+        rc = 1;
+    }
+    /* from GlideStart: not helpless */
+    GenoGame_TestCapture(1, 0);
+    t_fp.motion_id = T_MS(T3_GS);
+    Geno_OnActionChange(&t_gobj);
+    t_script[0] = GENO_W0_CHG(GENO_SUB_CHG, 2, GENO_COND_ALWAYS, 0, 0, GENO_CHG_ONCE);
+    t_script[1] = GENO_TARGET(GENO_TGT_GENO, T3_GL);
+    t_script[2] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    Geno_PreAnim(&t_gobj);
+    if (t_fp.motion_id != T_MS(T3_GL) || st->move_i[4] != 0) {
+        TestFail("a Glide from GlideStart must not be helpless");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
+/* GENO_MAX_STATES (v3: 48): a profile with 40 states builds every row. */
+static char t_v3_many[4096];
+
+static int test_geno_v3_many_states(void)
+{
+    static const char head[] = "{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":[";
+    static const char a[] = "{\"name\":\"S";
+    static const char b[] = "\",\"behavior\":\"geno.air\",\"subaction\":";
+    static const char tail[] = "]}]}";
+    int n = 0, i, rc = 0;
+    const char* c;
+    for (c = head; *c; c++) {
+        t_v3_many[n++] = *c;
+    }
+    for (i = 0; i < 40; i++) {
+        for (c = a; *c; c++) {
+            t_v3_many[n++] = *c;
+        }
+        t_v3_many[n++] = (char) ('0' + i / 10);
+        t_v3_many[n++] = (char) ('0' + i % 10);
+        for (c = b; *c; c++) {
+            t_v3_many[n++] = *c;
+        }
+        t_v3_many[n++] = (char) ('0' + (100 + i) / 100);
+        t_v3_many[n++] = (char) ('0' + ((100 + i) / 10) % 10);
+        t_v3_many[n++] = (char) ('0' + (100 + i) % 10);
+        t_v3_many[n++] = '}';
+        if (i < 39) {
+            t_v3_many[n++] = ',';
+        }
+    }
+    for (c = tail; *c; c++) {
+        t_v3_many[n++] = *c;
+    }
+    t_v3_many[n] = 0;
+    if (GENO_MAX_STATES < 40 || Geno_TestInstall(t_v3_many) != 1 || t_setup() == NULL) {
+        TestFail("could not install a 40-state profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    if (Geno_MotionRow(&t_fp, T_MS(39))->anim_id != 139 ||
+        Geno_MotionRow(&t_fp, T_MS(16))->anim_id != 116)
+    {
+        TestFail("a 40-state profile must build rows 16..39 (subactions 116 / 139)");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -1442,4 +1725,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v2_glide_entry", test_geno_v2_glide_entry);
     TestRegister("geno_v2_glide", test_geno_v2_glide);
     TestRegister("geno_v2_specials", test_geno_v2_specials);
+    TestRegister("geno_v3_anim_motion", test_geno_v3_anim_motion);
+    TestRegister("geno_v3_hidden_glide", test_geno_v3_hidden_glide);
+    TestRegister("geno_v3_many_states", test_geno_v3_many_states);
 }

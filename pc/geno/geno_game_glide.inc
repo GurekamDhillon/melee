@@ -16,7 +16,10 @@
  *   move_f[0] angle (deg, + = nose up; F4)   move_f[1] speed (F5)   move_f[2] sink (F6)
  *   move_f[3] pitch rate (F7)                move_i[0] frames gliding
  *   move_i[1] end reason (event 21)          move_i[2] stall (Bit16)  move_i[3] wall (Bit19)
+ *   move_i[4] v3: helpless after the glide (entered straight from another action, e.g. Shuttle
+ *             Loop: Brawl's LA-Bit61) -> GlideEnd / GlideAttack end in FallSpecial
  */
+#define GL_HELPLESS move_i[4]
 
 #define GL_ANGLE move_f[0]
 #define GL_SPEED move_f[1]
@@ -107,6 +110,7 @@ static void geno_glide_start_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* s
     st->GL_REASON = 0;
     st->GL_STALL = 0;
     st->GL_WALL = 0;
+    st->GL_HELPLESS = 0;
 }
 
 static void geno_glide_start_anim(Fighter_GObj* gobj)
@@ -168,6 +172,13 @@ static void geno_glide_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int
     st->GL_RATE = 0.0f;
     st->GL_STALL = 0;
     st->GL_WALL = 0;
+    {
+        /* Brawl: the common Glide entered by a Change Action from another move (Shuttle Loop sets
+           LA-Bit61 on the way out) ends helpless; from GlideStart (the jump hold) it does not */
+        int gs = geno_state_with(st, GENO_BHV_GLIDE_START);
+        st->GL_HELPLESS = geno_param(st, GENO_P_GLIDE_SCRIPT_HELPLESS) != 0.0f &&
+                          (gs < 0 || st->enter_from != GENO_MOTION_BASE + gs);
+    }
     fp->self_vel.x = GLP(5) * fp->facing_dir;
     fp->self_vel.y = 0.0f;
     fp->fall_fast = 0;
@@ -334,6 +345,23 @@ static void geno_glide_end_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st,
     if (geno_param(st, GENO_P_GLIDE_END_HELPLESS) != 0.0f) {
         ftCommon_UseAllJumps(fp);
     }
+}
+
+/* anim "glide.after" (GlideAttack, GlideEnd): at the end, FallSpecial when the glide is helpless,
+ * else the state's next target. */
+static void geno_glide_after_anim(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    int s = geno_cur_state(fp, st);
+    if (!geno_anim_ended(gobj)) {
+        return;
+    }
+    if (st->GL_HELPLESS) {
+        geno_go(gobj, fp, st, GENO_TGT_HELPLESS);
+        return;
+    }
+    geno_go(gobj, fp, st, s >= 0 ? geno_next_of(st, s) : GENO_AUTO);
 }
 
 static void geno_glide_end_phys(Fighter_GObj* gobj)

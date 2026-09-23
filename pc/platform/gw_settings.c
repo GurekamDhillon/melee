@@ -132,6 +132,24 @@ void gw_Settings_SetInt(const char *key, int value) {
     gw_Settings_SetStr(key, b);
 }
 
+/* Every saved key=value on one line for a crash report, leaving out what can identify the
+ * player (name) or a private address (server). Returns the count written. */
+int gw_Settings_Summary(char *out, int cap) {
+    int i, n = 0, k = 0;
+    if (out == NULL || cap <= 0) return 0;
+    out[0] = '\0';
+    st_load();
+    for (i = 0; i < st.n; ++i) {
+        int w;
+        if (strcmp(st.key[i], "name") == 0 || strcmp(st.key[i], "server") == 0) continue;
+        w = snprintf(out + n, (size_t) (cap - n), "%s%s=%s", k ? " " : "", st.key[i], st.val[i]);
+        if (w < 0 || n + w >= cap) break;
+        n += w;
+        k++;
+    }
+    return k;
+}
+
 /* Typing into a text setting (the SETTINGS screens' name / server rows): letters (Shift for
  * capitals), digits, space . - _ : ; Backspace deletes before the caret. Keys count only while
  * this window has focus, and the keyboard-as-controller mapping stands down meanwhile

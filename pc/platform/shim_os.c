@@ -462,7 +462,11 @@ void gw_OSReport(const char *fmt, ...) {
     gw_log_raw("OSReport fmt: ", fmt);
   }
   va_start(ap, fmt);
-  gw_logv(fmt, ap);
+  {
+    /* gw_log.c: pieces are held until their newline, so a report printed in parts reads whole */
+    extern void gw_log_osreportv(const char *fmt, va_list ap);
+    gw_log_osreportv(fmt, ap);
+  }
   va_end(ap);
 }
 

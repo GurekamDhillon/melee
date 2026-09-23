@@ -152,26 +152,10 @@ void gw_write_mtx(void *dst, const float src[3][4]) { gw_write_f32v(dst, &src[0]
 void gw_read_mtx44(float dst[4][4], const void *src) { gw_read_f32v(&dst[0][0], src, 16); }
 void gw_write_mtx44(void *dst, const float src[4][4]) { gw_write_f32v(dst, &src[0][0], 16); }
 
-/* ---- logging ------------------------------------------------------------------------------ */
-
-static FILE *gw_log_file;
-
-void gw_logv(const char *fmt, va_list ap) {
-  va_list copy;
-  va_copy(copy, ap);
-  vfprintf(stdout, fmt, ap);
-  fputc('\n', stdout);
-  fflush(stdout);
-  if (gw_log_file == NULL) {
-    gw_log_file = fopen("melee-pc.log", "w");
-  }
-  if (gw_log_file != NULL) {
-    vfprintf(gw_log_file, fmt, copy);
-    fputc('\n', gw_log_file);
-    fflush(gw_log_file);
-  }
-  va_end(copy);
-}
+/* ---- logging ------------------------------------------------------------------------------
+ * gw_log / gw_logv / gw_log_raw and the crash report live in gw_log.c (log categories, MELEE_LOG). */
+extern void gw_log_crash_begin(void);
+extern void gw_crash_report(const char *kind, const char *reason);
 
 /* Opt-in tracing of every OSReport format string, before it is expanded. Set
  * MELEE_PC_TRACE_OSREPORT=1 when chasing a crash inside the formatter. */
@@ -182,31 +166,6 @@ bool gw_trace_osreport(void) {
     state = (v != NULL && v[0] != '\0' && v[0] != '0') ? 1 : 0;
   }
   return state != 0;
-}
-
-/* Writes two strings verbatim, with no format expansion, for use when the thing being reported
- * is itself a format string that may be about to crash the formatter. */
-void gw_log_raw(const char *prefix, const char *text) {
-  fputs(prefix, stdout);
-  fputs(text != NULL ? text : "(null)", stdout);
-  fputc('\n', stdout);
-  fflush(stdout);
-  if (gw_log_file == NULL) {
-    gw_log_file = fopen("melee-pc.log", "w");
-  }
-  if (gw_log_file != NULL) {
-    fputs(prefix, gw_log_file);
-    fputs(text != NULL ? text : "(null)", gw_log_file);
-    fputc('\n', gw_log_file);
-    fflush(gw_log_file);
-  }
-}
-
-void gw_log(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  gw_logv(fmt, ap);
-  va_end(ap);
 }
 
 void gw_panic(const char *fmt, ...) {
@@ -223,9 +182,9 @@ void gw_panic(const char *fmt, ...) {
       gw_test_panic_hit(msg);
     }
   }
-  fputs("gw: PANIC ", stdout);
-  gw_log("%s", msg);
-  gw_archive_crash_log(msg);
+  gw_log_crash_begin();
+  gw_log("gw: PANIC %s", msg);
+  gw_crash_report("panic (assert / OSPanic)", msg);
   gw_dump_stub_summary();
   abort();
 }
@@ -257,49 +216,6 @@ void gw_dump_stub_summary(void) {
   for (int i = 0; i < gw_stub_count; ++i) {
     gw_log("gw:   %-32s %lu", gw_stubs[i].name, gw_stubs[i].count);
   }
-}
-
-/* Copies the session log to crashlogs/crash-<timestamp>.log before melee-pc.log is next truncated. */
-void gw_archive_crash_log(const char *reason) {
-  SYSTEMTIME st;
-  char dst[MAX_PATH];
-  char header[256];
-  FILE *in;
-  FILE *out;
-
-  GetLocalTime(&st);
-  CreateDirectoryA("crashlogs", NULL);
-  snprintf(dst, sizeof dst, "crashlogs\\crash-%04u%02u%02u-%02u%02u%02u.log", st.wYear,
-           st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-
-  if (gw_log_file != NULL) {
-    fflush(gw_log_file);
-  }
-
-  out = fopen(dst, "wb");
-  if (out == NULL) {
-    return;
-  }
-
-  {
-    int n = snprintf(header, sizeof header, "==== crash %04u-%02u-%02u %02u:%02u:%02u  %s ====\n",
-                     st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-                     reason != NULL ? reason : "(no reason)");
-    if (n > 0) {
-      fwrite(header, 1, (size_t)n, out);
-    }
-  }
-
-  in = fopen("melee-pc.log", "rb");
-  if (in != NULL) {
-    char buf[4096];
-    size_t r;
-    while ((r = fread(buf, 1, sizeof buf, in)) > 0) {
-      fwrite(buf, 1, r, out);
-    }
-    fclose(in);
-  }
-  fclose(out);
 }
 
 /* ---- crash reporting -----------------------------------------------------------------------
@@ -394,6 +310,7 @@ static LONG WINAPI gw_unhandled_exception(EXCEPTION_POINTERS *ep) {
   const uintptr_t pc = (uintptr_t)er->ExceptionAddress;
   char where[MAX_PATH + 64];
 
+  gw_log_crash_begin();
   gw_log("gw: FATAL %s (0x%08lX) at %p  %s%s", gw_exception_name(er->ExceptionCode),
          (unsigned long)er->ExceptionCode, er->ExceptionAddress,
          gw_describe_code_addr(pc, where, sizeof where), gw_region_of(pc));
@@ -460,7 +377,12 @@ static LONG WINAPI gw_unhandled_exception(EXCEPTION_POINTERS *ep) {
 
   gw_log("gw:   for a map rva, take the melee-pc.map entry with the greatest address <= it");
   gw_dump_stub_summary();
-  gw_archive_crash_log("unhandled exception");
+  {
+    char why[96];
+    snprintf(why, sizeof why, "%s (0x%08lX)", gw_exception_name(er->ExceptionCode),
+             (unsigned long)er->ExceptionCode);
+    gw_crash_report("unhandled exception", why);
+  }
   return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -481,6 +403,7 @@ static void gw_invalid_parameter(const wchar_t *expr, const wchar_t *func, const
                                  unsigned int line, uintptr_t reserved) {
   char where[MAX_PATH + 64];
   (void)reserved;
+  gw_log_crash_begin();
   gw_log("gw: FATAL CRT rejected an argument: expr=%ls func=%ls file=%ls line=%u",
          expr != NULL ? expr : L"(release CRT: unavailable)", func != NULL ? func : L"?",
          file != NULL ? file : L"?", line);
@@ -506,7 +429,7 @@ static void gw_invalid_parameter(const wchar_t *expr, const wchar_t *func, const
     }
   }
   gw_dump_stub_summary();
-  gw_archive_crash_log("CRT invalid parameter");
+  gw_crash_report("CRT invalid parameter", "the CRT rejected an argument (__fastfail path)");
   _exit(3);
 }
 
@@ -629,6 +552,10 @@ static DWORD WINAPI gw_watchdog(LPVOID unused) {
     CONTEXT ctx;
     uintptr_t pc = 0;
     Sleep(GW_WATCHDOG_INTERVAL_MS);
+    {
+      extern void gw_log_crash_test_tick(void); /* MELEE_CRASH_TEST (gw_log.c) */
+      gw_log_crash_test_tick();
+    }
     ctx.ContextFlags = CONTEXT_CONTROL;
     if (SuspendThread(gw_game_thread) == (DWORD)-1) {
       continue;

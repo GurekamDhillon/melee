@@ -117,6 +117,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_PAD_SCRIPT=<file>` | drive channel 0 from a text script; see `_build/audio_test_script.txt` |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted input) |
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
+| `MELEE_NO_ONBOARD=1` | skip the first boot's visit to SETTINGS > CONTROLS (also skipped for any `MELEE_SCENE` / `MELEE_PAD_SCRIPT` run; settings.cfg `onboarded=1` records it) |
 | `MELEE_PROFILE=1` | per-frame timing split, percentiles, histogram (see section 20) |
 | `MELEE_WINDOW_X/Y` | window position; may be negative. Applied at creation, so no flash |
 | `MELEE_WINDOW_W/H` | window size (Aurora clamps to at least 640x480) |
@@ -212,6 +213,20 @@ Restore vanilla before handing the machine back (same write, with the original 6
   -RedirectStandardOutput <f>` makes PowerShell **block until the child exits** (never use it for a
   long-running game); and `cmd.exe /c "tasklist /FI \"IMAGENAME eq x.exe\""` from WSL mangles its
   quoting and hangs. Use a plain `cmd.exe /c tasklist | grep -i melee` instead.
+
+### First boot and SETTINGS > CONTROLS
+- **The save.** The memory card's "There is no save data. Create one?" answers Yes by itself on the
+  port (`gmscmemcard.c` case 2, the prompt's own Yes branch; the log says `memcard-autocreate`).
+  settings.cfg `auto_create_save=0` puts the question back.
+- **The controller page.** The first time the menus are ready, they open SETTINGS > CONTROLS once
+  (`fm_first_boot`, `gw_Onboard_Pending` in `shim_pad.c`; settings.cfg `onboarded=1` afterwards).
+  The page shows each port live (the device, stick, C-stick, triggers and held buttons, from
+  `gw_Pad_Source` / `gw_Pad_Value` / `gw_Pad_Name`: what the game saw on the last read), so it is
+  also the controller test. It has GameCube Adapter recalibrate, a Stick Dead Zone row for SDL
+  controllers (settings.cfg `stick_deadzone`, percent; applied through Aurora's `PADGetDeadZones`
+  as each SDL pad appears; not shown without one), and How to Play Online (six read-only steps).
+- Not built: button remapping (Aurora's `PADSetButtonMapping` is there for SDL pads; it needs a
+  "press the button for Z" capture screen).
 
 ### The keyboard does not play
 The keyboard is hotkeys only (F9/F10, the console's backquote, `gd.key` for scripts); it never

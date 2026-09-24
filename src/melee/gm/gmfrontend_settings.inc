@@ -39,6 +39,11 @@ extern void Netplay_ReloadServer(void);
 extern void Netplay_ServerName(char* out, int cap);
 extern int gc_adapter_present(void);
 extern void gc_adapter_recalibrate(void);
+extern int Pad_Source(int port);
+extern int Pad_Value(int port, int what);
+extern void Pad_Name(int port, char* out, int cap);
+extern int Pad_DeadZone(void);
+extern void Pad_SetDeadZone(int pct);
 extern int Mods_Count(void);
 extern const char* Mods_Name(int i);
 extern const char* Mods_Description(int i);
@@ -242,11 +247,109 @@ FSC_KEY(panel, "F9")
 FSC_KEY(reshow, "F10")
 FSC_KEY(console, "Backquote (left of 1)")
 FSC_KEY(mouse, "Point, click; right-click back")
+FSC_KEY(howto1, "SETTINGS > ONLINE")
+FSC_KEY(howto2, "VERSUS > ONLINE")
+FSC_KEY(howto3, "Type the code")
+FSC_KEY(howto4, "VERSUS > ONLINE")
+FSC_KEY(howto5, "Then play")
+FSC_KEY(howto6, "Input Delay")
 
-/* The keyboard does not play: controllers play, the keyboard is hotkeys (and mods' keys). */
+/* The ports, live: what drives each one (shim_pad.c's source) and what it reads right now, so
+ * the page is also the controller test: press a button, it shows; move a stick, it moves. */
+static void fsc_fmt_port(int port, char* out)
+{
+    static const struct { u16 bit; const char* name; } bits[] = {
+        { 0x0100, "A" }, { 0x0200, "B" }, { 0x0400, "X" }, { 0x0800, "Y" }, { 0x0010, "Z" },
+        { 0x0040, "L" }, { 0x0020, "R" }, { 0x1000, "START" }, { 0x0008, "UP" }, { 0x0004, "DOWN" },
+        { 0x0001, "LEFT" }, { 0x0002, "RIGHT" },
+    };
+    char name[40], held[48];
+    int k, n = 0, b;
+    if (Pad_Source(port) == 0) {
+        sprintf(out, "%s", "Nothing connected");
+        return;
+    }
+    Pad_Name(port, name, sizeof name);
+    if (strlen(name) > 18) {
+        name[17] = '.';
+        name[18] = '\0';
+    }
+    b = Pad_Value(port, 0);
+    held[0] = '\0';
+    for (k = 0; k < (int) (sizeof bits / sizeof bits[0]) && n < (int) sizeof held - 8; ++k) {
+        if (b & bits[k].bit) {
+            n += sprintf(held + n, " %s", bits[k].name);
+        }
+    }
+    /* the stick as the game reads it (80 = a full tilt), the C-stick, the analog triggers */
+    sprintf(out, "%s  %+d %+d  C %+d %+d  L%d R%d%s", name, Pad_Value(port, 1), Pad_Value(port, 2),
+            Pad_Value(port, 3), Pad_Value(port, 4), Pad_Value(port, 5), Pad_Value(port, 6), held);
+    out[FE_STR - 1] = '\0';
+}
+static void fsc_fmt_p1(int v, char* out) { (void) v; fsc_fmt_port(0, out); }
+static void fsc_fmt_p2(int v, char* out) { (void) v; fsc_fmt_port(1, out); }
+static void fsc_fmt_p3(int v, char* out) { (void) v; fsc_fmt_port(2, out); }
+static void fsc_fmt_p4(int v, char* out) { (void) v; fsc_fmt_port(3, out); }
+
+/* The stick dead zone for controllers read through SDL (Xbox, PlayStation, Switch Pro...): the
+ * adapter calibrates its centre instead. 0 = the default (24%). Shown only when one is there. */
+static int fsc_any_sdl(void)
+{
+    int c;
+    for (c = 0; c < 4; ++c) {
+        if (Pad_Source(c) == 2) {
+            return 1;
+        }
+    }
+    return 0;
+}
+static int fsc_get_dz(void)
+{
+    int v = Pad_DeadZone();
+    return v < 0 ? 0 : v;
+}
+static void fsc_set_dz(int v) { Pad_SetDeadZone(v <= 0 ? -1 : v); }
+static void fsc_fmt_dz(int v, char* out)
+{
+    if (v <= 0) sprintf(out, "%s", "Default (24%)");
+    else sprintf(out, "%d%%", v);
+}
+
+/* HOW TO PLAY ONLINE: the steps, as the menus name them (read-only rows; B goes back). */
+static const FrontendItem fe_items_howto_online[] = {
+    { FE_SLIDER, 0, "1  Your Name", "SETTINGS > ONLINE > Player Name: what your opponent sees.", fsc_zero, NULL,
+      0, 0, 0, NULL, fsc_k_howto1 },
+    { FE_SLIDER, 0, "2  Host a Room", "VERSUS > ONLINE > Host a Room gives you a code: send it to your opponent.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_howto2 },
+    { FE_SLIDER, 0, "3  Join a Room", "Your opponent picks Join a Room and types in your code.", fsc_zero, NULL,
+      0, 0, 0, NULL, fsc_k_howto3 },
+    { FE_SLIDER, 0, "4  Random Opponent", "Or Random Opponent: play whoever else is looking right now.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_howto4 },
+    { FE_SLIDER, 0, "5  The Lobby", "Blind picks, starters and counterpicks, 1-2-1 strikes, bans, then play. Rematches stay in the room.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_howto5 },
+    { FE_SLIDER, 0, "6  If It Stutters", "Raise Input Delay (SETTINGS > ONLINE). 2 suits most connections.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_howto6 },
+};
+static const FrontendScreen fe_screen_howto_online = {
+    "SETTINGS", "HOW TO PLAY ONLINE", fe_items_howto_online,
+    sizeof fe_items_howto_online / sizeof fe_items_howto_online[0],
+};
+static void fsc_howto(void) { fe_switch_screen(&fe_screen_howto_online); }
+
+/* The keyboard does not play: controllers play, the keyboard is hotkeys (and mods' keys). The first
+ * boot opens this page once (gmfrontend_menus.inc, Onboard_Pending). */
 static const FrontendItem fe_items_set_controls[] = {
+    { FE_SLIDER, 0, "Port 1", "What port 1 reads right now: press buttons and move the sticks to test them.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p1 },
+    { FE_SLIDER, 0, "Port 2", "What port 2 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p2 },
+    { FE_SLIDER, 0, "Port 3", "What port 3 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p3 },
+    { FE_SLIDER, 0, "Port 4", "What port 4 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p4 },
     { FE_ACTION, FE_DO_CALL, "GameCube Adapter", "A recalibrates every controller's sticks.", NULL, NULL,
       0, 0, 0, NULL, fsc_fmt_adapter, NULL, fsc_recal },
+    { FE_SLIDER, 0, "Stick Dead Zone", "Xbox, PlayStation and other controllers: how far a stick moves before it counts.",
+      fsc_get_dz, fsc_set_dz, 0, 40, 2, NULL, fsc_fmt_dz, fsc_any_sdl },
+    { FE_ACTION, FE_DO_CALL, "How to Play Online", "Rooms, codes, random opponents and the lobby, in six steps.",
+      NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fsc_howto },
     { FE_SLIDER, 0, "Controller Panel", "Hotkey: what each port reads; with an adapter, also recalibrates.",
       fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_panel },
     { FE_SLIDER, 0, "Overlays Back", "Hotkey: puts every overlay back on screen.", fsc_zero, NULL, 0,

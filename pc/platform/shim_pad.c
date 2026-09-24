@@ -485,6 +485,116 @@ int gw_Pad_NoController(void) {
   return want;
 }
 
+/* ---- controller onboarding (SETTINGS > CONTROLS, and its first-boot visit) --------------------
+ * What each port reads, for the menus' live rows: the source and the values the game saw on the
+ * last read (the adapter, SDL and scripts all applied). Game code calls these through the gw_
+ * bridge, so scalars and caller buffers only. */
+static struct {
+  int src;
+  unsigned btn;
+  int sx, sy, cx, cy, l, r;
+} gw_pad_now[PAD_CHANMAX];
+static int gw_pad_dz_applied[PAD_CHANMAX] = { -1, -1, -1, -1 };
+extern int gw_Settings_Int(const char *key, int dflt);
+extern void gw_Settings_SetInt(const char *key, int value);
+
+/* 0 nothing, 1 GameCube adapter, 2 a controller through SDL (XInput, DualSense, ...), 3 idle
+ * (a window that reads no devices), 4 a script */
+int gw_Pad_Source(int port) {
+  return port >= 0 && port < PAD_CHANMAX ? gw_pad_now[port].src : GW_SRC_NONE;
+}
+
+/* what: 0 buttons (the GameCube bits), 1 stick x, 2 stick y, 3 C x, 4 C y, 5 L, 6 R */
+int gw_Pad_Value(int port, int what) {
+  if (port < 0 || port >= PAD_CHANMAX) {
+    return 0;
+  }
+  switch (what) {
+  case 0: return (int)gw_pad_now[port].btn;
+  case 1: return gw_pad_now[port].sx;
+  case 2: return gw_pad_now[port].sy;
+  case 3: return gw_pad_now[port].cx;
+  case 4: return gw_pad_now[port].cy;
+  case 5: return gw_pad_now[port].l;
+  case 6: return gw_pad_now[port].r;
+  }
+  return 0;
+}
+
+/* the device on the port, as a player would name it */
+void gw_Pad_Name(int port, char *out, int cap) {
+  const char *n = "";
+  if (out == NULL || cap <= 0) {
+    return;
+  }
+  switch (gw_Pad_Source(port)) {
+  case GW_SRC_ADAPTER: n = "GameCube adapter"; break;
+  case GW_SRC_SDL: {
+    const char *sdl = PADGetName((u32)port);
+    n = sdl != NULL && sdl[0] != '\0' ? sdl : "Controller";
+    break;
+  }
+  case GW_SRC_SCRIPT: n = "Script"; break;
+  case GW_SRC_IDLE: n = "Idle"; break;
+  }
+  snprintf(out, (size_t)cap, "%s", n);
+}
+
+/* The stick dead zone for controllers read through SDL, in percent of the full tilt (settings.cfg
+ * stick_deadzone; -1 = Aurora's own, 8000/32767 = 24%). The GameCube adapter has none: it
+ * calibrates its centre instead (gc_adapter.c). Applied to each SDL port as it appears. */
+int gw_Pad_DeadZone(void) { return gw_Settings_Int("stick_deadzone", -1); }
+void gw_Pad_SetDeadZone(int pct) {
+  int c;
+  gw_Settings_SetInt("stick_deadzone", pct < -1 ? -1 : pct > 50 ? 50 : pct);
+  for (c = 0; c < PAD_CHANMAX; ++c) {
+    gw_pad_dz_applied[c] = -2; /* re-apply */
+  }
+}
+static void gw_pad_apply_deadzone(const int *src) {
+  int c, pct = gw_Pad_DeadZone();
+  for (c = 0; c < PAD_CHANMAX; ++c) {
+    PADDeadZones *dz;
+    if (src[c] != GW_SRC_SDL) {
+      gw_pad_dz_applied[c] = -1;
+      continue;
+    }
+    if (pct < 0 || gw_pad_dz_applied[c] == pct) {
+      continue;
+    }
+    dz = PADGetDeadZones((u32)c);
+    if (dz == NULL) {
+      continue;
+    }
+    dz->useDeadzones = true;
+    dz->stickDeadZone = (u16)(pct * 32767 / 100);
+    dz->substickDeadZone = (u16)(pct * 32767 / 100);
+    gw_pad_dz_applied[c] = pct;
+    gw_log("gw: pad: P%d stick dead zone %d%%", c + 1, pct);
+  }
+}
+
+/* The first boot's visit to SETTINGS > CONTROLS: once, when settings.cfg has no onboarded=1, and
+ * never for a run somebody automated (a scene launch, a pad script, MELEE_NO_ONBOARD=1). */
+int gw_Onboard_Pending(void) {
+  extern int gw_SceneLaunch_SkipMemcard(void);
+  static int decided = -1;
+  if (decided >= 0) {
+    return decided;
+  }
+  decided = 0;
+  if (gw_Settings_Int("onboarded", 0) != 0) return 0;
+  if (getenv("MELEE_NO_ONBOARD") != NULL || getenv("MELEE_PAD_SCRIPT") != NULL ||
+      getenv("MELEE_SCENE") != NULL || gw_SceneLaunch_SkipMemcard()) {
+    return 0;
+  }
+  decided = 1;
+  return 1;
+}
+void gw_Onboard_Done(void) {
+  gw_Settings_SetInt("onboarded", 1);
+}
+
 int gw_PADRead(void *status) {
   PADStatus *st = (PADStatus *)status;
   PADStatus adp[PAD_CHANMAX];
@@ -583,6 +693,17 @@ int gw_PADRead(void *status) {
   gw_pad_reset_combo(st);
   gw_pad_track(st, src);
   gw_pad_note_connected(src, focused);
+  gw_pad_apply_deadzone(src);
+  for (i = 0; i < PAD_CHANMAX; ++i) {
+    gw_pad_now[i].src = st[i].err == 0 || src[i] == GW_SRC_IDLE ? src[i] : GW_SRC_NONE;
+    gw_pad_now[i].btn = (unsigned)gw_r16(&st[i].button);
+    gw_pad_now[i].sx = st[i].stickX;
+    gw_pad_now[i].sy = st[i].stickY;
+    gw_pad_now[i].cx = st[i].substickX;
+    gw_pad_now[i].cy = st[i].substickY;
+    gw_pad_now[i].l = st[i].triggerLeft;
+    gw_pad_now[i].r = st[i].triggerRight;
+  }
 
   /* Mirror what the game will actually see into the F9 panel. Reading it back out of the
    * PADStatus array later would mean byte-swapping guest memory in the overlay; doing it here,

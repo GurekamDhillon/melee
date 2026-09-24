@@ -342,6 +342,23 @@ void gm_Scene_MemCard_OnFrame(void)
         gm_801AF250();
         break;
     case 2:
+#if defined(TARGET_PC)
+        /* The first boot's question, "There is no save data. Create one?": the port's card is a
+         * folder it made itself, so there is nothing to decide. Take the prompt's own Yes (the
+         * branch below with unk1C == 0 and unk0.unk0 set: the card is used and the save written)
+         * without waiting for a press. settings.cfg auto_create_save=0 puts the question back. */
+        {
+            extern int Settings_Int(const char* key, int dflt);
+            if (enter_data.unk0.unk0 != 0 && Settings_Int("auto_create_save", 1) != 0) {
+                SceneReport_Cursor("memcard-autocreate", enter_data.decision, 0);
+                enter_data.unk8.unk0 = 1;
+                enter_data.decision = 20;
+                lbCardGame_SetCardStatus(LbCardStatus_0);
+                lbCardGame_SaveChanges();
+                break;
+            }
+        }
+#endif
         if (!gm_801AF0D4() && gm_801AEDC8_flag_check()) {
             if (enter_data.unk1C == 0) {
                 if (enter_data.unk0.unk0 == 0) {

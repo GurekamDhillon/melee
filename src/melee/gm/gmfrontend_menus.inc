@@ -1100,6 +1100,26 @@ static void fm_leave_scene(u8 mode)
     fm.fading_out = true;
 }
 
+/* The first boot opens SETTINGS > CONTROLS once, as its menu row would (page 2, FSP_CONTROLS):
+ * a controller to plug in and test, the dead zone, and how to play online. Onboard_Pending says
+ * when (settings.cfg has no onboarded=1, and nobody automated the run); true = it was queued. */
+extern int Onboard_Pending(void);
+extern void Onboard_Done(void);
+static bool fm_first_boot(void)
+{
+    static bool done;
+    if (done || !Onboard_Pending()) {
+        return false;
+    }
+    done = true;
+    Onboard_Done();
+    OSReport("frontend: first boot -> SETTINGS > CONTROLS\n");
+    fm.pend_kind = 6;
+    fm.pend_a = 2; /* FSP_CONTROLS (gmfrontend_settings.inc, included after this file) */
+    fm.leave_at = fp.frame + 1;
+    return true;
+}
+
 static void fm_do_pending(void)
 {
     const FeMenu* m;
@@ -1352,6 +1372,9 @@ static void fm_scene_frame(void)
     if (fm.leave_at != 0 && fp.frame >= fm.leave_at) {
         fm.leave_at = 0;
         fm_do_pending();
+    } else if (fm.leave_at == 0 && !fm.fading_out && fm.frames >= fm.ready_at && fm.nvis > 0 &&
+               fm_first_boot()) {
+        /* the first boot: SETTINGS > CONTROLS once (plug in, test, how to play online) */
     } else if (fm.leave_at == 0 && !fm.fading_out && fm.frames >= fm.ready_at && fm.nvis > 0) {
         in = mn_80229624(4) | fms_menu_bits();
         {

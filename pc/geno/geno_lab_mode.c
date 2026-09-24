@@ -225,6 +225,11 @@ int GenoLab_ModeActive(void)
     return gm_GetCurrentGameMode() == GM_LAB;
 }
 
+int GenoLab_InMatch(void)
+{
+    return gm_GetCurrentGameMode() == GM_LAB && lab_in_match;
+}
+
 int GenoLab_Leave(int where)
 {
     if (gm_GetCurrentGameMode() != GM_LAB || !lab_in_match) {

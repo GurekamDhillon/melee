@@ -166,6 +166,76 @@ ico("slash", "overlay on any Lab icon when its toggle is OFF (tint: off); colour
 ico("slash_gap", "drawn first under ico_lab_slash in the backdrop colour (glass), so the "
     "slash cuts the icon", body=S("M6 58 L58 6", 16, "square"), tint="glass")
 
+# ---- stage C: display modes, stage layers, the pause menu's tabs
+ico("clean", "mode CLEAN: nothing but the game (four frame corners around empty space)",
+    body=(S("M4 22 V4 H22", 6) + S("M42 4 H60 V22", 6) + S("M60 42 V60 H42", 6) +
+          S("M22 60 H4 V42", 6)))
+ico("inspect", "mode INSPECT: joints, model, info, attributes (a magnifier)",
+    body=S(circle(26, 26, 19), 7) + S("M41 41 L59 59", 9, "round"))
+ico("points", "STAGE: spawn / respawn / item points (a map pin)",
+    shape=P("M32 62 L12 34 C4 22 12 4 32 4 C52 4 60 22 52 34 Z"), knock=P(circle(32, 24, 9)))
+ico("zones", "STAGE: camera and blast zones (nested dashed bounds)",
+    body=(S("M2 16 V2 H16 M26 2 H38 M48 2 H62 V16 M62 26 V38 M62 48 V62 H48 M38 62 H26 "
+            "M16 62 H2 V48 M2 38 V26", 5) + P(rect(18, 18, 28, 28))))
+ico("terrain", "STAGE: terrain surfaces (ground, a platform, a wall)",
+    body=P(rect(2, 44, 60, 18)) + P(rect(10, 18, 22, 7)) + P(rect(44, 10, 8, 34)))
+ico("dummy", "DUMMY tab: the CPU dummy (a target)",
+    shape=P(circle(32, 32, 30)),
+    knock=P(ring(32, 32, 22, 16), "evenodd"))
+ico("display", "DISPLAY tab: display modes (a screen with an overlay box)",
+    body=S(rect(4, 6, 56, 40), 6) + P("M25 48 H39 V54 H50 V61 H14 V54 H25 Z") +
+    S(rect(20, 17, 16, 18), 5))
+ico("exit", "EXIT tab: leave the match (a door and an arrow)",
+    body=S("M30 4 H6 V60 H30", 6) + P("M40 16 L60 32 L40 48 V38 H20 V26 H40 Z"))
+ico("eye", "hide / show the Lab UI (an eye)",
+    shape=P("M1 32 C14 8 50 8 63 32 C50 56 14 56 1 32 Z"),
+    knock=P(circle(32, 32, 14)) + WHITE % P(circle(32, 32, 7)))
+ico("keys", "the key strip / help (three keycaps)",
+    body=(S(rrect(4, 32, 16, 26, 4), 5) + S(rrect(24, 32, 16, 26, 4), 5) +
+          S(rrect(44, 32, 16, 26, 4), 5) + S(rrect(24, 4, 16, 24, 4), 5)))
+ico("percent", "DUMMY: set the dummy's damage (the percent sign is the symbol)",
+    body=(P(ring(16, 16, 12, 6), "evenodd") + P(ring(48, 48, 12, 6), "evenodd") +
+          S("M54 6 L10 58", 7, "square")))
+ico("modes", "cycle display mode (stacked layers)",
+    body=(P("M32 4 L62 18 L32 32 L2 18 Z") + S("M2 32 L32 46 L62 32", 6) +
+          S("M2 46 L32 60 L62 46", 6)))
+
+# ---- stage C: generic pieces for kit-drawn chrome (all white masks, tinted at draw time)
+mask("lab_solid", "chrome", 16, 16, 8,
+     "a flat quad: stretch + tint (+ opts.shear) for bars, sheared blocks, dimming",
+     body=P(rect(0, 0, 16, 16)), grid=(16, 16), tint="glass")
+mask("lab_fade", "chrome", 64, 16, 16,
+     "horizontal ramp, opaque left -> clear right: edge fades and the tab wipe's trailing edge",
+     body=('<defs><linearGradient id="g"><stop offset="0" stop-color="#fff" stop-opacity="1"/>'
+           '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>'
+           '<rect x="0" y="0" width="64" height="16" fill="url(#g)"/>'),
+     grid=(64, 16), tint="accent")
+mask("lab_stripes", "chrome", 128, 128, 64,
+     "diagonal hazard stripes at the kit shear, tiles both ways: pause-menu backdrop blocks",
+     body="".join(P("M%d 0 H%d L%d 128 H%d Z" % (x, x + 12, x + 12 - 32, x - 32))
+                  for x in range(-128, 192, 32)),
+     grid=(128, 128), tint="accent")
+mask("lab_ruler", "chrome", 256, 32, 64,
+     "frame-ruler ticks (every frame; 5 taller; 10 full) - tiles on X; menu flourish",
+     body="".join(P(rect(x * 8 + 3, 0 if x % 10 == 0 else (12 if x % 5 == 0 else 20), 2,
+                         32 if x % 10 == 0 else (20 if x % 5 == 0 else 12)))
+                  for x in range(32)),
+     grid=(256, 32), tint="tick")
+mask("lab_burst", "chrome", 256, 256, 128,
+     "the hitbox motif, big: a burst ring - pause-menu decoration (tint accent at low alpha)",
+     shape=P(star(32, 32, 31, 24, 12)), knock=P(circle(32, 32, 17)))
+mask("lab_bracket", "chrome", 32, 32, 16,
+     "one corner bracket (top-left; flip_x / flip_y for the others): detail frame, focus",
+     body=P("M0 0 H32 V7 H7 V32 H0 Z"), grid=(32, 32), tint="accent")
+mask("lab_chev", "chrome", 32, 32, 12,
+     "selected-row chevron (points right)",
+     body=P("M4 2 L30 16 L4 30 L4 21 L14 16 L4 11 Z"), grid=(32, 32), tint="playhead")
+mask("lab_chip_l", "chrome", 16, 32, 16,
+     "value / mode chip, left end (a slanted plate at the kit shear); flat centre + chip_r",
+     body=P("M8 0 H16 V32 H0 Z"), grid=(16, 32), tint="accent")
+mask("lab_chip_r", "chrome", 16, 32, 16, "value / mode chip, right end",
+     body=P("M0 0 H16 L8 32 H0 Z"), grid=(16, 32), tint="accent")
+
 # ---- the LAB menu icon (SOLO > LAB), hero-capable like the kit's hub icons
 mask("ico_lab", "menu", 256, 256, 16,
      "SOLO > LAB menu tile, LAB breadcrumb: a flask (replaces ico_training on that entry)",
@@ -589,7 +659,7 @@ def sheet(imgs, rows):
     ink, bone, muted = hexc(LP.KIT["ink"]), hexc(LP.KIT["bone"]), hexc(LP.KIT["muted"])
     solo_bg = hexc(LP.kit.SECTIONS["solo"]["bg"])
     W = 1760
-    canvas = Image.new("RGBA", (W, 2400), solo_bg)
+    canvas = Image.new("RGBA", (W, 5200), solo_bg)
     d = ImageDraw.Draw(canvas)
     H1, H2, SM = font(34), font(20, "Bold"), font(16, "Bold")
 
@@ -798,6 +868,140 @@ def sheet(imgs, rows):
             x += 66
         y += 38
     y += 20
+
+    # ---- 7. stage C: the display-mode HUD and the full-screen pause menu (mock-ups, 2x)
+    y = head(y, "7  STAGE C PIECES", "mode + stage icons, chrome masks (solid, fade, stripes, "
+             "ruler, burst, bracket, chev, chip)")
+    new_icons = ["ico_lab_" + n for n in ("clean", "inspect", "points", "zones", "terrain", "dummy",
+                                          "display", "exit", "eye", "keys", "percent", "modes")]
+    x = 44
+    for n in new_icons:
+        paste_mask(canvas, gx[n], (x, y), LP.LAB["accent"])
+        paste_mask(canvas, gx[n], (x + 72, y + 16), LP.KIT["bone"], size=(32, 32))
+        d.text((x, y + 70), n[8:], font=SM, fill=bone)
+        x += 140
+    y += 100
+    x = 44
+    for n in ("lab_solid", "lab_fade", "lab_stripes", "lab_ruler", "lab_burst", "lab_bracket",
+              "lab_chev", "lab_chip_l", "lab_chip_r"):
+        m = gx[n]
+        sz = (min(m.width, 128), min(m.height, 128)) if m.width <= 256 else (256, 32)
+        if n == "lab_burst":
+            sz = (128, 128)
+        if n == "lab_ruler":
+            sz = (256, 32)
+        paste_mask(canvas, m, (x, y), tint_of(ART[n]["tint"]), size=sz)
+        d.text((x, y + sz[1] + 6), n, font=SM, fill=muted)
+        x += sz[0] + 36
+    y += 170
+
+    y = head(y, "8  HUD: MODE STRIP + KEY STRIP", "bottom-left mode chip (icon + name), key chips "
+             "with the toggle icons ON / OFF, per mode")
+    bd = backdrop(W - 48, 150)
+    canvas.alpha_composite(bd, (24, y))
+    sy = y + 60
+    d.rectangle((24, sy, W - 24, sy + 64), fill=hexc(LP.LAB["glass"], 219))
+    # mode chip: slanted accent plate
+    d.polygon([(40 + 16, sy + 8), (330, sy + 8), (314, sy + 56), (40, sy + 56)], fill=hexc(LP.LAB["accent"]))
+    paste_mask(canvas, gx["ico_lab_hitbox"], (60, sy + 12), LP.KIT["ink"], size=(40, 40))
+    d.text((112, sy + 32), "HITBOXES", font=font(34), fill=ink, anchor="lm")
+    kx = 360
+    for lab, icon, on in (("B", "hitbox", True), ("L", "hitlabels", True), ("E", "ecb", False),
+                          ("D", "info", True)):
+        chip = key_chip(gx, lab)
+        canvas.alpha_composite(chip, (kx, sy + 16))
+        ix = kx + chip.width + 8
+        if on:
+            paste_mask(canvas, gx["ico_lab_" + icon], (ix, sy + 12), LP.LAB["accent"], size=(40, 40))
+        else:
+            paste_mask(canvas, gx["ico_lab_slash_gap"], (ix, sy + 12), hexc(LP.LAB["glass"]), size=(40, 40))
+            paste_mask(canvas, gx["ico_lab_" + icon], (ix, sy + 12), LP.LAB["off"], size=(40, 40))
+            paste_mask(canvas, gx["ico_lab_slash"], (ix, sy + 12), LP.LAB["off"], size=(40, 40))
+        kx = ix + 60
+    for lab, word in (("TAB", "mode"), ("F3", "help")):
+        chip = key_chip(gx, lab)
+        canvas.alpha_composite(chip, (kx + 40, sy + 16))
+        d.text((kx + 48 + chip.width, sy + 32), word, font=H2, fill=muted, anchor="lm")
+        kx += chip.width + 140
+    y += 180
+
+    y = head(y, "9  PAUSE MENU (full screen)", "tabs L/R, sheared rows (selected = gold, offset, "
+             "chevron), detail panel, controls strip, dimmed game, burst + ruler + flask decor")
+    MW, MH = 1280, 960
+    scr = backdrop(MW, MH)
+    scr.alpha_composite(Image.new("RGBA", (MW, MH), hexc(LP.KIT["ink"], 200)))
+    sd = ImageDraw.Draw(scr)
+    # cyan diagonal block on the left, stripes inside it
+    sd.polygon([(0, 0), (560, 0), (340, MH), (0, MH)], fill=hexc(LP.LAB["glass"], 235))
+    sd.polygon([(0, 150), (40, 150), (-180, MH), (0, MH)], fill=hexc(LP.LAB["accent"]))
+    burst = gx["lab_burst"].resize((640, 640), Image.BOX)
+    scr.paste(Image.new("RGBA", burst.size, hexc(LP.LAB["accent"], 40)), (820, 380), burst.getchannel("A"))
+    flask = gx["ico_lab"].resize((520, 520), Image.BOX)
+    scr.paste(Image.new("RGBA", flask.size, hexc(LP.LAB["accent"], 36)), (-120, 380), flask.getchannel("A"))
+    sd.text((40, 20), "DISPLAY", font=font(160), fill=hexc(LP.LAB["accent"], 90))
+    # tabs
+    tx = 60
+    for i, t in enumerate(("PLAY", "DISPLAY", "DUMMY", "STATES", "EXIT")):
+        tw = int(font(40).getlength(t)) + 60
+        sel = i == 1
+        sd.polygon([(tx + 16, 150), (tx + tw + 16, 150), (tx + tw, 214), (tx, 214)],
+                   fill=hexc(LP.KIT["gold"] if sel else LP.LAB["glass"]))
+        sd.text((tx + tw / 2 + 8, 182), t, font=font(40), fill=ink if sel else bone, anchor="mm")
+        tx += tw + 16
+    ruler = gx["lab_ruler"]
+    for rx in range(0, MW, 256):
+        scr.paste(Image.new("RGBA", (256, 32), hexc(LP.LAB["tick"])), (rx, 226), ruler.getchannel("A"))
+    rows = (("Display mode", "HITBOXES"), ("Hit / hurtboxes", "ON"), ("Hitbox labels", "ON"),
+            ("ECB", "OFF"), ("Hitbox data", "ON"), ("Lab UI", "SHOWN"))
+    for i, (lab, val) in enumerate(rows):
+        ry = 290 + i * 88
+        sel = i == 0
+        ox = 40 if sel else 0
+        col = LP.KIT["gold"] if sel else LP.LAB["glass"]
+        sd.polygon([(80 + ox + 18, ry), (620 + ox + 18, ry), (620 + ox, ry + 72), (80 + ox, ry + 72)],
+                   fill=hexc(col))
+        if sel:
+            chev = gx["lab_chev"]
+            scr.paste(Image.new("RGBA", (32, 32), hexc(LP.KIT["gold"])), (60, ry + 20), chev.getchannel("A"))
+        sd.text((110 + ox, ry + 36), lab.upper(), font=font(38), fill=ink if sel else bone, anchor="lm")
+        sd.text((600 + ox, ry + 36), val, font=font(30, "Bold"), fill=ink if sel else hexc(LP.LAB["accent"]),
+                anchor="rm")
+    # detail panel
+    dp = nine_slice(gx, 520, 540)
+    scr.alpha_composite(dp, (700, 280))
+    br = gx["lab_bracket"]
+    for fx_, fy_, (bx, by) in ((0, 0, (690, 270)), (1, 0, (1198, 270)), (0, 1, (690, 808)), (1, 1, (1198, 808))):
+        m = br
+        if fx_:
+            m = m.transpose(Image.FLIP_LEFT_RIGHT)
+        if fy_:
+            m = m.transpose(Image.FLIP_TOP_BOTTOM)
+        scr.paste(Image.new("RGBA", (32, 32), hexc(LP.LAB["accent"])), (bx, by), m.getchannel("A"))
+    ic = gx["ico_lab_hitbox"].resize((128, 128), Image.BOX)
+    scr.paste(Image.new("RGBA", (128, 128), hexc(LP.LAB["accent"])), (740, 320), ic.getchannel("A"))
+    sd.text((890, 350), "DISPLAY MODE", font=font(44), fill=bone)
+    sd.text((890, 410), "HITBOXES", font=font(56), fill=hexc(LP.KIT["gold"]))
+    for k, line in enumerate(("What's on screen, and which keys", "are live. Five modes; each one",
+                              "remembers its own toggles.")):
+        sd.text((740, 490 + k * 40), line, font=font(30, "Bold"), fill=muted)
+    # controls strip
+    sd.rectangle((0, MH - 72, MW, MH), fill=hexc(LP.KIT["ink"]))
+    sd.rectangle((0, MH - 76, MW, MH - 72), fill=hexc(LP.LAB["accent"]))
+    cx = 40
+    for g, word in (("glyph_a", "SELECT"), ("glyph_b", "BACK"), ("glyph_l", "TAB"), ("glyph_r", ""),
+                    ("glyph_stick", "CHANGE"), ("glyph_start", "CLOSE")):
+        k = kit_png("2x", g)
+        if k is not None:
+            scr.paste(Image.new("RGBA", k.size, hexc(LP.KIT["bone"])), (cx, MH - 36 - k.height // 2), k.getchannel("A"))
+            cx += k.width + 8
+        if word:
+            sd.text((cx, MH - 36), word, font=font(30), fill=bone, anchor="lm")
+            cx += int(font(30).getlength(word)) + 40
+    canvas.alpha_composite(scr.resize((MW * 3 // 4, MH * 3 // 4), Image.LANCZOS), (24, y))
+    d.text((24 + MW * 3 // 4 + 30, y + 20), "mock-up at 3/4 of 2x;", font=H2, fill=muted)
+    d.text((24 + MW * 3 // 4 + 30, y + 50), "the game draws it with", font=H2, fill=muted)
+    d.text((24 + MW * 3 // 4 + 30, y + 80), "gd.kit from these pieces", font=H2, fill=muted)
+    y += MH * 3 // 4 + 30
     canvas = canvas.crop((0, 0, W, y))
     out = os.path.join(PREVIEW, "lab_sheet.png")
     canvas.convert("RGB").save(out, optimize=True)

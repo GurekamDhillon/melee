@@ -424,22 +424,10 @@ restored by loads too. `on_loadstate(0)` reports a step-back.
 
 `pc/geno/mods/geno-lab` (mod.json: `"kind": "script"`, `"gameplay": true`, not rollback_safe). Put
 it (or a junction to it) in the mods folder; script id `geno-lab/lab`. Settings persist in
-`scripts-data/geno-lab_lab/settings.txt`. Keys (game window focused, console closed; none is a
-keyboard play key):
+`scripts-data/geno-lab_lab/settings.txt`. The keys and the display modes are in 14.9 (stage C
+replaced the original `P` / `N` / `B` / `1`..`0` / `X` map).
 
-| key | |
-|---|---|
-| `P` | pause / resume |
-| `N` | step 1 frame; hold = slow play; `CTRL+N` 10 frames |
-| `B` | step back 1 frame; hold = slow rewind; `CTRL+B` 10 frames |
-| `TAB` | focus the next fighter (the info panel shows the focused one and the next side by side) |
-| `1` .. `0` | hit/hurtboxes, model, skeleton, joint numbers, ECB, stage collision (cycles lines / ledges / terrain), info panel, event log, hitbox labels, attributes (differences in yellow) |
-| `F5` / `F6` | save / load state 1 |
-| `X` | Lab on/off (off restores the default drawing) |
-| `F3` | help |
-
-Console: `lab help | lab port N | lab history N | lab back [N] | lab dump [N] | lab set <key> <value>`.
-Online the Lab only reads (the status bar says so).
+Online the Lab only reads.
 
 ### 14.7 Stage 2: timelines, set motion, lock-step, LAB menu entry
 
@@ -495,6 +483,89 @@ Training, work as before).
 - **Launch straight in:** `MELEE_SCENE="mode=lab;p1=fox;p2=falco/cpu0;stage=fd"` (the usual grammar;
   `at=css` / `at=sss` open the select screens). Only a LAB scene seeds LAB.
 - **Tests:** `geno_lab_mode_table`, `geno_lab_rules`, `geno_lab_scene`, `geno_lab_select_flow`.
+- The pause menu was redesigned in stage C (14.9).
+
+### 14.9 Display modes, the kit HUD, the full-screen pause menu (stage C)
+
+**Nothing plain on screen.** `lab.lua` draws only with `gd.kit` and the Lab art (`ui/`); there is
+no `gd.text` left. `gd.line` / `gd.fill` remain only for the skeleton, bones and ECB lines. The
+port's fps readout (`shim_vi.c`, opt-in) is suppressed during a LAB match
+(`GenoLab_InMatch()`). The F9 info panel and toasts are still there; they only appear when you
+ask for them.
+
+**Keyboard in LAB.** During a LAB match (`GenoLab_InMatch()`: match start to match end) the
+keyboard never reaches the game pad (`shim_pad.c`: sampled as unfocused; in keyboard+ mode it
+does not take the port; F1's C-stick hotkey is off). Every key belongs to the Lab. The public
+"keyboard = hotkeys only" change will generalise this. Reconcile it with that change.
+
+**Global keys** (every mode, menu closed):
+
+| key | |
+|---|---|
+| `SPACE` | pause / resume |
+| `RIGHT` | step +1 (hold = slow play, `CTRL` = 10) |
+| `LEFT` | step -1 from the history ring (hold, `CTRL` = 10) |
+| `F5` / `F6` | save / load state 1 |
+| `TAB` / `SHIFT+TAB` | next / previous mode; `1`..`5` pick one directly |
+| `F` | focus the next fighter |
+| `H` | hide / show the whole Lab UI (overlays go back to the game's default drawing) |
+| `F3` | help: a kit panel with this mode's keys plus the global ones |
+| `ESC` (or START on any pad) | the pause menu (LAB matches) |
+
+**Modes.** Each mode chooses its panels and overlays, and which keys are live. Each mode
+remembers its own toggles. The mode and every toggle persist in `settings.txt`, for example
+`mode=hitboxes` or `hitboxes.ecb=false`.
+
+| # | mode | panels / overlays | keys (default) |
+|---|---|---|---|
+| 1 | CLEAN | a tiny mode chip only (gold while paused); model on, no boxes | none |
+| 2 | HITBOXES | game hit/hurtbox draw, hitbox label chips, ECB, hitbox data panel (focused fighter) | `B` boxes (on), `L` labels (on), `E` ECB (off), `D` data (on) |
+| 3 | FRAMES | action/frame + history chip; move timeline (focused + next fighter); boxes | `T` timeline (on), `B` boxes (on); actions `Q`/`E` scrub -1/+1 (hold), `HOME` replay, `C` lock-step, `R` mirror P1 -> P2 |
+| 4 | STAGE | stage debug draw | `C` collision (on), `L` ledges (on), `T` terrain, `P` points, `Z` zones |
+| 5 | INSPECT | skeleton, joint-number chips, info panel (2 fighters), attribute compare (differences first, in gold), event log | `M` model (on), `S` skeleton (on), `J` joints, `I` info (on), `A` attributes, `L` log (on) |
+
+Every mode except CLEAN shows a key strip along the bottom: the mode chip (icon + name, gold
+while paused), a key chip plus a toggle icon for each mode key (an OFF toggle is
+`ico_lab_slash_gap`, then the icon in its off tint, then `ico_lab_slash`), the frame and
+step-back depth, and `TAB mode` / `F3 help`.
+
+**Pause menu (full screen).** START or Esc freezes and dims the game. A glass slab with a
+cyan edge covers the left. The tab name is drawn huge, bleeding off the edge. Decoration is
+the flask, the hitbox burst and hazard stripes.
+- Tabs sit across the top and switch with L / R (keyboard `Q` / `E`, PgUp / PgDn). A cyan wipe
+  plays on each switch.
+- Big sheared rows run down the left. The selected row is gold, pushed right, and has a
+  chevron.
+- A detail panel on the right shows the icon, the name, the current value, a one-line
+  description, the button hints and the match key for the same action. In DISPLAY, the "Display
+  mode" row also previews that mode's keys.
+- A controls strip runs along the bottom.
+- Rows open with a staggered slide-in (about 7 frames).
+- Tabs and rows are recorded as hit rects (`menu.hits`, `menu_hit(x, y)`). A future
+  `gd.mouse()` (`{x, y, pressed}`) is already polled when it exists.
+
+| tab | rows |
+|---|---|
+| PLAY | Resume; Step +1; Step -1; Step +10; Focus (left / right) |
+| DISPLAY | Display mode (left / right); the current mode's toggles; Lab UI shown / hidden |
+| DUMMY | Target (left / right); Damage (left / right steps of 10, A applies `gd.set_percent`); Lock-step; Replay move; Mirror my pad |
+| STATES | Save state (slot 1-3); Load state (slot 1-3); Reset positions (slot 4, match start); History depth (10 / 20 / 40 / 60) |
+| EXIT | Change fighters; Change stage; Quit (no contest) |
+
+Pad: stick / d-pad up and down, left and right change a value, A, B or START close, L / R
+switch tabs. Keyboard: the arrows, Enter or Space, Backspace or Esc, `Q` / `E`. While the menu
+is open it takes every key, so no Lab shortcut fires underneath it.
+
+Console: `lab status` (mode, toggles, draw and stage flags, menu tab and row, hit-rect count),
+`lab mode <name|1-5>`, `lab set <mode>.<toggle> on|off`, `lab hide`,
+`lab menu [tab|close]`, plus the older `port / history / back / dump / move / events`.
+
+**Art added** (`art/lab_art.py`, 73 textures, all checks pass): icons `ico_lab_clean`,
+`inspect`, `points`, `zones`, `terrain`, `dummy`, `display`, `exit`, `eye`, `keys`, `percent`
+and `modes`; chrome masks `lab_solid` (flat or sheared quads), `lab_fade`, `lab_stripes`,
+`lab_ruler`, `lab_burst`, `lab_bracket`, `lab_chev` and `lab_chip_l/r`. Review:
+`art/preview/lab_sheet.png` sections 7-9 (the pieces, the HUD strip mock-up and the pause menu
+mock-up).
 
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 

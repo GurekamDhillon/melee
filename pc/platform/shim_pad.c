@@ -638,11 +638,19 @@ int gw_PADRead(void *status) {
     const int typing = (int)(GetTickCount() - (DWORD)gw_TextEntryUntil) < 0;
     const int h = gw_keyboard_home();
     PADStatus kb;
-    const int keys = gw_keyboard_sample(&kb, focused && !typing);
+    /* Geno LAB (private): in a LAB match the keyboard is the Lab's hotkeys only
+     * (geno-lab/scripts/lab.lua) and never plays. Sampled as unfocused, so it reads neutral, and
+     * it does not take the port from a controller. The public "keyboard is hotkeys only" change
+     * will generalise this; reconcile there (this block and the F1 check below). */
+    extern int gw_GenoLab_InMatch(void);
+    const int lab = gw_GenoLab_InMatch() != 0;
+    const int keys = gw_keyboard_sample(&kb, focused && !typing && !lab);
 
     if (mode == GW_INPUT_KEYBOARD) {
       st[h] = kb;
       src[h] = GW_SRC_KEYBOARD;
+    } else if (lab) {
+      /* leave the port to its controller; the owner is picked up again after the match */
     } else {
       const int prev = gw_kb_owner;
       const char *why = NULL;
@@ -658,7 +666,7 @@ int gw_PADRead(void *status) {
     /* F1 is the in-match C-stick toggle hotkey. It has no GameCube button, so it rides the
      * reserved pad bit 0x0080 (HSD_PAD_7) into game code, where fighter.c treats that bit's press
      * edge as the F1 toggle. A hotkey, not play input: it does not take the port over. */
-    if (focused && !typing && (GetAsyncKeyState(VK_F1) & 0x8000) != 0 && st[h].err == 0) {
+    if (focused && !typing && !lab && (GetAsyncKeyState(VK_F1) & 0x8000) != 0 && st[h].err == 0) {
       gw_w16(&st[h].button, (u16)(gw_r16(&st[h].button) | 0x0080u));
     }
   }

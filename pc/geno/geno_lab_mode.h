@@ -28,6 +28,7 @@ void gm_Mode_Lab_OnLoad(void);
 
 /* for native code (gw_script.c calls the gw_-prefixed names) */
 int GenoLab_ModeActive(void);   ///< 1 while LAB is the running game mode
+int GenoLab_InMatch(void);      ///< 1 from a LAB match's start to its end (loading included)
 int GenoLab_Leave(int where);   ///< end the LAB match (no contest) and go to `where`; 0 if no match
 /* for tests (geno_tests.c) */
 void GenoLab_ApplyRules(struct StartMeleeData* start);

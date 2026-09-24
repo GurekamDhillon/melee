@@ -1007,7 +1007,9 @@ static void gw_stats_note_present(int replay) {
 }
 
 static void gw_stats_draw(void) {
-  if (gw_video_show_fps && gw_stat_text[0] != '\0') {
+  /* Geno LAB (private): no plain debug text over a LAB match; the Lab draws its own kit HUD */
+  extern int gw_GenoLab_InMatch(void);
+  if (gw_video_show_fps && gw_stat_text[0] != '\0' && !gw_GenoLab_InMatch()) {
     gw_Overlay_DrawStats(gw_stat_text);
   }
 }

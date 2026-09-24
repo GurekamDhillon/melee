@@ -1358,6 +1358,664 @@
    }
   },
   {
+   "name": "ico_lab_clean",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_clean.png",
+   "file_1x": "out/1x/ico_lab_clean.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "mode CLEAN: nothing but the game (four frame corners around empty space)",
+   "tint": "bone",
+   "alpha_levels_i4": 2,
+   "legibility": {
+    "full": [
+     4,
+     0
+    ],
+    "at_2x_draw": [
+     4,
+     0
+    ],
+    "at_1x_draw": [
+     4,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_inspect",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_inspect.png",
+   "file_1x": "out/1x/ico_lab_inspect.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "mode INSPECT: joints, model, info, attributes (a magnifier)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_points",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_points.png",
+   "file_1x": "out/1x/ico_lab_points.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "STAGE: spawn / respawn / item points (a map pin)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_zones",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_zones.png",
+   "file_1x": "out/1x/ico_lab_zones.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "STAGE: camera and blast zones (nested dashed bounds)",
+   "tint": "bone",
+   "alpha_levels_i4": 4,
+   "legibility": {
+    "full": [
+     9,
+     0
+    ],
+    "at_2x_draw": [
+     9,
+     0
+    ],
+    "at_1x_draw": [
+     9,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_terrain",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_terrain.png",
+   "file_1x": "out/1x/ico_lab_terrain.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "STAGE: terrain surfaces (ground, a platform, a wall)",
+   "tint": "bone",
+   "alpha_levels_i4": 2,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_dummy",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_dummy.png",
+   "file_1x": "out/1x/ico_lab_dummy.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "DUMMY tab: the CPU dummy (a target)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_display",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_display.png",
+   "file_1x": "out/1x/ico_lab_display.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "DISPLAY tab: display modes (a screen with an overlay box)",
+   "tint": "bone",
+   "alpha_levels_i4": 5,
+   "legibility": {
+    "full": [
+     2,
+     2
+    ],
+    "at_2x_draw": [
+     2,
+     2
+    ],
+    "at_1x_draw": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_exit",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_exit.png",
+   "file_1x": "out/1x/ico_lab_exit.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "EXIT tab: leave the match (a door and an arrow)",
+   "tint": "bone",
+   "alpha_levels_i4": 8,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_eye",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_eye.png",
+   "file_1x": "out/1x/ico_lab_eye.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "hide / show the Lab UI (an eye)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_keys",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_keys.png",
+   "file_1x": "out/1x/ico_lab_keys.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "the key strip / help (three keycaps)",
+   "tint": "bone",
+   "alpha_levels_i4": 15,
+   "legibility": {
+    "full": [
+     1,
+     4
+    ],
+    "at_2x_draw": [
+     1,
+     4
+    ],
+    "at_1x_draw": [
+     1,
+     4
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_percent",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_percent.png",
+   "file_1x": "out/1x/ico_lab_percent.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "DUMMY: set the dummy's damage (the percent sign is the symbol)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     3,
+     2
+    ],
+    "at_2x_draw": [
+     3,
+     2
+    ],
+    "at_1x_draw": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_modes",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_modes.png",
+   "file_1x": "out/1x/ico_lab_modes.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "cycle display mode (stacked layers)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     3,
+     0
+    ],
+    "at_2x_draw": [
+     3,
+     0
+    ],
+    "at_1x_draw": [
+     3,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_solid",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_solid.png",
+   "file_1x": "out/1x/lab_solid.png",
+   "size_2x": [
+    16,
+    16
+   ],
+   "size_1x": [
+    8,
+    8
+   ],
+   "format": "I4",
+   "bytes_2x": 128,
+   "min_draw_1x": 8,
+   "use": "a flat quad: stretch + tint (+ opts.shear) for bars, sheared blocks, dimming",
+   "tint": "glass",
+   "alpha_levels_i4": 1,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_fade",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_fade.png",
+   "file_1x": "out/1x/lab_fade.png",
+   "size_2x": [
+    64,
+    16
+   ],
+   "size_1x": [
+    32,
+    8
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 16,
+   "use": "horizontal ramp, opaque left -> clear right: edge fades and the tab wipe's trailing edge",
+   "tint": "accent",
+   "alpha_levels_i4": 16
+  },
+  {
+   "name": "lab_stripes",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_stripes.png",
+   "file_1x": "out/1x/lab_stripes.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "bytes_2x": 8192,
+   "min_draw_1x": 64,
+   "use": "diagonal hazard stripes at the kit shear, tiles both ways: pause-menu backdrop blocks",
+   "tint": "accent",
+   "alpha_levels_i4": 6,
+   "legibility": {
+    "full": [
+     5,
+     0
+    ],
+    "at_2x_draw": [
+     5,
+     0
+    ],
+    "at_1x_draw": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_ruler",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_ruler.png",
+   "file_1x": "out/1x/lab_ruler.png",
+   "size_2x": [
+    256,
+    32
+   ],
+   "size_1x": [
+    128,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 4096,
+   "min_draw_1x": 64,
+   "use": "frame-ruler ticks (every frame; 5 taller; 10 full) - tiles on X; menu flourish",
+   "tint": "tick",
+   "alpha_levels_i4": 2
+  },
+  {
+   "name": "lab_burst",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_burst.png",
+   "file_1x": "out/1x/lab_burst.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "min_draw_1x": 128,
+   "use": "the hitbox motif, big: a burst ring - pause-menu decoration (tint accent at low alpha)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "lab_bracket",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_bracket.png",
+   "file_1x": "out/1x/lab_bracket.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 16,
+   "use": "one corner bracket (top-left; flip_x / flip_y for the others): detail frame, focus",
+   "tint": "accent",
+   "alpha_levels_i4": 2,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_chev",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_chev.png",
+   "file_1x": "out/1x/lab_chev.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 512,
+   "min_draw_1x": 12,
+   "use": "selected-row chevron (points right)",
+   "tint": "playhead",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "lab_chip_l",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_chip_l.png",
+   "file_1x": "out/1x/lab_chip_l.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "value / mode chip, left end (a slanted plate at the kit shear); flat centre + chip_r",
+   "tint": "accent",
+   "alpha_levels_i4": 6
+  },
+  {
+   "name": "lab_chip_r",
+   "group": "chrome",
+   "file_2x": "out/2x/lab_chip_r.png",
+   "file_1x": "out/1x/lab_chip_r.png",
+   "size_2x": [
+    16,
+    32
+   ],
+   "size_1x": [
+    8,
+    16
+   ],
+   "format": "I4",
+   "bytes_2x": 256,
+   "min_draw_1x": 16,
+   "use": "value / mode chip, right end",
+   "tint": "accent",
+   "alpha_levels_i4": 6
+  },
+  {
    "name": "ico_lab",
    "group": "menu",
    "file_2x": "out/2x/ico_lab.png",

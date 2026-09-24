@@ -1,7 +1,6 @@
 # Geno - GD's Melee's fighter-extension layer
 
-Status: **v2** (v0 foundation, v1 Meta Knight script features (section 15), v2 action states, glide and MK specials (section 16)), private branch `private/geno` in the melee fork. Working name, approved by GD.
-Nothing here may reach a public branch until GD says so.
+Status: **v2** (v0 foundation, v1 Meta Knight script features (section 15), v2 action states, glide and MK specials (section 16)), on the public `pc-port` branch of the melee fork (made public 2026-09-24; later work: v3/v4, the LAB mode, see sections 17-18).
 
 ## 1. What Geno is, and what it is not
 
@@ -83,7 +82,7 @@ dispatch). Geno never edits m-ex's tables, slot numbering or hook registration.
 
 - Log lines start with `geno:`. C: `Geno_*` (game half, engine call sites), `GenoGame_*` (game half,
   called by the native half), `gw_Geno_*` (native half), `GENO_*` constants in `pc/geno/geno.h`.
-- IR engine id (experiment/character-ir): `melee.geno`.
+- IR engine id (ports/ir (workspace repo)): `melee.geno`.
 
 ## 6. Files
 
@@ -282,7 +281,7 @@ Geno version - data-driven, drawn natively, no fighter code:
 2. **Moves** - (v1) subaction script overlays: geno.json names a subaction index and a script file
    in the mod (`mods/<id>/geno/<fighter>.ftcmd`), loaded once at boot into a read-only guest buffer
    (rollback-safe: never written after boot) and swapped into the fighter's action table rows at
-   load. The PSA translator (a tool on top of experiment/character-ir) emits Melee commands for
+   load. The PSA translator (a tool on top of ports/ir (workspace repo)) emits Melee commands for
    what Melee has (hitboxes with unit conversion, GFX, SFX, timers) and Geno escapes for variables,
    if/else and hook calls for PSA events Melee lacks.
 3. **Animations / model** - through the normal mods file overlay (`PlKb*.dat`), outside Geno.
@@ -835,8 +834,8 @@ has no `os.date`), `gd.player().kb_last` (the last launch's knockback, which is 
 
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 
-This section is the contract the Brawl -> Geno script translator (experiment/brawl-metaknight/)
-emits against. A copy lives at `experiment/brawl-metaknight/geno_v1_encodings.md`; this section
+This section is the contract the Brawl -> Geno script translator (ports/halberd/ (workspace repo) )
+emits against. A copy lives at `ports/halberd/ (workspace repo) geno_v1_encodings.md`; this section
 wins if they differ. **Numbers here never change**: new features get new sub / value / condition
 ids. Constants: `pc/geno/geno.h`. Everything is ftcmd opcode 59 (first byte 0xEC-0xEF), words
 big-endian like any Pl file script:
@@ -1111,7 +1110,7 @@ drawn in the fast-forward pass). No host pointers, no host time. Tests `geno_sta
 ## 16. v2: Geno action states, glide, native specials (STABLE reference)
 
 Status: **built** (v2). This section is the contract for geno.json v2 and for the Meta Knight
-translator; a copy of the MK part lives at `experiment/brawl-metaknight/geno_v2_encodings.md`
+translator; a copy of the MK part lives at `ports/halberd/ (workspace repo) geno_v2_encodings.md`
 (this section wins). Numbers here never change. Code: `pc/geno/geno_game_v2.inc` (states, tables),
 `geno_game_glide.inc`, `geno_game_specials.inc`; registry `pc/platform/geno_registry.c`.
 
@@ -1348,7 +1347,7 @@ idempotently at every spawn from the registry (same bytes every time); all behav
 Status: **built** (v3, `"geno": 3`; every v3 key is additive, a v2 exe reads the v2 keys and logs
 the rest). Code: `pc/geno/geno_game_v2.inc` (geno.anim_motion, the KEEP_FRAME carry, the glide
 start frame), `geno_game_specials.inc` (cape, drill), `geno_game_glide.inc` (helpless glide),
-registry `pc/platform/geno_registry.c`. MK translator copy: `experiment/brawl-metaknight/
+registry `pc/platform/geno_registry.c`. MK translator copy: `ports/halberd/ (workspace repo) 
 geno_v2_encodings.md` section 6.
 
 ### 17.1 geno.anim_motion: the clip's root motion, on the ground and in the air
@@ -1478,14 +1477,14 @@ more per snapshot, rebuilt idempotently at spawn). MK uses 30.
   `geno_v3_cape` (momentum kept, steering, decision, partner swap keeps the counter, entry facing),
   `geno_v3_drill` (start swap, unlimited pitch, a hit does not end the rush, the end by situation,
   helpless air end), `geno_lab_stale_fighter`.
-- In game (Meta Knight, `experiment/brawl-metaknight/tools/ingame_v2.py`, "v3" plans) and netplay:
+- In game (Meta Knight, `ports/halberd/ (workspace repo) tools/ingame_v2.py`, "v3" plans) and netplay:
   `_build/agents/beta/NOTES.md` (Geno v3 entry).
 
 ## 18. v4: the model follows Meta Knight's specials (STABLE reference)
 
 Status: **built** (additive keys; a v3 exe logs them as unknown and keeps its behaviour). Code:
 `pc/geno/geno_game_specials.inc` (`geno_drill_pose`, `geno_tornado_spin_*`). MK: `tools/build_mk.py`
-sets the keys; checks `experiment/brawl-metaknight/tools/ingame_v4.py` (numeric, joints / hitboxes).
+sets the keys; checks `ports/halberd/ (workspace repo) tools/ingame_v4.py` (numeric, joints / hitboxes).
 
 ### 18.1 Drill Rush turns the model (`drill.pitch_model`, default 1)
 

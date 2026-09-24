@@ -72,6 +72,15 @@ static struct {
     FILE *trace;
     FILE *vel; /* <trace>.vel.csv: the velocities Slippi 3.5+ post-frame records */
     char scene[256];
+    /* MELEE_SLP_PARITY=1 (see rp_parity_*): the console's post-frame state per frame per slot */
+    int parity;
+    struct GwRpPost {
+        float x, y, facing, percent;
+        uint16_t action;
+        uint8_t stocks, has, seen;
+    } *post;
+    long parity_checked, parity_expected;
+    int parity_failed, parity_seed_frames;
 } rp = { .frame = GW_RP_UNARMED };
 
 static const GwRpInput *rp_cur(int port, int follower);
@@ -139,6 +148,22 @@ static int rp_parse(const uint8_t *d, size_t n) {
                         rp.ucf_shield[p] = rp_be32(b + 0x145 + 8 * p);
                     }
                 }
+            } else if (cmd == 0x38 && pass == 1 && rp.post != NULL) {
+                int frame = (int) rp_be32(b + 1);
+                int port = b[5], fol = b[6] != 0;
+                if (frame >= rp.first && frame <= rp.last && port < 4 && sz >= 0x21) {
+                    struct GwRpPost *q = &rp.post[(frame - rp.first) * GW_RP_SLOTS + port * 2 + fol];
+                    q->action = (uint16_t) ((b[8] << 8) | b[9]);
+                    q->x = rp_bef(b + 0x0A);
+                    q->y = rp_bef(b + 0x0E);
+                    q->facing = rp_bef(b + 0x12);
+                    q->percent = rp_bef(b + 0x16);
+                    q->stocks = b[0x21];
+                    if (!q->has) {
+                        q->has = 1;
+                        ++rp.parity_expected;
+                    }
+                }
             } else if (cmd == 0x3A && pass == 1) {
                 int frame = (int) rp_be32(b + 1);
                 if (frame >= rp.first && frame <= rp.last) {
@@ -180,6 +205,10 @@ static int rp_parse(const uint8_t *d, size_t n) {
             rp.in = (GwRpInput *) calloc(count, sizeof *rp.in);
             rp.fs_seed = (uint32_t *) calloc((size_t) (rp.last - rp.first + 1), 4);
             rp.fs_has = (uint8_t *) calloc((size_t) (rp.last - rp.first + 1), 1);
+            if (getenv("MELEE_SLP_PARITY") != NULL && getenv("MELEE_SLP_PARITY")[0] == '1') {
+                rp.parity = 1;
+                rp.post = (struct GwRpPost *) calloc(count, sizeof *rp.post);
+            }
             if (rp.in == NULL || rp.fs_seed == NULL || rp.fs_has == NULL) {
                 return -1;
             }
@@ -282,7 +311,7 @@ void gw_Replay_ArmLive(int on) {
         rp.ucf_dashback[p] = 1;
         rp.ucf_shield[p] = 1;
     }
-    rp.scene[0] = ' ';
+    rp.scene[0] = '\0';
     rp.frame = GW_RP_UNARMED;
     gw_log("replay: live mode (netplay) - frames counted from %d, online codes, UCF 0.84", rp.first);
 }
@@ -528,6 +557,84 @@ static void rec_post(int port, int follower, int ckind, int action, float x, flo
 }
 
 /* Playback or recording: the scene loop's per-frame hooks run for either. */
+/* ---- parity: MELEE_SLP_PARITY=1 ---------------------------------------------------------------
+ * The vanilla-parity check (pc/geno/tools/parity.sh). Every fighter's post-frame state the port
+ * computes is compared, as it is computed, with the console's own post-frame record for that frame:
+ * action state, x, y, facing, percent and stocks, bit for bit at single precision, plus the RNG
+ * seed at the start of each frame wherever the replay records it (Frame Start, Slippi 2.2+). The
+ * first difference ends the run with exit code 1 and a "parity: FAIL" line naming the frame, the
+ * port and the field; reaching the replay's end with every recorded post-frame matched ends it
+ * with 0 and "parity: PASS". A record the port never produced is a failure too. */
+static void rp_parity_end(int rc) {
+    fflush(NULL);
+    _exit(rc);
+}
+
+static void rp_parity_fail_f(const char *field, int port, int fol, double console, double port_v) {
+    rp.parity_failed = 1;
+    gw_log("parity: FAIL frame %d port %d%s field %s: console %.9g, port %.9g", rp.frame, port + 1,
+           fol ? " (follower)" : "", field, console, port_v);
+    rp_parity_end(1);
+}
+
+static void rp_parity_check(int port, int follower, int action, float x, float y, float facing,
+                            float percent, int stocks) {
+    struct GwRpPost *q;
+    int fol = follower != 0;
+    if (!rp.parity || rp.post == NULL || rp.parity_failed || rp.frame < rp.first ||
+        rp.frame > rp.last || port < 0 || port >= 4) {
+        return;
+    }
+    q = &rp.post[(rp.frame - rp.first) * GW_RP_SLOTS + port * 2 + fol];
+    if (!q->has || q->seen) {
+        return;
+    }
+    q->seen = 1;
+    ++rp.parity_checked;
+    if (q->action != (uint16_t) action) {
+        rp_parity_fail_f("action_state", port, fol, q->action, (uint16_t) action);
+    }
+    if (q->x != x) {
+        rp_parity_fail_f("x", port, fol, q->x, x);
+    }
+    if (q->y != y) {
+        rp_parity_fail_f("y", port, fol, q->y, y);
+    }
+    if (q->facing != facing) {
+        rp_parity_fail_f("facing", port, fol, q->facing, facing);
+    }
+    if (q->percent != percent) {
+        rp_parity_fail_f("percent", port, fol, q->percent, percent);
+    }
+    if (q->stocks != (uint8_t) stocks) {
+        rp_parity_fail_f("stocks", port, fol, q->stocks, (uint8_t) stocks);
+    }
+}
+
+static void rp_parity_verdict(void) {
+    if (!rp.parity || rp.parity_failed) {
+        return;
+    }
+    if (rp.parity_checked != rp.parity_expected) {
+        int f, s;
+        for (f = 0; f <= rp.last - rp.first; ++f) {
+            for (s = 0; s < GW_RP_SLOTS; ++s) {
+                const struct GwRpPost *q = &rp.post[f * GW_RP_SLOTS + s];
+                if (q->has && !q->seen) {
+                    gw_log("parity: FAIL frame %d port %d%s: the console recorded a post-frame the "
+                           "port never produced (%ld of %ld compared)", rp.first + f, s / 2 + 1,
+                           (s & 1) ? " (follower)" : "", rp.parity_checked, rp.parity_expected);
+                    rp_parity_end(1);
+                }
+            }
+        }
+    }
+    gw_log("parity: PASS frames %d..%d, %ld post-frame records (action, x, y, facing, percent, "
+           "stocks) identical, RNG seed checked on %d frames", rp.first, rp.last, rp.parity_checked,
+           rp.parity_seed_frames);
+    rp_parity_end(0);
+}
+
 int gw_Replay_Enabled(void) {
     return gw_Replay_Active() || gw_Replay_Recording();
 }
@@ -548,6 +655,7 @@ int gw_Replay_Tick(void) {
         if (rp.trace != NULL) {
             fflush(rp.trace);
         }
+        rp_parity_verdict();
     }
     return rp.frame;
 }
@@ -704,7 +812,16 @@ void gw_Replay_CheckSeed(uint32_t port_seed) {
         rp.seed_diverged = 1;
         gw_log("replay: RNG seed diverged at frame %d: port 0x%08X, console 0x%08X", rp.frame,
                port_seed, want);
-    } else if (rp.frame == rp.last) {
+        if (rp.parity && !rp.parity_failed) {
+            rp.parity_failed = 1;
+            gw_log("parity: FAIL frame %d field rng_seed: console 0x%08X, port 0x%08X", rp.frame,
+                   want, port_seed);
+            rp_parity_end(1);
+        }
+        return;
+    }
+    rp.parity_seed_frames++;
+    if (rp.frame == rp.last) {
         gw_log("replay: RNG seed matched the console on every frame through %d", rp.last);
     }
 }
@@ -828,7 +945,7 @@ int gw_Replay_TraceAtProcMap(void) {
 }
 
 int gw_Replay_Tracing(void) {
-    return (rp.trace != NULL && rp.frame != GW_RP_UNARMED) ||
+    return ((rp.trace != NULL || rp.parity) && rp.frame != GW_RP_UNARMED) ||
            (rec.f != NULL && rec.frame != GW_RP_UNARMED);
 }
 
@@ -841,6 +958,9 @@ void gw_Replay_TraceFighter(int port, int follower, int ckind, int action, float
     }
     rec_post(port, follower, ckind, action, x, y, facing, percent, stocks, air_x, air_y, kb_x,
              kb_y, ground_x);
+    if (rp.parity && rp.frame != GW_RP_UNARMED) {
+        rp_parity_check(port, follower, action, x, y, facing, percent, stocks);
+    }
     if (rp.trace == NULL || rp.frame == GW_RP_UNARMED) {
         return;
     }

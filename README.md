@@ -1,30 +1,77 @@
 # GD's Melee — native PC port
 
+<!-- TODO(brand): a logo or banner from the brand kit can go here. -->
+<p align="center">
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Version 0.1.4" src="https://img.shields.io/badge/version-0.1.4-f0b429"></a>
+  <img alt="Platform: Windows x64" src="https://img.shields.io/badge/platform-Windows%20x64-2a4bb8">
+  <a href="pc/LICENSE"><img alt="License: GPL-2.0-or-later (pc/)" src="https://img.shields.io/badge/license%20(pc%2F)-GPL--2.0--or--later-3a3f4b"></a>
+</p>
+
 This fork of [doldecomp/melee](https://github.com/doldecomp/melee) adds a native PC port of
 *Super Smash Bros. Melee* (NTSC 1.02, `GALE01`) on the **`pc-port`** branch. It is built from the
 matching decompilation — every game translation unit is real, editable C — rather than by emulation
 or by statically recompiling the retail binary.
 
-On top of that it runs **[m-ex](https://github.com/akaneia/m-ex) modded content**: extra fighters,
-stages, items and music, loaded from a modded disc the same way the mod loads them on hardware.
+It plays online with **rollback netcode** from a competitive lobby, renders natively in HD, runs
+**[m-ex](https://github.com/akaneia/m-ex) modded content** (mod discs and loose mods: fighters,
+stages, items and music), and can be scripted in **Lua**.
 
-> **Status: work in progress — a research/engineering project, not a release.** It boots, renders,
-> plays VS matches, and has audio, memory-card saves, GameCube-adapter input and hard 60 Hz frame
-> pacing. Sonic is playable end to end from m-ex data. Netplay, replays, packaging and distribution
-> are not started.
+> **Status: public test build (0.1.4).** Download it, and read the project overview, the full
+> feature list and the screenshots, in the workspace repo:
+> **[GurekamDhillon/gd-melee-workspace](https://github.com/GurekamDhillon/gd-melee-workspace)**
+> ([latest release](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest)). You
+> supply your own legally dumped disc image.
+
+<table>
+  <tr>
+    <td width="50%"><img alt="Online lobby, game 1 stage striking over the starters, with the counterpick opening from game 2" src="pc/docs/readme/lobby_strikes.png"></td>
+    <td width="50%"><img alt="A Fox vs Marth match on Battlefield rendered at 3x" src="pc/docs/readme/match_hd.jpg"></td>
+  </tr>
+  <tr>
+    <td><img alt="The port's character select on the Akaneia disc, with the m-ex fighters in the grid" src="pc/docs/readme/css.png"></td>
+    <td><img alt="The kit_hud example script: a gd.kit panel drawn over a match" src="pc/docs/readme/kit_hud.jpg"></td>
+  </tr>
+</table>
+
+## What's here
+
+- **Rollback netplay** with a room code or Random Opponent, and a competitive lobby: blind picks,
+  starters and counterpicks, 1-2-1 strikes (the cursor skips struck stages), bans, ready-up and
+  rematches.
+- **HD rendering** at any render scale over D3D12, vsync off, an experimental uncapped frame rate,
+  and about 13 ms from controller to screen.
+- **m-ex content**: mod discs (ACE, Akaneia) and loose mods, **94 fighter slots**, m-ex fighters'
+  names, emblems and stock icons on the results screen, and m-ex CPUs that play from their clone
+  base's CPU tables.
+- **New menus**: main menu, hubs, character and stage select (with pages for big rosters), a
+  Settings screen, and Training through the new select screens.
+- **Lua scripting and a console**, including `gd.kit` for drawing in the menus' own style over any
+  scene. See the workspace repo's
+  [`docs/scripting.md`](https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md).
+- **Slippi replay playback**, UCF and tournament rule sets, and a deterministic engine checked frame
+  by frame with SyncTest.
+
+### Coming soon: the Geno engine
+
+Native fighter extensions beyond m-ex: new action states, new moves and behaviours, defined per
+fighter in data. 100% m-ex compatible, opt-in per fighter, and rollback-safe. It comes with the
+**Geno Lab**, a frame-data lab with hitbox and hurtbox overlays, frame stepping and step-back, and a
+timeline.
 
 ## What the port adds
 
 Everything lives under [`pc/`](pc/):
 
 ```
-pc/platform/   native shims: GX→Aurora, OS, PAD, CARD, AX (DSP-ADPCM mixer), DVD, AR, VI, libc
+pc/platform/   native shims: GX→Aurora, OS, PAD, CARD, AX (DSP-ADPCM mixer), DVD, AR, VI, libc,
+               netplay, scripting (Lua) and the new menus,
                plus the m-ex layer: gw_ppc.c (interpreter), gw_mex_ftfunction*.c (fighters),
                gw_mex_grfunction.c (stages), gw_mex_bridge.c (guest→native call bridge)
 pc/gameworld/  game-world code compiled through the PowerPC→x86 retarget (gekko_fp.c, mtx_pc.c)
+pc/scripts/    the built-in Lua examples and console.py (the console over a local socket)
 pc/tools/      gwtool (the PPC→x86 retargeter) and asset extraction
 pc/build/      Windows build/link/run scripts
-pc/tests/      in-engine tests (46, run headless against a real disc image)
+pc/tests/      in-engine tests, run headless against a real disc image
 pc/docs/       port dev quick-reference
 ```
 
@@ -44,29 +91,36 @@ question, not a code one.
 
 | Area | State |
 |---|---|
-| **Fighters** | Table-driven from `mexData`. **Sonic is playable and hands-on verified**, including his custom spring article (up-B). Akaneia's other six — Wolf, Diddy, Charizard, Lucas, Dedede, Tails — register, load and resolve every call target, but are **not yet play-tested**. |
-| **Stages** | `grFunction` plus the expanded stage tables. The first custom stage loads, installs and runs its code; **it does not display correctly yet.** |
-| **Items** | Custom articles work — Sonic's spring is a custom item kind spawned from his blob. |
-| **Audio/menus** | Per-fighter BGM, weighted menu playlists, announcer, victory themes, results screen, CSS cursor scaling. |
+| **Fighters** | Table-driven from `mexData`, up to **94** m-ex slots. Akaneia and ACE rosters load and play, locally and online. |
+| **Stages** | `grFunction` plus the expanded stage tables. |
+| **Items** | Custom articles work (for example Sonic's spring). |
+| **Audio/menus** | Per-fighter BGM, weighted menu playlists, announcer, victory themes, results screen names, emblems and stock icons, CSS cursor scaling. |
+| **CPUs** | m-ex CPUs read their clone base's rows of the CPU tables. |
 | **Kirby hats** | Not implemented — every m-ex fighter currently gives Kirby the clone base's hat. |
-| **ACE** | Dumped and reconciled (31 fighters, 155 stages) but **not enabled**; several tables are still sized for Akaneia. |
+| **Mixing packs** | Fighters and stages from different packs (ACE fighters on Akaneia stages) can't be mixed yet. |
 
-m-ex content requires a disc that carries it. A stock `GALE01` image boots fine and simply has none.
+m-ex content requires a disc (or loose mods) that carries it. A stock `GALE01` image boots fine and
+simply has none.
 
 ### Development conveniences
 
 - `MELEE_SCENE="mode=training;p1=fox"` boots straight to any screen with any configuration —
-  characters, stages, CPU levels, teams. A number naming a character or stage **must** say which
-  index space it is in (`ck:`/`fk:`/`mex:`, `ext:`/`int:`), because the port juggles four of them.
+  characters, stages, CPU levels, teams, and `select=kit` for Training on the new select screens. A
+  number naming a character or stage **must** say which index space it is in (`ck:`/`fk:`/`mex:`,
+  `ext:`/`int:`), because the port juggles four of them.
+- `MELEE_CONSOLE_PORT` opens the console on a local socket (`pc/scripts/console.py`), so tools can
+  drive the game: state, input, save/load states, stepping and screenshots.
 - A host-side loading overlay reports real progress during the multi-second boot read.
-- 46 in-engine tests run headless (no window, no GPU) against a real disc image, so most of the
-  m-ex data layer is verified without launching the game.
+- In-engine tests run headless (no window, no GPU) against a real disc image, so most of the m-ex
+  data layer is verified without launching the game.
 
 ## Building
 
 See [`pc/build/README.md`](pc/build/README.md) and [`pc/docs/PORT_DEV_QUICKREF.md`](pc/docs/PORT_DEV_QUICKREF.md).
 Broadly: build Aurora + Dawn + SDL3, compile each translation unit through `gwtool`, link with the
-platform shims, then run `melee-pc.exe --iso <your GALE01 v1.02 image>`.
+platform shims, regenerate the m-ex bridge from the link map and link again, then run
+`melee-pc.exe --iso <your GALE01 v1.02 image>`. The workspace repo's `tools/port/build.sh` does the
+whole sequence.
 
 ## Licence and legal
 
@@ -77,7 +131,8 @@ attribution header.
 
 **No copyrighted game material is distributed here.** You must supply your own legally dumped disc
 image. Nothing in this repository contains disc data: no `.iso`, `.dol`, `.dat`, `.usd`, `.ssm`,
-`.sem`, `.hps`, `.thp` or `.gci` files are tracked, and `.gitignore` refuses them.
+`.sem`, `.hps`, `.thp` or `.gci` files are tracked, and `.gitignore` refuses them. The screenshots
+above show the port running on the author's own discs.
 
 **m-ex is treated as a specification only.** m-ex publishes no licence, so none of its sources,
 headers or data files are vendored or redistributed here; the support described above is an

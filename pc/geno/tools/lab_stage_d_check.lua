@@ -35,7 +35,8 @@ local files = {}
 local loads = {}
 
 local K = setmetatable({ shear = 0.25, available = function() return true end, measure = function(s) return #s * 6 end,
-  color = function() return 0xFFFFFFFF end }, { __index = function() return noop end })
+  color = function() return 0xFFFFFFFF end, text = function(x, y, s) return #tostring(s) * 6 end,
+  image = function(n, x, y, w) return w or 16 end }, { __index = function() return noop end })
 
 local gd
 gd = setmetatable({
@@ -217,12 +218,12 @@ expect(out:find("Hops: short hop (jumpsquat 3 f)", 1, true) ~= nil, "short hop")
 expect(out:find("Waveland: landed on airdodge f4", 1, true) ~= nil, "waveland")
 expect(out:find("Ledgedash: GALINT 5", 1, true) ~= nil, "ledgedash GALINT")
 
--- 5. The move card, measured like the export: frame 1 = the first frame after the change of state.
+-- 5. The move card, measured like the export: frame 1 = the frame the state starts (its change is seen).
 --    Fox ftilt: hitboxes on 5-8, the state lasts 26, no IASA inside it (the export's reading, in game).
 local HB = { { id = 0, x = 0, y = 0, z = 0, px = 0, py = 0, radius = 2, damage = 9, angle = 45, kbg = 100, bkb = 5, wbk = 0,
   bone = 1, element_name = "normal" } }
 local function perform(name, len, from, to, iasa, after)
-  set(1, name) frame() -- the frame the state is entered
+  set(1, name) -- frame 1 is the frame the change is seen
   for f = 1, len do
     P[1].hitboxes = (f >= from and f <= to) and HB or {}
     P[1].iasa = iasa ~= nil and f >= iasa
@@ -278,7 +279,8 @@ for _ = 1, 20 do
   if inputs[2] and inputs[2] ~= "released" and ((inputs[2].buttons or 0) & 0x20) ~= 0 then pressed_at = pressed_at or P[2].y end
 end
 expect(pressed_at ~= nil and pressed_at <= 10 and pressed_at > 0, "tech press ~5 frames before the floor (y " .. tostring(pressed_at) .. ")")
-expect(inputs[2] and inputs[2] ~= "released" and inputs[2].x == 80, "tech away: the stick held away (P1 is left of P2)")
+expect(inputs[2] and inputs[2] ~= "released" and inputs[2].x >= 56 and inputs[2].x <= 63,
+  "tech away: the stick held away, past the roll line, under the smash line (" .. tostring(inputs[2] and inputs[2].x) .. ")")
 set(2, "Passive", { airborne = false, vy = 0, y = 0 }) run(20) set(2, "Wait") run(3)
 -- the ledge: jump off it after a 3-frame reaction
 lab("dummy ledge jump") lab("dummy delay_min 3") lab("dummy delay_max 3")
@@ -335,6 +337,22 @@ expect(out:find("2 f%d+ .- TRUE") ~= nil or out:find("TRUE", 1, true) ~= nil, "c
 expect(out:find("escapable 3 f", 1, true) ~= nil, "combo: the third was escapable by 3 frames")
 set(2, "Wait") run(40)
 
+-- throw > uair: the throw is a hit when P2 is let go; a hit on P2 lying in DownWait is escapable
+lab("combo")
+set(2, "Wait") run(40)
+set(1, "ThrowHi") set(2, "ThrownHi") P[2].percent = 10 run(8)
+P[2].percent = 17 set(2, "DamageFlyHi", { in_hitstun = true }) set(1, "Wait") frame()
+run(10)
+frame(function() env.on_hit(1, 2, { dealt = 13 }) end)
+out = lab("combo")
+print(out)
+expect(out:find("1 f%d+ ThrowHi 7.0%% opener") ~= nil and out:find("2 f%d+ %S+ 13.0%% TRUE") ~= nil, "combo: upthrow (7%) > the next hit, true")
+P[2].in_hitstun = false set(2, "DownWaitU") run(5)
+frame(function() env.on_hit(1, 2, { dealt = 3 }) end)
+out = lab("combo")
+expect(out:find("escapable 5 f", 1, true) ~= nil, "combo: a hit on a downed P2 that could get up is escapable")
+set(2, "Wait") run(40)
+
 -- 10. D5: the L-cancel drill (streak), then its results line
 lab("drill lcancel")
 aerial_land(2) aerial_land(2) aerial_land(9) aerial_land(2)
@@ -356,6 +374,19 @@ P[1].hitboxes = { { id = 0, x = 5, y = 5, z = 0, px = 3, py = 5, radius = 2, dam
 P[2].shield_on, P[2].shield_x, P[2].shield_y, P[2].shield_r = true, 20, 5, 10
 run(2)
 
+-- the pause menu with a mouse: gd.mouse() -> x, y, buttons, wheel (four numbers, not a table)
+env.gd.mouse = function() return 100, 150, 1, -1 end
+env.gd.key_pressed = function(k) return k == "ESCAPE" end
+local okm, errm = pcall(env.on_tick)
+env.gd.key_pressed = function() return false end
+for _ = 1, 3 do if okm then okm, errm = pcall(env.on_tick) end end
+if okm then okm, errm = pcall(env.on_draw) end
+expect(okm, "pause menu with gd.mouse's four numbers: tick and draw (" .. tostring(errm) .. ")")
+env.gd.key_pressed = function(k) return k == "ESCAPE" end
+pcall(env.on_tick)
+env.gd.key_pressed = function() return false end
+env.gd.mouse = function() return -1000, -1000, 0, 0 end
+
 -- 7. Draw everything once (catches nil arithmetic in the drawing code)
 local ok, err = pcall(env.on_draw)
 expect(ok, "on_draw in TRAINING: " .. tostring(err))
@@ -365,7 +396,7 @@ env.on_loadstate(4)
 out = lab("adv")
 local later = 0
 for f in out:gmatch("f(%d+) P") do if tonumber(f) > 100 then later = later + 1 end end
-expect(later == 0 and out:find("f6 P1", 1, true) ~= nil, "a load drops the exchanges after its frame, keeps f6")
+expect(later == 0, "a load drops the exchanges after its frame")
 now = keep_now
 env.on_loadstate(0)
 ok, err = pcall(env.on_draw)

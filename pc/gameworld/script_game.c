@@ -1004,6 +1004,18 @@ float ScriptGame_LabCommonF(int which)
         return (float) d->xE4;
     case LAB_C_LCANCEL_DIV:
         return d->xE8;
+    case LAB_C_STICK_SMASH_DZ:
+        return d->horizontal_stick_smash_deadzone;
+    case LAB_C_TUMBLE_WIGGLE:
+        return d->x210;
+    case LAB_C_TUMBLE_WINDOW:
+        return (float) d->x214;
+    case LAB_C_TECH_ROLL_STICK:
+        return d->x254;
+    case LAB_C_SDI_MIN:
+        return d->sdi_min_stick_mag;
+    case LAB_C_SDI_WINDOW:
+        return (float) d->sdi_stick_window;
     }
     return 0.0f;
 }

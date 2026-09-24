@@ -205,6 +205,12 @@ enum {
     LAB_C_BLAST_BOTTOM,
     LAB_C_LCANCEL_WINDOW,   /* xE4: an L-cancel needs LAB_I_LR_AGE below this at landing (stage D) */
     LAB_C_LCANCEL_DIV,      /* xE8: an L-cancelled landing lag is the lag / this, truncated (stage D) */
+    LAB_C_STICK_SMASH_DZ,   /* x8: crossing this on an axis restarts its active timer (a "smash") (stage D) */
+    LAB_C_TUMBLE_WIGGLE,    /* x210 / x214: tumble drops to Fall on |x| past this, smashed within x214 frames */
+    LAB_C_TUMBLE_WINDOW,
+    LAB_C_TECH_ROLL_STICK,  /* x254: a tech rolls when |x| is past this at the landing (ftCo_80098928) */
+    LAB_C_SDI_MIN,          /* x4B0 / x4B4: SDI needs the stick past this, an axis smashed within x4B4 frames */
+    LAB_C_SDI_WINDOW,
     LAB_C_COUNT
 };
 

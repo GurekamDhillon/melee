@@ -3572,7 +3572,8 @@ static int l_lab_now(lua_State *L) {
 
 /* gd.lab_common() -> the PlCo constants the Lab's training readouts use (stage D), as loaded:
    lcancel_window (an L-cancel needs player.lr_age below it at landing), lcancel_div (the landing
-   lag is divided by it), hitstun_mul, kb_speed, kb_decay. Read-only. */
+   lag is divided by it), hitstun_mul, kb_speed, kb_decay; the stick thresholds the dummy keeps
+   under (stick_smash_dz, tumble_wiggle / _window, tech_roll_stick, sdi_min / _window). Read-only. */
 static int l_lab_common(lua_State *L) {
     lua_createtable(L, 0, 5);
     gs_setnum(L, "lcancel_window", gw_ScriptGame_LabCommonF(LAB_C_LCANCEL_WINDOW));
@@ -3580,6 +3581,12 @@ static int l_lab_common(lua_State *L) {
     gs_setnum(L, "hitstun_mul", gw_ScriptGame_LabCommonF(LAB_C_HITSTUN_MUL));
     gs_setnum(L, "kb_speed", gw_ScriptGame_LabCommonF(LAB_C_KB_SPEED));
     gs_setnum(L, "kb_decay", gw_ScriptGame_LabCommonF(LAB_C_KB_DECAY));
+    gs_setnum(L, "stick_smash_dz", gw_ScriptGame_LabCommonF(LAB_C_STICK_SMASH_DZ));
+    gs_setnum(L, "tumble_wiggle", gw_ScriptGame_LabCommonF(LAB_C_TUMBLE_WIGGLE));
+    gs_setnum(L, "tumble_window", gw_ScriptGame_LabCommonF(LAB_C_TUMBLE_WINDOW));
+    gs_setnum(L, "tech_roll_stick", gw_ScriptGame_LabCommonF(LAB_C_TECH_ROLL_STICK));
+    gs_setnum(L, "sdi_min", gw_ScriptGame_LabCommonF(LAB_C_SDI_MIN));
+    gs_setnum(L, "sdi_window", gw_ScriptGame_LabCommonF(LAB_C_SDI_WINDOW));
     return 1;
 }
 

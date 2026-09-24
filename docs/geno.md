@@ -874,7 +874,9 @@ game's boxes and `C` to clear the readouts. They all only read the game.
 **The move card (`M`).** It shows the focused fighter's move, **measured as it runs, the way the
 frame-data export measures** (`bx_frame`), so `lab card` and `lab export` agree. One convention for
 both:
-- **frame 1** is the first frame the game runs in the state: the frame after the change;
+- **frame 1** is the frame the state starts: the frame its change is seen (`action_frame` 0). A move's
+  frame-1 hitbox, like shine's, is already out then. The first fix counted from the frame after,
+  which read a frame low (ftilt 4 / 4-7 / 25) on ACE;
 - **startup / active** are the frames the move has a hitbox;
 - **IASA** is the first frame of the state with the interrupt flag. There is none when it only
   comes at or after the end (Fox ftilt);
@@ -974,10 +976,11 @@ the game.
 | Record slot (`R` in TRAINING, or the menu) | Your controller drives the dummy while it records, and your own fighter stands still. This is `gd.mirror_pad(from, to, true)`: the "take" flag, new in stage D, leaves `from` neutral. `R` again stops. There are 4 slots of up to 10 s, saved in `dummy_rec<n>.txt`. |
 | Record from a state | Starting a recording saves quick slot 2, and each playback of that slot loads it first, so it loops from the same spot. |
 | Playback (`P` in TRAINING) | Off, in order, or random by each slot's weight (`lab dummy w_slot 1,1,0,2`). |
-| DI | Knockback DI on every hit: none / in / out / survival / a fixed angle / random (`w_di`). The launch comes from the knockback preview of the hit's own numbers, and the stick is set with the preview's own DI rule (`gs_apply_di`): "in" is the perpendicular back toward the attacker's side, "survival" the one that ends nearer 45 / 135 degrees. It is held through hitlag. |
+| DI | Knockback DI on every hit: none / in / out / survival / a fixed angle / random (`w_di`). The launch comes from the knockback preview of the hit's own numbers, and the stick is set with the preview's own DI rule (`gs_apply_di`): "in" is the perpendicular back toward the attacker's side, "survival" the one that ends nearer 45 / 135 degrees. It is held through hitlag. Stage E's real-hit check (`lab kb`, LAUNCH's K) now predicts with this stick (`LE.di_for`), not with no DI. |
+| Clean DI (on) | On ACE, a DI flick from neutral also took an SDI: an axis crossing the smash line (PlCo `x8`) during hitlag restarts its timer, and `ftCo_Damage_OnEveryHitlag` takes an SDI inside `sdi_window`. That moved "in" up to 28 units. Clean DI scales the stick so each axis stays one unit under the line (63 of 80), so there is no SDI. Diagonals keep full DI; near an axis the turn is about 0.79² of full. The control stick still gives ASDI at hitlag's end when the C-stick is neutral: that is Melee, and the ASDI setting overrides it with the C-stick. Off = a full flick. |
 | ASDI | The C-stick held through hitlag: away / toward / up / down. |
 | SDI | N flicks (one every 2 frames: in, then neutral) at the start of hitlag, in one direction. |
-| Tech | In tumble (`DamageFly*` / `DamageFall`) it presses R when `gd.floor_below` says the floor is 5 frames away (the game takes a press in the 20 frames before contact, `ftCo_800986B0`, with a 40-frame lockout). The stick picks in place / away / toward (`ftCo_80098928` reads it at the landing). Other options are miss and random (`w_tech`). The press is tumble-only: tumble's interrupts have no airdodge (`ftCo_DamageFall_IASA`), but an air damage state out of hitstun would airdodge. |
+| Tech | In tumble (`DamageFly*` / `DamageFall`) it presses R when `gd.floor_below` says the floor is 5 frames away (the game takes a press in the 20 frames before contact, `ftCo_800986B0`, with a 40-frame lockout). The stick picks in place / away / toward (`ftCo_80098928` reads it at the landing). Other options are miss and random (`w_tech`). The press is tumble-only: tumble's interrupts have no airdodge (`ftCo_DamageFall_IASA`), but an air damage state out of hitstun would airdodge. **The roll's stick:** on ACE a full ±80 dropped tumble to Fall before the landing (the "wiggle": x past `tumble_wiggle`, smashed within `tumble_window`, or UCF 0.84's raw jump of 75+ in two frames), so away / toward landed normally on BF's platforms. The stick now eases in at 24 a frame, starting as the fall starts, to just past `tech_roll_stick` and under the smash line. There is no smash and no wiggle, and it still rolls. |
 | Getup | From DownWait: stand / attack / roll away / roll toward / random (`w_getup`). |
 | Ledge | From CliffWait: getup (toward x = 0) / roll / attack / jump / drop / ledgedash / random (`w_ledge`). The ledgedash is a fixed script (drop back, jump, 2 frames, airdodge down-in), so its timing is approximate and varies by fighter. |
 | After hitstun / shieldstun / landing | What it does on the first actionable frame (the same reading as frame advantage), the frame GuardSetOff becomes Guard, or when a landing's lag ends. The options are shield, spotdodge, roll away / toward, jump, attack, nair (jump then A), grab, or a recorded slot. |
@@ -991,6 +994,9 @@ triggered response (after its delay), then playback, then the hold. With none of
 the pad.
 
 **Native API:**
+- `gd.lab_common()` gains the PlCo stick lines the dummy keeps under: `stick_smash_dz` (`x8`),
+  `tumble_wiggle` / `tumble_window` (`x210` / `x214`), `tech_roll_stick` (`x254`), `sdi_min` /
+  `sdi_window` (`x4B0` / `x4B4`).
 - `gd.floor_below(x, y [, depth])`: `mpCheckFloor`, read-only. It clears the bounding flags it
   sets, so it is safe between frames and rewind-exact.
 - `gd.set_shield(port, health)`: offline; forks the timeline.
@@ -1024,6 +1030,14 @@ COMBO mode (`0`).
   victim is. So the panel also shows the **DI fan** (`D`): the last hit's flight for none / in /
   out / survival from the knockback preview, with the angle and hitstun, drawn to the end of
   hitstun.
+- **Throws count.** A throw has no hit event, so on ACE upthrow > uair started at the uair and was
+  dropped as a one-hit combo. Now a fighter leaving a `Thrown*` state is the thrower's hit (the
+  thrower is whoever is in `Throw*`), with the percent the throw dealt, named for the throw. A hit
+  event from the same thrower during the throw is folded into it. Pummels in `Capture*` are
+  ordinary hits.
+- **Lying down is able to act.** `DownWaitU` / `DownWaitD` (a missed tech, getup open) are free
+  states now, for the combo reading and frame advantage alike. On ACE a hit on a downed P2 read
+  TRUE; it is now escapable by the frames P2 lay there. `DownBound` (the bounce) still is not.
 - **A combo** is a run of hits by one attacker on one victim. It ends with the reason:
   - "dropped: P2 could act for 30 f (jump / airdodge / aerial)";
   - "P2 hit back";
@@ -1076,7 +1090,14 @@ The last two exist only as data, on the `tech:` rule.
 **Next candidates** (each needs a rule): shield-drop punish, wavedash out of shield, edgeguard
 (the dummy's ledge options), DI survival (you are the victim; the dummy's recorded slot hits you).
 
-**Checks off the game:** `pc/geno/tools/lab_stage_d_check.lua` covers D1-D5 in 32 checks:
+**The pause menu and the mouse.** Stage C read `gd.mouse()` as a table (`m.pressed`), from before
+the mouse existed. The public mouse returns four numbers (x, y, buttons, wheel), so every tick with
+the menu open raised an error, and after 20 the Lab turned itself off. It now reads the four
+numbers: a click is the left button's press edge (x, y are -1000 off the picture), and the wheel
+moves the selection. The menu's detail text is word-wrapped once per text, not every frame, after one
+menu draw ran past the 50 ms script budget on ACE.
+
+**Checks off the game:** `pc/geno/tools/lab_stage_d_check.lua` covers D1-D5 in 37 checks (32 at first):
 - D1, as in 14.12;
 - D3:
   - SDI flicks, then DI "in" as the right perpendicular;
@@ -1084,7 +1105,10 @@ The last two exist only as data, on the `tech:` rule.
   - a ledge jump after a 3-frame reaction;
   - a spotdodge out of shieldstun;
   - recording through the take-mirror, the slot saved, and its playback pressing A;
-- D4: a true second hit and a third escapable by exactly 3 frames;
+- D4: a true second hit and a third escapable by exactly 3 frames; upthrow counted as the opener;
+  a hit on a downed P2 escapable;
+- the pause menu ticked and drawn with `gd.mouse`'s four numbers. This check fails on `da6b6ce` with
+  the ACE error;
 - D5: the L-cancel drill's count, streak and saved result, and a tech-chase hit;
 - the D2 drawing, in HITBOXES with a swept hitbox, a grab box and a shield.
 

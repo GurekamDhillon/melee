@@ -529,8 +529,14 @@ local function panel(x, y, w, h, title, title_col)
   end
 end
 
--- word-wrap for the kit's proportional font
+-- word-wrap for the kit's proportional font. Cached: the pause menu wraps its detail text every
+-- frame, and measuring each growing prefix is what made its draw run past the script budget.
+local wrap_cache, wrap_n = {}, 0
 local function wrap(s, role, w)
+  local key = (role or "") .. "|" .. w .. "|" .. s
+  local hit = wrap_cache[key]
+  if hit then return hit end
+  if wrap_n > 256 then wrap_cache, wrap_n = {}, 0 end
   local lines, cur = {}, ""
   for word in s:gmatch("%S+") do
     local try = cur == "" and word or (cur .. " " .. word)
@@ -542,6 +548,7 @@ local function wrap(s, role, w)
     end
   end
   if cur ~= "" then lines[#lines + 1] = cur end
+  wrap_cache[key], wrap_n = lines, wrap_n + 1
   return lines
 end
 
@@ -933,15 +940,22 @@ local function lab_menu_tick()
   elseif e.B or e.START or gd.key_pressed("ESCAPE") or gd.key_pressed("BACKSPACE") then
     menu_close()
   end
-  -- a mouse, once the port has one (gd.mouse is not in the API yet)
+  -- the mouse: gd.mouse() -> x, y, buttons (1 left, 2 right, 4 middle), wheel; x, y are -1000 off the
+  -- picture. A left click is the button's press edge.
   if gd.mouse and menu.open then
-    local ok, m = pcall(gd.mouse)
-    if ok and m and m.pressed then
-      local kind, i = menu_hit(m.x, m.y)
-      if kind == "tab" then set_tab(i)
-      elseif kind == "row" then
-        if i == cur_sel() then menu_activate() else set_sel(i) end
+    local ok, mx, my, mb, wheel = pcall(gd.mouse)
+    if ok and type(mx) == "number" then
+      local left = (math.tointeger(mb or 0) or 0) & 1 ~= 0
+      local clicked = left and not menu.mouse_down
+      menu.mouse_down = left
+      if clicked and mx > -1000 then
+        local kind, i = menu_hit(mx, my)
+        if kind == "tab" then set_tab(i)
+        elseif kind == "row" then
+          if i == cur_sel() then menu_activate() else set_sel(i) end
+        end
       end
+      if type(wheel) == "number" and wheel ~= 0 then set_sel(cur_sel() + (wheel > 0 and -1 or 1)) end
     end
   end
   return true
@@ -1800,7 +1814,8 @@ local function kb_on_hit(attacker, victim, info)
   if v == nil then return end
   local pre = math.max(0, v.percent - (info.dealt or 0))
   local ok, pred = pcall(gd.kb_preview, victim, { attacker = attacker, damage = info.dealt, angle = info.angle,
-    kbg = info.kbg, bkb = info.bkb, wbk = info.wbk, percent = pre, x = v.x, y = v.y, di = "none", extra = 0 })
+    kbg = info.kbg, bkb = info.bkb, wbk = info.wbk, percent = pre, x = v.x, y = v.y,
+    di = (LE.di_for and LE.di_for(victim, attacker, info)) or "none", extra = 0 }) -- stage D: the dummy's own DI
   if not ok or pred == nil then return end
   kbv.check = { victim = victim, pred = pred, real = {}, kb_real = v.kb_last, pre = pre, hit = info,
     frame = gd.match().frame, hitstun_real = nil }
@@ -2868,9 +2883,14 @@ local function common()
     common_cache = (gd.lab_common and gd.lab_common()) or {}
     if (common_cache.lcancel_window or 0) <= 0 then common_cache.lcancel_window = 7 end
     if (common_cache.lcancel_div or 0) <= 0 then common_cache.lcancel_div = 2 end
+    -- the stick thresholds (PlCo); retail-like guesses only for a build without them
+    local def = { stick_smash_dz = 0.8, tumble_wiggle = 0.7, tumble_window = 2, tech_roll_stick = 0.7, sdi_min = 0.7,
+      sdi_window = 2 }
+    for k, v in pairs(def) do if (common_cache[k] or 0) <= 0 then common_cache[k] = v end end
   end
   return common_cache
 end
+LD.common = common
 
 -- ---- "actionable": the first frame a fighter can act again -----------------------------------------
 -- A state from which every normal option is open (FREE), the script's IASA flag, a normal landing
@@ -2879,7 +2899,8 @@ end
 local FREE = {}
 for _, n in ipairs({ "Wait", "WalkSlow", "WalkMiddle", "WalkFast", "Turn", "Dash", "Run", "RunDirect", "Squat",
   "SquatWait", "SquatRv", "Fall", "FallF", "FallB", "FallAerial", "FallAerialF", "FallAerialB", "JumpF", "JumpB",
-  "JumpAerialF", "JumpAerialB", "GuardOn", "Guard", "CliffWait", "Ottotto", "OttottoWait" }) do
+  "JumpAerialF", "JumpAerialB", "GuardOn", "Guard", "CliffWait", "Ottotto", "OttottoWait",
+  "DownWaitU", "DownWaitD" }) do -- lying down after a missed tech: getup, roll, attack are all open
   FREE[n] = true
 end
 local GUARD = { GuardOn = true, Guard = true, GuardSetOff = true, GuardReflect = true }
@@ -2964,7 +2985,8 @@ end
 
 -- ---- the move card ---------------------------------------------------------------------------------------
 -- The focused fighter's move, MEASURED as it runs, the way the frame-data export measures (bx_frame):
--- frame 1 = the first frame the game runs in the state (the frame after the change); a frame counts
+-- frame 1 = the frame the state starts (the frame its change is seen: action_frame 0; a move's frame-1
+-- hitbox, e.g. shine's, is already out then), as the export and frame-data sites count; a frame counts
 -- when the move has a hitbox (startup, active), the IASA flag (the first interruptible frame), and
 -- the total = the frames the state lasts when nothing ends it early. Unlike the export it runs in a
 -- real exchange, so the frames frozen in hitlag are not counted. Each move's last full measurement is
@@ -3026,7 +3048,8 @@ local function card_frame()
     card.live = info ~= nil
     if info then
       card.info = info
-      card.run = { key = info.key, f = 0, hb = {}, lag = p.in_hitlag }
+      card.run = { key = info.key, f = 1, hb = {}, lag = p.in_hitlag, iasa = p.iasa and 1 or nil, iasa_now = p.iasa }
+      if #p.hitboxes > 0 then card.run.hb[1] = true end
     end
   elseif card.run then
     local r = card.run
@@ -3526,7 +3549,7 @@ local HOLD_OPTS = { "none", "shield", "crouch", "jump" }
 local dm = {
   port = 2, on = false, play = "off", slot = 1, rec_state = false, -- off until asked: a human P2 keeps its pad
   w_slot = { 1, 1, 1, 1 },
-  di = "none", di_angle = 90, asdi = "none", sdi_n = 0, sdi_dir = "away",
+  di = "none", di_angle = 90, di_clean = true, asdi = "none", sdi_n = 0, sdi_dir = "away",
   tech = "in place", getup = "stand", ledge = "getup",
   w_tech = { ["in place"] = 1, away = 1, toward = 1, miss = 1 },
   w_getup = { stand = 1, attack = 1, away = 1, toward = 1 },
@@ -3554,7 +3577,7 @@ local function wparse(s, w)
 end
 local function dm_save()
   local out = {}
-  for _, k in ipairs({ "port", "on", "play", "slot", "rec_state", "di", "di_angle", "asdi", "sdi_n", "sdi_dir", "tech",
+  for _, k in ipairs({ "port", "on", "play", "slot", "rec_state", "di", "di_angle", "di_clean", "asdi", "sdi_n", "sdi_dir", "tech",
     "getup", "ledge", "after_hit", "after_shield", "after_land", "delay_min", "delay_max", "pct_lock", "inf_shield",
     "tilt", "hold" }) do
     out[#out + 1] = k .. "=" .. tostring(dm[k])
@@ -3704,10 +3727,19 @@ local function di_stick(vx, vy, how)
   return -ccx, -ccy
 end
 
-function LD.dummy_hit(attacker, victim, info)
-  if victim ~= dm.port or not dm.on then return end
+-- The DI stick for a hit on the dummy, in pad units, cached per frame: stage E's real-hit knockback
+-- check (LE.di_for) predicts with it, then the dummy holds it. "Clean" DI keeps each axis under the
+-- smash line (PlCo x8): an axis that crosses it during hitlag restarts its timer and the game takes an
+-- SDI (ftCo_Damage_OnEveryHitlag), which a DI flick from neutral always did. Diagonals keep their full
+-- DI; near an axis the turn is (0.79)^2 of the full one. The control stick still gives ASDI at the end
+-- of hitlag when the C-stick is neutral, as it does for a player (ASDI below overrides with the C-stick).
+local di_cache = nil
+local function di_for(victim, attacker, info)
+  local now = gd.match().frame
+  if di_cache and di_cache.f == now and di_cache.v == victim then return di_cache end
+  if victim ~= dm.port or not dm.on then return nil end
   local p, a = gd.player(victim), attacker and gd.player(attacker)
-  if p == nil then return end
+  if p == nil then return nil end
   local vx, vy = (a and sgn(p.x - a.x) or -p.facing), 1
   if info.angle and gd.kb_preview then
     local ok, r = pcall(gd.kb_preview, victim, { damage = info.damage or info.dealt, angle = info.angle, kbg = info.kbg,
@@ -3716,10 +3748,32 @@ function LD.dummy_hit(attacker, victim, info)
   end
   local how = dm.di == "random" and pick(dm.w_di) or dm.di
   local sx, sy = di_stick(vx, vy, how)
+  local rx, ry = sx * STK, sy * STK
+  if dm.di_clean then
+    local cap = math.floor(LD.common().stick_smash_dz * STK) - 1
+    local m = math.max(math.abs(rx), math.abs(ry))
+    if m > cap then rx, ry = rx * cap / m, ry * cap / m end
+  end
+  rx = rx >= 0 and math.floor(rx + 0.5) or -math.floor(-rx + 0.5)
+  ry = ry >= 0 and math.floor(ry + 0.5) or -math.floor(-ry + 0.5)
+  di_cache = { f = now, v = victim, how = how, rx = rx, ry = ry }
+  return di_cache
+end
+LE.di_for = function(victim, attacker, info)
+  local d = di_for(victim, attacker, info)
+  if d == nil or d.how == "none" then return nil end
+  return { x = d.rx / STK, y = d.ry / STK }
+end
+
+function LD.dummy_hit(attacker, victim, info)
+  if victim ~= dm.port or not dm.on then return end
+  local p = gd.player(victim)
+  local d = di_for(victim, attacker, info)
+  if p == nil or d == nil then return end
   local ax, ay = dir_xy(p, dm.asdi)
   local dx, dy = dir_xy(p, dm.sdi_dir)
-  st.hit = { f = gd.match().frame, sx = math.floor(sx * STK + 0.5), sy = math.floor(sy * STK + 0.5), ax = ax, ay = ay,
-    sdi_left = dm.sdi_n, sdx = dx, sdy = dy, k = 0, how = how }
+  st.hit = { f = gd.match().frame, sx = d.rx, sy = d.ry, ax = ax, ay = ay, sdi_left = dm.sdi_n, sdx = dx, sdy = dy, k = 0,
+    how = d.how }
   st.run = nil
 end
 
@@ -3790,21 +3844,33 @@ local function tech_spec(p, now)
     if not p.airborne then st.fall = nil end
     return nil
   end
-  if st.fall == nil then st.fall = { what = opt(dm.tech, dm.w_tech), pressed = nil } end
+  if st.fall == nil then st.fall = { what = opt(dm.tech, dm.w_tech), pressed = nil, x = st.last_x or 0 } end
   local f = st.fall
   if f.what == nil or f.what == "miss" then return nil end
-  local x = 0
-  if f.what == "away" or f.what == "toward" then x = dir_xy(p, f.what) end
+  -- a roll needs |x| past tech_roll_stick at the landing. A full x would drop tumble to Fall first
+  -- (ftCo_DamageFall_IASA: x past tumble_wiggle, smashed within tumble_window frames; UCF 0.84 also
+  -- takes a raw jump of 75+ in two frames), so the stick eases in (24 a frame) and stays under the
+  -- smash line: no smash, no wiggle, and still a roll.
+  local target = 0
+  if f.what == "away" or f.what == "toward" then
+    local c = LD.common()
+    local cap = math.floor(c.stick_smash_dz * STK) - 1
+    local want = math.min(cap, math.ceil(c.tech_roll_stick * STK) + 2)
+    target = (dir_xy(p, f.what) >= 0 and 1 or -1) * want
+  end
+  local step = 24
+  if f.x < target then f.x = math.min(target, f.x + step) elseif f.x > target then f.x = math.max(target, f.x - step) end
+  local x = f.x
   if f.pressed then return { x = x } end -- hold the roll's direction to the landing
   local vy = (p.vy or 0) + (p.kb_vy or 0)
-  if vy >= 0 or (st.last_press and now - st.last_press < TECH_LOCKOUT) then return nil end
+  if vy >= 0 or (st.last_press and now - st.last_press < TECH_LOCKOUT) then return x ~= 0 and { x = x } or nil end
   local floor = gd.floor_below(p.x, p.y + 4, 400)
-  if floor == nil then return nil end
+  if floor == nil then return x ~= 0 and { x = x } or nil end
   if (p.y - floor) / -vy <= TECH_PRESS_FRAMES then
     f.pressed, st.last_press = now, now
     return { b = B_R, r = 255, x = x }
   end
-  return nil
+  return x ~= 0 and { x = x } or nil
 end
 
 -- this frame's input for the dummy (applied to the next frame), or nil
@@ -3878,10 +3944,12 @@ end
 local function apply(spec)
   if spec == nil then
     if not released then gd.release(dm.port) released = true end
+    st.last_x = 0
     return
   end
   gd.input(dm.port, { buttons = spec.b or 0, x = spec.x or 0, y = spec.y or 0, cx = spec.cx or 0, cy = spec.cy or 0,
     l = spec.l or 0, r = spec.r or 0 }, 1)
+  st.last_x = spec.x or 0
   released = false
 end
 
@@ -3994,6 +4062,10 @@ local extra = {
     run = function() dm.rec_state = not dm.rec_state dm_save() end, adjust = function() dm.rec_state = not dm.rec_state dm_save() end },
   row("Playback", "lab_play", "Play the recorded slots: in order, or at random by each slot's weight (lab dummy w_slot 1,1,0,2).", "play", PLAY_OPTS),
   row("DI", "lab_launch", "Knockback DI on every hit: in, out, survival (toward the diagonal), a fixed stick angle, or random (weights: lab dummy w_di).", "di", DI_OPTS),
+  { label = "Clean DI", icon = "lab_launch",
+    desc = "On: the DI stick stays just under the smash line on each axis, so the DI itself never also counts as an SDI. Off: a full flick (DI plus one SDI, as a human's flick often is).",
+    toggle = function() return dm.di_clean end, value = function() return onoff(dm.di_clean) end,
+    run = function() dm.di_clean = not dm.di_clean dm_save() end, adjust = function() dm.di_clean = not dm.di_clean dm_save() end },
   num("DI angle", "lab_launch", "The stick angle for DI \"angle\", in degrees (0 = right, 90 = up).", "di_angle", 0, 345, 15, function(v) return v .. " DEG" end),
   row("ASDI", "lab_mirror", "The C-stick held through hitlag: the small nudge at its end.", "asdi", ASDI_OPTS),
   num("SDI count", "lab_mirror", "How many smash-DI flicks during hitlag (one every 2 frames).", "sdi_n", 0, 8, 1),
@@ -4201,12 +4273,15 @@ local function end_combo(c, why)
   end
 end
 
+local thrown = {} -- thrown[victim] = {by, move, pct}: a throw is one hit, counted when the victim is let go
 function LD.combo_hit(attacker, victim, info)
   if attacker == nil or victim == nil or attacker == victim or info.item then return end
+  local t = thrown[victim]
+  if t and t.by == attacker and not info.throw then return end -- the throw's own damage: counted on release
   local now = gd.match().frame
   local c = cb.cur
   local pa = gd.player(attacker)
-  local hit = { f = now, move = pa and pa.motion_name or "?", dmg = info.dealt or 0 }
+  local hit = { f = now, move = info.move or (pa and pa.motion_name) or "?", dmg = info.dealt or 0 }
   if c and c.a == attacker and c.v == victim then
     local prev = c.hits[#c.hits]
     if prev and prev.tv and prev.tv < now then
@@ -4240,7 +4315,28 @@ end
 
 -- per frame: the victim's first actionable frame after the last hit; a combo drops when the victim
 -- has been actionable long enough that nothing is following up (30 frames), or lands a hit of its own
+-- the throws: the victim in a Thrown* state is being thrown (by whoever is in a Throw* state); leaving
+-- it is the throw's hit, with the percent it dealt
+local function throw_frame()
+  for _, p in ipairs(gd.players()) do
+    local t = thrown[p.port]
+    if p.motion_name:find("^Thrown") then
+      if t == nil then
+        local by, move
+        for _, q in ipairs(gd.players()) do
+          if q.port ~= p.port and q.motion_name:find("^Throw") then by, move = q.port, q.motion_name end
+        end
+        if by then thrown[p.port] = { by = by, move = move, pct = p.percent } end
+      end
+    elseif t then
+      thrown[p.port] = nil
+      LD.combo_hit(t.by, p.port, { dealt = math.max(0, p.percent - t.pct), throw = true, move = t.move })
+    end
+  end
+end
+
 function LD.combo_frame(now)
+  throw_frame()
   local c = cb.cur
   if c == nil then return end
   local pv = gd.player(c.v)
@@ -4262,6 +4358,7 @@ end
 
 function LD.combo_cut()
   cb.cur = nil
+  thrown = {}
   local now = gd.match().frame
   for i = #cb.hist, 1, -1 do if cb.hist[i].f0 > now then table.remove(cb.hist, i) end end
 end

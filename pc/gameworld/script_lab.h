@@ -151,4 +151,31 @@ enum {
 #define LAB_HIT_VICTIM_SUB 0x200
 #define LAB_HIT_BY_ITEM 0x400
 
+/* ScriptGame_LabDObjI(slot, d, field): the draw list (fp->dobj_list) and the model-part states */
+enum {
+    LAB_DI_COUNT = 0,      /* number of DObjs (d ignored) */
+    LAB_DI_MODELS,         /* model-part tables' model count (d ignored) */
+    LAB_DI_MODEL_STATE,    /* d = model: its current state (fp->x5F4_arr[d].idx, -1 none) */
+    LAB_DI_COSTUME_TOBJS,  /* costume texture-anim TObjs (fp->tobj_list, d ignored) */
+    LAB_DI_FLAGS,          /* DObj flags (bit 0 = hidden) */
+    LAB_DI_RENDER,         /* its MObj render mode */
+    LAB_DI_TOBJS,          /* its MObj's TObj count */
+    LAB_DI_COUNT_
+};
+/* ScriptGame_LabTObjF(slot, d, t, field): TObj t of DObj d (d = -1: costume TObj t) */
+enum {
+    LAB_TF_ID = 0,  /* GXTexMapID */
+    LAB_TF_SRC,     /* GXTexGenSrc */
+    LAB_TF_FLAGS,   /* TObj flags (coord / lightmap / colormap bits) */
+    LAB_TF_TU,      /* texture translate, scale */
+    LAB_TF_TV,
+    LAB_TF_SU,
+    LAB_TF_SV,
+    LAB_TF_FRAME,   /* its texture anim's frame, -1 none */
+    LAB_TF_FMT,     /* image GXTexFmt, width, height */
+    LAB_TF_W,
+    LAB_TF_H,
+    LAB_TF_COUNT
+};
+
 #endif /* SCRIPT_LAB_H */

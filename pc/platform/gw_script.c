@@ -50,6 +50,8 @@ extern int gw_ScriptGame_HurtI(int slot, int i, int field);
 extern float gw_ScriptGame_HurtF(int slot, int i, int field);
 extern float gw_ScriptGame_JointF(int slot, int i, int comp);
 extern int gw_ScriptGame_JointParent(int slot, int i);
+extern int gw_ScriptGame_LabDObjI(int slot, int d, int field);
+extern float gw_ScriptGame_LabTObjF(int slot, int d, int t, int field);
 extern float gw_ScriptGame_CameraF(int field);
 extern int gw_ScriptGame_LabDebugDraw(int slot, int set, int value);
 extern int gw_ScriptGame_LabStageDraw(int mask, int value);
@@ -1681,6 +1683,58 @@ static int l_joints(lua_State *L) {
     return 1;
 }
 
+/* gd.dobjs(port) -> the fighter's draw list, read-only: { models = {state per model-part model},
+ * costume = {{frame, tu, tv, su, sv} per costume texture-anim TObj}, {index, hidden, render, tobjs =
+ * {{id, src, flags, tu, tv, su, sv, frame, fmt, w, h}}} per DObj }. */
+static void gs_tobj_table(lua_State *L, int slot, int d, int t) {
+    static const char *const names[LAB_TF_COUNT] = {"id", "src", "flags", "tu", "tv", "su", "sv", "frame", "fmt", "w", "h"};
+    int f;
+    lua_createtable(L, 0, LAB_TF_COUNT);
+    for (f = 0; f < LAB_TF_COUNT; ++f) {
+        gs_setnum(L, names[f], gw_ScriptGame_LabTObjF(slot, d, t, f));
+    }
+}
+
+static int l_dobjs(lua_State *L) {
+    int slot = gs_present_arg(L, 1), n, i, t, nt;
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    n = gw_ScriptGame_LabDObjI(slot, 0, LAB_DI_COUNT);
+    lua_createtable(L, n > 0 ? n : 0, 2);
+    nt = gw_ScriptGame_LabDObjI(slot, 0, LAB_DI_MODELS);
+    lua_createtable(L, nt > 0 ? nt : 0, 0);
+    for (i = 0; i < nt && i < 12; ++i) {
+        lua_pushinteger(L, gw_ScriptGame_LabDObjI(slot, i, LAB_DI_MODEL_STATE));
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "models");
+    nt = gw_ScriptGame_LabDObjI(slot, 0, LAB_DI_COSTUME_TOBJS);
+    lua_createtable(L, nt > 0 ? nt : 0, 0);
+    for (i = 0; i < nt && i < 5; ++i) {
+        gs_tobj_table(L, slot, -1, i);
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "costume");
+    for (i = 0; i < n; ++i) {
+        int flags = gw_ScriptGame_LabDObjI(slot, i, LAB_DI_FLAGS);
+        lua_createtable(L, 0, 4);
+        gs_setint(L, "index", i);
+        gs_setbool(L, "hidden", (flags & 1) != 0);
+        gs_setint(L, "render", gw_ScriptGame_LabDObjI(slot, i, LAB_DI_RENDER));
+        nt = gw_ScriptGame_LabDObjI(slot, i, LAB_DI_TOBJS);
+        lua_createtable(L, nt > 0 ? nt : 0, 0);
+        for (t = 0; t < nt; ++t) {
+            gs_tobj_table(L, slot, i, t);
+            lua_rawseti(L, -2, t + 1);
+        }
+        lua_setfield(L, -2, "tobjs");
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+
 /* gd.attrs(port) -> {name = value} for the 40 named ftCo_DatAttrs fields, as the fighter has them */
 static int l_attrs(lua_State *L) {
     int slot = gs_present_arg(L, 1), i, n = gw_ScriptGame_LabAttrCount();
@@ -2139,7 +2193,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
     /* the Geno Lab (docs/geno.md) */
     {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
-    {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"project", l_project}, {"attrs", l_attrs},
+    {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs}, {"project", l_project}, {"attrs", l_attrs},
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
     {"lab_request", l_lab_request},

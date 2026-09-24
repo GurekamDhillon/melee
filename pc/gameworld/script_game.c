@@ -761,3 +761,112 @@ float ScriptGame_LabAttrF(int slot, int i)
     }
     return *(f32*) base;
 }
+
+/* ---- Lab: the fighter's draw list (DObjs, their materials' TObjs, the model-part states) ---------
+ * Read-only, like the joints: what the renderer will draw this frame. `d` indexes fp->dobj_list (the
+ * part-visibility tables' DObj numbering), `t` the DObj's MObj TObj chain. docs/geno.md "Geno Lab". */
+#include <sysdolphin/baselib/aobj.h>
+#include <sysdolphin/baselib/dobj.h>
+#include <sysdolphin/baselib/mobj.h>
+#include <sysdolphin/baselib/tobj.h>
+
+static HSD_DObj* lab_dobj(Fighter* fp, int d)
+{
+    if (fp == NULL || d < 0 || d >= (int) fp->dobj_list.count || fp->dobj_list.data == NULL) {
+        return NULL;
+    }
+    return fp->dobj_list.data[d];
+}
+
+static HSD_TObj* lab_tobj(HSD_DObj* dobj, int t)
+{
+    HSD_TObj* tp;
+    if (dobj == NULL || dobj->mobj == NULL || t < 0) {
+        return NULL;
+    }
+    for (tp = dobj->mobj->tobj; tp != NULL && t > 0; tp = tp->next) {
+        t--;
+    }
+    return tp;
+}
+
+/* field: LAB_DI_* */
+int ScriptGame_LabDObjI(int slot, int d, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    HSD_DObj* dobj;
+    HSD_TObj* tp;
+    int n = 0;
+    if (fp == NULL) {
+        return -1;
+    }
+    switch (field) {
+    case LAB_DI_COUNT:
+        return (int) fp->dobj_list.count;
+    case LAB_DI_MODELS:
+        return (int) fp->x5AC.model_num;
+    case LAB_DI_MODEL_STATE:
+        return d >= 0 && d < 12 ? (int) fp->x5F4_arr[d].idx : -1;
+    case LAB_DI_COSTUME_TOBJS:
+        return (int) fp->tobj_list.n_costume_tobjs;
+    }
+    dobj = lab_dobj(fp, d);
+    if (dobj == NULL) {
+        return -1;
+    }
+    switch (field) {
+    case LAB_DI_FLAGS:
+        return (int) dobj->flags;
+    case LAB_DI_RENDER:
+        return dobj->mobj != NULL ? (int) dobj->mobj->rendermode : 0;
+    case LAB_DI_TOBJS:
+        for (tp = dobj->mobj != NULL ? dobj->mobj->tobj : NULL; tp != NULL; tp = tp->next) {
+            n++;
+        }
+        return n;
+    }
+    return -1;
+}
+
+/* field: LAB_TF_*; d = -1 reads costume TObj t (fp->tobj_list, the eye texture anims) */
+float ScriptGame_LabTObjF(int slot, int d, int t, int field)
+{
+    Fighter* fp = script_fighter(slot);
+    HSD_TObj* tp;
+    if (fp == NULL) {
+        return 0.0f;
+    }
+    if (d < 0) {
+        tp = t >= 0 && t < (int) fp->tobj_list.n_costume_tobjs && t < 5 ? fp->tobj_list.costume_tobjs[t] : NULL;
+    } else {
+        tp = lab_tobj(lab_dobj(fp, d), t);
+    }
+    if (tp == NULL) {
+        return -1.0f;
+    }
+    switch (field) {
+    case LAB_TF_ID:
+        return (float) tp->id;
+    case LAB_TF_SRC:
+        return (float) tp->src;
+    case LAB_TF_FLAGS:
+        return (float) (tp->flags & 0x7FFFFFFF);
+    case LAB_TF_TU:
+        return tp->translate.x;
+    case LAB_TF_TV:
+        return tp->translate.y;
+    case LAB_TF_SU:
+        return tp->scale.x;
+    case LAB_TF_SV:
+        return tp->scale.y;
+    case LAB_TF_FRAME:
+        return tp->aobj != NULL ? tp->aobj->curr_frame : -1.0f;
+    case LAB_TF_FMT:
+        return tp->imagedesc != NULL ? (float) tp->imagedesc->format : -1.0f;
+    case LAB_TF_W:
+        return tp->imagedesc != NULL ? (float) tp->imagedesc->width : -1.0f;
+    case LAB_TF_H:
+        return tp->imagedesc != NULL ? (float) tp->imagedesc->height : -1.0f;
+    }
+    return 0.0f;
+}

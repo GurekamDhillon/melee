@@ -219,11 +219,15 @@ void gw_script_pad_state(int ch, unsigned *buttons, int *sx, int *sy, int *cx, i
 
 /* gd.mirror_pad (the Geno Lab): port `to` receives exactly what port `from` sends, after every
  * other source - two fighters under the same inputs. Off during any netplay/rollback session. */
-static int gw_mirror_from = -1, gw_mirror_to = -1;
+static int gw_mirror_from = -1, gw_mirror_to = -1, gw_mirror_take = 0;
 void gw_script_pad_mirror(int from, int to) {
   gw_mirror_from = from;
   gw_mirror_to = to;
+  gw_mirror_take = 0;
 }
+/* Stage D (the dummy's recording): "take" = port `from` is left neutral while `to` gets its pad,
+ * so the player drives the dummy and their own fighter stands still. Set after the mirror. */
+void gw_script_pad_take(int on) { gw_mirror_take = on; }
 
 extern int gw_RB_Enabled(void);
 extern int gw_Netplay_Enabled(void);
@@ -249,6 +253,9 @@ void gw_Script_PadApply(void *pad_status_array) {
   if (gw_mirror_from >= 0 && gw_mirror_from < 4 && gw_mirror_to >= 0 && gw_mirror_to < 4 &&
       !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
     st[gw_mirror_to] = st[gw_mirror_from];
+    if (gw_mirror_take) {
+      memset(&st[gw_mirror_from], 0, sizeof st[gw_mirror_from]);
+    }
   }
   for (ch = 0; ch < 4; ++ch) {
     gw_seen[ch].buttons = gw_r16(&st[ch].button);

@@ -231,6 +231,12 @@ float ScriptGame_LabF(int slot, int field)
         return fp->cmd_timer;
     case LAB_F_KB_LAST:
         return fp->dmg.x18d8.kb_applied1;
+    case LAB_F_SHIELD_X:
+        return fp->shield_hit.pos.x;
+    case LAB_F_SHIELD_Y:
+        return fp->shield_hit.pos.y;
+    case LAB_F_SHIELD_R:
+        return fp->shield_hit.size;
     }
     return 0.0f;
 }
@@ -306,6 +312,8 @@ int ScriptGame_LabI(int slot, int field)
         return (int) fp->x67F;
     case LAB_I_JUMP_AGE:
         return (int) fp->x67E;
+    case LAB_I_SHIELD_ON:
+        return fp->x221B_b0 ? 1 : 0;
     case LAB_I_JOINTS:
         return lab_joint_count(fp);
     case LAB_I_HURTBOXES:
@@ -897,6 +905,7 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
 #include <melee/ft/kinds/ftCommon/ftCo_Damage.h>
 #include <melee/gm/gmvs.h>
 #include <melee/gr/stage.h>
+#include <melee/mp/mplib.h>
 
 /* The knockback a hit would give the fighter in `slot` now: ftColl_80079AB0 (the fighter-hit
  * path of ftColl, with the stage factor and both players' attack / defense ratios), then
@@ -997,6 +1006,42 @@ float ScriptGame_LabCommonF(int which)
         return d->xE8;
     }
     return 0.0f;
+}
+
+/* Stage D. The first floor line under (x, y) within `depth` units: its y, or -1e6 when there is
+ * none. The dummy times its tech press with it. mpCheckFloor clears the collision joints'
+ * bounding flags it sets, so this leaves no state behind (safe between frames, rewind-exact). */
+float ScriptGame_LabFloorY(int x_bits, int y_bits, int depth_bits)
+{
+    union {
+        int i;
+        float f;
+    } x, y, d;
+    Vec3 pos;
+    x.i = x_bits;
+    y.i = y_bits;
+    d.i = depth_bits;
+    if (!mpCheckFloor(x.f, y.f, x.f, y.f - d.f, 0.0f, &pos, NULL, NULL, NULL, -1, -1, -1, NULL, NULL)) {
+        return -1000000.0f;
+    }
+    return pos.y;
+}
+
+/* Stage D, the dummy's infinite shield: a gameplay write (offline; gw_script.c forks the Lab's
+ * timeline first, as for set_percent). */
+int ScriptGame_LabSetShield(int slot, int health_bits)
+{
+    Fighter* fp = script_fighter(slot);
+    union {
+        int i;
+        float f;
+    } h;
+    if (fp == NULL) {
+        return -1;
+    }
+    h.i = health_bits;
+    fp->shield_health = h.f;
+    return 0;
 }
 
 /* The victim's own numbers the flight uses: gravity, terminal velocity, aerial friction,

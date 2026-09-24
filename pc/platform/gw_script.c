@@ -719,6 +719,10 @@ static void gs_push_lab_fields(lua_State *L, int slot) {
     gs_setint(L, "ledge_cooldown", gw_ScriptGame_LabI(slot, LAB_I_LEDGE_COOLDOWN));
     gs_setint(L, "lr_age", gw_ScriptGame_LabI(slot, LAB_I_LR_AGE));
     gs_setint(L, "jump_age", gw_ScriptGame_LabI(slot, LAB_I_JUMP_AGE));
+    gs_setbool(L, "shield_on", gw_ScriptGame_LabI(slot, LAB_I_SHIELD_ON) == 1);
+    gs_setnum(L, "shield_x", gw_ScriptGame_LabF(slot, LAB_F_SHIELD_X));
+    gs_setnum(L, "shield_y", gw_ScriptGame_LabF(slot, LAB_F_SHIELD_Y));
+    gs_setnum(L, "shield_r", gw_ScriptGame_LabF(slot, LAB_F_SHIELD_R));
     gs_setint(L, "draw_flags", gw_ScriptGame_LabI(slot, LAB_I_DRAW_FLAGS));
     gs_setint(L, "joint_count", gw_ScriptGame_LabI(slot, LAB_I_JOINTS));
     gs_setbool(L, "hidden", gw_ScriptGame_LabI(slot, LAB_I_HIDDEN) == 1);
@@ -2308,6 +2312,7 @@ static int l_set_motion(lua_State *L) {
 }
 
 extern void gw_script_pad_mirror(int from, int to);
+extern void gw_script_pad_take(int on);
 /* gd.mirror_pad(from, to) / gd.mirror_pad(): port `to` gets exactly what port `from` sends (for
    comparing two fighters under the same inputs; `to` must be a human slot). Offline, gameplay. */
 static int l_mirror_pad(lua_State *L) {
@@ -2322,6 +2327,8 @@ static int l_mirror_pad(lua_State *L) {
             luaL_error(L, "gd.mirror_pad: two different ports 1-4");
         }
         gw_script_pad_mirror(from, to);
+        /* stage D: gd.mirror_pad(from, to, true) also leaves `from` neutral (the dummy's recording) */
+        gw_script_pad_take(lua_toboolean(L, 3));
     }
     return 0;
 }
@@ -3576,6 +3583,39 @@ static int l_lab_common(lua_State *L) {
     return 1;
 }
 
+extern float gw_ScriptGame_LabFloorY(int x_bits, int y_bits, int depth_bits);
+extern int gw_ScriptGame_LabSetShield(int slot, int health_bits);
+
+/* gd.floor_below(x, y [, depth]) -> the y of the first floor line under (x, y) within `depth`
+   units (default 200), or nil. Read-only (mpCheckFloor), in a match only. Stage D's dummy. */
+static int l_floor_below(lua_State *L) {
+    float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    float depth = (float) luaL_optnumber(L, 3, 200.0);
+    float fy;
+    if (!gs.match_active) {
+        lua_pushnil(L);
+        return 1;
+    }
+    fy = gw_ScriptGame_LabFloorY(gs_fbits(x), gs_fbits(y), gs_fbits(depth));
+    if (fy <= -999999.0f) {
+        lua_pushnil(L);
+    } else {
+        lua_pushnumber(L, fy);
+    }
+    return 1;
+}
+
+/* gd.set_shield(port, health): the dummy's infinite shield. Gameplay, offline; forks the timeline
+   like gd.set_percent. */
+static int l_set_shield(lua_State *L) {
+    int slot = gs_slot_arg(L, 1);
+    float h = (float) luaL_checknumber(L, 2);
+    gs_require_offline(L, "set_shield");
+    gs_rw_branch();
+    gw_ScriptGame_LabSetShield(slot, gs_fbits(h < 0.0f ? 0.0f : h));
+    return 0;
+}
+
 /* gd.lab_env(name) -> the value of the environment variable MELEE_LAB_<name>, or nil (only that
    family: the Lab's launch switches, e.g. MELEE_LAB_BATCH for the headless frame-data export) */
 static int l_lab_env(lua_State *L) {
@@ -3672,7 +3712,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"motion_list", l_motion_list}, {"kb_preview", l_kb_preview}, {"rollbacks", l_rollbacks},
     {"rollbacks_clear", l_rollbacks_clear}, {"lab_env", l_lab_env}, {"lab_now", l_lab_now},
     /* stage D */
-    {"lab_common", l_lab_common},
+    {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */

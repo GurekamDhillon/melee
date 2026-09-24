@@ -12,7 +12,7 @@
 --   LEFT   step back (hold; CTRL: 10)   F5 / F6  save / load state 1
 --   F8     hot reload (geno.json, overlays, this script) and replay the last seconds
 --   G      go live: stop replaying the logged input here (after a rewind)
---   TAB    next mode (SHIFT: previous)  1-9  a mode directly    F  focus the next fighter
+--   TAB    next mode (SHIFT: previous)  1-9, 0  a mode directly    F  focus the next fighter
 --   H      hide / show the Lab UI  F3  help (this mode's keys)  ESC  the LAB pause menu
 -- Mode keys:
 --   CLEAN     (none)                      just the game and a tiny mode chip
@@ -24,6 +24,8 @@
 --   LAUNCH    Q / E hitbox  D DI  Z / X percent -/+10  P live percent  V victim  A arc  K check
 --   A/B       R record A  B re-sim B on reloaded data  C re-sim B on the same data  M two fighters
 --   TRAINING  A frame advantage  M move card  I input display  K tech feedback  B boxes  C clear
+--             R record the dummy  P playback
+--   COMBO     D DI fan  B boxes  C clear      (HITBOXES also: W swept  U hurtbox states  S shield  C grab)
 --   (FRAMES also: N the rollback strip.)  The pause menu's TOOLS tab: frame-data export and diff.
 -- Console: "lab help", "lab status".
 
@@ -68,6 +70,14 @@ local MODES = {
         desc = "The environment collision diamond. Where the fighter meets the floor." },
       { k = "D", id = "data", label = "Hitbox data", icon = "lab_info", def = true,
         desc = "A panel with every live hitbox of the focused fighter, in full." },
+      { k = "W", id = "swept", label = "Swept hitboxes", icon = "lab_hitlabels", def = true,
+        desc = "Each hitbox as the capsule from last frame to this one (what Melee tests hits against), with fading ghosts." },
+      { k = "U", id = "hurt", label = "Hurtbox states", icon = "lab_hurtbox", def = false,
+        desc = "Hurtboxes coloured by state: normal yellow, intangible blue, invincible green, with the frames left." },
+      { k = "S", id = "shield", label = "Shield bubble", icon = "lab_eye", def = true,
+        desc = "The shield as the game has it this frame: its size, where it sits, its health." },
+      { k = "C", id = "grab", label = "Grab boxes", icon = "lab_focus", def = true,
+        desc = "Grab ranges, in purple." },
     }, a = {} },
   { id = "frames", name = "FRAMES", icon = "lab_timeline",
     blurb = "The move as a timeline: windows, IASA, effects. Scrub it, replay it, line two up.",
@@ -188,6 +198,19 @@ local MODES = {
     },
     a = {
       { k = "C", label = "Clear", icon = "lab_trash", run = "tr_clear" },
+      { k = "R", label = "Record dummy", icon = "lab_record", run = "dm_record", state = "dm_rec" },
+      { k = "P", label = "Playback", icon = "lab_play", run = "dm_play", state = "dm_play" },
+    } },
+  { id = "combo", name = "COMBO", icon = "lab_ko",
+    blurb = "Was it true? Each hit of a combo, true or escapable (by how many frames, and how), why it dropped, and how DI moves the last hit.",
+    t = {
+      { k = "D", id = "fan", label = "DI fan", icon = "lab_launch", def = true,
+        desc = "The last hit's flight for each DI: none, in, out, survival, to the end of hitstun." },
+      { k = "B", id = "boxes", label = "Hit / hurtboxes", icon = "lab_hitbox", def = false,
+        desc = "The game's hitbox and hurtbox draw, with the swept hitboxes." },
+    },
+    a = {
+      { k = "C", label = "Clear", icon = "lab_trash", run = "cb_clear" },
     } },
 }
 local MODE_BY_ID = {}
@@ -197,7 +220,7 @@ local GLOBAL_KEYS = {
   { "SPACE", "Pause / resume" }, { "RIGHT", "Step +1 (hold, CTRL x10)" },
   { "LEFT", "Step -1 (hold, CTRL x10)" }, { "F5", "Save state 1" }, { "F6", "Load state 1" },
   { "F8", "Hot reload + replay" }, { "G", "Go live (stop replaying)" },
-  { "TAB", "Next mode (SHIFT back)" }, { "1-9", "Mode directly" }, { "F", "Focus next fighter" },
+  { "TAB", "Next mode (SHIFT back)" }, { "1-0", "Mode directly" }, { "F", "Focus next fighter" },
   { "H", "Hide / show the Lab UI" }, { "F3", "This help" }, { "ESC", "Pause menu" },
 }
 
@@ -268,7 +291,7 @@ local function wanted_flags()
   if not cfg.on or cfg.hidden then return gd.draw.DEFAULT end
   local f = 0
   if not in_mode("inspect") or T("model") then f = f | gd.draw.MODEL end
-  if (in_mode("hitboxes") or in_mode("frames") or in_mode("moves") or in_mode("launch") or in_mode("training")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
+  if (in_mode("hitboxes") or in_mode("frames") or in_mode("moves") or in_mode("launch") or in_mode("training") or in_mode("combo")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
   return f
 end
 
@@ -955,14 +978,17 @@ local function lab_menu_draw()
   local ty = 70 - (1 - o) * 30
   local tx = 44
   img("glyph_l", 18, ty + 6, 16, 16, MUTED)
+  local tpad, tgap, tsum = 30, 8, 0
+  for _, t in ipairs(TABS) do tsum = tsum + math.floor(measure(t.name, "label")) + 38 end
+  if tsum > 570 then tpad, tgap = 16, 4 end -- stage D's DRILLS tab: squeeze rather than run off the edge
   for i, t in ipairs(TABS) do
-    local tw = math.floor(measure(t.name, "label")) + 30
+    local tw = math.floor(measure(t.name, "label")) + tpad
     local on = i == menu.tab
     quad(tx, ty, tw, 28, on and GOLD or alpha(GLASS_SOLID, 0xF0), SHEAR)
     if on then quad(tx + 2, ty + 28, tw - 4, 3, GOLD_DK, SHEAR) end
     stxt(tx + tw / 2, ty + 22, t.name, "label", on and INK or BONE, "center")
     menu.hits[#menu.hits + 1] = { kind = "tab", i = i, x = tx, y = ty, w = tw, h = 28 }
-    tx = tx + tw + 8
+    tx = tx + tw + tgap
   end
   img("glyph_r", tx + 2, ty + 6, 16, 16, MUTED)
   -- the frame ruler under the tabs
@@ -2928,6 +2954,10 @@ end
 function LD.on_hit(attacker, victim, info)
   if attacker == nil or victim == nil or attacker == victim or info.item then return end
   fa_start(attacker, victim, "hit")
+  LD.dummy_hit(attacker, victim, info)
+  LD.combo_victim_hit(attacker, victim)
+  LD.combo_hit(attacker, victim, info)
+  LD.drill_hit(attacker, victim)
 end
 
 -- ---- the move card ---------------------------------------------------------------------------------------
@@ -3051,7 +3081,9 @@ local function tech_result(port, kind, ok, text, value)
   table.insert(tech.res, 1, { port = port, kind = kind, ok = ok, text = text, frame = gd.match().frame })
   while #tech.res > TECH_N do table.remove(tech.res) end
   log(string.format("P%d %s: %s", port, TECH_NAME[kind], text), ok == true and OK or ok == false and DANGER or ACCENT)
+  LD.drill_tech(port, kind, ok, text, value)
 end
+function LD.reset_tech() tech.st = {} end
 
 local function lcancel_land(p, t, now)
   local age, win = p.lr_age or 255, common().lcancel_window
@@ -3146,6 +3178,10 @@ function LD.frame()
   fa_frame(now)
   card_frame()
   inp_frame(now)
+  LD.dummy_frame(now)
+  LD.d2_frame(now)
+  LD.combo_frame(now)
+  LD.drill_frame(now)
 end
 
 -- the timeline jumped (step back, a load, a rewind): drop everything in flight, keep the results
@@ -3156,11 +3192,16 @@ function LD.cut()
   card.action = nil
   inp.prev, inp.sdir, inp.cdir, inp.last_f = 0, nil, nil, -999
   attrs_cache, common_cache = {}, nil
+  LD.dummy_cut()
+  LD.d2_cut()
+  LD.combo_cut()
+  LD.drill_cut()
 end
 
 function LD.reset()
   LD.cut()
   fa.hist, tech.res, tech.stats, inp.seqs, card.info = {}, {}, {}, {}, nil
+  LD.combo_reset()
 end
 
 -- ---- drawing -------------------------------------------------------------------------------------------------
@@ -3340,6 +3381,7 @@ local function draw_tech()
 end
 
 function LD.draw()
+  if T("boxes") then LD.draw_d2({ swept = true, shield = true, grab = true }) end
   if T("adv") then draw_adv() end
   if T("card") then draw_card() end
   if T("input") then draw_input() end
@@ -3389,6 +3431,1093 @@ end
 end
 stage_d()
 
+local function stage_d3()
+-- =================================================================================================
+-- ---- stage D3: the dummy (docs/geno.md 14.13) ---------------------------------------------------
+-- The Lab plays a fighter on a HUMAN port (CPUs ignore pads) through gd.input, one frame at a time:
+-- recordings, DI / ASDI / SDI, tech and getup options, ledge options, what to do after hitstun,
+-- shieldstun and landings, a reaction delay, and holds. Offline only. It stands down while the
+-- history replays (the replay feeds the logged pads) and while a recording is being made.
+-- =================================================================================================
+local DUMMY_FILE = "dummy.txt"
+local REC_SLOTS, REC_MAX = 4, 600      -- 4 slots of up to 10 s
+local STK = 80                         -- a full stick tilt
+local B_A, B_B, B_X, B_Z, B_R = 0x0100, 0x0200, 0x0400, 0x0010, 0x0020
+local TECH_PRESS_FRAMES = 5            -- press L/R when the floor is this many frames away (the window is 20)
+local TECH_LOCKOUT = 41                -- the game ignores a tech press within 40 frames of the last one
+
+local AFTER = { "none", "shield", "spotdodge", "roll away", "roll toward", "jump", "attack", "nair", "grab",
+  "slot 1", "slot 2", "slot 3", "slot 4" }
+local DI_OPTS = { "none", "in", "out", "survival", "angle", "random" }
+local ASDI_OPTS = { "none", "away", "toward", "up", "down" }
+local SDI_DIRS = { "away", "toward", "up", "down" }
+local TECH_OPTS = { "in place", "away", "toward", "miss", "random" }
+local GETUP_OPTS = { "stand", "attack", "away", "toward", "random" }
+local LEDGE_OPTS = { "getup", "roll", "attack", "jump", "drop", "ledgedash", "random" }
+local PLAY_OPTS = { "off", "in order", "random" }
+local HOLD_OPTS = { "none", "shield", "crouch", "jump" }
+
+local dm = {
+  port = 2, on = false, play = "off", slot = 1, rec_state = false, -- off until asked: a human P2 keeps its pad
+  w_slot = { 1, 1, 1, 1 },
+  di = "none", di_angle = 90, asdi = "none", sdi_n = 0, sdi_dir = "away",
+  tech = "in place", getup = "stand", ledge = "getup",
+  w_tech = { ["in place"] = 1, away = 1, toward = 1, miss = 1 },
+  w_getup = { stand = 1, attack = 1, away = 1, toward = 1 },
+  w_ledge = { getup = 1, roll = 1, attack = 1, jump = 1, drop = 1, ledgedash = 1 },
+  w_di = { none = 1, ["in"] = 1, out = 1, survival = 1 },
+  after_hit = "none", after_shield = "none", after_land = "none",
+  delay_min = 0, delay_max = 0, pct_lock = -1, inf_shield = false, tilt = "none", hold = "none",
+}
+local rec = {}          -- rec[slot] = {frames = {{b, x, y, cx, cy, l, r}, ...}, state = bool}
+local st = {}           -- the dummy's live state (reset on a cut)
+local recording = nil   -- {slot, frames, from}
+local pb_keep = nil     -- a playback that loaded its start state survives that load's cut
+local released = true
+
+-- ---- settings ------------------------------------------------------------------------------------
+local function wstr(w)
+  local keys, out = {}, {}
+  for k in pairs(w) do keys[#keys + 1] = k end
+  table.sort(keys)
+  for _, k in ipairs(keys) do out[#out + 1] = k .. ":" .. w[k] end
+  return table.concat(out, ",")
+end
+local function wparse(s, w)
+  for k, v in s:gmatch("([^,:]+):(%d+)") do if w[k] ~= nil then w[k] = tonumber(v) end end
+end
+local function dm_save()
+  local out = {}
+  for _, k in ipairs({ "port", "on", "play", "slot", "rec_state", "di", "di_angle", "asdi", "sdi_n", "sdi_dir", "tech",
+    "getup", "ledge", "after_hit", "after_shield", "after_land", "delay_min", "delay_max", "pct_lock", "inf_shield",
+    "tilt", "hold" }) do
+    out[#out + 1] = k .. "=" .. tostring(dm[k])
+  end
+  for _, k in ipairs({ "w_tech", "w_getup", "w_ledge", "w_di" }) do out[#out + 1] = k .. "=" .. wstr(dm[k]) end
+  out[#out + 1] = "w_slot=" .. table.concat(dm.w_slot, ",")
+  pcall(gd.data_write, DUMMY_FILE, table.concat(out, "\n") .. "\n")
+end
+local function rec_file(slot) return "dummy_rec" .. slot .. ".txt" end
+local function rec_save(slot)
+  local r = rec[slot]
+  if r == nil then pcall(gd.data_write, rec_file(slot), "") return end
+  local out = { "state=" .. tostring(r.state) }
+  for _, f in ipairs(r.frames) do out[#out + 1] = table.concat(f, " ") end
+  pcall(gd.data_write, rec_file(slot), table.concat(out, "\n") .. "\n")
+end
+local function dm_load()
+  local ok, text = pcall(gd.data_read, DUMMY_FILE)
+  if ok and text then
+    for k, v in text:gmatch("([%w_]+)=([^\r\n]*)") do
+      if k:find("^w_") and k ~= "w_slot" and dm[k] then wparse(v, dm[k])
+      elseif k == "w_slot" then
+        local i = 0
+        for n in v:gmatch("%d+") do i = i + 1 if i <= REC_SLOTS then dm.w_slot[i] = tonumber(n) end end
+      elseif type(dm[k]) == "number" then dm[k] = tonumber(v) or dm[k]
+      elseif type(dm[k]) == "boolean" then dm[k] = v == "true"
+      elseif dm[k] ~= nil then dm[k] = v end
+    end
+  end
+  for slot = 1, REC_SLOTS do
+    local ok2, t = pcall(gd.data_read, rec_file(slot))
+    if ok2 and t and t ~= "" then
+      local r = { frames = {}, state = t:match("state=true") ~= nil }
+      for line in t:gmatch("[^\r\n]+") do
+        local f = {}
+        for n in line:gmatch("%-?%d+") do f[#f + 1] = tonumber(n) end
+        if #f == 7 then r.frames[#r.frames + 1] = f end
+      end
+      if #r.frames > 0 then rec[slot] = r end
+    end
+  end
+end
+dm_load()
+
+-- ---- helpers -------------------------------------------------------------------------------------
+local function cycle(list, v, d)
+  local k = 1
+  for i, x in ipairs(list) do if x == v then k = i end end
+  return list[((k - 1 + d) % #list) + 1]
+end
+-- a weighted pick; the keys in sorted order so a seed gives the same choice
+local function pick(w)
+  local keys, total = {}, 0
+  for k, v in pairs(w) do if v > 0 then keys[#keys + 1] = k total = total + v end end
+  if total == 0 then return nil end
+  table.sort(keys)
+  local r = math.random() * total
+  for _, k in ipairs(keys) do
+    r = r - w[k]
+    if r <= 0 then return k end
+  end
+  return keys[#keys]
+end
+local function opt(v, w) if v == "random" then return pick(w) end return v end
+local function sgn(v) return v < 0 and -1 or 1 end
+local function delay()
+  local a, b = math.max(0, dm.delay_min), math.max(0, dm.delay_max)
+  if b < a then b = a end
+  return a + (b > a and math.random(0, b - a) or 0)
+end
+-- the player the dummy reacts to: the focused fighter, else the nearest other one
+local function opponent(p)
+  local f = gd.player(focus)
+  if f and f.port ~= p.port then return f end
+  local best, bd
+  for _, q in ipairs(gd.players()) do
+    if q.port ~= p.port then
+      local d = math.abs(q.x - p.x)
+      if bd == nil or d < bd then best, bd = q, d end
+    end
+  end
+  return best
+end
+local function away_x(p)
+  local o = opponent(p)
+  return o and sgn(p.x - o.x) or -p.facing
+end
+local function dir_xy(p, d)
+  if d == "away" then return away_x(p) * STK, 0 end
+  if d == "toward" then return -away_x(p) * STK, 0 end
+  if d == "up" then return 0, STK end
+  if d == "down" then return 0, -STK end
+  return 0, 0
+end
+
+-- an input script: a list of steps {b, x, y, cx, cy, n = frames}
+local function run_script(steps, wait, why)
+  st.run = { steps = steps, i = 1, left = steps[1] and steps[1].n or 1, at = gd.match().frame + (wait or 0), why = why }
+end
+local function slot_script(slot)
+  local r = rec[slot]
+  if r == nil then return nil end
+  local steps = {}
+  for _, f in ipairs(r.frames) do steps[#steps + 1] = { b = f[1], x = f[2], y = f[3], cx = f[4], cy = f[5], l = f[6], r = f[7], n = 1 } end
+  return steps
+end
+local function after_script(p, what)
+  local ax = away_x(p) * STK
+  if what == "shield" then return { { b = B_R, r = 255, n = 20 } }
+  elseif what == "spotdodge" then return { { b = B_R, r = 255, y = -STK, n = 2 } }
+  elseif what == "roll away" then return { { b = B_R, r = 255, x = ax, n = 2 } }
+  elseif what == "roll toward" then return { { b = B_R, r = 255, x = -ax, n = 2 } }
+  elseif what == "jump" then return { { b = B_X, n = 1 } }
+  elseif what == "attack" then return { { b = B_A, n = 1 } }
+  elseif what == "nair" then return { { b = B_X, n = 1 }, { n = 2 }, { b = B_A, n = 1 } }
+  elseif what == "grab" then return { { b = B_Z, n = 1 } }
+  elseif what and what:find("^slot") then return slot_script(tonumber(what:match("%d")))
+  end
+  return nil
+end
+
+-- ---- DI: the same rule as the launch preview (gs_apply_di / kb_preview), from the launch -----------
+local function di_stick(vx, vy, how)
+  if how == "none" or how == nil then return 0, 0 end
+  if how == "angle" then
+    local a = math.rad(dm.di_angle)
+    return math.cos(a), math.sin(a)
+  end
+  local t = math.atan(vy, vx)
+  local ccx, ccy = -math.sin(t), math.cos(t)
+  local dir = vx >= 0 and 1 or -1
+  if how == "in" or how == "out" then
+    local toward = (ccx * dir < 0) == (how == "in")
+    if toward then return ccx, ccy end
+    return -ccx, -ccy
+  end
+  -- survival: the perpendicular whose result is nearer the diagonal (45 / 135 degrees)
+  local goal = dir > 0 and math.pi / 4 or 3 * math.pi / 4
+  local function turned(sx, sy)
+    local m2 = vx * vx + vy * vy
+    local f3 = vy * sx - vx * sy
+    local f30 = f3 * f3 / m2
+    if vx * sy - vy * sx < 0 then f30 = -f30 end
+    return t + math.rad(18) * f30
+  end
+  if math.abs(turned(ccx, ccy) - goal) <= math.abs(turned(-ccx, -ccy) - goal) then return ccx, ccy end
+  return -ccx, -ccy
+end
+
+function LD.dummy_hit(attacker, victim, info)
+  if victim ~= dm.port or not dm.on then return end
+  local p, a = gd.player(victim), attacker and gd.player(attacker)
+  if p == nil then return end
+  local vx, vy = (a and sgn(p.x - a.x) or -p.facing), 1
+  if info.angle and gd.kb_preview then
+    local ok, r = pcall(gd.kb_preview, victim, { damage = info.damage or info.dealt, angle = info.angle, kbg = info.kbg,
+      bkb = info.bkb, wbk = info.wbk, attacker = attacker, percent = math.max(0, p.percent - (info.dealt or 0)) })
+    if ok and r then vx, vy = r.vx, r.vy end
+  end
+  local how = dm.di == "random" and pick(dm.w_di) or dm.di
+  local sx, sy = di_stick(vx, vy, how)
+  local ax, ay = dir_xy(p, dm.asdi)
+  local dx, dy = dir_xy(p, dm.sdi_dir)
+  st.hit = { f = gd.match().frame, sx = math.floor(sx * STK + 0.5), sy = math.floor(sy * STK + 0.5), ax = ax, ay = ay,
+    sdi_left = dm.sdi_n, sdx = dx, sdy = dy, k = 0, how = how }
+  st.run = nil
+end
+
+-- ---- the triggers ----------------------------------------------------------------------------------
+local LANDING = { Landing = true, LandingFallSpecial = true, LandingAirN = true, LandingAirF = true, LandingAirB = true,
+  LandingAirHi = true, LandingAirLw = true }
+local DOWN_WAIT = { DownWaitU = true, DownWaitD = true }
+
+local function ledge_script(p, what)
+  local tx = -sgn(p.x) * STK -- toward the stage (the legal stages sit around x = 0)
+  if what == "getup" then return { { x = tx, n = 2 } }
+  elseif what == "roll" then return { { b = B_R, r = 255, n = 1 } }
+  elseif what == "attack" then return { { b = B_A, n = 1 } }
+  elseif what == "jump" then return { { b = B_X, n = 1 } }
+  elseif what == "drop" then return { { y = -STK, n = 1 } }
+  elseif what == "ledgedash" then
+    -- drop (back), jump, then airdodge down toward the stage: approximate, the right frames vary by fighter
+    return { { x = -tx, n = 1 }, { b = B_X, n = 1 }, { n = 2 }, { b = B_R, r = 255, x = math.floor(tx * 0.7), y = -56, n = 1 } }
+  end
+  return nil
+end
+
+local function triggers(p, now)
+  local n, pn = p.motion_name, st.prev
+  st.prev = n
+  -- after hitstun: the first actionable frame once hitstun is over
+  if p.in_hitstun then st.stunned = true
+  elseif st.stunned and LD.actionable(p) then
+    st.stunned = false
+    local s = after_script(p, dm.after_hit)
+    if s then run_script(s, delay(), "after hitstun") end
+  end
+  if n == pn then return end
+  if pn == "GuardSetOff" and n == "Guard" then
+    local s = after_script(p, dm.after_shield)
+    if s then run_script(s, delay(), "after shieldstun") end
+  end
+  if LANDING[n] and not LANDING[pn] then st.landed = true end
+  if st.landed and not LANDING[n] then
+    st.landed = false
+    local s = after_script(p, dm.after_land)
+    if s and LD.actionable(p) then run_script(s, delay(), "after landing") end
+  end
+  if n == "CliffWait" then
+    local what = opt(dm.ledge, dm.w_ledge)
+    local s = what and ledge_script(p, what)
+    if s then run_script(s, delay(), "ledge: " .. what) end
+  end
+  if DOWN_WAIT[n] then
+    local what = opt(dm.getup, dm.w_getup)
+    local s
+    if what == "stand" then s = { { y = STK, n = 2 } }
+    elseif what == "attack" then s = { { b = B_A, n = 1 } }
+    elseif what == "away" or what == "toward" then local x = dir_xy(p, what) s = { { x = x, n = 2 } } end
+    if s then run_script(s, delay(), "getup: " .. what) end
+  end
+  if n:find("^Passive") or n:find("^DownBound") then st.fall = nil end
+end
+
+-- the tech: while falling in a damage state, press L / R once the floor is close (the game takes a
+-- press in the 20 frames before contact, one press per 40 frames); the stick picks in place or a roll
+local function tech_spec(p, now)
+  local n = p.motion_name
+  -- tumble only: its interrupts have no airdodge (ftCo_DamageFall_IASA), so the press is only a tech;
+  -- an air damage state out of hitstun would airdodge instead
+  local falling = p.airborne and (n == "DamageFall" or n:find("^DamageFly") ~= nil)
+  if not falling then
+    if not p.airborne then st.fall = nil end
+    return nil
+  end
+  if st.fall == nil then st.fall = { what = opt(dm.tech, dm.w_tech), pressed = nil } end
+  local f = st.fall
+  if f.what == nil or f.what == "miss" then return nil end
+  local x = 0
+  if f.what == "away" or f.what == "toward" then x = dir_xy(p, f.what) end
+  if f.pressed then return { x = x } end -- hold the roll's direction to the landing
+  local vy = (p.vy or 0) + (p.kb_vy or 0)
+  if vy >= 0 or (st.last_press and now - st.last_press < TECH_LOCKOUT) then return nil end
+  local floor = gd.floor_below(p.x, p.y + 4, 400)
+  if floor == nil then return nil end
+  if (p.y - floor) / -vy <= TECH_PRESS_FRAMES then
+    f.pressed, st.last_press = now, now
+    return { b = B_R, r = 255, x = x }
+  end
+  return nil
+end
+
+-- this frame's input for the dummy (applied to the next frame), or nil
+local function dummy_spec(p, now)
+  -- in hitlag from a hit: SDI (the stick flicks in and out, one flick per 2 frames), then DI + ASDI
+  local h = st.hit
+  if h and p.in_hitlag then
+    h.k = h.k + 1
+    if h.sdi_left > 0 then
+      if h.k % 2 == 1 then
+        h.sdi_left = h.sdi_left - 1
+        return { x = h.sdx, y = h.sdy }
+      end
+      return {}
+    end
+    return { x = h.sx, y = h.sy, cx = h.ax, cy = h.ay }
+  elseif h and now - h.f > 2 then
+    st.hit = nil
+  end
+  local t = tech_spec(p, now)
+  if t then return t end
+  local r = st.run
+  if r and now >= r.at then
+    local s = r.steps[r.i]
+    if s == nil then st.run = nil
+    else
+      r.left = r.left - 1
+      if r.left <= 0 then
+        r.i = r.i + 1
+        r.left = r.steps[r.i] and (r.steps[r.i].n or 1) or 0
+      end
+      return s
+    end
+  end
+  -- playback of the recordings
+  if dm.play ~= "off" then
+    local pb = st.pb
+    if pb == nil or pb.i > #pb.steps then
+      local slot
+      if dm.play == "in order" then
+        slot = st.pb_last or 0
+        for _ = 1, REC_SLOTS do
+          slot = slot % REC_SLOTS + 1
+          if rec[slot] and dm.w_slot[slot] > 0 then break end
+        end
+      else
+        local w = {}
+        for k = 1, REC_SLOTS do if rec[k] then w[tostring(k)] = dm.w_slot[k] end end
+        slot = tonumber(pick(w) or "")
+      end
+      if slot == nil or rec[slot] == nil then return nil end
+      st.pb_last = slot
+      st.pb = { steps = slot_script(slot), i = 1, slot = slot }
+      if rec[slot].state and offline() and pcall(gd.loadstate, 2) then pb_keep = st.pb end
+      pb = st.pb
+    end
+    local s = pb.steps[pb.i]
+    pb.i = pb.i + 1
+    return s
+  end
+  -- holds
+  if dm.hold == "shield" then
+    local x, y = 0, 0
+    if dm.tilt ~= "none" then x, y = dir_xy(p, dm.tilt) end
+    return { b = B_R, r = 255, x = x, y = y }
+  elseif dm.hold == "crouch" then return { y = -STK }
+  elseif dm.hold == "jump" then return { b = B_X } end
+  return nil
+end
+
+local function apply(spec)
+  if spec == nil then
+    if not released then gd.release(dm.port) released = true end
+    return
+  end
+  gd.input(dm.port, { buttons = spec.b or 0, x = spec.x or 0, y = spec.y or 0, cx = spec.cx or 0, cy = spec.cy or 0,
+    l = spec.l or 0, r = spec.r or 0 }, 1)
+  released = false
+end
+
+local function holds(p)
+  if dm.pct_lock >= 0 and math.abs(p.percent - dm.pct_lock) >= 0.5 and not p.in_hitlag then
+    gd.set_percent(dm.port, dm.pct_lock)
+  end
+  if dm.inf_shield and gd.set_shield and (p.shield or 60) < 50 then gd.set_shield(dm.port, 60) end
+end
+
+local function rec_frame()
+  local ok, pad = pcall(gd.pad, dm.port)
+  if not ok or pad == nil then return end
+  local f = recording.frames
+  f[#f + 1] = { pad.buttons, pad.x, pad.y, pad.cx, pad.cy, pad.l, pad.r }
+  if #f >= REC_MAX then LD.dummy_record() end
+end
+
+function LD.dummy_frame(now)
+  if not (offline() and dm.on) then return end
+  if gd.history().replaying then st.run, st.pb = nil, nil return end
+  local p = gd.player(dm.port)
+  if p == nil then return end
+  if recording then rec_frame() return end
+  if p.cpu then return end
+  triggers(p, now)
+  holds(p)
+  apply(dummy_spec(p, now))
+end
+
+function LD.dummy_cut()
+  st = { pb = pb_keep, pb_last = pb_keep and pb_keep.slot or nil }
+  pb_keep = nil
+  if not released and offline() and gd.player(dm.port) then gd.release(dm.port) end
+  released = true
+end
+
+function LD.dummy_record()
+  if not offline() then say("The dummy is offline only", DANGER) return end
+  if recording then
+    gd.mirror_pad()
+    local r = { frames = recording.frames, state = recording.state }
+    if #r.frames > 0 then rec[recording.slot] = r end
+    rec_save(recording.slot)
+    say(string.format("Slot %d: %d frames recorded", recording.slot, #r.frames), OK)
+    recording = nil
+    return
+  end
+  if focus == dm.port or focus > 4 then say("Focus your own fighter (F): you drive the dummy from it", DANGER) return end
+  local p = gd.player(dm.port)
+  if p == nil or p.cpu then say("The dummy has to be a human port", DANGER) return end
+  LD.dummy_cut()
+  if dm.rec_state then gd.savestate(2) end
+  gd.mirror_pad(focus, dm.port, true)
+  recording = { slot = dm.slot, frames = {}, state = dm.rec_state }
+  say(string.format("Recording slot %d: your controller drives P%d (R again stops)", dm.slot, dm.port), GOLD)
+end
+function LD.dummy_recording() return recording ~= nil end
+LD.dm = dm
+function LD.dummy_cfg(k, v) dm[k] = v dm_save() end
+function LD.dummy_rec(slot) return rec[slot] end
+LD.dummy_pick = pick
+
+ACTIONS.dm_record = LD.dummy_record
+ACTIONS.dm_play = function()
+  dm.play = dm.play == "off" and "in order" or "off"
+  st.pb = nil
+  dm_save()
+  say("Playback " .. dm.play, dm.play == "off" and DISABLED or ACCENT)
+end
+STATES.dm_rec = function() return recording ~= nil end
+STATES.dm_play = function() return dm.play ~= "off" end
+
+-- ---- the DUMMY tab of the pause menu ------------------------------------------------------------------
+local function row(label, icon, desc, key, list)
+  return { label = label, icon = icon, desc = desc,
+    value = function() return tostring(dm[key]):upper() end,
+    run = function() dm[key] = cycle(list, dm[key], 1) dm_save() end,
+    adjust = function(d) dm[key] = cycle(list, dm[key], d) dm_save() end }
+end
+local function num(label, icon, desc, key, lo, hi, step, fmt)
+  return { label = label, icon = icon, desc = desc,
+    value = function() return fmt and fmt(dm[key]) or tostring(dm[key]) end,
+    adjust = function(d) dm[key] = math.max(lo, math.min(hi, dm[key] + d * step)) dm_save() end,
+    run = function() dm[key] = dm[key] + step > hi and lo or dm[key] + step dm_save() end }
+end
+local items = TABS[3].items
+local extra = {
+  { label = "Dummy", icon = "lab_dummy",
+    desc = function()
+      local p = gd.player(dm.port)
+      local why = p == nil and "  Nobody on that port." or p.cpu and "  That port is a CPU: CPUs ignore pads. Pick a human port with no controller." or ""
+      return "The port the Lab plays: every option below acts on it. Left / right: the port; A: on / off." .. why
+    end,
+    value = function() return "P" .. dm.port .. (dm.on and "" or " OFF") end,
+    run = function() dm.on = not dm.on if not dm.on then LD.dummy_cut() end dm_save() end,
+    adjust = function(d) LD.dummy_cut() dm.port = ((dm.port - 1 + d) % 4) + 1 dm_save() end },
+  { label = "Record slot", icon = "lab_record", key = "R",
+    desc = function()
+      local r = rec[dm.slot]
+      return "Your controller drives the dummy while it records (your fighter stands still). A starts, R in TRAINING too; again stops. "
+        .. (r and string.format("Slot %d: %d frames%s.", dm.slot, #r.frames, r.state and ", from its saved state" or "") or "Empty.")
+    end,
+    value = function() return (recording and "REC " or "SLOT ") .. dm.slot end,
+    run = function() menu_close() LD.dummy_record() end,
+    adjust = function(d) if not recording then dm.slot = ((dm.slot - 1 + d) % REC_SLOTS) + 1 dm_save() end end },
+  { label = "Record from a state", icon = "lab_save",
+    desc = "On: starting a recording saves quick slot 2, and each playback of it loads that state first (a loop from the same spot).",
+    toggle = function() return dm.rec_state end, value = function() return onoff(dm.rec_state) end,
+    run = function() dm.rec_state = not dm.rec_state dm_save() end, adjust = function() dm.rec_state = not dm.rec_state dm_save() end },
+  row("Playback", "lab_play", "Play the recorded slots: in order, or at random by each slot's weight (lab dummy w_slot 1,1,0,2).", "play", PLAY_OPTS),
+  row("DI", "lab_launch", "Knockback DI on every hit: in, out, survival (toward the diagonal), a fixed stick angle, or random (weights: lab dummy w_di).", "di", DI_OPTS),
+  num("DI angle", "lab_launch", "The stick angle for DI \"angle\", in degrees (0 = right, 90 = up).", "di_angle", 0, 345, 15, function(v) return v .. " DEG" end),
+  row("ASDI", "lab_mirror", "The C-stick held through hitlag: the small nudge at its end.", "asdi", ASDI_OPTS),
+  num("SDI count", "lab_mirror", "How many smash-DI flicks during hitlag (one every 2 frames).", "sdi_n", 0, 8, 1),
+  row("SDI direction", "lab_mirror", "Which way the SDI flicks go.", "sdi_dir", SDI_DIRS),
+  row("Tech", "lab_ko", "On landing in tumble: in place, roll away, roll toward, miss, or random (weights: lab dummy w_tech).", "tech", TECH_OPTS),
+  row("Getup (missed tech)", "lab_ko", "From a missed tech: stand, attack, roll away / toward, or random (lab dummy w_getup).", "getup", GETUP_OPTS),
+  row("Ledge", "lab_ledge", "From the ledge: getup, roll, attack, jump, drop, ledgedash (approximate timing), or random (lab dummy w_ledge).", "ledge", LEDGE_OPTS),
+  row("After hitstun", "lab_dummy", "The first thing it does when hitstun ends.", "after_hit", AFTER),
+  row("After shieldstun", "lab_dummy", "Out of shield, the frame shieldstun ends.", "after_shield", AFTER),
+  row("After landing", "lab_dummy", "When a landing's lag ends.", "after_land", AFTER),
+  num("Reaction min", "lab_slowmo", "Every response waits at least this many frames. Humans are not frame-perfect.", "delay_min", 0, 60, 1, function(v) return v .. " F" end),
+  num("Reaction max", "lab_slowmo", "And at most this many: a random delay between the two.", "delay_max", 0, 60, 1, function(v) return v .. " F" end),
+  num("Percent lock", "lab_percent", "Put back to this percent after every hit. OFF below 0.", "pct_lock", -10, 300, 10,
+    function(v) return v < 0 and "OFF" or (v .. "%") end),
+  { label = "Infinite shield", icon = "lab_hitbox", desc = "The shield is refilled whenever it gets low.",
+    toggle = function() return dm.inf_shield end, value = function() return onoff(dm.inf_shield) end,
+    run = function() dm.inf_shield = not dm.inf_shield dm_save() end, adjust = function() dm.inf_shield = not dm.inf_shield dm_save() end },
+  row("Hold", "lab_pause", "What it does when nothing else is going on: shield, crouch, jump, or nothing.", "hold", HOLD_OPTS),
+  row("Shield tilt", "lab_mirror", "While holding shield, the stick tilts it this way.", "tilt", { "none", "away", "toward", "up", "down" }),
+}
+for _, it in ipairs(extra) do items[#items + 1] = it end
+
+-- ---- console: lab dummy [key value] -------------------------------------------------------------------
+function LD.dummy_console(rest)
+  local k, v = rest:match("^(%S+)%s+(.+)$")
+  if k == nil then
+    local keys = {}
+    for key, val in pairs(dm) do
+      keys[#keys + 1] = key .. "=" .. (type(val) == "table" and (key == "w_slot" and table.concat(val, ",") or wstr(val)) or tostring(val))
+    end
+    table.sort(keys)
+    gd.log("dummy: " .. table.concat(keys, "  "))
+    for slot = 1, REC_SLOTS do
+      if rec[slot] then gd.log(string.format("  slot %d: %d frames%s", slot, #rec[slot].frames, rec[slot].state and " (state)" or "")) end
+    end
+    return
+  end
+  if k == "w_slot" then
+    local i = 0
+    for n in v:gmatch("%d+") do i = i + 1 if i <= REC_SLOTS then dm.w_slot[i] = tonumber(n) end end
+  elseif k:find("^w_") and type(dm[k]) == "table" then wparse(v, dm[k])
+  elseif type(dm[k]) == "number" then dm[k] = tonumber(v) or dm[k]
+  elseif type(dm[k]) == "boolean" then dm[k] = v == "true" or v == "on"
+  elseif dm[k] ~= nil then dm[k] = v
+  else gd.log("dummy: no setting " .. k) return end
+  dm_save()
+  gd.log("dummy " .. k .. " = " .. v)
+end
+end
+stage_d3()
+
+local function stage_d2()
+-- =================================================================================================
+-- ---- stage D2: hitbox display upgrades (docs/geno.md 14.14) --------------------------------------
+-- Swept hitboxes (the capsule from last frame's position to this frame's: the shape Melee tests),
+-- with fading ghosts; hurtboxes by state; the shield bubble; grab boxes. Drawn by the Lab over the
+-- game, in HITBOXES (W U S C) and, with B, in TRAINING and COMBO.
+-- =================================================================================================
+local GHOSTS = 4
+local COL_HURT = { normal = 0xF7DF5EFF, invincible = 0x27B88AFF, intangible = 0x4D8DFFFF }
+local ghosts = {} -- ghosts[port] = { {caps}, ... } newest first
+local last_f = -1
+
+local function circle(cx, cy, r, col, seg)
+  seg = seg or 16
+  local px, py = cx + r, cy
+  for k = 1, seg do
+    local a = k * 2 * math.pi / seg
+    local x, y = cx + math.cos(a) * r, cy + math.sin(a) * r
+    gd.line(px, py, x, y, col)
+    px, py = x, y
+  end
+end
+
+-- a capsule between two world points, radius r (world units), outlined in screen space
+local function capsule(ax, ay, bx, by, r, col)
+  local sax, say = gd.project(ax, ay, 0)
+  local sbx, sby = gd.project(bx, by, 0)
+  local rx = gd.project(ax + r, ay, 0)
+  if sax == nil or sbx == nil or rx == nil then return end
+  local sr = math.abs(rx - sax)
+  circle(sax, say, sr, col)
+  local dx, dy = sbx - sax, sby - say
+  local len = math.sqrt(dx * dx + dy * dy)
+  if len > 0.5 then
+    circle(sbx, sby, sr, col)
+    local nx, ny = -dy / len * sr, dx / len * sr
+    gd.line(sax + nx, say + ny, sbx + nx, sby + ny, col)
+    gd.line(sax - nx, say - ny, sbx - nx, sby - ny, col)
+  end
+end
+LD.capsule, LD.circle = capsule, circle
+
+-- once per game frame: remember each fighter's swept hitboxes for the ghosts
+function LD.d2_frame(now)
+  if now == last_f then return end
+  last_f = now
+  for _, p in ipairs(gd.players()) do
+    local caps = {}
+    for _, h in ipairs(p.hitboxes) do
+      if h.element_name ~= "catch" then caps[#caps + 1] = { h.px, h.py, h.x, h.y, h.radius, h.id } end
+    end
+    local g = ghosts[p.port] or {}
+    table.insert(g, 1, caps)
+    while #g > GHOSTS + 1 do table.remove(g) end
+    ghosts[p.port] = g
+  end
+end
+function LD.d2_cut() ghosts, last_f = {}, -1 end
+
+local function draw_swept(p)
+  local g = ghosts[p.port]
+  if g == nil then return end
+  for age = #g, 1, -1 do
+    local a = age == 1 and 0xFF or math.floor(0xB0 / age)
+    for _, c in ipairs(g[age]) do capsule(c[1], c[2], c[3], c[4], c[5], alpha(HIT[c[6]] or HIT[0], a)) end
+  end
+end
+
+local function draw_hurt(p)
+  local whole = p.intangible > 0 and "intangible" or p.invincible > 0 and "invincible"
+    or (p.body_state ~= "normal" and p.body_state) or nil
+  local hb = gd.hurtboxes(p.port) or {}
+  for _, h in ipairs(hb) do
+    local s = whole or h.state
+    capsule(h.ax, h.ay, h.bx, h.by, h.radius, alpha(COL_HURT[s] or COL_HURT.normal, s == "normal" and 0x70 or 0xE0))
+  end
+  if whole then
+    local sx, sy = gd.project(p.x, p.y, 0)
+    if sx then
+      local left = p.intangible > 0 and p.intangible or p.invincible
+      local s = whole:upper() .. (left > 0 and (" " .. left) or "")
+      quad(sx - measure(s) / 2 - 4, sy + 4, measure(s) + 8, 13, alpha(GLASS_SOLID, 0xC0))
+      txt(sx, sy + 14, s, "caption", COL_HURT[whole] or BONE, "center")
+    end
+  end
+end
+
+local function draw_shield(p)
+  if not p.shield_on or (p.shield_r or 0) <= 0 then return end
+  local sx, sy = gd.project(p.shield_x, p.shield_y, 0)
+  local rx = gd.project(p.shield_x + p.shield_r, p.shield_y, 0)
+  if sx == nil or rx == nil then return end
+  local col = p.shield > 30 and ACCENT or p.shield > 15 and GOLD or DANGER
+  circle(sx, sy, math.abs(rx - sx), col, 24)
+  txt(sx, sy - math.abs(rx - sx) - 4, string.format("%.1f", p.shield), "caption", col, "center")
+end
+
+local function draw_grab(p)
+  for _, h in ipairs(p.hitboxes) do
+    if h.element_name == "catch" then
+      capsule(h.px, h.py, h.x, h.y, h.radius, 0xC77DFFFF)
+      local sx, sy = gd.project(h.x, h.y, 0)
+      if sx then txt(sx, sy - 6, "GRAB", "caption", 0xC77DFFFF, "center") end
+    end
+  end
+end
+
+-- `which`: a table of the overlays to draw (swept, hurt, shield, grab)
+function LD.draw_d2(which)
+  for _, p in ipairs(gd.players()) do
+    if which.hurt then draw_hurt(p) end
+    if which.swept then draw_swept(p) end
+    if which.grab then draw_grab(p) end
+    if which.shield then draw_shield(p) end
+  end
+end
+end
+stage_d2()
+
+local function stage_d4()
+-- =================================================================================================
+-- ---- stage D4: combo analysis (docs/geno.md 14.15) -----------------------------------------------
+-- COMBO mode (0). For each hit on a victim, the victim's first actionable frame after it (the same
+-- reading as frame advantage) against the next hit: TRUE when the next hit landed first, else the
+-- escape window (how many frames the victim could act, and with what: jump, airdodge, shield...).
+-- A combo is a run of hits by one attacker on one victim; it drops when the victim acts first, with
+-- the reason. For the last hit, the launch for each DI (the knockback preview) shows how DI moves it.
+-- The punish finder is later (decision 2).
+-- =================================================================================================
+local COMBO_N = 5
+local cb = { cur = nil, hist = {}, di = nil }
+
+local function options(p)
+  local o = {}
+  if p.airborne then
+    if (p.jumps_left or 0) > 0 then o[#o + 1] = "jump" end
+    o[#o + 1] = "airdodge"
+    o[#o + 1] = "aerial"
+  else
+    o[#o + 1] = "shield"
+    o[#o + 1] = "jump"
+    o[#o + 1] = "spotdodge"
+  end
+  return table.concat(o, " / ")
+end
+
+local function end_combo(c, why)
+  cb.cur = nil
+  c.why = why
+  if #c.hits >= 2 or c.escape then
+    table.insert(cb.hist, 1, c)
+    while #cb.hist > COMBO_N do table.remove(cb.hist) end
+    log(string.format("P%d combo on P%d: %d hits %.1f%% - %s", c.a, c.v, #c.hits, c.dmg, why), GOLD)
+  end
+end
+
+function LD.combo_hit(attacker, victim, info)
+  if attacker == nil or victim == nil or attacker == victim or info.item then return end
+  local now = gd.match().frame
+  local c = cb.cur
+  local pa = gd.player(attacker)
+  local hit = { f = now, move = pa and pa.motion_name or "?", dmg = info.dealt or 0 }
+  if c and c.a == attacker and c.v == victim then
+    local prev = c.hits[#c.hits]
+    if prev and prev.tv and prev.tv < now then
+      -- the victim could act before this hit: not a true combo from the last hit
+      hit.gap = now - prev.tv
+      hit.opts = prev.opts
+      c.escape = c.escape or hit
+    else
+      hit.gap = 0
+    end
+    c.hits[#c.hits + 1] = hit
+    c.dmg = c.dmg + hit.dmg
+  else
+    if c then end_combo(c, "a new exchange") end
+    c = { a = attacker, v = victim, f0 = now, hits = { hit }, dmg = hit.dmg }
+    cb.cur = c
+  end
+  -- the DI fan for this hit: where each DI choice sends the victim
+  cb.di = nil
+  local pv = gd.player(victim)
+  if pv and info.angle and gd.kb_preview then
+    local fan = {}
+    for _, how in ipairs({ "none", "in", "out", "survival" }) do
+      local ok, r = pcall(gd.kb_preview, victim, { damage = info.damage or info.dealt, angle = info.angle, kbg = info.kbg,
+        bkb = info.bkb, wbk = info.wbk, attacker = attacker, percent = math.max(0, pv.percent - (info.dealt or 0)), di = how })
+      if ok and r then fan[#fan + 1] = { how = how, angle = r.angle_di, hitstun = r.hitstun, points = r.points } end
+    end
+    cb.di = { victim = victim, fan = fan, f = now }
+  end
+end
+
+-- per frame: the victim's first actionable frame after the last hit; a combo drops when the victim
+-- has been actionable long enough that nothing is following up (30 frames), or lands a hit of its own
+function LD.combo_frame(now)
+  local c = cb.cur
+  if c == nil then return end
+  local pv = gd.player(c.v)
+  if pv == nil then cb.cur = nil return end
+  local last = c.hits[#c.hits]
+  if last.tv == nil and LD.actionable(pv) and now > last.f then
+    last.tv = now
+    last.opts = options(pv)
+  end
+  if last.tv and now - last.tv >= 30 then
+    end_combo(c, string.format("dropped: P%d could act for %d f (%s)", c.v, now - last.tv, last.opts))
+  end
+end
+
+function LD.combo_victim_hit(attacker, victim)
+  local c = cb.cur
+  if c and attacker == c.v then end_combo(c, "P" .. c.v .. " hit back") end
+end
+
+function LD.combo_cut() cb.cur = nil end
+function LD.combo_reset() cb.cur, cb.hist, cb.di = nil, {}, nil end
+
+local DI_COL = { none = BONE, ["in"] = 0x4D8DFFFF, out = DANGER, survival = OK }
+function LD.draw_combo(show_fan)
+  local c = cb.cur or cb.hist[1]
+  local x, y, w = 8, 8, 300
+  if c == nil then
+    panel(x, y, w, 40, "COMBO")
+    txt(x + 12, y + 34, "hit someone twice: true or escapable, per hit", "caption", DISABLED)
+  else
+    local n = math.min(#c.hits, 8)
+    local h = 44 + n * 14 + 16
+    panel(x, y, w, h, cb.cur and "COMBO" or "LAST COMBO", cb.cur and GOLD or DISABLED)
+    txt(x + 104, y + 14, string.format("P%d > P%d  %d hits  %.1f%%", c.a, c.v, #c.hits, c.dmg), "caption", GOLD, "left", w - 114)
+    local yy = y + 34
+    for i = math.max(1, #c.hits - n + 1), #c.hits do
+      local hit = c.hits[i]
+      local verdict, col
+      if i == 1 then verdict, col = "opener", MUTED
+      elseif hit.gap == 0 then verdict, col = "TRUE", OK
+      else verdict, col = string.format("escapable %d f: %s", hit.gap, hit.opts or "?"), DANGER end
+      txt(x + 12, yy, string.format("%d  %s  %.1f%%", i, hit.move, hit.dmg), "caption", BONE, "left", 130)
+      txt(x + 144, yy, verdict, "caption", col, "left", w - 154)
+      yy = yy + 14
+    end
+    if c.why then txt(x + 12, yy + 4, c.why, "caption", MUTED, "left", w - 24) end
+  end
+  -- the older combos
+  local parts = {}
+  for i = cb.cur and 1 or 2, #cb.hist do
+    local o = cb.hist[i]
+    parts[#parts + 1] = string.format("%dh %.0f%%%s", #o.hits, o.dmg, o.escape and "" or " true")
+  end
+  if #parts > 0 then txt(x + 12, 470 - 30, "before: " .. table.concat(parts, "   "), "caption", MUTED) end
+  -- the DI fan of the last hit: the flight for each DI to the end of hitstun
+  if show_fan and cb.di and gd.match().frame - cb.di.f < 90 then
+    local lx, ly = 404, 8
+    panel(lx, ly, 228, 20 + #cb.di.fan * 14 + 8, "DI")
+    for i, f in ipairs(cb.di.fan) do
+      txt(lx + 12, ly + 20 + i * 14, string.format("%-8s %5.1f deg  hitstun %d", f.how, f.angle or 0, f.hitstun or 0), "caption",
+        DI_COL[f.how] or BONE)
+      local prev
+      for k, pt in ipairs(f.points or {}) do
+        local sx, sy = gd.project(pt[1] or pt.x, pt[2] or pt.y, 0)
+        if sx and prev then gd.line(prev[1], prev[2], sx, sy, alpha(DI_COL[f.how] or BONE, 0xC0)) end
+        if sx then prev = { sx, sy } end
+        if k > 120 then break end
+      end
+    end
+  end
+end
+
+function LD.combo_console()
+  local list = {}
+  if cb.cur then list[#list + 1] = cb.cur end
+  for _, c in ipairs(cb.hist) do list[#list + 1] = c end
+  if #list == 0 then gd.log("combo: none yet") end
+  for _, c in ipairs(list) do
+    gd.log(string.format("P%d > P%d from f%d: %d hits %.1f%% %s", c.a, c.v, c.f0, #c.hits, c.dmg, c.why or "(running)"))
+    for i, h in ipairs(c.hits) do
+      gd.log(string.format("  %d f%d %s %.1f%% %s", i, h.f, h.move, h.dmg,
+        i == 1 and "opener" or h.gap == 0 and "TRUE" or string.format("escapable %d f (%s)", h.gap, h.opts or "?")))
+    end
+  end
+end
+end
+stage_d4()
+
+local function stage_d5()
+-- =================================================================================================
+-- ---- stage D5: scenarios and drills (docs/geno.md 14.16) -----------------------------------------
+-- A scenario is data: a start (a library state, or the match as it is), dummy settings, a rule that
+-- scores each attempt, a scoring kind (streak or rate) and a limit (attempts or seconds). The rules
+-- are the only code; a new drill on an existing rule is a file in scripts-data/geno-lab_lab/drills/
+-- (docs/geno.md has the format). Results go to drills/results.txt; the best per drill is kept.
+-- =================================================================================================
+local RESULTS = "drills/results.txt"
+
+-- the built-in drills (the same format a drills/<id>.txt file uses)
+local BUILTIN = {
+  { id = "lcancel", name = "L-cancel streak", rule = "tech:lcancel", score = "streak", attempts = 0, seconds = 60,
+    desc = "Land aerials and L-cancel them. The score is your longest streak; the hit rate is kept too. A plain landing (autocancel) does not count." },
+  { id = "techchase", name = "Tech chase", rule = "techchase", score = "rate", attempts = 20, seconds = 0,
+    window = 40, ["dummy.on"] = "true", ["dummy.tech"] = "random", ["dummy.getup"] = "random", ["dummy.w_tech"] = "in place:1,away:1,toward:1,miss:1",
+    desc = "Knock the dummy down: it techs in place, away, toward or misses at random. Hit it within 40 frames of its tech or getup starting. The score is your rate; your reaction time is shown." },
+  { id = "ledgedash", name = "Ledgedash consistency", rule = "tech:ledgedash", score = "rate", attempts = 20, seconds = 0,
+    desc = "Ledgedash 20 times. A hit is a landing with ledge intangibility left (GALINT above 0); the mean GALINT is shown." },
+  { id = "wavedash", name = "Wavedash timing", rule = "tech:wavedash", score = "rate", attempts = 20, seconds = 0,
+    desc = "Wavedash 20 times. A hit is a frame-perfect airdodge." },
+}
+
+local drills = {}
+local function parse_drill(text, id)
+  local d = { id = id }
+  for k, v in text:gmatch("([%w_%.]+)%s*=%s*([^\r\n]*)") do d[k] = tonumber(v) or v end
+  if d.name and d.rule then return d end
+  return nil
+end
+local function load_drills()
+  drills = {}
+  for _, d in ipairs(BUILTIN) do drills[#drills + 1] = d end
+  local ok, idx = pcall(gd.data_read, "drills/index.txt")
+  if ok and idx then
+    for id in idx:gmatch("[%w_%-]+") do
+      local ok2, t = pcall(gd.data_read, "drills/" .. id .. ".txt")
+      local d = ok2 and t and parse_drill(t, id)
+      if d then drills[#drills + 1] = d end
+    end
+  end
+end
+load_drills()
+
+local best = {}  -- best[id] = score
+local function load_best()
+  local ok, t = pcall(gd.data_read, RESULTS)
+  if not (ok and t) then return end
+  for id, score in t:gmatch("[^\r\n]-%s(%S+)%s+score%s+([%d%.]+)") do
+    local s = tonumber(score)
+    if s and (best[id] == nil or s > best[id]) then best[id] = s end
+  end
+end
+load_best()
+
+local dr = nil      -- the running drill
+local last = nil    -- the last finished drill's results (the results panel)
+
+local function score_of(r)
+  if r.d.score == "streak" then return r.best_streak end
+  return r.n > 0 and math.floor(100 * r.ok / r.n + 0.5) or 0
+end
+
+local function finish(why)
+  if dr == nil then return end
+  local r = dr
+  dr = nil
+  local s = score_of(r)
+  local id = r.d.id
+  local was = best[id]
+  if was == nil or s > was then best[id] = s end
+  last = { d = r.d, score = s, was = was, n = r.n, ok = r.ok, streak = r.best_streak, log = r.log, why = why,
+    mean = r.nv > 0 and r.sum / r.nv or nil, until_t = gd.time() + 10 }
+  local ok, old = pcall(gd.data_read, RESULTS)
+  local line = string.format("%s %s score %d n %d ok %d streak %d%s", gd.lab_now and gd.lab_now(true) or "?", id, s, r.n, r.ok,
+    r.best_streak, last.mean and string.format(" mean %.2f", last.mean) or "")
+  pcall(gd.data_write, RESULTS, ((ok and old) or "") .. line .. "\n")
+  for _, k in ipairs(r.restore or {}) do LD.dummy_cfg(k[1], k[2]) end
+  log("drill " .. r.d.name .. ": " .. s .. (r.d.score == "streak" and " streak" or "%"), GOLD)
+  say(string.format("%s: %d%s%s", r.d.name, s, r.d.score == "streak" and " streak" or "%",
+    (was == nil or s > was) and "  NEW BEST" or ""), GOLD)
+end
+
+local function attempt(ok, text, value)
+  local r = dr
+  r.n = r.n + 1
+  if ok then
+    r.ok = r.ok + 1
+    r.streak = r.streak + 1
+    if r.streak > r.best_streak then r.best_streak = r.streak end
+  else
+    r.streak = 0
+  end
+  if value then r.sum, r.nv = r.sum + value, r.nv + 1 end
+  table.insert(r.log, 1, { ok = ok, text = text })
+  while #r.log > 8 do table.remove(r.log) end
+  if r.d.attempts and r.d.attempts > 0 and r.n >= r.d.attempts then finish("done") end
+end
+
+-- ---- the rules ------------------------------------------------------------------------------------------
+-- tech:<kind>  one attempt per tech result of that kind (stage D1's reading), on the player's port
+-- techchase    the dummy techs or gets up; the player hits it within `window` frames of that start
+local TECH_STARTS = { PassiveStandF = "tech away/toward", PassiveStandB = "tech away/toward", Passive = "tech in place",
+  DownStandU = "getup stand", DownStandD = "getup stand", DownAttackU = "getup attack", DownAttackD = "getup attack",
+  DownFowardU = "getup roll", DownFowardD = "getup roll", DownBackU = "getup roll", DownBackD = "getup roll" }
+
+function LD.drill_tech(port, kind, ok, text, value)
+  if dr == nil or port ~= dr.port then return end
+  local want = dr.d.rule:match("^tech:(%w+)$")
+  if want and want == kind and ok ~= nil then attempt(ok, text, value) end
+end
+
+function LD.drill_hit(attacker, victim)
+  if dr == nil or dr.d.rule ~= "techchase" then return end
+  local o = dr.chase
+  if o and attacker == dr.port and victim == LD.dm.port then
+    local rt = gd.match().frame - o.f
+    dr.chase = nil
+    attempt(true, string.format("%s: hit %d f after", o.what, rt), rt)
+  end
+end
+
+function LD.drill_frame(now)
+  if dr == nil then return end
+  if dr.d.seconds and dr.d.seconds > 0 and now - dr.f0 >= dr.d.seconds * 60 then finish("time") return end
+  if dr.d.rule == "techchase" then
+    local p = gd.player(LD.dm.port)
+    if p == nil then return end
+    local n = p.motion_name
+    if n ~= dr.prev and TECH_STARTS[n] then
+      if dr.chase then attempt(false, dr.chase.what .. ": missed") end
+      dr.chase = { f = now, what = TECH_STARTS[n] }
+    end
+    dr.prev = n
+    local w = dr.d.window or 40
+    if dr and dr.chase and now - dr.chase.f > w then
+      local what = dr.chase.what
+      dr.chase = nil
+      attempt(false, what .. ": too slow")
+    end
+  end
+end
+
+local function start(d)
+  if not offline() then say("Drills are offline only", DANGER) return end
+  if dr then finish("stopped") end
+  -- the drill's dummy settings, put back when it ends
+  local restore = {}
+  for k, v in pairs(d) do
+    local key = type(k) == "string" and k:match("^dummy%.(.+)$")
+    if key and LD.dm[key] ~= nil then
+      local cur = LD.dm[key]
+      local keep = cur
+      if type(cur) == "table" then keep = {} for kk, vv in pairs(cur) do keep[kk] = vv end end
+      restore[#restore + 1] = { key, keep }
+      if type(cur) == "table" then LD.dummy_console(key .. " " .. v)
+      elseif type(cur) == "boolean" then LD.dummy_cfg(key, v == "true" or v == true)
+      else LD.dummy_cfg(key, tonumber(v) or v) end
+    end
+  end
+  if d.state and gd.state_load then
+    local ok, why = gd.state_load(d.state)
+    if not ok then say("Drill state: " .. tostring(why), DANGER) end
+  end
+  LD.reset_tech()
+  dr = { d = d, port = focus, f0 = gd.match().frame, n = 0, ok = 0, streak = 0, best_streak = 0, sum = 0, nv = 0, log = {},
+    restore = restore }
+  last = nil
+  say(d.name .. ": go", GOLD)
+end
+LD.drill_start = start
+function LD.drill_running() return dr ~= nil end
+function LD.drill_cut() if dr then dr.chase = nil end end
+
+-- ---- the HUD and the results -----------------------------------------------------------------------
+function LD.draw_drill()
+  if dr then
+    local r = dr
+    local left = ""
+    if r.d.attempts and r.d.attempts > 0 then left = string.format("%d / %d", r.n, r.d.attempts) end
+    if r.d.seconds and r.d.seconds > 0 then
+      left = left .. string.format("  %ds", math.max(0, r.d.seconds - math.floor((gd.match().frame - r.f0) / 60)))
+    end
+    local main = r.d.score == "streak" and string.format("streak %d  best %d", r.streak, r.best_streak)
+      or string.format("%d / %d  %d%%", r.ok, r.n, r.n > 0 and math.floor(100 * r.ok / r.n + 0.5) or 0)
+    local w = 300
+    local x, y = 320 - w / 2, 84
+    quad(x, y, w, 40, GLASS, SHEAR)
+    quad(x - 2, y, 4, 40, GOLD, SHEAR)
+    stxt(x + 14, y + 17, r.d.name:upper(), "row", GOLD)
+    txt(x + w - 12, y + 15, left, "caption", MUTED, "right")
+    txt(x + 14, y + 33, main, "body", BONE)
+    local e = r.log[1]
+    if e then txt(x + w - 12, y + 33, e.text, "caption", e.ok and OK or DANGER, "right", 150) end
+  elseif last and gd.time() < last.until_t then
+    local L = last
+    local x, y, w = 170, 150, 300
+    local h = 70 + math.min(#L.log, 6) * 14
+    panel(x, y, w, h, "RESULTS", GOLD)
+    stxt(x + 12, y + 40, L.d.name:upper(), "row", BONE)
+    txt(x + w - 12, y + 40, string.format("%d%s", L.score, L.d.score == "streak" and " streak" or "%"), "body", GOLD, "right")
+    txt(x + 12, y + 56, string.format("%d / %d hit%s   best before: %s%s", L.ok, L.n,
+      L.mean and string.format("   mean %.1f", L.mean) or "", L.was and tostring(L.was) or "-",
+      (L.was == nil or L.score > L.was) and "   NEW BEST" or ""), "caption", MUTED, "left", w - 24)
+    for i = 1, math.min(#L.log, 6) do
+      local e = L.log[i]
+      txt(x + 12, y + 56 + i * 14, e.text, "caption", e.ok and OK or DANGER, "left", w - 24)
+    end
+  end
+end
+function LD.dismiss_results() last = nil end
+
+-- ---- the DRILLS tab ------------------------------------------------------------------------------------
+local function drill_items()
+  local items = {}
+  if dr then
+    items[#items + 1] = { label = "Stop the drill", icon = "lab_pause",
+      desc = "End it now and score what you have.", value = function() return dr and dr.d.name:upper() or "" end,
+      run = function() finish("stopped") menu_close() end }
+  end
+  for _, d in ipairs(drills) do
+    local dd = d
+    items[#items + 1] = { label = dd.name, icon = "lab_record",
+      desc = function()
+        return dd.desc .. (best[dd.id] and string.format("  Best: %d%s.", best[dd.id], dd.score == "streak" and " streak" or "%") or "")
+      end,
+      value = function() return best[dd.id] and ("BEST " .. best[dd.id]) or "NEW" end,
+      run = function() menu_close() start(dd) end }
+  end
+  items[#items + 1] = { label = "Reload drill files", icon = "lab_reload",
+    desc = "Read scripts-data/geno-lab_lab/drills/index.txt again: one id per line, each drills/<id>.txt a drill (docs/geno.md 14.16).",
+    value = function() return #drills .. " DRILLS" end,
+    run = function() load_drills() say(#drills .. " drills") end }
+  return items
+end
+-- before EXIT
+table.insert(TABS, #TABS, { name = "DRILLS", icon = "lab_record", items = drill_items })
+
+function LD.drill_console(rest)
+  local id = rest:match("^(%S*)")
+  if id == "" then
+    for _, d in ipairs(drills) do gd.log(string.format("  %-10s %s (%s, %s)%s", d.id, d.name, d.rule, d.score,
+      best[d.id] and ("  best " .. best[d.id]) or "")) end
+    if dr then gd.log(string.format("running: %s  %d / %d  streak %d", dr.d.name, dr.ok, dr.n, dr.streak)) end
+    return
+  end
+  if id == "stop" then finish("stopped") return end
+  for _, d in ipairs(drills) do if d.id == id then start(d) gd.log("drill " .. d.name) return end end
+  gd.log("lab drill [id | stop]  (lab drill lists them)")
+end
+end
+stage_d5()
+
+ACTIONS.cb_clear = function() LD.combo_reset() say("Combos cleared") end
+
 -- ---- ticks ----------------------------------------------------------------------------------------
 local function mode_keys()
   local md = mode()
@@ -3415,7 +4544,7 @@ function on_tick()
   end
   if gd.key_pressed("F3") then cfg.help = not cfg.help end
   if gd.key_pressed("TAB") then set_mode(cfg.mode + (gd.key("SHIFT") and -1 or 1)) end
-  for i = 1, #MODES do if gd.key_pressed(tostring(i)) then set_mode(i) end end
+  for i = 1, #MODES do if gd.key_pressed(i == 10 and "0" or tostring(i)) then set_mode(i) end end
   if gd.key_pressed("F") then next_port(1) end
   mode_keys()
   if offline() then
@@ -3546,6 +4675,12 @@ function on_draw()
   if id == "launch" then LE.draw_launch() end
   if id == "ab" then LE.draw_ab() end
   if id == "training" then LD.draw() end
+  if id == "combo" then
+    if T("boxes") then LD.draw_d2({ swept = true, shield = true, grab = true }) end
+    LD.draw_combo(T("fan"))
+  end
+  if id == "hitboxes" then LD.draw_d2({ swept = T("swept"), hurt = T("hurt"), shield = T("shield"), grab = T("grab") }) end
+  LD.draw_drill()
   if id == "inspect" then
     if T("info") then draw_info(list) end
     if T("attrs") then draw_attrs(list) end
@@ -3570,7 +4705,7 @@ local function dump(port)
 end
 
 local function help_lines()
-  local out = { "Geno Lab - mode " .. mode().name .. " (TAB / 1-9 change it)" }
+  local out = { "Geno Lab - mode " .. mode().name .. " (TAB / 1-9, 0 change it)" }
   for i, m in ipairs(MODES) do
     local ks = {}
     for _, t in ipairs(m.t) do ks[#ks + 1] = t.k .. " " .. t.label end
@@ -3585,7 +4720,7 @@ local function help_lines()
   out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
   out[#out + 1] = "  stage E: moves [text] | play <id|name> | kb | di none|in|out|survival | ab [record|reload|same|mirror]"
   out[#out + 1] = "           export [port] [version] | fdiff [fighter verA verB] | rollbacks [n]"
-  out[#out + 1] = "  stage D: adv | card | tech [clear] | actionable"
+  out[#out + 1] = "  stage D: adv | card | tech [clear] | actionable | dummy [key value] | combo | drill [id | stop]"
   return out
 end
 
@@ -3611,7 +4746,7 @@ gd.command("lab", function(arg)
     local want = rest:lower()
     local i = MODE_BY_ID[want] or tonumber(want)
     if i and MODES[i] then set_mode(i) gd.log("mode " .. mode().name)
-    else gd.log("lab mode clean|hitboxes|frames|stage|inspect|moves|launch|ab|training") end
+    else gd.log("lab mode clean|hitboxes|frames|stage|inspect|moves|launch|ab|training|combo") end
   elseif cmd == "hide" then
     cfg.hidden = not cfg.hidden
     if cfg.hidden then restore_draw() end
@@ -3690,6 +4825,12 @@ gd.command("lab", function(arg)
     -- stage E (LE.console)
   elseif LD.console(cmd, rest) then
     -- stage D (LD.console)
+  elseif cmd == "dummy" then
+    LD.dummy_console(rest)
+  elseif cmd == "combo" then
+    LD.combo_console()
+  elseif cmd == "drill" then
+    LD.drill_console(rest)
   elseif cmd == "set" then
     local mid, tid, v = rest:match("^(%w+)%.(%w+)%s+(%S+)$")
     if mid and tog[mid] and tog[mid][tid] ~= nil then

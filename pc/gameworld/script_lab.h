@@ -31,6 +31,9 @@ enum {
     LAB_F_SCALE,         /* model scale (x34_scale.y) */
     LAB_F_CMD_TIMER,     /* subaction script timer */
     LAB_F_KB_LAST,       /* the knockback of the last launch (dmg.x18d8.kb_applied1, kept after kb_applied clears) */
+    LAB_F_SHIELD_X,      /* the shield bubble as the game has it this frame (shield_hit.pos, .size) (stage D) */
+    LAB_F_SHIELD_Y,
+    LAB_F_SHIELD_R,
     LAB_F_COUNT
 };
 
@@ -59,6 +62,7 @@ enum {
     LAB_I_KIND,           /* fp->kind (the port's fighter kind: m-ex slots from 0x21) */
     LAB_I_LR_AGE,         /* fp->x67F: frames since L / R / Z was pressed (255 = none); the L-cancel reads it (stage D) */
     LAB_I_JUMP_AGE,       /* fp->x67E: frames since X / Y was pressed (255 = none) (stage D) */
+    LAB_I_SHIELD_ON,      /* fp->x221B_b0: the shield bubble is up (ftColl_8007B1B8) (stage D) */
     LAB_I_COUNT
 };
 

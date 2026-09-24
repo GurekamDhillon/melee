@@ -834,10 +834,9 @@ has no `os.date`), `gd.player().kb_last` (the last launch's knockback, which is 
 
 ### 14.12 Stage D: the player-training half (D1: frame data on screen)
 
-Stage E built the creator tools; stage D is what players practise with. It is planned in five parts,
-built in this order: D1 frame data on screen, D3 the dummy, D2 hitbox display upgrades, D4 combo
-analysis, D5 scenarios and drills. There are two review points, after D1-D3 and after D4-D5.
-**D1 is built**; the rest is below as the plan.
+Stage E built the creator tools; stage D is what players practise with. It has five parts: D1 frame
+data on screen (14.12), D3 the dummy (14.13), D2 hitbox display (14.14), D4 combo analysis (14.15)
+and D5 scenarios and drills (14.16). All five are built. The punish finder (D4) is left for later.
 
 The Lua is in `lab.lua` in one function scope, `stage_d()`, like stage E's. No new art: it reuses
 the stage C and E icons.
@@ -896,9 +895,8 @@ rates:
 | ledgedash | Off CliffWait (a drop or a jump) into an airdodge that lands within 60 frames: the ledge intangibility left on landing (GALINT, `player.intangible`, the timer `ftCo_CliffWait` starts). Scored as a hit when above 0. |
 | hops | KneeBend > JumpF/B: short or full, by the take-off speed against the fighter's `hop_v_initial_velocity` / `jump_v_initial_velocity`, and the jumpsquat's length. |
 
-Not in D1: dash-back and shield-drop timing. They need the game's own stick thresholds and
-windows (like `lr_age` for the L-cancel) before the Lab can say "early" or "late". They come with D3,
-which reads the same input code.
+Not in stage D: dash-back and shield-drop timing. They need the game's own stick thresholds and
+windows (like `lr_age` for the L-cancel) before the Lab can say "early" or "late".
 
 **API added:**
 - `player.lr_age`: `fp->x67F`, the frames since L / R / Z was pressed (255 = none).
@@ -931,28 +929,141 @@ the game.
 - L-cancel early/late counts from scripted `gd.input` presses at known frames.
 - `lab card` against `lab export` for the same fighter.
 
-**The plan for the rest of stage D** (from the brief; D1 is built above):
-- **D3, the dummy:**
-  - 4 record/playback slots, played in order or at random with weights;
-  - knockback DI (none / in / out / survival / an angle), ASDI and SDI;
-  - tech and missed-tech options with weights;
-  - ledge options with weights;
-  - out-of-state actions after hitstun, shieldstun, landing or a ledge grab;
-  - a reaction delay (fixed or a random range);
-  - holds: percent, infinite shield, shield tilt, and hold shield / crouch / jump.
-- **D2, hitbox display:**
-  - swept hitboxes (the capsule between last frame and this one, `LAB_HF_PX..PZ`) with fading ghosts;
-  - hurtbox states drawn apart (normal, intangible, invincible);
-  - shield bubble and grab ranges.
-- **D4, combo analysis:**
-  - true-combo detection with the escape window (the victim's actionable frame against the next
-    hit, E's knockback code for each DI);
-  - a combo counter that says why a combo dropped;
-  - the punish finder later (decision 2).
-- **D5, scenarios and drills:**
-  - a data-only scenario format;
-  - the L-cancel streak and the tech chase first (decision 1);
-  - a results screen and a DRILLS tab.
+### 14.13 Stage D3: the dummy
+
+**What it is.** The Lab plays one fighter, the **dummy**, through `gd.input`, one frame at a time.
+- The dummy must be a **human** port, because CPUs ignore pads. Leave its controller unplugged,
+  or its inputs are overridden anyway.
+- It is **off until you turn it on**: DUMMY tab > Dummy, then A. Left / right picks the port. A
+  human P2 keeps its pad.
+- It is offline only. It stands down while the history replays (the replay feeds the logged pads)
+  and while it is recording.
+- The settings persist in `scripts-data/geno-lab_lab/dummy.txt`. The pause menu's DUMMY tab edits
+  them, and so does the console: `lab dummy` lists them, `lab dummy <key> <value>` sets one.
+
+| setting | what it does |
+|---|---|
+| Record slot (`R` in TRAINING, or the menu) | Your controller drives the dummy while it records, and your own fighter stands still. This is `gd.mirror_pad(from, to, true)`: the "take" flag, new in stage D, leaves `from` neutral. `R` again stops. There are 4 slots of up to 10 s, saved in `dummy_rec<n>.txt`. |
+| Record from a state | Starting a recording saves quick slot 2, and each playback of that slot loads it first, so it loops from the same spot. |
+| Playback (`P` in TRAINING) | Off, in order, or random by each slot's weight (`lab dummy w_slot 1,1,0,2`). |
+| DI | Knockback DI on every hit: none / in / out / survival / a fixed angle / random (`w_di`). The launch comes from the knockback preview of the hit's own numbers, and the stick is set with the preview's own DI rule (`gs_apply_di`): "in" is the perpendicular back toward the attacker's side, "survival" the one that ends nearer 45 / 135 degrees. It is held through hitlag. |
+| ASDI | The C-stick held through hitlag: away / toward / up / down. |
+| SDI | N flicks (one every 2 frames: in, then neutral) at the start of hitlag, in one direction. |
+| Tech | In tumble (`DamageFly*` / `DamageFall`) it presses R when `gd.floor_below` says the floor is 5 frames away (the game takes a press in the 20 frames before contact, `ftCo_800986B0`, with a 40-frame lockout). The stick picks in place / away / toward (`ftCo_80098928` reads it at the landing). Other options are miss and random (`w_tech`). The press is tumble-only: tumble's interrupts have no airdodge (`ftCo_DamageFall_IASA`), but an air damage state out of hitstun would airdodge. |
+| Getup | From DownWait: stand / attack / roll away / roll toward / random (`w_getup`). |
+| Ledge | From CliffWait: getup (toward x = 0) / roll / attack / jump / drop / ledgedash / random (`w_ledge`). The ledgedash is a fixed script (drop back, jump, 2 frames, airdodge down-in), so its timing is approximate and varies by fighter. |
+| After hitstun / shieldstun / landing | What it does on the first actionable frame (the same reading as frame advantage), the frame GuardSetOff becomes Guard, or when a landing's lag ends. The options are shield, spotdodge, roll away / toward, jump, attack, nair (jump then A), grab, or a recorded slot. |
+| Reaction min / max | Every response waits a random number of frames between the two. |
+| Percent lock | Put back to this percent after a hit (`gd.set_percent`, only when it changed). |
+| Infinite shield | The shield is refilled to 60 when it falls under 50. `gd.set_shield`, new in stage D, writes only then, because every write forks the rewind timeline. |
+| Hold / Shield tilt | When nothing else is running: shield (with a tilt), crouch, or jump. |
+
+**What wins when several apply** (per frame): SDI / DI in hitlag first, then the tech press, then a
+triggered response (after its delay), then playback, then the hold. With none of them it releases
+the pad.
+
+**Native API:**
+- `gd.floor_below(x, y [, depth])`: `mpCheckFloor`, read-only. It clears the bounding flags it
+  sets, so it is safe between frames and rewind-exact.
+- `gd.set_shield(port, health)`: offline; forks the timeline.
+- `gd.mirror_pad(from, to, take)`.
+- `player.shield_on / shield_x / shield_y / shield_r`: `shield_hit` as the game has it this frame.
+
+### 14.14 Stage D2: hitbox display
+
+The Lab's own drawing over the game's.
+- **Where:** HITBOXES gets four toggles: `W` swept hitboxes (on), `U` hurtbox states (off), `S`
+  shield bubble (on), `C` grab boxes (on). TRAINING and COMBO draw the swept hitboxes, the shield
+  and the grabs when `B` is on.
+- **Swept hitboxes:** the capsule from last frame's position to this frame's (`px, py` to `x, y`),
+  the shape Melee tests hits against. The last 4 frames stay as fading ghosts.
+- **Hurtbox states:** the capsules coloured normal yellow, intangible blue, invincible green. A
+  whole-body timer (`player.intangible` / `invincible`) or body state overrides the capsule's own,
+  with a chip giving the frames left: ledge, respawn, airdodge and spotdodge each read clearly.
+- **Shield:** the bubble at the game's position and radius, with its health, coloured by health.
+- **Grabs:** hitboxes with the `catch` element, in purple.
+
+### 14.15 Stage D4: combo analysis
+
+COMBO mode (`0`).
+- **The reading, per hit on a victim:** the victim's first actionable frame after it (the frame
+  advantage reading), set against the next hit.
+  - **TRUE:** the next hit landed first.
+  - **Escapable:** otherwise, "escapable N f" (how many frames the victim could act), with what it
+    could do then: in the air jump (if it has one) / airdodge / aerial, on the ground shield / jump
+    / spotdodge.
+- **DI does not change the reading.** Hitstun does not depend on DI; what DI changes is where the
+  victim is. So the panel also shows the **DI fan** (`D`): the last hit's flight for none / in /
+  out / survival from the knockback preview, with the angle and hitstun, drawn to the end of
+  hitstun.
+- **A combo** is a run of hits by one attacker on one victim. It ends with the reason:
+  - "dropped: P2 could act for 30 f (jump / airdodge / aerial)";
+  - "P2 hit back";
+  - "a new exchange".
+
+  The last 5 are kept. Console: `lab combo`.
+- **Not built: the punish finder** (decision 2). It would try the attacker's moves in B's rewind
+  after an exchange and list the ones that connect.
+
+### 14.16 Stage D5: scenarios and drills
+
+**A drill is data.** It has these keys:
+
+| key | meaning |
+|---|---|
+| `name`, `desc` | shown in the DRILLS tab |
+| `rule` | how an attempt is scored (below) |
+| `score` | `streak` (the longest run of hits) or `rate` (the percentage) |
+| `attempts`, `seconds` | the limits (0 = none) |
+| `state` | a library state file to load first; otherwise the match as it is |
+| `window` | techchase only: frames to land the hit |
+| `dummy.<setting>` | dummy settings for the drill (weights as `in place:1,away:1`), put back when it ends |
+
+**The rules** (the only code):
+- `tech:<kind>` scores each D1 tech result of that kind on your port: `lcancel`, `wavedash`,
+  `waveland`, `ledgedash`, `hop`.
+- `techchase`: the dummy techs, rolls or gets up (the `Passive*` / `Down*` state starts), and
+  you must hit it within `window` frames. The reaction time is logged.
+
+**Built in:**
+- **L-cancel streak:** 60 s, the score is the streak.
+- **Tech chase:** 20 attempts, window 40, random tech and getup, the rate.
+- **Ledgedash consistency:** 20, GALINT above 0, the rate.
+- **Wavedash timing:** 20, frame-perfect, the rate.
+
+The last two exist only as data, on the `tech:` rule.
+
+**Your own drills.** A file per drill, `scripts-data/geno-lab_lab/drills/<id>.txt`, one
+`key = value` per line, listed by id in `drills/index.txt`. DRILLS > Reload reads them again.
+
+**Running one:**
+- **Starting:** from the pause menu's **DRILLS** tab (between TOOLS and EXIT; the tab strip
+  narrows to fit), or `lab drill <id>`. `lab drill` lists them and `lab drill stop` ends one.
+- **HUD:** the name, the score, the streak or rate, the attempts or time left, and the last
+  attempt.
+- **Results:** a panel for 10 s: the score, hits of attempts, the mean (GALINT, reaction), the
+  best before and NEW BEST, and the last attempts. Each run adds a line to `drills/results.txt`,
+  and the best per drill is read back from it.
+
+**Next candidates** (each needs a rule): shield-drop punish, wavedash out of shield, edgeguard
+(the dummy's ledge options), DI survival (you are the victim; the dummy's recorded slot hits you).
+
+**Checks off the game:** `pc/geno/tools/lab_stage_d_check.lua` covers D1-D5 in 32 checks:
+- D1, as in 14.12;
+- D3:
+  - SDI flicks, then DI "in" as the right perpendicular;
+  - the tech press about 5 frames out, with the away stick held;
+  - a ledge jump after a 3-frame reaction;
+  - a spotdodge out of shieldstun;
+  - recording through the take-mirror, the slot saved, and its playback pressing A;
+- D4: a true second hit and a third escapable by exactly 3 frames;
+- D5: the L-cancel drill's count, streak and saved result, and a tech-chase hit;
+- the D2 drawing, in HITBOXES with a swept hitbox, a grab box and a shield.
+
+All pass. The checks in the game are the ones in 14.12, plus:
+- the dummy's DI angle against LAUNCH's arc for the same DI;
+- the tech press with a real `mpCheckFloor` (Battlefield platforms included);
+- the swept capsules against the game's own hitbox draw.
 
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 

@@ -862,20 +862,41 @@ game's boxes and `C` to clear the readouts. They all only read the game.
 - **Restarts and drops.** Another hit by the same attacker restarts the exchange, so multi-hit
   moves count from the last hit. A shield break ends it with "shield break". After 240 frames it
   is dropped.
+- **On a load or a step back,** the exchanges after the frame you land on go, like the event log's
+  lines. The same goes for the tech results and the combos. The tech hit rates stay, as totals.
+- **A move's jump-cancel is not its IASA.** Shine's jump cancel, for one, is not the script's
+  interrupt flag, so the attacker's side is read at the move's own end. `lab adv` measured Fox's
+  shine on shield at +4 and jab 1 at -10 (ACE, a scripted human P2 holding shield). A published
+  sheet's number may count the jump cancel.
 - **On screen:** the latest result big at the top (green plus, red minus) with the move, and the
   last 5 in a row under it. It also goes to INSPECT's event log.
 
-**The move card (`M`).**
-- **What it shows:** the focused fighter's move: startup, the active frames, the total, IASA, and
-  a bar with the current frame. For aerials it adds the landing lag, the L-cancelled lag and the
-  autocancel windows.
-- **Where the numbers come from:** the move's own script, through the same analysis as the FRAMES
-  timeline (`analyse`) and the frame-data export (`bx_static`, exported as `LE.move_static`).
-  Nothing is typed in by hand.
-- **The L-cancelled lag** is `ftCo_LandingAir_EnterWithLag`'s: the lag divided by PlCo `xE8`,
-  truncated, at least 1.
-- **When the move ends,** the card stays up as LAST MOVE until the next move that has a hitbox or
-  a landing lag.
+**The move card (`M`).** It shows the focused fighter's move, **measured as it runs, the way the
+frame-data export measures** (`bx_frame`), so `lab card` and `lab export` agree. One convention for
+both:
+- **frame 1** is the first frame the game runs in the state: the frame after the change;
+- **startup / active** are the frames the move has a hitbox;
+- **IASA** is the first frame of the state with the interrupt flag. There is none when it only
+  comes at or after the end (Fox ftilt);
+- **total** is the frames the state lasts when nothing ends it early. A run cut short in its IASA
+  window, or by a landing, gives no total, and the fighter's last full run's total stays.
+
+Unlike the export, the card runs in real exchanges, so frames frozen in hitlag are not counted.
+Each move's last measurement is kept per fighter, so the next time the card has the numbers from
+the move's first frame ("(measuring)" until then). The landing lag, the L-cancelled lag
+(`ftCo_LandingAir_EnterWithLag`: the lag / PlCo `xE8`, at least 1) and autocancel come from the
+script (`LE.move_static`), as the export's do. The card stays up as LAST MOVE until the next move
+with a hitbox or a landing lag.
+
+**Why D1 changed this.** D1's card read the script statically (`analyse`, as FRAMES does). On ACE
+that read one frame high against the export and the known values: ftilt 6-9 vs 5-8, nair 5-32 vs
+4-31. Its "total" was the script's length, not the state's. The static reading is still what the
+FRAMES timeline, the state browser and the export's `autocancel` and `total_script` use, so those
+may be one frame high too. **Open:** check `gd.timeline`'s frame numbering against a measured move
+before relying on those.
+
+The export now takes the script's IASA only when it falls inside the state; before, ftilt's 28 was
+reported past its 26-frame end.
 
 **The input display (`I`).**
 - **The controls:** both sticks (an octagon gate with the position), A B X Y Z, and the L / R
@@ -893,7 +914,7 @@ rates:
 | wavedash | KneeBend > (JumpF/B) > EscapeAir > LandingFallSpecial. It reports how many frames after the jump's first airborne frame the airdodge came. The fighter procs run the animation (proc 0) before the input (proc 3), so a frame-perfect airdodge goes straight out of KneeBend and JumpF is never seen. That is scored as 0, "frame-perfect". |
 | waveland | EscapeAir > LandingFallSpecial with no jump in the 12 frames before it: the airdodge frame it landed on (and the mean). |
 | ledgedash | Off CliffWait (a drop or a jump) into an airdodge that lands within 60 frames: the ledge intangibility left on landing (GALINT, `player.intangible`, the timer `ftCo_CliffWait` starts). Scored as a hit when above 0. |
-| hops | KneeBend > JumpF/B: short or full, by the take-off speed against the fighter's `hop_v_initial_velocity` / `jump_v_initial_velocity`, and the jumpsquat's length. |
+| hops | KneeBend > JumpF/B: short or full, by the take-off speed against the fighter's `hop_v_initial_velocity` / `jump_v_initial_velocity`, and the jumpsquat's length. Counted, not scored: `lab tech` prints "short N  full M". |
 
 Not in stage D: dash-back and shield-drop timing. They need the game's own stick thresholds and
 windows (like `lr_age` for the L-cancel) before the Lab can say "early" or "late".
@@ -922,7 +943,14 @@ with scripted frames:
 All 15 checks pass. It needs any Lua 5.4. It checks the Lab's reading of states and counters, not
 the game.
 
-**Check in the game (to do, on ACE):**
+**Checked in the game (D1, ACE):**
+- It builds and runs, and `lab.lua` raised no errors.
+- L-cancel on time, 1 f early and no press all read right.
+- Wavedash "1 f late" and "3 f late" match the scripted inputs.
+- Shine and jab on shield read +4 / -10, as noted above.
+- The card disagreed with the export. That is fixed above.
+
+**Still to check in the game:**
 - Fox shine on shield. Check it against our own export first; compare with a published sheet
   only once there is one we trust (decision 3).
 - Fox jab 1 on shield, and Marth fsmash on shield.

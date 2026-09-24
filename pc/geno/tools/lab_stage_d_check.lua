@@ -217,15 +217,37 @@ expect(out:find("Hops: short hop (jumpsquat 3 f)", 1, true) ~= nil, "short hop")
 expect(out:find("Waveland: landed on airdodge f4", 1, true) ~= nil, "waveland")
 expect(out:find("Ledgedash: GALINT 5", 1, true) ~= nil, "ledgedash GALINT")
 
--- 5. The move card
-set(1, "AttackS3S") run(3)
+-- 5. The move card, measured like the export: frame 1 = the first frame after the change of state.
+--    Fox ftilt: hitboxes on 5-8, the state lasts 26, no IASA inside it (the export's reading, in game).
+local HB = { { id = 0, x = 0, y = 0, z = 0, px = 0, py = 0, radius = 2, damage = 9, angle = 45, kbg = 100, bkb = 5, wbk = 0,
+  bone = 1, element_name = "normal" } }
+local function perform(name, len, from, to, iasa, after)
+  set(1, name) frame() -- the frame the state is entered
+  for f = 1, len do
+    P[1].hitboxes = (f >= from and f <= to) and HB or {}
+    P[1].iasa = iasa ~= nil and f >= iasa
+    frame()
+  end
+  P[1].hitboxes, P[1].iasa = {}, false
+  set(1, after) frame()
+end
+perform("AttackS3S", 26, 5, 8, nil, "Wait")
 out = lab("card")
 print(out)
-expect(out:find("startup 5 active 5-8 total 26 IASA 20", 1, true) ~= nil, "move card (ftilt)")
-set(1, "AttackAirN") run(2)
+expect(out:find("startup 5 active 5-8 total 26 IASA nil", 1, true) ~= nil, "move card = the export's reading (ftilt 5-8, 26)")
+-- nair, landed at 45 after its IASA at 42: the landing cuts it short, so no total from this run
+perform("AttackAirN", 45, 4, 31, 42, "LandingAirN")
+set(1, "Wait") frame()
+P[1].hitboxes = {}
 out = lab("card")
 print(out)
-expect(out:find("landing 15 L-cancel 7 autocancel 1-2 40-", 1, true) ~= nil, "move card (nair lag, autocancel)")
+expect(out:find("AttackAirN startup 4 active 4-31 total nil IASA 42 landing 15 L-cancel 7 autocancel 1-2 40-", 1, true) ~= nil,
+  "move card (nair: landed, IASA 42, the lag and autocancel)")
+-- the second time, the card has the numbers from the first frame on
+set(1, "AttackS3S") frame() frame()
+out = lab("card")
+expect(out:find("startup 5 active 5-8 total 26", 1, true) ~= nil and not out:find("measuring", 1, true), "move card: kept for the next time")
+set(1, "Wait") run(2)
 
 -- 6. Inputs: X on f1, R on f4
 pad.buttons = 0x0400 frame() pad.buttons = 0 run(2) pad.buttons = 0x0020 frame() pad.buttons = 0 run(2)
@@ -337,6 +359,14 @@ run(2)
 -- 7. Draw everything once (catches nil arithmetic in the drawing code)
 local ok, err = pcall(env.on_draw)
 expect(ok, "on_draw in TRAINING: " .. tostring(err))
+local keep_now = now
+now = 100 -- a load back to frame 100: the exchanges after it are from the abandoned timeline
+env.on_loadstate(4)
+out = lab("adv")
+local later = 0
+for f in out:gmatch("f(%d+) P") do if tonumber(f) > 100 then later = later + 1 end end
+expect(later == 0 and out:find("f6 P1", 1, true) ~= nil, "a load drops the exchanges after its frame, keeps f6")
+now = keep_now
 env.on_loadstate(0)
 ok, err = pcall(env.on_draw)
 expect(ok, "on_draw after a step back: " .. tostring(err))

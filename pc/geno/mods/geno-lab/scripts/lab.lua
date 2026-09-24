@@ -2311,7 +2311,9 @@ local function bx_finish_move(cur)
   local lag_attr = LANDING_ATTR[m.name]
   local lag = lag_attr and bx.attrs and bx.attrs[lag_attr] or nil
   local row = { id = m.id, name = m.name, group = m.group, air = m.air or (air_name(m.name) and true or false),
-    total = total, total_script = st.len, iasa = iasa or st.iasa, startup = startup, active = windows_of(active),
+    total = total, total_script = st.len, startup = startup, active = windows_of(active),
+    -- the measured IASA; the script's only when it falls inside the state (Fox ftilt's is past its end)
+    iasa = iasa or (st.iasa and (total == 0 or st.iasa <= total) and st.iasa or nil),
     landing_lag = lag and math.floor(lag + 0.5) or nil, lcancel_lag = lag and math.floor(lag / 2) or nil,
     autocancel = st.ac, ended = cur.ended or "", landed = cur.landed, hitboxes = {},
     chain = cur.chain and table.concat(cur.chain, ">") or nil }
@@ -2961,25 +2963,26 @@ function LD.on_hit(attacker, victim, info)
 end
 
 -- ---- the move card ---------------------------------------------------------------------------------------
--- The focused fighter's move: its script's windows (the same analysis as the FRAMES timeline and
--- the state browser), IASA, the length, and for aerials the landing lag, the L-cancelled lag and the
--- autocancel windows (the frame-data export's own reading, LE.move_static). It stays up, dimmed,
--- after the move ends, until the next move with a hitbox or a landing lag.
-local card = { port = nil, action = nil, info = nil, live = false }
+-- The focused fighter's move, MEASURED as it runs, the way the frame-data export measures (bx_frame):
+-- frame 1 = the first frame the game runs in the state (the frame after the change); a frame counts
+-- when the move has a hitbox (startup, active), the IASA flag (the first interruptible frame), and
+-- the total = the frames the state lasts when nothing ends it early. Unlike the export it runs in a
+-- real exchange, so the frames frozen in hitlag are not counted. Each move's last full measurement is
+-- kept per fighter, so the card has the numbers from the move's first frame on the next time.
+-- The landing lag, the L-cancelled lag and autocancel come from the script (LE.move_static), as the
+-- export's do. The card stays up, dimmed, after the move ends, until the next move with a hitbox or
+-- a landing lag.
+local card = { port = nil, action = nil, info = nil, live = false, meas = {}, run = nil }
+local LANDED = { Landing = true, LandingFallSpecial = true, LandingAirN = true, LandingAirF = true, LandingAirB = true,
+  LandingAirHi = true, LandingAirLw = true }
 
 local function card_info(p)
-  local c = timeline_of(p)
-  if c == nil then return nil end
   local lag_attr = LE.LANDING_ATTR[p.motion_name]
-  if #c.windows == 0 and lag_attr == nil then return nil end
-  local frames, iasa = {}, nil
-  for _, w in ipairs(c.windows) do for f = w.from, w.to do frames[f] = true end end
-  for _, e in ipairs(c.marks) do if e.name == "iasa" then iasa = e.frame break end end
+  local c = timeline_of(p)
+  if (c == nil or #c.windows == 0) and lag_attr == nil then return nil end
   local st = LE.move_static(p.port, p.action)
   local lag = lag_attr and attrs_of(p)[lag_attr] or nil
-  local info = { name = p.motion_name, char = p.char_name, len = math.floor(c.len + 0.5),
-    startup = c.windows[1] and c.windows[1].from or nil, active = LE.windows_of(frames), iasa = iasa or st.iasa,
-    windows = c.windows, ac = st.ac }
+  local info = { name = p.motion_name, char = p.char_name, key = p.char .. ":" .. p.action, ac = st.ac }
   if lag then
     info.lag = math.floor(lag + 0.5)
     info.lcl = math.max(1, math.floor(lag / common().lcancel_div))
@@ -2987,17 +2990,70 @@ local function card_info(p)
   return info
 end
 
+-- the measurement so far -> {startup, active, windows = {{from, to}}, iasa, total}
+local function card_result(r)
+  local frames, first = {}, nil
+  for f in pairs(r.hb) do frames[#frames + 1] = f end
+  table.sort(frames)
+  local windows = {}
+  for _, f in ipairs(frames) do
+    first = first or f
+    local w = windows[#windows]
+    if w and f == w.to + 1 then w.to = f else windows[#windows + 1] = { from = f, to = f } end
+  end
+  return { startup = first, active = LE.windows_of(r.hb), windows = windows, iasa = r.iasa, total = r.total }
+end
+
+local function card_end(next_name)
+  local r = card.run
+  card.run = nil
+  if r == nil or r.f == 0 then return end
+  -- the total only when the state ran out by itself: not cut short in its IASA window, not landed
+  if not r.iasa_now and not LANDED[next_name] then r.total = r.f end
+  local res = card_result(r)
+  local old = card.meas[r.key]
+  if res.total == nil and old then res.total = old.total end
+  card.meas[r.key] = res
+end
+
 local function card_frame()
   local p = gd.player(focus)
   if p == nil then return end
   if p.port ~= card.port or p.action ~= card.action then
+    card_end(p.motion_name)
     card.port, card.action = p.port, p.action
     local info = card_info(p)
     card.live = info ~= nil
-    if info then card.info = info end
+    if info then
+      card.info = info
+      card.run = { key = info.key, f = 0, hb = {}, lag = p.in_hitlag }
+    end
+  elseif card.run then
+    local r = card.run
+    -- a frame frozen in hitlag (the hit's own frame still counts) is not a frame of the move
+    if not (p.in_hitlag and r.lag) then
+      r.f = r.f + 1
+      if #p.hitboxes > 0 then r.hb[r.f] = true end
+      if p.iasa and r.iasa == nil then r.iasa = r.f end
+    end
+    r.lag, r.iasa_now = p.in_hitlag, p.iasa
   end
-  card.frame = card.live and p.action_frame + 1 or nil
+  card.frame = card.live and card.run and card.run.f or nil
 end
+
+-- what the card shows: this run so far, filled in from the fighter's last full measurement
+local function card_view()
+  local i = card.info
+  if i == nil then return nil end
+  local m = card.meas[i.key]
+  local r = card.run and card.run.key == i.key and card_result(card.run) or nil
+  local v = { name = i.name, char = i.char, lag = i.lag, lcl = i.lcl, ac = i.ac, measured = m ~= nil }
+  local src = m or r or {}
+  v.startup, v.active, v.windows, v.iasa, v.total = src.startup, src.active, src.windows or {}, src.iasa, src.total
+  if r and m == nil then v.partial = true end
+  return v
+end
+LD.card_view = card_view
 
 -- ---- the input display --------------------------------------------------------------------------------
 -- What the game saw from the focused fighter's pad this frame (gd.pad), and a log of inputs with
@@ -3186,6 +3242,11 @@ end
 
 -- the timeline jumped (step back, a load, a rewind): drop everything in flight, keep the results
 function LD.cut()
+  -- what happened after the frame we are back at belongs to the abandoned timeline (as the event log)
+  local now = gd.match().frame
+  for i = #fa.hist, 1, -1 do if fa.hist[i].frame > now then table.remove(fa.hist, i) end end
+  for i = #tech.res, 1, -1 do if tech.res[i].frame > now then table.remove(tech.res, i) end end
+  card.run = nil
   fa.cur = nil
   prev_lag = {}
   tech.st = {}
@@ -3247,7 +3308,7 @@ local function draw_adv()
 end
 
 local function draw_card()
-  local i = card.info
+  local i = card_view()
   local x, y, w = 8, 8, 236
   if i == nil then
     panel(x, y, w, 40, "MOVE")
@@ -3256,30 +3317,31 @@ local function draw_card()
   end
   local h = i.lag and 96 or 80
   panel(x, y, w, h, card.live and "MOVE" or "LAST MOVE", card.live and ACCENT or DISABLED)
-  local head = string.format("%s  %s", i.char, i.name)
+  local head = string.format("%s  %s%s", i.char, i.name, i.measured and "" or "  (measuring)")
   txt(x + 82, y + 14, head, "caption", card.live and GOLD or MUTED, "left", w - 92)
   local function cell(cx, cy, label, value, col)
     txt(cx, cy, label, "caption", MUTED)
     txt(cx, cy + 13, value, "body", col or BONE)
   end
   cell(x + 12, y + 30, "startup", i.startup and tostring(i.startup) or "-")
-  cell(x + 62, y + 30, "active", i.active ~= "" and i.active or "-", HIT[0])
-  cell(x + 152, y + 30, "total", tostring(i.len))
+  cell(x + 62, y + 30, "active", (i.active or "") ~= "" and i.active or "-", HIT[0])
+  cell(x + 152, y + 30, "total", i.total and tostring(i.total) or "-")
   cell(x + 192, y + 30, "IASA", i.iasa and tostring(i.iasa) or "-", MARK.iasa)
   if i.lag then
     txt(x + 12, y + 70, string.format("landing %d   L-cancel %d   autocancel %s", i.lag, i.lcl, i.ac or "-"),
       "caption", BONE, "left", w - 24)
   end
-  -- the move as a bar: active frames in the hitbox colours, IASA in green, the current frame
+  -- the move as a bar: active frames, IASA in green, the current frame
   local bx0, by0, bw = x + 12, y + h - 18, w - 24
-  local len = math.max(i.len, 1)
+  local len = math.max(i.total or 0, card.frame or 0, i.iasa or 0, 1)
+  for _, win in ipairs(i.windows) do len = math.max(len, win.to) end
   local sx = bw / len
   quad(bx0, by0, bw, 8, TRACK)
   for _, win in ipairs(i.windows) do
-    quad(bx0 + (win.from - 1) * sx, by0, math.max(1, (win.to - win.from + 1) * sx), 8, HIT[win.id] or HIT[0])
+    quad(bx0 + (win.from - 1) * sx, by0, math.max(1, (win.to - win.from + 1) * sx), 8, HIT[0])
   end
   if i.iasa then quad(bx0 + (i.iasa - 1) * sx, by0 - 2, 2, 12, MARK.iasa) end
-  if card.frame then
+  if card.frame and card.frame > 0 then
     local fx = bx0 + math.min(card.frame - 1, len) * sx
     quad(fx, by0 - 3, 2, 14, BONE)
     txt(bx0 + bw, by0 - 4, "f" .. card.frame, "caption", BONE, "right")
@@ -3402,16 +3464,20 @@ function LD.console(cmd, rest)
     for port, s in pairs(tech.stats) do
       for _, k in ipairs(TECHS) do
         local st = s[k]
-        if st.n > 0 then gd.log(string.format("  P%d %-9s %d / %d ok, sum %g", port, TECH_NAME[k], st.ok, st.n, st.sum)) end
+        if st.n > 0 then
+          if k == "hop" then gd.log(string.format("  P%d %-9s short %d  full %d", port, TECH_NAME[k], st.sum, st.n - st.sum))
+          elseif k == "waveland" then gd.log(string.format("  P%d %-9s %d, mean airdodge f%.1f", port, TECH_NAME[k], st.n, st.sum / st.n))
+          else gd.log(string.format("  P%d %-9s %d / %d ok, sum %g", port, TECH_NAME[k], st.ok, st.n, st.sum)) end
+        end
       end
     end
     for _, r in ipairs(tech.res) do gd.log(string.format("  f%d P%d %s: %s", r.frame, r.port, TECH_NAME[r.kind], r.text)) end
   elseif cmd == "card" then
-    local i = card.info
+    local i = card_view()
     if i == nil then gd.log("card: no move yet") return true end
-    gd.log(string.format("card: %s %s startup %s active %s total %d IASA %s landing %s L-cancel %s autocancel %s",
-      i.char, i.name, tostring(i.startup), i.active, i.len, tostring(i.iasa), tostring(i.lag), tostring(i.lcl),
-      tostring(i.ac)))
+    gd.log(string.format("card: %s %s startup %s active %s total %s IASA %s landing %s L-cancel %s autocancel %s%s",
+      i.char, i.name, tostring(i.startup), i.active ~= "" and i.active or "-", tostring(i.total), tostring(i.iasa),
+      tostring(i.lag), tostring(i.lcl), tostring(i.ac), i.measured and "" or " (measuring)"))
   elseif cmd == "actionable" then
     for _, p in ipairs(gd.players()) do
       gd.log(string.format("  P%d %s f%d actionable=%s iasa=%s hitlag=%s hitstun=%s lr_age=%s", p.port, p.motion_name,
@@ -4194,7 +4260,11 @@ function LD.combo_victim_hit(attacker, victim)
   if c and attacker == c.v then end_combo(c, "P" .. c.v .. " hit back") end
 end
 
-function LD.combo_cut() cb.cur = nil end
+function LD.combo_cut()
+  cb.cur = nil
+  local now = gd.match().frame
+  for i = #cb.hist, 1, -1 do if cb.hist[i].f0 > now then table.remove(cb.hist, i) end end
+end
 function LD.combo_reset() cb.cur, cb.hist, cb.di = nil, {}, nil end
 
 local DI_COL = { none = BONE, ["in"] = 0x4D8DFFFF, out = DANGER, survival = OK }

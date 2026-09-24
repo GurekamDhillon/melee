@@ -1045,7 +1045,9 @@ static void gs_poll_keys(void) {
     if (fg != NULL) {
         GetWindowThreadProcessId(fg, &pid);
     }
-    focused = pid == GetCurrentProcessId() && !gs.console_open;
+    /* typing (the console, a name, a room code): the keys are text, not hotkeys */
+    focused = pid == GetCurrentProcessId() && !gs.console_open &&
+              (int) (GetTickCount() - (DWORD) gw_TextEntryUntil) >= 0;
     memcpy(gs.key_prev, gs.key_now, sizeof gs.key_now);
     for (vk = 1; vk < 256; ++vk) {
         gs.key_now[vk] = (unsigned char) (focused && (GetAsyncKeyState(vk) & 0x8000) != 0);
@@ -2378,7 +2380,7 @@ void gw_Script_Tick(void) {
         return;
     }
     if (gs.console_open) {
-        gw_TextEntryUntil = (int) GetTickCount() + 200; /* the keyboard is text, not a pad */
+        gw_TextEntryUntil = (int) GetTickCount() + 200; /* the keyboard is text, not hotkeys */
     }
     gs_poll_keys();
     gs_socket_poll();

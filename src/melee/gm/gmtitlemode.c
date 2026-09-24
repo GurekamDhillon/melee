@@ -40,7 +40,7 @@ void onExit(GameModeState* scene)
 {
     int* buttons = gm_GetGameModeStateExitData(scene);
 #if defined(TARGET_PC)
-    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or keyboard B) open the debug menu. */
+    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu. */
     if (*buttons & (HSD_PAD_Y | HSD_PAD_B)) {
         gm_SetPendingGameMode(GM_DEBUG);
         gm_SetNewGameModePending();

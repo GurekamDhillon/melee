@@ -51,9 +51,8 @@ static const char *gw_pad_setting(const char *env, const char *key, char *out, i
  * MELEE_PAD_DIAG (env) / pad_diag (settings.cfg):
  *   0        off
  *   1        (default) event log, cheap enough for every player's log: per-port source changes
- *            (adapter / sdl / keyboard / script / none = disconnected), keyboard<->controller
- *            hand-overs, adapter open/close/lost/suspend/resume and scanner retries, SDL's device
- *            list when it changes, and a 10 s summary while anyone is pressing things. Rate-capped:
+ *            (adapter / sdl / idle / script / none = disconnected), adapter open/close/lost/
+ *            suspend/resume and scanner retries, SDL's device list when it changes, and a 10 s summary while anyone is pressing things. Rate-capped:
  *            at most 20 lines per 10 s, then one "N suppressed" line.
  *   2        level 1 plus the old verbose dumps (every channel's values and the adapter's raw
  *            report bytes, twice a second). */
@@ -119,20 +118,16 @@ void gw_pad_log(const char *fmt, ...) {
   va_end(ap);
 }
 
-/* MELEE_INPUT pins this window to one input device - two copies of the game on one machine
- * (netplay testing) must not both read every controller:
- *   gc        the GameCube controller only (the raw adapter, else SDL's pads); keys do nothing
- *   keyboard  the keyboard only, on port 1: the adapter is never opened and SDL's pads are
- *             dropped; the full play mapping below applies. For tools that run a keyboard window
- *             next to a controller window (netplay_local.ps1, crash_sweep.py) - it must not grab
- *             the adapter.
- *   keyboard+ (and unset: the default for players) the keyboard and every controller together.
- *             The keyboard plays on its home port (port 1, or MELEE_KEYBOARD_PORT / settings
- *             keyboard_port = 1-4), shared with whatever controller is in that port: the device
- *             used last drives the port - press a key and the keyboard has it, move the stick or
- *             press a button and the controller has it back. Netplay plays channel 0 (port 1), so
- *             a player can switch mid-match. Other ports are controllers only. */
-enum { GW_INPUT_GC = 1, GW_INPUT_KEYBOARD, GW_INPUT_KEYBOARD_PLUS };
+/* The keyboard never plays: controllers drive the game, and keys are hotkeys only (F9/F10, the
+ * console's `, gd.key for scripts and mods).
+ *
+ * MELEE_INPUT (env) / input (settings.cfg):
+ *   unset, gc  every controller: the raw GameCube adapter, else SDL's pads (the default)
+ *   none       no devices at all (env only; tools that run a window next to a controller window -
+ *              netplay_local.ps1, crash_sweep.py - must not grab the adapter). Port 1 reads as a
+ *              connected controller at rest, so scenes and pad scripts see a player there. The
+ *              old value "keyboard" means the same. A player's settings.cfg never selects it. */
+enum { GW_INPUT_GC = 1, GW_INPUT_NONE };
 extern int gw_gc_adapter_device_plugged(void);
 extern void gw_gc_adapter_start_hotplug(void);
 static int gw_input_mode(void) {
@@ -140,45 +135,20 @@ static int gw_input_mode(void) {
   if (cached < 0) {
     char v[16];
     const char *from = gw_pad_setting("MELEE_INPUT", "input", v, sizeof v);
-    cached = GW_INPUT_KEYBOARD_PLUS;
-    if (v[0] == 'g' || v[0] == 'G') {
-      cached = GW_INPUT_GC;
-    } else if ((v[0] == 'k' || v[0] == 'K') && from != NULL && strcmp(from, "MELEE_INPUT") == 0 &&
-               strchr(v, '+') == NULL) {
-      /* a player's setting never switches controllers off; only the env var's plain
-       * "keyboard" (tools) does */
-      cached = GW_INPUT_KEYBOARD;
+    cached = GW_INPUT_GC;
+    if ((v[0] == 'n' || v[0] == 'N' || ((v[0] == 'k' || v[0] == 'K') && strchr(v, '+') == NULL)) &&
+        from != NULL && strcmp(from, "MELEE_INPUT") == 0) {
+      cached = GW_INPUT_NONE;
     }
-    if (cached == GW_INPUT_KEYBOARD_PLUS) {
-      gw_log("gw: input: keyboard and controllers together, last used wins the port (%s)",
+    if (cached == GW_INPUT_GC) {
+      gw_log("gw: input: every controller; the keyboard is hotkeys only (%s)",
              from != NULL ? from : "default");
     } else {
-      gw_log("gw: input pinned to the %s (%s)",
-             cached == GW_INPUT_GC ? "GameCube controller" : "keyboard", from);
-    }
-    if (cached == GW_INPUT_KEYBOARD && gw_gc_adapter_device_plugged()) {
-      gw_log("gw: input: NOTE a GameCube adapter is plugged in but this window is keyboard-only "
-             "(MELEE_INPUT=keyboard), so the adapter is ignored. Use MELEE_INPUT=keyboard+ or "
-             "leave it unset to play with it.");
-    }
-  }
-  return cached;
-}
-
-/* The keyboard's home port, chosen once: MELEE_KEYBOARD_PORT / settings keyboard_port (1-4),
- * else port 1. Keyboard-only windows always use port 1. */
-static int gw_keyboard_home(void) {
-  static int cached = -1;
-  if (cached < 0) {
-    char v[8];
-    const char *from = gw_pad_setting("MELEE_KEYBOARD_PORT", "keyboard_port", v, sizeof v);
-    int p = from != NULL ? atoi(v) : 1;
-    if (p < 1 || p > 4 || gw_input_mode() == GW_INPUT_KEYBOARD) {
-      p = 1;
-    }
-    cached = p - 1;
-    if (gw_input_mode() != GW_INPUT_GC) {
-      gw_log("gw: input: keyboard plays port %d (%s)", p, from != NULL ? from : "default");
+      gw_log("gw: input: no devices (MELEE_INPUT=%s): port 1 is a controller at rest", v);
+      if (gw_gc_adapter_device_plugged()) {
+        gw_log("gw: input: NOTE a GameCube adapter is plugged in but this window reads no devices "
+               "(MELEE_INPUT=%s), so the adapter is ignored. Leave MELEE_INPUT unset to play.", v);
+      }
     }
   }
   return cached;
@@ -205,10 +175,9 @@ int gw_PADInit(void) {
   int ret;
 
   gw_pad_diag_level();
-  gw_keyboard_home();
   /* Claim the adapter before Aurora brings SDL's joystick subsystem up. SDL's HIDAPI GameCube
    * driver opens the same device, and whichever side gets there first locks the other out. */
-  if (gw_input_mode() != GW_INPUT_KEYBOARD) {
+  if (gw_input_mode() != GW_INPUT_NONE) {
     gw_pad_release_on_blur();
     gw_gc_adapter_init();
     gw_gc_adapter_start_hotplug(); /* plugged in later, or moved to another port: picked up */
@@ -241,7 +210,7 @@ void gw_pad_focus_event(int focused) {
  * a gain acts at once. */
 void gw_pad_focus_tick(void) {
   int want;
-  if (gw_input_mode() == GW_INPUT_KEYBOARD || !gw_pad_release_on_blur()) {
+  if (gw_input_mode() == GW_INPUT_NONE || !gw_pad_release_on_blur()) {
     return;
   }
   want = 0;
@@ -266,14 +235,14 @@ void gw_pad_focus_tick(void) {
 }
 
 /* MELEE_PAD_IGNORE_ADAPTER=1 drops the raw GC adapter's contribution, so only the
- * script/live/keyboard input drives the pad. Useful when a plugged-in controller drifts or
+ * script/live input drives the pad. Useful when a plugged-in controller drifts or
  * holds a button and would otherwise fight the scripted input. */
 static int gw_pad_ignore_adapter(void) {
   static int cached = -1;
   if (cached < 0) {
     const char *v = getenv("MELEE_PAD_IGNORE_ADAPTER");
     cached = (v != NULL && v[0] == '1') ? 1 : 0;
-    if (gw_input_mode() == GW_INPUT_KEYBOARD) {
+    if (gw_input_mode() == GW_INPUT_NONE) {
       cached = 1;
     }
   }
@@ -370,7 +339,7 @@ static void gw_pad_reset_combo(PADStatus *st) {
 }
 /* MELEE_PROFILE_FRAMES: where gw_PADRead spends its time, summed per frame (read and reset by
  * shim_vi.c). aurora = Aurora's PADRead (SDL), adapter = the raw GameCube adapter read, rest = the
- * overlays, keyboard and script. */
+ * overlays and script. */
 static long long gw_pad_prof_t0;
 double gw_pad_prof_aurora_ms, gw_pad_prof_adapter_ms, gw_pad_prof_rest_ms;
 uint32_t gw_pad_prof_calls;
@@ -396,60 +365,9 @@ static int gw_this_window_focused(void) {
   return pid == GetCurrentProcessId();
 }
 
-/* The keyboard as a controller. Focus-gated: GetAsyncKeyState reports the GLOBAL key state, so
- * without the gate the game would react to typing in another window. Returns whether any play
- * key is down (the keyboard "was used" this sample).
- *   W A S D     control stick (Left Shift: half tilt, for walking and tilts)
- *   arrow keys  C-stick
- *   J = A   K = B   I or Space = X (jump)   O = Y (jump)
- *   L = R (shield)   U = L (shield)   ; = Z (grab)
- *   Enter = Start   T F G H = D-pad up/left/down/right */
-static int gw_keyboard_sample(PADStatus *k, int focused) {
-  u16 btn = 0;
-  int sx = 0, sy = 0, cx = 0, cy = 0;
-  int any;
-
-  memset(k, 0, sizeof *k);
-  if (focused) {
-#define GW_KEY(vk) ((GetAsyncKeyState(vk) & 0x8000) != 0)
-    int tilt = GW_KEY(VK_LSHIFT) ? 40 : 80;
-    if (GW_KEY('W')) sy += 1;
-    if (GW_KEY('S')) sy -= 1;
-    if (GW_KEY('A')) sx -= 1;
-    if (GW_KEY('D')) sx += 1;
-    if (GW_KEY(VK_UP)) cy += 1;
-    if (GW_KEY(VK_DOWN)) cy -= 1;
-    if (GW_KEY(VK_LEFT)) cx -= 1;
-    if (GW_KEY(VK_RIGHT)) cx += 1;
-    if (GW_KEY('J')) btn |= PAD_BUTTON_A;
-    if (GW_KEY('K')) btn |= PAD_BUTTON_B;
-    if (GW_KEY('I') || GW_KEY(VK_SPACE)) btn |= PAD_BUTTON_X;
-    if (GW_KEY('O')) btn |= PAD_BUTTON_Y;
-    if (GW_KEY('L')) { btn |= PAD_TRIGGER_R; k->triggerRight = 140; }
-    if (GW_KEY('U')) { btn |= PAD_TRIGGER_L; k->triggerLeft = 140; }
-    if (GW_KEY(VK_OEM_1)) btn |= PAD_TRIGGER_Z;
-    if (GW_KEY(VK_RETURN)) btn |= PAD_BUTTON_START;
-    if (GW_KEY('T')) btn |= PAD_BUTTON_UP;
-    if (GW_KEY('G')) btn |= PAD_BUTTON_DOWN;
-    if (GW_KEY('F')) btn |= PAD_BUTTON_LEFT;
-    if (GW_KEY('H')) btn |= PAD_BUTTON_RIGHT;
-#undef GW_KEY
-    /* a diagonal is the same distance from centre as a cardinal (0.7 of each axis) */
-    k->stickX = (s8)(sx * (sy != 0 ? tilt * 7 / 10 : tilt));
-    k->stickY = (s8)(sy * (sx != 0 ? tilt * 7 / 10 : tilt));
-    k->substickX = (s8)(cx * (cy != 0 ? 56 : 80));
-    k->substickY = (s8)(cy * (cx != 0 ? 56 : 80));
-  }
-  any = btn != 0 || sx != 0 || sy != 0 || cx != 0 || cy != 0;
-  gw_w16(&k->button, btn);
-  k->err = 0; /* always connected: a keyboard does not unplug */
-  return any;
-}
-
-/* A controller "really used" - the rule from melee-unlocked's keyboard_and_pad (Hero88go,
- * port/runtime/host/window.cpp, GPL-2.0-or-later): any button, a stick or C-stick past the game's
- * own deadzone (23 of ~80, so a worn stick resting off centre does not lock the keyboard out), or
- * a trigger past 20. */
+/* A controller "really used" (the 10 s summary): any button, a stick or C-stick past the game's
+ * own deadzone (23 of ~80, so a worn stick resting off centre does not count), or a trigger past
+ * 20. */
 static int gw_pad_moved(s8 v) { return v > 23 || v < -23; }
 static int gw_pad_really_used(const PADStatus *p) {
   return p->err == 0 &&
@@ -459,33 +377,10 @@ static int gw_pad_really_used(const PADStatus *p) {
 }
 
 /* ---- per-port source tracking (level-1 log) ---------------------------------------------- */
-enum { GW_SRC_NONE, GW_SRC_ADAPTER, GW_SRC_SDL, GW_SRC_KEYBOARD, GW_SRC_SCRIPT };
-static const char *const gw_src_name[] = { "none", "adapter", "sdl", "keyboard", "script" };
+enum { GW_SRC_NONE, GW_SRC_ADAPTER, GW_SRC_SDL, GW_SRC_IDLE, GW_SRC_SCRIPT };
+static const char *const gw_src_name[] = { "none", "adapter", "sdl", "idle", "script" };
 static int gw_src_last[PAD_CHANMAX] = { -1, -1, -1, -1 };
 static int gw_src_script_hold[PAD_CHANMAX]; /* frames a port keeps the "script" label */
-static int gw_kb_owner = GW_SRC_KEYBOARD;   /* who drives the keyboard's home port */
-
-/* Last-active-wins on the keyboard's home port. owner and pad_src are GW_SRC_*; pad_src is what
- * is in the port apart from the keyboard (GW_SRC_NONE = nothing). *why is set when the owner
- * changes for a reason worth logging. */
-static int gw_pad_owner_next(int owner, int keys, int pad_src, int pad_used, const char **why) {
-  if (keys) {
-    if (owner != GW_SRC_KEYBOARD) *why = "key pressed";
-    return GW_SRC_KEYBOARD;
-  }
-  if (pad_src != GW_SRC_NONE && pad_used) {
-    if (owner != pad_src) *why = "controller used";
-    return pad_src;
-  }
-  if (owner != GW_SRC_KEYBOARD && pad_src == GW_SRC_NONE) {
-    *why = "controller gone";
-    return GW_SRC_KEYBOARD;
-  }
-  if (owner != GW_SRC_KEYBOARD) {
-    return pad_src; /* the same controller, reached through the other path (adapter<->sdl) */
-  }
-  return owner;
-}
 
 /* 10 s summary: which ports were live, what drove them, which buttons were seen. */
 static DWORD gw_sum_at;
@@ -531,11 +426,8 @@ static void gw_pad_track(const PADStatus *st, const int *src) {
     for (c = 0; c < PAD_CHANMAX; ++c) {
       if (src[c] == GW_SRC_NONE) continue;
       any |= gw_sum_used[c];
-      n += snprintf(line + n, sizeof line - (size_t)n, " | P%d %s%s btn=%04X%s", c + 1,
-                    gw_src_name[src[c]],
-                    (gw_input_mode() == GW_INPUT_KEYBOARD_PLUS && c == gw_keyboard_home())
-                        ? "(kb home)" : "",
-                    (unsigned)gw_sum_btn[c], gw_sum_used[c] ? "" : " idle");
+      n += snprintf(line + n, sizeof line - (size_t)n, " | P%d %s btn=%04X%s", c + 1,
+                    gw_src_name[src[c]], (unsigned)gw_sum_btn[c], gw_sum_used[c] ? "" : " idle");
       if (n >= (int)sizeof line) n = (int)sizeof line - 1;
     }
     /* only while someone is actually playing: an idle menu writes nothing */
@@ -550,6 +442,47 @@ static void gw_pad_track(const PADStatus *st, const int *src) {
     gw_sum_at = now;
     gw_sum_reports = reports;
   }
+}
+
+/* ---- "Connect a controller" ------------------------------------------------------------------
+ * The keyboard does not play, so a window with no controller cannot be played: the overlay shows
+ * a notice (gw_console.cpp) while gw_Pad_NoController() says so. A port counts when a device
+ * drives it (adapter, SDL) or a script does; a window that reads no devices never asks. Not while
+ * unfocused (the adapter is released in the background) and not in the first 1.5 s (the adapter's
+ * first reports), and a pad must be gone for 30 samples before the notice comes back. */
+static int gw_pad_none_samples = 0;
+static int gw_pad_samples = 0;
+
+static int gw_pad_connected_now(const int *src) {
+  int c;
+  for (c = 0; c < PAD_CHANMAX; ++c) {
+    if (src[c] == GW_SRC_ADAPTER || src[c] == GW_SRC_SDL || src[c] == GW_SRC_SCRIPT) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static void gw_pad_note_connected(const int *src, int focused) {
+  if (gw_pad_samples < 1000000) {
+    ++gw_pad_samples;
+  }
+  if (!focused || gw_pad_connected_now(src)) {
+    gw_pad_none_samples = 0;
+  } else if (gw_pad_none_samples < 1000000) {
+    ++gw_pad_none_samples;
+  }
+}
+
+int gw_Pad_NoController(void) {
+  static int shown = 0;
+  const int want = gw_input_mode() != GW_INPUT_NONE && gw_pad_samples >= 90 &&
+                   gw_pad_none_samples >= 30;
+  if (want != shown) {
+    shown = want;
+    gw_log("gw: pad: \"Connect a controller\" notice %s", want ? "shown" : "hidden");
+  }
+  return want;
 }
 
 int gw_PADRead(void *status) {
@@ -567,15 +500,15 @@ int gw_PADRead(void *status) {
   /* Aurora fills every channel's PADStatus natively, but the game reads the array big-endian
    * (gw.h). Swap each channel's u16 button into big-endian order before the overlays below touch
    * it, so channels nothing drives (and 1-3) keep a value the game can read, the adapter's and
-   * overlays' gw_w16 writes stay correct, and the keyboard overlay's gw_r16 read sees big-endian.
+   * overlays' gw_w16 writes stay correct.
    * stick/substick/trigger/analog/err are single bytes and cross unchanged; extButton is not
    * swapped because the game never reads it (only Aurora's own pad.cpp touches it). */
   for (i = 0; i < PAD_CHANMAX; ++i) {
     st[i].button = gw_bswap16(st[i].button);
   }
-  /* SDL's pads play no part in a keyboard-only window, nor while the window is in the background
-   * with the adapter released (every port reads disconnected unless the keyboard drives it). */
-  if (mode == GW_INPUT_KEYBOARD || gw_gc_adapter_suspended()) {
+  /* SDL's pads play no part in a window that reads no devices, nor while the window is in the
+   * background with the adapter released (every port reads disconnected then). */
+  if (mode == GW_INPUT_NONE || gw_gc_adapter_suspended()) {
     for (i = 0; i < PAD_CHANMAX; ++i) {
       memset(&st[i], 0, sizeof st[i]);
       st[i].err = (s8)-1; /* PAD_ERR_NO_CONTROLLER */
@@ -588,7 +521,7 @@ int gw_PADRead(void *status) {
   /* F9 re-runs controller calibration: the resting stick and trigger positions are re-sampled
    * and any button held at that moment is masked as stuck. Worn triggers and trigger plugs drift,
    * so this needs to be repeatable without restarting the game. Gated to the foreground window,
-   * like the keyboard below, so it cannot fire while the game is not focused. */
+   * so it cannot fire while the game is not focused. */
   if (gw_gc_adapter_present()) {
     static int f9_was_down;
     const int f9_down = focused && (GetAsyncKeyState(VK_F9) & 0x8000) != 0;
@@ -626,44 +559,14 @@ int gw_PADRead(void *status) {
   gw_diag_pads();
   gw_diag_pad_values(st);
 
-  /* The keyboard. Keyboard-only: it is port 1. Otherwise it shares its home port with whatever
-   * controller is there, and the device used last owns the port: any play key down -> keyboard;
-   * the controller really used -> controller; neither -> no change. The home port is fixed
-   * (gw_keyboard_home), so the keyboard never hops between ports as controllers come and go.
-   * The decision uses only this machine's live devices before anything is sent to a netplay peer,
-   * so rollback sees one ordinary input stream either way. */
-  if (mode == GW_INPUT_KEYBOARD || mode == GW_INPUT_KEYBOARD_PLUS) {
-    /* typing a room code (gw_netplay.c): keys are text, not a controller, for the moment */
-    extern int gw_TextEntryUntil;
-    const int typing = (int)(GetTickCount() - (DWORD)gw_TextEntryUntil) < 0;
-    const int h = gw_keyboard_home();
-    PADStatus kb;
-    const int keys = gw_keyboard_sample(&kb, focused && !typing);
-
-    if (mode == GW_INPUT_KEYBOARD) {
-      st[h] = kb;
-      src[h] = GW_SRC_KEYBOARD;
-    } else {
-      const int prev = gw_kb_owner;
-      const char *why = NULL;
-      gw_kb_owner = gw_pad_owner_next(gw_kb_owner, keys, src[h], gw_pad_really_used(&st[h]), &why);
-      if (gw_kb_owner != prev && why != NULL) {
-        gw_pad_log("gw: pad: P%d now driven by the %s (%s)", h + 1, gw_src_name[gw_kb_owner], why);
-      }
-      if (gw_kb_owner == GW_SRC_KEYBOARD) {
-        st[h] = kb;
-        src[h] = GW_SRC_KEYBOARD;
-      }
-    }
-    /* F1 is the in-match C-stick toggle hotkey. It has no GameCube button, so it rides the
-     * reserved pad bit 0x0080 (HSD_PAD_7) into game code, where fighter.c treats that bit's press
-     * edge as the F1 toggle. A hotkey, not play input: it does not take the port over. */
-    if (focused && !typing && (GetAsyncKeyState(VK_F1) & 0x8000) != 0 && st[h].err == 0) {
-      gw_w16(&st[h].button, (u16)(gw_r16(&st[h].button) | 0x0080u));
-    }
+  /* A window that reads no devices (tools): port 1 is a controller at rest, so a scene's human
+   * player and a pad script have a port to drive. */
+  if (mode == GW_INPUT_NONE) {
+    memset(&st[0], 0, sizeof st[0]);
+    src[0] = GW_SRC_IDLE;
   }
 
-  /* Scripted and live input take precedence over the adapter and the keyboard. */
+  /* Scripted and live input take precedence over the adapter. */
   memcpy(before, st, sizeof before);
   gw_Script_PadApply(st);
   for (i = 0; i < PAD_CHANMAX; ++i) {
@@ -679,6 +582,7 @@ int gw_PADRead(void *status) {
 
   gw_pad_reset_combo(st);
   gw_pad_track(st, src);
+  gw_pad_note_connected(src, focused);
 
   /* Mirror what the game will actually see into the F9 panel. Reading it back out of the
    * PADStatus array later would mean byte-swapping guest memory in the overlay; doing it here,
@@ -722,24 +626,17 @@ void gw_PADSetSamplingRate(int rate) {
 /* ---- tests (run.sh --test) ------------------------------------------------------------------ */
 #include "gw_test.h"
 
-static int test_pad_last_active_wins(void) {
-  const char *why = NULL;
-  int o = GW_SRC_KEYBOARD;
-  o = gw_pad_owner_next(o, 0, GW_SRC_ADAPTER, 0, &why); /* pad idle: keyboard keeps it */
-  if (o != GW_SRC_KEYBOARD || why != NULL) { gw_test_fail("idle pad took the port"); return 1; }
-  o = gw_pad_owner_next(o, 0, GW_SRC_ADAPTER, 1, &why);
-  if (o != GW_SRC_ADAPTER || why == NULL) { gw_test_fail("used pad did not take the port"); return 1; }
-  why = NULL;
-  o = gw_pad_owner_next(o, 0, GW_SRC_ADAPTER, 0, &why); /* pad let go: stays the pad's */
-  if (o != GW_SRC_ADAPTER || why != NULL) { gw_test_fail("pad lost the port while idle"); return 1; }
-  o = gw_pad_owner_next(o, 1, GW_SRC_ADAPTER, 1, &why); /* key wins even over a moving pad */
-  if (o != GW_SRC_KEYBOARD || why == NULL) { gw_test_fail("key did not take the port"); return 1; }
-  why = NULL;
-  o = gw_pad_owner_next(o, 0, GW_SRC_SDL, 1, &why);
-  if (o != GW_SRC_SDL) { gw_test_fail("SDL pad did not take the port"); return 1; }
-  why = NULL;
-  o = gw_pad_owner_next(o, 0, GW_SRC_NONE, 0, &why); /* unplugged: back to the keyboard */
-  if (o != GW_SRC_KEYBOARD || why == NULL) { gw_test_fail("unplug did not return the port"); return 1; }
+static int test_pad_connected_sources(void) {
+  int src[PAD_CHANMAX] = { GW_SRC_NONE, GW_SRC_NONE, GW_SRC_NONE, GW_SRC_NONE };
+  if (gw_pad_connected_now(src)) { gw_test_fail("no device counted as connected"); return 1; }
+  src[2] = GW_SRC_IDLE;
+  if (gw_pad_connected_now(src)) { gw_test_fail("the idle stand-in counted as a controller"); return 1; }
+  src[3] = GW_SRC_ADAPTER;
+  if (!gw_pad_connected_now(src)) { gw_test_fail("adapter port not counted"); return 1; }
+  src[3] = GW_SRC_SDL;
+  if (!gw_pad_connected_now(src)) { gw_test_fail("SDL port not counted"); return 1; }
+  src[3] = GW_SRC_SCRIPT;
+  if (!gw_pad_connected_now(src)) { gw_test_fail("scripted port not counted"); return 1; }
   return 0;
 }
 
@@ -763,6 +660,6 @@ static int test_pad_really_used_thresholds(void) {
 void gw_pad_tests_register(void) {
   extern void gw_gc_adapter_tests_register(void);
   gw_gc_adapter_tests_register();
-  gw_test_register("pad_last_active_wins", test_pad_last_active_wins);
+  gw_test_register("pad_connected_sources", test_pad_connected_sources);
   gw_test_register("pad_really_used_thresholds", test_pad_really_used_thresholds);
 }

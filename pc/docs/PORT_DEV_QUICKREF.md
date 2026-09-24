@@ -80,7 +80,7 @@ cmd.exe /c "cd /d C:\gdm\_build\ax86m && ..\build_melee_pc.bat"   # expect MELEE
 ## Run (interactive, e.g. for the user to play) - env vars must be EXPORTED
 ```
 cd /mnt/c/gdm/_build
-export MELEE_PAD_IGNORE_ADAPTER=1   # only when using scripted/keyboard, not a real controller
+export MELEE_PAD_IGNORE_ADAPTER=1   # only when using scripted input, not a real controller
 export WSLENV="MELEE_PAD_IGNORE_ADAPTER"
 nohup ./melee-pc.exe --iso 'C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso' > /tmp/opencode/live.log 2>&1 &
 disown
@@ -115,7 +115,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |
 | `MELEE_TARGET_TEST=<char>` | boot straight into Target Test with that character (name or ckind; dev/testing) |
 | `MELEE_PAD_SCRIPT=<file>` | drive channel 0 from a text script; see `_build/audio_test_script.txt` |
-| `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted/keyboard input) |
+| `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted input) |
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
 | `MELEE_PROFILE=1` | per-frame timing split, percentiles, histogram (see section 20) |
 | `MELEE_WINDOW_X/Y` | window position; may be negative. Applied at creation, so no flash |
@@ -213,12 +213,11 @@ Restore vanilla before handing the machine back (same write, with the original 6
   long-running game); and `cmd.exe /c "tasklist /FI \"IMAGENAME eq x.exe\""` from WSL mangles its
   quoting and hangs. Use a plain `cmd.exe /c tasklist | grep -i melee` instead.
 
-### Scripted keyboard input (the port's keyboard overlay)
-`shim_pad.c` maps, on **channel 0**, when the window is **focused** (`GetAsyncKeyState` is global, so
-there is a focus gate): `WASD` = stick, `J` = A, `K` = B, **`Enter` = Start**, `F1` = 0x0080, arrows =
-d-pad. To advance a menu unattended: focus the window (`SetForegroundWindow` after
-`AttachThreadInput`), then `keybd_event(0x0D, ...)`.
-`MELEE_PAD_SCRIPT` is the more reliable alternative for fully unattended runs.
+### The keyboard does not play
+The keyboard is hotkeys only (F9/F10, the console's backquote, `gd.key` for scripts); it never
+drives a pad. For unattended runs use `MELEE_PAD_SCRIPT` (or `gd.input` / the console `input`
+command). `MELEE_INPUT=none` (old value: `keyboard`) opens no devices and leaves port 1 as a
+controller at rest.
 
 ## Conventions that have bitten workers
 - **Big-endian game memory.** Native shims must read/write game-visible scalars with `gw_r32`/`gw_w32` (and `gw_r16`/`gw_w16`, `gw_rf32`/`gw_wf32`). A native little-endian store the game then byte-swaps reads back wrong (e.g. `AXVPB.index`).

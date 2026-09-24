@@ -2302,8 +2302,7 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                     (fp->input.held_buttons[0] &
                      (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START)) ==
                     (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START);
-                if ((combo && !cstick_combo_was_held) ||
-                    (fp->input.pressed_buttons & HSD_PAD_7)) {
+                if (combo && !cstick_combo_was_held) {
                     gm_CStickSmashTargetTest = !gm_CStickSmashTargetTest;
                     OSReport("C-STICK: %s\n",
                              gm_CStickSmashTargetTest ? "SMASH" : "CAMERA");

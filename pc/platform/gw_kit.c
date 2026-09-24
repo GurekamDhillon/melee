@@ -1112,6 +1112,7 @@ static int nkq;
 
 void gw_Kit_BeginFrame(void) { nkq = 0; }
 int gw_Kit_QuadCount(void) { return nkq; }
+void gw_Kit_TruncateQuads(int n) { if (n >= 0 && n < nkq) nkq = n; }
 const GwKitQuad *gw_Kit_QuadAt(int i) { return (i >= 0 && i < nkq) ? &kq[i] : NULL; }
 
 /* A quad from its unsheared corners, sheared about y0: x' = x + (y0 - y) * shear. */

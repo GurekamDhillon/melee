@@ -87,6 +87,9 @@ int gw_Kit_TexCount(void);
 /* ---- the frame's draw list ------------------------------------------------------------------ */
 void gw_Kit_BeginFrame(void); /* empties the quad list (gw_Script_Tick, before on_tick) */
 int gw_Kit_QuadCount(void);
+/* Drops the quads from n on: the host's own overlay (gw_console.cpp) draws after the scripts'
+ * list and takes its quads back the same frame. */
+void gw_Kit_TruncateQuads(int n);
 const GwKitQuad *gw_Kit_QuadAt(int i);
 
 /* Drawing appends quads and returns how many it added (the script's draw list records the

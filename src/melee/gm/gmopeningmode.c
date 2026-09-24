@@ -282,7 +282,7 @@ void onExitTitle(GameModeState* arg0)
 {
     int* temp_r3 = gm_GetGameModeStateExitData(arg0);
 #if defined(TARGET_PC)
-    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or keyboard B) open the debug menu. */
+    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu. */
     if (*temp_r3 & (0x800 | 0x200)) {
         gm_SetPendingGameMode(GM_DEBUG);
         gm_SetNewGameModePending();

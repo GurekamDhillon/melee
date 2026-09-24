@@ -4,9 +4,8 @@
  *   ` (the key left of 1, "~")   open / close the console; Esc closes it
  *   Enter                        run the line (gw_Script_Exec: a built-in command or Lua)
  *   Up / Down                    history
- * While it is open the keyboard is text, not a controller: gw_script.c keeps gw_TextEntryUntil
- * in the future, which is what makes shim_pad.c's keyboard mapping stand down (the same
- * mechanism the online room-code entry uses).
+ * While it is open the keyboard is text, not hotkeys: gw_script.c keeps gw_TextEntryUntil in the
+ * future, which makes gd.key read nothing (the same mechanism the online room-code entry uses).
  *
  * Script drawing (gd.text / gd.box / gd.fill / gd.line) is in a 640x480 virtual screen, scaled
  * uniformly to the window and centred, so an overlay lines up with the game's 4:3 picture.
@@ -198,7 +197,49 @@ void draw_console(const ImGuiIO &io) {
   ImGui::End();
 }
 
+uint32_t kit_col(const char *tok, uint32_t fallback) {
+  uint32_t c = 0;
+  return gw_Kit_Colour(tok, nullptr, &c) ? c : fallback;
+}
+
+/* "Connect a controller": the keyboard does not play, so a window with no controller says so
+ * (shim_pad.c gw_Pad_NoController). The kit's frame panel over a dimmed screen; plain ImGui text
+ * when the kit's files are missing. */
+void draw_no_controller(const ImGuiIO &io, float s, float ox, float oy) {
+  static const char *const head = "Connect a controller";
+  static const char *const body = "Plug in a GameCube adapter or any gamepad to play.";
+  static const char *const foot = "The keyboard is for hotkeys only.";
+  ImDrawList *dl = ImGui::GetForegroundDrawList();
+  dl->AddRectFilled(ImVec2(0, 0), io.DisplaySize, IM_COL32(10, 14, 24, 150));
+  if (gw_Kit_Available()) {
+    const int q0 = gw_Kit_QuadCount();
+    const float w = 360.0f, h = 104.0f, x = (640.0f - w) * 0.5f, y = (480.0f - h) * 0.5f;
+    gw_Kit_DrawPanel(x, y, w, h, "frame", nullptr, 0.0f, kit_col("gold", 0xF0B429FFu),
+                     kit_col("ink", 0x0A0E18FFu) & 0xFFFFFFF0u, 0.0f);
+    int role = gw_Kit_Role("heading");
+    gw_Kit_DrawText(320.0f, y + 40.0f, head, role >= 0 ? role : 0, kit_col("bone", 0xF2EFE4FFu),
+                    GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
+    role = gw_Kit_Role("body");
+    gw_Kit_DrawText(320.0f, y + 66.0f, body, role >= 0 ? role : 0, kit_col("muted", 0xB8C2DCFFu),
+                    GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
+    role = gw_Kit_Role("caption");
+    gw_Kit_DrawText(320.0f, y + 88.0f, foot, role >= 0 ? role : 0, kit_col("gold", 0xF0B429FFu),
+                    GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
+    draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy);
+    gw_Kit_TruncateQuads(q0);
+    return;
+  }
+  ImFont *font = ImGui::GetFont();
+  const float size = 20.0f * s;
+  const ImVec2 hs = font->CalcTextSizeA(size, 1e9f, 0.0f, head);
+  dl->AddText(font, size, ImVec2(ox + 320.0f * s - hs.x * 0.5f, oy + 220.0f * s), IM_COL32(242, 239, 228, 255), head);
+  const ImVec2 bs = font->CalcTextSizeA(size * 0.6f, 1e9f, 0.0f, body);
+  dl->AddText(font, size * 0.6f, ImVec2(ox + 320.0f * s - bs.x * 0.5f, oy + 250.0f * s), IM_COL32(184, 194, 220, 255), body);
+}
+
 } // namespace
+
+extern "C" int gw_Pad_NoController(void); /* shim_pad.c */
 
 extern "C" void gw_Console_Draw(void) {
   if (ImGui::GetCurrentContext() == nullptr) {
@@ -219,6 +260,14 @@ extern "C" void gw_Console_Draw(void) {
   }
   if (!gw_Console_Open()) {
     draw_script_list(io); /* the console covers the top of the screen; overlays pause under it */
+  }
+  {
+    const float sx = io.DisplaySize.x / 640.0f, sy = io.DisplaySize.y / 480.0f;
+    const float s = sx < sy ? sx : sy;
+    const float ox = (io.DisplaySize.x - 640.0f * s) * 0.5f, oy = (io.DisplaySize.y - 480.0f * s) * 0.5f;
+    if (gw_Pad_NoController()) {
+      draw_no_controller(io, s, ox, oy);
+    }
   }
   if (gw_Console_Open()) {
     draw_console(io);

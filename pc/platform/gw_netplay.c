@@ -2491,10 +2491,10 @@ int gw_Netplay_CodePaste(void) {
 
 /* Typing, while the code entry is open: letters/digits fill the active slot and move on,
  * Backspace clears and moves back, arrows move/step, Ctrl+V pastes. Keys only count while this
- * window has focus, and the keyboard-as-controller mapping stands down meanwhile (shim_pad.c).
+ * window has focus, and gd.key reads nothing meanwhile (the keys are text, not hotkeys).
  * Returns 0 nothing, 1 the code changed, 2 Enter (join), 3 Escape (back), 4 refused (a key
  * outside the alphabet, or an arrow at an end: the slot bumps). */
-int gw_TextEntryUntil; /* GetTickCount deadline: shim_pad skips its keyboard mapping until then */
+int gw_TextEntryUntil; /* GetTickCount deadline: keys are text until then (gd.key reads none) */
 int gw_Netplay_CodeKeys(void) {
     static unsigned char was[256];
     HWND fg = GetForegroundWindow();

@@ -168,7 +168,7 @@ static const FeMenuItem fm_settings[] = {
     /* the port's pages (gmfrontend_settings.inc); the game's own options follow */
     { "VIDEO", "Render scale, frame rate, vsync, FPS readout.", NULL, 0x41, FA_PAGE, 0 },
     { "AUDIO", "Master volume, music and effects mix, stereo or mono.", NULL, 0x42, FA_PAGE, 1 },
-    { "CONTROLS", "Input device, adapter recalibration, keyboard layout.", NULL, 0x43, FA_PAGE, 2 },
+    { "CONTROLS", "Adapter recalibration and the hotkeys.", NULL, 0x43, FA_PAGE, 2 },
     { "ONLINE", "Your player name, the server, input delay, stage list.", NULL, 0x44, FA_PAGE, 3 },
     { "MODS", "Turn mods on or off.", NULL, 0x45, FA_PAGE, 4 },
     { "GAMEPLAY", "Unlock everything, the default match rules.", NULL, 0x46, FA_PAGE, 5 },

@@ -697,6 +697,15 @@ void ftAnim_8006F628(Fighter* fp, Fighter_Part part, bool do_blending)
                     !fp->parts[tmp].flags_b5)
                 {
                     HSD_JObj* jobj = get_part_joint(fp, tmp, do_blending);
+#if defined(TARGET_PC)
+                    if (jobj == NULL || tmp >= (int) ftPartsTable[fp->kind]->parts_num) {
+                        OSReport("ftanim guard: 8006F628 kind=%d author=%d part=%d i=%d tmp=%d "
+                                 "parts_num=%d jobj=%08x blend=%d bits=%x\n",
+                                 fp->kind, kind, part, i, tmp,
+                                 (int) ftPartsTable[fp->kind]->parts_num, (u32) jobj,
+                                 do_blending, x594_bits);
+                    }
+#endif
                     if (fp->parts[tmp].flags_b3) {
                         lbAnim_8001E6D8(jobj, tree, cur_track, *cur_node);
                     } else {
@@ -1193,6 +1202,14 @@ void ftAnim_80070904(Fighter* fp, Fighter_Part start, HSD_AnimJoint* animjoint)
         while (ftParts_8007506C(fp->kind, i) != 0) {
             i++;
         }
+#if defined(TARGET_PC)
+        /* A hand tree can be a whole skeleton (ACE's SSBU Wolf: ~74 nodes from part 41 of 74),
+         * so the walk runs past the fighter's parts into fp->parts' pool tail, which holds an
+         * earlier fighter's stale entries. There are no parts there to animate: stop. */
+        if (i >= (int) ftPartsTable[fp->kind]->parts_num) {
+            break;
+        }
+#endif
         if (!fp->parts[i].flags_b0 && animjoint->aobjdesc != NULL) {
             HSD_JObj* jobj = fp->parts[i].x4_jobj2;
             HSD_JObjAddAnim(jobj, animjoint, NULL, NULL);
@@ -1313,6 +1330,11 @@ static inline void some_inline(Fighter* fp, int start,
         while (ftParts_8007506C(fp->kind, i) != 0) {
             i++;
         }
+#if defined(TARGET_PC)
+        if (i >= (int) ftPartsTable[fp->kind]->parts_num) {
+            break; /* past the fighter's parts (ftAnim_80070904) */
+        }
+#endif
 
         if (fp->parts[i].flags_b5) {
             fp->parts[i].flags_b5 = false;

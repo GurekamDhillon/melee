@@ -1548,6 +1548,18 @@ u8 ftData_UnkBytePerCharacter[Ft_Kind_Max] = {
  * A disc without MxDt.dat leaves every slot empty. */
 static Fighter_CostumeStrings ftData_MexCostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0][16];
 
+/* Whether a motion-table row (Fighter_WaitAnimData, main or demo table) of an m-ex fighter's file
+ * is a real row: its name is NULL (a hole) or a string inside the archive, and its subaction
+ * script is inside the archive (every row has one, holes too). The tables' lengths are not in the
+ * file, and what follows a table is other data - Akaneia's Lucas puts his hand tables' part-index
+ * bytes (0x0B0C0D0E...) right after the demo table - which fails this at once. */
+static bool ftData_MexMotionRowOk(const Fighter_WaitAnimData* row, const u8* lo, const u8* hi)
+{
+    const u8* name = (const u8*) row->x0;
+    const u8* cmd = (const u8*) row->xC;
+    return (name == NULL || (name >= lo && name < hi)) && cmd != NULL && cmd >= lo && cmd < hi;
+}
+
 /* The animation flags an m-ex fighter's motion gets (ftData_8008572C explains why the low 6 bits,
  * the authoring kind, are rewritten at all). A kind below 64 is written as is - unchanged from
  * before the slot cap was raised. A kind of 64 or more does not fit 6 bits: its own motions get
@@ -1900,9 +1912,43 @@ void ftData_8008572C(FighterKind kind)
         if (ftData_IsMexKind(kind)) {
             ftData* fd = gFtDataList[kind];
             int i;
-            for (i = 0; i < ftData_Table_Unk0[kind].count; i++) {
-                fd->xC[i].x10_animCurrFlags =
-                    (s32) ftData_MexAnimFlags((u32) fd->xC[i].x10_animCurrFlags, kind);
+            /* The main motion table has the same problem as the demo table below: its count here
+             * is the CLONE BASE's (ftData_Table_Unk0), and an m-ex fighter's own table can be
+             * shorter (Akaneia's Charizard and Lucas run 1-2 rows past theirs). So the same two
+             * bounds: the nearest data landmark (see the demo table's note below), and a row
+             * that is not a motion row (ftData_MexMotionRowOk). Rows past that keep their flags
+             * (the cross-kind path, which works). */
+            {
+                u8* arch_lo = (u8*) ftData_LoadedArchive->data;
+                u8* arch_hi = arch_lo + ftData_LoadedArchive->header.data_size;
+                u8* tab_lo = (u8*) fd->xC;
+                u8* tab_hi = arch_hi;
+                int w, n_main = 0;
+                if ((u8*) fd > tab_lo && (u8*) fd < tab_hi) {
+                    tab_hi = (u8*) fd;
+                }
+                for (w = 0; w < (int) (sizeof(ftData) / 4); w++) {
+                    u8* p = (u8*) ((void**) fd)[w];
+                    if (p > tab_lo && p < tab_hi && p >= arch_lo && p < arch_hi) {
+                        tab_hi = p;
+                    }
+                }
+                for (i = 0; i < ftData_Table_Unk0[kind].count; i++) {
+                    u8* entry = (u8*) &fd->xC[i];
+                    if (entry < arch_lo || entry + sizeof(fd->xC[0]) > tab_hi ||
+                        !ftData_MexMotionRowOk(&fd->xC[i], arch_lo, arch_hi))
+                    {
+                        break;
+                    }
+                    fd->xC[i].x10_animCurrFlags =
+                        (s32) ftData_MexAnimFlags((u32) fd->xC[i].x10_animCurrFlags, kind);
+                    n_main++;
+                }
+                if (n_main != ftData_Table_Unk0[kind].count) {
+                    OSReport("gw: kind %d: motion table ends after %d entries (the base has %d); "
+                             "the rest keep their authored flags\n",
+                             kind, n_main, ftData_Table_Unk0[kind].count);
+                }
             }
             /* Same for the demo motions (results-screen / intro poses, fd->x14): they are
              * authored for m-ex's kind too, and the cross-kind path crashed on the results
@@ -1933,7 +1979,16 @@ void ftData_8008572C(FighterKind kind)
              * something that is not the table, and so does the struct itself. The nearest of
              * them is the furthest the table can possibly reach. Erring low is safe - a motion
              * whose flags are left alone still animates, through the cross-kind path - while
-             * erring high corrupts whatever follows. */
+             * erring high corrupts whatever follows.
+             *
+             * And that was not sufficient either: Akaneia's Lucas puts his hand-animation tables
+             * (ftData->x1C[n]: part-index bytes, then AnimJoint pointers) after the demo table,
+             * and nothing points there from ftData directly. Row 15's flags word was hand set
+             * 1's first AnimJoint pointer; (ptr & ~0x3F) | kind moved it 0x18 bytes into a node,
+             * and picking up an item walked that as a tree into a garbage AObjDesc
+             * (HSD_JObjLoadJoint AV via ftMr_Init_OnItemPickup -> ftAnim_80070904). A row must
+             * now also look like a motion row (ftData_MexMotionRowOk): row 14 there is the
+             * part-index bytes 0x0B0C0D0E, not a name pointer, and ends the table. */
             if (fd->x14 != NULL) {
                 u8* arch_lo = (u8*) ftData_LoadedArchive->data;
                 u8* arch_hi = arch_lo + ftData_LoadedArchive->header.data_size;
@@ -1956,7 +2011,8 @@ void ftData_8008572C(FighterKind kind)
                     u8* entry = (u8*) &fd->x14[i];
                     u32 flags;
                     if (entry < arch_lo || entry + sizeof(fd->x14[0]) > arch_hi ||
-                        entry + sizeof(fd->x14[0]) > demo_hi || fd->x14[i].xC == NULL)
+                        entry + sizeof(fd->x14[0]) > demo_hi ||
+                        !ftData_MexMotionRowOk(&fd->x14[i], arch_lo, arch_hi))
                     {
                         break;
                     }

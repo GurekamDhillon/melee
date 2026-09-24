@@ -19,6 +19,9 @@
 #include <bit>
 #include <cfloat>
 #include <cmath>
+#include <condition_variable>
+#include <cstdlib>
+#include <memory>
 #include <mutex>
 #include <utility>
 
@@ -363,7 +366,40 @@ wgpu::RenderPipeline build_pipeline(const PipelineConfig& config, const gfx::Ren
       .multisample = wgpu::MultisampleState{.count = layout.sampleCount},
       .fragment = &fragmentState,
   };
-  return g_device.CreateRenderPipeline(&descriptor);
+  // Plain CreateRenderPipeline is "no autolock" in Dawn, so the N pipeline workers
+  // (gfx/pipeline_cache.cpp) calling it compile N pipelines at once. CreateRenderPipelineAsync
+  // does NOT scale: Dawn's default worker pool runs at most 2 threads
+  // (AsyncWorkerThreadPool::kDefaultTaskHandlingJobCount), measured ~22 pipelines/s at 8 workers.
+  // Kept behind AURORA_PIPELINE_ASYNC=1 for comparison.
+  static const bool useAsync = [] {
+    const char* env = std::getenv("AURORA_PIPELINE_ASYNC");
+    return env != nullptr && env[0] == '1';
+  }();
+  if (!useAsync) {
+    return g_device.CreateRenderPipeline(&descriptor);
+  }
+  struct AsyncResult {
+    std::mutex mutex;
+    std::condition_variable cv;
+    bool done = false;
+    wgpu::RenderPipeline pipeline;
+  };
+  auto result = std::make_shared<AsyncResult>();
+  g_device.CreateRenderPipelineAsync(
+      &descriptor, wgpu::CallbackMode::AllowSpontaneous,
+      [result](wgpu::CreatePipelineAsyncStatus status, wgpu::RenderPipeline pipeline, wgpu::StringView message) {
+        std::lock_guard lock{result->mutex};
+        if (status == wgpu::CreatePipelineAsyncStatus::Success) {
+          result->pipeline = std::move(pipeline);
+        } else {
+          Log.error("GX pipeline creation failed ({}): {}", static_cast<int>(status), message);
+        }
+        result->done = true;
+        result->cv.notify_all();
+      });
+  std::unique_lock lock{result->mutex};
+  result->cv.wait(lock, [&] { return result->done; });
+  return std::move(result->pipeline);
 }
 
 void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXVtxFmt fmt) noexcept {

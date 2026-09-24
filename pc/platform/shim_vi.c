@@ -1549,7 +1549,7 @@ void gw_frame_tick(void) {
               fprintf(gw_prof_csv,
                       "frame,total_ms,game_ms,present_ms,texobj_inits,prims,dlists,queued_pipes,"
                       "created_pipes,urgent_pipes,drawcalls,vert_kb,storage_kb,texupload_kb,pad_calls,pad_aurora_ms,"
-                      "pad_adapter_ms,pad_rest_ms,wait_idle_calls\n");
+                      "pad_adapter_ms,pad_rest_ms,wait_idle_calls,pipe_wait_hits,pipe_wait_ms\n");
             }
           }
         }
@@ -1562,7 +1562,7 @@ void gw_frame_tick(void) {
           extern double gw_pad_prof_aurora_ms, gw_pad_prof_adapter_ms, gw_pad_prof_rest_ms;
           extern uint32_t gw_pad_prof_calls;
           static uint32_t last_waits;
-          fprintf(gw_prof_csv, "%u,%.3f,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%.3f,%u\n",
+          fprintf(gw_prof_csv, "%u,%.3f,%.3f,%.3f,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%.3f,%.3f,%.3f,%u,%u,%.3f\n",
                   gw_presented_count, total, game, gw_prof_ms(t_enter, t_present),
                   gw_gx_texobj_inits - last_inits, prims, dlists,
                   as != NULL ? as->queuedPipelines : 0u, as != NULL ? as->createdPipelines : 0u,
@@ -1571,7 +1571,10 @@ void gw_frame_tick(void) {
                   as != NULL ? as->lastStorageSize / 1024u : 0u,
                   as != NULL ? as->lastTextureUploadSize / 1024u : 0u, gw_pad_prof_calls,
                   gw_pad_prof_aurora_ms, gw_pad_prof_adapter_ms, gw_pad_prof_rest_ms,
-                  gw_wait_idle_count - last_waits);
+                  gw_wait_idle_count - last_waits,
+                  /* cumulative: draws that blocked on an unbuilt pipeline (a warm-up gap) */
+                  as != NULL ? as->pipelineWaitHits : 0u,
+                  as != NULL ? as->pipelineWaitUs / 1000.0 : 0.0);
           last_waits = gw_wait_idle_count;
           gw_pad_prof_aurora_ms = gw_pad_prof_adapter_ms = gw_pad_prof_rest_ms = 0.0;
           gw_pad_prof_calls = 0u;

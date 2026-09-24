@@ -2989,6 +2989,18 @@ int gw_Gfx_PipelinesUrgent(void) {
   return s != NULL ? (int) s->urgentPipelinesPending : 0;
 }
 
+/* Match load (mnLoadScreen_Begin): queue every pipeline tagged MUST_DRAW - the ones item models
+ * draw with - as urgent, so the loading hold waits for them instead of a mid-match item spawn
+ * waiting on one (aurora_prewarm_tagged_pipelines, beside the pipeline cache). An Aurora without
+ * the call links the no-op below and returns 0. */
+uint32_t gw_aurora_prewarm_none(uint32_t mask) { (void) mask; return 0; }
+#pragma comment(linker, "/alternatename:_aurora_prewarm_tagged_pipelines=_gw_aurora_prewarm_none")
+int gw_Gfx_PrewarmMustDraw(void) {
+  const uint32_t n = aurora_prewarm_tagged_pipelines(AURORA_PIPELINE_TAG_MUST_DRAW);
+  gw_log("gfx: prewarm %u must-draw (item) pipeline(s) at match load", (unsigned) n);
+  return (int) n;
+}
+
 int gw_Gfx_SeedPipelinesBuilt(void) {
   const AuroraStats *s = aurora_get_stats();
   return s != NULL ? (int) s->seedPipelinesBuilt : 0;

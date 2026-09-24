@@ -34,7 +34,22 @@ typedef struct {
   /// queuedPipelines this ignores the seed's background warm-up, so it reaches 0 as soon as
   /// the current frame has everything it draws - what a loading screen should wait on.
   uint32_t urgentPipelinesPending;
+  /// Draws that had to block on a pipeline still compiling (GXSetPipelineWaitAURORA), and the
+  /// total time they blocked (microseconds). Each is a hitch: a pipeline no warm-up covered.
+  uint32_t pipelineWaitHits;
+  uint32_t pipelineWaitUs;
+  /// Pipeline compile workers running (AURORA_PIPELINE_WORKERS).
+  uint32_t pipelineWorkers;
 } AuroraStats;
+
+/// Pipeline tag bits, recorded per pipeline config in the pipeline cache (and its seed).
+/// MUST_DRAW: drawn while GXSetPipelineWaitAURORA was on (item models).
+#define AURORA_PIPELINE_TAG_MUST_DRAW 1u
+
+/// Queue every known pipeline config carrying any of `tagMask` at normal priority for the current
+/// scene layout, ahead of the background warm-up. They count in urgentPipelinesPending until built,
+/// so a loading screen that waits on that also waits on them. Returns how many were not built yet.
+uint32_t aurora_prewarm_tagged_pipelines(uint32_t tagMask);
 
 const AuroraStats* aurora_get_stats();
 float aurora_get_fps();

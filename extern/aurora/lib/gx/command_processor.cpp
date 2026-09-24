@@ -596,6 +596,11 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
     }
   }
   if (sPipelineWait) {
+    static gfx::PipelineRef sLastTagged = 0;
+    if (cache.pipelineRef != sLastTagged) {
+      sLastTagged = cache.pipelineRef;
+      gfx::tag_pipeline_must_draw(cache.pipelineRef); // so the next scene prewarms it
+    }
     gfx::wait_pipeline(cache.pipelineRef);
   }
 

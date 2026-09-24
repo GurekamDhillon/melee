@@ -368,6 +368,8 @@ void HSD_PadRenewMasterStatus(void)
 #if defined(TARGET_PC)
     PADStatus rbpad[4];
     int rb_pads = 0;
+    PADStatus labpad[4];
+    int lab_pads = 0, lab_have = 0;
     {
         /* rollback session with raw-controller sources (gw_rollback.c): this logic iteration's
            statuses come from the session's per-frame ring, not the pad queue - so a resimulated
@@ -391,21 +393,42 @@ void HSD_PadRenewMasterStatus(void)
             }
         }
     }
+    {
+        /* the Geno Lab's rewind (gw_script.c): a frame being re-simulated or replayed takes the
+           statuses logged when it first ran (1), or, if that frame renewed nothing, nothing (2);
+           a live frame's statuses are logged below */
+        extern int LabPad_Replay(void* out, int size);
+        if (!rb_pads) {
+            lab_pads = LabPad_Replay(labpad, (int) sizeof labpad);
+        }
+    }
 #endif
 
     p = &HSD_PadLibData;
     mp = &HSD_PadMasterStatus[0];
     intr = OSDisableInterrupts();
 #if defined(TARGET_PC)
-    if (p->qcount != 0 || rb_pads) {
-        if (p->qcount != 0) {
-            qread = &p->queue->stat[p->qread * 4];
-            HSD_PadRawQueueShift(p->qnum, &p->qread);
-            p->qcount -= 1;
-        }
-        if (rb_pads) {
-            qread = rbpad;
-        }
+    if (p->qcount != 0) {
+        qread = &p->queue->stat[p->qread * 4];
+        HSD_PadRawQueueShift(p->qnum, &p->qread);
+        p->qcount -= 1;
+        lab_have = 1;
+    }
+    if (rb_pads) {
+        qread = rbpad;
+        lab_have = 1;
+    }
+    if (lab_pads == 1) {
+        qread = labpad;
+        lab_have = 1;
+    } else if (lab_pads == 2) {
+        lab_have = 0;
+    }
+    {
+        extern void LabPad_Record(const void* st, int size);
+        LabPad_Record(lab_have ? (const void*) qread : NULL, (int) sizeof labpad);
+    }
+    if (lab_have) {
 #else
     if (p->qcount != 0) {
         qread = &p->queue->stat[p->qread * 4];

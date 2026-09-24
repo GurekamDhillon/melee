@@ -409,16 +409,12 @@ rolled back). Reading the attacker's hitbox at queue time is read-only.
 
 ### 14.5 History and step-back
 
-`gd.history(depth)` (offline, gameplay) keeps one snapshot per logic frame for the last `depth`
-frames (max 40); `gd.history()` returns `{depth, stored, back, now, slot_mb}`. `gd.step_back([n])`
-restores the state `n` frames back and stays paused -> `true`, or `false, why`. Implementation: the
-ring lives in `gw_snap` slots after the 4 savestate slots (addressed by index, so a ring entry can
-never evict a named savestate); a slot is a MEM1 copy plus the game globals, **26.6 MB** on ACE,
-and dirty-page saving keeps the per-frame cost small (60 fps held with depth 20; process private
-memory ~1.2 GB). Savestates, loads and step-backs requested while **paused** are applied at once
-(at the loop top, between frames) instead of waiting for a frame that never comes; loading a
-savestate clears the history (it belongs to the other timeline). `gd.player().action_frame` is now
-restored by loads too. `on_loadstate(0)` reports a step-back.
+**Replaced by the long rewind (14.10).** The old ring kept one full snapshot per frame (26.6 MB a
+frame, 40 frames at most). `gd.history(frames)` and `gd.step_back([n])` keep their names and their
+`false, why` answers; `gd.history()` returns more fields now (14.10). Savestates, loads and
+rewinds requested while **paused** are still applied at once, at the loop top between frames.
+Loading a savestate restarts the history, because it belongs to the other timeline.
+`gd.player().action_frame` is restored by loads. `on_loadstate(0)` reports a step-back.
 
 ### 14.6 The Lab mod
 
@@ -549,7 +545,7 @@ the flask, the hitbox burst and hazard stripes.
 | PLAY | Resume; Step +1; Step -1; Step +10; Focus (left / right) |
 | DISPLAY | Display mode (left / right); the current mode's toggles; Lab UI shown / hidden |
 | DUMMY | Target (left / right); Damage (left / right steps of 10, A applies `gd.set_percent`); Lock-step; Replay move; Mirror my pad |
-| STATES | Save state (slot 1-3); Load state (slot 1-3); Reset positions (slot 4, match start); History depth (10 / 20 / 40 / 60) |
+| STATES | Save to library; Quick save / Quick load (memory slot 1-3); Reset positions (slot 4, match start); History (2 / 5 / 10 / 20 s); Hot reload (replay 1 / 2 / 3 / 5 s); then the library, one row per saved state (A loads, Y / DELETE deletes after a confirm). Stage B, 14.10 |
 | EXIT | Change fighters; Change stage; Quit (no contest) |
 
 Pad: stick / d-pad up and down, left and right change a value, A, B or START close, L / R
@@ -566,6 +562,117 @@ and `modes`; chrome masks `lab_solid` (flat or sheared quads), `lab_fade`, `lab_
 `lab_ruler`, `lab_burst`, `lab_bracket`, `lab_chev` and `lab_chip_l/r`. Review:
 `art/preview/lab_sheet.png` sections 7-9 (the pieces, the HUD strip mock-up and the pause menu
 mock-up).
+
+### 14.10 Stage B: the long rewind, the state library, hot reload
+
+**The long rewind** (`gw_snap.c` "THE GENO LAB'S LONG REWIND", driven by `gw_script.c`):
+- **Storage.** One full image, the *base*: MEM1 plus the game globals, the oldest frame you can
+  reach. Then a **delta keyframe** every N frames (default 30). Its MEM1 part is the pages written
+  since the previous keyframe (the write-watch set `sn_poll` already keeps, fed into its own
+  bitmap). Its globals part is the 4 KB chunks that changed. A keyframe = the base + every earlier
+  delta + its own, the newest copy of a page winning. The window slides: a keyframe older than the
+  window is folded into the base and freed.
+- **The per-frame log** (`gs_log`, 4096 frames) holds everything outside the snapshot that the
+  simulation reads:
+  - the `PADStatus[4]` the frame renewed, taken in `HSD_PadRenewMasterStatus` (controller.c), or
+    "renewed nothing";
+  - the voice handle every `HSD_AudioSFXStartParam` returned (axdriver.c). The handle is game
+    state; the voice pool is not;
+  - every answer the voice pool gave the game (axdriver.c `LAB_AUDIO`): key-off / set-pan /
+    volume / pitch / mix results, `HSD_AudioSFXCheck` ("still playing?", which the crowd and stage
+    code read), `AXDriverCheck` and the two voice counts.
+  The RNG seed is game state, so the snapshot holds it. The pad queue, the rumble and the disc's
+  async blocks are not simulation.
+- **Going to frame F.** Load the newest keyframe K <= F. Only the pages that can differ are
+  copied: those written since the live state was last a keyframe, plus the pages of the keyframes
+  between. Then re-simulate K..F-1 **in one tick** on the logged input. The frames before the last
+  run with the rollback's resimulation flag: sound is silent, and the scene loop renders without
+  presenting (gmscene.c). The last frame runs as a real frame and is shown.
+  - Frames between F and the log's head are then **replayed** from the log, at speed or step by
+    step. Sounds play, but the game keeps the logged handles; a logged-to-real map lets them stop.
+  - `G` (`gd.rewind_live()`) stops the replay and goes live at that frame.
+  - Any write (`set_percent`, `set_stocks`, `set_motion`) forks the timeline: the log and the
+    keyframes after the fork go, and a keyframe of the new timeline is kept at once.
+- **Scalars only across the game/native boundary.** Native code writing through a pointer into
+  game memory writes little-endian. The first version handed the handle back through an `int*`,
+  and replayed handles came back byte-swapped; the exactness test caught it.
+
+| | |
+|---|---|
+| memory, 10 s (600 frames, the default) | **49.4 MB** (the base image 24 MB + the globals x3 + the keyframe deltas 17 MB). The old ring needed 27 MB per *frame* |
+| memory, 20 s (1200 frames) | **67.1 MB** (deltas 34.7 MB) |
+| a keyframe | 1.8 ms, every 30 frames |
+| step back 1 | **8-12 ms** measured: a keyframe load of 0.7-1.1 ms (~200 pages) plus 16-20 re-simulated frames at ~0.5 ms each. At most ~15 ms (29 frames) |
+| scrub to -600 | **10.6 ms** (21 frames re-simulated). -1190 at 20 s: 12.8 ms. The distance does not matter: it is one load plus at most 29 frames |
+| a library save / its file | ~40 ms / ~12.6 MB (the zero pages are left out) |
+
+Measured on ACE: Wolf vs Fox (CPU level 0) on FD, P1 driven by a scripted input loop.
+
+**Exactness** (`gd.rewind_test([frames [, keep_running]])`, `gd.rewind_test_result()`):
+1. It copies the whole state (MEM1 + globals) at a frame T.
+2. It runs `frames` more, then rewinds to T through a keyframe and the log.
+3. It compares every byte and hashes both sides.
+It does not count the disc's async blocks (the four stream command blocks at 0x80171160, and
+devcom's nodes; a rewind load now leaves all four blocks alone), the pad-side globals SyncTest does
+not compare either (pad statuses, rumble), the light list (walked in both images), or the
+**render-owned** bytes it measures while it runs. Render-owned bytes are those that change between
+a render pass's start and the next logic frame, word-granular, as SyncTest marks them. The render
+pass advances particles and reuses list nodes per render, and a paused Lab renders without running
+logic, so those bytes legitimately differ.
+
+Result on ACE (Wolf vs Fox, FD, a scripted P1): **14 of 14 PASS** back to back, over 29..500 frames
+and 0..29 re-simulated frames, many of them captured while a replay of an earlier timeline was
+running. Each reads `PASS: ... 0 simulation bytes differ, hash X vs X`; between 4 and 99 bytes
+were exempt per run. What the test found on the way (all fixed): handles byte-swapped through a
+pointer; the fourth stream block; the voice pool's answers; the light list.
+
+Debug read: `gd.lab_peek(addr [, n])` returns n (<= 64) raw MEM1 bytes as hex, read-only.
+`gd.lab_leave("restart")` ends a LAB match into the same match again.
+
+**The persistent state library** (`gd.state_save/list/load/delete/rename/gen`):
+- **Storage.** One file per state, `scripts-data/geno-lab_lab/states/st_<time>_<n>.gdst`, plus
+  `index.txt`, a readable list rewritten on every change (the files are the truth). A file holds
+  a header, the non-zero MEM1 pages and the globals, with a 64-bit hash over all of it. It is
+  written to a temp file and renamed.
+- **The header.** Exe hash (the running exe's bytes), disc hash (the ISO's first 4 MB and its
+  size), mods hash (`gw_Mods_Describe`), Geno hash (every profile id + `GENO_VERSION`), the
+  fighters (character, costume and CPU per port), the stage, the match frame, the date, the name
+  and "what" ("Wolf v Fox on FD").
+- **Loading.** The header is checked when you ask. Any mismatch is **refused** with the reason:
+  "saved by another build of the game", "... another disc", "... other mods", "... other Geno
+  fighter data", "load it during a match", or "this state is Wolf v Fox on FD: start that match
+  first". Only then is the whole file read and verified, before a byte of it is loaded; a damaged
+  file is refused too. A load restarts the history (`on_loadstate(9)`).
+- **In the menu (STATES).** Save to library, with an auto name like `Wolf v Fox – FD – f1234`
+  (there is no text entry; `lab rename <file> <name>` renames from the console). Then the list:
+  8 rows show and it scrolls. A loads; Y / DELETE asks, and A confirms the delete. Refused states
+  show REFUSED and say why. F5 / F6 are still the quick memory slots.
+
+**Hot reload** (`gd.hot_reload([seconds])`, F8, STATES > Hot reload; `on_hot_reload(ok)`,
+`gd.hot_reload_status()`):
+1. Rewind `seconds` (default 2) through the history. That is exact: the old data re-simulates to
+   there.
+2. Re-read every mounting mod's `geno.json` and the words files its overlays name
+   (`gw_Geno_Reload`).
+3. Re-apply the data to every live fighter (`GenoGame_LabReload`): refill the overlay pool and
+   repoint the subaction rows (`Orig` keeps the vanilla script), rebuild the Geno state rows and
+   parameters, and recompute the attributes (the file, then the Geno overrides, then the game's
+   own modifiers: `ftCo_800D105C`).
+4. Reload the Lab script.
+5. Restart the history at that frame and **replay** the logged input on the new data, then go
+   live.
+
+What reloads cleanly: attributes, jumps, special attributes, hooks, on_land, change-action checks,
+behaviour parameters, Geno state rows (behaviour, callbacks, flags, landing, motion), subaction
+overlay words (inline or words files), and the Lab script.
+
+What does not:
+- **Layout changes.** The profile set, what a profile attaches to, a profile's Geno state count,
+  or its overlay list. The restored state would not fit, so it says so and **restarts the match**
+  (`gd.lab_leave("restart")`: the loading screen, then the same fighters on the same stage).
+- **Disc / file data** (Pl*.dat, animations, models): these need a new match.
+- `on_init` hooks are not re-run.
+- A `geno.json` that does not parse keeps the old data.
 
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 

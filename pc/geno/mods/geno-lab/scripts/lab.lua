@@ -10,6 +10,8 @@
 -- Global keys (every mode):
 --   SPACE  pause / resume          RIGHT  step 1 frame (hold: slow play; CTRL: 10)
 --   LEFT   step back (hold; CTRL: 10)   F5 / F6  save / load state 1
+--   F8     hot reload (geno.json, overlays, this script) and replay the last seconds
+--   G      go live: stop replaying the logged input here (after a rewind)
 --   TAB    next mode (SHIFT: previous)  1-5  a mode directly    F  focus the next fighter
 --   H      hide / show the Lab UI  F3  help (this mode's keys)  ESC  the LAB pause menu
 -- Mode keys:
@@ -114,12 +116,13 @@ for i, m in ipairs(MODES) do MODE_BY_ID[m.id] = i end
 local GLOBAL_KEYS = {
   { "SPACE", "Pause / resume" }, { "RIGHT", "Step +1 (hold, CTRL x10)" },
   { "LEFT", "Step -1 (hold, CTRL x10)" }, { "F5", "Save state 1" }, { "F6", "Load state 1" },
+  { "F8", "Hot reload + replay" }, { "G", "Go live (stop replaying)" },
   { "TAB", "Next mode (SHIFT back)" }, { "1-5", "Mode directly" }, { "F", "Focus next fighter" },
   { "H", "Hide / show the Lab UI" }, { "F3", "This help" }, { "ESC", "Pause menu" },
 }
 
 -- ---- settings (scripts-data/<mod>/settings.txt) ------------------------------------------------
-local cfg = { on = true, always = false, history = 20, mode = 2, hidden = false, help = false }
+local cfg = { on = true, always = false, history_s = 10, reload_s = 2, mode = 2, hidden = false, help = false }
 local tog = {} -- tog[mode_id][toggle_id] = bool
 for _, m in ipairs(MODES) do
   tog[m.id] = {}
@@ -129,7 +132,7 @@ local SETTINGS = "settings.txt"
 
 local function save_settings()
   local out = { "mode=" .. MODES[cfg.mode].id, "hidden=" .. tostring(cfg.hidden),
-    "history=" .. cfg.history, "always=" .. tostring(cfg.always) }
+    "history_s=" .. cfg.history_s, "reload_s=" .. cfg.reload_s, "always=" .. tostring(cfg.always) }
   for _, m in ipairs(MODES) do
     for _, t in ipairs(m.t) do out[#out + 1] = m.id .. "." .. t.id .. "=" .. tostring(tog[m.id][t.id]) end
   end
@@ -146,7 +149,8 @@ local function load_settings()
       elseif k == "mode" and MODE_BY_ID[v] then cfg.mode = MODE_BY_ID[v]
       elseif k == "hidden" then cfg.hidden = v == "true"
       elseif k == "always" then cfg.always = v == "true"
-      elseif k == "history" and tonumber(v) then cfg.history = tonumber(v) end
+      elseif k == "history_s" and tonumber(v) then cfg.history_s = tonumber(v)
+      elseif k == "reload_s" and tonumber(v) then cfg.reload_s = tonumber(v) end
     end
   end
   cfg.on = cfg.always or gd.lab_request()
@@ -218,10 +222,13 @@ end
 
 local function ensure_history()
   if history_on or not offline() or not gd.match().active then return end
-  local h = gd.history(cfg.history)
+  local h = gd.history(math.floor(cfg.history_s * 60))
   history_on = true
-  if h.depth < cfg.history then say(string.format("History: %d frames (memory)", h.depth), DANGER) end
+  if h.depth < cfg.history_s * 60 then say(string.format("History: %.0f s (memory)", h.depth / 60), DANGER) end
 end
+
+-- seconds, for the history readouts
+local function secs(frames) return string.format("%.1f", (frames or 0) / 60) end
 
 -- ---- stepping, scrubbing, lock-step -----------------------------------------------------------
 local function step(n) if offline() then gd.step(n) end end
@@ -466,7 +473,70 @@ local function fighter_name(port)
 end
 
 local function onoff(v) return v and "ON" or "OFF" end
-local HISTORY_STEPS = { 10, 20, 40, 60 }
+local HISTORY_STEPS = { 2, 5, 10, 20 } -- seconds
+local RELOAD_STEPS = { 1, 2, 3, 5 }      -- seconds replayed after a hot reload
+
+-- ---- the saved-state library (gd.state_*: files in scripts-data/geno-lab_lab/states) ----------
+-- by GrKind (gd.match().stage; gr/forward.h)
+local STAGE_NAMES = { [0x02] = "Castle", [0x03] = "Rainbow", [0x04] = "Kongo", [0x05] = "Japes",
+  [0x06] = "Great Bay", [0x07] = "Temple", [0x08] = "Brinstar", [0x09] = "Depths", [0x0A] = "YS",
+  [0x0B] = "Yoshi's Island", [0x0C] = "FoD", [0x0D] = "Green Greens", [0x0E] = "Corneria",
+  [0x0F] = "Venom", [0x10] = "PS", [0x11] = "Poke Floats", [0x12] = "Mute City", [0x13] = "Big Blue",
+  [0x14] = "Onett", [0x15] = "Fourside", [0x16] = "Icicle", [0x18] = "Mushroom I",
+  [0x19] = "Mushroom II", [0x1B] = "Flat Zone", [0x1C] = "DL", [0x1D] = "YI64", [0x1E] = "Kongo64",
+  [0x24] = "BF", [0x25] = "FD" }
+local lib = { gen = -1, rows = {}, confirm = nil }
+
+local function cap(s) return (s or "?"):gsub("^%l", string.upper) end
+
+-- "Fox v Falco · FD · f1234": what the state is, as a name the list can show
+local function auto_name()
+  local names = {}
+  for _, p in ipairs(gd.players()) do names[#names + 1] = cap(p.char_name) end
+  local st = gd.match().stage
+  return string.format("%s \u{2013} %s \u{2013} f%d", table.concat(names, " v "),
+    STAGE_NAMES[st] or ("stage " .. tostring(st)), gd.match().frame)
+end
+
+local function what_now()
+  local names = {}
+  for _, p in ipairs(gd.players()) do names[#names + 1] = cap(p.char_name) end
+  local st = gd.match().stage
+  return table.concat(names, " v ") .. " on " .. (STAGE_NAMES[st] or ("stage " .. tostring(st)))
+end
+
+local function lib_refresh(force)
+  if not gd.state_gen then return end
+  local g = gd.state_gen()
+  if force or g ~= lib.gen then
+    lib.gen = g
+    local ok, rows = pcall(gd.state_list)
+    lib.rows = ok and rows or {}
+  end
+end
+
+local function lib_save()
+  local file, why = gd.state_save(auto_name(), what_now())
+  if file then say("Saved to the library") else say("Not saved: " .. tostring(why), DANGER) end
+end
+
+local function lib_load(row)
+  local ok, why = gd.state_load(row.file)
+  if ok then say("Loading " .. row.name) else say("Refused: " .. tostring(why), DANGER) end
+end
+
+local function lib_delete(row)
+  local ok, why = gd.state_delete(row.file)
+  lib.confirm = nil
+  if ok then say("Deleted " .. row.name) lib_refresh(true) else say(tostring(why), DANGER) end
+end
+
+local function hot_reload()
+  if not offline() then return end
+  local ok, why = gd.hot_reload(cfg.reload_s)
+  if ok then say(string.format("Hot reload: rewinding %d s, then replaying", cfg.reload_s))
+  else say("Hot reload: " .. tostring(why), DANGER) end
+end
 
 local function display_items()
   local items = {
@@ -491,6 +561,8 @@ local function display_items()
   return items
 end
 
+local states_items -- below: the rows are rebuilt from the library each time
+
 local TABS = {
   { name = "PLAY", icon = "lab_play", items = {
     { label = "Resume", icon = "lab_play", desc = "Unfreeze. Everything carries on from this exact frame.",
@@ -499,8 +571,8 @@ local TABS = {
       desc = "One frame forward, then frozen again. The heart of frame study.",
       value = function() return "f " .. gd.match().frame end, run = function() gd.step(1) end },
     { label = "Step -1", icon = "lab_step_back", key = "LEFT",
-      desc = "One frame back, out of the history ring. Undo, but for physics.",
-      value = function() local h = gd.history() return string.format("%d / %d", h.back, h.depth) end,
+      desc = "One frame back through the history: the keyframe before it, then the logged input re-simulated. Undo, but for physics.",
+      value = function() local h = gd.history() return string.format("-%s / %d s", secs(h.back), cfg.history_s) end,
       run = function() back(1) end },
     { label = "Step +10", icon = "lab_forward", desc = "Ten frames at once, for when one at a time is a chore.",
       run = function() gd.step(10) end },
@@ -536,14 +608,32 @@ local TABS = {
       toggle = function() return mirror end, value = function() return onoff(mirror) end,
       run = function() set_mirror(not mirror) end },
   } },
-  { name = "STATES", icon = "lab_save", items = {
-    { label = "Save state", icon = "lab_save", key = "F5",
-      desc = "Snapshot everything into a slot. Left / right picks the slot.",
+  { name = "STATES", icon = "lab_save", items = function() return states_items() end },
+  { name = "EXIT", icon = "lab_exit", items = {
+    { label = "Change fighters", icon = "lab_focus", desc = "Back to LAB's character select.",
+      run = function() menu_leave("css") end },
+    { label = "Change stage", icon = "lab_stage", desc = "Same fighters, a different floor.",
+      run = function() menu_leave("sss") end },
+    { label = "Quit", icon = "lab_power", desc = "Leave the Lab for the menus. No contest, no results.",
+      value = function() return "NO CONTEST" end, run = function() menu_leave("menu") end },
+  } },
+}
+
+states_items = function()
+  lib_refresh(false)
+  local items = {
+    { label = "Save to library", icon = "lab_library",
+      desc = function() return "Everything, to a file that survives restarts, named " .. auto_name() ..
+        ". It loads only in this build, with this disc, these mods and this Geno data, in this match." end,
+      value = function() return #lib.rows .. " SAVED" end,
+      run = function() lib_save() end },
+    { label = "Quick save", icon = "lab_save", key = "F5",
+      desc = "Snapshot everything into a memory slot (gone when the game closes). Left / right picks the slot.",
       value = function() return "SLOT " .. menu.slot end,
       run = function() gd.savestate(menu.slot) say("State " .. menu.slot .. " saved") end,
       adjust = function(d) menu.slot = ((menu.slot - 1 + d) % 3) + 1 end },
-    { label = "Load state", icon = "lab_load", key = "F6",
-      desc = "Back to a snapshot, frame-exact.",
+    { label = "Quick load", icon = "lab_load", key = "F6",
+      desc = "Back to a memory slot, frame-exact.",
       value = function() return "SLOT " .. menu.slot end,
       run = function()
         local ok, err = pcall(gd.loadstate, menu.slot)
@@ -557,26 +647,59 @@ local TABS = {
         if ok then menu_close() say("Reset to the match start") else say((tostring(err):gsub("^.-: ", "")), DANGER) end
       end },
     { label = "History", icon = "lab_history",
-      desc = "How far step-back can rewind. Every frame kept costs about 27 MB.",
-      value = function() return cfg.history .. " FRAMES" end,
+      desc = function()
+        local h = gd.history()
+        return string.format("How far step-back and the timeline reach: one keyframe every %d frames plus the input log. Now %.0f MB for %s s kept.",
+          h.interval, h.mb, secs(h.back))
+      end,
+      value = function() return cfg.history_s .. " S" end,
       adjust = function(d)
         local k = 1
-        for i, v in ipairs(HISTORY_STEPS) do if v == cfg.history then k = i end end
-        cfg.history = HISTORY_STEPS[((k - 1 + d) % #HISTORY_STEPS) + 1]
+        for i, v in ipairs(HISTORY_STEPS) do if v == cfg.history_s then k = i end end
+        cfg.history_s = HISTORY_STEPS[((k - 1 + d) % #HISTORY_STEPS) + 1]
         history_on = false
         ensure_history()
         save_settings()
       end },
-  } },
-  { name = "EXIT", icon = "lab_exit", items = {
-    { label = "Change fighters", icon = "lab_focus", desc = "Back to LAB's character select.",
-      run = function() menu_leave("css") end },
-    { label = "Change stage", icon = "lab_stage", desc = "Same fighters, a different floor.",
-      run = function() menu_leave("sss") end },
-    { label = "Quit", icon = "lab_power", desc = "Leave the Lab for the menus. No contest, no results.",
-      value = function() return "NO CONTEST" end, run = function() menu_leave("menu") end },
-  } },
-}
+    { label = "Hot reload", icon = "lab_reload", key = "F8",
+      desc = function()
+        local st = gd.hot_reload_status and gd.hot_reload_status()
+        local last = (st and st.text ~= "") and ("  Last: " .. st.text) or ""
+        return "Re-read the fighters' geno.json, their overlays and this script, rewind the chosen seconds and replay your input on the new data. Left / right: how far." .. last
+      end,
+      value = function() return "REPLAY " .. cfg.reload_s .. " S" end,
+      run = function() menu_close() hot_reload() end,
+      adjust = function(d)
+        local k = 1
+        for i, v in ipairs(RELOAD_STEPS) do if v == cfg.reload_s then k = i end end
+        cfg.reload_s = RELOAD_STEPS[((k - 1 + d) % #RELOAD_STEPS) + 1]
+        save_settings()
+      end },
+  }
+  for _, r in ipairs(lib.rows) do
+    local row = r
+    items[#items + 1] = {
+      label = row.name ~= "" and row.name or row.file, icon = row.ok and "lab_load" or "lab_slash",
+      state_row = row,
+      desc = function()
+        local d = (row.what ~= "" and row.what or "a saved state") .. ", saved " .. row.saved .. "."
+        if lib.confirm == row.file then return "Delete it? A deletes, B keeps it." end
+        if not row.ok then return d .. "  Refused here: " .. row.why .. ".  Y / DELETE deletes it." end
+        return d .. "  A loads it.  Y / DELETE deletes it."
+      end,
+      value = function()
+        if lib.confirm == row.file then return "DELETE?" end
+        return row.ok and ("f" .. row.frame) or "REFUSED"
+      end,
+      run = function()
+        if lib.confirm == row.file then lib_delete(row) return end
+        if row.ok then menu_close() lib_load(row) else say("Refused: " .. row.why, DANGER) end
+      end,
+      delete = function() lib.confirm = row.file end,
+    }
+  end
+  return items
+end
 
 local function tab_items(i)
   local it = TABS[i or menu.tab].items
@@ -616,7 +739,7 @@ local function menu_open(port)
   if tp then menu.pct = math.floor((tp.percent or 0) / 10 + 0.5) * 10 end
 end
 
-local PAD_EDGES = { "A", "B", "START", "UP", "DOWN", "LEFT", "RIGHT", "L", "R" }
+local PAD_EDGES = { "A", "B", "X", "Y", "START", "UP", "DOWN", "LEFT", "RIGHT", "L", "R" }
 local function pad_edges(port)
   local ok, p = pcall(gd.pad, port)
   if not ok or p == nil then return {} end
@@ -693,8 +816,14 @@ local function lab_menu_tick()
   if down then set_sel(cur_sel() + 1) end
   if left then menu_adjust(-1) end
   if right then menu_adjust(1) end
-  if e.A or gd.key_pressed("ENTER") or gd.key_pressed("SPACE") then
+  local it = tab_items()[cur_sel()]
+  if lib.confirm and (not it or not it.state_row or it.state_row.file ~= lib.confirm) then lib.confirm = nil end
+  if (e.Y or gd.key_pressed("DELETE")) and it and it.delete then
+    it.delete()
+  elseif e.A or gd.key_pressed("ENTER") or gd.key_pressed("SPACE") then
     menu_activate()
+  elseif lib.confirm and (e.B or gd.key_pressed("BACKSPACE") or gd.key_pressed("ESCAPE")) then
+    lib.confirm = nil
   elseif e.B or e.START or gd.key_pressed("ESCAPE") or gd.key_pressed("BACKSPACE") then
     menu_close()
   end
@@ -759,8 +888,23 @@ local function lab_menu_draw()
   -- rows: big, sheared; the selected one gold, pushed right, with a chevron
   local rx0, ry0, rw, rh, pitch = 44, 126, 276, 30, 36
   local wipe = menu.tab_t < 6
+  local VIS = 8
+  menu.scroll = menu.scroll or {}
+  local first = menu.scroll[menu.tab] or 1
+  if sel < first then first = sel end
+  if sel > first + VIS - 1 then first = sel - VIS + 1 end
+  if first > math.max(1, #items - VIS + 1) then first = math.max(1, #items - VIS + 1) end
+  menu.scroll[menu.tab] = first
+  if first > 1 then
+    txt(rx0 + rw / 2, ry0 - 6, string.format("\u{2191} %d more", first - 1), "caption", MUTED, "center")
+  end
+  if first + VIS - 1 < #items then
+    txt(rx0 + rw / 2, ry0 + VIS * pitch + 8, string.format("\u{2193} %d more", #items - (first + VIS - 1)),
+      "caption", MUTED, "center")
+  end
   for i, it in ipairs(items) do
-    local ry = ry0 + (i - 1) * pitch
+    if i < first or i > first + VIS - 1 then goto continue end
+    local ry = ry0 + (i - first) * pitch
     local a = ease((menu.t - i * 0.8) / 6)
     if wipe then a = math.min(a, ease((menu.tab_t - i * 0.6) / 5)) end
     local dx = -(1 - a) * 90
@@ -779,6 +923,7 @@ local function lab_menu_draw()
     stxt(x + 36, ry + 21, it.label:upper(), "row", on and INK or BONE, "left", rw - 50 - (val and 96 or 0))
     if val then stxt(x + rw - 12, ry + 21, val, "row", on and INK or ACCENT, "right", 110) end
     menu.hits[#menu.hits + 1] = { kind = "row", i = i, x = x, y = ry, w = rw, h = rh }
+    ::continue::
   end
 
   -- the detail panel
@@ -823,7 +968,7 @@ local function lab_menu_draw()
     end
     -- what the buttons do here, and the match key for the same thing
     local hint = it.adjust and (it.run and "A  do it    LEFT / RIGHT  change" or "LEFT / RIGHT  change")
-      or "A  do it"
+      or (it.delete and "A  load    Y  delete" or "A  do it")
     quad(px + 10, py + ph - 48, pw - 20, 1, alpha(TICK, 0x80))
     txt(px + 14, py + ph - 32, hint, "caption", MUTED)
     if it.key then
@@ -891,7 +1036,8 @@ local function draw_strip()
   end
   -- the right end: status, mode, help
   local h = gd.history()
-  local status = string.format("f %d%s", gd.match().frame, h.back > 0 and ("  -" .. h.back) or "")
+  local status = string.format("f %d  %s", gd.match().frame,
+    h.replaying and string.format("REPLAY +%s s", secs(h.fwd)) or string.format("rewind %s s", secs(h.back)))
   local rx = 632
   txt(rx, y + 12, "help", "caption", MUTED, "right")
   rx = rx - measure("help", "caption") - 4 - key_w("F3")
@@ -1167,7 +1313,8 @@ local function draw_frames(list)
   -- the action / frame chip, top-left
   local h = gd.history()
   local s = string.format("%s   %s  f%d", fighter_name(a.port), a.motion_name, a.action_frame + 1)
-  local extra = string.format("history %d / %d", h.back, h.depth)
+  local extra = h.replaying and string.format("replaying  +%s s  G live", secs(h.fwd))
+    or string.format("rewind %s / %d s", secs(h.back), cfg.history_s)
   local w = measure(s, "body") + measure(extra, "caption") + 44
   quad(8, 8, w, 22, GLASS, SHEAR)
   quad(6, 8, 4, 22, GOLD, SHEAR)
@@ -1220,6 +1367,8 @@ function on_tick()
     if repeat_key("RIGHT") then step(big) end
     if repeat_key("LEFT") then back(big) end
     if gd.key_pressed("F5") then gd.savestate(1) say("State 1 saved") end
+    if gd.key_pressed("F8") then hot_reload() end
+    if gd.key_pressed("G") and gd.history().replaying then gd.rewind_live() say("Live from here") end
     if gd.key_pressed("F6") then
       local ok, err = pcall(gd.loadstate, 1)
       if not ok then say((tostring(err):gsub("^.-: ", "")), DANGER) end
@@ -1294,7 +1443,15 @@ function on_loadstate(slot)
   for i = #log_lines, 1, -1 do
     if log_lines[i][1] > now then table.remove(log_lines, i) end
   end
-  log(slot == 0 and "-- stepped back --" or ("-- loaded state " .. slot .. " --"), GOLD)
+  log(slot == 0 and "-- stepped back --" or slot == 9 and "-- loaded from the library --"
+    or ("-- loaded state " .. slot .. " --"), GOLD)
+  if slot == 9 then lib_refresh(true) end
+end
+
+function on_hot_reload(ok)
+  local st = gd.hot_reload_status()
+  say((ok and "Reloaded: " or "Reload: ") .. st.text, ok and OK or DANGER)
+  log("-- hot reload --", GOLD)
 end
 
 -- ---- drawing -------------------------------------------------------------------------------------
@@ -1351,7 +1508,8 @@ local function help_lines()
   for _, k in ipairs(GLOBAL_KEYS) do g[#g + 1] = k[1] .. " " .. k[2] end
   out[#out + 1] = "  global: " .. table.concat(g, ", ")
   out[#out + 1] = "  console: lab help | status | mode <name> | set <mode>.<toggle> on|off | hide | menu [tab]"
-  out[#out + 1] = "           port N | history N | back N | dump [N] | move <id> [frame] | events"
+  out[#out + 1] = "           port N | history [seconds] | back N | dump [N] | move <id> [frame] | events"
+  out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
   return out
 end
 
@@ -1392,12 +1550,40 @@ gd.command("lab", function(arg)
   elseif cmd == "port" and n then
     focus = n
   elseif cmd == "history" and n then
-    cfg.history = n
+    cfg.history_s = n
     history_on = false
     ensure_history()
     local h = gd.history()
-    gd.log(string.format("history: %d frames (%.0f MB each)", h.depth, h.slot_mb))
+    gd.log(string.format("history: %d s (%d frames), a keyframe every %d, %.1f MB now", cfg.history_s, h.depth,
+      h.interval, h.mb))
     save_settings()
+  elseif cmd == "history" then
+    local h = gd.history()
+    gd.log(string.format("history: %d s, back %d fwd %d, %d keyframes, %.1f MB (%.1f MB deltas), key %.2f ms, " ..
+      "last rewind %d frames in %.2f ms (load %.2f ms)%s", cfg.history_s, h.back, h.fwd, h.keys, h.mb, h.delta_mb,
+      h.key_ms, h.last_frames, h.last_ms, h.last_load_ms, h.replaying and ", replaying" or ""))
+  elseif cmd == "states" then
+    lib_refresh(true)
+    for _, r in ipairs(lib.rows) do
+      gd.log(string.format("  %s  %s  f%d  %s  %s", r.file, r.name, r.frame, r.saved, r.ok and "ok" or ("REFUSED: " .. r.why)))
+    end
+    gd.log(#lib.rows .. " saved state(s)")
+  elseif cmd == "save" then
+    lib_save()
+  elseif cmd == "load" and rest ~= "" then
+    local ok, why = gd.state_load(rest)
+    gd.log(ok and ("loading " .. rest) or ("refused: " .. tostring(why)))
+  elseif cmd == "rename" then
+    local f, nm = rest:match("^(%S+)%s+(.+)$")
+    if f then local ok, why = gd.state_rename(f, nm) gd.log(ok and "renamed" or tostring(why)) lib_refresh(true)
+    else gd.log("lab rename <file> <name>") end
+  elseif cmd == "delete" and rest ~= "" then
+    local ok, why = gd.state_delete(rest)
+    gd.log(ok and "deleted" or tostring(why))
+    lib_refresh(true)
+  elseif cmd == "reload" then
+    if n then cfg.reload_s = n end
+    hot_reload()
   elseif cmd == "back" then
     back(n or 1)
   elseif cmd == "dump" then
@@ -1434,6 +1620,6 @@ gd.command("lab", function(arg)
       gd.log("lab set <mode>.<toggle> on|off  (e.g. hitboxes.ecb on; lab help lists them)")
     end
   else
-    gd.log("lab [help | status | mode <m> | set <m>.<t> on|off | hide | menu [tab|close] | port N | history N | back [N] | dump [N]]")
+    gd.log("lab [help | status | mode <m> | set <m>.<t> on|off | hide | menu [tab|close] | port N | history [s] | back [N] | dump [N] | states | save | load | rename | delete | reload [s]]")
   end
-end, "Geno Lab: help, status, mode, set, hide, menu, port, history, back, dump")
+end, "Geno Lab: help, status, mode, set, hide, menu, port, history, back, dump, states, save, load, reload")

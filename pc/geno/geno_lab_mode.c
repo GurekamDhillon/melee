@@ -141,13 +141,17 @@ static void lab_exit_match(GameModeState* state)
     case GENO_LAB_TO_MENU:
         gm_ChangeGameModeAfterCurrentScene(GM_MENU);
         break;
+    case GENO_LAB_TO_MATCH:
+        gm_SetNextGameModeStateId(LAB_STATE_LOADING); /* a restart: same fighters, same stage */
+        break;
     default:
         gm_SetNextGameModeStateId(LAB_STATE_CSS);
         break;
     }
-    OSReport("geno lab: LAB match over -> %s\n", lab_next == GENO_LAB_TO_SSS    ? "stage select"
-                                                 : lab_next == GENO_LAB_TO_MENU ? "menus"
-                                                                                : "character select");
+    OSReport("geno lab: LAB match over -> %s\n", lab_next == GENO_LAB_TO_SSS     ? "stage select"
+                                                 : lab_next == GENO_LAB_TO_MENU  ? "menus"
+                                                 : lab_next == GENO_LAB_TO_MATCH ? "the same match"
+                                                                                 : "character select");
     lab_next = GENO_LAB_TO_CSS;
 }
 
@@ -235,7 +239,9 @@ int GenoLab_Leave(int where)
     if (gm_GetCurrentGameMode() != GM_LAB || !lab_in_match) {
         return 0;
     }
-    lab_next = where == GENO_LAB_TO_SSS || where == GENO_LAB_TO_MENU ? where : GENO_LAB_TO_CSS;
+    lab_next = where == GENO_LAB_TO_SSS || where == GENO_LAB_TO_MENU || where == GENO_LAB_TO_MATCH
+                   ? where
+                   : GENO_LAB_TO_CSS;
     gmVs_EndMatch(OUTCOME_NO_CONTEST);
     return 1;
 }

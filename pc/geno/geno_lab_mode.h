@@ -20,6 +20,7 @@ enum {
     GENO_LAB_TO_CSS = 0,  ///< the default: LAB's character select
     GENO_LAB_TO_SSS = 1,  ///< the stage select, same fighters
     GENO_LAB_TO_MENU = 2, ///< quit: the menus (no contest)
+    GENO_LAB_TO_MATCH = 3, ///< the same match again (the loading screen, then the match): restart
 };
 
 extern GameModeState gm_Mode_Lab_States[];

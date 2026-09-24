@@ -157,6 +157,14 @@ ico("save", "F5: save state (into the slot)",
     body=S("M5 36 V58 H59 V36", 6) + P("M26 2 H38 V20 H48 L32 38 L16 20 H26 Z"))
 ico("load", "F6: load state (out of the slot)",
     body=S("M5 36 V58 H59 V36", 6) + P("M32 2 L48 20 H38 V44 H26 V20 H16 Z"))
+ico("reload", "F8: hot reload (one arrow round a circle: reload, then replay)",
+    body=S(arc(32, 34, 22, 40, 318), 7) + P("M41.5 23.5 L60.5 10.5 L58 33 Z"))
+ico("library", "STATES: the saved-state library (three stacked cards)",
+    body=(S(rrect(14, 4, 44, 32, 4), 5) + S(rrect(9, 13, 44, 32, 4), 5) +
+          P(rrect(4, 24, 44, 36, 5))))
+ico("trash", "delete a saved state (a bin)",
+    body=(P(rect(6, 10, 52, 7)) + P(rect(24, 3, 16, 7)) +
+          P("M11 21 H53 L49 61 H15 Z")))
 ico("help", "F3: help (the question mark is the symbol)",
     body=(S("M19 22 C19 6 45 6 45 22 C45 34 32 32 32 44", 8) + P(circle(32, 55, 6))))
 ico("power", "X: Lab on / off",

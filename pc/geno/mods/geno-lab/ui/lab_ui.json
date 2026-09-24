@@ -1222,6 +1222,108 @@
    }
   },
   {
+   "name": "ico_lab_reload",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_reload.png",
+   "file_1x": "out/1x/ico_lab_reload.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "F8: hot reload (one arrow round a circle: reload, then replay)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_library",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_library.png",
+   "file_1x": "out/1x/ico_lab_library.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "STATES: the saved-state library (three stacked cards)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     3
+    ],
+    "at_2x_draw": [
+     1,
+     3
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_trash",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_trash.png",
+   "file_1x": "out/1x/ico_lab_trash.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "delete a saved state (a bin)",
+   "tint": "bone",
+   "alpha_levels_i4": 12,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
    "name": "ico_lab_help",
    "group": "icon",
    "file_2x": "out/2x/ico_lab_help.png",

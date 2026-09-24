@@ -24,6 +24,7 @@
 #include <melee/ft/fighter.h>
 #include <melee/ft/ft_0892.h>
 #include <melee/ft/ftanim.h>
+#include <melee/ft/ftchangeparam.h>
 #include <melee/ft/ftcommon.h>
 #include <melee/ft/ftparts.h>
 #include <melee/ft/inlines.h>
@@ -263,7 +264,12 @@ static void geno_install_overlays(Fighter* fp, int p)
         /* idempotent: the table is the kind's (shared by every fighter of it, kept while the file
            stays loaded), so a second spawn finds it already pointing at the overlay */
         if (table[anim].xC != mine) {
-            Geno_OverlayOrig[slot] = table[anim].xC;
+            /* a row already pointing into the pool is an overlay from before a hot reload (the
+               words moved): the script it replaced is still Orig's */
+            u32* was = (u32*) table[anim].xC;
+            if (!(was >= &Geno_ScriptPool[0] && was < &Geno_ScriptPool[GENO_POOL_WORDS])) {
+                Geno_OverlayOrig[slot] = table[anim].xC;
+            }
             table[anim].xC = mine;
             Geno_Event(13, fp->kind, fp->player_id, anim, slot);
         }
@@ -336,6 +342,39 @@ void Geno_FighterReset(Fighter* fp)
             geno_run_event(fp->gobj, st, GENO_EV_INIT);
         }
     }
+}
+
+/* The Geno Lab's hot reload (gd.hot_reload, gw_script.c): the registry was re-read (same layout:
+ * geno_registry.c refuses otherwise). Re-apply it to every live fighter the way a spawn does,
+ * without resetting the fighter: the overlay words and table rows, the Geno state rows and
+ * parameters, and the attributes (recomputed from the fighter's file, then the Geno overrides,
+ * then the game's own modifiers - ftCo_800D105C). Hooks (on_init) are not re-run. Returns the
+ * number of fighters re-applied. */
+int GenoGame_LabReload(void)
+{
+    HSD_GObj* cur;
+    int n = 0;
+    if (HSD_GObjPLinkHead == NULL) {
+        return 0;
+    }
+    for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
+        Fighter* fp = GET_FIGHTER(cur);
+        GenoState* st;
+        if (fp == NULL) {
+            continue;
+        }
+        st = geno_state(fp);
+        st->profile = Geno_ProfileForKind(fp->kind);
+        if (st->profile < 0) {
+            continue;
+        }
+        geno_pool_sync();
+        geno_install_overlays(fp, st->profile);
+        geno_v2_build(fp, st->profile);
+        ftCo_800D105C(cur);
+        n++;
+    }
+    return n;
 }
 
 /* Fighter_ChangeMotionState, right after motion_id is set: the RA banks, change-action checks,

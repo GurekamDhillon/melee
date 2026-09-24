@@ -1181,6 +1181,83 @@ uint64_t gw_Geno_SaltForPlFile(const char *pl) {
 int gw_Geno_ProfileCount(void) { return gn_reg()->n; }
 const char *gw_Geno_ProfileHex(int p) { return gn_at(p) ? gn_at(p)->hex : ""; }
 
+/* ---- hot reload (the Geno Lab's gd.hot_reload) --------------------------------------------------
+ * Re-read every mounting mod's geno.json (and the words files its overlays name) into a fresh
+ * registry and install it; the pool generation moves on, so the game half refills its copy of the
+ * overlay words. The registry is otherwise never changed during a match, and the game half keeps
+ * per-fighter state keyed to it (a profile index per fighter, a subaction table row per overlay, a
+ * row per Geno state), so a reload that changes that LAYOUT - the set of profiles and what they
+ * attach to, a profile's Geno state count, its overlay list - is reported as unsafe: the caller
+ * restarts the match. Returns 1 installed (layout unchanged), 0 installed (layout changed),
+ * -1 not installed (a geno.json does not parse: the old data stays). `msg` says what changed. */
+static gn_registry gn_next;
+
+int gw_Geno_Reload(char *msg, int cap) {
+    gn_registry *cur = gn_reg();
+    int n, k, i, changed = 0, layout = 0, pool_changed;
+    const char *dir = gw_Mods_Dir();
+    char why[160];
+    why[0] = '\0';
+    if (!cur->kinds_built) gn_build_kinds(cur);
+    memset(&gn_next, 0, sizeof gn_next);
+    for (k = 0; k < GN_KINDS; ++k) gn_next.kind_profile[k] = -1;
+    n = gw_Mods_ActiveCount();
+    for (k = 0; k < n && dir != NULL && dir[0]; ++k) {
+        int m = gw_Mods_ActiveAt(k);
+        char path[MAX_PATH];
+        char *text;
+        snprintf(path, sizeof path, "%s\\%s\\geno.json", dir, gw_Mods_Id(m));
+        text = gn_read_file(path);
+        if (text == NULL) continue;
+        if (gn_parse_text(&gn_next, text, gw_Mods_Id(m)) < 0) {
+            free(text);
+            snprintf(msg, (size_t) cap, "%s/geno.json does not parse - kept the old data", gw_Mods_Id(m));
+            return -1;
+        }
+        free(text);
+    }
+    gn_build_kinds(&gn_next);
+    if (gn_next.n != cur->n) {
+        snprintf(why, sizeof why, "fighter entries %d -> %d", cur->n, gn_next.n);
+        layout = 1;
+    }
+    for (i = 0; !layout && i < cur->n; ++i) {
+        const gn_profile *p = &cur->p[i], *q = &gn_next.p[i];
+        if (p->kind != q->kind || _stricmp(p->plfile, q->plfile) != 0) {
+            snprintf(why, sizeof why, "%s now attaches to %s", q->name, q->plfile);
+            layout = 1;
+        } else if (p->nstate != q->nstate) {
+            snprintf(why, sizeof why, "%s: Geno states %d -> %d", q->name, p->nstate, q->nstate);
+            layout = 1;
+        } else if (p->nov != q->nov || memcmp(p->ov_anim, q->ov_anim, sizeof p->ov_anim[0] * (size_t) p->nov) != 0 ||
+                   memcmp(p->ov_slot, q->ov_slot, sizeof p->ov_slot[0] * (size_t) p->nov) != 0) {
+            snprintf(why, sizeof why, "%s: the subaction overlay list changed", q->name);
+            layout = 1;
+        } else if (p->id != q->id) {
+            changed++;
+        }
+    }
+    if (!layout && gn_next.nslot != cur->nslot) {
+        snprintf(why, sizeof why, "overlay slots %d -> %d", cur->nslot, gn_next.nslot);
+        layout = 1;
+    }
+    pool_changed = gn_next.npool != cur->npool ||
+                   memcmp(gn_next.pool, cur->pool, sizeof cur->pool[0] * (size_t) cur->npool) != 0;
+    gn_boot = gn_next;
+    gn_boot_loaded = 1;
+    gn_pool_gen++;
+    if (layout) {
+        snprintf(msg, (size_t) cap, "geno.json: %s", why);
+        gw_log("geno: hot reload: layout changed (%s)", why);
+        return 0;
+    }
+    snprintf(msg, (size_t) cap, "geno.json: %d entr%s changed, overlay words %s", changed,
+             changed == 1 ? "y" : "ies", pool_changed ? "changed" : "unchanged");
+    gw_log("geno: hot reload: %d profile(s) changed, overlay words %s", changed,
+           pool_changed ? "changed" : "unchanged");
+    return 1;
+}
+
 /* ---- test support: swap in a registry parsed from text (game-side tests), then put the boot one
  * back. Never called outside --test. */
 static gn_registry gn_saved;

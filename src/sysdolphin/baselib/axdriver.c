@@ -11,6 +11,22 @@
 #include <dolphin/dvd.h>
 #include <dolphin/os.h>
 
+#if defined(TARGET_PC)
+/* The Geno Lab's rewind (pc/platform/gw_script.c, LabAudio_*): what the voice pool tells the game
+ * (is a sound still playing, did a key-off find its voice, ...) is not in any snapshot, so a frame
+ * being replayed gets the answers the frame got when it first ran. The real functions are renamed
+ * here and wrapped at the end of the file. */
+#define HSD_AudioSFXKeyOff HSD_AudioSFXKeyOff_raw
+#define HSD_AudioSFXSetPan HSD_AudioSFXSetPan_raw
+#define HSD_AudioSFXSetVolumeEx HSD_AudioSFXSetVolumeEx_raw
+#define HSD_AudioSFXSetPitchFid HSD_AudioSFXSetPitchFid_raw
+#define HSD_AudioSFXSetMix HSD_AudioSFXSetMix_raw
+#define HSD_AudioSFXCheck HSD_AudioSFXCheck_raw
+#define AXDriverCheck AXDriverCheck_raw
+#define AXDriver_8038E5D4 AXDriver_8038E5D4_raw
+#define AXDriver_8038E5DC AXDriver_8038E5DC_raw
+#endif
+
 void* AXDriverAlloc(size_t size)
 {
     void* ptr = &AXDriver_804D77D4[axfxallocsize];
@@ -552,7 +568,28 @@ int HSD_AudioSFXStartParam(int sound_id, u8 volume, u8 pan, int track,
     extern int Snap_SfxTake(int sound_id);
     extern void Snap_SfxPut(int sound_id, int result);
     extern void Snap_SfxAdd(int sound_id, int result);
-    int r;
+    extern int LabSfx_Replay(int sound_id);
+    extern int LabSfx_Handle(void);
+    extern void LabSfx_Record(int sound_id, int handle);
+    int r, lab_h, lab_m;
+    /* the Geno Lab's rewind (gw_script.c): a replayed frame gets the voice handle the frame got
+       when it first ran (the handle is game state; the voice pool is not). 1: re-simulated,
+       silent; 2: replayed at speed, the sound plays too; 3: not in the log, play it. A live
+       frame's handles are logged below. Scalars only across this boundary: native code writing
+       through a pointer into game memory would write little-endian. */
+    lab_m = LabSfx_Replay(sound_id);
+    lab_h = LabSfx_Handle();
+    if (lab_m == 1) {
+        return lab_h;
+    }
+    if (lab_m == 2) {
+        extern void LabSfx_Map(int logged, int real);
+        LabSfx_Map(lab_h, HSD_AudioSFXStartParam_impl(sound_id, volume, pan, track, channel));
+        return lab_h;
+    }
+    if (lab_m == 3) {
+        return HSD_AudioSFXStartParam_impl(sound_id, volume, pan, track, channel);
+    }
     if (Snap_SuppressSfx()) {
         r = Snap_SfxTake(sound_id);
         if (r != -2) {
@@ -565,6 +602,7 @@ int HSD_AudioSFXStartParam(int sound_id, u8 volume, u8 pan, int track,
     }
     r = HSD_AudioSFXStartParam_impl(sound_id, volume, pan, track, channel);
     Snap_SfxPut(sound_id, r);
+    LabSfx_Record(sound_id, r);
     return r;
 }
 
@@ -1364,3 +1402,53 @@ bool AXDriverCheck(void)
     }
     return true;
 }
+
+#if defined(TARGET_PC)
+#undef HSD_AudioSFXKeyOff
+#undef HSD_AudioSFXSetPan
+#undef HSD_AudioSFXSetVolumeEx
+#undef HSD_AudioSFXSetPitchFid
+#undef HSD_AudioSFXSetMix
+#undef HSD_AudioSFXCheck
+#undef AXDriverCheck
+#undef AXDriver_8038E5D4
+#undef AXDriver_8038E5DC
+/* LabAudio_Replay: 0 = a live frame (call, then Record); 1 = a re-simulated frame (the logged
+ * answer, no side effect); 2 = a frame replayed at speed (the logged answer; the side effect goes
+ * to the voice the replay really started, LabAudio_Real). Scalars only across this boundary. */
+extern int LabAudio_Replay(int kind, int arg);
+extern int LabAudio_Value(void);
+extern int LabAudio_Real(void);
+extern void LabAudio_Record(int kind, int arg, int value);
+#define LAB_AUDIO(kind, arg, call_real)                           \
+    {                                                             \
+        int lab_m = LabAudio_Replay((kind), (arg));               \
+        int lab_v = LabAudio_Value(), lab_real = LabAudio_Real(); \
+        if (lab_m == 0) {                                         \
+            lab_v = (int) (call_real);                            \
+            LabAudio_Record((kind), (arg), lab_v);                \
+        } else if (lab_m == 2) {                                  \
+            (void) (call_real);                                   \
+        }                                                         \
+        return lab_v;                                             \
+    }
+
+bool HSD_AudioSFXKeyOff(int vid)
+    LAB_AUDIO(1, vid, HSD_AudioSFXKeyOff_raw(lab_real))
+bool HSD_AudioSFXSetPan(int vid, u8 pan)
+    LAB_AUDIO(2, vid, HSD_AudioSFXSetPan_raw(lab_real, pan))
+bool HSD_AudioSFXSetVolumeEx(s32 vid, u8 volume)
+    LAB_AUDIO(3, vid, HSD_AudioSFXSetVolumeEx_raw(lab_real, volume))
+bool HSD_AudioSFXSetPitchFid(s32 vid, s16 pitch)
+    LAB_AUDIO(4, vid, HSD_AudioSFXSetPitchFid_raw(lab_real, pitch))
+bool HSD_AudioSFXSetMix(s32 vid, s32 aux_bus, u8 send_level)
+    LAB_AUDIO(5, vid, HSD_AudioSFXSetMix_raw(lab_real, aux_bus, send_level))
+bool HSD_AudioSFXCheck(int vid)
+    LAB_AUDIO(6, vid, HSD_AudioSFXCheck_raw(lab_real))
+bool AXDriverCheck(void)
+    LAB_AUDIO(7, 0, AXDriverCheck_raw())
+int AXDriver_8038E5D4(void)
+    LAB_AUDIO(8, 0, AXDriver_8038E5D4_raw())
+int AXDriver_8038E5DC(void)
+    LAB_AUDIO(9, 0, AXDriver_8038E5DC_raw())
+#endif

@@ -15,12 +15,14 @@
 #include "gw.h"
 #include "gw_script.h"
 #include "gw_kit.h"
+#include "../geno/geno.h" /* GENO_VERSION, for the state library header */
 
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
@@ -73,6 +75,37 @@ extern int gw_snap_reserve(int n);
 extern void gw_snap_save_index(int idx, int tag);
 extern int gw_snap_load_index(int idx);
 extern uint32_t gw_snap_slot_bytes(void);
+/* gw_snap.c: the Lab's long rewind (delta keyframes) and state files */
+extern int gw_rw_begin(int tag, const void *user, int ulen);
+extern int gw_rw_save(int tag, const void *user, int ulen);
+extern int gw_rw_load(int tag, void *user_out, int ulen);
+extern int gw_rw_drop_from(int tag);
+extern void gw_rw_trim(int limit);
+extern void gw_rw_end(void);
+extern int gw_rw_find_le(int tag);
+extern int gw_rw_base_tag(void);
+extern int gw_rw_latest(void);
+extern int gw_rw_count(void);
+extern double gw_rw_bytes(void);
+extern double gw_rw_delta_bytes(void);
+extern double gw_rw_ms_last_load(void);
+extern double gw_rw_ms_save_avg(void);
+extern uint32_t gw_rw_last_load_pages(void);
+extern int gw_rw_capture(void);
+extern int gw_rw_compare(double out[2], uint64_t out_h[2]);
+extern void gw_rw_measure(int on);
+extern void gw_Snap_LabResim(int on);
+extern int gw_snap_file_save(const char *path, const void *hdr, uint32_t hdr_len);
+extern int gw_snap_file_header(const char *path, void *hdr, uint32_t cap);
+extern int gw_snap_file_rewrite_header(const char *path, const void *hdr, uint32_t hdr_len);
+extern int gw_snap_file_load(const char *path);
+/* Geno hot reload (geno_registry.c, and the game half in pc/geno/geno_game.c) */
+extern int gw_Geno_Reload(char *msg, int cap);
+extern int gw_GenoGame_LabReload(void);
+extern int gw_Geno_ProfileCount(void);
+extern const char *gw_Geno_ProfileHex(int p);
+extern uint64_t gw_net_hash_file(const char *path, size_t max_bytes);
+extern const char *gw_Mods_Describe(void);
 extern int gw_TextEntryUntil;
 /* gw_script_pad.c */
 extern void gw_script_pad_state(int ch, unsigned *buttons, int *sx, int *sy, int *cx, int *cy,
@@ -124,14 +157,32 @@ typedef struct {
     int last_action[6], state_frame[6]; /* gd.player().action_frame bookkeeping */
 } GsSaveSlot;
 
-/* The Geno Lab's history ring: one snapshot per logic frame (gd.history / gd.step_back). Lives in
- * gw_snap slots GS_SAVE_SLOTS.. (the user's savestates are slots 0..GS_SAVE_SLOTS-1). `tag` is the
- * match frame about to run when the snapshot was taken. */
-#define GS_RING_MAX 40
+/* The Geno Lab's long rewind (gd.history / gd.step_back / gd.rewind_to): delta keyframes in
+ * gw_snap.c (gw_rw_*) plus the per-frame input log below. A frame's `tag` is the match frame about
+ * to run (gs_ring_now). docs/geno.md 14.10. */
+#define GS_RW_MAX_FRAMES (60 * 60) /* the longest window: a minute */
+#define GS_RW_INTERVAL 30          /* a keyframe every half second by default */
+#define GS_LOG_N 4096              /* the input log ring (> the longest window + an interval) */
+#define GS_LOG_SFX 16
+#define GS_LOG_Q 48
 typedef struct {
-    GsSaveSlot s;
     int tag;
-} GsRingEntry;
+    unsigned char have;     /* the frame renewed the pads (else it kept the previous statuses) */
+    unsigned char sfx_open; /* the sound handles are still being recorded (the frame's first run) */
+    unsigned char nsfx;
+    unsigned char nq;       /* the voice pool's answers to the game (axdriver.c LAB_AUDIO) */
+    unsigned char pad[48];  /* PADStatus[4] as the game read them */
+    int sfx_id[GS_LOG_SFX], sfx_h[GS_LOG_SFX];
+    unsigned char q_kind[GS_LOG_Q];
+    int q_arg[GS_LOG_Q], q_val[GS_LOG_Q];
+} GsLogEntry;
+static GsLogEntry gs_log[GS_LOG_N];
+static unsigned gs_sfx_claimed; /* the replayed frame's handles already given out */
+static int gs_q_pos;            /* the replayed frame's next logged audio answer */
+static int gs_in_frame;         /* between FramePre and FramePost: a logic frame is running */
+/* sounds a replay at speed really started: the logged handle the game keeps -> the real voice */
+#define GS_SFX_MAP 128
+static int gs_sfx_map_from[GS_SFX_MAP], gs_sfx_map_to[GS_SFX_MAP], gs_sfx_map_next;
 
 /* events the engine reports mid-frame (Script_GameEvent), dispatched after the frame */
 #define GS_MAX_EVENTS 256
@@ -173,11 +224,30 @@ static struct {
     int pending_save, pending_load; /* slot+1, 0 = none */
     GsSaveSlot slot[GS_SAVE_SLOTS];
     int snap_ready;
-    /* history ring (Geno Lab) */
-    GsRingEntry ring[GS_RING_MAX];
-    int ring_depth; /* 0 = off */
-    int ring_next;
-    int pending_back; /* ring index + 1 to load, 0 = none */
+    /* the long rewind (Geno Lab) */
+    int rw_frames;     /* the window, 0 = off */
+    int rw_interval;   /* a keyframe every N frames */
+    int rw_began;      /* the keyframe store holds this match's timeline */
+    int rw_head;       /* the first frame not in the input log: the live edge */
+    int rw_log_start;  /* the first frame in the log */
+    int rw_force_key;  /* a write changed the game: keyframe at the next boundary */
+    int rw_pending_on, rw_pending_to; /* a rewind to that frame at the next boundary */
+    int rw_resim;      /* frames the next tick re-simulates */
+    int rw_resim_run;  /* re-simulated iterations left in this tick */
+    int rw_notify;     /* on_loadstate(0) once the re-simulation is done */
+    double rw_t0, rw_last_ms, rw_last_load_ms;
+    int rw_last_frames;
+    /* the exactness self-test (gd.rewind_test) */
+    int rwt_phase, rwt_tag, rwt_back, rwt_pass, rwt_keep, rwt_arm;
+    double rwt_diff[2];
+    char rwt_text[320];
+    /* hot reload (gd.hot_reload) */
+    int hot_phase, hot_start, hot_ok;
+    char hot_text[512];
+    /* the persistent state library: a load / save waiting for a frame boundary */
+    char st_pending_load[MAX_PATH];
+    char st_pending_save[MAX_PATH];
+    char st_save_name[64], st_save_desc[96];
     /* engine events (Geno Lab) */
     GsEvent ev[GS_MAX_EVENTS];
     int nev, ev_dropped;
@@ -205,6 +275,8 @@ static struct {
     char data_dir[MAX_PATH];
     char describe[1024];
 } gs;
+
+static void gs_rw_branch(void); /* the Lab's rewind: a write forks the timeline here */
 
 static double gs_now_ms(void) {
     static double freq;
@@ -482,10 +554,25 @@ static const char *const gs_char_names[] = {
     "Jigglypuff", "Samus", "Yoshi", "Zelda", "Sheik", "Falco", "Young Link", "Dr. Mario", "Roy",
     "Pichu", "Ganondorf"};
 
+extern const char *gw_Mex_FighterName(int ext);
+extern int gw_Mex_PortCKindToExt(int ckind);
+
 static const char *gs_char_name(int c) {
     static char buf[32];
+    const char *m;
     if (c >= 0 && c < (int) (sizeof gs_char_names / sizeof gs_char_names[0])) {
         return gs_char_names[c];
+    }
+    /* an m-ex fighter (ACE's Wolf is 34): its own name from the disc's m-ex data, lower case like
+       the vanilla table */
+    m = c >= 0 ? gw_Mex_FighterName(gw_Mex_PortCKindToExt(c)) : NULL;
+    if (m != NULL && m[0] != '\0') {
+        size_t i;
+        for (i = 0; i + 1 < sizeof buf && m[i] != '\0'; ++i) {
+            buf[i] = (char) ((m[i] >= 'A' && m[i] <= 'Z') ? m[i] - 'A' + 'a' : m[i]);
+        }
+        buf[i] = '\0';
+        return buf;
     }
     snprintf(buf, sizeof buf, "character %d", c);
     return buf;
@@ -1019,6 +1106,7 @@ static int l_set_percent(lua_State *L) {
     int slot = gs_slot_arg(L, 1);
     int p = (int) luaL_checknumber(L, 2);
     gs_require_gameplay(L, "set_percent");
+    gs_rw_branch();
     gw_ScriptGame_SetPercent(slot, gs_clampi(p, 0, 999));
     return 0;
 }
@@ -1027,6 +1115,7 @@ static int l_set_stocks(lua_State *L) {
     int slot = gs_slot_arg(L, 1);
     int n = (int) luaL_checkinteger(L, 2);
     gs_require_gameplay(L, "set_stocks");
+    gs_rw_branch();
     gw_ScriptGame_SetStocks(slot, gs_clampi(n, 0, 99));
     return 0;
 }
@@ -2138,7 +2227,7 @@ static int l_lab_mode(lua_State *L) {
     return 1;
 }
 
-/* gd.lab_leave("css" | "sss" | "menu") -> true when a LAB match was ended (a no contest): back to
+/* gd.lab_leave("css" | "sss" | "menu" | "restart") -> true when a LAB match was ended (a no contest): back to
    LAB's character select, its stage select, or the menus. Offline only (the match's own end). */
 static int l_lab_leave(lua_State *L) {
     const char *to = luaL_optstring(L, 1, "css");
@@ -2150,85 +2239,590 @@ static int l_lab_leave(lua_State *L) {
         where = 1;
     } else if (strcmp(to, "menu") == 0) {
         where = 2;
+    } else if (strcmp(to, "restart") == 0) {
+        where = 3; /* the same match again */
     } else {
-        return luaL_error(L, "gd.lab_leave: \"css\", \"sss\" or \"menu\" (got \"%s\")", to);
+        return luaL_error(L, "gd.lab_leave: \"css\", \"sss\", \"menu\" or \"restart\" (got \"%s\")", to);
     }
     gs.paused = 0; /* the match has to run a frame to end */
     lua_pushboolean(L, gw_GenoLab_Leave(where) != 0);
     return 1;
 }
 
-static int gs_ring_find(int tag);
+static void gs_slot_capture(GsSaveSlot *s);
+static void gs_slot_restore(const GsSaveSlot *s);
 static int gs_ring_now(void);
 static int gs_snap_ensure(int slots);
-static void gs_ring_clear(void);
+static void gs_rw_stop(void);
+static int gs_rw_request(int target, const char **why);
+static void gs_rw_branch(void);
+static int gs_states_dir(char *out, size_t cap);
+static int gs_state_check(const void *hdr, int len, char *why, size_t cap);
+static int gs_exec(const char *line_in);
 
-static void gs_push_history(lua_State *L) {
-    int k, avail = 0, oldest = -1, now = gs_ring_now();
-    for (k = 0; k < gs.ring_depth; ++k) {
-        if (gs.ring[k].s.used && gs.ring[k].s.scene_epoch == gs.scene_epoch && gs.ring[k].tag < now) {
-            avail++;
-            if (oldest < 0 || gs.ring[k].tag < oldest) oldest = gs.ring[k].tag;
-        }
-    }
-    /* frames you can step back = how far back the entries run without a gap */
-    for (k = 1; k <= gs.ring_depth && gs_ring_find(now - k) >= 0; ++k) {
-    }
-    lua_createtable(L, 0, 6);
-    gs_setint(L, "depth", gs.ring_depth);
-    gs_setint(L, "stored", avail);
-    gs_setint(L, "back", k - 1);
-    gs_setint(L, "now", now);
-    gs_setnum(L, "slot_mb", (double) gw_snap_slot_bytes() / (1024.0 * 1024.0));
-}
-
-/* gd.history([depth]) -> {depth, stored, back, now, slot_mb}: with depth, keep that many frames
-   of per-frame snapshots for gd.step_back (0 = off). Offline, gameplay. Each frame costs a
-   snapshot slot (MEM1 + globals, ~25 MB), allocated once. */
+/* gd.history([frames [, interval]]) -> {depth, seconds, back, fwd, now, head, oldest, keys, mb,
+   delta_mb, key_ms, last_ms, last_load_ms, last_frames, replaying, busy, ...}: with frames, keep that
+   many frames of rewind (0 = off, at most a minute); a keyframe every `interval` frames (default
+   30). Offline, gameplay. The cost is one MEM1 image plus the pages the game writes. */
 static int l_history(lua_State *L) {
+    int now;
     if (!lua_isnoneornil(L, 1)) {
-        int want = (int) luaL_checkinteger(L, 1), got;
+        int want = (int) luaL_checkinteger(L, 1);
+        int iv = (int) luaL_optinteger(L, 2, gs.rw_interval > 0 ? gs.rw_interval : GS_RW_INTERVAL);
         gs_require_offline(L, "history");
         if (want < 0) want = 0;
-        if (want > GS_RING_MAX) want = GS_RING_MAX;
-        if (want > 0) {
-            got = gs_snap_ensure(GS_SAVE_SLOTS + want) - GS_SAVE_SLOTS;
-            if (got < want) {
-                gw_Console_Print(GS_YELLOW, "history: only %d frames fit (asked for %d)",
-                                 got < 0 ? 0 : got, want);
-                want = got < 0 ? 0 : got;
-            }
+        if (want > GS_RW_MAX_FRAMES) want = GS_RW_MAX_FRAMES;
+        if (iv < 1) iv = 1;
+        if (iv > 600) iv = 600;
+        gs.rw_interval = iv;
+        if (want == 0) {
+            gs_rw_stop();
         }
-        gs_ring_clear();
-        gs.ring_depth = want;
+        gs.rw_frames = want;
     }
-    gs_push_history(L);
+    now = gs_ring_now();
+    lua_createtable(L, 0, 24);
+    gs_setint(L, "depth", gs.rw_frames);
+    gs_setnum(L, "seconds", gs.rw_frames / 60.0);
+    gs_setint(L, "interval", gs.rw_interval > 0 ? gs.rw_interval : GS_RW_INTERVAL);
+    gs_setint(L, "now", now);
+    gs_setint(L, "back", gs.rw_began && now > gw_rw_base_tag() ? now - gw_rw_base_tag() : 0);
+    gs_setint(L, "fwd", gs.rw_began && gs.rw_head > now ? gs.rw_head - now : 0);
+    gs_setint(L, "head", gs.rw_began ? gs.rw_head : now);
+    gs_setint(L, "oldest", gs.rw_began ? gw_rw_base_tag() : now);
+    gs_setint(L, "keys", gw_rw_count());
+    gs_setnum(L, "mb", gw_rw_bytes() / 1048576.0);
+    gs_setnum(L, "delta_mb", gw_rw_delta_bytes() / 1048576.0);
+    gs_setnum(L, "slot_mb", (double) gw_snap_slot_bytes() / 1048576.0);
+    gs_setnum(L, "key_ms", gw_rw_ms_save_avg());
+    gs_setnum(L, "last_ms", gs.rw_last_ms);
+    gs_setnum(L, "last_load_ms", gs.rw_last_load_ms);
+    gs_setint(L, "last_frames", gs.rw_last_frames);
+    gs_setint(L, "last_pages", (lua_Integer) gw_rw_last_load_pages());
+    gs_setbool(L, "replaying", gs.rw_began && now < gs.rw_head);
+    gs_setbool(L, "busy", gs.rw_resim > 0 || gs.rw_resim_run > 0 || gs.rw_pending_on);
     return 1;
 }
 
-/* gd.step_back([n]) -> true | false, why: go back n frames through the history and stay paused.
-   Offline, gameplay. The load happens at once when paused, else at the next frame boundary. */
+static int gs_push_fail(lua_State *L, const char *why) {
+    lua_pushboolean(L, 0);
+    lua_pushstring(L, why);
+    return 2;
+}
+
+/* gd.step_back([n]) -> true | false, why: go back n frames and stay paused. Offline, gameplay.
+   The newest keyframe at or before the target is loaded and the frames after it re-simulated on the
+   logged inputs (silently, in one tick). */
 static int l_step_back(lua_State *L) {
-    int n = (int) luaL_optinteger(L, 1, 1), k;
+    int n = (int) luaL_optinteger(L, 1, 1);
+    const char *why = NULL;
     gs_require_offline(L, "step_back");
-    if (gs.ring_depth <= 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, "history is off (gd.history(n) turns it on)");
-        return 2;
-    }
     if (n < 1) n = 1;
-    k = gs_ring_find(gs_ring_now() - n);
-    if (k < 0) {
-        lua_pushboolean(L, 0);
-        lua_pushstring(L, "not that far back in the history");
-        return 2;
+    if (gs_rw_request(gs_ring_now() - n, &why) != 0) {
+        return gs_push_fail(L, why);
     }
-    gs.pending_back = k + 1;
-    gs.paused = 1;
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* gd.rewind_to(frame) -> true | false, why: any frame from gd.history().oldest to .head (forward
+   too, while the log still has the frames after "now"). Offline, gameplay; stays paused. */
+static int l_rewind_to(lua_State *L) {
+    int f = (int) luaL_checkinteger(L, 1);
+    const char *why = NULL;
+    gs_require_offline(L, "rewind_to");
+    if (gs_rw_request(f, &why) != 0) {
+        return gs_push_fail(L, why);
+    }
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* gd.rewind_live() -> true: stop replaying the log here; the pads play from this frame on (the
+   logged frames after it are dropped). Offline, gameplay. */
+static int l_rewind_live(lua_State *L) {
+    gs_require_offline(L, "rewind_live");
+    gs_rw_branch();
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* gd.rewind_test([frames [, keep_running]]) -> true | false, why: the exactness self-test. Copies
+   the whole state at the next frame, runs `frames` more (default 90), rewinds to the copied frame
+   through the keyframes and the input log, and compares every byte. The result:
+   gd.rewind_test_result(). Offline, gameplay; unpauses to run, pauses again after unless
+   keep_running. */
+static int l_rewind_test(lua_State *L) {
+    int n = (int) luaL_optinteger(L, 1, 90);
+    gs_require_offline(L, "rewind_test");
+    if (!gs.rw_began || gs.rw_frames <= 0) {
+        return gs_push_fail(L, "history is off (gd.history(n) turns it on)");
+    }
+    if (n < 1 || n > gs.rw_frames - gs.rw_interval) {
+        return gs_push_fail(L, "frames: 1 .. the history window minus one keyframe interval");
+    }
+    gs.rwt_phase = 1;
+    gs.rwt_back = n;
+    gs.rwt_keep = lua_toboolean(L, 2);
+    gs.rwt_arm = 0;
+    gs.rwt_pass = -1;
+    snprintf(gs.rwt_text, sizeof gs.rwt_text, "running");
+    gs.paused = 0;
     gs.step = 0;
     lua_pushboolean(L, 1);
     return 1;
 }
+
+/* gd.rewind_test_result() -> {phase (0 = done), pass (true/false/nil), diff, diff_compared, text} */
+static int l_rewind_test_result(lua_State *L) {
+    lua_createtable(L, 0, 5);
+    gs_setint(L, "phase", gs.rwt_phase);
+    if (gs.rwt_pass >= 0) {
+        gs_setbool(L, "pass", gs.rwt_pass);
+    }
+    gs_setnum(L, "diff", gs.rwt_diff[0]);
+    gs_setnum(L, "diff_compared", gs.rwt_diff[1]);
+    gs_setstr(L, "text", gs.rwt_text);
+    return 1;
+}
+
+/* gd.hot_reload([seconds]) -> true, start | false, why: save where you are, rewind `seconds`
+   (default 2) through the history, reload the fighters' geno.json (attributes, parameters, states,
+   subaction overlays and their words files) and the Lab script, re-apply them to the fighters, and
+   replay the logged input from there, so an edit is checked on the same inputs at once. When the
+   reload changed the layout (a fighter's state or overlay count, the profile set) the state cannot
+   take it: the match restarts instead. The outcome: gd.hot_reload_status(), and on_hot_reload(ok).
+   Offline, gameplay. */
+static int l_hot_reload(lua_State *L) {
+    double sec = luaL_optnumber(L, 1, 2.0);
+    const char *why = NULL;
+    int now = gs_ring_now(), start;
+    gs_require_offline(L, "hot_reload");
+    if (gs.hot_phase != 0) {
+        return gs_push_fail(L, "a reload is already running");
+    }
+    if (!gs.match_active) {
+        return gs_push_fail(L, "not in a match");
+    }
+    start = now - (int) (sec * 60.0 + 0.5);
+    if (!gs.rw_began || sec <= 0.0) {
+        start = now; /* no history: reload in place */
+        gs.hot_start = now;
+        gs.hot_phase = 2;
+        gs.paused = 1;
+        gs.step = 0;
+    } else {
+        if (start < gw_rw_base_tag()) start = gw_rw_base_tag();
+        if (start < gs.rw_log_start) start = gs.rw_log_start;
+        if (gs_rw_request(start, &why) != 0) {
+            return gs_push_fail(L, why);
+        }
+        gs.hot_start = start;
+        gs.hot_phase = 1;
+    }
+    snprintf(gs.hot_text, sizeof gs.hot_text, "reloading");
+    lua_pushboolean(L, 1);
+    lua_pushinteger(L, start);
+    return 2;
+}
+
+/* gd.lab_peek(addr [, n]) -> hex string: n (<= 64) raw bytes of MEM1 at addr, as memory holds them
+   (game memory is big-endian). Read-only, for the Lab's debugging. */
+static int l_lab_peek(lua_State *L) {
+    lua_Integer a = luaL_checkinteger(L, 1);
+    int n = (int) luaL_optinteger(L, 2, 16), i;
+    char out[140];
+    if (n < 1) n = 1;
+    if (n > 64) n = 64;
+    if (a < 0x80000000LL || a + n > 0x80000000LL + (lua_Integer) gw_mem1_size) {
+        lua_pushnil(L);
+        return 1;
+    }
+    for (i = 0; i < n; ++i) {
+        snprintf(out + i * 2, 3, "%02X", ((const unsigned char *) (uintptr_t) a)[i]);
+    }
+    lua_pushstring(L, out);
+    return 1;
+}
+
+/* gd.hot_reload_status() -> {phase (0 = idle), ok, text} */
+static int l_hot_reload_status(lua_State *L) {
+    lua_createtable(L, 0, 3);
+    gs_setint(L, "phase", gs.hot_phase);
+    gs_setbool(L, "ok", gs.hot_ok);
+    gs_setstr(L, "text", gs.hot_text);
+    return 1;
+}
+
+/* ---- the persistent state library (gd.state_*) -------------------------------------------------
+ * One file per state in the Lab's saved data (scripts-data/<script>/states/*.gdst) plus index.txt
+ * (a readable list, rewritten on every change; the files are the truth). A state is refused -
+ * before a byte of it is loaded - when its header does not match this exe, disc, mods and Geno
+ * data, or when the match running is not the one it was saved in (fighters, costumes, stage). */
+#define GS_ST_MAGIC "GDLABHD1"
+typedef struct {
+    char magic[8];
+    uint32_t size, geno_version;
+    uint64_t exe_hash, disc_hash, mods_hash, geno_hash;
+    int32_t match_frame, stage;
+    int32_t present[6], chr[6], costume[6], cpu[6];
+    int64_t unix_time;
+    char name[64];
+    char desc[96];
+    GsSaveSlot slot;
+} GsStateHdr;
+static int gs_st_gen = 1; /* bumped on every change to the library, so a menu knows to re-list */
+
+static void gs_identity(uint64_t out[4]) {
+    static uint64_t exe, disc;
+    static int done;
+    uint64_t h;
+    int i, n;
+    if (!done) {
+        char path[MAX_PATH];
+        const char *iso = gw_iso_path();
+        DWORD len = GetModuleFileNameA(NULL, path, sizeof path);
+        exe = len > 0 && len < sizeof path ? gw_net_hash_file(path, 0) : 0;
+        disc = iso != NULL && iso[0] != '\0' ? gw_net_hash_file(iso, 4u << 20) : 0;
+        if (iso != NULL && iso[0] != '\0') {
+            WIN32_FILE_ATTRIBUTE_DATA fa;
+            if (GetFileAttributesExA(iso, GetFileExInfoStandard, &fa)) {
+                disc ^= ((uint64_t) fa.nFileSizeHigh << 32 | fa.nFileSizeLow) * 1099511628211ull;
+            }
+        }
+        done = 1;
+    }
+    out[0] = exe;
+    out[1] = disc;
+    {
+        const char *m = gw_Mods_Describe();
+        out[2] = gs_fnv(14695981039346656037ull, m != NULL ? m : "", m != NULL ? strlen(m) : 0);
+    }
+    h = gs_fnv(14695981039346656037ull, "geno", 4);
+    n = gw_Geno_ProfileCount();
+    for (i = 0; i < n; ++i) {
+        const char *x = gw_Geno_ProfileHex(i);
+        h = gs_fnv(h, x, strlen(x));
+    }
+    out[3] = h;
+}
+
+static void gs_state_fill(GsStateHdr *h, const char *name, const char *desc) {
+    uint64_t id[4];
+    int s;
+    memset(h, 0, sizeof *h);
+    memcpy(h->magic, GS_ST_MAGIC, 8);
+    h->size = sizeof *h;
+    h->geno_version = GENO_VERSION;
+    gs_identity(id);
+    h->exe_hash = id[0];
+    h->disc_hash = id[1];
+    h->mods_hash = id[2];
+    h->geno_hash = id[3];
+    h->match_frame = gs.match_frame;
+    h->stage = gw_ScriptGame_StageKind();
+    for (s = 0; s < 6; ++s) {
+        h->present[s] = gs_players_present(s);
+        h->chr[s] = h->present[s] ? gw_ScriptGame_FighterI(s, SI_CHAR) : -1;
+        h->costume[s] = h->present[s] ? gw_ScriptGame_FighterI(s, SI_COSTUME) : -1;
+        h->cpu[s] = h->present[s] ? gw_ScriptGame_FighterI(s, SI_SLOT_TYPE) : -1;
+    }
+    h->unix_time = (int64_t) time(NULL);
+    snprintf(h->name, sizeof h->name, "%s", name != NULL ? name : "");
+    snprintf(h->desc, sizeof h->desc, "%s", desc != NULL ? desc : "");
+    gs_slot_capture(&h->slot);
+}
+
+static int gs_state_check(const void *hdr, int len, char *why, size_t cap) {
+    const GsStateHdr *h = (const GsStateHdr *) hdr;
+    uint64_t id[4];
+    int s;
+    if (len != (int) sizeof *h || memcmp(h->magic, GS_ST_MAGIC, 8) != 0 || h->size != sizeof *h) {
+        snprintf(why, cap, "not a state this Lab can read");
+        return -1;
+    }
+    gs_identity(id);
+    if (h->exe_hash != id[0]) {
+        snprintf(why, cap, "saved by another build of the game");
+        return -1;
+    }
+    if (h->disc_hash != id[1]) {
+        snprintf(why, cap, "saved with another disc");
+        return -1;
+    }
+    if (h->mods_hash != id[2]) {
+        snprintf(why, cap, "saved with other mods");
+        return -1;
+    }
+    if (h->geno_hash != id[3] || h->geno_version != GENO_VERSION) {
+        snprintf(why, cap, "saved with other Geno fighter data");
+        return -1;
+    }
+    if (!gs.match_active) {
+        snprintf(why, cap, "load it during a match");
+        return -1;
+    }
+    for (s = 0; s < 6; ++s) {
+        int present = gs_players_present(s);
+        if (present != h->present[s] ||
+            (present && (gw_ScriptGame_FighterI(s, SI_CHAR) != h->chr[s] ||
+                         gw_ScriptGame_FighterI(s, SI_COSTUME) != h->costume[s]))) {
+            snprintf(why, cap, "this state is %s: start that match first", h->desc[0] ? h->desc : "another match");
+            return -1;
+        }
+    }
+    if (gw_ScriptGame_StageKind() != h->stage) {
+        snprintf(why, cap, "this state is %s: start that match first", h->desc[0] ? h->desc : "another stage");
+        return -1;
+    }
+    why[0] = '\0';
+    return 0;
+}
+
+static int gs_states_dir(char *out, size_t cap) {
+    GsScript *s = gs_cur_script();
+    char *p;
+    const char *id = (s != NULL && gs.cur != gs.console) ? s->id : "geno-lab/lab";
+    snprintf(out, cap, "%s\\%s", gs.data_dir, id);
+    for (p = out + strlen(gs.data_dir); *p != '\0'; ++p) {
+        if (*p == '/') *p = '_';
+    }
+    CreateDirectoryA(gs.data_dir, NULL);
+    CreateDirectoryA(out, NULL);
+    strncat(out, "\\states", cap - strlen(out) - 1);
+    CreateDirectoryA(out, NULL);
+    return 0;
+}
+
+static int gs_state_file_ok(const char *f) {
+    size_t n = strlen(f), i;
+    if (n < 6 || n > 64 || _stricmp(f + n - 5, ".gdst") != 0) {
+        return 0;
+    }
+    for (i = 0; i < n; ++i) {
+        char c = f[i];
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' ||
+              c == '-' || c == '.')) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* index.txt beside the states: file | frame | saved | name | what (tab separated) */
+static void gs_state_index(const char *dir) {
+    char pat[MAX_PATH], path[MAX_PATH];
+    WIN32_FIND_DATAA fd;
+    HANDLE hf;
+    FILE *out;
+    snprintf(path, sizeof path, "%s\\index.txt", dir);
+    out = fopen(path, "w");
+    if (out == NULL) {
+        return;
+    }
+    fprintf(out, "# the Geno Lab's saved states (the .gdst files are the truth; this list is rewritten)\n");
+    snprintf(pat, sizeof pat, "%s\\*.gdst", dir);
+    hf = FindFirstFileA(pat, &fd);
+    if (hf != INVALID_HANDLE_VALUE) {
+        do {
+            GsStateHdr h;
+            char full[MAX_PATH];
+            snprintf(full, sizeof full, "%s\\%s", dir, fd.cFileName);
+            if (gw_snap_file_header(full, &h, sizeof h) == (int) sizeof h) {
+                char when[32];
+                time_t t = (time_t) h.unix_time;
+                struct tm *tm = localtime(&t);
+                if (tm != NULL) strftime(when, sizeof when, "%Y-%m-%d %H:%M", tm);
+                else snprintf(when, sizeof when, "?");
+                fprintf(out, "%s\tf%d\t%s\t%s\t%s\n", fd.cFileName, h.match_frame, when, h.name, h.desc);
+            }
+        } while (FindNextFileA(hf, &fd));
+        FindClose(hf);
+    }
+    fclose(out);
+}
+
+/* gd.state_save([name [, what]]) -> file | false, why: the whole state to a new file in the Lab's
+   library, at the next frame boundary (at once when paused). Offline, gameplay. */
+static int l_state_save(lua_State *L) {
+    const char *name = luaL_optstring(L, 1, "");
+    const char *desc = luaL_optstring(L, 2, "");
+    char dir[MAX_PATH], file[64];
+    static int counter;
+    gs_require_offline(L, "state_save");
+    if (!gs.match_active) {
+        return gs_push_fail(L, "not in a match");
+    }
+    if (gs.st_pending_save[0] != '\0') {
+        return gs_push_fail(L, "a save is already waiting");
+    }
+    gs_states_dir(dir, sizeof dir);
+    snprintf(file, sizeof file, "st_%lld_%03d.gdst", (long long) time(NULL), ++counter % 1000);
+    snprintf(gs.st_pending_save, sizeof gs.st_pending_save, "%s\\%s", dir, file);
+    snprintf(gs.st_save_name, sizeof gs.st_save_name, "%s", name);
+    snprintf(gs.st_save_desc, sizeof gs.st_save_desc, "%s", desc);
+    lua_pushstring(L, file);
+    return 1;
+}
+
+typedef struct {
+    char file[64];
+    GsStateHdr h;
+    int ok;
+    char why[128];
+} GsStateRow;
+
+static int gs_state_row_cmp(const void *a, const void *b) {
+    const GsStateRow *x = (const GsStateRow *) a, *y = (const GsStateRow *) b;
+    if (x->h.unix_time != y->h.unix_time) return x->h.unix_time < y->h.unix_time ? 1 : -1;
+    return strcmp(y->file, x->file);
+}
+
+/* gd.state_list() -> {{file, name, what, frame, time, saved, stage, fighters = {{port, char,
+   costume, cpu}}, ok, why}, ...}, newest first. `ok` false = it would be refused now, `why` says
+   why. gd.state_gen() changes whenever the library does. */
+static int l_state_list(lua_State *L) {
+    char dir[MAX_PATH], pat[MAX_PATH];
+    WIN32_FIND_DATAA fd;
+    HANDLE hf;
+    GsStateRow *rows = NULL;
+    int n = 0, cap = 0, i, s;
+    gs_states_dir(dir, sizeof dir);
+    snprintf(pat, sizeof pat, "%s\\*.gdst", dir);
+    hf = FindFirstFileA(pat, &fd);
+    if (hf != INVALID_HANDLE_VALUE) {
+        do {
+            char full[MAX_PATH];
+            GsStateRow r;
+            int len;
+            if (!gs_state_file_ok(fd.cFileName)) continue;
+            memset(&r, 0, sizeof r);
+            snprintf(r.file, sizeof r.file, "%s", fd.cFileName);
+            snprintf(full, sizeof full, "%s\\%s", dir, fd.cFileName);
+            len = gw_snap_file_header(full, &r.h, sizeof r.h);
+            r.ok = gs_state_check(&r.h, len, r.why, sizeof r.why) == 0;
+            if (len != (int) sizeof r.h) memset(&r.h, 0, sizeof r.h);
+            if (n == cap) {
+                GsStateRow *nr = (GsStateRow *) realloc(rows, (size_t) (cap = cap ? cap * 2 : 16) * sizeof *rows);
+                if (nr == NULL) break;
+                rows = nr;
+            }
+            rows[n++] = r;
+        } while (FindNextFileA(hf, &fd) && n < 512);
+        FindClose(hf);
+    }
+    if (n > 1) qsort(rows, (size_t) n, sizeof *rows, gs_state_row_cmp);
+    lua_createtable(L, n, 0);
+    for (i = 0; i < n; ++i) {
+        GsStateRow *r = &rows[i];
+        char when[32];
+        time_t t = (time_t) r->h.unix_time;
+        struct tm *tm = localtime(&t);
+        int k = 0;
+        if (tm != NULL) strftime(when, sizeof when, "%Y-%m-%d %H:%M", tm);
+        else snprintf(when, sizeof when, "?");
+        lua_createtable(L, 0, 12);
+        gs_setstr(L, "file", r->file);
+        gs_setstr(L, "name", r->h.name);
+        gs_setstr(L, "what", r->h.desc);
+        gs_setint(L, "frame", r->h.match_frame);
+        gs_setint(L, "time", (lua_Integer) r->h.unix_time);
+        gs_setstr(L, "saved", when);
+        gs_setint(L, "stage", r->h.stage);
+        gs_setbool(L, "ok", r->ok);
+        gs_setstr(L, "why", r->why);
+        lua_createtable(L, 6, 0);
+        for (s = 0; s < 6; ++s) {
+            if (!r->h.present[s]) continue;
+            lua_createtable(L, 0, 4);
+            gs_setint(L, "port", s + 1);
+            gs_setint(L, "char", r->h.chr[s]);
+            gs_setstr(L, "char_name", gs_char_name(r->h.chr[s]));
+            gs_setint(L, "costume", r->h.costume[s]);
+            gs_setbool(L, "cpu", r->h.cpu[s] == 1);
+            lua_rawseti(L, -2, ++k);
+        }
+        lua_setfield(L, -2, "fighters");
+        lua_rawseti(L, -2, i + 1);
+    }
+    free(rows);
+    return 1;
+}
+
+static int l_state_gen(lua_State *L) {
+    lua_pushinteger(L, gs_st_gen);
+    return 1;
+}
+
+/* gd.state_load(file) -> true | false, why: checked now (build, disc, mods, Geno data, and that this
+   match is the state's match); loaded whole at the next frame boundary. Offline, gameplay. */
+static int l_state_load(lua_State *L) {
+    const char *file = luaL_checkstring(L, 1);
+    char dir[MAX_PATH], path[MAX_PATH], why[160];
+    GsStateHdr h;
+    int len;
+    gs_require_offline(L, "state_load");
+    if (!gs_state_file_ok(file)) {
+        return gs_push_fail(L, "not a state file name");
+    }
+    gs_states_dir(dir, sizeof dir);
+    snprintf(path, sizeof path, "%s\\%s", dir, file);
+    len = gw_snap_file_header(path, &h, sizeof h);
+    if (len < 0) {
+        return gs_push_fail(L, "no such state");
+    }
+    if (gs_state_check(&h, len, why, sizeof why) != 0) {
+        return gs_push_fail(L, why);
+    }
+    snprintf(gs.st_pending_load, sizeof gs.st_pending_load, "%s", path);
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* gd.state_delete(file) -> true | false, why */
+static int l_state_delete(lua_State *L) {
+    const char *file = luaL_checkstring(L, 1);
+    char dir[MAX_PATH], path[MAX_PATH];
+    gs_require_offline(L, "state_delete");
+    if (!gs_state_file_ok(file)) {
+        return gs_push_fail(L, "not a state file name");
+    }
+    gs_states_dir(dir, sizeof dir);
+    snprintf(path, sizeof path, "%s\\%s", dir, file);
+    if (!DeleteFileA(path)) {
+        return gs_push_fail(L, "could not delete it");
+    }
+    gs_st_gen++;
+    gs_state_index(dir);
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* gd.state_rename(file, name) -> true | false, why */
+static int l_state_rename(lua_State *L) {
+    const char *file = luaL_checkstring(L, 1);
+    const char *name = luaL_checkstring(L, 2);
+    char dir[MAX_PATH], path[MAX_PATH];
+    GsStateHdr h;
+    gs_require_offline(L, "state_rename");
+    if (!gs_state_file_ok(file)) {
+        return gs_push_fail(L, "not a state file name");
+    }
+    gs_states_dir(dir, sizeof dir);
+    snprintf(path, sizeof path, "%s\\%s", dir, file);
+    if (gw_snap_file_header(path, &h, sizeof h) != (int) sizeof h) {
+        return gs_push_fail(L, "not a state this Lab can read");
+    }
+    snprintf(h.name, sizeof h.name, "%s", name);
+    if (gw_snap_file_rewrite_header(path, &h, sizeof h) != 0) {
+        return gs_push_fail(L, "could not rename it");
+    }
+    gs_st_gen++;
+    gs_state_index(dir);
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
 
 /* ---- gd.kit: the frontend kit's fonts, palette, 9-slice panels, icons and rows (gw_kit.h) ------
  * Local drawing only: it builds quads for the overlay pass, reads no game state and writes none,
@@ -2642,6 +3236,11 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
     {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs}, {"project", l_project}, {"attrs", l_attrs},
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
+    {"rewind_to", l_rewind_to}, {"rewind_live", l_rewind_live}, {"rewind_test", l_rewind_test},
+    {"rewind_test_result", l_rewind_test_result}, {"hot_reload", l_hot_reload},
+    {"hot_reload_status", l_hot_reload_status}, {"state_save", l_state_save},
+    {"state_list", l_state_list}, {"state_load", l_state_load}, {"state_delete", l_state_delete},
+    {"state_rename", l_state_rename}, {"state_gen", l_state_gen}, {"lab_peek", l_lab_peek},
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
     {"lab_request", l_lab_request}, {"lab_mode", l_lab_mode}, {"lab_leave", l_lab_leave},
     {"training_select", l_training_select},
@@ -3345,15 +3944,6 @@ static void gs_init(void) {
 /* ============================================================================================
  * scene loop entry points
  * ============================================================================================ */
-static void gs_ring_clear(void) {
-    int k;
-    for (k = 0; k < GS_RING_MAX; ++k) {
-        gs.ring[k].s.used = 0;
-    }
-    gs.ring_next = 0;
-    gs.pending_back = 0;
-}
-
 void gw_Script_SceneBegin(int scene_kind) {
     int prev;
     gs_init();
@@ -3370,7 +3960,13 @@ void gw_Script_SceneBegin(int scene_kind) {
     gs.paused = 0; /* a scene change always resumes */
     gs.step = 0;
     gs.nev = 0; /* events from the scene that ended are dropped */
-    gs_ring_clear();
+    gs_rw_stop();
+    memset(gs_sfx_map_from, 0xFF, sizeof gs_sfx_map_from);
+    gw_rw_measure(0);
+    gs.rwt_arm = 0;
+    gs.rwt_phase = 0;
+    gs.hot_phase = 0;
+    gs.st_pending_save[0] = gs.st_pending_load[0] = '\0';
     {
         int i;
         for (i = 0; i < gs.n; ++i) {
@@ -3414,8 +4010,9 @@ static void gs_finish_draw(void) {
     gs_draw_open = 0;
 }
 
-static void gs_apply_pending(void);
+static void gs_apply_pending(int at_tick);
 static void gs_apply_set_motion(void);
+static void gs_rw_tick_top(void);
 
 void gw_Script_Tick(void) {
     gs_init();
@@ -3439,6 +4036,7 @@ void gw_Script_Tick(void) {
     gs.cam_stamp++;
     gs_update_want_events();
     gw_Kit_BeginFrame();
+    gs_rw_tick_top();
     if (gs.paused && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
         /* Paused: no logic frame reads the pads, so gd.pad would stay stale and a script's menu
            (the Geno Lab's LAB pause menu) could not be driven by a controller. Sample them here,
@@ -3453,7 +4051,7 @@ void gw_Script_Tick(void) {
        savestate / loadstate / step-back to wait for. This point is between frames too (the loop
        top, before any logic), so apply them now - the render below shows the loaded state. */
     if (gs.paused && gs.step == 0 && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
-        gs_apply_pending();
+        gs_apply_pending(1);
     }
     if (gs.paused && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
         gs_apply_set_motion(); /* before this tick's frames: then exactly `frame - 1` run */
@@ -3481,6 +4079,13 @@ void gw_Script_PostRender(void) {
 }
 
 int gw_Script_Iterations(int count) {
+    if (gs.rw_resim > 0 && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+        /* a rewind: re-simulate every frame from the keyframe to the target in this one tick */
+        int n = gs.rw_resim;
+        gs.rw_resim = 0;
+        gs.rw_resim_run = n;
+        return n;
+    }
     if (!gs.paused || gw_RB_Enabled() || gw_Netplay_Enabled()) {
         return count;
     }
@@ -3514,31 +4119,462 @@ static int gs_snap_ensure(int slots) {
     return got;
 }
 
-/* the ring's "now": the match frame about to run */
+/* the rewind's "now": the match frame about to run */
 static int gs_ring_now(void) { return gs.match_active ? gs.match_frame + 1 : 0; }
 
-static int gs_ring_find(int tag) {
-    int k;
-    for (k = 0; k < gs.ring_depth; ++k) {
-        if (gs.ring[k].s.used && gs.ring[k].s.scene_epoch == gs.scene_epoch && gs.ring[k].tag == tag) {
-            return k;
-        }
-    }
-    return -1;
+/* ---- the long rewind: the input log, keyframes as frames pass, rewinds -------------------------- */
+static int gs_lab_frame_kind; /* this logic frame: 0 live, 1 re-simulated (silent), 2 a burst's last */
+
+static int gs_rw_session(void) { return gw_RB_Enabled() || gw_Netplay_Enabled(); }
+
+static int gs_rw_replaying(int tag) {
+    return gs.rw_began && tag >= gs.rw_log_start && tag < gs.rw_head;
 }
 
-/* pending savestate / loadstate / step-back, at a frame boundary (FramePre, or Tick when paused) */
-static void gs_apply_pending(void) {
-    if ((gs.pending_save || gs.pending_load || gs.pending_back) &&
-        (gw_RB_Enabled() || gw_Netplay_Enabled())) {
+static void gs_rw_stop(void) {
+    gw_rw_end();
+    gs.rw_began = 0;
+    gs.rw_resim = gs.rw_resim_run = 0;
+    gs.rw_pending_on = 0;
+    gs.rw_notify = 0;
+    gs.rw_head = gs.rw_log_start = 0;
+    gw_Snap_LabResim(0);
+}
+
+/* A write changed the game at this boundary (set_percent, set_motion, ...): the logged frames from
+ * here on belong to the old timeline, and the next boundary keeps a keyframe of the new one. */
+static void gs_rw_branch(void) {
+    int now = gs_ring_now();
+    if (!gs.rw_began) {
+        return;
+    }
+    if (gs.rw_head > now) {
+        gs.rw_head = now;
+    }
+    if (gw_rw_drop_from(now) != 0) {
+        gs.rw_began = 0; /* the base itself is this frame or later: start over here */
+    }
+    gs.rw_force_key = 1;
+}
+
+static int gs_rw_request(int target, const char **why) {
+    if (gs.rw_frames <= 0 || !gs.rw_began) {
+        *why = "history is off (gd.history(n) turns it on)";
+        return -1;
+    }
+    if (gs_rw_session()) {
+        *why = "not during a netplay/rollback session";
+        return -1;
+    }
+    if (gs.rw_resim > 0 || gs.rw_resim_run > 0 || gs.rw_pending_on) {
+        *why = "busy rewinding";
+        return -1;
+    }
+    if (target < gw_rw_base_tag() || target < gs.rw_log_start) {
+        *why = "not that far back in the history";
+        return -1;
+    }
+    if (target > gs.rw_head) {
+        *why = "not that far forward";
+        return -1;
+    }
+    gs.rw_pending_on = 1;
+    gs.rw_pending_to = target;
+    gs.paused = 1;
+    gs.step = 0;
+    return 0;
+}
+
+/* HSD_PadRenewMasterStatus (controller.c): the pads for a frame being replayed. 0 = not replaying,
+ * 1 = `out` holds the logged statuses, 2 = the frame renewed nothing when it first ran. */
+int gw_LabPad_Replay(void *out, int size) {
+    int tag;
+    GsLogEntry *e;
+    if (gs.L == NULL || !gs.rw_began || !gs.match_active) {
+        return 0;
+    }
+    tag = gs_ring_now();
+    if (!gs_rw_replaying(tag)) {
+        return 0;
+    }
+    e = &gs_log[(unsigned) tag % GS_LOG_N];
+    if (e->tag != tag) {
+        return 0;
+    }
+    if (!e->have) {
+        return 2;
+    }
+    memcpy(out, e->pad, size < (int) sizeof e->pad ? (size_t) size : sizeof e->pad);
+    return 1;
+}
+
+/* ...and a live frame's statuses (NULL: it renewed nothing), logged at the live edge. */
+void gw_LabPad_Record(const void *st, int size) {
+    int tag;
+    GsLogEntry *e;
+    if (gs.L == NULL || !gs.rw_began || !gs.match_active || gs_rw_session()) {
+        return;
+    }
+    tag = gs_ring_now();
+    if (gs_rw_replaying(tag)) {
+        return;
+    }
+    if (tag != gs.rw_head) {
+        gs.rw_began = 0; /* a gap in the log: the next boundary starts the history over */
+        return;
+    }
+    e = &gs_log[(unsigned) tag % GS_LOG_N];
+    e->tag = tag;
+    e->have = st != NULL;
+    if (st != NULL) {
+        memcpy(e->pad, st, size < (int) sizeof e->pad ? (size_t) size : sizeof e->pad);
+    }
+    e->nsfx = 0;
+    e->nq = 0;
+    e->sfx_open = 1;
+    gs.rw_head = tag + 1;
+}
+
+/* HSD_AudioSFXStartParam (axdriver.c): a replayed frame gets the voice handle it got the first time
+ * (the handle is game state, the voice pool is not; gw_LabSfx_Handle). 0 = not replaying (play,
+ * then Record);
+ * 1 = the logged handle, silent; 2 = the logged handle, play it too; 3 = not logged: play it. */
+static int gs_lab_handle = -1, gs_lab_value, gs_lab_real;
+int gw_LabSfx_Handle(void) { return gs_lab_handle; }
+int gw_LabAudio_Value(void) { return gs_lab_value; }
+int gw_LabAudio_Real(void) { return gs_lab_real; }
+
+int gw_LabSfx_Replay(int sound_id) {
+    int tag, i;
+    GsLogEntry *e;
+    gs_lab_handle = -1;
+    if (gs.L == NULL || !gs.rw_began || !gs.match_active || !gs_in_frame) {
+        return 0;
+    }
+    tag = gs_ring_now();
+    if (!gs_rw_replaying(tag)) {
+        return 0;
+    }
+    e = &gs_log[(unsigned) tag % GS_LOG_N];
+    if (e->tag != tag) {
+        return 3;
+    }
+    if (e->sfx_open) {
+        return 0; /* this pass is the frame's first on this timeline (after a hot reload): record */
+    }
+    for (i = 0; i < e->nsfx; ++i) {
+        if (!(gs_sfx_claimed & (1u << i)) && e->sfx_id[i] == sound_id) {
+            gs_sfx_claimed |= 1u << i;
+            gs_lab_handle = e->sfx_h[i];
+            return gs_lab_frame_kind != 0 ? 1 : 2;
+        }
+    }
+    return 3;
+}
+
+void gw_LabSfx_Record(int sound_id, int handle) {
+    int tag;
+    GsLogEntry *e;
+    if (gs.L == NULL || !gs.rw_began || !gs.match_active || !gs_in_frame) {
+        return;
+    }
+    tag = gs_ring_now();
+    e = &gs_log[(unsigned) tag % GS_LOG_N];
+    if (e->tag == tag && e->sfx_open && e->nsfx < GS_LOG_SFX) {
+        e->sfx_id[e->nsfx] = sound_id;
+        e->sfx_h[e->nsfx] = handle;
+        e->nsfx++;
+    }
+}
+
+void gw_LabSfx_Map(int logged, int real) {
+    if (logged == real || logged < 0) {
+        return;
+    }
+    gs_sfx_map_from[gs_sfx_map_next] = logged;
+    gs_sfx_map_to[gs_sfx_map_next] = real;
+    gs_sfx_map_next = (gs_sfx_map_next + 1) % GS_SFX_MAP;
+}
+
+static int gs_sfx_real(int h) {
+    int i;
+    for (i = 0; i < GS_SFX_MAP; ++i) {
+        if (gs_sfx_map_from[i] == h && h >= 0) {
+            return gs_sfx_map_to[i];
+        }
+    }
+    return h;
+}
+
+/* axdriver.c LAB_AUDIO: the voice pool's answer to one call (a key-off, "still playing?", ...).
+ * 0 = live (call it, then Record); 1 = re-simulated (the logged answer, no side effect); 2 =
+ * replayed at speed (the logged answer; the call goes to the voice the replay started). */
+int gw_LabAudio_Replay(int kind, int arg) {
+    int tag;
+    GsLogEntry *e;
+    gs_lab_value = 0;
+    gs_lab_real = gs_sfx_real(arg);
+    if (gs.L == NULL || !gs.rw_began || !gs.match_active || !gs_in_frame) {
+        return 0;
+    }
+    tag = gs_ring_now();
+    if (!gs_rw_replaying(tag)) {
+        return 0;
+    }
+    e = &gs_log[(unsigned) tag % GS_LOG_N];
+    if (e->tag != tag || e->sfx_open) {
+        return 0;
+    }
+    if (gs_q_pos < e->nq && e->q_kind[gs_q_pos] == kind && e->q_arg[gs_q_pos] == arg) {
+        gs_lab_value = e->q_val[gs_q_pos++];
+        return gs_lab_frame_kind != 0 ? 1 : 2;
+    }
+    return 0; /* the replay asks something the first run did not: answer live */
+}
+
+void gw_LabAudio_Record(int kind, int arg, int value) {
+    int tag;
+    GsLogEntry *e;
+    if (gs.L == NULL || !gs.rw_began || !gs.match_active || !gs_in_frame) {
+        return;
+    }
+    tag = gs_ring_now();
+    e = &gs_log[(unsigned) tag % GS_LOG_N];
+    if (e->tag == tag && e->sfx_open && e->nq < GS_LOG_Q) {
+        e->q_kind[e->nq] = (unsigned char) kind;
+        e->q_arg[e->nq] = arg;
+        e->q_val[e->nq] = value;
+        e->nq++;
+    }
+}
+
+/* At every frame boundary: start the history, keep a keyframe every interval, slide the window. */
+static void gs_rw_frame(void) {
+    int now = gs_ring_now(), latest, edge;
+    GsSaveSlot u;
+    if (gs.rw_frames <= 0 || !gs.match_active || gs_rw_session()) {
+        return;
+    }
+    if (gs.rw_began && now > gs.rw_head) {
+        gs.rw_began = 0; /* frames ran that the log did not see */
+    }
+    if (!gs.rw_began) {
+        gs_slot_capture(&u);
+        if (gw_rw_begin(now, &u, sizeof u) != 0) {
+            gw_Console_Print(GS_RED, "history unavailable (no memory for the base image)");
+            gs.rw_frames = 0;
+            return;
+        }
+        gs.rw_began = 1;
+        gs.rw_head = now;
+        gs.rw_log_start = now;
+        gs.rw_force_key = 0;
+        gw_log("rewind: on at frame %d: %d frames, a keyframe every %d", now, gs.rw_frames,
+               gs.rw_interval);
+        return;
+    }
+    latest = gw_rw_latest();
+    if (now > latest && (gs.rw_force_key || now - latest >= gs.rw_interval)) {
+        gs_slot_capture(&u);
+        if (gw_rw_save(now, &u, sizeof u) != 0) {
+            gw_log("rewind: keyframe at frame %d failed - starting over", now);
+            gs.rw_began = 0;
+            return;
+        }
+        gs.rw_force_key = 0;
+    }
+    edge = gs.rw_head > now ? gs.rw_head : now;
+    gw_rw_trim(edge - gs.rw_frames);
+    if (gs.rw_log_start < gw_rw_base_tag()) {
+        gs.rw_log_start = gw_rw_base_tag();
+    }
+}
+
+/* the exactness self-test (gd.rewind_test), at the very start of a frame */
+static void gs_rwt_fail(const char *text) {
+    double d[2];
+    uint64_t h[2];
+    (void) gw_rw_compare(d, h); /* frees the copy */
+    gw_rw_measure(0);
+    gs.rwt_arm = 0;
+    gs.rwt_phase = 0;
+    gs.rwt_pass = 0;
+    snprintf(gs.rwt_text, sizeof gs.rwt_text, "FAIL: %s", text);
+    gw_Console_Print(GS_RED, "rewind test: %s", gs.rwt_text);
+    gw_log("rewind test: %s", gs.rwt_text);
+}
+
+static void gs_rwt_frame(void) {
+    int now = gs_ring_now();
+    if (gs.rwt_phase == 1) {
+        if (!gs.rw_began || !gs.match_active) {
+            gs_rwt_fail("history is off");
+            return;
+        }
+        /* measure render-owned bytes from here on, and capture once a keyframe has been kept
+           since: the keyframe the rewind starts from then lies inside the measured window */
+        if (gs.rwt_arm == 0) {
+            gw_rw_measure(1);
+            gs.rwt_arm = now;
+            return;
+        }
+        if (gw_rw_latest() < gs.rwt_arm) {
+            return;
+        }
+        gs.rwt_arm = 0;
+        if (gw_rw_capture() != 0) {
+            gs_rwt_fail("no memory for the copy");
+            return;
+        }
+        gs.rwt_tag = now;
+        gs.rwt_phase = 2;
+    } else if (gs.rwt_phase == 2 && now >= gs.rwt_tag + gs.rwt_back) {
+        const char *why = NULL;
+        if (gs_rw_request(gs.rwt_tag, &why) != 0) {
+            gs_rwt_fail(why);
+        } else {
+            gs.rwt_phase = 3;
+        }
+    } else if (gs.rwt_phase == 4) {
+        double d[2] = {0, 0};
+        uint64_t h[2] = {0, 0};
+        if (!gs.rwt_keep) {
+            gs.paused = 1;
+            gs.step = 0;
+        }
+        if (now != gs.rwt_tag) {
+            char t[96];
+            snprintf(t, sizeof t, "landed on frame %d, not %d", now, gs.rwt_tag);
+            gs_rwt_fail(t);
+            return;
+        }
+        gs.rwt_phase = 0;
+        if (gw_rw_compare(d, h) != 0) {
+            gs_rwt_fail("the copy was lost");
+            return;
+        }
+        gw_rw_measure(0);
+        gs.rwt_diff[0] = d[0];
+        gs.rwt_diff[1] = d[1];
+        gs.rwt_pass = d[1] == 0 && h[0] == h[1];
+        snprintf(gs.rwt_text, sizeof gs.rwt_text,
+                 "%s: frame %d, %d frames later rewound to it (keyframe load %.2f ms + %d frames "
+                 "re-simulated, %.1f ms): %.0f simulation bytes differ, hash %016llx vs %016llx "
+                 "(%.0f counting render-owned bytes, the disc's async blocks and pad-side rumble)",
+                 gs.rwt_pass ? "PASS" : "FAIL", now, gs.rwt_back, gs.rw_last_load_ms,
+                 gs.rw_last_frames, gs.rw_last_ms, d[1], (unsigned long long) h[0],
+                 (unsigned long long) h[1], d[0]);
+        gw_Console_Print(gs.rwt_pass ? GS_GREEN : GS_RED, "rewind test: %s", gs.rwt_text);
+        gw_log("rewind test: %s", gs.rwt_text);
+    }
+}
+
+extern int gw_GenoLab_Leave(int where);
+
+/* hot reload, once the rewind to its start frame is done (the loop top, between frames) */
+static void gs_hot_do(void) {
+    char msg[400];
+    int safe, n = 0, now = gs_ring_now(), t, script_rc;
+    gs.hot_phase = 0;
+    msg[0] = '\0';
+    safe = gw_Geno_Reload(msg, sizeof msg);
+    if (safe == 0) {
+        snprintf(gs.hot_text, sizeof gs.hot_text,
+                 "%s - the state no longer fits the fighters' layout: restarting the match", msg);
+        gs.hot_ok = 0;
+        gw_Console_Print(GS_YELLOW, "hot reload: %s", gs.hot_text);
+        gw_log("hot reload: %s", gs.hot_text);
+        gs.paused = 0;
+        gs.step = 0;
+        gs_rw_stop();
+        if (!gw_GenoLab_Leave(3)) {
+            gw_Console_Print(GS_RED, "hot reload: not a LAB match - restart it yourself");
+        }
+        gs_hook_all("on_hot_reload", 1, 0, 0);
+        return;
+    }
+    if (safe > 0) {
+        n = gw_GenoGame_LabReload();
+    }
+    script_rc = gs_exec("reload geno-lab/lab");
+    /* the timeline from here on is the new data's: re-record its sounds, restart the history here,
+       keep the logged input to replay */
+    if (gs.rw_began) {
+        GsSaveSlot u;
+        for (t = now; t < gs.rw_head; ++t) {
+            GsLogEntry *e = &gs_log[(unsigned) t % GS_LOG_N];
+            if (e->tag == t) {
+                e->sfx_open = 1;
+                e->nsfx = 0;
+                e->nq = 0;
+            }
+        }
+        gs_slot_capture(&u);
+        if (gw_rw_begin(now, &u, sizeof u) != 0) {
+            gs_rw_stop();
+        } else {
+            gs.rw_log_start = now;
+            gs.rw_force_key = 0;
+        }
+    }
+    gs.hot_ok = 1;
+    snprintf(gs.hot_text, sizeof gs.hot_text, "%s; %d fighter(s) re-applied; Lab script %s; replaying %.1f s",
+             msg[0] ? msg : "geno.json unchanged", n, script_rc == 0 ? "reloaded" : "NOT reloaded",
+             gs.rw_began && gs.rw_head > now ? (gs.rw_head - now) / 60.0 : 0.0);
+    gw_Console_Print(GS_GREEN, "hot reload: %s", gs.hot_text);
+    gw_log("hot reload: %s", gs.hot_text);
+    gs.paused = 0;
+    gs.step = 0;
+    gs_hook_all("on_hot_reload", 1, 1, 0);
+}
+
+/* the loop top: the work that waits for a finished re-simulation */
+static void gs_rw_tick_top(void) {
+    if (gs.rw_resim_run > 0) {
+        gs.rw_resim_run = 0; /* the loop ended the burst early (a scene change) */
+        gw_Snap_LabResim(0);
+    }
+    if (gs.rw_resim > 0) {
+        return;
+    }
+    if (gs.rw_notify) {
+        gs.rw_notify = 0;
+        gs.nev = 0;
+        gs_hook_all("on_loadstate", 1, 0, 0); /* slot 0 = the history */
+        if (gs.rwt_phase == 3) {
+            gs.rwt_phase = 4;
+            gs.paused = 0; /* the self-test compares at the next frame's start */
+            gs.step = 0;
+        }
+    }
+    if (gs.hot_phase == 2 && !gs.rw_pending_on) {
+        gs_hot_do();
+    }
+}
+
+static void gs_state_dir_of(const char *path, char *out, size_t cap) {
+    char *s;
+    snprintf(out, cap, "%s", path);
+    s = strrchr(out, '\\');
+    if (s != NULL) *s = '\0';
+}
+
+/* pending savestate / loadstate / rewind / library save and load, at a frame boundary: FramePre,
+   or the loop top when paused (at_tick). A rewind starts a re-simulation burst, so it only
+   happens at the loop top. */
+static void gs_apply_pending(int at_tick) {
+    if ((gs.pending_save || gs.pending_load || gs.rw_pending_on || gs.st_pending_save[0] ||
+         gs.st_pending_load[0]) &&
+        gs_rw_session()) {
         gw_Console_Print(GS_RED, "savestates are off during a netplay/rollback session");
-        gs.pending_save = gs.pending_load = gs.pending_back = 0;
+        gs.pending_save = gs.pending_load = gs.rw_pending_on = 0;
+        gs.st_pending_save[0] = gs.st_pending_load[0] = '\0';
     }
     if (gs.pending_save) {
         int slot = gs.pending_save - 1;
         gs.pending_save = 0;
         if (!gs.snap_ready) {
-            gs_snap_ensure(GS_SAVE_SLOTS + gs.ring_depth);
+            gs_snap_ensure(GS_SAVE_SLOTS);
         }
         if (gs.snap_ready) {
             gw_snap_save_index(slot, -1 - slot);
@@ -3555,72 +4591,125 @@ static void gs_apply_pending(void) {
         if (gs.slot[slot].used && gs.slot[slot].scene_epoch == gs.scene_epoch &&
             gw_snap_load_index(slot) == 0) {
             gs_slot_restore(&gs.slot[slot]);
-            gs_ring_clear(); /* the history belongs to the timeline we just left */
+            gs.rw_began = 0; /* the history belongs to the timeline we just left: start over */
             gw_Console_Print(GS_GREEN, "loaded state %d", slot + 1);
             gs_hook_all("on_loadstate", 1, slot + 1, 0);
         } else {
             gw_Console_Print(GS_RED, "could not load state %d", slot + 1);
         }
     }
-    if (gs.pending_back) {
-        int k = gs.pending_back - 1;
-        gs.pending_back = 0;
-        if (k < gs.ring_depth && gs.ring[k].s.used && gs.ring[k].s.scene_epoch == gs.scene_epoch &&
-            gw_snap_load_index(GS_SAVE_SLOTS + k) == 0) {
-            gs_slot_restore(&gs.ring[k].s);
-            gs.nev = 0;
-            gs_hook_all("on_loadstate", 1, 0, 0); /* slot 0 = the history ring */
+    if (gs.st_pending_save[0] != '\0') {
+        char path[MAX_PATH], dir[MAX_PATH];
+        GsStateHdr h;
+        double t0 = gs_now_ms();
+        snprintf(path, sizeof path, "%s", gs.st_pending_save);
+        gs.st_pending_save[0] = '\0';
+        gs_state_fill(&h, gs.st_save_name, gs.st_save_desc);
+        if (gw_snap_file_save(path, &h, sizeof h) == 0) {
+            gs_state_dir_of(path, dir, sizeof dir);
+            gs_state_index(dir);
+            gs_st_gen++;
+            gw_Console_Print(GS_GREEN, "state saved: %s (frame %d, %.0f ms)", h.name, h.match_frame,
+                             gs_now_ms() - t0);
+            gw_log("lab: state saved to %s in %.0f ms", path, gs_now_ms() - t0);
         } else {
-            gw_Console_Print(GS_RED, "step back: that frame is no longer in the history");
+            gw_Console_Print(GS_RED, "state could not be saved (%s)", path);
+        }
+    }
+    if (gs.st_pending_load[0] != '\0') {
+        char path[MAX_PATH], why[160];
+        GsStateHdr h;
+        int len, rc;
+        snprintf(path, sizeof path, "%s", gs.st_pending_load);
+        gs.st_pending_load[0] = '\0';
+        len = gw_snap_file_header(path, &h, sizeof h);
+        if (gs_state_check(&h, len, why, sizeof why) != 0) {
+            gw_Console_Print(GS_RED, "state refused: %s", why);
+        } else if ((rc = gw_snap_file_load(path)) != 0) {
+            gw_Console_Print(GS_RED, "state not loaded: %s", rc == -2 ? "made for another memory layout"
+                                                            : rc == -3 ? "the file is damaged"
+                                                                       : "unreadable");
+        } else {
+            gs_slot_restore(&h.slot);
+            gs.nev = 0;
+            gs.rw_began = 0; /* a new timeline */
+            gw_Console_Print(GS_GREEN, "state loaded: %s (frame %d)", h.name, h.match_frame);
+            gs_hook_all("on_loadstate", 1, 9, 0); /* slot 9 = the library */
+        }
+    }
+    if (gs.rw_pending_on && at_tick) {
+        int target = gs.rw_pending_to, k;
+        GsSaveSlot u;
+        gs.rw_pending_on = 0;
+        k = gw_rw_find_le(target);
+        if (!gs.rw_began || k == -0x7FFFFFFF - 1 || target > gs.rw_head ||
+            gw_rw_load(k, &u, sizeof u) != 0) {
+            gw_Console_Print(GS_RED, "rewind: frame %d is no longer in the history", target);
+            if (gs.hot_phase == 1) gs.hot_phase = 0;
+            if (gs.rwt_phase == 3) gs_rwt_fail("the target left the history");
+        } else {
+            gs_slot_restore(&u);
+            gs.nev = 0;
+            gs.rw_last_load_ms = gw_rw_ms_last_load();
+            gs.rw_t0 = gs_now_ms() - gs.rw_last_load_ms;
+            gs.rw_last_frames = target - k;
+            gs.rw_resim = target - k;
+            gs.rw_notify = 1;
+            if (gs.rw_resim == 0) {
+                gs.rw_last_ms = gs.rw_last_load_ms;
+            }
+            if (gs.hot_phase == 1) {
+                gs.hot_phase = 2;
+            }
         }
     }
 }
 
-/* one snapshot per logic frame into the history ring (gd.history) */
-static void gs_ring_save(void) {
-    int tag, k;
-    if (gs.ring_depth <= 0 || !gs.match_active || !gs.snap_ready || gw_RB_Enabled() ||
-        gw_Netplay_Enabled()) {
-        return;
-    }
-    tag = gs_ring_now();
-    k = gs_ring_find(tag);
-    if (k < 0) {
-        k = gs.ring_next;
-        gs.ring_next = (gs.ring_next + 1) % gs.ring_depth;
-    }
-    gw_snap_save_index(GS_SAVE_SLOTS + k, -100 - k);
-    gs_slot_capture(&gs.ring[k].s);
-    gs.ring[k].tag = tag;
-}
-
 /* pending gd.set_motion calls, at a frame boundary (the loop top when paused, else FramePre) */
 static void gs_apply_set_motion(void) {
-{
-    int slot;
+    int slot, any = 0;
     for (slot = 0; slot < 6; ++slot) {
-        if (gs.set_motion[slot] > 0 && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+        if (gs.set_motion[slot] > 0 && !gs_rw_session()) {
             union {
                 float f;
                 int i;
             } r, lift;
             r.f = gs.set_rate[slot] > 0.0f ? gs.set_rate[slot] : 1.0f;
             lift.f = gs.set_lift[slot];
+            if (!any) {
+                gs_rw_branch(); /* a write: the timeline forks here */
+                any = 1;
+            }
             gw_ScriptGame_LabSetMotion(slot, gs.set_motion[slot] - 1, r.i, lift.i);
         }
         gs.set_motion[slot] = 0;
     }
 }
-}
 
 void gw_Script_FramePre(void) {
+    int resim = 0;
     if (gs.L == NULL) {
         return;
     }
-    gs_apply_pending();
-    gs_ring_save();
-    gs_apply_set_motion();
-    gs_hook_all("on_frame_pre", 0, 0, 0);
+    gs_lab_frame_kind = 0;
+    gs_sfx_claimed = 0;
+    gs_q_pos = 0;
+    gs_in_frame = 1;
+    if (gs.rw_resim_run > 0) {
+        resim = gs.rw_resim_run > 1;
+        gs_lab_frame_kind = resim ? 1 : 2;
+        gw_Snap_LabResim(resim);
+        gs.rw_resim_run--;
+    }
+    if (!resim) {
+        gs_rwt_frame();
+        gs_apply_pending(0);
+        gs_apply_set_motion();
+    }
+    gs_rw_frame();
+    if (!resim) {
+        gs_hook_all("on_frame_pre", 0, 0, 0);
+    }
 }
 
 /* ---- engine events (Script_GameEvent from ft/fighter.c, ft/ftcoll.c, ft/ftcommon.c) ------------ */
@@ -3762,10 +4851,22 @@ static void gs_dispatch_events(void) {
 }
 
 void gw_Script_FramePost(void) {
-    int slot, any = 0;
-    if (gs.L == NULL || gw_Snap_Resimulating()) {
+    int slot, any = 0, kind = gs_lab_frame_kind;
+    gs_in_frame = 0;
+    if (gs.L == NULL) {
         return;
     }
+    if (gs.rw_began) {
+        /* the frame's sounds are all in the log now */
+        GsLogEntry *e = &gs_log[(unsigned) gs_ring_now() % GS_LOG_N];
+        if (e->tag == gs_ring_now()) {
+            e->sfx_open = 0;
+        }
+    }
+    if (gw_Snap_Resimulating() && kind != 1) {
+        return; /* a rollback's resimulated frame */
+    }
+    gs_lab_frame_kind = 0;
     gs.frame++;
     for (slot = 0; slot < 6; ++slot) {
         if (gs_players_present(slot)) {
@@ -3782,12 +4883,25 @@ void gw_Script_FramePost(void) {
             gs.state_frame[slot] = 0;
         }
     }
+    if (kind == 1) {
+        /* a frame the Lab re-simulates: its bookkeeping, none of its hooks */
+        if (gs.match_active) {
+            gs.match_frame++;
+        }
+        return;
+    }
     if (any && !gs.match_active) {
         gs.match_active = 1;
         gs.match_frame = 0;
         gs_hook_all("on_match_start", 0, 0, 0);
     } else if (gs.match_active) {
         gs.match_frame++;
+    }
+    if (kind == 2) {
+        gs.rw_last_ms = gs_now_ms() - gs.rw_t0;
+        gw_log("rewind: to frame %d: keyframe load %.2f ms (%u pages), %d frame(s) re-simulated, "
+               "%.1f ms in all", gs_ring_now(), gs.rw_last_load_ms, gw_rw_last_load_pages(),
+               gs.rw_last_frames, gs.rw_last_ms);
     }
     gs_dispatch_events();
     gs_hook_all("on_frame", 0, 0, 0);
@@ -4853,6 +5967,196 @@ static int test_script_kit_isolated(void) {
     return 0;
 }
 
+/* ---- the Lab's long rewind (docs/geno.md 14.10) ---------------------------------------------------
+ * The keyframe store on its own: a scratch region at the top of MEM1 (restored afterwards) is
+ * written in three steps, two of them kept as keyframes; every load must give back exactly that
+ * step's bytes, across trims (the base moving forward) and drops (a timeline forking). */
+static int test_lab_rewind_store(void) {
+    const uint32_t len = 5 * 4096 + 100; /* crosses pages; the last is partial */
+    uint8_t *region = (uint8_t *) (uintptr_t) (0x80000000u + gw_mem1_size - 8 * 4096);
+    uint8_t *orig = (uint8_t *) malloc(len), *want1 = (uint8_t *) malloc(len), *want2 = (uint8_t *) malloc(len);
+    uint32_t i;
+    int rc = 1;
+    GsSaveSlot u, back;
+    if (orig == NULL || want1 == NULL || want2 == NULL) {
+        gw_test_fail("no memory");
+        goto out;
+    }
+    memcpy(orig, region, len);
+    memset(&u, 0, sizeof u);
+    u.match_frame = 999;
+    if (gw_rw_begin(1000, &u, sizeof u) != 0) {
+        rc = 0; /* no map beside the exe in this run: nothing to test */
+        goto out;
+    }
+    for (i = 0; i < len; ++i) region[i] = (uint8_t) (i * 7 + 1);          /* step 1: every page */
+    memcpy(want1, region, len);
+    u.match_frame = 1000;
+    if (gw_rw_save(1001, &u, sizeof u) != 0) { gw_test_fail("save 1001"); goto end; }
+    for (i = 4096; i < 2 * 4096; ++i) region[i] = (uint8_t) (i * 13 + 5);  /* step 2: page 1 only */
+    memcpy(want2, region, len);
+    u.match_frame = 1001;
+    if (gw_rw_save(1002, &u, sizeof u) != 0) { gw_test_fail("save 1002"); goto end; }
+    for (i = 0; i < len; i += 3) region[i] ^= 0x5A;                        /* step 3: not kept */
+    if (gw_rw_save(1002, &u, sizeof u) == 0) { gw_test_fail("a second keyframe at 1002 was taken"); goto end; }
+    if (gw_rw_load(1001, &back, sizeof back) != 0 || memcmp(region, want1, len) != 0 || back.match_frame != 1000) {
+        gw_test_fail("load 1001 did not give step 1 back");
+        goto end;
+    }
+    if (gw_rw_load(1002, &back, sizeof back) != 0 || memcmp(region, want2, len) != 0 || back.match_frame != 1001) {
+        gw_test_fail("load 1002 did not give step 2 back");
+        goto end;
+    }
+    if (gw_rw_load(1000, &back, sizeof back) != 0 || memcmp(region, orig, len) != 0 || back.match_frame != 999) {
+        gw_test_fail("load 1000 (the base) did not give the original back");
+        goto end;
+    }
+    if (gw_rw_find_le(1001) != 1001 || gw_rw_find_le(5000) != 1002 || gw_rw_find_le(999) != -0x7FFFFFFF - 1) {
+        gw_test_fail("find_le: %d %d", gw_rw_find_le(1001), gw_rw_find_le(5000));
+        goto end;
+    }
+    gw_rw_trim(1001); /* the base moves to 1001 */
+    if (gw_rw_base_tag() != 1001 || gw_rw_load(1000, NULL, 0) == 0) {
+        gw_test_fail("trim: base %d, 1000 still loadable", gw_rw_base_tag());
+        goto end;
+    }
+    if (gw_rw_load(1002, NULL, 0) != 0 || memcmp(region, want2, len) != 0 ||
+        gw_rw_load(1001, NULL, 0) != 0 || memcmp(region, want1, len) != 0) {
+        gw_test_fail("after the trim, 1001 / 1002 are wrong");
+        goto end;
+    }
+    for (i = 0; i < len; i += 5) region[i] = 0xEE; /* a fork after 1001 */
+    if (gw_rw_drop_from(1002) != 0 || gw_rw_latest() != 1001 || gw_rw_load(1002, NULL, 0) == 0) {
+        gw_test_fail("drop_from 1002");
+        goto end;
+    }
+    if (gw_rw_save(1003, NULL, 0) != 0 || gw_rw_load(1001, NULL, 0) != 0 || memcmp(region, want1, len) != 0) {
+        gw_test_fail("the fork's keyframe or the way back to 1001");
+        goto end;
+    }
+    rc = 0;
+end:
+    gw_rw_end();
+    memcpy(region, orig, len);
+out:
+    free(orig);
+    free(want1);
+    free(want2);
+    return rc;
+}
+
+/* The input log: a live frame's pad statuses and sound handles come back, byte for byte, when the
+ * frame is replayed; a frame that renewed nothing replays as nothing. */
+static int test_lab_rewind_log(void) {
+    unsigned char st[48], back[48];
+    int saved_began = gs.rw_began, saved_active = gs.match_active, saved_mf = gs.match_frame;
+    int saved_head = gs.rw_head, saved_start = gs.rw_log_start, m, rc = 1, i;
+    for (i = 0; i < 48; ++i) st[i] = (unsigned char) (i * 11 + 3);
+    gs.rw_began = 1;
+    gs.match_active = 1;
+    gs.match_frame = 499; /* now = 500 */
+    gs.rw_head = 500;
+    gs.rw_log_start = 500;
+    gs_in_frame = 1;
+    gw_LabPad_Record(st, 48);
+    gw_LabSfx_Record(1234, 0x2F5C);
+    gw_LabAudio_Record(6, 0x2F5C, 1);
+    gs.match_frame = 500;
+    gw_LabPad_Record(NULL, 48); /* frame 501 renewed nothing */
+    if (gs.rw_head != 502) {
+        gw_test_fail("head %d, want 502", gs.rw_head);
+        goto out;
+    }
+    gs_log[500 % GS_LOG_N].sfx_open = 0; /* FramePost closes it */
+    gs.match_frame = 499;
+    gs_sfx_claimed = 0;
+    gs_q_pos = 0;
+    gs_lab_frame_kind = 1;
+    memset(back, 0, sizeof back);
+    if (gw_LabPad_Replay(back, 48) != 1 || memcmp(back, st, 48) != 0) {
+        gw_test_fail("frame 500's pads did not come back");
+        goto out;
+    }
+    m = gw_LabSfx_Replay(1234);
+    if (m != 1 || gw_LabSfx_Handle() != 0x2F5C) {
+        gw_test_fail("frame 500's sound handle: mode %d handle 0x%X", m, gw_LabSfx_Handle());
+        goto out;
+    }
+    if (gw_LabSfx_Replay(1234) != 3) {
+        gw_test_fail("a second start of the same sound should be a new one");
+        goto out;
+    }
+    if (gw_LabAudio_Replay(6, 0x2F5C) != 1 || gw_LabAudio_Value() != 1) {
+        gw_test_fail("frame 500's still-playing answer");
+        goto out;
+    }
+    gs.match_frame = 500;
+    if (gw_LabPad_Replay(back, 48) != 2) {
+        gw_test_fail("frame 501 should replay as no renewal");
+        goto out;
+    }
+    gs.match_frame = 501; /* now = 502: the live edge, not replayed */
+    if (gw_LabPad_Replay(back, 48) != 0) {
+        gw_test_fail("the live edge was replayed");
+        goto out;
+    }
+    rc = 0;
+out:
+    gs_in_frame = 0;
+    gs_lab_frame_kind = 0;
+    gs.rw_began = saved_began;
+    gs.match_active = saved_active;
+    gs.match_frame = saved_mf;
+    gs.rw_head = saved_head;
+    gs.rw_log_start = saved_start;
+    return rc;
+}
+
+/* A saved state is refused, with the reason, when anything in its header does not match. */
+static int test_lab_state_header(void) {
+    GsStateHdr h;
+    char why[160];
+    int saved_active = gs.match_active;
+    gs_state_fill(&h, "Fox v Falco", "Fox v Falco on FD");
+    gs.match_active = 1;
+    if (gs_state_check(&h, sizeof h, why, sizeof why) != 0) {
+        gw_test_fail("a fresh header was refused: %s", why);
+        goto fail;
+    }
+    h.exe_hash ^= 1;
+    if (gs_state_check(&h, sizeof h, why, sizeof why) == 0 || strstr(why, "build") == NULL) {
+        gw_test_fail("another build: \"%s\"", why);
+        goto fail;
+    }
+    h.exe_hash ^= 1;
+    h.geno_hash ^= 1;
+    if (gs_state_check(&h, sizeof h, why, sizeof why) == 0 || strstr(why, "Geno") == NULL) {
+        gw_test_fail("other Geno data: \"%s\"", why);
+        goto fail;
+    }
+    h.geno_hash ^= 1;
+    h.stage ^= 1;
+    if (gs_state_check(&h, sizeof h, why, sizeof why) == 0 || strstr(why, "Fox v Falco on FD") == NULL) {
+        gw_test_fail("another stage: \"%s\"", why);
+        goto fail;
+    }
+    h.stage ^= 1;
+    if (gs_state_check(&h, sizeof h - 4, why, sizeof why) == 0) {
+        gw_test_fail("a short header was taken");
+        goto fail;
+    }
+    gs.match_active = 0;
+    if (gs_state_check(&h, sizeof h, why, sizeof why) == 0 || strstr(why, "match") == NULL) {
+        gw_test_fail("outside a match: \"%s\"", why);
+        goto fail;
+    }
+    gs.match_active = saved_active;
+    return 0;
+fail:
+    gs.match_active = saved_active;
+    return 1;
+}
+
 void gw_script_tests_register(void) {
     gw_test_register("script_kit_mod_art", test_script_kit_mod_art);
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
@@ -4864,6 +6168,9 @@ void gw_script_tests_register(void) {
     gw_test_register("script_manifest_and_hash", test_script_manifest_and_hash);
     gw_test_register("script_input_task", test_script_input_task);
     gw_test_register("script_lab_api", test_script_lab_api);
+    gw_test_register("lab_rewind_store", test_lab_rewind_store);
+    gw_test_register("lab_rewind_log", test_lab_rewind_log);
+    gw_test_register("lab_state_header", test_lab_state_header);
     gw_test_register("script_lab_project", test_script_lab_project);
     gw_test_register("script_lab_events", test_script_lab_events);
     gw_test_register("script_lab_draw_pass", test_script_lab_draw_pass);

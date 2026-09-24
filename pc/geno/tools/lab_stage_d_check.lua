@@ -271,6 +271,19 @@ expect(seen[6] and seen[6].x == -25 and seen[7] and seen[7].x == -57 and seen[7]
 P[2].in_hitlag = false
 run(3)
 lab("dummy sdi_n 0")
+-- the full DI stick is written while 2 hitlag frames are left (it reaches the game a frame later,
+-- on hitlag's last frame, when DI is read); with 1 left it is still the full stick
+set(2, "DamageN1", { in_hitlag = true, in_hitstun = true, hitlag = 4 })
+frame(function() env.on_hit(1, 2, { dealt = 9, damage = 9, angle = 45, kbg = 100, bkb = 10, wbk = 0 }) end)
+P[2].hitlag = 3 frame()
+P[2].hitlag = 2 frame()
+local at2 = inputs[2]
+P[2].hitlag = 1 frame()
+local at1 = inputs[2]
+expect(at2 and at2 ~= "released" and at2.x == -57 and at1 and at1.x == -57, "full DI out with 2 hitlag frames left ("
+  .. tostring(at2 and at2.x) .. ", " .. tostring(at1 and at1.x) .. ")")
+P[2].in_hitlag, P[2].hitlag = false, 0
+run(3)
 -- a reload replaying the same frame with another DI must not reuse the old one (it was cached by frame)
 set(2, "DamageN1", { in_hitlag = true, in_hitstun = true, hitlag = 10 })
 local f_hit = now + 1
@@ -289,15 +302,17 @@ run(3)
 lab("dummy tech away")
 set(2, "DamageFall", { airborne = true, in_hitstun = false, vy = -2, y = 30 })
 floor_y = 0
-local pressed_at
-for _ = 1, 20 do
+local pressed_at, early_x = nil, 0
+for k = 1, 20 do
   P[2].y = P[2].y - 2
   frame()
+  if k <= 3 and inputs[2] and inputs[2] ~= "released" then early_x = early_x + math.abs(inputs[2].x or 0) end
   if inputs[2] and inputs[2] ~= "released" and ((inputs[2].buttons or 0) & 0x20) ~= 0 then pressed_at = pressed_at or P[2].y end
 end
 expect(pressed_at ~= nil and pressed_at <= 10 and pressed_at > 0, "tech press ~5 frames before the floor (y " .. tostring(pressed_at) .. ")")
 expect(inputs[2] and inputs[2] ~= "released" and inputs[2].x == 80,
-  "tech away: the full stick away, after its first step (" .. tostring(inputs[2] and inputs[2].x) .. ")")
+  "tech away: the full stick away at the press (" .. tostring(inputs[2] and inputs[2].x) .. ")")
+expect(early_x == 0, "tech away: no drift early in the fall (x " .. tostring(early_x) .. ")")
 set(2, "Passive", { airborne = false, vy = 0, y = 0 }) run(20) set(2, "Wait") run(3)
 -- the ledge: jump off it after a 3-frame reaction
 lab("dummy ledge jump") lab("dummy delay_min 3") lab("dummy delay_max 3")
@@ -361,8 +376,9 @@ set(1, "Catch") set(2, "CapturePulledHi") P[2].percent = 8 run(4)
 set(2, "CaptureWaitHi") run(4)
 set(1, "ThrowHi") set(2, "ThrownHi") P[2].percent = 10 run(8)
 -- let go at 12%; the rest of the throw lands a frame later (17%): the throw is 17 - 8 = 9% from the grab
-P[2].percent = 12 set(2, "DamageFlyHi", { in_hitstun = true }) set(1, "Wait") frame()
-P[2].percent = 17 frame()
+P[2].percent = 10 set(2, "DamageFlyHi", { in_hitstun = true }) set(1, "Wait") frame()
+run(9) P[2].percent = 12 frame() P[2].percent = 14 frame() P[2].percent = 17 frame() -- the lasers, f10-12
+run(16) -- quiet: the throw closes at 17 - 8 = 9%
 run(10)
 frame(function() env.on_hit(1, 2, { dealt = 13 }) end)
 out = lab("combo")
@@ -373,6 +389,14 @@ P[2].in_hitstun = false set(2, "DownWaitU") run(5)
 frame(function() env.on_hit(1, 2, { dealt = 3 }) end)
 out = lab("combo")
 expect(out:find("escapable 5 f", 1, true) ~= nil, "combo: a hit on a downed P2 that could get up is escapable")
+-- a lone throw is listed (before, "combo: none yet" followed a throw whose follow-up missed)
+set(2, "Wait") run(40)
+set(1, "Catch") set(2, "CapturePulledHi") P[2].percent = 20 run(4)
+set(1, "ThrowHi") set(2, "ThrownHi") run(8)
+P[2].percent = 27 set(2, "DamageFlyHi", { in_hitstun = true }) set(1, "Wait") frame()
+run(20) P[2].in_hitstun = false set(2, "Wait") run(40)
+out = lab("combo")
+expect(out:find("1 hits 7.0%", 1, true) ~= nil, "combo: a lone throw is listed")
 set(2, "Wait") run(40)
 
 -- 10. D5: the L-cancel drill (streak), then its results line

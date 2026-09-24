@@ -3853,31 +3853,40 @@ local function tech_spec(p, now)
   -- tumble_window frames ago; UCF 0.84 also takes a raw jump of 75+ in two frames). So, as the fall
   -- starts, x goes just past the stick line and stays there tumble_window + 1 frames, then full:
   -- no fresh crossing, a jump of about 50, no wiggle, and a full roll.
-  local x = 0
-  if f.what == "away" or f.what == "toward" then
-    local c = LD.common()
-    local sign = dir_xy(p, f.what) >= 0 and 1 or -1
+  -- The roll's stick is held only near the landing: a full sideways stick through a whole fall is
+  -- drift, and on ACE it carried a fighter off a platform's edge and past the stage. Until the
+  -- floor is close the stick stays neutral (or, with no floor under the drift, toward the stage).
+  local c = LD.common()
+  local roll = f.what == "away" or f.what == "toward"
+  local sign = roll and (dir_xy(p, f.what) >= 0 and 1 or -1) or 0
+  local function roll_x()
+    -- the two-step entry (just past the stick line, then full) avoids the tumble wiggle
     f.k = (f.k or 0) + 1
-    if f.k <= c.tumble_window + 1 then x = sign * (math.ceil(math.max(c.stick_smash_dz, 0.2875) * STK) + 2)
-    else x = sign * STK end
+    if f.k <= c.tumble_window + 1 then return sign * (math.ceil(math.max(c.stick_smash_dz, 0.2875) * STK) + 2) end
+    return sign * STK
   end
-  if f.pressed then return { x = x } end -- hold the roll's direction to the landing
+  if f.pressed then return { x = roll and roll_x() or 0 } end -- hold the roll's direction to the landing
   local vy = (p.vy or 0) + (p.kb_vy or 0)
-  if vy >= 0 or (st.last_press and now - st.last_press < TECH_LOCKOUT) then return x ~= 0 and { x = x } or nil end
+  if vy >= 0 or (st.last_press and now - st.last_press < TECH_LOCKOUT) then return nil end
   -- the floor where the drift is taking it: under here first, then under where it will be by then
-  -- (on ACE a fighter drifting off a platform's edge pressed for the platform and missed the ground)
   local vx = (p.vx or 0) + (p.kb_vx or 0)
   local floor = gd.floor_below(p.x, p.y + 4, 400)
   if floor then
     local t = (p.y - floor) / -vy
     floor = gd.floor_below(p.x + vx * t, p.y + 4, 400)
   end
-  if floor == nil then return x ~= 0 and { x = x } or nil end
-  if (p.y - floor) / -vy <= TECH_PRESS_FRAMES then
-    f.pressed, st.last_press = now, now
-    return { b = B_R, r = 255, x = x }
+  if floor == nil then
+    -- nothing under the drift: drift toward the stage instead (x = 0 is its middle on the legal stages)
+    return { x = -sgn(p.x) * STK }
   end
-  return x ~= 0 and { x = x } or nil
+  local frames = (p.y - floor) / -vy
+  if frames <= TECH_PRESS_FRAMES then
+    f.pressed, st.last_press = now, now
+    return { b = B_R, r = 255, x = roll and roll_x() or 0 }
+  end
+  -- the roll stick starts its two-step entry just before the press, so it is full at the landing
+  if roll and frames <= TECH_PRESS_FRAMES + c.tumble_window + 2 then return { x = roll_x() } end
+  return nil
 end
 
 -- this frame's input for the dummy (applied to the next frame), or nil
@@ -3894,8 +3903,10 @@ local function dummy_spec(p, now)
       return {}
     end
     -- clean DI: the first step (each used axis just past the line) for sdi_window + 1 frames, then the
-    -- full stick; the last hitlag frame always has the full stick (DI is read as hitlag ends)
-    if dm.di_clean and (h.sx ~= 0 or h.sy ~= 0) and (p.hitlag or 0) > 1 then
+    -- full stick. gd.input written on this frame is what the game reads on the NEXT frame, so the
+    -- full stick goes out while 2 hitlag frames are left: the game then has it on hitlag's last
+    -- frame, when DI is read (on ACE it showed up one frame after hitlag with "> 1").
+    if dm.di_clean and (h.sx ~= 0 or h.sy ~= 0) and (p.hitlag or 0) > 2 then
       local c = LD.common()
       if h.calm <= c.sdi_window then
         h.calm = h.calm + 1
@@ -4285,7 +4296,7 @@ end
 local function end_combo(c, why)
   cb.cur = nil
   c.why = why
-  if #c.hits >= 2 or c.escape then
+  if #c.hits >= 2 or c.escape or c.hits[1].move:find("^Throw") then
     table.insert(cb.hist, 1, c)
     while #cb.hist > COMBO_N do table.remove(cb.hist) end
     log(string.format("P%d combo on P%d: %d hits %.1f%% - %s", c.a, c.v, #c.hits, c.dmg, why), GOLD)
@@ -4339,7 +4350,11 @@ end
 -- percent read at the let-go itself was 2% of an upthrow's 7.5%: part of the throw lands after it).
 -- The grabber's own hit events in that time are folded into it. A grab that ends without a throw
 -- (an escape) is no hit.
-local THROW_SETTLE = 2
+-- A throw's damage keeps landing after the let-go (Fox's upthrow: 2% plus three blaster shots 9-13
+-- frames later), so the throw is closed only when the victim's percent has not changed for
+-- THROW_QUIET frames (past the lasers' 13), or THROW_MAX frames after the let-go. The hit is dated
+-- at the let-go. A follow-up hit inside that window is folded into the throw (combo_hit).
+local THROW_QUIET, THROW_MAX = 16, 40
 local function throw_frame(now)
   for _, p in ipairs(gd.players()) do
     local t = thrown[p.port]
@@ -4361,7 +4376,8 @@ local function throw_frame(now)
       if not t.threw then thrown[p.port] = nil
       else
         t.release = t.release or now
-        if now - t.release >= THROW_SETTLE then
+        if p.percent ~= (t.last_pct or -1) then t.last_pct, t.last_change = p.percent, now end
+        if now - (t.last_change or t.release) >= THROW_QUIET or now - t.release >= THROW_MAX then
           thrown[p.port] = nil
           LD.combo_hit(t.by, p.port, { dealt = math.max(0, p.percent - t.pct), throw = true, move = t.move or "Throw" },
             t.release)

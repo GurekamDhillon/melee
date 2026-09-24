@@ -17,6 +17,14 @@
 
 #include <math.h>
 
+/* A paired-single ps_madd lane: a*c + b with ONE rounding to single. Both factors are floats, so
+ * their product is exact in double; the sum is rounded to double and then to float - Dolphin's
+ * model of the Gekko's fused multiply-add (the same as gwtool's lowering of fmuladd). */
+static float mtx_madd(float a, float c, float b)
+{
+    return (float) ((double) a * (double) c + (double) b);
+}
+
 void PSMTXIdentity(Mtx m)
 {
     m[0][0] = 1.0f;
@@ -63,23 +71,26 @@ void PSMTXConcat(Mtx mA, Mtx mB, Mtx mAB)
         m = mAB;
     }
 
-    m[0][0] = mA[0][2] * mB[2][0] + ((mA[0][0] * mB[0][0]) + (mA[0][1] * mB[1][0]));
-    m[0][1] = mA[0][2] * mB[2][1] + ((mA[0][0] * mB[0][1]) + (mA[0][1] * mB[1][1]));
-    m[0][2] = mA[0][2] * mB[2][2] + ((mA[0][0] * mB[0][2]) + (mA[0][1] * mB[1][2]));
-    m[0][3] = mA[0][3] + (mA[0][2] * mB[2][3] +
-                          (mA[0][0] * mB[0][3] + (mA[0][1] * mB[1][3])));
-
-    m[1][0] = mA[1][2] * mB[2][0] + ((mA[1][0] * mB[0][0]) + (mA[1][1] * mB[1][0]));
-    m[1][1] = mA[1][2] * mB[2][1] + ((mA[1][0] * mB[0][1]) + (mA[1][1] * mB[1][1]));
-    m[1][2] = mA[1][2] * mB[2][2] + ((mA[1][0] * mB[0][2]) + (mA[1][1] * mB[1][2]));
-    m[1][3] = mA[1][3] + (mA[1][2] * mB[2][3] +
-                          (mA[1][0] * mB[0][3] + (mA[1][1] * mB[1][3])));
-
-    m[2][0] = mA[2][2] * mB[2][0] + ((mA[2][0] * mB[0][0]) + (mA[2][1] * mB[1][0]));
-    m[2][1] = mA[2][2] * mB[2][1] + ((mA[2][0] * mB[0][1]) + (mA[2][1] * mB[1][1]));
-    m[2][2] = mA[2][2] * mB[2][2] + ((mA[2][0] * mB[0][2]) + (mA[2][1] * mB[1][2]));
-    m[2][3] = mA[2][3] + (mA[2][2] * mB[2][3] +
-                          (mA[2][0] * mB[0][3] + (mA[2][1] * mB[1][3])));
+    /* The retail paired-single code's dataflow (mtx.c PSMTXConcat), not the C_MTX grouping:
+     * per element, ps_muls0 then two fused ps_madds, t = fma(b2j, ai2, fma(b1j, ai1, b0j ai0));
+     * then the Unit01 lane: column 3 adds ai3 (1 * ai3, fused - exact product), column 2 adds
+     * 0 * ai3. One statement per rounding, so clang contracts nothing. */
+    {
+        int i, j;
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 4; j++) {
+                float t = mB[0][j] * mA[i][0];
+                t = mtx_madd(mB[1][j], mA[i][1], t);
+                t = mtx_madd(mB[2][j], mA[i][2], t);
+                if (j == 3) {
+                    t = mtx_madd(1.0F, mA[i][3], t);
+                } else if (j == 2) {
+                    t = mtx_madd(0.0F, mA[i][3], t);
+                }
+                m[i][j] = t;
+            }
+        }
+    }
 
     if (m == mTmp) {
         PSMTXCopy(mTmp, mAB);
@@ -338,33 +349,60 @@ void PSMTXQuat(Mtx m, QuaternionPtr q)
     m[2][3] = 0.0f;
 }
 
+/* PSMTXMultVec and PSMTXMultVecSR follow the retail paired-single code's dataflow exactly, not
+ * the C_MTX reference's grouping: the two differ in the last bit, and a stage's collision
+ * vertices go through here every frame (mpLib_80055E9C), so one ULP in a wall moved a wall push by
+ * one ULP (.slp parity: Fox under Fountain of Dreams' edge, frame 228). Each product and sum is
+ * its own statement, so clang never contracts it into something the Gekko did not do.
+ *
+ * PSMTXMultVec (mtxvec.c): ps_mul (m00 x, m01 y); ps_madd (m02 z + that, m03 * 1 + that);
+ * ps_sum0 adds the two lanes. So x' = fma(m02, z, m00 x) + (m03 + m01 y). */
 void PSMTXMultVec(Mtx44 m, Vec* src, Vec* dst)
 {
-    Vec vTmp;
-
-    /* src and dst are frequently the same vector. */
-    vTmp.x =
-        m[0][3] + ((m[0][2] * src->z) + ((m[0][0] * src->x) + (m[0][1] * src->y)));
-    vTmp.y =
-        m[1][3] + ((m[1][2] * src->z) + ((m[1][0] * src->x) + (m[1][1] * src->y)));
-    vTmp.z =
-        m[2][3] + ((m[2][2] * src->z) + ((m[2][0] * src->x) + (m[2][1] * src->y)));
-    dst->x = vTmp.x;
-    dst->y = vTmp.y;
-    dst->z = vTmp.z;
+    float x = src->x, y = src->y, z = src->z; /* src and dst are frequently the same vector */
+    float p0, p1, s0, s1, rx, ry, rz;
+    int r;
+    for (r = 0; r < 3; r++) {
+        p0 = m[r][0] * x;
+        p1 = m[r][1] * y;
+        s0 = mtx_madd(m[r][2], z, p0);
+        s1 = m[r][3] + p1; /* ps_madd with c = 1.0: the product is exact */
+        if (r == 0) {
+            rx = s0 + s1;
+        } else if (r == 1) {
+            ry = s0 + s1;
+        } else {
+            rz = s0 + s1;
+        }
+    }
+    dst->x = rx;
+    dst->y = ry;
+    dst->z = rz;
 }
 
+/* PSMTXMultVecSR (mtxvec.c): ps_mul (m00 x, m01 y); ps_sum0 adds them; ps_madd m02 z onto that.
+ * So x' = fma(m02, z, m00 x + m01 y). */
 void PSMTXMultVecSR(Mtx44 m, Vec* src, Vec* dst)
 {
-    Vec vTmp;
-
-    /* Rotation/scale only -- the translation column is not applied. */
-    vTmp.x = (m[0][2] * src->z) + ((m[0][0] * src->x) + (m[0][1] * src->y));
-    vTmp.y = (m[1][2] * src->z) + ((m[1][0] * src->x) + (m[1][1] * src->y));
-    vTmp.z = (m[2][2] * src->z) + ((m[2][0] * src->x) + (m[2][1] * src->y));
-    dst->x = vTmp.x;
-    dst->y = vTmp.y;
-    dst->z = vTmp.z;
+    float x = src->x, y = src->y, z = src->z;
+    float p0, p1, s, rx, ry, rz;
+    int r;
+    for (r = 0; r < 3; r++) {
+        p0 = m[r][0] * x;
+        p1 = m[r][1] * y;
+        s = p0 + p1;
+        s = mtx_madd(m[r][2], z, s);
+        if (r == 0) {
+            rx = s;
+        } else if (r == 1) {
+            ry = s;
+        } else {
+            rz = s;
+        }
+    }
+    dst->x = rx;
+    dst->y = ry;
+    dst->z = rz;
 }
 
 void PSVECAdd(Vec* a, Vec* b, Vec* c)

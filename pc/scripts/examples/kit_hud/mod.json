@@ -1,0 +1,11 @@
+{
+  "id": "kit_hud",
+  "name": "Kit HUD: a menu-kit panel over the match",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Draws a panel in the port's own menu style (9-slice frame, kit fonts, list rows, icons) over any match with every fighter's percent and action. F3 shows/hides it; 'kit_training' routes Training through the kit's character and stage select. Read-only: works online.",
+  "api_version": 1,
+  "gameplay": false,
+  "entry": "main.lua"
+}

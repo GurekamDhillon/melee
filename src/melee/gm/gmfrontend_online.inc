@@ -2307,6 +2307,19 @@ static void fl_lobby_events(void)
     }
 }
 
+/* The lobby's stage tile under the pointer on the page `cur` is on, or -1. */
+static int fl_mouse_tile(int cur)
+{
+    int i;
+    if (cur < 0 || cur >= flg.n) cur = 0;
+    for (i = 0; i < flg.n; i++) {
+        if (flg.page[i] == flg.page[cur] && fms_in_rect(flg.r[i])) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static void fl_frame_lobby(u32 in)
 {
     int p, me = Netplay_LobbyMe();
@@ -2359,6 +2372,11 @@ static void fl_frame_lobby(u32 in)
     if (fl_reconnecting()) {
         return;
     }
+    if (fms.click && !fms_over_footer() && !fl_my_stage_turn()) {
+        /* the mouse: a click readies, or opens the character pick, as A does */
+        if (p == LBP_READY) in |= MenuInput_AButton;
+        else if (fl_can_pick_char()) in |= MenuInput_Confirm;
+    }
     if (p == LBP_READY && (in & (MenuInput_StartButton | MenuInput_AButton))) {
         /* START toggles; A only readies (so a hurried A never takes it back) */
         bool on = !Netplay_LobbyPlayer(me, 3);
@@ -2390,6 +2408,17 @@ static void fl_frame_lobby(u32 in)
         else if (in & MenuInput_Right) c = fl_step_open(c, 1);
         else if (in & MenuInput_Up) c = fl_step_row(c, -1);
         else if (in & MenuInput_Down) c = fl_step_row(c, 1);
+        {
+            /* the mouse: pointing at an open stage moves there, a click acts on the stage
+               under it, the wheel turns the page */
+            int h = fl_mouse_tile(c);
+            if (h >= 0 && (fms.moved || fms.click) && fl_stage_open(h)) c = h;
+            if (fms.click && h >= 0) {
+                c = h;
+                in |= MenuInput_Confirm;
+            }
+            if (fms.wheel != 0) c = fl_step_page(c, fms.wheel > 0 ? -1 : 1);
+        }
         if (c != fl.cur) {
             fl.cur = c;
             sfxMove();
@@ -2442,7 +2471,7 @@ static void fl_frame(void)
     u32 in = 0;
     fl.frames++;
     if (fe.frames >= 4) { /* let the button that brought us here go */
-        in = mn_80229624(4);
+        in = mn_80229624(4) | fms_menu_bits(); /* the mouse: right click B, the hints */
     }
     switch (fl.art) {
     case FL_CODE: fl_frame_code(in); break;

@@ -450,6 +450,7 @@ void gw_tests_register_all(void) {
   extern void gw_script_tests_register(void);
   extern void gw_kit_tests_register(void);
   extern void gw_pad_tests_register(void);
+  extern void gw_mouse_tests_register(void);
   gw_MexTestRegisterAll();
   gw_ppc_tests_register();
   gw_ftfunction_tests_register();
@@ -468,6 +469,7 @@ void gw_tests_register_all(void) {
   gw_script_tests_register();
   gw_kit_tests_register();
   gw_pad_tests_register();
+  gw_mouse_tests_register();
   gw_test_register("game_va_list_vsnprintf", test_game_va_list_vsnprintf);
   gw_test_register("mex_flag_unknown_is_off", test_mex_flag_unknown_is_off);
   gw_test_register("mex_flags_default_off", test_mex_flags_default_off);

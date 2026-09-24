@@ -641,6 +641,77 @@ static void fs_pick(int port, int slot)
     }
 }
 
+static void fs_tile_rect(int slot, float* r);
+static void fs_card_rect(int c, float* r);
+
+/* THE MOUSE (gmfrontend_mouse.inc) plays for one port: online the one card, in Training the
+ * human, else the first human port (port 1 by default). Pointing at a fighter moves that port's
+ * cursor there (the port-coloured plate is the token) and a click picks, as A; pointing at a card
+ * puts the cursor on it and a click is A there (add a CPU, pick a CPU's fighter), on your own card
+ * the next costume; the wheel over a card steps the costume or the CPU's level, over the grid it
+ * turns the page; a right click is B (on a CPU's card, Z: remove it). The footer's hints are
+ * buttons. Returns the buttons to add to that port's presses. */
+static int fs_mouse_port(void)
+{
+    int p;
+    if (fcs.online) return 0;
+    if (fcs.training) return fcs.train_h;
+    for (p = 0; p < 4; p++) {
+        if (fcs.p[p].kind == FS_HMN) return p;
+    }
+    return 0;
+}
+
+static u32 fs_mouse_css(int p)
+{
+    FsPort* s = &fcs.p[p];
+    u32 b = fms_pad_bits();
+    int slot = -1, card = -1, i, first = fcs.page * fcs.per, last = first + fcs.per;
+    float r[4];
+    if (!fms.in || fms_over_footer()) {
+        return b;
+    }
+    if (last > fs_slots()) last = fs_slots();
+    for (i = first; i < last && slot < 0; i++) {
+        fs_tile_rect(i, r);
+        if (fms_in_rect(r)) slot = i;
+    }
+    for (i = 0; i < 4 && slot < 0 && card < 0; i++) {
+        if (fcs.online && i != 0) continue;
+        fs_card_rect(i, r);
+        if (fms_in_rect(r)) card = i;
+    }
+    if (s->kind != FS_HMN) {
+        if (fms.click && (slot >= 0 || card == p)) b |= PAD_BUTTON_A; /* join */
+        return b;
+    }
+    if (slot >= 0 && (fms.moved || fms.click)) {
+        if (s->card >= 0 || s->cur != slot) sfxMove();
+        s->card = -1;
+        s->cur = slot;
+    }
+    if (slot >= 0 && fms.click) b |= PAD_BUTTON_A;
+    if (card >= 0 && !fcs.online && !fcs.training && (fms.moved || fms.click) && s->card != card) {
+        s->card = card;
+        sfxMove();
+    }
+    if (card >= 0 && fms.click) {
+        if (card == p || fcs.online || fcs.training) {
+            if (fcs.p[s->target].ck >= 0) b |= PAD_BUTTON_X; /* your card: the next costume */
+        } else {
+            b |= PAD_BUTTON_A;
+        }
+    }
+    if (card >= 0 && fms.rclick && card != p && fcs.p[card].kind == FS_CPU && !fcs.training) {
+        b = (b & ~PAD_BUTTON_B) | PAD_TRIGGER_Z;
+    }
+    if (fms.wheel != 0) {
+        if (card >= 0) b |= fms.wheel > 0 ? PAD_BUTTON_X : PAD_BUTTON_Y;
+        else if (fcs.pages > 1) b |= fms.wheel > 0 ? PAD_TRIGGER_L : PAD_TRIGGER_R;
+    }
+    return b;
+}
+
 static void fs_css_port(int p)
 {
     FsPort* s = &fcs.p[p];
@@ -660,6 +731,9 @@ static void fs_css_port(int p)
             in.trig |= o.trig;
             in.rep |= o.rep;
         }
+    }
+    if (p == fs_mouse_port()) {
+        in.trig |= fs_mouse_css(p);
     }
     if (s->kind != FS_HMN) {
         if (in.trig & (PAD_BUTTON_A | PAD_BUTTON_START)) {
@@ -1225,6 +1299,32 @@ static void fs_sss_frame(void)
         FsIn o = fs_in(p);
         in.trig |= o.trig;
         in.rep |= o.rep;
+    }
+    /* the mouse: right click B, the hints, the wheel turns the page, pointing at a stage moves the
+       cursor there and a click chooses it */
+    in.trig |= fms_pad_bits();
+    if (fms.wheel != 0 && fcs.pages > 1) {
+        in.trig |= fms.wheel > 0 ? PAD_TRIGGER_L : PAD_TRIGGER_R;
+    }
+    if (fms.in && !fms_over_footer() && (fms.moved || fms.click)) {
+        int i, first = fcs.page * fcs.per, last = first + fcs.per;
+        float w = (FS_GX1 - FS_GX0 - (fcs.cols - 1) * 6.0F) / (float) fcs.cols, h = w * 7.0F / 8.0F, r[4];
+        if (last > fcs.ns) last = fcs.ns;
+        for (i = first; i < last; i++) {
+            int k = i - first;
+            r[0] = FS_GX0 + (k % fcs.cols) * (w + 6.0F);
+            r[1] = FS_GY0 + (k / fcs.cols) * (h + 6.0F);
+            r[2] = r[0] + w;
+            r[3] = r[1] + h;
+            if (fms_in_rect(r)) {
+                if (fcs.st_cur != i) {
+                    fcs.st_cur = i;
+                    sfxMove();
+                }
+                if (fms.click) in.trig |= PAD_BUTTON_A;
+                break;
+            }
+        }
     }
     if (in.trig & PAD_TRIGGER_L) {
         fcs.page = (fcs.page + fcs.pages - 1) % fcs.pages;

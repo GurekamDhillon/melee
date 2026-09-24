@@ -164,6 +164,7 @@ void gw_exit_clean(int code) {
 }
 
 extern void gw_pad_focus_event(int focused); /* shim_pad.c */
+extern void gw_mouse_event(const void *sdl_event); /* gw_console.cpp: menus and gd.mouse */
 extern void gw_pad_focus_tick(void);
 
 static void gw_handle_events(void) {
@@ -174,6 +175,7 @@ static void gw_handle_events(void) {
       gw_exiting = true;
       break;
     case AURORA_SDL_EVENT:
+      gw_mouse_event(&event->sdl);
       /* focus: shim_pad.c releases the GC adapter in the background (debounced there) */
       if (event->sdl.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
         gw_pad_focus_event(0);

@@ -241,6 +241,7 @@ static int fsc_zero(void) { return 0; }
 FSC_KEY(panel, "F9")
 FSC_KEY(reshow, "F10")
 FSC_KEY(console, "Backquote (left of 1)")
+FSC_KEY(mouse, "Point, click; right-click back")
 
 /* The keyboard does not play: controllers play, the keyboard is hotkeys (and mods' keys). */
 static const FrontendItem fe_items_set_controls[] = {
@@ -252,6 +253,8 @@ static const FrontendItem fe_items_set_controls[] = {
       0, 0, NULL, fsc_k_reshow },
     { FE_SLIDER, 0, "Console", "Hotkey: the command console.", fsc_zero, NULL, 0, 0, 0, NULL,
       fsc_k_console },
+    { FE_SLIDER, 0, "Mouse", "Menus take the mouse too (the wheel scrolls); matches never do.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_mouse },
 };
 
 /* ---- ONLINE --------------------------------------------------------------------------------- */

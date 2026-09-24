@@ -13,7 +13,8 @@
 # frame and field is printed), 2 = nothing could run.
 set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-conf="${PARITY_CONF:-$here/parity.conf}"
+if [ -f "$here/parity.local.conf" ]; then default_conf="$here/parity.local.conf"; else default_conf="$here/parity.conf"; fi
+conf="${PARITY_CONF:-$default_conf}"
 timeout_s="${PARITY_TIMEOUT:-180}"
 
 # tools/port/run.sh lives in the root repo, above this melee checkout (worktrees/<lane> or melee/)

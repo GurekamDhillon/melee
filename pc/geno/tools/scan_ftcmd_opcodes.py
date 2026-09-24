@@ -19,7 +19,7 @@ import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.environ.get("GW_ROOT") or r"C:/Users/Gurek/Desktop/GD's Melee"
+ROOT = os.environ.get("GW_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
 import mex_hsd  # noqa: E402
 

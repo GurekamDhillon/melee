@@ -832,6 +832,128 @@ textures, every check passes).
 has no `os.date`), `gd.player().kb_last` (the last launch's knockback, which is kept after
 `kb_applied` clears), and `gd.attrs` gains `normal_landing_lag` and `landingair{n,f,b,hi,lw}_lag`.
 
+### 14.12 Stage D: the player-training half (D1: frame data on screen)
+
+Stage E built the creator tools; stage D is what players practise with. It is planned in five parts,
+built in this order: D1 frame data on screen, D3 the dummy, D2 hitbox display upgrades, D4 combo
+analysis, D5 scenarios and drills. There are two review points, after D1-D3 and after D4-D5.
+**D1 is built**; the rest is below as the plan.
+
+The Lua is in `lab.lua` in one function scope, `stage_d()`, like stage E's. No new art: it reuses
+the stage C and E icons.
+
+**TRAINING mode (9).** It has four panels, each a toggle (`A`, `M`, `I`, `K`), plus `B` for the
+game's boxes and `C` to clear the readouts. They all only read the game.
+
+**Frame advantage (`A`).**
+- **An exchange** starts on a hit (`on_hit`, fighters only, no items) or a shield hit (the victim
+  enters hitlag in `GuardOn` / `Guard` / `GuardSetOff` / `GuardReflect`). The shield hit's attacker
+  is whoever entered hitlag on the same frame, else whoever has a live hitbox, else the nearest
+  fighter.
+- **From that frame,** each side's first actionable frame is taken. The advantage is the victim's
+  minus the attacker's, from the attacker's side: `+3 on shield` means the attacker acts 3 frames
+  first. Both clocks start on the same frame, so the shared hitlag cancels out.
+- **Actionable** (`LD.actionable`):
+  - never during hitlag;
+  - the script's IASA flag (`player.iasa`);
+  - a free state: Wait, walks, Turn, Dash, Run, the squats, the falls, JumpF/B, JumpAerialF/B,
+    GuardOn, Guard, CliffWait and Ottotto;
+  - `Landing` once the animation frame reaches `normal_landing_lag` (`ftCo_Landing_IASA`'s own test);
+  - a damage state (`DamageHi/N/Lw/Air1-3`, `DamageFly*`, `DamageFall`) once hitstun is over.
+- **Restarts and drops.** Another hit by the same attacker restarts the exchange, so multi-hit
+  moves count from the last hit. A shield break ends it with "shield break". After 240 frames it
+  is dropped.
+- **On screen:** the latest result big at the top (green plus, red minus) with the move, and the
+  last 5 in a row under it. It also goes to INSPECT's event log.
+
+**The move card (`M`).**
+- **What it shows:** the focused fighter's move: startup, the active frames, the total, IASA, and
+  a bar with the current frame. For aerials it adds the landing lag, the L-cancelled lag and the
+  autocancel windows.
+- **Where the numbers come from:** the move's own script, through the same analysis as the FRAMES
+  timeline (`analyse`) and the frame-data export (`bx_static`, exported as `LE.move_static`).
+  Nothing is typed in by hand.
+- **The L-cancelled lag** is `ftCo_LandingAir_EnterWithLag`'s: the lag divided by PlCo `xE8`,
+  truncated, at least 1.
+- **When the move ends,** the card stays up as LAST MOVE until the next move that has a hitbox or
+  a landing lag.
+
+**The input display (`I`).**
+- **The controls:** both sticks (an octagon gate with the position), A B X Y Z, and the L / R
+  analog bars, as the game saw them (`gd.pad`).
+- **The log:** each input with its frame in the sequence, e.g. `jump f1 > R f4`. Buttons are named
+  (X / Y = jump), and stick flicks past 0.8 of a full tilt are named by direction. A sequence ends
+  after 20 frames with no input. The last 5 sequences are kept.
+
+**Tech feedback (`K`).** Per port, from the action changes and the game's own counters, with hit
+rates:
+
+| tech | how it is read |
+|---|---|
+| L-cancel | An aerial lands in its `LandingAir*` state. The game's L / R / Z press age (`player.lr_age` = `fp->x67F`) is compared with its window (`gd.lab_common().lcancel_window`, PlCo `xE4`, 7). The same test the game makes decides hit or miss. A miss says "N f early" (for presses up to 20 frames early), "N f late" (a press during the landing lag), or "no press". A plain `Landing` (autocancel) is listed but not scored. |
+| wavedash | KneeBend > (JumpF/B) > EscapeAir > LandingFallSpecial. It reports how many frames after the jump's first airborne frame the airdodge came. The fighter procs run the animation (proc 0) before the input (proc 3), so a frame-perfect airdodge goes straight out of KneeBend and JumpF is never seen. That is scored as 0, "frame-perfect". |
+| waveland | EscapeAir > LandingFallSpecial with no jump in the 12 frames before it: the airdodge frame it landed on (and the mean). |
+| ledgedash | Off CliffWait (a drop or a jump) into an airdodge that lands within 60 frames: the ledge intangibility left on landing (GALINT, `player.intangible`, the timer `ftCo_CliffWait` starts). Scored as a hit when above 0. |
+| hops | KneeBend > JumpF/B: short or full, by the take-off speed against the fighter's `hop_v_initial_velocity` / `jump_v_initial_velocity`, and the jumpsquat's length. |
+
+Not in D1: dash-back and shield-drop timing. They need the game's own stick thresholds and
+windows (like `lr_age` for the L-cancel) before the Lab can say "early" or "late". They come with D3,
+which reads the same input code.
+
+**API added:**
+- `player.lr_age`: `fp->x67F`, the frames since L / R / Z was pressed (255 = none).
+- `player.jump_age`: `fp->x67E`, the same for X / Y.
+- `gd.lab_common()`: `{lcancel_window, lcancel_div, hitstun_mul, kb_speed, kb_decay}`, PlCo as loaded.
+
+The game half is `ScriptGame_LabI` (`LAB_I_LR_AGE`, `LAB_I_JUMP_AGE`) and `ScriptGame_LabCommonF`
+(`LAB_C_LCANCEL_WINDOW`, `LAB_C_LCANCEL_DIV`).
+
+**Console:** `lab adv` (the exchanges), `lab card`, `lab tech [clear]`, `lab actionable` (each
+fighter's state, the actionable reading, IASA, hitlag, hitstun and `lr_age`: the thing to check
+when a number looks wrong), `lab mode training`.
+
+**Check off the game:** `pc/geno/tools/lab_stage_d_check.lua` runs `lab.lua` against a stub `gd`
+with scripted frames:
+- a hit and a shield exchange;
+- L-cancels pressed on time, 4 f early, 2 f late and not at all;
+- a frame-perfect wavedash and one 2 f late;
+- a short hop, a waveland and a ledgedash with GALINT 5;
+- the move card for a tilt and an aerial;
+- the drawing, before and after a step back.
+
+All 15 checks pass. It needs any Lua 5.4. It checks the Lab's reading of states and counters, not
+the game.
+
+**Check in the game (to do, on ACE):**
+- Fox shine on shield. Check it against our own export first; compare with a published sheet
+  only once there is one we trust (decision 3).
+- Fox jab 1 on shield, and Marth fsmash on shield.
+- L-cancel early/late counts from scripted `gd.input` presses at known frames.
+- `lab card` against `lab export` for the same fighter.
+
+**The plan for the rest of stage D** (from the brief; D1 is built above):
+- **D3, the dummy:**
+  - 4 record/playback slots, played in order or at random with weights;
+  - knockback DI (none / in / out / survival / an angle), ASDI and SDI;
+  - tech and missed-tech options with weights;
+  - ledge options with weights;
+  - out-of-state actions after hitstun, shieldstun, landing or a ledge grab;
+  - a reaction delay (fixed or a random range);
+  - holds: percent, infinite shield, shield tilt, and hold shield / crouch / jump.
+- **D2, hitbox display:**
+  - swept hitboxes (the capsule between last frame and this one, `LAB_HF_PX..PZ`) with fading ghosts;
+  - hurtbox states drawn apart (normal, intangible, invincible);
+  - shield bubble and grab ranges.
+- **D4, combo analysis:**
+  - true-combo detection with the escape window (the victim's actionable frame against the next
+    hit, E's knockback code for each DI);
+  - a combo counter that says why a combo dropped;
+  - the punish finder later (decision 2).
+- **D5, scenarios and drills:**
+  - a data-only scenario format;
+  - the L-cancel streak and the tech chase first (decision 1);
+  - a results screen and a DRILLS tab.
+
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 
 This section is the contract the Brawl -> Geno script translator (ports/halberd/ (workspace repo) )

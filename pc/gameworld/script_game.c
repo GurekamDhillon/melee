@@ -302,6 +302,10 @@ int ScriptGame_LabI(int slot, int field)
         return (fp->x221E_b5 || fp->invisible) ? 1 : 0;
     case LAB_I_KIND:
         return (int) fp->kind;
+    case LAB_I_LR_AGE:
+        return (int) fp->x67F;
+    case LAB_I_JUMP_AGE:
+        return (int) fp->x67E;
     case LAB_I_JOINTS:
         return lab_joint_count(fp);
     case LAB_I_HURTBOXES:
@@ -987,6 +991,10 @@ float ScriptGame_LabCommonF(int which)
         return Stage_GetBlastZoneTopOffset();
     case LAB_C_BLAST_BOTTOM:
         return Stage_GetBlastZoneBottomOffset();
+    case LAB_C_LCANCEL_WINDOW:
+        return (float) d->xE4;
+    case LAB_C_LCANCEL_DIV:
+        return d->xE8;
     }
     return 0.0f;
 }

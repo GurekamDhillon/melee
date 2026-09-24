@@ -12,7 +12,7 @@
 --   LEFT   step back (hold; CTRL: 10)   F5 / F6  save / load state 1
 --   F8     hot reload (geno.json, overlays, this script) and replay the last seconds
 --   G      go live: stop replaying the logged input here (after a rewind)
---   TAB    next mode (SHIFT: previous)  1-5  a mode directly    F  focus the next fighter
+--   TAB    next mode (SHIFT: previous)  1-9  a mode directly    F  focus the next fighter
 --   H      hide / show the Lab UI  F3  help (this mode's keys)  ESC  the LAB pause menu
 -- Mode keys:
 --   CLEAN     (none)                      just the game and a tiny mode chip
@@ -23,6 +23,7 @@
 --   MOVES     UP / DOWN pick  ENTER play  V filter  Z / X speed  S stop  L loop  N from neutral
 --   LAUNCH    Q / E hitbox  D DI  Z / X percent -/+10  P live percent  V victim  A arc  K check
 --   A/B       R record A  B re-sim B on reloaded data  C re-sim B on the same data  M two fighters
+--   TRAINING  A frame advantage  M move card  I input display  K tech feedback  B boxes  C clear
 --   (FRAMES also: N the rollback strip.)  The pause menu's TOOLS tab: frame-data export and diff.
 -- Console: "lab help", "lab status".
 
@@ -171,6 +172,23 @@ local MODES = {
       { k = "Q", label = "Frame -", icon = "lab_step_back", rep = true, run = "ab_back" },
       { k = "E", label = "Frame +", icon = "lab_step", rep = true, run = "ab_fwd" },
     } },
+  { id = "training", name = "TRAINING", icon = "lab_focus",
+    blurb = "For practice: frame advantage after every exchange, the move card, your inputs, and how your tech went.",
+    t = {
+      { k = "A", id = "adv", label = "Frame advantage", icon = "lab_ab", def = true,
+        desc = "After every hit or shield hit: who acts first, and by how many frames. +3 on shield = the attacker is 3 frames ahead." },
+      { k = "M", id = "card", label = "Move card", icon = "lab_timeline", def = true,
+        desc = "The move being done now: startup, active frames, total, IASA; for aerials the landing lag, L-cancelled lag and autocancel." },
+      { k = "I", id = "input", label = "Input display", icon = "lab_keys", def = true,
+        desc = "The sticks, buttons and triggers as the game saw them, and a log of inputs with their frame: jump f1 > R f4." },
+      { k = "K", id = "tech", label = "Tech feedback", icon = "lab_ledge", def = true,
+        desc = "L-cancels (early / late by how many frames), wavedash and waveland timing, ledgedash GALINT, short or full hop, with success rates." },
+      { k = "B", id = "boxes", label = "Hit / hurtboxes", icon = "lab_hitbox", def = false,
+        desc = "The game's hitbox and hurtbox draw." },
+    },
+    a = {
+      { k = "C", label = "Clear", icon = "lab_trash", run = "tr_clear" },
+    } },
 }
 local MODE_BY_ID = {}
 for i, m in ipairs(MODES) do MODE_BY_ID[m.id] = i end
@@ -179,7 +197,7 @@ local GLOBAL_KEYS = {
   { "SPACE", "Pause / resume" }, { "RIGHT", "Step +1 (hold, CTRL x10)" },
   { "LEFT", "Step -1 (hold, CTRL x10)" }, { "F5", "Save state 1" }, { "F6", "Load state 1" },
   { "F8", "Hot reload + replay" }, { "G", "Go live (stop replaying)" },
-  { "TAB", "Next mode (SHIFT back)" }, { "1-8", "Mode directly" }, { "F", "Focus next fighter" },
+  { "TAB", "Next mode (SHIFT back)" }, { "1-9", "Mode directly" }, { "F", "Focus next fighter" },
   { "H", "Hide / show the Lab UI" }, { "F3", "This help" }, { "ESC", "Pause menu" },
 }
 
@@ -250,7 +268,7 @@ local function wanted_flags()
   if not cfg.on or cfg.hidden then return gd.draw.DEFAULT end
   local f = 0
   if not in_mode("inspect") or T("model") then f = f | gd.draw.MODEL end
-  if (in_mode("hitboxes") or in_mode("frames") or in_mode("moves") or in_mode("launch")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
+  if (in_mode("hitboxes") or in_mode("frames") or in_mode("moves") or in_mode("launch") or in_mode("training")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
   return f
 end
 
@@ -2781,8 +2799,595 @@ function LE.draw_batch()
   txt(320 - w / 2 + 14, 29, s, "body", BONE)
 end
 LE.draw_moves, LE.draw_launch, LE.draw_ab = draw_moves, draw_launch, draw_ab
+-- for stage D's move card: the export's own reading of a state's script
+function LE.move_static(port, id) return bx_static(port, { id = id }) end
+LE.LANDING_ATTR, LE.windows_of = LANDING_ATTR, windows_of
 end
 stage_e()
+
+local LD = {} -- stage D: the player-training half (a function of its own, as stage E)
+local function stage_d()
+-- =================================================================================================
+-- ---- stage D: the player-training half (docs/geno.md 14.12) -------------------------------------
+-- D1, TRAINING mode (9): frame advantage after every exchange, the move card, the input display
+-- and tech-skill feedback (L-cancel, wavedash, waveland, ledgedash, short / full hop).
+-- Everything here only reads the game; it works in any Lab match, CPUs and humans alike.
+-- =================================================================================================
+local HIST_N = 6          -- exchanges kept on screen
+local EXCHANGE_MAX = 240  -- frames an exchange may run before it is dropped (someone never acts)
+local SEQ_IDLE = 20       -- input log: a sequence ends after this many frames with no new input
+local SEQ_N = 5           -- input sequences kept
+local TECH_N = 6          -- tech results kept
+local STICK_MAX = 80      -- a full stick tilt (the pad's usable range)
+local FLICK = 0.8         -- the input log names a stick direction past this much of a full tilt
+local LC_EARLY_MAX = 20   -- an L / R / Z press at most this many frames before the window is an early L-cancel
+
+local attrs_cache = {} -- [port] = {char, a = gd.attrs(port)}
+local common_cache = nil
+
+local function attrs_of(p)
+  local c = attrs_cache[p.port]
+  if c == nil or c.char ~= p.char then
+    c = { char = p.char, a = gd.attrs(p.port) or {} }
+    attrs_cache[p.port] = c
+  end
+  return c.a
+end
+
+-- the PlCo constants (gd.lab_common, stage D); the retail values when the build has none
+local function common()
+  if common_cache == nil then
+    common_cache = (gd.lab_common and gd.lab_common()) or {}
+    if (common_cache.lcancel_window or 0) <= 0 then common_cache.lcancel_window = 7 end
+    if (common_cache.lcancel_div or 0) <= 0 then common_cache.lcancel_div = 2 end
+  end
+  return common_cache
+end
+
+-- ---- "actionable": the first frame a fighter can act again -----------------------------------------
+-- A state from which every normal option is open (FREE), the script's IASA flag, a normal landing
+-- past its lag (ftCo_Landing_IASA: anim frame >= normal_landing_lag), or a damage state once
+-- hitstun is over. Never during hitlag.
+local FREE = {}
+for _, n in ipairs({ "Wait", "WalkSlow", "WalkMiddle", "WalkFast", "Turn", "Dash", "Run", "RunDirect", "Squat",
+  "SquatWait", "SquatRv", "Fall", "FallF", "FallB", "FallAerial", "FallAerialF", "FallAerialB", "JumpF", "JumpB",
+  "JumpAerialF", "JumpAerialB", "GuardOn", "Guard", "CliffWait", "Ottotto", "OttottoWait" }) do
+  FREE[n] = true
+end
+local GUARD = { GuardOn = true, Guard = true, GuardSetOff = true, GuardReflect = true }
+
+local function is_damage(name)
+  return name == "DamageFall" or name:find("^DamageFly") ~= nil or name:find("^Damage%a+%d$") ~= nil
+end
+
+local function actionable(p)
+  local name = p.motion_name
+  if p.in_hitlag then return false end
+  if p.iasa or FREE[name] then return true end
+  if name == "Landing" then return p.anim_frame >= (attrs_of(p).normal_landing_lag or 4) end
+  if is_damage(name) then return not p.in_hitstun end
+  return false
+end
+LD.actionable = actionable
+
+-- ---- frame advantage -----------------------------------------------------------------------------------
+-- An exchange starts on a hit (on_hit) or a shield hit (the victim enters hitlag while shielding).
+-- From that frame on, each side's first actionable frame is taken; the advantage is the victim's
+-- minus the attacker's, from the attacker's side: "+3 on shield" = the attacker acts 3 frames first.
+-- Another hit by the same attacker restarts the exchange (multi-hit moves count from the last hit).
+local fa = { cur = nil, hist = {} }
+
+local function fa_push(e)
+  table.insert(fa.hist, 1, e)
+  while #fa.hist > HIST_N do table.remove(fa.hist) end
+end
+
+local function fa_start(a, v, kind)
+  local pa = gd.player(a)
+  fa.cur = { a = a, v = v, kind = kind, f0 = gd.match().frame, move = pa and pa.motion_name or "?",
+    char = pa and pa.char_name or "?" }
+end
+
+local function fa_finish(c, why)
+  fa.cur = nil
+  local e = { a = c.a, v = c.v, kind = c.kind, move = c.move, char = c.char, frame = c.f0, why = why }
+  if why == nil then e.adv = c.tv - c.ta end
+  fa_push(e)
+  if e.adv then
+    log(string.format("P%d %s %+d on %s (P%d)", c.a, c.move, e.adv, c.kind, c.v), e.adv >= 0 and OK or DANGER)
+  end
+end
+
+local function fa_frame(now)
+  local c = fa.cur
+  if c == nil then return end
+  local pa, pv = gd.player(c.a), gd.player(c.v)
+  if pa == nil or pv == nil or now - c.f0 > EXCHANGE_MAX then fa.cur = nil return end
+  if c.tv == nil and pv.motion_name:find("^ShieldBreak") then fa_finish(c, "shield break") return end
+  if c.ta == nil and actionable(pa) then c.ta = now end
+  if c.tv == nil and actionable(pv) then c.tv = now end
+  if c.ta and c.tv then fa_finish(c) end
+end
+
+-- the shield hit's attacker: whoever entered hitlag with the victim, else whoever has a live hitbox,
+-- else the nearest other fighter
+local function shield_attacker(v, rising)
+  for port in pairs(rising) do if port ~= v then return port end end
+  local pv = gd.player(v)
+  local best, bd
+  for _, p in ipairs(gd.players()) do
+    if p.port ~= v then
+      if #p.hitboxes > 0 then return p.port end
+      local d = pv and math.abs(p.x - pv.x) + math.abs(p.y - pv.y) or 0
+      if bd == nil or d < bd then best, bd = p.port, d end
+    end
+  end
+  return best
+end
+
+function LD.on_hit(attacker, victim, info)
+  if attacker == nil or victim == nil or attacker == victim or info.item then return end
+  fa_start(attacker, victim, "hit")
+end
+
+-- ---- the move card ---------------------------------------------------------------------------------------
+-- The focused fighter's move: its script's windows (the same analysis as the FRAMES timeline and
+-- the state browser), IASA, the length, and for aerials the landing lag, the L-cancelled lag and the
+-- autocancel windows (the frame-data export's own reading, LE.move_static). It stays up, dimmed,
+-- after the move ends, until the next move with a hitbox or a landing lag.
+local card = { port = nil, action = nil, info = nil, live = false }
+
+local function card_info(p)
+  local c = timeline_of(p)
+  if c == nil then return nil end
+  local lag_attr = LE.LANDING_ATTR[p.motion_name]
+  if #c.windows == 0 and lag_attr == nil then return nil end
+  local frames, iasa = {}, nil
+  for _, w in ipairs(c.windows) do for f = w.from, w.to do frames[f] = true end end
+  for _, e in ipairs(c.marks) do if e.name == "iasa" then iasa = e.frame break end end
+  local st = LE.move_static(p.port, p.action)
+  local lag = lag_attr and attrs_of(p)[lag_attr] or nil
+  local info = { name = p.motion_name, char = p.char_name, len = math.floor(c.len + 0.5),
+    startup = c.windows[1] and c.windows[1].from or nil, active = LE.windows_of(frames), iasa = iasa or st.iasa,
+    windows = c.windows, ac = st.ac }
+  if lag then
+    info.lag = math.floor(lag + 0.5)
+    info.lcl = math.max(1, math.floor(lag / common().lcancel_div))
+  end
+  return info
+end
+
+local function card_frame()
+  local p = gd.player(focus)
+  if p == nil then return end
+  if p.port ~= card.port or p.action ~= card.action then
+    card.port, card.action = p.port, p.action
+    local info = card_info(p)
+    card.live = info ~= nil
+    if info then card.info = info end
+  end
+  card.frame = card.live and p.action_frame + 1 or nil
+end
+
+-- ---- the input display --------------------------------------------------------------------------------
+-- What the game saw from the focused fighter's pad this frame (gd.pad), and a log of inputs with
+-- their frame in the sequence: "jump f1 > R f4". A sequence ends after SEQ_IDLE quiet frames.
+local inp = { port = nil, pad = nil, prev = 0, sdir = nil, cdir = nil, seqs = {}, last_f = -999 }
+local BTN = { { 0x0400, "jump" }, { 0x0800, "jump" }, { 0x0100, "A" }, { 0x0200, "B" }, { 0x0010, "Z" },
+  { 0x0040, "L" }, { 0x0020, "R" } }
+local DIRS = { "right", "up-right", "up", "up-left", "left", "down-left", "down", "down-right" }
+
+local function dir8(x, y)
+  local m = math.sqrt(x * x + y * y) / STICK_MAX
+  if m < FLICK then return nil end
+  local a = math.atan(y, x)
+  return DIRS[(math.floor(a / (math.pi / 4) + 0.5) % 8) + 1]
+end
+
+local function inp_add(now, label)
+  local s = inp.seqs[1]
+  if s == nil or now - inp.last_f > SEQ_IDLE then
+    s = { f0 = now, items = {} }
+    table.insert(inp.seqs, 1, s)
+    while #inp.seqs > SEQ_N do table.remove(inp.seqs) end
+  end
+  inp.last_f = now
+  local f = now - s.f0 + 1
+  local last = s.items[#s.items]
+  if last and last.f == f and last.label == label then return end
+  s.items[#s.items + 1] = { f = f, label = label }
+end
+
+local function inp_frame(now)
+  if focus > 4 then return end
+  if inp.port ~= focus then inp.port, inp.prev, inp.sdir, inp.cdir, inp.seqs = focus, 0, nil, nil, {} end
+  local ok, pad = pcall(gd.pad, focus)
+  if not ok or pad == nil then return end
+  inp.pad = pad
+  local b = pad.buttons
+  for _, e in ipairs(BTN) do
+    if b & e[1] ~= 0 and inp.prev & e[1] == 0 then inp_add(now, e[2]) end
+  end
+  inp.prev = b
+  local sd, cd = dir8(pad.x, pad.y), dir8(pad.cx, pad.cy)
+  if sd and sd ~= inp.sdir then inp_add(now, "stick " .. sd) end
+  if cd and cd ~= inp.cdir then inp_add(now, "C " .. cd) end
+  inp.sdir, inp.cdir = sd, cd
+end
+
+-- ---- tech-skill feedback ---------------------------------------------------------------------------------
+-- Per port, from the action changes and the game's own counters:
+--   L-cancel   an aerial lands in its LandingAir state: the game's L / R / Z press age (player.lr_age,
+--              fp->x67F) against its window (lab_common().lcancel_window, 7): under it = cancelled;
+--              else "N f early" (up to LC_EARLY_MAX), or a press during the landing lag = "N f late".
+--   wavedash   KneeBend > (Jump) > EscapeAir > LandingFallSpecial: how many frames after the jump's
+--              first airborne frame the airdodge came (0 = frame-perfect: straight out of KneeBend).
+--   waveland   EscapeAir > LandingFallSpecial with no jump just before: the airdodge frame it landed on.
+--   ledgedash  off CliffWait (drop or jump) > EscapeAir > LandingFallSpecial: the ledge intangibility
+--              left on landing (GALINT, player.intangible).
+--   hop        KneeBend > JumpF / JumpB: short or full, by the take-off speed against the fighter's
+--              hop and jump speeds; and the jumpsquat's length.
+local tech = { st = {}, res = {}, stats = {} }
+local TECHS = { "lcancel", "wavedash", "waveland", "ledgedash", "hop" }
+local TECH_NAME = { lcancel = "L-cancel", wavedash = "Wavedash", waveland = "Waveland", ledgedash = "Ledgedash",
+  hop = "Hops" }
+
+local function stats_of(port)
+  local s = tech.stats[port]
+  if s == nil then
+    s = {}
+    for _, k in ipairs(TECHS) do s[k] = { ok = 0, n = 0, sum = 0 } end
+    tech.stats[port] = s
+  end
+  return s
+end
+
+-- ok: true = hit, false = miss, nil = not scored (counted only)
+local function tech_result(port, kind, ok, text, value)
+  local s = stats_of(port)[kind]
+  s.n = s.n + 1
+  if ok then s.ok = s.ok + 1 end
+  if value then s.sum = s.sum + value end
+  table.insert(tech.res, 1, { port = port, kind = kind, ok = ok, text = text, frame = gd.match().frame })
+  while #tech.res > TECH_N do table.remove(tech.res) end
+  log(string.format("P%d %s: %s", port, TECH_NAME[kind], text), ok == true and OK or ok == false and DANGER or ACCENT)
+end
+
+local function lcancel_land(p, t, now)
+  local age, win = p.lr_age or 255, common().lcancel_window
+  if age < win then
+    tech_result(p.port, "lcancel", true, age == 0 and "on the landing frame" or string.format("%d f before landing", age))
+  elseif age < win + LC_EARLY_MAX then
+    tech_result(p.port, "lcancel", false, string.format("%d f early", age - win + 1), age - win + 1)
+  else
+    t.lc = { f = now, name = p.motion_name } -- no press yet: a press in the landing lag is late
+  end
+end
+
+local function tech_port(p, now)
+  local t = tech.st[p.port]
+  if t == nil then t = { prev = p.motion_name } tech.st[p.port] = t end
+  local n, pn = p.motion_name, t.prev
+  -- a late L-cancel press: the counter restarted after the landing
+  if t.lc then
+    if n ~= t.lc.name then
+      tech_result(p.port, "lcancel", false, "no press")
+      t.lc = nil
+    elseif (p.lr_age or 255) < now - t.lc.f then
+      tech_result(p.port, "lcancel", false, string.format("%d f late", now - (p.lr_age or 0) - t.lc.f))
+      t.lc = nil
+    end
+  end
+  if n == pn then return end
+  t.prev = n
+  if n == "KneeBend" then
+    t.ks_f = now
+  elseif pn == "KneeBend" and (n == "JumpF" or n == "JumpB") then
+    t.jump_f = now
+    local a = attrs_of(p)
+    local hop, full = a.hop_v_initial_velocity or 0, a.jump_v_initial_velocity or 0
+    local short = math.abs(p.vy - hop) < math.abs(p.vy - full)
+    tech_result(p.port, "hop", nil, string.format("%s (jumpsquat %d f)", short and "short hop" or "full hop",
+      t.ks_f and now - t.ks_f or 0), short and 1 or 0)
+  elseif n == "EscapeAir" then
+    -- the fighter procs run the animation before the input (fighter.c: proc 0, then proc 3), so the
+    -- jump's first airborne frame can already be an airdodge: KneeBend > EscapeAir, JumpF never seen
+    if pn == "KneeBend" then t.jump_f = now end
+    t.ad_f = now
+    t.ad_jump = t.jump_f and now - t.jump_f <= 12 and t.jump_f or nil
+    t.ad_ledge = t.ledge_f and now - t.ledge_f <= 60 or false
+    t.ad_ks = t.ks_f and t.jump_f and t.jump_f - t.ks_f or nil
+  elseif n == "LandingFallSpecial" and pn == "EscapeAir" and t.ad_f then
+    if t.ad_ledge then
+      local galint = p.intangible or 0
+      tech_result(p.port, "ledgedash", galint > 0, galint > 0 and string.format("GALINT %d", galint)
+        or "no intangibility left", galint)
+    elseif t.ad_jump then
+      local late = t.ad_f - t.ad_jump
+      tech_result(p.port, "wavedash", late == 0, late == 0 and "frame-perfect airdodge"
+        or string.format("airdodge %d f late", late), late)
+    else
+      local d = now - t.ad_f
+      tech_result(p.port, "waveland", nil, string.format("landed on airdodge f%d", d), d)
+    end
+    t.ad_f, t.ad_jump, t.ad_ledge = nil, nil, false
+  elseif n:find("^LandingAir") and pn:find("^AttackAir") then
+    lcancel_land(p, t, now)
+  end
+  if pn == "CliffWait" then
+    t.ledge_f = (n == "Fall" or n == "FallAerial" or n:find("^JumpAerial")) and now or nil
+  end
+  if n == "Landing" and pn:find("^AttackAir") then
+    table.insert(tech.res, 1, { port = p.port, kind = "lcancel", text = "autocancelled", frame = now })
+    while #tech.res > TECH_N do table.remove(tech.res) end
+  end
+end
+
+-- ---- per frame, reset ------------------------------------------------------------------------------------------
+local prev_lag = {}
+function LD.frame()
+  if not (cfg.on and gd.match().active) then return end
+  local now = gd.match().frame
+  local rising = {}
+  local list = gd.players()
+  for _, p in ipairs(list) do
+    if p.in_hitlag and not prev_lag[p.port] then rising[p.port] = true end
+  end
+  for _, p in ipairs(list) do
+    -- a shield hit: hitlag begins while shielding (a hit on the body arrives through on_hit)
+    local c = fa.cur
+    if rising[p.port] and GUARD[p.motion_name] and not (c and c.v == p.port and c.f0 == now) then
+      local a = shield_attacker(p.port, rising)
+      if a then fa_start(a, p.port, p.motion_name == "GuardReflect" and "powershield" or "shield") end
+    end
+    prev_lag[p.port] = p.in_hitlag
+    if p.port <= 4 then tech_port(p, now) end
+  end
+  fa_frame(now)
+  card_frame()
+  inp_frame(now)
+end
+
+-- the timeline jumped (step back, a load, a rewind): drop everything in flight, keep the results
+function LD.cut()
+  fa.cur = nil
+  prev_lag = {}
+  tech.st = {}
+  card.action = nil
+  inp.prev, inp.sdir, inp.cdir, inp.last_f = 0, nil, nil, -999
+  attrs_cache, common_cache = {}, nil
+end
+
+function LD.reset()
+  LD.cut()
+  fa.hist, tech.res, tech.stats, inp.seqs, card.info = {}, {}, {}, {}, nil
+end
+
+-- ---- drawing -------------------------------------------------------------------------------------------------
+local KIND_WORD = { hit = "on hit", shield = "on shield", powershield = "on powershield" }
+local function adv_col(v) return v > 0 and OK or v < 0 and DANGER or BONE end
+
+local function draw_adv()
+  local e = fa.hist[1]
+  local cx, y = 320, 8
+  if e == nil and fa.cur == nil then
+    local s = "FRAME ADVANTAGE  hit something, or hit a shield"
+    local w = measure(s, "caption") + 24
+    quad(cx - w / 2, y, w, 20, GLASS, SHEAR)
+    txt(cx, y + 14, s, "caption", DISABLED, "center")
+    return
+  end
+  if e then
+    local big = e.adv and string.format("%+d", e.adv) or "--"
+    local word = e.adv and (KIND_WORD[e.kind] or e.kind) or e.why
+    local sub = string.format("P%d %s > P%d", e.a, e.move, e.v)
+    local bw = measure(big, "title")
+    local w = math.max(bw + measure(word, "row") + 44, measure(sub, "caption") + 24)
+    quad(cx - w / 2, y, w, 48, GLASS, SHEAR)
+    quad(cx - w / 2 - 2, y, 4, 48, e.adv and adv_col(e.adv) or DISABLED, SHEAR)
+    stxt(cx - w / 2 + 14, y + 28, big, "title", e.adv and adv_col(e.adv) or DISABLED)
+    stxt(cx - w / 2 + 24 + bw, y + 26, word, "row", BONE)
+    txt(cx - w / 2 + 14, y + 42, sub, "caption", MUTED, "left", w - 24)
+    y = y + 52
+  end
+  -- the older exchanges, small
+  local parts = {}
+  for i = 2, #fa.hist do
+    local h = fa.hist[i]
+    parts[#parts + 1] = h.adv and string.format("%+d %s", h.adv, h.kind == "hit" and "hit" or "shd") or h.why
+  end
+  if fa.cur then parts[#parts + 1] = "..." end
+  if #parts > 0 then
+    local s = table.concat(parts, "   ")
+    local w = measure(s, "caption") + 20
+    quad(cx - w / 2, y, w, 16, alpha(GLASS_SOLID, 0xB0))
+    txt(cx, y + 12, s, "caption", MUTED, "center")
+  end
+end
+
+local function draw_card()
+  local i = card.info
+  local x, y, w = 8, 8, 236
+  if i == nil then
+    panel(x, y, w, 40, "MOVE")
+    txt(x + 12, y + 34, "attack: startup, active, IASA, lag", "caption", DISABLED)
+    return
+  end
+  local h = i.lag and 96 or 80
+  panel(x, y, w, h, card.live and "MOVE" or "LAST MOVE", card.live and ACCENT or DISABLED)
+  local head = string.format("%s  %s", i.char, i.name)
+  txt(x + 82, y + 14, head, "caption", card.live and GOLD or MUTED, "left", w - 92)
+  local function cell(cx, cy, label, value, col)
+    txt(cx, cy, label, "caption", MUTED)
+    txt(cx, cy + 13, value, "body", col or BONE)
+  end
+  cell(x + 12, y + 30, "startup", i.startup and tostring(i.startup) or "-")
+  cell(x + 62, y + 30, "active", i.active ~= "" and i.active or "-", HIT[0])
+  cell(x + 152, y + 30, "total", tostring(i.len))
+  cell(x + 192, y + 30, "IASA", i.iasa and tostring(i.iasa) or "-", MARK.iasa)
+  if i.lag then
+    txt(x + 12, y + 70, string.format("landing %d   L-cancel %d   autocancel %s", i.lag, i.lcl, i.ac or "-"),
+      "caption", BONE, "left", w - 24)
+  end
+  -- the move as a bar: active frames in the hitbox colours, IASA in green, the current frame
+  local bx0, by0, bw = x + 12, y + h - 18, w - 24
+  local len = math.max(i.len, 1)
+  local sx = bw / len
+  quad(bx0, by0, bw, 8, TRACK)
+  for _, win in ipairs(i.windows) do
+    quad(bx0 + (win.from - 1) * sx, by0, math.max(1, (win.to - win.from + 1) * sx), 8, HIT[win.id] or HIT[0])
+  end
+  if i.iasa then quad(bx0 + (i.iasa - 1) * sx, by0 - 2, 2, 12, MARK.iasa) end
+  if card.frame then
+    local fx = bx0 + math.min(card.frame - 1, len) * sx
+    quad(fx, by0 - 3, 2, 14, BONE)
+    txt(bx0 + bw, by0 - 4, "f" .. card.frame, "caption", BONE, "right")
+  end
+end
+
+local function draw_input()
+  local x, y, w, h = 8, 336, 316, 112
+  panel(x, y, w, h, "INPUT", ACCENT)
+  local pad = inp.pad
+  txt(x + 70, y + 14, "P" .. focus, "caption", PORT[focus] or BONE)
+  -- the sticks: the gate (an octagon), the position
+  local function stick(cx, cy, r, sx, sy, col)
+    local pts = {}
+    for k = 0, 8 do
+      local a = k * math.pi / 4
+      pts[#pts + 1] = { cx + math.cos(a) * r, cy - math.sin(a) * r }
+    end
+    for k = 1, 8 do gd.line(pts[k][1], pts[k][2], pts[k + 1][1], pts[k + 1][2], alpha(MUTED, 0xA0)) end
+    gd.line(cx - 2, cy, cx + 2, cy, alpha(MUTED, 0x80))
+    local px = cx + math.max(-1, math.min(1, (sx or 0) / STICK_MAX)) * r
+    local py = cy - math.max(-1, math.min(1, (sy or 0) / STICK_MAX)) * r
+    gd.line(cx, cy, px, py, col)
+    gd.fill(px - 2, py - 2, 5, 5, col)
+  end
+  stick(x + 38, y + 56, 24, pad and pad.x, pad and pad.y, BONE)
+  stick(x + 88, y + 62, 15, pad and pad.cx, pad and pad.cy, GOLD)
+  -- the buttons and the analog triggers
+  local b = pad and pad.buttons or 0
+  local function btn(bx, by, label, bit, col)
+    local on = b & bit ~= 0
+    quad(bx, by, 16, 14, on and col or alpha(TRACK, 0xE0))
+    txt(bx + 8, by + 11, label, "caption", on and INK or DISABLED, "center")
+  end
+  btn(x + 14, y + 88, "A", 0x0100, OK)
+  btn(x + 32, y + 88, "B", 0x0200, DANGER)
+  btn(x + 50, y + 88, "X", 0x0400, BONE)
+  btn(x + 68, y + 88, "Y", 0x0800, BONE)
+  btn(x + 86, y + 88, "Z", 0x0010, 0x8E72FFFF)
+  local function trig(tx, label, v, bit)
+    local on = b & bit ~= 0
+    quad(tx, y + 24, 8, 32, alpha(TRACK, 0xE0))
+    local f = math.min(1, (v or 0) / 255)
+    quad(tx, y + 24 + 32 * (1 - f), 8, 32 * f, on and ACCENT or MUTED)
+    txt(tx + 4, y + 20, label, "caption", on and ACCENT or DISABLED, "center")
+  end
+  trig(x + 108, "L", pad and pad.l, 0x0040)
+  trig(x + 120, "R", pad and pad.r, 0x0020)
+  -- the log: newest sequence on top
+  local lx, ly = x + 138, y + 36
+  if #inp.seqs == 0 then txt(lx, ly, "inputs show here, with their frame", "caption", DISABLED, "left", w - 146) end
+  for k, s in ipairs(inp.seqs) do
+    local parts = {}
+    for _, it in ipairs(s.items) do parts[#parts + 1] = it.label .. " f" .. it.f end
+    txt(lx, ly + (k - 1) * 15, table.concat(parts, " > "), "caption", k == 1 and BONE or MUTED, "left", w - 146)
+  end
+end
+
+local function draw_tech()
+  local x, y, w = 404, 8, 228
+  local rows = {}
+  local s = stats_of(focus)
+  for _, k in ipairs(TECHS) do
+    local st = s[k]
+    if st.n > 0 then
+      local v
+      if k == "hop" then v = string.format("SH %d  FH %d", st.sum, st.n - st.sum)
+      elseif k == "waveland" then v = string.format("%d, mean f%.1f", st.n, st.sum / st.n)
+      elseif k == "ledgedash" then v = string.format("%d / %d  (%d%%)  GALINT %.1f", st.ok, st.n,
+        math.floor(100 * st.ok / st.n + 0.5), st.sum / st.n)
+      else v = string.format("%d / %d  (%d%%)", st.ok, st.n, math.floor(100 * st.ok / st.n + 0.5)) end
+      rows[#rows + 1] = { TECH_NAME[k], v }
+    end
+  end
+  local n = 0
+  for _, r in ipairs(tech.res) do if r.port == focus then n = n + 1 end end
+  local h = 26 + math.max(1, #rows) * 14 + (n > 0 and 8 + n * 14 or 0)
+  panel(x, y, w, h, "TECH")
+  txt(x + 64, y + 14, "P" .. focus, "caption", PORT[focus] or BONE)
+  local yy = y + 34
+  if #rows == 0 then txt(x + 12, yy, "L-cancel, wavedash, waveland, ledgedash, hops", "caption", DISABLED, "left", w - 24) end
+  for _, r in ipairs(rows) do
+    txt(x + 12, yy, r[1], "caption", MUTED)
+    txt(x + w - 12, yy, r[2], "caption", BONE, "right")
+    yy = yy + 14
+  end
+  if n > 0 then
+    yy = yy + 8
+    quad(x + 12, yy - 12, w - 24, 1, alpha(TICK, 0x90))
+    for _, r in ipairs(tech.res) do
+      if r.port == focus then
+        local col = r.ok == true and OK or r.ok == false and DANGER or ACCENT
+        img("lab_mk_hitbox", x + 12, yy - 9, 10, 10, col)
+        txt(x + 26, yy, TECH_NAME[r.kind] .. ": " .. r.text, "caption", col, "left", w - 38)
+        yy = yy + 14
+      end
+    end
+  end
+end
+
+function LD.draw()
+  if T("adv") then draw_adv() end
+  if T("card") then draw_card() end
+  if T("input") then draw_input() end
+  if T("tech") then draw_tech() end
+end
+
+-- ---- console ---------------------------------------------------------------------------------------------------
+function LD.console(cmd, rest)
+  if cmd == "adv" then
+    if #fa.hist == 0 then gd.log("adv: no exchange yet") end
+    for _, e in ipairs(fa.hist) do
+      gd.log(string.format("  f%d P%d %s > P%d: %s", e.frame, e.a, e.move, e.v,
+        e.adv and string.format("%+d %s", e.adv, KIND_WORD[e.kind] or e.kind) or e.why))
+    end
+    if fa.cur then gd.log(string.format("  in flight: P%d > P%d %s since f%d", fa.cur.a, fa.cur.v, fa.cur.kind, fa.cur.f0)) end
+  elseif cmd == "tech" then
+    if rest == "clear" then tech.stats, tech.res = {}, {} gd.log("tech stats cleared") return true end
+    for port, s in pairs(tech.stats) do
+      for _, k in ipairs(TECHS) do
+        local st = s[k]
+        if st.n > 0 then gd.log(string.format("  P%d %-9s %d / %d ok, sum %g", port, TECH_NAME[k], st.ok, st.n, st.sum)) end
+      end
+    end
+    for _, r in ipairs(tech.res) do gd.log(string.format("  f%d P%d %s: %s", r.frame, r.port, TECH_NAME[r.kind], r.text)) end
+  elseif cmd == "card" then
+    local i = card.info
+    if i == nil then gd.log("card: no move yet") return true end
+    gd.log(string.format("card: %s %s startup %s active %s total %d IASA %s landing %s L-cancel %s autocancel %s",
+      i.char, i.name, tostring(i.startup), i.active, i.len, tostring(i.iasa), tostring(i.lag), tostring(i.lcl),
+      tostring(i.ac)))
+  elseif cmd == "actionable" then
+    for _, p in ipairs(gd.players()) do
+      gd.log(string.format("  P%d %s f%d actionable=%s iasa=%s hitlag=%s hitstun=%s lr_age=%s", p.port, p.motion_name,
+        p.action_frame + 1, tostring(actionable(p)), tostring(p.iasa), tostring(p.in_hitlag), tostring(p.in_hitstun),
+        tostring(p.lr_age)))
+    end
+  else
+    return false
+  end
+  return true
+end
+
+ACTIONS.tr_clear = function()
+  LD.reset()
+  say("Training readouts cleared")
+end
+end
+stage_d()
 
 -- ---- ticks ----------------------------------------------------------------------------------------
 local function mode_keys()
@@ -2841,6 +3446,7 @@ local function pname(port) return port and ("P" .. port) or "item" end
 function on_hit(attacker, victim, info)
   if not cfg.on then return end
   LE.on_hit(attacker, victim, info)
+  LD.on_hit(attacker, victim, info)
   local text
   if info.angle then
     text = string.format("%s hit %s  #%s  %.1f%%  a%d  kbg %d  bkb %d  wbk %d  %s", pname(attacker),
@@ -2876,6 +3482,7 @@ function on_match_start()
   tl_cache, scrub = {}, {}
   menu.open, menu.reset_saved, menu.prev = false, false, {}
   LE.reset()
+  LD.reset()
   cfg.on = cfg.always or gd.lab_request()
   if gd.lab_request() then lab_matched = true end
 end
@@ -2890,6 +3497,7 @@ end
 
 function on_frame()
   LE.frame()
+  LD.frame()
   for port, s0 in pairs(scrub) do
     local p = gd.player(port)
     if p == nil or p.action ~= s0.motion then scrub[port] = nil end
@@ -2897,6 +3505,7 @@ function on_frame()
 end
 
 function on_loadstate(slot)
+  LD.cut()
   local now = gd.match().frame
   for i = #log_lines, 1, -1 do
     if log_lines[i][1] > now then table.remove(log_lines, i) end
@@ -2908,6 +3517,7 @@ end
 
 function on_hot_reload(ok)
   local st = gd.hot_reload_status()
+  LD.cut()
   say((ok and "Reloaded: " or "Reload: ") .. st.text, ok and OK or DANGER)
   log("-- hot reload --", GOLD)
 end
@@ -2935,6 +3545,7 @@ function on_draw()
   if id == "moves" then LE.draw_moves() end
   if id == "launch" then LE.draw_launch() end
   if id == "ab" then LE.draw_ab() end
+  if id == "training" then LD.draw() end
   if id == "inspect" then
     if T("info") then draw_info(list) end
     if T("attrs") then draw_attrs(list) end
@@ -2959,7 +3570,7 @@ local function dump(port)
 end
 
 local function help_lines()
-  local out = { "Geno Lab - mode " .. mode().name .. " (TAB / 1-5 change it)" }
+  local out = { "Geno Lab - mode " .. mode().name .. " (TAB / 1-9 change it)" }
   for i, m in ipairs(MODES) do
     local ks = {}
     for _, t in ipairs(m.t) do ks[#ks + 1] = t.k .. " " .. t.label end
@@ -2974,6 +3585,7 @@ local function help_lines()
   out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
   out[#out + 1] = "  stage E: moves [text] | play <id|name> | kb | di none|in|out|survival | ab [record|reload|same|mirror]"
   out[#out + 1] = "           export [port] [version] | fdiff [fighter verA verB] | rollbacks [n]"
+  out[#out + 1] = "  stage D: adv | card | tech [clear] | actionable"
   return out
 end
 
@@ -2999,7 +3611,7 @@ gd.command("lab", function(arg)
     local want = rest:lower()
     local i = MODE_BY_ID[want] or tonumber(want)
     if i and MODES[i] then set_mode(i) gd.log("mode " .. mode().name)
-    else gd.log("lab mode clean|hitboxes|frames|stage|inspect|moves|launch|ab") end
+    else gd.log("lab mode clean|hitboxes|frames|stage|inspect|moves|launch|ab|training") end
   elseif cmd == "hide" then
     cfg.hidden = not cfg.hidden
     if cfg.hidden then restore_draw() end
@@ -3076,6 +3688,8 @@ gd.command("lab", function(arg)
     end
   elseif LE.console(cmd, rest) then
     -- stage E (LE.console)
+  elseif LD.console(cmd, rest) then
+    -- stage D (LD.console)
   elseif cmd == "set" then
     local mid, tid, v = rest:match("^(%w+)%.(%w+)%s+(%S+)$")
     if mid and tog[mid] and tog[mid][tid] ~= nil then

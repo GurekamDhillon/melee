@@ -717,6 +717,8 @@ static void gs_push_lab_fields(lua_State *L, int slot) {
     gs_setnum(L, "shield", gw_ScriptGame_LabF(slot, LAB_F_SHIELD));
     gs_setbool(L, "iasa", gw_ScriptGame_LabI(slot, LAB_I_IASA) == 1);
     gs_setint(L, "ledge_cooldown", gw_ScriptGame_LabI(slot, LAB_I_LEDGE_COOLDOWN));
+    gs_setint(L, "lr_age", gw_ScriptGame_LabI(slot, LAB_I_LR_AGE));
+    gs_setint(L, "jump_age", gw_ScriptGame_LabI(slot, LAB_I_JUMP_AGE));
     gs_setint(L, "draw_flags", gw_ScriptGame_LabI(slot, LAB_I_DRAW_FLAGS));
     gs_setint(L, "joint_count", gw_ScriptGame_LabI(slot, LAB_I_JOINTS));
     gs_setbool(L, "hidden", gw_ScriptGame_LabI(slot, LAB_I_HIDDEN) == 1);
@@ -3561,6 +3563,19 @@ static int l_lab_now(lua_State *L) {
     return 1;
 }
 
+/* gd.lab_common() -> the PlCo constants the Lab's training readouts use (stage D), as loaded:
+   lcancel_window (an L-cancel needs player.lr_age below it at landing), lcancel_div (the landing
+   lag is divided by it), hitstun_mul, kb_speed, kb_decay. Read-only. */
+static int l_lab_common(lua_State *L) {
+    lua_createtable(L, 0, 5);
+    gs_setnum(L, "lcancel_window", gw_ScriptGame_LabCommonF(LAB_C_LCANCEL_WINDOW));
+    gs_setnum(L, "lcancel_div", gw_ScriptGame_LabCommonF(LAB_C_LCANCEL_DIV));
+    gs_setnum(L, "hitstun_mul", gw_ScriptGame_LabCommonF(LAB_C_HITSTUN_MUL));
+    gs_setnum(L, "kb_speed", gw_ScriptGame_LabCommonF(LAB_C_KB_SPEED));
+    gs_setnum(L, "kb_decay", gw_ScriptGame_LabCommonF(LAB_C_KB_DECAY));
+    return 1;
+}
+
 /* gd.lab_env(name) -> the value of the environment variable MELEE_LAB_<name>, or nil (only that
    family: the Lab's launch switches, e.g. MELEE_LAB_BATCH for the headless frame-data export) */
 static int l_lab_env(lua_State *L) {
@@ -3656,6 +3671,8 @@ static const luaL_Reg gs_gd_funcs[] = {
     /* stage E */
     {"motion_list", l_motion_list}, {"kb_preview", l_kb_preview}, {"rollbacks", l_rollbacks},
     {"rollbacks_clear", l_rollbacks_clear}, {"lab_env", l_lab_env}, {"lab_now", l_lab_now},
+    /* stage D */
+    {"lab_common", l_lab_common},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */

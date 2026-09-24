@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "author": "GD",
   "kind": "script",
-  "description": "The LAB (SOLO > LAB): hit/hurtboxes, frame stepping and rewind, savestates, move browser, knockback preview, A/B compare and frame-data export. Offline only; never affects online matches.",
+  "description": "The LAB (SOLO > LAB): hit/hurtboxes, frame stepping and rewind, savestates, move browser, knockback preview, A/B compare, frame-data export, and TRAINING (frame advantage, move card, input display, tech feedback). Offline only; never affects online matches.",
   "api_version": 1,
   "gameplay": true,
   "rollback_safe": false

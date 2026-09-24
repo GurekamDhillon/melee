@@ -57,6 +57,8 @@ enum {
     LAB_I_HITSTUN_TOTAL,  /* unused, reserved */
     LAB_I_HIDDEN,         /* 1 when the fighter is not drawn (FighterVis x221E_b5 or invisible) */
     LAB_I_KIND,           /* fp->kind (the port's fighter kind: m-ex slots from 0x21) */
+    LAB_I_LR_AGE,         /* fp->x67F: frames since L / R / Z was pressed (255 = none); the L-cancel reads it (stage D) */
+    LAB_I_JUMP_AGE,       /* fp->x67E: frames since X / Y was pressed (255 = none) (stage D) */
     LAB_I_COUNT
 };
 
@@ -197,6 +199,8 @@ enum {
     LAB_C_BLAST_RIGHT,
     LAB_C_BLAST_TOP,
     LAB_C_BLAST_BOTTOM,
+    LAB_C_LCANCEL_WINDOW,   /* xE4: an L-cancel needs LAB_I_LR_AGE below this at landing (stage D) */
+    LAB_C_LCANCEL_DIV,      /* xE8: an L-cancelled landing lag is the lag / this, truncated (stage D) */
     LAB_C_COUNT
 };
 

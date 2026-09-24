@@ -570,10 +570,20 @@ static void rp_parity_end(int rc) {
     _exit(rc);
 }
 
+static uint32_t rp_f32_bits(double v) {
+    float f = (float) v;
+    uint32_t u;
+    memcpy(&u, &f, 4);
+    return u;
+}
+
+/* the line parity.sh matches pins against: "... bits console 0x%08X port 0x%08X" (f32 bits;
+   integer fields are exact in f32 too) */
 static void rp_parity_fail_f(const char *field, int port, int fol, double console, double port_v) {
     rp.parity_failed = 1;
-    gw_log("parity: FAIL frame %d port %d%s field %s: console %.9g, port %.9g", rp.frame, port + 1,
-           fol ? " (follower)" : "", field, console, port_v);
+    gw_log("parity: FAIL frame %d port %d%s field %s: console %.9g, port %.9g, bits console 0x%08X "
+           "port 0x%08X", rp.frame, port + 1, fol ? " (follower)" : "", field, console, port_v,
+           rp_f32_bits(console), rp_f32_bits(port_v));
     rp_parity_end(1);
 }
 
@@ -814,8 +824,8 @@ void gw_Replay_CheckSeed(uint32_t port_seed) {
                port_seed, want);
         if (rp.parity && !rp.parity_failed) {
             rp.parity_failed = 1;
-            gw_log("parity: FAIL frame %d field rng_seed: console 0x%08X, port 0x%08X", rp.frame,
-                   want, port_seed);
+            gw_log("parity: FAIL frame %d port 0 field rng_seed: console 0x%08X, port 0x%08X, bits "
+                   "console 0x%08X port 0x%08X", rp.frame, want, port_seed, want, port_seed);
             rp_parity_end(1);
         }
         return;

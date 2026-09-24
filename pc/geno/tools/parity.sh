@@ -30,12 +30,28 @@ fi
 
 iso=""
 slps=()
+declare -A pins # slp path -> "frame=F port=P field=NAME console=0x.. port=0x.." (normalised)
+norm_pin() {    # the exe's FAIL line or a conf pin -> "F P FIELD CONSOLEBITS PORTBITS", upper-case hex
+    echo "$1" | tr 'a-f' 'A-F' | sed -E 's/0X/0x/g'
+}
 while IFS= read -r line || [ -n "$line" ]; do
     line="${line%%#*}"
     line="$(echo "$line" | sed -e 's/[[:space:]]*$//' -e 's/^[[:space:]]*//')"
     case "$line" in
     iso=*) iso="${line#iso=}" ;;
     slp=*) slps+=("${line#slp=}") ;;
+    expect=*)
+        # the slp path may contain spaces: everything before " frame=" is the path
+        rest="${line#expect=}"
+        p="${rest%% frame=*}"
+        spec="frame=${rest#* frame=}"
+        f="$(echo "$spec" | sed -nE 's/.*frame=(-?[0-9]+).*/\1/p')"
+        po="$(echo "$spec" | sed -nE 's/.*port=([0-9]+) .*/\1/p')"
+        fi_="$(echo "$spec" | sed -nE 's/.*field=([a-z_]+).*/\1/p')"
+        cb="$(echo "$spec" | sed -nE 's/.*console=(0x[0-9A-Fa-f]+).*/\1/p')"
+        pb="$(echo "$spec" | sed -nE 's/.* port=(0x[0-9A-Fa-f]+).*/\1/p')"
+        pins["$p"]="$(norm_pin "$f $po $fi_ $cb $pb")"
+        ;;
     esac
 done < "$conf"
 
@@ -77,9 +93,25 @@ for slp in "${slps[@]}"; do
     fi
     wait "$runner" 2> /dev/null
     verdict="$(grep -a "parity: " "$log" 2> /dev/null | tail -1 | sed 's/.*parity: //')"
+    pin="${pins[$slp]:-}"
     case "$verdict" in
-    PASS*) echo "PASS  $name: ${verdict#PASS }"; pass=$((pass + 1)) ;;
-    FAIL*) echo "FAIL  $name: ${verdict#FAIL }"; fail=$((fail + 1)) ;;
+    PASS*)
+        if [ -n "$pin" ]; then
+            echo "FAIL  $name: matches fully now - pin can be removed - fixed (pin: $pin)"
+            fail=$((fail + 1))
+        else
+            echo "PASS  $name: ${verdict#PASS }"; pass=$((pass + 1))
+        fi
+        ;;
+    FAIL*)
+        got="$(echo "$verdict" | sed -nE 's/^FAIL frame (-?[0-9]+) port ([0-9]+)[^f]* field ([a-z_]+):.* bits console (0x[0-9A-Fa-f]+) port (0x[0-9A-Fa-f]+).*/\1 \2 \3 \4 \5/p')"
+        got="$(norm_pin "$got")"
+        if [ -n "$pin" ] && [ "$got" = "$pin" ]; then
+            echo "PASS  $name: pinned divergence, exactly as pinned ($pin)"; pass=$((pass + 1))
+        else
+            echo "FAIL  $name: ${verdict#FAIL }${pin:+ (pinned: $pin)}"; fail=$((fail + 1))
+        fi
+        ;;
     *)
         echo "FAIL  $name: the game exited without a verdict (log $log)"
         grep -a "FATAL\|replay:" "$log" 2> /dev/null | tail -3 | sed 's/^/      /'

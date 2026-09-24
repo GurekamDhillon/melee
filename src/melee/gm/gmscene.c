@@ -344,6 +344,7 @@ void gm_801A4BD4(void)
  * binds to the shim of the same name in pc/platform/gw_runtime.c. */
 extern int Gfx_PipelinesUrgent(void);
 extern int Gfx_PipelinesCreated(void);
+extern int Gfx_PrewarmMustDraw(void);
 extern int Gfx_LoadScreenEnabled(void);
 
 /* Settled means nothing the frozen frame draws is still compiling (Gfx_PipelinesUrgent) - NOT
@@ -435,6 +436,12 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
     mnLoadScreen_created = Gfx_PipelinesCreated();
     mnLoadScreen_started = OSGetTime();
     mnLoadScreen_holding = 1;
+    /* Every pipeline an item model has ever drawn with (Aurora tags them MUST_DRAW, and the
+       shipped seed carries the tags) goes to the front of the compile queue now, as urgent, so
+       the hold below waits for them. An item draw that meets an unbuilt pipeline waits for it -
+       it is never skipped (Kirby's ~35-frame ground hammer) - and mid-match that wait is a
+       visible hitch; here it is behind the panel. */
+    Gfx_PrewarmMustDraw();
 
     text_gobj = DevText_GetGObj();
     if (text_gobj != NULL) {

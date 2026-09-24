@@ -447,11 +447,24 @@ void mpColl_LoadECB_JObj(CollData* coll, u32 flags)
     coll->desired_ecb.bottom.x = 0.0F;
     coll->desired_ecb.bottom.y = bottom_y;
     coll->desired_ecb.right.x = right_x;
+#if defined(TARGET_PC)
+    {
+        /* The retail code computes 0.5F * (bottom_y + top_y) ONCE (fmuls, shared by both sides)
+         * and adds it with two plain fadds (0x800428E4); clang would contract each line into its
+         * own fused multiply-add, which can land an ULP away. Separate statements are never
+         * contracted. */
+        float half = 0.5F * (bottom_y + top_y);
+        coll->desired_ecb.right.y = coll->ecb_source.x124 + half;
+        coll->desired_ecb.left.x = left_x;
+        coll->desired_ecb.left.y = coll->ecb_source.x124 + half;
+    }
+#else
     coll->desired_ecb.right.y =
         coll->ecb_source.x124 + 0.5F * (bottom_y + top_y);
     coll->desired_ecb.left.x = left_x;
     coll->desired_ecb.left.y =
         coll->ecb_source.x124 + 0.5F * (bottom_y + top_y);
+#endif
     coll->x34_flags.b0 = 0;
 }
 

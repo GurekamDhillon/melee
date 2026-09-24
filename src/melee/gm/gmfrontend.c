@@ -1118,6 +1118,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 
 #include "gmfrontend_player.inc"
 #include "gmfrontend_kit.inc"
+#include "gmfrontend_mouse.inc"
 #include "gmfrontend_menus.inc"
 #include "gmfrontend_kitlist.inc"
 #include "gmfrontend_online.inc"
@@ -1887,11 +1888,28 @@ static void fe_loading_frame(void)
     fl_frame();
 }
 
+/* The toolkit row under the pointer (the kit's rows as drawn), or -1. */
+static int fe_mouse_row(void)
+{
+    int r;
+    if (!fe_kit || !fk.on) {
+        return -1;
+    }
+    for (r = 0; r < fk.nrows && r < fe.n_vis; r++) {
+        const FpTile* t = &fp.tile[fk.tile[r]];
+        if (fms_in_quad(t->q_face) || fms_in_quad(t->q_plate)) {
+            return r;
+        }
+    }
+    return -1;
+}
+
 void gm_Scene_Frontend_OnFrame(void)
 {
     u32 in;
     const FrontendItem* it;
 
+    fms_poll();
     if (fm.active) {
         fm_scene_frame();
         return;
@@ -1955,7 +1973,30 @@ void gm_Scene_Frontend_OnFrame(void)
     }
 
     if (fe.frames >= 4 && fe.n_vis > 0) { /* let the button that brought us here go */
-        in = mn_80229624(4);
+        int hov = fe_mouse_row();
+        in = mn_80229624(4) | fms_menu_bits();
+        /* the mouse: pointing moves the cursor, a click is A on the row, the wheel steps the
+           hovered row's value (a choice, slider or toggle) or scrolls the list */
+        if (hov >= 0 && hov != fe.cursor && (fms.moved || fms.click) && !(in & MenuInput_Confirm)) {
+            fe.cursor = hov;
+            sfxMove();
+        }
+        if (fms.click && hov >= 0 && hov == fe.cursor) {
+            in |= MenuInput_Confirm;
+        }
+        if (fms.wheel != 0) {
+            const FrontendItem* w = &fe.screen->items[fe.vis[fe.cursor]];
+            if (hov == fe.cursor && w->kind != FE_ACTION && w->set != NULL) {
+                in |= fms.wheel > 0 ? MenuInput_Right : MenuInput_Left;
+            } else {
+                int to = fe.cursor - fms.wheel;
+                to = to < 0 ? 0 : to >= fe.n_vis ? fe.n_vis - 1 : to;
+                if (to != fe.cursor) {
+                    fe.cursor = to;
+                    sfxMove();
+                }
+            }
+        }
         it = &fe.screen->items[fe.vis[fe.cursor]];
         if (in & MenuInput_Up) {
             fe.cursor = (fe.cursor + fe.n_vis - 1) % fe.n_vis;

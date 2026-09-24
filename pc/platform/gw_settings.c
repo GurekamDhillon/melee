@@ -152,8 +152,7 @@ int gw_Settings_Summary(char *out, int cap) {
 
 /* Typing into a text setting (the SETTINGS screens' name / server rows): letters (Shift for
  * capitals), digits, space . - _ : ; Backspace deletes before the caret. Keys count only while
- * this window has focus, and the keyboard-as-controller mapping stands down meanwhile
- * (gw_TextEntryUntil, shim_pad.c). Returns 0 nothing, 1 changed, 2 Enter, 3 Escape. */
+ * this window has focus, and gd.key reads nothing meanwhile (gw_TextEntryUntil). Returns 0 nothing, 1 changed, 2 Enter, 3 Escape. */
 extern int gw_TextEntryUntil;
 static int st_caret;
 /* The caret after the last gw_Settings_TextKeys (an int does not cross back through a pointer:

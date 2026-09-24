@@ -4,12 +4,19 @@
  *   ` (the key left of 1, "~")   open / close the console; Esc closes it
  *   Enter                        run the line (gw_Script_Exec: a built-in command or Lua)
  *   Up / Down                    history
- * While it is open the keyboard is text, not a controller: gw_script.c keeps gw_TextEntryUntil
- * in the future, which is what makes shim_pad.c's keyboard mapping stand down (the same
- * mechanism the online room-code entry uses).
+ * While it is open the keyboard is text, not hotkeys: gw_script.c keeps gw_TextEntryUntil in the
+ * future, which makes gd.key read nothing (the same mechanism the online room-code entry uses).
  *
  * Script drawing (gd.text / gd.box / gd.fill / gd.line) is in a 640x480 virtual screen, scaled
  * uniformly to the window and centred, so an overlay lines up with the game's 4:3 picture.
+ *
+ * THE MOUSE lives here too (it shares that mapping): shim_vi.c hands every SDL event to
+ * gw_mouse_event, which keeps the pointer in the same 640x480 space, the buttons, and the wheel.
+ * The menus (gmfrontend_mouse.inc) and scripts (gd.mouse) read it; it is local UI input and never
+ * reaches the pads, so a netplay peer never sees it. The OS cursor is hidden over the window;
+ * the kit's hand is drawn instead, only while the pointer moved in the last 3 s AND something
+ * wants it (a frontend screen said so this frame - gw_Mouse_UiFrame - or a script polled
+ * gd.mouse), so a match shows no cursor unless a script's menu is open.
  */
 #include "gw_kit.h"
 #include "gw_script.h"
@@ -17,12 +24,142 @@
 #include <aurora/imgui.h>
 #include <imgui.h>
 
+#include <SDL3/SDL.h>
+
 #include <windows.h>
 
 #include <cstdio>
 #include <cstring>
 
 extern "C" void gw_log(const char *fmt, ...);
+
+/* ---- the mouse ----------------------------------------------------------------------------- */
+namespace {
+struct {
+  float x = -1000.0f, y = -1000.0f; /* 640x480 space */
+  bool inside = false;
+  int buttons = 0;          /* 1 left, 2 right, 4 middle */
+  float wheel_game = 0.0f;  /* notches not yet taken by the frontend */
+  float wheel_script = 0.0f;
+  float wheel_frame = 0.0f; /* the scripts' notches this tick */
+  unsigned move_seq = 0;
+  DWORD moved_at = 0;
+  unsigned ui_frame = 0, script_frame = 0, frame = 0;
+  bool os_hidden = false;
+  bool logged = false;
+} g_mouse;
+
+/* Window point -> the 640x480 picture (uniform scale, centred: what draw_script_list does). */
+bool mouse_map(int ww, int wh, float px, float py, float *x, float *y) {
+  if (ww <= 0 || wh <= 0) {
+    return false;
+  }
+  const float sx = ww / 640.0f, sy = wh / 480.0f, s = sx < sy ? sx : sy;
+  const float ox = (ww - 640.0f * s) * 0.5f, oy = (wh - 480.0f * s) * 0.5f;
+  *x = (px - ox) / s;
+  *y = (py - oy) / s;
+  return *x >= 0.0f && *x < 640.0f && *y >= 0.0f && *y < 480.0f;
+}
+
+void mouse_to_kit(SDL_WindowID wid, float px, float py) {
+  SDL_Window *w = SDL_GetWindowFromID(wid);
+  int ww = 0, wh = 0;
+  if (w == nullptr || !SDL_GetWindowSize(w, &ww, &wh)) {
+    return;
+  }
+  g_mouse.inside = mouse_map(ww, wh, px, py, &g_mouse.x, &g_mouse.y);
+}
+} // namespace
+
+extern "C" void gw_mouse_event(const void *ev) {
+  const SDL_Event *e = static_cast<const SDL_Event *>(ev);
+  switch (e->type) {
+  case SDL_EVENT_MOUSE_MOTION:
+    mouse_to_kit(e->motion.windowID, e->motion.x, e->motion.y);
+    ++g_mouse.move_seq;
+    g_mouse.moved_at = GetTickCount();
+    if (!g_mouse.logged) {
+      g_mouse.logged = true;
+      gw_log("gw: mouse: first motion at (%.0f, %.0f) in 640x480", g_mouse.x, g_mouse.y);
+    }
+    if (!g_mouse.os_hidden) {
+      g_mouse.os_hidden = SDL_HideCursor(); /* the kit's hand replaces it over the window */
+    }
+    break;
+  case SDL_EVENT_MOUSE_BUTTON_DOWN:
+  case SDL_EVENT_MOUSE_BUTTON_UP: {
+    const int bit = e->button.button == SDL_BUTTON_LEFT    ? 1
+                    : e->button.button == SDL_BUTTON_RIGHT ? 2
+                    : e->button.button == SDL_BUTTON_MIDDLE ? 4
+                                                            : 0;
+    mouse_to_kit(e->button.windowID, e->button.x, e->button.y);
+    if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+      g_mouse.buttons |= bit;
+      g_mouse.moved_at = GetTickCount(); /* a click shows the cursor too */
+    } else {
+      g_mouse.buttons &= ~bit;
+    }
+    break;
+  }
+  case SDL_EVENT_MOUSE_WHEEL: {
+    const float d = e->wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -e->wheel.y : e->wheel.y;
+    g_mouse.wheel_game += d;
+    g_mouse.wheel_script += d;
+    g_mouse.moved_at = GetTickCount();
+    break;
+  }
+  case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+    g_mouse.inside = false;
+    g_mouse.buttons = 0;
+    break;
+  case SDL_EVENT_WINDOW_FOCUS_LOST:
+    g_mouse.buttons = 0;
+    break;
+  default:
+    break;
+  }
+}
+
+/* Game side (the frontend): position in 640x480 (-1000 when outside), buttons, the wheel's whole
+ * notches since the last call (+ = up), a counter that changes whenever the pointer moves. */
+extern "C" int gw_Mouse_X(void) { return g_mouse.inside ? (int)g_mouse.x : -1000; }
+extern "C" int gw_Mouse_Y(void) { return g_mouse.inside ? (int)g_mouse.y : -1000; }
+extern "C" int gw_Mouse_Buttons(void) { return g_mouse.inside ? g_mouse.buttons : 0; }
+extern "C" int gw_Mouse_MoveSeq(void) { return (int)g_mouse.move_seq; }
+extern "C" int gw_Mouse_Wheel(void) {
+  const int n = (int)g_mouse.wheel_game;
+  g_mouse.wheel_game -= (float)n;
+  return g_mouse.inside ? n : 0;
+}
+extern "C" void gw_Mouse_UiFrame(void) { g_mouse.ui_frame = g_mouse.frame; }
+
+/* Scripts (gd.mouse): gw_Script_Tick takes the tick's wheel once, every gd.mouse call reads it. */
+extern "C" void gw_Mouse_ScriptTick(void) {
+  g_mouse.wheel_frame = g_mouse.wheel_script;
+  g_mouse.wheel_script = 0.0f;
+}
+extern "C" void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) {
+  g_mouse.script_frame = g_mouse.frame;
+  *x = g_mouse.inside ? g_mouse.x : -1000.0f;
+  *y = g_mouse.inside ? g_mouse.y : -1000.0f;
+  *buttons = g_mouse.inside ? g_mouse.buttons : 0;
+  *wheel = g_mouse.wheel_frame;
+}
+
+/* The native side's view (the cursor drawing): no side effects. */
+extern "C" void gw_Mouse_Peek(float *x, float *y, int *buttons, float *wheel) {
+  *x = g_mouse.x;
+  *y = g_mouse.y;
+  *buttons = g_mouse.buttons;
+  *wheel = g_mouse.wheel_frame;
+}
+
+/* The cursor shows while the pointer moved in the last 3 s, over the window, and a frontend screen
+ * or a script's menu wants it (both say so every frame they do). */
+extern "C" int gw_Mouse_CursorShown(void) {
+  const bool wanted = g_mouse.frame - g_mouse.ui_frame <= 6u || g_mouse.frame - g_mouse.script_frame <= 6u;
+  return g_mouse.inside && wanted && GetTickCount() - g_mouse.moved_at < 3000u;
+}
 
 namespace {
 
@@ -198,7 +335,93 @@ void draw_console(const ImGuiIO &io) {
   ImGui::End();
 }
 
+uint32_t kit_col(const char *tok, uint32_t fallback) {
+  uint32_t c = 0;
+  return gw_Kit_Colour(tok, nullptr, &c) ? c : fallback;
+}
+
+/* "Connect a controller": the keyboard does not play, so a window with no controller says so
+ * (shim_pad.c gw_Pad_NoController). The kit's frame panel over a dimmed screen; plain ImGui text
+ * when the kit's files are missing. */
+void draw_no_controller(const ImGuiIO &io, float s, float ox, float oy) {
+  static const char *const head = "Connect a controller";
+  static const char *const body = "Plug in a GameCube adapter or any gamepad to play.";
+  static const char *const foot = "The keyboard is for hotkeys only.";
+  ImDrawList *dl = ImGui::GetForegroundDrawList();
+  dl->AddRectFilled(ImVec2(0, 0), io.DisplaySize, IM_COL32(10, 14, 24, 150));
+  if (gw_Kit_Available()) {
+    const int q0 = gw_Kit_QuadCount();
+    const float w = 360.0f, h = 104.0f, x = (640.0f - w) * 0.5f, y = (480.0f - h) * 0.5f;
+    gw_Kit_DrawPanel(x, y, w, h, "frame", nullptr, 0.0f, kit_col("gold", 0xF0B429FFu),
+                     kit_col("ink", 0x0A0E18FFu) & 0xFFFFFFF0u, 0.0f);
+    int role = gw_Kit_Role("heading");
+    gw_Kit_DrawText(320.0f, y + 40.0f, head, role >= 0 ? role : 0, kit_col("bone", 0xF2EFE4FFu),
+                    GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
+    role = gw_Kit_Role("body");
+    gw_Kit_DrawText(320.0f, y + 66.0f, body, role >= 0 ? role : 0, kit_col("muted", 0xB8C2DCFFu),
+                    GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
+    role = gw_Kit_Role("caption");
+    gw_Kit_DrawText(320.0f, y + 88.0f, foot, role >= 0 ? role : 0, kit_col("gold", 0xF0B429FFu),
+                    GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
+    draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy);
+    gw_Kit_TruncateQuads(q0);
+    return;
+  }
+  ImFont *font = ImGui::GetFont();
+  const float size = 20.0f * s;
+  const ImVec2 hs = font->CalcTextSizeA(size, 1e9f, 0.0f, head);
+  dl->AddText(font, size, ImVec2(ox + 320.0f * s - hs.x * 0.5f, oy + 220.0f * s), IM_COL32(242, 239, 228, 255), head);
+  const ImVec2 bs = font->CalcTextSizeA(size * 0.6f, 1e9f, 0.0f, body);
+  dl->AddText(font, size * 0.6f, ImVec2(ox + 320.0f * s - bs.x * 0.5f, oy + 250.0f * s), IM_COL32(184, 194, 220, 255), body);
+}
+
+/* The kit's hand (cursor_layout.json, variant "default"): 32x32 at 1x, hotspot (14, 4); layers
+ * shadow (ink, +1.5), outline (ink), fill (bone), detail (ink). Never sheared. Without the kit's
+ * files the OS cursor stands in, under the same rule. */
+void draw_cursor(float s, float ox, float oy) {
+  static int tex_ink = -2, tex_fill = -2, tex_detail = -2;
+  static bool os_shown = false;
+  const bool show = gw_Mouse_CursorShown() != 0;
+  if (tex_ink == -2 && gw_Kit_Available()) {
+    tex_ink = gw_Kit_Tex("cursor_ink", nullptr);
+    tex_fill = gw_Kit_Tex("cursor_fill", nullptr);
+    tex_detail = gw_Kit_Tex("cursor_detail", nullptr);
+  }
+  const bool kit = tex_ink >= 0 && tex_fill >= 0;
+  if (!kit) {
+    if (show != os_shown) {
+      os_shown = show;
+      if (show) SDL_ShowCursor(); else SDL_HideCursor();
+    }
+    return;
+  }
+  if (!show) {
+    return;
+  }
+  float x, y, wheel;
+  int buttons;
+  gw_Mouse_Peek(&x, &y, &buttons, &wheel);
+  x -= 14.0f;
+  y -= 4.0f;
+  const float press = (buttons & 1) != 0 ? 1.0f : 0.0f; /* a click nudges the hand */
+  x += press;
+  y += press;
+  ImDrawList *dl = ImGui::GetForegroundDrawList();
+  const int q0 = gw_Kit_QuadCount();
+  const uint32_t ink = kit_col("ink", 0x0A0E18FFu), bone = kit_col("bone", 0xF2EFE4FFu);
+  gw_Kit_DrawImage(tex_ink, x + 1.5f, y + 1.5f, 32.0f, 32.0f, (ink & 0xFFFFFF00u) | 0x90u, 0, 0.0f);
+  gw_Kit_DrawImage(tex_ink, x, y, 32.0f, 32.0f, ink, 0, 0.0f);
+  gw_Kit_DrawImage(tex_fill, x, y, 32.0f, 32.0f, bone, 0, 0.0f);
+  if (tex_detail >= 0) {
+    gw_Kit_DrawImage(tex_detail, x, y, 32.0f, 32.0f, ink, 0, 0.0f);
+  }
+  draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy);
+  gw_Kit_TruncateQuads(q0);
+}
+
 } // namespace
+
+extern "C" int gw_Pad_NoController(void); /* shim_pad.c */
 
 extern "C" void gw_Console_Draw(void) {
   if (ImGui::GetCurrentContext() == nullptr) {
@@ -220,7 +443,78 @@ extern "C" void gw_Console_Draw(void) {
   if (!gw_Console_Open()) {
     draw_script_list(io); /* the console covers the top of the screen; overlays pause under it */
   }
+  {
+    const float sx = io.DisplaySize.x / 640.0f, sy = io.DisplaySize.y / 480.0f;
+    const float s = sx < sy ? sx : sy;
+    const float ox = (io.DisplaySize.x - 640.0f * s) * 0.5f, oy = (io.DisplaySize.y - 480.0f * s) * 0.5f;
+    if (gw_Pad_NoController()) {
+      draw_no_controller(io, s, ox, oy);
+    }
+    ++g_mouse.frame;
+    if (!gw_Console_Open()) {
+      draw_cursor(s, ox, oy);
+    }
+  }
   if (gw_Console_Open()) {
     draw_console(io);
   }
+}
+
+/* ---- tests (run.sh --test) ------------------------------------------------------------------ */
+extern "C" {
+#include "gw_test.h"
+}
+
+namespace {
+int test_mouse_map() {
+  float x = 0, y = 0;
+  /* 1280x720: scale 1.5, the picture 960x720 from x 160 */
+  if (!mouse_map(1280, 720, 160.0f + 150.0f, 300.0f, &x, &y) || x < 99.9f || x > 100.1f || y < 199.9f || y > 200.1f) {
+    gw_test_fail("1280x720 mapped to (%.2f, %.2f), want (100, 200)", x, y);
+    return 1;
+  }
+  if (mouse_map(1280, 720, 100.0f, 300.0f, &x, &y)) {
+    gw_test_fail("a point in the pillarbox counted as inside");
+    return 1;
+  }
+  if (!mouse_map(640, 480, 639.0f, 0.0f, &x, &y) || x != 639.0f || y != 0.0f) {
+    gw_test_fail("640x480 is not the identity");
+    return 1;
+  }
+  return 0;
+}
+
+int test_mouse_buttons_wheel() {
+  SDL_Event e;
+  const int seq = gw_Mouse_MoveSeq();
+  gw_Mouse_Wheel(); /* drop anything pending */
+  g_mouse.wheel_game = 0.0f;
+  g_mouse.inside = true;
+  std::memset(&e, 0, sizeof e);
+  e.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+  e.button.button = SDL_BUTTON_RIGHT;
+  gw_mouse_event(&e);
+  if ((gw_Mouse_Buttons() & 2) == 0) { gw_test_fail("right button not down"); return 1; }
+  e.type = SDL_EVENT_MOUSE_BUTTON_UP;
+  gw_mouse_event(&e);
+  if (gw_Mouse_Buttons() != 0) { gw_test_fail("button not released"); return 1; }
+  std::memset(&e, 0, sizeof e);
+  e.type = SDL_EVENT_MOUSE_WHEEL;
+  e.wheel.y = 1.0f;
+  gw_mouse_event(&e);
+  gw_mouse_event(&e);
+  if (gw_Mouse_Wheel() != 2 || gw_Mouse_Wheel() != 0) { gw_test_fail("wheel notches not taken once"); return 1; }
+  std::memset(&e, 0, sizeof e);
+  e.type = SDL_EVENT_MOUSE_MOTION;
+  gw_mouse_event(&e);
+  if (gw_Mouse_MoveSeq() == seq) { gw_test_fail("motion did not count"); return 1; }
+  g_mouse.inside = false;
+  if (gw_Mouse_X() != -1000 || gw_Mouse_Buttons() != 0) { gw_test_fail("outside still reads a position"); return 1; }
+  return 0;
+}
+} // namespace
+
+extern "C" void gw_mouse_tests_register(void) {
+  gw_test_register("mouse_map", test_mouse_map);
+  gw_test_register("mouse_buttons_wheel", test_mouse_buttons_wheel);
 }

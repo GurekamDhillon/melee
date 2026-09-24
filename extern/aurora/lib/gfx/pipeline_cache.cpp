@@ -24,6 +24,11 @@
 #include <ranges>
 #include <variant>
 #include <thread>
+#include <chrono>
+#include <cstdlib>
+#include <vector>
+
+#include <aurora/gfx.h>
 
 #include <SDL3/SDL_iostream.h>
 #include <absl/container/flat_hash_map.h>
@@ -57,6 +62,7 @@ struct PipelineCacheWrite {
   uint32_t configVersion;
   ByteBuffer config;
   uint32_t firstFrameUsed = UINT32_MAX;
+  uint32_t tags = 0; // PipelineTag* bits, kept in the pipeline_tags side table
 };
 
 using SavedPipelineConfig = std::variant<gx::PipelineConfig, clear::PipelineConfig
@@ -70,6 +76,7 @@ struct KnownPipeline {
   ShaderType type;
   SavedPipelineConfig config;
   uint32_t firstFrameUsed;
+  uint32_t tags = 0;
 };
 
 struct SdlVfsSqliteFile {
@@ -86,8 +93,16 @@ constexpr size_t BuildPipelinesPerFrame = 5;
 #else
 constexpr size_t BuildPipelinesPerFrame = 1;
 #endif
-static std::thread g_pipelineThread;
+// Several compile workers (AURORA_PIPELINE_WORKERS, default below). Each builds through
+// CreateRenderPipelineAsync (gx::build_pipeline), so they compile in parallel on Dawn's pool.
+static std::vector<std::thread> g_pipelineThreads;
 static std::atomic_bool g_pipelineThreadEnd = false;
+// runtime key (layout + config) -> config key, so a draw that must not be skipped can tag its config
+static absl::flat_hash_map<PipelineRef, HashType> g_runtimeToConfig;
+// Last-resort waits taken in play (wait_pipeline), for AuroraStats and the log.
+static std::atomic_uint32_t g_pipelineWaitHits{0};
+static std::atomic_uint32_t g_pipelineWaitUs{0};
+static int g_pipelineWaiters = 0; // draws blocked in wait_pipeline right now (g_pipelineMutex)
 static std::condition_variable g_pipelineQueueCv;
 static std::condition_variable g_pipelineReadyCv;
 static absl::flat_hash_map<PipelineRef, CachedPipeline> g_pipelines;
@@ -101,6 +116,7 @@ static std::atomic_bool g_gpuCachePrunePending = false;
 static sqlite3* g_pipelineCacheDb = nullptr;
 static sqlite3_stmt* g_pipelineCacheLoadStmt = nullptr;
 static sqlite3_stmt* g_pipelineCacheUpsertStmt = nullptr;
+static sqlite3_stmt* g_pipelineTagUpsertStmt = nullptr;
 static bool g_pipelineCacheBroken = false;
 static std::thread g_pipelineCacheWriterThread;
 static std::condition_variable g_pipelineCacheWriterCv;
@@ -449,18 +465,45 @@ static void notify_pipeline_ready(bool queued) {
 }
 
 template <typename Config>
-static void remember_pipeline_config(ShaderType type, const Config& config, uint32_t firstFrameUsed, bool persist) {
+static void remember_pipeline_config(ShaderType type, const Config& config, uint32_t firstFrameUsed, bool persist,
+                                     uint32_t tags = 0) {
   const auto cacheKey = xxh3_hash(config, static_cast<HashType>(type));
   bool changed = false;
   {
     std::lock_guard lock{g_pipelineMutex};
-    auto [it, inserted] = g_knownPipelines.try_emplace(cacheKey, KnownPipeline{type, config, firstFrameUsed});
+    auto [it, inserted] = g_knownPipelines.try_emplace(cacheKey, KnownPipeline{type, config, firstFrameUsed, tags});
     changed = inserted || firstFrameUsed < it->second.firstFrameUsed;
     it->second.firstFrameUsed = std::min(it->second.firstFrameUsed, firstFrameUsed);
+    it->second.tags |= tags;
   }
   if (persist && changed) {
     enqueue_pipeline_cache_write(make_pipeline_cache_write(type, cacheKey, config, firstFrameUsed));
   }
+}
+
+// Adds tag bits to a known config (by its runtime key) and persists them the first time.
+static void tag_pipeline(PipelineRef runtimeKey, uint32_t tags) {
+  PipelineCacheWrite write{};
+  {
+    std::lock_guard lock{g_pipelineMutex};
+    const auto keyIt = g_runtimeToConfig.find(runtimeKey);
+    if (keyIt == g_runtimeToConfig.end()) {
+      return;
+    }
+    const auto knownIt = g_knownPipelines.find(keyIt->second);
+    if (knownIt == g_knownPipelines.end() || (knownIt->second.tags & tags) == tags) {
+      return;
+    }
+    knownIt->second.tags |= tags;
+    std::visit(
+        [&](const auto& config) {
+          write = make_pipeline_cache_write(knownIt->second.type, keyIt->second, config,
+                                            knownIt->second.firstFrameUsed);
+        },
+        knownIt->second.config);
+    write.tags = knownIt->second.tags;
+  }
+  enqueue_pipeline_cache_write(std::move(write));
 }
 
 static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallback&& cb,
@@ -543,7 +586,12 @@ static PipelineRef find_pipeline_impl(PipelineRef runtimeKey, NewPipelineCallbac
 
 static PipelineRef resolve_pipeline(ShaderType type, const gx::PipelineConfig& config, const RenderTargetLayout& layout,
                                     PipelinePriority priority) {
-  const auto runtimeKey = xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(type)));
+  const auto configKey = xxh3_hash(config, static_cast<HashType>(type));
+  const auto runtimeKey = xxh3_hash(layout.key, configKey);
+  {
+    std::lock_guard lock{g_pipelineMutex};
+    g_runtimeToConfig.try_emplace(runtimeKey, configKey);
+  }
   return find_pipeline_impl(runtimeKey, [config, layout] { return create_pipeline(config, layout); }, priority);
 }
 
@@ -571,6 +619,10 @@ static void pipeline_cache_abort() {
     sqlite3_finalize(g_pipelineCacheUpsertStmt);
     g_pipelineCacheUpsertStmt = nullptr;
   }
+  if (g_pipelineTagUpsertStmt != nullptr) {
+    sqlite3_finalize(g_pipelineTagUpsertStmt);
+    g_pipelineTagUpsertStmt = nullptr;
+  }
   if (g_pipelineCacheDb != nullptr) {
     sqlite3_close(g_pipelineCacheDb);
     g_pipelineCacheDb = nullptr;
@@ -578,6 +630,20 @@ static void pipeline_cache_abort() {
 }
 
 static bool write_pipeline_cache_record(const PipelineCacheWrite& write);
+
+static bool write_pipeline_tag(ShaderType type, PipelineRef hash, uint32_t tags) {
+  sqlite3_bind_int(g_pipelineTagUpsertStmt, 1, underlying(type));
+  sqlite3_bind_int64(g_pipelineTagUpsertStmt, 2, static_cast<sqlite3_int64>(hash));
+  sqlite3_bind_int64(g_pipelineTagUpsertStmt, 3, static_cast<sqlite3_int64>(tags));
+  const auto ret = sqlite3_step(g_pipelineTagUpsertStmt);
+  sqlite3_reset(g_pipelineTagUpsertStmt);
+  sqlite3_clear_bindings(g_pipelineTagUpsertStmt);
+  if (ret != SQLITE_DONE) {
+    Log.error("Failed to upsert pipeline tag row: {}", sqlite3_errmsg(g_pipelineCacheDb));
+    return false;
+  }
+  return true;
+}
 
 static std::string pipeline_cache_seed_path() {
   if (g_config.resourcesPath == nullptr || g_config.resourcesPath[0] == '\0') {
@@ -708,6 +774,24 @@ static void seed_pipeline_cache() {
       readFailed = true;
     }
 
+    // The seed's tags, when it has them (older seeds do not).
+    sqlite3_stmt* tagStmt = nullptr;
+    if (!writeFailed && !readFailed &&
+        sqlite3_prepare_v3(seedDb, "SELECT type, hash, tags FROM pipeline_tags", -1, 0, &tagStmt, nullptr) ==
+            SQLITE_OK) {
+      while (sqlite3_step(tagStmt) == SQLITE_ROW) {
+        if (!write_pipeline_tag(static_cast<ShaderType>(sqlite3_column_int(tagStmt, 0)),
+                                static_cast<PipelineRef>(sqlite3_column_int64(tagStmt, 1)),
+                                static_cast<uint32_t>(sqlite3_column_int64(tagStmt, 2)))) {
+          writeFailed = true;
+          break;
+        }
+      }
+    }
+    if (tagStmt != nullptr) {
+      sqlite3_finalize(tagStmt);
+    }
+
     if (!writeFailed && !readFailed) {
       tx.commit();
     }
@@ -807,10 +891,31 @@ INSERT INTO aurora_schema VALUES ({});)",
     return false;
   }
 
+  // Tag bits per config (PipelineTag*), a side table so the pipeline_cache schema and older seeds
+  // stay valid: a seed without it simply has no tags.
+  ret = sqlite::exec(g_pipelineCacheDb, "CREATE TABLE IF NOT EXISTS pipeline_tags ("
+                                        "type INTEGER NOT NULL, hash INTEGER NOT NULL, tags INTEGER NOT NULL, "
+                                        "PRIMARY KEY (type, hash));");
+  if (ret != SQLITE_OK) {
+    Log.error("Failed to create pipeline tag table: {}", sqlite3_errmsg(g_pipelineCacheDb));
+    pipeline_cache_abort();
+    return false;
+  }
   ret = sqlite3_prepare_v3(g_pipelineCacheDb,
-                           "SELECT config, first_frame_used FROM pipeline_cache "
-                           "WHERE type = ? AND config_version = ? "
-                           "ORDER BY first_frame_used ASC, rowid ASC",
+                           "INSERT INTO pipeline_tags (type, hash, tags) VALUES (?, ?, ?) "
+                           "ON CONFLICT(type, hash) DO UPDATE SET tags = pipeline_tags.tags | excluded.tags",
+                           -1, SQLITE_PREPARE_PERSISTENT, &g_pipelineTagUpsertStmt, nullptr);
+  if (ret != SQLITE_OK) {
+    Log.error("Failed to prepare pipeline tag upsert statement: {}", sqlite3_errmsg(g_pipelineCacheDb));
+    pipeline_cache_abort();
+    return false;
+  }
+
+  ret = sqlite3_prepare_v3(g_pipelineCacheDb,
+                           "SELECT c.config, c.first_frame_used, IFNULL(t.tags, 0) FROM pipeline_cache c "
+                           "LEFT JOIN pipeline_tags t ON t.type = c.type AND t.hash = c.hash "
+                           "WHERE c.type = ? AND c.config_version = ? "
+                           "ORDER BY c.first_frame_used ASC, c.rowid ASC",
                            -1, SQLITE_PREPARE_PERSISTENT, &g_pipelineCacheLoadStmt, nullptr);
   if (ret != SQLITE_OK) {
     Log.error("Failed to prepare pipeline cache load statement: {}", sqlite3_errmsg(g_pipelineCacheDb));
@@ -922,7 +1027,7 @@ static bool write_pipeline_cache_record(const PipelineCacheWrite& write) {
 
   sqlite3_reset(g_pipelineCacheUpsertStmt);
   sqlite3_clear_bindings(g_pipelineCacheUpsertStmt);
-  return true;
+  return write.tags == 0 || write_pipeline_tag(write.type, write.hash, write.tags);
 }
 
 static void pipeline_cache_writer() {
@@ -980,11 +1085,13 @@ static void pipeline_worker() {
     {
       std::unique_lock lock{g_pipelineMutex};
       if (g_hasPipelineThread) {
-        if (!hasMore) {
-          g_pipelineQueueCv.wait(lock, [] {
-            return !g_pipelineQueue.empty() || !g_backgroundPipelineQueue.empty() || g_pipelineThreadEnd;
-          });
-        }
+        // Always re-check under the lock: with several workers, another may have taken the last one.
+        // While a draw is blocked in wait_pipeline, background (seed) work is held back so the
+        // blocked compile does not share the CPU with a fresh batch of warm-ups.
+        g_pipelineQueueCv.wait(lock, [] {
+          return !g_pipelineQueue.empty() || (!g_backgroundPipelineQueue.empty() && g_pipelineWaiters == 0) ||
+                 g_pipelineThreadEnd;
+        });
       } else if (g_pipelineQueue.empty() && g_backgroundPipelineQueue.empty()) {
         return;
       }
@@ -1039,6 +1146,7 @@ static size_t load_pipeline_cache_entries(ShaderType type, uint32_t configVersio
     const auto* configBlob = static_cast<const uint8_t*>(sqlite3_column_blob(g_pipelineCacheLoadStmt, 0));
     const auto configSize = sqlite3_column_bytes(g_pipelineCacheLoadStmt, 0);
     const auto firstFrameUsed = static_cast<uint32_t>(sqlite3_column_int64(g_pipelineCacheLoadStmt, 1));
+    const auto tags = static_cast<uint32_t>(sqlite3_column_int64(g_pipelineCacheLoadStmt, 2));
     if (configSize != static_cast<int>(sizeof(PipelineConfig)) || (configSize != 0 && configBlob == nullptr)) {
       continue;
     }
@@ -1049,7 +1157,7 @@ static size_t load_pipeline_cache_entries(ShaderType type, uint32_t configVersio
       continue;
     }
 
-    remember_pipeline_config(type, config, firstFrameUsed, false);
+    remember_pipeline_config(type, config, firstFrameUsed, false, tags);
     ++acceptedRows;
   }
 
@@ -1140,7 +1248,17 @@ void rebuild_pipeline_cache() {
       known.push_back(pipeline);
     }
   }
-  std::ranges::sort(known, {}, &KnownPipeline::firstFrameUsed);
+  // MUST_DRAW (item) configs first, then first-use order: a draw that meets one of those unbuilt
+  // blocks (wait_pipeline), so they are warmed from boot - through the intro and menus - rather
+  // than only at match load, where a slow machine can reach the loading hold's ceiling first.
+  std::ranges::sort(known, [](const KnownPipeline& a, const KnownPipeline& b) {
+    const bool mustA = (a.tags & AURORA_PIPELINE_TAG_MUST_DRAW) != 0;
+    const bool mustB = (b.tags & AURORA_PIPELINE_TAG_MUST_DRAW) != 0;
+    if (mustA != mustB) {
+      return mustA;
+    }
+    return a.firstFrameUsed < b.firstFrameUsed;
+  });
   for (const auto& pipeline : known) {
     std::visit(
         [&](const auto& config) {
@@ -1163,7 +1281,17 @@ void initialize_pipeline_cache() {
     g_hasPipelineThread = false;
   } else {
     g_hasPipelineThread = true;
-    g_pipelineThread = std::thread(pipeline_worker);
+    // Default: all but two hardware threads (the game and render threads), 1..8.
+    int workers = static_cast<int>(std::thread::hardware_concurrency()) - 2;
+    if (const char* env = std::getenv("AURORA_PIPELINE_WORKERS"); env != nullptr && env[0] != '\0') {
+      workers = std::atoi(env);
+    }
+    workers = std::clamp(workers, 1, 8);
+    for (int i = 0; i < workers; ++i) {
+      g_pipelineThreads.emplace_back(pipeline_worker);
+    }
+    detail::resources().stats.pipelineWorkers = static_cast<uint32_t>(workers);
+    Log.info("{} pipeline compile worker(s)", workers);
   }
 
   const size_t loadedCount = load_pipeline_cache();
@@ -1182,8 +1310,12 @@ void shutdown_pipeline_cache() {
     g_pipelineThreadEnd = true;
     g_pipelineQueueCv.notify_all();
     g_pipelineReadyCv.notify_all();
-    g_pipelineThread.join();
+    for (auto& thread : g_pipelineThreads) {
+      thread.join();
+    }
+    g_pipelineThreads.clear();
   }
+  g_runtimeToConfig.clear();
   g_hasPipelineThread = false;
 
   stop_pipeline_cache_writer();
@@ -1226,17 +1358,89 @@ void wait_pipeline(PipelineRef ref) {
   if (g_pipelines.contains(ref) || !g_pendingPipelines.contains(ref)) {
     return;
   }
-  // to the front: out of the background (seed) queue, or ahead of the other urgent requests
-  auto it = find_pending_pipeline(g_pipelineQueue, ref);
-  if (it != g_pipelineQueue.end()) {
-    PendingPipeline pending = std::move(*it);
-    g_pipelineQueue.erase(it);
-    g_pipelineQueue.emplace_front(std::move(pending));
-  } else {
-    promote_pending_pipeline(ref, PipelinePriority::Blocking);
+  const auto start = std::chrono::steady_clock::now();
+  ++g_pipelineWaiters;
+  // Still queued (no worker has it): take it and build it right here, so the wait is one compile
+  // and never "the workers' current jobs, then this one". It stays in g_pendingPipelines while it
+  // builds, so nothing queues it a second time.
+  std::optional<PendingPipeline> stolen;
+  for (auto* queue : {&g_pipelineQueue, &g_backgroundPipelineQueue}) {
+    auto it = find_pending_pipeline(*queue, ref);
+    if (it != queue->end()) {
+      stolen = std::move(*it);
+      queue->erase(it);
+      break;
+    }
   }
-  g_pipelineQueueCv.notify_one();
-  g_pipelineReadyCv.wait(lock, [=] { return g_pipelines.contains(ref) || g_pipelineThreadEnd; });
+  if (stolen) {
+    lock.unlock();
+    auto result = stolen->create();
+    lock.lock();
+    g_pipelines.try_emplace(ref, CachedPipeline{std::move(result)});
+    g_pendingPipelines.erase(ref);
+    lock.unlock();
+    if (stolen->seed) {
+      ++seedPipelinesBuilt;
+    }
+    if (stolen->urgent) {
+      --urgentPipelinesPending;
+    }
+    notify_pipeline_ready(true);
+  } else {
+    // a worker is building it now
+    g_pipelineReadyCv.wait(lock, [=] { return g_pipelines.contains(ref) || g_pipelineThreadEnd; });
+    lock.unlock();
+  }
+  {
+    std::lock_guard guard{g_pipelineMutex};
+    --g_pipelineWaiters;
+  }
+  g_pipelineQueueCv.notify_all(); // background warm-up may resume
+  const auto us = static_cast<uint32_t>(
+      std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count());
+  auto& stats = detail::resources().stats;
+  stats.pipelineWaitHits = ++g_pipelineWaitHits;
+  stats.pipelineWaitUs = (g_pipelineWaitUs += us);
+  Log.warn("pipeline wait: draw blocked {:.1f} ms on pipeline {:x} ({}) - not covered by any warm-up", us / 1000.0,
+           ref, stolen ? "built inline" : "worker");
+}
+
+void tag_pipeline_must_draw(PipelineRef ref) { tag_pipeline(ref, AURORA_PIPELINE_TAG_MUST_DRAW); }
+
+static uint32_t count_tagged(uint32_t tagMask) {
+  std::lock_guard lock{g_pipelineMutex};
+  uint32_t n = 0;
+  for (const auto& pipeline : g_knownPipelines | std::views::values) {
+    n += (pipeline.tags & tagMask) != 0 ? 1 : 0;
+  }
+  return n;
+}
+
+static uint32_t prewarm_tagged(uint32_t tagMask) {
+  const auto scene = scene_render_target_layout();
+  std::vector<KnownPipeline> tagged;
+  {
+    std::lock_guard lock{g_pipelineMutex};
+    for (const auto& pipeline : g_knownPipelines | std::views::values) {
+      if ((pipeline.tags & tagMask) != 0) {
+        tagged.push_back(pipeline);
+      }
+    }
+  }
+  const uint32_t urgentBefore = detail::resources().stats.urgentPipelinesPending;
+  uint32_t notReady = 0;
+  for (const auto& pipeline : tagged) {
+    std::visit(
+        [&](const auto& config) {
+          const auto ref = resolve_pipeline(pipeline.type, config, scene, PipelinePriority::Normal);
+          std::lock_guard lock{g_pipelineMutex};
+          notReady += g_pipelines.contains(ref) ? 0 : 1;
+        },
+        pipeline.config);
+  }
+  Log.info("prewarm: {} tagged pipeline config(s), {} not built yet (urgent {} -> {})", tagged.size(), notReady,
+           urgentBefore, detail::resources().stats.urgentPipelinesPending);
+  return notReady;
 }
 
 bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
@@ -1250,3 +1454,7 @@ bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
 }
 
 } // namespace aurora::gfx
+
+uint32_t aurora_prewarm_tagged_pipelines(uint32_t tagMask) { return aurora::gfx::prewarm_tagged(tagMask); }
+
+uint32_t aurora_count_tagged_pipelines(uint32_t tagMask) { return aurora::gfx::count_tagged(tagMask); }

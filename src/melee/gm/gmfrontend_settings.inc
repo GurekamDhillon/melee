@@ -9,8 +9,7 @@
  *
  *   VIDEO     render scale, frame rate, vsync, FPS readout     video.cfg   (gw_Video_*)
  *   AUDIO     master volume; music/effects mix, stereo/mono     audio.cfg + the memory card
- *   CONTROLS  input device (next start), adapter status +      settings.cfg
- *             recalibrate, the keyboard's layout
+ *   CONTROLS  adapter status + recalibrate, the hotkeys        -
  *   ONLINE    player name, server, input delay, stage list     settings.cfg
  *   MODS      every mod in the folder, on/off                  mods/enabled.txt (gw_Mods_*)
  *   GAMEPLAY  unlock everything, the default match rules       settings.cfg + the memory card
@@ -218,19 +217,6 @@ static const FrontendItem fe_items_set_audio[] = {
 };
 
 /* ---- CONTROLS ------------------------------------------------------------------------------- */
-static const char* const fsc_inputs[] = { "Every device", "GameCube controller", "Keyboard" };
-static const char* const fsc_input_keys[] = { "", "gc", "keyboard" };
-static int fsc_get_input(void)
-{
-    char b[16];
-    Settings_Str("input", b, sizeof b, "");
-    return b[0] == 'g' ? 1 : b[0] == 'k' ? 2 : 0;
-}
-static void fsc_set_input(int v)
-{
-    Settings_SetStr("input", fsc_input_keys[v]);
-    fe_ol_notice("The input device changes from the next start.", false);
-}
 static void fsc_fmt_adapter(int v, char* out)
 {
     (void) v;
@@ -252,30 +238,23 @@ static int fsc_zero(void) { return 0; }
         (void) v;                                                                                 \
         sprintf(out, "%s", text);                                                                 \
     }
-FSC_KEY(stick, "W A S D (Shift: half)")
-FSC_KEY(cstick, "Arrow keys")
-FSC_KEY(ab, "J / K")
-FSC_KEY(xy, "I or Space / O")
-FSC_KEY(lrz, "U / L / ;")
-FSC_KEY(start, "Enter")
+FSC_KEY(panel, "F9")
+FSC_KEY(reshow, "F10")
+FSC_KEY(console, "Backquote (left of 1)")
+FSC_KEY(mouse, "Point, click; right-click back")
 
+/* The keyboard does not play: controllers play, the keyboard is hotkeys (and mods' keys). */
 static const FrontendItem fe_items_set_controls[] = {
-    { FE_CHOICE, 0, "Input Device", "Which devices this window reads (from the next start).",
-      fsc_get_input, fsc_set_input, 0, 2, 1, fsc_inputs },
     { FE_ACTION, FE_DO_CALL, "GameCube Adapter", "A recalibrates every controller's sticks.", NULL, NULL,
       0, 0, 0, NULL, fsc_fmt_adapter, NULL, fsc_recal },
-    { FE_SLIDER, 0, "Keyboard: Stick", "The keyboard as a controller.", fsc_zero, NULL, 0, 0, 0, NULL,
-      fsc_k_stick },
-    { FE_SLIDER, 0, "Keyboard: C-Stick", "The keyboard as a controller.", fsc_zero, NULL, 0, 0, 0, NULL,
-      fsc_k_cstick },
-    { FE_SLIDER, 0, "Keyboard: A / B", "The keyboard as a controller.", fsc_zero, NULL, 0, 0, 0, NULL,
-      fsc_k_ab },
-    { FE_SLIDER, 0, "Keyboard: X / Y", "The keyboard as a controller.", fsc_zero, NULL, 0, 0, 0, NULL,
-      fsc_k_xy },
-    { FE_SLIDER, 0, "Keyboard: L / R / Z", "The keyboard as a controller.", fsc_zero, NULL, 0, 0, 0,
-      NULL, fsc_k_lrz },
-    { FE_SLIDER, 0, "Keyboard: Start", "The keyboard as a controller.", fsc_zero, NULL, 0, 0, 0, NULL,
-      fsc_k_start },
+    { FE_SLIDER, 0, "Controller Panel", "Hotkey: what each port reads; with an adapter, also recalibrates.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_panel },
+    { FE_SLIDER, 0, "Overlays Back", "Hotkey: puts every overlay back on screen.", fsc_zero, NULL, 0,
+      0, 0, NULL, fsc_k_reshow },
+    { FE_SLIDER, 0, "Console", "Hotkey: the command console.", fsc_zero, NULL, 0, 0, 0, NULL,
+      fsc_k_console },
+    { FE_SLIDER, 0, "Mouse", "Menus take the mouse too (the wheel scrolls); matches never do.",
+      fsc_zero, NULL, 0, 0, 0, NULL, fsc_k_mouse },
 };
 
 /* ---- ONLINE --------------------------------------------------------------------------------- */

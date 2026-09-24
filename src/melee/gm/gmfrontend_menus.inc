@@ -171,7 +171,7 @@ static const FeMenuItem fm_settings[] = {
     /* the port's pages (gmfrontend_settings.inc); the game's own options follow */
     { "VIDEO", "Render scale, frame rate, vsync, FPS readout.", NULL, 0x41, FA_PAGE, 0 },
     { "AUDIO", "Master volume, music and effects mix, stereo or mono.", NULL, 0x42, FA_PAGE, 1 },
-    { "CONTROLS", "Input device, adapter recalibration, keyboard layout.", NULL, 0x43, FA_PAGE, 2 },
+    { "CONTROLS", "Adapter recalibration, the hotkeys and the mouse.", NULL, 0x43, FA_PAGE, 2 },
     { "ONLINE", "Your player name, the server, input delay, stage list.", NULL, 0x44, FA_PAGE, 3 },
     { "MODS", "Turn mods on or off.", NULL, 0x45, FA_PAGE, 4 },
     { "GAMEPLAY", "Unlock everything, the default match rules.", NULL, 0x46, FA_PAGE, 5 },
@@ -635,9 +635,12 @@ static void fm_chrome_with(const char* title, const char* const* crumbs, int ncr
             kit.footer[3], ink);
     fm_flat("footer_mark", FPR_CHROME, -1, kit.footer_mark[0], kit.footer_mark[1],
             kit.footer_mark[2], kit.footer_mark[3], gold);
-    /* hints: glyph, 4px, text, 12px */
+    /* hints: glyph, 4px, text, 12px (each one a button for the mouse) */
     x = kit.footer[0] + 24;
+    fms.nhint = 0;
     for (i = 0; i < nhints; i++) {
+        float hx0 = x - 4;
+        int gq;
         int t = fp_tex(hglyph[i]);
         float gw = kit.hint_glyph_h;
         const float* tint = strcmp(hglyph[i], "glyph_a") == 0   ? ok
@@ -647,13 +650,14 @@ static void fm_chrome_with(const char* title, const char* const* crumbs, int ncr
             gw = kit.hint_glyph_h * (float) fp.tex[t].t.w / (float) fp.tex[t].t.h;
         }
         sprintf(id, "hint_%d_glyph", i);
-        fm_textured(id, FPR_CHROME, -1, hglyph[i], x, kit.hint_glyph_y0, x + gw,
-                    kit.hint_glyph_y0 + kit.hint_glyph_h, tint);
+        gq = fm_textured(id, FPR_CHROME, -1, hglyph[i], x, kit.hint_glyph_y0, x + gw,
+                         kit.hint_glyph_y0 + kit.hint_glyph_h, tint);
         x += gw + 4;
         sprintf(id, "hint_%d_text", i);
         fm_text(id, FPR_CHROME, -1, kit.hint_role, x, kit.hint_anchor_y, htext[i], bone,
                 kit.hint_max);
         x += fm_last_w + 12;
+        fms_hint_add(gq, hglyph[i], hx0, x - 6, kit.footer[1], kit.footer[3]);
     }
 }
 
@@ -1254,6 +1258,47 @@ static int fm_move(u32 in)
     return fm.cursor;
 }
 
+/* The cursor to slot `to`, as a d-pad press moves it: the sound, the list's scroll, the kit's
+ * row_select / row_deselect or the hub's cursor move. */
+static void fm_go(int to)
+{
+    if (to == fm.cursor || to < 0 || to >= fm.nvis) {
+        return;
+    }
+    sfxMove();
+    fm.cursor = to;
+    fm_list_scroll();
+    if (fp.motion_ok && fm.menu->style == FM_LIST && fp_find_event("row_select") >= 0) {
+        /* the kit's list_cursor_move: row_deselect / row_select, with the hub's
+           description fade for the strip */
+        int old = fp.sel;
+        fp.prev = old;
+        fp.sel = fm.tile_of[to];
+        fp_event("row_deselect", old, fp.frame, -1);
+        fp_event("desc_out", old, fp.frame, -1);
+        fp_event("row_select", fp.sel, fp.frame, -1);
+        fp_event("desc_in", fp.sel, fp.frame, -1);
+    } else if (fp.motion_ok) {
+        fp_cursor_move(fm.tile_of[to], fp.frame);
+    } else {
+        fp_reset_channels();
+        fp_select_initial(fm.tile_of[to], fp.frame);
+    }
+}
+
+/* The slot under the pointer (a tile's face as drawn), or -1. */
+static int fm_mouse_slot(void)
+{
+    int i;
+    for (i = 0; i < fm.nvis; i++) {
+        const FpTile* t = &fp.tile[fm.tile_of[i]];
+        if (fms_in_quad(t->q_face) || fms_in_quad(t->q_plate)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 /* ---- the scene ---------------------------------------------------------------------------- */
 
 static void fm_scene_enter(void)
@@ -1308,7 +1353,22 @@ static void fm_scene_frame(void)
         fm.leave_at = 0;
         fm_do_pending();
     } else if (fm.leave_at == 0 && !fm.fading_out && fm.frames >= fm.ready_at && fm.nvis > 0) {
-        in = mn_80229624(4);
+        in = mn_80229624(4) | fms_menu_bits();
+        {
+            /* the mouse: pointing moves the cursor, a click selects, the wheel scrolls a list */
+            int hov = fm_mouse_slot();
+            if (hov >= 0 && (fms.moved || fms.click) && !(in & MenuInput_Confirm)) {
+                fm_go(hov);
+            }
+            if (fms.click && hov >= 0) {
+                in |= MenuInput_Confirm;
+            }
+            if (fms.wheel != 0 && fm.menu->style == FM_LIST) {
+                /* the wheel stops at the ends (the d-pad wraps) */
+                int to = fm.cursor - fms.wheel;
+                fm_go(to < 0 ? 0 : to >= fm.nvis ? fm.nvis - 1 : to);
+            }
+        }
         /* L+R+START anywhere but Main: back to the main menu, as mnMain_Scene_OnFrame does
            (it reloads GM_MENU with force_main_menu set, which routes here) */
         if (mn_8022F218() && fm.menu->kind != MENU_KIND_MAIN) {
@@ -1322,30 +1382,7 @@ static void fm_scene_frame(void)
         } else if (in & MenuInput_Back) {
             fm_back();
         } else if (in & (MenuInput_Up | MenuInput_Down | MenuInput_Left | MenuInput_Right)) {
-            int to = fm_move(in);
-            if (to != fm.cursor) {
-                sfxMove();
-                fm.cursor = to;
-                fm_list_scroll();
-                if (fp.motion_ok && fm.menu->style == FM_LIST &&
-                    fp_find_event("row_select") >= 0)
-                {
-                    /* the kit's list_cursor_move: row_deselect / row_select, with the hub's
-                       description fade for the strip */
-                    int old = fp.sel;
-                    fp.prev = old;
-                    fp.sel = fm.tile_of[to];
-                    fp_event("row_deselect", old, fp.frame, -1);
-                    fp_event("desc_out", old, fp.frame, -1);
-                    fp_event("row_select", fp.sel, fp.frame, -1);
-                    fp_event("desc_in", fp.sel, fp.frame, -1);
-                } else if (fp.motion_ok) {
-                    fp_cursor_move(fm.tile_of[to], fp.frame);
-                } else {
-                    fp_reset_channels();
-                    fp_select_initial(fm.tile_of[to], fp.frame);
-                }
-            }
+            fm_go(fm_move(in));
         }
     }
     fm_mirror_flow();

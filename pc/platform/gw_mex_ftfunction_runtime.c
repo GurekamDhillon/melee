@@ -141,7 +141,7 @@ static int gw_mex_slot_of_internal(int k);
  * (GW_FTFUNC_KIND_MAX): 46 * 4 + 46 * 512 = 0x5CB8 at most. */
 #define GW_MEX_MEXDATA_SIZE 0x6000u
 #define GW_MEX_STACK_SIZE 0x10000u
-#define GW_MEX_GETDATA_SIZE 0x1000u /* synthetic safe buffer MEX_GetData(8) hands back */
+#define GW_MEX_GETDATA_SIZE 0x10000u /* MEX_GetData(8): the costume table mirrored into MEM1 */
 
 /* MoveLogic (slot 3) is a MotionState[] table the engine indexes by `motion_id - fp->x18`. Its
  * layout (mirroring src/melee/ft/types.h MotionState, 0x20 bytes) is:
@@ -1870,6 +1870,46 @@ static uint32_t gw_mex_mexdt_field(uint32_t root, uint32_t arch, uint32_t field)
     return a != 0u ? gw_mex_mexdt_ptr(a + field) : 0u;
 }
 
+/* MEX_GetData(8). m-ex's Char_CostumeRuntimePointers IS the game's own
+ * CostumeListsForeachCharacter: per internal kind an 8-byte {UnkCostumeStruct *list; u8 count}
+ * row, each list entry 0x18 bytes with the loaded costume archive at +0x14. Blobs index it
+ * kind * 8, then costume * 0x18 (PlTs.dat's OnLoad: slwi r9,kind,3; lwzx; mulli costume,24;
+ * lwz r3,20). ftData_80085820 fills an entry as it loads the costume, before OnLoad runs.
+ * OnLoads look symbols up in the costume file through it (Sonic's PlySonicColor, Tails'
+ * PlyTailsColor); the old zeroed stand-in gave them NULL, and Color_Shoes / Effect_Recolor
+ * faulted on that later.
+ *
+ * The table and the m-ex kinds' lists live in the exe's data, which the interpreter cannot read
+ * (it reads MEM1 only), so every call copies them into the MEM1 scratch buffer: the rows at +0,
+ * then each kind's entries, the rows pointing at the copies. The entries' own pointers (joint,
+ * matanim, archive) are heap - MEM1 - already. A copy is current for the call that asked, which is
+ * when a blob reads it (OnLoad, right after the costume loaded). Kinds past the buffer, or with no
+ * list, get a NULL row. */
+static uint32_t gw_mex_costume_mirror(void) {
+    extern uint8_t gw_CostumeListsForeachCharacter[];
+    const uint32_t kinds = GW_PORT_FT_MEX0 + GW_MEX_SLOTS;
+    uint32_t k, at = kinds * 8u;
+    uint8_t *buf = (uint8_t *) (uintptr_t) gw_mex_getdata_buf;
+    if (gw_mex_getdata_buf == 0u) {
+        return 0u;
+    }
+    for (k = 0; k < kinds; ++k) {
+        const uint8_t *row = gw_CostumeListsForeachCharacter + k * 8u;
+        uint32_t list = gw_r32(row);
+        uint32_t n = gw_r8(row + 4u);
+        uint32_t bytes = n * 0x18u;
+        uint32_t dst = 0u;
+        if (list != 0u && n != 0u && at + bytes <= GW_MEX_GETDATA_SIZE) {
+            dst = gw_mex_getdata_buf + at;
+            memcpy(buf + at, (const void *) (uintptr_t) list, bytes); /* big-endian both sides */
+            at += bytes;
+        }
+        gw_w32(buf + k * 8u, dst);
+        memcpy(buf + k * 8u + 4u, row + 4u, 4u); /* the count byte and its padding */
+    }
+    return gw_mex_getdata_buf;
+}
+
 static uint32_t gw_mex_shim_get_data(uint32_t id, uint32_t a1, uint32_t a2, uint32_t a3,
                                      uint32_t a4, uint32_t a5, uint32_t a6, uint32_t a7) {
     static uint32_t moaned;
@@ -1902,10 +1942,24 @@ static uint32_t gw_mex_shim_get_data(uint32_t id, uint32_t a1, uint32_t a2, uint
             r = gw_mex_mexdt_field(root, 0x08u, 0x0Cu);
             break;
         case GW_MXDT_FTCOSTUMEARCHIVE:
-            /* Its own rtoc slot, not a mexData field: the port has no real one, so hand back the
-             * synthetic buffer whose per-kind slots point at a zeroed sub-region - onLoad's
-             * costume lookup then reads NULL and skips instead of faulting on an unbuilt table. */
-            r = gw_mex_getdata_buf;
+            /* m-ex's Char_CostumeRuntimePointers is the game's own CostumeListsForeachCharacter
+             * (see gw_mex_costume_mirror); the interpreter reads MEM1 only, so it gets a copy. */
+            r = gw_mex_costume_mirror();
+            {
+                /* name each distinct caller once: which fighters use the costume archive */
+                extern uint32_t gw_ppc_guest_lr(void);
+                extern const char *gw_ppc_describe(uint32_t guest_addr);
+                static uint32_t seen[32];
+                static int nseen;
+                uint32_t lr = gw_ppc_guest_lr();
+                int s;
+                for (s = 0; s < nseen && seen[s] != lr; ++s) {
+                }
+                if (s == nseen && nseen < 32) {
+                    seen[nseen++] = lr;
+                    gw_log("interp: MEX_GetData(8) costume table used by %s", gw_ppc_describe(lr));
+                }
+            }
             break;
         default:
             known = 0;
@@ -3327,14 +3381,6 @@ void gw_Mex_RuntimeInit(void) {
     gw_mex_stack_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_STACK_SIZE);
     getdata_base = (uint32_t) (uintptr_t) gw_mex_persist_alloc(GW_MEX_GETDATA_SIZE);
     gw_mex_getdata_buf = getdata_base;
-    {
-        /* Make every per-kind slot of the synthetic costume table point at a zeroed sub-region,
-         * so onLoad's costume lookup dereferences valid guest memory and reads NULL (skips). */
-        uint32_t i;
-        for (i = 0; i < 0x400u / 4u; ++i) {
-            gw_w32((void *)(uintptr_t)(getdata_base + 4u * i), getdata_base + 0x400u);
-        }
-    }
     gw_mex_stack_top = gw_mex_stack_base + GW_MEX_STACK_SIZE - 0x100u;
     gw_mex_r2 = gw_mex_mexdata_base;
     gw_ppc_set_bridge(gw_mex_interp_resolve, NULL, 0u, 0u); /* code lives in added ranges */

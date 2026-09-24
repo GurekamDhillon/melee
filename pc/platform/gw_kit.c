@@ -1118,6 +1118,7 @@ static int kq_build;
 void gw_Kit_BeginFrame(void) { nkq = 0; }
 void gw_Kit_SwapBanks(void) { kq_build = !kq_build; }
 int gw_Kit_QuadCount(void) { return nkq; }
+void gw_Kit_TruncateQuads(int n) { if (n >= 0 && n < nkq) nkq = n; }
 const GwKitQuad *gw_Kit_QuadAt(int i) { return (i >= 0 && i < nkq) ? &kq[i] : NULL; }
 const GwKitQuad *gw_Kit_ShownQuadAt(int i) {
     int b = !kq_build;

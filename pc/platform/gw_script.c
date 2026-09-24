@@ -1356,6 +1356,23 @@ static int l_key_pressed(lua_State *L) {
     return 1;
 }
 
+/* gd.mouse() -> x, y, buttons, wheel: the pointer in the 640x480 kit/overlay space (-1000, -1000
+ * when it is outside the picture), buttons 1 left + 2 right + 4 middle, the wheel's notches this
+ * tick (+ up). Local UI input only: it never reaches the pads or a netplay peer. Polling it is what
+ * shows the cursor during a match (a script's menu is open), so poll it only while one is. */
+extern void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel);
+extern void gw_Mouse_ScriptTick(void);
+static int l_mouse(lua_State *L) {
+    float x, y, wheel;
+    int buttons;
+    gw_Mouse_ScriptRead(&x, &y, &buttons, &wheel);
+    lua_pushnumber(L, x);
+    lua_pushnumber(L, y);
+    lua_pushinteger(L, buttons);
+    lua_pushnumber(L, wheel);
+    return 4;
+}
+
 static void gs_poll_keys(void) {
     HWND fg = GetForegroundWindow();
     DWORD pid = 0;
@@ -1363,7 +1380,9 @@ static void gs_poll_keys(void) {
     if (fg != NULL) {
         GetWindowThreadProcessId(fg, &pid);
     }
-    focused = pid == GetCurrentProcessId() && !gs.console_open;
+    /* typing (the console, a name, a room code): the keys are text, not hotkeys */
+    focused = pid == GetCurrentProcessId() && !gs.console_open &&
+              (int) (GetTickCount() - (DWORD) gw_TextEntryUntil) >= 0;
     memcpy(gs.key_prev, gs.key_now, sizeof gs.key_now);
     for (vk = 1; vk < 256; ++vk) {
         gs.key_now[vk] = (unsigned char) (focused && (GetAsyncKeyState(vk) & 0x8000) != 0);
@@ -3618,7 +3637,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_stocks", l_set_stocks},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
-    {"key_pressed", l_key_pressed}, {"command", l_command}, {"run", l_run},
+    {"key_pressed", l_key_pressed}, {"mouse", l_mouse}, {"command", l_command}, {"run", l_run},
     {"data_read", l_data_read}, {"data_write", l_data_write}, {"script", l_script_info},
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
     {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
@@ -4413,9 +4432,10 @@ void gw_Script_Tick(void) {
         return;
     }
     if (gs.console_open) {
-        gw_TextEntryUntil = (int) GetTickCount() + 200; /* the keyboard is text, not a pad */
+        gw_TextEntryUntil = (int) GetTickCount() + 200; /* the keyboard is text, not hotkeys */
     }
     gs_poll_keys();
+    gw_Mouse_ScriptTick();
     gs_socket_poll();
     if (gs_pending_launch >= 0) {
         int mode = gs_pending_launch;

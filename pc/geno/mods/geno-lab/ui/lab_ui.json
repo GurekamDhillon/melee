@@ -1324,6 +1324,244 @@
    }
   },
   {
+   "name": "ico_lab_moves",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_moves.png",
+   "file_1x": "out/1x/ico_lab_moves.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "MOVES: the state browser (a list of states, one playing)",
+   "tint": "bone",
+   "alpha_levels_i4": 14,
+   "legibility": {
+    "full": [
+     6,
+     0
+    ],
+    "at_2x_draw": [
+     6,
+     0
+    ],
+    "at_1x_draw": [
+     6,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_launch",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_launch.png",
+   "file_1x": "out/1x/ico_lab_launch.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "LAUNCH: the knockback preview (a launch arc from a hit)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_ab",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_ab.png",
+   "file_1x": "out/1x/ico_lab_ab.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "A/B: compare two variants on the same inputs (two panes, one solid)",
+   "tint": "bone",
+   "alpha_levels_i4": 5,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_export",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_export.png",
+   "file_1x": "out/1x/ico_lab_export.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "the frame-data export (a table and a down arrow)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     5,
+     0
+    ],
+    "at_2x_draw": [
+     5,
+     0
+    ],
+    "at_1x_draw": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_diff",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_diff.png",
+   "file_1x": "out/1x/ico_lab_diff.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "the frame-data diff (a row broken where it changed)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     4,
+     0
+    ],
+    "at_2x_draw": [
+     4,
+     0
+    ],
+    "at_1x_draw": [
+     4,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_rollback",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_rollback.png",
+   "file_1x": "out/1x/ico_lab_rollback.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "the rollback visualiser (rollback bars under a back arrow)",
+   "tint": "bone",
+   "alpha_levels_i4": 6,
+   "legibility": {
+    "full": [
+     5,
+     0
+    ],
+    "at_2x_draw": [
+     5,
+     0
+    ],
+    "at_1x_draw": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_lab_ko",
+   "group": "icon",
+   "file_2x": "out/2x/ico_lab_ko.png",
+   "file_1x": "out/1x/ico_lab_ko.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "bytes_2x": 2048,
+   "min_draw_1x": 16,
+   "use": "a blast-zone crossing (a burst)",
+   "tint": "bone",
+   "alpha_levels_i4": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     5,
+     0
+    ]
+   }
+  },
+  {
    "name": "ico_lab_help",
    "group": "icon",
    "file_2x": "out/2x/ico_lab_help.png",

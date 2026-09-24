@@ -26,6 +26,9 @@
 #include <windows.h>
 
 extern int gw_Replay_Active(void);
+/* the Geno Lab's rollback visualiser (gw_snap.c) */
+extern void gw_RbViz_Push(int frame, int first, int depth, int cause, double ms, int kind);
+extern void gw_RbViz_Desync(int frame, uint32_t local, uint32_t peer);
 extern int gw_Replay_Frame(void);
 extern int gw_Replay_LastFrame(void);
 extern int gw_Replay_Live(void);
@@ -111,6 +114,8 @@ static struct {
     int fake_done_frame[GW_RB_SLOTS][RB_RING];
 
     int first_wrong;                  /* earliest simulated frame whose confirmed input differs */
+    int first_wrong_slot;             /* the input slot (port*2 + follower) that set it (Lab viz) */
+    int cur_cause, cur_first;         /* the current rollback's cause slot and first frame (Lab viz) */
     /* the plan for this tick */
     struct {
         int rollback, first, n, i, k, new_frame;
@@ -413,6 +418,7 @@ void gw_rb_submit_remote_input(int slot, int frame, const GwRbInput *in) {
             }
             if (frame < rb.first_wrong) {
                 rb.first_wrong = frame;
+                rb.first_wrong_slot = slot;
             }
         }
         u->in.confirmed = 1;
@@ -921,10 +927,14 @@ int gw_RB_Iterations(int count) {
                 rb.n_desync++;
                 gw_log("rb: DESYNC - frame %d needs a correction but its snapshot is gone (now at "
                        "%d, confirmed %d)", f, n, conf);
+                gw_RbViz_Push(n, f, n - f, rb.first_wrong_slot / 2, 0.0, 2);
+                gw_RbViz_Desync(f, 0, 0);
             } else {
                 rb.plan.rollback = 1;
                 rb.plan.first = f;
                 rb.plan.k = n - f;
+                rb.cur_cause = rb.first_wrong_slot / 2;
+                rb.cur_first = f;
                 if (rb.log > 0) {
                     rb.log--;
                     gw_log("rb: rollback to frame %d (k=%d) at next frame %d, tick %ld, confirmed %d", f,
@@ -1014,6 +1024,12 @@ void gw_RB_TickEnd(void) {
         } else {
             rb.c_new += di;
         }
+    }
+    if (k > 0) {
+        /* the Lab's rollback visualiser: frames rolled back, why (the port whose input changed),
+           what the load and the re-simulation cost */
+        gw_RbViz_Push(rb.cur_first + rb.cur_depth, rb.cur_first, rb.cur_depth, rb.cur_cause, rb.c_load + rb.c_resim,
+                      rb.net ? 3 : 2);
     }
     rb.d_save[k] += rb.c_save;
     rb.d_load[k] += rb.c_load;

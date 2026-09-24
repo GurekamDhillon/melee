@@ -229,6 +229,8 @@ float ScriptGame_LabF(int slot, int field)
         return fp->x34_scale.y;
     case LAB_F_CMD_TIMER:
         return fp->cmd_timer;
+    case LAB_F_KB_LAST:
+        return fp->dmg.x18d8.kb_applied1;
     }
     return 0.0f;
 }
@@ -298,6 +300,8 @@ int ScriptGame_LabI(int slot, int field)
         return fp->is_sub_fighter ? 1 : 0;
     case LAB_I_HIDDEN:
         return (fp->x221E_b5 || fp->invisible) ? 1 : 0;
+    case LAB_I_KIND:
+        return (int) fp->kind;
     case LAB_I_JOINTS:
         return lab_joint_count(fp);
     case LAB_I_HURTBOXES:
@@ -683,6 +687,11 @@ int ScriptGame_LabSetMotion(int slot, int msid, int rate_bits, int lift_bits)
         fp->cur_pos.y += lift.f;
         fp->self_vel.x = fp->self_vel.y = 0.0f;
     }
+    if (msid >= 0x400) {
+        /* a Geno state: its behaviour's own entry (pc/geno/geno_game_v2.inc), not a bare change */
+        extern int Geno_LabEnterState(Fighter * fp, int s);
+        return Geno_LabEnterState(fp, msid - 0x400);
+    }
     Fighter_ChangeMotionState(fp->gobj, msid, 0, 0.0f, rate.f, 0.0f, NULL);
     return 0;
 }
@@ -735,6 +744,13 @@ static const struct {
     LAB_ATTR(shield_break_initial_velocity, 0),
     LAB_ATTR(rapid_jab_window, 1),
     LAB_ATTR(clank_animation_length, 0),
+    /* stage E: the landing lags the frame-data export reports */
+    LAB_ATTR(normal_landing_lag, 0),
+    LAB_ATTR(landingairn_lag, 0),
+    LAB_ATTR(landingairf_lag, 0),
+    LAB_ATTR(landingairb_lag, 0),
+    LAB_ATTR(landingairhi_lag, 0),
+    LAB_ATTR(landingairlw_lag, 0),
 };
 #define LAB_NATTRS ((int) (sizeof(lab_attrs) / sizeof(lab_attrs[0])))
 
@@ -870,4 +886,210 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
         return tp->imagedesc != NULL ? (float) tp->imagedesc->height : -1.0f;
     }
     return 0.0f;
+}
+
+/* ---- Stage E: the knockback preview (the game's own knockback functions) -------------------- */
+#include <melee/ft/ftcoll.h>
+#include <melee/ft/kinds/ftCommon/ftCo_Damage.h>
+#include <melee/gm/gmvs.h>
+#include <melee/gr/stage.h>
+
+/* The knockback a hit would give the fighter in `slot` now: ftColl_80079AB0 (the fighter-hit
+ * path of ftColl, with the stage factor and both players' attack / defense ratios), then
+ * ftCo_Damage_CalcKnockback (crouch, ice, smash charge, Y scale, armour, the minimum). `pct_bits`
+ * < 0 (as a float) uses the fighter's percent. The percent and the pending damage the formula reads
+ * (x1830 / x1838) and kb_applied are set for the two calls and restored bit for bit before
+ * returning, so the game sees no change. Offline reads only (gw_script.c). Floats arrive as bits.
+ * `post` = 0 skips the second step (raw formula). Returns -1 without a fighter. */
+float ScriptGame_LabKnockback(int slot, int attacker_slot, int dmg_bits, int kbg, int wbk, int bkb,
+                              int pct_bits, int post)
+{
+    Fighter* fp = script_fighter(slot);
+    Fighter* at = attacker_slot >= 0 ? script_fighter(attacker_slot) : NULL;
+    HitCapsule hit = { 0 };
+    union {
+        int i;
+        float f;
+    } dmg, pct;
+    float save_pct, save_tmp, save_kb, kb, atk;
+    if (fp == NULL) {
+        return -1.0f;
+    }
+    dmg.i = dmg_bits;
+    pct.i = pct_bits;
+    hit.damage = dmg.f;
+    hit.unk_count = (u32) (dmg.f + 0.5f);
+    hit.x24 = (u32) kbg;
+    hit.x28 = (u32) wbk;
+    hit.x2C = (u32) bkb;
+    save_pct = fp->dmg.x1830_percent;
+    save_tmp = fp->dmg.x1838_percentTemp;
+    save_kb = fp->dmg.kb_applied;
+    if (pct.f >= 0.0f) {
+        fp->dmg.x1830_percent = pct.f;
+    }
+    fp->dmg.x1838_percentTemp = (float) hit.unk_count;
+    atk = at != NULL ? Player_GetAttackRatio(at->player_id) : 1.0f;
+    kb = ftColl_80079AB0(fp, &hit, hit.unk_count, gm_8016B248(), atk,
+                         Player_GetDefenseRatio(fp->player_id), fp->co_attrs.weight);
+    if (post) {
+        fp->dmg.kb_applied = kb;
+        ftCo_Damage_CalcKnockback(fp);
+        kb = fp->dmg.kb_applied;
+    }
+    fp->dmg.x1830_percent = save_pct;
+    fp->dmg.x1838_percentTemp = save_tmp;
+    fp->dmg.kb_applied = save_kb;
+    return kb;
+}
+
+/* ftCo_8008D8E8: the knockback level (0-3, 3 = tumble) of a knockback value, from its hitstun. */
+int ScriptGame_LabKbLevel(int kb_bits)
+{
+    union {
+        int i;
+        float f;
+    } kb;
+    kb.i = kb_bits;
+    return (int) ftCo_8008D8E8(kb.f * p_ftCommonData->x154);
+}
+
+/* The ftCommonData constants the launch uses (PlCo.dat as loaded), and the stage's blast zones. */
+float ScriptGame_LabCommonF(int which)
+{
+    ftCommonData* d = p_ftCommonData;
+    switch (which) {
+    case LAB_C_KB_SPEED:
+        return d->x100;
+    case LAB_C_KB_MAX:
+        return d->x108;
+    case LAB_C_ANGLE_AIR_361:
+        return d->x144_radians;
+    case LAB_C_ANGLE_GROUND_MAX:
+        return d->x148;
+    case LAB_C_ANGLE_GROUND_KB0:
+        return d->x14C;
+    case LAB_C_ANGLE_GROUND_KB1:
+        return d->x150;
+    case LAB_C_HITSTUN_MUL:
+        return d->x154;
+    case LAB_C_DI_DEGREES:
+        return d->x1A8;
+    case LAB_C_KB_DECAY:
+        return d->x204_knockbackFrameDecay;
+    case LAB_C_SQUAT_MUL:
+        return d->kb_squat_mul;
+    case LAB_C_BLAST_LEFT:
+        return Stage_GetBlastZoneLeftOffset();
+    case LAB_C_BLAST_RIGHT:
+        return Stage_GetBlastZoneRightOffset();
+    case LAB_C_BLAST_TOP:
+        return Stage_GetBlastZoneTopOffset();
+    case LAB_C_BLAST_BOTTOM:
+        return Stage_GetBlastZoneBottomOffset();
+    }
+    return 0.0f;
+}
+
+/* The victim's own numbers the flight uses: gravity, terminal velocity, aerial friction,
+ * facing, grounded. */
+float ScriptGame_LabFlightF(int slot, int which)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL) {
+        return 0.0f;
+    }
+    switch (which) {
+    case 0:
+        return fp->co_attrs.gravity;
+    case 1:
+        return fp->co_attrs.terminal_velocity;
+    case 2:
+        return fp->co_attrs.aerial_friction;
+    case 3:
+        return fp->facing_dir;
+    case 4:
+        return fp->ground_or_air == GA_Ground ? 1.0f : 0.0f;
+    case 5:
+        return fp->co_attrs.weight;
+    case 6:
+        return fp->dmg.x1830_percent;
+    }
+    return 0.0f;
+}
+
+/* ---- Stage E: name a SyncTest mismatch inside a Fighter (the rollback visualiser) ---------- */
+#define LAB_FF(name, field) { name, (int) __builtin_offsetof(Fighter, field), (int) sizeof(((Fighter*) 0)->field) }
+static const struct {
+    const char* name;
+    int off, size;
+} lab_ffields[] = {
+    LAB_FF("kind", kind),
+    LAB_FF("motion_id", motion_id),
+    LAB_FF("anim_id", anim_id),
+    LAB_FF("facing_dir", facing_dir),
+    LAB_FF("x34_scale", x34_scale),
+    LAB_FF("x44_mtx", x44_mtx),
+    LAB_FF("x74_self_accel", x74_self_accel),
+    LAB_FF("self_vel", self_vel),
+    LAB_FF("x8c_kb_vel", x8c_kb_vel),
+    LAB_FF("x98_atk_shield_kb", x98_atk_shield_kb),
+    LAB_FF("cur_pos", cur_pos),
+    LAB_FF("prev_pos", prev_pos),
+    LAB_FF("pos_delta", pos_delta),
+    LAB_FF("ground_or_air", ground_or_air),
+    LAB_FF("gr_vel", gr_vel),
+    LAB_FF("xF0_ground_kb_vel", xF0_ground_kb_vel),
+    LAB_FF("input", input),
+    LAB_FF("co_attrs", co_attrs),
+    LAB_FF("coll_data", coll_data),
+    LAB_FF("ecb_lock", ecb_lock),
+    LAB_FF("cur_anim_frame", cur_anim_frame),
+    LAB_FF("frame_speed_mul", frame_speed_mul),
+    LAB_FF("x8B0", x8B0),
+    LAB_FF("x914 (hitboxes)", x914),
+    LAB_FF("xDF4", xDF4),
+    LAB_FF("x1064_thrownHitbox", x1064_thrownHitbox),
+    LAB_FF("hurt_capsules", hurt_capsules),
+    LAB_FF("x1614", x1614),
+    LAB_FF("dmg", dmg),
+    LAB_FF("x1968_jumpsUsed", x1968_jumpsUsed),
+    LAB_FF("x2064_ledgeCooldown", x2064_ledgeCooldown),
+    LAB_FF("mv (state vars)", mv),
+};
+#define LAB_NFF ((int) (sizeof lab_ffields / sizeof lab_ffields[0]))
+
+/* (player << 16) | offset when `va` lies inside a live Fighter struct, else -1 */
+int ScriptGame_LabFighterAt(u32 va)
+{
+    HSD_GObj* g;
+    for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; g != NULL; g = g->next) {
+        Fighter* f = GET_FIGHTER(g);
+        u32 base = (u32) (uintptr_t) f;
+        if (f != NULL && va >= base && va < base + (u32) sizeof(Fighter)) {
+            return ((int) f->player_id << 16) | (int) (va - base);
+        }
+    }
+    return -1;
+}
+
+static int lab_ffield(int off)
+{
+    int i;
+    for (i = 0; i < LAB_NFF; ++i) {
+        if (off >= lab_ffields[i].off && off < lab_ffields[i].off + lab_ffields[i].size) {
+            return i;
+        }
+    }
+    return -1;
+}
+const char* ScriptGame_LabFighterFieldName(int off)
+{
+    int i = lab_ffield(off);
+    return i >= 0 ? lab_ffields[i].name : NULL;
+}
+int ScriptGame_LabFighterFieldBase(int off)
+{
+    int i = lab_ffield(off);
+    return i >= 0 ? lab_ffields[i].off : off;
 }

@@ -1108,6 +1108,8 @@ int gw_Geno_StateLand(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_la
 int gw_Geno_StateLagBits(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_lag[s] : 0; }
 int gw_Geno_StateMotion(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_motion[s] : 0; }
 int gw_Geno_StateGravityBits(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_grav[s] : 0; }
+/* the state's geno.json name (the Lab's state browser); NULL when there is no such state */
+const char *gw_Geno_StateName(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_name[s] : NULL; }
 int gw_Geno_ParamCount(int p) { return gn_at(p) ? gn_at(p)->nparam : 0; }
 int gw_Geno_ParamId(int p, int i) {
     const gn_profile *x = gn_at(p);

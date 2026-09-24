@@ -20,6 +20,10 @@
 --   FRAMES    T timeline  B boxes  Q / E scrub -1 / +1  HOME replay  C lock-step  R mirror pad
 --   STAGE     C collision  L ledges  T terrain  P points  Z zones
 --   INSPECT   M model  S skeleton  J joint numbers  I info  A attributes  L event log
+--   MOVES     UP / DOWN pick  ENTER play  V filter  Z / X speed  S stop  L loop  N from neutral
+--   LAUNCH    Q / E hitbox  D DI  Z / X percent -/+10  P live percent  V victim  A arc  K check
+--   A/B       R record A  B re-sim B on reloaded data  C re-sim B on the same data  M two fighters
+--   (FRAMES also: N the rollback strip.)  The pause menu's TOOLS tab: frame-data export and diff.
 -- Console: "lab help", "lab status".
 
 if gd.lab_api == nil then
@@ -71,6 +75,8 @@ local MODES = {
         desc = "The subaction script as a track: hit windows, IASA, GFX, SFX, body state." },
       { k = "B", id = "boxes", label = "Hit / hurtboxes", icon = "lab_hitbox", def = true,
         desc = "Keep the boxes on while you scrub." },
+      { k = "N", id = "net", label = "Rollbacks", icon = "lab_rollback", def = true,
+        desc = "Every rollback as a bar (netplay, SyncTest, the fake network): how far, why, what it cost, and the first mismatch." },
     },
     a = {
       { k = "Q", label = "Scrub -1", icon = "lab_step_back", rep = true, run = "scrub_back" },
@@ -109,6 +115,62 @@ local MODES = {
       { k = "L", id = "log", label = "Event log", icon = "lab_log", def = true,
         desc = "Hits, hitlag, landings and action changes, frame-stamped." },
     }, a = {} },
+  { id = "moves", name = "MOVES", icon = "lab_moves",
+    blurb = "Every action state the fighter has: common, specials, m-ex and Geno. Pick one and play it.",
+    t = {
+      { k = "L", id = "loop", label = "Loop", icon = "lab_rewind", def = true,
+        desc = "Play the state again each time it ends." },
+      { k = "N", id = "neutral", label = "From neutral", icon = "lab_focus", def = true,
+        desc = "Start each play from the match's first frame (everyone standing), not from whatever was happening." },
+      { k = "T", id = "timeline", label = "Timeline", icon = "lab_timeline", def = true,
+        desc = "The playing state's track along the bottom, following the frame." },
+      { k = "B", id = "boxes", label = "Hit / hurtboxes", icon = "lab_hitbox", def = true,
+        desc = "The game's hitbox and hurtbox draw while it plays." },
+    },
+    a = {
+      { k = "UP", label = "Up", icon = "lab_step_back", rep = true, run = "br_up" },
+      { k = "DOWN", label = "Down", icon = "lab_step", rep = true, run = "br_down" },
+      { k = "ENTER", label = "Play", icon = "lab_play", run = "br_play", state = "br_playing" },
+      { k = "V", label = "Filter", icon = "lab_moves", run = "br_filter" },
+      { k = "Z", label = "Slower", icon = "lab_slowmo", run = "br_slower" },
+      { k = "X", label = "Faster", icon = "lab_forward", run = "br_faster" },
+      { k = "S", label = "Stop", icon = "lab_pause", run = "br_stop" },
+    } },
+  { id = "launch", name = "LAUNCH", icon = "lab_launch",
+    blurb = "Where a hit sends them: knockback, angle, hitstun, tumble and the arc to the blast zone, by the game's own formula.",
+    t = {
+      { k = "A", id = "arc", label = "Arc", icon = "lab_launch", def = true,
+        desc = "The predicted flight, a line to the end of hitstun, a burst where it crosses a blast zone." },
+      { k = "B", id = "boxes", label = "Hit / hurtboxes", icon = "lab_hitbox", def = true,
+        desc = "The game's hitbox and hurtbox draw." },
+      { k = "K", id = "check", label = "Check real hits", icon = "lab_ko", def = true,
+        desc = "When a hit really lands, predict it from its own numbers, follow the real flight and show the error." },
+    },
+    a = {
+      { k = "Q", label = "Hitbox -", icon = "lab_step_back", run = "kb_prev" },
+      { k = "E", label = "Hitbox +", icon = "lab_step", run = "kb_next" },
+      { k = "D", label = "DI", icon = "lab_mirror", run = "kb_di", state = "kb_di" },
+      { k = "Z", label = "-10%", icon = "lab_percent", rep = true, run = "kb_pct_down" },
+      { k = "X", label = "+10%", icon = "lab_percent", rep = true, run = "kb_pct_up" },
+      { k = "P", label = "Live %", icon = "lab_percent", run = "kb_pct_live" },
+      { k = "V", label = "Victim", icon = "lab_dummy", run = "kb_victim" },
+    } },
+  { id = "ab", name = "A/B", icon = "lab_ab",
+    blurb = "Two variants on the same inputs: record A, re-simulate B from the same frame, see where they part.",
+    t = {
+      { k = "O", id = "ghost", label = "Ghosts", icon = "lab_eye", def = true,
+        desc = "A's path and B's path over the stage, and where each is on the frame you look at." },
+      { k = "T", id = "tracks", label = "Tracks", icon = "lab_timeline", def = true,
+        desc = "A and B as two tracks coloured by action, the differing frames under them, the first divergence marked." },
+    },
+    a = {
+      { k = "R", label = "Record A", icon = "lab_record", run = "ab_record", state = "ab_rec" },
+      { k = "B", label = "B: reload", icon = "lab_reload", run = "ab_reload" },
+      { k = "C", label = "B: same", icon = "lab_rewind", run = "ab_same" },
+      { k = "M", label = "Two fighters", icon = "lab_mirror", run = "ab_mirror" },
+      { k = "Q", label = "Frame -", icon = "lab_step_back", rep = true, run = "ab_back" },
+      { k = "E", label = "Frame +", icon = "lab_step", rep = true, run = "ab_fwd" },
+    } },
 }
 local MODE_BY_ID = {}
 for i, m in ipairs(MODES) do MODE_BY_ID[m.id] = i end
@@ -117,7 +179,7 @@ local GLOBAL_KEYS = {
   { "SPACE", "Pause / resume" }, { "RIGHT", "Step +1 (hold, CTRL x10)" },
   { "LEFT", "Step -1 (hold, CTRL x10)" }, { "F5", "Save state 1" }, { "F6", "Load state 1" },
   { "F8", "Hot reload + replay" }, { "G", "Go live (stop replaying)" },
-  { "TAB", "Next mode (SHIFT back)" }, { "1-5", "Mode directly" }, { "F", "Focus next fighter" },
+  { "TAB", "Next mode (SHIFT back)" }, { "1-8", "Mode directly" }, { "F", "Focus next fighter" },
   { "H", "Hide / show the Lab UI" }, { "F3", "This help" }, { "ESC", "Pause menu" },
 }
 
@@ -188,7 +250,7 @@ local function wanted_flags()
   if not cfg.on or cfg.hidden then return gd.draw.DEFAULT end
   local f = 0
   if not in_mode("inspect") or T("model") then f = f | gd.draw.MODEL end
-  if (in_mode("hitboxes") or in_mode("frames")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
+  if (in_mode("hitboxes") or in_mode("frames") or in_mode("moves") or in_mode("launch")) and T("boxes") then f = f | gd.draw.HIT | gd.draw.THROWN end
   return f
 end
 
@@ -562,6 +624,8 @@ local function display_items()
 end
 
 local states_items -- below: the rows are rebuilt from the library each time
+local tools_items  -- below (stage E): the creator tools
+local draw_rollbacks -- below (stage E)
 
 local TABS = {
   { name = "PLAY", icon = "lab_play", items = {
@@ -609,6 +673,7 @@ local TABS = {
       run = function() set_mirror(not mirror) end },
   } },
   { name = "STATES", icon = "lab_save", items = function() return states_items() end },
+  { name = "TOOLS", icon = "lab_export", items = function() return tools_items() end },
   { name = "EXIT", icon = "lab_exit", items = {
     { label = "Change fighters", icon = "lab_focus", desc = "Back to LAB's character select.",
       run = function() menu_leave("css") end },
@@ -1320,6 +1385,7 @@ local function draw_frames(list)
   quad(6, 8, 4, 22, GOLD, SHEAR)
   txt(18, 24, s, "body", BONE)
   txt(8 + w - 10, 23, extra, "caption", MUTED, "right")
+  if T("net") then draw_rollbacks() end
   if not T("timeline") then return end
   local others = {}
   for _, p in ipairs(list) do if p.port ~= focus then others[#others + 1] = p end end
@@ -1330,6 +1396,1393 @@ local function draw_frames(list)
   draw_timeline(a, 22, py + 10, 596, true)
   if others[1] then draw_timeline(others[1], 22, py + 62, 596, false) end
 end
+
+local LE = {} -- stage E: the creator tools (a function of its own: the main chunk has a 200-local limit)
+local function stage_e()
+-- =================================================================================================
+-- ---- stage E: the creator tools (docs/geno.md 14.11) -------------------------------------------
+-- MOVES (the state browser), LAUNCH (the knockback preview), A/B (two variants on the same inputs),
+-- the frame-data export + diff (TOOLS tab, `lab export`, MELEE_LAB_BATCH) and the rollback strip
+-- (FRAMES, N).
+-- =================================================================================================
+local WAIT_MOTION = 14 -- ftCo_MS_Wait
+local BATCH_SLOT = 3    -- the export's neutral state (the menu's quick slot 3)
+local function hexid(id) return string.format("%03X", id) end
+local function sorted_keys(t)
+  local k = {}
+  for key in pairs(t) do k[#k + 1] = key end
+  table.sort(k)
+  return k
+end
+local function windows_of(frames) -- {f = true} -> "2-3 9-12"
+  local ks, out, a, b = sorted_keys(frames), {}, nil, nil
+  for _, f in ipairs(ks) do
+    if a and f == b + 1 then b = f
+    else
+      if a then out[#out + 1] = a == b and tostring(a) or (a .. "-" .. b) end
+      a, b = f, f
+    end
+  end
+  if a then out[#out + 1] = a == b and tostring(a) or (a .. "-" .. b) end
+  return table.concat(out, " ")
+end
+local function air_name(name)
+  return (name:find("Air") and not name:find("Landing")) or name:find("Fall") or name:find("Glide")
+    or (name:find("Jump") and not name:find("Squat")) or false
+end
+
+-- ---- the specials, entered through their input ------------------------------------------------
+-- A vanilla or m-ex special's entry function sets up more than its motion (Fox's blaster, a
+-- charge, an article): a bare motion change into it can crash the game. So specials are played
+-- (and exported) by pressing B on the pad from a neutral stance: the game enters them itself.
+-- Geno states are entered through Geno's own entry (their behaviour's enter routine).
+local INPUTS = {
+  { key = "B", name = "Neutral B", x = 0, y = 0 }, { key = "B>", name = "Side B", x = 1, y = 0 },
+  { key = "B^", name = "Up B", x = 0, y = 1 }, { key = "Bv", name = "Down B", x = 0, y = -1 },
+}
+local function input_entries()
+  local out = {}
+  for air = 0, 1 do
+    for i, sp in ipairs(INPUTS) do
+      out[#out + 1] = { id = -(i + air * 4), name = (air == 1 and "Air " or "") .. sp.name, group = "input",
+        anim_id = 0, anim_name = "", input = sp, air = air == 1 }
+    end
+  end
+  return out
+end
+-- where a special's sequence is over: back to standing, falling, landing (or helpless)
+local END_STATES = { Wait = true, Fall = true, FallF = true, FallB = true, FallAerial = true, FallAerialF = true,
+  FallAerialB = true, Landing = true, FallSpecial = true, FallSpecialF = true, FallSpecialB = true,
+  LandingFallSpecial = true, Squat = true, SquatWait = true }
+local function motion_by_name(port, name, def)
+  for _, m in ipairs(gd.motion_list(port) or {}) do if m.name == name then return m.id end end
+  return def
+end
+local function input_spec(port, sp)
+  local p = gd.player(port)
+  local face = p and p.facing or 1
+  return { buttons = "B", x = sp.x * 127 * face, y = sp.y * 127 }
+end
+local function mname(m) return m.input and m.input.key or hexid(m.id) end
+
+-- ---- MOVES: the state browser -------------------------------------------------------------------
+local FILTERS = { "ALL", "ATTACKS", "COMMON", "SPECIAL", "M-EX", "GENO" }
+local GROUP_COL = { common = MUTED, special = ACCENT, mex = 0xC77DFFFF, geno = GOLD, input = OK }
+local SPEEDS = { 1, 0.5, 0.25, 0.1 }
+local br = { key = nil, all = {}, filter = 1, sel = 1, first = 1, speed = 1, play = nil, acc = 0,
+  pending = nil, text = "", hits = {}, tl = {} }
+
+local function br_list()
+  local p = gd.player(focus)
+  if p == nil then return {} end
+  local key = focus .. ":" .. tostring(p.char_name)
+  if br.key ~= key then
+    br.key = key
+    br.all = input_entries()
+    for _, m in ipairs(gd.motion_list(focus) or {}) do br.all[#br.all + 1] = m end
+    br.sel, br.first, br.tl = 1, 1, {}
+  end
+  local f, out = FILTERS[br.filter], {}
+  for _, m in ipairs(br.all) do
+    local ok = f == "ALL" or (f == "COMMON" and m.group == "common")
+      or (f == "SPECIAL" and (m.group == "special" or m.group == "input"))
+      or (f == "M-EX" and m.group == "mex") or (f == "GENO" and m.group == "geno")
+      or (f == "ATTACKS" and (m.name:find("^Attack") ~= nil or m.group ~= "common"))
+    if ok and br.text ~= "" then ok = m.name:lower():find(br.text, 1, true) ~= nil end
+    if ok then out[#out + 1] = m end
+  end
+  if br.sel > #out then br.sel = math.max(1, #out) end
+  return out
+end
+
+local function br_static(m) -- the state's own script, analysed (cached per id)
+  if m.input then return nil end
+  local c = br.tl[m.id]
+  if c == nil then
+    local tl = gd.timeline(focus, m.id)
+    if tl then
+      local windows, marks, len = analyse(tl)
+      local iasa
+      for _, e in ipairs(marks) do if e.name == "iasa" then iasa = e.frame break end end
+      c = { tl = tl, windows = windows, len = len, iasa = iasa }
+    else
+      c = false
+    end
+    br.tl[m.id] = c
+  end
+  return c or nil
+end
+
+local function br_start(m)
+  if not offline() or gd.player(focus) == nil then return end
+  if m.input == nil and (m.group == "special" or m.group == "mex") then
+    say("Specials play through their input: the B rows (a bare entry skips the special's own setup)", DANGER)
+    return
+  end
+  if m.input == nil and (m.anim_id < 0 or m.anim_name == "") then
+    -- a common row this fighter never uses (Fox's Attack13): entering it leaves the game in a state
+    -- it asserts on
+    say(m.name .. ": this fighter has no animation for it", DANGER)
+    br.play = nil
+    return
+  end
+  if T("neutral") and menu.reset_saved then
+    pcall(gd.loadstate, RESET_SLOT) -- everyone back to the match start: the same neutral every loop
+    br.pending = { m = m, wait = 1 }
+  elseif T("neutral") then
+    gd.set_motion(focus, WAIT_MOTION, 1)
+    br.pending = { m = m, wait = 1 }
+  else
+    br.pending = { m = m, wait = 0 }
+  end
+end
+
+local function br_tick()
+  local pd = br.pending
+  if pd then
+    if pd.wait > 0 then pd.wait = pd.wait - 1 return end
+    if pd.m.input then
+      if pd.m.air and not pd.lifted then
+        pd.lifted, pd.wait = true, 1
+        gd.set_motion(focus, motion_by_name(focus, "Fall", 29), 1, 1, 40)
+        return
+      end
+      br.pending = nil
+      local p = gd.player(focus)
+      gd.input(focus, input_spec(focus, pd.m.input), 3)
+      br.play = { m = pd.m, port = focus, seen = false, t = 0, base = p and p.action }
+      if br.speed >= 1 then gd.resume() else gd.step(1) end
+      return
+    end
+    br.pending = nil
+    local ok, why = gd.set_motion(focus, pd.m.id, 1, 1, air_name(pd.m.name) and 40 or 0)
+    if not ok then
+      say("Play: " .. tostring(why), DANGER)
+      br.play = nil
+      return
+    end
+    br.play = { m = pd.m, port = focus, seen = false, t = 0 }
+    if br.speed >= 1 then gd.resume() end
+    return
+  end
+  if br.play and br.speed < 1 and not menu.open then
+    br.acc = br.acc + br.speed
+    if br.acc >= 1 then br.acc = br.acc - 1 gd.step(1) end
+  end
+end
+
+local function br_frame()
+  local pl = br.play
+  if pl == nil or br.pending then return end
+  local p = gd.player(pl.port)
+  if p == nil then br.play = nil return end
+  pl.t = pl.t + 1
+  if pl.m.input then
+    if not pl.seen then
+      if p.action ~= pl.base then pl.seen = true elseif pl.t > 20 then br.play = nil say("No special came out", DANGER) end
+      return
+    end
+    if not END_STATES[gd.motion_name(p.action, pl.port)] and pl.t < 600 then return end
+    if tog.moves.loop then br_start(pl.m) else br.play = nil end
+    return
+  end
+  if p.action == pl.m.id then
+    pl.seen = true
+  elseif pl.seen or pl.t > 30 then
+    if tog.moves.loop then br_start(pl.m) else br.play = nil end
+  end
+end
+
+ACTIONS.br_up = function() br.sel = math.max(1, br.sel - 1) end
+ACTIONS.br_down = function() br.sel = math.min(#br_list(), br.sel + 1) end
+ACTIONS.br_play = function()
+  local m = br_list()[br.sel]
+  if m then br_start(m) say(string.format("%s  %s", hexid(m.id), m.name)) end
+end
+ACTIONS.br_filter = function()
+  br.filter = br.filter % #FILTERS + 1
+  br.sel, br.first = 1, 1
+  say("Filter: " .. FILTERS[br.filter])
+end
+ACTIONS.br_slower = function()
+  for i, s in ipairs(SPEEDS) do if s == br.speed and i < #SPEEDS then br.speed = SPEEDS[i + 1] break end end
+  say(string.format("Speed x%g", br.speed))
+end
+ACTIONS.br_faster = function()
+  for i, s in ipairs(SPEEDS) do if s == br.speed and i > 1 then br.speed = SPEEDS[i - 1] break end end
+  if br.speed >= 1 and br.play then gd.resume() end
+  say(string.format("Speed x%g", br.speed))
+end
+ACTIONS.br_stop = function() br.play, br.pending = nil, nil gd.pause() say("Stopped") end
+STATES.br_playing = function() return br.play ~= nil end
+
+local function draw_moves()
+  local list = br_list()
+  local p = gd.player(focus)
+  if p == nil then return end
+  local ROWS = 18
+  local x, y, w = 8, 8, 318
+  local h = 44 + ROWS * 15
+  panel(x, y, w, h, "MOVES")
+  txt(x + 70, y + 14, string.format("%s   %s  %d / %d", fighter_name(focus), FILTERS[br.filter], #list, #br.all),
+    "caption", GOLD, "left", w - 80)
+  if br.text ~= "" then txt(x + w - 10, y + 14, "\u{201C}" .. br.text .. "\u{201D}", "caption", BONE, "right") end
+  if br.sel < br.first then br.first = br.sel end
+  if br.sel > br.first + ROWS - 1 then br.first = br.sel - ROWS + 1 end
+  br.hits = {}
+  for i = br.first, math.min(#list, br.first + ROWS - 1) do
+    local m = list[i]
+    local yy = y + 26 + (i - br.first) * 15
+    local on = i == br.sel
+    if on then quad(x + 6, yy, w - 12, 14, GOLD, SHEAR) end
+    quad(x + 8, yy + 2, 3, 10, GROUP_COL[m.group] or MUTED)
+    local col = on and INK or BONE
+    txt(x + 16, yy + 11, mname(m), "caption", on and INK or DISABLED)
+    txt(x + 46, yy + 11, m.name, "caption", col, "left", 150)
+    txt(x + w - 12, yy + 11, m.anim_name ~= m.name and m.anim_name or "", "caption", on and INK or DISABLED, "right", 110)
+    if br.play and br.play.m.id == m.id then icon("lab_play", x + w - 128, yy + 1, 12, on and INK or OK) end
+    br.hits[#br.hits + 1] = { kind = "move", i = i, x = x + 6, y = yy, w = w - 12, h = 14 }
+  end
+  -- the legend: a colour per group
+  local lx = x + 12
+  for _, g in ipairs({ { "input", "INPUT" }, { "common", "COMMON" }, { "special", "SPECIAL" }, { "mex", "M-EX" },
+                       { "geno", "GENO" } }) do
+    quad(lx, y + h - 13, 3, 9, GROUP_COL[g[1]])
+    lx = lx + 6 + txt(lx + 6, y + h - 5, g[2], "caption", MUTED) + 10
+  end
+  -- the detail panel: the selected state's own script
+  local m = list[br.sel]
+  if m == nil then return end
+  local c = br_static(m)
+  local dx, dw = 334, 298
+  local dh = 150
+  panel(dx, 8, dw, dh, "STATE")
+  stxt(dx + 12, 44, m.name, "label", BONE, "left", dw - 24)
+  if m.input then
+    txt(dx + 12, 60, string.format("the pad: B%s%s, from %s", m.input.x ~= 0 and " + forward" or "",
+      m.input.y > 0 and " + up" or m.input.y < 0 and " + down" or "", m.air and "the air" or "standing"), "caption",
+      MUTED, "left", dw - 24)
+    txt(dx + 12, 76, "the game enters the special itself, with its own setup", "caption", BONE, "left", dw - 24)
+  else
+    txt(dx + 12, 60, string.format("id %d (0x%s)   %s   anim %s", m.id, hexid(m.id), m.group:upper(),
+      m.anim_id >= 0 and m.anim_id or "-"), "caption", MUTED, "left", dw - 24)
+  end
+  if m.input then
+  elseif c then
+    txt(dx + 12, 76, string.format("script %d frames%s%s", math.floor(c.len + 0.5),
+      c.iasa and ("   IASA " .. c.iasa) or "", c.tl.stop ~= "end" and ("   (" .. c.tl.stop .. ")") or ""),
+      "caption", BONE, "left", dw - 24)
+    local yy = 92
+    if #c.windows == 0 then txt(dx + 12, yy, "no hitboxes in its script", "caption", DISABLED) end
+    for k, hw in ipairs(c.windows) do
+      if k > 4 then txt(dx + 12, yy, string.format("+%d more", #c.windows - 4), "caption", DISABLED) break end
+      img("lab_mk_hitbox", dx + 12, yy - 9, 10, 10, HIT[hw.id] or BONE)
+      txt(dx + 26, yy, string.format("f%d-%d  #%d  %s%%  a%d  kbg %d  bkb %d  wbk %d", hw.from, hw.to, hw.id,
+        tostring(hw.dmg), hw.angle, hw.kbg, hw.bkb, hw.wbk), "caption", HIT[hw.id] or BONE, "left", dw - 38)
+      yy = yy + 13
+    end
+  else
+    txt(dx + 12, 76, "no script for this state", "caption", DISABLED)
+  end
+  if m.input == nil and (m.group == "special" or m.group == "mex") then
+    txt(dx + 12, 8 + dh - 22, "plays through its input (a B row)", "caption", DISABLED)
+  end
+  local st = string.format("x%g   %s%s", br.speed, T("loop") and "LOOP" or "ONCE", T("neutral") and "   FROM NEUTRAL" or "")
+  txt(dx + dw - 12, 8 + dh - 8, st, "caption", br.play and OK or MUTED, "right")
+  if T("timeline") then
+    local ph = 66
+    panel(8, 444 - ph, 624, ph, "TIMELINE")
+    draw_timeline(p, 22, 444 - ph + 10, 596, true)
+  end
+end
+
+-- ---- LAUNCH: the knockback preview --------------------------------------------------------------
+local DIS = { "none", "in", "out", "survival" }
+local kbv = { sel = 1, di = 1, pct = nil, victim = nil, check = nil, last = nil, cache = nil, key = nil }
+
+local function kb_victim()
+  if kbv.victim and kbv.victim ~= focus and gd.player(kbv.victim) then return kbv.victim end
+  for _, p in ipairs(gd.players()) do if p.port ~= focus then return p.port end end
+end
+
+-- a live hitbox on the frame shown, else the ones the script opens next (the hit about to connect)
+local function kb_hitboxes(p)
+  local list = {}
+  for _, h in ipairs(p.hitboxes) do
+    list[#list + 1] = { live = true, id = h.id, damage = h.damage, angle = h.angle, kbg = h.kbg, bkb = h.bkb,
+      wbk = h.wbk, element = h.element_name }
+  end
+  if #list == 0 then
+    local c = timeline_of(p)
+    local now = p.anim_frame_f + 1
+    local nextf
+    if c then
+      for _, hw in ipairs(c.windows) do
+        if hw.from >= now and (nextf == nil or hw.from == nextf) then
+          nextf = hw.from
+          list[#list + 1] = { live = false, from = hw.from, id = hw.id, damage = hw.dmg, angle = hw.angle,
+            kbg = hw.kbg, bkb = hw.bkb, wbk = hw.wbk, element = hw.element }
+        end
+      end
+    end
+  end
+  return list
+end
+
+local function kb_predict()
+  local a, vport = gd.player(focus), kb_victim()
+  local v = vport and gd.player(vport)
+  if a == nil or v == nil then return nil end
+  local hbs = kb_hitboxes(a)
+  if #hbs == 0 then return nil, a, v, hbs end
+  if kbv.sel > #hbs then kbv.sel = 1 end
+  local h = hbs[kbv.sel]
+  local key = table.concat({ gd.match().frame, focus, vport, kbv.sel, kbv.di, tostring(kbv.pct), h.id, h.damage,
+    h.angle, v.x, v.y, v.percent }, ":")
+  if kbv.key ~= key then
+    kbv.key = key
+    local ok, r = pcall(gd.kb_preview, vport, { attacker = focus, damage = h.damage, angle = h.angle, kbg = h.kbg,
+      bkb = h.bkb, wbk = h.wbk, di = DIS[kbv.di], percent = kbv.pct })
+    kbv.cache = ok and r or nil
+  end
+  return kbv.cache, a, v, hbs, h
+end
+
+-- the check: when a real hit lands, predict it from the hit's own numbers and the victim's state
+-- before it, then follow the real flight to the end of hitstun and measure the error
+local function kb_on_hit(attacker, victim, info)
+  if not tog.launch.check or attacker == nil or info.angle == nil or not offline() then return end
+  local v = gd.player(victim)
+  if v == nil then return end
+  local pre = math.max(0, v.percent - (info.dealt or 0))
+  local ok, pred = pcall(gd.kb_preview, victim, { attacker = attacker, damage = info.dealt, angle = info.angle,
+    kbg = info.kbg, bkb = info.bkb, wbk = info.wbk, percent = pre, x = v.x, y = v.y, di = "none", extra = 0 })
+  if not ok or pred == nil then return end
+  kbv.check = { victim = victim, pred = pred, real = {}, kb_real = v.kb_last, pre = pre, hit = info,
+    frame = gd.match().frame, hitstun_real = nil }
+end
+
+local function kb_check_finish(c)
+  local n, maxe, sum = math.min(#c.real, #c.pred.points), 0, 0
+  for i = 1, n do
+    local dx, dy = c.real[i][1] - c.pred.points[i][1], c.real[i][2] - c.pred.points[i][2]
+    local d = math.sqrt(dx * dx + dy * dy)
+    sum = sum + d
+    if d > maxe then maxe = d end
+  end
+  kbv.last = { n = n, max = maxe, mean = n > 0 and sum / n or 0, kb_pred = c.pred.kb, kb_real = c.kb_real,
+    hs_pred = c.pred.hitstun, hs_real = c.hitstun_real, frame = c.frame, victim = c.victim, dmg = c.hit.dealt,
+    angle = c.hit.angle, pct = c.pre }
+  kbv.check = nil
+  gd.log(string.format("lab kbcheck: f%d P%d at %.0f%% hit %.1f%% a%d: kb pred %.3f real %.3f; hitstun pred %d real %s;"
+    .. " flight %d frames, max err %.4f, mean err %.4f", kbv.last.frame, kbv.last.victim, kbv.last.pct, kbv.last.dmg,
+    kbv.last.angle, kbv.last.kb_pred, kbv.last.kb_real or -1, kbv.last.hs_pred, tostring(kbv.last.hs_real), n, maxe,
+    kbv.last.mean))
+end
+
+local function kb_frame()
+  local c = kbv.check
+  if c == nil then return end
+  local v = gd.player(c.victim)
+  if v == nil then kbv.check = nil return end
+  if v.in_hitlag then return end
+  if c.hitstun_real == nil then c.hitstun_real = math.floor(v.hitstun + 0.5) + 1 end
+  if (c.kb_real or 0) == 0 then c.kb_real = v.kb_last end
+  c.real[#c.real + 1] = { v.x, v.y }
+  if #c.real >= c.pred.hitstun or (not v.airborne and #c.real > 1) or not v.in_hitstun then kb_check_finish(c) end
+end
+
+ACTIONS.kb_prev = function() kbv.sel = math.max(1, kbv.sel - 1) end
+ACTIONS.kb_next = function() kbv.sel = kbv.sel + 1 end
+ACTIONS.kb_di = function() kbv.di = kbv.di % #DIS + 1 say("DI: " .. DIS[kbv.di]:upper()) end
+ACTIONS.kb_pct_down = function()
+  local v = gd.player(kb_victim() or 2)
+  kbv.pct = math.max(0, (kbv.pct or math.floor((v and v.percent or 0) / 10) * 10) - 10)
+end
+ACTIONS.kb_pct_up = function()
+  local v = gd.player(kb_victim() or 2)
+  kbv.pct = math.min(999, (kbv.pct or math.floor((v and v.percent or 0) / 10) * 10) + 10)
+end
+ACTIONS.kb_pct_live = function() kbv.pct = nil say("Percent: live") end
+ACTIONS.kb_victim = function()
+  local ports = {}
+  for _, p in ipairs(gd.players()) do if p.port ~= focus then ports[#ports + 1] = p.port end end
+  if #ports == 0 then return end
+  local cur, k = kb_victim(), 1
+  for i, pt in ipairs(ports) do if pt == cur then k = i end end
+  kbv.victim = ports[k % #ports + 1]
+  say("Victim: " .. fighter_name(kbv.victim))
+end
+STATES.kb_di = function() return kbv.di ~= 1 end
+
+local function draw_launch()
+  local r, a, v, hbs, h = kb_predict()
+  local x, y, w = 8, 8, 312
+  if a == nil or v == nil then
+    panel(x, y, w, 40, "LAUNCH")
+    txt(x + 12, y + 32, "needs two fighters: the focused one hits the other", "caption", DISABLED)
+    return
+  end
+  if T("arc") and r and r.points then
+    local c = HIT[h.id] or BONE
+    local lx, ly = gd.project(v.x, v.y, 0)
+    for i, pt in ipairs(r.points) do
+      local sx, sy = gd.project(pt[1], pt[2], 0)
+      if sx and lx then gd.line(lx, ly, sx, sy, c) end
+      if sx and i % 10 == 0 then gd.fill(sx - 1, sy - 1, 3, 3, BONE) end
+      lx, ly = sx, sy
+    end
+    if lx then
+      icon("lab_step", lx - 6, ly - 6, 12, c)
+      txt(lx + 8, ly + 4, string.format("f%d", #r.points), "caption", c)
+    end
+    if r.blast then
+      local kx, ky = gd.project(r.blast.x, r.blast.y, 0)
+      if kx then
+        icon("lab_ko", kx - 12, ky - 12, 24, DANGER)
+        txt(kx + 14, ky + 4, string.format("KO f%d", r.blast.frame), "caption", DANGER)
+      end
+    end
+  end
+  local lines = 11
+  panel(x, y, w, 30 + lines * 13, "LAUNCH")
+  txt(x + 76, y + 14, string.format("%s  >  %s", fighter_name(focus), fighter_name(v.port)), "caption", GOLD,
+    "left", w - 86)
+  local yy = y + 30
+  local function line(s, c) txt(x + 12, yy, s, "caption", c or BONE, "left", w - 24) yy = yy + 13 end
+  if h == nil then
+    line("no live hitbox and none ahead in this move", DISABLED)
+  else
+    line(string.format("%s #%d  (%d of %d)  %s%%  a%d  kbg %d  bkb %d  wbk %d", h.live and "LIVE" or ("NEXT f" .. h.from),
+      h.id, kbv.sel, #hbs, tostring(h.damage), h.angle, h.kbg, h.bkb, h.wbk), HIT[h.id] or BONE)
+  end
+  if r then
+    line(string.format("victim %.0f%%%s  weight %g   DI %s", r.percent, kbv.pct and " (set)" or "", r.weight,
+      DIS[kbv.di]:upper()), MUTED)
+    line(string.format("knockback %.2f", r.kb), BONE)
+    line(string.format("angle %.1f%s", r.angle, kbv.di ~= 1 and string.format("  ->  %.1f with DI", r.angle_di) or ""), BONE)
+    line(string.format("hitstun %d frames   %s", r.hitstun, r.tumble and "TUMBLE" or ("no tumble (level " .. r.level .. ")")),
+      r.tumble and GOLD or MUTED)
+    if r.blast then
+      line(string.format("KO: crosses the %s blast zone at f%d%s", r.blast.side, r.blast.frame,
+        r.blast.after_hitstun and " (after hitstun)" or ""), DANGER)
+    else
+      line("survives (no blast zone while the launch lasts)", OK)
+    end
+  else
+    yy = yy + 13 * 5
+  end
+  local L = kbv.last
+  if kbv.check then
+    line(string.format("checking a real hit: %d / %d frames", #kbv.check.real, kbv.check.pred.hitstun), ACCENT)
+  elseif L then
+    line(string.format("last real hit f%d: kb %.2f vs %.2f, hitstun %d vs %s", L.frame, L.kb_pred, L.kb_real or -1,
+      L.hs_pred, tostring(L.hs_real)), ACCENT)
+    line(string.format("flight error over %d f: max %.3f  mean %.3f units", L.n, L.max, L.mean), ACCENT)
+  else
+    line(tog.launch.check and "hit them for real (K) and the error shows here" or "check off (K)", DISABLED)
+  end
+end
+
+-- ---- A/B: two variants on the same inputs -------------------------------------------------------
+-- A is recorded live; B re-simulates the same logged input from the same frame (sequential,
+-- exact: the rewind's keyframe + input log). B = "reload" (geno.json / overlays as they are on
+-- disk now, through the hot reload), "same" (the same data: a determinism check, 0 differences
+-- expected) or "mirror" (two fighters live: P2 gets P1's pad, compared from their own start).
+local AB_FILE, AB_PENDING = "ab_a.txt", "ab_pending.txt"
+local ab = { rec = nil, a = nil, b = nil, res = nil, view = nil }
+
+local function ab_sample(tr)
+  local row = {}
+  for _, p in ipairs(gd.players()) do
+    local mask = 0
+    for _, h in ipairs(p.hitboxes) do mask = mask | (1 << h.id) end
+    row[p.port] = { p.x, p.y, p.action, mask, p.facing or 1 }
+  end
+  tr[gd.match().frame] = row
+end
+
+local function ab_write(t)
+  local out = { string.format("%d %d %s", t.from, t.to, t.kind or "live") }
+  for _, f in ipairs(sorted_keys(t.tr)) do
+    for port, s in pairs(t.tr[f]) do
+      out[#out + 1] = string.format("%d %d %.6f %.6f %d %d", f, port, s[1], s[2], s[3], s[4])
+    end
+  end
+  pcall(gd.data_write, AB_FILE, table.concat(out, "\n") .. "\n")
+end
+
+local function ab_read()
+  local ok, text = pcall(gd.data_read, AB_FILE)
+  if not ok or text == nil then return nil end
+  local t = { tr = {} }
+  local first = true
+  for l in text:gmatch("[^\n]+") do
+    if first then
+      local a, b, k = l:match("^(%-?%d+) (%-?%d+) (%S+)")
+      t.from, t.to, t.kind = tonumber(a), tonumber(b), k
+      first = false
+    else
+      local f, port, x, y, act, mask = l:match("^(%-?%d+) (%d+) (%S+) (%S+) (%-?%d+) (%d+)")
+      if f then
+        f = tonumber(f)
+        t.tr[f] = t.tr[f] or {}
+        t.tr[f][tonumber(port)] = { tonumber(x), tonumber(y), tonumber(act), tonumber(mask) }
+      end
+    end
+  end
+  return t.from and t or nil
+end
+
+-- compare A's port pa with B's port pb frame by frame (rel: from each one's own start, x as faced)
+local function ab_compare(A, B, pa, pb, rel)
+  local frames, first, why, maxd, nact, nhb, npos = {}, nil, nil, 0, 0, 0, 0
+  local a0, b0
+  for _, f in ipairs(sorted_keys(A.tr)) do
+    local ra, rb = A.tr[f][pa], B.tr[f] and B.tr[f][pb]
+    if ra and rb then
+      a0, b0 = a0 or ra, b0 or rb
+      local ax, ay, bx, by = ra[1], ra[2], rb[1], rb[2]
+      if rel then
+        ax, ay = (ax - a0[1]) * (a0[5] or 1), ay - a0[2]
+        bx, by = (bx - b0[1]) * (b0[5] or 1), by - b0[2]
+      end
+      local d = math.sqrt((ax - bx) ^ 2 + (ay - by) ^ 2)
+      local act, hb, pos = ra[3] ~= rb[3], ra[4] ~= rb[4], d > 0.0001
+      if d > maxd then maxd = d end
+      if act then nact = nact + 1 end
+      if hb then nhb = nhb + 1 end
+      if pos then npos = npos + 1 end
+      if first == nil and (act or hb or pos) then
+        first = f
+        why = (pos and "position" or "") .. (act and ((pos and ", " or "") .. "action") or "")
+          .. (hb and (((pos or act) and ", " or "") .. "hitboxes") or "")
+      end
+      frames[#frames + 1] = { f = f, a = ra, b = rb, d = d, act = act, hb = hb, pos = pos }
+    end
+  end
+  return { frames = frames, first = first, why = why, maxd = maxd, nact = nact, nhb = nhb, npos = npos,
+    pa = pa, pb = pb }
+end
+
+local function ab_finish()
+  local A, B = ab.a, ab.b
+  if A == nil or B == nil then return end
+  local res = { kind = B.kind, per = {} }
+  if B.kind == "mirror" then
+    res.per[1] = ab_compare(A, B, 1, 2, true)
+  else
+    for _, p in ipairs(gd.players()) do res.per[#res.per + 1] = ab_compare(A, B, p.port, p.port, false) end
+  end
+  ab.res, ab.view = res, nil
+  for _, r in ipairs(res.per) do
+    gd.log(string.format("lab ab: %s P%d vs P%d over %d frames: first divergence %s (%s); position differs on %d "
+      .. "(max %.4f), action on %d, hitboxes on %d", res.kind, r.pa, r.pb, #r.frames, tostring(r.first or "none"),
+      r.why or "-", r.npos, r.maxd, r.nact, r.nhb))
+  end
+  say(res.per[1] and res.per[1].first and ("A/B: they part at f" .. res.per[1].first) or "A/B: identical",
+    res.per[1] and res.per[1].first and GOLD or OK)
+end
+
+local function ab_stop_record()
+  local r = ab.rec
+  ab.rec = nil
+  gd.pause()
+  r.to = gd.match().frame
+  if r.kind == "mirror" then
+    set_mirror(false)
+    local A, B = { from = r.from, to = r.to, kind = "mirror", tr = {} }, { from = r.from, to = r.to, kind = "mirror", tr = {} }
+    for f, row in pairs(r.tr) do A.tr[f] = { [1] = row[1] } B.tr[f] = { [2] = row[2] } end
+    ab.a, ab.b = A, B
+    ab_finish()
+    return
+  end
+  ab.a, ab.b, ab.res = r, nil, nil
+  ab_write(r)
+  say(string.format("A recorded: f%d-%d. Now B: reload (B) or same data (C)", r.from, r.to))
+end
+
+ACTIONS.ab_record = function()
+  if ab.rec then ab_stop_record() return end
+  if not offline() then return end
+  ensure_history()
+  ab.rec = { from = gd.match().frame, tr = {}, kind = "live" }
+  ab.res, ab.b = nil, nil
+  gd.resume()
+  say("Recording A: play, then R again")
+end
+ACTIONS.ab_mirror = function()
+  if ab.rec then ab_stop_record() return end
+  if not offline() then return end
+  set_mirror(true)
+  ab.rec = { from = gd.match().frame, tr = {}, kind = "mirror" }
+  ab.res = nil
+  gd.resume()
+  say("Recording P1 and P2 on one pad: M again to stop")
+end
+local function ab_start_b(kind)
+  local A = ab.a
+  if A == nil or ab.rec then say("Record A first (R)", DANGER) return end
+  local h = gd.history()
+  if A.from < (h.oldest or 0) then say("A has left the rewind window: record again", DANGER) return end
+  ab.b = { from = A.from, to = A.to, kind = kind, tr = {} }
+  ab.res = nil
+  if kind == "reload" then
+    -- the script reloads: A and the plan wait in files
+    ab_write(A)
+    pcall(gd.data_write, AB_PENDING, string.format("reload %d %d\n", A.from, A.to))
+    local ok, why = gd.hot_reload((gd.match().frame - A.from) / 60)
+    if not ok then say("Hot reload: " .. tostring(why), DANGER) ab.b = nil pcall(gd.data_write, AB_PENDING, "") end
+  else
+    -- the rewind happens at the loop top while paused; play on once it has (LE.tick)
+    local ok, why = gd.rewind_to(A.from)
+    if ok then ab.b.resume = true else say("Rewind: " .. tostring(why), DANGER) ab.b = nil end
+  end
+end
+ACTIONS.ab_reload = function() ab_start_b("reload") end
+ACTIONS.ab_same = function() ab_start_b("same") end
+ACTIONS.ab_back = function()
+  local r = ab.res and ab.res.per[1]
+  if r == nil or #r.frames == 0 then return end
+  ab.view = math.max(1, (ab.view or (#r.frames + 1)) - 1)
+end
+ACTIONS.ab_fwd = function()
+  local r = ab.res and ab.res.per[1]
+  if r == nil or #r.frames == 0 then return end
+  ab.view = math.min(#r.frames, (ab.view or 0) + 1)
+end
+STATES.ab_rec = function() return ab.rec ~= nil end
+
+local function ab_frame()
+  if ab.rec then
+    ab_sample(ab.rec.tr)
+    local h = gd.history()
+    if ab.rec.kind ~= "mirror" and gd.match().frame - ab.rec.from >= math.max(60, (h.depth or 600) - 30) then
+      ab_stop_record()
+      say("A stopped at the edge of the rewind window", GOLD)
+    end
+    return
+  end
+  local B = ab.b
+  if B and B.kind ~= "mirror" then
+    local f = gd.match().frame
+    -- the rewind lands at a frame boundary: wait until the frames are A's again
+    if not B.armed then
+      if f > B.from + 2 then return end
+      B.armed = true
+    end
+    if f >= B.from and f <= B.to then ab_sample(B.tr) end
+    if f >= B.to then
+      gd.pause()
+      ab_finish()
+      if B.kind == "reload" then pcall(gd.data_write, AB_PENDING, "") end
+    end
+  end
+end
+
+-- a hot reload restarted the script: pick A and the plan back up
+do
+  local ok, text = pcall(gd.data_read, AB_PENDING)
+  if ok and text and text:match("^reload") then
+    local a = ab_read()
+    if a then
+      ab.a = a
+      ab.b = { from = a.from, to = a.to, kind = "reload", tr = {} }
+    end
+  end
+end
+
+local function act_col(id) return PORT[(id % 5) + 1] end
+
+local function draw_ab()
+  local x, y, w = 8, 8, 330
+  local lines = {}
+  local function add(s, c) lines[#lines + 1] = { s, c or BONE } end
+  if ab.rec then
+    add(string.format("RECORDING %s  f%d  (%d frames)", ab.rec.kind == "mirror" and "P1 + P2" or "A", ab.rec.from,
+      gd.match().frame - ab.rec.from), DANGER)
+  elseif ab.a == nil then
+    add("R records A (live). Then B re-simulates the same input from the same frame:", MUTED)
+    add("B = reload the fighter data (edit geno.json first), C = the same data (a check).", MUTED)
+    add("M records two fighters at once: P2 plays P1's pad (P2 must be a human port).", MUTED)
+  else
+    add(string.format("A: f%d-%d (%d frames)", ab.a.from, ab.a.to, ab.a.to - ab.a.from), ACCENT)
+    if ab.b and not ab.res then add(string.format("B (%s): re-simulating ... f%d", ab.b.kind, gd.match().frame), GOLD) end
+  end
+  local res = ab.res
+  if res then
+    for _, r in ipairs(res.per) do
+      add(string.format("P%d%s: %s", r.pa, r.pb ~= r.pa and (" vs P" .. r.pb) or "",
+        r.first and string.format("part at f%d (%s)", r.first, r.why) or "identical"), r.first and GOLD or OK)
+      add(string.format("   pos %d f (max %.3f)  action %d f  hitboxes %d f  of %d", r.npos, r.maxd, r.nact, r.nhb,
+        #r.frames), MUTED)
+    end
+  end
+  panel(x, y, w, 26 + #lines * 13 + 4, "A / B")
+  if res then txt(x + 64, y + 14, res.kind:upper(), "caption", GOLD) end
+  for i, l in ipairs(lines) do txt(x + 12, y + 28 + (i - 1) * 13, l[1], "caption", l[2], "left", w - 24) end
+  if res == nil or res.per[1] == nil or #res.per[1].frames == 0 then return end
+  -- the focused port's comparison (or the first)
+  local r = res.per[1]
+  for _, rr in ipairs(res.per) do if rr.pa == focus then r = rr end end
+  local n = #r.frames
+  local view = ab.view or n
+  local cur = r.frames[view]
+  -- ghosts: A's path and B's path, and where each is on the viewed frame
+  if T("ghost") and res.kind ~= "mirror" then
+    local la, lb
+    for i, fr in ipairs(r.frames) do
+      local ax, ay = gd.project(fr.a[1], fr.a[2], 0)
+      local qx, qy = gd.project(fr.b[1], fr.b[2], 0)
+      if la and ax then gd.line(la[1], la[2], ax, ay, alpha(ACCENT, 0xC0)) end
+      if lb and qx then gd.line(lb[1], lb[2], qx, qy, alpha(GOLD, 0xC0)) end
+      la, lb = ax and { ax, ay } or la, qx and { qx, qy } or lb
+    end
+    local ax, ay = gd.project(cur.a[1], cur.a[2], 0)
+    local qx, qy = gd.project(cur.b[1], cur.b[2], 0)
+    if ax then quad(ax - 4, ay - 4, 8, 8, ACCENT) txt(ax + 6, ay - 4, "A", "caption", ACCENT) end
+    if qx then quad(qx - 4, qy - 4, 8, 8, GOLD) txt(qx + 6, qy + 8, "B", "caption", GOLD) end
+  end
+  if not T("tracks") then return end
+  -- split timelines: A and B coloured by action, the differences, the first divergence
+  local px, pw = 22, 596
+  local ph = 96
+  local py = 444 - ph
+  panel(8, py, 624, ph, "A / B TRACKS")
+  local sx = pw / n
+  local ty = py + 26
+  txt(px, ty - 4, "A", "caption", ACCENT)
+  txt(px, ty + 16, "B", "caption", GOLD)
+  for i, fr in ipairs(r.frames) do
+    local fx = px + 12 + (i - 1) * sx * (pw - 12) / pw
+    local fw = math.max(1, sx * (pw - 12) / pw)
+    quad(fx, ty - 12, fw, 10, act_col(fr.a[3]))
+    quad(fx, ty + 8, fw, 10, act_col(fr.b[3]))
+    if fr.act or fr.pos or fr.hb then quad(fx, ty + 22, fw, 6, fr.act and DANGER or fr.hb and HIT[1] or GOLD) end
+    if fr.a[4] ~= 0 then quad(fx, ty - 1, fw, 2, HIT[0]) end
+    if fr.b[4] ~= 0 then quad(fx, ty + 19, fw, 2, HIT[0]) end
+  end
+  if r.first then
+    for i, fr in ipairs(r.frames) do
+      if fr.f == r.first then
+        local fx = px + 12 + (i - 1) * sx * (pw - 12) / pw
+        img("lab_tl_playhead", fx - 4, ty - 18, 8, 16, GOLD)
+      end
+    end
+  end
+  local vx = px + 12 + (view - 1) * sx * (pw - 12) / pw
+  quad(vx, ty - 14, 1, 44, BONE)
+  txt(px, py + ph - 10, string.format("f%d   A %s  B %s   d %.3f%s", cur.f, gd.motion_name(cur.a[3], r.pa),
+    gd.motion_name(cur.b[3], r.pb), cur.d, cur.hb and "   hitboxes differ" or ""), "caption", BONE, "left", pw)
+end
+
+-- ---- the frame-data export (TOOLS, `lab export`, MELEE_LAB_BATCH) --------------------------------
+local LANDING_ATTR = { AttackAirN = "landingairn_lag", AttackAirF = "landingairf_lag", AttackAirB = "landingairb_lag",
+  AttackAirHi = "landingairhi_lag", AttackAirLw = "landingairlw_lag" }
+local bx = nil
+local fd_last = nil -- the last export: {fighter, version, dir, moves}
+
+local function bx_moves(port)
+  local out = {}
+  for _, m in ipairs(gd.motion_list(port) or {}) do
+    if m.anim_id >= 0 and m.anim_name ~= "" and ((m.group == "common" and m.name:find("^Attack") ~= nil)
+        or m.group == "geno") then
+      out[#out + 1] = m
+    end
+  end
+  for i, m in ipairs(input_entries()) do table.insert(out, i, m) end
+  return out
+end
+
+local function bx_start(port, version, quit)
+  local p = gd.player(port)
+  if p == nil or not offline() then return false, "no fighter there (or online)" end
+  if p.airborne or gd.motion_name(p.action, port) ~= "Wait" then return false, "stand still on the ground first (Wait; now " .. gd.motion_name(p.action, port) .. (p.airborne and ", airborne" or "") .. ")" end
+  if bx then return false, "an export is running" end
+  gd.pause()
+  gd.savestate(BATCH_SLOT)
+  bx = { port = port, version = version or gd.lab_now(), moves = bx_moves(port), i = 0,
+    phase = "save", wait = 2, out = {}, fighter = ((p.char_name or "fighter"):lower():gsub("[^%w_%-]+", "_")), quit = quit,
+    fall = motion_by_name(port, "Fall", 29),
+    t0 = gd.time(), attrs = gd.attrs(port), verbose = gd.lab_env("BATCH_VERBOSE") ~= nil }
+  say(string.format("Frame data: %d states of %s", #bx.moves, fighter_name(port)))
+  return true
+end
+
+local function bx_sample(cur, f)
+  local p = gd.player(bx.port)
+  if p == nil then return end
+  local s = { action = p.action, iasa = p.iasa, air = p.airborne, hb = {} }
+  for _, h in ipairs(gd.hitboxes(bx.port) or {}) do s.hb[#s.hb + 1] = h end
+  cur.f[f] = s
+end
+
+local function bx_static(port, m)
+  local tl = gd.timeline(port, m.id)
+  local st = { len = 0, iasa = nil, ac = nil }
+  if tl == nil then return st end
+  local _, marks, len = analyse(tl)
+  st.len = math.floor(len + 0.5)
+  local lag_on, lag_off
+  for _, e in ipairs(tl.events) do
+    if e.name == "iasa" and st.iasa == nil then st.iasa = e.frame end
+    if e.name == "cmd_var" and e.index == 0 then
+      if e.value ~= 0 and lag_on == nil then lag_on = e.frame
+      elseif e.value == 0 and lag_on and lag_off == nil then lag_off = e.frame end
+    end
+  end
+  if lag_on then
+    -- cmd_vars[0] set = a landing takes the move's landing lag (ftCo_LandingAir_EnterWithLag)
+    st.ac = string.format("1-%d%s", lag_on - 1, lag_off and string.format(" %d-", lag_off) or "")
+  end
+  return st
+end
+
+local function bx_finish_move(cur)
+  local m = cur.m
+  local frames = sorted_keys(cur.f)
+  local total, iasa, active = 0, nil, {}
+  local hbs, order = {}, {}
+  for _, f in ipairs(frames) do
+    local s = cur.f[f]
+    if cur.input or s.action == m.id then
+      if f > total then total = f end
+      if s.iasa and iasa == nil then iasa = f end
+      if #s.hb > 0 then active[f] = true end
+      for _, h in ipairs(s.hb) do
+        local key = string.format("%d|%g|%d|%d|%d|%d|%.3f|%d|%s|%d", h.id, h.damage, h.angle, h.kbg, h.bkb, h.wbk,
+          h.radius, h.bone, h.element_name, h.shield_damage)
+        if hbs[key] == nil then
+          hbs[key] = { id = h.id, damage = h.damage, angle = h.angle, kbg = h.kbg, bkb = h.bkb, wbk = h.wbk,
+            radius = h.radius, bone = h.bone, element = h.element_name, shield_damage = h.shield_damage, frames = {} }
+          order[#order + 1] = key
+        end
+        hbs[key].frames[f] = true
+      end
+    end
+  end
+  local st = m.input and { len = nil } or bx_static(bx.port, m)
+  local startup
+  for _, f in ipairs(sorted_keys(active)) do startup = f break end
+  local lag_attr = LANDING_ATTR[m.name]
+  local lag = lag_attr and bx.attrs and bx.attrs[lag_attr] or nil
+  local row = { id = m.id, name = m.name, group = m.group, air = m.air or (air_name(m.name) and true or false),
+    total = total, total_script = st.len, iasa = iasa or st.iasa, startup = startup, active = windows_of(active),
+    landing_lag = lag and math.floor(lag + 0.5) or nil, lcancel_lag = lag and math.floor(lag / 2) or nil,
+    autocancel = st.ac, ended = cur.ended or "", landed = cur.landed, hitboxes = {},
+    chain = cur.chain and table.concat(cur.chain, ">") or nil }
+  for _, key in ipairs(order) do
+    local h = hbs[key]
+    h.frames = windows_of(h.frames)
+    row.hitboxes[#row.hitboxes + 1] = h
+  end
+  bx.out[#bx.out + 1] = row
+end
+
+local function csv(v)
+  if v == nil then return "" end
+  if type(v) == "boolean" then return v and "1" or "0" end
+  local s = tostring(v)
+  if s:find("[,\"]") then s = "\"" .. s:gsub("\"", "\"\"") .. "\"" end
+  return s
+end
+local function jstr(v)
+  if v == nil then return "null" end
+  if type(v) == "boolean" or type(v) == "number" then return tostring(v) end
+  return "\"" .. tostring(v):gsub("[\"%c]", function(c) return c == "\"" and "\\\"" or " " end) .. "\""
+end
+
+local MOVE_COLS = { "id", "name", "group", "air", "startup", "active", "total", "iasa", "total_script",
+  "landing_lag", "lcancel_lag", "autocancel", "landed", "ended", "chain" }
+local HB_COLS = { "id", "damage", "angle", "kbg", "bkb", "wbk", "radius", "bone", "element", "shield_damage", "frames" }
+
+local function bx_write()
+  local dir = string.format("framedata/%s/%s", bx.fighter, bx.version)
+  local mc, hc, js = { "fighter," .. table.concat(MOVE_COLS, ",") .. ",hitboxes" },
+    { "fighter,motion_id,motion,hb_" .. table.concat(HB_COLS, ",hb_") }, {}
+  for _, r in ipairs(bx.out) do
+    local cells = { csv(bx.fighter) }
+    for _, c in ipairs(MOVE_COLS) do cells[#cells + 1] = csv(r[c]) end
+    cells[#cells + 1] = tostring(#r.hitboxes)
+    mc[#mc + 1] = table.concat(cells, ",")
+    local jh = {}
+    for _, h in ipairs(r.hitboxes) do
+      local hcells = { csv(bx.fighter), tostring(r.id), csv(r.name) }
+      local jf = {}
+      for _, c in ipairs(HB_COLS) do
+        hcells[#hcells + 1] = csv(h[c])
+        jf[#jf + 1] = jstr(c) .. ":" .. jstr(h[c])
+      end
+      hc[#hc + 1] = table.concat(hcells, ",")
+      jh[#jh + 1] = "{" .. table.concat(jf, ",") .. "}"
+    end
+    local jm = {}
+    for _, c in ipairs(MOVE_COLS) do jm[#jm + 1] = jstr(c) .. ":" .. jstr(r[c]) end
+    jm[#jm + 1] = "\"hitboxes\":[" .. table.concat(jh, ",") .. "]"
+    js[#js + 1] = "  {" .. table.concat(jm, ",") .. "}"
+  end
+  local head = string.format("{\"fighter\":%s,\"version\":%s,\"date\":%s,\"frames\":\"the first frame in the state = frame 1\",\"moves\":[\n",
+    jstr(bx.fighter), jstr(bx.version), jstr(gd.lab_now(true)))
+  gd.data_write(dir .. "/moves.csv", table.concat(mc, "\n") .. "\n")
+  gd.data_write(dir .. "/hitboxes.csv", table.concat(hc, "\n") .. "\n")
+  gd.data_write(dir .. "/framedata.json", head .. table.concat(js, ",\n") .. "\n]}\n")
+  -- the fighter's version list (the diff picks the last two)
+  local idx = string.format("framedata/%s/versions.txt", bx.fighter)
+  local ok, old = pcall(gd.data_read, idx)
+  local text = (ok and old) or ""
+  if not text:find("\n" .. bx.version .. "\n", 1, true) and not text:find("^" .. bx.version .. "\n") then
+    text = text .. bx.version .. "\n"
+  end
+  gd.data_write(idx, text)
+  return dir
+end
+
+local function bx_tick()
+  if bx == nil then return end
+  if not gd.match().active then bx = nil return end
+  if bx.wait > 0 then bx.wait = bx.wait - 1 return end
+  if bx.phase == "save" or bx.phase == "next" then
+    bx.i = bx.i + 1
+    if bx.i > #bx.moves then
+      local okw, dir = pcall(bx_write)
+      if not okw then
+        gd.log("lab export: not written: " .. tostring(dir))
+        say("Frame data: not written (see the log)", DANGER)
+        local quit = bx.quit
+        bx = nil
+        if quit then gd.quit() end
+        return
+      end
+      fd_last = { fighter = bx.fighter, version = bx.version, dir = dir, n = #bx.out }
+      gd.log(string.format("lab export: %s %s: %d states in %.1f s -> scripts-data/geno-lab_lab/%s", bx.fighter,
+        bx.version, #bx.out, gd.time() - bx.t0, dir))
+      say(string.format("Frame data: %d states -> %s", #bx.out, dir), OK)
+      local quit = bx.quit
+      bx = nil
+      pcall(gd.loadstate, BATCH_SLOT)
+      if quit then gd.quit() end
+      return
+    end
+    gd.resume()
+    gd.pause()
+    pcall(gd.loadstate, BATCH_SLOT)
+    bx.phase, bx.wait = "enter", 1
+  elseif bx.phase == "enter" then
+    local m = bx.moves[bx.i]
+    bx.cur = { m = m, f = {}, n = 0, entered = false, tries = 0 }
+    if bx.verbose then gd.log(string.format("lab export: %d/%d %d %s anim %d", bx.i, #bx.moves, m.id, m.name, m.anim_id)) end
+    if m.input then
+      bx.cur.input = true
+      if m.air then gd.set_motion(bx.port, bx.fall, 1, 1, 60) end -- low: an up special must not fly into the top blast zone
+      bx.phase, bx.wait = "input", m.air and 1 or 0
+      return
+    end
+    local ok = gd.set_motion(bx.port, m.id, 1, 1, air_name(m.name) and 160 or 0)
+    if not ok then bx.phase = "next" return end
+    bx.phase = "settle"
+  elseif bx.phase == "input" then
+    local p, cur = gd.player(bx.port), bx.cur
+    cur.base, cur.pre, cur.chain = p and p.action, 0, {}
+    -- the pad override reaches the game at the next tick's pad read: no frame runs until then
+    gd.input(bx.port, input_spec(bx.port, cur.m.input), 3)
+    bx.phase, bx.wait = "run", 1
+  elseif bx.phase == "settle" then
+    local p, cur = gd.player(bx.port), bx.cur
+    cur.tries = cur.tries + 1
+    if p and p.action == cur.m.id then
+      -- the entry itself (the change at the frame boundary); the first frame the game runs in the
+      -- state is frame 1, as frame-data sites count (Fox: jab 2-3, nair 4-31), so it overwrites this
+      bx_sample(cur, 1)
+      cur.entered = true
+      bx.phase = "run"
+      gd.step(30)
+    elseif cur.tries > 4 then
+      cur.ended = "never entered"
+      bx_finish_move(cur)
+      bx.phase = "next"
+    end
+  elseif bx.phase == "run" then
+    local cur = bx.cur
+    if cur.done then
+      bx_finish_move(cur)
+      bx.phase = "next"
+      gd.resume()
+      gd.pause()
+    else
+      gd.step(30)
+    end
+  end
+end
+
+local function bx_frame()
+  if bx == nil or bx.phase ~= "run" then return end
+  local cur = bx.cur
+  if cur.done then return end
+  local p = gd.player(bx.port)
+  if p == nil then cur.done = true return end
+  if cur.input then
+    -- frame 1 = the first frame out of the neutral stance; the move ends back in an end state
+    if cur.n == 0 then
+      cur.pre = cur.pre + 1
+      if p.action == cur.base then
+        if cur.pre > 12 then cur.done = true cur.ended = "no special came out" end
+        return
+      end
+    end
+    local nm = gd.motion_name(p.action, bx.port)
+    if cur.n > 0 and END_STATES[nm] then cur.done = true cur.ended = nm return end
+    cur.n = cur.n + 1
+    if cur.chain[#cur.chain] ~= nm then cur.chain[#cur.chain + 1] = nm end
+    bx_sample(cur, cur.n)
+    if cur.n >= 300 then cur.done = true cur.ended = "cap 300" end
+    return
+  end
+  cur.n = cur.n + 1
+  if p.action ~= cur.m.id then
+    cur.done = true
+    cur.ended = gd.motion_name(p.action, bx.port)
+    return
+  end
+  bx_sample(cur, cur.n)
+  if cur.n >= 299 then cur.done = true cur.ended = "cap 300" end
+end
+
+local function bx_land(port)
+  if bx and bx.cur and port == bx.port and not bx.cur.landed and bx.phase == "run" then bx.cur.landed = bx.cur.n + 1 end
+end
+
+-- the diff of two exports (moves.csv + hitboxes.csv), by state name
+local function read_csv(name)
+  local ok, text = pcall(gd.data_read, name)
+  if not ok or text == nil then return nil end
+  local rows, head = {}, nil
+  for l in text:gmatch("[^\n]+") do
+    local cells, i = {}, 1
+    while i <= #l do
+      if l:sub(i, i) == "\"" then
+        local j, s = i + 1, ""
+        while j <= #l do
+          local ch = l:sub(j, j)
+          if ch == "\"" and l:sub(j + 1, j + 1) == "\"" then s = s .. "\"" j = j + 2
+          elseif ch == "\"" then j = j + 1 break
+          else s = s .. ch j = j + 1 end
+        end
+        cells[#cells + 1] = s
+        i = j + 1
+      else
+        local j = l:find(",", i, true) or (#l + 1)
+        cells[#cells + 1] = l:sub(i, j - 1)
+        i = j + 1
+      end
+    end
+    if l:sub(-1) == "," then cells[#cells + 1] = "" end
+    if head == nil then head = cells else
+      local r = {}
+      for k, h in ipairs(head) do r[h] = cells[k] or "" end
+      rows[#rows + 1] = r
+    end
+  end
+  return rows
+end
+
+local function fd_diff(fighter, va, vb)
+  local base = "framedata/" .. fighter .. "/"
+  local ma, mb = read_csv(base .. va .. "/moves.csv"), read_csv(base .. vb .. "/moves.csv")
+  if ma == nil or mb == nil then return nil, "no export " .. (ma == nil and va or vb) end
+  local ha, hb = read_csv(base .. va .. "/hitboxes.csv") or {}, read_csv(base .. vb .. "/hitboxes.csv") or {}
+  local function index(rows, hrows)
+    local t = {}
+    for _, r in ipairs(rows) do t[r.name] = { r = r, hb = {} } end
+    for _, h in ipairs(hrows) do if t[h.motion] then table.insert(t[h.motion].hb, h) end end
+    return t
+  end
+  local A, B = index(ma, ha), index(mb, hb)
+  local out, changed = {}, 0
+  local names = {}
+  for n in pairs(A) do names[n] = true end
+  for n in pairs(B) do names[n] = true end
+  for _, n in ipairs(sorted_keys(names)) do
+    local a, b = A[n], B[n]
+    if a == nil then out[#out + 1] = "+ " .. n .. "  (new in " .. vb .. ")" changed = changed + 1
+    elseif b == nil then out[#out + 1] = "- " .. n .. "  (gone in " .. vb .. ")" changed = changed + 1
+    else
+      local diffs = {}
+      for _, c in ipairs(MOVE_COLS) do
+        if c ~= "id" and (a.r[c] or "") ~= (b.r[c] or "") then
+          diffs[#diffs + 1] = string.format("%s %s -> %s", c, a.r[c] ~= "" and a.r[c] or "-", b.r[c] ~= "" and b.r[c] or "-")
+        end
+      end
+      local nh = math.max(#a.hb, #b.hb)
+      for k = 1, nh do
+        local x, y = a.hb[k], b.hb[k]
+        if x == nil or y == nil then
+          diffs[#diffs + 1] = string.format("hitbox %d %s", k, x == nil and "added" or "removed")
+        else
+          for _, c in ipairs(HB_COLS) do
+            if x["hb_" .. c] ~= y["hb_" .. c] then
+              diffs[#diffs + 1] = string.format("hb%d.%s %s -> %s", k, c, x["hb_" .. c], y["hb_" .. c])
+            end
+          end
+        end
+      end
+      if #diffs > 0 then
+        changed = changed + 1
+        out[#out + 1] = "~ " .. n .. ": " .. table.concat(diffs, "; ")
+      end
+    end
+  end
+  table.insert(out, 1, string.format("framedata diff %s: %s -> %s: %d state(s) changed", fighter, va, vb, changed))
+  pcall(gd.data_write, base .. "diff_" .. va .. "_" .. vb .. ".txt", table.concat(out, "\n") .. "\n")
+  return out, changed
+end
+
+local function fd_versions(fighter)
+  local ok, text = pcall(gd.data_read, "framedata/" .. fighter .. "/versions.txt")
+  local v = {}
+  if ok and text then for l in text:gmatch("[^\n]+") do v[#v + 1] = l end end
+  return v
+end
+
+local fd_diff_text = nil
+local function fd_diff_last(port)
+  local p = gd.player(port or focus)
+  local fighter = p and ((p.char_name or ""):lower():gsub("[^%w_%-]+", "_")) or (fd_last and fd_last.fighter)
+  if fighter == nil then return nil, "no fighter" end
+  local v = fd_versions(fighter)
+  if #v < 2 then return nil, "export " .. fighter .. " twice first (" .. #v .. " export(s))" end
+  local out, n = fd_diff(fighter, v[#v - 1], v[#v])
+  if out == nil then return nil, n end
+  fd_diff_text = out
+  return out, n
+end
+
+-- ---- the rollback strip (FRAMES, N) ----------------------------------------------------------------
+local RB_KIND_COL = { synctest = ACCENT, fake = 0x4D8DFFFF, netplay = GOLD }
+draw_rollbacks = function()
+  local r = gd.rollbacks(240)
+  local x, y, w, h = 332, 36, 300, 104
+  panel(x, y, w, h, "ROLLBACKS")
+  if r.total == 0 and r.mismatch == nil then
+    txt(x + 12, y + 34, "none yet: netplay, SyncTest or MELEE_RB_FAKE", "caption", DISABLED)
+    txt(x + 12, y + 48, "record every rollback here, newest on the right", "caption", DISABLED)
+    return
+  end
+  local newest = r.list[1] and r.list[1].frame or 0
+  local span = 180
+  local bx0, by0, bw, bh = x + 12, y + 70, w - 24, 44
+  quad(bx0, by0, bw, 1, alpha(TICK, 0x90))
+  local maxd, sum, nms, causes = 0, 0, 0, {}
+  for _, e in ipairs(r.list) do
+    local age = newest - e.frame
+    if age < span then
+      local fx = bx0 + bw - (age + 1) * bw / span
+      local hh = math.min(bh, 5 * e.depth)
+      quad(fx, by0 - hh, math.max(1, bw / span), hh, e.mismatch and DANGER or RB_KIND_COL[e.kind] or BONE)
+    end
+    if e.depth > maxd then maxd = e.depth end
+    sum = sum + e.ms
+    if e.mismatch then nms = nms + 1 end
+    causes[e.cause] = (causes[e.cause] or 0) + 1
+  end
+  local cs = {}
+  for c, n in pairs(causes) do cs[#cs + 1] = (c == 0 and "SyncTest" or ("P" .. c)) .. " " .. n end
+  local last = r.list[1]
+  txt(x + 70, y + 14, string.format("%d in all", r.total), "caption", GOLD)
+  txt(x + 12, y + 30, last and string.format("last f%d: %d back (from f%d), %s, %.2f ms", last.frame, last.depth,
+    last.first, last.kind, last.ms) or "", "caption", BONE, "left", w - 24)
+  txt(x + 12, y + 43, string.format("deepest %d   mean %.2f ms   why: %s", maxd, #r.list > 0 and sum / #r.list or 0,
+    table.concat(cs, ", ")), "caption", MUTED, "left", w - 24)
+  if r.mismatch then
+    panel(x, y + h + 6, w, 44, "MISMATCH")
+    txt(x + 84, y + h + 20, string.format("f%d  x%d", r.mismatch.frame, r.mismatch.count), "caption", DANGER)
+    txt(x + 12, y + h + 36, r.mismatch.where, "caption", BONE, "left", w - 24)
+  end
+end
+
+tools_items = function()
+  local function go(id)
+    return function() set_mode(MODE_BY_ID[id]) menu_close() end
+  end
+  return {
+    { label = "Frame data export", icon = "lab_export",
+      desc = function()
+        return "Every attack, special, m-ex and Geno state of the focused fighter, one after another from a neutral"
+          .. " start, as fast as the game runs: startup, active frames, IASA, landing lag, autocancel and every"
+          .. " hitbox, to CSV and JSON in scripts-data/geno-lab_lab/framedata/<fighter>/<version>. Uses quick slot "
+          .. BATCH_SLOT .. "." .. (fd_last and ("  Last: " .. fd_last.dir .. ", " .. fd_last.n .. " states.") or "")
+      end,
+      value = function() return bx and "RUNNING" or (fd_last and fd_last.version or "") end,
+      run = function()
+        menu_close()
+        local ok, why = bx_start(focus, nil, false)
+        if not ok then say("Export: " .. tostring(why), DANGER) end
+      end },
+    { label = "Diff the last two", icon = "lab_diff",
+      desc = function()
+        local t = fd_diff_text
+        if t == nil then return "Compare the focused fighter's last two exports: every changed state and field. The full list goes to framedata/<fighter>/diff_<a>_<b>.txt and the console." end
+        local s = t[1]
+        for k = 2, math.min(#t, 4) do s = s .. "  " .. t[k] end
+        return s
+      end,
+      value = function() return fd_diff_text and (#fd_diff_text - 1) .. " CHANGED" or "" end,
+      run = function()
+        local out, n = fd_diff_last(focus)
+        if out == nil then say("Diff: " .. tostring(n), DANGER) return end
+        for _, l in ipairs(out) do gd.log(l) end
+        say(out[1], n > 0 and GOLD or OK)
+      end },
+    { label = "State browser", icon = "lab_moves", key = "6",
+      desc = "Every action state of the focused fighter, with a filter. Pick one and play it: from neutral, looped, slowed.",
+      run = go("moves") },
+    { label = "Launch preview", icon = "lab_launch", key = "7",
+      desc = "The knockback, angle, hitstun and flight of the hitbox on screen (or the next one), for the victim's percent, weight and DI.",
+      run = go("launch") },
+    { label = "A/B compare", icon = "lab_ab", key = "8",
+      desc = "Record your inputs once, re-simulate them on other fighter data from the same frame, see the first frame they part.",
+      run = go("ab") },
+    { label = "Rollbacks", icon = "lab_rollback",
+      desc = function()
+        local r = gd.rollbacks(1)
+        return string.format("%d rollbacks recorded%s. A clears the record. FRAMES mode draws them (N).", r.total,
+          r.mismatch and (", first mismatch f" .. r.mismatch.frame .. ": " .. r.mismatch.where) or "")
+      end,
+      value = function() return tostring(gd.rollbacks(0).total) end,
+      run = function() gd.rollbacks_clear() say("Rollback record cleared") end },
+  }
+end
+
+function LE.console(cmd, rest)
+  local handled = true
+  if cmd == "export" then
+    local pt, ver = rest:match("^(%d*)%s*(%S*)$")
+    local ok, why = bx_start(tonumber(pt) or focus, ver ~= "" and ver or nil, false)
+    gd.log(ok and "export started" or ("export: " .. tostring(why)))
+  elseif cmd == "fdiff" then
+    local f, va, vb = rest:match("^(%S+)%s+(%S+)%s+(%S+)$")
+    local out, n
+    if f then out, n = fd_diff(f, va, vb) else out, n = fd_diff_last(focus) end
+    if out == nil then gd.log("fdiff: " .. tostring(n)) else for _, l in ipairs(out) do gd.log(l) end end
+  elseif cmd == "moves" then
+    br.text = rest:lower()
+    local list = br_list()
+    gd.log(string.format("moves: %d of %d (filter %s, text \"%s\")", #list, #br.all, FILTERS[br.filter], br.text))
+    for i, m in ipairs(list) do
+      if i > 60 then gd.log(string.format("  ... %d more (lab moves <text> filters)", #list - 60)) break end
+      gd.log(string.format("  %4d 0x%s %-8s %-24s %s", m.id, hexid(m.id), m.group, m.name, m.anim_name))
+    end
+  elseif cmd == "play" then
+    local id = tonumber(rest)
+    local m
+    for _, x in ipairs(br_list() and br.all) do if x.id == id or x.name == rest then m = x end end
+    if m then br_start(m) gd.log("playing " .. m.name) else gd.log("lab play <id | name>") end
+  elseif cmd == "kb" then
+    local r, a, v, hbs, h = kb_predict()
+    if r == nil then gd.log("kb: no hitbox / no victim") else
+      gd.log(string.format("kb: P%d #%d %s%% a%d kbg %d bkb %d wbk %d on P%d at %.0f%% (w %g, DI %s): kb %.3f angle %.2f -> %.2f"
+        .. " hitstun %d level %d%s", focus, h.id, tostring(h.damage), h.angle, h.kbg, h.bkb, h.wbk, v.port, r.percent,
+        r.weight, r.di, r.kb, r.angle, r.angle_di, r.hitstun, r.level,
+        r.blast and string.format(" KO %s f%d", r.blast.side, r.blast.frame) or " survives"))
+    end
+    if kbv.last then
+      local L = kbv.last
+      gd.log(string.format("kb check: kb %.3f vs %.3f, hitstun %d vs %s, flight %d f max err %.4f mean %.4f", L.kb_pred,
+        L.kb_real or -1, L.hs_pred, tostring(L.hs_real), L.n, L.max, L.mean))
+    end
+  elseif cmd == "di" then
+    for i, d in ipairs(DIS) do if d == rest then kbv.di = i end end
+    gd.log("DI " .. DIS[kbv.di])
+  elseif cmd == "ab" then
+    local sub = rest:match("^(%S*)")
+    local map = { record = "ab_record", reload = "ab_reload", same = "ab_same", mirror = "ab_mirror" }
+    if map[sub] then ACTIONS[map[sub]]() gd.log("ab " .. sub)
+    else
+      local res = ab.res
+      gd.log(string.format("ab: A %s, B %s, rec %s", ab.a and (ab.a.from .. "-" .. ab.a.to) or "-",
+        ab.b and ab.b.kind or "-", tostring(ab.rec ~= nil)))
+      if res then for _, r in ipairs(res.per) do
+        gd.log(string.format("  P%d/P%d first %s (%s) pos %d max %.4f act %d hb %d of %d", r.pa, r.pb, tostring(r.first),
+          r.why or "-", r.npos, r.maxd, r.nact, r.nhb, #r.frames))
+      end end
+    end
+  elseif cmd == "rollbacks" then
+    local r = gd.rollbacks(tonumber(rest) or 20)
+    gd.log(string.format("rollbacks: %d in all", r.total))
+    for _, e in ipairs(r.list) do
+      gd.log(string.format("  f%d back %d from f%d cause %s %s %.2f ms%s", e.frame, e.depth, e.first,
+        e.cause == 0 and "synctest" or ("P" .. e.cause), e.kind, e.ms, e.mismatch and " MISMATCH" or ""))
+    end
+    if r.mismatch then gd.log(string.format("  first mismatch f%d (x%d): %s", r.mismatch.frame, r.mismatch.count,
+      r.mismatch.where)) end
+  else
+    handled = false
+  end
+  return handled
+end
+
+-- ---- what the rest of the script uses ---------------------------------------------------------------
+local batch_env_done = false
+-- true while the export runs (it owns the tick)
+function LE.tick()
+  -- the headless export: MELEE_LAB_BATCH=<version> (MELEE_LAB_BATCH_PORT, MELEE_LAB_BATCH_QUIT=1)
+  local p1 = gd.match().active and gd.player(tonumber(gd.lab_env and gd.lab_env("BATCH_PORT") or "1") or 1)
+  if not batch_env_done and p1 and gd.match().frame >= 30 and not p1.airborne and gd.motion_name(p1.action, p1.port) == "Wait"
+      and gd.lab_env("BATCH") then
+    batch_env_done = true
+    cfg.hidden = true
+    local ok, why = bx_start(tonumber(gd.lab_env("BATCH_PORT") or "1") or 1, gd.lab_env("BATCH"),
+      gd.lab_env("BATCH_QUIT") == "1")
+    if not ok then gd.log("lab export: " .. tostring(why)) end
+  end
+  if bx then
+    -- never leave the game stuck: an error ends the export, and so does a move that makes no
+    -- progress for 5 s (a state that never ends is capped at 300 frames; this is the backstop)
+    local key = bx.i .. ":" .. bx.phase .. ":" .. (bx.cur and bx.cur.n or -1)
+    if key ~= bx.last_key then bx.last_key, bx.last_t = key, gd.time() end
+    local ok, err = pcall(bx_tick)
+    if not ok or (bx and gd.time() - (bx.last_t or gd.time()) > 5) then
+      gd.log("lab export: stopped at state " .. tostring(bx and bx.i) .. ": " .. (ok and "no progress for 5 s" or tostring(err)))
+      say("Frame data: stopped (see the log)", DANGER)
+      local quit = bx and bx.quit
+      bx = nil
+      gd.resume()
+      if quit then gd.quit() end
+    end
+    return true
+  end
+  if ab.b and ab.b.resume and not gd.history().busy then
+    ab.b.resume = false
+    gd.resume()
+  end
+  br_tick()
+  return false
+end
+function LE.frame()
+  bx_frame()
+  br_frame()
+  kb_frame()
+  ab_frame()
+end
+LE.on_hit = kb_on_hit
+LE.on_land = bx_land
+function LE.reset()
+  br.play, br.pending, br.key = nil, nil, nil
+  kbv.check, kbv.cache, kbv.key = nil, nil, nil
+  ab.rec = nil
+  bx = nil
+end
+function LE.draw_batch()
+  if not (bx and cfg.on and gd.match().active) then return end
+  local s = string.format("FRAME DATA  %s  %d / %d  %s", bx.fighter:upper(), bx.i, #bx.moves,
+    bx.moves[bx.i] and bx.moves[bx.i].name or "")
+  local w = measure(s, "body") + 30
+  quad(320 - w / 2, 12, w, 24, GLASS, SHEAR)
+  quad(320 - w / 2 - 2, 12, 4, 24, GOLD, SHEAR)
+  txt(320 - w / 2 + 14, 29, s, "body", BONE)
+end
+LE.draw_moves, LE.draw_launch, LE.draw_ab = draw_moves, draw_launch, draw_ab
+end
+stage_e()
 
 -- ---- ticks ----------------------------------------------------------------------------------------
 local function mode_keys()
@@ -1349,6 +2802,7 @@ end
 function on_tick()
   if lab_menu_tick() then return end -- the menu owns every key while it is open
   if not cfg.on then return end
+  if LE.tick() then return end -- the frame-data export owns the tick while it runs
   if gd.key_pressed("H") then
     cfg.hidden = not cfg.hidden
     if cfg.hidden then restore_draw() end
@@ -1386,6 +2840,7 @@ local function pname(port) return port and ("P" .. port) or "item" end
 
 function on_hit(attacker, victim, info)
   if not cfg.on then return end
+  LE.on_hit(attacker, victim, info)
   local text
   if info.angle then
     text = string.format("%s hit %s  #%s  %.1f%%  a%d  kbg %d  bkb %d  wbk %d  %s", pname(attacker),
@@ -1405,6 +2860,7 @@ end
 
 function on_land(port, motion)
   if not cfg.on then return end
+  LE.on_land(port)
   log(string.format("%s land from %s", pname(port), gd.motion_name(motion, port)), DISABLED)
 end
 
@@ -1419,6 +2875,7 @@ function on_match_start()
   focus = 1
   tl_cache, scrub = {}, {}
   menu.open, menu.reset_saved, menu.prev = false, false, {}
+  LE.reset()
   cfg.on = cfg.always or gd.lab_request()
   if gd.lab_request() then lab_matched = true end
 end
@@ -1432,6 +2889,7 @@ function on_scene(kind, name)
 end
 
 function on_frame()
+  LE.frame()
   for port, s0 in pairs(scrub) do
     local p = gd.player(port)
     if p == nil or p.action ~= s0.motion then scrub[port] = nil end
@@ -1462,6 +2920,7 @@ function on_draw()
     return
   end
   if menu.open then lab_menu_draw() return end
+  LE.draw_batch()
   if not cfg.on or cfg.hidden then return end
   if not gd.match().active then return end
   local list = gd.players()
@@ -1473,6 +2932,9 @@ function on_draw()
   end
   if id == "hitboxes" and T("data") then draw_hit_data() end
   if id == "frames" then draw_frames(list) end
+  if id == "moves" then LE.draw_moves() end
+  if id == "launch" then LE.draw_launch() end
+  if id == "ab" then LE.draw_ab() end
   if id == "inspect" then
     if T("info") then draw_info(list) end
     if T("attrs") then draw_attrs(list) end
@@ -1510,6 +2972,8 @@ local function help_lines()
   out[#out + 1] = "  console: lab help | status | mode <name> | set <mode>.<toggle> on|off | hide | menu [tab]"
   out[#out + 1] = "           port N | history [seconds] | back N | dump [N] | move <id> [frame] | events"
   out[#out + 1] = "           states | save | load <file> | rename <file> <name> | delete <file> | reload [seconds]"
+  out[#out + 1] = "  stage E: moves [text] | play <id|name> | kb | di none|in|out|survival | ab [record|reload|same|mirror]"
+  out[#out + 1] = "           export [port] [version] | fdiff [fighter verA verB] | rollbacks [n]"
   return out
 end
 
@@ -1535,7 +2999,7 @@ gd.command("lab", function(arg)
     local want = rest:lower()
     local i = MODE_BY_ID[want] or tonumber(want)
     if i and MODES[i] then set_mode(i) gd.log("mode " .. mode().name)
-    else gd.log("lab mode clean|hitboxes|frames|stage|inspect") end
+    else gd.log("lab mode clean|hitboxes|frames|stage|inspect|moves|launch|ab") end
   elseif cmd == "hide" then
     cfg.hidden = not cfg.hidden
     if cfg.hidden then restore_draw() end
@@ -1610,6 +3074,8 @@ gd.command("lab", function(arg)
         gd.log(string.format("  f%-3d %s%s", e.frame, e.name, extra))
       end
     end
+  elseif LE.console(cmd, rest) then
+    -- stage E (LE.console)
   elseif cmd == "set" then
     local mid, tid, v = rest:match("^(%w+)%.(%w+)%s+(%S+)$")
     if mid and tog[mid] and tog[mid][tid] ~= nil then

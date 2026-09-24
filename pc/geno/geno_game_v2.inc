@@ -1015,6 +1015,18 @@ int Geno_SpecialEnter(Fighter_GObj* gobj, int which)
     return geno_do_change(gobj, fp, st, t);
 }
 
+/* Lab (script_game.c ScriptGame_LabSetMotion; stage E's state browser and frame-data export):
+ * enter Geno state `s` the way the engine does, its behaviour's entry routine included, not as a
+ * bare motion change. Offline, at a frame boundary. 0, or -1 when the fighter has no such state. */
+int Geno_LabEnterState(Fighter* fp, int s)
+{
+    GenoState* st = geno_state(fp);
+    if (st->profile < 0 || !geno_state_valid(st, s) || s >= Geno_RowCount[st->profile]) {
+        return -1;
+    }
+    return geno_enter_state(fp->gobj, fp, st, s, 0) ? 0 : -1;
+}
+
 /* Lab (pc/gameworld/script_game.c): a Geno row by motion id, NULL when none. */
 MotionState* Geno_MotionRowIfAny(Fighter* fp, int msid)
 {

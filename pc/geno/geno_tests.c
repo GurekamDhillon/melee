@@ -2334,6 +2334,51 @@ static int test_geno_lab_select_flow(void)
     return 0;
 }
 
+/* Stage E: the rollback visualiser names a SyncTest mismatch inside a GenoState / a Fighter */
+extern int GenoGame_StateSize(void);
+extern const char* GenoGame_StateFieldName(int off);
+extern int GenoGame_StateFieldBase(int off);
+extern const char* ScriptGame_LabFighterFieldName(int off);
+extern int ScriptGame_LabFighterFieldBase(int off);
+static int t_streq(const char* a, const char* b)
+{
+    if (a == NULL || b == NULL) {
+        return 0;
+    }
+    while (*a != 0 && *a == *b) {
+        ++a;
+        ++b;
+    }
+    return *a == *b;
+}
+static int test_geno_lab_mismatch_fields(void)
+{
+    int mi = (int) __builtin_offsetof(GenoState, move_i);
+    int pos = (int) __builtin_offsetof(Fighter, cur_pos);
+    int pct = (int) __builtin_offsetof(Fighter, dmg);
+    if (GenoGame_StateSize() != (int) sizeof(GenoState)) {
+        TestFail("GenoGame_StateSize is not sizeof(GenoState)");
+        return 1;
+    }
+    if (!t_streq(GenoGame_StateFieldName(mi + 8), "move_i") || GenoGame_StateFieldBase(mi + 8) != mi) {
+        TestFail("GenoState +move_i[2] must name move_i at its base");
+        return 1;
+    }
+    if (!t_streq(GenoGame_StateFieldName((int) __builtin_offsetof(GenoState, motion_vy)), "motion_vy")) {
+        TestFail("GenoState motion_vy must be named");
+        return 1;
+    }
+    if (!t_streq(ScriptGame_LabFighterFieldName(pos + 4), "cur_pos") || ScriptGame_LabFighterFieldBase(pos + 4) != pos) {
+        TestFail("Fighter +cur_pos.y must name cur_pos");
+        return 1;
+    }
+    if (!t_streq(ScriptGame_LabFighterFieldName(pct + 4), "dmg")) {
+        TestFail("Fighter dmg.x1830_percent must name dmg");
+        return 1;
+    }
+    return 0;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -2368,4 +2413,5 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_lab_rules", test_geno_lab_rules);
     TestRegister("geno_lab_scene", test_geno_lab_scene);
     TestRegister("geno_lab_select_flow", test_geno_lab_select_flow);
+    TestRegister("geno_lab_mismatch_fields", test_geno_lab_mismatch_fields);
 }

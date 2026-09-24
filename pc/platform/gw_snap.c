@@ -938,6 +938,124 @@ static int sn_any_diff(const GwSnapSlot *s) {
     return 0;
 }
 
+/* ---- the Geno Lab's rollback visualiser (stage E) -----------------------------------------------
+ * A ring of the last RBV_N rollbacks, from SyncTest (gw_SyncTest_IterStart) and from the rollback
+ * session (gw_rollback.c: fake network or netplay), plus the FIRST mismatch SyncTest found (or a
+ * netplay checksum desync), named down to the symbol / heap object and, where the game half can,
+ * the Fighter field or the GenoState field. Native memory only; nothing here is game state. Read
+ * by gd.rollbacks() (gw_script.c). */
+#define RBV_N 600
+typedef struct {
+    int frame, first, depth, cause, kind, mismatch;
+    float ms;
+} GwRbvRec;
+static GwRbvRec rbv[RBV_N];
+static int rbv_total;
+static struct {
+    int frame, count;
+    uint32_t va;
+    uint8_t was, now;
+    char where[200];
+} rbv_mm = {-1};
+
+void gw_RbViz_Push(int frame, int first, int depth, int cause, double ms, int kind) {
+    GwRbvRec *r = &rbv[rbv_total % RBV_N];
+    r->frame = frame;
+    r->first = first;
+    r->depth = depth;
+    r->cause = cause;
+    r->kind = kind;
+    r->mismatch = 0;
+    r->ms = (float) ms;
+    rbv_total++;
+}
+void gw_RbViz_MarkMismatch(void) {
+    if (rbv_total > 0) rbv[(rbv_total - 1) % RBV_N].mismatch = 1;
+}
+int gw_RbViz_Total(void) { return rbv_total; }
+/* `back` = 0 is the newest; 0 when there is no such record */
+int gw_RbViz_Get(int back, int *frame, int *first, int *depth, int *cause, int *kind, int *mismatch,
+                 float *ms) {
+    GwRbvRec *r;
+    if (back < 0 || back >= rbv_total || back >= RBV_N) return 0;
+    r = &rbv[(rbv_total - 1 - back) % RBV_N];
+    *frame = r->frame;
+    *first = r->first;
+    *depth = r->depth;
+    *cause = r->cause;
+    *kind = r->kind;
+    *mismatch = r->mismatch;
+    *ms = r->ms;
+    return 1;
+}
+/* the first mismatch: frame (-1 none), how many compares mismatched, where */
+const char *gw_RbViz_FirstMismatch(int *frame, int *count, uint32_t *va, int *was, int *now) {
+    *frame = rbv_mm.frame;
+    *count = rbv_mm.count;
+    *va = rbv_mm.va;
+    *was = rbv_mm.was;
+    *now = rbv_mm.now;
+    return rbv_mm.where;
+}
+void gw_RbViz_Reset(void) {
+    rbv_total = 0;
+    memset(&rbv_mm, 0, sizeof rbv_mm);
+    rbv_mm.frame = -1;
+}
+/* a desync the netplay checksum found (no bytes to compare across peers) */
+void gw_RbViz_Desync(int frame, uint32_t local, uint32_t peer) {
+    rbv_mm.count++;
+    if (rbv_mm.frame >= 0) return;
+    rbv_mm.frame = frame;
+    if (local == 0 && peer == 0) {
+        snprintf(rbv_mm.where, sizeof rbv_mm.where, "rollback: frame %d needed a correction, its snapshot was gone", frame);
+    } else {
+        snprintf(rbv_mm.where, sizeof rbv_mm.where, "netplay checksum: local %08X, peer %08X", local, peer);
+    }
+    gw_RbViz_MarkMismatch();
+}
+
+/* the game half names a Fighter field / a GenoState field at an address (scriptgame / geno_game) */
+extern int gw_ScriptGame_LabFighterAt(uint32_t va);
+extern const char *gw_ScriptGame_LabFighterFieldName(int off);
+extern int gw_ScriptGame_LabFighterFieldBase(int off);
+extern const char *gw_GenoGame_StateFieldName(int off);
+extern int gw_GenoGame_StateFieldBase(int off);
+extern int gw_GenoGame_StateSize(void);
+
+static void rbv_note(int frame, uint32_t va, uint8_t was, uint8_t now, const char *sym, uint32_t symoff,
+                     const char *cls, uint32_t clsoff) {
+    char field[96] = "";
+    rbv_mm.count++;
+    if (rbv_mm.frame >= 0) return;
+    rbv_mm.frame = frame;
+    rbv_mm.va = va;
+    rbv_mm.was = was;
+    rbv_mm.now = now;
+    if (sym != NULL && strstr(sym, "Geno_StateBlock") != NULL && gw_GenoGame_StateSize() > 0) {
+        int sz = gw_GenoGame_StateSize();
+        int blk = (int) symoff / sz, off = (int) symoff % sz;
+        const char *f = gw_GenoGame_StateFieldName(off);
+        snprintf(field, sizeof field, "  = GenoState P%d%s .%s +0x%X", blk / 2 + 1, (blk & 1) ? " (sub)" : "",
+                 f != NULL ? f : "?", off - gw_GenoGame_StateFieldBase(off));
+    } else {
+        int at = gw_ScriptGame_LabFighterAt(va);
+        if (at >= 0) {
+            int off = at & 0xFFFF;
+            const char *f = gw_ScriptGame_LabFighterFieldName(off);
+            snprintf(field, sizeof field, "  = Fighter P%d +0x%X%s%s", (at >> 16) + 1, off,
+                     f != NULL ? " ." : "", f != NULL ? f : "");
+        }
+    }
+    if (sym != NULL) {
+        snprintf(rbv_mm.where, sizeof rbv_mm.where, "global %s+0x%X%s", sym, symoff, field);
+    } else {
+        snprintf(rbv_mm.where, sizeof rbv_mm.where, "MEM1 0x%08X [%s +0x%X]%s", va, cls != NULL ? cls : "?",
+                 clsoff, field);
+    }
+    gw_log("snap: first mismatch (frame %d): %s", frame, rbv_mm.where);
+}
+
 /* Compare the live state with the snapshot of `frame`; log up to a few differing runs. */
 static int sn_compare(int frame) {
     GwSnapSlot *s = sn_slot_for(frame, 0);
@@ -1012,6 +1130,10 @@ static int sn_compare(int frame) {
                         }
                         if (back == 0) break;
                     }
+                    if (logged == 0) {
+                        rbv_note(frame, 0x80000000u + start, s->mem1[start], live[start], NULL, 0,
+                                 cls ? cls->name : NULL, cls ? 0x80000000u + start - owner : 0);
+                    }
                     gw_log("snap:   MEM1 0x%08X +%u: first pass %02X.. now %02X..  [%s +0x%X]",
                            0x80000000u + start, off - start, s->mem1[start], live[start],
                            cls ? cls->name : "?", cls ? 0x80000000u + start - owner : 0);
@@ -1046,6 +1168,10 @@ static int sn_compare(int frame) {
                     uint32_t va = sn.ranges[i].va + j;
                     const GwSnapSym *sym = sn_sym_at(va);
                     ++diffs;
+                    if (diffs == 1) {
+                        rbv_note(frame, va, s->globals[base + j], sn.cmp_globals[base + j],
+                                 sym ? sym->name : "?", sym ? va - sym->va : 0, NULL, 0);
+                    }
                     if (logged < 24) {
                         gw_log("snap:   global %s+0x%X (%s): first pass %02X now %02X",
                                sym ? sym->name : "?", sym ? va - sym->va : 0,
@@ -1240,6 +1366,7 @@ static void sn_cur_take(void) {
             if (sn_cur_ring[slot].h != h) {
                 sn_cur_mismatch++;
                 sn.mismatches++;
+                gw_RbViz_MarkMismatch();
                 if (sn_cur_mismatch <= 8) {
                     gw_log("snap: CURATED MISMATCH frame %d (resimulated %d back from %d): first pass %016llX resim %016llX",
                            f, sn.target - f, sn.target, (unsigned long long) sn_cur_ring[slot].h,
@@ -1397,9 +1524,11 @@ void gw_SyncTest_IterStart(void) {
     }
     next = gw_Replay_Frame() + 1;
     if (sn.plan_rollback) {
+        double rbv_t0 = sn_ms();
         sn.plan_rollback = 0;
         gw_snap_save(sn.target);
         gw_snap_load(sn.target - sn.k);
+        gw_RbViz_Push(sn.target, sn.target - sn.k, sn.k, -1, sn_ms() - rbv_t0, 1);
         sn.resim = 1;
         sn.cur_is_resim = 1;
         sn_sfx_rewind(sn.target - sn.k);
@@ -1410,6 +1539,7 @@ void gw_SyncTest_IterStart(void) {
         int d = gw_Snap_Curated() ? 0 : sn_compare(next);
         if (d != 0) {
             sn.mismatches++;
+            gw_RbViz_MarkMismatch();
             if (sn.mismatches == 1 && getenv("MELEE_SYNCTEST_DUMP") != NULL) {
                 /* both MEM1 images of the first mismatch, for offline analysis */
                 GwSnapSlot *sl = sn_slot_for(next, 0);

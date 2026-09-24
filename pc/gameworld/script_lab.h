@@ -30,6 +30,7 @@ enum {
     LAB_F_Z,             /* cur_pos.z */
     LAB_F_SCALE,         /* model scale (x34_scale.y) */
     LAB_F_CMD_TIMER,     /* subaction script timer */
+    LAB_F_KB_LAST,       /* the knockback of the last launch (dmg.x18d8.kb_applied1, kept after kb_applied clears) */
     LAB_F_COUNT
 };
 
@@ -55,6 +56,7 @@ enum {
     LAB_I_HURTBOXES,      /* hurt_capsules_len */
     LAB_I_HITSTUN_TOTAL,  /* unused, reserved */
     LAB_I_HIDDEN,         /* 1 when the fighter is not drawn (FighterVis x221E_b5 or invisible) */
+    LAB_I_KIND,           /* fp->kind (the port's fighter kind: m-ex slots from 0x21) */
     LAB_I_COUNT
 };
 
@@ -176,6 +178,26 @@ enum {
     LAB_TF_W,
     LAB_TF_H,
     LAB_TF_COUNT
+};
+
+
+/* ScriptGame_LabCommonF(which): the launch's ftCommonData constants and the blast zones (stage E) */
+enum {
+    LAB_C_KB_SPEED = 0,     /* x100: launch speed per knockback unit (0.03) */
+    LAB_C_KB_MAX,           /* x108: the knockback cap */
+    LAB_C_ANGLE_AIR_361,    /* x144: the Sakurai angle in the air (radians) */
+    LAB_C_ANGLE_GROUND_MAX, /* x148: the Sakurai angle on the ground, most (degrees) */
+    LAB_C_ANGLE_GROUND_KB0, /* x14C / x150: its knockback ramp */
+    LAB_C_ANGLE_GROUND_KB1,
+    LAB_C_HITSTUN_MUL,      /* x154: hitstun frames per knockback unit (0.4) */
+    LAB_C_DI_DEGREES,       /* x1A8: the most trajectory DI turns (18) */
+    LAB_C_KB_DECAY,         /* x204: knockback velocity lost per frame (0.051) */
+    LAB_C_SQUAT_MUL,        /* kb_squat_mul: crouch cancel */
+    LAB_C_BLAST_LEFT,       /* Stage_GetBlastZone*Offset */
+    LAB_C_BLAST_RIGHT,
+    LAB_C_BLAST_TOP,
+    LAB_C_BLAST_BOTTOM,
+    LAB_C_COUNT
 };
 
 #endif /* SCRIPT_LAB_H */

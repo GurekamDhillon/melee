@@ -627,6 +627,8 @@ static const char *gs_motion_name(int name_kind, int motion, const char *fallbac
     return buf;
 }
 
+static const char *gs_motion_name_at(int slot, int name_kind, int motion, const char *fallback, char *buf,
+                                     size_t cap);
 static const char *const gs_body_state_names[] = {"normal", "invincible", "intangible"};
 static const char *gs_body_state(int v) { return v >= 0 && v <= 2 ? gs_body_state_names[v] : "?"; }
 
@@ -677,7 +679,7 @@ static void gs_push_lab_fields(lua_State *L, int slot) {
     int jumps_used = gw_ScriptGame_LabI(slot, LAB_I_JUMPS_USED);
     int jumps_max = gw_ScriptGame_LabI(slot, LAB_I_MAX_JUMPS);
     gs_anim_name(sym, anim, sizeof anim);
-    gs_setstr(L, "motion_name", gs_motion_name(name_kind, action, anim, buf, sizeof buf));
+    gs_setstr(L, "motion_name", gs_motion_name_at(slot, name_kind, action, anim, buf, sizeof buf));
     gs_setint(L, "anim_id", gw_ScriptGame_LabI(slot, LAB_I_ANIM_ID));
     gs_setstr(L, "anim_name", anim);
     gs_setstr(L, "anim_symbol", sym != NULL ? sym : "");
@@ -697,6 +699,7 @@ static void gs_push_lab_fields(lua_State *L, int slot) {
     gs_setnum(L, "z", gw_ScriptGame_LabF(slot, LAB_F_Z));
     gs_setnum(L, "scale", gw_ScriptGame_LabF(slot, LAB_F_SCALE));
     gs_setnum(L, "cmd_timer", gw_ScriptGame_LabF(slot, LAB_F_CMD_TIMER));
+    gs_setnum(L, "kb_last", gw_ScriptGame_LabF(slot, LAB_F_KB_LAST));
     lua_createtable(L, 0, 4);
     gs_push_xy(L, "top", gw_ScriptGame_LabF(slot, LAB_F_ECB_TOP_X), gw_ScriptGame_LabF(slot, LAB_F_ECB_TOP_Y));
     gs_push_xy(L, "bottom", gw_ScriptGame_LabF(slot, LAB_F_ECB_BOTTOM_X),
@@ -1469,13 +1472,15 @@ static void gs_data_path(lua_State *L, const char *name, char *out, size_t cap) 
     if (s == NULL) {
         luaL_error(L, "no current script");
     }
-    if (name[0] == '\0' || strlen(name) > 64) {
-        luaL_error(L, "data file names are 1-64 characters");
+    if (name[0] == '\0' || strlen(name) > 96) {
+        luaL_error(L, "data file names are 1-96 characters");
     }
     for (p = name; *p != '\0'; ++p) {
+        /* folders too: "dir/file" (a '/' never first, last or doubled; a '.' never starts a part) */
+        int slash_ok = *p == '/' && p != name && p[1] != '\0' && p[1] != '/';
         if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') || (*p >= '0' && *p <= '9') ||
-              *p == '_' || *p == '-' || (*p == '.' && p != name))) {
-            luaL_error(L, "data file names use letters, digits, _ - and . (got \"%s\")", name);
+              *p == '_' || *p == '-' || slash_ok || (*p == '.' && p != name && p[-1] != '/'))) {
+            luaL_error(L, "data file names use letters, digits, _ - . and / (got \"%s\")", name);
         }
     }
     snprintf(dir, sizeof dir, "%s\\%s", gs.data_dir, s->id);
@@ -1487,6 +1492,17 @@ static void gs_data_path(lua_State *L, const char *name, char *out, size_t cap) 
     CreateDirectoryA(gs.data_dir, NULL);
     CreateDirectoryA(dir, NULL);
     snprintf(out, cap, "%s\\%s", dir, name);
+    {
+        /* the folders of a "dir/sub/file" name (stage E: versioned frame-data exports) */
+        char *q = out + strlen(dir) + 1;
+        for (; *q != '\0'; ++q) {
+            if (*q == '/') {
+                *q = '\0';
+                CreateDirectoryA(out, NULL);
+                *q = '\\';
+            }
+        }
+    }
 }
 
 static int l_data_read(lua_State *L) {
@@ -1866,14 +1882,14 @@ static int l_attrs(lua_State *L) {
 static int l_motion_name(lua_State *L) {
     char buf[32];
     int id = (int) luaL_checkinteger(L, 1);
-    int kind = -1;
+    int kind = -1, slot = -1;
     if (!lua_isnoneornil(L, 2)) {
-        int slot = gs_present_arg(L, 2);
+        slot = gs_present_arg(L, 2);
         if (slot >= 0) {
             kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND);
         }
     }
-    lua_pushstring(L, gs_motion_name(kind, id, NULL, buf, sizeof buf));
+    lua_pushstring(L, gs_motion_name_at(slot, kind, id, NULL, buf, sizeof buf));
     return 1;
 }
 
@@ -2104,7 +2120,7 @@ static int l_timeline(lua_State *L) {
     gs_anim_name(anim >= 0 ? gw_ScriptGame_LabAnimSymbolFor(slot, anim) : NULL, anim_name,
                  sizeof anim_name);
     gs_setstr(L, "anim_name", anim_name);
-    gs_setstr(L, "motion_name", gs_motion_name(name_kind, motion, anim_name, buf, sizeof buf));
+    gs_setstr(L, "motion_name", gs_motion_name_at(slot, name_kind, motion, anim_name, buf, sizeof buf));
     if (lua_isnoneornil(L, 2)) {
         gs_setnum(L, "end_frame", gw_ScriptGame_LabAnimEnd(slot));
     }
@@ -2123,18 +2139,99 @@ static int l_timeline(lua_State *L) {
     return 1;
 }
 
-/* a motion id the fighter really has a row for: common states, or a special in the decomp's
-   table for its kind (Kirby clones use Kirby's) - so a script never enters a garbage row */
+/* ---- Stage E: every action state a fighter has (the state browser) ---------------------------- */
+extern int gw_Mex_MoveLogicEntriesForKind(int fk);
+extern int gw_Geno_ProfileForKind(int kind);
+extern int gw_Geno_StateCount(int p);
+extern const char *gw_Geno_StateName(int p, int s);
+#define GS_GENO_MOTION_BASE 0x400
+
+static int gs_geno_profile(int slot) {
+    return gw_Geno_ProfileForKind(gw_ScriptGame_LabI(slot, LAB_I_KIND));
+}
+
+/* how many special states the fighter has: its kind's table in the decomp (Kirby clones: Kirby's),
+   or the m-ex MoveLogic table when that is longer */
+static int gs_special_count(int slot) {
+    int kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND), n = 0, m;
+    if (kind >= 0 && kind < (int) (sizeof gw_motion_special / sizeof gw_motion_special[0])) {
+        n = gw_motion_special[kind].count;
+    }
+    m = gw_Mex_MoveLogicEntriesForKind(gw_ScriptGame_LabI(slot, LAB_I_KIND));
+    return m > n ? m : n;
+}
+
+/* gs_motion_name, plus Geno action states (motion 0x400 + n) by their geno.json name */
+static const char *gs_motion_name_at(int slot, int name_kind, int motion, const char *fallback, char *buf,
+                                     size_t cap) {
+    if (motion >= GS_GENO_MOTION_BASE && slot >= 0) {
+        const char *n = gw_Geno_StateName(gs_geno_profile(slot), motion - GS_GENO_MOTION_BASE);
+        if (n != NULL && n[0] != '\0') {
+            return n;
+        }
+        snprintf(buf, cap, "Geno%d", motion - GS_GENO_MOTION_BASE);
+        return buf;
+    }
+    return gs_motion_name(name_kind, motion, fallback, buf, cap);
+}
+
+/* a motion id the fighter really has a row for: common states, a special in the decomp's table for
+   its kind (Kirby clones use Kirby's) or in its m-ex MoveLogic table, or one of its Geno states -
+   so a script never enters a garbage row */
 static int gs_motion_ok(int slot, int motion) {
     int common = gw_ScriptGame_LabCommonCount(slot);
-    int kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND);
     if (motion < 0 || common <= 0) return 0;
+    if (motion >= GS_GENO_MOTION_BASE) {
+        int p = gs_geno_profile(slot);
+        return p >= 0 && motion - GS_GENO_MOTION_BASE < gw_Geno_StateCount(p) &&
+               gw_ScriptGame_LabMotionAnim(slot, motion) >= -1;
+    }
     if (motion < common) return gw_ScriptGame_LabMotionAnim(slot, motion) >= -1;
-    if (kind >= 0 && kind < (int) (sizeof gw_motion_special / sizeof gw_motion_special[0]) &&
-        motion - common < gw_motion_special[kind].count) {
+    if (motion - common < gs_special_count(slot)) {
         return gw_ScriptGame_LabMotionAnim(slot, motion) >= -1;
     }
     return 0;
+}
+
+/* gd.motion_list(port) -> {{id, name, group ("common" | "special" | "mex" | "geno"), anim_id,
+   anim_name}, ...}: every action state the fighter has a row for, in id order. "mex" = a special
+   past the decomp's table (the m-ex MoveLogic table's own). Read-only. */
+static int l_motion_list(lua_State *L) {
+    int slot = gs_present_arg(L, 1), common, nspec, kind, dec = 0, m, n = 0, p;
+    char anim_name[128], buf[32];
+    if (slot < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    common = gw_ScriptGame_LabCommonCount(slot);
+    nspec = gs_special_count(slot);
+    kind = gw_ScriptGame_LabI(slot, LAB_I_NAME_KIND);
+    if (kind >= 0 && kind < (int) (sizeof gw_motion_special / sizeof gw_motion_special[0])) {
+        dec = gw_motion_special[kind].count;
+    }
+    p = gs_geno_profile(slot);
+    lua_newtable(L);
+    for (m = 0; m < common + nspec + (p >= 0 ? GS_GENO_MOTION_BASE + gw_Geno_StateCount(p) : 0); ++m) {
+        int anim;
+        const char *group;
+        if (m >= common + nspec && m < GS_GENO_MOTION_BASE) {
+            if (p < 0) break;
+            m = GS_GENO_MOTION_BASE - 1;
+            continue;
+        }
+        if (!gs_motion_ok(slot, m)) continue;
+        anim = gw_ScriptGame_LabMotionAnim(slot, m);
+        gs_anim_name(anim >= 0 ? gw_ScriptGame_LabAnimSymbolFor(slot, anim) : NULL, anim_name, sizeof anim_name);
+        group = m >= GS_GENO_MOTION_BASE ? "geno" : m < common ? "common" : (m - common < dec ? "special" : "mex");
+        lua_createtable(L, 0, 5);
+        gs_setint(L, "id", m);
+        gs_setstr(L, "name", gs_motion_name_at(slot, kind, m, anim_name, buf, sizeof buf));
+        gs_setstr(L, "group", group);
+        gs_setint(L, "anim_id", anim);
+        gs_setstr(L, "anim_name", anim_name);
+        lua_rawseti(L, -2, ++n);
+    }
+    return 1;
 }
 
 /* gd.set_motion(port | {ports}, motion [, frame [, rate [, lift]]]) -> true | false, why. Offline,
@@ -3167,6 +3264,299 @@ static int l_kit_color(lua_State *L) {
     return 1;
 }
 
+/* ---- Stage E: knockback and launch preview ----------------------------------------------------
+ * The knockback value comes from the game's own functions (script_game.c ScriptGame_LabKnockback:
+ * ftColl_80079AB0 then ftCo_Damage_CalcKnockback); the level from ftCo_8008D8E8. The angle
+ * (ftCo_Damage_CalcAngle's Sakurai-angle rule), the trajectory DI (ftCo_8008E5A4), the launch speed
+ * (ftCo_8008DCE0) and the flight (the DamageFly physics: gravity / terminal velocity / aerial
+ * friction on the fighter's own velocity, fighter.c's knockback decay on the knockback velocity)
+ * are the same expressions with the loaded PlCo constants, read through ScriptGame_LabCommonF. */
+extern float gw_ScriptGame_LabKnockback(int slot, int attacker_slot, int dmg_bits, int kbg, int wbk, int bkb,
+                                        int pct_bits, int post);
+extern int gw_ScriptGame_LabKbLevel(int kb_bits);
+extern float gw_ScriptGame_LabCommonF(int which);
+extern float gw_ScriptGame_LabFlightF(int slot, int which);
+
+static int gs_fbits(float f) {
+    union {
+        float f;
+        int i;
+    } u;
+    u.f = f;
+    return u.i;
+}
+static double gs_optnum_field(lua_State *L, int t, const char *k, double def) {
+    double v = def;
+    lua_getfield(L, t, k);
+    if (lua_isnumber(L, -1)) v = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return v;
+}
+
+/* the trajectory DI of ftCo_8008E5A4 for a stick (sx, sy) on a knockback velocity */
+static void gs_apply_di(float *vx, float *vy, float sx, float sy, float di_deg) {
+    float kx = *vx, ky = *vy, mag2 = kx * kx + ky * ky, f3, f30, a, mag;
+    if ((sx == 0.0f && sy == 0.0f) || mag2 < 0.00001f) return;
+    f3 = ky * sx + (-kx) * sy;
+    f30 = f3 * f3 / mag2;
+    if (kx * sy - ky * sx < 0.0f) f30 = -f30;
+    a = atan2f(ky, kx) + di_deg * 3.14159265f / 180.0f * f30;
+    mag = sqrtf(mag2);
+    *vx = mag * cosf(a);
+    *vy = mag * sinf(a);
+}
+
+/* gd.kb_preview(victim_port, {damage, angle, kbg, bkb, wbk, attacker, dir, di, percent, x, y,
+   extra}) -> {kb, level, tumble, hitstun, angle, angle_di, vx, vy, percent, weight, points =
+   {{x, y}, ...} (one per hitstun frame), blast = {x, y, frame, side, after_hitstun} | nil,
+   zones = {left, right, top, bottom}}.
+   `dir` +1 launches right, -1 left (default: away from the attacker, else behind the victim's
+   facing); `di` "none" | "in" | "out" | "survival" | {x, y} (a stick); `percent` overrides the
+   victim's (before the hit; the hit's damage is added as the game does); `extra` frames past the
+   hitstun are still checked against the blast zones. Offline (the game half sets the percent for
+   the call and restores it bit for bit). */
+static int l_kb_preview(lua_State *L) {
+    int slot = gs_present_arg(L, 1), att = -1, angle, kbg, bkb, wbk, level, hitstun, f, extra, npts = 0;
+    float dmg, pct, kb, a, vx, vy, sx = 0, sy = 0, px, py, svx = 0, svy = 0, g, term, fric, decay;
+    float left, right, top, bottom, dir, a_di;
+    const char *di = "none";
+    luaL_checktype(L, 2, LUA_TTABLE);
+    gs_require_offline(L, "kb_preview");
+    if (slot < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "no fighter on that port");
+        return 2;
+    }
+    lua_getfield(L, 2, "attacker");
+    if (lua_isinteger(L, -1)) att = gs_present_arg(L, lua_gettop(L));
+    lua_pop(L, 1);
+    dmg = (float) gs_optnum_field(L, 2, "damage", 10);
+    angle = (int) gs_optnum_field(L, 2, "angle", 45);
+    kbg = (int) gs_optnum_field(L, 2, "kbg", 100);
+    bkb = (int) gs_optnum_field(L, 2, "bkb", 0);
+    wbk = (int) gs_optnum_field(L, 2, "wbk", 0);
+    pct = (float) gs_optnum_field(L, 2, "percent", -1);
+    extra = (int) gs_optnum_field(L, 2, "extra", 90);
+    px = (float) gs_optnum_field(L, 2, "x", gw_ScriptGame_FighterF(slot, SF_X));
+    py = (float) gs_optnum_field(L, 2, "y", gw_ScriptGame_FighterF(slot, SF_Y));
+    {
+        float def = -gw_ScriptGame_LabFlightF(slot, 3);
+        if (att >= 0) def = gw_ScriptGame_FighterF(slot, SF_X) >= gw_ScriptGame_FighterF(att, SF_X) ? 1.0f : -1.0f;
+        dir = (float) gs_optnum_field(L, 2, "dir", def) >= 0 ? 1.0f : -1.0f;
+    }
+    kb = gw_ScriptGame_LabKnockback(slot, att, gs_fbits(dmg), kbg, wbk, bkb, gs_fbits(pct), 1);
+    level = gw_ScriptGame_LabKbLevel(gs_fbits(kb));
+    hitstun = (int) (kb * gw_ScriptGame_LabCommonF(LAB_C_HITSTUN_MUL));
+    if (hitstun < 1) hitstun = 1;
+    /* ftCo_Damage_CalcAngle */
+    if (angle != 361) {
+        a = (float) angle * 3.14159265f / 180.0f;
+    } else if (gw_ScriptGame_LabFlightF(slot, 4) == 0.0f) {
+        a = gw_ScriptGame_LabCommonF(LAB_C_ANGLE_AIR_361);
+    } else if (kb < gw_ScriptGame_LabCommonF(LAB_C_ANGLE_GROUND_KB0)) {
+        a = 0.0f;
+    } else {
+        float k0 = gw_ScriptGame_LabCommonF(LAB_C_ANGLE_GROUND_KB0);
+        float k1 = gw_ScriptGame_LabCommonF(LAB_C_ANGLE_GROUND_KB1);
+        float mx = gw_ScriptGame_LabCommonF(LAB_C_ANGLE_GROUND_MAX);
+        a = (mx * ((kb - k0) / (k1 - k0)) + 1.0f) * 3.14159265f / 180.0f;
+        if (a > mx * 3.14159265f / 180.0f) a = mx * 3.14159265f / 180.0f;
+    }
+    /* ftCo_8008DCE0: speed = kb * x100; x goes against the victim's facing (it faces the hit) */
+    vx = kb * gw_ScriptGame_LabCommonF(LAB_C_KB_SPEED) * cosf(a) * dir;
+    vy = kb * gw_ScriptGame_LabCommonF(LAB_C_KB_SPEED) * sinf(a);
+    /* the stick */
+    lua_getfield(L, 2, "di");
+    if (lua_istable(L, -1)) {
+        di = "stick";
+        sx = (float) gs_optnum_field(L, lua_gettop(L), "x", 0);
+        sy = (float) gs_optnum_field(L, lua_gettop(L), "y", 0);
+    } else if (lua_type(L, -1) == LUA_TSTRING) {
+        di = lua_tostring(L, -1);
+    }
+    {
+        float t = atan2f(vy, vx);
+        float ccx = -sinf(t), ccy = cosf(t); /* the perpendicular that turns the launch CCW */
+        float di_deg = gw_ScriptGame_LabCommonF(LAB_C_DI_DEGREES);
+        if (strcmp(di, "in") == 0 || strcmp(di, "out") == 0) {
+            /* "in": the perpendicular pointing back toward where the launch came from */
+            int toward = (ccx * dir < 0.0f) == (strcmp(di, "in") == 0);
+            sx = toward ? ccx : -ccx;
+            sy = toward ? ccy : -ccy;
+        } else if (strcmp(di, "survival") == 0) {
+            /* the perpendicular whose result lands nearer the diagonal (45 / 135 degrees) */
+            float ax = vx, ay = vy, bx = vx, by = vy, goal = dir > 0 ? 0.785398f : 2.356194f;
+            gs_apply_di(&ax, &ay, ccx, ccy, di_deg);
+            gs_apply_di(&bx, &by, -ccx, -ccy, di_deg);
+            if (fabsf(atan2f(ay, ax) - goal) <= fabsf(atan2f(by, bx) - goal)) {
+                sx = ccx, sy = ccy;
+            } else {
+                sx = -ccx, sy = -ccy;
+            }
+        }
+        gs_apply_di(&vx, &vy, sx, sy, di_deg);
+    }
+    lua_pop(L, 1);
+    a_di = atan2f(vy, vx);
+    g = gw_ScriptGame_LabFlightF(slot, 0);
+    term = gw_ScriptGame_LabFlightF(slot, 1);
+    fric = gw_ScriptGame_LabFlightF(slot, 2);
+    decay = gw_ScriptGame_LabCommonF(LAB_C_KB_DECAY);
+    left = gw_ScriptGame_LabCommonF(LAB_C_BLAST_LEFT);
+    right = gw_ScriptGame_LabCommonF(LAB_C_BLAST_RIGHT);
+    top = gw_ScriptGame_LabCommonF(LAB_C_BLAST_TOP);
+    bottom = gw_ScriptGame_LabCommonF(LAB_C_BLAST_BOTTOM);
+    lua_createtable(L, 0, 16);
+    gs_setnum(L, "kb", kb);
+    gs_setint(L, "level", level);
+    gs_setbool(L, "tumble", level >= 3);
+    gs_setint(L, "hitstun", hitstun);
+    gs_setnum(L, "angle", a * 180.0 / 3.14159265);
+    gs_setnum(L, "angle_di", a_di * 180.0 / 3.14159265);
+    gs_setnum(L, "vx", vx);
+    gs_setnum(L, "vy", vy);
+    gs_setstr(L, "di", di);
+    gs_setnum(L, "percent", pct >= 0 ? pct : gw_ScriptGame_LabFlightF(slot, 6));
+    gs_setnum(L, "weight", gw_ScriptGame_LabFlightF(slot, 5));
+    lua_createtable(L, 0, 4);
+    gs_setnum(L, "left", left);
+    gs_setnum(L, "right", right);
+    gs_setnum(L, "top", top);
+    gs_setnum(L, "bottom", bottom);
+    lua_setfield(L, -2, "zones");
+    lua_createtable(L, hitstun, 0);
+    for (f = 1; f <= hitstun + extra && f <= 1200; ++f) {
+        float m;
+        /* the DamageFly physics on the fighter's own velocity (ft_80084EEC) */
+        svy -= g;
+        if (svy < -term) svy = -term;
+        if (svx > 0.0f) {
+            svx -= fric;
+            if (svx < 0.0f) svx = 0.0f;
+        } else if (svx < 0.0f) {
+            svx += fric;
+            if (svx > 0.0f) svx = 0.0f;
+        }
+        /* fighter.c: the knockback velocity decays along itself */
+        m = sqrtf(vx * vx + vy * vy);
+        if (m < decay) {
+            vx = vy = 0.0f;
+        } else {
+            float t = atan2f(vy, vx);
+            vx -= decay * cosf(t);
+            vy -= decay * sinf(t);
+        }
+        px += svx + vx;
+        py += svy + vy;
+        if (f <= hitstun) {
+            lua_createtable(L, 2, 0);
+            lua_pushnumber(L, px);
+            lua_rawseti(L, -2, 1);
+            lua_pushnumber(L, py);
+            lua_rawseti(L, -2, 2);
+            lua_rawseti(L, -2, ++npts);
+        }
+        if (px < left || px > right || py > top || py < bottom) {
+            lua_setfield(L, -2, "points");
+            lua_createtable(L, 0, 5);
+            gs_setnum(L, "x", px);
+            gs_setnum(L, "y", py);
+            gs_setint(L, "frame", f);
+            gs_setstr(L, "side", px < left ? "left" : px > right ? "right" : py > top ? "top" : "bottom");
+            gs_setbool(L, "after_hitstun", f > hitstun);
+            lua_setfield(L, -2, "blast");
+            return 1;
+        }
+        if (f >= hitstun && vx == 0.0f && vy == 0.0f) {
+            break; /* hitstun over and the launch spent: from here the fighter flies itself home */
+        }
+    }
+    lua_setfield(L, -2, "points");
+    return 1;
+}
+
+/* ---- Stage E: the rollback visualiser (gw_snap.c's ring) --------------------------------------- */
+extern int gw_RbViz_Total(void);
+extern int gw_RbViz_Get(int back, int *frame, int *first, int *depth, int *cause, int *kind, int *mismatch,
+                        float *ms);
+extern const char *gw_RbViz_FirstMismatch(int *frame, int *count, uint32_t *va, int *was, int *now);
+extern void gw_RbViz_Reset(void);
+
+/* gd.rollbacks([n]) -> {total, list = {{frame, first, depth, cause (port; 0 = SyncTest's own), kind
+   ("synctest" | "fake" | "netplay"), mismatch, ms}, ...} newest first (n, default 120),
+   mismatch = {frame, count, where, va, was, now} | nil}. Read-only; works in any session. */
+static int l_rollbacks(lua_State *L) {
+    static const char *const kinds[] = {"?", "synctest", "fake", "netplay"};
+    int n = (int) luaL_optinteger(L, 1, 120), i, fr, first, depth, cause, kind, mm, mf, mc, was, now;
+    float ms;
+    uint32_t va;
+    const char *where;
+    if (n > 600) n = 600;
+    if (n < 0) n = 0;
+    lua_createtable(L, 0, 3);
+    gs_setint(L, "total", gw_RbViz_Total());
+    lua_createtable(L, n, 0);
+    for (i = 0; i < n && gw_RbViz_Get(i, &fr, &first, &depth, &cause, &kind, &mm, &ms); ++i) {
+        lua_createtable(L, 0, 7);
+        gs_setint(L, "frame", fr);
+        gs_setint(L, "first", first);
+        gs_setint(L, "depth", depth);
+        gs_setint(L, "cause", cause + 1);
+        gs_setstr(L, "kind", kind >= 0 && kind <= 3 ? kinds[kind] : "?");
+        gs_setbool(L, "mismatch", mm);
+        gs_setnum(L, "ms", ms);
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "list");
+    where = gw_RbViz_FirstMismatch(&mf, &mc, &va, &was, &now);
+    if (mf >= 0) {
+        lua_createtable(L, 0, 6);
+        gs_setint(L, "frame", mf);
+        gs_setint(L, "count", mc);
+        gs_setstr(L, "where", where);
+        gs_setint(L, "va", (lua_Integer) va);
+        gs_setint(L, "was", was);
+        gs_setint(L, "now", now);
+        lua_setfield(L, -2, "mismatch");
+    }
+    return 1;
+}
+static int l_rollbacks_clear(lua_State *L) {
+    (void) L;
+    gw_RbViz_Reset();
+    return 0;
+}
+
+/* gd.lab_now([long]) -> the local time, "20260924-153000" (a version tag) or, with long,
+   "2026-09-24 15:30:00" (the sandbox has no os.date) */
+static int l_lab_now(lua_State *L) {
+    SYSTEMTIME t;
+    char b[32];
+    GetLocalTime(&t);
+    if (lua_toboolean(L, 1)) {
+        snprintf(b, sizeof b, "%04u-%02u-%02u %02u:%02u:%02u", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+    } else {
+        snprintf(b, sizeof b, "%04u%02u%02u-%02u%02u%02u", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+    }
+    lua_pushstring(L, b);
+    return 1;
+}
+
+/* gd.lab_env(name) -> the value of the environment variable MELEE_LAB_<name>, or nil (only that
+   family: the Lab's launch switches, e.g. MELEE_LAB_BATCH for the headless frame-data export) */
+static int l_lab_env(lua_State *L) {
+    char k[64];
+    const char *v;
+    snprintf(k, sizeof k, "MELEE_LAB_%s", luaL_checkstring(L, 1));
+    v = getenv(k);
+    if (v == NULL || v[0] == '\0') {
+        lua_pushnil(L);
+    } else {
+        lua_pushstring(L, v);
+    }
+    return 1;
+}
+
 static const luaL_Reg gs_kit_funcs[] = {
     {"available", l_kit_available}, {"text", l_kit_text}, {"measure", l_kit_measure},
     {"metrics", l_kit_metrics}, {"texture", l_kit_texture}, {"image", l_kit_image},
@@ -3244,6 +3634,9 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
     {"lab_request", l_lab_request}, {"lab_mode", l_lab_mode}, {"lab_leave", l_lab_leave},
     {"training_select", l_training_select},
+    /* stage E */
+    {"motion_list", l_motion_list}, {"kb_preview", l_kb_preview}, {"rollbacks", l_rollbacks},
+    {"rollbacks_clear", l_rollbacks_clear}, {"lab_env", l_lab_env}, {"lab_now", l_lab_now},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */

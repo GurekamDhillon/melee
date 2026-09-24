@@ -674,6 +674,165 @@ What does not:
 - `on_init` hooks are not re-run.
 - A `geno.json` that does not parse keeps the old data.
 
+### 14.11 Stage E: the creator tools
+
+Three new display modes (keys `6`/`7`/`8`, TAB cycles through all 8), a FRAMES toggle and a pause-menu
+tab. The Lua is in `lab.lua` in one function scope, `stage_e()`. It needs its own scope because the main chunk is at Lua's
+200-local limit. The art is `ico_lab_moves / launch / ab / export / diff / rollback / ko` (`lab_art.py`, 83
+textures, every check passes).
+
+**MOVES: the state browser (6).**
+- **The list.** `gd.motion_list(port)` gives every action state the fighter has a row for:
+  - `common`: the common states;
+  - `special`: the decomp's special table for its kind;
+  - `mex`: past that table, the m-ex MoveLogic table (`gw_Mex_MoveLogicEntriesForKind`);
+  - `geno`: motion 0x400+n, named by geno.json (`gw_Geno_StateName`).
+
+  On top of these sit eight **input** rows (B, B>, B^, Bv, standing and in the air).
+- **Filters** (`V`): ALL / ATTACKS / COMMON / SPECIAL / M-EX / GENO. `lab moves <text>` filters by
+  name.
+- **Playing a state** (`UP` / `DOWN` pick, `ENTER` plays it):
+  - `N` plays it from neutral: the match-start state (slot 4) each time, otherwise Wait.
+  - `L` loops it.
+  - `Z` / `X` set the speed: x1, 1/2, 1/4, 1/10. Below x1 it steps one frame every N ticks.
+  - `S` stops it.
+  - The timeline follows along the bottom (`T`), and the right panel shows the state's own script windows.
+- **How states are entered.**
+  - Common states: a plain `gd.set_motion`. States with no animation symbol are refused, e.g. Fox's
+    Attack13: entering it trips the ground assert.
+  - Geno states: `Geno_LabEnterState`, i.e. the behaviour's own entry routine.
+  - Vanilla and m-ex specials: **only through their input.** A bare motion change skips the
+    special's setup and crashed the game (Fox's blaster). The B rows press B, plus a direction, on
+    the pad from a neutral stance, so the game enters the special itself.
+- `gd.player().motion_name` now names Geno states (e.g. `Tornado`).
+
+**LAUNCH: the knockback preview (7).**
+- **What it previews.** The focused fighter's live hitbox, or, when none is live, the next window its
+  script opens (the hit about to connect). It is applied to the victim (`V` cycles). `Q` / `E` pick the hitbox.
+- **`gd.kb_preview(victim, {damage, angle, kbg, bkb, wbk, attacker, dir, di, percent, x, y})`
+  returns:**
+  - `kb`, `level`, `tumble`, `hitstun`;
+  - `angle` and `angle_di`;
+  - `points` (one per hitstun frame);
+  - `blast` (the frame and side where it crosses a zone), and the `zones`.
+- **The game's own code:**
+  - Knockback is `ftColl_80079AB0`, the fighter-hit path: the stage factor, the attack and defence
+    ratios, weight, and percent + damage. Then `ftCo_Damage_CalcKnockback`: crouch, ice, smash
+    charge, Y scale, armour and the minimum.
+  - For that call the game half (`ScriptGame_LabKnockback`) sets the percent and pending damage
+    the formula reads, then restores them bit for bit.
+  - The level is `ftCo_8008D8E8`.
+- **The same expressions, with the loaded PlCo constants** (`ScriptGame_LabCommonF`):
+  - the angle: `ftCo_Damage_CalcAngle`'s Sakurai rule;
+  - the trajectory DI: `ftCo_8008E5A4`, 18 degrees;
+  - the launch speed: x100 = 0.03;
+  - the flight: DamageFly's gravity / terminal / aerial friction on the self velocity, plus
+    fighter.c's 0.051 decay on the knockback velocity.
+- **DI** (`D`): none / in / out / survival.
+  - `in`: the perpendicular back toward the attacker's side.
+  - `survival`: the perpendicular that lands nearer 45 or 135 degrees.
+- **Percent.** `Z` / `X` set it (±10); `P` goes back to the live percent.
+- **Drawing.** The arc runs to the end of hitstun, with a dot every 10 frames and a KO burst where
+  it crosses a blast zone. The check runs past hitstun only while the launch still has velocity.
+- **The check** (`K`, on by default): when a hit really lands, the Lab predicts it from that hit's own numbers
+  and the victim's pre-hit percent. It then follows the real flight to the end of hitstun and
+  reports the knockback, the hitstun and the flight error (`lab kbcheck:` in the log, `lab kb`).
+  - Measured on ACE: Falco's fsmash on Fox at 80%, 75 frames of tumble.
+    - Hitstun predicted 75, real 75.
+    - Flight error: max **0.0001** units, mean 0.0000.
+- **Not modelled:**
+  - ground launches that stay grounded (slide), and bounces;
+  - the air-motion multiplier x190;
+  - an attacker's special hit directions (the default `dir` is away from the attacker);
+  - landing during hitstun: the arc goes through the floor.
+
+**A/B: two variants on the same inputs (8).**
+- **The approach.** Sequential and exact: re-simulation through B's rewind machinery, not two live fighters.
+  1. `R` records A live (the frames are captured on every frame) and stops at `R` or at the rewind window's edge.
+  2. B re-runs the logged input from A's first frame:
+     - `C` = the same data. This is a determinism check; 0 differences are expected.
+     - `B` = reload. It runs through `gd.hot_reload`, so it uses whatever geno.json / overlay words are on disk now.
+       A and the plan wait in `ab_a.txt` / `ab_pending.txt`, because the Lab script reloads too.
+     - `M` = two fighters live: P2 gets P1's pad, and they are compared from their own start with x as
+       faced. P2 must be a human port.
+- **What is compared, per frame and per port:** position, action, the hitbox-id mask, and the first divergence.
+- **What is drawn:**
+  - ghost paths of A (cyan) and B (gold), with markers on the viewed frame (`Q` / `E`);
+  - split tracks coloured by action;
+  - a strip of the differing frames, and the first divergence marked.
+- **Measured** (MK vs Fox CPU, ACE):
+  - Same data: 389 frames, 0 differences on both ports.
+  - Reload with geno.json unchanged: 251 frames, 0 differences.
+  - Reload with `tornado.w02` (start_rate) 80 -> 60: they part at the tornado's end (action,
+    hitboxes). Fox, who was hit, differs from the next frame.
+- **Not built:** Geno vs its non-Geno base. That needs the profile switched off in a live match, which is a layout change.
+
+**The frame-data export and diff (TOOLS tab, `lab export`, headless).**
+- **What it runs.** Every common `Attack*` state (plain entry), the 8 input specials (the full chain,
+  from the input to Wait / Fall / Landing / helpless) and every Geno state (Geno entry). Each starts
+  from a neutral state saved in quick slot 3 and runs at up to 30 frames per tick.
+- **Numbering.** The first frame the game runs in the state is frame 1, which matches the frame-data sites.
+- **Per state:** startup, active windows, total, IASA, the script length, landing lag and L-cancel
+  lag (attributes), autocancel windows (`cmd_var[0]`, `ftCo_LandingAir_EnterWithLag`), where it
+  ended and the state chain.
+- **Per hitbox:** damage, angle, KBG, BKB, WDSK, radius, bone, element, shield damage and frames.
+- **Output.** `scripts-data/geno-lab_lab/framedata/<fighter>/<version>/moves.csv`, `hitboxes.csv` and
+  `framedata.json`, plus `versions.txt`. `gd.data_write` names may now contain folders.
+- **Headless:**
+
+  ```
+  MELEE_SCENE="mode=lab;p1=fox;stage=fd" MELEE_LAB_BATCH=v1 MELEE_LAB_BATCH_QUIT=1
+  ```
+
+  It starts once P1 stands in Wait. `MELEE_LAB_BATCH_PORT` picks the port and
+  `MELEE_LAB_BATCH_VERBOSE` logs each state. Fox takes 1.8 s (29 states); Meta Knight 4.3 s
+  (60 states).
+- **A watchdog.** A Lua error or 5 s without progress ends the export (and quits in headless mode).
+- **Diff.** `python pc/geno/tools/framedata_diff.py <exportA> <exportB>`, or in the game TOOLS > "Diff the
+  last two" / `lab fdiff [fighter verA verB]` (also written to `diff_<a>_<b>.txt`). MK with
+  `tornado.w02` 80 -> 60 lists exactly Neutral B, Air Neutral B and Tornado, each 13 frames shorter.
+- **Fox on ACE vs the known values** (all match):
+
+  | move | startup / active | total | landing |
+  |---|---|---|---|
+  | jab 1 | 2-3 | IASA 17 | |
+  | dash attack | 4-17 | 39 | |
+  | ftilt | 5-8 | 26 | |
+  | utilt | 5-11 | 23 | |
+  | dtilt | 7-9 | 29 | |
+  | fsmash | 12-22 | 39 | |
+  | usmash | 7-17 | 41 | |
+  | nair | 4-31 | 49 | 15 / 7 |
+  | fair | 6-8, 16-18, 24-26, 33-35, 43-45 | 59 | 22 |
+  | bair | 4-19 | 39 | 20 |
+  | uair | 8-9, 11-14 | 39 | 18 |
+  | dair | 5-24 (7 hits) | 49 | 18 |
+- Run the export with the fighter alone. An opponent in range is hit, and hitlag stretches the numbers.
+
+**The rollback visualiser (FRAMES, `N`).**
+- **What is recorded.** `gw_snap.c` keeps a ring of the last 600 rollbacks:
+  - the frame, the first frame, the depth;
+  - the cause: the port whose confirmed input differed (`gw_rb_submit_remote_input`), or SyncTest's own;
+  - the kind: synctest / fake / netplay;
+  - the load + re-simulation ms, and whether it mismatched.
+- **The first mismatch.** SyncTest's `sn_compare` names the symbol or heap object, and inside a live
+  **Fighter** the field (`ScriptGame_LabFighterAt/FieldName`). Inside `Geno_StateBlock` it names the
+  port and the **GenoState field** (`GenoGame_StateFieldName`). A netplay checksum desync is recorded
+  with both checksums.
+- **API.** `gd.rollbacks([n])` and `gd.rollbacks_clear()`; console `lab rollbacks [n]`. It works in any session.
+- **Drawn as** a strip of bars (depth; the colour is the kind; red = mismatch) with the last rollback's
+  numbers, the deepest one, the mean cost and a count per cause, plus a MISMATCH panel.
+- **Locally, without a second PC:**
+  - `MELEE_SLP=<replay> MELEE_RB_FAKE=4,2,5` is the fake network. A Marth ditto gave 28 rollbacks, all
+    caused by P2, depth 3-7, 3.4-8.5 ms. That equals the session's own count (28, max 7, 136 frames re-simulated).
+  - `MELEE_SYNCTEST=2` on the same replay: 874 rollbacks recorded, 0 mismatches.
+  - `_build/netplay_local.ps1` for real netplay.
+- **Test.** `geno_lab_mismatch_fields` checks the naming.
+
+**Other API:** `gd.lab_env(name)` (reads `MELEE_LAB_<name>` only), `gd.lab_now([long])` (the sandbox
+has no `os.date`), `gd.player().kb_last` (the last launch's knockback, which is kept after
+`kb_applied` clears), and `gd.attrs` gains `normal_landing_lag` and `landingair{n,f,b,hi,lw}_lag`.
+
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 
 This section is the contract the Brawl -> Geno script translator (experiment/brawl-metaknight/)

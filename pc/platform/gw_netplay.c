@@ -275,6 +275,10 @@ static void np_cb_desync(void *user, int32_t frame, uint32_t local, uint32_t rem
     (void) user;
     np.desync_frame = frame;
     gw_log("netplay: DESYNC at frame %d - local checksum %08X, peer %08X", frame, local, remote);
+    {
+        extern void gw_RbViz_Desync(int frame, uint32_t local, uint32_t peer);
+        gw_RbViz_Desync(frame, local, remote); /* the Geno Lab's rollback visualiser */
+    }
 }
 
 /* Host: the guest's HELLO carried its choices ("ck:N/cM"); make the match. */

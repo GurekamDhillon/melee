@@ -1591,3 +1591,44 @@ void* GenoGame_StateOf(Fighter* fp)
 
 /* ---- v2 ---------------------------------------------------------------------------------------- */
 #include "geno_game_v2.inc"
+
+/* ---- Stage E: name a SyncTest mismatch inside a GenoState (the Lab's rollback visualiser) --- */
+#define GENO_SF(field) { #field, (int) __builtin_offsetof(GenoState, field), (int) sizeof(((GenoState*) 0)->field) }
+static const struct {
+    const char* name;
+    int off, size;
+} geno_sfields[] = {
+    GENO_SF(profile), GENO_SF(kind), GENO_SF(flags), GENO_SF(resets), GENO_SF(la_i), GENO_SF(ra_i),
+    GENO_SF(la_f), GENO_SF(ra_f), GENO_SF(hook_calls), GENO_SF(extra_jumps), GENO_SF(action_time),
+    GENO_SF(nchecks), GENO_SF(last_check), GENO_SF(checks), GENO_SF(rehit_period), GENO_SF(rehit_count),
+    GENO_SF(link_mode), GENO_SF(in_coll), GENO_SF(edge_pending), GENO_SF(edge_target), GENO_SF(changes),
+    GENO_SF(hold_motion), GENO_SF(hold_frames), GENO_SF(move_i), GENO_SF(move_f), GENO_SF(state_entries),
+    GENO_SF(enter_from), GENO_SF(hidden), GENO_SF(ledge), GENO_SF(motion_started), GENO_SF(motion_vy),
+    GENO_SF(motion_land), GENO_SF(motion_facing), GENO_SF(motion_gravity), GENO_SF(enter_keep),
+};
+#define GENO_NSF ((int) (sizeof geno_sfields / sizeof geno_sfields[0]))
+
+static int geno_sfield(int off)
+{
+    int i;
+    for (i = 0; i < GENO_NSF; ++i) {
+        if (off >= geno_sfields[i].off && off < geno_sfields[i].off + geno_sfields[i].size) {
+            return i;
+        }
+    }
+    return -1;
+}
+int GenoGame_StateSize(void)
+{
+    return (int) sizeof(GenoState);
+}
+const char* GenoGame_StateFieldName(int off)
+{
+    int i = geno_sfield(off);
+    return i >= 0 ? geno_sfields[i].name : NULL;
+}
+int GenoGame_StateFieldBase(int off)
+{
+    int i = geno_sfield(off);
+    return i >= 0 ? geno_sfields[i].off : off;
+}

@@ -165,6 +165,26 @@ ico("library", "STATES: the saved-state library (three stacked cards)",
 ico("trash", "delete a saved state (a bin)",
     body=(P(rect(6, 10, 52, 7)) + P(rect(24, 3, 16, 7)) +
           P("M11 21 H53 L49 61 H15 Z")))
+# ---- stage E: the creator tools
+ico("moves", "MOVES: the state browser (a list of states, one playing)",
+    body=(P(rect(2, 6, 10, 10)) + P(rect(18, 6, 44, 10)) +
+          P("M2 25 L14 32 L2 39 Z") + P(rect(18, 27, 44, 10)) +
+          P(rect(2, 48, 10, 10)) + P(rect(18, 48, 30, 10))))
+ico("launch", "LAUNCH: the knockback preview (a launch arc from a hit)",
+    body=(S("M9 55 C16 28 32 14 50 12", 6, "round") + P("M46 3 L62 10 L48 21 Z") +
+          P(circle(9, 55, 7))))
+ico("ab", "A/B: compare two variants on the same inputs (two panes, one solid)",
+    body=S(rect(4, 8, 22, 48), 5) + P(rect(36, 6, 26, 52)))
+ico("export", "the frame-data export (a table and a down arrow)",
+    body=(P(rect(2, 6, 30, 8)) + P(rect(2, 20, 30, 8)) + P(rect(2, 34, 30, 8)) +
+          P(rect(2, 48, 30, 8)) + P("M46 4 H56 V38 H62 L51 58 L40 38 H46 Z")))
+ico("diff", "the frame-data diff (a row broken where it changed)",
+    body=(P(rect(2, 8, 60, 10)) + P(rect(2, 28, 28, 10)) + P(rect(38, 28, 24, 10)) +
+          P("M26 60 L34 45 L42 60 Z")))
+ico("rollback", "the rollback visualiser (rollback bars under a back arrow)",
+    body=(P("M3 12 L18 2 V8 H60 V16 H18 V22 Z") + P(rect(4, 34, 9, 26)) + P(rect(19, 46, 9, 14)) +
+          P(rect(34, 28, 9, 32)) + P(rect(49, 50, 9, 10))))
+ico("ko", "a blast-zone crossing (a burst)", body=P(star(32, 32, 31, 13, 8)))
 ico("help", "F3: help (the question mark is the symbol)",
     body=(S("M19 22 C19 6 45 6 45 22 C45 34 32 32 32 44", 8) + P(circle(32, 55, 6))))
 ico("power", "X: Lab on / off",

@@ -1005,6 +1005,16 @@ int gw_Mex_FighterBgmForPortCKind(int ck, int which) {
  * new fighters after the vanilla playables and moves the six specials to the end (internal
  * internal_id_count-6 .. -1 = 35..40 on Akaneia), where the port keeps them at 27..32 and adds
  * Sonic at 33 (m-ex 31). Verified: _research/mex-stock-icons.md. */
+/* The number of special states an m-ex fighter's MoveLogic table holds (port kind `fk`), 0 when
+ * the kind is not an m-ex slot or its table is not wired. Read-only; the Geno Lab's state browser. */
+int gw_Mex_MoveLogicEntriesForKind(int fk) {
+    int s = gw_mex_slot_of_port(fk);
+    if (s < 0 || gw_mex_kinds[s].installed != 1) {
+        return 0;
+    }
+    return gw_mex_kinds[s].movelogic_entries;
+}
+
 int gw_Mex_InternalForPortKind(int fk) {
     int n = gw_Mex_InternalCount();
     int s = gw_mex_slot_of_port(fk);

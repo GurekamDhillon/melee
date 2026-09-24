@@ -11,8 +11,10 @@
  * Script drawing (gd.text / gd.box / gd.fill / gd.line) is in a 640x480 virtual screen, scaled
  * uniformly to the window and centred, so an overlay lines up with the game's 4:3 picture.
  */
+#include "gw_kit.h"
 #include "gw_script.h"
 
+#include <aurora/imgui.h>
 #include <imgui.h>
 
 #include <windows.h>
@@ -63,6 +65,51 @@ int input_cb(ImGuiInputTextCallbackData *d) {
   return 0;
 }
 
+/* The kit's textures as ImGui textures, uploaded the first time a quad uses one (they never
+ * change once decoded; a handful of atlas pages and icons). */
+ImTextureID g_kit_tex[256];
+bool g_kit_tex_up[256];
+
+ImTextureID kit_texture(int tex) {
+  if (tex < 0 || tex >= 256) {
+    return ImTextureID{};
+  }
+  if (!g_kit_tex_up[tex]) {
+    int w = 0, h = 0;
+    const uint8_t *px = gw_Kit_TexPixels(tex);
+    g_kit_tex_up[tex] = true;
+    if (px != nullptr && gw_Kit_TexInfo(tex, &w, &h, nullptr, nullptr, nullptr, nullptr)) {
+      g_kit_tex[tex] = aurora_imgui_add_texture((uint32_t)w, (uint32_t)h, px);
+    }
+  }
+  return g_kit_tex[tex];
+}
+
+/* Kit quads kq0 .. kq0+kqn-1: textured ones modulate the texture by the tint (masks are white,
+ * so their RGB is the tint's), flat ones fill with it. */
+void draw_kit_quads(ImDrawList *dl, int kq0, int kqn, float s, float ox, float oy) {
+  for (int i = kq0; i < kq0 + kqn; ++i) {
+    const GwKitQuad *q = gw_Kit_ShownQuadAt(i);
+    if (q == nullptr) {
+      break;
+    }
+    ImVec2 p[4];
+    for (int k = 0; k < 4; ++k) {
+      p[k] = ImVec2(ox + q->x[k] * s, oy + q->y[k] * s);
+    }
+    if (q->tex >= 0) {
+      ImTextureID id = kit_texture(q->tex);
+      if (id == ImTextureID{}) {
+        continue;
+      }
+      dl->AddImageQuad(id, p[0], p[1], p[2], p[3], ImVec2(q->u[0], q->v[0]), ImVec2(q->u[1], q->v[1]),
+                       ImVec2(q->u[2], q->v[2]), ImVec2(q->u[3], q->v[3]), col(q->rgba));
+    } else {
+      dl->AddQuadFilled(p[0], p[1], p[2], p[3], col(q->rgba));
+    }
+  }
+}
+
 void draw_script_list(const ImGuiIO &io) {
   const int n = gw_Script_DrawCount();
   if (n == 0) {
@@ -95,6 +142,9 @@ void draw_script_list(const ImGuiIO &io) {
       break;
     case GW_SDRAW_LINE:
       dl->AddLine(p, ImVec2(ox + d->w * s, oy + d->h * s), col(d->rgba), 1.5f);
+      break;
+    case GW_SDRAW_KIT:
+      draw_kit_quads(dl, d->kq0, d->kqn, s, ox, oy);
       break;
     }
   }

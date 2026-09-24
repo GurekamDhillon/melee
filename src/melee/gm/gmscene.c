@@ -245,6 +245,15 @@ void gm_801A4BD4(void)
            scene. User-found: idle on the title > attract demo > Start > the title screen wrote
            through the demo's camera and crashed. A match's camera setup assigns it again. */
         Camera_ForgetGameCamera();
+        /* ...and the player table's fighter pointers, for the same reason: HSD_GObjInit below
+           starts an empty GObj world, but vanilla keeps every slot's player_entity from the
+           scene before, freed without a destructor. The Lua script API read them on the CSS
+           after training (ACCESS_VIOLATION at 0x8B8B8B6E); the scene's own Fighter_Create
+           assigns them again. */
+        {
+            extern void Player_ForgetEntities(void);
+            Player_ForgetEntities();
+        }
     }
 #endif
 

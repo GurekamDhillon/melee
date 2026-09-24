@@ -14,6 +14,7 @@
  */
 #include "gw.h"
 #include "gw_script.h"
+#include "gw_kit.h"
 
 #include <math.h>
 #include <stdarg.h>
@@ -94,6 +95,7 @@ typedef struct {
     char version[32];
     char author[64];
     char entry[MAX_PATH]; /* the .lua file */
+    char ui_dir[MAX_PATH]; /* the script's (or its mod's) ui/ folder for gd.kit art, "" = none */
     char origin[12];      /* "scripts" | "mods" | "env" | "console" | "test" */
     int api_version;
     int gameplay;
@@ -1066,6 +1068,26 @@ static int l_scene_launch(lua_State *L) {
     return 1;
 }
 
+/* gd.training_select(["kit" | "native"]) -> the current choice. Training's character and
+ * stage select on the port's kit screens or the native ones; stays until changed. Menu routing
+ * only - the match and its rules are Training's either way - so any script may call it. */
+extern int gw_Frontend_TrainingSelect(void);
+extern void gw_Frontend_SetTrainingSelect(int kit);
+static int l_training_select(lua_State *L) {
+    if (!lua_isnoneornil(L, 1)) {
+        const char *v = luaL_checkstring(L, 1);
+        if (strcmp(v, "kit") == 0) {
+            gw_Frontend_SetTrainingSelect(1);
+        } else if (strcmp(v, "native") == 0) {
+            gw_Frontend_SetTrainingSelect(0);
+        } else {
+            luaL_error(L, "gd.training_select: \"kit\" or \"native\" (got \"%s\")", v);
+        }
+    }
+    lua_pushstring(L, gw_Frontend_TrainingSelect() ? "kit" : "native");
+    return 1;
+}
+
 static int l_scene_clear(lua_State *L) {
     (void) L;
     gw_SceneLaunch_SetText(NULL);
@@ -1475,8 +1497,7 @@ static int l_collectgarbage(lua_State *L) {
     return 0;
 }
 
-/* ============================================================================================
- * the Geno Lab API (docs/geno.md "Geno Lab"): inspection, debug drawing, projection, history
+/* ===================================================================================== * the Geno Lab API (docs/geno.md "Geno Lab"): inspection, debug drawing, projection, history
  * ============================================================================================ */
 static int gs_present_arg(lua_State *L, int idx) {
     int slot = gs_slot_arg(L, idx);
@@ -2179,6 +2200,402 @@ static int l_step_back(lua_State *L) {
     return 1;
 }
 
+/* ---- gd.kit: the frontend kit's fonts, palette, 9-slice panels, icons and rows (gw_kit.h) ------
+ * Local drawing only: it builds quads for the overlay pass, reads no game state and writes none,
+ * so it is allowed in every script, online included. */
+static const char *gs_kit_mod_ui(void) {
+    GsScript *s = gs_cur_script();
+    return (s != NULL && s->ui_dir[0] != '\0') ? s->ui_dir : NULL;
+}
+
+/* A colour argument: 0xRRGGBBAA, a kit/mod token ("bone", "@face", "p1", "#rrggbb", "accent"),
+ * {r=, g=, b=, a=}, or nil for `def`. */
+static uint32_t gs_kit_colour(lua_State *L, int idx, uint32_t def) {
+    uint32_t c;
+    if (lua_type(L, idx) == LUA_TSTRING) {
+        const char *tok = lua_tostring(L, idx);
+        if (!gw_Kit_Colour(tok, gs_kit_mod_ui(), &c)) {
+            luaL_error(L, "gd.kit: unknown colour \"%s\" (a kit palette name, @face, p1..p4, #rrggbb)", tok);
+        }
+        return c;
+    }
+    return gs_color_arg(L, idx, def);
+}
+
+static int gs_kit_record(int first, int added) {
+    GwScriptDraw *d, *last;
+    int nb = gs.ndraw[gs.build];
+    if (added <= 0) return 0;
+    last = nb > 0 ? &gs.draw[gs.build][nb - 1] : NULL;
+    if (last != NULL && last->kind == GW_SDRAW_KIT && last->kq0 + last->kqn == first) {
+        last->kqn += added; /* consecutive kit calls share one draw entry */
+        return added;
+    }
+    d = gs_draw_new(GW_SDRAW_KIT);
+    if (d != NULL) {
+        d->kq0 = first;
+        d->kqn = added;
+    }
+    return added;
+}
+
+static double gs_kit_optnum(lua_State *L, int t, const char *k, double def) {
+    double v = def;
+    if (!lua_istable(L, t)) return def;
+    lua_getfield(L, t, k);
+    if (lua_isnumber(L, -1)) v = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return v;
+}
+
+static int gs_kit_optbool(lua_State *L, int t, const char *k, int def) {
+    int v = def;
+    if (!lua_istable(L, t)) return def;
+    lua_getfield(L, t, k);
+    if (!lua_isnil(L, -1)) v = lua_toboolean(L, -1);
+    lua_pop(L, 1);
+    return v;
+}
+
+/* opts[k] as a colour (pushes nothing); `def` when absent */
+static uint32_t gs_kit_optcolour(lua_State *L, int t, const char *k, uint32_t def) {
+    uint32_t c = def;
+    if (!lua_istable(L, t)) return def;
+    lua_getfield(L, t, k);
+    if (!lua_isnil(L, -1)) c = gs_kit_colour(L, lua_gettop(L), def);
+    lua_pop(L, 1);
+    return c;
+}
+
+static int gs_kit_role_arg(lua_State *L, int idx, const char *def) {
+    const char *name = luaL_optstring(L, idx, def);
+    int r = gw_Kit_Role(name);
+    if (r < 0) {
+        luaL_error(L, "gd.kit: unknown text role \"%s\" (gd.kit.roles lists them)", name);
+    }
+    return r;
+}
+
+static int gs_kit_align_arg(lua_State *L, int idx) {
+    const char *a = luaL_optstring(L, idx, "left");
+    if (strcmp(a, "center") == 0 || strcmp(a, "centre") == 0) return GW_KIT_ALIGN_CENTER;
+    if (strcmp(a, "right") == 0) return GW_KIT_ALIGN_RIGHT;
+    return GW_KIT_ALIGN_LEFT;
+}
+
+static void gs_kit_need(lua_State *L) {
+    if (!gw_Kit_Available()) {
+        luaL_error(L, "gd.kit: the kit is not available (%s)", gw_Kit_Why());
+    }
+}
+
+static int l_kit_available(lua_State *L) {
+    lua_pushboolean(L, gw_Kit_Available());
+    lua_pushstring(L, gw_Kit_Why());
+    return 2;
+}
+
+/* gd.kit.text(x, baseline_y, text [, role [, colour [, align [, opts]]]]) -> width */
+static int l_kit_text(lua_State *L) {
+    float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2), w = 0;
+    const char *s;
+    int role, align, first = gw_Kit_QuadCount();
+    uint32_t c;
+    gs_kit_need(L);
+    lua_settop(L, 7);
+    s = luaL_tolstring(L, 3, NULL);
+    role = gs_kit_role_arg(L, 4, "body");
+    c = gs_kit_colour(L, 5, 0xF2EFE4FFu);
+    align = gs_kit_align_arg(L, 6);
+    gs_kit_record(first, gw_Kit_DrawText(x, y, s, role, c, align, (float) gs_kit_optnum(L, 7, "max_w", 0),
+                                         (float) gs_kit_optnum(L, 7, "shear", gw_Kit_Shear()), &w));
+    lua_pushnumber(L, w);
+    return 1;
+}
+
+/* gd.kit.measure(text [, role [, max_w]]) -> width, line height, the text as fitted */
+static int l_kit_measure(lua_State *L) {
+    char fit[512];
+    const char *s;
+    int role, k;
+    float line = 0, max_w;
+    gs_kit_need(L);
+    lua_settop(L, 3);
+    s = luaL_tolstring(L, 1, NULL);
+    role = gs_kit_role_arg(L, 2, "body");
+    max_w = (float) luaL_optnumber(L, 3, 0);
+    role = gw_Kit_Fit(role, s, max_w, fit, sizeof fit);
+    gw_Kit_RoleMetrics(role, NULL, NULL, NULL, NULL, &line);
+    lua_pushnumber(L, gw_Kit_TextWidth(role, fit));
+    lua_pushnumber(L, line);
+    for (k = 0; fit[k] != '\0'; k++) {
+        if (fit[k] == 0x01) fit[k] = '~'; /* the ellipsis byte, for display only */
+    }
+    lua_pushstring(L, fit);
+    return 3;
+}
+
+/* gd.kit.metrics(role) -> {size, ascent, descent, cap, line} */
+static int l_kit_metrics(lua_State *L) {
+    float size, asc, desc, cap, line;
+    int role;
+    gs_kit_need(L);
+    role = gs_kit_role_arg(L, 1, "body");
+    gw_Kit_RoleMetrics(role, &size, &asc, &desc, &cap, &line);
+    lua_createtable(L, 0, 5);
+    gs_setnum(L, "size", size);
+    gs_setnum(L, "ascent", asc);
+    gs_setnum(L, "descent", desc);
+    gs_setnum(L, "cap", cap);
+    gs_setnum(L, "line", line);
+    return 1;
+}
+
+/* gd.kit.texture(name) -> {w, h, w1x, h1x, mask, tint} or nil */
+static int l_kit_texture(lua_State *L) {
+    int t = gw_Kit_Tex(luaL_checkstring(L, 1), gs_kit_mod_ui()), w, h, mask;
+    float w1, h1;
+    const char *tint;
+    if (!gw_Kit_TexInfo(t, &w, &h, &w1, &h1, &mask, &tint)) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_createtable(L, 0, 6);
+    gs_setint(L, "w", w);
+    gs_setint(L, "h", h);
+    gs_setnum(L, "w1x", w1);
+    gs_setnum(L, "h1x", h1);
+    gs_setbool(L, "mask", mask);
+    gs_setstr(L, "tint", tint);
+    return 1;
+}
+
+/* Draws texture `name` at (x, y); w/h default to its 1x size times opts.scale. */
+static int gs_kit_image(lua_State *L, const char *name, float x, float y, int wi, int hi, int oi,
+                        uint32_t def_tint) {
+    int t = gw_Kit_Tex(name, gs_kit_mod_ui()), mask, flip = 0, first = gw_Kit_QuadCount();
+    float w1, h1, w, h, scale;
+    const char *tint_tok;
+    uint32_t tint = def_tint;
+    if (!gw_Kit_TexInfo(t, NULL, NULL, &w1, &h1, &mask, &tint_tok)) {
+        lua_pushnil(L);
+        return 1;
+    }
+    scale = (float) gs_kit_optnum(L, oi, "scale", 1.0);
+    w = lua_isnumber(L, wi) ? (float) lua_tonumber(L, wi) : w1 * scale;
+    h = lua_isnumber(L, hi) ? (float) lua_tonumber(L, hi) : h1 * scale;
+    if (tint_tok != NULL && tint_tok[0] != '\0') {
+        gw_Kit_Colour(tint_tok, gs_kit_mod_ui(), &tint); /* the manifest's tint */
+    }
+    tint = gs_kit_optcolour(L, oi, "tint", tint);
+    if (gs_kit_optbool(L, oi, "flip_x", 0)) flip |= GW_KIT_FLIP_X;
+    if (gs_kit_optbool(L, oi, "flip_y", 0)) flip |= GW_KIT_FLIP_Y;
+    gs_kit_record(first, gw_Kit_DrawImage(t, x, y, w, h, tint, flip, (float) gs_kit_optnum(L, oi, "shear", 0)));
+    lua_pushnumber(L, w);
+    lua_pushnumber(L, h);
+    return 2;
+}
+
+/* gd.kit.image(name, x, y [, w [, h [, opts]]]) -> w, h drawn (nil when there is no such texture) */
+static int l_kit_image(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    float x = (float) luaL_checknumber(L, 2), y = (float) luaL_checknumber(L, 3);
+    lua_settop(L, 6);
+    return gs_kit_image(L, name, x, y, 4, 5, 6, 0xFFFFFFFFu);
+}
+
+/* gd.kit.icon(name, x, y [, scale [, tint]]) -> w, h: the texture ico_<name>, bone by default */
+static int l_kit_icon(lua_State *L) {
+    char nm[80];
+    float x = (float) luaL_checknumber(L, 2), y = (float) luaL_checknumber(L, 3);
+    uint32_t bone = 0xF2EFE4FFu;
+    snprintf(nm, sizeof nm, "ico_%s", luaL_checkstring(L, 1));
+    lua_settop(L, 5);
+    gw_Kit_Colour("bone", NULL, &bone);
+    lua_createtable(L, 0, 2); /* index 6: the options gs_kit_image reads */
+    lua_pushvalue(L, 4);
+    lua_setfield(L, 6, "scale");
+    lua_pushvalue(L, 5);
+    lua_setfield(L, 6, "tint");
+    lua_settop(L, 8); /* 7, 8: no explicit size */
+    return gs_kit_image(L, nm, x, y, 7, 8, 6, bone);
+}
+
+/* gd.kit.panel(x, y, w, h [, style]) - style {prefix="frame", piece, tint, fill, shear} */
+static int l_kit_panel(lua_State *L) {
+    float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    float w = (float) luaL_checknumber(L, 3), h = (float) luaL_checknumber(L, 4);
+    const char *prefix = "frame";
+    uint32_t tint, fill = 0x032568E0u; /* the Versus section's bg, a little translucent */
+    int first = gw_Kit_QuadCount();
+    lua_settop(L, 5);
+    gw_Kit_Colour("@bg", NULL, &fill);
+    fill = (fill & 0xFFFFFF00u) | 0xE0u;
+    if (lua_istable(L, 5)) {
+        lua_getfield(L, 5, "prefix");
+        if (lua_isstring(L, -1)) prefix = lua_tostring(L, -1); /* stays on the stack until return */
+        lua_getfield(L, 5, "fill");
+        if (lua_isboolean(L, -1) && !lua_toboolean(L, -1)) fill = 0;
+        else if (!lua_isnil(L, -1)) fill = gs_kit_colour(L, lua_gettop(L), fill);
+        lua_pop(L, 1);
+    }
+    tint = gs_kit_optcolour(L, 5, "tint", 0xFFFFFFFFu);
+    gs_kit_record(first, gw_Kit_DrawPanel(x, y, w, h, prefix, gs_kit_mod_ui(), (float) gs_kit_optnum(L, 5, "piece", 0),
+                                          tint, fill, (float) gs_kit_optnum(L, 5, "shear", 0)));
+    return 0;
+}
+
+static int gs_kit_state_arg(lua_State *L, int idx) {
+    if (lua_isboolean(L, idx)) return lua_toboolean(L, idx) ? GW_KIT_ROW_SEL : GW_KIT_ROW_NG;
+    if (lua_type(L, idx) == LUA_TSTRING) {
+        const char *s = lua_tostring(L, idx);
+        if (strcmp(s, "sel") == 0 || strcmp(s, "selected") == 0) return GW_KIT_ROW_SEL;
+        if (strcmp(s, "disabled") == 0) return GW_KIT_ROW_DISABLED;
+    }
+    return GW_KIT_ROW_NG;
+}
+
+static int gs_kit_section_arg(lua_State *L, int t) {
+    int i;
+    const char *s = NULL;
+    if (lua_istable(L, t)) {
+        lua_getfield(L, t, "section");
+        s = lua_tostring(L, -1);
+        lua_pop(L, 1); /* the string stays alive in the table */
+    }
+    for (i = 0; s != NULL && i < gw_Kit_SectionCount(); i++) {
+        if (strcmp(gw_Kit_SectionName(i), s) == 0) return i;
+    }
+    return -1;
+}
+
+/* gd.kit.button(x, y, w, label [, state [, opts]]) -> h. state: true/"sel", false/"ng",
+ * "disabled"; opts {value, h, shear, section} */
+static int l_kit_button(lua_State *L) {
+    float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    float w = (float) luaL_checknumber(L, 3), h, rh;
+    const char *label, *value = NULL;
+    int first = gw_Kit_QuadCount();
+    gs_kit_need(L);
+    lua_settop(L, 6);
+    label = luaL_tolstring(L, 4, NULL); /* index 7 */
+    if (lua_istable(L, 6)) {
+        lua_getfield(L, 6, "value"); /* index 8 */
+        if (!lua_isnil(L, -1)) value = luaL_tolstring(L, -1, NULL);
+    }
+    gw_Kit_RowMetrics(&rh, NULL, NULL, NULL, NULL);
+    h = (float) gs_kit_optnum(L, 6, "h", rh);
+    gs_kit_record(first, gw_Kit_DrawRow(x, y, w, h, label, value, gs_kit_state_arg(L, 5), gs_kit_section_arg(L, 6),
+                                        (float) gs_kit_optnum(L, 6, "shear", gw_Kit_Shear())));
+    lua_pushnumber(L, h);
+    return 1;
+}
+
+/* gd.kit.list(x, y, w, items, selected [, opts]) -> height. items: strings or {label, value,
+ * disabled}; selected: 1-based (0/nil = none); opts {pitch, h, shear, section, first, visible} */
+static int l_kit_list(lua_State *L) {
+    float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    float w = (float) luaL_checknumber(L, 3), rh, pitch, h;
+    int sel, n, i, firsti, visible, shown = 0, section;
+    float shear;
+    gs_kit_need(L);
+    luaL_checktype(L, 4, LUA_TTABLE);
+    lua_settop(L, 6);
+    sel = (int) luaL_optinteger(L, 5, 0);
+    gw_Kit_RowMetrics(&rh, &pitch, NULL, NULL, NULL);
+    h = (float) gs_kit_optnum(L, 6, "h", rh);
+    pitch = (float) gs_kit_optnum(L, 6, "pitch", pitch + (h - rh));
+    shear = (float) gs_kit_optnum(L, 6, "shear", gw_Kit_Shear());
+    firsti = (int) gs_kit_optnum(L, 6, "first", 1);
+    visible = (int) gs_kit_optnum(L, 6, "visible", 64);
+    section = gs_kit_section_arg(L, 6);
+    n = (int) lua_rawlen(L, 4);
+    for (i = firsti < 1 ? 1 : firsti; i <= n && shown < visible; i++, shown++) {
+        const char *label = NULL, *value = NULL;
+        int state = i == sel ? GW_KIT_ROW_SEL : GW_KIT_ROW_NG, first = gw_Kit_QuadCount(), top = lua_gettop(L);
+        lua_rawgeti(L, 4, i);
+        if (lua_istable(L, -1)) {
+            int it = lua_gettop(L);
+            lua_getfield(L, it, "label");
+            label = lua_isnil(L, -1) ? "" : luaL_tolstring(L, -1, NULL);
+            lua_getfield(L, it, "value");
+            if (!lua_isnil(L, -1)) value = luaL_tolstring(L, -1, NULL);
+            lua_getfield(L, it, "disabled");
+            if (lua_toboolean(L, -1) && state != GW_KIT_ROW_SEL) state = GW_KIT_ROW_DISABLED;
+        } else {
+            label = luaL_tolstring(L, -1, NULL);
+        }
+        gs_kit_record(first, gw_Kit_DrawRow(x, y + pitch * shown, w, h, label, value, state, section, shear));
+        lua_settop(L, top);
+    }
+    lua_pushnumber(L, shown > 0 ? pitch * (shown - 1) + h : 0);
+    return 1;
+}
+
+/* gd.kit.color(token) -> 0xRRGGBBAA or nil (the calling mod's palette names included) */
+static int l_kit_color(lua_State *L) {
+    uint32_t c;
+    if (!gw_Kit_Colour(luaL_checkstring(L, 1), gs_kit_mod_ui(), &c)) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_pushinteger(L, (lua_Integer) c);
+    return 1;
+}
+
+static const luaL_Reg gs_kit_funcs[] = {
+    {"available", l_kit_available}, {"text", l_kit_text}, {"measure", l_kit_measure},
+    {"metrics", l_kit_metrics}, {"texture", l_kit_texture}, {"image", l_kit_image},
+    {"icon", l_kit_icon}, {"panel", l_kit_panel}, {"button", l_kit_button}, {"list", l_kit_list},
+    {"color", l_kit_color}, {NULL, NULL}};
+
+/* gd.kit: the functions, and the kit's data as tables (colors, roles, row, shear). */
+static void gs_push_kit(lua_State *L) {
+    int i, k;
+    static const char *const which[4] = {"face", "bg", "band", "face_hi"};
+    static const char *const ports[5] = {"p1", "p2", "p3", "p4", "cpu"};
+    float rh = 0, pitch = 0, lx = 0, lb = 0, lift = 0;
+    lua_newtable(L);
+    luaL_setfuncs(L, gs_kit_funcs, 0);
+    lua_newtable(L); /* colors */
+    for (i = 0; i < gw_Kit_PaletteCount(); i++) {
+        lua_pushinteger(L, (lua_Integer) gw_Kit_PaletteRGBA(i));
+        lua_setfield(L, -2, gw_Kit_PaletteName(i));
+    }
+    for (i = 0; i < gw_Kit_SectionCount(); i++) {
+        lua_newtable(L);
+        for (k = 0; k < 4; k++) {
+            lua_pushinteger(L, (lua_Integer) gw_Kit_SectionRGBA(i, k));
+            lua_setfield(L, -2, which[k]);
+        }
+        lua_setfield(L, -2, gw_Kit_SectionName(i));
+    }
+    for (k = 0; k < 5; k++) {
+        uint32_t c;
+        if (gw_Kit_Colour(ports[k], NULL, &c)) {
+            lua_pushinteger(L, (lua_Integer) c);
+            lua_setfield(L, -2, ports[k]);
+        }
+    }
+    lua_setfield(L, -2, "colors");
+    lua_newtable(L); /* roles, smallest first as the manifest lists them */
+    for (i = 0; i < gw_Kit_RoleCount(); i++) {
+        lua_pushstring(L, gw_Kit_RoleName(i));
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "roles");
+    gw_Kit_RowMetrics(&rh, &pitch, &lx, &lb, &lift);
+    lua_createtable(L, 0, 5);
+    gs_setnum(L, "h", rh);
+    gs_setnum(L, "pitch", pitch);
+    gs_setnum(L, "label_x", lx);
+    gs_setnum(L, "label_base", lb);
+    gs_setnum(L, "lift", lift);
+    lua_setfield(L, -2, "row");
+    lua_pushnumber(L, gw_Kit_Shear());
+    lua_setfield(L, -2, "shear");
+}
+
 static const luaL_Reg gs_gd_funcs[] = {
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"scene", l_scene}, {"match", l_match},
     {"players", l_players}, {"player", l_player}, {"char_name", l_char_name}, {"pad", l_pad},
@@ -2197,6 +2614,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
     {"lab_request", l_lab_request},
+    {"training_select", l_training_select},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -2338,6 +2756,8 @@ static void gs_build_base(lua_State *L) {
         }
         lua_setfield(L, -2, "stage_draw");
     }
+    gs_push_kit(L);
+    lua_setfield(L, -2, "kit");
     /* the prelude adds wait / wait_until / press / tilt */
     if (luaL_loadbufferx(L, gs_prelude, sizeof gs_prelude - 1, "=gd.prelude", "t") == LUA_OK) {
         lua_pushvalue(L, -2);
@@ -2354,6 +2774,22 @@ static void gs_build_base(lua_State *L) {
     gs_base_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 }
 
+/* A copy of the table at `src` whose table values are copied too, `depth` levels down. */
+static void gs_copy_deep(lua_State *L, int src, int depth) {
+    src = lua_absindex(L, src);
+    lua_newtable(L);
+    lua_pushnil(L);
+    while (lua_next(L, src) != 0) {
+        if (depth > 1 && lua_istable(L, -1)) {
+            gs_copy_deep(L, -1, depth - 1);
+            lua_remove(L, -2);
+        }
+        lua_pushvalue(L, -2);
+        lua_insert(L, -2);
+        lua_rawset(L, -4);
+    }
+}
+
 /* A fresh environment: the base's entries, with private copies of every library table and gd. */
 static int gs_new_env(lua_State *L) {
     static const char *const copy[] = {"string", "table", "math", "utf8", "coroutine", "gd", NULL};
@@ -2363,6 +2799,13 @@ static int gs_new_env(lua_State *L) {
     for (i = 0; copy[i] != NULL; ++i) {
         lua_getfield(L, -2, copy[i]);
         gs_copy_table(L, -1);
+        if (strcmp(copy[i], "gd") == 0) {
+            /* gd.kit and its tables (colors and its sections, roles, row): private copies too */
+            lua_getfield(L, -1, "kit");
+            gs_copy_deep(L, -1, 3);
+            lua_setfield(L, -3, "kit");
+            lua_pop(L, 1);
+        }
         lua_setfield(L, -3, copy[i]);
         lua_pop(L, 1);
     }
@@ -2527,6 +2970,30 @@ static int gs_header_field(const char *src, const char *key, char *out, size_t c
 static int gs_load_text(const char *id, const char *entry, char *src, size_t len,
                         const char *manifest, const char *origin);
 
+/* A script's kit art (gd.kit): ui/ beside the script, else ui/ one level up - a mod's
+ * <mod>/scripts/x.lua finds <mod>/ui, a scripts/<id>/main.lua finds scripts/<id>/ui. */
+static void gs_find_ui_dir(const char *entry, char *out, size_t cap) {
+    char dir[MAX_PATH], cand[MAX_PATH + 8];
+    char *slash;
+    int up;
+    out[0] = '\0';
+    snprintf(dir, sizeof dir, "%s", entry);
+    for (up = 0; up < 2; up++) {
+        slash = strrchr(dir, '\\');
+        if (strrchr(dir, '/') > slash) slash = strrchr(dir, '/');
+        if (slash == NULL) return;
+        *slash = '\0';
+        snprintf(cand, sizeof cand, "%s\\ui", dir);
+        {
+            DWORD a = GetFileAttributesA(cand);
+            if (a != INVALID_FILE_ATTRIBUTES && (a & FILE_ATTRIBUTE_DIRECTORY)) {
+                snprintf(out, cap, "%s", cand);
+                return;
+            }
+        }
+    }
+}
+
 /* Load (or reload) a script file. `manifest` is the mod.json text or NULL. Returns index or -1. */
 static int gs_load_script(const char *id, const char *entry, const char *manifest, const char *origin) {
     size_t len = 0;
@@ -2559,6 +3026,7 @@ static int gs_load_text(const char *id, const char *entry, char *src, size_t len
     snprintf(s->id, sizeof s->id, "%s", id);
     snprintf(s->name, sizeof s->name, "%s", id);
     snprintf(s->entry, sizeof s->entry, "%s", entry);
+    gs_find_ui_dir(entry, s->ui_dir, sizeof s->ui_dir);
     snprintf(s->origin, sizeof s->origin, "%s", origin);
     s->api_version = GW_SCRIPT_API_VERSION;
     if (manifest == NULL) { /* single file: "-- @key: value" header lines */
@@ -2912,6 +3380,7 @@ static void gs_finish_draw(void) {
     gs.cam_stamp++;
     gs_hook_all("on_draw", 0, 0, 0);
     gs.build = !gs.build;
+    gw_Kit_SwapBanks(); /* the kit's quads flip with the list that indexes them */
     gs_draw_open = 0;
 }
 
@@ -2939,6 +3408,7 @@ void gw_Script_Tick(void) {
     gs_draw_open = 1;
     gs.cam_stamp++;
     gs_update_want_events();
+    gw_Kit_BeginFrame();
     gs_hook_all("on_tick", 0, 0, 0);
     /* Paused: no logic frame will run this tick, so there is no frame boundary for a pending
        savestate / loadstate / step-back to wait for. This point is between frames too (the loop
@@ -4151,7 +4621,203 @@ static int test_script_lab_draw_pass(void) {
     return 0;
 }
 
+static int test_script_text_optional_args(void) {
+    /* gd.text's colour and size are optional (luaL_tolstring's push once landed in their slots) */
+    char out[512];
+    gs.ndraw[gs.build] = 0;
+    if (t_exec("gd.text(10, 20, 'plain')", out, sizeof out) != 0 ||
+        t_exec("gd.text(10, 40, 'red', 0xFF0000FF)", out, sizeof out) != 0 ||
+        t_exec("gd.text(10, 60, 42, 0x00FF00FF, 2)", out, sizeof out) != 0) {
+        gw_test_fail("gd.text with optional arguments left out raised: %s", out);
+        return 1;
+    }
+    if (gs.ndraw[gs.build] != 3 || strcmp(gs.draw[gs.build][0].text, "plain") != 0 || gs.draw[gs.build][0].rgba != 0xFFFFFFFFu ||
+        gs.draw[gs.build][1].rgba != 0xFF0000FFu || gs.draw[gs.build][1].size != 1.0f || strcmp(gs.draw[gs.build][2].text, "42") != 0 ||
+        gs.draw[gs.build][2].size != 2.0f) {
+        gw_test_fail("gd.text draw list wrong (n=%d)", gs.ndraw[gs.build]);
+        return 1;
+    }
+    gs.ndraw[gs.build] = 0;
+    return 0;
+}
+
+/* A tiny .gxtex: 8x8 I4, every texel 0xF (an opaque mask). */
+static int t_write_gxtex(const char *path) {
+    unsigned char blob[64 + 32];
+    static const unsigned hdr[11] = {0x47585458u, 1, 0 /* I4 */, 8, 8, 0xFFFFFFFFu, 0, 32, 0, 64, 0};
+    FILE *f;
+    int i;
+    memset(blob, 0, sizeof blob);
+    for (i = 0; i < 11; ++i) {
+        blob[i * 4] = (unsigned char) (hdr[i] >> 24);
+        blob[i * 4 + 1] = (unsigned char) (hdr[i] >> 16);
+        blob[i * 4 + 2] = (unsigned char) (hdr[i] >> 8);
+        blob[i * 4 + 3] = (unsigned char) hdr[i];
+    }
+    memset(blob + 64, 0xFF, 32);
+    f = fopen(path, "wb");
+    if (f == NULL) return -1;
+    fwrite(blob, 1, sizeof blob, f);
+    fclose(f);
+    return 0;
+}
+
+/* gd.kit from a script mod: its own ui/ art (icon, 9-slice by prefix, *_ui.json size / tint /
+ * palette) and the kit's fonts, all landing in the draw list as kit quads, in call order. */
+static int test_script_kit_mod_art(void) {
+    char dir[MAX_PATH], ui[MAX_PATH], path[MAX_PATH];
+    static const char *const pieces[] = {"ico_testmark", "tpanel_corner_tl", "tpanel_corner_tr",
+                                         "tpanel_corner_bl", "tpanel_corner_br", "tpanel_edge_h",
+                                         "tpanel_edge_v", "tpanel_fill"};
+    FILE *f;
+    int i, k, rc = 0, n_kit = 0;
+    gs_init(); /* the engine starts lazily; this may be the first test to touch it */
+    if (gs.L == NULL) {
+        gw_test_fail("the Lua state did not start");
+        return 1;
+    }
+    snprintf(dir, sizeof dir, "%s\\gw_kit_test", gs.exe_dir);
+    snprintf(ui, sizeof ui, "%s\\ui", dir);
+    CreateDirectoryA(dir, NULL);
+    CreateDirectoryA(ui, NULL);
+    snprintf(path, sizeof path, "%s\\scripts", dir);
+    CreateDirectoryA(path, NULL);
+    for (k = 0; k < 8; ++k) {
+        snprintf(path, sizeof path, "%s\\%s.gxtex", ui, pieces[k]);
+        t_write_gxtex(path);
+    }
+    snprintf(path, sizeof path, "%s\\test_ui.json", ui);
+    f = fopen(path, "w");
+    fputs("{\"palette\": {\"mine\": {\"accentx\": {\"hex\": \"#38c9d9\", \"u32\": \"0x38C9D9FF\"}}},\n"
+          " \"textures\": [{\"name\": \"ico_testmark\", \"size_1x\": [12, 10], \"tint\": \"accentx\"}]}\n", f);
+    fclose(f);
+    snprintf(path, sizeof path, "%s\\scripts\\kit.lua", dir);
+    f = fopen(path, "w");
+    fputs("function on_draw()\n"
+          "  gd.text(1, 1, 'plain first')\n"
+          "  local w, h = gd.kit.icon('testmark', 10, 10)\n"
+          "  iw, ih = w, h\n"
+          "  gd.kit.panel(20, 20, 100, 60, {prefix = 'tpanel', fill = 'accentx'})\n"
+          "  if gd.kit.available() then\n"
+          "    tw = gd.kit.text(30, 50, 'Kit', 'row', 'bone')\n"
+          "    gd.kit.list(30, 90, 200, {'One', {label = 'Two', value = 'On'}}, 2)\n"
+          "  end\n"
+          "  accent = gd.kit.color('accentx')\n"
+          "  tex = gd.kit.texture('ico_testmark')\n"
+          "end\n", f);
+    fclose(f);
+    i = gs_load_script("kit_test", path, NULL, "test");
+    if (i < 0 || strcmp(gs.s[i].ui_dir, ui) != 0) {
+        gw_test_fail("a script mod did not find its ui/ folder (%s)", i >= 0 ? gs.s[i].ui_dir : "not loaded");
+        rc = 1;
+        goto done;
+    }
+    gw_Script_Tick();       /* a new list opens */
+    gw_Script_PostRender(); /* on_draw completes it; it is the shown list now */
+    if (gw_Script_DrawCount() < 2 || gw_Script_DrawAt(0)->kind != GW_SDRAW_TEXT || gw_Script_DrawAt(1)->kind != GW_SDRAW_KIT) {
+        gw_test_fail("kit draws are not in the draw list after the plain text (n=%d)", gw_Script_DrawCount());
+        rc = 1;
+        goto done;
+    }
+    for (k = 0; k < gw_Script_DrawCount(); ++k) {
+        if (gw_Script_DrawAt(k)->kind == GW_SDRAW_KIT) n_kit += gw_Script_DrawAt(k)->kqn;
+    }
+    /* icon 1 + panel 9 (fill, 4 edges, 4 corners), plus the text and rows when the kit is here */
+    if (n_kit < 10 || gw_Kit_ShownQuadAt(n_kit - 1) == NULL || gw_Kit_ShownQuadAt(n_kit) != NULL) {
+        gw_test_fail("kit quads: %d in the draw list, not the shown bank's count", n_kit);
+        rc = 1;
+    }
+    {
+        const GwKitQuad *icon = gw_Kit_ShownQuadAt(0), *fill = gw_Kit_ShownQuadAt(1);
+        if (icon == NULL || icon->x[1] - icon->x[0] != 12.0f || icon->y[2] - icon->y[0] != 10.0f ||
+            icon->rgba != 0x38C9D9FFu) {
+            gw_test_fail("the icon ignored its *_ui.json size / tint");
+            rc = 1;
+        }
+        if (fill == NULL || fill->tex < 0 || fill->rgba != 0x38C9D9FFu) {
+            gw_test_fail("the panel's <prefix>_fill texture was not used with the fill colour");
+            rc = 1;
+        }
+    }
+    lua_rawgeti(gs.L, LUA_REGISTRYINDEX, gs.s[i].env_ref);
+    lua_getfield(gs.L, -1, "accent");
+    if (lua_tointeger(gs.L, -1) != 0x38C9D9FF) {
+        gw_test_fail("gd.kit.color did not read the mod's palette");
+        rc = 1;
+    }
+    lua_pop(gs.L, 1);
+    lua_getfield(gs.L, -1, "tex");
+    if (!lua_istable(gs.L, -1)) {
+        gw_test_fail("gd.kit.texture returned no table for the mod's texture");
+        rc = 1;
+    } else {
+        lua_getfield(gs.L, -1, "mask");
+        if (!lua_toboolean(gs.L, -1)) {
+            gw_test_fail("an I4 texture is not reported as a mask");
+            rc = 1;
+        }
+        lua_pop(gs.L, 1);
+    }
+    lua_pop(gs.L, 2);
+done:
+    if (i >= 0) gs_unload(i);
+    gs.ndraw[0] = gs.ndraw[1] = 0;
+    gw_Kit_BeginFrame();
+    gw_Kit_SwapBanks();
+    gw_Kit_BeginFrame();
+    gw_Kit_SwapBanks();
+    for (k = 0; k < 8; ++k) {
+        snprintf(path, sizeof path, "%s\\%s.gxtex", ui, pieces[k]);
+        DeleteFileA(path);
+    }
+    snprintf(path, sizeof path, "%s\\test_ui.json", ui);
+    DeleteFileA(path);
+    snprintf(path, sizeof path, "%s\\scripts\\kit.lua", dir);
+    DeleteFileA(path);
+    snprintf(path, sizeof path, "%s\\scripts", dir);
+    RemoveDirectoryA(path);
+    RemoveDirectoryA(ui);
+    RemoveDirectoryA(dir);
+    return rc;
+}
+
+/* gd.kit is per-script like the rest of gd; kit calls from a script without art still work */
+static int test_script_kit_isolated(void) {
+    char out[512];
+    t_exec("gd.kit.shear = 99; gd.kit.colors.gold = 1", out, sizeof out);
+    t_exec("= gd.kit.panel ~= nil and type(gd.kit.roles) == 'table'", out, sizeof out);
+    if (strstr(out, "true") == NULL) {
+        gw_test_fail("gd.kit is missing from the console's gd: %s", out);
+        return 1;
+    }
+    if (gs.console >= 0) {
+        /* another environment still sees the kit's own values */
+        int e = gs_new_env(gs.L);
+        lua_rawgeti(gs.L, LUA_REGISTRYINDEX, e);
+        lua_getfield(gs.L, -1, "gd");
+        lua_getfield(gs.L, -1, "kit");
+        lua_getfield(gs.L, -1, "shear");
+        if (lua_tonumber(gs.L, -1) == 99) {
+            gw_test_fail("one script's gd.kit edit leaked into another environment");
+            lua_pop(gs.L, 4);
+            luaL_unref(gs.L, LUA_REGISTRYINDEX, e);
+            return 1;
+        }
+        lua_pop(gs.L, 4);
+        luaL_unref(gs.L, LUA_REGISTRYINDEX, e);
+    }
+    t_exec("= gd.training_select()", out, sizeof out);
+    if (strstr(out, "native") == NULL && strstr(out, "kit") == NULL) {
+        gw_test_fail("gd.training_select() gave %s", out);
+        return 1;
+    }
+    return 0;
+}
+
 void gw_script_tests_register(void) {
+    gw_test_register("script_kit_mod_art", test_script_kit_mod_art);
+    gw_test_register("script_kit_isolated", test_script_kit_isolated);
+    gw_test_register("script_text_optional_args", test_script_text_optional_args);
     gw_test_register("script_lua_runs", test_script_lua_runs);
     gw_test_register("script_sandbox", test_script_sandbox);
     gw_test_register("script_budget", test_script_budget);

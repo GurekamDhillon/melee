@@ -65,13 +65,15 @@ int gw_Console_Open(void);           /* the in-game overlay is showing */
 void gw_Console_SetOpen(int open);
 
 /* ---- script drawing (rendered by gw_console.cpp in the ImGui pass) --------------------------- */
-enum { GW_SDRAW_TEXT = 0, GW_SDRAW_BOX = 1, GW_SDRAW_FILL = 2, GW_SDRAW_LINE = 3 };
+/* GW_SDRAW_KIT: quads kq0 .. kq0+kqn-1 of the kit's draw list (gw_kit.h), in call order */
+enum { GW_SDRAW_TEXT = 0, GW_SDRAW_BOX = 1, GW_SDRAW_FILL = 2, GW_SDRAW_LINE = 3, GW_SDRAW_KIT = 4 };
 typedef struct {
     int kind;
     float x, y, w, h; /* 640x480 virtual screen; LINE uses (x,y)-(w,h) as the end point */
     uint32_t rgba;
     float size; /* text scale, 1 = the console font */
     char text[160];
+    int kq0, kqn;
 } GwScriptDraw;
 int gw_Script_DrawCount(void);
 const GwScriptDraw *gw_Script_DrawAt(int i);

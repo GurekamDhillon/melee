@@ -74,6 +74,11 @@ void gw_UI_RasterI4(int w, int h, const uint8_t *rgba, void *dst);
 void gw_UI_RasterRgba8Guest(int w, int h, const uint8_t *rgba_host, void *guest_dst);
 void gw_UI_RasterI4Guest(int w, int h, const uint8_t *rgba_host, void *guest_dst);
 
+/* Draw ASCII `text` centred into an I4 texture of w x h texels (style 0 = the results screen's
+ * per-player name, 1 = its winner banner); `dst` holds gw_UI_I4Size(w, h rounded up to 8) bytes.
+ * 1 = drawn, 0 = failed (dst blank). Game code declares it as UI_TextI4. */
+int gw_UI_TextI4(const char *text, int w, int h, int style, void *dst);
+
 /* True when the runtime UI-generation experiment is enabled: MELEE_UIGEN is set and not "0".
  * The game-side gmGenUI_Active() (gmgenui.c) calls this; game code cannot call getenv directly
  * (there is no gw_getenv shim), so the env read lives here on the native side. */

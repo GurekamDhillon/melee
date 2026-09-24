@@ -44,10 +44,11 @@ enum {
     SCRIPT_I_SLOT_TYPE, /* 0 human, 1 cpu, 2 demo, 3 none */
 };
 
-/* The player table keeps its fighter pointers after a scene frees the fighters (leaving a match
- * for the CSS, the results screen, a window close mid-match): Player_GetEntity then returns freed
- * memory (the 0x8B8B8B8B fill; the Geno Lab crashed in ScriptGame_FighterI from Script_FramePost on
- * the CSS after training). A slot's fighter counts only when its gobj is in the live fighter list. */
+/* A slot's fighter counts only while its gobj is in the live fighter list. The scene start clears
+ * the player table (Player_ForgetEntities, gmscene.c) and a fighter freed mid-scene clears its
+ * own slot (Fighter_Unload_8006DABC), so the table should never hold a freed fighter; this is the
+ * second line, because every script read and write goes through here and a stale pointer means
+ * reading freed memory (the 0x8B8B8B8B fill). At most six fighters, so the walk is cheap. */
 static int script_gobj_live(HSD_GObj* gobj)
 {
     HSD_GObj* cur;

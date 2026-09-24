@@ -190,7 +190,7 @@ static u8 mnCharSel_IconCount = SELKIND_COUNT;
 #define MNCS_NUM_SK ((int) mnCharSel_IconCount)
 /* icons[] capacity: m-ex's metadata allows more icons than retail's 25; the table is refilled
  * from mexData at scene entry. */
-#define CSS_ICON_MAX 64
+#define CSS_ICON_MAX 128 /* pc/platform/gw.h GW_MEX_CSS_ICON_MAX */
 
 /* m-ex's CSS descriptor, public symbol `mexSelectChr` of an m-ex MnSlChr archive (verified with
  * tools/mex_port/dump_css.py): the icon model, its anims, and the portrait (CSP) material anim with

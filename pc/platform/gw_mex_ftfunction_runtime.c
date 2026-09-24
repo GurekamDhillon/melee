@@ -41,8 +41,7 @@
  * of character kinds for m-ex fighters (melee/ft/forward.h Ft_Kind_Mex0, ChKind_Mex0). Slots are
  * DENSE: slot i is the i-th non-empty m-ex fighter row from internal id GW_MEX_FIRST_NEW up
  * (gw_Mex_SlotInternal), so builds with placeholder rows (ACE's "NONE") still fit. */
-#define GW_MEX_SLOTS 31             /* Ft_Kind_Mex0 .. +30: a fighter kind must fit the 6-bit
-                                     * x597_bits field the animation code compares it with */
+#define GW_MEX_SLOTS GW_MEX_SLOT_COUNT /* Ft_Kind_Mex0 .. 0x7E (gw.h says why 94) */
 #define GW_PORT_FT_MEX0 0x21        /* Ft_Kind_Mex0 */
 #define GW_PORT_CK_MEX0 0x22        /* ChKind_Mex0 (after ChKind_None, 0x21) */
 #define GW_MEX_FIRST_NEW 27         /* m-ex internal id of the first added fighter */
@@ -55,6 +54,7 @@ int gw_Mex_InternalForPortKind(int fk);
 int gw_Mex_PortKindForInternal(int k);
 int gw_Mex_InternalForExt(int e);
 int gw_Mex_ExtForInternal(int k);
+const char *gw_Mex_FighterName(int ext);
 int gw_Mex_SlotInternal(int slot);
 int gw_Mex_InternalCount(void);
 int gw_Mex_CssIconCount(void);
@@ -137,9 +137,9 @@ static int gw_mex_slot_of_internal(int k);
 #define GW_MEX_GUEST_SETUP_PROC   0x8038FD54u /* HSD_GObj_SetupProc(cb=guest 0x80000C74) */
 
 /* Arch_FighterFunc layout the loader writes (see gw_mex_ftfunction.c): a 46-slot pointer array
- * followed by the per-kind tables. 0x2000 bytes covers the slot array + 25 overridden slots'
- * 64-entry per-kind tables with margin. */
-#define GW_MEX_MEXDATA_SIZE 0x5000u /* 46 slots + 46 per-kind tables of 96 ids */
+ * followed by the per-kind tables, one per overridden slot, 128 internal ids wide
+ * (GW_FTFUNC_KIND_MAX): 46 * 4 + 46 * 512 = 0x5CB8 at most. */
+#define GW_MEX_MEXDATA_SIZE 0x6000u
 #define GW_MEX_STACK_SIZE 0x10000u
 #define GW_MEX_GETDATA_SIZE 0x1000u /* synthetic safe buffer MEX_GetData(8) hands back */
 
@@ -662,7 +662,17 @@ int gw_Mex_CssIconCount(void) {
         return 0;
     }
     n = (int32_t) gw_r32((const void *) (uintptr_t) (meta + 0x0Cu));
-    return (n > 0 && n <= 64) ? n : 0;
+    if (n > GW_MEX_CSS_ICON_MAX) {
+        /* Everything m-ex keys off this count; 0 turns the whole m-ex layer off, so say so. */
+        static int logged;
+        if (!logged) {
+            logged = 1;
+            gw_log("mexdata: ERROR the CSS lists %d icons; the port holds at most %d - m-ex "
+                   "content is OFF for this disc/mod set", (int) n, GW_MEX_CSS_ICON_MAX);
+        }
+        return 0;
+    }
+    return n > 0 ? n : 0;
 }
 
 void *gw_Mex_CssIconTable(void) {
@@ -879,6 +889,31 @@ float gw_Mex_ResultScaleForPortCKind(int ck) {
 }
 int gw_Mex_AnnouncerForPortCKind(int ck) { return gw_mex_fighter_s32_for_ck(ck, 0x34u, -1); }
 
+/* Can the results screen's name art (GmRst's name strips, one frame per m-ex EXTERNAL id) belong
+ * to m-ex fighter `ck`? m-ex just shows frame = external id (ResultScreen/RstData_GetTextureName*),
+ * which is right on a disc built as a whole - MexManager writes a name into GmRst for every
+ * fighter it adds. A fighter a MOD added is different: its row reuses an external id whose frame
+ * in the disc's GmRst holds whatever the disc put there (a Meta Knight mod on ACE's "Wolf SSBU"
+ * row showed WOLF) or nothing of its own. So the art is the fighter's own only when GmRst itself
+ * comes from a mod (the mod set that added the fighter shipped its names), or the fighter's
+ * character file is on the disc proper (the disc's own fighter, named by the disc's own GmRst).
+ * The caller still checks that the frame exists at all. 0 for a non-m-ex kind. */
+int gw_Mex_ResultArtIsOwn(int ck) {
+    extern int gw_DVDFileFromMod(const char *path);
+    extern int gw_DVDFileOnDisc(const char *path);
+    extern const char *gw_Mex_FtPlFile(int k);
+    int ext = gw_Mex_PortCKindToExt(ck);
+    int k = ext >= 0 ? gw_Mex_InternalForExt(ext) : -1;
+    const char *pl = k >= 0 ? gw_Mex_FtPlFile(k) : NULL;
+    if (ck <= 25 || pl == NULL) {
+        return 0;
+    }
+    if (gw_DVDFileFromMod("GmRst.usd") || gw_DVDFileFromMod("GmRst.dat")) {
+        return 1;
+    }
+    return gw_DVDFileOnDisc(pl);
+}
+
 /* ---- m-ex menu params (mexData.menu +0x00) ---------------------------------------------------
  * params[0] is the CSS cursor scale m-ex's CursorScale patches apply (Akaneia: 0.95 - its icon
  * grid is denser than retail's 25, so the retail hand covers too much of it). params[2] is the
@@ -1015,7 +1050,7 @@ static int gw_mex_slot_internal[GW_MEX_SLOTS];
 static int gw_mex_slot_count = -1;
 
 static void gw_mex_slots_build(void) {
-    int n, k;
+    int n, k, dropped = 0;
     if (gw_mex_slot_count >= 0 || gw_Mex_CssIconCount() == 0) {
         return;
     }
@@ -1032,13 +1067,23 @@ static void gw_mex_slots_build(void) {
             continue;
         }
         if (gw_mex_slot_count == GW_MEX_SLOTS) {
-            gw_log("mexdata: more than %d m-ex fighters - m-ex %d (%s) and later are left out",
-                   GW_MEX_SLOTS, k, pl);
-            break;
+            /* The hard limit (gw.h GW_MEX_SLOT_COUNT: kinds are s8). Name every fighter it
+             * costs, so an over-full mod set never loses one silently. */
+            gw_log("mexdata: ERROR no m-ex fighter slot left (the port holds %d): m-ex fighter "
+                   "%d (%s, \"%s\") is left out", GW_MEX_SLOTS, k, pl,
+                   gw_Mex_FighterName(gw_Mex_ExtForInternal(k)) != NULL
+                       ? gw_Mex_FighterName(gw_Mex_ExtForInternal(k))
+                       : "?");
+            ++dropped;
+            continue;
         }
         gw_mex_slot_internal[gw_mex_slot_count++] = k;
     }
-    gw_log("mexdata: %d m-ex fighter slots", gw_mex_slot_count);
+    if (dropped > 0) {
+        gw_log("mexdata: ERROR %d m-ex fighter(s) left out - more than %d fighters; disable "
+               "some fighter mods", dropped, GW_MEX_SLOTS);
+    }
+    gw_log("mexdata: %d m-ex fighter slots (of %d)", gw_mex_slot_count, GW_MEX_SLOTS);
 }
 
 /* m-ex internal id of port slot `slot`, or -1. */
@@ -3640,7 +3685,7 @@ static int test_mex_css_icon_map(void) {
     uint32_t saved = gw_mexdt, saved_base = gw_mexdt_base, saved_size = gw_mexdt_size;
     uint32_t root, tbl;
     int rc = 0, n, i, j;
-    int ext[64], internal[64], slot[64], ck[64];
+    int ext[GW_MEX_CSS_ICON_MAX], internal[GW_MEX_CSS_ICON_MAX], slot[GW_MEX_CSS_ICON_MAX], ck[GW_MEX_CSS_ICON_MAX];
     root = gw_mex_load_hsd("MxDt.dat", "mexData", GW_MEXDT_TEST_BASE, &gw_mexdt_base,
                            &gw_mexdt_size);
     if (root == 0u) {
@@ -3651,7 +3696,7 @@ static int test_mex_css_icon_map(void) {
     gw_mexdt = root;
     n = gw_Mex_CssIconCount();
     tbl = (uint32_t) (uintptr_t) gw_Mex_CssIconTable();
-    if (n <= 0 || n > 64 || tbl == 0u) {
+    if (n <= 0 || n > GW_MEX_CSS_ICON_MAX || tbl == 0u) {
         gw_test_fail("CSS icon table unavailable (count %d, table 0x%08X)", n, tbl);
         gw_mexdt = saved; gw_mexdt_base = saved_base; gw_mexdt_size = saved_size;
         return 1;

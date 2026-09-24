@@ -94,6 +94,13 @@ void gm_801B1B74(GameModeState* arg0)
                 vs_data->start.players[1].nametag, 0U, gm_804D68C0);
     lbDvd_SetupVsPreloadCache();
     gm_804D68C1 = lbTime_8000AF74((u32) gm_804D68C1, 1);
+#if defined(TARGET_PC)
+    {
+        /* the kit's character select, when asked for (gmfrontend.c) */
+        extern void gmFrontend_TrainingSelect(GameModeState * state, int sss);
+        gmFrontend_TrainingSelect(arg0, 0);
+    }
+#endif
 }
 
 static void gm_801B07E8_layer(CSSData* css_data, s8* c_kind, s8* stocks,
@@ -176,6 +183,13 @@ void gm_801B1EB8(GameModeState* arg0)
     sss->x1 = 0;
     sss->force_stage_id = -1;
     sss->unk_stage = 0;
+#if defined(TARGET_PC)
+    {
+        /* the kit's stage select, when asked for (gmfrontend.c) */
+        extern void gmFrontend_TrainingSelect(GameModeState * state, int sss);
+        gmFrontend_TrainingSelect(arg0, 1);
+    }
+#endif
 }
 
 void gm_801B1EEC(GameModeState* arg0)

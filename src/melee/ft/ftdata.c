@@ -1547,6 +1547,24 @@ u8 ftData_UnkBytePerCharacter[Ft_Kind_Max] = {
  *     whose default onLoad it shares) - Kirby's copy tables, demo-motion count, effect file.
  * A disc without MxDt.dat leaves every slot empty. */
 static Fighter_CostumeStrings ftData_MexCostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0][16];
+
+/* The animation flags an m-ex fighter's motion gets (ftData_8008572C explains why the low 6 bits,
+ * the authoring kind, are rewritten at all). A kind below 64 is written as is - unchanged from
+ * before the slot cap was raised. A kind of 64 or more does not fit 6 bits: its own motions get
+ * FT_ANIM_KIND_SELF, which ftAnim_AuthorKind reads back as the fighter playing it, and a motion
+ * authored for 0x21 - the generic thrown skeleton retail uses for what a VICTIM plays (Mario's
+ * TMarioThrowF, and every m-ex fighter's T*Throw* rows) - keeps 0x21, as retail has it, because
+ * "self" would be the victim, not this fighter. */
+static u32 ftData_MexAnimFlags(u32 flags, int kind)
+{
+    if (kind < 64) {
+        return (flags & ~0x3Fu) | (u32) kind;
+    }
+    if ((flags & 0x3Fu) == 0x21u) {
+        return flags;
+    }
+    return (flags & ~0x3Fu) | (u32) FT_ANIM_KIND_SELF;
+}
 static UnkCostumeStruct ftData_MexCostumeLists[Ft_Kind_Max - Ft_Kind_Mex0][16];
 
 void ftData_MexInitKinds(void)
@@ -1738,6 +1756,11 @@ void ftData_MexInitKinds(void)
             if (eb >= 0 && eb < EF_BANK_MAX && Mex_EffectString(eb, 0) != NULL) {
                 ftData_UnkBytePerCharacter[fk] = (u8) eb;
             } else {
+                if (eb >= EF_BANK_MAX && eb != 255) {
+                    OSReport("gw: ERROR m-ex fighter %d's effect bank %d is past the %d the "
+                             "particle system holds - it uses its clone base's effects\n",
+                             k, eb, EF_BANK_MAX);
+                }
                 ftData_UnkBytePerCharacter[fk] = ftData_UnkBytePerCharacter[base];
             }
         }
@@ -1878,9 +1901,8 @@ void ftData_8008572C(FighterKind kind)
             ftData* fd = gFtDataList[kind];
             int i;
             for (i = 0; i < ftData_Table_Unk0[kind].count; i++) {
-                u32 flags = (u32) fd->xC[i].x10_animCurrFlags;
-                flags = (flags & ~0x3Fu) | (u32) kind;
-                fd->xC[i].x10_animCurrFlags = (s32) flags;
+                fd->xC[i].x10_animCurrFlags =
+                    (s32) ftData_MexAnimFlags((u32) fd->xC[i].x10_animCurrFlags, kind);
             }
             /* Same for the demo motions (results-screen / intro poses, fd->x14): they are
              * authored for m-ex's kind too, and the cross-kind path crashed on the results
@@ -1939,7 +1961,7 @@ void ftData_8008572C(FighterKind kind)
                         break;
                     }
                     flags = (u32) fd->x14[i].x10_animCurrFlags;
-                    fd->x14[i].x10_animCurrFlags = (s32) ((flags & ~0x3Fu) | (u32) kind);
+                    fd->x14[i].x10_animCurrFlags = (s32) ftData_MexAnimFlags(flags, kind);
                     n_demo++;
                 }
                 if (n_demo != ftData_UnkIntPairs[kind].count) {

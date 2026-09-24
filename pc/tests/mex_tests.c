@@ -5,6 +5,10 @@
 #include <melee/ft/forward.h>
 #include <melee/gm/forward.h>
 #include <melee/gm/gm_1A3F.h>
+#include <melee/ft/inlines.h>
+#include <melee/ft/types.h>
+#include <melee/pl/player.h>
+#include <sysdolphin/baselib/gobj.h>
 
 extern void TestRegister(const char *name, int (*fn)(void));
 extern void TestFail(const char *msg);
@@ -13,13 +17,16 @@ extern void TestFail(const char *msg);
 
 static int test_external_special_range(void) {
     /* ChKind_Max is the retail "none" sentinel and must keep its value (it is stored and compared
-     * everywhere); the m-ex character kinds follow it. Fighter kinds, retail + the m-ex slots, must
-     * stay below 64: the animation code compares fp->kind with a 6-bit field (x597_bits). */
+     * everywhere); the m-ex character kinds follow it. Kinds live in s8 fields (ftMapping_list,
+     * MatchEnd, PlayerInitData), so the largest m-ex CharacterKind (ChKind_Cap - 1) and
+     * Ft_Kind_None must stay <= 127. Kinds past 63 are handled by FT_ANIM_KIND_SELF. */
     if ((int)ChKind_Max != 0x21 || (int)ChKind_Mex0 != 0x22 || (int)Ft_Kind_Mex0 != 0x21 ||
-        (int)Ft_Kind_Max > 64)
+        (int)Ft_Kind_Max > 127 || (int)ChKind_Cap > 128 ||
+        (int)Ft_Kind_Max - (int)Ft_Kind_Mex0 != (int)ChKind_Cap - (int)ChKind_Mex0)
     {
         TestFail("kind layout: expected ChKind_Max 0x21, ChKind_Mex0 0x22, Ft_Kind_Mex0 0x21, "
-                 "Ft_Kind_Max <= 64");
+                 "Ft_Kind_Max <= 127, ChKind_Cap <= 128, as many m-ex FighterKinds as "
+                 "CharacterKinds");
         return 1;
     }
     if ((int)ChKind_Max - (int)CKind_Playable_Count != MEX_SPECIAL_COUNT) {
@@ -228,6 +235,101 @@ static int test_mex_predicate_register_and_clear(void) {
     return 0;
 }
 
+/* ---- Script API vs the player table (pc/gameworld/script_game.c) ----------------------------
+ * A scene change frees every fighter without running its destructor, and vanilla kept each slot's
+ * player_entity pointing at the freed gobj. The Lua script API polls every slot every frame
+ * (Script_FramePost), so leaving training for the CSS with a script loaded read freed memory
+ * (ACCESS_VIOLATION at 0x8B8B8B6E in ScriptGame_FighterI). Game globals are not in MEM1, so each
+ * test saves and restores what it touches by hand. */
+extern StaticPlayer player_slots[];
+extern int ScriptGame_FighterI(int slot, int field);
+extern float ScriptGame_FighterF(int slot, int field);
+extern void Player_ForgetEntities(void);
+
+#define T_SI_PRESENT 0
+#define T_SI_KIND 1
+#define T_SI_ACTION 3
+#define T_SF_X 0
+
+static HSD_GObj t_fighter_gobj;
+static Fighter t_fighter;
+static HSD_GObj* t_plinks[HSD_GOBJ_PLINK_MAX + 1];
+
+/* a slot pointing at a fighter gobj that is not in the live fighter list reads as "no fighter" */
+static int test_script_stale_fighter_reads_absent(void) {
+    static StaticPlayer saved;
+    int rc = 0;
+    saved = player_slots[5];
+    t_fighter_gobj.next = NULL;
+    t_fighter_gobj.user_data = (void*) 0x8B8B8B8B; /* what the freed scene's memory holds */
+    player_slots[5].transformed[0] = 0;
+    player_slots[5].player_entity[0] = &t_fighter_gobj;
+    if (ScriptGame_FighterI(5, T_SI_PRESENT) != 0 || ScriptGame_FighterI(5, T_SI_ACTION) != -1 ||
+        ScriptGame_FighterF(5, T_SF_X) != 0.0f)
+    {
+        TestFail("a slot whose fighter is not in the live fighter list must read as absent");
+        rc = 1;
+    }
+    player_slots[5] = saved;
+    return rc;
+}
+
+/* ...and the check does not hide a fighter that IS live */
+static int test_script_live_fighter_reads(void) {
+    static StaticPlayer saved;
+    HSD_GObj** saved_heads = HSD_GObjPLinkHead;
+    HSD_GObj* saved_first = NULL;
+    int rc = 0;
+    saved = player_slots[5];
+    if (HSD_GObjPLinkHead == NULL) {
+        HSD_GObjPLinkHead = t_plinks;
+    }
+    saved_first = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
+    t_fighter.kind = Ft_Kind_Falco;
+    t_fighter.cur_pos.x = 12.5f;
+    t_fighter_gobj.next = NULL;
+    t_fighter_gobj.user_data = &t_fighter;
+    HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER] = &t_fighter_gobj;
+    player_slots[5].transformed[0] = 0;
+    player_slots[5].player_entity[0] = &t_fighter_gobj;
+    if (ScriptGame_FighterI(5, T_SI_PRESENT) != 1 ||
+        ScriptGame_FighterI(5, T_SI_KIND) != Ft_Kind_Falco ||
+        ScriptGame_FighterF(5, T_SF_X) != 12.5f)
+    {
+        TestFail("a live fighter must still read through the script API");
+        rc = 1;
+    }
+    HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER] = saved_first;
+    HSD_GObjPLinkHead = saved_heads;
+    player_slots[5] = saved;
+    return rc;
+}
+
+/* the scene start (gm_801A4BD4) drops every slot's fighter pointers */
+static int test_scene_start_forgets_player_entities(void) {
+    static StaticPlayer saved[6];
+    int slot, i, rc = 0;
+    for (slot = 0; slot < 6; slot++) {
+        saved[slot] = player_slots[slot];
+        for (i = 0; i < PL_MAX_SUB_FIGHTERS; i++) {
+            player_slots[slot].player_entity[i] = &t_fighter_gobj;
+        }
+    }
+    Player_ForgetEntities();
+    for (slot = 0; slot < 6; slot++) {
+        for (i = 0; i < PL_MAX_SUB_FIGHTERS; i++) {
+            if (player_slots[slot].player_entity[i] != NULL) {
+                rc = 1;
+            }
+        }
+        player_slots[slot] = saved[slot];
+    }
+    if (rc) {
+        TestFail("Player_ForgetEntities left a fighter pointer in the player table");
+    }
+    return rc;
+}
+
 void MexTestRegisterAll(void) {
     TestRegister("gm_Is1PMode_1p_modes", test_1p_mode_classification);
     TestRegister("gm_Is1PMode_vs_modes", test_vs_mode_is_not_1p);
@@ -238,4 +340,7 @@ void MexTestRegisterAll(void) {
                  test_mex_onframe_hook_register_and_clear);
     TestRegister("mex_predicate_register_and_clear",
                  test_mex_predicate_register_and_clear);
+    TestRegister("script_stale_fighter_reads_absent", test_script_stale_fighter_reads_absent);
+    TestRegister("script_live_fighter_reads", test_script_live_fighter_reads);
+    TestRegister("scene_start_forgets_player_entities", test_scene_start_forgets_player_entities);
 }

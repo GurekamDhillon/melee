@@ -322,7 +322,7 @@ static const struct {
 };
 
 #define GN_MEX_KIND0 0x21 /* Ft_Kind_Mex0 */
-#define GN_KINDS 64
+#define GN_KINDS GW_MEX_KIND_MAX /* every FighterKind: retail + the m-ex slots (gw.h) */
 
 /* The Pl file a target names ("kirby" -> "PlKb.dat"; "PlSh.dat" stays). "" when unknown. */
 static void gn_target_file(const char *target, char *out, size_t cap) {
@@ -351,7 +351,7 @@ static int gn_kind_for_file(const char *pl) {
         snprintf(f, sizeof f, "Pl%s.dat", gn_vanilla[i].code);
         if (_stricmp(f, pl) == 0) return i;
     }
-    for (s = 0; s < 31; ++s) {
+    for (s = 0; s < GW_MEX_SLOT_COUNT; ++s) {
         int k = gw_Mex_SlotInternal(s);
         const char *f;
         if (k < 0) break;

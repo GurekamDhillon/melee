@@ -52,6 +52,8 @@ bool gmFrontend_TakeWarmed(void);
  * scene) in place of the native one, unless MELEE_NATIVE_CSS=1. `sss` 0 = CSS, 1 = SSS. */
 struct GameModeState;
 void gmFrontend_SelectScene(struct GameModeState* state, int sss);
+/* Training's CSS / SSS on the kit when Frontend_TrainingSelect() is on (gmfrontend.c). */
+void gmFrontend_TrainingSelect(struct GameModeState* state, int sss);
 
 #endif
 

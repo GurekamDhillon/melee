@@ -218,7 +218,17 @@ enum {
     GW_MEX_EVENT_COUNT
 };
 
-#define GW_MEX_KIND_MAX (0x21 + 31) /* Ft_Kind_Max (melee/ft/forward.h): retail + m-ex slots */
+/* The number of m-ex fighter slots: port FighterKinds Ft_Kind_Mex0 (0x21) .. 0x7E and
+ * CharacterKinds ChKind_Mex0 (0x22) .. 0x7F. Must equal FT_MEX_SLOT_COUNT in melee/ft/forward.h.
+ * Why 94: CharacterKinds and FighterKinds live in s8 fields all over the game (PlayerInitData,
+ * MatchEnd, ftMapping_list, the CSS), so both stay <= 127; m-ex has the same bound (FtKindDesc is
+ * s8: 128 internal ids = 27 retail + 95 added + 6 bosses). Fighter kinds past 63 no longer fit the
+ * 6-bit animation-kind field - ftdata.c / ftanim.c handle those (FT_ANIM_KIND_SELF). */
+#define GW_MEX_SLOT_COUNT 94
+/* CSS icons an m-ex disc may list (retail's 26 + one per added fighter, with room to spare);
+ * CSS_ICON_MAX in melee/mn/mncharsel.c must match. */
+#define GW_MEX_CSS_ICON_MAX 128
+#define GW_MEX_KIND_MAX (0x21 + GW_MEX_SLOT_COUNT) /* Ft_Kind_Max: retail + m-ex slots */
 
 /* Register/clear a per-(event, kind) override. fn == NULL clears the slot, so the vanilla entry
  * runs again. Last registration wins; m-ex does not chain. Returns 0 on a bad event/kind (int, not

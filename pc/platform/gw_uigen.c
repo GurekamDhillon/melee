@@ -150,6 +150,132 @@ void gw_UI_RasterI4Guest(int w, int h, const uint8_t *rgba_host, void *guest_dst
     gw_UI_RasterI4(w, h, rgba_host, guest_dst);
 }
 
+/* ---- text art ------------------------------------------------------------------------------
+ * gw_UI_TextI4: draw `text` (ASCII) into an I4 texture of w x h texels - the shape of the
+ * results screen's name strips (GmRst: 120x24 per-player names, 256x28 winner name, both I4,
+ * white on black, centred). For a fighter whose name the disc's art does not have. Windows GDI
+ * does the glyphs (the port is a Win32 program and links gdi32); the result goes through the same
+ * I4 tiler as everything else. `style` 0 = the per-player name (bold sans, like the disc's),
+ * 1 = the winner banner (bold serif, letter-spaced, a dim outline). A name too wide for the
+ * strip is squeezed horizontally, never clipped. `dst` holds gw_UI_I4Size(w, round8(h)) bytes:
+ * I4 tiles are 8 texels tall, so the rows past h are padding, as they are in the disc's own
+ * textures. Returns 1 when drawn, 0 on any failure (dst is then left all zero = blank). */
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+
+int gw_UI_TextI4(const char *text, int w, int h, int style, void *dst) {
+    int hp = (h + 7) & ~7, size = gw_UI_I4Size(w, (h + 7) & ~7);
+    HDC dc = NULL;
+    HBITMAP bmp = NULL, old_bmp = NULL;
+    HFONT font = NULL, old_font = NULL;
+    BITMAPINFO bi;
+    uint8_t *bits = NULL, *rgba = NULL;
+    SIZE ext;
+    int len, ok = 0, px, py, x, y, font_h, spacing;
+    if (text == NULL || dst == NULL || size == 0 || w > 1024 || h > 256) {
+        return 0;
+    }
+    memset(dst, 0, (size_t) size);
+    len = (int) strlen(text);
+    if (len == 0) {
+        return 0;
+    }
+    dc = CreateCompatibleDC(NULL);
+    memset(&bi, 0, sizeof bi);
+    bi.bmiHeader.biSize = sizeof bi.bmiHeader;
+    bi.bmiHeader.biWidth = w;
+    bi.bmiHeader.biHeight = -hp; /* top-down */
+    bi.bmiHeader.biPlanes = 1;
+    bi.bmiHeader.biBitCount = 32;
+    bi.bmiHeader.biCompression = BI_RGB;
+    bmp = dc != NULL ? CreateDIBSection(dc, &bi, DIB_RGB_COLORS, (void **) &bits, NULL, 0) : NULL;
+    rgba = (uint8_t *) calloc((size_t) w * (size_t) hp, 4u);
+    if (bmp == NULL || bits == NULL || rgba == NULL) {
+        goto done;
+    }
+    old_bmp = (HBITMAP) SelectObject(dc, bmp);
+    font_h = style == 1 ? h - 2 : h - 3;
+    spacing = style == 1 ? 3 : 0;
+    font = CreateFontA(-font_h, 0, 0, 0, style == 1 ? FW_BOLD : FW_HEAVY, FALSE, FALSE, FALSE,
+                       ANSI_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY,
+                       VARIABLE_PITCH, style == 1 ? "Times New Roman" : "Arial");
+    if (font == NULL) {
+        goto done;
+    }
+    old_font = (HFONT) SelectObject(dc, font);
+    SetTextCharacterExtra(dc, spacing);
+    GetTextExtentPoint32A(dc, text, len, &ext);
+    if (ext.cx > w - 4) {
+        /* Squeeze: the same height with narrower glyphs (lfWidth), less letter spacing first. */
+        TEXTMETRICA tm;
+        int avg;
+        spacing = 0;
+        SetTextCharacterExtra(dc, 0);
+        GetTextMetricsA(dc, &tm);
+        GetTextExtentPoint32A(dc, text, len, &ext);
+        avg = ext.cx > 0 ? (int) ((long) tm.tmAveCharWidth * (w - 4) / ext.cx) : tm.tmAveCharWidth;
+        SelectObject(dc, old_font);
+        DeleteObject(font);
+        font = CreateFontA(-font_h, avg > 1 ? avg : 1, 0, 0, style == 1 ? FW_BOLD : FW_HEAVY, FALSE,
+                           FALSE, FALSE, ANSI_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
+                           ANTIALIASED_QUALITY, VARIABLE_PITCH,
+                           style == 1 ? "Times New Roman" : "Arial");
+        if (font == NULL) {
+            old_font = NULL;
+            goto done;
+        }
+        old_font = (HFONT) SelectObject(dc, font);
+        GetTextExtentPoint32A(dc, text, len, &ext);
+    }
+    SetBkMode(dc, TRANSPARENT);
+    px = (w - ext.cx + spacing) / 2;
+    py = (h - ext.cy) / 2;
+    if (style == 1) {
+        /* the banner's outline: the text in grey at the eight one-texel offsets, then white */
+        static const int off[8][2] = { { -1, -1 }, { 0, -1 }, { 1, -1 }, { -1, 0 },
+                                       { 1, 0 },   { -1, 1 }, { 0, 1 },  { 1, 1 } };
+        int i;
+        SetTextColor(dc, RGB(110, 110, 110));
+        for (i = 0; i < 8; ++i) {
+            TextOutA(dc, px + off[i][0], py + off[i][1], text, len);
+        }
+    }
+    SetTextColor(dc, RGB(255, 255, 255));
+    TextOutA(dc, px, py, text, len);
+    GdiFlush();
+    for (y = 0; y < h; ++y) {
+        for (x = 0; x < w; ++x) {
+            const uint8_t *s = bits + ((size_t) y * (size_t) w + (size_t) x) * 4u; /* B,G,R,x */
+            uint8_t *d = rgba + ((size_t) y * (size_t) w + (size_t) x) * 4u;
+            uint8_t v = s[0] > s[1] ? s[0] : s[1];
+            v = v > s[2] ? v : s[2];
+            d[0] = d[1] = d[2] = v;
+            d[3] = 255;
+        }
+    }
+    gw_UI_RasterI4(w, hp, rgba, dst);
+    ok = 1;
+done:
+    if (old_font != NULL) {
+        SelectObject(dc, old_font);
+    }
+    if (font != NULL) {
+        DeleteObject(font);
+    }
+    if (old_bmp != NULL) {
+        SelectObject(dc, old_bmp);
+    }
+    if (bmp != NULL) {
+        DeleteObject(bmp);
+    }
+    if (dc != NULL) {
+        DeleteDC(dc);
+    }
+    free(rgba);
+    return ok;
+}
+
 /* The runtime UI-generation experiment flag. Game code cannot call getenv (no gw_getenv shim), so
  * gmGenUI_Active() in the game TU delegates here. */
 int gw_GenUI_Active(void) {
@@ -162,6 +288,28 @@ int gw_GenUI_Active(void) {
 int gw_Frontend_NativeSelect(void) {
     const char *v = getenv("MELEE_NATIVE_CSS");
     return v != NULL && v[0] != '\0' && strcmp(v, "0") != 0;
+}
+
+/* Training's character / stage select: 0 = the native screens (the default), 1 = the port's own
+ * kit screens (gmfrontend_select.inc) with Training's rules - one human, the CPU dummy
+ * (gmFrontend_TrainingSelect). MELEE_TRAINING_SELECT=kit turns it on at start; the scene
+ * grammar's select=kit|native, gd.training_select() and native code (a menu entry that opens
+ * Training on the kit, say) change it with gw_Frontend_SetTrainingSelect. It stays until changed. */
+static int gw_training_select = -1;
+
+int gw_Frontend_TrainingSelect(void) {
+    if (gw_training_select < 0) {
+        const char *v = getenv("MELEE_TRAINING_SELECT");
+        gw_training_select = v != NULL && strcmp(v, "kit") == 0;
+    }
+    return gw_training_select;
+}
+
+void gw_Frontend_SetTrainingSelect(int kit) {
+    if (gw_Frontend_TrainingSelect() != (kit != 0)) {
+        gw_log("frontend: Training's character/stage select -> %s", kit ? "kit" : "native");
+    }
+    gw_training_select = kit != 0;
 }
 
 /* ---- content enumeration ------------------------------------------------------------------ */
@@ -344,6 +492,39 @@ static int test_uigen_i4_golden(void) {
     return uigen_memcmp_report(out, kGoldI4, sizeof kGoldI4, "uigen_i4");
 }
 
+/* gw_UI_TextI4: a name draws ink inside the strip and nothing in the tile padding below it; an
+ * empty name draws nothing and says so. (Glyph shapes come from GDI, so no golden bytes.) */
+static int test_uigen_text_i4(void) {
+    static uint8_t buf[128 * 32 / 2];
+    int i, ink = 0, pad_ink = 0;
+    if (gw_UI_TextI4("", 120, 24, 0, buf) != 0) {
+        gw_test_fail("an empty name reported drawn");
+        return 1;
+    }
+    if (gw_UI_TextI4("BRAWL META KNIGHT", 120, 28, 1, buf) != 1) {
+        gw_test_fail("gw_UI_TextI4 failed");
+        return 1;
+    }
+    /* I4 tiles: 8x8 texels = 32 bytes; 120 wide = 15 tiles per tile row; rows 24..31 are tile
+     * row 3 (texel rows 28..31 of it are padding: bytes 16..31 of each tile). */
+    for (i = 0; i < 15 * 4 * 32; ++i) {
+        if (buf[i] != 0) {
+            ++ink;
+        }
+    }
+    for (i = 15 * 3 * 32; i < 15 * 4 * 32; ++i) {
+        if ((i % 32) >= 16 && buf[i] != 0) {
+            ++pad_ink;
+        }
+    }
+    if (ink < 100 || pad_ink != 0) {
+        gw_test_fail("name strip: %d inked bytes (want >= 100), %d in the padding (want 0)", ink,
+                     pad_ink);
+        return 1;
+    }
+    return 0;
+}
+
 /* Disc-dependent: the enumeration must agree with the m-ex runtime's own counts and every entry
  * must round-trip its index spaces. Skips cleanly with no ISO (or a retail disc). */
 static int test_uigen_enumeration(void) {
@@ -420,5 +601,6 @@ static int test_uigen_enumeration(void) {
 void gw_uigen_tests_register(void) {
     gw_test_register("uigen_rgba8_golden", test_uigen_rgba8_golden);
     gw_test_register("uigen_i4_golden", test_uigen_i4_golden);
+    gw_test_register("uigen_text_i4", test_uigen_text_i4);
     gw_test_register("uigen_enumeration", test_uigen_enumeration);
 }

@@ -292,6 +292,23 @@ int gw_DVDFileExists(const char *path) {
   }
 }
 
+/* Where a path is served from: 1 when a mounted mod provides it (gw_DVDFileFromMod), or when the
+ * disc image itself has it, whatever the mods do (gw_DVDFileOnDisc). Presence checks only - no
+ * load is counted. The results screen asks both to tell whether the disc's name art can belong
+ * to a fighter a mod added (gw_Mex_ResultArtIsOwn). */
+int gw_DVDFileFromMod(const char *path) {
+  if (path == NULL || !gw_iso_open() || gw_fst_nodes == 0) return 0;
+  gw_mods_load();
+  return gw_mod_by_path(path) != NULL;
+}
+
+int gw_DVDFileOnDisc(const char *path) {
+  int e;
+  if (path == NULL || !gw_iso_open() || gw_fst_nodes == 0) return 0;
+  e = gw_iso_lookup(path);
+  return e >= 0 && gw_fst_kind((uint32_t)e) == 0;
+}
+
 /* Read `length` bytes at `offset` of mod file `m` into `dst`. Returns bytes read. */
 static uint32_t gw_mod_read(const gw_mod_file *m, void *dst, uint32_t offset, uint32_t length) {
   FILE *f = fopen(m->host, "rb");

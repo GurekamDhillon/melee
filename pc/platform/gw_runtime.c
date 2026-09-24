@@ -1650,7 +1650,7 @@ static int gw_sl_all_digits(const char *s) {
  * he is FighterKind 37 and CharacterKind 38, and both statements are true. */
 int gw_SceneLaunch_FKindToCKind(int fk) {
   int i;
-  if (fk >= GW_SL_FK_MEX0 && fk < GW_SL_FK_MEX0 + 31) {
+  if (fk >= GW_SL_FK_MEX0 && fk < GW_SL_FK_MEX0 + GW_MEX_SLOT_COUNT) {
     return GW_SL_CK_MEX0 + (fk - GW_SL_FK_MEX0);
   }
   for (i = 0; i < GW_SL_CK_NONE; ++i) {
@@ -1661,7 +1661,7 @@ int gw_SceneLaunch_FKindToCKind(int fk) {
 }
 
 int gw_SceneLaunch_CKindToFKind(int ck) {
-  if (ck >= GW_SL_CK_MEX0 && ck < GW_SL_CK_MEX0 + 31) {
+  if (ck >= GW_SL_CK_MEX0 && ck < GW_SL_CK_MEX0 + GW_MEX_SLOT_COUNT) {
     return GW_SL_FK_MEX0 + (ck - GW_SL_CK_MEX0);
   }
   return (ck >= 0 && ck < GW_SL_CK_NONE) ? gw_sl_ck_to_fk[ck] : -1;
@@ -1902,6 +1902,19 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
       }
     }
     return -1;
+  }
+  if (tt_ieq(key, "select")) {
+    /* Training's character / stage select: the kit's screens or the native ones (gw_uigen.c).
+       Applied as the config is read, and it stays for later Training launches. */
+    extern void gw_Frontend_SetTrainingSelect(int kit);
+    if (tt_ieq(val, "kit")) {
+      gw_Frontend_SetTrainingSelect(1);
+    } else if (tt_ieq(val, "native")) {
+      gw_Frontend_SetTrainingSelect(0);
+    } else {
+      return -1;
+    }
+    return 0;
   }
   if (tt_ieq(key, "at") || tt_ieq(key, "screen")) {
     if (tt_ieq(val, "css") || tt_ieq(val, "chars")) {
@@ -2620,6 +2633,26 @@ static int test_scene_parse_file_form(void) {
   return 0;
 }
 
+/* select=kit|native routes Training's character / stage select (gw_uigen.c) as the config is read */
+static int test_scene_select_kit(void) {
+  extern int gw_Frontend_TrainingSelect(void);
+  extern void gw_Frontend_SetTrainingSelect(int kit);
+  int before = gw_Frontend_TrainingSelect(), rc = 0;
+  gw_SceneLaunch_LoadForTest("mode=training;at=css;select=kit");
+  if (!gw_Frontend_TrainingSelect()) {
+    gw_test_fail("select=kit did not route Training to the kit's select");
+    rc = 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=training;select=native");
+  if (gw_Frontend_TrainingSelect()) {
+    gw_test_fail("select=native did not route Training back to the native select");
+    rc = 1;
+  }
+  gw_SceneLaunch_LoadForTest(NULL);
+  gw_Frontend_SetTrainingSelect(before);
+  return rc;
+}
+
 /* ---- .gxtex: host-side GX textures for custom menus ---------------------------------------
  *
  * Melee's own art arrives inside HSD archives on the disc. Anything the port adds cannot, so
@@ -3072,4 +3105,5 @@ void gw_scene_tests_register(void) {
   gw_test_register("scene_parse_stage", test_scene_parse_stage);
   gw_test_register("scene_memcard_default", test_scene_memcard_default);
   gw_test_register("scene_parse_file_form", test_scene_parse_file_form);
+  gw_test_register("scene_select_kit", test_scene_select_kit);
 }

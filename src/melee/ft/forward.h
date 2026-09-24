@@ -89,6 +89,16 @@ typedef void (*FtCmd)(Fighter_GObj*, CommandInfo*);
 typedef void (*FtCmd2)(Fighter_GObj*, CommandInfo*, int);
 typedef bool (*ftDevice_Callback0)(Ground_GObj*, Fighter_GObj*, Vec3*);
 
+#if defined(TARGET_PC)
+/* The number of m-ex fighter slots (pc/platform/gw.h GW_MEX_SLOT_COUNT - keep them equal). */
+#define FT_MEX_SLOT_COUNT 94
+/* The value the port writes into an m-ex fighter's animation-kind bits (Fighter::x597_bits, 6
+ * bits) when its FighterKind is 64 or more and does not fit: "authored for the fighter playing
+ * it". Sandbag's own kind, because only Sandbag ever plays an animation authored for Sandbag, so
+ * for every other fighter the value was free - see ftAnim_AuthorKind (ftanim.c). */
+#define FT_ANIM_KIND_SELF 0x20
+#endif
+
 typedef enum FighterKind {
     /* 00 */ Ft_Kind_Mario,
     /* 01 */ Ft_Kind_Fox,
@@ -126,10 +136,12 @@ typedef enum FighterKind {
 #if defined(TARGET_PC)
     /* m-ex fighters: kind Ft_Kind_Mex0 + i is the i-th m-ex fighter the disc's MxDt.dat defines
      * after the retail cast (Mex_SlotInternal maps it to m-ex's INTERNAL id). Rows are filled at
-     * startup from MxDt.dat (ftData_MexInitKinds); an unused slot stays empty. 31 slots: ACE has
-     * exactly 31 m-ex fighters, and a kind must stay below 64 (the 6-bit x597_bits field). */
+     * startup from MxDt.dat (ftData_MexInitKinds); an unused slot stays empty. FT_MEX_SLOT_COUNT
+     * slots (0x21..0x7E): kinds live in s8 fields (ftMapping_list, MatchEnd, the CSS), so
+     * Ft_Kind_None must stay <= 127 - m-ex's own bound (s8 FtKindDesc) is the same. Kinds past 63
+     * do not fit the 6-bit animation-kind field (x597_bits); FT_ANIM_KIND_SELF covers them. */
     /* 21 */ Ft_Kind_Mex0,
-    Ft_Kind_None = Ft_Kind_Mex0 + 31, /* 0x40: kinds must stay below 64 (6-bit x597_bits) */
+    Ft_Kind_None = Ft_Kind_Mex0 + FT_MEX_SLOT_COUNT, /* 0x7F */
 #else
     /* 21 */ Ft_Kind_None,
 #endif
@@ -194,7 +206,7 @@ typedef enum CharacterKind {
      * stored), so it keeps its value; slot i matches Ft_Kind_Mex0 + i. ChKind_Cap sizes the
      * tables they index. */
     /* 22 */ ChKind_Mex0,
-    ChKind_Cap = ChKind_Mex0 + 31,
+    ChKind_Cap = ChKind_Mex0 + FT_MEX_SLOT_COUNT, /* 0x80: m-ex CharacterKinds 0x22..0x7F */
 #endif
 } CharacterKind;
 

@@ -255,19 +255,36 @@ pad.buttons = 0x0400 frame() pad.buttons = 0 run(2) pad.buttons = 0x0020 frame()
 -- 8. D3: DI in on a hit launching up-right (the preview stub: vx = vy = 1), with 2 SDI flicks away
 set(1, "Wait") set(2, "Wait") run(2)
 lab("dummy port 2") lab("dummy on true") lab("dummy di in") lab("dummy sdi_n 2") lab("dummy sdi_dir up")
-set(2, "DamageN1", { in_hitlag = true, in_hitstun = true })
+set(2, "DamageN1", { in_hitlag = true, in_hitstun = true, hitlag = 10 })
 env.on_hit(1, 2, { dealt = 9, damage = 9, angle = 45, kbg = 100, bkb = 10, wbk = 0 })
 frame()
 local seen = {}
-for _ = 1, 5 do seen[#seen + 1] = inputs[2] frame() end
+for _ = 1, 8 do seen[#seen + 1] = inputs[2] P[2].hitlag = P[2].hitlag - 1 frame() end
 expect(seen[1] and seen[1].y == 80 and seen[1].x == 0, "SDI flick 1 up")
 expect(seen[2] and (seen[2].x or 0) == 0 and (seen[2].y or 0) == 0, "SDI back to neutral")
 expect(seen[3] and seen[3].y == 80, "SDI flick 2")
-expect(seen[5] and seen[5].x == -57 and seen[5].y == 57, "DI in: the perpendicular toward the attacker (" ..
-  tostring(seen[5] and seen[5].x) .. ", " .. tostring(seen[5] and seen[5].y) .. ")")
+expect(seen[4] and seen[4].x == -25 and seen[4].y == 25, "clean DI step 1: each axis just past the 0.25 line (" ..
+  tostring(seen[4] and seen[4].x) .. ", " .. tostring(seen[4] and seen[4].y) .. ")")
+expect(seen[6] and seen[6].x == -25 and seen[7] and seen[7].x == -57 and seen[7].y == 57,
+  "clean DI step 2 after the SDI window: the full perpendicular toward the attacker (" ..
+  tostring(seen[7] and seen[7].x) .. ", " .. tostring(seen[7] and seen[7].y) .. ")")
 P[2].in_hitlag = false
 run(3)
 lab("dummy sdi_n 0")
+-- a reload replaying the same frame with another DI must not reuse the old one (it was cached by frame)
+set(2, "DamageN1", { in_hitlag = true, in_hitstun = true, hitlag = 10 })
+local f_hit = now + 1
+frame(function() env.on_hit(1, 2, { dealt = 9, damage = 9, angle = 45, kbg = 100, bkb = 10, wbk = 0 }) end)
+now = f_hit - 1
+env.on_loadstate(4)
+lab("dummy di out")
+frame(function() env.on_hit(1, 2, { dealt = 9, damage = 9, angle = 45, kbg = 100, bkb = 10, wbk = 0 }) end)
+for _ = 1, 4 do P[2].hitlag = P[2].hitlag - 1 frame() end
+expect(inputs[2] and inputs[2] ~= "released" and inputs[2].x == 57 and inputs[2].y == -57,
+  "after a reload the same frame's hit takes the new DI (out: " .. tostring(inputs[2] and inputs[2].x) .. ")")
+P[2].in_hitlag, P[2].hitlag = false, 0
+lab("dummy di in")
+run(3)
 -- the tech: falling in tumble at 2 units a frame, the floor at 0: the press comes 5 frames out
 lab("dummy tech away")
 set(2, "DamageFall", { airborne = true, in_hitstun = false, vy = -2, y = 30 })
@@ -279,8 +296,8 @@ for _ = 1, 20 do
   if inputs[2] and inputs[2] ~= "released" and ((inputs[2].buttons or 0) & 0x20) ~= 0 then pressed_at = pressed_at or P[2].y end
 end
 expect(pressed_at ~= nil and pressed_at <= 10 and pressed_at > 0, "tech press ~5 frames before the floor (y " .. tostring(pressed_at) .. ")")
-expect(inputs[2] and inputs[2] ~= "released" and inputs[2].x >= 56 and inputs[2].x <= 63,
-  "tech away: the stick held away, past the roll line, under the smash line (" .. tostring(inputs[2] and inputs[2].x) .. ")")
+expect(inputs[2] and inputs[2] ~= "released" and inputs[2].x == 80,
+  "tech away: the full stick away, after its first step (" .. tostring(inputs[2] and inputs[2].x) .. ")")
 set(2, "Passive", { airborne = false, vy = 0, y = 0 }) run(20) set(2, "Wait") run(3)
 -- the ledge: jump off it after a 3-frame reaction
 lab("dummy ledge jump") lab("dummy delay_min 3") lab("dummy delay_max 3")
@@ -340,13 +357,18 @@ set(2, "Wait") run(40)
 -- throw > uair: the throw is a hit when P2 is let go; a hit on P2 lying in DownWait is escapable
 lab("combo")
 set(2, "Wait") run(40)
+set(1, "Catch") set(2, "CapturePulledHi") P[2].percent = 8 run(4)
+set(2, "CaptureWaitHi") run(4)
 set(1, "ThrowHi") set(2, "ThrownHi") P[2].percent = 10 run(8)
-P[2].percent = 17 set(2, "DamageFlyHi", { in_hitstun = true }) set(1, "Wait") frame()
+-- let go at 12%; the rest of the throw lands a frame later (17%): the throw is 17 - 8 = 9% from the grab
+P[2].percent = 12 set(2, "DamageFlyHi", { in_hitstun = true }) set(1, "Wait") frame()
+P[2].percent = 17 frame()
 run(10)
 frame(function() env.on_hit(1, 2, { dealt = 13 }) end)
 out = lab("combo")
 print(out)
-expect(out:find("1 f%d+ ThrowHi 7.0%% opener") ~= nil and out:find("2 f%d+ %S+ 13.0%% TRUE") ~= nil, "combo: upthrow (7%) > the next hit, true")
+expect(out:find("1 f%d+ ThrowHi 9.0%% opener") ~= nil and out:find("2 f%d+ %S+ 13.0%% TRUE") ~= nil,
+  "combo: grab > upthrow counted whole (9%, landing after the let-go too) > the next hit, true")
 P[2].in_hitstun = false set(2, "DownWaitU") run(5)
 frame(function() env.on_hit(1, 2, { dealt = 3 }) end)
 out = lab("combo")

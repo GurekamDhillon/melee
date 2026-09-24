@@ -878,8 +878,11 @@ both:
   frame-1 hitbox, like shine's, is already out then. The first fix counted from the frame after,
   which read a frame low (ftilt 4 / 4-7 / 25) on ACE;
 - **startup / active** are the frames the move has a hitbox;
-- **IASA** is the first frame of the state with the interrupt flag. There is none when it only
-  comes at or after the end (Fox ftilt);
+- **IASA** is the first frame where the interrupt flag **turns on** inside the state. It is none when
+  it only comes at or after the end (Fox ftilt). The flag can come into a state already set from the
+  one before; the Lab's own entry does not clear it, and on ACE every export row read IASA 1. So a
+  flag that is on from frame 1 and never off is not an IASA, and the export falls back to the
+  script's, bounded by the total;
 - **total** is the frames the state lasts when nothing ends it early. A run cut short in its IASA
   window, or by a landing, gives no total, and the fighter's last full run's total stays.
 
@@ -977,10 +980,10 @@ the game.
 | Record from a state | Starting a recording saves quick slot 2, and each playback of that slot loads it first, so it loops from the same spot. |
 | Playback (`P` in TRAINING) | Off, in order, or random by each slot's weight (`lab dummy w_slot 1,1,0,2`). |
 | DI | Knockback DI on every hit: none / in / out / survival / a fixed angle / random (`w_di`). The launch comes from the knockback preview of the hit's own numbers, and the stick is set with the preview's own DI rule (`gs_apply_di`): "in" is the perpendicular back toward the attacker's side, "survival" the one that ends nearer 45 / 135 degrees. It is held through hitlag. Stage E's real-hit check (`lab kb`, LAUNCH's K) now predicts with this stick (`LE.di_for`), not with no DI. |
-| Clean DI (on) | On ACE, a DI flick from neutral also took an SDI: an axis crossing the smash line (PlCo `x8`) during hitlag restarts its timer, and `ftCo_Damage_OnEveryHitlag` takes an SDI inside `sdi_window`. That moved "in" up to 28 units. Clean DI scales the stick so each axis stays one unit under the line (63 of 80), so there is no SDI. Diagonals keep full DI; near an axis the turn is about 0.79² of full. The control stick still gives ASDI at hitlag's end when the C-stick is neutral: that is Melee, and the ASDI setting overrides it with the C-stick. Off = a full flick. |
+| Clean DI (on) | SDI (`ftCo_Damage_OnEveryHitlag`) needs the stick past `sdi_min` **and** an axis that crossed the stick line (PlCo `x8`, **0.25** on ACE) fewer than `sdi_window` frames ago: a fast flick. A DI flick from neutral during hitlag is exactly that, and on ACE it moved "in" up to 28 units. Clean DI moves in two steps. First, each axis the DI uses goes just past the line (25 of 80), so the stick is far under `sdi_min` and there is no SDI. Then, after `sdi_window` + 1 frames, it goes to the full DI; no axis crosses the line again, so again no SDI. The last hitlag frame always has the full stick. The first fix instead capped the stick under the line, which on ACE's 0.25 was ±19: no DI at all, and no tech rolls. The control stick still gives ASDI at hitlag's end when the C-stick is neutral; that is Melee, and the ASDI setting overrides it with the C-stick. So `lab kb`'s flight is off by the ASDI nudge. Off = a full flick (DI plus one SDI). |
 | ASDI | The C-stick held through hitlag: away / toward / up / down. |
 | SDI | N flicks (one every 2 frames: in, then neutral) at the start of hitlag, in one direction. |
-| Tech | In tumble (`DamageFly*` / `DamageFall`) it presses R when `gd.floor_below` says the floor is 5 frames away (the game takes a press in the 20 frames before contact, `ftCo_800986B0`, with a 40-frame lockout). The stick picks in place / away / toward (`ftCo_80098928` reads it at the landing). Other options are miss and random (`w_tech`). The press is tumble-only: tumble's interrupts have no airdodge (`ftCo_DamageFall_IASA`), but an air damage state out of hitstun would airdodge. **The roll's stick:** on ACE a full ±80 dropped tumble to Fall before the landing (the "wiggle": x past `tumble_wiggle`, smashed within `tumble_window`, or UCF 0.84's raw jump of 75+ in two frames), so away / toward landed normally on BF's platforms. The stick now eases in at 24 a frame, starting as the fall starts, to just past `tech_roll_stick` and under the smash line. There is no smash and no wiggle, and it still rolls. |
+| Tech | In tumble (`DamageFly*` / `DamageFall`) it presses R when `gd.floor_below` says the floor is 5 frames away (the game takes a press in the 20 frames before contact, `ftCo_800986B0`, with a 40-frame lockout). The stick picks in place / away / toward (`ftCo_80098928` reads it at the landing). Other options are miss and random (`w_tech`). The press is tumble-only: tumble's interrupts have no airdodge (`ftCo_DamageFall_IASA`), but an air damage state out of hitstun would airdodge. **The roll's stick:** on ACE a full ±80 dropped tumble to Fall before the landing (the "wiggle": x past `tumble_wiggle`, smashed within `tumble_window`, or UCF 0.84's raw jump of 75+ in two frames), so away / toward landed normally on BF's platforms. As the fall starts, x now goes just past the stick line for `tumble_window` + 1 frames, then to full. There is no fresh crossing and the raw jump is about 50, so there is no wiggle, and the roll gets the full stick. (A first fix kept x under the "smash line", which is 0.25 on ACE, so it never rolled.) **Where it lands:** the floor is looked for under where the drift will have taken it by then. On ACE at 45% a fighter drifting off a platform's edge pressed for the platform and missed the ground. |
 | Getup | From DownWait: stand / attack / roll away / roll toward / random (`w_getup`). |
 | Ledge | From CliffWait: getup (toward x = 0) / roll / attack / jump / drop / ledgedash / random (`w_ledge`). The ledgedash is a fixed script (drop back, jump, 2 frames, airdodge down-in), so its timing is approximate and varies by fighter. |
 | After hitstun / shieldstun / landing | What it does on the first actionable frame (the same reading as frame advantage), the frame GuardSetOff becomes Guard, or when a landing's lag ends. The options are shield, spotdodge, roll away / toward, jump, attack, nair (jump then A), grab, or a recorded slot. |
@@ -1031,10 +1034,12 @@ COMBO mode (`0`).
   out / survival from the knockback preview, with the angle and hitstun, drawn to the end of
   hitstun.
 - **Throws count.** A throw has no hit event, so on ACE upthrow > uair started at the uair and was
-  dropped as a one-hit combo. Now a fighter leaving a `Thrown*` state is the thrower's hit (the
-  thrower is whoever is in `Throw*`), with the percent the throw dealt, named for the throw. A hit
-  event from the same thrower during the throw is folded into it. Pummels in `Capture*` are
-  ordinary hits.
+  dropped as a one-hit combo. Now **the grab and the throw are one hit** by the grabber (the fighter
+  in `Catch*` / `Throw*`), named for the throw. Its damage is the victim's percent 2 frames after
+  the let-go (leaving `Thrown*`), minus the percent at the grab (`Capture*`). The first version read
+  the percent at the let-go itself and showed 2.0% of an upthrow's 7.5%, because part of the throw
+  lands after it. The grabber's own hit events in that time are folded in, and a grab that ends
+  without a throw (an escape) is no hit.
 - **Lying down is able to act.** `DownWaitU` / `DownWaitD` (a missed tech, getup open) are free
   states now, for the combo reading and frame advantage alike. On ACE a hit on a downed P2 read
   TRUE; it is now escapable by the frames P2 lay there. `DownBound` (the bounce) still is not.
@@ -1094,10 +1099,15 @@ The last two exist only as data, on the `tech:` rule.
 the mouse existed. The public mouse returns four numbers (x, y, buttons, wheel), so every tick with
 the menu open raised an error, and after 20 the Lab turned itself off. It now reads the four
 numbers: a click is the left button's press edge (x, y are -1000 off the picture), and the wheel
-moves the selection. The menu's detail text is word-wrapped once per text, not every frame, after one
-menu draw ran past the 50 ms script budget on ACE.
+moves the selection.
 
-**Checks off the game:** `pc/geno/tools/lab_stage_d_check.lua` covers D1-D5 in 37 checks (32 at first):
+**The draw budget.** Twice on ACE a draw ran past the 50 ms script budget: once in the pause menu,
+once at startup in `draw_strip`. Both were a first draw, where the Lab's textures load from disk. They
+are now drawn off-screen a few at a time before the Lab UI first appears, at most 12 ms a frame. The
+menu's detail text is also word-wrapped once per text, not every frame.
+
+**Checks off the game:** `pc/geno/tools/lab_stage_d_check.lua` covers D1-D5 in 39 checks (32 at first).
+Each fix from an ACE run added a check that fails on the build it fixes:
 - D1, as in 14.12;
 - D3:
   - SDI flicks, then DI "in" as the right perpendicular;

@@ -2128,6 +2128,36 @@ static int l_lab_request(lua_State *L) {
     return 1;
 }
 
+/* LAB, the Lab's own game mode (pc/geno/geno_lab_mode.c) */
+extern int gw_GenoLab_ModeActive(void);
+extern int gw_GenoLab_Leave(int where);
+
+/* gd.lab_mode() -> true while LAB is the running game mode (its match, its select screens) */
+static int l_lab_mode(lua_State *L) {
+    lua_pushboolean(L, gw_GenoLab_ModeActive() != 0);
+    return 1;
+}
+
+/* gd.lab_leave("css" | "sss" | "menu") -> true when a LAB match was ended (a no contest): back to
+   LAB's character select, its stage select, or the menus. Offline only (the match's own end). */
+static int l_lab_leave(lua_State *L) {
+    const char *to = luaL_optstring(L, 1, "css");
+    int where;
+    gs_require_gameplay(L, "lab_leave");
+    if (strcmp(to, "css") == 0) {
+        where = 0;
+    } else if (strcmp(to, "sss") == 0) {
+        where = 1;
+    } else if (strcmp(to, "menu") == 0) {
+        where = 2;
+    } else {
+        return luaL_error(L, "gd.lab_leave: \"css\", \"sss\" or \"menu\" (got \"%s\")", to);
+    }
+    gs.paused = 0; /* the match has to run a frame to end */
+    lua_pushboolean(L, gw_GenoLab_Leave(where) != 0);
+    return 1;
+}
+
 static int gs_ring_find(int tag);
 static int gs_ring_now(void);
 static int gs_snap_ensure(int slots);
@@ -2613,7 +2643,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs}, {"project", l_project}, {"attrs", l_attrs},
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
-    {"lab_request", l_lab_request},
+    {"lab_request", l_lab_request}, {"lab_mode", l_lab_mode}, {"lab_leave", l_lab_leave},
     {"training_select", l_training_select},
     {NULL, NULL}};
 
@@ -3409,6 +3439,15 @@ void gw_Script_Tick(void) {
     gs.cam_stamp++;
     gs_update_want_events();
     gw_Kit_BeginFrame();
+    if (gs.paused && !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+        /* Paused: no logic frame reads the pads, so gd.pad would stay stale and a script's menu
+           (the Geno Lab's LAB pause menu) could not be driven by a controller. Sample them here,
+           as PADRead would (scripted overrides included); the game never sees this read. */
+        extern int gw_PADRead(void *status);
+        unsigned char st[4 * 32]; /* PADStatus[4], 16 bytes each */
+        memset(st, 0, sizeof st);
+        (void) gw_PADRead(st);
+    }
     gs_hook_all("on_tick", 0, 0, 0);
     /* Paused: no logic frame will run this tick, so there is no frame boundary for a pending
        savestate / loadstate / step-back to wait for. This point is between frames too (the loop

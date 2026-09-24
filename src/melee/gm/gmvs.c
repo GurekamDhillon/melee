@@ -1328,6 +1328,28 @@ static inline void fn_8016CF4C_dontinline(int slot, MatchOutcome matchResult)
     fn_8016CF4C(slot, matchResult);
 }
 
+#if defined(TARGET_PC)
+/* Geno LAB (pc/geno/geno_lab_mode.c): end the running VS match from outside the pause menu, the
+ * way the pause menu's no contest does (fn_8016CF4C), at the start of the next VS frame. */
+static int gmVs_pending_end = OUTCOME_NONE;
+
+void gmVs_EndMatch(int outcome)
+{
+    gmVs_pending_end = outcome;
+}
+
+static bool gmVs_TakePendingEnd(void)
+{
+    int outcome = gmVs_pending_end;
+    if (outcome == OUTCOME_NONE) {
+        return false;
+    }
+    gmVs_pending_end = OUTCOME_NONE;
+    fn_8016CF4C(0, (MatchOutcome) outcome);
+    return true;
+}
+#endif
+
 static inline void fn_8016CFE0_inline(void)
 {
     int i;
@@ -1360,6 +1382,11 @@ void fn_8016CFE0(void)
     int unpauser_slot;
     PAD_STACK(0x10);
 
+#if defined(TARGET_PC)
+    if (gmVs_TakePendingEnd()) {
+        return;
+    }
+#endif
     fn_8016CFE0_inline();
 
     fn_8016A4C8();

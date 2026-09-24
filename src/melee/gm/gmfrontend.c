@@ -36,6 +36,8 @@
 #include <sysdolphin/baselib/sislib.h>
 #include <sysdolphin/baselib/state.h>
 
+#include "../../../pc/geno/geno_lab_mode.h" /* GM_LAB: SOLO > LAB (Geno, private) */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -603,6 +605,11 @@ static SSSData* fe_sel_sss;
 static bool fe_sel_training;
 static void* fe_train_css; ///< Training's CSS state data, registered by gmFrontend_TrainingSelect
 static void* fe_train_sss;
+/* A mode that asked for the kit's select with its own name (gmFrontend_ModeSelect): the SOLO
+ * section and "SOLO / <name>" breadcrumbs instead of VERSUS / MELEE. Set for the next VS-data
+ * select scene only; NULL = plain VS. */
+static const char* fe_sel_mode_pending;
+static const char* fe_sel_mode;
 /* The same screen after the online lobby's countdown, inside the lobby's own scene. */
 static const FrontendScreen fe_screen_online_load = { "GET READY", "LOADING", NULL, 0, 4 };
 
@@ -757,6 +764,20 @@ void gmFrontend_TrainingSelect(struct GameModeState* state, int sss)
     } else {
         fe_train_css = gm_GetGameModeStateEnterData(state);
     }
+    state->info.scene_kind = GS_FRONTEND;
+}
+
+/* A VS-machinery mode that wants the kit's select whatever MELEE_NATIVE_CSS says, under its own
+ * name in the SOLO section (Geno's LAB). Called from the state's on_enter, after the mode filled
+ * gmVsMelee_CssData / SssData as VS does. The selection rules stay VS mode's: any fighters on any
+ * ports, humans and CPUs. */
+void gmFrontend_ModeSelect(struct GameModeState* state, int sss, const char* name)
+{
+    (void) sss;
+    if (state == NULL) {
+        return;
+    }
+    fe_sel_mode_pending = name;
     state->info.scene_kind = GS_FRONTEND;
 }
 
@@ -1560,6 +1581,8 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         fe_sel_css = &gmVsMelee_CssData;
         fe_sel_sss = &gmVsMelee_SssData;
         fe_sel_training = false;
+        fe_sel_mode = fe_sel_mode_pending; /* a named mode's select, once */
+        fe_sel_mode_pending = NULL;
     } else if (enter_data != NULL && (enter_data == fe_train_css || enter_data == fe_train_sss)) {
         /* Training's CSS / SSS state, routed here by gmFrontend_TrainingSelect: the same
            screens, filling Training's own data, so its exit handlers keep its rules */

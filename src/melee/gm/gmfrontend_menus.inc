@@ -87,8 +87,8 @@ static const FeMenuItem fm_1p[] = {
       FA_SUB, MENU_KIND_STADIUM },
     { "TRAINING", "Practice against a dummy, any stage, any speed.", "ico_training",
       SEL_1P_TRAINING, FA_MODE, GM_TRAINING },
-    { "LAB", "Training with the Geno Lab: frame-step, hitboxes, timelines.", "ico_training",
-      SEL_1P_LAB, FA_MODE, GM_TRAINING },
+    { "LAB", "The Geno Lab: any fighters, no timer, frame-step, hitboxes, timelines.", "ico_lab",
+      SEL_1P_LAB, FA_MODE, GM_LAB },
 };
 
 static const FeMenuItem fm_reg[] = {
@@ -292,6 +292,7 @@ static void fm_position_for(u8 previous_mode, u8* kind, u8* sel)
         { GM_TOY_LOTTERY, MENU_KIND_TOY, SEL_TOY_LOTTERY },
         { GM_TOY_COLLECTION, MENU_KIND_TOY, SEL_TOY_COLLECTION },
         { GM_MENU, MENU_KIND_SETTINGS, SEL_SETTINGS_LANG },
+        { GM_LAB, MENU_KIND_1P, SEL_1P_LAB },
     };
     int i;
     GameRules* rules = gmMainLib_GetGameRules();

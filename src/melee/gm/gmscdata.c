@@ -29,6 +29,9 @@
 #include "gmsinglebutton.h"
 #include "gmslomo.h"
 #include "gmfrontend.h"
+#if defined(TARGET_PC)
+#include "../../../pc/geno/geno_lab_mode.h" /* GM_LAB (Geno, private) */
+#endif
 #include "gmstaffroll.h"
 #include "gmstamina.h"
 #include "gmsupersudden.h"
@@ -760,6 +763,15 @@ static GameMode modes[] = {
         NULL,
         NULL,
         gm_Mode_Frontend_States,
+    },
+    {
+        /* Geno's LAB (pc/geno/geno_lab_mode.c): its own mode past the retail terminator */
+        false,
+        GM_LAB,
+        gm_Mode_Lab_OnLoad,
+        NULL,
+        gm_Mode_Lab_OnInit,
+        gm_Mode_Lab_States,
     },
 #endif
     {

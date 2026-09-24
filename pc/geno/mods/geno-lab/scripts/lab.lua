@@ -246,7 +246,199 @@ local function compare()
   say(string.format("lock-step: %d fighters in %s, frame %d", n, gd.motion_name(motion, focus), frame))
 end
 
+-- ---- LAB mode: the kit-styled pause menu (START in a LAB match; LAB only) ---------------------
+-- LAB (SOLO > LAB, MELEE_SCENE mode=lab) turns Melee's own pause off; START on any controller
+-- opens this menu instead. Drawn with gd.kit and the Lab art (ui/): glass panel, cyan accent,
+-- the kit's gold for the selected row. The game is frozen while it is open (gd.pause).
+local RESET_SLOT = 4        -- the state taken at the LAB match's first frame ("reset positions")
+local LAB_ACCENT, LAB_GLASS = 0x38C9D9FF, 0x111122DB
+local menu = { open = false, sel = 1, page = "main", port = 1, was_paused = false,
+  prev = {}, rep = 0, reset_saved = false }
+
+local OVERLAYS = {
+  { key = "hit", label = "Hit / hurtboxes", icon = "lab_hitbox" },
+  { key = "model", label = "Model", icon = "lab_model" },
+  { key = "skel", label = "Skeleton", icon = "lab_skeleton" },
+  { key = "joints", label = "Joint numbers", icon = "lab_joints" },
+  { key = "ecb", label = "ECB", icon = "lab_ecb" },
+  { key = "stage", label = "Stage collision", icon = "lab_stage" },
+  { key = "info", label = "Info panel", icon = "lab_info" },
+  { key = "timeline", label = "Move timeline", icon = "lab_timeline" },
+  { key = "labels", label = "Hitbox labels", icon = "lab_hitlabels" },
+  { key = "log", label = "Event log", icon = "lab_log" },
+  { key = "attrs", label = "Attributes", icon = "lab_attrs" },
+}
+
+local function in_lab_match()
+  return gd.lab_mode ~= nil and gd.lab_mode() and gd.match().active and offline()
+end
+
+local function menu_close()
+  menu.open = false
+  if not menu.was_paused then gd.resume() end
+  -- the buttons that closed the menu must not reach the fighters on the next frames
+  for port = 1, 4 do pcall(gd.input, port, 0, 10) end
+end
+
+local function menu_leave(where)
+  menu.open = false
+  for port = 1, 4 do pcall(gd.input, port, 0, 10) end
+  gd.lab_leave(where)
+end
+
+local MAIN_ITEMS = {
+  { label = "Resume", icon = "lab_play", run = function() menu_close() end },
+  { label = "Frame step", icon = "lab_step", run = function() gd.step(1) end, value = "A: +1" },
+  { label = "Overlays", icon = "lab_hitbox", run = function() menu.page = "overlays" menu.sel = 1 end,
+    value = ">" },
+  { label = "Reset positions", icon = "lab_rewind", run = function()
+      local ok, err = pcall(gd.loadstate, RESET_SLOT)
+      if ok then menu_close() say("reset to the match start") else say((tostring(err):gsub("^.-: ", "")), RED) end
+    end },
+  { label = "Save state", icon = "lab_save", run = function() gd.savestate(1) say("state 1 saved") end },
+  { label = "Load state", icon = "lab_load", run = function()
+      local ok, err = pcall(gd.loadstate, 1)
+      if ok then say("state 1 loaded") else say((tostring(err):gsub("^.-: ", "")), RED) end
+    end },
+  { label = "Change characters", icon = "lab_focus", run = function() menu_leave("css") end },
+  { label = "Change stage", icon = "lab_stage", run = function() menu_leave("sss") end },
+  { label = "Quit (no contest)", icon = "lab_power", run = function() menu_leave("menu") end },
+}
+
+local function overlay_value(o)
+  if o.key == "stage" then return STAGE_NAMES[cfg.stage] end
+  return cfg[o.key] and "on" or "off"
+end
+
+local function menu_items()
+  if menu.page == "overlays" then return OVERLAYS end
+  return MAIN_ITEMS
+end
+
+-- pad edges for the menu: pressed this tick and not the last
+local function pad_edges(port)
+  local ok, p = pcall(gd.pad, port)
+  if not ok or p == nil then return {} end
+  local prev = menu.prev[port] or 0
+  menu.prev[port] = p.buttons
+  local e = {}
+  for _, name in ipairs({ "A", "B", "START", "UP", "DOWN" }) do
+    local bit = gd.buttons[name]
+    e[name] = (p.buttons & bit) ~= 0 and (prev & bit) == 0
+  end
+  e.y = p.y
+  return e
+end
+
+local function menu_move(d)
+  local n = #menu_items()
+  menu.sel = ((menu.sel - 1 + d) % n) + 1
+end
+
+local function menu_activate()
+  local it = menu_items()[menu.sel]
+  if it == nil then return end
+  if menu.page == "overlays" then
+    if it.key == "stage" then
+      cfg.stage = (cfg.stage + 1) % #STAGE_MODES
+      save_settings()
+    else
+      toggle(it.key, it.label)
+    end
+    if not cfg.on then cfg.on = true end
+  else
+    it.run()
+  end
+end
+
+-- returns true when the menu took this tick's input
+local function lab_menu_tick()
+  if not in_lab_match() then
+    menu.open = false
+    return false
+  end
+  if not menu.reset_saved and gd.match().frame >= 1 then
+    gd.savestate(RESET_SLOT) -- "reset positions" returns here
+    menu.reset_saved = true
+  end
+  if not menu.open then
+    for port = 1, 4 do
+      local e = pad_edges(port)
+      if e.START then
+        menu.open, menu.sel, menu.page, menu.port = true, 1, "main", port
+        menu.was_paused = gd.paused()
+        ensure_history()
+        gd.pause()
+        return true
+      end
+    end
+    if gd.key_pressed("ESCAPE") then
+      menu.open, menu.sel, menu.page, menu.port = true, 1, "main", 1
+      menu.was_paused = gd.paused()
+      gd.pause()
+      return true
+    end
+    return false
+  end
+  local e = pad_edges(menu.port)
+  for port = 1, 4 do if port ~= menu.port then pad_edges(port) end end
+  local up = e.UP or gd.key_pressed("UP")
+  local down = e.DOWN or gd.key_pressed("DOWN")
+  -- the stick, with a repeat
+  if (e.y or 0) > 60 or (e.y or 0) < -60 then
+    menu.rep = menu.rep + 1
+    if menu.rep == 1 or (menu.rep > 18 and menu.rep % 5 == 0) then
+      if e.y > 0 then up = true else down = true end
+    end
+  else
+    menu.rep = 0
+  end
+  if up then menu_move(-1) end
+  if down then menu_move(1) end
+  if e.A or gd.key_pressed("ENTER") then
+    menu_activate()
+  elseif e.B or gd.key_pressed("BACKSPACE") then
+    if menu.page ~= "main" then menu.page, menu.sel = "main", 3 else menu_close() end
+  elseif e.START or gd.key_pressed("ESCAPE") then
+    menu_close()
+  end
+  return true
+end
+
+local function lab_menu_draw()
+  if not menu.open or not gd.kit or not gd.kit.available() then return end
+  local items = menu_items()
+  local pitch = gd.kit.row.pitch
+  local x, w = 196, 248
+  local h = 78 + #items * pitch + 22
+  local y = math.floor((480 - h) / 2)
+  gd.kit.panel(x, y, w, h, { prefix = "lab_frame", fill = LAB_GLASS, piece = 20 })
+  gd.kit.icon("lab", x + 16, y + 14, 0.5, LAB_ACCENT)
+  gd.kit.text(x + 52, y + 36, menu.page == "overlays" and "OVERLAYS" or "LAB", "label", "bone")
+  gd.kit.text(x + w - 16, y + 36, gd.paused() and "PAUSED" or "", "body", LAB_ACCENT, "right")
+  local rows = {}
+  for i, it in ipairs(items) do
+    rows[i] = { label = it.label, value = menu.page == "overlays" and overlay_value(it) or it.value }
+  end
+  local ly = y + 56
+  gd.kit.list(x + 40, ly, w - 56, rows, menu.sel)
+  for i, it in ipairs(items) do
+    local on = menu.page ~= "overlays" or (it.key == "stage" and cfg.stage ~= 0) or cfg[it.key] == true
+    local iy = ly + (i - 1) * pitch + 2
+    if on then
+      gd.kit.icon(it.icon, x + 14, iy, 0.25, i == menu.sel and "gold" or LAB_ACCENT)
+    else
+      gd.kit.icon("lab_slash_gap", x + 14, iy, 0.25, LAB_GLASS)
+      gd.kit.icon(it.icon, x + 14, iy, 0.25, "muted")
+      gd.kit.icon("lab_slash", x + 14, iy, 0.25, "muted")
+    end
+  end
+  gd.kit.text(x + w / 2, y + h - 10, menu.page == "overlays" and "A toggle   B back   START close"
+    or "A select   B / START close", "body", "muted", "center")
+end
+
 function on_tick()
+  if lab_menu_tick() then return end
   if gd.key_pressed("X") then
     cfg.on = not cfg.on
     if not cfg.on then restore_draw() end
@@ -347,6 +539,7 @@ function on_match_start()
   log_lines = {}
   focus = 1
   tl_cache, scrub = {}, {}
+  menu.open, menu.reset_saved, menu.prev = false, false, {}
   cfg.on = cfg.always or gd.lab_request()
   if gd.lab_request() then lab_matched = true end
 end
@@ -562,7 +755,7 @@ local function draw_status(m)
 end
 
 function on_draw()
-  if not cfg.on then return end
+  if not cfg.on then lab_menu_draw() return end
   local m = gd.match()
   if not m.active then return end
   local list = gd.players()
@@ -593,6 +786,7 @@ function on_draw()
     gd.fill(40, 150, 560, #HELP * 14 + 12, 0x000000E0)
     for i, l in ipairs(HELP) do gd.text(50, 156 + (i - 1) * 14, l, i == 1 and YELLOW or WHITE, 0.85) end
   end
+  lab_menu_draw()
 end
 
 function on_unload()

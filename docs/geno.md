@@ -468,6 +468,34 @@ focused fighter's move at its scrub frame), `R` mirror P1's controller onto P2. 
 
 Not built: live edits written back to `experiment/brawl-kirby/tuning.json` (the "later" item).
 
+### 14.8 LAB, the Lab's own game mode (stage A)
+
+SOLO > LAB (icon `ico_lab`) now opens **LAB**, a game mode of its own (`GM_LAB` = `GM_COUNT + 2`,
+`pc/geno/geno_lab_mode.c`); Training is untouched (a plain TRAINING launch, or `MELEE_LAB=1` with
+Training, work as before).
+
+- **Flow:** the kit's character select (SOLO / LAB) -> the kit's stage select -> the loading
+  screen -> the match -> back to LAB's character select. B on the character select goes to the
+  menus. The select screens are always the kit's (`gmFrontend_ModeSelect`), even with
+  `MELEE_NATIVE_CSS=1`.
+- **Rules** (`GenoLab_ApplyRules`): VS's machinery on LAB's own VsModeData row (not the save's):
+  any fighters on any ports, humans and CPUs; time mode with the clock off (a KO respawns, the
+  match never ends on its own); no stocks; no items; any stage; Melee's pause off. No results
+  screen, no statistics.
+- **Pause menu** (`lab.lua`, LAB only): START on any controller (or Esc) freezes the game and opens
+  a kit panel in the Lab art (glass `#111122`@219, cyan `#38c9d9`, the kit's gold for the
+  selection): Resume, Frame step, Overlays (every Lab toggle), Reset positions (loads the state
+  taken at the match's first frame, slot 4), Save state / Load state (slot 1, as F5/F6), Change
+  characters (-> LAB's CSS), Change stage (-> the SSS), Quit (no contest -> the menus). Pad: up /
+  down, A, B back, START close; keyboard: arrows, Enter, Backspace, Esc. Closing holds every pad
+  neutral for 10 frames so the closing button does not reach the fighters.
+- **Script API:** `gd.lab_mode()` (true while LAB runs), `gd.lab_leave("css" | "sss" | "menu")`
+  (ends the LAB match with a no contest; offline, gameplay). The mode also sets the Lab request, so
+  the Lab script turns itself on.
+- **Launch straight in:** `MELEE_SCENE="mode=lab;p1=fox;p2=falco/cpu0;stage=fd"` (the usual grammar;
+  `at=css` / `at=sss` open the select screens). Only a LAB scene seeds LAB.
+- **Tests:** `geno_lab_mode_table`, `geno_lab_rules`, `geno_lab_scene`, `geno_lab_select_flow`.
+
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 
 This section is the contract the Brawl -> Geno script translator (experiment/brawl-metaknight/)

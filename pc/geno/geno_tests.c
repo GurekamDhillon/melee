@@ -2209,6 +2209,131 @@ static int test_geno_lab_stale_fighter(void)
     return rc;
 }
 
+/* ---- LAB, the Lab's own game mode (geno_lab_mode.c) ------------------------------------------ */
+#include <melee/gm/gm_1A3F.h>
+#include <melee/gm/gmfrontend.h>
+#include <melee/gm/gmscdata.h>
+#include <melee/gm/gmvsmelee.h>
+#include "geno_lab_mode.h"
+
+extern void SceneLaunch_LoadForTest(const char* text);
+extern int SceneLaunch_BootGameMode(void);
+extern int SceneLaunch_EntryStateId(void);
+extern int SceneLaunch_PlayerCKind(int slot);
+extern int SceneLaunch_PlayerSlotType(int slot);
+extern int SceneLaunch_StageExternal(void);
+
+/* its own mode id, past every vanilla one and the port's GM_FRONTEND, in the mode table with
+   CSS -> SSS -> match (+ the loading screen), the match being VS's scene */
+static int test_geno_lab_mode_table(void)
+{
+    GameMode* m;
+    GameModeState* s;
+    int found = 0;
+    if (GM_LAB <= GM_COUNT || GM_LAB == GM_FRONTEND) {
+        TestFail("GM_LAB must be past GM_COUNT and not GM_FRONTEND");
+        return 1;
+    }
+    for (m = gm_GetAllGameModes(); m->kind != GM_COUNT; m++) {
+        if (m->kind == GM_LAB) {
+            found++;
+            if (m->states != gm_Mode_Lab_States || m->on_load != gm_Mode_Lab_OnLoad) {
+                TestFail("the GM_LAB row does not point at LAB's states / on_load");
+                return 1;
+            }
+        }
+    }
+    if (found != 1) {
+        TestFail("GM_LAB must be in the mode table exactly once");
+        return 1;
+    }
+    s = gm_Mode_Lab_States;
+    if (s[0].info.scene_kind != GS_CSS || s[1].info.scene_kind != GS_SSS ||
+        s[2].info.scene_kind != GS_VS || s[2].info.enter_data != &gmVsMelee_StartData ||
+        s[3].info.scene_kind != GS_FRONTEND || s[4].id != (u8) GM_GAMEMODESTATE_TERMINATE)
+    {
+        TestFail("LAB's states must be CSS, SSS, the VS match and the loading screen");
+        return 1;
+    }
+    return 0;
+}
+
+/* the rules: no timer, no stocks (a KO respawns: time mode never eliminates), no items, Melee's
+   pause off - applied over whatever VS's saved rules said (stock mode, 4 stocks, 8 minutes) */
+static int test_geno_lab_rules(void)
+{
+    static StartMeleeData d;
+    int i;
+    d.rules.match_kind = MatchKind_Stock;
+    d.rules.is_stock = true;
+    d.rules.timer_enabled = true;
+    d.rules.time_limit = 480;
+    d.rules.item_freq = 2;
+    d.rules.x4_2 = true;
+    for (i = 0; i < Gm_Player_NumMax; i++) {
+        d.players[i].stocks = 4;
+    }
+    GenoLab_ApplyRules(&d);
+    if (d.rules.match_kind != MatchKind_Time || d.rules.is_stock || d.rules.timer_enabled ||
+        d.rules.time_limit != 0 || d.rules.x4_2)
+    {
+        TestFail("LAB rules: time mode with the clock off, no stock game over");
+        return 1;
+    }
+    if (d.rules.item_freq != -1 || !d.rules.disable_pausing) {
+        TestFail("LAB rules: items off, Melee's pause off");
+        return 1;
+    }
+    for (i = 0; i < Gm_Player_NumMax; i++) {
+        if (d.players[i].stocks != 0) {
+            TestFail("LAB rules: no stocks on any player");
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* MELEE_SCENE=mode=lab;p1=...;p2=.../cpu;stage=fd boots LAB's match with those fighters */
+static int test_geno_lab_scene(void)
+{
+    int rc = 0;
+    SceneLaunch_LoadForTest("mode=lab;p1=fox;p2=falco/cpu;stage=fd");
+    if (SceneLaunch_BootGameMode() != GM_LAB || SceneLaunch_EntryStateId() != 2 ||
+        SceneLaunch_PlayerCKind(0) < 0 || SceneLaunch_PlayerCKind(1) < 0 ||
+        SceneLaunch_PlayerSlotType(1) != Gm_PKind_Cpu || SceneLaunch_StageExternal() != 32)
+    {
+        TestFail("mode=lab did not give LAB's match, Fox + CPU Falco on FD");
+        rc = 1;
+    }
+    SceneLaunch_LoadForTest("mode=lab;at=css");
+    if (rc == 0 && (SceneLaunch_BootGameMode() != GM_LAB || SceneLaunch_EntryStateId() != 0)) {
+        TestFail("mode=lab;at=css did not open LAB's character select");
+        rc = 1;
+    }
+    SceneLaunch_LoadForTest(NULL);
+    return rc;
+}
+
+/* the menu flow: LAB's select states always run the kit's screens (GS_FRONTEND) - whatever
+   MELEE_NATIVE_CSS says - while Training's default stays the native screen; and leaving is
+   refused outside a LAB match (the pause menu cannot end some other mode's match) */
+static int test_geno_lab_select_flow(void)
+{
+    GameModeState st = gm_Mode_Lab_States[0];
+    gmFrontend_ModeSelect(&st, 0, "LAB");
+    if (st.info.scene_kind != GS_FRONTEND) {
+        TestFail("LAB's character select must run the kit's screen");
+        return 1;
+    }
+    if (GenoLab_ModeActive() || GenoLab_Leave(GENO_LAB_TO_MENU) != 0 ||
+        GenoLab_NextAfterMatch() != GENO_LAB_TO_CSS)
+    {
+        TestFail("outside LAB: not active, leave refused, next stays the character select");
+        return 1;
+    }
+    return 0;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -2239,4 +2364,8 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_lab_stale_fighter", test_geno_lab_stale_fighter);
     TestRegister("geno_v4_drill_pose", test_geno_v4_drill_pose);
     TestRegister("geno_v4_tornado_spin", test_geno_v4_tornado_spin);
+    TestRegister("geno_lab_mode_table", test_geno_lab_mode_table);
+    TestRegister("geno_lab_rules", test_geno_lab_rules);
+    TestRegister("geno_lab_scene", test_geno_lab_scene);
+    TestRegister("geno_lab_select_flow", test_geno_lab_select_flow);
 }

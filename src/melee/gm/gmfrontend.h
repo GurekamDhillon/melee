@@ -54,6 +54,8 @@ struct GameModeState;
 void gmFrontend_SelectScene(struct GameModeState* state, int sss);
 /* Training's CSS / SSS on the kit when Frontend_TrainingSelect() is on (gmfrontend.c). */
 void gmFrontend_TrainingSelect(struct GameModeState* state, int sss);
+/* A VS-machinery mode's CSS / SSS always on the kit, named `name` in the SOLO section (Geno LAB). */
+void gmFrontend_ModeSelect(struct GameModeState* state, int sss, const char* name);
 
 #endif
 

@@ -902,6 +902,8 @@ static void fs_build_css(void)
     const char* crumbs[3] = { "VERSUS", "MELEE", "CHARACTERS" };
     const char* crumbs_tr[3] = { "SOLO", "TRAINING", "CHARACTERS" };
     const char* crumbs_on[3] = { "VERSUS", "ONLINE PLAY", "PICK A FIGHTER" };
+    const char* crumbs_md[3] = { "SOLO", fe_sel_mode, "CHARACTERS" }; /* a named mode (LAB) */
+    int solo = fcs.training || (fe_sel_mode != NULL && !fcs.online);
     float ink[3], face[3], bone[3], muted[3], gold[3], white[3] = { 1, 1, 1 }, dim[3], disabled[3];
     float r[4];
     char id[FP_ID], buf[FE_STR];
@@ -915,8 +917,11 @@ static void fs_build_css(void)
     fs_tok("@bg", dim);
     fs_tok("disabled", disabled);
     fm_chrome_with(fcs.online ? "PICK YOUR FIGHTER" : "CHARACTER SELECT",
-                   fcs.online ? crumbs_on : fcs.training ? crumbs_tr : crumbs, 3,
-                   fcs.training ? KS_SOLO : KS_VERSUS, fcs.online ? 3 : 5, hg, ht);
+                   fcs.online     ? crumbs_on
+                   : fcs.training ? crumbs_tr
+                   : solo         ? crumbs_md
+                                  : crumbs,
+                   3, solo ? KS_SOLO : KS_VERSUS, fcs.online ? 3 : 5, hg, ht);
     fl_desc(fs_css_hint(buf));
     if (last > fs_slots()) {
         last = fs_slots();
@@ -1294,7 +1299,9 @@ static void fs_build_sss(void)
     static const char* const ht[4] = { "Choose", "Move", "Back", "Pages" };
     const char* crumbs_vs[3] = { "VERSUS", "MELEE", "STAGES" };
     const char* crumbs_tr[3] = { "SOLO", "TRAINING", "STAGES" };
-    const char* const* crumbs = fe_sel_training ? crumbs_tr : crumbs_vs;
+    const char* crumbs_md[3] = { "SOLO", fe_sel_mode, "STAGES" }; /* a named mode (LAB) */
+    const char* const* crumbs = fe_sel_training ? crumbs_tr : fe_sel_mode != NULL ? crumbs_md : crumbs_vs;
+    int solo = fe_sel_training || fe_sel_mode != NULL;
     float ink[3], face[3], bone[3], muted[3], gold[3], white[3] = { 1, 1, 1 }, r[4], c[3];
     char id[FP_ID], buf[FE_STR];
     int i, first = fcs.page * fcs.per, last = first + fcs.per;
@@ -1306,8 +1313,7 @@ static void fs_build_sss(void)
     fs_tok("muted", muted);
     fs_tok("gold", gold);
     fs_port_rgb(0, c);
-    fm_chrome_with("STAGE SELECT", crumbs, 3, fe_sel_training ? KS_SOLO : KS_VERSUS, fcs.pages > 1 ? 4 : 3, hg,
-                   ht);
+    fm_chrome_with("STAGE SELECT", crumbs, 3, solo ? KS_SOLO : KS_VERSUS, fcs.pages > 1 ? 4 : 3, hg, ht);
     fl_desc(fcs.toast[0] != 0 && fl.frames < fcs.toast_until ? fcs.toast
                                                               : "Choose the stage: A. B goes back to the characters.");
     if (last > fcs.ns) {

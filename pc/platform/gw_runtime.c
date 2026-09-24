@@ -1563,6 +1563,10 @@ static const struct {
   int vs_mode;   /* GmVsMode, or -1 */
 } gw_sl_modes[] = {
     {"training", 0x1C, 6},  /* GM_TRAINING, GmVsMode_Training */
+    /* Geno's LAB (pc/geno/geno_lab_mode.h, GM_COUNT + 2): VS's machinery on its own VsModeData
+       row, which gm_Mode_Lab_OnLoad seeds itself (only for a LAB scene); the 0 only marks it as a
+       mode that seeds players and takes at=css|sss|match */
+    {"lab", 0x2F, 0},
     {"vs", 0x02, 0},        /* GM_VS,       GmVsMode_Melee */
     {"melee", 0x02, 0},
     {"targettest", 0x0F, -1}, /* GM_TARGET_TEST */

@@ -1,10 +1,20 @@
 # GD's Melee — native PC port
 
-<!-- TODO(brand): a logo or banner from the brand kit can go here. -->
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Version 0.1.4" src="https://img.shields.io/badge/version-0.1.4-f0b429"></a>
-  <img alt="Platform: Windows x64" src="https://img.shields.io/badge/platform-Windows%20x64-2a4bb8">
-  <a href="pc/LICENSE"><img alt="License: GPL-2.0-or-later (pc/)" src="https://img.shields.io/badge/license%20(pc%2F)-GPL--2.0--or--later-3a3f4b"></a>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="pc/docs/readme/brand/logo_horizontal_dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="pc/docs/readme/brand/logo_horizontal_light.png">
+    <img alt="GD's Melee" src="pc/docs/readme/brand/logo_horizontal_light.png" width="600">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.4" src="pc/docs/readme/brand/version.svg" height="28"></a>
+  <img alt="Platform: Windows x64" src="pc/docs/readme/brand/windows.svg" height="28">
+  <img alt="Netplay: rollback" src="pc/docs/readme/brand/rollback.svg" height="28">
+  <img alt="Mods: m-ex compatible" src="pc/docs/readme/brand/mex.svg" height="28">
+  <img alt="Replays: Slippi" src="pc/docs/readme/brand/slippi.svg" height="28">
+  <a href="pc/LICENSE"><img alt="License: GPL-2.0-or-later" src="https://img.shields.io/badge/license-GPL--2.0--or--later-3a3f4b"></a>
 </p>
 
 This fork of [doldecomp/melee](https://github.com/doldecomp/melee) adds a native PC port of

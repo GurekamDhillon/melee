@@ -1248,7 +1248,17 @@ void rebuild_pipeline_cache() {
       known.push_back(pipeline);
     }
   }
-  std::ranges::sort(known, {}, &KnownPipeline::firstFrameUsed);
+  // MUST_DRAW (item) configs first, then first-use order: a draw that meets one of those unbuilt
+  // blocks (wait_pipeline), so they are warmed from boot - through the intro and menus - rather
+  // than only at match load, where a slow machine can reach the loading hold's ceiling first.
+  std::ranges::sort(known, [](const KnownPipeline& a, const KnownPipeline& b) {
+    const bool mustA = (a.tags & AURORA_PIPELINE_TAG_MUST_DRAW) != 0;
+    const bool mustB = (b.tags & AURORA_PIPELINE_TAG_MUST_DRAW) != 0;
+    if (mustA != mustB) {
+      return mustA;
+    }
+    return a.firstFrameUsed < b.firstFrameUsed;
+  });
   for (const auto& pipeline : known) {
     std::visit(
         [&](const auto& config) {
@@ -1397,6 +1407,15 @@ void wait_pipeline(PipelineRef ref) {
 
 void tag_pipeline_must_draw(PipelineRef ref) { tag_pipeline(ref, AURORA_PIPELINE_TAG_MUST_DRAW); }
 
+static uint32_t count_tagged(uint32_t tagMask) {
+  std::lock_guard lock{g_pipelineMutex};
+  uint32_t n = 0;
+  for (const auto& pipeline : g_knownPipelines | std::views::values) {
+    n += (pipeline.tags & tagMask) != 0 ? 1 : 0;
+  }
+  return n;
+}
+
 static uint32_t prewarm_tagged(uint32_t tagMask) {
   const auto scene = scene_render_target_layout();
   std::vector<KnownPipeline> tagged;
@@ -1437,3 +1456,5 @@ bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
 } // namespace aurora::gfx
 
 uint32_t aurora_prewarm_tagged_pipelines(uint32_t tagMask) { return aurora::gfx::prewarm_tagged(tagMask); }
+
+uint32_t aurora_count_tagged_pipelines(uint32_t tagMask) { return aurora::gfx::count_tagged(tagMask); }

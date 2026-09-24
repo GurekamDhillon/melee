@@ -50,6 +50,9 @@ typedef struct {
 /// scene layout, ahead of the background warm-up. They count in urgentPipelinesPending until built,
 /// so a loading screen that waits on that also waits on them. Returns how many were not built yet.
 uint32_t aurora_prewarm_tagged_pipelines(uint32_t tagMask);
+/// How many known pipeline configs carry any of `tagMask`. The boot warm-up builds MUST_DRAW
+/// configs first, so a frontend waiting on the first N seed builds should add this to N.
+uint32_t aurora_count_tagged_pipelines(uint32_t tagMask);
 
 const AuroraStats* aurora_get_stats();
 float aurora_get_fps();

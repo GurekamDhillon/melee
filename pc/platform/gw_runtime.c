@@ -2978,8 +2978,12 @@ int gw_Gfx_SeedCoreCount(void) {
       }
     }
   }
-  return core;
+  /* Aurora warms MUST_DRAW (item) pipelines ahead of the seed's order, so the core is warm only
+   * after those too. */
+  return core > 0 ? core + (int) aurora_count_tagged_pipelines(AURORA_PIPELINE_TAG_MUST_DRAW) : 0;
 }
+uint32_t gw_aurora_count_tagged_none(uint32_t mask) { (void) mask; return 0; }
+#pragma comment(linker, "/alternatename:_aurora_count_tagged_pipelines=_gw_aurora_count_tagged_none")
 
 /* Pipelines built out of the seed warm-up so far, in the seed's order (aurora's own count). */
 /* Pipelines something is drawing with that are not built yet - the queue minus the seed's background

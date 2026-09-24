@@ -290,6 +290,28 @@ int gw_Frontend_NativeSelect(void) {
     return v != NULL && v[0] != '\0' && strcmp(v, "0") != 0;
 }
 
+/* Training's character / stage select: 0 = the native screens (the default), 1 = the port's own
+ * kit screens (gmfrontend_select.inc) with Training's rules - one human, the CPU dummy
+ * (gmFrontend_TrainingSelect). MELEE_TRAINING_SELECT=kit turns it on at start; the scene
+ * grammar's select=kit|native, gd.training_select() and native code (a menu entry that opens
+ * Training on the kit, say) change it with gw_Frontend_SetTrainingSelect. It stays until changed. */
+static int gw_training_select = -1;
+
+int gw_Frontend_TrainingSelect(void) {
+    if (gw_training_select < 0) {
+        const char *v = getenv("MELEE_TRAINING_SELECT");
+        gw_training_select = v != NULL && strcmp(v, "kit") == 0;
+    }
+    return gw_training_select;
+}
+
+void gw_Frontend_SetTrainingSelect(int kit) {
+    if (gw_Frontend_TrainingSelect() != (kit != 0)) {
+        gw_log("frontend: Training's character/stage select -> %s", kit ? "kit" : "native");
+    }
+    gw_training_select = kit != 0;
+}
+
 /* ---- content enumeration ------------------------------------------------------------------ */
 
 int gw_UI_FighterCount(void) {

@@ -596,6 +596,13 @@ static const FrontendScreen fe_screen_loading = {
 /* VS mode's character and stage select (gmfrontend_select.inc), in their states' own scene. */
 static const FrontendScreen fe_screen_css = { "VERSUS", "CHARACTERS", NULL, 0, 5 };
 static const FrontendScreen fe_screen_sss = { "VERSUS", "STAGES", NULL, 0, 6 };
+/* Which state's data the kit's character / stage select fills (gmfrontend_select.inc): VS mode's
+ * (gmVsMelee_CssData / SssData), or Training's when gmFrontend_TrainingSelect routed it here. */
+static CSSData* fe_sel_css;
+static SSSData* fe_sel_sss;
+static bool fe_sel_training;
+static void* fe_train_css; ///< Training's CSS state data, registered by gmFrontend_TrainingSelect
+static void* fe_train_sss;
 /* The same screen after the online lobby's countdown, inside the lobby's own scene. */
 static const FrontendScreen fe_screen_online_load = { "GET READY", "LOADING", NULL, 0, 4 };
 
@@ -731,6 +738,26 @@ void gmFrontend_SelectScene(struct GameModeState* state, int sss)
         return;
     }
     state->info.scene_kind = Frontend_NativeSelect() ? (sss ? GS_SSS : GS_CSS) : GS_FRONTEND;
+}
+
+/* Training's CSS / SSS states (gmtrainingmode.c) call this from their on_enter. When the kit's
+ * select is asked for (Frontend_TrainingSelect: MELEE_TRAINING_SELECT=kit, the scene grammar's
+ * select=kit, gd.training_select("kit"), or native code through gw_Frontend_SetTrainingSelect)
+ * the state runs the frontend scene instead of the native screen. It fills the state's own
+ * CSSData / SSSData - one human (the port that entered Training), the CPU dummy in the other
+ * slot - and ends the scene, so Training's exit handlers apply its rules unchanged. */
+void gmFrontend_TrainingSelect(struct GameModeState* state, int sss)
+{
+    extern int Frontend_TrainingSelect(void);
+    if (state == NULL || !Frontend_TrainingSelect()) {
+        return;
+    }
+    if (sss) {
+        fe_train_sss = gm_GetGameModeStateEnterData(state);
+    } else {
+        fe_train_css = gm_GetGameModeStateEnterData(state);
+    }
+    state->info.scene_kind = GS_FRONTEND;
 }
 
 void gmFrontend_BeginLoading(void)
@@ -1530,6 +1557,18 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         fe.screen = enter_data == &gmVsMelee_CssData ? &fe_screen_css : &fe_screen_sss;
         fe.next_menus = false;
         fe.loading = false;
+        fe_sel_css = &gmVsMelee_CssData;
+        fe_sel_sss = &gmVsMelee_SssData;
+        fe_sel_training = false;
+    } else if (enter_data != NULL && (enter_data == fe_train_css || enter_data == fe_train_sss)) {
+        /* Training's CSS / SSS state, routed here by gmFrontend_TrainingSelect: the same
+           screens, filling Training's own data, so its exit handlers keep its rules */
+        fe.screen = enter_data == fe_train_css ? &fe_screen_css : &fe_screen_sss;
+        fe.next_menus = false;
+        fe.loading = false;
+        fe_sel_css = (CSSData*) fe_train_css;
+        fe_sel_sss = (SSSData*) fe_train_sss;
+        fe_sel_training = true;
     }
     if (fe.next_menus) {
         fe.next_menus = false;

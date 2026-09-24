@@ -261,6 +261,8 @@ static struct {
     int back_until;
     int done;                     ///< the scene is ending
     int teams;
+    int training;                 ///< Training's select: one human (train_h), the CPU dummy (train_c)
+    int train_h, train_c;
     char toast[FE_STR];
     int toast_until;
     /* SSS */
@@ -459,6 +461,34 @@ static void fs_css_open(CSSData* css)
         fcs.p[0].kind = FS_HMN; /* whoever came here is P1 */
     }
     fcs.page = fcs.p[0].cur / fcs.per;
+    if (fe_sel_training && css != NULL) {
+        /* Training (gm_801B06B0 / gm_801B07B4): the port that entered is the human, the other of
+           slots 0 / 1 the CPU dummy; its exit handler reads exactly those two slots */
+        int h = css->unk_0x0 >= 1 && css->unk_0x0 <= 4 ? css->unk_0x0 - 1 : 0;
+        int c = h == 0 ? 1 : 0;
+        fcs.training = 1;
+        fcs.train_h = h;
+        fcs.train_c = c;
+        for (p = 0; p < 4; p++) {
+            FsPort* s = &fcs.p[p];
+            const PlayerInitData* pl = &css->vs.start.players[p];
+            int ck = pl->ckind;
+            s->card = -1;
+            s->target = p;
+            s->kind = p == h ? FS_HMN : p == c ? FS_CPU : FS_OFF;
+            s->ck = FS_CK_NONE;
+            if (s->kind != FS_OFF && ck >= 0 && ck < FE_NP_MAX_CK && ck != ChKind_None) {
+                s->ck = ck;
+                s->costume = pl->color;
+            } else if (s->kind == FS_CPU) {
+                s->ck = FS_CK_RANDOM;
+            }
+            s->cur = s->ck >= 0 ? fs_slot_of(s->ck) : 0;
+        }
+        fcs.page = fcs.p[h].cur / fcs.per;
+        OSReport("frontend: character select for Training - P%d human, CPU dummy in slot %d\n", h + 1,
+                 c + 1);
+    }
 }
 
 static int fs_count_in(void)
@@ -619,6 +649,9 @@ static void fs_css_port(int p)
     if (fcs.online && p != 0) {
         return;
     }
+    if (fcs.training && p != fcs.train_h) {
+        return; /* Training: one player, and the CPU dummy's card */
+    }
     if (fcs.online) {
         /* the lobby's pick: any controller drives the one card */
         int q;
@@ -721,7 +754,7 @@ static void fs_css_port(int p)
         } else if (in.trig & PAD_BUTTON_A) {
             if (s->card == p) {
                 s->card = -1; /* your own card: back to the grid */
-            } else if (c->kind == FS_OFF) {
+            } else if (c->kind == FS_OFF && !fcs.training) {
                 c->kind = FS_CPU; /* add a CPU, and pick its fighter now */
                 c->ck = FS_CK_RANDOM;
                 c->cpu_lv = 9;
@@ -742,7 +775,7 @@ static void fs_css_port(int p)
                 s->costume = fs_free_costume(p, s->ck, s->costume + dir, dir);
                 sfxMove();
             }
-        } else if (in.trig & PAD_TRIGGER_Z) {
+        } else if ((in.trig & PAD_TRIGGER_Z) && !fcs.training) {
             if (c->kind == FS_CPU) {
                 c->kind = FS_OFF;
                 c->ck = FS_CK_NONE;
@@ -867,6 +900,7 @@ static void fs_build_css(void)
     static const char* const hg[5] = { "glyph_a", "glyph_x", "glyph_start", "glyph_b", "glyph_dpad" };
     static const char* const ht[5] = { "Pick", "Costume", "Start", "Back", "CPUs" };
     const char* crumbs[3] = { "VERSUS", "MELEE", "CHARACTERS" };
+    const char* crumbs_tr[3] = { "SOLO", "TRAINING", "CHARACTERS" };
     const char* crumbs_on[3] = { "VERSUS", "ONLINE PLAY", "PICK A FIGHTER" };
     float ink[3], face[3], bone[3], muted[3], gold[3], white[3] = { 1, 1, 1 }, dim[3], disabled[3];
     float r[4];
@@ -880,8 +914,9 @@ static void fs_build_css(void)
     fs_tok("gold", gold);
     fs_tok("@bg", dim);
     fs_tok("disabled", disabled);
-    fm_chrome_with(fcs.online ? "PICK YOUR FIGHTER" : "CHARACTER SELECT", fcs.online ? crumbs_on : crumbs,
-                   3, KS_VERSUS, fcs.online ? 3 : 5, hg, ht);
+    fm_chrome_with(fcs.online ? "PICK YOUR FIGHTER" : "CHARACTER SELECT",
+                   fcs.online ? crumbs_on : fcs.training ? crumbs_tr : crumbs, 3,
+                   fcs.training ? KS_SOLO : KS_VERSUS, fcs.online ? 3 : 5, hg, ht);
     fl_desc(fs_css_hint(buf));
     if (last > fs_slots()) {
         last = fs_slots();
@@ -1257,7 +1292,9 @@ static void fs_build_sss(void)
 {
     static const char* const hg[4] = { "glyph_a", "glyph_dpad", "glyph_b", "glyph_l" };
     static const char* const ht[4] = { "Choose", "Move", "Back", "Pages" };
-    const char* crumbs[3] = { "VERSUS", "MELEE", "STAGES" };
+    const char* crumbs_vs[3] = { "VERSUS", "MELEE", "STAGES" };
+    const char* crumbs_tr[3] = { "SOLO", "TRAINING", "STAGES" };
+    const char* const* crumbs = fe_sel_training ? crumbs_tr : crumbs_vs;
     float ink[3], face[3], bone[3], muted[3], gold[3], white[3] = { 1, 1, 1 }, r[4], c[3];
     char id[FP_ID], buf[FE_STR];
     int i, first = fcs.page * fcs.per, last = first + fcs.per;
@@ -1269,7 +1306,8 @@ static void fs_build_sss(void)
     fs_tok("muted", muted);
     fs_tok("gold", gold);
     fs_port_rgb(0, c);
-    fm_chrome_with("STAGE SELECT", crumbs, 3, KS_VERSUS, fcs.pages > 1 ? 4 : 3, hg, ht);
+    fm_chrome_with("STAGE SELECT", crumbs, 3, fe_sel_training ? KS_SOLO : KS_VERSUS, fcs.pages > 1 ? 4 : 3, hg,
+                   ht);
     fl_desc(fcs.toast[0] != 0 && fl.frames < fcs.toast_until ? fcs.toast
                                                               : "Choose the stage: A. B goes back to the characters.");
     if (last > fcs.ns) {

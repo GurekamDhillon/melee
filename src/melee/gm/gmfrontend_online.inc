@@ -2066,9 +2066,9 @@ static void fl_build(void)
 static void fl_open(int art)
 {
     if (art == FL_CSS) {
-        fs_css_open(&gmVsMelee_CssData);
+        fs_css_open(fe_sel_css != NULL ? fe_sel_css : &gmVsMelee_CssData);
     } else if (art == FL_SSS) {
-        fs_sss_open(&gmVsMelee_SssData);
+        fs_sss_open(fe_sel_sss != NULL ? fe_sel_sss : &gmVsMelee_SssData);
     }
     if (art == FL_LOAD) {
         fe_load_begin();

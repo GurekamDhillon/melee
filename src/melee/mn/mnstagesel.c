@@ -1338,6 +1338,12 @@ static HSD_JObj* mnStageSel_PcModel(StaticModelDesc* m)
     return j;
 }
 
+/* mnStageSel_PcArtName's name model. Built from the open archive and dropped by each open: the
+ * JObj lives in the scene's heap, and a later scene can load MnSlMap at the SAME address, so a
+ * cache keyed on the data pointer alone reused a freed JObj (crash in HSD_FObjReqAnimAll on the
+ * second stage select of a run: match -> SSS -> CSS -> SSS). */
+static HSD_JObj* mnStageSel_PcName;
+
 /* Open the art: `archive` is MnSlMap. Returns the icon count (retail 30, m-ex's table). */
 int mnStageSel_PcArtOpen(HSD_Archive* archive)
 {
@@ -1352,6 +1358,7 @@ int mnStageSel_PcArtOpen(HSD_Archive* archive)
     mnStageSel_PcMexIcon = NULL;
     mnStageSel_PcMex = NULL;
     mnStageSel_PcCount = 0;
+    mnStageSel_PcName = NULL;
     if (archive == NULL) {
         return 0;
     }
@@ -1399,8 +1406,7 @@ static void mnStageSel_PcWidest(HSD_JObj* j, HSD_TObj** best, int* bw, int depth
  * 20 x preview id): the widest texture of the name model at that frame. NULL if none. */
 int mnStageSel_PcArtName(int i, HSD_ImageDesc** img, HSD_Tlut** tlut)
 {
-    static HSD_JObj* name;
-    static void* name_for;
+    HSD_JObj* name;
     HSD_TObj* best = NULL;
     int bw = 0;
     *img = NULL;
@@ -1408,15 +1414,15 @@ int mnStageSel_PcArtName(int i, HSD_ImageDesc** img, HSD_Tlut** tlut)
     if (i < 0 || i >= mnStageSel_PcCount || mnStageSel_804D6C98 == NULL) {
         return 0;
     }
-    if (name == NULL || name_for != (void*) mnStageSel_804D6C98) {
+    if (mnStageSel_PcName == NULL) {
         StaticModelDesc* m = &mnStageSel_804D6C98->x30;
-        name = HSD_JObjLoadJoint(m->joint);
-        HSD_JObjAddAnimAll(name, m->animjoint,
+        mnStageSel_PcName = HSD_JObjLoadJoint(m->joint);
+        HSD_JObjAddAnimAll(mnStageSel_PcName, m->animjoint,
                            mnStageSel_PcMex != NULL ? mnStageSel_PcMex->stagename_matanim
                                                     : m->matanim_joint,
                            m->shapeanim_joint);
-        name_for = mnStageSel_804D6C98;
     }
+    name = mnStageSel_PcName;
     if (mnStageSel_PcMex != NULL) {
         do_anim(name, i);
     } else {

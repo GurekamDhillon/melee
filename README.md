@@ -60,13 +60,30 @@ stages, items and music), and can be scripted in **Lua**.
   [`docs/scripting.md`](https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md).
 - **Slippi replay playback**, UCF and tournament rule sets, and a deterministic engine checked frame
   by frame with SyncTest.
+- **Controllers play, the keyboard is hotkeys only**, with a "Connect a controller" notice when a
+  window has none, and **the mouse in every menu** (`gd.mouse` for scripts).
+- **Bit-exact with the console:** matrix maths rounds like the Gekko's paired singles, and real
+  console Slippi replays play back matching to the bit, frame by frame.
+- Recent fixes: items no longer hitch on first spawn (pipelines compiled in parallel and prewarmed),
+  and crash fixes for m-ex motion tables, part trees and costume data.
 
-### Coming soon: the Geno engine
+### The Geno engine and LAB
 
-Native fighter extensions beyond m-ex: new action states, new moves and behaviours, defined per
-fighter in data. 100% m-ex compatible, opt-in per fighter, and rollback-safe. It comes with the
-**Geno Lab**, a frame-data lab with hitbox and hurtbox overlays, frame stepping and step-back, and a
-timeline.
+**Geno** (`pc/geno/`) is native fighter content beyond m-ex, opt-in per fighter through a
+`geno.json`: script variables and logic, engine values, change-action rules, new action states
+(glide, Brawl-style specials), root-motion states, and model effects that follow a move. A fighter
+without `geno.json` runs exactly as m-ex defines it, and everything Geno adds is in the rollback
+snapshot. Melee's own physics, hitstun, knockback and ledge rules never change.
+
+**LAB** (SOLO > LAB) is a frame-data lab game mode: display modes and overlays, a Sakurai-style pause
+menu, long rewind, a savestate library and hot reload, a state browser, knockback preview, A/B
+compare, frame-data export, a rollback visualiser, and vanilla-parity checks against real Slippi
+replays.
+
+The reference is [`docs/geno.md`](docs/geno.md). The first fighter built on it is **Halberd**
+(Meta Knight from *Brawl*), whose research lives in the workspace repo's
+[`ports/halberd/`](https://github.com/GurekamDhillon/gd-melee-workspace/tree/master/ports/halberd)
+(no assets; you need your own legally obtained game files).
 
 ## What the port adds
 
@@ -77,6 +94,7 @@ pc/platform/   native shims: GX→Aurora, OS, PAD, CARD, AX (DSP-ADPCM mixer), D
                netplay, scripting (Lua) and the new menus,
                plus the m-ex layer: gw_ppc.c (interpreter), gw_mex_ftfunction*.c (fighters),
                gw_mex_grfunction.c (stages), gw_mex_bridge.c (guest→native call bridge)
+pc/geno/       Geno (fighter extensions) and the LAB mode
 pc/gameworld/  game-world code compiled through the PowerPC→x86 retarget (gekko_fp.c, mtx_pc.c)
 pc/scripts/    the built-in Lua examples and console.py (the console over a local socket)
 pc/tools/      gwtool (the PPC→x86 retargeter) and asset extraction

@@ -185,8 +185,8 @@ void Fighter_FirstInitialize_80067A84(void)
     /* The per-fighter animation buffers (fp->x59C/x5A0: one figatree each, DMA'd from ARAM). Retail
      * sizes them for its largest animation, 0x8000. m-ex fighters exceed that (Akaneia's Sonic has
      * a 0x8796 one) and ftData_80085A14 asserted "fighter figatree over" loading them; the port
-     * doubles the buffer and raises the check with it (FT_ANIM_BUF_SIZE). */
-    HSD_ObjAllocInit(&fighter_x59C_alloc_data, 0x10000, 0x20);
+     * raises the buffer and the check with it (FT_ANIM_BUF_SIZE, ftparts.h). */
+    HSD_ObjAllocInit(&fighter_x59C_alloc_data, FT_ANIM_BUF_SIZE, 0x20);
 #else
     HSD_ObjAllocInit(&fighter_x59C_alloc_data, 0x8000, 0x20);
 #endif

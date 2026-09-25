@@ -9,6 +9,9 @@
 #include "fighter.h"
 #include "forward.h"
 #include "ft_0877.h"
+#if defined(TARGET_PC)
+#include "ftparts.h" /* FT_ANIM_BUF_SIZE */
+#endif
 #include "inlines.h"
 #include "kinds/ftCaptain/ftcaptain.h"
 #include "kinds/ftCaptain/ftcaptainspecialhi.h"
@@ -2178,7 +2181,7 @@ void ftData_80085A14(FighterKind kind)
             temp_r0 = temp_r27->xC[i].x8;
             if (temp_r0 != 0) {
 #if defined(TARGET_PC)
-                if (temp_r0 > 0x10000) { /* the buffer size, fighter.c (m-ex anims exceed 0x8000) */
+                if (temp_r0 > FT_ANIM_BUF_SIZE) { /* fighter.c's buffer (ftparts.h) */
 #else
                 if (temp_r0 > 0x8000) {
 #endif

@@ -61,6 +61,13 @@ struct Fighter_804D6540_x0_t;
 #define MAX_FT_PARTS 140
 #endif
 
+#if defined(TARGET_PC)
+/* Bytes in each of a fighter's two figatree buffers (fp->x59C/x5A0). Retail's is 0x8000; m-ex
+ * fighters exceed it (Akaneia's Sonic: 0x8796) and Ultimate clips converted onto a fighter's own
+ * skeleton more so (Kirby: 2 of 398 over 0x10000, the largest 0x11657). */
+#define FT_ANIM_BUF_SIZE 0x20000
+#endif
+
 /* 07506C */ u32 ftParts_8007506C(FighterKind ftkind, int part);
 /* 0750C8 */ void ftParts_800750C8(Fighter*, enum_t, bool);
 /* 075240 */ HSD_TObj*

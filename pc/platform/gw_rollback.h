@@ -70,6 +70,11 @@ typedef struct GwRbInput {
     uint8_t is_raw;
     uint8_t pad_l, pad_r, pad_a, pad_b; /* triggerLeft/Right, analogA/B */
     int8_t pad_err;                     /* PADStatus.err (0 = ok) */
+    /* Replay-only physical fields. Ordinary playback still consumes the processed values above.
+     * A modern online .slp records these separately from the processed fighter input. */
+    uint16_t physical_buttons;
+    float physical_l, physical_r;
+    uint8_t physical_complete;
 } GwRbInput;
 
 /* ======================= THE NETWORK-FACING INTERFACE ======================================== */

@@ -21,6 +21,10 @@
  *     Fighter_Spaghetti_8006AD10 just before pressed/released are derived - the same point here.
  *     Recording and playback both use this point, so pad sampling, the pad queue and controller
  *     calibration are out of the loop entirely.
+ *   Modern online Pre-Frame events also retain physical buttons, normalized L/R trigger floats
+ *     and four raw UCF stick bytes for the experimental Slippi PAD source. This does not change
+ *     ordinary processed-input playback. Fixture eligibility is separate from processed parity:
+ *     only the real game-side pad pipeline can establish the latter.
  *
  * FRAMES. Slippi numbers a match's frames from -123 (the first frame fighters run) and the timer
  * starts at 0. gw_Replay_ApplyMatch arms the counter, and gw_Replay_Tick advances it once per
@@ -33,6 +37,7 @@
  */
 #include "gw.h"
 #include "gw_rollback.h"
+#include "gw_slippi_pad.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -58,6 +63,7 @@ static struct {
     uint8_t game_info[GW_RP_GAME_INFO];
     uint32_t seed;
     uint8_t version[4];
+    int game_start_seen, truncated;
     int first, last; /* frame range with pre-frame data */
     GwRpInput *in;   /* (last - first + 1) * GW_RP_SLOTS */
     uint32_t *fs_seed; /* Frame Start (0x3A) seed per frame, Slippi 2.2+ */
@@ -112,11 +118,19 @@ static int rp_parse(const uint8_t *d, size_t n) {
     }
     pos = i + 12;
     end = pos + rp_be32(d + i + 8);
-    if (end > n || end == pos) {
+    if (end > n) {
+        rp.truncated = 1;
+        end = n;
+    } else if (end == pos) {
         end = n; /* a replay still being written has length 0 */
+        rp.truncated = 1;
     }
     if (d[pos] != 0x35) {
         gw_log("replay: raw block does not start with the event-size table");
+        return -1;
+    }
+    if (pos + 2 > end || d[pos + 1] < 1 || pos + 1 + d[pos + 1] > end ||
+        (d[pos + 1] - 1) % 3 != 0) {
         return -1;
     }
     for (i = 0; i + 3 <= (size_t) d[pos + 1] - 1; i += 3) {
@@ -133,9 +147,12 @@ static int rp_parse(const uint8_t *d, size_t n) {
                 break;
             }
             if (c + 1 + sz > end) {
+                rp.truncated = 1;
                 break;
             }
             if (cmd == 0x36 && pass == 0) {
+                if (sz < 0x140) { rp.truncated = 1; c += 1 + sz; continue; }
+                rp.game_start_seen = 1;
                 memcpy(rp.version, b + 1, 4);
                 memcpy(rp.game_info, b + 5, GW_RP_GAME_INFO);
                 rp.seed = rp_be32(b + 0x13D);
@@ -165,12 +182,14 @@ static int rp_parse(const uint8_t *d, size_t n) {
                     }
                 }
             } else if (cmd == 0x3A && pass == 1) {
+                if (sz < 8) { rp.truncated = 1; c += 1 + sz; continue; }
                 int frame = (int) rp_be32(b + 1);
                 if (frame >= rp.first && frame <= rp.last) {
                     rp.fs_seed[frame - rp.first] = rp_be32(b + 5);
                     rp.fs_has[frame - rp.first] = 1;
                 }
             } else if (cmd == 0x37) {
+                if (sz < 0x30) { rp.truncated = 1; c += 1 + sz; continue; }
                 int frame = (int) rp_be32(b + 1);
                 int port = b[5], fol = b[6] != 0;
                 if (pass == 0) {
@@ -195,12 +214,19 @@ static int rp_parse(const uint8_t *d, size_t n) {
                     r->raw[1] = sz >= 0x40 ? (int8_t) b[0x40] : 0;
                     r->raw[2] = sz >= 0x41 ? (int8_t) b[0x41] : 0;
                     r->raw[3] = sz >= 0x42 ? (int8_t) b[0x42] : 0;
+                    if (sz >= 0x42) {
+                        r->physical_buttons = (uint16_t) ((b[0x31] << 8) | b[0x32]);
+                        r->physical_l = rp_bef(b + 0x33);
+                        r->physical_r = rp_bef(b + 0x37);
+                        r->physical_complete = 1;
+                    }
                     r->present = 1;
                 }
             }
             c += 1 + sz;
         }
         if (pass == 0) {
+            if (rp.first > rp.last || rp.first < -123 || rp.last - rp.first > 3600000) return -1;
             size_t count = (size_t) (rp.last - rp.first + 1) * GW_RP_SLOTS;
             rp.in = (GwRpInput *) calloc(count, sizeof *rp.in);
             rp.fs_seed = (uint32_t *) calloc((size_t) (rp.last - rp.first + 1), 4);
@@ -1072,6 +1098,74 @@ int gw_Replay_PeekInput(int slot, int frame, GwRbInput *out) {
     *out = *r;
     out->confirmed = 1;
     return 1;
+}
+
+/* Only a complete modern two-human online recording may supply Slippi wire pads. The ordinary
+ * replay path deliberately remains permissive about older optional fields. */
+static const char *rp_fixture_reason = "not checked";
+const char *gw_Replay_SlippiFixtureReason(void) { return rp_fixture_reason; }
+
+int gw_Replay_SlippiFixtureInfo(GwSlippiFixtureInfo *out) {
+    int frame, port;
+    uint16_t stage;
+    rp_load();
+    if (!out || !rp.active || rp.live || !rp.game_start_seen || !rp.in) {
+        rp_fixture_reason = "no complete Game Start"; return 0;
+    }
+    if (rp.truncated) { rp_fixture_reason = "truncated replay"; return 0; }
+    if (rp.version[0] < 3 || (rp.version[0] == 3 && rp.version[1] < 17)) {
+        rp_fixture_reason = "Slippi version before 3.17"; return 0;
+    }
+    if (!rp.online) { rp_fixture_reason = "not a Slippi online match"; return 0; }
+    if (rp.first != GW_RP_FIRST_FRAME || rp.last < rp.first) {
+        rp_fixture_reason = "invalid frame range"; return 0;
+    }
+    stage = (uint16_t) ((rp.game_info[0x0E] << 8) | rp.game_info[0x0F]);
+    if (stage > 32) { rp_fixture_reason = "non-vanilla stage"; return 0; }
+    for (port = 0; port < 4; ++port) {
+        int type = rp.game_info[0x60 + 0x24 * port + 1];
+        if (type != (port < 2 ? 0 : 3)) {
+            rp_fixture_reason = "expected human ports 1 and 2 only"; return 0;
+        }
+    }
+    for (frame = rp.first; frame <= rp.last; ++frame) {
+        for (port = 0; port < 2; ++port) {
+            const GwRpInput *in = &rp.in[(frame - rp.first) * GW_RP_SLOTS + port * 2];
+            GwSlippiPad pad;
+            if (!in->present) { rp_fixture_reason = "missing player input"; return 0; }
+            if (!in->physical_complete) {
+                rp_fixture_reason = "missing physical input fields"; return 0;
+            }
+            if (!gw_SlippiPad_FromPhysical(in->physical_buttons, in->raw[0], in->raw[1],
+                                           in->raw[2], in->raw[3], in->physical_l,
+                                           in->physical_r, &pad)) {
+                rp_fixture_reason = "invalid physical trigger"; return 0;
+            }
+        }
+    }
+    memset(out, 0, sizeof *out);
+    memcpy(out->version, rp.version, 4);
+    out->online = 1;
+    out->human_ports[0] = 0;
+    out->human_ports[1] = 1;
+    out->first_frame = rp.first;
+    out->last_frame = rp.last;
+    out->seed = rp.seed;
+    memcpy(out->game_info, rp.game_info, sizeof out->game_info);
+    rp_fixture_reason = "ok";
+    return 1;
+}
+
+int gw_Replay_SlippiPad(int port, int slp_frame, GwSlippiPad *out) {
+    const GwRpInput *in;
+    rp_load();
+    if (!out || port < 0 || port > 1 || !rp.active || rp.live ||
+        slp_frame < rp.first || slp_frame > rp.last || !rp.in) return 0;
+    in = &rp.in[(slp_frame - rp.first) * GW_RP_SLOTS + port * 2];
+    return in->present && in->physical_complete &&
+           gw_SlippiPad_FromPhysical(in->physical_buttons, in->raw[0], in->raw[1],
+                                     in->raw[2], in->raw[3], in->physical_l,
+                                     in->physical_r, out);
 }
 
 /* The replay's frame range and whether it is armed - the session's fake network needs both. */

@@ -1923,7 +1923,7 @@ void ftData_8008572C(FighterKind kind)
                 u8* arch_hi = arch_lo + ftData_LoadedArchive->header.data_size;
                 u8* tab_lo = (u8*) fd->xC;
                 u8* tab_hi = arch_hi;
-                int w, n_main = 0;
+                int w, n_main = 0, n_holes = 0;
                 if ((u8*) fd > tab_lo && (u8*) fd < tab_hi) {
                     tab_hi = (u8*) fd;
                 }
@@ -1935,20 +1935,34 @@ void ftData_8008572C(FighterKind kind)
                 }
                 for (i = 0; i < ftData_Table_Unk0[kind].count; i++) {
                     u8* entry = (u8*) &fd->xC[i];
-                    if (entry < arch_lo || entry + sizeof(fd->xC[0]) > tab_hi ||
-                        !ftData_MexMotionRowOk(&fd->xC[i], arch_lo, arch_hi))
-                    {
+                    if (entry < arch_lo || entry + sizeof(fd->xC[0]) > tab_hi) {
+                        break;
+                    }
+                    if (!ftData_MexMotionRowOk(&fd->xC[i], arch_lo, arch_hi)) {
+                        /* An empty row (no name, clip or script) is a hole inside the table, not
+                         * its end: retail Kirby's row 4, Fox's 4 and a dozen more are empty, so
+                         * stopping there left every m-ex clone of them (Brawl Meta Knight) with 4
+                         * rewritten rows and the rest played as the wrong kind's. Holes are
+                         * skipped; any other non-motion row still ends the table. A walk over
+                         * every fighter file on the ACE disc ends on each table's last row. */
+                        const Fighter_WaitAnimData* row = &fd->xC[i];
+                        if (row->x0 == NULL && row->xC == NULL && row->x4 == 0 && row->x8 == 0) {
+                            n_holes++;
+                            continue;
+                        }
                         break;
                     }
                     fd->xC[i].x10_animCurrFlags =
                         (s32) ftData_MexAnimFlags((u32) fd->xC[i].x10_animCurrFlags, kind);
                     n_main++;
                 }
-                if (n_main != ftData_Table_Unk0[kind].count) {
+                if (n_main + n_holes != ftData_Table_Unk0[kind].count) {
                     OSReport("gw: kind %d: motion table ends after %d entries (the base has %d); "
                              "the rest keep their authored flags\n",
-                             kind, n_main, ftData_Table_Unk0[kind].count);
+                             kind, n_main + n_holes, ftData_Table_Unk0[kind].count);
                 }
+                OSReport("gw: kind %d: %d motion rows rewritten, %d empty rows skipped\n", kind,
+                         n_main, n_holes);
             }
             /* Same for the demo motions (results-screen / intro poses, fd->x14): they are
              * authored for m-ex's kind too, and the cross-kind path crashed on the results

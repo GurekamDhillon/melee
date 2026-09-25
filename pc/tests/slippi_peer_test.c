@@ -1,4 +1,5 @@
 #include "../platform/gw_slippi_peer.h"
+#include "../platform/gw_slippi_enet.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -62,6 +63,52 @@ static void two_process(void) {
   assert(GetExitCodeProcess(b.hProcess,&rc) && rc==0);
   CloseHandle(a.hThread); CloseHandle(a.hProcess); CloseHandle(b.hThread); CloseHandle(b.hProcess);
 }
+static void malformed_packet(void) {
+  ENetAddress addr={0}; ENetHost *raw; ENetPeer *sender=NULL; ENetEvent ev;
+  GwSlippiPeerConfig cfg={0}; GwSlippiPeerStats st={0}; GwSlippiPeer *target;
+  GwSlippiWirePad p={0}; Seen seen={0}; uint8_t bytes[GW_SLIPPI_MAX_PACKET];
+  ENetPacket *packet; size_t len; int i;
+  cfg.remote_host="127.0.0.1"; cfg.local_udp_port=49296; cfg.remote_udp_port=49295;
+  cfg.local_port_idx=0; cfg.remote_port_idx=1; cfg.loopback_mode=1;
+  cfg.user=&seen; cfg.on_remote_pad=on_pad;
+  target=gw_slippi_peer_start(&cfg); assert(target);
+  assert(enet_address_set_host_ip(&addr,"127.0.0.1")==0); addr.port=49295;
+  raw=enet_host_create(&addr,2,3,0,0); assert(raw);
+  for (i=0;i<200;i++) {
+    gw_slippi_peer_poll(target,1);
+    while (enet_host_service(raw,&ev,0)>0) {
+      if (ev.type==ENET_EVENT_TYPE_CONNECT) sender=ev.peer;
+      if (ev.type==ENET_EVENT_TYPE_RECEIVE) enet_packet_destroy(ev.packet);
+    }
+    gw_slippi_peer_stats(target,&st);
+    if (sender && st.connected) break;
+    Sleep(5);
+  }
+  assert(sender && st.connected);
+  p.frame=1; p.player_idx=1; p.count=1; p.pads[0][0]=0x7f;
+  len=gw_slippi_wire_encode_pad(bytes,sizeof bytes,&p); assert(len==22);
+  bytes[5]=0; /* wrong sender player index */
+  packet=enet_packet_create(bytes,len,ENET_PACKET_FLAG_UNSEQUENCED); assert(packet);
+  assert(enet_peer_send(sender,1,packet)==0); enet_host_flush(raw);
+  for (i=0;i<20;i++) { gw_slippi_peer_poll(target,1); Sleep(5); }
+  gw_slippi_peer_stats(target,&st); assert(st.packets_rejected>=1 && seen.count==0);
+  bytes[5]=1;
+  packet=enet_packet_create(bytes,len-1,ENET_PACKET_FLAG_UNSEQUENCED); assert(packet);
+  assert(enet_peer_send(sender,1,packet)==0); enet_host_flush(raw);
+  for (i=0;i<20;i++) { gw_slippi_peer_poll(target,1); Sleep(5); }
+  gw_slippi_peer_stats(target,&st); assert(st.packets_rejected>=2 && seen.count==0);
+  p.frame=2; len=gw_slippi_wire_encode_pad(bytes,sizeof bytes,&p); assert(len==22);
+  packet=enet_packet_create(bytes,len,ENET_PACKET_FLAG_UNSEQUENCED); assert(packet);
+  assert(enet_peer_send(sender,1,packet)==0); enet_host_flush(raw);
+  for (i=0;i<20;i++) { gw_slippi_peer_poll(target,2); Sleep(5); }
+  gw_slippi_peer_stats(target,&st); assert(st.packets_rejected>=3 && seen.count==0);
+  p.frame=1; len=gw_slippi_wire_encode_pad(bytes,sizeof bytes,&p); assert(len==22);
+  packet=enet_packet_create(bytes,len,ENET_PACKET_FLAG_UNSEQUENCED); assert(packet);
+  assert(enet_peer_send(sender,1,packet)==0); enet_host_flush(raw);
+  for (i=0;i<100;i++) { gw_slippi_peer_poll(target,1); if (seen.count) break; Sleep(5); }
+  assert(seen.count==1 && seen.last_frame==1 && seen.last_pad[0]==0x7f);
+  enet_host_destroy(raw); gw_slippi_peer_close(target);
+}
 int main(int argc,char **argv) {
   Seen a={0},b={0}; GwSlippiPeerConfig ca={0},cb={0}; GwSlippiPeer *pa,*pb;
   GwSlippiPeerStats sa,sb; uint8_t pad1[8]={1,2,3,4,5,6,7,8},pad2[8]={9,8,7,6,5,4,3,2};
@@ -109,5 +156,6 @@ int main(int argc,char **argv) {
   gw_slippi_peer_stats(pa,&sa); assert(sa.queued_local<=128);
   gw_slippi_peer_close(pa); gw_slippi_peer_close(pb);
   two_process();
+  malformed_packet();
   puts("slippi ENet loopback passed"); return 0;
 }

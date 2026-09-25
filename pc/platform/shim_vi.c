@@ -14,10 +14,14 @@
 #include "shim_gx.h"
 #include "shim_os.h"
 #include "gw_overlay.h"
+#include "gw_window_drag.h"
 
 #include <aurora/aurora.h>
 #include <aurora/event.h>
 #include <aurora/gfx.h> /* AuroraStats: MELEE_PROFILE_FRAMES */
+#include <SDL3/SDL_properties.h>
+#include <SDL3/SDL_system.h>
+#include <SDL3/SDL_video.h>
 #include <dolphin/gx.h>
 #include <dolphin/vi.h>
 
@@ -42,6 +46,112 @@ static bool gw_frame_has_content;
 static uint32_t gw_retrace_count;
 static void *gw_next_framebuffer;
 static bool gw_exiting;
+
+/* Win32's ordinary title-bar drag enters a modal message loop inside SDL_PollEvent.
+ * Since the game's simulation and ENet pump run on that thread, it stops both
+ * until mouse-up. Consume only the caption's primary-button down message and
+ * move the exact Aurora HWND during the ordinary frame tick instead. */
+static struct {
+  HWND hwnd;
+  GwWindowDrag position;
+  RECT initial_rect;
+  int primary_button, was_maximized;
+} gw_drag;
+
+static bool SDLCALL gw_drag_message(void *userdata, MSG *message) {
+  POINT cursor;
+  RECT rect;
+  int swapped;
+  (void)userdata;
+  if (!message || message->hwnd != gw_drag.hwnd) return true;
+  swapped = GetSystemMetrics(SM_SWAPBUTTON) != 0;
+  /* Windows swaps logical button messages itself. WM_NCLBUTTONDOWN is the
+   * primary caption click in either configuration; GetAsyncKeyState below
+   * uses the physical primary key, which does change with SM_SWAPBUTTON. */
+  if (message->message == WM_NCLBUTTONDOWN && message->wParam == HTCAPTION) {
+    /* Even a failed position query must not fall back to the modal drag. */
+    gw_window_drag_cancel(&gw_drag.position);
+    /* Suppressing DefWindowProc's caption down also suppresses its usual
+     * activation path. Activate this exact owned HWND before dragging. */
+    SetForegroundWindow(gw_drag.hwnd);
+    if (GetCursorPos(&cursor) && GetWindowRect(gw_drag.hwnd, &rect)) {
+      gw_window_drag_begin(&gw_drag.position, cursor.x, cursor.y, rect.left, rect.top);
+      gw_drag.initial_rect = rect;
+      gw_drag.was_maximized = IsZoomed(gw_drag.hwnd) != 0;
+      gw_drag.primary_button = swapped ? VK_RBUTTON : VK_LBUTTON;
+    }
+    return false;
+  }
+  if (message->message == WM_NCLBUTTONDBLCLK || message->message == WM_NCRBUTTONDBLCLK ||
+      message->message == WM_NCLBUTTONUP || message->message == WM_NCRBUTTONUP ||
+      message->message == WM_CANCELMODE || message->message == WM_CAPTURECHANGED ||
+      message->message == WM_KILLFOCUS || message->message == WM_DESTROY ||
+      (message->message == WM_ACTIVATEAPP && !message->wParam))
+    gw_window_drag_cancel(&gw_drag.position);
+  return true;
+}
+
+bool gw_window_drag_install(SDL_Window *window) {
+  SDL_PropertiesID properties;
+  DWORD process_id = 0;
+  if (!window) return false;
+  properties = SDL_GetWindowProperties(window);
+  gw_drag.hwnd = properties ?
+      (HWND)SDL_GetPointerProperty(properties, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL) : NULL;
+  if (!gw_drag.hwnd || !IsWindow(gw_drag.hwnd) ||
+      GetWindowThreadProcessId(gw_drag.hwnd, &process_id) != GetCurrentThreadId() ||
+      process_id != GetCurrentProcessId()) return false;
+  SDL_SetWindowsMessageHook(gw_drag_message, NULL);
+  gw_log("window: nonmodal caption dragging enabled");
+  return true;
+}
+
+static void gw_window_drag_tick(void) {
+  POINT cursor;
+  RECT rect;
+  int x, y, tx, ty;
+  if (!gw_drag.position.active) return;
+  if (!IsWindow(gw_drag.hwnd) || IsIconic(gw_drag.hwnd) ||
+      GetForegroundWindow() != gw_drag.hwnd ||
+      !(GetAsyncKeyState(gw_drag.primary_button) & 0x8000) || !GetCursorPos(&cursor)) {
+    gw_window_drag_cancel(&gw_drag.position);
+    return;
+  }
+  tx = GetSystemMetrics(SM_CXDRAG); if (tx < 1) tx = 1;
+  ty = GetSystemMetrics(SM_CYDRAG); if (ty < 1) ty = 1;
+  if (!gw_window_drag_step(&gw_drag.position, cursor.x, cursor.y, tx, ty, &x, &y)) return;
+  if (gw_drag.was_maximized && IsZoomed(gw_drag.hwnd)) {
+    int old_width = gw_drag.initial_rect.right - gw_drag.initial_rect.left;
+    int relative_x = cursor.x - gw_drag.initial_rect.left;
+    int width, height, offset_x, offset_y;
+    if (!ShowWindow(gw_drag.hwnd, SW_RESTORE) || !GetWindowRect(gw_drag.hwnd, &rect)) {
+      gw_window_drag_cancel(&gw_drag.position);
+      return;
+    }
+    width = rect.right - rect.left; height = rect.bottom - rect.top;
+    if (old_width < 1 || width < 1 || height < 1) {
+      gw_window_drag_cancel(&gw_drag.position);
+      return;
+    }
+    if (relative_x < 0) relative_x = 0;
+    if (relative_x > old_width) relative_x = old_width;
+    offset_x = (int)((int64_t)relative_x * width / old_width);
+    offset_y = (GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME)) / 2;
+    if (offset_y >= height) offset_y = height - 1;
+    x = cursor.x - offset_x; y = cursor.y - offset_y;
+    gw_window_drag_begin(&gw_drag.position, cursor.x, cursor.y, x, y);
+    gw_drag.position.moved = 1;
+    gw_drag.was_maximized = 0;
+  }
+  if (!GetWindowRect(gw_drag.hwnd, &rect)) {
+    gw_window_drag_cancel(&gw_drag.position);
+    return;
+  }
+  if (rect.left == x && rect.top == y) return;
+  if (!SetWindowPos(gw_drag.hwnd, NULL, x, y, 0, 0,
+                    SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE))
+    gw_window_drag_cancel(&gw_drag.position);
+}
 
 /* ---- virtual GameCube clock -------------------------------------------------------------- */
 
@@ -1509,6 +1619,7 @@ void gw_frame_tick(void) {
   }
 
   gw_handle_events();
+  gw_window_drag_tick();
   if (prof) {
     t_events = gw_prof_now();
   }

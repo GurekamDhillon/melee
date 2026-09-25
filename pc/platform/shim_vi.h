@@ -9,6 +9,9 @@ extern "C" {
 #endif
 
 bool gw_frame_init(void);
+struct SDL_Window;
+/* Install the nonmodal Windows caption drag on Aurora's exact game window. */
+bool gw_window_drag_install(struct SDL_Window *window);
 
 /* One video field: presents a finished frame, pumps window events, fires the game's retrace
  * callbacks, advances the virtual clock and runs anything that came due (alarms, async I/O).

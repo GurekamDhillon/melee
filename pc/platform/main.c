@@ -283,6 +283,9 @@ int main(int argc, char *argv[]) {
       .mem2Size = 0,
   };
   AuroraInfo info = aurora_initialize(argc, argv, &config);
+  if (!gw_window_drag_install(info.window)) {
+    gw_panic("could not install nonmodal window drag");
+  }
   gw_log("melee-pc: aurora backend %d, window %ux%u", (int)info.backend, info.windowSize.width,
          info.windowSize.height);
   gw_apply_window_env();

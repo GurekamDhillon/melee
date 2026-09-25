@@ -14,8 +14,11 @@
   <img alt="Netplay: rollback" src="pc/docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="pc/docs/readme/brand/mex.svg" height="28">
   <img alt="Replays: Slippi" src="pc/docs/readme/brand/slippi.svg" height="28">
+  <a href="https://discord.gg/FU4KTGQS5m"><img alt="Join GD's Workshop on Discord" src="pc/docs/readme/brand/discord.svg" height="28"></a>
   <a href="pc/LICENSE"><img alt="License: GPL-2.0-or-later" src="https://img.shields.io/badge/license-GPL--2.0--or--later-3a3f4b"></a>
 </p>
+
+<p align="center">Join <a href="https://discord.gg/FU4KTGQS5m">GD's Workshop on Discord</a> for matchmaking, setup help, bug reports, and modding.</p>
 
 This fork of [doldecomp/melee](https://github.com/doldecomp/melee) adds a native PC port of
 *Super Smash Bros. Melee* (NTSC 1.02, `GALE01`) on the **`pc-port`** branch. It is built from the

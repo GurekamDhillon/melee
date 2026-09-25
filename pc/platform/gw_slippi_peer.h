@@ -17,7 +17,8 @@ typedef struct GwSlippiPeerConfig {
   const char *match_id; /* diagnostics only; Slippi PAD has no match ID */
   int loopback_mode;
   void *user;
-  void (*on_remote_pad)(void *user, int online_frame, const uint8_t pad[8]);
+  /* Return nonzero only after the frame is stored; rejected frames remain unacknowledged. */
+  int (*on_remote_pad)(void *user, int online_frame, const uint8_t pad[8]);
   void (*on_remote_checksum)(void *user, int checksum_frame, uint32_t checksum);
   void (*on_selections)(void *user, const GwSlippiWireSelections *s);
   void (*on_prep)(void *user, const GwSlippiWirePrep *s);

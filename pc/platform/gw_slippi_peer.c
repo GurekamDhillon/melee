@@ -80,7 +80,19 @@ fail:
 }
 
 static int valid_peer(const GwSlippiPeer *p,const ENetPeer *remote) {
-  return remote && remote->address.host==p->remote.host && remote->address.port==p->remote.port;
+  /* NAT may remap the source UDP port after matchmaking. Dolphin accepts the
+   * assigned host's incoming connection and binds the resulting ENetPeer. */
+  return remote && remote->address.host==p->remote.host;
+}
+
+static ENetPeer *connected_alternative(const GwSlippiPeer *p,const ENetPeer *except) {
+  size_t i;
+  for (i=0;i<p->host->peerCount;i++) {
+    ENetPeer *candidate=&p->host->peers[i];
+    if (candidate!=except && candidate->state==ENET_PEER_STATE_CONNECTED &&
+        valid_peer(p,candidate)) return candidate;
+  }
+  return NULL;
 }
 
 static void receive_pad(GwSlippiPeer *p,const uint8_t *data,size_t len,int current) {
@@ -97,10 +109,12 @@ static void receive_pad(GwSlippiPeer *p,const uint8_t *data,size_t len,int curre
     int index=w.frame-i;
     if (i<min_frame || i<=p->stats.last_received_frame) continue;
     if (i!=p->stats.last_received_frame+1) { p->stats.packets_rejected++; return; }
-    if (p->cfg.on_remote_pad) p->cfg.on_remote_pad(p->cfg.user,i,w.pads[index]);
+    if (!p->cfg.on_remote_pad || !p->cfg.on_remote_pad(p->cfg.user,i,w.pads[index])) {
+      p->stats.packets_rejected++; break;
+    }
     p->stats.last_received_frame=i; p->stats.pads_received++;
   }
-  if (w.checksum_frame>=0 && w.checksum_frame<=w.frame) {
+  if (w.checksum_frame>=0 && w.checksum_frame<=p->stats.last_received_frame) {
     if (w.checksum_frame>p->stats.remote_checksum_frame) {
       p->stats.remote_checksum_frame=w.checksum_frame;
       p->stats.remote_checksum=w.checksum;
@@ -160,9 +174,11 @@ void gw_slippi_peer_poll(GwSlippiPeer *p,int current_online_frame) {
       p->stats.packets_rejected++; continue;
     }
     if (ev.type==ENET_EVENT_TYPE_CONNECT) {
-      p->active=ev.peer; p->stats.connected=1; send_queued(p,0);
+      if (!p->active || p->active->state!=ENET_PEER_STATE_CONNECTED) p->active=ev.peer;
+      p->stats.connected=1; send_queued(p,0);
     } else if (ev.type==ENET_EVENT_TYPE_DISCONNECT) {
-      if (p->active==ev.peer) { p->active=NULL; p->stats.connected=0; }
+      if (p->active==ev.peer) p->active=connected_alternative(p,ev.peer);
+      p->stats.connected=p->active!=NULL;
     } else if (ev.type==ENET_EVENT_TYPE_RECEIVE) {
       const uint8_t *data=ev.packet->data; size_t len=ev.packet->dataLength;
       p->stats.packets_received++;
@@ -183,7 +199,9 @@ int gw_slippi_peer_send_pad(GwSlippiPeer *p,int frame,const uint8_t pad[8],
                             int checksum_frame,uint32_t checksum) {
   if (!p || !pad || frame<1 || frame!=p->stats.last_sent_frame+1 ||
       checksum_frame>frame) return 0;
-  if (p->queued==GW_SLIPPI_MAX_PADS) p->queued--;
+  /* Evicting an unacknowledged frame makes the receiver's contiguous stream
+   * unrecoverable. Let the caller stop or wait for an ACK instead. */
+  if (p->queued==GW_SLIPPI_MAX_PADS) return 0;
   memmove(p->queue+1,p->queue,p->queued*sizeof p->queue[0]);
   p->queue[0].frame=frame; p->queue[0].checksum_frame=checksum_frame;
   p->queue[0].checksum=checksum; memcpy(p->queue[0].bytes,pad,8);

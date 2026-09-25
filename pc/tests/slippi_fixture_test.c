@@ -8,16 +8,21 @@
 #include "../platform/gw_replay.c"
 
 void gw_log(const char *fmt, ...) { (void) fmt; }
+static int external_slippi_port = -1;
+static int rollback_active;
+static int used_pad_on;
+static GwRbInput used_pad;
+int gw_rb_slippi_local_port(void) { return external_slippi_port; }
 /* Unused game callbacks retained by the Windows linker for this source-inclusion test. */
 uint32_t gw_Netplay_Handshake(uint8_t *p, int n, int off, int len) {
     (void) p; (void) n; (void) off; (void) len; return 0;
 }
-int gw_rb_active(void) { return 0; }
+int gw_rb_active(void) { return rollback_active; }
 const GwRbInput *gw_RB_InputFor(int port, int follower, int frame) {
     (void) port; (void) follower; (void) frame; return NULL;
 }
 const GwRbInput *gw_RB_InputAny(int port, int frame) {
-    (void) port; (void) frame; return NULL;
+    (void) port; (void) frame; return used_pad_on ? &used_pad : NULL;
 }
 int gw_Snap_Resimulating(void) { return 0; }
 
@@ -64,7 +69,33 @@ int main(void) {
     uint8_t d[2048] = {0};
     GwSlippiFixtureInfo info;
     GwSlippiPad pad;
+    int cursor[4];
     size_t n;
+
+    rec.frame = -100; rec.seed = 0xCAFEBABE;
+    gw_Replay_GetCursor(cursor);
+    rec.frame = 77; rec.seed = 0;
+    gw_Replay_SetCursor(cursor);
+    assert(rec.frame == -100 && rec.seed == 0xCAFEBABE);
+    rec.f = tmpfile(); assert(rec.f != NULL); rec.frame = -124;
+    rollback_active = 1;
+    memset(&used_pad, 0, sizeof used_pad);
+    used_pad_on = 1; used_pad.is_raw = used_pad.present = 1;
+    used_pad.buttons = 0x0100; used_pad.raw[0] = 9;
+    used_pad.pad_l = 70; used_pad.pad_r = 140;
+    rec_tick(0x11111111);
+    gw_Replay_RecordInput(0, 0, 0, 0, 0, 0, 0, 0x100, 0, 0, 0, 0, 0);
+    rec.frame = -124; /* rollback resimulates the same frame with final input */
+    rec_tick(0x22222222);
+    gw_Replay_RecordInput(0, 0, 0, 0, 0, 0, 0, 0x200, 0, 0, 0, 0, 0);
+    assert(ftell(rec.f) == 0); /* no speculative event hit disk */
+    gw_Replay_TraceFlushUpTo(-123);
+    assert(ftell(rec.f) == (long) (2 + GW_RP_SZ_FSTART + GW_RP_SZ_PRE));
+    fseek(rec.f, 13 + 0x31, SEEK_SET);
+    assert(fgetc(rec.f) == 1 && fgetc(rec.f) == 0);
+    assert(fgetc(rec.f) == 0x3F && fgetc(rec.f) == 0x00); /* L = 70/140 = 0.5 */
+    fseek(rec.f, 13 + 0x3B, SEEK_SET); assert(fgetc(rec.f) == 9);
+    fclose(rec.f); rec.f = NULL; rollback_active = used_pad_on = 0;
 
     n = fixture(d, 17, 0x42, 0, 0); clear_replay();
     assert(rp_parse(d, n) == 0); rp.active = 1;
@@ -77,6 +108,24 @@ int main(void) {
     assert(pad.bytes[6] == 0 && pad.bytes[7] == 140);
     assert(!gw_Replay_SlippiPad(2, -123, &pad));
     assert(!gw_Replay_SlippiPad(-1, -123, &pad));
+    rp.frame = -123;
+    external_slippi_port = 0;
+    gw_Replay_SlippiLocalMismatchReset();
+    gw_Replay_RecordInput(1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    assert(gw_Replay_SlippiLocalMismatches() == 0); /* remote output checked offline */
+    gw_Replay_RecordInput(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    assert(gw_Replay_SlippiLocalMismatches() == 1);
+    external_slippi_port = -1;
+    /* The external two-client mode follows Slippi's online rule, even when a fixture's
+       Frame Start seed has a conflicting value. Ordinary replay still reads that value. */
+    rp.fs_seed = (uint32_t *) realloc(rp.fs_seed, 2 * sizeof *rp.fs_seed);
+    rp.fs_has = (uint8_t *) realloc(rp.fs_has, 2);
+    rp.fs_seed[1] = 0xDEADBEEF; rp.fs_has[1] = 1;
+    rp.last = rp.frame = -122;
+    external_slippi_port = 0;
+    assert(gw_Replay_ResyncSeed() == 0x12355678);
+    external_slippi_port = -1;
+    assert(gw_Replay_ResyncSeed() == 0xDEADBEEF);
 
     n = fixture(d, 16, 0x42, 0, 0); clear_replay();
     assert(rp_parse(d, n) == 0); rp.active = 1;

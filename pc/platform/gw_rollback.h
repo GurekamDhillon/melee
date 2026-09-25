@@ -77,6 +77,22 @@ typedef struct GwRbInput {
     uint8_t physical_complete;
 } GwRbInput;
 
+typedef struct GwSlippiPad GwSlippiPad;
+
+/* External Slippi source. Only the experimental mode calls configure; it does so after
+ * MELEE_SLP has loaded a validated two-human online fixture and before entering the VS scene.
+ * Ports are zero-based. peer_tick runs on the game thread once per render tick before rollback
+ * planning, with the online PAD frame for the NEXT applied simulation frame. */
+int gw_rb_slippi_configure(int local_port, int delay, void (*peer_tick)(int online_frame));
+void gw_rb_slippi_disable(void);
+int gw_rb_slippi_local_pad(int online_frame, GwSlippiPad *out);
+int gw_rb_slippi_receive(int epoch, int remote_port, int online_frame, const GwSlippiPad *pad);
+int gw_rb_local_fixture_reads(int port);
+int gw_rb_slippi_local_port(void); /* -1 outside the experimental mode */
+/* Finalizes trace and recording through the last replay frame once all remote pads have arrived
+ * and any correction has been resimulated. Does not simulate an extra game frame. */
+int gw_rb_slippi_finalized(void);
+
 /* ======================= THE NETWORK-FACING INTERFACE ======================================== */
 
 /* True while a rollback session is running (a match is live and a session was configured). */

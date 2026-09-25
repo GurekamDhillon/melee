@@ -18,6 +18,7 @@
  */
 #include "gw.h"
 #include "gw_rollback.h"
+#include "gw_slippi_pad.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -103,6 +104,9 @@ static struct {
     int n_held;           /* ticks the game itself held the frame (loading hold): clock paused */
     int last;             /* the replay's last frame (fake) */
     int net;              /* netplay: a real peer delivers the remote port's inputs (gw_netplay.c) */
+    int slippi_configured, slippi, slippi_port, slippi_delay, slippi_fault;
+    void (*slippi_tick)(int online_frame);
+    int local_fixture_reads[4];
 
     int slot_present[GW_RB_SLOTS];
     int slot_remote[GW_RB_SLOTS];
@@ -161,11 +165,12 @@ static void rb_init(void) {
     }
     rb.tried = 1;
     v = getenv("MELEE_RB_FAKE");
-    rb.net = gw_Netplay_Enabled() && gw_Replay_Active();
-    if (!rb.net && (v == NULL || v[0] == '\0' || !gw_Replay_Active())) {
+    rb.net = !rb.slippi_configured && gw_Netplay_Enabled() && gw_Replay_Active();
+    rb.slippi = rb.slippi_configured && gw_Replay_Active();
+    if (!rb.net && !rb.slippi && (v == NULL || v[0] == '\0' || !gw_Replay_Active())) {
         return;
     }
-    if (rb.net) {
+    if (rb.net || rb.slippi) {
         v = "0";
     }
     rb.fake_lat = atoi(v);
@@ -200,11 +205,58 @@ static void rb_init(void) {
         rb.fake_lat = rb.fake_jit = rb.fake_loss = 0;
         gw_log("rb: netplay - local port %d, remote port %d", gw_Netplay_LocalPort() + 1,
                gw_Netplay_RemotePort() + 1);
+    } else if (rb.slippi) {
+        rb.src = 3;
+        rb.remote_mask = 1u << (1 - rb.slippi_port);
+        rb.delay = rb.slippi_delay;
+        rb.fake_lat = rb.fake_jit = rb.fake_loss = 0;
+        gw_log("rb: Slippi fixture source - local port %d, remote port %d, delay %d",
+               rb.slippi_port + 1, 2 - rb.slippi_port, rb.delay);
     }
     rb.on = 1;
     gw_log("rb: session ON (fake network: latency %d, jitter %d, loss %d%%; input delay %d, max "
            "rollback %d, remote ports 0x%X; inputs from %s)", rb.fake_lat, rb.fake_jit, rb.fake_loss,
            rb.delay, rb.maxb, rb.remote_mask, rb.src == 2 ? "live pads" : rb.src == 1 ? "the pad generator" : "the replay");
+}
+
+int gw_rb_slippi_configure(int local_port, int delay, void (*peer_tick)(int)) {
+    GwSlippiFixtureInfo info;
+    int f;
+    if ((local_port != 0 && local_port != 1) || delay < 0 || delay > 8 || !peer_tick ||
+        !gw_Replay_SlippiFixtureInfo(&info) || info.first_frame != RB_FIRST ||
+        info.human_ports[0] != 0 || info.human_ports[1] != 1) return 0;
+    /* Slippi sends neutral dummy pads for the first D online frames, before a local sample can
+       exist. A fixture that disagrees with these applied inputs cannot be driven faithfully. */
+    for (f = RB_FIRST; f < RB_FIRST + delay; ++f) {
+        GwSlippiPad pad;
+        const uint8_t neutral[8] = {0};
+        if (f > info.last_frame || !gw_Replay_SlippiPad(local_port, f, &pad) ||
+            memcmp(pad.bytes, neutral, sizeof neutral) != 0) {
+            gw_log("rb: Slippi fixture port %d has non-neutral input in initial delay window",
+                   local_port + 1);
+            return 0;
+        }
+    }
+    rb.slippi_configured = 1;
+    rb.slippi_port = local_port;
+    rb.slippi_delay = delay;
+    rb.slippi_tick = peer_tick;
+    rb.slippi_fault = 0;
+    rb.tried = rb.on = 0;
+    memset(rb.local_fixture_reads, 0, sizeof rb.local_fixture_reads);
+    gw_Replay_SlippiLocalMismatchReset();
+    return 1;
+}
+
+void gw_rb_slippi_disable(void) {
+    rb.slippi_configured = rb.slippi = rb.on = rb.in_match = 0;
+    rb.slippi_tick = NULL;
+    rb.tried = 0;
+}
+
+int gw_rb_slippi_local_port(void) { return rb.slippi ? rb.slippi_port : -1; }
+int gw_rb_local_fixture_reads(int port) {
+    return port >= 0 && port < 4 ? rb.local_fixture_reads[port] : 0;
 }
 
 /* Netplay: the guest adopts the host's input delay once the handshake has it (before frame -123). */
@@ -259,6 +311,8 @@ void gw_RB_SceneBegin(int scene_kind) {
         memset(&rb.plan, 0, sizeof rb.plan);
         rb.iter_kind = 0;
         rb.npend = 0;
+        rb.slippi_fault = 0;
+        memset(rb.local_fixture_reads, 0, sizeof rb.local_fixture_reads);
         memset(rb.latch, 0, sizeof rb.latch);
         for (s = 0; s < GW_RB_SLOTS; ++s) {
             rb.conf_slot[s] = RB_FIRST - 1;
@@ -448,6 +502,43 @@ int gw_rb_local_input_for_send(int slot, int frame, GwRbInput *out) {
     return 1;
 }
 
+int gw_rb_slippi_local_pad(int online_frame, GwSlippiPad *out) {
+    GwRbInput in;
+    int frame = gw_SlippiPad_SlpFrame(online_frame);
+    if (!out || !rb.slippi || !rb.opened || frame < RB_FIRST || frame > rb.last ||
+        !gw_rb_local_input_for_send(rb.slippi_port * 2, frame, &in) || !in.is_raw || !in.present)
+        return 0;
+    out->bytes[0] = (uint8_t) (in.buttons >> 8);
+    out->bytes[1] = (uint8_t) in.buttons;
+    out->bytes[2] = (uint8_t) in.raw[0];
+    out->bytes[3] = (uint8_t) in.raw[1];
+    out->bytes[4] = (uint8_t) in.raw[2];
+    out->bytes[5] = (uint8_t) in.raw[3];
+    out->bytes[6] = in.pad_l;
+    out->bytes[7] = in.pad_r;
+    return 1;
+}
+
+int gw_rb_slippi_receive(int epoch, int remote_port, int online_frame, const GwSlippiPad *pad) {
+    GwRbInput in;
+    RbEntry *old;
+    int frame = gw_SlippiPad_SlpFrame(online_frame);
+    int slot = remote_port * 2;
+    int now = gw_Replay_Frame();
+    if (!rb.slippi || !rb.in_match || !rb.opened || !pad || epoch != rb.epoch ||
+        remote_port != 1 - rb.slippi_port || frame < RB_FIRST || frame > rb.last ||
+        frame < now - (RB_RING - 8) || frame > now + (RB_RING - 8) ||
+        !rb.slot_present[slot] || !rb.slot_remote[slot] || !gw_SlippiPad_ToRb(pad, &in)) return 0;
+    if (frame < RB_FIRST + rb.delay) {
+        const uint8_t neutral[8] = {0};
+        if (memcmp(pad->bytes, neutral, sizeof neutral) != 0) return 0;
+    }
+    old = rb_at(rb.truth[slot], frame, 0);
+    if (old != NULL) return rb_same(&old->in, &in);
+    gw_rb_submit_remote_input(slot, frame, &in);
+    return rb_at(rb.truth[slot], frame, 0) != NULL;
+}
+
 int gw_rb_confirmed_frame(void) {
     int c = rb_conf();
     return c == INT_MAX ? gw_Replay_Frame() : c;
@@ -508,6 +599,19 @@ void gw_rb_request_wait(int frames) {
 
 int gw_rb_rollbacks(void) { return rb.n_rollbacks; }
 int gw_rb_desyncs(void) { return rb.n_desync; }
+
+int gw_rb_slippi_finalized(void) {
+    RbEntry *local_last;
+    if (!rb.slippi || !rb.opened) return 0;
+    local_last = rb_at(rb.truth[rb.slippi_port * 2], rb.last, 0);
+    if (rb.slippi_fault || gw_Replay_Frame() < rb.last ||
+        rb_conf() < rb.last || rb.first_wrong != RB_NONE ||
+        (rb.plan.rollback && rb.plan.i < rb.plan.k) ||
+        local_last == NULL || !local_last->in.present ||
+        gw_Replay_SlippiLocalMismatches() != 0) return 0;
+    gw_Replay_TraceFlushUpTo(rb.last);
+    return 1;
+}
 
 const GwRbInput *gw_RB_InputFor(int port, int follower, int frame) {
     RbEntry *e;
@@ -770,7 +874,7 @@ int gw_RB_Iterations(int count) {
         for (s = 0; s < GW_RB_SLOTS; ++s) {
             GwRbInput probe;
             int p = s >> 1;
-            rb.slot_present[s] = gw_Replay_Live()
+            rb.slot_present[s] = rb.slippi ? (s == 0 || s == 2) : gw_Replay_Live()
                                      ? (!(s & 1) && gw_Replay_PortHuman(p))
                                      : gw_Replay_PeekInput(s, RB_FIRST, &probe) && (rb.src == 0 || !(s & 1));
             rb.slot_remote[s] = (rb.remote_mask >> p) & 1u;
@@ -798,6 +902,14 @@ int gw_RB_Iterations(int count) {
                 if (rb.slot_remote[s]) {
                     rb.conf_slot[s] = RB_FIRST + rb.delay - 1;
                 }
+            }
+        }
+        if (rb.slippi && rb.delay > 0) {
+            /* Only this client's first D pads are known locally. The peer must deliver and
+               confirm its own neutral pads over the actual connection. */
+            for (s = RB_FIRST; s < RB_FIRST + rb.delay; ++s) {
+                RbEntry *e = rb_at(rb.truth[rb.slippi_port * 2], s, 1);
+                rb_neutral_raw(&e->in);
             }
         }
         {
@@ -905,7 +1017,11 @@ int gw_RB_Iterations(int count) {
         gw_log("rb: clock tk %ld frame %d lead %ld held %d count %d", rb.tk, frame,
                rb.tk - (long) (frame - RB_FIRST), rb.n_held, count);
     }
-    if (rb.net) {
+    if (rb.slippi) {
+        if (rb.slippi_tick != NULL) {
+            rb.slippi_tick(gw_SlippiPad_OnlineFrame(frame + 1));
+        }
+    } else if (rb.net) {
         gw_Netplay_Tick(); /* receive, deliver remote inputs, send ours, time sync */
     } else {
         rb_fake_deliver();
@@ -945,7 +1061,8 @@ int gw_RB_Iterations(int count) {
     }
     /* stall: never simulate more than maxb frames beyond the newest fully-confirmed one; and at
        the replay's end wait for every frame to be confirmed before the "past the end" tick */
-    if (frame >= RB_FIRST && (n - conf > rb.maxb || (n > rb.last && conf < rb.last))) {
+    if (frame >= RB_FIRST && (n - conf > rb.maxb ||
+        (rb.slippi ? n > rb.last : (n > rb.last && conf < rb.last)))) {
         rb.plan.new_frame = 0;
         rb.n_stall_ticks++;
     } else if (rb.wait_ticks > 0 && frame >= RB_FIRST) {
@@ -1063,12 +1180,16 @@ static void rb_prepare(int next) {
         } else if (!rb.slot_remote[s]) {
             /* a local slot: the fake "player" (the replay or the generator) provides it; live pads
                were sampled D frames ago (rb_live_sample) and only a hole reaches here */
-            if (rb.src != 2 && rb_src_peek(s, next, &in)) {
+            if (rb.src != 2 && rb.src != 3 && rb_src_peek(s, next, &in)) {
                 RbEntry *nt = rb_at(rb.truth[s], next, 1);
                 nt->in = in;
                 nt->in.confirmed = 1;
             } else if (rb.src != 0) {
                 rb_neutral_raw(&in);
+                if (rb.slippi && next <= rb.last) {
+                    rb.slippi_fault = 1;
+                    gw_log("rb: Slippi local pad missing for frame %d", next);
+                }
             } else {
                 memset(&in, 0, sizeof in);
             }
@@ -1088,6 +1209,22 @@ static void rb_prepare(int next) {
         }
         u->in = in;
     }
+}
+
+static void rb_slippi_sample(int next) {
+    int frame = next + rb.delay;
+    int slot = rb.slippi_port * 2;
+    GwSlippiPad pad;
+    GwRbInput in;
+    if (frame > rb.last || rb_at(rb.truth[slot], frame, 0) != NULL) return;
+    if (!gw_Replay_SlippiPad(rb.slippi_port, frame, &pad) || !gw_SlippiPad_ToRb(&pad, &in)) {
+        rb.slippi_fault = 1;
+        gw_log("rb: Slippi fixture pad missing for local port %d frame %d", rb.slippi_port + 1,
+               frame);
+        return;
+    }
+    rb.local_fixture_reads[rb.slippi_port]++;
+    gw_rb_submit_local_input(slot, frame, &in);
 }
 
 void gw_RB_IterStart(void) {
@@ -1122,6 +1259,8 @@ void gw_RB_IterStart(void) {
     resim = rb.plan.rollback && next < rb.plan.n;
     if (!resim && rb.src == 2) {
         rb_live_sample(next);
+    } else if (!resim && rb.slippi) {
+        rb_slippi_sample(next);
     }
     rb_prepare(next);
     gw_Replay_TraceBeginIter(next);

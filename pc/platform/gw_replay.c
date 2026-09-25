@@ -87,6 +87,7 @@ static struct {
     } *post;
     long parity_checked, parity_expected;
     int parity_failed, parity_seed_frames;
+    int slippi_local_mismatches;
 } rp = { .frame = GW_RP_UNARMED };
 
 static const GwRpInput *rp_cur(int port, int follower);
@@ -423,6 +424,49 @@ static struct {
     uint32_t seed;    /* this frame's start seed, repeated in each pre-frame */
 } rec = { .frame = GW_RP_UNARMED };
 
+#define GW_REC_RING 64
+static struct GwRecSlot {
+    int frame;
+    uint8_t *bytes;
+    size_t len, cap;
+} rec_slots[GW_REC_RING];
+static int rec_flush_next = GW_RP_UNARMED, rec_failed;
+
+static void rec_event(const uint8_t *data, size_t len) {
+    struct GwRecSlot *slot;
+    uint8_t *p;
+    size_t cap;
+    if (rec.f == NULL || rec_failed) return;
+    if (!gw_rb_active()) {
+        fwrite(data, 1, len, rec.f);
+        return;
+    }
+    slot = &rec_slots[(unsigned) rec.frame % GW_REC_RING];
+    if (slot->frame != rec.frame) { slot->frame = rec.frame; slot->len = 0; }
+    if (slot->len + len > slot->cap) {
+        cap = slot->cap ? slot->cap * 2 : 256;
+        while (cap < slot->len + len) cap *= 2;
+        p = (uint8_t *) realloc(slot->bytes, cap);
+        if (p == NULL) { rec_failed = 1; gw_log("replay: recording buffer allocation failed"); return; }
+        slot->bytes = p; slot->cap = cap;
+    }
+    memcpy(slot->bytes + slot->len, data, len);
+    slot->len += len;
+}
+
+static void rec_flush_upto(int frame) {
+    if (rec.f == NULL || rec_flush_next == GW_RP_UNARMED) return;
+    while (rec_flush_next <= frame && rec_flush_next <= rec.frame) {
+        struct GwRecSlot *slot = &rec_slots[(unsigned) rec_flush_next % GW_REC_RING];
+        if (slot->frame == rec_flush_next && slot->len != 0) {
+            fwrite(slot->bytes, 1, slot->len, rec.f);
+            slot->len = 0;
+        }
+        rec_flush_next++;
+    }
+    fflush(rec.f);
+}
+
 static void rec_be32(uint8_t *p, uint32_t v) {
     p[0] = (uint8_t) (v >> 24); p[1] = (uint8_t) (v >> 16); p[2] = (uint8_t) (v >> 8);
     p[3] = (uint8_t) v;
@@ -509,6 +553,7 @@ void gw_Replay_RecordMatch(void *start_melee_data, uint32_t seed) {
     }
     fwrite(ev, 1, sizeof ev, rec.f);
     rec.frame = GW_RP_FIRST_FRAME - 1;
+    rec_flush_next = GW_RP_FIRST_FRAME;
     gw_log("replay: recording the match (seed 0x%08X)", seed);
 }
 
@@ -520,17 +565,37 @@ static void rec_tick(uint32_t seed) {
     fflush(rec.f); /* a killed run loses at most the frame in flight */
     ++rec.frame;
     rec.seed = seed;
+    if (rec_flush_next == GW_RP_UNARMED) rec_flush_next = rec.frame;
+    if (gw_rb_active()) {
+        struct GwRecSlot *slot = &rec_slots[(unsigned) rec.frame % GW_REC_RING];
+        slot->frame = rec.frame;
+        slot->len = 0; /* a resimulation replaces the entire event sequence for this frame */
+    }
     memset(ev, 0, sizeof ev);
     ev[0] = 0x3A;
     rec_be32(ev + 1, (uint32_t) rec.frame);
     rec_be32(ev + 5, seed);
-    fwrite(ev, 1, sizeof ev, rec.f);
+    rec_event(ev, sizeof ev);
 }
 
 void gw_Replay_RecordInput(int port, int follower, float lx, float ly, float cx, float cy,
                            float trigger, uint32_t buttons, int action, float x, float y,
                            float facing, float percent) {
     uint8_t ev[1 + GW_RP_SZ_PRE];
+    int local = gw_rb_slippi_local_port();
+    if (local == port && rp.active && rp.in != NULL && rp.frame >= rp.first &&
+        rp.frame <= rp.last) {
+        const GwRpInput *want = &rp.in[(rp.frame - rp.first) * GW_RP_SLOTS + port * 2 +
+                                       (follower != 0)];
+        float got[5] = {lx, ly, cx, cy, trigger};
+        if (!want->present || memcmp(&want->lx, got, sizeof got) != 0 ||
+            want->buttons != buttons) {
+            if (rp.slippi_local_mismatches++ < 4) {
+                gw_log("replay: Slippi local processed input mismatch at frame %d port %d%s",
+                       rp.frame, port + 1, follower ? " follower" : "");
+            }
+        }
+    }
     if (rec.f == NULL || rec.frame == GW_RP_UNARMED) {
         return;
     }
@@ -548,15 +613,27 @@ void gw_Replay_RecordInput(int port, int follower, float lx, float ly, float cx,
     rec_be32(ev + 0x2D, buttons);
     rec_bef(ev + 0x3C, percent);
     {
-        const GwRpInput *r = rp_cur(port, follower); /* the raw bytes UCF read, when playing back */
+        const GwRpInput *r = gw_rb_active() ? gw_RB_InputAny(port, rp.frame)
+                                          : rp_cur(port, follower);
         if (r != NULL) {
             ev[0x3B] = (uint8_t) r->raw[0];
             ev[0x40] = (uint8_t) r->raw[1];
             ev[0x41] = (uint8_t) r->raw[2];
             ev[0x42] = (uint8_t) r->raw[3];
+            if (r->is_raw || r->physical_complete) {
+                uint16_t phys = r->is_raw ? (uint16_t) r->buttons : r->physical_buttons;
+                float l = r->is_raw ? (float) (r->pad_l > 140 ? 140 : r->pad_l) / 140.0f
+                                    : r->physical_l;
+                float rr = r->is_raw ? (float) (r->pad_r > 140 ? 140 : r->pad_r) / 140.0f
+                                     : r->physical_r;
+                ev[0x31] = (uint8_t) (phys >> 8);
+                ev[0x32] = (uint8_t) phys;
+                rec_bef(ev + 0x33, l);
+                rec_bef(ev + 0x37, rr);
+            }
         }
     }
-    fwrite(ev, 1, sizeof ev, rec.f);
+    rec_event(ev, sizeof ev);
 }
 
 static void rec_post(int port, int follower, int ckind, int action, float x, float y, float facing,
@@ -579,7 +656,7 @@ static void rec_post(int port, int follower, int ckind, int action, float x, flo
     rec_bef(ev + 0x35, air_x); rec_bef(ev + 0x39, air_y);
     rec_bef(ev + 0x3D, kb_x); rec_bef(ev + 0x41, kb_y);
     rec_bef(ev + 0x45, ground_x);
-    fwrite(ev, 1, sizeof ev, rec.f);
+    rec_event(ev, sizeof ev);
 }
 
 /* Playback or recording: the scene loop's per-frame hooks run for either. */
@@ -738,7 +815,7 @@ static int rp_frame_seed(uint32_t *out) {
  * Under MELEE_SLP_RESYNC every later frame gets the console's own Frame Start seed too. */
 uint32_t gw_Replay_ResyncSeed(void) {
     uint32_t s;
-    if (rp.live) {
+    if (rp.live || gw_rb_slippi_local_port() >= 0) {
         /* Slippi online's rule: every frame starts from seed + ((frame + 123) << 16). Both peers
            force it, so an RNG draw that only one of them makes (render-side effects) cannot carry
            into the next frame. */
@@ -940,6 +1017,7 @@ void gw_Replay_TraceFlushUpTo(int iter) {
             }
         }
     }
+    rec_flush_upto(iter);
 }
 
 static void gw_tb_printf(int which, FILE *plain, const char *fmt, ...) {
@@ -1016,13 +1094,15 @@ void gw_Replay_TraceFighter(int port, int follower, int ckind, int action, float
 void gw_Replay_GetCursor(int out[4]) {
     out[0] = rp.frame;
     out[1] = rp.seed_diverged;
-    out[2] = 0;
-    out[3] = 0;
+    out[2] = rec.frame;
+    memcpy(&out[3], &rec.seed, sizeof rec.seed);
 }
 
 void gw_Replay_SetCursor(const int in[4]) {
     rp.frame = in[0];
     rp.seed_diverged = in[1];
+    rec.frame = in[2];
+    memcpy(&rec.seed, &in[3], sizeof rec.seed);
 }
 
 /* The Slippi frame now running, or a large negative number before the match. */
@@ -1129,6 +1209,11 @@ int gw_Replay_SlippiFixtureInfo(GwSlippiFixtureInfo *out) {
         }
     }
     for (frame = rp.first; frame <= rp.last; ++frame) {
+        if (rp.fs_has[frame - rp.first] &&
+            rp.fs_seed[frame - rp.first] !=
+                rp.seed + ((uint32_t) (frame - GW_RP_FIRST_FRAME) << 16)) {
+            rp_fixture_reason = "online seed rule differs from fixture"; return 0;
+        }
         for (port = 0; port < 2; ++port) {
             const GwRpInput *in = &rp.in[(frame - rp.first) * GW_RP_SLOTS + port * 2];
             GwSlippiPad pad;
@@ -1167,6 +1252,9 @@ int gw_Replay_SlippiPad(int port, int slp_frame, GwSlippiPad *out) {
                                      in->raw[2], in->raw[3], in->physical_l,
                                      in->physical_r, out);
 }
+
+void gw_Replay_SlippiLocalMismatchReset(void) { rp.slippi_local_mismatches = 0; }
+int gw_Replay_SlippiLocalMismatches(void) { return rp.slippi_local_mismatches; }
 
 /* The replay's frame range and whether it is armed - the session's fake network needs both. */
 int gw_Replay_LastFrame(void) { return rp.active ? rp.last : 0; }

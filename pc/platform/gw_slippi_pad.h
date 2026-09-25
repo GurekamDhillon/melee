@@ -48,4 +48,6 @@ int gw_Replay_SlippiFixtureInfo(GwSlippiFixtureInfo *out);
 /* Static diagnostic set by the most recent fixture-info call; contains no file path. */
 const char *gw_Replay_SlippiFixtureReason(void);
 int gw_Replay_SlippiPad(int port, int slp_frame, GwSlippiPad *out);
+void gw_Replay_SlippiLocalMismatchReset(void);
+int gw_Replay_SlippiLocalMismatches(void);
 #endif

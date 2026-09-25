@@ -1018,6 +1018,10 @@ float ScriptGame_LabCommonF(int which)
         return (float) d->sdi_stick_window;
     case LAB_C_ASDI_SCALE:
         return d->x4BC;
+    case LAB_C_STICK_DZ_X:
+        return d->horizontal_stick_deadzone;
+    case LAB_C_STICK_DZ_Y:
+        return d->vertical_stick_deadzone;
     }
     return 0.0f;
 }

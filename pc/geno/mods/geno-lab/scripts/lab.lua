@@ -1816,14 +1816,15 @@ local function kb_on_hit(attacker, victim, info)
   -- stage D: the dummy's own DI, and the ASDI its held stick gives at hitlag's end
   -- (ftCo_Damage_OnExitHitlag: position += stick * x4BC when the stick is past sdi_min), so the
   -- flight is predicted from where the fighter will be after that nudge
+  -- The stick there is the game's float (pad units / 80, clamped to the unit circle), NOT pad units:
+  -- ASDI is about 3 units, not 240. The C-stick overrides the control stick when it is past sdi_min.
   local di = (LE.di_for and LE.di_for(victim, attacker, info)) or "none"
   local x0, y0 = v.x, v.y
-  if type(di) == "table" and gd.lab_common then
+  local ax, ay = 0, 0
+  if LE.asdi_stick then ax, ay = LE.asdi_stick(victim, attacker, info) end
+  if (ax ~= 0 or ay ~= 0) and gd.lab_common then
     local c = gd.lab_common()
-    local m = math.sqrt(di.x * di.x + di.y * di.y)
-    if (c.asdi_scale or 0) > 0 and m >= (c.sdi_min or 0.7) then
-      x0, y0 = x0 + di.x * 80 * c.asdi_scale, y0 + di.y * 80 * c.asdi_scale
-    end
+    if (c.asdi_scale or 0) > 0 then x0, y0 = x0 + ax * c.asdi_scale, y0 + ay * c.asdi_scale end
   end
   local ok, pred = pcall(gd.kb_preview, victim, { attacker = attacker, damage = info.dealt, angle = info.angle,
     kbg = info.kbg, bkb = info.bkb, wbk = info.wbk, percent = pre, x = x0, y = y0, di = di, extra = 0 })
@@ -3547,6 +3548,8 @@ local DUMMY_FILE = "dummy.txt"
 local REC_SLOTS, REC_MAX = 4, 600      -- 4 slots of up to 10 s
 local STK = 80                         -- a full stick tilt
 local B_A, B_B, B_X, B_Z, B_R = 0x0100, 0x0200, 0x0400, 0x0010, 0x0020
+local TECH_ROLL_DIST = 40              -- about how far a tech roll goes (Fox: ~35); must stay on the floor
+local TECH_EDGE_MARGIN = 6             -- a landing this close to a floor's end steers back inward
 local TECH_PRESS_FRAMES = 5            -- press L/R when the floor is this many frames away (the window is 20)
 local TECH_LOCKOUT = 41                -- the game ignores a tech press within 40 frames of the last one
 
@@ -3771,10 +3774,45 @@ local function di_for(victim, attacker, info)
   di_cache = { f = now, v = victim, how = how, rx = rx, ry = ry }
   return di_cache
 end
+-- a held stick in pad units as the fighter reads it (fp->input.lstick): HSD_PadClampCheck3 clamps the
+-- radius to 80 (the s8 truncates), / 80, then each axis at or under its dead zone (PlCo x0 / x4,
+-- 0.275 on ACE) reads 0. A DI of (-79, 14) is (-0.975, 0) to the game: the 14 is under the dead zone.
+local function game_stick(x, y)
+  local r = math.sqrt(x * x + y * y)
+  if r > STK then
+    x, y = x * STK / r, y * STK / r
+    x = x >= 0 and math.floor(x) or -math.floor(-x)
+    y = y >= 0 and math.floor(y) or -math.floor(-y)
+  end
+  x, y = x / STK, y / STK
+  local c = LD.common()
+  if math.abs(x) <= (c.stick_dz_x or 0) then x = 0 end
+  if math.abs(y) <= (c.stick_dz_y or 0) then y = 0 end
+  return x, y
+end
 LE.di_for = function(victim, attacker, info)
   local d = di_for(victim, attacker, info)
   if d == nil or d.how == "none" then return nil end
-  return { x = d.rx / STK, y = d.ry / STK }
+  local x, y = game_stick(d.rx, d.ry)
+  return { x = x, y = y }
+end
+-- the stick ftCo_Damage_OnExitHitlag moves the fighter by (times x4BC): the game's own stick float
+-- (pad units / 80, clamped to the unit circle); the C-stick when past sdi_min, else the control
+-- stick when past sdi_min, else none (0, 0)
+LE.asdi_stick = function(victim, attacker, info)
+  local d = di_for(victim, attacker, info)
+  local p = gd.player(victim)
+  if d == nil or p == nil then return 0, 0 end
+  local smin = LD.common().sdi_min
+  local function norm(x, y)
+    x, y = game_stick(x, y)
+    return x, y, math.sqrt(x * x + y * y)
+  end
+  local cx, cy, cm = norm(dir_xy(p, dm.asdi))
+  if cm >= smin then return cx, cy end
+  local x, y, m = norm(d.rx, d.ry)
+  if m >= smin then return x, y end
+  return 0, 0
 end
 
 function LD.dummy_hit(attacker, victim, info)
@@ -3868,35 +3906,69 @@ local function tech_spec(p, now)
   -- drift, and on ACE it carried a fighter off a platform's edge and past the stage. Until the
   -- floor is close the stick stays neutral (or, with no floor under the drift, toward the stage).
   local c = LD.common()
-  local roll = f.what == "away" or f.what == "toward"
-  local sign = roll and (dir_xy(p, f.what) >= 0 and 1 or -1) or 0
+  -- Steering (no floor under the drift, or the landing at an edge) is held BELOW tumble_wiggle
+  -- (60 of 80 on ACE, whose tumble_wiggle is 0.8): a full +-80 is a wiggle and drops DamageFall to
+  -- Fall, which loses the tech (BF 45-60% upsmash off the platform edge grabbed the ledge or landed).
+  local steer = math.max(1, math.floor(c.tumble_wiggle * STK) - 4)
+  local function steer_x(x)
+    -- never jump more than ~steer in a frame (UCF's raw 75+ jump reads as a wiggle): via 0 on a reversal
+    local last = f.lastx or 0
+    if last ~= 0 and x ~= 0 and (last > 0) ~= (x > 0) then x = 0 end
+    f.lastx = x
+    return x
+  end
+  local want_roll = f.what == "away" or f.what == "toward"
+  local sign = want_roll and (dir_xy(p, f.what) >= 0 and 1 or -1) or 0
+  local roll = want_roll and f.roll_ok ~= false
   local function roll_x()
     -- the two-step entry (just past the stick line, then full) avoids the tumble wiggle
     f.k = (f.k or 0) + 1
-    if f.k <= c.tumble_window + 1 then return sign * (math.ceil(math.max(c.stick_smash_dz, 0.2875) * STK) + 2) end
-    return sign * STK
+    if f.k <= c.tumble_window + 1 then return steer_x(sign * (math.ceil(math.max(c.stick_smash_dz, 0.2875) * STK) + 2)) end
+    return steer_x(sign * STK)
   end
-  if f.pressed then return { x = roll and roll_x() or 0 } end -- hold the roll's direction to the landing
+  if f.pressed then
+    if roll then return { x = roll_x() } end -- hold the roll's direction to the landing
+    return { x = steer_x(f.press_x or 0) }
+  end
   local vy = (p.vy or 0) + (p.kb_vy or 0)
-  if vy >= 0 or (st.last_press and now - st.last_press < TECH_LOCKOUT) then return nil end
+  if vy >= 0 then f.lastx = 0 return nil end
+  local locked = st.last_press and now - st.last_press < TECH_LOCKOUT -- steer, but no press
   -- the floor where the drift is taking it: under here first, then under where it will be by then
   local vx = (p.vx or 0) + (p.kb_vx or 0)
   local floor = gd.floor_below(p.x, p.y + 4, 400)
+  local land_x = p.x
   if floor then
     local t = (p.y - floor) / -vy
-    floor = gd.floor_below(p.x + vx * t, p.y + 4, 400)
+    land_x = p.x + vx * t
+    floor = gd.floor_below(land_x, p.y + 4, 400)
   end
   if floor == nil then
-    -- nothing under the drift: drift toward the stage instead (x = 0 is its middle on the legal stages)
-    return { x = -sgn(p.x) * STK }
+    -- nothing under the drift: drift toward the stage instead (x = 0 is its middle on the legal
+    -- stages), under the wiggle threshold
+    return { x = steer_x(-sgn(p.x) * steer) }
   end
   local frames = (p.y - floor) / -vy
-  if frames <= TECH_PRESS_FRAMES then
+  -- an edge: the floor just past the landing (in the drift's direction) is gone. Steer back from it.
+  local function floor_at(x) local fy = gd.floor_below(x, floor + 4, 12) return fy ~= nil and math.abs(fy - floor) < 2 end
+  local at_edge = math.abs(vx) > 0.05 and not floor_at(land_x + sgn(vx) * TECH_EDGE_MARGIN)
+  local inward = at_edge and -sgn(vx) * steer or 0
+  -- The roll direction rule: a roll must end on the floor it lands on. When the floor TECH_ROLL_DIST
+  -- past the landing in the roll's direction is gone (an edge, or a platform's end), the tech is in
+  -- place instead (or the inward roll, when the fighter has to steer back from the edge anyway).
+  if want_roll and f.roll_ok == nil and frames <= TECH_PRESS_FRAMES + c.tumble_window + 2 then
+    f.roll_ok = floor_at(land_x + sign * TECH_ROLL_DIST)
+    roll = f.roll_ok
+  end
+  if frames <= TECH_PRESS_FRAMES and not locked then
     f.pressed, st.last_press = now, now
-    return { b = B_R, r = 255, x = roll and roll_x() or 0 }
+    f.press_x = inward
+    if roll then return { b = B_R, r = 255, x = roll_x() } end
+    return { b = B_R, r = 255, x = steer_x(inward) }
   end
   -- the roll stick starts its two-step entry just before the press, so it is full at the landing
-  if roll and frames <= TECH_PRESS_FRAMES + c.tumble_window + 2 then return { x = roll_x() } end
+  if roll and not locked and frames <= TECH_PRESS_FRAMES + c.tumble_window + 2 then return { x = roll_x() } end
+  if inward ~= 0 then return { x = steer_x(inward) } end
+  f.lastx = 0
   return nil
 end
 

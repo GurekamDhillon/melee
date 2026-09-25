@@ -314,6 +314,50 @@ expect(inputs[2] and inputs[2] ~= "released" and inputs[2].x == 80,
   "tech away: the full stick away at the press (" .. tostring(inputs[2] and inputs[2].x) .. ")")
 expect(early_x == 0, "tech away: no drift early in the fall (x " .. tostring(early_x) .. ")")
 set(2, "Passive", { airborne = false, vy = 0, y = 0 }) run(20) set(2, "Wait") run(3)
+-- the tech near a floor's end (the floor ends at x = 68 here), drifting out, "away" pointing off
+-- it: the stick stays under tumble_wiggle (no wiggle to Fall), steers back in, and the tech is in
+-- place or the inward roll, never a roll off the edge
+local keep_floor = gd.floor_below
+gd.floor_below = function(x) if x < 68 then return floor_y end return nil end
+set(2, "DamageFall", { airborne = true, in_hitstun = false, vy = -2, y = 30, x = 60, vx = 0.5 })
+local wig = 56 -- tumble_wiggle 0.7 (the stub has none) * 80
+local max_x, min_x, press_x = 0, 0, nil
+for _ = 1, 20 do
+  P[2].y = P[2].y - 2
+  frame()
+  local s = inputs[2]
+  if s and s ~= "released" then
+    max_x, min_x = math.max(max_x, s.x or 0), math.min(min_x, s.x or 0)
+    if ((s.buttons or 0) & 0x20) ~= 0 and press_x == nil then press_x = s.x or 0 end
+  end
+end
+expect(press_x ~= nil and press_x <= 0, "tech away at an edge: pressed, in place or inward (x " .. tostring(press_x) .. ")")
+expect(max_x <= 0, "tech away at an edge: the stick never points off the edge (max x " .. max_x .. ")")
+expect(min_x > -wig, "tech at an edge: steering under the wiggle threshold (min x " .. min_x .. ")")
+set(2, "Passive", { airborne = false, vy = 0, y = 0, vx = 0 }) run(20) set(2, "Wait") run(3)
+-- no floor under the drift at all: steer toward the stage, under the wiggle threshold
+floor_y = nil
+set(2, "DamageFall", { airborne = true, in_hitstun = false, vy = -2, y = 60, x = 80, vx = 0.5 })
+local steer_seen
+for _ = 1, 3 do P[2].y = P[2].y - 2 frame() local s = inputs[2] if s and s ~= "released" then steer_seen = s.x end end
+expect(steer_seen and steer_seen < 0 and steer_seen > -wig, "no floor: steer toward the stage under the wiggle ("
+  .. tostring(steer_seen) .. ")")
+floor_y = 0
+gd.floor_below = keep_floor
+set(2, "Wait", { airborne = false, vy = 0, y = 0, vx = 0, x = 20 }) run(3)
+-- the kb check's ASDI nudge: the stick as the game's float (x4BC = 3: about 3 units), not 80x that
+local keep_common, keep_prev = gd.lab_common, gd.kb_preview
+gd.lab_common = function() return { lcancel_window = 7, lcancel_div = 2, asdi_scale = 3 } end
+local x_from
+gd.kb_preview = function(v, t) if t.x then x_from = t.x end return keep_prev(v, t) end
+lab("dummy di in")
+set(2, "DamageN1", { in_hitlag = true, in_hitstun = true, hitlag = 4, x = 20 })
+frame(function() env.on_hit(1, 2, { dealt = 9, damage = 9, angle = 45, kbg = 100, bkb = 10, wbk = 0 }) end)
+expect(x_from and math.abs(x_from - (20 - 3 * 0.7071)) < 0.05, "kb check: ASDI nudge is stick float * 3 (x from "
+  .. tostring(x_from) .. ", want 17.88)")
+gd.lab_common, gd.kb_preview = keep_common, keep_prev
+P[2].in_hitlag, P[2].hitlag = false, 0
+set(2, "Wait", { in_hitstun = false }) run(3)
 -- the ledge: jump off it after a 3-frame reaction
 lab("dummy ledge jump") lab("dummy delay_min 3") lab("dummy delay_max 3")
 set(2, "CliffWait") frame()

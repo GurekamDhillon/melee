@@ -206,6 +206,7 @@ int gw_slippi_match_parse_response(const char *json, int ticket_created,
                                    GwSlippiMatchAssignment *out) {
   JDoc d; char type[32], error[256]; int players, t, local = -1, remote = -1, count = 0;
   GwSlippiMatchAssignment m;
+  char local_public[64] = {0};
   if (!out || parse(&d, json) || get(&d, 0, "type", type, sizeof type))
     return fail("Invalid matchmaking response");
   if (strcmp(type, ticket_created ? "get-ticket-resp" : "create-ticket-resp"))
@@ -240,7 +241,8 @@ int gw_slippi_match_parse_response(const char *json, int ticket_created,
         get(&d, t, "uid", uid, sizeof uid) || !uid[0])
       return fail("Invalid matchmaking player assignment");
     if (d.t[is_local].type == J_TRUE) {
-      if (local >= 0) return fail("Invalid matchmaking player assignment");
+      if (local >= 0 || get(&d, t, "ipAddress", local_public, sizeof local_public) ||
+          !address(local_public)) return fail("Invalid matchmaking local address");
       local = port - 1; m.local_uid_hash = uid_hash(uid);
     } else {
       if (remote >= 0 || get(&d, t, "ipAddress", m.peer_public, sizeof m.peer_public) ||
@@ -254,6 +256,13 @@ int gw_slippi_match_parse_response(const char *json, int ticket_created,
   if (count != 2 || local < 0 || remote < 0 || local == remote ||
       m.local_uid_hash == m.remote_uid_hash)
     return fail("Matchmaking requires two distinct player ports");
+  {
+    const char *local_colon = strchr(local_public, ':');
+    const char *remote_colon = strchr(m.peer_public, ':');
+    size_t local_length = (size_t)(local_colon - local_public);
+    m.same_external_ip = local_length == (size_t)(remote_colon - m.peer_public) &&
+                         memcmp(local_public, m.peer_public, local_length) == 0;
+  }
   m.local_port = local; m.remote_port = remote; *out = m; return 1;
 }
 int gw_slippi_match_timeout_elapsed(uint64_t started_ms, uint64_t now_ms) {

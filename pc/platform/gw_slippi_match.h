@@ -18,6 +18,7 @@ typedef struct GwSlippiMatchAssignment {
   int local_port;                 /* zero-based P1/P2 index */
   int remote_port;
   int is_host;
+  int same_external_ip;          /* compare assigned public IPv4 hosts, ignoring UDP ports */
   int local_udp_port;             /* ticket socket's port; reuse for peer hole punching */
   uint64_t local_uid_hash;        /* stable private UID fingerprint; no raw UID in logs */
   uint64_t remote_uid_hash;

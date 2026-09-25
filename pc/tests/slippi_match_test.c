@@ -10,6 +10,8 @@ int main(void) {
   const char *p1 = "{\"uid\":\"one\",\"playKey\":\"secret-one\",\"connectCode\":\"ONE#1\",\"displayName\":\"One\",\"latestVersion\":\"3.6.4\"}";
   const char *p2 = "{\"uid\":\"two\",\"playKey\":\"secret-two\",\"connectCode\":\"TWO#2\",\"displayName\":\"Two\",\"latestVersion\":\"3.6.4\"}";
   const char *assignment = "{\"type\":\"get-ticket-resp\",\"matchId\":\"test.match\",\"isHost\":true,\"players\":[{\"uid\":\"one\",\"port\":1,\"isLocalPlayer\":true,\"ipAddress\":\"198.51.100.1:42000\"},{\"uid\":\"two\",\"port\":2,\"isLocalPlayer\":false,\"ipAddress\":\"203.0.113.2:43000\",\"ipAddressLan\":\"192.168.1.2:43000\"}]}";
+  const char *same_wan = "{\"type\":\"get-ticket-resp\",\"matchId\":\"test.match\",\"isHost\":true,\"players\":[{\"uid\":\"one\",\"port\":1,\"isLocalPlayer\":true,\"ipAddress\":\"203.0.113.2:42000\"},{\"uid\":\"two\",\"port\":2,\"isLocalPlayer\":false,\"ipAddress\":\"203.0.113.2:43000\",\"ipAddressLan\":\"192.168.1.2:43000\"}]}";
+  const char *bad_local_ip = "{\"type\":\"get-ticket-resp\",\"matchId\":\"test.match\",\"isHost\":true,\"players\":[{\"uid\":\"one\",\"port\":1,\"isLocalPlayer\":true,\"ipAddress\":\"203.0.113.999:42000\"},{\"uid\":\"two\",\"port\":2,\"isLocalPlayer\":false,\"ipAddress\":\"203.0.113.2:43000\",\"ipAddressLan\":\"192.168.1.2:43000\"}]}";
   GwSlippiMatchProfile a, b;
   GwSlippiMatchAssignment m;
   char request[1024];
@@ -30,6 +32,10 @@ int main(void) {
   CHECK(m.local_port == 0 && m.remote_port == 1 && m.is_host);
   CHECK(strcmp(m.peer_public, "203.0.113.2:43000") == 0);
   CHECK(strcmp(m.peer_lan, "192.168.1.2:43000") == 0);
+  CHECK(m.same_external_ip == 0);
+  CHECK(gw_slippi_match_parse_response(same_wan, 1, &m) == 1);
+  CHECK(m.same_external_ip == 1);
+  CHECK(gw_slippi_match_parse_response(bad_local_ip, 1, &m) < 0);
   CHECK(gw_slippi_match_parse_response("{\"type\":\"get-ticket-resp\",\"error\":\"Play key expired: secret-one\"}", 1, &m) < 0);
   CHECK(strstr(gw_slippi_match_error(), "secret-one") == NULL);
   CHECK(gw_slippi_match_parse_response("{\"type\":\"get-ticket-resp\",\"error\":\"not authorized: secret-two\"}", 1, &m) < 0);

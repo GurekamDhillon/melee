@@ -51,7 +51,15 @@ struct Fighter_804D6540_x0_t;
 /* 075028 */ int ftPartsRemap(size_t to_table_idx, size_t from_table_idx,
                               size_t joint_idx);
 /// Upper bound on FighterPartsTable::parts_num; sizes fp->parts.
+#if defined(TARGET_PC)
+/* Ported fighters keep their own skeletons, and a quarter of Ultimate's roster has more than 140
+ * joints (up to 195 with the two joints the port adds). Part indices are u8 with 0xFF meaning none
+ * (FighterPartsTable, ftcmd bone fields), so 255 parts is the ceiling. The DObj list is a separate
+ * limit (124 entries; FighterBone::xD is 7 bits). */
+#define MAX_FT_PARTS 255
+#else
 #define MAX_FT_PARTS 140
+#endif
 
 /* 07506C */ u32 ftParts_8007506C(FighterKind ftkind, int part);
 /* 0750C8 */ void ftParts_800750C8(Fighter*, enum_t, bool);

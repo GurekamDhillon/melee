@@ -10,6 +10,7 @@
 #include "../platform/gw_rollback.c"
 
 static int replay_frame = -124, fixture_reads[2], ticks, fixture_active = 1, flushed = -999;
+static int startup_processed_bad_port = -1;
 static void tick(int online_frame) { assert(online_frame == 1); ++ticks; }
 void gw_log(const char *fmt, ...) { (void) fmt; }
 int gw_Replay_Active(void) { return fixture_active; }
@@ -38,8 +39,11 @@ void gw_RbViz_Desync(int f, uint32_t a, uint32_t b) { (void) f; (void) a; (void)
 void gw_Replay_TraceBeginIter(int frame) { (void) frame; }
 void gw_Replay_TraceFlushUpTo(int frame) { flushed = frame; }
 int gw_Replay_PeekInput(int slot, int frame, GwRbInput *out) {
-    (void) slot; (void) frame; (void) out;
-    assert(!"Slippi must never peek processed replay input"); return 0;
+    assert((slot == 0 || slot == 2) && frame >= -123 && frame <= -122);
+    memset(out, 0, sizeof *out);
+    out->present = 1;
+    if (slot / 2 == startup_processed_bad_port) out->trigger = 0.5f;
+    return 1;
 }
 int gw_Replay_SlippiFixtureInfo(GwSlippiFixtureInfo *out) {
     if (!fixture_active) return 0;
@@ -55,6 +59,10 @@ int gw_Replay_SlippiPad(int port, int frame, GwSlippiPad *out) {
     if (port < 0 || port > 1 || frame < -123 || frame > -120) return 0;
     fixture_reads[port]++;
     memset(out, 0, sizeof *out);
+    if (port == 0 && frame == -123) {
+        out->bytes[5] = 0xFF; /* physical C-stick noise despite neutral processed input */
+        out->bytes[7] = 3;
+    }
     if (frame >= -121) {
         out->bytes[1] = 0x01; /* A, changing non-neutral input after delay window */
         out->bytes[2] = (uint8_t) (frame + 130);
@@ -66,6 +74,11 @@ int main(void) {
     GwSlippiPad pad, bad;
     int epoch;
     assert(!gw_rb_slippi_receive(1, 1, 1, &pad)); /* off mode */
+    startup_processed_bad_port = 1;
+    assert(!gw_rb_slippi_configure(0, 2, tick)); /* other port's applied input must be neutral */
+    startup_processed_bad_port = 0;
+    assert(!gw_rb_slippi_configure(0, 2, tick)); /* local applied input must be neutral too */
+    startup_processed_bad_port = -1;
     assert(gw_rb_slippi_configure(0, 2, tick));
     assert(gw_RB_Enabled());
     gw_RB_SceneBegin(2);

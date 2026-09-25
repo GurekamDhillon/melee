@@ -221,20 +221,27 @@ static void rb_init(void) {
 
 int gw_rb_slippi_configure(int local_port, int delay, void (*peer_tick)(int)) {
     GwSlippiFixtureInfo info;
-    int f;
+    int f, port;
     if ((local_port != 0 && local_port != 1) || delay < 0 || delay > 8 || !peer_tick ||
         !gw_Replay_SlippiFixtureInfo(&info) || info.first_frame != RB_FIRST ||
         info.human_ports[0] != 0 || info.human_ports[1] != 1) return 0;
-    /* Slippi sends neutral dummy pads for the first D online frames, before a local sample can
-       exist. A fixture that disagrees with these applied inputs cannot be driven faithfully. */
+    /* Slippi's TriggerSendInput clears PAD reports during the opening freeze and starts its
+       delay buffer empty. Its first D applied pads are therefore neutral. SendGamePreFrame records
+       physical fields separately from the fighter's processed fields; the first recorded raw
+       fields can contain startup noise even though the applied input is neutral. Validate the
+       processed inputs of BOTH ports here, before peer setup; runtime never reads remote fixture
+       controls. See slippi-ssbm-asm fcf47f10: Online/Core/TriggerSendInput.asm sections 1, 6,
+       Recording/SendGamePreFrame.asm's fighter-input and raw-input sections. */
     for (f = RB_FIRST; f < RB_FIRST + delay; ++f) {
-        GwSlippiPad pad;
-        const uint8_t neutral[8] = {0};
-        if (f > info.last_frame || !gw_Replay_SlippiPad(local_port, f, &pad) ||
-            memcmp(pad.bytes, neutral, sizeof neutral) != 0) {
-            gw_log("rb: Slippi fixture port %d has non-neutral input in initial delay window",
-                   local_port + 1);
-            return 0;
+        for (port = 0; port < 2; ++port) {
+            GwRbInput in;
+            if (f > info.last_frame || !gw_Replay_PeekInput(port * 2, f, &in) ||
+                in.lx != 0.0f || in.ly != 0.0f || in.cx != 0.0f || in.cy != 0.0f ||
+                in.trigger != 0.0f || in.buttons != 0) {
+                gw_log("rb: Slippi fixture port %d has non-neutral processed input in initial "
+                       "delay window", port + 1);
+                return 0;
+            }
         }
     }
     rb.slippi_configured = 1;

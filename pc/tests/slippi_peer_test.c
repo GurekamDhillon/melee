@@ -118,6 +118,17 @@ static void malformed_packet(void) {
   for (i=0;i<100;i++) { gw_slippi_peer_poll(target,1); if (seen.count) break; Sleep(5); }
   assert(seen.count==1 && seen.last_frame==1 && seen.last_pad[0]==0x7f &&
          seen.checksum_frame==1 && seen.checksum==0xbeef);
+  /* A sender seven simulation frames ahead with D=2 can bundle frame 10
+   * while this receiver remains at frame 1. The history starts at frame 2. */
+  memset(&p,0,sizeof p); p.frame=10; p.player_idx=1; p.count=9;
+  for (i=0;i<9;i++) p.pads[i][0]=(uint8_t)(10-i);
+  len=gw_slippi_wire_encode_pad(bytes,sizeof bytes,&p); assert(len==86);
+  packet=enet_packet_create(bytes,len,ENET_PACKET_FLAG_UNSEQUENCED); assert(packet);
+  assert(enet_peer_send(sender,1,packet)==0); enet_host_flush(raw);
+  for (i=0;i<100;i++) { gw_slippi_peer_poll(target,1); if (seen.count==10) break; Sleep(5); }
+  gw_slippi_peer_stats(target,&st);
+  assert(seen.count==10 && seen.last_frame==10 && seen.last_pad[0]==10 &&
+         st.last_received_frame==10);
   enet_host_destroy(raw); gw_slippi_peer_close(target);
 }
 static void remapped_port(void) {

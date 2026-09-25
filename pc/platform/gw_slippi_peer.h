@@ -25,7 +25,7 @@ typedef struct GwSlippiPeerConfig {
   void (*on_connection_selected)(void *user);
 } GwSlippiPeerConfig;
 typedef struct GwSlippiPeerStats {
-  uint32_t packets_sent, packets_received, packets_rejected;
+  uint32_t packets_sent, packets_received, packets_rejected, pad_packets_received;
   uint32_t pads_sent, pads_received, retransmits, acks_sent, acks_received;
   int last_sent_frame, last_received_frame, last_acked_frame;
   int remote_checksum_frame;

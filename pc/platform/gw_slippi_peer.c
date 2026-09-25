@@ -99,11 +99,15 @@ static void receive_pad(GwSlippiPeer *p,const uint8_t *data,size_t len,int curre
   GwSlippiWirePad w;
   uint8_t ack[6];
   int min_frame=current>128?current-128:1;
-  int max_frame=current<0?7:(current>INT32_MAX-7?INT32_MAX:current+7);
+  /* The rollback ring accepts a 56-frame lookahead. A sender can be seven
+   * simulation frames ahead and transmit another D delayed input frames;
+   * rejecting its newest bundled frame would also discard useful history. */
+  int max_frame=current<0?56:(current>INT32_MAX-56?INT32_MAX:current+56);
   int i,first;
   if (!gw_slippi_wire_decode_pad(data,len,p->cfg.remote_port_idx,min_frame,max_frame,&w)) {
     p->stats.packets_rejected++; return;
   }
+  p->stats.pad_packets_received++;
   first=w.frame-(int)w.count+1;
   for (i=first;i<=w.frame;i++) {
     int index=w.frame-i;

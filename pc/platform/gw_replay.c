@@ -489,13 +489,23 @@ static void rec_close(void) {
     ev[1] = 7; /* game end method: no contest - the port does not know how the run ended */
     fwrite(ev, 1, sizeof ev, rec.f);
     end = ftell(rec.f);
+    if (end < rec.raw_start) rec_failed = 1;
     fwrite(meta, 1, sizeof meta - 1, rec.f);
     rec_be32(len, (uint32_t) (end - rec.raw_start));
-    fseek(rec.f, rec.raw_len_at, SEEK_SET);
+    if (fseek(rec.f, rec.raw_len_at, SEEK_SET) != 0) rec_failed = 1;
     fwrite(len, 1, 4, rec.f);
-    fclose(rec.f);
+    if (ferror(rec.f)) rec_failed = 1;
+    if (fclose(rec.f) != 0) rec_failed = 1;
     rec.f = NULL;
     gw_log("replay: recording closed (%ld event bytes)", end - rec.raw_start);
+}
+
+/* Finite diagnostic runs bypass CRT destructors (Dawn teardown is unsafe).
+ * Finalize explicitly first, including Game End, metadata and the raw length. */
+int gw_Replay_FinishRecording(void) {
+    int opened = rec.f != NULL;
+    rec_close();
+    return opened && !rec_failed;
 }
 
 int gw_Replay_Recording(void) {

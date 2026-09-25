@@ -2088,6 +2088,14 @@ static void gw_sl_load(void) {
   gw_sl_loaded = 1;
   gw_sl_config_init(&gw_sl_cfg);
   {
+    extern const char *gw_SlippiMode_Scene(void);
+    text = gw_SlippiMode_Scene();
+    if (text != NULL) {
+      gw_sl_parse(&gw_sl_cfg, text, "Slippi replay driver");
+      goto parsed;
+    }
+  }
+  {
     /* netplay (gw_netplay.c): connect first; the match the two players agreed on is the scene */
     extern const char *gw_Netplay_Scene(void);
     text = gw_Netplay_Scene();

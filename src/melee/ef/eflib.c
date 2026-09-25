@@ -132,7 +132,13 @@ void efLib_Init(void)
 
     efLib_EffectCount = 0;
 
+#if defined(TARGET_PC)
+    /* every bank, m-ex's too: a bank past 50 (e.g. the Brawl Meta Knight slot's) otherwise keeps
+     * the last match's freed archive, and its first effect next match reads garbage */
+    for (i = 0; i < (int) ARRAY_SIZE(efAsync_DatEntries); ++i) {
+#else
     for (i = 0; i < 50; ++i) {
+#endif
         efAsync_DatEntries[i].data = NULL;
     }
 

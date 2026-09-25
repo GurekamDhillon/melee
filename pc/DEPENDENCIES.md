@@ -8,6 +8,7 @@ What the port builds against, where each piece comes from, and its licence.
 |---|---|---|
 | [encounter/aurora](https://github.com/encounter/aurora) (GC/Wii SDK reimplementation) | `extern/aurora` — base commit `749d6ee7a22bdfab78c8ece9047bca5d79aa72ca`, seven port patches (see [`extern/aurora/PORT_PATCHES.md`](extern/aurora/PORT_PATCHES.md)) | MIT |
 | Nintendo Dolphin SDK / MSL / MetroTRK | `extern/dolphin`, `src/MSL`, `src/Runtime`, `src/MetroTRK` (part of the upstream decompilation) | proprietary SDK sources, upstream |
+| [ENet](https://github.com/lsalzman/enet) | `extern/enet`, v1.3.18 at `2662c0de09e36f2a2030ccc2c528a3e4c9e8138a`; unmodified source, headers and `LICENSE` | MIT |
 
 `extern/aurora` is a plain vendored copy, not a git submodule, so a clone contains
 the patched Aurora directly.
@@ -36,8 +37,15 @@ libpng (libpng), zlib (zlib), zstd (BSD), xxhash (BSD), imgui (MIT), sqlite3
 ## Derived code
 
 `pc/gameworld/gekko_fp.c` reproduces the Gekko `frsqrte`/`fres` estimate tables
-from Dolphin Emulator's `Common/FloatUtils.cpp` (GPL-2.0-or-later). The file
-carries an SPDX and attribution header; it is the only GPL-derived source in `pc/`.
+from Dolphin Emulator's `Common/FloatUtils.cpp` (GPL-2.0-or-later). Slippi's
+packet codec (`pc/platform/gw_slippi_wire.c`) follows Project Slippi Dolphin's
+[`SlippiNetplay.cpp`](https://github.com/project-slippi/dolphin/blob/41a7a3a110ed52999486ae1901c8fbb9a63d4f13/Source/Core/Core/Slippi/SlippiNetplay.cpp)
+at commit `41a7a3a110ed52999486ae1901c8fbb9a63d4f13`, GPL-2.0-or-later.
+
+ENet's Windows static build compiles `callbacks.c`, `compress.c`, `host.c`,
+`list.c`, `packet.c`, `peer.c`, `protocol.c`, and `win32.c` with
+`-I<game>/extern/enet/include`, then links `ws2_32.lib` and `winmm.lib`.
+The `unix.c` file is retained in the vendor snapshot but excluded on Windows.
 
 ## Not dependencies
 

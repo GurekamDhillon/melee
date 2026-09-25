@@ -1813,9 +1813,20 @@ local function kb_on_hit(attacker, victim, info)
   local v = gd.player(victim)
   if v == nil then return end
   local pre = math.max(0, v.percent - (info.dealt or 0))
+  -- stage D: the dummy's own DI, and the ASDI its held stick gives at hitlag's end
+  -- (ftCo_Damage_OnExitHitlag: position += stick * x4BC when the stick is past sdi_min), so the
+  -- flight is predicted from where the fighter will be after that nudge
+  local di = (LE.di_for and LE.di_for(victim, attacker, info)) or "none"
+  local x0, y0 = v.x, v.y
+  if type(di) == "table" and gd.lab_common then
+    local c = gd.lab_common()
+    local m = math.sqrt(di.x * di.x + di.y * di.y)
+    if (c.asdi_scale or 0) > 0 and m >= (c.sdi_min or 0.7) then
+      x0, y0 = x0 + di.x * 80 * c.asdi_scale, y0 + di.y * 80 * c.asdi_scale
+    end
+  end
   local ok, pred = pcall(gd.kb_preview, victim, { attacker = attacker, damage = info.dealt, angle = info.angle,
-    kbg = info.kbg, bkb = info.bkb, wbk = info.wbk, percent = pre, x = v.x, y = v.y,
-    di = (LE.di_for and LE.di_for(victim, attacker, info)) or "none", extra = 0 }) -- stage D: the dummy's own DI
+    kbg = info.kbg, bkb = info.bkb, wbk = info.wbk, percent = pre, x = x0, y = y0, di = di, extra = 0 })
   if not ok or pred == nil then return end
   kbv.check = { victim = victim, pred = pred, real = {}, kb_real = v.kb_last, pre = pre, hit = info,
     frame = gd.match().frame, hitstun_real = nil }

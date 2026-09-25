@@ -1016,6 +1016,8 @@ float ScriptGame_LabCommonF(int which)
         return d->sdi_min_stick_mag;
     case LAB_C_SDI_WINDOW:
         return (float) d->sdi_stick_window;
+    case LAB_C_ASDI_SCALE:
+        return d->x4BC;
     }
     return 0.0f;
 }

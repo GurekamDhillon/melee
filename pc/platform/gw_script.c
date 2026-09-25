@@ -3587,6 +3587,7 @@ static int l_lab_common(lua_State *L) {
     gs_setnum(L, "tech_roll_stick", gw_ScriptGame_LabCommonF(LAB_C_TECH_ROLL_STICK));
     gs_setnum(L, "sdi_min", gw_ScriptGame_LabCommonF(LAB_C_SDI_MIN));
     gs_setnum(L, "sdi_window", gw_ScriptGame_LabCommonF(LAB_C_SDI_WINDOW));
+    gs_setnum(L, "asdi_scale", gw_ScriptGame_LabCommonF(LAB_C_ASDI_SCALE));
     return 1;
 }
 

@@ -211,6 +211,7 @@ enum {
     LAB_C_TECH_ROLL_STICK,  /* x254: a tech rolls when |x| is past this at the landing (ftCo_80098928) */
     LAB_C_SDI_MIN,          /* x4B0 / x4B4: SDI needs the stick past this, an axis smashed within x4B4 frames */
     LAB_C_SDI_WINDOW,
+    LAB_C_ASDI_SCALE,       /* x4BC: ASDI moves the fighter stick * this at hitlag's end (ftCo_Damage_OnExitHitlag) */
     LAB_C_COUNT
 };
 

@@ -25,6 +25,11 @@
 #include <melee/db/db.h>
 #include <melee/ef/efasync.h>
 #include <melee/lb/lb_00B0.h>
+#include <sysdolphin/baselib/generator.h>
+#include <sysdolphin/baselib/particle.h>
+#include <sysdolphin/baselib/psstructs.h>
+
+extern HSD_Particle* hsd_804D0908[16]; /* particle.c: the live particles, one list per link */
 #include <melee/it/it_26B1.h>
 #include <melee/it/it_2725.h>
 #include <melee/it/itcoll.h>
@@ -146,10 +151,19 @@ static ItemStateTable geno_art_states[1] = {
     { -1, geno_art_anim, geno_art_phys, geno_art_coll },
 };
 
+/* Every way an article goes (hit, timeout, stage, blast zone, absorbed): stop the particle
+ * generators that follow its root joint (a "FollowJointPos" m-ex generator keeps the item's JObj;
+ * efLib_DestroyAll only removes effect MODELS). hsd_8039D5DC is what grlib uses for a stage part:
+ * the emitted particles live on, the generators stop. */
+static void geno_art_destroyed(Item_GObj* gobj)
+{
+    hsd_8039D5DC(GET_JOBJ(gobj));
+}
+
 static ItemLogicTable geno_art_logic = {
     geno_art_states,
     NULL,               /* spawned */
-    NULL,               /* destroyed */
+    geno_art_destroyed, /* destroyed */
     NULL,               /* picked_up */
     NULL,               /* dropped */
     NULL,               /* thrown */
@@ -401,6 +415,41 @@ static void geno_art_children(Item_GObj* gobj, Item* ip, GenoArtVars* v)
     }
 }
 
+/* Diagnostics (event 38/39, at article frames 5, 10, 20 and 30): the particle generators attached to
+ * this article's root joint, and the live particles of their bank per generator (matched by the
+ * generator's command list). Reads only; the log is how the particle pilot is checked. */
+static void geno_art_fx_census(Item_GObj* gobj, GenoArtVars* v)
+{
+    HSD_Generator* g;
+    HSD_JObj* j = GET_JOBJ(gobj);
+    u8* lists[8];
+    int ngen = 0, per[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }, total = 0, i, k;
+    /* the generators on this article, in creation order (the list is newest first) */
+    for (g = hsd_804D78FC; g != NULL; g = g->next) {
+        if (g->jobj == j && ngen < 8) {
+            for (k = ngen; k > 0; k--) {
+                lists[k] = lists[k - 1];
+            }
+            lists[0] = g->cmdList;
+            ngen++;
+        }
+    }
+    for (i = 0; i < 16; i++) {
+        HSD_Particle* pp;
+        for (pp = hsd_804D0908[i]; pp != NULL; pp = pp->next) {
+            for (k = 0; k < ngen; k++) {
+                if (pp->cmdList == lists[k]) {
+                    per[k]++;
+                    total++;
+                    break;
+                }
+            }
+        }
+    }
+    Geno_Event(38, v->article, v->frame, ngen, total);
+    Geno_Event(39, (per[0] << 8) | per[1], (per[2] << 8) | per[3], (per[4] << 8) | per[5], (per[6] << 8) | per[7]);
+}
+
 static bool geno_art_anim(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
@@ -413,6 +462,9 @@ static bool geno_art_anim(Item_GObj* gobj)
     }
     geno_art_hitboxes(gobj, ip, v);
     geno_art_children(gobj, ip, v);
+    if (v->frame == 5 || v->frame == 10 || v->frame == 20 || v->frame == 30) {
+        geno_art_fx_census(gobj, v);
+    }
     if (spin != 0.0f) {
         v->spin += spin * (f32) M_PI / 180.0f;
         HSD_JObjSetRotationX(GET_JOBJ(gobj), v->spin);
@@ -565,9 +617,32 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     ip->x40_vel.y = v->vy;
     ip->x40_vel.z = 0.0f;
     db_80225DD8(ig, owner);
-    if (Geno_ArticleParam(p, a, GENO_AP_EFFECT) > 0) {
-        /* attached to the article's root joint, as Mario's fireball carries its flame */
-        efAsync_Spawn(ig, &ip->xBC0, 1, (u32) Geno_ArticleParam(p, a, GENO_AP_EFFECT), GET_JOBJ(ig));
+    {
+        /* effects attached to the article's root joint: "effect" (v5.1) and "effects" (v5.2). An id
+           5000..8999 is the owner fighter's own m-ex effect (a model 5000+, a particle generator
+           6000+ of its bank), queued the way an m-ex article's item script does it (iteffect.c);
+           any other id is Melee's, as Mario's fireball carries its flame */
+        static const Vec3 zero = { 0.0f, 0.0f, 0.0f };
+        int e, nfx = 0;
+        for (e = -1; e < 8; e++) {
+            int id = Geno_ArticleParam(p, a, e < 0 ? GENO_AP_EFFECT : GENO_AP_EFFECTS + e);
+            Vec3 off = zero;
+            if (id <= 0) {
+                continue;
+            }
+            if (EF_MEX_IS_CUSTOM(id)) {
+                efAsync_MexSpawn(ig, &ip->xBC0, id, GET_JOBJ(ig), &off, facing, 0.0f);
+            } else {
+                efAsync_Spawn(ig, &ip->xBC0, 1, (u32) id, GET_JOBJ(ig));
+            }
+            nfx++;
+        }
+        if (nfx > 0) {
+            /* queued on the item (spawns run inside a fighter proc): run them now, as Item_80268E5C's
+               own flush does for effects queued before a state change */
+            efAsync_QueueFlush(ig, &ip->xBC0);
+            Geno_Event(37, a, nfx, Geno_ArticleParam(p, a, GENO_AP_EFFECTS), 0);
+        }
     }
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);

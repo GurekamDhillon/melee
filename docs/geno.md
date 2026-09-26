@@ -2068,3 +2068,23 @@ item builds from its model (joints, display objects, scale).
 Verified (ACE, the magic pad): 4 model loads (5-5.2 KB each), every spawned article item has 2 joints
 and 1 display object at scale 1.00; at the canonical spacing Firaga 6 %, Blizzaga 10 %, Thundaga 10 %,
 the cycle wraps (unchanged by the models). Whether they look right is for GD's eyes (no screenshots).
+
+### 19.11 v5.2: effects on articles (Ultimate particles, route (c) pilot)
+
+`"effects": [6000, ...]` (param ids 40-47, up to 8; the v5.1 `"effect"` still works): effects attached to
+the article's root joint at spawn. An id 5000..8999 is the OWNER fighter's own m-ex effect (models 5000+,
+particle generators 6000+ of its bank) and is queued the way an m-ex article's item script does it
+(`efAsync_MexSpawn`, iteffect.c), then flushed at once; other ids go through `efAsync_Spawn` as before.
+The logic table's `destroyed` callback now stops the generators that follow the article's joint
+(`hsd_8039D5DC`, as grlib does for a stage part): an m-ex "FollowJointPos" generator keeps the item's JObj
+and `efLib_DestroyAll` only removes effect models. Events 37 (effects attached) and 38 / 39 (at article
+frames 5 / 10 / 20 / 30: generators on the article, live particles from them, per generator) are the
+numeric check.
+
+The pilot (workspace `ports/ir/tools/trail_vfx_melee.py`, `_research/ultimate-particles.md`): Firaga's
+in-flight effect `P_TrailFireBullet` from GD's ef_trail.eff, decoded with EffectLibrary, converted to a
+Melee particle bank (EfUsData.dat, 7 generators, 3 texture groups) given to the Sora slot through an MxDt
+effect row. Measured in game (ACE, Sora slot vs Fox): 7 generators on the fireball, 16 / 31 / 46 / 50 live
+particles at frames 5 / 10 / 20 / 30; per generator at frame 30 {2, 6, 6, 6, 7, 9, 14} against the decoded
+steady states rate x life {2 (flare1), 5.8 (fire1), 6.5 (fireline1), 6.6 (fire2), 7.5 (fire_rif1), 9.75
+(fire3), 15 (spark2)}.

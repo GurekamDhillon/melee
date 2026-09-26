@@ -378,7 +378,10 @@ enum {
                                 spawn variant +4 (ints) */
     GENO_AP_ANGLE = 38,      /* degrees the initial velocity is turned (up, in the facing), added to
                                 the spawn arg's angle */
-    GENO_AP_COUNT = 40
+    GENO_AP_EFFECTS = 40,    /* v5.2 40..47: "effects" - up to 8 effect ids attached at spawn
+                                (ids 5000..8999: the owner fighter's own m-ex bank, e.g. its
+                                particle generators 6000+n; others: Melee's), 0 = none */
+    GENO_AP_COUNT = 48
 };
 #define GENO_ART_DESPAWN_HIT 1u    /* its hitbox hit a fighter / item */
 #define GENO_ART_DESPAWN_SHIELD 2u /* it hit a shield */

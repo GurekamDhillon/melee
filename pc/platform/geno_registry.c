@@ -948,6 +948,11 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
         if (gn_num(d, c, "angle", &v)) p->art_param[a][GENO_AP_ANGLE] = gn_fbits(v);
         p->art_param[a][GENO_AP_BONE] = gn_int(d, c, "bone", -1);
         p->art_param[a][GENO_AP_EFFECT] = gn_int(d, c, "effect", 0);
+        if ((m = jd_get(d, c, "effects")) >= 0 && d->n[m].type == JN_ARR) { /* v5.2 */
+            int e2, n2 = 0;
+            for (e2 = d->n[m].first; e2 >= 0 && n2 < 8; e2 = d->n[e2].next)
+                if (d->n[e2].type == JN_NUM) p->art_param[a][GENO_AP_EFFECTS + n2++] = (uint32_t) (int) d->n[e2].num;
+        }
         if ((m = jd_get(d, c, "spawns")) >= 0 && d->n[m].type == JN_ARR) {
             int e2, n2 = 0;
             for (e2 = d->n[m].first; e2 >= 0 && n2 < GENO_ART_SPAWNS; e2 = d->n[e2].next) {
@@ -1551,6 +1556,9 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: article %d spawned at x100 (%d, %d), vx x1000 %d",                              /* 34 */
         "geno: article %d touched the stage: from x100 (%d, %d) to y x100 %d",                /* 35 */
         "geno: article %d model on the item: %d joint(s), %d display object(s), scale x100 %d", /* 36 */
+        "geno: article %d: %d effect(s) attached (first m-ex id %d)%.0d",                   /* 37 */
+        "geno: article %d frame %d: %d generator(s) on it, %d live particle(s) from them", /* 38 */
+        "geno:   particles per generator (hi/lo byte pairs): g0g1 0x%04x g2g3 0x%04x g4g5 0x%04x g6g7 0x%04x", /* 39 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

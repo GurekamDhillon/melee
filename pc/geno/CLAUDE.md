@@ -1,6 +1,6 @@
 # pc/geno: the Geno fighter-extension engine and the LAB
 
-`docs/geno.md` is the reference: sections 1-13 the engine, 14 the LAB, 15-18 the stable script
+`docs/geno.md` is the reference: sections 1-13 the engine, 14 the LAB, 15-19 the stable script
 encodings the Meta Knight translator (workspace `ports/halberd`) emits against. `geno.h` is the
 contract between the two halves and holds only `#define`s and enums.
 
@@ -9,7 +9,7 @@ contract between the two halves and holds only `#define`s and enums.
 | half | file | compiled as |
 |---|---|---|
 | native | `pc/platform/geno_registry.c` | x86: reads `geno.json`, the registry, stable ids |
-| game | `geno_game.c` (+ `_glide.inc`, `_specials.inc`, `_v2.inc`), `geno_lab_mode.c` | through gwtool: sees guest structs in their byte order |
+| game | `geno_game.c` (+ `_glide.inc`, `_specials.inc`, `_v2.inc`, `_articles.inc`), `geno_lab_mode.c` | through gwtool: sees guest structs in their byte order |
 
 They talk through scalar functions only. A layout change (a struct both halves see) is a hot-reload
 "layout change" and restarts the match (`docs/geno.md` 14.10).
@@ -19,7 +19,7 @@ They talk through scalar functions only. A layout change (a struct both halves s
 - **Opt-in per fighter.** A fighter no `geno.json` names runs the code it ran before. The escape
   opcode (59) is the only global change, and no shipped script uses it
   (`tools/scan_ftcmd_opcodes.py` is the census; re-run it if the claim is questioned).
-- **Numbers in sections 15-18 never change.** New behaviour gets new sub / value / condition ids.
+- **Numbers in sections 15-19 never change.** New behaviour gets new sub / value / condition ids.
 - **Deterministic and rollback-safe** (section 4): no native state the snapshot misses; the stable
   ids are salted by `GENO_ID_VERSION`, which v2/v3 did not bump.
 - m-ex stays untouched: Geno layers on `gw_mex_*`, never edits it.

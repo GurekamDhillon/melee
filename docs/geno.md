@@ -1,6 +1,6 @@
 # Geno - GD's Melee's fighter-extension layer
 
-Status: **v2** (v0 foundation, v1 Meta Knight script features (section 15), v2 action states, glide and MK specials (section 16)), on the public `pc-port` branch of the melee fork (made public 2026-09-24; later work: v3/v4, the LAB mode, see sections 17-18).
+Status: **v2** (v0 foundation, v1 Meta Knight script features (section 15), v2 action states, glide and MK specials (section 16)), on the public `pc-port` branch of the melee fork (made public 2026-09-24; later work: v3/v4, the LAB mode, see sections 17-18; v5 articles, on_hit and counter windows, section 19).
 
 ## 1. What Geno is, and what it is not
 
@@ -195,10 +195,12 @@ Native hooks have **stable numbers** (geno.h; never renumber) and names:
 | 2 | `geno.jumps.refill` | give back `arg` air jumps (0 = all) |
 | 3 | `geno.jumps.to_var` | LA int[arg] = air jumps left |
 | 4 | `geno.count_frames` | LA int[arg] += 1 |
+| 5 | `geno.article.spawn` | v5: spawn the profile's article `arg` (section 19) |
 
 A feature adds hooks as rows of the `const` table in geno_game.c. Hooks run from the escape's CALL
 and from dispatch points bound in geno.json: `on_init` (after the reset), `on_frame` (after m-ex's
-onFrame), `on_action` (after the RA clear). Only fighters with a profile dispatch.
+onFrame), `on_action` (after the RA clear), v1 `on_land` (15.5), v5 `on_hit` (section 19.3). Only
+fighters with a profile dispatch.
 
 ## 10. Mechanic v0: multi-jump past Melee's cap
 
@@ -294,7 +296,8 @@ Geno version - data-driven, drawn natively, no fighter code:
 | version | adds |
 |---|---|
 | v0 | registry + stable ids + netplay salt, state block, escape (vars, if/else, CALL), 4 hooks, 3 dispatch points, attribute overrides, multi-jump past the table, tests, opcode census |
-| v1 (built, section 15) | subaction script overlays; engine values GET/PUT/IFV; DIV, RAND; change action (Brawl requirements, persistent/once, CHGAND); REHIT; LINK (autolink 365); special-attribute overrides; `on_land` (script checks, geno.json map, hooks). Not done from the old v1 list: `air_vy` for non-multi-jump fighters, `on_hit` |
+| v1 (built, section 15) | subaction script overlays; engine values GET/PUT/IFV; DIV, RAND; change action (Brawl requirements, persistent/once, CHGAND); REHIT; LINK (autolink 365); special-attribute overrides; `on_land` (script checks, geno.json map, hooks). Not done from the old v1 list: `air_vy` for non-multi-jump fighters (`on_hit`: v5) |
+| v5 (built, section 19) | articles (projectiles as Melee items, models from a .dat), `on_hit` dispatch point 4, counter windows |
 | v2 | Geno action states (section 11): glide, then crawl and wall cling; Meta Knight on top |
 | v2.5 | HUD elements (section 11b): data-driven meters/icons bound to Geno variables |
 | v3 | `define`: brand-new fighters with Geno-native registration (their own kind range and content ids, independent of m-ex's dense slots), CSS/SSS entries via gw_uigen |
@@ -1388,7 +1391,8 @@ drawn in the fast-forward pass). No host pointers, no host time. Tests `geno_sta
   file); use Geno SKIP/IF for forward jumps, Melee's loop commands for loops, ORIG to continue with
   the original script.
 - PRESSED SHIELD sees digital L/R only (HELD also sees the analog trigger).
-- Not in v1: `on_hit` dispatch, `air_vy` for non-multi-jump fighters, a "change subaction" op.
+- Not in v1: `on_hit` dispatch (v5, section 19), `air_vy` for non-multi-jump fighters, a "change
+  subaction" op.
 
 
 ### 15.9 v1 verification
@@ -1848,3 +1852,160 @@ AObjs (game heap, snapshotted); the rate is re-derived from move_f[0] every fram
 - The special's own B press arms the tornado's first lift (the phys reads `pressed_buttons` on the
   entry frame): +16 at frame 10 (and, on the ground, the lift-off), about 10 frames more spin. Whether
   Brawl's first execStatus still sees the press as a trigger is not recovered.
+
+## 19. v5: articles, the on_hit hook, counter windows (STABLE reference)
+
+Status: **built** (`"geno": 4`; every key is additive, an older exe logs them as unknown). Code:
+`pc/geno/geno_game_articles.inc` (game half), `pc/platform/geno_registry.c` (parse, model load),
+engine sites in `item.c` and `fighter.c` (19.5). First customer: Sora (Firaga / Blizzaga / Thundaga
+are articles, Counter Attack is a counter window), but nothing here is Sora-specific.
+
+### 19.1 Articles are Melee items
+
+A profile's `"articles"` list declares projectiles. **Article a of profile p is item kind
+`0x1000 + p * 8 + a`** (`GENO_ART_KIND_BASE`, 8 articles per profile): above m-ex's custom kinds
+(237 + the disc's count) and below m-ex's `5000 + n` "the spawner's own article n" remap, so no
+vanilla or m-ex table is ever indexed with it. `Item_80267978` asks Geno for the kind's descriptor
+(`Article`: `ItemAttr`, model desc, no hurtbox) and logic table; `Item_802674AC` gives it the
+character-article hold kind (no item-count cap). From there it is an ordinary item.
+
+**Reused, not reinvented:**
+
+| what | Melee / m-ex machinery used |
+|---|---|
+| spawn | Fox's laser path (`it_8029C504`): `SpawnItem` + `Item_InitSpawn*`, `Item_80268B18`, `Item_80268E5C` (one state, `anim_id` -1), `db_80225DD8` |
+| movement, drawing, blast zones | the item procs: `x40_vel` is added to the position by `Item_802697D4`; the generic item renderer (`it_8026EECC`, as m-ex custom items) |
+| hitboxes | the item hitbox setup of the item script's hitbox command (`it_802790C0`: `it_8026FCF8`, `it_80272460` with the owner's staling / scale, `it_80275594`, `it_8027129C`), so they hit, clank, and are reflected / absorbed / countered like the laser |
+| stage contact | the laser's ray test between the last and this position (`it_8026E9A4`) |
+| despawn | the logic table's predicates (`dmg_dealt`, `hit_shield`, `shield_bounced`, `clanked`, `absorbed`) returning true, the anim callback at the lifetime's end |
+| a dying owner | `it_8026B894` (the laser's reference cleanup) |
+
+What Geno adds: the descriptor built from geno.json, the three state callbacks (life + hitbox
+windows, motion, stage contact) and the reactions. Halberd's cape is **not** a precedent here: it was
+merged into MK's model (section 17.4), it never was an item.
+
+**Models.** `"model": {"file", "symbol"}` names an HSD archive (a costume-style `.dat` in the mod's
+`files/`, or any disc file) and its joint symbol (default: the first public `*_joint`). The registry
+loads it **once** into Geno's withheld guest region (`shim_os.c` `GW_GENO_PERSIST_SIZE`, 1 MB taken
+off the main heap below m-ex's region) and relocates it there, so it outlives every scene heap (a
+model loaded into a match's heap is freed with it). Read-only after the load. No model = an
+invisible article (hitboxes only).
+
+### 19.2 geno.json
+
+```json
+"articles": [
+  { "name": "Fire",
+    "model": { "file": "GnSoraFire.dat", "symbol": "fire_joint" },
+    "scale": 1.0, "spin": 0,
+    "lifetime": 60,
+    "spawn": [8, 8],
+    "velocity": [2.5, 0], "gravity": 0, "max_fall": 0, "accel": 0, "max_speed": 0,
+    "homing": { "turn": 0, "range": 0, "delay": 0 },
+    "max_live": 4,
+    "despawn": { "hit": true, "shield": true, "stage": true, "clank": true },
+    "hitboxes": [ { "damage": 7, "size": 4, "offset": [0, 0, 0], "angle": 45, "kbg": 50, "wkb": 0,
+                    "bkb": 30, "element": 1, "shield_damage": 0, "sfx_severity": 1, "sfx_kind": 0,
+                    "start": 1, "end": 0,
+                    "hits": { "ground": true, "air": true, "reflect": true, "absorb": true,
+                              "counter": true } } ] }
+]
+```
+
+| key | default | meaning (param id, `GENO_AP_*`) |
+|---|---|---|
+| `lifetime` | 60 | frames alive; then it despawns (0) |
+| `velocity` | [0, 0] | initial [forward, up]; forward follows the owner's facing (1, 2) |
+| `gravity`, `max_fall` | 0 | `vy -= gravity` a frame, not below `-max_fall` (0 = no cap) (3, 4) |
+| `accel`, `max_speed` | 0 | speed change a frame along the travel; speed cap (0 = none) (5, 6) |
+| `homing.turn` / `.range` / `.delay` | 0 | turn at most `turn` degrees a frame toward the nearest fighter that is not the owner (its position + 5 up), only within `range` (0 = any) and after `delay` frames (7, 8, 9) |
+| `spawn` | [0, 0] | spawn offset from the owner's position, [forward, up] (10, 11) |
+| `scale` | 1 | model scale (`ItemAttr` scale) (12) |
+| `despawn` | all true | what ends it besides the lifetime: its hitbox hit something, it hit a shield, it touched the stage, it clanked (13, a mask). An absorber always takes it |
+| `spin` | 0 | model roll, degrees a frame (visual) (14) |
+| `max_live` | 4 | at most this many of this article per fighter; a spawn past it is refused (15) |
+
+Hitboxes (up to 4, Melee's item limit; `GENO_AH_*` ids 0-15): `damage` (1), `size` (3), `offset`
+(from the article's root joint), `angle` (361), `kbg` (100), `wkb`, `bkb`, `element` (Melee's:
+0 normal, 1 fire, 2 electric, 3 slash, 5 ice ...), `shield_damage`, `sfx_severity` (1), `sfx_kind`,
+`start` / `end` (the active frames of the article's life, 1-based; `end` 0 = to the end; a window
+re-opening clears the victim list, so two windows = two hits), `hits` (who it hits and who can take
+it). One hit per victim per window, as Melee's items.
+
+**Spawning:** native hook **5 `geno.article.spawn`**, argument = the article's index: from a script
+(`CALL 5 n`, section 15.1), from a geno.json dispatch point, or a subaction overlay at the frame the
+move throws it. Reflected: the reflector owns it and the travel turns with the new facing (as the
+laser). The spawn, the despawn reason and a refused spawn are logged (`geno: ... article`).
+
+### 19.3 on_hit: dispatch point 4
+
+`"hooks": {"on_hit": ["geno.log:77"]}` runs when the fighter is **hit**: in
+`Fighter_ProcessHit_8006D1EC`, before Melee reacts to the frame's hit (a hit = knockback to apply or
+damage to take). Dispatch points are stable numbers (`GENO_EV_*`): 0 on_init, 1 on_frame,
+2 on_action, 3 on_land, **4 on_hit**. The hit's context is in engine values first, so hooks and
+scripts read it:
+
+| id | name | type | meaning |
+|---|---|---|---|
+| 0x35 | HIT_DAMAGE | f | the last hit's damage (before a counter dropped it) |
+| 0x36 | HIT_PORT | i | its attacker's port 0-5 (an article counts as its owner), -1 unknown |
+| 0x37 | HIT_COUNTER | i | 1 when it landed in a counter window |
+| 0x38 | HIT_COUNT | i | hits taken since the spawn |
+| 0x39 | ARTICLES | i | this fighter's Geno articles alive now |
+
+All read-only; HIT_* persist until the next hit (reset at spawn / respawn).
+
+### 19.4 Counter windows
+
+A Geno state's `"counter": {"from": 5, "to": 25, "target": "geno:CounterAttack", "negate": true}`.
+A hit taken in that state on an action frame in [`from`, `to`] (ACTION_FRAME, 1-based; defaults 1
+and forever) is **countered**: with `negate` (default) the knockback and the damage are dropped
+before Melee applies them (the hitlag both sides already got stays, as with Marth's counter), the
+fighter goes to `target` (any target, section 16.1; none = stay), HIT_COUNTER is 1, then the on_hit
+hooks run. `"negate": false` only flags the hit (the fighter takes it; a script / hook decides).
+The attacker's hitbox is not asked whether it is counterable (`hits.counter` concerns Melee's
+shield-bubble counters); a Brawl/Ultimate-style counter multiplier on HIT_DAMAGE is the move's
+script (read HIT_DAMAGE, put it in a hitbox's damage - not a v5 opcode).
+
+### 19.5 How v5 hooks in (compatibility)
+
+| site | what | everyone else |
+|---|---|---|
+| `item.c` `Item_80267978` | kinds `0x1000..0x10FF` -> `Geno_ArticleDesc` / `Geno_ArticleLogic` | the vanilla / m-ex ranges, before the m-ex custom branch |
+| `item.c` `Item_802674AC` | those kinds: hold kind 8 | unchanged |
+| `fighter.c` `Fighter_ProcessHit_8006D1EC` | `Geno_OnHit` first | returns at once (no profile) |
+| `shim_os.c` | 1 MB withheld under m-ex's region | the main heap is 1 MB smaller for everyone |
+
+Rollback: descriptors, attributes and model descs are game globals written only with registry values
+(idempotent); the model data is read-only; all per-frame state is the item itself (game heap,
+snapshotted like every item: position, velocity, hitboxes, and Geno's vars in its per-kind block)
+and the `GenoState` hit fields. `GENO_VERSION` 4 (the LAB's state library refuses v3 states: the
+`GenoState` layout grew); `GENO_ID_VERSION` stays 1.
+
+### 19.6 Limits and approximations
+
+- Straight / ballistic / homing travel only; no bounce off the floor, no ground-riding articles (Link's
+  bomb, Samus's missile are future behaviours), no per-article animation (the model is static; `spin`
+  rolls it). Articles have no hurtbox (they cannot be hit, only clank).
+- One state per article. An article that changes behaviour mid-life (Thundaga's cloud then bolt)
+  is two articles, the second spawned by the first's owner script, or a later `"phases"` key.
+- Homing aims at the nearest non-owner fighter, not the nearest opponent by team.
+- The spawn position is the owner's position + offset, not a bone.
+- The model region is a bump allocator: every hot reload loads the models again; 1 MB total.
+
+### 19.7 v5 verification
+
+- Tests (`--test`, ACE, 188/188): `geno_v5_registry` (article numbers and defaults, hitboxes, the
+  `hits` / `despawn` masks, counter windows, the on_hit list, kinds -> descriptors, undeclared kinds),
+  `geno_v5_article_motion` (a straight shot flies 2.5 u/f for 40 frames = 100 u; gravity to max_fall;
+  homing turns exactly 5 degrees a frame after its delay; max_speed), `geno_v5_on_hit` (a hit before the
+  window stands and runs the hook; in the window it is negated and goes to the target; a state without a
+  window; a flag-only window; GET HIT_*; CALL `geno.article.spawn` from a script; no profile = inert).
+- In game (ACE, demo mod `_build/agents/beta/mods-geno-v5/geno-v5-demo`, Lua pad
+  `_build/agents/beta/geno_v5_pad.lua`, Wolf (P1, ck 34) vs Fox (P2), both driven, FD): neutral B ->
+  state Shoot, whose overlay `CALL 5 0` at frame 5 spawns the article (Fox's costume, scale 0.35,
+  355,712 bytes loaded once into the Geno region): item kind 4096, it hit Fox for **7.0%** and despawned
+  (reason 1 hit). Shot away from Fox: despawned after 60 frames (reason 0 timeout). Down B -> Counter
+  (motion 0x401); Fox's jab (4%) at action frame 4: **COUNTER**, Wolf took **0.0%**, went to CounterHit
+  (0x402) whose jab hitbox hit Fox (+4.0%), on_hit hook ran (`geno.log 77`). A jab on Wolf standing:
+  on_hit, not countered, Wolf took 3.6%.

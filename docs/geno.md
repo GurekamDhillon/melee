@@ -2103,17 +2103,24 @@ in word files (`"file"`), the registry's JSON reader has a node cap. Test `geno_
 hook 6 by name, PUT ANIM_RATE, HBDMG). Counter scaling in game (ACE): Fox jab 3.64 % -> 9.0 (min), Ganondorf
 jab 7.28 -> 10.9, fsmash 16.71 -> 25.1 (x1.5), fresh fsmash 22.0 -> 30.0 (max); Sora took 0 each time. In-game numbers: the workspace lane notes (`_build/agents/echo/NOTES.md`).
 
-## 20. Geno effects (`.gfx.json`, format v1) - DESIGN / format only, no runtime yet
+## 20. Geno effects (`.gfx.json`, format v1): the effect IR
 
-Status: **format + converter built; the runtime is designed, not built** (it draws through Aurora and waits for
-the renderer's owner, see the workspace's `_research/geno-effects-runtime.md`). GD's decision (2026-09-26): an
-effect from another game is rendered by its own runtime, not squeezed into Melee's particle bytecode
-(sections 19.8-19.11 remain the path for effects Melee's particles express well).
+Status: **format + Ultimate importer built; runtime part 1 built** (`pc/platform/gw_fx.c`: loader, simulation,
+numeric census; test `fx_sim`). Not built: the game-half attach / per-frame driver, the geno.json `"fx"` binding,
+and the renderer (Aurora; waits for the renderer's owner). Design: the workspace's
+`_research/geno-effects-runtime.md`. GD's decisions (2026-09-26): an effect from another game is rendered by
+Geno's own runtime, not squeezed into Melee's particle bytecode (sections 19.8-19.11 remain the path for effects
+Melee's particles express well); the goal is higher fidelity close to the source, **not a 1:1 shader port**.
+
+**The pipeline**: source game -> importer -> **effect IR** (`.gfx.json`) -> Geno effect runtime -> Aurora, the same
+shape as the character IR (schema: the workspace's `ports/ir/schema/effects.schema.json`). The IR is
+game-neutral. Emission, motion, colour / alpha curves, textures and blend modes are carried faithfully; every
+material is **a shader type from the runtime's library + parameters** (20.2). There is no IR of source shader
+programs: importers read them only to choose the type. Importers: `ports/ir/tools/ultimate_vfx_geno.py`
+(Ultimate eft2 / VFXB); Halberd's Brawl effects (REFF) could get one later.
 
 A **Geno effect package** is a directory in a mod (`mods/<id>/fx/<name>/`): `<name>.gfx.json`, `tex/*.png`,
-`mesh/*.json`. Nothing in it is interpreted by Melee's HSD particle system; the future runtime reads it at load.
-General, not per game: the first converter is `ports/ir/tools/ultimate_vfx_geno.py` (Ultimate eft2 / VFXB); a
-Brawl REFF converter would write the same format.
+`mesh/*.json`. Nothing in it is interpreted by Melee's HSD particle system.
 
 ```json
 { "geno_fx": 1, "name": "P_TrailFireBullet",
@@ -2136,21 +2143,42 @@ Brawl REFF converter would write the same format.
 | `particle` | `life` (+ `life_random_pct`), `infinite`, `shape` (billboard, y_billboard, plate_xy, plate_xz, directional_y, directional_polygon, stripe, complex_stripe, primitive); `velocity` {`all_direction` (radial speed), `direction[3]` x `direction_scale`, `diffusion...`, `random_pct`, `inherit` (share of the emitter's own velocity), `momentum_random`}; `forces` {`gravity_dir[3]`, `gravity`, `gravity_world`, `air_resistance` (velocity x this a frame)}; `rotation` {`axes`, `init` + `init_random`, `add` + `add_random` (per frame), `regist`}; `scale` {`base[3]`, `random_pct`, `keys`, `loop`, `add_velocity`}; `param_keys` |
 | `color` | `scale` (HDR multiplier), `emitter` {color0, color1}, `color0` / `alpha0` / `color1` / `alpha1`: {`kind`: constant / random / keys, `value`, `keys`}, `loop` per curve |
 | `samplers` | per texture slot: `texture`, `wrap` [u, v], `filter`, `uv_channel`, `pattern` {`mode` fit_life / clamp / loop / random, `count`, `frequency`, `table`}, `uv` {`scroll`, `scroll_add`, `scale`, `scale_add`, `rotate`, `rotate_add`, `*_random`, `divide` [cols, rows] (atlas)} |
-| `material` | `blend` (alpha, add, sub, mul, screen), depth test / write / func, `alpha_test` {func, threshold}, `display_side`, `draw_path` (render pass), `sort`, `soft_particle` {distance, volume}, `fresnel_alpha` [lo, hi], `near_alpha` / `far_alpha` [lo, hi], `decal` |
+| `material` | `shader` {`type` + parameters, 20.2}, `bloom` {`threshold`, `intensity`} (20.2), `blend` (alpha, add, sub, mul, screen), depth test / write / func, `alpha_test` {func, threshold}, `display_side`, `draw_path` (render pass), `sort`, `soft_particle` {distance, volume}, `fresnel_alpha` [lo, hi], `near_alpha` / `far_alpha` [lo, hi], `decal` |
 | `wave` | per-particle fluctuation: `type`, `amplitude`, `cycle`, `phase_random`, `phase_init`, `apply` [alpha, scale, scale_y] |
 | `inherit` | child-emitter inheritance flags and rates |
-| `program` | `kind` (normal, user_macro1, user_macro2), `shader_index`, and when the source shader is straight-line: `fragment` = the source fragment program as an op list (`op`, `mod`, `args`, `pred`) over registers `$rN`, varyings `a[0xNN]`, uniform words `c<bank>[0xNNN]`, immediates and texture handles; the full disassembly beside it (`fragment_listing`) |
+| `program` | **optional, reference only** (the runtime never reads it): the source shader `kind`, `shader_index`, `fragment_listing` (the disassembly beside the package); with the importer's `--keep-programs` also `fragment` (op list) and `vertex_outputs` (varying -> source field) |
 | `extensions` | emitter sub-sections the format does not map yet (`EPxx` plugins, `FSPN` spin field, `FCLN` collision field, `CADP` / `CSDP` ...), as raw words and floats |
 
 Textures keep their source channel layout; `swizzle` says which source channel feeds r, g, b, a (the GPU's
 component selector: Ultimate's BC5 effect textures read as `rrrg`: colour = R, alpha = G). Mesh JSON:
 `position`, `normal`, `uv0`, `color0`, `indices` (triangles).
 
-**Not in v1** (named so a runtime does not guess): the varying / uniform meaning of the fragment `program`
-inputs (the runtime re-derives them from the emitter data; `_research/geno-effects-runtime.md` has the map as
-far as it is known), child emitters' links, stripes' history, GPU (compute) emitters (`spark2`-style
-`ComputeShader.bnsh` is noted, not translated), the plugins and fields in `extensions`.
+**Not in v1** (named so a runtime does not guess): child emitters' links, stripes' history, GPU (compute)
+emitters (`spark2`-style `ComputeShader.bnsh` is noted, not translated), the plugins and fields in `extensions`.
 
-Converter check (GD's ef_trail.eff): P_TrailFireBullet 10 emitters, 9 textures, 4 meshes, 10 / 10 fragment
-programs translated; P_TrailIceBullet 11 / 10 textures / 5 meshes / 10 of 11; P_TrailThunderCloud 5 / 4 / 4 /
+### 20.2 The effect shader library (`material.shader`, `material.bloom`)
+
+| `type` | draws | parameters |
+|---|---|---|
+| `sprite` | texture(s) x the colour ramps | `color`: `modulate` (color0 x tex) / `lerp` (lerp(color1, color0, tex)); `alpha`: `texture` / `texture_product` |
+| `warp` | sampler `offset` displaces sampler `base`'s UVs | + `strength[2]`, `base`, `offset` |
+| `distortion` | displaces the frame copy (heat haze) | + `strength[2]` |
+
+All types: `fresnel`, `alpha_test` (booleans; their values are in `material`), the samplers' UV animation, the
+blend mode, soft particles. `bloom`: the effect's colour above `threshold` goes to an effect-only bloom buffer
+(blurred, added over the frame after the effects; Melee's own world never enters it) at `intensity`. A
+missing `shader` means `sprite` / `modulate` / `texture`.
+
+### 20.3 The runtime API (native, `gw_fx.c`)
+
+`gw_Fx_Find(name)` loads `mods/<id>/fx/<name>/<name>.gfx.json` (the last mounting mod wins) and returns a package
+index; `gw_Fx_Attach(pkg, jobj, mtx_offset, frame)` starts every emitter on a guest JObj (its world matrix read each
+frame, read-only); `gw_Fx_Detach(jobj)` stops emission (live particles finish); `gw_Fx_Frame(frame)` steps once per
+logic frame with the game's own frame counter: a frame not after the last one restores the state kept for the
+frame before (16 frames) and re-simulates (rollback, LAB rewind); nothing enters a snapshot. `gw_Fx_Stat` /
+`gw_Fx_Census` are the numeric census (live particles, instances, spawned / killed / refused, per instance).
+Budget: 2000 particles, 64 emitter instances.
+
+Importer check (GD's ef_trail.eff; shader types: Fire 7 warp / 2 sprite / 1 distortion, Ice 10 sprite / 1 warp,
+Thunder sprite): P_TrailFireBullet 10 emitters, 9 textures, 4 meshes, 10 / 10 fragment programs read; P_TrailIceBullet 11 / 10 textures / 5 meshes / 10 of 11; P_TrailThunderCloud 5 / 4 / 4 /
 4 of 5; P_TrailThunderBullet 4 / 3 / 4 / 4 of 4.

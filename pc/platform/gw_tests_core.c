@@ -489,6 +489,7 @@ void gw_tests_register_all(void) {
     extern void gw_GenoTestRegisterAll(void); /* pc/geno/geno_tests.c (game side) */
     extern void geno_registry_tests_register(void);
     geno_registry_tests_register();
+    { extern void gw_fx_tests_register(void); gw_fx_tests_register(); }
     gw_GenoTestRegisterAll();
   }
 }

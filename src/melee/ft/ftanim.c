@@ -1079,8 +1079,24 @@ void ftAnim_80070458(Fighter* fp, CostumeTObjList* tobj_list, u32 tobj_idx,
                      float frame)
 {
     if (tobj_idx >= tobj_list->n_costume_tobjs) {
+#if defined(TARGET_PC)
+        /* A fighter ported onto its own model may have no costume texture anims: Ultimate
+         * fighters change expression by showing and hiding meshes (ModelVis), not by animating
+         * eye textures. The host's code still asks for them (Kirby's OnKnockbackExit resets TObj 0
+         * and 1), so a request past the list is skipped, not asserted. Retail fighters list every
+         * TObj they animate and never get here. */
+        static u8 said[Ft_Kind_Max];
+        if (fp->kind < Ft_Kind_Max && !said[fp->kind]) {
+            said[fp->kind] = 1;
+            OSReport("gw: kind %d has %d costume texture anim(s); request for %d skipped "
+                     "(expressions are not texture anims)\n",
+                     fp->kind, tobj_list->n_costume_tobjs, tobj_idx);
+        }
+        return;
+#else
         HSD_ASSERTREPORT(1264, 0, "texture no exist! %d %d\n", fp->player_id,
                          tobj_idx);
+#endif
     }
     tobjAnim(&tobj_list->costume_tobjs[tobj_idx], frame);
 }

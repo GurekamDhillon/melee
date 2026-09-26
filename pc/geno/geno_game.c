@@ -1088,6 +1088,19 @@ static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
     case GENO_VAL_FWD_VEL:
         fp->self_vel.x = v.f * fp->facing_dir;
         return 1;
+    case GENO_VAL_ANIM_RATE:
+        /* v5.2: Ultimate's FT_MOTION_RATE (Melee has no ftcmd for it: flow op 8 waits forever).
+           ftAnim_8006F0FC sets the clip's AObj rates and frame_speed_mul, which also paces the
+           subaction script (ftAction's timer steps by frame_speed_mul), so waits stay in clip
+           frames. Negative or zero rates are refused (a frozen move never ends). */
+        if (v.f > 0.0f) {
+            if (fp->gobj != NULL && GET_JOBJ(fp->gobj) != NULL) {
+                ftAnim_8006F0FC((Fighter_GObj*) fp->gobj, v.f);
+            } else {
+                fp->frame_speed_mul = v.f; /* no model (the headless tests) */
+            }
+        }
+        return 1;
     case GENO_VAL_JUMPS_USED:
         fp->x1968_jumpsUsed = (u8) (v.i < 0 ? 0 : v.i > 255 ? 255 : v.i);
         return 1;

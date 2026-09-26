@@ -2768,6 +2768,26 @@ static int test_geno_v52_lockon(void)
         TestFail("lockon: stick inside 0.25 = level");
         rc = 1;
     }
+    /* ANIM_RATE is writable (v5.2): 0.5 taken, 0 refused */
+    {
+        u32* s = t_script;
+        int n = 0;
+        t_setup();
+        t_fp.frame_speed_mul = 1.0f;
+        s[n++] = GENO_W0(GENO_SUB_PUT, 3, 0);
+        s[n++] = GENO_VAL_ANIM_RATE;
+        s[n++] = t_fbits(0.5f);
+        s[n++] = GENO_W0(GENO_SUB_PUT, 3, 0);
+        s[n++] = GENO_VAL_ANIM_RATE;
+        s[n++] = t_fbits(0.0f);
+        s[n++] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        if (t_fp.frame_speed_mul != 0.5f) {
+            TestFail("PUT ANIM_RATE 0.5 sets frame_speed_mul; 0 is refused");
+            rc = 1;
+        }
+        t_fp.frame_speed_mul = 1.0f;
+    }
     if (GenoGame_HookFind("geno.lockon") != GENO_HOOK_LOCKON || GENO_HOOK_LOCKON != 6) {
         TestFail("hook 6 is geno.lockon");
         rc = 1;

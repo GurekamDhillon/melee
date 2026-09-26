@@ -1215,7 +1215,7 @@ Value ids (type: `f` float, `i` int; `W` = writable):
 | 0x15 | POS_X | f |  | position x |
 | 0x16 | POS_Y | f |  | position y |
 | 0x17-0x1A | CMD_VAR0-3 | i | W | Melee's script variables `fp->cmd_vars[0..3]` (what Melee's own "set cmd var" writes and special states read) |
-| 0x1B | ANIM_RATE | f |  | animation speed |
+| 0x1B | ANIM_RATE | f | W | animation speed (`fp->frame_speed_mul`). **v5.3: writable** - `ftAnim_8006F0FC` sets the clip rate and the script pace together (Ultimate FT_MOTION_RATE; values <= 0 ignored) |
 | 0x1C | FAST_FALL | i |  | 1 while fast-falling |
 | 0x1D | TRIGGER | f |  | analog shield trigger, 0..1 |
 | 0x1000 + i | SPECIAL_F[i] | f |  | special attribute word i (`fp->dat_attrs`), read as float, i < 265 |
@@ -2088,3 +2088,15 @@ effect row. Measured in game (ACE, Sora slot vs Fox): 7 generators on the fireba
 particles at frames 5 / 10 / 20 / 30; per generator at frame 30 {2, 6, 6, 6, 7, 9, 14} against the decoded
 steady states rate x life {2 (flare1), 5.8 (fire1), 6.5 (fireline1), 6.6 (fire2), 7.5 (fire_rif1), 9.75
 (fire3), 15 (spark2)}.
+### 19.12 v5.3: what Sora's physical specials needed (additive)
+
+| id | meaning |
+|---|---|
+| hook **6 `geno.lockon`** | arg `[15:0]` range (units, 0 = any), `[23:16]` max angle (deg), `[31:24]` stick angle (deg). The nearest fighter of another port within range: turn to face it, aim at it with the angle above / below the horizontal clamped to the max; none in range: keep the facing, the stick past 0.25 aims +- the stick angle; never down on the ground. Writes MOVE_F0 / MOVE_F1 (unit forward / up), MOVE_I0 (1 = locked on); scripts scale it (GET / MUL / PUT FWD_VEL, VEL_Y). Event 40. Pure part: `GenoGame_LockonAim` |
+| phys **`air_drift`** (callback id 14) | Melee's horizontal air drift without gravity (the script owns VEL_Y, e.g. a per-frame rise profile); ground friction on the ground |
+| value **0x1B ANIM_RATE writable** | `ftAnim_8006F0FC(gobj, rate)`: clip rate and `frame_speed_mul`; ftAction's timer steps by `frame_speed_mul`, so script waits stay in clip frames while game time stretches (Ultimate FT_MOTION_RATE r = PUT ANIM_RATE 1/r) |
+
+Sora's side / up / down specials (workspace `ports/ir/tools/trail_specials_geno.py`, with `--magic` the
+combine step that puts trail_magic_geno.py's neutral special first) are 13 Geno states; long overlays go
+in word files (`"file"`), the registry's JSON reader has a node cap. Test `geno_v52_lockon` (the aim,
+hook 6 by name, PUT ANIM_RATE). In-game numbers: the workspace lane notes (`_build/agents/echo/NOTES.md`).

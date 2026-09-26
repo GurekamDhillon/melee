@@ -95,7 +95,7 @@ enum {
     GENO_VAL_POS_Y = 0x16,        /* f */
     GENO_VAL_CMD_VAR0 = 0x17,     /* i W: fp->cmd_vars[0..3] = 0x17..0x1A */
     GENO_VAL_CMD_VAR3 = 0x1A,
-    GENO_VAL_ANIM_RATE = 0x1B,    /* f */
+    GENO_VAL_ANIM_RATE = 0x1B,    /* f W (v5.2): animation + script rate (ftAnim_8006F0FC) */
     GENO_VAL_FAST_FALL = 0x1C,    /* i */
     GENO_VAL_TRIGGER = 0x1D,      /* f: analog shield trigger */
     /* v2 */

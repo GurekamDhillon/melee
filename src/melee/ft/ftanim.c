@@ -633,7 +633,12 @@ void ftAnim_8006F4C8(Fighter* fp, bool do_blending, FigaTree* tree)
             }
             i++;
         }
+#if defined(TARGET_PC)
+        /* MAX_FT_PARTS is 255 on PC (ported skeletons; ftparts.h); the retail literal was 0x8C */
+        if (i >= MAX_FT_PARTS) {
+#else
         if (i >= 0x8C) {
+#endif
             HSD_ASSERTREPORT(767, 0, "atree data error! player %d\n",
                              fp->player_id);
         }

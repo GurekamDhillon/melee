@@ -192,12 +192,42 @@ static void geno_fx_render(HSD_GObj* gobj, int code)
     }
 }
 
+/* v5.5: fighters whose profile names "fx_bindings" attach their states' effects (gw_fx.c keeps what happened in
+ * each state with its own rollback state; this only reports where each fighter is). */
+extern int Geno_FxBindings(int p);
+extern void Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int parts,
+                     int stride, int nparts, int joint_to_part, int frame);
+extern HSD_GObj* Player_GetEntity(s32 slot);
+static void geno_fx_drive(int frame)
+{
+    int slot;
+    for (slot = 0; slot < 6; slot++) {
+        HSD_GObj* g = Player_GetEntity(slot);
+        Fighter* fp;
+        int p, set;
+        if (g == NULL) {
+            continue;
+        }
+        fp = GET_FIGHTER(g);
+        p = Geno_ProfileForKind(fp->kind);
+        set = p >= 0 ? Geno_FxBindings(p) : -1;
+        if (set < 0 || fp->parts == NULL || ftPartsTable[fp->kind] == NULL) {
+            continue;
+        }
+        Fx_Drive(set, (int) fp, (int) fp->motion_id, fp->anim_id, fp->cur_anim_frame, (int) geno_state(fp)->action_time,
+                 fp->ground_or_air == GA_Air, fp->facing_dir < 0.0f ? -1 : 1, (int) fp->parts,
+                 (int) sizeof(FighterBone), (int) ftPartsTable[fp->kind]->parts_num,
+                 (int) ftPartsTable[fp->kind]->joint_to_part, frame);
+    }
+}
+
 void Geno_FxFramePost(int frame)
 {
     if (frame <= 1) {
         geno_fx_gobj = NULL; /* a new scene: the last scene's GObjs are gone */
     }
     geno_fx_frame = frame;
+    geno_fx_drive(frame);
     Fx_Frame(frame);
     /* only once something is live: a match without Geno effects never has this GObj */
     if (geno_fx_gobj == NULL && Fx_Stat(0) > 0) {

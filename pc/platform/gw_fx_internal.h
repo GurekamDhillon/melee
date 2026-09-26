@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define FX_MAX_PKGS 32
+#define FX_MAX_PKGS 64
 #define FX_MAX_EMITTERS 32      /* per package */
 #define FX_MAX_TEX 24           /* per package */
 #define FX_MAX_INST 256
@@ -17,6 +17,11 @@ extern "C" {
 #define FX_KEYS 8
 #define FX_SAMPLERS 3
 #define FX_PATTERN_TABLE 32
+#define FX_MAX_DRV 8            /* fighters driven by bindings at once */
+#define FX_BIND_SETS 8
+#define FX_BIND_STATES 96
+#define FX_BIND_CALLS 384
+#define FX_BIND_PER_STATE 32    /* <= bits in fx_drv.fired */
 
 enum { FX_SHAPE_POINT, FX_SHAPE_SPHERE, FX_SHAPE_SPHERE_FILL, FX_SHAPE_CIRCLE, FX_SHAPE_CIRCLE_FILL,
        FX_SHAPE_CIRCLE_DIVIDE, FX_SHAPE_SPHERE_DIVIDE, FX_SHAPE_SPHERE_DIVIDE64,
@@ -92,7 +97,19 @@ typedef struct {
     float pos[3], prev[3], m[3][4];
     float basis[3][3];          /* effect-local -> owner-local (the package's space and the facing) */
     int have_prev;
+    /* fighter bindings: a joint-local transform after the owner's matrix, a world-fixed emitter (matrix taken once
+     * at attach), and the tag of the call that attached it (0 = not from a binding) */
+    int has_local, fixed, keep;
+    float local[3][4];
+    uint32_t tag;
 } fx_inst;
+
+/* one fighter driven by a binding set: what happened in its current state (rollback-restored with the rest) */
+typedef struct {
+    uint32_t owner;             /* the fighter's key (guest address); 0 = free */
+    int set, motion, anim, time, serial, last_frame;
+    uint32_t fired, ended;      /* bit i: the state's call i attached / ended */
+} fx_drv;
 
 typedef struct {
     int inst;                   /* -1 = free */
@@ -114,6 +131,7 @@ typedef struct {
     fx_part part[FX_MAX_PARTICLES];
     int nlive;
     uint32_t spawned, killed, refused, refused_emitters;
+    fx_drv drv[FX_MAX_DRV];
 } fx_state;
 
 /* gw_fx.c */

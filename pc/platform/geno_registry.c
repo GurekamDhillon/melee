@@ -375,6 +375,7 @@ typedef struct {
     char name[64];
     int kind; /* resolved at install; -1 = the target fighter is not on this install */
     int max_jumps; /* -1 = keep the fighter's own */
+    int fx_set;    /* v5.5: "fx_bindings" (gw_fx.c binding set), -1 none */
     int njvy;
     uint32_t jvy[GENO_MAX_JUMP_VY]; /* float bits */
     int nattr;
@@ -1117,6 +1118,12 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
             p->nattr++;
         }
     }
+    p->fx_set = -1;
+    x = jd_get(d, e, "fx_bindings"); /* v5.5: effect bindings on the fighter's states (a path in the mod) */
+    if (x >= 0 && d->n[x].type == JN_STR) {
+        extern int gw_Fx_BindLoad(const char *mod_id, const char *rel);
+        p->fx_set = gw_Fx_BindLoad(mod, d->n[x].str);
+    }
     x = jd_get(d, e, "jumps");
     if (x >= 0 && d->n[x].type == JN_OBJ) {
         int m = jd_get(d, x, "max"), v = jd_get(d, x, "air_vy");
@@ -1420,6 +1427,7 @@ int gw_Geno_SpecialSelect(int p, int which, int i) {
     if (i == -2) return x->sp_sel_n[which];
     return i >= 0 && i < x->sp_sel_n[which] ? (int) x->sp_sel_t[which][i] : -1;
 }
+int gw_Geno_FxBindings(int p) { return gn_at(p) ? gn_at(p)->fx_set : -1; }
 int gw_Geno_StateHasCounter(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_ctr_on[s] : 0; }
 #define GN_ART(p, a) (gn_at(p) != NULL && (a) >= 0 && (a) < gn_at(p)->nart)
 int gw_Geno_ArticleCount(int p) { return gn_at(p) ? gn_at(p)->nart : 0; }

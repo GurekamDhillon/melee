@@ -459,6 +459,7 @@ static void fx_copy(fx_state *dst, const fx_state *src, int hi) {
     dst->nlive = src->nlive;
     dst->spawned = src->spawned; dst->killed = src->killed;
     dst->refused = src->refused; dst->refused_emitters = src->refused_emitters;
+    memcpy(dst->drv, src->drv, sizeof src->drv);
 }
 
 static int fx_idle(void) {
@@ -578,9 +579,19 @@ static void fx_visual_update(fx_part *p, const fx_emitter *e, const fx_inst *in)
 static void fx_owner_mtx(fx_inst *in) {
     int r, c, k;
     float M[3][4];
-    if (in->owner == 0 || in->detached) return;
+    if (in->owner == 0 || in->detached || in->fixed) return;
     for (r = 0; r < 3; ++r)
         for (c = 0; c < 4; ++c) M[r][c] = gw_rf32((const void *) (uintptr_t) (in->owner + in->mtx_off + (r * 4 + c) * 4));
+    if (in->has_local) { /* a binding's joint-local offset / rotation / scale */
+        float L[3][4];
+        for (r = 0; r < 3; ++r)
+            for (c = 0; c < 4; ++c) {
+                float v = c == 3 ? M[r][3] : 0.0f;
+                for (k = 0; k < 3; ++k) v += M[r][k] * in->local[k][c];
+                L[r][c] = v;
+            }
+        memcpy(M, L, sizeof M);
+    }
     for (r = 0; r < 3; ++r) {
         for (c = 0; c < 3; ++c) {
             float v = 0.0f;
@@ -628,7 +639,7 @@ static void fx_erot(const fx_emitter *e, float v[3]) {
 /* Emitter-local position and outward direction. Sweep angles are radians. For the even-division
  * variants the sampled angle/line coordinate is snapped to a segment centre. */
 static void fx_sample_shape(const fx_emitter *e, uint32_t *rng, float local[3], float dir[3]) {
-    float th, u, r, rad = 1.0f, inner = fx_clamp(1.0f - e->caliber, 0.0f, 1.0f);
+    float th, u, rad = 1.0f, inner = fx_clamp(1.0f - e->caliber, 0.0f, 1.0f);
     int k;
     th = e->sweep[0] + (e->sweep_start_random ? fx_rndf(rng) * 6.2831853f : 0.0f)
          + fx_rndf(rng) * e->sweep[1];
@@ -710,7 +721,9 @@ static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel
     p->scale = 1.0f - e->scale_random * fx_rndf(&p->seed);
     p->rot = e->rot_init[2] + e->rot_init_random[2] * fx_rndf(&p->seed);
     p->rot_add = e->rot_add[2] + e->rot_add_random[2] * (fx_rndf(&p->seed) * 2 - 1);
-    for (k = 0; k < 2; ++k) p->wave_phase[k] = e->wave_phase_init[k] + e->wave_phase_random[k] * fx_rndf(&p->seed) * 6.2831853f;
+    for (k = 0; k < 2; ++k)
+        p->wave_phase[k] = e->wave_phase_init[k] +
+                           (e->wave_phase_random[k] != 0.0f ? e->wave_phase_random[k] * fx_rndf(&p->seed) * 6.2831853f : 0.0f);
     for (k = 0; k < FX_SAMPLERS; ++k) {
         const fx_sampler *s = &e->smp[k];
         int axis;
@@ -719,10 +732,13 @@ static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel
         if (p->pattern_count[k] < 1) p->pattern_count[k] = 1;
         p->pattern_start[k] = s->pattern_random_start ? (int) (fx_rndf(&p->seed) * (float) p->pattern_count[k]) : 0;
         for (axis = 0; axis < 2; ++axis) {
-            p->uv_scroll[k][axis] = s->scroll[axis] + s->scroll_random[axis] * (fx_rndf(&p->seed) * 2.0f - 1.0f);
-            p->uv_scale[k][axis] = s->scale[axis] + s->scale_random[axis] * (fx_rndf(&p->seed) * 2.0f - 1.0f);
+            p->uv_scroll[k][axis] = s->scroll[axis] + (s->scroll_random[axis] != 0.0f ?
+                                      s->scroll_random[axis] * (fx_rndf(&p->seed) * 2.0f - 1.0f) : 0.0f);
+            p->uv_scale[k][axis] = s->scale[axis] + (s->scale_random[axis] != 0.0f ?
+                                     s->scale_random[axis] * (fx_rndf(&p->seed) * 2.0f - 1.0f) : 0.0f);
         }
-        p->uv_rotate[k] = s->rotate + s->rotate_random * (fx_rndf(&p->seed) * 2.0f - 1.0f);
+        p->uv_rotate[k] = s->rotate + (s->rotate_random != 0.0f ?
+                           s->rotate_random * (fx_rndf(&p->seed) * 2.0f - 1.0f) : 0.0f);
     }
     fx_visual_update(p, e, in);
     in->emitted++;
@@ -755,6 +771,12 @@ static void fx_step(void) {
             }
             in->accum += n;
             while (in->accum >= 1.0f) { fx_spawn(i, in, e, emvel); in->accum -= 1.0f; }
+        }
+        /* a binding's emitter_life instance: once its emission is over nothing more comes; let it finish and go */
+        if (in->keep && !in->detached &&
+            ((e->one_time && in->age > e->start) || (e->duration > 0 && in->age > e->start + e->duration))) {
+            in->detached = 1;
+            in->detach_frame = fx_cur.frame;
         }
         in->prev[0] = in->pos[0]; in->prev[1] = in->pos[1]; in->prev[2] = in->pos[2];
         in->have_prev = 1;
@@ -872,6 +894,10 @@ static void fx_trace(int frame) {
     }
 }
 
+/* set only around a binding's gw_Fx_Attach call (transient, never state) */
+typedef struct { float local[3][4]; uint32_t tag; int keep, follow; } fx_attach_extra;
+static const fx_attach_extra *fx_attach_ex;
+
 /* the renderer's view (gw_fx_render.cpp; game thread) */
 const fx_state *gw_fx_state(void) { return fx_ready ? &fx_cur : NULL; }
 const fx_pkg *gw_fx_pkg(int i) { return i >= 0 && i < fx_npkg ? fx_pkgs[i] : NULL; }
@@ -880,7 +906,8 @@ int gw_fx_npkg(void) { return fx_npkg; }
 /* ---- the API the game half calls (scalars; guest addresses as ints) ---------------------------------- */
 
 /* Once per logic frame from the game half, with ITS frame counter (game memory: a rollback restores it). */
-void gw_Fx_Frame(int frame) {
+/* A rollback / LAB rewind: when fx_cur is at or past `frame`, make it the state at the end of frame - 1. */
+static void fx_rewind(int frame) {
     if (!fx_ready) fx_reset();
     if (frame <= fx_cur.frame) {
         int was = fx_cur.frame;
@@ -894,6 +921,7 @@ void gw_Fx_Frame(int frame) {
                 for (i = 0; i < FX_MAX_PARTICLES; ++i) fx_cur.part[i].inst = -1;
                 fx_cur.spawned = sp; fx_cur.killed = ki; fx_cur.refused = re; fx_cur.refused_emitters = rem;
                 fx_cur.frame = s->frame;
+                memcpy(fx_cur.drv, s->drv, sizeof s->drv);
             } else {
                 int i, hi = fx_ring_hi[(frame - 1) & (FX_RING - 1)];
                 fx_copy(&fx_cur, s, hi);
@@ -902,12 +930,17 @@ void gw_Fx_Frame(int frame) {
         } else fx_reset();
         gw_log("fx: frame %d after %d - state restored to %d (re-simulating)", frame, was, fx_cur.frame);
     }
+}
+
+void gw_Fx_Frame(int frame) {
+    fx_rewind(frame);
     if (fx_idle()) {
         fx_state *r = &fx_ring[frame & (FX_RING - 1)];
         fx_cur.frame = frame;
         r->frame = frame; r->nlive = 0;
         r->spawned = fx_cur.spawned; r->killed = fx_cur.killed;
         r->refused = fx_cur.refused; r->refused_emitters = fx_cur.refused_emitters;
+        memcpy(r->drv, fx_cur.drv, sizeof r->drv);
         fx_ring_idle[frame & (FX_RING - 1)] = 1;
         return;
     }
@@ -958,8 +991,23 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
         fx_cur.inst[i].attach_frame = frame;
         fx_cur.inst[i].facing = facing;
         fx_basis(fx_pkgs[pkg], facing, fx_cur.inst[i].basis);
+        if (fx_attach_ex != NULL) { /* a fighter binding: joint-local frame, the package's axes as the joint's own */
+            float f[3] = {fx_pkgs[pkg]->forward[0], fx_pkgs[pkg]->forward[1], fx_pkgs[pkg]->forward[2]};
+            float u[3] = {fx_pkgs[pkg]->up[0], fx_pkgs[pkg]->up[1], fx_pkgs[pkg]->up[2]}, sd[3];
+            int r, c;
+            fx_norm(f); fx_norm(u); fx_cross(u, f, sd);
+            /* joint space follows the source rig (+X side, +Y up, +Z forward): basis = [x y z] [s u f]^T */
+            for (r = 0; r < 3; ++r)
+                for (c = 0; c < 3; ++c)
+                    fx_cur.inst[i].basis[r][c] = (r == 0 ? sd[c] : r == 1 ? u[c] : f[c]);
+            fx_cur.inst[i].has_local = 1;
+            memcpy(fx_cur.inst[i].local, fx_attach_ex->local, sizeof fx_cur.inst[i].local);
+            fx_cur.inst[i].tag = fx_attach_ex->tag;
+            fx_cur.inst[i].keep = fx_attach_ex->keep;
+        }
         fx_cur.inst[i].rng = 0x811C9DC5u ^ ((uint32_t) pkg * 16777619u) ^ ((uint32_t) e << 8) ^ (uint32_t) owner ^ ((uint32_t) frame << 16);
         fx_owner_mtx(&fx_cur.inst[i]);
+        if (fx_attach_ex != NULL && !fx_attach_ex->follow) fx_cur.inst[i].fixed = 1; /* world-fixed from here */
         if (first < 0) first = i;
         attached++;
     }
@@ -976,6 +1024,210 @@ void gw_Fx_Detach(int owner) {
             fx_cur.inst[i].detached = 1;
             fx_cur.inst[i].detach_frame = fx_cur.frame;
         }
+}
+
+/* ---- fighter bindings (fx_bindings.json, format 1: the workspace's ports/ir/schema/fx_bindings.schema.json) ----
+ * A fighter's states name effect calls: a package, a frame on the state's clock (animation frame, or frames since
+ * the state began), a joint of the fighter's own skeleton with a joint-local offset / rotation (degrees, X then Y
+ * then Z) / scale, follow or world-fixed, and an end (state exit, an explicit off frame, or the emitters' own life).
+ * The tables are read once at load; what happened this state (which calls fired / ended) lives in fx_cur.drv, so a
+ * rollback or LAB rewind restores it with the instances. Branch conditions ("when") cannot be evaluated here: a call
+ * is taken when every condition it lists holds; a call under a condition that does not hold is the other branch and
+ * is skipped (Sora: the unrotated AirLwImpact, no FireImpact). "owner_destroy" is treated as state exit. */
+typedef struct {
+    int pkg, joint, follow, keep, situation; /* keep: emitter_life (never detached); situation 0 any, 1 ground, 2 air */
+    float frame, end_frame;                   /* end_frame < 0: none */
+    float off[3], rot[3], scale;
+} fx_bcall;
+typedef struct { int subaction, game_clock, first, n; char name[32]; } fx_bstate;
+typedef struct {
+    char path[MAX_PATH];
+    int nstate, ncall;
+    fx_bstate st[FX_BIND_STATES];
+    fx_bcall call[FX_BIND_CALLS];
+} fx_bset;
+static fx_bset *fx_bsets[FX_BIND_SETS];
+static int fx_nbset;
+
+int gw_Fx_BindLoad(const char *mod_id, const char *rel) {
+    char path[MAX_PATH], *text;
+    const char *dir = gw_Mods_Dir();
+    fjdoc d;
+    fx_bset *b;
+    int i, root, states, s, taken = 0, skipped = 0, missing = 0;
+    if (dir == NULL || !dir[0] || mod_id == NULL || rel == NULL) return -1;
+    snprintf(path, sizeof path, "%s\\%s\\%s", dir, mod_id, rel);
+    for (i = 0; i < fx_nbset; ++i)
+        if (strcmp(fx_bsets[i]->path, path) == 0) return i;
+    if (fx_nbset >= FX_BIND_SETS) return -1;
+    text = fx_read(path);
+    if (text == NULL) { gw_log("fx: bindings %s: not found", path); return -1; }
+    memset(&d, 0, sizeof d);
+    d.p = text;
+    root = fj_value(&d, 0);
+    if (root < 0 || (int) fj_num(&d, fj_get(&d, root, "geno_fx_bindings"), 0) != 1) {
+        gw_log("fx: bindings %s: not a geno_fx_bindings 1 document", path);
+        fj_free(&d); free(text);
+        return -1;
+    }
+    b = (fx_bset *) calloc(1, sizeof *b);
+    snprintf(b->path, sizeof b->path, "%s", path);
+    states = fj_get(&d, root, "states");
+    for (s = 0; fj_at(&d, states, s) >= 0 && b->nstate < FX_BIND_STATES; ++s) {
+        int so = fj_at(&d, states, s), calls = fj_get(&d, so, "calls"), c;
+        fx_bstate *st = &b->st[b->nstate++];
+        snprintf(st->name, sizeof st->name, "%s", fj_s(&d, fj_get(&d, so, "state")));
+        st->subaction = (int) fj_num(&d, fj_get(&d, so, "subaction"), -1);
+        st->game_clock = strcmp(fj_s(&d, fj_get(&d, so, "clock")), "game") == 0;
+        st->first = b->ncall;
+        for (c = 0; fj_at(&d, calls, c) >= 0; ++c) {
+            int co = fj_at(&d, calls, c), when = fj_get(&d, co, "when"), w, holds = 1, pk;
+            const char *ev = fj_s(&d, fj_get(&d, co, "end_event")), *sit = fj_s(&d, fj_get(&d, co, "situation"));
+            fx_bcall *k;
+            for (w = 0; fj_at(&d, when, w) >= 0; ++w) {
+                if (fj_num(&d, fj_get(&d, fj_at(&d, when, w), "holds"), 1) == 0) holds = 0;
+            }
+            if (!holds) { skipped++; continue; }
+            pk = gw_Fx_Find(fj_s(&d, fj_get(&d, co, "package")));
+            if (pk < 0) { missing++; continue; }
+            if (b->ncall >= FX_BIND_CALLS || st->n >= FX_BIND_PER_STATE) break;
+            k = &b->call[b->ncall++];
+            st->n++;
+            k->pkg = pk;
+            k->joint = (int) fj_num(&d, fj_get(&d, co, "joint"), 0);
+            k->follow = fj_num(&d, fj_get(&d, co, "follow"), 1) != 0;
+            k->keep = strcmp(ev, "emitter_life") == 0;
+            k->situation = strcmp(sit, "ground") == 0 ? 1 : strcmp(sit, "air") == 0 ? 2 : 0;
+            k->frame = (float) fj_num(&d, fj_get(&d, co, "frame"), 0);
+            k->end_frame = (strcmp(ev, "off") == 0 || strcmp(ev, "detach") == 0)
+                               ? (float) fj_num(&d, fj_get(&d, co, "end_frame"), -1) : -1.0f;
+            fj_vec(&d, fj_get(&d, co, "offset"), k->off, 3);
+            fj_vec(&d, fj_get(&d, co, "rotation"), k->rot, 3);
+            k->scale = (float) fj_num(&d, fj_get(&d, co, "scale"), 1);
+            taken++;
+        }
+    }
+    fj_free(&d);
+    free(text);
+    fx_bsets[fx_nbset] = b;
+    gw_log("fx: bindings %s: %d states, %d calls (%d under a branch not taken, %d with no package)", path, b->nstate,
+           taken, skipped, missing);
+    return fx_nbset++;
+}
+
+static void fx_detach_tag(uint32_t mask, uint32_t val, int keep_too) {
+    int i;
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i];
+        const fx_emitter *e = in->used ? &fx_pkgs[in->pkg]->em[in->em] : NULL;
+        /* keep (emitter_life) stays, unless its emitter never ends by itself */
+        if (in->used && !in->detached && in->tag != 0 && (in->tag & mask) == val &&
+            (keep_too || !in->keep || (!e->one_time && e->duration <= 0))) {
+            in->detached = 1;
+            in->detach_frame = fx_cur.frame;
+        }
+    }
+}
+
+/* T(offset) x R (X, then Y, then Z; degrees) x S(scale): a call's joint-local frame */
+static void fx_call_local(const fx_bcall *k, float L[3][4]) {
+    float cx = cosf(k->rot[0] * 0.017453293f), sx = sinf(k->rot[0] * 0.017453293f);
+    float cy = cosf(k->rot[1] * 0.017453293f), sy = sinf(k->rot[1] * 0.017453293f);
+    float cz = cosf(k->rot[2] * 0.017453293f), sz = sinf(k->rot[2] * 0.017453293f);
+    float R[3][3] = {{cy * cz, sx * sy * cz - cx * sz, cx * sy * cz + sx * sz},
+                     {cy * sz, sx * sy * sz + cx * cz, cx * sy * sz - sx * cz},
+                     {-sy, sx * cy, cx * cy}}; /* Rz Ry Rx */
+    int r, c;
+    for (r = 0; r < 3; ++r) {
+        for (c = 0; c < 3; ++c) L[r][c] = R[r][c] * k->scale;
+        L[r][3] = k->off[r];
+    }
+}
+
+/* Once per scene frame per fighter with a binding set, BEFORE gw_Fx_Frame(frame), after the fighter's joints are
+ * final. owner: the fighter's key (guest address); motion: its motion state; anim: its subaction; anim_frame: its animation frame; time:
+ * frames since its state began (Geno's action_time); parts: its FighterBone array (guest), stride / count;
+ * joint_to_part: the kind's u8 table (guest; a binding names a joint of the model's tree, parts[] is by part). */
+void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int parts,
+                 int stride, int nparts, int joint_to_part, int frame) {
+    const fx_bset *b;
+    fx_drv *dv;
+    int i, slot = -1, st = -1;
+    if (set < 0 || set >= fx_nbset || owner == 0) return;
+    fx_rewind(frame);
+    b = fx_bsets[set];
+    for (i = 0; i < FX_MAX_DRV; ++i)
+        if (fx_cur.drv[i].owner == (uint32_t) owner) { slot = i; break; }
+    if (slot < 0) {
+        for (i = 0; i < FX_MAX_DRV && slot < 0; ++i)
+            if (fx_cur.drv[i].owner == 0) slot = i;
+        if (slot < 0) /* all taken: the one not driven for longest */
+            for (slot = 0, i = 1; i < FX_MAX_DRV; ++i)
+                if (fx_cur.drv[i].last_frame < fx_cur.drv[slot].last_frame) slot = i;
+        if (fx_cur.drv[slot].owner != 0) fx_detach_tag(0xFF000000u, 0x80000000u | ((uint32_t) slot << 24), 0);
+        memset(&fx_cur.drv[slot], 0, sizeof fx_cur.drv[slot]);
+        fx_cur.drv[slot].owner = (uint32_t) owner;
+        fx_cur.drv[slot].anim = -1;
+    }
+    dv = &fx_cur.drv[slot];
+    dv->set = set;
+    if (dv->anim != anim || dv->motion != motion || time < dv->time) { /* a new state (or the same one again) */
+        fx_detach_tag(0xFFFFFF00u, 0x80000000u | ((uint32_t) slot << 24) | ((uint32_t) (dv->serial & 0xFFFF) << 8), 0);
+        dv->serial = (dv->serial + 1) & 0xFFFF;
+        dv->fired = dv->ended = 0;
+        dv->anim = anim;
+        dv->motion = motion;
+    }
+    dv->time = time;
+    dv->last_frame = frame;
+    for (i = 0; i < b->nstate; ++i)
+        if (b->st[i].subaction == anim) { st = i; break; }
+    if (st < 0) return;
+    for (i = 0; i < b->st[st].n && i < FX_BIND_PER_STATE; ++i) {
+        const fx_bcall *k = &b->call[b->st[st].first + i];
+        float clock = b->st[st].game_clock ? (float) time : anim_frame;
+        uint32_t bit = 1u << i, tag = 0x80000000u | ((uint32_t) slot << 24) | ((uint32_t) (dv->serial & 0xFFFF) << 8) | (uint32_t) i;
+        if (!(dv->fired & bit)) {
+            fx_attach_extra ex;
+            int jobj, h;
+            if ((k->situation == 1 && airborne) || (k->situation == 2 && !airborne) || clock < k->frame) continue;
+            dv->fired |= bit;
+            {
+                int part = k->joint;
+                if (joint_to_part != 0 && part >= 0 && part < 256)
+                    part = *(const unsigned char *) (uintptr_t) (joint_to_part + part);
+                if (part < 0 || part >= nparts) {
+                    gw_log("fx: bind %s call %d: joint %d (part %d) outside the fighter's %d parts", b->st[st].name, i,
+                           k->joint, part, nparts);
+                    continue;
+                }
+                jobj = (int) gw_r32((const void *) (uintptr_t) (parts + part * stride));
+            }
+            if (jobj == 0) continue;
+            fx_call_local(k, ex.local);
+            ex.tag = tag;
+            ex.keep = k->keep;
+            ex.follow = k->follow;
+            fx_attach_ex = &ex;
+            h = gw_Fx_Attach(k->pkg, jobj, 0x44, frame, facing);
+            fx_attach_ex = NULL;
+            if (h > 0) {
+                const fx_inst *in = &fx_cur.inst[h - 1];
+                const void *jm = (const void *) (uintptr_t) (jobj + 0x44);
+                gw_log("fx: bind %s call %d %s at %s frame %.1f (call frame %.1f) joint %d at (%.2f %.2f %.2f) %s: "
+                       "emitter origin (%.2f %.2f %.2f)",
+                       b->st[st].name, i, fx_pkgs[k->pkg]->name, b->st[st].game_clock ? "state" : "anim", clock,
+                       k->frame, k->joint, gw_rf32((const char *) jm + 12), gw_rf32((const char *) jm + 28),
+                       gw_rf32((const char *) jm + 44), k->follow ? "follow" : "world-fixed", in->m[0][3], in->m[1][3],
+                       in->m[2][3]);
+            }
+        } else if (!(dv->ended & bit) && k->end_frame >= 0 && clock >= k->end_frame) {
+            dv->ended |= bit;
+            fx_detach_tag(0xFFFFFFFFu, tag, 1);
+            gw_log("fx: bind %s call %d %s off at %s frame %.1f", b->st[st].name, i, fx_pkgs[k->pkg]->name,
+                   b->st[st].game_clock ? "state" : "anim", clock);
+        }
+    }
 }
 
 /* The census (numbers only): 0 live particles, 1 instances, 2 spawned, 3 killed, 4 refused,
@@ -1141,6 +1393,19 @@ static int test_fx_sim_features(void) {
                     gw_test_fail("fx: cylinder caliber 0.5 must leave inner radius 0.5 empty"); rc = 1; break;
                 }
             }
+        }
+        e->shape = FX_SHAPE_CIRCLE;
+        e->sweep[0] = 0.0f; e->sweep[1] = 1.5707963f;
+        for (i = 0; i < 64; ++i) {
+            fx_sample_shape(e, &rng, v, dir);
+            if (v[0] < -0.001f || v[2] < -0.001f) {
+                gw_test_fail("fx: quarter-circle sweep must stay in positive X/Z quadrant"); rc = 1; break;
+            }
+        }
+        e->shape = FX_SHAPE_SPHERE; e->sweep[1] = 6.2831853f; e->sweep[2] = 1.5707963f;
+        for (i = 0; i < 64; ++i) {
+            fx_sample_shape(e, &rng, v, dir);
+            if (v[1] < -0.001f) { gw_test_fail("fx: hemisphere latitude sweep must stay above Y=0"); rc = 1; break; }
         }
     }
 

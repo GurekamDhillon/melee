@@ -2179,7 +2179,7 @@ frame, read-only); `gw_Fx_Detach(jobj)` stops emission (live particles finish); 
 logic frame with the game's own frame counter: a frame not after the last one restores the state kept for the
 frame before (16 frames) and re-simulates (rollback, LAB rewind); nothing enters a snapshot. `gw_Fx_Stat` /
 `gw_Fx_Census` are the numeric census (live particles, instances, spawned / killed / refused, per instance).
-Budget: 2000 particles, 256 emitter instances (a full pool refuses the newest package's lowest-priority emitters; `gw_Fx_Stat(5)` counts them). An idle state is kept in the rollback ring as its header only.
+Budget: 64 packages, 2000 particles, 256 emitter instances (a full pool refuses the newest package's lowest-priority emitters; `gw_Fx_Stat(5)` counts them). An idle state is kept in the rollback ring as its header only.
 
 **Binding (geno.json v5.4)**: an article's `"fx": "<package>"` (GENO_AP_FX) attaches that package to the article's
 root joint at spawn and detaches it when the article goes (every despawn path). The game half calls
@@ -2187,6 +2187,24 @@ root joint at spawn and detaches it when the article goes (every despawn path). 
 `gw_Fx_Frame` logs a census line every 30 frames while anything is live (`fx: census frame N: ...`). Checked in
 a real match (Sora magic, ACE): Firaga attached 10 emitters, census 8 live at +7 frames; 8 Blizzaga shots, 35
 instances / 18 live at the peak, none refused, all dead after.
+
+**Fighter bindings (geno.json v5.5)**: a fighter entry's `"fx_bindings": "fx/fx_bindings.json"` (a path in the mod;
+format: the workspace's `ports/ir/schema/fx_bindings.schema.json`, written by `ports/ir/tools/trail_fx_bindings.py`)
+attaches packages on the fighter's states. `Geno_FxFramePost` calls `gw_Fx_Drive` for each fighter whose profile has
+a set, before `gw_Fx_Frame`, with its motion state, subaction (`anim_id`), animation frame, Geno's `action_time`,
+situation, facing and parts table. A state is matched by `subaction`; a call fires once the state's clock (`animation`
+= the animation frame, `game` = frames since the state began) reaches `frame`, on `joint` (a joint of the model's
+tree, turned into a part by the kind's `joint_to_part`) x T(`offset`) R(`rotation`, degrees, X then Y then Z)
+S(`scale`), the package's axes taken as the joint's own. `follow: false` takes the matrix once (world-fixed). Ends:
+`off` / `detach` at `end_frame`; `state_exit` (and `owner_destroy`) when the motion state or subaction changes or
+the state is entered again; `emitter_life` instances end themselves when their emission is over (one whose emitter
+never ends goes at state exit). `when`: a call is taken when every condition it lists holds (the other branch is
+skipped); `situation` limits a call to ground / air. What fired in the current state lives in the effects state
+(`fx_drv`, 8 fighters), so a rollback or LAB rewind restores it with the instances; a rewind past the 16-frame ring
+starts clean. Checked in the LAB (Sora slot, ACE): jab KeybladeFlare on joint 78 at anim frame 8, off at 16; forward
+smash KeybladeFlare + KeybladeLight at 14, off at 25 / 23; Sonic Blade SonicStart world-fixed on `top` + 11.5 up at 0,
+SDash KeybladeFlare 1, SonicAttack on joint 2 at 2, SonicImpact world-fixed at 9; Counter CounterFlash at 8 (ground
+and air); a LAB rewind restores and re-fires.
 
 Importer check (GD's ef_trail.eff; shader types: Fire 7 warp / 2 sprite / 1 distortion, Ice 10 sprite / 1 warp,
 Thunder sprite): P_TrailFireBullet 10 emitters, 9 textures, 4 meshes, 10 / 10 fragment programs read; P_TrailIceBullet 11 / 10 textures / 5 meshes / 10 of 11; P_TrailThunderCloud 5 / 4 / 4 /

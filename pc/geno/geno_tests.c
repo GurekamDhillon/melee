@@ -2643,6 +2643,94 @@ static int test_geno_v5_on_hit(void)
     return rc;
 }
 
+/* ---- v5.1: slots, spawn variants, children, brakes, specials select ------------------------- */
+
+extern int Geno_SpecialSelect(int p, int which, int i);
+
+static const char t_v51_json[] =
+    "{\"geno\":4,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"Fire\",\"behavior\":\"geno.ground\",\"subaction\":20},"
+    "{\"name\":\"Ice\",\"behavior\":\"geno.ground\",\"subaction\":21},"
+    "{\"name\":\"Thunder\",\"behavior\":\"geno.ground\",\"subaction\":22}],"
+    "\"specials\":{\"n\":{\"select\":\"la_i:0\",\"targets\":[\"geno:Fire\",\"geno:Ice\",\"geno:Thunder\"]}},"
+    "\"articles\":["
+    "{\"name\":\"Ice\",\"velocity\":[3.6,0],\"accel\":-0.18,\"min_speed\":0.2,\"angle\":4,"
+    "\"spawns\":[[7.6,6.8],[10,2]],"
+    "\"hitboxes\":[{\"damage\":2.4,\"start\":1,\"end\":3},{\"damage\":2.4,\"slot\":0,\"start\":4,\"end\":6}]},"
+    "{\"name\":\"Cloud\",\"lifetime\":30,\"bone\":2,\"effect\":1147,"
+    "\"children\":[{\"article\":\"Bolt\",\"frame\":3,\"every\":3,\"count\":4,\"spawn\":1}]},"
+    "{\"name\":\"Bolt\",\"velocity\":[0,-3.8]}"
+    "]}]}";
+
+static int test_geno_v51(void)
+{
+    TestGenoState* st;
+    int rc = 0, f;
+    f32 vx = 3.6f, vy = 0.0f;
+    if (Geno_TestInstall(t_v51_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the v5.1 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    if (Geno_ArticleHitParam(0, 0, 0, GENO_AH_SLOT) != 0 || Geno_ArticleHitParam(0, 0, 1, GENO_AH_SLOT) != 0 ||
+        Geno_ArticleParam(0, 0, GENO_AP_SPAWN_N) != 2 || t_bitsf(Geno_ArticleParam(0, 0, GENO_AP_SPAWN_V + 3)) != 2.0f ||
+        t_bitsf(Geno_ArticleParam(0, 0, GENO_AP_ANGLE)) != 4.0f || Geno_ArticleParam(0, 0, GENO_AP_BONE) != -1 ||
+        Geno_ArticleParam(0, 1, GENO_AP_BONE) != 2 || Geno_ArticleParam(0, 1, GENO_AP_EFFECT) != 1147)
+    {
+        TestFail("v5.1 article keys: slots (both entries in slot 0), spawns, angle, bone, effect");
+        rc = 1;
+    }
+    if (Geno_ArticleParam(0, 1, GENO_AP_CHILD) != 2 || Geno_ArticleParam(0, 1, GENO_AP_CHILD + 1) != 3 ||
+        Geno_ArticleParam(0, 1, GENO_AP_CHILD + 2) != 3 || Geno_ArticleParam(0, 1, GENO_AP_CHILD + 3) != 4 ||
+        Geno_ArticleParam(0, 1, GENO_AP_CHILD + 4) != 1 || Geno_ArticleParam(0, 1, GENO_AP_CHILD + 5) != -1 ||
+        Geno_ArticleParam(0, 0, GENO_AP_CHILD) != -1)
+    {
+        TestFail("children: Cloud -> Bolt (by name) at 3, every 3, 4 times, variant 1; none elsewhere");
+        rc = 1;
+    }
+    /* the brake: 3.6 - 0.18 a frame, stopping at 0.2 */
+    for (f = 1; f <= 5; f++) {
+        GenoGame_ArticleStep(0, 0, f, &vx, &vy, 0.0f, 0.0f, 0, 0.0f, 0.0f);
+    }
+    if (!t_near(vx, 2.7f)) {
+        TestFail("brake: 5 frames of -0.18 from 3.6 = 2.7");
+        rc = 1;
+    }
+    for (f = 6; f <= 60; f++) {
+        GenoGame_ArticleStep(0, 0, f, &vx, &vy, 0.0f, 0.0f, 0, 0.0f, 0.0f);
+    }
+    if (!t_near(vx, 0.2f)) {
+        TestFail("brake must stop at min_speed 0.2");
+        rc = 1;
+    }
+    /* specials select: LA0 picks Fire / Ice / Thunder; out of range = the fighter's own */
+    if (Geno_SpecialSelect(0, GENO_SP_N, -1) != GENO_VAR(GENO_BANK_LA_INT, 0) ||
+        Geno_SpecialSelect(0, GENO_SP_AIR_N, -2) != 3)
+    {
+        TestFail("select: la_i:0, three targets, air_n inherits it");
+        rc = 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.ground_or_air = GA_Ground;
+    for (f = 0; f < 3; f++) {
+        st->la_i[0] = f;
+        t_fp.motion_id = ftCo_MS_Wait;
+        if (Geno_SpecialEnter(&t_gobj, GENO_SP_N) != 1 || t_fp.motion_id != T_MS(f)) {
+            TestFail("select: LA0 = n must enter state n");
+            rc = 1;
+        }
+    }
+    st->la_i[0] = 3;
+    t_fp.motion_id = ftCo_MS_Wait;
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_N) != 0) {
+        TestFail("select: LA0 out of range must leave the special to the fighter");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    return rc;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -2681,4 +2769,5 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v5_registry", test_geno_v5_registry);
     TestRegister("geno_v5_article_motion", test_geno_v5_article_motion);
     TestRegister("geno_v5_on_hit", test_geno_v5_on_hit);
+    TestRegister("geno_v51", test_geno_v51);
 }

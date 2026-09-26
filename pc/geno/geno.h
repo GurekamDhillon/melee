@@ -337,7 +337,11 @@ enum {
 #define GENO_ART_KIND_BASE 0x1000
 #define GENO_MAX_ARTICLES 8
 #define GENO_ART_KIND_END (GENO_ART_KIND_BASE + GENO_MAX_PROFILES * GENO_MAX_ARTICLES)
-#define GENO_ART_HITBOXES 4 /* Melee items have 4 hitboxes */
+#define GENO_ART_HITBOXES 4 /* Melee items have 4 hitbox slots */
+#define GENO_ART_HIT_ENTRIES 8 /* v5.1: hitbox entries per article; entries sharing a "slot" hand over
+                                  (Ultimate's ATTACK re-issued on one id: the victim list stays) */
+#define GENO_ART_SPAWNS 4      /* v5.1: spawn variants ("spawns"), chosen by the spawn arg */
+#define GENO_ART_CHILDREN 2    /* v5.1: articles an article spawns ("children") */
 
 /* Article parameters (Geno_ArticleParam; float bits unless noted). Stable ids. */
 enum {
@@ -357,7 +361,17 @@ enum {
     GENO_AP_DESPAWN = 13,    /* int: GENO_ART_DESPAWN_* mask (default hit | shield | stage) */
     GENO_AP_SPIN = 14,       /* model spin, degrees a frame about the travel axis (visual only) */
     GENO_AP_MAX_LIVE = 15,   /* int: at most this many of this article per fighter (0 = 4) */
-    GENO_AP_COUNT = 16
+    /* v5.1 */
+    GENO_AP_MIN_SPEED = 16,  /* a negative accel (a brake) stops at this speed */
+    GENO_AP_BONE = 17,       /* int: spawn at this fighter part (bone) + the offset; -1 = position */
+    GENO_AP_EFFECT = 18,     /* int: Melee effect id attached to the article at spawn (efAsync), 0 none */
+    GENO_AP_SPAWN_N = 19,    /* int: number of "spawns" variants */
+    GENO_AP_SPAWN_V = 20,    /* 20..27: variant v's [forward, up] = 20 + 2v, 21 + 2v */
+    GENO_AP_CHILD = 28,      /* 28..37: child c: article 28+5c, frame +1, every +2, count +3,
+                                spawn variant +4 (ints) */
+    GENO_AP_ANGLE = 38,      /* degrees the initial velocity is turned (up, in the facing), added to
+                                the spawn arg's angle */
+    GENO_AP_COUNT = 40
 };
 #define GENO_ART_DESPAWN_HIT 1u    /* its hitbox hit a fighter / item */
 #define GENO_ART_DESPAWN_SHIELD 2u /* it hit a shield */
@@ -383,7 +397,8 @@ enum {
     GENO_AH_START = 13,        /* first active frame of the article's life (1-based) */
     GENO_AH_END = 14,          /* last active frame (0 = the whole lifetime) */
     GENO_AH_FLAGS = 15,        /* GENO_AHF_* (default: all but none) */
-    GENO_AH_COUNT = 16
+    GENO_AH_SLOT = 16,         /* v5.1: Melee hitbox slot 0-3 (default: the entry's index mod 4) */
+    GENO_AH_COUNT = 17
 };
 #define GENO_AHF_GROUND 1u      /* hits grounded fighters */
 #define GENO_AHF_AIR 2u         /* hits airborne fighters */
@@ -405,6 +420,15 @@ enum {
 };
 
 /* v2: specials bound to Geno states ("specials": {"n": "geno:5", "air_s": "geno:7", ...}) */
+/* v5.1: "specials": {"n": {"select": "la_i:0", "targets": [...]}} - the special picks its target by a
+ * variable (Sora's magic: Firaga -> Blizzaga -> Thundaga). Up to GENO_SP_SELECT targets. */
+#define GENO_SP_SELECT 4
+/* Spawn arg of hook 5 (geno.article.spawn): [7:0] article, [15:8] spawn variant, [31:16] signed
+ * extra angle in degrees (the velocity turned up in the facing). Plain 0..7 = v5. */
+#define GENO_SPAWN_ARG(article, variant, angle) \
+    (((unsigned) (article) & 0xFFu) | (((unsigned) (variant) & 0xFFu) << 8) | \
+     (((unsigned) (angle) & 0xFFFFu) << 16))
+
 enum {
     GENO_SP_N = 0, GENO_SP_S = 1, GENO_SP_HI = 2, GENO_SP_LW = 3,
     GENO_SP_AIR_N = 4, GENO_SP_AIR_S = 5, GENO_SP_AIR_HI = 6, GENO_SP_AIR_LW = 7,

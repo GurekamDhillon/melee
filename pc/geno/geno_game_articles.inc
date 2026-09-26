@@ -23,6 +23,8 @@
  */
 
 #include <melee/db/db.h>
+#include <melee/ef/efasync.h>
+#include <melee/lb/lb_00B0.h>
 #include <melee/it/it_26B1.h>
 #include <melee/it/it_2725.h>
 #include <melee/it/itcoll.h>
@@ -42,6 +44,7 @@ extern int Geno_ArticleHitParam(int p, int a, int h, int id);
 extern int Geno_ArticleJoint(int p, int a);
 extern int Geno_StateCounter(int p, int s, int field);
 extern int Geno_StateHasCounter(int p, int s);
+extern int Geno_SpecialSelect(int p, int which, int i);
 
 /* ---- game globals: one descriptor per (profile, article) ------------------------------------- */
 
@@ -59,6 +62,7 @@ typedef struct GenoArtVars {
     f32 vx, vy; /* the travel velocity the phys callback writes to x40_vel */
     Vec3 prev;  /* the position before this frame's move (the stage ray test) */
     f32 spin;   /* the model's roll (visual) */
+    s8 cur[GENO_ART_HITBOXES]; /* v5.1: the hitbox entry each Melee slot holds now, -1 off */
 } GenoArtVars;
 
 static GenoArtVars* geno_art_vars(Item* ip)
@@ -192,25 +196,27 @@ static int geno_art_live(HSD_GObj* owner, int article)
 
 /* ---- hitboxes: what the item script's hitbox command (it_802790C0) does, from geno.json -------- */
 
-static void geno_art_hitbox_on(Item_GObj* gobj, Item* ip, int p, int a, int h)
+/* Entry h into Melee hitbox slot `slot`. A slot that is already on is re-set IN PLACE (Ultimate's
+ * ATTACK re-issued on the same id: new numbers, the victim list stays), as the item script's hitbox
+ * command does when the hit group is unchanged. */
+static void geno_art_hitbox_on(Item_GObj* gobj, Item* ip, int p, int a, int h, int slot)
 {
-    ItemHitbox* hb = &ip->x5D4_hitboxes[h];
+    ItemHitbox* hb = &ip->x5D4_hitboxes[slot];
     HitCapsule* hit = &hb->hit;
     u32 fl = (u32) Geno_ArticleHitParam(p, a, h, GENO_AH_FLAGS);
     f32 dmg = geno_art_hf(p, a, h, GENO_AH_DAMAGE);
-    if (hit->state != HitCapsule_Disabled) {
-        return; /* already on: its victim list stands (one hit per victim per window) */
+    if (hit->state == HitCapsule_Disabled) {
+        hit->x4 = 0;
+        hit->state = HitCapsule_Enabled;
+        ip->xDC8_word.flags.x16 = 1;
+        ip->xDAA_flag.b2 = 0;
+        it_8026FCF8(ip, hit);
     }
-    hit->x4 = 0;
-    hit->state = HitCapsule_Enabled;
-    ip->xDC8_word.flags.x16 = 1;
-    ip->xDAA_flag.b2 = 0;
-    it_8026FCF8(ip, hit);
     hit->jobj = gobj->hsd_obj;
     it_80272460(hit, (u32) (ip->xC3C * ((dmg + 0.5f) * ip->xC40)), gobj);
     hit->scale = geno_art_hf(p, a, h, GENO_AH_SIZE);
     ip->x3C = hit->scale;
-    it_80275594(gobj, h, 1.0f / ip->scl);
+    it_80275594(gobj, slot, 1.0f / ip->scl);
     hit->b_offset.x = geno_art_hf(p, a, h, GENO_AH_OFF_X);
     hit->b_offset.y = geno_art_hf(p, a, h, GENO_AH_OFF_Y);
     hit->b_offset.z = geno_art_hf(p, a, h, GENO_AH_OFF_Z);
@@ -244,22 +250,34 @@ static void geno_art_hitbox_on(Item_GObj* gobj, Item* ip, int p, int a, int h)
     hb->x138 = 1;
     hit->x43_b2 = 0;
     if (HSD_GObj_CurrentInvokedProc != NULL && HSD_GObj_CurrentInvokedProc->s_link > 11) {
-        it_8027129C(gobj, h);
+        it_8027129C(gobj, slot);
     }
 }
 
-/* Each hitbox is on during [start, end] of the article's life (end 0 = to the end). */
+/* Each entry is on during [start, end] of the article's life (end 0 = to the end), in its slot; the
+ * last listed entry whose window holds the frame wins its slot. A slot whose entry changes hands over
+ * in place; a slot with no entry is switched off. */
 static void geno_art_hitboxes(Item_GObj* gobj, Item* ip, GenoArtVars* v)
 {
-    int n = Geno_ArticleHitCount(v->profile, v->article), h;
-    for (h = 0; h < n && h < GENO_ART_HITBOXES; h++) {
+    int n = Geno_ArticleHitCount(v->profile, v->article), h, sl;
+    int want[GENO_ART_HITBOXES];
+    for (sl = 0; sl < GENO_ART_HITBOXES; sl++) {
+        want[sl] = -1;
+    }
+    for (h = 0; h < n && h < GENO_ART_HIT_ENTRIES; h++) {
         int start = Geno_ArticleHitParam(v->profile, v->article, h, GENO_AH_START);
         int end = Geno_ArticleHitParam(v->profile, v->article, h, GENO_AH_END);
         if (v->frame >= start && (end <= 0 || v->frame <= end)) {
-            geno_art_hitbox_on(gobj, ip, v->profile, v->article, h);
-        } else {
-            ip->x5D4_hitboxes[h].hit.state = HitCapsule_Disabled;
+            want[Geno_ArticleHitParam(v->profile, v->article, h, GENO_AH_SLOT) & (GENO_ART_HITBOXES - 1)] = h;
         }
+    }
+    for (sl = 0; sl < GENO_ART_HITBOXES; sl++) {
+        if (want[sl] < 0) {
+            ip->x5D4_hitboxes[sl].hit.state = HitCapsule_Disabled;
+        } else if (want[sl] != v->cur[sl] || ip->x5D4_hitboxes[sl].hit.state == HitCapsule_Disabled) {
+            geno_art_hitbox_on(gobj, ip, v->profile, v->article, want[sl], sl);
+        }
+        v->cur[sl] = (s8) want[sl];
     }
 }
 
@@ -276,7 +294,10 @@ void GenoGame_ArticleStep(int p, int a, int frame, f32* vx, f32* vy, f32 px, f32
     f32 delay = geno_art_f(p, a, GENO_AP_HOMING_DELAY);
     f32 speed = sqrtf(*vx * *vx + *vy * *vy);
     if (acc != 0.0f && speed > 0.0001f) {
-        f32 ns = speed + acc;
+        f32 ns = speed + acc, mn = geno_art_f(p, a, GENO_AP_MIN_SPEED);
+        if (acc < 0.0f && ns < mn) {
+            ns = speed < mn ? speed : mn; /* a brake stops at min_speed (Ultimate's stable_speed) */
+        }
         if (ns < 0.0f) {
             ns = 0.0f;
         }
@@ -349,6 +370,32 @@ static void geno_art_gone(Item* ip, GenoArtVars* v, int why)
                v->article, why);
 }
 
+static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32 angle, Vec3* base,
+                                  f32 facing);
+
+/* v5.1 "children": an article spawns articles (a cloud's bolts) at frame, every k frames, n times,
+ * from its own position and facing, owned by its fighter. */
+static void geno_art_children(Item_GObj* gobj, Item* ip, GenoArtVars* v)
+{
+    int c;
+    for (c = 0; c < GENO_ART_CHILDREN; c++) {
+        int base = GENO_AP_CHILD + 5 * c;
+        int art = Geno_ArticleParam(v->profile, v->article, base);
+        int f0 = Geno_ArticleParam(v->profile, v->article, base + 1);
+        int every = Geno_ArticleParam(v->profile, v->article, base + 2);
+        int count = Geno_ArticleParam(v->profile, v->article, base + 3);
+        int k;
+        if (art < 0 || v->frame < f0 || ip->owner == NULL) {
+            continue;
+        }
+        k = every > 0 ? (v->frame - f0) / every : 0;
+        if ((every > 0 ? (v->frame - f0) % every == 0 : v->frame == f0) && k < count) {
+            geno_art_spawn(ip->owner, v->profile, art, Geno_ArticleParam(v->profile, v->article, base + 4),
+                           0.0f, &ip->pos, ip->facing_dir);
+        }
+    }
+}
+
 static bool geno_art_anim(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
@@ -360,6 +407,7 @@ static bool geno_art_anim(Item_GObj* gobj)
         return true;
     }
     geno_art_hitboxes(gobj, ip, v);
+    geno_art_children(gobj, ip, v);
     if (spin != 0.0f) {
         v->spin += spin * (f32) M_PI / 180.0f;
         HSD_JObjSetRotationX(GET_JOBJ(gobj), v->spin);
@@ -442,54 +490,103 @@ static bool geno_art_absorbed(Item_GObj* gobj)
 
 /* ---- spawning (hook 5 "geno.article.spawn", arg = article index) ------------------------------ */
 
-int GenoGame_ArticleSpawn(Fighter_GObj* gobj, int a)
+/* The spawner. `base` = where the offsets apply from (the owner's position or bone, or a parent
+ * article's position), `facing` the direction; the velocity is (velocity) turned up by the article's
+ * "angle" + `angle` degrees. Returns the item, NULL when refused (logged). */
+static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32 angle, Vec3* base,
+                                  f32 facing)
 {
-    Fighter* fp = GET_FIGHTER(gobj);
-    GenoState* st = geno_state(fp);
-    int p = st->profile, kind, max;
+    Fighter* fp = GET_FIGHTER(owner);
+    int kind, max, nv;
     SpawnItem spawn;
     Vec3 pos;
     Item_GObj* ig;
     Item* ip;
     GenoArtVars* v;
+    f32 fwd, up, vf, vu, rad, c, sn;
     if (p < 0 || p >= GENO_MAX_PROFILES || a < 0 || a >= Geno_ArticleCount(p)) {
         Geno_Event(30, fp->kind, fp->player_id, a, 0);
-        return 0;
+        return NULL;
     }
     max = Geno_ArticleParam(p, a, GENO_AP_MAX_LIVE);
-    if (max > 0 && geno_art_live(gobj, a) >= max) {
+    if (max > 0 && geno_art_live(owner, a) >= max) {
         Geno_Event(30, fp->kind, fp->player_id, a, 1);
-        return 0;
+        return NULL;
     }
     geno_art_build(p, a);
     kind = GENO_ART_KIND_BASE + p * GENO_MAX_ARTICLES + a;
-    pos.x = fp->cur_pos.x + fp->facing_dir * geno_art_f(p, a, GENO_AP_SPAWN_FWD);
-    pos.y = fp->cur_pos.y + geno_art_f(p, a, GENO_AP_SPAWN_UP);
+    nv = Geno_ArticleParam(p, a, GENO_AP_SPAWN_N);
+    if (variant > 0 && variant < nv) {
+        fwd = geno_art_f(p, a, GENO_AP_SPAWN_V + 2 * variant);
+        up = geno_art_f(p, a, GENO_AP_SPAWN_V + 2 * variant + 1);
+    } else if (nv > 0) {
+        fwd = geno_art_f(p, a, GENO_AP_SPAWN_V);
+        up = geno_art_f(p, a, GENO_AP_SPAWN_V + 1);
+    } else {
+        fwd = geno_art_f(p, a, GENO_AP_SPAWN_FWD);
+        up = geno_art_f(p, a, GENO_AP_SPAWN_UP);
+    }
+    pos.x = base->x + facing * fwd;
+    pos.y = base->y + up;
     pos.z = 0.0f;
     spawn.kind = kind;
-    Item_InitSpawnPositionFromParent(&spawn, gobj, &pos);
-    Item_InitSpawnCommonFields(&spawn, gobj, fp->facing_dir, true);
+    Item_InitSpawnPositionFromParent(&spawn, owner, &pos);
+    Item_InitSpawnCommonFields(&spawn, owner, facing, true);
     ig = Item_80268B18(&spawn);
     if (ig == NULL) {
         Geno_Event(30, fp->kind, fp->player_id, a, 2);
-        return 0;
+        return NULL;
     }
     ip = GET_ITEM(ig);
     v = geno_art_vars(ip);
     geno_zero(v, sizeof(*v));
     v->profile = p;
     v->article = a;
-    v->vx = fp->facing_dir * geno_art_f(p, a, GENO_AP_VEL_FWD);
-    v->vy = geno_art_f(p, a, GENO_AP_VEL_UP);
+    for (nv = 0; nv < GENO_ART_HITBOXES; nv++) {
+        v->cur[nv] = -1;
+    }
+    vf = geno_art_f(p, a, GENO_AP_VEL_FWD);
+    vu = geno_art_f(p, a, GENO_AP_VEL_UP);
+    rad = (geno_art_f(p, a, GENO_AP_ANGLE) + angle) * (f32) M_PI / 180.0f;
+    c = cosf(rad);
+    sn = sinf(rad);
+    v->vx = facing * (vf * c - vu * sn);
+    v->vy = vf * sn + vu * c;
     v->prev = ip->pos;
     Item_80268E5C(ig, 0, ITEM_ANIM_UPDATE);
     ip->x40_vel.x = v->vx;
     ip->x40_vel.y = v->vy;
     ip->x40_vel.z = 0.0f;
-    db_80225DD8(ig, gobj);
-    st->art_spawned++;
+    db_80225DD8(ig, owner);
+    if (Geno_ArticleParam(p, a, GENO_AP_EFFECT) > 0) {
+        /* attached to the article's root joint, as Mario's fireball carries its flame */
+        efAsync_Spawn(ig, &ip->xBC0, 1, (u32) Geno_ArticleParam(p, a, GENO_AP_EFFECT), GET_JOBJ(ig));
+    }
+    geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);
-    return 1;
+    Geno_Event(34, a, (int) (pos.x * 100.0f), (int) (pos.y * 100.0f), (int) (v->vx * 1000.0f));
+    return ig;
+}
+
+/* Hook 5: arg [7:0] article, [15:8] spawn variant, [31:16] signed extra angle (degrees). From the
+ * fighter's position, or its part "bone" (world position) when the article names one. */
+int GenoGame_ArticleSpawn(Fighter_GObj* gobj, int arg)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    int a = arg & 0xFF, bone;
+    Vec3 base = fp->cur_pos;
+    if (st->profile < 0 || a >= Geno_ArticleCount(st->profile)) {
+        Geno_Event(30, fp->kind, fp->player_id, a, 0);
+        return 0;
+    }
+    bone = Geno_ArticleParam(st->profile, a, GENO_AP_BONE);
+    if (bone >= 0 && bone < 128 && fp->parts != NULL && fp->parts[bone].joint != NULL) {
+        lb_8000B1CC(fp->parts[bone].joint, NULL, &base);
+        base.z = 0.0f;
+    }
+    return geno_art_spawn(gobj, st->profile, a, (arg >> 8) & 0xFF, (f32) (s16) ((u32) arg >> 16), &base,
+                          fp->facing_dir) != NULL;
 }
 
 static int hook_article_spawn(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)

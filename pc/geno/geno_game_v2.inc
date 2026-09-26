@@ -1008,6 +1008,17 @@ int Geno_SpecialEnter(Fighter_GObj* gobj, int which)
         return 0;
     }
     t = (u32) Geno_Special(st->profile, which);
+    {
+        /* v5.1 "select": the target picked by an int variable (Sora's magic cycle) */
+        extern int Geno_SpecialSelect(int p, int which, int i);
+        int ref = Geno_SpecialSelect(st->profile, which, -1);
+        if (ref >= 0) {
+            s32 n = *(s32*) geno_var(st, ref);
+            t = n >= 0 && n < Geno_SpecialSelect(st->profile, which, -2)
+                    ? (u32) Geno_SpecialSelect(st->profile, which, n)
+                    : GENO_NONE_T;
+        }
+    }
     if (t == GENO_NONE_T || !geno_target_ok(fp, t)) {
         return 0;
     }

@@ -420,7 +420,10 @@ typedef struct {
     char art_name[GENO_MAX_ARTICLES][32];
     uint32_t art_param[GENO_MAX_ARTICLES][GENO_AP_COUNT];  /* float bits (ints for the int params) */
     int art_nhit[GENO_MAX_ARTICLES];
-    uint32_t art_hit[GENO_MAX_ARTICLES][GENO_ART_HITBOXES][GENO_AH_COUNT];
+    uint32_t art_hit[GENO_MAX_ARTICLES][GENO_ART_HIT_ENTRIES][GENO_AH_COUNT];
+    int sp_sel_var[GENO_SP_COUNT];              /* v5.1 specials select: var ref, -1 none */
+    int sp_sel_n[GENO_SP_COUNT];
+    uint32_t sp_sel_t[GENO_SP_COUNT][GENO_SP_SELECT];
     char art_file[GENO_MAX_ARTICLES][64];     /* the model's .dat ("" = no model: invisible) */
     char art_sym[GENO_MAX_ARTICLES][64];      /* its joint symbol ("" = the first *_joint) */
     uint32_t art_joint[GENO_MAX_ARTICLES];    /* loaded HSD_Joint (guest address), 0 = not yet */
@@ -688,6 +691,30 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
     }
 }
 
+/* v5.1: a special that picks its target by an int variable: {"select": "la_i:0" | "ra_i:3",
+ * "targets": ["geno:Firaga", ...]} (value n -> targets[n]; out of range -> the special's own code). */
+static void gn_special_select(gn_profile *p, const jdoc *d, int v, int k, const char *where, const char *key) {
+    int sel = jd_get(d, v, "select"), tl = jd_get(d, v, "targets"), c, bank = -1;
+    const char *s = sel >= 0 && d->n[sel].type == JN_STR ? d->n[sel].str : "";
+    if (_strnicmp(s, "la_i:", 5) == 0) bank = GENO_BANK_LA_INT;
+    else if (_strnicmp(s, "ra_i:", 5) == 0) bank = GENO_BANK_RA_INT;
+    if (bank < 0 || atoi(s + 5) < 0 || atoi(s + 5) >= GENO_VARS_PER_BANK || tl < 0 || d->n[tl].type != JN_ARR) {
+        gw_log("geno: %s: specials.%s: a select needs \"select\": \"la_i:N\" / \"ra_i:N\" and a \"targets\" list",
+               where, key);
+        return;
+    }
+    p->sp_sel_var[k] = GENO_VAR(bank, atoi(s + 5));
+    p->sp_sel_n[k] = 0;
+    for (c = d->n[tl].first; c >= 0 && p->sp_sel_n[k] < GENO_SP_SELECT; c = d->n[c].next) {
+        uint32_t t;
+        if (!gn_target_p(d, c, &t, p)) {
+            gw_log("geno: %s: specials.%s: bad target in \"targets\"", where, key);
+            t = GN_NONE;
+        }
+        p->sp_sel_t[k][p->sp_sel_n[k]++] = t;
+    }
+}
+
 /* v2: "states" (Geno action states), the behaviour parameter blocks, "specials". Parsed before
  * the v1 keys so on_land / specials can name states ("geno:Glide"). */
 static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
@@ -696,7 +723,7 @@ static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
     static const char *const sp_keys[GENO_SP_COUNT] = { "n", "s", "hi", "lw",
                                                         "air_n", "air_s", "air_hi", "air_lw" };
     int x, c, f, k;
-    for (k = 0; k < GENO_SP_COUNT; ++k) p->special[k] = GN_NONE;
+    for (k = 0; k < GENO_SP_COUNT; ++k) p->special[k] = GN_NONE, p->sp_sel_var[k] = -1;
     /* states: [ { "name", "behavior", "subaction", "like", "flags", "move_id", "next", "land",
                    "landing_lag", "anim" / "iasa" / "phys" / "coll" } ] */
     x = jd_get(d, e, "states");
@@ -808,13 +835,22 @@ static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
     if (x >= 0 && d->n[x].type == JN_OBJ) {
         for (k = 0; k < GENO_SP_COUNT; ++k) {
             int v = jd_get(d, x, sp_keys[k]);
+            if (v >= 0 && d->n[v].type == JN_OBJ) { /* v5.1 {"select": "la_i:N", "targets": [...]} */
+                gn_special_select(p, d, v, k, where, sp_keys[k]);
+                continue;
+            }
             if (v >= 0 && !gn_target_p(d, v, &p->special[k], p)) {
                 gw_log("geno: %s: specials.%s: bad target", where, sp_keys[k]);
                 p->special[k] = GN_NONE;
             }
         }
         for (k = GENO_SP_AIR_N; k <= GENO_SP_AIR_LW; ++k)
-            if (p->special[k] == GN_NONE) p->special[k] = p->special[k - GENO_SP_AIR_N];
+            if (p->special[k] == GN_NONE && p->sp_sel_var[k] < 0) {
+                p->special[k] = p->special[k - GENO_SP_AIR_N];
+                p->sp_sel_var[k] = p->sp_sel_var[k - GENO_SP_AIR_N];
+                p->sp_sel_n[k] = p->sp_sel_n[k - GENO_SP_AIR_N];
+                memcpy(p->sp_sel_t[k], p->sp_sel_t[k - GENO_SP_AIR_N], sizeof p->sp_sel_t[k]);
+            }
     }
 }
 
@@ -907,6 +943,25 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
                 if (gn_num(d, m, despawn_keys[k], &v)) desp = v != 0 ? desp | (1u << k) : desp & ~(1u << k);
         }
         p->art_param[a][GENO_AP_DESPAWN] = desp;
+        /* v5.1 */
+        if (gn_num(d, c, "min_speed", &v)) p->art_param[a][GENO_AP_MIN_SPEED] = gn_fbits(v);
+        if (gn_num(d, c, "angle", &v)) p->art_param[a][GENO_AP_ANGLE] = gn_fbits(v);
+        p->art_param[a][GENO_AP_BONE] = gn_int(d, c, "bone", -1);
+        p->art_param[a][GENO_AP_EFFECT] = gn_int(d, c, "effect", 0);
+        if ((m = jd_get(d, c, "spawns")) >= 0 && d->n[m].type == JN_ARR) {
+            int e2, n2 = 0;
+            for (e2 = d->n[m].first; e2 >= 0 && n2 < GENO_ART_SPAWNS; e2 = d->n[e2].next) {
+                double o[2] = { 0, 0 };
+                int k2 = 0, q;
+                if (d->n[e2].type != JN_ARR) continue;
+                for (q = d->n[e2].first; q >= 0 && k2 < 2; q = d->n[q].next, ++k2)
+                    if (d->n[q].type == JN_NUM) o[k2] = d->n[q].num;
+                p->art_param[a][GENO_AP_SPAWN_V + 2 * n2] = gn_fbits(o[0]);
+                p->art_param[a][GENO_AP_SPAWN_V + 2 * n2 + 1] = gn_fbits(o[1]);
+                n2++;
+            }
+            p->art_param[a][GENO_AP_SPAWN_N] = (uint32_t) n2;
+        }
         if ((m = jd_get(d, c, "model")) >= 0 && d->n[m].type == JN_OBJ) {
             int f = jd_get(d, m, "file"), y = jd_get(d, m, "symbol");
             if (f >= 0 && d->n[f].type == JN_STR)
@@ -916,7 +971,7 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
         }
         hl = jd_get(d, c, "hitboxes");
         hc = 0;
-        for (h = hl >= 0 && d->n[hl].type == JN_ARR ? d->n[hl].first : -1; h >= 0 && hc < GENO_ART_HITBOXES;
+        for (h = hl >= 0 && d->n[hl].type == JN_ARR ? d->n[hl].first : -1; h >= 0 && hc < GENO_ART_HIT_ENTRIES;
              h = d->n[h].next) {
             uint32_t *hb = p->art_hit[a][hc];
             double off[3] = { 0, 0, 0 };
@@ -938,6 +993,7 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
             hb[GENO_AH_START] = gn_int(d, h, "start", 1);
             hb[GENO_AH_END] = gn_int(d, h, "end", 0);
             hb[GENO_AH_FLAGS] = GENO_AHF_DEFAULT;
+            hb[GENO_AH_SLOT] = gn_int(d, h, "slot", hc % GENO_ART_HITBOXES) & (GENO_ART_HITBOXES - 1);
             if ((m = jd_get(d, h, "hits")) >= 0 && d->n[m].type == JN_OBJ) {
                 for (k = 0; k < 5; ++k)
                     if (gn_num(d, m, hits_keys[k], &v))
@@ -948,6 +1004,34 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
         p->art_nhit[a] = hc;
         if (hc == 0) gw_log("geno: %s: article %s has no hitboxes (it only flies)", where, p->art_name[a]);
         p->nart++;
+    }
+    /* v5.1 children (a second pass: they may name a later article): [ { "article": name | index,
+       "frame": f, "every": k, "count": n, "spawn": variant } ] - spawned BY the article, owned by its
+       fighter (a cloud's bolts) */
+    for (c = d->n[x].first, k = 0; c >= 0 && k < p->nart; c = d->n[c].next) {
+        int cl, e2, n2 = 0;
+        if (d->n[c].type != JN_OBJ) continue;
+        for (e2 = 0; e2 < GENO_ART_CHILDREN; ++e2) p->art_param[k][GENO_AP_CHILD + 5 * e2] = (uint32_t) -1;
+        cl = jd_get(d, c, "children");
+        for (e2 = cl >= 0 && d->n[cl].type == JN_ARR ? d->n[cl].first : -1; e2 >= 0 && n2 < GENO_ART_CHILDREN;
+             e2 = d->n[e2].next) {
+            int an = jd_get(d, e2, "article"), idx = -1, q;
+            if (an >= 0 && d->n[an].type == JN_NUM) idx = (int) d->n[an].num;
+            else if (an >= 0 && d->n[an].type == JN_STR)
+                for (q = 0; q < p->nart; ++q)
+                    if (_stricmp(p->art_name[q], d->n[an].str) == 0) idx = q;
+            if (idx < 0 || idx >= p->nart) {
+                gw_log("geno: %s: article %s: a child names no article - ignored", where, p->art_name[k]);
+                continue;
+            }
+            p->art_param[k][GENO_AP_CHILD + 5 * n2] = (uint32_t) idx;
+            p->art_param[k][GENO_AP_CHILD + 5 * n2 + 1] = gn_int(d, e2, "frame", 1);
+            p->art_param[k][GENO_AP_CHILD + 5 * n2 + 2] = gn_int(d, e2, "every", 0);
+            p->art_param[k][GENO_AP_CHILD + 5 * n2 + 3] = gn_int(d, e2, "count", 1);
+            p->art_param[k][GENO_AP_CHILD + 5 * n2 + 4] = gn_int(d, e2, "spawn", 0);
+            n2++;
+        }
+        k++;
     }
 }
 
@@ -1300,6 +1384,14 @@ int gw_Geno_StateCounter(int p, int s, int field) {
     if (!GN_ST(p, s) || !gn_at(p)->st_ctr_on[s] || field < 0 || field > 3) return -1;
     return (int) gn_at(p)->st_ctr[s][field];
 }
+/* v5.1: i -1 = the select var ref (-1 none), -2 = the target count, else target i */
+int gw_Geno_SpecialSelect(int p, int which, int i) {
+    const gn_profile *x = gn_at(p);
+    if (x == NULL || which < 0 || which >= GENO_SP_COUNT) return -1;
+    if (i == -1) return x->sp_sel_var[which];
+    if (i == -2) return x->sp_sel_n[which];
+    return i >= 0 && i < x->sp_sel_n[which] ? (int) x->sp_sel_t[which][i] : -1;
+}
 int gw_Geno_StateHasCounter(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_ctr_on[s] : 0; }
 #define GN_ART(p, a) (gn_at(p) != NULL && (a) >= 0 && (a) < gn_at(p)->nart)
 int gw_Geno_ArticleCount(int p) { return gn_at(p) ? gn_at(p)->nart : 0; }
@@ -1410,7 +1502,7 @@ int gw_Geno_ArticleJoint(int p, int a) {
 /* Log lines for the game half, which cannot format strings portably. Rate-limited per `what`:
  * rollback resimulates frames, and a per-frame event would flood the log. */
 void gw_Geno_Event(int what, int a, int b, int c, int d) {
-    static int count[32];
+    static int count[64];
     static const char *const fmt[] = {
         "geno: kind %d player %d reset (profile %d)%.0d",                                  /* 0 */
         "geno: kind %d player %d air jump %d of %d (beyond Melee's multi-jump table)",       /* 1 */
@@ -1446,6 +1538,7 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d on_hit: damage x100 %d from port %d",                        /* 31 */
         "geno: kind %d player %d COUNTER: hit in Geno state %d at action frame %d",           /* 32 */
         "geno: kind %d player %d article %d at frame %d",                                     /* 33 */
+        "geno: article %d spawned at x100 (%d, %d), vx x1000 %d",                              /* 34 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

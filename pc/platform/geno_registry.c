@@ -1559,6 +1559,7 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: article %d: %d effect(s) attached (first m-ex id %d)%.0d",                   /* 37 */
         "geno: article %d frame %d: %d generator(s) on it, %d live particle(s) from them", /* 38 */
         "geno:   particles per generator (hi/lo byte pairs): g0g1 0x%04x g2g3 0x%04x g4g5 0x%04x g6g7 0x%04x", /* 39 */
+        "geno: kind %d player %d lockon: target %d, aim %d deg",                             /* 40 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

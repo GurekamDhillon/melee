@@ -2731,6 +2731,50 @@ static int test_geno_v51(void)
     return rc;
 }
 
+/* v5.2: geno.lockon's aim (Sonic Blade) and the "air_drift" phys name / hook 6 by name */
+extern void GenoGame_LockonAim(int has, f32 dx, f32 dy, f32 sx, f32 sy, f32 facing, int grounded,
+                               f32 max_deg, f32 stick_deg, f32* fwd, f32* up, f32* face);
+extern int GenoGame_HookFind(const char* name);
+
+static int test_geno_v52_lockon(void)
+{
+    f32 fw, up, face;
+    int rc = 0;
+    /* a target 30 ahead, 30 up, facing right: 45 deg, clamped to 30 */
+    GenoGame_LockonAim(1, 30.0f, 30.0f, 0.0f, 0.0f, 1.0f, 0, 30.0f, 20.0f, &fw, &up, &face);
+    if (!t_near(fw, 0.8660254f) || !t_near(up, 0.5f) || face != 1.0f) {
+        TestFail("lockon: 45 deg up clamps to 30");
+        rc = 1;
+    }
+    /* a target behind, level: turn, aim straight */
+    GenoGame_LockonAim(1, -20.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0, 30.0f, 20.0f, &fw, &up, &face);
+    if (!t_near(fw, 1.0f) || !t_near(up, 0.0f) || face != -1.0f) {
+        TestFail("lockon: a target behind turns the fighter");
+        rc = 1;
+    }
+    /* no target: the stick (down in the air = -20; down on the ground = level; neutral = level) */
+    GenoGame_LockonAim(0, 0.0f, 0.0f, 0.0f, -0.8f, -1.0f, 0, 30.0f, 20.0f, &fw, &up, &face);
+    if (!t_near(up, -0.34202f) || face != -1.0f) {
+        TestFail("lockon: no target, stick down in the air = -20 deg, facing kept");
+        rc = 1;
+    }
+    GenoGame_LockonAim(0, 0.0f, 0.0f, 0.0f, -0.8f, 1.0f, 1, 30.0f, 20.0f, &fw, &up, &face);
+    if (!t_near(up, 0.0f) || !t_near(fw, 1.0f)) {
+        TestFail("lockon: never aims down on the ground");
+        rc = 1;
+    }
+    GenoGame_LockonAim(0, 0.0f, 0.0f, 0.0f, 0.1f, 1.0f, 0, 30.0f, 20.0f, &fw, &up, &face);
+    if (!t_near(up, 0.0f)) {
+        TestFail("lockon: stick inside 0.25 = level");
+        rc = 1;
+    }
+    if (GenoGame_HookFind("geno.lockon") != GENO_HOOK_LOCKON || GENO_HOOK_LOCKON != 6) {
+        TestFail("hook 6 is geno.lockon");
+        rc = 1;
+    }
+    return rc;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -2770,4 +2814,5 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v5_article_motion", test_geno_v5_article_motion);
     TestRegister("geno_v5_on_hit", test_geno_v5_on_hit);
     TestRegister("geno_v51", test_geno_v51);
+    TestRegister("geno_v52_lockon", test_geno_v52_lockon);
 }

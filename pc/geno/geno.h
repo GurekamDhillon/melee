@@ -209,7 +209,8 @@ enum {
     GENO_HOOK_JUMPS_TO_VAR = 3,  /* "geno.jumps.to_var": LA int var[arg] = air jumps left */
     GENO_HOOK_COUNT_FRAMES = 4,  /* "geno.count_frames": LA int var[arg] += 1 */
     GENO_HOOK_ARTICLE_SPAWN = 5, /* v5 "geno.article.spawn": spawn the profile's article arg */
-    GENO_HOOK_BUILTIN_COUNT = 6,
+    GENO_HOOK_LOCKON = 6,        /* v5.2 "geno.lockon": aim at the nearest other fighter -> MOVE_F0/F1/I0 */
+    GENO_HOOK_BUILTIN_COUNT = 7,
     GENO_HOOK_MAX = 64
 };
 

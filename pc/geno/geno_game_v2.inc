@@ -535,6 +535,18 @@ static void geno_cb_phys_air_nodrift(Fighter_GObj* gobj)
     ftCommon_CalcSelfAccel_DeaccelAir(fp);
 }
 
+/* phys "air_drift" (v5.2): in the air Melee's horizontal drift only - no gravity, the vertical speed
+ * is the script's (PUT VEL_Y each frame: Sora's Aerial Sweep rise); on the ground friction */
+static void geno_cb_phys_air_drift(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->ground_or_air == GA_Ground) {
+        ft_80084F3C(gobj);
+    } else {
+        ftCommon_CalcSelfAccel_Drift(fp);
+    }
+}
+
 static void geno_cb_phys_ground(Fighter_GObj* gobj)
 {
     ft_80084F3C(gobj); /* ground friction */
@@ -823,6 +835,7 @@ enum {
     GENO_CBID_AUTO = 11,
     GENO_CBID_ANIM_MOTION = 12, /* v3 */
     GENO_CBID_INTERRUPT = 13,   /* v3 */
+    GENO_CBID_AIR_DRIFT = 14,   /* v5.2 */
     GENO_CBID_CAPE = 50,        /* v3 */
     GENO_CBID_CAPE_AFTER = 51,  /* v3 */
     GENO_CBID_GLIDE_AFTER = 25, /* v3 */
@@ -857,6 +870,7 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_NONE, GENO_CB_PHYS, "none", geno_cb_nothing },
     { GENO_CBID_AIR, GENO_CB_PHYS, "air", geno_cb_phys_air },
     { GENO_CBID_AIR_NODRIFT, GENO_CB_PHYS, "air_nodrift", geno_cb_phys_air_nodrift },
+    { GENO_CBID_AIR_DRIFT, GENO_CB_PHYS, "air_drift", geno_cb_phys_air_drift },
     { GENO_CBID_GROUND, GENO_CB_PHYS, "ground", geno_cb_phys_ground },
     { GENO_CBID_AUTO, GENO_CB_PHYS, "auto", geno_cb_phys_auto },
     { GENO_CBID_ANIM_MOTION, GENO_CB_PHYS, "anim_motion", geno_cb_phys_anim_motion },

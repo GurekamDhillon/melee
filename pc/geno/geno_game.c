@@ -156,6 +156,76 @@ static int hook_count_frames(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32
     return 0;
 }
 
+/* v5.2 "geno.lockon" (Sora's Sonic Blade search): the aim of a dash, pure so the headless tests run
+ * it. (dx, dy) = target minus self (has = a target was found within range), (sx, sy) the stick.
+ * With a target: face it, aim at it, the angle above / below the horizontal clamped to max_deg.
+ * Without: keep the facing; stick up / down past 0.25 (Ultimate's search_stick) = +-stick_deg.
+ * On the ground the aim never points down. Writes the unit direction (forward, up) and the facing
+ * (+-1). */
+void GenoGame_LockonAim(int has, f32 dx, f32 dy, f32 sx, f32 sy, f32 facing, int grounded, f32 max_deg,
+                        f32 stick_deg, f32* fwd, f32* up, f32* face)
+{
+    f32 a = 0.0f, lim = max_deg * (f32) M_PI / 180.0f;
+    (void) sx;
+    *face = facing < 0.0f ? -1.0f : 1.0f;
+    if (has) {
+        f32 ax = dx < 0.0f ? -dx : dx;
+        if (ax > 0.001f) {
+            *face = dx < 0.0f ? -1.0f : 1.0f;
+        }
+        a = atan2f(dy, ax);
+        a = a > lim ? lim : a < -lim ? -lim : a;
+    } else if (sy > 0.25f) {
+        a = stick_deg * (f32) M_PI / 180.0f;
+    } else if (sy < -0.25f) {
+        a = -stick_deg * (f32) M_PI / 180.0f;
+    }
+    if (grounded && a < 0.0f) {
+        a = 0.0f;
+    }
+    *fwd = cosf(a);
+    *up = sinf(a);
+}
+
+/* hook 6 geno.lockon, arg [15:0] range (units, 0 = any), [23:16] max angle (deg), [31:24] stick
+ * angle (deg): the nearest fighter of another port (its body, position + 5 up, from ours + 5 up)
+ * -> GenoGame_LockonAim -> MOVE_F0 forward, MOVE_F1 up (a unit vector), MOVE_I0 1 = locked on,
+ * and the fighter turns to face the target. Scripts scale it into a velocity (GET / MUL / PUT). */
+static int hook_lockon(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
+{
+    HSD_GObj* cur;
+    f32 range = (f32) (arg & 0xFFFF), best = -1.0f, tx = 0.0f, ty = 0.0f, face;
+    int has = 0;
+    if (HSD_GObjPLinkHead != NULL) {
+        for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
+            Fighter* o = GET_FIGHTER(cur);
+            f32 dx, dy, d;
+            if (o == NULL || cur == (HSD_GObj*) gobj || o->player_id == fp->player_id) {
+                continue;
+            }
+            dx = o->cur_pos.x - fp->cur_pos.x;
+            dy = o->cur_pos.y - fp->cur_pos.y;
+            d = dx * dx + dy * dy;
+            if (range > 0.0f && d > range * range) {
+                continue;
+            }
+            if (best < 0.0f || d < best) {
+                best = d;
+                tx = dx;
+                ty = dy;
+                has = 1;
+            }
+        }
+    }
+    GenoGame_LockonAim(has, tx, ty, fp->input.lstick[0].x, fp->input.lstick[0].y, fp->facing_dir,
+                       fp->ground_or_air == GA_Ground, (f32) ((arg >> 16) & 0xFF),
+                       (f32) ((u32) arg >> 24), &st->move_f[0], &st->move_f[1], &face);
+    fp->facing_dir = face;
+    st->move_i[0] = has;
+    Geno_Event(40, fp->kind, fp->player_id, has, (int) (atan2f(st->move_f[1], st->move_f[0]) * 180.0f / (f32) M_PI));
+    return 0;
+}
+
 /* A Geno feature registers a hook by adding a row here with a new stable number from geno.h. The
  * table is const on purpose: registration is part of the build, so it can never differ between
  * two peers or between a snapshot and the live game. */
@@ -169,6 +239,7 @@ static const struct {
     { GENO_HOOK_JUMPS_TO_VAR, "geno.jumps.to_var", hook_jumps_to_var },
     { GENO_HOOK_COUNT_FRAMES, "geno.count_frames", hook_count_frames },
     { GENO_HOOK_ARTICLE_SPAWN, "geno.article.spawn", hook_article_spawn },
+    { GENO_HOOK_LOCKON, "geno.lockon", hook_lockon },
 };
 #define GENO_NHOOKS ((int) (sizeof(geno_hooks) / sizeof(geno_hooks[0])))
 

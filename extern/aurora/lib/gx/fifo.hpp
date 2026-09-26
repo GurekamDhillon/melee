@@ -14,6 +14,9 @@ extern bool sInDisplayList;
 extern uint8_t* sDlBuffer;
 extern uint32_t sDlSize;
 extern uint32_t sDlWritePos;
+// True on the GX processing thread while a GX_AURORA_CALLBACK runs: drain() is then a no-op (the callback is
+// itself part of the stream being processed; waiting for it would deadlock).
+extern thread_local bool tInCallback;
 } // namespace detail
 
 enum class ProcessingMode : uint8_t {

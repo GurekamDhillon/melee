@@ -103,6 +103,12 @@ extern "C" {
  */
 #define GX_AURORA_PIPELINE_WAIT 0x0042
 
+/*
+ * Callback (port patch, Geno effects). Followed by a u64 function pointer, a u16 size and that many bytes: the
+ * GX processing thread calls fn(bytes, size) at this point of the command stream (GXAuroraCallback).
+ */
+#define GX_AURORA_CALLBACK 0x0043
+
 #define GX2_SET_POLYGON_OFFSET 0x1000
 
 
@@ -131,6 +137,14 @@ void GXPopDebugGroup();
  * Sends a debug marker to the backend graphics API. These may show in debugging tools such as RenderDoc.
  */
 void GXInsertDebugMarker(const char* label);
+
+/**
+ * Port patch (Geno effects, pc/platform/gw_fx_render.cpp): runs fn(data, size) on the GX processing thread, in
+ * order with the GX commands around it. Inside fn, aurora::gfx's recording API (push_uniform / push_storage /
+ * push_custom_draw / resolve_pass / create_pass) records at this point of the frame WITHOUT draining the FIFO,
+ * so the game thread never waits for the GX thread. data (<= 65535 bytes) is copied into the FIFO.
+ */
+void GXAuroraCallback(void (*fn)(const void* data, u32 size), const void* data, u32 size);
 
 typedef enum _AuroraViewportPolicy {
   AURORA_VIEWPORT_FIT = 0,     // Preserve logical aspect in the content framebuffer

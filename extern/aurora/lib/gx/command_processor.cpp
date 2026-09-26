@@ -973,6 +973,16 @@ void handle_aurora(ByteReader& reader) noexcept {
     gfx::push_debug_group(std::move(label));
   } else if (subCmd == GX_AURORA_DEBUG_GROUP_POP) {
     pop_debug_group();
+  } else if (subCmd == GX_AURORA_CALLBACK) {
+    using Callback = void (*)(const void*, u32);
+    const auto fn = reinterpret_cast<Callback>(static_cast<uintptr_t>(reader.read<u64>()));
+    const auto size = reader.read<u16>();
+    const auto bytes = reader.take(size);
+    if (fn != nullptr && !fifo::replaying()) {
+      fifo::detail::tInCallback = true;
+      fn(bytes.data(), size);
+      fifo::detail::tInCallback = false;
+    }
   } else if (subCmd == GX_AURORA_DEBUG_MARKER_INSERT) {
     auto label = reader.read_string();
     gfx::insert_debug_marker(std::move(label));

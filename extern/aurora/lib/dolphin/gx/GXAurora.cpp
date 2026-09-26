@@ -37,6 +37,18 @@ void GXInsertDebugMarker(const char* label) {
   GXWriteString(label);
 }
 
+void GXAuroraCallback(void (*fn)(const void* data, u32 size), const void* data, u32 size) {
+  if (fn == nullptr || size > std::numeric_limits<u16>::max()) {
+    return;
+  }
+  GX_WRITE_AURORA(GX_AURORA_CALLBACK);
+  GX_WRITE_U64(reinterpret_cast<uintptr_t>(fn));
+  GX_WRITE_U16(size);
+  if (size > 0) {
+    GX_WRITE_DATA(data, size);
+  }
+}
+
 void AuroraSetViewportPolicy(AuroraViewportPolicy policy) {
   aurora::gx::set_viewport_policy(policy);
 }

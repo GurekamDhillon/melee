@@ -335,8 +335,15 @@ enum {
  * an ordinary Melee item: the engine moves, draws, collides and destroys it; its hitboxes are item
  * hitboxes (they hit, clank, are reflected / absorbed / countered like Fox's laser). */
 #define GENO_ART_KIND_BASE 0x1000
-#define GENO_MAX_ARTICLES 8
-#define GENO_ART_KIND_END (GENO_ART_KIND_BASE + GENO_MAX_PROFILES * GENO_MAX_ARTICLES)
+#define GENO_MAX_ARTICLES 16 /* v5.1: was 8; articles 8-15 take the second range below */
+#define GENO_ART_PER_RANGE 8
+/* v5.1: articles 8..15 of profile p are kind GENO_ART_KIND_BASE2 + p * 8 + (a - 8), so the v5
+ * numbers (0x1000 + p * 8 + a for a < 8) never change. Both ranges end below 5000. */
+#define GENO_ART_KIND_BASE2 (GENO_ART_KIND_BASE + GENO_MAX_PROFILES * GENO_ART_PER_RANGE)
+#define GENO_ART_KIND_END (GENO_ART_KIND_BASE2 + GENO_MAX_PROFILES * GENO_ART_PER_RANGE)
+#define GENO_ART_KIND(p, a) \
+    ((a) < GENO_ART_PER_RANGE ? GENO_ART_KIND_BASE + (p) * GENO_ART_PER_RANGE + (a) \
+                              : GENO_ART_KIND_BASE2 + (p) * GENO_ART_PER_RANGE + (a) - GENO_ART_PER_RANGE)
 #define GENO_ART_HITBOXES 4 /* Melee items have 4 hitbox slots */
 #define GENO_ART_HIT_ENTRIES 8 /* v5.1: hitbox entries per article; entries sharing a "slot" hand over
                                   (Ultimate's ATTACK re-issued on one id: the victim list stays) */

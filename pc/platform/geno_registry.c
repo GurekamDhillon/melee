@@ -1539,6 +1539,7 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d COUNTER: hit in Geno state %d at action frame %d",           /* 32 */
         "geno: kind %d player %d article %d at frame %d",                                     /* 33 */
         "geno: article %d spawned at x100 (%d, %d), vx x1000 %d",                              /* 34 */
+        "geno: article %d touched the stage: from x100 (%d, %d) to y x100 %d",                /* 35 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

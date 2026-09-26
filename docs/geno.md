@@ -2011,3 +2011,44 @@ and the `GenoState` hit fields. `GENO_VERSION` 4 (the LAB's state library refuse
   (motion 0x401); Fox's jab (4%) at action frame 4: **COUNTER**, Wolf took **0.0%**, went to CounterHit
   (0x402) whose jab hitbox hit Fox (+4.0%), on_hit hook ran (`geno.log 77`). A jab on Wolf standing:
   on_hit, not countered, Wolf took 3.6%.
+
+### 19.8 v5.1: what Sora's magic needed (additive)
+
+| key / id | meaning |
+|---|---|
+| articles 8-15 | `GENO_MAX_ARTICLES` 16; articles 8-15 are kinds `0x1100 + p * 8 + (a - 8)` (the v5 numbers of 0-7 unchanged; `GENO_ART_KIND(p, a)`) |
+| hitbox `"slot"` (`GENO_AH_SLOT` 16) | up to 8 entries on Melee's 4 item hitbox slots (default: entry index mod 4). An entry taking over an active slot re-sets it in place and keeps its victim list - Ultimate's ATTACK re-issued on one id (Firaga's 5.6 / 5.2 / 4.8 decay) |
+| `"spawns": [[fwd, up], ...]` (`GENO_AP_SPAWN_N` 19, `_V` 20-27) | spawn variants picked by the spawn arg (Thundaga's three clouds) |
+| hook 5's arg | `[7:0]` article, `[15:8]` spawn variant, `[31:16]` signed extra angle, degrees (`GENO_SPAWN_ARG`); a plain 0-7 is v5 |
+| `"angle"` (38) | the initial velocity turned up by this many degrees (in the facing) |
+| `"bone"` (17) | spawn from that fighter part's world position (`lb_8000B1CC`) + the offset; -1 the fighter's position |
+| `"min_speed"` (16) | a negative `accel` brakes to this speed and holds it (Ultimate's brake / stable_speed) |
+| `"effect"` (18) | a Melee effect id attached to the article at spawn (`efAsync_Spawn` kind 1 on its root joint, as Mario's fireball) |
+| `"children": [{"article", "frame", "every", "count", "spawn"}]` (28-37) | the article spawns articles from its own position and facing, owned by its fighter (a cloud dropping a bolt). Up to 2 |
+| specials `{"select": "la_i:N" \| "ra_i:N", "targets": [...]}` | the special picks its target by an int variable; out of range = the fighter's own special. `air_*` inherits it. Sora's cycle: each cast sets LA int 0 to the next spell |
+
+Event 34 logs every spawn position and velocity, 35 a stage contact.
+
+**Sora's magic** (workspace `ports/ir/tools/trail_magic_geno.py`: our acmd dump + `vl.prc` -> a
+geno.json; stand-in states on a host fighter's unused ItemScope subactions until Sora's own clips
+and model exist):
+
+| spell | from the dump (1:1) | inferred |
+|---|---|---|
+| Firaga | fire: speed 1.65, life 40, spawn (13.6, 7.4); hitbox 5.6 % / 361 / kbg 24 / bkb 42 / size 3.8, fire, decaying to 5.2 at f10 and 4.8 at f20; the cast's frames through its FT_MOTION_RATE segments (fire at game frame 16, 43 frames) | the re-press window (specialn12 loop) not ported |
+| Blizzaga | 8 shards at game frames 15-37, angles 4 / 16 / -8 / 24 / -2 / 12 / -14 / 0; speed 3.6, brake 0.18 to 0.2; 2.4 % / 70 / kbg 12 / bkb 92 -> 86 -> 74, the last shard 3.6 % / 80 / kbg 100 / fkb 82; the body hit 1.8 % / 42 / 64 / 52 | shard life 30 |
+| Thundaga | three clouds at game frames 26 / 40 / 54, each dropping a bolt at its frame 3 (generate_frame), speed -3.8, life length / speed = 24, despawn on the stage; 5.2 % / 10 then 50, the third 64 / kbg 140; air versions 344 / 68 | cloud positions (15 / 26 / 37 forward, 32 up) and life 30 |
+
+Melee rounds hitbox damage to whole percent (5.6 -> 6, 2.4 -> 2).
+
+### 19.9 v5.1 verification
+
+- Test `geno_v51` (slots, variants, angle, bone, effect, children by name, the brake 3.6 -> 2.7 in 5
+  frames and stopping at 0.2, select by LA0 incl. out of range); suite 189/189 on ACE.
+- In game (ACE, Wolf standing in for Sora, Fox 29-31 units in front, both scripted,
+  `_build/agents/beta/sora_magic_pad.lua`): B three times = Firaga (0x400, 43 frames, Fox +6.0 %),
+  Blizzaga (0x401, 54 frames, 8 shards at the dump's angles, Fox +10.0 %), Thundaga (0x402, 70 frames,
+  three clouds at x -45 / -34 / -23 dropping bolts that reach the floor and despawn there, Fox +10.0 %);
+  the fourth B in the air = FiragaAir (0x403): the cycle wrapped.
+- A bug the run found: `item.c` includes `geno.h` for the kind range; it must be rebuilt when the
+  range changes (it was not, and article 8 fell into the m-ex branch - a panic, fixed by the rebuild).

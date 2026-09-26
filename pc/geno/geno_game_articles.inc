@@ -96,8 +96,13 @@ static int geno_art_of_kind(int kind, int* p, int* a)
     if (kind < GENO_ART_KIND_BASE || kind >= GENO_ART_KIND_END) {
         return 0;
     }
-    *p = (kind - GENO_ART_KIND_BASE) / GENO_MAX_ARTICLES;
-    *a = (kind - GENO_ART_KIND_BASE) % GENO_MAX_ARTICLES;
+    if (kind < GENO_ART_KIND_BASE2) {
+        *p = (kind - GENO_ART_KIND_BASE) / GENO_ART_PER_RANGE;
+        *a = (kind - GENO_ART_KIND_BASE) % GENO_ART_PER_RANGE;
+    } else {
+        *p = (kind - GENO_ART_KIND_BASE2) / GENO_ART_PER_RANGE;
+        *a = GENO_ART_PER_RANGE + (kind - GENO_ART_KIND_BASE2) % GENO_ART_PER_RANGE;
+    }
     return *a < Geno_ArticleCount(*p);
 }
 
@@ -436,6 +441,8 @@ static bool geno_art_coll(Item_GObj* gobj)
     if ((Geno_ArticleParam(v->profile, v->article, GENO_AP_DESPAWN) & GENO_ART_DESPAWN_STAGE) &&
         it_8026E9A4(gobj, &v->prev, &ip->pos, NULL))
     {
+        Geno_Event(35, v->article, (int) (v->prev.x * 100.0f), (int) (v->prev.y * 100.0f),
+                   (int) (ip->pos.y * 100.0f));
         geno_art_gone(ip, v, 3);
         return true; /* Item_80269978 destroys it */
     }
@@ -514,7 +521,7 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
         return NULL;
     }
     geno_art_build(p, a);
-    kind = GENO_ART_KIND_BASE + p * GENO_MAX_ARTICLES + a;
+    kind = GENO_ART_KIND(p, a);
     nv = Geno_ArticleParam(p, a, GENO_AP_SPAWN_N);
     if (variant > 0 && variant < nv) {
         fwd = geno_art_f(p, a, GENO_AP_SPAWN_V + 2 * variant);

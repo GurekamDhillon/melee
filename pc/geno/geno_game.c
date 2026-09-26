@@ -1680,6 +1680,19 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
         }
         break;
     }
+    case GENO_SUB_HBDMG: {
+        /* v5.3: the damage of the masked hitboxes (after their creation) = B, a float immediate or
+           a var ref ([7]); Ultimate's counters scale their hit from the countered one (Sora's
+           Counter Attack: HIT_DAMAGE x 1.5, 9..30). Set after staling, like a re-issued hitbox. */
+        int i;
+        f32 d = geno_operand(st, 1, (w0 & 0x80) != 0, GENO_W(1)).f;
+        for (i = 0; i < 4; i++) {
+            if (a & (1 << i)) {
+                fp->x914[i].damage = d < 0.0f ? 0.0f : d;
+            }
+        }
+        break;
+    }
     default:
         Geno_Event(3, fp->kind, fp->player_id, sub, 0);
         break;

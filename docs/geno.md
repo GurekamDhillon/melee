@@ -2094,9 +2094,11 @@ steady states rate x life {2 (flare1), 5.8 (fire1), 6.5 (fireline1), 6.6 (fire2)
 |---|---|
 | hook **6 `geno.lockon`** | arg `[15:0]` range (units, 0 = any), `[23:16]` max angle (deg), `[31:24]` stick angle (deg). The nearest fighter of another port within range: turn to face it, aim at it with the angle above / below the horizontal clamped to the max; none in range: keep the facing, the stick past 0.25 aims +- the stick angle; never down on the ground. Writes MOVE_F0 / MOVE_F1 (unit forward / up), MOVE_I0 (1 = locked on); scripts scale it (GET / MUL / PUT FWD_VEL, VEL_Y). Event 40. Pure part: `GenoGame_LockonAim` |
 | phys **`air_drift`** (callback id 14) | Melee's horizontal air drift without gravity (the script owns VEL_Y, e.g. a per-frame rise profile); ground friction on the ground |
+| sub **0x3A HBDMG** (len 2) | word0 `[15:8]` hitbox mask (Melee ids 0-3), `[7]` B is a var; word1 = damage (float immediate or var ref). Sets the active hitboxes' damage after their creation (after staling) - Ultimate counters scale their hit: Sora's Counter Attack is `GET RAF5 HIT_DAMAGE; MUL 1.5; clamp 9..30; HBDMG mask RAF5` after each hitbox command |
 | value **0x1B ANIM_RATE writable** | `ftAnim_8006F0FC(gobj, rate)`: clip rate and `frame_speed_mul`; ftAction's timer steps by `frame_speed_mul`, so script waits stay in clip frames while game time stretches (Ultimate FT_MOTION_RATE r = PUT ANIM_RATE 1/r) |
 
 Sora's side / up / down specials (workspace `ports/ir/tools/trail_specials_geno.py`, with `--magic` the
 combine step that puts trail_magic_geno.py's neutral special first) are 13 Geno states; long overlays go
 in word files (`"file"`), the registry's JSON reader has a node cap. Test `geno_v52_lockon` (the aim,
-hook 6 by name, PUT ANIM_RATE). In-game numbers: the workspace lane notes (`_build/agents/echo/NOTES.md`).
+hook 6 by name, PUT ANIM_RATE, HBDMG). Counter scaling in game (ACE): Fox jab 3.64 % -> 9.0 (min), Ganondorf
+jab 7.28 -> 10.9, fsmash 16.71 -> 25.1 (x1.5), fresh fsmash 22.0 -> 30.0 (max); Sora took 0 each time. In-game numbers: the workspace lane notes (`_build/agents/echo/NOTES.md`).

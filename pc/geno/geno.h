@@ -65,6 +65,7 @@ enum {
     GENO_SUB_CHGAND = 0x31, /* v1: AND another condition onto the last CHG (word1/2 args) */
     GENO_SUB_CHGCLR = 0x32, /* v1: drop every change-action check of this action */
     GENO_SUB_REHIT = 0x38,  /* v1: [15:8] hitbox mask; word1 = rehit every N frames (0 = off) */
+    GENO_SUB_HBDMG = 0x3A,  /* v5.3: [15:8] hitbox mask, [7] B is a var; word1 = damage (float) */
     GENO_SUB_LINK = 0x39,   /* v1: [15:8] hitbox mask; word1 = autolink mode (GENO_LINK_*) */
 };
 

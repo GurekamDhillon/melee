@@ -2788,6 +2788,26 @@ static int test_geno_v52_lockon(void)
         }
         t_fp.frame_speed_mul = 1.0f;
     }
+    /* HBDMG (v5.3): hitboxes 0 and 3 = LAF5 (13.5), hitbox 1 = 2.0 immediate, 2 untouched */
+    {
+        u32* s = t_script;
+        int n = 0;
+        TestGenoState* st = t_setup();
+        t_fp.x914[0].damage = t_fp.x914[1].damage = t_fp.x914[2].damage = t_fp.x914[3].damage = 9.0f;
+        st->la_f[5] = 13.5f;
+        s[n++] = GENO_W0(GENO_SUB_HBDMG, 2, (0x09 << 8) | 0x80);
+        s[n++] = LAF_(5);
+        s[n++] = GENO_W0(GENO_SUB_HBDMG, 2, 0x02 << 8);
+        s[n++] = t_fbits(2.0f);
+        s[n++] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        if (t_fp.x914[0].damage != 13.5f || t_fp.x914[3].damage != 13.5f || t_fp.x914[1].damage != 2.0f ||
+            t_fp.x914[2].damage != 9.0f)
+        {
+            TestFail("HBDMG: mask 9 = LAF5, mask 2 = 2.0, hitbox 2 kept");
+            rc = 1;
+        }
+    }
     if (GenoGame_HookFind("geno.lockon") != GENO_HOOK_LOCKON || GENO_HOOK_LOCKON != 6) {
         TestFail("hook 6 is geno.lockon");
         rc = 1;

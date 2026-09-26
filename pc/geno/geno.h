@@ -383,7 +383,14 @@ enum {
     GENO_AP_EFFECTS = 40,    /* v5.2 40..47: "effects" - up to 8 effect ids attached at spawn
                                 (ids 5000..8999: the owner fighter's own m-ex bank, e.g. its
                                 particle generators 6000+n; others: Melee's), 0 = none */
-    GENO_AP_COUNT = 48
+    GENO_AP_EFFECT_AT = 48,  /* v5.3 48..55: effect e's [15:0] article frame it attaches at (0 = spawn),
+                                [23:16] the joint of the article's model it follows (depth-first index,
+                                0 = the root), [31:24] count - 1: ids id..id+count-1 (one Ultimate emitter
+                                converted into several generators) */
+    GENO_AP_SPINS = 56,      /* v5.3 56..63: "spins" - 4 x (joint index, radians a frame about its Z, float bits):
+                                a joint of the article's model turning on its own (Ultimate primitive
+                                emitters' RotateAddZ, e.g. Firaga's ring and core) */
+    GENO_AP_COUNT = 64
 };
 #define GENO_ART_DESPAWN_HIT 1u    /* its hitbox hit a fighter / item */
 #define GENO_ART_DESPAWN_SHIELD 2u /* it hit a shield */

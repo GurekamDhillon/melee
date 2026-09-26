@@ -392,6 +392,61 @@ static void geno_art_gone(Item* ip, GenoArtVars* v, int why)
 static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32 angle, Vec3* base,
                                   f32 facing);
 
+/* The article model's joint `k` in depth-first order (0 = the root), NULL past the end. */
+static HSD_JObj* geno_art_joint(Item_GObj* gobj, int k)
+{
+    HSD_JObj* j = GET_JOBJ(gobj);
+    while (j != NULL && k > 0) {
+        if (HSD_JObjGetChild(j) != NULL) {
+            j = HSD_JObjGetChild(j);
+        } else {
+            while (j != NULL && HSD_JObjGetNext(j) == NULL) {
+                j = HSD_JObjGetParent(j);
+            }
+            j = j != NULL ? HSD_JObjGetNext(j) : NULL;
+        }
+        k--;
+    }
+    return j;
+}
+
+/* Attach the article's effects whose frame is `frame` ("effects", v5.2 / v5.3). An id 5000..8999 is the
+ * owner fighter's own m-ex effect (its bank's models 5000+ / particle generators 6000+), queued as an
+ * m-ex article's item script does (iteffect.c) and flushed at once; any other id is Melee's. Returns
+ * how many it attached. */
+static int geno_art_effects(Item_GObj* ig, Item* ip, int p, int a, int frame, f32 facing)
+{
+    static const Vec3 zero = { 0.0f, 0.0f, 0.0f };
+    int e, n = 0;
+    for (e = -1; e < 8; e++) {
+        int id = Geno_ArticleParam(p, a, e < 0 ? GENO_AP_EFFECT : GENO_AP_EFFECTS + e);
+        int at = e < 0 ? 0 : Geno_ArticleParam(p, a, GENO_AP_EFFECT_AT + e);
+        HSD_JObj* j;
+        int c, count = ((u32) at >> 24) + 1;
+        if (id <= 0 || (at & 0xFFFF) != frame) {
+            continue;
+        }
+        j = geno_art_joint(ig, (at >> 16) & 0xFF);
+        if (j == NULL) {
+            j = GET_JOBJ(ig);
+        }
+        for (c = 0; c < count; c++) {
+            Vec3 off = zero;
+            if (EF_MEX_IS_CUSTOM(id + c)) {
+                efAsync_MexSpawn(ig, &ip->xBC0, id + c, j, &off, facing, 0.0f);
+            } else {
+                efAsync_Spawn(ig, &ip->xBC0, 1, (u32) (id + c), j);
+            }
+            n++;
+        }
+    }
+    if (n > 0) {
+        efAsync_QueueFlush(ig, &ip->xBC0);
+        Geno_Event(37, a, n, frame, 0);
+    }
+    return n;
+}
+
 /* v5.1 "children": an article spawns articles (a cloud's bolts) at frame, every k frames, n times,
  * from its own position and facing, owned by its fighter. */
 static void geno_art_children(Item_GObj* gobj, Item* ip, GenoArtVars* v)
@@ -421,12 +476,21 @@ static void geno_art_children(Item_GObj* gobj, Item* ip, GenoArtVars* v)
 static void geno_art_fx_census(Item_GObj* gobj, GenoArtVars* v)
 {
     HSD_Generator* g;
-    HSD_JObj* j = GET_JOBJ(gobj);
-    u8* lists[8];
-    int ngen = 0, per[8] = { 0, 0, 0, 0, 0, 0, 0, 0 }, total = 0, i, k;
-    /* the generators on this article, in creation order (the list is newest first) */
+    HSD_JObj* j0 = GET_JOBJ(gobj);
+    Item* ip = GET_ITEM(gobj);
+    u8* lists[32];
+    int ngen = 0, per[32], total = 0, i, k;
+    f32 sdx = 0.0f, sdy = 0.0f, svx = 0.0f;
+    for (k = 0; k < 32; k++) {
+        per[k] = 0;
+    }
+    /* the generators on this article or its joints, in creation order (the list is newest first) */
     for (g = hsd_804D78FC; g != NULL; g = g->next) {
-        if (g->jobj == j && ngen < 8) {
+        HSD_JObj* gj = g->jobj;
+        while (gj != NULL && gj != j0) {
+            gj = HSD_JObjGetParent(gj);
+        }
+        if (gj == j0 && g->jobj != NULL && ngen < 32) {
             for (k = ngen; k > 0; k--) {
                 lists[k] = lists[k - 1];
             }
@@ -441,13 +505,24 @@ static void geno_art_fx_census(Item_GObj* gobj, GenoArtVars* v)
                 if (pp->cmdList == lists[k]) {
                     per[k]++;
                     total++;
+                    sdx += (pp->pos.x - ip->pos.x) * ip->facing_dir;
+                    sdy += pp->pos.y - ip->pos.y;
+                    svx += pp->vel.x * ip->facing_dir;
                     break;
                 }
             }
         }
     }
     Geno_Event(38, v->article, v->frame, ngen, total);
-    Geno_Event(39, (per[0] << 8) | per[1], (per[2] << 8) | per[3], (per[4] << 8) | per[5], (per[6] << 8) | per[7]);
+    /* per group of 4 generators (one Ultimate emitter each, trail_vfx_melee.py v2) */
+    Geno_Event(39, (per[0] + per[1] + per[2] + per[3]) << 8 | (per[4] + per[5] + per[6] + per[7]),
+               (per[8] + per[9] + per[10] + per[11]) << 8 | (per[12] + per[13] + per[14] + per[15]),
+               (per[16] + per[17] + per[18] + per[19]) << 8 | (per[20] + per[21] + per[22] + per[23]),
+               (per[24] + per[25] + per[26] + per[27]) << 8 | (per[28] + per[29] + per[30] + per[31]));
+    if (total > 0) {
+        Geno_Event(41, (int) (100.0f * sdx / total), (int) (100.0f * sdy / total), (int) (1000.0f * svx / total),
+                   total);
+    }
 }
 
 static bool geno_art_anim(Item_GObj* gobj)
@@ -462,6 +537,23 @@ static bool geno_art_anim(Item_GObj* gobj)
     }
     geno_art_hitboxes(gobj, ip, v);
     geno_art_children(gobj, ip, v);
+    geno_art_effects(gobj, ip, v->profile, v->article, v->frame, ip->facing_dir);
+    {
+        /* "spins": joints of the model turning about their own Z (a billboarded joint: in the screen
+           plane), angle = frame x speed - derived from the frame, so a rollback needs nothing */
+        int k;
+        for (k = 0; k < 4; k++) {
+            f32 sp = geno_art_f(v->profile, v->article, GENO_AP_SPINS + 2 * k + 1);
+            HSD_JObj* sj;
+            if (sp == 0.0f) {
+                continue;
+            }
+            sj = geno_art_joint(gobj, Geno_ArticleParam(v->profile, v->article, GENO_AP_SPINS + 2 * k));
+            if (sj != NULL) {
+                HSD_JObjSetRotationZ(sj, sp * (f32) v->frame);
+            }
+        }
+    }
     if (v->frame == 5 || v->frame == 10 || v->frame == 20 || v->frame == 30) {
         geno_art_fx_census(gobj, v);
     }
@@ -617,33 +709,7 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     ip->x40_vel.y = v->vy;
     ip->x40_vel.z = 0.0f;
     db_80225DD8(ig, owner);
-    {
-        /* effects attached to the article's root joint: "effect" (v5.1) and "effects" (v5.2). An id
-           5000..8999 is the owner fighter's own m-ex effect (a model 5000+, a particle generator
-           6000+ of its bank), queued the way an m-ex article's item script does it (iteffect.c);
-           any other id is Melee's, as Mario's fireball carries its flame */
-        static const Vec3 zero = { 0.0f, 0.0f, 0.0f };
-        int e, nfx = 0;
-        for (e = -1; e < 8; e++) {
-            int id = Geno_ArticleParam(p, a, e < 0 ? GENO_AP_EFFECT : GENO_AP_EFFECTS + e);
-            Vec3 off = zero;
-            if (id <= 0) {
-                continue;
-            }
-            if (EF_MEX_IS_CUSTOM(id)) {
-                efAsync_MexSpawn(ig, &ip->xBC0, id, GET_JOBJ(ig), &off, facing, 0.0f);
-            } else {
-                efAsync_Spawn(ig, &ip->xBC0, 1, (u32) id, GET_JOBJ(ig));
-            }
-            nfx++;
-        }
-        if (nfx > 0) {
-            /* queued on the item (spawns run inside a fighter proc): run them now, as Item_80268E5C's
-               own flush does for effects queued before a state change */
-            efAsync_QueueFlush(ig, &ip->xBC0);
-            Geno_Event(37, a, nfx, Geno_ArticleParam(p, a, GENO_AP_EFFECTS), 0);
-        }
-    }
+    geno_art_effects(ig, ip, p, a, 0, facing); /* the frame-0 effects; later ones from the anim callback */
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);
     {

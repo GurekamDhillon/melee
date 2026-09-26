@@ -52,6 +52,7 @@ extern float gw_ScriptGame_HitF(int slot, int i, int field);
 extern int gw_ScriptGame_HurtI(int slot, int i, int field);
 extern float gw_ScriptGame_HurtF(int slot, int i, int field);
 extern float gw_ScriptGame_JointF(int slot, int i, int comp);
+extern void gw_ScriptGame_JointsSetup(int slot);
 extern int gw_ScriptGame_JointParent(int slot, int i);
 extern int gw_ScriptGame_LabDObjI(int slot, int d, int field);
 extern float gw_ScriptGame_LabTObjF(int slot, int d, int t, int field);
@@ -1802,12 +1803,20 @@ static int l_project(lua_State *L) {
     return 4;
 }
 
-/* gd.joints(port) -> {{index, parent, x, y, z, sx, sy, on}, ...}; list position = index + 1 */
+/* gd.joints(port [, fresh]) -> {{index, parent, x, y, z, sx, sy, on}, ...}; list position =
+ * index + 1. fresh = true brings every joint's matrix up to date first (ScriptGame_JointsSetup);
+ * without it a joint nothing used this frame reports an old matrix. Offline only. */
 static int l_joints(lua_State *L) {
     int slot = gs_present_arg(L, 1), n, i;
     if (slot < 0) {
         lua_pushnil(L);
         return 1;
+    }
+    if (lua_toboolean(L, 2)) {
+        if (gw_RB_Enabled() || gw_Netplay_Enabled()) {
+            return luaL_error(L, "gd.joints(port, true) is offline-only (refused during a netplay/rollback session)");
+        }
+        gw_ScriptGame_JointsSetup(slot);
     }
     n = gw_ScriptGame_LabI(slot, LAB_I_JOINTS);
     lua_createtable(L, n > 0 ? n : 0, 0);

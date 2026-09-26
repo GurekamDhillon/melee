@@ -487,6 +487,26 @@ float ScriptGame_JointF(int slot, int i, int comp)
     return j != NULL ? j->mtx[comp][3] : 0.0f;
 }
 
+/* gd.joints(port, true): bring every joint's matrix up to date before it is read. HSD computes a
+ * matrix only when something needs it, so a joint nothing used this frame (no skin, hitbox or
+ * effect on it) keeps an OLD matrix, and the joint probe read tens of units of error from those.
+ * HSD_JObjSetupMatrix only recomputes a matrix marked dirty, from the joint's current SRT - the
+ * same value the game computes the next time it needs it - so this changes no game state. */
+void ScriptGame_JointsSetup(int slot)
+{
+    Fighter* fp = script_fighter(slot);
+    int i, n;
+    if (fp == NULL) {
+        return;
+    }
+    n = lab_joint_count(fp);
+    for (i = 0; i < n; i++) {
+        if (fp->parts[i].joint != NULL) {
+            HSD_JObjSetupMatrix(fp->parts[i].joint);
+        }
+    }
+}
+
 /* The parent joint's index, -1 for the root or a joint outside the table, -2 for no joint. */
 int ScriptGame_JointParent(int slot, int i)
 {

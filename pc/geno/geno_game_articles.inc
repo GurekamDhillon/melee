@@ -571,6 +571,20 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     }
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);
+    {
+        /* what will be drawn: the joints and display objects the item built from the model */
+        HSD_JObj* j = GET_JOBJ(ig);
+        int nj = 0, nd = 0;
+        while (j != NULL && nj < 64) {
+            HSD_DObj* d = HSD_JObjGetDObj(j);
+            nj++;
+            for (; d != NULL; d = d->next) {
+                nd++;
+            }
+            j = HSD_JObjGetChild(j) != NULL ? HSD_JObjGetChild(j) : HSD_JObjGetNext(j);
+        }
+        Geno_Event(36, a, nj, nd, (int) (ip->scl * 100.0f));
+    }
     Geno_Event(34, a, (int) (pos.x * 100.0f), (int) (pos.y * 100.0f), (int) (v->vx * 1000.0f));
     return ig;
 }

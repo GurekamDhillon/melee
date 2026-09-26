@@ -2052,3 +2052,19 @@ Melee rounds hitbox damage to whole percent (5.6 -> 6, 2.4 -> 2).
   the fourth B in the air = FiragaAir (0x403): the cycle wrapped.
 - A bug the run found: `item.c` includes `geno.h` for the kind range; it must be rebuilt when the
   range changes (it was not, and article 8 fell into the m-ex branch - a panic, fixed by the rebuild).
+
+### 19.10 Article models for Sora's magic
+
+Ultimate draws Sora's spells with particle effects, not models: trail_fire / _ice / _cloud / _thunder
+have no model folders and their effect scripts are .eff emitters (our acmd dump); the only trail
+weapon meshes are the taunt's `flower` and the Final Smash `box`. So the magic's models are ORIGINAL
+procedural shapes (workspace `ports/ir/tools/trail_magic_models.py`, no game data in them), sized from
+the dump (fireball radius = hitbox size 3.8, shard 2.0, bolt 12 tall over its hitbox), built by
+fighterbuild into costume-style .dat files (GnTrailFire / Ice / Cloud / Bolt, symbol `<name>_joint`)
+that the mod ships in `files/`. The registry now loads a file + symbol once per profile and shares it
+between articles (Ice and IceLast, the four clouds, the four bolts). Event 36 logs what each spawned
+item builds from its model (joints, display objects, scale).
+
+Verified (ACE, the magic pad): 4 model loads (5-5.2 KB each), every spawned article item has 2 joints
+and 1 display object at scale 1.00; at the canonical spacing Firaga 6 %, Blizzaga 10 %, Thundaga 10 %,
+the cycle wraps (unchanged by the models). Whether they look right is for GD's eyes (no screenshots).

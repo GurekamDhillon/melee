@@ -1494,7 +1494,17 @@ int gw_Geno_ArticleJoint(int p, int a) {
         char who[100];
         x->art_tried[a] = 1;
         snprintf(who, sizeof who, "%s/%s", x->name, x->art_name[a]);
-        if (x->art_file[a][0] != 0) x->art_joint[a] = gn_load_model(x->art_file[a], x->art_sym[a], who);
+        if (x->art_file[a][0] != 0) {
+            int b;
+            /* the same file + symbol as an earlier article of this profile: share its load */
+            for (b = 0; b < a; ++b)
+                if (x->art_tried[b] && x->art_joint[b] != 0 && _stricmp(x->art_file[b], x->art_file[a]) == 0 &&
+                    strcmp(x->art_sym[b], x->art_sym[a]) == 0) {
+                    x->art_joint[a] = x->art_joint[b];
+                    return (int) x->art_joint[a];
+                }
+            x->art_joint[a] = gn_load_model(x->art_file[a], x->art_sym[a], who);
+        }
     }
     return (int) x->art_joint[a];
 }
@@ -1540,6 +1550,7 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d article %d at frame %d",                                     /* 33 */
         "geno: article %d spawned at x100 (%d, %d), vx x1000 %d",                              /* 34 */
         "geno: article %d touched the stage: from x100 (%d, %d) to y x100 %d",                /* 35 */
+        "geno: article %d model on the item: %d joint(s), %d display object(s), scale x100 %d", /* 36 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

@@ -1584,6 +1584,7 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno:   particles per group of 4 generators (hi/lo byte pairs): 0x%04x 0x%04x 0x%04x 0x%04x", /* 39 */
         "geno: kind %d player %d lockon: target %d, aim %d deg",                             /* 40 */
         "geno:   particles behind the ball x100 %d (along the facing), above x100 %d, forward speed x1000 %d (%d)", /* 41 */
+        "geno: kind %d player %d aim_stick: stick used %d, heading %d deg",                  /* 42 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

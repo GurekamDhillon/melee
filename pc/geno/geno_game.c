@@ -187,6 +187,63 @@ void GenoGame_LockonAim(int has, f32 dx, f32 dy, f32 sx, f32 sy, f32 facing, int
     *up = sinf(a);
 }
 
+/* v5.3 "geno.aim_stick" (Sora's Sonic Blade steering, any directed dash): the stick's polar
+ * direction, pure for the headless test. Stick length >= thr: face the stick's horizontal side (when
+ * allow_turn and it points behind), heading = atan2(sy, |sx|) clamped to +max_up / -max_down degrees
+ * (never down on the ground); returns 1. Below thr: returns 0 and writes nothing (the caller keeps the
+ * saved heading - Ultimate's "below search_stick: the stored angle"). */
+int GenoGame_AimStick(f32 sx, f32 sy, f32 facing, int grounded, f32 thr, f32 max_up, f32 max_down,
+                      int allow_turn, f32* fwd, f32* up, f32* face)
+{
+    f32 a, ax = sx < 0.0f ? -sx : sx;
+    f32 hi = max_up * (f32) M_PI / 180.0f, lo = -max_down * (f32) M_PI / 180.0f;
+    if (sx * sx + sy * sy < thr * thr) {
+        return 0;
+    }
+    *face = facing < 0.0f ? -1.0f : 1.0f;
+    if (allow_turn && ax > 0.0001f && sx * *face < 0.0f) {
+        *face = -*face;
+    }
+    a = atan2f(sy, ax);
+    a = a > hi ? hi : a < lo ? lo : a;
+    if (grounded && a < 0.0f) {
+        a = 0.0f;
+    }
+    *fwd = cosf(a);
+    *up = sinf(a);
+    return 1;
+}
+
+/* hook 7 geno.aim_stick, arg [7:0] stick threshold x100, [15:8] max angle up (deg), [23:16] max
+ * angle down (deg), bit 24 the stick may turn the fighter. Stick past the threshold: MOVE_F0/F1 =
+ * the heading, also saved in MOVE_F2/F3, MOVE_I2 = 1. Below it: MOVE_F0/F1 = the saved heading when
+ * MOVE_I2 is 1 (a script clears MOVE_I2 at the move's start), else unchanged. Event 42. */
+static int hook_aim_stick(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
+{
+    f32 fw, up, face = fp->facing_dir;
+    int used = GenoGame_AimStick(fp->input.lstick[0].x, fp->input.lstick[0].y, fp->facing_dir,
+                                 fp->ground_or_air == GA_Ground, (f32) (arg & 0xFF) / 100.0f,
+                                 (f32) ((arg >> 8) & 0xFF), (f32) ((arg >> 16) & 0xFF),
+                                 (arg >> 24) & 1, &fw, &up, &face);
+    if (used) {
+        st->move_f[0] = st->move_f[2] = fw;
+        st->move_f[1] = st->move_f[3] = up;
+        st->move_i[2] = 1;
+        if (face != fp->facing_dir) {
+            fp->facing_dir = face;
+            if (fp->parts != NULL) {
+                ftPartSetRotY(fp, 0, 1.5707964f * fp->facing_dir);
+            }
+        }
+    } else if (st->move_i[2]) {
+        st->move_f[0] = st->move_f[2];
+        st->move_f[1] = st->move_f[3];
+    }
+    Geno_Event(42, fp->kind, fp->player_id, used,
+               (int) (atan2f(st->move_f[1], st->move_f[0]) * 180.0f / (f32) M_PI));
+    return 0;
+}
+
 /* hook 6 geno.lockon, arg [15:0] range (units, 0 = any), [23:16] max angle (deg), [31:24] stick
  * angle (deg): the nearest fighter of another port (its body, position + 5 up, from ours + 5 up)
  * -> GenoGame_LockonAim -> MOVE_F0 forward, MOVE_F1 up (a unit vector), MOVE_I0 1 = locked on,
@@ -240,6 +297,7 @@ static const struct {
     { GENO_HOOK_COUNT_FRAMES, "geno.count_frames", hook_count_frames },
     { GENO_HOOK_ARTICLE_SPAWN, "geno.article.spawn", hook_article_spawn },
     { GENO_HOOK_LOCKON, "geno.lockon", hook_lockon },
+    { GENO_HOOK_AIM_STICK, "geno.aim_stick", hook_aim_stick },
 };
 #define GENO_NHOOKS ((int) (sizeof(geno_hooks) / sizeof(geno_hooks[0])))
 

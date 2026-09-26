@@ -2846,6 +2846,40 @@ static int test_geno_v52_lockon(void)
             rc = 1;
         }
     }
+    /* aim_stick (v5.3): polar stick heading, threshold, clamps, turn, ground */
+    {
+        extern int GenoGame_AimStick(f32 sx, f32 sy, f32 facing, int grounded, f32 thr, f32 max_up,
+                                     f32 max_down, int allow_turn, f32* fwd, f32* up, f32* face);
+        f32 fw = 9.0f, up = 9.0f, fc = 1.0f;
+        if (GenoGame_AimStick(0.1f, 0.1f, 1.0f, 0, 0.25f, 60.0f, 60.0f, 1, &fw, &up, &fc) != 0 || fw != 9.0f) {
+            TestFail("aim_stick: below the threshold writes nothing");
+            rc = 1;
+        }
+        GenoGame_AimStick(0.5f, 0.5f, 1.0f, 0, 0.25f, 60.0f, 60.0f, 1, &fw, &up, &fc);
+        if (!t_near(fw, 0.7071068f) || !t_near(up, 0.7071068f) || fc != 1.0f) {
+            TestFail("aim_stick: up-forward diagonal = 45 deg");
+            rc = 1;
+        }
+        GenoGame_AimStick(0.0f, 1.0f, 1.0f, 0, 0.25f, 60.0f, 60.0f, 1, &fw, &up, &fc);
+        if (!t_near(up, 0.8660254f)) {
+            TestFail("aim_stick: straight up clamps to max_up 60");
+            rc = 1;
+        }
+        GenoGame_AimStick(-0.8f, -0.3f, 1.0f, 0, 0.25f, 60.0f, 60.0f, 1, &fw, &up, &fc);
+        if (fc != -1.0f || !t_near(up, sinf(atan2f(-0.3f, 0.8f)))) {
+            TestFail("aim_stick: back-down turns and aims down");
+            rc = 1;
+        }
+        GenoGame_AimStick(0.8f, -0.8f, 1.0f, 1, 0.25f, 60.0f, 60.0f, 1, &fw, &up, &fc);
+        if (!t_near(up, 0.0f)) {
+            TestFail("aim_stick: never down on the ground");
+            rc = 1;
+        }
+        if (GenoGame_HookFind("geno.aim_stick") != GENO_HOOK_AIM_STICK || GENO_HOOK_AIM_STICK != 7) {
+            TestFail("hook 7 is geno.aim_stick");
+            rc = 1;
+        }
+    }
     if (GenoGame_HookFind("geno.lockon") != GENO_HOOK_LOCKON || GENO_HOOK_LOCKON != 6) {
         TestFail("hook 6 is geno.lockon");
         rc = 1;

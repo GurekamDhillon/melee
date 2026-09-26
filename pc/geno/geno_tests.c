@@ -2808,6 +2808,44 @@ static int test_geno_v52_lockon(void)
             rc = 1;
         }
     }
+    /* ATTACK_CONNECTED (v5.3): set by a won hit (Geno_Autolink's site), moved to _PREV and cleared
+       at the action change, writable */
+    {
+        u32* s = t_script;
+        int n = 0;
+        f32 dir = 1.0f, ang = 45.0f, kb = 50.0f;
+        TestGenoState* st = t_setup();
+        s[0] = GENO_W0(0x00, 1, 0); /* a NOP escape: the block is live (scripted) */
+        s[1] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        Geno_OnActionChange(&t_gobj);
+        Geno_Autolink(&t_fp, &t_fp.x914[0], &dir, &ang, &kb);
+        s[n++] = GENO_W0_VAR(GENO_SUB_GET, 2, LA(20), 0, 0);
+        s[n++] = GENO_VAL_ATTACK_CONNECTED;
+        s[n++] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        if (st->la_i[20] != 1) {
+            TestFail("ATTACK_CONNECTED is 1 after a won hit");
+            rc = 1;
+        }
+        Geno_OnActionChange(&t_gobj);
+        n = 0;
+        s[n++] = GENO_W0_VAR(GENO_SUB_GET, 2, LA(21), 0, 0);
+        s[n++] = GENO_VAL_ATTACK_CONNECTED;
+        s[n++] = GENO_W0_VAR(GENO_SUB_GET, 2, LA(22), 0, 0);
+        s[n++] = GENO_VAL_ATTACK_CONNECTED_PREV;
+        s[n++] = GENO_W0(GENO_SUB_PUT, 3, 0);
+        s[n++] = GENO_VAL_ATTACK_CONNECTED;
+        s[n++] = 1;
+        s[n++] = GENO_W0_VAR(GENO_SUB_GET, 2, LA(23), 0, 0);
+        s[n++] = GENO_VAL_ATTACK_CONNECTED;
+        s[n++] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        if (st->la_i[21] != 0 || st->la_i[22] != 1 || st->la_i[23] != 1) {
+            TestFail("action change: ATTACK_CONNECTED 0, _PREV 1; PUT 1 writes it");
+            rc = 1;
+        }
+    }
     if (GenoGame_HookFind("geno.lockon") != GENO_HOOK_LOCKON || GENO_HOOK_LOCKON != 6) {
         TestFail("hook 6 is geno.lockon");
         rc = 1;

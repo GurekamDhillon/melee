@@ -462,6 +462,9 @@ void Geno_OnActionChange(Fighter_GObj* gobj)
         return;
     }
     geno_clear_action(st);
+    /* v5.3: ATTACK_CONNECTED belongs to one action; the previous one's result stays readable */
+    st->atk_connected_prev = st->atk_connected;
+    st->atk_connected = 0;
     if ((s32) GET_FIGHTER(gobj)->motion_id < GENO_MOTION_BASE) {
         st->hidden = 0; /* v3: HIDDEN lives only across Geno states (damage etc. show the fighter) */
     }
@@ -890,6 +893,8 @@ static int geno_val_is_float(u32 id)
     case GENO_VAL_HIT_COUNTER:
     case GENO_VAL_HIT_COUNT:
     case GENO_VAL_ARTICLES:
+    case GENO_VAL_ATTACK_CONNECTED:
+    case GENO_VAL_ATTACK_CONNECTED_PREV:
         return 0;
     default:
         if (id >= GENO_VAL_MOVE_I0 && id <= GENO_VAL_MOVE_I7) {
@@ -1028,6 +1033,12 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
     case GENO_VAL_ARTICLES:
         r.i = geno_art_live(fp->gobj, -1);
         break;
+    case GENO_VAL_ATTACK_CONNECTED:
+        r.i = st->atk_connected;
+        break;
+    case GENO_VAL_ATTACK_CONNECTED_PREV:
+        r.i = st->atk_connected_prev;
+        break;
     default:
         if (id >= GENO_VAL_MOVE_F0 && id <= GENO_VAL_MOVE_F7) {
             r.f = st->move_f[id - GENO_VAL_MOVE_F0];
@@ -1100,6 +1111,9 @@ static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
                 fp->frame_speed_mul = v.f; /* no model (the headless tests) */
             }
         }
+        return 1;
+    case GENO_VAL_ATTACK_CONNECTED:
+        geno_state(fp)->atk_connected = v.i != 0;
         return 1;
     case GENO_VAL_JUMPS_USED:
         fp->x1968_jumpsUsed = (u8) (v.i < 0 ? 0 : v.i > 255 ? 255 : v.i);
@@ -1533,6 +1547,7 @@ int Geno_Autolink(Fighter* attacker, HitCapsule* hit, float* dir, float* angle, 
     if (geno_inert(st)) {
         return 0;
     }
+    st->atk_connected = 1; /* v5.3 GENO_VAL_ATTACK_CONNECTED: this hitbox won a hit on a fighter */
     idx = (int) (hit - &attacker->x914[0]);
     mode = st->link_mode[idx];
     if (mode == GENO_LINK_OFF) {

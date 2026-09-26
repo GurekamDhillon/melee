@@ -13,7 +13,7 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 4    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
+#define GENO_VERSION 5    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
                              4 = v5: articles, on_hit, counter windows - docs/geno.md section 19) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
 #define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
@@ -120,7 +120,10 @@ enum {
     GENO_VAL_HIT_COUNTER = 0x37,  /* i: 1 when the last hit landed in a counter window */
     GENO_VAL_HIT_COUNT = 0x38,    /* i: hits taken since the spawn */
     GENO_VAL_ARTICLES = 0x39,     /* i: this fighter's Geno articles alive now */
-    GENO_VAL_COUNT = 0x3A,
+    GENO_VAL_ATTACK_CONNECTED = 0x3B,      /* i W (v5.3): a hitbox of this fighter hit a fighter in this
+                                              action; 0 at every action change (Geno states too) */
+    GENO_VAL_ATTACK_CONNECTED_PREV = 0x3C, /* i (v5.3): ATTACK_CONNECTED as the previous action ended */
+    GENO_VAL_COUNT = 0x3D,
     GENO_VAL_SPECIAL_F = 0x1000,  /* + word index: fp->dat_attrs word as float */
     GENO_VAL_SPECIAL_I = 0x2000,  /* + word index: fp->dat_attrs word as int */
 };

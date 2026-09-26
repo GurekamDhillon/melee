@@ -71,6 +71,9 @@ typedef struct GenoState {
     f32 motion_gravity;              /* GENO_VAL_MOTION_GRAVITY: -1 = the state's "gravity" */
     s32 enter_keep;                  /* the current Geno state was entered with KEEP_FRAME (a
                                         ground/air swap of the same move: behaviours keep their vars) */
+    /* ---- v5.3 (GENO_VAL_ATTACK_CONNECTED*): Geno_OnActionChange moves cur to prev and clears cur ---- */
+    s32 atk_connected;               /* one of this fighter's hitboxes hit a fighter in this action */
+    s32 atk_connected_prev;          /* atk_connected as the previous action ended */
 } GenoState;
 
 #define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */

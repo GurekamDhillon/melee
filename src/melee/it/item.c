@@ -1,4 +1,7 @@
 #include "item.h"
+#if defined(TARGET_PC)
+#include "../../../pc/geno/geno.h" /* GENO_ART_KIND_* */
+#endif
 
 #include <melee/lb/forward.h>
 
@@ -290,6 +293,13 @@ static void Item_802674AC(SpawnItem* spawnItem)
 {
     ItemKind kind = spawnItem->kind;
 
+#if defined(TARGET_PC)
+    if (kind >= GENO_ART_KIND_BASE && kind < GENO_ART_KIND_END) {
+        spawnItem->hold_kind = 8; /* a Geno article counts as a fighter article (no item cap) */
+        return;
+    }
+#endif
+
     if (kind == It_Kind_Foods) {
         spawnItem->hold_kind = 2;
         return;
@@ -554,6 +564,13 @@ void Item_80267978(HSD_GObj* gobj)
         item_data->xC4_article_data = it_804D6D30[idx];
         item_data->xB8_itemLogicTable = &it_803F23CC[idx];
 #if defined(TARGET_PC)
+    } else if (item_data->kind >= GENO_ART_KIND_BASE && item_data->kind < GENO_ART_KIND_END) {
+        /* A Geno article (pc/geno/geno_game_articles.inc, docs/geno.md section 19): its own item
+         * kind range, above m-ex's custom kinds and below m-ex's 5000 spawn remap. */
+        extern void* Geno_ArticleDesc(int kind);
+        extern void* Geno_ArticleLogic(int kind);
+        item_data->xC4_article_data = Geno_ArticleDesc(item_data->kind);
+        item_data->xB8_itemLogicTable = Geno_ArticleLogic(item_data->kind);
     } else if (item_data->kind >= 237) {
         /* Ported from m-ex (https://github.com/akaneia/m-ex):
          * asm/m-ex/Item Extension/Create Item.asm, @ 0x80267990. m-ex adds a fifth range for custom

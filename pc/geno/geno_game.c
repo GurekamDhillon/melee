@@ -120,6 +120,9 @@ static int geno_state_valid(GenoState* st, int s);
 static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s, u32 target);
 static int geno_v2_preanim(Fighter_GObj* gobj, Fighter* fp, GenoState* st);
 static int geno_cur_state(Fighter* fp, GenoState* st);
+/* v5: articles (geno_game_articles.inc) */
+static int geno_art_live(HSD_GObj* owner, int article);
+static int hook_article_spawn(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg);
 
 /* ---- native hooks ---------------------------------------------------------------------------- */
 
@@ -165,6 +168,7 @@ static const struct {
     { GENO_HOOK_JUMPS_REFILL, "geno.jumps.refill", hook_jumps_refill },
     { GENO_HOOK_JUMPS_TO_VAR, "geno.jumps.to_var", hook_jumps_to_var },
     { GENO_HOOK_COUNT_FRAMES, "geno.count_frames", hook_count_frames },
+    { GENO_HOOK_ARTICLE_SPAWN, "geno.article.spawn", hook_article_spawn },
 };
 #define GENO_NHOOKS ((int) (sizeof(geno_hooks) / sizeof(geno_hooks[0])))
 
@@ -334,6 +338,7 @@ void Geno_FighterReset(Fighter* fp)
     st->hold_frames = -1;
     st->ledge = -1;
     st->enter_from = -1;
+    st->hit_port = -1;
     if (st->profile >= 0) {
         Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
         geno_install_overlays(fp, st->profile);
@@ -810,6 +815,10 @@ static int geno_val_is_float(u32 id)
     case GENO_VAL_GENO_STATE:
     case GENO_VAL_LEDGE:
     case GENO_VAL_HIDDEN:
+    case GENO_VAL_HIT_PORT:
+    case GENO_VAL_HIT_COUNTER:
+    case GENO_VAL_HIT_COUNT:
+    case GENO_VAL_ARTICLES:
         return 0;
     default:
         if (id >= GENO_VAL_MOVE_I0 && id <= GENO_VAL_MOVE_I7) {
@@ -932,6 +941,21 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
         break;
     case GENO_VAL_MOTION_GRAVITY:
         r.f = st->motion_gravity;
+        break;
+    case GENO_VAL_HIT_DAMAGE:
+        r.f = st->hit_damage;
+        break;
+    case GENO_VAL_HIT_PORT:
+        r.i = st->hit_port;
+        break;
+    case GENO_VAL_HIT_COUNTER:
+        r.i = st->hit_counter;
+        break;
+    case GENO_VAL_HIT_COUNT:
+        r.i = st->hit_count;
+        break;
+    case GENO_VAL_ARTICLES:
+        r.i = geno_art_live(fp->gobj, -1);
         break;
     default:
         if (id >= GENO_VAL_MOVE_F0 && id <= GENO_VAL_MOVE_F7) {
@@ -1592,6 +1616,9 @@ void* GenoGame_StateOf(Fighter* fp)
 /* ---- v2 ---------------------------------------------------------------------------------------- */
 #include "geno_game_v2.inc"
 
+/* ---- v5: articles, on_hit, counter windows ------------------------------------------------------ */
+#include "geno_game_articles.inc"
+
 /* ---- Stage E: name a SyncTest mismatch inside a GenoState (the Lab's rollback visualiser) --- */
 #define GENO_SF(field) { #field, (int) __builtin_offsetof(GenoState, field), (int) sizeof(((GenoState*) 0)->field) }
 static const struct {
@@ -1605,6 +1632,8 @@ static const struct {
     GENO_SF(hold_motion), GENO_SF(hold_frames), GENO_SF(move_i), GENO_SF(move_f), GENO_SF(state_entries),
     GENO_SF(enter_from), GENO_SF(hidden), GENO_SF(ledge), GENO_SF(motion_started), GENO_SF(motion_vy),
     GENO_SF(motion_land), GENO_SF(motion_facing), GENO_SF(motion_gravity), GENO_SF(enter_keep),
+    GENO_SF(hit_count), GENO_SF(hit_damage), GENO_SF(hit_port), GENO_SF(hit_counter), GENO_SF(counters),
+    GENO_SF(art_spawned),
 };
 #define GENO_NSF ((int) (sizeof geno_sfields / sizeof geno_sfields[0]))
 

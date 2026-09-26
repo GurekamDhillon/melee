@@ -3399,6 +3399,14 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
     float forceAppliedOnHit;
 
     if (!fp->x221F_b3) {
+#if defined(TARGET_PC)
+        {
+            /* Geno v5 (docs/geno.md section 19): on_hit hooks and counter windows, before Melee
+             * reacts to this frame's hit. Returns at once for a fighter with no Geno profile. */
+            extern int Geno_OnHit(Fighter_GObj * gobj);
+            Geno_OnHit(gobj);
+        }
+#endif
         if (!fp->x221A_b7) {
             if (fp->shield_health < p_ftCommonData->x260_startShieldHealth) {
                 fp->shield_health += p_ftCommonData->x27C;

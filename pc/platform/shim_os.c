@@ -61,13 +61,20 @@ static void gw_set_cur_heap(int heap) { gw_w32(gw___OSCurrHeap, (uint32_t)heap);
  * whose MxDt.dat is 164 KB). */
 #define GW_MEX_PERSIST_SIZE 0x60000u
 
+/* Below it, GW_GENO_PERSIST_SIZE bytes are withheld for Geno (pc/platform/geno_registry.c): the
+ * article models a geno.json names ("articles"[].model), loaded once per registry and read-only
+ * after that, so they live for the process like the registry itself - a scene heap would free them
+ * at the end of the match and the next match would draw from reused memory. Also taken off the main
+ * heap (docs/geno.md section 19). */
+#define GW_GENO_PERSIST_SIZE 0x100000u
+
 static uintptr_t gw_arena_lo;
 static uintptr_t gw_arena_hi;
 
 static void gw_arena_ensure(void) {
   if (gw_arena_lo == 0) {
     gw_arena_lo = (uintptr_t)gw_mem1 + GW_ARENA_LO_OFFSET;
-    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE;
+    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - GW_GENO_PERSIST_SIZE;
   }
 }
 
@@ -80,6 +87,12 @@ static void gw_arena_ensure(void) {
 void gw_mex_persist_region(uint32_t *base, uint32_t *size) {
   *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE);
   *size = GW_MEX_PERSIST_SIZE - GW_GUEST_SCRATCH_SIZE;
+}
+
+/* Geno's withheld region: [base, base + size), just below m-ex's. Never touched by the game. */
+void gw_geno_persist_region(uint32_t *base, uint32_t *size) {
+  *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - GW_GENO_PERSIST_SIZE);
+  *size = GW_GENO_PERSIST_SIZE;
 }
 
 /* ---- guest scratch for pointer arguments handed to GUEST callbacks -------------------------

@@ -55,6 +55,13 @@ typedef struct GenoState {
     s32 enter_from;                  /* the motion the current Geno state was entered from */
     s32 hidden;                      /* GENO_VAL_HIDDEN: not drawn; kept across Geno states, cleared
                                         by any non-Geno action */
+    /* ---- v5 (kept across actions; reset at spawn / respawn) ---- */
+    s32 hit_count;                   /* GENO_VAL_HIT_COUNT: hits taken (on_hit dispatches) */
+    f32 hit_damage;                  /* GENO_VAL_HIT_DAMAGE: the last hit's damage */
+    s32 hit_port;                    /* GENO_VAL_HIT_PORT: its attacker's port, -1 unknown */
+    s32 hit_counter;                 /* GENO_VAL_HIT_COUNTER: it landed in a counter window */
+    s32 counters;                    /* hits countered since the reset (diagnostics) */
+    s32 art_spawned;                 /* articles spawned since the reset (diagnostics) */
     /* per action (cleared on every action change, like the v1 block) */
     s32 ledge;                       /* GENO_VAL_LEDGE: -1 = the state's default */
     s32 motion_started;              /* geno.anim_motion: the first frame has been applied */

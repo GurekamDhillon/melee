@@ -413,6 +413,18 @@ typedef struct {
     int param_id[GENO_PARAMS];
     uint32_t param_bits[GENO_PARAMS];         /* float bits */
     uint32_t special[GENO_SP_COUNT];          /* target, ~0 = Melee's / m-ex's own special */
+    /* v5: counter windows per state, articles */
+    uint32_t st_ctr[GENO_MAX_STATES][4];      /* GENO_CTR_*; st_ctr_on = the state has one */
+    int st_ctr_on[GENO_MAX_STATES];
+    int nart;
+    char art_name[GENO_MAX_ARTICLES][32];
+    uint32_t art_param[GENO_MAX_ARTICLES][GENO_AP_COUNT];  /* float bits (ints for the int params) */
+    int art_nhit[GENO_MAX_ARTICLES];
+    uint32_t art_hit[GENO_MAX_ARTICLES][GENO_ART_HITBOXES][GENO_AH_COUNT];
+    char art_file[GENO_MAX_ARTICLES][64];     /* the model's .dat ("" = no model: invisible) */
+    char art_sym[GENO_MAX_ARTICLES][64];      /* its joint symbol ("" = the first *_joint) */
+    uint32_t art_joint[GENO_MAX_ARTICLES];    /* loaded HSD_Joint (guest address), 0 = not yet */
+    int art_tried[GENO_MAX_ARTICLES];         /* the load was attempted (a failure is not retried) */
 } gn_profile;
 
 #define GN_NONE 0xFFFFFFFFu
@@ -806,9 +818,142 @@ static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
     }
 }
 
+/* ---- v5: counter windows and articles (docs/geno.md section 19) -------------------------------- */
+
+static int gn_num(const jdoc *d, int obj, const char *key, double *out) {
+    int v = jd_get(d, obj, key);
+    if (v < 0 || (d->n[v].type != JN_NUM && d->n[v].type != JN_BOOL)) return 0;
+    *out = d->n[v].num;
+    return 1;
+}
+
+/* A [x, y] or [x, y, z] array into out[0..n-1]; missing entries keep their value. */
+static void gn_vec(const jdoc *d, int obj, const char *key, double *out, int n) {
+    int v = jd_get(d, obj, key), c, i = 0;
+    if (v < 0 || d->n[v].type != JN_ARR) return;
+    for (c = d->n[v].first; c >= 0 && i < n; c = d->n[c].next, ++i)
+        if (d->n[c].type == JN_NUM) out[i] = d->n[c].num;
+}
+
+/* An int parameter from a key, or `def`. */
+static uint32_t gn_int(const jdoc *d, int obj, const char *key, int def) {
+    double v;
+    return gn_num(d, obj, key, &v) ? (uint32_t) (int) v : (uint32_t) def;
+}
+
+static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
+    static const char *const despawn_keys[4] = { "hit", "shield", "stage", "clank" };
+    static const char *const hits_keys[5] = { "ground", "air", "reflect", "absorb", "counter" };
+    int x, c, k;
+    /* states[].counter: { "from": f, "to": f, "target": target, "negate": bool } */
+    x = jd_get(d, e, "states");
+    if (x >= 0 && d->n[x].type == JN_ARR) {
+        for (c = d->n[x].first, k = 0; c >= 0 && k < p->nstate; c = d->n[c].next, ++k) {
+            int w = jd_get(d, c, "counter"), t;
+            if (w < 0 || d->n[w].type != JN_OBJ) continue;
+            p->st_ctr_on[k] = 1;
+            p->st_ctr[k][GENO_CTR_FROM] = gn_int(d, w, "from", 1);
+            p->st_ctr[k][GENO_CTR_TO] = gn_int(d, w, "to", 0x7FFFFFFF);
+            p->st_ctr[k][GENO_CTR_NEGATE] = gn_int(d, w, "negate", 1) != 0;
+            p->st_ctr[k][GENO_CTR_TARGET] = GN_NONE;
+            if ((t = jd_get(d, w, "target")) >= 0 &&
+                !gn_target_p(d, t, &p->st_ctr[k][GENO_CTR_TARGET], p)) {
+                gw_log("geno: %s: state %s: bad counter \"target\" - a countered hit only stays flagged",
+                       where, p->st_name[k]);
+                p->st_ctr[k][GENO_CTR_TARGET] = GN_NONE;
+            }
+        }
+    }
+    /* articles: [ { "name", "model": { "file", "symbol" }, "lifetime", "velocity": [fwd, up],
+                     "gravity", "max_fall", "accel", "max_speed", "homing": { "turn", "range",
+                     "delay" }, "spawn": [fwd, up], "scale", "spin", "max_live",
+                     "despawn": { "hit", "shield", "stage", "clank" }, "hitboxes": [ {...} ] } ] */
+    x = jd_get(d, e, "articles");
+    if (x < 0 || d->n[x].type != JN_ARR) return;
+    for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
+        int a = p->nart, m, h, hl, hc;
+        double v, vel[2] = { 0, 0 }, sp[2] = { 0, 0 };
+        uint32_t desp = GENO_ART_DESPAWN_DEFAULT;
+        if (a >= GENO_MAX_ARTICLES) {
+            gw_log("geno: %s: more than %d articles - the rest are ignored", where, GENO_MAX_ARTICLES);
+            break;
+        }
+        if (d->n[c].type != JN_OBJ) continue;
+        m = jd_get(d, c, "name");
+        snprintf(p->art_name[a], sizeof p->art_name[0], "%s",
+                 m >= 0 && d->n[m].type == JN_STR ? d->n[m].str : "");
+        for (k = 0; k < GENO_AP_COUNT; ++k) p->art_param[a][k] = 0;
+        p->art_param[a][GENO_AP_LIFETIME] = gn_fbits(gn_num(d, c, "lifetime", &v) && v > 0 ? v : 60.0);
+        gn_vec(d, c, "velocity", vel, 2);
+        p->art_param[a][GENO_AP_VEL_FWD] = gn_fbits(vel[0]);
+        p->art_param[a][GENO_AP_VEL_UP] = gn_fbits(vel[1]);
+        gn_vec(d, c, "spawn", sp, 2);
+        p->art_param[a][GENO_AP_SPAWN_FWD] = gn_fbits(sp[0]);
+        p->art_param[a][GENO_AP_SPAWN_UP] = gn_fbits(sp[1]);
+        if (gn_num(d, c, "gravity", &v)) p->art_param[a][GENO_AP_GRAVITY] = gn_fbits(v);
+        if (gn_num(d, c, "max_fall", &v)) p->art_param[a][GENO_AP_MAX_FALL] = gn_fbits(v);
+        if (gn_num(d, c, "accel", &v)) p->art_param[a][GENO_AP_ACCEL] = gn_fbits(v);
+        if (gn_num(d, c, "max_speed", &v)) p->art_param[a][GENO_AP_MAX_SPEED] = gn_fbits(v);
+        p->art_param[a][GENO_AP_SCALE] = gn_fbits(gn_num(d, c, "scale", &v) && v > 0 ? v : 1.0);
+        if (gn_num(d, c, "spin", &v)) p->art_param[a][GENO_AP_SPIN] = gn_fbits(v);
+        p->art_param[a][GENO_AP_MAX_LIVE] = gn_num(d, c, "max_live", &v) && v >= 1 ? (uint32_t) (int) v : 4u;
+        if ((m = jd_get(d, c, "homing")) >= 0 && d->n[m].type == JN_OBJ) {
+            if (gn_num(d, m, "turn", &v)) p->art_param[a][GENO_AP_HOMING_TURN] = gn_fbits(v);
+            if (gn_num(d, m, "range", &v)) p->art_param[a][GENO_AP_HOMING_RANGE] = gn_fbits(v);
+            if (gn_num(d, m, "delay", &v)) p->art_param[a][GENO_AP_HOMING_DELAY] = gn_fbits(v);
+        }
+        if ((m = jd_get(d, c, "despawn")) >= 0 && d->n[m].type == JN_OBJ) {
+            for (k = 0; k < 4; ++k)
+                if (gn_num(d, m, despawn_keys[k], &v)) desp = v != 0 ? desp | (1u << k) : desp & ~(1u << k);
+        }
+        p->art_param[a][GENO_AP_DESPAWN] = desp;
+        if ((m = jd_get(d, c, "model")) >= 0 && d->n[m].type == JN_OBJ) {
+            int f = jd_get(d, m, "file"), y = jd_get(d, m, "symbol");
+            if (f >= 0 && d->n[f].type == JN_STR)
+                snprintf(p->art_file[a], sizeof p->art_file[0], "%s", d->n[f].str);
+            if (y >= 0 && d->n[y].type == JN_STR)
+                snprintf(p->art_sym[a], sizeof p->art_sym[0], "%s", d->n[y].str);
+        }
+        hl = jd_get(d, c, "hitboxes");
+        hc = 0;
+        for (h = hl >= 0 && d->n[hl].type == JN_ARR ? d->n[hl].first : -1; h >= 0 && hc < GENO_ART_HITBOXES;
+             h = d->n[h].next) {
+            uint32_t *hb = p->art_hit[a][hc];
+            double off[3] = { 0, 0, 0 };
+            if (d->n[h].type != JN_OBJ) continue;
+            hb[GENO_AH_DAMAGE] = gn_fbits(gn_num(d, h, "damage", &v) ? v : 1.0);
+            hb[GENO_AH_SIZE] = gn_fbits(gn_num(d, h, "size", &v) ? v : 3.0);
+            gn_vec(d, h, "offset", off, 3);
+            hb[GENO_AH_OFF_X] = gn_fbits(off[0]);
+            hb[GENO_AH_OFF_Y] = gn_fbits(off[1]);
+            hb[GENO_AH_OFF_Z] = gn_fbits(off[2]);
+            hb[GENO_AH_ANGLE] = gn_int(d, h, "angle", 361);
+            hb[GENO_AH_KBG] = gn_int(d, h, "kbg", 100);
+            hb[GENO_AH_WKB] = gn_int(d, h, "wkb", 0);
+            hb[GENO_AH_BKB] = gn_int(d, h, "bkb", 0);
+            hb[GENO_AH_ELEMENT] = gn_int(d, h, "element", 0);
+            hb[GENO_AH_SHIELD_DAMAGE] = gn_int(d, h, "shield_damage", 0);
+            hb[GENO_AH_SFX_SEVERITY] = gn_int(d, h, "sfx_severity", 1);
+            hb[GENO_AH_SFX_KIND] = gn_int(d, h, "sfx_kind", 0);
+            hb[GENO_AH_START] = gn_int(d, h, "start", 1);
+            hb[GENO_AH_END] = gn_int(d, h, "end", 0);
+            hb[GENO_AH_FLAGS] = GENO_AHF_DEFAULT;
+            if ((m = jd_get(d, h, "hits")) >= 0 && d->n[m].type == JN_OBJ) {
+                for (k = 0; k < 5; ++k)
+                    if (gn_num(d, m, hits_keys[k], &v))
+                        hb[GENO_AH_FLAGS] = v != 0 ? hb[GENO_AH_FLAGS] | (1u << k) : hb[GENO_AH_FLAGS] & ~(1u << k);
+            }
+            hc++;
+        }
+        p->art_nhit[a] = hc;
+        if (hc == 0) gw_log("geno: %s: article %s has no hitboxes (it only flies)", where, p->art_name[a]);
+        p->nart++;
+    }
+}
+
 static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where) {
     static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",
-                                                         "on_land" };
+                                                         "on_land", "on_hit" };
     gn_profile *p;
     int x, c, ev;
     if (d->n[e].type != JN_OBJ) {
@@ -890,6 +1035,7 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
         }
     }
     gn_add_v2(p, d, e, where);
+    gn_add_v5(p, d, e, where);
     gn_add_v1(r, p, d, e, mod, where);
     /* the id covers the whole entry as written - including keys this version ignores, which a
        newer Geno might act on, so two installs never agree on an id while behaving differently */
@@ -955,10 +1101,10 @@ static void gn_build_kinds(gn_registry *r) {
         r->kind_profile[p->kind] = i;
         gw_log("geno: fighter %s (%s) -> kind %d: id %s, %d attribute(s), max jumps %d, %d air vy, "
                "hooks %d/%d/%d/%d, %d special attribute(s), %d on_land, %d subaction overlay(s), "
-               "%d Geno state(s), %d behaviour parameter(s)",
+               "%d Geno state(s), %d behaviour parameter(s), %d article(s), %d on_hit hook(s)",
                p->name, p->plfile, p->kind, p->hex, p->nattr, p->max_jumps, p->njvy, p->nhook[0],
                p->nhook[1], p->nhook[2], p->nhook[3], p->nspec, p->nland, p->nov, p->nstate,
-               p->nparam);
+               p->nparam, p->nart, p->nhook[GENO_EV_HIT]);
     }
     r->kinds_built = 1;
 }
@@ -1124,6 +1270,117 @@ int gw_Geno_Special(int p, int which) {
     return x != NULL && which >= 0 && which < GENO_SP_COUNT ? (int) x->special[which] : -1;
 }
 
+/* v5: counter windows, articles */
+int gw_Geno_StateCounter(int p, int s, int field) {
+    if (!GN_ST(p, s) || !gn_at(p)->st_ctr_on[s] || field < 0 || field > 3) return -1;
+    return (int) gn_at(p)->st_ctr[s][field];
+}
+int gw_Geno_StateHasCounter(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_ctr_on[s] : 0; }
+#define GN_ART(p, a) (gn_at(p) != NULL && (a) >= 0 && (a) < gn_at(p)->nart)
+int gw_Geno_ArticleCount(int p) { return gn_at(p) ? gn_at(p)->nart : 0; }
+int gw_Geno_ArticleParam(int p, int a, int id) {
+    return GN_ART(p, a) && id >= 0 && id < GENO_AP_COUNT ? (int) gn_at(p)->art_param[a][id] : 0;
+}
+int gw_Geno_ArticleHitCount(int p, int a) { return GN_ART(p, a) ? gn_at(p)->art_nhit[a] : 0; }
+int gw_Geno_ArticleHitParam(int p, int a, int h, int id) {
+    return GN_ART(p, a) && h >= 0 && h < gn_at(p)->art_nhit[a] && id >= 0 && id < GENO_AH_COUNT
+               ? (int) gn_at(p)->art_hit[a][h][id]
+               : 0;
+}
+const char *gw_Geno_ArticleName(int p, int a) { return GN_ART(p, a) ? gn_at(p)->art_name[a] : NULL; }
+
+/* Article models: an HSD archive (a costume-style .dat from a mod's files or the disc) loaded ONCE
+ * into Geno's withheld guest region (shim_os.c, GW_GENO_PERSIST_SIZE) and relocated there, so the
+ * joint tree outlives every scene heap (a model loaded into a match's heap would be freed with it
+ * and the next match would draw reused memory). Read-only after the load: the item code builds the
+ * article's JObjs from it the way it does from a Pl file's article data. A bump allocator: a hot
+ * reload loads the models again (the old copies are not reclaimed; the log says when it is full). */
+static uint32_t gn_persist_base, gn_persist_cap, gn_persist_used;
+
+static uint32_t gn_persist_alloc(uint32_t size) {
+    extern void gw_geno_persist_region(uint32_t * base, uint32_t * size);
+    uint32_t a;
+    if (gn_persist_cap == 0u) gw_geno_persist_region(&gn_persist_base, &gn_persist_cap);
+    size = (size + 31u) & ~31u;
+    if (size > gn_persist_cap - gn_persist_used) return 0u;
+    a = gn_persist_base + gn_persist_used;
+    gn_persist_used += size;
+    memset((void *) (uintptr_t) a, 0, size);
+    return a;
+}
+
+static uint32_t gn_load_model(const char *file, const char *symbol, const char *who) {
+    extern void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size);
+    uint32_t len = 0, data_size, nb_reloc, nb_public, nb_extern, o_pub, o_str, i, base, sym = ~0u;
+    unsigned char *dat = (unsigned char *) gw_DVDReadFileAlloc(file, &len);
+    if (dat == NULL) {
+        gw_log("geno: article %s: model file %s not found (in a mod or on the disc)", who, file);
+        return 0u;
+    }
+    if (len < 0x20u || gw_r32(dat) != len) {
+        gw_log("geno: article %s: %s is not an HSD archive", who, file);
+        free(dat);
+        return 0u;
+    }
+    data_size = gw_r32(dat + 4);
+    nb_reloc = gw_r32(dat + 8);
+    nb_public = gw_r32(dat + 12);
+    nb_extern = gw_r32(dat + 16);
+    o_pub = 0x20u + data_size + nb_reloc * 4u;
+    o_str = o_pub + (nb_public + nb_extern) * 8u;
+    if ((uint64_t) o_str > len) {
+        gw_log("geno: article %s: %s header is inconsistent", who, file);
+        free(dat);
+        return 0u;
+    }
+    for (i = 0; i < nb_public; ++i) {
+        uint32_t off = gw_r32(dat + o_pub + i * 8u), so = gw_r32(dat + o_pub + i * 8u + 4u);
+        const char *nm = o_str + so < len ? (const char *) dat + o_str + so : "";
+        size_t n = strnlen(nm, len - (o_str + so < len ? o_str + so : len));
+        int match = symbol[0] != 0 ? (strncmp(nm, symbol, n) == 0 && symbol[n] == 0)
+                                   : (n > 6 && strncmp(nm + n - 6, "_joint", 6) == 0);
+        if (match) {
+            sym = off;
+            break;
+        }
+    }
+    if (sym == ~0u || sym >= data_size) {
+        gw_log("geno: article %s: %s has no joint symbol %s", who, file, symbol[0] ? symbol : "*_joint");
+        free(dat);
+        return 0u;
+    }
+    base = gn_persist_alloc(data_size);
+    if (base == 0u) {
+        gw_log("geno: article %s: no room for %s (%u bytes; Geno's model region holds %u, %u used)", who,
+               file, data_size, gn_persist_cap, gn_persist_used);
+        free(dat);
+        return 0u;
+    }
+    memcpy((void *) (uintptr_t) base, dat + 0x20, data_size);
+    for (i = 0; i < nb_reloc; ++i) {
+        uint32_t off = gw_r32(dat + 0x20 + data_size + i * 4u);
+        if ((uint64_t) off + 4u > data_size) continue;
+        gw_w32((void *) (uintptr_t) (base + off), gw_r32((const void *) (uintptr_t) (base + off)) + base);
+    }
+    free(dat);
+    gw_log("geno: article %s: model %s loaded (%u bytes), joint at 0x%08X", who, file, data_size, base + sym);
+    return base + sym;
+}
+
+/* The article's model joint (a guest address), 0 when it names none or it could not be loaded. */
+int gw_Geno_ArticleJoint(int p, int a) {
+    gn_profile *x;
+    if (!GN_ART(p, a)) return 0;
+    x = &gn_reg()->p[p];
+    if (!x->art_tried[a]) {
+        char who[100];
+        x->art_tried[a] = 1;
+        snprintf(who, sizeof who, "%s/%s", x->name, x->art_name[a]);
+        if (x->art_file[a][0] != 0) x->art_joint[a] = gn_load_model(x->art_file[a], x->art_sym[a], who);
+    }
+    return (int) x->art_joint[a];
+}
+
 /* Log lines for the game half, which cannot format strings portably. Rate-limited per `what`:
  * rollback resimulates frames, and a per-frame event would flood the log. */
 void gw_Geno_Event(int what, int a, int b, int c, int d) {
@@ -1157,6 +1414,12 @@ void gw_Geno_Event(int what, int a, int b, int c, int d) {
         "geno: kind %d player %d root motion: state %d grabbed the ledge (mode %d)",         /* 25 */
         "geno: kind %d player %d cape: vanished at frame %d (stick x100 %d)",               /* 26 */
         "geno: kind %d player %d cape: reappear %d (0 end, 1 N, 2 F, 3 B; +10 air) held 0x%x", /* 27 */
+        "geno: kind %d player %d article %d spawned as item kind %d",                         /* 28 */
+        "geno: kind %d player %d article %d despawned (%d: 0 timeout, 1 hit, 2 shield, 3 stage, 4 clank)", /* 29 */
+        "geno: kind %d player %d article %d not spawned (%d: 0 no such article, 1 max_live, 2 item limit)", /* 30 */
+        "geno: kind %d player %d on_hit: damage x100 %d from port %d",                        /* 31 */
+        "geno: kind %d player %d COUNTER: hit in Geno state %d at action frame %d",           /* 32 */
+        "geno: kind %d player %d article %d at frame %d",                                     /* 33 */
     };
     if (what < 0 || what >= (int) (sizeof fmt / sizeof fmt[0])) return;
     if (++count[what] > 40) {

@@ -6,10 +6,13 @@
 
 #include <Runtime/platform.h>
 
+#include <math.h>
+
 #include <melee/ft/fighter.h>
 #include <melee/ft/ftaction.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/types.h>
+#include <melee/it/types.h>
 #include <melee/lb/types.h>
 #include <melee/pl/player.h>
 
@@ -2379,6 +2382,267 @@ static int test_geno_lab_mismatch_fields(void)
     return 0;
 }
 
+/* ---- v5: articles, on_hit, counter windows (docs/geno.md section 19) ------------------------- */
+
+extern int Geno_ArticleCount(int p);
+extern int Geno_ArticleParam(int p, int a, int id);
+extern int Geno_ArticleHitCount(int p, int a);
+extern int Geno_ArticleHitParam(int p, int a, int h, int id);
+extern int Geno_StateCounter(int p, int s, int field);
+extern int Geno_HookCount(int p, int ev);
+extern void* Geno_ArticleDesc(int kind);
+extern void* Geno_ArticleLogic(int kind);
+extern int Geno_OnHit(Fighter_GObj* gobj);
+extern void GenoGame_ArticleStep(int p, int a, int frame, f32* vx, f32* vy, f32 px, f32 py,
+                                 int has_target, f32 tx, f32 ty);
+
+static const char t_v5_json[] =
+    "{\"geno\":4,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+    "{\"name\":\"Counter\",\"behavior\":\"geno.ground\",\"subaction\":20,"
+    "\"counter\":{\"from\":3,\"to\":10,\"target\":\"geno:CounterHit\"}},"
+    "{\"name\":\"CounterHit\",\"behavior\":\"geno.ground\",\"subaction\":21},"
+    "{\"name\":\"Flag\",\"behavior\":\"geno.ground\",\"subaction\":22,"
+    "\"counter\":{\"negate\":false}}],"
+    "\"specials\":{\"lw\":\"geno:Counter\"},"
+    "\"hooks\":{\"on_hit\":[\"geno.count_frames:7\"]},"
+    "\"articles\":["
+    "{\"name\":\"Shot\",\"lifetime\":40,\"velocity\":[2.5,0],\"spawn\":[6,8],"
+    "\"hitboxes\":[{\"damage\":7,\"size\":2.5,\"angle\":45,\"kbg\":60,\"bkb\":20,\"element\":1,"
+    "\"start\":2,\"end\":30}]},"
+    "{\"name\":\"Lob\",\"velocity\":[1,2],\"gravity\":0.1,\"max_fall\":1.5,\"max_speed\":3,"
+    "\"homing\":{\"turn\":5,\"delay\":3},\"despawn\":{\"stage\":false},\"max_live\":2,"
+    "\"hitboxes\":[{\"damage\":3,\"hits\":{\"reflect\":false}},{\"damage\":4,\"offset\":[1,2,3]}]}"
+    "]}]}";
+
+static f32 t_bitsf(int b)
+{
+    union {
+        u32 u;
+        f32 f;
+    } x;
+    x.u = (u32) b;
+    return x.f;
+}
+
+/* The registry side: articles (defaults, hitboxes, flags), counter windows, the on_hit hook list,
+ * the article item kinds and their descriptors. */
+static int test_geno_v5_registry(void)
+{
+    int rc = 0;
+    Article* d;
+    if (Geno_TestInstall(t_v5_json) != 1) {
+        TestFail("could not install the v5 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    if (Geno_ArticleCount(0) != 2 || Geno_ArticleHitCount(0, 0) != 1 || Geno_ArticleHitCount(0, 1) != 2) {
+        TestFail("two articles, with 1 and 2 hitboxes");
+        rc = 1;
+    }
+    if (t_bitsf(Geno_ArticleParam(0, 0, GENO_AP_LIFETIME)) != 40.0f ||
+        t_bitsf(Geno_ArticleParam(0, 0, GENO_AP_VEL_FWD)) != 2.5f ||
+        t_bitsf(Geno_ArticleParam(0, 0, GENO_AP_SPAWN_UP)) != 8.0f ||
+        t_bitsf(Geno_ArticleParam(0, 1, GENO_AP_LIFETIME)) != 60.0f ||
+        t_bitsf(Geno_ArticleParam(0, 1, GENO_AP_SCALE)) != 1.0f ||
+        Geno_ArticleParam(0, 0, GENO_AP_MAX_LIVE) != 4 || Geno_ArticleParam(0, 1, GENO_AP_MAX_LIVE) != 2)
+    {
+        TestFail("article parameters: lifetime 40 / default 60, velocity, spawn, scale 1, max_live");
+        rc = 1;
+    }
+    if (Geno_ArticleParam(0, 0, GENO_AP_DESPAWN) != (int) GENO_ART_DESPAWN_DEFAULT ||
+        Geno_ArticleParam(0, 1, GENO_AP_DESPAWN) != (int) (GENO_ART_DESPAWN_DEFAULT & ~GENO_ART_DESPAWN_STAGE))
+    {
+        TestFail("despawn mask: default hit|shield|stage|clank; \"stage\": false clears one bit");
+        rc = 1;
+    }
+    if (t_bitsf(Geno_ArticleHitParam(0, 0, 0, GENO_AH_DAMAGE)) != 7.0f ||
+        Geno_ArticleHitParam(0, 0, 0, GENO_AH_ANGLE) != 45 || Geno_ArticleHitParam(0, 0, 0, GENO_AH_KBG) != 60 ||
+        Geno_ArticleHitParam(0, 0, 0, GENO_AH_BKB) != 20 || Geno_ArticleHitParam(0, 0, 0, GENO_AH_START) != 2 ||
+        Geno_ArticleHitParam(0, 0, 0, GENO_AH_END) != 30 || Geno_ArticleHitParam(0, 1, 0, GENO_AH_ANGLE) != 361 ||
+        Geno_ArticleHitParam(0, 1, 0, GENO_AH_FLAGS) != (int) (GENO_AHF_DEFAULT & ~GENO_AHF_REFLECT) ||
+        t_bitsf(Geno_ArticleHitParam(0, 1, 1, GENO_AH_OFF_Z)) != 3.0f)
+    {
+        TestFail("article hitboxes: numbers, defaults (angle 361), the hits flags, offsets");
+        rc = 1;
+    }
+    if (Geno_StateCounter(0, 0, GENO_CTR_FROM) != 3 || Geno_StateCounter(0, 0, GENO_CTR_TO) != 10 ||
+        Geno_StateCounter(0, 0, GENO_CTR_TARGET) != (int) GENO_TARGET(GENO_TGT_GENO, 1) ||
+        Geno_StateCounter(0, 0, GENO_CTR_NEGATE) != 1 || Geno_StateCounter(0, 1, GENO_CTR_FROM) != -1 ||
+        Geno_StateCounter(0, 2, GENO_CTR_NEGATE) != 0 || Geno_StateCounter(0, 2, GENO_CTR_TARGET) != -1)
+    {
+        TestFail("counter windows: frames 3-10 -> geno:CounterHit, negate default 1; none on CounterHit");
+        rc = 1;
+    }
+    if (Geno_HookCount(0, GENO_EV_HIT) != 1) {
+        TestFail("hooks.on_hit must bind one hook");
+        rc = 1;
+    }
+    d = Geno_ArticleDesc(GENO_ART_KIND_BASE + 1);
+    if (d == NULL || d->x10_modelDesc == NULL || d->x10_modelDesc->x0_joint != NULL ||
+        d->x0_common_attr == NULL || d->x0_common_attr->x60_scale != 1.0f || d->x8_hurtbones != NULL ||
+        Geno_ArticleLogic(GENO_ART_KIND_BASE + 1) == NULL)
+    {
+        TestFail("article kind 0x1001: a descriptor (no model: invisible, scale 1, no hurtbox)");
+        rc = 1;
+    }
+    if (Geno_ArticleDesc(GENO_ART_KIND_BASE + 2) != NULL || Geno_ArticleDesc(GENO_ART_KIND_BASE + 8) != NULL ||
+        Geno_ArticleDesc(237) != NULL)
+    {
+        TestFail("an undeclared article kind (or an m-ex kind) must have no Geno descriptor");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
+/* The travel: a straight shot keeps its velocity; gravity to max_fall; homing turns at most
+ * `turn` degrees a frame toward the target, only after `delay`; max_speed caps the speed. */
+static int test_geno_v5_article_motion(void)
+{
+    int rc = 0, f;
+    f32 vx = 2.5f, vy = 0.0f, px = 0.0f;
+    if (Geno_TestInstall(t_v5_json) != 1) {
+        TestFail("could not install the v5 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    for (f = 1; f <= 40; f++) {
+        GenoGame_ArticleStep(0, 0, f, &vx, &vy, px, 0.0f, 1, 0.0f, 50.0f);
+        px += vx;
+    }
+    if (vx != 2.5f || vy != 0.0f || !t_near(px, 100.0f)) {
+        TestFail("a straight article must fly 2.5 a frame for 40 frames (100 units), no homing");
+        rc = 1;
+    }
+    /* Lob: velocity (1, 2), gravity 0.1, max fall 1.5, homing 5 deg after frame 3, target far below */
+    vx = 1.0f;
+    vy = 2.0f;
+    GenoGame_ArticleStep(0, 1, 1, &vx, &vy, 0.0f, 0.0f, 1, 100.0f, -100.0f);
+    if (!t_near(vx, 1.0f) || !t_near(vy, 1.9f)) {
+        TestFail("before the homing delay only gravity applies (vy 2 -> 1.9)");
+        rc = 1;
+    }
+    {
+        f32 a0 = atan2f(vy, vx), a1;
+        GenoGame_ArticleStep(0, 1, 4, &vx, &vy, 0.0f, 0.0f, 1, 100.0f, -100.0f);
+        vy += 0.1f; /* undo this frame's gravity to measure the turn alone */
+        a1 = atan2f(vy, vx);
+        if (!t_near((a0 - a1) * 57.29578f, 5.0f)) {
+            TestFail("homing must turn exactly 5 degrees toward the target");
+            rc = 1;
+        }
+    }
+    for (f = 5; f < 200; f++) {
+        GenoGame_ArticleStep(0, 1, f, &vx, &vy, 0.0f, 1000.0f, 0, 0.0f, 0.0f);
+    }
+    if (!t_near(vy, -1.5f) || sqrtf(vx * vx + vy * vy) > 3.0001f) {
+        TestFail("gravity must stop at max_fall 1.5 and the speed stay under max_speed 3");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
+/* on_hit: the hit's context (HIT_* values), the on_hit hooks, the counter window (frames 3-10:
+ * negated, -> CounterHit), outside the window the hit stands, a flag-only window, the spawn hook
+ * from a script CALL, and no profile = nothing. */
+static int test_geno_v5_on_hit(void)
+{
+    TestGenoState* st;
+    int rc = 0;
+    t_rows[ftCo_MS_Fall].anim_id = 29;
+    if (Geno_TestInstall(t_v5_json) != 1 || (st = t_setup()) == NULL) {
+        TestFail("could not install the v5 profile");
+        Geno_TestRestore();
+        return 1;
+    }
+    GenoGame_TestCapture(1, 0);
+    t_fp.ground_or_air = GA_Ground;
+    t_fp.motion_id = ftCo_MS_Wait;
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_LW) != 1 || t_fp.motion_id != T_MS(0)) {
+        TestFail("specials.lw -> Counter");
+        rc = 1;
+    }
+    /* frame 2: before the window - the hit stands, on_hit runs */
+    st->action_time = 2;
+    t_fp.dmg.kb_applied = 40.0f;
+    t_fp.dmg.x1838_percentTemp = 12.0f;
+    t_fp.dmg.x18c4_source_ply = 1;
+    if (Geno_OnHit(&t_gobj) != 0 || t_fp.dmg.kb_applied != 40.0f || t_fp.dmg.x1838_percentTemp != 12.0f ||
+        t_fp.motion_id != T_MS(0) || st->hit_count != 1 || st->la_i[7] != 1 || st->hit_counter != 0 ||
+        st->hit_port != 1 || st->hit_damage != 12.0f)
+    {
+        TestFail("a hit before the window: taken, on_hit hook ran, HIT_* set, still in Counter");
+        rc = 1;
+    }
+    /* frame 5: in the window - negated, -> CounterHit, hook ran again */
+    st->action_time = 5;
+    t_fp.dmg.kb_applied = 40.0f;
+    t_fp.dmg.x1838_percentTemp = 9.0f;
+    if (Geno_OnHit(&t_gobj) != 1 || t_fp.dmg.kb_applied != 0.0f || t_fp.dmg.x1838_percentTemp != 0.0f ||
+        t_fp.motion_id != T_MS(1) || st->hit_count != 2 || st->la_i[7] != 2 || st->hit_counter != 1 ||
+        st->counters != 1 || st->hit_damage != 9.0f)
+    {
+        TestFail("a hit in the window: countered (no damage, no knockback), -> CounterHit, HIT_COUNTER 1");
+        rc = 1;
+    }
+    /* CounterHit has no window: the next hit stands */
+    st->action_time = 5;
+    t_fp.dmg.kb_applied = 40.0f;
+    t_fp.dmg.x1838_percentTemp = 9.0f;
+    if (Geno_OnHit(&t_gobj) != 0 || t_fp.dmg.x1838_percentTemp != 9.0f || st->hit_counter != 0) {
+        TestFail("a hit in a state without a window stands");
+        rc = 1;
+    }
+    /* no hit this frame: nothing */
+    t_fp.dmg.kb_applied = 0.0f;
+    t_fp.dmg.x1838_percentTemp = 0.0f;
+    if (Geno_OnHit(&t_gobj) != 0 || st->hit_count != 3) {
+        TestFail("no hit, no on_hit");
+        rc = 1;
+    }
+    /* a flag-only window (negate false, no target): flagged, the hit stands, the state stays */
+    t_fp.motion_id = T_MS(2);
+    st->action_time = 1;
+    t_fp.dmg.kb_applied = 30.0f;
+    t_fp.dmg.x1838_percentTemp = 5.0f;
+    if (Geno_OnHit(&t_gobj) != 1 || t_fp.dmg.x1838_percentTemp != 5.0f || t_fp.motion_id != T_MS(2) ||
+        st->hit_counter != 1)
+    {
+        TestFail("\"negate\": false: the hit is flagged (HIT_COUNTER 1) and still taken");
+        rc = 1;
+    }
+    /* the HIT_* values through GET */
+    t_script[0] = GENO_W0_VAR(GENO_SUB_GET, 2, LA(3), 0, 0);
+    t_script[1] = GENO_VAL_HIT_COUNT;
+    t_script[2] = GENO_W0_VAR(GENO_SUB_GET, 2, LA(4), 0, 0);
+    t_script[3] = GENO_VAL_HIT_COUNTER;
+    /* the spawn hook from a script: CALL geno.article.spawn 0 (counted: the test has no item heap) */
+    t_script[4] = GENO_W0(GENO_SUB_CALL, 3, 0);
+    t_script[5] = GENO_HOOK_ARTICLE_SPAWN;
+    t_script[6] = 0;
+    t_script[7] = 0;
+    t_run(t_script, GENO_MODE_EXEC);
+    if (st->la_i[3] != 4 || st->la_i[4] != 1 || st->art_spawned != 1) {
+        TestFail("GET HIT_COUNT / HIT_COUNTER, and CALL geno.article.spawn from a script");
+        rc = 1;
+    }
+    GenoGame_TestCapture(0, 0);
+    Geno_TestRestore();
+    t_setup(); /* no profile */
+    t_fp.dmg.kb_applied = 40.0f;
+    t_fp.dmg.x1838_percentTemp = 12.0f;
+    if (Geno_OnHit(&t_gobj) != 0 || t_fp.dmg.x1838_percentTemp != 12.0f ||
+        ((TestGenoState*) GenoGame_StateOf(&t_fp))->hit_count != 0)
+    {
+        TestFail("a fighter with no profile: on_hit is inert");
+        rc = 1;
+    }
+    t_fp.dmg.kb_applied = 0.0f;
+    t_fp.dmg.x1838_percentTemp = 0.0f;
+    return rc;
+}
+
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
@@ -2414,4 +2678,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_lab_scene", test_geno_lab_scene);
     TestRegister("geno_lab_select_flow", test_geno_lab_select_flow);
     TestRegister("geno_lab_mismatch_fields", test_geno_lab_mismatch_fields);
+    TestRegister("geno_v5_registry", test_geno_v5_registry);
+    TestRegister("geno_v5_article_motion", test_geno_v5_article_motion);
+    TestRegister("geno_v5_on_hit", test_geno_v5_on_hit);
 }

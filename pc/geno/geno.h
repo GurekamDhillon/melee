@@ -13,7 +13,8 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 3    /* newest geno.json "geno" field this build reads (v2/v3 keys are additive) */
+#define GENO_VERSION 4    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
+                             4 = v5: articles, on_hit, counter windows - docs/geno.md section 19) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
 #define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
 
@@ -112,7 +113,13 @@ enum {
     GENO_VAL_TRANSN_UP = 0x33,    /* f: this frame's root motion (TransN), up */
     GENO_VAL_MOTION_GRAVITY = 0x34, /* f W: this action's root-motion gravity multiplier (PSA
                                      Disable / Enable Horizontal Gravity); -1 = the state's */
-    GENO_VAL_COUNT = 0x35,
+    /* v5 (docs/geno.md section 19): the last hit taken (on_hit), articles */
+    GENO_VAL_HIT_DAMAGE = 0x35,   /* f: damage of the last hit taken (before a counter negated it) */
+    GENO_VAL_HIT_PORT = 0x36,     /* i: the attacker's port (0-5) of the last hit, -1 unknown */
+    GENO_VAL_HIT_COUNTER = 0x37,  /* i: 1 when the last hit landed in a counter window */
+    GENO_VAL_HIT_COUNT = 0x38,    /* i: hits taken since the spawn */
+    GENO_VAL_ARTICLES = 0x39,     /* i: this fighter's Geno articles alive now */
+    GENO_VAL_COUNT = 0x3A,
     GENO_VAL_SPECIAL_F = 0x1000,  /* + word index: fp->dat_attrs word as float */
     GENO_VAL_SPECIAL_I = 0x2000,  /* + word index: fp->dat_attrs word as int */
 };
@@ -201,7 +208,8 @@ enum {
     GENO_HOOK_JUMPS_REFILL = 2,  /* "geno.jumps.refill": give back arg air jumps (0 = all) */
     GENO_HOOK_JUMPS_TO_VAR = 3,  /* "geno.jumps.to_var": LA int var[arg] = air jumps left */
     GENO_HOOK_COUNT_FRAMES = 4,  /* "geno.count_frames": LA int var[arg] += 1 */
-    GENO_HOOK_BUILTIN_COUNT = 5,
+    GENO_HOOK_ARTICLE_SPAWN = 5, /* v5 "geno.article.spawn": spawn the profile's article arg */
+    GENO_HOOK_BUILTIN_COUNT = 6,
     GENO_HOOK_MAX = 64
 };
 
@@ -211,7 +219,9 @@ enum {
     GENO_EV_FRAME = 1,  /* every frame, after the m-ex onFrame dispatch */
     GENO_EV_ACTION = 2, /* action state change, after the RA banks are cleared */
     GENO_EV_LAND = 3,   /* v1: the moment of landing (inside the collision callback) */
-    GENO_EV_COUNT = 4
+    GENO_EV_HIT = 4,    /* v5: the fighter was hit (Fighter_ProcessHit, before the damage reaction);
+                           the hit's damage / attacker / counter flag are the HIT_* values */
+    GENO_EV_COUNT = 5
 };
 #define GENO_EV_MAX_HOOKS 8
 
@@ -316,6 +326,83 @@ enum {
 #define GENO_MOTION_ENTRY_FACING 16u /* "facing": "entry": the root motion keeps the facing the state
                                        was entered with (a mid-clip Reverse Direction turns the model
                                        and the hitboxes, not the travel) */
+
+/* ---- v5: articles (docs/geno.md section 19) ------------------------------------------------------
+ * A profile's "articles" list declares projectiles. Article a of profile p is Melee item kind
+ * GENO_ART_KIND_BASE + p * GENO_MAX_ARTICLES + a: past m-ex's custom kinds (237 + the disc's
+ * count) and below m-ex's "fighter article" spawn range (5000), so no vanilla or m-ex table is ever
+ * indexed with it; Item_80267978 asks Geno for its descriptor and logic table. The article is then
+ * an ordinary Melee item: the engine moves, draws, collides and destroys it; its hitboxes are item
+ * hitboxes (they hit, clank, are reflected / absorbed / countered like Fox's laser). */
+#define GENO_ART_KIND_BASE 0x1000
+#define GENO_MAX_ARTICLES 8
+#define GENO_ART_KIND_END (GENO_ART_KIND_BASE + GENO_MAX_PROFILES * GENO_MAX_ARTICLES)
+#define GENO_ART_HITBOXES 4 /* Melee items have 4 hitboxes */
+
+/* Article parameters (Geno_ArticleParam; float bits unless noted). Stable ids. */
+enum {
+    GENO_AP_LIFETIME = 0,    /* frames alive (the article despawns after it); 0 = 60 */
+    GENO_AP_VEL_FWD = 1,     /* initial velocity along the facing */
+    GENO_AP_VEL_UP = 2,      /* initial velocity up */
+    GENO_AP_GRAVITY = 3,     /* vy -= gravity every frame */
+    GENO_AP_MAX_FALL = 4,    /* vy >= -max_fall (0 = no cap) */
+    GENO_AP_ACCEL = 5,       /* speed += accel every frame, along the travel direction */
+    GENO_AP_MAX_SPEED = 6,   /* |v| cap (0 = none) */
+    GENO_AP_HOMING_TURN = 7, /* degrees a frame the travel turns toward the nearest opponent */
+    GENO_AP_HOMING_RANGE = 8,/* only opponents nearer than this (0 = any distance) */
+    GENO_AP_HOMING_DELAY = 9,/* frames before the homing starts */
+    GENO_AP_SPAWN_FWD = 10,  /* spawn offset from the fighter's position, along the facing */
+    GENO_AP_SPAWN_UP = 11,   /* spawn offset, up */
+    GENO_AP_SCALE = 12,      /* model scale (0 = 1) */
+    GENO_AP_DESPAWN = 13,    /* int: GENO_ART_DESPAWN_* mask (default hit | shield | stage) */
+    GENO_AP_SPIN = 14,       /* model spin, degrees a frame about the travel axis (visual only) */
+    GENO_AP_MAX_LIVE = 15,   /* int: at most this many of this article per fighter (0 = 4) */
+    GENO_AP_COUNT = 16
+};
+#define GENO_ART_DESPAWN_HIT 1u    /* its hitbox hit a fighter / item */
+#define GENO_ART_DESPAWN_SHIELD 2u /* it hit a shield */
+#define GENO_ART_DESPAWN_STAGE 4u  /* it touched the stage (a wall, floor or ceiling on its path) */
+#define GENO_ART_DESPAWN_CLANK 8u  /* it clanked with another hitbox */
+#define GENO_ART_DESPAWN_DEFAULT 15u
+
+/* Article hitbox parameters (Geno_ArticleHitParam; ints unless noted). Stable ids. */
+enum {
+    GENO_AH_DAMAGE = 0,        /* float */
+    GENO_AH_SIZE = 1,          /* float (radius) */
+    GENO_AH_OFF_X = 2,         /* float: offset from the article's root joint */
+    GENO_AH_OFF_Y = 3,         /* float */
+    GENO_AH_OFF_Z = 4,         /* float */
+    GENO_AH_ANGLE = 5,         /* Melee angle (361 = Sakurai) */
+    GENO_AH_KBG = 6,           /* knockback growth */
+    GENO_AH_WKB = 7,           /* weight-set knockback */
+    GENO_AH_BKB = 8,           /* base knockback */
+    GENO_AH_ELEMENT = 9,       /* HitElement: 0 normal, 1 fire, 2 electric, 3 slash, 4 coin, 5 ice ... */
+    GENO_AH_SHIELD_DAMAGE = 10,
+    GENO_AH_SFX_SEVERITY = 11,
+    GENO_AH_SFX_KIND = 12,
+    GENO_AH_START = 13,        /* first active frame of the article's life (1-based) */
+    GENO_AH_END = 14,          /* last active frame (0 = the whole lifetime) */
+    GENO_AH_FLAGS = 15,        /* GENO_AHF_* (default: all but none) */
+    GENO_AH_COUNT = 16
+};
+#define GENO_AHF_GROUND 1u      /* hits grounded fighters */
+#define GENO_AHF_AIR 2u         /* hits airborne fighters */
+#define GENO_AHF_REFLECT 4u     /* can be reflected */
+#define GENO_AHF_ABSORB 8u      /* can be absorbed */
+#define GENO_AHF_COUNTER 16u    /* can be countered (Marth's / Geno's counter windows, shields) */
+#define GENO_AHF_DEFAULT 31u
+
+/* ---- v5: counter windows (a Geno state's "counter" key) -------------------------------------------
+ * A hit taken while the fighter is in a Geno state with a counter window whose action frames
+ * include the current one is COUNTERED: the damage and the knockback are dropped (the hitlag
+ * stays), the fighter goes to the window's target, and on_hit hooks see HIT_COUNTER = 1. */
+enum {
+    GENO_CTR_FROM = 0,   /* first action frame of the window (1-based, like ACTION_FRAME) */
+    GENO_CTR_TO = 1,     /* last action frame */
+    GENO_CTR_TARGET = 2, /* where a countered hit goes (a target word), ~0 = stay */
+    GENO_CTR_NEGATE = 3, /* 1 = drop the damage and knockback (default); 0 = take the hit, only
+                            flag it / change state */
+};
 
 /* v2: specials bound to Geno states ("specials": {"n": "geno:5", "air_s": "geno:7", ...}) */
 enum {

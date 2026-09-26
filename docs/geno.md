@@ -1887,7 +1887,9 @@ merged into MK's model (section 17.4), it never was an item.
 **Models.** `"model": {"file", "symbol"}` names an HSD archive (a costume-style `.dat` in the mod's
 `files/`, or any disc file) and its joint symbol (default: the first public `*_joint`). The registry
 loads it **once** into Geno's withheld guest region (`shim_os.c` `GW_GENO_PERSIST_SIZE`, 1 MB taken
-off the main heap below m-ex's region) and relocates it there, so it outlives every scene heap (a
+off the main heap below m-ex's region - reserved only when a mounted mod's geno.json defines
+`"articles"`, decided once at boot by `gw_Geno_ModelRegionWanted` and logged `geno: article model
+region RESERVED` / `not reserved`; a mod enabled later by a hot reload gets no models until a restart) and relocates it there, so it outlives every scene heap (a
 model loaded into a match's heap is freed with it). Read-only after the load. No model = an
 invisible article (hitboxes only).
 
@@ -1974,7 +1976,7 @@ script (read HIT_DAMAGE, put it in a hitbox's damage - not a v5 opcode).
 | `item.c` `Item_80267978` | kinds `0x1000..0x10FF` -> `Geno_ArticleDesc` / `Geno_ArticleLogic` | the vanilla / m-ex ranges, before the m-ex custom branch |
 | `item.c` `Item_802674AC` | those kinds: hold kind 8 | unchanged |
 | `fighter.c` `Fighter_ProcessHit_8006D1EC` | `Geno_OnHit` first | returns at once (no profile) |
-| `shim_os.c` | 1 MB withheld under m-ex's region | the main heap is 1 MB smaller for everyone |
+| `shim_os.c` | 1 MB withheld under m-ex's region, only if a mounted mod defines articles | full main heap otherwise |
 
 Rollback: descriptors, attributes and model descs are game globals written only with registry values
 (idempotent); the model data is read-only; all per-frame state is the item itself (game heap,

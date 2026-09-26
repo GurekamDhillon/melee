@@ -65,8 +65,19 @@ static void gw_set_cur_heap(int heap) { gw_w32(gw___OSCurrHeap, (uint32_t)heap);
  * article models a geno.json names ("articles"[].model), loaded once per registry and read-only
  * after that, so they live for the process like the registry itself - a scene heap would free them
  * at the end of the match and the next match would draw from reused memory. Also taken off the main
- * heap (docs/geno.md section 19). */
+ * heap (docs/geno.md section 19) - but ONLY when a mounted mod's geno.json defines articles
+ * (gw_Geno_ModelRegionWanted, decided once, before the arena is carved, and logged); normal play
+ * keeps its full main heap. */
 #define GW_GENO_PERSIST_SIZE 0x100000u
+
+static uint32_t gw_geno_region_size(void) {
+  static int decided = -1;
+  if (decided < 0) {
+    extern int gw_Geno_ModelRegionWanted(void);
+    decided = gw_Geno_ModelRegionWanted() ? 1 : 0;
+  }
+  return decided ? GW_GENO_PERSIST_SIZE : 0u;
+}
 
 static uintptr_t gw_arena_lo;
 static uintptr_t gw_arena_hi;
@@ -74,7 +85,7 @@ static uintptr_t gw_arena_hi;
 static void gw_arena_ensure(void) {
   if (gw_arena_lo == 0) {
     gw_arena_lo = (uintptr_t)gw_mem1 + GW_ARENA_LO_OFFSET;
-    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - GW_GENO_PERSIST_SIZE;
+    gw_arena_hi = (uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size();
   }
 }
 
@@ -91,8 +102,8 @@ void gw_mex_persist_region(uint32_t *base, uint32_t *size) {
 
 /* Geno's withheld region: [base, base + size), just below m-ex's. Never touched by the game. */
 void gw_geno_persist_region(uint32_t *base, uint32_t *size) {
-  *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - GW_GENO_PERSIST_SIZE);
-  *size = GW_GENO_PERSIST_SIZE;
+  *base = (uint32_t)((uintptr_t)gw_mem1 + gw_mem1_size - GW_MEX_PERSIST_SIZE - gw_geno_region_size());
+  *size = gw_geno_region_size(); /* 0 when no mod defines articles: nothing reserved */
 }
 
 /* ---- guest scratch for pointer arguments handed to GUEST callbacks -------------------------

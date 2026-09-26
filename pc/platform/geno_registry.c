@@ -1154,6 +1154,31 @@ static gn_registry *gn_reg(void) {
     return &gn_boot;
 }
 
+/* shim_os.c asks once, before it carves the arena: does any mounted mod's geno.json define
+ * "articles"? Only then are GW_GENO_PERSIST_SIZE bytes withheld for article models (GD, 2026-09-26:
+ * normal play keeps its full main heap). A plain text scan: the registry itself is parsed later. */
+int gw_Geno_ModelRegionWanted(void) {
+    int n = gw_Mods_ActiveCount(), k, want = 0;
+    const char *dir = gw_Mods_Dir(), *who = "";
+    for (k = 0; k < n && dir != NULL && dir[0] && !want; ++k) {
+        char path[MAX_PATH];
+        char *text;
+        snprintf(path, sizeof path, "%s\\%s\\geno.json", dir, gw_Mods_Id(gw_Mods_ActiveAt(k)));
+        text = gn_read_file(path);
+        if (text == NULL) continue;
+        if (strstr(text, "\"articles\"") != NULL) {
+            want = 1;
+            who = gw_Mods_Id(gw_Mods_ActiveAt(k));
+        }
+        free(text);
+    }
+    if (want)
+        gw_log("geno: article model region RESERVED (1 MB off the main heap): mod %s defines articles", who);
+    else
+        gw_log("geno: article model region not reserved: no mounted mod defines articles");
+    return want;
+}
+
 static const gn_profile *gn_at(int p) {
     gn_registry *r = gn_reg();
     return p >= 0 && p < r->n ? &r->p[p] : NULL;
@@ -1301,6 +1326,7 @@ static uint32_t gn_persist_alloc(uint32_t size) {
     extern void gw_geno_persist_region(uint32_t * base, uint32_t * size);
     uint32_t a;
     if (gn_persist_cap == 0u) gw_geno_persist_region(&gn_persist_base, &gn_persist_cap);
+    if (gn_persist_cap == 0u) return 0u; /* not reserved at boot (no mod had articles then) */
     size = (size + 31u) & ~31u;
     if (size > gn_persist_cap - gn_persist_used) return 0u;
     a = gn_persist_base + gn_persist_used;

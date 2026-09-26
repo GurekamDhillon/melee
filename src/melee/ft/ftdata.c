@@ -1572,11 +1572,16 @@ static bool ftData_MexMotionRowOk(const Fighter_WaitAnimData* row, const u8* lo,
  * "self" would be the victim, not this fighter. */
 static u32 ftData_MexAnimFlags(u32 flags, int kind)
 {
-    if (kind < 64) {
-        return (flags & ~0x3Fu) | (u32) kind;
-    }
+    /* 0x21 (the generic thrown skeleton) stays for EVERY kind, not only >= 64: those rows play on
+     * the victim. Stamping them with a kind below 64 made the victim play a thrown clip as if
+     * authored for the thrower's skeleton; with a fighter on its own skeleton (Ultimate Kirby, 55
+     * joints) the victim of a throw crashed in lbAnim_8001E7E8 (ftCo_CatchWait_IASA -> throw ->
+     * Fighter_ChangeMotionState), found by the joint probe's CPU-vs-CPU run. */
     if ((flags & 0x3Fu) == 0x21u) {
         return flags;
+    }
+    if (kind < 64) {
+        return (flags & ~0x3Fu) | (u32) kind;
     }
     return (flags & ~0x3Fu) | (u32) FT_ANIM_KIND_SELF;
 }

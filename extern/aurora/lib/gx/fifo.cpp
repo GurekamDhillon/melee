@@ -17,6 +17,7 @@
 
 namespace aurora::gx::fifo {
 namespace detail {
+thread_local bool tInCallback = false;
 uint8_t* sBufferData = nullptr;
 uint32_t sBufferSize = 0;
 uint32_t sBufferCapacity = 0;
@@ -272,6 +273,9 @@ uint32_t end_display_list() {
 bool in_display_list() { return detail::sInDisplayList; }
 
 void drain() {
+  if (detail::tInCallback) {
+    return;
+  }
   if (detail::sBufferSize == 0) {
     return;
   }

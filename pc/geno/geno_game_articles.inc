@@ -28,6 +28,10 @@
 #include <sysdolphin/baselib/generator.h>
 #include <sysdolphin/baselib/particle.h>
 #include <sysdolphin/baselib/psstructs.h>
+#include <sysdolphin/baselib/cobj.h>
+#include <sysdolphin/baselib/gobj.h>
+#include <sysdolphin/baselib/gobjgxlink.h>
+#include <melee/ef/forward.h>
 
 extern HSD_Particle* hsd_804D0908[16]; /* particle.c: the live particles, one list per link */
 #include <melee/it/it_26B1.h>
@@ -156,7 +160,7 @@ static ItemStateTable geno_art_states[1] = {
  * efLib_DestroyAll only removes effect MODELS). hsd_8039D5DC is what grlib uses for a stage part:
  * the emitted particles live on, the generators stop. */
 /* Geno effects (gw_fx.c, native): ints across; the JObj is a guest address, its world matrix at +0x44. */
-extern int Fx_Attach(int pkg, int owner, int mtx_off, int frame);
+extern int Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing);
 extern void Fx_Detach(int owner);
 extern void Fx_Frame(int frame);
 static int geno_fx_frame; /* the last frame Geno_FxFramePost saw (seeds attaches) */
@@ -169,10 +173,39 @@ static void geno_art_destroyed(Item_GObj* gobj)
 
 /* Once per scene frame, after the scripts (gmscene.c): the scene's frame counter is game memory, so a
  * rollback or LAB rewind brings it back and gw_fx re-simulates from there. */
+extern void Fx_Draw(int view_mtx);
+extern int Fx_Stat(int what);
+static HSD_GObj* geno_fx_gobj; /* game memory: a rollback restores it with the GObj heap */
+
+/* The effects draw inside the camera that draws gx link 8 (Melee's own particles'), after them (priority 255),
+ * in the translucent pass (render code 2 = HSD_GObj_804085F0's XLU): depth-tested against the world, under the
+ * HUD's camera. The native side draws once per frame, with this camera's viewing matrix. */
+static void geno_fx_render(HSD_GObj* gobj, int code)
+{
+    HSD_CObj* cobj;
+    if (code != 2) {
+        return;
+    }
+    cobj = HSD_CObjGetCurrent();
+    if (cobj != NULL) {
+        Fx_Draw((int) HSD_CObjGetViewingMtxPtrDirect(cobj));
+    }
+}
+
 void Geno_FxFramePost(int frame)
 {
+    if (frame <= 1) {
+        geno_fx_gobj = NULL; /* a new scene: the last scene's GObjs are gone */
+    }
     geno_fx_frame = frame;
     Fx_Frame(frame);
+    /* only once something is live: a match without Geno effects never has this GObj */
+    if (geno_fx_gobj == NULL && Fx_Stat(0) > 0) {
+        geno_fx_gobj = GObj_Create(HSD_GOBJ_CLASS_EFFECT, 0xC, 0);
+        if (geno_fx_gobj != NULL) {
+            GObj_SetupGXLink(geno_fx_gobj, geno_fx_render, 8, 255);
+        }
+    }
 }
 
 static ItemLogicTable geno_art_logic = {
@@ -726,7 +759,8 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     db_80225DD8(ig, owner);
     geno_art_effects(ig, ip, p, a, 0, facing); /* the frame-0 effects; later ones from the anim callback */
     if (Geno_ArticleParam(p, a, GENO_AP_FX) > 0) {
-        Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44, geno_fx_frame);
+        Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44, geno_fx_frame,
+                  facing < 0.0f ? -1 : 1);
     }
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);

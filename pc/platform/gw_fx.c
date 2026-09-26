@@ -19,6 +19,7 @@
 #include "gw.h"
 #include "gw_mods.h"
 #include "gw_test.h"
+#include "gw_fx_internal.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -28,13 +29,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define FX_MAX_PKGS 32
-#define FX_MAX_EMITTERS 32      /* per package */
-#define FX_MAX_INST 64
-#define FX_MAX_PARTICLES 2000
-#define FX_RING 16              /* frames of state kept for a rollback */
-#define FX_KEYS 8
 
 /* ---- a small JSON DOM (dynamic; the packages are 50-100 KB) ---------------------------------------- */
 enum { FJ_NULL, FJ_BOOL, FJ_NUM, FJ_STR, FJ_ARR, FJ_OBJ };
@@ -150,40 +144,6 @@ static void fj_vec(const fjdoc *d, int arr, float *out, int n) {
 }
 static const char *fj_s(const fjdoc *d, int o) { return o >= 0 && d->n[o].type == FJ_STR ? d->n[o].str : ""; }
 
-/* ---- definitions -------------------------------------------------------------------------------------- */
-enum { FX_SHAPE_POINT, FX_SHAPE_SPHERE, FX_SHAPE_SPHERE_FILL, FX_SHAPE_CIRCLE, FX_SHAPE_CIRCLE_FILL, FX_SHAPE_OTHER };
-
-typedef struct { int n; float k[FX_KEYS][4]; float value[3]; int keyed; } fx_curve;
-
-typedef struct {
-    char name[48];
-    int mesh, follow;           /* follow: 0 srt, 1 none, 2 translate */
-    float trans[3], rot[3];
-    int start, duration, one_time, interval;
-    float rate, rate_random;
-    int by_dist, dist_max_particles;
-    float dist_unit, dist_min, dist_max;
-    int shape;
-    float radius[3], caliber;
-    int life, infinite;
-    float life_random;          /* 0..1 */
-    float vel_all, vel_dir[3], vel_dir_scale, vel_random, inherit;
-    float grav_dir[3], grav, air;
-    int grav_world;
-    float scale[2], scale_random;
-    fx_curve scale_keys, color0, alpha0, color1, alpha1;
-    float color_scale;
-    float rot_init[3], rot_init_random[3], rot_add[3], rot_add_random[3];
-} fx_emitter;
-
-typedef struct {
-    char name[64];
-    char path[MAX_PATH];
-    int nem;
-    fx_emitter em[FX_MAX_EMITTERS];
-    int ntex, nmesh;
-} fx_pkg;
-
 static fx_pkg *fx_pkgs[FX_MAX_PKGS];
 static int fx_npkg;
 
@@ -197,6 +157,84 @@ static void fx_curve_read(const fjdoc *d, int o, fx_curve *c, int is_color) {
         if (k < 0) break;
         fj_vec(d, k, c->k[i], 4);
         c->n++;
+    }
+}
+
+static int fx_tex_index(const fjdoc *d, int root, const char *name) {
+    int i, t;
+    for (i = 0; (t = fj_at(d, fj_get(d, root, "textures"), i)) >= 0 && i < FX_MAX_TEX; ++i)
+        if (strcmp(fj_s(d, fj_get(d, t, "name")), name) == 0) return i;
+    return -1;
+}
+static int fx_mask(const fjdoc *d, int arr) {
+    int i, c, m = 0;
+    for (i = 0; (c = fj_at(d, arr, i)) >= 0; ++i) m |= 1 << ((int) fj_num(d, c, 0) & 7);
+    return m;
+}
+static int fx_enum(const char *s, const char *const *names, int n, int def) {
+    int i;
+    for (i = 0; i < n; ++i) if (strcmp(s, names[i]) == 0) return i;
+    return def;
+}
+/* material.shader / .bloom / blend / alpha_test, the samplers and the param curve (what the renderer reads) */
+static void fx_material_read(const fjdoc *d, int root, int e, fx_emitter *m) {
+    static const char *const sh[] = {"sprite", "warp", "distortion"}, *const col[] = {"flat", "modulate", "lerp"},
+                              *const bl[] = {"alpha", "add", "sub", "mul", "screen"},
+                              *const pat[] = {"none", "fit_life", "clamp", "loop", "random"},
+                              *const wr[] = {"Mirror", "Repeat", "Clamp"};
+    int ma = fj_get(d, e, "material"), s = fj_path(d, e, "material", "shader"), b = fj_get(d, ma, "bloom");
+    int at = fj_get(d, ma, "alpha_test"), smps = fj_get(d, e, "samplers"), i, x, pa = fj_get(d, e, "particle");
+    m->shader = s >= 0 ? fx_enum(fj_s(d, fj_get(d, s, "type")), sh, 3, FX_SH_SPRITE) : FX_SH_SPRITE;
+    m->color_mode = s >= 0 ? fx_enum(fj_s(d, fj_get(d, s, "color")), col, 3, FX_COL_MODULATE) : FX_COL_MODULATE;
+    m->offset = s >= 0 ? (int) fj_num(d, fj_get(d, s, "offset"), -1) : -1;
+    m->offset_mask = fx_mask(d, fj_get(d, s, "offset_targets"));
+    m->color_mask = s >= 0 && fj_get(d, s, "color_textures") >= 0 ? fx_mask(d, fj_get(d, s, "color_textures")) : 1;
+    m->alpha_mask = s >= 0 && fj_get(d, s, "alpha_textures") >= 0 ? fx_mask(d, fj_get(d, s, "alpha_textures")) : 1;
+    m->strength[0] = m->strength[1] = 0.0f;
+    fj_vec(d, fj_get(d, s, "strength"), m->strength, 2);
+    m->blend = fx_enum(fj_s(d, fj_get(d, ma, "blend")), bl, 5, FX_BLEND_ALPHA);
+    m->depth_test = (int) fj_num(d, fj_get(d, ma, "depth_test"), 1);
+    m->alpha_test = at >= 0 && d->n[at].type == FJ_OBJ;
+    m->alpha_threshold = (float) fj_num(d, fj_get(d, at, "threshold"), 0);
+    m->bloom_threshold = (float) fj_num(d, fj_get(d, b, "threshold"), 1);
+    m->bloom_intensity = (float) fj_num(d, fj_get(d, b, "intensity"), 0);
+    {
+        fx_curve *k = &m->param;
+        int ks = fj_get(d, pa, "param_keys"), j;
+        memset(k, 0, sizeof *k);
+        for (j = 0; j < FX_KEYS && fj_at(d, ks, j) >= 0; ++j) fj_vec(d, fj_at(d, ks, j), k->k[k->n++], 4);
+        k->keyed = k->n > 0;
+        k->value[0] = k->value[1] = k->value[2] = 1.0f;
+    }
+    for (i = 0; i < FX_SAMPLERS; ++i) m->smp[i].tex = -1;
+    for (i = 0; (x = fj_at(d, smps, i)) >= 0; ++i) {
+        int slot = (int) fj_num(d, fj_get(d, x, "slot"), i), pt = fj_get(d, x, "pattern"), uv = fj_get(d, x, "uv");
+        int en = fj_get(d, uv, "enable"), j, tb = fj_get(d, pt, "table");
+        fx_sampler *sp;
+        float div[2] = {1, 1};
+        if (slot < 0 || slot >= FX_SAMPLERS) continue;
+        sp = &m->smp[slot];
+        sp->tex = fx_tex_index(d, root, fj_s(d, fj_get(d, x, "texture")));
+        sp->wrap[0] = fx_enum(fj_s(d, fj_at(d, fj_get(d, x, "wrap"), 0)), wr, 3, FX_WRAP_REPEAT);
+        sp->wrap[1] = fx_enum(fj_s(d, fj_at(d, fj_get(d, x, "wrap"), 1)), wr, 3, FX_WRAP_REPEAT);
+        sp->pattern = fx_enum(fj_s(d, fj_get(d, pt, "mode")), pat, 5, FX_PAT_NONE);
+        sp->pattern_count = (int) fj_num(d, fj_get(d, pt, "count"), 0);
+        sp->pattern_freq = (float) fj_num(d, fj_get(d, pt, "frequency"), 1);
+        for (j = 0; j < FX_PATTERN_TABLE && fj_at(d, tb, j) >= 0; ++j) sp->table[j] = (int) fj_num(d, fj_at(d, tb, j), 0);
+        sp->table_n = j;
+        sp->scale[0] = sp->scale[1] = 1.0f;
+        fj_vec(d, fj_get(d, uv, "scroll"), sp->scroll, 2);
+        fj_vec(d, fj_get(d, uv, "scroll_add"), sp->scroll_add, 2);
+        fj_vec(d, fj_get(d, uv, "scale"), sp->scale, 2);
+        fj_vec(d, fj_get(d, uv, "scale_add"), sp->scale_add, 2);
+        fj_vec(d, fj_get(d, uv, "divide"), div, 2);
+        sp->div[0] = div[0] >= 1 ? (int) div[0] : 1;
+        sp->div[1] = div[1] >= 1 ? (int) div[1] : 1;
+        sp->rotate = (float) fj_num(d, fj_get(d, uv, "rotate"), 0);
+        sp->rotate_add = (float) fj_num(d, fj_get(d, uv, "rotate_add"), 0);
+        sp->en_scroll = (int) fj_num(d, fj_get(d, en, "scroll"), 1);
+        sp->en_scale = (int) fj_num(d, fj_get(d, en, "scale"), 1);
+        sp->en_rotate = (int) fj_num(d, fj_get(d, en, "rotate"), 1);
     }
 }
 
@@ -224,9 +262,25 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
     p = (fx_pkg *) calloc(1, sizeof *p);
     snprintf(p->name, sizeof p->name, "%s", fj_s(&d, fj_get(&d, root, "name")));
     snprintf(p->path, sizeof p->path, "%s", path);
+    snprintf(p->dir, sizeof p->dir, "%s", path);
+    {
+        char *sl = strrchr(p->dir, '\\'), *sl2 = strrchr(p->dir, '/');
+        if (sl2 > sl) sl = sl2;
+        if (sl) *sl = 0;
+    }
     p->ntex = 0;
-    for (i = 0; fj_at(&d, fj_get(&d, root, "textures"), i) >= 0; ++i) p->ntex++;
+    for (i = 0; (e = fj_at(&d, fj_get(&d, root, "textures"), i)) >= 0 && p->ntex < FX_MAX_TEX; ++i) {
+        const char *sw = fj_s(&d, fj_get(&d, e, "swizzle"));
+        snprintf(p->tex_file[p->ntex], sizeof p->tex_file[0], "%s", fj_s(&d, fj_get(&d, e, "file")));
+        snprintf(p->tex_swizzle[p->ntex], sizeof p->tex_swizzle[0], "%s", strlen(sw) == 4 ? sw : "rgba");
+        p->ntex++;
+    }
     for (i = 0; fj_at(&d, fj_get(&d, root, "meshes"), i) >= 0; ++i) p->nmesh++;
+    /* "space": the effect's forward / up axes; absent = the owner's own (+X forward, +Y up) */
+    p->forward[0] = 1.0f; p->forward[1] = p->forward[2] = 0.0f;
+    p->up[1] = 1.0f; p->up[0] = p->up[2] = 0.0f;
+    fj_vec(&d, fj_path(&d, root, "space", "forward"), p->forward, 3);
+    fj_vec(&d, fj_path(&d, root, "space", "up"), p->up, 3);
     ems = fj_get(&d, root, "emitters");
     for (i = 0; (e = fj_at(&d, ems, i)) >= 0 && p->nem < FX_MAX_EMITTERS; ++i) {
         fx_emitter *m = &p->em[p->nem++];
@@ -288,7 +342,7 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         fj_vec(&d, fj_get(&d, ro, "init_random"), m->rot_init_random, 3);
         fj_vec(&d, fj_get(&d, ro, "add"), m->rot_add, 3);
         fj_vec(&d, fj_get(&d, ro, "add_random"), m->rot_add_random, 3);
-        (void) fj_path;
+        fx_material_read(&d, root, e, m);
     }
     fj_free(&d);
     return p;
@@ -336,30 +390,7 @@ int gw_Fx_Find(const char *name) {
     return -1;
 }
 
-/* ---- simulation state (one block, so the rollback ring is a plain copy) ------------------------------ */
-typedef struct {
-    int used, pkg, em, detached, attach_frame, age, emitted;
-    uint32_t owner, mtx_off, rng;
-    float accum, dist_accum;
-    float pos[3], prev[3], m[3][4];
-    int have_prev;
-} fx_inst;
-
-typedef struct {
-    int inst;                   /* -1 = free */
-    int age, life;
-    float pos[3], vel[3], scale, rot, rot_add;
-    uint32_t seed;
-} fx_part;
-
-typedef struct {
-    int frame;                  /* the game frame this state is at the end of */
-    fx_inst inst[FX_MAX_INST];
-    fx_part part[FX_MAX_PARTICLES];
-    int nlive;
-    uint32_t spawned, killed, refused;
-} fx_state;
-
+/* ---- simulation state (one block, so the rollback ring is a plain copy; types in gw_fx_internal.h) */
 int gw_Fx_Stat(int what);
 void gw_Fx_Census(int handle, int frame);
 
@@ -385,7 +416,7 @@ static uint32_t fx_rnd(uint32_t *s) {
 }
 static float fx_rndf(uint32_t *s) { return (fx_rnd(s) >> 8) * (1.0f / 16777216.0f); }
 
-static float fx_curve_at(const fx_curve *c, float t, int ch) {
+float gw_fx_curve_at(const fx_curve *c, float t, int ch) {
     int i;
     if (!c->keyed || c->n == 0) return c->value[ch];
     if (t <= c->k[0][3]) return c->k[0][ch];
@@ -398,11 +429,45 @@ static float fx_curve_at(const fx_curve *c, float t, int ch) {
 }
 
 /* the owner's world matrix (3x4, big-endian floats in guest memory) */
+/* The owner's world matrix x the effect's basis: the effect's own forward / up axes (package "space") turned
+ * onto the owner's travel direction (+X x facing: a Melee item's root joint does not turn with the facing) and
+ * +Y. Without it an Ultimate article effect (+Z forward) trails into the screen and does not mirror. */
 static void fx_owner_mtx(fx_inst *in) {
-    int r, c;
+    int r, c, k;
+    float M[3][4];
     if (in->owner == 0 || in->detached) return;
     for (r = 0; r < 3; ++r)
-        for (c = 0; c < 4; ++c) in->m[r][c] = gw_rf32((const void *) (uintptr_t) (in->owner + in->mtx_off + (r * 4 + c) * 4));
+        for (c = 0; c < 4; ++c) M[r][c] = gw_rf32((const void *) (uintptr_t) (in->owner + in->mtx_off + (r * 4 + c) * 4));
+    for (r = 0; r < 3; ++r) {
+        for (c = 0; c < 3; ++c) {
+            float v = 0.0f;
+            for (k = 0; k < 3; ++k) v += M[r][k] * in->basis[k][c];
+            in->m[r][c] = v;
+        }
+        in->m[r][3] = M[r][3];
+    }
+}
+
+static void fx_cross(const float a[3], const float b[3], float o[3]) {
+    o[0] = a[1] * b[2] - a[2] * b[1];
+    o[1] = a[2] * b[0] - a[0] * b[2];
+    o[2] = a[0] * b[1] - a[1] * b[0];
+}
+static void fx_norm(float v[3]) {
+    float l = sqrtf(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    if (l > 1e-6f) { v[0] /= l; v[1] /= l; v[2] /= l; }
+}
+/* basis = [S U F] [s u f]^T: the effect's side / up / forward (s = u x f) onto the owner's S / U / F */
+static void fx_basis(const fx_pkg *p, int facing, float B[3][3]) {
+    float f[3] = {p->forward[0], p->forward[1], p->forward[2]}, u[3] = {p->up[0], p->up[1], p->up[2]}, s[3];
+    float F[3] = {facing < 0 ? -1.0f : 1.0f, 0, 0}, U[3] = {0, 1, 0}, S[3];
+    int r, c;
+    fx_norm(f);
+    fx_norm(u);
+    fx_cross(u, f, s);
+    fx_cross(U, F, S);
+    for (r = 0; r < 3; ++r)
+        for (c = 0; c < 3; ++c) B[r][c] = S[r] * s[c] + U[r] * u[c] + F[r] * f[c];
 }
 static void fx_xform(const float m[3][4], const float v[3], float out[3], int point) {
     int r;
@@ -457,6 +522,12 @@ static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel
     p->pos[0] = world[0]; p->pos[1] = world[1]; p->pos[2] = world[2];
     fx_xform((const float (*)[4]) in->m, v, world, 0);
     for (k = 0; k < 3; ++k) p->vel[k] = world[k] + e->inherit * emvel[k];
+    /* follow (EmitterInfo.FollowType): srt = the particle lives in the emitter's frame and moves with it,
+     * translate = with its position only, none = in the world where it was born */
+    for (k = 0; k < 3; ++k) {
+        p->lpos[k] = e->follow == 0 ? local[k] : p->pos[k] - in->m[k][3];
+        p->lvel[k] = e->follow == 0 ? v[k] : p->vel[k];
+    }
     len = e->life_random > 0 ? 1.0f - e->life_random * fx_rndf(&p->seed) : 1.0f;
     p->life = (int) (e->life * len + 0.5f);
     if (p->life < 1) p->life = 1;
@@ -503,13 +574,38 @@ static void fx_step(void) {
         int c;
         if (p->inst < 0) continue;
         e = &fx_pkgs[fx_cur.inst[p->inst].pkg]->em[fx_cur.inst[p->inst].em];
-        for (c = 0; c < 3; ++c) {
-            p->vel[c] *= e->air;
-            p->vel[c] += e->grav_dir[c] * e->grav;
-            p->pos[c] += p->vel[c];
+        {
+            const fx_inst *in = &fx_cur.inst[p->inst];
+            float g[3], gw[3];
+            for (c = 0; c < 3; ++c) g[c] = e->grav_dir[c] * e->grav;
+            /* gravity in the world, or in the emitter's frame */
+            if (e->grav_world) { gw[0] = g[0]; gw[1] = g[1]; gw[2] = g[2]; }
+            else fx_xform((const float (*)[4]) in->m, g, gw, 0);
+            if (e->follow == 0) { /* srt: integrate in the emitter frame; world gravity turned into it */
+                float gl[3];
+                if (e->grav_world)
+                    for (c = 0; c < 3; ++c) gl[c] = in->m[0][c] * g[0] + in->m[1][c] * g[1] + in->m[2][c] * g[2];
+                else { gl[0] = g[0]; gl[1] = g[1]; gl[2] = g[2]; }
+                for (c = 0; c < 3; ++c) {
+                    p->lvel[c] = p->lvel[c] * e->air + gl[c];
+                    p->lpos[c] += p->lvel[c];
+                }
+                fx_xform((const float (*)[4]) in->m, p->lpos, p->pos, 1);
+            } else if (e->follow == 2) { /* translate: world axes, carried by the owner's position */
+                for (c = 0; c < 3; ++c) {
+                    p->lvel[c] = p->lvel[c] * e->air + gw[c];
+                    p->lpos[c] += p->lvel[c];
+                    p->pos[c] = in->m[c][3] + p->lpos[c];
+                }
+            } else {
+                for (c = 0; c < 3; ++c) {
+                    p->vel[c] = p->vel[c] * e->air + gw[c];
+                    p->pos[c] += p->vel[c];
+                }
+            }
         }
         p->rot += p->rot_add;
-        if (++p->age >= p->life && !e->infinite) { p->inst = -1; fx_cur.nlive--; fx_cur.killed++; }
+        if (++p->age >= p->life && (!e->infinite || fx_cur.inst[p->inst].detached)) /* infinite: until the owner goes */ { p->inst = -1; fx_cur.nlive--; fx_cur.killed++; }
     }
     /* an emitter instance whose owner is gone and whose particles are gone is freed */
     for (i = 0; i < FX_MAX_INST; ++i) {
@@ -520,6 +616,69 @@ static void fx_step(void) {
         if (!live) in->used = 0;
     }
 }
+
+/* MELEE_FX_TRACE=1: per frame and per attached package, the owner joint's world position and axes, the
+ * emitter origin the runtime computes (owner x the first emitter's local translate) and the centroid of all its
+ * live particles - where the effect sits relative to its owner, numerically. */
+static void fx_trace(int frame) {
+    static int on = -1;
+    int i, j, k;
+    if (on < 0) {
+        const char *v = getenv("MELEE_FX_TRACE");
+        on = v ? atoi(v) : 0;
+    }
+    if (!on) return;
+    if (on == 2) /* per emitter instance */
+        for (i = 0; i < FX_MAX_INST; ++i) {
+            const fx_inst *in = &fx_cur.inst[i];
+            float c[3] = {0, 0, 0}, sgn = in->facing < 0 ? -1.0f : 1.0f;
+            int n = 0;
+            if (!in->used || in->detached) continue;
+            for (k = 0; k < FX_MAX_PARTICLES; ++k)
+                if (fx_cur.part[k].inst == i) {
+                    for (j = 0; j < 3; ++j) c[j] += fx_cur.part[k].pos[j] - in->pos[j];
+                    n++;
+                }
+            if (!n) continue;
+            gw_log("fx: trace2 f=%d %s/%s follow=%d n=%d along %.2f up %.2f depth %.2f", frame, fx_pkgs[in->pkg]->name,
+                   fx_pkgs[in->pkg]->em[in->em].name, fx_pkgs[in->pkg]->em[in->em].follow, n, sgn * c[0] / n, c[1] / n,
+                   c[2] / n);
+        }
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        const fx_inst *in = &fx_cur.inst[i];
+        float c[2][3] = {{0, 0, 0}, {0, 0, 0}}, sgn = in->facing < 0 ? -1.0f : 1.0f;
+        int n[2] = {0, 0}, first = 1, g;
+        if (!in->used) continue;
+        for (j = 0; j < i; ++j) /* one line per attach: the first instance of it */
+            if (fx_cur.inst[j].used && fx_cur.inst[j].owner == in->owner && fx_cur.inst[j].attach_frame == in->attach_frame)
+                first = 0;
+        if (!first) continue;
+        /* group 0: particles that follow the owner (srt / translate), group 1: world particles (follow none) */
+        for (j = i; j < FX_MAX_INST; ++j) {
+            if (!fx_cur.inst[j].used || fx_cur.inst[j].owner != in->owner || fx_cur.inst[j].attach_frame != in->attach_frame)
+                continue;
+            g = fx_pkgs[fx_cur.inst[j].pkg]->em[fx_cur.inst[j].em].follow == 1;
+            for (k = 0; k < FX_MAX_PARTICLES; ++k)
+                if (fx_cur.part[k].inst == j) {
+                    c[g][0] += fx_cur.part[k].pos[0] - in->pos[0];
+                    c[g][1] += fx_cur.part[k].pos[1] - in->pos[1];
+                    c[g][2] += fx_cur.part[k].pos[2] - in->pos[2];
+                    n[g]++;
+                }
+        }
+        for (g = 0; g < 2; ++g)
+            if (n[g]) { c[g][0] *= sgn / n[g]; c[g][1] /= n[g]; c[g][2] /= n[g]; }
+        gw_log("fx: trace f=%d %s owner=0x%08X facing=%s%s root=(%.2f %.2f %.2f) | following n=%d along %.2f up %.2f "
+               "depth %.2f | world n=%d along %.2f up %.2f depth %.2f",
+               frame, fx_pkgs[in->pkg]->name, in->owner, in->facing < 0 ? "left" : "right", in->detached ? " (gone)" : "",
+               in->pos[0], in->pos[1], in->pos[2], n[0], c[0][0], c[0][1], c[0][2], n[1], c[1][0], c[1][1], c[1][2]);
+    }
+}
+
+/* the renderer's view (gw_fx_render.cpp; game thread) */
+const fx_state *gw_fx_state(void) { return fx_ready ? &fx_cur : NULL; }
+const fx_pkg *gw_fx_pkg(int i) { return i >= 0 && i < fx_npkg ? fx_pkgs[i] : NULL; }
+int gw_fx_npkg(void) { return fx_npkg; }
 
 /* ---- the API the game half calls (scalars; guest addresses as ints) ---------------------------------- */
 
@@ -536,13 +695,14 @@ void gw_Fx_Frame(int frame) {
     }
     fx_step();
     fx_cur.frame = frame;
+    fx_trace(frame);
     if ((frame % 30) == 0 && (fx_cur.nlive > 0 || gw_Fx_Stat(1) > 0)) gw_Fx_Census(0, frame);
     fx_ring[frame & (FX_RING - 1)] = fx_cur;
 }
 
 /* Attach every emitter of package `pkg` to the guest JObj at `owner` (world matrix at `mtx_off`); returns a
  * handle (the first instance index + 1) or 0. */
-int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame) {
+int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
     int e, i, first = -1;
     if (!fx_ready) fx_reset();
     if (pkg < 0 || pkg >= fx_npkg) return 0;
@@ -556,11 +716,14 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame) {
         fx_cur.inst[i].owner = (uint32_t) owner;
         fx_cur.inst[i].mtx_off = (uint32_t) mtx_off;
         fx_cur.inst[i].attach_frame = frame;
+        fx_cur.inst[i].facing = facing;
+        fx_basis(fx_pkgs[pkg], facing, fx_cur.inst[i].basis);
         fx_cur.inst[i].rng = 0x811C9DC5u ^ ((uint32_t) pkg * 16777619u) ^ ((uint32_t) e << 8) ^ (uint32_t) owner ^ ((uint32_t) frame << 16);
         fx_owner_mtx(&fx_cur.inst[i]);
         if (first < 0) first = i;
     }
-    gw_log("fx: %s attached to 0x%08X at frame %d: %d emitter(s)", fx_pkgs[pkg]->name, (uint32_t) owner, frame, fx_pkgs[pkg]->nem);
+    gw_log("fx: %s attached to 0x%08X at frame %d, facing %s: %d emitter(s)", fx_pkgs[pkg]->name, (uint32_t) owner, frame,
+           facing < 0 ? "left" : "right", fx_pkgs[pkg]->nem);
     return first + 1;
 }
 
@@ -588,6 +751,14 @@ int gw_Fx_Stat(int what) {
     if (what >= 16 && what < 16 + FX_MAX_INST) {
         for (i = 0; i < FX_MAX_PARTICLES; ++i) n += fx_cur.part[i].inst == what - 16;
         return n;
+    }
+    if ((what >= 200 && what < 200 + FX_MAX_INST) || (what >= 300 && what < 300 + FX_MAX_INST)) {
+        const int ii = what % 100, axis = what >= 300 ? 2 : 0;
+        const fx_inst *in = &fx_cur.inst[ii];
+        float sum = 0.0f;
+        for (i = 0; i < FX_MAX_PARTICLES; ++i)
+            if (fx_cur.part[i].inst == ii) { sum += fx_cur.part[i].pos[axis] - in->pos[axis]; n++; }
+        return n ? (int) (100.0f * sum / (float) n) : 0;
     }
     if (what >= 100 && what < 100 + FX_MAX_INST) {
         const fx_inst *in = &fx_cur.inst[what - 100];
@@ -625,7 +796,7 @@ void gw_Fx_Census(int handle, int frame) {
 
 /* ---- tests ---------------------------------------------------------------------------------------------- */
 static const char fx_test_pkg[] =
-    "{\"geno_fx\":1,\"name\":\"t\",\"textures\":[],\"meshes\":[],\"emitters\":["
+    "{\"geno_fx\":1,\"name\":\"t\",\"space\":{\"forward\":[0,0,1],\"up\":[0,1,0]},\"textures\":[],\"meshes\":[],\"emitters\":["
     "{\"name\":\"steady\",\"kind\":\"particle\",\"follow\":\"none\",\"transform\":{\"translate\":[0,0,0],\"rotate\":[0,0,0]},"
     " \"emission\":{\"start\":2,\"duration\":1,\"one_time\":false,\"rate\":1,\"interval\":2,\"by_distance\":false},"
     " \"shape\":{\"type\":\"point\",\"radius\":[0,0,0],\"caliber\":1},"
@@ -646,12 +817,13 @@ static int test_fx_sim(void) {
     fx_reset();
     fx_pkgs[fx_npkg] = p;
     pkg = fx_npkg++;
-    {   /* identity rotation, moving 1 unit per frame along +X (Z forward in the effect's frame -> world X) */
-        float m[12] = {0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, 0};
+    {   /* a Melee item's root joint: identity rotation (it does not turn with the facing), moving +1 X a frame; the
+         * package's space says +Z is its forward, so the effect's -Z (the steady emitter's velocity) is behind it */
+        float m[12] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0};
         int i;
         for (i = 0; i < 12; ++i) gw_wf32(&mtx[i], m[i]);
     }
-    h = gw_Fx_Attach(pkg, (int) (uintptr_t) mtx, 0, 0);
+    h = gw_Fx_Attach(pkg, (int) (uintptr_t) mtx, 0, 0, 1);
     for (f = 1; f <= 20; ++f) {
         gw_wf32(&mtx[3], (float) f);        /* the owner travels +1 a frame */
         gw_Fx_Frame(f);
@@ -660,6 +832,11 @@ static int test_fx_sim(void) {
     if (gw_Fx_Stat(16 + h - 1) != 4) { gw_test_fail("fx: steady emitter: %d live (expect 4)", gw_Fx_Stat(16 + h - 1)); rc = 1; }
     /* its particles go backwards (local -Z = world -X here) at 0.5 a frame: mean offset behind the emitter */
     if (gw_Fx_Stat(100 + h - 1) >= 0) { gw_test_fail("fx: steady particles must trail behind (offset %d)", gw_Fx_Stat(100 + h - 1)); rc = 1; }
+    if (gw_Fx_Stat(200 + h - 1) >= 0 || gw_Fx_Stat(300 + h - 1) != 0) {
+        gw_test_fail("fx: facing right, the trail must be at world -X and depth 0 (x100: %d, z %d)", gw_Fx_Stat(200 + h - 1),
+                     gw_Fx_Stat(300 + h - 1));
+        rc = 1;
+    }
     /* trail: by distance, 1 per 2 units at 1 unit a frame (spawns on frames 3,5,..19), life 4 -> only 19's alive */
     live = gw_Fx_Stat(16 + h);
     if (live != 1) { gw_test_fail("fx: by-distance emitter: %d live (expect 1)", live); rc = 1; }
@@ -674,8 +851,18 @@ static int test_fx_sim(void) {
             rc = 1;
         }
     }
+    {   /* the same effect facing left mirrors: the trail at world +X */
+        static float mtx2[12];
+        float m[12] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0};
+        int i, h2;
+        for (i = 0; i < 12; ++i) gw_wf32(&mtx2[i], m[i]);
+        h2 = gw_Fx_Attach(pkg, (int) (uintptr_t) mtx2, 0, 21, -1);
+        for (f = 21; f <= 34; ++f) { gw_wf32(&mtx2[3], (float) -(f - 21)); gw_Fx_Frame(f); }
+        if (gw_Fx_Stat(200 + h2 - 1) <= 0) { gw_test_fail("fx: facing left, the trail must be at world +X (x100: %d)", gw_Fx_Stat(200 + h2 - 1)); rc = 1; }
+        gw_Fx_Detach((int) (uintptr_t) mtx2);
+    }
     gw_Fx_Detach((int) (uintptr_t) mtx);
-    for (f = 21; f <= 40; ++f) gw_Fx_Frame(f);
+    for (f = 35; f <= 60; ++f) gw_Fx_Frame(f);
     if (gw_Fx_Stat(0) != 0 || gw_Fx_Stat(1) != 0) { gw_test_fail("fx: after detach everything must die out (%d live, %d inst)", gw_Fx_Stat(0), gw_Fx_Stat(1)); rc = 1; }
     free(p);
     fx_npkg--;

@@ -2102,3 +2102,55 @@ combine step that puts trail_magic_geno.py's neutral special first) are 13 Geno 
 in word files (`"file"`), the registry's JSON reader has a node cap. Test `geno_v52_lockon` (the aim,
 hook 6 by name, PUT ANIM_RATE, HBDMG). Counter scaling in game (ACE): Fox jab 3.64 % -> 9.0 (min), Ganondorf
 jab 7.28 -> 10.9, fsmash 16.71 -> 25.1 (x1.5), fresh fsmash 22.0 -> 30.0 (max); Sora took 0 each time. In-game numbers: the workspace lane notes (`_build/agents/echo/NOTES.md`).
+
+## 20. Geno effects (`.gfx.json`, format v1) - DESIGN / format only, no runtime yet
+
+Status: **format + converter built; the runtime is designed, not built** (it draws through Aurora and waits for
+the renderer's owner, see the workspace's `_research/geno-effects-runtime.md`). GD's decision (2026-09-26): an
+effect from another game is rendered by its own runtime, not squeezed into Melee's particle bytecode
+(sections 19.8-19.11 remain the path for effects Melee's particles express well).
+
+A **Geno effect package** is a directory in a mod (`mods/<id>/fx/<name>/`): `<name>.gfx.json`, `tex/*.png`,
+`mesh/*.json`. Nothing in it is interpreted by Melee's HSD particle system; the future runtime reads it at load.
+General, not per game: the first converter is `ports/ir/tools/ultimate_vfx_geno.py` (Ultimate eft2 / VFXB); a
+Brawl REFF converter would write the same format.
+
+```json
+{ "geno_fx": 1, "name": "P_TrailFireBullet",
+  "source": { "format": "eft2/VFXB (Nintendo), via EffectLibrary", "set": "P_TrailFireBullet" },
+  "textures": [ { "name": "ef_cmn_fire00", "file": "tex/ef_cmn_fire00.png", "w": 512, "h": 512,
+                  "source_format": "0x1e01", "swizzle": "rrrg" } ],
+  "meshes":   [ { "name": "P_TrailFireBullet_sphere1", "file": "mesh/P_TrailFireBullet_sphere1.json",
+                  "verts": 327, "tris": 520 } ],
+  "emitters": [ { "name": "fire1", "order": 4, "kind": "particle" | "mesh", "mesh": null | "<mesh name>",
+                  "follow": "srt" | "none" | "translate", "transform": {...}, "emission": {...}, "shape": {...},
+                  "particle": {...}, "color": {...}, "samplers": [...], "material": {...}, "wave": {...},
+                  "inherit": {...}, "program": {...}, "extensions": {...} } ] }
+```
+
+| block | fields (units: game units, frames, radians; curves are up to 8 keys `[x, y, z, t]`, t = life ratio 0..1) |
+|---|---|
+| `transform` | emitter offset `translate` (+ `_random`), `rotate` (+ `_random`), `scale`, in the spawning object's frame |
+| `emission` | `start` (frame delay), `duration`, `one_time`, `rate` (+ `rate_random`), `interval` (+ `_random`), `position_random`, `by_distance` {`unit`, `min`, `max`, `margin`, `max_particles`} (emit per distance travelled), `fade` {`on_stop`, `alpha_frames`, `fade_in_frames`, ...} |
+| `shape` | `type` (point, circle, circle_fill, sphere, sphere_fill, cylinder, box, line, rectangle, primitive, ...), `radius[3]`, `form_scale[3]`, `caliber` (hollow ratio), `sweep` [start, longitude, latitude], `surface_random`, `line`, `divide` |
+| `particle` | `life` (+ `life_random_pct`), `infinite`, `shape` (billboard, y_billboard, plate_xy, plate_xz, directional_y, directional_polygon, stripe, complex_stripe, primitive); `velocity` {`all_direction` (radial speed), `direction[3]` x `direction_scale`, `diffusion...`, `random_pct`, `inherit` (share of the emitter's own velocity), `momentum_random`}; `forces` {`gravity_dir[3]`, `gravity`, `gravity_world`, `air_resistance` (velocity x this a frame)}; `rotation` {`axes`, `init` + `init_random`, `add` + `add_random` (per frame), `regist`}; `scale` {`base[3]`, `random_pct`, `keys`, `loop`, `add_velocity`}; `param_keys` |
+| `color` | `scale` (HDR multiplier), `emitter` {color0, color1}, `color0` / `alpha0` / `color1` / `alpha1`: {`kind`: constant / random / keys, `value`, `keys`}, `loop` per curve |
+| `samplers` | per texture slot: `texture`, `wrap` [u, v], `filter`, `uv_channel`, `pattern` {`mode` fit_life / clamp / loop / random, `count`, `frequency`, `table`}, `uv` {`scroll`, `scroll_add`, `scale`, `scale_add`, `rotate`, `rotate_add`, `*_random`, `divide` [cols, rows] (atlas)} |
+| `material` | `blend` (alpha, add, sub, mul, screen), depth test / write / func, `alpha_test` {func, threshold}, `display_side`, `draw_path` (render pass), `sort`, `soft_particle` {distance, volume}, `fresnel_alpha` [lo, hi], `near_alpha` / `far_alpha` [lo, hi], `decal` |
+| `wave` | per-particle fluctuation: `type`, `amplitude`, `cycle`, `phase_random`, `phase_init`, `apply` [alpha, scale, scale_y] |
+| `inherit` | child-emitter inheritance flags and rates |
+| `program` | `kind` (normal, user_macro1, user_macro2), `shader_index`, and when the source shader is straight-line: `fragment` = the source fragment program as an op list (`op`, `mod`, `args`, `pred`) over registers `$rN`, varyings `a[0xNN]`, uniform words `c<bank>[0xNNN]`, immediates and texture handles; the full disassembly beside it (`fragment_listing`) |
+| `extensions` | emitter sub-sections the format does not map yet (`EPxx` plugins, `FSPN` spin field, `FCLN` collision field, `CADP` / `CSDP` ...), as raw words and floats |
+
+Textures keep their source channel layout; `swizzle` says which source channel feeds r, g, b, a (the GPU's
+component selector: Ultimate's BC5 effect textures read as `rrrg`: colour = R, alpha = G). Mesh JSON:
+`position`, `normal`, `uv0`, `color0`, `indices` (triangles).
+
+**Not in v1** (named so a runtime does not guess): the varying / uniform meaning of the fragment `program`
+inputs (the runtime re-derives them from the emitter data; `_research/geno-effects-runtime.md` has the map as
+far as it is known), child emitters' links, stripes' history, GPU (compute) emitters (`spark2`-style
+`ComputeShader.bnsh` is noted, not translated), the plugins and fields in `extensions`.
+
+Converter check (GD's ef_trail.eff): P_TrailFireBullet 10 emitters, 9 textures, 4 meshes, 10 / 10 fragment
+programs translated; P_TrailIceBullet 11 / 10 textures / 5 meshes / 10 of 11; P_TrailThunderCloud 5 / 4 / 4 /
+4 of 5; P_TrailThunderBullet 4 / 3 / 4 / 4 of 4.

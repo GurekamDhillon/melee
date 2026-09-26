@@ -380,6 +380,8 @@ enum {
                                 spawn variant +4 (ints) */
     GENO_AP_ANGLE = 38,      /* degrees the initial velocity is turned (up, in the facing), added to
                                 the spawn arg's angle */
+    GENO_AP_FX = 39,         /* v5.4 int: "fx" - Geno effect package (docs/geno.md 20) + 1, attached to the
+                                article's root joint at spawn, detached when it goes; 0 = none */
     GENO_AP_EFFECTS = 40,    /* v5.2 40..47: "effects" - up to 8 effect ids attached at spawn
                                 (ids 5000..8999: the owner fighter's own m-ex bank, e.g. its
                                 particle generators 6000+n; others: Melee's), 0 = none */

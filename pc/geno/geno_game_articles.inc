@@ -155,9 +155,24 @@ static ItemStateTable geno_art_states[1] = {
  * generators that follow its root joint (a "FollowJointPos" m-ex generator keeps the item's JObj;
  * efLib_DestroyAll only removes effect MODELS). hsd_8039D5DC is what grlib uses for a stage part:
  * the emitted particles live on, the generators stop. */
+/* Geno effects (gw_fx.c, native): ints across; the JObj is a guest address, its world matrix at +0x44. */
+extern int Fx_Attach(int pkg, int owner, int mtx_off, int frame);
+extern void Fx_Detach(int owner);
+extern void Fx_Frame(int frame);
+static int geno_fx_frame; /* the last frame Geno_FxFramePost saw (seeds attaches) */
+
 static void geno_art_destroyed(Item_GObj* gobj)
 {
     hsd_8039D5DC(GET_JOBJ(gobj));
+    Fx_Detach((int) GET_JOBJ(gobj)); /* its emitters stop; live particles finish */
+}
+
+/* Once per scene frame, after the scripts (gmscene.c): the scene's frame counter is game memory, so a
+ * rollback or LAB rewind brings it back and gw_fx re-simulates from there. */
+void Geno_FxFramePost(int frame)
+{
+    geno_fx_frame = frame;
+    Fx_Frame(frame);
 }
 
 static ItemLogicTable geno_art_logic = {
@@ -710,6 +725,9 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     ip->x40_vel.z = 0.0f;
     db_80225DD8(ig, owner);
     geno_art_effects(ig, ip, p, a, 0, facing); /* the frame-0 effects; later ones from the anim callback */
+    if (Geno_ArticleParam(p, a, GENO_AP_FX) > 0) {
+        Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44, geno_fx_frame);
+    }
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);
     {

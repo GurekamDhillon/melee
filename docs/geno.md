@@ -2179,6 +2179,13 @@ frame before (16 frames) and re-simulates (rollback, LAB rewind); nothing enters
 `gw_Fx_Census` are the numeric census (live particles, instances, spawned / killed / refused, per instance).
 Budget: 2000 particles, 64 emitter instances.
 
+**Binding (geno.json v5.4)**: an article's `"fx": "<package>"` (GENO_AP_FX) attaches that package to the article's
+root joint at spawn and detaches it when the article goes (every despawn path). The game half calls
+`Geno_FxFramePost(frame)` once per scene frame after the scripts (`gmscene.c`), with the scene's frame counter;
+`gw_Fx_Frame` logs a census line every 30 frames while anything is live (`fx: census frame N: ...`). Checked in
+a real match (Sora magic, ACE): Firaga attached 10 emitters, census 8 live at +7 frames; 8 Blizzaga shots, 35
+instances / 18 live at the peak, none refused, all dead after.
+
 Importer check (GD's ef_trail.eff; shader types: Fire 7 warp / 2 sprite / 1 distortion, Ice 10 sprite / 1 warp,
 Thunder sprite): P_TrailFireBullet 10 emitters, 9 textures, 4 meshes, 10 / 10 fragment programs read; P_TrailIceBullet 11 / 10 textures / 5 meshes / 10 of 11; P_TrailThunderCloud 5 / 4 / 4 /
 4 of 5; P_TrailThunderBullet 4 / 3 / 4 / 4 of 4.

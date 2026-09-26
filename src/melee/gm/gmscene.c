@@ -965,6 +965,11 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     extern void Script_FramePost(void);
                     Script_FramePost();
                 }
+                {
+                    /* Geno effects: after the game's own effects, so attached joints are final */
+                    extern void Geno_FxFramePost(int frame);
+                    Geno_FxFramePost(temp_r25->unk_0);
+                }
 #endif
             }
             if (temp_r25->unk_0 != -2) {

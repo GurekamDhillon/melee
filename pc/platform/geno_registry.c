@@ -957,6 +957,11 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
         if (gn_num(d, c, "angle", &v)) p->art_param[a][GENO_AP_ANGLE] = gn_fbits(v);
         p->art_param[a][GENO_AP_BONE] = gn_int(d, c, "bone", -1);
         p->art_param[a][GENO_AP_EFFECT] = gn_int(d, c, "effect", 0);
+        if ((m = jd_get(d, c, "fx")) >= 0 && d->n[m].type == JN_STR) { /* v5.4: a Geno effect package (gw_fx.c) */
+            extern int gw_Fx_Find(const char *name);
+            int pk = gw_Fx_Find(d->n[m].str);
+            p->art_param[a][GENO_AP_FX] = pk >= 0 ? (uint32_t) (pk + 1) : 0;
+        }
         if ((m = jd_get(d, c, "effects")) >= 0 && d->n[m].type == JN_ARR) { /* v5.2 */
             int e2, n2 = 0;
             for (e2 = d->n[m].first; e2 >= 0 && n2 < 8; e2 = d->n[e2].next) {

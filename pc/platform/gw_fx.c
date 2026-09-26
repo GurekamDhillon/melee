@@ -360,6 +360,9 @@ typedef struct {
     uint32_t spawned, killed, refused;
 } fx_state;
 
+int gw_Fx_Stat(int what);
+void gw_Fx_Census(int handle, int frame);
+
 static fx_state fx_cur;
 static fx_state fx_ring[FX_RING];
 static int fx_ready;
@@ -533,6 +536,7 @@ void gw_Fx_Frame(int frame) {
     }
     fx_step();
     fx_cur.frame = frame;
+    if ((frame % 30) == 0 && (fx_cur.nlive > 0 || gw_Fx_Stat(1) > 0)) gw_Fx_Census(0, frame);
     fx_ring[frame & (FX_RING - 1)] = fx_cur;
 }
 
@@ -599,15 +603,19 @@ int gw_Fx_Stat(int what) {
     return 0;
 }
 
-/* The census as log lines (a run's check): per instance of `handle`'s package, live particles. */
+/* The census as a log line (a run's check): live particles per instance of `handle`'s package (0 = every
+ * instance; gw_Fx_Frame logs that every 30 frames while anything is live). */
 void gw_Fx_Census(int handle, int frame) {
     int i;
     char line[512];
     int o = 0;
-    if (!fx_ready || handle <= 0) return;
-    for (i = handle - 1; i < FX_MAX_INST && fx_cur.inst[i].used && fx_cur.inst[i].pkg == fx_cur.inst[handle - 1].pkg &&
-                         (i == handle - 1 || fx_cur.inst[i].em > fx_cur.inst[i - 1].em); ++i) {
-        const fx_emitter *e = &fx_pkgs[fx_cur.inst[i].pkg]->em[fx_cur.inst[i].em];
+    if (!fx_ready || handle < 0) return;
+    line[0] = 0;
+    for (i = handle > 0 ? handle - 1 : 0; i < FX_MAX_INST; ++i) {
+        const fx_emitter *e;
+        if (!fx_cur.inst[i].used) { if (handle > 0) break; continue; }
+        if (handle > 0 && i > handle - 1 && (fx_cur.inst[i].pkg != fx_cur.inst[handle - 1].pkg || fx_cur.inst[i].em <= fx_cur.inst[i - 1].em)) break;
+        e = &fx_pkgs[fx_cur.inst[i].pkg]->em[fx_cur.inst[i].em];
         o += snprintf(line + o, sizeof line - (size_t) o, " %s=%d", e->name, gw_Fx_Stat(16 + i));
         if (o > (int) sizeof line - 40) break;
     }

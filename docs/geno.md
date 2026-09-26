@@ -2179,7 +2179,7 @@ frame, read-only); `gw_Fx_Detach(jobj)` stops emission (live particles finish); 
 logic frame with the game's own frame counter: a frame not after the last one restores the state kept for the
 frame before (16 frames) and re-simulates (rollback, LAB rewind); nothing enters a snapshot. `gw_Fx_Stat` /
 `gw_Fx_Census` are the numeric census (live particles, instances, spawned / killed / refused, per instance).
-Budget: 2000 particles, 64 emitter instances.
+Budget: 2000 particles, 256 emitter instances (a full pool refuses the newest package's lowest-priority emitters; `gw_Fx_Stat(5)` counts them). An idle state is kept in the rollback ring as its header only.
 
 **Binding (geno.json v5.4)**: an article's `"fx": "<package>"` (GENO_AP_FX) attaches that package to the article's
 root joint at spawn and detaches it when the article goes (every despawn path). The game half calls

@@ -14,7 +14,7 @@
  * Owner transform: the game half attaches an effect to a guest JObj (its address and the offset of its world
  * matrix inside HSD_JObj) and the simulation reads that matrix each frame (read-only, big-endian floats).
  *
- * Budget (accepted 2026-09-26): 2000 live particles, 64 emitter instances per match. */
+ * Budget (accepted 2026-09-26): 2000 live particles, 256 emitter instances per match. */
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 #include "gw_mods.h"
@@ -219,19 +219,24 @@ static void fx_material_read(const fjdoc *d, int root, int e, fx_emitter *m) {
         sp->wrap[1] = fx_enum(fj_s(d, fj_at(d, fj_get(d, x, "wrap"), 1)), wr, 3, FX_WRAP_REPEAT);
         sp->pattern = fx_enum(fj_s(d, fj_get(d, pt, "mode")), pat, 5, FX_PAT_NONE);
         sp->pattern_count = (int) fj_num(d, fj_get(d, pt, "count"), 0);
+        sp->pattern_count_random = (int) fj_num(d, fj_get(d, pt, "count_random"), 0);
+        sp->pattern_random_start = (int) fj_num(d, fj_get(d, pt, "loop_random_start"), 0);
         sp->pattern_freq = (float) fj_num(d, fj_get(d, pt, "frequency"), 1);
         for (j = 0; j < FX_PATTERN_TABLE && fj_at(d, tb, j) >= 0; ++j) sp->table[j] = (int) fj_num(d, fj_at(d, tb, j), 0);
         sp->table_n = j;
         sp->scale[0] = sp->scale[1] = 1.0f;
         fj_vec(d, fj_get(d, uv, "scroll"), sp->scroll, 2);
         fj_vec(d, fj_get(d, uv, "scroll_add"), sp->scroll_add, 2);
+        fj_vec(d, fj_get(d, uv, "scroll_random"), sp->scroll_random, 2);
         fj_vec(d, fj_get(d, uv, "scale"), sp->scale, 2);
         fj_vec(d, fj_get(d, uv, "scale_add"), sp->scale_add, 2);
+        fj_vec(d, fj_get(d, uv, "scale_random"), sp->scale_random, 2);
         fj_vec(d, fj_get(d, uv, "divide"), div, 2);
         sp->div[0] = div[0] >= 1 ? (int) div[0] : 1;
         sp->div[1] = div[1] >= 1 ? (int) div[1] : 1;
         sp->rotate = (float) fj_num(d, fj_get(d, uv, "rotate"), 0);
         sp->rotate_add = (float) fj_num(d, fj_get(d, uv, "rotate_add"), 0);
+        sp->rotate_random = (float) fj_num(d, fj_get(d, uv, "rotate_random"), 0);
         sp->en_scroll = (int) fj_num(d, fj_get(d, en, "scroll"), 1);
         sp->en_scale = (int) fj_num(d, fj_get(d, en, "scale"), 1);
         sp->en_rotate = (int) fj_num(d, fj_get(d, en, "rotate"), 1);
@@ -244,7 +249,17 @@ static int fx_shape(const char *s) {
     if (!strcmp(s, "circle")) return FX_SHAPE_CIRCLE;
     if (!strcmp(s, "circle_fill")) return FX_SHAPE_CIRCLE_FILL;
     if (!strcmp(s, "point")) return FX_SHAPE_POINT;
-    return FX_SHAPE_OTHER;
+    if (!strcmp(s, "circle_same_divide")) return FX_SHAPE_CIRCLE_DIVIDE;
+    if (!strcmp(s, "sphere_same_divide")) return FX_SHAPE_SPHERE_DIVIDE;
+    if (!strcmp(s, "sphere_same_divide64")) return FX_SHAPE_SPHERE_DIVIDE64;
+    if (!strcmp(s, "cylinder")) return FX_SHAPE_CYLINDER;
+    if (!strcmp(s, "cylinder_fill")) return FX_SHAPE_CYLINDER_FILL;
+    if (!strcmp(s, "box")) return FX_SHAPE_BOX;
+    if (!strcmp(s, "box_fill")) return FX_SHAPE_BOX_FILL;
+    if (!strcmp(s, "line")) return FX_SHAPE_LINE;
+    if (!strcmp(s, "line_same_divide")) return FX_SHAPE_LINE_DIVIDE;
+    if (!strcmp(s, "rectangle")) return FX_SHAPE_RECTANGLE;
+    return FX_SHAPE_PRIMITIVE;
 }
 
 static fx_pkg *fx_parse(const char *text, const char *path) {
@@ -288,9 +303,12 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         int pa = fj_get(&d, e, "particle"), co = fj_get(&d, e, "color");
         int ve = fj_get(&d, pa, "velocity"), fo = fj_get(&d, pa, "forces"), ro = fj_get(&d, pa, "rotation");
         int sc = fj_get(&d, pa, "scale"), bd = fj_get(&d, em, "by_distance");
+        int cl = fj_get(&d, co, "loop"), wa = fj_get(&d, e, "wave"), fa = fj_get(&d, em, "fade"), j;
         const char *fl = fj_s(&d, fj_get(&d, e, "follow"));
         memset(m, 0, sizeof *m);
         snprintf(m->name, sizeof m->name, "%s", fj_s(&d, fj_get(&d, e, "name")));
+        m->order = (int) fj_num(&d, fj_get(&d, e, "order"), i);
+        m->priority = (int) fj_num(&d, fj_get(&d, e, "priority"), m->order);
         m->mesh = strcmp(fj_s(&d, fj_get(&d, e, "kind")), "mesh") == 0;
         m->follow = !strcmp(fl, "none") ? 1 : !strcmp(fl, "translate") ? 2 : 0;
         fj_vec(&d, fj_get(&d, t, "translate"), m->trans, 3);
@@ -298,6 +316,11 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         m->start = (int) fj_num(&d, fj_get(&d, em, "start"), 0);
         m->duration = (int) fj_num(&d, fj_get(&d, em, "duration"), 0);
         m->one_time = (int) fj_num(&d, fj_get(&d, em, "one_time"), 0);
+        m->fade_on_stop = (int) fj_num(&d, fj_get(&d, fa, "on_stop"), 0);
+        m->fade_alpha_frames = (int) fj_num(&d, fj_get(&d, fa, "alpha_frames"), 0);
+        m->fade_in_frames = (int) fj_num(&d, fj_get(&d, fa, "fade_in_frames"), 0);
+        m->alpha_fade_in = (int) fj_num(&d, fj_get(&d, fa, "alpha_fade_in"), 0);
+        m->scale_fade_in = (int) fj_num(&d, fj_get(&d, fa, "scale_fade_in"), 0);
         m->rate = (float) fj_num(&d, fj_get(&d, em, "rate"), 1);
         m->rate_random = (float) fj_num(&d, fj_get(&d, em, "rate_random"), 0);
         m->interval = (int) fj_num(&d, fj_get(&d, em, "interval"), 0);
@@ -310,7 +333,16 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         }
         m->shape = fx_shape(fj_s(&d, fj_get(&d, sh, "type")));
         fj_vec(&d, fj_get(&d, sh, "radius"), m->radius, 3);
+        m->form_scale[0] = m->form_scale[1] = m->form_scale[2] = 1.0f;
+        fj_vec(&d, fj_get(&d, sh, "form_scale"), m->form_scale, 3);
         m->caliber = (float) fj_num(&d, fj_get(&d, sh, "caliber"), 1);
+        m->sweep[1] = 6.2831853f; m->sweep[2] = 3.1415927f;
+        fj_vec(&d, fj_get(&d, sh, "sweep"), m->sweep, 3);
+        m->sweep_start_random = (int) fj_num(&d, fj_get(&d, sh, "sweep_start_random"), 0);
+        m->surface_random = (float) fj_num(&d, fj_get(&d, sh, "surface_random"), 0);
+        m->line[1] = 1.0f;
+        fj_vec(&d, fj_get(&d, sh, "line"), m->line, 2);
+        for (j = 0; j < 4; ++j) m->divide[j] = (int) fj_num(&d, fj_at(&d, fj_get(&d, sh, "divide"), j), 1);
         m->life = (int) fj_num(&d, fj_get(&d, pa, "life"), 30);
         m->life_random = (float) fj_num(&d, fj_get(&d, pa, "life_random_pct"), 0) / 100.0f;
         m->infinite = (int) fj_num(&d, fj_get(&d, pa, "infinite"), 0);
@@ -338,6 +370,23 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         fx_curve_read(&d, fj_get(&d, co, "color1"), &m->color1, 1);
         fx_curve_read(&d, fj_get(&d, co, "alpha1"), &m->alpha1, 0);
         m->color_scale = (float) fj_num(&d, fj_get(&d, co, "scale"), 1);
+        {
+            fx_curve *curves[4] = {&m->color0, &m->alpha0, &m->color1, &m->alpha1};
+            const char *names[4] = {"color0", "alpha0", "color1", "alpha1"};
+            for (j = 0; j < 4; ++j) {
+                int loop = fj_get(&d, cl, names[j]);
+                curves[j]->loop = (int) fj_num(&d, fj_at(&d, loop, 0), 0);
+                curves[j]->loop_rate = (int) fj_num(&d, fj_at(&d, loop, 1), 0);
+            }
+            m->scale_keys.loop = (int) fj_num(&d, fj_get(&d, sc, "loop"), 0);
+            m->scale_keys.loop_rate = (int) fj_num(&d, fj_get(&d, sc, "loop_rate"), 0);
+        }
+        m->wave_type = (int) fj_num(&d, fj_get(&d, wa, "type"), 0);
+        fj_vec(&d, fj_get(&d, wa, "amplitude"), m->wave_amplitude, 2);
+        fj_vec(&d, fj_get(&d, wa, "cycle"), m->wave_cycle, 2);
+        fj_vec(&d, fj_get(&d, wa, "phase_random"), m->wave_phase_random, 2);
+        fj_vec(&d, fj_get(&d, wa, "phase_init"), m->wave_phase_init, 2);
+        for (j = 0; j < 3; ++j) m->wave_apply[j] = (int) fj_num(&d, fj_at(&d, fj_get(&d, wa, "apply"), j), 0);
         fj_vec(&d, fj_get(&d, ro, "init"), m->rot_init, 3);
         fj_vec(&d, fj_get(&d, ro, "init_random"), m->rot_init_random, 3);
         fj_vec(&d, fj_get(&d, ro, "add"), m->rot_add, 3);
@@ -396,6 +445,28 @@ void gw_Fx_Census(int handle, int frame);
 
 static fx_state fx_cur;
 static fx_state fx_ring[FX_RING];
+/* An idle state (no instance in use, nothing live) is kept as its header only: every slot is fully
+ * re-initialised when it is taken, so a cleared state is equivalent to it. Copying the whole block (600 KB)
+ * each frame of a match with no effects cost ~0.5 ms of game thread. */
+static unsigned char fx_ring_idle[FX_RING];
+static int fx_ring_hi[FX_RING]; /* particle slots [0, hi) were copied; the rest were free */
+
+/* copy a state leaving out the free particle slots past the last used one */
+static void fx_copy(fx_state *dst, const fx_state *src, int hi) {
+    dst->frame = src->frame;
+    memcpy(dst->inst, src->inst, sizeof src->inst);
+    memcpy(dst->part, src->part, (size_t) hi * sizeof src->part[0]);
+    dst->nlive = src->nlive;
+    dst->spawned = src->spawned; dst->killed = src->killed;
+    dst->refused = src->refused; dst->refused_emitters = src->refused_emitters;
+}
+
+static int fx_idle(void) {
+    int i;
+    if (fx_cur.nlive > 0) return 0;
+    for (i = 0; i < FX_MAX_INST; ++i) if (fx_cur.inst[i].used) return 0;
+    return 1;
+}
 static int fx_ready;
 
 static void fx_reset(void) {
@@ -426,6 +497,78 @@ float gw_fx_curve_at(const fx_curve *c, float t, int ch) {
             return c->k[i - 1][ch] + (c->k[i][ch] - c->k[i - 1][ch]) * f;
         }
     return c->k[c->n - 1][ch];
+}
+
+/* Loop rates in the source format are frame periods. Keep the ordinary normalized-life evaluator
+ * for callers that do not have a particle, and use this one for per-particle simulation. */
+static float fx_curve_part_at(const fx_curve *c, int age, int life, int ch) {
+    float t = life > 0 ? (float) age / (float) life : 0.0f;
+    if (c->loop && c->loop_rate > 0)
+        t = (float) (age % c->loop_rate) / (float) c->loop_rate;
+    return gw_fx_curve_at(c, t, ch);
+}
+
+static float fx_clamp(float x, float lo, float hi) { return x < lo ? lo : x > hi ? hi : x; }
+
+static int fx_pattern_cell(const fx_sampler *s, const fx_part *p, int slot) {
+    int n = p->pattern_count[slot], idx = 0, step;
+    if (n < 1) return 0;
+    step = (int) ((float) p->age / (s->pattern_freq > 0.0f ? s->pattern_freq : 1.0f));
+    switch (s->pattern) {
+    case FX_PAT_FIT_LIFE: idx = p->life > 0 ? p->age * n / p->life : 0; break;
+    case FX_PAT_CLAMP: idx = step; break;
+    case FX_PAT_LOOP: idx = (step + p->pattern_start[slot]) % n; break;
+    case FX_PAT_RANDOM: {
+        uint32_t seed = p->seed ^ (uint32_t) slot * 0x9E3779B9u ^ (uint32_t) step * 0x85EBCA6Bu;
+        idx = (int) (fx_rnd(&seed) % (uint32_t) n);
+        break;
+    }
+    default: idx = 0; break;
+    }
+    if (idx < 0) idx = 0;
+    if (idx >= n) idx = n - 1;
+    return idx < s->table_n ? s->table[idx] : idx;
+}
+
+static void fx_visual_update(fx_part *p, const fx_emitter *e, const fx_inst *in) {
+    int k, c;
+    float phase[2], w[2], fade = 1.0f;
+    for (k = 0; k < 2; ++k) {
+        phase[k] = e->wave_cycle[k] > 0.0f ? 6.2831853f * (float) p->age / e->wave_cycle[k] + p->wave_phase[k] : 0.0f;
+        w[k] = e->wave_type ? e->wave_amplitude[k] * sinf(phase[k]) : 0.0f;
+        p->wave_offset[k] = w[k];
+        p->wave_scale[k] = 1.0f + w[k];
+    }
+    for (k = 0; k < 3; ++k)
+        p->visual_pos[k] = p->pos[k] + in->m[k][0] * w[0] + in->m[k][1] * w[1];
+    if (in->detached && e->fade_on_stop && e->fade_alpha_frames > 0)
+        fade = fx_clamp(1.0f - (float) (fx_cur.frame - in->detach_frame + 1) / (float) e->fade_alpha_frames, 0.0f, 1.0f);
+    if (e->alpha_fade_in && e->fade_in_frames > 0)
+        fade *= fx_clamp((float) p->age / (float) e->fade_in_frames, 0.0f, 1.0f);
+    p->fade_alpha = fade;
+    for (k = 0; k < 2; ++k) {
+        float value = e->scale[k] * fx_curve_part_at(&e->scale_keys, p->age, p->life, k) * p->scale;
+        if (e->wave_apply[1]) value *= p->wave_scale[0];
+        if (k == 1 && e->wave_apply[2]) value *= p->wave_scale[1];
+        if (e->scale_fade_in && e->fade_in_frames > 0)
+            value *= fx_clamp((float) p->age / (float) e->fade_in_frames, 0.0f, 1.0f);
+        p->visual_scale[k] = value;
+    }
+    for (c = 0; c < 3; ++c) {
+        p->visual_color0[c] = fx_curve_part_at(&e->color0, p->age, p->life, c) * e->color_scale;
+        p->visual_color1[c] = fx_curve_part_at(&e->color1, p->age, p->life, c) * e->color_scale;
+    }
+    p->visual_color0[3] = fx_curve_part_at(&e->alpha0, p->age, p->life, 0) * fade;
+    p->visual_color1[3] = fx_curve_part_at(&e->alpha1, p->age, p->life, 0) * fade;
+    if (e->wave_apply[0]) { p->visual_color0[3] *= p->wave_scale[0]; p->visual_color1[3] *= p->wave_scale[0]; }
+    p->visual_param = fx_curve_part_at(&e->param, p->age, p->life, 0);
+    for (k = 0; k < FX_SAMPLERS; ++k) {
+        const fx_sampler *s = &e->smp[k];
+        const int cols = s->div[0] > 0 ? s->div[0] : 1, rows = s->div[1] > 0 ? s->div[1] : 1;
+        p->pattern_cell[k] = fx_pattern_cell(s, p, k);
+        p->pattern_uv[k][0] = (float) (p->pattern_cell[k] % cols) / (float) cols;
+        p->pattern_uv[k][1] = (float) ((p->pattern_cell[k] / cols) % rows) / (float) rows;
+    }
 }
 
 /* the owner's world matrix (3x4, big-endian floats in guest memory) */
@@ -482,6 +625,55 @@ static void fx_erot(const fx_emitter *e, float v[3]) {
     v[0] = x; v[1] = y; v[2] = z;
 }
 
+/* Emitter-local position and outward direction. Sweep angles are radians. For the even-division
+ * variants the sampled angle/line coordinate is snapped to a segment centre. */
+static void fx_sample_shape(const fx_emitter *e, uint32_t *rng, float local[3], float dir[3]) {
+    float th, u, r, rad = 1.0f, inner = fx_clamp(1.0f - e->caliber, 0.0f, 1.0f);
+    int k;
+    th = e->sweep[0] + (e->sweep_start_random ? fx_rndf(rng) * 6.2831853f : 0.0f)
+         + fx_rndf(rng) * e->sweep[1];
+    if (e->shape == FX_SHAPE_CIRCLE_DIVIDE || e->shape == FX_SHAPE_SPHERE_DIVIDE || e->shape == FX_SHAPE_SPHERE_DIVIDE64) {
+        int n = e->shape == FX_SHAPE_SPHERE_DIVIDE64 ? 64 : e->divide[0];
+        if (n > 1) th = floorf(th * (float) n / 6.2831853f) * 6.2831853f / (float) n;
+    }
+    u = fx_rndf(rng);
+    if (e->shape == FX_SHAPE_SPHERE || e->shape == FX_SHAPE_SPHERE_FILL ||
+        e->shape == FX_SHAPE_SPHERE_DIVIDE || e->shape == FX_SHAPE_SPHERE_DIVIDE64) {
+        float polar = acosf(1.0f - u * (1.0f - cosf(e->sweep[2])));
+        dir[0] = sinf(polar) * cosf(th); dir[1] = cosf(polar); dir[2] = sinf(polar) * sinf(th);
+        if (e->shape == FX_SHAPE_SPHERE_FILL)
+            rad = cbrtf(inner * inner * inner + fx_rndf(rng) * (1.0f - inner * inner * inner));
+        for (k = 0; k < 3; ++k) local[k] = dir[k] * e->radius[k] * rad;
+    } else if (e->shape == FX_SHAPE_CIRCLE || e->shape == FX_SHAPE_CIRCLE_FILL || e->shape == FX_SHAPE_CIRCLE_DIVIDE ||
+               e->shape == FX_SHAPE_CYLINDER || e->shape == FX_SHAPE_CYLINDER_FILL) {
+        dir[0] = cosf(th); dir[1] = 0.0f; dir[2] = sinf(th);
+        if (e->shape == FX_SHAPE_CIRCLE_FILL || e->shape == FX_SHAPE_CYLINDER_FILL)
+            rad = sqrtf(inner * inner + u * (1.0f - inner * inner));
+        local[0] = dir[0] * e->radius[0] * rad;
+        local[1] = (e->shape == FX_SHAPE_CYLINDER || e->shape == FX_SHAPE_CYLINDER_FILL) ?
+                   (fx_rndf(rng) * 2.0f - 1.0f) * e->radius[1] : 0.0f;
+        local[2] = dir[2] * e->radius[2] * rad;
+    } else if (e->shape == FX_SHAPE_BOX || e->shape == FX_SHAPE_BOX_FILL || e->shape == FX_SHAPE_RECTANGLE) {
+        for (k = 0; k < 3; ++k) local[k] = (fx_rndf(rng) * 2.0f - 1.0f) * e->radius[k];
+        if (e->shape == FX_SHAPE_RECTANGLE) local[1] = 0.0f;
+        if (e->shape == FX_SHAPE_BOX) {
+            int face = (int) (fx_rndf(rng) * 6.0f);
+            local[face / 2] = (face & 1 ? 1.0f : -1.0f) * e->radius[face / 2];
+        }
+        dir[0] = local[0]; dir[1] = local[1]; dir[2] = local[2]; fx_norm(dir);
+    } else if (e->shape == FX_SHAPE_LINE || e->shape == FX_SHAPE_LINE_DIVIDE) {
+        float t = u;
+        if (e->shape == FX_SHAPE_LINE_DIVIDE && e->divide[2] > 1)
+            t = floorf(u * (float) e->divide[2]) / (float) (e->divide[2] - 1);
+        local[1] = e->line[0] + (t - 0.5f) * e->line[1];
+        dir[0] = 0.0f; dir[1] = local[1] >= e->line[0] ? 1.0f : -1.0f; dir[2] = 0.0f;
+    } else {
+        float z = u * 2.0f - 1.0f, xy = sqrtf(1.0f - z * z);
+        dir[0] = xy * cosf(th); dir[1] = xy * sinf(th); dir[2] = z;
+    }
+    for (k = 0; k < 3; ++k) local[k] *= e->form_scale[k];
+}
+
 static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel[3]) {
     int k;
     fx_part *p = NULL;
@@ -492,23 +684,7 @@ static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel
     memset(p, 0, sizeof *p);
     p->inst = ii;
     p->seed = fx_rnd(&in->rng);
-    /* position in the emitter volume */
-    if (e->shape == FX_SHAPE_SPHERE || e->shape == FX_SHAPE_SPHERE_FILL) {
-        float u = fx_rndf(&p->seed) * 2 - 1, th = fx_rndf(&p->seed) * 6.2831853f, r = sqrtf(1 - u * u), rad = 1.0f;
-        if (e->shape == FX_SHAPE_SPHERE_FILL) {
-            float in_ = 1.0f - e->caliber;          /* hollow ratio: caliber 1 = full */
-            rad = cbrtf(in_ * in_ * in_ + fx_rndf(&p->seed) * (1 - in_ * in_ * in_));
-        }
-        dir[0] = r * cosf(th); dir[1] = r * sinf(th); dir[2] = u;
-        for (k = 0; k < 3; ++k) local[k] = dir[k] * e->radius[k] * rad;
-    } else if (e->shape == FX_SHAPE_CIRCLE || e->shape == FX_SHAPE_CIRCLE_FILL) {
-        float th = fx_rndf(&p->seed) * 6.2831853f, rad = e->shape == FX_SHAPE_CIRCLE_FILL ? sqrtf(fx_rndf(&p->seed)) : 1.0f;
-        dir[0] = cosf(th); dir[1] = 0; dir[2] = sinf(th);
-        local[0] = dir[0] * e->radius[0] * rad; local[2] = dir[2] * e->radius[2] * rad;
-    } else {
-        float u = fx_rndf(&p->seed) * 2 - 1, th = fx_rndf(&p->seed) * 6.2831853f, r = sqrtf(1 - u * u);
-        dir[0] = r * cosf(th); dir[1] = r * sinf(th); dir[2] = u;
-    }
+    fx_sample_shape(e, &p->seed, local, dir);
     /* velocity: radial x all_direction + direction x scale, random, in the emitter frame */
     for (k = 0; k < 3; ++k) v[k] = dir[k] * e->vel_all + e->vel_dir[k] * e->vel_dir_scale;
     if (e->vel_random > 0) {
@@ -534,6 +710,21 @@ static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel
     p->scale = 1.0f - e->scale_random * fx_rndf(&p->seed);
     p->rot = e->rot_init[2] + e->rot_init_random[2] * fx_rndf(&p->seed);
     p->rot_add = e->rot_add[2] + e->rot_add_random[2] * (fx_rndf(&p->seed) * 2 - 1);
+    for (k = 0; k < 2; ++k) p->wave_phase[k] = e->wave_phase_init[k] + e->wave_phase_random[k] * fx_rndf(&p->seed) * 6.2831853f;
+    for (k = 0; k < FX_SAMPLERS; ++k) {
+        const fx_sampler *s = &e->smp[k];
+        int axis;
+        p->pattern_count[k] = s->pattern_count + (s->pattern_count_random > 0 ?
+                              (int) (fx_rndf(&p->seed) * (float) (s->pattern_count_random + 1)) : 0);
+        if (p->pattern_count[k] < 1) p->pattern_count[k] = 1;
+        p->pattern_start[k] = s->pattern_random_start ? (int) (fx_rndf(&p->seed) * (float) p->pattern_count[k]) : 0;
+        for (axis = 0; axis < 2; ++axis) {
+            p->uv_scroll[k][axis] = s->scroll[axis] + s->scroll_random[axis] * (fx_rndf(&p->seed) * 2.0f - 1.0f);
+            p->uv_scale[k][axis] = s->scale[axis] + s->scale_random[axis] * (fx_rndf(&p->seed) * 2.0f - 1.0f);
+        }
+        p->uv_rotate[k] = s->rotate + s->rotate_random * (fx_rndf(&p->seed) * 2.0f - 1.0f);
+    }
+    fx_visual_update(p, e, in);
     in->emitted++;
     fx_cur.spawned++;
     fx_cur.nlive++;
@@ -605,7 +796,13 @@ static void fx_step(void) {
             }
         }
         p->rot += p->rot_add;
-        if (++p->age >= p->life && (!e->infinite || fx_cur.inst[p->inst].detached)) /* infinite: until the owner goes */ { p->inst = -1; fx_cur.nlive--; fx_cur.killed++; }
+        p->age++;
+        fx_visual_update(p, e, &fx_cur.inst[p->inst]);
+        if ((p->age >= p->life && (!e->infinite ||
+             (fx_cur.inst[p->inst].detached && !(e->fade_on_stop && e->fade_alpha_frames > 0)))) ||
+            (fx_cur.inst[p->inst].detached && e->fade_on_stop && e->fade_alpha_frames > 0 && p->fade_alpha <= 0.0f)) {
+            p->inst = -1; fx_cur.nlive--; fx_cur.killed++;
+        }
     }
     /* an emitter instance whose owner is gone and whose particles are gone is freed */
     for (i = 0; i < FX_MAX_INST; ++i) {
@@ -689,26 +886,69 @@ void gw_Fx_Frame(int frame) {
         int was = fx_cur.frame;
         /* a rollback / LAB rewind: restore the state at the end of frame - 1 and let the resim step again */
         const fx_state *s = &fx_ring[(frame - 1) & (FX_RING - 1)];
-        if (frame >= 1 && s->frame == frame - 1) fx_cur = *s;
-        else fx_reset();
+        if (frame >= 1 && s->frame == frame - 1) {
+            if (fx_ring_idle[(frame - 1) & (FX_RING - 1)]) {
+                int i;
+                uint32_t sp = s->spawned, ki = s->killed, re = s->refused, rem = s->refused_emitters;
+                memset(&fx_cur, 0, sizeof fx_cur);
+                for (i = 0; i < FX_MAX_PARTICLES; ++i) fx_cur.part[i].inst = -1;
+                fx_cur.spawned = sp; fx_cur.killed = ki; fx_cur.refused = re; fx_cur.refused_emitters = rem;
+                fx_cur.frame = s->frame;
+            } else {
+                int i, hi = fx_ring_hi[(frame - 1) & (FX_RING - 1)];
+                fx_copy(&fx_cur, s, hi);
+                for (i = hi; i < FX_MAX_PARTICLES; ++i) fx_cur.part[i].inst = -1;
+            }
+        } else fx_reset();
         gw_log("fx: frame %d after %d - state restored to %d (re-simulating)", frame, was, fx_cur.frame);
+    }
+    if (fx_idle()) {
+        fx_state *r = &fx_ring[frame & (FX_RING - 1)];
+        fx_cur.frame = frame;
+        r->frame = frame; r->nlive = 0;
+        r->spawned = fx_cur.spawned; r->killed = fx_cur.killed;
+        r->refused = fx_cur.refused; r->refused_emitters = fx_cur.refused_emitters;
+        fx_ring_idle[frame & (FX_RING - 1)] = 1;
+        return;
     }
     fx_step();
     fx_cur.frame = frame;
     fx_trace(frame);
     if ((frame % 30) == 0 && (fx_cur.nlive > 0 || gw_Fx_Stat(1) > 0)) gw_Fx_Census(0, frame);
-    fx_ring[frame & (FX_RING - 1)] = fx_cur;
+    {
+        int hi = FX_MAX_PARTICLES;
+        while (hi > 0 && fx_cur.part[hi - 1].inst < 0) --hi;
+        fx_copy(&fx_ring[frame & (FX_RING - 1)], &fx_cur, hi);
+        fx_ring_hi[frame & (FX_RING - 1)] = hi;
+        fx_ring_idle[frame & (FX_RING - 1)] = 0;
+    }
 }
 
 /* Attach every emitter of package `pkg` to the guest JObj at `owner` (world matrix at `mtx_off`); returns a
  * handle (the first instance index + 1) or 0. */
 int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
-    int e, i, first = -1;
+    int e, i, first = -1, free_slots = 0, chosen, attached = 0;
+    unsigned char keep[FX_MAX_EMITTERS] = {0};
     if (!fx_ready) fx_reset();
     if (pkg < 0 || pkg >= fx_npkg) return 0;
+    for (i = 0; i < FX_MAX_INST; ++i) free_slots += !fx_cur.inst[i].used;
+    chosen = fx_pkgs[pkg]->nem;
+    for (e = 0; e < chosen; ++e) keep[e] = 1;
+    while (chosen > free_slots) {
+        int worst = -1;
+        for (e = 0; e < fx_pkgs[pkg]->nem; ++e)
+            if (keep[e] && (worst < 0 || fx_pkgs[pkg]->em[e].priority > fx_pkgs[pkg]->em[worst].priority ||
+                (fx_pkgs[pkg]->em[e].priority == fx_pkgs[pkg]->em[worst].priority && e > worst))) worst = e;
+        if (worst < 0) break;
+        keep[worst] = 0;
+        chosen--;
+        fx_cur.refused++;
+        fx_cur.refused_emitters++;
+    }
     for (e = 0; e < fx_pkgs[pkg]->nem; ++e) {
+        if (!keep[e]) continue;
         for (i = 0; i < FX_MAX_INST && fx_cur.inst[i].used; ++i) {}
-        if (i == FX_MAX_INST) { gw_log("fx: %s: more than %d emitter instances - the rest are not attached", fx_pkgs[pkg]->name, FX_MAX_INST); break; }
+        if (i == FX_MAX_INST) break;
         memset(&fx_cur.inst[i], 0, sizeof fx_cur.inst[i]);
         fx_cur.inst[i].used = 1;
         fx_cur.inst[i].pkg = pkg;
@@ -721,9 +961,10 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
         fx_cur.inst[i].rng = 0x811C9DC5u ^ ((uint32_t) pkg * 16777619u) ^ ((uint32_t) e << 8) ^ (uint32_t) owner ^ ((uint32_t) frame << 16);
         fx_owner_mtx(&fx_cur.inst[i]);
         if (first < 0) first = i;
+        attached++;
     }
-    gw_log("fx: %s attached to 0x%08X at frame %d, facing %s: %d emitter(s)", fx_pkgs[pkg]->name, (uint32_t) owner, frame,
-           facing < 0 ? "left" : "right", fx_pkgs[pkg]->nem);
+    gw_log("fx: %s attached to 0x%08X at frame %d, facing %s: %d/%d emitter(s), refused %d", fx_pkgs[pkg]->name,
+           (uint32_t) owner, frame, facing < 0 ? "left" : "right", attached, fx_pkgs[pkg]->nem, gw_Fx_Stat(4));
     return first + 1;
 }
 
@@ -731,12 +972,16 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
 void gw_Fx_Detach(int owner) {
     int i;
     for (i = 0; i < FX_MAX_INST; ++i)
-        if (fx_cur.inst[i].used && fx_cur.inst[i].owner == (uint32_t) owner) fx_cur.inst[i].detached = 1;
+        if (fx_cur.inst[i].used && fx_cur.inst[i].owner == (uint32_t) owner && !fx_cur.inst[i].detached) {
+            fx_cur.inst[i].detached = 1;
+            fx_cur.inst[i].detach_frame = fx_cur.frame;
+        }
 }
 
-/* The census (numbers only): what = 0 live particles, 1 emitter instances, 2 spawned, 3 killed, 4 refused;
- * 16 + i = live particles of instance i; 100 + i = instance i's mean particle offset from its emitter along
- * the owner's local Z (the effect's forward) axis x100. */
+/* The census (numbers only): 0 live particles, 1 instances, 2 spawned, 3 killed, 4 refused,
+ * 5 refused emitters (a subset of 4; other refusals are particles).
+ * The old 16/100/200/300 selectors remain for indices 0..63. With 256 instances their ranges
+ * overlap, so new callers use 1000/2000/3000/4000 + instance for count/forward/world X/world Z. */
 int gw_Fx_Stat(int what) {
     int i, n = 0;
     if (!fx_ready) return 0;
@@ -746,25 +991,30 @@ int gw_Fx_Stat(int what) {
     case 2: return (int) fx_cur.spawned;
     case 3: return (int) fx_cur.killed;
     case 4: return (int) fx_cur.refused;
+    case 5: return (int) fx_cur.refused_emitters;
     default: break;
     }
-    if (what >= 16 && what < 16 + FX_MAX_INST) {
-        for (i = 0; i < FX_MAX_PARTICLES; ++i) n += fx_cur.part[i].inst == what - 16;
+    if ((what >= 16 && what < 80) || (what >= 1000 && what < 1000 + FX_MAX_INST)) {
+        const int ii = what >= 1000 ? what - 1000 : what - 16;
+        for (i = 0; i < FX_MAX_PARTICLES; ++i) n += fx_cur.part[i].inst == ii;
         return n;
     }
-    if ((what >= 200 && what < 200 + FX_MAX_INST) || (what >= 300 && what < 300 + FX_MAX_INST)) {
-        const int ii = what % 100, axis = what >= 300 ? 2 : 0;
+    if ((what >= 200 && what < 264) || (what >= 300 && what < 364) ||
+        (what >= 3000 && what < 3000 + FX_MAX_INST) || (what >= 4000 && what < 4000 + FX_MAX_INST)) {
+        const int ii = what >= 4000 ? what - 4000 : what >= 3000 ? what - 3000 : what % 100;
+        const int axis = (what >= 4000 || (what >= 300 && what < 364)) ? 2 : 0;
         const fx_inst *in = &fx_cur.inst[ii];
         float sum = 0.0f;
         for (i = 0; i < FX_MAX_PARTICLES; ++i)
             if (fx_cur.part[i].inst == ii) { sum += fx_cur.part[i].pos[axis] - in->pos[axis]; n++; }
         return n ? (int) (100.0f * sum / (float) n) : 0;
     }
-    if (what >= 100 && what < 100 + FX_MAX_INST) {
-        const fx_inst *in = &fx_cur.inst[what - 100];
+    if ((what >= 100 && what < 164) || (what >= 2000 && what < 2000 + FX_MAX_INST)) {
+        const int ii = what >= 2000 ? what - 2000 : what - 100;
+        const fx_inst *in = &fx_cur.inst[ii];
         float s = 0.0f;
         for (i = 0; i < FX_MAX_PARTICLES; ++i)
-            if (fx_cur.part[i].inst == what - 100) {
+            if (fx_cur.part[i].inst == ii) {
                 float d[3] = {fx_cur.part[i].pos[0] - in->pos[0], fx_cur.part[i].pos[1] - in->pos[1], fx_cur.part[i].pos[2] - in->pos[2]};
                 s += d[0] * in->m[0][2] + d[1] * in->m[1][2] + d[2] * in->m[2][2];
                 n++;
@@ -787,14 +1037,200 @@ void gw_Fx_Census(int handle, int frame) {
         if (!fx_cur.inst[i].used) { if (handle > 0) break; continue; }
         if (handle > 0 && i > handle - 1 && (fx_cur.inst[i].pkg != fx_cur.inst[handle - 1].pkg || fx_cur.inst[i].em <= fx_cur.inst[i - 1].em)) break;
         e = &fx_pkgs[fx_cur.inst[i].pkg]->em[fx_cur.inst[i].em];
-        o += snprintf(line + o, sizeof line - (size_t) o, " %s=%d", e->name, gw_Fx_Stat(16 + i));
+        o += snprintf(line + o, sizeof line - (size_t) o, " %s=%d", e->name, gw_Fx_Stat(1000 + i));
         if (o > (int) sizeof line - 40) break;
     }
-    gw_log("fx: census frame %d: %d live, %d instances, spawned %d killed %d refused %d |%s", frame, gw_Fx_Stat(0),
-           gw_Fx_Stat(1), gw_Fx_Stat(2), gw_Fx_Stat(3), gw_Fx_Stat(4), line);
+    gw_log("fx: census frame %d: %d live, %d instances, spawned %d killed %d refused %d (emitters %d) |%s", frame,
+           gw_Fx_Stat(0), gw_Fx_Stat(1), gw_Fx_Stat(2), gw_Fx_Stat(3), gw_Fx_Stat(4), gw_Fx_Stat(5), line);
 }
 
 /* ---- tests ---------------------------------------------------------------------------------------------- */
+static int test_fx_sim_features(void) {
+    static fx_pkg q;
+    static float mtx[12];
+    fx_emitter *e = &q.em[0];
+    fx_part part;
+    fx_inst inst;
+    uint32_t rng = 0x12345678u;
+    int i, h, rc = 0;
+    float v[3], dir[3];
+    memset(&q, 0, sizeof q);
+    q.nem = 1;
+    q.forward[0] = q.up[1] = 1.0f;
+    e->scale[0] = e->scale[1] = 1.0f;
+    e->scale_keys.value[0] = e->scale_keys.value[1] = 1.0f;
+    e->alpha0.value[0] = e->alpha1.value[0] = 1.0f;
+    e->param.value[0] = 1.0f;
+    e->color_scale = 1.0f;
+    e->wave_type = 8;
+    e->wave_amplitude[0] = 0.5f;
+    e->wave_cycle[0] = 4.0f;
+    e->wave_apply[0] = e->wave_apply[1] = 1;
+    memset(&part, 0, sizeof part);
+    memset(&inst, 0, sizeof inst);
+    inst.m[0][0] = inst.m[1][1] = inst.m[2][2] = 1.0f;
+    part.age = 1; part.life = 8; part.scale = 1.0f;
+    fx_visual_update(&part, e, &inst);
+    if (fabsf(part.wave_offset[0] - 0.5f) > 0.001f || fabsf(part.visual_pos[0] - 0.5f) > 0.001f ||
+        fabsf(part.visual_scale[0] - 1.5f) > 0.001f ||
+        fabsf(part.visual_color0[3] - 1.5f) > 0.001f) {
+        gw_test_fail("fx: wave frame 1 offset/scale/alpha expected 0.5/1.5/1.5"); rc = 1;
+    }
+
+    {   /* a four-frame colour ramp repeats after its period, independently of particle life */
+        fx_curve c = {0};
+        c.keyed = c.loop = 1; c.loop_rate = 4; c.n = 2;
+        c.k[0][0] = 0.0f; c.k[0][3] = 0.0f;
+        c.k[1][0] = 1.0f; c.k[1][3] = 1.0f;
+        if (fabsf(fx_curve_part_at(&c, 5, 20, 0) - 0.25f) > 0.001f ||
+            fabsf(fx_curve_part_at(&c, 7, 20, 0) - 0.75f) > 0.001f) {
+            gw_test_fail("fx: curve loop at ages 5/7 expected 0.25/0.75"); rc = 1;
+        }
+    }
+
+    {   /* frame cells at 25, 50, 75 percent of an eight-frame life; clamp and loop are age based */
+        fx_sampler s = {0};
+        s.pattern_count = 4; s.pattern_freq = 2.0f; s.div[0] = s.div[1] = 2;
+        part.pattern_count[0] = 4; part.pattern_start[0] = 1; part.life = 8;
+        s.pattern = FX_PAT_FIT_LIFE;
+        for (i = 1; i <= 3; ++i) {
+            part.age = i * 2;
+            if (fx_pattern_cell(&s, &part, 0) != i) { gw_test_fail("fx: fit_life at %d/8 expected cell %d", part.age, i); rc = 1; }
+        }
+        s.pattern = FX_PAT_CLAMP; part.age = 10;
+        if (fx_pattern_cell(&s, &part, 0) != 3) { gw_test_fail("fx: clamp cell at age 10 expected 3"); rc = 1; }
+        s.pattern = FX_PAT_LOOP;
+        if (fx_pattern_cell(&s, &part, 0) != 2) { gw_test_fail("fx: loop cell at age 10 plus phase 1 expected 2"); rc = 1; }
+        s.pattern = FX_PAT_RANDOM; part.age = 4; part.seed = 0x12345678u;
+        if (fx_pattern_cell(&s, &part, 0) != 1) {
+            gw_test_fail("fx: seeded random pattern at age 4 expected atlas cell 1"); rc = 1;
+        }
+        s.pattern = FX_PAT_FIT_LIFE; s.table_n = 4;
+        s.table[0] = 3; s.table[1] = 2; s.table[2] = 1; s.table[3] = 0; part.age = 4;
+        if (fx_pattern_cell(&s, &part, 0) != 1) { gw_test_fail("fx: table remap at half life expected cell 1"); rc = 1; }
+        e->smp[0] = s;
+        fx_visual_update(&part, e, &inst);
+        if (fabsf(part.pattern_uv[0][0] - 0.5f) > 0.001f || fabsf(part.pattern_uv[0][1]) > 0.001f) {
+            gw_test_fail("fx: atlas cell 1 of 2x2 expected UV origin (0.5, 0)"); rc = 1;
+        }
+    }
+
+    {   /* bounds for the source census's cylinder, plus the remaining shape families */
+        const int shapes[] = {FX_SHAPE_CYLINDER, FX_SHAPE_CYLINDER_FILL, FX_SHAPE_BOX, FX_SHAPE_BOX_FILL,
+                              FX_SHAPE_LINE, FX_SHAPE_LINE_DIVIDE, FX_SHAPE_RECTANGLE, FX_SHAPE_CIRCLE_DIVIDE,
+                              FX_SHAPE_SPHERE_DIVIDE, FX_SHAPE_SPHERE_DIVIDE64};
+        e->radius[0] = 2.0f; e->radius[1] = 3.0f; e->radius[2] = 4.0f;
+        e->form_scale[0] = e->form_scale[1] = e->form_scale[2] = 1.0f;
+        e->sweep[1] = 6.2831853f; e->sweep[2] = 3.1415927f;
+        e->line[1] = 6.0f; e->divide[0] = e->divide[2] = 8;
+        e->caliber = 0.5f;
+        for (i = 0; i < (int) (sizeof shapes / sizeof shapes[0]); ++i) {
+            int j;
+            e->shape = shapes[i];
+            for (j = 0; j < 64; ++j) {
+                fx_sample_shape(e, &rng, v, dir);
+                if (fabsf(v[0]) > 2.001f || fabsf(v[1]) > 3.001f || fabsf(v[2]) > 4.001f) {
+                    gw_test_fail("fx: shape %d spawned outside radius 2/3/4", e->shape); rc = 1; break;
+                }
+                if (e->shape == FX_SHAPE_CYLINDER &&
+                    fabsf(v[0] * v[0] / 4.0f + v[2] * v[2] / 16.0f - 1.0f) > 0.001f) {
+                    gw_test_fail("fx: cylinder surface must lie on elliptical rim"); rc = 1; break;
+                }
+                if (e->shape == FX_SHAPE_CYLINDER_FILL &&
+                    v[0] * v[0] / 4.0f + v[2] * v[2] / 16.0f < 0.25f - 0.001f) {
+                    gw_test_fail("fx: cylinder caliber 0.5 must leave inner radius 0.5 empty"); rc = 1; break;
+                }
+            }
+        }
+    }
+
+    {   /* detach keeps the particles alive while their alpha reaches zero in four frames */
+        e->wave_type = 0; e->fade_on_stop = 1; e->fade_alpha_frames = 4;
+        memset(&inst, 0, sizeof inst); inst.detached = 1; inst.detach_frame = 10;
+        part.age = 2; part.life = 20; part.scale = 1.0f;
+        fx_cur.frame = 10;
+        fx_visual_update(&part, e, &inst);
+        if (fabsf(part.fade_alpha - 0.75f) > 0.001f || fabsf(part.visual_color0[3] - 0.75f) > 0.001f) {
+            gw_test_fail("fx: detach frame 1 alpha expected 0.75"); rc = 1;
+        }
+        fx_cur.frame = 11; fx_visual_update(&part, e, &inst);
+        if (fabsf(part.fade_alpha - 0.5f) > 0.001f) { gw_test_fail("fx: detach frame 2 alpha expected 0.5"); rc = 1; }
+        fx_reset(); fx_pkgs[fx_npkg] = &q; h = fx_npkg++;
+        e->mesh = 1; /* no new emission in this synthetic case */
+        fx_cur.frame = 10;
+        fx_cur.inst[0] = inst;
+        fx_cur.inst[0].used = 1; fx_cur.inst[0].pkg = h; fx_cur.inst[0].em = 0;
+        fx_cur.part[0] = part;
+        fx_cur.part[0].inst = 0;
+        fx_cur.nlive = 1;
+        for (i = 0; i < 3; ++i) {
+            fx_cur.frame = 10 + i;
+            fx_step();
+            if (gw_Fx_Stat(0) != 1 || fabsf(fx_cur.part[0].fade_alpha - (0.75f - 0.25f * (float) i)) > 0.001f) {
+                gw_test_fail("fx: fade frame %d expected one live particle and alpha %.2f", i + 1, 0.75f - 0.25f * (float) i);
+                rc = 1;
+            }
+        }
+        fx_cur.frame = 13; fx_step();
+        if (gw_Fx_Stat(0) != 0 || gw_Fx_Stat(1) != 0) {
+            gw_test_fail("fx: fade frame 4 must release particle and emitter"); rc = 1;
+        }
+        fx_npkg--; fx_reset();
+    }
+
+    {   /* actual spawn initializes UV offsets/angles from the seeded instance PRNG */
+        fx_part first;
+        fx_inst before;
+        memset(&q.em[0], 0, sizeof q.em[0]);
+        e->life = 20; e->scale[0] = e->scale[1] = 1.0f;
+        e->scale_keys.value[0] = e->scale_keys.value[1] = 1.0f;
+        e->color_scale = e->alpha0.value[0] = e->alpha1.value[0] = 1.0f;
+        e->param.value[0] = 1.0f;
+        e->form_scale[0] = e->form_scale[1] = e->form_scale[2] = 1.0f;
+        e->smp[0].scroll_random[0] = 0.25f;
+        e->smp[0].scale[0] = 1.0f; e->smp[0].scale_random[0] = 0.5f;
+        e->smp[0].rotate_random = 0.75f;
+        e->smp[0].pattern_count = 4; e->smp[0].pattern_random_start = 1;
+        e->smp[0].div[0] = e->smp[0].div[1] = 2;
+        memset(mtx, 0, sizeof mtx);
+        for (i = 0; i < 12; i += 5) gw_wf32(&mtx[i], 1.0f);
+        fx_reset(); fx_pkgs[fx_npkg] = &q; h = fx_npkg++;
+        i = gw_Fx_Attach(h, (int) (uintptr_t) mtx, 0, 0, 1) - 1;
+        before = fx_cur.inst[i];
+        { float vel[3] = {0, 0, 0}; fx_spawn(i, &fx_cur.inst[i], e, vel); }
+        first = fx_cur.part[0];
+        if (fabsf(first.uv_scroll[0][0]) > 0.25f || first.uv_scale[0][0] < 0.5f ||
+            first.uv_scale[0][0] > 1.5f || fabsf(first.uv_rotate[0]) > 0.75f ||
+            first.pattern_start[0] < 0 || first.pattern_start[0] >= 4) {
+            gw_test_fail("fx: seeded initial UV scroll/scale/rotation or flipbook phase outside expected range"); rc = 1;
+        }
+        fx_cur.inst[i] = before; fx_cur.part[0].inst = -1; fx_cur.nlive = 0; fx_cur.spawned = 0;
+        { float vel[3] = {0, 0, 0}; fx_spawn(i, &fx_cur.inst[i], e, vel); }
+        if (memcmp(&first, &fx_cur.part[0], sizeof first) != 0) {
+            gw_test_fail("fx: repeated spawn after state restore must reproduce every UV and pattern random"); rc = 1;
+        }
+        fx_npkg--; fx_reset();
+    }
+
+    {   /* a full pool accepts the newest package's two highest-priority emitters only */
+        fx_reset();
+        q.nem = 3;
+        q.em[0].priority = 0; q.em[1].priority = 1; q.em[2].priority = 2;
+        fx_pkgs[fx_npkg] = &q; h = fx_npkg++;
+        for (i = 0; i < FX_MAX_INST - 2; ++i) fx_cur.inst[i].used = 1;
+        (void) gw_Fx_Attach(h, (int) (uintptr_t) mtx, 0, 0, 1);
+        fx_cur.part[0].inst = 255;
+        if (FX_MAX_INST != 256 || FX_MAX_PARTICLES != 2000 || gw_Fx_Stat(1) != 256 ||
+            gw_Fx_Stat(4) != 1 || gw_Fx_Stat(5) != 1 ||
+            fx_cur.inst[254].em != 0 || fx_cur.inst[255].em != 1 || gw_Fx_Stat(1255) != 1) {
+            gw_test_fail("fx: 256-instance cap must refuse only priority-2 emitter (instances %d refused %d)",
+                         gw_Fx_Stat(1), gw_Fx_Stat(4)); rc = 1;
+        }
+        fx_npkg--; fx_reset();
+    }
+    return rc;
+}
+
 static const char fx_test_pkg[] =
     "{\"geno_fx\":1,\"name\":\"t\",\"space\":{\"forward\":[0,0,1],\"up\":[0,1,0]},\"textures\":[],\"meshes\":[],\"emitters\":["
     "{\"name\":\"steady\",\"kind\":\"particle\",\"follow\":\"none\",\"transform\":{\"translate\":[0,0,0],\"rotate\":[0,0,0]},"
@@ -867,6 +1303,7 @@ static int test_fx_sim(void) {
     free(p);
     fx_npkg--;
     fx_reset();
+    rc |= test_fx_sim_features();
     return rc;
 }
 

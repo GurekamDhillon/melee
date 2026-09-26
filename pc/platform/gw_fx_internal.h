@@ -11,43 +11,50 @@ extern "C" {
 #define FX_MAX_PKGS 32
 #define FX_MAX_EMITTERS 32      /* per package */
 #define FX_MAX_TEX 24           /* per package */
-#define FX_MAX_INST 64
+#define FX_MAX_INST 256
 #define FX_MAX_PARTICLES 2000
 #define FX_RING 16              /* frames of state kept for a rollback */
 #define FX_KEYS 8
 #define FX_SAMPLERS 3
 #define FX_PATTERN_TABLE 32
 
-enum { FX_SHAPE_POINT, FX_SHAPE_SPHERE, FX_SHAPE_SPHERE_FILL, FX_SHAPE_CIRCLE, FX_SHAPE_CIRCLE_FILL, FX_SHAPE_OTHER };
+enum { FX_SHAPE_POINT, FX_SHAPE_SPHERE, FX_SHAPE_SPHERE_FILL, FX_SHAPE_CIRCLE, FX_SHAPE_CIRCLE_FILL,
+       FX_SHAPE_CIRCLE_DIVIDE, FX_SHAPE_SPHERE_DIVIDE, FX_SHAPE_SPHERE_DIVIDE64,
+       FX_SHAPE_CYLINDER, FX_SHAPE_CYLINDER_FILL, FX_SHAPE_BOX, FX_SHAPE_BOX_FILL,
+       FX_SHAPE_LINE, FX_SHAPE_LINE_DIVIDE, FX_SHAPE_RECTANGLE, FX_SHAPE_PRIMITIVE };
 enum { FX_SH_SPRITE, FX_SH_WARP, FX_SH_DISTORTION };            /* the shader library (geno.md 20.2) */
 enum { FX_COL_FLAT, FX_COL_MODULATE, FX_COL_LERP };
 enum { FX_BLEND_ALPHA, FX_BLEND_ADD, FX_BLEND_SUB, FX_BLEND_MUL, FX_BLEND_SCREEN };
 enum { FX_PAT_NONE, FX_PAT_FIT_LIFE, FX_PAT_CLAMP, FX_PAT_LOOP, FX_PAT_RANDOM };
 enum { FX_WRAP_MIRROR, FX_WRAP_REPEAT, FX_WRAP_CLAMP };
 
-typedef struct { int n; float k[FX_KEYS][4]; float value[3]; int keyed; } fx_curve;
+typedef struct { int n; float k[FX_KEYS][4]; float value[3]; int keyed, loop, loop_rate; } fx_curve;
 
 typedef struct {
     int tex;                    /* index into the package's textures, -1 = none */
     int wrap[2];
-    int pattern, pattern_count, table_n;
+    int pattern, pattern_count, pattern_count_random, pattern_random_start, table_n;
     float pattern_freq;
     int table[FX_PATTERN_TABLE];
     int div[2];
     float scroll[2], scroll_add[2], scale[2], scale_add[2], rotate, rotate_add;
+    float scroll_random[2], scale_random[2], rotate_random;
     int en_scroll, en_scale, en_rotate;
 } fx_sampler;
 
 typedef struct {
     char name[48];
-    int mesh, follow;           /* follow: 0 srt, 1 none, 2 translate */
+    int mesh, follow, order, priority; /* follow: 0 srt, 1 none, 2 translate */
     float trans[3], rot[3];
-    int start, duration, one_time, interval;
+    int start, duration, one_time, interval, fade_on_stop, fade_alpha_frames, fade_in_frames;
+    int alpha_fade_in, scale_fade_in;
     float rate, rate_random;
     int by_dist, dist_max_particles;
     float dist_unit, dist_min, dist_max;
     int shape;
-    float radius[3], caliber;
+    float radius[3], form_scale[3], caliber, sweep[3], line[2];
+    int sweep_start_random, divide[4];
+    float surface_random;
     int life, infinite;
     float life_random;          /* 0..1 */
     float vel_all, vel_dir[3], vel_dir_scale, vel_random, inherit;
@@ -57,6 +64,8 @@ typedef struct {
     fx_curve scale_keys, color0, alpha0, color1, alpha1, param;
     float color_scale;
     float rot_init[3], rot_init_random[3], rot_add[3], rot_add_random[3];
+    int wave_type, wave_apply[3];
+    float wave_amplitude[2], wave_cycle[2], wave_phase_random[2], wave_phase_init[2];
     /* material (the shader library type + parameters) */
     int shader, color_mode, offset, offset_mask, color_mask, alpha_mask, blend, depth_test, alpha_test;
     float strength[2], alpha_threshold, bloom_threshold, bloom_intensity;
@@ -77,7 +86,7 @@ typedef struct {
 } fx_pkg;
 
 typedef struct {
-    int used, pkg, em, detached, attach_frame, age, emitted, facing;
+    int used, pkg, em, detached, detach_frame, attach_frame, age, emitted, facing;
     uint32_t owner, mtx_off, rng;
     float accum, dist_accum;
     float pos[3], prev[3], m[3][4];
@@ -90,6 +99,12 @@ typedef struct {
     int age, life;
     float pos[3], vel[3], scale, rot, rot_add;
     float lpos[3], lvel[3];     /* follow srt: in the emitter frame; translate: world axes, from the owner */
+    float wave_phase[2], wave_offset[2], wave_scale[2], fade_alpha;
+    float visual_pos[3];
+    float uv_scroll[FX_SAMPLERS][2], uv_scale[FX_SAMPLERS][2], uv_rotate[FX_SAMPLERS];
+    int pattern_start[FX_SAMPLERS], pattern_count[FX_SAMPLERS], pattern_cell[FX_SAMPLERS];
+    float pattern_uv[FX_SAMPLERS][2];
+    float visual_scale[2], visual_color0[4], visual_color1[4], visual_param;
     uint32_t seed;
 } fx_part;
 
@@ -98,7 +113,7 @@ typedef struct {
     fx_inst inst[FX_MAX_INST];
     fx_part part[FX_MAX_PARTICLES];
     int nlive;
-    uint32_t spawned, killed, refused;
+    uint32_t spawned, killed, refused, refused_emitters;
 } fx_state;
 
 /* gw_fx.c */

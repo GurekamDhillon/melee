@@ -1284,6 +1284,15 @@ static int gw_uncap_try(uint64_t now, uint64_t target) {
 
 static void gw_pace_field(void) {
   if (gw_turbo) {
+    /* The realtime wait below ends at the pad alarm's deadline and the poll follows at once, at the
+       start of the next tick. Do the same on the virtual clock: jump to the deadline here, so the
+       sample for the next frame is taken after this frame's logic and scripts (on_frame's gd.input
+       lands on the next frame, as in realtime), never by a wait inside the frame. */
+    uint64_t deadline;
+    if (gw_os_pad_alarm_deadline(GW_TICKS_PER_FIELD, &deadline) && deadline > gw_turbo_ticks &&
+        gw_polls_since_pace < 2u) {
+      gw_turbo_ticks = deadline;
+    }
     gw_polls_since_pace = 0;
     return;
   }
@@ -1950,6 +1959,29 @@ void gw_wait_idle(void) {
   }
   if (gw_turbo) {
     const int have_alarm = gw_os_next_alarm_deadline(&next_alarm);
+    uint64_t pad_deadline;
+    static uint32_t held;
+    /* A wait inside a frame (an ARAM load, a DVD read) takes microseconds in realtime and never
+       reaches the next field's pad alarm; jumping the virtual clock to it here sampled the pad a
+       frame early (a script's gd.input landed one frame late in turbo). Once this field has its
+       sample, hold the clock short of the pad deadline; gw_pace_field moves it there. The valve
+       lets a wait that only the pad alarm can end make progress after 100000 calls. */
+    if (have_alarm && next_alarm > gw_turbo_ticks && gw_polls_since_pace >= 1u &&
+        gw_os_pad_alarm_deadline(GW_TICKS_PER_FIELD, &pad_deadline) && next_alarm >= pad_deadline &&
+        ++held < 100000u) {
+      if (held == 1u) {
+        gw_run_deferred();
+      }
+      return;
+    }
+    if (held >= 100000u) {
+      static int warned;
+      if (!warned) {
+        warned = 1;
+        gw_log("gw: turbo: a wait needed the next pad alarm mid-frame; the clock moved on");
+      }
+    }
+    held = 0;
     if (have_alarm && next_alarm > gw_turbo_ticks) {
       gw_turbo_ticks = next_alarm;
     } else if (!have_alarm) {

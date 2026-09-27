@@ -446,6 +446,7 @@ static void geno_clear_action(GenoState* st)
     geno_zero(st->rehit_count, sizeof(st->rehit_count));
     geno_zero(st->link_mode, sizeof(st->link_mode));
     geno_zero(st->stun_add, sizeof(st->stun_add));
+    geno_zero(st->hb_flags, sizeof(st->hb_flags));
     st->ledge = -1;
     st->motion_started = 0;
     st->motion_vy = 0.0f;
@@ -1766,6 +1767,17 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
         }
         break;
     }
+    case GENO_SUB_HBFLAGS: {
+        /* v5.5: contact flags of the masked hitbox ids (GENO_HBF_*), kept for the action */
+        int i;
+        s32 f = geno_operand(st, 0, (w0 & 0x80) != 0, GENO_W(1)).i;
+        for (i = 0; i < GENO_MAX_REHIT; i++) {
+            if (a & (1 << i)) {
+                st->hb_flags[i] = f & 0xF;
+            }
+        }
+        break;
+    }
     case GENO_SUB_HBDMG: {
         /* v5.3: the damage of the masked hitboxes (after their creation) = B, a float immediate or
            a var ref ([7]); Ultimate's counters scale their hit from the countered one (Sora's
@@ -1805,6 +1817,69 @@ void Geno_HitStunBonus(Fighter* atk, int idx, Fighter* vic)
     as = geno_state(atk);
     add = as->stun_add[idx];
     Geno_GiveStunBonus(vic, add);
+}
+
+/* v5.5 HBFLAGS, at a won fighter-on-fighter hit (ftcoll.c): the hitbox's contact flags; returns them so the
+ * caller can take ZERO_DAMAGE's damage back at once. The victim keeps them for this frame (FLINCHLESS /
+ * FORCE_REACTION / NO_HITLAG, read by Geno_HitReact / Geno_NoHitlag); NO_HITLAG also marks the attacker. */
+int Geno_HitFlags(Fighter* atk, int idx, Fighter* vic)
+{
+    GenoState* s;
+    s32 f;
+    if (atk == NULL || vic == NULL || idx < 0 || idx >= GENO_MAX_REHIT) {
+        return 0;
+    }
+    f = geno_state(atk)->hb_flags[idx];
+    if (f == 0) {
+        return 0;
+    }
+    s = geno_state(vic);
+    {
+        extern void diag_geno_stun(int port, int base, int bonus);
+        diag_geno_stun(-1000 - vic->player_id, f, atk->player_id); /* MELEE_GENO_STUNLOG: a contact-flags hit */
+    }
+    if (s->react_frame != geno_stun_frame()) {
+        s->react_flags = 0;
+    }
+    s->react_flags |= f;
+    s->react_frame = geno_stun_frame();
+    if (f & GENO_HBF_NO_HITLAG) {
+        s = geno_state(atk);
+        if (s->react_frame != geno_stun_frame()) {
+            s->react_flags = 0;
+        }
+        s->react_flags |= GENO_HBF_NO_HITLAG;
+        s->react_frame = geno_stun_frame();
+    }
+    return f;
+}
+
+static s32 geno_react(Fighter* fp)
+{
+    GenoState* s = geno_state(fp);
+    return s->react_frame == geno_stun_frame() ? s->react_flags : 0;
+}
+
+/* fighter.c, the start of the hit reaction (Fighter_ProcessHit): FLINCHLESS drops the knockback (the damage
+ * still lands); FORCE_REACTION lifts no_kb for this hit (returns 1 so the caller restores it after) */
+int Geno_HitReact(Fighter* fp)
+{
+    const s32 f = geno_react(fp);
+    int lifted = 0;
+    if (f & GENO_HBF_FORCE_REACTION) {
+        lifted = fp->no_kb != 0;
+        fp->no_kb = 0;
+    }
+    if ((f & GENO_HBF_FLINCHLESS) && !(f & GENO_HBF_FORCE_REACTION)) {
+        fp->dmg.kb_applied = 0.0f;
+    }
+    return lifted;
+}
+
+/* fighter.c, the hitlag of this frame's hit: 1 = none (a NO_HITLAG hitbox was involved) */
+int Geno_NoHitlag(Fighter* fp)
+{
+    return (geno_react(fp) & GENO_HBF_NO_HITLAG) != 0;
 }
 
 /* the victim's pending bonus for this frame: the largest of the frame's hits */

@@ -1438,7 +1438,11 @@ void gw_diag_geno_stun(int port, int base, int bonus) {
         const char *v = getenv("MELEE_GENO_STUNLOG");
         on = v != NULL && v[0] == '1';
     }
-    if (on) gw_log("geno: hitstun P%d: base %d + bonus %d = %d frames", port + 1, base, bonus, base + bonus);
+    if (on && port <= -1000)
+        gw_log("geno: contact flags 0x%X: P%d hit P%d (no damage state / damage / hitlag as flagged)", base, bonus + 1,
+               -1000 - port + 1);
+    else if (on)
+        gw_log("geno: hitstun P%d: base %d + bonus %d = %d frames", port + 1, base, bonus, base + bonus);
 }
 int gw_Geno_FxBindings(int p) { return gn_at(p) ? gn_at(p)->fx_set : -1; }
 int gw_Geno_StateHasCounter(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_ctr_on[s] : 0; }

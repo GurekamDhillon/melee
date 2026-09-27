@@ -3393,6 +3393,9 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     bool bool1 = 0;
     s32 motion_state_index = fp->motion_id;
+#if defined(TARGET_PC)
+    int geno_lifted_no_kb = 0;
+#endif
     bool bool2 = 0;
     bool bool3 = 0;
     bool bool4 = 0;
@@ -3404,7 +3407,9 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
             /* Geno v5 (docs/geno.md section 19): on_hit hooks and counter windows, before Melee
              * reacts to this frame's hit. Returns at once for a fighter with no Geno profile. */
             extern int Geno_OnHit(Fighter_GObj * gobj);
+            extern int Geno_HitReact(Fighter * fp);
             Geno_OnHit(gobj);
+            geno_lifted_no_kb = Geno_HitReact(fp); /* v5.5 HBFLAGS: flinchless / forced reaction */
         }
 #endif
         if (!fp->x221A_b7) {
@@ -3567,6 +3572,11 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
             ftCommon_800804FC(fp);
         }
         ftCo_800C8D00(gobj);
+#if defined(TARGET_PC)
+        if (geno_lifted_no_kb) {
+            fp->no_kb = 1; /* HBFLAGS FORCE_REACTION lifted it for this hit only */
+        }
+#endif
 
         if (bool1) {
             fp->dmg.x195c_hitlag_frames = ftCommon_CalcHitlag(
@@ -3574,6 +3584,14 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
             if (fp->dmg.x195c_hitlag_frames < fp->x1964) {
                 fp->dmg.x195c_hitlag_frames = fp->x1964;
             }
+#if defined(TARGET_PC)
+            {
+                extern int Geno_NoHitlag(Fighter * fp);
+                if (Geno_NoHitlag(fp)) { /* v5.5 HBFLAGS NO_HITLAG */
+                    fp->dmg.x195c_hitlag_frames = 0.0f;
+                }
+            }
+#endif
             if (fp->dmg.x195c_hitlag_frames > 0.0f) {
                 if (fp->dmg.x195c_hitlag_frames >
                     p_ftCommonData->x194_unkHitLagFrames)

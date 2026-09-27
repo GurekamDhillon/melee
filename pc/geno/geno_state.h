@@ -43,6 +43,9 @@ typedef struct GenoState {
     s32 stun_add[GENO_MAX_REHIT];        /* v5.5 HBSTUN: extra hitstun frames a hit by this hitbox id gives */
     s32 stun_bonus;                      /* as a victim: extra hitstun from this frame's hits (the largest) */
     s32 stun_bonus_frame;                /* the frame stun_bonus was set in (a bonus is for its frame only) */
+    s32 hb_flags[GENO_MAX_REHIT];        /* v5.5 HBFLAGS: GENO_HBF_* per hitbox id, kept for the action */
+    s32 react_flags;                     /* GENO_HBF_* from this frame's hits, as a victim (or NO_HITLAG as attacker) */
+    s32 react_frame;                     /* the frame react_flags were set in */
     /* landing / take-off edges inside the collision callback (not cleared by action changes) */
     u32 in_coll;
     u32 edge_pending;

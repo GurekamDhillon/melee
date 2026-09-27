@@ -68,6 +68,7 @@ enum {
     GENO_SUB_HBDMG = 0x3A,  /* v5.3: [15:8] hitbox mask, [7] B is a var; word1 = damage (float) */
     GENO_SUB_LINK = 0x39,   /* v1: [15:8] hitbox mask; word1 = autolink mode (GENO_LINK_*) */
     GENO_SUB_HBSTUN = 0x3B, /* v5.5: [15:8] hitbox mask, [7] B is a var; word1 = extra hitstun frames (int) */
+    GENO_SUB_HBFLAGS = 0x3C, /* v5.5: [15:8] hitbox mask, [7] B is a var; word1 = GENO_HBF_* contact flags */
 };
 
 /* ---- v1: engine values (GET / PUT / IFV / the VALUE condition). Stable numbers. ----------- */
@@ -174,6 +175,11 @@ enum {
 #define GENO_MAX_CHECKS 8     /* registered change-action checks per fighter */
 #define GENO_CHECK_CONDS 3    /* conditions per check (CHG + 2 CHGAND) */
 #define GENO_MAX_REHIT 4      /* one per Melee hitbox id */
+/* v5.5 HBFLAGS contact flags (a hitbox's hits; Ultimate ATTACK options / AttackModule) */
+#define GENO_HBF_NO_HITLAG 1       /* no hitlag for the victim or the attacker */
+#define GENO_HBF_FLINCHLESS 2      /* the damage lands; no knockback, no damage state */
+#define GENO_HBF_ZERO_DAMAGE 4     /* the hit adds no damage (a detector / sensor hit) */
+#define GENO_HBF_FORCE_REACTION 8  /* the victim reacts even when its state would not (no_kb) */
 
 enum {
     GENO_LINK_OFF = 0,

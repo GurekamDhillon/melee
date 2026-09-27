@@ -2854,6 +2854,45 @@ static int test_geno_v52_lockon(void)
         if (b1 != 5) { TestFail("HBSTUN: hitbox 1 from LAI7 gives 5"); rc = 1; }
         if (bcleared != 0) { TestFail("HBSTUN: an action change clears the hitbox bonuses"); rc = 1; }
     }
+    /* HBFLAGS (v5.5): hitbox 0 = NO_HITLAG|FLINCHLESS|ZERO_DAMAGE (7), hitbox 1 = FORCE_REACTION (8); a hit by
+       hitbox 0 drops the knockback and the hitlag (this frame only), hitbox 1 lifts no_kb; an action change clears */
+    {
+        extern int Geno_HitFlags(Fighter * atk, int idx, Fighter * vic);
+        extern int Geno_HitReact(Fighter * fp);
+        extern int Geno_NoHitlag(Fighter * fp);
+        u32* s = t_script;
+        int n = 0, f0, lifted;
+        t_setup();
+        s[n++] = GENO_W0(GENO_SUB_HBFLAGS, 2, 0x01 << 8);
+        s[n++] = 7;
+        s[n++] = GENO_W0(GENO_SUB_HBFLAGS, 2, 0x02 << 8);
+        s[n++] = 8;
+        s[n++] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        f0 = Geno_HitFlags(&t_fp, 0, &t_fp);
+        t_fp.dmg.kb_applied = 50.0f;
+        Geno_HitReact(&t_fp);
+        if (f0 != 7) { TestFail("HBFLAGS: hitbox 0 carries 7"); rc = 1; }
+        if (t_fp.dmg.kb_applied != 0.0f) { TestFail("HBFLAGS: FLINCHLESS drops the knockback"); rc = 1; }
+        if (!Geno_NoHitlag(&t_fp)) { TestFail("HBFLAGS: NO_HITLAG reported"); rc = 1; }
+        t_setup();
+        s[0] = GENO_W0(GENO_SUB_HBFLAGS, 2, 0x02 << 8);
+        s[1] = 8;
+        s[2] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        Geno_HitFlags(&t_fp, 1, &t_fp);
+        t_fp.no_kb = 1;
+        t_fp.dmg.kb_applied = 50.0f;
+        lifted = Geno_HitReact(&t_fp);
+        if (lifted != 1 || t_fp.no_kb != 0 || t_fp.dmg.kb_applied != 50.0f) {
+            TestFail("HBFLAGS: FORCE_REACTION lifts no_kb, keeps the knockback");
+            rc = 1;
+        }
+        t_fp.no_kb = 0;
+        if (Geno_HitFlags(&t_fp, 3, &t_fp) != 0) { TestFail("HBFLAGS: hitbox 3 has none"); rc = 1; }
+        Geno_OnActionChange(&t_gobj);
+        if (Geno_HitFlags(&t_fp, 1, &t_fp) != 0) { TestFail("HBFLAGS: an action change clears them"); rc = 1; }
+    }
     /* ATTACK_CONNECTED (v5.3): set by a won hit (Geno_Autolink's site), moved to _PREV and cleared
        at the action change, writable */
     {

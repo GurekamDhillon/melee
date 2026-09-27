@@ -2,6 +2,7 @@
  * Compiled through the game pipeline, so `TestRegister`/`TestFail` resolve to gw_TestRegister/
  * gw_TestFail after gwtool's symbol prefixing. Registered from gw_MexTestRegisterAll. */
 
+#include <dolphin/mtx.h>
 #include <melee/ft/forward.h>
 #include <melee/gm/forward.h>
 #include <melee/gm/gm_1A3F.h>
@@ -330,6 +331,51 @@ static int test_scene_start_forgets_player_entities(void) {
     return rc;
 }
 
+/* PSMTXConcat's madd (mtx_pc.c mtx_madd) is a double mul then add, not an fma call: the float*float
+ * product is exact in double, so it must round exactly like fma(). Checked against the CRT's fma
+ * (a true llvm.fma here) on random float bit patterns, and PSMTXConcat against an fma reference. */
+static unsigned int fma_rng = 0x9E3779B9u;
+static float fma_rand_float(void) {
+    union { unsigned int u; float f; } v;
+    do {
+        fma_rng = fma_rng * 1664525u + 1013904223u;
+        v.u = fma_rng ^ (fma_rng >> 7) * 2654435761u;
+    } while ((v.u & 0x7F800000u) == 0x7F800000u); /* no inf/NaN */
+    if ((fma_rng >> 3) & 1) { v.u = (v.u & 0x807FFFFFu) | (((v.u >> 23 & 0x1F) + 112u) << 23); }
+    return v.f;
+}
+static float fma_ref_madd(float a, float c, float b) { /* one expression: clang contracts it to fmuladd.f64, gwtool lowers that to llvm.fma (the CRT fma) */
+    return (float) ((double) a * (double) c + (double) b); }
+static float fma_split_madd(float a, float c, float b) {
+    double p = (double) a * (double) c;
+    return (float) (p + (double) b);
+}
+static int test_mtx_madd_matches_fma(void) {
+    int i, j, k, n;
+    union { float f; unsigned int u; } x, y;
+    for (n = 0; n < 200000; n++) {
+        float a = fma_rand_float(), c = fma_rand_float(), b = fma_rand_float();
+        x.f = fma_split_madd(a, c, b); y.f = fma_ref_madd(a, c, b);
+        if (x.u != y.u) { TestFail("double mul+add differs from fma() on float operands"); return 1; }
+    }
+    for (n = 0; n < 5000; n++) {
+        Mtx A, B, R;
+        for (i = 0; i < 3; i++) for (j = 0; j < 4; j++) { A[i][j] = fma_rand_float(); B[i][j] = fma_rand_float(); }
+        PSMTXConcat(A, B, R);
+        for (i = 0; i < 3; i++) for (j = 0; j < 4; j++) {
+            float t = B[0][j] * A[i][0];
+            t = fma_ref_madd(B[1][j], A[i][1], t);
+            t = fma_ref_madd(B[2][j], A[i][2], t);
+            if (j == 3) t = fma_ref_madd(1.0F, A[i][3], t);
+            else if (j == 2) t = fma_ref_madd(0.0F, A[i][3], t);
+            x.f = R[i][j]; y.f = t;
+            if (x.u != y.u) { TestFail("PSMTXConcat differs from its fma reference"); return 1; }
+        }
+    }
+    (void) k;
+    return 0;
+}
+
 void MexTestRegisterAll(void) {
     TestRegister("gm_Is1PMode_1p_modes", test_1p_mode_classification);
     TestRegister("gm_Is1PMode_vs_modes", test_vs_mode_is_not_1p);
@@ -343,4 +389,5 @@ void MexTestRegisterAll(void) {
     TestRegister("script_stale_fighter_reads_absent", test_script_stale_fighter_reads_absent);
     TestRegister("script_live_fighter_reads", test_script_live_fighter_reads);
     TestRegister("scene_start_forgets_player_entities", test_scene_start_forgets_player_entities);
+    TestRegister("mtx_madd_matches_fma", test_mtx_madd_matches_fma);
 }

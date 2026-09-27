@@ -19,10 +19,17 @@
 
 /* A paired-single ps_madd lane: a*c + b with ONE rounding to single. Both factors are floats, so
  * their product is exact in double; the sum is rounded to double and then to float - Dolphin's
- * model of the Gekko's fused multiply-add (the same as gwtool's lowering of fmuladd). */
+ * model of the Gekko's fused multiply-add (the same as gwtool's lowering of fmuladd).
+ *
+ * The product and the add are separate statements on purpose. As one expression clang contracts
+ * them to llvm.fmuladd.f64, gwtool lowers that to llvm.fma.f64, and without FMA3 that is a call
+ * to the CRT's software fma - 2.6 ms a frame for Sora's 2,080 envelopes. Since the float*float
+ * product is exact in double (48 significant bits, no overflow or underflow possible), mul then
+ * add rounds once, exactly like fma(a, c, b): the same bits, no call. geno_tests checks it. */
 static float mtx_madd(float a, float c, float b)
 {
-    return (float) ((double) a * (double) c + (double) b);
+    double p = (double) a * (double) c;
+    return (float) (p + (double) b);
 }
 
 void PSMTXIdentity(Mtx m)

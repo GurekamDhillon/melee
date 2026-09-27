@@ -46,6 +46,7 @@ typedef struct gw_mod {
     char status_text[GW_MODS_TEXT_MAX];
     uint64_t file_sum; /* order-independent sum of per-file digests the overlay reported */
     int nfiles;
+    char engine_miss[GW_MODS_TEXT_MAX]; /* mod.json "engine": the first feature this build lacks ("" = none) */
 } gw_mod;
 
 typedef struct gw_mods_set {
@@ -211,6 +212,24 @@ static void mod_add_list(gw_mod *m, const char *key, const char *val) {
     }
 }
 
+/* mod.json "engine": {"<feature>": <version>, ...} - engine features the mod's files need. A mod that needs a
+ * feature this build lacks, or a newer version of one, is not mounted (its files would load and draw wrong on an
+ * older engine: e.g. a geno_pal_pobj_v1 POBJ reads as a plain one). The features this build has: */
+static const struct { const char *name; int version; } gw_engine_features[] = {
+    { "pobj_palette", 1 }, /* PC matrix palette POBJs (pobj.c geno_pal_pobj_v1; Aurora GX_AURORA_LOAD_PALETTE) */
+};
+
+static void mod_engine_need(gw_mod *m, const char *feature, int version) {
+    size_t i;
+    int have = 0;
+    for (i = 0; i < sizeof gw_engine_features / sizeof gw_engine_features[0]; ++i)
+        if (strcmp(gw_engine_features[i].name, feature) == 0) have = gw_engine_features[i].version;
+    if (version > have && m->engine_miss[0] == '\0') {
+        snprintf(m->engine_miss, sizeof m->engine_miss, "needs engine %s %d (this build: %s%d)", feature, version,
+                 have ? "" : "none, ", have);
+    }
+}
+
 /* Returns 0 on success, -1 on a syntax error (fields read before it are kept). */
 static int mod_parse_json(gw_mod *m, const char *text) {
     const char *p = json_skip_ws(text);
@@ -242,6 +261,22 @@ static int mod_parse_json(gw_mod *m, const char *text) {
                 if (*p == ',') p = json_skip_ws(p + 1);
             }
             if (*p != ']') return -1;
+            ++p;
+        } else if (*p == '{' && strcmp(key, "engine") == 0) {
+            p = json_skip_ws(p + 1);
+            while (*p && *p != '}') {
+                char feat[48];
+                p = json_string(p, feat, sizeof feat);
+                if (p == NULL) return -1;
+                p = json_skip_ws(p);
+                if (*p != ':') return -1;
+                p = json_skip_ws(p + 1);
+                mod_engine_need(m, feat, atoi(p)); /* a non-number (e.g. true) reads as 0: no requirement */
+                p = json_skip_value(p);
+                p = json_skip_ws(p);
+                if (*p == ',') p = json_skip_ws(p + 1);
+            }
+            if (*p != '}') return -1;
             ++p;
         } else {
             p = json_skip_value(p);
@@ -363,6 +398,12 @@ static void set_resolve(gw_mods_set *s) {
         m->status = keep[i] ? GW_MOD_ACTIVE : GW_MOD_OFF;
         copy_str(m->status_text, sizeof m->status_text,
                  s->mods_off ? "all mods off (MELEE_MODS=0)" : keep[i] ? "on" : "off");
+        if (keep[i] && m->engine_miss[0]) { /* mod.json "engine": this build lacks what its files need */
+            keep[i] = 0;
+            m->status = GW_MOD_MISSING_DEP;
+            copy_str(m->status_text, sizeof m->status_text, m->engine_miss);
+            gw_log("gw: mods: %s not mounted: %s", m->id, m->engine_miss);
+        }
     }
     /* Conflict pass order: base first, then misc, then content, then id (the array is id-sorted). */
     for (k = 0; k < 3; ++k) {
@@ -958,6 +999,34 @@ static int test_mods_resolve(void) {
     return 0;
 }
 
+/* mod.json "engine": a mod needing a feature this build has mounts; one needing a newer version, or a feature
+ * it lacks, does not (MISSING_DEP, with the reason in its status). */
+static int test_mods_engine(void) {
+    gw_mods_set *s = t_set();
+    char dir[MAX_PATH];
+    int rc = 0;
+    t_write("enabled.txt", "ace-base\npal-ok\npal-new\npal-unknown\n");
+    t_write("pal-ok\\mod.json", "{\"kind\":\"fighter\",\"engine\":{\"pobj_palette\":1}}");
+    t_write("pal-new\\mod.json", "{\"kind\":\"fighter\",\"engine\":{\"pobj_palette\":2},\"name\":\"after\"}");
+    t_write("pal-unknown\\mod.json", "{\"kind\":\"fighter\",\"engine\":{\"pobj_palette\":1,\"warp_drive\":3}}");
+    set_load(s, gw_mods_test_root, 0);
+    if (t_status(s, "pal-ok") != GW_MOD_ACTIVE || t_status(s, "pal-new") != GW_MOD_MISSING_DEP ||
+        t_status(s, "pal-unknown") != GW_MOD_MISSING_DEP ||
+        strstr(s->mod[set_find(s, "pal-new")].status_text, "pobj_palette 2") == NULL ||
+        strcmp(s->mod[set_find(s, "pal-new")].name, "after") != 0) {
+        gw_test_fail("engine requirements resolved wrong (ok %d, new %d, unknown %d)", t_status(s, "pal-ok"),
+                     t_status(s, "pal-new"), t_status(s, "pal-unknown"));
+        rc = 1;
+    }
+    snprintf(dir, sizeof dir, "%s\\pal-ok", gw_mods_test_root);
+    t_rmtree(dir);
+    snprintf(dir, sizeof dir, "%s\\pal-new", gw_mods_test_root);
+    t_rmtree(dir);
+    snprintf(dir, sizeof dir, "%s\\pal-unknown", gw_mods_test_root);
+    t_rmtree(dir);
+    return rc;
+}
+
 static int test_mods_toggle_and_save(void) {
     gw_mods_set *s = t_set();
     int n;
@@ -1048,6 +1117,7 @@ static int test_mods_fingerprint_and_diff(void) {
 void gw_mods_tests_register(void) {
     gw_test_register("mods_scan_and_json", test_mods_scan_and_json);
     gw_test_register("mods_resolve", test_mods_resolve);
+    gw_test_register("mods_engine", test_mods_engine);
     gw_test_register("mods_toggle_and_save", test_mods_toggle_and_save);
     gw_test_register("mods_fingerprint_and_diff", test_mods_fingerprint_and_diff);
 }

@@ -35,10 +35,16 @@
 #include "../geno/geno.h"
 #include "script_items.h"
 #include <sysdolphin/baselib/gobj.h>
+#include <sysdolphin/baselib/gobjobject.h>
 #include <sysdolphin/baselib/memory.h>
 #include <melee/mp/mplib.h>
 #include <melee/mp/types.h>
+#include <melee/lb/lbarchive.h>
+#include <melee/lb/lbfile.h>
+#include <melee/lb/lbheap.h>
 #include <math.h>
+#include <string.h>
+#include <dolphin/dvd.h>
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <melee/gr/forward.h>
@@ -47,6 +53,8 @@
 #include <sysdolphin/baselib/gobjplink.h>
 #include <sysdolphin/baselib/state.h>
 #include <sysdolphin/baselib/tev.h>
+#include <sysdolphin/baselib/archive.h>
+#include <sysdolphin/baselib/jobj.h>
 
 /* Each scripted line owns two vertices and one joint. mpCheckFloor and its wall/ceiling
  * siblings walk joint ranges (mplib.c), so a single appended global range cannot mix kinds.
@@ -55,8 +63,11 @@
 #define SCRIPT_STAGE_LINES 200 /* the pool's size; a stage gets min(this, its spare room) */
 #define SCRIPT_STAGE_TARGETS 32
 #define SCRIPT_STAGE_ENEMIES 32
+#define SCRIPT_STAGE_MODELS 64
+#define SCRIPT_STAGE_ARCHIVES 8
+#define SCRIPT_STAGE_ARCHIVE_MAX (8 * 1024 * 1024)
 typedef struct {
-    int handle, active, kind, flags;
+    int handle, active, kind, flags, model_handle;
     float x0, y0, x1, y1;
 } ScriptStageLine;
 typedef struct {
@@ -68,9 +79,21 @@ typedef struct {
     int handle, kind, active, defeated;
     Item_GObj* gobj;
 } ScriptStageEnemy;
+typedef struct {
+    int handle, active, line_handle;
+    HSD_GObj* gobj;
+    float x, y, z, scale, rot;
+} ScriptStageModel;
+typedef struct {
+    char file[32];
+    void* data;
+    HSD_Archive* archive;
+    size_t bytes;
+} ScriptStageArchive;
 static struct {
     MapCollData* map;
     int base_v, base_l, base_j, target_remaining;
+    int target_model_ready;
     int cap;           /* lines reserved on this stage (<= SCRIPT_STAGE_LINES) */
     HSD_GObj* draw;    /* the world-pass drawing GObj (gxlink 3, with the stage) */
     u8* cube;          /* the unit box's 8 corners, MEM1 (a GX_INDEX8 position array) */
@@ -80,7 +103,106 @@ static struct {
     int enemy_ready[6];
     int enemy_attempted[6];
     HSD_Archive* enemy_archive[3];
+    ScriptStageModel model[SCRIPT_STAGE_MODELS];
+    ScriptStageArchive archives[SCRIPT_STAGE_ARCHIVES];
 } script_stage;
+static Article* script_target_old_article;
+
+static int script_stage_same_file(const char* a, const char* b)
+{
+    for (; *a && *b; ++a, ++b) {
+        int ac = *a, bc = *b;
+        if (ac >= 'A' && ac <= 'Z') ac += 'a' - 'A';
+        if (bc >= 'A' && bc <= 'Z') bc += 'a' - 'A';
+        if (ac != bc) return 0;
+    }
+    return *a == *b;
+}
+
+/* Called at the end of gm_801A4D34, while this scene's objects still exist. */
+void ScriptGame_StageEnd(void)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
+        if (script_stage.model[i].active && script_stage.model[i].gobj != NULL)
+            HSD_GObjFree(script_stage.model[i].gobj);
+        script_stage.model[i].active = 0;
+        script_stage.model[i].gobj = NULL;
+    }
+    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
+        if (script_stage.target[i].active && script_stage.target[i].gobj != NULL) {
+            Item_GObj* gobj = script_stage.target[i].gobj;
+            script_stage.target[i].active = 0;
+            script_stage.target[i].gobj = NULL;
+            Item_8026A8EC(gobj);
+        }
+    }
+    if (script_stage.draw != NULL) HSD_GObjFree(script_stage.draw);
+    script_stage.draw = NULL;
+    if (script_stage.target_model_ready) {
+        it_804A0F60[It_Kind_Mato - It_Kind_Old_Kuri] = script_target_old_article;
+        script_target_old_article = NULL;
+    }
+    for (i = 0; i < SCRIPT_STAGE_ARCHIVES; ++i) {
+        ScriptStageArchive* a = &script_stage.archives[i];
+        if (a->archive != NULL) {
+            OSReport("script stage: release /%s (%u bytes, heap 0)\n", a->file,
+                     (unsigned) a->bytes);
+            lbHeap_80015CA8(0, a->archive);
+            lbHeap_80015CA8(0, a->data);
+            a->archive = NULL;
+            a->data = NULL;
+            a->file[0] = 0;
+        }
+    }
+    script_stage.map = NULL;
+    script_stage.target_model_ready = 0;
+}
+
+static HSD_Archive* script_stage_archive(const char* file)
+{
+    int i, entry;
+    size_t bytes, read_bytes;
+    HSD_Archive* archive;
+    void* data;
+    ScriptStageArchive* a = NULL;
+    char path[34];
+    for (i = 0; i < SCRIPT_STAGE_ARCHIVES; ++i) {
+        if (script_stage.archives[i].archive != NULL &&
+            script_stage_same_file(script_stage.archives[i].file, file))
+            return script_stage.archives[i].archive;
+        if (a == NULL && script_stage.archives[i].archive == NULL) a = &script_stage.archives[i];
+    }
+    if (a == NULL) return NULL;
+    path[0] = '/';
+    strcpy(path + 1, file);
+    entry = DVDConvertPathToEntrynum(path); /* shim_dvd also finds a mounted mod's own DAT */
+    if (entry < 0) return NULL;
+    bytes = lbFile_8001634C(entry);
+    if (bytes < sizeof(HSD_ArchiveHeader) || bytes > SCRIPT_STAGE_ARCHIVE_MAX) return NULL;
+    data = lbHeap_80015BD0(0, (bytes + 31) & ~(size_t) 31);
+    archive = lbHeap_80015BD0(0, sizeof(*archive));
+    if (data == NULL || archive == NULL) {
+        if (archive != NULL) lbHeap_80015CA8(0, archive);
+        if (data != NULL) lbHeap_80015CA8(0, data);
+        return NULL;
+    }
+    lbFile_8001668C(path, data, &read_bytes);
+    if (read_bytes != bytes || HSD_ArchiveParse(archive, data, bytes) < 0) {
+        lbHeap_80015CA8(0, archive);
+        lbHeap_80015CA8(0, data);
+        return NULL;
+    }
+    /* Stage DATs have no unresolved externs; use the same relocation path as lbArchive. */
+    for (i = 0; HSD_ArchiveGetExtern(archive, i) != NULL; ++i)
+        HSD_ArchiveLocateExtern(archive, HSD_ArchiveGetExtern(archive, i), NULL);
+    strcpy(a->file, file);
+    a->data = data;
+    a->archive = archive;
+    a->bytes = bytes;
+    OSReport("script stage: loaded /%s (%u bytes, heap 0)\n", file, (unsigned) bytes);
+    return archive;
+}
 
 static const int script_enemy_kinds[6] = {
     It_Kind_Kuriboh, It_Kind_Nokonoko, It_Kind_Leadead,
@@ -153,10 +275,12 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     int i;
     script_stage.map = NULL;
     script_stage.target_remaining = 0;
+    script_stage.target_model_ready = 0;
     script_stage.cap = 0;
     script_stage.draw = NULL;
     script_stage.cube = NULL;
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
+    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) script_stage.model[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
         script_stage.target[i].active = 0;
         script_stage.target[i].gobj = NULL;
@@ -301,7 +425,7 @@ static void script_stage_render(HSD_GObj* gobj, int code)
     for (i = 0; i < script_stage.cap; ++i) {
         ScriptStageLine* s = &script_stage.line[i];
         float dx, dy, len, ux, uy, mx, my;
-        if (!s->active) continue;
+        if (!s->active || s->model_handle) continue;
         dx = s->x1 - s->x0;
         dy = s->y1 - s->y0;
         len = sqrtf(dx * dx + dy * dy);
@@ -324,11 +448,19 @@ static void script_stage_render(HSD_GObj* gobj, int code)
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
         ScriptStageTarget* t = &script_stage.target[i];
         if (!t->active) continue;
+        if (script_stage.target_model_ready) continue;
         /* a target: a diamond (the unit box turned 45 degrees), red with a white core */
         script_box(view, 0.70710678f, 0.70710678f, 7.0f, 7.0f, 3.0f, t->x, t->y, 0xE5483Bu);
         script_box(view, 0.70710678f, 0.70710678f, 3.0f, 3.0f, 3.4f, t->x, t->y, 0xF2EFE4u);
     }
     HSD_StateInvalidate(-1);
+}
+
+static void script_stage_model_render(HSD_GObj* gobj, int code)
+{
+    if (!script_stage_geometry || gx_suppress_draws) return;
+    HSD_StateInvalidate(-1);
+    HSD_GObj_JObjCallback(gobj, code); /* the stage's lit, textured JObj path */
 }
 
 /* at stage load (ScriptGame_StageReady): the unit box's corners in MEM1 and the drawing GObj */
@@ -454,6 +586,7 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     script_stage.line[i].active = 1;
     script_stage.line[i].kind = kind;
     script_stage.line[i].flags = flags;
+    script_stage.line[i].model_handle = 0;
     script_stage.line[i].x0 = x0; script_stage.line[i].y0 = y0;
     script_stage.line[i].x1 = x1; script_stage.line[i].y1 = y1;
     mpJointListAdd(j);
@@ -466,12 +599,33 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
 int ScriptGame_StageRemove(int handle)
 {
     int i;
+    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
+        ScriptStageModel* m = &script_stage.model[i];
+        if (m->active && m->handle == handle) {
+            int attached = m->line_handle;
+            HSD_GObj* gobj = m->gobj;
+            m->active = 0;
+            m->gobj = NULL;
+            m->line_handle = 0;
+            if (attached) ScriptGame_StageRemove(attached);
+            HSD_GObjFree(gobj);
+            OSReport("script stage: removed model handle=%d\n", handle);
+            return 1;
+        }
+    }
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
         if (script_stage.line[i].active && script_stage.line[i].handle == handle) {
             int j = script_stage.base_j + i;
             mpLib_80057BC0(j);
             script_stage.map->joints[j].ranges[MapLineGroup_Dynamic].count = 0;
             script_stage.line[i].active = 0;
+            script_stage.line[i].model_handle = 0;
+            {
+                int k;
+                for (k = 0; k < SCRIPT_STAGE_MODELS; ++k)
+                    if (script_stage.model[k].line_handle == handle)
+                        script_stage.model[k].line_handle = 0;
+            }
             mpUncheckBounding();
             OSReport("script stage: removed line handle=%d\n", handle);
             return 1;
@@ -501,6 +655,33 @@ int ScriptGame_StageMove(int handle, int xb, int yb)
     CollJoint* j;
     int i;
     u.i = xb; x = u.f; u.i = yb; y = u.f;
+    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
+        ScriptStageModel* m = &script_stage.model[i];
+        if (m->active && m->handle == handle) {
+            HSD_JObj* root = GET_JOBJ(m->gobj);
+            Vec3 pos = root->translate;
+            if (m->line_handle) {
+                int k;
+                for (k = 0; k < SCRIPT_STAGE_LINES; ++k) {
+                    ScriptStageLine* s = &script_stage.line[k];
+                    if (s->active && s->handle == m->line_handle) {
+                        int line_x, line_y;
+                        u.f = (s->x0 + s->x1) * 0.5f + x - m->x;
+                        line_x = u.i;
+                        u.f = (s->y0 + s->y1) * 0.5f + y - m->y;
+                        line_y = u.i;
+                        ScriptGame_StageMove(s->handle, line_x, line_y);
+                        break;
+                    }
+                }
+            }
+            pos.x += x - m->x;
+            pos.y += y - m->y;
+            HSD_JObjSetTranslate(root, &pos);
+            m->x = x; m->y = y;
+            return 1;
+        }
+    }
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
         ScriptStageLine* s = &script_stage.line[i];
         if (!s->active || s->handle != handle) continue;
@@ -520,6 +701,135 @@ int ScriptGame_StageMove(int handle, int xb, int yb)
         mpLib_8005667C(script_stage.base_j + i);
         mpUncheckBounding();
         return 1; /* no log line: a moving platform is moved every frame */
+    }
+    return 0;
+}
+
+/* Ground_801C126C's preorder numbering, scoped to a map_head model group. A copy of
+ * the chosen descriptor cuts its next sibling, so HSD_JObjLoadJoint owns this branch only. */
+static HSD_Joint* script_stage_joint(HSD_Joint* joint, int* index)
+{
+    HSD_Joint* found;
+    if (joint == NULL) return NULL;
+    if ((*index)-- == 0) return joint;
+    found = script_stage_joint(joint->child, index);
+    if (found != NULL) return found;
+    return script_stage_joint(joint->next, index);
+}
+
+/* HSD_JObjResolveRefs requires an instance target to have been loaded into the
+ * same ID table. A detached branch cannot promise that for an outside sibling. */
+static int script_stage_has_instance(HSD_Joint* joint)
+{
+    for (; joint != NULL; joint = joint->next) {
+        if (joint->flags & JOBJ_INSTANCE || script_stage_has_instance(joint->child))
+            return 1;
+    }
+    return 0;
+}
+
+static int script_stage_text(int which, char* dst, int cap)
+{
+    extern int Script_StageTextByte(int which, int at);
+    int i, c;
+    for (i = 0; i < cap; ++i) {
+        c = Script_StageTextByte(which, i);
+        if (c == 0) break;
+        if (i == cap - 1) return 0;
+        if (c < 32 || c > 126) return 0;
+        dst[i] = (char) c;
+    }
+    dst[i] = 0;
+    return i < cap && i > 0;
+}
+
+int ScriptGame_StageAddModel(int group, int joint_index, int xb, int yb, int zb,
+                             int sb, int rb, int handle)
+{
+    union { int i; float f; } u;
+    char file[32], symbol[64];
+    HSD_Archive* archive;
+    UnkStageDat* head;
+    HSD_Joint* source;
+    HSD_Joint branch;
+    HSD_JObj* root;
+    HSD_GObj* gobj;
+    Vec3 pos, scale;
+    float rot;
+    int i, n;
+    if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map ||
+        !script_stage_text(0, file, sizeof file) ||
+        !script_stage_text(1, symbol, sizeof symbol)) return -1;
+    for (i = 0; i < SCRIPT_STAGE_MODELS && script_stage.model[i].active; ++i) {}
+    if (i == SCRIPT_STAGE_MODELS) return -1;
+    archive = script_stage_archive(file);
+    if (archive == NULL) return -1;
+    if (strcmp(symbol, "map_head") == 0) {
+        head = HSD_ArchiveGetPublicAddress(archive, symbol);
+        if (head == NULL || group < 0 || group >= head->unkC || head->unk8 == NULL)
+            return -1;
+        source = head->unk8[group].unk0;
+    } else {
+        source = HSD_ArchiveGetPublicAddress(archive, symbol);
+    }
+    if (source == NULL) return -1;
+    if (joint_index >= 0) {
+        n = joint_index;
+        source = script_stage_joint(source, &n);
+        if (source == NULL) return -1;
+    }
+    if (source->flags & JOBJ_INSTANCE || script_stage_has_instance(source->child))
+        return -1;
+    branch = *source;
+    branch.next = NULL;
+    root = HSD_JObjLoadJoint(&branch);
+    if (root == NULL) return -1;
+    gobj = GObj_Create(HSD_GOBJ_CLASS_STAGE, 13, 0);
+    if (gobj == NULL) { HSD_JObjUnref(root); return -1; }
+    u.i = xb; pos.x = u.f;
+    u.i = yb; pos.y = u.f;
+    u.i = zb; pos.z = u.f;
+    HSD_JObjSetTranslate(root, &pos);
+    u.i = sb;
+    scale.x = root->scale.x * u.f;
+    scale.y = root->scale.y * u.f;
+    scale.z = root->scale.z * u.f;
+    HSD_JObjSetScale(root, &scale);
+    u.i = rb; rot = u.f;
+    HSD_JObjSetRotationZ(root, source->rotation.z + rot);
+    HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, root);
+    GObj_SetupGXLink(gobj, script_stage_model_render, 3, 0);
+    script_stage.model[i].handle = handle;
+    script_stage.model[i].active = 1;
+    script_stage.model[i].line_handle = 0;
+    script_stage.model[i].gobj = gobj;
+    script_stage.model[i].x = pos.x;
+    script_stage.model[i].y = pos.y;
+    script_stage.model[i].z = pos.z;
+    u.i = sb; script_stage.model[i].scale = u.f;
+    script_stage.model[i].rot = rot;
+    OSReport("script stage: model handle=%d /%s:%s group=%d joint=%d at (%f,%f,%f)\n",
+             handle, file, symbol, group, joint_index, pos.x, pos.y, pos.z);
+    return handle;
+}
+
+int ScriptGame_StageAttachModel(int model_handle, int line_handle)
+{
+    int i, k;
+    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
+        ScriptStageModel* m = &script_stage.model[i];
+        if (!m->active || m->handle != model_handle || m->line_handle) continue;
+        for (k = 0; k < SCRIPT_STAGE_LINES; ++k) {
+            ScriptStageLine* s = &script_stage.line[k];
+            if (s->active && s->handle == line_handle && s->kind == 1 &&
+                s->model_handle == 0) {
+                m->line_handle = line_handle;
+                s->model_handle = model_handle;
+                OSReport("script stage: model %d carries line %d\n", model_handle,
+                         line_handle);
+                return 1;
+            }
+        }
     }
     return 0;
 }
@@ -557,10 +867,8 @@ float ScriptGame_StageLineF(int i, int field)
     return field == 0 ? s->x0 : field == 1 ? s->y0 : field == 2 ? s->x1 : s->y1;
 }
 
-/* Target Test's It_Kind_Mato logic lives in it_3F2F.c / itmato.c. Its article normally comes
- * from the GrT* stage's itemdata (ground.c:Ground_801C0800), which a VS stage need not have.
- * A model-less descriptor keeps its actual item hurt capsule and destroy callback; the native
- * script overlay draws the ring. All fields are game globals included in the snapshot. */
+/* Target Test's It_Kind_Mato logic lives in it_3F2F.c / itmato.c. Borrow its actual
+ * model descriptor from GrTMr's itemdata; the archive remains in heap 0 for this scene. */
 static ItemAttr script_target_attr;
 static ItHurtBoneDesc script_target_hurt_desc;
 static ItHurtBoneList script_target_hurt = { 1, &script_target_hurt_desc };
@@ -571,8 +879,22 @@ static Article script_target_article = {
     &script_target_model, NULL
 };
 
-static void script_target_register(void)
+static int script_target_register(void)
 {
+    HSD_Archive* archive;
+    struct GroundItemData** items;
+    int i;
+    if (script_stage.target_model_ready) return 1;
+    archive = script_stage_archive("GrTMr.dat");
+    if (archive == NULL) return 0;
+    items = HSD_ArchiveGetPublicAddress(archive, "itemdata");
+    if (items == NULL) return 0;
+    for (i = 0; items[i] != NULL; ++i) {
+        if (items[i]->unk0 == It_Kind_Mato && items[i]->unk4 != NULL &&
+            items[i]->unk4->x10_modelDesc != NULL &&
+            items[i]->unk4->x10_modelDesc->x0_joint != NULL) break;
+    }
+    if (items[i] == NULL) return 0;
     script_target_attr.x1_67_cam_kind = 0;
     script_target_attr.x1C_damage_mul = 1.0f;
     script_target_attr.x60_scale = 1.0f;
@@ -582,9 +904,12 @@ static void script_target_register(void)
     script_target_hurt_desc.a_offset.z = 0;
     script_target_hurt_desc.b_offset = script_target_hurt_desc.a_offset;
     script_target_hurt_desc.scale = 5.0f;
-    script_target_model.x0_joint = NULL;
-    script_target_model.x4_bone_count = 0;
+    script_target_model = *items[i]->unk4->x10_modelDesc;
+    script_target_old_article = it_804A0F60[It_Kind_Mato - It_Kind_Old_Kuri];
     it_804A0F60[It_Kind_Mato - It_Kind_Old_Kuri] = &script_target_article;
+    script_stage.target_model_ready = 1;
+    OSReport("script stage: Mato model from /GrTMr.dat itemdata\n");
+    return 1;
 }
 
 int ScriptGame_StageJoint(int joint_id)
@@ -604,7 +929,7 @@ int ScriptGame_SpawnTarget(int xb, int yb, int handle)
     for (i = 0; i < SCRIPT_STAGE_TARGETS && script_stage.target[i].active; ++i) {}
     if (i == SCRIPT_STAGE_TARGETS) return -1;
     u.i = xb; pos.x = u.f; u.i = yb; pos.y = u.f; pos.z = 0;
-    script_target_register();
+    if (!script_target_register()) return -1;
     gobj = it_8027B5B0(It_Kind_Mato, &pos, NULL, NULL, 0);
     if (gobj == NULL) return -1;
     /* Targets are allowed outside the current stage's blast rectangle. */

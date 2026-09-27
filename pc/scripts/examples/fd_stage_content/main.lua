@@ -6,10 +6,21 @@ function on_match_start()
   local match = gd.match()
   if match.netplay or match.stage ~= FINAL_DESTINATION then return end
 
-  local a = assert(gd.stage_add_platform(-55, 22, 34, {passthrough = true, ledges = true}))
-  local b = assert(gd.stage_add_platform(0, 42, 42, {passthrough = true}))
-  local c = assert(gd.stage_add_platform(57, 22, 34, {passthrough = false, ledges = true}))
-  gd.log(string.format("FD Lua platforms: %d, %d, %d", a, b, c))
+  -- Battlefield map_head group 6 has separate platform branches 13/14/15.
+  -- Their source origins and floor lines are in _research/stage-model-parts.md.
+  local pieces = {
+    {joint = 13, x = -48.5, y = 34},
+    {joint = 14, x = 48.5, y = 34},
+    {joint = 15, x = 0, y = 68},
+  }
+  for _, p in ipairs(pieces) do
+    local floor = assert(gd.stage_add_platform(p.x, p.y, 47, {passthrough = true}))
+    local model = assert(gd.stage_add_model{
+      file = 'GrNBa.dat', symbol = 'map_head', group = 6, joint = p.joint,
+      x = p.x, y = p.y, z = 0, platform = floor,
+    })
+    gd.log(string.format("FD Battlefield platform: model %d, floor %d", model, floor))
+  end
 
   local positions = {
     {-82, 48}, {-55, 58}, {-28, 66}, {0, 74}, {28, 66},

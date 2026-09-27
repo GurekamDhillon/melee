@@ -51,6 +51,9 @@ extern void gw_ScriptGame_LaunchScene(int game_mode);
 extern int gw_ScriptGame_StageAddLine(int x0, int y0, int x1, int y1, int kind, int flags, int handle);
 extern int gw_ScriptGame_StageRemove(int handle);
 extern int gw_ScriptGame_StageMove(int handle, int x, int y);
+extern int gw_ScriptGame_StageAddModel(int group, int joint, int x, int y, int z,
+                                       int scale, int rot, int handle);
+extern int gw_ScriptGame_StageAttachModel(int model_handle, int line_handle);
 extern void gw_ScriptGame_StageFrame(void);
 extern int gw_ScriptGame_StageLineI(int slot, int field);
 extern float gw_ScriptGame_StageLineF(int slot, int field);
@@ -4418,6 +4421,95 @@ static int gs_stage_next_handle(lua_State *L) {
     return ++gs_stage_handle_serial;
 }
 
+/* Only used during one synchronous game call. The game copies these bytes into its own
+ * stack; no native pointer or persistent native simulation state crosses the bridge. */
+static char gs_stage_model_file[32];
+static char gs_stage_model_symbol[64];
+int gw_Script_StageTextByte(int which, int at) {
+    const char *p = which == 0 ? gs_stage_model_file : gs_stage_model_symbol;
+    int cap = which == 0 ? sizeof gs_stage_model_file : sizeof gs_stage_model_symbol;
+    return at >= 0 && at < cap ? (unsigned char) p[at] : 0;
+}
+
+static float gs_stage_field_num(lua_State *L, const char *field, float fallback) {
+    float v;
+    lua_getfield(L, 1, field);
+    v = lua_isnil(L, -1) ? fallback : gs_stage_num(L, -1);
+    lua_pop(L, 1);
+    return v;
+}
+
+static int l_stage_add_model(lua_State *L) {
+    const char *file, *symbol;
+    size_t n;
+    int group = 0, joint = -1, platform = 0, h;
+    float x, y, z, scale, rot;
+    luaL_checktype(L, 1, LUA_TTABLE);
+    gs_require_stage(L, "stage_add_model");
+    lua_getfield(L, 1, "file");
+    file = luaL_checkstring(L, -1);
+    n = strlen(file);
+    if (n < 5 || n > 30 || strcmp(file + n - 4, ".dat") != 0 ||
+        strchr(file, '/') != NULL || strchr(file, '\\') != NULL || strstr(file, "..") != NULL)
+        return luaL_error(L, "model file must be a root-level .dat name (max 30 bytes)");
+    memcpy(gs_stage_model_file, file, n + 1);
+    lua_pop(L, 1);
+    lua_getfield(L, 1, "symbol");
+    symbol = lua_isnil(L, -1) ? "map_head" : luaL_checkstring(L, -1);
+    n = strlen(symbol);
+    if (n == 0 || n >= sizeof gs_stage_model_symbol)
+        return luaL_error(L, "model symbol must be 1-63 bytes");
+    memcpy(gs_stage_model_symbol, symbol, n + 1);
+    lua_pop(L, 1);
+    lua_getfield(L, 1, "group");
+    if (!lua_isnil(L, -1)) group = (int) luaL_checkinteger(L, -1);
+    lua_pop(L, 1);
+    if (group < 0 || group > 255) return luaL_error(L, "model group must be 0-255");
+    lua_getfield(L, 1, "joint");
+    if (lua_isinteger(L, -1)) {
+        joint = (int) lua_tointeger(L, -1);
+    } else if (lua_isstring(L, -1)) {
+        const char *name = lua_tostring(L, -1);
+        char *end;
+        long value;
+        if (strcmp(name, "root") == 0) joint = -1;
+        else {
+            if (strncmp(name, "JOBJ_", 5) != 0) return luaL_error(L, "joint name must be JOBJ_<index> or root");
+            value = strtol(name + 5, &end, 10);
+            if (*end != '\0' || end == name + 5 || value < 0 || value > 4095)
+                return luaL_error(L, "joint name must be JOBJ_<index> or root");
+            joint = (int) value;
+        }
+    } else if (!lua_isnil(L, -1)) return luaL_error(L, "joint must be an index or JOBJ_<index>");
+    lua_pop(L, 1);
+    if (joint < -1 || joint > 4095) return luaL_error(L, "joint index must be 0-4095");
+    lua_getfield(L, 1, "platform");
+    if (!lua_isnil(L, -1)) platform = gs_stage_handle_arg(L, -1);
+    lua_pop(L, 1);
+    x = gs_stage_field_num(L, "x", 0.0f);
+    y = gs_stage_field_num(L, "y", 0.0f);
+    z = gs_stage_field_num(L, "z", 0.0f);
+    scale = gs_stage_field_num(L, "scale", 1.0f);
+    rot = gs_stage_field_num(L, "rot", 0.0f);
+    if (scale <= 0.0f || scale > 100.0f) return luaL_error(L, "model scale must be >0 and <=100");
+    gs_rw_branch();
+    h = gw_ScriptGame_StageAddModel(group, joint, gs_fbits(x), gs_fbits(y), gs_fbits(z),
+                                     gs_fbits(scale), gs_fbits(rot * 0.0174532925199433f),
+                                     gs_stage_next_handle(L));
+    if (h < 0) {
+        gw_log("script stage: model unavailable /%s:%s group=%d joint=%d", gs_stage_model_file,
+               gs_stage_model_symbol, group, joint);
+        lua_pushnil(L); lua_pushstring(L, "model archive, symbol, joint or capacity unavailable"); return 2;
+    }
+    if (platform && !gw_ScriptGame_StageAttachModel(h, platform)) {
+        gw_ScriptGame_StageRemove(h);
+        gw_log("script stage: model %d could not attach floor %d", h, platform);
+        lua_pushnil(L); lua_pushstring(L, "platform handle is not a free floor line"); return 2;
+    }
+    lua_pushinteger(L, h);
+    return 1;
+}
+
 static int gs_stage_kind(lua_State *L, int idx) {
     const char *s = luaL_checkstring(L, idx);
     if (strcmp(s, "floor") == 0) return 1;
@@ -4682,6 +4774,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     /* stage D */
     {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield},
     {"stage_add_platform", l_stage_add_platform}, {"stage_add_line", l_stage_add_line},
+    {"stage_add_model", l_stage_add_model},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},
@@ -7462,6 +7555,11 @@ static int test_script_stage_events(void) {
     if (t_exec("= pcall(gd.enemy_remove, 1)", out, sizeof out) != 0 ||
         strstr(out, "false") == NULL) {
         gw_test_fail("console was allowed to remove enemies: %s", out);
+        ok = 0;
+    }
+    if (t_exec("= pcall(gd.stage_add_model, {file='GrNBa.dat', group=6, joint=13})",
+               out, sizeof out) != 0 || strstr(out, "false") == NULL) {
+        gw_test_fail("console was allowed to load a stage model: %s", out);
         ok = 0;
     }
     DeleteFileA(path);

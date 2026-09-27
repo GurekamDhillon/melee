@@ -1121,6 +1121,12 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         HSD_PerfInitStat();
     }
 #if defined(TARGET_PC)
+    {
+        /* Scripted model descriptors and Mato article point into heap-0 archive buffers.
+         * Retire their GObjs before releasing the buffers, while this scene is still live. */
+        extern void ScriptGame_StageEnd(void);
+        ScriptGame_StageEnd();
+    }
     mnLoadScreen_Release("scene ended");
 #endif
     HSD_VIWaitXFBFlush();

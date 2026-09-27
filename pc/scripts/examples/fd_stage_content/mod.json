@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "author": "GD's Melee",
   "kind": "script",
-  "description": "Adds collision platforms and ten breakable targets to Final Destination. Offline only.",
+  "description": "Adds Battlefield platform models with collision and ten Target Test targets to Final Destination. Offline only.",
   "api_version": 1,
   "gameplay": true,
   "rollback_safe": false,

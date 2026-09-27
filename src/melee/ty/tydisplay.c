@@ -2393,6 +2393,15 @@ s32 tyDisplay_8031C454(s32 arg0)
 
     PAD_STACK(0x4);
     tables = (TyDspNameTables const*) &_tyDisplay_803B8988;
+#if defined(TARGET_PC)
+    /* Retail reads the archive file names past the two symbol tables, which it lays out back to
+     * back. The port links the three tables separately, so that read landed in the matanim
+     * symbol names and every trophy display (Classic's intro, Snag the Trophies) asked lbFile for
+     * "ToyDspMycharaR1E_Top_matanim_joint" as a file: "file name too long" -> PANIC. Only
+     * arch_names is read here, so aim `tables` at the real file-name table. */
+    tables = (TyDspNameTables const*) ((char const*) &_tyDisplay_803B8AE0 -
+                                       (char const*) &((TyDspNameTables const*) 0)->arch_names);
+#endif
     result = 0;
     archArr = _tyDisplay_804A2DE8;
 
@@ -2480,7 +2489,11 @@ HSD_JObj* tyDisplay_8031C5E4(s32 arg0)
     {
         u8 c = entry->x04;
         cat = c;
+#if defined(TARGET_PC)
+        matanim_names1 = _tyDisplay_803B8A34; /* the tables are not adjacent in the port */
+#else
         matanim_names1 = *(TyDspArchNames*) tables->matanim_names;
+#endif
         if ((s8) c == -1) {
             cat = 0;
         }

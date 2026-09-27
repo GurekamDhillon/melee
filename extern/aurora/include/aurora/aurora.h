@@ -131,6 +131,9 @@ void aurora_shutdown();
 const AuroraEvent* aurora_update();
 bool aurora_begin_frame();
 void aurora_end_frame();
+/* Run GX/EFB work without acquiring or presenting a swapchain image. */
+bool aurora_begin_frame_offscreen();
+void aurora_end_frame_offscreen();
 
 void aurora_set_log_level(AuroraLogLevel level);
 void aurora_set_pause_on_focus_lost(bool value);

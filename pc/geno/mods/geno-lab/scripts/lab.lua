@@ -2892,12 +2892,12 @@ function LE.tick()
   end
   if bx then
     -- never leave the game stuck: an error ends the export, and so does a move that makes no
-    -- progress for 5 s (a state that never ends is capped at 300 frames; this is the backstop)
+    -- progress for 300 game frames (a state that never ends is capped at 300 frames; this is the backstop)
     local key = bx.i .. ":" .. bx.phase .. ":" .. (bx.cur and bx.cur.n or -1)
-    if key ~= bx.last_key then bx.last_key, bx.last_t = key, gd.time() end
+    if key ~= bx.last_key then bx.last_key, bx.last_frame = key, gd.frame() end
     local ok, err = pcall(bx_tick)
-    if not ok or (bx and gd.time() - (bx.last_t or gd.time()) > 5) then
-      gd.log("lab export: stopped at state " .. tostring(bx and bx.i) .. ": " .. (ok and "no progress for 5 s" or tostring(err)))
+    if not ok or (bx and gd.frame() - (bx.last_frame or gd.frame()) > 300) then
+      gd.log("lab export: stopped at state " .. tostring(bx and bx.i) .. ": " .. (ok and "no progress for 300 frames" or tostring(err)))
       say("Frame data: stopped (see the log)", DANGER)
       local quit = bx and bx.quit
       bx = nil

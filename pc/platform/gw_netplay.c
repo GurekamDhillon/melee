@@ -35,6 +35,7 @@
 #include "gw_rollback.h"
 #include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
 #include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
+#include "shim_vi.h"
 #include <stdio.h>
 #include <stdint.h>
 
@@ -1766,6 +1767,11 @@ static int np_begin(int bind_local) {
     gw_net_addr peer, pub, ppub, plan;
     int phas_lan = 0;
     uint32_t bind_ip = 0;
+    if (gw_turbo_enabled()) {
+        np_status("Online play requires realtime mode; restart without turbo");
+        gw_log("netplay: refused while turbo is active");
+        return -1;
+    }
     np_close();
     rnd.state = NP_RAND_OFF; /* a room-code session: not random matchmaking */
     memset(&peer, 0, sizeof peer);
@@ -2099,6 +2105,11 @@ static void np_rand_poll(void) {
  * the phase is NP_WORKING and gw_Netplay_RandomStatus says how it is going. */
 int gw_Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay) {
     uint16_t port = NP_DEFAULT_PORT;
+    if (gw_turbo_enabled()) {
+        np_status("Online play requires realtime mode; restart without turbo");
+        gw_log("netplay: random queue refused while turbo is active");
+        return -1;
+    }
     np_close();
     memset(&rnd, 0, sizeof rnd);
     np.ck = ck;

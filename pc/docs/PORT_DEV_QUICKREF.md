@@ -128,6 +128,10 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
 | `MELEE_NO_ONBOARD=1` | skip the first boot's visit to SETTINGS > CONTROLS (also skipped for any `MELEE_SCENE` / `MELEE_PAD_SCRIPT` run; settings.cfg `onboarded=1` records it) |
 | `MELEE_PROFILE=1` | per-frame timing split, percentiles, histogram (see section 20) |
+| `MELEE_TURBO=1` / `--turbo` | accelerate scripted or LAB batch game simulation with a virtual field clock; refused for netplay and ordinary player windows |
+| `MELEE_TURBO_RENDER=N` | present every Nth game frame in turbo (default 8; 0 never); GX/EFB work still runs every frame for game-state parity |
+| `MELEE_TURBO_HASHLOG=<path>` | optional per-match-frame full snapshot hash CSV for realtime/turbo parity checks |
+| `MELEE_TEST_SEED=<integer>` | fix the boot RNG seed for scripted parity checks; otherwise use OSGetTick |
 | `MELEE_WINDOW_X/Y` | window position; may be negative. Applied at creation, so no flash |
 | `MELEE_WINDOW_W/H` | window size (Aurora clamps to at least 640x480) |
 | `MELEE_AUDIO_LATENCY_MS` | output ring cushion, default 60 (section 19.2) |
@@ -136,8 +140,8 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_BACKEND=d3d12\|auto\|vulkan` | override the default D3D11 backend |
 | `MELEE_AURORA_VERBOSE=1` | log Aurora INFO (present mode, adapter) |
 
-`MELEE_WINDOW_HIDE=1` exists but **does not work**: a hidden window makes the D3D11 present block
-forever and the frame loop never leaves `retrace=0`. Park the window off-screen instead.
+`MELEE_WINDOW_HIDE=1` remains unsuitable for realtime play: a hidden window makes the D3D11
+present block. Turbo runs GX/EFB work offscreen and skips swapchain presentation while hidden.
 
 ## Run without the window appearing on a monitor
 

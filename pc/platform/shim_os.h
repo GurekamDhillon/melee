@@ -18,6 +18,8 @@ void gw_os_alarm_stats(uint32_t *active, uint32_t *fired);
  * one 60 Hz field: lb_80019628 arms it to sample the controllers). Returns 0 when none is armed.
  * The frame driver paces against it, so the controllers are sampled right after the wait. */
 int gw_os_pad_alarm_deadline(uint64_t period_ticks, uint64_t *fire_at);
+/* Earliest armed alarm, for a turbo blocking wait that must make virtual time progress. */
+int gw_os_next_alarm_deadline(uint64_t *fire_at);
 
 #ifdef __cplusplus
 }

@@ -601,6 +601,10 @@ static DWORD WINAPI gw_watchdog(LPVOID unused) {
 }
 
 void gw_start_watchdog(void) {
+  if (gw_turbo_enabled()) {
+    gw_log("gw: watchdog: wall-clock spin detector disabled in turbo (retrace heartbeat stays on)");
+    return;
+  }
   if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
                        &gw_game_thread, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
     gw_log("gw: could not start the watchdog (DuplicateHandle failed %lu)", GetLastError());

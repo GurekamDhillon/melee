@@ -45,6 +45,7 @@ static gw_drawdone_cb gw_draw_done_cb;
 static bool gw_frame_begun;
 static bool gw_frame_has_content;
 static uint32_t gw_retrace_count;
+static SDL_Window *gw_video_window;
 static void *gw_next_framebuffer;
 static bool gw_exiting;
 
@@ -102,6 +103,7 @@ bool gw_window_drag_install(SDL_Window *window) {
   if (!gw_drag.hwnd || !IsWindow(gw_drag.hwnd) ||
       GetWindowThreadProcessId(gw_drag.hwnd, &process_id) != GetCurrentThreadId() ||
       process_id != GetCurrentProcessId()) return false;
+  gw_video_window = window;
   SDL_SetWindowsMessageHook(gw_drag_message, NULL);
   gw_log("window: nonmodal caption dragging enabled");
   return true;
@@ -170,10 +172,51 @@ static uint64_t gw_qpc_freq;
 static uint64_t gw_qpc_base;
 static uint64_t gw_last_advance_ms;
 static uint64_t gw_last_alarm_tick; /* gw_wait_idle's alarm gate, OS ticks */
+static int gw_turbo;
+static unsigned gw_turbo_render = 8;
+static uint64_t gw_turbo_ticks;
+static uint64_t gw_turbo_last_field;
+
+int gw_turbo_enabled(void) { return gw_turbo; }
+
+void gw_turbo_configure(int argc, char **argv) {
+  const char *v = getenv("MELEE_TURBO");
+  const char *render = getenv("MELEE_TURBO_RENDER");
+  int requested = v != NULL && strcmp(v, "1") == 0;
+  int scripted = getenv("MELEE_PAD_SCRIPT") != NULL || getenv("MELEE_LAB_BATCH") != NULL;
+  int tests = 0;
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "--turbo") == 0) requested = 1;
+    if (strcmp(argv[i], "--test") == 0) tests = 1;
+    if (strcmp(argv[i], "--realtime") == 0) requested = 0;
+  }
+  if (render != NULL && *render != '\0') {
+    char *end;
+    long n = strtol(render, &end, 10);
+    if (*end == '\0' && n >= 0 && n <= 10000) gw_turbo_render = (unsigned)n;
+    else gw_log("gw: turbo: invalid MELEE_TURBO_RENDER=%s (using 8)", render);
+  }
+  if (requested && (getenv("MELEE_NETPLAY") != NULL || getenv("MELEE_SLIPPI_MODE") != NULL ||
+                    getenv("MELEE_RB_FAKE") != NULL)) {
+    gw_log("gw: turbo: refused for netplay");
+    return;
+  }
+  if (requested && tests) {
+    gw_log("gw: turbo: headless --test has no frame driver or 60 Hz pacing");
+    return;
+  }
+  if (requested && !tests && !scripted) {
+    gw_log("gw: turbo: refused without a pad script or LAB batch export");
+    return;
+  }
+  gw_turbo = requested;
+  if (gw_turbo) gw_log("gw: turbo: on, present every %u game frame(s) (0 = never)", gw_turbo_render);
+}
 
 uint64_t gw_time_ticks(void) {
   LARGE_INTEGER now;
   uint64_t elapsed;
+  if (gw_turbo) return gw_turbo_ticks;
   if (gw_qpc_freq == 0) {
     LARGE_INTEGER freq;
     QueryPerformanceFrequency(&freq);
@@ -192,7 +235,13 @@ uint64_t gw_time_ticks(void) {
 
 /* Kept because the frame driver still marks field boundaries, but the clock no longer depends on
  * being told about them. */
-void gw_time_advance_field(void) {}
+void gw_time_advance_field(void) {
+  if (gw_turbo) {
+    const uint64_t next = gw_turbo_last_field + GW_TICKS_PER_FIELD;
+    if (gw_turbo_ticks < next) gw_turbo_ticks = next;
+    gw_turbo_last_field = gw_turbo_ticks;
+  }
+}
 
 /* ---- deferred work -----------------------------------------------------------------------
  * The DVD and ARQ shims complete their transfers immediately but must not call back into game
@@ -463,8 +512,14 @@ void gw_aurora_perf_enable_none(bool enabled) { (void)enabled; }
 #pragma comment(linker, "/alternatename:_aurora_frame_replay_mark=_gw_aurora_frame_replay_mark_none")
 #pragma comment(linker, "/alternatename:_aurora_frame_replay=_gw_aurora_frame_replay_none")
 #pragma comment(linker, "/alternatename:_aurora_frame_slot_available=_gw_aurora_frame_slot_available_none")
+/* An Aurora without the offscreen entry points (turbo, MELEE_TURBO) links these: the frame is presented
+ * as a normal one, so turbo still runs, only without skipping Present. */
+bool gw_aurora_begin_frame_offscreen_none(void) { return aurora_begin_frame(); }
+void gw_aurora_end_frame_offscreen_none(void) { aurora_end_frame(); }
+#pragma comment(linker, "/alternatename:_aurora_begin_frame_offscreen=_gw_aurora_begin_frame_offscreen_none")
+#pragma comment(linker, "/alternatename:_aurora_end_frame_offscreen=_gw_aurora_end_frame_offscreen_none")
 
-static int gw_uncap_on(void) { return gw_video_fps != 60; }
+static int gw_uncap_on(void) { return !gw_turbo && gw_video_fps != 60; }
 
 static void gw_video_apply_rate(void) {
   const int on = gw_uncap_on();
@@ -502,7 +557,7 @@ int gw_Video_Vsync(void) {
 void gw_Video_SetVsync(int on) {
   gw_video_load();
   gw_video_vsync = on != 0;
-  aurora_enable_vsync(gw_video_vsync != 0);
+  aurora_enable_vsync(!gw_turbo && gw_video_vsync != 0);
   gw_video_save();
 }
 
@@ -608,19 +663,19 @@ bool gw_frame_init(void) {
   gw_video_load();
   gw_video_apply_scale();
   gw_video_apply_rate();
-  if (!gw_video_vsync) {
+  if (gw_turbo || !gw_video_vsync) {
     aurora_enable_vsync(false);
   }
-  /* Present one frame (cleared, with the host overlay pass) before the first gw_handle_events: the first
-   * aurora_update opens SDL's input subsystems, which can take seconds, and until something is presented
-   * the new window is black. */
-  if (aurora_begin_frame()) {
+  /* Realtime puts a cleared frame on screen before SDL opens input. Turbo starts offscreen so a
+   * hidden window cannot block its first Present; later fields follow the render interval. */
+  if (gw_turbo ? aurora_begin_frame_offscreen() : aurora_begin_frame()) {
     gw_present_overlays();
-    aurora_end_frame();
+    if (gw_turbo) aurora_end_frame_offscreen();
+    else aurora_end_frame();
   }
-  gw_log("melee-pc: first frame presented");
+  gw_log("melee-pc: first frame %s", gw_turbo ? "completed offscreen" : "presented");
   gw_handle_events();
-  gw_frame_begun = aurora_begin_frame();
+  gw_frame_begun = gw_turbo ? aurora_begin_frame_offscreen() : aurora_begin_frame();
   return true;
 }
 
@@ -1228,6 +1283,10 @@ static int gw_uncap_try(uint64_t now, uint64_t target) {
 }
 
 static void gw_pace_field(void) {
+  if (gw_turbo) {
+    gw_polls_since_pace = 0;
+    return;
+  }
   uint64_t now = gw_time_ticks();
   uint64_t last_pump;
   uint64_t spin = GW_PACE_SPIN_TICKS;
@@ -1624,6 +1683,8 @@ void gw_frame_tick(void) {
   long long t_submit0 = 0, t_submit1 = 0;
   int presented = 0;
 
+  gw_time_advance_field();
+
   gw_watch_tick();
 
   if (perf != gw_perf_collecting) {
@@ -1640,11 +1701,16 @@ void gw_frame_tick(void) {
   }
 
   if (gw_frame_has_content && gw_frame_begun) {
+    const int show = !gw_turbo || (gw_turbo_render != 0 &&
+        (gw_retrace_count % gw_turbo_render) == 0 && gw_video_window != NULL &&
+        (SDL_GetWindowFlags(gw_video_window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN)) == 0);
     /* Composited over the game's output by Aurora's ImGui pass, which is why this must happen
      * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
-    gw_present_overlays();
-    gw_stats_note_present(0);
-    gw_shots_tick(gw_presented_count + 1u);
+    if (show) {
+      gw_present_overlays();
+      gw_stats_note_present(0);
+      gw_shots_tick(gw_presented_count + 1u);
+    }
     if (gw_video_fps > 60) {
       gw_uncap_next = gw_time_ticks() + GW_TIMER_CLOCK / (uint64_t)gw_video_fps;
     }
@@ -1661,7 +1727,8 @@ void gw_frame_tick(void) {
       gw_inprof_submit();
     }
     if (perf) t_submit0 = gw_prof_now();
-    aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
+    if (show) aurora_end_frame();
+    else aurora_end_frame_offscreen(); /* drain GX and submit EFB work, without swapchain Present */
     if (perf) t_submit1 = gw_prof_now();
     ++gw_end_frames;
     if (gw_inprof_on()) {
@@ -1669,8 +1736,8 @@ void gw_frame_tick(void) {
     }
     gw_frame_begun = false;
     gw_frame_has_content = false;
-    ++gw_presented_count;
-    presented = 1;
+    if (show) ++gw_presented_count;
+    presented = show;
     if (!gw_pace_legacy()) {
       /* submitted as soon as it was drawn; now wait for the next pad sample (gw_pace_field) */
       long long tp = prof ? gw_prof_now() : 0;
@@ -1681,7 +1748,7 @@ void gw_frame_tick(void) {
     }
   } else {
     /* A wait that produced no new frame: don't burn a core spinning. */
-    Sleep(1);
+    if (!gw_turbo) Sleep(1);
     if (prof) {
       ++gw_prof_empty;
     }
@@ -1700,7 +1767,7 @@ void gw_frame_tick(void) {
   }
 
   if (!gw_frame_begun) {
-    gw_frame_begun = aurora_begin_frame();
+    gw_frame_begun = gw_turbo ? aurora_begin_frame_offscreen() : aurora_begin_frame();
   }
   if (gw_inprof_on() && presented) {
     gw_ip_push(&gw_ip_begin, gw_prof_ms(gw_ip_last_events, gw_prof_now()));
@@ -1867,7 +1934,7 @@ void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
  * runs on its own now, so this only has to give alarms and completions a chance to run; the
  * once-per-millisecond gate keeps a tight spin from calling them millions of times a second. */
 void gw_wait_idle(void) {
-  const uint64_t now = GetTickCount64();
+  uint64_t next_alarm;
   ++gw_wait_idle_count;
   /* A queued completion is already DUE: the DVD/ARQ shims do the transfer inline and only defer
    * the callback out of the starter's stack (gw_defer). The game's synchronous waits are
@@ -1881,12 +1948,22 @@ void gw_wait_idle(void) {
   if (gw_deferred_count != 0) {
     gw_run_deferred();
   }
+  if (gw_turbo) {
+    const int have_alarm = gw_os_next_alarm_deadline(&next_alarm);
+    if (have_alarm && next_alarm > gw_turbo_ticks) {
+      gw_turbo_ticks = next_alarm;
+    } else if (!have_alarm) {
+      gw_turbo_ticks += GW_TICKS_PER_FIELD;
+    }
+    gw_os_run_alarms(gw_turbo_ticks);
+    gw_run_deferred();
+    return;
+  }
   /* Alarms are checked on the high-resolution clock, at most every quarter millisecond.
    * GetTickCount64 only moves once per system tick (~15.6 ms, whatever timeBeginPeriod says), and
    * gating on it let the pad alarm fire up to a whole tick late whenever the game was waiting in
    * its pad-queue spin (MELEE_INPUT_PROFILE, loading into a match: alarm lateness p95 11.9 ms,
    * max 24 ms). */
-  (void)now;
   {
     const uint64_t t = gw_time_ticks();
     if (t - gw_last_alarm_tick < GW_TIMER_CLOCK / 4000u) {

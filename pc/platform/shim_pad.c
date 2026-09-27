@@ -4,6 +4,7 @@
  * both trees under TARGET_PC, so the arrays the game passes cross unchanged. */
 #include "gw.h"
 #include "gw_overlay.h"
+#include "shim_vi.h"
 
 #include <dolphin/pad.h>
 
@@ -136,6 +137,11 @@ static int gw_input_mode(void) {
     char v[16];
     const char *from = gw_pad_setting("MELEE_INPUT", "input", v, sizeof v);
     cached = GW_INPUT_GC;
+    if (gw_turbo_enabled()) {
+      cached = GW_INPUT_NONE; /* physical polling cannot define a deterministic fast input frame */
+      gw_log("gw: input: turbo uses scripted/neutral pads; adapter and live SDL input ignored");
+      return cached;
+    }
     if ((v[0] == 'n' || v[0] == 'N' || ((v[0] == 'k' || v[0] == 'K') && strchr(v, '+') == NULL)) &&
         from != NULL && strcmp(from, "MELEE_INPUT") == 0) {
       cached = GW_INPUT_NONE;

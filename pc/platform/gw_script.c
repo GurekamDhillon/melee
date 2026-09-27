@@ -18,6 +18,7 @@
 #include "gw_fx_query.h"
 #include "../gameworld/script_items.h"
 #include "gw_perf.h"
+#include "shim_vi.h"
 #include "../geno/geno.h" /* GENO_VERSION, for the state library header */
 #include <dolphin/pad.h> /* PADStatus in the scripted-pad headless test */
 
@@ -56,6 +57,8 @@ extern float gw_ScriptGame_StageLineF(int slot, int field);
 extern int gw_ScriptGame_SpawnTarget(int x, int y, int handle);
 extern int gw_ScriptGame_StageTargetI(int slot);
 extern float gw_ScriptGame_StageTargetF(int slot, int field);
+extern int gw_snap_open(int k);
+extern uint64_t gw_snap_hash(void);
 enum { SF_X, SF_Y, SF_VX, SF_VY, SF_PERCENT, SF_FACING, SF_ANIM_FRAME, SF_HITLAG };
 enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTUME, SI_SLOT_TYPE };
 
@@ -425,7 +428,7 @@ static void *gs_alloc(void *ud, void *ptr, size_t osize, size_t nsize) {
 static void gs_count_hook(lua_State *L, lua_Debug *ar) {
     (void) ar;
     gs.budget -= 1000;
-    if (gs.budget < 0 || gs_now_ms() > gs.deadline) {
+    if (gs.budget < 0 || (!gw_turbo_enabled() && gs_now_ms() > gs.deadline)) {
         gs.budget = 0; /* keep failing until control is back with the engine */
         luaL_error(L, "ran too long (limit: %d instructions or %d ms per call)",
                    (int) gs.budget_per_call, (int) gs.ms_per_call);
@@ -6084,6 +6087,28 @@ void gw_Script_FramePost(void) {
     gs_dispatch_events();
     gs_hook_all("on_frame", 0, 0, 0);
     gs_run_tasks();
+    /* Opt-in parity trace: the same snapshot hash used by rollback, once per live match frame.
+     * Opening k=0 enables the write-watch/hash machinery without scheduling any rollbacks. */
+    if (gs.match_active) {
+        static FILE *hashlog;
+        static int tried;
+        if (!tried) {
+            const char *path = getenv("MELEE_TURBO_HASHLOG");
+            tried = 1;
+            if (path != NULL && *path != '\0' && gw_snap_open(0) == 0) {
+                hashlog = fopen(path, "w");
+                if (hashlog != NULL) {
+                    fprintf(hashlog, "frame,hash\n");
+                    gw_log("gw: turbo hash trace: %s", path);
+                } else gw_log("gw: turbo hash trace: cannot open %s", path);
+            }
+        }
+        if (hashlog != NULL) {
+            fprintf(hashlog, "%d,%016llX\n", gs.match_frame,
+                    (unsigned long long) gw_snap_hash());
+            fflush(hashlog);
+        }
+    }
 }
 
 int gw_Script_DrawCount(void) { return gs.ndraw[!gs.build]; }

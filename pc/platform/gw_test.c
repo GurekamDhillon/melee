@@ -186,12 +186,15 @@ int gw_test_run_all(void) {
   gw_log("TESTS: begin (%d registered)", gw_test_count);
   {
     const char *v = getenv("MELEE_TEST_TIMEOUT");
+    if (getenv("MELEE_TURBO") != NULL && strcmp(getenv("MELEE_TURBO"), "1") == 0)
+      gw_test_timeout_ms = 60000; /* host I/O tests still use real time */
     if (v != NULL) {
       const long secs = strtol(v, NULL, 0);
       if (secs > 0) {
         gw_test_timeout_ms = (DWORD)(secs * 1000);
       }
     }
+    gw_log("TESTS: wall-clock safety timeout %lu ms per test", (unsigned long)gw_test_timeout_ms);
     CreateThread(NULL, 0, gw_test_watchdog, NULL, 0, NULL);
   }
   for (i = 0; i < gw_test_count; ++i) {

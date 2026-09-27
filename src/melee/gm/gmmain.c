@@ -160,7 +160,14 @@ int main(void)
     HSD_GXSetFifoObj(GXInit(HSD_AllocateFifo(0x40000), 0x40000));
     HSD_InitComponent();
     GXSetMisc(1, 8);
+#if defined(TARGET_PC)
+    {
+        extern u32 InitialSeed(void); /* shim_os.c: a fixed seed for scripted parity runs */
+        *HSD_RandSeedPtr = InitialSeed();
+    }
+#else
     *HSD_RandSeedPtr = OSGetTick();
+#endif
     lbAudioAx_8002838C();
     lb_80019AAC(&gmMain_8015FD24);
     HSD_VISetUserPostRetraceCallback(&gmMain_8015FDA0);

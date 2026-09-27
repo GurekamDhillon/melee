@@ -9,6 +9,9 @@ extern "C" {
 #endif
 
 bool gw_frame_init(void);
+/* Opt-in accelerated scripted simulation. Configure before Aurora/game initialization. */
+void gw_turbo_configure(int argc, char **argv);
+int gw_turbo_enabled(void);
 struct SDL_Window;
 /* Install the nonmodal Windows caption drag on Aurora's exact game window. */
 bool gw_window_drag_install(struct SDL_Window *window);

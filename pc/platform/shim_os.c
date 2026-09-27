@@ -214,6 +214,20 @@ int64_t gw_OSGetTime(void) { return (int64_t)gw_time_ticks(); }
 
 int gw_OSGetTick(void) { return (int)(int32_t)(uint32_t)gw_time_ticks(); }
 
+uint32_t gw_InitialSeed(void) {
+  const char *v = getenv("MELEE_TEST_SEED");
+  if (v != NULL && *v != '\0') {
+    char *end;
+    unsigned long seed = strtoul(v, &end, 0);
+    if (*end == '\0') {
+      gw_log("gw: fixed scripted match seed %lu", seed);
+      return (uint32_t)seed;
+    }
+    gw_log("gw: invalid MELEE_TEST_SEED=%s; using OSGetTick", v);
+  }
+  return (uint32_t)gw_OSGetTick();
+}
+
 /* Aurora writes each OSCalendarTime field natively (little-endian) into the game's buffer, but the
  * game reads them big-endian, so the save-description date comes out garbage (DEVLOG §13.6.5).
  * Swap every 32-bit field in place, one by one, so the swap stays correct even if the struct's
@@ -350,6 +364,18 @@ int gw_os_pad_alarm_deadline(uint64_t period_ticks, uint64_t *fire_at) {
     }
   }
   return 0;
+}
+
+int gw_os_next_alarm_deadline(uint64_t *fire_at) {
+  int found = 0;
+  for (int i = 0; i < GW_MAX_ALARMS; ++i) {
+    const gw_alarm *a = &gw_alarms[i];
+    if (a->handle != NULL && a->handler != NULL && (!found || a->fire_at < *fire_at)) {
+      *fire_at = a->fire_at;
+      found = 1;
+    }
+  }
+  return found;
 }
 
 void gw_os_run_alarms(uint64_t ticks) {

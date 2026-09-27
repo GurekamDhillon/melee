@@ -234,18 +234,18 @@ const AuroraEvent* update() noexcept {
   return window::poll_events();
 }
 
-bool begin_frame() noexcept {
+bool begin_frame(bool offscreen = false) noexcept {
   ZoneScoped;
 #ifdef AURORA_ENABLE_GX
   {
-    if (!window::is_presentable()) {
+    if (!offscreen && !window::is_presentable()) {
       webgpu::release_surface();
       return false;
     }
-    if (window::is_paused()) {
+    if (!offscreen && window::is_paused()) {
       return false;
     }
-    if (!g_surface) {
+    if (!offscreen && !g_surface) {
       webgpu::refresh_surface(true);
       if (!g_surface) {
         return false;
@@ -262,7 +262,7 @@ bool begin_frame() noexcept {
   return true;
 }
 
-void end_frame() noexcept {
+void end_frame(bool offscreen = false) noexcept {
   ZoneScoped;
 #ifdef AURORA_ENABLE_GX
   gx::fifo::drain();
@@ -286,7 +286,7 @@ void end_frame() noexcept {
   }
 #endif
 
-  gfx::end_frame([rmlBindGroup = std::move(rmlBindGroup), rmlOverlay, viewport,
+  gfx::end_frame([rmlBindGroup = std::move(rmlBindGroup), rmlOverlay, viewport, offscreen,
                   imguiDrawData = std::move(imguiDrawData)](
                      wgpu::CommandEncoder& encoder, std::vector<gfx::AfterSubmitCallback> afterSubmitCallbacks) {
     wgpu::Texture currentTexture;
@@ -294,7 +294,7 @@ void end_frame() noexcept {
     auto surfaceStatus = wgpu::SurfaceGetCurrentTextureStatus::Error;
     {
       window::SurfaceLock surfaceLock;
-      if (window::is_presentable() && g_surface) {
+      if (!offscreen && window::is_presentable() && g_surface) {
         ZoneScopedN("Acquire texture");
         wgpu::SurfaceTexture surfaceTexture;
         g_surface.GetCurrentTexture(&surfaceTexture);
@@ -364,7 +364,7 @@ void end_frame() noexcept {
         imgui::render(pass, imguiDrawData);
         pass.End();
       }
-    } else {
+    } else if (!offscreen) {
       Log.info("Skipping present; window not presentable");
     }
     webgpu::gpu_prof::frame_end(encoder);
@@ -457,6 +457,8 @@ void aurora_shutdown() { aurora::shutdown(); }
 const AuroraEvent* aurora_update() { return aurora::update(); }
 bool aurora_begin_frame() { return aurora::begin_frame(); }
 void aurora_end_frame() { aurora::end_frame(); }
+bool aurora_begin_frame_offscreen() { return aurora::begin_frame(true); }
+void aurora_end_frame_offscreen() { aurora::end_frame(true); }
 AuroraBackend aurora_get_backend() { return aurora::g_config.desiredBackend; }
 const AuroraBackend* aurora_get_available_backends(size_t* count) {
   if (count != nullptr) {

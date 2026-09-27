@@ -215,6 +215,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   gw_log("melee-pc: disc image %s", gw_iso_path_buf);
+  gw_turbo_configure(argc, argv);
 
   /* Scan the Target Test mod directory now so the loader reports what it found at boot, instead of
    * only on the first Target Test query. */
@@ -250,6 +251,7 @@ int main(int argc, char *argv[]) {
    * reaches the screen. Default on. */
   int vsync = 1;
   (void)gw_env_int("MELEE_VSYNC", &vsync);
+  if (gw_turbo_enabled()) vsync = 0;
   int win_x = 0, win_y = 0, win_w = 1280, win_h = 960;
   bool have_x = gw_env_int("MELEE_WINDOW_X", &win_x);
   bool have_y = gw_env_int("MELEE_WINDOW_Y", &win_y);

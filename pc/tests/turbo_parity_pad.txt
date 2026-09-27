@@ -1,0 +1,10 @@
+# One segment is consumed per PADRead. Repeating this input is independent of host time.
+30 0000
+6 0100
+12 0000
+6 0200
+12 0000
+6 0002 80 0
+12 0000
+6 0001 -80 0
+120 0000

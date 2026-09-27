@@ -1017,6 +1017,10 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
             hb[GENO_AH_BKB] = gn_int(d, h, "bkb", 0);
             hb[GENO_AH_ELEMENT] = gn_int(d, h, "element", 0);
             hb[GENO_AH_SHIELD_DAMAGE] = gn_int(d, h, "shield_damage", 0);
+            { /* v5.5: extra hitstun frames (Ultimate add_reaction_frame on the article's attack) */
+                int stun = gn_int(d, h, "stun", 0);
+                hb[GENO_AH_STUN] = (uint32_t) (stun < 0 ? 0 : stun > 255 ? 255 : stun);
+            }
             hb[GENO_AH_SFX_SEVERITY] = gn_int(d, h, "sfx_severity", 1);
             hb[GENO_AH_SFX_KIND] = gn_int(d, h, "sfx_kind", 0);
             hb[GENO_AH_START] = gn_int(d, h, "start", 1);

@@ -1794,17 +1794,24 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
  * the largest bonus of the frame; ftCo_Damage.c takes it when it computes the hitstun (Geno_TakeStunBonus). Both
  * live in Geno_StateBlock (a game global: rollback / savestates restore it). */
 extern int geno_stun_frame(void);
+void Geno_GiveStunBonus(Fighter* vic, int add);
 void Geno_HitStunBonus(Fighter* atk, int idx, Fighter* vic)
 {
     GenoState* as;
-    GenoState* vs;
     s32 add;
     if (atk == NULL || vic == NULL || idx < 0 || idx >= GENO_MAX_REHIT) {
         return;
     }
     as = geno_state(atk);
     add = as->stun_add[idx];
-    if (add <= 0) {
+    Geno_GiveStunBonus(vic, add);
+}
+
+/* the victim's pending bonus for this frame: the largest of the frame's hits */
+void Geno_GiveStunBonus(Fighter* vic, int add)
+{
+    GenoState* vs;
+    if (vic == NULL || add <= 0) {
         return;
     }
     vs = geno_state(vic);

@@ -115,6 +115,27 @@ static int geno_art_of_kind(int kind, int* p, int* a)
     return *a < Geno_ArticleCount(*p);
 }
 
+/* v5.5: ftcoll.c - an item's hitbox `hit` hit fighter `vic`: a Geno article's hitbox entry gives its "stun" bonus */
+void Geno_ArticleStunBonus(Item* item, HitCapsule* hit, Fighter* vic)
+{
+    int p, a, slot, h;
+    GenoArtVars* v;
+    if (item == NULL || hit == NULL || !geno_art_of_kind(item->kind, &p, &a)) {
+        return;
+    }
+    for (slot = 0; slot < 4 && &item->x5D4_hitboxes[slot].hit != hit; slot++) {
+    }
+    if (slot >= 4 || slot >= GENO_ART_HITBOXES) {
+        return;
+    }
+    v = geno_art_vars(item);
+    h = v->cur[slot];
+    if (h < 0) {
+        return;
+    }
+    Geno_GiveStunBonus(vic, Geno_ArticleHitParam(p, a, h, GENO_AH_STUN));
+}
+
 /* The descriptor, from the registry (idempotent: the same values at every spawn). */
 static void geno_art_build(int p, int a)
 {

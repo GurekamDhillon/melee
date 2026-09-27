@@ -1360,6 +1360,10 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                     if (item->owner != NULL && ftLib_80086960(item->owner)) {
                         owner = GET_FIGHTER(item->owner)->player_id;
                     }
+                    {
+                        extern void Geno_ArticleStunBonus(Item * item, HitCapsule * hit, Fighter * vic);
+                        Geno_ArticleStunBonus(item, hit, fp); /* v5.5: a Geno article's extra hitstun */
+                    }
                     bits.f = scaled_dmg;
                     Script_GameEvent(2 /* LAB_EV_HIT */, owner, fp->player_id,
                                      0xFF | 0x400 | (fp->is_sub_fighter ? 0x200 : 0), bits.i);

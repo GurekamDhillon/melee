@@ -1949,6 +1949,7 @@ Hitboxes (up to 4, Melee's item limit; `GENO_AH_*` ids 0-15): `damage` (1), `siz
 `start` / `end` (the active frames of the article's life, 1-based; `end` 0 = to the end; a window
 re-opening clears the victim list, so two windows = two hits), `hits` (who it hits and who can take
 it). One hit per victim per window, as Melee's items.
+v5.5: `stun` (0-255, default 0): extra hitstun frames a hit by this hitbox gives the victim (Ultimate's `set_add_reaction_frame_revised` on the article's attack; the fighter-side command is HBSTUN, section 20 table). Checked: Firaga with `stun` 15 on Fox: hitstun 18 -> 33.
 
 **Spawning:** native hook **5 `geno.article.spawn`**, argument = the article's index: from a script
 (`CALL 5 n`, section 15.1), from a geno.json dispatch point, or a subaction overlay at the frame the

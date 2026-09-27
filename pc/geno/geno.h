@@ -424,7 +424,8 @@ enum {
     GENO_AH_END = 14,          /* last active frame (0 = the whole lifetime) */
     GENO_AH_FLAGS = 15,        /* GENO_AHF_* (default: all but none) */
     GENO_AH_SLOT = 16,         /* v5.1: Melee hitbox slot 0-3 (default: the entry's index mod 4) */
-    GENO_AH_COUNT = 17
+    GENO_AH_STUN = 17,         /* v5.5: extra hitstun frames a hit gives (int; HBSTUN for articles) */
+    GENO_AH_COUNT = 18
 };
 #define GENO_AHF_GROUND 1u      /* hits grounded fighters */
 #define GENO_AHF_AIR 2u         /* hits airborne fighters */

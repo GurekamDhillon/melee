@@ -22,6 +22,7 @@
  * entry points route through the VI shim instead, which owns HSD's XFB state machine; the rest are
  * logged stubs. */
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "shim_gx.h"
 #include "shim_vi.h"
@@ -732,6 +733,72 @@ void gw_GXLoadPosMtxImm(const void *mtx, u32 id) {
   GXLoadPosMtxImm(native, id);
 }
 
+/* PC matrix palette (pobj.c geno_pal_pobj_v1; Aurora GX_AURORA_LOAD_PALETTE): n slots of 24 big-endian floats
+ * (position 3x4 rows, normal 3x4 rows) from the game, converted once here. */
+void gw_GXAuroraLoadPalette(u32 n, u32 key, const void *data) {
+  static f32 native[GX_AURORA_PALETTE_MAX * 24];
+  u32 i;
+  if (n == 0 || n > GX_AURORA_PALETTE_MAX || data == NULL) {
+    return;
+  }
+  for (i = 0; i < n * 24u; ++i) {
+    native[i] = gw_rf32((const char *)data + i * 4u);
+  }
+  GXAuroraLoadPalette(n, key, native);
+}
+void gw_GXAuroraEndPalette(void) { GXAuroraEndPalette(); }
+/* MELEE_PAL_FORCE=1: pobj.c turns vanilla envelope POBJs into palette POBJs (a draw-path test; never for play) */
+int gw_diag_geno_pal_force(void) {
+  const char *v = getenv("MELEE_PAL_FORCE");
+  const int on = v != NULL && v[0] == '1';
+  if (on) {
+    gw_log("geno: MELEE_PAL_FORCE: vanilla envelope POBJs draw through the matrix palette (test only)");
+  }
+  return on;
+}
+/* MELEE_PAL_SELFTEST=1: pobj.c compares the palette arithmetic with every vanilla envelope POBJ's slots */
+int gw_diag_geno_pal_selftest(void) {
+  const char *v = getenv("MELEE_PAL_SELFTEST");
+  const int on = v != NULL && v[0] == '1';
+  if (on) {
+    gw_log("geno: palette self-test on: every vanilla envelope POBJ is also computed by the palette path");
+  }
+  return on;
+}
+void gw_diag_geno_pal_compare(int slots, int pos_equal, int nrm_equal, int nrm_checked) {
+  static unsigned pobjs, slot_n, pos_eq, nrm_n, nrm_eq, bad_count, frames_logged;
+  if (slots < 0) {
+    ++bad_count;
+    return;
+  }
+  ++pobjs;
+  slot_n += (unsigned)slots;
+  pos_eq += (unsigned)pos_equal;
+  nrm_n += (unsigned)nrm_checked;
+  nrm_eq += (unsigned)nrm_equal;
+  if ((pobjs % 20000u) == 0 && frames_logged < 50) {
+    ++frames_logged;
+    gw_log("geno: palette self-test: %u POBJs, %u slots: position bit-equal %u, normal bit-equal %u of %u; slot "
+           "count mismatches %u",
+           pobjs, slot_n, pos_eq, nrm_eq, nrm_n, bad_count);
+  }
+}
+/* pobj.c's palette POBJ checks: what 0 loaded, 1 refused at load (why: 1 not envelope, 2 no DIRECT PNMTXIDX,
+ * 4 TEXnMTXIDX), 2 refused at draw (normal projection). Counted; the first of each kind logged. */
+void gw_diag_geno_pal(int what, int a, int b) {
+  static int count[3], logged[3];
+  if (what < 0 || what > 2) {
+    return;
+  }
+  ++count[what];
+  if (!logged[what] || (what == 0 && (count[0] % 100) == 0)) {
+    logged[what] = 1;
+    gw_log("geno: palette POBJ %s (%d so far): %d envelopes%s%s%s%s", what == 0 ? "loaded" : what == 1 ? "REFUSED at load" : "REFUSED at draw (normal projection)",
+           count[what], a, (b & 1) ? ", not an envelope POBJ" : "", (b & 2) ? ", no DIRECT PNMTXIDX" : "",
+           (b & 4) ? ", has TEXnMTXIDX" : "", what == 1 && a > GX_AURORA_PALETTE_MAX ? ", too many envelopes" : "");
+  }
+}
+
 void gw_GXLoadNrmMtxImm(const void *mtx, u32 id) {
   f32 native[3][4];
   gw_read_mtx(native, mtx);
@@ -1108,6 +1175,19 @@ void gw_GXSetScissor(u32 left, u32 top, u32 wd, u32 ht) { GXSetScissor(left, top
 extern void GXSetPipelineWaitAURORA(u8 on);
 void gw_GXSetPipelineWaitAURORA_none(u8 on) { (void) on; }
 #pragma comment(linker, "/alternatename:_GXSetPipelineWaitAURORA=_gw_GXSetPipelineWaitAURORA_none")
+/* An Aurora without the matrix palette (the shared ax86m until it is rebuilt from this tree): the calls resolve to
+ * these, palette POBJs then draw with the wrong matrices - logged once, loudly. */
+void gw_GXAuroraLoadPalette_none(u32 n, u32 key, const float *data) {
+  static int said;
+  (void) n; (void) key; (void) data;
+  if (!said) {
+    said = 1;
+    gw_log("geno: a palette POBJ drew, but this build's Aurora has no GX_AURORA_LOAD_PALETTE: rebuild Aurora");
+  }
+}
+void gw_GXAuroraEndPalette_none(void) {}
+#pragma comment(linker, "/alternatename:_GXAuroraLoadPalette=_gw_GXAuroraLoadPalette_none")
+#pragma comment(linker, "/alternatename:_GXAuroraEndPalette=_gw_GXAuroraEndPalette_none")
 void gw_GXSetPipelineWaitAURORA(u8 on) { GXSetPipelineWaitAURORA(on); }
 
 void gw_GXSetCullMode(u32 mode) { GXSetCullMode((GXCullMode)mode); }

@@ -306,12 +306,24 @@ static s32 PObjLoad(HSD_PObj* pobj, HSD_PObjDesc* desc)
     return 0;
 }
 
+#if defined(TARGET_PC)
+static int geno_pal_desc(const HSD_PObjDesc* desc);
+extern HSD_PObjInfo genoPalPObj;
+#endif
+
 HSD_PObj* HSD_PObjLoadDesc(HSD_PObjDesc* pobjdesc)
 {
     if (pobjdesc != NULL) {
         HSD_PObj* pobj;
         HSD_ClassInfo* info;
 
+#if defined(TARGET_PC)
+        if (geno_pal_desc(pobjdesc)) { /* a PC matrix palette POBJ (below) */
+            pobj = hsdNew(HSD_CLASS_INFO(&genoPalPObj));
+            HSD_POBJ_METHOD(pobj)->load(pobj, pobjdesc);
+            return pobj;
+        }
+#endif
         if (!pobjdesc->class_name ||
             !(info = hsdSearchClassInfo(pobjdesc->class_name)))
         {
@@ -1124,6 +1136,12 @@ static void SetupSharedVtxModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
 #if defined(TARGET_PC)
 /* Unprefixed: gwtool prefixes every symbol in a game TU with gw_. */
 extern void diag_envelope(int count, float weight_sum);
+extern int diag_geno_pal_selftest(void);
+extern void diag_geno_pal_compare(int slots, int pos_equal, int nrm_equal, int nrm_checked);
+static int geno_pal_selftest_on = -1; /* MELEE_PAL_SELFTEST, read once */
+static f32 geno_pal_legacy[10][24];
+static u8 geno_pal_legacy_nrm[10];
+static void geno_pal_selftest_check(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, int slots);
 #endif
 
 static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
@@ -1140,6 +1158,11 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
     HSD_PObjClearMtxMark(NULL, HSD_MTX_ENVELOPE);
     flags = GetSetupFlags(jobj, rendermode);
     right = _HSD_mkEnvelopeModelNodeMtx(jobj, mtx);
+#if defined(TARGET_PC)
+    if (geno_pal_selftest_on < 0) {
+        geno_pal_selftest_on = diag_geno_pal_selftest();
+    }
+#endif
 
     for (MtxIdx = 0, list = pobj->u.envelope_list; MtxIdx < 10 && list;
          MtxIdx++, list = list->next)
@@ -1201,9 +1224,21 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
         MTXConcat(vmtx, mtxp, tmp);
         GXLoadPosMtxImm(tmp, mtx_no);
         HSD_PerfCountMtxLoad();
+#if defined(TARGET_PC)
+        if (geno_pal_selftest_on > 0) {
+            memcpy(geno_pal_legacy[MtxIdx], tmp, sizeof(Mtx));
+            geno_pal_legacy_nrm[MtxIdx] = 0;
+        }
+#endif
 
         if (flags & SETUP_NORMAL) {
             HSD_MtxInverseTranspose(tmp, mtx);
+#if defined(TARGET_PC)
+            if (geno_pal_selftest_on > 0) {
+                memcpy(&geno_pal_legacy[MtxIdx][12], mtx, sizeof(Mtx));
+                geno_pal_legacy_nrm[MtxIdx] = 1;
+            }
+#endif
             if (jobj->flags & JOBJ_LIGHTING) {
                 GXLoadNrmMtxImm(mtx, mtx_no);
                 HSD_PerfCountMtxLoad();
@@ -1214,6 +1249,11 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
             }
         }
     }
+#if defined(TARGET_PC)
+    if (geno_pal_selftest_on > 0) {
+        geno_pal_selftest_check(pobj, vmtx, right, MtxIdx);
+    }
+#endif
 }
 
 static void PObjSetupMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
@@ -1323,3 +1363,243 @@ static void PObjInfoInit(void)
     HSD_POBJ_INFO(&hsdPObj)->setup_mtx = PObjSetupMtx;
     HSD_POBJ_INFO(&hsdPObj)->load = PObjLoad;
 }
+
+#if defined(TARGET_PC)
+/* ---- PC matrix palette (the workspace's _research/pc-matrix-palette-design.md) --------------------------------
+ * An envelope POBJ whose desc names the class "geno_pal_pobj_v1" draws up to GENO_PAL_MAX envelopes in one piece:
+ * its per-vertex PNMTXIDX byte is the envelope's slot itself (0..n-1, not slot*3), and setup_mtx computes every
+ * envelope's matrices with the same arithmetic as SetupEnvelopeModelMtx, handing them to Aurora in one
+ * GX_AURORA_LOAD_PALETTE instead of the ten GX slots. Vanilla POBJs never reach this code: the class is chosen
+ * by name in HSD_PObjLoadDesc (Melee never fills the class hash, so hsdSearchClassInfo cannot find it). */
+#define GENO_PAL_MAX 64
+
+typedef struct GenoPalPObj {
+    HSD_PObj base;
+    u8 n;      /* envelopes (palette slots) */
+    u8 broken; /* failed the load checks, or needs something v1 does not do: not drawn */
+    u8 pad[2];
+} GenoPalPObj;
+
+/* Unprefixed: gwtool prefixes every symbol in a game TU with gw_ (-> shim_gx.c, big-endian floats). */
+extern void GXAuroraLoadPalette(u32 n, u32 key, const f32* data);
+extern void GXAuroraEndPalette(void);
+extern void diag_geno_pal(int what, int a, int b);
+
+static void GenoPalInfoInit(void);
+HSD_PObjInfo genoPalPObj = { GenoPalInfoInit };
+
+static f32 geno_pal_data[GENO_PAL_MAX * 24]; /* per slot: position 3x4 rows, then normal 3x4 rows */
+
+static int GenoPalLoad(HSD_PObj* pobj, HSD_PObjDesc* desc)
+{
+    GenoPalPObj* gp = (GenoPalPObj*) pobj;
+    HSD_SList* list;
+    HSD_VtxDescList* v;
+    int n = 0, pnmtx = 0, texmtx = 0;
+    int rc = HSD_POBJ_INFO(&hsdPObj)->load(pobj, desc);
+    for (list = pobj_type(pobj) == POBJ_ENVELOPE ? pobj->u.envelope_list : NULL; list != NULL; list = list->next) {
+        n++;
+    }
+    for (v = pobj->verts; v != NULL && v->attr != GX_VA_NULL; v++) {
+        if (v->attr == GX_VA_PNMTXIDX && v->attr_type == GX_DIRECT) {
+            pnmtx = 1;
+        }
+        if (v->attr >= GX_VA_TEX0MTXIDX && v->attr <= GX_VA_TEX7MTXIDX) {
+            texmtx = 1;
+        }
+    }
+    gp->n = (u8) (n > 255 ? 255 : n);
+    gp->broken = (u8) (pobj_type(pobj) != POBJ_ENVELOPE || n < 1 || n > GENO_PAL_MAX || !pnmtx || texmtx);
+    diag_geno_pal(gp->broken ? 1 : 0, n, (pobj_type(pobj) != POBJ_ENVELOPE) | (!pnmtx << 1) | (texmtx << 2));
+    return rc;
+}
+
+/* every envelope's view-space position matrix and its inverse transpose, as SetupEnvelopeModelMtx computes them
+ * (same operations, same order); returns the slots written */
+static int geno_pal_compute(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, f32* out)
+{
+    HSD_SList* list;
+    Mtx mtx;
+    int i = 0, r, c;
+    for (list = pobj->u.envelope_list; i < GENO_PAL_MAX && list != NULL; i++, list = list->next) {
+        Mtx m, tmp, nrm;
+        MtxPtr mtxp;
+        HSD_Envelope* envelope = list->data;
+        f32* o = &out[i * 24];
+
+        /* the arithmetic of SetupEnvelopeModelMtx, in the same order */
+        if (envelope->weight >= (1.0f - FLT_EPSILON)) {
+            HSD_JObjSetupMatrix(envelope->jobj);
+            if (right) {
+                MTXConcat(envelope->jobj->mtx, envelope->jobj->envelopemtx, m);
+                mtxp = m;
+            } else {
+                mtxp = envelope->jobj->mtx;
+            }
+        } else {
+            m[0][0] = m[0][1] = m[0][2] = m[0][3] = m[1][0] = m[1][1] = m[1][2] = m[1][3] = m[2][0] = m[2][1] =
+                m[2][2] = m[2][3] = 0.0f;
+            while (envelope) {
+                HSD_JObj* jp = envelope->jobj;
+                HSD_JObjSetupMatrix(jp);
+                MTXConcat(jp->mtx, jp->envelopemtx, tmp);
+                HSD_MtxScaledAdd(tmp, m, m, envelope->weight);
+                envelope = envelope->next;
+            }
+            mtxp = m;
+        }
+        if (right) { /* in place, as the original (its loop-local mtx is mtxp here); never the outer mtx: right is it */
+            MTXConcat(mtxp, right, m);
+            mtxp = m;
+        }
+        MTXConcat(vmtx, mtxp, tmp);
+        HSD_MtxInverseTranspose(tmp, nrm);
+        for (r = 0; r < 3; r++) {
+            for (c = 0; c < 4; c++) {
+                o[r * 4 + c] = tmp[r][c];
+                o[12 + r * 4 + c] = c < 3 ? nrm[r][c] : 0.0f;
+            }
+        }
+    }
+    (void) mtx;
+    return i;
+}
+
+static void GenoPalSetupMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
+{
+    GenoPalPObj* gp = (GenoPalPObj*) pobj;
+    HSD_JObj* jobj;
+    MtxPtr right;
+    Mtx mtx;
+    PObjSetupFlag flags;
+    int n;
+
+    if (gp->broken) {
+        return;
+    }
+    jobj = HSD_JObjGetCurrent();
+    HSD_PObjClearMtxMark(NULL, HSD_MTX_ENVELOPE);
+    flags = GetSetupFlags(jobj, rendermode);
+    if (flags & SETUP_NORMAL_PROJECTION) { /* per-envelope texture matrices: not in v1 */
+        gp->broken = 1;
+        diag_geno_pal(2, gp->n, 0);
+        return;
+    }
+    right = _HSD_mkEnvelopeModelNodeMtx(jobj, mtx);
+    n = geno_pal_compute(pobj, vmtx, right, geno_pal_data);
+    GXAuroraLoadPalette((u32) n, (u32) pobj ^ (u32) jobj, geno_pal_data);
+}
+
+/* MELEE_PAL_SELFTEST (diag_geno_pal_selftest() != 0): SetupEnvelopeModelMtx records each vanilla slot's position
+ * matrix (and normal, when it computed one) and hands them here; the palette arithmetic on the same POBJ must give
+ * the same bits. The result goes to the log (shim_gx.c) as counts. */
+static void geno_pal_selftest_check(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, int slots)
+{
+    int i, k, pos_eq = 0, nrm_eq = 0, nrm_n = 0, n = geno_pal_compute(pobj, vmtx, right, geno_pal_data);
+    if (n != slots) {
+        diag_geno_pal_compare(-1, n, slots, 0);
+        return;
+    }
+    for (i = 0; i < n; i++) {
+        pos_eq += memcmp(&geno_pal_data[i * 24], geno_pal_legacy[i], 12 * sizeof(f32)) == 0;
+        if (geno_pal_legacy_nrm[i]) {
+            int eq = 1;
+            nrm_n++;
+            for (k = 0; k < 12; k++) {
+                if ((k & 3) != 3 && memcmp(&geno_pal_data[i * 24 + 12 + k], &geno_pal_legacy[i][12 + k], 4) != 0) {
+                    eq = 0;
+                }
+            }
+            nrm_eq += eq;
+        }
+    }
+    diag_geno_pal_compare(n, pos_eq, nrm_eq, nrm_n);
+}
+
+static void GenoPalDisp(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
+{
+    if (((GenoPalPObj*) pobj)->broken) {
+        return;
+    }
+    HSD_PObjDisp(pobj, vmtx, pmtx, rendermode);
+    GXAuroraEndPalette();
+}
+
+static void GenoPalInfoInit(void)
+{
+    hsdInitClassInfo(HSD_CLASS_INFO(&genoPalPObj), HSD_CLASS_INFO(&hsdPObj), "sysdolphin_base_library",
+                     "geno_pal_pobj_v1", sizeof(HSD_PObjInfo), sizeof(GenoPalPObj));
+    HSD_POBJ_INFO(&genoPalPObj)->disp = GenoPalDisp;
+    HSD_POBJ_INFO(&genoPalPObj)->setup_mtx = GenoPalSetupMtx;
+    HSD_POBJ_INFO(&genoPalPObj)->load = GenoPalLoad;
+}
+
+/* MELEE_PAL_FORCE=1 (a test of the palette's draw path; never for play): every vanilla envelope POBJ whose
+ * attributes other than PNMTXIDX are all indexed, and that has no TEXnMTXIDX, is turned into a palette POBJ at
+ * load - its display list's PNMTXIDX bytes divided by 3 in place (once per display list). */
+extern int diag_geno_pal_force(void);
+static int geno_pal_force_on = -1;
+static u8* geno_pal_forced[512];
+static int geno_pal_nforced;
+
+static int geno_pal_force_convert(const HSD_PObjDesc* desc)
+{
+    const HSD_VtxDescList* v;
+    int stride = 0, has_pn = 0, i, n;
+    u8 *dl, *end;
+    if (pobj_type(desc) != POBJ_ENVELOPE || desc->display == NULL || desc->verts == NULL) {
+        return 0;
+    }
+    for (v = desc->verts; v->attr != GX_VA_NULL; v++) {
+        if (v->attr == GX_VA_PNMTXIDX) {
+            if (v->attr_type != GX_DIRECT || stride != 0) {
+                return 0; /* PNMTXIDX must be DIRECT and the first attribute */
+            }
+            has_pn = 1;
+            stride += 1;
+        } else if (v->attr >= GX_VA_TEX0MTXIDX && v->attr <= GX_VA_TEX7MTXIDX) {
+            return 0;
+        } else if (v->attr_type == GX_INDEX8) {
+            stride += 1;
+        } else if (v->attr_type == GX_INDEX16) {
+            stride += 2;
+        } else {
+            return 0;
+        }
+    }
+    if (!has_pn) {
+        return 0;
+    }
+    for (i = 0; i < geno_pal_nforced; i++) {
+        if (geno_pal_forced[i] == desc->display) {
+            return 1; /* this display list is already converted (another instance of the model) */
+        }
+    }
+    if (geno_pal_nforced >= 512) {
+        return 0;
+    }
+    dl = desc->display;
+    end = dl + (desc->n_display << 5);
+    while (dl + 3 <= end && (dl[0] & 0xF8) != 0) {
+        n = (dl[1] << 8) | dl[2];
+        dl += 3;
+        for (i = 0; i < n && dl + stride <= end; i++, dl += stride) {
+            dl[0] = (u8) (dl[0] / 3);
+        }
+    }
+    geno_pal_forced[geno_pal_nforced++] = desc->display;
+    return 1;
+}
+
+/* HSD_PObjLoadDesc: is this desc an extended (palette) POBJ? */
+static int geno_pal_desc(const HSD_PObjDesc* desc)
+{
+    if (desc->class_name != NULL && strcmp(desc->class_name, "geno_pal_pobj_v1") == 0) {
+        return 1;
+    }
+    if (geno_pal_force_on < 0) {
+        geno_pal_force_on = diag_geno_pal_force();
+    }
+    return geno_pal_force_on > 0 && desc->class_name == NULL && geno_pal_force_convert(desc);
+}
+#endif

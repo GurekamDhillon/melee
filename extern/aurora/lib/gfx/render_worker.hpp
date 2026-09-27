@@ -13,6 +13,7 @@
 #include <vector>
 
 namespace aurora::gfx::render_worker {
+int64_t busy_ns() noexcept;
 
 enum class ItemType : uint8_t {
   BeginFrame,

@@ -181,6 +181,7 @@ static int fsv_get_vsync(void) { return Video_Vsync(); }
 static void fsv_set_vsync(int v) { Video_SetVsync(v); }
 static int fsv_get_fps(void) { return Video_ShowFps(); }
 static void fsv_set_fps(int v) { Video_SetShowFps(v); }
+static const char* const fsv_fps_names[] = { "Off", "FPS", "Performance" };
 
 static const FrontendItem fe_items_set_video[] = {
     { FE_CHOICE, 0, "Render Scale", "The picture's internal size. Auto follows the window.",
@@ -190,8 +191,8 @@ static const FrontendItem fe_items_set_video[] = {
       fsv_get_rate, fsv_set_rate, 0, 3, 1, fsv_rate_names },
     { FE_TOGGLE, 0, "VSync", "Wait for the display. Off can tear but responds sooner.", fsv_get_vsync,
       fsv_set_vsync, 0, 1, 1 },
-    { FE_TOGGLE, 0, "Show FPS", "A frame-rate readout in the corner.", fsv_get_fps, fsv_set_fps, 0, 1,
-      1 },
+    { FE_CHOICE, 0, "Show FPS", "Off, a frame-rate readout, or a frame-time graph.",
+      fsv_get_fps, fsv_set_fps, 0, 2, 1, fsv_fps_names },
 };
 
 /* ---- AUDIO ---------------------------------------------------------------------------------- */

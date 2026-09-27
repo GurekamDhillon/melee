@@ -577,8 +577,10 @@ void gw_GXCopyTex(void *dest, u8 clear) {
 /* ---- geometry ----------------------------------------------------------------------------- */
 
 void gw_GXBegin(u32 type, u32 vtxfmt, u16 nverts) {
+  int64_t start = gw_perf_gx_begin();
   ++gw_gx_prim_count;
   GXBegin((GXPrimitive)type, (GXVtxFmt)vtxfmt, nverts);
+  gw_perf_gx_end(start);
 }
 
 /* A resimulated frame (gw_snap.c) runs the render calls for their side effects on game state - pool
@@ -593,7 +595,9 @@ void gw_GXCallDisplayList(void *list, u32 nbytes) {
     return;
   }
   ++gw_gx_dlist_count;
+  int64_t start = gw_perf_gx_begin();
   GXCallDisplayList(list, nbytes);
+  gw_perf_gx_end(start);
 }
 void gw_GXClearVtxDesc(void) { GXClearVtxDesc(); }
 void gw_GXInvalidateVtxCache(void) { GXInvalidateVtxCache(); }

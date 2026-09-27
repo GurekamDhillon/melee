@@ -115,6 +115,7 @@ std::mutex g_presentStatsMutex;
 std::deque<PresentClock::time_point> g_presentTimes;
 std::atomic_bool g_processEventsQueued = false;
 std::atomic_int64_t g_lastPresentNs = 0;
+std::atomic_bool g_perfEnabled = false;
 std::atomic_uint32_t g_presentCount = 0;
 std::atomic_int64_t g_presentPeriodNs = 0;
 std::atomic_int64_t g_cpuFrameTimeNs = 0;
@@ -689,6 +690,7 @@ void end_frame(EndFrameCallback callback) {
     auto afterSubmitCallbacks = std::move(packet.afterSubmitCallbacks);
     packet = {};
     g_resources.stats.drawCallCount = stats.drawCallCount;
+    g_resources.stats.vertexCount = stats.vertexCount;
     g_resources.stats.mergedDrawCallCount = stats.mergedDrawCallCount;
     g_resources.stats.lastVertSize = stats.lastVertSize;
     g_resources.stats.lastUniformSize = stats.lastUniformSize;
@@ -750,4 +752,8 @@ int64_t aurora_get_last_present_ns() {
   return aurora::gfx::g_lastPresentNs.load(std::memory_order_acquire);
 }
 uint32_t aurora_get_present_count() { return aurora::gfx::g_presentCount.load(std::memory_order_acquire); }
+int64_t aurora_get_worker_busy_ns() { return aurora::gfx::render_worker::busy_ns(); }
+uint32_t aurora_get_last_vertex_count() { return aurora::gfx::detail::resources().stats.vertexCount; }
+void aurora_perf_enable(bool enabled) { aurora::gfx::g_perfEnabled.store(enabled, std::memory_order_relaxed); }
+bool aurora_perf_enabled() { return aurora::gfx::g_perfEnabled.load(std::memory_order_relaxed); }
 bool aurora_frame_slot_available() { return aurora::gfx::g_frameSlots.free_count() != 0; }

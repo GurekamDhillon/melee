@@ -17,6 +17,7 @@
 #include "gw_kit.h"
 #include "gw_fx_query.h"
 #include "../gameworld/script_items.h"
+#include "gw_perf.h"
 #include "../geno/geno.h" /* GENO_VERSION, for the state library header */
 
 #include <math.h>
@@ -3795,8 +3796,38 @@ static void gs_push_kit(lua_State *L) {
     lua_setfield(L, -2, "shear");
 }
 
+/* Host diagnostics only: no game memory or rollback state is read or changed. */
+static int l_perf(lua_State *L) {
+    GwPerfFrame frames[GW_PERF_HISTORY];
+    int requested = (int)luaL_optinteger(L, 1, 120);
+    int n, i, target;
+    float fps;
+    if (requested < 1) requested = 1;
+    if (requested > GW_PERF_HISTORY) requested = GW_PERF_HISTORY;
+    n = gw_perf_snapshot(frames, requested, &fps, &target);
+    lua_createtable(L, 0, 3);
+    gs_setnum(L, "fps", fps);
+    gs_setint(L, "target", target);
+    lua_createtable(L, n, 0);
+    for (i = 0; i < n; ++i) {
+        const GwPerfFrame *f = &frames[i];
+        lua_createtable(L, 0, 8);
+        gs_setnum(L, "total_ms", f->total_ms);
+        gs_setnum(L, "logic_ms", f->logic_ms);
+        gs_setnum(L, "gx_ms", f->gx_ms);
+        gs_setnum(L, "submit_ms", f->submit_ms);
+        gs_setnum(L, "worker_ms", f->worker_ms);
+        gs_setint(L, "draw_calls", f->draw_calls);
+        gs_setint(L, "vertices", f->vertices);
+        gs_setint(L, "fx_particles", f->fx_particles);
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setfield(L, -2, "frames");
+    return 1;
+}
+
 static const luaL_Reg gs_gd_funcs[] = {
-    {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"scene", l_scene}, {"match", l_match},
+    {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"scene", l_scene}, {"match", l_match},
     {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
     {"char_name", l_char_name}, {"pad", l_pad},
     {"input", l_input}, {"release", l_release}, {"savestate", l_savestate},

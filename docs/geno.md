@@ -487,9 +487,11 @@ Training, work as before).
 
 **Nothing plain on screen.** `lab.lua` draws only with `gd.kit` and the Lab art (`ui/`); there is
 no `gd.text` left. `gd.line` / `gd.fill` remain only for the skeleton, bones and ECB lines. The
-port's fps readout (`shim_vi.c`, opt-in) is suppressed during a LAB match
-(`GenoLab_InMatch()`). The F9 info panel and toasts are still there; they only appear when you
-ask for them.
+port's FPS panels (`shim_vi.c`, opt-in) use the same menu kit art and fonts outside LAB. They are
+suppressed during a LAB match (`GenoLab_InMatch()`). The Lab's **Performance** overlay uses
+`gd.perf()` and the kit instead;
+toggle it in DISPLAY or with `F4` (menu closed). The F9 info panel and toasts are still there;
+they only appear when you ask for them.
 
 **Keyboard in LAB.** During a LAB match (`GenoLab_InMatch()`: match start to match end) the
 keyboard never reaches the game pad (`shim_pad.c`: sampled as unfocused; in keyboard+ mode it
@@ -508,6 +510,7 @@ does not take the port; F1's C-stick hotkey is off). Every key belongs to the La
 | `F` | focus the next fighter |
 | `H` | hide / show the whole Lab UI (overlays go back to the game's default drawing) |
 | `F3` | help: a kit panel with this mode's keys plus the global ones |
+| `F4` | toggle the Performance panel in every display mode |
 | `ESC` (or START on any pad) | the pause menu (LAB matches) |
 
 **Modes.** Each mode chooses its panels and overlays, and which keys are live. Each mode
@@ -545,7 +548,7 @@ the flask, the hitbox burst and hazard stripes.
 | tab | rows |
 |---|---|
 | PLAY | Resume; Step +1; Step -1; Step +10; Focus (left / right) |
-| DISPLAY | Display mode (left / right); the current mode's toggles; Lab UI shown / hidden |
+| DISPLAY | Display mode (left / right); the current mode's toggles; Performance; Lab UI shown / hidden |
 | DUMMY | Target (left / right); Damage (left / right steps of 10, A applies `gd.set_percent`); Lock-step; Replay move; Mirror my pad |
 | STATES | Save to library; Quick save / Quick load (memory slot 1-3); Reset positions (slot 4, match start); History (2 / 5 / 10 / 20 s); Hot reload (replay 1 / 2 / 3 / 5 s); then the library, one row per saved state (A loads, Y / DELETE deletes after a confirm). Stage B, 14.10 |
 | EXIT | Change fighters; Change stage; Quit (no contest) |
@@ -553,6 +556,19 @@ the flask, the hitbox burst and hazard stripes.
 Pad: stick / d-pad up and down, left and right change a value, A, B or START close, L / R
 switch tabs. Keyboard: the arrows, Enter or Space, Backspace or Esc, `Q` / `E`. While the menu
 is open it takes every key, so no Lab shortcut fires underneath it.
+
+**Performance panel.** The compact kit panel shows current presented FPS and target (0 means
+uncapped), the latest total frame time, draw calls, decoded GX vertices and live Geno FX particles.
+Its graph covers up to 160 recent presented frames, paired into 80 columns. Cyan is game-thread
+logic, gold is time inside the timed GX submission calls, and red is Aurora enqueue time. The
+8.3 ms and 16.7 ms reference lines mark 120 and 60 FPS. Violet marks render-worker busy time as
+an independent trace: it overlaps game-thread work and is therefore not part of the stacked total.
+The gray remainder of total time is pacing, events and frame-slot waiting. Samples are host-side
+diagnostics, not rollback state; collection stops shortly after the panel is closed. `F4` has no
+other Lab binding. Outside LAB, Video > Show FPS > Performance (or `show_fps = 2` in `video.cfg`)
+draws the same data with the menu kit's `frame_*` art, font atlas and palette through the host
+overlay. `show_fps = 1` uses a smaller kit panel for the FPS readout; `0` draws neither panel and
+does not touch the kit from this path.
 
 Console: `lab status` (mode, toggles, draw and stage flags, menu tab and row, hit-rect count),
 `lab mode <name|1-5>`, `lab set <mode>.<toggle> on|off`, `lab hide`,

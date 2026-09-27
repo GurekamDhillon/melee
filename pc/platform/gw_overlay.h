@@ -14,6 +14,7 @@
 #define GW_OVERLAY_H
 
 #include <stdint.h>
+#include "gw_perf.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,8 +45,10 @@ void gw_Overlay_Draw(void);
  * top, and unconditional - it has to be reachable during a match, not just a load. */
 void gw_Overlay_DrawPanel(void);
 
-/* A one-box frame-rate readout in the top-left corner (shim_vi.c decides when). */
+/* Kit-art FPS and performance panels over non-LAB scenes (implemented by gw_console.cpp).
+ * shim_vi.c calls only while show_fps is enabled; no native font rendering is used. */
 void gw_Overlay_DrawStats(const char *text);
+void gw_Overlay_DrawPerf(const GwPerfFrame *frames, int count, float fps, int target);
 
 #ifdef __cplusplus
 }

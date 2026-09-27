@@ -8,6 +8,7 @@
  * the virtual clock advances, alarms fire and asynchronous transfers complete.
  */
 #include "shim_vi.h"
+#include "gw_perf.h"
 
 #include "gw.h"
 #include "shim_ax.h"
@@ -382,7 +383,7 @@ static void gw_video_load(void) {
       } else if (sscanf(line, " vsync = %d", &iv) == 1) {
         gw_video_vsync = iv != 0;
       } else if (sscanf(line, " show_fps = %d", &iv) == 1) {
-        gw_video_show_fps = iv != 0;
+        gw_video_show_fps = iv < 0 ? 0 : iv > 2 ? 2 : iv;
       }
     }
     fclose(f);
@@ -404,7 +405,8 @@ static void gw_video_load(void) {
   }
   env = getenv("MELEE_SHOW_FPS");
   if (env != NULL && env[0] != '\0') {
-    gw_video_show_fps = atoi(env) != 0;
+    int mode = atoi(env);
+    gw_video_show_fps = mode < 0 ? 0 : mode > 2 ? 2 : mode;
   }
 }
 
@@ -448,6 +450,12 @@ void gw_aurora_frame_replay_mark_none(bool v) { (void)v; }
 bool gw_aurora_frame_replay_none(float v) { (void)v; return false; }
 bool gw_aurora_frame_slot_available_none(void) { return true; }
 void gw_aurora_frame_interp_stats_none(uint32_t *b, uint32_t *r, uint32_t *m) { *b = *r = *m = 0; }
+int64_t gw_aurora_worker_busy_ns_none(void) { return 0; }
+uint32_t gw_aurora_vertex_count_none(void) { return 0; }
+void gw_aurora_perf_enable_none(bool enabled) { (void)enabled; }
+#pragma comment(linker, "/alternatename:_aurora_get_worker_busy_ns=_gw_aurora_worker_busy_ns_none")
+#pragma comment(linker, "/alternatename:_aurora_get_last_vertex_count=_gw_aurora_vertex_count_none")
+#pragma comment(linker, "/alternatename:_aurora_perf_enable=_gw_aurora_perf_enable_none")
 #pragma comment(linker, "/alternatename:_aurora_frame_interp_stats=_gw_aurora_frame_interp_stats_none")
 #pragma comment(linker, "/alternatename:_aurora_frame_replay_enable=_gw_aurora_frame_replay_enable_none")
 #pragma comment(linker, "/alternatename:_aurora_frame_replay_available=_gw_aurora_frame_replay_available_none")
@@ -504,7 +512,8 @@ int gw_Video_ShowFps(void) {
 
 void gw_Video_SetShowFps(int on) {
   gw_video_load();
-  gw_video_show_fps = on != 0;
+  gw_video_show_fps = on < 0 ? 0 : on > 2 ? 2 : on;
+  gw_log("gw: video: show_fps=%d", gw_video_show_fps);
   gw_video_save();
 }
 
@@ -640,6 +649,24 @@ static int gw_prof_on(void) {
 #define GW_PROF_BUCKETS 8
 
 static double gw_prof_freq;
+static GwPerfFrame gw_perf_ring[GW_PERF_HISTORY];
+static int gw_perf_head, gw_perf_count;
+static uint32_t gw_perf_lease_end;
+static long long gw_perf_last_end, gw_perf_gx_ticks, gw_perf_last_worker_ns;
+static int gw_perf_collecting;
+
+int gw_perf_snapshot(GwPerfFrame *out, int cap, float *fps, int *target) {
+  int n, i;
+  if (!gw_perf_collecting && gw_video_show_fps != 2) gw_perf_head = gw_perf_count = 0;
+  gw_perf_lease_end = gw_retrace_count + 120u;
+  if (fps) *fps = aurora_get_fps();
+  if (target) *target = gw_video_fps;
+  if (!out || cap <= 0) return gw_perf_count;
+  n = cap < gw_perf_count ? cap : gw_perf_count;
+  for (i = 0; i < n; ++i)
+    out[i] = gw_perf_ring[(gw_perf_head - n + i + GW_PERF_HISTORY) % GW_PERF_HISTORY];
+  return n;
+}
 static long long gw_prof_last_end;
 static long long gw_prof_last_cpu = -1;
 static double gw_prof_samples[GW_PROF_FRAMES];
@@ -672,6 +699,11 @@ static double gw_prof_ms(long long a, long long b) {
     gw_prof_freq = (double)f.QuadPart;
   }
   return ((double)(b - a) * 1000.0) / gw_prof_freq;
+}
+
+int64_t gw_perf_gx_begin(void) { return gw_perf_collecting ? gw_prof_now() : 0; }
+void gw_perf_gx_end(int64_t start) {
+  if (start) gw_perf_gx_ticks += gw_prof_now() - start;
 }
 
 /* Kernel+user CPU time of the calling thread, in 100 ns units. The wall split cannot tell real
@@ -1119,10 +1151,18 @@ static void gw_stats_note_present(int replay) {
 }
 
 static void gw_stats_draw(void) {
-  /* Geno LAB (private): no plain debug text over a LAB match; the Lab draws its own kit HUD */
+  /* Geno LAB owns its kit HUD; all other FPS modes use the host kit's art and font atlas. */
   extern int gw_GenoLab_InMatch(void);
-  if (gw_video_show_fps && gw_stat_text[0] != '\0' && !gw_GenoLab_InMatch()) {
-    gw_Overlay_DrawStats(gw_stat_text);
+  if (gw_video_show_fps && !gw_GenoLab_InMatch()) {
+    if (gw_video_show_fps == 2) {
+      GwPerfFrame frames[GW_PERF_HISTORY];
+      float fps;
+      int target;
+      int n = gw_perf_snapshot(frames, GW_PERF_HISTORY, &fps, &target);
+      gw_Overlay_DrawPerf(frames, n, fps, target);
+    } else if (gw_stat_text[0] != '\0') {
+      gw_Overlay_DrawStats(gw_stat_text);
+    }
   }
 }
 
@@ -1556,14 +1596,27 @@ static int gw_prof_csv_tried;
 
 void gw_frame_tick(void) {
   const int prof = gw_prof_on();
+  extern int gw_GenoLab_InMatch(void);
+  const int perf = (gw_video_show_fps == 2 && !gw_GenoLab_InMatch()) ||
+                   (int32_t)(gw_perf_lease_end - gw_retrace_count) > 0;
 
   gw_sample_maybe_start();
   long long t_enter = 0, t_present = 0, t_events = 0, t_begin = 0;
+  long long t_submit0 = 0, t_submit1 = 0;
   int presented = 0;
 
   gw_watch_tick();
 
-  if (prof) {
+  if (perf != gw_perf_collecting) {
+    gw_log("gw: performance sampling %s", perf ? "on" : "off");
+    aurora_perf_enable(perf != 0);
+    if (perf) {
+      gw_perf_head = gw_perf_count = 0;
+      gw_perf_last_end = gw_perf_last_worker_ns = gw_perf_gx_ticks = 0;
+    }
+  }
+  gw_perf_collecting = perf;
+  if (prof || perf) {
     t_enter = gw_prof_now();
   }
 
@@ -1590,7 +1643,9 @@ void gw_frame_tick(void) {
     if (gw_inprof_on()) {
       gw_inprof_submit();
     }
+    if (perf) t_submit0 = gw_prof_now();
     aurora_end_frame(); /* enqueues to the render worker; the real Present() is async */
+    if (perf) t_submit1 = gw_prof_now();
     ++gw_end_frames;
     if (gw_inprof_on()) {
       gw_inprof_submitted();
@@ -1614,13 +1669,13 @@ void gw_frame_tick(void) {
       ++gw_prof_empty;
     }
   }
-  if (prof) {
+  if (prof || perf) {
     t_present = gw_prof_now();
   }
 
   gw_handle_events();
   gw_window_drag_tick();
-  if (prof) {
+  if (prof || perf) {
     t_events = gw_prof_now();
   }
   if (gw_inprof_on()) {
@@ -1634,8 +1689,38 @@ void gw_frame_tick(void) {
     gw_ip_push(&gw_ip_begin, gw_prof_ms(gw_ip_last_events, gw_prof_now()));
   }
 
-  if (prof) {
+  if (prof || perf) {
     t_begin = gw_prof_now();
+  }
+  if (perf && presented) {
+    const int64_t worker = aurora_get_worker_busy_ns();
+    if (gw_perf_last_end) {
+      GwPerfFrame *f = &gw_perf_ring[gw_perf_head];
+      const AuroraStats *as = aurora_get_stats();
+      extern int gw_Fx_Stat(int what);
+      double game = gw_prof_ms(gw_perf_last_end, t_enter);
+      double gx = gw_prof_ms(0, gw_perf_gx_ticks);
+      if (gx > game) gx = game;
+      f->total_ms = (float)gw_prof_ms(gw_perf_last_end, t_begin);
+      f->logic_ms = (float)(game - gx);
+      f->gx_ms = (float)gx;
+      f->submit_ms = (float)gw_prof_ms(t_submit0, t_submit1);
+      f->worker_ms = worker >= gw_perf_last_worker_ns && gw_perf_last_worker_ns != 0
+                         ? (float)((double)(worker - gw_perf_last_worker_ns) / 1e6) : 0.0f;
+      f->draw_calls = as ? as->drawCallCount : 0;
+      f->vertices = aurora_get_last_vertex_count();
+      f->fx_particles = (uint32_t)gw_Fx_Stat(0);
+      gw_perf_head = (gw_perf_head + 1) % GW_PERF_HISTORY;
+      if (gw_perf_count < GW_PERF_HISTORY) ++gw_perf_count;
+    }
+    gw_perf_last_worker_ns = worker;
+    gw_perf_last_end = t_begin;
+    gw_perf_gx_ticks = 0;
+  } else if (!perf) {
+    gw_perf_last_end = 0;
+    gw_perf_gx_ticks = 0;
+  }
+  if (prof) {
     if (presented) {
       /* "game" is the span since the previous tick finished: the game's own work plus the FIFO
        * writes it made, none of which happens inside this function. */

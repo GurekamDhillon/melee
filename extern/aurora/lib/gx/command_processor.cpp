@@ -715,6 +715,7 @@ static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, s
 
 static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& reader) noexcept {
   ZoneScoped;
+  gfx::detail::record_gx_vertices(vtxCount);
   u32 vtxSize;
   if (g_gxState.lastVtxFmt == fmt)
     LIKELY { vtxSize = g_gxState.lastVtxSize; }
@@ -1005,6 +1006,7 @@ void handle_aurora(ByteReader& reader) noexcept {
     }
     const u32 totalVtxBytes = vtxCount * vtxSize;
     const auto vertexData = reader.take(totalVtxBytes);
+    gfx::detail::record_gx_vertices(vtxCount);
   if (drawlog_on()) {
     drawlog_draw(vertexData);
   }

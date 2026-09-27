@@ -13,7 +13,7 @@
 --   F8     hot reload (geno.json, overlays, this script) and replay the last seconds
 --   G      go live: stop replaying the logged input here (after a rewind)
 --   TAB    next mode (SHIFT: previous)  1-9, 0  a mode directly    F  focus the next fighter
---   H      hide / show the Lab UI  F3  help (this mode's keys)  ESC  the LAB pause menu
+--   H      hide / show the Lab UI  F3  help (this mode's keys)  F4  performance  ESC  the LAB pause menu
 -- Mode keys:
 --   CLEAN     (none)                      just the game and a tiny mode chip
 --   HITBOXES  B boxes  L labels  E ECB  D hitbox data
@@ -221,11 +221,12 @@ local GLOBAL_KEYS = {
   { "LEFT", "Step -1 (hold, CTRL x10)" }, { "F5", "Save state 1" }, { "F6", "Load state 1" },
   { "F8", "Hot reload + replay" }, { "G", "Go live (stop replaying)" },
   { "TAB", "Next mode (SHIFT back)" }, { "1-0", "Mode directly" }, { "F", "Focus next fighter" },
-  { "H", "Hide / show the Lab UI" }, { "F3", "This help" }, { "ESC", "Pause menu" },
+  { "H", "Hide / show the Lab UI" }, { "F3", "This help" },
+  { "F4", "Performance graph" }, { "ESC", "Pause menu" },
 }
 
 -- ---- settings (scripts-data/<mod>/settings.txt) ------------------------------------------------
-local cfg = { on = true, always = false, history_s = 10, reload_s = 2, mode = 2, hidden = false, help = false }
+local cfg = { on = true, always = false, history_s = 10, reload_s = 2, mode = 2, hidden = false, help = false, perf = false }
 local tog = {} -- tog[mode_id][toggle_id] = bool
 for _, m in ipairs(MODES) do
   tog[m.id] = {}
@@ -234,7 +235,7 @@ end
 local SETTINGS = "settings.txt"
 
 local function save_settings()
-  local out = { "mode=" .. MODES[cfg.mode].id, "hidden=" .. tostring(cfg.hidden),
+  local out = { "mode=" .. MODES[cfg.mode].id, "hidden=" .. tostring(cfg.hidden), "perf=" .. tostring(cfg.perf),
     "history_s=" .. cfg.history_s, "reload_s=" .. cfg.reload_s, "always=" .. tostring(cfg.always) }
   for _, m in ipairs(MODES) do
     for _, t in ipairs(m.t) do out[#out + 1] = m.id .. "." .. t.id .. "=" .. tostring(tog[m.id][t.id]) end
@@ -251,6 +252,7 @@ local function load_settings()
         tog[mid][tid] = v == "true"
       elseif k == "mode" and MODE_BY_ID[v] then cfg.mode = MODE_BY_ID[v]
       elseif k == "hidden" then cfg.hidden = v == "true"
+      elseif k == "perf" then cfg.perf = v == "true"
       elseif k == "always" then cfg.always = v == "true"
       elseif k == "history_s" and tonumber(v) then cfg.history_s = tonumber(v)
       elseif k == "reload_s" and tonumber(v) then cfg.reload_s = tonumber(v) end
@@ -662,6 +664,12 @@ local function display_items()
       value = function() return onoff(T(t.id)) end,
       run = function() flip(mode().id, t.id) end, adjust = function() flip(mode().id, t.id) end }
   end
+  items[#items + 1] = { label = "Performance", icon = "lab_info", key = "F4",
+    desc = "Frame times, FPS, draw calls, vertices and live FX. F4 toggles this in every display mode.",
+    toggle = function() return cfg.perf end,
+    value = function() return onoff(cfg.perf) end,
+    run = function() cfg.perf = not cfg.perf gd.log("Geno Lab: performance " .. onoff(cfg.perf)) save_settings() end,
+    adjust = function() cfg.perf = not cfg.perf gd.log("Geno Lab: performance " .. onoff(cfg.perf)) save_settings() end }
   items[#items + 1] = { label = "Lab UI", icon = "lab_eye", key = "H",
     desc = "Hide every Lab panel and overlay: the game as the game draws it. H does the same.",
     toggle = function() return not cfg.hidden end,
@@ -1121,6 +1129,55 @@ local function lab_menu_draw()
 end
 
 -- ---- the HUD (menu closed): mode chip, key strip, panels ------------------------------------
+local function draw_perf()
+  -- Pair neighbouring samples: 160 presented frames become 80 columns (about 2.7 s at 60 Hz).
+  local p = gd.perf(160)
+  local frames = p.frames
+  local last = frames[#frames]
+  local x, y, w = 328, 8, 304
+  panel(x, y, w, 146, "PERFORMANCE")
+  txt(x + 12, y + 38, string.format("%.0f FPS  /  %s", p.fps, p.target == 0 and "UNCAPPED" or tostring(p.target)), "body", BONE)
+  if last then
+    txt(x + w - 12, y + 38, string.format("%.1f ms", last.total_ms), "caption", GOLD, "right")
+    txt(x + 12, y + 53, string.format("draw %d   vert %d   FX %d", last.draw_calls, last.vertices, last.fx_particles), "caption", MUTED)
+  end
+  local gx, gy, gw, gh = x + 12, y + 62, 280, 61
+  quad(gx, gy, gw, gh, TRACK)
+  local scale = gh / 33.3
+  for _, ms in ipairs({ 8.33, 16.67 }) do
+    local ly = gy + gh - ms * scale
+    quad(gx, ly, gw, 1, alpha(TICK, 0xA0))
+    txt(gx + gw - 2, ly - 2, ms < 10 and "8.3" or "16.7", "caption", BONE, "right")
+  end
+  local pairs = math.min(80, math.ceil(#frames / 2))
+  local first = math.max(1, #frames - pairs * 2 + 1)
+  for i = 1, pairs do
+    local a = frames[first + (i - 1) * 2]
+    local b = frames[first + (i - 1) * 2 + 1]
+    local div = b and 2 or 1
+    local logic = (a.logic_ms + (b and b.logic_ms or 0)) / div
+    local gxms = (a.gx_ms + (b and b.gx_ms or 0)) / div
+    local submit = (a.submit_ms + (b and b.submit_ms or 0)) / div
+    local total = (a.total_ms + (b and b.total_ms or 0)) / div
+    local worker = (a.worker_ms + (b and b.worker_ms or 0)) / div
+    local bx = gx + (i - 1) * (gw / 80)
+    local bottom = gy + gh
+    for _, stage in ipairs({ {logic, ACCENT}, {gxms, GOLD}, {submit, DANGER},
+                            {math.max(0, total - logic - gxms - submit), DISABLED} }) do
+      local height = math.min(bottom - gy, stage[1] * scale)
+      if height > 0 then quad(bx, bottom - height, 2.5, height, stage[2]) end
+      bottom = bottom - height
+    end
+    local wy = math.max(gy, gy + gh - worker * scale)
+    quad(bx, wy, 2.5, 1, 0xAE82FFFF)
+  end
+  txt(gx, y + 137, "LOGIC", "caption", ACCENT)
+  txt(gx + 58, y + 137, "GX", "caption", GOLD)
+  txt(gx + 87, y + 137, "SUBMIT", "caption", DANGER)
+  txt(gx + 156, y + 137, "WAIT", "caption", DISABLED)
+  txt(gx + 205, y + 137, "WORKER", "caption", 0xAE82FFFF)
+end
+
 local function draw_notice()
   if not (notice and gd.time() < notice_until) then return end
   local w = measure(notice[1], "body") + 28
@@ -4845,6 +4902,7 @@ function on_tick()
     save_settings()
   end
   if gd.key_pressed("F3") then cfg.help = not cfg.help end
+  if gd.key_pressed("F4") then cfg.perf = not cfg.perf gd.log("Geno Lab: performance " .. onoff(cfg.perf)) save_settings() end
   if gd.key_pressed("TAB") then set_mode(cfg.mode + (gd.key("SHIFT") and -1 or 1)) end
   for i = 1, #MODES do if gd.key_pressed(i == 10 and "0" or tostring(i)) then set_mode(i) end end
   if gd.key_pressed("F") then next_port(1) end
@@ -5025,6 +5083,7 @@ function on_draw()
   end
   draw_strip()
   draw_notice()
+  if cfg.perf then draw_perf() end
   if cfg.help then draw_help() end
 end
 

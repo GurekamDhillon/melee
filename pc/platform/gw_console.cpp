@@ -19,6 +19,7 @@
  * gd.mouse), so a match shows no cursor unless a script's menu is open.
  */
 #include "gw_kit.h"
+#include "gw_overlay.h"
 #include "gw_script.h"
 
 #include <aurora/imgui.h>
@@ -224,9 +225,9 @@ ImTextureID kit_texture(int tex) {
 
 /* Kit quads kq0 .. kq0+kqn-1: textured ones modulate the texture by the tint (masks are white,
  * so their RGB is the tint's), flat ones fill with it. */
-void draw_kit_quads(ImDrawList *dl, int kq0, int kqn, float s, float ox, float oy) {
+void draw_kit_quads(ImDrawList *dl, int kq0, int kqn, float s, float ox, float oy, bool shown) {
   for (int i = kq0; i < kq0 + kqn; ++i) {
-    const GwKitQuad *q = gw_Kit_ShownQuadAt(i);
+    const GwKitQuad *q = shown ? gw_Kit_ShownQuadAt(i) : gw_Kit_QuadAt(i);
     if (q == nullptr) {
       break;
     }
@@ -281,7 +282,7 @@ void draw_script_list(const ImGuiIO &io) {
       dl->AddLine(p, ImVec2(ox + d->w * s, oy + d->h * s), col(d->rgba), 1.5f);
       break;
     case GW_SDRAW_KIT:
-      draw_kit_quads(dl, d->kq0, d->kqn, s, ox, oy);
+      draw_kit_quads(dl, d->kq0, d->kqn, s, ox, oy, true);
       break;
     }
   }
@@ -340,6 +341,41 @@ uint32_t kit_col(const char *tok, uint32_t fallback) {
   return gw_Kit_Colour(tok, nullptr, &c) ? c : fallback;
 }
 
+/* Host overlays use the same kit quad producer as gd.kit. Script quads are in the shown bank;
+ * these quads are appended to the build bank, drawn now, then removed without touching scripts. */
+bool stats_kit_ready() {
+  static bool warned = false;
+  if (ImGui::GetCurrentContext() == nullptr) return false;
+  if (gw_Kit_Available()) return true;
+  if (!warned) {
+    gw_log("gw: FPS overlay needs the menu kit (%s)", gw_Kit_Why());
+    warned = true;
+  }
+  return false;
+}
+
+void draw_host_kit_quads(int first) {
+  const ImGuiIO &io = ImGui::GetIO();
+  const float sx = io.DisplaySize.x / 640.0f, sy = io.DisplaySize.y / 480.0f;
+  const float s = sx < sy ? sx : sy;
+  const float ox = (io.DisplaySize.x - 640.0f * s) * 0.5f;
+  const float oy = (io.DisplaySize.y - 480.0f * s) * 0.5f;
+  draw_kit_quads(ImGui::GetForegroundDrawList(), first, gw_Kit_QuadCount() - first, s, ox, oy, false);
+  gw_Kit_TruncateQuads(first);
+}
+
+void stats_text(float x, float y, const char *value, const char *role, uint32_t color, float max_w = 0.0f) {
+  int r = gw_Kit_Role(role);
+  gw_Kit_DrawText(x, y, value, r >= 0 ? r : 0, color, GW_KIT_ALIGN_LEFT, max_w, 0, nullptr);
+}
+
+void stats_panel(float height) {
+  const uint32_t edge = kit_col("solo.face", 0x38C9D9FFu);
+  const uint32_t bg = kit_col("solo.bg", 0x111122FFu);
+  gw_Kit_DrawPanel(8.0f, 8.0f, 308.0f, height, "frame", nullptr, 12.0f, edge,
+                   (bg & 0xFFFFFF00u) | 0xE8u, 0.0f);
+}
+
 /* "Connect a controller": the keyboard does not play, so a window with no controller says so
  * (shim_pad.c gw_Pad_NoController). The kit's frame panel over a dimmed screen; plain ImGui text
  * when the kit's files are missing. */
@@ -363,7 +399,7 @@ void draw_no_controller(const ImGuiIO &io, float s, float ox, float oy) {
     role = gw_Kit_Role("caption");
     gw_Kit_DrawText(320.0f, y + 88.0f, foot, role >= 0 ? role : 0, kit_col("gold", 0xF0B429FFu),
                     GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
-    draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy);
+    draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy, false);
     gw_Kit_TruncateQuads(q0);
     return;
   }
@@ -415,7 +451,7 @@ void draw_cursor(float s, float ox, float oy) {
   if (tex_detail >= 0) {
     gw_Kit_DrawImage(tex_detail, x, y, 32.0f, 32.0f, ink, 0, 0.0f);
   }
-  draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy);
+  draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy, false);
   gw_Kit_TruncateQuads(q0);
 }
 
@@ -458,6 +494,85 @@ extern "C" void gw_Console_Draw(void) {
   if (gw_Console_Open()) {
     draw_console(io);
   }
+}
+
+/* show_fps=1 and =2 share the menu kit's host renderer. They are called only by shim_vi.c
+ * while visible, including interpolated presents that have no script on_draw hook. */
+extern "C" void gw_Overlay_DrawStats(const char *value) {
+  if (value == nullptr || !stats_kit_ready()) return;
+  const int first = gw_Kit_QuadCount();
+  stats_panel(38.0f);
+  stats_text(20.0f, 33.0f, value, "caption", kit_col("bone", 0xF2EFE4FFu), 280.0f);
+  draw_host_kit_quads(first);
+}
+
+extern "C" void gw_Overlay_DrawPerf(const GwPerfFrame *frames, int count, float fps, int target) {
+  if (!stats_kit_ready()) return;
+  const int first = gw_Kit_QuadCount();
+  const GwPerfFrame *last = count > 0 && frames != nullptr ? &frames[count - 1] : nullptr;
+  const uint32_t bone = kit_col("bone", 0xF2EFE4FFu);
+  const uint32_t muted = kit_col("muted", 0xB8C2DCFFu);
+  const uint32_t gold = kit_col("gold", 0xF0B429FFu);
+  const uint32_t cyan = kit_col("solo.face", 0x38C9D9FFu);
+  const uint32_t red = kit_col("danger", 0xE5483BFFu);
+  const uint32_t worker = 0xAE82FFFFu;
+  char line[128], target_text[24];
+  stats_panel(164.0f);
+  gw_Kit_DrawFlat(17.0f, 11.0f, 103.0f, 15.0f, cyan, gw_Kit_Shear());
+  stats_text(23.0f, 23.0f, "PERFORMANCE", "caption", kit_col("ink", 0x0A0E18FFu));
+  if (target == 0) std::snprintf(target_text, sizeof target_text, "UNCAPPED");
+  else std::snprintf(target_text, sizeof target_text, "%d", target);
+  std::snprintf(line, sizeof line, "%.0f FPS / %s    %.1f MS", fps, target_text,
+                last != nullptr ? last->total_ms : 0.0f);
+  stats_text(20.0f, 45.0f, line, "body", bone, 280.0f);
+  std::snprintf(line, sizeof line, "DRAW %u   VERT %u   FX %u",
+                last != nullptr ? last->draw_calls : 0u, last != nullptr ? last->vertices : 0u,
+                last != nullptr ? last->fx_particles : 0u);
+  stats_text(20.0f, 61.0f, line, "caption", muted, 280.0f);
+  if (last != nullptr) {
+    std::snprintf(line, sizeof line, "LOGIC %.1f   GX %.1f   SUB %.1f   WORK %.1f",
+                  last->logic_ms, last->gx_ms, last->submit_ms, last->worker_ms);
+    stats_text(20.0f, 76.0f, line, "caption", muted, 280.0f);
+  }
+  const float gx = 20.0f, gy = 83.0f, gw = 280.0f, gh = 57.0f, scale = gh / 33.3f;
+  gw_Kit_DrawFlat(gx, gy, gw, gh, kit_col("solo.bg", 0x232B40FFu), 0.0f);
+  gw_Kit_DrawFlat(gx, gy + gh - 8.33f * scale, gw, 1.0f, 0x7D88A6A0u, 0.0f);
+  gw_Kit_DrawFlat(gx, gy + gh - 16.67f * scale, gw, 1.0f, 0x7D88A6A0u, 0.0f);
+  const int start = count > 240 ? count - 240 : 0;
+  const int columns = (count - start + 1) / 2;
+  for (int i = 0; i < columns; ++i) {
+    const GwPerfFrame &a = frames[start + 2 * i];
+    const GwPerfFrame *b = start + 2 * i + 1 < count ? &frames[start + 2 * i + 1] : nullptr;
+    const float div = b != nullptr ? 2.0f : 1.0f;
+    const float logic = (a.logic_ms + (b != nullptr ? b->logic_ms : 0.0f)) / div;
+    const float gxms = (a.gx_ms + (b != nullptr ? b->gx_ms : 0.0f)) / div;
+    const float submit = (a.submit_ms + (b != nullptr ? b->submit_ms : 0.0f)) / div;
+    const float total = (a.total_ms + (b != nullptr ? b->total_ms : 0.0f)) / div;
+    const float worker_ms = (a.worker_ms + (b != nullptr ? b->worker_ms : 0.0f)) / div;
+    float wait = total - logic - gxms - submit;
+    if (wait < 0.0f) wait = 0.0f;
+    const float x = gx + gw - (columns - i) * (gw / 120.0f);
+    float bottom = gy + gh;
+    const float heights[4] = {logic * scale, gxms * scale, submit * scale, wait * scale};
+    const uint32_t colors[4] = {cyan, gold, red, muted};
+    for (int stage = 0; stage < 4; ++stage) {
+      float h = heights[stage];
+      if (h > bottom - gy) h = bottom - gy;
+      if (h > 0.0f) gw_Kit_DrawFlat(x, bottom - h, 2.0f, h, colors[stage], 0.0f);
+      bottom -= h;
+    }
+    float wy = gy + gh - worker_ms * scale;
+    if (wy < gy) wy = gy;
+    gw_Kit_DrawFlat(x, wy, 2.0f, 1.0f, worker, 0.0f);
+  }
+  stats_text(270.0f, gy + gh - 16.67f * scale - 2.0f, "16.7", "caption", bone);
+  stats_text(277.0f, gy + gh - 8.33f * scale - 2.0f, "8.3", "caption", bone);
+  stats_text(20.0f, 157.0f, "LOGIC", "caption", cyan);
+  stats_text(77.0f, 157.0f, "GX", "caption", gold);
+  stats_text(104.0f, 157.0f, "SUBMIT", "caption", red);
+  stats_text(170.0f, 157.0f, "WAIT", "caption", muted);
+  stats_text(219.0f, 157.0f, "WORKER", "caption", worker);
+  draw_host_kit_quads(first);
 }
 
 /* ---- tests (run.sh --test) ------------------------------------------------------------------ */

@@ -40,6 +40,7 @@ typedef struct {
   uint32_t pipelineWaitUs;
   /// Pipeline compile workers running (AURORA_PIPELINE_WORKERS).
   uint32_t pipelineWorkers;
+  uint32_t vertexCount;
 } AuroraStats;
 
 /// Pipeline tag bits, recorded per pipeline config in the pipeline cache (and its seed).
@@ -60,6 +61,13 @@ float aurora_get_fps();
 /// presents have completed. Lets an application measure input-to-present latency.
 int64_t aurora_get_last_present_ns();
 uint32_t aurora_get_present_count();
+/// Cumulative render-worker queue work, including Present (ns); sample deltas per frame.
+int64_t aurora_get_worker_busy_ns();
+/// GX vertices decoded for the last completed frame, including display lists.
+uint32_t aurora_get_last_vertex_count();
+/// Enable the two extra performance counters used by the in-game visualizer.
+void aurora_perf_enable(bool enabled);
+bool aurora_perf_enabled();
 
 /// Frame interpolation (port patch). With replay enabled, every frame's GX command stream and the
 /// state it started from are kept. Between two game frames, a frame opened with

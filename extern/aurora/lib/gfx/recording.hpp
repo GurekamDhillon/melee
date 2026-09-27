@@ -18,6 +18,7 @@ void begin_recording(FramePacket& packet, size_t frameSlot);
 RecordedFrame end_recording();
 void shutdown_recording();
 void increment_merged_draw_count() noexcept;
+void record_gx_vertices(uint32_t count) noexcept;
 
 namespace testing {
 void suppress_render_worker(bool suppress) noexcept;

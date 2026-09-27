@@ -1,4 +1,5 @@
 #include "recording.hpp"
+#include "aurora/gfx.h"
 
 #include "encoding.hpp"
 #include "frame.hpp"
@@ -43,6 +44,7 @@ struct FrameRecorder {
   size_t frameSlot = 0;
   uint32_t currentRenderPass = UINT32_MAX;
   uint32_t drawCallCount = 0;
+  uint32_t vertexCount = 0;
   uint32_t mergedDrawCallCount = 0;
   bool inOffscreen = false;
   std::optional<RenderPass> suspendedEfbPass;
@@ -570,6 +572,7 @@ void begin_recording(FramePacket& packet, size_t frameSlot) {
   g_recorder.frameSlot = frameSlot;
   g_passSnapshotPools[frameSlot].used = 0;
   g_recorder.drawCallCount = 0;
+  g_recorder.vertexCount = 0;
   g_recorder.mergedDrawCallCount = 0;
   g_recorder.suspendedEfbPass.reset();
 
@@ -593,6 +596,7 @@ RecordedFrame end_recording() {
                 "end_frame called before finish finalized the current render pass");
   auto& frame = g_recorder.frame();
   frame.stats.drawCallCount = g_recorder.drawCallCount;
+  frame.stats.vertexCount = g_recorder.vertexCount;
   frame.stats.mergedDrawCallCount = g_recorder.mergedDrawCallCount;
   frame.stats.lastVertSize = frame.verts.size();
   frame.stats.lastUniformSize = frame.uniforms.size();
@@ -654,6 +658,9 @@ void increment_merged_draw_count() noexcept {
   if (g_recorder.active()) {
     ++g_recorder.mergedDrawCallCount;
   }
+}
+void record_gx_vertices(uint32_t count) noexcept {
+  if (g_recorder.active() && aurora_perf_enabled()) g_recorder.vertexCount += count;
 }
 
 } // namespace detail

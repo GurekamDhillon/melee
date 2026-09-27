@@ -21,6 +21,9 @@ void gw_frame_tick(void);
 /* Called by the GX shims: the game finished drawing into the EFB and copied it out, so the
  * Aurora frame in progress is complete and should be presented at the next tick. */
 void gw_frame_mark_content(void);
+/* Cheap brackets around GX command-building entry points; zero when diagnostics are off. */
+int64_t gw_perf_gx_begin(void);
+void gw_perf_gx_end(int64_t start);
 
 /* GX draw-done notification, owned here because it drives HSD's XFB state machine. */
 void gw_gx_set_draw_done(void);

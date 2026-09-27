@@ -294,6 +294,11 @@ int ScriptGame_StageGameplayScene(void)
         return 0;
     }
 }
+extern void Script_StageModelsReset(void);
+extern int Script_StageModelFor(int handle);
+/* Native Aurora owns the immutable mesh and GXTX bytes. This call only issues GX commands;
+ * no model pointer, cache or visual selection enters the snapshotted game world. */
+extern void Script_StageModelDraw(int model, Mtx view, float x0, float y0, float x1, float y1);
 
 /* Called from Ground_801C0800 after the Target Test layout merge and before mpLibLoad.
  * mpLibLoad allocates fixed 2048/1536/256 Coll* arrays, so refuse maps without room. */
@@ -308,6 +313,7 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     script_stage.cap = 0;
     script_stage.draw = NULL;
     script_stage.cube = NULL;
+    Script_StageModelsReset();
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) script_stage.model[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
@@ -454,7 +460,11 @@ static void script_stage_render(HSD_GObj* gobj, int code)
     for (i = 0; i < script_stage.cap; ++i) {
         ScriptStageLine* s = &script_stage.line[i];
         float dx, dy, len, ux, uy, mx, my;
+        int model;
         if (!s->active || s->model_handle) continue;
+        model = s->kind == 1 ? Script_StageModelFor(s->handle) : 0;
+        if (model > 0)
+            continue; /* textured model is drawn in the one-material pass below */
         dx = s->x1 - s->x0;
         dy = s->y1 - s->y0;
         len = sqrtf(dx * dx + dy * dy);
@@ -481,6 +491,18 @@ static void script_stage_render(HSD_GObj* gobj, int code)
         /* a target: a diamond (the unit box turned 45 degrees), red with a white core */
         script_box(view, 0.70710678f, 0.70710678f, 7.0f, 7.0f, 3.0f, t->x, t->y, 0xE5483Bu);
         script_box(view, 0.70710678f, 0.70710678f, 3.0f, 3.0f, 3.4f, t->x, t->y, 0xF2EFE4u);
+    }
+    {
+        int any = 0;
+        for (i = 0; i < script_stage.cap; ++i) {
+            ScriptStageLine* s = &script_stage.line[i];
+            int model;
+            if (!s->active || s->kind != 1) continue;
+            model = Script_StageModelFor(s->handle);
+            if (model < 1) continue;
+            if (!any) { HSD_StateInvalidate(-1); any = 1; }
+            Script_StageModelDraw(model, view, s->x0, s->y0, s->x1, s->y1);
+        }
     }
     HSD_StateInvalidate(-1);
 }

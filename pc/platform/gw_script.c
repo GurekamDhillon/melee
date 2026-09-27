@@ -21,6 +21,7 @@
 #include "shim_vi.h"
 #include "../geno/geno.h" /* GENO_VERSION, for the state library header */
 #include <dolphin/pad.h> /* PADStatus in the scripted-pad headless test */
+#include <dolphin/gx.h> /* cosmetic stage models draw through Aurora's native GX */
 
 #include <math.h>
 #include <limits.h>
@@ -332,6 +333,23 @@ static struct {
  * cannot alias a new object after load. The object's handle itself lives in game memory. */
 static int gs_stage_handle_serial;
 static int gs_stage_overlay; /* gd.stage_view(_, true): the host-overlay debug strokes */
+/* Cosmetic associations are native, keyed by the collision handle that *is* snapshotted. A
+ * rewind to before a line existed therefore has no model to draw; a new future gets a new handle.
+ * Assets are immutable process-local caches, never read by gameplay or the rollback simulation. */
+#define GS_STAGE_MODELS 8
+#define GS_STAGE_MODEL_LINES 4096 /* handles are not recycled when a rewound future is discarded */
+typedef struct {
+    char path[MAX_PATH];
+    unsigned char *mesh;
+    unsigned char *image;
+    int bytes;
+    GXTexObj texture;
+} GsStageModel;
+static GsStageModel gs_stage_models[GS_STAGE_MODELS];
+static int gs_stage_nmodels;
+static struct { int handle, model; } gs_stage_model_lines[GS_STAGE_MODEL_LINES];
+static int gs_stage_nmodel_lines;
+static unsigned char gs_stage_model_draw_seen[GS_STAGE_MODELS];
 static int gs_input_owner; /* explicit claim identity while a socket command or task runs */
 static int gs_client_owner; /* socket that started the current task, else 0 */
 
@@ -4545,8 +4563,208 @@ static int gs_stage_kind(lua_State *L, int idx) {
     return luaL_error(L, "line kind must be floor, ceiling, right_wall or left_wall");
 }
 
-static int gs_stage_opts(lua_State *L, int idx) {
+extern int gw_GxTex_OpenAt(const char *dir, const char *name);
+extern int gw_GxTex_Format(int h);
+extern int gw_GxTex_Width(int h);
+extern int gw_GxTex_Height(int h);
+extern int gw_GxTex_ImageSize(int h);
+extern void gw_GxTex_CopyImage(int h, void *dst);
+extern void gw_GxTex_Close(int h);
+static char *gs_read_file(const char *path, size_t *len);
+
+/* GXMS v1 is an indexed, one-material triangle list: 36-byte BE header, 20-byte BE
+ * (x,y,z,u,v) vertices, then BE u16 indices. The renderer sends one GXBegin per platform.
+ * Validate before handing host bytes to Aurora; malformed mod art must not make GX
+ * walk outside an array. Texture bytes use the existing GXTX loader (gw_runtime.c). */
+static int gs_stage_mesh_valid(const unsigned char *p, size_t n) {
+    uint32_t nv, ni, vo, io, i;
+    if (n < 36 || memcmp(p, "GXMS", 4) != 0 || gw_r32(p + 4) != 1) return 0;
+    nv = gw_r32(p + 8); ni = gw_r32(p + 12);
+    vo = gw_r32(p + 28); io = gw_r32(p + 32);
+    if (nv < 3 || nv > 65535 || ni < 3 || ni > 65535 || ni % 3 ||
+        vo != 36 || io != vo + nv * 20u || (uint64_t)io + ni * 2u != n ||
+        !isfinite(gw_rf32(p + 16)) || gw_rf32(p + 16) <= 0.0f ||
+        !isfinite(gw_rf32(p + 20)) || gw_rf32(p + 20) <= 0.0f ||
+        !isfinite(gw_rf32(p + 24)) || gw_rf32(p + 24) <= 0.0f) return 0;
+    for (i = 0; i < nv * 5u; ++i)
+        if (!isfinite(gw_rf32(p + vo + i * 4u))) return 0;
+    for (i = 0; i < ni; ++i)
+        if (gw_r16(p + io + i * 2u) >= nv) return 0;
+    return 1;
+}
+
+/* Resolve models/ beside a script's main.lua, or at the mod root for scripts/main.lua.
+ * Names are deliberately plain basenames; a gameplay mod cannot walk into another mod's files. */
+static int gs_stage_model_open(lua_State *L, const char *name) {
+    GsScript *s = gs_cur_script();
+    char dir[MAX_PATH], path[MAX_PATH];
+    unsigned char *mesh, *image;
+    size_t len, k;
+    int up, h, i, w, height, image_size;
+    for (k = 0; name[k] != '\0'; ++k)
+        if (k >= 48 || !((name[k] >= 'a' && name[k] <= 'z') ||
+                         (name[k] >= 'A' && name[k] <= 'Z') ||
+                         (name[k] >= '0' && name[k] <= '9') ||
+                         name[k] == '_' || name[k] == '-'))
+            return luaL_error(L, "model must be a basename of at most 48 letters, digits, _ or -");
+    if (k == 0 || s == NULL) return luaL_error(L, "model name is empty");
+    snprintf(dir, sizeof dir, "%s", s->entry);
+    for (up = 0; up < 2; ++up) {
+        char *slash = strrchr(dir, '\\');
+        char *forward = strrchr(dir, '/');
+        if (forward != NULL && (slash == NULL || forward > slash)) slash = forward;
+        if (slash == NULL) break;
+        *slash = '\0';
+        if (snprintf(path, sizeof path, "%s\\models\\%s.gxmesh", dir, name) >= (int)sizeof path)
+            break;
+        for (i = 0; i < gs_stage_nmodels; ++i)
+            if (_stricmp(gs_stage_models[i].path, path) == 0) return i + 1;
+        mesh = (unsigned char *) gs_read_file(path, &len);
+        if (mesh == NULL) continue;
+        if (!gs_stage_mesh_valid(mesh, len)) {
+            free(mesh);
+            return luaL_error(L, "model %s has an invalid .gxmesh file", name);
+        }
+        if (gs_stage_nmodels == GS_STAGE_MODELS) {
+            free(mesh);
+            return luaL_error(L, "stage model cache is full (%d)", GS_STAGE_MODELS);
+        }
+        {
+            char model_dir[MAX_PATH];
+            snprintf(model_dir, sizeof model_dir, "%s\\models", dir);
+            h = gw_GxTex_OpenAt(model_dir, name);
+        }
+        w = gw_GxTex_Width(h); height = gw_GxTex_Height(h);
+        image_size = gw_GxTex_ImageSize(h);
+        if (h < 0 || gw_GxTex_Format(h) != GX_TF_RGBA8 || w <= 0 || height <= 0 ||
+            w > 4096 || height > 4096 || (w & 3) || (height & 3) ||
+            image_size != w * height * 4) {
+            if (h >= 0) gw_GxTex_Close(h);
+            free(mesh);
+            return luaL_error(L, "model %s needs a v1 RGBA8 .gxtex beside its .gxmesh", name);
+        }
+        image = (unsigned char *)malloc((size_t)image_size);
+        if (image == NULL) {
+            gw_GxTex_Close(h);
+            free(mesh);
+            return luaL_error(L, "model %s has no room for its texture", name);
+        }
+        gw_GxTex_CopyImage(h, image);
+        gw_GxTex_Close(h);
+        i = gs_stage_nmodels++;
+        gs_stage_models[i].mesh = mesh;
+        gs_stage_models[i].image = image;
+        gs_stage_models[i].bytes = (int)len;
+        GXInitTexObj(&gs_stage_models[i].texture, image, (u16)w, (u16)height, GX_TF_RGBA8,
+                     GX_CLAMP, GX_CLAMP, GX_FALSE);
+        GXInitTexObjLOD(&gs_stage_models[i].texture, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f,
+                        0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+        snprintf(gs_stage_models[i].path, sizeof gs_stage_models[i].path, "%s", path);
+        gw_log("script stage: model %s loaded (%u vertices, %u indices, %dx%d atlas)", path,
+               gw_r32(mesh + 8), gw_r32(mesh + 12), w, height);
+        return i + 1;
+    }
+    return luaL_error(L, "model %s not found in this mod's models/ directory", name);
+}
+
+/* Called by the retargeted world draw. Neither this table nor the file cache is rollback input. */
+void gw_Script_StageModelsReset(void) {
+    gs_stage_nmodel_lines = 0;
+    memset(gs_stage_model_draw_seen, 0, sizeof gs_stage_model_draw_seen);
+}
+int gw_Script_StageModelFor(int handle) {
+    int lo = 0, hi = gs_stage_nmodel_lines;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (gs_stage_model_lines[mid].handle < handle) lo = mid + 1;
+        else hi = mid;
+    }
+    if (lo < gs_stage_nmodel_lines && gs_stage_model_lines[lo].handle == handle)
+        return gs_stage_model_lines[lo].model;
+    return 0;
+}
+
+/* World-pass draw invoked from script_game.c. The camera matrix is BE game memory; coordinates
+ * are scalar arguments. Aurora's GX array reader consumes the mesh's BE float streams directly
+ * (le=false), while the indices cross as native scalar values. One GXBegin per platform. */
+void gw_Script_StageModelDraw(int model, const void *game_view, float x0, float y0,
+                              float x1, float y1) {
+    const GsStageModel *art;
+    const unsigned char *mesh, *idx;
+    uint32_t voff, ioff, count, k;
+    float dx, dy, len, ux, uy, width, sx;
+    float local[3][4], mv[3][4], view[3][4];
+    int r, c;
+    if (model < 1 || model > gs_stage_nmodels || game_view == NULL) return;
+    art = &gs_stage_models[model - 1];
+    mesh = art->mesh;
+    voff = gw_r32(mesh + 28); ioff = gw_r32(mesh + 32);
+    count = gw_r32(mesh + 12);
+    width = gw_rf32(mesh + 16);
+    dx = x1 - x0; dy = y1 - y0;
+    len = sqrtf(dx * dx + dy * dy);
+    if (len < 0.001f) return;
+    ux = dx / len; uy = dy / len; sx = len / width;
+    local[0][0] = ux * sx; local[0][1] = -uy; local[0][2] = 0.0f;
+    local[0][3] = (x0 + x1) * 0.5f;
+    local[1][0] = uy * sx; local[1][1] = ux; local[1][2] = 0.0f;
+    local[1][3] = (y0 + y1) * 0.5f;
+    local[2][0] = 0.0f; local[2][1] = 0.0f; local[2][2] = 1.0f;
+    local[2][3] = 0.0f;
+    for (r = 0; r < 3; ++r)
+        for (c = 0; c < 4; ++c)
+            view[r][c] = gw_rf32((const unsigned char *)game_view + (r * 4 + c) * 4);
+    for (r = 0; r < 3; ++r)
+        for (c = 0; c < 4; ++c)
+            mv[r][c] = view[r][0] * local[0][c] + view[r][1] * local[1][c] +
+                       view[r][2] * local[2][c] + (c == 3 ? view[r][3] : 0.0f);
+
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
+    GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+    GXSetNumIndStages(0);
+    GXSetNumTevStages(1);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
+    GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+    GXSetNumChans(0);
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GXSetCurrentMtx(GX_PNMTX0);
+    GXLoadPosMtxImm(mv, GX_PNMTX0);
+    GXSetArray(GX_VA_POS, mesh + voff, (u32)art->bytes - voff, 20, false);
+    GXSetArray(GX_VA_TEX0, mesh + voff + 12, (u32)art->bytes - voff - 12, 20, false);
+    GXLoadTexObj((GXTexObj *)&art->texture, GX_TEXMAP0);
+    idx = mesh + ioff;
+    GXBegin(GX_TRIANGLES, GX_VTXFMT0, (u16)count);
+    for (k = 0; k < count; ++k) {
+        u16 v = gw_r16(idx + k * 2);
+        GXPosition1x16(v);
+        GXTexCoord1x16(v);
+    }
+    GXEnd();
+    if (!gs_stage_model_draw_seen[model - 1]) {
+        gs_stage_model_draw_seen[model - 1] = 1;
+        gw_log("script stage: model %d first world draw (%u triangles)", model, count / 3);
+    }
+}
+
+static void gs_stage_model_attach(int handle, int model) {
+    if (model <= 0) return;
+    gs_stage_model_lines[gs_stage_nmodel_lines].handle = handle;
+    gs_stage_model_lines[gs_stage_nmodel_lines].model = model;
+    gs_stage_nmodel_lines++;
+    gw_log("script stage: model %d attached to handle %d", model, handle);
+}
+
+static int gs_stage_opts(lua_State *L, int idx, int *model) {
     int flags = 0;
+    *model = 0;
     if (lua_isnoneornil(L, idx)) return 0;
     luaL_checktype(L, idx, LUA_TTABLE);
     lua_getfield(L, idx, "passthrough");
@@ -4555,14 +4773,20 @@ static int gs_stage_opts(lua_State *L, int idx) {
     lua_getfield(L, idx, "ledges");
     if (lua_toboolean(L, -1)) flags |= 2;
     lua_pop(L, 1);
+    lua_getfield(L, idx, "model");
+    if (!lua_isnil(L, -1)) *model = gs_stage_model_open(L, luaL_checkstring(L, -1));
+    lua_pop(L, 1);
     return flags;
 }
 
 static int l_stage_add_line(lua_State *L) {
     float x0 = gs_stage_num(L, 1), y0 = gs_stage_num(L, 2);
     float x1 = gs_stage_num(L, 3), y1 = gs_stage_num(L, 4);
-    int kind = gs_stage_kind(L, 5), flags = gs_stage_opts(L, 6), h;
+    int kind = gs_stage_kind(L, 5), flags, model, h;
     gs_require_stage(L, "stage_add_line");
+    flags = gs_stage_opts(L, 6, &model);
+    if (model && gs_stage_nmodel_lines == GS_STAGE_MODEL_LINES)
+        return luaL_error(L, "stage model handle cache is full");
     if (kind == 1 && x0 >= x1) return luaL_error(L, "floor lines must run left to right");
     if (kind == 2 && x0 <= x1) return luaL_error(L, "ceiling lines must run right to left");
     if (kind == 3 && y0 <= y1)
@@ -4571,24 +4795,31 @@ static int l_stage_add_line(lua_State *L) {
         return luaL_error(L, "left_wall lines must run bottom to top");
     if (kind != 1 && flags != 0)
         return luaL_error(L, "passthrough and ledges apply only to floor lines");
+    if (kind != 1 && model != 0)
+        return luaL_error(L, "model applies only to floor lines");
     gs_rw_branch();
     h = gw_ScriptGame_StageAddLine(gs_fbits(x0), gs_fbits(y0), gs_fbits(x1), gs_fbits(y1),
                                    kind, flags, gs_stage_next_handle(L));
     if (h < 0) { lua_pushnil(L); lua_pushstring(L, "collision line capacity unavailable"); return 2; }
+    gs_stage_model_attach(h, model);
     lua_pushinteger(L, h);
     return 1;
 }
 
 static int l_stage_add_platform(lua_State *L) {
     float x = gs_stage_num(L, 1), y = gs_stage_num(L, 2), w = gs_stage_num(L, 3);
-    int flags = gs_stage_opts(L, 4), h;
+    int flags, model, h;
     gs_require_stage(L, "stage_add_platform");
     if (w <= 0 || w > 200000.0f) return luaL_error(L, "platform width must be positive");
+    flags = gs_stage_opts(L, 4, &model);
+    if (model && gs_stage_nmodel_lines == GS_STAGE_MODEL_LINES)
+        return luaL_error(L, "stage model handle cache is full");
     gs_rw_branch();
     h = gw_ScriptGame_StageAddLine(gs_fbits(x - w * 0.5f), gs_fbits(y),
                                    gs_fbits(x + w * 0.5f), gs_fbits(y), 1, flags,
                                    gs_stage_next_handle(L));
     if (h < 0) { lua_pushnil(L); lua_pushstring(L, "collision line capacity unavailable"); return 2; }
+    gs_stage_model_attach(h, model);
     lua_pushinteger(L, h);
     return 1;
 }

@@ -1,0 +1,12 @@
+{
+  "id": "bf_platform",
+  "name": "Battlefield platform model example",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Three Lua collision platforms with GD's original baked platform model on Final Destination.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "main.lua"
+}

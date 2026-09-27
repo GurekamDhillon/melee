@@ -2770,6 +2770,14 @@ static uint32_t gw_gxtex_be32(const unsigned char *p) {
 
 static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet);
 
+/* A script model's atlas lives in its own mod's models/ directory. Reuse the GXTX parser
+ * instead of inventing another texture container. The script side validates the name and
+ * resolves the directory, then copies these unchanged GX-tiled bytes into native memory. */
+int gw_GxTex_OpenAt(const char *dir, const char *name) {
+  if (dir == NULL || name == NULL) return -1;
+  return gw_gxtex_open_dir(dir, name, 0);
+}
+
 int gw_GxTex_Open(const char *name) {
   const char *dir = getenv("MELEE_MENUTEX_DIR");
   if (dir == NULL || *dir == '\0' || name == NULL) {

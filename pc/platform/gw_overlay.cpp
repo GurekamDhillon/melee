@@ -222,6 +222,21 @@ extern "C" void gw_Overlay_NoteContent(uint32_t prims) {
   }
 }
 
+extern "C" int gw_Console_DrawLoadScreen(const char *title, const char *crumb, const char *status,
+                                          float progress, double t, int ink_only); /* gw_console.cpp */
+extern "C" int gw_Gfx_SeedCoreCount(void);      /* gw_runtime.c */
+extern "C" int gw_Gfx_SeedPipelinesBuilt(void); /* gw_runtime.c */
+static int g_host_loading, g_host_loading_warm;
+static double g_host_loading_at;
+
+/* Game side (gmscene.c mnLoadScreen_Begin / _Release, as Gfx_HostLoading): the match-load hold is on
+ * or off; warm = the frontend's own loading screen ran just before, so the hold is a plain ink cover. */
+extern "C" void gw_Gfx_HostLoading(int on, int warm) {
+  g_host_loading = on ? 1 : 0;
+  g_host_loading_warm = warm ? 1 : 0;
+  g_host_loading_at = now_seconds();
+}
+
 extern "C" void gw_Overlay_Draw(void) {
   if (!overlay_enabled() || !imgui_ready()) {
     return;
@@ -229,8 +244,32 @@ extern "C" void gw_Overlay_Draw(void) {
   if (g.first_frame_at == 0.0) {
     g.first_frame_at = now_seconds();
   }
+  /* A match-load hold (gmscene.c mnLoadScreen via gw_Gfx_HostLoading) covers the frozen match with the
+   * kit's loading screen and the seed's warm-up progress. */
+  if (g_host_loading) {
+    const int core = gw_Gfx_SeedCoreCount();
+    const float p = core > 0 ? (float) gw_Gfx_SeedPipelinesBuilt() / (float) core : -1.0f;
+    if (gw_Console_DrawLoadScreen("GET READY", "VERSUS / LOADING", "Loading the match...", p,
+                                  now_seconds() - g_host_loading_at, g_host_loading_warm)) {
+      return;
+    }
+  }
   if (!should_show()) {
     return;
+  }
+  /* Boot: the kit's loading screen, with what the disc is doing as its status line and the seed's
+   * warm-up as its bar. Plain ImGui below only when the kit's files are missing. */
+  {
+    char status[200], bytes_str[32];
+    human_bytes(bytes_str, sizeof bytes_str, g.bytes);
+    std::snprintf(status, sizeof status, "%u files, %s%s%s", g.files, bytes_str, g.current[0] ? "  -  " : "",
+                  g.current);
+    const int core = gw_Gfx_SeedCoreCount();
+    const float p = core > 0 ? (float) gw_Gfx_SeedPipelinesBuilt() / (float) core : -1.0f;
+    if (gw_Console_DrawLoadScreen("MELEE PC", "STARTING UP", status, g.content_seen ? -1.0f : p,
+                                  now_seconds() - g.first_frame_at, 0)) {
+      return;
+    }
   }
 
   const ImGuiIO &io = ImGui::GetIO();

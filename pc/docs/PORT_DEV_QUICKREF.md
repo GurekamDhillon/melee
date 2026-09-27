@@ -111,6 +111,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | Variable | Effect |
 |---|---|
 | `MELEE_ISO=<path>` | disc image, if not passed as `--iso` |
+| `MELEE_DIRECTINPUT=1` | let SDL enumerate DirectInput joysticks (off by default: it could stall the first frame for seconds) |
 | `MELEE_SLIPPI_MODE=loopback\|direct` | opt-in experimental two-client replay driver; absent means the existing replay/netplay paths |
 | `MELEE_SLIPPI_REPLAY_ROLE=1\|2` | fixture player owned locally; Direct adopts the server's assigned port |
 | `MELEE_SLIPPI_DELAY=1..7` | applied-input delay, default 2; initial pads must be neutral |

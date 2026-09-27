@@ -29,6 +29,7 @@
 
 #include <windows.h>
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 
@@ -494,6 +495,69 @@ extern "C" void gw_Console_Draw(void) {
   if (gw_Console_Open()) {
     draw_console(io);
   }
+}
+
+/* The kit's loading screen, drawn by the host (gw_overlay.cpp) over whatever the game presents: at
+ * boot before the game draws, and over every match-load hold (gmscene.c mnLoadScreen), a direct
+ * MELEE_SCENE launch included. The layout is the kit's own (_build/ui/loading_layout.json and
+ * chrome_layout.json, section "versus"): the section backdrop, the gold header slab with the title,
+ * the crumb line, the progress track and fill (92..548 x 362..372) with its WARMING UP / READY label
+ * and percent, and the status strip. The fighter cards and the stage plate need the game's captured
+ * CSS/SSS art, which only the game-side screen (gmfrontend fl_load_*) has, so they are left out here.
+ * progress < 0: unknown (an animated sweep instead of a fill). ink_only: the plain ink cover the
+ * match hold uses after the frontend's own loading screen already said what is loading.
+ * Returns 0 when the kit's files are missing (the caller falls back to plain ImGui). */
+extern "C" int gw_Console_DrawLoadScreen(const char *title, const char *crumb, const char *status,
+                                          float progress, double t, int ink_only) {
+  if (ImGui::GetCurrentContext() == nullptr || !gw_Kit_Available()) return 0;
+  const ImGuiIO &io = ImGui::GetIO();
+  const float sx = io.DisplaySize.x / 640.0f, sy = io.DisplaySize.y / 480.0f;
+  const float s = sx < sy ? sx : sy;
+  const float ox = (io.DisplaySize.x - 640.0f * s) * 0.5f, oy = (io.DisplaySize.y - 480.0f * s) * 0.5f;
+  const int sec = 0; /* versus */
+  ImDrawList *dl = ImGui::GetForegroundDrawList();
+  /* the whole window, letterbox bars included: nothing of the frozen match may show */
+  dl->AddRectFilled(ImVec2(0, 0), io.DisplaySize, col(ink_only ? kit_col("ink", 0x0A0E18FFu) : gw_Kit_SectionRGBA(sec, 1)));
+  if (ink_only) return 1;
+  const float S = gw_Kit_Shear();
+  const int q0 = gw_Kit_QuadCount();
+  const uint32_t ink = kit_col("ink", 0x0A0E18FFu), gold = kit_col("gold", 0xF0B429FFu);
+  const uint32_t muted = kit_col("muted", 0xB8C2DCFFu), bone = kit_col("bone", 0xF2EFE4FFu);
+  int role;
+  /* header: the gold slab and its ink rule, the title in ink, the crumb line */
+  gw_Kit_DrawFlat(382.3f, 46.0f, 550.0f - 382.3f, 6.0f, ink, S);
+  gw_Kit_DrawFlat(84.0f, 24.0f, 386.3f - 84.0f, 28.0f, gold, S);
+  role = gw_Kit_Role("title");
+  gw_Kit_DrawText(100.0f, 45.92f, title, role >= 0 ? role : 0, ink, GW_KIT_ALIGN_LEFT, 280.0f, S, nullptr);
+  role = gw_Kit_Role("body");
+  gw_Kit_DrawText(118.0f, 68.62f, crumb, role >= 0 ? role : 0, muted, GW_KIT_ALIGN_LEFT, 432.0f, S, nullptr);
+  /* progress: the track, the fill (or a sweep when the total is unknown), the label and percent */
+  gw_Kit_DrawFlat(92.0f, 362.0f, 456.0f, 10.0f, ink, S);
+  const uint32_t face = gw_Kit_SectionRGBA(sec, 0);
+  char pct[16] = "";
+  if (progress >= 0.0f) {
+    const float p = progress > 1.0f ? 1.0f : progress;
+    if (p > 0.0f) gw_Kit_DrawFlat(92.0f, 362.0f, 456.0f * p, 10.0f, gold, S);
+    std::snprintf(pct, sizeof pct, "%d%%", (int)(p * 100.0f + 0.5f));
+  } else {
+    const float u = (float)std::fmod(t, 1.2) / 1.2f, w = 0.18f;
+    float a = u * (1.0f + w) - w, b = a + w;
+    a = a < 0.0f ? 0.0f : a;
+    b = b > 1.0f ? 1.0f : b;
+    gw_Kit_DrawFlat(92.0f + 456.0f * a, 362.0f, 456.0f * (b - a), 10.0f, face, S);
+  }
+  role = gw_Kit_Role("caption");
+  gw_Kit_DrawText(92.0f, 387.96f, progress >= 1.0f ? "READY" : "WARMING UP", role >= 0 ? role : 0, muted,
+                  GW_KIT_ALIGN_LEFT, 120.0f, S, nullptr);
+  if (pct[0] != '\0')
+    gw_Kit_DrawText(548.0f, 387.96f, pct, role >= 0 ? role : 0, bone, GW_KIT_ALIGN_RIGHT, 80.0f, S, nullptr);
+  /* the status strip */
+  gw_Kit_DrawFlat(90.0f, 398.0f, 506.0f, 24.0f, ink, S);
+  role = gw_Kit_Role("body");
+  gw_Kit_DrawText(100.0f, 415.0f, status, role >= 0 ? role : 0, bone, GW_KIT_ALIGN_LEFT, 486.0f, S, nullptr);
+  draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy, false);
+  gw_Kit_TruncateQuads(q0);
+  return 1;
 }
 
 /* show_fps=1 and =2 share the menu kit's host renderer. They are called only by shim_vi.c

@@ -346,6 +346,12 @@ extern int Gfx_PipelinesUrgent(void);
 extern int Gfx_PipelinesCreated(void);
 extern int Gfx_PrewarmMustDraw(void);
 extern int Gfx_LoadScreenEnabled(void);
+extern int Gfx_SeedCoreCount(void);
+extern int Gfx_SeedPipelinesBuilt(void);
+/* The host draws the kit's loading screen over the held scene (pc/platform/gw_overlay.cpp): the
+   DevText panel and caption this used to create looked nothing like the menus and were the last
+   old-style loading screen. on/warm, see gw_Gfx_HostLoading. */
+extern void Gfx_HostLoading(int on, int warm);
 
 /* Settled means nothing the frozen frame draws is still compiling (Gfx_PipelinesUrgent) - NOT
    "nothing queued at all": the pipeline seed's background warm-up keeps thousands queued for
@@ -386,6 +392,7 @@ static void mnLoadScreen_Release(char* why)
         return;
     }
     mnLoadScreen_holding = 0;
+    Gfx_HostLoading(0, 0);
     /* DevText_Unlink, not DevText_Remove. The loading screen's boxes are the first two on the
        draw list, and DevText_Remove(&handle) on the head box never updates devtext_drawlist: it
        kept naming the freed box, whose next is the free pool, and every box behind it - the F9
@@ -404,8 +411,10 @@ static void mnLoadScreen_Release(char* why)
         mnLoadScreen_panel = NULL;
     }
     /* the match clock, which the freeze keeps where it started */
-    OSReport("loadscreen: released (%s) after %d frames, %d pipelines created, clock %u.%02u\n",
-             why, mnLoadScreen_frames, Gfx_PipelinesCreated(), gm_8016AEEC(),
+    OSReport("loadscreen: released (%s) after %d frames, %d pipelines created, seed core %d/%d, "
+             "clock %u.%02u\n",
+             why, mnLoadScreen_frames, Gfx_PipelinesCreated(), Gfx_SeedPipelinesBuilt(),
+             Gfx_SeedCoreCount(), gm_8016AEEC(),
              (u32) gm_8016AF0C());
 }
 
@@ -442,8 +451,9 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
        it is never skipped (Kirby's ~35-frame ground hammer) - and mid-match that wait is a
        visible hitch; here it is behind the panel. */
     Gfx_PrewarmMustDraw();
+    Gfx_HostLoading(1, mnLoadScreen_warm);
 
-    text_gobj = DevText_GetGObj();
+    text_gobj = NULL; /* the host's kit screen replaces the DevText panel and caption */
     if (text_gobj != NULL) {
         /* Created panel first, caption second: DevText_AddToList appends, and the list is drawn
            in order, so the panel is behind. */
@@ -511,8 +521,12 @@ static bool mnLoadScreen_Frame(void)
         }
     }
 
+    /* ... and the pipeline seed's core (the pipelines most matches draw with first, built in the
+       background from boot) is built: releasing before it is what made a cold first match arrive
+       part by part after the hold. No seed (core 0): no condition. */
     if (mnLoadScreen_frames >=
             (mnLoadScreen_warm ? LOADSCREEN_WARM_MIN_FRAMES : LOADSCREEN_MIN_FRAMES) &&
+        Gfx_SeedPipelinesBuilt() >= Gfx_SeedCoreCount() &&
         mnLoadScreen_settled >=
             (mnLoadScreen_warm ? LOADSCREEN_WARM_SETTLE_FRAMES : LOADSCREEN_SETTLE_FRAMES))
     {

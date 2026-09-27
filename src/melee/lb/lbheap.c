@@ -331,6 +331,16 @@ void lbHeap_80015DF8(void)
             if (p->type == 0) {
                 var_r25 = OSCheckHeap(p->id);
             } else {
+#if defined(TARGET_PC)
+                /* m-ex's 0x20-byte "Scene" heap (6) is too small for lbMemory_80014E24 to give it a
+                   handle, and lbMemory_80014F7C on that NULL read address 4: the ALLOC_FAIL report
+                   this prints turned a clean out-of-memory assert into an ACCESS_VIOLATION. */
+                if (p->handle == NULL || p->handle == (Handle*) -1) {
+                    OSReport("                    no arena");
+                    OSReport(" / %5d KB\n", p->size / 1024, p->size);
+                    continue;
+                }
+#endif
                 var_r25 = lbMemory_80014F7C(p->handle);
             }
             OSReport(" %5d KB + ", (p->size - var_r25) / 1024);

@@ -478,6 +478,7 @@ static void gw_video_apply_rate(void) {
     gw_log("gw: video: frame rate up to %d (simulation stays 60 Hz; in-between frames interpolated)",
            gw_video_fps);
   }
+  if (on) gw_log("gw: video: host UI submitted on interpolated presents");
 }
 
 /* Frame rate: 60 = the game's own (default); 0 = uncapped; N > 60 = at most N presents a second. */
@@ -1166,6 +1167,15 @@ static void gw_stats_draw(void) {
   }
 }
 
+/* Aurora replays only GX commands. The script/kit list is already kept in the shown bank until
+ * the next gw_Script_PostRender; submit it through ImGui for every present, including GX replays.
+ * This also keeps the console and host panels above the replayed game frame in the same order. */
+static void gw_present_overlays(void) {
+  gw_Overlay_Draw();
+  gw_Overlay_DrawPanel();
+  gw_stats_draw();
+}
+
 static void gw_uncap_replay(uint64_t now) {
   const uint64_t t0 = now;
   float alpha = (float)((double)(now - gw_last_poll_tick) / (double)GW_TICKS_PER_FIELD);
@@ -1177,8 +1187,7 @@ static void gw_uncap_replay(uint64_t now) {
   }
   aurora_frame_replay_mark(true);
   if (aurora_begin_frame()) {
-    gw_Overlay_Draw();
-    gw_stats_draw();
+    gw_present_overlays();
     aurora_frame_replay(alpha);
     aurora_end_frame();
     ++gw_end_frames;
@@ -1623,9 +1632,7 @@ void gw_frame_tick(void) {
   if (gw_frame_has_content && gw_frame_begun) {
     /* Composited over the game's output by Aurora's ImGui pass, which is why this must happen
      * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
-    gw_Overlay_Draw();
-    gw_Overlay_DrawPanel();
-    gw_stats_draw();
+    gw_present_overlays();
     gw_stats_note_present(0);
     gw_shots_tick(gw_presented_count + 1u);
     if (gw_video_fps > 60) {

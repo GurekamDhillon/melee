@@ -135,12 +135,16 @@ wgpu::Sampler g_samp[3], g_linearClamp;
 wgpu::TextureView g_white, g_black, g_depth0;
 std::unordered_map<uint64_t, wgpu::RenderPipeline> g_pipes;
 
-enum Kind : uint32_t { KParticles = 0, KBloomParticles = 1, KBlurH = 2, KBlurV = 3, KComposite = 4 };
+enum Kind : uint32_t { KParticles = 0, KBloomParticles = 1, KBlurH = 2, KBlurV = 3, KComposite = 4, KMesh = 5,
+                       KBloomMesh = 6 };
+inline bool is_mesh_kind(uint32_t k) { return k == KMesh || k == KBloomMesh; }
 
 struct Payload {
   uint32_t kind, slot, count, blend, depthTest, src; // src: the bloom buffer a blur / composite reads
   int32_t pkg, em;
   Range uni, sto;
+  Range mv;    // mesh kinds: the mesh's expanded vertices (12 floats each)
+  uint32_t nv; // mesh kinds: vertex count
 };
 static_assert(sizeof(Payload) <= aurora::gfx::InlineDrawPayloadSize, "payload");
 
@@ -162,6 +166,9 @@ struct P {
   c1: vec4f,  // colour1, alpha1
   a: array<vec4f, 3>,  // per sampler: scroll.xy, scale.xy
   b: array<vec4f, 3>,  // per sampler: rotation, cell origin uv, 0
+  ax: vec4f,  // mode 1 / 2: the particle's world X axis x its size (p1.w: 0 billboard, 1 oriented quad, 2 mesh)
+  ay: vec4f,
+  az: vec4f,
 };
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var<storage, read> parts: array<P>;
@@ -174,11 +181,13 @@ struct P {
 @group(0) @binding(8) var s1: sampler;
 @group(0) @binding(9) var s2: sampler;
 @group(0) @binding(10) var sl: sampler;
+@group(0) @binding(11) var<storage, read> mverts: array<vec4f>; // mesh kinds: 3 vec4f a vertex
 
 struct V {
   @builtin(position) pos: vec4f,
   @location(0) uv: vec2f,
   @location(1) @interpolate(flat) ii: u32,
+  @location(2) vc: vec4f,
 };
 
 const corners = array<vec2f, 6>(vec2f(-0.5, -0.5), vec2f(0.5, -0.5), vec2f(0.5, 0.5),
@@ -187,16 +196,37 @@ const corners = array<vec2f, 6>(vec2f(-0.5, -0.5), vec2f(0.5, -0.5), vec2f(0.5, 
 @vertex fn vs_particle(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> V {
   let p = parts[ii];
   let c = corners[vi];
-  let s = c * vec2f(p.p0.w, p.p1.x);
-  let cr = cos(p.p1.y);
-  let sr = sin(p.p1.y);
-  let w = vec4f(p.p0.xyz, 1.0);
-  let vp = vec4f(dot(u.view[0], w) + s.x * cr - s.y * sr, dot(u.view[1], w) + s.x * sr + s.y * cr,
-                 dot(u.view[2], w), 1.0);
+  var vp: vec4f;
+  if (p.p1.w > 0.5) { // oriented quad: the axes carry the size and facing
+    let w = vec4f(p.p0.xyz + p.ax.xyz * c.x + p.ay.xyz * c.y, 1.0);
+    vp = vec4f(dot(u.view[0], w), dot(u.view[1], w), dot(u.view[2], w), 1.0);
+  } else {
+    let s = c * vec2f(p.p0.w, p.p1.x);
+    let cr = cos(p.p1.y);
+    let sr = sin(p.p1.y);
+    let w = vec4f(p.p0.xyz, 1.0);
+    vp = vec4f(dot(u.view[0], w) + s.x * cr - s.y * sr, dot(u.view[1], w) + s.x * sr + s.y * cr,
+               dot(u.view[2], w), 1.0);
+  }
   var o: V;
   o.pos = vec4f(dot(u.proj[0], vp), dot(u.proj[1], vp), dot(u.proj[2], vp), dot(u.proj[3], vp));
   o.uv = vec2f(c.x + 0.5, 0.5 - c.y);
   o.ii = ii;
+  o.vc = vec4f(1.0);
+  return o;
+}
+
+@vertex fn vs_mesh(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> V {
+  let p = parts[ii];
+  let a = mverts[vi * 3u];
+  let b = mverts[vi * 3u + 1u];
+  let w = vec4f(p.p0.xyz + p.ax.xyz * a.x + p.ay.xyz * a.y + p.az.xyz * a.z, 1.0);
+  let vp = vec4f(dot(u.view[0], w), dot(u.view[1], w), dot(u.view[2], w), 1.0);
+  var o: V;
+  o.pos = vec4f(dot(u.proj[0], vp), dot(u.proj[1], vp), dot(u.proj[2], vp), dot(u.proj[3], vp));
+  o.uv = vec2f(a.w, b.x);
+  o.ii = ii;
+  o.vc = mverts[vi * 3u + 2u];
   return o;
 }
 
@@ -243,11 +273,11 @@ fn shade(in: V) -> vec4f {
   let s2v = smp(2u, uv2);
   let cm = u.mat1.y;
   let am = u.mat1.z;
-  var alpha = p.c0.a * p.c1.a;
+  var alpha = p.c0.a * p.c1.a * in.vc.a;
   if ((am & 1u) != 0u) { alpha *= s0v.a; }
   if ((am & 2u) != 0u) { alpha *= s1v.a; }
   if ((am & 4u) != 0u) { alpha *= s2v.a; }
-  var rgb = p.c0.rgb;
+  var rgb = p.c0.rgb * in.vc.rgb;
   let first = select(select(s2v, s1v, (cm & 2u) != 0u), s0v, (cm & 1u) != 0u);
   if (u.mat0.y == 1u) {
     if ((cm & 1u) != 0u) { rgb *= s0v.rgb; }
@@ -342,7 +372,7 @@ void init_gpu(const aurora::gfx::DrawContext& ctx) {
   md.label = "Geno fx module";
   g_module = dev.CreateShaderModule(&md);
 
-  wgpu::BindGroupLayoutEntry e[11]{};
+  wgpu::BindGroupLayoutEntry e[12]{};
   const auto vis = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
   e[0].binding = 0;
   e[0].visibility = vis;
@@ -365,8 +395,11 @@ void init_gpu(const aurora::gfx::DrawContext& ctx) {
     e[i].visibility = wgpu::ShaderStage::Fragment;
     e[i].sampler.type = wgpu::SamplerBindingType::Filtering;
   }
+  e[11].binding = 11;
+  e[11].visibility = wgpu::ShaderStage::Vertex;
+  e[11].buffer.type = wgpu::BufferBindingType::ReadOnlyStorage;
   wgpu::BindGroupLayoutDescriptor bd{};
-  bd.entryCount = 11;
+  bd.entryCount = 12;
   bd.entries = e;
   g_bgl = dev.CreateBindGroupLayout(&bd);
   wgpu::PipelineLayoutDescriptor pd{};
@@ -402,7 +435,7 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
   };
   using BF = wgpu::BlendFactor;
   using BO = wgpu::BlendOperation;
-  if (kind == KParticles) {
+  if (kind == KParticles || kind == KMesh) {
     switch (blend) {
     case FX_BLEND_ADD: bs.color = comp(BO::Add, BF::SrcAlpha, BF::One); break;
     case FX_BLEND_SUB: bs.color = comp(BO::ReverseSubtract, BF::SrcAlpha, BF::One); break;
@@ -425,17 +458,18 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
   }
   ct[0].blend = &bs;
   ct[0].writeMask = wgpu::ColorWriteMask::All;
-  const bool particles = kind == KParticles || kind == KBloomParticles;
+  const bool particles = kind == KParticles || kind == KBloomParticles || is_mesh_kind(kind);
   wgpu::FragmentState fs{};
   fs.module = g_module;
-  fs.entryPoint = kind == KParticles ? "fs_particle" : kind == KBloomParticles ? "fs_bloom"
+  fs.entryPoint = kind == KParticles || kind == KMesh ? "fs_particle"
+                  : kind == KBloomParticles || kind == KBloomMesh ? "fs_bloom"
                   : kind == KComposite ? "fs_composite" : "fs_blur";
   fs.targetCount = L.colorAttachmentCount;
   fs.targets = ct;
   wgpu::DepthStencilState ds{};
   ds.format = L.depthStencilFormat;
   ds.depthWriteEnabled = false;
-  ds.depthCompare = kind == KParticles && depthTest
+  ds.depthCompare = (kind == KParticles || kind == KMesh) && depthTest
                         ? (aurora::gfx::uses_reversed_z() ? wgpu::CompareFunction::GreaterEqual
                                                           : wgpu::CompareFunction::LessEqual)
                         : wgpu::CompareFunction::Always;
@@ -443,7 +477,7 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
   rd.label = "Geno fx pipeline";
   rd.layout = g_pl;
   rd.vertex.module = g_module;
-  rd.vertex.entryPoint = particles ? "vs_particle" : "vs_full";
+  rd.vertex.entryPoint = is_mesh_kind(kind) ? "vs_mesh" : particles ? "vs_particle" : "vs_full";
   rd.primitive.topology = wgpu::PrimitiveTopology::TriangleList;
   rd.depthStencil = L.depthStencilFormat != wgpu::TextureFormat::Undefined ? &ds : nullptr;
   rd.multisample.count = L.sampleCount;
@@ -496,12 +530,12 @@ void draw_cb(const aurora::gfx::DrawContext& ctx, const wgpu::RenderPassEncoder&
       wrap[k] = e->smp[k].wrap[0];
     }
   wgpu::TextureView src = g_black;
-  if (d.kind == KParticles && slot.color) src = slot.color;
+  if ((d.kind == KParticles || d.kind == KMesh) && slot.color) src = slot.color;
   if ((d.kind == KBlurH || d.kind == KBlurV || d.kind == KComposite) && d.src < 3 && slot.bloom[d.src])
     src = slot.bloom[d.src];
   wgpu::TextureView depth = slot.depth ? slot.depth : g_depth0;
 
-  wgpu::BindGroupEntry be[11]{};
+  wgpu::BindGroupEntry be[12]{};
   be[0].binding = 0;
   be[0].buffer = ctx.uniformBuffer;
   be[0].offset = d.uni.offset;
@@ -527,12 +561,18 @@ void draw_cb(const aurora::gfx::DrawContext& ctx, const wgpu::RenderPassEncoder&
   be[10].sampler = g_linearClamp;
   wgpu::BindGroupDescriptor bgd{};
   bgd.layout = g_bgl;
-  bgd.entryCount = 11;
+  be[11].binding = 11;
+  be[11].buffer = ctx.storageBuffer;
+  be[11].offset = is_mesh_kind(d.kind) && d.mv.size ? d.mv.offset : be[1].offset;
+  be[11].size = is_mesh_kind(d.kind) && d.mv.size ? d.mv.size : be[1].size;
+  bgd.entryCount = 12;
   bgd.entries = be;
   auto bg = ctx.device.CreateBindGroup(&bgd);
   pass.SetPipeline(pipeline(ctx, d.kind, d.blend, d.depthTest));
   pass.SetBindGroup(0, bg);
-  if (d.kind == KParticles || d.kind == KBloomParticles)
+  if (is_mesh_kind(d.kind))
+    pass.Draw(d.nv, d.count);
+  else if (d.kind == KParticles || d.kind == KBloomParticles)
     pass.Draw(6, d.count);
   else
     pass.Draw(3);
@@ -550,12 +590,36 @@ struct alignas(16) GpuU {
   float inv_div[3][4];
 };
 struct alignas(16) GpuP {
-  float p0[4], p1[4], c0[4], c1[4], a[3][4], b[3][4];
+  float p0[4], p1[4], c0[4], c1[4], a[3][4], b[3][4], ax[4], ay[4], az[4];
 };
 
 float curve(const fx_curve& c, float t, int ch) { return gw_fx_curve_at(&c, t, ch); }
 
-void particle_data(const fx_emitter& e, const fx_part& q, GpuP& o) {
+void v3norm(float v[3]) {
+  const float l = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  if (l > 1e-6f)
+    for (int k = 0; k < 3; ++k) v[k] /= l;
+}
+void v3cross(const float a[3], const float b[3], float o[3]) {
+  o[0] = a[1] * b[2] - a[2] * b[1];
+  o[1] = a[2] * b[0] - a[0] * b[2];
+  o[2] = a[0] * b[1] - a[1] * b[0];
+}
+// the emitter's own rotation (X, then Y, then Z, radians; as gw_fx.c fx_erot) after the particle's roll about Z
+void local_axis(const fx_emitter& e, float roll, int axis, float v[3]) {
+  float x = axis == 0 ? 1.0f : 0.0f, y = axis == 1 ? 1.0f : 0.0f, z = axis == 2 ? 1.0f : 0.0f, c, s;
+  c = std::cos(roll); s = std::sin(roll); { const float x2 = x * c - y * s, y2 = x * s + y * c; x = x2; y = y2; }
+  c = std::cos(e.rot[0]); s = std::sin(e.rot[0]); { const float y2 = y * c - z * s, z2 = y * s + z * c; y = y2; z = z2; }
+  c = std::cos(e.rot[1]); s = std::sin(e.rot[1]); { const float x2 = x * c + z * s, z2 = -x * s + z * c; x = x2; z = z2; }
+  c = std::cos(e.rot[2]); s = std::sin(e.rot[2]); { const float x2 = x * c - y * s, y2 = x * s + y * c; x = x2; y = y2; }
+  v[0] = x; v[1] = y; v[2] = z;
+}
+// the emitter frame (the owner's matrix x basis; the joint's scale included) applied to a direction
+void frame_dir(const fx_inst& in, const float v[3], float o[3]) {
+  for (int r = 0; r < 3; ++r) o[r] = in.m[r][0] * v[0] + in.m[r][1] * v[1] + in.m[r][2] * v[2];
+}
+
+void particle_data(const fx_emitter& e, const fx_part& q, const fx_inst& in, const float (*view)[4], GpuP& o) {
   const float t = q.life > 0 ? float(q.age) / float(q.life) : 0.0f;
   o.p0[0] = q.pos[0];
   o.p0[1] = q.pos[1];
@@ -565,6 +629,55 @@ void particle_data(const fx_emitter& e, const fx_part& q, GpuP& o) {
   o.p1[1] = q.rot;
   o.p1[2] = curve(e.param, t, 0);
   o.p1[3] = 0.0f;
+  {
+    // facing: 0 camera billboard (above), 1 an oriented quad, 2 a mesh instance; the axes carry the size
+    const float sx = o.p0[3] * e.escale[0], sy = o.p1[0] * e.escale[1];
+    float cz = curve(e.scale_keys, t, 2);
+    if (!e.scale_keys.keyed && cz == 0.0f) cz = curve(e.scale_keys, t, 0);
+    const float sz = e.scale_z * cz * q.scale * e.escale[2];
+    float X[3], Y[3], Z[3], lx[3], ly[3], lz[3];
+    local_axis(e, q.rot, 0, lx);
+    local_axis(e, q.rot, 1, ly);
+    local_axis(e, q.rot, 2, lz);
+    frame_dir(in, lx, X);
+    frame_dir(in, ly, Y);
+    frame_dir(in, lz, Z);
+    const float camz[3] = {view[2][0], view[2][1], view[2][2]}; // the view's Z axis, in world
+    int mode = 0;
+    if (e.mesh && e.mesh_idx >= 0) {
+      mode = 2; // mesh units are the emitter frame's (joint-local): keep the frame's own scale
+      for (int k = 0; k < 3; ++k) { X[k] *= o.p0[3] * e.escale[0]; Y[k] *= o.p1[0] * e.escale[1]; Z[k] *= sz; }
+    } else if (e.pshape == FX_PS_DIRECTIONAL || e.pshape == FX_PS_Y_BILLBOARD) {
+      mode = 1;
+      float d[3];
+      if (e.pshape == FX_PS_Y_BILLBOARD) {
+        d[0] = 0.0f; d[1] = 1.0f; d[2] = 0.0f;
+      } else {
+        // along the velocity (world): follow-srt particles keep theirs in the emitter frame
+        if (e.follow == 0) frame_dir(in, q.lvel, d);
+        else for (int k = 0; k < 3; ++k) d[k] = q.vel[k];
+        if (d[0] * d[0] + d[1] * d[1] + d[2] * d[2] < 1e-8f)
+          for (int k = 0; k < 3; ++k) d[k] = Y[k];
+      }
+      v3norm(d);
+      float side[3];
+      v3cross(d, camz, side);
+      v3norm(side);
+      for (int k = 0; k < 3; ++k) { X[k] = side[k] * sx; Y[k] = d[k] * sy; Z[k] = 0.0f; }
+    } else if (e.pshape == FX_PS_PLATE_XY || e.pshape == FX_PS_PLATE_XZ) {
+      mode = 1;
+      v3norm(X);
+      if (e.pshape == FX_PS_PLATE_XZ) std::memcpy(Y, Z, sizeof Y);
+      v3norm(Y);
+      for (int k = 0; k < 3; ++k) { X[k] *= sx; Y[k] *= sy; Z[k] = 0.0f; }
+    } else {
+      o.p0[3] = sx;
+      o.p1[0] = sy;
+    }
+    o.p1[3] = float(mode);
+    for (int k = 0; k < 3; ++k) { o.ax[k] = X[k]; o.ay[k] = Y[k]; o.az[k] = Z[k]; }
+    o.ax[3] = o.ay[3] = o.az[3] = 0.0f;
+  }
   for (int c = 0; c < 3; ++c) {
     o.c0[c] = curve(e.color0, t, c) * e.color_scale;
     o.c1[c] = curve(e.color1, t, c) * e.color_scale;
@@ -633,7 +746,7 @@ double now_ms() {
   return double(c.QuadPart) * 1000.0 / double(f.QuadPart);
 }
 
-struct Group { int pkg, em, first, count; };
+struct Group { int pkg, em, first, count, mesh; }; // mesh: the package mesh index, -1 quads
 struct FrameData {
   GpuU base;
   std::vector<GpuP> buf;
@@ -710,11 +823,12 @@ extern "C" void gw_Fx_Draw(int view_guest) {
     for (int k = 0; k < FX_MAX_PARTICLES; ++k)
       if (st->part[k].inst == i) {
         buf.emplace_back();
-        particle_data(e, st->part[k], buf.back());
+        particle_data(e, st->part[k], in, base.view, buf.back());
       }
     if (int(buf.size()) == first) continue;
     ensure_textures(in.pkg);
-    groups.push_back({in.pkg, in.em, first, int(buf.size()) - first});
+    groups.push_back({in.pkg, in.em, first, int(buf.size()) - first,
+                      e.mesh && e.mesh_idx >= 0 && e.mesh_idx < p->nmesh_loaded && p->mesh_nv[e.mesh_idx] > 0 ? e.mesh_idx : -1});
     needFrame |= e.shader == FX_SH_DISTORTION;
     needBloom |= e.bloom_intensity > 0.0f;
   }
@@ -816,9 +930,24 @@ void record_frame(const void* data, u32 size) {
     own[gi] = aurora::gfx::push_storage(reinterpret_cast<const uint8_t*>(buf.data() + groups[gi].first),
                                         size_t(groups[gi].count) * sizeof(GpuP));
   }
+  std::vector<Range> meshRange(groups.size());
+  for (size_t gi = 0; gi < groups.size(); ++gi) {
+    const Group& g = groups[gi];
+    if (g.mesh < 0) continue;
+    for (size_t gj = 0; gj < gi; ++gj) // the same mesh earlier this frame: share its upload
+      if (groups[gj].pkg == g.pkg && groups[gj].mesh == g.mesh) { meshRange[gi] = meshRange[gj]; break; }
+    if (meshRange[gi].size == 0) {
+      const fx_pkg* mp = gw_fx_pkg(g.pkg);
+      meshRange[gi] = aurora::gfx::push_storage(reinterpret_cast<const uint8_t*>(mp->mesh_v[g.mesh]),
+                                                size_t(mp->mesh_nv[g.mesh]) * 12 * sizeof(float));
+    }
+  }
   auto push_group = [&](uint32_t kind, size_t gi, float tw, float th, float depthScale) {
     // as push(), with the group's own storage range
     Group g = groups[gi];
+    if (g.mesh >= 0) {
+      kind = kind == KParticles ? KMesh : KBloomMesh;
+    }
     GpuU u = base;
     const fx_emitter& e = gw_fx_pkg(g.pkg)->em[g.em];
     fill_material(e, u, kind);
@@ -831,6 +960,10 @@ void record_frame(const void* data, u32 size) {
     d.blend = uint32_t(e.blend);
     d.depthTest = uint32_t(e.depth_test);
     d.sto = own[gi];
+    if (g.mesh >= 0) {
+      d.mv = meshRange[gi];
+      d.nv = uint32_t(gw_fx_pkg(g.pkg)->mesh_nv[g.mesh]);
+    }
     u.screen[0] = tw;
     u.screen[1] = th;
     u.screen[2] = tw > 0 ? 1.0f / tw : 0.0f;

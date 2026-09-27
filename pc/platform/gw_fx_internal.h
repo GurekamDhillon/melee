@@ -11,6 +11,7 @@ extern "C" {
 #define FX_MAX_PKGS 64
 #define FX_MAX_EMITTERS 32      /* per package */
 #define FX_MAX_TEX 24           /* per package */
+#define FX_MAX_MESH 24          /* per package */
 #define FX_MAX_INST 256
 #define FX_MAX_PARTICLES 2000
 #define FX_RING 16              /* frames of state kept for a rollback */
@@ -32,6 +33,8 @@ enum { FX_COL_FLAT, FX_COL_MODULATE, FX_COL_LERP };
 enum { FX_BLEND_ALPHA, FX_BLEND_ADD, FX_BLEND_SUB, FX_BLEND_MUL, FX_BLEND_SCREEN };
 enum { FX_PAT_NONE, FX_PAT_FIT_LIFE, FX_PAT_CLAMP, FX_PAT_LOOP, FX_PAT_RANDOM };
 enum { FX_WRAP_MIRROR, FX_WRAP_REPEAT, FX_WRAP_CLAMP };
+/* particle.shape: how a particle faces (the renderer); stripes and the directional kinds align to their velocity */
+enum { FX_PS_BILLBOARD, FX_PS_Y_BILLBOARD, FX_PS_DIRECTIONAL, FX_PS_PLATE_XY, FX_PS_PLATE_XZ };
 
 typedef struct { int n; float k[FX_KEYS][4]; float value[3]; int keyed, loop, loop_rate; } fx_curve;
 
@@ -50,6 +53,8 @@ typedef struct {
 typedef struct {
     char name[48];
     int mesh, follow, order, priority; /* follow: 0 srt, 1 none, 2 translate */
+    int mesh_idx, pshape;       /* the package mesh a mesh emitter draws (-1 none); FX_PS_* */
+    float scale_z, escale[3];   /* particle scale z; the emitter transform's scale */
     float trans[3], rot[3];
     int start, duration, one_time, interval, fade_on_stop, fade_alpha_frames, fade_in_frames;
     int alpha_fade_in, scale_fade_in;
@@ -86,6 +91,11 @@ typedef struct {
     int ntex, nmesh;
     char tex_file[FX_MAX_TEX][96];
     char tex_swizzle[FX_MAX_TEX][5];
+    /* meshes, expanded to triangle vertices: 12 floats each (position, u, v, 0, 0, colour rgba) */
+    int nmesh_loaded;
+    char mesh_name[FX_MAX_MESH][64];
+    float *mesh_v[FX_MAX_MESH];
+    int mesh_nv[FX_MAX_MESH];
     float forward[3], up[3];    /* the effect's own axes ("space"): which local axis is the owner's travel direction
                                    and which is up (Ultimate articles: +Z forward, +Y up) */
 } fx_pkg;

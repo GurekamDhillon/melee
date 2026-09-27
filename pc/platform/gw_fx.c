@@ -262,6 +262,69 @@ static int fx_shape(const char *s) {
     return FX_SHAPE_PRIMITIVE;
 }
 
+static char *fx_read(const char *path);
+
+/* A package mesh (mesh/<name>.json: position, uv0, color0, indices), expanded to triangle vertices of 12 floats
+ * (position, u, v, 0, 0, colour rgba) so the renderer draws it without an index buffer. Loaded once with the package. */
+static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const char *file) {
+    char path[MAX_PATH], *text, *slash;
+    fjdoc d;
+    int root, pos, uv, col, idx, n, i, k;
+    float *v;
+    const int m = p->nmesh_loaded;
+    if (m >= FX_MAX_MESH) return;
+    snprintf(path, sizeof path, "%s", pkgpath);
+    slash = strrchr(path, '\\');
+    if (strrchr(path, '/') > slash) slash = strrchr(path, '/');
+    if (slash == NULL) return;
+    snprintf(slash + 1, sizeof path - (size_t) (slash + 1 - path), "%s", file);
+    text = fx_read(path);
+    if (text == NULL) { gw_log("fx: %s: mesh %s not found", p->name, path); return; }
+    memset(&d, 0, sizeof d);
+    d.p = text;
+    root = fj_value(&d, 0);
+    pos = fj_get(&d, root, "position");
+    uv = fj_get(&d, root, "uv0");
+    col = fj_get(&d, root, "color0");
+    idx = fj_get(&d, root, "indices");
+    for (n = 0; fj_at(&d, idx, n) >= 0; ++n) {}
+    n -= n % 3;
+    v = n > 0 ? (float *) calloc((size_t) n * 12, sizeof(float)) : NULL;
+    if (v != NULL) {
+        /* node index of each vertex's position / uv / colour (fj_at walks a list, so collect them once) */
+        int nv = 0, *pn, *un, *cn, c;
+        for (c = pos >= 0 ? d.n[pos].first : -1; c >= 0; c = d.n[c].next) nv++;
+        pn = (int *) malloc((size_t) (nv + 1) * sizeof(int));
+        un = (int *) malloc((size_t) (nv + 1) * sizeof(int));
+        cn = (int *) malloc((size_t) (nv + 1) * sizeof(int));
+        for (k = 0; k < nv; ++k) pn[k] = un[k] = cn[k] = -1;
+        for (k = 0, c = pos >= 0 ? d.n[pos].first : -1; c >= 0 && k < nv; c = d.n[c].next) pn[k++] = c;
+        for (k = 0, c = uv >= 0 ? d.n[uv].first : -1; c >= 0 && k < nv; c = d.n[c].next) un[k++] = c;
+        for (k = 0, c = col >= 0 ? d.n[col].first : -1; c >= 0 && k < nv; c = d.n[c].next) cn[k++] = c;
+        c = idx >= 0 ? d.n[idx].first : -1;
+        for (i = 0; i < n && c >= 0; ++i, c = d.n[c].next) {
+            const int j = (int) d.n[c].num;
+            float *o = v + (size_t) i * 12;
+            const int pj = j >= 0 && j < nv ? pn[j] : -1, uj = j >= 0 && j < nv ? un[j] : -1,
+                      cj = j >= 0 && j < nv ? cn[j] : -1;
+            o[8] = o[9] = o[10] = o[11] = 1.0f;
+            for (k = 0; k < 3; ++k) o[k] = (float) fj_num(&d, fj_at(&d, pj, k), 0);
+            o[3] = (float) fj_num(&d, fj_at(&d, uj, 0), 0);
+            o[4] = (float) fj_num(&d, fj_at(&d, uj, 1), 0);
+            for (k = 0; k < 4; ++k) o[8 + k] = (float) fj_num(&d, fj_at(&d, cj, k), 1);
+        }
+        free(pn);
+        free(un);
+        free(cn);
+    }
+    fj_free(&d);
+    free(text);
+    snprintf(p->mesh_name[m], sizeof p->mesh_name[m], "%s", name);
+    p->mesh_v[m] = v;
+    p->mesh_nv[m] = v != NULL ? n : 0;
+    p->nmesh_loaded++;
+}
+
 static fx_pkg *fx_parse(const char *text, const char *path) {
     fjdoc d;
     int root, ems, e, i;
@@ -290,7 +353,10 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         snprintf(p->tex_swizzle[p->ntex], sizeof p->tex_swizzle[0], "%s", strlen(sw) == 4 ? sw : "rgba");
         p->ntex++;
     }
-    for (i = 0; fj_at(&d, fj_get(&d, root, "meshes"), i) >= 0; ++i) p->nmesh++;
+    for (i = 0; (e = fj_at(&d, fj_get(&d, root, "meshes"), i)) >= 0; ++i) {
+        p->nmesh++;
+        fx_load_mesh(p, path, fj_s(&d, fj_get(&d, e, "name")), fj_s(&d, fj_get(&d, e, "file")));
+    }
     /* "space": the effect's forward / up axes; absent = the owner's own (+X forward, +Y up) */
     p->forward[0] = 1.0f; p->forward[1] = p->forward[2] = 0.0f;
     p->up[1] = 1.0f; p->up[0] = p->up[2] = 0.0f;
@@ -310,6 +376,23 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         m->order = (int) fj_num(&d, fj_get(&d, e, "order"), i);
         m->priority = (int) fj_num(&d, fj_get(&d, e, "priority"), m->order);
         m->mesh = strcmp(fj_s(&d, fj_get(&d, e, "kind")), "mesh") == 0;
+        m->mesh_idx = -1;
+        if (m->mesh) {
+            const char *mn = fj_s(&d, fj_get(&d, e, "mesh"));
+            int q;
+            for (q = 0; q < p->nmesh_loaded; ++q)
+                if (strcmp(p->mesh_name[q], mn) == 0) m->mesh_idx = q;
+        }
+        {
+            const char *ps = fj_s(&d, fj_path(&d, e, "particle", "shape"));
+            m->pshape = !strcmp(ps, "y_billboard") ? FX_PS_Y_BILLBOARD
+                        : (!strcmp(ps, "directional_y") || !strcmp(ps, "directional_polygon") ||
+                           !strcmp(ps, "stripe") || !strcmp(ps, "complex_stripe")) ? FX_PS_DIRECTIONAL
+                        : !strcmp(ps, "plate_xy") ? FX_PS_PLATE_XY
+                        : !strcmp(ps, "plate_xz") ? FX_PS_PLATE_XZ : FX_PS_BILLBOARD;
+        }
+        m->escale[0] = m->escale[1] = m->escale[2] = 1.0f;
+        fj_vec(&d, fj_get(&d, t, "scale"), m->escale, 3);
         m->follow = !strcmp(fl, "none") ? 1 : !strcmp(fl, "translate") ? 2 : 0;
         fj_vec(&d, fj_get(&d, t, "translate"), m->trans, 3);
         fj_vec(&d, fj_get(&d, t, "rotate"), m->rot, 3);
@@ -356,6 +439,7 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         m->grav_world = (int) fj_num(&d, fj_get(&d, fo, "gravity_world"), 1);
         m->air = (float) fj_num(&d, fj_get(&d, fo, "air_resistance"), 1);
         fj_vec(&d, fj_get(&d, sc, "base"), m->scale, 2);
+        m->scale_z = (float) fj_num(&d, fj_at(&d, fj_get(&d, sc, "base"), 2), m->scale[0]);
         m->scale_random = (float) fj_num(&d, fj_at(&d, fj_get(&d, sc, "random_pct"), 0), 0) / 100.0f;
         {
             fx_curve *k = &m->scale_keys;
@@ -759,7 +843,7 @@ static void fx_step(void) {
         if (in->have_prev) for (k = 0; k < 3; ++k) emvel[k] = in->pos[k] - in->prev[k];
         travel = sqrtf(emvel[0] * emvel[0] + emvel[1] * emvel[1] + emvel[2] * emvel[2]);
         in->age++;
-        if (!in->detached && !e->mesh && in->age > e->start) {
+        if (!in->detached && (!e->mesh || e->mesh_idx >= 0) && in->age > e->start) {
             float n = 0.0f;
             if (e->one_time) {
                 n = in->emitted == 0 ? e->rate : 0.0f;
@@ -906,6 +990,45 @@ int gw_fx_npkg(void) { return fx_npkg; }
 /* ---- the API the game half calls (scalars; guest addresses as ints) ---------------------------------- */
 
 /* Once per logic frame from the game half, with ITS frame counter (game memory: a rollback restores it). */
+/* MELEE_FX_SANITY=1: every 30 frames, over live particles: non-finite position / velocity / size, and the largest
+ * |position| from the emitter origin, size (as drawn) and speed, with the emitter that holds each maximum. */
+static void fx_sanity(int frame) {
+    static int on = -1;
+    int k, nan = 0, n = 0, wp = -1, ws = -1, wv = -1;
+    float mp = 0, ms = 0, mv = 0;
+    if (on < 0) { const char *v = getenv("MELEE_FX_SANITY"); on = v != NULL && v[0] == '1'; }
+    if (!on || (frame % 30) != 0) return;
+    for (k = 0; k < FX_MAX_PARTICLES; ++k) {
+        const fx_part *p = &fx_cur.part[k];
+        const fx_inst *in;
+        const fx_emitter *e;
+        float t, sx, sy, d, v, s;
+        int c;
+        if (p->inst < 0) continue;
+        in = &fx_cur.inst[p->inst];
+        e = &fx_pkgs[in->pkg]->em[in->em];
+        t = p->life > 0 ? (float) p->age / (float) p->life : 0.0f;
+        sx = e->scale[0] * gw_fx_curve_at(&e->scale_keys, t, 0) * p->scale;
+        sy = e->scale[1] * gw_fx_curve_at(&e->scale_keys, t, 1) * p->scale;
+        d = 0; v = 0;
+        for (c = 0; c < 3; ++c) {
+            float dp = p->pos[c] - in->pos[c];
+            d += dp * dp; v += p->vel[c] * p->vel[c];
+            if (!isfinite(p->pos[c]) || !isfinite(p->vel[c])) nan++;
+        }
+        if (!isfinite(sx) || !isfinite(sy)) nan++;
+        d = sqrtf(d); v = sqrtf(v); s = fabsf(sx) > fabsf(sy) ? fabsf(sx) : fabsf(sy);
+        if (d > mp) { mp = d; wp = k; }
+        if (s > ms) { ms = s; ws = k; }
+        if (v > mv) { mv = v; wv = k; }
+        n++;
+    }
+#define FX_WHO(k) ((k) < 0 ? "-" : fx_pkgs[fx_cur.inst[fx_cur.part[k].inst].pkg]->em[fx_cur.inst[fx_cur.part[k].inst].em].name)
+    gw_log("fx: sanity frame %d: %d live, %d non-finite; max offset %.1f (%s), max size %.1f (%s), max speed %.1f (%s)",
+           frame, n, nan, mp, FX_WHO(wp), ms, FX_WHO(ws), mv, FX_WHO(wv));
+#undef FX_WHO
+}
+
 /* A rollback / LAB rewind: when fx_cur is at or past `frame`, make it the state at the end of frame - 1. */
 static void fx_rewind(int frame) {
     if (!fx_ready) fx_reset();
@@ -947,6 +1070,7 @@ void gw_Fx_Frame(int frame) {
     fx_step();
     fx_cur.frame = frame;
     fx_trace(frame);
+    fx_sanity(frame);
     if ((frame % 30) == 0 && (fx_cur.nlive > 0 || gw_Fx_Stat(1) > 0)) gw_Fx_Census(0, frame);
     {
         int hi = FX_MAX_PARTICLES;
@@ -1422,6 +1546,7 @@ static int test_fx_sim_features(void) {
         if (fabsf(part.fade_alpha - 0.5f) > 0.001f) { gw_test_fail("fx: detach frame 2 alpha expected 0.5"); rc = 1; }
         fx_reset(); fx_pkgs[fx_npkg] = &q; h = fx_npkg++;
         e->mesh = 1; /* no new emission in this synthetic case */
+        e->mesh_idx = -1;
         fx_cur.frame = 10;
         fx_cur.inst[0] = inst;
         fx_cur.inst[0].used = 1; fx_cur.inst[0].pkg = h; fx_cur.inst[0].em = 0;

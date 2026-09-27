@@ -628,7 +628,13 @@ static inline void gm_1832_sdata2_order(int unused)
 void fn_80185408(int x, float arg8, float arg9, float argA, float argB)
 {
     u8 _[0x30];
+#if defined(TARGET_PC)
+    /* MTXOrtho writes a 4x4 Mtx44; retail's 3x4 Mtx relied on the padding above, and on PC the
+     * extra row overwrote the return address (Classic step 7's splash: ret to address 0). */
+    Mtx44 sp1C;
+#else
     Mtx sp1C;
+#endif
     GXSetNumChans(1);
     GXSetChanCtrl(GX_COLOR0A0, 0, GX_SRC_REG, GX_SRC_VTX, 0, GX_DF_NONE,
                   GX_AF_NONE);

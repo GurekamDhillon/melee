@@ -10,7 +10,7 @@
  *      MELEE_PAD_SCRIPT=<file>.lua instead loads a Lua input script (gw_script.c) that can wait on
  *      game state: gd.run(function() gd.wait_until(...) gd.press(1, "A", 2) end).
  *   2. MELEE_PAD_LIVE=<path>  re-read every PADRead: "<buttons_hex> [sx sy [tl tr]]" on channel 0.
- *   3. gd.input / the console "input" command: per-port overrides for N samples.
+ *   3. gd.input / the console "input" command: per-port overrides for N logic samples.
  * Whatever the game finally sees is recorded for gd.pad().
  */
 #include "gw.h"
@@ -173,7 +173,7 @@ static void gw_pad_live_apply(PADStatus *st) {
 
 /* ---- 3. gd.input overrides, and what the game saw ---------------------------------------------- */
 static struct {
-  int samples; /* PADReads left; 0 = off */
+  int samples; /* logic PADReads left; 0 = off (paused menu polls do not count) */
   unsigned buttons;
   int sx, sy, cx, cy, tl, tr;
 } gw_ovr[4];
@@ -181,6 +181,11 @@ static struct {
   unsigned buttons;
   int sx, sy, cx, cy, tl, tr;
 } gw_seen[4];
+static int gw_paused_sample;
+
+/* gd.pad() still sees the paused menu sample, but it is not one of the logic
+ * PADReads promised by gd.input/console input. */
+void gw_script_pad_paused_sample(int on) { gw_paused_sample = on != 0; }
 
 void gw_script_pad_override(int ch, unsigned buttons, int sx, int sy, int cx, int cy, int l, int r,
                             int samples) {
@@ -239,6 +244,8 @@ void gw_Script_PadApply(void *pad_status_array) {
   gw_pad_live_apply(st);
   for (ch = 0; ch < 4; ++ch) {
     if (gw_ovr[ch].samples > 0) {
+      /* Clear every physical field, including analog A/B and the error code. */
+      memset(&st[ch], 0, sizeof st[ch]);
       st[ch].stickX = (s8)gw_ovr[ch].sx;
       st[ch].stickY = (s8)gw_ovr[ch].sy;
       st[ch].substickX = (s8)gw_ovr[ch].cx;
@@ -247,7 +254,7 @@ void gw_Script_PadApply(void *pad_status_array) {
       st[ch].triggerRight = (u8)gw_ovr[ch].tr;
       gw_w16(&st[ch].button, (uint16_t)gw_ovr[ch].buttons);
       st[ch].err = 0;
-      gw_ovr[ch].samples--;
+      if (!gw_paused_sample) gw_ovr[ch].samples--;
     }
   }
   if (gw_mirror_from >= 0 && gw_mirror_from < 4 && gw_mirror_to >= 0 && gw_mirror_to < 4 &&

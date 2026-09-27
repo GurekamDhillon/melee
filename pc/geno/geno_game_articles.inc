@@ -162,6 +162,7 @@ static ItemStateTable geno_art_states[1] = {
 /* Geno effects (gw_fx.c, native): ints across; the JObj is a guest address, its world matrix at +0x44. */
 extern int Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing);
 extern void Fx_Detach(int owner);
+extern void Fx_SetOwnerPort(int owner, int port);
 extern void Fx_Frame(int frame);
 static int geno_fx_frame; /* the last frame Geno_FxFramePost saw (seeds attaches) */
 
@@ -175,6 +176,7 @@ static void geno_art_destroyed(Item_GObj* gobj)
  * rollback or LAB rewind brings it back and gw_fx re-simulates from there. */
 extern void Fx_Draw(int view_mtx);
 extern int Fx_Stat(int what);
+extern void Fx_SetOwner(int handle, int kind, int port);
 static HSD_GObj* geno_fx_gobj; /* game memory: a rollback restores it with the GObj heap */
 
 /* The effects draw inside the camera that draws gx link 8 (Melee's own particles'), after them (priority 255),
@@ -211,7 +213,7 @@ static void geno_fx_render(HSD_GObj* gobj, int code)
 /* v5.5: fighters whose profile names "fx_bindings" attach their states' effects (gw_fx.c keeps what happened in
  * each state with its own rollback state; this only reports where each fighter is). */
 extern int Geno_FxBindings(int p);
-extern void Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int parts,
+extern void Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int port, int parts,
                      int stride, int nparts, int joint_to_part, int frame);
 extern HSD_GObj* Player_GetEntity(s32 slot);
 static void geno_fx_drive(int frame)
@@ -231,7 +233,7 @@ static void geno_fx_drive(int frame)
             continue;
         }
         Fx_Drive(set, (int) fp, (int) fp->motion_id, fp->anim_id, fp->cur_anim_frame, (int) geno_state(fp)->action_time,
-                 fp->ground_or_air == GA_Air, fp->facing_dir < 0.0f ? -1 : 1, (int) fp->parts,
+                 fp->ground_or_air == GA_Air, fp->facing_dir < 0.0f ? -1 : 1, slot + 1, (int) fp->parts,
                  (int) sizeof(FighterBone), (int) ftPartsTable[fp->kind]->parts_num,
                  (int) ftPartsTable[fp->kind]->joint_to_part, frame);
     }
@@ -719,6 +721,7 @@ static bool geno_art_reflected(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
     GenoArtVars* v = geno_art_vars(ip);
+    if (ip->owner != NULL) Fx_SetOwnerPort((int) GET_JOBJ(gobj), GET_FIGHTER(ip->owner)->player_id + 1);
     if (ip->facing_dir != ip->xC68) {
         ip->facing_dir = ip->xC68;
         HSD_JObjSetRotationY(GET_JOBJ(gobj), (f32) (M_PI / 2) * ip->facing_dir);
@@ -805,8 +808,9 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     db_80225DD8(ig, owner);
     geno_art_effects(ig, ip, p, a, 0, facing); /* the frame-0 effects; later ones from the anim callback */
     if (Geno_ArticleParam(p, a, GENO_AP_FX) > 0) {
-        Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44, geno_fx_frame,
-                  facing < 0.0f ? -1 : 1);
+        int h = Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44,
+                          geno_fx_frame, facing < 0.0f ? -1 : 1);
+        if (h > 0) Fx_SetOwner(h, 2, fp->player_id + 1);
     }
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);

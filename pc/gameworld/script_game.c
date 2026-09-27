@@ -20,7 +20,81 @@
 #include <melee/gr/ground.h>
 #include <melee/gr/types.h>
 #include <melee/pl/player.h>
+#include <melee/it/types.h>
+#include <melee/it/forward.h>
+#include <melee/it/inlines.h>
+#include "../geno/geno.h"
+#include "script_items.h"
 #include <sysdolphin/baselib/gobj.h>
+
+/* Item_80268B18 gives each item a unique x1C serial. The list is the same one the
+ * engine's item collision pass walks; no item pointer crosses into native Lua. */
+static Item* script_item(int index)
+{
+    HSD_GObj* g;
+    if (index < 0 || HSD_GObjPLinkHead == NULL) return NULL;
+    for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]; g != NULL; g = g->next)
+        if (index-- == 0) return GET_ITEM(g);
+    return NULL;
+}
+
+int ScriptGame_ItemCount(void)
+{
+    HSD_GObj* g;
+    int n = 0;
+    if (HSD_GObjPLinkHead != NULL)
+        for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]; g != NULL; g = g->next) ++n;
+    return n;
+}
+
+int ScriptGame_ItemI(int index, int field)
+{
+    Item* ip = script_item(index);
+    int p, a, slot;
+    if (ip == NULL) return -1;
+    switch (field) {
+    case SCRIPT_ITEM_KIND: return ip->kind;
+    case SCRIPT_ITEM_ID: return ip->x1C;
+    case SCRIPT_ITEM_STATE: return ip->msid;
+    case SCRIPT_ITEM_OWNER:
+        for (slot = 0; slot < 6; ++slot)
+            if (ip->owner != NULL && Player_GetEntity(slot) == ip->owner) return slot + 1;
+        return 0;
+    case SCRIPT_ITEM_GENO_PROFILE:
+    case SCRIPT_ITEM_GENO_ARTICLE:
+    case SCRIPT_ITEM_GENO_FRAME:
+        if (ip->kind >= GENO_ART_KIND_BASE && ip->kind < GENO_ART_KIND_END) {
+            if (ip->kind < GENO_ART_KIND_BASE2) {
+                p = (ip->kind - GENO_ART_KIND_BASE) / GENO_ART_PER_RANGE;
+                a = (ip->kind - GENO_ART_KIND_BASE) % GENO_ART_PER_RANGE;
+            } else {
+                p = (ip->kind - GENO_ART_KIND_BASE2) / GENO_ART_PER_RANGE;
+                a = GENO_ART_PER_RANGE + (ip->kind - GENO_ART_KIND_BASE2) % GENO_ART_PER_RANGE;
+            }
+            if (field == SCRIPT_ITEM_GENO_PROFILE) return p;
+            if (field == SCRIPT_ITEM_GENO_ARTICLE) return a;
+            /* GenoArtVars begins with profile, article, frame in xDD4_itemVar. */
+            return ((s32*) &ip->xDD4_itemVar)[2];
+        }
+        return -1;
+    }
+    return -1;
+}
+
+float ScriptGame_ItemF(int index, int field)
+{
+    Item* ip = script_item(index);
+    if (ip == NULL) return 0.0f;
+    switch (field) {
+    case SCRIPT_ITEM_X: return ip->pos.x;
+    case SCRIPT_ITEM_Y: return ip->pos.y;
+    case SCRIPT_ITEM_Z: return ip->pos.z;
+    case SCRIPT_ITEM_VX: return ip->x40_vel.x;
+    case SCRIPT_ITEM_VY: return ip->x40_vel.y;
+    case SCRIPT_ITEM_FACING: return ip->facing_dir;
+    }
+    return 0.0f;
+}
 
 enum {
     SCRIPT_F_X = 0,

@@ -102,6 +102,7 @@ typedef struct {
 
 typedef struct {
     int used, pkg, em, detached, detach_frame, attach_frame, age, emitted, facing;
+    int owner_kind, port, joint; /* observation metadata, saved with effects for rollback */
     uint32_t owner, mtx_off, rng;
     float accum, dist_accum;
     float pos[3], prev[3], m[3][4];

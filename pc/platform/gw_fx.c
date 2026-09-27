@@ -20,6 +20,7 @@
 #include "gw_mods.h"
 #include "gw_test.h"
 #include "gw_fx_internal.h"
+#include "gw_fx_query.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -979,7 +980,7 @@ static void fx_trace(int frame) {
 }
 
 /* set only around a binding's gw_Fx_Attach call (transient, never state) */
-typedef struct { float local[3][4]; uint32_t tag; int keep, follow; } fx_attach_extra;
+typedef struct { float local[3][4]; uint32_t tag; int keep, follow, port, joint; } fx_attach_extra;
 static const fx_attach_extra *fx_attach_ex;
 
 /* the renderer's view (gw_fx_render.cpp; game thread) */
@@ -1114,6 +1115,7 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
         fx_cur.inst[i].mtx_off = (uint32_t) mtx_off;
         fx_cur.inst[i].attach_frame = frame;
         fx_cur.inst[i].facing = facing;
+        fx_cur.inst[i].joint = -1;
         fx_basis(fx_pkgs[pkg], facing, fx_cur.inst[i].basis);
         if (fx_attach_ex != NULL) { /* a fighter binding: joint-local frame, the package's axes as the joint's own */
             float f[3] = {fx_pkgs[pkg]->forward[0], fx_pkgs[pkg]->forward[1], fx_pkgs[pkg]->forward[2]};
@@ -1128,6 +1130,9 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
             memcpy(fx_cur.inst[i].local, fx_attach_ex->local, sizeof fx_cur.inst[i].local);
             fx_cur.inst[i].tag = fx_attach_ex->tag;
             fx_cur.inst[i].keep = fx_attach_ex->keep;
+            fx_cur.inst[i].owner_kind = 1;
+            fx_cur.inst[i].port = fx_attach_ex->port;
+            fx_cur.inst[i].joint = fx_attach_ex->joint;
         }
         fx_cur.inst[i].rng = 0x811C9DC5u ^ ((uint32_t) pkg * 16777619u) ^ ((uint32_t) e << 8) ^ (uint32_t) owner ^ ((uint32_t) frame << 16);
         fx_owner_mtx(&fx_cur.inst[i]);
@@ -1138,6 +1143,28 @@ int gw_Fx_Attach(int pkg, int owner, int mtx_off, int frame, int facing) {
     gw_log("fx: %s attached to 0x%08X at frame %d, facing %s: %d/%d emitter(s), refused %d", fx_pkgs[pkg]->name,
            (uint32_t) owner, frame, facing < 0 ? "left" : "right", attached, fx_pkgs[pkg]->nem, gw_Fx_Stat(4));
     return first + 1;
+}
+
+/* Article attachment has only a JObj address. The game half supplies its owner
+ * port immediately after Fx_Attach; this only annotates the new emitter group. */
+void gw_Fx_SetOwner(int handle, int kind, int port) {
+    int i, first = handle - 1;
+    if (!fx_ready || first < 0 || first >= FX_MAX_INST || !fx_cur.inst[first].used) return;
+    for (i = first; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i], *start = &fx_cur.inst[first];
+        if (!in->used || in->pkg != start->pkg || in->owner != start->owner ||
+            in->attach_frame != start->attach_frame || in->tag != start->tag) continue;
+        in->owner_kind = kind;
+        in->port = port;
+    }
+}
+
+void gw_Fx_SetOwnerPort(int owner, int port) {
+    int i;
+    if (!fx_ready) return;
+    for (i = 0; i < FX_MAX_INST; ++i)
+        if (fx_cur.inst[i].used && fx_cur.inst[i].owner == (uint32_t) owner &&
+            fx_cur.inst[i].owner_kind == 2) fx_cur.inst[i].port = port;
 }
 
 /* The owner is going away: its emitters stop emitting; their live particles finish their lives. */
@@ -1272,7 +1299,7 @@ static void fx_call_local(const fx_bcall *k, float L[3][4]) {
  * final. owner: the fighter's key (guest address); motion: its motion state; anim: its subaction; anim_frame: its animation frame; time:
  * frames since its state began (Geno's action_time); parts: its FighterBone array (guest), stride / count;
  * joint_to_part: the kind's u8 table (guest; a binding names a joint of the model's tree, parts[] is by part). */
-void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int parts,
+void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int port, int parts,
                  int stride, int nparts, int joint_to_part, int frame) {
     const fx_bset *b;
     fx_drv *dv;
@@ -1332,6 +1359,8 @@ void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int
             ex.tag = tag;
             ex.keep = k->keep;
             ex.follow = k->follow;
+            ex.port = port;
+            ex.joint = k->joint;
             fx_attach_ex = &ex;
             h = gw_Fx_Attach(k->pkg, jobj, 0x44, frame, facing);
             fx_attach_ex = NULL;
@@ -1359,6 +1388,58 @@ void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int
                    b->st[st].game_clock ? "state" : "anim", clock);
         }
     }
+}
+
+/* One row per attachment (not per emitter). Particle bounds use the visual
+ * world position that the renderer consumes; empty attachments have no box. */
+int gw_Fx_Query(int index, GwFxQuery *out) {
+    int i, j, p, row = 0;
+    if (!fx_ready || index < 0 || out == NULL) return 0;
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        const fx_inst *in = &fx_cur.inst[i];
+        int first = 1;
+        if (!in->used) continue;
+        for (j = 0; j < i; ++j)
+            if (fx_cur.inst[j].used && fx_cur.inst[j].pkg == in->pkg &&
+                fx_cur.inst[j].owner == in->owner && fx_cur.inst[j].attach_frame == in->attach_frame &&
+                fx_cur.inst[j].tag == in->tag) { first = 0; break; }
+        if (!first) continue;
+        if (row++ != index) continue;
+        memset(out, 0, sizeof *out);
+        out->package = fx_pkgs[in->pkg]->name;
+        out->owner_kind = in->owner_kind;
+        out->port = in->port;
+        out->joint = in->joint;
+        out->x = in->pos[0]; out->y = in->pos[1]; out->z = in->pos[2];
+        out->facing = in->facing;
+        for (j = i; j < FX_MAX_INST; ++j) {
+            const fx_inst *e = &fx_cur.inst[j];
+            if (!e->used || e->pkg != in->pkg || e->owner != in->owner ||
+                e->attach_frame != in->attach_frame || e->tag != in->tag) continue;
+            ++out->emitters;
+            for (p = 0; p < FX_MAX_PARTICLES; ++p) {
+                const float *v;
+                if (fx_cur.part[p].inst != j) continue;
+                v = fx_cur.part[p].visual_pos;
+                if (!out->has_bbox) {
+                    out->min_x = out->max_x = v[0];
+                    out->min_y = out->max_y = v[1];
+                    out->min_z = out->max_z = v[2];
+                    out->has_bbox = 1;
+                } else {
+                    if (v[0] < out->min_x) out->min_x = v[0];
+                    if (v[1] < out->min_y) out->min_y = v[1];
+                    if (v[2] < out->min_z) out->min_z = v[2];
+                    if (v[0] > out->max_x) out->max_x = v[0];
+                    if (v[1] > out->max_y) out->max_y = v[1];
+                    if (v[2] > out->max_z) out->max_z = v[2];
+                }
+                ++out->particles;
+            }
+        }
+        return 1;
+    }
+    return 0;
 }
 
 /* The census (numbers only): 0 live particles, 1 instances, 2 spawned, 3 killed, 4 refused,
@@ -1645,6 +1726,7 @@ static const char fx_test_pkg[] =
 static int test_fx_sim(void) {
     static float mtx[12];                  /* a fake guest JObj world matrix, big-endian (gw_rf32 reads it) */
     int pkg, h, f, rc = 0, live;
+    GwFxQuery q;
     fx_pkg *p = fx_parse(fx_test_pkg, "test");
     if (p == NULL || p->nem != 2) { gw_test_fail("fx: the test package must parse with 2 emitters"); return 1; }
     fx_reset();
@@ -1657,6 +1739,7 @@ static int test_fx_sim(void) {
         for (i = 0; i < 12; ++i) gw_wf32(&mtx[i], m[i]);
     }
     h = gw_Fx_Attach(pkg, (int) (uintptr_t) mtx, 0, 0, 1);
+    gw_Fx_SetOwner(h, 2, 1);
     for (f = 1; f <= 20; ++f) {
         gw_wf32(&mtx[3], (float) f);        /* the owner travels +1 a frame */
         gw_Fx_Frame(f);
@@ -1673,6 +1756,12 @@ static int test_fx_sim(void) {
     /* trail: by distance, 1 per 2 units at 1 unit a frame (spawns on frames 3,5,..19), life 4 -> only 19's alive */
     live = gw_Fx_Stat(16 + h);
     if (live != 1) { gw_test_fail("fx: by-distance emitter: %d live (expect 1)", live); rc = 1; }
+    if (!gw_Fx_Query(0, &q) || q.emitters != 2 || q.particles != 5 || !q.has_bbox ||
+        q.owner_kind != 2 || q.port != 1 || q.min_x > q.max_x || q.min_y > q.max_y ||
+        q.min_z > q.max_z || gw_Fx_Query(1, &q)) {
+        gw_test_fail("fx: read-only query did not aggregate the two emitter instances");
+        rc = 1;
+    }
     /* rollback: back to frame 15 and forward again gives the same state */
     {
         int before = gw_Fx_Stat(2), l0 = gw_Fx_Stat(0);

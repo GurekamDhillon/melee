@@ -15,6 +15,8 @@
 #include "gw.h"
 #include "gw_script.h"
 #include "gw_kit.h"
+#include "gw_fx_query.h"
+#include "../gameworld/script_items.h"
 #include "../geno/geno.h" /* GENO_VERSION, for the state library header */
 
 #include <math.h>
@@ -38,6 +40,9 @@ extern void gw_ScriptGame_SetPercent(int slot, int percent);
 extern void gw_ScriptGame_SetStocks(int slot, int stocks);
 extern int gw_ScriptGame_StageKind(void);
 extern int gw_ScriptGame_GameMode(void);
+extern int gw_ScriptGame_ItemCount(void);
+extern int gw_ScriptGame_ItemI(int index, int field);
+extern float gw_ScriptGame_ItemF(int index, int field);
 extern void gw_ScriptGame_LaunchScene(int game_mode);
 enum { SF_X, SF_Y, SF_VX, SF_VY, SF_PERCENT, SF_FACING, SF_ANIM_FRAME, SF_HITLAG };
 enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTUME, SI_SLOT_TYPE };
@@ -923,6 +928,92 @@ static int l_players(lua_State *L) {
             gs_push_player(L, slot);
             lua_rawseti(L, -2, ++n);
         }
+    }
+    return 1;
+}
+
+/* Vanilla Item has a unique x1C spawn serial but no elapsed-frame field. Track
+ * that serial at every visible frame; this is diagnostic state, never fed back
+ * to the game or saved in rollback. Geno's own per-item frame is exact. */
+#define GS_ITEM_TRACK_MAX 512
+static struct { int id, first, seen; } gs_item_track[GS_ITEM_TRACK_MAX];
+static int gs_item_track_count;
+static void gs_items_track(void) {
+    int i, j, n = gw_ScriptGame_ItemCount();
+    for (i = 0; i < n; ++i) {
+        int id = gw_ScriptGame_ItemI(i, SCRIPT_ITEM_ID);
+        for (j = 0; j < gs_item_track_count && gs_item_track[j].id != id; ++j) {}
+        if (j == gs_item_track_count) {
+            if (j >= GS_ITEM_TRACK_MAX) continue;
+            gs_item_track[j].id = id;
+            gs_item_track[j].first = gs.frame;
+            ++gs_item_track_count;
+        }
+        if (gs.frame < gs_item_track[j].first) gs_item_track[j].first = gs.frame;
+        gs_item_track[j].seen = gs.frame;
+    }
+    for (j = 0; j < gs_item_track_count; ) {
+        if (gs_item_track[j].seen != gs.frame) gs_item_track[j] = gs_item_track[--gs_item_track_count];
+        else ++j;
+    }
+}
+static int gs_item_age(int index) {
+    int f = gw_ScriptGame_ItemI(index, SCRIPT_ITEM_GENO_FRAME), id, j;
+    if (f >= 0) return f;
+    id = gw_ScriptGame_ItemI(index, SCRIPT_ITEM_ID);
+    for (j = 0; j < gs_item_track_count; ++j)
+        if (gs_item_track[j].id == id) return gs.frame - gs_item_track[j].first + 1;
+    return 1;
+}
+static int l_items(lua_State *L) {
+    int i, n = gw_ScriptGame_ItemCount();
+    lua_createtable(L, n, 0);
+    for (i = 0; i < n; ++i) {
+        int art = gw_ScriptGame_ItemI(i, SCRIPT_ITEM_GENO_ARTICLE);
+        lua_createtable(L, 0, 13);
+        gs_setint(L, "kind", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_KIND));
+        if (art >= 0) {
+            gs_setint(L, "geno_kind", art);
+            gs_setint(L, "geno_profile", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_GENO_PROFILE));
+        }
+        gs_setint(L, "owner_port", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_OWNER));
+        gs_setnum(L, "x", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_X));
+        gs_setnum(L, "y", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Y));
+        gs_setnum(L, "z", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Z));
+        gs_setnum(L, "vx", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_VX));
+        gs_setnum(L, "vy", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_VY));
+        gs_setnum(L, "facing", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_FACING));
+        gs_setint(L, "frame_alive", gs_item_age(i));
+        gs_setint(L, "state", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_STATE));
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+static void gs_fx_xyz(lua_State *L, float x, float y, float z) {
+    lua_createtable(L, 0, 3);
+    gs_setnum(L, "x", x); gs_setnum(L, "y", y); gs_setnum(L, "z", z);
+}
+static int l_fx(lua_State *L) {
+    GwFxQuery q;
+    int i;
+    lua_newtable(L);
+    for (i = 0; gw_Fx_Query(i, &q); ++i) {
+        lua_createtable(L, 0, 10);
+        gs_setstr(L, "package", q.package);
+        gs_setstr(L, "owner_kind", q.owner_kind == 1 ? "fighter" : q.owner_kind == 2 ? "article" : "unknown");
+        gs_setint(L, "owner_port", q.port);
+        gs_setint(L, "joint", q.joint);
+        gs_setnum(L, "x", q.x); gs_setnum(L, "y", q.y); gs_setnum(L, "z", q.z);
+        gs_setint(L, "facing", q.facing);
+        gs_setint(L, "live_particles", q.particles);
+        gs_setint(L, "emitter_count", q.emitters);
+        if (q.has_bbox) {
+            lua_createtable(L, 0, 2);
+            gs_fx_xyz(L, q.min_x, q.min_y, q.min_z); lua_setfield(L, -2, "min");
+            gs_fx_xyz(L, q.max_x, q.max_y, q.max_z); lua_setfield(L, -2, "max");
+            lua_setfield(L, -2, "bbox");
+        }
+        lua_rawseti(L, -2, i + 1);
     }
     return 1;
 }
@@ -3706,7 +3797,8 @@ static void gs_push_kit(lua_State *L) {
 
 static const luaL_Reg gs_gd_funcs[] = {
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"scene", l_scene}, {"match", l_match},
-    {"players", l_players}, {"player", l_player}, {"char_name", l_char_name}, {"pad", l_pad},
+    {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
+    {"char_name", l_char_name}, {"pad", l_pad},
     {"input", l_input}, {"release", l_release}, {"savestate", l_savestate},
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_stocks", l_set_stocks},
@@ -4446,6 +4538,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     }
     gs.scene_kind = scene_kind;
     gs.scene_epoch++;
+    gs_item_track_count = 0;
     gs.paused = 0; /* a scene change always resumes */
     gs.step = 0;
     gs.nev = 0; /* events from the scene that ended are dropped */
@@ -4532,9 +4625,12 @@ void gw_Script_Tick(void) {
            (the Geno Lab's LAB pause menu) could not be driven by a controller. Sample them here,
            as PADRead would (scripted overrides included); the game never sees this read. */
         extern int gw_PADRead(void *status);
+        extern void gw_script_pad_paused_sample(int on);
         unsigned char st[4 * 32]; /* PADStatus[4], 16 bytes each */
         memset(st, 0, sizeof st);
+        gw_script_pad_paused_sample(1);
         (void) gw_PADRead(st);
+        gw_script_pad_paused_sample(0);
     }
     gs_hook_all("on_tick", 0, 0, 0);
     /* Paused: no logic frame will run this tick, so there is no frame boundary for a pending
@@ -5358,6 +5454,7 @@ void gw_Script_FramePost(void) {
     }
     gs_lab_frame_kind = 0;
     gs.frame++;
+    gs_items_track();
     for (slot = 0; slot < 6; ++slot) {
         if (gs_players_present(slot)) {
             int a = gw_ScriptGame_FighterI(slot, SI_ACTION);
@@ -5527,11 +5624,38 @@ static void gs_cmd_state(void) {
     if (!any) gw_Console_Print(GS_GREY, "(no fighters)");
 }
 
+static void gs_cmd_items(void) {
+    int i, n = gw_ScriptGame_ItemCount();
+    for (i = 0; i < n; ++i) {
+        int art = gw_ScriptGame_ItemI(i, SCRIPT_ITEM_GENO_ARTICLE);
+        gw_Console_Print(GS_WHITE,
+            "item kind=%d geno_kind=%d geno_profile=%d owner_port=%d pos=(%.2f,%.2f,%.2f) vel=(%.2f,%.2f) facing=%.0f frame_alive=%d state=%d",
+            gw_ScriptGame_ItemI(i, SCRIPT_ITEM_KIND), art,
+            gw_ScriptGame_ItemI(i, SCRIPT_ITEM_GENO_PROFILE), gw_ScriptGame_ItemI(i, SCRIPT_ITEM_OWNER),
+            gw_ScriptGame_ItemF(i, SCRIPT_ITEM_X), gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Y),
+            gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Z), gw_ScriptGame_ItemF(i, SCRIPT_ITEM_VX),
+            gw_ScriptGame_ItemF(i, SCRIPT_ITEM_VY), gw_ScriptGame_ItemF(i, SCRIPT_ITEM_FACING),
+            gs_item_age(i), gw_ScriptGame_ItemI(i, SCRIPT_ITEM_STATE));
+    }
+    if (n == 0) gw_Console_Print(GS_GREY, "(no items)");
+}
+static void gs_cmd_fx(void) {
+    GwFxQuery q;
+    int i;
+    for (i = 0; gw_Fx_Query(i, &q); ++i)
+        gw_Console_Print(GS_WHITE,
+            "fx %s %s:P%d j%d (%.1f %.1f %.1f) f%d p%d e%d box (%.1f %.1f %.1f)..(%.1f %.1f %.1f)%s",
+            q.package, q.owner_kind == 1 ? "fighter" : q.owner_kind == 2 ? "article" : "unknown",
+            q.port, q.joint, q.x, q.y, q.z, q.facing, q.particles, q.emitters,
+            q.min_x, q.min_y, q.min_z, q.max_x, q.max_y, q.max_z, q.has_bbox ? "" : " (empty)");
+    if (i == 0) gw_Console_Print(GS_GREY, "(no Geno effects)");
+}
+
 static void gs_cmd_help(void) {
     int i;
     gw_Console_Print(GS_YELLOW, "commands (anything else runs as Lua; \"= expr\" prints a value):");
     gw_Console_Print(GS_WHITE, "  help | scripts | load <name> | unload <id> | reload [id]");
-    gw_Console_Print(GS_WHITE, "  state | frame | pause | resume | step [n]");
+    gw_Console_Print(GS_WHITE, "  state | frame | items | fx | pause | resume | step [n]");
     gw_Console_Print(GS_WHITE, "  savestate [1-4] | loadstate [1-4]");
     gw_Console_Print(GS_WHITE, "  scene <MELEE_SCENE text> | scene clear");
     gw_Console_Print(GS_WHITE, "  input <port> <buttons> [frames] [x y]   e.g. input 1 A+B 10");
@@ -5647,6 +5771,8 @@ static int gs_exec(const char *line_in) {
         gs_cmd_state();
         return 0;
     }
+    if (IS("items")) { gs_cmd_items(); return 0; }
+    if (IS("fx")) { gs_cmd_fx(); return 0; }
     if (IS("frame")) {
         gw_Console_Print(GS_WHITE, "%d", gs.frame);
         return 0;
@@ -6034,6 +6160,49 @@ static int test_script_input_task(void) {
     for (k = 0; k < 5; ++k) gw_Script_FramePost();
     if (t_exec("= done", out, sizeof out) != 0 || strstr(out, "true") == NULL) {
         gw_test_fail("the input task did not finish: %s", out);
+        return 1;
+    }
+    return 0;
+}
+
+static int test_script_paused_input(void) {
+    unsigned char st[4 * 32];
+    char out[512];
+    int k;
+    extern void gw_script_pad_paused_sample(int on);
+    if (t_exec("= type(gd.items), type(gd.fx), type(gd.items()), type(gd.fx())", out, sizeof out) != 0 ||
+        strstr(out, "function\nfunction\ntable\ntable") == NULL) {
+        gw_test_fail("gd.items/gd.fx read-only API missing: %s", out);
+        return 1;
+    }
+    if (t_exec("input 1 A 2 25 -30", out, sizeof out) != 0) {
+        gw_test_fail("console input refused: %s", out);
+        return 1;
+    }
+    gw_script_pad_paused_sample(1);
+    for (k = 0; k < 3; ++k) {
+        memset(st, 0x7f, sizeof st); /* a connected physical pad on every port */
+        gw_Script_PadApply(st);
+        if (gw_r16(st) != 0x0100 || (signed char) st[2] != 25 || (signed char) st[3] != -30 ||
+            st[8] != 0 || st[9] != 0 || st[10] != 0) {
+            gw_script_pad_paused_sample(0);
+            gw_test_fail("paused input did not replace every physical pad field");
+            return 1;
+        }
+    }
+    gw_script_pad_paused_sample(0);
+    for (k = 0; k < 2; ++k) {
+        memset(st, 0x7f, sizeof st);
+        gw_Script_PadApply(st);
+        if (gw_r16(st) != 0x0100 || (signed char) st[2] != 25) {
+            gw_test_fail("console input did not survive for both stepped frames");
+            return 1;
+        }
+    }
+    memset(st, 0x7f, sizeof st);
+    gw_Script_PadApply(st);
+    if (gw_r16(st) == 0x0100) {
+        gw_test_fail("console input lasted beyond its two logic frames");
         return 1;
     }
     return 0;
@@ -6657,6 +6826,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_isolation_and_errors", test_script_isolation_and_errors);
     gw_test_register("script_manifest_and_hash", test_script_manifest_and_hash);
     gw_test_register("script_input_task", test_script_input_task);
+    gw_test_register("script_paused_input", test_script_paused_input);
     gw_test_register("script_lab_api", test_script_lab_api);
     gw_test_register("lab_rewind_store", test_lab_rewind_store);
     gw_test_register("lab_rewind_log", test_lab_rewind_log);

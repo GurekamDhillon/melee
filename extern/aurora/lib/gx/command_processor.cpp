@@ -627,6 +627,9 @@ static bool sPipelineWait = false;
 static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
                          gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
   ArrTimer arrTimer(sArr.nsPush);
+  if (gfx::frame_overflowed()) {
+    return; // a per-frame arena is full (gfx::push): the rest of this frame's draws are dropped
+  }
   interp::before_draw(vertexData.data(), static_cast<u32>(vertexData.size()));
   auto& state = g_gxState;
   auto& cache = sDrawCache;
@@ -664,6 +667,10 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
         }
       }
       array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), pushSize);
+      if (gfx::frame_overflowed()) {
+        array.cachedRange = {};
+        return;
+      }
       shadow_record(array.cachedRange, array.data, pushSize);
       ++sArr.uploads;
       sArr.uploadBytes += pushSize;
@@ -841,6 +848,9 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& 
 
   // Push raw vertex data to buffer. Merged draws must remain contiguous with the previous range.
   gfx::Range vertRange = gfx::push_verts(vertexData.data(), vertexData.size(), canMerge ? 0 : 4);
+  if (gfx::frame_overflowed()) {
+    return;
+  }
 
   // Try to merge with previous draw call
   if (canMerge) {
@@ -1089,7 +1099,7 @@ void handle_aurora(ByteReader& reader) noexcept {
     drawlog_draw(vertexData);
   }
     const gfx::Range vertRange = gfx::push_verts(vertexData.data(), vertexData.size(), 4);
-    if (indexCount != 0) {
+    if (indexCount != 0 && !gfx::frame_overflowed()) {
       push_gx_draw(prim, fmt, vtxCount, vertexData, vertRange, idxRange, indexCount);
     }
   } else if (subCmd == GX_AURORA_DEBUG_GROUP_PUSH) {

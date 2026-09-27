@@ -274,7 +274,33 @@ void seal_pass(FramePacket& frame, uint32_t passIndex) {
   pass.sealed = true;
 }
 
+// Per-frame arenas are views of a mapped staging buffer and cannot grow; appending past one used to
+// abort() (a silent 0xC0000409 with nothing in the log). Now the push is refused, the frame is marked
+// overflowed, and draws check frame_overflowed() and drop out for the rest of the frame: one frame with
+// missing geometry, logged, instead of a dead process.
+static bool sFrameOverflowed = false;
+static uint32_t sOverflowLogs = 0;
+static bool arena_fits(ByteBuffer& target, size_t length, size_t alignment, const char* what) {
+  if (target.owned()) {
+    return true;
+  }
+  const size_t begin = alignment != 0 ? AURORA_ALIGN(target.size(), alignment) : target.size();
+  if (begin + length <= target.capacity()) {
+    return true;
+  }
+  sFrameOverflowed = true;
+  if (sOverflowLogs < 20) {
+    ++sOverflowLogs;
+    Log.error("frame arena full ({}): {} + {} bytes > {} capacity; the rest of this frame's draws are dropped",
+              what, begin, length, target.capacity());
+  }
+  return false;
+}
+
 Range push(ByteBuffer& target, const uint8_t* data, size_t length, size_t alignment) {
+  if (!arena_fits(target, length, alignment, "push")) {
+    return {};
+  }
   if (alignment != 0) {
     const size_t begin = target.size();
     const size_t alignedBegin = AURORA_ALIGN(begin, alignment);
@@ -290,6 +316,9 @@ Range push(ByteBuffer& target, const uint8_t* data, size_t length, size_t alignm
 }
 
 Range map(ByteBuffer& target, size_t length, size_t alignment) {
+  if (!arena_fits(target, length, alignment, "map")) {
+    return {};
+  }
   if (alignment != 0) {
     const size_t begin = target.size();
     const size_t alignedBegin = AURORA_ALIGN(begin, alignment);
@@ -564,6 +593,7 @@ void enqueue_pass(FramePacket& frame, uint32_t passIndex) {
 namespace detail {
 
 void begin_recording(FramePacket& packet, size_t frameSlot) {
+  sFrameOverflowed = false;
   CHECK(!g_recorder.active(), "A recording session is already active");
   if (g_recorder.normalRequested && webgpu::enable_normal_buffer()) {
     g_recorder.normalRequested = false;
@@ -1188,6 +1218,9 @@ void finish() {
     g_recorder.currentRenderPass = UINT32_MAX;
   }
 }
+
+bool frame_overflowed() noexcept { return sFrameOverflowed; }
+void clear_frame_overflow() noexcept { sFrameOverflowed = false; }
 
 Range push_verts(const uint8_t* data, size_t length, size_t alignment) {
   ZoneScoped;

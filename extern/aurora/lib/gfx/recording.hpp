@@ -67,6 +67,9 @@ struct ConvRequest;
 void queue_palette_conv(tex_palette_conv::ConvRequest req);
 
 Range push_verts(const uint8_t* data, size_t length, size_t alignment);
+// A per-frame arena (verts, indices, uniforms, storage, texture upload) ran out this frame: draws skip.
+bool frame_overflowed() noexcept;
+void clear_frame_overflow() noexcept;
 template <typename T>
 Range push_verts(ArrayRef<T> data, size_t alignment) {
   return push_verts(reinterpret_cast<const uint8_t*>(data.data()), data.size() * sizeof(T), alignment);

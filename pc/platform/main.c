@@ -14,6 +14,7 @@
 #include <aurora/event.h>
 #include <aurora/main.h>
 
+#include <SDL3/SDL_hints.h>
 #include <windows.h>
 
 #include <stdio.h>
@@ -282,6 +283,18 @@ int main(int argc, char *argv[]) {
       .mem1Size = 0,
       .mem2Size = 0,
   };
+  /* Boot black screen: Aurora opens SDL's joystick subsystem on the first aurora_update, before the first
+   * present, and SDL's DirectInput enumeration asks every HID device for its product string. A slow
+   * device kept the main thread in HidD_GetProductString for 4.2 s in 2 of 7 boots (cdb stack: dinput8
+   * CDIObj_EnumDevicesW), window black. XInput, HIDAPI and RawInput still find ordinary pads, and the GC
+   * adapter has its own path (gc_adapter.c). MELEE_DIRECTINPUT=1 brings DirectInput back for an old pad
+   * that only it can see. */
+  {
+    int dinput = 0;
+    (void)gw_env_int("MELEE_DIRECTINPUT", &dinput);
+    SDL_SetHint(SDL_HINT_JOYSTICK_DIRECTINPUT, dinput ? "1" : "0");
+    gw_log("melee-pc: DirectInput joysticks %s (MELEE_DIRECTINPUT)", dinput ? "on" : "off");
+  }
   AuroraInfo info = aurora_initialize(argc, argv, &config);
   if (!gw_window_drag_install(info.window)) {
     gw_panic("could not install nonmodal window drag");

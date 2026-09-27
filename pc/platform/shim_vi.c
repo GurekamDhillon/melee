@@ -602,6 +602,8 @@ void gw_Video_SetRenderScale(float scale) {
   gw_video_save();
 }
 
+static void gw_present_overlays(void);
+
 bool gw_frame_init(void) {
   gw_video_load();
   gw_video_apply_scale();
@@ -609,6 +611,14 @@ bool gw_frame_init(void) {
   if (!gw_video_vsync) {
     aurora_enable_vsync(false);
   }
+  /* Present one frame (cleared, with the host overlay pass) before the first gw_handle_events: the first
+   * aurora_update opens SDL's input subsystems, which can take seconds, and until something is presented
+   * the new window is black. */
+  if (aurora_begin_frame()) {
+    gw_present_overlays();
+    aurora_end_frame();
+  }
+  gw_log("melee-pc: first frame presented");
   gw_handle_events();
   gw_frame_begun = aurora_begin_frame();
   return true;

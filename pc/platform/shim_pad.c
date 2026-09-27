@@ -380,7 +380,6 @@ static int gw_pad_really_used(const PADStatus *p) {
 enum { GW_SRC_NONE, GW_SRC_ADAPTER, GW_SRC_SDL, GW_SRC_IDLE, GW_SRC_SCRIPT };
 static const char *const gw_src_name[] = { "none", "adapter", "sdl", "idle", "script" };
 static int gw_src_last[PAD_CHANMAX] = { -1, -1, -1, -1 };
-static int gw_src_script_hold[PAD_CHANMAX]; /* frames a port keeps the "script" label */
 
 /* 10 s summary: which ports were live, what drove them, which buttons were seen. */
 static DWORD gw_sum_at;
@@ -598,8 +597,8 @@ void gw_Onboard_Done(void) {
 int gw_PADRead(void *status) {
   PADStatus *st = (PADStatus *)status;
   PADStatus adp[PAD_CHANMAX];
-  PADStatus before[PAD_CHANMAX];
   int src[PAD_CHANMAX];
+  unsigned script_driven;
   const int mode = gw_input_mode();
   const int focused = gw_this_window_focused();
   long long tp0 = gw_pad_prof_now(), tp1, tp2;
@@ -677,15 +676,9 @@ int gw_PADRead(void *status) {
   }
 
   /* Scripted and live input take precedence over the adapter. */
-  memcpy(before, st, sizeof before);
-  gw_Script_PadApply(st);
+  script_driven = gw_Script_PadApply(st);
   for (i = 0; i < PAD_CHANMAX; ++i) {
-    if (memcmp(&before[i], &st[i], sizeof st[i]) != 0) {
-      gw_src_script_hold[i] = 60; /* a script writing what was already there is still the script */
-    } else if (gw_src_script_hold[i] > 0) {
-      --gw_src_script_hold[i];
-    }
-    if (gw_src_script_hold[i] > 0) {
+    if ((script_driven & (1u << i)) != 0) {
       src[i] = st[i].err == 0 ? GW_SRC_SCRIPT : GW_SRC_NONE;
     }
   }

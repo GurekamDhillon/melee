@@ -19,6 +19,7 @@
 #include "../gameworld/script_items.h"
 #include "gw_perf.h"
 #include "../geno/geno.h" /* GENO_VERSION, for the state library header */
+#include <dolphin/pad.h> /* PADStatus in the scripted-pad headless test */
 
 #include <math.h>
 #include <stdarg.h>
@@ -117,13 +118,15 @@ extern int gw_TextEntryUntil;
 /* gw_script_pad.c */
 extern void gw_script_pad_state(int ch, unsigned *buttons, int *sx, int *sy, int *cx, int *cy,
                                 int *l, int *r);
-extern void gw_script_pad_override(int ch, unsigned buttons, int sx, int sy, int cx, int cy, int l,
-                                   int r, int samples);
-extern void gw_script_pad_release(int ch);
+extern void gw_script_pad_override(int ch, int owner, unsigned buttons, int sx, int sy, int cx,
+                                   int cy, int l, int r, int samples);
+extern void gw_script_pad_release(int ch, int owner);
+extern void gw_script_pad_release_owner(int owner);
 extern const char *gw_script_pad_lua_path(void); /* MELEE_PAD_SCRIPT when it names a .lua */
 
 #define GS_MAX_SCRIPTS 64
 #define GS_MAX_TASKS 16
+#define GS_CLIENTS 4
 #define GS_MAX_COMMANDS 64
 #define GS_MEM_CAP (64u << 20)
 #define GS_SAVE_SLOTS 4
@@ -143,6 +146,8 @@ typedef struct {
     int env_ref;
     int tasks[GS_MAX_TASKS]; /* registry refs to coroutines, LUA_NOREF = free */
     int task_wait[GS_MAX_TASKS];
+    int task_pad_owner[GS_MAX_TASKS]; /* each task releases its own claims when it finishes */
+    int task_client_owner[GS_MAX_TASKS]; /* socket that started the task, for disconnect */
     int errors;
     int disabled;
     int used;
@@ -282,6 +287,16 @@ static struct {
     char data_dir[MAX_PATH];
     char describe[1024];
 } gs;
+static int gs_input_owner; /* explicit claim identity while a socket command or task runs */
+static int gs_client_owner; /* socket that started the current task, else 0 */
+
+static int gs_pad_owner(void) {
+    if (gs_input_owner > GS_MAX_SCRIPTS + GS_CLIENTS ||
+        (gs.cur == gs.console && gs_input_owner > 0)) {
+        return gs_input_owner;
+    }
+    return gs.cur + 1;
+}
 
 static void gs_rw_branch(void); /* the Lab's rewind: a write forks the timeline here */
 
@@ -421,7 +436,12 @@ static void gs_report(int script, const char *what, const char *err) {
     gw_Console_Print(GS_RED, "[%s] %s: %s", gs_script_id(script), what, err);
     gw_log("script [%s] %s: %s", gs_script_id(script), what, err);
     if (s != NULL && script != gs.console && ++s->errors >= GS_MAX_ERRORS && !s->disabled) {
+        int k;
         s->disabled = 1;
+        gw_script_pad_release_owner(script + 1);
+        for (k = 0; k < GS_MAX_TASKS; ++k) {
+            gw_script_pad_release_owner(s->task_pad_owner[k]);
+        }
         gw_Console_Print(GS_RED, "[%s] switched off after %d errors (\"reload\" to try again)",
                          s->id, s->errors);
     }
@@ -1120,14 +1140,27 @@ static int l_input(lua_State *L) {
     } else {
         buttons = gs_parse_buttons(L, 2);
     }
-    gw_script_pad_override(ch, buttons, sx, sy, cx, cy, tl, tr, frames < 1 ? 1 : frames);
+    gw_script_pad_override(ch, gs_pad_owner(), buttons, sx, sy, cx, cy, tl, tr,
+                           frames < 1 ? 1 : frames);
     return 0;
 }
 
 static int l_release(lua_State *L) {
     int ch = gs_slot_arg(L, 1);
-    if (ch <= 3) {
-        gw_script_pad_release(ch);
+    int k;
+    if (ch > 3) luaL_error(L, "gd.release_pad: ports are 1-4");
+    gw_script_pad_release(ch, gs_pad_owner());
+    if (gs.cur >= 0 && gs.cur < gs.n) {
+        GsScript *s = &gs.s[gs.cur];
+        if (gs.cur != gs.console || gs_client_owner == 0) {
+            gw_script_pad_release(ch, gs.cur + 1);
+        }
+        for (k = 0; k < GS_MAX_TASKS; ++k) {
+            if (s->tasks[k] != LUA_NOREF &&
+                (gs.cur != gs.console || s->task_client_owner[k] == gs_client_owner)) {
+                gw_script_pad_release(ch, s->task_pad_owner[k]);
+            }
+        }
     }
     return 0;
 }
@@ -1534,6 +1567,8 @@ static int l_run(lua_State *L) {
     lua_xmove(L, co, 1);
     s->tasks[k] = luaL_ref(L, LUA_REGISTRYINDEX); /* pops the thread */
     s->task_wait[k] = 0;
+    s->task_pad_owner[k] = GS_MAX_SCRIPTS + GS_CLIENTS + 1 + gs.cur * GS_MAX_TASKS + k;
+    s->task_client_owner[k] = gs.cur == gs.console ? gs_client_owner : 0;
     lua_pushinteger(L, k + 1);
     return 1;
 }
@@ -1548,7 +1583,7 @@ static void gs_run_tasks(void) {
         }
         for (k = 0; k < GS_MAX_TASKS; ++k) {
             lua_State *co;
-            int nres = 0, rc, prev;
+            int nres = 0, rc, prev, prev_owner, prev_client;
             if (s->tasks[k] == LUA_NOREF) {
                 continue;
             }
@@ -1560,10 +1595,16 @@ static void gs_run_tasks(void) {
             co = lua_tothread(L, -1);
             lua_pop(L, 1);
             prev = gs.cur;
+            prev_owner = gs_input_owner;
+            prev_client = gs_client_owner;
             gs.cur = i;
+            gs_input_owner = s->task_pad_owner[k];
+            gs_client_owner = s->task_client_owner[k];
             gs_arm_budget();
             rc = lua_resume(co, L, 0, &nres);
             gs.cur = prev;
+            gs_input_owner = prev_owner;
+            gs_client_owner = prev_client;
             if (rc == LUA_YIELD) {
                 /* gd.wait(n) yields n: skip n-1 more frames */
                 int n = (nres >= 1 && lua_isinteger(co, -1)) ? (int) lua_tointeger(co, -1) : 1;
@@ -1576,8 +1617,10 @@ static void gs_run_tasks(void) {
                 gs_report(i, "task", lua_tostring(L, -1));
                 lua_pop(L, 1);
             }
+            gw_script_pad_release_owner(s->task_pad_owner[k]);
             luaL_unref(L, LUA_REGISTRYINDEX, s->tasks[k]);
             s->tasks[k] = LUA_NOREF;
+            if (s->disabled) break;
         }
     }
 }
@@ -3830,7 +3873,8 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"scene", l_scene}, {"match", l_match},
     {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
     {"char_name", l_char_name}, {"pad", l_pad},
-    {"input", l_input}, {"release", l_release}, {"savestate", l_savestate},
+    {"input", l_input}, {"release", l_release}, {"release_pad", l_release},
+    {"savestate", l_savestate},
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_stocks", l_set_stocks},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
@@ -4149,8 +4193,10 @@ static void gs_unload(int i) {
     if (gs_get_hook(i, "on_unload")) {
         gs_pcall(i, 0, 0, "on_unload");
     }
+    gw_script_pad_release_owner(i + 1);
     for (k = 0; k < GS_MAX_TASKS; ++k) {
         if (s->tasks[k] != LUA_NOREF) {
+            gw_script_pad_release_owner(s->task_pad_owner[k]);
             luaL_unref(gs.L, LUA_REGISTRYINDEX, s->tasks[k]);
             s->tasks[k] = LUA_NOREF;
         }
@@ -5881,7 +5927,6 @@ int gw_Script_Exec(const char *line, char *out, int cap) {
  * the local console socket: MELEE_CONSOLE_PORT=<port> (off by default), 127.0.0.1 only.
  * One command per line; the reply is the command's output lines, then ">>> ok" or ">>> error".
  * ============================================================================================ */
-#define GS_CLIENTS 4
 static SOCKET gs_listen = INVALID_SOCKET;
 static struct {
     SOCKET s;
@@ -5926,6 +5971,22 @@ static void gs_send_all(SOCKET s, const char *p, int n) {
     }
 }
 
+static void gs_socket_release_pad(int client) {
+    int owner = GS_MAX_SCRIPTS + client + 1;
+    int i, k;
+    gw_script_pad_release_owner(owner);
+    /* A console task started by this socket cannot re-claim a port after disconnect. */
+    for (i = 0; i < gs.n; ++i) {
+        for (k = 0; k < GS_MAX_TASKS; ++k) {
+            if (gs.s[i].tasks[k] != LUA_NOREF && gs.s[i].task_client_owner[k] == owner) {
+                gw_script_pad_release_owner(gs.s[i].task_pad_owner[k]);
+                luaL_unref(gs.L, LUA_REGISTRYINDEX, gs.s[i].tasks[k]);
+                gs.s[i].tasks[k] = LUA_NOREF;
+            }
+        }
+    }
+}
+
 static void gs_socket_poll(void) {
     int i;
     if (gs_listen == INVALID_SOCKET) return;
@@ -5954,6 +6015,7 @@ static void gs_socket_poll(void) {
         k = recv(gs_client[i].s, gs_client[i].in + gs_client[i].len,
                  (int) sizeof gs_client[i].in - 1 - gs_client[i].len, 0);
         if (k == 0 || (k < 0 && WSAGetLastError() != WSAEWOULDBLOCK)) {
+            gs_socket_release_pad(i);
             closesocket(gs_client[i].s);
             gs_client[i].s = INVALID_SOCKET;
             continue;
@@ -5963,9 +6025,13 @@ static void gs_socket_poll(void) {
         /* one command per tick per client keeps the frame bounded and lets "step" land between */
         if ((nl = strchr(gs_client[i].in, '\n')) != NULL) {
             static char out[16384];
-            int rc;
+            int rc, prev_owner = gs_input_owner, prev_client = gs_client_owner;
             *nl = '\0';
+            gs_input_owner = GS_MAX_SCRIPTS + i + 1;
+            gs_client_owner = gs_input_owner;
             rc = gw_Script_Exec(gs_client[i].in, out, (int) sizeof out);
+            gs_input_owner = prev_owner;
+            gs_client_owner = prev_client;
             gs_send_all(gs_client[i].s, out, (int) strlen(out));
             gs_send_all(gs_client[i].s, rc == 0 ? ">>> ok\n" : ">>> error\n", rc == 0 ? 7 : 10);
             k = (int) (nl + 1 - gs_client[i].in);
@@ -6193,7 +6259,93 @@ static int test_script_input_task(void) {
         gw_test_fail("the input task did not finish: %s", out);
         return 1;
     }
+    t_exec("gd.release_pad(1)", out, sizeof out);
     return 0;
+}
+
+static int test_script_pad_claim_gaps(void) {
+    static const char code[] =
+        "gd.run(function() gd.press(4, 'A', 1); gd.wait(2); "
+        "gd.press(4, 'B', 1); gd.release_pad(4); released = true; gd.wait(2) end)";
+    PADStatus st[4];
+    char out[64];
+    char *src;
+    int i, rc = 0;
+    unsigned driven;
+    if (t_exec("= 1", out, sizeof out) != 0) return 1; /* initialise the engine */
+    src = (char *)malloc(sizeof code);
+    if (src == NULL) return 1;
+    memcpy(src, code, sizeof code);
+    i = gs_load_text("pad_claim_test", "pad_claim_test.lua", src, sizeof code - 1,
+                     "{\"gameplay\": true}", "test");
+    if (i < 0) return 1;
+
+    memset(st, 0, sizeof st);
+    st[3].err = (s8)-1;
+    driven = gw_Script_PadApply(st);
+    if ((driven & (1u << 3)) != 0 || st[3].err == 0) {
+        gw_test_fail("a script that has not sent input claimed port 4");
+        rc = 1;
+        goto done;
+    }
+
+    gw_Script_FramePost(); /* first gd.press queues A */
+    memset(st, 0, sizeof st);
+    st[3].err = (s8)-1;
+    driven = gw_Script_PadApply(st);
+    if ((driven & (1u << 3)) == 0 || st[3].err != 0 || gw_r16(&st[3].button) != 0x0100) {
+        gw_test_fail("first press did not claim and connect port 4");
+        rc = 1;
+        goto done;
+    }
+
+    gw_Script_FramePost(); /* gd.wait(2) begins */
+    memset(st, 0x7f, sizeof st); /* a physical pad is present in the gap */
+    st[3].err = 0;
+    driven = gw_Script_PadApply(st);
+    if ((driven & (1u << 3)) == 0 || st[3].err != 0 || gw_r16(&st[3].button) != 0 ||
+        st[3].stickX != 0 || st[3].triggerLeft != 0) {
+        gw_test_fail("gap after A did not stay claimed, connected and neutral");
+        rc = 1;
+        goto done;
+    }
+    gw_Script_FramePost(); /* one more waiting frame */
+    memset(st, 0, sizeof st);
+    st[3].err = (s8)-1;
+    driven = gw_Script_PadApply(st);
+    if ((driven & (1u << 3)) == 0 || st[3].err != 0 || gw_r16(&st[3].button) != 0) {
+        gw_test_fail("second gap sample disconnected or carried a button");
+        rc = 1;
+        goto done;
+    }
+
+    gw_Script_FramePost(); /* second gd.press queues B */
+    memset(st, 0, sizeof st);
+    st[3].err = (s8)-1;
+    driven = gw_Script_PadApply(st);
+    if ((driven & (1u << 3)) == 0 || st[3].err != 0 || gw_r16(&st[3].button) != 0x0200) {
+        gw_test_fail("second press did not reach the same claimed port");
+        rc = 1;
+        goto done;
+    }
+    gw_Script_FramePost(); /* gd.release_pad frees the port */
+    lua_rawgeti(gs.L, LUA_REGISTRYINDEX, gs.s[i].env_ref);
+    lua_getfield(gs.L, -1, "released");
+    if (!lua_toboolean(gs.L, -1)) {
+        gw_test_fail("gd.release_pad was not called successfully");
+        rc = 1;
+    }
+    lua_pop(gs.L, 2);
+    memset(st, 0, sizeof st);
+    st[3].err = (s8)-1;
+    driven = gw_Script_PadApply(st);
+    if ((driven & (1u << 3)) != 0 || st[3].err == 0) {
+        gw_test_fail("gd.release_pad did not free port 4");
+        rc = 1;
+    }
+done:
+    gs_unload(i);
+    return rc;
 }
 
 static int test_script_paused_input(void) {
@@ -6232,8 +6384,18 @@ static int test_script_paused_input(void) {
     }
     memset(st, 0x7f, sizeof st);
     gw_Script_PadApply(st);
-    if (gw_r16(st) == 0x0100) {
-        gw_test_fail("console input lasted beyond its two logic frames");
+    if (gw_r16(st) != 0 || st[0] != 0 || st[2] != 0 || st[8] != 0) {
+        gw_test_fail("console input did not remain claimed and neutral after its two logic frames");
+        return 1;
+    }
+    if (t_exec("gd.release_pad(1)", out, sizeof out) != 0) {
+        gw_test_fail("console could not release its input: %s", out);
+        return 1;
+    }
+    memset(st, 0x7f, sizeof st);
+    gw_Script_PadApply(st);
+    if (gw_r16(st) != 0x7f7f) {
+        gw_test_fail("console release did not restore the physical pad");
         return 1;
     }
     return 0;
@@ -6857,6 +7019,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_isolation_and_errors", test_script_isolation_and_errors);
     gw_test_register("script_manifest_and_hash", test_script_manifest_and_hash);
     gw_test_register("script_input_task", test_script_input_task);
+    gw_test_register("script_pad_claim_gaps", test_script_pad_claim_gaps);
     gw_test_register("script_paused_input", test_script_paused_input);
     gw_test_register("script_lab_api", test_script_lab_api);
     gw_test_register("lab_rewind_store", test_lab_rewind_store);

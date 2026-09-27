@@ -10,7 +10,9 @@
  *      MELEE_PAD_SCRIPT=<file>.lua instead loads a Lua input script (gw_script.c) that can wait on
  *      game state: gd.run(function() gd.wait_until(...) gd.press(1, "A", 2) end).
  *   2. MELEE_PAD_LIVE=<path>  re-read every PADRead: "<buttons_hex> [sx sy [tl tr]]" on channel 0.
- *   3. gd.input / the console "input" command: per-port overrides for N logic samples.
+ *   3. gd.input / the console "input" command: per-port claims from the first input until
+ *      explicit release, task completion, script unload or console-client disconnect. Queued
+ *      samples expire after N logic reads, then the claimed port reports connected neutral.
  * Whatever the game finally sees is recorded for gd.pad().
  */
 #include "gw.h"
@@ -21,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+extern void gw_pad_log(const char *fmt, ...); /* rate-limited pad transition log (shim_pad.c) */
 
 /* ---- 1. the fixed-frame txt script ---------------------------------------------------------- */
 #define GW_SCRIPT_MAX 8192
@@ -109,15 +113,16 @@ const char *gw_script_pad_lua_path(void) {
   return gw_script_lua[0] != '\0' ? gw_script_lua : NULL;
 }
 
-static void gw_pad_script_apply(PADStatus *st) {
+static unsigned gw_pad_script_apply(PADStatus *st) {
   int idx;
   int ch;
+  unsigned driven = 0;
 
   if (!gw_script_loaded) {
     gw_pad_script_load();
   }
   if (gw_script_count == 0) {
-    return;
+    return 0;
   }
   if (gw_script_cursor >= gw_script_count) {
     gw_script_cursor = gw_script_count - 1;
@@ -138,14 +143,16 @@ static void gw_pad_script_apply(PADStatus *st) {
     st[ch].triggerRight = gw_script[idx].tr;
     gw_w16(&st[ch].button, gw_script[idx].buttons);
     st[ch].err = 0;
+    driven |= 1u << ch;
   }
   if (--gw_script_left == 0) {
     ++gw_script_cursor;
   }
+  return driven;
 }
 
 /* ---- 2. live file ------------------------------------------------------------------------------ */
-static void gw_pad_live_apply(PADStatus *st) {
+static unsigned gw_pad_live_apply(PADStatus *st) {
   const char *path = getenv("MELEE_PAD_LIVE");
   char line[128];
   FILE *f;
@@ -153,11 +160,11 @@ static void gw_pad_live_apply(PADStatus *st) {
   int sx = 0, sy = 0, tl = 0, tr = 0;
 
   if (path == NULL || path[0] == '\0') {
-    return;
+    return 0;
   }
   f = fopen(path, "r");
   if (f == NULL) {
-    return;
+    return 0;
   }
   if (fgets(line, sizeof line, f) != NULL &&
       sscanf(line, "%x %d %d %d %d", &buttons, &sx, &sy, &tl, &tr) >= 1) {
@@ -167,13 +174,17 @@ static void gw_pad_live_apply(PADStatus *st) {
     st[PAD_CHAN0].triggerRight = (uint8_t)tr;
     gw_w16(&st[PAD_CHAN0].button, (uint16_t)buttons);
     st[PAD_CHAN0].err = 0;
+    fclose(f);
+    return 1u << PAD_CHAN0;
   }
   fclose(f);
+  return 0;
 }
 
 /* ---- 3. gd.input overrides, and what the game saw ---------------------------------------------- */
 static struct {
-  int samples; /* logic PADReads left; 0 = off (paused menu polls do not count) */
+  int samples; /* logic PADReads left; 0 = claimed but neutral */
+  int owner;   /* 0 = unclaimed; script or console-client identity otherwise */
   unsigned buttons;
   int sx, sy, cx, cy, tl, tr;
 } gw_ovr[4];
@@ -187,11 +198,18 @@ static int gw_paused_sample;
  * PADReads promised by gd.input/console input. */
 void gw_script_pad_paused_sample(int on) { gw_paused_sample = on != 0; }
 
-void gw_script_pad_override(int ch, unsigned buttons, int sx, int sy, int cx, int cy, int l, int r,
-                            int samples) {
-  if (ch < 0 || ch > 3) {
+void gw_script_pad_override(int ch, int owner, unsigned buttons, int sx, int sy, int cx, int cy,
+                            int l, int r, int samples) {
+  if (ch < 0 || ch > 3 || owner <= 0) {
     return;
   }
+  if (gw_ovr[ch].owner != owner) {
+    if (gw_ovr[ch].owner != 0) {
+      gw_pad_log("gw: pad: P%d script release (owner %d)", ch + 1, gw_ovr[ch].owner);
+    }
+    gw_pad_log("gw: pad: P%d script claim (owner %d)", ch + 1, owner);
+  }
+  gw_ovr[ch].owner = owner;
   gw_ovr[ch].samples = samples;
   gw_ovr[ch].buttons = buttons;
   gw_ovr[ch].sx = sx;
@@ -202,9 +220,18 @@ void gw_script_pad_override(int ch, unsigned buttons, int sx, int sy, int cx, in
   gw_ovr[ch].tr = r;
 }
 
-void gw_script_pad_release(int ch) {
-  if (ch >= 0 && ch <= 3) {
+void gw_script_pad_release(int ch, int owner) {
+  if (ch >= 0 && ch <= 3 && gw_ovr[ch].owner == owner && owner > 0) {
     gw_ovr[ch].samples = 0;
+    gw_ovr[ch].owner = 0;
+    gw_pad_log("gw: pad: P%d script release (owner %d)", ch + 1, owner);
+  }
+}
+
+void gw_script_pad_release_owner(int owner) {
+  int ch;
+  for (ch = 0; ch < 4; ++ch) {
+    gw_script_pad_release(ch, owner);
   }
 }
 
@@ -237,31 +264,36 @@ void gw_script_pad_take(int on) { gw_mirror_take = on; }
 extern int gw_RB_Enabled(void);
 extern int gw_Netplay_Enabled(void);
 
-void gw_Script_PadApply(void *pad_status_array) {
+unsigned gw_Script_PadApply(void *pad_status_array) {
   PADStatus *st = (PADStatus *)pad_status_array;
   int ch;
-  gw_pad_script_apply(st);
-  gw_pad_live_apply(st);
+  unsigned driven = gw_pad_script_apply(st) | gw_pad_live_apply(st);
   for (ch = 0; ch < 4; ++ch) {
-    if (gw_ovr[ch].samples > 0) {
-      /* Clear every physical field, including analog A/B and the error code. */
+    if (gw_ovr[ch].owner != 0) {
+      /* A claim stays connected and neutral after its queued samples run out. Clear every
+       * physical field so an adapter or SDL pad cannot leak through during that gap. */
       memset(&st[ch], 0, sizeof st[ch]);
-      st[ch].stickX = (s8)gw_ovr[ch].sx;
-      st[ch].stickY = (s8)gw_ovr[ch].sy;
-      st[ch].substickX = (s8)gw_ovr[ch].cx;
-      st[ch].substickY = (s8)gw_ovr[ch].cy;
-      st[ch].triggerLeft = (u8)gw_ovr[ch].tl;
-      st[ch].triggerRight = (u8)gw_ovr[ch].tr;
-      gw_w16(&st[ch].button, (uint16_t)gw_ovr[ch].buttons);
       st[ch].err = 0;
-      if (!gw_paused_sample) gw_ovr[ch].samples--;
+      if (gw_ovr[ch].samples > 0) {
+        st[ch].stickX = (s8)gw_ovr[ch].sx;
+        st[ch].stickY = (s8)gw_ovr[ch].sy;
+        st[ch].substickX = (s8)gw_ovr[ch].cx;
+        st[ch].substickY = (s8)gw_ovr[ch].cy;
+        st[ch].triggerLeft = (u8)gw_ovr[ch].tl;
+        st[ch].triggerRight = (u8)gw_ovr[ch].tr;
+        gw_w16(&st[ch].button, (uint16_t)gw_ovr[ch].buttons);
+        if (!gw_paused_sample) gw_ovr[ch].samples--;
+      }
+      driven |= 1u << ch;
     }
   }
   if (gw_mirror_from >= 0 && gw_mirror_from < 4 && gw_mirror_to >= 0 && gw_mirror_to < 4 &&
       !gw_RB_Enabled() && !gw_Netplay_Enabled()) {
     st[gw_mirror_to] = st[gw_mirror_from];
+    driven |= 1u << gw_mirror_to;
     if (gw_mirror_take) {
       memset(&st[gw_mirror_from], 0, sizeof st[gw_mirror_from]);
+      driven |= 1u << gw_mirror_from;
     }
   }
   for (ch = 0; ch < 4; ++ch) {
@@ -273,4 +305,5 @@ void gw_Script_PadApply(void *pad_status_array) {
     gw_seen[ch].tl = st[ch].triggerLeft;
     gw_seen[ch].tr = st[ch].triggerRight;
   }
+  return driven;
 }

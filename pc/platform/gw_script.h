@@ -51,7 +51,7 @@ void gw_Script_PostRender(void); /* after the render pass: on_draw, then the lis
 void gw_Script_GameEvent(int what, int a, int b, int c, int d);
 
 /* ---- input (shim_pad.c) -------------------------------------------------------------------- */
-void gw_Script_PadApply(void *pad_status_array); /* PADStatus[4], button field big-endian */
+unsigned gw_Script_PadApply(void *pad_status_array); /* PADStatus[4], BE buttons; driven-port mask */
 
 /* ---- console --------------------------------------------------------------------------------- */
 /* Run one console line (a built-in command or Lua). Output goes to the console scrollback; when

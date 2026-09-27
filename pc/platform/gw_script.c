@@ -1285,6 +1285,21 @@ static int l_set_percent(lua_State *L) {
     return 0;
 }
 
+/* gd.set_damage(port, n): the fighter's real damage (fp->dmg.x1830_percent) and the player's
+ * damage slot together (Player_SetHUDDamage -> ftLib_800870F0), so the HUD, knockback and a stamina
+ * boss's remaining HP (Player_GetRemainingHP = stamina - damage: Master Hand at 300 dies on its
+ * next hit once this reaches 300) all agree. Offline, gameplay scripts; a rewind branch like the
+ * other gameplay writes. */
+static int l_set_damage(lua_State *L) {
+    int slot = gs_slot_arg(L, 1);
+    int p = (int) luaL_checknumber(L, 2);
+    gs_require_gameplay(L, "set_damage");
+    gs_require_offline(L, "set_damage");
+    gs_rw_branch();
+    gw_ScriptGame_SetPercent(slot, gs_clampi(p, 0, 999));
+    return 0;
+}
+
 static int l_set_stocks(lua_State *L) {
     int slot = gs_slot_arg(L, 1);
     int n = (int) luaL_checkinteger(L, 2);
@@ -4330,7 +4345,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"input", l_input}, {"release", l_release}, {"release_pad", l_release},
     {"savestate", l_savestate},
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
-    {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_stocks", l_set_stocks},
+    {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage}, {"set_stocks", l_set_stocks},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
@@ -7177,6 +7192,16 @@ static int test_script_lab_events(void) {
 }
 
 /* A boss event is delivered after the frame with a one-based port and world coordinates. */
+/* gd.set_damage is registered */
+static int test_script_set_damage(void) {
+    char out[256];
+    if (t_exec("= type(gd.set_damage)", out, sizeof out) != 0 || strstr(out, "function") == NULL) {
+        gw_test_fail("gd.set_damage missing: %s", out);
+        return 1;
+    }
+    return 0;
+}
+
 static int test_script_boss_event(void) {
     char out[256];
     union { float f; int i; } x, y;
@@ -7681,6 +7706,7 @@ fail:
 void gw_script_tests_register(void) {
     gw_test_register("script_stage_events", test_script_stage_events);
     gw_test_register("script_boss_event", test_script_boss_event);
+    gw_test_register("script_set_damage", test_script_set_damage);
     gw_test_register("script_kit_mod_art", test_script_kit_mod_art);
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);

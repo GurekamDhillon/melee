@@ -5,5 +5,6 @@
   "kind": "script",
   "api_version": 1,
   "gameplay": true,
-  "rollback_safe": false
+  "rollback_safe": false,
+  "entry": "scripts/enemies.lua"
 }

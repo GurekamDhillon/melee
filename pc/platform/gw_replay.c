@@ -244,6 +244,7 @@ static int rp_parse(const uint8_t *d, size_t n) {
     return 0;
 }
 
+void gw_Replay_ArmLive(int on);
 static void rp_load(void) {
     const char *path;
     FILE *f;
@@ -255,6 +256,13 @@ static void rp_load(void) {
     rp.tried = 1;
     path = getenv("MELEE_SLP");
     if (path == NULL || path[0] == '\0') {
+        const char *lt = getenv("MELEE_RB_LIVETEST");
+        if (lt != NULL && lt[0] == '1') {
+            /* test only: arm live mode (as netplay does) for a scene-launched match, so the rollback session
+             * runs single-process with the fake network (MELEE_RB_FAKE, MELEE_RB_INPUT=padgen): rollback cost */
+            gw_log("replay: MELEE_RB_LIVETEST - live mode without netplay (rollback measurement)");
+            gw_Replay_ArmLive(1);
+        }
         return;
     }
     f = fopen(path, "rb");

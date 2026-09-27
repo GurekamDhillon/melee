@@ -1384,6 +1384,7 @@ typedef struct GenoPalPObj {
 extern void GXAuroraLoadPalette(u32 n, u32 key, const f32* data);
 extern void GXAuroraEndPalette(void);
 extern void diag_geno_pal(int what, int a, int b);
+extern int gx_suppress_draws; /* shim_gx.c: a re-simulated frame's render pass (no display lists) */
 
 static void GenoPalInfoInit(void);
 HSD_PObjInfo genoPalPObj = { GenoPalInfoInit };
@@ -1486,6 +1487,20 @@ static void GenoPalSetupMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
         return;
     }
     right = _HSD_mkEnvelopeModelNodeMtx(jobj, mtx);
+    if (gx_suppress_draws) {
+        /* a re-simulated frame (gw_snap / the rollback session): its picture is thrown away and its display
+         * lists are not submitted - keep only the game-state side effects of the matrix setup (each envelope
+         * joint's HSD_JObjSetupMatrix: world matrix caches, dirty flags); no products, no upload */
+        HSD_SList* list;
+        int i = 0;
+        for (list = pobj->u.envelope_list; i < GENO_PAL_MAX && list != NULL; i++, list = list->next) {
+            HSD_Envelope* e;
+            for (e = list->data; e != NULL; e = e->next) {
+                HSD_JObjSetupMatrix(e->jobj);
+            }
+        }
+        return;
+    }
     n = geno_pal_compute(pobj, vmtx, right, geno_pal_data);
     GXAuroraLoadPalette((u32) n, (u32) pobj ^ (u32) jobj, geno_pal_data);
 }
@@ -1522,7 +1537,9 @@ static void GenoPalDisp(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
         return;
     }
     HSD_PObjDisp(pobj, vmtx, pmtx, rendermode);
-    GXAuroraEndPalette();
+    if (!gx_suppress_draws) {
+        GXAuroraEndPalette();
+    }
 }
 
 static void GenoPalInfoInit(void)

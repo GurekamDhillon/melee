@@ -50,6 +50,7 @@ entry points appended to `pc/platform/gw_snap.c`.
   simulated or on the session's own stall/wait ticks, so holds (the loading hold freezes the match) and
   rollbacks during holds do not give it a lead. Reproducible (`MELEE_RB_SEED`).
 - **Trace** (`MELEE_STATE_TRACE`): rows buffered per iteration, written when final — equals plain playback.
+- **`MELEE_RB_LIVETEST=1`** (test switch, 2026-09-26): with no `MELEE_SLP`, arms the replay machinery's live mode (as netplay does) for a scene-launched match, so the session runs single-process: `MELEE_RB_FAKE=L`, `MELEE_RB_DELAY=0`, `MELEE_RB_INPUT=padgen` give a rollback of depth L every tick, any fighters (m-ex / Geno too). `gd.quit()` is refused during a session: end the run from outside. Script: the workspace's `_build/agents/beta/rb_cost.sh` (depth 2/4/7 tables).
 - Diagnostics: `MELEE_RB_LOG=<n>`, `MELEE_RB_HASHLOG=<file>` (final curated hashes), `MELEE_RB_WAITTEST=1`
   (2 frames of wait every 40 ticks), per-depth tick cost table every 1200 ticks.
 

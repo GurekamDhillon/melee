@@ -10,10 +10,10 @@ inline constexpr uint64_t UniformBufferSize = 25165824; // 24 MiB
 // draws instead (recording.cpp push), but the arena should not overflow in a normal match.
 inline constexpr uint64_t VertexBufferSize = 12582912;  // 12 MiB
 inline constexpr uint64_t IndexBufferSize = 2097152;    // 2 MiB
-// Four palette fighters can submit up to 4 * 804 pieces * 64 matrices * 96 bytes = 18.8 MiB
-// of palettes per frame. Indexed GX array snapshots, stage draws and effects share this buffer.
-// Keep room for those uploads on both real frames and interpolated replays.
-inline constexpr uint64_t StorageBufferSize = 67108864; // 64 MiB
+// Four palette Soras (LAB, FD, uncapped) peaked at 10,573 KB here: about 1,370 palette loads a
+// frame plus indexed-array snapshots, stage and effects (8 MiB overflowed and dropped the frame's
+// tail draws). 24 MiB is about 2x that peak.
+inline constexpr uint64_t StorageBufferSize = 25165824; // 24 MiB
 inline constexpr uint64_t TextureUploadSize = 25165824; // 24 MiB
 
 namespace detail {

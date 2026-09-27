@@ -172,6 +172,18 @@ static void geno_art_destroyed(Item_GObj* gobj)
     Fx_Detach((int) GET_JOBJ(gobj)); /* its emitters stop; live particles finish */
 }
 
+/* hide every DObj of an article's joint tree (depth first: child, then next) */
+static void geno_art_hide_model(HSD_JObj* j)
+{
+    for (; j != NULL; j = j->next) {
+        HSD_DObj* d;
+        for (d = (j->flags & (JOBJ_PTCL | JOBJ_SPLINE | JOBJ_INSTANCE)) ? NULL : j->u.dobj; d != NULL; d = d->next) {
+            HSD_DObjSetFlags(d, DOBJ_HIDDEN);
+        }
+        geno_art_hide_model(j->child);
+    }
+}
+
 /* Once per scene frame, after the scripts (gmscene.c): the scene's frame counter is game memory, so a
  * rollback or LAB rewind brings it back and gw_fx re-simulates from there. */
 extern void Fx_Draw(int view_mtx);
@@ -213,9 +225,18 @@ static void geno_fx_render(HSD_GObj* gobj, int code)
 /* v5.5: fighters whose profile names "fx_bindings" attach their states' effects (gw_fx.c keeps what happened in
  * each state with its own rollback state; this only reports where each fighter is). */
 extern int Geno_FxBindings(int p);
-extern void Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int port, int parts,
-                     int stride, int nparts, int joint_to_part, int frame);
+extern void Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int port,
+                     int parts, int stride, int nparts, int joint_to_part, int root, int frame);
 extern HSD_GObj* Player_GetEntity(s32 slot);
+extern int Fx_Owner(int i);
+static void geno_fx_setup_tree(HSD_JObj* j)
+{
+    for (; j != NULL; j = j->next) {
+        HSD_JObjSetupMatrix(j);
+        geno_fx_setup_tree(j->child);
+    }
+}
+
 static void geno_fx_drive(int frame)
 {
     int slot;
@@ -232,10 +253,11 @@ static void geno_fx_drive(int frame)
         if (set < 0 || fp->parts == NULL || ftPartsTable[fp->kind] == NULL) {
             continue;
         }
+        geno_fx_setup_tree(GET_JOBJ(g)); /* this frame's joint matrices (HSD computes them lazily at display) */
         Fx_Drive(set, (int) fp, (int) fp->motion_id, fp->anim_id, fp->cur_anim_frame, (int) geno_state(fp)->action_time,
                  fp->ground_or_air == GA_Air, fp->facing_dir < 0.0f ? -1 : 1, slot + 1, (int) fp->parts,
                  (int) sizeof(FighterBone), (int) ftPartsTable[fp->kind]->parts_num,
-                 (int) ftPartsTable[fp->kind]->joint_to_part, frame);
+                 (int) ftPartsTable[fp->kind]->joint_to_part, (int) GET_JOBJ(g), frame);
     }
 }
 
@@ -246,6 +268,15 @@ void Geno_FxFramePost(int frame)
     }
     geno_fx_frame = frame;
     geno_fx_drive(frame);
+    {
+        /* every JObj an effect follows: this frame's world matrix before the step reads it */
+        int i, owner;
+        for (i = 0; i < 256; i++) {
+            if ((owner = Fx_Owner(i)) != 0) {
+                HSD_JObjSetupMatrix((HSD_JObj*) owner);
+            }
+        }
+    }
     Fx_Frame(frame);
     /* only once something is live: a match without Geno effects never has this GObj */
     if (geno_fx_gobj == NULL && Fx_Stat(0) > 0) {
@@ -808,9 +839,16 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     db_80225DD8(ig, owner);
     geno_art_effects(ig, ip, p, a, 0, facing); /* the frame-0 effects; later ones from the anim callback */
     if (Geno_ArticleParam(p, a, GENO_AP_FX) > 0) {
-        int h = Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44,
-                          geno_fx_frame, facing < 0.0f ? -1 : 1);
-        if (h > 0) Fx_SetOwner(h, 2, fp->player_id + 1);
+        HSD_JObjSetTranslate(GET_JOBJ(ig), &ip->pos); /* the spawn position, before the effect reads the matrix */
+        HSD_JObjSetupMatrix(GET_JOBJ(ig));
+        {
+            int h = Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44,
+                              geno_fx_frame, facing < 0.0f ? -1 : 1);
+            if (h > 0) Fx_SetOwner(h, 2, fp->player_id + 1);
+        }
+        /* the package is the article's look: the model's display objects (a placeholder, e.g. trail_magic_models.py's
+         * sphere) are hidden; the joints keep being set up, so the effects still follow the article */
+        geno_art_hide_model(GET_JOBJ(ig));
     }
     geno_state(fp)->art_spawned++;
     Geno_Event(28, fp->kind, fp->player_id, a, kind);

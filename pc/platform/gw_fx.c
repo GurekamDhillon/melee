@@ -270,7 +270,7 @@ static char *fx_read(const char *path);
 static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const char *file) {
     char path[MAX_PATH], *text, *slash;
     fjdoc d;
-    int root, pos, uv, col, idx, n, i, k;
+    int root, pos, uv, col, idx, n, i, k, nrm_arr;
     float *v;
     const int m = p->nmesh_loaded;
     if (m >= FX_MAX_MESH) return;
@@ -284,6 +284,7 @@ static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const
     memset(&d, 0, sizeof d);
     d.p = text;
     root = fj_value(&d, 0);
+    nrm_arr = fj_get(&d, root, "normal");
     pos = fj_get(&d, root, "position");
     uv = fj_get(&d, root, "uv0");
     col = fj_get(&d, root, "color0");
@@ -293,12 +294,14 @@ static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const
     v = n > 0 ? (float *) calloc((size_t) n * 12, sizeof(float)) : NULL;
     if (v != NULL) {
         /* node index of each vertex's position / uv / colour (fj_at walks a list, so collect them once) */
-        int nv = 0, *pn, *un, *cn, c;
+        int nv = 0, *pn, *un, *cn, *nn, c;
         for (c = pos >= 0 ? d.n[pos].first : -1; c >= 0; c = d.n[c].next) nv++;
         pn = (int *) malloc((size_t) (nv + 1) * sizeof(int));
         un = (int *) malloc((size_t) (nv + 1) * sizeof(int));
         cn = (int *) malloc((size_t) (nv + 1) * sizeof(int));
-        for (k = 0; k < nv; ++k) pn[k] = un[k] = cn[k] = -1;
+        nn = (int *) malloc((size_t) (nv + 1) * sizeof(int));
+        for (k = 0; k < nv; ++k) pn[k] = un[k] = cn[k] = nn[k] = -1;
+        for (k = 0, c = nrm_arr >= 0 ? d.n[nrm_arr].first : -1; c >= 0 && k < nv; c = d.n[c].next) nn[k++] = c;
         for (k = 0, c = pos >= 0 ? d.n[pos].first : -1; c >= 0 && k < nv; c = d.n[c].next) pn[k++] = c;
         for (k = 0, c = uv >= 0 ? d.n[uv].first : -1; c >= 0 && k < nv; c = d.n[c].next) un[k++] = c;
         for (k = 0, c = col >= 0 ? d.n[col].first : -1; c >= 0 && k < nv; c = d.n[c].next) cn[k++] = c;
@@ -307,16 +310,18 @@ static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const
             const int j = (int) d.n[c].num;
             float *o = v + (size_t) i * 12;
             const int pj = j >= 0 && j < nv ? pn[j] : -1, uj = j >= 0 && j < nv ? un[j] : -1,
-                      cj = j >= 0 && j < nv ? cn[j] : -1;
+                      cj = j >= 0 && j < nv ? cn[j] : -1, nj = j >= 0 && j < nv ? nn[j] : -1;
             o[8] = o[9] = o[10] = o[11] = 1.0f;
             for (k = 0; k < 3; ++k) o[k] = (float) fj_num(&d, fj_at(&d, pj, k), 0);
             o[3] = (float) fj_num(&d, fj_at(&d, uj, 0), 0);
             o[4] = (float) fj_num(&d, fj_at(&d, uj, 1), 0);
+            for (k = 0; k < 3; ++k) o[5 + k] = (float) fj_num(&d, fj_at(&d, nj, k), 0);
             for (k = 0; k < 4; ++k) o[8 + k] = (float) fj_num(&d, fj_at(&d, cj, k), 1);
         }
         free(pn);
         free(un);
         free(cn);
+        free(nn);
     }
     fj_free(&d);
     free(text);
@@ -391,6 +396,12 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
                            !strcmp(ps, "stripe") || !strcmp(ps, "complex_stripe")) ? FX_PS_DIRECTIONAL
                         : !strcmp(ps, "plate_xy") ? FX_PS_PLATE_XY
                         : !strcmp(ps, "plate_xz") ? FX_PS_PLATE_XZ : FX_PS_BILLBOARD;
+        }
+        {
+            const int mat = fj_get(&d, e, "material"), fa = fj_get(&d, mat, "fresnel_alpha");
+            m->fresnel = fj_num(&d, fj_path(&d, mat, "shader", "fresnel"), 0) != 0 && fj_at(&d, fa, 1) >= 0;
+            m->fresnel_lo = (float) fj_num(&d, fj_at(&d, fa, 0), 0);
+            m->fresnel_hi = (float) fj_num(&d, fj_at(&d, fa, 1), 1);
         }
         m->escale[0] = m->escale[1] = m->escale[2] = 1.0f;
         fj_vec(&d, fj_get(&d, t, "scale"), m->escale, 3);
@@ -1299,8 +1310,27 @@ static void fx_call_local(const fx_bcall *k, float L[3][4]) {
  * final. owner: the fighter's key (guest address); motion: its motion state; anim: its subaction; anim_frame: its animation frame; time:
  * frames since its state began (Geno's action_time); parts: its FighterBone array (guest), stride / count;
  * joint_to_part: the kind's u8 table (guest; a binding names a joint of the model's tree, parts[] is by part). */
-void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int port, int parts,
-                 int stride, int nparts, int joint_to_part, int frame) {
+/* The fighter model's joint at depth-first index `index` (HSD's tree order: child before next sibling, as the
+ * character IR's plan and the bindings number them). HSD_JObj: next at +0x08, child at +0x10 (guest). */
+static int fx_jobj_at(int root, int index) {
+    int stack[256], sp = 0, j, n = 0;
+    if (root == 0) return 0;
+    stack[sp++] = root;
+    while (sp > 0) {
+        j = stack[--sp];
+        if (n++ == index) return j;
+        {
+            const int next = (int) gw_r32((const void *) (uintptr_t) (j + 0x08));
+            const int child = (int) gw_r32((const void *) (uintptr_t) (j + 0x10));
+            if (next != 0 && sp < 256) stack[sp++] = next;
+            if (child != 0 && sp < 256) stack[sp++] = child;
+        }
+    }
+    return 0;
+}
+
+void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int time, int airborne, int facing, int port,
+                 int parts, int stride, int nparts, int joint_to_part, int root, int frame) {
     const fx_bset *b;
     fx_drv *dv;
     int i, slot = -1, st = -1;
@@ -1343,16 +1373,21 @@ void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int
             int jobj, h;
             if ((k->situation == 1 && airborne) || (k->situation == 2 && !airborne) || clock < k->frame) continue;
             dv->fired |= bit;
+            /* the binding's joint is an index into the model's joint tree (depth-first); the parts table is the
+             * kind's (for an m-ex slot possibly the host's), so it is only the fallback */
+            jobj = fx_jobj_at(root, k->joint);
             {
-                int part = k->joint;
+                int part = k->joint, pj = 0;
                 if (joint_to_part != 0 && part >= 0 && part < 256)
                     part = *(const unsigned char *) (uintptr_t) (joint_to_part + part);
-                if (part < 0 || part >= nparts) {
-                    gw_log("fx: bind %s call %d: joint %d (part %d) outside the fighter's %d parts", b->st[st].name, i,
-                           k->joint, part, nparts);
-                    continue;
+                if (part >= 0 && part < nparts) pj = (int) gw_r32((const void *) (uintptr_t) (parts + part * stride));
+                if (jobj == 0) jobj = pj;
+                if (pj != jobj) {
+                    static int said;
+                    if (said++ < 8)
+                        gw_log("fx: bind joint %d: tree walk JObj 0x%08X, parts table (part %d) JObj 0x%08X - using the tree",
+                               k->joint, (uint32_t) jobj, part, (uint32_t) pj);
                 }
-                jobj = (int) gw_r32((const void *) (uintptr_t) (parts + part * stride));
             }
             if (jobj == 0) continue;
             fx_call_local(k, ex.local);
@@ -1440,6 +1475,15 @@ int gw_Fx_Query(int index, GwFxQuery *out) {
         return 1;
     }
     return 0;
+
+/* The JObj the i-th live, following instance reads (0 = none): the game half runs HSD_JObjSetupMatrix on each
+ * before gw_Fx_Frame, since HSD computes a joint's world matrix lazily at display and would otherwise hand the
+ * effect last frame's (a one-frame lag; zeros on an article's spawn frame). */
+int gw_Fx_Owner(int i) {
+    const fx_inst *in;
+    if (!fx_ready || i < 0 || i >= FX_MAX_INST) return 0;
+    in = &fx_cur.inst[i];
+    return in->used && !in->detached && !in->fixed && in->owner != 0 ? (int) in->owner : 0;
 }
 
 /* The census (numbers only): 0 live particles, 1 instances, 2 spawned, 3 killed, 4 refused,

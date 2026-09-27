@@ -189,6 +189,7 @@ struct V {
   @location(0) uv: vec2f,
   @location(1) @interpolate(flat) ii: u32,
   @location(2) vc: vec4f,
+  @location(3) fres: f32, // 1 - |the surface normal . the view axis|: 0 facing the camera, 1 at the rim
 };
 
 const corners = array<vec2f, 6>(vec2f(-0.5, -0.5), vec2f(0.5, -0.5), vec2f(0.5, 0.5),
@@ -214,6 +215,7 @@ const corners = array<vec2f, 6>(vec2f(-0.5, -0.5), vec2f(0.5, -0.5), vec2f(0.5, 
   o.uv = vec2f(c.x + 0.5, 0.5 - c.y);
   o.ii = ii;
   o.vc = vec4f(1.0);
+  o.fres = 1.0;
   return o;
 }
 
@@ -228,6 +230,9 @@ const corners = array<vec2f, 6>(vec2f(-0.5, -0.5), vec2f(0.5, -0.5), vec2f(0.5, 
   o.uv = vec2f(a.w, b.x);
   o.ii = ii;
   o.vc = mverts[vi * 3u + 2u];
+  let n = b.yzw;
+  let nw = normalize(normalize(p.ax.xyz) * n.x + normalize(p.ay.xyz) * n.y + normalize(p.az.xyz) * n.z + vec3f(1e-6));
+  o.fres = 1.0 - abs(dot(u.view[2].xyz, nw));
   return o;
 }
 
@@ -292,11 +297,17 @@ fn shade(in: V) -> vec4f {
   if (u.mat0.x == 2u) {
     rgb = frame.rgb;
   }
+  if (u.inv_div[0].w > 0.5) { // fresnel alpha: the rim shows, the face toward the camera fades
+    let lo = u.inv_div[1].w;
+    let hi = u.inv_div[2].w;
+    alpha *= clamp((in.fres - lo) / max(hi - lo, 1e-4), 0.0, 1.0);
+  }
   alpha = clamp(alpha, 0.0, 1.0);
   return vec4f(rgb, alpha);
 }
 
 @fragment fn fs_particle(in: V) -> @location(0) vec4f {
+  if (u.mat3.z > 0.5) { return vec4f(0.1, 1.0, 0.2, 0.7); } // MELEE_FX_DEBUGFLAT: the geometry only
   let c = shade(in);
   if ((u.mat0.w & 1u) != 0u && c.a <= u.mat2.z) { discard; }
   if (c.a <= 0.0) { discard; }
@@ -707,6 +718,9 @@ void particle_data(const fx_emitter& e, const fx_part& q, const fx_inst& in, con
 }
 
 void fill_material(const fx_emitter& e, GpuU& u, uint32_t kind) {
+  static int flat = -1;
+  if (flat < 0) { const char* v = std::getenv("MELEE_FX_DEBUGFLAT"); flat = v != nullptr && v[0] == '1'; }
+  u.mat3[2] = flat ? 1.0f : 0.0f;
   u.mat0[0] = uint32_t(e.shader);
   u.mat0[1] = uint32_t(e.color_mode);
   u.mat0[2] = e.offset >= 0 && e.offset < FX_SAMPLERS ? uint32_t(e.offset + 1) : 0u;
@@ -726,6 +740,9 @@ void fill_material(const fx_emitter& e, GpuU& u, uint32_t kind) {
     u.inv_div[k][1] = 1.0f / float(rows);
     u.inv_div[k][2] = cols > 1 || rows > 1 ? 1.0f : 0.0f;
     u.inv_div[k][3] = 0.0f;
+    if (k == 0) u.inv_div[0][3] = e.fresnel && e.mesh ? 1.0f : 0.0f;
+    if (k == 1) u.inv_div[1][3] = e.fresnel_lo;
+    if (k == 2) u.inv_div[2][3] = e.fresnel_hi;
   }
 }
 
@@ -855,6 +872,52 @@ extern "C" void gw_Fx_Draw(int view_guest) {
     needBloom |= e.bloom_intensity > 0.0f;
   }
   if (groups.empty()) return;
+  {
+    // MELEE_FX_DRAWLOG=1: per emitter group, what is drawn and where it lands on screen (NDC bbox of the particle
+    // centres, or of the mesh vertices), capped
+    static int on = -1, lines = 0;
+    if (on < 0) { const char* v = std::getenv("MELEE_FX_DRAWLOG"); on = v != nullptr && v[0] == '1'; }
+    if (on && lines < 600) {
+      for (const Group& g : groups) {
+        const fx_pkg* p = gw_fx_pkg(g.pkg);
+        const fx_emitter& e = p->em[g.em];
+        float mn[2] = {1e9f, 1e9f}, mx[2] = {-1e9f, -1e9f};
+        auto proj = [&](const float w[3]) {
+          float vv[4];
+          for (int r = 0; r < 3; ++r) vv[r] = base.view[r][0] * w[0] + base.view[r][1] * w[1] + base.view[r][2] * w[2] + base.view[r][3];
+          vv[3] = 1.0f;
+          float c[4];
+          for (int r = 0; r < 4; ++r) c[r] = base.proj[r][0] * vv[0] + base.proj[r][1] * vv[1] + base.proj[r][2] * vv[2] + base.proj[r][3] * vv[3];
+          if (c[3] > 1e-6f) for (int k = 0; k < 2; ++k) { mn[k] = std::min(mn[k], c[k] / c[3]); mx[k] = std::max(mx[k], c[k] / c[3]); }
+        };
+        for (int q = g.first; q < g.first + g.count; ++q) {
+          const GpuP& gp = buf[size_t(q)];
+          if (g.mesh >= 0) {
+            const float* mv = p->mesh_v[g.mesh];
+            for (int v = 0; v < p->mesh_nv[g.mesh]; v += 7) {
+              const float* a = mv + size_t(v) * 12;
+              float w[3];
+              for (int r = 0; r < 3; ++r) w[r] = gp.p0[r] + gp.ax[r] * a[0] + gp.ay[r] * a[1] + gp.az[r] * a[2];
+              proj(w);
+            }
+          } else {
+            proj(gp.p0);
+          }
+        }
+        const GpuP& f = buf[size_t(g.first)];
+        int texok = 0, texn = 0;
+        for (int k = 0; k < FX_SAMPLERS; ++k)
+          if (e.smp[k].tex >= 0) { ++texn; texok += g.pkg < int(g_tex.size()) && e.smp[k].tex < int(g_tex[g.pkg].size()) && g_tex[g.pkg][e.smp[k].tex].state == 1; }
+        ++lines;
+        gw_log("fx: drawlog f%u %s/%s %s n=%d nv=%d blend %d depth %d shader %d cmode %d cmask %u amask %u tex %d/%d "
+               "c0 (%.2f %.2f %.2f %.2f) c1 (%.2f %.2f %.2f %.2f) size (%.2f %.2f) mode %.0f ndc x[%.2f %.2f] y[%.2f %.2f]",
+               frame, p->name, e.name, g.mesh >= 0 ? "mesh" : "quad", g.count, g.mesh >= 0 ? p->mesh_nv[g.mesh] : 6,
+               e.blend, e.depth_test, e.shader, e.color_mode, unsigned(e.color_mask), unsigned(e.alpha_mask), texok, texn,
+               f.c0[0], f.c0[1], f.c0[2], f.c0[3], f.c1[0], f.c1[1], f.c1[2], f.c1[3], f.p0[3], f.p1[0], f.p1[3],
+               mn[0], mx[0], mn[1], mx[1]);
+      }
+    }
+  }
 
   // hand the frame to the GX thread: it records the draws at this point of the command stream (after everything
   // Melee queued before us), so the game thread never waits for it (Aurora port patch GXAuroraCallback)

@@ -54,6 +54,8 @@ typedef struct {
     char name[48];
     int mesh, follow, order, priority; /* follow: 0 srt, 1 none, 2 translate */
     int mesh_idx, pshape;       /* the package mesh a mesh emitter draws (-1 none); FX_PS_* */
+    int fresnel;                /* material.shader.fresnel: alpha x the view angle, remapped by fresnel_alpha */
+    float fresnel_lo, fresnel_hi;
     float scale_z, escale[3];   /* particle scale z; the emitter transform's scale */
     float trans[3], rot[3];
     int start, duration, one_time, interval, fade_on_stop, fade_alpha_frames, fade_in_frames;

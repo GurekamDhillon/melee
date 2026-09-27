@@ -165,6 +165,11 @@ extern void Fx_Detach(int owner);
 extern void Fx_SetOwnerPort(int owner, int port);
 extern void Fx_Frame(int frame);
 static int geno_fx_frame; /* the last frame Geno_FxFramePost saw (seeds attaches) */
+/* one number per game frame for the hitstun bonus (game memory; hits and the damage state of one frame agree) */
+int geno_stun_frame(void)
+{
+    return geno_fx_frame;
+}
 
 static void geno_art_destroyed(Item_GObj* gobj)
 {

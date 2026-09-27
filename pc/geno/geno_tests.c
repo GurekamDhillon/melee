@@ -2815,6 +2815,45 @@ static int test_geno_v52_lockon(void)
             rc = 1;
         }
     }
+    /* HBSTUN (v5.5): hitboxes 0 and 2 = +12 hitstun frames (immediate), hitbox 1 = LAI7 (5); a hit by hitbox 0
+       gives the victim 12 for that frame only, taken once; hitbox 3 gives nothing; an action change clears it */
+    {
+        extern void Geno_HitStunBonus(Fighter * atk, int idx, Fighter * vic);
+        extern int Geno_TakeStunBonus(Fighter * vic);
+        u32* s = t_script;
+        int n = 0, b0, b0again, b1, b3, bmax, bcleared;
+        TestGenoState* st = t_setup();
+        st->la_i[7] = 5;
+        s[n++] = GENO_W0(GENO_SUB_HBSTUN, 2, 0x05 << 8);
+        s[n++] = 12;
+        s[n++] = GENO_W0(GENO_SUB_HBSTUN, 2, (0x02 << 8) | 0x80);
+        s[n++] = GENO_VAR(GENO_BANK_LA_INT, 7);
+        s[n++] = 0;
+        t_run(t_script, GENO_MODE_EXEC);
+        if (st->stun_add[0] != 12) { TestFail("HBSTUN: stun_add[0] != 12"); rc = 1; }
+        if (st->stun_add[1] != 5) { TestFail("HBSTUN: stun_add[1] != 5"); rc = 1; }
+        if (st->stun_add[2] != 12) { TestFail("HBSTUN: stun_add[2] != 12"); rc = 1; }
+        if (st->stun_add[3] != 0) { TestFail("HBSTUN: stun_add[3] != 0"); rc = 1; }
+        Geno_HitStunBonus(&t_fp, 0, &t_fp);
+        b0 = Geno_TakeStunBonus(&t_fp);
+        b0again = Geno_TakeStunBonus(&t_fp);
+        Geno_HitStunBonus(&t_fp, 3, &t_fp);
+        b3 = Geno_TakeStunBonus(&t_fp);
+        Geno_HitStunBonus(&t_fp, 1, &t_fp);
+        Geno_HitStunBonus(&t_fp, 2, &t_fp); /* two hits in one frame: the largest */
+        bmax = Geno_TakeStunBonus(&t_fp);
+        Geno_HitStunBonus(&t_fp, 1, &t_fp);
+        b1 = Geno_TakeStunBonus(&t_fp);
+        Geno_OnActionChange(&t_gobj);
+        Geno_HitStunBonus(&t_fp, 0, &t_fp);
+        bcleared = Geno_TakeStunBonus(&t_fp);
+        if (b0 != 12) { TestFail("HBSTUN: hitbox 0 gives +12"); rc = 1; }
+        if (b0again != 0) { TestFail("HBSTUN: the bonus is taken once"); rc = 1; }
+        if (b3 != 0) { TestFail("HBSTUN: hitbox 3 gives nothing"); rc = 1; }
+        if (bmax != 12) { TestFail("HBSTUN: two hits in a frame give the largest"); rc = 1; }
+        if (b1 != 5) { TestFail("HBSTUN: hitbox 1 from LAI7 gives 5"); rc = 1; }
+        if (bcleared != 0) { TestFail("HBSTUN: an action change clears the hitbox bonuses"); rc = 1; }
+    }
     /* ATTACK_CONNECTED (v5.3): set by a won hit (Geno_Autolink's site), moved to _PREV and cleared
        at the action change, writable */
     {

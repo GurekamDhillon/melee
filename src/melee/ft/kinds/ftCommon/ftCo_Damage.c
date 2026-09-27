@@ -287,6 +287,16 @@ void ftCo_8008DCE0(Fighter_GObj* gobj, int arg1, float facing_dir)
     if (!fp->mv.co.damage.x0) {
         fp->mv.co.damage.x0 = 1;
     }
+#if defined(TARGET_PC)
+    {
+        /* Geno v5.5: extra hitstun from the hitbox (HBSTUN; Ultimate's added reaction frames) */
+        extern int Geno_TakeStunBonus(Fighter * vic);
+        extern void diag_geno_stun(int port, int base, int bonus);
+        const int bonus = Geno_TakeStunBonus(fp);
+        diag_geno_stun(fp->player_id, fp->mv.co.damage.x0, bonus);
+        fp->mv.co.damage.x0 += bonus;
+    }
+#endif
     {
         Vec3* normal;
         if (scaled_kb_154 < p_ftCommonData->x158) {

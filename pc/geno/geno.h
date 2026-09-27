@@ -67,6 +67,7 @@ enum {
     GENO_SUB_REHIT = 0x38,  /* v1: [15:8] hitbox mask; word1 = rehit every N frames (0 = off) */
     GENO_SUB_HBDMG = 0x3A,  /* v5.3: [15:8] hitbox mask, [7] B is a var; word1 = damage (float) */
     GENO_SUB_LINK = 0x39,   /* v1: [15:8] hitbox mask; word1 = autolink mode (GENO_LINK_*) */
+    GENO_SUB_HBSTUN = 0x3B, /* v5.5: [15:8] hitbox mask, [7] B is a var; word1 = extra hitstun frames (int) */
 };
 
 /* ---- v1: engine values (GET / PUT / IFV / the VALUE condition). Stable numbers. ----------- */

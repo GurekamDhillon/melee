@@ -720,6 +720,8 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                         int i;
                     } bits;
                     int idx = (int) (hit0 - fp0->x914);
+                    extern void Geno_HitStunBonus(Fighter * atk, int idx, Fighter * vic);
+                    Geno_HitStunBonus(fp0, idx, fp1); /* v5.5: extra hitstun from this hitbox, if any */
                     bits.f = dmg;
                     Script_GameEvent(2 /* LAB_EV_HIT */, fp0->player_id, fp1->player_id,
                                      ((idx >= 0 && idx < 4) ? idx : 0xFF) |

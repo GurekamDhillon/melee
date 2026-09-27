@@ -40,6 +40,9 @@ typedef struct GenoState {
     s32 rehit_period[GENO_MAX_REHIT];    /* per Melee hitbox id; 0 = off */
     s32 rehit_count[GENO_MAX_REHIT];
     s32 link_mode[GENO_MAX_REHIT];       /* GENO_LINK_* per hitbox id */
+    s32 stun_add[GENO_MAX_REHIT];        /* v5.5 HBSTUN: extra hitstun frames a hit by this hitbox id gives */
+    s32 stun_bonus;                      /* as a victim: extra hitstun from this frame's hits (the largest) */
+    s32 stun_bonus_frame;                /* the frame stun_bonus was set in (a bonus is for its frame only) */
     /* landing / take-off edges inside the collision callback (not cleared by action changes) */
     u32 in_coll;
     u32 edge_pending;

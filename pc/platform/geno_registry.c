@@ -1427,6 +1427,15 @@ int gw_Geno_SpecialSelect(int p, int which, int i) {
     if (i == -2) return x->sp_sel_n[which];
     return i >= 0 && i < x->sp_sel_n[which] ? (int) x->sp_sel_t[which][i] : -1;
 }
+/* MELEE_GENO_STUNLOG=1: each damage-state entry's hitstun (ftCo_Damage.c): base frames and the Geno bonus */
+void gw_diag_geno_stun(int port, int base, int bonus) {
+    static int on = -1;
+    if (on < 0) {
+        const char *v = getenv("MELEE_GENO_STUNLOG");
+        on = v != NULL && v[0] == '1';
+    }
+    if (on) gw_log("geno: hitstun P%d: base %d + bonus %d = %d frames", port + 1, base, bonus, base + bonus);
+}
 int gw_Geno_FxBindings(int p) { return gn_at(p) ? gn_at(p)->fx_set : -1; }
 int gw_Geno_StateHasCounter(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_ctr_on[s] : 0; }
 #define GN_ART(p, a) (gn_at(p) != NULL && (a) >= 0 && (a) < gn_at(p)->nart)

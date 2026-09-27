@@ -445,6 +445,7 @@ static void geno_clear_action(GenoState* st)
     geno_zero(st->rehit_period, sizeof(st->rehit_period));
     geno_zero(st->rehit_count, sizeof(st->rehit_count));
     geno_zero(st->link_mode, sizeof(st->link_mode));
+    geno_zero(st->stun_add, sizeof(st->stun_add));
     st->ledge = -1;
     st->motion_started = 0;
     st->motion_vy = 0.0f;
@@ -1753,6 +1754,18 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
         }
         break;
     }
+    case GENO_SUB_HBSTUN: {
+        /* v5.5: a hit by the masked hitbox ids adds word1 frames to the victim's hitstun (Ultimate's
+           AttackModule::set_add_reaction_frame_revised); kept for the action, like REHIT / LINK */
+        int i;
+        s32 f = geno_operand(st, 0, (w0 & 0x80) != 0, GENO_W(1)).i; /* an int (frames) */
+        for (i = 0; i < GENO_MAX_REHIT; i++) {
+            if (a & (1 << i)) {
+                st->stun_add[i] = f < 0 ? 0 : f > 255 ? 255 : f;
+            }
+        }
+        break;
+    }
     case GENO_SUB_HBDMG: {
         /* v5.3: the damage of the masked hitboxes (after their creation) = B, a float immediate or
            a var ref ([7]); Ultimate's counters scale their hit from the countered one (Sora's
@@ -1775,6 +1788,39 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
         skip = 0x10000; /* a corrupt count must not send the pointer across the heap */
     }
     cmd->u = (CmdUnion*) (w + len + skip);
+}
+
+/* v5.5 hitstun bonus. ftcoll.c: fighter `atk`'s hitbox id `idx` hit fighter `vic` (a won hit). The victim keeps
+ * the largest bonus of the frame; ftCo_Damage.c takes it when it computes the hitstun (Geno_TakeStunBonus). Both
+ * live in Geno_StateBlock (a game global: rollback / savestates restore it). */
+extern int geno_stun_frame(void);
+void Geno_HitStunBonus(Fighter* atk, int idx, Fighter* vic)
+{
+    GenoState* as;
+    GenoState* vs;
+    s32 add;
+    if (atk == NULL || vic == NULL || idx < 0 || idx >= GENO_MAX_REHIT) {
+        return;
+    }
+    as = geno_state(atk);
+    add = as->stun_add[idx];
+    if (add <= 0) {
+        return;
+    }
+    vs = geno_state(vic);
+    if (vs->stun_bonus_frame != geno_stun_frame() || add > vs->stun_bonus) {
+        vs->stun_bonus = add;
+    }
+    vs->stun_bonus_frame = geno_stun_frame();
+}
+
+/* the victim's bonus for this frame's hit, cleared (0 if none, or if it was set in another frame) */
+int Geno_TakeStunBonus(Fighter* vic)
+{
+    GenoState* vs = geno_state(vic);
+    s32 b = vs->stun_bonus_frame == geno_stun_frame() ? vs->stun_bonus : 0;
+    vs->stun_bonus = 0;
+    return b;
 }
 
 /* For tests: the block of a fighter. */

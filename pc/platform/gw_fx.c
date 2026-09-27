@@ -1475,6 +1475,7 @@ int gw_Fx_Query(int index, GwFxQuery *out) {
         return 1;
     }
     return 0;
+}
 
 /* The JObj the i-th live, following instance reads (0 = none): the game half runs HSD_JObjSetupMatrix on each
  * before gw_Fx_Frame, since HSD computes a joint's world matrix lazily at display and would otherwise hand the

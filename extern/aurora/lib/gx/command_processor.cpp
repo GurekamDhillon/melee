@@ -22,6 +22,7 @@
 #include <span>
 #include <unordered_map>
 #include <cstdlib>
+#include <chrono>
 #include <xxhash.h>
 #include <vector>
 
@@ -227,6 +228,38 @@ static void handle_draw(u8 cmd, ByteReader& reader) noexcept;
 // config, the vertex bytes, the legacy matrix slots, texture matrices, projection and the palette immediate -
 // logged by drawlog_end_frame. Arena offsets are left out (they move with unrelated uploads). For proving a
 // renderer change leaves a vanilla frame's draws identical.
+// AURORA_ARRAYLOG=1 (port patch): per real frame, what the indexed-array reuse costs
+static struct {
+  u32 inval, reval, reuse, reuseHit, uploads;
+  u64 revalBytes, reuseBytes, uploadBytes;
+  u64 nsDraw, nsMaxIdx, nsReuse, nsPush; // time inside handle_draw / max_index_for_attr / reuse / push_gx_draw
+  u64 nsEq, maxEq;
+  u32 draws;
+} sArr;
+static bool arraylog_on() noexcept {
+  static const bool on = [] {
+    const char* v = std::getenv("AURORA_ARRAYLOG");
+    return v != nullptr && v[0] == '1';
+  }();
+  return on;
+}
+// Times a scope into `acc` only under AURORA_ARRAYLOG (the clock is otherwise never read).
+struct ArrTimer {
+  u64& acc;
+  bool on;
+  std::chrono::steady_clock::time_point t0;
+  explicit ArrTimer(u64& a) noexcept : acc(a), on(arraylog_on()) {
+    if (on) {
+      t0 = std::chrono::steady_clock::now();
+    }
+  }
+  ~ArrTimer() {
+    if (on) {
+      acc += static_cast<u64>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - t0).count());
+    }
+  }
+};
 static int sDrawLogOn = -1;
 static XXH64_hash_t sDrawDigest = 0;
 static u32 sDrawCount = 0, sDrawFrame = 0, sPalDraws = 0, sPalLoads = 0;
@@ -321,6 +354,7 @@ ProcessResult process(const u8* data, u32 size) noexcept {
       // re-uploaded each array once per draw; a stage drawing many PObjs from one 100 KB array
       // (ACE ext:338, GrMe) overran the 8 MiB frame storage buffer and aborted. The invalidate only
       // matters if the CPU rewrote the array, so mark the snapshot for a byte comparison instead.
+      ++sArr.inval;
       for (auto& array : g_gxState.arrays) {
         if (array.cachedRange.size != 0) {
           array.stale = true;
@@ -449,6 +483,7 @@ static u32 attr_stream_offset(int attr, GXVtxFmt fmt) noexcept {
 // vertices of `fmt` in the raw vertex stream `vertexData`. Index values are big-endian in the GX
 // FIFO stream (INDEX8 = 1 byte, INDEX16 = 2 bytes; NBT3 normals carry 3 indices).
 static u32 max_index_for_attr(int attr, GXVtxFmt fmt, std::span<const uint8_t> vertexData, u16 vtxCount) noexcept {
+  ArrTimer arrTimer(sArr.nsMaxIdx);
   const u32 vtxSize = (g_gxState.lastVtxFmt == fmt) ? g_gxState.lastVtxSize : calc_vtx_size(fmt);
   const u32 offset = attr_stream_offset(attr, fmt);
   const auto& attrFmt = g_gxState.vtxFmts[fmt].attrs[attr];
@@ -476,6 +511,28 @@ static u32 max_index_for_attr(int attr, GXVtxFmt fmt, std::span<const uint8_t> v
 // reuse is taken only when the stored bytes still equal the array's, which also makes an entry
 // left over from an earlier frame harmless: it simply fails the comparison.
 static std::unordered_map<const void*, gfx::Range> sArrayUploads;
+
+// CPU copies of this frame's array uploads, by storage offset (port patch). The comparisons below used to read
+// the snapshot back from the frame's storage staging memory, which is write-combined: reading it runs at
+// ~120 MB/s, and Sora's ~1 MB of comparisons a frame cost ~9 ms of the FIFO thread. Cleared with the draw cache
+// (frame end, replay), so an offset from another frame never matches.
+struct ShadowSpan {
+  u32 at, size;
+};
+static std::vector<u8> sShadow;
+static std::unordered_map<u32, ShadowSpan> sShadowAt;
+static const u8* snapshot_data(const gfx::Range& r) noexcept {
+  if (r.size == 0) {
+    return nullptr;
+  }
+  const auto it = sShadowAt.find(r.offset);
+  return it != sShadowAt.end() && it->second.size >= r.size ? sShadow.data() + it->second.at : nullptr;
+}
+static void shadow_record(const gfx::Range& r, const void* src, u32 size) noexcept {
+  const u32 at = static_cast<u32>(sShadow.size());
+  sShadow.insert(sShadow.end(), static_cast<const u8*>(src), static_cast<const u8*>(src) + size);
+  sShadowAt[r.offset] = ShadowSpan{at, size};
+}
 
 // Equality of two byte ranges, 64 bytes per iteration. The array-snapshot checks below compare
 // tens of megabytes a frame in a 4-player match (every PObj re-binds and re-checks its arrays), and
@@ -514,6 +571,7 @@ static bool bytes_equal(const uint8_t* a, const uint8_t* b, size_t n) noexcept {
 }
 
 static bool reuse_array_upload(AttrArray& array, u32 needed) noexcept {
+  ArrTimer arrTimer(sArr.nsReuse);
   const auto it = sArrayUploads.find(array.data);
   if (it == sArrayUploads.end() || it->second.size < needed) {
     return false;
@@ -524,15 +582,25 @@ static bool reuse_array_upload(AttrArray& array, u32 needed) noexcept {
   // this same snapshot - a model drawn as many indexed draws with a growing max index - only the
   // new tail is compared; the prefix cannot have changed without a GXInvalidateVtxCache, which
   // revalidates it.
-  const uint8_t* snap = gfx::storage_data(it->second);
+  const uint8_t* snap = snapshot_data(it->second);
   u32 from = 0;
   if (array.cachedRange.size != 0 && array.cachedRange.offset == it->second.offset) {
     from = array.cachedRange.size;
   }
-  if (snap == nullptr ||
-      !bytes_equal(snap + from, static_cast<const uint8_t*>(array.data) + from, needed - from)) {
+  ++sArr.reuse;
+  if (snap != nullptr) {
+    sArr.reuseBytes += needed - from;
+  }
+  bool eq = false;
+  if (snap != nullptr) {
+    ArrTimer eqTimer(sArr.nsEq); // AURORA_ARRAYLOG only
+    sArr.maxEq = std::max<u64>(sArr.maxEq, needed - from);
+    eq = bytes_equal(snap + from, static_cast<const uint8_t*>(array.data) + from, needed - from);
+  }
+  if (!eq) {
     return false;
   }
+  ++sArr.reuseHit;
   array.cachedRange = gfx::Range{it->second.offset, needed};
   return true;
 }
@@ -542,7 +610,11 @@ static void revalidate_array(AttrArray& array) noexcept {
     return;
   }
   array.stale = false;
-  const uint8_t* snap = gfx::storage_data(array.cachedRange);
+  const uint8_t* snap = snapshot_data(array.cachedRange);
+  ++sArr.reval;
+  if (snap != nullptr) {
+    sArr.revalBytes += array.cachedRange.size;
+  }
   if (snap == nullptr ||
       !bytes_equal(snap, static_cast<const uint8_t*>(array.data), array.cachedRange.size)) {
     array.cachedRange = {};
@@ -554,6 +626,7 @@ static bool sPipelineWait = false;
 
 static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
                          gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
+  ArrTimer arrTimer(sArr.nsPush);
   interp::before_draw();
   auto& state = g_gxState;
   auto& cache = sDrawCache;
@@ -591,6 +664,9 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
         }
       }
       array.cachedRange = gfx::push_storage(static_cast<const uint8_t*>(array.data), pushSize);
+      shadow_record(array.cachedRange, array.data, pushSize);
+      ++sArr.uploads;
+      sArr.uploadBytes += pushSize;
       if (sArrayUploads.size() > 4096) {
         sArrayUploads.clear();
       }
@@ -805,6 +881,8 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& 
 }
 
 static void handle_draw(u8 cmd, ByteReader& reader) noexcept {
+  ArrTimer arrTimer(sArr.nsDraw);
+  ++sArr.draws;
   const auto fmt = static_cast<GXVtxFmt>(cmd & CP_VAT_MASK);
   const auto prim = static_cast<GXPrimitive>(cmd & CP_OPCODE_MASK);
   draw_prim(prim, fmt, reader.read<u16>(), reader);
@@ -1064,7 +1142,27 @@ void handle_aurora(ByteReader& reader) noexcept {
   }
 }
 
+static void arraylog_end_frame() noexcept {
+  static int on = -1;
+  static u32 frame;
+  if (on < 0) {
+    const char* v = std::getenv("AURORA_ARRAYLOG");
+    on = v != nullptr && v[0] == '1';
+  }
+  if (on && !replaying() && (++frame % 60) == 0) {
+    Log.warn("arraylog frame {}: inval {} | revalidate {} calls {} KB | reuse {} calls {} hits {} KB | uploads {} {} KB"
+             " | draws {}: {:.2f} ms in draws, max_index {:.2f}, reuse {:.2f} (bytes_equal {:.2f}, largest {} B), push_gx_draw {:.2f}",
+             frame, sArr.inval, sArr.reval, sArr.revalBytes / 1024, sArr.reuse, sArr.reuseHit, sArr.reuseBytes / 1024,
+             sArr.uploads, sArr.uploadBytes / 1024, sArr.draws, sArr.nsDraw / 1e6, sArr.nsMaxIdx / 1e6, sArr.nsReuse / 1e6,
+             sArr.nsEq / 1e6, sArr.maxEq, sArr.nsPush / 1e6);
+  }
+  if (!replaying()) {
+    sArr = {};
+  }
+}
+
 void drawlog_end_frame() noexcept {
+  arraylog_end_frame();
   if (!drawlog_on()) {
     return;
   }
@@ -1078,6 +1176,9 @@ void drawlog_end_frame() noexcept {
 }
 
 void clear_draw_cache() noexcept {
+  sShadow.clear();
+  sShadowAt.clear();
+  sArrayUploads.clear(); // its ranges point into the frame packet that just ended
   if (g_palette.active) { // a palette never outlives the frame (or a replay's start)
     g_palette = {};
     g_gxState.dirty |= DirtyPipeline | DirtyImmediates;

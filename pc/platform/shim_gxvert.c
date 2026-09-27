@@ -12,6 +12,7 @@
 void gw_GXPosition3f32(f32 x, f32 y, f32 z) { GXPosition3f32(x, y, z); }
 void gw_GXPosition2f32(f32 x, f32 y) { GXPosition2f32(x, y); }
 void gw_GXPosition2u8(u8 x, u8 y) { GXPosition2u8(x, y); }
+void gw_GXPosition1x8(u8 index) { GXPosition1x8(index); } /* script_game.c's stage shapes */
 
 void gw_GXNormal3f32(f32 x, f32 y, f32 z) { GXNormal3f32(x, y, z); }
 

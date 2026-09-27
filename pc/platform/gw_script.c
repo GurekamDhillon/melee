@@ -300,6 +300,7 @@ static struct {
 /* Token allocation is native and never rewound: a handle from a discarded savestate future
  * cannot alias a new object after load. The object's handle itself lives in game memory. */
 static int gs_stage_handle_serial;
+static int gs_stage_overlay; /* gd.stage_view(_, true): the host-overlay debug strokes */
 static int gs_input_owner; /* explicit claim identity while a socket command or task runs */
 static int gs_client_owner; /* socket that started the current task, else 0 */
 
@@ -4188,6 +4189,21 @@ static int l_stage_move(lua_State *L) {
     return 1;
 }
 
+/* gd.stage_view([geometry [, overlay]]) -> geometry, overlay: the in-game shapes (on by default)
+ * and the host-overlay debug strokes (off by default). Cosmetic: any script, not gameplay state. */
+extern void gw_ScriptGame_StageSetDraw(int on);
+static int gs_stage_geometry = 1;
+static int l_stage_view(lua_State *L) {
+    if (!lua_isnoneornil(L, 1)) {
+        gs_stage_geometry = lua_toboolean(L, 1);
+        gw_ScriptGame_StageSetDraw(gs_stage_geometry);
+    }
+    if (!lua_isnoneornil(L, 2)) gs_stage_overlay = lua_toboolean(L, 2);
+    lua_pushboolean(L, gs_stage_geometry);
+    lua_pushboolean(L, gs_stage_overlay);
+    return 2;
+}
+
 static int l_spawn_target(lua_State *L) {
     float x = gs_stage_num(L, 1), y = gs_stage_num(L, 2);
     int h;
@@ -4316,7 +4332,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield},
     {"stage_add_platform", l_stage_add_platform}, {"stage_add_line", l_stage_add_line},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
-    {"spawn_target", l_spawn_target},
+    {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -5082,10 +5098,11 @@ static void gs_stage_draw_segment(float x0, float y0, float x1, float y1, uint32
 
 /* The overlay uses the same project path as gd.project and reads current game memory on each
  * render. Nothing visual is kept in native state, so savestate/rewind restores the right shapes. */
+static int gs_stage_overlay; /* gd.stage_draw{overlay = true}: the old host-overlay strokes */
 static void gs_stage_draw(void) {
     int i;
-    if (!gs.match_active) return;
-    for (i = 0; i < 32; ++i) {
+    if (!gs.match_active || !gs_stage_overlay) return;
+    for (i = 0; i < 200; ++i) {
         float ax, ay, bx, by, depth;
         if (!gw_ScriptGame_StageLineI(i, 0)) continue;
         if (!gs_project(gw_ScriptGame_StageLineF(i, 0), gw_ScriptGame_StageLineF(i, 1),

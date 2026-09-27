@@ -32,15 +32,24 @@
 #include <sysdolphin/baselib/memory.h>
 #include <melee/mp/mplib.h>
 #include <melee/mp/types.h>
+#include <math.h>
+#include <dolphin/gx.h>
+#include <dolphin/mtx.h>
+#include <melee/gr/forward.h>
+#include <sysdolphin/baselib/cobj.h>
+#include <sysdolphin/baselib/gobjgxlink.h>
+#include <sysdolphin/baselib/gobjplink.h>
+#include <sysdolphin/baselib/state.h>
+#include <sysdolphin/baselib/tev.h>
 
 /* Each scripted line owns two vertices and one joint. mpCheckFloor and its wall/ceiling
  * siblings walk joint ranges (mplib.c), so a single appended global range cannot mix kinds.
  * These arrays live in MEM1; the pool below is this object's BSS, which gw_snap.c saves
  * (pc_gameworld_script_game.c.obj is in its game set since this change). */
-#define SCRIPT_STAGE_LINES 32
+#define SCRIPT_STAGE_LINES 200 /* the pool's size; a stage gets min(this, its spare room) */
 #define SCRIPT_STAGE_TARGETS 32
 typedef struct {
-    int handle, active, kind;
+    int handle, active, kind, flags;
     float x0, y0, x1, y1;
 } ScriptStageLine;
 typedef struct {
@@ -51,6 +60,9 @@ typedef struct {
 static struct {
     MapCollData* map;
     int base_v, base_l, base_j, target_remaining;
+    int cap;           /* lines reserved on this stage (<= SCRIPT_STAGE_LINES) */
+    HSD_GObj* draw;    /* the world-pass drawing GObj (gxlink 3, with the stage) */
+    u8* cube;          /* the unit box's 8 corners, MEM1 (a GX_INDEX8 position array) */
     ScriptStageLine line[SCRIPT_STAGE_LINES];
     ScriptStageTarget target[SCRIPT_STAGE_TARGETS];
 } script_stage;
@@ -64,6 +76,9 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     int i;
     script_stage.map = NULL;
     script_stage.target_remaining = 0;
+    script_stage.cap = 0;
+    script_stage.draw = NULL;
+    script_stage.cube = NULL;
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
         script_stage.target[i].active = 0;
@@ -76,17 +91,22 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
         extern int Script_StageWanted(void);
         if (!Script_StageWanted()) return src;
     }
-    if (src->vert_count + SCRIPT_STAGE_LINES * 2 > 2048 ||
-        src->line_count + SCRIPT_STAGE_LINES > 1536 ||
-        src->joint_count + SCRIPT_STAGE_LINES > 256 ||
-        src->vert_count + SCRIPT_STAGE_LINES * 2 > 65535 ||
-        src->line_count + SCRIPT_STAGE_LINES > 32767) return src;
+    {
+        /* each line takes 2 vertices, 1 line and 1 joint of mpLibLoad's fixed 2048 / 1536 / 256:
+         * the joints bind first (a stage uses few of them, but 256 is the smallest array) */
+        int cap = SCRIPT_STAGE_LINES;
+        if (cap > (2048 - src->vert_count) / 2) cap = (2048 - src->vert_count) / 2;
+        if (cap > 1536 - src->line_count) cap = 1536 - src->line_count;
+        if (cap > 256 - src->joint_count) cap = 256 - src->joint_count;
+        if (cap < 1) return src;
+        script_stage.cap = cap;
+    }
     dst = HSD_MemAlloc(sizeof(*dst));
     if (dst == NULL) return src;
     *dst = *src;
-    dst->verts = HSD_MemAlloc((src->vert_count + SCRIPT_STAGE_LINES * 2) * sizeof(*dst->verts));
-    dst->lines = HSD_MemAlloc((src->line_count + SCRIPT_STAGE_LINES) * sizeof(*dst->lines));
-    dst->joints = HSD_MemAlloc((src->joint_count + SCRIPT_STAGE_LINES) * sizeof(*dst->joints));
+    dst->verts = HSD_MemAlloc((src->vert_count + script_stage.cap * 2) * sizeof(*dst->verts));
+    dst->lines = HSD_MemAlloc((src->line_count + script_stage.cap) * sizeof(*dst->lines));
+    dst->joints = HSD_MemAlloc((src->joint_count + script_stage.cap) * sizeof(*dst->joints));
     if (dst->verts == NULL || dst->lines == NULL || dst->joints == NULL) return src;
     for (i = 0; i < src->vert_count; ++i) dst->verts[i] = src->verts[i];
     for (i = 0; i < src->line_count; ++i) dst->lines[i] = src->lines[i];
@@ -98,6 +118,155 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     return dst;
 }
 
+
+/* ---- in-game geometry: the scripted lines and targets, drawn with the stage ----------------
+ * A GObj on the stage's gxlink (3) draws in the main camera's world pass, after the stage's fog
+ * is set, so the shapes are in screenshots, fogged, depth-tested against the stage and fighters.
+ * Every shape is the same unit box (8 corners in MEM1, indexed), placed by its own position
+ * matrix (view x model): the uncapped renderer pairs a draw's matrix loads frame to frame by
+ * (slot, the draw's vertex bytes, the POS array), which are all fixed here, so a moving platform
+ * is blended between real frames like the stage's own parts. Colours are per vertex (a lit top,
+ * mid front, dark sides), no lighting or texture. Skipped in a re-simulated frame. */
+extern int gx_suppress_draws;
+static int script_stage_geometry = 1; /* gd.stage_view: 0 off (debug overlay only) */
+
+static const float script_cube_pts[8][3] = {
+    { -0.5f, -0.5f, -0.5f }, { 0.5f, -0.5f, -0.5f }, { 0.5f, 0.5f, -0.5f }, { -0.5f, 0.5f, -0.5f },
+    { -0.5f, -0.5f, 0.5f },  { 0.5f, -0.5f, 0.5f },  { 0.5f, 0.5f, 0.5f },  { -0.5f, 0.5f, 0.5f },
+};
+/* six faces, 4 corners each, and the shade each face gets (x/256) */
+static const u8 script_cube_faces[6][5] = {
+    { 3, 2, 6, 7, 255 }, /* top    (+y) */
+    { 4, 5, 6, 7, 210 }, /* front  (+z, toward the camera) */
+    { 0, 1, 2, 3, 150 }, /* back   (-z) */
+    { 1, 5, 6, 2, 170 }, /* right  (+x) */
+    { 0, 3, 7, 4, 170 }, /* left   (-x) */
+    { 0, 4, 5, 1, 110 }, /* bottom (-y) */
+};
+
+static HSD_Chan script_stage_chan = {
+    NULL, GX_COLOR0A0, 0, { 0, 0, 0, 0 }, { 0xFF, 0xFF, 0xFF, 0xFF }, 0,
+    GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE, NULL,
+};
+
+static void script_box(Mtx view, float ux, float uy, float len, float thick, float depth, float cx,
+                       float cy, u32 rgb)
+{
+    Mtx m, mv;
+    int f, k;
+    /* columns: x along the line (length), y its left normal (thickness), z depth */
+    m[0][0] = ux * len; m[0][1] = -uy * thick; m[0][2] = 0.0f; m[0][3] = cx;
+    m[1][0] = uy * len; m[1][1] = ux * thick;  m[1][2] = 0.0f; m[1][3] = cy;
+    m[2][0] = 0.0f;     m[2][1] = 0.0f;        m[2][2] = depth; m[2][3] = 0.0f;
+    PSMTXConcat(view, m, mv);
+    GXLoadPosMtxImm(mv, GX_PNMTX0);
+    GXBegin(GX_QUADS, GX_VTXFMT0, 24);
+    for (f = 0; f < 6; ++f) {
+        u32 s = script_cube_faces[f][4];
+        u8 r = (u8) ((((rgb >> 16) & 0xFF) * s) >> 8), g = (u8) ((((rgb >> 8) & 0xFF) * s) >> 8);
+        u8 b = (u8) (((rgb & 0xFF) * s) >> 8);
+        for (k = 0; k < 4; ++k) {
+            GXPosition1x8(script_cube_faces[f][k]);
+            GXColor4u8(r, g, b, 0xFF);
+        }
+    }
+    GXEnd();
+}
+
+static void script_stage_render(HSD_GObj* gobj, int code)
+{
+    Mtx view;
+    HSD_TevDesc tev;
+    int i;
+    static int seen;
+    (void) gobj;
+    if (!(seen & (1 << (code & 7)))) {
+        seen |= 1 << (code & 7);
+        OSReport("script stage: world pass render code %d\n", code); /* once per pass code */
+    }
+    if (code != 0 || !script_stage_geometry || gx_suppress_draws || script_stage.cube == NULL) {
+        return; /* the opaque pass only */
+    }
+    HSD_StateInvalidate(-1);
+    HSD_StateInitTev();
+    tev.flags = 0;
+    tev.stage = HSD_StateAssignTev();
+    tev.coord = 0xFF;
+    tev.map = 0xFF;
+    tev.color = 4;
+    tev.u.tevop.tevmode = 4; /* the rasterised (vertex) colour, as mpLib_SetupDraw */
+    HSD_SetupTevStage(&tev);
+    HSD_SetupPEMode(1, NULL);
+    HSD_SetTevRegAll();
+    HSD_StateSetNumTevStages();
+    HSD_StateSetNumTexGens();
+    HSD_StateSetNumChans(1);
+    HSD_SetupChannel(&script_stage_chan);
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_INDEX8);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetArray(GX_VA_POS, script_stage.cube, 12);
+    GXSetCurrentMtx(GX_PNMTX0);
+    HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), view);
+    for (i = 0; i < script_stage.cap; ++i) {
+        ScriptStageLine* s = &script_stage.line[i];
+        float dx, dy, len, ux, uy, mx, my;
+        if (!s->active) continue;
+        dx = s->x1 - s->x0;
+        dy = s->y1 - s->y0;
+        len = sqrtf(dx * dx + dy * dy);
+        if (len < 0.001f) continue;
+        ux = dx / len;
+        uy = dy / len;
+        mx = (s->x0 + s->x1) * 0.5f;
+        my = (s->y0 + s->y1) * 0.5f;
+        if (s->kind == 1) {
+            /* a floor: a slab hanging under the line (its left normal is up), gold when solid,
+             * cyan when it can be dropped through */
+            const float t = 5.0f;
+            script_box(view, ux, uy, len, t, 30.0f, mx + uy * t * 0.5f, my - ux * t * 0.5f,
+                       (s->flags & 1) ? 0x38C9D9u : 0xF0B429u);
+        } else {
+            /* a wall or ceiling: a thin bar on the line itself */
+            script_box(view, ux, uy, len, 1.5f, 8.0f, mx, my, s->kind == 2 ? 0xC77DFFu : 0xE5483Bu);
+        }
+    }
+    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
+        ScriptStageTarget* t = &script_stage.target[i];
+        if (!t->active) continue;
+        /* a target: a diamond (the unit box turned 45 degrees), red with a white core */
+        script_box(view, 0.70710678f, 0.70710678f, 7.0f, 7.0f, 3.0f, t->x, t->y, 0xE5483Bu);
+        script_box(view, 0.70710678f, 0.70710678f, 3.0f, 3.0f, 3.4f, t->x, t->y, 0xF2EFE4u);
+    }
+    HSD_StateInvalidate(-1);
+}
+
+/* at stage load (ScriptGame_StageReady): the unit box's corners in MEM1 and the drawing GObj */
+static void script_stage_draw_init(void)
+{
+    int i, k;
+    float* p = HSD_MemAlloc(sizeof(script_cube_pts));
+    if (p == NULL) return;
+    for (i = 0; i < 8; ++i) {
+        for (k = 0; k < 3; ++k) p[i * 3 + k] = script_cube_pts[i][k];
+    }
+    script_stage.cube = (u8*) p;
+    /* plink 13: a list nothing walks as Ground / Fighter / Item user data */
+    script_stage.draw = GObj_Create(HSD_GOBJ_CLASS_STAGE, 13, 0);
+    if (script_stage.draw != NULL) {
+        GObj_SetupGXLink(script_stage.draw, script_stage_render, 3, 0);
+    }
+}
+
+void ScriptGame_StageSetDraw(int on)
+{
+    script_stage_geometry = on != 0;
+}
+
 void ScriptGame_StageReady(void)
 {
     MapCollData* map = script_stage.map;
@@ -106,7 +275,7 @@ void ScriptGame_StageReady(void)
     CollJoint* cj = mpGetGroundCollJoint();
     int i, k;
     if (map == NULL || mpLib_8004D164() != map) return;
-    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+    for (i = 0; i < script_stage.cap; ++i) {
         int v = script_stage.base_v + i * 2, l = script_stage.base_l + i;
         MapLine* ml = &map->lines[l];
         MapJoint* mj = &map->joints[script_stage.base_j + i];
@@ -137,12 +306,13 @@ void ScriptGame_StageReady(void)
         cj[script_stage.base_j + i].cb_data_0 = cj[script_stage.base_j + i].cb_data_1 = NULL;
         cj[script_stage.base_j + i].xE = false;
     }
-    map->vert_count += SCRIPT_STAGE_LINES * 2;
-    map->line_count += SCRIPT_STAGE_LINES;
-    map->joint_count += SCRIPT_STAGE_LINES;
+    map->vert_count += script_stage.cap * 2;
+    map->line_count += script_stage.cap;
+    map->joint_count += script_stage.cap;
+    script_stage_draw_init();
     OSReport("script stage: reserved %d collision lines and %d targets (the stage uses %d/2048 "
              "vertices, %d/1536 lines, %d/256 joints)\n",
-             SCRIPT_STAGE_LINES, SCRIPT_STAGE_TARGETS, script_stage.base_v, script_stage.base_l,
+             script_stage.cap, SCRIPT_STAGE_TARGETS, script_stage.base_v, script_stage.base_l,
              script_stage.base_j);
 }
 
@@ -162,8 +332,8 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     u.i = x0b; x0 = u.f; u.i = y0b; y0 = u.f;
     u.i = x1b; x1 = u.f; u.i = y1b; y1 = u.f;
     if (x0 == x1 && y0 == y1) return -1;
-    for (i = 0; i < SCRIPT_STAGE_LINES && script_stage.line[i].active; ++i) {}
-    if (i == SCRIPT_STAGE_LINES) return -1;
+    for (i = 0; i < script_stage.cap && script_stage.line[i].active; ++i) {}
+    if (i >= script_stage.cap) return -1;
     v = script_stage.base_v + 2 * i;
     l = script_stage.base_l + i;
     j = script_stage.base_j + i;
@@ -197,6 +367,7 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     script_stage.line[i].handle = handle;
     script_stage.line[i].active = 1;
     script_stage.line[i].kind = kind;
+    script_stage.line[i].flags = flags;
     script_stage.line[i].x0 = x0; script_stage.line[i].y0 = y0;
     script_stage.line[i].x1 = x1; script_stage.line[i].y1 = y1;
     mpJointListAdd(j);
@@ -334,7 +505,7 @@ int ScriptGame_StageJoint(int joint_id)
 {
     return script_stage.map != NULL &&
            joint_id >= script_stage.base_j &&
-           joint_id < script_stage.base_j + SCRIPT_STAGE_LINES;
+           joint_id < script_stage.base_j + script_stage.cap;
 }
 
 int ScriptGame_SpawnTarget(int xb, int yb, int handle)

@@ -49,6 +49,18 @@ void GXAuroraCallback(void (*fn)(const void* data, u32 size), const void* data, 
   }
 }
 
+void GXAuroraLoadPalette(u32 n, u32 key, const float* data) {
+  if (n == 0 || n > GX_AURORA_PALETTE_MAX || data == nullptr) {
+    return;
+  }
+  GX_WRITE_AURORA(GX_AURORA_LOAD_PALETTE);
+  GX_WRITE_U16(static_cast<u16>(n));
+  GX_WRITE_U32(key);
+  GX_WRITE_DATA(data, n * 96u);
+}
+
+void GXAuroraEndPalette(void) { GX_WRITE_AURORA(GX_AURORA_END_PALETTE); }
+
 void AuroraSetViewportPolicy(AuroraViewportPolicy policy) {
   aurora::gx::set_viewport_policy(policy);
 }

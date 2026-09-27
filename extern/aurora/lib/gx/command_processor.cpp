@@ -21,6 +21,8 @@
 #include <cstring>
 #include <span>
 #include <unordered_map>
+#include <cstdlib>
+#include <xxhash.h>
 #include <vector>
 
 #if defined(__SSE2__) || defined(_M_IX86) || defined(_M_X64)
@@ -220,6 +222,29 @@ u8 line_mode_for_prim(GXPrimitive prim) noexcept {
 } // namespace
 
 static void handle_draw(u8 cmd, ByteReader& reader) noexcept;
+
+// ---- AURORA_DRAWLOG=1 (port patch): one digest per real frame over what each draw depends on - the shader
+// config, the vertex bytes, the legacy matrix slots, texture matrices, projection and the palette immediate -
+// logged by drawlog_end_frame. Arena offsets are left out (they move with unrelated uploads). For proving a
+// renderer change leaves a vanilla frame's draws identical.
+static int sDrawLogOn = -1;
+static XXH64_hash_t sDrawDigest = 0;
+static u32 sDrawCount = 0, sDrawFrame = 0, sPalDraws = 0, sPalLoads = 0;
+static bool drawlog_on() noexcept {
+  if (sDrawLogOn < 0) {
+    const char* v = std::getenv("AURORA_DRAWLOG");
+    sDrawLogOn = v != nullptr && v[0] == '1';
+  }
+  return sDrawLogOn == 1 && !replaying();
+}
+static void drawlog_bytes(const void* p, size_t n) noexcept { sDrawDigest = XXH3_64bits_withSeed(p, n, sDrawDigest); }
+static void drawlog_draw(std::span<const uint8_t> vertexData) noexcept {
+  drawlog_bytes(vertexData.data(), vertexData.size());
+  drawlog_bytes(&g_gxState.pnMtx, sizeof(g_gxState.pnMtx));
+  drawlog_bytes(&g_gxState.texMtxs, sizeof(g_gxState.texMtxs));
+  drawlog_bytes(&g_gxState.proj, sizeof(g_gxState.proj));
+  ++sDrawCount;
+}
 static void handle_aurora(ByteReader& reader) noexcept;
 
 ProcessResult process(const u8* data, u32 size) noexcept {
@@ -632,8 +657,21 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
     }
   }
   immediates.fogRangeBase = cache.fogRange.offset / sizeof(u32);
+  immediates._pad = cache.config.shaderConfig.pnPalette ? g_palette.base : 0u; // the palette's abuf word offset
+  if (cache.config.shaderConfig.pnPalette || immediates._pad != 0) {
+    ++sPalDraws;
+  }
 
   state.dirty &= ~DirtyImmediates;
+  if (drawlog_on()) {
+    DrawImmediateData im = immediates;
+    im.vtxStart = 0;
+    im.fogRangeBase = 0;
+    im.arrayStart = {};
+    im._pad = im._pad != 0 ? 1u : 0u;
+    drawlog_bytes(&cache.config.shaderConfig, sizeof(cache.config.shaderConfig));
+    drawlog_bytes(&im, sizeof(im));
+  }
 
   uint32_t instanceCount = 1;
   if (prim == GX_LINES) {
@@ -694,6 +732,9 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& 
   // Read the vertex data before deciding whether to merge: the merge predicate below needs the
   // indices these vertices reference.
   const auto vertexData = reader.take(totalVtxBytes);
+  if (drawlog_on()) {
+    drawlog_draw(vertexData);
+  }
 
   // A merged draw is folded into the previous draw command and never reaches push_gx_draw, so it
   // keeps that draw's immediates -- including arrayStart[], whose storage was uploaded to cover
@@ -964,6 +1005,9 @@ void handle_aurora(ByteReader& reader) noexcept {
     }
     const u32 totalVtxBytes = vtxCount * vtxSize;
     const auto vertexData = reader.take(totalVtxBytes);
+  if (drawlog_on()) {
+    drawlog_draw(vertexData);
+  }
     const gfx::Range vertRange = gfx::push_verts(vertexData.data(), vertexData.size(), 4);
     if (indexCount != 0) {
       push_gx_draw(prim, fmt, vtxCount, vertexData, vertRange, idxRange, indexCount);
@@ -973,6 +1017,26 @@ void handle_aurora(ByteReader& reader) noexcept {
     gfx::push_debug_group(std::move(label));
   } else if (subCmd == GX_AURORA_DEBUG_GROUP_POP) {
     pop_debug_group();
+  } else if (subCmd == GX_AURORA_LOAD_PALETTE) {
+    const u32 n = reader.read<u16>();
+    const u32 key = reader.read<u32>();
+    if (n == 0 || n > GX_AURORA_PALETTE_MAX) {
+      Log.error("LOAD_PALETTE: {} entries (1..{}) - ignored", n, GX_AURORA_PALETTE_MAX);
+      return;
+    }
+    const auto bytes = reader.take(n * 96u);
+    const gfx::Range range = gfx::push_storage(bytes.data(), bytes.size());
+    g_palette.active = true;
+    g_palette.n = n;
+    g_palette.key = key;
+    g_palette.base = range.offset / sizeof(u32);
+    ++sPalLoads;
+    g_gxState.dirty |= DirtyPipeline | DirtyImmediates; // new shader variant; and no merge across palettes
+  } else if (subCmd == GX_AURORA_END_PALETTE) {
+    if (g_palette.active) {
+      g_palette = {};
+      g_gxState.dirty |= DirtyPipeline | DirtyImmediates;
+    }
   } else if (subCmd == GX_AURORA_CALLBACK) {
     using Callback = void (*)(const void*, u32);
     const auto fn = reinterpret_cast<Callback>(static_cast<uintptr_t>(reader.read<u64>()));
@@ -993,7 +1057,24 @@ void handle_aurora(ByteReader& reader) noexcept {
   }
 }
 
+void drawlog_end_frame() noexcept {
+  if (!drawlog_on()) {
+    return;
+  }
+  Log.info("drawlog frame {} draws {} digest {:016x} palette draws {} loads {}", sDrawFrame, sDrawCount,
+           sDrawDigest, sPalDraws, sPalLoads);
+  sPalDraws = 0;
+  sPalLoads = 0;
+  ++sDrawFrame;
+  sDrawCount = 0;
+  sDrawDigest = 0;
+}
+
 void clear_draw_cache() noexcept {
+  if (g_palette.active) { // a palette never outlives the frame (or a replay's start)
+    g_palette = {};
+    g_gxState.dirty |= DirtyPipeline | DirtyImmediates;
+  }
   sDrawCache.bindGeneration = 0;
   sDrawCache.uniformRange = {};
   sDrawCache.fogRange = {};
@@ -1001,3 +1082,7 @@ void clear_draw_cache() noexcept {
 }
 
 } // namespace aurora::gx::fifo
+
+namespace aurora::gx {
+PaletteState g_palette;
+} // namespace aurora::gx

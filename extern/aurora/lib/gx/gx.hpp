@@ -87,6 +87,16 @@ struct DrawImmediateData {
 static_assert(std::has_unique_object_representations_v<DrawImmediateData>);
 static_assert(sizeof(DrawImmediateData) == 64);
 
+// PC matrix palette (port patch): set by GX_AURORA_LOAD_PALETTE, cleared by GX_AURORA_END_PALETTE and at frame start.
+// Kept out of GXState so that struct's layout (shared by every Aurora object file) does not change.
+struct PaletteState {
+  bool active = false;
+  u32 n = 0;
+  u32 key = 0;
+  u32 base = 0; // abuf word offset of slot 0
+};
+extern PaletteState g_palette;
+
 extern wgpu::BindGroup g_emptyTextureBindGroup;
 
 template <typename Arg, Arg Default>
@@ -494,7 +504,8 @@ struct ShaderConfig {
   u8 vtxStride = 0;
   u8 lineMode : 2 = 0; // 1 = GX_LINES, 2 = GX_LINESTRIP, 3 = GX_POINTS
   u8 fogRangeEnabled : 1 = false;
-  u8 pad1 : 5 = 0;
+  u8 pnPalette : 1 = false; // PC matrix palette (GX_AURORA_LOAD_PALETTE); 0 = the vanilla shader, unchanged
+  u8 pad1 : 4 = 0;
   u8 pad2 = 0;
   std::array<AttrConfig, MaxVtxAttr> attrs;
   std::array<TevSwap, MaxTevSwap> tevSwapTable;

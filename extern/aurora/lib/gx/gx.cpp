@@ -460,6 +460,9 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
   } else {
     config.shaderConfig.lineMode = 0;
   }
+  // PC matrix palette: only triangle draws whose matrix index comes per vertex (DIRECT PNMTXIDX)
+  config.shaderConfig.pnPalette = g_palette.active && config.shaderConfig.lineMode == 0 &&
+                                  g_gxState.vtxDesc[GX_VA_PNMTXIDX] == GX_DIRECT;
   config.shaderConfig.tevSwapTable = g_gxState.tevSwapTable;
   for (u8 i = 0; i < g_gxState.numTevStages; ++i) {
     config.shaderConfig.tevStages[i] = g_gxState.tevStages[i];

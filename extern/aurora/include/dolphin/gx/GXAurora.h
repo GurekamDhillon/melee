@@ -109,6 +109,17 @@ extern "C" {
  */
 #define GX_AURORA_CALLBACK 0x0043
 
+/*
+ * PC matrix palette (port patch, _research/pc-matrix-palette-design.md). LOAD_PALETTE is followed by a u16 n
+ * (1..GX_AURORA_PALETTE_MAX), a u32 key and n * 96 bytes of host floats: per slot a position 3x4 then a normal
+ * 3x4 (rows; the normal rows' 4th column 0). Until END_PALETTE, a draw whose PNMTXIDX is DIRECT reads its matrices
+ * from this palette with the index byte UNSCALED (slot, not slot*3). Ordinary FIFO commands: replayed frames
+ * process them again.
+ */
+#define GX_AURORA_LOAD_PALETTE 0x0044
+#define GX_AURORA_END_PALETTE 0x0045
+#define GX_AURORA_PALETTE_MAX 64
+
 #define GX2_SET_POLYGON_OFFSET 0x1000
 
 
@@ -145,6 +156,8 @@ void GXInsertDebugMarker(const char* label);
  * so the game thread never waits for the GX thread. data (<= 65535 bytes) is copied into the FIFO.
  */
 void GXAuroraCallback(void (*fn)(const void* data, u32 size), const void* data, u32 size);
+void GXAuroraLoadPalette(u32 n, u32 key, const float* data);
+void GXAuroraEndPalette(void);
 
 typedef enum _AuroraViewportPolicy {
   AURORA_VIEWPORT_FIT = 0,     // Preserve logical aspect in the content framebuffer

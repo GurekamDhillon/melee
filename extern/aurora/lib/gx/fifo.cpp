@@ -171,8 +171,12 @@ void begin_frame() noexcept {
   interp::begin_real_frame(sReplayEnabled, sRealAlpha);
 }
 
+void drawlog_end_frame() noexcept; // command_processor (AURORA_DRAWLOG)
 void end_frame() noexcept {
   sFrameActive = false;
+  if (!sReplayFrame) {
+    drawlog_end_frame();
+  }
   clear_draw_cache(); // command_processor
   if (sReplayFrame) {
     return;

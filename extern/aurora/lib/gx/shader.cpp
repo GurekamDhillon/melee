@@ -1,3 +1,5 @@
+#include <xxhash.h>
+#include <cstdlib>
 #include "../gfx/hash.hpp"
 #include "../gfx/types.hpp"
 
@@ -723,6 +725,9 @@ auto attr_load(const ShaderConfig& config, GXAttr attr, std::string_view vidx) -
   const auto [offs, buf, le] = attr_address(mapping, attr, vidx, config.vtxStride, 0u, 0u);
   switch (attr) {
   case GX_VA_PNMTXIDX:
+    if (config.pnPalette) { // PC matrix palette: the byte is the slot itself
+      return fmt::format("raw_fetch_u8_1(&{}, {})", buf, offs);
+    }
     return fmt::format("(raw_fetch_u8_1(&{}, {}) / 3u)", buf, offs);
   case GX_VA_TEX0MTXIDX:
   case GX_VA_TEX1MTXIDX:
@@ -1070,7 +1075,22 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
                                   attr_load_nbt_slice(config, NbtSlice::T, vidxAttr));
   }
 
-  if (config.lineMode == 0) {
+  if (config.lineMode == 0 && config.pnPalette) {
+    // PC matrix palette (GX_AURORA_LOAD_PALETTE): 24 words a slot in abuf from imm._pad, position rows then
+    // normal rows; each row is a column of the mat3x4f, as the uniform's matrices are
+    const auto row = [](u32 w) {
+      return fmt::format("bitcast<vec4f>(vec4u(abuf[pal_b + {}u], abuf[pal_b + {}u], abuf[pal_b + {}u], "
+                         "abuf[pal_b + {}u]))",
+                         w, w + 1, w + 2, w + 3);
+    };
+    vtxXfrAttrsPre += "\n    let pal_b = imm._pad + in_pnmtxidx * 24u;";
+    vtxXfrAttrsPre += fmt::format("\n    let pal_pos = mat3x4f({}, {}, {});", row(0), row(4), row(8));
+    vtxXfrAttrsPre += fmt::format("\n    let pal_nrm = mat3x4f({}, {}, {});", row(12), row(16), row(20));
+    vtxXfrAttrsPre += fmt::format(
+        "\n    let mv_pos = vec4f({}, 1.0) * pal_pos;"
+        "\n    out.pos = vec4f(mv_pos, 1.0) * ubuf.proj;",
+        vtx_attr(config, GX_VA_POS));
+  } else if (config.lineMode == 0) {
     vtxXfrAttrsPre += fmt::format(
         "\n    let mv_pos = vec4f({}, 1.0) * ubuf.postex_mtx[in_pnmtxidx];"
         "\n    out.pos = vec4f(mv_pos, 1.0) * ubuf.proj;",
@@ -1103,10 +1123,17 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
         "\n    let clip_base = select(clip_a, clip_b, use_b);"
         "\n    out.pos = vec4f(clip_base.xy + offset_ndc * clip_base.w, clip_base.zw);";
   }
-  vtxXfrAttrsPre += fmt::format(
-      "\n    let nrm_tmp = vec4f({}, 0.0) * ubuf.nrm_mtx[in_pnmtxidx];"
-      "\n    let mv_nrm = select(nrm_tmp, normalize(nrm_tmp), dot(nrm_tmp, nrm_tmp) > 1e-10);",
-      vtx_attr(config, GX_VA_NRM));
+  if (config.pnPalette && config.lineMode == 0) {
+    vtxXfrAttrsPre += fmt::format(
+        "\n    let nrm_tmp = vec4f({}, 0.0) * pal_nrm;"
+        "\n    let mv_nrm = select(nrm_tmp, normalize(nrm_tmp), dot(nrm_tmp, nrm_tmp) > 1e-10);",
+        vtx_attr(config, GX_VA_NRM));
+  } else {
+    vtxXfrAttrsPre += fmt::format(
+        "\n    let nrm_tmp = vec4f({}, 0.0) * ubuf.nrm_mtx[in_pnmtxidx];"
+        "\n    let mv_nrm = select(nrm_tmp, normalize(nrm_tmp), dot(nrm_tmp, nrm_tmp) > 1e-10);",
+        vtx_attr(config, GX_VA_NRM));
+  }
   if constexpr (EnableNormalVisualization) {
     vtxOutAttrs += fmt::format("\n    @location({}) nrm: vec3f,", vtxOutIdx++);
     vtxXfrAttrsPre += "\n    out.nrm = mv_nrm;";
@@ -1271,11 +1298,12 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
       const u32 lightIdx = tcg.type - GX_TG_BUMP0;
       vtxXfrAttrs += fmt::format(
           "\n    let bump_ldir{0} = normalize(ubuf.lights[{1}].pos - mv_pos);"
-          "\n    let bump_tan{0} = vec4f(in_tangent, 0.0) * ubuf.nrm_mtx[in_pnmtxidx];"
-          "\n    let bump_bin{0} = vec4f(in_binrm, 0.0) * ubuf.nrm_mtx[in_pnmtxidx];"
+          "\n    let bump_tan{0} = vec4f(in_tangent, 0.0) * {3};"
+          "\n    let bump_bin{0} = vec4f(in_binrm, 0.0) * {3};"
           "\n    out.tex{0}_uv = tc{2}_proj.xy + vec2f(dot(bump_ldir{0}, bump_tan{0}), dot(bump_ldir{0}, "
           "bump_bin{0}));",
-          i, lightIdx, tcg.embossSrc);
+          i, lightIdx, tcg.embossSrc,
+          config.pnPalette && config.lineMode == 0 ? "pal_nrm" : "ubuf.nrm_mtx[in_pnmtxidx]");
       fragmentFnPre += fmt::format("\n    var tex{0}_uv = in.tex{0}_uv.xy;", i);
       continue;
     }
@@ -2091,6 +2119,15 @@ wgpu::ShaderModule build_shader(const ShaderConfig& config, const gfx::RenderTar
   }
   const auto shaderSource = build_shader_source(config, normalAttachment);
   const auto hash = xxh3_hash(normalAttachment, xxh3_hash(config));
+  {
+    static const bool shaderLog = [] {
+      const char* v = std::getenv("AURORA_SHADERLOG");
+      return v != nullptr && v[0] == '1';
+    }();
+    if (shaderLog) {
+      Log.info("shaderlog cfg {:016x} wgsl {:016x}", hash, XXH3_64bits(shaderSource.data(), shaderSource.size()));
+    }
+  }
   wgpu::ShaderSourceWGSL wgslDescriptor{};
   wgslDescriptor.code = shaderSource.c_str();
   const auto label = fmt::format("GX Shader {:x}", hash);

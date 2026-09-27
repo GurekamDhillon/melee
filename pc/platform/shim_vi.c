@@ -179,6 +179,33 @@ static uint64_t gw_turbo_last_field;
 
 int gw_turbo_enabled(void) { return gw_turbo; }
 
+/* Will this frame be presented? In turbo only every MELEE_TURBO_RENDER-th, and never while the window
+ * is minimized or hidden. Decided once per frame - by the game's render pass when it asks
+ * (gw_Turbo_FrameHidden, gmscene.c), else at present time - so both see the same answer. */
+static int gw_turbo_hidden_decided, gw_turbo_hidden;
+static int gw_turbo_frame_hidden(void) {
+  if (!gw_turbo_hidden_decided) {
+    gw_turbo_hidden = gw_turbo && !(gw_turbo_render != 0 && (gw_retrace_count % gw_turbo_render) == 0 &&
+                                    gw_video_window != NULL &&
+                                    (SDL_GetWindowFlags(gw_video_window) &
+                                     (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN)) == 0);
+    gw_turbo_hidden_decided = 1;
+  }
+  return gw_turbo_hidden;
+}
+
+/* gmscene.c's match render: a turbo frame nobody will see renders like a rollback re-simulation - the
+ * render callbacks run for their game-state side effects, display lists and the envelope/palette
+ * matrix products are skipped (Gx_SuppressDraws; pobj.c checks it). MELEE_TURBO_DRAWS=1 keeps them. */
+int gw_Turbo_FrameHidden(void) {
+  static int keep = -1;
+  if (keep < 0) {
+    const char *e = getenv("MELEE_TURBO_DRAWS");
+    keep = e != NULL && e[0] == '1';
+  }
+  return gw_turbo && !keep && gw_turbo_frame_hidden();
+}
+
 void gw_turbo_configure(int argc, char **argv) {
   const char *v = getenv("MELEE_TURBO");
   const char *render = getenv("MELEE_TURBO_RENDER");
@@ -1710,9 +1737,8 @@ void gw_frame_tick(void) {
   }
 
   if (gw_frame_has_content && gw_frame_begun) {
-    const int show = !gw_turbo || (gw_turbo_render != 0 &&
-        (gw_retrace_count % gw_turbo_render) == 0 && gw_video_window != NULL &&
-        (SDL_GetWindowFlags(gw_video_window) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN)) == 0);
+    const int show = !gw_turbo_frame_hidden();
+    gw_turbo_hidden_decided = 0;
     /* Composited over the game's output by Aurora's ImGui pass, which is why this must happen
      * before end_frame: aurora::end_frame() is what freezes the ImGui draw data. */
     if (show) {

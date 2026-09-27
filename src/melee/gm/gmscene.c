@@ -1068,7 +1068,24 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
             Det_SetInRender(1);
 #endif
         HSD_StartRender(HSD_RP_SCREEN);
+#if defined(TARGET_PC)
+        {
+            /* turbo (shim_vi.c): a frame that will not be presented renders like a rollback
+               re-simulation, without its display lists and skinning products */
+            extern int Turbo_FrameHidden(void);
+            extern void Gx_SuppressDraws(int on);
+            const int hidden = Turbo_FrameHidden();
+            if (hidden) {
+                Gx_SuppressDraws(1);
+            }
+            HSD_GObj_80390FC0();
+            if (hidden) {
+                Gx_SuppressDraws(0);
+            }
+        }
+#else
         HSD_GObj_80390FC0();
+#endif
         HSD_Init_803755A8();
 #if defined(TARGET_PC)
         {

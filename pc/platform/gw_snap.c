@@ -5,7 +5,8 @@
  *                        the first pass. Any difference is state rollback would get wrong.
  *
  * WHAT A SNAPSHOT IS (_research/rollback-netcode.md section 2):
- *   - MEM1, all 24 MB at 0x80000000 (heaps, HSD objects, loaded files) - strategy "copy it all"
+ *   - MEM1, all of it at 0x80000000 (heaps, HSD objects, loaded files) - strategy "copy it all",
+ *     stored as reference-counted pages shared between slots where they are equal (the page pool)
  *     first; exclusions are carved out as SyncTest proves they are needed.
  *   - The game's own native globals: every section-3 (.data/.bss) symbol of a game object
  *     (src_melee_*, src_sysdolphin_*, libs_dolphin_*, and the game's commons `_gw_*`), found by
@@ -47,7 +48,10 @@ typedef struct {
 
 typedef struct {
     int frame; /* the frame this is the START of; INT_MIN = empty */
-    uint8_t *mem1;
+    /* MEM1 as page ids in the shared page pool (sn_pool_*): a page no other slot differs on is
+       stored once. A flat 40 MB copy per slot ran out of 32-bit address space with the LAB's
+       savestate slots; this costs what the slots actually differ by. */
+    uint32_t *pg;
     uint8_t *globals;
     int replay_cursor[4];
     /* DIRTY-PAGE MODE: a superset of the pages where the live MEM1 may differ from this slot's
@@ -323,6 +327,109 @@ static int sn_load_map(void) {
 #define SN_PAGE 4096u
 #define SN_BM_WORDS(n) (((n) + 63u) / 64u)
 
+/* ---- the page pool: every slot's MEM1 pages, reference counted ----------------------------------
+ * Pages live in 1 MB chunks (256 pages). A slot's page p is an id; a page is shared between slots
+ * whose page p has the same bytes (the loaded files, the static heaps - most of MEM1) and private
+ * where the slot differs. A shared page is never written: a save into it allocates a new one. */
+#define SN_POOL_CHUNK_SHIFT 8u
+#define SN_POOL_CHUNK_PAGES (1u << SN_POOL_CHUNK_SHIFT)
+static uint8_t **sn_pool_chunk;
+static uint32_t *sn_pool_ref, *sn_pool_next;
+static uint32_t sn_pool_nchunks, sn_pool_free, sn_pool_live, sn_pool_peak;
+static const void *sn_last_saved; /* the slot saved most recently: its pages are the likeliest match */
+
+static uint8_t *sn_pg_data(uint32_t id) {
+    return sn_pool_chunk[id >> SN_POOL_CHUNK_SHIFT] + (size_t) (id & (SN_POOL_CHUNK_PAGES - 1)) * SN_PAGE;
+}
+
+static uint32_t sn_pool_alloc(void) {
+    uint32_t id;
+    if (sn_pool_free == 0) {
+        uint32_t c = sn_pool_nchunks, i, n = (c + 1) * SN_POOL_CHUNK_PAGES;
+        uint8_t **chunks = (uint8_t **) realloc(sn_pool_chunk, (c + 1) * sizeof *chunks);
+        uint32_t *ref, *next;
+        if (chunks == NULL) {
+            return 0;
+        }
+        sn_pool_chunk = chunks;
+        ref = (uint32_t *) realloc(sn_pool_ref, n * sizeof *ref);
+        if (ref == NULL) {
+            return 0;
+        }
+        sn_pool_ref = ref;
+        next = (uint32_t *) realloc(sn_pool_next, n * sizeof *next);
+        if (next == NULL) {
+            return 0;
+        }
+        sn_pool_next = next;
+        chunks[c] = (uint8_t *) VirtualAlloc(NULL, (size_t) SN_POOL_CHUNK_PAGES * SN_PAGE, MEM_RESERVE | MEM_COMMIT,
+                                             PAGE_READWRITE);
+        if (chunks[c] == NULL) {
+            return 0;
+        }
+        sn_pool_nchunks = c + 1;
+        /* id 0 is "no page": chunk 0's first page is never handed out */
+        for (i = n; i-- > c * SN_POOL_CHUNK_PAGES;) {
+            if (i == 0) {
+                continue;
+            }
+            sn_pool_ref[i] = 0;
+            sn_pool_next[i] = sn_pool_free;
+            sn_pool_free = i;
+        }
+    }
+    id = sn_pool_free;
+    sn_pool_free = sn_pool_next[id];
+    sn_pool_ref[id] = 1;
+    if (++sn_pool_live > sn_pool_peak) {
+        sn_pool_peak = sn_pool_live;
+    }
+    return id;
+}
+
+static void sn_pool_release(uint32_t id) {
+    if (id != 0 && --sn_pool_ref[id] == 0) {
+        sn_pool_next[id] = sn_pool_free;
+        sn_pool_free = id;
+        --sn_pool_live;
+    }
+}
+
+/* Page p of slot pgs := the live page. In place when the slot owns it alone; else shared with the
+   last saved slot's page p when that holds the same bytes; else a new page. 0 = out of memory. */
+static int sn_page_store(uint32_t *pgs, const uint32_t *last, uint32_t p, const uint8_t *live) {
+    uint32_t cur = pgs[p], cand, id;
+    if (cur != 0 && sn_pool_ref[cur] == 1) {
+        memcpy(sn_pg_data(cur), live, SN_PAGE);
+        return 1;
+    }
+    if (cur != 0 && memcmp(sn_pg_data(cur), live, SN_PAGE) == 0) {
+        return 1; /* shared, and already these bytes */
+    }
+    cand = last != NULL ? last[p] : 0;
+    if (cand != 0 && cand != cur && memcmp(sn_pg_data(cand), live, SN_PAGE) == 0) {
+        ++sn_pool_ref[cand];
+        sn_pool_release(cur);
+        pgs[p] = cand;
+        return 1;
+    }
+    id = sn_pool_alloc();
+    if (id == 0) {
+        return 0;
+    }
+    memcpy(sn_pg_data(id), live, SN_PAGE);
+    sn_pool_release(cur);
+    pgs[p] = id;
+    return 1;
+}
+
+/* The pool's size now and at its peak, and its address space (for the Lab and the logs). */
+void gw_snap_pool_stats(uint32_t *live_pages, uint32_t *peak_pages, uint32_t *reserved_mb) {
+    *live_pages = sn_pool_live;
+    *peak_pages = sn_pool_peak;
+    *reserved_mb = sn_pool_nchunks; /* 1 MB each */
+}
+
 extern int gw_mem1_watched;
 
 static void sn_bm_set(uint64_t *bm, uint32_t pg) { bm[pg >> 6] |= 1ull << (pg & 63); }
@@ -338,8 +445,18 @@ static void sn_bm_fill(uint64_t *bm, uint32_t npages) {
 /* Ask Windows which pages changed since the last poll (and reset the watch), and record them in
  * every slot's dirty set and the hash's. Everything that reads or writes the sets calls this first. */
 static void sn_poll(void) {
-    static PVOID addrs[6144 + 64];
+    /* one entry per MEM1 page: GetWriteWatch fills up to `count`. This was a fixed [6144 + 64] (24 MB)
+       while count was sn.npages: at 40 MB it wrote 4096 page addresses past the array, over the
+       rollback session's state (gw_rollback.c rb, linked right after), and fprintf'd a MEM1 address
+       as rb.hlog. */
+    static PVOID *addrs;
     ULONG_PTR count = sn.npages;
+    if (addrs == NULL) {
+        addrs = (PVOID *) malloc((size_t) sn.npages * sizeof *addrs);
+        if (addrs == NULL) {
+            gw_panic("snap: out of memory for the write-watch list (%u pages)", sn.npages);
+        }
+    }
     DWORD gran = 0;
     double t0 = sn_ms();
     UINT r;
@@ -391,12 +508,13 @@ static void sn_watch_reset(void) {
 
 /* Copy every page of `bm` between `live` and `slot` (dir 0: live -> slot, 1: slot -> live), merging
  * neighbours into one memcpy. Returns the pages copied. */
-static uint32_t sn_copy_pages(const uint64_t *bm, uint8_t *slot, int dir) {
+/* bm == NULL: every page. dir 0: live -> slot (sharing pages, see sn_page_store), 1: slot -> live. */
+static uint32_t sn_copy_pages(const uint64_t *bm, uint32_t *slot, const uint32_t *last, int dir) {
     uint8_t *live = (uint8_t *) (uintptr_t) 0x80000000u;
     uint32_t pg = 0, copied = 0;
+    static int oom_logged;
     while (pg < sn.npages) {
-        uint32_t start, n;
-        if (!sn_bm_test(bm, pg)) {
+        if (bm != NULL && !sn_bm_test(bm, pg)) {
             /* skip whole clear words fast */
             if ((pg & 63) == 0 && bm[pg >> 6] == 0) {
                 pg += 64;
@@ -405,19 +523,40 @@ static uint32_t sn_copy_pages(const uint64_t *bm, uint8_t *slot, int dir) {
             }
             continue;
         }
-        start = pg;
-        while (pg < sn.npages && sn_bm_test(bm, pg)) {
-            ++pg;
-        }
-        n = pg - start;
         if (dir == 0) {
-            memcpy(slot + (size_t) start * SN_PAGE, live + (size_t) start * SN_PAGE, (size_t) n * SN_PAGE);
-        } else {
-            memcpy(live + (size_t) start * SN_PAGE, slot + (size_t) start * SN_PAGE, (size_t) n * SN_PAGE);
+            if (!sn_page_store(slot, last, pg, live + (size_t) pg * SN_PAGE) && !oom_logged) {
+                oom_logged = 1;
+                gw_log("snap: OUT OF MEMORY storing a snapshot page (%u pages live)", sn_pool_live);
+            }
+        } else if (slot[pg] != 0) {
+            memcpy(live + (size_t) pg * SN_PAGE, sn_pg_data(slot[pg]), SN_PAGE);
         }
-        copied += n;
+        ++copied;
+        ++pg;
     }
     return copied;
+}
+
+/* A slot's MEM1 as one flat image, for the debugging paths that compare or dump byte by byte
+   (SyncTest's compare, the full-mode checksum, MELEE_SYNCTEST_DUMP). One shared scratch buffer:
+   the pointer is valid until the next call. */
+static const uint8_t *sn_view(const uint32_t *pgs) {
+    static uint8_t *buf;
+    uint32_t pg;
+    if (buf == NULL) {
+        buf = (uint8_t *) malloc(gw_mem1_size);
+        if (buf == NULL) {
+            gw_panic("snap: out of memory for the compare view (%u bytes)", gw_mem1_size);
+        }
+    }
+    for (pg = 0; pg < sn.npages; ++pg) {
+        if (pgs[pg] != 0) {
+            memcpy(buf + (size_t) pg * SN_PAGE, sn_pg_data(pgs[pg]), SN_PAGE);
+        } else {
+            memset(buf + (size_t) pg * SN_PAGE, 0, SN_PAGE);
+        }
+    }
+    return buf;
 }
 
 /* ---- a fast hash, and the incremental state hash ------------------------------------------------
@@ -651,7 +790,7 @@ static void sn_verify_equal(const GwSnapSlot *s, const char *what) {
     const uint8_t *live = (const uint8_t *) (uintptr_t) 0x80000000u;
     uint32_t pg, bad = 0, first = 0;
     for (pg = 0; pg < sn.npages; ++pg) {
-        if (memcmp(live + (size_t) pg * SN_PAGE, s->mem1 + (size_t) pg * SN_PAGE, SN_PAGE) != 0) {
+        if (s->pg[pg] == 0 || memcmp(live + (size_t) pg * SN_PAGE, sn_pg_data(s->pg[pg]), SN_PAGE) != 0) {
             if (bad++ == 0) {
                 first = pg;
             }
@@ -659,7 +798,7 @@ static void sn_verify_equal(const GwSnapSlot *s, const char *what) {
     }
     if (bad != 0) {
         uint32_t o;
-        const uint8_t *a = live + (size_t) first * SN_PAGE, *b = s->mem1 + (size_t) first * SN_PAGE;
+        const uint8_t *a = live + (size_t) first * SN_PAGE, *b = sn_view(s->pg) + (size_t) first * SN_PAGE;
         for (o = 0; o < SN_PAGE && a[o] == b[o]; ++o) {
         }
         sn.n_verify_fail++;
@@ -676,18 +815,29 @@ static void sn_save_to(GwSnapSlot *s, int frame) {
     s->frame = frame;
     if (sn.dirty_mode) {
         sn_poll();
-        sn.n_copy_pages += (long) sn_copy_pages(s->dirty, s->mem1, 0);
+        sn.n_copy_pages += (long) sn_copy_pages(s->dirty, s->pg,
+                                                sn_last_saved != (const void *) s && sn_last_saved != NULL
+                                                    ? ((const GwSnapSlot *) sn_last_saved)->pg : NULL,
+                                                0);
         memset(s->dirty, 0, SN_BM_WORDS(sn.npages) * 8);
         if (sn.verify) {
             sn_verify_equal(s, "save");
         }
     } else {
-        memcpy(s->mem1, (const void *) (uintptr_t) 0x80000000u, gw_mem1_size);
+        sn_copy_pages(NULL, s->pg,
+                      sn_last_saved != (const void *) s && sn_last_saved != NULL ? ((const GwSnapSlot *) sn_last_saved)->pg
+                                                                                 : NULL,
+                      0);
     }
+    sn_last_saved = s;
     sn_gather(s->globals);
     gw_Replay_GetCursor(s->replay_cursor);
     sn.ms_save += sn_ms() - t0;
     sn.n_save++;
+    if (sn.n_save % 600 == 1) {
+        gw_log("snap: page pool %u pages live (%u MB), peak %u (%u MB), %u MB reserved, %d slots", sn_pool_live,
+               sn_pool_live / 256u, sn_pool_peak, sn_pool_peak / 256u, sn_pool_nchunks, sn.nslots);
+    }
     if (sn.hash_on) {
         s->hash = gw_snap_hash();
     }
@@ -701,7 +851,7 @@ static int sn_load_from(GwSnapSlot *s) {
     if (sn.dirty_mode) {
         int u;
         sn_poll();
-        sn.n_copy_pages += (long) sn_copy_pages(s->dirty, s->mem1, 1);
+        sn.n_copy_pages += (long) sn_copy_pages(s->dirty, s->pg, NULL, 1);
         /* live now equals this slot: every other slot differs from live at most where it differed
            from live before, or where this slot did */
         for (u = 0; u < sn.nslots; ++u) {
@@ -732,7 +882,7 @@ static int sn_load_from(GwSnapSlot *s) {
             sn_verify_equal(s, "load");
         }
     } else {
-        memcpy((void *) (uintptr_t) 0x80000000u, s->mem1, gw_mem1_size);
+        sn_copy_pages(NULL, s->pg, NULL, 1);
     }
     sn_scatter(s->globals);
     sn_async_put_back();
@@ -761,7 +911,7 @@ int gw_snap_load(int frame) {
  * `tag` is only stored (it is the slot's "frame" for the keyed calls, so pick tags no session
  * will ask for - negative ones). gw_snap_reserve(n) makes sure n slots exist: it opens the
  * machinery with n slots, or grows an open one (up to GW_SNAP_MAX_SLOTS); each slot costs a MEM1
- * copy (24 MB) plus the game globals. Returns the number of slots now available (0 = failed). */
+ * copy (only the pages it differs by, see the page pool) plus the game globals. Returns the number of slots now available (0 = failed). */
 int gw_snap_open(int k);
 
 int gw_snap_reserve(int n) {
@@ -777,14 +927,14 @@ int gw_snap_reserve(int n) {
     for (i = sn.nslots; i < n; ++i) {
         GwSnapSlot *s = &sn.slot[i];
         s->frame = -0x7FFFFFFF - 1;
-        s->mem1 = (uint8_t *) malloc(gw_mem1_size);
+        s->pg = (uint32_t *) calloc(sn.npages, sizeof *s->pg);
         s->globals = (uint8_t *) malloc(sn.globals_len);
         s->dirty = (uint64_t *) malloc(SN_BM_WORDS(sn.npages) * 8);
-        if (s->mem1 == NULL || s->globals == NULL || s->dirty == NULL) {
-            free(s->mem1);
+        if (s->pg == NULL || s->globals == NULL || s->dirty == NULL) {
+            free(s->pg);
             free(s->globals);
             free(s->dirty);
-            s->mem1 = NULL;
+            s->pg = NULL;
             s->globals = NULL;
             s->dirty = NULL;
             gw_log("snap: out of memory growing to %d slots (have %d)", n, sn.nslots);
@@ -917,7 +1067,7 @@ static int sn_any_diff(const GwSnapSlot *s) {
     const uint8_t *live = (const uint8_t *) (uintptr_t) 0x80000000u;
     uint32_t pg = 0;
     if (!sn.dirty_mode) {
-        return memcmp(s->mem1, live, gw_mem1_size) != 0;
+        return memcmp(sn_view(s->pg), live, gw_mem1_size) != 0;
     }
     while (pg < sn.npages) {
         uint32_t start, n;
@@ -930,9 +1080,11 @@ static int sn_any_diff(const GwSnapSlot *s) {
             ++pg;
         }
         n = pg - start;
-        if (memcmp(s->mem1 + (size_t) start * SN_PAGE, live + (size_t) start * SN_PAGE,
-                   (size_t) n * SN_PAGE) != 0) {
-            return 1;
+        for (; n > 0; ++start, --n) {
+            if (s->pg[start] == 0 ||
+                memcmp(sn_pg_data(s->pg[start]), live + (size_t) start * SN_PAGE, SN_PAGE) != 0) {
+                return 1;
+            }
         }
     }
     return 0;
@@ -1069,9 +1221,10 @@ static int sn_compare(int frame) {
     sn_poll();
     if (sn_any_diff(s)) {
         uint32_t off = 0;
+        const uint8_t *smem = sn_view(s->pg);
         sn.nmask = 0;
         sn_mask_particles(NULL, NULL);
-        sn_mask_particles(s->mem1, s->globals);
+        sn_mask_particles(smem, s->globals);
         while (off < gw_mem1_size) {
             uint32_t mend;
             if (sn.dirty_mode && !sn_bm_test(s->dirty, off / SN_PAGE)) {
@@ -1084,11 +1237,11 @@ static int sn_compare(int frame) {
                 off = pg >= sn.npages ? gw_mem1_size : pg * SN_PAGE;
                 continue;
             }
-            if (s->mem1[off] != live[off] && (sn.rmask_mem1[off >> 3] & (1u << (off & 7)))) {
+            if (smem[off] != live[off] && (sn.rmask_mem1[off >> 3] & (1u << (off & 7)))) {
                 ++off;
                 continue;
             }
-            if (s->mem1[off] != live[off]) {
+            if (smem[off] != live[off]) {
                 int f;
                 for (f = 0; f < sn_nfixed; ++f) {
                     if (0x80000000u + off >= sn_fixed[f].va && 0x80000000u + off < sn_fixed[f].va + sn_fixed[f].len) {
@@ -1100,17 +1253,17 @@ static int sn_compare(int frame) {
                     continue;
                 }
             }
-            if (s->mem1[off] != live[off] && sn_in_render_arena(0x80000000u + off, &mend)) {
+            if (smem[off] != live[off] && sn_in_render_arena(0x80000000u + off, &mend)) {
                 off = mend - 0x80000000u;
                 continue;
             }
-            if (s->mem1[off] != live[off] && sn_masked(0x80000000u + off, &mend)) {
+            if (smem[off] != live[off] && sn_masked(0x80000000u + off, &mend)) {
                 off = mend - 0x80000000u;
                 continue;
             }
-            if (s->mem1[off] != live[off]) {
+            if (smem[off] != live[off]) {
                 uint32_t start = off;
-                while (off < gw_mem1_size && s->mem1[off] != live[off] &&
+                while (off < gw_mem1_size && smem[off] != live[off] &&
                        !(sn.rmask_mem1[off >> 3] & (1u << (off & 7))) && off - start < 4096) ++off;
                 ++diffs;
                 if (logged < 12) {
@@ -1131,20 +1284,20 @@ static int sn_compare(int frame) {
                         if (back == 0) break;
                     }
                     if (logged == 0) {
-                        rbv_note(frame, 0x80000000u + start, s->mem1[start], live[start], NULL, 0,
+                        rbv_note(frame, 0x80000000u + start, smem[start], live[start], NULL, 0,
                                  cls ? cls->name : NULL, cls ? 0x80000000u + start - owner : 0);
                     }
                     gw_log("snap:   MEM1 0x%08X +%u: first pass %02X.. now %02X..  [%s +0x%X]",
-                           0x80000000u + start, off - start, s->mem1[start], live[start],
+                           0x80000000u + start, off - start, smem[start], live[start],
                            cls ? cls->name : "?", cls ? 0x80000000u + start - owner : 0);
                     if (sn.mismatches < 1 && logged < 2) {
                         /* context for the first mismatch: 32 words around it, both images */
                         uint32_t w0 = (start & ~0x3Fu) >= 0x40 ? (start & ~0x3Fu) - 0x40 : 0, w;
                         for (w = w0; w < w0 + 0x80 && w + 16 <= gw_mem1_size; w += 16) {
                             gw_log("snap:     %08X  pass1 %08X %08X %08X %08X  now %08X %08X %08X %08X",
-                                   0x80000000u + w, sn_rd32(s->mem1, 0x80000000u + w),
-                                   sn_rd32(s->mem1, 0x80000004u + w), sn_rd32(s->mem1, 0x80000008u + w),
-                                   sn_rd32(s->mem1, 0x8000000Cu + w), sn_rd32(NULL, 0x80000000u + w),
+                                   0x80000000u + w, sn_rd32(smem, 0x80000000u + w),
+                                   sn_rd32(smem, 0x80000004u + w), sn_rd32(smem, 0x80000008u + w),
+                                   sn_rd32(smem, 0x8000000Cu + w), sn_rd32(NULL, 0x80000000u + w),
                                    sn_rd32(NULL, 0x80000004u + w), sn_rd32(NULL, 0x80000008u + w),
                                    sn_rd32(NULL, 0x8000000Cu + w));
                         }
@@ -1427,10 +1580,10 @@ int gw_snap_open(int k) {
     sn.hash_on = sn.dirty_mode && v != NULL && v[0] == '1';
     for (i = 0; i < sn.nslots; ++i) {
         sn.slot[i].frame = -0x7FFFFFFF - 1;
-        sn.slot[i].mem1 = (uint8_t *) malloc(gw_mem1_size);
+        sn.slot[i].pg = (uint32_t *) calloc(sn.npages, sizeof *sn.slot[i].pg);
         sn.slot[i].globals = (uint8_t *) malloc(sn.globals_len);
         sn.slot[i].dirty = (uint64_t *) malloc(SN_BM_WORDS(sn.npages) * 8);
-        if (sn.slot[i].mem1 == NULL || sn.slot[i].globals == NULL || sn.slot[i].dirty == NULL) {
+        if (sn.slot[i].pg == NULL || sn.slot[i].globals == NULL || sn.slot[i].dirty == NULL) {
             gw_log("snap: out of memory for %d slots", sn.nslots);
             return -1;
         }
@@ -1551,7 +1704,7 @@ void gw_SyncTest_IterStart(void) {
                 FILE *df;
                 snprintf(p, sizeof p, "%s.pass1.bin", getenv("MELEE_SYNCTEST_DUMP"));
                 if (sl != NULL && (df = fopen(p, "wb")) != NULL) {
-                    fwrite(sl->mem1, 1, gw_mem1_size, df);
+                    fwrite(sn_view(sl->pg), 1, gw_mem1_size, df);
                     fclose(df);
                 }
                 snprintf(p, sizeof p, "%s.resim.bin", getenv("MELEE_SYNCTEST_DUMP"));
@@ -2182,7 +2335,7 @@ uint32_t gw_Snap_Checksum(int frame) {
     if (sn.hash_on && sl->hash != 0) {
         return (uint32_t) (sl->hash ^ (sl->hash >> 32)) | 1u;
     }
-    w = (const uint64_t *) sl->mem1;
+    w = (const uint64_t *) sn_view(sl->pg);
     for (i = 0; i < gw_mem1_size / 8; ++i) {
         h = (h ^ w[i]) * 0x100000001B3ull;
         h ^= h >> 29;

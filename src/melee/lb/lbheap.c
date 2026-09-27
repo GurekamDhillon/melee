@@ -35,7 +35,11 @@ struct lbHeap_HeapDesc lbHeap_803BA380[LBHEAP_DESC_COUNT] = {
      * in lbdvd.c inline2 -- EfMnData, EfCoData, ItCo, IfAll -- all land in heap 3). The measured
      * shortfall is 0xB6B0; heap 3 is grown by 0x20000 (128 KB) to 0x51A690, donating from the
      * main heap (which sits at ~11.3 MB and only ~35 KB in use at that point). */
-    { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x51A690 }, { 4, 2, 6, 0x64B400 },
+    /* Heap 4 (AllM, the fighter files) gets the PC port's 16 MB of extra MEM1 (GW_MEM1_SIZE, 40 MB):
+       0x64B400 + 0x1000000. Two Ultimate Soras in different costumes (3.6 + 3.9 MB costume files
+       on top of 0.9 MB of fighter data) failed ALLOC_FAIL heap 4 at 0x64B400; four need ~15 MB.
+       The main heap (Hsd) is what is left of the arena, so it keeps its size. */
+    { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x51A690 }, { 4, 2, 6, 0x164B400 },
     { 5, 4, 6, 0x96C800 }, { 6, 1, 3, 0x20 },     { LBHEAP_HEAP_COUNT, 0, 0, 0 },
 #else
     { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x4F8800 }, { 4, 2, 6, 0x64B400 },

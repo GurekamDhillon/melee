@@ -41,7 +41,9 @@
 extern "C" {
 #endif
 
-#define GW_NET_PROTOCOL_VERSION 2u
+/* 3: MEM1 40 MB and heap 4 16 MB larger (gw_runtime.c, lbheap.c): the heap layout, and so the
+ * simulation, differs from a version-2 peer. */
+#define GW_NET_PROTOCOL_VERSION 3u
 #define GW_NET_MAX_BLOB 900        /* match-config blob: StartMeleeData + extras */
 #define GW_NET_MAX_SLOTS 8         /* port * 2 + follower */
 #define GW_NET_MAX_PAYLOAD 32      /* bytes of one slot's input for one frame */

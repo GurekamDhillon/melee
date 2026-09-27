@@ -7,6 +7,8 @@
 #include <bit>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 
 namespace aurora::gx::fifo {
 namespace {
@@ -1004,9 +1006,40 @@ absl::flat_hash_map<u32, u32> sPalOcc;
 u32 sPalBlended, sPalRejected, sPalMissing, sPalFrames; // palette slots, logged every 600 real frames
 u32 sPendingNrm = 0;
 
+// The draw the pending matrices are for: a hash of its vertex/index bytes (the display list's own
+// content, fixed for a POBJ from frame to frame). A fighter built as hundreds of small POBJs shares
+// one POS array across all of them, so (slot, POS array) alone put every piece's matrices in one
+// list, and a piece culled or reordered in one frame paired the rest with another piece's (a
+// different bone's) matrices: models stretched into spikes between real frames.
+u32 sDrawId = 0;
+bool sLegacyKey = false; // AURORA_INTERP_KEY=legacy: the old (slot, POS array) key, for A/B
+
 u64 pair_key(u32 addr) noexcept {
   const auto ptr = static_cast<u32>(reinterpret_cast<uintptr_t>(g_gxState.arrays[GX_VA_POS].data));
-  return (static_cast<u64>(addr & 0x1FFF) << 32) | ptr;
+  const u32 hi = (addr & 0x1FFF) | (sLegacyKey ? 0u : (sDrawId << 13));
+  return (static_cast<u64>(hi) << 32) | ptr;
+}
+
+// Pairs whose translation moved more than this in one real frame, or whose linear part changed by
+// more than a fifth of its size: counted, so a key that pairs different objects shows up as a number.
+u32 sSpikes, sPalSpikes;
+f32 sWorstJump;
+void count_jump(const f32* from, const f32* to, u32 len, bool affine, u32& spikes) noexcept {
+  f32 dt = 0.f, dl = 0.f, nl = 0.f;
+  for (u32 i = 0; i < len; ++i) {
+    const f32 d = from[i] - to[i];
+    if (affine && (i % 4) == 3) {
+      dt += d * d;
+    } else {
+      dl += d * d;
+      nl += to[i] * to[i];
+    }
+  }
+  const f32 t = std::sqrt(dt);
+  sWorstJump = std::max(sWorstJump, t);
+  if (t > 8.f || dl > 0.04f * nl + 1e-6f) {
+    ++spikes;
+  }
 }
 
 // A pairing between two different objects (the draw list changed shape between the frames) shows
@@ -1092,6 +1125,7 @@ void blend(u32 addr, f32* v, u32 len, bool affine) noexcept {
   if (from == nullptr) {
     return;
   }
+  count_jump(from->v, v, len, affine, sSpikes);
   const f32 a = sAlpha < 0.f ? 0.f : sAlpha;
   for (u32 i = 0; i < len; ++i) {
     v[i] = from->v[i] + (v[i] - from->v[i]) * a;
@@ -1116,10 +1150,16 @@ void begin_real_frame(bool enabled, float alpha) noexcept {
   }
   sPalFrom.swap(sPalTo);
   sPalTo.clear();
-  if (++sPalFrames % 600 == 0 && (sPalBlended | sPalRejected | sPalMissing) != 0) {
-    Log.info("interp: palette slots over 600 frames: blended {}, implausible {}, palettes unmatched {}", sPalBlended,
-             sPalRejected, sPalMissing);
-    sPalBlended = sPalRejected = sPalMissing = 0;
+  if (++sPalFrames % 600 == 0) {
+    Log.info("interp: 600 real frames ({} key): legacy slots {} jumps, palette slots blended {}, implausible {}, "
+             "palettes unmatched {}, jumps {}; worst translation jump {:.2f}",
+             sLegacyKey ? "legacy" : "draw", sSpikes, sPalBlended, sPalRejected, sPalMissing, sPalSpikes, sWorstJump);
+    sPalBlended = sPalRejected = sPalMissing = sPalSpikes = sSpikes = 0;
+    sWorstJump = 0.f;
+  }
+  if (sPalFrames == 1) {
+    const char* k = std::getenv("AURORA_INTERP_KEY");
+    sLegacyKey = k != nullptr && std::strcmp(k, "legacy") == 0;
   }
   sOcc.clear();
   sPendingPos = sPendingNrm = 0;
@@ -1177,6 +1217,7 @@ void blend_palette(u32 key, f32* data, u32 n) noexcept {
       ++sPalRejected;
       continue;
     }
+    count_jump(from, v, 12, true, sPalSpikes);
     for (u32 i = 0; i < 24; ++i) {
       v[i] = from[i] + (v[i] - from[i]) * a;
     }
@@ -1197,10 +1238,15 @@ void note_load(u32 addr) noexcept {
   }
 }
 
-void before_draw() noexcept {
+void before_draw(const u8* data, u32 size) noexcept {
   if (!sActive || (sPendingPos | sPendingNrm) == 0) {
     return;
   }
+  u32 h = 2166136261u ^ size; // FNV-1a over the draw's first bytes; 19 bits of it go in the key
+  for (u32 i = 0, n = std::min<u32>(size, 256); i < n; ++i) {
+    h = (h ^ data[i]) * 16777619u;
+  }
+  sDrawId = (h ^ (h >> 19)) & 0x7FFFFu;
   for (u32 slot = 0; slot < MaxPnMtx; ++slot) {
     if (sPendingPos & (1u << slot)) {
       blend(slot * 12, reinterpret_cast<f32*>(&g_gxState.pnMtx[slot].pos), 12, true);

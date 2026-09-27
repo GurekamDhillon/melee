@@ -627,7 +627,7 @@ static bool sPipelineWait = false;
 static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
                          gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
   ArrTimer arrTimer(sArr.nsPush);
-  interp::before_draw();
+  interp::before_draw(vertexData.data(), static_cast<u32>(vertexData.size()));
   auto& state = g_gxState;
   auto& cache = sDrawCache;
 

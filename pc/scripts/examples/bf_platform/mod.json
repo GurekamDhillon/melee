@@ -8,5 +8,5 @@
   "api_version": 1,
   "gameplay": true,
   "rollback_safe": false,
-  "entry": "main.lua"
+  "entry": "scripts/main.lua"
 }

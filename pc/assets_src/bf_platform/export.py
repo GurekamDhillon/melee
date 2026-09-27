@@ -25,7 +25,10 @@ import bpy
 
 
 HERE = Path(__file__).resolve().parent
-HEADER = struct.Struct(">4sIIIfffII")  # GXMS, version, vertex/index counts, dimensions, offsets
+HEADER = struct.Struct(">4sIIIfffII")
+GLOW_GAIN = 0.8   # emissive strength baked into the glow atlas (was 0.42: lines too dim at play distance)
+RIM_GAIN = 1.35   # the camera-facing rim band
+EDGE_MAX = 0.6    # edge-wear highlight, as a mix towards bright metal  # GXMS, version, vertex/index counts, dimensions, offsets
 
 
 def options():
@@ -200,7 +203,7 @@ def route_material(mat, image, glow):
                                      math('MULTIPLY', xyz.outputs[1], xyz.outputs[1])))
             falloff = math('MAXIMUM', math('SUBTRACT', 1, math('MULTIPLY', radius, 1.65)), 0)
             colour = scale(colour, math('ADD', 0.12, math('MULTIPLY', falloff, 0.88)))
-        colour = scale(colour, 0.42)
+        colour = scale(colour, GLOW_GAIN)
     else:
         colour = value(bsdf.inputs['Base Color'])
         ao = nodes.new('ShaderNodeAmbientOcclusion')
@@ -220,15 +223,26 @@ def route_material(mat, image, glow):
         if mat.name == 'BF_Trim':
             noise = next(n for n in nodes if n.type == 'TEX_NOISE')
             colour = scale(colour, math('ADD', 0.7, math('MULTIPLY', noise.outputs['Fac'], 0.6)))
-            bevel = nodes.new('ShaderNodeBevel')
-            bevel.inputs['Radius'].default_value = 0.018
-            bevel.samples = 8
-            dot = nodes.new('ShaderNodeVectorMath')
-            dot.operation = 'DOT_PRODUCT'
-            links.new(bevel.outputs['Normal'], dot.inputs[0])
-            links.new(geom.outputs['Normal'], dot.inputs[1])
-            edge = math('MINIMUM', math('MULTIPLY', math('SUBTRACT', 1, dot.outputs['Value']), 9), 0.55)
-            colour = scale(colour, math('ADD', 1, edge))
+        if mat.name == 'BF_Rim':
+            # the band facing the camera: brighter, so the slab's silhouette reads at play distance
+            colour = scale(colour, RIM_GAIN)
+        # Edge wear on every opaque material: where a small bevel normal leaves the face normal, the
+        # surface sits on a chamfer or frame edge - lift it towards a bright worn-metal highlight.
+        bevel = nodes.new('ShaderNodeBevel')
+        bevel.inputs['Radius'].default_value = 0.022
+        bevel.samples = 8
+        dot = nodes.new('ShaderNodeVectorMath')
+        dot.operation = 'DOT_PRODUCT'
+        links.new(bevel.outputs['Normal'], dot.inputs[0])
+        links.new(geom.outputs['Normal'], dot.inputs[1])
+        edge = math('MINIMUM', math('MULTIPLY', math('SUBTRACT', 1, dot.outputs['Value']), 10), EDGE_MAX)
+        mix = nodes.new('ShaderNodeMix')
+        mix.data_type = 'RGBA'
+        mix.blend_type = 'MIX'
+        links.new(edge, mix.inputs['Factor'])
+        links.new(colour, mix.inputs[6])
+        mix.inputs[7].default_value = (0.86, 0.88, 0.95, 1.0)
+        colour = mix.outputs[2]
     emission = nodes.new('ShaderNodeEmission')
     links.new(colour, emission.inputs['Color'])
     links.new(emission.outputs[0], output.inputs['Surface'])

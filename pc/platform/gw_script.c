@@ -341,9 +341,9 @@ static int gs_stage_overlay; /* gd.stage_view(_, true): the host-overlay debug s
 typedef struct {
     char path[MAX_PATH];
     unsigned char *mesh;
-    unsigned char *image;
-    int bytes;
-    GXTexObj texture;
+    unsigned char *image, *glow_image;
+    int bytes, stride, has_normals, has_glow;
+    GXTexObj texture, glow;
 } GsStageModel;
 static GsStageModel gs_stage_models[GS_STAGE_MODELS];
 static int gs_stage_nmodels;
@@ -4572,25 +4572,50 @@ extern void gw_GxTex_CopyImage(int h, void *dst);
 extern void gw_GxTex_Close(int h);
 static char *gs_read_file(const char *path, size_t *len);
 
-/* GXMS v1 is an indexed, one-material triangle list: 36-byte BE header, 20-byte BE
- * (x,y,z,u,v) vertices, then BE u16 indices. The renderer sends one GXBegin per platform.
+/* GXMS is an indexed, one-material triangle list: 36-byte BE header, then BE vertices -
+ * v1 20 bytes (x,y,z,u,v), v2 32 bytes (x,y,z,u,v,nx,ny,nz: corner normals, so the stage
+ * lights shade the deck, rim and underside) - then BE u16 indices. One GXBegin per platform.
  * Validate before handing host bytes to Aurora; malformed mod art must not make GX
  * walk outside an array. Texture bytes use the existing GXTX loader (gw_runtime.c). */
 static int gs_stage_mesh_valid(const unsigned char *p, size_t n) {
-    uint32_t nv, ni, vo, io, i;
-    if (n < 36 || memcmp(p, "GXMS", 4) != 0 || gw_r32(p + 4) != 1) return 0;
+    uint32_t nv, ni, vo, io, i, ver, stride;
+    if (n < 36 || memcmp(p, "GXMS", 4) != 0) return 0;
+    ver = gw_r32(p + 4);
+    if (ver != 1 && ver != 2) return 0;
+    stride = ver == 2 ? 32u : 20u;
     nv = gw_r32(p + 8); ni = gw_r32(p + 12);
     vo = gw_r32(p + 28); io = gw_r32(p + 32);
     if (nv < 3 || nv > 65535 || ni < 3 || ni > 65535 || ni % 3 ||
-        vo != 36 || io != vo + nv * 20u || (uint64_t)io + ni * 2u != n ||
+        vo != 36 || io != vo + nv * stride || (uint64_t)io + ni * 2u != n ||
         !isfinite(gw_rf32(p + 16)) || gw_rf32(p + 16) <= 0.0f ||
         !isfinite(gw_rf32(p + 20)) || gw_rf32(p + 20) <= 0.0f ||
         !isfinite(gw_rf32(p + 24)) || gw_rf32(p + 24) <= 0.0f) return 0;
-    for (i = 0; i < nv * 5u; ++i)
+    for (i = 0; i < nv * (stride / 4u); ++i)
         if (!isfinite(gw_rf32(p + vo + i * 4u))) return 0;
     for (i = 0; i < ni; ++i)
         if (gw_r16(p + io + i * 2u) >= nv) return 0;
     return 1;
+}
+
+/* A GXTX RGBA8 image with its mip chain stored level after level: how many levels make up
+ * `size` bytes (0 = not a whole chain). */
+static int gs_stage_tex_levels(int w, int h, int size) {
+    int levels = 0, total = 0;
+    while (w >= 4 && h >= 4 && total < size && levels < 11) {
+        total += w * h * 4;
+        ++levels;
+        w >>= 1;
+        h >>= 1;
+    }
+    return total == size ? levels : 0;
+}
+
+static void gs_stage_tex_init(GXTexObj *obj, void *image, int w, int h, int size) {
+    const int levels = gs_stage_tex_levels(w, h, size);
+    GXInitTexObj(obj, image, (u16)w, (u16)h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP,
+                 levels > 1 ? GX_TRUE : GX_FALSE);
+    GXInitTexObjLOD(obj, levels > 1 ? GX_LIN_MIP_LIN : GX_LINEAR, GX_LINEAR, 0.0f,
+                    (float)(levels - 1), 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
 }
 
 /* Resolve models/ beside a script's main.lua, or at the mod root for scripts/main.lua.
@@ -4638,10 +4663,10 @@ static int gs_stage_model_open(lua_State *L, const char *name) {
         image_size = gw_GxTex_ImageSize(h);
         if (h < 0 || gw_GxTex_Format(h) != GX_TF_RGBA8 || w <= 0 || height <= 0 ||
             w > 4096 || height > 4096 || (w & 3) || (height & 3) ||
-            image_size != w * height * 4) {
+            gs_stage_tex_levels(w, height, image_size) < 1) {
             if (h >= 0) gw_GxTex_Close(h);
             free(mesh);
-            return luaL_error(L, "model %s needs a v1 RGBA8 .gxtex beside its .gxmesh", name);
+            return luaL_error(L, "model %s needs an RGBA8 .gxtex (with or without its mip chain) beside its .gxmesh", name);
         }
         image = (unsigned char *)malloc((size_t)image_size);
         if (image == NULL) {
@@ -4652,16 +4677,38 @@ static int gs_stage_model_open(lua_State *L, const char *name) {
         gw_GxTex_CopyImage(h, image);
         gw_GxTex_Close(h);
         i = gs_stage_nmodels++;
+        memset(&gs_stage_models[i], 0, sizeof gs_stage_models[i]);
         gs_stage_models[i].mesh = mesh;
         gs_stage_models[i].image = image;
         gs_stage_models[i].bytes = (int)len;
-        GXInitTexObj(&gs_stage_models[i].texture, image, (u16)w, (u16)height, GX_TF_RGBA8,
-                     GX_CLAMP, GX_CLAMP, GX_FALSE);
-        GXInitTexObjLOD(&gs_stage_models[i].texture, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f,
-                        0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+        gs_stage_models[i].has_normals = gw_r32(mesh + 4) == 2;
+        gs_stage_models[i].stride = gs_stage_models[i].has_normals ? 32 : 20;
+        gs_stage_tex_init(&gs_stage_models[i].texture, image, w, height, image_size);
+        {
+            /* <name>.glow.gxtex: the emissive lines, rim lights and core, added in a second TEV stage */
+            char glow_name[64];
+            int g, gw_, gh_, gsize;
+            snprintf(glow_name, sizeof glow_name, "%s.glow", name);
+            snprintf(path, sizeof path, "%s\\models", dir);
+            g = gw_GxTex_OpenAt(path, glow_name);
+            gw_ = g >= 0 ? gw_GxTex_Width(g) : 0; gh_ = g >= 0 ? gw_GxTex_Height(g) : 0;
+            gsize = g >= 0 ? gw_GxTex_ImageSize(g) : 0;
+            if (g >= 0 && gw_GxTex_Format(g) == GX_TF_RGBA8 && gw_ > 0 && gh_ > 0 && gw_ <= 4096 &&
+                gh_ <= 4096 && !(gw_ & 3) && !(gh_ & 3) && gs_stage_tex_levels(gw_, gh_, gsize) >= 1 &&
+                (gs_stage_models[i].glow_image = (unsigned char *)malloc((size_t)gsize)) != NULL) {
+                gw_GxTex_CopyImage(g, gs_stage_models[i].glow_image);
+                gs_stage_tex_init(&gs_stage_models[i].glow, gs_stage_models[i].glow_image, gw_, gh_, gsize);
+                gs_stage_models[i].has_glow = 1;
+            }
+            if (g >= 0) gw_GxTex_Close(g);
+        }
+        if (snprintf(path, sizeof path, "%s\\models\\%s.gxmesh", dir, name) >= (int)sizeof path) path[0] = 0;
         snprintf(gs_stage_models[i].path, sizeof gs_stage_models[i].path, "%s", path);
-        gw_log("script stage: model %s loaded (%u vertices, %u indices, %dx%d atlas)", path,
-               gw_r32(mesh + 8), gw_r32(mesh + 12), w, height);
+        gw_log("script stage: model %s loaded (GXMS v%u: %u vertices, %u indices, %s; %dx%d atlas, %d mip level(s)%s)",
+               path, gw_r32(mesh + 4), gw_r32(mesh + 8), gw_r32(mesh + 12),
+               gs_stage_models[i].has_normals ? "lit" : "unlit", w, height,
+               gs_stage_tex_levels(w, height, image_size),
+               gs_stage_models[i].has_glow ? ", glow atlas" : "");
         return i + 1;
     }
     return luaL_error(L, "model %s not found in this mod's models/ directory", name);
@@ -4721,36 +4768,89 @@ void gw_Script_StageModelDraw(int model, const void *game_view, float x0, float 
 
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
+    if (art->has_normals) GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
     GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    if (art->has_normals) GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     GXSetNumTexGens(1);
     GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
     GXSetNumIndStages(0);
-    GXSetNumTevStages(1);
-    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
-    GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
-    GXSetNumChans(0);
+    if (art->has_normals) {
+        /* One key light from above and in front, plus a cool ambient: Melee's stage lights are
+           not reachable from here, and a fixed key keeps the deck bright, the rim lit and the
+           underside in shadow at every camera angle. Directions are in eye space. */
+        GXLightObj light;
+        float lx = 0.25f, ly = 1.0f, lz = 0.55f, ex, ey, ez, n;
+        ex = view[0][0] * lx + view[0][1] * ly + view[0][2] * lz;
+        ey = view[1][0] * lx + view[1][1] * ly + view[1][2] * lz;
+        ez = view[2][0] * lx + view[2][1] * ly + view[2][2] * lz;
+        n = sqrtf(ex * ex + ey * ey + ez * ez);
+        if (n > 0.0f) { ex /= n; ey /= n; ez /= n; }
+        GXInitLightPos(&light, ex * 100000.0f, ey * 100000.0f, ez * 100000.0f);
+        GXInitLightColor(&light, (GXColor){ 235, 235, 240, 255 });
+        GXInitLightAttn(&light, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+        GXLoadLightObjImm(&light, GX_LIGHT0);
+        GXSetNumChans(1);
+        GXSetChanCtrl(GX_COLOR0A0, GX_TRUE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT0, GX_DF_CLAMP, GX_AF_NONE);
+        GXSetChanAmbColor(GX_COLOR0A0, (GXColor){ 92, 96, 112, 255 });
+        GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 255, 255, 255, 255 });
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    } else {
+        GXSetNumChans(0);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
+        GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+    }
+    if (art->has_glow) {
+        /* the emissive lines, rim lights and core, added on top unlit: prev + glow */
+        GXSetNumTevStages(2);
+        GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR_NULL);
+        GXSetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_TEXC, GX_CC_ONE, GX_CC_CPREV);
+        GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXSetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+        GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        GXLoadTexObj((GXTexObj *)&art->glow, GX_TEXMAP1);
+    } else {
+        GXSetNumTevStages(1);
+    }
     GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetCullMode(GX_CULL_NONE);
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     GXSetCurrentMtx(GX_PNMTX0);
     GXLoadPosMtxImm(mv, GX_PNMTX0);
-    GXSetArray(GX_VA_POS, mesh + voff, (u32)art->bytes - voff, 20, false);
-    GXSetArray(GX_VA_TEX0, mesh + voff + 12, (u32)art->bytes - voff - 12, 20, false);
+    if (art->has_normals) {
+        /* the normal matrix: view rotation x (local rotation, X divided by the width scale) */
+        float ln[3][3], nm[3][4];
+        ln[0][0] = ux / sx; ln[0][1] = -uy; ln[0][2] = 0.0f;
+        ln[1][0] = uy / sx; ln[1][1] = ux; ln[1][2] = 0.0f;
+        ln[2][0] = 0.0f; ln[2][1] = 0.0f; ln[2][2] = 1.0f;
+        for (r = 0; r < 3; ++r) {
+            for (c = 0; c < 3; ++c)
+                nm[r][c] = view[r][0] * ln[0][c] + view[r][1] * ln[1][c] + view[r][2] * ln[2][c];
+            nm[r][3] = 0.0f;
+        }
+        GXLoadNrmMtxImm(nm, GX_PNMTX0);
+    }
+    GXSetArray(GX_VA_POS, mesh + voff, (u32)art->bytes - voff, (u8)art->stride, false);
+    GXSetArray(GX_VA_TEX0, mesh + voff + 12, (u32)art->bytes - voff - 12, (u8)art->stride, false);
+    if (art->has_normals)
+        GXSetArray(GX_VA_NRM, mesh + voff + 20, (u32)art->bytes - voff - 20, (u8)art->stride, false);
     GXLoadTexObj((GXTexObj *)&art->texture, GX_TEXMAP0);
     idx = mesh + ioff;
     GXBegin(GX_TRIANGLES, GX_VTXFMT0, (u16)count);
     for (k = 0; k < count; ++k) {
         u16 v = gw_r16(idx + k * 2);
         GXPosition1x16(v);
+        if (art->has_normals) GXNormal1x16(v);
         GXTexCoord1x16(v);
     }
     GXEnd();
     if (!gs_stage_model_draw_seen[model - 1]) {
         gs_stage_model_draw_seen[model - 1] = 1;
-        gw_log("script stage: model %d first world draw (%u triangles)", model, count / 3);
+        gw_log("script stage: model %d first world draw (%u triangles, %s%s, 1 draw)", model, count / 3,
+               art->has_normals ? "lit" : "unlit", art->has_glow ? " + glow stage" : "");
     }
 }
 

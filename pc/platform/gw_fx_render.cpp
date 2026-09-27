@@ -621,13 +621,15 @@ void frame_dir(const fx_inst& in, const float v[3], float o[3]) {
 
 void particle_data(const fx_emitter& e, const fx_part& q, const fx_inst& in, const float (*view)[4], GpuP& o) {
   const float t = q.life > 0 ? float(q.age) / float(q.life) : 0.0f;
-  o.p0[0] = q.pos[0];
-  o.p0[1] = q.pos[1];
-  o.p0[2] = q.pos[2];
-  o.p0[3] = e.scale[0] * curve(e.scale_keys, t, 0) * q.scale;
-  o.p1[0] = e.scale[1] * curve(e.scale_keys, t, 1) * q.scale;
+  // the simulation's per-particle visual state (gw_fx.c fx_visual_update: wave offset / scale, curve loops,
+  // fade in / on stop, colour x HDR scale, the flipbook cell)
+  o.p0[0] = q.visual_pos[0];
+  o.p0[1] = q.visual_pos[1];
+  o.p0[2] = q.visual_pos[2];
+  o.p0[3] = q.visual_scale[0];
+  o.p1[0] = q.visual_scale[1];
   o.p1[1] = q.rot;
-  o.p1[2] = curve(e.param, t, 0);
+  o.p1[2] = q.visual_param;
   o.p1[3] = 0.0f;
   {
     // facing: 0 camera billboard (above), 1 an oriented quad, 2 a mesh instance; the axes carry the size
@@ -678,35 +680,21 @@ void particle_data(const fx_emitter& e, const fx_part& q, const fx_inst& in, con
     for (int k = 0; k < 3; ++k) { o.ax[k] = X[k]; o.ay[k] = Y[k]; o.az[k] = Z[k]; }
     o.ax[3] = o.ay[3] = o.az[3] = 0.0f;
   }
-  for (int c = 0; c < 3; ++c) {
-    o.c0[c] = curve(e.color0, t, c) * e.color_scale;
-    o.c1[c] = curve(e.color1, t, c) * e.color_scale;
+  for (int c = 0; c < 4; ++c) {
+    o.c0[c] = q.visual_color0[c];
+    o.c1[c] = q.visual_color1[c];
   }
-  o.c0[3] = curve(e.alpha0, t, 0);
-  o.c1[3] = curve(e.alpha1, t, 0);
   const float age = float(q.age);
   for (int k = 0; k < FX_SAMPLERS; ++k) {
     const fx_sampler& s = e.smp[k];
-    o.a[k][0] = s.scroll[0] + (s.en_scroll ? s.scroll_add[0] * age : 0.0f);
-    o.a[k][1] = s.scroll[1] + (s.en_scroll ? s.scroll_add[1] * age : 0.0f);
-    o.a[k][2] = s.scale[0] + (s.en_scale ? s.scale_add[0] * age : 0.0f);
-    o.a[k][3] = s.scale[1] + (s.en_scale ? s.scale_add[1] * age : 0.0f);
-    o.b[k][0] = s.rotate + (s.en_rotate ? s.rotate_add * age : 0.0f);
-    int idx = 0;
-    const int n = s.pattern_count > 0 ? s.pattern_count : 1;
-    switch (s.pattern) {
-    case FX_PAT_FIT_LIFE: idx = int(t * n); break;
-    case FX_PAT_CLAMP: idx = int(age / (s.pattern_freq > 0 ? s.pattern_freq : 1.0f)); break;
-    case FX_PAT_LOOP: idx = int(age / (s.pattern_freq > 0 ? s.pattern_freq : 1.0f)) % n; break;
-    case FX_PAT_RANDOM: idx = int(q.seed % uint32_t(n)); break;
-    default: idx = 0; break;
-    }
-    if (idx >= n) idx = n - 1;
-    if (idx < 0) idx = 0;
-    const int cell = s.pattern != FX_PAT_NONE && idx < s.table_n ? s.table[idx] : idx;
-    const int cols = s.div[0] > 0 ? s.div[0] : 1, rows = s.div[1] > 0 ? s.div[1] : 1;
-    o.b[k][1] = float(cell % cols) / float(cols);
-    o.b[k][2] = float((cell / cols) % rows) / float(rows);
+    // the particle's own initial UV (the sampler's value + its seeded random), then the per-frame adds
+    o.a[k][0] = q.uv_scroll[k][0] + (s.en_scroll ? s.scroll_add[0] * age : 0.0f);
+    o.a[k][1] = q.uv_scroll[k][1] + (s.en_scroll ? s.scroll_add[1] * age : 0.0f);
+    o.a[k][2] = q.uv_scale[k][0] + (s.en_scale ? s.scale_add[0] * age : 0.0f);
+    o.a[k][3] = q.uv_scale[k][1] + (s.en_scale ? s.scale_add[1] * age : 0.0f);
+    o.b[k][0] = q.uv_rotate[k] + (s.en_rotate ? s.rotate_add * age : 0.0f);
+    o.b[k][1] = q.pattern_uv[k][0];
+    o.b[k][2] = q.pattern_uv[k][1];
     o.b[k][3] = 0.0f;
   }
 }

@@ -1390,7 +1390,11 @@ static void sn_mark_window(void);
  * scene-loop tick, and so can a rollback session. Returns 0 on success.
  *   MELEE_SNAP_MODE=full|dirty   dirty (default): write-watch dirty pages; full: copy all of MEM1
  *   MELEE_SNAP_VERIFY=1          after every dirty save/load, memcmp live against the slot
- *   MELEE_SNAP_HASH=0            do not hash at save time (gw_snap_hash() is still callable) */
+ *   MELEE_SNAP_HASH=1            hash the whole state at every save (gw_Snap_Checksum's fast path). Off by default
+ *                                since 2026-09-26: nothing in a session reads it (netplay's and the Lab's desync
+ *                                checks use the curated gameplay hash, gw_rb_checksum) and it was 13-23 % of the
+ *                                game thread in a rollback storm; gw_Snap_Checksum still answers, by hashing the
+ *                                slot (the full-copy path). */
 int gw_snap_open(int k) {
     int i;
     const char *v;
@@ -1420,7 +1424,7 @@ int gw_snap_open(int k) {
     v = getenv("MELEE_SNAP_VERIFY");
     sn.verify = sn.dirty_mode && v != NULL && v[0] == '1';
     v = getenv("MELEE_SNAP_HASH");
-    sn.hash_on = sn.dirty_mode && !(v != NULL && v[0] == '0');
+    sn.hash_on = sn.dirty_mode && v != NULL && v[0] == '1';
     for (i = 0; i < sn.nslots; ++i) {
         sn.slot[i].frame = -0x7FFFFFFF - 1;
         sn.slot[i].mem1 = (uint8_t *) malloc(gw_mem1_size);

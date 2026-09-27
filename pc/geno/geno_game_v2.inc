@@ -414,6 +414,14 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
     st->enter_from = from;
     st->enter_keep = (target & GENO_TGT_KEEP_FRAME) != 0;
     Geno_Event(16, fp->kind, fp->player_id, s, from);
+    /* Melee's own attacks clear Allow Interrupt on entry (ftCo_Attack1.c, ftCo_AppealS.c); the flag
+       is not part of ChangeMotionState's resets. Without this an IASA left set by the previous state
+       (Sora's whiffed counter reaching its cancel frame, then Wait) makes an "interrupt" state
+       interruptible from its first frame: the held down-B stick crouched out of the next LwStart.
+       A KEEP_FRAME swap (the same move's ground / air version) keeps it. */
+    if (!st->enter_keep) {
+        fp->allow_interrupt = false;
+    }
     if (geno_test_capture) {
         geno_test_target = target;
         geno_test_changes++;

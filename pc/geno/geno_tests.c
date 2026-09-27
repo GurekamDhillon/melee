@@ -1144,6 +1144,13 @@ static int test_geno_v2_change_to_state(void)
         TestFail("specials.air_s defaults to specials.s -> Drill");
         rc = 1;
     }
+    /* a stale Allow Interrupt from the previous state must not carry into the entered state */
+    t_fp.motion_id = 14;
+    t_fp.allow_interrupt = true;
+    if (Geno_SpecialEnter(&t_gobj, GENO_SP_N) != 1 || t_fp.allow_interrupt) {
+        TestFail("entering a Geno state must clear Allow Interrupt (a whiffed counter's IASA crouched out of the next one)");
+        rc = 1;
+    }
     if (Geno_SpecialEnter(&t_gobj, GENO_SP_HI) != 0) {
         TestFail("an unbound special must be left to the fighter's own code");
         rc = 1;

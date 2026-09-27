@@ -71,7 +71,7 @@ uint32_t gw_aram_size;
  * (shim_os.c) so gmmain.c does not withhold the extra the way a 48 MB kit does. Snapshots store
  * pages, not whole MEM1 copies (gw_snap.c), so the size costs rollback and the Lab little. */
 #define GW_MEM1_SIZE (40u * 1024u * 1024u)
-#define GW_ARAM_SIZE (16u * 1024u * 1024u)
+#define GW_ARAM_SIZE (32u * 1024u * 1024u) /* AllA's extra 16 MB, lbheap.c */
 
 /* Nonzero when MEM1 was allocated with MEM_WRITE_WATCH (gw_snap.c's dirty-page savestates use
  * GetWriteWatch/ResetWriteWatch on it). Tracking is free - the CPU's own dirty bits - and a
@@ -2242,8 +2242,22 @@ int gw_SceneLaunch_OnePDirect(int game_mode) {
 }
 
 int gw_SceneLaunch_OnePStep(void) {
+  int step, max_step;
   gw_sl_load();
-  return gw_sl_cfg.onep_step < 0 ? 0 : gw_sl_cfg.onep_step;
+  step = gw_sl_cfg.onep_step < 0 ? 0 : gw_sl_cfg.onep_step;
+  /* gm_Mode_*_States: Classic 0..10, Adventure 0..11, All-Star 0..12.
+   * The next state IDs are the mode's completion/coming-soon or CSS states. */
+  switch (gw_sl_cfg.game_mode) {
+    case 0x03: max_step = 10; break;
+    case 0x04: max_step = 11; break;
+    case 0x05: max_step = 12; break;
+    default: return step;
+  }
+  if (step > max_step) {
+    gw_log("gw: scene: mode %d step %d clamped to %d", gw_sl_cfg.game_mode, step, max_step);
+    return max_step;
+  }
+  return step;
 }
 
 int gw_SceneLaunch_OnePLevel(void) {

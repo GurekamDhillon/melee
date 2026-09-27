@@ -156,6 +156,10 @@
  * @see #ckind_to_selkind_map
  */
 /* 164024 */ u8 gm_CKindToSelKind(u8 ckind);
+#if defined(TARGET_PC)
+/* Retail table index for an m-ex FighterKind or CharacterKind. */
+int gm_MexVanillaKind(int kind, int character_kind);
+#endif
 
 /* 16403C */ bool gm_8016403C(u8 item);
 /* 1640B0 */ void fn_801640B0(u64* item_mask);

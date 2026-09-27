@@ -1,6 +1,6 @@
 /* AR/ARQ shims: the audio RAM and its DMA queue.
  *
- * The port's ARAM is a real 16 MB buffer at low addresses (gw_aram), so the game's
+ * The port's ARAM is a real 32 MB buffer at low addresses (gw_aram), so the game's
  * "< 0x80000000 means ARAM" rule keeps working and an ARQ transfer is a plain memcpy between the
  * two address spaces.
  *

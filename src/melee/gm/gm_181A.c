@@ -3,6 +3,7 @@
 #include <sysdolphin/baselib/forward.h>
 
 #include "forward.h"
+#include "gm_1601.h"
 #include "gm_unsplit.h"
 #include "gmmain_lib.h"
 #include "gmregclear.h"
@@ -149,6 +150,10 @@ void gm_80181A44(int c_kind, int arg1, bool arg2)
 {
     RecordBlock* base = lbl_803D8D08;
 
+#if defined(TARGET_PC)
+    c_kind = gm_MexVanillaKind(c_kind, 1);
+#endif
+
     switch (arg1) {
     case 0x21:
         base[0].icons[c_kind] = arg2;
@@ -175,6 +180,10 @@ void gm_80181AC8(int c_kind, int arg1, u16 arg2)
 {
     RecordBlock* base = lbl_803D8D08;
 
+#if defined(TARGET_PC)
+    c_kind = gm_MexVanillaKind(c_kind, 1);
+#endif
+
     switch (arg1) {
     case 0x21:
         base[0].times[c_kind] = arg2;
@@ -200,6 +209,10 @@ void gm_80181AC8(int c_kind, int arg1, u16 arg2)
 void gm_80181B64(int c_kind, int arg1, s32 arg2)
 {
     RecordBlock* base = lbl_803D8D08;
+
+#if defined(TARGET_PC)
+    c_kind = gm_MexVanillaKind(c_kind, 1);
+#endif
 
     switch (arg1) {
     case 0x21:
@@ -627,6 +640,9 @@ static inline u16 gm_80182578_GetTimeFromData(RegClearRecordOverlay* data)
 static inline int gm_80182578_GetRecordTime(RecordBlock* blocks, int idx,
                                             int mode)
 {
+#if defined(TARGET_PC)
+    idx = gm_MexVanillaKind(idx, 1);
+#endif
     switch (mode) {
     case 33:
         return blocks[0].times[idx];
@@ -648,6 +664,9 @@ static inline int gm_80182578_GetRecordTime(RecordBlock* blocks, int idx,
 static inline u32 gm_80182578_GetRecordScore(RecordBlock* blocks, int idx,
                                              int mode)
 {
+#if defined(TARGET_PC)
+    idx = gm_MexVanillaKind(idx, 1);
+#endif
     switch (mode) {
     case 33:
         return blocks[0].scores[idx];
@@ -674,6 +693,9 @@ static inline int gm_80182578_GetIndexFromPointer(const int* idx_ptr)
 static inline void gm_80182578_SetTime(RecordBlock* blocks, int idx, int mode,
                                        u16 value)
 {
+#if defined(TARGET_PC)
+    idx = gm_MexVanillaKind(idx, 1);
+#endif
     switch (mode) {
     case 33:
         blocks[0].times[idx] = value;
@@ -712,6 +734,9 @@ void gm_80182578(void)
     blocks = lbl_803D8D08;
     mode = REGCLEAR_RECORD.x8;
     idx = gm_80182578_GetIndexFromPointer(idx_ptr);
+#if defined(TARGET_PC)
+    idx = gm_MexVanillaKind(idx, 1);
+#endif
     time_val = gm_80182578_GetRecordTime(blocks, idx, mode);
 
     score_val = gm_80182578_GetRecordScore(blocks, idx, mode);
@@ -727,7 +752,7 @@ void gm_80182578(void)
         if (REGCLEAR_RECORD.x0 != 0) {
             u32 score_store = (u32) REGCLEAR_RECORD.x4;
             if (score_store < score_val) {
-                int i = gm_80182578_GetIndexFromPointer(idx_ptr);
+                int i = idx;
                 int m = *mode_ptr;
                 switch (m) {
                 case 33:
@@ -772,7 +797,7 @@ void gm_80182578(void)
                 gm_80182578_SetTime(blocks, i, m, REGCLEAR_RECORD.x2);
             }
         } else if ((s32) REGCLEAR_RECORD.x2 > (s32) time_val && mode == 0) {
-            int i = *idx_ptr;
+            int i = idx;
             int m = *mode_ptr;
             switch (m) {
             case 33:
@@ -884,6 +909,9 @@ static inline u32 fn_80182B5C_GetScore(RecordBlock* blocks,
 {
     int idx = REGCLEAR_RECORD.xC;
     int mode = REGCLEAR_RECORD.x8;
+#if defined(TARGET_PC)
+    idx = gm_MexVanillaKind(idx, 1);
+#endif
 
     switch (mode) {
     case 33:
@@ -908,6 +936,9 @@ static inline int fn_80182B5C_GetTime(RecordBlock* blocks,
 {
     int idx = REGCLEAR_RECORD.xC;
     int mode = REGCLEAR_RECORD.x8;
+#if defined(TARGET_PC)
+    idx = gm_MexVanillaKind(idx, 1);
+#endif
 
     switch (mode) {
     case 33:
@@ -935,6 +966,10 @@ void fn_80182B5C(void)
     int idx = REGCLEAR_RECORD.xC;
     u32 score;
     int mode = REGCLEAR_RECORD.x8;
+
+#if defined(TARGET_PC)
+    idx = gm_MexVanillaKind(idx, 1);
+#endif
 
     time = fn_80182B5C_GetTime(blocks, data);
     score = fn_80182B5C_GetScore(blocks, data);
@@ -986,6 +1021,10 @@ UnkMultimanData* gm_80182DF0(int c_kind, int arg1)
 {
     UnkMultimanData* result = &lbl_804D65E0;
     RecordBlock* base = lbl_803D8D08;
+
+#if defined(TARGET_PC)
+    c_kind = gm_MexVanillaKind(c_kind, 1);
+#endif
 
     switch (arg1) {
     case 33:

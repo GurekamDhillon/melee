@@ -189,24 +189,33 @@ void HSD_GObj_80390FC0(void)
     HSD_GObj* saved;
     HSD_GObj* cur = HSD_GObjGXLinkHead[HSD_GObjLibInitData.gx_link_max + 1];
     while (cur != NULL) {
-        if (cur->render_cb != NULL) {
+#if defined(TARGET_PC)
+        /* The Classic step-7 splash installs max-link render objects. Use the
+         * callback tested at the start of this iteration: a second load at the
+         * call site called address 0 in the archived IntroEasy frame trace. */
+        GObj_RenderFunc render_cb = cur->render_cb;
+        if (render_cb != NULL) {
             saved = HSD_GObj_804D7818;
             HSD_GObj_804D7818 = cur;
-#if defined(TARGET_PC)
             {
                 extern void Snap_CbTime(void* cb, int begin);
                 extern int Snap_SkipRenderCb(void* cb);
-                if (!Snap_SkipRenderCb((void*) cur->render_cb)) {
-                    Snap_CbTime((void*) cur->render_cb, 1);
-                    cur->render_cb(cur, 0);
-                    Snap_CbTime((void*) cur->render_cb, 0);
+                if (!Snap_SkipRenderCb((void*) render_cb)) {
+                    Snap_CbTime((void*) render_cb, 1);
+                    render_cb(cur, 0);
+                    Snap_CbTime((void*) render_cb, 0);
                 }
             }
-#else
-            cur->render_cb(cur, 0);
-#endif
             HSD_GObj_804D7818 = saved;
         }
+#else
+        if (cur->render_cb != NULL) {
+            saved = HSD_GObj_804D7818;
+            HSD_GObj_804D7818 = cur;
+            cur->render_cb(cur, 0);
+            HSD_GObj_804D7818 = saved;
+        }
+#endif
         cur = cur->next_gx;
     }
 }

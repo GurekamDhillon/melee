@@ -2180,6 +2180,12 @@ void ftData_80085A14(FighterKind kind)
 
     if (ftData_Table_Unk0[kind].data == NULL) {
         lbFile_800168A0(1, ftData_803C23E4[kind], &sp18, &sp10);
+#if defined(TARGET_PC)
+        /* Heap 5 (AllA) holds whole animation archives; this identifies the
+         * files behind a multi-fighter preload's heap report. */
+        OSReport("AllA anim: kind %d file %s size 0x%X\n", (int) kind,
+                 ftData_803C23E4[kind], (unsigned int) sp10);
+#endif
         a_head = sp18;
         HSD_ASSERT(0x974, a_head);
         for (i = 0; i < (u32) ftData_Table_Unk0[kind].count; i++) {

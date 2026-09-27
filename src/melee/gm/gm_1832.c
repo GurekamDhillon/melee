@@ -36,6 +36,21 @@
 #include <sysdolphin/baselib/util.h>
 #include <sysdolphin/baselib/wobj.h>
 
+#if defined(TARGET_PC)
+/* GmIntEz.dat's character rows are retail only. The intro still loads the
+ * actual m-ex fighter; only layout coordinates and scale use the host row. */
+#define INTRO_TABLE_CK(ck) gm_MexVanillaKind((ck), 1)
+static int gm_IntroTeamRow(int ckind)
+{
+    int row = INTRO_TABLE_CK(ckind);
+    return (u32) row < 25 ? row : CKind_Mario; /* GmIntEz x37C has 25 rows */
+}
+#define INTRO_TEAM_CK(ck) gm_IntroTeamRow(ck)
+#else
+#define INTRO_TABLE_CK(ck) (ck)
+#define INTRO_TEAM_CK(ck) (ck)
+#endif
+
 static struct {
     int x0;
     HSD_JObj* x4[13];
@@ -181,38 +196,38 @@ void fn_8018325C(HSD_GObj* arg0, int arg1)
 
     if (lbl_8047368C.model_scale_kind == 2) {
         HSD_JObjAddTranslationX(
-            jobj, lbl_804D6604->x6A8[lbl_8047368C.xF1[arg1]].x00 -
+            jobj, lbl_804D6604->x6A8[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x00 -
                       lbl_804D6604->x630[lbl_8047368C.xEF].vals[arg1]);
         HSD_JObjAddTranslationY(
-            jobj, lbl_804D6604->x6A8[lbl_8047368C.xF1[arg1]].x04 +
+            jobj, lbl_804D6604->x6A8[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x04 +
                       lbl_804D6604->x654[lbl_8047368C.xEF].vals[arg1]);
 
         HSD_JObjSetScaleX(jobj,
-                          lbl_804D6604->x6A8[lbl_8047368C.xF1[arg1]].x08.x *
+                          lbl_804D6604->x6A8[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x08.x *
                               lbl_804D6604->x678[lbl_8047368C.xEF].vals[arg1]);
         HSD_JObjSetScaleY(jobj,
-                          lbl_804D6604->x6A8[lbl_8047368C.xF1[arg1]].x08.y *
+                          lbl_804D6604->x6A8[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x08.y *
                               lbl_804D6604->x678[lbl_8047368C.xEF].vals[arg1]);
         HSD_JObjSetScaleZ(jobj,
-                          lbl_804D6604->x6A8[lbl_8047368C.xF1[arg1]].x08.z *
+                          lbl_804D6604->x6A8[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x08.z *
                               lbl_804D6604->x678[lbl_8047368C.xEF].vals[arg1]);
     } else {
         HSD_JObjAddTranslationX(
-            jobj, lbl_804D6604->x6C[lbl_8047368C.xF1[arg1]].x00 -
+            jobj, lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x00 -
                       lbl_804D6604->x00[lbl_8047368C.xEF - 1].vals[arg1]);
 
         HSD_JObjAddTranslationY(
-            jobj, lbl_804D6604->x6C[lbl_8047368C.xF1[arg1]].x04 +
+            jobj, lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x04 +
                       lbl_804D6604->x18[lbl_8047368C.xEF].vals[arg1]);
 
         HSD_JObjSetScaleX(jobj,
-                          lbl_804D6604->x6C[lbl_8047368C.xF1[arg1]].x08.x *
+                          lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x08.x *
                               lbl_804D6604->x3C[lbl_8047368C.xEF].vals[arg1]);
         HSD_JObjSetScaleY(jobj,
-                          lbl_804D6604->x6C[lbl_8047368C.xF1[arg1]].x08.y *
+                          lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x08.y *
                               lbl_804D6604->x3C[lbl_8047368C.xEF].vals[arg1]);
         HSD_JObjSetScaleZ(jobj,
-                          lbl_804D6604->x6C[lbl_8047368C.xF1[arg1]].x08.z *
+                          lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF1[arg1])].x08.z *
                               lbl_804D6604->x3C[lbl_8047368C.xEF].vals[arg1]);
     }
 
@@ -246,19 +261,19 @@ void fn_80184138(HSD_GObj* arg0, int arg1)
     HSD_JObjSetTranslate(jobj, &pos);
 
     if (lbl_8047368C.model_scale_kind == 2) {
-        scl = lbl_804D6604->x37C[lbl_8047368C.xF4[arg1]].x08;
+        scl = lbl_804D6604->x37C[INTRO_TEAM_CK(lbl_8047368C.xF4[arg1])].x08;
     } else {
         scl = 1.0f;
     }
 
     if (lbl_8047368C.model_scale_kind == 2) {
-        xoff = lbl_804D6604->x37C[lbl_8047368C.xF4[arg1]].x00;
+        xoff = lbl_804D6604->x37C[INTRO_TEAM_CK(lbl_8047368C.xF4[arg1])].x00;
     } else {
         xoff = 0.0f;
     }
 
     if (lbl_8047368C.model_scale_kind == 2) {
-        yoff = lbl_804D6604->x37C[lbl_8047368C.xF4[arg1]].x04;
+        yoff = lbl_804D6604->x37C[INTRO_TEAM_CK(lbl_8047368C.xF4[arg1])].x04;
     } else {
         yoff = 0.0f;
     }
@@ -268,29 +283,29 @@ void fn_80184138(HSD_GObj* arg0, int arg1)
     }
 
     HSD_JObjAddTranslationX(
-        jobj, xoff + (-lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x00 +
+        jobj, xoff + (-lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x00 +
                       lbl_804D6604->x00[lbl_8047368C.xF0 - 1].vals[arg1]));
 
     HSD_JObjAddTranslationY(
-        jobj, yoff + (lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x04 +
+        jobj, yoff + (lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x04 +
                       lbl_804D6604->x18[lbl_8047368C.xF0].vals[arg1]));
 
     if (lbl_8047368C.model_scale_kind == 2) {
         HSD_JObjSetScaleX(
-            jobj, lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x08.x * scl);
+            jobj, lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x08.x * scl);
         HSD_JObjSetScaleY(
-            jobj, lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x08.y * scl);
+            jobj, lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x08.y * scl);
         HSD_JObjSetScaleZ(
-            jobj, lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x08.z * scl);
+            jobj, lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x08.z * scl);
     } else {
         HSD_JObjSetScaleX(jobj,
-                          lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x08.x *
+                          lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x08.x *
                               lbl_804D6604->x3C[lbl_8047368C.xF0].vals[arg1]);
         HSD_JObjSetScaleY(jobj,
-                          lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x08.y *
+                          lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x08.y *
                               lbl_804D6604->x3C[lbl_8047368C.xF0].vals[arg1]);
         HSD_JObjSetScaleZ(jobj,
-                          lbl_804D6604->x6C[lbl_8047368C.xF4[arg1]].x08.z *
+                          lbl_804D6604->x6C[INTRO_TABLE_CK(lbl_8047368C.xF4[arg1])].x08.z *
                               lbl_804D6604->x3C[lbl_8047368C.xF0].vals[arg1]);
     }
 
@@ -550,7 +565,7 @@ s32 fn_801851C0(void)
         Player_SetSlottype(result, Gm_PKind_Demo);
         Player_SetFacingDirection(result, 0.0f);
         Player_SetCostumeId(result, i);
-        pos = gm_1832_CharOffset[lbl_8047368C.xF4[0]];
+        pos = gm_1832_CharOffset[INTRO_TABLE_CK(lbl_8047368C.xF4[0])];
         Player_80032768(result, &pos);
         if (lbl_8047368C.xF4[0] == 0xE) {
             pos.x += gm_1832_SamusOffset.x;
@@ -558,7 +573,7 @@ s32 fn_801851C0(void)
             pos.z += gm_1832_SamusOffset.z;
             Player_80032828(result, 1, &pos);
         }
-        Player_SetModelScale(result, gm_1832_CharScale[lbl_8047368C.xF4[0]]);
+        Player_SetModelScale(result, gm_1832_CharScale[INTRO_TABLE_CK(lbl_8047368C.xF4[0])]);
         Player_SetFlagsBit5(result, lbl_8047368C.x100[0]);
         Player_80037054(result, 6);
     }

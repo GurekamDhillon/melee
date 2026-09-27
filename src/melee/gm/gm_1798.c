@@ -63,12 +63,14 @@
  * really gmResultCharacterScaleData, gmResultCharacterData.slot_off, gmResultCameraDesc.
  * CharScaleEntry/CameraKindParams share the 0x30-byte layout, so the view is exact. */
 #define RESULT_CAM_KIND ((CameraKindParams*) gmResultCharacterScaleData)
-#if defined(TARGET_PC)
-/* The results per-character tables (scale, camera offsets) have 32 rows, retail's CharacterKinds.
- * An m-ex fighter past them (Sonic, 0x20) uses Mario's camera row - m-ex's own data makes its new
- * fighters Mario clones - and its size comes from mexData result_scale. */
-#define RESULT_TBL_KIND(k) ((u32) (k) < 32 ? (k) : CKind_Mario)
-#endif
+/* The results camera and scale tables have only 32 rows; retail Popo and
+ * sentinels also lie beyond them. */
+static int gmResult_TableKind(int kind)
+{
+    int row = gm_MexVanillaKind(kind, 1);
+    return (u32) row < 32 ? row : CKind_Mario;
+}
+#define RESULT_TBL_KIND(k) gmResult_TableKind(k)
 #define RESULT_CAM_SLOTOFF (gmResultCharacterData.slot_off)
 #define RESULT_CAM_DESC ((HSD_CObjDesc*) &gmResultCameraDesc)
 #else

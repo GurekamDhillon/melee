@@ -369,7 +369,11 @@ void lbMemory_8001564C(void)
     _p(a_arenaLo) = (void*) ARAlloc(0x20);
     ARFree(&freed_size);
     _p(a_arenaHi) =
+#if defined(TARGET_PC)
+        (void*) ARGetSize(); /* the port's ARAM is 32 MB (AllA's extra 16 MB, lbheap.c); no 16 MB cap */
+#else
         (void*) ((ARGetSize() > 0x01000000U) ? 0x01000000U : ARGetSize());
+#endif
 
     _p(free_mem) = (Handle*) &_p(x8_mem)[0];
     for (i = 0; i < (int) ARRAY_SIZE(_p(x8_mem)) - 1; i++) {

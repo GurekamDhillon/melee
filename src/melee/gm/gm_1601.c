@@ -478,6 +478,7 @@ u32 fn_80160400(CharacterKind ckind)
     if (mex >= 0) {
         return mex;
     }
+    ckind = gm_MexVanillaKind(ckind, 1);
 #endif
 
     while (true) {
@@ -503,15 +504,14 @@ char* gm_80160438(s32 ckind)
     s32 id;
 #if defined(TARGET_PC)
     /* Ported from m-ex: the results-screen file is mexData fighter.result_file[external id]
-     * (Sonic: GmRstMSn.dat). Retail's table has no entry past Roy, and a winner without one gets
-     * no results fighter - the winner camera then read a NULL fighter (user-found crash when
-     * Sonic won). */
+     * (Sonic: GmRstMSn.dat). If a mod supplies no result file, its retail host has a valid row. */
     {
         extern const char* Mex_ResultFileForPortCKind(int);
         const char* mex = Mex_ResultFileForPortCKind(ckind);
         if (mex != NULL) {
             return (char*) mex;
         }
+        ckind = gm_MexVanillaKind(ckind, 1);
     }
 #endif
 
@@ -530,6 +530,9 @@ char* gm_80160438(s32 ckind)
 
 bool gm_80160474(CharacterKind ckind, GameModeKind mode)
 {
+#if defined(TARGET_PC)
+    ckind = gm_MexVanillaKind(ckind, 1);
+#endif
     switch (mode) {
     case GM_CLASSIC_GOVER:
     case GM_CLASSIC:
@@ -545,6 +548,10 @@ bool gm_80160474(CharacterKind ckind, GameModeKind mode)
 char* gm_801604DC(CharacterKind ckind, GameModeKind mode)
 {
     int var_r3;
+
+#if defined(TARGET_PC)
+    ckind = gm_MexVanillaKind(ckind, 1);
+#endif
 
     switch (mode) {
     case GM_CLASSIC_GOVER:
@@ -565,6 +572,10 @@ char* gm_801604DC(CharacterKind ckind, GameModeKind mode)
 char* gm_80160564(CharacterKind ckind, GameModeKind mode)
 {
     int var_r3;
+
+#if defined(TARGET_PC)
+    ckind = gm_MexVanillaKind(ckind, 1);
+#endif
 
     switch (mode) {
     case GM_CLASSIC_GOVER:
@@ -731,6 +742,45 @@ u32 gm_80160854(u8 slot, u8 team, u8 is_teams, u8 slot_type)
  * what Popo's selkind reports (the Ice Climbers are a base-cast character). */
 #define GM_CK_TO_SELKIND(ck) \
     (GM_IS_MEX_CK(ck) ? ckind_to_selkind_map[ChKind_Popo] : ckind_to_selkind_map[ck])
+#define GM_NAME_TABLE_CK(ck) gm_MexVanillaKind((ck), 1)
+
+/* MxDt's slot maps to an internal id; Mex_FtBaseKind infers its retail host
+ * from the onLoad callback, as ftData_MexInitKinds does. Keep the m-ex kind
+ * everywhere except a retail table lookup. */
+int gm_MexVanillaKind(int kind, int character_kind)
+{
+    extern int Mex_InternalForPortKind(int fk);
+    extern int Mex_FtBaseKind(int internal);
+    int fk = character_kind ? kind - ChKind_Mex0 + Ft_Kind_Mex0 : kind;
+    int internal, base, ck;
+    if (character_kind ? (kind < ChKind_Mex0 || kind >= ChKind_Cap)
+                       : (kind < Ft_Kind_Mex0 || kind >= Ft_Kind_Max)) {
+        return kind;
+    }
+    internal = Mex_InternalForPortKind(fk);
+    if (internal < 0) {
+        return character_kind ? CKind_Mario : -1;
+    }
+    base = Mex_FtBaseKind(internal);
+    {
+        static u8 reported[FT_MEX_SLOT_COUNT];
+        int slot = fk - Ft_Kind_Mex0;
+        if (!reported[slot]) {
+            reported[slot] = 1;
+            OSReport("vanilla table kind: fkind %d internal %d uses host %d\n",
+                     fk, internal, base);
+        }
+    }
+    if (!character_kind) {
+        return base;
+    }
+    for (ck = 0; ck < ChKind_None; ck++) {
+        if (Player_800325C8((CharacterKind) ck, 0) == base) {
+            return ck;
+        }
+    }
+    return CKind_Mario;
+}
 
 /* An m-ex fighter's name, converted from MxDt's ASCII to the full-width forms the game's own name
  * strings use ("Sonic" -> "Ｓｏｎｉｃ"), which is what the menus' text code expects. */
@@ -766,6 +816,7 @@ static const char* gm_MexName(u8 ckind)
 }
 #else
 #define GM_CK_TO_SELKIND(ck) ckind_to_selkind_map[ck]
+#define GM_NAME_TABLE_CK(ck) (ck)
 #endif
 
 GXColor gm_80160968(u32 arg0)
@@ -796,13 +847,13 @@ const char* fn_801609E0(u8 ckind)
     }
 #endif
     if (lbLang_IsSavedLanguageUS()) {
-        if (lbl_803D50E4[ckind] != NULL) {
-            return lbl_803D50E4[ckind];
+        if (lbl_803D50E4[GM_NAME_TABLE_CK(ckind)] != NULL) {
+            return lbl_803D50E4[GM_NAME_TABLE_CK(ckind)];
         }
         return lbl_803D4FDC[ckind];
     } else {
-        if (lbl_803D5060[ckind] != NULL) {
-            return lbl_803D5060[ckind];
+        if (lbl_803D5060[GM_NAME_TABLE_CK(ckind)] != NULL) {
+            return lbl_803D5060[GM_NAME_TABLE_CK(ckind)];
         }
         return lbl_803D4D74[ckind];
     }
@@ -861,11 +912,11 @@ void gm_80160B40(HSD_Text* text, u8 ckind, u8 arg2)
     gm_80160B40_init_text(text, &tmp_text);
     str = arg2 ? fn_801609E0(tmp_ckind) : gm_80160980(tmp_ckind);
     if (lbLang_IsSavedLanguageUS()) {
-        bool tmp = arg2 && lbl_803D50E4[tmp_ckind] != NULL;
-        var_f31 = tmp ? lbl_803B7784[tmp_ckind] : lbl_803B767C[tmp_ckind];
+        bool tmp = arg2 && lbl_803D50E4[GM_NAME_TABLE_CK(tmp_ckind)] != NULL;
+        var_f31 = tmp ? lbl_803B7784[GM_NAME_TABLE_CK(tmp_ckind)] : lbl_803B767C[GM_NAME_TABLE_CK(tmp_ckind)];
     } else {
-        bool tmp = arg2 && lbl_803D5060[tmp_ckind] != NULL;
-        var_f31 = tmp ? lbl_803B7700[tmp_ckind] : lbl_803B75F8[tmp_ckind];
+        bool tmp = arg2 && lbl_803D5060[GM_NAME_TABLE_CK(tmp_ckind)] != NULL;
+        var_f31 = tmp ? lbl_803B7700[GM_NAME_TABLE_CK(tmp_ckind)] : lbl_803B75F8[GM_NAME_TABLE_CK(tmp_ckind)];
     }
     HSD_SisLib_803A6B98(tmp_text, 0.0F, 0.0F, str);
     tmp_text->font_size.x *= var_f31;
@@ -887,25 +938,25 @@ void gm_80160C90(HSD_Text* text, u8 fighter_id, u8 arg2)
     if (lbLang_IsSavedLanguageUS() != 0) {
         f32 temp;
         use_alt_name = false;
-        if (arg2 && lbl_803D50E4[tmp_ckind] != NULL) {
+        if (arg2 && lbl_803D50E4[GM_NAME_TABLE_CK(tmp_ckind)] != NULL) {
             use_alt_name = true;
         }
         if (use_alt_name) {
-            temp = lbl_803B7784[tmp_ckind];
+            temp = lbl_803B7784[GM_NAME_TABLE_CK(tmp_ckind)];
         } else {
-            temp = lbl_803B767C[tmp_ckind];
+            temp = lbl_803B767C[GM_NAME_TABLE_CK(tmp_ckind)];
         }
         size = temp;
     } else {
         f32 temp;
         use_alt_name = false;
-        if (arg2 && lbl_803D5060[tmp_ckind] != NULL) {
+        if (arg2 && lbl_803D5060[GM_NAME_TABLE_CK(tmp_ckind)] != NULL) {
             use_alt_name = true;
         }
         if (use_alt_name) {
-            temp = lbl_803B7700[tmp_ckind];
+            temp = lbl_803B7700[GM_NAME_TABLE_CK(tmp_ckind)];
         } else {
-            temp = lbl_803B75F8[tmp_ckind];
+            temp = lbl_803B75F8[GM_NAME_TABLE_CK(tmp_ckind)];
         }
         size = temp;
     }
@@ -931,25 +982,25 @@ void fn_80160DE8(HSD_JObj* arg0, u8 arg1, s32 arg2, u8 arg3, f32 farg0,
     if (lbLang_IsSavedLanguageUS() != 0) {
         f32 temp;
         use_alt_name = false;
-        if (arg3 && lbl_803D50E4[tmp_ckind] != NULL) {
+        if (arg3 && lbl_803D50E4[GM_NAME_TABLE_CK(tmp_ckind)] != NULL) {
             use_alt_name = true;
         }
         if (use_alt_name) {
-            temp = lbl_803B7784[tmp_ckind];
+            temp = lbl_803B7784[GM_NAME_TABLE_CK(tmp_ckind)];
         } else {
-            temp = lbl_803B767C[tmp_ckind];
+            temp = lbl_803B767C[GM_NAME_TABLE_CK(tmp_ckind)];
         }
         size = temp;
     } else {
         f32 temp;
         use_alt_name = false;
-        if (arg3 && lbl_803D5060[tmp_ckind] != NULL) {
+        if (arg3 && lbl_803D5060[GM_NAME_TABLE_CK(tmp_ckind)] != NULL) {
             use_alt_name = true;
         }
         if (use_alt_name) {
-            temp = lbl_803B7700[tmp_ckind];
+            temp = lbl_803B7700[GM_NAME_TABLE_CK(tmp_ckind)];
         } else {
-            temp = lbl_803B75F8[tmp_ckind];
+            temp = lbl_803B75F8[GM_NAME_TABLE_CK(tmp_ckind)];
         }
         size = temp;
     }
@@ -961,11 +1012,11 @@ f32 fn_80160F58(u8 ckind)
 {
     f32 result;
     if (lbLang_IsSavedLanguageUS()) {
-        result = lbl_803D50E4[ckind] != NULL ? lbl_803B7784[ckind]
-                                             : lbl_803B767C[ckind];
+        result = lbl_803D50E4[GM_NAME_TABLE_CK(ckind)] != NULL ? lbl_803B7784[GM_NAME_TABLE_CK(ckind)]
+                                             : lbl_803B767C[GM_NAME_TABLE_CK(ckind)];
     } else {
-        result = lbl_803D5060[ckind] != NULL ? lbl_803B7700[ckind]
-                                             : lbl_803B75F8[ckind];
+        result = lbl_803D5060[GM_NAME_TABLE_CK(ckind)] != NULL ? lbl_803B7700[GM_NAME_TABLE_CK(ckind)]
+                                             : lbl_803B75F8[GM_NAME_TABLE_CK(ckind)];
     }
     return result;
 }
@@ -4069,7 +4120,9 @@ f32 gm_80168B34(CharacterKind ckind, int arg1, int arg2)
     /* The decomp leaves `base` uninitialised: mwcc happened to keep `ckind` in the register, so
      * every playable character indexed itself. clang + -ftrivial-auto-var-init=zero makes it 0,
      * which maps every character to frame 0 (Captain Falcon) in the shared stock-icon atlas. */
-    int base = ckind;
+    int base = gm_MexVanillaKind(ckind, 1);
+    ckind = (CharacterKind) base;
+    arg1 = gm_MexVanillaKind(arg1, 0);
 #else
     int base;
 #endif
@@ -4129,6 +4182,7 @@ void gm_80168C5C(u32 arg0)
         lbAudioAx_800243F4(mex);
         return;
     }
+    arg0 = gm_MexVanillaKind(arg0, 1);
 #endif
     switch (arg0) {
     case 0:

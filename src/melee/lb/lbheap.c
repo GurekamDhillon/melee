@@ -40,7 +40,10 @@ struct lbHeap_HeapDesc lbHeap_803BA380[LBHEAP_DESC_COUNT] = {
        on top of 0.9 MB of fighter data) failed ALLOC_FAIL heap 4 at 0x64B400; four need ~15 MB.
        The main heap (Hsd) is what is left of the arena, so it keeps its size. */
     { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x51A690 }, { 4, 2, 6, 0x164B400 },
-    { 5, 4, 6, 0x96C800 }, { 6, 1, 3, 0x20 },     { LBHEAP_HEAP_COUNT, 0, 0, 0 },
+    /* Heap 5 (AllA) holds each loaded fighter's complete animation archive. Sora's PlUsAJ is
+     * about 4.6 MB; Classic's multi-opponent preload filled 8.8 MB of the old 9.4 MB slice and
+     * failed its next 0x14D940-byte allocation. The extra 16 MB of port ARAM goes to AllA. */
+    { 5, 4, 6, 0x196C800 }, { 6, 1, 3, 0x20 },     { LBHEAP_HEAP_COUNT, 0, 0, 0 },
 #else
     { 2, 1, 6, 0x800 },    { 3, 1, 2, 0x4F8800 }, { 4, 2, 6, 0x64B400 },
     { 5, 4, 6, 0x96C800 }, { 6, 0, 0, 0 },

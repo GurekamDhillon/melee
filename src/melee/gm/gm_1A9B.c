@@ -14,6 +14,7 @@
 #include "gm_1A36.h"
 #include "gm_1A3F.h"
 #include "gm_1A7A.h"
+#include "gm_1601.h"
 #include "gmevent.h"
 #include "gmregclear.h"
 #include "gmregtyfall.h"
@@ -102,6 +103,10 @@ void gm_Scene_Congrats_OnEnter(UNK_T unused)
     HSD_GObjObject_80390A70(gobj, HSD_SObjLib_804D7960, NULL);
     GObj_SetupGXLink(gobj, lbMthp8001F928, 0xB, 0);
     ckind = gm_801BEFB0();
+#if defined(TARGET_PC)
+    /* The three ending THP filename tables contain retail character rows. */
+    ckind = gm_MexVanillaKind(ckind, 1);
+#endif
     gover_kind = gm_GetCurrentGameMode();
     if (gover_kind == GM_DEBUG_GOVER) {
         gover_kind = gm_801BF050();

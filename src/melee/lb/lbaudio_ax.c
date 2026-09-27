@@ -1761,6 +1761,12 @@ u64 lbAudioAx_80026E84(CharacterKind ckind)
         if (ssm >= 0) {
             return ssm < 64 ? 1ULL << ssm : 0;
         }
+        /* A mod slot without an m-ex sound-bank row uses the host fighter's
+         * retail bank rather than the zero-filled appended table row. */
+        {
+            extern int gm_MexVanillaKind(int kind, int character_kind);
+            ckind = gm_MexVanillaKind(ckind, 1);
+        }
     }
 #endif
     if (ckind < 0 || ckind >= ChKind_Max) {

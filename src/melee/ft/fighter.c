@@ -234,12 +234,12 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
  * (0x80 bytes apart in PlCo.dat) - m-ex never extends them; it runs the AI with the fighter's
  * INTERNAL id (CPU/CPUSpoofs @8006ABD4), which for an added fighter indexes past the end the same
  * way. So an m-ex fighter takes the rows of the retail fighter it was cloned from
- * (Mex_FtBaseKind: Meta Knight -> Kirby; Mario when none), and every other kind keeps its own.
+ * (gm_MexVanillaKind: Meta Knight -> Kirby; Mario when no host matches), and every
+ * other kind keeps its own.
  * Rebuilt into a private copy of the struct on every load (PlCo reloads per scene). */
 static struct Fighter_804D64FC_t* ftCommonData_ExtendCpuTables(struct Fighter_804D64FC_t* src)
 {
-    extern int Mex_InternalForPortKind(int fk);
-    extern int Mex_FtBaseKind(int k);
+    extern int gm_MexVanillaKind(int kind, int character_kind);
     static struct Fighter_804D64FC_t copy;
     static void* tables[8][Ft_Kind_Max];
     void*** fields[8];
@@ -264,8 +264,7 @@ static struct Fighter_804D64FC_t* ftCommonData_ExtendCpuTables(struct Fighter_80
         for (i = 0; i < Ft_Kind_Max; i++) {
             int k = i;
             if (i >= Ft_Kind_Mex0) {
-                k = Mex_InternalForPortKind(i); /* -1 on a vanilla disc: no row */
-                k = k >= 0 ? Mex_FtBaseKind(k) : -1;
+                k = gm_MexVanillaKind(i, 0);
             }
             tables[j][i] = k >= 0 ? loaded[k] : NULL;
         }

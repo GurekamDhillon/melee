@@ -672,6 +672,18 @@ int grPushOn_80219230(int arg0)
     s32 i = 0;
     s32 key;
 
+#if defined(TARGET_PC)
+    /* Race to the Finish's x10c is a retail CharacterKind lookup. */
+    {
+        extern int gm_MexVanillaKind(int kind, int character_kind);
+        int vanilla = gm_MexVanillaKind(arg0, 1);
+        if (vanilla != arg0) {
+            OSReport("grPushOn_80219230: ckind %d uses retail ckind %d\n", arg0, vanilla);
+            arg0 = vanilla;
+        }
+    }
+#endif
+
     while (i < 0x21 && (key = yakumono_param->x10c[i].key) != -1) {
         if (key == arg0) {
             return yakumono_param->x10c[i].value;

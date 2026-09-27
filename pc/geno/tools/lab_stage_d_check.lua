@@ -38,6 +38,7 @@ local K = setmetatable({ shear = 0.25, available = function() return true end, m
   color = function() return 0xFFFFFFFF end, text = function(x, y, s) return #tostring(s) * 6 end,
   image = function(n, x, y, w) return w or 16 end }, { __index = function() return noop end })
 
+local flying, fly_v = {}, 2.0 -- gd.fly / gd.fly_speed
 local gd
 gd = setmetatable({
   lab_api = 1, kit = K,
@@ -52,6 +53,11 @@ gd = setmetatable({
     vx = 1, vy = 1, angle = 45, angle_di = 45, hitstun = 20, points = { { 1, 1 } } } end,
   hurtboxes = function() return { { ax = 0, ay = 0, bx = 0, by = 5, radius = 2, state = "normal" } } end,
   set_shield = function(port, v) P[port].shield = v end, set_percent = function(port, v) P[port].percent = v end,
+  fly = function(port, m) -- debug movement: nil reads; true / "on" / "toggle" / "place" / "off" / false
+    if m == nil then return flying[port] == true end
+    if m == "toggle" then flying[port] = not flying[port] elseif m == true or m == "on" then flying[port] = true else flying[port] = false end
+    return flying[port] end,
+  fly_speed = function(v) if v ~= nil then fly_v = v end return fly_v end,
   mirror_pad = function(a, b, take) mirror = a and { a, b, take } or nil end,
   savestate = noop, loadstate = function(s) loads[#loads + 1] = s end, state_load = function() return true end,
   lab_now = function() return "2026-09-24 12:00:00" end,
@@ -464,6 +470,7 @@ P[1].hitboxes = { { id = 0, x = 5, y = 5, z = 0, px = 3, py = 5, radius = 2, dam
 P[2].shield_on, P[2].shield_x, P[2].shield_y, P[2].shield_r = true, 20, 5, 10
 run(2)
 
+flying[1] = true -- the PLAY tab's fly rows read gd.fly / gd.fly_speed while it draws
 -- the pause menu with a mouse: gd.mouse() -> x, y, buttons, wheel (four numbers, not a table)
 env.gd.mouse = function() return 100, 150, 1, -1 end
 env.gd.key_pressed = function(k) return k == "ESCAPE" end

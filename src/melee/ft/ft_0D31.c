@@ -41,6 +41,15 @@ bool ftCo_800D3158(Fighter_GObj* gobj)
     if (fp->x2219_b1) {
         return false;
     }
+#if defined(TARGET_PC)
+    {
+        /* debug movement (pc/geno/geno_lab_mode.c): a flying fighter crosses the blast zones */
+        extern int GenoFly_Fighter(Fighter * fp);
+        if (GenoFly_Fighter(fp)) {
+            return false;
+        }
+    }
+#endif
     if (fp->cur_pos.x > Stage_GetBlastZoneRightOffset()) {
         ftCo_800D3950(gobj);
         return true;

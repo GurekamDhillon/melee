@@ -34,6 +34,7 @@
 #include <cstring>
 
 extern "C" void gw_log(const char *fmt, ...);
+extern "C" int gw_Fly_Readout(char *out, int cap); /* gw_script.c: debug movement */
 
 /* ---- the mouse ----------------------------------------------------------------------------- */
 namespace {
@@ -456,6 +457,38 @@ void draw_cursor(float s, float ox, float oy) {
   gw_Kit_TruncateQuads(q0);
 }
 
+/* debug movement's coordinate readout (gw_script.c gw_Fly_Readout): a small kit panel at the
+ * bottom left while a fighter flies, one line per flying port */
+void draw_fly_readout(float s, float ox, float oy) {
+  char text[256];
+  static bool logged = false;
+  if (!gw_Fly_Readout(text, (int)sizeof text) || !gw_Kit_Available()) {
+    logged = false;
+    return;
+  }
+  if (!logged) {
+    gw_log("gw: fly readout drawn: %s", text); /* once per flight: tests read it */
+    logged = true;
+  }
+  int lines = 1;
+  for (const char *c = text; *c; ++c) lines += *c == '\n';
+  const float h = 12.0f + 16.0f * (float)lines, y0 = 480.0f - 12.0f - h;
+  const int q0 = gw_Kit_QuadCount();
+  gw_Kit_DrawPanel(12.0f, y0, 300.0f, h, "frame", nullptr, 10.0f, kit_col("solo.face", 0x38C9D9FFu),
+                   (kit_col("ink", 0x0A0E18FFu) & 0xFFFFFF00u) | 0xD8u, 0.0f);
+  const int role = gw_Kit_Role("caption");
+  char *line = text;
+  for (int i = 0; i < lines && line != nullptr; ++i) {
+    char *nl = strchr(line, '\n');
+    if (nl != nullptr) *nl = '\0';
+    gw_Kit_DrawText(22.0f, y0 + 19.0f + 16.0f * (float)i, line, role >= 0 ? role : 0,
+                    kit_col("bone", 0xF2EFE4FFu), GW_KIT_ALIGN_LEFT, 280.0f, 0.0f, nullptr);
+    line = nl != nullptr ? nl + 1 : nullptr;
+  }
+  draw_kit_quads(ImGui::GetForegroundDrawList(), q0, gw_Kit_QuadCount() - q0, s, ox, oy, false);
+  gw_Kit_TruncateQuads(q0);
+}
+
 } // namespace
 
 extern "C" int gw_Pad_NoController(void); /* shim_pad.c */
@@ -487,6 +520,7 @@ extern "C" void gw_Console_Draw(void) {
     if (gw_Pad_NoController()) {
       draw_no_controller(io, s, ox, oy);
     }
+    draw_fly_readout(s, ox, oy);
     ++g_mouse.frame;
     if (!gw_Console_Open()) {
       draw_cursor(s, ox, oy);

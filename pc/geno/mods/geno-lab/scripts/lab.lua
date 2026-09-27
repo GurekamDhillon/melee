@@ -700,6 +700,29 @@ local TABS = {
       desc = "Whose timeline, hitbox data and inspector you are looking at. Left / right to switch.",
       value = function() return fighter_name(focus) end,
       run = function() next_port(1) end, adjust = function(d) next_port(d) end },
+    -- debug movement (docs/scripting.md, gd.fly): the focused fighter flies through everything
+    { label = "Fly (noclip)", icon = "lab_points", key = "F11",
+      desc = "The focused fighter flies: stick moves it, A slow, B fast. No gravity, stage, ledges, blast zones or hurtboxes.",
+      value = function() return gd.fly and gd.player(focus) and (gd.fly(focus) and "on" or "off") or "-" end,
+      run = function()
+        local ok, err = pcall(gd.fly, focus, "toggle")
+        if ok then say(string.format("P%d fly %s", focus, gd.fly(focus) and "on" or "off"))
+        else say(tostring(err):gsub("^.-: ", ""), DANGER) end
+      end },
+    { label = "Fly speed", icon = "lab_forward",
+      desc = "Units per frame at full stick. Left / right to change it.",
+      value = function() local v = gd.fly_speed and gd.fly_speed() return type(v) == "number" and string.format("%.2f", v) or "-" end,
+      adjust = function(d)
+        local v = gd.fly_speed and gd.fly_speed()
+        if type(v) == "number" then pcall(gd.fly_speed, math.max(0.25, v * (d > 0 and 1.5 or 1 / 1.5))) end
+      end },
+    { label = "Land here", icon = "lab_terrain",
+      desc = "Stop flying on the floor straight below. With no floor below, it drops where it is.",
+      run = function()
+        local ok, err = pcall(gd.fly, focus, "place")
+        if ok then say(string.format("P%d landed", focus)) menu_close()
+        else say(tostring(err):gsub("^.-: ", ""), DANGER) end
+      end },
   } },
   { name = "DISPLAY", icon = "lab_display", items = display_items },
   { name = "DUMMY", icon = "lab_dummy", items = {

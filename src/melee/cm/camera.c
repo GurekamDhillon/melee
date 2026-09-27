@@ -38,6 +38,7 @@
 #include <sysdolphin/baselib/fog.h>
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjgxlink.h>
+
 #include <sysdolphin/baselib/gobjobject.h>
 #include <sysdolphin/baselib/gobjplink.h>
 #include <sysdolphin/baselib/gobjproc.h>
@@ -45,6 +46,32 @@
 #include <sysdolphin/baselib/memory.h>
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/wobj.h>
+
+#if defined(TARGET_PC)
+/* debug movement (pc/geno/geno_lab_mode.c): while any fighter flies, the camera's stage bounds
+ * open wide so it can follow the fighter anywhere (large maps). Only this file's clamps change. */
+extern int GenoFly_Any(void);
+static f32 cm_fly_left(void)
+{
+    return GenoFly_Any() ? -100000.0f : Stage_GetCamBoundsLeftOffset();
+}
+static f32 cm_fly_right(void)
+{
+    return GenoFly_Any() ? 100000.0f : Stage_GetCamBoundsRightOffset();
+}
+static f32 cm_fly_top(void)
+{
+    return GenoFly_Any() ? 100000.0f : Stage_GetCamBoundsTopOffset();
+}
+static f32 cm_fly_bottom(void)
+{
+    return GenoFly_Any() ? -100000.0f : Stage_GetCamBoundsBottomOffset();
+}
+#define Stage_GetCamBoundsLeftOffset() cm_fly_left()
+#define Stage_GetCamBoundsRightOffset() cm_fly_right()
+#define Stage_GetCamBoundsTopOffset() cm_fly_top()
+#define Stage_GetCamBoundsBottomOffset() cm_fly_bottom()
+#endif
 
 /* 029AAC */ static void Camera_80029AAC(CameraBounds* bounds,
                                          CameraTransformState* transform,
@@ -376,6 +403,16 @@ bool Camera_8002928C(CmSubject* subject)
     float bottom;
     float top;
 
+#if defined(TARGET_PC)
+    /* debug movement: while a fighter flies, the camera frames only the flying fighters (so it
+     * follows one across a large map); nothing of the subject changes, so nothing is left behind */
+    {
+        extern int GenoFly_CameraSubject(void* subject);
+        if (GenoFly_Any() && !GenoFly_CameraSubject(subject)) {
+            return false;
+        }
+    }
+#endif
     if (subject->state != CmSubjectState_Inactive && !subject->force_inactive)
     {
         if (subject->state == CmSubjectState_Auto) {

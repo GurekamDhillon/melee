@@ -35,4 +35,24 @@ int GenoLab_Leave(int where);   ///< end the LAB match (no contest) and go to `w
 void GenoLab_ApplyRules(struct StartMeleeData* start);
 int GenoLab_NextAfterMatch(void);
 
+/* ---- debug movement (geno_lab_mode.c; any offline mode, not only LAB) ---------------------------
+ * A fighter flies (noclip) while its state callbacks are the fly ones: it sits in Fall with no
+ * gravity, no stage collision, no ledges, no blast-zone KO and (by default) no hurtboxes; the stick
+ * moves it. Any action change (a KO, a respawn, the match ending) ends the flight by itself, so
+ * nothing can stay stuck. Everything lives in the Fighter and in this TU's statics, both in a
+ * snapshot, so it rewinds and re-simulates exactly. gw_script.c refuses all of it online. */
+enum {
+    GENO_FLY_OFF = 0,   ///< stop flying: Fall where it is
+    GENO_FLY_ON = 1,    ///< start flying
+    GENO_FLY_PLACE = 2, ///< stop flying on the floor below (Fall where it is when there is none)
+};
+int GenoFly_Set(int slot, int mode); ///< 0 ok; -1 no fighter, -2 its state cannot fly, 1 PLACE found no floor
+int GenoFly_Get(int slot);           ///< 1 flying, 0 not, -1 no fighter on that port
+int GenoFly_Any(void);               ///< 1 while any fighter flies (the camera leaves its bounds)
+int GenoFly_Teleport(int slot, int x_bits, int y_bits); ///< 0 ok, -1 no fighter, -2 state refused
+void GenoFly_SetSpeed(int speed_bits);                  ///< units per frame at full stick
+float GenoFly_Speed(void);
+void GenoFly_SetSolid(int solid); ///< 1: hurtboxes stay on while flying (default 0: intangible)
+int GenoFly_Solid(void);
+
 #endif

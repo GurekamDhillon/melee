@@ -1255,6 +1255,293 @@ static int l_set_stocks(lua_State *L) {
     return 0;
 }
 
+/* ---- debug movement: fly / noclip, teleport (pc/geno/geno_lab_mode.c, docs/scripting.md) ------
+ * Any offline mode; refused during a netplay / rollback session. The game half keeps all of its
+ * state in the fighter and in snapshotted statics; a change here forks the Lab's rewind timeline,
+ * as a gameplay write does. The console's commands, the hotkey (F11) and gd.fly / gd.teleport
+ * all come through gs_fly_*. */
+extern int gw_GenoFly_Set(int slot, int mode);
+extern int gw_GenoFly_Get(int slot);
+extern int gw_GenoFly_Any(void);
+extern int gw_GenoFly_Teleport(int slot, int x_bits, int y_bits);
+extern void gw_GenoFly_SetSpeed(int speed_bits);
+extern float gw_GenoFly_Speed(void);
+extern void gw_GenoFly_SetSolid(int solid);
+extern int gw_GenoFly_Solid(void);
+
+static int gs_fly_port = 0;     /* the hotkey's and the console's default port (0-based) */
+static int gs_fly_readout = 1;  /* the coordinate readout while a fighter flies */
+
+static int gs_fly_on(int slot) { return gw_GenoFly_Get(slot) > 0; }
+
+static int gs_fly_bits(float f) {
+    union {
+        float f;
+        int i;
+    } u;
+    u.f = f;
+    return u.i;
+}
+
+/* NULL when allowed, else why not */
+static const char *gs_fly_refused(void) {
+    if (gw_RB_Enabled() || gw_Netplay_Enabled()) {
+        return "debug movement is offline-only (refused during a netplay/rollback session)";
+    }
+    return NULL;
+}
+
+static const char *gs_fly_err(int rc) {
+    return rc == -1 ? "no fighter on that port" : rc == -2 ? "that fighter's state cannot fly (dead, held, respawning)" : "";
+}
+
+/* mode: GENO_FLY_OFF 0 / ON 1 / PLACE 2, or -1 = toggle. Returns the game's code. */
+static int gs_fly_set(int slot, int mode) {
+    int rc;
+    if (mode < 0) {
+        mode = gs_fly_on(slot) ? 0 : 1;
+    }
+    gs_rw_branch();
+    rc = gw_GenoFly_Set(slot, mode);
+    if (rc >= 0) {
+        gw_log("fly: P%d %s%s", slot + 1, mode == 1 ? "on" : mode == 2 ? "off (placed)" : "off",
+               rc == 1 ? " - no floor below, dropped where it was" : "");
+    }
+    return rc;
+}
+
+static int l_fly(lua_State *L) {
+    int slot = gs_slot_arg(L, 1), mode = -2, rc;
+    if (lua_isnoneornil(L, 2)) {
+        lua_pushboolean(L, gs_fly_on(slot));
+        return 1;
+    }
+    if (lua_isboolean(L, 2)) {
+        mode = lua_toboolean(L, 2) ? 1 : 0;
+    } else {
+        const char *m = luaL_checkstring(L, 2);
+        mode = _stricmp(m, "on") == 0 ? 1 : _stricmp(m, "off") == 0 ? 0 : _stricmp(m, "place") == 0 ? 2
+             : _stricmp(m, "toggle") == 0 ? -1 : -2;
+        if (mode == -2) {
+            luaL_error(L, "gd.fly: mode is true / false / \"on\" / \"off\" / \"place\" / \"toggle\" (got \"%s\")", m);
+        }
+    }
+    gs_require_offline(L, "fly");
+    rc = gs_fly_set(slot, mode);
+    if (rc < 0) {
+        luaL_error(L, "gd.fly: %s", gs_fly_err(rc));
+    }
+    lua_pushboolean(L, gs_fly_on(slot));
+    return 1;
+}
+
+static int l_teleport(lua_State *L) {
+    int slot = gs_slot_arg(L, 1), rc;
+    float x = (float) luaL_checknumber(L, 2), y = (float) luaL_checknumber(L, 3);
+    gs_require_offline(L, "teleport");
+    gs_rw_branch();
+    rc = gw_GenoFly_Teleport(slot, gs_fly_bits(x), gs_fly_bits(y));
+    if (rc < 0) {
+        luaL_error(L, "gd.teleport: %s", gs_fly_err(rc));
+    }
+    return 0;
+}
+
+/* gd.fly_speed([units per frame]) -> the speed; gd.fly_solid([bool]) -> hurtboxes kept */
+static int l_fly_speed(lua_State *L) {
+    if (!lua_isnoneornil(L, 1)) {
+        float v = (float) luaL_checknumber(L, 1);
+        gs_require_offline(L, "fly_speed");
+        gs_rw_branch();
+        gw_GenoFly_SetSpeed(gs_fly_bits(v));
+    }
+    lua_pushnumber(L, gw_GenoFly_Speed());
+    return 1;
+}
+static int l_fly_solid(lua_State *L) {
+    if (!lua_isnoneornil(L, 1)) {
+        gs_require_offline(L, "fly_solid");
+        gs_rw_branch();
+        gw_GenoFly_SetSolid(lua_toboolean(L, 1));
+    }
+    lua_pushboolean(L, gw_GenoFly_Solid());
+    return 1;
+}
+
+/* the console: fly [port] [on|off|place|toggle] | fly speed <n> | fly solid on|off | fly port <n>
+ * | fly readout on|off; noclip = fly; tp [port] <x> <y>; pos [port] */
+static int gs_fly_console(const char *cmd, const char *arg) {
+    char a[4][64];
+    int n, slot = gs_fly_port, rc;
+    const char *why;
+    memset(a, 0, sizeof a);
+    n = sscanf(arg, "%63s %63s %63s %63s", a[0], a[1], a[2], a[3]);
+    if (n < 0) n = 0;
+    if (_stricmp(cmd, "pos") == 0) {
+        char text[96];
+        if (n >= 1) slot = atoi(a[0]) - 1;
+        if (slot < 0 || slot > 5 || gw_GenoFly_Get(slot) < 0) {
+            gw_Console_Print(GS_RED, "pos: no fighter on P%d", slot + 1);
+            return -1;
+        }
+        snprintf(text, sizeof text, "%.2f %.2f", gw_ScriptGame_FighterF(slot, SF_X), gw_ScriptGame_FighterF(slot, SF_Y));
+        gw_Console_Print(GS_GREEN, "P%d pos %s%s (copied)", slot + 1, text, gs_fly_on(slot) ? "  flying" : "");
+        if (OpenClipboard(NULL)) {
+            HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, strlen(text) + 1);
+            EmptyClipboard();
+            if (h != NULL) {
+                memcpy(GlobalLock(h), text, strlen(text) + 1);
+                GlobalUnlock(h);
+                SetClipboardData(CF_TEXT, h);
+            }
+            CloseClipboard();
+        }
+        return 0;
+    }
+    why = gs_fly_refused();
+    if (_stricmp(cmd, "tp") == 0) {
+        float x = 0.0f, y = 0.0f;
+        char *e1 = NULL, *e2 = NULL;
+        if (n == 3) {
+            slot = atoi(a[0]) - 1;
+            x = strtof(a[1], &e1);
+            y = strtof(a[2], &e2);
+        } else if (n == 2) {
+            x = strtof(a[0], &e1);
+            y = strtof(a[1], &e2);
+        }
+        if ((n != 2 && n != 3) || e1 == NULL || *e1 != '\0' || e2 == NULL || *e2 != '\0') {
+            gw_Console_Print(GS_RED, "usage: tp [port] <x> <y>");
+            return -1;
+        }
+        if (why != NULL) {
+            gw_Console_Print(GS_RED, "%s", why);
+            return -1;
+        }
+        if (slot < 0 || slot > 5) {
+            gw_Console_Print(GS_RED, "ports are 1-6");
+            return -1;
+        }
+        gs_rw_branch();
+        rc = gw_GenoFly_Teleport(slot, gs_fly_bits(x), gs_fly_bits(y));
+        if (rc < 0) {
+            gw_Console_Print(GS_RED, "tp: %s", gs_fly_err(rc));
+            return -1;
+        }
+        gw_Console_Print(GS_GREEN, "P%d -> %.2f %.2f", slot + 1, x, y);
+        return 0;
+    }
+    /* fly / noclip */
+    if (n >= 1 && _stricmp(a[0], "speed") == 0) {
+        if (n >= 2) {
+            if (why != NULL) {
+                gw_Console_Print(GS_RED, "%s", why);
+                return -1;
+            }
+            gs_rw_branch();
+            gw_GenoFly_SetSpeed(gs_fly_bits((float) atof(a[1])));
+        }
+        gw_Console_Print(GS_GREEN, "fly speed %.2f units/frame (A held x0.25, B held x4)", gw_GenoFly_Speed());
+        return 0;
+    }
+    if (n >= 1 && _stricmp(a[0], "solid") == 0) {
+        if (n >= 2) {
+            if (why != NULL) {
+                gw_Console_Print(GS_RED, "%s", why);
+                return -1;
+            }
+            gs_rw_branch();
+            gw_GenoFly_SetSolid(_stricmp(a[1], "on") == 0 || strcmp(a[1], "1") == 0);
+        }
+        gw_Console_Print(GS_GREEN, "fly solid %s (hurtboxes %s while flying)", gw_GenoFly_Solid() ? "on" : "off",
+                         gw_GenoFly_Solid() ? "kept" : "off");
+        return 0;
+    }
+    if (n >= 1 && _stricmp(a[0], "port") == 0) {
+        if (n >= 2 && atoi(a[1]) >= 1 && atoi(a[1]) <= 6) gs_fly_port = atoi(a[1]) - 1;
+        gw_Console_Print(GS_GREEN, "fly port P%d (F11 and the console's default)", gs_fly_port + 1);
+        return 0;
+    }
+    if (n >= 1 && _stricmp(a[0], "readout") == 0) {
+        if (n >= 2) gs_fly_readout = _stricmp(a[1], "off") != 0 && strcmp(a[1], "0") != 0;
+        gw_Console_Print(GS_GREEN, "fly readout %s", gs_fly_readout ? "on" : "off");
+        return 0;
+    }
+    {
+        int k = 0, mode = -1;
+        if (n >= 1 && a[0][0] >= '1' && a[0][0] <= '6' && a[0][1] == '\0') {
+            slot = a[0][0] - '1';
+            k = 1;
+        }
+        if (n > k) {
+            mode = _stricmp(a[k], "on") == 0 ? 1 : _stricmp(a[k], "off") == 0 ? 0 : _stricmp(a[k], "place") == 0 ? 2
+                 : _stricmp(a[k], "toggle") == 0 ? -1 : -2;
+            if (mode == -2) {
+                gw_Console_Print(GS_RED, "usage: fly [port] [on|off|place|toggle] | fly speed <n> | fly solid on|off"
+                                         " | fly port <n> | fly readout on|off");
+                return -1;
+            }
+        }
+        if (why != NULL) {
+            gw_Console_Print(GS_RED, "%s", why);
+            return -1;
+        }
+        rc = gs_fly_set(slot, mode);
+        if (rc < 0) {
+            gw_Console_Print(GS_RED, "fly: %s", gs_fly_err(rc));
+            return -1;
+        }
+        gw_Console_Print(GS_GREEN, "P%d fly %s%s", slot + 1, gs_fly_on(slot) ? "on" : "off",
+                         rc == 1 ? " (no floor below: dropped where it was)" : "");
+        return 0;
+    }
+}
+
+static void gs_fly_text_update(void);
+
+/* F11: toggle the fly port's flight, in any offline match (focused window, console closed) */
+static void gs_fly_hotkey(void) {
+    const int vk = 0x7A; /* VK_F11 */
+    int rc;
+    gs_fly_text_update();
+    if (!gs.key_now[vk] || gs.key_prev[vk]) {
+        return;
+    }
+    if (gs_fly_refused() != NULL) {
+        gw_Console_Print(GS_RED, "%s", gs_fly_refused());
+        return;
+    }
+    rc = gs_fly_set(gs_fly_port, -1);
+    if (rc == -2) {
+        gw_Console_Print(GS_RED, "fly: %s", gs_fly_err(rc));
+    }
+}
+
+/* the host overlay's coordinate readout (gw_console.cpp): built here on the game thread each tick
+ * (gs_fly_hotkey), copied out by the overlay; 0 when nothing flies */
+static char gs_fly_text[256];
+static void gs_fly_text_update(void) {
+    int slot, len = 0;
+    gs_fly_text[0] = '\0';
+    if (!gs_fly_readout || gw_RB_Enabled() || gw_Netplay_Enabled() || !gw_GenoFly_Any()) {
+        return;
+    }
+    for (slot = 0; slot < 6 && len < (int) sizeof gs_fly_text - 1; ++slot) {
+        if (gs_fly_on(slot)) {
+            len += snprintf(gs_fly_text + len, sizeof gs_fly_text - (size_t) len, "%sFLY P%d   x %.1f   y %.1f   speed %.2f",
+                            len ? "\n" : "", slot + 1, gw_ScriptGame_FighterF(slot, SF_X),
+                            gw_ScriptGame_FighterF(slot, SF_Y), gw_GenoFly_Speed());
+        }
+    }
+}
+int gw_Fly_Readout(char *out, int cap) {
+    if (out == NULL || cap <= 0 || gs_fly_text[0] == '\0') {
+        return 0;
+    }
+    snprintf(out, (size_t) cap, "%s", gs_fly_text);
+    return 1;
+}
+
 /* gd.scene_launch("mode=training;p1=fox") or gd.scene_launch{mode="training", p1="fox"} */
 static int gs_pending_launch = -1;
 static int l_scene_launch(lua_State *L) {
@@ -3877,6 +4164,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"savestate", l_savestate},
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_stocks", l_set_stocks},
+    {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
     {"key_pressed", l_key_pressed}, {"mouse", l_mouse}, {"command", l_command}, {"run", l_run},
@@ -4682,6 +4970,7 @@ void gw_Script_Tick(void) {
         gw_TextEntryUntil = (int) GetTickCount() + 200; /* the keyboard is text, not hotkeys */
     }
     gs_poll_keys();
+    gs_fly_hotkey();
     gw_Mouse_ScriptTick();
     gs_socket_poll();
     if (gs_pending_launch >= 0) {
@@ -5737,6 +6026,7 @@ static void gs_cmd_help(void) {
     gw_Console_Print(GS_WHITE, "  scene <MELEE_SCENE text> | scene clear");
     gw_Console_Print(GS_WHITE, "  input <port> <buttons> [frames] [x y]   e.g. input 1 A+B 10");
     gw_Console_Print(GS_WHITE, "  shot [path] | label <text> | echo <text> | clear | api | quit");
+    gw_Console_Print(GS_WHITE, "  fly|noclip [port] [on|off|place] | fly speed|solid|port|readout .. | tp [port] x y | pos [port]  (F11 = fly, offline)");
     for (i = 0; i < gs.ncmd; ++i) {
         gw_Console_Print(GS_WHITE, "  %s  %s  [%s]", gs.cmd[i].name, gs.cmd[i].help,
                          gs_script_id(gs.cmd[i].script));
@@ -5770,6 +6060,9 @@ static int gs_exec(const char *line_in) {
     if (IS("help") || IS("?")) {
         gs_cmd_help();
         return 0;
+    }
+    if (IS("fly") || IS("noclip") || IS("tp") || IS("pos")) {
+        return gs_fly_console(IS("noclip") ? "fly" : line, arg);
     }
     if (IS("api")) {
         gw_Console_Print(GS_WHITE, "scripting API %d (docs/scripting.md), Lua %s", GW_SCRIPT_API_VERSION,

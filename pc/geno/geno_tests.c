@@ -15,6 +15,7 @@
 #include <melee/it/types.h>
 #include <melee/lb/types.h>
 #include <melee/pl/player.h>
+#include <sysdolphin/baselib/controller.h>
 
 #include "geno.h"
 #include "geno_state.h"
@@ -2972,8 +2973,96 @@ static int test_geno_v52_lockon(void)
     return rc;
 }
 
+/* ---- debug movement (geno_lab_mode.c): the fly callbacks on a test fighter ------------------ */
+extern void GenoFly_TestArm(Fighter* fp);
+extern int GenoFly_Fighter(Fighter* fp);
+extern void GenoFly_SetSpeed(int speed_bits);
+extern float GenoFly_Speed(void);
+extern void GenoFly_SetSolid(int solid);
+extern bool ftCo_800D3158(Fighter_GObj* gobj);
+
+static int test_geno_fly(void)
+{
+    float old = GenoFly_Speed();
+    int rc = 0;
+    t_setup();
+    if (GenoFly_Fighter(&t_fp)) {
+        TestFail("an unarmed fighter reads as flying");
+        return 1;
+    }
+    GenoFly_TestArm(&t_fp);
+    GenoFly_SetSpeed((int) t_fbits(2.0f));
+    GenoFly_SetSolid(0);
+    t_fp.input.lstick[0].x = 0.5f;
+    t_fp.input.lstick[0].y = -1.0f;
+    t_fp.x8c_kb_vel.x = 7.0f;
+    t_fp.facing_dir = -1.0f;
+    t_fp.dmg.x1910 = 30;
+    t_fp.phys_cb(&t_gobj);
+    if (!GenoFly_Fighter(&t_fp) || t_fp.self_vel.x != 1.0f || t_fp.self_vel.y != -2.0f ||
+        t_fp.x8c_kb_vel.x != 0.0f || t_fp.facing_dir != 1.0f || t_fp.x1988 != 2 || t_fp.dmg.x1910 != 0)
+    {
+        TestFail("fly phys: velocity = stick x speed, knockback cleared, facing the stick, intangible");
+        rc = 1;
+    }
+    t_fp.input.held_buttons[0] = HSD_PAD_A;
+    t_fp.phys_cb(&t_gobj);
+    if (t_fp.self_vel.x != 0.25f || t_fp.self_vel.y != -0.5f) {
+        TestFail("fly phys: A held is a quarter speed");
+        rc = 1;
+    }
+    t_fp.input.held_buttons[0] = HSD_PAD_B;
+    t_fp.phys_cb(&t_gobj);
+    if (t_fp.self_vel.x != 4.0f || t_fp.self_vel.y != -8.0f) {
+        TestFail("fly phys: B held is 4x speed");
+        rc = 1;
+    }
+    t_fp.input.held_buttons[0] = 0;
+    t_fp.input.lstick[0].x = 0.05f;
+    t_fp.input.lstick[0].y = -0.05f;
+    t_fp.phys_cb(&t_gobj);
+    if (t_fp.self_vel.x != 0.0f || t_fp.self_vel.y != 0.0f) {
+        TestFail("fly phys: a resting stick's drift does not move");
+        rc = 1;
+    }
+    GenoFly_SetSolid(1);
+    t_fp.x1988 = 2; /* intangible from before: solid mid-flight turns the hurtboxes back on */
+    t_fp.phys_cb(&t_gobj);
+    GenoFly_SetSolid(0);
+    if (t_fp.x1988 != 0) {
+        TestFail("fly phys: solid keeps the hurtboxes");
+        rc = 1;
+    }
+    t_fp.cur_pos.x = 5.0f;
+    t_fp.cur_pos.y = 6.0f;
+    t_fp.coll_data.prev_pos.x = -300.0f;
+    t_fp.coll_data.env_flags = 0x7;
+    t_fp.coll_cb(&t_gobj);
+    if (t_fp.coll_data.cur_pos.x != 5.0f || t_fp.coll_data.cur_pos.y != 6.0f ||
+        t_fp.coll_data.prev_pos.x != 5.0f || t_fp.coll_data.last_pos.y != 6.0f || t_fp.coll_data.env_flags != 0)
+    {
+        TestFail("fly coll: the collision data follows the fighter, no floor / wall / ceiling");
+        rc = 1;
+    }
+    t_fp.cur_pos.x = 1.0e6f; /* past any blast zone */
+    t_fp.cur_pos.y = -1.0e6f;
+    if (ftCo_800D3158(&t_gobj)) {
+        TestFail("a flying fighter past the blast zones was KO'd");
+        rc = 1;
+    }
+    GenoFly_SetSpeed((int) t_fbits(1000.0f));
+    if (GenoFly_Speed() != 200.0f) {
+        TestFail("fly speed clamps to 200");
+        rc = 1;
+    }
+    GenoFly_SetSpeed((int) t_fbits(old));
+    t_setup();
+    return rc;
+}
+
 void GenoTestRegisterAll(void)
 {
+    TestRegister("geno_fly", test_geno_fly);
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
     TestRegister("geno_ftcmd_loops", test_geno_ftcmd_loops);
     TestRegister("geno_vanilla_script_untouched", test_geno_vanilla_script_untouched);

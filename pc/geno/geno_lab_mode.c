@@ -245,3 +245,270 @@ int GenoLab_Leave(int where)
     gmVs_EndMatch(OUTCOME_NO_CONTEST);
     return 1;
 }
+
+/* ---- debug movement: fly / noclip and teleport (geno_lab_mode.h) --------------------------------
+ * Flying is "the fighter's state callbacks are these": ftCo_Fall_Enter first (air, no hitboxes,
+ * Fall's animation), then the anim / input / phys / coll callbacks are replaced. So:
+ *  - input: none (no jump, attack or airdodge interrupts);
+ *  - phys: velocity = stick x speed (A held: x0.25, B held: x4), no gravity, knockback cleared;
+ *  - coll: no stage collision or ledge grab; the collision data follows the fighter (its previous
+ *    position is reset every frame), so leaving the flight never sweeps across the stage;
+ *  - ft_0D31.c skips the blast-zone KO for it, and the off-screen damage counter is held at 0;
+ *  - cm/camera.c: while any fighter flies, the camera frames only the flying fighters and ignores
+ *    the stage's camera bounds (GenoFly_Any, GenoFly_CameraSubject).
+ * A change of action by anything else (KO, respawn, match end) replaces the callbacks, which ends
+ * the flight with nothing to restore. The speed and the solid switch are this TU's statics (in a
+ * snapshot: pc_geno_*). */
+#include <melee/ft/fighter.h>
+#include <melee/ft/ftcommon.h>
+#include <melee/ft/types.h>
+#include <melee/ft/kinds/ftCommon/ftCo_Fall.h>
+#include <melee/ft/kinds/ftCommon/forward.h>
+#include <melee/mp/mpcoll.h>
+#include <melee/mp/mplib.h>
+#include <melee/pl/player.h>
+#include <sysdolphin/baselib/controller.h>
+#include <sysdolphin/baselib/gobj.h>
+
+static float fly_speed = 2.0f; /* units per frame at full stick */
+static int fly_solid;          /* 1: keep hurtboxes */
+
+static void fly_anim(Fighter_GObj* gobj)
+{
+    (void) gobj;
+}
+
+static void fly_input(Fighter_GObj* gobj)
+{
+    (void) gobj;
+}
+
+static void fly_phys(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    float sx = fp->input.lstick[0].x, sy = fp->input.lstick[0].y, v = fly_speed;
+    if (fp->input.held_buttons[0] & HSD_PAD_A) {
+        v *= 0.25f;
+    }
+    if (fp->input.held_buttons[0] & HSD_PAD_B) {
+        v *= 4.0f;
+    }
+    if (sx < 0.1f && sx > -0.1f) { /* a resting stick's drift stays put */
+        sx = 0.0f;
+    }
+    if (sy < 0.1f && sy > -0.1f) {
+        sy = 0.0f;
+    }
+    fp->self_vel.x = sx * v;
+    fp->self_vel.y = sy * v;
+    fp->self_vel.z = 0.0f;
+    fp->x8c_kb_vel.x = fp->x8c_kb_vel.y = fp->x8c_kb_vel.z = 0.0f;
+    if (sx > 0.0f) {
+        fp->facing_dir = 1.0f;
+    } else if (sx < 0.0f) {
+        fp->facing_dir = -1.0f;
+    }
+    fp->dmg.x1910 = 0; /* off-screen damage (fighter.c) never builds up */
+    /* intangible (ftColl_8007B62C's state 2, without its colour flash), or normal when solid: set every
+     * frame, so switching solid mid-flight takes effect at once */
+    fp->x1988 = fly_solid ? 0 : 2;
+}
+
+static void fly_coll(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    mpColl_80043680(&fp->coll_data, &fp->cur_pos); /* follow: no floor, wall, ceiling or ledge */
+    fp->coll_data.env_flags = 0;
+}
+
+int GenoFly_Fighter(Fighter* fp)
+{
+    return fp != NULL && fp->phys_cb == fly_phys;
+}
+
+static Fighter_GObj* fly_gobj(int slot)
+{
+    HSD_GObj* g;
+    HSD_GObj* want;
+    if (slot < 0 || slot >= 6 || HSD_GObjPLinkHead == NULL) {
+        return NULL;
+    }
+    want = Player_GetEntity(slot);
+    for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; g != NULL; g = g->next) {
+        if (g == want) {
+            return g;
+        }
+    }
+    return NULL;
+}
+
+/* states a fighter cannot be lifted out of cleanly: dead / asleep / respawning, held or thrown,
+ * the entry, holding someone, the hands */
+static int fly_refused(Fighter* fp)
+{
+    if (fp->x221F_b3 || fp->kind == Ft_Kind_MasterH || fp->kind == Ft_Kind_CrezyH) {
+        return 1;
+    }
+    if (fp->motion_id >= ftCo_MS_DeadDown && fp->motion_id <= ftCo_MS_RebirthWait) {
+        return 1;
+    }
+    if (fp->motion_id >= ftCo_MS_CapturePulledHi && fp->motion_id <= ftCo_MS_ThrownCrazyHand) {
+        return 1;
+    }
+    return fp->victim_gobj != NULL || fp->x1A5C != NULL;
+}
+
+/* into Fall at the current spot: velocities cleared, the collision data moved here, hurtboxes on */
+static void fly_drop(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    fp->self_vel.x = fp->self_vel.y = fp->self_vel.z = 0.0f;
+    fp->x8c_kb_vel.x = fp->x8c_kb_vel.y = fp->x8c_kb_vel.z = 0.0f;
+    fp->prev_pos = fp->cur_pos;
+    mpColl_80043680(&fp->coll_data, &fp->cur_pos);
+    ftCo_Fall_Enter(gobj);
+    fp->x1988 = 0;
+}
+
+int GenoFly_Set(int slot, int mode)
+{
+    Fighter_GObj* gobj = fly_gobj(slot);
+    Fighter* fp;
+    if (gobj == NULL) {
+        return -1;
+    }
+    fp = GET_FIGHTER(gobj);
+    if (mode == GENO_FLY_ON) {
+        if (GenoFly_Fighter(fp)) {
+            return 0;
+        }
+        if (fly_refused(fp)) {
+            return -2;
+        }
+        fly_drop(gobj);
+        fp->anim_cb = fly_anim;
+        fp->input_cb = fly_input;
+        fp->phys_cb = fly_phys;
+        fp->coll_cb = fly_coll;
+        if (!fly_solid) {
+            fp->x1988 = 2;
+        }
+        return 0;
+    }
+    if (!GenoFly_Fighter(fp)) {
+        return 0;
+    }
+    if (mode == GENO_FLY_PLACE) {
+        Vec3 floor;
+        if (mpCheckFloor(fp->cur_pos.x, fp->cur_pos.y, fp->cur_pos.x, fp->cur_pos.y - 100000.0f, 0.0f,
+                         &floor, NULL, NULL, NULL, -1, -1, -1, NULL, NULL))
+        {
+            fp->cur_pos.x = floor.x;
+            fp->cur_pos.y = floor.y + 0.5f; /* Fall lands on it the next frame */
+            fly_drop(gobj);
+            return 0;
+        }
+        fly_drop(gobj);
+        return 1;
+    }
+    fly_drop(gobj);
+    return 0;
+}
+
+int GenoFly_Get(int slot)
+{
+    Fighter_GObj* gobj = fly_gobj(slot);
+    return gobj == NULL ? -1 : GenoFly_Fighter(GET_FIGHTER(gobj));
+}
+
+int GenoFly_Any(void)
+{
+    HSD_GObj* g;
+    if (HSD_GObjPLinkHead == NULL) {
+        return 0;
+    }
+    for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; g != NULL; g = g->next) {
+        if (GenoFly_Fighter(GET_FIGHTER(g))) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* cm/camera.c: 1 when `subject` is a flying fighter's camera subject */
+int GenoFly_CameraSubject(void* subject)
+{
+    HSD_GObj* g;
+    if (HSD_GObjPLinkHead == NULL) {
+        return 0;
+    }
+    for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; g != NULL; g = g->next) {
+        Fighter* fp = GET_FIGHTER(g);
+        if (GenoFly_Fighter(fp) && (void*) fp->x890_cameraBox == subject) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int GenoFly_Teleport(int slot, int x_bits, int y_bits)
+{
+    Fighter_GObj* gobj = fly_gobj(slot);
+    Fighter* fp;
+    union {
+        int i;
+        float f;
+    } x, y;
+    if (gobj == NULL) {
+        return -1;
+    }
+    fp = GET_FIGHTER(gobj);
+    if (!GenoFly_Fighter(fp) && fly_refused(fp)) {
+        return -2;
+    }
+    x.i = x_bits;
+    y.i = y_bits;
+    fp->cur_pos.x = x.f;
+    fp->cur_pos.y = y.f;
+    fp->prev_pos = fp->cur_pos;
+    if (GenoFly_Fighter(fp)) {
+        mpColl_80043680(&fp->coll_data, &fp->cur_pos);
+    } else {
+        fly_drop(gobj); /* a grounded fighter would snap back along its floor line */
+    }
+    return 0;
+}
+
+void GenoFly_SetSpeed(int speed_bits)
+{
+    union {
+        int i;
+        float f;
+    } s;
+    s.i = speed_bits;
+    fly_speed = s.f < 0.05f ? 0.05f : s.f > 200.0f ? 200.0f : s.f;
+}
+
+float GenoFly_Speed(void)
+{
+    return fly_speed;
+}
+
+void GenoFly_SetSolid(int solid)
+{
+    fly_solid = solid != 0;
+}
+
+int GenoFly_Solid(void)
+{
+    return fly_solid;
+}
+
+/* geno_tests.c: the fly callbacks on a test fighter (no player, no stage, no Fall) */
+void GenoFly_TestArm(Fighter* fp)
+{
+    fp->anim_cb = fly_anim;
+    fp->input_cb = fly_input;
+    fp->phys_cb = fly_phys;
+    fp->coll_cb = fly_coll;
+}

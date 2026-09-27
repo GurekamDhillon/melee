@@ -1150,6 +1150,87 @@ All pass. The checks in the game are the ones in 14.12, plus:
 - the tech press with a real `mpCheckFloor` (Battlefield platforms included);
 - the swept capsules against the game's own hitbox draw.
 
+### 14.17 Debug movement: fly (noclip) and teleport
+
+A dev tool for moving a fighter anywhere on a map, for building and checking large maps. It works
+in **every offline mode** (VS, the 1P modes, Adventure maps, the LAB), not only in the LAB, and is
+**refused during a netplay or rollback session** (console, hotkey and `gd.*` alike).
+
+**Flying.** The fighter goes into Fall, and its state callbacks are replaced by the fly ones
+(`pc/geno/geno_lab_mode.c`, the "debug movement" section):
+- **Stick:** moves it at the fly speed (default 2 units a frame at full stick). A held is ×0.25,
+  B held is ×4. A resting stick (under 0.1 on an axis) does not move it. It faces the way it moves.
+- **Physics:** there is no gravity and no knockback.
+- **Collision:** none. The fighter passes through the stage and does not grab ledges. Its collision
+  data is moved to it every frame, so leaving the flight never sweeps across the stage.
+- **Blast zones:** it cannot be KO'd by them (`ft_0D31.c`), and the off-screen damage counter is
+  held at 0.
+- **Hurtboxes:** off (intangible) unless solid is on.
+- **Camera:** while any fighter flies, the camera frames only the flying fighters and ignores the
+  stage's camera bounds (`cm/camera.c`), so it follows one anywhere.
+
+**Stopping.** "Off" drops the fighter into Fall where it is. "Place" puts it on the floor straight
+below (`mpCheckFloor`), or drops it where it is when there is no floor. Anything else that changes
+its action ends the flight by itself: a KO, a respawn, a hit while solid, the match ending. Nothing
+is left behind.
+
+**Teleport.** `tp` / `gd.teleport` sets the position exactly. A flying fighter stays flying there. A
+fighter on foot is put into Fall at that spot, because a grounded fighter would snap back along its
+floor line.
+
+**Refused states.** A fighter that is dead, asleep, respawning, held or thrown, holding someone, or
+one of the Hands cannot start flying (error "cannot fly").
+
+**Determinism.** Everything is kept either in the Fighter (its callbacks) or in snapshotted statics
+of `pc_geno_geno_lab_mode.c` (the speed and the solid switch). So a savestate, the Lab's step-back
+and the rewind restore it exactly. Every change forks the Lab's rewind timeline, as a gameplay write
+does.
+
+**Controls** (the fighter is the fly port, P1 unless `fly port N` says otherwise):
+
+| where | |
+|---|---|
+| `F11` | toggle the fly port's flight (any offline match; the window focused, the console closed). F11 is used nowhere else (14.9's keys, F1 / F9 / F10, the examples' F2 / F5-F8) |
+| LAB pause menu, PLAY tab | **Fly (noclip)** toggles the focused fighter (F11 in the detail panel), **Fly speed** (left / right ×1.5), **Land here** (place) |
+| console `fly [port] [on\|off\|place\|toggle]` | toggle with no argument; `noclip` is the same command |
+| console `fly speed <n>`, `fly solid on\|off`, `fly port <n>`, `fly readout on\|off` | the speed (0.05-200), hurtboxes while flying, the hotkey's port, the readout |
+| console `tp [port] <x> <y>` | teleport |
+| console `pos [port]` | print the position and copy `x y` to the clipboard |
+| `gd.fly(port [, mode])`, `gd.teleport(port, x, y)`, `gd.fly_speed([n])`, `gd.fly_solid([bool])` | the script API (docs/scripting.md) |
+
+**The readout.** While a fighter flies, a small kit panel at the bottom left shows `FLY P1  x  y
+speed`, one line per flying port. The host overlay draws it in every mode (`gw_console.cpp`,
+`draw_fly_readout`), and `fly readout off` hides it.
+
+**Checked** (2026-09-27, ACE, one game at a time):
+- **Headless** (`geno_fly`, suite 196/196): the phys callback gives stick × speed with A / B, clears
+  knockback, faces the stick, is intangible, and ignores drift. Solid mid-flight gives the hurtboxes
+  back. The coll callback makes the collision data follow. A flier past the blast zones is not KO'd.
+  The speed clamps.
+- **In game, LAB (Fox vs Marth on Battlefield, 25/25):**
+  - 30 frames right = +60.000 x.
+  - 60 up = +120.000 y, and 30 idle frames = no drift.
+  - B = −80.000 in 10 frames; A = −10.000 in 20 frames.
+  - Straight down through the main floor to y −60.
+  - 60 frames past the top, right and bottom blast zones with no KO and no stock or percent change.
+  - A savestate while flying, then a load: the same frame (f580) gives the same position bit for
+    bit (45.7000, 31.2000).
+  - Marth's jabs: none land on a flying P1; with solid on they land (0 → 11.7%) and end the flight.
+  - Place from (0, 45): standing at y 0.00, hurtboxes back.
+  - After the flight it jumps (y 10.62) and lands.
+  - Teleport on foot falls from the spot and lands; fly off mid-air falls.
+- **Console over the socket (13/13):** `fly speed`, `fly 1 on`, `tp 1 12.5 77`, `pos` (landed on
+  the top platform at 54.40), `noclip 1 off`, `fly` toggle, `fly place`, `fly solid`. Bad port,
+  empty port and a bad `tp` give errors.
+- **VS:** 20 frames = +40.00. The camera keeps P1 on screen at (600, 300), (−700, −250) and
+  (1500, 900). It is back on the stage after place. The readout draws `FLY P1 x 40.0 y 70.0 speed
+  2.00`.
+- **Rollback session** (`MELEE_RB_LIVETEST`): `gd.fly`, `gd.teleport` and `gd.fly_speed` error.
+  `fly`, `tp`, `fly speed` and `noclip` on the console answer "offline-only". The fighter moved only
+  by its own walk.
+- **Not machine-checked:** the F11 key itself (a minimized test window has no focus) and the LAB
+  menu rows in a live game (the Lab checker draws them with stubs).
+
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 
 This section is the contract the Brawl -> Geno script translator (ports/halberd/ (workspace repo) )

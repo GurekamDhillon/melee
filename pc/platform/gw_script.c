@@ -7477,12 +7477,16 @@ static int test_script_paused_input(void) {
     }
     gw_script_pad_paused_sample(0);
     for (k = 0; k < 2; ++k) {
+        extern void gw_Script_PadFrameConsumed(void);
+        /* two stepped logic frames: a read (a burst may read more than once), then the frame ends */
         memset(st, 0x7f, sizeof st);
+        gw_Script_PadApply(st);
         gw_Script_PadApply(st);
         if (gw_r16(st) != 0x0100 || (signed char) st[2] != 25) {
             gw_test_fail("console input did not survive for both stepped frames");
             return 1;
         }
+        gw_Script_PadFrameConsumed();
     }
     memset(st, 0x7f, sizeof st);
     gw_Script_PadApply(st);

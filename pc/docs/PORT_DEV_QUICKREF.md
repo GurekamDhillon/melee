@@ -25,7 +25,7 @@ bash tools/port/run.sh --test --realtime tests-rt --iso "C:/path/game.iso"
 `build.sh` scans stale game TUs and native shims, links, regenerates `gw_mex_bridge` from the
 map, recompiles/relinks when required, and checks until stable (four regeneration checks max).
 The final EXE gets a bridge ABI audit. An unchanged trusted bridge avoids the extra link.
-This workspace revision uses timestamp scans and fixed `xargs -P 8`; it has no `GW_JOBS` option.
+`GW_JOBS` sets compile jobs; objects rebuild by content hash (workspace tools/port/README.md).
 
 `run.sh` copies the EXE/map into `GW_BUILD_ROOT/runs/<name>/`. Each name gets its own logs,
 card and runtime files; a running copy cannot block linking the baseline. Do not reuse a name

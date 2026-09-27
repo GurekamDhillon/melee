@@ -32,6 +32,9 @@ void end() noexcept;
 // Blend the matrix slots loaded since the last draw (called at the top of every draw).
 void before_draw() noexcept;
 void take_stats(u32* blended, u32* rejected, u32* missing) noexcept;
+// PC matrix palette (GX_AURORA_LOAD_PALETTE): blend n slots of 24 floats (position 3x4, normal 3x4) in place from
+// the previous real frame's palette with the same key (and occurrence of that key in the frame), slot by slot.
+void blend_palette(u32 key, f32* data, u32 n) noexcept;
 } // namespace interp
 
 } // namespace aurora::gx::fifo

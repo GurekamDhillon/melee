@@ -997,6 +997,11 @@ absl::flat_hash_map<u64, std::vector<Vals>> sTo;
 absl::flat_hash_map<u64, u32> sOcc;
 u32 sBlended, sRejected, sMissing;
 u32 sPendingPos = 0; // matrix slots loaded since the last draw
+// PC matrix palettes, by (key, occurrence of the key this frame): whole palettes, 24 floats a slot
+absl::flat_hash_map<u64, std::vector<f32>> sPalFrom;
+absl::flat_hash_map<u64, std::vector<f32>> sPalTo;
+absl::flat_hash_map<u32, u32> sPalOcc;
+u32 sPalBlended, sPalRejected, sPalMissing, sPalFrames; // palette slots, logged every 600 real frames
 u32 sPendingNrm = 0;
 
 u64 pair_key(u32 addr) noexcept {
@@ -1095,7 +1100,10 @@ void blend(u32 addr, f32* v, u32 len, bool affine) noexcept {
 } // namespace
 
 void begin_real_frame(bool enabled, float alpha) noexcept {
+  sPalOcc.clear();
   if (!enabled) {
+    sPalFrom.clear();
+    sPalTo.clear();
     sFrom.clear();
     sTo.clear();
     sActive = false;
@@ -1106,6 +1114,13 @@ void begin_real_frame(bool enabled, float alpha) noexcept {
   for (auto& [key, list] : sTo) {
     list.clear();
   }
+  sPalFrom.swap(sPalTo);
+  sPalTo.clear();
+  if (++sPalFrames % 600 == 0 && (sPalBlended | sPalRejected | sPalMissing) != 0) {
+    Log.info("interp: palette slots over 600 frames: blended {}, implausible {}, palettes unmatched {}", sPalBlended,
+             sPalRejected, sPalMissing);
+    sPalBlended = sPalRejected = sPalMissing = 0;
+  }
   sOcc.clear();
   sPendingPos = sPendingNrm = 0;
   sActive = true;
@@ -1115,6 +1130,7 @@ void begin_real_frame(bool enabled, float alpha) noexcept {
 
 void begin_replay(float alpha) noexcept {
   sOcc.clear();
+  sPalOcc.clear();
   sPendingPos = sPendingNrm = 0;
   sActive = true;
   sRecord = false;
@@ -1133,6 +1149,40 @@ void take_stats(u32* blended, u32* rejected, u32* missing) noexcept {
   *rejected = sRejected;
   *missing = sMissing;
   sBlended = sRejected = sMissing = 0;
+}
+
+void blend_palette(u32 key, f32* data, u32 n) noexcept {
+  if (!sActive) {
+    return;
+  }
+  const u64 k = (static_cast<u64>(sPalOcc[key]++) << 32) | key;
+  if (sRecord) {
+    sPalTo[k].assign(data, data + n * 24);
+  }
+  if (sAlpha >= 1.f) {
+    return;
+  }
+  const auto it = sPalFrom.find(k);
+  if (it == sPalFrom.end() || it->second.size() != n * 24) { // spawned, or its envelope count changed: as it is
+    ++sMissing;
+    ++sPalMissing;
+    return;
+  }
+  const f32 a = sAlpha < 0.f ? 0.f : sAlpha;
+  for (u32 s = 0; s < n; ++s) {
+    f32* v = data + s * 24;
+    const f32* from = it->second.data() + s * 24;
+    if (!plausible(from, v, 12, true)) {
+      ++sRejected;
+      ++sPalRejected;
+      continue;
+    }
+    for (u32 i = 0; i < 24; ++i) {
+      v[i] = from[i] + (v[i] - from[i]) * a;
+    }
+    ++sBlended;
+    ++sPalBlended;
+  }
 }
 
 // Position/normal matrix slots loaded since the last draw. They are blended when the next draw

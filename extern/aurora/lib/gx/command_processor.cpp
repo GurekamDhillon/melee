@@ -1025,7 +1025,12 @@ void handle_aurora(ByteReader& reader) noexcept {
       return;
     }
     const auto bytes = reader.take(n * 96u);
-    const gfx::Range range = gfx::push_storage(bytes.data(), bytes.size());
+    // frame interpolation: blend toward this frame's palette from the last real frame's (by the game's key)
+    static std::vector<f32> palBuf;
+    palBuf.resize(n * 24u);
+    std::memcpy(palBuf.data(), bytes.data(), n * 96u);
+    interp::blend_palette(key, palBuf.data(), n);
+    const gfx::Range range = gfx::push_storage(reinterpret_cast<const u8*>(palBuf.data()), n * 96u);
     g_palette.active = true;
     g_palette.n = n;
     g_palette.key = key;

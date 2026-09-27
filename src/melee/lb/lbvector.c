@@ -368,7 +368,12 @@ Vec3* lbVector_WorldToScreen(HSD_CObj* cobj, const Vec3* pos3d,
 {
     u8 _[16];
 
+#if defined(TARGET_PC)
+    /* MTXPerspective and MTXOrtho write all four rows, unlike C_MTXLookAt. */
+    Mtx44 projMtx;
+#else
     Mtx projMtx;
+#endif
     float projection[7]; // projection params
     float viewport[6];   // viewport params
     Mtx m;

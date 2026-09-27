@@ -498,12 +498,17 @@ void HSD_SisLib_803A84BC(HSD_GObj* gobj, int pass)
             }
             HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), (MtxPtr)&m);
         } else {
+#if defined(TARGET_PC)
+            /* MTXOrtho writes four rows; GXSetProjection reads them on PC. */
+            Mtx44 projection_m;
+#else
             Mtx projection_m;
+#endif
 
             GXSetZMode(0U, 0U, 0U);
             GXSetViewport(0.0F, 0.0F, 640.0F, 480.0F, 0.0F, 1.0F);
             GXSetScissor(0, 0, 0x280, 0x1E0);
-#ifdef MUST_MATCH
+#if defined(MUST_MATCH) && !defined(TARGET_PC)
             MTXOrtho((MtxPtr) ((u8*) &projection_m[0][0] - 0x14), 0.0F,
                      -480.0F, 0.0F, 640.0F, 0.0F, 2.0F);
             GXSetProjection((MtxPtr) ((u8*) &projection_m[2][3] - 0x40), 0);

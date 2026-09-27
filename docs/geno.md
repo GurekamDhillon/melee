@@ -1,6 +1,10 @@
 # Geno - GD's Melee's fighter-extension layer
 
-Status: **v2** (v0 foundation, v1 Meta Knight script features (section 15), v2 action states, glide and MK specials (section 16)), on the public `pc-port` branch of the melee fork (made public 2026-09-24; later work: v3/v4, the LAB mode, see sections 17-18; v5 articles, on_hit and counter windows, section 19).
+**Current as of 2026-09-27 (game `4c676892a`).** This dated overview supersedes older status
+summaries in this file; versioned verification sections remain historical results for their
+named runs, not HEAD validation. JSON `GENO_VERSION` is **5**, with additive v5.5 commands,
+articles, on-hit/counter hooks and native effects. The LAB and its `gd` API are public.
+Stable earlier instruction ids retain their meanings; sections 15-20 describe their additions.
 
 ## 1. What Geno is, and what it is not
 
@@ -304,16 +308,16 @@ Geno version - data-driven, drawn natively, no fighter code:
 | later | an IR emitter/loader for `melee.geno`; per-profile merge rules instead of "later mod wins" |
 
 Constraints that stay: Melee's global rules (section 1), m-ex untouched (section 3), rollback-safe
-(section 4), privacy of this branch until GD decides otherwise.
+(section 4), stable public encodings and explicit version checks.
 
 ## 14. Geno Lab (inspection tool)
 
 An in-engine, frame-steppable lab for seeing *why* a fighter feels the way it does (first use:
 Brawl Kirby vs vanilla Kirby). The native part is thin: scalar read-only getters, the game's own
 develop-mode drawing switches, a camera projection, engine event hooks and a snapshot history.
-The tool itself is a Lua script mod. Everything here is private (this branch), so the API is
-documented **here**, not in the public `docs/scripting.md`. It extends the `gd` table of scripting
-API 1; `gd.lab_api == 1` says the build has it (nil on public builds).
+The tool itself is a public Lua script mod, shipped as `mods/geno-lab`. Its native calls extend
+scripting API 1; `gd.lab_api == 1`. The workspace's `docs/scripting.md` inventories all registered
+`gd` functions; this section gives the detailed fields and LAB behaviour.
 
 ### 14.1 Files
 
@@ -1231,6 +1235,56 @@ speed`, one line per flying port. The host overlay draws it in every mode (`gw_c
 - **Not machine-checked:** the F11 key itself (a minimized test window has no focus) and the LAB
   menu rows in a live game (the Lab checker draws them with stubs).
 
+### 14.18 Input timing and turbo
+
+`gd.input(port, spec, frames)` claims the whole pad and holds it for completed logic frames,
+not PADReads. `gw_Script_PadFrameConsumed` runs after live logic frames; paused reads and
+rollback/rewind resimulation do not consume a live hold. Once the hold ends, the claimed port
+stays connected and neutral until release/task completion/unload. `gd.release_pad(port)` and
+its alias `gd.release(port)` release early. Legacy text pad scripts still count PADReads.
+
+The LAB's input-driven frame-data export steps one frame per tick during an input move so the
+script can supply each sample before the next frame. General multi-frame `gd.step(n)` still exists.
+
+`MELEE_FPS=u` uncaps interpolated presentation, keeping realtime logic at 60 Hz. `MELEE_TURBO=1`
+or game `--turbo` runs scripted/LAB batch logic on a virtual clock without pacing and mutes audio.
+It requires `MELEE_PAD_SCRIPT` or `MELEE_LAB_BATCH` and refuses netplay/Slippi/fake rollback.
+`MELEE_TURBO_RENDER=N` presents every Nth game frame (default 8, 0 never). Hidden/minimised
+windows never present. Unpresented match frames execute render callbacks but skip display
+lists/skinning unless `MELEE_TURBO_DRAWS=1`. Use logic frames for holds; wall-clock performance
+and screenshots need their own realtime checks. Workspace `run.sh --test` requests turbo unless
+`--realtime` is supplied, but the headless test runner has no paced frame loop.
+
+### 14.19 Offline scripting additions
+
+Full signatures, bounds and return values are in workspace `docs/scripting.md`, checked against
+`pc/platform/gw_script.c` registration and game-side implementations.
+
+- `gd.set_damage(port, n)` writes real fighter/player damage (integer 0-999), including stamina
+  HP accounting. It does not itself deliver the hit needed to finish an HP boss.
+- `gd.hit(port, {damage=, angle=, kbg=, bkb=, from=})` feeds Melee's collision result and hit
+  processing. Required integers: damage 0-500, angle 0-361, kbg/bkb 0-1000; optional source
+  fighter slot `from`, otherwise environment damage. Returns acceptance, forks rewind.
+- `on_boss_defeated{kind, port, x, y}` observes the Hand bosses' completed death. Gameplay
+  scripts can delay progression with `gd.boss_hold([seconds])` (default 60, range 1/60-600)
+  and release it with `gd.boss_release()`. The hold timeout counts match logic frames.
+- `gd.stage_add_platform`, `gd.stage_add_line`, `gd.stage_move`, `gd.stage_remove`,
+  `gd.spawn_target` and `gd.stage_add_model` create offline stage content. Up to 200 collision
+  lines (also bounded by the 256-joint stage budget), 32 targets, 64 model branches and 8 DATs.
+  Targets use Mato's real `GrTMr.dat` model. `gd.stage_add_model{file=, platform=handle, ...}`
+  can carry an existing floor; `gd.stage_add_platform` has no `model=` field in this revision.
+  `gd.stage_view` controls geometry/debug-overlay drawing.
+- `gd.spawn_enemy(kind, x, y [, opts])` and `gd.enemy_remove(handle)` manage up to 32 Adventure
+  enemies: goomba, koopa, redead, like_like, octorok, polar_bear. Defeats deliver
+  `on_enemy_defeated{kind, handle}`; Koopa's shell transition and explicit removal do not.
+- Stage/enemy writes require a gameplay script in an active offline match; console calls are
+  refused. Camera writes allow the offline gameplay console: `gd.camera_get`, `camera_detach`,
+  `camera_set`, `camera_move`, `camera_path`, `camera_follow`, `camera_shake`, `camera_bounds`,
+  `camera_attach`. One script owns the camera; completion calls `on_camera_complete(kind)`.
+- `gd.items`, `gd.fx` and `gd.perf` expose item/effect/performance diagnostics. Performance is
+  host state, not deterministic gameplay data. Effect packages hide article placeholder DObjs
+  when attached; compare the installed effect visually before calling the conversion complete.
+
 ## 15. v1 script encodings (STABLE reference for the Meta Knight translator)
 
 This section is the contract the Brawl -> Geno script translator (ports/halberd/ (workspace repo) )
@@ -1952,7 +2006,7 @@ AObjs (game heap, snapshotted); the rate is re-derived from move_f[0] every fram
 
 ## 19. v5: articles, the on_hit hook, counter windows (STABLE reference)
 
-Status: **built** (`"geno": 4`; every key is additive, an older exe logs them as unknown). Code:
+Status: **built** (`"geno": 5`; keys are additive, but an older build cannot be assumed to execute newer commands). Code:
 `pc/geno/geno_game_articles.inc` (game half), `pc/platform/geno_registry.c` (parse, model load),
 engine sites in `item.c` and `fighter.c` (19.5). First customer: Sora (Firaga / Blizzaga / Thundaga
 are articles, Counter Attack is a counter window), but nothing here is Sora-specific.
@@ -1960,7 +2014,8 @@ are articles, Counter Attack is a counter window), but nothing here is Sora-spec
 ### 19.1 Articles are Melee items
 
 A profile's `"articles"` list declares projectiles. **Article a of profile p is item kind
-`0x1000 + p * 8 + a`** (`GENO_ART_KIND_BASE`, 8 articles per profile): above m-ex's custom kinds
+`0x1000 + p * 8 + a` for a=0..7, or `0x1100 + p * 8 + (a - 8)` for a=8..15**
+(`GENO_ART_KIND`, 16 articles per profile; the original first-eight ids are unchanged): above m-ex's custom kinds
 (237 + the disc's count) and below m-ex's `5000 + n` "the spawner's own article n" remap, so no
 vanilla or m-ex table is ever indexed with it. `Item_80267978` asks Geno for the kind's descriptor
 (`Article`: `ItemAttr`, model desc, no hurtbox) and logic table; `Item_802674AC` gives it the
@@ -2065,13 +2120,13 @@ fighter goes to `target` (any target, section 16.1; none = stay), HIT_COUNTER is
 hooks run. `"negate": false` only flags the hit (the fighter takes it; a script / hook decides).
 The attacker's hitbox is not asked whether it is counterable (`hits.counter` concerns Melee's
 shield-bubble counters); a Brawl/Ultimate-style counter multiplier on HIT_DAMAGE is the move's
-script (read HIT_DAMAGE, put it in a hitbox's damage - not a v5 opcode).
+script: read HIT_DAMAGE, scale it, and apply it with HBDMG (sub 0x3A; section 19.12).
 
 ### 19.5 How v5 hooks in (compatibility)
 
 | site | what | everyone else |
 |---|---|---|
-| `item.c` `Item_80267978` | kinds `0x1000..0x10FF` -> `Geno_ArticleDesc` / `Geno_ArticleLogic` | the vanilla / m-ex ranges, before the m-ex custom branch |
+| `item.c` `Item_80267978` | kinds `0x1000..0x11FF` -> `Geno_ArticleDesc` / `Geno_ArticleLogic` | the vanilla / m-ex ranges, before the m-ex custom branch |
 | `item.c` `Item_802674AC` | those kinds: hold kind 8 | unchanged |
 | `fighter.c` `Fighter_ProcessHit_8006D1EC` | `Geno_OnHit` first | returns at once (no profile) |
 | `shim_os.c` | 1 MB withheld under m-ex's region, only if a mounted mod defines articles | full main heap otherwise |
@@ -2079,8 +2134,8 @@ script (read HIT_DAMAGE, put it in a hitbox's damage - not a v5 opcode).
 Rollback: descriptors, attributes and model descs are game globals written only with registry values
 (idempotent); the model data is read-only; all per-frame state is the item itself (game heap,
 snapshotted like every item: position, velocity, hitboxes, and Geno's vars in its per-kind block)
-and the `GenoState` hit fields. `GENO_VERSION` 4 (the LAB's state library refuses v3 states: the
-`GenoState` layout grew); `GENO_ID_VERSION` stays 1.
+and the `GenoState` hit fields. `GENO_VERSION` is 5; the LAB state library checks that version as well as build/disc/mod/Geno
+identity before loading. `GENO_ID_VERSION` stays 1.
 
 ### 19.6 Limits and approximations
 
@@ -2090,8 +2145,10 @@ and the `GenoState` hit fields. `GENO_VERSION` 4 (the LAB's state library refuse
 - One state per article. An article that changes behaviour mid-life (Thundaga's cloud then bolt)
   is two articles, the second spawned by the first's owner script, or a later `"phases"` key.
 - Homing aims at the nearest non-owner fighter, not the nearest opponent by team.
-- The spawn position is the owner's position + offset, not a bone.
-- The model region is a bump allocator: every hot reload loads the models again; 1 MB total.
+- Spawn offsets can use the owner or a configured bone (section 19.8); check the source skeleton
+  mapping when converting another game's article attachment.
+- The model region is a 1 MiB bump allocation, reserved only when a mounted mod defines articles.
+  Models are shared by file+symbol within a registry load; reload/allocation limits still matter.
 
 ### 19.7 v5 verification
 
@@ -2207,9 +2264,10 @@ jab 7.28 -> 10.9, fsmash 16.71 -> 25.1 (x1.5), fresh fsmash 22.0 -> 30.0 (max); 
 
 ## 20. Geno effects (`.gfx.json`, format v1): the effect IR
 
-Status: **format + Ultimate importer built; runtime part 1 built** (`pc/platform/gw_fx.c`: loader, simulation,
-numeric census; test `fx_sim`). Not built: the game-half attach / per-frame driver, the geno.json `"fx"` binding,
-and the renderer (Aurora; waits for the renderer's owner). Design: the workspace's
+Status: **importer, simulation, game bindings and renderer built**. `pc/platform/gw_fx.c` loads,
+simulates and supplies the census; `pc/geno/geno_game_articles.inc` drives article/fighter effects;
+`pc/platform/gw_fx_render.cpp` renders them through Aurora. Article `fx` and fighter `fx_bindings`
+are implemented (20.3). Code presence does not establish source-game visual parity. Design: the workspace's
 `_research/geno-effects-runtime.md`. GD's decisions (2026-09-26): an effect from another game is rendered by
 Geno's own runtime, not squeezed into Melee's particle bytecode (sections 19.8-19.11 remain the path for effects
 Melee's particles express well); the goal is higher fidelity close to the source, **not a 1:1 shader port**.
@@ -2293,8 +2351,7 @@ format: the workspace's `ports/ir/schema/fx_bindings.schema.json`, written by `p
 attaches packages on the fighter's states. `Geno_FxFramePost` calls `gw_Fx_Drive` for each fighter whose profile has
 a set, before `gw_Fx_Frame`, with its motion state, subaction (`anim_id`), animation frame, Geno's `action_time`,
 situation, facing and parts table. A state is matched by `subaction`; a call fires once the state's clock (`animation`
-= the animation frame, `game` = frames since the state began) reaches `frame`, on `joint` (a joint of the model's
-tree, turned into a part by the kind's `joint_to_part`) x T(`offset`) R(`rotation`, degrees, X then Y then Z)
+= the animation frame, `game` = frames since the state began) reaches `frame`, on `joint` (a depth-first index in the model's tree; the runtime walks that tree rather than trusting a remapped parts slot) x T(`offset`) R(`rotation`, degrees, X then Y then Z)
 S(`scale`), the package's axes taken as the joint's own. `follow: false` takes the matrix once (world-fixed). Ends:
 `off` / `detach` at `end_frame`; `state_exit` (and `owner_destroy`) when the motion state or subaction changes or
 the state is entered again; `emitter_life` instances end themselves when their emission is over (one whose emitter

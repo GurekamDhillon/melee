@@ -1,105 +1,65 @@
 # Port dev quick-reference (agents: READ THIS FIRST)
 
-Workspace root: `C:\gdm` = `/mnt/c/gdm` (a junction to the same checkout).
-Game repo: `C:\gdm\melee` (branch `pc-port`). Build dir: `C:\gdm\_build`. Docs: `_research/`, `docs/DEVLOG.md`.
-Commands digest: `docs/DEVLOG.md` §4. Boot gates / SDK notes: `_research/melee-boot.md`. Invariants: `_research/console-invariants.md`.
+**Reviewed 2026-09-27.** Workspace `docs/NEXT-SESSION.md` owns dated current state and
+supersedes older operating instructions here. Commands below match workspace `fc23753`;
+game API/timing behaviour matches `4c676892a`. No build or runtime check accompanied this review.
 
-## Toolchain
-- Clang: `/mnt/c/gdm/_toolchains/llvm/bin/clang.exe` (a Windows binary; run it directly from WSL, `--target=i686-pc-windows-msvc`).
-- Windows-side steps run via `cmd.exe` from WSL. Visual Studio Build Tools supply `vcvarsall` for the link step.
+The workspace and game are separate repos. Run workspace tools from the workspace root;
+`GW_ROOT` defaults to that tools checkout, `GW_MELEE` to its `melee/` (or the caller's game
+checkout), and `GW_BUILD_ROOT` to `_build`. Override them for another layout. A machine's
+`C:/gdm` junction is not a portable checkout path.
 
-## Build and run: use the scripts (they get the bridge right)
+## Toolchain and build
 
+Use the workspace scripts; game TUs require the PPC frontend/gwtool transform and cannot be
+compiled with a raw native clang command. Native shims use Windows clang and the workspace
+link environment. Full command reference: workspace `tools/port/README.md`.
+
+```bash
+bash tools/port/build.sh --tu src/melee/ft/ftdata.c --shim shim_dvd.c
+bash tools/port/run.sh play --iso "C:/path/game.iso"
+bash tools/port/run.sh --test tests --iso "C:/path/game.iso"
+bash tools/port/run.sh --test --realtime tests-rt --iso "C:/path/game.iso"
 ```
-bash C:/gdm/tools/port/build.sh --tu src/melee/ft/ftdata.c --shim shim_dvd.c
-bash C:/gdm/tools/port/run.sh sonic --iso C:/iso/Akaneia.iso
-bash C:/gdm/tools/port/run.sh --test t --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
-```
 
-`build.sh` does compile -> link -> **regenerate `gw_mex_bridge.c`** -> compile it -> link again,
-then proves the bridge is a fixpoint. Skipping that regeneration is the single nastiest mistake in
-this tree: the build succeeds, the game boots, and a guest address silently calls the wrong native
-function. The raw commands below still work and are worth understanding, but prefer the scripts.
+`build.sh` scans stale game TUs and native shims, links, regenerates `gw_mex_bridge` from the
+map, recompiles/relinks when required, and checks until stable (four regeneration checks max).
+The final EXE gets a bridge ABI audit. An unchanged trusted bridge avoids the extra link.
+This workspace revision uses timestamp scans and fixed `xargs -P 8`; it has no `GW_JOBS` option.
 
-`run.sh` runs a COPY of the exe in `_build/runs/<name>/`, so the game's log, crash logs, memory
-card and mods never collide with another run - and a running game can never block the next link
-with `LNK1104`.
+`run.sh` copies the EXE/map into `GW_BUILD_ROOT/runs/<name>/`. Each name gets its own logs,
+card and runtime files; a running copy cannot block linking the baseline. Do not reuse a name
+for concurrent runs. `--test` and `--realtime` go before the name. Test mode exports
+`MELEE_TURBO=1` unless `--realtime` clears it; the headless test runner itself has no paced
+frame loop and does not enter turbo simulation.
 
 ## Two agents at once
 
 ```
-bash C:/gdm/tools/port/agent_new.sh stages     # worktree + build root, objects hardlinked
-export GW_MELEE=C:/gdm/worktrees/stages
-export GW_BUILD_ROOT=C:/gdm/_build/agents/stages
+bash tools/port/agent_new.sh stages     # worktree + build root, objects hardlinked
+export GW_MELEE="$(pwd -W)/worktrees/stages"
+export GW_BUILD_ROOT="$(pwd -W)/_build/agents/stages"
 ```
 
-`GW_BUILD_ROOT` is the whole trick: it holds that agent's objects, link response file and
-`melee-pc.exe`, so two agents share nothing they write. What stays shared is read-only - the
-Aurora/Dawn/SDL3 libraries in `_build/ax86m` (the link always runs there because
-`melee_link_libs.rsp` names them relative to it; only the outputs move) and the ISOs.
-
-`--test` needs no window or GPU, so test runs parallelise freely. Gameplay runs each open a window
-and share one audio device, so keep audio checks serial.
+Build roots separate link outputs, but `agent_new.sh` hardlinks baseline objects. Verify that
+local `_build/masstest/pipe_win.sh` replaces its output rather than truncating a shared link.
+Aurora/Dawn/SDL3 libraries remain shared; coordinate their rebuilds. Use separate run directories,
+and keep audio/controller checks serial. Read workspace `docs/HANDOFF.md` section 6.
 
 Clean up with `agent_rm.sh <name>`; it refuses if the worktree has uncommitted work and never
 deletes the branch.
 
-## Rebuild a platform shim (`melee/pc/platform/<shim>.c`)
-```
-C:/gdm/_toolchains/llvm/bin/clang.exe --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC \
-  -I C:/gdm/melee/extern/aurora/include -I C:/gdm/melee/pc/platform \
-  -I C:/gdm/_build/ax86/_deps/sdl3_prebuilt-src/include \
-  C:/gdm/melee/pc/platform/<shim>.c -o C:/gdm/_build/masstest/shimobj/<shim>.obj
-```
-- The **SDL3 include path is required**, not optional: `main.c`, `shim_ax.c` and `shim_vi.c` all
-  reach SDL3 headers (directly or through `aurora/event.h`). Omitting it fails with
-  `'SDL3/SDL_events.h' file not found`.
-- New shim file? Add its `.obj` to `_build/melee_link_objects.rsp` and any new import library to
-  `_build/melee_link_libs.rsp` - **both response files are hand-maintained, not generated.**
+## Build inputs and run evidence
 
-## Rebuild one game TU (`melee/src/**.c`) - use the pipe script, NOT raw clang
-```
-cd /mnt/c/gdm/melee && bash /mnt/c/gdm/_build/masstest/pipe_wsl.sh <src path>   # e.g. src/melee/lb/lbarq.c
-# Git Bash alternative: pipe_win.sh <path>
-```
-Game TUs go clang (PPC frontend) -> gwtool -> `.obj`. Compiling a game TU directly with the Windows clang produces a wrong object; always use the pipe.
-- This includes SDK TUs under `extern/dolphin/src/` that the port builds for real rather than
-  shimming - currently `mtx/mtx44.c` and `thp/THPDec.c` (see DEVLOG section 21). Adding one means a
-  line in `_build/masstest/files.txt` **and** a line in `_build/melee_link_objects.rsp`.
-- **Blocker to expect:** much of the SDK source is MWERKS inline PowerPC `asm`, which clang's PPC
-  front end rejects outright, so those TUs cannot be piped as-is. Precedents both ways:
-  `axfx/reverb_std.c` + `delay.c` were reimplemented natively in `shim_ax.c` (section 19.3);
-  `thp/THPDec.c` was ported in place behind `TARGET_PC` with the assembly kept under `#else`
-  (section 21.2).
+New native shims need entries in the curated object response file, not `files.txt`. New game TUs
+need both the pipeline list and link list. `build.sh` is still required after either changes:
+an isolated compile or raw link does not establish the bridge fixpoint.
 
-## Relink (after any `.obj` change)
-```
-cmd.exe /c "cd /d C:\gdm\_build\ax86m && ..\build_melee_pc.bat"   # expect MELEE_PC_LINK_OK
-```
-
-## Run (interactive, e.g. for the user to play) - env vars must be EXPORTED
-```
-cd /mnt/c/gdm/_build
-export MELEE_PAD_IGNORE_ADAPTER=1   # only when using scripted input, not a real controller
-export WSLENV="MELEE_PAD_IGNORE_ADAPTER"
-nohup ./melee-pc.exe --iso 'C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso' > /tmp/opencode/live.log 2>&1 &
-disown
-```
-- **Memory card is on by default** (GCI folder at `_build/card`); set `MELEE_CARD=0` to disable it.
-- **Gotcha:** `env MELEE_CARD=0 ./melee-pc.exe` does NOT propagate - `WSLENV` shares vars from the
-  WSL *shell* environment, so the var must be `export`ed first (or already exported in the shell).
-- Success looks like `gw: card: initialised (GCI folder) at ...\_build\card`; the
-  `aurora::card: Failed to get status of file at idx: 1/2` errors are just empty slots.
-- Kill before relaunch: `cmd.exe /c "taskkill /IM melee-pc.exe /F"`.
-
-## Run (ONE instance only)
-```
-cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso'
-```
-- Before every run: `cmd.exe /c "tasklist | findstr /i melee-pc"` and wait until none. Two concurrent instances kill each other's runs.
-- Screenshots and scripted input **are** available now and are the normal way to verify a visual change: `MELEE_PAD_SCRIPT` for input, `PrintWindow` for capture, window parked off-screen so nothing appears on the user's monitors (see "Run without the window appearing on a monitor"). Still ask the user for anything needing real judgement or a path the scripts cannot reach.
-- `_build/melee-pc.log` is truncated on every run: copy it into `.omo/evidence/` immediately after a run.
-- Never redirect stdout into `melee-pc.log` (two writers).
+Launch checks visibly for GD when visual/controller judgement is needed; use logs and numeric
+probes for automation. Stop only a PID you started after checking its executable path, not every
+`melee-pc.exe` on the machine. A failed link or an older sandbox copy can leave an old EXE running.
+Record actual EXE/map, renderer, disc, mods, commands and run directory with each result.
+Never redirect stdout into the game's own `melee-pc.log` (two writers).
 
 ## Resolve an rva/crash address to a symbol (needs Git Bash gawk; WSL mawk fails)
 ```
@@ -123,13 +83,16 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_CARD=0` | disable the memory card (on by default; GCI folder at `_build/card`) |
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |
 | `MELEE_TARGET_TEST=<char>` | boot straight into Target Test with that character (name or ckind; dev/testing) |
-| `MELEE_PAD_SCRIPT=<file>` | drive channel 0 from a text script; see `_build/audio_test_script.txt` |
+| `MELEE_PAD_SCRIPT=<file>` | text scripts consume PADReads; `.lua` files run gameplay scripts whose `gd.input` holds count completed logic frames, including paused single steps |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted input) |
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
 | `MELEE_NO_ONBOARD=1` | skip the first boot's visit to SETTINGS > CONTROLS (also skipped for any `MELEE_SCENE` / `MELEE_PAD_SCRIPT` run; settings.cfg `onboarded=1` records it) |
 | `MELEE_PROFILE=1` | per-frame timing split, percentiles, histogram (see section 20) |
-| `MELEE_TURBO=1` / `--turbo` | accelerate scripted or LAB batch game simulation with a virtual field clock; refused for netplay and ordinary player windows |
-| `MELEE_TURBO_RENDER=N` | present every Nth game frame in turbo (default 8; 0 never); GX/EFB work still runs every frame for game-state parity |
+| `MELEE_TURBO=1` / `--turbo` | accelerate simulation with a virtual clock and muted audio; requires `MELEE_PAD_SCRIPT` or `MELEE_LAB_BATCH`, refuses netplay/Slippi/fake rollback and ordinary player windows |
+| `MELEE_TURBO_RENDER=N` | present every Nth game frame in turbo (default 8, 0 never; 0-10000); hidden/minimised windows never present |
+| `MELEE_TURBO_DRAWS=1` | retain display lists and skinning on unpresented turbo match frames; normally suppressed while render callbacks still run |
+| `MELEE_FPS=u` / `MELEE_FPS=120` | uncapped / capped interpolated presentation; realtime logic remains 60 Hz |
+| `MELEE_MODS_DIR=<path>` | parent of mod folders; use a Windows path (`pwd -W` in Git Bash), not `/c/...` |
 | `MELEE_TURBO_HASHLOG=<path>` | optional per-match-frame full snapshot hash CSV for realtime/turbo parity checks |
 | `MELEE_TEST_SEED=<integer>` | fix the boot RNG seed for scripted parity checks; otherwise use OSGetTick |
 | `MELEE_WINDOW_X/Y` | window position; may be negative. Applied at creation, so no flash |
@@ -255,7 +218,7 @@ controller at rest.
 - **Game-source changes** must be `#if defined(TARGET_PC)`-guarded with the original code kept.
 - **Audio backend exists** (2026-09-12/13, reworked 2026-09-14 - see DEVLOG section 19). Aurora has no `ax`/`ai`/`dsp`, so `shim_ax.c` implements AX: DSP-ADPCM decode, a 64-voice mixer over `gw_aram` with linear resampling, both aux buses with native AXFX reverb-std and delay, ITD and de-pop, over an SDL3 32 kHz stereo output paced by the ring fill level. `HSD_SynthCallback` is pumped per sub-frame from `gw_frame_tick`.
 - **Cutscenes work** (2026-09-14 - DEVLOG section 21). `extern/dolphin/src/dolphin/thp/THPDec.c` is built as a game TU with its Gekko paired-single IDCT and assembly Huffman decoders reimplemented in C behind `TARGET_PC`; the opening movie plays by default.
-- **Commits:** commit on `pc-port` with a short `pc: ...` subject. Never `git add -A`; stage paths explicitly.
+- **Commits:** work in the authorised branch. Do not commit, merge or push when the task forbids it; otherwise stage named paths and use a short subject. Never `git add -A`.
 - **Evidence:** each task writes `.omo/evidence/task-<name>.log` with the exact commands and their outputs.
 - **Aurora bootstrap cache.** `build_aurora_x86.bat` builds the vendored `melee/extern/aurora`. If `_build/ax86` was previously configured from another Aurora checkout (`dusklight/extern/aurora`), CMake refuses the stale cache ("does not match the source ... used to generate cache") - delete `_build/ax86/CMakeCache.txt` and `_build/ax86/CMakeFiles/` and re-run. Keep `_build/ax86/_deps`: `ax86m` reuses its `dawn-src` and SDL3 package.
 

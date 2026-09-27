@@ -1,0 +1,12 @@
+{
+  "id": "boss_bonus",
+  "name": "Master Hand bonus targets",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "After Master Hand falls, hold the 1P finish for three breakable targets or 20 seconds.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "main.lua"
+}

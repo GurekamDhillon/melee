@@ -59,6 +59,9 @@ extern int gw_ScriptGame_StageTargetI(int slot);
 extern float gw_ScriptGame_StageTargetF(int slot, int field);
 extern int gw_snap_open(int k);
 extern uint64_t gw_snap_hash(void);
+/* gm_17C0.c: all mutable hold state is in snapshotted game memory. */
+extern int gw_BossHook_Hold(int frames);
+extern int gw_BossHook_Release(void);
 enum { SF_X, SF_Y, SF_VX, SF_VY, SF_PERCENT, SF_FACING, SF_ANIM_FRAME, SF_HITLAG };
 enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTUME, SI_SLOT_TYPE };
 
@@ -565,6 +568,25 @@ static void gs_require_offline(lua_State *L, const char *fn) {
     if (gw_RB_Enabled() || gw_Netplay_Enabled()) {
         luaL_error(L, "gd.%s is offline-only (refused during a netplay/rollback session)", fn);
     }
+}
+
+/* The deadline counts match logic frames, so pause/step and savestates stay deterministic. */
+static int l_boss_hold(lua_State *L) {
+    double seconds = luaL_optnumber(L, 1, 60.0);
+    gs_require_offline(L, "boss_hold");
+    if (seconds < 1.0 / 60.0 || seconds > 600.0) {
+        return luaL_error(L, "gd.boss_hold: timeout must be 1/60 to 600 seconds");
+    }
+    gs_rw_branch();
+    lua_pushboolean(L, gw_BossHook_Hold((int) (seconds * 60.0 + 0.5)));
+    return 1;
+}
+
+static int l_boss_release(lua_State *L) {
+    gs_require_offline(L, "boss_release");
+    gs_rw_branch();
+    lua_pushboolean(L, gw_BossHook_Release());
+    return 1;
 }
 
 static int gs_slot_arg(lua_State *L, int idx) {
@@ -4310,6 +4332,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_stocks", l_set_stocks},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
+    {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
     {"key_pressed", l_key_pressed}, {"mouse", l_mouse}, {"command", l_command}, {"run", l_run},
@@ -5077,10 +5100,11 @@ void gw_Script_SceneBegin(int scene_kind) {
 /* Does any script define one of the event hooks? (checked every tick: cheap, and it follows
    scripts that define a hook late, e.g. from the console) */
 static void gs_update_want_events(void) {
-    static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land"};
+    static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land",
+                                       "on_boss_defeated"};
     int i, k, want = 0;
     for (i = 0; i < gs.n && !want; ++i) {
-        for (k = 0; k < 4 && !want; ++k) {
+        for (k = 0; k < 5 && !want; ++k) {
             if (gs_get_hook(i, hooks[k])) {
                 lua_pop(gs.L, 1);
                 want = 1;
@@ -5088,6 +5112,20 @@ static void gs_update_want_events(void) {
         }
     }
     gs.want_events = want;
+}
+
+int gw_Script_BossHookEnabled(void) {
+    int i;
+    if (gs.L == NULL || gw_RB_Enabled() || gw_Netplay_Enabled() || gw_Snap_Resimulating()) {
+        return 0;
+    }
+    for (i = 0; i < gs.n; ++i) {
+        if (gs_get_hook(i, "on_boss_defeated")) {
+            lua_pop(gs.L, 1);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* The draw pass: on_tick opens a list (gw_Script_Tick), on_draw completes it after the render
@@ -5956,8 +5994,9 @@ static void gs_dispatch_events(void) {
     for (k = 0; k < n; ++k) {
         const GsEvent *e = &gs.ev[k];
         static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land",
-                                            "on_target_broken", "on_all_targets_broken"};
-        if (e->what < 1 || e->what > 6) {
+                                            "on_target_broken", "on_all_targets_broken",
+                                            "on_boss_defeated"};
+        if (e->what < 1 || e->what > LAB_EV_BOSS_DEFEATED) {
             continue;
         }
         for (i = 0; i < gs.n; ++i) {
@@ -5976,6 +6015,25 @@ static void gs_dispatch_events(void) {
             case 6:
                 nargs = 0;
                 break;
+            case LAB_EV_BOSS_DEFEATED: {
+                union { int i; float f; } x, y;
+                const char *kind = e->a == 0x1B ? "master_hand" :
+                                   e->a == 0x1C ? "crazy_hand" : NULL;
+                char other[32];
+                if (kind == NULL) {
+                    snprintf(other, sizeof other, "fighter_%d", e->a);
+                    kind = other;
+                }
+                x.i = e->c;
+                y.i = e->d;
+                lua_createtable(L, 0, 4);
+                gs_setstr(L, "kind", kind);
+                gs_setint(L, "port", e->b + 1);
+                gs_setnum(L, "x", x.f);
+                gs_setnum(L, "y", y.f);
+                nargs = 1;
+                break;
+            }
             case LAB_EV_ACTION: /* (port, old, new, sub) */
                 lua_pushinteger(L, e->a + 1);
                 lua_pushinteger(L, e->b);
@@ -7118,6 +7176,32 @@ static int test_script_lab_events(void) {
     return 0;
 }
 
+/* A boss event is delivered after the frame with a one-based port and world coordinates. */
+static int test_script_boss_event(void) {
+    char out[256];
+    union { float f; int i; } x, y;
+    x.f = -27.5f;
+    y.f = 42.25f;
+    if (t_exec("boss_ev = nil; function on_boss_defeated(e) boss_ev = e end", out, sizeof out) != 0) {
+        gw_test_fail("defining boss hook failed: %s", out);
+        return 1;
+    }
+    gw_Script_Tick();
+    gw_Script_GameEvent(LAB_EV_BOSS_DEFEATED, 0x1B, 2, x.i, y.i);
+    if (t_exec("= boss_ev == nil", out, sizeof out) != 0 || strstr(out, "true") == NULL) {
+        gw_test_fail("boss hook ran before FramePost: %s", out);
+        return 1;
+    }
+    gw_Script_FramePost();
+    if (t_exec("= boss_ev.kind .. ':' .. boss_ev.port .. ':' .. boss_ev.x .. ':' .. boss_ev.y",
+               out, sizeof out) != 0 || strstr(out, "master_hand:3:-27.5:42.25") == NULL) {
+        gw_test_fail("boss event fields: %s", out);
+        return 1;
+    }
+    t_exec("on_boss_defeated, boss_ev = nil", out, sizeof out);
+    return 0;
+}
+
 /* the subaction-script walk (gd.timeline) on a hand-made script at the top of MEM1 */
 static int test_script_lab_timeline(void) {
     static const uint32_t words[] = {
@@ -7596,6 +7680,7 @@ fail:
 
 void gw_script_tests_register(void) {
     gw_test_register("script_stage_events", test_script_stage_events);
+    gw_test_register("script_boss_event", test_script_boss_event);
     gw_test_register("script_kit_mod_art", test_script_kit_mod_art);
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);

@@ -151,7 +151,8 @@ enum {
     LAB_EV_ACTION = 1, /* a player, b old motion, c new motion, d sub */
     LAB_EV_HIT = 2,    /* a attacker player (-1 none), b victim player, c flags, d damage (f32 bits) */
     LAB_EV_HITLAG = 3, /* a player, b 1 entering / 0 leaving, c sub */
-    LAB_EV_LAND = 4    /* a player, b motion, c sub */
+    LAB_EV_LAND = 4,   /* a player, b motion, c sub */
+    LAB_EV_BOSS_DEFEATED = 7 /* (5 / 6: the stage layer's target events, queued natively) */ /* a fighter kind, b zero-based port, c/d world x/y f32 bits */
 };
 /* LAB_EV_HIT flags in c */
 #define LAB_HIT_INDEX_MASK 0xFF   /* hitbox index 0-3, 0xFF unknown */

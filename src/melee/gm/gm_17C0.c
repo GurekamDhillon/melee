@@ -12,6 +12,11 @@
 #include <melee/cm/camera.h>
 #include <melee/db/db.h>
 #include <melee/ft/ft_0877.h>
+#if defined(TARGET_PC)
+#include <melee/ft/fighter.h>
+#include <melee/ft/kinds/ftCommon/forward.h>
+#include "../../../pc/gameworld/script_lab.h"
+#endif
 #include <melee/ft/ftbosslib.h>
 #include <melee/ft/ftlib.h>
 #include <melee/gr/ground.h>
@@ -48,6 +53,86 @@ static struct lbl_804706C0_t {
     int x10;
     int x14;
 } lbl_804706C0;
+
+#if defined(TARGET_PC)
+/* Game BSS is in MEM1 and saved by gw_snap. Keep every decision the simulation reads here. */
+static struct {
+    int sent_mask;
+    int pending;
+    int held;
+    int restored;
+    int limit;
+    int elapsed;
+    int sleep_wait;
+} boss_hook;
+
+extern int Script_BossHookEnabled(void);
+extern void Script_GameEvent(int what, int a, int b, int c, int d);
+
+static int BossHook_Kind(int kind)
+{
+    /* Extend this whitelist when another HP boss uses the 1P controller. */
+    return kind == Ft_Kind_MasterH || kind == Ft_Kind_CrezyH;
+}
+
+static int BossHook_AllSleeping(void)
+{
+    int port;
+    for (port = 1; port < 6; ++port) {
+        HSD_GObj* gobj = Player_GetEntity(port);
+        if (gobj != NULL) {
+            Fighter* fp = GET_FIGHTER(gobj);
+            if (BossHook_Kind(fp->kind) && Player_GetRemainingHP(port) <= 0 &&
+                fp->motion_id != ftCo_MS_Sleep)
+            {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+static void BossHook_Poll(void)
+{
+    int port;
+    for (port = 1; port < 6; ++port) {
+        int bit = 1 << port;
+        HSD_GObj* gobj = Player_GetEntity(port);
+        if (gobj != NULL && !(boss_hook.sent_mask & bit) && Player_GetRemainingHP(port) <= 0) {
+            Fighter* fp = GET_FIGHTER(gobj);
+            if (BossHook_Kind(fp->kind) && fp->motion_id == ftCo_MS_Sleep) {
+                union { int i; float f; } x, y;
+                x.f = fp->cur_pos.x;
+                y.f = fp->cur_pos.y;
+                boss_hook.sent_mask |= bit;
+                boss_hook.pending = 1;
+                Script_GameEvent(LAB_EV_BOSS_DEFEATED, fp->kind, port, x.i, y.i);
+                OSReport("boss_hook: defeated kind=%d port=%d\n", fp->kind, port + 1);
+            }
+        }
+    }
+}
+
+int BossHook_Hold(int frames)
+{
+    if (boss_hook.sent_mask == 0 || lbl_804706C0.x0 < 3 || lbl_804706C0.x0 > 8) {
+        return 0;
+    }
+    boss_hook.held = 1;
+    boss_hook.limit = frames;
+    boss_hook.elapsed = 0;
+    OSReport("boss_hook: hold %d frames\n", frames);
+    return 1;
+}
+
+int BossHook_Release(void)
+{
+    if (!boss_hook.held) return 0;
+    boss_hook.held = 0;
+    OSReport("boss_hook: released\n");
+    return 1;
+}
+#endif
 
 static lbl_804706D8_t lbl_804706D8[12];
 
@@ -107,6 +192,17 @@ void fn_8017C1A4(HSD_GObj* unused)
     temp_r29 = ftBossLib_8015C7EC();
     temp_r27 = ftBossLib_8015C88C();
     temp_r3 = ftBossLib_8015C9CC();
+#if defined(TARGET_PC)
+    /* Events are queued in the GObj pass and delivered by Script_FramePost. */
+    boss_hook.pending = 0;
+    if (boss_hook.held && ++boss_hook.elapsed >= boss_hook.limit) {
+        boss_hook.held = 0;
+        OSReport("boss_hook: hold timed out\n");
+    }
+    if (tmp->x0 >= 3 && tmp->x0 <= 8 && Script_BossHookEnabled()) {
+        BossHook_Poll();
+    }
+#endif
     switch (tmp->x0) {
     case 0:
         if (tmp->x8 == 0) {
@@ -235,6 +331,16 @@ void fn_8017C1A4(HSD_GObj* unused)
         } else if (tmp->x8 == temp_r28) {
             lbBgFlash_800205F0(temp_r3);
         } else if (tmp->x8 >= temp_r29_2) {
+#if defined(TARGET_PC)
+            /* With no boss hook, take the original finish branch. A same-frame death event
+             * gets FramePost to call Lua before the termination branch can run. */
+            if (boss_hook.held || (Script_BossHookEnabled() &&
+                                   (!BossHook_AllSleeping() || boss_hook.pending))) {
+                tmp->x0 = 8;
+                boss_hook.sleep_wait = 0;
+                break;
+            }
+#endif
             lbAudioAx_80028B90();
             gm_SetGameSpeed(1.0f);
             gm_8016B33C(8);
@@ -253,6 +359,41 @@ void fn_8017C1A4(HSD_GObj* unused)
             tmp->x8++;
         }
         break;
+#if defined(TARGET_PC)
+    case 8:
+        /* Wait for the death cleanup in ftCo_800BFD04, then for FramePost. A bad death
+         * animation cannot strand the match: the same safety limit applies to that wait. */
+        if (!BossHook_AllSleeping() && ++boss_hook.sleep_wait < 3600) break;
+        if (boss_hook.pending) break;
+        if (boss_hook.held) {
+            if (!boss_hook.restored) {
+                temp_r3_4 = gmVs_GetSceneController();
+                temp_r3_4->state.hud_enabled = 1;
+                /* Keep the encounter clock stopped so targets cannot force a time-out. */
+                ftBossLib_8015CC14();
+                gm_ClearDbPauseFlag(6);
+                gm_SetGameSpeed(1.0f);
+                Player_80031848(0);
+                Player_80036844(0, 0);
+                boss_hook.restored = 1;
+                OSReport("boss_hook: gameplay resumed during hold\n");
+            }
+            break;
+        }
+        if (boss_hook.sleep_wait >= 3600) OSReport("boss_hook: death wait timed out\n");
+        boss_hook.held = 0;
+        if (boss_hook.restored) {
+            gmVs_GetSceneController()->state.hud_enabled = 0;
+            Player_80031790(0);
+            Player_80036844(0, 1);
+        }
+        lbAudioAx_80028B90();
+        gm_SetGameSpeed(1.0f);
+        gm_8016B33C(8);
+        gm_8016B328();
+        tmp->x0 = 9;
+        break;
+#endif
     }
 }
 
@@ -263,6 +404,10 @@ void fn_8017C71C(void)
     tmp->x0 = 0;
     tmp->x4 = 1;
     tmp->x8 = 0;
+#if defined(TARGET_PC)
+    boss_hook.sent_mask = boss_hook.pending = boss_hook.held = boss_hook.restored = 0;
+    boss_hook.limit = boss_hook.elapsed = boss_hook.sleep_wait = 0;
+#endif
     tmp->xC = ftBossLib_8015C530(gm_8017E068());
     Player_SetOtherStamina(2, tmp->xC);
     ftLib_80087508(Ft_Kind_CrezyH, 0);

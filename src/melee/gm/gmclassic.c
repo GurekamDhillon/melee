@@ -692,6 +692,43 @@ static gm_803DDEC8Struct* gmClassic_801B2D54(gm_803DDEC8Struct* arg0)
     return ptr;
 }
 
+#if defined(TARGET_PC)
+/* pc: MELEE_SCENE="mode=classic;p1=<fighter>[/cN][/stocksN];step=N;difficulty=D" skips this mode's
+ * character select: what the screen's exit (gmClassic_801B3E44) stores, then straight into step N. */
+extern int SceneLaunch_OnePDirect(int game_mode);
+extern int SceneLaunch_OnePStep(void);
+extern int SceneLaunch_OnePLevel(void);
+extern int SceneLaunch_PlayerCKind(int n);
+extern int SceneLaunch_PlayerColor(int n);
+extern int SceneLaunch_PlayerStocks(int n);
+
+static int gm_OnePSceneDirect(struct gmm_x0_528_t* s, struct Unk1PData* d, int game_mode)
+{
+    int color, stocks;
+    if (!SceneLaunch_OnePDirect(game_mode)) {
+        return 0;
+    }
+    color = SceneLaunch_PlayerColor(0);
+    stocks = SceneLaunch_PlayerStocks(0);
+    s->c_kind = (s8) SceneLaunch_PlayerCKind(0);
+    s->color = (u8) (color < 0 ? 0 : color);
+    s->stocks = (u8) (stocks > 0 ? stocks : 3);
+    s->cpu_level = (u8) SceneLaunch_OnePLevel();
+    s->x5 = (u8) SceneLaunch_OnePStep();
+    d->x0.ckind = s->c_kind;
+    d->x0.color = s->color;
+    d->x0.cpu_level = s->cpu_level;
+    d->x0.stocks = s->stocks;
+    d->x0.nametag = s->nametag;
+    lbDvd_GetPreloadCacheScene()->game_cache.entries[0].char_id = s->c_kind;
+    lbDvd_GetPreloadCacheScene()->game_cache.entries[0].color = s->color;
+    lbDvd_SetupVsPreloadCache();
+    OSReport("1P direct launch: mode %d ckind %d color %d step %d difficulty %d\n", game_mode,
+             (int) s->c_kind, (int) s->color, (int) s->x5, (int) s->cpu_level);
+    return 1;
+}
+#endif
+
 void gm_Mode_Classic_OnLoad(void)
 {
     UnkAllstarData* data;
@@ -750,6 +787,13 @@ void gm_Mode_Classic_OnLoad(void)
     gm_SetGameModeStateId(0x70U);
     gm_80172174();
     Ground_801C5A28();
+#if defined(TARGET_PC)
+    if (gm_OnePSceneDirect(gmMainLib_8015CDC8(), &data->x0, GM_CLASSIC)) {
+        gmClassic_801B2D54(gmClassic_803DDEC8.x00);
+        gm_80168F88();
+        gm_SetGameModeStateId(gmMainLib_8015CDC8()->x5 << 3);
+    }
+#endif
 }
 
 void gm_Mode_Classic_OnInit(void)

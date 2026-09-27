@@ -1505,6 +1505,8 @@ typedef struct {
   int entry_state;  /* GW_SL_AT_*, or -1 to leave the state machine alone */
   int stage_ext;    /* external StKind, or -1 */
   int tt_ckind;     /* Target Test character (CharacterKind), or -1 */
+  int onep_step;    /* 1P modes: the stage index to start at (-1 = the first) */
+  int onep_level;   /* 1P modes: difficulty 0..4 (-1 = Normal) */
   int skip_memcard; /* -1 = auto (skip whenever a scene is configured) */
   int teams;        /* -1 = leave alone */
   int time_limit;   /* seconds, -1 = leave alone */
@@ -1576,6 +1578,12 @@ static const struct {
     {"melee", 0x02, 0},
     {"targettest", 0x0F, -1}, /* GM_TARGET_TEST */
     {"tt", 0x0F, -1},
+    /* The 1P modes. With p1=<fighter> the mode's own character select is skipped: the mode's
+     * OnLoad (gmclassic.c / gmadventure.c / gmallstar.c) does what that screen's exit would and
+     * enters step=N (the mode's stage index, 0 = the first) at difficulty=0..4. */
+    {"classic", 0x03, -1},  /* GM_CLASSIC */
+    {"adventure", 0x04, -1},/* GM_ADVENTURE */
+    {"allstar", 0x05, -1},  /* GM_ALLSTAR */
     {"title", 0x00, -1},    /* GM_TITLE */
     {"menu", 0x01, -1},     /* GM_MENU */
     {"tiny", 0x1D, 7},      /* GM_TINY_VS,    GmVsMode_Tiny */
@@ -1620,6 +1628,8 @@ static void gw_sl_config_init(GwSceneConfig *c) {
   c->entry_state = -1;
   c->stage_ext = -1;
   c->tt_ckind = -1;
+  c->onep_step = -1;
+  c->onep_level = -1;
   c->skip_memcard = -1;
   c->teams = -1;
   c->time_limit = -1;
@@ -1943,6 +1953,16 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
   if (key[0] == 'p' && key[1] >= '1' && key[1] <= '4' && key[2] == '\0') {
     return gw_sl_parse_player(val, &c->p[key[1] - '1']);
   }
+  if (tt_ieq(key, "step")) {
+    if (!gw_sl_all_digits(val) || atoi(val) > 31) return -1;
+    c->onep_step = atoi(val);
+    return 0;
+  }
+  if (tt_ieq(key, "difficulty")) {
+    if (!gw_sl_all_digits(val) || atoi(val) > 4) return -1;
+    c->onep_level = atoi(val);
+    return 0;
+  }
   if (tt_ieq(key, "skipmemcard")) {
     c->skip_memcard = (val[0] == '1');
     return 0;
@@ -2207,6 +2227,24 @@ int gw_SceneLaunch_EntryStateId(void) {
 int gw_SceneLaunch_StageExternal(void) {
   gw_sl_load();
   return gw_sl_cfg.stage_ext;
+}
+
+/* 1P modes (classic / adventure / allstar): 1 when the mode should skip its character select -
+ * the scene booted that mode with a P1 fighter - and the start step / difficulty / costume /
+ * stocks the skipped screen would have produced. */
+int gw_SceneLaunch_OnePDirect(int game_mode) {
+  gw_sl_load();
+  return gw_sl_cfg.configured && gw_sl_cfg.game_mode == game_mode && gw_sl_cfg.p[0].ckind >= 0;
+}
+
+int gw_SceneLaunch_OnePStep(void) {
+  gw_sl_load();
+  return gw_sl_cfg.onep_step < 0 ? 0 : gw_sl_cfg.onep_step;
+}
+
+int gw_SceneLaunch_OnePLevel(void) {
+  gw_sl_load();
+  return gw_sl_cfg.onep_level < 0 ? 2 : gw_sl_cfg.onep_level;
 }
 
 int gw_SceneLaunch_TargetTestCKind(void) {

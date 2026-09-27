@@ -1338,12 +1338,19 @@ void gw_Fx_Drive(int set, int owner, int motion, int anim, float anim_frame, int
             if (h > 0) {
                 const fx_inst *in = &fx_cur.inst[h - 1];
                 const void *jm = (const void *) (uintptr_t) (jobj + 0x44);
-                gw_log("fx: bind %s call %d %s at %s frame %.1f (call frame %.1f) joint %d at (%.2f %.2f %.2f) %s: "
-                       "emitter origin (%.2f %.2f %.2f)",
+                float cn[3];
+                int cc, rr;
+                for (cc = 0; cc < 3; ++cc) { /* the joint matrix's axis lengths: its scale */
+                    float s2 = 0;
+                    for (rr = 0; rr < 3; ++rr) { float x = gw_rf32((const char *) jm + (rr * 4 + cc) * 4); s2 += x * x; }
+                    cn[cc] = sqrtf(s2);
+                }
+                gw_log("fx: bind %s call %d %s at %s frame %.1f (call frame %.1f) joint %d at (%.2f %.2f %.2f) scale "
+                       "(%.3f %.3f %.3f) %s: offset (%.2f %.2f %.2f) x%.2f -> emitter origin (%.2f %.2f %.2f)",
                        b->st[st].name, i, fx_pkgs[k->pkg]->name, b->st[st].game_clock ? "state" : "anim", clock,
                        k->frame, k->joint, gw_rf32((const char *) jm + 12), gw_rf32((const char *) jm + 28),
-                       gw_rf32((const char *) jm + 44), k->follow ? "follow" : "world-fixed", in->m[0][3], in->m[1][3],
-                       in->m[2][3]);
+                       gw_rf32((const char *) jm + 44), cn[0], cn[1], cn[2], k->follow ? "follow" : "world-fixed",
+                       k->off[0], k->off[1], k->off[2], k->scale, in->m[0][3], in->m[1][3], in->m[2][3]);
             }
         } else if (!(dv->ended & bit) && k->end_frame >= 0 && clock >= k->end_frame) {
             dv->ended |= bit;

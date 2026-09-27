@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -633,7 +634,13 @@ void particle_data(const fx_emitter& e, const fx_part& q, const fx_inst& in, con
   o.p1[3] = 0.0f;
   {
     // facing: 0 camera billboard (above), 1 an oriented quad, 2 a mesh instance; the axes carry the size
-    const float sx = o.p0[3] * e.escale[0], sy = o.p1[0] * e.escale[1];
+    // the emitter frame's own scale (a fighter bone: the model's scale, 1.15 for Sora): offsets and velocities
+    // already pass through it, so quad sizes take it too (meshes get it from the frame itself, below)
+    float fs = 0.0f;
+    for (int c = 0; c < 3; ++c)
+      fs += std::sqrt(in.m[0][c] * in.m[0][c] + in.m[1][c] * in.m[1][c] + in.m[2][c] * in.m[2][c]) / 3.0f;
+    if (!(fs > 1e-4f)) fs = 1.0f;
+    const float sx = o.p0[3] * e.escale[0] * fs, sy = o.p1[0] * e.escale[1] * fs;
     float cz = curve(e.scale_keys, t, 2);
     if (!e.scale_keys.keyed && cz == 0.0f) cz = curve(e.scale_keys, t, 0);
     const float sz = e.scale_z * cz * q.scale * e.escale[2];
@@ -752,12 +759,39 @@ uint32_t g_lastW, g_lastH;
 void record_frame(const void* data, u32 size);
 } // namespace
 
+extern "C" void gw_diag_fx_cam(int cobj, int code, int main_cobj, float ex, float ey, float ez, float mx, float my,
+                               float mz) {
+  static int on = -1, lines = 0;
+  if (on < 0) { const char* v = std::getenv("MELEE_FX_CAMLOG"); on = v != nullptr && v[0] == '1'; }
+  if (!on || lines >= 60) return;
+  ++lines;
+  gw_log("fx: camcall code %d current cobj 0x%08X eye (%.1f %.1f %.1f) | main camera 0x%08X eye (%.1f %.1f %.1f)", code,
+         uint32_t(cobj), ex, ey, ez, uint32_t(main_cobj), mx, my, mz);
+}
+
 // Called from the Geno effects GObj's render callback (game thread, inside the camera's EFB pass), with the
 // guest address of the camera's viewing matrix (world -> view, 3x4, big-endian). Draws every live Geno particle.
 extern "C" void gw_Fx_Draw(int view_guest) {
   const fx_state* st = gw_fx_state();
   if (st == nullptr || st->nlive <= 0 || view_guest == 0) return;
   const uint32_t frame = aurora::gfx::current_frame();
+  {
+    // MELEE_FX_CAMLOG=1: every call (each camera that draws link 8), every 60th frame: the view's translation
+    // and the projection, to see which camera the effects take
+    static int camlog = -1;
+    if (camlog < 0) { const char* v = std::getenv("MELEE_FX_CAMLOG"); camlog = v != nullptr && v[0] == '1'; }
+    static int camlines = 0;
+    if (camlog && camlines < 400 && (frame % 4) == 0) {
+      ++camlines;
+      f32 pv[7];
+      GXGetProjectionv(pv);
+      float vt[3];
+      for (int r = 0; r < 3; ++r) vt[r] = gw_rf32((const void*)(uintptr_t)(uint32_t(view_guest) + (r * 4 + 3) * 4));
+      gw_log("fx: camlog frame %u view@0x%08X t=(%.1f %.1f %.1f) proj %s %.4f %.4f %.4f %.4f %.4f %.4f%s", frame,
+             uint32_t(view_guest), vt[0], vt[1], vt[2], pv[0] != 0.0f ? "ortho" : "persp", pv[1], pv[2], pv[3], pv[4],
+             pv[5], pv[6], frame == g_lastFrame ? " (skipped: not the first this frame)" : " (TAKEN)");
+    }
+  }
   if (frame == g_lastFrame) return; // once per frame: the first camera that draws link 8 (the main one)
   g_lastFrame = frame;
   const double t0 = now_ms();

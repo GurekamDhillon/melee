@@ -180,15 +180,31 @@ static HSD_GObj* geno_fx_gobj; /* game memory: a rollback restores it with the G
 /* The effects draw inside the camera that draws gx link 8 (Melee's own particles'), after them (priority 255),
  * in the translucent pass (render code 2 = HSD_GObj_804085F0's XLU): depth-tested against the world, under the
  * HUD's camera. The native side draws once per frame, with this camera's viewing matrix. */
+extern void diag_fx_cam(int cobj, int code, int main_cobj, float ex, float ey, float ez, float mx, float my,
+                        float mz);
+extern HSD_CObj* Camera_800310B8(void);
 static void geno_fx_render(HSD_GObj* gobj, int code)
 {
     HSD_CObj* cobj;
+    {
+        /* MELEE_FX_CAMLOG: every call, any code: which camera is current, and the main camera's eye */
+        HSD_CObj* cur = HSD_CObjGetCurrent();
+        HSD_CObj* mc = Camera_800310B8();
+        Vec3 e = { 0, 0, 0 }, m = { 0, 0, 0 };
+        if (cur != NULL) {
+            HSD_CObjGetEyePosition(cur, &e);
+        }
+        if (mc != NULL) {
+            HSD_CObjGetEyePosition(mc, &m);
+        }
+        diag_fx_cam((int) cur, code, (int) mc, e.x, e.y, e.z, m.x, m.y, m.z);
+    }
     if (code != 2) {
         return;
     }
     cobj = HSD_CObjGetCurrent();
     if (cobj != NULL) {
-        Fx_Draw((int) HSD_CObjGetViewingMtxPtrDirect(cobj));
+        Fx_Draw((int) HSD_CObjGetViewingMtxPtr(cobj)); /* computed (LookAt when dirty), as psdisp.c: the Direct field can be stale */
     }
 }
 
@@ -233,7 +249,7 @@ void Geno_FxFramePost(int frame)
     if (geno_fx_gobj == NULL && Fx_Stat(0) > 0) {
         geno_fx_gobj = GObj_Create(HSD_GOBJ_CLASS_EFFECT, 0xC, 0);
         if (geno_fx_gobj != NULL) {
-            GObj_SetupGXLink(geno_fx_gobj, geno_fx_render, 8, 255);
+            GObj_SetupGXLink(geno_fx_gobj, geno_fx_render, 7, 255); /* link 7: the world particles (the main camera); 8 is the screen-space camera */
         }
     }
 }

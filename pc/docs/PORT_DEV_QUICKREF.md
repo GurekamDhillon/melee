@@ -139,6 +139,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_AUDIO_NOFX=1` | bypass the aux effect processors |
 | `MELEE_BACKEND=d3d12\|auto\|vulkan` | override the default D3D11 backend |
 | `MELEE_AURORA_VERBOSE=1` | log Aurora INFO (present mode, adapter) |
+| `MELEE_LOG=gobj` | log each GObj render callback address, class, owner and link before invocation (very verbose; Classic IntroEasy diagnosis) |
 
 `MELEE_WINDOW_HIDE=1` remains unsuitable for realtime play: a hidden window makes the D3D11
 present block. Turbo runs GX/EFB work offscreen and skips swapchain presentation while hidden.

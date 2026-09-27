@@ -41,6 +41,7 @@
 extern float gw_ScriptGame_FighterF(int slot, int field);
 extern int gw_ScriptGame_FighterI(int slot, int field);
 extern void gw_ScriptGame_SetPercent(int slot, int percent);
+extern int gw_ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int bkb);
 extern void gw_ScriptGame_SetStocks(int slot, int stocks);
 extern int gw_ScriptGame_StageKind(void);
 extern int gw_ScriptGame_GameMode(void);
@@ -1559,6 +1560,30 @@ static int l_set_damage(lua_State *L) {
     gs_rw_branch();
     gw_ScriptGame_SetPercent(slot, gs_clampi(p, 0, 999));
     return 0;
+}
+
+/* gd.hit(port, {damage, angle, kbg, bkb, from?}): feed a hit to Melee's collision
+ * damage result and fighter hit processing. All inputs are integers to keep it repeatable. */
+static int l_hit(lua_State *L) {
+    int slot = gs_slot_arg(L, 1), from = -1;
+    lua_Integer damage, angle, kbg, bkb;
+    luaL_checktype(L, 2, LUA_TTABLE);
+    gs_require_offline(L, "hit");
+    lua_getfield(L, 2, "damage"); damage = luaL_checkinteger(L, -1); lua_pop(L, 1);
+    lua_getfield(L, 2, "angle"); angle = luaL_checkinteger(L, -1); lua_pop(L, 1);
+    lua_getfield(L, 2, "kbg"); kbg = luaL_checkinteger(L, -1); lua_pop(L, 1);
+    lua_getfield(L, 2, "bkb"); bkb = luaL_checkinteger(L, -1); lua_pop(L, 1);
+    lua_getfield(L, 2, "from");
+    if (!lua_isnil(L, -1)) from = gs_slot_arg(L, -1);
+    lua_pop(L, 1);
+    if (damage < 0 || damage > 500 || angle < 0 || angle > 361 ||
+        kbg < 0 || kbg > 1000 || bkb < 0 || bkb > 1000) {
+        return luaL_error(L, "gd.hit: damage 0-500, angle 0-361, kbg/bkb 0-1000 required");
+    }
+    gs_rw_branch();
+    lua_pushboolean(L, gw_ScriptGame_Hit(slot, from, (int) damage, (int) angle,
+                                         (int) kbg, (int) bkb));
+    return 1;
 }
 
 static int l_set_stocks(lua_State *L) {
@@ -4747,7 +4772,8 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"input", l_input}, {"release", l_release}, {"release_pad", l_release},
     {"savestate", l_savestate},
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
-    {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage}, {"set_stocks", l_set_stocks},
+    {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage},
+    {"hit", l_hit}, {"set_stocks", l_set_stocks},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
@@ -7718,6 +7744,31 @@ static int test_script_set_damage(void) {
     return 0;
 }
 
+/* Headless API contract: a scripted hit needs a live fighter, and bad hit parameters fail before
+ * crossing into game memory. An in-match damage/KO check requires a game run. */
+static int test_script_hit(void) {
+    char out[256];
+    if (t_exec("= type(gd.hit)", out, sizeof out) != 0 || strstr(out, "function") == NULL) {
+        gw_test_fail("gd.hit missing: %s", out);
+        return 1;
+    }
+    if (t_exec("= gd.hit(1, {damage=10, angle=45, kbg=100, bkb=20})", out, sizeof out) != 0 ||
+        strstr(out, "false") == NULL) {
+        gw_test_fail("gd.hit without a fighter: %s", out);
+        return 1;
+    }
+    if (t_exec("gd.hit(1, {damage=-1, angle=45, kbg=100, bkb=20})", out, sizeof out) == 0) {
+        gw_test_fail("gd.hit accepted negative damage");
+        return 1;
+    }
+    if (t_exec("gd.hit(1, {damage=10, angle=45, kbg=100, bkb=20, from=7})", out,
+               sizeof out) == 0) {
+        gw_test_fail("gd.hit accepted invalid attacker port");
+        return 1;
+    }
+    return 0;
+}
+
 static int test_script_boss_event(void) {
     char out[256];
     union { float f; int i; } x, y;
@@ -8223,6 +8274,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_stage_events", test_script_stage_events);
     gw_test_register("script_boss_event", test_script_boss_event);
     gw_test_register("script_set_damage", test_script_set_damage);
+    gw_test_register("script_hit", test_script_hit);
     gw_test_register("script_kit_mod_art", test_script_kit_mod_art);
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);

@@ -17,6 +17,7 @@
  *   dvd       gw: dvd: <path> (MELEE_DVD_TRACE) and the per-file lines of a mounting mod
  *   audio     synth: bank loads, lbAudioAx: m-ex sfx -> voice
  *   snap      snap: render pass ObjAlloc/ObjFree
+ *   gobj      gobj: each max/camera-link render callback, class and owner (MELEE_LOG=gobj)
  * (the once-per-scene render block is the periodic proj/posmtx/copy lines and their indented
  * report; the one-off vtxattrfmt/mtxidx setup lines count as the full "render" category)
  * and four that are ON by default: scene (scene: ...), pad (adapter/input/pad diagnostics - the
@@ -72,11 +73,12 @@ enum {
   GL_DVD,
   GL_AUDIO,
   GL_SNAP,
+  GL_GOBJ,
   GL_COUNT
 };
 static const char *const gl_name[GL_COUNT] = {"core", "scene", "pad", "net", "render", "watchdog",
                                                "tex", "frontend", "mex", "heap", "dvd", "audio",
-                                               "snap"};
+                                               "snap", "gobj"};
 #define GL_FIRST_QUIET GL_RENDER
 
 #define GL_LINE 320
@@ -193,6 +195,7 @@ static int gl_classify(const char *s) {
   if (gl_starts(s, "gw: dvd: ") || gl_starts(s, "gw: mods:   /")) return GL_DVD;
   if (gl_starts(s, "synth: bank ") || gl_starts(s, "lbAudioAx: m-ex sfx ")) return GL_AUDIO;
   if (gl_starts(s, "snap: render pass")) return GL_SNAP;
+  if (gl_starts(s, "gobj: ")) return GL_GOBJ;
   return GL_CORE;
 }
 
@@ -281,6 +284,18 @@ static void gl_configure(void) {
     }
   }
   gl.state = 2;
+}
+
+/* Game-side GObj walks query once before each logged callback. The category is quiet by default,
+ * so normal rendering does not format a line for every draw object. */
+int gw_GObjLogEnabled(void) {
+  int enabled;
+  if (gl.state == 2) return gl.on[GL_GOBJ] > 0;
+  gl_lock();
+  if (gl.state == 0) gl_configure();
+  enabled = gl.on[GL_GOBJ] > 0;
+  gl_unlock();
+  return enabled;
 }
 
 /* The categories as one line ("scene pad net render:scene ..."), for the log and the report. */
@@ -961,7 +976,8 @@ static int test_log_categories(void) {
       gl_classify("gw: heartbeat retrace=600 presented=600") != GL_CORE ||
       gl_classify("frontend: hub_layout.json: 23513 bytes, 968 nodes") != GL_FRONTEND ||
       gl_classify("frontend: menu MAIN (kind 0, sel 0)") != GL_CORE ||
-      gl_classify("scene: enter mode=GM_VS(2)") != GL_SCENE) {
+      gl_classify("scene: enter mode=GM_VS(2)") != GL_SCENE ||
+      gl_classify("gobj: max cb=0x0 class=19") != GL_GOBJ) {
     gw_test_fail("a line landed in the wrong category");
     rc = 1;
   }

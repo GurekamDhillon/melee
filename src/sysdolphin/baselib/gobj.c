@@ -9,6 +9,20 @@
 #include "lobj.h"
 #include "object.h"
 
+#if defined(TARGET_PC)
+#include <dolphin/os.h>
+extern int GObjLogEnabled(void);
+
+static void gobj_trace_render(const char* walk, HSD_GObj* gobj, GObj_RenderFunc cb)
+{
+    if (GObjLogEnabled()) {
+        OSReport("gobj: %s cb=%p gobj=%p class=%u owner=%p plink=%u gx=%u obj=%u\n",
+                 walk, cb, gobj, gobj->classifier, gobj->user_data, gobj->p_link,
+                 gobj->gx_link, gobj->obj_kind);
+    }
+}
+#endif
+
 u8 HSD_GObj_CameraKind;
 s8 HSD_GObj_LightKind;
 u8 HSD_GObj_JObjKind;
@@ -169,6 +183,9 @@ void HSD_GObj_80390ED0(HSD_GObj* gobj, u32 mask)
                     for (cur = HSD_GObjGXLinkHead[j]; cur != NULL;
                          cur = cur->next_gx)
                     {
+#if defined(TARGET_PC)
+                        gobj_trace_render("camera", cur, cur->render_cb);
+#endif
                         if (cur->render_cb != NULL) {
                             render_gobj(cur, i);
                         }
@@ -194,6 +211,7 @@ void HSD_GObj_80390FC0(void)
          * callback tested at the start of this iteration: a second load at the
          * call site called address 0 in the archived IntroEasy frame trace. */
         GObj_RenderFunc render_cb = cur->render_cb;
+        gobj_trace_render("max", cur, render_cb);
         if (render_cb != NULL) {
             saved = HSD_GObj_804D7818;
             HSD_GObj_804D7818 = cur;

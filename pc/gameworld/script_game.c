@@ -2075,9 +2075,68 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
 /* ---- Stage E: the knockback preview (the game's own knockback functions) -------------------- */
 #include <melee/ft/ftcoll.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Damage.h>
+#include <melee/lb/forward.h>
 #include <melee/gm/gmvs.h>
 #include <melee/gr/stage.h>
 #include <melee/mp/mplib.h>
+
+/* gd.hit: feed the same damage result consumed after ftColl_8007AB48 in Fighter_8006CB94.
+ * ftColl_8007A06C chooses the collision's knockback, angle, direction and source;
+ * Fighter_ProcessHit_8006D1EC applies percent/HP, damage state and hitlag. The entry and
+ * hitbox live on this stack only while the collision result is being consumed. */
+int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int bkb)
+{
+    Fighter* fp = script_fighter(slot);
+    Fighter* from = from_slot >= 0 ? script_fighter(from_slot) : NULL;
+    HitCapsule hit = { 0 };
+    DmgLogEntry entry = { 0 };
+    lbColl_80008D30_arg1 env = { 0 };
+    float applied = (float) damage;
+    if (fp == NULL || (from_slot >= 0 && from == NULL)) {
+        return 0;
+    }
+    if (!ftColl_80076640(fp, &applied)) {
+        return 0;
+    }
+    hit.damage = applied;
+    hit.unk_count = (u32) applied;
+    hit.kb_angle = angle;
+    hit.x24 = kbg;
+    hit.x28 = 0;
+    hit.x2C = bkb;
+    hit.element = HitElement_Normal;
+    entry.pos = fp->cur_pos;
+    entry.x20 = applied;
+    entry.size_of_xC = (size_t) applied;
+    if (from != NULL) {
+        entry.x0 = 1; /* ftColl_80076ED8: fighter hitbox against fighter hurtbox */
+        entry.kind = from->kind;
+        entry.gobj = from->gobj;
+        entry.hit0 = &hit;
+        entry.hurt1 = &fp->hurt_capsules[0];
+    } else {
+        entry.x0 = 3; /* ftColl_80076764: anonymous environment damage */
+        entry.kind = -10;
+        env.damage = (u32) applied;
+        env.kb_angle = angle;
+        env.unkC = kbg;
+        env.unk14 = bkb;
+        env.element = HitElement_Normal;
+        entry.unk_anim0 = (DynamicsDesc*) &env;
+        /* ftColl_8007A06C reads best_entry->hit0->kb_angle (the 361 check) for every entry kind */
+        entry.hit0 = &hit;
+        entry.hurt1 = &fp->hurt_capsules[0];
+    }
+    {
+        extern void ftColl_8007A06C(Fighter_GObj*, void*, void*, size_t, int);
+        ftColl_8007A06C(fp->gobj, &fp->dmg.facing_dir_1, &entry, 1, 0);
+    }
+    Fighter_ProcessHit_8006D1EC(fp->gobj);
+    OSReport("script: hit victim=%d from=%d damage=%d angle=%d kbg=%d bkb=%d percent=%d\n",
+             slot + 1, from_slot + 1, damage, angle, kbg, bkb,
+             (int) fp->dmg.x1830_percent);
+    return 1;
+}
 
 /* The knockback a hit would give the fighter in `slot` now: ftColl_80079AB0 (the fighter-hit
  * path of ftColl, with the stage factor and both players' attack / defense ratios), then

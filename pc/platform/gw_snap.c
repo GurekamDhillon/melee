@@ -9,7 +9,8 @@
  *     stored as reference-counted pages shared between slots where they are equal (the page pool)
  *     first; exclusions are carved out as SyncTest proves they are needed.
  *   - The game's own native globals: every section-3 (.data/.bss) symbol of a game object
- *     (src_melee_*, src_sysdolphin_*, libs_dolphin_*, and the game's commons `_gw_*`), found by
+ *     (src_melee_*, src_sysdolphin_*, libs_dolphin_*, pc_geno_*, pc_gameworld_script_game, and the
+ *     game's commons `_gw_*`), found by
  *     walking melee-pc.map beside the exe, minus an exclusion list (audio, pad queue, video, perf,
  *     card, movies, devcom, rumble). Renderer, CRT, shim and m-ex runtime state is never touched.
  *   - The replay module's cursor (gw_replay.c), which is native and decides which inputs a frame
@@ -165,6 +166,9 @@ static int sn_game_object(const char *obj, const char *name) {
     int game = strncmp(obj, "src_melee_", 10) == 0 || strncmp(obj, "src_sysdolphin_", 15) == 0 ||
                strncmp(obj, "libs_dolphin_", 13) == 0 ||
                strncmp(obj, "pc_geno_", 8) == 0 || /* Geno's game half (pc/geno): per-fighter state */
+               /* the scripting API's game half: the Lua stage layer's line / target pool (script_stage)
+                  and its target article; everything else there is constant tables */
+               strcmp(obj, "pc_gameworld_script_game.c.obj") == 0 ||
                (strcmp(obj, "<common>") == 0 && strncmp(name, "_gw_", 4) == 0);
     if (!game) {
         return 0;

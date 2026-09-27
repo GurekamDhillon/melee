@@ -26,6 +26,8 @@
  * even those are refused unless the manifest also says "rollback_safe": true, which promises the
  * script derives everything it writes from game state (no Lua-side memory across frames). The
  * gameplay scripts' sources are hashed into gw_Script_GameplayHash for the must-match set.
+ * Stage collision and target writes are stricter: manifest-backed gameplay scripts only,
+ * in an active offline match (even a rollback_safe script cannot call them online).
  */
 #ifndef GW_SCRIPT_H
 #define GW_SCRIPT_H
@@ -49,6 +51,11 @@ void gw_Script_PostRender(void); /* after the render pass: on_draw, then the lis
  * pc/gameworld/script_lab.h): queued, dispatched to on_action_change / on_hit / on_hitlag /
  * on_land after the frame, never for a resimulated frame */
 void gw_Script_GameEvent(int what, int a, int b, int c, int d);
+/* Scripted Mato hit callback; queued for on_target_broken / on_all_targets_broken after the frame. */
+void gw_Script_TargetBroken(int handle, int remaining);
+/* script_game.c at stage load: 1 = reserve the Lua stage layer's collision room (offline, a gameplay
+ * script loaded); 0 = the stage's map exactly as before */
+int gw_Script_StageWanted(void);
 
 /* ---- input (shim_pad.c) -------------------------------------------------------------------- */
 unsigned gw_Script_PadApply(void *pad_status_array); /* PADStatus[4], BE buttons; driven-port mask */

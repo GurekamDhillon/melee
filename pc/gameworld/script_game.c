@@ -23,9 +23,396 @@
 #include <melee/it/types.h>
 #include <melee/it/forward.h>
 #include <melee/it/inlines.h>
+#include <melee/it/item.h>
+#include <melee/it/it_3F14.h>
+#include <melee/it/itzako.h>
 #include "../geno/geno.h"
 #include "script_items.h"
 #include <sysdolphin/baselib/gobj.h>
+#include <sysdolphin/baselib/memory.h>
+#include <melee/mp/mplib.h>
+#include <melee/mp/types.h>
+
+/* Each scripted line owns two vertices and one joint. mpCheckFloor and its wall/ceiling
+ * siblings walk joint ranges (mplib.c), so a single appended global range cannot mix kinds.
+ * These arrays live in MEM1; the pool below is this object's BSS, which gw_snap.c saves
+ * (pc_gameworld_script_game.c.obj is in its game set since this change). */
+#define SCRIPT_STAGE_LINES 32
+#define SCRIPT_STAGE_TARGETS 32
+typedef struct {
+    int handle, active, kind;
+    float x0, y0, x1, y1;
+} ScriptStageLine;
+typedef struct {
+    int handle, active;
+    Item_GObj* gobj;
+    float x, y;
+} ScriptStageTarget;
+static struct {
+    MapCollData* map;
+    int base_v, base_l, base_j, target_remaining;
+    ScriptStageLine line[SCRIPT_STAGE_LINES];
+    ScriptStageTarget target[SCRIPT_STAGE_TARGETS];
+} script_stage;
+
+/* Called from Ground_801C0800 after the Target Test layout merge and before mpLibLoad.
+ * mpLibLoad allocates fixed 2048/1536/256 Coll* arrays, so refuse maps without room. */
+MapCollData* ScriptGame_StagePrepare(MapCollData* src)
+{
+    extern MapCollData mpLib_803BF760;
+    MapCollData* dst;
+    int i;
+    script_stage.map = NULL;
+    script_stage.target_remaining = 0;
+    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
+    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
+        script_stage.target[i].active = 0;
+        script_stage.target[i].gobj = NULL;
+    }
+    if (src == NULL) src = &mpLib_803BF760; /* mpLibLoad's own fallback map */
+    {
+        /* Only when a gameplay script could use it, offline: a match with none (and every
+         * netplay / rollback match) loads the stage's own map exactly as before, heap included. */
+        extern int Script_StageWanted(void);
+        if (!Script_StageWanted()) return src;
+    }
+    if (src->vert_count + SCRIPT_STAGE_LINES * 2 > 2048 ||
+        src->line_count + SCRIPT_STAGE_LINES > 1536 ||
+        src->joint_count + SCRIPT_STAGE_LINES > 256 ||
+        src->vert_count + SCRIPT_STAGE_LINES * 2 > 65535 ||
+        src->line_count + SCRIPT_STAGE_LINES > 32767) return src;
+    dst = HSD_MemAlloc(sizeof(*dst));
+    if (dst == NULL) return src;
+    *dst = *src;
+    dst->verts = HSD_MemAlloc((src->vert_count + SCRIPT_STAGE_LINES * 2) * sizeof(*dst->verts));
+    dst->lines = HSD_MemAlloc((src->line_count + SCRIPT_STAGE_LINES) * sizeof(*dst->lines));
+    dst->joints = HSD_MemAlloc((src->joint_count + SCRIPT_STAGE_LINES) * sizeof(*dst->joints));
+    if (dst->verts == NULL || dst->lines == NULL || dst->joints == NULL) return src;
+    for (i = 0; i < src->vert_count; ++i) dst->verts[i] = src->verts[i];
+    for (i = 0; i < src->line_count; ++i) dst->lines[i] = src->lines[i];
+    for (i = 0; i < src->joint_count; ++i) dst->joints[i] = src->joints[i];
+    script_stage.base_v = src->vert_count;
+    script_stage.base_l = src->line_count;
+    script_stage.base_j = src->joint_count;
+    script_stage.map = dst;
+    return dst;
+}
+
+void ScriptGame_StageReady(void)
+{
+    MapCollData* map = script_stage.map;
+    CollVtx* cv = mpGetGroundCollVtx();
+    CollLine* cl = mpGetGroundCollLine();
+    CollJoint* cj = mpGetGroundCollJoint();
+    int i, k;
+    if (map == NULL || mpLib_8004D164() != map) return;
+    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+        int v = script_stage.base_v + i * 2, l = script_stage.base_l + i;
+        MapLine* ml = &map->lines[l];
+        MapJoint* mj = &map->joints[script_stage.base_j + i];
+        ml->v0_idx = v;
+        ml->v1_idx = v + 1;
+        ml->prev_id0 = ml->next_id0 = ml->prev_id1 = ml->next_id1 = -1;
+        ml->hi_flags = ml->lo_flags = 0;
+        cl[l].x0 = ml;
+        cl[l].flags = 0;
+        for (k = 0; k < 2; ++k) {
+            cv[v + k].x0 = cv[v + k].x4 = 0;
+            cv[v + k].pos.x = cv[v + k].pos.y = 0;
+            cv[v + k].x10 = cv[v + k].x14 = 0;
+            map->verts[v + k].x = map->verts[v + k].y = 0;
+        }
+        for (k = 0; k < MapLineGroup_Count; ++k) {
+            mj->ranges[k].start = 0;
+            mj->ranges[k].count = 0;
+        }
+        mj->vtx_start = v;
+        mj->vtx_count = 2;
+        mj->left_bound = mj->right_bound = mj->bottom_bound = mj->top_bound = 0;
+        cj[script_stage.base_j + i].next = NULL;
+        cj[script_stage.base_j + i].inner = mj;
+        cj[script_stage.base_j + i].flags = 0;
+        cj[script_stage.base_j + i].x20 = NULL;
+        cj[script_stage.base_j + i].cb_0 = cj[script_stage.base_j + i].cb_1 = NULL;
+        cj[script_stage.base_j + i].cb_data_0 = cj[script_stage.base_j + i].cb_data_1 = NULL;
+        cj[script_stage.base_j + i].xE = false;
+    }
+    map->vert_count += SCRIPT_STAGE_LINES * 2;
+    map->line_count += SCRIPT_STAGE_LINES;
+    map->joint_count += SCRIPT_STAGE_LINES;
+    OSReport("script stage: reserved %d collision lines and %d targets (the stage uses %d/2048 "
+             "vertices, %d/1536 lines, %d/256 joints)\n",
+             SCRIPT_STAGE_LINES, SCRIPT_STAGE_TARGETS, script_stage.base_v, script_stage.base_l,
+             script_stage.base_j);
+}
+
+int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int flags,
+                            int handle)
+{
+    union { int i; float f; } u;
+    float x0, y0, x1, y1, scale;
+    MapCollData* map = script_stage.map;
+    int i, v, l, j;
+    MapLine* ml;
+    MapJoint* mj;
+    CollVtx* cv;
+    CollLine* cl;
+    CollJoint* cj;
+    if (map == NULL || mpLib_8004D164() != map || kind < 1 || kind > 4) return -1;
+    u.i = x0b; x0 = u.f; u.i = y0b; y0 = u.f;
+    u.i = x1b; x1 = u.f; u.i = y1b; y1 = u.f;
+    if (x0 == x1 && y0 == y1) return -1;
+    for (i = 0; i < SCRIPT_STAGE_LINES && script_stage.line[i].active; ++i) {}
+    if (i == SCRIPT_STAGE_LINES) return -1;
+    v = script_stage.base_v + 2 * i;
+    l = script_stage.base_l + i;
+    j = script_stage.base_j + i;
+    ml = &map->lines[l]; mj = &map->joints[j];
+    cv = mpGetGroundCollVtx(); cl = mpGetGroundCollLine(); cj = mpGetGroundCollJoint();
+    scale = Ground_801C0498();
+    if (scale <= 0.001f) scale = 1.0f;
+    cv[v].x0 = x0 / scale; cv[v].x4 = y0 / scale;
+    cv[v + 1].x0 = x1 / scale; cv[v + 1].x4 = y1 / scale;
+    cv[v].pos.x = cv[v].x10 = x0; cv[v].pos.y = cv[v].x14 = y0;
+    cv[v + 1].pos.x = cv[v + 1].x10 = x1; cv[v + 1].pos.y = cv[v + 1].x14 = y1;
+    map->verts[v].x = cv[v].x0; map->verts[v].y = cv[v].x4;
+    map->verts[v + 1].x = cv[v + 1].x0; map->verts[v + 1].y = cv[v + 1].x4;
+    /* mpIsland_8005B004 builds floor/ceiling islands from the dynamic range when
+     * mpJointListAdd runs. The extra 0x10 identifies its dynamic line type. */
+    mj->ranges[MapLineGroup_Dynamic].start = l;
+    mj->ranges[MapLineGroup_Dynamic].count = 1;
+    mj->left_bound = (x0 < x1 ? x0 : x1) / scale;
+    mj->right_bound = (x0 > x1 ? x0 : x1) / scale;
+    mj->bottom_bound = (y0 < y1 ? y0 : y1) / scale;
+    mj->top_bound = (y0 > y1 ? y0 : y1) / scale;
+    cj[j].bounding_min.x = (x0 < x1 ? x0 : x1) - 30;
+    cj[j].bounding_max.x = (x0 > x1 ? x0 : x1) + 30;
+    cj[j].bounding_min.y = (y0 < y1 ? y0 : y1) - 30;
+    cj[j].bounding_max.y = (y0 > y1 ? y0 : y1) + 30;
+    ml->hi_flags = (1 << (kind - 1)) | 0x10;
+    if (flags & 1) ml->hi_flags |= LINE_FLAG_PLATFORM;
+    ml->lo_flags = (flags & 2) ? LINE_FLAG_LEDGE : 0;
+    if (flags & 1) ml->lo_flags |= LINE_FLAG_PLATFORM;
+    cl[l].flags = ml->hi_flags;
+    script_stage.line[i].handle = handle;
+    script_stage.line[i].active = 1;
+    script_stage.line[i].kind = kind;
+    script_stage.line[i].x0 = x0; script_stage.line[i].y0 = y0;
+    script_stage.line[i].x1 = x1; script_stage.line[i].y1 = y1;
+    mpJointListAdd(j);
+    mpUncheckBounding();
+    OSReport("script stage: line handle=%d map line=%d kind=%d\n",
+             handle, l, kind);
+    return handle;
+}
+
+int ScriptGame_StageRemove(int handle)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+        if (script_stage.line[i].active && script_stage.line[i].handle == handle) {
+            int j = script_stage.base_j + i;
+            mpLib_80057BC0(j);
+            script_stage.map->joints[j].ranges[MapLineGroup_Dynamic].count = 0;
+            script_stage.line[i].active = 0;
+            mpUncheckBounding();
+            OSReport("script stage: removed line handle=%d\n", handle);
+            return 1;
+        }
+    }
+    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
+        ScriptStageTarget* t = &script_stage.target[i];
+        if (t->active && t->handle == handle) {
+            Item_GObj* gobj = t->gobj;
+            t->active = 0;
+            t->gobj = NULL;
+            script_stage.target_remaining--;
+            /* Item_8026A8EC is direct cleanup, not Mato's hit callback. */
+            Item_8026A8EC(gobj);
+            OSReport("script stage: removed target handle=%d\n", handle);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int ScriptGame_StageMove(int handle, int xb, int yb)
+{
+    union { int i; float f; } u;
+    float x, y, dx, dy;
+    CollVtx* v;
+    CollJoint* j;
+    int i;
+    u.i = xb; x = u.f; u.i = yb; y = u.f;
+    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+        ScriptStageLine* s = &script_stage.line[i];
+        if (!s->active || s->handle != handle) continue;
+        dx = x - (s->x0 + s->x1) * 0.5f;
+        dy = y - (s->y0 + s->y1) * 0.5f;
+        v = &mpGetGroundCollVtx()[script_stage.base_v + 2 * i];
+        v[0].x10 = v[0].pos.x; v[0].x14 = v[0].pos.y;
+        v[1].x10 = v[1].pos.x; v[1].x14 = v[1].pos.y;
+        v[0].pos.x += dx; v[0].pos.y += dy;
+        v[1].pos.x += dx; v[1].pos.y += dy;
+        s->x0 += dx; s->x1 += dx; s->y0 += dy; s->y1 += dy;
+        j = &mpGetGroundCollJoint()[script_stage.base_j + i];
+        j->bounding_min.x += dx; j->bounding_max.x += dx;
+        j->bounding_min.y += dy; j->bounding_max.y += dy;
+        j->flags |= CollJoint_B8;
+        j->xE = true;
+        mpLib_8005667C(script_stage.base_j + i);
+        mpUncheckBounding();
+        return 1; /* no log line: a moving platform is moved every frame */
+    }
+    return 0;
+}
+
+/* A line moved by Lua carries its delta for exactly one logic frame. mpGetSpeed
+ * (mplib.c) remaps x10/x14 to pos for grounded fighters; leaving the old endpoint
+ * there would keep imparting velocity on every later frame. */
+void ScriptGame_StageFrame(void)
+{
+    CollVtx* cv;
+    int i;
+    if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return;
+    cv = mpGetGroundCollVtx();
+    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+        int v;
+        if (!script_stage.line[i].active) continue;
+        v = script_stage.base_v + i * 2;
+        cv[v].x10 = cv[v].pos.x; cv[v].x14 = cv[v].pos.y;
+        cv[v + 1].x10 = cv[v + 1].pos.x; cv[v + 1].x14 = cv[v + 1].pos.y;
+        mpGetGroundCollJoint()[script_stage.base_j + i].flags &= ~CollJoint_B8;
+    }
+}
+
+int ScriptGame_StageLineI(int i, int field)
+{
+    if (i < 0 || i >= SCRIPT_STAGE_LINES || !script_stage.line[i].active) return 0;
+    return field == 0 ? script_stage.line[i].kind : script_stage.line[i].handle;
+}
+
+float ScriptGame_StageLineF(int i, int field)
+{
+    ScriptStageLine* s;
+    if (i < 0 || i >= SCRIPT_STAGE_LINES || !script_stage.line[i].active) return 0;
+    s = &script_stage.line[i];
+    return field == 0 ? s->x0 : field == 1 ? s->y0 : field == 2 ? s->x1 : s->y1;
+}
+
+/* Target Test's It_Kind_Mato logic lives in it_3F2F.c / itmato.c. Its article normally comes
+ * from the GrT* stage's itemdata (ground.c:Ground_801C0800), which a VS stage need not have.
+ * A model-less descriptor keeps its actual item hurt capsule and destroy callback; the native
+ * script overlay draws the ring. All fields are game globals included in the snapshot. */
+static ItemAttr script_target_attr;
+static ItHurtBoneDesc script_target_hurt_desc;
+static ItHurtBoneList script_target_hurt = { 1, &script_target_hurt_desc };
+static ItemStateArray script_target_states;
+static ItemModelDesc script_target_model;
+static Article script_target_article = {
+    &script_target_attr, NULL, &script_target_hurt, &script_target_states,
+    &script_target_model, NULL
+};
+
+static void script_target_register(void)
+{
+    script_target_attr.x1_67_cam_kind = 0;
+    script_target_attr.x1C_damage_mul = 1.0f;
+    script_target_attr.x60_scale = 1.0f;
+    script_target_hurt_desc.bone_id = 0;
+    script_target_hurt_desc.a_offset.x = 0;
+    script_target_hurt_desc.a_offset.y = 0;
+    script_target_hurt_desc.a_offset.z = 0;
+    script_target_hurt_desc.b_offset = script_target_hurt_desc.a_offset;
+    script_target_hurt_desc.scale = 5.0f;
+    script_target_model.x0_joint = NULL;
+    script_target_model.x4_bone_count = 0;
+    it_804A0F60[It_Kind_Mato - It_Kind_Old_Kuri] = &script_target_article;
+}
+
+int ScriptGame_StageJoint(int joint_id)
+{
+    return script_stage.map != NULL &&
+           joint_id >= script_stage.base_j &&
+           joint_id < script_stage.base_j + SCRIPT_STAGE_LINES;
+}
+
+int ScriptGame_SpawnTarget(int xb, int yb, int handle)
+{
+    union { int i; float f; } u;
+    Vec3 pos;
+    Item_GObj* gobj;
+    int i;
+    if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return -1;
+    for (i = 0; i < SCRIPT_STAGE_TARGETS && script_stage.target[i].active; ++i) {}
+    if (i == SCRIPT_STAGE_TARGETS) return -1;
+    u.i = xb; pos.x = u.f; u.i = yb; pos.y = u.f; pos.z = 0;
+    script_target_register();
+    gobj = it_8027B5B0(It_Kind_Mato, &pos, NULL, NULL, 0);
+    if (gobj == NULL) return -1;
+    /* Targets are allowed outside the current stage's blast rectangle. */
+    GET_ITEM(gobj)->xDCC_flag.b4567 = 0;
+    script_stage.target[i].handle = handle;
+    script_stage.target[i].active = 1;
+    script_stage.target[i].gobj = gobj;
+    script_stage.target[i].x = pos.x;
+    script_stage.target[i].y = pos.y;
+    script_stage.target_remaining++;
+    OSReport("script stage: target handle=%d at (%f,%f), remaining=%d\n",
+             handle, pos.x, pos.y, script_stage.target_remaining);
+    return handle;
+}
+
+/* itmato.c's phys: a scripted target stays where it was spawned (no joint to follow). */
+int ScriptGame_TargetPin(Item_GObj* gobj)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
+        ScriptStageTarget* t = &script_stage.target[i];
+        if (t->active && t->gobj == gobj) {
+            Item* ip = GET_ITEM(gobj);
+            ip->pos.x = t->x;
+            ip->pos.y = t->y;
+            ip->pos.z = 0.0f;
+            ip->x40_vel.x = ip->x40_vel.y = ip->x40_vel.z = 0.0f;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* itmato.c calls this before Ground_801C4338. Return 1 for a scripted Mato (including
+ * gd.stage_remove), so VS stages never decrement Target Test's unrelated stage counter. */
+int ScriptGame_TargetDestroyed(Item_GObj* gobj)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
+        ScriptStageTarget* t = &script_stage.target[i];
+        if (t->gobj != gobj || gobj == NULL) continue;
+        t->gobj = NULL;
+        if (t->active) {
+            extern void Script_TargetBroken(int handle, int remaining);
+            t->active = 0;
+            script_stage.target_remaining--;
+            Script_TargetBroken(t->handle, script_stage.target_remaining);
+            OSReport("script stage: target broken handle=%d remaining=%d\n",
+                     t->handle, script_stage.target_remaining);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+int ScriptGame_StageTargetI(int i)
+{
+    return i >= 0 && i < SCRIPT_STAGE_TARGETS && script_stage.target[i].active;
+}
+
+float ScriptGame_StageTargetF(int i, int field)
+{
+    if (!ScriptGame_StageTargetI(i)) return 0;
+    return field == 0 ? script_stage.target[i].x : script_stage.target[i].y;
+}
 
 /* Item_80268B18 gives each item a unique x1C serial. The list is the same one the
  * engine's item collision pass walks; no item pointer crosses into native Lua. */

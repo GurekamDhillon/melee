@@ -50,6 +50,14 @@ void itMato_UnkMotion0_Phys(Item_GObj* item_gobj)
         lb_8000B1CC(it->xDD4_itemVar.mato.x0, NULL, &pos);
         it->pos = pos;
     }
+#if defined(TARGET_PC)
+    else {
+        /* A scripted target (pc/gameworld/script_game.c) has no stage joint to follow: hold it at
+         * its own spot, or the model-less article's item physics drops it onto the floor below. */
+        extern int ScriptGame_TargetPin(Item_GObj*);
+        ScriptGame_TargetPin(item_gobj);
+    }
+#endif
 }
 
 bool itMato_UnkMotion0_Coll(Item_GObj* item_gobj)
@@ -59,6 +67,12 @@ bool itMato_UnkMotion0_Coll(Item_GObj* item_gobj)
 
 bool it_802D85F4(Item_GObj* item_gobj)
 {
+#if defined(TARGET_PC)
+    /* Scripted targets also use Mato's normal hit/destroy path, but are owned by the
+     * Lua stage layer, not Ground_801C4210's Target Test counter. */
+    extern int ScriptGame_TargetDestroyed(Item_GObj*);
+    if (ScriptGame_TargetDestroyed(item_gobj)) return true;
+#endif
     Ground_801C4338();
     return true;
 }

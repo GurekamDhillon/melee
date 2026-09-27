@@ -5888,6 +5888,9 @@ void mpLib_80058560(void)
 
 void mpLib_80058614_Floor(void)
 {
+#if defined(TARGET_PC)
+    extern int ScriptGame_StageJoint(int joint_id);
+#endif
     // CollLine* var_r31;
     CollJoint* jp;
     int count_r8;
@@ -5911,6 +5914,14 @@ void mpLib_80058614_Floor(void)
     jp = (joint_r7 = groundCollJoint);
     count_r8 = mpLib_804D64B4->joint_count;
     for (count_r5 = 0; count_r5 < count_r8; count_r5++, jp++) {
+#if defined(TARGET_PC)
+        /* Lua lines participate in collision, but must not expand the stage's floor bounds.
+         * This pass feeds mpLib_80458868[1], unlike mpCheckFloor's joint search. */
+        if (ScriptGame_StageJoint(count_r5)) {
+            jp->xE = false;
+            continue;
+        }
+#endif
         if (jp->xE) {
             break;
         }
@@ -5927,6 +5938,9 @@ void mpLib_80058614_Floor(void)
 
     for (i = 0; i < count_r8; i++, joint_r7++) {
         joint_r7->xE = false;
+#if defined(TARGET_PC)
+        if (ScriptGame_StageJoint(i)) continue;
+#endif
         if (!(joint_r7->flags & CollJoint_Enabled) ||
             joint_r7->flags & CollJoint_Hidden)
         {

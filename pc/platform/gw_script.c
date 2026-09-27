@@ -22,6 +22,7 @@
 #include <dolphin/pad.h> /* PADStatus in the scripted-pad headless test */
 
 #include <math.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +47,15 @@ extern int gw_ScriptGame_ItemCount(void);
 extern int gw_ScriptGame_ItemI(int index, int field);
 extern float gw_ScriptGame_ItemF(int index, int field);
 extern void gw_ScriptGame_LaunchScene(int game_mode);
+extern int gw_ScriptGame_StageAddLine(int x0, int y0, int x1, int y1, int kind, int flags, int handle);
+extern int gw_ScriptGame_StageRemove(int handle);
+extern int gw_ScriptGame_StageMove(int handle, int x, int y);
+extern void gw_ScriptGame_StageFrame(void);
+extern int gw_ScriptGame_StageLineI(int slot, int field);
+extern float gw_ScriptGame_StageLineF(int slot, int field);
+extern int gw_ScriptGame_SpawnTarget(int x, int y, int handle);
+extern int gw_ScriptGame_StageTargetI(int slot);
+extern float gw_ScriptGame_StageTargetF(int slot, int field);
 enum { SF_X, SF_Y, SF_VX, SF_VY, SF_PERCENT, SF_FACING, SF_ANIM_FRAME, SF_HITLAG };
 enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTUME, SI_SLOT_TYPE };
 
@@ -287,6 +297,9 @@ static struct {
     char data_dir[MAX_PATH];
     char describe[1024];
 } gs;
+/* Token allocation is native and never rewound: a handle from a discarded savestate future
+ * cannot alias a new object after load. The object's handle itself lives in game memory. */
+static int gs_stage_handle_serial;
 static int gs_input_owner; /* explicit claim identity while a socket command or task runs */
 static int gs_client_owner; /* socket that started the current task, else 0 */
 
@@ -4073,6 +4086,119 @@ static int l_lab_env(lua_State *L) {
     return 1;
 }
 
+/* Stage edits are deliberately narrower than other gameplay writes: a manifest-backed gameplay
+ * script in an offline match. The console has no manifest and cannot create persistent geometry. */
+static void gs_require_stage(lua_State *L, const char *fn) {
+    GsScript *s = gs_cur_script();
+    gs_require_offline(L, fn);
+    if (gs.cur == gs.console || s == NULL || !s->gameplay)
+        luaL_error(L, "gd.%s requires a gameplay mod script", fn);
+    if (!gs.match_active) luaL_error(L, "gd.%s requires an active match", fn);
+}
+
+static float gs_stage_num(lua_State *L, int idx) {
+    double v = luaL_checknumber(L, idx);
+    if (!isfinite(v) || v < -100000.0 || v > 100000.0)
+        luaL_error(L, "stage coordinates must be finite and within +/-100000");
+    return (float) v;
+}
+
+static int gs_stage_handle_arg(lua_State *L, int idx) {
+    lua_Integer h = luaL_checkinteger(L, idx);
+    if (h < 1 || h > INT_MAX) luaL_error(L, "stage handle is out of range");
+    return (int) h;
+}
+
+static int gs_stage_next_handle(lua_State *L) {
+    if (gs_stage_handle_serial == INT_MAX) luaL_error(L, "stage handle space exhausted");
+    return ++gs_stage_handle_serial;
+}
+
+static int gs_stage_kind(lua_State *L, int idx) {
+    const char *s = luaL_checkstring(L, idx);
+    if (strcmp(s, "floor") == 0) return 1;
+    if (strcmp(s, "ceiling") == 0) return 2;
+    if (strcmp(s, "right_wall") == 0) return 3;
+    if (strcmp(s, "left_wall") == 0) return 4;
+    return luaL_error(L, "line kind must be floor, ceiling, right_wall or left_wall");
+}
+
+static int gs_stage_opts(lua_State *L, int idx) {
+    int flags = 0;
+    if (lua_isnoneornil(L, idx)) return 0;
+    luaL_checktype(L, idx, LUA_TTABLE);
+    lua_getfield(L, idx, "passthrough");
+    if (lua_toboolean(L, -1)) flags |= 1;
+    lua_pop(L, 1);
+    lua_getfield(L, idx, "ledges");
+    if (lua_toboolean(L, -1)) flags |= 2;
+    lua_pop(L, 1);
+    return flags;
+}
+
+static int l_stage_add_line(lua_State *L) {
+    float x0 = gs_stage_num(L, 1), y0 = gs_stage_num(L, 2);
+    float x1 = gs_stage_num(L, 3), y1 = gs_stage_num(L, 4);
+    int kind = gs_stage_kind(L, 5), flags = gs_stage_opts(L, 6), h;
+    gs_require_stage(L, "stage_add_line");
+    if (kind == 1 && x0 >= x1) return luaL_error(L, "floor lines must run left to right");
+    if (kind == 2 && x0 <= x1) return luaL_error(L, "ceiling lines must run right to left");
+    if (kind == 3 && y0 <= y1)
+        return luaL_error(L, "right_wall lines must run top to bottom");
+    if (kind == 4 && y0 >= y1)
+        return luaL_error(L, "left_wall lines must run bottom to top");
+    if (kind != 1 && flags != 0)
+        return luaL_error(L, "passthrough and ledges apply only to floor lines");
+    gs_rw_branch();
+    h = gw_ScriptGame_StageAddLine(gs_fbits(x0), gs_fbits(y0), gs_fbits(x1), gs_fbits(y1),
+                                   kind, flags, gs_stage_next_handle(L));
+    if (h < 0) { lua_pushnil(L); lua_pushstring(L, "collision line capacity unavailable"); return 2; }
+    lua_pushinteger(L, h);
+    return 1;
+}
+
+static int l_stage_add_platform(lua_State *L) {
+    float x = gs_stage_num(L, 1), y = gs_stage_num(L, 2), w = gs_stage_num(L, 3);
+    int flags = gs_stage_opts(L, 4), h;
+    gs_require_stage(L, "stage_add_platform");
+    if (w <= 0 || w > 200000.0f) return luaL_error(L, "platform width must be positive");
+    gs_rw_branch();
+    h = gw_ScriptGame_StageAddLine(gs_fbits(x - w * 0.5f), gs_fbits(y),
+                                   gs_fbits(x + w * 0.5f), gs_fbits(y), 1, flags,
+                                   gs_stage_next_handle(L));
+    if (h < 0) { lua_pushnil(L); lua_pushstring(L, "collision line capacity unavailable"); return 2; }
+    lua_pushinteger(L, h);
+    return 1;
+}
+
+static int l_stage_remove(lua_State *L) {
+    int h = gs_stage_handle_arg(L, 1);
+    gs_require_stage(L, "stage_remove");
+    gs_rw_branch();
+    lua_pushboolean(L, gw_ScriptGame_StageRemove(h));
+    return 1;
+}
+
+static int l_stage_move(lua_State *L) {
+    int h = gs_stage_handle_arg(L, 1);
+    float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
+    gs_require_stage(L, "stage_move");
+    gs_rw_branch();
+    lua_pushboolean(L, gw_ScriptGame_StageMove(h, gs_fbits(x), gs_fbits(y)));
+    return 1;
+}
+
+static int l_spawn_target(lua_State *L) {
+    float x = gs_stage_num(L, 1), y = gs_stage_num(L, 2);
+    int h;
+    gs_require_stage(L, "spawn_target");
+    gs_rw_branch();
+    h = gw_ScriptGame_SpawnTarget(gs_fbits(x), gs_fbits(y), gs_stage_next_handle(L));
+    if (h < 0) { lua_pushnil(L); lua_pushstring(L, "target capacity or article unavailable"); return 2; }
+    lua_pushinteger(L, h);
+    return 1;
+}
+
 static const luaL_Reg gs_kit_funcs[] = {
     {"available", l_kit_available}, {"text", l_kit_text}, {"measure", l_kit_measure},
     {"metrics", l_kit_metrics}, {"texture", l_kit_texture}, {"image", l_kit_image},
@@ -4188,6 +4314,9 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"rollbacks_clear", l_rollbacks_clear}, {"lab_env", l_lab_env}, {"lab_now", l_lab_now},
     /* stage D */
     {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield},
+    {"stage_add_platform", l_stage_add_platform}, {"stage_add_line", l_stage_add_line},
+    {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
+    {"spawn_target", l_spawn_target},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -4946,12 +5075,46 @@ static void gs_update_want_events(void) {
    (gw_Script_PostRender) and the overlay is handed the finished list. A scene loop that never
    reaches PostRender still gets on_draw, at the next tick (the old timing). */
 static int gs_draw_open;
+static void gs_stage_draw_segment(float x0, float y0, float x1, float y1, uint32_t rgba) {
+    GwScriptDraw *d = gs_draw_new(GW_SDRAW_LINE);
+    if (d != NULL) { d->x = x0; d->y = y0; d->w = x1; d->h = y1; d->rgba = rgba; }
+}
+
+/* The overlay uses the same project path as gd.project and reads current game memory on each
+ * render. Nothing visual is kept in native state, so savestate/rewind restores the right shapes. */
+static void gs_stage_draw(void) {
+    int i;
+    if (!gs.match_active) return;
+    for (i = 0; i < 32; ++i) {
+        float ax, ay, bx, by, depth;
+        if (!gw_ScriptGame_StageLineI(i, 0)) continue;
+        if (!gs_project(gw_ScriptGame_StageLineF(i, 0), gw_ScriptGame_StageLineF(i, 1),
+                        0, &ax, &ay, &depth)) continue;
+        if (!gs_project(gw_ScriptGame_StageLineF(i, 2), gw_ScriptGame_StageLineF(i, 3),
+                        0, &bx, &by, &depth)) continue;
+        gs_stage_draw_segment(ax, ay - 1, bx, by - 1, 0x2D393FFFu);
+        gs_stage_draw_segment(ax, ay, bx, by, 0xEAB970FFu);
+        gs_stage_draw_segment(ax, ay + 1, bx, by + 1, 0x2D393FFFu);
+    }
+    for (i = 0; i < 32; ++i) {
+        float x, y, depth;
+        if (!gw_ScriptGame_StageTargetI(i)) continue;
+        if (!gs_project(gw_ScriptGame_StageTargetF(i, 0), gw_ScriptGame_StageTargetF(i, 1),
+                        0, &x, &y, &depth)) continue;
+        gs_stage_draw_segment(x - 7, y, x, y - 7, 0xFA8A4EFFu);
+        gs_stage_draw_segment(x, y - 7, x + 7, y, 0xFA8A4EFFu);
+        gs_stage_draw_segment(x + 7, y, x, y + 7, 0xFA8A4EFFu);
+        gs_stage_draw_segment(x, y + 7, x - 7, y, 0xFA8A4EFFu);
+        gs_stage_draw_segment(x - 3, y, x + 3, y, 0xF7E7CDFFu);
+    }
+}
 static void gs_finish_draw(void) {
     if (!gs_draw_open) {
         return;
     }
     gs.cam_stamp++;
     gs_hook_all("on_draw", 0, 0, 0);
+    gs_stage_draw();
     gs.build = !gs.build;
     gw_Kit_SwapBanks(); /* the kit's quads flip with the list that indexes them */
     gs_draw_open = 0;
@@ -5693,6 +5856,40 @@ void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
     }
 }
 
+/* Called by scripted Mato's destroy callback in game code. Both events are delivered at the
+ * frame boundary; during resimulation the game snapshot still records the broken target. */
+/* script_game.c, at stage load: reserve the Lua stage layer's collision room? Offline, and only
+ * with a loaded gameplay script (the only kind that may call gd.stage_* / gd.spawn_target). */
+int gw_Script_StageWanted(void) {
+    int i;
+    if (gs.L == NULL || gw_RB_Enabled() || gw_Netplay_Enabled()) {
+        return 0;
+    }
+    for (i = 0; i < gs.n; ++i) {
+        if (gs.s[i].used && !gs.s[i].disabled && i != gs.console && gs.s[i].gameplay) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void gw_Script_TargetBroken(int handle, int remaining) {
+    GsEvent *e;
+    if (gs.L == NULL || gw_Snap_Resimulating()) return;
+    if (gs.nev >= GS_MAX_EVENTS - (remaining == 0 ? 1 : 0)) {
+        gs.ev_dropped++;
+        return;
+    }
+    e = &gs.ev[gs.nev++];
+    memset(e, 0, sizeof *e);
+    e->what = 5; e->a = handle; e->b = remaining;
+    if (remaining == 0) {
+        e = &gs.ev[gs.nev++];
+        memset(e, 0, sizeof *e);
+        e->what = 6;
+    }
+}
+
 static const char *const gs_element_names[] = {
     "normal", "fire", "electric", "slash", "coin", "ice", "nap", "sleep", "catch",
     "ground", "cape", "inert", "disable", "dark", "scball", "lipstick", "leadead"};
@@ -5738,17 +5935,27 @@ static void gs_dispatch_events(void) {
     gs.in_event = 1;
     for (k = 0; k < n; ++k) {
         const GsEvent *e = &gs.ev[k];
-        static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land"};
-        if (e->what < 1 || e->what > 4) {
+        static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land",
+                                            "on_target_broken", "on_all_targets_broken"};
+        if (e->what < 1 || e->what > 6) {
             continue;
         }
         for (i = 0; i < gs.n; ++i) {
             lua_State *L = gs.L;
             int nargs;
-            if (!gs_may_run(i) || !gs_get_hook(i, names[e->what])) {
+            if (!gs_may_run(i) || (e->what >= 5 && !gs.s[i].gameplay) ||
+                !gs_get_hook(i, names[e->what])) {
                 continue;
             }
             switch (e->what) {
+            case 5:
+                lua_pushinteger(L, e->a);
+                lua_pushinteger(L, e->b);
+                nargs = 2;
+                break;
+            case 6:
+                nargs = 0;
+                break;
             case LAB_EV_ACTION: /* (port, old, new, sub) */
                 lua_pushinteger(L, e->a + 1);
                 lua_pushinteger(L, e->b);
@@ -5808,6 +6015,7 @@ void gw_Script_FramePost(void) {
     if (gs.L == NULL) {
         return;
     }
+    if (gs.match_active) gw_ScriptGame_StageFrame();
     if (gs.rw_began) {
         /* the frame's sounds are all in the log now */
         GsLogEntry *e = &gs_log[(unsigned) gs_ring_now() % GS_LOG_N];
@@ -6695,6 +6903,48 @@ static int test_script_paused_input(void) {
 }
 
 /* ---- Geno Lab ---------------------------------------------------------------------------------- */
+static int test_script_stage_events(void) {
+    char dir[MAX_PATH], path[MAX_PATH], out[512];
+    FILE *f;
+    int i, ok = 1;
+    gs_init(); /* do not rely on another script test having run first */
+    if (gs.L == NULL) {
+        gw_test_fail("scripting unavailable");
+        return 1;
+    }
+    snprintf(dir, sizeof dir, "%s\\gw_script_stage_test", gs.exe_dir);
+    CreateDirectoryA(dir, NULL);
+    snprintf(path, sizeof path, "%s\\events.lua", dir);
+    f = fopen(path, "w");
+    if (f == NULL) { gw_test_fail("stage event test script could not be written"); return 1; }
+    fputs("function on_target_broken(h, n) seen = h * 100 + n end\n"
+          "function on_all_targets_broken() all = true end\n", f);
+    fclose(f);
+    i = gs_load_script("stage_event_test", path, "{\"gameplay\": true}", "test");
+    if (i < 0) { gw_test_fail("stage event test script did not load"); ok = 0; }
+    if (ok) {
+        gw_Script_TargetBroken(7, 0);
+        gs_dispatch_events();
+        lua_rawgeti(gs.L, LUA_REGISTRYINDEX, gs.s[i].env_ref);
+        lua_getfield(gs.L, -1, "seen");
+        if (lua_tointeger(gs.L, -1) != 700) ok = 0;
+        lua_pop(gs.L, 1);
+        lua_getfield(gs.L, -1, "all");
+        if (!lua_toboolean(gs.L, -1)) ok = 0;
+        lua_pop(gs.L, 2);
+        if (!ok) gw_test_fail("target break hooks did not receive handle, count and completion");
+        gs_unload(i);
+    }
+    if (t_exec("= pcall(gd.stage_add_platform, 0, 10, 20)", out, sizeof out) != 0 ||
+        strstr(out, "false") == NULL) {
+        gw_test_fail("console was allowed to create stage collision: %s", out);
+        ok = 0;
+    }
+    DeleteFileA(path);
+    RemoveDirectoryA(dir);
+    return ok ? 0 : 1;
+}
+
 static int test_script_lab_api(void) {
     static const struct {
         const char *expr, *want;
@@ -7303,6 +7553,7 @@ fail:
 }
 
 void gw_script_tests_register(void) {
+    gw_test_register("script_stage_events", test_script_stage_events);
     gw_test_register("script_kit_mod_art", test_script_kit_mod_art);
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);

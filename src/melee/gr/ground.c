@@ -849,13 +849,16 @@ void Ground_801C0800(StageIdPair* pair)
     }
 #if defined(TARGET_PC)
     {
+        extern MapCollData* ScriptGame_StagePrepare(MapCollData*);
+        extern void ScriptGame_StageReady(void);
         extern UNK_T gm_801B6320(void);
         extern int TTMod_ForCharacter(int ckind);
         extern int TTMod_PlatformCount(int level);
         int ckind = *(s8*) gm_801B6320();
         int level = -1;
         int nplat = 0;
-        MapCollData* merged;
+        MapCollData* merged = NULL;
+        MapCollData* coll = stage_info.coll_data;
         if (stage_info.grkind >= Gr_Kind_TMario &&
             stage_info.grkind <= Gr_Kind_TGanon)
         {
@@ -866,14 +869,13 @@ void Ground_801C0800(StageIdPair* pair)
             merged = Ground_TTMod_BuildCollData(stage_info.coll_data, level,
                                                 nplat);
             if (merged != NULL) {
-                mpLibLoad(merged);
-                Ground_TTMod_InitLines(merged, nplat);
-            } else {
-                mpLibLoad(stage_info.coll_data);
+                coll = merged;
             }
-        } else {
-            mpLibLoad(stage_info.coll_data);
         }
+        coll = ScriptGame_StagePrepare(coll);
+        mpLibLoad(coll);
+        if (merged != NULL) Ground_TTMod_InitLines(coll, nplat);
+        ScriptGame_StageReady();
     }
 #else
     mpLibLoad(stage_info.coll_data);

@@ -1,0 +1,12 @@
+{
+  "id": "fd_stage_content",
+  "name": "Final Destination Lua stage content",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Adds collision platforms and ten breakable targets to Final Destination. Offline only.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "main.lua"
+}

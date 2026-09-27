@@ -1,4 +1,4 @@
--- Copy this folder to scripts/fd_stage_content beside melee-pc.exe and enable it as a script mod.
+-- A script mod: put this folder in the mods folder and list fd_stage_content in enabled.txt.
 -- Gr_Kind_Last is Final Destination (gr/forward.h, 0x25). Coordinates are world units.
 local FINAL_DESTINATION = 0x25
 

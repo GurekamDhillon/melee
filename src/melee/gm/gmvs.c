@@ -1447,6 +1447,11 @@ void fn_8016CFE0(void)
     }
     if (tmp->state.match_result != OUTCOME_NONE) {
     block_51:
+#if defined(TARGET_PC)
+        OSReport("scene: match-end outcome=%d terminate=%d graphic=%d\n",
+                 tmp->state.match_result, tmp->state.terminate_match,
+                 tmp->state.unk_B);
+#endif
         fn_8016C7F0();
         ifStatus_802F7034(fn_8016B88C);
         lbAudioAx_80024D50();
@@ -1579,6 +1584,12 @@ void fn_8016D634(void)
         fn_80180630(tmp->start.x18, 0, tmp->start.x9, tmp->start.x4_5,
                     copied_dst);
         controller.state.unk_0 = 2;
+#if defined(TARGET_PC)
+        /* Classic's results are an overlay in GS_VS. Script match.active stays
+         * true until SceneBegin; neither is an end-of-stage assertion. */
+        OSReport("scene: 1p-results ready outcome=%d final=%d; waiting for Start\n",
+                 controller.state.match_result, controller.start.x4_5);
+#endif
     } else {
         controller.state.unk_0 = 3;
     }

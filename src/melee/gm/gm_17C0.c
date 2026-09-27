@@ -338,11 +338,21 @@ void fn_8017C1A4(HSD_GObj* unused)
                                    (!BossHook_AllSleeping() || boss_hook.pending))) {
                 tmp->x0 = 8;
                 boss_hook.sleep_wait = 0;
+                OSReport("scene: boss-end wait sleep=%d pending=%d held=%d\n",
+                         BossHook_AllSleeping(), boss_hook.pending,
+                         boss_hook.held);
                 break;
             }
 #endif
             lbAudioAx_80028B90();
             gm_SetGameSpeed(1.0f);
+#if defined(TARGET_PC)
+            /* The vanilla branch remains in state 7 until the VS scene exits. */
+            if (!gmVs_GetSceneController()->state.terminate_match) {
+                OSReport("scene: boss-end request controller=7 hp_mh=%d hp_ch=%d\n",
+                         Player_GetRemainingHP(2), Player_GetRemainingHP(1));
+            }
+#endif
             gm_8016B33C(8);
             gm_8016B328();
             break;
@@ -375,6 +385,12 @@ void fn_8017C1A4(HSD_GObj* unused)
                 gm_SetGameSpeed(1.0f);
                 Player_80031848(0);
                 Player_80036844(0, 0);
+                /* State 7 ended on lbBgFlash's white-to-black fade, which covers the
+                 * stage while the hook holds the match; fade it back out. */
+                {
+                    GXColor black = { 0, 0, 0, 255 }, clear = { 0, 0, 0, 0 };
+                    lbBgFlash_800206D4(&black, &clear, 20);
+                }
                 boss_hook.restored = 1;
                 OSReport("boss_hook: gameplay resumed during hold\n");
             }
@@ -386,11 +402,15 @@ void fn_8017C1A4(HSD_GObj* unused)
             gmVs_GetSceneController()->state.hud_enabled = 0;
             Player_80031790(0);
             Player_80036844(0, 1);
+            lbBgFlash_8002063C(20); /* back to black, as the vanilla finish leaves it */
         }
         lbAudioAx_80028B90();
         gm_SetGameSpeed(1.0f);
         gm_8016B33C(8);
         gm_8016B328();
+        OSReport("scene: boss-end terminate controller=8 hp_mh=%d hp_ch=%d flag=%d\n",
+                 Player_GetRemainingHP(2), Player_GetRemainingHP(1),
+                 gmVs_GetSceneController()->state.terminate_match);
         tmp->x0 = 9;
         break;
 #endif

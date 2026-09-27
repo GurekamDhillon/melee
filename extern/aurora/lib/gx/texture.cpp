@@ -721,7 +721,12 @@ void end_frame() noexcept {
   s_stats.publishBytes = streamingStats.publishBytes;
   ++s_frameCount;
   apply_pending_invalidations();
-  sweep_object_caches();
+  // Port patch: the sweep walks every cached texture object (the port mints an id per GXInitTexObj, so ~600
+  // frames of them) - 10-19 % of the game thread when run every frame. Entries idle 600 frames may live up to
+  // 63 frames longer.
+  if ((s_frameCount & 63u) == 0) {
+    sweep_object_caches();
+  }
 }
 
 void shutdown() noexcept {

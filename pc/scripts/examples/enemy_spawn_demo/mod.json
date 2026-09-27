@@ -1,0 +1,9 @@
+{
+  "id": "enemy-spawn-demo",
+  "name": "Adventure Enemy Spawn Demo",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false
+}

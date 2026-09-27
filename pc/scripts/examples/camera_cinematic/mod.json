@@ -1,0 +1,11 @@
+{
+  "id": "camera_cinematic",
+  "name": "Final Destination camera cinematic",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Console command fdcine launches FD and performs an orbit, push-in, and return to the match camera.",
+  "api_version": 1,
+  "gameplay": true,
+  "entry": "main.lua"
+}

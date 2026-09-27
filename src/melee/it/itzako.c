@@ -482,6 +482,11 @@ bool it_8027C824(Item_GObj* item_gobj, s32 (*arg_func)(Item_GObj*))
 
 void it_2725_Logic9_Destroyed(Item_GObj* item_gobj)
 {
+#if defined(TARGET_PC)
+    /* Scripted enemies have no grZakoGenerator slot to release. */
+    extern int ScriptGame_EnemyDestroyed(Item_GObj*);
+    if (ScriptGame_EnemyDestroyed(item_gobj)) return;
+#endif
     grZakoGenerator_801CAC14(item_gobj);
 }
 
@@ -686,6 +691,15 @@ void it_8027CE18(Item_GObj* item_gobj)
 
 void it_8027CE44(Item_GObj* item_gobj)
 {
+#if defined(TARGET_PC)
+    /* This is the monster defeat transition used by the stock Adventure logic. */
+    extern int ScriptGame_EnemyDefeated(Item_GObj*);
+    int scripted = ScriptGame_EnemyDefeated(item_gobj);
+    if (scripted) {
+        if (scripted == 1) it_8027CE18(item_gobj);
+        return;
+    }
+#endif
     grZakoGenerator_801CACB8(item_gobj);
 }
 

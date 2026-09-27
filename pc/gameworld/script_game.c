@@ -25,7 +25,13 @@
 #include <melee/it/inlines.h>
 #include <melee/it/item.h>
 #include <melee/it/it_3F14.h>
+#include <melee/it/it_26B1.h>
 #include <melee/it/itzako.h>
+#include <melee/it/kinds/itleadead.h>
+#include <melee/it/kinds/itlikelike.h>
+#include <melee/it/kinds/itnokonoko.h>
+#include <melee/lb/lbarchive.h>
+#include <melee/mp/mpcoll.h>
 #include "../geno/geno.h"
 #include "script_items.h"
 #include <sysdolphin/baselib/gobj.h>
@@ -48,6 +54,7 @@
  * (pc_gameworld_script_game.c.obj is in its game set since this change). */
 #define SCRIPT_STAGE_LINES 200 /* the pool's size; a stage gets min(this, its spare room) */
 #define SCRIPT_STAGE_TARGETS 32
+#define SCRIPT_STAGE_ENEMIES 32
 typedef struct {
     int handle, active, kind, flags;
     float x0, y0, x1, y1;
@@ -57,6 +64,10 @@ typedef struct {
     Item_GObj* gobj;
     float x, y;
 } ScriptStageTarget;
+typedef struct {
+    int handle, kind, active, defeated;
+    Item_GObj* gobj;
+} ScriptStageEnemy;
 static struct {
     MapCollData* map;
     int base_v, base_l, base_j, target_remaining;
@@ -65,7 +76,73 @@ static struct {
     u8* cube;          /* the unit box's 8 corners, MEM1 (a GX_INDEX8 position array) */
     ScriptStageLine line[SCRIPT_STAGE_LINES];
     ScriptStageTarget target[SCRIPT_STAGE_TARGETS];
+    ScriptStageEnemy enemy[SCRIPT_STAGE_ENEMIES];
+    int enemy_ready[6];
+    int enemy_attempted[6];
+    HSD_Archive* enemy_archive[3];
 } script_stage;
+
+static const int script_enemy_kinds[6] = {
+    It_Kind_Kuriboh, It_Kind_Nokonoko, It_Kind_Leadead,
+    It_Kind_Likelike, It_Kind_Octarock, It_Kind_Whitebea
+};
+
+static int script_enemy_index(int kind)
+{
+    int i;
+    for (i = 0; i < 6; ++i)
+        if (script_enemy_kinds[i] == kind) return i;
+    return -1;
+}
+
+/* Ground_801C0800 registers only the current stage's itemdata. The three late monster kinds
+ * use itemdata from their Adventure archives, so pin those archives in the game heap before a
+ * script can spawn on a VS stage. First-range monsters and Octorok's stone live in ItCo.dat. */
+static int script_enemy_preload(int which)
+{
+    static const char* const files[3] = { "/GrNKr.dat", "/GrNSr.dat", "/GrIm.dat" };
+    static const int kinds[3] = { It_Kind_Nokonoko, It_Kind_Likelike, It_Kind_Whitebea };
+    struct GroundItemData** rows;
+    int i, j;
+    if (script_stage.enemy_attempted[which]) return script_stage.enemy_ready[which];
+    script_stage.enemy_attempted[which] = 1;
+    if (script_enemy_kinds[which] < It_Kind_Old_Kuri) {
+        int kind = script_enemy_kinds[which];
+        script_stage.enemy_ready[which] = it_804D6D38 != NULL &&
+            it_804D6D38[kind - It_Kind_Kuriboh] != NULL;
+        OSReport("script enemy: ItCo kind=%d %s\n", kind,
+                 script_stage.enemy_ready[which] ? "ready" : "missing article");
+        return script_stage.enemy_ready[which];
+    }
+    i = which == 1 ? 0 : which == 3 ? 1 : 2;
+    rows = stage_info.itemdata;
+    for (j = 0; rows != NULL && j < 64 && rows[j] != NULL; ++j) {
+        if (rows[j]->unk0 == kinds[i] && rows[j]->unk4 != NULL) {
+            it_8026B40C(rows[j]->unk4, kinds[i]);
+            script_stage.enemy_ready[which] = 1;
+            break;
+        }
+    }
+    if (script_stage.enemy_ready[which]) return 1;
+    rows = NULL;
+    lbArchive_800171CC(&script_stage.enemy_archive[i], files[i], &rows, "itemdata", 0);
+    /* every row of the archive, not only the monster's own: a Koopa spawns its shell (and the
+     * route's other monsters their projectiles) as separate stage items, and a kind with no
+     * article asserts in Item_802675A8 ("not found zako model data"). Rows the running stage
+     * already registered are left alone. */
+    for (j = 0; rows != NULL && j < 64 && rows[j] != NULL; ++j) {
+        int k = rows[j]->unk0;
+        if (rows[j]->unk4 == NULL || k < It_Kind_Old_Kuri) continue;
+        if (it_804A0F60[k - It_Kind_Old_Kuri] == NULL) {
+            it_8026B40C(rows[j]->unk4, k);
+            OSReport("script enemy: registered stage item kind=%d from %s\n", k, files[i]);
+        }
+        if (k == kinds[i]) script_stage.enemy_ready[which] = 1;
+    }
+    OSReport("script enemy: preload %s kind=%d %s\n", files[i], kinds[i],
+             script_stage.enemy_ready[which] ? "ready" : "missing itemdata");
+    return script_stage.enemy_ready[which];
+}
 
 /* Called from Ground_801C0800 after the Target Test layout merge and before mpLibLoad.
  * mpLibLoad allocates fixed 2048/1536/256 Coll* arrays, so refuse maps without room. */
@@ -83,6 +160,15 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
         script_stage.target[i].active = 0;
         script_stage.target[i].gobj = NULL;
+    }
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        script_stage.enemy[i].active = 0;
+        script_stage.enemy[i].gobj = NULL;
+    }
+    for (i = 0; i < 3; ++i) script_stage.enemy_archive[i] = NULL;
+    for (i = 0; i < 6; ++i) {
+        script_stage.enemy_ready[i] = 0;
+        script_stage.enemy_attempted[i] = 0;
     }
     if (src == NULL) src = &mpLib_803BF760; /* mpLibLoad's own fallback map */
     {
@@ -579,6 +665,91 @@ int ScriptGame_StageTargetI(int i)
     return i >= 0 && i < SCRIPT_STAGE_TARGETS && script_stage.target[i].active;
 }
 
+/* Scripted enemies deliberately have no grZakoGenerator entry. The pool is game BSS, so item
+ * identity and defeated state follow the item heap through a same-scene savestate/rewind. */
+int ScriptGame_SpawnEnemy(int which, int xb, int yb, int facing, int handle)
+{
+    union { int i; float f; } u;
+    Vec3 pos;
+    Item_GObj* gobj = NULL;
+    Item* ip;
+    int i, kind;
+    if (which < 0 || which >= 6 || (facing != -1 && facing != 1))
+        return -1;
+    if (!script_enemy_preload(which)) return -1;
+    kind = script_enemy_kinds[which];
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES && script_stage.enemy[i].active; ++i) {}
+    if (i == SCRIPT_STAGE_ENEMIES) return -1;
+    u.i = xb; pos.x = u.f; u.i = yb; pos.y = u.f; pos.z = 0.0f;
+    switch (kind) {
+    case It_Kind_Leadead: gobj = it_802EA9FC(&pos, facing); break;
+    case It_Kind_Nokonoko: gobj = it_802DD7F0(0, &pos, NULL, facing); break;
+    case It_Kind_Likelike: gobj = it_802DC4BC(1, &pos, facing); break;
+    default: gobj = it_8027B5B0(kind, &pos, NULL, NULL, 1); break;
+    }
+    if (gobj == NULL) return -1;
+    ip = GET_ITEM(gobj);
+    ip->facing_dir = ip->init_facing_dir = (float) facing;
+    mpCollSetFacingDir(&ip->x378_itemColl, facing);
+    if (kind == It_Kind_Kuriboh || kind == It_Kind_Octarock || kind == It_Kind_Whitebea)
+        it_8027C56C(gobj, (float) facing);
+    script_stage.enemy[i].handle = handle;
+    script_stage.enemy[i].kind = kind;
+    script_stage.enemy[i].active = 1;
+    script_stage.enemy[i].defeated = 0;
+    script_stage.enemy[i].gobj = gobj;
+    OSReport("script enemy: spawned kind=%d handle=%d at (%f,%f) facing=%d\n",
+             kind, handle, pos.x, pos.y, facing);
+    return handle;
+}
+
+int ScriptGame_EnemyRemove(int handle)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        if (!e->active || e->handle != handle) continue;
+        e->active = 0;
+        /* Item_8026A8EC calls ScriptGame_EnemyDestroyed before releasing this gobj. */
+        Item_8026A8EC(e->gobj);
+        e->gobj = NULL;
+        OSReport("script enemy: removed handle=%d\n", handle);
+        return 1;
+    }
+    return 0;
+}
+
+int ScriptGame_EnemyDefeated(Item_GObj* gobj)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        if (!e->active || e->gobj != gobj) continue;
+        if (e->defeated) return 2;
+        {
+            extern void Script_EnemyDefeated(int kind, int handle);
+            e->defeated = 1;
+            Script_EnemyDefeated(script_enemy_index(e->kind), e->handle);
+            OSReport("script enemy: defeated kind=%d handle=%d\n", e->kind, e->handle);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+int ScriptGame_EnemyDestroyed(Item_GObj* gobj)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        if (e->gobj != gobj || gobj == NULL) continue;
+        e->active = 0;
+        e->gobj = NULL;
+        return 1;
+    }
+    return 0;
+}
+
 float ScriptGame_StageTargetF(int i, int field)
 {
     if (!ScriptGame_StageTargetI(i)) return 0;
@@ -706,6 +877,30 @@ static Fighter* script_fighter(int slot)
         return NULL;
     }
     return GET_FIGHTER(gobj);
+}
+
+/* Camera_8002A4AC and its script override run in the game TU. Resolve handles here, where the
+ * live fighter list and Item_80268B18's unique item serial can be checked without a native
+ * pointer crossing the PPC bridge. */
+int ScriptGame_CameraFollowTarget(int kind, int id, Vec3* out)
+{
+    if (kind == 1) {
+        Fighter* fp = script_fighter(id);
+        if (fp == NULL) return 0;
+        *out = fp->cur_pos;
+        return 1;
+    }
+    if (kind == 2 && HSD_GObjPLinkHead != NULL) {
+        HSD_GObj* g;
+        for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]; g != NULL; g = g->next) {
+            Item* ip = GET_ITEM(g);
+            if (ip != NULL && ip->x1C == id) {
+                *out = ip->pos;
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 
 float ScriptGame_FighterF(int slot, int field)

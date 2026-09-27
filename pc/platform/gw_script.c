@@ -55,6 +55,8 @@ extern void gw_ScriptGame_StageFrame(void);
 extern int gw_ScriptGame_StageLineI(int slot, int field);
 extern float gw_ScriptGame_StageLineF(int slot, int field);
 extern int gw_ScriptGame_SpawnTarget(int x, int y, int handle);
+extern int gw_ScriptGame_SpawnEnemy(int which, int x, int y, int facing, int handle);
+extern int gw_ScriptGame_EnemyRemove(int handle);
 extern int gw_ScriptGame_StageTargetI(int slot);
 extern float gw_ScriptGame_StageTargetF(int slot, int field);
 extern int gw_snap_open(int k);
@@ -80,6 +82,23 @@ extern int gw_ScriptGame_JointParent(int slot, int i);
 extern int gw_ScriptGame_LabDObjI(int slot, int d, int field);
 extern float gw_ScriptGame_LabTObjF(int slot, int d, int t, int field);
 extern float gw_ScriptGame_CameraF(int field);
+extern int gw_Camera_ScriptDetach(void);
+extern void gw_Camera_ScriptAttach(int frames);
+extern void gw_Camera_ScriptReset(void);
+extern int gw_Camera_ScriptState(void);
+extern int gw_Camera_ScriptMode(void);
+extern int gw_Camera_ScriptCompletion(void);
+extern int gw_Camera_ScriptCompletionKind(void);
+extern int gw_Camera_ScriptGetBits(int field);
+extern void gw_Camera_ScriptSet(int field, int bits);
+extern void gw_Camera_ScriptMoveBegin(void);
+extern void gw_Camera_ScriptMove(int frames, int ease);
+extern void gw_Camera_ScriptPathClear(void);
+extern int gw_Camera_ScriptPathKey(int frame);
+extern void gw_Camera_ScriptPathStart(void);
+extern int gw_Camera_ScriptFollow(int kind, int id, int px, int py, int pz, int ox, int oy, int oz);
+extern void gw_Camera_ScriptShake(int intensity_bits, int frames);
+extern void gw_Camera_ScriptLiftBounds(int lift);
 extern int gw_ScriptGame_LabDebugDraw(int slot, int set, int value);
 extern int gw_ScriptGame_LabStageDraw(int mask, int value);
 extern int gw_ScriptGame_LabAttrCount(void);
@@ -245,6 +264,7 @@ static struct {
     int match_frame;
     int last_action[6];
     int state_frame[6];
+    int camera_owner, camera_task_owner, camera_completion;
     /* pause / step */
     int paused;
     int step;
@@ -458,6 +478,11 @@ static void gs_report(int script, const char *what, const char *err) {
     if (s != NULL && script != gs.console && ++s->errors >= GS_MAX_ERRORS && !s->disabled) {
         int k;
         s->disabled = 1;
+        if (gs.camera_owner == script + 1) {
+            gw_Camera_ScriptReset();
+            gs.camera_owner = gs.camera_task_owner = 0;
+            gw_log("script [%s] camera restored (script disabled)", s->id);
+        }
         gw_script_pad_release_owner(script + 1);
         for (k = 0; k < GS_MAX_TASKS; ++k) {
             gw_script_pad_release_owner(s->task_pad_owner[k]);
@@ -568,6 +593,238 @@ static void gs_require_offline(lua_State *L, const char *fn) {
     if (gw_RB_Enabled() || gw_Netplay_Enabled()) {
         luaL_error(L, "gd.%s is offline-only (refused during a netplay/rollback session)", fn);
     }
+}
+static void gs_setnum(lua_State *L, const char *k, double v);
+
+/* The simulation reads camera projection for offscreen fighter logic (ftLib_80086A8C), so every
+ * write below goes through the game-side camera .bss, which gw_snap.c captures. */
+static int gs_camera_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
+static float gs_camera_float(int bits) { union { float f; int i; } u; u.i = bits; return u.f; }
+static int gs_camera_claim(lua_State *L, const char *fn) {
+    gs_require_offline(L, fn);
+    if (gs.camera_owner && gs.camera_owner != gs.cur + 1)
+        luaL_error(L, "gd.%s: camera is owned by another script", fn);
+    gs_rw_branch();
+    if (gw_Camera_ScriptState() == 2) gw_Camera_ScriptReset();
+    if (!gw_Camera_ScriptDetach()) luaL_error(L, "gd.%s: no game camera in this scene", fn);
+    if (!gs.camera_owner) {
+        gs.camera_owner = gs.cur + 1;
+        gs.camera_task_owner = gs_input_owner > GS_MAX_SCRIPTS + GS_CLIENTS ? gs_input_owner : 0;
+        gs.camera_completion = gw_Camera_ScriptCompletion();
+        gw_log("script [%s] camera detached", gs_script_id(gs.cur));
+    }
+    return 1;
+}
+static float gs_camera_number(lua_State *L, int idx, const char *name) {
+    double v = luaL_checknumber(L, idx);
+    if (v != v || v > 1000000.0 || v < -1000000.0)
+        luaL_error(L, "camera %s must be finite and within +/-1000000", name);
+    return (float) v;
+}
+static void gs_camera_vec(lua_State *L, int idx, float out[3]) {
+    static const char *const names[3] = {"x", "y", "z"};
+    int i;
+    idx = lua_absindex(L, idx);
+    luaL_checktype(L, idx, LUA_TTABLE);
+    for (i = 0; i < 3; ++i) {
+        lua_getfield(L, idx, names[i]);
+        out[i] = gs_camera_number(L, -1, names[i]);
+        lua_pop(L, 1);
+    }
+}
+static int gs_camera_check_pose(lua_State *L, int idx, int required) {
+    const char *const names[2] = {"eye", "interest"};
+    int i, mask = 0;
+    float v[3], eye[3], interest[3];
+    idx = lua_absindex(L, idx);
+    luaL_checktype(L, idx, LUA_TTABLE);
+    for (i = 0; i < 3; ++i) {
+        eye[i] = gs_camera_float(gw_Camera_ScriptGetBits(i));
+        interest[i] = gs_camera_float(gw_Camera_ScriptGetBits(i + 3));
+    }
+    for (i = 0; i < 2; ++i) {
+        lua_getfield(L, idx, names[i]);
+        if (!lua_isnil(L, -1)) {
+            gs_camera_vec(L, -1, v);
+            memcpy(i == 0 ? eye : interest, v, sizeof v);
+            mask |= 1 << i;
+        }
+        else if (required) luaL_error(L, "camera key needs %s", names[i]);
+        lua_pop(L, 1);
+    }
+    lua_getfield(L, idx, "fov");
+    if (!lua_isnil(L, -1)) {
+        float fov = gs_camera_number(L, -1, "fov");
+        if (fov <= 1.0f || fov >= 179.0f) luaL_error(L, "camera fov must be between 1 and 179 degrees");
+        mask |= 4;
+    } else if (required) luaL_error(L, "camera key needs fov");
+    lua_pop(L, 1);
+    lua_getfield(L, idx, "roll");
+    if (!lua_isnil(L, -1)) { (void) gs_camera_number(L, -1, "roll"); mask |= 8; }
+    lua_pop(L, 1);
+    if (!mask) luaL_error(L, "camera pose needs eye, interest, fov, or roll");
+    if ((mask & 3) == 3 || ((mask & 3) && gw_ScriptGame_CameraF(LAB_CAM_OK) != 0.0f)) {
+        double dx = eye[0] - interest[0], dy = eye[1] - interest[1], dz = eye[2] - interest[2];
+        if (dx * dx + dy * dy + dz * dz < 0.0001)
+            luaL_error(L, "camera eye and interest must be distinct");
+    }
+    return mask;
+}
+static void gs_camera_apply_pose(lua_State *L, int idx, int mask) {
+    int i;
+    float v[3];
+    idx = lua_absindex(L, idx);
+    if (mask & 1) {
+        lua_getfield(L, idx, "eye"); gs_camera_vec(L, -1, v); lua_pop(L, 1);
+        for (i = 0; i < 3; ++i) gw_Camera_ScriptSet(i, gs_camera_bits(v[i]));
+    }
+    if (mask & 2) {
+        lua_getfield(L, idx, "interest"); gs_camera_vec(L, -1, v); lua_pop(L, 1);
+        for (i = 0; i < 3; ++i) gw_Camera_ScriptSet(i + 3, gs_camera_bits(v[i]));
+    }
+    if (mask & 4) {
+        lua_getfield(L, idx, "fov");
+        gw_Camera_ScriptSet(6, gs_camera_bits((float) lua_tonumber(L, -1)));
+        lua_pop(L, 1);
+    }
+    if (mask & 8) {
+        lua_getfield(L, idx, "roll");
+        gw_Camera_ScriptSet(7, gs_camera_bits((float) lua_tonumber(L, -1)));
+        lua_pop(L, 1);
+    }
+}
+static void gs_camera_pushvec(lua_State *L, int field) {
+    lua_createtable(L, 0, 3);
+    gs_setnum(L, "x", gs_camera_float(gw_Camera_ScriptGetBits(field)));
+    gs_setnum(L, "y", gs_camera_float(gw_Camera_ScriptGetBits(field + 1)));
+    gs_setnum(L, "z", gs_camera_float(gw_Camera_ScriptGetBits(field + 2)));
+}
+static int l_camera_get(lua_State *L) {
+    static const char *const modes[] = {"standard", "pause", "training", "clear", "fixed",
+                                       "free", "boss_intro", "debug_follow", "debug_free"};
+    int mode;
+    if (gw_ScriptGame_CameraF(LAB_CAM_OK) == 0.0f) { lua_pushnil(L); return 1; }
+    lua_createtable(L, 0, 5);
+    gs_camera_pushvec(L, 0); lua_setfield(L, -2, "eye");
+    gs_camera_pushvec(L, 3); lua_setfield(L, -2, "interest");
+    gs_setnum(L, "fov", gs_camera_float(gw_Camera_ScriptGetBits(6)));
+    gs_setnum(L, "roll", gs_camera_float(gw_Camera_ScriptGetBits(7)));
+    mode = gw_Camera_ScriptMode();
+    lua_pushstring(L, gw_Camera_ScriptState() == 1 ? "detached" :
+                      gw_Camera_ScriptState() == 2 ? "attaching" :
+                      mode >= 0 && mode < 9 ? modes[mode] : "unknown");
+    lua_setfield(L, -2, "mode");
+    return 1;
+}
+static int l_camera_detach(lua_State *L) { gs_camera_claim(L, "camera_detach"); lua_pushboolean(L, 1); return 1; }
+static int l_camera_attach(lua_State *L) {
+    int frames = (int) luaL_optinteger(L, 1, 30);
+    gs_require_offline(L, "camera_attach");
+    if (frames < 0 || frames > 6000) luaL_error(L, "camera_attach frames must be 0..6000");
+    if (gs.camera_owner && gs.camera_owner != gs.cur + 1)
+        luaL_error(L, "gd.camera_attach: camera is owned by another script");
+    gs_rw_branch();
+    gw_Camera_ScriptAttach(frames);
+    gw_log("script [%s] camera attach (%d frames)", gs_script_id(gs.cur), frames);
+    if (!frames) gs.camera_owner = gs.camera_task_owner = 0;
+    return 0;
+}
+static int l_camera_set(lua_State *L) {
+    int mask = gs_camera_check_pose(L, 1, 0);
+    gs_camera_claim(L, "camera_set");
+    gs_camera_apply_pose(L, 1, mask);
+    gw_log("script [%s] camera set", gs_script_id(gs.cur));
+    return 0;
+}
+static int l_camera_move(lua_State *L) {
+    int frames, mask, ease = 0;
+    const char *name;
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_getfield(L, 1, "to");
+    mask = gs_camera_check_pose(L, -1, 0);
+    lua_pop(L, 1);
+    lua_getfield(L, 1, "frames"); frames = (int) luaL_checkinteger(L, -1); lua_pop(L, 1);
+    if (frames < 1 || frames > 6000) luaL_error(L, "camera_move frames must be 1..6000");
+    lua_getfield(L, 1, "ease"); name = lua_isnil(L, -1) ? "linear" : luaL_checkstring(L, -1);
+    if (strcmp(name, "in") == 0) ease = 1;
+    else if (strcmp(name, "out") == 0) ease = 2;
+    else if (strcmp(name, "inout") == 0) ease = 3;
+    else if (strcmp(name, "linear") != 0) luaL_error(L, "camera_move ease is linear, in, out, or inout");
+    lua_pop(L, 1);
+    gs_camera_claim(L, "camera_move");
+    gw_Camera_ScriptMoveBegin();
+    lua_getfield(L, 1, "to"); gs_camera_apply_pose(L, -1, mask); lua_pop(L, 1);
+    gw_Camera_ScriptMove(frames, ease);
+    gw_log("script [%s] camera move %d frames ease=%d", gs_script_id(gs.cur), frames, ease);
+    return 0;
+}
+static int l_camera_path(lua_State *L) {
+    int i, n, last = -1;
+    int masks[64], frames[64];
+    luaL_checktype(L, 1, LUA_TTABLE);
+    n = (int) lua_rawlen(L, 1);
+    if (n < 2 || n > 64) luaL_error(L, "camera_path needs 2..64 keys");
+    for (i = 0; i < n; ++i) {
+        lua_rawgeti(L, 1, i + 1);
+        masks[i] = gs_camera_check_pose(L, -1, 1);
+        lua_getfield(L, -1, "frame"); frames[i] = (int) luaL_checkinteger(L, -1); lua_pop(L, 1);
+        if (frames[i] <= last || frames[i] > 36000 || (i == 0 && frames[i] != 0))
+            luaL_error(L, "camera_path frames must start at 0 and increase through 36000");
+        last = frames[i];
+        lua_pop(L, 1);
+    }
+    gs_camera_claim(L, "camera_path");
+    gw_Camera_ScriptPathClear();
+    for (i = 0; i < n; ++i) {
+        lua_rawgeti(L, 1, i + 1);
+        gs_camera_apply_pose(L, -1, masks[i]);
+        lua_pop(L, 1);
+        if (!gw_Camera_ScriptPathKey(frames[i])) luaL_error(L, "camera_path: game rejected key %d", i + 1);
+    }
+    gw_Camera_ScriptPathStart();
+    gw_log("script [%s] camera path %d keys, %d frames", gs_script_id(gs.cur), n, last);
+    return 0;
+}
+static int l_camera_follow(lua_State *L) {
+    int kind = 0, id = 0;
+    float point[3] = {0}, offset[3] = {0};
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_getfield(L, 1, "port");
+    if (lua_isinteger(L, -1)) { kind = 1; id = (int) lua_tointeger(L, -1) - 1; }
+    lua_pop(L, 1);
+    if (!kind) {
+        lua_getfield(L, 1, "id");
+        if (lua_isinteger(L, -1)) { kind = 2; id = (int) lua_tointeger(L, -1); }
+        lua_pop(L, 1);
+    }
+    if (!kind) gs_camera_vec(L, 1, point);
+    if (!lua_isnoneornil(L, 2)) gs_camera_vec(L, 2, offset);
+    if (kind == 1 && (id < 0 || id >= 6)) luaL_error(L, "camera_follow fighter port must be 1..6");
+    if (kind == 2 && id < 0) luaL_error(L, "camera_follow item id is out of range");
+    gs_camera_claim(L, "camera_follow");
+    if (!gw_Camera_ScriptFollow(kind, id, gs_camera_bits(point[0]), gs_camera_bits(point[1]),
+                                gs_camera_bits(point[2]), gs_camera_bits(offset[0]),
+                                gs_camera_bits(offset[1]), gs_camera_bits(offset[2])))
+        luaL_error(L, "camera_follow target is no longer live");
+    gw_log("script [%s] camera follow kind=%d id=%d", gs_script_id(gs.cur), kind, id);
+    return 0;
+}
+static int l_camera_shake(lua_State *L) {
+    float intensity = gs_camera_number(L, 1, "shake intensity");
+    int frames = (int) luaL_checkinteger(L, 2);
+    if (intensity < 0.0f || frames < 0 || frames > 6000)
+        luaL_error(L, "camera_shake needs nonnegative intensity and 0..6000 frames");
+    gs_camera_claim(L, "camera_shake");
+    gw_Camera_ScriptShake(gs_camera_bits(intensity), frames);
+    gw_log("script [%s] camera shake intensity=%g frames=%d", gs_script_id(gs.cur), intensity, frames);
+    return 0;
+}
+static int l_camera_bounds(lua_State *L) {
+    int lift = lua_toboolean(L, 1);
+    gs_camera_claim(L, "camera_bounds");
+    gw_Camera_ScriptLiftBounds(lift);
+    gw_log("script [%s] camera bounds %s", gs_script_id(gs.cur), lift ? "lifted" : "stage");
+    return 0;
 }
 
 /* The deadline counts match logic frames, so pause/step and savestates stay deterministic. */
@@ -1037,6 +1294,7 @@ static int l_items(lua_State *L) {
             gs_setint(L, "geno_profile", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_GENO_PROFILE));
         }
         gs_setint(L, "owner_port", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_OWNER));
+        gs_setint(L, "id", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_ID));
         gs_setnum(L, "x", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_X));
         gs_setnum(L, "y", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Y));
         gs_setnum(L, "z", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Z));
@@ -1959,6 +2217,11 @@ static void gs_run_tasks(void) {
                 lua_pop(L, 1);
             }
             gw_script_pad_release_owner(s->task_pad_owner[k]);
+            if (gs.camera_owner == i + 1 && gs.camera_task_owner == s->task_pad_owner[k]) {
+                gw_Camera_ScriptReset();
+                gs.camera_owner = gs.camera_task_owner = 0;
+                gw_log("script [%s] camera restored (task ended)", s->id);
+            }
             luaL_unref(L, LUA_REGISTRYINDEX, s->tasks[k]);
             s->tasks[k] = LUA_NOREF;
             if (s->disabled) break;
@@ -4255,6 +4518,48 @@ static int l_spawn_target(lua_State *L) {
     return 1;
 }
 
+static const char *const gs_enemy_names[6] = {
+    "goomba", "koopa", "redead", "like_like", "octorok", "polar_bear"
+};
+
+static int l_spawn_enemy(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
+    int i, facing = 1, h;
+    gs_require_stage(L, "spawn_enemy");
+    for (i = 0; i < 6 && strcmp(name, gs_enemy_names[i]) != 0; ++i) {}
+    if (i == 6) return luaL_error(L, "unknown enemy kind: %s", name);
+    if (!lua_isnoneornil(L, 4)) {
+        luaL_checktype(L, 4, LUA_TTABLE);
+        lua_getfield(L, 4, "facing");
+        if (!lua_isnil(L, -1)) {
+            lua_Integer value = luaL_checkinteger(L, -1);
+            if (value != -1 && value != 1)
+                return luaL_error(L, "enemy facing must be -1 or 1");
+            facing = (int) value;
+        }
+        lua_pop(L, 1);
+    }
+    gs_rw_branch();
+    h = gw_ScriptGame_SpawnEnemy(i, gs_fbits(x), gs_fbits(y), facing,
+                                 gs_stage_next_handle(L));
+    if (h < 0) {
+        lua_pushnil(L);
+        lua_pushstring(L, "enemy capacity or item data unavailable");
+        return 2;
+    }
+    lua_pushinteger(L, h);
+    return 1;
+}
+
+static int l_enemy_remove(lua_State *L) {
+    int h = gs_stage_handle_arg(L, 1);
+    gs_require_stage(L, "enemy_remove");
+    gs_rw_branch();
+    lua_pushboolean(L, gw_ScriptGame_EnemyRemove(h));
+    return 1;
+}
+
 static const luaL_Reg gs_kit_funcs[] = {
     {"available", l_kit_available}, {"text", l_kit_text}, {"measure", l_kit_measure},
     {"metrics", l_kit_metrics}, {"texture", l_kit_texture}, {"image", l_kit_image},
@@ -4341,6 +4646,11 @@ static int l_perf(lua_State *L) {
 static const luaL_Reg gs_gd_funcs[] = {
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"scene", l_scene}, {"match", l_match},
     {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
+    {"camera_get", l_camera_get}, {"camera_detach", l_camera_detach},
+    {"camera_attach", l_camera_attach}, {"camera_set", l_camera_set},
+    {"camera_move", l_camera_move}, {"camera_path", l_camera_path},
+    {"camera_follow", l_camera_follow}, {"camera_shake", l_camera_shake},
+    {"camera_bounds", l_camera_bounds},
     {"char_name", l_char_name}, {"pad", l_pad},
     {"input", l_input}, {"release", l_release}, {"release_pad", l_release},
     {"savestate", l_savestate},
@@ -4374,6 +4684,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"stage_add_platform", l_stage_add_platform}, {"stage_add_line", l_stage_add_line},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
+    {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -4666,6 +4977,12 @@ static void gs_unload(int i) {
     }
     if (gs_get_hook(i, "on_unload")) {
         gs_pcall(i, 0, 0, "on_unload");
+    }
+    if (gs.camera_owner == i + 1) {
+        gs_rw_branch();
+        gw_Camera_ScriptReset();
+        gs.camera_owner = gs.camera_task_owner = 0;
+        gw_log("script [%s] camera restored (unload)", s->id);
     }
     gw_script_pad_release_owner(i + 1);
     for (k = 0; k < GS_MAX_TASKS; ++k) {
@@ -5087,6 +5404,12 @@ void gw_Script_SceneBegin(int scene_kind) {
         gs.match_active = 0;
         gs_hook_all("on_match_end", 0, 0, 0);
     }
+    if (gs.camera_owner) {
+        gw_Camera_ScriptReset();
+        gs.camera_owner = gs.camera_task_owner = 0;
+        gw_log("script: camera restored (scene change)");
+    }
+    gs.camera_completion = gw_Camera_ScriptCompletion();
     gs.scene_kind = scene_kind;
     gs.scene_epoch++;
     gs_item_track_count = 0;
@@ -5963,6 +6286,16 @@ void gw_Script_TargetBroken(int handle, int remaining) {
     }
 }
 
+void gw_Script_EnemyDefeated(int which, int handle) {
+    GsEvent *e;
+    if (gs.L == NULL || gw_Snap_Resimulating() || which < 0 || which >= 6) return;
+    if (gs.nev >= GS_MAX_EVENTS) { gs.ev_dropped++; return; }
+    e = &gs.ev[gs.nev++];
+    memset(e, 0, sizeof *e);
+    e->what = 8; e->a = which; e->b = handle;
+    gw_log("script enemy: queued defeat kind=%s handle=%d", gs_enemy_names[which], handle);
+}
+
 static const char *const gs_element_names[] = {
     "normal", "fire", "electric", "slash", "coin", "ice", "nap", "sleep", "catch",
     "ground", "cape", "inert", "disable", "dark", "scball", "lipstick", "leadead"};
@@ -6010,8 +6343,8 @@ static void gs_dispatch_events(void) {
         const GsEvent *e = &gs.ev[k];
         static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land",
                                             "on_target_broken", "on_all_targets_broken",
-                                            "on_boss_defeated"};
-        if (e->what < 1 || e->what > LAB_EV_BOSS_DEFEATED) {
+                                            "on_boss_defeated", "on_enemy_defeated"};
+        if (e->what < 1 || e->what > 8) {
             continue;
         }
         for (i = 0; i < gs.n; ++i) {
@@ -6049,6 +6382,12 @@ static void gs_dispatch_events(void) {
                 nargs = 1;
                 break;
             }
+            case 8: /* the Adventure enemy layer's defeat (queued natively) */
+                lua_createtable(L, 0, 2);
+                gs_setstr(L, "kind", gs_enemy_names[e->a]);
+                gs_setint(L, "handle", e->b);
+                nargs = 1;
+                break;
             case LAB_EV_ACTION: /* (port, old, new, sub) */
                 lua_pushinteger(L, e->a + 1);
                 lua_pushinteger(L, e->b);
@@ -6156,6 +6495,23 @@ void gw_Script_FramePost(void) {
         gw_log("rewind: to frame %d: keyframe load %.2f ms (%u pages), %d frame(s) re-simulated, "
                "%.1f ms in all", gs_ring_now(), gs.rw_last_load_ms, gw_rw_last_load_pages(),
                gs.rw_last_frames, gs.rw_last_ms);
+    }
+    {
+        int completed = gw_Camera_ScriptCompletion();
+        if (completed > gs.camera_completion && gs.camera_owner > 0) {
+            int owner = gs.camera_owner - 1;
+            const char *kind_name = gw_Camera_ScriptCompletionKind() == 2 ? "path" : "move";
+            gw_log("script [%s] camera %s complete", gs_script_id(owner), kind_name);
+            if (gs_get_hook(owner, "on_camera_complete")) {
+                lua_pushstring(gs.L, kind_name);
+                gs_pcall(owner, 1, 0, "on_camera_complete");
+            }
+        }
+        gs.camera_completion = completed; /* a rewind may move the counter backward */
+        if (gs.camera_owner && !gw_Camera_ScriptState()) {
+            gw_log("script [%s] camera restored (attach complete)", gs_script_id(gs.camera_owner - 1));
+            gs.camera_owner = gs.camera_task_owner = 0;
+        }
     }
     gs_dispatch_events();
     gs_hook_all("on_frame", 0, 0, 0);
@@ -6684,6 +7040,38 @@ static int test_script_lua_runs(void) {
     return 0;
 }
 
+static int test_script_camera_api(void) {
+    char out[512];
+    if (t_exec("= gd.camera_get() == nil", out, sizeof out) != 0 || strstr(out, "true") == NULL) {
+        gw_test_fail("camera_get without a match: %s", out);
+        return 1;
+    }
+    if (t_exec("gd.camera_set{fov=180}", out, sizeof out) == 0 || strstr(out, "fov") == NULL) {
+        gw_test_fail("camera_set accepted invalid fov: %s", out);
+        return 1;
+    }
+    if (t_exec("gd.camera_move{to={fov=45},frames=30,ease='bounce'}", out, sizeof out) == 0 ||
+        strstr(out, "ease") == NULL) {
+        gw_test_fail("camera_move accepted invalid ease: %s", out);
+        return 1;
+    }
+    if (t_exec("gd.camera_path{{eye={x=0,y=0,z=1},interest={x=0,y=0,z=0},fov=45,frame=0},"
+               "{eye={x=1,y=0,z=1},interest={x=0,y=0,z=0},fov=45,frame=0}}",
+               out, sizeof out) == 0 || strstr(out, "frames") == NULL) {
+        gw_test_fail("camera_path accepted duplicate frames: %s", out);
+        return 1;
+    }
+    if (t_exec("gd.camera_follow({port=7})", out, sizeof out) == 0 || strstr(out, "port") == NULL) {
+        gw_test_fail("camera_follow accepted invalid port: %s", out);
+        return 1;
+    }
+    if (t_exec("gd.camera_detach()", out, sizeof out) == 0 || strstr(out, "no game camera") == NULL) {
+        gw_test_fail("camera_detach without a game camera: %s", out);
+        return 1;
+    }
+    return 0;
+}
+
 static int test_script_sandbox(void) {
     static const char *const banned[] = {"io", "os", "package", "debug", "require", "dofile",
                                          "loadfile", "string.dump"};
@@ -7033,7 +7421,8 @@ static int test_script_stage_events(void) {
     f = fopen(path, "w");
     if (f == NULL) { gw_test_fail("stage event test script could not be written"); return 1; }
     fputs("function on_target_broken(h, n) seen = h * 100 + n end\n"
-          "function on_all_targets_broken() all = true end\n", f);
+          "function on_all_targets_broken() all = true end\n"
+          "function on_enemy_defeated(e) enemy = e end\n", f);
     fclose(f);
     i = gs_load_script("stage_event_test", path, "{\"gameplay\": true}", "test");
     if (i < 0) { gw_test_fail("stage event test script did not load"); ok = 0; }
@@ -7046,13 +7435,33 @@ static int test_script_stage_events(void) {
         lua_pop(gs.L, 1);
         lua_getfield(gs.L, -1, "all");
         if (!lua_toboolean(gs.L, -1)) ok = 0;
-        lua_pop(gs.L, 2);
-        if (!ok) gw_test_fail("target break hooks did not receive handle, count and completion");
+        lua_pop(gs.L, 1);
+        gw_Script_EnemyDefeated(3, 9);
+        gs_dispatch_events();
+        lua_getfield(gs.L, -1, "enemy");
+        lua_getfield(gs.L, -1, "kind");
+        if (lua_tostring(gs.L, -1) == NULL ||
+            strcmp(lua_tostring(gs.L, -1), "like_like") != 0) ok = 0;
+        lua_pop(gs.L, 1);
+        lua_getfield(gs.L, -1, "handle");
+        if (lua_tointeger(gs.L, -1) != 9) ok = 0;
+        lua_pop(gs.L, 3);
+        if (!ok) gw_test_fail("script stage event hooks got the wrong payload");
         gs_unload(i);
     }
     if (t_exec("= pcall(gd.stage_add_platform, 0, 10, 20)", out, sizeof out) != 0 ||
         strstr(out, "false") == NULL) {
         gw_test_fail("console was allowed to create stage collision: %s", out);
+        ok = 0;
+    }
+    if (t_exec("= pcall(gd.spawn_enemy, 'goomba', 0, 10)", out, sizeof out) != 0 ||
+        strstr(out, "false") == NULL) {
+        gw_test_fail("console was allowed to spawn enemies: %s", out);
+        ok = 0;
+    }
+    if (t_exec("= pcall(gd.enemy_remove, 1)", out, sizeof out) != 0 ||
+        strstr(out, "false") == NULL) {
+        gw_test_fail("console was allowed to remove enemies: %s", out);
         ok = 0;
     }
     DeleteFileA(path);
@@ -7711,6 +8120,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);
     gw_test_register("script_lua_runs", test_script_lua_runs);
+    gw_test_register("script_camera_api", test_script_camera_api);
     gw_test_register("script_sandbox", test_script_sandbox);
     gw_test_register("script_budget", test_script_budget);
     gw_test_register("script_isolation_and_errors", test_script_isolation_and_errors);

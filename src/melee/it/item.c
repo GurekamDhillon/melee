@@ -2104,6 +2104,12 @@ void Item_8026A8EC(Item_GObj* gobj)
 
     Item_8026B0B4(gobj);
     efAsync_QueueClear((struct EF_QueuedEffect*) &ip->xBC0);
+#if defined(TARGET_PC)
+    {
+        extern int ScriptGame_EnemyDestroyed(Item_GObj*);
+        ScriptGame_EnemyDestroyed(gobj);
+    }
+#endif
     HSD_GObjFree(gobj);
 }
 

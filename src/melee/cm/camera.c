@@ -48,24 +48,61 @@
 #include <sysdolphin/baselib/wobj.h>
 
 #if defined(TARGET_PC)
+/* Script camera state belongs to this game TU: gw_snap.c snapshots game .bss as well as MEM1.
+ * ftLib_UpdateLogicOffCamera projects against the resulting CObj during logic, so a host-only
+ * camera would make offscreen damage and rollback depend on rendering. */
+#define CM_SCRIPT_KEYS 64
+typedef struct CmScriptPose {
+    Vec3 eye, interest;
+    f32 fov, roll;
+} CmScriptPose;
+typedef struct CmScriptKey {
+    CmScriptPose pose;
+    int frame;
+} CmScriptKey;
+static struct {
+    int state; /* 0 normal, 1 detached, 2 blending back */
+    int lift_bounds, elapsed, duration, ease;
+    int path_count, path_frame, path_building, completion, completion_kind;
+    int follow_kind, follow_id, shake_left, shake_total, shake_tick;
+    f32 shake_intensity, saved_roll, saved_far;
+    int saved_up_vector;
+    Vec3 saved_up, follow_point, follow_offset, follow_eye_delta;
+    CameraTransformState normal;
+    CmScriptPose pose, from, to;
+    CmScriptKey path[CM_SCRIPT_KEYS];
+} cm_script;
+static void cm_script_update(void);
+static f32 cm_script_float(int bits)
+{
+    union { int i; f32 f; } u;
+    u.i = bits;
+    return u.f;
+}
+static int cm_script_bits(f32 value)
+{
+    union { int i; f32 f; } u;
+    u.f = value;
+    return u.i;
+}
 /* debug movement (pc/geno/geno_lab_mode.c): while any fighter flies, the camera's stage bounds
  * open wide so it can follow the fighter anywhere (large maps). Only this file's clamps change. */
 extern int GenoFly_Any(void);
 static f32 cm_fly_left(void)
 {
-    return GenoFly_Any() ? -100000.0f : Stage_GetCamBoundsLeftOffset();
+    return (GenoFly_Any() || (cm_script.state && cm_script.lift_bounds)) ? -100000.0f : Stage_GetCamBoundsLeftOffset();
 }
 static f32 cm_fly_right(void)
 {
-    return GenoFly_Any() ? 100000.0f : Stage_GetCamBoundsRightOffset();
+    return (GenoFly_Any() || (cm_script.state && cm_script.lift_bounds)) ? 100000.0f : Stage_GetCamBoundsRightOffset();
 }
 static f32 cm_fly_top(void)
 {
-    return GenoFly_Any() ? 100000.0f : Stage_GetCamBoundsTopOffset();
+    return (GenoFly_Any() || (cm_script.state && cm_script.lift_bounds)) ? 100000.0f : Stage_GetCamBoundsTopOffset();
 }
 static f32 cm_fly_bottom(void)
 {
-    return GenoFly_Any() ? -100000.0f : Stage_GetCamBoundsBottomOffset();
+    return (GenoFly_Any() || (cm_script.state && cm_script.lift_bounds)) ? -100000.0f : Stage_GetCamBoundsBottomOffset();
 }
 #define Stage_GetCamBoundsLeftOffset() cm_fly_left()
 #define Stage_GetCamBoundsRightOffset() cm_fly_right()
@@ -210,6 +247,9 @@ void Camera_Init(int n_subjects)
     int i;
 
     camera_sdata2_order();
+#if defined(TARGET_PC)
+    memzero(&cm_script, sizeof(cm_script));
+#endif
     interest_pos = &cm_803BCB64.interest->pos;
     game_camera.transform.interest = *interest_pos;
     game_camera.transform.target_interest = *interest_pos;
@@ -1167,6 +1207,19 @@ void Camera_8002A4AC(HSD_GObj* gobj)
         HSD_CObjSetInterest(cobj, &cm_80453004.free_int_pos);
         HSD_CObjSetEyePosition(cobj, &cm_80453004.free_eye_pos);
     }
+#if defined(TARGET_PC)
+    if (cm_script.state) {
+        /* All retail modes have their own CObj path (debug/free bypass transform). Override at
+         * the one shared exit, also used by Camera_RefreshViewingMtx before offscreen logic. */
+        HSD_CObjSetFov(cobj, transform->fov);
+        HSD_CObjSetInterest(cobj, &transform->interest);
+        HSD_CObjSetEyePosition(cobj, &transform->position);
+        HSD_CObjSetRoll(cobj, cm_script.pose.roll);
+        if (cm_script.lift_bounds) HSD_CObjSetFar(cobj, 200000.0f);
+        else if (game_camera.mode == CAMERA_DEBUG_FOLLOW || game_camera.mode == CAMERA_DEBUG_FREE)
+            HSD_CObjSetFar(cobj, cm_script.saved_far);
+    }
+#endif
 }
 
 void Camera_8002A768(CameraTransformState* transform, s32 arg1)
@@ -3568,9 +3621,15 @@ void Camera_8002F274(void)
 
 void fn_8002F360(HSD_GObj* x)
 {
+#if defined(TARGET_PC)
+    if (cm_script.state) game_camera.transform = cm_script.normal;
+#endif
     if (cm_803BCB18.callback[game_camera.mode]) {
         cm_803BCB18.callback[game_camera.mode](x);
     }
+#if defined(TARGET_PC)
+    cm_script_update();
+#endif
 }
 
 void Camera_8002F3AC(void)
@@ -4344,7 +4403,273 @@ bool Camera_800307D0(f32* left, f32* center, f32* right)
 void Camera_ForgetGameCamera(void)
 {
     game_camera.gobj = NULL;
+    memzero(&cm_script, sizeof(cm_script));
 }
+
+/* A pose is four scalar fields in game .bss. Lua never passes a native pointer to game code. */
+static f32 cm_script_lerp(f32 a, f32 b, f32 t) { return a + (b - a) * t; }
+static void cm_script_restore_up(void)
+{
+    if (game_camera.gobj != NULL) {
+        HSD_CObj* c = GET_COBJ(game_camera.gobj);
+        if (cm_script.saved_up_vector) HSD_CObjSetUpVector(c, &cm_script.saved_up);
+        else HSD_CObjSetRoll(c, cm_script.saved_roll);
+        HSD_CObjSetFar(c, cm_script.saved_far);
+    }
+}
+static CmScriptPose cm_script_blend(CmScriptPose a, CmScriptPose b, f32 t)
+{
+    CmScriptPose p;
+    p.eye.x = cm_script_lerp(a.eye.x, b.eye.x, t);
+    p.eye.y = cm_script_lerp(a.eye.y, b.eye.y, t);
+    p.eye.z = cm_script_lerp(a.eye.z, b.eye.z, t);
+    p.interest.x = cm_script_lerp(a.interest.x, b.interest.x, t);
+    p.interest.y = cm_script_lerp(a.interest.y, b.interest.y, t);
+    p.interest.z = cm_script_lerp(a.interest.z, b.interest.z, t);
+    p.fov = cm_script_lerp(a.fov, b.fov, t);
+    p.roll = cm_script_lerp(a.roll, b.roll, t);
+    return p;
+}
+static f32 cm_script_ease(f32 t, int ease)
+{
+    if (ease == 1) return t * t;
+    if (ease == 2) return t * (2.0f - t);
+    if (ease == 3) return t < 0.5f ? 2.0f * t * t : 1.0f - 2.0f * (1.0f - t) * (1.0f - t);
+    return t;
+}
+extern int ScriptGame_CameraFollowTarget(int kind, int id, Vec3* out);
+static void cm_script_update(void)
+{
+    CmScriptPose normal;
+    Vec3 target;
+    int i;
+    f32 t;
+    if (!cm_script.state) return;
+    cm_script.normal = game_camera.transform;
+    normal.eye = game_camera.transform.position;
+    normal.interest = game_camera.transform.interest;
+    normal.fov = game_camera.transform.fov;
+    normal.roll = cm_script.saved_roll;
+    if (cm_script.state == 2) {
+        ++cm_script.elapsed;
+        t = (f32) cm_script.elapsed / (f32) cm_script.duration;
+        if (t >= 1.0f) {
+            cm_script.state = 0;
+            cm_script.lift_bounds = 0;
+            cm_script_restore_up();
+            return;
+        }
+        cm_script.pose = cm_script_blend(cm_script.from, normal, t);
+    } else if (cm_script.follow_kind) {
+        target = cm_script.follow_point;
+        if (cm_script.follow_kind == 1 ||
+            ScriptGame_CameraFollowTarget(cm_script.follow_kind - 1,
+                                          cm_script.follow_id, &target)) {
+            target.x += cm_script.follow_offset.x;
+            target.y += cm_script.follow_offset.y;
+            target.z += cm_script.follow_offset.z;
+            cm_script.pose.interest = target;
+            cm_script.pose.eye.x = target.x + cm_script.follow_eye_delta.x;
+            cm_script.pose.eye.y = target.y + cm_script.follow_eye_delta.y;
+            cm_script.pose.eye.z = target.z + cm_script.follow_eye_delta.z;
+        }
+    } else if (cm_script.path_count) {
+        ++cm_script.path_frame;
+        for (i = 0; i < cm_script.path_count && cm_script.path[i].frame < cm_script.path_frame; ++i) {}
+        if (i == cm_script.path_count) {
+            cm_script.pose = cm_script.path[i - 1].pose;
+            cm_script.path_count = 0;
+            ++cm_script.completion;
+            cm_script.completion_kind = 2;
+        } else if (i == 0) {
+            cm_script.pose = cm_script.path[0].pose;
+        } else {
+            int begin = cm_script.path[i - 1].frame;
+            t = (f32) (cm_script.path_frame - begin) / (f32) (cm_script.path[i].frame - begin);
+            cm_script.pose = cm_script_blend(cm_script.path[i - 1].pose, cm_script.path[i].pose, t);
+            if (i == cm_script.path_count - 1 && cm_script.path_frame == cm_script.path[i].frame) {
+                cm_script.path_count = 0;
+                ++cm_script.completion;
+                cm_script.completion_kind = 2;
+            }
+        }
+    } else if (cm_script.duration) {
+        ++cm_script.elapsed;
+        t = (f32) cm_script.elapsed / (f32) cm_script.duration;
+        if (t >= 1.0f) t = 1.0f;
+        cm_script.pose = cm_script_blend(cm_script.from, cm_script.to, cm_script_ease(t, cm_script.ease));
+        if (cm_script.elapsed >= cm_script.duration) {
+            cm_script.duration = 0;
+            ++cm_script.completion;
+            cm_script.completion_kind = 1;
+        }
+    }
+    game_camera.transform.position = cm_script.pose.eye;
+    game_camera.transform.interest = cm_script.pose.interest;
+    game_camera.transform.fov = cm_script.pose.fov;
+    if (cm_script.shake_left > 0) {
+        /* A deterministic 60 Hz offset in snapshotted state. The renderer interpolates resulting
+         * view/projection matrices on extra presents (shim_vi.c / Aurora frame replay). */
+        f32 amplitude = cm_script.shake_intensity *
+                        ((f32) cm_script.shake_left / (f32) cm_script.shake_total);
+        f32 sx = sinf((f32) cm_script.shake_tick * 2.4f) * amplitude;
+        f32 sy = sinf((f32) cm_script.shake_tick * 3.7f) * amplitude;
+        game_camera.transform.position.x += sx;
+        game_camera.transform.position.y += sy;
+        game_camera.transform.interest.x += sx;
+        game_camera.transform.interest.y += sy;
+        ++cm_script.shake_tick;
+        --cm_script.shake_left;
+    }
+}
+
+int Camera_ScriptDetach(void)
+{
+    HSD_CObj* c;
+    if (game_camera.gobj == NULL) return 0;
+    if (cm_script.state) return 1;
+    c = GET_COBJ(game_camera.gobj);
+    HSD_CObjGetEyePosition(c, &cm_script.pose.eye);
+    HSD_CObjGetInterest(c, &cm_script.pose.interest);
+    cm_script.pose.fov = HSD_CObjGetFov(c);
+    cm_script.saved_roll = c->flags & 1 ? 0.0f : c->u.roll;
+    cm_script.saved_far = HSD_CObjGetFar(c);
+    cm_script.saved_up_vector = (c->flags & 1) != 0;
+    HSD_CObjGetUpVector(c, &cm_script.saved_up);
+    cm_script.pose.roll = cm_script.saved_roll;
+    cm_script.normal = game_camera.transform;
+    cm_script.state = 1;
+    cm_script.lift_bounds = 0;
+    cm_script.duration = cm_script.path_count = cm_script.follow_kind = cm_script.path_building = 0;
+    return 1;
+}
+void Camera_ScriptAttach(int frames)
+{
+    if (!cm_script.state) return;
+    cm_script.duration = cm_script.path_count = cm_script.follow_kind = cm_script.path_building = 0;
+    cm_script.shake_left = cm_script.lift_bounds = 0;
+    if (frames <= 0) {
+        cm_script.state = 0;
+        game_camera.transform = cm_script.normal;
+        cm_script_restore_up();
+        if (game_camera.gobj != NULL) {
+            Camera_8002A4AC(game_camera.gobj);
+            HSD_CObjGetViewingMtxPtr(GET_COBJ(game_camera.gobj));
+        }
+    } else {
+        cm_script.state = 2;
+        cm_script.from = cm_script.pose;
+        cm_script.duration = frames;
+        cm_script.elapsed = 0;
+    }
+}
+void Camera_ScriptReset(void) { Camera_ScriptAttach(0); }
+int Camera_ScriptState(void) { return cm_script.state; }
+int Camera_ScriptMode(void) { return game_camera.mode; }
+int Camera_ScriptCompletion(void) { return cm_script.completion; }
+int Camera_ScriptCompletionKind(void) { return cm_script.completion_kind; }
+int Camera_ScriptGetBits(int field)
+{
+    CmScriptPose p;
+    HSD_CObj* c;
+    if (game_camera.gobj == NULL) return 0;
+    if (cm_script.state) p = cm_script.pose;
+    else {
+        c = GET_COBJ(game_camera.gobj);
+        HSD_CObjGetEyePosition(c, &p.eye);
+        HSD_CObjGetInterest(c, &p.interest);
+        p.fov = HSD_CObjGetFov(c);
+        p.roll = c->flags & 1 ? 0.0f : c->u.roll;
+    }
+    switch (field) {
+    case 0: return cm_script_bits(p.eye.x);
+    case 1: return cm_script_bits(p.eye.y);
+    case 2: return cm_script_bits(p.eye.z);
+    case 3: return cm_script_bits(p.interest.x);
+    case 4: return cm_script_bits(p.interest.y);
+    case 5: return cm_script_bits(p.interest.z);
+    case 6: return cm_script_bits(p.fov);
+    case 7: return cm_script_bits(p.roll);
+    }
+    return 0;
+}
+void Camera_ScriptSet(int field, int bits)
+{
+    f32 v = cm_script_float(bits);
+    if (cm_script.state != 1) return;
+    cm_script.duration = cm_script.follow_kind = 0;
+    if (!cm_script.path_building) cm_script.path_count = 0;
+    switch (field) {
+    case 0: cm_script.pose.eye.x = v; break;
+    case 1: cm_script.pose.eye.y = v; break;
+    case 2: cm_script.pose.eye.z = v; break;
+    case 3: cm_script.pose.interest.x = v; break;
+    case 4: cm_script.pose.interest.y = v; break;
+    case 5: cm_script.pose.interest.z = v; break;
+    case 6: cm_script.pose.fov = v; break;
+    case 7: cm_script.pose.roll = v; break;
+    }
+}
+void Camera_ScriptMove(int frames, int ease)
+{
+    if (cm_script.state != 1 || frames < 1) return;
+    cm_script.to = cm_script.pose;
+    cm_script.pose = cm_script.from;
+    cm_script.duration = frames;
+    cm_script.elapsed = 0;
+    cm_script.ease = ease;
+    cm_script.path_count = cm_script.follow_kind = cm_script.path_building = 0;
+}
+void Camera_ScriptMoveBegin(void) { cm_script.from = cm_script.pose; }
+void Camera_ScriptPathClear(void)
+{
+    cm_script.path_count = cm_script.duration = cm_script.follow_kind = 0;
+    cm_script.path_building = 1;
+}
+int Camera_ScriptPathKey(int frame)
+{
+    if (cm_script.state != 1 || cm_script.path_count >= CM_SCRIPT_KEYS || frame < 0 ||
+        (cm_script.path_count && frame <= cm_script.path[cm_script.path_count - 1].frame)) return 0;
+    cm_script.path[cm_script.path_count].pose = cm_script.pose;
+    cm_script.path[cm_script.path_count].frame = frame;
+    ++cm_script.path_count;
+    return 1;
+}
+void Camera_ScriptPathStart(void)
+{
+    if (cm_script.state != 1 || cm_script.path_count < 2) return;
+    cm_script.path_frame = 0;
+    cm_script.pose = cm_script.path[0].pose;
+    cm_script.path_building = 0;
+    cm_script.duration = cm_script.follow_kind = 0;
+}
+int Camera_ScriptFollow(int kind, int id, int px, int py, int pz, int ox, int oy, int oz)
+{
+    Vec3 target;
+    if (cm_script.state != 1) return 0;
+    target.x = cm_script_float(px); target.y = cm_script_float(py); target.z = cm_script_float(pz);
+    if (kind != 0 && !ScriptGame_CameraFollowTarget(kind, id, &target)) return 0;
+    cm_script.follow_point.x = cm_script_float(px);
+    cm_script.follow_point.y = cm_script_float(py);
+    cm_script.follow_point.z = cm_script_float(pz);
+    cm_script.follow_offset.x = cm_script_float(ox);
+    cm_script.follow_offset.y = cm_script_float(oy);
+    cm_script.follow_offset.z = cm_script_float(oz);
+    cm_script.follow_eye_delta.x = cm_script.pose.eye.x - cm_script.pose.interest.x;
+    cm_script.follow_eye_delta.y = cm_script.pose.eye.y - cm_script.pose.interest.y;
+    cm_script.follow_eye_delta.z = cm_script.pose.eye.z - cm_script.pose.interest.z;
+    cm_script.follow_kind = kind + 1;
+    cm_script.follow_id = id;
+    cm_script.duration = cm_script.path_count = 0;
+    return 1;
+}
+void Camera_ScriptShake(int intensity_bits, int frames)
+{
+    cm_script.shake_intensity = cm_script_float(intensity_bits);
+    cm_script.shake_left = cm_script.shake_total = frames;
+    cm_script.shake_tick = 1;
+}
+void Camera_ScriptLiftBounds(int lift) { cm_script.lift_bounds = cm_script.state == 1 && lift; }
 
 void Camera_RefreshViewingMtx(void)
 {

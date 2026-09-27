@@ -165,4 +165,25 @@
 extern CmSubject* cm_804D6468;
 extern CameraDebugMode cm_80453004;
 
+#if defined(TARGET_PC)
+/* Deterministic script camera; scalar-only entry points for pc/platform/gw_script.c. */
+int Camera_ScriptDetach(void);
+void Camera_ScriptAttach(int frames);
+void Camera_ScriptReset(void);
+int Camera_ScriptState(void);
+int Camera_ScriptMode(void);
+int Camera_ScriptCompletion(void);
+int Camera_ScriptCompletionKind(void);
+int Camera_ScriptGetBits(int field);
+void Camera_ScriptSet(int field, int bits);
+void Camera_ScriptMoveBegin(void);
+void Camera_ScriptMove(int frames, int ease);
+void Camera_ScriptPathClear(void);
+int Camera_ScriptPathKey(int frame);
+void Camera_ScriptPathStart(void);
+int Camera_ScriptFollow(int kind, int id, int px, int py, int pz, int ox, int oy, int oz);
+void Camera_ScriptShake(int intensity_bits, int frames);
+void Camera_ScriptLiftBounds(int lift);
+#endif
+
 #endif

@@ -970,8 +970,10 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                     extern void HSD_ObjAllocTopUp(void);
                     extern void Netplay_Background(void);
                     Netplay_Background(); /* an online lobby stays connected on the CSS too */
-                    ifMagnify_UpdateLogicOffscreen();
                     Camera_RefreshViewingMtx();
+                    /* ftLib_UpdateLogicOffCamera projects with this CObj. A scripted pose must
+                     * reach its view/projection before the offscreen flag is stored for logic. */
+                    ifMagnify_UpdateLogicOffscreen();
                     HSD_ObjAllocTopUp();
                 }
                 {

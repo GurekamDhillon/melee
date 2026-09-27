@@ -1385,6 +1385,11 @@ extern void GXAuroraLoadPalette(u32 n, u32 key, const f32* data);
 extern void GXAuroraEndPalette(void);
 extern void diag_geno_pal(int what, int a, int b);
 extern int gx_suppress_draws; /* shim_gx.c: a re-simulated frame's render pass (no display lists) */
+/* shim_gx.c: this frame's computed palette slots by envelope content (render-only, native memory: never in a
+ * snapshot). Pieces share envelopes (Sora's body: 3,290 slots, 2,080 distinct), each blended once a frame. */
+extern int GenoPalCacheGet(u32 k0, u32 k1, u32 k2, u32 frame, f32* out);
+extern void GenoPalCachePut(u32 k0, u32 k1, u32 k2, u32 frame, const f32* in);
+extern int geno_stun_frame(void);
 
 static void GenoPalInfoInit(void);
 HSD_PObjInfo genoPalPObj = { GenoPalInfoInit };
@@ -1416,13 +1421,39 @@ static int GenoPalLoad(HSD_PObj* pobj, HSD_PObjDesc* desc)
 }
 
 /* every envelope's view-space position matrix and its inverse transpose, as SetupEnvelopeModelMtx computes them
- * (same operations, same order); returns the slots written */
-static int geno_pal_compute(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, f32* out)
+ * (same operations, same order); returns the slots written. A slot another piece of this model already computed
+ * this frame, under the same camera, is copied from the cache (the same computation: the same bits). */
+static int geno_pal_compute(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, f32* out, int need_nrm)
 {
     HSD_SList* list;
     Mtx mtx;
     int i = 0, r, c;
+    const u32 frame = (u32) geno_stun_frame();
+    union {
+        f32 f;
+        u32 u;
+    } vb;
+    u32 cam;
+    vb.f = vmtx[0][0] + vmtx[1][3] * 3.0f + vmtx[2][3] * 7.0f;
+    cam = ((u32) vmtx ^ vb.u ^ ((u32) HSD_JObjGetCurrent() * 2654435761u)) + (need_nrm ? 1u : 0u);
     for (list = pobj->u.envelope_list; i < GENO_PAL_MAX && list != NULL; i++, list = list->next) {
+        u32 k0 = 2166136261u, k1 = 0x9E3779B9u;
+        {
+            HSD_Envelope* ek;
+            for (ek = list->data; ek != NULL; ek = ek->next) {
+                union {
+                    f32 f;
+                    u32 u;
+                } wb;
+                wb.f = ek->weight;
+                k0 = (k0 ^ (u32) ek->jobj) * 16777619u;
+                k0 = (k0 ^ wb.u) * 16777619u;
+                k1 = (k1 + (u32) ek->jobj * 31u + wb.u) * 2246822519u;
+            }
+        }
+        if (GenoPalCacheGet(k0, k1, cam, frame, &out[i * 24])) {
+            continue;
+        }
         Mtx m, tmp, nrm;
         MtxPtr mtxp;
         HSD_Envelope* envelope = list->data;
@@ -1454,13 +1485,18 @@ static int geno_pal_compute(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, f32* out)
             mtxp = m;
         }
         MTXConcat(vmtx, mtxp, tmp);
-        HSD_MtxInverseTranspose(tmp, nrm);
+        if (need_nrm) { /* as SetupEnvelopeModelMtx: only when the joint's setup wants normals */
+            HSD_MtxInverseTranspose(tmp, nrm);
+        } else {
+            memset(nrm, 0, sizeof(Mtx));
+        }
         for (r = 0; r < 3; r++) {
             for (c = 0; c < 4; c++) {
                 o[r * 4 + c] = tmp[r][c];
                 o[12 + r * 4 + c] = c < 3 ? nrm[r][c] : 0.0f;
             }
         }
+        GenoPalCachePut(k0, k1, cam, frame, o);
     }
     (void) mtx;
     return i;
@@ -1501,7 +1537,7 @@ static void GenoPalSetupMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
         }
         return;
     }
-    n = geno_pal_compute(pobj, vmtx, right, geno_pal_data);
+    n = geno_pal_compute(pobj, vmtx, right, geno_pal_data, (flags & SETUP_NORMAL) != 0);
     GXAuroraLoadPalette((u32) n, (u32) pobj ^ (u32) jobj, geno_pal_data);
 }
 
@@ -1510,7 +1546,7 @@ static void GenoPalSetupMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
  * the same bits. The result goes to the log (shim_gx.c) as counts. */
 static void geno_pal_selftest_check(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, int slots)
 {
-    int i, k, pos_eq = 0, nrm_eq = 0, nrm_n = 0, n = geno_pal_compute(pobj, vmtx, right, geno_pal_data);
+    int i, k, pos_eq = 0, nrm_eq = 0, nrm_n = 0, n = geno_pal_compute(pobj, vmtx, right, geno_pal_data, 1);
     if (n != slots) {
         diag_geno_pal_compare(-1, n, slots, 0);
         return;

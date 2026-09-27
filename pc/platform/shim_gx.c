@@ -751,6 +751,30 @@ void gw_GXAuroraLoadPalette(u32 n, u32 key, const void *data) {
   GXAuroraLoadPalette(n, key, native);
 }
 void gw_GXAuroraEndPalette(void) { GXAuroraEndPalette(); }
+/* pobj.c's per-frame palette slot cache (render-only; native, so never in a snapshot or a SyncTest compare):
+ * 24 big-endian floats a slot, keyed by the envelope's content, the camera and the logic frame. */
+#define GW_PAL_CACHE 8192u
+static struct {
+  uint32_t k0, k1, k2, frame;
+  uint32_t v[24];
+} gw_pal_cache[GW_PAL_CACHE];
+int gw_GenoPalCacheGet(u32 k0, u32 k1, u32 k2, u32 frame, void *out) {
+  const uint32_t i = (k0 ^ (k1 >> 7) ^ (k2 * 0x9E3779B1u)) & (GW_PAL_CACHE - 1u);
+  if (gw_pal_cache[i].frame != frame + 1u || gw_pal_cache[i].k0 != k0 || gw_pal_cache[i].k1 != k1 ||
+      gw_pal_cache[i].k2 != k2) {
+    return 0;
+  }
+  memcpy(out, gw_pal_cache[i].v, sizeof gw_pal_cache[i].v); /* the guest's own big-endian bytes back */
+  return 1;
+}
+void gw_GenoPalCachePut(u32 k0, u32 k1, u32 k2, u32 frame, const void *in) {
+  const uint32_t i = (k0 ^ (k1 >> 7) ^ (k2 * 0x9E3779B1u)) & (GW_PAL_CACHE - 1u);
+  gw_pal_cache[i].k0 = k0;
+  gw_pal_cache[i].k1 = k1;
+  gw_pal_cache[i].k2 = k2;
+  gw_pal_cache[i].frame = frame + 1u;
+  memcpy(gw_pal_cache[i].v, in, sizeof gw_pal_cache[i].v);
+}
 /* MELEE_PAL_FORCE=1: pobj.c turns vanilla envelope POBJs into palette POBJs (a draw-path test; never for play) */
 int gw_diag_geno_pal_force(void) {
   const char *v = getenv("MELEE_PAL_FORCE");

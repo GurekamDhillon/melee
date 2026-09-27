@@ -6551,6 +6551,11 @@ void gw_Script_FramePost(void) {
     if (gw_Snap_Resimulating() && kind != 1) {
         return; /* a rollback's resimulated frame */
     }
+    if (kind != 1) {
+        /* a new logic frame (not the Lab rewind's silent re-simulation): gd.input holds count it */
+        extern void gw_Script_PadFrameConsumed(void);
+        gw_Script_PadFrameConsumed();
+    }
     gs_lab_frame_kind = 0;
     gs.frame++;
     gs_items_track();

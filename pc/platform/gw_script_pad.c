@@ -11,8 +11,12 @@
  *      game state: gd.run(function() gd.wait_until(...) gd.press(1, "A", 2) end).
  *   2. MELEE_PAD_LIVE=<path>  re-read every PADRead: "<buttons_hex> [sx sy [tl tr]]" on channel 0.
  *   3. gd.input / the console "input" command: per-port claims from the first input until
- *      explicit release, task completion, script unload or console-client disconnect. Queued
- *      samples expire after N logic reads, then the claimed port reports connected neutral.
+ *      explicit release, task completion, script unload or console-client disconnect. A hold of
+ *      N frames covers exactly N LOGIC frames (gw_Script_PadFrameConsumed, at the end of each one),
+ *      then the claimed port reports connected neutral. It used to count PADReads, and the pad
+ *      alarm samples every field whether a logic frame consumes the sample or not: a paused or
+ *      stepped game (the Lab's export) let the hold run out between frames, so realtime read a
+ *      stick+B hold as neutral B while turbo (its reads closer to the frames) did not.
  * Whatever the game finally sees is recorded for gd.pad().
  */
 #include "gw.h"
@@ -183,7 +187,7 @@ static unsigned gw_pad_live_apply(PADStatus *st) {
 
 /* ---- 3. gd.input overrides, and what the game saw ---------------------------------------------- */
 static struct {
-  int samples; /* logic PADReads left; 0 = claimed but neutral */
+  int samples; /* logic frames left; 0 = claimed but neutral */
   int owner;   /* 0 = unclaimed; script or console-client identity otherwise */
   unsigned buttons;
   int sx, sy, cx, cy, tl, tr;
@@ -218,6 +222,17 @@ void gw_script_pad_override(int ch, int owner, unsigned buttons, int sx, int sy,
   gw_ovr[ch].cy = cy;
   gw_ovr[ch].tl = l;
   gw_ovr[ch].tr = r;
+}
+
+/* The end of a logic frame that read the pads (gw_Script_FramePost; not a rollback or rewind
+ * re-simulation): each claimed port's hold has covered one more frame. */
+void gw_Script_PadFrameConsumed(void) {
+  int ch;
+  for (ch = 0; ch < 4; ++ch) {
+    if (gw_ovr[ch].owner != 0 && gw_ovr[ch].samples > 0) {
+      gw_ovr[ch].samples--;
+    }
+  }
 }
 
 void gw_script_pad_release(int ch, int owner) {
@@ -282,7 +297,6 @@ unsigned gw_Script_PadApply(void *pad_status_array) {
         st[ch].triggerLeft = (u8)gw_ovr[ch].tl;
         st[ch].triggerRight = (u8)gw_ovr[ch].tr;
         gw_w16(&st[ch].button, (uint16_t)gw_ovr[ch].buttons);
-        if (!gw_paused_sample) gw_ovr[ch].samples--;
       }
       driven |= 1u << ch;
     }

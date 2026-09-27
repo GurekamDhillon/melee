@@ -2564,6 +2564,12 @@ local function bx_tick()
       bx.phase = "next"
       gd.resume()
       gd.pause()
+    elseif cur.input and cur.n < 8 then
+      -- one frame per tick while the input move's 3-frame hold (and a few frames after) runs: a
+      -- burst of frames in one tick reuses the tick's one pad sample, so how long a held button
+      -- lasted inside a 30-frame burst depended on where the pad alarm fell (realtime vs turbo
+      -- disagreed on Down B's length)
+      gd.step(1)
     else
       gd.step(30)
     end

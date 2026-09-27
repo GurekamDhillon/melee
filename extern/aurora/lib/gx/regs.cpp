@@ -1024,6 +1024,16 @@ u64 pair_key(u32 addr) noexcept {
 // more than a fifth of its size: counted, so a key that pairs different objects shows up as a number.
 u32 sSpikes, sPalSpikes;
 f32 sWorstJump;
+// Where the worst jump of the window came from (logged with it): path, key, occurrence/slot, and both translations.
+struct WorstInfo {
+  const char* path = "-";
+  u64 key = 0;
+  u32 idx = 0;
+  f32 from[3]{}, to[3]{};
+} sWorst;
+const char* sJumpPath = "-";
+u64 sJumpKey = 0;
+u32 sJumpIdx = 0;
 void count_jump(const f32* from, const f32* to, u32 len, bool affine, u32& spikes) noexcept {
   f32 dt = 0.f, dl = 0.f, nl = 0.f;
   for (u32 i = 0; i < len; ++i) {
@@ -1036,7 +1046,18 @@ void count_jump(const f32* from, const f32* to, u32 len, bool affine, u32& spike
     }
   }
   const f32 t = std::sqrt(dt);
-  sWorstJump = std::max(sWorstJump, t);
+  if (t > sWorstJump) {
+    sWorstJump = t;
+    sWorst.path = sJumpPath;
+    sWorst.key = sJumpKey;
+    sWorst.idx = sJumpIdx;
+    if (affine && len == 12) {
+      for (u32 i = 0; i < 3; ++i) {
+        sWorst.from[i] = from[i * 4 + 3];
+        sWorst.to[i] = to[i * 4 + 3];
+      }
+    }
+  }
   if (t > 8.f || dl > 0.04f * nl + 1e-6f) {
     ++spikes;
   }
@@ -1063,7 +1084,10 @@ bool plausible(const f32* a, const f32* b, u32 len, bool affine) noexcept {
   if (dl > 0.25f * std::max(na, nb) + 1e-6f) {
     return false;
   }
-  if (affine && std::sqrt(dt) > 40.f + 0.5f * std::sqrt(nt)) {
+  // A real object moves at most a few tens of units in one 60 Hz field; a camera cut, a respawn or a
+  // teleport moves it a hundred or more. 40 + 10% of the distance: Sora's fastest legitimate move is 13.4
+  // units at 225, the match-start camera cut 143 units at 207 (was 40 + 50%, which let the cut through).
+  if (affine && std::sqrt(dt) > 40.f + 0.1f * std::sqrt(nt)) {
     return false;
   }
   return true;
@@ -1125,6 +1149,9 @@ void blend(u32 addr, f32* v, u32 len, bool affine) noexcept {
   if (from == nullptr) {
     return;
   }
+  sJumpPath = "legacy";
+  sJumpKey = pair;
+  sJumpIdx = occ;
   count_jump(from->v, v, len, affine, sSpikes);
   const f32 a = sAlpha < 0.f ? 0.f : sAlpha;
   for (u32 i = 0; i < len; ++i) {
@@ -1154,6 +1181,12 @@ void begin_real_frame(bool enabled, float alpha) noexcept {
     Log.info("interp: 600 real frames ({} key): legacy slots {} jumps, palette slots blended {}, implausible {}, "
              "palettes unmatched {}, jumps {}; worst translation jump {:.2f}",
              sLegacyKey ? "legacy" : "draw", sSpikes, sPalBlended, sPalRejected, sPalMissing, sPalSpikes, sWorstJump);
+    Log.info("interp: worst jump {:.2f}: {} key {:016x} (slot/addr 0x{:x}, draw id 0x{:x}, POS/POBJ 0x{:08x}) idx {} "
+             "translation ({:.1f},{:.1f},{:.1f}) -> ({:.1f},{:.1f},{:.1f})",
+             sWorstJump, sWorst.path, sWorst.key, static_cast<u32>(sWorst.key >> 32) & 0x1FFF,
+             static_cast<u32>(sWorst.key >> 45), static_cast<u32>(sWorst.key), sWorst.idx, sWorst.from[0], sWorst.from[1],
+             sWorst.from[2], sWorst.to[0], sWorst.to[1], sWorst.to[2]);
+    sWorst = {};
     sPalBlended = sPalRejected = sPalMissing = sPalSpikes = sSpikes = 0;
     sWorstJump = 0.f;
   }
@@ -1217,6 +1250,9 @@ void blend_palette(u32 key, f32* data, u32 n) noexcept {
       ++sPalRejected;
       continue;
     }
+    sJumpPath = "palette";
+    sJumpKey = k;
+    sJumpIdx = s;
     count_jump(from, v, 12, true, sPalSpikes);
     for (u32 i = 0; i < 24; ++i) {
       v[i] = from[i] + (v[i] - from[i]) * a;

@@ -31,6 +31,7 @@ local known = {}
 for _, name in ipairs(PALETTE) do known[name] = true end
 local parts, handles, assets, undo, redo = {}, {}, {}, {}, {}
 local selected, next_id, palette = nil, 0, 1
+local filter, filtering, recents, toasts = '', false, {}, {}
 local editing, menu, action_index = false, false, 1
 local depth, rotation, grid = 0, 0, 1
 local collision, floor_flags, overlay = true, 3, true
@@ -89,6 +90,32 @@ local function find(list, id)
   for i,p in ipairs(list) do if p.id==id then return p,i end end
 end
 local function scale_of(p, k) return p[k] or 1 end
+local function palette_match(name)
+  return filter=='' or name:lower():find(filter,1,true)~=nil
+end
+local function palette_view()
+  local out,pinned={},{}
+  for _,name in ipairs(recents) do
+    for i,n in ipairs(PALETTE) do
+      if n==name and palette_match(name) then out[#out+1]=i pinned[i]=true end
+    end
+  end
+  for i,name in ipairs(PALETTE) do
+    if not pinned[i] and palette_match(name) then out[#out+1]=i end
+  end
+  return out
+end
+local function palette_part()
+  local view=palette_view()
+  return PALETTE[view[math.min(math.max(palette,1),#view)] or 1]
+end
+local function remember(name)
+  for i,n in ipairs(recents) do if n==name then table.remove(recents,i) break end end
+  table.insert(recents,1,name) if #recents>5 then table.remove(recents) end
+end
+local function toast(msg)
+  toasts[#toasts+1]={msg=msg,t=100} if #toasts>3 then table.remove(toasts,1) end
+end
 
 -- world/screen homography --------------------------------------------------------------------
 -- The projection is opaque to Lua (fov and aspect live in the engine, and widescreen changes
@@ -285,7 +312,7 @@ local function save(name)
   if old then gd.data_write(name..'.bak',old) end
   gd.data_write(name,text)
   assert(gd.data_read(name)==text, 'save read-back failed; previous file is in .bak')
-  filename=name dirty=false say('Saved '..#parts..' parts to '..name)
+  filename=name dirty=false say('Saved '..#parts..' parts to '..name) toast('Saved '..#parts..' parts')
 end
 local function load_map(name)
   assert(offline(), 'active offline match required')
@@ -295,7 +322,7 @@ local function load_map(name)
   local chunk,why=load(text,'@'..name,'t',{}) assert(chunk,why)
   local target=validate(chunk())
   apply(target,true) filename=name dirty=false
-  say('Loaded '..#parts..' parts from '..name)
+  say('Loaded '..#parts..' parts from '..name) toast('Loaded '..#parts..' parts')
 end
 local function set_overlay()
   if previous then gd.stage_view(previous.geometry,overlay) end
@@ -324,13 +351,15 @@ end
 local function place(duplicate, wx, wy)
   edit()
   local p=duplicate and assert(find(parts,selected), 'select a part first') or
-    {part=PALETTE[palette],rot=rotation,collision=collision,floor_flags=floor_flags,
+    {part=palette_part(),rot=rotation,collision=collision,floor_flags=floor_flags,
      scale=1,scale_x=1,scale_y=1,scale_z=1}
   p=clone(p)
   if wx then p.x,p.y,p.z=sn(wx),sn(wy),depth else p.x,p.y,p.z=fly_cursor() end
   next_id=next_id+1 p.id=next_id
   local target=clone(parts) target[#target+1]=p apply(target,true) selected=p.id
   say((duplicate and 'Duplicated ' or 'Placed ')..p.part,'action')
+  remember(p.part)
+  if duplicate then toast('Duplicated '..p.part:gsub('^bf_','')) end
 end
 local function select_near(wx, wy)
   edit()
@@ -468,7 +497,7 @@ local ACTIONS = {
   {'New parts: collision on/off',function() collision=not collision end},
   {'New floors: flags 0..3',function() floor_flags=(floor_flags+1)%4 end},
   {'New parts: rotation +15',function() rotation=((rotation+15+180)%360)-180 end},
-  {'Clear map (undoable)',function() edit() apply({},true) say('Cleared map') end},
+  {'Clear map (undoable)',function() edit() apply({},true) say('Cleared map') toast('Cleared map') end},
   {'Exit editor / play',function() stop() say('Editor closed; map remains live') end},
   {'Next tool',cycle_tool},
   {'Tool: place',function() tool='place' axis_lock=nil say('Tool: place') end},
@@ -529,8 +558,14 @@ gd.command('map',function(arg)
       local found=nil
       for i,n in ipairs(PALETTE) do if n==want then found=i end end
       assert(found,'map part: unknown part '..tostring(name))
-      palette=found say('Part: '..want)
-    else error('map on|off|part <name>|tool <name>|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
+      filter='' filtering=false
+      local view=palette_view() palette=1
+      for pos,idx in ipairs(view) do if idx==found then palette=pos end end
+      say('Part: '..want)
+    elseif op=='filter' then
+      filter=(name or ''):lower() filtering=false palette=1
+      say(filter=='' and 'Filter cleared' or ('Filter: '..filter))
+    else error('map on|off|part <name>|tool <name>|filter [text]|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
   end)
 end,'map on/off; part <name>; tool <place|select|move|rotate|scale>; scale <factor>; mirror x|y; snap on|off; place/select/move/rotate/duplicate/delete/undo/redo/clear; save/load/play [file.lua]')
 
@@ -542,12 +577,20 @@ local function panel_rows()
     rows[#rows+1]={kind='tool',index=i,label=(tool==t and '> ' or '  ')..t,x=16,y=y,w=230,h=20}
     y=y+21
   end
-  y=188
+  y=192
   if tool=='place' then
-    local first=math.max(1,math.min(palette-3,#PALETTE-6))
-    for i=first,math.min(first+6,#PALETTE) do
-      rows[#rows+1]={kind='part',index=i,label=PALETTE[i]:gsub('^bf_',''),x=16,y=y,w=230,h=18}
-      y=y+20
+    local view=palette_view()
+    if #view==0 then
+      rows[#rows+1]={kind='none',label='(no matches)',x=16,y=y,w=230,h=18}
+    else
+      local first=math.max(1,math.min(palette-3,math.max(1,#view-6)))
+      for i=first,math.min(first+6,#view) do
+        local name=PALETTE[view[i]]
+        local pinned=false
+        for _,r in ipairs(recents) do if r==name then pinned=true end end
+        rows[#rows+1]={kind='part',index=i,label=(pinned and '* ' or '  ')..name:gsub('^bf_',''),x=16,y=y,w=230,h=18}
+        y=y+20
+      end
     end
   else
     local first=math.max(1,math.min(action_index-3,#ACTIONS-6))
@@ -562,11 +605,55 @@ end
 local function in_rect(mx,my,r)
   return r and mx>=r.x and mx<=r.x+r.w and my>=r.y and my<=r.y+r.h
 end
+local function inspector_rows()
+  local rows={}
+  local p=find(parts,selected)
+  local y=70
+  if not p then
+    rows[#rows+1]={kind='info',label='no selection',x=400,y=y,w=224,h=20}
+    return rows
+  end
+  rows[#rows+1]={kind='name',label=p.part:gsub('^bf_',''),x=400,y=y,w=224,h=20}
+  y=y+24
+  for _,f in ipairs({{'x','%.2f'},{'y','%.2f'},{'z','%.2f'},{'rot','%.1f'},{'scale','%.2f'}}) do
+    local value=f[1]=='scale' and scale_of(p,'scale') or (p[f[1]] or 0)
+    rows[#rows+1]={kind='field',field=f[1],label=f[1],value=string.format(f[2],value),x=400,y=y,w=224,h=18}
+    y=y+20
+  end
+  rows[#rows+1]={kind='collision',label='collision',value=p.collision and 'on' or 'off',x=400,y=y,w=224,h=18}
+  y=y+20
+  rows[#rows+1]={kind='flags',label='floor flags',value=tostring(p.floor_flags or 0),x=400,y=y,w=224,h=18}
+  return rows
+end
+local function click_inspector(mx,my)
+  if help_open then return false end
+  for _,r in ipairs(inspector_rows()) do
+    if in_rect(mx,my,r) then
+      if r.kind=='collision' then
+        attempt(function()
+          edit()
+          local target=clone(parts) local p=find(target,selected)
+          p.collision=not p.collision
+          apply(target,true) say('collision '..(p.collision and 'on' or 'off'),'action')
+        end)
+      elseif r.kind=='flags' then
+        attempt(function()
+          edit()
+          local target=clone(parts) local p=find(target,selected)
+          p.floor_flags=((p.floor_flags or 0)+1)%4
+          apply(target,true) say('floor flags '..p.floor_flags,'action')
+        end)
+      end
+      return true
+    end
+  end
+  return false
+end
 local function click_panel(mx,my)
   for _,r in ipairs(panel_rows()) do
     if in_rect(mx,my,r) then
       if r.kind=='tool' then tool=TOOLS[r.index] axis_lock=nil say('Tool: '..tool)
-      elseif r.kind=='part' then palette=r.index say('Part: '..PALETTE[r.index])
+      elseif r.kind=='part' then palette=r.index say('Part: '..palette_part())
       elseif r.kind=='help' then help_open=not help_open
       else attempt(ACTIONS[r.index][2]) end
       return true
@@ -599,7 +686,7 @@ local function poll_mouse()
   if right then
     if help_open then help_open=false else menu=not menu end
   elseif pressed then
-    if not click_panel(mouse.x,mouse.y) and mouse.over and not help_open then
+    if not click_panel(mouse.x,mouse.y) and not click_inspector(mouse.x,mouse.y) and mouse.over and not help_open then
       local wx,wy=mouse_world()
       if tool=='select' then attempt(function() select_near(wx,wy) end)
       elseif tool=='place' then attempt(function() place(false,wx,wy) end)
@@ -629,6 +716,7 @@ end
 
 function on_tick()
   local pad=gd.pad(1) or {}
+  for _,t in ipairs(toasts) do t.t=t.t-1 end
   local function pressed(k) return pad[k] and not old_pad[k] end
   if not offline() then stop() old_pad=pad return end
   if gd.key_pressed('F6') then attempt(function() if editing then stop() else start() end end) end
@@ -641,6 +729,23 @@ function on_tick()
     if gd.key_pressed('ESCAPE') and not menu then help_open=false end
     if gd.key_pressed('DOWN') then help_first=math.min(math.max(1,#HELP-11),help_first+1) end
     if gd.key_pressed('UP') then help_first=math.max(1,help_first-1) end
+  end
+  if gd.key_pressed('F4') then
+    filtering=not filtering
+    if not filtering then filter='' end
+    palette=1
+    say(filtering and 'Type a part name; Enter done, ESC clears' or 'Filter cleared')
+  end
+  if filtering then
+    local ch=''
+    for c in ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):gmatch('.') do
+      if gd.key_pressed(c) then ch=c end
+    end
+    if ch~='' then filter=filter..ch:lower() palette=1 end
+    if gd.key_pressed('BACKSPACE') then filter=filter:sub(1,-2) palette=1 end
+    if gd.key_pressed('ESCAPE') then filter='' filtering=false palette=1 end
+    if gd.key_pressed('ENTER') then filtering=false end
+    old_pad=pad return
   end
   if gd.key_pressed('F2') or pressed('Z') then menu=not menu end
   if menu then
@@ -662,8 +767,11 @@ function on_tick()
       if gd.key_pressed(tostring(i)) then tool=t axis_lock=nil say('Tool: '..t) end
     end
     if not help_open then
-      if gd.key_pressed('UP') or pressed('UP') then palette=(palette-2)%#PALETTE+1 end
-      if gd.key_pressed('DOWN') or pressed('DOWN') then palette=palette%#PALETTE+1 end
+      local view=palette_view()
+      if #view>0 then
+        if gd.key_pressed('UP') or pressed('UP') then palette=(palette-2)%#view+1 end
+        if gd.key_pressed('DOWN') or pressed('DOWN') then palette=(palette-1)%#view+1 end
+      end
     end
     if gd.key_pressed('PAGEUP') or pressed('RIGHT') then depth=depth+U*grid end
     if gd.key_pressed('PAGEDOWN') or pressed('LEFT') then depth=depth-U*grid end
@@ -697,7 +805,7 @@ function on_frame_pre()
   if not editing or not offline() then return end
   if mouse_api then poll_mouse() end
   hover=hover_part()
-  if menu or help_open or modal or gd.key('CTRL') then return end
+  if menu or help_open or modal or filtering or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
   local dx=(gd.key('D') and 1 or 0)-(gd.key('A') and 1 or 0)
   local dy=(gd.key('W') and 1 or 0)-(gd.key('S') and 1 or 0)
@@ -710,6 +818,7 @@ end
 HELP = {
   {'F6', 'start / exit the editor'},
   {'F1 / H', 'this help (ESC or click closes)'},
+  {'F4', 'palette filter (type; Enter done, ESC clears)'},
   {'F2 / Z', 'action menu (all commands)'},
   {'1..5', 'tool: place, select, move, rotate, scale'},
   {'G / E / C', 'hold: move / rotate / scale (tap: switch tool)'},
@@ -792,12 +901,12 @@ function on_draw()
   kit.panel(8,10,624,30,{piece=12,fill=PANEL_FILL})
   kit.text(20,30,'MAP EDITOR','label','gold')
   kit.text(150,30,('tool: %s%s'):format(tool,axis_lock and (' ['..axis_lock..' axis]') or ''),'caption','bone')
-  kit.text(340,30,('part: %s'):format(PALETTE[palette]:gsub('^bf_','')),'caption','bone',nil,{max_w=140})
+  kit.text(340,30,('part: %s'):format(palette_part():gsub('^bf_','')),'caption','bone',nil,{max_w=140})
   kit.text(628,30,('%s%s'):format(dirty and '* ' or '',filename),'caption','muted','right',{max_w=200})
   gd.fill(8,44,246,338,0x0E1218FF)
   kit.panel(8,44,246,338,{piece=16,fill=PANEL_FILL})
   kit.text(20,62,'TOOL','caption','gold')
-  kit.text(20,186,tool=='place' and 'PART' or 'ACTIONS','caption','gold')
+  kit.text(20,186,tool=='place' and ('PART'..(filter~='' and (' /'..filter..(filtering and '_' or '')) or '')) or 'ACTIONS','caption','gold')
   for _,r in ipairs(panel_rows()) do
     local state=(r.kind=='tool' and tool==TOOLS[r.index]) or
                 (r.kind=='part' and palette==r.index) or
@@ -805,6 +914,12 @@ function on_draw()
                 (r.kind=='help' and help_open) or false
     local value = r.kind=='tool' and tostring(r.index) or r.value
     kit.button(r.x,r.y,r.w,r.label,state and 'sel' or 'ng',{h=r.h,value=value})
+  end
+  gd.fill(392,44,240,338,0x0E1218FF)
+  kit.panel(392,44,240,338,{piece=16,fill=PANEL_FILL})
+  kit.text(404,62,'SELECTION','caption','gold')
+  for _,r in ipairs(inspector_rows()) do
+    kit.button(r.x,r.y,r.w,r.label,'ng',{h=r.h,value=r.value})
   end
   gd.fill(8,376,624,54,0x0E1218FF)
   kit.panel(8,376,624,54,{piece=12,fill=PANEL_FILL})
@@ -815,6 +930,12 @@ function on_draw()
     'caption','muted','right',{max_w=300})
   local line=error_text and ('error: '..error_text) or (last_action or '')
   kit.text(20,424,line,'caption',error_text and 'danger' or 'gold',nil,{max_w=598})
+  for i=#toasts,1,-1 do if toasts[i].t<=0 then table.remove(toasts,i) end end
+  for i,t in ipairs(toasts) do
+    local ty=356-(i-1)*22
+    gd.fill(462,ty,166,18,0x0E1218E0)
+    kit.text(470,ty+13,t.msg,'caption','gold',nil,{max_w=150})
+  end
   if help_open then gd.fill(0,0,640,480,0x000000A8) draw_help() end
 end
 

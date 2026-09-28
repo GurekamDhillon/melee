@@ -72,6 +72,22 @@ static struct {
     CmScriptPose pose, from, to;
     CmScriptKey path[CM_SCRIPT_KEYS];
 } cm_script;
+/* largemap: secondary/debug CObjs do not reset their far plane every frame.
+ * Keep their original values in this TU's snapshot domain and restore while
+ * the scene's objects are still alive (ScriptGame_StageEnd). */
+static struct {
+    HSD_CObj* primary;
+    HSD_CObj* secondary;
+    f32 primary_far, secondary_far;
+} cm_largemap;
+void Camera_LargeMapRestore(void)
+{
+    if (cm_largemap.primary)
+        HSD_CObjSetFar(cm_largemap.primary, cm_largemap.primary_far);
+    if (cm_largemap.secondary)
+        HSD_CObjSetFar(cm_largemap.secondary, cm_largemap.secondary_far);
+    cm_largemap.primary = cm_largemap.secondary = NULL;
+}
 static void cm_script_update(void);
 static f32 cm_script_float(int bits)
 {
@@ -1218,6 +1234,22 @@ void Camera_8002A4AC(HSD_GObj* gobj)
         if (cm_script.lift_bounds) HSD_CObjSetFar(cobj, 200000.0f);
         else if (game_camera.mode == CAMERA_DEBUG_FOLLOW || game_camera.mode == CAMERA_DEBUG_FREE)
             HSD_CObjSetFar(cobj, cm_script.saved_far);
+    }
+    /* largemap: normal following and its secondary view need the wide-stage
+     * far plane too, without claiming/detaching the cinematic camera. */
+    {
+        extern int ScriptGame_MapWide(void);
+        if (ScriptGame_MapWide()) {
+            if (!cm_largemap.primary) {
+                cm_largemap.primary = cobj;
+                cm_largemap.primary_far = HSD_CObjGetFar(cobj);
+                cm_largemap.secondary = cm_804D6464;
+                if (cm_804D6464)
+                    cm_largemap.secondary_far = HSD_CObjGetFar(cm_804D6464);
+            }
+            HSD_CObjSetFar(cobj, 200000.0f);
+            if (cm_804D6464) HSD_CObjSetFar(cm_804D6464, 200000.0f);
+        }
     }
 #endif
 }

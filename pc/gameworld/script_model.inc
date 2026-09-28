@@ -88,6 +88,7 @@ int ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first
     if (count > free_lines || (count && script_stage.map == NULL)) return -3;
     memset(&candidate, 0, sizeof candidate);
     candidate.handle = handle; candidate.asset = asset; candidate.count = count;
+    candidate.area = script_stage.loading_area;
     for (i = 0; i < SM_FIELDS; ++i) candidate.field[i] = Script_ModelInput(i, -1);
     for (i = 0; i < 3; ++i) candidate.center[i] = script_mesh_float(Script_ModelInput(SM_FIELDS + i, -1));
     for (i = 0; i < count; ++i) {

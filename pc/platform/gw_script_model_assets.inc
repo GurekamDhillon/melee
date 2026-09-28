@@ -1,15 +1,29 @@
 /* Included in gw_script.c: shared asset loader for stage model= and gd.model_*.
  * Slots are scene-pinned even at zero references: old snapshots may name them. */
 static int gs_model_asset_serial;
+/* largemap: immutable scene pins are required by old snapshots. Bound their
+ * native memory separately from MEM1 instead of evicting snapshot dependencies. */
+#define GS_MODEL_BYTE_BUDGET (64 * 1024 * 1024)
+static int gs_model_cache_bytes(void)
+{
+    int i, bytes = 0;
+    for (i = 0; i < gs_stage_nmodels; ++i) {
+        const GsStageModel *m = &gs_stage_models[i];
+        bytes += m->bytes;
+        if (m->atlas_owner) bytes += m->image_bytes + m->glow_bytes;
+    }
+    return bytes;
+}
 static int gs_model_texture(const char *dir, const char *name, GXTexObj *obj,
-                            unsigned char **image)
+                            unsigned char **image, int *bytes, int available)
 {
     int h = gw_GxTex_OpenAt(dir, name), w, height, size;
     if (h < 0) return 0;
     w = gw_GxTex_Width(h); height = gw_GxTex_Height(h); size = gw_GxTex_ImageSize(h);
     if (gw_GxTex_Format(h) != GX_TF_RGBA8 || w < 4 || height < 4 || w > 4096 ||
         height > 4096 || (w & 3) || (height & 3) ||
-        gs_stage_tex_levels(w, height, size) < 1) { gw_GxTex_Close(h); return 0; }
+        gs_stage_tex_levels(w, height, size) < 1 || size > available) { gw_GxTex_Close(h); return 0; }
+    *bytes = size;
     *image = malloc((size_t)size);
     if (!*image) { gw_GxTex_Close(h); return 0; }
     gw_GxTex_CopyImage(h, *image); gw_GxTex_Close(h);
@@ -25,7 +39,8 @@ static int gs_model_open_at(lua_State *L, const char *dir, const char *name)
     unsigned char *mesh;
     char *json;
     size_t len, json_len;
-    int i, shared = -1;
+    int i, shared = -1, available;
+    WIN32_FILE_ATTRIBUTE_DATA info;
     DWORD full = GetFullPathNameA(dir, sizeof canonical, canonical, NULL);
     if (!full || full >= sizeof canonical) return luaL_error(L, "model path too long");
     dir = canonical;
@@ -52,8 +67,12 @@ static int gs_model_open_at(lua_State *L, const char *dir, const char *name)
         return luaL_error(L, "model atlas path too long");
     for (i = 0; i < gs_stage_nmodels; ++i)
         if (!_stricmp(atlaspath, gs_stage_models[i].atlas_path)) { shared = i; break; }
+    available = GS_MODEL_BYTE_BUDGET - gs_model_cache_bytes();
+    if (!GetFileAttributesExA(path, GetFileExInfoStandard, &info) ||
+        info.nFileSizeHigh || info.nFileSizeLow > (DWORD)available)
+        return luaL_error(L, "model file missing or scene asset budget exceeded (64 MiB)");
     mesh = (unsigned char *)gs_read_file(path, &len);
-    if (!mesh || !gs_stage_mesh_valid(mesh, len)) {
+    if (!mesh || len > (size_t)available || !gs_stage_mesh_valid(mesh, len)) {
         free(mesh); return luaL_error(L, "missing or invalid GXMS model: %s", path);
     }
     if (gs_model_asset_serial == INT_MAX) { free(mesh); return luaL_error(L, "model handle space exhausted"); }
@@ -74,20 +93,22 @@ static int gs_model_open_at(lua_State *L, const char *dir, const char *name)
         }
     }
     art.atlas_owner = shared < 0;
+    available -= (int)len;
     if (shared >= 0) {
         GsStageModel *owner = &gs_stage_models[shared];
         art.image = owner->image; art.glow_image = owner->glow_image;
         art.texture = owner->texture; art.glow = owner->glow; art.has_glow = owner->has_glow;
     } else {
-        if (!gs_model_texture(dir, collision.atlas, &art.texture, &art.image)) {
+        if (!gs_model_texture(dir, collision.atlas, &art.texture, &art.image, &art.image_bytes, available)) {
             free(mesh); return luaL_error(L, "model needs a valid RGBA8 GXTX atlas: %s", atlaspath);
         }
+        available -= art.image_bytes;
         snprintf(glow, sizeof glow, "%s.glow", collision.atlas);
         if (snprintf(sidepath, sizeof sidepath, "%s\\%s.gxtex", dir, glow) >= sizeof sidepath) {
             free(mesh); free(art.image); return luaL_error(L, "model glow path too long");
         }
         if (GetFileAttributesA(sidepath) != INVALID_FILE_ATTRIBUTES) {
-            if (!gs_model_texture(dir, glow, &art.glow, &art.glow_image)) {
+            if (!gs_model_texture(dir, glow, &art.glow, &art.glow_image, &art.glow_bytes, available)) {
                 free(mesh); free(art.image); return luaL_error(L, "invalid model glow atlas: %s", sidepath);
             }
             art.has_glow = 1;

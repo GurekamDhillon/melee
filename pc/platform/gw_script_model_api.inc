@@ -121,7 +121,7 @@ static int l_model_spawn(lua_State *L)
     gs_model_collision = NULL; gs_model_floor_flags = -1;
     if (result < 0) {
         lua_pushnil(L);
-        lua_pushstring(L, result == -2 ? "model instance pool full (128)" : result == -3 ?
+        lua_pushstring(L, result == -2 ? "model instance pool full (256)" : result == -3 ?
                        "collision line capacity unavailable" : result == -4 ?
                        "model transform reverses collision kind or exceeds world bounds" : "model scene renderer unavailable");
         return 2;

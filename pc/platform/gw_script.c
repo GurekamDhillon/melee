@@ -6090,6 +6090,7 @@ static void gs_comm_draw(void) {
     lua_getfield(gs.L, -1, "gd");
     lua_getfield(gs.L, -1, "comm_draw");
     if (lua_isfunction(gs.L, -1)) {
+        gs_arm_budget(); /* this call comes from the draw pass, not a gs_pcall site */
         if (lua_pcall(gs.L, 0, 0, 0) != LUA_OK) {
             gw_log("script: gd.comm_draw: %s", lua_tostring(gs.L, -1));
             lua_pop(gs.L, 1);

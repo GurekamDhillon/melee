@@ -31,6 +31,7 @@
 #include <melee/it/kinds/itlikelike.h>
 #include <melee/it/kinds/itnokonoko.h>
 #include <melee/lb/lbarchive.h>
+#include <melee/lb/lbaudio_ax.h>
 #include <melee/mp/mpcoll.h>
 #include "../geno/geno.h"
 #include "script_items.h"
@@ -2628,3 +2629,10 @@ int ScriptGame_LabFighterFieldBase(int off)
 
 /* ---- largemap: isolated area, capacity and bounds API ---- */
 #include "script_largemap.inc"
+
+/* gd.play_sound(id): a game sound id (the ids Ground_801C5440 / lbAudioAx_800237A8 take), full volume, centre pan.
+ * Returns the AX voice handle. */
+int ScriptGame_PlaySound(int id)
+{
+    return lbAudioAx_800237A8(id, 0x7F, 0x40);
+}

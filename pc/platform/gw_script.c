@@ -1647,6 +1647,7 @@ static int l_set_stocks(lua_State *L) {
  * all come through gs_fly_*. */
 extern int gw_GenoFly_Set(int slot, int mode);
 extern int gw_GenoFly_Get(int slot);
+extern int gw_ScriptGame_PlaySound(int id);
 extern int gw_GenoFly_HoldHitbox(int slot, int on, int action, int frame);
 extern int gw_GenoFly_Holding(int slot);
 extern int gw_GenoFly_HoldHits(int slot);
@@ -1756,6 +1757,16 @@ static int l_hold_hitbox(lua_State *L) {
     if (rc == -3) luaL_error(L, "gd.hold_hitbox: the fighter must be flying (gd.fly)");
     if (rc < 0) luaL_error(L, "gd.hold_hitbox: %s", gs_fly_err(rc));
     lua_pushboolean(L, gw_GenoFly_Holding(slot));
+    return 1;
+}
+
+/* gd.play_sound(id): play a game sound id (Corneria's voice ids are in docs/scripting.md). Offline only. */
+static int l_play_sound(lua_State *L) {
+    lua_Integer id = luaL_checkinteger(L, 1);
+    if (gw_RB_Enabled() || gw_Netplay_Enabled())
+        return luaL_error(L, "gd.play_sound is offline-only (refused during a netplay/rollback session)");
+    if (id <= 0 || id > 0x7FFFFFFF) return luaL_error(L, "gd.play_sound: sound id out of range");
+    lua_pushinteger(L, gw_ScriptGame_PlaySound((int)id));
     return 1;
 }
 
@@ -5214,7 +5225,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage},
     {"hit", l_hit}, {"set_stocks", l_set_stocks},
-    {"fly", l_fly}, {"hold_hitbox", l_hold_hitbox}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
+    {"fly", l_fly}, {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"mode_blob", l_mode_blob},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
@@ -5267,6 +5278,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"enemy_status", l_enemy_status},
     {NULL, NULL}};
 
+#include "gw_script_comm.inc"
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
 static const char gs_prelude[] =
     "local gd, coroutine = ...\n"
@@ -5418,6 +5430,17 @@ static void gs_build_base(lua_State *L) {
         }
     } else {
         gw_log("script: prelude did not compile: %s", lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+    if (luaL_loadbufferx(L, gs_comm_lua, sizeof gs_comm_lua - 1, "=gd.comm", "t") == LUA_OK) {
+        lua_pushvalue(L, -2);
+        lua_getglobal(L, "coroutine");
+        if (lua_pcall(L, 2, 0, 0) != LUA_OK) {
+            gw_log("script: gd.comm failed: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);
+        }
+    } else {
+        gw_log("script: gd.comm did not compile: %s", lua_tostring(L, -1));
         lua_pop(L, 1);
     }
     lua_setfield(L, -2, "gd");
@@ -6058,6 +6081,25 @@ int gw_Script_BossHookEnabled(void) {
 /* The draw pass: on_tick opens a list (gw_Script_Tick), on_draw completes it after the render
    (gw_Script_PostRender) and the overlay is handed the finished list. A scene loop that never
    reaches PostRender still gets on_draw, at the next tick (the old timing). */
+/* gd.comm's window: drawn by the engine each draw pass (the Lua is gw_comm.lua), under the console's context. */
+static void gs_comm_draw(void) {
+    int old = gs.cur;
+    if (gs.L == NULL || gs_base_ref == LUA_NOREF) return;
+    gs.cur = gs.console;
+    lua_rawgeti(gs.L, LUA_REGISTRYINDEX, gs_base_ref);
+    lua_getfield(gs.L, -1, "gd");
+    lua_getfield(gs.L, -1, "comm_draw");
+    if (lua_isfunction(gs.L, -1)) {
+        if (lua_pcall(gs.L, 0, 0, 0) != LUA_OK) {
+            gw_log("script: gd.comm_draw: %s", lua_tostring(gs.L, -1));
+            lua_pop(gs.L, 1);
+            /* a broken window must not repeat every frame */
+            gs_exec("= gd.comm_clear()");
+        }
+    } else lua_pop(gs.L, 1);
+    lua_pop(gs.L, 2);
+    gs.cur = old;
+}
 static int gs_draw_open;
 static void gs_stage_draw_segment(float x0, float y0, float x1, float y1, uint32_t rgba) {
     GwScriptDraw *d = gs_draw_new(GW_SDRAW_LINE);
@@ -6099,6 +6141,7 @@ static void gs_finish_draw(void) {
     }
     gs.cam_stamp++;
     gs_hook_all("on_draw", 0, 0, 0);
+    gs_comm_draw();
     gs_stage_draw();
     gs.build = !gs.build;
     gw_Kit_SwapBanks(); /* the kit's quads flip with the list that indexes them */
@@ -7374,6 +7417,34 @@ static int gs_exec(const char *line_in) {
             snprintf(path, sizeof path, "%s\\shot-%d.png", gs.exe_dir, gs.frame);
         }
         return gs_screenshot(path) == 0 ? 0 : -1;
+    }
+    if (IS("comm")) { /* comm <fox|falco|peppy|slippy|custom> "text" [sound id] -> gd.comm{...} */
+        char who[16] = "", text[200] = "", lua[420], *p = (char *)arg, *q;
+        long sound = 0;
+        size_t n = 0, k;
+        while (*p == ' ') ++p;
+        for (k = 0; *p != '\0' && *p != ' ' && k < sizeof who - 1; ++p) who[k++] = *p;
+        while (*p == ' ') ++p;
+        if (*p == '"') {
+            ++p;
+            for (k = 0; *p != '\0' && *p != '"' && k < sizeof text - 1; ++p) text[k++] = *p;
+            if (*p == '"') ++p;
+            sound = strtol(p, &q, 0);
+        } else {
+            strncpy(text, p, sizeof text - 1);
+        }
+        if (who[0] == '\0' || text[0] == '\0') {
+            gw_Console_Print(GS_RED, "usage: comm <fox|falco|peppy|slippy|custom> \"text\" [sound id]");
+            return -1;
+        }
+        n = (size_t)snprintf(lua, sizeof lua, "gd.comm{who='%s', text='", who);
+        for (k = 0; text[k] != '\0' && n < sizeof lua - 40; ++k) { /* single-quoted Lua: escape ' and \ */
+            if (text[k] == '\'' || text[k] == '\\') lua[n++] = '\\';
+            lua[n++] = text[k];
+        }
+        if (sound > 0) snprintf(lua + n, sizeof lua - n, "', sound=%ld}", sound);
+        else snprintf(lua + n, sizeof lua - n, "'}");
+        return gs_exec_lua(lua);
     }
     if (IS("quit")) {
         gw_log("console: quit");

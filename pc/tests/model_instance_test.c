@@ -13,7 +13,7 @@ static struct {
     ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
     struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
 } script_stage, snapshot;
-static int input[SM_FIELDS], line_input[6], line_sets, fail_after = -1;
+static int input[SM_FIELDS + 3], line_input[6], line_sets, fail_after = -1;
 static int script_mesh_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
 static float script_mesh_float(int i) { union { float f; int i; } u; u.i = i; return u.f; }
 static int Script_ModelInput(int field, int line) { return line < 0 ? input[field] : line_input[field]; }
@@ -57,10 +57,41 @@ int main(void)
     int i;
     script_stage.map = script_stage.draw = &script_stage; script_stage.cap = 2;
     input[SM_SCALE] = script_mesh_bits(1); input[SM_VISIBLE] = 1; input[SM_TINT] = -1;
+    input[SM_SX] = input[SM_SY] = input[SM_SZ] = script_mesh_bits(1);
     line_input[0] = script_mesh_bits(-10); line_input[2] = script_mesh_bits(10);
     line_input[4] = 1; line_input[5] = 3;
     assert(!ScriptGame_ModelRef(0, 7, 0));
     assert(ScriptGame_ModelRef(0, 7, 1));
+    /* A reflected slope must keep its height and reverse its endpoint order.
+     * A vertical reflection becomes a ceiling; walls exchange left/right. */
+    input[SM_SX] = script_mesh_bits(-2);
+    input[SM_SY] = script_mesh_bits(3);
+    line_input[3] = script_mesh_bits(4);
+    assert(ScriptGame_ModelSpawn(0, 7, 90, 1, 190) == 90);
+    assert(script_stage.line[0].x0 == -20 && script_stage.line[0].y0 == 12);
+    assert(script_stage.line[0].x1 == 20 && script_stage.line[0].y1 == 0);
+    assert(ScriptGame_ModelDespawn(90));
+    input[SM_SX] = script_mesh_bits(1); input[SM_SY] = script_mesh_bits(-1);
+    assert(ScriptGame_ModelSpawn(0, 7, 91, 1, 191) == 91);
+    assert(script_stage.instance[0].line[0].kind == 2);
+    assert(script_stage.line[0].x0 == 10 && script_stage.line[0].y0 == -4);
+    input[SM_SY] = script_mesh_bits(1);
+    assert(ScriptGame_ModelSet(91) == -4); /* changing owned collision kind needs respawn */
+    assert(script_stage.instance[0].line[0].kind == 2);
+    assert(ScriptGame_ModelDespawn(91));
+    /* X reflection exchanges walls and retains directed endpoint convention. */
+    input[SM_SX] = script_mesh_bits(-1);
+    line_input[0] = line_input[2] = 0;
+    line_input[1] = script_mesh_bits(4); line_input[3] = 0;
+    line_input[4] = 3; line_input[5] = 0;
+    assert(ScriptGame_ModelSpawn(0, 7, 92, 1, 192) == 92);
+    assert(script_stage.instance[0].line[0].kind == 4);
+    assert(script_stage.line[0].y0 == 0 && script_stage.line[0].y1 == 4);
+    assert(ScriptGame_ModelDespawn(92));
+    input[SM_SX] = script_mesh_bits(1);
+    line_input[0] = script_mesh_bits(-10); line_input[2] = script_mesh_bits(10);
+    line_input[1] = 0; line_input[4] = 1; line_input[5] = 3;
+    line_input[3] = 0;
     fail_after = 1;
     assert(ScriptGame_ModelSpawn(0, 7, 99, 2, 200) == -3);
     assert(!script_stage.line[0].active && !script_stage.line[1].active);
@@ -69,8 +100,10 @@ int main(void)
     assert(script_stage.asset[0].instances == 1 && script_stage.line[0].model_handle == 100);
     assert(ScriptGame_ModelLineOwner(200) == 100);
     snapshot = script_stage;
+    input[SM_ALPHA] = 1; input[SM_SZ] = script_mesh_bits(-2);
     input[SM_X] = script_mesh_bits(20);
     assert(ScriptGame_ModelSet(100) == 1 && script_stage.line[0].x0 == 10);
+    assert(ScriptGame_ModelField(0, -4) == 1);
     input[SM_TINT] = 0x12345678;
     assert(ScriptGame_ModelSet(100) == 1 && line_sets == 1); /* no phantom collision move */
     input[SM_ROT] = script_mesh_bits(180);
@@ -78,6 +111,10 @@ int main(void)
     input[SM_ROT] = 0;
     script_stage = snapshot;
     assert(ScriptGame_ModelField(0, SM_X) == 0 && script_stage.line[0].x0 == -10);
+    assert(ScriptGame_ModelField(0, -4) == 0);
+    assert(ScriptGame_ModelField(0, SM_ALPHA) == 0 &&
+           ScriptGame_ModelField(0, SM_SZ) == script_mesh_bits(1));
+    assert(ScriptGame_ModelField(0, -1) == 100 && ScriptGame_ModelField(0, -3) == 1);
     assert(ScriptGame_ModelDespawn(100) && !ScriptGame_ModelDespawn(100));
     assert(!script_stage.line[0].active && script_stage.asset[0].instances == 0);
     assert(!ScriptGame_ModelLineOwner(200));

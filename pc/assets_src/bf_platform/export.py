@@ -316,9 +316,13 @@ def write_gxtex(path, rgba, size):
         rgb = np.where(rgb <= 0.04045, rgb/12.92, ((rgb+0.055)/1.055)**2.4)
         size //= 2
         rgb = rgb.reshape(size, 2, size, 2, 3).mean(axis=(1, 3))
+        # Coverage is linear, not sRGB. Preserve it through every mip; forcing
+        # 255 here made exported glass opaque as soon as the sampler minified it.
+        alpha = level[:, :, 3].astype(np.float32).reshape(size, 2, size, 2).mean(axis=(1, 3))
         rgb = np.where(rgb <= 0.0031308, rgb*12.92, 1.055*rgb**(1/2.4)-0.055)
         level = np.full((size, size, 4), 255, dtype=np.uint8)
         level[:, :, :3] = np.rint(rgb*255).astype(np.uint8)
+        level[:, :, 3] = np.rint(alpha).astype(np.uint8)
     header = struct.pack('>4sIIIIIIIIII', b'GXTX', 1, 6, rgba_size := int((len(rgba)/4)**0.5),
                          rgba_size, 0xFFFFFFFF, 0, len(image), 0, 64, 64+len(image))
     path.write_bytes(header + bytes(64-len(header)) + image)

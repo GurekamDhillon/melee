@@ -1,5 +1,5 @@
 """Export the BF interior kit for the runtime model API (gd.model_load / gd.model_spawn): one
-shared atlas, one GXMS v2 mesh per part, and a collision sidecar per part.
+shared opaque atlas, a glass atlas, merged GXMS v2 meshes, and collision sidecars.
 
     blender --factory-startup --background --python pc/assets_src/bf_interior/export_kit.py --         --output pc/scripts/examples/bf_interior_room/models         --lua pc/scripts/examples/bf_interior_room/scripts/main.lua
 
@@ -9,12 +9,13 @@ builds the parts; this bakes them together, so every part samples the same atlas
     <model>.gxmesh                                      one per part, in the part's own frame
     <model>.coll.json                                   collision sidecar v1 (docs/scripting.md):
         {"version":1,"atlas":"bf_kit","lines":[[kind,x0,y0,x1,y1,flags]]}
-Every part, visual-only ones included, gets a sidecar: it names the shared atlas, which the
+Glass faces export as <model>_glass.gxmesh with alpha=1 and bf_kit_glass atlas.
+Opaque frame geometry stays in <model>.gxmesh. Every exported mesh gets a sidecar: it names the shared atlas, which the
 runtime loads once for all parts.
 
 Coordinates: Blender X -> game X, Blender Z -> game Y, Blender -Y (the open front) -> game +Z
-(towards the camera), in game units (UNIT per metre), origin at the part's origin. Glass is left
-out (the model draw is opaque) and so are faces that point away from the camera.
+(towards the camera), in game units (UNIT per metre), origin at the part's origin.
+Rear-facing faces are omitted, including the backs of glass boxes (avoid double opacity).
 """
 
 import argparse
@@ -83,7 +84,7 @@ def build_parts():
     return [(c.name, c) for c in bpy.data.collections if "module_size" in c]
 
 
-def combined(parts):
+def combined(parts, transparent=False):
     scene = bpy.context.scene
     for ob in list(scene.collection.all_objects):
         ob.hide_render = True
@@ -96,7 +97,7 @@ def combined(parts):
             bm = bmesh.new()
             bm.from_mesh(me)
             kill = [f for f in bm.faces
-                    if "transparent" in me.materials[f.material_index].name or f.normal.y > 0.7]
+                    if (("transparent" in me.materials[f.material_index].name) != transparent) or f.normal.y > 0.7]
             bmesh.ops.delete(bm, geom=kill, context="FACES")
             bm.to_mesh(me)
             bm.free()
@@ -174,7 +175,16 @@ def route_material(mat, image, glow):
         return n.outputs[0]
 
     geom = nodes.new("ShaderNodeNewGeometry")
-    if glow:
+    if glow == "alpha":
+        # Bake authored coverage separately: EMIT bake otherwise writes alpha=1.
+        socket = bsdf.inputs["Alpha"]
+        if socket.is_linked:
+            colour = socket.links[0].from_socket
+        else:
+            n = nodes.new("ShaderNodeRGB")
+            n.outputs[0].default_value = (socket.default_value,) * 3 + (1.0,)
+            colour = n.outputs[0]
+    elif glow:
         strength = bsdf.inputs["Emission Strength"]
         energy = strength.links[0].from_socket if strength.is_linked else strength.default_value
         colour = scale(scale(value(bsdf.inputs["Emission Color"]), energy), GLOW_GAIN)
@@ -261,46 +271,55 @@ def write_part(path, me, part_index, offset_x, size_m):
     return len(verts), len(idx) // 3
 
 
-def sidecar(lines):
+def sidecar(lines, transparent=False):
     """Collision sidecar v1: [kind, x0, y0, x1, y1, flags] in part-relative game units.
     Floor flags: 1 pass-through, 2 ledges (a spawn can override them with floor_flags)."""
     out = []
     for l in lines:
         flags = (1 if l["passthrough"] else 0) | (2 if l["ledges"] else 0) if l["kind"] == "floor" else 0
         out.append([l["kind"], l["x0"] * UNIT, l["z0"] * UNIT, l["x1"] * UNIT, l["z1"] * UNIT, flags])
-    return {"version": 1, "atlas": "bf_kit", "lines": out}
+    result = {"version": 1, "atlas": "bf_kit_glass" if transparent else "bf_kit", "lines": out}
+    if transparent:
+        result["alpha"] = 1
+    return result
 
 
 def main():
     a = options()
     a.output.mkdir(parents=True, exist_ok=True)
     parts = build_parts()
-    ob = combined(parts)
-    unwrap(ob, a.texture_size)
-    me = ob.data
-    me.calc_loop_triangles()
     X = BF_EXPORT
-    base = bake(ob, a.texture_size, False, a.samples)
-    glow = X["soften_glow"](bake(ob, a.texture_size, True, a.samples), a.texture_size)
-    colour_rgba = X["atlas_bytes"](base, glow, a.texture_size, False)
-    glow_rgba = X["atlas_bytes"](base, glow, a.texture_size, True)
-    stem = a.output / "bf_kit"
-    X["write_png"](stem.with_suffix(".png"), colour_rgba, a.texture_size)
-    X["write_png"](Path(str(stem) + ".glow.png"), glow_rgba, a.texture_size)
-    X["write_gxtex"](stem.with_suffix(".gxtex"), colour_rgba, a.texture_size)
-    X["write_gxtex"](Path(str(stem) + ".glow.gxtex"), glow_rgba, a.texture_size)
-    me.calc_loop_triangles()
-    for i, (part, col) in enumerate(parts):
-        size_m = tuple(col["module_size"])
-        lines = COLLISION.get(part, [])
-        name = model_name(part)
-        if not any(pid.value == i for pid in me.attributes["part_id"].data):
-            print(f"  {name}: skipped (all glass; the model draw is opaque)")
-            continue
-        nv, nt = write_part(a.output / (name + ".gxmesh"), me, i, i * SPACING, size_m)
-        (a.output / (name + ".coll.json")).write_text(
-            json.dumps(sidecar(lines), separators=(",", ":")) + "\n", encoding="utf-8")
-        print(f"  {name}: {nv} vertices, {nt} triangles, {len(lines)} line(s)")
+    for transparent in (False, True):
+        ob = combined(parts, transparent)
+        unwrap(ob, a.texture_size)
+        me = ob.data
+        me.calc_loop_triangles()
+        base = bake(ob, a.texture_size, False, a.samples)
+        glow = X["soften_glow"](bake(ob, a.texture_size, True, a.samples), a.texture_size)
+        colour_rgba = bytearray(X["atlas_bytes"](base, glow, a.texture_size, False))
+        glow_rgba = X["atlas_bytes"](base, glow, a.texture_size, True)
+        if transparent:
+            coverage = bake(ob, a.texture_size, "alpha", a.samples)
+            for pixel in range(a.texture_size * a.texture_size):
+                colour_rgba[pixel * 4 + 3] = round(max(0, min(1, coverage[pixel * 4])) * 255)
+        stem = a.output / ("bf_kit_glass" if transparent else "bf_kit")
+        X["write_png"](stem.with_suffix(".png"), colour_rgba, a.texture_size)
+        X["write_png"](Path(str(stem) + ".glow.png"), glow_rgba, a.texture_size)
+        X["write_gxtex"](stem.with_suffix(".gxtex"), colour_rgba, a.texture_size)
+        X["write_gxtex"](Path(str(stem) + ".glow.gxtex"), glow_rgba, a.texture_size)
+        me.calc_loop_triangles()
+        for i, (part, col) in enumerate(parts):
+            size_m = tuple(col["module_size"])
+            lines = [] if transparent else COLLISION.get(part, [])
+            name = model_name(part) + ("_glass" if transparent else "")
+            if not any(pid.value == i for pid in me.attributes["part_id"].data):
+                continue
+            # write_part merges all objects/materials of this part into one
+            # triangle stream. Only the opaque/alpha boundary creates a split.
+            nv, nt = write_part(a.output / (name + ".gxmesh"), me, i, i * SPACING, size_m)
+            (a.output / (name + ".coll.json")).write_text(
+                json.dumps(sidecar(lines, transparent), separators=(",", ":")) + "\n", encoding="utf-8")
+            print(f"  {name}: {nv} vertices, {nt} triangles, {len(lines)} line(s), alpha={transparent}")
     if a.lua:
         import re
         src = a.lua.read_text(encoding="utf-8")

@@ -347,6 +347,7 @@ typedef struct {
     unsigned char *mesh;
     unsigned char *image, *glow_image;
     int bytes, stride, has_normals, has_glow;
+    float center[3];
     GXTexObj texture, glow;
     int token, atlas_owner;
     char atlas_path[MAX_PATH];
@@ -4629,8 +4630,10 @@ static void gs_stage_tex_init(GXTexObj *obj, void *image, int w, int h, int size
 #include "gw_script_model_assets.inc"
 
 /* Called at stage prepare and scene end; no snapshot may resurrect assets from another scene. */
+static void gs_model_batch_reset(void);
 void gw_Script_StageModelsReset(void) {
     int i;
+    gs_model_batch_reset();
     for (i = 0; i < gs_stage_nmodels; ++i) {
         free(gs_stage_models[i].mesh);
         if (gs_stage_models[i].atlas_owner) {
@@ -4658,20 +4661,27 @@ int gw_Script_StageModelFor(int handle) {
 
 /* World-pass draw invoked from script_game.c. The camera matrix is BE game memory; coordinates
  * are scalar arguments. Aurora's GX array reader consumes the mesh's BE float streams directly
- * (le=false), while indices cross as native scalars. One GXBegin per model instance. */
+ * (le=false), while indices cross as native scalars. Runtime instances use the
+ * world-space batch below; legacy floor attachments still submit a single mesh. */
 static const GsStageModel *gs_model_bound;
 static unsigned gs_model_bound_tint;
-static void gs_model_draw(int model, const void *game_view, float local[3][4], unsigned tint) {
+/* Draw-only scratch, rebuilt for each camera/pass and never read by simulation.
+ * Keep a whole number of triangles below GX_AUTO (0xffff). */
+#define GS_MODEL_BATCH_VERTS 65532
+static float gs_model_batch[GS_MODEL_BATCH_VERTS][8];
+static int gs_model_batch_count;
+static void gs_model_draw(int model, const void *game_view, float local[3][4], unsigned tint, int alpha) {
     const GsStageModel *art;
     const unsigned char *mesh, *idx;
     uint32_t voff, ioff, count, k;
     float mv[3][4], view[3][4];
-    int r, c;
+    int r, c, mirrored;
     if (model < 1 || model > gs_stage_nmodels || game_view == NULL) return;
+    mirrored = (local[0][0] * local[1][1] - local[0][1] * local[1][0]) * local[2][2] < 0;
     art = &gs_stage_models[model - 1];
     mesh = art->mesh;
     voff = gw_r32(mesh + 28); ioff = gw_r32(mesh + 32);
-    count = gw_r32(mesh + 12);
+    count = gs_model_batch_count ? (unsigned)gs_model_batch_count : gw_r32(mesh + 12);
     for (r = 0; r < 3; ++r)
         for (c = 0; c < 4; ++c)
             view[r][c] = gw_rf32((const unsigned char *)game_view + (r * 4 + c) * 4);
@@ -4682,9 +4692,9 @@ static void gs_model_draw(int model, const void *game_view, float local[3][4], u
 
     if (gs_model_bound != art || gs_model_bound_tint != tint) {
         GXClearVtxDesc();
-        GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
-        if (art->has_normals) GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
-        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
+        GXSetVtxDesc(GX_VA_POS, gs_model_batch_count ? GX_DIRECT : GX_INDEX16);
+        if (art->has_normals) GXSetVtxDesc(GX_VA_NRM, gs_model_batch_count ? GX_DIRECT : GX_INDEX16);
+        GXSetVtxDesc(GX_VA_TEX0, gs_model_batch_count ? GX_DIRECT : GX_INDEX16);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
         if (art->has_normals) GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
@@ -4741,11 +4751,11 @@ static void gs_model_draw(int model, const void *game_view, float local[3][4], u
             GXSetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_APREV, GX_CA_A1, GX_CA_ZERO);
             GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         }
-        GXSetBlendMode((tint & 255) == 255 ? GX_BM_NONE : GX_BM_BLEND,
+        GXSetBlendMode(alpha ? GX_BM_BLEND : GX_BM_NONE,
                        GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
         GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
         GXSetCullMode(GX_CULL_NONE);
-        GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+        GXSetZMode(GX_TRUE, GX_LEQUAL, alpha ? GX_FALSE : GX_TRUE);
     }
     GXSetCurrentMtx(GX_PNMTX0);
     GXLoadPosMtxImm(mv, GX_PNMTX0);
@@ -4773,7 +4783,17 @@ static void gs_model_draw(int model, const void *game_view, float local[3][4], u
     idx = mesh + ioff;
     GXBegin(GX_TRIANGLES, GX_VTXFMT0, (u16)count);
     for (k = 0; k < count; ++k) {
-        u16 v = gw_r16(idx + k * 2);
+        unsigned index;
+        u16 v;
+        if (gs_model_batch_count) {
+            const float *v = gs_model_batch[k];
+            GXPosition3f32(v[0], v[1], v[2]);
+            if (art->has_normals) GXNormal3f32(v[5], v[6], v[7]);
+            GXTexCoord2f32(v[3], v[4]);
+            continue;
+        }
+        index = mirrored && k % 3 ? k - k % 3 + (3 - k % 3) : k;
+        v = gw_r16(idx + index * 2);
         GXPosition1x16(v);
         if (art->has_normals) GXNormal1x16(v);
         GXTexCoord1x16(v);
@@ -4781,7 +4801,7 @@ static void gs_model_draw(int model, const void *game_view, float local[3][4], u
     GXEnd();
     if (!gs_stage_model_draw_seen[model - 1]) {
         gs_stage_model_draw_seen[model - 1] = 1;
-        gw_log("script stage: model %d first world draw (%u triangles, %s%s, 1 draw)", model, count / 3,
+        gw_log("script stage: model %d first world batch (%u triangles, %s%s, 1 draw)", model, count / 3,
                art->has_normals ? "lit" : "unlit", art->has_glow ? " + glow stage" : "");
     }
 }
@@ -4797,7 +4817,7 @@ void gw_Script_StageModelDraw(int model, const void *view, float x0, float y0, f
     local[1][0] = uy * sx; local[1][1] = ux; local[1][3] = (y0 + y1) * 0.5f;
     local[2][2] = 1;
     gs_model_bound = NULL;
-    gs_model_draw(model, view, local, 0xFFFFFFFFu);
+    gs_model_draw(model, view, local, 0xFFFFFFFFu, 0);
 }
 
 #include "gw_script_model_api.inc"
@@ -5092,6 +5112,8 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"model_set", l_model_set},
     {"model_despawn", l_model_despawn},
     {"model_get", l_model_get},
+    {"model_instances", l_model_instances},
+    {"stage_bounds", l_stage_bounds},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},

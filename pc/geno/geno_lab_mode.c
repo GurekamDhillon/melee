@@ -260,6 +260,7 @@ int GenoLab_Leave(int where)
  * the flight with nothing to restore. The speed and the solid switch are this TU's statics (in a
  * snapshot: pc_geno_*). */
 #include <melee/ft/fighter.h>
+#include <melee/ft/ftanim.h>
 #include <melee/ft/ftcommon.h>
 #include <melee/ft/types.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Fall.h>
@@ -273,9 +274,23 @@ int GenoLab_Leave(int where)
 static float fly_speed = 2.0f; /* units per frame at full stick */
 static int fly_solid;          /* 1: keep hurtboxes */
 
+static void fly_input(Fighter_GObj* gobj);
+static void fly_phys(Fighter_GObj* gobj);
+static void fly_coll(Fighter_GObj* gobj);
+
+/* Loop the idle: Wait's own anim callback (ftCo_Wait_Anim) is replaced, so restart the animation
+ * when it ends and put the fly callbacks back over the ones Fighter_ChangeMotionState installs. */
 static void fly_anim(Fighter_GObj* gobj)
 {
-    (void) gobj;
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->motion_id != ftCo_MS_Wait || ftAnim_IsFramesRemaining(gobj)) {
+        return;
+    }
+    Fighter_ChangeMotionState(gobj, ftCo_MS_Wait, 0, 0.0f, 1.0f, 0.0f, NULL);
+    fp->anim_cb = fly_anim;
+    fp->input_cb = fly_input;
+    fp->phys_cb = fly_phys;
+    fp->coll_cb = fly_coll;
 }
 
 static void fly_input(Fighter_GObj* gobj)

@@ -18,7 +18,7 @@ local ROOM = {
   {"Floor_4m",  2, 0, solid = true, ledges = false},
   {"Floor_4m",  6, 0, solid = true, ledges = true},
   {"Stairs_4m_Rise2m", -6, 0},
-  {"Balcony_4m", -2, 2},
+  {"Balcony_4m", -2, 2, ledges = false},  -- both ends meet slopes: an edge there pops a runner airborne
   {"Ramp_4m_Rise2m", 2, 2},
   {"Floor_Opening_4m", 6, 4},
   -- back walls, two storeys
@@ -27,26 +27,19 @@ local ROOM = {
   {"Door_Leaf", -6, 0},
   -- ends: side returns, inside corners at the back, outside corners on the exposed front edge
   {"Wall_Side_Return", -8, 0}, {"Wall_Side_Return", -8, 4},
-  {"Wall_Side_Return",  8, 0}, {"Wall_Side_Return",  8, 4},
+  {"Wall_Side_Return",  8, 0, mirror = true}, {"Wall_Side_Return",  8, 4, mirror = true},
   {"Corner_Inside_4m", -8, 0}, {"Corner_Inside_4m", -8, 4},
-  -- the kit mirrors this corner for the right end; the API has no mirror, so it is moved in
-  -- by its width instead (the column lands where the mirror would put it)
-  {"Corner_Inside_4m", 7.6, 0}, {"Corner_Inside_4m", 7.6, 4},
+  {"Corner_Inside_4m", 8, 0, mirror = true}, {"Corner_Inside_4m", 8, 4, mirror = true},
   {"Corner_Outside_4m", -8, 0, 1.2}, {"Corner_Outside_4m", -8, 4, 1.2},
-  {"Corner_Outside_4m",  8, 0, 1.2}, {"Corner_Outside_4m",  8, 4, 1.2},
+  {"Corner_Outside_4m",  8, 0, 1.2, mirror = true}, {"Corner_Outside_4m",  8, 4, 1.2, mirror = true},
   -- structure and trim
   {"Beam_4m", -6, 8}, {"Beam_4m", -2, 8}, {"Beam_4m", 2, 8}, {"Beam_4m", 6, 8},
   {"Rear_Post_4m", 4, 0}, {"Rear_Post_4m", 8, 0},
   {"Rear_Glass_Rail_4m", 6, 4},
+  {"Rear_Glass_Rail_4m_glass", 6, 4}, {"Window_Glass_Insert_glass", 2, 0},
+  {"Balcony_4m_glass", -2, 2}, {"Ramp_4m_Rise2m_glass", 2, 2},
   {"Floor_End_Trim", -10, 0}, {"Floor_End_Trim", 8, 0}, {"Floor_End_Trim", 4, 4},
   {"Floor_End_Trim", -4, 4},
-}
-
--- Where the room's origin (ground floor, centre) goes, per stage (gd.match().stage). Elsewhere it
--- goes 20 units above P1's start, which is on solid ground on any stage.
-local ORIGIN = {
-  [0x25] = {0, 20},   -- Final Destination: hovering over the main floor
-  [0x24] = {0, 72},   -- Battlefield: above the top platform
 }
 
 room = nil  -- global, so a test or the console can despawn it: {instances = {...}, assets = {...}}
@@ -59,6 +52,7 @@ function room_build(ox, oy)
     local name = model_name(p[1])
     assets[name] = assets[name] or assert(gd.model_load(name))
     local opts = {x = ox + p[2] * U, y = oy + p[3] * U, z = (p[4] or 0) * U}
+    opts.scale_x = p.mirror and -1 or 1
     if p.solid ~= nil or p.ledges ~= nil then
       opts.floor_flags = (p.solid and 0 or 1) + ((p.ledges == false) and 0 or 2)
     end
@@ -90,12 +84,15 @@ function on_match_start()
   room = nil
   local match = gd.match()
   if match.netplay then return end
-  local o = ORIGIN[match.stage]
-  if not o then
-    local p1 = gd.player(1)
-    o = {p1 and p1.x or 0, (p1 and p1.y or 40) + 20}
+  local bounds = gd.stage_bounds()
+  if not bounds or not bounds.main_floor then
+    gd.log("bf_interior_room: no solid main floor available")
+    return
   end
-  room_build(o[1], o[2])
+  local floor = bounds.main_floor
+  -- Stage geometry supplies the placement: above the highest base-stage platform,
+  -- centred on the widest connected solid floor (FD and Battlefield need no IDs).
+  room_build((floor.left + floor.right) / 2, bounds.surface_top + 20)
 end
 
 function on_match_end()

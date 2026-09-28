@@ -6,12 +6,15 @@ collision; nothing is baked as a scene.
 
 - `scripts/main.lua`: `ROOM` is the layout in kit metres (floors, stairs, balcony, ramp, a landing
   with a drop-through gap, back walls on two storeys, a door leaf, side returns, inside and outside
-  corners, beams, posts, a rear rail and end trims: 41 parts from 17 models). `ORIGIN` sets where
-  the room goes on FD and Battlefield; on any other stage it goes 20 units above P1's start.
+  corners, beams, posts, a rear rail and end trims: 43 instances from 19 models, including
+  two glass meshes). `gd.stage_bounds()` centres the room over the main floor and places it
+  20 units above the highest base-stage floor/platform. Right-hand pieces use `scale_x=-1`.
   `room_build(x, y)` and `room_despawn()` are globals, for tests and the console.
 - `models/<model>.gxmesh`: one GXMS v2 mesh per part, in the part's own frame. All of them sample
-  one shared atlas (`bf_kit.gxtex`, `bf_kit.glow.gxtex`), loaded once.
+  the shared opaque atlas (`bf_kit.gxtex`, `bf_kit.glow.gxtex`), loaded once. Glass parts
+  use the separate shared `bf_kit_glass` atlas and `<model>_glass.gxmesh` names.
 - `models/<model>.coll.json`: the part's collision sidecar (v1), which also names the atlas.
+  Glass sidecars set `alpha: 1` and have no collision. Opaque frame parts still write depth.
   Floors carry pass-through and ledge flags; the room overrides them per placement with
   `floor_flags` (solid ground, no ledges at interior seams). Walls and scenery have no lines.
 
@@ -20,16 +23,14 @@ docstring has the command). `KIT_SCALE` there is the kit's size in game (1.3: th
 doorway reads as a door next to Fox); it scales meshes, sidecars and the room grid together.
 The binaries are generated, not committed (about 13 MB).
 
-Tested in the LAB and VS on FD and Battlefield, and in Classic and Adventure (ACE, Fox): landing
-on the balcony, dropping through the gap, a despawn of every part, a savestate restore that
-brings all 41 back, and LAB restarts that free and reload the assets each time.
+The previous 41-instance lane was reported tested in LAB/VS on FD and Battlefield,
+Classic/Adventure, despawn/restore and LAB restart. Those results describe the old
+opaque, uniform-scale renderer. The revised 43-instance glass/mirrored room has
+not been built or run in this code-only change.
 
-## What the runtime still lacks
-
-1. **Transparency.** The model draw is opaque, so the exporter leaves out glass (window panes,
-   the glass insert, rail glass).
-2. **Mirroring.** Scale is uniform; the right inside corner cannot be mirrored, so the room
-   shifts an unmirrored copy into place.
-3. **A stage-bounds query.** The origin is picked by hand for FD and Battlefield, and from P1's
-   start elsewhere.
-4. **Draw cost.** 41 instances add about 160 draw calls and about 1.1-1.4 ms of frame cost.
+Regenerate both atlases and all sidecars before using the revised room. Existing
+exports do not contain the two new glass meshes. Objects and material slots are
+merged per part/pass; the runtime additionally batches compatible shared-atlas
+instances. See [model-gaps-report.md](../../../../model-gaps-report.md) for the
+F4 before/after capture procedure, historical ~160-draw report, and validation
+status. No after-run draw count is claimed yet.

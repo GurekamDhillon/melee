@@ -27,6 +27,8 @@ int ScriptGame_ModelField(int slot, int field)
     m = &script_stage.instance[slot];
     if (field == -1) return m->handle;
     if (field == -2) return m->asset;
+    if (field == -3) return m->count;
+    if (field == -4) return m->dynamic;
     return field >= 0 && field < SM_FIELDS ? m->field[field] : 0;
 }
 
@@ -48,16 +50,24 @@ static int script_mesh_points(ScriptMeshInstance* m, float points[SCRIPT_MESH_LI
 {
     float rot = script_mesh_float(m->field[SM_ROT]) * 0.017453292519943295f;
     float scale = script_mesh_float(m->field[SM_SCALE]);
-    float c = cosf(rot) * scale, s = sinf(rot) * scale;
+    float sx = scale * script_mesh_float(m->field[SM_SX]);
+    float sy = scale * script_mesh_float(m->field[SM_SY]);
+    float c = cosf(rot), s = sinf(rot);
     float x = script_mesh_float(m->field[SM_X]), y = script_mesh_float(m->field[SM_Y]);
     int i, j;
     for (i = 0; i < m->count; ++i) {
         float* p = points[i];
         int kind = m->line[i].kind;
-        p[0] = x + c * m->line[i].x0 - s * m->line[i].y0;
-        p[1] = y + s * m->line[i].x0 + c * m->line[i].y0;
-        p[2] = x + c * m->line[i].x1 - s * m->line[i].y1;
-        p[3] = y + s * m->line[i].x1 + c * m->line[i].y1;
+        p[0] = x + c * sx * m->line[i].x0 - s * sy * m->line[i].y0;
+        p[1] = y + s * sx * m->line[i].x0 + c * sy * m->line[i].y0;
+        p[2] = x + c * sx * m->line[i].x1 - s * sy * m->line[i].y1;
+        p[3] = y + s * sx * m->line[i].x1 + c * sy * m->line[i].y1;
+        /* mpLib's directed segments keep the solid side on the same side of
+         * the edge. A reflection reverses orientation (rotation does not). */
+        if (sx * sy < 0) {
+            float t = p[0]; p[0] = p[2]; p[2] = t;
+            t = p[1]; p[1] = p[3]; p[3] = t;
+        }
         for (j = 0; j < 4; ++j) if (!(p[j] >= -100000 && p[j] <= 100000)) return 0;
         if ((kind == 1 && p[0] >= p[2]) || (kind == 2 && p[0] <= p[2]) ||
             (kind == 3 && p[1] <= p[3]) || (kind == 4 && p[1] >= p[3])) return 0;
@@ -79,6 +89,7 @@ int ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first
     memset(&candidate, 0, sizeof candidate);
     candidate.handle = handle; candidate.asset = asset; candidate.count = count;
     for (i = 0; i < SM_FIELDS; ++i) candidate.field[i] = Script_ModelInput(i, -1);
+    for (i = 0; i < 3; ++i) candidate.center[i] = script_mesh_float(Script_ModelInput(SM_FIELDS + i, -1));
     for (i = 0; i < count; ++i) {
         candidate.line[i].x0 = script_mesh_float(Script_ModelInput(0, i));
         candidate.line[i].y0 = script_mesh_float(Script_ModelInput(1, i));
@@ -86,6 +97,16 @@ int ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first
         candidate.line[i].y1 = script_mesh_float(Script_ModelInput(3, i));
         candidate.line[i].kind = Script_ModelInput(4, i);
         candidate.line[i].flags = Script_ModelInput(5, i);
+        {
+            int kind = candidate.line[i].kind;
+            float scale = script_mesh_float(candidate.field[SM_SCALE]);
+            if (kind <= 2 && scale * script_mesh_float(candidate.field[SM_SY]) < 0)
+                kind = 3 - kind;
+            if (kind >= 3 && scale * script_mesh_float(candidate.field[SM_SX]) < 0)
+                kind = 7 - kind;
+            candidate.line[i].kind = kind;
+            if (kind != 1) candidate.line[i].flags = 0;
+        }
         candidate.line[i].handle = first_line + i;
     }
     if (!script_mesh_points(&candidate, points)) return -4;
@@ -116,11 +137,27 @@ int ScriptGame_ModelSet(int handle)
     if (slot < 0) return 0;
     candidate = script_stage.instance[slot];
     for (i = 0; i < SM_FIELDS; ++i) candidate.field[i] = Script_ModelInput(i, -1);
+    /* Reclassifying an owned line would also change its mpLib joint list.
+     * Keep updates transactional: signs may change only on visual instances. */
+    if (candidate.count) {
+        for (i = SM_SX; i <= SM_SY; ++i) {
+            ScriptMeshInstance* old = &script_stage.instance[slot];
+            if ((script_mesh_float(candidate.field[SM_SCALE]) * script_mesh_float(candidate.field[i]) < 0) !=
+                (script_mesh_float(old->field[SM_SCALE]) * script_mesh_float(old->field[i]) < 0)) return -4;
+        }
+    }
     if (!script_mesh_points(&candidate, points)) return -4;
+    /* Once moved, retain a matrix draw for Aurora's uncapped frame replay.
+     * This policy belongs to the instance snapshot, not a native history cache. */
+    for (i = 0; i < SM_FIELDS; ++i)
+        if (SM_FLOAT_FIELD(i) && candidate.field[i] != script_stage.instance[slot].field[i])
+            candidate.dynamic = 1;
     if (candidate.field[SM_X] != script_stage.instance[slot].field[SM_X] ||
         candidate.field[SM_Y] != script_stage.instance[slot].field[SM_Y] ||
         candidate.field[SM_ROT] != script_stage.instance[slot].field[SM_ROT] ||
-        candidate.field[SM_SCALE] != script_stage.instance[slot].field[SM_SCALE])
+        candidate.field[SM_SCALE] != script_stage.instance[slot].field[SM_SCALE] ||
+        candidate.field[SM_SX] != script_stage.instance[slot].field[SM_SX] ||
+        candidate.field[SM_SY] != script_stage.instance[slot].field[SM_SY])
         for (i = 0; i < candidate.count; ++i)
             script_stage_line_set(candidate.line[i].handle, points[i][0], points[i][1], points[i][2], points[i][3]);
     script_stage.instance[slot] = candidate;

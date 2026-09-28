@@ -11,6 +11,8 @@ int main(void)
         "{\"version\":1,\"lines\":[[\"left_wall\",0,0,0,1,2]]}",
         "{\"version\":1,\"lines\":[],}",
         "{\"version\":1,\"version\":1,\"lines\":[]}",
+        "{\"version\":1,\"alpha\":2,\"lines\":[]}",
+        "{\"version\":1,\"alpha\":1,\"alpha\":0,\"lines\":[]}",
         "{\"version\":1,\"atlas\":\"../escape\",\"lines\":[]}",
         "{\"version\":1,\"lines\":[[\"floor\",0,0,1e999,0,0]]}",
         "{\"version\":1,\"lines\":[]} garbage"
@@ -20,6 +22,8 @@ int main(void)
            "[\"floor\",-10,0,10,5,3],[\"left_wall\",0,-10,0,0,0]]}", &c));
     assert(c.count == 2 && c.line[0].flags == 3 && c.line[1].kind == 4);
     assert(!strcmp(c.atlas, "kit"));
+    assert(!c.alpha);
+    assert(gm_collision_parse("{\"version\":1,\"alpha\":1,\"lines\":[]}", &c) && c.alpha);
     for (i = 0; i < sizeof bad / sizeof *bad; ++i)
         assert(!gm_collision_parse(bad[i], &c));
     assert(gm_collision_parse("{\"lines\":[],\"version\":1}", &c));

@@ -60,6 +60,19 @@ static int gs_model_open_at(lua_State *L, const char *dir, const char *name)
     memset(&art, 0, sizeof art);
     art.mesh = mesh; art.bytes = (int)len; art.has_normals = gw_r32(mesh + 4) == 2;
     art.stride = art.has_normals ? 32 : 20; art.collision = collision;
+    {
+        unsigned v, n = gw_r32(mesh + 8), offset = gw_r32(mesh + 28);
+        int axis;
+        for (axis = 0; axis < 3; ++axis) {
+            float lo = gw_rf32(mesh + offset + axis * 4), hi = lo;
+            for (v = 1; v < n; ++v) {
+                float f = gw_rf32(mesh + offset + v * art.stride + axis * 4);
+                if (f < lo) lo = f;
+                if (f > hi) hi = f;
+            }
+            art.center[axis] = lo * 0.5f + hi * 0.5f;
+        }
+    }
     art.atlas_owner = shared < 0;
     if (shared >= 0) {
         GsStageModel *owner = &gs_stage_models[shared];
@@ -85,9 +98,9 @@ static int gs_model_open_at(lua_State *L, const char *dir, const char *name)
     art.token = ++gs_model_asset_serial;
     i = gs_stage_nmodels++;
     gs_stage_models[i] = art;
-    gw_log("script stage: model %s loaded (GXMS v%u, %u triangles, %s%s; shared atlas=%d, collision=%d)",
+    gw_log("script stage: model %s loaded (GXMS v%u, %u triangles, %s%s; shared atlas=%d, collision=%d, alpha=%d)",
            path, gw_r32(mesh + 4), gw_r32(mesh + 12) / 3,
-           art.has_normals ? "lit" : "unlit", art.has_glow ? " + glow" : "", shared >= 0, collision.count);
+           art.has_normals ? "lit" : "unlit", art.has_glow ? " + glow" : "", shared >= 0, collision.count, collision.alpha);
     return i + 1;
 }
 

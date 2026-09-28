@@ -53,7 +53,7 @@ Copy that folder to `scripts/bf_platform` beside `melee-pc.exe`, then enable
 the mod. It puts three modelled platforms on Final Destination in an offline
 match. The port log should contain `script stage: model ... loaded`,
 three `script stage: model 1 attached` lines, and
-`script stage: model 1 first world draw`.
+`script stage: model 1 first world batch`.
 
 # Runtime models
 
@@ -114,16 +114,20 @@ scene transitions.
 | `gd.model_move(instance, x, y [, z])` | Moves the model and all owned collision lines; omitted Z is preserved |
 | `gd.model_move(instance, options)` | Updates any instance fields, like `model_set` |
 | `gd.model_set(instance, options)` | Updates supplied fields atomically; returns `true` |
-| `gd.model_get(instance)` | Current snapshotted fields, or `nil` for a stale instance |
+| `gd.model_get(instance)` | Current snapshotted fields and asset identity, or `nil` for a stale instance |
+| `gd.model_instances()` | Dense list of every live scene instance, including hidden ones, in slot order |
+| `gd.stage_bounds()` | Loaded stage blast/camera rectangles and live main-floor bounds, or `nil` outside a match |
 | `gd.model_despawn(instance)` | Removes the instance and its collision; `true`, or `false` if already absent |
 | `gd.model_release(asset)` | Releases one load reference; no return value |
 
 Options are `x`, `y`, `z` (default 0), `rot` (degrees about +Z, default 0),
-`scale` (uniform, default 1), `layer` (integer -8..8, default 0), `visible`
-(boolean, default true), and `tint` (packed `0xRRGGBBAA`, default `0xFFFFFFFF`).
+`scale` (uniform multiplier, default 1), `scale_x`, `scale_y`, `scale_z`
+(per-axis multipliers, each default 1), `layer` (integer -8..8, default 0),
+`visible` (boolean, default true), `alpha` (boolean, defaults to the sidecar
+setting), and `tint` (packed `0xRRGGBBAA`, default `0xFFFFFFFF`).
 Fields are raw table entries; extra fields are ignored so data-table rows can
 include script metadata. Coordinates must be finite and within ±100000; scale
-is 0.001..100 and rotation is -360..360. Invalid options and stale mutation
+has magnitude 0.001..100 (negative values mirror) and rotation is -360..360. Invalid options and stale mutation
 handles raise Lua errors. A rejected transform leaves the instance unchanged.
 
 Two options apply to `gd.model_spawn` only: `collision = false` places the model
@@ -133,7 +137,14 @@ one part can be a solid floor in one place and a drop-through ledge in another.
 
 The mesh uses its authored origin and dimensions, with no automatic centering
 or fit-to-floor scaling. X/Y are the collision plane; Z is visual depth only.
-Collision transforms are `world = translation + scale * rotationZ * local`.
+Transforms are `world = translation + rotationZ * diag(scale * scale_x,
+scale * scale_y, scale * scale_z) * local`. Normals use the normalized inverse
+transpose; odd reflections reverse triangle winding. Collision mirrors in X/Y:
+X exchanges left/right walls, Y exchanges floors/ceilings, and reflected edges
+reverse their endpoints. Non-floor results drop floor-only flags. With owned
+collision, changing the effective X/Y scale signs after spawn is rejected;
+despawn/respawn to reclassify the lines. Magnitude changes and translations
+remain atomic updates. Visual-only instances can change all signs.
 Changing visibility or tint does not remove collision. Despawn to remove it.
 Owned sidecar lines cannot be individually moved or removed through `gd.stage_*`;
 use the instance APIs so the model and collision remain together.
@@ -146,7 +157,8 @@ spawns reserve all required lines or fail without leaving a partial assembly.
 Offline stages reserve the collision headroom and world renderer at stage load,
 even before a gameplay script is loaded, so scripts loaded mid-match can use them.
 
-Instance handles, transform, tint, visibility, layer, local collision definitions,
+Instance handles, transform (including signed axes), alpha mode, mesh centre,
+tint, visibility, layer, local collision definitions,
 line ownership, and reference counts live in `script_game.c` game memory, already
 registered in the snapshot set. Restoring an in-scene snapshot restores these
 fields, including despawned objects, and the scene pin preserves their assets.
@@ -154,6 +166,46 @@ Lua locals are not snapshotted; use `model_get` for current state and account fo
 handles from discarded futures. This is snapshot storage coverage, not a claim
 of tested rewind/resimulation parity. Cross-scene/cross-process asset resurrection
 is not supported. No online/rollback-safety claim is made.
+
+## Read-only scene queries
+
+`model_get` and `model_instances` are available from the console as well as mod
+scripts and do not fork the rewind timeline. A row contains `handle`, `model`
+(asset token), `path` (resolved mesh path), `collision_lines`, `batched` (eligible for static batching), and every instance
+option listed above, including `visible`, `alpha`, `layer`, and `tint`. `model`
+identifies the asset even after its load reference is released; load it again
+before spawning another instance. Outside a match the list is empty and `get`
+returns nil. Slot order is deterministic for a restored snapshot; it is not
+creation order after slots have been reused. Returned tables are copies.
+
+`stage_bounds()` returns `{blast={left,right,top,bottom},
+camera={left,right,top,bottom}, main_floor={left,right,top,bottom}, surface_top=n}`.
+Blast and camera limits come from the loaded `stage_info`; camera limits describe
+the stage's allowed camera rectangle, not the current camera viewport. The main
+floor is the widest connected, enabled, solid floor chain in the base stage's
+live collision vertices. Pass-through platforms, hidden/empty lines and scripted
+extensions are excluded. `surface_top` includes base-stage platforms, useful for
+placing a room above Battlefield's upper platform. `main_floor` and `surface_top`
+are absent when no solid floor exists. Slopes use an axis-aligned extent; a bounds
+rectangle does not promise collision at every point within it. A disconnected
+stage selects one widest island (first by line index on equal width).
+
+```lua
+local b = gd.stage_bounds()
+if b and b.main_floor then
+  local x = (b.main_floor.left + b.main_floor.right) / 2
+  -- room_build(x, b.surface_top + 20)
+end
+for _, row in ipairs(gd.model_instances()) do
+  gd.log(string.format("instance=%d model=%d x=%g y=%g alpha=%s",
+    row.handle, row.model, row.x, row.y, tostring(row.alpha)))
+end
+```
+
+New fields remain in the existing snapshot registration. Native mesh/atlas bytes
+stay scene-pinned; render batches are scratch rebuilt at every camera pass and
+cleared before scene-end release. Saved states from older executable layouts are
+not compatible; create new states with the changed executable.
 
 ## Collision sidecar v1 (exporter contract)
 
@@ -173,7 +225,9 @@ Beside `deck.gxmesh`, write `deck.coll.json` as UTF-8 JSON without a BOM:
 }
 ```
 
-`version` and `lines` are required; `atlas` is optional. Each line is exactly
+`version` and `lines` are required; `atlas` and integer `alpha` (0 or 1) are
+optional. `alpha: 1` defaults instances to blended atlas alpha; omit it for
+opaque models. An instance may override it with the boolean `alpha` option. Each line is exactly
 `[kind, x0, y0, x1, y1, flags]`, in the **same local game units and origin as the
 mesh**, before instance scale/rotation. Flags are integer 0..3: bit 0 (`1`)
 makes a floor pass-through; bit 1 (`2`) enables the existing scripted floor
@@ -183,8 +237,9 @@ with equal Y values; there is no separate platform record.
 
 Floors must run left to right, ceilings right to left, `left_wall` bottom to
 top, and `right_wall` top to bottom. Only floors may have nonzero flags. These
-directions must still hold after a transform: turning a floor upside down is
-rejected, rather than changing its collision kind. Endpoint coordinates must
+directions must still hold after mirroring and rotation. Spawn-time signed
+axes mirror the collision kind as described above; rotation alone does not
+reclassify a floor into a ceiling and is rejected if it reverses that kind. Endpoint coordinates must
 remain within ±100000 in local and world space. Segments are independent stage
 lines; sidecars do not weld islands, define arbitrary polygon solids, or author
 per-endpoint ledge metadata. The ledge behavior is exactly that of existing
@@ -231,14 +286,34 @@ the shader uses trilinear filtering when multiple levels exist. For exported
 mip chains use power-of-two dimensions. The optional glow atlas uses the same
 format and normalized UVs; malformed glow rejects the load.
 
-The existing indexed GX renderer provides a fixed directional light plus ambient
-for v2 normals, atlas mips, additive unlit glow, and final RGBA tint. Each visible
-instance issues one triangle draw, even with glow. Within each layer, opaque
-instances group by asset and reuse material setup; atlas storage is shared
-across parts. Matrices remain per-instance: this GX path has no hardware
-instancing. Alpha-tinted instances follow opaque instances in slot order within
-the layer. Layer controls submission order, with ordinary depth testing; it
-does not override depth or perform automatic transparent depth sorting.
+The GX renderer provides fixed directional light plus ambient for v2 normals,
+atlas mips, additive unlit glow, and final RGBA tint. Glow is a TEV stage in the
+same draw, not another pass. Export all objects/materials belonging to a part
+into one triangle stream against a shared atlas. Split opaque and glass geometry
+into separate models so frames still write depth.
+
+Opaque instances draw in HSD pass 0, grouped by layer/asset. Blended instances
+(`alpha=true` or tint alpha below 255) draw in HSD pass 2 after opaque/texture-edge
+geometry, sorted back-to-front using the transformed mesh bounds centre in the
+current camera's view space. Layer breaks equal-depth ties, then slot order.
+Both passes depth-test; only opaque draws write depth. Sorting is per instance,
+not per triangle, and does not inter-sort with other HSD translucent GObjs.
+Intersecting transparent meshes should be split into smaller parts.
+
+Compatible consecutive static instances, including different models sharing the same
+atlas, are combined into CPU-transformed world-space triangle batches. Batch keys
+include colour/glow textures, normal format, tint, alpha mode and layer. A batch
+holds at most 65,532 vertices; oversized groups split only at triangle boundaries.
+Transparent batches preserve sorted instance order. This removes per-instance GX
+matrix/state changes; it is software batching, not hardware instancing. Logs
+report `script model: opaque/alpha pass instances=N draws=D (per camera)` when
+counts change. F4 and `gd.perf().frames[*].draw_calls` include the entire frame.
+An instance whose transform changes through `model_set`/`model_move` permanently
+uses one matrix draw (`batched=false`) for the rest of that instance's lifetime,
+so Aurora can retain its existing uncapped position/normal-matrix interpolation.
+This flag is snapshotted, so restoring before the move restores batch eligibility.
+Tint, alpha, layer and visibility changes alone do not disable batching. Static
+world-space batches still use the camera matrix and its replay interpolation.
 `gd.stage_view(false)` hides runtime models along with scripted stage geometry.
 
 ## Example and checks
@@ -252,8 +327,16 @@ It deliberately has no map or mode filter; placement is a demonstration and may
 overlap a particular map's existing geometry.
 
 Headless API/validation test: workspace `run.sh --test script_model_api`.
-Standalone C tests: `pc/tests/model_format_test.c` and
-`pc/tests/model_instance_test.c` (compile as ordinary host C; neither runs Melee).
+Standalone C tests (ordinary host C, no Melee execution):
+`pc/tests/model_format_test.c`, `model_instance_test.c`, `model_order_test.c`,
+`model_draw_test.c`, and `stage_bounds_test.c`. Ordering and draw tests need the
+math library where the host toolchain requires it. The draw test uses the actual
+batcher with a recording sink; it does not exercise GX or the GPU.
+
+`python pc/tests/model_export_test.py` runs the pure exporter/alpha-mip tests
+without Blender (NumPy required). It writes only tiny synthetic fixtures in a
+temporary directory. See [model-gaps-report.md](../model-gaps-report.md) for the
+unrun FD/Battlefield lane procedure and explicit verification limits.
 The instance harness uses fake collision calls, so it tests transactions and
 snapshot data, not fighter contact behavior. See [model-api-report.md](../model-api-report.md)
 for what was checked and the required stage/mode/savestate lane test plan.

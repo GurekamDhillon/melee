@@ -115,6 +115,7 @@ static struct {
     struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
 } script_stage;
 static Article* script_target_old_article;
+#include "script_bounds.inc"
 
 static int script_stage_same_file(const char* a, const char* b)
 {
@@ -429,6 +430,16 @@ static void script_box(Mtx view, float ux, float uy, float len, float thick, flo
     GXEnd();
 }
 
+#include "script_model_order.inc"
+static void script_mesh_render(Mtx view, int alpha)
+{
+    int order[SCRIPT_MESH_INSTANCES], i;
+    int count = script_mesh_order(view, alpha, order);
+    Script_ModelDraw(-1, view);
+    for (i = 0; i < count; ++i) Script_ModelDraw(order[i], view);
+    Script_ModelDraw(-2, view); /* flush before another GObj changes GX state */
+}
+
 static void script_stage_render(HSD_GObj* gobj, int code)
 {
     Mtx view;
@@ -440,8 +451,15 @@ static void script_stage_render(HSD_GObj* gobj, int code)
         seen |= 1 << (code & 7);
         OSReport("script stage: world pass render code %d\n", code); /* once per pass code */
     }
-    if (code != 0 || !script_stage_geometry || gx_suppress_draws || script_stage.cube == NULL) {
-        return; /* the opaque pass only */
+    if ((code != 0 && code != 2) || !script_stage_geometry || gx_suppress_draws || script_stage.cube == NULL) {
+        return;
+    }
+    if (code == 2) {
+        HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), view);
+        HSD_StateInvalidate(-1);
+        script_mesh_render(view, 1);
+        HSD_StateInvalidate(-1);
+        return;
     }
     HSD_StateInvalidate(-1);
     HSD_StateInitTev();
@@ -515,29 +533,7 @@ static void script_stage_render(HSD_GObj* gobj, int code)
             Script_StageModelDraw(model, view, s->x0, s->y0, s->x1, s->y1);
         }
     }
-    /* Build a transient stable draw order: layer, opaque before alpha, then asset
-     * for opaque geometry. No native ordering state can survive a snapshot load. */
-    {
-        int order[SCRIPT_MESH_INSTANCES], count = 0, n;
-        for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i) {
-            ScriptMeshInstance* m = &script_stage.instance[i];
-            int alpha = (m->field[SM_TINT] & 255) != 255;
-            if (!m->handle || !m->field[SM_VISIBLE]) continue;
-            for (n = count; n > 0; --n) {
-                ScriptMeshInstance* prev = &script_stage.instance[order[n - 1]];
-                int prev_alpha = (prev->field[SM_TINT] & 255) != 255;
-                if (prev->field[SM_LAYER] < m->field[SM_LAYER]) break;
-                if (prev->field[SM_LAYER] == m->field[SM_LAYER] &&
-                    (prev_alpha < alpha || (prev_alpha == alpha &&
-                     (alpha || prev->asset <= m->asset)))) break;
-                order[n] = order[n - 1];
-            }
-            order[n] = i;
-            ++count;
-        }
-        Script_ModelDraw(-1, view);
-        for (i = 0; i < count; ++i) Script_ModelDraw(order[i], view);
-    }
+    script_mesh_render(view, 0);
     HSD_StateInvalidate(-1);
 }
 

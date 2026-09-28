@@ -5,7 +5,11 @@ static int t_model_options(lua_State *L)
     gs_model_options(L, 1, field);
     lua_pushnumber(L, gs_camera_float(field[SM_X]));
     lua_pushinteger(L, (unsigned)field[SM_TINT]);
-    return 2;
+    lua_pushnumber(L, gs_camera_float(field[SM_SX]));
+    lua_pushnumber(L, gs_camera_float(field[SM_SY]));
+    lua_pushnumber(L, gs_camera_float(field[SM_SZ]));
+    lua_pushboolean(L, field[SM_ALPHA]);
+    return 6;
 }
 static int t_model_open(lua_State *L)
 {
@@ -29,8 +33,9 @@ static int test_script_model_api(void)
     GmCollision coll;
     int i, rc = 1, fail_line = 0, old_count = gs_stage_nmodels;
     if (t_exec("= type(gd.model_load),type(gd.model_release),type(gd.model_spawn),"
-               "type(gd.model_move),type(gd.model_set),type(gd.model_despawn),type(gd.model_get)", out, sizeof out) ||
-        strcmp(out, "function\nfunction\nfunction\nfunction\nfunction\nfunction\nfunction\n")) {
+               "type(gd.model_move),type(gd.model_set),type(gd.model_despawn),type(gd.model_get),"
+               "type(gd.model_instances),type(gd.stage_bounds)", out, sizeof out) ||
+        strcmp(out, "function\nfunction\nfunction\nfunction\nfunction\nfunction\nfunction\nfunction\nfunction\n")) {
         gw_test_fail("model API registration: %s", out); return 1;
     }
     if (t_exec("assert(not pcall(gd.model_load, 'kit')); assert(not pcall(gd.model_spawn, 1, {})); "
@@ -39,6 +44,9 @@ static int test_script_model_api(void)
         gw_test_fail("console model mutation was allowed"); return 1;
     }
     if (old_count) { gw_test_fail("model test requires an empty headless scene"); return 1; }
+    if (t_exec("assert(#gd.model_instances()==0); assert(gd.stage_bounds()==nil)", out, sizeof out)) {
+        gw_test_fail("read-only model queries outside a match: %s", out); return 1;
+    }
     if (gs_stage_tex_levels(12, 12, 576) != 1 || gs_stage_tex_levels(8, 8, 320) != 2 ||
         gs_stage_tex_levels(12, 12, 720) != 0) {
         gw_test_fail("model mip/tile validation"); return 1;
@@ -74,7 +82,10 @@ static int test_script_model_api(void)
     lua_pushstring(L, dir); lua_pushcclosure(L, t_model_open, 1); lua_setglobal(L, "open_model");
     if (luaL_dostring(L,
         "local x,t=options{x=12.5,tint=0x12345678}; assert(x==12.5 and t==0x12345678) "
+        "local _,_,sx,sy,sz,a=options{scale=-1,scale_x=-2,scale_y=3,scale_z=-0.5,alpha=true}; "
+        "assert(sx==-2 and sy==3 and sz==-0.5 and a) "
         "for _,v in ipairs{{scale=0},{scale=101},{x=0/0},{z=math.huge},{layer=9},"
+        "{scale_x=0},{scale_y=math.huge},{scale_z=-101},{alpha=1},"
         "{rot=361},{visible=1},{tint=-1},{tint=0x100000000}} do assert(not pcall(options,v)) end "
         "assert(open_model('a')==open_model('A')); assert(open_model('b')~=open_model('a'))")) {
         gw_test_fail("model Lua validation/cache: %s", lua_tostring(L, -1)); { fail_line = __LINE__; goto done; }

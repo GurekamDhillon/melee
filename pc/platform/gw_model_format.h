@@ -7,7 +7,7 @@
 #include <string.h>
 #define GM_COLLISION_LINES 32
 typedef struct { float x0, y0, x1, y1; int kind, flags; } GmLine;
-typedef struct { char atlas[49]; int count; GmLine line[GM_COLLISION_LINES]; } GmCollision;
+typedef struct { char atlas[49]; int count, alpha; GmLine line[GM_COLLISION_LINES]; } GmCollision;
 
 static int gm_model_path(const char *s)
 {
@@ -85,6 +85,9 @@ static int gm_collision_parse(const char *p, GmCollision *out)
             if ((seen & 2) || !gm_string(&p, out->atlas, sizeof out->atlas) ||
                 !gm_model_path(out->atlas) || strchr(out->atlas, '/')) return 0;
             seen |= 2;
+        } else if (!strcmp(key, "alpha")) {
+            if ((seen & 8) || !gm_small_integer(&p, 1, &out->alpha)) return 0;
+            seen |= 8;
         } else if (!strcmp(key, "lines")) {
             if ((seen & 4) || !gm_take(&p, '[')) return 0;
             seen |= 4; gm_ws(&p);

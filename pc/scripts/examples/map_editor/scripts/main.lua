@@ -449,6 +449,17 @@ local function doc_restore(d)
   end
   for slot,b in pairs(spawns) do pcall(gd.stage_set_spawn,slot,b.x,b.y) end
 end
+local function outside_bounds(p)
+  local b=bounds.blast
+  local cam=bounds.camera
+  if (not b or not cam) and gd.stage_bounds then
+    local live=gd.stage_bounds() or {}
+    b=b or live.blast
+    cam=cam or live.camera
+  end
+  if b and (p.x<b.left or p.x>b.right or p.y<b.bottom or p.y>b.top) then return 'the blast zone' end
+  if cam and (p.x<cam.left or p.x>cam.right or p.y<cam.bottom or p.y>cam.top) then return 'the camera bounds' end
+end
 local function load_map(name)
   assert(offline(), 'active offline match required')
   name=file_name(name or filename)
@@ -505,6 +516,8 @@ local function place(duplicate, wx, wy)
   local target=clone(parts) target[#target+1]=p
   acted(target,(duplicate and 'Duplicated ' or 'Placed ')..p.part)
   selected=p.id
+  local out=outside_bounds(p)
+  if out then say(('Placed outside %s'):format(out)) toast('Outside '..out) end
   remember(p.part)
   if duplicate then toast('Duplicated '..p.part:gsub('^bf_','')) end
 end
@@ -1333,6 +1346,7 @@ HELP = {
   {'action log', 'map log on: click a step to go back'},
   {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (drag a green edge)'},
   {'spawns', 'map spawn <slot> [x y]: starts 0-3, respawns 4-7, item spawns 127-146'},
+  {'out of bounds', 'placing outside the blast zone / camera bounds warns (toast + log)'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},

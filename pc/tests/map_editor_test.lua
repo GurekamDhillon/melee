@@ -6,6 +6,10 @@ local safe_w = 640
 local stub_camera, stub_blast = nil, nil
 local stub_spawn = nil
 local stub_spawns = {}
+local logs = {}
+local function logged(pattern)
+  for _,m in ipairs(logs) do if tostring(m):find(pattern,1,true) then return true end end
+end
 local function spawn_at(slot)
   for _,s in ipairs(stub_spawns) do if s[1]==slot then return s end end
 end
@@ -14,7 +18,7 @@ local mouse_state = {x=-1000, y=-1000, buttons=0}
 local camera = {eye={x=0,y=0,z=100}, interest={x=0,y=0,z=0}, fov=30, roll=0, mode='standard'}
 local function copy(t) local o={} for k,v in pairs(t) do o[k]=v end return o end
 gd = {
-  command=function(n,f) commands[n]=f end, log=function() end,
+  command=function(n,f) commands[n]=f end, log=function(s) logs[#logs+1]=s end,
   match=function() return {active=active, netplay=online} end,
   player=function() return p end,
   fly=function(_, v) if v~=nil then flying=v end return flying end,
@@ -423,5 +427,16 @@ mouse_state={x=450, y=200, buttons=0} on_frame_pre()
 assert(stub_camera and math.abs(stub_camera[1]-448.5)<0.01, 'dragging the camera left edge moves it (snapped)')
 command('undo')
 assert(stub_camera and math.abs(stub_camera[1]-400)<0.01, 'a bounds drag is one undo step (back to the pre-drag edge)')
+command('off')
+-- P2 guardrail: placing outside the bounds warns (bible §6.7 #8)
+active=false on_match_end()
+active=true models={} on_match_start()
+command('on') command('clear')
+command('bounds restore')
+command('bounds camera -10 10 10 -10')
+logs={}
+mouse_state={x=400, y=240, buttons=1} on_frame_pre()
+mouse_state={x=400, y=240, buttons=0} on_frame_pre()
+assert(logged('outside the'), 'placing outside the bounds logs a warning')
 command('off')
 print('map_editor_test: PASS')

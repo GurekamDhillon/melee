@@ -54,6 +54,7 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Action log | `map log on`: named steps; click one to step back or a `redo:` row to step forward (`map history <n>` / `map redo <n>`) | — |
 | Stage bounds | `map bounds capture` stores the live camera/blast bounds in the layout (v2, drawn green/red); `bounds restore` clears them; `bounds camera l r t b` / `bounds blast l r t b` set them; drag a green edge handle to move a camera edge (one undo step) | — |
 | Spawns | `map spawn <slot>` reads a spawn point; `map spawn <slot> <x> <y>` moves it (saved in the v2 layout). Slots: 0-3 starts, 4-7 respawns, 127-146 item spawns | — |
+| Out-of-bounds warning | placing or duplicating outside the blast zone / camera bounds raises a toast and a log line (uses the layout bounds, else the live stage) | — |
 | Panel rows | click a tool, part or action row | — |
 | Exit editing, keep map live | F6 | Z menu: Exit editor / play |
 

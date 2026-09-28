@@ -41,6 +41,8 @@ local autoload, broken = nil, false
 local modal, error_text, last_action = nil, nil, nil -- hybrid-transform state; status severities (bible §4.3, §5.6, §5.9)
 local field_drag, typing, handles_ui = nil, nil, nil -- inspector scrub / typed entry / gizmo hit geometry
 local ghost_on, ghost = true, nil -- placement preview instance (bible §5.8)
+local action_log, undo_names, log_open, log_rows = {}, {}, false, nil -- named history (bible §5.6)
+local search, search_rows = nil, nil -- action search overlay (bible §5.10)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -299,6 +301,16 @@ local function apply(target, record)
   parts=clone(target) dirty=true
   if not find(parts,selected) then selected=parts[#parts] and parts[#parts].id end
 end
+local function name_undo(label)
+  if #undo>0 then undo_names[#undo]=label end
+  action_log[#action_log+1]=label
+  if #action_log>8 then table.remove(action_log,1) end
+end
+local function acted(target, label)
+  apply(target, true)
+  name_undo(label)
+  say(label, 'action')
+end
 local function opt_scale(p,k)
   local v=p[k]
   if v==nil then return 1 end
@@ -366,7 +378,7 @@ local function load_map(name)
   -- Text-only chunk with no globals: files cannot access gd, io or the script environment.
   local chunk,why=load(text,'@'..name,'t',{}) assert(chunk,why)
   local target=validate(chunk())
-  apply(target,true) filename=name dirty=false
+  acted(target,'Loaded '..name) filename=name dirty=false
   say('Loaded '..#parts..' parts from '..name) toast('Loaded '..#parts..' parts')
 end
 local function set_overlay()
@@ -402,8 +414,9 @@ local function place(duplicate, wx, wy)
   p=clone(p)
   if wx then p.x,p.y,p.z=sn(wx),sn(wy),depth else p.x,p.y,p.z=fly_cursor() end
   next_id=next_id+1 p.id=next_id
-  local target=clone(parts) target[#target+1]=p apply(target,true) selected=p.id
-  say((duplicate and 'Duplicated ' or 'Placed ')..p.part,'action')
+  local target=clone(parts) target[#target+1]=p
+  acted(target,(duplicate and 'Duplicated ' or 'Placed ')..p.part)
+  selected=p.id
   remember(p.part)
   if duplicate then toast('Duplicated '..p.part:gsub('^bf_','')) end
 end
@@ -431,17 +444,23 @@ local function transform(mode,delta,record,wx,wy)
   elseif mode=='mirror' then p['scale_'..delta]=-scale_of(p,'scale_'..delta)
   elseif mode=='unscale' then p.scale,p.scale_x,p.scale_y,p.scale_z=1,1,1,1
   end
-  apply(target,record ~= false) say(mode..' '..p.part,'action')
+  if record~=false then acted(target,mode..' '..p.part) else apply(target,false) end
 end
 local function remove()
   edit() local target=clone(parts) local _,i=find(target,selected)
-  assert(i,'select a part first') table.remove(target,i) apply(target,true) say('Deleted part','action')
+  assert(i,'select a part first') table.remove(target,i) acted(target,'Deleted part')
 end
 local function history(back)
   edit() local from,to=back and undo or redo,back and redo or undo
   local target=from[#from] assert(target,back and 'Nothing to undo' or 'Nothing to redo')
   local old=clone(parts) apply(target,false) table.remove(from) to[#to+1]=old
+  if back then table.remove(undo_names) else undo_names[#undo_names+1]='Redo' end
+  action_log[#action_log+1]=back and 'Undo' or 'Redo'
+  if #action_log>8 then table.remove(action_log,1) end
   say(back and 'Undo' or 'Redo','action')
+end
+local function history_jump(n)
+  for _=1,n do if #undo==0 then break end history(true) end
 end
 local function cycle_tool()
   local i=1
@@ -509,6 +528,7 @@ local function modal_commit()
       undo[#undo+1]=m.base if #undo>HISTORY then table.remove(undo,1) end
       redo={}
       apply(target,false)
+      name_undo(m.mode..' '..tp.part)
       say(m.mode..' '..tp.part,'action')
     end
   end
@@ -570,8 +590,7 @@ local function field_set(field, value)
   elseif field=='scale' then p.scale=math.max(SCALE_MIN,math.min(SCALE_MAX,v))
   elseif field=='x' or field=='y' or field=='z' then p[field]=v
   else error('field: x|y|z|rot|scale') end
-  apply(target,true)
-  say(field..' '..string.format('%.2f',field_value(p,field)),'action')
+  acted(target,field..' '..string.format('%.2f',field_value(p,field)))
 end
 local function seg_dist(x1,y1,x2,y2,mx,my)
   local dx,dy=x2-x1,y2-y1
@@ -606,7 +625,7 @@ local ACTIONS = {
   {'New parts: collision on/off',function() collision=not collision end},
   {'New floors: flags 0..3',function() floor_flags=(floor_flags+1)%4 end},
   {'New parts: rotation +15',function() rotation=((rotation+15+180)%360)-180 end},
-  {'Clear map (undoable)',function() edit() apply({},true) say('Cleared map') toast('Cleared map') end},
+  {'Clear map (undoable)',function() edit() acted({},'Cleared map') toast('Cleared map') end},
   {'Exit editor / play',function() stop() say('Editor closed; map remains live') end},
   {'Next tool',cycle_tool},
   {'Tool: place',function() tool='place' axis_lock=nil say('Tool: place') end},
@@ -626,6 +645,19 @@ local ACTIONS = {
 }
 local function attempt(fn)
   local ok,why=pcall(fn) if not ok then say('Error: '..tostring(why),'error') end return ok
+end
+local function search_matches(text)
+  local out={}
+  text=(text or ''):lower()
+  for i,a in ipairs(ACTIONS) do
+    if text=='' or a[1]:lower():find(text,1,true) then out[#out+1]=i end
+  end
+  return out
+end
+local function search_execute(st, index)
+  local m=search_matches(st and st.text)
+  local i=m[math.min(math.max(index or (st and st.index) or 1,1),#m)]
+  if i then attempt(ACTIONS[i][2]) else say('No matching action') end
 end
 
 gd.command('map',function(arg)
@@ -661,7 +693,7 @@ gd.command('map',function(arg)
     elseif op=='delete' then remove()
     elseif op=='undo' then history(true)
     elseif op=='redo' then history(false)
-    elseif op=='clear' then edit() apply({},true)
+    elseif op=='clear' then edit() acted({},'Cleared map')
     elseif op=='part' then
       local want=name and (name:find('^bf_') and name or 'bf_'..name)
       local found=nil
@@ -675,6 +707,23 @@ gd.command('map',function(arg)
       local field,value=(name or ''):match('^(%S+)%s*(.-)%s*$')
       assert(field and value~='','map set <x|y|z|rot|scale> <value>')
       field_set(field,value)
+    elseif op=='log' then
+      log_open=(name~='off')
+      say(log_open and 'Action log on' or 'Action log off','action')
+    elseif op=='history' then
+      local n=math.max(1,math.floor(tonumber(name) or 1))
+      history_jump(n)
+    elseif op=='run' then
+      assert(name and name~='','map run <text>')
+      search_execute({text=name:lower(),index=1})
+    elseif op=='search' then
+      if name=='off' then
+        search=nil
+        say('Search off')
+      else
+        search={text=(name or ''):lower(),index=1}
+        say('Search on')
+      end
     elseif op=='ghost' then
       assert(name=='on' or name=='off','ghost on|off')
       ghost_on=name=='on'
@@ -683,7 +732,7 @@ gd.command('map',function(arg)
     elseif op=='filter' then
       filter=(name or ''):lower() filtering=false palette=1
       say(filter=='' and 'Filter cleared' or ('Filter: '..filter))
-    else error('map on|off|part <name>|tool <name>|filter [text]|ghost on|off|set <field> <value>|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
+    else error('map on|off|part <name>|tool <name>|filter [text]|ghost on|off|set <field> <value>|log [on|off]|history [n]|run <text>|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
   end)
 end,'map on/off; part <name>; tool <place|select|move|rotate|scale>; scale <factor>; mirror x|y; snap on|off; place/select/move/rotate/duplicate/delete/undo/redo/clear; save/load/play [file.lua]')
 
@@ -756,7 +805,7 @@ local function click_inspector(mx,my)
           edit()
           local target=clone(parts) local p=find(target,selected)
           p.collision=not p.collision
-          apply(target,true) say('collision '..(p.collision and 'on' or 'off'),'action')
+          acted(target,'collision '..(p.collision and 'on' or 'off'))
         end)
       elseif r.kind=='field' then
         field_drag={field=r.field, base=clone(parts), sx=mouse.x, sy=mouse.y, used=false}
@@ -765,10 +814,24 @@ local function click_inspector(mx,my)
           edit()
           local target=clone(parts) local p=find(target,selected)
           p.floor_flags=((p.floor_flags or 0)+1)%4
-          apply(target,true) say('floor flags '..p.floor_flags,'action')
+          acted(target,'floor flags '..p.floor_flags)
         end)
       end
       return true
+    end
+  end
+  return false
+end
+local function click_overlay(mx,my)
+  if help_open then return false end
+  if log_open and log_rows then
+    for _,r in ipairs(log_rows) do
+      if in_rect(mx,my,r) then history_jump(r.depth) return true end
+    end
+  end
+  if search and search_rows then
+    for _,r in ipairs(search_rows) do
+      if in_rect(mx,my,r) then local st=search search=nil search_execute(st,r.index) return true end
     end
   end
   return false
@@ -825,6 +888,7 @@ local function poll_mouse()
           undo[#undo+1]=f.base if #undo>HISTORY then table.remove(undo,1) end
           redo={}
           apply(t,false)
+          name_undo(f.field..' '..string.format('%.2f',field_value(tp,f.field)))
           say(f.field..' '..string.format('%.2f',field_value(tp,f.field)),'action')
         end
       else
@@ -848,7 +912,8 @@ local function poll_mouse()
   if right then
     if help_open then help_open=false else menu=not menu end
   elseif pressed then
-    if not click_panel(mouse.x,mouse.y) and not click_inspector(mouse.x,mouse.y) and mouse.over and not help_open then
+    if not click_panel(mouse.x,mouse.y) and not click_inspector(mouse.x,mouse.y) and
+       not click_overlay(mouse.x,mouse.y) and mouse.over and not help_open then
       local hmode,hax=hit_handle(mouse.x,mouse.y)
       if hmode then
         if modal_begin(hmode,hax,'mouse') then
@@ -899,6 +964,23 @@ function on_tick()
     if gd.key_pressed('ESCAPE') and not menu then help_open=false end
     if gd.key_pressed('DOWN') then help_first=math.min(math.max(1,#HELP-11),help_first+1) end
     if gd.key_pressed('UP') then help_first=math.max(1,help_first-1) end
+  end
+  if gd.key_pressed('SPACE') and not search and not typing and not filtering and not menu and not help_open then
+    search={text='',index=1}
+    say('Search actions: type, Up/Down, Enter runs, ESC closes')
+  end
+  if search then
+    local ch=''
+    for c in ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):gmatch('.') do
+      if gd.key_pressed(c) then ch=c end
+    end
+    if ch~='' then search.text=(search.text..ch):lower() search.index=1 end
+    if gd.key_pressed('BACKSPACE') then search.text=search.text:sub(1,-2) search.index=1 end
+    if gd.key_pressed('UP') then search.index=math.max(1,(search.index or 1)-1) end
+    if gd.key_pressed('DOWN') then search.index=(search.index or 1)+1 end
+    if gd.key_pressed('ENTER') then local st=search search=nil search_execute(st) end
+    if gd.key_pressed('ESCAPE') then search=nil say('Cancelled') end
+    old_pad=pad return
   end
   if typing then
     local ch=''
@@ -993,7 +1075,7 @@ function on_frame_pre()
   if mouse_api then poll_mouse() end
   ghost_sync()
   hover=hover_part()
-  if menu or help_open or modal or filtering or typing or field_drag or gd.key('CTRL') then return end
+  if menu or help_open or modal or filtering or typing or field_drag or search or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
   local dx=(gd.key('D') and 1 or 0)-(gd.key('A') and 1 or 0)
   local dy=(gd.key('W') and 1 or 0)-(gd.key('S') and 1 or 0)
@@ -1028,6 +1110,8 @@ HELP = {
   {'Shift+C', 'move constraint free / X / Y'},
   {'gizmo', 'drag the object handles: red/green move X/Y, cyan scale, gold ring rotate'},
   {'ghost', 'translucent placement preview; map ghost on|off'},
+  {'Space', 'search actions; Enter runs the top match'},
+  {'action log', 'map log on: click a step to go back'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},
@@ -1148,6 +1232,38 @@ function on_draw()
     local ty=356-(i-1)*22
     gd.fill(W-178,ty,166,18,0x0E1218E0)
     kit.text(W-170,ty+13,t.msg,'caption','gold',nil,{max_w=150})
+  end
+  log_rows=nil
+  if log_open then
+    local lw=300 local n=math.min(#undo_names,7)
+    local lh=44+n*18
+    local lx=(W-lw)/2 local ly=150
+    gd.fill(lx,ly,lw,lh,0x0E1218F0)
+    kit.panel(lx,ly,lw,lh,{piece=12,fill=PANEL_FILL})
+    kit.text(lx+12,ly+18,'ACTION LOG - click a step','caption','gold')
+    log_rows={}
+    for i=1,n do
+      local y=ly+26+(i-1)*18
+      log_rows[i]={depth=i,x=lx+6,y=y,w=lw-12,h=16}
+      kit.button(lx+6,y,lw-12,undo_names[#undo_names-i+1] or '','ng',{h=16})
+    end
+  end
+  search_rows=nil
+  if search then
+    local m=search_matches(search.text)
+    local sw=320 local rows=math.min(#m,7)
+    local sh=44+rows*18
+    local sx=(W-sw)/2 local sy=150
+    gd.fill(sx,sy,sw,sh,0x0E1218F0)
+    kit.panel(sx,sy,sw,sh,{piece=12,fill=PANEL_FILL})
+    kit.text(sx+12,sy+18,'SEARCH: '..search.text..'_','caption','gold')
+    search_rows={}
+    for i=1,rows do
+      local y=sy+26+(i-1)*18
+      search_rows[i]={index=i,x=sx+6,y=y,w=sw-12,h=16}
+      local sel=i==math.min(math.max(search.index or 1,1),math.max(#m,1))
+      kit.button(sx+6,y,sw-12,ACTIONS[m[i]][1],sel and 'sel' or 'ng',{h=16})
+    end
   end
   if help_open then gd.fill(0,0,W,480,0x000000A8) draw_help() end
 end

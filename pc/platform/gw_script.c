@@ -1590,13 +1590,26 @@ static int l_set_damage(lua_State *L) {
     return 0;
 }
 
-/* gd.hit(port, {damage, angle, kbg, bkb, from?}): feed a hit to Melee's collision
+/* enemies2: an explicit table target avoids aliasing handles 1-6 with fighter ports. */
+extern int gw_ScriptGame_EnemyHit(int handle, int from, int damage, int angle, int kbg, int bkb);
+static void gs_require_stage(lua_State *L, const char *what);
+static int gs_stage_handle_arg(lua_State *L, int arg);
+
+/* gd.hit(port or {enemy=handle}, {damage, angle, kbg, bkb, from?}): feed a hit to Melee's collision
  * damage result and fighter hit processing. All inputs are integers to keep it repeatable. */
 static int l_hit(lua_State *L) {
-    int slot = gs_slot_arg(L, 1), from = -1;
+    int slot = -1, enemy = 0, from = -1;
     lua_Integer damage, angle, kbg, bkb;
     luaL_checktype(L, 2, LUA_TTABLE);
     gs_require_offline(L, "hit");
+    if (lua_istable(L, 1)) {
+        gs_require_stage(L, "hit enemy");
+        lua_getfield(L, 1, "enemy");
+        enemy = gs_stage_handle_arg(L, -1);
+        lua_pop(L, 1);
+    } else {
+        slot = gs_slot_arg(L, 1);
+    }
     lua_getfield(L, 2, "damage"); damage = luaL_checkinteger(L, -1); lua_pop(L, 1);
     lua_getfield(L, 2, "angle"); angle = luaL_checkinteger(L, -1); lua_pop(L, 1);
     lua_getfield(L, 2, "kbg"); kbg = luaL_checkinteger(L, -1); lua_pop(L, 1);
@@ -1609,8 +1622,9 @@ static int l_hit(lua_State *L) {
         return luaL_error(L, "gd.hit: damage 0-500, angle 0-361, kbg/bkb 0-1000 required");
     }
     gs_rw_branch();
-    lua_pushboolean(L, gw_ScriptGame_Hit(slot, from, (int) damage, (int) angle,
-                                         (int) kbg, (int) bkb));
+    lua_pushboolean(L, enemy
+        ? gw_ScriptGame_EnemyHit(enemy, from, (int) damage, (int) angle, (int) kbg, (int) bkb)
+        : gw_ScriptGame_Hit(slot, from, (int) damage, (int) angle, (int) kbg, (int) bkb));
     return 1;
 }
 
@@ -4943,8 +4957,10 @@ static int l_spawn_target(lua_State *L) {
     return 1;
 }
 
-static const char *const gs_enemy_names[6] = {
-    "goomba", "koopa", "redead", "like_like", "octorok", "polar_bear"
+/* enemies2: keep these indices aligned with script_enemy_kinds. */
+#define GS_ENEMY_KINDS 7
+static const char *const gs_enemy_names[GS_ENEMY_KINDS] = {
+    "goomba", "koopa", "redead", "like_like", "octorok", "polar_bear", "topi"
 };
 
 static int l_spawn_enemy(lua_State *L) {
@@ -4952,8 +4968,8 @@ static int l_spawn_enemy(lua_State *L) {
     float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
     int i, facing = 1, h;
     gs_require_stage(L, "spawn_enemy");
-    for (i = 0; i < 6 && strcmp(name, gs_enemy_names[i]) != 0; ++i) {}
-    if (i == 6) return luaL_error(L, "unknown enemy kind: %s", name);
+    for (i = 0; i < GS_ENEMY_KINDS && strcmp(name, gs_enemy_names[i]) != 0; ++i) {}
+    if (i == GS_ENEMY_KINDS) return luaL_error(L, "unknown enemy kind: %s", name);
     if (!lua_isnoneornil(L, 4)) {
         luaL_checktype(L, 4, LUA_TTABLE);
         lua_getfield(L, 4, "facing");
@@ -6740,7 +6756,7 @@ void gw_Script_TargetBroken(int handle, int remaining) {
 
 void gw_Script_EnemyDefeated(int which, int handle) {
     GsEvent *e;
-    if (gs.L == NULL || gw_Snap_Resimulating() || which < 0 || which >= 6) return;
+    if (gs.L == NULL || gw_Snap_Resimulating() || which < 0 || which >= GS_ENEMY_KINDS) return;
     if (gs.nev >= GS_MAX_EVENTS) { gs.ev_dropped++; return; }
     e = &gs.ev[gs.nev++];
     memset(e, 0, sizeof *e);

@@ -34,8 +34,10 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Rotate selected about Z | R / T (+/-15 degrees); rotate tool: drag to face the pointer | R / L |
 | Scale selected | F7 / F8 (-10% / +10%), clamped 0.25..4 | Z menu: Scale -/+ |
 | Mirror selected | Shift+X / Shift+Y | Z menu: Mirror X / Y |
-| Move constraint | C: free / X only / Y only | Z menu: Move constraint |
-| Snap | G: on / off | Z menu: Snap on/off |
+| Transform (hold) | G / E / C hold: modal move / rotate / scale; tap: switch tool | — (pad holds LT/RT) |
+| Frame selection | F | — |
+| Move constraint | Shift+C: free / X only / Y only | Z menu: Move constraint |
+| Snap | Z: on / off | Z menu: Snap on/off |
 | Duplicate at cursor | Ctrl+D | Z menu: Duplicate |
 | Delete | Delete | Z menu: Delete |
 | Undo / redo | Ctrl+Z / Ctrl+Y | Z menu: Undo / Redo |

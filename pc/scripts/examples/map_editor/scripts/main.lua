@@ -37,6 +37,7 @@ local collision, floor_flags, overlay = true, 3, true
 local previous, old_pad, saved_states = nil, {}, {}
 local filename, dirty, status = 'layout.lua', false, 'F1 help | F6 edit | map play layout.lua: load'
 local autoload, broken = nil, false
+local modal, error_text, last_action = nil, nil, nil -- hybrid-transform state; status severities (bible §4.3, §5.6, §5.9)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -44,17 +45,22 @@ local SCALE_STEP, SCALE_MIN, SCALE_MAX = 1.1, 0.25, 4.0
 local hover, dragging, help_first = nil, false, 1
 local PANEL_FILL = 0x0E1218F2 -- opaque editor panels: the game behind must not read through the text
 local HINTS = {
-  place='LMB / Insert: place at the cursor; Up/Down: part; wheel: depth',
-  select='LMB / Tab: select the nearest part',
-  move='LMB drag: move; M: to cursor; C: constraint (free/X/Y)',
-  rotate='R / T: +-15 deg; LMB drag: face the pointer',
-  scale='F7 / F8: -10% / +10%; Shift+X / Shift+Y: mirror',
+  place='LMB/Ins: place; Up/Down: part; wheel: depth; hold G/E/C: transform',
+  select='LMB / Tab: select the nearest part; F: frame; hold G/E/C: transform',
+  move='hold G: drag to move; M: to cursor; Shift+C: constraint',
+  rotate='hold E: drag to face the pointer; R / T: +-15 deg',
+  scale='hold C: drag to scale; F7 / F8: -10% / +10%; Shift+X/Y: mirror',
 }
 local mouse = { x = -1000, y = -1000, buttons = 0, prev = 0, over = false, used = 0 }
 local map_hinv, map_key = nil, nil
 local mouse_api = gd.mouse ~= nil and gd.camera_get ~= nil
 
-local function say(s) status = tostring(s) gd.log('map_editor: ' .. status) end
+local function say(s, kind)
+  status = tostring(s)
+  if kind == 'error' then error_text = status
+  elseif kind == 'action' then last_action = status error_text = nil end
+  gd.log('map_editor: ' .. (kind == 'error' and 'error: ' or '') .. status)
+end
 local function offline()
   local m = gd.match()
   return m.active and not m.netplay
@@ -68,7 +74,12 @@ local function number(n)
   return type(n)=='number' and n==n and math.abs(n)<=100000
 end
 local function sign(n) return n < 0 and -1 or 1 end
-local function snap(n) local s=U*grid return math.floor(n/s+0.5)*s end
+-- Ctrl (hold) snaps hard to the grid, Shift (hold) takes a quarter step (bible §4.5).
+local function snap(n)
+  local s = U*grid
+  if gd.key('SHIFT') then s = s * 0.25 end
+  return math.floor(n/s+0.5)*s
+end
 local function sn(v) return snap_on and snap(v) or v end
 local function fly_cursor()
   local p=assert(gd.player(1), 'P1 is required for the flight cursor')
@@ -319,7 +330,7 @@ local function place(duplicate, wx, wy)
   if wx then p.x,p.y,p.z=sn(wx),sn(wy),depth else p.x,p.y,p.z=fly_cursor() end
   next_id=next_id+1 p.id=next_id
   local target=clone(parts) target[#target+1]=p apply(target,true) selected=p.id
-  say((duplicate and 'Duplicated ' or 'Placed ')..p.part)
+  say((duplicate and 'Duplicated ' or 'Placed ')..p.part,'action')
 end
 local function select_near(wx, wy)
   edit()
@@ -330,7 +341,7 @@ local function select_near(wx, wy)
     local distance=(p.x-x)^2+(p.y-y)^2+(p.z-z)^2
     if distance<d then best,d=p.id,distance end
   end
-  selected=best say(best and ('Selected '..find(parts,best).part) or 'No parts to select')
+  selected=best say(best and ('Selected '..find(parts,best).part) or 'No parts to select','action')
 end
 local function transform(mode,delta,record,wx,wy)
   edit() local target=clone(parts) local p=assert(find(target,selected), 'select a part first')
@@ -345,17 +356,17 @@ local function transform(mode,delta,record,wx,wy)
   elseif mode=='mirror' then p['scale_'..delta]=-scale_of(p,'scale_'..delta)
   elseif mode=='unscale' then p.scale,p.scale_x,p.scale_y,p.scale_z=1,1,1,1
   end
-  apply(target,record ~= false) say(mode..' '..p.part)
+  apply(target,record ~= false) say(mode..' '..p.part,'action')
 end
 local function remove()
   edit() local target=clone(parts) local _,i=find(target,selected)
-  assert(i,'select a part first') table.remove(target,i) apply(target,true) say('Deleted part')
+  assert(i,'select a part first') table.remove(target,i) apply(target,true) say('Deleted part','action')
 end
 local function history(back)
   edit() local from,to=back and undo or redo,back and redo or undo
   local target=from[#from] assert(target,back and 'Nothing to undo' or 'Nothing to redo')
   local old=clone(parts) apply(target,false) table.remove(from) to[#to+1]=old
-  say(back and 'Undo' or 'Redo')
+  say(back and 'Undo' or 'Redo','action')
 end
 local function cycle_tool()
   local i=1
@@ -375,9 +386,77 @@ local function rotate_to_mouse()
   transform('rotateto',deg)
 end
 
+local function frame_selection()
+  local p=assert(find(parts,selected),'select a part first')
+  depth=p.z
+  if gd.player(1) then gd.teleport(1,sn(p.x),sn(p.y)) end
+  say('Framed '..p.part,'action')
+end
+
+-- Hybrid transforms (bible §4.3-§4.5): holding G/E/C runs a modal transform that follows the
+-- pointer, commits on release and cancels on ESC; a quick tap switches tool instead. Arrows lock
+-- the axis during a modal. The base snapshot makes the commit idempotent.
+local function modal_point(base)
+  local target=clone(base)
+  local p=find(target,selected) if not p then return nil end
+  local wx,wy=mouse_world()
+  if modal.mode=='move' then
+    if modal.ax=='x' then p.x=sn(wx or p.x)
+    elseif modal.ax=='y' then p.y=sn(wy or p.y)
+    else p.x,p.y,p.z=sn(wx or p.x),sn(wy or p.y),depth end
+  elseif modal.mode=='rotate' then
+    if wx then
+      local deg=math.deg(math.atan(wy-p.y,wx-p.x))
+      if snap_on then deg=math.floor(deg/15+0.5)*15 end
+      p.rot=((deg+180)%360)-180
+    end
+  elseif wx then
+    local d=math.max(0.5,math.sqrt((wx-p.x)^2+(wy-p.y)^2))
+    p.scale=math.max(SCALE_MIN,math.min(SCALE_MAX,scale_of(p,'scale')*(d/modal.d0)))
+  end
+  return target
+end
+local function modal_key(name, mode)
+  if gd.key_pressed(name) and not (modal and modal.mode==mode) then
+    local p=find(parts,selected)
+    if not p then tool=mode axis_lock=nil say('Tool: '..mode,'action') return true end
+    local wx,wy=mouse_world()
+    modal={mode=mode, base=clone(parts), mx=mouse.x, my=mouse.y, used=false, ax=axis_lock,
+           d0=wx and math.max(0.5,math.sqrt((wx-p.x)^2+(wy-p.y)^2)) or 1}
+  end
+  if not (modal and modal.mode==mode) then return false end
+  if gd.key_pressed('ESCAPE') then apply(modal.base,false) modal=nil say('Cancelled') return true end
+  if gd.key_pressed('LEFT') or gd.key_pressed('RIGHT') then
+    modal.ax=(modal.ax=='x') and nil or 'x' say('Axis: '..(modal.ax or 'free'))
+  elseif gd.key_pressed('UP') or gd.key_pressed('DOWN') then
+    modal.ax=(modal.ax=='y') and nil or 'y' say('Axis: '..(modal.ax or 'free'))
+  end
+  if not gd.key(name) then
+    if modal.used then
+      local target=modal_point(modal.base)
+      local tp,bp=find(target or {},selected),find(modal.base,selected)
+      if target and tp and bp and not same(tp,bp) then
+        undo[#undo+1]=modal.base if #undo>HISTORY then table.remove(undo,1) end
+        redo={}
+        apply(target,false)
+        say(mode..' '..tp.part,'action')
+      end
+    else
+      tool=mode axis_lock=nil say('Tool: '..mode,'action')
+    end
+    modal=nil
+  elseif math.abs(mouse.x-modal.mx)+math.abs(mouse.y-modal.my)>3 then
+    modal.used=true
+    local target=modal_point(modal.base)
+    if target then apply(target,false) end
+  end
+  return true
+end
+
 -- The first ten entries keep their order: the contract tests and muscle memory rely on it.
 local ACTIONS = {
-  {'Place',function() place(false) end}, {'Select nearest',select_near},
+  {'Place',function() place(false) end},   {'Select nearest',select_near},
+  {'Frame selection',frame_selection},
   {'Move selected to cursor',function() transform('move') end},
   {'Rotate selected +15',function() transform('rotate',15) end},
   {'Rotate selected -15',function() transform('rotate',-15) end},
@@ -408,7 +487,7 @@ local ACTIONS = {
   {'Help / keybinds',function() help_open=not help_open end},
 }
 local function attempt(fn)
-  local ok,why=pcall(fn) if not ok then say('Error: '..tostring(why)) end return ok
+  local ok,why=pcall(fn) if not ok then say('Error: '..tostring(why),'error') end return ok
 end
 
 gd.command('map',function(arg)
@@ -506,6 +585,7 @@ local function poll_mouse()
   elseif mouse.used>0 then
     mouse.used=mouse.used-1
   end
+  if modal then mouse.prev=mouse.buttons return end -- a modal owns the pointer; no clicks, no depth
   local lmb=(mouse.buttons & 1)==1
   local pressed=lmb and (mouse.prev & 1)==0
   local right=(mouse.buttons & 2)==2 and (mouse.prev & 2)==0
@@ -569,6 +649,15 @@ function on_tick()
     if gd.key_pressed('ENTER') or pressed('A') then attempt(ACTIONS[action_index][2]) end
     if gd.key_pressed('ESCAPE') or pressed('B') then menu=false end
   else
+    local handled = false
+    if not help_open then
+      handled = (modal and ((modal.mode=='move' and modal_key('G','move')) or
+                            (modal.mode=='rotate' and modal_key('E','rotate')) or
+                            (modal.mode=='scale' and modal_key('C','scale')))) or
+                (not modal and not gd.key('SHIFT') and
+                 (modal_key('G','move') or modal_key('E','rotate') or modal_key('C','scale')))
+    end
+    if handled then old_pad=pad return end
     for i,t in ipairs(TOOLS) do
       if gd.key_pressed(tostring(i)) then tool=t axis_lock=nil say('Tool: '..t) end
     end
@@ -585,8 +674,9 @@ function on_tick()
     if gd.key_pressed('T') or pressed('L') then attempt(function() transform('rotate',-15) end) end
     if gd.key_pressed('F7') then attempt(function() transform('scale',1/SCALE_STEP) end) end
     if gd.key_pressed('F8') then attempt(function() transform('scale',SCALE_STEP) end) end
-    if gd.key_pressed('C') then cycle_axis() end
-    if gd.key_pressed('G') then snap_on=not snap_on say('Snap '..(snap_on and 'on' or 'off')) end
+    if gd.key('SHIFT') and gd.key_pressed('C') then cycle_axis() end
+    if gd.key_pressed('Z') then snap_on=not snap_on say('Snap '..(snap_on and 'on' or 'off'),'action') end
+    if gd.key_pressed('F') then attempt(frame_selection) end
     if gd.key_pressed('DELETE') then attempt(remove) end
     if gd.key_pressed('F3') then overlay=not overlay set_overlay() end
     if gd.key('CTRL') then
@@ -607,7 +697,7 @@ function on_frame_pre()
   if not editing or not offline() then return end
   if mouse_api then poll_mouse() end
   hover=hover_part()
-  if menu or help_open or gd.key('CTRL') then return end
+  if menu or help_open or modal or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
   local dx=(gd.key('D') and 1 or 0)-(gd.key('A') and 1 or 0)
   local dy=(gd.key('W') and 1 or 0)-(gd.key('S') and 1 or 0)
@@ -622,6 +712,10 @@ HELP = {
   {'F1 / H', 'this help (ESC or click closes)'},
   {'F2 / Z', 'action menu (all commands)'},
   {'1..5', 'tool: place, select, move, rotate, scale'},
+  {'G / E / C', 'hold: move / rotate / scale (tap: switch tool)'},
+  {'F', 'frame selection (fly cursor + depth)'},
+  {'Shift / Ctrl', 'fine step / hard snap while dragging'},
+  {'Z', 'snap toggle'},
   {'WASD', 'fly (Shift fast); P1 stick on pad'},
   {'LMB', 'use the tool at the pointer'},
   {'drag LMB', 'move tool: drag the selection'},
@@ -634,8 +728,7 @@ HELP = {
   {'rotate drag', 'rotate tool: face the pointer'},
   {'F7 / F8', 'scale -10% / +10%'},
   {'Shift+X / Y', 'mirror selection X / Y'},
-  {'C', 'move constraint free / X / Y'},
-  {'G', 'snap on / off'},
+  {'Shift+C', 'move constraint free / X / Y'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},
   {'Delete', 'remove selection'},
@@ -704,7 +797,7 @@ function on_draw()
   gd.fill(8,44,246,338,0x0E1218FF)
   kit.panel(8,44,246,338,{piece=16,fill=PANEL_FILL})
   kit.text(20,62,'TOOL','caption','gold')
-  kit.text(20,180,tool=='place' and 'PART' or 'ACTIONS','caption','gold')
+  kit.text(20,186,tool=='place' and 'PART' or 'ACTIONS','caption','gold')
   for _,r in ipairs(panel_rows()) do
     local state=(r.kind=='tool' and tool==TOOLS[r.index]) or
                 (r.kind=='part' and palette==r.index) or
@@ -713,12 +806,15 @@ function on_draw()
     local value = r.kind=='tool' and tostring(r.index) or r.value
     kit.button(r.x,r.y,r.w,r.label,state and 'sel' or 'ng',{h=r.h,value=value})
   end
-  gd.fill(8,386,624,44,0x0E1218FF)
-  kit.panel(8,386,624,44,{piece=12,fill=PANEL_FILL})
-  kit.text(20,404,HINTS[tool],'caption','bone',nil,{max_w=430})
-  kit.text(628,404,('XYZ %.2f %.2f %.2f | grid %.3g | snap %s | parts %d/%d')
-    :format(x,y,z,U*grid,snap_on and 'on' or 'off',#parts,MAX_PARTS),'caption','muted','right',{max_w=190})
-  kit.text(20,424,(dirty and '* ' or '')..filename..' | '..status,'caption','gold',nil,{max_w=598})
+  gd.fill(8,376,624,54,0x0E1218FF)
+  kit.panel(8,376,624,54,{piece=12,fill=PANEL_FILL})
+  kit.text(20,392,HINTS[tool],'caption','bone',nil,{max_w=440})
+  kit.text(628,392,('XYZ %.2f %.2f %.2f'):format(x,y,z),'caption','muted','right',{max_w=170})
+  kit.text(20,408,(dirty and '* ' or '')..filename,'caption','muted',nil,{max_w=300})
+  kit.text(628,408,('grid %.2g m | snap %s | parts %d/%d'):format(grid,snap_on and 'on' or 'off',#parts,MAX_PARTS),
+    'caption','muted','right',{max_w=300})
+  local line=error_text and ('error: '..error_text) or (last_action or '')
+  kit.text(20,424,line,'caption',error_text and 'danger' or 'gold',nil,{max_w=598})
   if help_open then gd.fill(0,0,640,480,0x000000A8) draw_help() end
 end
 

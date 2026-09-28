@@ -116,6 +116,10 @@ end
 local function toast(msg)
   toasts[#toasts+1]={msg=msg,t=100} if #toasts>3 then table.remove(toasts,1) end
 end
+local function canvas_w()
+  local a=gd.safe_area and gd.safe_area()
+  return a and tonumber(a.w) or 640
+end
 
 -- world/screen homography --------------------------------------------------------------------
 -- The projection is opaque to Lua (fov and aspect live in the engine, and widescreen changes
@@ -608,21 +612,22 @@ end
 local function inspector_rows()
   local rows={}
   local p=find(parts,selected)
+  local x=canvas_w()-240
   local y=70
   if not p then
-    rows[#rows+1]={kind='info',label='no selection',x=400,y=y,w=224,h=20}
+    rows[#rows+1]={kind='info',label='no selection',x=x,y=y,w=224,h=20}
     return rows
   end
-  rows[#rows+1]={kind='name',label=p.part:gsub('^bf_',''),x=400,y=y,w=224,h=20}
+  rows[#rows+1]={kind='name',label=p.part:gsub('^bf_',''),x=x,y=y,w=224,h=20}
   y=y+24
   for _,f in ipairs({{'x','%.2f'},{'y','%.2f'},{'z','%.2f'},{'rot','%.1f'},{'scale','%.2f'}}) do
     local value=f[1]=='scale' and scale_of(p,'scale') or (p[f[1]] or 0)
-    rows[#rows+1]={kind='field',field=f[1],label=f[1],value=string.format(f[2],value),x=400,y=y,w=224,h=18}
+    rows[#rows+1]={kind='field',field=f[1],label=f[1],value=string.format(f[2],value),x=x,y=y,w=224,h=18}
     y=y+20
   end
-  rows[#rows+1]={kind='collision',label='collision',value=p.collision and 'on' or 'off',x=400,y=y,w=224,h=18}
+  rows[#rows+1]={kind='collision',label='collision',value=p.collision and 'on' or 'off',x=x,y=y,w=224,h=18}
   y=y+20
-  rows[#rows+1]={kind='flags',label='floor flags',value=tostring(p.floor_flags or 0),x=400,y=y,w=224,h=18}
+  rows[#rows+1]={kind='flags',label='floor flags',value=tostring(p.floor_flags or 0),x=x,y=y,w=224,h=18}
   return rows
 end
 local function click_inspector(mx,my)
@@ -666,7 +671,7 @@ local function poll_mouse()
   if not mouse_api or not editing then return end
   local mx,my,buttons,wheel=gd.mouse()
   mouse.x,mouse.y,mouse.buttons=tonumber(mx) or -1000,tonumber(my) or -1000,tonumber(buttons) or 0
-  mouse.over = mouse.x>=0 and mouse.x<640 and mouse.y>=0 and mouse.y<480
+  mouse.over = mouse.x>=0 and mouse.x<canvas_w() and mouse.y>=0 and mouse.y<480
   if mouse.over and (mouse.x~=mouse.lastx or mouse.y~=mouse.lasty) then
     mouse.used,mouse.lastx,mouse.lasty=60,mouse.x,mouse.y
   elseif mouse.used>0 then
@@ -851,22 +856,23 @@ local function draw_help()
   local pages=math.max(1,math.ceil(#HELP/visible))
   local last=math.max(1,#HELP-visible+1)
   if help_first>last then help_first=last end
-  gd.fill(40,24,560,432,0x0E1218FF)
-  kit.panel(40,24,560,432,{piece=16,fill=PANEL_FILL})
-  gd.box(40,24,560,432,0x8A92A0FF)
+  local hx=(canvas_w()-560)/2
+  gd.fill(hx,24,560,432,0x0E1218FF)
+  kit.panel(hx,24,560,432,{piece=16,fill=PANEL_FILL})
+  gd.box(hx,24,560,432,0x8A92A0FF)
   local track_y, track_h = 120, 300
   local kh = math.max(30, math.floor(track_h*visible/#HELP))
   local kf = (help_first-1)/math.max(1,#HELP-visible)
-  gd.fill(584,track_y,8,track_h,0x464F5EFF)
-  gd.fill(584,track_y+kf*(track_h-kh),8,kh,0xE8C878FF)
-  kit.text(60,54,'MAP EDITOR - KEYBINDS','label','gold')
-  kit.text(60,76,('page %d/%d - Up/Down scrolls - F1/H/ESC closes')
+  gd.fill(hx+544,track_y,8,track_h,0x464F5EFF)
+  gd.fill(hx+544,track_y+kf*(track_h-kh),8,kh,0xE8C878FF)
+  kit.text(hx+20,54,'MAP EDITOR - KEYBINDS','label','gold')
+  kit.text(hx+20,76,('page %d/%d - Up/Down scrolls - F1/H/ESC closes')
     :format((help_first-1)//visible+1,pages),'caption','muted',nil,{max_w=480})
-  kit.text(60,96,'pad: Z menu; Tab/X select; M/Y move; R/L rotate','caption','muted',nil,{max_w=480})
+  kit.text(hx+20,96,'pad: Z menu; Tab/X select; M/Y move; R/L rotate','caption','muted',nil,{max_w=480})
   for i=help_first,math.min(#HELP,help_first+visible-1) do
     local y=120+(i-help_first)*28
-    kit.text(60,y,HELP[i][1],'caption','bone')
-    kit.paragraph(170,y,410,HELP[i][2],'caption','muted')
+    kit.text(hx+20,y,HELP[i][1],'caption','bone')
+    kit.paragraph(hx+130,y,410,HELP[i][2],'caption','muted')
   end
 end
 function on_draw()
@@ -897,12 +903,13 @@ function on_draw()
   end
   local kit=gd.kit
   if not kit.available() then gd.text(12,12,'Map editor: menu kit assets missing; use map console commands') return end
-  gd.fill(8,10,624,30,0x0E1218FF)
-  kit.panel(8,10,624,30,{piece=12,fill=PANEL_FILL})
+  local W=canvas_w()
+  gd.fill(8,10,W-16,30,0x0E1218FF)
+  kit.panel(8,10,W-16,30,{piece=12,fill=PANEL_FILL})
   kit.text(20,30,'MAP EDITOR','label','gold')
   kit.text(150,30,('tool: %s%s'):format(tool,axis_lock and (' ['..axis_lock..' axis]') or ''),'caption','bone')
   kit.text(340,30,('part: %s'):format(palette_part():gsub('^bf_','')),'caption','bone',nil,{max_w=140})
-  kit.text(628,30,('%s%s'):format(dirty and '* ' or '',filename),'caption','muted','right',{max_w=200})
+  kit.text(W-12,30,('%s%s'):format(dirty and '* ' or '',filename),'caption','muted','right',{max_w=200})
   gd.fill(8,44,246,338,0x0E1218FF)
   kit.panel(8,44,246,338,{piece=16,fill=PANEL_FILL})
   kit.text(20,62,'TOOL','caption','gold')
@@ -915,28 +922,28 @@ function on_draw()
     local value = r.kind=='tool' and tostring(r.index) or r.value
     kit.button(r.x,r.y,r.w,r.label,state and 'sel' or 'ng',{h=r.h,value=value})
   end
-  gd.fill(392,44,240,338,0x0E1218FF)
-  kit.panel(392,44,240,338,{piece=16,fill=PANEL_FILL})
-  kit.text(404,62,'SELECTION','caption','gold')
+  gd.fill(W-248,44,240,338,0x0E1218FF)
+  kit.panel(W-248,44,240,338,{piece=16,fill=PANEL_FILL})
+  kit.text(W-236,62,'SELECTION','caption','gold')
   for _,r in ipairs(inspector_rows()) do
     kit.button(r.x,r.y,r.w,r.label,'ng',{h=r.h,value=r.value})
   end
-  gd.fill(8,376,624,54,0x0E1218FF)
-  kit.panel(8,376,624,54,{piece=12,fill=PANEL_FILL})
+  gd.fill(8,376,W-16,54,0x0E1218FF)
+  kit.panel(8,376,W-16,54,{piece=12,fill=PANEL_FILL})
   kit.text(20,392,HINTS[tool],'caption','bone',nil,{max_w=440})
-  kit.text(628,392,('XYZ %.2f %.2f %.2f'):format(x,y,z),'caption','muted','right',{max_w=170})
+  kit.text(W-12,392,('XYZ %.2f %.2f %.2f'):format(x,y,z),'caption','muted','right',{max_w=170})
   kit.text(20,408,(dirty and '* ' or '')..filename,'caption','muted',nil,{max_w=300})
-  kit.text(628,408,('grid %.2g m | snap %s | parts %d/%d'):format(grid,snap_on and 'on' or 'off',#parts,MAX_PARTS),
+  kit.text(W-12,408,('grid %.2g m | snap %s | parts %d/%d'):format(grid,snap_on and 'on' or 'off',#parts,MAX_PARTS),
     'caption','muted','right',{max_w=300})
   local line=error_text and ('error: '..error_text) or (last_action or '')
   kit.text(20,424,line,'caption',error_text and 'danger' or 'gold',nil,{max_w=598})
   for i=#toasts,1,-1 do if toasts[i].t<=0 then table.remove(toasts,i) end end
   for i,t in ipairs(toasts) do
     local ty=356-(i-1)*22
-    gd.fill(462,ty,166,18,0x0E1218E0)
-    kit.text(470,ty+13,t.msg,'caption','gold',nil,{max_w=150})
+    gd.fill(W-178,ty,166,18,0x0E1218E0)
+    kit.text(W-170,ty+13,t.msg,'caption','gold',nil,{max_w=150})
   end
-  if help_open then gd.fill(0,0,640,480,0x000000A8) draw_help() end
+  if help_open then gd.fill(0,0,W,480,0x000000A8) draw_help() end
 end
 
 -- Model slots are snapshotted, Lua is not. Pair manual savestates with document snapshots;

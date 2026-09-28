@@ -52,16 +52,29 @@ struct {
   bool logged = false;
 } g_mouse;
 
-/* Window point -> the 640x480 picture (uniform scale, centred: what draw_script_list does). */
+/* The script overlay fills the frame: height 480, the width the window's aspect (canvas_w = W/s).
+ * 640x480 stays the origin and the minimum; a 16:9 window widens the canvas (~853). */
+void script_map(float ww, float wh, float *s, float *ox, float *oy, float *cw) {
+  if (ww <= 0.0f || wh <= 0.0f) {
+    *s = 1.0f; *ox = 0.0f; *oy = 0.0f; *cw = 640.0f;
+    return;
+  }
+  *s = wh / 480.0f;
+  *ox = 0.0f;
+  *oy = 0.0f;
+  *cw = ww / *s;
+}
+
+/* Window point -> the script canvas above (what draw_script_list does). */
 bool mouse_map(int ww, int wh, float px, float py, float *x, float *y) {
+  float s, ox, oy, cw;
   if (ww <= 0 || wh <= 0) {
     return false;
   }
-  const float sx = ww / 640.0f, sy = wh / 480.0f, s = sx < sy ? sx : sy;
-  const float ox = (ww - 640.0f * s) * 0.5f, oy = (wh - 480.0f * s) * 0.5f;
+  script_map((float) ww, (float) wh, &s, &ox, &oy, &cw);
   *x = (px - ox) / s;
   *y = (py - oy) / s;
-  return *x >= 0.0f && *x < 640.0f && *y >= 0.0f && *y < 480.0f;
+  return *x >= 0.0f && *x < cw && *y >= 0.0f && *y < 480.0f;
 }
 
 void mouse_to_kit(SDL_WindowID wid, float px, float py) {
@@ -255,9 +268,9 @@ void draw_script_list(const ImGuiIO &io) {
   if (n == 0) {
     return;
   }
-  const float sx = io.DisplaySize.x / 640.0f, sy = io.DisplaySize.y / 480.0f;
-  const float s = sx < sy ? sx : sy;
-  const float ox = (io.DisplaySize.x - 640.0f * s) * 0.5f, oy = (io.DisplaySize.y - 480.0f * s) * 0.5f;
+  float s = 1.0f, ox = 0.0f, oy = 0.0f, cw = 640.0f;
+  script_map(io.DisplaySize.x, io.DisplaySize.y, &s, &ox, &oy, &cw);
+  (void) cw;
   ImDrawList *dl = ImGui::GetForegroundDrawList();
   ImFont *font = ImGui::GetFont();
   for (int i = 0; i < n; ++i) {
@@ -521,6 +534,7 @@ extern "C" void gw_Console_Draw(void) {
     draw_script_list(io); /* the console covers the top of the screen; overlays pause under it */
   }
   {
+    /* Host readouts stay in the centred 4:3 picture; the script cursor follows the script canvas. */
     const float sx = io.DisplaySize.x / 640.0f, sy = io.DisplaySize.y / 480.0f;
     const float s = sx < sy ? sx : sy;
     const float ox = (io.DisplaySize.x - 640.0f * s) * 0.5f, oy = (io.DisplaySize.y - 480.0f * s) * 0.5f;
@@ -530,7 +544,9 @@ extern "C" void gw_Console_Draw(void) {
     draw_fly_readout(s, ox, oy);
     ++g_mouse.frame;
     if (!gw_Console_Open()) {
-      draw_cursor(s, ox, oy);
+      float cs = 1.0f, cox = 0.0f, coy = 0.0f, ccw = 640.0f;
+      script_map(io.DisplaySize.x, io.DisplaySize.y, &cs, &cox, &coy, &ccw);
+      draw_cursor(cs, cox, coy);
     }
   }
   if (gw_Console_Open()) {
@@ -599,6 +615,31 @@ extern "C" int gw_Console_DrawLoadScreen(const char *title, const char *crumb, c
   draw_kit_quads(dl, q0, gw_Kit_QuadCount() - q0, s, ox, oy, false);
   gw_Kit_TruncateQuads(q0);
   return 1;
+}
+
+/* The script canvas width in overlay units (height is always 480): the overlay spans the window,
+ * so a 16:9 window reports ~853. gw_script scales gd.project by width/640 and exposes gd.safe_area. */
+extern "C" float gw_Console_ScriptWidth(void) {
+  if (ImGui::GetCurrentContext() == nullptr) {
+    return 640.0f;
+  }
+  const ImGuiIO &io = ImGui::GetIO();
+  float s, ox, oy, cw;
+  script_map(io.DisplaySize.x, io.DisplaySize.y, &s, &ox, &oy, &cw);
+  static bool logged = false;
+  if (!logged) {
+    logged = true;
+    int ww = 0, wh = 0, dw = 0, dh = 0;
+    SDL_Window *win = SDL_GetKeyboardFocus();
+    if (win != nullptr) {
+      SDL_GetWindowSize(win, &ww, &wh);
+      SDL_GetWindowSizeInPixels(win, &dw, &dh);
+    }
+    gw_log("gw: overlay: DisplaySize %.0fx%.0f fb %.3fx%.3f | window %dx%d drawable %dx%d | canvas %.1f",
+           io.DisplaySize.x, io.DisplaySize.y, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y,
+           ww, wh, dw, dh, cw);
+  }
+  return cw;
 }
 
 /* show_fps=1 and =2 share the menu kit's host renderer. They are called only by shim_vi.c
@@ -688,13 +729,17 @@ extern "C" {
 namespace {
 int test_mouse_map() {
   float x = 0, y = 0;
-  /* 1280x720: scale 1.5, the picture 960x720 from x 160 */
-  if (!mouse_map(1280, 720, 160.0f + 150.0f, 300.0f, &x, &y) || x < 99.9f || x > 100.1f || y < 199.9f || y > 200.1f) {
-    gw_test_fail("1280x720 mapped to (%.2f, %.2f), want (100, 200)", x, y);
+  /* 1280x720: scale 1.5, the canvas 853.3 wide (the overlay fills the frame). */
+  if (!mouse_map(1280, 720, 310.0f, 300.0f, &x, &y) || x < 206.6f || x > 206.8f || y < 199.9f || y > 200.1f) {
+    gw_test_fail("1280x720 mapped to (%.2f, %.2f), want (206.7, 200)", x, y);
     return 1;
   }
-  if (mouse_map(1280, 720, 100.0f, 300.0f, &x, &y)) {
-    gw_test_fail("a point in the pillarbox counted as inside");
+  if (mouse_map(1280, 720, 100.0f, 800.0f, &x, &y)) {
+    gw_test_fail("a point below the canvas counted as inside");
+    return 1;
+  }
+  if (!mouse_map(1280, 720, 1270.0f, 10.0f, &x, &y) || x < 846.6f || x > 846.8f) {
+    gw_test_fail("the wide right edge is not reachable (%f)", x);
     return 1;
   }
   if (!mouse_map(640, 480, 639.0f, 0.0f, &x, &y) || x != 639.0f || y != 0.0f) {

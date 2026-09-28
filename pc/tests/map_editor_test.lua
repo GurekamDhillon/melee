@@ -2,6 +2,7 @@
 local commands, files, models, serial, loads = {}, {}, {}, 0, 0
 local active, online, flying, fail_spawn = true, false, false, false
 local pad, keys, overlay, reject_rotation = {}, {}, false, false
+local safe_w = 640
 local p = {x=13, y=26, z=0}
 local mouse_state = {x=-1000, y=-1000, buttons=0}
 local camera = {eye={x=0,y=0,z=100}, interest={x=0,y=0,z=0}, fov=30, roll=0, mode='standard'}
@@ -29,6 +30,7 @@ gd = {
   pad=function() return pad end, time=function() return 0 end,
   fly_speed=function() return 2 end, teleport=function(_,x,y) p.x,p.y=x,y end,
   project=function(x,y) return x,y,true end, line=function() end, box=function() end, fill=function() end,
+  safe_area=function() return {x=0,y=0,w=safe_w,h=480} end,
   mouse=function() return mouse_state.x, mouse_state.y, mouse_state.buttons, 0 end,
   camera_get=function() return camera end,
   kit={available=function() return true end,panel=function() end,text=function() end,
@@ -217,6 +219,18 @@ assert(q2.collision==false, 'inspector click toggles collision')
 mouse_state={x=450, y=222, buttons=1} on_frame_pre() mouse_state={x=450, y=222, buttons=0} on_frame_pre()
 local q3=saved('p2c.lua')[1]
 assert(q3.floor_flags==0, 'inspector click cycles floor flags')
+on_draw()
+command('off')
+-- Widescreen: the layout follows gd.safe_area (bible §4.6)
+active=false on_match_end()
+active=true models={} on_match_start()
+command('on') command('clear') command('tool place') command('place')
+mouse_state={x=750, y=200, buttons=1} on_frame_pre() mouse_state={x=750, y=200, buttons=0} on_frame_pre()
+assert(saved('p4a.lua')[1].collision==true, 'beyond 640 nothing is clickable at 4:3')
+safe_w=800
+mouse_state={x=750, y=200, buttons=1} on_frame_pre() mouse_state={x=750, y=200, buttons=0} on_frame_pre()
+assert(saved('p4b.lua')[1].collision==false, 'the inspector sits at the right edge of an 800-wide canvas')
+safe_w=640
 on_draw()
 command('off')
 print('map_editor_test: PASS')

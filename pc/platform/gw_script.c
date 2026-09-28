@@ -2229,6 +2229,7 @@ static int l_key_pressed(lua_State *L) {
  * tick (+ up). Local UI input only: it never reaches the pads or a netplay peer. Polling it is what
  * shows the cursor during a match (a script's menu is open), so poll it only while one is. */
 extern void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel);
+extern float gw_Console_ScriptWidth(void); /* the overlay canvas width (640 at 4:3, ~853 on 16:9) */
 extern void gw_Mouse_ScriptTick(void);
 static int l_mouse(lua_State *L) {
     float x, y, wheel;
@@ -2661,6 +2662,9 @@ static int gs_project(float x, float y, float z, float *sx, float *sy, float *de
     vh = gs.cam[LAB_CAM_VP_YMAX] - vy;
     *sx = vw * 0.5f + vx + wc * xc * vw * 0.5f;
     *sy = vh * 0.5f + vy - wc * yc * vh * 0.5f;
+    /* The camera viewport is 640 wide (the game picture); the overlay canvas grows with the window,
+     * so world->overlay x stretches by canvas/640 and drawings line up with the stretched picture. */
+    *sx *= gw_Console_ScriptWidth() / 640.0f;
     *depth = -ez;
     return 1;
 }
@@ -2677,9 +2681,23 @@ static int l_project(lua_State *L) {
     }
     lua_pushnumber(L, sx);
     lua_pushnumber(L, sy);
-    lua_pushboolean(L, ok && sx >= 0.0f && sx < 640.0f && sy >= 0.0f && sy < 480.0f);
+    lua_pushboolean(L, ok && sx >= 0.0f && sx < gw_Console_ScriptWidth() && sy >= 0.0f && sy < 480.0f);
     lua_pushnumber(L, depth);
     return 4;
+}
+
+/* gd.safe_area() -> {x, y, w, h, right, bottom}: the overlay canvas in script units. Height is
+ * always 480; the width follows the window's aspect, so wide layouts lay out against this. */
+static int l_safe_area(lua_State *L) {
+    const float w = gw_Console_ScriptWidth();
+    lua_newtable(L);
+    lua_pushnumber(L, 0.0); lua_setfield(L, -2, "x");
+    lua_pushnumber(L, 0.0); lua_setfield(L, -2, "y");
+    lua_pushnumber(L, w);   lua_setfield(L, -2, "w");
+    lua_pushnumber(L, 480.0); lua_setfield(L, -2, "h");
+    lua_pushnumber(L, w);   lua_setfield(L, -2, "right");
+    lua_pushnumber(L, 480.0); lua_setfield(L, -2, "bottom");
+    return 1;
 }
 
 /* gd.joints(port [, fresh]) -> {{index, parent, x, y, z, sx, sy, on}, ...}; list position =
@@ -5259,6 +5277,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     /* the Geno Lab (docs/geno.md) */
     {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
     {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs}, {"project", l_project}, {"attrs", l_attrs},
+    {"safe_area", l_safe_area},
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
     {"rewind_to", l_rewind_to}, {"rewind_live", l_rewind_live}, {"rewind_test", l_rewind_test},
     {"rewind_test_result", l_rewind_test_result}, {"hot_reload", l_hot_reload},

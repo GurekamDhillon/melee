@@ -1,9 +1,5 @@
 # Scripted hit for gameplay tests
 
-For offline authored rooms, waves, doors, goals, checkpoints and boss continuation, see
-[the reusable Gamemode library](lib/gamemode.md) and [two-area demo](examples/gamemode_demo/README.md).
-Its mode state is stored in snapshotted game memory; it explicitly refuses rollback/rewind.
-
 `gd.hit(port, {damage=, angle=, kbg=, bkb=, from=})` applies a hit to a live
 fighter through Melee's collision damage result and fighter hit processing.
 Ports are one-based. `from` is an optional attacker port; omit it or set it to

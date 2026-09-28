@@ -1,7 +1,9 @@
 """Export the BF interior kit for the runtime model API (gd.model_load / gd.model_spawn): one
 shared opaque atlas, a glass atlas, merged GXMS v2 meshes, and collision sidecars.
 
-    blender --factory-startup --background --python pc/assets_src/bf_interior/export_kit.py --         --output pc/scripts/examples/bf_interior_room/models         --lua pc/scripts/examples/bf_interior_room/scripts/main.lua
+    blender --factory-startup --background --python pc/assets_src/bf_interior/export_kit.py -- \
+        --output pc/scripts/examples/bf_interior_room/models \
+        --lua pc/scripts/examples/bf_interior_room/scripts/main.lua
 
 bf_interior_playset.py (a copy of the stage kit's generator, E:/Projects/Blender-Stage-Kit)
 builds the parts; this bakes them together, so every part samples the same atlas:
@@ -64,6 +66,9 @@ def options():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", type=Path, required=True, help="models/ directory")
     p.add_argument("--lua", type=Path, help="room script whose 'local U = ...' line is set to UNIT")
+    p.add_argument("--editor", type=Path,
+                   default=HERE.parent.parent / "scripts/examples/map_editor/scripts/main.lua",
+                   help="editor script whose generated palette/grid block is updated")
     p.add_argument("--texture-size", type=int, default=1024)
     p.add_argument("--samples", type=int, default=48)
     a = p.parse_args(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
@@ -284,11 +289,25 @@ def sidecar(lines, transparent=False):
     return result
 
 
+def write_editor_catalog(path, names):
+    """Keep the editor grid and palette tied to the meshes actually exported, not a hand list."""
+    import re
+    block = "-- BEGIN GENERATED KIT\nlocal U = %g\nlocal PALETTE = {\n" % UNIT
+    block += "".join('  "%s",\n' % name for name in sorted(names))
+    block += "}\n-- END GENERATED KIT"
+    source, count = re.subn(r"-- BEGIN GENERATED KIT.*?-- END GENERATED KIT", block,
+                            path.read_text(encoding="utf-8"), flags=re.S)
+    if count != 1:
+        raise RuntimeError(f"{path}: expected one generated kit block")
+    path.write_text(source, encoding="utf-8")
+
+
 def main():
     a = options()
     a.output.mkdir(parents=True, exist_ok=True)
     parts = build_parts()
     X = BF_EXPORT
+    exported = []
     for transparent in (False, True):
         ob = combined(parts, transparent)
         unwrap(ob, a.texture_size)
@@ -319,6 +338,7 @@ def main():
             nv, nt = write_part(a.output / (name + ".gxmesh"), me, i, i * SPACING, size_m)
             (a.output / (name + ".coll.json")).write_text(
                 json.dumps(sidecar(lines, transparent), separators=(",", ":")) + "\n", encoding="utf-8")
+            exported.append(name)
             print(f"  {name}: {nv} vertices, {nt} triangles, {len(lines)} line(s), alpha={transparent}")
     if a.lua:
         import re
@@ -328,6 +348,7 @@ def main():
         if n != 1:
             raise RuntimeError(f"{a.lua}: no 'local U = ' line to set")
         a.lua.write_text(src, encoding="utf-8")
+    write_editor_catalog(a.editor, exported)
     print(f"BF kit export: {len(parts)} parts, {a.texture_size}px shared atlas -> {a.output}")
 
 

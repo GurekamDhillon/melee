@@ -1,0 +1,12 @@
+{
+  "id": "map_editor",
+  "name": "Kit map editor",
+  "version": "0.1.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Offline kit placement, flight cursor, undo/redo and reusable Lua layouts.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

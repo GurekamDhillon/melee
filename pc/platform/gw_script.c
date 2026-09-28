@@ -211,6 +211,8 @@ typedef struct {
     int frame;
     int match_frame;
     int last_action[6], state_frame[6]; /* gd.player().action_frame bookkeeping */
+    uint64_t mode_scripts; /* active gameplay sources for mode-bearing snapshots */
+    uint64_t mode_session; /* host asset caches are only valid in this process/scene */
 } GsSaveSlot;
 
 /* The Geno Lab's long rewind (gd.history / gd.step_back / gd.rewind_to): delta keyframes in
@@ -625,6 +627,7 @@ static void gs_require_offline(lua_State *L, const char *fn) {
     }
 }
 static void gs_setnum(lua_State *L, const char *k, double v);
+#include "gw_script_mode.inc"
 
 /* The simulation reads camera projection for offscreen fighter logic (ftLib_80086A8C), so every
  * write below goes through the game-side camera .bss, which gw_snap.c captures. */
@@ -3197,6 +3200,8 @@ static int l_history(lua_State *L) {
         int want = (int) luaL_checkinteger(L, 1);
         int iv = (int) luaL_optinteger(L, 2, gs.rw_interval > 0 ? gs.rw_interval : GS_RW_INTERVAL);
         gs_require_offline(L, "history");
+        if (want > 0 && gw_ScriptGame_ModeActive())
+            return luaL_error(L, "mode state active: Lua director cannot resimulate");
         if (want < 0) want = 0;
         if (want > GS_RW_MAX_FRAMES) want = GS_RW_MAX_FRAMES;
         if (iv < 1) iv = 1;
@@ -3282,6 +3287,7 @@ static int l_rewind_live(lua_State *L) {
 static int l_rewind_test(lua_State *L) {
     int n = (int) luaL_optinteger(L, 1, 90);
     gs_require_offline(L, "rewind_test");
+    if (gw_ScriptGame_ModeActive()) return gs_push_fail(L, "mode state active: Lua director cannot resimulate");
     if (!gs.rw_began || gs.rw_frames <= 0) {
         return gs_push_fail(L, "history is off (gd.history(n) turns it on)");
     }
@@ -3325,6 +3331,7 @@ static int l_hot_reload(lua_State *L) {
     const char *why = NULL;
     int now = gs_ring_now(), start;
     gs_require_offline(L, "hot_reload");
+    if (gw_ScriptGame_ModeActive()) return gs_push_fail(L, "mode state active: Lua director cannot resimulate");
     if (gs.hot_phase != 0) {
         return gs_push_fail(L, "a reload is already running");
     }
@@ -3479,6 +3486,15 @@ static int gs_state_check(const void *hdr, int len, char *why, size_t cap) {
     }
     if (h->mods_hash != id[2]) {
         snprintf(why, cap, "saved with other mods");
+        return -1;
+    }
+    if (h->slot.mode_scripts && (h->slot.mode_session != gs_mode_session() ||
+                                h->slot.scene_epoch != gs.scene_epoch)) {
+        snprintf(why, cap, "mode state requires its original live scene (model assets are scene-pinned)");
+        return -1;
+    }
+    if (h->slot.mode_scripts && h->slot.mode_scripts != gs_mode_identity()) {
+        snprintf(why, cap, "saved with other mode/gameplay script sources");
         return -1;
     }
     if (h->geno_hash != id[3] || h->geno_version != GENO_VERSION) {
@@ -5060,6 +5076,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"hit", l_hit}, {"set_stocks", l_set_stocks},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
+    {"mode_blob", l_mode_blob},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
     {"key_pressed", l_key_pressed}, {"mouse", l_mouse}, {"command", l_command}, {"run", l_run},
@@ -5388,6 +5405,7 @@ static void gs_unload(int i) {
     if (gs_get_hook(i, "on_unload")) {
         gs_pcall(i, 0, 0, "on_unload");
     }
+    gs_mode_drop(i);
     if (gs.camera_owner == i + 1) {
         gs_rw_branch();
         gw_Camera_ScriptReset();
@@ -6024,6 +6042,8 @@ static void gs_slot_capture(GsSaveSlot *s) {
     s->scene_epoch = gs.scene_epoch;
     s->frame = gs.frame;
     s->match_frame = gs.match_frame;
+    s->mode_scripts = gw_ScriptGame_ModeActive() ? gs_mode_identity() : 0;
+    s->mode_session = s->mode_scripts ? gs_mode_session() : 0;
     memcpy(s->last_action, gs.last_action, sizeof s->last_action);
     memcpy(s->state_frame, gs.state_frame, sizeof s->state_frame);
 }
@@ -6032,6 +6052,7 @@ static void gs_slot_restore(const GsSaveSlot *s) {
     gs.match_frame = s->match_frame;
     memcpy(gs.last_action, s->last_action, sizeof gs.last_action);
     memcpy(gs.state_frame, s->state_frame, sizeof gs.state_frame);
+    if (gw_ScriptGame_ModeActive()) gs_mode_no_history();
 }
 
 static int gs_snap_ensure(int slots) {
@@ -6079,6 +6100,10 @@ static void gs_rw_branch(void) {
 }
 
 static int gs_rw_request(int target, const char **why) {
+    if (gw_ScriptGame_ModeActive()) {
+        *why = "mode state active: Lua director cannot resimulate";
+        return -1;
+    }
     if (gs.rw_frames <= 0 || !gs.rw_began) {
         *why = "history is off (gd.history(n) turns it on)";
         return -1;
@@ -6509,7 +6534,9 @@ static void gs_apply_pending(int at_tick) {
     if (gs.pending_load) {
         int slot = gs.pending_load - 1;
         gs.pending_load = 0;
-        if (gs.slot[slot].used && gs.slot[slot].scene_epoch == gs.scene_epoch &&
+        if (gs.slot[slot].mode_scripts && gs.slot[slot].mode_scripts != gs_mode_identity()) {
+            gw_Console_Print(GS_RED, "could not load state %d: mode/gameplay script sources changed", slot + 1);
+        } else if (gs.slot[slot].used && gs.slot[slot].scene_epoch == gs.scene_epoch &&
             gw_snap_load_index(slot) == 0) {
             gs_slot_restore(&gs.slot[slot]);
             gs.rw_began = 0; /* the history belongs to the timeline we just left: start over */
@@ -8558,7 +8585,10 @@ fail:
     return 1;
 }
 
+#include "gw_script_mode_tests.inc"
+
 void gw_script_tests_register(void) {
+    gw_test_register("script_mode_blob", test_script_mode_blob);
     gw_test_register("script_model_api", test_script_model_api);
     gw_test_register("script_stage_events", test_script_stage_events);
     gw_test_register("script_boss_event", test_script_boss_event);

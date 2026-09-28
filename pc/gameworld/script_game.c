@@ -56,6 +56,8 @@
 #include <sysdolphin/baselib/tev.h>
 #include <sysdolphin/baselib/archive.h>
 #include <sysdolphin/baselib/jobj.h>
+#include "script_mode.h"
+#include "script_mode.inc"
 
 /* Each scripted line owns two vertices and one joint. mpCheckFloor and its wall/ceiling
  * siblings walk joint ranges (mplib.c), so a single appended global range cannot mix kinds.
@@ -177,6 +179,7 @@ void ScriptGame_StageEnd(void)
     /* Invalidate every handle now, including enemies and lines. StagePrepare may
      * not run in the next scene (CSS, menus), so it cannot own this reset. */
     memset(&script_stage, 0, sizeof(script_stage));
+    memset(script_mode, 0, sizeof(script_mode));
     Script_StageModelsReset(); /* native mesh/atlas bytes; the memset above cleared the instances */
 }
 

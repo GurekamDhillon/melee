@@ -1,0 +1,12 @@
+{
+  "id": "bf_interior_room",
+  "name": "BF interior kit: open-front room",
+  "version": "0.1.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Assembles the BF interior kit's open-front room from separate part models and their collision at match start (offline).",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

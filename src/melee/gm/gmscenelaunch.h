@@ -211,12 +211,28 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         GameRules* gr = gmMainLib_GetGameRules();
         struct GamePrefs* gp = gmMainLib_GetGamePrefs();
         bool any = false;
+        int player_stocks = -1, k;
+        /* per-player /stocksN: GameRules has one stock count, so the largest one named */
+        for (k = 0; k < 4; k++) {
+            if (SceneLaunch_PlayerStocks(k) > player_stocks) {
+                player_stocks = SceneLaunch_PlayerStocks(k);
+            }
+        }
         if (SceneLaunch_RuleMatch() >= 0) {
             gr->mode = (u8) SceneLaunch_RuleMatch();
+            any = true;
+        } else if (SceneLaunch_RuleStocks() >= 0 || player_stocks >= 0) {
+            gr->mode = 1; /* a stock count with no match= means a stock match (it ends at 0) */
+            any = true;
+        } else if (SceneLaunch_TimeLimit() > 0 || SceneLaunch_RuleMinutes() > 0) {
+            gr->mode = 0; /* a time with no match= means a timed match */
             any = true;
         }
         if (SceneLaunch_RuleStocks() >= 0) {
             gr->stock_count = (u8) SceneLaunch_RuleStocks();
+            any = true;
+        } else if (player_stocks >= 0) {
+            gr->stock_count = (u8) player_stocks;
             any = true;
         }
         if (SceneLaunch_RuleMinutes() >= 0) {
@@ -224,8 +240,11 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
             gr->stock_time_limit = (u8) SceneLaunch_RuleMinutes();
             any = true;
         } else if (SceneLaunch_TimeLimit() >= 0) {
-            gr->time_limit = (u8) (SceneLaunch_TimeLimit() / 60);
-            gr->stock_time_limit = (u8) (SceneLaunch_TimeLimit() / 60);
+            /* GameRules counts whole minutes and 0 means no limit: round seconds up, so time=1..60
+             * is a one-minute match (it truncated to 0 before - a match with no end) */
+            int minutes = (SceneLaunch_TimeLimit() + 59) / 60;
+            gr->time_limit = (u8) minutes;
+            gr->stock_time_limit = (u8) minutes;
             any = true;
         }
         if (SceneLaunch_RulePause() >= 0) {

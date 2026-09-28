@@ -1182,6 +1182,66 @@ int gw_Kit_DrawText(float x, float y, const char *s, int role, uint32_t rgba, in
     return added;
 }
 
+int gw_Kit_DrawParagraph(float x, float y, float max_w, const char *s, int role, uint32_t rgba,
+                         float shear, float *out_h) {
+    char line[512];
+    float line_h = 16.0f, w = 0;
+    int lines = 0;
+    if (out_h) *out_h = 0.0f;
+    if (s == NULL) return 0;
+    gw_Kit_RoleMetrics(role, NULL, NULL, NULL, NULL, &line_h);
+    if (line_h <= 0.0f) line_h = 16.0f;
+    if (max_w <= 0.0f) {
+        gw_Kit_DrawText(x, y, s, role, rgba, GW_KIT_ALIGN_LEFT, 0.0f, shear, &w);
+        if (out_h) *out_h = line_h;
+        return 1;
+    }
+    line[0] = '\0';
+    while (*s != '\0') {
+        char word[256], fit[512];
+        size_t n = 0;
+        while (*s == ' ') s++;
+        if (*s == '\n') { /* hard break flushes, even an empty line */
+            gw_Kit_DrawText(x, y + lines * line_h, line, role, rgba, GW_KIT_ALIGN_LEFT, 0.0f, shear, &w);
+            lines++;
+            line[0] = '\0';
+            s++;
+            continue;
+        }
+        if (*s == '\0') break;
+        while (s[n] != '\0' && s[n] != ' ' && s[n] != '\n' && n < sizeof word - 1) {
+            word[n] = s[n];
+            n++;
+        }
+        word[n] = '\0';
+        s += n;
+        if (line[0] != '\0') {
+            char cand[512];
+            snprintf(cand, sizeof cand, "%s %s", line, word);
+            if (gw_Kit_TextWidth(role, cand) <= max_w) {
+                snprintf(line, sizeof line, "%s", cand);
+                continue;
+            }
+            gw_Kit_DrawText(x, y + lines * line_h, line, role, rgba, GW_KIT_ALIGN_LEFT, 0.0f, shear, &w);
+            lines++;
+            line[0] = '\0';
+        }
+        if (gw_Kit_TextWidth(role, word) <= max_w) {
+            snprintf(line, sizeof line, "%s", word);
+        } else { /* a single word wider than max_w: the fit rule, on its own line */
+            gw_Kit_Fit(role, word, max_w, fit, sizeof fit);
+            gw_Kit_DrawText(x, y + lines * line_h, fit, role, rgba, GW_KIT_ALIGN_LEFT, 0.0f, shear, &w);
+            lines++;
+        }
+    }
+    if (line[0] != '\0') {
+        gw_Kit_DrawText(x, y + lines * line_h, line, role, rgba, GW_KIT_ALIGN_LEFT, 0.0f, shear, &w);
+        lines++;
+    }
+    if (out_h) *out_h = lines * line_h;
+    return lines;
+}
+
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip, float shear) {
     float u0 = 0, v0 = 0, u1 = 1, v1 = 1;
     if (tex < 0 || tex >= nkt || kt[tex]->rgba == NULL) return 0;
@@ -1433,12 +1493,24 @@ static int test_kit_text_layout(void) {
             return 1;
         }
     }
-    /* right alignment ends at x; the fit rule truncates with the ellipsis */
+    /* the fit rule truncates with the ellipsis */
     w2 = gw_Kit_TextWidth(role, "Stock Time Limit (min)");
     gw_Kit_Fit(role, "Stock Time Limit (min)", w2 * 0.5f, fit, sizeof fit);
     if (strlen(fit) >= strlen("Stock Time Limit (min)") || strchr(fit, 0x01) == NULL) {
         gw_test_fail("the fit rule did not truncate with an ellipsis");
         return 1;
+    }
+    /* paragraph: wraps at the width and advances by the line height */
+    {
+        float ph = 0;
+        int plines;
+        gw_Kit_BeginFrame();
+        plines = gw_Kit_DrawParagraph(20, 60, gw_Kit_TextWidth(role, "AAAA AAAA") * 0.6f,
+                                      "AAAA AAAA AAAA AAAA", role, 0xFFFFFFFFu, 0, &ph);
+        if (plines < 2 || ph < 2.0f || gw_Kit_QuadCount() == 0) {
+            gw_test_fail("paragraph did not wrap (lines %d, h %.1f)", plines, ph);
+            return 1;
+        }
     }
     /* caps roles uppercase: "abc" in hero is as wide as "ABC" */
     i = gw_Kit_Role("hero");

@@ -101,6 +101,11 @@ const GwKitQuad *gw_Kit_ShownQuadAt(int i);
  * baseline) and about each element's own middle otherwise. */
 int gw_Kit_DrawText(float x, float y, const char *s, int role, uint32_t rgba, int align,
                     float max_w, float shear, float *out_w);
+/* Wrapped text: breaks at spaces and '\n' to lines no wider than max_w, at the role's line
+ * height. An overlong single word goes through the fit rule. Returns lines drawn; *out_h gets
+ * the block's height. */
+int gw_Kit_DrawParagraph(float x, float y, float max_w, const char *s, int role, uint32_t rgba,
+                         float shear, float *out_h);
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip,
                      float shear);
 int gw_Kit_DrawFlat(float x, float y, float w, float h, uint32_t rgba, float shear);

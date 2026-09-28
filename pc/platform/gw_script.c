@@ -3963,6 +3963,26 @@ static int l_kit_text(lua_State *L) {
     return 1;
 }
 
+/* gd.kit.paragraph(x, y, w, text [, role [, colour [, opts]]]) -> lines, height */
+static int l_kit_paragraph(lua_State *L) {
+    float x = (float) luaL_checknumber(L, 1), y = (float) luaL_checknumber(L, 2);
+    float w = (float) luaL_checknumber(L, 3), h = 0;
+    const char *s;
+    int role, lines, first = gw_Kit_QuadCount();
+    uint32_t c;
+    gs_kit_need(L);
+    lua_settop(L, 7);
+    s = luaL_tolstring(L, 4, NULL);
+    role = gs_kit_role_arg(L, 5, "body");
+    c = gs_kit_colour(L, 6, 0xF2EFE4FFu);
+    lines = gw_Kit_DrawParagraph(x, y, w, s, role, c,
+                                 (float) gs_kit_optnum(L, 7, "shear", gw_Kit_Shear()), &h);
+    gs_kit_record(first, gw_Kit_QuadCount() - first);
+    lua_pushinteger(L, lines);
+    lua_pushnumber(L, h);
+    return 2;
+}
+
 /* gd.kit.measure(text [, role [, max_w]]) -> width, line height, the text as fitted */
 static int l_kit_measure(lua_State *L) {
     char fit[512];
@@ -5096,7 +5116,8 @@ static int l_enemy_status(lua_State *L) {
 
 static const luaL_Reg gs_kit_funcs[] = {
     {"available", l_kit_available}, {"text", l_kit_text}, {"measure", l_kit_measure},
-    {"metrics", l_kit_metrics}, {"texture", l_kit_texture}, {"image", l_kit_image},
+    {"paragraph", l_kit_paragraph}, {"metrics", l_kit_metrics}, {"texture", l_kit_texture},
+    {"image", l_kit_image},
     {"icon", l_kit_icon}, {"panel", l_kit_panel}, {"button", l_kit_button}, {"list", l_kit_list},
     {"color", l_kit_color}, {NULL, NULL}};
 

@@ -64,6 +64,7 @@
 #define SCRIPT_STAGE_LINES 200 /* the pool's size; a stage gets min(this, its spare room) */
 #define SCRIPT_STAGE_TARGETS 32
 #define SCRIPT_STAGE_ENEMIES 32
+#define SCRIPT_ENEMY_KINDS 7 /* enemies2: append kinds to preserve the Lua event indices */
 #define SCRIPT_STAGE_MODELS 64
 #define SCRIPT_STAGE_ARCHIVES 8
 #define SCRIPT_STAGE_ARCHIVE_MAX (8 * 1024 * 1024)
@@ -106,8 +107,8 @@ static struct {
     ScriptStageLine line[SCRIPT_STAGE_LINES];
     ScriptStageTarget target[SCRIPT_STAGE_TARGETS];
     ScriptStageEnemy enemy[SCRIPT_STAGE_ENEMIES];
-    int enemy_ready[6];
-    int enemy_attempted[6];
+    int enemy_ready[SCRIPT_ENEMY_KINDS];
+    int enemy_attempted[SCRIPT_ENEMY_KINDS];
     HSD_Archive* enemy_archive[3];
     ScriptStageModel model[SCRIPT_STAGE_MODELS];
     ScriptStageArchive archives[SCRIPT_STAGE_ARCHIVES];
@@ -225,15 +226,18 @@ static HSD_Archive* script_stage_archive(const char* file)
     return archive;
 }
 
-static const int script_enemy_kinds[6] = {
+static const int script_enemy_kinds[SCRIPT_ENEMY_KINDS] = {
+    /* enemies2: active Ottosea uses ItCo.usd's Topi model (TyToppi texture match).
+     * ItCo.dat supplies the Japanese seal variant; retain the game's locale choice.
+     * It_Kind_Old_Otto is the obsolete stage slot, not this common article. */
     It_Kind_Kuriboh, It_Kind_Nokonoko, It_Kind_Leadead,
-    It_Kind_Likelike, It_Kind_Octarock, It_Kind_Whitebea
+    It_Kind_Likelike, It_Kind_Octarock, It_Kind_Whitebea, It_Kind_Ottosea
 };
 
 static int script_enemy_index(int kind)
 {
     int i;
-    for (i = 0; i < 6; ++i)
+    for (i = 0; i < SCRIPT_ENEMY_KINDS; ++i)
         if (script_enemy_kinds[i] == kind) return i;
     return -1;
 }
@@ -336,7 +340,7 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
         script_stage.enemy[i].gobj = NULL;
     }
     for (i = 0; i < 3; ++i) script_stage.enemy_archive[i] = NULL;
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < SCRIPT_ENEMY_KINDS; ++i) {
         script_stage.enemy_ready[i] = 0;
         script_stage.enemy_attempted[i] = 0;
     }
@@ -1100,7 +1104,7 @@ int ScriptGame_SpawnEnemy(int which, int xb, int yb, int facing, int handle)
     Item_GObj* gobj = NULL;
     Item* ip;
     int i, kind;
-    if (which < 0 || which >= 6 || (facing != -1 && facing != 1))
+    if (which < 0 || which >= SCRIPT_ENEMY_KINDS || (facing != -1 && facing != 1))
         return -1;
     if (!script_enemy_preload(which)) return -1;
     kind = script_enemy_kinds[which];
@@ -1110,14 +1114,21 @@ int ScriptGame_SpawnEnemy(int which, int xb, int yb, int facing, int handle)
     switch (kind) {
     case It_Kind_Leadead: gobj = it_802EA9FC(&pos, facing); break;
     case It_Kind_Nokonoko: gobj = it_802DD7F0(0, &pos, NULL, facing); break;
-    case It_Kind_Likelike: gobj = it_802DC4BC(1, &pos, facing); break;
+    case It_Kind_Likelike:
+        /* enemies2: arg0=1 clings to a ceiling and accelerates upward forever on FD.
+         * it_802DC4BC(0) selects the stock falling/floor AI. Its initializer lowers
+         * Y by 40 for the buried variant; restore the requested airborne position. */
+        gobj = it_802DC4BC(0, &pos, facing);
+        if (gobj != NULL) GET_ITEM(gobj)->pos = pos;
+        break;
     default: gobj = it_8027B5B0(kind, &pos, NULL, NULL, 1); break;
     }
     if (gobj == NULL) return -1;
     ip = GET_ITEM(gobj);
     ip->facing_dir = ip->init_facing_dir = (float) facing;
     mpCollSetFacingDir(&ip->x378_itemColl, facing);
-    if (kind == It_Kind_Kuriboh || kind == It_Kind_Octarock || kind == It_Kind_Whitebea)
+    if (kind == It_Kind_Kuriboh || kind == It_Kind_Octarock ||
+        kind == It_Kind_Whitebea || kind == It_Kind_Ottosea)
         it_8027C56C(gobj, (float) facing);
     script_stage.enemy[i].handle = handle;
     script_stage.enemy[i].kind = kind;
@@ -2180,6 +2191,57 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
 #include <melee/gm/gmvs.h>
 #include <melee/gr/stage.h>
 #include <melee/mp/mplib.h>
+
+/* ---- enemies2: explicit enemy hits; fighter port semantics remain unchanged ---- */
+#include <melee/it/itcoll.h>
+
+int ScriptGame_EnemyHit(int handle, int from_slot, int damage, int angle, int kbg, int bkb)
+{
+    Fighter* from = from_slot >= 0 ? script_fighter(from_slot) : NULL;
+    int i;
+    if (from_slot >= 0 && from == NULL) return 0;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        Item* ip;
+        HitCapsule hit = { 0 };
+        if (!e->active || e->defeated || e->handle != handle || e->gobj == NULL) continue;
+        ip = GET_ITEM(e->gobj);
+        if (ip->xB8_itemLogicTable->dmg_received == NULL || damage == 0) return 0;
+        hit.damage = (float) damage;
+        hit.kb_angle = angle;
+        hit.x24 = kbg;
+        hit.x2C = bkb;
+        /* it_80270CD8 uses the loaded item/common attributes, including the cap.
+         * Mirror it_80270E30's result and OnTakeDamageThink's accounting before
+         * invoking the real callback. Only that callback can award a defeat. */
+        ip->xCA0 = damage;
+        ip->xCC8_knockback = it_80270CD8(ip, &hit);
+        ip->xCAC_angle = angle;
+        ip->xCC4 = HitElement_Normal;
+        ip->xCB0_source_ply = from != NULL ? from->player_id : 6;
+        ip->xCEC_fighterGObj = from != NULL ? from->gobj : NULL;
+        ip->xCF0_itemGObj = NULL;
+        ip->xCCC_incDamageDirection = from != NULL && from->cur_pos.x < ip->pos.x
+            ? -1.0f : 1.0f;
+        Item_80269CA0(ip, damage);
+        ip->xCA8 = damage;
+        ip->xDC8_word.flags.xB = 1;
+        OSReport("script enemy: hit handle=%d kind=%d damage=%d from=%d\n",
+                 handle, e->kind, damage, from_slot + 1);
+        if (ip->xB8_itemLogicTable->dmg_received(e->gobj)) {
+            ip->destroy_type = 2; /* processCallback in item.c */
+            Item_8026A8EC(e->gobj);
+        } else {
+            /* We consumed this result synchronously; the next item collision pass
+             * must not process it again. Leave source/angle for the death animation. */
+            ip->xCA0 = 0;
+            ip->xCC8_knockback = 0.0f;
+        }
+        return 1;
+    }
+    return 0;
+}
+/* ---- end enemies2 hit block ---- */
 
 /* gd.hit: feed the same damage result consumed after ftColl_8007AB48 in Fighter_8006CB94.
  * ftColl_8007A06C chooses the collision's knockback, angle, direction and source;

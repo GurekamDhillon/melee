@@ -1296,8 +1296,24 @@ static int CObjLoad(HSD_CObj* cobj, HSD_CObjDesc* desc)
     }
     switch (desc->common.projection_type) {
     case PROJ_PERSPECTIVE:
+#if defined(TARGET_PC)
+        {
+            /* Widescreen (Hor+): scale the camera aspect by 320/219 — 73/60 * 320/219 is exactly
+             * 16:9. Mirrors the hook Slippi's "Optional: Widescreen 16:9" code installs at
+             * CObjLoad+0x1BC (Dan Salvato, mirrorbender, Achilles1515, UnclePunch), reimplemented
+             * natively; enabled by MELEE_WIDESCREEN / the "widescreen" setting.
+             * Specification and the remaining sites: _research/widescreen.md. */
+            extern int Widescreen_Enabled(void);
+            f32 aspect = desc->perspective.aspect;
+            if (Widescreen_Enabled()) {
+                aspect *= 320.0f / 219.0f;
+            }
+            HSD_CObjSetPerspective(cobj, desc->perspective.fov, aspect);
+        }
+#else
         HSD_CObjSetPerspective(cobj, desc->perspective.fov,
                                desc->perspective.aspect);
+#endif
         break;
     case PROJ_ORTHO:
         HSD_CObjSetOrtho(cobj, desc->ortho.top, desc->ortho.bottom,

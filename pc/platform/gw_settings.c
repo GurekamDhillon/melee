@@ -132,6 +132,14 @@ void gw_Settings_SetInt(const char *key, int value) {
     gw_Settings_SetStr(key, b);
 }
 
+/* Widescreen (16:9 Hor+). MELEE_WIDESCREEN wins over the saved "widescreen" key so scripted runs
+ * and lanes can force it; game code calls Widescreen_Enabled() across the gw.h boundary.
+ * Specification and credits: _research/widescreen.md. */
+int gw_Widescreen_Enabled(void) {
+    const char *v = getenv("MELEE_WIDESCREEN");
+    return (v != NULL && v[0] != '\0') ? atoi(v) != 0 : gw_Settings_Int("widescreen", 0) != 0;
+}
+
 /* Every saved key=value on one line for a crash report, leaving out what can identify the
  * player (name) or a private address (server). Returns the count written. */
 int gw_Settings_Summary(char *out, int cap) {

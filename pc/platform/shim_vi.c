@@ -20,6 +20,7 @@
 #include <aurora/aurora.h>
 #include <aurora/event.h>
 #include <aurora/gfx.h> /* AuroraStats: MELEE_PROFILE_FRAMES */
+#include <dolphin/gx/GXAurora.h>
 #include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_system.h>
 #include <SDL3/SDL_video.h>
@@ -1708,11 +1709,26 @@ static void gw_spike_dump(void) {
 static FILE *gw_prof_csv;
 static int gw_prof_csv_tried;
 
+/* Widescreen: STRETCH fills the window with the game's frame (anamorphic), pairing with the camera
+ * widened game-side (src/sysdolphin/baselib/cobj.c); FIT keeps the native 73:60 picture letterboxed.
+ * Toggled on change so the "widescreen" setting / MELEE_WIDESCREEN applies live. */
+static void gw_video_sync_viewport_policy(void) {
+  extern int gw_Widescreen_Enabled(void);
+  static int ws_last = -1;
+  const int ws = gw_Widescreen_Enabled();
+  if (ws != ws_last) {
+    ws_last = ws;
+    AuroraSetViewportPolicy(ws ? AURORA_VIEWPORT_STRETCH : AURORA_VIEWPORT_FIT);
+  }
+}
+
 void gw_frame_tick(void) {
   const int prof = gw_prof_on();
   extern int gw_GenoLab_InMatch(void);
   const int perf = (gw_video_show_fps == 2 && !gw_GenoLab_InMatch()) ||
                    (int32_t)(gw_perf_lease_end - gw_retrace_count) > 0;
+
+  gw_video_sync_viewport_policy();
 
   gw_sample_maybe_start();
   long long t_enter = 0, t_present = 0, t_events = 0, t_begin = 0;

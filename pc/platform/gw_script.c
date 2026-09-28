@@ -2373,6 +2373,9 @@ static int l_data_write(lua_State *L) {
     return 0;
 }
 
+/* campaign-save: isolated local persistence; no game/snapshot state. */
+#include "gw_script_campaign.inc"
+
 static int l_script_info(lua_State *L) {
     GsScript *s = gs_cur_script();
     lua_createtable(L, 0, 6);
@@ -5064,6 +5067,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
     {"key_pressed", l_key_pressed}, {"mouse", l_mouse}, {"command", l_command}, {"run", l_run},
     {"data_read", l_data_read}, {"data_write", l_data_write}, {"script", l_script_info},
+    {"campaign_storage", l_campaign_storage}, /* campaign-save */
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
     {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
     /* the Geno Lab (docs/geno.md) */

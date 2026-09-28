@@ -44,6 +44,7 @@ local ghost_on, ghost = true, nil -- placement preview instance (bible §5.8)
 local action_log, undo_names, redo_names, log_open, log_rows = {}, {}, {}, false, nil -- named history (bible §5.6)
 local search, search_rows = nil, nil -- action search overlay (bible §5.10)
 local bounds = {camera=nil, blast=nil} -- stage bounds the map is authored against (bible §6.6, §8 P2)
+local spawns = {} -- moved start/respawn points, slot -> {x=, y=} (bible §6.3)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -333,6 +334,17 @@ local function validate(data)
         lay_bounds[kind]={left=b.left,right=b.right,top=b.top,bottom=b.bottom}
       end
     end
+    local sp=data.spawn
+    if sp~=nil then
+      assert(type(sp)=='table' and getmetatable(sp)==nil, 'spawn must be a table')
+      lay_bounds.spawn={}
+      for slot,b in pairs(sp) do
+        assert(type(slot)=='number' and slot%1==0 and slot>=0 and slot<=7, 'spawn slots are 0..7')
+        assert(type(b)=='table' and getmetatable(b)==nil and number(b.x) and number(b.y),
+               'spawn points need x and y')
+        lay_bounds.spawn[slot]={x=b.x,y=b.y}
+      end
+    end
   end
   assert(type(data.parts)=='table' and getmetatable(data.parts)==nil, 'parts must be a list')
   local count=0
@@ -363,7 +375,7 @@ local function file_name(name)
   return name
 end
 local function serialize()
-  local version=(bounds.camera or bounds.blast) and 2 or 1
+  local version=((bounds.camera or bounds.blast) or next(spawns)) and 2 or 1
   local out={('-- Kit layout v%d; world units, Z is visual depth. Grid: %.17g units/metre.'):format(version,U)}
   out[#out+1]=('return {version=%d,units=%.17g,'):format(version,U)
   for _,kind in ipairs({'camera','blast'}) do
@@ -372,6 +384,16 @@ local function serialize()
       out[#out+1]=('%s={left=%.17g,right=%.17g,top=%.17g,bottom=%.17g},')
         :format(kind,b.left,b.right,b.top,b.bottom)
     end
+  end
+  if next(spawns) then
+    out[#out+1]='spawn={'
+    local slots={}
+    for slot in pairs(spawns) do slots[#slots+1]=slot end
+    table.sort(slots)
+    for _,slot in ipairs(slots) do
+      out[#out+1]=('[%d]={x=%.17g,y=%.17g},'):format(slot,spawns[slot].x,spawns[slot].y)
+    end
+    out[#out+1]='},'
   end
   out[#out+1]='parts={'
   for _,p in ipairs(parts) do
@@ -414,6 +436,12 @@ local function load_map(name)
   if lay_bounds.camera or lay_bounds.blast then
     bounds=lay_bounds
     if not pcall(apply_bounds) then say('Stage refused the layout bounds','error') end
+  end
+  if lay_bounds.spawn then
+    spawns=lay_bounds.spawn
+    local ok=true
+    for slot,b in pairs(spawns) do ok=pcall(gd.stage_set_spawn,slot,b.x,b.y) and ok end
+    if not ok then say('Stage refused some spawn points','error') end
   end
   say('Loaded '..#parts..' parts from '..name) toast('Loaded '..#parts..' parts')
 end
@@ -784,6 +812,7 @@ gd.command('map',function(arg)
         x,y=tonumber(x),tonumber(y)
         assert(x and y and number(x) and number(y),'spawn needs a finite x y')
         assert(gd.stage_set_spawn(n,x,y))
+        spawns[n]={x=x,y=y} dirty=true
         say(('spawn %d -> %.1f %.1f'):format(n,x,y),'action')
       else
         local sx,sy,sz=gd.stage_spawn(n)

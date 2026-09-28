@@ -53,7 +53,7 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Action search | Space: type to filter actions, Up/Down, Enter runs; `map run <text>` | — |
 | Action log | `map log on`: named steps; click one to step back or a `redo:` row to step forward (`map history <n>` / `map redo <n>`) | — |
 | Stage bounds | `map bounds capture` stores the live camera/blast bounds in the layout (v2, drawn green/red); `bounds restore` clears them; `bounds camera l r t b` / `bounds blast l r t b` set them | — |
-| Spawns | `map spawn <0-7>` reads a start (0-3) / respawn (4-7) point; `map spawn <slot> <x> <y>` moves it | — |
+| Spawns | `map spawn <0-7>` reads a start (0-3) / respawn (4-7) point; `map spawn <slot> <x> <y>` moves it (saved in the v2 layout) | — |
 | Panel rows | click a tool, part or action row | — |
 | Exit editing, keep map live | F6 | Z menu: Exit editor / play |
 

@@ -844,14 +844,22 @@ local function panel_rows()
     if #view==0 then
       rows[#rows+1]={kind='none',label='(no matches)',x=16,y=y,w=230,h=18}
     else
-      local first=math.max(1,math.min(palette-3,math.max(1,#view-6)))
-      for i=first,math.min(first+6,#view) do
+      local visible=5
+      local first=math.max(1,math.min(palette-2,math.max(1,#view-visible+1)))
+      local category=nil
+      for i=first,math.min(first+visible-1,#view) do
         local name=PALETTE[view[i]]
+        local cat=palette_category(name)
+        if cat~=category then
+          category=cat
+          rows[#rows+1]={kind='header',label=cat,x=16,y=y,w=230,h=14}
+          y=y+14
+        end
         local pinned=false
         for _,r in ipairs(recents) do if r==name then pinned=true end end
         rows[#rows+1]={kind='part',index=i,label=(pinned and '* ' or '  ')..name:gsub('^bf_',''),
-                       value=palette_category(name),x=16,y=y,w=230,h=18}
-        y=y+20
+                       value=cat,x=16,y=y,w=230,h=18}
+        y=y+18
       end
     end
   else
@@ -937,6 +945,7 @@ local function click_panel(mx,my)
   for _,r in ipairs(panel_rows()) do
     if in_rect(mx,my,r) then
       if r.kind=='tool' then tool=TOOLS[r.index] axis_lock=nil say('Tool: '..tool)
+      elseif r.kind=='header' then return true
       elseif r.kind=='part' then palette=r.index say('Part: '..palette_part())
       elseif r.kind=='help' then help_open=not help_open
       else attempt(ACTIONS[r.index][2]) end
@@ -1317,12 +1326,16 @@ function on_draw()
   kit.text(20,62,'TOOL','caption','gold')
   kit.text(20,186,tool=='place' and ('PART'..(filter~='' and (' /'..filter..(filtering and '_' or '')) or '')) or 'ACTIONS','caption','gold')
   for _,r in ipairs(panel_rows()) do
+    if r.kind=='header' then
+      kit.text(r.x+4,r.y+12,r.label,'caption','gold')
+    else
     local state=(r.kind=='tool' and tool==TOOLS[r.index]) or
                 (r.kind=='part' and palette==r.index) or
                 (r.kind=='action' and action_index==r.index) or
                 (r.kind=='help' and help_open) or false
     local value = r.kind=='tool' and tostring(r.index) or r.value
     kit.button(r.x,r.y,r.w,r.label,state and 'sel' or 'ng',{h=r.h,value=value})
+    end
   end
   gd.fill(W-248,44,240,338,0x0E1218FF)
   kit.panel(W-248,44,240,338,{piece=16,fill=PANEL_FILL})

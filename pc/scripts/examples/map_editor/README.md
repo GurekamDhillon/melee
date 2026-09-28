@@ -58,8 +58,9 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 
 ## Tools and the mouse
 
-The left panel is clickable: the five tool rows, the palette (place tool) or the action list
-(every other tool, the row the keyboard menu is on), and the Help row. The top bar shows the
+The left panel is clickable: the five tool rows, the palette (place tool), grouped under
+`floor`/`wall`/`trim`/`glass`/`corner`/`door`/`balcony` category headers with the recent parts pinned
+first, the action list (every other tool, the row the keyboard menu is on), and the Help row. The top bar shows the
 active tool and part; the bottom bar shows the document, cursor, grid, snap and part count.
 
 With the mouse, a plain click uses the current tool at the pointer: **place** drops a part there,

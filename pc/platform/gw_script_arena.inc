@@ -51,7 +51,7 @@ static int l_stage_restore_bounds(lua_State *L) {
     gw_log("script arena-hooks: bounds restored");
     lua_pushboolean(L, 1); return 1;
 }
-static int l_stage_bounds(lua_State *L) {
+static int l_stage_bounds_arena(lua_State *L) {
     static const char *keys[] = {"left", "right", "top", "bottom"};
     int b, k;
     if (!gs.match_active) { lua_pushnil(L); return 1; }

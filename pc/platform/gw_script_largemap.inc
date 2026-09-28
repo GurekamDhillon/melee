@@ -102,7 +102,7 @@ static int l_stage_stats(lua_State *L)
     return 1;
 }
 
-static int l_stage_bounds(lua_State *L)
+static int l_stage_bounds_largemap(lua_State *L)
 {
     static const char *rects[] = {"camera", "blast"};
     static const char *fields[] = {"left", "right", "bottom", "top"};

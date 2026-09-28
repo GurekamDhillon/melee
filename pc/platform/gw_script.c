@@ -5116,6 +5116,36 @@ static int l_perf(lua_State *L) {
 /* ---- largemap: isolated area, capacity and bounds API ---- */
 #include "gw_script_largemap.inc"
 
+/* Merge of three gd.stage_bounds: largemap (set/restore + camera/blast), arena-hooks
+   (origin, frames) and model-gaps (main_floor, surface_top). Reads keep every field. */
+static int l_stage_bounds(lua_State *L)
+{
+    static const char *extra_a[] = {"origin", "frames", NULL};
+    static const char *extra_b[] = {"main_floor", "surface_top", NULL};
+    int main = 1, i;
+    l_stage_bounds_largemap(L);
+    if (!lua_istable(L, -1)) return 1;
+    lua_replace(L, 1);
+    lua_settop(L, 1);
+    {
+        int (*fn[2])(lua_State *) = {l_stage_bounds_arena, l_stage_bounds_base};
+        const char **keys[2] = {extra_a, extra_b};
+        int k;
+        for (k = 0; k < 2; ++k) {
+            fn[k](L); /* returns nil or table on top */
+            if (lua_istable(L, -1))
+                for (i = 0; keys[k][i]; ++i) {
+                    lua_getfield(L, -1, keys[k][i]);
+                    if (!lua_isnil(L, -1)) lua_setfield(L, main, keys[k][i]);
+                    else lua_pop(L, 1);
+                }
+            lua_pop(L, 1);
+        }
+    }
+    lua_settop(L, 1);
+    return 1;
+}
+
 static const luaL_Reg gs_gd_funcs[] = {
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"scene", l_scene}, {"match", l_match},
     {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
@@ -5177,7 +5207,6 @@ static const luaL_Reg gs_gd_funcs[] = {
     /* largemap */
     {"area_load", l_area_load}, {"area_unload", l_area_unload},
     {"area_loaded", l_area_loaded}, {"stage_stats", l_stage_stats},
-    {"stage_bounds", l_stage_bounds},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},

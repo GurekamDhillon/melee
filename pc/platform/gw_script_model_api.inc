@@ -193,7 +193,7 @@ static int l_model_instances(lua_State *L)
 }
 
 extern int gw_ScriptGame_StageBounds(int field);
-static int l_stage_bounds(lua_State *L)
+static int l_stage_bounds_base(lua_State *L)
 {
     static const char *groups[] = {"blast", "camera", "main_floor"};
     static const char *fields[] = {"left", "right", "top", "bottom"};

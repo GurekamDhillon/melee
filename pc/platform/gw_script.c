@@ -44,6 +44,7 @@ extern void gw_ScriptGame_SetPercent(int slot, int percent);
 extern int gw_ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int bkb);
 extern void gw_ScriptGame_SetStocks(int slot, int stocks);
 extern int gw_ScriptGame_StageKind(void);
+extern int gw_ScriptGame_StageGameplayScene(void);
 extern int gw_ScriptGame_GameMode(void);
 extern int gw_ScriptGame_ItemCount(void);
 extern int gw_ScriptGame_ItemI(int index, int field);
@@ -6373,11 +6374,13 @@ void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
 
 /* Called by scripted Mato's destroy callback in game code. Both events are delivered at the
  * frame boundary; during resimulation the game snapshot still records the broken target. */
-/* script_game.c, at stage load: reserve the Lua stage layer's collision room? Offline, and only
- * with a loaded gameplay script (the only kind that may call gd.stage_* / gd.spawn_target). */
+/* script_game.c, at stage load: reserve only for an offline gameplay scene with a loaded
+ * gameplay script. gs.scene_kind / match_active still describe the previous scene here:
+ * Ground_801C0800 runs before Script_SceneBegin, so query the game's installed scene info. */
 int gw_Script_StageWanted(void) {
     int i;
-    if (gs.L == NULL || gw_RB_Enabled() || gw_Netplay_Enabled()) {
+    if (gs.L == NULL || gw_RB_Enabled() || gw_Netplay_Enabled() ||
+        !gw_ScriptGame_StageGameplayScene()) {
         return 0;
     }
     for (i = 0; i < gs.n; ++i) {

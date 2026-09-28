@@ -155,8 +155,20 @@ void ScriptGame_StageEnd(void)
             a->file[0] = 0;
         }
     }
-    script_stage.map = NULL;
-    script_stage.target_model_ready = 0;
+    if (script_stage.map != NULL) {
+        /* mpLib still owns references into these scene-heap buffers until the next
+         * scene resets the heap. Retire the appended ranges, but do not free the
+         * backing map out from under the scene's on_exit callback. */
+        script_stage.map->vert_count = script_stage.base_v;
+        script_stage.map->line_count = script_stage.base_l;
+        script_stage.map->joint_count = script_stage.base_j;
+        OSReport("script stage: released %d collision lines and %d targets at scene end\n",
+                 script_stage.cap, SCRIPT_STAGE_TARGETS);
+    }
+    if (script_stage.cube != NULL) HSD_Free(script_stage.cube);
+    /* Invalidate every handle now, including enemies and lines. StagePrepare may
+     * not run in the next scene (CSS, menus), so it cannot own this reset. */
+    memset(&script_stage, 0, sizeof(script_stage));
 }
 
 static HSD_Archive* script_stage_archive(const char* file)
@@ -264,6 +276,23 @@ static int script_enemy_preload(int which)
     OSReport("script enemy: preload %s kind=%d %s\n", files[i], kinds[i],
              script_stage.enemy_ready[which] ? "ready" : "missing itemdata");
     return script_stage.enemy_ready[which];
+}
+
+int ScriptGame_StageGameplayScene(void)
+{
+    extern struct GameSceneInfo* gm_804D6720;
+    /* gm_801A4014 installs this before scene->on_enter loads Ground_801C0800.
+     * Script_SceneBegin and the first fighter frame have not happened yet. */
+    if (gm_804D6720 == NULL) return 0;
+    switch (gm_804D6720->scene_kind) {
+    case GS_VS:
+    case GS_SUDDEN_DEATH:
+    case GS_TRAINING:
+    case GS_CAMERA_VS:
+        return 1;
+    default:
+        return 0;
+    }
 }
 
 /* Called from Ground_801C0800 after the Target Test layout merge and before mpLibLoad.

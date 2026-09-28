@@ -14,6 +14,9 @@
  */
 #include "gw.h"
 #include "gw_script.h"
+#include "gw_mods.h"
+#include "gw_model_format.h"
+#include "../gameworld/script_model.h"
 #include "gw_kit.h"
 #include "gw_fx_query.h"
 #include "../gameworld/script_items.h"
@@ -335,8 +338,9 @@ static int gs_stage_handle_serial;
 static int gs_stage_overlay; /* gd.stage_view(_, true): the host-overlay debug strokes */
 /* Cosmetic associations are native, keyed by the collision handle that *is* snapshotted. A
  * rewind to before a line existed therefore has no model to draw; a new future gets a new handle.
- * Assets are immutable process-local caches, never read by gameplay or the rollback simulation. */
-#define GS_STAGE_MODELS 8
+ * Immutable asset bytes are scene-pinned. Runtime instance selection and collision are in
+ * script_game.c snapshot memory; only this legacy line-to-art association remains native. */
+#define GS_STAGE_MODELS SCRIPT_MESH_ASSETS
 #define GS_STAGE_MODEL_LINES 4096 /* handles are not recycled when a rewound future is discarded */
 typedef struct {
     char path[MAX_PATH];
@@ -344,6 +348,9 @@ typedef struct {
     unsigned char *image, *glow_image;
     int bytes, stride, has_normals, has_glow;
     GXTexObj texture, glow;
+    int token, atlas_owner;
+    char atlas_path[MAX_PATH];
+    GmCollision collision;
 } GsStageModel;
 static GsStageModel gs_stage_models[GS_STAGE_MODELS];
 static int gs_stage_nmodels;
@@ -4602,6 +4609,7 @@ static int gs_stage_mesh_valid(const unsigned char *p, size_t n) {
 static int gs_stage_tex_levels(int w, int h, int size) {
     int levels = 0, total = 0;
     while (w >= 4 && h >= 4 && total < size && levels < 11) {
+        if ((w & 3) || (h & 3)) return 0; /* whole GX RGBA8 4x4 tiles at every level */
         total += w * h * 4;
         ++levels;
         w >>= 1;
@@ -4618,104 +4626,21 @@ static void gs_stage_tex_init(GXTexObj *obj, void *image, int w, int h, int size
                     (float)(levels - 1), 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
 }
 
-/* Resolve models/ beside a script's main.lua, or at the mod root for scripts/main.lua.
- * Names are deliberately plain basenames; a gameplay mod cannot walk into another mod's files. */
-static int gs_stage_model_open(lua_State *L, const char *name) {
-    GsScript *s = gs_cur_script();
-    char dir[MAX_PATH], path[MAX_PATH];
-    unsigned char *mesh, *image;
-    size_t len, k;
-    int up, h, i, w, height, image_size;
-    for (k = 0; name[k] != '\0'; ++k)
-        if (k >= 48 || !((name[k] >= 'a' && name[k] <= 'z') ||
-                         (name[k] >= 'A' && name[k] <= 'Z') ||
-                         (name[k] >= '0' && name[k] <= '9') ||
-                         name[k] == '_' || name[k] == '-'))
-            return luaL_error(L, "model must be a basename of at most 48 letters, digits, _ or -");
-    if (k == 0 || s == NULL) return luaL_error(L, "model name is empty");
-    snprintf(dir, sizeof dir, "%s", s->entry);
-    for (up = 0; up < 2; ++up) {
-        char *slash = strrchr(dir, '\\');
-        char *forward = strrchr(dir, '/');
-        if (forward != NULL && (slash == NULL || forward > slash)) slash = forward;
-        if (slash == NULL) break;
-        *slash = '\0';
-        if (snprintf(path, sizeof path, "%s\\models\\%s.gxmesh", dir, name) >= (int)sizeof path)
-            break;
-        for (i = 0; i < gs_stage_nmodels; ++i)
-            if (_stricmp(gs_stage_models[i].path, path) == 0) return i + 1;
-        mesh = (unsigned char *) gs_read_file(path, &len);
-        if (mesh == NULL) continue;
-        if (!gs_stage_mesh_valid(mesh, len)) {
-            free(mesh);
-            return luaL_error(L, "model %s has an invalid .gxmesh file", name);
-        }
-        if (gs_stage_nmodels == GS_STAGE_MODELS) {
-            free(mesh);
-            return luaL_error(L, "stage model cache is full (%d)", GS_STAGE_MODELS);
-        }
-        {
-            char model_dir[MAX_PATH];
-            snprintf(model_dir, sizeof model_dir, "%s\\models", dir);
-            h = gw_GxTex_OpenAt(model_dir, name);
-        }
-        w = gw_GxTex_Width(h); height = gw_GxTex_Height(h);
-        image_size = gw_GxTex_ImageSize(h);
-        if (h < 0 || gw_GxTex_Format(h) != GX_TF_RGBA8 || w <= 0 || height <= 0 ||
-            w > 4096 || height > 4096 || (w & 3) || (height & 3) ||
-            gs_stage_tex_levels(w, height, image_size) < 1) {
-            if (h >= 0) gw_GxTex_Close(h);
-            free(mesh);
-            return luaL_error(L, "model %s needs an RGBA8 .gxtex (with or without its mip chain) beside its .gxmesh", name);
-        }
-        image = (unsigned char *)malloc((size_t)image_size);
-        if (image == NULL) {
-            gw_GxTex_Close(h);
-            free(mesh);
-            return luaL_error(L, "model %s has no room for its texture", name);
-        }
-        gw_GxTex_CopyImage(h, image);
-        gw_GxTex_Close(h);
-        i = gs_stage_nmodels++;
-        memset(&gs_stage_models[i], 0, sizeof gs_stage_models[i]);
-        gs_stage_models[i].mesh = mesh;
-        gs_stage_models[i].image = image;
-        gs_stage_models[i].bytes = (int)len;
-        gs_stage_models[i].has_normals = gw_r32(mesh + 4) == 2;
-        gs_stage_models[i].stride = gs_stage_models[i].has_normals ? 32 : 20;
-        gs_stage_tex_init(&gs_stage_models[i].texture, image, w, height, image_size);
-        {
-            /* <name>.glow.gxtex: the emissive lines, rim lights and core, added in a second TEV stage */
-            char glow_name[64];
-            int g, gw_, gh_, gsize;
-            snprintf(glow_name, sizeof glow_name, "%s.glow", name);
-            snprintf(path, sizeof path, "%s\\models", dir);
-            g = gw_GxTex_OpenAt(path, glow_name);
-            gw_ = g >= 0 ? gw_GxTex_Width(g) : 0; gh_ = g >= 0 ? gw_GxTex_Height(g) : 0;
-            gsize = g >= 0 ? gw_GxTex_ImageSize(g) : 0;
-            if (g >= 0 && gw_GxTex_Format(g) == GX_TF_RGBA8 && gw_ > 0 && gh_ > 0 && gw_ <= 4096 &&
-                gh_ <= 4096 && !(gw_ & 3) && !(gh_ & 3) && gs_stage_tex_levels(gw_, gh_, gsize) >= 1 &&
-                (gs_stage_models[i].glow_image = (unsigned char *)malloc((size_t)gsize)) != NULL) {
-                gw_GxTex_CopyImage(g, gs_stage_models[i].glow_image);
-                gs_stage_tex_init(&gs_stage_models[i].glow, gs_stage_models[i].glow_image, gw_, gh_, gsize);
-                gs_stage_models[i].has_glow = 1;
-            }
-            if (g >= 0) gw_GxTex_Close(g);
-        }
-        if (snprintf(path, sizeof path, "%s\\models\\%s.gxmesh", dir, name) >= (int)sizeof path) path[0] = 0;
-        snprintf(gs_stage_models[i].path, sizeof gs_stage_models[i].path, "%s", path);
-        gw_log("script stage: model %s loaded (GXMS v%u: %u vertices, %u indices, %s; %dx%d atlas, %d mip level(s)%s)",
-               path, gw_r32(mesh + 4), gw_r32(mesh + 8), gw_r32(mesh + 12),
-               gs_stage_models[i].has_normals ? "lit" : "unlit", w, height,
-               gs_stage_tex_levels(w, height, image_size),
-               gs_stage_models[i].has_glow ? ", glow atlas" : "");
-        return i + 1;
-    }
-    return luaL_error(L, "model %s not found in this mod's models/ directory", name);
-}
+#include "gw_script_model_assets.inc"
 
-/* Called by the retargeted world draw. Neither this table nor the file cache is rollback input. */
+/* Called at stage prepare and scene end; no snapshot may resurrect assets from another scene. */
 void gw_Script_StageModelsReset(void) {
+    int i;
+    for (i = 0; i < gs_stage_nmodels; ++i) {
+        free(gs_stage_models[i].mesh);
+        if (gs_stage_models[i].atlas_owner) {
+            free(gs_stage_models[i].image);
+            free(gs_stage_models[i].glow_image);
+        }
+    }
+    if (gs_stage_nmodels) gw_log("script model: scene assets released (%d)", gs_stage_nmodels);
+    memset(gs_stage_models, 0, sizeof gs_stage_models);
+    gs_stage_nmodels = 0;
     gs_stage_nmodel_lines = 0;
     memset(gs_stage_model_draw_seen, 0, sizeof gs_stage_model_draw_seen);
 }
@@ -4733,31 +4658,20 @@ int gw_Script_StageModelFor(int handle) {
 
 /* World-pass draw invoked from script_game.c. The camera matrix is BE game memory; coordinates
  * are scalar arguments. Aurora's GX array reader consumes the mesh's BE float streams directly
- * (le=false), while the indices cross as native scalar values. One GXBegin per platform. */
-void gw_Script_StageModelDraw(int model, const void *game_view, float x0, float y0,
-                              float x1, float y1) {
+ * (le=false), while indices cross as native scalars. One GXBegin per model instance. */
+static const GsStageModel *gs_model_bound;
+static unsigned gs_model_bound_tint;
+static void gs_model_draw(int model, const void *game_view, float local[3][4], unsigned tint) {
     const GsStageModel *art;
     const unsigned char *mesh, *idx;
     uint32_t voff, ioff, count, k;
-    float dx, dy, len, ux, uy, width, sx;
-    float local[3][4], mv[3][4], view[3][4];
+    float mv[3][4], view[3][4];
     int r, c;
     if (model < 1 || model > gs_stage_nmodels || game_view == NULL) return;
     art = &gs_stage_models[model - 1];
     mesh = art->mesh;
     voff = gw_r32(mesh + 28); ioff = gw_r32(mesh + 32);
     count = gw_r32(mesh + 12);
-    width = gw_rf32(mesh + 16);
-    dx = x1 - x0; dy = y1 - y0;
-    len = sqrtf(dx * dx + dy * dy);
-    if (len < 0.001f) return;
-    ux = dx / len; uy = dy / len; sx = len / width;
-    local[0][0] = ux * sx; local[0][1] = -uy; local[0][2] = 0.0f;
-    local[0][3] = (x0 + x1) * 0.5f;
-    local[1][0] = uy * sx; local[1][1] = ux; local[1][2] = 0.0f;
-    local[1][3] = (y0 + y1) * 0.5f;
-    local[2][0] = 0.0f; local[2][1] = 0.0f; local[2][2] = 1.0f;
-    local[2][3] = 0.0f;
     for (r = 0; r < 3; ++r)
         for (c = 0; c < 4; ++c)
             view[r][c] = gw_rf32((const unsigned char *)game_view + (r * 4 + c) * 4);
@@ -4766,66 +4680,82 @@ void gw_Script_StageModelDraw(int model, const void *game_view, float x0, float 
             mv[r][c] = view[r][0] * local[0][c] + view[r][1] * local[1][c] +
                        view[r][2] * local[2][c] + (c == 3 ? view[r][3] : 0.0f);
 
-    GXClearVtxDesc();
-    GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
-    if (art->has_normals) GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
-    GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-    if (art->has_normals) GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
-    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-    GXSetNumTexGens(1);
-    GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
-    GXSetNumIndStages(0);
-    if (art->has_normals) {
-        /* One key light from above and in front, plus a cool ambient: Melee's stage lights are
-           not reachable from here, and a fixed key keeps the deck bright, the rim lit and the
-           underside in shadow at every camera angle. Directions are in eye space. */
-        GXLightObj light;
-        float lx = 0.25f, ly = 1.0f, lz = 0.55f, ex, ey, ez, n;
-        ex = view[0][0] * lx + view[0][1] * ly + view[0][2] * lz;
-        ey = view[1][0] * lx + view[1][1] * ly + view[1][2] * lz;
-        ez = view[2][0] * lx + view[2][1] * ly + view[2][2] * lz;
-        n = sqrtf(ex * ex + ey * ey + ez * ez);
-        if (n > 0.0f) { ex /= n; ey /= n; ez /= n; }
-        GXInitLightPos(&light, ex * 100000.0f, ey * 100000.0f, ez * 100000.0f);
-        GXInitLightColor(&light, (GXColor){ 235, 235, 240, 255 });
-        GXInitLightAttn(&light, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
-        GXLoadLightObjImm(&light, GX_LIGHT0);
-        GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A0, GX_TRUE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT0, GX_DF_CLAMP, GX_AF_NONE);
-        GXSetChanAmbColor(GX_COLOR0A0, (GXColor){ 92, 96, 112, 255 });
-        GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 255, 255, 255, 255 });
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
-        GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
-    } else {
-        GXSetNumChans(0);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
-        GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+    if (gs_model_bound != art || gs_model_bound_tint != tint) {
+        GXClearVtxDesc();
+        GXSetVtxDesc(GX_VA_POS, GX_INDEX16);
+        if (art->has_normals) GXSetVtxDesc(GX_VA_NRM, GX_INDEX16);
+        GXSetVtxDesc(GX_VA_TEX0, GX_INDEX16);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+        if (art->has_normals) GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+        GXSetNumTexGens(1);
+        GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+        GXSetNumIndStages(0);
+        if (art->has_normals) {
+            /* One key light from above and in front, plus a cool ambient: Melee's stage lights are
+               not reachable from here, and a fixed key keeps the deck bright, the rim lit and the
+               underside in shadow at every camera angle. Directions are in eye space. */
+            GXLightObj light;
+            float lx = 0.25f, ly = 1.0f, lz = 0.55f, ex, ey, ez, n;
+            ex = view[0][0] * lx + view[0][1] * ly + view[0][2] * lz;
+            ey = view[1][0] * lx + view[1][1] * ly + view[1][2] * lz;
+            ez = view[2][0] * lx + view[2][1] * ly + view[2][2] * lz;
+            n = sqrtf(ex * ex + ey * ey + ez * ez);
+            if (n > 0.0f) { ex /= n; ey /= n; ez /= n; }
+            GXInitLightPos(&light, ex * 100000.0f, ey * 100000.0f, ez * 100000.0f);
+            GXInitLightColor(&light, (GXColor){ 235, 235, 240, 255 });
+            GXInitLightAttn(&light, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f);
+            GXLoadLightObjImm(&light, GX_LIGHT0);
+            GXSetNumChans(1);
+            GXSetChanCtrl(GX_COLOR0A0, GX_TRUE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT0, GX_DF_CLAMP, GX_AF_NONE);
+            GXSetChanAmbColor(GX_COLOR0A0, (GXColor){ 92, 96, 112, 255 });
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 255, 255, 255, 255 });
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+            GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+        } else {
+            GXSetNumChans(0);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
+            GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+        }
+        if (art->has_glow) {
+            /* the emissive lines, rim lights and core, added on top unlit: prev + glow */
+            GXSetNumTevStages(2);
+            GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR_NULL);
+            GXSetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_TEXC, GX_CC_ONE, GX_CC_CPREV);
+            GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            GXSetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+            GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            if (!gs_model_bound || gs_model_bound->glow_image != art->glow_image)
+                GXLoadTexObj((GXTexObj *)&art->glow, GX_TEXMAP1);
+        } else {
+            GXSetNumTevStages(1);
+        }
+        /* Tint the complete lit + glow result, including alpha, in a final TEV stage. */
+        {
+            int stage = art->has_glow ? GX_TEVSTAGE2 : GX_TEVSTAGE1;
+            GXSetTevColor(GX_TEVREG1, (GXColor){ tint >> 24, tint >> 16, tint >> 8, tint });
+            GXSetNumTevStages(art->has_glow ? 3 : 2);
+            GXSetTevOrder(stage, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);
+            GXSetTevColorIn(stage, GX_CC_ZERO, GX_CC_CPREV, GX_CC_C1, GX_CC_ZERO);
+            GXSetTevColorOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            GXSetTevAlphaIn(stage, GX_CA_ZERO, GX_CA_APREV, GX_CA_A1, GX_CA_ZERO);
+            GXSetTevAlphaOp(stage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+        }
+        GXSetBlendMode((tint & 255) == 255 ? GX_BM_NONE : GX_BM_BLEND,
+                       GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_NOOP);
+        GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+        GXSetCullMode(GX_CULL_NONE);
+        GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     }
-    if (art->has_glow) {
-        /* the emissive lines, rim lights and core, added on top unlit: prev + glow */
-        GXSetNumTevStages(2);
-        GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD0, GX_TEXMAP1, GX_COLOR_NULL);
-        GXSetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_TEXC, GX_CC_ONE, GX_CC_CPREV);
-        GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GXSetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
-        GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GXLoadTexObj((GXTexObj *)&art->glow, GX_TEXMAP1);
-    } else {
-        GXSetNumTevStages(1);
-    }
-    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_NOOP);
-    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
-    GXSetCullMode(GX_CULL_NONE);
-    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     GXSetCurrentMtx(GX_PNMTX0);
     GXLoadPosMtxImm(mv, GX_PNMTX0);
     if (art->has_normals) {
-        /* the normal matrix: view rotation x (local rotation, X divided by the width scale) */
+        /* Inverse transpose of the orthogonal local basis, followed by camera rotation. */
         float ln[3][3], nm[3][4];
-        ln[0][0] = ux / sx; ln[0][1] = -uy; ln[0][2] = 0.0f;
-        ln[1][0] = uy / sx; ln[1][1] = ux; ln[1][2] = 0.0f;
-        ln[2][0] = 0.0f; ln[2][1] = 0.0f; ln[2][2] = 1.0f;
+        for (c = 0; c < 3; ++c) {
+            float length2 = local[0][c] * local[0][c] + local[1][c] * local[1][c] + local[2][c] * local[2][c];
+            for (r = 0; r < 3; ++r) ln[r][c] = local[r][c] / length2;
+        }
         for (r = 0; r < 3; ++r) {
             for (c = 0; c < 3; ++c)
                 nm[r][c] = view[r][0] * ln[0][c] + view[r][1] * ln[1][c] + view[r][2] * ln[2][c];
@@ -4837,7 +4767,9 @@ void gw_Script_StageModelDraw(int model, const void *game_view, float x0, float 
     GXSetArray(GX_VA_TEX0, mesh + voff + 12, (u32)art->bytes - voff - 12, (u8)art->stride, false);
     if (art->has_normals)
         GXSetArray(GX_VA_NRM, mesh + voff + 20, (u32)art->bytes - voff - 20, (u8)art->stride, false);
-    GXLoadTexObj((GXTexObj *)&art->texture, GX_TEXMAP0);
+    if (!gs_model_bound || gs_model_bound->image != art->image)
+        GXLoadTexObj((GXTexObj *)&art->texture, GX_TEXMAP0);
+    gs_model_bound = art; gs_model_bound_tint = tint;
     idx = mesh + ioff;
     GXBegin(GX_TRIANGLES, GX_VTXFMT0, (u16)count);
     for (k = 0; k < count; ++k) {
@@ -4853,6 +4785,22 @@ void gw_Script_StageModelDraw(int model, const void *game_view, float x0, float 
                art->has_normals ? "lit" : "unlit", art->has_glow ? " + glow stage" : "");
     }
 }
+
+/* Legacy floor attachment uses the same renderer with width-only scaling. */
+void gw_Script_StageModelDraw(int model, const void *view, float x0, float y0, float x1, float y1) {
+    float dx = x1 - x0, dy = y1 - y0, len = sqrtf(dx * dx + dy * dy), ux, uy, sx;
+    float local[3][4];
+    if (model < 1 || model > gs_stage_nmodels || len < 0.001f) return;
+    ux = dx / len; uy = dy / len; sx = len / gw_rf32(gs_stage_models[model - 1].mesh + 16);
+    memset(local, 0, sizeof local);
+    local[0][0] = ux * sx; local[0][1] = -uy; local[0][3] = (x0 + x1) * 0.5f;
+    local[1][0] = uy * sx; local[1][1] = ux; local[1][3] = (y0 + y1) * 0.5f;
+    local[2][2] = 1;
+    gs_model_bound = NULL;
+    gs_model_draw(model, view, local, 0xFFFFFFFFu);
+}
+
+#include "gw_script_model_api.inc"
 
 static void gs_stage_model_attach(int handle, int model) {
     if (model <= 0) return;
@@ -4927,6 +4875,8 @@ static int l_stage_add_platform(lua_State *L) {
 static int l_stage_remove(lua_State *L) {
     int h = gs_stage_handle_arg(L, 1);
     gs_require_stage(L, "stage_remove");
+    if (gw_ScriptGame_ModelLineOwner(h))
+        return luaL_error(L, "line belongs to a runtime model; use model_despawn");
     gs_rw_branch();
     lua_pushboolean(L, gw_ScriptGame_StageRemove(h));
     return 1;
@@ -4936,6 +4886,8 @@ static int l_stage_move(lua_State *L) {
     int h = gs_stage_handle_arg(L, 1);
     float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
     gs_require_stage(L, "stage_move");
+    if (gw_ScriptGame_ModelLineOwner(h))
+        return luaL_error(L, "line belongs to a runtime model; use model_move");
     gs_rw_branch();
     lua_pushboolean(L, gw_ScriptGame_StageMove(h, gs_fbits(x), gs_fbits(y)));
     return 1;
@@ -5133,6 +5085,13 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield},
     {"stage_add_platform", l_stage_add_platform}, {"stage_add_line", l_stage_add_line},
     {"stage_add_model", l_stage_add_model},
+    {"model_load", l_model_load},
+    {"model_release", l_model_release},
+    {"model_spawn", l_model_spawn},
+    {"model_move", l_model_move},
+    {"model_set", l_model_set},
+    {"model_despawn", l_model_despawn},
+    {"model_get", l_model_get},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},
@@ -6703,25 +6662,18 @@ void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
     }
 }
 
-/* Called by scripted Mato's destroy callback in game code. Both events are delivered at the
- * frame boundary; during resimulation the game snapshot still records the broken target. */
-/* script_game.c, at stage load: reserve only for an offline gameplay scene with a loaded
- * gameplay script. gs.scene_kind / match_active still describe the previous scene here:
- * Ground_801C0800 runs before Script_SceneBegin, so query the game's installed scene info. */
+/* script_game.c, at stage load: reserve for any offline gameplay scene, even before a gameplay
+ * script is loaded: a mod can be enabled/loaded during the scene and spawn models at once.
+ * gs.scene_kind / match_active still describe the previous scene here: Ground_801C0800 runs
+ * before Script_SceneBegin, so query the game's installed scene info. Online retains the
+ * original map and heap layout, with no scripted collision layer. */
 int gw_Script_StageWanted(void) {
-    int i;
-    if (gs.L == NULL || gw_RB_Enabled() || gw_Netplay_Enabled() ||
-        !gw_ScriptGame_StageGameplayScene()) {
-        return 0;
-    }
-    for (i = 0; i < gs.n; ++i) {
-        if (gs.s[i].used && !gs.s[i].disabled && i != gs.console && gs.s[i].gameplay) {
-            return 1;
-        }
-    }
-    return 0;
+    return gs.L != NULL && !gw_RB_Enabled() && !gw_Netplay_Enabled() &&
+           gw_ScriptGame_StageGameplayScene();
 }
 
+/* Called by scripted Mato's destroy callback in game code. Both events are delivered at the
+ * frame boundary; during resimulation the game snapshot still records the broken target. */
 void gw_Script_TargetBroken(int handle, int remaining) {
     GsEvent *e;
     if (gs.L == NULL || gw_Snap_Resimulating()) return;
@@ -7868,6 +7820,8 @@ static int test_script_paused_input(void) {
 }
 
 /* ---- Geno Lab ---------------------------------------------------------------------------------- */
+#include "gw_script_model_tests.inc"
+
 static int test_script_stage_events(void) {
     char dir[MAX_PATH], path[MAX_PATH], out[512];
     FILE *f;
@@ -8605,6 +8559,7 @@ fail:
 }
 
 void gw_script_tests_register(void) {
+    gw_test_register("script_model_api", test_script_model_api);
     gw_test_register("script_stage_events", test_script_stage_events);
     gw_test_register("script_boss_event", test_script_boss_event);
     gw_test_register("script_set_damage", test_script_set_damage);

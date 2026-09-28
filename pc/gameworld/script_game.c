@@ -34,6 +34,7 @@
 #include <melee/mp/mpcoll.h>
 #include "../geno/geno.h"
 #include "script_items.h"
+#include "script_model.h"
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjobject.h>
 #include <sysdolphin/baselib/memory.h>
@@ -90,6 +91,11 @@ typedef struct {
     HSD_Archive* archive;
     size_t bytes;
 } ScriptStageArchive;
+extern int Script_ModelInput(int field, int line);
+extern void Script_ModelDraw(int slot, Mtx view);
+extern void Script_StageModelsReset(void);
+static int script_mesh_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
+static float script_mesh_float(int i) { union { float f; int i; } u; u.i = i; return u.f; }
 static struct {
     MapCollData* map;
     int base_v, base_l, base_j, target_remaining;
@@ -105,6 +111,8 @@ static struct {
     HSD_Archive* enemy_archive[3];
     ScriptStageModel model[SCRIPT_STAGE_MODELS];
     ScriptStageArchive archives[SCRIPT_STAGE_ARCHIVES];
+    ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
+    struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
 } script_stage;
 static Article* script_target_old_article;
 
@@ -169,6 +177,7 @@ void ScriptGame_StageEnd(void)
     /* Invalidate every handle now, including enemies and lines. StagePrepare may
      * not run in the next scene (CSS, menus), so it cannot own this reset. */
     memset(&script_stage, 0, sizeof(script_stage));
+    Script_StageModelsReset(); /* native mesh/atlas bytes; the memset above cleared the instances */
 }
 
 static HSD_Archive* script_stage_archive(const char* file)
@@ -296,8 +305,8 @@ int ScriptGame_StageGameplayScene(void)
 }
 extern void Script_StageModelsReset(void);
 extern int Script_StageModelFor(int handle);
-/* Native Aurora owns the immutable mesh and GXTX bytes. This call only issues GX commands;
- * no model pointer, cache or visual selection enters the snapshotted game world. */
+/* Native Aurora owns the immutable mesh and GXTX bytes. This legacy floor call only
+ * issues GX commands; runtime model selection instead lives in ScriptMeshInstance. */
 extern void Script_StageModelDraw(int model, Mtx view, float x0, float y0, float x1, float y1);
 
 /* Called from Ground_801C0800 after the Target Test layout merge and before mpLibLoad.
@@ -314,6 +323,8 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     script_stage.draw = NULL;
     script_stage.cube = NULL;
     Script_StageModelsReset();
+    memset(script_stage.instance, 0, sizeof script_stage.instance);
+    memset(script_stage.asset, 0, sizeof script_stage.asset);
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) script_stage.model[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
@@ -331,8 +342,8 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     }
     if (src == NULL) src = &mpLib_803BF760; /* mpLibLoad's own fallback map */
     {
-        /* Only when a gameplay script could use it, offline: a match with none (and every
-         * netplay / rollback match) loads the stage's own map exactly as before, heap included. */
+        /* Reserve offline even without a loaded script: runtime mod loading needs this
+         * capacity later. Online retains the original map and heap layout. */
         extern int Script_StageWanted(void);
         if (!Script_StageWanted()) return src;
     }
@@ -504,6 +515,29 @@ static void script_stage_render(HSD_GObj* gobj, int code)
             Script_StageModelDraw(model, view, s->x0, s->y0, s->x1, s->y1);
         }
     }
+    /* Build a transient stable draw order: layer, opaque before alpha, then asset
+     * for opaque geometry. No native ordering state can survive a snapshot load. */
+    {
+        int order[SCRIPT_MESH_INSTANCES], count = 0, n;
+        for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i) {
+            ScriptMeshInstance* m = &script_stage.instance[i];
+            int alpha = (m->field[SM_TINT] & 255) != 255;
+            if (!m->handle || !m->field[SM_VISIBLE]) continue;
+            for (n = count; n > 0; --n) {
+                ScriptMeshInstance* prev = &script_stage.instance[order[n - 1]];
+                int prev_alpha = (prev->field[SM_TINT] & 255) != 255;
+                if (prev->field[SM_LAYER] < m->field[SM_LAYER]) break;
+                if (prev->field[SM_LAYER] == m->field[SM_LAYER] &&
+                    (prev_alpha < alpha || (prev_alpha == alpha &&
+                     (alpha || prev->asset <= m->asset)))) break;
+                order[n] = order[n - 1];
+            }
+            order[n] = i;
+            ++count;
+        }
+        Script_ModelDraw(-1, view);
+        for (i = 0; i < count; ++i) Script_ModelDraw(order[i], view);
+    }
     HSD_StateInvalidate(-1);
 }
 
@@ -543,6 +577,9 @@ void ScriptGame_StageReady(void)
     CollLine* cl = mpGetGroundCollLine();
     CollJoint* cj = mpGetGroundCollJoint();
     int i, k;
+    /* A visual-only model also works when the map has no spare collision joints. */
+    { extern int Script_StageWanted(void);
+      if (Script_StageWanted()) script_stage_draw_init(); }
     if (map == NULL || mpLib_8004D164() != map) return;
     for (i = 0; i < script_stage.cap; ++i) {
         int v = script_stage.base_v + i * 2, l = script_stage.base_l + i;
@@ -578,7 +615,6 @@ void ScriptGame_StageReady(void)
     map->vert_count += script_stage.cap * 2;
     map->line_count += script_stage.cap;
     map->joint_count += script_stage.cap;
-    script_stage_draw_init();
     OSReport("script stage: reserved %d collision lines and %d targets (the stage uses %d/2048 "
              "vertices, %d/1536 lines, %d/256 joints)\n",
              script_stage.cap, SCRIPT_STAGE_TARGETS, script_stage.base_v, script_stage.base_l,
@@ -698,12 +734,37 @@ int ScriptGame_StageRemove(int handle)
     return 0;
 }
 
+static int script_stage_line_set(int handle, float x0, float y0, float x1, float y1)
+{
+    int i;
+    for (i = 0; i < script_stage.cap; ++i) {
+        ScriptStageLine* s = &script_stage.line[i];
+        CollVtx* v;
+        CollJoint* j;
+        if (!s->active || s->handle != handle) continue;
+        v = &mpGetGroundCollVtx()[script_stage.base_v + 2 * i];
+        /* ScriptGame_StageFrame captured the frame-start positions. Preserve those
+         * across multiple moves so mpColl sees the whole frame's floor displacement. */
+        v[0].pos.x = s->x0 = x0; v[0].pos.y = s->y0 = y0;
+        v[1].pos.x = s->x1 = x1; v[1].pos.y = s->y1 = y1;
+        j = &mpGetGroundCollJoint()[script_stage.base_j + i];
+        j->bounding_min.x = (x0 < x1 ? x0 : x1) - 30;
+        j->bounding_max.x = (x0 > x1 ? x0 : x1) + 30;
+        j->bounding_min.y = (y0 < y1 ? y0 : y1) - 30;
+        j->bounding_max.y = (y0 > y1 ? y0 : y1) + 30;
+        j->flags |= CollJoint_B8;
+        j->xE = true;
+        mpLib_8005667C(script_stage.base_j + i);
+        mpUncheckBounding();
+        return 1;
+    }
+    return 0;
+}
+
 int ScriptGame_StageMove(int handle, int xb, int yb)
 {
     union { int i; float f; } u;
     float x, y, dx, dy;
-    CollVtx* v;
-    CollJoint* j;
     int i;
     u.i = xb; x = u.f; u.i = yb; y = u.f;
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
@@ -733,28 +794,17 @@ int ScriptGame_StageMove(int handle, int xb, int yb)
             return 1;
         }
     }
-    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+    for (i = 0; i < script_stage.cap; ++i) {
         ScriptStageLine* s = &script_stage.line[i];
         if (!s->active || s->handle != handle) continue;
         dx = x - (s->x0 + s->x1) * 0.5f;
         dy = y - (s->y0 + s->y1) * 0.5f;
-        v = &mpGetGroundCollVtx()[script_stage.base_v + 2 * i];
-        v[0].x10 = v[0].pos.x; v[0].x14 = v[0].pos.y;
-        v[1].x10 = v[1].pos.x; v[1].x14 = v[1].pos.y;
-        v[0].pos.x += dx; v[0].pos.y += dy;
-        v[1].pos.x += dx; v[1].pos.y += dy;
-        s->x0 += dx; s->x1 += dx; s->y0 += dy; s->y1 += dy;
-        j = &mpGetGroundCollJoint()[script_stage.base_j + i];
-        j->bounding_min.x += dx; j->bounding_max.x += dx;
-        j->bounding_min.y += dy; j->bounding_max.y += dy;
-        j->flags |= CollJoint_B8;
-        j->xE = true;
-        mpLib_8005667C(script_stage.base_j + i);
-        mpUncheckBounding();
-        return 1; /* no log line: a moving platform is moved every frame */
+        return script_stage_line_set(handle, s->x0 + dx, s->y0 + dy, s->x1 + dx, s->y1 + dy);
     }
     return 0;
 }
+
+#include "script_model.inc"
 
 /* Ground_801C126C's preorder numbering, scoped to a map_head model group. A copy of
  * the chosen descriptor cuts its next sibling, so HSD_JObjLoadJoint owns this branch only. */

@@ -53,8 +53,8 @@ void gw_Script_PostRender(void); /* after the render pass: on_draw, then the lis
 void gw_Script_GameEvent(int what, int a, int b, int c, int d);
 /* Scripted Mato hit callback; queued for on_target_broken / on_all_targets_broken after the frame. */
 void gw_Script_TargetBroken(int handle, int remaining);
-/* script_game.c at stage load: 1 = reserve collision room (offline gameplay scene, gameplay
- * script loaded); 0 = the stage's map exactly as before */
+/* script_game.c at stage load: 1 = reserve the Lua stage layer's collision room (offline
+ * gameplay scene, including for scripts loaded later); 0 = the stage's map exactly as before */
 int gw_Script_StageWanted(void);
 /* Called only by the 1P boss controller; an event hook is opt-in and offline only. */
 int gw_Script_BossHookEnabled(void);

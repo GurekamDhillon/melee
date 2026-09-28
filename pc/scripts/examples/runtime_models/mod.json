@@ -1,0 +1,11 @@
+{
+  "id": "runtime_models",
+  "name": "Runtime model parts",
+  "version": "1.0.0",
+  "kind": "script",
+  "description": "Data-table model assembly and moving collision on any offline stage.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

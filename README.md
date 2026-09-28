@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.4" src="pc/docs/readme/brand/version.svg" height="28"></a>
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.7" src="pc/docs/readme/brand/version.svg" height="28"></a>
   <img alt="Platform: Windows x64" src="pc/docs/readme/brand/windows.svg" height="28">
   <img alt="Netplay: rollback" src="pc/docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="pc/docs/readme/brand/mex.svg" height="28">
@@ -29,7 +29,7 @@ It plays online with **rollback netcode** from a competitive lobby, renders nati
 **[m-ex](https://github.com/akaneia/m-ex) modded content** (mod discs and loose mods: fighters,
 stages, items and music), and can be scripted in **Lua**.
 
-> **Status: public test build (0.1.4).** Download it, and read the project overview, the full
+> **Status: public test build (0.1.7).** Download it, and read the project overview, the full
 > feature list and the screenshots, in the workspace repo:
 > **[GurekamDhillon/gd-melee-workspace](https://github.com/GurekamDhillon/gd-melee-workspace)**
 > ([latest release](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest)). You

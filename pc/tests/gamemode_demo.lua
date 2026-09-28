@@ -47,6 +47,13 @@ local function gmtest_tp(x, y)
     error('teleport never became available')
 end
 local function gmtest_hold(spec, n) gd.input(1, spec, n); gd.wait(n) end
+-- Attack: fly into the target with a held hitbox (gd.hold_hitbox re-hits every 8 frames).
+local function gmtest_swing(x, y)
+    if not gd.fly(1) then gd.fly(1, true) end
+    if not gd.hold_hitbox(1) then gd.hold_hitbox(1, true, {action = 'nair'}) end
+    gmtest_tp(x, y)
+    gd.wait(24)
+end
 gd.run(function()
     local ok, why = pcall(function()
         assert(gd.wait_until(function()
@@ -57,11 +64,14 @@ gd.run(function()
         for _ = 1, 40 do
             local enemies = gmtest_items(false)
             if #enemies == 0 then break end
-            gmtest_tp(enemies[1].x - 14, enemies[1].y + 2)
-            gmtest_hold({x = 127}, 1); gmtest_hold(0, 1)
-            gmtest_hold({x = 127, buttons = 'A'}, 2); gd.wait(40)
+            gmtest_swing(enemies[1].x, enemies[1].y)
         end
         assert(gd.wait_until(function() return mode:ready() end, 180), 'hall goal stranded')
+        do
+            local _, hits = gd.hold_hitbox(1)
+            gd.log('GMD hold_hitbox rehit intervals: ' .. tostring(hits))
+            assert(hits >= 5, 'held hitbox re-armed only ' .. tostring(hits) .. ' times')
+        end
         for _, h in ipairs(gmtest_hall) do
             assert(gd.enemy_status(h) ~= 'alive', 'hall cleared with live owned enemy')
             local terminal = gmtest_terminal[h]
@@ -77,8 +87,7 @@ gd.run(function()
         for _ = 1, 30 do
             local targets = gmtest_items(true)
             if #targets == 0 then break end
-            gmtest_tp(targets[1].x, targets[1].y - 8)
-            gmtest_hold({buttons = 'A'}, 2); gmtest_hold(0, 30)
+            gmtest_swing(targets[1].x, targets[1].y)
         end
         assert(gd.wait_until(function() return mode:ready() end, 300), 'gallery objectives not complete')
         assert(#gmtest_items(true) == 0, 'gallery targets still live')

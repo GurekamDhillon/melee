@@ -49,6 +49,9 @@ enum {
 int GenoFly_Set(int slot, int mode); ///< 0 ok; -1 no fighter, -2 its state cannot fly, 1 PLACE found no floor
 int GenoFly_Get(int slot);           ///< 1 flying, 0 not, -1 no fighter on that port
 int GenoFly_Any(void);               ///< 1 while any fighter flies (the camera leaves its bounds)
+int GenoFly_HoldHitbox(int slot, int on, int action, int frame); ///< 0 ok, -1 no fighter, -3 not flying
+int GenoFly_Holding(int slot);
+int GenoFly_HoldHits(int slot); ///< connects counted per rehit interval since the hold began
 int GenoFly_Teleport(int slot, int x_bits, int y_bits); ///< 0 ok, -1 no fighter, -2 state refused
 void GenoFly_SetSpeed(int speed_bits);                  ///< units per frame at full stick
 float GenoFly_Speed(void);

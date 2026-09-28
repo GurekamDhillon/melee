@@ -262,6 +262,8 @@ int GenoLab_Leave(int where)
 #include <melee/ft/fighter.h>
 #include <melee/ft/ftanim.h>
 #include <melee/ft/ftcommon.h>
+#include <melee/ft/ftcoll.h>
+#include <melee/lb/lbcollision.h>
 #include <melee/ft/types.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Fall.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
@@ -275,6 +277,12 @@ static float fly_speed = 2.0f; /* units per frame at full stick */
 static int fly_solid;          /* 1: keep hurtboxes */
 
 static void fly_input(Fighter_GObj* gobj);
+static void hold_step(Fighter_GObj* gobj);
+static Fighter_GObj* fly_gobj(int slot);
+int GenoFly_Fighter(Fighter* fp);
+/* gd.hold_hitbox: per-port (pc_geno_* statics, so savestates carry them) */
+static int hold_on[6], hold_action[6], hold_frame[6], hold_frozen[6], hold_tick[6], hold_mask[6], hold_hits[6];
+#define HOLD_REHIT_FRAMES 8
 static void fly_phys(Fighter_GObj* gobj);
 static void fly_coll(Fighter_GObj* gobj);
 
@@ -327,6 +335,7 @@ static void fly_phys(Fighter_GObj* gobj)
     /* intangible (ftColl_8007B62C's state 2, without its colour flash), or normal when solid: set every
      * frame, so switching solid mid-flight takes effect at once */
     fp->x1988 = fly_solid ? 0 : 2;
+    hold_step(gobj);
 }
 
 static void fly_coll(Fighter_GObj* gobj)
@@ -334,6 +343,120 @@ static void fly_coll(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     mpColl_80043680(&fp->coll_data, &fp->cur_pos); /* follow: no floor, wall, ceiling or ledge */
     fp->coll_data.env_flags = 0;
+}
+
+/* ---- gd.hold_hitbox: a fighter flying in an attack state, frozen where its hitbox is live -------
+ * hold_step runs from fly_phys. It (re)enters the attack state, lets the animation run until a hitbox is
+ * enabled (and past opts.frame), then freezes the animation (rate 0) so that hitbox stays on, and every
+ * HOLD_REHIT_FRAMES clears the hit victims so the same enemy is hit again. */
+static void hold_callbacks(Fighter* fp)
+{
+    fp->anim_cb = fly_anim;
+    fp->input_cb = fly_input;
+    fp->phys_cb = fly_phys;
+    fp->coll_cb = fly_coll;
+}
+
+static int hold_live(Fighter* fp)
+{
+    int i;
+    for (i = 0; i < 4; i++) {
+        if (fp->x914[i].state == HitCapsule_Enabled) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void hold_step(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    int slot = fp->player_id, i;
+    if (slot < 0 || slot >= 6 || !hold_on[slot]) {
+        return;
+    }
+    if (fp->motion_id != hold_action[slot] || hold_frozen[slot] < 0) {
+        Fighter_ChangeMotionState(gobj, hold_action[slot], 0, 0.0f, 1.0f, 0.0f, NULL);
+        hold_callbacks(fp);
+        hold_frozen[slot] = 0;
+        hold_tick[slot] = 0;
+        return;
+    }
+    if (!hold_frozen[slot]) {
+        int mask = 0;
+        for (i = 0; i < 4; i++) {
+            if (fp->x914[i].state == HitCapsule_Enabled) {
+                mask |= 1 << i;
+            }
+        }
+        if (mask != 0 && fp->cur_anim_frame >= (float) hold_frame[slot]) {
+            hold_frozen[slot] = 1;
+            hold_mask[slot] = mask;
+            OSReport("geno hold: P%d frozen in motion %d at frame %.1f, hitboxes %x\n", slot + 1,
+                     (int) fp->motion_id, fp->cur_anim_frame, mask);
+        } else if (!ftAnim_IsFramesRemaining(gobj)) {
+            hold_frozen[slot] = -1; /* restart the animation next frame */
+            return;
+        }
+    }
+    if (hold_frozen[slot] == 1) {
+        ftAnim_SetAnimRate(gobj, 0.0f);
+        fp->dmg.x195c_hitlag_frames = 0.0f; /* the attacker's hitlag never freezes the hold */
+        for (i = 0; i < 4; i++) {
+            if ((hold_mask[slot] & (1 << i)) && fp->x914[i].state != HitCapsule_Enabled) {
+                fp->x914[i].state = HitCapsule_Enabled; /* re-armed: a connect or the move's end cleared it */
+            }
+        }
+        if (++hold_tick[slot] % HOLD_REHIT_FRAMES == 0) {
+            hold_hits[slot]++; /* rehit intervals offered while the hitbox was live (item hits leave no record) */
+            for (i = 0; i < 4; i++) {
+                lbColl_80008440(&fp->x914[i]); /* victims cleared: the same target can be hit again */
+            }
+        }
+    }
+}
+
+/* action: 0 nair (default), 1 fair, 2 bair, 3 uair, 4 dair, 5 jab, or a raw motion state id (>5).
+ * frame: freeze no earlier than this animation frame (< 0: the first frame a hitbox is live). */
+int GenoFly_HoldHitbox(int slot, int on, int action, int frame)
+{
+    Fighter_GObj* gobj = fly_gobj(slot);
+    Fighter* fp;
+    static const int codes[6] = {ftCo_MS_AttackAirN, ftCo_MS_AttackAirF, ftCo_MS_AttackAirB,
+                                 ftCo_MS_AttackAirHi, ftCo_MS_AttackAirLw, ftCo_MS_Attack11};
+    if (gobj == NULL) {
+        return -1;
+    }
+    fp = GET_FIGHTER(gobj);
+    if (!GenoFly_Fighter(fp)) {
+        return -3;
+    }
+    if (!on) {
+        if (hold_on[slot]) {
+            hold_on[slot] = 0;
+            Fighter_ChangeMotionState(gobj, ftCo_MS_Wait, 0, 0.0f, 1.0f, 0.0f, NULL);
+            hold_callbacks(fp);
+            fp->self_vel.x = fp->self_vel.y = fp->self_vel.z = 0.0f;
+        }
+        return 0;
+    }
+    hold_on[slot] = 1;
+    hold_hits[slot] = 0;
+    hold_action[slot] = action >= 0 && action < 6 ? codes[action] : action;
+    hold_frame[slot] = frame;
+    hold_tick[slot] = 0;
+    hold_frozen[slot] = -1; /* enter the attack on the next flight frame */
+    return 0;
+}
+
+int GenoFly_HoldHits(int slot)
+{
+    return slot >= 0 && slot < 6 ? hold_hits[slot] : 0;
+}
+
+int GenoFly_Holding(int slot)
+{
+    return slot >= 0 && slot < 6 && hold_on[slot];
 }
 
 int GenoFly_Fighter(Fighter* fp)
@@ -421,6 +544,7 @@ int GenoFly_Set(int slot, int mode)
     if (!GenoFly_Fighter(fp)) {
         return 0;
     }
+    hold_on[slot] = 0;
     if (mode == GENO_FLY_PLACE) {
         Vec3 floor;
         if (mpCheckFloor(fp->cur_pos.x, fp->cur_pos.y, fp->cur_pos.x, fp->cur_pos.y - 100000.0f, 0.0f,

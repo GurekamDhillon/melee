@@ -1647,6 +1647,9 @@ static int l_set_stocks(lua_State *L) {
  * all come through gs_fly_*. */
 extern int gw_GenoFly_Set(int slot, int mode);
 extern int gw_GenoFly_Get(int slot);
+extern int gw_GenoFly_HoldHitbox(int slot, int on, int action, int frame);
+extern int gw_GenoFly_Holding(int slot);
+extern int gw_GenoFly_HoldHits(int slot);
 extern int gw_GenoFly_Any(void);
 extern int gw_GenoFly_Teleport(int slot, int x_bits, int y_bits);
 extern void gw_GenoFly_SetSpeed(int speed_bits);
@@ -1717,6 +1720,42 @@ static int l_fly(lua_State *L) {
         luaL_error(L, "gd.fly: %s", gs_fly_err(rc));
     }
     lua_pushboolean(L, gs_fly_on(slot));
+    return 1;
+}
+
+/* gd.hold_hitbox(port, on [, {action=, frame=}]): the flying fighter stays in an attack state frozen where its
+ * hitbox is live (re-hitting every 8 frames). action: "nair"(default) "fair" "bair" "uair" "dair" "jab" or a
+ * motion state id; frame: earliest freeze frame. Returns whether it is on. */
+static int gs_hold_action(lua_State *L, int idx) {
+    static const char *names[] = {"nair", "fair", "bair", "uair", "dair", "jab"};
+    int i;
+    if (lua_type(L, idx) == LUA_TNUMBER) return (int)lua_tointeger(L, idx);
+    if (lua_type(L, idx) == LUA_TSTRING) {
+        const char *n = lua_tostring(L, idx);
+        for (i = 0; i < 6; ++i) if (_stricmp(n, names[i]) == 0) return i;
+        luaL_error(L, "gd.hold_hitbox: unknown action \"%s\"", n);
+    }
+    return 0;
+}
+static int gs_hold_set(int slot, int on, int action, int frame) {
+    int rc;
+    gs_rw_branch();
+    rc = gw_GenoFly_HoldHitbox(slot, on, action, frame);
+    if (rc == 0) gw_log("fly: P%d hold hitbox %s", slot + 1, on ? "on" : "off");
+    return rc;
+}
+static int l_hold_hitbox(lua_State *L) {
+    int slot = gs_slot_arg(L, 1), rc, action = 0, frame = -1;
+    if (lua_isnoneornil(L, 2)) { lua_pushboolean(L, gw_GenoFly_Holding(slot)); lua_pushinteger(L, gw_GenoFly_HoldHits(slot)); return 2; }
+    gs_require_offline(L, "hold_hitbox");
+    if (lua_istable(L, 3)) {
+        lua_getfield(L, 3, "action"); action = gs_hold_action(L, -1); lua_pop(L, 1);
+        lua_getfield(L, 3, "frame"); if (lua_isnumber(L, -1)) frame = (int)lua_tointeger(L, -1); lua_pop(L, 1);
+    }
+    rc = gs_hold_set(slot, lua_toboolean(L, 2), action, frame);
+    if (rc == -3) luaL_error(L, "gd.hold_hitbox: the fighter must be flying (gd.fly)");
+    if (rc < 0) luaL_error(L, "gd.hold_hitbox: %s", gs_fly_err(rc));
+    lua_pushboolean(L, gw_GenoFly_Holding(slot));
     return 1;
 }
 
@@ -1814,6 +1853,20 @@ static int gs_fly_console(const char *cmd, const char *arg) {
             return -1;
         }
         gw_Console_Print(GS_GREEN, "P%d -> %.2f %.2f", slot + 1, x, y);
+        return 0;
+    }
+    if (_stricmp(cmd, "hold") == 0) {
+        int on, rc2;
+        if (n >= 2) slot = atoi(a[0]) - 1;
+        on = _stricmp(a[n - 1], "on") == 0;
+        if (n < 1 || (!on && _stricmp(a[n - 1], "off") != 0) || slot < 0 || slot > 5) {
+            gw_Console_Print(GS_RED, "usage: hold [port] on|off");
+            return -1;
+        }
+        if (why != NULL) { gw_Console_Print(GS_RED, "%s", why); return -1; }
+        rc2 = gs_hold_set(slot, on, 0, -1);
+        if (rc2 != 0) { gw_Console_Print(GS_RED, "hold: %s", rc2 == -3 ? "fly first (fly [port] on)" : gs_fly_err(rc2)); return -1; }
+        gw_Console_Print(GS_GREEN, "P%d hold hitbox %s", slot + 1, on ? "on" : "off");
         return 0;
     }
     /* fly / noclip */
@@ -5161,7 +5214,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage},
     {"hit", l_hit}, {"set_stocks", l_set_stocks},
-    {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
+    {"fly", l_fly}, {"hold_hitbox", l_hold_hitbox}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"mode_blob", l_mode_blob},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
@@ -7305,7 +7358,7 @@ static int gs_exec(const char *line_in) {
         gs_cmd_help();
         return 0;
     }
-    if (IS("fly") || IS("noclip") || IS("tp") || IS("pos")) {
+    if (IS("fly") || IS("noclip") || IS("tp") || IS("pos") || IS("hold")) {
         return gs_fly_console(IS("noclip") ? "fly" : line, arg);
     }
     if (IS("api")) {

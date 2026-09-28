@@ -41,6 +41,7 @@ end
 function on_frame() mode:frame() end
 function on_draw() mode:draw() end
 function on_enemy_defeated(e) mode:enemy_defeated(e) end
+function on_enemy_removed(e) mode:enemy_removed(e) end
 function on_target_broken(h) mode:target_broken(h) end
 function on_boss_defeated(e) mode:boss_defeated(e) end
 function on_loadstate() mode:load() end

@@ -39,9 +39,10 @@ there is no automatic fit, bounds change, scaling or collision generation. Sidec
 collision. At most 128 models and 32 targets per room, further limited by native/global pools.
 
 `waves` is an ordered list of enemy lists (1–32 per wave). A subsequent wave starts on the
-next logic-frame hook after all **owned** enemies emit defeat events. Unrelated/duplicate
-events do nothing. Explicit removal is not defeat; silently despawning a mode enemy elsewhere
-can leave its objective blocked. Koopa's shell transition is not a defeat event. Spawn failure
+next logic-frame hook after all **owned** enemies emit terminal events. Unrelated/duplicate
+events do nothing. Both defeats and removals clear ownership. A watchdog reconciles owned
+handles through `gd.enemy_status` every play frame before advancing waves, so a lost event
+cannot leave a phantom enemy blocking the door. Koopa's shell transition is not a defeat event. Spawn failure
 puts the director in `error` and cleans its owned objects, rather than treating the wave as won.
 
 Goals are ANDed; empty goals mean doors are immediately eligible:
@@ -49,7 +50,7 @@ Goals are ANDed; empty goals mean doors are immediately eligible:
 | Goal | Satisfied when |
 |---|---|
 | `reach_exit` | An eligible door is entered; with `box={x0,y0,x1,y1}`, that region must first be reached |
-| `defeat_all` | Every authored wave was spawned and all its owned enemies defeated |
+| `defeat_all` | Every authored wave was spawned and all its owned enemies defeated or removed |
 | `break_targets` | Every target in `targets={{x=,y=},...}` was broken |
 | `survive`, `seconds=N` | `ceil(N*60)` active `play` frames elapsed, excluding fades and pause |
 | `boss` | The configured boss kind/port emitted its defeat hook and the native hold was accepted |
@@ -57,10 +58,17 @@ Goals are ANDed; empty goals mean doors are immediately eligible:
 The survival goal is a room timer, not an automatic life-loss policy. The owning mod decides
 whether death calls `retry()`, ends the route, or waits for the underlying match to respawn.
 
+`defeat_all` defaults to `count_removed=true`. Set `count_removed=false` on a goal to
+require actual defeats: an owned removal enters the director's explicit `error` state
+and logs the handle/reason. It never grants completion or waits forever; retry can rebuild
+the checkpoint. This policy also applies to watchdog-detected removals. Other goals remain
+independent: clearing enemies does not bypass targets, timers, bosses, or future waves.
+
 ## Hooks and methods
 
 Forward `on_match_start` to `start()`, `on_frame` to `frame()`, `on_draw` to `draw()`,
-`on_enemy_defeated(e)` to `enemy_defeated(e)`, `on_target_broken(h)` to `target_broken(h)`,
+`on_enemy_defeated(e)` to `enemy_defeated(e)`, `on_enemy_removed(e)` to `enemy_removed(e)`,
+`on_target_broken(h)` to `target_broken(h)`,
 `on_boss_defeated(e)` to `boss_defeated(e)`, and `on_loadstate` to `load()`.
 Forward `on_match_end` to `stop(true)` (native teardown owns resources) and `on_unload` to
 `stop()`. Never advance the director from `on_tick`/`on_draw`. Do not also forward
@@ -112,6 +120,19 @@ Adventure item enemies. Test actual native events; calling a Lua hook manually i
 integration test. See the report's boss lane.
 
 ## Snapshot contract and native API
+
+Enemy terminal hooks carry `{kind, handle, reason}`. Defeats use `reason='defeated'`;
+removals use `explicit_remove` for `gd.enemy_remove`, or `item_destroyed` for the generic
+item end path (including falling out, blast-zone removal, despawn and lifetime expiry).
+The generic destructor does not distinguish those underlying causes. A defeated enemy's
+later corpse cleanup emits no second terminal event. Events are queued for the frame
+boundary; the existing bounded event queue can drop events under overload, which is why
+the director also polls status. As with other hooks, scripts do not run during resimulation.
+
+`gd.enemy_status(handle)` returns `alive`, `defeated`, or `removed` for gameplay scripts
+in an active offline match. Unknown/retired handles return `removed`. A defeated status
+is retained until the enemy pool slot is reused; this is a live ownership query, not a
+permanent event history. The watchdog logs `watchdog_missing` for an absent handle.
 
 `gd.mode_blob()` returns this script's bytes or nil. `gd.mode_blob(bytes)` replaces them;
 `gd.mode_blob('')` clears them. The API is limited to gameplay scripts in an active offline

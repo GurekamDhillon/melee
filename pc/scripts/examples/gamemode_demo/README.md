@@ -4,7 +4,7 @@ An offline Final Destination experiment using the BF interior kit and the reusab
 [Gamemode library](../../lib/gamemode.md). It runs in an existing match; no fixed campaign,
 new native menu or fighter-spawn service is introduced.
 
-1. Hall: one Goomba/ReDead wave. Defeat both, then enter the doorway on the right.
+1. Hall: one Goomba/ReDead wave. Clear both (defeated or removed), then enter the doorway on the right.
 2. Gallery: two real Target Test targets and a three-second active-play timer. Break both
    and reach the right doorway to complete. Entry into each room creates a checkpoint.
 
@@ -40,3 +40,16 @@ guard rejects mode-bearing states after script edits; keep the source fixed duri
 See [gamemode-report.md](../../../../gamemode-report.md) for the exact Windows lane and
 validation status. Visual composition, collision, enemy portability and boss integration
 have not been tested in the game for this task.
+
+The two-area PASS/FAIL integration test lives in `pc/tests/gamemode_demo.lua`. Append it
+to the real demo in the same sandbox so it can inspect the director without changing it:
+
+```powershell
+python pc/scripts/examples/gamemode_demo/bundle.py --test pc/tests/gamemode_demo.lua --output scratch/gamemode_demo_test --kit-models "PATH/TO/KIT/models"
+```
+
+Install that mod instead of the ordinary demo, start offline VS on FD with Fox P1,
+an idle human P2 and time=0. It attacks the hall enemies, verifies terminal events/reasons,
+enters the gallery, breaks both targets, waits for the survival goal and takes the exit.
+It logs `GMD PASS`/`GMD FAIL` and calls `gd.quit()` on success, failure or deadline.
+This is a mod integration test, not a standalone pad script. It was not run for this fix.

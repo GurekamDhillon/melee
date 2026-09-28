@@ -4977,6 +4977,16 @@ static int l_enemy_remove(lua_State *L) {
     return 1;
 }
 
+/* Scripted enemy lifecycle query; see the isolated block in script_game.c. */
+static int l_enemy_status(lua_State *L) {
+    extern int gw_ScriptGame_EnemyStatus(int handle);
+    int h = gs_stage_handle_arg(L, 1), status;
+    gs_require_stage(L, "enemy_status");
+    status = gw_ScriptGame_EnemyStatus(h);
+    lua_pushstring(L, status == 1 ? "alive" : status == 2 ? "defeated" : "removed");
+    return 1;
+}
+
 static const luaL_Reg gs_kit_funcs[] = {
     {"available", l_kit_available}, {"text", l_kit_text}, {"measure", l_kit_measure},
     {"metrics", l_kit_metrics}, {"texture", l_kit_texture}, {"image", l_kit_image},
@@ -5112,6 +5122,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},
+    {"enemy_status", l_enemy_status},
     {NULL, NULL}};
 
 /* Lua-side helpers, compiled once into the shared base (they only use the public API). */
@@ -6728,6 +6739,20 @@ void gw_Script_EnemyDefeated(int which, int handle) {
     gw_log("script enemy: queued defeat kind=%s handle=%d", gs_enemy_names[which], handle);
 }
 
+/* Removed is terminal too, but is not a stock KO. reason: 1 explicit, 2 generic.
+ * Derive the kind bound from the table so new enemy adapters need no edits here. */
+void gw_Script_EnemyRemoved(int which, int handle, int reason) {
+    GsEvent *e;
+    if (gs.L == NULL || gw_Snap_Resimulating() || which < 0 ||
+        which >= (int)(sizeof gs_enemy_names / sizeof gs_enemy_names[0])) return;
+    if (gs.nev >= GS_MAX_EVENTS) { gs.ev_dropped++; return; }
+    e = &gs.ev[gs.nev++];
+    memset(e, 0, sizeof *e);
+    e->what = 9; e->a = which; e->b = handle; e->c = reason;
+    gw_log("script enemy: queued removed kind=%s handle=%d reason=%s",
+           gs_enemy_names[which], handle, reason == 1 ? "explicit_remove" : "item_destroyed");
+}
+
 static const char *const gs_element_names[] = {
     "normal", "fire", "electric", "slash", "coin", "ice", "nap", "sleep", "catch",
     "ground", "cape", "inert", "disable", "dark", "scball", "lipstick", "leadead"};
@@ -6765,7 +6790,8 @@ static void gs_dispatch_events(void) {
     if (n == 0) {
         return;
     }
-    gs.nev = 0;
+    /* Hooks may remove enemies and enqueue terminal events. Append behind this
+     * batch; resetting nev here would overwrite events still being dispatched. */
     if (gs.ev_dropped > 0) {
         gw_log("script: %d engine events dropped (queue full)", gs.ev_dropped);
         gs.ev_dropped = 0;
@@ -6775,8 +6801,8 @@ static void gs_dispatch_events(void) {
         const GsEvent *e = &gs.ev[k];
         static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land",
                                             "on_target_broken", "on_all_targets_broken",
-                                            "on_boss_defeated", "on_enemy_defeated"};
-        if (e->what < 1 || e->what > 8) {
+                                            "on_boss_defeated", "on_enemy_defeated", "on_enemy_removed"};
+        if (e->what < 1 || e->what > 9) {
             continue;
         }
         for (i = 0; i < gs.n; ++i) {
@@ -6815,9 +6841,12 @@ static void gs_dispatch_events(void) {
                 break;
             }
             case 8: /* the Adventure enemy layer's defeat (queued natively) */
-                lua_createtable(L, 0, 2);
+            case 9: /* all other ends of a scripted enemy item */
+                lua_createtable(L, 0, 3);
                 gs_setstr(L, "kind", gs_enemy_names[e->a]);
                 gs_setint(L, "handle", e->b);
+                gs_setstr(L, "reason", e->what == 8 ? "defeated" :
+                          e->c == 1 ? "explicit_remove" : "item_destroyed");
                 nargs = 1;
                 break;
             case LAB_EV_ACTION: /* (port, old, new, sub) */
@@ -6871,6 +6900,8 @@ static void gs_dispatch_events(void) {
         }
     }
     gs.in_event = 0;
+    gs.nev -= n;
+    memmove(gs.ev, gs.ev + n, (size_t)gs.nev * sizeof gs.ev[0]);
 }
 
 void gw_Script_FramePost(void) {
@@ -7865,7 +7896,8 @@ static int test_script_stage_events(void) {
     if (f == NULL) { gw_test_fail("stage event test script could not be written"); return 1; }
     fputs("function on_target_broken(h, n) seen = h * 100 + n end\n"
           "function on_all_targets_broken() all = true end\n"
-          "function on_enemy_defeated(e) enemy = e end\n", f);
+          "function on_enemy_defeated(e) enemy = e end\n"
+          "function on_enemy_removed(e) removed = e end\n", f);
     fclose(f);
     i = gs_load_script("stage_event_test", path, "{\"gameplay\": true}", "test");
     if (i < 0) { gw_test_fail("stage event test script did not load"); ok = 0; }
@@ -7888,7 +7920,28 @@ static int test_script_stage_events(void) {
         lua_pop(gs.L, 1);
         lua_getfield(gs.L, -1, "handle");
         if (lua_tointeger(gs.L, -1) != 9) ok = 0;
-        lua_pop(gs.L, 3);
+        lua_pop(gs.L, 1);
+        lua_getfield(gs.L, -1, "reason");
+        if (lua_tostring(gs.L, -1) == NULL ||
+            strcmp(lua_tostring(gs.L, -1), "defeated") != 0) ok = 0;
+        lua_pop(gs.L, 2);
+        for (int reason = 1; reason <= 2; ++reason) {
+            gw_Script_EnemyRemoved(2, 15, reason);
+            gs_dispatch_events();
+            lua_getfield(gs.L, -1, "removed");
+            lua_getfield(gs.L, -1, "kind");
+            if (lua_tostring(gs.L, -1) == NULL ||
+                strcmp(lua_tostring(gs.L, -1), "redead") != 0) ok = 0;
+            lua_pop(gs.L, 1);
+            lua_getfield(gs.L, -1, "handle");
+            if (lua_tointeger(gs.L, -1) != 15) ok = 0;
+            lua_pop(gs.L, 1);
+            lua_getfield(gs.L, -1, "reason");
+            if (lua_tostring(gs.L, -1) == NULL ||
+                strcmp(lua_tostring(gs.L, -1), reason == 1 ? "explicit_remove" : "item_destroyed") != 0) ok = 0;
+            lua_pop(gs.L, 2);
+        }
+        lua_pop(gs.L, 1);
         if (!ok) gw_test_fail("script stage event hooks got the wrong payload");
         gs_unload(i);
     }

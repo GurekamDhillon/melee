@@ -113,6 +113,9 @@ function Gamemode.new(def)
             if g.kind == 'survive' then assert(finite(g.seconds) and g.seconds >= 0, 'invalid survival time') end
             if g.kind == 'reach_exit' and g.box then box(g.box) end
             if g.kind == 'boss' then assert(a.boss, 'boss goal needs boss filter') end
+            if g.kind == 'defeat_all' then
+                assert(g.count_removed == nil or type(g.count_removed) == 'boolean', 'invalid count_removed')
+            end
         end
         if a.boss then
             assert(type(a.boss.kind) == 'string' and math.type(a.boss.port) == 'integer' and
@@ -190,6 +193,7 @@ function Mode:_enter(id, entry)
     local s, a = self.state, self.def.areas[id]
     self:_clean()
     s.area, s.entry, s.elapsed, s.wave, s.boss_done = id, entry, 0, 0, false
+    s.error = nil -- checkpoint retry starts a fresh attempt after a strict-goal failure
     s.ready_announced = false
     s.reached = {}
     for _, p in ipairs(a.layout or {}) do
@@ -293,6 +297,7 @@ function Mode:frame()
             end
         elseif s.phase == 'play' then
             s.elapsed = s.elapsed + 1
+            self:_enemy_watchdog()
             self:_wave()
             local a, p = self.def.areas[s.area], gd.player(self.port)
             for i, g in ipairs(a.goals or {}) do
@@ -316,6 +321,39 @@ function Mode:enemy_defeated(e)
             self.state.enemies[e.handle] = nil
             self:_log('enemy defeated ' .. e.handle); self:_save()
         end)
+    end
+end
+function Mode:_removed(handle, reason)
+    local s = self.state
+    s.enemies[handle] = nil
+    self:_log('enemy removed ' .. handle .. ' reason=' .. tostring(reason or 'unknown'))
+    for _, g in ipairs(self.def.areas[s.area].goals or {}) do
+        assert(g.kind ~= 'defeat_all' or g.count_removed ~= false,
+               'defeat_all requires defeat: enemy ' .. handle .. ' removed (' .. tostring(reason) .. ')')
+    end
+end
+function Mode:enemy_removed(e)
+    if self.state and self.state.enemies[e.handle] then
+        return self:_safe(function()
+            self:_removed(e.handle, e.reason); self:_save()
+        end)
+    end
+end
+function Mode:_enemy_watchdog()
+    -- Query owned handles, not all stage items: unrelated enemies cannot lock this
+    -- room. Reconcile before spawning the next wave. Events normally arrive first;
+    -- queue overflow or a missed forwarded hook must not leave a phantom enemy.
+    for _, h in ipairs(keys(self.state.enemies)) do
+        local status = gd.enemy_status(h)
+        if status == 'defeated' then
+            self.state.enemies[h] = nil
+            self:_log('enemy watchdog: defeated ' .. h)
+        elseif status == 'removed' then
+            self:_log('enemy watchdog: missing ' .. h)
+            self:_removed(h, 'watchdog_missing')
+        else
+            assert(status == 'alive', 'invalid enemy status')
+        end
     end
 end
 function Mode:target_broken(handle)
@@ -428,6 +466,7 @@ end
 function on_frame() mode:frame() end
 function on_draw() mode:draw() end
 function on_enemy_defeated(e) mode:enemy_defeated(e) end
+function on_enemy_removed(e) mode:enemy_removed(e) end
 function on_target_broken(h) mode:target_broken(h) end
 function on_boss_defeated(e) mode:boss_defeated(e) end
 function on_loadstate() mode:load() end

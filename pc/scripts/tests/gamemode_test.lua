@@ -3,6 +3,7 @@ local blob, serial, frame = nil, 0, 0
 local removed, releases, holds = {}, 0, 0
 local player = {x = 0, y = 0, dead = false}
 local fail_spawn = false
+local enemy_status = {}
 local function handle() serial = serial + 1; return serial end
 gd = {
     mode_blob = function(...)
@@ -14,8 +15,12 @@ gd = {
     log = function() end,
     model_load = handle, model_release = function() end,
     model_spawn = handle, model_despawn = function(h) removed[h] = true end,
-    spawn_enemy = function() if fail_spawn then return nil, 'full' end; return handle() end,
-    enemy_remove = function(h) removed[h] = true end,
+    spawn_enemy = function()
+        if fail_spawn then return nil, 'full' end
+        local h = handle(); enemy_status[h] = 'alive'; return h
+    end,
+    enemy_status = function(h) return enemy_status[h] or 'removed' end,
+    enemy_remove = function(h) removed[h] = true; enemy_status[h] = 'removed' end,
     spawn_target = handle, stage_remove = function(h) removed[h] = true end,
     camera_set = function() end, camera_attach = function() end, camera_detach = function() end,
     teleport = function(_, x, y) player.x, player.y = x, y; return true end,
@@ -100,6 +105,45 @@ assert(mode.state.phase == 'error' and not mode:ready())
 fail_spawn = false
 mode:stop()
 assert(blob == '')
+-- Missing removal handling strands a wave; duplicates must not clear the next one.
+mode:start()
+enemy = first(mode.state.enemies)
+tick(3)
+assert(mode.state.wave == 1 and mode.state.enemies[enemy] and not mode:ready())
+mode:enemy_removed({handle = -10, reason = 'item_destroyed'})
+assert(mode.state.enemies[enemy])
+mode:enemy_removed({handle = enemy, reason = 'item_destroyed'})
+tick()
+mode:enemy_removed({handle = enemy, reason = 'explicit_remove'})
+assert(mode.state.wave == 2 and not mode:ready())
+-- A lost terminal event must not strand the final wave, or an earlier wave.
+enemy_status[first(mode.state.enemies)] = 'removed'
+tick()
+assert(mode:ready())
+mode:stop()
+mode:start()
+enemy_status[first(mode.state.enemies)] = 'removed'
+tick()
+assert(mode.state.wave == 2 and not mode:ready())
+enemy_status[first(mode.state.enemies)] = 'defeated'
+tick()
+assert(mode:ready())
+mode:stop()
+-- Strict goals fail explicitly on removal, including watchdog recovery; retry resets it.
+spec.areas.a.goals[1].count_removed = false
+mode:start()
+enemy_status[first(mode.state.enemies)] = 'defeated'
+tick()
+assert(mode.state.wave == 2 and mode.state.phase == 'play' and not mode:ready())
+mode:enemy_removed({handle = first(mode.state.enemies), reason = 'explicit_remove'})
+assert(mode.state.phase == 'error' and not mode:ready())
+mode:retry(); tick(4)
+assert(mode.state.phase == 'play' and mode.state.wave == 1 and mode.state.error == nil)
+enemy_status[first(mode.state.enemies)] = 'removed'
+tick()
+assert(mode.state.phase == 'error' and not mode:ready())
+mode:stop()
+spec.areas.a.goals[1].count_removed = nil
 -- Boss hooks are filtered, held once, and released by a logic-frame timeout.
 spec.areas.a.boss = {kind = 'master_hand', port = 3, hold_seconds = 1}
 spec.areas.a.goals = {{kind = 'boss'}}

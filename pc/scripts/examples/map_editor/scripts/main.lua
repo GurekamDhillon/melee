@@ -352,7 +352,8 @@ local function validate(data)
       assert(type(sp)=='table' and getmetatable(sp)==nil, 'spawn must be a table')
       lay_bounds.spawn={}
       for slot,b in pairs(sp) do
-        assert(type(slot)=='number' and slot%1==0 and slot>=0 and slot<=7, 'spawn slots are 0..7')
+        assert(type(slot)=='number' and slot%1==0 and ((slot>=0 and slot<=7) or (slot>=127 and slot<=146)),
+               'spawn slots are 0-7 (starts/respawns) or 127-146 (item spawns)')
         assert(type(b)=='table' and getmetatable(b)==nil and number(b.x) and number(b.y),
                'spawn points need x and y')
         lay_bounds.spawn[slot]={x=b.x,y=b.y}
@@ -842,7 +843,8 @@ gd.command('map',function(arg)
     elseif op=='spawn' then
       local slot,rest=(name or ''):match('^(%d*)%s*(.-)%s*$')
       local n=tonumber(slot)
-      assert(n and n>=0 and n<=7,'map spawn <0-7> [x y]  (starts 0-3, respawns 4-7)')
+      assert(n and ((n>=0 and n<=7) or (n>=127 and n<=146)),
+             'map spawn <slot> [x y]: 0-3 starts, 4-7 respawns, 127-146 item spawns')
       local x,y=rest:match('^(%S+)%s+(%S+)$')
       if x then
         x,y=tonumber(x),tonumber(y)
@@ -1330,7 +1332,7 @@ HELP = {
   {'Space', 'search actions; Enter runs the top match'},
   {'action log', 'map log on: click a step to go back'},
   {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (drag a green edge)'},
-  {'spawns', 'map spawn <0-7> [x y]: read or move a start (0-3) or respawn (4-7)'},
+  {'spawns', 'map spawn <slot> [x y]: starts 0-3, respawns 4-7, item spawns 127-146'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},

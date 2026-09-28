@@ -22,8 +22,8 @@ static int l_stage_set_spawn(lua_State *L) {
     int slot = (int) luaL_checkinteger(L, 1);
     float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
     gs_arena_require(L, "stage_set_spawn");
-    if (slot < 0 || slot > 7)
-        return luaL_error(L, "spawn slot must be 0..7 (starts 0-3, respawns 4-7)");
+    if (!((slot >= 0 && slot <= 7) || (slot >= 127 && slot <= 146)))
+        return luaL_error(L, "spawn slot must be 0-7 (starts/respawns) or 127-146 (item spawns)");
     gs_rw_branch();
     gw_ScriptGame_ArenaSpawn(gs.cur + 1, slot, gs_fbits(x), gs_fbits(y));
     gw_log("script arena-hooks: spawn %d -> %g %g", slot, x, y);
@@ -31,8 +31,8 @@ static int l_stage_set_spawn(lua_State *L) {
 }
 static int l_stage_spawn(lua_State *L) {
     int slot = (int) luaL_checkinteger(L, 1);
-    if (slot < 0 || slot > 7)
-        return luaL_error(L, "spawn slot must be 0..7 (starts 0-3, respawns 4-7)");
+    if (!((slot >= 0 && slot <= 7) || (slot >= 127 && slot <= 146)))
+        return luaL_error(L, "spawn slot must be 0-7 (starts/respawns) or 127-146 (item spawns)");
     lua_pushnumber(L, gw_ScriptGame_ArenaSpawnPos(slot, 0, 0.0f));
     lua_pushnumber(L, gw_ScriptGame_ArenaSpawnPos(slot, 1, 0.0f));
     lua_pushnumber(L, gw_ScriptGame_ArenaSpawnPos(slot, 2, 0.0f));

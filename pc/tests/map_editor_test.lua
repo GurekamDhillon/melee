@@ -5,6 +5,10 @@ local pad, keys, overlay, reject_rotation = {}, {}, false, false
 local safe_w = 640
 local stub_camera, stub_blast = nil, nil
 local stub_spawn = nil
+local stub_spawns = {}
+local function spawn_at(slot)
+  for _,s in ipairs(stub_spawns) do if s[1]==slot then return s end end
+end
 local p = {x=13, y=26, z=0}
 local mouse_state = {x=-1000, y=-1000, buttons=0}
 local camera = {eye={x=0,y=0,z=100}, interest={x=0,y=0,z=0}, fov=30, roll=0, mode='standard'}
@@ -38,7 +42,7 @@ gd = {
   stage_set_camera_bounds=function(l,r,t,b) stub_camera={l,r,t,b} return true end,
   stage_set_blast_bounds=function(l,r,t,b) stub_blast={l,r,t,b} return true end,
   stage_restore_bounds=function() stub_camera,stub_blast=nil,nil return true end,
-  stage_set_spawn=function(slot,x,y) stub_spawn={slot,x,y} return true end,
+  stage_set_spawn=function(slot,x,y) stub_spawn={slot,x,y} stub_spawns[#stub_spawns+1]={slot,x,y} return true end,
   stage_spawn=function(slot) return 12.0, 34.0, 0.0 end,
   mouse=function() return mouse_state.x, mouse_state.y, mouse_state.buttons, 0 end,
   camera_get=function() return camera end,
@@ -369,6 +373,11 @@ assert(stub_spawn and stub_spawn[1]==4 and stub_spawn[2]==-33 and stub_spawn[3]=
 stub_spawn=nil
 command('spawn 4')
 assert(stub_spawn==nil, 'map spawn 4 reads without writing')
+command('spawn 130 -20 30')
+assert(stub_spawn and stub_spawn[1]==130 and stub_spawn[2]==-20, 'map spawn 130 moves an item spawn point')
+stub_spawn=nil
+command('spawn 130')
+assert(stub_spawn==nil, 'reading an item spawn point does not write')
 on_draw()
 command('off')
 -- P2 spawn persistence: v2 stores spawns and load applies them (bible §6.6)
@@ -380,8 +389,9 @@ command('save sp.lua')
 assert(files['sp.lua']:find('version=2',1,true), 'a moved spawn makes the layout v2')
 assert(files['sp.lua']:find('[4]={x=-100',1,true), 'the spawn is written to the layout')
 stub_spawn=nil
+stub_spawns={}
 command('load sp.lua')
-assert(stub_spawn and stub_spawn[1]==4 and stub_spawn[2]==-100, 'loading v2 applies the saved spawn')
+assert(spawn_at(4) and spawn_at(4)[2]==-100, 'loading v2 applies the saved spawn')
 command('off')
 -- P2 bounds/spawn edits are undoable (bible §2 P16, §5.6)
 active=false on_match_end()

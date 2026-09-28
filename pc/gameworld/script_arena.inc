@@ -9,8 +9,8 @@ static struct {
     int group_owner[256]; /* mpLibLoad's fixed collision-joint capacity */
     u8 group_enabled[256];
     u8 line_enabled[1536]; /* preserve individually disabled lines on unload */
-    Vec3 spawn_saved[8]; /* player start/respawn points a script moved */
-    u8 spawn_saved_ok[8];
+    Vec3 spawn_saved[261]; /* stage_info.x280 capacity: every general point a script moved */
+    u8 spawn_saved_ok[261];
 } script_arena;
 
 static void script_arena_apply(void)
@@ -64,7 +64,7 @@ void ScriptGame_ArenaSpawn(int owner, int slot, int x, int y)
 {
     HSD_JObj* jobj;
     Vec3 pos;
-    if (slot < 0 || slot > 7) return;
+    if (slot < 0 || slot > 260) return; /* general points: starts 0-3, respawns 4-7, items 127-146 */
     jobj = Ground_801C2CF4(slot);
     if (!jobj) return;
     script_arena_claim(owner);
@@ -84,7 +84,7 @@ float ScriptGame_ArenaSpawnPos(int slot, int axis, float fallback)
 {
     Vec3 pos;
     HSD_JObj* jobj;
-    if (slot < 0 || slot > 7) return fallback;
+    if (slot < 0 || slot > 260) return fallback;
     jobj = Ground_801C2CF4(slot);
     if (!jobj) return fallback;
     lb_8000B1CC(jobj, NULL, &pos);
@@ -98,7 +98,7 @@ void ScriptGame_ArenaRestore(void)
     Ground_801C38BC(script_arena.saved_x, script_arena.saved_y);
     stage_info.cam_info.cam_bounds = script_arena.saved_camera;
     stage_info.blast_zone = script_arena.saved_blast;
-    for (i = 0; i < 8; ++i) {
+    for (i = 0; i < 261; ++i) {
         if (!script_arena.spawn_saved_ok[i]) continue;
         if (Ground_801C2CF4(i)) HSD_JObjSetTranslate(Ground_801C2CF4(i), &script_arena.spawn_saved[i]);
         script_arena.spawn_saved_ok[i] = 0;

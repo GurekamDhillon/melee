@@ -45,6 +45,7 @@ local action_log, undo_names, redo_names, log_open, log_rows = {}, {}, {}, false
 local search, search_rows = nil, nil -- action search overlay (bible §5.10)
 local bounds = {camera=nil, blast=nil} -- stage bounds the map is authored against (bible §6.6, §8 P2)
 local spawns = {} -- moved start/respawn points, slot -> {x=, y=} (bible §6.3)
+local bounds_drag, bounds_ui = nil, nil -- dragging a camera-bounds edge (bible §8 P2)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -286,8 +287,12 @@ local function sync(target)
     for k,v in pairs(p) do h[k]=v end
   end
 end
+local function copy_rect(r)
+  return r and {left=r.left,right=r.right,top=r.top,bottom=r.bottom}
+end
 local function doc_snapshot()
-  return {parts=clone(parts), bounds={camera=bounds.camera, blast=bounds.blast}, spawns=clone(spawns)}
+  return {parts=clone(parts), bounds={camera=copy_rect(bounds.camera), blast=copy_rect(bounds.blast)},
+          spawns=clone(spawns)}
 end
 local function apply(target, record)
   assert(offline(), 'active offline match required')
@@ -434,7 +439,7 @@ local function apply_bounds()
   end
 end
 local function doc_restore(d)
-  bounds={camera=d.bounds.camera, blast=d.bounds.blast}
+  bounds={camera=copy_rect(d.bounds.camera), blast=copy_rect(d.bounds.blast)}
   spawns=d.spawns
   if bounds.camera or bounds.blast then
     pcall(apply_bounds)
@@ -704,6 +709,15 @@ local function field_set(field, value)
   elseif field=='x' or field=='y' or field=='z' then p[field]=v
   else error('field: x|y|z|rot|scale') end
   acted(target,field..' '..string.format('%.2f',field_value(p,field)))
+end
+local function hit_bounds(mx,my)
+  local h=bounds_ui
+  if not h or not bounds.camera then return nil end
+  for _,edge in ipairs({'left','right','top','bottom'}) do
+    local p=h[edge]
+    if math.abs(mx-p.x)<=6 and math.abs(my-p.y)<=6 then return edge end
+  end
+  return nil
 end
 local function seg_dist(x1,y1,x2,y2,mx,my)
   local dx,dy=x2-x1,y2-y1
@@ -1077,6 +1091,26 @@ local function poll_mouse()
     mouse.prev=mouse.buttons
     return
   end
+  if bounds_drag then
+    if (mouse.buttons & 1)==1 then
+      local wx,wy=mouse_world()
+      local r=bounds.camera
+      if wx and r then
+        local v=(bounds_drag.edge=='left' or bounds_drag.edge=='right') and sn(wx) or sn(wy)
+        if bounds_drag.edge=='left' then r.left=math.min(v,r.right-U*grid)
+        elseif bounds_drag.edge=='right' then r.right=math.max(v,r.left+U*grid)
+        elseif bounds_drag.edge=='bottom' then r.bottom=math.min(v,r.top-U*grid)
+        else r.top=math.max(v,r.bottom+U*grid) end
+        pcall(gd.stage_set_camera_bounds,r.left,r.right,r.top,r.bottom)
+      end
+    else
+      local before=bounds_drag.base
+      bounds_drag=nil
+      doc_commit(before,'camera bounds')
+    end
+    mouse.prev=mouse.buttons
+    return
+  end
   local lmb=(mouse.buttons & 1)==1
   local pressed=lmb and (mouse.prev & 1)==0
   local right=(mouse.buttons & 2)==2 and (mouse.prev & 2)==0
@@ -1092,6 +1126,10 @@ local function poll_mouse()
   elseif pressed then
     if not click_panel(mouse.x,mouse.y) and not click_inspector(mouse.x,mouse.y) and
        not click_overlay(mouse.x,mouse.y) and mouse.over and not help_open then
+      local bedge=hit_bounds(mouse.x,mouse.y)
+      if bedge then
+        bounds_drag={edge=bedge, base=doc_snapshot()}
+      else
       local hmode,hax=hit_handle(mouse.x,mouse.y)
       if hmode then
         if modal_begin(hmode,hax,'mouse') then
@@ -1105,6 +1143,7 @@ local function poll_mouse()
       elseif tool=='move' then dragging=true attempt(function() transform('move',nil,true,wx,wy) end)
       elseif tool=='rotate' then attempt(rotate_to_mouse)
       elseif tool=='scale' then attempt(function() transform('scale',SCALE_STEP) end)
+      end
       end
       end
     end
@@ -1253,7 +1292,7 @@ function on_frame_pre()
   if mouse_api then poll_mouse() end
   ghost_sync()
   hover=hover_part()
-  if menu or help_open or modal or filtering or typing or field_drag or search or gd.key('CTRL') then return end
+  if menu or help_open or modal or filtering or typing or field_drag or search or bounds_drag or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
   local dx=(gd.key('D') and 1 or 0)-(gd.key('A') and 1 or 0)
   local dy=(gd.key('W') and 1 or 0)-(gd.key('S') and 1 or 0)
@@ -1290,7 +1329,7 @@ HELP = {
   {'ghost', 'translucent placement preview; map ghost on|off'},
   {'Space', 'search actions; Enter runs the top match'},
   {'action log', 'map log on: click a step to go back'},
-  {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (v2 layout)'},
+  {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (drag a green edge)'},
   {'spawns', 'map spawn <0-7> [x y]: read or move a start (0-3) or respawn (4-7)'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
@@ -1366,19 +1405,24 @@ function on_draw()
       handles_ui={movex={px,py,hx2,hy2}, movey={px,py,gx2,gy2}, scale={sx2,sy2}, rot={px,py,r}}
     end
   end
+  bounds_ui=nil
   if bounds.camera or bounds.blast then
     local cw=canvas_w()
-    local function rect(b,color)
+    local function clampv(v,lo,hi) return math.max(lo,math.min(hi,v)) end
+    local function draw_rect(b,color,kind)
       local x1,y1=gd.project(b.left,b.top,0)
       local x2,y2=gd.project(b.right,b.bottom,0)
-      if x1 and y1 and x2 and y2 then
-        x1,y1=math.max(0,math.min(cw,x1)),math.max(0,math.min(480,y1))
-        x2,y2=math.max(0,math.min(cw,x2)),math.max(0,math.min(480,y2))
-        gd.box(x1,y1,x2-x1,y2-y1,color)
+      if not (x1 and y1 and x2 and y2) then return end
+      x1,y1,x2,y2=clampv(x1,0,cw),clampv(y1,0,480),clampv(x2,0,cw),clampv(y2,0,480)
+      gd.box(x1,y1,x2-x1,y2-y1,color)
+      if kind=='camera' then
+        local mx,my=(x1+x2)/2,(y1+y2)/2
+        bounds_ui={left={x=x1,y=my},right={x=x2,y=my},top={x=mx,y=y1},bottom={x=mx,y=y2}}
+        for _,h in pairs(bounds_ui) do gd.box(h.x-4,h.y-4,8,8,0x40E060FF) end
       end
     end
-    if bounds.camera then rect(bounds.camera,0x40E060FF) end
-    if bounds.blast then rect(bounds.blast,0xE06060FF) end
+    if bounds.camera then draw_rect(bounds.camera,0x40E060FF,'camera') end
+    if bounds.blast then draw_rect(bounds.blast,0xE06060FF,'blast') end
   end
   local h=hover and find(parts,hover)
   if h and h.id~=selected then
@@ -1476,7 +1520,7 @@ end
 function on_savestate(slot)
   saved_states[slot]={parts=clone(parts),handles=clone(handles),assets=clone(assets),
                       previous=previous and clone(previous),selected=selected,broken=broken,
-                      bounds={camera=bounds.camera,blast=bounds.blast},spawns=clone(spawns)}
+                      bounds={camera=copy_rect(bounds.camera),blast=copy_rect(bounds.blast)},spawns=clone(spawns)}
 end
 function on_loadstate(slot)
   if not offline() then return end

@@ -371,10 +371,18 @@ void stats_text(float x, float y, const char *value, const char *role, uint32_t 
   gw_Kit_DrawText(x, y, value, r >= 0 ? r : 0, color, GW_KIT_ALIGN_LEFT, max_w, 0, nullptr);
 }
 
+/* A host panel's fill colour: white (only the alpha) when the frame set has its own full-colour
+ * frame_fill art, which a tint would muddy; `rgba` when it does not. */
+uint32_t frame_fill_rgba(uint32_t rgba) {
+  static int fill_tex = -2;
+  if (fill_tex == -2) fill_tex = gw_Kit_Tex("frame_fill", nullptr);
+  return fill_tex >= 0 ? (0xFFFFFF00u | (rgba & 0xFFu)) : rgba;
+}
+
 void stats_panel(float height) {
   const uint32_t bg = kit_col("solo.bg", 0x111122FFu);
   gw_Kit_DrawPanel(8.0f, 8.0f, 308.0f, height, "frame", nullptr, 0.0f /* the art's 1x corners, as the sheet */, 0xFFFFFFFFu, /* the frame art is full colour: untinted */
-                   (bg & 0xFFFFFF00u) | 0xE8u, 0.0f);
+                   frame_fill_rgba((bg & 0xFFFFFF00u) | 0xE8u), 0.0f);
 }
 
 /* "Connect a controller": the keyboard does not play, so a window with no controller says so
@@ -390,7 +398,7 @@ void draw_no_controller(const ImGuiIO &io, float s, float ox, float oy) {
     const int q0 = gw_Kit_QuadCount();
     const float w = 360.0f, h = 104.0f, x = (640.0f - w) * 0.5f, y = (480.0f - h) * 0.5f;
     gw_Kit_DrawPanel(x, y, w, h, "frame", nullptr, 0.0f, 0xFFFFFFFFu, /* full-colour frame art: untinted */
-                     kit_col("ink", 0x0A0E18FFu) & 0xFFFFFFF0u, 0.0f);
+                     frame_fill_rgba(kit_col("ink", 0x0A0E18FFu) & 0xFFFFFFF0u), 0.0f);
     int role = gw_Kit_Role("heading");
     gw_Kit_DrawText(320.0f, y + 40.0f, head, role >= 0 ? role : 0, kit_col("bone", 0xF2EFE4FFu),
                     GW_KIT_ALIGN_CENTER, w - 32.0f, 0.0f, nullptr);
@@ -474,7 +482,7 @@ void draw_fly_readout(float s, float ox, float oy) {
   const float h = 12.0f + 16.0f * (float)lines, y0 = 480.0f - 12.0f - h;
   const int q0 = gw_Kit_QuadCount();
   gw_Kit_DrawPanel(12.0f, y0, 300.0f, h, "frame", nullptr, 0.0f, 0xFFFFFFFFu, /* full-colour frame art: untinted */
-                   (kit_col("ink", 0x0A0E18FFu) & 0xFFFFFF00u) | 0xD8u, 0.0f);
+                   frame_fill_rgba((kit_col("ink", 0x0A0E18FFu) & 0xFFFFFF00u) | 0xD8u), 0.0f);
   const int role = gw_Kit_Role("caption");
   char *line = text;
   for (int i = 0; i < lines && line != nullptr; ++i) {

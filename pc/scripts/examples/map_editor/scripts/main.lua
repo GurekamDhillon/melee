@@ -41,7 +41,15 @@ local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; sha
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
 local SCALE_STEP, SCALE_MIN, SCALE_MAX = 1.1, 0.25, 4.0
-local hover, dragging = nil, false
+local hover, dragging, help_first = nil, false, 1
+local PANEL_FILL = 0x0E1218F2 -- opaque editor panels: the game behind must not read through the text
+local HINTS = {
+  place='LMB / Insert: place at the cursor; Up/Down: part; wheel: depth',
+  select='LMB / Tab: select the nearest part',
+  move='LMB drag: move; M: to cursor; C: constraint (free/X/Y)',
+  rotate='R / T: +-15 deg; LMB drag: face the pointer',
+  scale='F7 / F8: -10% / +10%; Shift+X / Shift+Y: mirror',
+}
 local mouse = { x = -1000, y = -1000, buttons = 0, prev = 0, over = false, used = 0 }
 local map_hinv, map_key = nil, nil
 local mouse_api = gd.mouse ~= nil and gd.camera_get ~= nil
@@ -431,6 +439,8 @@ gd.command('map',function(arg)
       tool=found axis_lock=nil say('Tool: '..tool)
     elseif op=='snap' then
       assert(name=='on' or name=='off','snap on|off') snap_on=name=='on' say('Snap '..name)
+    elseif op=='help' then
+      assert(name=='on' or name=='off','help on|off') help_open=name=='on' say('Help '..name)
     elseif op=='delete' then remove()
     elseif op=='undo' then history(true)
     elseif op=='redo' then history(false)
@@ -441,7 +451,7 @@ gd.command('map',function(arg)
       for i,n in ipairs(PALETTE) do if n==want then found=i end end
       assert(found,'map part: unknown part '..tostring(name))
       palette=found say('Part: '..want)
-    else error('map on|off|part <name>|tool <name>|scale <f>|mirror x|y|snap on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
+    else error('map on|off|part <name>|tool <name>|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
   end)
 end,'map on/off; part <name>; tool <place|select|move|rotate|scale>; scale <factor>; mirror x|y; snap on|off; place/select/move/rotate/duplicate/delete/undo/redo/clear; save/load/play [file.lua]')
 
@@ -453,21 +463,21 @@ local function panel_rows()
     rows[#rows+1]={kind='tool',index=i,label=(tool==t and '> ' or '  ')..t,x=16,y=y,w=230,h=20}
     y=y+21
   end
-  y=180
+  y=188
   if tool=='place' then
     local first=math.max(1,math.min(palette-3,#PALETTE-6))
     for i=first,math.min(first+6,#PALETTE) do
       rows[#rows+1]={kind='part',index=i,label=PALETTE[i]:gsub('^bf_',''),x=16,y=y,w=230,h=18}
-      y=y+19
+      y=y+20
     end
   else
     local first=math.max(1,math.min(action_index-3,#ACTIONS-6))
     for i=first,math.min(first+6,#ACTIONS) do
       rows[#rows+1]={kind='action',index=i,label=ACTIONS[i][1],x=16,y=y,w=230,h=18}
-      y=y+19
+      y=y+20
     end
   end
-  rows[#rows+1]={kind='help',label='Help (F1)',x=16,y=396,w=230,h=22}
+  rows[#rows+1]={kind='help',label='Help',value='F1',x=16,y=344,w=230,h=20}
   return rows
 end
 local function in_rect(mx,my,r)
@@ -499,7 +509,13 @@ local function poll_mouse()
   local lmb=(mouse.buttons & 1)==1
   local pressed=lmb and (mouse.prev & 1)==0
   local right=(mouse.buttons & 2)==2 and (mouse.prev & 2)==0
-  if wheel and wheel~=0 then depth=depth+wheel*U*grid say(('depth %.2f'):format(depth)) end
+  if wheel and wheel~=0 then
+    if help_open then
+      help_first=math.max(1,math.min(math.max(1,#HELP-11),help_first+wheel))
+    else
+      depth=depth+wheel*U*grid say(('depth %.2f'):format(depth))
+    end
+  end
   if right then
     if help_open then help_open=false else menu=not menu end
   elseif pressed then
@@ -541,6 +557,11 @@ function on_tick()
     old_pad=pad return
   end
   if gd.key_pressed('F1') or gd.key_pressed('H') then help_open=not help_open end
+  if help_open then
+    if gd.key_pressed('ESCAPE') and not menu then help_open=false end
+    if gd.key_pressed('DOWN') then help_first=math.min(math.max(1,#HELP-11),help_first+1) end
+    if gd.key_pressed('UP') then help_first=math.max(1,help_first-1) end
+  end
   if gd.key_pressed('F2') or pressed('Z') then menu=not menu end
   if menu then
     if gd.key_pressed('UP') or pressed('UP') then action_index=(action_index-2)%#ACTIONS+1 end
@@ -551,8 +572,10 @@ function on_tick()
     for i,t in ipairs(TOOLS) do
       if gd.key_pressed(tostring(i)) then tool=t axis_lock=nil say('Tool: '..t) end
     end
-    if gd.key_pressed('UP') or pressed('UP') then palette=(palette-2)%#PALETTE+1 end
-    if gd.key_pressed('DOWN') or pressed('DOWN') then palette=palette%#PALETTE+1 end
+    if not help_open then
+      if gd.key_pressed('UP') or pressed('UP') then palette=(palette-2)%#PALETTE+1 end
+      if gd.key_pressed('DOWN') or pressed('DOWN') then palette=palette%#PALETTE+1 end
+    end
     if gd.key_pressed('PAGEUP') or pressed('RIGHT') then depth=depth+U*grid end
     if gd.key_pressed('PAGEDOWN') or pressed('LEFT') then depth=depth-U*grid end
     if gd.key_pressed('INSERT') or pressed('A') then attempt(function() place(false) end) end
@@ -594,7 +617,7 @@ function on_frame_pre()
   end
 end
 
-local HELP = {
+HELP = {
   {'F6', 'start / exit the editor'},
   {'F1 / H', 'this help (ESC or click closes)'},
   {'F2 / Z', 'action menu (all commands)'},
@@ -622,17 +645,27 @@ local HELP = {
 }
 local function draw_help()
   local kit=gd.kit
-  kit.panel(40,24,560,432,{piece=16})
+  local visible=12
+  local pages=math.max(1,math.ceil(#HELP/visible))
+  local last=math.max(1,#HELP-visible+1)
+  if help_first>last then help_first=last end
+  gd.fill(40,24,560,432,0x0E1218FF)
+  kit.panel(40,24,560,432,{piece=16,fill=PANEL_FILL})
+  gd.box(40,24,560,432,0x8A92A0FF)
+  local track_y, track_h = 120, 300
+  local kh = math.max(30, math.floor(track_h*visible/#HELP))
+  local kf = (help_first-1)/math.max(1,#HELP-visible)
+  gd.fill(584,track_y,8,track_h,0x464F5EFF)
+  gd.fill(584,track_y+kf*(track_h-kh),8,kh,0xE8C878FF)
   kit.text(60,54,'MAP EDITOR - KEYBINDS','label','gold')
-  kit.text(60,74,'pad: Z menu, D-pad/A/B, X select, Y move, L/R rotate','caption','muted',nil,{max_w=520})
-  for i,row in ipairs(HELP) do
-    local col,rowi=(i-1)%12,(i-1)//12
-    local x=60+col*270
-    local y=104+rowi*26
-    kit.text(x,y,row[1],'caption','bone')
-    kit.text(x+96,y,row[2],'caption','muted',nil,{max_w=166})
+  kit.text(60,76,('page %d/%d - Up/Down scrolls - F1/H/ESC closes')
+    :format((help_first-1)//visible+1,pages),'caption','muted',nil,{max_w=480})
+  kit.text(60,96,'pad: Z menu; Tab/X select; M/Y move; R/L rotate','caption','muted',nil,{max_w=480})
+  for i=help_first,math.min(#HELP,help_first+visible-1) do
+    local y=120+(i-help_first)*28
+    kit.text(60,y,HELP[i][1],'caption','bone')
+    kit.paragraph(170,y,410,HELP[i][2],'caption','muted')
   end
-  kit.text(60,440,'F1 / H / ESC / click closes','caption','muted')
 end
 function on_draw()
   if not editing or not offline() or not gd.player(1) then return end
@@ -662,30 +695,31 @@ function on_draw()
   end
   local kit=gd.kit
   if not kit.available() then gd.text(12,12,'Map editor: menu kit assets missing; use map console commands') return end
-  kit.panel(8,10,624,30,{piece=12})
+  gd.fill(8,10,624,30,0x0E1218FF)
+  kit.panel(8,10,624,30,{piece=12,fill=PANEL_FILL})
   kit.text(20,30,'MAP EDITOR','label','gold')
-  kit.text(120,30,('tool: %s%s'):format(tool,axis_lock and (' ['..axis_lock..' axis]') or ''),'caption','bone')
-  kit.text(300,30,('part: %s'):format(PALETTE[palette]:gsub('^bf_','')),'caption','bone',nil,{max_w=160})
+  kit.text(150,30,('tool: %s%s'):format(tool,axis_lock and (' ['..axis_lock..' axis]') or ''),'caption','bone')
+  kit.text(340,30,('part: %s'):format(PALETTE[palette]:gsub('^bf_','')),'caption','bone',nil,{max_w=140})
   kit.text(628,30,('%s%s'):format(dirty and '* ' or '',filename),'caption','muted','right',{max_w=200})
-  kit.panel(8,44,246,382,{piece=16})
-  kit.text(20,62,tool=='place' and 'TOOLS / PARTS' or 'TOOLS / ACTIONS','caption','gold')
+  gd.fill(8,44,246,338,0x0E1218FF)
+  kit.panel(8,44,246,338,{piece=16,fill=PANEL_FILL})
+  kit.text(20,62,'TOOL','caption','gold')
+  kit.text(20,180,tool=='place' and 'PART' or 'ACTIONS','caption','gold')
   for _,r in ipairs(panel_rows()) do
     local state=(r.kind=='tool' and tool==TOOLS[r.index]) or
                 (r.kind=='part' and palette==r.index) or
                 (r.kind=='action' and action_index==r.index) or
                 (r.kind=='help' and help_open) or false
-    if r.kind=='help' then
-      kit.text(r.x,r.y+15,r.label,(help_open and 'label' or 'caption'),help_open and 'gold' or 'muted')
-    else
-      kit.button(r.x,r.y,r.w,r.label,state and 'sel' or 'ng',{h=r.h,value=tostring(r.index)})
-    end
+    local value = r.kind=='tool' and tostring(r.index) or r.value
+    kit.button(r.x,r.y,r.w,r.label,state and 'sel' or 'ng',{h=r.h,value=value})
   end
-  kit.panel(8,432,624,46,{piece=12})
-  kit.text(20,452,(dirty and '* ' or '')..filename..' | '..status,'caption','gold',nil,{max_w=598})
-  kit.text(20,470,('XYZ %.2f %.2f %.2f | grid %.3g | snap %s | parts %d/%d | %s')
-    :format(x,y,z,U*grid,snap_on and 'on' or 'off',#parts,MAX_PARTS,
-            mouse_api and 'mouse ready' or 'mouse unavailable'),'caption','muted',nil,{max_w=598})
-  if help_open then draw_help() end
+  gd.fill(8,386,624,44,0x0E1218FF)
+  kit.panel(8,386,624,44,{piece=12,fill=PANEL_FILL})
+  kit.text(20,404,HINTS[tool],'caption','bone',nil,{max_w=430})
+  kit.text(628,404,('XYZ %.2f %.2f %.2f | grid %.3g | snap %s | parts %d/%d')
+    :format(x,y,z,U*grid,snap_on and 'on' or 'off',#parts,MAX_PARTS),'caption','muted','right',{max_w=190})
+  kit.text(20,424,(dirty and '* ' or '')..filename..' | '..status,'caption','gold',nil,{max_w=598})
+  if help_open then gd.fill(0,0,640,480,0x000000A8) draw_help() end
 end
 
 -- Model slots are snapshotted, Lua is not. Pair manual savestates with document snapshots;

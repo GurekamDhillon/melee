@@ -28,10 +28,11 @@ gd = {
   key=function(k) return keys[k] end, key_pressed=function(k) return keys[k] end,
   pad=function() return pad end, time=function() return 0 end,
   fly_speed=function() return 2 end, teleport=function(_,x,y) p.x,p.y=x,y end,
-  project=function(x,y) return x,y,true end, line=function() end, box=function() end,
+  project=function(x,y) return x,y,true end, line=function() end, box=function() end, fill=function() end,
   mouse=function() return mouse_state.x, mouse_state.y, mouse_state.buttons, 0 end,
   camera_get=function() return camera end,
   kit={available=function() return true end,panel=function() end,text=function() end,
+       paragraph=function() return 1, 16 end,
        button=function() return 20 end,
        list=function(...) assert(select('#',...)==6, 'kit.list opts must be argument 6') end},
 }

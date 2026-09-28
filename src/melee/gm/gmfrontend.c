@@ -981,7 +981,8 @@ typedef struct FeTex {
 enum {
     FT_FRAME_TL, FT_FRAME_TR, FT_FRAME_BL, FT_FRAME_BR, FT_EDGE_H, FT_EDGE_V,
     FT_PANEL, FT_ROW, FT_ROW_SEL, FT_BTN, FT_BTN_HOVER, FT_BTN_PRESS,
-    FT_GLYPH_A, FT_GLYPH_B, FT_CURSOR, FT_COUNT
+    FT_GLYPH_A, FT_GLYPH_B, FT_CURSOR, FT_FRAME_FILL,
+    FT_FRAME_CUT_TL, FT_FRAME_CUT_TR, FT_FRAME_CUT_BL, FT_FRAME_CUT_BR, FT_COUNT
 };
 
 static const char* const fe_tex_names[FT_COUNT] = {
@@ -989,6 +990,8 @@ static const char* const fe_tex_names[FT_COUNT] = {
     "frame_edge_h", "frame_edge_v", "panel_bg", "row_ng", "row_sel",
     "btn_continue_ng", "btn_continue_hover", "btn_continue_press",
     "glyph_a", "glyph_b", "cursor_hand",
+    "frame_fill", "frame_cut_corner_tl", "frame_cut_corner_tr",
+    "frame_cut_corner_bl", "frame_cut_corner_br",
 };
 
 static FeTex fe_tex[FT_COUNT];
@@ -1095,16 +1098,6 @@ static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
     fe_tex_quad_uv(t, x, y, w, h, 0.0F, 0.0F, 1.0F, 1.0F, c);
 }
 
-/* An element at its authored size (1x = half its 2x texel size), or a flat stand-in. */
-static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXColor fallback)
-{
-    if (fe_tex[which].ok) {
-        fe_tex_quad(&fe_tex[which], x, y, w, h, fe_rgba(255, 255, 255, 255));
-    } else {
-        fe_solid(x, y, w, h, fallback);
-    }
-}
-
 /* ---- the layout + motion player and the menu tree (split out for size; same TU) ---------- */
 
 static void fe_match_setup_from_menus(void);
@@ -1125,6 +1118,21 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_online.inc"
 #include "gmfrontend_select.inc"
 #include "gmfrontend_settings.inc"
+
+/* Legacy panels, rows and buttons share the grid too. The source grid uses
+ * their old display sizes, preserving UV placement at those sizes exactly. */
+static void fe_tex_or_solid(int which, float x, float y, float w, float h, GXColor fallback)
+{
+    FePanelRect bounds;
+    float aw = FE_BTN_W, ah = FE_BTN_H, cx = FE_BTN_H * 0.5F, cy = 8.0F;
+    if (which == FT_PANEL) {
+        aw = FE_PANEL_W; ah = FE_PANEL_H; cx = cy = 32.0F;
+    } else if (which == FT_ROW || which == FT_ROW_SEL) {
+        aw = FE_ROW_W; ah = FE_ROW_H; cx = 32.0F; cy = 8.0F;
+    }
+    fe_panel_rect(&bounds, x, y, w, h);
+    fe_panel_art_image(which, &bounds, aw, ah, cx, cy, fallback);
+}
 
 /* The toolkit screens are drawn with the kit when its files are there (fe_kit), with the old
  * art pack and SisLib otherwise. */
@@ -1253,7 +1261,7 @@ static void fe_draw_frame(void)
     const FePanelRect bounds = {
         FE_FRAME_M, FE_FRAME_M, FE_W - 2 * FE_FRAME_M, FE_H - 2 * FE_FRAME_M
     };
-    fe_panel_art_frame(&bounds, 64.0F, 16.0F);
+    fe_panel_art_frame(&bounds, 64.0F, 16.0F, 0, false);
 }
 
 static void fe_draw_panels(HSD_GObj* gobj, int pass)
@@ -1311,16 +1319,16 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
         if (it->kind == FE_SLIDER && it->get != NULL && it->max > it->min) {
             float frac = (float) (it->get() - it->min) / (float) (it->max - it->min);
             float tx = x + 240, tw = 150, ty = cy - 3;
-            fe_solid(tx - 2, ty - 2, tw + 4, 10, FE_INK);
-            fe_solid(tx, ty, tw * frac, 6, FE_GOLD);
-            fe_solid(tx + tw * frac - 5, ty - 6, 10, 18, FE_INK);
-            fe_solid(tx + tw * frac - 3, ty - 4, 6, 14, FE_BONE);
+            fe_panel_solid(tx - 2, ty - 2, tw + 4, 10, FE_INK);
+            fe_panel_solid(tx, ty, tw * frac, 6, FE_GOLD);
+            fe_panel_solid(tx + tw * frac - 5, ty - 6, 10, 18, FE_INK);
+            fe_panel_solid(tx + tw * frac - 3, ty - 4, 6, 14, FE_BONE);
         } else if (it->kind == FE_TOGGLE && it->get != NULL) {
             int on = it->get() != 0;
             float px = x + 240, py = cy - 9;
-            fe_solid(px - 2, py - 2, 44, 22, FE_INK);
-            fe_solid(px, py, 40, 18, on ? FE_GOLD : FE_COBALT_DK);
-            fe_solid(on ? px + 23 : px + 3, py + 3, 14, 12, FE_BONE);
+            fe_panel_solid(px - 2, py - 2, 44, 22, FE_INK);
+            fe_panel_solid(px, py, 40, 18, on ? FE_GOLD : FE_COBALT_DK);
+            fe_panel_solid(on ? px + 23 : px + 3, py + 3, 14, 12, FE_BONE);
         }
     }
 
@@ -1346,10 +1354,10 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
 
     /* scroll marks, when the list runs past the rows shown */
     if (fe.scroll > 0) {
-        fe_solid(FE_W * 0.5F - 12, FE_ROW_Y - 9, 24, 4, FE_GOLD);
+        fe_panel_solid(FE_W * 0.5F - 12, FE_ROW_Y - 9, 24, 4, FE_GOLD);
     }
     if (fe.scroll + fe_rows_shown() < fe.n_list) {
-        fe_solid(FE_W * 0.5F - 12, fe_row_y(FE_MAX_ROWS) + 1, 24, 4, FE_GOLD);
+        fe_panel_solid(FE_W * 0.5F - 12, fe_row_y(FE_MAX_ROWS) + 1, 24, 4, FE_GOLD);
     }
 }
 

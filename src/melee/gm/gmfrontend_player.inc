@@ -364,7 +364,7 @@ static const FjNode* fj_load(const char* name, void** mem_text, void** mem_pool)
 #define FP_PLAYS 3
 #define FP_ID 28
 
-enum { FPK_FLAT, FPK_TEX, FPK_TEXT };
+enum { FPK_FLAT, FPK_TEX, FPK_TEXT, FPK_PANEL };
 enum {
     FPR_DECOR, FPR_CHROME, FPR_PLATE, FPR_FACE, FPR_ICON, FPR_LABEL, FPR_DESC, FPR_TITLE,
     FPR_OTHER
@@ -404,6 +404,11 @@ typedef struct FpQuad {
     float v[4][2]; ///< TL TR BR BL at rest
     float uv[4];   ///< u0 v0 u1 v1
     float rgb[3];
+    /* A panel remains one animation/material target; slicing happens at draw.
+     * Size is in rest-layout units, before shear and joint transforms. */
+    float corner_w, corner_h;
+    u8 cuts;
+    bool hollow;
     /* FPK_TEXT */
     const char* text;
     char textbuf[64]; ///< the fitted string (the fit rule may truncate it)
@@ -787,6 +792,7 @@ static int fp_add_quad(const char* id, u8 kind, u8 role, int tile)
     memset(q, 0, sizeof *q);
     fp_copy(q->id, id, FP_ID);
     q->kind = kind;
+    q->corner_w = q->corner_h = 4.0F;
     q->role = role;
     q->tile = (s8) tile;
     q->tex = -1;
@@ -796,11 +802,13 @@ static int fp_add_quad(const char* id, u8 kind, u8 role, int tile)
     return fp.nq++;
 }
 
+static void fe_panel_read(FpQuad* q, const FjNode* n);
+
 static int fp_quad_from_json(const FjNode* n, int tile)
 {
     const char* kind = fj_str(fj_get(n, "kind"));
     int qi = fp_add_quad(fj_str(fj_get(n, "id")),
-                         (kind != NULL && strcmp(kind, "textured") == 0) ? FPK_TEX : FPK_FLAT,
+                         (kind != NULL && strcmp(kind, "textured") == 0) ? FPK_TEX : FPK_PANEL,
                          fp_role(fj_str(fj_get(n, "role"))), tile);
     const FjNode* v;
     int i;
@@ -809,6 +817,7 @@ static int fp_quad_from_json(const FjNode* n, int tile)
         return -1;
     }
     q = &fp.q[qi];
+    fe_panel_read(q, n);
     for (i = 0, v = fj_first(fj_get(n, "verts")); v != NULL && i < 4; v = fj_next(v), i++) {
         q->v[i][0] = fj_num(fj_idx(v, 0), 0);
         q->v[i][1] = fj_num(fj_idx(v, 1), 0);
@@ -1307,7 +1316,7 @@ static void fp_set(FpChan* c, int f, float v)
 
 static void fp_reset_channels(void)
 {
-    int i, c;
+    int i, c, panels = 0;
     for (i = 0; i < FP_MAX_JOINTS * FJC_N + FP_MAX_QUADS * FMC_N; i++) {
         fp.ch[i].n = 0;
         fp.ch[i].rest = 0.0F;
@@ -1328,11 +1337,14 @@ static void fp_reset_channels(void)
         }
     }
     for (i = 0; i < fp.nq; i++) {
+        if (fp.q[i].kind == FPK_PANEL) panels++;
         for (c = 0; c < 3; c++) {
             fp_mch(i, c)->rest = fp.q[i].rgb[c];
         }
         fp_mch(i, FMC_ALPHA)->rest = 1.0F;
     }
+    OSReport("frontend: panel migration: %d logical panels, %d/%d quads\n",
+             panels, fp.nq, FP_MAX_QUADS);
 }
 
 /* Play an event on tile `ti` from frame f. `joint_override` sends every joint track to that
@@ -1758,6 +1770,7 @@ static void fp_textured(FpTex* tx, const float w[4][2], const float* uv, GXColor
 }
 
 static void fp_draw_text(FpQuad* q);
+static void fe_panel_draw(const FpQuad* q, GXColor c);
 
 static void fp_draw_quad(int i)
 {
@@ -1776,7 +1789,8 @@ static void fp_draw_quad(int i)
         }
         return;
     }
-    if (q->kind == FPK_FLAT && !q->has_colour && q->role != FPR_PLATE) {
+    if ((q->kind == FPK_FLAT || q->kind == FPK_PANEL) &&
+        !q->has_colour && q->role != FPR_PLATE) {
         return; /* a flat quad with no colour is a placeholder with nothing to show */
     }
     c.r = fp_u8(q->wrgb[0]);
@@ -1789,7 +1803,11 @@ static void fp_draw_quad(int i)
         }
         return;
     }
-    fp_flat(q->w, c);
+    if (q->kind == FPK_PANEL) {
+        fe_panel_draw(q, c);
+    } else {
+        fp_flat(q->w, c);
+    }
 }
 
 static void fp_draw(void)

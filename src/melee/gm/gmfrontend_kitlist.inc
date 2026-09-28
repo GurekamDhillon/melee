@@ -114,7 +114,7 @@ static int fk_wflat(int row, const char* id, float x0, float y0, float x1, float
     float rgb[3];
     int q;
     kit_widget_state_colour(0, colour, rgb);
-    q = fm_flat(id, FPR_OTHER, fp.nt - 1, x0, y0, x1, y1, rgb);
+    q = fm_panel(id, FPR_OTHER, fp.nt - 1, x0, y0, x1, y1, rgb);
     if (q >= 0) {
         fp.tile[fk.tile[row]].extra[fp.tile[fk.tile[row]].nextra++] = q;
         fk.q_w[row][fk.nq_w[row]] = q;
@@ -168,7 +168,6 @@ static void fk_build(bool animate_in)
     void *lt, *lp, *mt, *mp;
     const FjNode* L;
     const FjNode* M;
-    FePanel description;
     int section = fe_is_settings(fe.screen) ? KS_OPTIONS : KS_VERSUS, r, i;
     kit_load();
     ff_load();
@@ -195,19 +194,9 @@ static void fk_build(bool animate_in)
         crumbs[0] = "SETTINGS"; /* SETTINGS > <page> */
         crumbs[1] = fe.screen->subtitle;
     }
-    /* MATCH SETUP is the first parametric panel consumer. Nine ink slices have
-     * the old strip's exact outline; changing bounds/corners/tokens here needs
-     * no art export. Keep the desc_strip prefix for the footer motion below. */
-    fe_panel_rect(&description.bounds, kit.desc_strip[0], kit.desc_strip[1],
-                   kit.desc_strip[2] - kit.desc_strip[0], kit.desc_strip[3] - kit.desc_strip[1]);
-    description.corner_w = description.corner_h = 4.0F;
-    description.cuts = 0;
-    description.fill = description.edge = description.corner = "ink";
-    description.section = section;
-    description.role = FPR_CHROME;
-    fm_chrome_panel(fe.screen->subtitle, crumbs,
-                   fe.screen == &fe_screen_online || fe_is_settings(fe.screen) ? 2 : 3, section, 3, hg,
-                   ht, fe.screen == &fe_screen_vs_setup ? &description : NULL);
+    fm_chrome_with(fe.screen->subtitle, crumbs,
+                   fe.screen == &fe_screen_online || fe_is_settings(fe.screen) ? 2 : 3,
+                   section, 3, hg, ht);
 
     fk.nrows = fe.n_vis < FK_MAX_ROWS ? fe.n_vis : FK_MAX_ROWS;
     for (r = 0; r < fk.nrows; r++) {
@@ -277,10 +266,10 @@ static void fk_build(bool animate_in)
         fm_tok("ink", section, ink);
         fm_tok("ok", section, ok);
         fm_tok("bone", section, bone);
-        q = fm_flat("toast_plate", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1],
+        q = fm_panel("toast_plate", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1],
                     kit.desc_strip[2], kit.desc_strip[3], ink);
         if (q >= 0) fp.q[q].late = true;
-        fk.q_toast_accent = fm_flat("toast_accent", FPR_CHROME, -1, kit.desc_strip[0],
+        fk.q_toast_accent = fm_panel("toast_accent", FPR_CHROME, -1, kit.desc_strip[0],
                                     kit.desc_strip[1], kit.desc_strip[0] + 6, kit.desc_strip[3],
                                     ok);
         if (fk.q_toast_accent >= 0) fp.q[fk.q_toast_accent].late = true;

@@ -413,10 +413,12 @@ static void fm_tok(const char* tok, int section, float* rgb)
     }
 }
 
-static int fm_flat(const char* id, u8 role, int tile, float x0, float y0, float x1, float y1,
+/* One resizable panel per material target. The primitive slices it after the
+ * player's transforms, keeping tile/row selection and widget channels intact. */
+static int fm_panel(const char* id, u8 role, int tile, float x0, float y0, float x1, float y1,
                    const float* rgb)
 {
-    int q = fp_add_quad(id, FPK_FLAT, role, tile);
+    int q = fp_add_quad(id, FPK_PANEL, role, tile);
     if (q < 0) {
         return -1;
     }
@@ -532,9 +534,9 @@ static void fm_tile(int slot, const FeMenuItem* it, int section, int rank, float
     fm_tok("@face_hi", section, t->ng_icon);
     fm.tile_of[slot] = fp.nt;
     sprintf(qid, "%s_plate", id);
-    t->q_plate = fm_flat(qid, FPR_PLATE, fp.nt, x0, y0, x1, y1, NULL);
+    t->q_plate = fm_panel(qid, FPR_PLATE, fp.nt, x0, y0, x1, y1, NULL);
     sprintf(qid, "%s_face", id);
-    t->q_face = fm_flat(qid, FPR_FACE, fp.nt, x0, y0, x1, y1, t->ng_face);
+    t->q_face = fm_panel(qid, FPR_FACE, fp.nt, x0, y0, x1, y1, t->ng_face);
     t->q_icon = -1;
     if (!row && it->icon != NULL) {
         icon = hero ? 128.0F : 64.0F;
@@ -590,16 +592,16 @@ static void fm_chrome_panel(const char* title, const char* const* crumbs, int nc
     fm_tok("danger", section, danger);
     for (i = 0; i < ks->nbands; i++) {
         sprintf(id, "band_%d", i);
-        fm_flat(id, FPR_DECOR, -1, ks->band_x[i], -40, ks->band_x[i] + ks->band_w[i], 520,
+        fm_panel(id, FPR_DECOR, -1, ks->band_x[i], -40, ks->band_x[i] + ks->band_w[i], 520,
                 ks->band);
     }
     /* header: the title decides the slab's width */
     q = fm_text("header_title", FPR_TITLE, -1, kit.title_role, kit.title_anchor[0],
                 kit.title_anchor[1], title, ink, kit.title_max);
     slab_x1 = kit.title_anchor[0] + fm_last_w + 20.0F;
-    fm_flat("header_rule", FPR_CHROME, -1, slab_x1 - 4, kit.rule[1], kit.rule[2], kit.rule[3],
+    fm_panel("header_rule", FPR_CHROME, -1, slab_x1 - 4, kit.rule[1], kit.rule[2], kit.rule[3],
             ink);
-    fm_flat("header_slab", FPR_CHROME, -1, kit.slab[0], kit.slab[1], slab_x1, kit.slab[3], gold);
+    fm_panel("header_slab", FPR_CHROME, -1, kit.slab[0], kit.slab[1], slab_x1, kit.slab[3], gold);
     /* the title draws over its slab */
     if (q >= 0) {
         FpQuad tmp = fp.q[q];
@@ -624,18 +626,18 @@ static void fm_chrome_panel(const char* title, const char* const* crumbs, int nc
         x += fm_last_w;
         if (i < ncrumbs - 1) {
             sprintf(id, "crumb_bar_%d", i);
-            fm_flat(id, FPR_CHROME, -1, x + 6, kit.crumb_anchor[1] - 10, x + 8,
+            fm_panel(id, FPR_CHROME, -1, x + 6, kit.crumb_anchor[1] - 10, x + 8,
                     kit.crumb_anchor[1], gold);
             x += 14;
         }
     }
     if (description == NULL || fe_panel_add("desc_strip", description) < 0) {
-        fm_flat("desc_strip", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1],
+        fm_panel("desc_strip", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1],
                 kit.desc_strip[2], kit.desc_strip[3], ink);
     }
-    fm_flat("footer_strip", FPR_CHROME, -1, kit.footer[0], kit.footer[1], kit.footer[2],
+    fm_panel("footer_strip", FPR_CHROME, -1, kit.footer[0], kit.footer[1], kit.footer[2],
             kit.footer[3], ink);
-    fm_flat("footer_mark", FPR_CHROME, -1, kit.footer_mark[0], kit.footer_mark[1],
+    fm_panel("footer_mark", FPR_CHROME, -1, kit.footer_mark[0], kit.footer_mark[1],
             kit.footer_mark[2], kit.footer_mark[3], gold);
     /* hints: glyph, 4px, text, 12px (each one a button for the mouse) */
     x = kit.footer[0] + 24;
@@ -710,7 +712,7 @@ static void fm_build(const FeMenu* m, int section)
         }
         return;
     }
-    fm_flat("backplate", FPR_CHROME, -1, X0 - 6, Y0 - 6, X1 + 6, Y1 + 6, ink);
+    fm_panel("backplate", FPR_CHROME, -1, X0 - 6, Y0 - 6, X1 + 6, Y1 + 6, ink);
     k = 0;
     for (i = 0; i < n; i++) {
         if (m->items[fm.vis[i]].sel == m->hero) {

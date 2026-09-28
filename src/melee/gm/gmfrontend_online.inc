@@ -390,9 +390,10 @@ static void fl_el(FlEl* e)
                 }
             }
         } else {
-            qi = fp_add_quad(qid, FPK_FLAT, FPR_OTHER, -1);
+            qi = fp_add_quad(qid, FPK_PANEL, FPR_OTHER, -1);
             if (qi < 0) continue;
         }
+        fe_panel_read(&fp.q[qi], q);
         fp.q[qi].has_colour = true;
         fm_rgb(fp.q[qi].rgb, rgb);
         for (k = 0, v = fj_first(fj_get(q, "verts")); v != NULL && k < 4; v = fj_next(v), k++) {
@@ -654,7 +655,7 @@ static int fl_icon_tex(int which)
 static int fl_rect_quad(const char* id, int tex, float x0, float y0, float x1, float y1,
                         const float* rgb, int joint)
 {
-    int q = fp_add_quad(id, tex >= 0 ? FPK_TEX : FPK_FLAT, FPR_OTHER, -1);
+    int q = fp_add_quad(id, tex >= 0 ? FPK_TEX : FPK_PANEL, FPR_OTHER, -1);
     if (q < 0) {
         return -1;
     }
@@ -1153,7 +1154,7 @@ static void fl_grid_draw(void)
         }
     }
     if (flg.div_x > 0) {
-        fm_flat("gdv", FPR_OTHER, -1, flg.div_x - 1.0F, FL_GRID_Y0 + 2.0F, flg.div_x + 1.0F,
+        fm_panel("gdv", FPR_OTHER, -1, flg.div_x - 1.0F, FL_GRID_Y0 + 2.0F, flg.div_x + 1.0F,
                 FL_GRID_Y0 + FL_GRID_H - 2.0F, muted);
     }
     for (i = 0; i < n; i++) {
@@ -1167,10 +1168,10 @@ static void fl_grid_draw(void)
             continue;
         }
         sprintf(id, "dg%d", i);
-        fm_flat(id, FPR_OTHER, -1, rx - 3, ry - 3, rx + w + 3, ry + h + 3,
+        fm_panel(id, FPR_OTHER, -1, rx - 3, ry - 3, rx + w + 3, ry + h + 3,
                 hov || s_ == LBS_PICKED ? gold : ink);
         sprintf(id, "df%d", i);
-        fm_flat(id, FPR_OTHER, -1, rx, ry, rx + w, ry + h, out || sits ? ink : face);
+        fm_panel(id, FPR_OTHER, -1, rx, ry, rx + w, ry + h, out || sits ? ink : face);
         tex = fs_stage_art_tex(Netplay_LobbyStageExt(i));
         if (tex >= 0) {
             int q;
@@ -1197,7 +1198,7 @@ static void fl_grid_draw(void)
             }
             /* the tab: who */
             sprintf(id, "dt%d", i);
-            fm_flat(id, FPR_OTHER, -1, rx + w - 22, ry, rx + w, ry + 12, c);
+            fm_panel(id, FPR_OTHER, -1, rx + w - 22, ry, rx + w, ry + 12, c);
             sprintf(id, "du%d", i);
             sprintf(buf, "P%d", s_ == LBS_P1 ? 1 : s_ == LBS_P2 ? 2 : banner ? 2 : 1);
             fl_text_at(id, "caption", rx + w - 11, ry + 10, "centre", 20, buf, ink, -1);
@@ -1205,7 +1206,7 @@ static void fl_grid_draw(void)
         if (s_ == LBS_PICKED) {
             int t = fp_tex("ico_pick");
             sprintf(id, "dp%d", i);
-            fm_flat(id, FPR_OTHER, -1, rx + w - 18, ry, rx + w, ry + 14, ink);
+            fm_panel(id, FPR_OTHER, -1, rx + w - 18, ry, rx + w, ry + 14, ink);
             if (t >= 0) {
                 sprintf(id, "dq%d", i);
                 fl_rect_quad(id, t, rx + w - 16, ry + 1, rx + w - 4, ry + 13, gold, -1);

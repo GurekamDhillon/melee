@@ -209,19 +209,15 @@ static void fs_port_rgb(int p, float* rgb)
     }
 }
 
-/* A rectangle's outline, `w` thick (4 flats). */
+/* A hollow panel: the corner cells meet the edges without doubled alpha. */
 static void fs_outline(const char* id, float x0, float y0, float x1, float y1, float w,
                        const float* rgb)
 {
-    char q[FP_ID];
-    sprintf(q, "%.20s_t", id);
-    fm_flat(q, FPR_OTHER, -1, x0, y0, x1, y0 + w, rgb);
-    sprintf(q, "%.20s_b", id);
-    fm_flat(q, FPR_OTHER, -1, x0, y1 - w, x1, y1, rgb);
-    sprintf(q, "%.20s_l", id);
-    fm_flat(q, FPR_OTHER, -1, x0, y0, x0 + w, y1, rgb);
-    sprintf(q, "%.20s_r", id);
-    fm_flat(q, FPR_OTHER, -1, x1 - w, y0, x1, y1, rgb);
+    int q = fm_panel(id, FPR_OTHER, -1, x0, y0, x1, y1, rgb);
+    if (q >= 0) {
+        fp.q[q].corner_w = fp.q[q].corner_h = w;
+        fp.q[q].hollow = true;
+    }
 }
 
 /* Per-port input: edges (A, B, X, Y, Z, L, R, START) and held-repeat directions. */
@@ -1014,13 +1010,13 @@ static void fs_build_css(void)
             k += fcs.p[q].kind == FS_HMN && fcs.p[q].card < 0 && fcs.p[q].cur == s->cur ? 3.0F : 0.0F;
         }
         sprintf(id, "cur%d", p);
-        fm_flat(id, FPR_OTHER, -1, r[0] - k, r[1] - k, r[2] + k, r[3] + k, c);
+        fm_panel(id, FPR_OTHER, -1, r[0] - k, r[1] - k, r[2] + k, r[3] + k, c);
     }
     for (slot = first; slot < last; slot++) {
         int ck = fs_slot_ck(slot);
         fs_tile_rect(slot, r);
         sprintf(id, "tf%d", slot);
-        fm_flat(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], slot == fcs.n ? ink : face);
+        fm_panel(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], slot == fcs.n ? ink : face);
         if (slot == fcs.n) {
             sprintf(id, "tq%d", slot);
             fl_text_at(id, "heading", (r[0] + r[2]) * 0.5F, r[3] - 8.0F, "centre", 40, "?", gold, -1);
@@ -1031,7 +1027,7 @@ static void fs_build_css(void)
         if (!fcs.ok[slot]) {
             int qd;
             sprintf(id, "tx%d", slot);
-            qd = fm_flat(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], ink);
+            qd = fm_panel(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], ink);
             if (qd >= 0) fp.q[qd].wa = -0.7F; /* dimmed: the opponent lacks it */
         }
         (void) ck;
@@ -1047,7 +1043,7 @@ static void fs_build_css(void)
         fs_tile_rect(s->cur, r);
         fs_port_rgb(p, c);
         sprintf(id, "ct%d", p);
-        fm_flat(id, FPR_OTHER, -1, r[0] - 3 + p * 0.0F, r[1] - 15, r[0] + 21, r[1] - 2, c);
+        fm_panel(id, FPR_OTHER, -1, r[0] - 3 + p * 0.0F, r[1] - 15, r[0] + 21, r[1] - 2, c);
         sprintf(id, "cl%d", p);
         sprintf(t, "P%d", p + 1);
         fl_text_at(id, "caption", r[0] + 9, r[1] - 4.5F, "centre", 22, t, ink, -1);
@@ -1073,16 +1069,16 @@ static void fs_build_css(void)
         if (hov >= 0) {
             float hc[3];
             fs_port_rgb(hov, hc);
-            fm_flat(id, FPR_OTHER, -1, r[0] - 5, r[1] - 5, r[2] + 5, r[3] + 5, hc);
+            fm_panel(id, FPR_OTHER, -1, r[0] - 5, r[1] - 5, r[2] + 5, r[3] + 5, hc);
         } else {
-            fm_flat(id, FPR_OTHER, -1, r[0] - 3, r[1] - 3, r[2] + 3, r[3] + 3, ink);
+            fm_panel(id, FPR_OTHER, -1, r[0] - 3, r[1] - 3, r[2] + 3, r[3] + 3, ink);
         }
         sprintf(id, "cf%d", p);
-        fm_flat(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], s->kind == FS_OFF ? dim : face);
+        fm_panel(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], s->kind == FS_OFF ? dim : face);
         sprintf(id, "cb%d", p);
-        fm_flat(id, FPR_OTHER, -1, r[0], r[1], r[2], r[1] + 6, s->kind == FS_OFF ? muted : c);
+        fm_panel(id, FPR_OTHER, -1, r[0], r[1], r[2], r[1] + 6, s->kind == FS_OFF ? muted : c);
         sprintf(id, "cp%d", p);
-        fm_flat(id, FPR_OTHER, -1, r[0] + 8, r[1] + 11, r[0] + 32, r[1] + 25, s->kind == FS_OFF ? muted : c);
+        fm_panel(id, FPR_OTHER, -1, r[0] + 8, r[1] + 11, r[0] + 32, r[1] + 25, s->kind == FS_OFF ? muted : c);
         sprintf(id, "cn%d", p);
         sprintf(buf, "P%d", p + 1);
         fl_text_at(id, "caption", r[0] + 20, r[1] + 22.5F, "centre", 22, buf, ink, -1);
@@ -1104,7 +1100,7 @@ static void fs_build_css(void)
         pr[2] = r[2] - 8;
         pr[3] = r[3] - 36;
         sprintf(id, "cr%d", p);
-        fm_flat(id, FPR_OTHER, -1, pr[0], pr[1], pr[2], pr[3], ink);
+        fm_panel(id, FPR_OTHER, -1, pr[0], pr[1], pr[2], pr[3], ink);
         if (s->kind == FS_OFF) {
             sprintf(id, "cj%d", p);
             fl_text_at(id, "caption", (r[0] + r[2]) * 0.5F, (pr[1] + pr[3]) * 0.5F + 4, "centre",
@@ -1138,7 +1134,7 @@ static void fs_build_css(void)
                 float g[3];
                 fs_port_rgb(q, g);
                 sprintf(id, "cg%d", p);
-                fm_flat(id, FPR_OTHER, -1, pr[0], pr[3] - 14, pr[2], pr[3], gold);
+                fm_panel(id, FPR_OTHER, -1, pr[0], pr[3] - 14, pr[2], pr[3], gold);
                 sprintf(id, "ch%d", p);
                 sprintf(buf, "P%d PICKS", q + 1);
                 fl_text_at(id, "caption", (pr[0] + pr[2]) * 0.5F, pr[3] - 3, "centre", pr[2] - pr[0], buf, ink, -1);
@@ -1427,10 +1423,10 @@ static void fs_build_sss(void)
         r[3] = r[1] + h;
         if (i == fcs.st_cur) {
             sprintf(id, "sc%d", i);
-            fm_flat(id, FPR_OTHER, -1, r[0] - 4, r[1] - 4, r[2] + 4, r[3] + 4, gold);
+            fm_panel(id, FPR_OTHER, -1, r[0] - 4, r[1] - 4, r[2] + 4, r[3] + 4, gold);
         }
         sprintf(id, "sf%d", i);
-        fm_flat(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], fcs.st_type[i] == 3 ? ink : face);
+        fm_panel(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], fcs.st_type[i] == 3 ? ink : face);
         sprintf(id, "si%d", i);
         if (fcs.st_type[i] == 3 && fcs.st_icon[i].img == NULL) {
             fl_text_at(id, "heading", (r[0] + r[2]) * 0.5F, r[3] - 10, "centre", 40, "?", gold, -1);
@@ -1440,7 +1436,7 @@ static void fs_build_sss(void)
         if (!fcs.st_ok[i]) {
             int q;
             sprintf(id, "sx%d", i);
-            q = fm_flat(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], ink);
+            q = fm_panel(id, FPR_OTHER, -1, r[0], r[1], r[2], r[3], ink);
             if (q >= 0) fp.q[q].wa = -0.75F;
             sprintf(id, "sl%d", i);
             {
@@ -1456,10 +1452,10 @@ static void fs_build_sss(void)
     {
         float y0 = 296.0F, y1 = 352.0F;
         int cur = fcs.st_cur;
-        fm_flat("sp_ink", FPR_OTHER, -1, FS_GX0 - 3, y0 - 3, FS_GX1 + 3, y1 + 3, ink);
-        fm_flat("sp_face", FPR_OTHER, -1, FS_GX0, y0, FS_GX1, y1, face);
-        fm_flat("sp_acc", FPR_OTHER, -1, FS_GX0, y0, FS_GX0 + 4, y1, gold);
-        fm_flat("sp_fr", FPR_OTHER, -1, FS_GX0 + 12, y0 + 4, FS_GX0 + 70, y1 - 4, ink);
+        fm_panel("sp_ink", FPR_OTHER, -1, FS_GX0 - 3, y0 - 3, FS_GX1 + 3, y1 + 3, ink);
+        fm_panel("sp_face", FPR_OTHER, -1, FS_GX0, y0, FS_GX1, y1, face);
+        fm_panel("sp_acc", FPR_OTHER, -1, FS_GX0, y0, FS_GX0 + 4, y1, gold);
+        fm_panel("sp_fr", FPR_OTHER, -1, FS_GX0 + 12, y0 + 4, FS_GX0 + 70, y1 - 4, ink);
         if (cur < fcs.ns && fcs.st_icon[cur].img != NULL) {
             fs_tex_fit("sp_art", fs_art_tex(fcs.st_icon[cur]), FS_GX0 + 13, y0 + 5, FS_GX0 + 69, y1 - 5, white);
         }

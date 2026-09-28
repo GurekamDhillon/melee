@@ -66,6 +66,103 @@ static bool fe_panel_grid(const FePanelRect* b, float cx, float cy, float ex, fl
     return true;
 }
 
+/* Layout files may opt into different corners without re-exporting vertices.
+ * Old files keep their exact outline: a solid panel with four square corners.
+ * cuts uses FPANEL_CUT_*; hollow omits only the centre cell. */
+static void fe_panel_read(FpQuad* q, const FjNode* n)
+{
+    const FjNode* p = fj_get(n, "panel");
+    const FjNode* corner = fj_get(p, "corner");
+    if (q->kind != FPK_PANEL || p == NULL) {
+        return;
+    }
+    q->corner_w = fj_num(fj_idx(corner, 0), 4.0F);
+    q->corner_h = fj_num(fj_idx(corner, 1), 4.0F);
+    q->cuts = (u8) fe_panel_limit(fj_num(fj_get(p, "cuts"), 0), 15);
+    q->hollow = fj_get(p, "hollow") != NULL && fj_get(p, "hollow")->type == FJ_TRUE;
+}
+
+/* Slice a logical quad in rest space, then map into its evaluated vertices.
+ * This retains the player's single ID, tile draw order, material channels,
+ * late/toast flag and joint hierarchy (including slider scale animations).
+ * Bilinear mapping also preserves the authored trapezoids in online layouts.
+ * Opposite slices never overlap, including translucent and chamfered panels. */
+static void fe_panel_draw(const FpQuad* q, GXColor c)
+{
+    FePanelRect b, r[FPANEL_COUNT];
+    int i, k, axis;
+    fe_panel_rect(&b, 0, 0, q->v[1][0] - q->v[0][0], q->v[3][1] - q->v[0][1]);
+    if (!fe_panel_grid(&b, q->corner_w, q->corner_h,
+                       q->corner_w, q->corner_h, r)) {
+        return;
+    }
+    for (i = q->hollow ? FPANEL_TOP : FPANEL_FILL; i < FPANEL_COUNT; i++) {
+        float v[4][2];
+        if (r[i].w <= 0 || r[i].h <= 0) {
+            continue;
+        }
+        for (k = 0; k < 4; k++) {
+            float u = (r[i].x + (k == 1 || k == 2 ? r[i].w : 0)) / b.w;
+            float t = (r[i].y + (k >= 2 ? r[i].h : 0)) / b.h;
+            for (axis = 0; axis < 2; axis++) {
+                float top = q->w[0][axis] + u * (q->w[1][axis] - q->w[0][axis]);
+                float bottom = q->w[3][axis] + u * (q->w[2][axis] - q->w[3][axis]);
+                v[k][axis] = top + t * (bottom - top);
+            }
+        }
+        if (i >= FPANEL_TL && (q->cuts & (1U << (i - FPANEL_TL)))) {
+            int outer = i == FPANEL_TL ? 0 : i == FPANEL_TR ? 1 : i == FPANEL_BL ? 3 : 2;
+            int next = (outer + 1) % 4;
+            v[outer][0] = v[next][0];
+            v[outer][1] = v[next][1];
+        }
+        fp_flat(v, c);
+    }
+}
+
+/* The legacy SisLib path also has solid slider/toggle furniture. It has no
+ * player model, but shares the same bounds/clamping as the kit panels. */
+static void fe_panel_solid(float x, float y, float w, float h, GXColor colour)
+{
+    FePanelRect bounds, r[FPANEL_COUNT];
+    int i;
+    fe_panel_rect(&bounds, x, y, w, h);
+    if (!fe_panel_grid(&bounds, 4, 4, 4, 4, r)) return;
+    for (i = 0; i < FPANEL_COUNT; i++) {
+        if (r[i].w > 0 && r[i].h > 0) {
+            fe_solid(r[i].x, r[i].y, r[i].w, r[i].h, colour);
+        }
+    }
+}
+
+/* Single-image legacy panels retain their authored UVs at the old size. On
+ * resize, only the centre and edge spans stretch; corners keep layout size.
+ * This preserves panel_bg's tab and the row/button shadows without new art. */
+static void fe_panel_art_image(int tex, const FePanelRect* bounds,
+                               float authored_w, float authored_h,
+                               float cx, float cy, GXColor fallback)
+{
+    FePanelRect source, dst[FPANEL_COUNT], uv[FPANEL_COUNT];
+    int i;
+    fe_panel_rect(&source, 0, 0, authored_w, authored_h);
+    if (!fe_panel_grid(bounds, cx, cy, cx, cy, dst) ||
+        !fe_panel_grid(&source, cx, cy, cx, cy, uv)) {
+        return;
+    }
+    for (i = 0; i < FPANEL_COUNT; i++) {
+        if (dst[i].w <= 0 || dst[i].h <= 0) continue;
+        if (fe_tex[tex].ok) {
+            fe_tex_quad_uv(&fe_tex[tex], dst[i].x, dst[i].y, dst[i].w, dst[i].h,
+                           uv[i].x / authored_w, uv[i].y / authored_h,
+                           (uv[i].x + uv[i].w) / authored_w,
+                           (uv[i].y + uv[i].h) / authored_h,
+                           fe_rgba(255, 255, 255, 255));
+        } else {
+            fe_solid(dst[i].x, dst[i].y, dst[i].w, dst[i].h, fallback);
+        }
+    }
+}
+
 /* Add chrome to the existing player; no extra renderer, heap, or texture asset.
  * The id prefix is kept on every slice so header/footer joint assignment works.
  * Return the first quad, or -1 without adding a partial panel. Call during screen
@@ -137,10 +234,11 @@ static int fe_panel_add(const char* id, const FePanel* p)
     return first;
 }
 
-/* Compatibility skin for the original art pack: preserve its gate, draw order,
- * UV flips and white tint. The fill remains the independently placed panel_bg;
- * callers can now place/resize this frame without scaling its corner artwork. */
-static void fe_panel_art_frame(const FePanelRect* bounds, float corner, float edge)
+/* Authored frame colours are never multiplied by the kit palette. Hollow is
+ * the legacy screen surround; filled panels use frame_fill in the centre cross
+ * only, excluding all four corner cells, including transparent chamfers. */
+static void fe_panel_art_frame(const FePanelRect* bounds, float corner, float edge,
+                               unsigned cuts, bool filled)
 {
     static const int tex[FPANEL_COUNT] = {
         FT_PANEL, FT_EDGE_H, FT_EDGE_H, FT_EDGE_V, FT_EDGE_V,
@@ -149,13 +247,45 @@ static void fe_panel_art_frame(const FePanelRect* bounds, float corner, float ed
     FePanelRect r[FPANEL_COUNT];
     GXColor white = fe_rgba(255, 255, 255, 255);
     int i;
-    if (!fe_tex[FT_EDGE_H].ok || !fe_tex[FT_FRAME_TL].ok ||
-        !fe_panel_grid(bounds, corner, corner, edge, edge, r)) {
+    if (!fe_panel_grid(bounds, corner, corner, edge, edge, r)) {
         return;
     }
+    /* A missing cut-corner asset must not silently turn into a square corner.
+     * Texture loading reports missing art once, outside the draw callback. */
+    for (i = filled ? FPANEL_FILL : FPANEL_TOP; i < FPANEL_COUNT; i++) {
+        int t = i == FPANEL_FILL ? FT_FRAME_FILL : tex[i];
+        if (i >= FPANEL_TL && (cuts & (1U << (i - FPANEL_TL)))) {
+            t = FT_FRAME_CUT_TL + i - FPANEL_TL;
+        }
+        if (!fe_tex[t].ok) return;
+    }
+    if (filled) {
+        FePanelRect fill[5];
+        /* Edges are thinner than corner cells in this skin. Fill the four
+         * inner edge gaps as well as the middle, never beneath an art slice. */
+        fill[0] = r[FPANEL_FILL];
+        fe_panel_rect(&fill[1], r[FPANEL_TOP].x, r[FPANEL_TOP].y + r[FPANEL_TOP].h,
+                       r[FPANEL_TOP].w, r[FPANEL_TL].h - r[FPANEL_TOP].h);
+        fe_panel_rect(&fill[2], r[FPANEL_BOTTOM].x, r[FPANEL_BL].y,
+                       r[FPANEL_BOTTOM].w, r[FPANEL_BL].h - r[FPANEL_BOTTOM].h);
+        fe_panel_rect(&fill[3], r[FPANEL_LEFT].x + r[FPANEL_LEFT].w, r[FPANEL_LEFT].y,
+                       r[FPANEL_TL].w - r[FPANEL_LEFT].w, r[FPANEL_LEFT].h);
+        fe_panel_rect(&fill[4], r[FPANEL_TR].x, r[FPANEL_RIGHT].y,
+                       r[FPANEL_TR].w - r[FPANEL_RIGHT].w, r[FPANEL_RIGHT].h);
+        for (i = 0; i < 5; i++) {
+            if (fill[i].w > 0 && fill[i].h > 0) {
+                fe_tex_quad(&fe_tex[FT_FRAME_FILL], fill[i].x, fill[i].y,
+                            fill[i].w, fill[i].h, white);
+            }
+        }
+    }
     for (i = FPANEL_TOP; i < FPANEL_COUNT; i++) {
+        int t = tex[i];
+        if (i >= FPANEL_TL && (cuts & (1U << (i - FPANEL_TL)))) {
+            t = FT_FRAME_CUT_TL + i - FPANEL_TL;
+        }
         if (r[i].w > 0 && r[i].h > 0) {
-            fe_tex_quad_uv(&fe_tex[tex[i]], r[i].x, r[i].y, r[i].w, r[i].h,
+            fe_tex_quad_uv(&fe_tex[t], r[i].x, r[i].y, r[i].w, r[i].h,
                            i == FPANEL_RIGHT ? 1 : 0, i == FPANEL_BOTTOM ? 1 : 0,
                            i == FPANEL_RIGHT ? 0 : 1, i == FPANEL_BOTTOM ? 0 : 1, white);
         }

@@ -573,9 +573,9 @@ static void fm_tile(int slot, const FeMenuItem* it, int section, int rank, float
  * sized by its title, the breadcrumb (`crumbs`, root first) with the section icon at its root,
  * the description strip, and the footer hints (glyph + text; A in `ok`, B in `danger`, the
  * kit's suggested tints, anything else bone). */
-static void fm_chrome_with(const char* title, const char* const* crumbs, int ncrumbs,
+static void fm_chrome_panel(const char* title, const char* const* crumbs, int ncrumbs,
                            int section, int nhints, const char* const* hglyph,
-                           const char* const* htext)
+                           const char* const* htext, const FePanel* description)
 {
     const KitSection* ks = &kit.sec[section];
     float ink[3], gold[3], muted[3], bone[3], ok[3], danger[3];
@@ -629,8 +629,10 @@ static void fm_chrome_with(const char* title, const char* const* crumbs, int ncr
             x += 14;
         }
     }
-    fm_flat("desc_strip", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1], kit.desc_strip[2],
-            kit.desc_strip[3], ink);
+    if (description == NULL || fe_panel_add("desc_strip", description) < 0) {
+        fm_flat("desc_strip", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1],
+                kit.desc_strip[2], kit.desc_strip[3], ink);
+    }
     fm_flat("footer_strip", FPR_CHROME, -1, kit.footer[0], kit.footer[1], kit.footer[2],
             kit.footer[3], ink);
     fm_flat("footer_mark", FPR_CHROME, -1, kit.footer_mark[0], kit.footer_mark[1],
@@ -659,6 +661,13 @@ static void fm_chrome_with(const char* title, const char* const* crumbs, int ncr
         x += fm_last_w + 12;
         fms_hint_add(gq, hglyph[i], hx0, x - 6, kit.footer[1], kit.footer[3]);
     }
+}
+
+static void fm_chrome_with(const char* title, const char* const* crumbs, int ncrumbs,
+                           int section, int nhints, const char* const* hglyph,
+                           const char* const* htext)
+{
+    fm_chrome_panel(title, crumbs, ncrumbs, section, nhints, hglyph, htext, NULL);
 }
 
 static void fm_chrome(const FeMenu* m, int section)

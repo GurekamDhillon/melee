@@ -1118,6 +1118,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 
 #include "gmfrontend_player.inc"
 #include "gmfrontend_kit.inc"
+#include "gmfrontend_panel.inc"
 #include "gmfrontend_mouse.inc"
 #include "gmfrontend_menus.inc"
 #include "gmfrontend_kitlist.inc"
@@ -1249,20 +1250,10 @@ static int fe_rows_shown(void)
  * between them, the bottom and right ones mirrored - the art pack's own preview composes it so. */
 static void fe_draw_frame(void)
 {
-    const float m = FE_FRAME_M, c = 64.0F, e = 16.0F;
-    const float sx = FE_W - 2 * m - 2 * c, sy = FE_H - 2 * m - 2 * c;
-    GXColor w = fe_rgba(255, 255, 255, 255);
-    if (!fe_tex[FT_EDGE_H].ok || !fe_tex[FT_FRAME_TL].ok) {
-        return;
-    }
-    fe_tex_quad_uv(&fe_tex[FT_EDGE_H], m + c, m, sx, e, 0, 0, 1, 1, w);
-    fe_tex_quad_uv(&fe_tex[FT_EDGE_H], m + c, FE_H - m - e, sx, e, 0, 1, 1, 0, w);
-    fe_tex_quad_uv(&fe_tex[FT_EDGE_V], m, m + c, e, sy, 0, 0, 1, 1, w);
-    fe_tex_quad_uv(&fe_tex[FT_EDGE_V], FE_W - m - e, m + c, e, sy, 1, 0, 0, 1, w);
-    fe_tex_quad(&fe_tex[FT_FRAME_TL], m, m, c, c, w);
-    fe_tex_quad(&fe_tex[FT_FRAME_TR], FE_W - m - c, m, c, c, w);
-    fe_tex_quad(&fe_tex[FT_FRAME_BL], m, FE_H - m - c, c, c, w);
-    fe_tex_quad(&fe_tex[FT_FRAME_BR], FE_W - m - c, FE_H - m - c, c, c, w);
+    const FePanelRect bounds = {
+        FE_FRAME_M, FE_FRAME_M, FE_W - 2 * FE_FRAME_M, FE_H - 2 * FE_FRAME_M
+    };
+    fe_panel_art_frame(&bounds, 64.0F, 16.0F);
 }
 
 static void fe_draw_panels(HSD_GObj* gobj, int pass)

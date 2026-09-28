@@ -1232,10 +1232,17 @@ int gw_Kit_DrawPanel(float x, float y, float w, float h, const char *prefix, con
     }
     if (eth > c) eth = c;
     if (etv > c) etv = c;
-    /* fill: under the frame */
+    /* fill: under the frame. A <prefix>_fill texture goes in the non-corner cells only (the centre
+     * and the four edge cells): the corner art carries its own interior, and a cut corner must stay
+     * open outside its diagonal. The flat colour fill (no texture) still covers the whole panel. */
     if ((fill_rgba & 0xFF) != 0) {
-        if (fill >= 0) added += kq_add(x, y, x + w, y + h, 0, 0, 1, 1, fill_rgba, fill, shear, sy);
-        else added += kq_add(x, y, x + w, y + h, 0, 0, 0, 0, fill_rgba, -1, shear, sy);
+        if (fill >= 0) {
+            added += kq_add(x + c, y, x + w - c, y + h, 0, 0, 1, 1, fill_rgba, fill, shear, sy); /* centre column */
+            added += kq_add(x, y + c, x + c, y + h - c, 0, 0, 1, 1, fill_rgba, fill, shear, sy);  /* left edge cell */
+            added += kq_add(x + w - c, y + c, x + w, y + h - c, 0, 0, 1, 1, fill_rgba, fill, shear, sy);
+        } else {
+            added += kq_add(x, y, x + w, y + h, 0, 0, 0, 0, fill_rgba, -1, shear, sy);
+        }
     }
     if (eh >= 0 && w > 2 * c) {
         added += kq_add(x + c, y, x + w - c, y + eth, 0, 0, 1, 1, tint, eh, shear, sy);

@@ -59,6 +59,7 @@ gd.run(function()
     -- Save callback observes the exact frame-boundary snapshot, before its next tick.
     saved = arena_saved
     if saved_group then gd.stage_collision_group(saved_group.id, saved_group.enabled) end
+    gd.teleport(1, 0, 10) -- the only group is the ground: the 2-tick toggle dropped the fighter through it
     gd.wait(65)
     local finish = gd.stage_bounds()
     check(finish.frames == 0 and near(finish.origin.x,12) and near(finish.origin.y,6), '60-tick origin reaches target')
@@ -69,6 +70,7 @@ gd.run(function()
     if saved_group then
         check(arena_loaded_groups[#groups].enabled == not saved_group.enabled, 'savestate restores collision group enabled state')
         gd.stage_collision_group(saved_group.id, saved_group.enabled)
+        gd.teleport(1, 0, 10) -- same ground-toggle drop as above
     end
     gd.wait(65)
     check(near(gd.stage_bounds().origin.x,12) and gd.stage_bounds().frames == 0, 'restored transition completes')

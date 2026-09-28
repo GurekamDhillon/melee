@@ -9,6 +9,8 @@ static struct {
     int group_owner[256]; /* mpLibLoad's fixed collision-joint capacity */
     u8 group_enabled[256];
     u8 line_enabled[1536]; /* preserve individually disabled lines on unload */
+    Vec3 spawn_saved[8]; /* player start/respawn points a script moved */
+    u8 spawn_saved_ok[8];
 } script_arena;
 
 static void script_arena_apply(void)
@@ -56,12 +58,51 @@ void ScriptGame_ArenaBounds(int owner, int blast, int l, int r, int t, int b)
     script_arena_apply();
 }
 
+extern void lb_8000B1CC(HSD_JObj* jobj, Vec3* pos0, Vec3* pos1); /* lb/lb_00B0.h; not in this TU's set */
+
+void ScriptGame_ArenaSpawn(int owner, int slot, int x, int y)
+{
+    HSD_JObj* jobj;
+    Vec3 pos;
+    if (slot < 0 || slot > 7) return;
+    jobj = Ground_801C2CF4(slot);
+    if (!jobj) return;
+    script_arena_claim(owner);
+    if (!script_arena.spawn_saved_ok[slot]) {
+        /* Ground_801C2D24 reads spawns the same way: the point's world translate. */
+        lb_8000B1CC(jobj, NULL, &pos);
+        script_arena.spawn_saved[slot] = pos;
+        script_arena.spawn_saved_ok[slot] = 1;
+    }
+    pos.x = script_mesh_float(x);
+    pos.y = script_mesh_float(y);
+    pos.z = script_arena.spawn_saved[slot].z;
+    HSD_JObjSetTranslate(jobj, &pos);
+}
+
+float ScriptGame_ArenaSpawnPos(int slot, int axis, float fallback)
+{
+    Vec3 pos;
+    HSD_JObj* jobj;
+    if (slot < 0 || slot > 7) return fallback;
+    jobj = Ground_801C2CF4(slot);
+    if (!jobj) return fallback;
+    lb_8000B1CC(jobj, NULL, &pos);
+    return axis == 0 ? pos.x : axis == 1 ? pos.y : pos.z;
+}
+
 void ScriptGame_ArenaRestore(void)
 {
+    int i;
     if (!script_arena.owner) return;
     Ground_801C38BC(script_arena.saved_x, script_arena.saved_y);
     stage_info.cam_info.cam_bounds = script_arena.saved_camera;
     stage_info.blast_zone = script_arena.saved_blast;
+    for (i = 0; i < 8; ++i) {
+        if (!script_arena.spawn_saved_ok[i]) continue;
+        if (Ground_801C2CF4(i)) HSD_JObjSetTranslate(Ground_801C2CF4(i), &script_arena.spawn_saved[i]);
+        script_arena.spawn_saved_ok[i] = 0;
+    }
     script_arena.owner = script_arena.frames = 0;
 }
 

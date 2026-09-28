@@ -775,6 +775,20 @@ gd.command('map',function(arg)
       local field,value=(name or ''):match('^(%S+)%s*(.-)%s*$')
       assert(field and value~='','map set <x|y|z|rot|scale> <value>')
       field_set(field,value)
+    elseif op=='spawn' then
+      local slot,rest=(name or ''):match('^(%d*)%s*(.-)%s*$')
+      local n=tonumber(slot)
+      assert(n and n>=0 and n<=7,'map spawn <0-7> [x y]  (starts 0-3, respawns 4-7)')
+      local x,y=rest:match('^(%S+)%s+(%S+)$')
+      if x then
+        x,y=tonumber(x),tonumber(y)
+        assert(x and y and number(x) and number(y),'spawn needs a finite x y')
+        assert(gd.stage_set_spawn(n,x,y))
+        say(('spawn %d -> %.1f %.1f'):format(n,x,y),'action')
+      else
+        local sx,sy,sz=gd.stage_spawn(n)
+        say(('spawn %d at %.1f %.1f %.1f'):format(n,sx or 0,sy or 0,sz or 0),'action')
+      end
     elseif op=='bounds' then
       local kind,rest=(name or ''):match('^(%S*)%s*(.-)%s*$')
       if kind=='' or kind==nil then
@@ -1219,6 +1233,7 @@ HELP = {
   {'Space', 'search actions; Enter runs the top match'},
   {'action log', 'map log on: click a step to go back'},
   {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (v2 layout)'},
+  {'spawns', 'map spawn <0-7> [x y]: read or move a start (0-3) or respawn (4-7)'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},

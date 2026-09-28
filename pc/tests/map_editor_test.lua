@@ -4,6 +4,7 @@ local active, online, flying, fail_spawn = true, false, false, false
 local pad, keys, overlay, reject_rotation = {}, {}, false, false
 local safe_w = 640
 local stub_camera, stub_blast = nil, nil
+local stub_spawn = nil
 local p = {x=13, y=26, z=0}
 local mouse_state = {x=-1000, y=-1000, buttons=0}
 local camera = {eye={x=0,y=0,z=100}, interest={x=0,y=0,z=0}, fov=30, roll=0, mode='standard'}
@@ -37,6 +38,8 @@ gd = {
   stage_set_camera_bounds=function(l,r,t,b) stub_camera={l,r,t,b} return true end,
   stage_set_blast_bounds=function(l,r,t,b) stub_blast={l,r,t,b} return true end,
   stage_restore_bounds=function() stub_camera,stub_blast=nil,nil return true end,
+  stage_set_spawn=function(slot,x,y) stub_spawn={slot,x,y} return true end,
+  stage_spawn=function(slot) return 12.0, 34.0, 0.0 end,
   mouse=function() return mouse_state.x, mouse_state.y, mouse_state.buttons, 0 end,
   camera_get=function() return camera end,
   kit={available=function() return true end,panel=function() end,text=function() end,
@@ -355,5 +358,17 @@ assert(count()==0, 'history 2 steps back twice')
 command('redo 2')
 assert(count()==2, 'redo 2 replays both steps')
 command('log on') on_draw() command('log off')
+command('off')
+-- P2 spawns: read and move a start/respawn point (bible §6.3)
+active=false on_match_end()
+active=true models={} on_match_start()
+command('on')
+command('spawn 4 -33 7')
+assert(stub_spawn and stub_spawn[1]==4 and stub_spawn[2]==-33 and stub_spawn[3]==7,
+       'map spawn 4 x y moves the respawn point')
+stub_spawn=nil
+command('spawn 4')
+assert(stub_spawn==nil, 'map spawn 4 reads without writing')
+on_draw()
 command('off')
 print('map_editor_test: PASS')

@@ -5300,6 +5300,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"stage_add_model", l_stage_add_model},
     /* arena-hooks */
     {"stage_set_origin", l_stage_set_origin},
+    {"stage_set_spawn", l_stage_set_spawn}, {"stage_spawn", l_stage_spawn},
     {"stage_set_camera_bounds", l_stage_set_camera_bounds},
     {"stage_set_blast_bounds", l_stage_set_blast_bounds},
     {"stage_restore_bounds", l_stage_restore_bounds}, {"stage_bounds", l_stage_bounds},

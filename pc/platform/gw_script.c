@@ -347,6 +347,7 @@ typedef struct {
     unsigned char *mesh;
     unsigned char *image, *glow_image;
     int bytes, stride, has_normals, has_glow;
+    int image_bytes, glow_bytes; /* largemap: unique pinned asset accounting */
     GXTexObj texture, glow;
     int token, atlas_owner;
     char atlas_path[MAX_PATH];
@@ -5044,6 +5045,9 @@ static int l_perf(lua_State *L) {
     return 1;
 }
 
+/* ---- largemap: isolated area, capacity and bounds API ---- */
+#include "gw_script_largemap.inc"
+
 static const luaL_Reg gs_gd_funcs[] = {
     {"log", l_log}, {"frame", l_frame}, {"time", l_time}, {"perf", l_perf}, {"scene", l_scene}, {"match", l_match},
     {"players", l_players}, {"player", l_player}, {"items", l_items}, {"fx", l_fx},
@@ -5092,6 +5096,10 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"model_set", l_model_set},
     {"model_despawn", l_model_despawn},
     {"model_get", l_model_get},
+    /* largemap */
+    {"area_load", l_area_load}, {"area_unload", l_area_unload},
+    {"area_loaded", l_area_loaded}, {"stage_stats", l_stage_stats},
+    {"stage_bounds", l_stage_bounds},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},
@@ -5394,6 +5402,8 @@ static void gs_unload(int i) {
         gs.camera_owner = gs.camera_task_owner = 0;
         gw_log("script [%s] camera restored (unload)", s->id);
     }
+    /* largemap: retire the nonreused owner token before this slot is reused. */
+    gs_area_retire(i);
     gw_script_pad_release_owner(i + 1);
     for (k = 0; k < GS_MAX_TASKS; ++k) {
         if (s->tasks[k] != LUA_NOREF) {
@@ -5891,7 +5901,7 @@ static int gs_stage_overlay; /* gd.stage_draw{overlay = true}: the old host-over
 static void gs_stage_draw(void) {
     int i;
     if (!gs.match_active || !gs_stage_overlay) return;
-    for (i = 0; i < 200; ++i) {
+    for (i = 0; i < gw_ScriptGame_StageStat(4); ++i) { /* largemap line capacity */
         float ax, ay, bx, by, depth;
         if (!gw_ScriptGame_StageLineI(i, 0)) continue;
         if (!gs_project(gw_ScriptGame_StageLineF(i, 0), gw_ScriptGame_StageLineF(i, 1),
@@ -5902,7 +5912,7 @@ static void gs_stage_draw(void) {
         gs_stage_draw_segment(ax, ay, bx, by, 0xEAB970FFu);
         gs_stage_draw_segment(ax, ay + 1, bx, by + 1, 0x2D393FFFu);
     }
-    for (i = 0; i < 32; ++i) {
+    for (i = 0; i < gw_ScriptGame_StageStat(6); ++i) { /* largemap target capacity */
         float x, y, depth;
         if (!gw_ScriptGame_StageTargetI(i)) continue;
         if (!gs_project(gw_ScriptGame_StageTargetF(i, 0), gw_ScriptGame_StageTargetF(i, 1),

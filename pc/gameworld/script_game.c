@@ -61,18 +61,22 @@
  * siblings walk joint ranges (mplib.c), so a single appended global range cannot mix kinds.
  * These arrays live in MEM1; the pool below is this object's BSS, which gw_snap.c saves
  * (pc_gameworld_script_game.c.obj is in its game set since this change). */
-#define SCRIPT_STAGE_LINES 200 /* the pool's size; a stage gets min(this, its spare room) */
-#define SCRIPT_STAGE_TARGETS 32
+/* largemap: retain mpIsland's 1536-line scratch limit and signed vertex indices.
+ * Only the joint allocation grows; joint storage is allocated once per scene. */
+#define SCRIPT_STAGE_LINES 768
+#define SCRIPT_STAGE_JOINTS 1024
+#define SCRIPT_STAGE_TARGETS 128
+#define SCRIPT_STAGE_AREAS 64
 #define SCRIPT_STAGE_ENEMIES 32
 #define SCRIPT_STAGE_MODELS 64
 #define SCRIPT_STAGE_ARCHIVES 8
 #define SCRIPT_STAGE_ARCHIVE_MAX (8 * 1024 * 1024)
 typedef struct {
-    int handle, active, kind, flags, model_handle;
+    int handle, active, kind, flags, model_handle, area;
     float x0, y0, x1, y1;
 } ScriptStageLine;
 typedef struct {
-    int handle, active;
+    int handle, active, area;
     Item_GObj* gobj;
     float x, y;
 } ScriptStageTarget;
@@ -113,6 +117,10 @@ static struct {
     ScriptStageArchive archives[SCRIPT_STAGE_ARCHIVES];
     ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
     struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
+    /* largemap: memberships and names are snapshot state, not Lua bookkeeping. */
+    struct { int owner; char name[48]; } area[SCRIPT_STAGE_AREAS];
+    int loading_area, bounds_saved;
+    StageBlastZone saved_camera, saved_blast;
 } script_stage;
 static Article* script_target_old_article;
 
@@ -131,6 +139,12 @@ static int script_stage_same_file(const char* a, const char* b)
 void ScriptGame_StageEnd(void)
 {
     int i;
+    if (script_stage.bounds_saved) {
+        extern void Camera_LargeMapRestore(void);
+        Camera_LargeMapRestore();
+        stage_info.cam_info.cam_bounds = script_stage.saved_camera;
+        stage_info.blast_zone = script_stage.saved_blast;
+    }
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
         if (script_stage.model[i].active && script_stage.model[i].gobj != NULL)
             HSD_GObjFree(script_stage.model[i].gobj);
@@ -310,7 +324,7 @@ extern int Script_StageModelFor(int handle);
 extern void Script_StageModelDraw(int model, Mtx view, float x0, float y0, float x1, float y1);
 
 /* Called from Ground_801C0800 after the Target Test layout merge and before mpLibLoad.
- * mpLibLoad allocates fixed 2048/1536/256 Coll* arrays, so refuse maps without room. */
+ * mpLibLoad keeps 2048/1536 CollVtx/CollLine arrays; largemap sizes joints on demand. */
 MapCollData* ScriptGame_StagePrepare(MapCollData* src)
 {
     extern MapCollData mpLib_803BF760;
@@ -325,6 +339,8 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     Script_StageModelsReset();
     memset(script_stage.instance, 0, sizeof script_stage.instance);
     memset(script_stage.asset, 0, sizeof script_stage.asset);
+    memset(script_stage.area, 0, sizeof script_stage.area);
+    script_stage.loading_area = script_stage.bounds_saved = 0;
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) script_stage.model[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
@@ -348,12 +364,11 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
         if (!Script_StageWanted()) return src;
     }
     {
-        /* each line takes 2 vertices, 1 line and 1 joint of mpLibLoad's fixed 2048 / 1536 / 256:
-         * the joints bind first (a stage uses few of them, but 256 is the smallest array) */
+        /* mpIsland's visited[0x600] is indexed by line id: do not grow past 1536. */
         int cap = SCRIPT_STAGE_LINES;
         if (cap > (2048 - src->vert_count) / 2) cap = (2048 - src->vert_count) / 2;
         if (cap > 1536 - src->line_count) cap = 1536 - src->line_count;
-        if (cap > 256 - src->joint_count) cap = 256 - src->joint_count;
+        if (cap > SCRIPT_STAGE_JOINTS - src->joint_count) cap = SCRIPT_STAGE_JOINTS - src->joint_count;
         if (cap < 1) return src;
         script_stage.cap = cap;
     }
@@ -363,7 +378,14 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     dst->verts = HSD_MemAlloc((src->vert_count + script_stage.cap * 2) * sizeof(*dst->verts));
     dst->lines = HSD_MemAlloc((src->line_count + script_stage.cap) * sizeof(*dst->lines));
     dst->joints = HSD_MemAlloc((src->joint_count + script_stage.cap) * sizeof(*dst->joints));
-    if (dst->verts == NULL || dst->lines == NULL || dst->joints == NULL) return src;
+    if (dst->verts == NULL || dst->lines == NULL || dst->joints == NULL) {
+        if (dst->verts) HSD_Free(dst->verts);
+        if (dst->lines) HSD_Free(dst->lines);
+        if (dst->joints) HSD_Free(dst->joints);
+        HSD_Free(dst);
+        script_stage.cap = 0;
+        return src;
+    }
     for (i = 0; i < src->vert_count; ++i) dst->verts[i] = src->verts[i];
     for (i = 0; i < src->line_count; ++i) dst->lines[i] = src->lines[i];
     for (i = 0; i < src->joint_count; ++i) dst->joints[i] = src->joints[i];
@@ -616,7 +638,7 @@ void ScriptGame_StageReady(void)
     map->line_count += script_stage.cap;
     map->joint_count += script_stage.cap;
     OSReport("script stage: reserved %d collision lines and %d targets (the stage uses %d/2048 "
-             "vertices, %d/1536 lines, %d/256 joints)\n",
+             "vertices, %d/1536 lines, %d base joints; largemap)\n",
              script_stage.cap, SCRIPT_STAGE_TARGETS, script_stage.base_v, script_stage.base_l,
              script_stage.base_j);
 }
@@ -674,6 +696,7 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     script_stage.line[i].kind = kind;
     script_stage.line[i].flags = flags;
     script_stage.line[i].model_handle = 0;
+    script_stage.line[i].area = script_stage.loading_area;
     script_stage.line[i].x0 = x0; script_stage.line[i].y0 = y0;
     script_stage.line[i].x1 = x1; script_stage.line[i].y1 = y1;
     mpJointListAdd(j);
@@ -1037,6 +1060,7 @@ int ScriptGame_SpawnTarget(int xb, int yb, int handle)
     GET_ITEM(gobj)->xDCC_flag.b4567 = 0;
     script_stage.target[i].handle = handle;
     script_stage.target[i].active = 1;
+    script_stage.target[i].area = script_stage.loading_area;
     script_stage.target[i].gobj = gobj;
     script_stage.target[i].x = pos.x;
     script_stage.target[i].y = pos.y;
@@ -2496,3 +2520,6 @@ int ScriptGame_LabFighterFieldBase(int off)
     int i = lab_ffield(off);
     return i >= 0 ? lab_ffields[i].off : off;
 }
+
+/* ---- largemap: isolated area, capacity and bounds API ---- */
+#include "script_largemap.inc"

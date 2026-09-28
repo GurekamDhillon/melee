@@ -906,8 +906,18 @@ void mpLibLoad(MapCollData* coll_data)
     groundCollLine =
         HSD_MemAlloc(sizeof(*groundCollLine) * groundCollLine_count);
     HSD_ASSERT(413, groundCollLine);
+#if defined(TARGET_PC)
+    /* largemap: StagePrepare reserves joints before StageReady publishes them.
+     * Vertex/line limits stay retail (mpIsland has visited[0x600]). */
+    {
+        extern int ScriptGame_StageJointCapacity(void);
+        groundCollJoint = HSD_MemAlloc(sizeof(*groundCollJoint) *
+                                      ScriptGame_StageJointCapacity());
+    }
+#else
     groundCollJoint =
         HSD_MemAlloc(sizeof(*groundCollJoint) * groundCollJoint_count);
+#endif
     HSD_ASSERT(414, groundCollJoint);
     grDynamicAttr_801CA0B4();
     if (coll_data == NULL) {

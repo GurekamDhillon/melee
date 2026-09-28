@@ -22,6 +22,15 @@ struct GwSlippiPeer {
 };
 static unsigned enet_refs;
 
+static void peer_timeouts(GwSlippiPeer *p, ENetPeer *peer) {
+  enet_uint32 timeout=p->cfg.timeout_ms?p->cfg.timeout_ms:5000u;
+  /* ENet protocol.c measures from the earliest unacknowledged reliable command.
+   * Equal bounds prevent RTT/backoff from cutting the 3 s outage grace short.
+   * Pings detect a vanished peer even though gameplay PADs are unsequenced. */
+  enet_peer_timeout(peer,32,timeout,timeout);
+  enet_peer_ping_interval(peer,250);
+}
+
 static int send_bytes(GwSlippiPeer *p,const uint8_t *data,size_t len,uint8_t channel,int reliable) {
   ENetPacket *pkt;
   if (!p || !p->active || p->active->state!=ENET_PEER_STATE_CONNECTED || !data || !len) return 0;
@@ -72,6 +81,7 @@ GwSlippiPeer *gw_slippi_peer_start(const GwSlippiPeerConfig *cfg) {
   if (!p->host) goto fail;
   p->active=enet_host_connect(p->host,&p->remote,3,0);
   if (!p->active) goto fail;
+  peer_timeouts(p,p->active);
   return p;
 fail:
   if (p) { if (p->host) enet_host_destroy(p->host); free(p); }
@@ -178,10 +188,17 @@ void gw_slippi_peer_poll(GwSlippiPeer *p,int current_online_frame) {
       p->stats.packets_rejected++; continue;
     }
     if (ev.type==ENET_EVENT_TYPE_CONNECT) {
+      peer_timeouts(p,ev.peer);
+      p->stats.disconnected=0;
       if (!p->active || p->active->state!=ENET_PEER_STATE_CONNECTED) p->active=ev.peer;
       p->stats.connected=1; send_queued(p,0);
     } else if (ev.type==ENET_EVENT_TYPE_DISCONNECT) {
       if (p->active==ev.peer) p->active=connected_alternative(p,ev.peer);
+      /* A failed outgoing attempt is not an established connection, and a
+       * duplicate connection dropping must not terminate the surviving path. */
+      if (!p->active || p->active->state!=ENET_PEER_STATE_CONNECTED)
+        p->active=connected_alternative(p,ev.peer);
+      if (p->stats.connected && !p->active) p->stats.disconnected=1;
       p->stats.connected=p->active!=NULL;
     } else if (ev.type==ENET_EVENT_TYPE_RECEIVE) {
       const uint8_t *data=ev.packet->data; size_t len=ev.packet->dataLength;

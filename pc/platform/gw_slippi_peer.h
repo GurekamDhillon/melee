@@ -16,6 +16,7 @@ typedef struct GwSlippiPeerConfig {
   uint8_t local_port_idx, remote_port_idx;
   const char *match_id; /* diagnostics only; Slippi PAD has no match ID */
   int loopback_mode;
+  uint32_t timeout_ms; /* zero selects 5000 ms; min/max equal preserves outage grace */
   void *user;
   /* Return nonzero only after the frame is stored; rejected frames remain unacknowledged. */
   int (*on_remote_pad)(void *user, int online_frame, const uint8_t pad[8]);
@@ -31,7 +32,7 @@ typedef struct GwSlippiPeerStats {
   int remote_checksum_frame;
   uint32_t remote_checksum;
   unsigned queued_local;
-  int connected;
+  int connected, disconnected; /* disconnected only after the last established peer is lost */
 } GwSlippiPeerStats;
 GwSlippiPeer *gw_slippi_peer_start(const GwSlippiPeerConfig *cfg);
 void gw_slippi_peer_poll(GwSlippiPeer *peer, int current_online_frame);

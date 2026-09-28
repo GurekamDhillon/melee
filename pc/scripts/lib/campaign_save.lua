@@ -1,0 +1,238 @@
+-- CampaignSave v1. Bundle before the owning mod entry (sandbox has no require).
+-- Disk progress is deliberately independent of mode_blob, savestates and rollback.
+CampaignSave = {}
+local C, Save = CampaignSave, {}
+Save.__index = Save
+local MAX = 65536
+
+local function encode(v, seen, depth)
+    seen, depth = seen or {}, depth or 0
+    assert(depth < 16, 'campaign nesting limit')
+    if type(v) == 'string' then assert(#v <= MAX); return 's' .. #v .. ':' .. v end
+    if type(v) == 'boolean' then return v and 'b1' or 'b0' end
+    if math.type(v) == 'integer' then return 'i' .. tostring(v) .. ':' end
+    assert(type(v) == 'table' and not seen[v], 'campaign values must be acyclic data')
+    seen[v] = true
+    local keys, out = {}, {}
+    for k in pairs(v) do
+        assert(type(k) == 'string' or math.type(k) == 'integer', 'invalid campaign key')
+        keys[#keys+1] = k
+        assert(#keys <= 4096, 'campaign table limit')
+    end
+    table.sort(keys, function(a,b)
+        if type(a) ~= type(b) then return type(a) < type(b) end
+        return a < b
+    end)
+    out[1] = 't' .. #keys .. ':'
+    for _,k in ipairs(keys) do
+        out[#out+1] = encode(k, seen, depth+1)
+        out[#out+1] = encode(v[k], seen, depth+1)
+    end
+    seen[v] = nil
+    local bytes = table.concat(out)
+    assert(#bytes <= MAX, 'campaign payload limit')
+    return bytes
+end
+local function decode(bytes)
+    assert(type(bytes) == 'string' and #bytes <= MAX, 'invalid campaign size')
+    local pos, nodes = 1, 0
+    local function read(depth)
+        nodes = nodes + 1
+        assert(depth < 16 and nodes <= 8192, 'campaign decode limit')
+        local tag = bytes:sub(pos,pos); pos = pos+1
+        if tag == 'b' then
+            local b = bytes:sub(pos,pos); pos = pos+1
+            assert(b == '0' or b == '1', 'bad boolean'); return b == '1'
+        end
+        local stop = assert(bytes:find(':',pos,true), 'missing length')
+        local raw = bytes:sub(pos,stop-1)
+        assert(raw:match('^-?%d+$') and #raw <= 20, 'bad integer')
+        local n = tonumber(raw); assert(math.type(n) == 'integer', 'integer overflow')
+        pos = stop+1
+        if tag == 'i' then return n end
+        assert(n >= 0 and n <= MAX, 'bad length')
+        if tag == 's' then
+            assert(pos+n-1 <= #bytes, 'short string')
+            local s = bytes:sub(pos,pos+n-1); pos = pos+n; return s
+        end
+        assert(tag == 't' and n <= 4096, 'bad table')
+        local t = {}
+        for _=1,n do
+            local k = read(depth+1)
+            assert(type(k) == 'string' or math.type(k) == 'integer', 'bad key')
+            assert(t[k] == nil, 'duplicate key'); t[k] = read(depth+1)
+        end
+        return t
+    end
+    local v = read(0); assert(pos == #bytes+1, 'trailing bytes'); return v
+end
+function C.copy(v) return decode(encode(v)) end
+local function hash(s)
+    local h = 2166136261
+    for i=1,#s do h = ((h ~ s:byte(i)) * 16777619) & 0xffffffff end
+    return ('%08x'):format(h)
+end
+-- Public encoder permits migration tools to construct old records without eval.
+function C.record(data, schema, generation, id, version)
+    local bytes = encode{schema=schema, generation=generation, id=id, version=version, data=data}
+    return 'GDCP1\n' .. hash(bytes) .. '\n' .. bytes
+end
+local function identifier(s)
+    return type(s) == 'string' and #s > 0 and #s <= 64
+end
+local function validate(s)
+    assert(type(s) == 'table' and identifier(s.area) and identifier(s.entry), 'invalid campaign location')
+    for _,k in ipairs{'party','unlocks','collectibles','progress','cleared'} do
+        assert(type(s[k]) == 'table', 'invalid campaign ' .. k)
+    end
+    local count = 0
+    for k,v in pairs(s.party) do
+        assert(math.type(k) == 'integer' and k >= 1 and k <= 16 and identifier(v), 'invalid party member')
+        count = count+1
+    end
+    assert(count == #s.party, 'party must be dense')
+    for k,v in pairs(s.unlocks) do assert(identifier(k) and type(v) == 'boolean', 'invalid unlock') end
+    for k,v in pairs(s.collectibles) do
+        assert(identifier(k) and math.type(v) == 'integer' and v >= 0, 'invalid collectible')
+    end
+    return s
+end
+local function snapshot(s)
+    return C.copy{area=s.area, entry=s.entry, party=s.party, unlocks=s.unlocks,
+        collectibles=s.collectibles, progress=s.progress, cleared=s.cleared}
+end
+local function normalize(s)
+    s = C.copy(s)
+    s.entry = s.entry or 'start'
+    for _,k in ipairs{'party','unlocks','collectibles','progress','cleared'} do s[k] = s[k] or {} end
+    validate(s)
+    s.schema = 2
+    s.checkpoint = s.checkpoint or snapshot(s)
+    validate(s.checkpoint)
+    return s
+end
+function C.new(opts)
+    assert(identifier(opts.id) and math.type(opts.version) == 'integer' and opts.version >= 1)
+    assert(type(opts.slot) == 'string' and #opts.slot <= 48 and opts.slot:match('^[%w_-]+$'), 'invalid campaign slot')
+    return setmetatable({id=opts.id, version=opts.version, name=opts.slot,
+        defaults=normalize(opts.defaults)}, Save)
+end
+function Save:filename(slot) return self.name .. '.' .. slot .. '.gdc' end
+function Save:_read(slot)
+    local bytes = gd.campaign_storage(self:filename(slot))
+    if not bytes then return nil end
+    assert(#bytes <= MAX + 15, 'campaign record too large')
+    local digest, payload = bytes:match('^GDCP1\n(%x%x%x%x%x%x%x%x)\n(.*)$')
+    assert(payload and digest == hash(payload), 'campaign checksum mismatch')
+    local r = decode(payload)
+    assert(type(r) == 'table' and r.id == self.id, 'campaign id mismatch')
+    assert(math.type(r.generation) == 'integer' and r.generation > 0, 'bad generation')
+    -- Future schemas/definition versions lock saving, rather than downgrading disk data.
+    if r.version ~= self.version or (r.schema ~= 1 and r.schema ~= 2) then return false, 'incompatible' end
+    if r.schema == 1 then
+        r.data.area, r.data.room = r.data.room, nil
+        if r.data.checkpoint then
+            r.data.checkpoint.area, r.data.checkpoint.room = r.data.checkpoint.room, nil
+        end
+    end
+    if r.schema == 2 then
+        validate(r.data)
+        validate(r.data.checkpoint)
+    end
+    r.data = normalize(r.data)
+    return r
+end
+function Save:scene()
+    -- Call at scene boundaries only, never from on_loadstate or frame resimulation.
+    gd.campaign_storage() -- Do not swallow offline/manifest refusal as corrupt data.
+    local best, bad = nil, false
+    self.blocked = false
+    for slot=1,2 do
+        local ok,r,why = pcall(self._read, self, slot)
+        if ok and r then
+            if not best or r.generation > best.generation then best = r; best.slot = slot end
+        elseif not ok or why then
+            bad = true
+            if why == 'incompatible' then self.blocked = true end
+            gd.log('campaign-save ' .. self.name .. ': rejected slot ' .. slot .. ' ' .. tostring(why or r))
+        end
+    end
+    self.generation, self.slot = best and best.generation or 0, best and best.slot or 2
+    self.current = best and best.data or C.copy(self.defaults)
+    local source = best and (bad and 'fallback' or 'primary') or 'defaults'
+    gd.log('campaign-save ' .. self.name .. ': load ' .. source)
+    return self:get(), source
+end
+function Save:get() assert(self.current, 'call scene before use'); return C.copy(self.current) end
+function Save:commit(reason, data)
+    assert(self.current and not self.blocked, 'campaign not loaded or incompatible')
+    assert(reason == 'checkpoint' or reason == 'room_exit' or reason == 'death' or reason == 'quit', 'invalid commit reason')
+    local nextstate
+    if reason == 'death' then nextstate = normalize(self.current.checkpoint)
+    else
+        nextstate = normalize(data)
+        nextstate.checkpoint = C.copy(self.current.checkpoint)
+        if reason == 'checkpoint' then nextstate.checkpoint = snapshot(nextstate) end
+    end
+    assert(self.generation < math.maxinteger, 'campaign generation exhausted')
+    local slot, generation = 3-self.slot, self.generation+1
+    assert(gd.campaign_storage(self:filename(slot), C.record(nextstate, 2, generation, self.id, self.version)))
+    self.current, self.slot, self.generation = nextstate, slot, generation
+    gd.log('campaign-save ' .. self.name .. ': ' .. reason .. ' generation ' .. generation)
+    return self:get()
+end
+
+-- codex/gamemode-kit2 adapter: reads documented state; never persists handles,
+-- mode_blob, phase, clocks, enemies, targets, models, camera or boss ownership.
+function C.adapter(mode, save)
+    assert(mode.def.id == save.id and mode.def.version == save.version, 'mode identity mismatch')
+    local adapter = {}
+    function adapter:scene()
+        local s, source = save:scene()
+        assert(mode.def.areas[s.area] and mode.def.areas[s.area].entries[s.entry], 'saved room/entry missing')
+        -- The framework consumes this DTO when constructing a fresh encounter.
+        return s, source
+    end
+    function adapter:start()
+        -- Gamemode v1's private construction seam. Match Mode:start's schema but
+        -- seed durable progress before _enter allocates this room's fresh objects.
+        -- Never use Mode:load: its blob includes live encounter handles.
+        gd.campaign_storage()
+        assert(not mode.state, 'stop previous mode before campaign start')
+        local d = save:get()
+        local function location(s)
+            assert(mode.def.areas[s.area] and mode.def.areas[s.area].entries[s.entry], 'saved room/entry missing')
+        end
+        location(d); location(d.checkpoint)
+        return mode:_safe(function()
+            local existing = gd.mode_blob()
+            assert(not existing or existing == '', 'mode storage already occupied')
+            mode.state = {schema=1, id=mode.def.id, version=mode.def.version,
+                area=d.area, entry=d.entry, phase='play', clock=0, elapsed=0, wave=0,
+                enemies={}, targets={}, models={}, progress=C.copy(d.progress),
+                cleared=C.copy(d.cleared), reached={}, holding=false, boss_done=false}
+            mode.state.progress.unlocks = C.copy(d.unlocks)
+            mode.state.progress.collectibles = C.copy(d.collectibles)
+            mode:_save() -- claim native storage before constructing objects
+            mode:_enter(d.area, d.entry)
+            local cp = d.checkpoint
+            mode.state.checkpoint = {area=cp.area, entry=cp.entry,
+                progress=C.copy(cp.progress), cleared=C.copy(cp.cleared)}
+            mode.state.checkpoint.progress.unlocks = C.copy(cp.unlocks)
+            mode.state.checkpoint.progress.collectibles = C.copy(cp.collectibles)
+            mode:_save()
+            gd.log('campaign-save ' .. save.name .. ': fresh encounter ' .. d.area .. '/' .. d.entry)
+        end)
+    end
+    function adapter:commit(reason, party)
+        local s = assert(mode.state, 'mode not started')
+        local data = save:get()
+        data.area, data.entry = s.area, s.entry
+        data.progress, data.cleared = C.copy(s.progress), C.copy(s.cleared)
+        if party then data.party = C.copy(party) end
+        data.unlocks = C.copy(s.progress.unlocks or data.unlocks)
+        data.collectibles = C.copy(s.progress.collectibles or data.collectibles)
+        return save:commit(reason, data)
+    end
+    return adapter
+end

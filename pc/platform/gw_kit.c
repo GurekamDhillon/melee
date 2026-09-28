@@ -1461,16 +1461,19 @@ static int test_kit_panel_and_row(void) {
     n = gw_Kit_DrawPanel(100, 100, 300, 200, "frame", NULL, 0, 0xFFFFFFFFu, 0x032568E0u, 0);
     if (gw_Kit_Tex("frame_corner_tl", NULL) >= 0) {
         const GwKitQuad *bottom;
-        if (n != 9) {
-            gw_test_fail("a frame panel drew %d quads (want 9)", n);
+        /* a frame_fill texture is drawn in the three non-corner bands (the centre column and both
+         * side cells), a flat fill in one quad */
+        const int nfill = gw_Kit_Tex("frame_fill", NULL) >= 0 ? 3 : 1;
+        if (n != 8 + nfill) {
+            gw_test_fail("a frame panel drew %d quads (want %d)", n, 8 + nfill);
             return 1;
         }
-        bottom = gw_Kit_QuadAt(2); /* fill, top edge, bottom edge */
+        bottom = gw_Kit_QuadAt(nfill + 1); /* fill, top edge, bottom edge */
         if (bottom->v[0] != 1.0f || bottom->v[2] != 0.0f) {
             gw_test_fail("the bottom edge is not flipped vertically");
             return 1;
         }
-        if (gw_Kit_QuadAt(4)->u[0] != 1.0f) {
+        if (gw_Kit_QuadAt(nfill + 3)->u[0] != 1.0f) {
             gw_test_fail("the right edge is not flipped horizontally");
             return 1;
         }

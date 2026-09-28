@@ -1417,7 +1417,12 @@ function on_draw()
       gd.box(x1,y1,x2-x1,y2-y1,color)
       if kind=='camera' then
         local mx,my=(x1+x2)/2,(y1+y2)/2
-        bounds_ui={left={x=x1,y=my},right={x=x2,y=my},top={x=mx,y=y1},bottom={x=mx,y=y2}}
+        local function inside(v,lo,hi) return v>=lo and v<=hi end
+        bounds_ui={}
+        if inside(x1,4,cw-4) then bounds_ui.left={x=x1,y=my} end
+        if inside(x2,4,cw-4) then bounds_ui.right={x=x2,y=my} end
+        if inside(y1,4,476) then bounds_ui.top={x=mx,y=y1} end
+        if inside(y2,4,476) then bounds_ui.bottom={x=mx,y=y2} end
         for _,h in pairs(bounds_ui) do gd.box(h.x-4,h.y-4,8,8,0x40E060FF) end
       end
     end

@@ -3,6 +3,7 @@ local commands, files, models, serial, loads = {}, {}, {}, 0, 0
 local active, online, flying, fail_spawn = true, false, false, false
 local pad, keys, overlay, reject_rotation = {}, {}, false, false
 local safe_w = 640
+local stub_camera, stub_blast = nil, nil
 local p = {x=13, y=26, z=0}
 local mouse_state = {x=-1000, y=-1000, buttons=0}
 local camera = {eye={x=0,y=0,z=100}, interest={x=0,y=0,z=0}, fov=30, roll=0, mode='standard'}
@@ -31,6 +32,11 @@ gd = {
   fly_speed=function() return 2 end, teleport=function(_,x,y) p.x,p.y=x,y end,
   project=function(x,y) return x,y,true end, line=function() end, box=function() end, fill=function() end,
   safe_area=function() return {x=0,y=0,w=safe_w,h=480} end,
+  stage_bounds=function() return {camera={left=-100,right=100,top=200,bottom=0},
+                                 blast={left=-120,right=120,top=220,bottom=-20}} end,
+  stage_set_camera_bounds=function(l,r,t,b) stub_camera={l,r,t,b} return true end,
+  stage_set_blast_bounds=function(l,r,t,b) stub_blast={l,r,t,b} return true end,
+  stage_restore_bounds=function() stub_camera,stub_blast=nil,nil return true end,
   mouse=function() return mouse_state.x, mouse_state.y, mouse_state.buttons, 0 end,
   camera_get=function() return camera end,
   kit={available=function() return true end,panel=function() end,text=function() end,
@@ -306,5 +312,28 @@ assert(count()==2, 'clicking a log row steps back one action')
 command('history 1')
 assert(count()==1, 'map history steps back')
 command('log off')
+command('off')
+-- P2 bounds: capture, v2 layout, load applies, v1 still reads (bible §6.6, §8 P2)
+active=false on_match_end()
+active=true models={} on_match_start()
+command('on') command('clear') command('tool place') command('place')
+command('bounds capture')
+command('save bounds.lua')
+assert(files['bounds.lua']:find('version=2',1,true), 'captured bounds make the layout v2')
+assert(files['bounds.lua']:find('camera={',1,true) and files['bounds.lua']:find('blast={',1,true),
+       'bounds are written to the layout')
+stub_camera,stub_blast=nil,nil
+command('bounds restore')
+assert(stub_camera==nil, 'restore clears the live bounds')
+command('load bounds.lua')
+assert(stub_camera and stub_camera[1]==-100, 'loading v2 applies the camera bounds')
+command('save bounds2.lua')
+assert(files['bounds2.lua']==files['bounds.lua'], 'the v2 layout round-trips')
+command('load test.lua')
+assert(count()==1, 'a v1 layout still loads')
+command('bounds camera -50 50 100 0')
+assert(stub_camera[1]==-50 and stub_camera[2]==50, 'map bounds camera sets live bounds')
+command('save bounds3.lua')
+assert(files['bounds3.lua']:find('camera={left=-50',1,true), 'a manual camera bound is stored')
 command('off')
 print('map_editor_test: PASS')

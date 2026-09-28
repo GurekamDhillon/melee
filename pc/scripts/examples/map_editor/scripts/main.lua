@@ -43,6 +43,7 @@ local field_drag, typing, handles_ui = nil, nil, nil -- inspector scrub / typed 
 local ghost_on, ghost = true, nil -- placement preview instance (bible §5.8)
 local action_log, undo_names, log_open, log_rows = {}, {}, false, nil -- named history (bible §5.6)
 local search, search_rows = nil, nil -- action search overlay (bible §5.10)
+local bounds = {camera=nil, blast=nil} -- stage bounds the map is authored against (bible §6.6, §8 P2)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -318,8 +319,21 @@ local function opt_scale(p,k)
   return v
 end
 local function validate(data)
-  assert(type(data)=='table' and getmetatable(data)==nil and data.version==1, 'layout version must be 1')
+  assert(type(data)=='table' and getmetatable(data)==nil and (data.version==1 or data.version==2),
+         'layout version must be 1 or 2')
   assert(data.units==U, 'kit scale differs; re-export the kit or convert the layout')
+  local lay_bounds={camera=nil,blast=nil}
+  if data.version==2 then
+    for _,kind in ipairs({'camera','blast'}) do
+      local b=data[kind]
+      if b~=nil then
+        assert(type(b)=='table' and getmetatable(b)==nil, kind..' bounds must be a table')
+        for _,k in ipairs({'left','right','top','bottom'}) do assert(number(b[k]), 'invalid '..kind..' '..k) end
+        assert(b.left<b.right and b.bottom<b.top, kind..' bounds require left < right and bottom < top')
+        lay_bounds[kind]={left=b.left,right=b.right,top=b.top,bottom=b.bottom}
+      end
+    end
+  end
   assert(type(data.parts)=='table' and getmetatable(data.parts)==nil, 'parts must be a list')
   local count=0
   for k in pairs(data.parts) do
@@ -341,7 +355,7 @@ local function validate(data)
                 scale=opt_scale(p,'scale'),scale_x=opt_scale(p,'scale_x'),
                 scale_y=opt_scale(p,'scale_y'),scale_z=opt_scale(p,'scale_z')}
   end
-  return out
+  return out, lay_bounds
 end
 local function file_name(name)
   assert(type(name)=='string' and #name<=80 and name:match('^[%w_-]+%.lua$'),
@@ -349,7 +363,17 @@ local function file_name(name)
   return name
 end
 local function serialize()
-  local out={('-- Kit layout v1; world units, Z is visual depth. Grid: %.17g units/metre.\nreturn {version=1,units=%.17g,parts={'):format(U,U)}
+  local version=(bounds.camera or bounds.blast) and 2 or 1
+  local out={('-- Kit layout v%d; world units, Z is visual depth. Grid: %.17g units/metre.'):format(version,U)}
+  out[#out+1]=('return {version=%d,units=%.17g,'):format(version,U)
+  for _,kind in ipairs({'camera','blast'}) do
+    local b=bounds[kind]
+    if b then
+      out[#out+1]=('%s={left=%.17g,right=%.17g,top=%.17g,bottom=%.17g},')
+        :format(kind,b.left,b.right,b.top,b.bottom)
+    end
+  end
+  out[#out+1]='parts={'
   for _,p in ipairs(parts) do
     local fields=('{part=%q,x=%.17g,y=%.17g,z=%.17g,rot=%.17g,collision=%s,floor_flags=%d'):format(
       p.part,p.x,p.y,p.z,p.rot,tostring(p.collision),p.floor_flags)
@@ -371,14 +395,26 @@ local function save(name)
   assert(gd.data_read(name)==text, 'save read-back failed; previous file is in .bak')
   filename=name dirty=false say('Saved '..#parts..' parts to '..name) toast('Saved '..#parts..' parts')
 end
+local function apply_bounds()
+  if bounds.camera then
+    assert(gd.stage_set_camera_bounds(bounds.camera.left,bounds.camera.right,bounds.camera.top,bounds.camera.bottom))
+  end
+  if bounds.blast then
+    assert(gd.stage_set_blast_bounds(bounds.blast.left,bounds.blast.right,bounds.blast.top,bounds.blast.bottom))
+  end
+end
 local function load_map(name)
   assert(offline(), 'active offline match required')
   name=file_name(name or filename)
   local text=assert(gd.data_read(name), 'layout file not found: '..name)
   -- Text-only chunk with no globals: files cannot access gd, io or the script environment.
   local chunk,why=load(text,'@'..name,'t',{}) assert(chunk,why)
-  local target=validate(chunk())
+  local target,lay_bounds=validate(chunk())
   acted(target,'Loaded '..name) filename=name dirty=false
+  if lay_bounds.camera or lay_bounds.blast then
+    bounds=lay_bounds
+    if not pcall(apply_bounds) then say('Stage refused the layout bounds','error') end
+  end
   say('Loaded '..#parts..' parts from '..name) toast('Loaded '..#parts..' parts')
 end
 local function set_overlay()
@@ -707,6 +743,32 @@ gd.command('map',function(arg)
       local field,value=(name or ''):match('^(%S+)%s*(.-)%s*$')
       assert(field and value~='','map set <x|y|z|rot|scale> <value>')
       field_set(field,value)
+    elseif op=='bounds' then
+      local kind,rest=(name or ''):match('^(%S*)%s*(.-)%s*$')
+      if kind=='' or kind==nil then
+        local b=gd.stage_bounds() or {}
+        local function fmt(r) return r and ('%.1f %.1f %.1f %.1f'):format(r.left,r.right,r.top,r.bottom) or '-' end
+        say('camera '..fmt(b.camera)..' | blast '..fmt(b.blast),'action')
+      elseif kind=='capture' then
+        local b=assert(gd.stage_bounds(),'no stage bounds')
+        assert(b.camera,'this stage has no camera bounds')
+        bounds.camera=b.camera
+        bounds.blast=b.blast or bounds.blast
+        dirty=true say('Bounds captured','action')
+      elseif kind=='restore' then
+        assert(gd.stage_restore_bounds())
+        bounds={camera=nil,blast=nil} dirty=true say('Bounds restored','action')
+      else
+        local l,r,t,bt=rest:match('^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$')
+        assert(l and (kind=='camera' or kind=='blast'),
+               'map bounds [capture|restore|camera l r t b|blast l r t b]')
+        local rect={left=tonumber(l),right=tonumber(r),top=tonumber(t),bottom=tonumber(bt)}
+        assert(rect.left and rect.right and rect.top and rect.bottom and rect.left<rect.right and rect.bottom<rect.top,
+               'bounds require left < right and bottom < top')
+        if kind=='camera' then assert(gd.stage_set_camera_bounds(rect.left,rect.right,rect.top,rect.bottom))
+        else assert(gd.stage_set_blast_bounds(rect.left,rect.right,rect.top,rect.bottom)) end
+        bounds[kind]=rect dirty=true say(kind..' bounds set','action')
+      end
     elseif op=='log' then
       log_open=(name~='off')
       say(log_open and 'Action log on' or 'Action log off','action')
@@ -1112,6 +1174,7 @@ HELP = {
   {'ghost', 'translucent placement preview; map ghost on|off'},
   {'Space', 'search actions; Enter runs the top match'},
   {'action log', 'map log on: click a step to go back'},
+  {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (v2 layout)'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},
@@ -1185,6 +1248,20 @@ function on_draw()
       end
       handles_ui={movex={px,py,hx2,hy2}, movey={px,py,gx2,gy2}, scale={sx2,sy2}, rot={px,py,r}}
     end
+  end
+  if bounds.camera or bounds.blast then
+    local cw=canvas_w()
+    local function rect(b,color)
+      local x1,y1=gd.project(b.left,b.top,0)
+      local x2,y2=gd.project(b.right,b.bottom,0)
+      if x1 and y1 and x2 and y2 then
+        x1,y1=math.max(0,math.min(cw,x1)),math.max(0,math.min(480,y1))
+        x2,y2=math.max(0,math.min(cw,x2)),math.max(0,math.min(480,y2))
+        gd.box(x1,y1,x2-x1,y2-y1,color)
+      end
+    end
+    if bounds.camera then rect(bounds.camera,0x40E060FF) end
+    if bounds.blast then rect(bounds.blast,0xE06060FF) end
   end
   local h=hover and find(parts,hover)
   if h and h.id~=selected then

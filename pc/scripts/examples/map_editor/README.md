@@ -51,7 +51,7 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Gizmo handles | drag the selected part's handles: red X / green Y = move, cyan = scale, gold ring = rotate | — |
 | Placement ghost | translucent preview at the cursor while placing; `map ghost on\|off` | — |
 | Action search | Space: type to filter actions, Up/Down, Enter runs; `map run <text>` | — |
-| Action log | `map log on`: named steps; click one to step back (`map history <n>`) | — |
+| Action log | `map log on`: named steps; click one to step back or a `redo:` row to step forward (`map history <n>` / `map redo <n>`) | — |
 | Stage bounds | `map bounds capture` stores the live camera/blast bounds in the layout (v2, drawn green/red); `bounds restore` clears them; `bounds camera l r t b` / `bounds blast l r t b` set them | — |
 | Panel rows | click a tool, part or action row | — |
 | Exit editing, keep map live | F6 | Z menu: Exit editor / play |

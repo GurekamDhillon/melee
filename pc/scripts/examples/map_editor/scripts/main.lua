@@ -41,7 +41,7 @@ local autoload, broken = nil, false
 local modal, error_text, last_action = nil, nil, nil -- hybrid-transform state; status severities (bible §4.3, §5.6, §5.9)
 local field_drag, typing, handles_ui = nil, nil, nil -- inspector scrub / typed entry / gizmo hit geometry
 local ghost_on, ghost = true, nil -- placement preview instance (bible §5.8)
-local action_log, undo_names, log_open, log_rows = {}, {}, false, nil -- named history (bible §5.6)
+local action_log, undo_names, redo_names, log_open, log_rows = {}, {}, {}, false, nil -- named history (bible §5.6)
 local search, search_rows = nil, nil -- action search overlay (bible §5.10)
 local bounds = {camera=nil, blast=nil} -- stage bounds the map is authored against (bible §6.6, §8 P2)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
@@ -297,7 +297,7 @@ local function apply(target, record)
   end
   if record then
     undo[#undo+1]=clone(parts) if #undo>HISTORY then table.remove(undo,1) end
-    redo={}
+    redo={} redo_names={}
   end
   parts=clone(target) dirty=true
   if not find(parts,selected) then selected=parts[#parts] and parts[#parts].id end
@@ -508,13 +508,22 @@ local function history(back)
   edit() local from,to=back and undo or redo,back and redo or undo
   local target=from[#from] assert(target,back and 'Nothing to undo' or 'Nothing to redo')
   local old=clone(parts) apply(target,false) table.remove(from) to[#to+1]=old
-  if back then table.remove(undo_names) else undo_names[#undo_names+1]='Redo' end
+  if back then
+    local n=table.remove(undo_names)
+    if n then redo_names[#redo_names+1]=n end
+  else
+    undo_names[#undo_names+1]='Redo'
+    table.remove(redo_names)
+  end
   action_log[#action_log+1]=back and 'Undo' or 'Redo'
   if #action_log>8 then table.remove(action_log,1) end
   say(back and 'Undo' or 'Redo','action')
 end
 local function history_jump(n)
   for _=1,n do if #undo==0 then break end history(true) end
+end
+local function redo_jump(n)
+  for _=1,n do if #redo==0 then break end history(false) end
 end
 local function cycle_tool()
   local i=1
@@ -749,7 +758,9 @@ gd.command('map',function(arg)
       assert(name=='on' or name=='off','help on|off') help_open=name=='on' say('Help '..name)
     elseif op=='delete' then remove()
     elseif op=='undo' then history(true)
-    elseif op=='redo' then history(false)
+    elseif op=='redo' then
+      local n=tonumber(name)
+      if n and n>1 then redo_jump(math.floor(n)) else history(false) end
     elseif op=='clear' then edit() acted({},'Cleared map')
     elseif op=='part' then
       local want=name and (name:find('^bf_') and name or 'bf_'..name)
@@ -909,7 +920,10 @@ local function click_overlay(mx,my)
   if help_open then return false end
   if log_open and log_rows then
     for _,r in ipairs(log_rows) do
-      if in_rect(mx,my,r) then history_jump(r.depth) return true end
+      if in_rect(mx,my,r) then
+        if r.rdepth then redo_jump(r.rdepth) else history_jump(r.depth) end
+        return true
+      end
     end
   end
   if search and search_rows then
@@ -1333,17 +1347,22 @@ function on_draw()
   end
   log_rows=nil
   if log_open then
-    local lw=300 local n=math.min(#undo_names,7)
-    local lh=44+n*18
+    local lw=300 local nu=math.min(#undo_names,6) local nr=math.min(#redo_names,3)
+    local lh=44+(nu+nr)*18
     local lx=(W-lw)/2 local ly=150
     gd.fill(lx,ly,lw,lh,0x0E1218F0)
     kit.panel(lx,ly,lw,lh,{piece=12,fill=PANEL_FILL})
     kit.text(lx+12,ly+18,'ACTION LOG - click a step','caption','gold')
     log_rows={}
-    for i=1,n do
+    for i=1,nu do
       local y=ly+26+(i-1)*18
-      log_rows[i]={depth=i,x=lx+6,y=y,w=lw-12,h=16}
+      log_rows[#log_rows+1]={depth=i,x=lx+6,y=y,w=lw-12,h=16}
       kit.button(lx+6,y,lw-12,undo_names[#undo_names-i+1] or '','ng',{h=16})
+    end
+    for i=1,nr do
+      local y=ly+26+(nu+i-1)*18
+      log_rows[#log_rows+1]={rdepth=i,x=lx+6,y=y,w=lw-12,h=16}
+      kit.button(lx+6,y,lw-12,'redo: '..(redo_names[#redo_names-i+1] or ''),'ng',{h=16})
     end
   end
   search_rows=nil

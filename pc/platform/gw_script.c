@@ -2182,7 +2182,11 @@ static int gs_vk(lua_State *L, const char *name) {
         {"BACKSPACE", VK_BACK}, {"SHIFT", VK_SHIFT}, {"CTRL", VK_CONTROL}, {"ALT", VK_MENU},
         {"LEFT", VK_LEFT}, {"RIGHT", VK_RIGHT}, {"UP", VK_UP}, {"DOWN", VK_DOWN},
         {"HOME", VK_HOME}, {"END", VK_END}, {"PAGEUP", VK_PRIOR}, {"PAGEDOWN", VK_NEXT},
-        {"INSERT", VK_INSERT}, {"DELETE", VK_DELETE}};
+        {"INSERT", VK_INSERT}, {"DELETE", VK_DELETE},
+        {"PERIOD", VK_OEM_PERIOD}, {"COMMA", VK_OEM_COMMA}, {"MINUS", VK_OEM_MINUS},
+        {"PLUS", VK_OEM_PLUS}, {"SLASH", VK_OEM_2}, {"SEMICOLON", VK_OEM_1},
+        {"GRAVE", VK_OEM_3}, {"LBRACKET", VK_OEM_4}, {"RBRACKET", VK_OEM_5},
+        {"BACKSLASH", VK_OEM_6}, {"QUOTE", VK_OEM_7}};
     char up[16];
     size_t i, n = strlen(name);
     if (n == 0 || n >= sizeof up) {

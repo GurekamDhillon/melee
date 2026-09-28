@@ -39,6 +39,7 @@ local previous, old_pad, saved_states = nil, {}, {}
 local filename, dirty, status = 'layout.lua', false, 'F1 help | F6 edit | map play layout.lua: load'
 local autoload, broken = nil, false
 local modal, error_text, last_action = nil, nil, nil -- hybrid-transform state; status severities (bible §4.3, §5.6, §5.9)
+local field_drag, typing, handles_ui = nil, nil, nil -- inspector scrub / typed entry / gizmo hit geometry
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -449,15 +450,36 @@ local function modal_point(base)
   end
   return target
 end
+local function modal_begin(mode, ax, src)
+  local p=find(parts,selected)
+  if not p then return false end
+  local wx,wy=mouse_world()
+  modal={mode=mode, base=clone(parts), mx=mouse.x, my=mouse.y, used=false, ax=ax, src=src or 'key',
+         d0=wx and math.max(0.5,math.sqrt((wx-p.x)^2+(wy-p.y)^2)) or 1}
+  return true
+end
+local function modal_commit()
+  if not modal then return end
+  local m=modal
+  if m.used then
+    local target=modal_point(m.base)
+    local tp,bp=find(target or {},selected),find(m.base,selected)
+    if target and tp and bp and not same(tp,bp) then
+      undo[#undo+1]=m.base if #undo>HISTORY then table.remove(undo,1) end
+      redo={}
+      apply(target,false)
+      say(m.mode..' '..tp.part,'action')
+    end
+  end
+  modal=nil
+end
 local function modal_key(name, mode)
   if gd.key_pressed(name) and not (modal and modal.mode==mode) then
-    local p=find(parts,selected)
-    if not p then tool=mode axis_lock=nil say('Tool: '..mode,'action') return true end
-    local wx,wy=mouse_world()
-    modal={mode=mode, base=clone(parts), mx=mouse.x, my=mouse.y, used=false, ax=axis_lock,
-           d0=wx and math.max(0.5,math.sqrt((wx-p.x)^2+(wy-p.y)^2)) or 1}
+    if not modal_begin(mode, axis_lock, 'key') then
+      tool=mode axis_lock=nil say('Tool: '..mode,'action') return true
+    end
   end
-  if not (modal and modal.mode==mode) then return false end
+  if not (modal and modal.mode==mode and modal.src=='key') then return false end
   if gd.key_pressed('ESCAPE') then apply(modal.base,false) modal=nil say('Cancelled') return true end
   if gd.key_pressed('LEFT') or gd.key_pressed('RIGHT') then
     modal.ax=(modal.ax=='x') and nil or 'x' say('Axis: '..(modal.ax or 'free'))
@@ -465,25 +487,67 @@ local function modal_key(name, mode)
     modal.ax=(modal.ax=='y') and nil or 'y' say('Axis: '..(modal.ax or 'free'))
   end
   if not gd.key(name) then
-    if modal.used then
-      local target=modal_point(modal.base)
-      local tp,bp=find(target or {},selected),find(modal.base,selected)
-      if target and tp and bp and not same(tp,bp) then
-        undo[#undo+1]=modal.base if #undo>HISTORY then table.remove(undo,1) end
-        redo={}
-        apply(target,false)
-        say(mode..' '..tp.part,'action')
-      end
-    else
-      tool=mode axis_lock=nil say('Tool: '..mode,'action')
-    end
-    modal=nil
+    if not modal.used then tool=mode axis_lock=nil say('Tool: '..mode,'action') end
+    modal_commit()
   elseif math.abs(mouse.x-modal.mx)+math.abs(mouse.y-modal.my)>3 then
     modal.used=true
     local target=modal_point(modal.base)
     if target then apply(target,false) end
   end
   return true
+end
+local function field_value(p, field)
+  return field=='scale' and scale_of(p,'scale') or (p[field] or 0)
+end
+local function field_point(base, field, dx)
+  local target=clone(base)
+  local p=find(target,selected) if not p then return nil end
+  if field=='rot' then
+    local v=field_value(p,'rot')+dx*1.5
+    if snap_on then v=math.floor(v/15+0.5)*15 end
+    p.rot=((v+180)%360)-180
+  elseif field=='scale' then
+    p.scale=math.max(SCALE_MIN,math.min(SCALE_MAX,scale_of(p,'scale')*(1+dx*0.01)))
+  else
+    local v=field_value(p,field)+dx*U*grid
+    if snap_on then v=snap(v) end
+    p[field]=v
+  end
+  return target
+end
+local function field_text(field)
+  local p=find(parts,selected) if not p then return '' end
+  return string.format(field=='rot' and '%.1f' or '%.2f', field_value(p,field))
+end
+local function field_set(field, value)
+  edit()
+  local v=tonumber(value) assert(v,'a number is required')
+  assert(number(v),'out of range')
+  local target=clone(parts)
+  local p=find(target,selected) assert(p,'select a part first')
+  if field=='rot' then p.rot=((v+180)%360)-180
+  elseif field=='scale' then p.scale=math.max(SCALE_MIN,math.min(SCALE_MAX,v))
+  elseif field=='x' or field=='y' or field=='z' then p[field]=v
+  else error('field: x|y|z|rot|scale') end
+  apply(target,true)
+  say(field..' '..string.format('%.2f',field_value(p,field)),'action')
+end
+local function seg_dist(x1,y1,x2,y2,mx,my)
+  local dx,dy=x2-x1,y2-y1
+  local l2=dx*dx+dy*dy
+  local t=l2>0 and ((mx-x1)*dx+(my-y1)*dy)/l2 or 0
+  t=math.max(0,math.min(1,t))
+  local cx,cy=x1+t*dx,y1+t*dy
+  return math.sqrt((mx-cx)^2+(my-cy)^2)
+end
+local function hit_handle(mx,my)
+  local h=handles_ui
+  if not h or not find(parts,selected) then return nil end
+  if seg_dist(h.movex[1],h.movex[2],h.movex[3],h.movex[4],mx,my)<=7 then return 'move','x' end
+  if seg_dist(h.movey[1],h.movey[2],h.movey[3],h.movey[4],mx,my)<=7 then return 'move','y' end
+  if math.abs(math.sqrt((mx-h.rot[1])^2+(my-h.rot[2])^2)-h.rot[3])<=6 then return 'rotate' end
+  if math.sqrt((mx-h.scale[1])^2+(my-h.scale[2])^2)<=8 then return 'scale' end
+  return nil
 end
 
 -- The first ten entries keep their order: the contract tests and muscle memory rely on it.
@@ -566,6 +630,10 @@ gd.command('map',function(arg)
       local view=palette_view() palette=1
       for pos,idx in ipairs(view) do if idx==found then palette=pos end end
       say('Part: '..want)
+    elseif op=='set' then
+      local field,value=(name or ''):match('^(%S+)%s*(.-)%s*$')
+      assert(field and value~='','map set <x|y|z|rot|scale> <value>')
+      field_set(field,value)
     elseif op=='filter' then
       filter=(name or ''):lower() filtering=false palette=1
       say(filter=='' and 'Filter cleared' or ('Filter: '..filter))
@@ -621,8 +689,10 @@ local function inspector_rows()
   rows[#rows+1]={kind='name',label=p.part:gsub('^bf_',''),x=x,y=y,w=224,h=20}
   y=y+24
   for _,f in ipairs({{'x','%.2f'},{'y','%.2f'},{'z','%.2f'},{'rot','%.1f'},{'scale','%.2f'}}) do
-    local value=f[1]=='scale' and scale_of(p,'scale') or (p[f[1]] or 0)
-    rows[#rows+1]={kind='field',field=f[1],label=f[1],value=string.format(f[2],value),x=x,y=y,w=224,h=18}
+    local value
+    if typing and typing.field==f[1] then value=typing.text..'_'
+    else value=string.format(f[2], f[1]=='scale' and scale_of(p,'scale') or (p[f[1]] or 0)) end
+    rows[#rows+1]={kind='field',field=f[1],label=f[1],value=value,x=x,y=y,w=224,h=18}
     y=y+20
   end
   rows[#rows+1]={kind='collision',label='collision',value=p.collision and 'on' or 'off',x=x,y=y,w=224,h=18}
@@ -641,6 +711,8 @@ local function click_inspector(mx,my)
           p.collision=not p.collision
           apply(target,true) say('collision '..(p.collision and 'on' or 'off'),'action')
         end)
+      elseif r.kind=='field' then
+        field_drag={field=r.field, base=clone(parts), sx=mouse.x, sy=mouse.y, used=false}
       elseif r.kind=='flags' then
         attempt(function()
           edit()
@@ -677,7 +749,45 @@ local function poll_mouse()
   elseif mouse.used>0 then
     mouse.used=mouse.used-1
   end
-  if modal then mouse.prev=mouse.buttons return end -- a modal owns the pointer; no clicks, no depth
+  if modal then
+    if modal.src=='mouse' then
+      if (mouse.buttons & 1)==1 then
+        local t=modal_point(modal.base)
+        if t then apply(t,false) modal.used=true end
+      else
+        modal_commit()
+      end
+    end
+    mouse.prev=mouse.buttons
+    return
+  end
+  if field_drag then
+    local dx=mouse.x-field_drag.sx
+    if math.abs(dx)+math.abs(mouse.y-field_drag.sy)>3 then field_drag.used=true end
+    if field_drag.used then
+      local t=field_point(field_drag.base,field_drag.field,dx)
+      if t then apply(t,false) end
+    end
+    if (mouse.buttons & 1)==0 then
+      local f=field_drag
+      field_drag=nil
+      if f.used then
+        local t=field_point(f.base,f.field,mouse.x-f.sx)
+        local tp,bp=find(t or {},selected),find(f.base,selected)
+        if t and tp and bp and not same(tp,bp) then
+          undo[#undo+1]=f.base if #undo>HISTORY then table.remove(undo,1) end
+          redo={}
+          apply(t,false)
+          say(f.field..' '..string.format('%.2f',field_value(tp,f.field)),'action')
+        end
+      else
+        typing={field=f.field, text=''}
+        say('Type a value; Enter applies, ESC cancels')
+      end
+    end
+    mouse.prev=mouse.buttons
+    return
+  end
   local lmb=(mouse.buttons & 1)==1
   local pressed=lmb and (mouse.prev & 1)==0
   local right=(mouse.buttons & 2)==2 and (mouse.prev & 2)==0
@@ -692,12 +802,20 @@ local function poll_mouse()
     if help_open then help_open=false else menu=not menu end
   elseif pressed then
     if not click_panel(mouse.x,mouse.y) and not click_inspector(mouse.x,mouse.y) and mouse.over and not help_open then
+      local hmode,hax=hit_handle(mouse.x,mouse.y)
+      if hmode then
+        if modal_begin(hmode,hax,'mouse') then
+          modal.used=true
+          local t=modal_point(modal.base) if t then apply(t,false) end
+        end
+      else
       local wx,wy=mouse_world()
       if tool=='select' then attempt(function() select_near(wx,wy) end)
       elseif tool=='place' then attempt(function() place(false,wx,wy) end)
       elseif tool=='move' then dragging=true attempt(function() transform('move',nil,true,wx,wy) end)
       elseif tool=='rotate' then attempt(rotate_to_mouse)
       elseif tool=='scale' then attempt(function() transform('scale',SCALE_STEP) end)
+      end
       end
     end
   end
@@ -734,6 +852,23 @@ function on_tick()
     if gd.key_pressed('ESCAPE') and not menu then help_open=false end
     if gd.key_pressed('DOWN') then help_first=math.min(math.max(1,#HELP-11),help_first+1) end
     if gd.key_pressed('UP') then help_first=math.max(1,help_first-1) end
+  end
+  if typing then
+    local ch=''
+    for _,c in ipairs({'0','1','2','3','4','5','6','7','8','9'}) do
+      if gd.key_pressed(c) then ch=c end
+    end
+    if gd.key_pressed('PERIOD') then ch='.' end
+    if gd.key_pressed('MINUS') then ch='-' end
+    if ch~='' then typing.text=(typing.text..ch):sub(-12) end
+    if gd.key_pressed('BACKSPACE') then typing.text=typing.text:sub(1,-2) end
+    if gd.key_pressed('ENTER') then
+      local f=typing typing=nil
+      if f.text~='' then attempt(function() field_set(f.field,f.text) end) end
+    elseif gd.key_pressed('ESCAPE') then
+      typing=nil say('Cancelled')
+    end
+    old_pad=pad return
   end
   if gd.key_pressed('F4') then
     filtering=not filtering
@@ -810,7 +945,7 @@ function on_frame_pre()
   if not editing or not offline() then return end
   if mouse_api then poll_mouse() end
   hover=hover_part()
-  if menu or help_open or modal or filtering or gd.key('CTRL') then return end
+  if menu or help_open or modal or filtering or typing or field_drag or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
   local dx=(gd.key('D') and 1 or 0)-(gd.key('A') and 1 or 0)
   local dy=(gd.key('W') and 1 or 0)-(gd.key('S') and 1 or 0)
@@ -843,6 +978,8 @@ HELP = {
   {'F7 / F8', 'scale -10% / +10%'},
   {'Shift+X / Y', 'mirror selection X / Y'},
   {'Shift+C', 'move constraint free / X / Y'},
+  {'gizmo', 'drag the object handles: red/green move X/Y, cyan scale, gold ring rotate'},
+  {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},
   {'Delete', 'remove selection'},
@@ -876,24 +1013,44 @@ local function draw_help()
   end
 end
 function on_draw()
-  if not editing or not offline() or not gd.player(1) then return end
+  if not editing or not offline() or not gd.player(1) then handles_ui=nil return end
   local x,y,z=shown_cursor()
   local sx,sy,on=gd.project(x,y,z)
   if sx and on then gd.line(sx-7,sy,sx+7,sy,0xFFE080FF) gd.line(sx,sy-7,sx,sy+7,0xFFE080FF) end
   local p=find(parts,selected)
+  handles_ui=nil
   if p then
     local px,py,visible=gd.project(p.x,p.y,p.z)
     if px and visible then
       gd.box(px-10,py-10,20,20,0x60FFFFFF)
-      -- Axis handles: 2 world units along +X / +Y, projected, so the gizmo follows the camera.
+      -- Gizmo handles: screen-space directions from the projected +X / +Y, so they follow the camera.
       local ax,ay=gd.project(p.x+2,p.y,p.z)
       local bx,by=gd.project(p.x,p.y+2,p.z)
-      if ax then gd.line(px,py,ax,ay,0xE06060FF) end
-      if bx then gd.line(px,py,bx,by,0x60E060FF) end
+      local function unit(sx,sy)
+        local dx,dy=sx-px,sy-py
+        local d=math.sqrt(dx*dx+dy*dy)
+        if d<0.001 then return 0,-1 end
+        return dx/d,dy/d
+      end
+      local ux,uy=unit(ax or px+2,ay or py)
+      local vx,vy=unit(bx or px,by or py-2)
+      local L=34
+      local hx2,hy2=px+ux*L,py+uy*L
+      local gx2,gy2=px+vx*L,py+vy*L
+      local sx2,sy2=px-vx*L,py-vy*L
+      gd.line(px,py,hx2,hy2,0xE06060FF) gd.box(hx2-3,hy2-3,6,6,0xE06060FF)
+      gd.line(px,py,gx2,gy2,0x60E060FF) gd.box(gx2-3,gy2-3,6,6,0x60E060FF)
+      gd.line(px,py,sx2,sy2,0x40C0E0FF) gd.box(sx2-4,sy2-4,8,8,0x40C0E0FF)
+      local r=20
+      for i=0,11 do
+        local a1=i/12*math.pi*2 local a2=(i+0.5)/12*math.pi*2
+        gd.line(px+math.cos(a1)*r,py+math.sin(a1)*r,px+math.cos(a2)*r,py+math.sin(a2)*r,0xFFD060FF)
+      end
       if tool=='rotate' then
         local t=math.rad(p.rot)
         gd.line(px,py,px+math.cos(t)*22,py-math.sin(t)*22,0xFFD060FF)
       end
+      handles_ui={movex={px,py,hx2,hy2}, movey={px,py,gx2,gy2}, scale={sx2,sy2}, rot={px,py,r}}
     end
   end
   local h=hover and find(parts,hover)

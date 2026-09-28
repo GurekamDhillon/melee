@@ -4467,6 +4467,9 @@ static int gs_stage_handle_arg(lua_State *L, int idx) {
     return (int) h;
 }
 
+/* ---- arena-hooks: offline stage arena API (implementation kept separate) ---- */
+#include "gw_script_arena.inc"
+
 static int gs_stage_next_handle(lua_State *L) {
     if (gs_stage_handle_serial == INT_MAX) luaL_error(L, "stage handle space exhausted");
     return ++gs_stage_handle_serial;
@@ -5085,6 +5088,13 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"lab_common", l_lab_common}, {"floor_below", l_floor_below}, {"set_shield", l_set_shield},
     {"stage_add_platform", l_stage_add_platform}, {"stage_add_line", l_stage_add_line},
     {"stage_add_model", l_stage_add_model},
+    /* arena-hooks */
+    {"stage_set_origin", l_stage_set_origin},
+    {"stage_set_camera_bounds", l_stage_set_camera_bounds},
+    {"stage_set_blast_bounds", l_stage_set_blast_bounds},
+    {"stage_restore_bounds", l_stage_restore_bounds}, {"stage_bounds", l_stage_bounds},
+    {"stage_collision_group", l_stage_collision_group},
+    {"stage_collision_groups", l_stage_collision_groups},
     {"model_load", l_model_load},
     {"model_release", l_model_release},
     {"model_spawn", l_model_spawn},
@@ -5395,6 +5405,12 @@ static void gs_unload(int i) {
         gw_log("script [%s] camera restored (unload)", s->id);
     }
     gw_script_pad_release_owner(i + 1);
+    /* arena-hooks: ownership is read from the restored game snapshot. */
+    if (gs.match_active) {
+        gs_rw_branch();
+        gw_ScriptGame_ArenaRelease(i + 1);
+        gw_log("script [%s] arena-hooks released (unload)", s->id);
+    }
     for (k = 0; k < GS_MAX_TASKS; ++k) {
         if (s->tasks[k] != LUA_NOREF) {
             gw_script_pad_release_owner(s->task_pad_owner[k]);

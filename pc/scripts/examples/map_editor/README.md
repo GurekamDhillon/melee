@@ -39,6 +39,7 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Move constraint | Shift+C: free / X only / Y only | Z menu: Move constraint |
 | Snap | Z: on / off | Z menu: Snap on/off |
 | Duplicate at cursor | Ctrl+D | Z menu: Duplicate |
+| Duplicate xN | `map duplicate <n>`; action row "Duplicate x4 at cursor" (one undo step) | — |
 | Delete | Delete | Z menu: Delete |
 | Undo / redo | Ctrl+Z / Ctrl+Y | Z menu: Undo / Redo |
 | Save / load current file | Ctrl+S / Ctrl+O | Z menu: Save / Load |

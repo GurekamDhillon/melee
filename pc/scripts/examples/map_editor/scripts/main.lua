@@ -456,6 +456,24 @@ local function place(duplicate, wx, wy)
   remember(p.part)
   if duplicate then toast('Duplicated '..p.part:gsub('^bf_','')) end
 end
+local function duplicate_many(n)
+  edit()
+  local src=assert(find(parts,selected),'select a part first')
+  local target=clone(parts)
+  local step=U*grid
+  local made=0
+  for i=1,n do
+    if #target>=MAX_PARTS then break end
+    local p=clone(src)
+    next_id=next_id+1 p.id=next_id
+    p.x=p.x+step*i
+    target[#target+1]=p
+    made=made+1
+  end
+  assert(made>0,'model limit reached')
+  acted(target,('Duplicated x%d'):format(made))
+  selected=target[#target].id
+end
 local function select_near(wx, wy)
   edit()
   local x,y,z
@@ -678,6 +696,7 @@ local ACTIONS = {
   {'Move constraint: free / X / Y',cycle_axis},
   {'Snap on/off',function() snap_on=not snap_on say('Snap '..(snap_on and 'on' or 'off')) end},
   {'Help / keybinds',function() help_open=not help_open end},
+  {'Duplicate x4 at cursor',function() duplicate_many(4) end},
 }
 local function attempt(fn)
   local ok,why=pcall(fn) if not ok then say('Error: '..tostring(why),'error') end return ok
@@ -708,7 +727,9 @@ gd.command('map',function(arg)
     elseif op=='load' then load_map(name) start()
     elseif op=='play' then load_map(name) stop() autoload=filename
     elseif op=='place' then place(false)
-    elseif op=='duplicate' then place(true)
+    elseif op=='duplicate' then
+      local n=tonumber(name)
+      if n and n>1 then duplicate_many(math.floor(n)) else place(true) end
     elseif op=='select' then select_near()
     elseif op=='move' then transform('move')
     elseif op=='rotate' then transform('rotate',tonumber(name) or 15)

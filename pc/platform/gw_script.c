@@ -5123,9 +5123,10 @@ static int l_stage_bounds(lua_State *L)
     static const char *extra_a[] = {"origin", "frames", NULL};
     static const char *extra_b[] = {"main_floor", "surface_top", NULL};
     int main = 1, i;
-    l_stage_bounds_largemap(L);
+    if (lua_isnone(L, 1)) lua_pushcfunction(L, l_stage_bounds_arena), lua_call(L, 0, 1);
+    else l_stage_bounds_largemap(L);
     if (!lua_istable(L, -1)) return 1;
-    lua_replace(L, 1);
+    lua_pushvalue(L, -1); lua_replace(L, 1);
     lua_settop(L, 1);
     {
         int (*fn[2])(lua_State *) = {l_stage_bounds_arena, l_stage_bounds_base};

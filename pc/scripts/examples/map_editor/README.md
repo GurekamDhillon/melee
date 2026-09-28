@@ -48,6 +48,7 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Palette filter | F4, then type; Enter done, Esc clears; `map filter <text>` | — |
 | Selection inspector | right panel: drag x/y/z/rot/scale to scrub, click a field to type a value (Enter applies, Esc cancels); click collision / floor flags | — |
 | Gizmo handles | drag the selected part's handles: red X / green Y = move, cyan = scale, gold ring = rotate | — |
+| Placement ghost | translucent preview at the cursor while placing; `map ghost on\|off` | — |
 | Panel rows | click a tool, part or action row | — |
 | Exit editing, keep map live | F6 | Z menu: Exit editor / play |
 

@@ -40,6 +40,7 @@ local filename, dirty, status = 'layout.lua', false, 'F1 help | F6 edit | map pl
 local autoload, broken = nil, false
 local modal, error_text, last_action = nil, nil, nil -- hybrid-transform state; status severities (bible §4.3, §5.6, §5.9)
 local field_drag, typing, handles_ui = nil, nil, nil -- inspector scrub / typed entry / gizmo hit geometry
+local ghost_on, ghost = true, nil -- placement preview instance (bible §5.8)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -91,8 +92,22 @@ local function find(list, id)
   for i,p in ipairs(list) do if p.id==id then return p,i end end
 end
 local function scale_of(p, k) return p[k] or 1 end
+local function palette_category(name)
+  local n=name:gsub('^bf_','')
+  if n:find('^floor') then return 'floor' end
+  if n:find('^stair') then return 'stair' end
+  if n:find('^ramp') then return 'ramp' end
+  if n:find('^wall') then return 'wall' end
+  if n:find('^corner') then return 'corner' end
+  if n:find('^beam') or n:find('^post') or n:find('_trim') then return 'trim' end
+  if n:find('door') or n:find('opening') then return 'door' end
+  if n:find('glass') or n:find('window') then return 'glass' end
+  if n:find('balcony') then return 'balcony' end
+  return 'other'
+end
 local function palette_match(name)
-  return filter=='' or name:lower():find(filter,1,true)~=nil
+  if filter=='' then return true end
+  return name:lower():find(filter,1,true)~=nil or palette_category(name):find(filter,1,true)~=nil
 end
 local function palette_view()
   local out,pinned={},{}
@@ -216,6 +231,31 @@ local function asset(name)
   if not assets[name] then assets[name]=assert(gd.model_load(name)) end
   return assets[name]
 end
+local function ghost_despawn()
+  if ghost then pcall(gd.model_despawn,ghost.handle) ghost=nil end
+end
+-- The placement ghost is a real instance at 45% alpha with no collision: it must never add pool
+-- pressure beyond one slot or collide with the map (bible §5.8).
+local function ghost_sync()
+  local view=palette_view()
+  if not ghost_on or not editing or not offline() or not gd.player(1) or tool~='place' or
+     modal or field_drag or typing or #view==0 then
+    ghost_despawn()
+    return
+  end
+  local name=PALETTE[view[math.min(math.max(palette,1),#view)]]
+  local x,y,z=shown_cursor()
+  local ok=#parts<MAX_PARTS
+  if ghost and ghost.name~=name then ghost_despawn() end
+  local opts={x=x,y=y,z=z,rot=rotation,scale=1,visible=true,alpha=true,collision=false,floor_flags=0,
+              tint=ok and 0xFFFFFFAA or 0xDF4433AA}
+  if not ghost then
+    local h=gd.model_spawn(asset(name),opts)
+    if h then ghost={handle=h,name=name} end
+  else
+    pcall(gd.model_set,ghost.handle,opts)
+  end
+end
 
 -- Reconcile by stable document ID: a transform touches one instance, not the whole map.
 -- On failure, the caller reconciles back to the last document before advancing history.
@@ -338,6 +378,7 @@ local function stop(restore_fly)
     gd.stage_view(previous.geometry,previous.overlay)
   end
   previous=nil editing=false menu=false help_open=false dragging=false
+  ghost_despawn()
 end
 local function start()
   assert(offline(), 'active offline match required')
@@ -634,10 +675,15 @@ gd.command('map',function(arg)
       local field,value=(name or ''):match('^(%S+)%s*(.-)%s*$')
       assert(field and value~='','map set <x|y|z|rot|scale> <value>')
       field_set(field,value)
+    elseif op=='ghost' then
+      assert(name=='on' or name=='off','ghost on|off')
+      ghost_on=name=='on'
+      if not ghost_on then ghost_despawn() end
+      say('Ghost '..name,'action')
     elseif op=='filter' then
       filter=(name or ''):lower() filtering=false palette=1
       say(filter=='' and 'Filter cleared' or ('Filter: '..filter))
-    else error('map on|off|part <name>|tool <name>|filter [text]|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
+    else error('map on|off|part <name>|tool <name>|filter [text]|ghost on|off|set <field> <value>|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
   end)
 end,'map on/off; part <name>; tool <place|select|move|rotate|scale>; scale <factor>; mirror x|y; snap on|off; place/select/move/rotate/duplicate/delete/undo/redo/clear; save/load/play [file.lua]')
 
@@ -660,7 +706,8 @@ local function panel_rows()
         local name=PALETTE[view[i]]
         local pinned=false
         for _,r in ipairs(recents) do if r==name then pinned=true end end
-        rows[#rows+1]={kind='part',index=i,label=(pinned and '* ' or '  ')..name:gsub('^bf_',''),x=16,y=y,w=230,h=18}
+        rows[#rows+1]={kind='part',index=i,label=(pinned and '* ' or '  ')..name:gsub('^bf_',''),
+                       value=palette_category(name),x=16,y=y,w=230,h=18}
         y=y+20
       end
     end
@@ -944,6 +991,7 @@ end
 function on_frame_pre()
   if not editing or not offline() then return end
   if mouse_api then poll_mouse() end
+  ghost_sync()
   hover=hover_part()
   if menu or help_open or modal or filtering or typing or field_drag or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
@@ -979,6 +1027,7 @@ HELP = {
   {'Shift+X / Y', 'mirror selection X / Y'},
   {'Shift+C', 'move constraint free / X / Y'},
   {'gizmo', 'drag the object handles: red/green move X/Y, cyan scale, gold ring rotate'},
+  {'ghost', 'translucent placement preview; map ghost on|off'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},
@@ -1140,6 +1189,7 @@ function on_match_start()
 end
 function on_unload()
   stop()
+  ghost_despawn()
   if offline() then
     for _,h in pairs(handles) do pcall(gd.model_despawn,h.handle) end
     for _,a in pairs(assets) do pcall(gd.model_release,a) end

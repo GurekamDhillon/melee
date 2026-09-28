@@ -10,9 +10,8 @@ enum { SM_X, SM_Y, SM_Z, SM_ROT, SM_SCALE, SM_LAYER, SM_VISIBLE, SM_TINT,
 #define SM_IS_ALPHA(m) ((m)->field[SM_ALPHA] || (((m)->field[SM_TINT] & 255) != 255))
 /* Transform fields are float bits; layer, visible and RGBA tint are integers. */
 typedef struct {
-    int handle, asset, field[SM_FIELDS], count, dynamic;
+    int handle, asset, field[SM_FIELDS], count, dynamic, area;
     float center[3]; /* immutable mesh bounds centre, mirrored with its transform */
-    int handle, asset, field[SM_FIELDS], count, area;
     struct { float x0, y0, x1, y1; int kind, flags, handle; } line[SCRIPT_MESH_LINES];
 } ScriptMeshInstance;
 #endif

@@ -286,6 +286,9 @@ local function sync(target)
     for k,v in pairs(p) do h[k]=v end
   end
 end
+local function doc_snapshot()
+  return {parts=clone(parts), bounds={camera=bounds.camera, blast=bounds.blast}, spawns=clone(spawns)}
+end
 local function apply(target, record)
   assert(offline(), 'active offline match required')
   assert(not broken, 'model recovery failed; save the document and restart the match')
@@ -297,7 +300,7 @@ local function apply(target, record)
     error(why,0)
   end
   if record then
-    undo[#undo+1]=clone(parts) if #undo>HISTORY then table.remove(undo,1) end
+    undo[#undo+1]=doc_snapshot() if #undo>HISTORY then table.remove(undo,1) end
     redo={} redo_names={}
   end
   parts=clone(target) dirty=true
@@ -312,6 +315,11 @@ local function acted(target, label)
   apply(target, true)
   name_undo(label)
   say(label, 'action')
+end
+local function doc_commit(before, label)
+  undo[#undo+1]=before if #undo>HISTORY then table.remove(undo,1) end
+  redo={} redo_names={}
+  name_undo(label) say(label,'action')
 end
 local function opt_scale(p,k)
   local v=p[k]
@@ -425,6 +433,16 @@ local function apply_bounds()
     assert(gd.stage_set_blast_bounds(bounds.blast.left,bounds.blast.right,bounds.blast.top,bounds.blast.bottom))
   end
 end
+local function doc_restore(d)
+  bounds={camera=d.bounds.camera, blast=d.bounds.blast}
+  spawns=d.spawns
+  if bounds.camera or bounds.blast then
+    pcall(apply_bounds)
+  else
+    pcall(gd.stage_restore_bounds)
+  end
+  for slot,b in pairs(spawns) do pcall(gd.stage_set_spawn,slot,b.x,b.y) end
+end
 local function load_map(name)
   assert(offline(), 'active offline match required')
   name=file_name(name or filename)
@@ -535,7 +553,8 @@ end
 local function history(back)
   edit() local from,to=back and undo or redo,back and redo or undo
   local target=from[#from] assert(target,back and 'Nothing to undo' or 'Nothing to redo')
-  local old=clone(parts) apply(target,false) table.remove(from) to[#to+1]=old
+  local old=doc_snapshot() apply(target.parts,false) doc_restore(target)
+  table.remove(from) to[#to+1]=old
   if back then
     local n=table.remove(undo_names)
     if n then redo_names[#redo_names+1]=n end
@@ -582,7 +601,7 @@ end
 -- pointer, commits on release and cancels on ESC; a quick tap switches tool instead. Arrows lock
 -- the axis during a modal. The base snapshot makes the commit idempotent.
 local function modal_point(base)
-  local target=clone(base)
+  local target=clone(base.parts)
   local p=find(target,selected) if not p then return nil end
   local wx,wy=mouse_world()
   if modal.mode=='move' then
@@ -605,7 +624,7 @@ local function modal_begin(mode, ax, src)
   local p=find(parts,selected)
   if not p then return false end
   local wx,wy=mouse_world()
-  modal={mode=mode, base=clone(parts), mx=mouse.x, my=mouse.y, used=false, ax=ax, src=src or 'key',
+  modal={mode=mode, base=doc_snapshot(), mx=mouse.x, my=mouse.y, used=false, ax=ax, src=src or 'key',
          d0=wx and math.max(0.5,math.sqrt((wx-p.x)^2+(wy-p.y)^2)) or 1}
   return true
 end
@@ -614,7 +633,7 @@ local function modal_commit()
   local m=modal
   if m.used then
     local target=modal_point(m.base)
-    local tp,bp=find(target or {},selected),find(m.base,selected)
+    local tp,bp=find(target or {},selected),find(m.base.parts,selected)
     if target and tp and bp and not same(tp,bp) then
       undo[#undo+1]=m.base if #undo>HISTORY then table.remove(undo,1) end
       redo={}
@@ -632,7 +651,10 @@ local function modal_key(name, mode)
     end
   end
   if not (modal and modal.mode==mode and modal.src=='key') then return false end
-  if gd.key_pressed('ESCAPE') then apply(modal.base,false) modal=nil say('Cancelled') return true end
+  if gd.key_pressed('ESCAPE') then
+    apply(modal.base.parts,false) doc_restore(modal.base)
+    modal=nil say('Cancelled') return true
+  end
   if gd.key_pressed('LEFT') or gd.key_pressed('RIGHT') then
     modal.ax=(modal.ax=='x') and nil or 'x' say('Axis: '..(modal.ax or 'free'))
   elseif gd.key_pressed('UP') or gd.key_pressed('DOWN') then
@@ -652,7 +674,7 @@ local function field_value(p, field)
   return field=='scale' and scale_of(p,'scale') or (p[field] or 0)
 end
 local function field_point(base, field, dx)
-  local target=clone(base)
+  local target=clone(base.parts)
   local p=find(target,selected) if not p then return nil end
   if field=='rot' then
     local v=field_value(p,'rot')+dx*1.5
@@ -811,9 +833,11 @@ gd.command('map',function(arg)
       if x then
         x,y=tonumber(x),tonumber(y)
         assert(x and y and number(x) and number(y),'spawn needs a finite x y')
+        edit()
+        local before=doc_snapshot()
         assert(gd.stage_set_spawn(n,x,y))
         spawns[n]={x=x,y=y} dirty=true
-        say(('spawn %d -> %.1f %.1f'):format(n,x,y),'action')
+        doc_commit(before,('spawn %d'):format(n))
       else
         local sx,sy,sz=gd.stage_spawn(n)
         say(('spawn %d at %.1f %.1f %.1f'):format(n,sx or 0,sy or 0,sz or 0),'action')
@@ -824,25 +848,30 @@ gd.command('map',function(arg)
         local b=gd.stage_bounds() or {}
         local function fmt(r) return r and ('%.1f %.1f %.1f %.1f'):format(r.left,r.right,r.top,r.bottom) or '-' end
         say('camera '..fmt(b.camera)..' | blast '..fmt(b.blast),'action')
-      elseif kind=='capture' then
-        local b=assert(gd.stage_bounds(),'no stage bounds')
-        assert(b.camera,'this stage has no camera bounds')
-        bounds.camera=b.camera
-        bounds.blast=b.blast or bounds.blast
-        dirty=true say('Bounds captured','action')
-      elseif kind=='restore' then
-        assert(gd.stage_restore_bounds())
-        bounds={camera=nil,blast=nil} dirty=true say('Bounds restored','action')
       else
-        local l,r,t,bt=rest:match('^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$')
-        assert(l and (kind=='camera' or kind=='blast'),
-               'map bounds [capture|restore|camera l r t b|blast l r t b]')
-        local rect={left=tonumber(l),right=tonumber(r),top=tonumber(t),bottom=tonumber(bt)}
-        assert(rect.left and rect.right and rect.top and rect.bottom and rect.left<rect.right and rect.bottom<rect.top,
-               'bounds require left < right and bottom < top')
-        if kind=='camera' then assert(gd.stage_set_camera_bounds(rect.left,rect.right,rect.top,rect.bottom))
-        else assert(gd.stage_set_blast_bounds(rect.left,rect.right,rect.top,rect.bottom)) end
-        bounds[kind]=rect dirty=true say(kind..' bounds set','action')
+        edit()
+        local before=doc_snapshot()
+        if kind=='capture' then
+          local b=assert(gd.stage_bounds(),'no stage bounds')
+          assert(b.camera,'this stage has no camera bounds')
+          bounds.camera=b.camera
+          bounds.blast=b.blast or bounds.blast
+          dirty=true doc_commit(before,'Bounds captured')
+        elseif kind=='restore' then
+          assert(gd.stage_restore_bounds())
+          bounds={camera=nil,blast=nil} spawns={}
+          dirty=true doc_commit(before,'Bounds restored')
+        else
+          local l,r,t,bt=rest:match('^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$')
+          assert(l and (kind=='camera' or kind=='blast'),
+                 'map bounds [capture|restore|camera l r t b|blast l r t b]')
+          local rect={left=tonumber(l),right=tonumber(r),top=tonumber(t),bottom=tonumber(bt)}
+          assert(rect.left and rect.right and rect.top and rect.bottom and rect.left<rect.right and rect.bottom<rect.top,
+                 'bounds require left < right and bottom < top')
+          if kind=='camera' then assert(gd.stage_set_camera_bounds(rect.left,rect.right,rect.top,rect.bottom))
+          else assert(gd.stage_set_blast_bounds(rect.left,rect.right,rect.top,rect.bottom)) end
+          bounds[kind]=rect dirty=true doc_commit(before,kind..' bounds set')
+        end
       end
     elseif op=='log' then
       log_open=(name~='off')
@@ -953,7 +982,7 @@ local function click_inspector(mx,my)
           acted(target,'collision '..(p.collision and 'on' or 'off'))
         end)
       elseif r.kind=='field' then
-        field_drag={field=r.field, base=clone(parts), sx=mouse.x, sy=mouse.y, used=false}
+        field_drag={field=r.field, base=doc_snapshot(), sx=mouse.x, sy=mouse.y, used=false}
       elseif r.kind=='flags' then
         attempt(function()
           edit()
@@ -1032,7 +1061,7 @@ local function poll_mouse()
       field_drag=nil
       if f.used then
         local t=field_point(f.base,f.field,mouse.x-f.sx)
-        local tp,bp=find(t or {},selected),find(f.base,selected)
+        local tp,bp=find(t or {},selected),find(f.base.parts,selected)
         if t and tp and bp and not same(tp,bp) then
           undo[#undo+1]=f.base if #undo>HISTORY then table.remove(undo,1) end
           redo={}
@@ -1446,7 +1475,8 @@ end
 -- on other loads, refuse to mutate until a new match rather than deleting unknown instances.
 function on_savestate(slot)
   saved_states[slot]={parts=clone(parts),handles=clone(handles),assets=clone(assets),
-                      previous=previous and clone(previous),selected=selected,broken=broken}
+                      previous=previous and clone(previous),selected=selected,broken=broken,
+                      bounds={camera=bounds.camera,blast=bounds.blast},spawns=clone(spawns)}
 end
 function on_loadstate(slot)
   if not offline() then return end
@@ -1459,6 +1489,9 @@ function on_loadstate(slot)
     parts,handles,assets=clone(saved.parts),clone(saved.handles),clone(saved.assets)
     selected=saved.selected
     undo={} redo={} dirty=true broken=saved.broken
+    if saved.bounds then bounds=saved.bounds end
+    if saved.spawns then spawns=saved.spawns end
+    pcall(doc_restore,{bounds=bounds,spawns=spawns})
     for _,h in pairs(handles) do if not gd.model_get(h.handle) then broken=true end end
     say(broken and 'Savestate handles missing; save and restart' or 'Restored document; undo history cleared')
   else

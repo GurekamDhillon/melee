@@ -46,6 +46,7 @@ local search, search_rows = nil, nil -- action search overlay (bible §5.10)
 local bounds = {camera=nil, blast=nil} -- stage bounds the map is authored against (bible §6.6, §8 P2)
 local spawns = {} -- moved start/respawn points, slot -> {x=, y=} (bible §6.3)
 local bounds_drag, bounds_ui = nil, nil -- dragging a camera-bounds edge (bible §8 P2)
+local group = {} -- extra selected part ids beside the anchor (bible §5.4)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -97,6 +98,14 @@ local function find(list, id)
   for i,p in ipairs(list) do if p.id==id then return p,i end end
 end
 local function scale_of(p, k) return p[k] or 1 end
+local function in_group(id) return group[id]==true end
+local function clear_group() group={} end
+local function selected_ids()
+  local out={}
+  if selected then out[#out+1]=selected end
+  for _,p in ipairs(parts) do if p.id~=selected and group[p.id] then out[#out+1]=p.id end end
+  return out
+end
 local function palette_category(name)
   local n=name:gsub('^bf_','')
   if n:find('^floor') then return 'floor' end
@@ -310,6 +319,7 @@ local function apply(target, record)
   end
   parts=clone(target) dirty=true
   if not find(parts,selected) then selected=parts[#parts] and parts[#parts].id end
+  for id in pairs(group) do if not find(parts,id) then group[id]=nil end end
 end
 local function name_undo(label)
   if #undo>0 then undo_names[#undo]=label end
@@ -539,6 +549,19 @@ local function duplicate_many(n)
   acted(target,('Duplicated x%d'):format(made))
   selected=target[#target].id
 end
+local function select_add()
+  edit()
+  local x,y,z=fly_cursor()
+  local best,d=nil,math.huge
+  for _,p in ipairs(parts) do
+    if p.id~=selected and not group[p.id] then
+      local distance=(p.x-x)^2+(p.y-y)^2+(p.z-z)^2
+      if distance<d then best,d=p.id,distance end
+    end
+  end
+  if best then group[best]=true say('Added '..find(parts,best).part,'action')
+  else say('All parts selected') end
+end
 local function select_near(wx, wy)
   edit()
   local x,y,z
@@ -552,6 +575,7 @@ local function select_near(wx, wy)
 end
 local function transform(mode,delta,record,wx,wy)
   edit() local target=clone(parts) local p=assert(find(target,selected), 'select a part first')
+  local ax,ay,az=p.x,p.y,p.z
   if mode=='move' then
     local x,y,z
     if wx then x,y,z=sn(wx),sn(wy),depth else x,y,z=fly_cursor() end
@@ -563,11 +587,37 @@ local function transform(mode,delta,record,wx,wy)
   elseif mode=='mirror' then p['scale_'..delta]=-scale_of(p,'scale_'..delta)
   elseif mode=='unscale' then p.scale,p.scale_x,p.scale_y,p.scale_z=1,1,1,1
   end
-  if record~=false then acted(target,mode..' '..p.part) else apply(target,false) end
+  if next(group) then
+    local mx,my,mz=p.x-ax,p.y-ay,p.z-az
+    for _,q in ipairs(target) do
+      if q.id~=selected and group[q.id] then
+        if mode=='move' then
+          if not axis_lock or axis_lock=='x' then q.x=q.x+mx end
+          if not axis_lock or axis_lock=='y' then q.y=q.y+my end
+          if not axis_lock then q.z=q.z+mz end
+        elseif mode=='rotate' then q.rot=((q.rot+delta+180)%360)-180
+        elseif mode=='rotateto' then q.rot=((delta+180)%360)-180
+        elseif mode=='scale' then q.scale=math.max(SCALE_MIN,math.min(SCALE_MAX,scale_of(q,'scale')*delta))
+        elseif mode=='mirror' then q['scale_'..delta]=-scale_of(q,'scale_'..delta)
+        elseif mode=='unscale' then q.scale,q.scale_x,q.scale_y,q.scale_z=1,1,1,1
+        end
+      end
+    end
+  end
+  local label=mode..' '..p.part
+  if next(group) then label=label..(' +%d'):format(#selected_ids()-1) end
+  if record~=false then acted(target,label) else apply(target,false) end
 end
 local function remove()
-  edit() local target=clone(parts) local _,i=find(target,selected)
-  assert(i,'select a part first') table.remove(target,i) acted(target,'Deleted part')
+  edit()
+  local target=clone(parts)
+  local ids=selected_ids()
+  assert(#ids>0,'select a part first')
+  for i=#target,1,-1 do
+    if target[i].id==selected or group[target[i].id] then table.remove(target,i) end
+  end
+  clear_group()
+  acted(target,#ids==1 and 'Deleted part' or ('Deleted '..#ids..' parts'))
 end
 local function history(back)
   edit() local from,to=back and undo or redo,back and redo or undo
@@ -817,7 +867,16 @@ gd.command('map',function(arg)
     elseif op=='duplicate' then
       local n=tonumber(name)
       if n and n>1 then duplicate_many(math.floor(n)) else place(true) end
-    elseif op=='select' then select_near()
+    elseif op=='select' then
+      if name=='add' then select_add()
+      elseif name=='all' then
+        clear_group()
+        if not selected and parts[1] then selected=parts[1].id end
+        for _,p in ipairs(parts) do if p.id~=selected then group[p.id]=true end end
+        say(('Selected %d parts'):format(#selected_ids()),'action')
+      elseif name=='clear' then
+        clear_group() say('Selection cleared','action')
+      else select_near() end
     elseif op=='move' then transform('move')
     elseif op=='rotate' then transform('rotate',tonumber(name) or 15)
     elseif op=='scale' then transform('scale',tonumber(name) or SCALE_STEP)
@@ -1153,7 +1212,10 @@ local function poll_mouse()
         end
       else
       local wx,wy=mouse_world()
-      if tool=='select' then attempt(function() select_near(wx,wy) end)
+      if tool=='select' then
+        local prev=selected
+        attempt(function() select_near(wx,wy) end)
+        if gd.key('SHIFT') and prev and selected and prev~=selected then group[prev]=true end
       elseif tool=='place' then attempt(function() place(false,wx,wy) end)
       elseif tool=='move' then dragging=true attempt(function() transform('move',nil,true,wx,wy) end)
       elseif tool=='rotate' then attempt(rotate_to_mouse)
@@ -1277,7 +1339,9 @@ function on_tick()
     if gd.key_pressed('PAGEUP') or pressed('RIGHT') then depth=depth+U*grid end
     if gd.key_pressed('PAGEDOWN') or pressed('LEFT') then depth=depth-U*grid end
     if gd.key_pressed('INSERT') or pressed('A') then attempt(function() place(false) end) end
-    if gd.key_pressed('TAB') or pressed('X') then attempt(select_near) end
+    if gd.key_pressed('TAB') or pressed('X') then
+      if gd.key('SHIFT') then attempt(select_add) else attempt(select_near) end
+    end
     if gd.key_pressed('M') or pressed('Y') then attempt(function() transform('move') end) end
     if gd.key_pressed('R') or pressed('R') then attempt(function() transform('rotate',15) end) end
     if gd.key_pressed('T') or pressed('L') then attempt(function() transform('rotate',-15) end) end
@@ -1347,6 +1411,7 @@ HELP = {
   {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (drag a green edge)'},
   {'spawns', 'map spawn <slot> [x y]: starts 0-3, respawns 4-7, item spawns 127-146'},
   {'out of bounds', 'placing outside the blast zone / camera bounds warns (toast + log)'},
+  {'multi-select', 'Shift+Tab / map select add: add nearest; select all|clear; transforms and Delete hit the whole selection'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},
@@ -1449,6 +1514,12 @@ function on_draw()
   if h and h.id~=selected then
     local hx,hy,hv=gd.project(h.x,h.y,h.z)
     if hx and hv then gd.box(hx-8,hy-8,16,16,0xC080FFFF) end
+  end
+  for _,q in ipairs(parts) do
+    if q.id~=selected and group[q.id] then
+      local qx,qy,qv=gd.project(q.x,q.y,q.z)
+      if qx and qv then gd.box(qx-7,qy-7,14,14,0xFFA040FF) end
+    end
   end
   local kit=gd.kit
   if not kit.available() then gd.text(12,12,'Map editor: menu kit assets missing; use map console commands') return end

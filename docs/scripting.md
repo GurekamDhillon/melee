@@ -126,6 +126,11 @@ include script metadata. Coordinates must be finite and within ±100000; scale
 is 0.001..100 and rotation is -360..360. Invalid options and stale mutation
 handles raise Lua errors. A rejected transform leaves the instance unchanged.
 
+Two options apply to `gd.model_spawn` only: `collision = false` places the model
+visual-only, without its sidecar's lines; `floor_flags` (0..3: `1` pass-through,
+`2` ledges) replaces the sidecar's flags on every floor line of this instance, so
+one part can be a solid floor in one place and a drop-through ledge in another.
+
 The mesh uses its authored origin and dimensions, with no automatic centering
 or fit-to-floor scaling. X/Y are the collision plane; Z is visual depth only.
 Collision transforms are `world = translation + scale * rotationZ * local`.

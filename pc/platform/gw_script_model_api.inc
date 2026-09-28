@@ -9,6 +9,7 @@ extern int gw_ScriptGame_ModelDespawn(int handle);
 extern int gw_ScriptGame_ModelLineOwner(int handle);
 static int gs_model_input[SM_FIELDS];
 static const GmCollision *gs_model_collision;
+static int gs_model_floor_flags = -1; /* spawn option: overrides every floor line's flags */
 
 int gw_Script_ModelInput(int field, int line)
 {
@@ -19,7 +20,8 @@ int gw_Script_ModelInput(int field, int line)
     switch (field) {
     case 0: return gs_fbits(l->x0); case 1: return gs_fbits(l->y0);
     case 2: return gs_fbits(l->x1); case 3: return gs_fbits(l->y1);
-    case 4: return l->kind; case 5: return l->flags;
+    case 4: return l->kind;
+    case 5: return l->kind == 1 && gs_model_floor_flags >= 0 ? gs_model_floor_flags : l->flags;
     default: return 0;
     }
 }
@@ -100,19 +102,33 @@ static int l_model_release(lua_State *L)
 }
 static int l_model_spawn(lua_State *L)
 {
-    int i, handle, result, first_line, field[SM_FIELDS] = {0};
+    int i, handle, result, first_line, count, floor_flags = -1, field[SM_FIELDS] = {0};
     gs_require_stage(L, "model_spawn"); i = gs_model_asset(L, 1);
     field[SM_SCALE] = gs_fbits(1); field[SM_VISIBLE] = 1; field[SM_TINT] = -1;
     gs_model_options(L, 2, field);
+    count = gs_stage_models[i].collision.count;
+    if (lua_istable(L, 2)) {
+        /* Spawn-only: collision = false places the model visual-only; floor_flags (0..3:
+         * 1 pass-through, 2 ledges) replaces the sidecar's flags on every floor line. */
+        lua_pushstring(L, "collision"); lua_rawget(L, 2);
+        if (!lua_isnil(L, -1)) { luaL_checktype(L, -1, LUA_TBOOLEAN); if (!lua_toboolean(L, -1)) count = 0; }
+        lua_pop(L, 1);
+        lua_pushstring(L, "floor_flags"); lua_rawget(L, 2);
+        if (!lua_isnil(L, -1)) {
+            lua_Integer v = luaL_checkinteger(L, -1);
+            if (v < 0 || v > 3) luaL_error(L, "model floor_flags must be 0..3");
+            floor_flags = (int)v;
+        }
+        lua_pop(L, 1);
+    }
     if (gs_stage_handle_serial > INT_MAX - SCRIPT_MESH_LINES - 1)
         return luaL_error(L, "model instance handle space exhausted");
     handle = gs_stage_next_handle(L); first_line = gs_stage_handle_serial + 1;
-    gs_stage_handle_serial += gs_stage_models[i].collision.count;
+    gs_stage_handle_serial += count;
     gs_rw_branch(); memcpy(gs_model_input, field, sizeof field);
-    gs_model_collision = &gs_stage_models[i].collision;
-    result = gw_ScriptGame_ModelSpawn(i, gs_stage_models[i].token, handle,
-                                    gs_model_collision->count, first_line);
-    gs_model_collision = NULL;
+    gs_model_collision = &gs_stage_models[i].collision; gs_model_floor_flags = floor_flags;
+    result = gw_ScriptGame_ModelSpawn(i, gs_stage_models[i].token, handle, count, first_line);
+    gs_model_collision = NULL; gs_model_floor_flags = -1;
     if (result < 0) {
         lua_pushnil(L);
         lua_pushstring(L, result == -2 ? "model instance pool full (128)" : result == -3 ?

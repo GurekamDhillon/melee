@@ -45,8 +45,9 @@ local action_log, undo_names, redo_names, log_open, log_rows = {}, {}, {}, false
 local search, search_rows = nil, nil -- action search overlay (bible §5.10)
 local bounds = {camera=nil, blast=nil} -- stage bounds the map is authored against (bible §6.6, §8 P2)
 local spawns = {} -- moved start/respawn points, slot -> {x=, y=} (bible §6.3)
-local bounds_drag, bounds_ui = nil, nil -- dragging a camera-bounds edge (bible §8 P2)
+local bounds_drag = nil -- dragging a camera-bounds edge (bible §8 P2)
 local group = {} -- extra selected part ids beside the anchor (bible §5.4)
+local marquee = nil -- select-tool drag rectangle: {sx,sy,x,y,add} (bible §5.4)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -792,12 +793,30 @@ local function field_set(field, value)
   else error('field: x|y|z|rot|scale') end
   acted(target,field..' '..string.format('%.2f',field_value(p,field)))
 end
+local function bounds_handle_positions()
+  local cam=bounds.camera
+  if not cam then return nil end
+  local cw=canvas_w()
+  local x1,y1=gd.project(cam.left,cam.top,0)
+  local x2,y2=gd.project(cam.right,cam.bottom,0)
+  if not (x1 and y1 and x2 and y2) then return nil end
+  local function clampv(v,lo,hi) return math.max(lo,math.min(hi,v)) end
+  x1,y1,x2,y2=clampv(x1,0,cw),clampv(y1,0,480),clampv(x2,0,cw),clampv(y2,0,480)
+  local mx,my=(x1+x2)/2,(y1+y2)/2
+  local h={}
+  local function inside(v,lo,hi) return v>=lo and v<=hi end
+  if inside(x1,4,cw-4) then h.left={x=x1,y=my} end
+  if inside(x2,4,cw-4) then h.right={x=x2,y=my} end
+  if inside(y1,4,476) then h.top={x=mx,y=y1} end
+  if inside(y2,4,476) then h.bottom={x=mx,y=y2} end
+  return h
+end
 local function hit_bounds(mx,my)
-  local h=bounds_ui
-  if not h or not bounds.camera then return nil end
+  local h=bounds_handle_positions()
+  if not h then return nil end
   for _,edge in ipairs({'left','right','top','bottom'}) do
     local p=h[edge]
-    if math.abs(mx-p.x)<=6 and math.abs(my-p.y)<=6 then return edge end
+    if p and math.abs(mx-p.x)<=6 and math.abs(my-p.y)<=6 then return edge end
   end
   return nil
 end
@@ -1204,6 +1223,32 @@ local function poll_mouse()
     mouse.prev=mouse.buttons
     return
   end
+  if marquee then
+    if (mouse.buttons & 1)==1 then
+      marquee.x,marquee.y=mouse.x,mouse.y
+    else
+      local m=marquee marquee=nil
+      if not m.add then clear_group() end
+      if math.abs(m.x-m.sx)<4 and math.abs(m.y-m.sy)<4 then
+        local wx,wy=mouse_world()
+        attempt(function() select_near(wx,wy) end)
+      else
+        local x1,x2=math.min(m.sx,m.x),math.max(m.sx,m.x)
+        local y1,y2=math.min(m.sy,m.y),math.max(m.sy,m.y)
+        local hit=0
+        for _,p in ipairs(parts) do
+          local px,py,on=gd.project(p.x,p.y,p.z)
+          if px and on and px>=x1 and px<=x2 and py>=y1 and py<=y2 then
+            group[p.id]=true hit=hit+1
+          end
+        end
+        if selected and in_group(selected) then group[selected]=nil end
+        if hit==0 then say('Nothing in the box') else say(('Box-selected %d'):format(#selected_ids()),'action') end
+      end
+    end
+    mouse.prev=mouse.buttons
+    return
+  end
   local lmb=(mouse.buttons & 1)==1
   local pressed=lmb and (mouse.prev & 1)==0
   local right=(mouse.buttons & 2)==2 and (mouse.prev & 2)==0
@@ -1232,9 +1277,7 @@ local function poll_mouse()
       else
       local wx,wy=mouse_world()
       if tool=='select' then
-        local prev=selected
-        attempt(function() select_near(wx,wy) end)
-        if gd.key('SHIFT') and prev and selected and prev~=selected then group[prev]=true end
+        marquee={sx=mouse.x, sy=mouse.y, x=mouse.x, y=mouse.y, add=gd.key('SHIFT')==true}
       elseif tool=='place' then attempt(function() place(false,wx,wy) end)
       elseif tool=='move' then dragging=true attempt(function() transform('move',nil,true,wx,wy) end)
       elseif tool=='rotate' then attempt(rotate_to_mouse)
@@ -1392,7 +1435,7 @@ function on_frame_pre()
   if mouse_api then poll_mouse() end
   ghost_sync()
   hover=hover_part()
-  if menu or help_open or modal or filtering or typing or field_drag or search or bounds_drag or gd.key('CTRL') then return end
+  if menu or help_open or modal or filtering or typing or field_drag or search or bounds_drag or marquee or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
   local dx=(gd.key('D') and 1 or 0)-(gd.key('A') and 1 or 0)
   local dy=(gd.key('W') and 1 or 0)-(gd.key('S') and 1 or 0)
@@ -1432,7 +1475,7 @@ HELP = {
   {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (drag a green edge)'},
   {'spawns', 'map spawn <slot> [x y]: starts 0-3, respawns 4-7, item spawns 127-146'},
   {'out of bounds', 'placing outside the blast zone / camera bounds warns (toast + log)'},
-  {'multi-select', 'Shift+Tab adds / Ctrl+Tab drops a part; select all|clear; transforms and Delete hit the whole selection'},
+  {'multi-select', 'select tool: drag a box (Shift-drag adds); Shift+Tab adds / Ctrl+Tab drops; select all|clear; transforms hit the selection'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},
@@ -1507,7 +1550,6 @@ function on_draw()
       handles_ui={movex={px,py,hx2,hy2}, movey={px,py,gx2,gy2}, scale={sx2,sy2}, rot={px,py,r}}
     end
   end
-  bounds_ui=nil
   if bounds.camera or bounds.blast then
     local cw=canvas_w()
     local function clampv(v,lo,hi) return math.max(lo,math.min(hi,v)) end
@@ -1518,18 +1560,16 @@ function on_draw()
       x1,y1,x2,y2=clampv(x1,0,cw),clampv(y1,0,480),clampv(x2,0,cw),clampv(y2,0,480)
       gd.box(x1,y1,x2-x1,y2-y1,color)
       if kind=='camera' then
-        local mx,my=(x1+x2)/2,(y1+y2)/2
-        local function inside(v,lo,hi) return v>=lo and v<=hi end
-        bounds_ui={}
-        if inside(x1,4,cw-4) then bounds_ui.left={x=x1,y=my} end
-        if inside(x2,4,cw-4) then bounds_ui.right={x=x2,y=my} end
-        if inside(y1,4,476) then bounds_ui.top={x=mx,y=y1} end
-        if inside(y2,4,476) then bounds_ui.bottom={x=mx,y=y2} end
-        for _,h in pairs(bounds_ui) do gd.box(h.x-4,h.y-4,8,8,0x40E060FF) end
+        for _,h in pairs(bounds_handle_positions() or {}) do gd.box(h.x-4,h.y-4,8,8,0x40E060FF) end
       end
     end
     if bounds.camera then draw_rect(bounds.camera,0x40E060FF,'camera') end
     if bounds.blast then draw_rect(bounds.blast,0xE06060FF,'blast') end
+  end
+  if marquee then
+    local x1,x2=math.min(marquee.sx,marquee.x),math.max(marquee.sx,marquee.x)
+    local y1,y2=math.min(marquee.sy,marquee.y),math.max(marquee.sy,marquee.y)
+    gd.box(x1,y1,x2-x1,y2-y1,0x80FFFFFF)
   end
   local h=hover and find(parts,hover)
   if h and h.id~=selected then

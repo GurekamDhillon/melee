@@ -480,4 +480,27 @@ local rotated=0
 for _,p in ipairs(sub) do if p.rot==15 then rotated=rotated+1 end end
 assert(rotated==2, 'select remove drops one part from the group (2 of 3 rotate together)')
 command('off')
+-- P3 marquee: box-select in one drag (bible §5.4)
+active=false on_match_end()
+active=true models={} on_match_start()
+command('on') command('clear')
+command('tool place')
+local places={{300,200},{320,220},{500,300},{520,320}}
+for _,pt in ipairs(places) do
+  mouse_state={x=pt[1], y=pt[2], buttons=1} on_frame_pre()
+  mouse_state={x=pt[1], y=pt[2], buttons=0} on_frame_pre()
+end
+assert(count()==4, 'four parts for the marquee test')
+command('tool select')
+mouse_state={x=250, y=150, buttons=1} on_frame_pre()
+mouse_state={x=350, y=150, buttons=1} on_frame_pre()
+mouse_state={x=350, y=250, buttons=1} on_frame_pre()
+mouse_state={x=350, y=250, buttons=0} on_frame_pre()
+command('rotate 15')
+command('save marq.lua')
+local mq=assert(load(files['marq.lua'],'','t',{}))().parts
+local zero, fifteen = 0, 0
+for _,p in ipairs(mq) do if p.rot==15 then fifteen=fifteen+1 else zero=zero+1 end end
+assert(fifteen==3 and zero==1, 'the box selects the two inside parts (plus the anchor rotates)')
+command('off')
 print('map_editor_test: PASS')

@@ -1237,9 +1237,11 @@ int gw_Kit_DrawPanel(float x, float y, float w, float h, const char *prefix, con
      * open outside its diagonal. The flat colour fill (no texture) still covers the whole panel. */
     if ((fill_rgba & 0xFF) != 0) {
         if (fill >= 0) {
-            added += kq_add(x + c, y, x + w - c, y + h, 0, 0, 1, 1, fill_rgba, fill, shear, sy); /* centre column */
-            added += kq_add(x, y + c, x + c, y + h - c, 0, 0, 1, 1, fill_rgba, fill, shear, sy);  /* left edge cell */
-            added += kq_add(x + w - c, y + c, x + w, y + h - c, 0, 0, 1, 1, fill_rgba, fill, shear, sy);
+            /* the art's own fill colour: only the caller's alpha applies (a tint would muddy it) */
+            const uint32_t own = 0xFFFFFF00u | (fill_rgba & 0xFFu);
+            added += kq_add(x + c, y, x + w - c, y + h, 0, 0, 1, 1, own, fill, shear, sy); /* centre column */
+            added += kq_add(x, y + c, x + c, y + h - c, 0, 0, 1, 1, own, fill, shear, sy);  /* left edge cell */
+            added += kq_add(x + w - c, y + c, x + w, y + h - c, 0, 0, 1, 1, own, fill, shear, sy);
         } else {
             added += kq_add(x, y, x + w, y + h, 0, 0, 0, 0, fill_rgba, -1, shear, sy);
         }

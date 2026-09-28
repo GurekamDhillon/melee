@@ -372,9 +372,8 @@ void stats_text(float x, float y, const char *value, const char *role, uint32_t 
 }
 
 void stats_panel(float height) {
-  const uint32_t edge = kit_col("solo.face", 0x38C9D9FFu);
   const uint32_t bg = kit_col("solo.bg", 0x111122FFu);
-  gw_Kit_DrawPanel(8.0f, 8.0f, 308.0f, height, "frame", nullptr, 12.0f, edge,
+  gw_Kit_DrawPanel(8.0f, 8.0f, 308.0f, height, "frame", nullptr, 0.0f /* the art's 1x corners, as the sheet */, 0xFFFFFFFFu, /* the frame art is full colour: untinted */
                    (bg & 0xFFFFFF00u) | 0xE8u, 0.0f);
 }
 
@@ -390,7 +389,7 @@ void draw_no_controller(const ImGuiIO &io, float s, float ox, float oy) {
   if (gw_Kit_Available()) {
     const int q0 = gw_Kit_QuadCount();
     const float w = 360.0f, h = 104.0f, x = (640.0f - w) * 0.5f, y = (480.0f - h) * 0.5f;
-    gw_Kit_DrawPanel(x, y, w, h, "frame", nullptr, 0.0f, kit_col("gold", 0xF0B429FFu),
+    gw_Kit_DrawPanel(x, y, w, h, "frame", nullptr, 0.0f, 0xFFFFFFFFu, /* full-colour frame art: untinted */
                      kit_col("ink", 0x0A0E18FFu) & 0xFFFFFFF0u, 0.0f);
     int role = gw_Kit_Role("heading");
     gw_Kit_DrawText(320.0f, y + 40.0f, head, role >= 0 ? role : 0, kit_col("bone", 0xF2EFE4FFu),
@@ -474,7 +473,7 @@ void draw_fly_readout(float s, float ox, float oy) {
   for (const char *c = text; *c; ++c) lines += *c == '\n';
   const float h = 12.0f + 16.0f * (float)lines, y0 = 480.0f - 12.0f - h;
   const int q0 = gw_Kit_QuadCount();
-  gw_Kit_DrawPanel(12.0f, y0, 300.0f, h, "frame", nullptr, 10.0f, kit_col("solo.face", 0x38C9D9FFu),
+  gw_Kit_DrawPanel(12.0f, y0, 300.0f, h, "frame", nullptr, 0.0f, 0xFFFFFFFFu, /* full-colour frame art: untinted */
                    (kit_col("ink", 0x0A0E18FFu) & 0xFFFFFF00u) | 0xD8u, 0.0f);
   const int role = gw_Kit_Role("caption");
   char *line = text;

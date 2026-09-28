@@ -7,12 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdint.h>
 
 typedef struct SmConfig {
-    int direct, role, delay, local_udp_port, remote_udp_port;
+    int direct, role, delay, local_udp_port, remote_udp_port, timeout_ms;
     const char *profile, *code, *evidence;
 } SmConfig;
 
+/* Unsigned subtraction remains valid across GetTickCount's wrap. */
+static int sm_stalled(uint32_t now, uint32_t progress, int timeout_ms) {
+    return (uint32_t)(now-progress) >= (uint32_t)timeout_ms;
+}
 static const char *sm_env(const char *name) {
     const char *value = getenv(name);
     return value && *value ? value : NULL;
@@ -40,6 +45,7 @@ static int sm_config(SmConfig *out, const char **why) {
     }
     if (!sm_int("MELEE_SLIPPI_REPLAY_ROLE",0,1,2,&out->role) ||
         !sm_int("MELEE_SLIPPI_DELAY",2,1,7,&out->delay) ||
+        !sm_int("MELEE_SLIPPI_TIMEOUT_MS",5000,1000,60000,&out->timeout_ms) ||
         !sm_int("MELEE_SLIPPI_LOCAL_PORT",0,1,65535,&out->local_udp_port) ||
         !sm_int("MELEE_SLIPPI_REMOTE_PORT",0,1,65535,&out->remote_udp_port)) {
         *why="invalid numeric Slippi setting"; return -1;

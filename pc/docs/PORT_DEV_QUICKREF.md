@@ -75,6 +75,7 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_SLIPPI_MODE=loopback\|direct` | opt-in experimental two-client replay driver; absent means the existing replay/netplay paths |
 | `MELEE_SLIPPI_REPLAY_ROLE=1\|2` | fixture player owned locally; Direct adopts the server's assigned port |
 | `MELEE_SLIPPI_DELAY=1..7` | applied-input delay, default 2; initial pads must be neutral |
+| `MELEE_SLIPPI_TIMEOUT_MS` | `5000` | ENet and gameplay-stall timeout in ms (`1000..60000`); default preserves 3 s outage grace. Terminal loss shows a toast for 2 s before exit 2. |
 | `MELEE_SLIPPI_LOCAL_PORT`, `MELEE_SLIPPI_REMOTE_PORT` | distinct UDP ports required by loopback; Direct uses its ticket assignment |
 | `MELEE_SLIPPI_USER_JSON=<path or ->`, `MELEE_SLIPPI_CODE` | Direct profile and opponent code; `-` reads bounded profile JSON from stdin, never log it |
 | `MELEE_SLIPPI_EVIDENCE=<path>` | required diagnostic JSON output; pair with `MELEE_STATE_TRACE`, `MELEE_RB_HASHLOG`, `MELEE_SLP_RECORD` |

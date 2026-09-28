@@ -129,7 +129,20 @@ static void malformed_packet(void) {
   gw_slippi_peer_stats(target,&st);
   assert(seen.count==10 && seen.last_frame==10 && seen.last_pad[0]==10 &&
          st.last_received_frame==10);
-  enet_host_destroy(raw); gw_slippi_peer_close(target);
+  enet_host_destroy(raw);
+  {
+    DWORD begin=GetTickCount();
+    do {
+      gw_slippi_peer_poll(target,10); gw_slippi_peer_stats(target,&st);
+      if (st.disconnected) break;
+      Sleep(5);
+    } while ((DWORD)(GetTickCount()-begin)<8000u);
+    if (!st.disconnected || st.connected || (DWORD)(GetTickCount()-begin)<4500u) {
+      puts("slippi-peer-silent-loss: FAIL"); assert(0);
+    }
+    puts("slippi-peer-silent-loss: PASS");
+  }
+  gw_slippi_peer_close(target);
 }
 static void remapped_port(void) {
   ENetAddress addr={0}; ENetHost *raw; ENetPeer *sender; ENetEvent ev;
@@ -250,6 +263,20 @@ static void duplicate_disconnect(void) {
     Sleep(5);
   }
   assert(received);
+  /* Losing the final connected alternative must be visible to the owner. */
+  enet_peer_disconnect(extra,0);
+  for (i=0;i<200;i++) {
+    gw_slippi_peer_poll(target,2);
+    while (enet_host_service(raw,&ev,0)>0)
+      if (ev.type==ENET_EVENT_TYPE_RECEIVE) enet_packet_destroy(ev.packet);
+    gw_slippi_peer_stats(target,&st);
+    if (st.disconnected) break;
+    Sleep(5);
+  }
+  if (!st.disconnected || st.connected) {
+    puts("slippi-peer-disconnect: FAIL"); assert(0);
+  }
+  puts("slippi-peer-disconnect: PASS");
   enet_host_destroy(raw); gw_slippi_peer_close(target);
 }
 int main(int argc,char **argv) {
@@ -305,7 +332,25 @@ int main(int argc,char **argv) {
     Sleep(5);
   }
   assert(sa.last_acked_frame==130 && sa.queued_local==0);
+  /* Freeze one endpoint for 3 s. The survivor must not discard its ENet session. */
+  {
+    DWORD begin=GetTickCount();
+    while ((DWORD)(GetTickCount()-begin)<3000u) {
+      gw_slippi_peer_poll(pa,130); Sleep(5);
+    }
+    gw_slippi_peer_stats(pa,&sa);
+    if (!sa.connected || sa.disconnected) { puts("slippi-peer-3s-recovery: FAIL"); assert(0); }
+    for (i=0;i<100;i++) { gw_slippi_peer_poll(pb,130); gw_slippi_peer_poll(pa,130); Sleep(5); }
+  }
   assert(gw_slippi_peer_send_pad(pa,131,pad1,130,131));
+  for (i=0;i<200;i++) {
+    gw_slippi_peer_poll(pb,131); gw_slippi_peer_poll(pa,131);
+    gw_slippi_peer_stats(pa,&sa);
+    if (sa.last_acked_frame==131) break;
+    Sleep(5);
+  }
+  if (sa.last_acked_frame!=131) { puts("slippi-peer-3s-recovery: FAIL"); assert(0); }
+  puts("slippi-peer-3s-recovery: PASS");
   gw_slippi_peer_close(pa); gw_slippi_peer_close(pb);
   two_process();
   malformed_packet();

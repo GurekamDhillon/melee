@@ -11,7 +11,7 @@ static int failures;
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "FAIL line %d: %s\n", __LINE__, #x); failures++; } } while (0)
 static void clear_config(void) {
     const char *names[] = {"MELEE_SLIPPI_MODE", "MELEE_SLIPPI_REPLAY_ROLE",
-        "MELEE_SLIPPI_DELAY", "MELEE_SLIPPI_LOCAL_PORT", "MELEE_SLIPPI_REMOTE_PORT",
+        "MELEE_SLIPPI_TIMEOUT_MS", "MELEE_SLIPPI_DELAY", "MELEE_SLIPPI_LOCAL_PORT", "MELEE_SLIPPI_REMOTE_PORT",
         "MELEE_SLIPPI_USER_JSON", "MELEE_SLIPPI_CODE", "MELEE_SLIPPI_EVIDENCE",
         "MELEE_NETPLAY", "MELEE_RB_FAKE", "MELEE_RB_INPUT", "MELEE_SLP_RESYNC"};
     unsigned i;
@@ -31,6 +31,22 @@ int main(void) {
     _putenv_s("MELEE_SLIPPI_REMOTE_PORT", "45102");
     _putenv_s("MELEE_SLIPPI_EVIDENCE", "evidence.json");
     CHECK(sm_config(&config, &why) == 1 && config.role == 1 && config.delay == 2);
+    CHECK(config.timeout_ms == 5000);
+    CHECK(!sm_stalled(4000u, 1000u, config.timeout_ms)); /* 3 s outage */
+    CHECK(!sm_stalled(5999u, 1000u, config.timeout_ms));
+    CHECK(sm_stalled(6000u, 1000u, config.timeout_ms));
+    CHECK(!sm_stalled(6500u, 6000u, config.timeout_ms)); /* recovered */
+    CHECK(sm_stalled(3999u, 0xFFFFFC17u, config.timeout_ms)); /* clock wrap */
+    _putenv_s("MELEE_SLIPPI_TIMEOUT_MS", "8000");
+    CHECK(sm_config(&config, &why) == 1 && config.timeout_ms == 8000);
+    CHECK(!sm_stalled(6000u, 1000u, config.timeout_ms));
+    _putenv_s("MELEE_SLIPPI_TIMEOUT_MS", "999");
+    CHECK(sm_config(&config, &why) < 0);
+    _putenv_s("MELEE_SLIPPI_TIMEOUT_MS", "60001");
+    CHECK(sm_config(&config, &why) < 0);
+    _putenv_s("MELEE_SLIPPI_TIMEOUT_MS", "5000junk");
+    CHECK(sm_config(&config, &why) < 0);
+    _putenv_s("MELEE_SLIPPI_TIMEOUT_MS", "");
     _putenv_s("MELEE_RB_FAKE", "4");
     CHECK(sm_config(&config, &why) < 0);
     _putenv_s("MELEE_RB_FAKE", "");

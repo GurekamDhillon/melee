@@ -6,6 +6,7 @@
  * compatibility with an unmodified Dolphin opponent.
  */
 #include "gw.h"
+#include "gw_overlay.h"
 #include "gw_slippi_mode.h"
 #include "gw_slippi_mode_config.h"
 #include "gw_slippi_pad.h"
@@ -25,7 +26,9 @@ static struct {
     int tried, active, selected, got_selections, sent_selections, sent_selected;
     int started, complete, last_simulated, local_port, remote_port;
     int got_remote, remote_changes, pending_error;
-    DWORD progress_ms, complete_ms;
+    DWORD progress_ms, complete_ms, lost_ms;
+    int exit_code, peer_lost;
+    const char *lost_reason;
     SmConfig config;
     GwSlippiFixtureInfo fixture;
     GwSlippiPeer *peer;
@@ -86,6 +89,7 @@ static int sm_evidence(void) {
             sm.config.direct?"direct":"loopback",sm.local_port+1,(unsigned long)GetCurrentProcessId());
     fprintf(file,"\"connection_selected\":%s,\"match_started\":%s,\"match_completed\":%s,\n",
             sm.selected?"true":"false",sm.started?"true":"false",sm.complete?"true":"false");
+    fprintf(file,"\"exit_code\":%d,\"end_frame\":%d,\n",sm.exit_code,gw_Replay_Frame());
     fprintf(file,"\"first_frame\":%d,\"last_frame\":%d,\"confirmed_frame\":%d,\"input_delay\":%d,\n",
             sm.fixture.first_frame,sm.fixture.last_frame,gw_rb_confirmed_frame(),sm.config.delay);
     fprintf(file,"\"sent_local_frames\":%u,\"received_remote_frames\":%u,\n",
@@ -106,9 +110,10 @@ static int sm_evidence(void) {
     { int failed=ferror(file); return fclose(file)==0 && !failed; }
 }
 static void sm_exit(int code, const char *reason) {
-    if (!gw_Replay_FinishRecording() && !code) {
+    if (!gw_Replay_FinishRecording()) {
         gw_log("slippi: could not finalize recording"); code=2;
     }
+    sm.exit_code=code;
     if (code) sm.complete=0;
     gw_log("slippi: %s (role %d, frame %d, confirmed %d)",reason,sm.local_port+1,
            gw_Replay_Frame(),gw_rb_confirmed_frame());
@@ -155,6 +160,12 @@ void gw_SlippiMode_Tick(int online_frame) {
     uint32_t checksum;
     DWORD now=GetTickCount();
     if (!sm.active || !sm.peer) return;
+    if (sm.peer_lost) {
+        /* Keep the normal render/event pump alive long enough to read the toast. */
+        gw_rb_request_wait(1);
+        if ((DWORD)(now-sm.lost_ms)>=2000u) sm_exit(2,sm.lost_reason);
+        return;
+    }
     gw_slippi_peer_poll(sm.peer,online_frame);
     if (sm.pending_error || gw_rb_desyncs()) sm_exit(2,"peer checksum or selection mismatch");
     if (gw_Replay_SlippiLocalMismatches()) sm_exit(2,"raw input processing differs from fixture");
@@ -168,8 +179,21 @@ void gw_SlippiMode_Tick(int online_frame) {
     current=gw_Replay_Frame();
     if (current>=sm.fixture.first_frame) sm.started=1;
     if (current>sm.last_simulated) { sm.last_simulated=current; sm.progress_ms=now; }
-    if ((DWORD)(now-sm.progress_ms)>60000u) sm_exit(2,"no gameplay progress for 60 seconds");
     gw_slippi_peer_stats(sm.peer,&stats);
+    /* A completed peer may close while we serve its final ACK grace period. */
+    if (gw_rb_slippi_finalized() &&
+        stats.last_acked_frame>=gw_SlippiPad_OnlineFrame(sm.fixture.last_frame) && !sm.complete_ms)
+        sm.complete_ms=now;
+    if (!sm.complete_ms && (stats.disconnected || (sm.started &&
+        sm_stalled(now,sm.progress_ms,sm.config.timeout_ms)))) {
+        sm.peer_lost=1; sm.lost_ms=now;
+        sm.lost_reason=stats.disconnected ? "Opponent disconnected. Match ended." :
+                                           "Connection lost: opponent stopped responding.";
+        gw_log("slippi: %s (timeout %d ms)",sm.lost_reason,sm.config.timeout_ms);
+        gw_Overlay_Toast(sm.lost_reason);
+        gw_rb_request_wait(1);
+        return;
+    }
     checksum_frame=gw_rb_confirmed_frame();
     if (checksum_frame>current) checksum_frame=current;
     checksum=gw_rb_checksum(checksum_frame);
@@ -275,6 +299,7 @@ const char *gw_SlippiMode_Scene(void) {
     peer.remote_host=host; peer.local_udp_port=(uint16_t)sm.config.local_udp_port;
     peer.remote_udp_port=(uint16_t)sm.config.remote_udp_port;
     peer.local_port_idx=(uint8_t)sm.local_port; peer.remote_port_idx=(uint8_t)sm.remote_port;
+    peer.timeout_ms=(uint32_t)sm.config.timeout_ms;
     peer.match_id=sm.match_id; peer.loopback_mode=!sm.config.direct;
     peer.on_remote_pad=sm_remote_pad; peer.on_remote_checksum=sm_remote_checksum;
     peer.on_selections=sm_remote_selection; peer.on_connection_selected=sm_remote_selected;
@@ -296,6 +321,7 @@ const char *gw_SlippiMode_Scene(void) {
     scene=gw_replay_scene();
     if (!scene || !*scene) sm_exit(2,"fixture does not describe a launchable match");
     sm.active=1; sm.progress_ms=GetTickCount();
+    gw_log("slippi: peer and gameplay stall timeout %d ms",sm.config.timeout_ms);
     gw_log("slippi: %s peer selected, P%d local / P%d remote, fixture frames %d..%d, delay %d",
            sm.config.direct?"Direct":"loopback",sm.local_port+1,sm.remote_port+1,
            sm.fixture.first_frame,sm.fixture.last_frame,sm.config.delay);

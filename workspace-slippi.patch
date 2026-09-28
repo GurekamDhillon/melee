@@ -1,0 +1,293 @@
+--- a/tools/slippi/compare_finalized.py
++++ b/tools/slippi/compare_finalized.py
+@@ -11,6 +11,9 @@
+ receive the same fresh salt from the runner. Only tags and salt may appear in
+ evidence; the peer tag must equal the other client's account tag. This is
+ diagnostic identity evidence, not authentication.
++Early-end comparison is opt-in and requires matching explicit exit-3/end-frame
++evidence. It compares only the shared finalized recording prefix, never treating
++a missing tail as gameplay divergence. Normal acceptance still requires full length.
+ Finalized hashes cover every fixture frame and may additionally include the
+ start-of-next-frame boundary at last_frame + 1 on both clients.
+ """
+@@ -208,7 +211,8 @@
+ 
+ 
+ def verify_pair(fixture: Path, client_a: dict, client_b: dict, *,
+-                require_mode: str = 'loopback', require_rollback: bool = False) -> dict:
++                require_mode: str = 'loopback', require_rollback: bool = False,
++                allow_early_end: bool = False) -> dict:
+     """Validate a pair; each client supplies trace/recording/hashes paths and evidence.
+ 
+     Evidence is written by the native mode. `input_delay` is an integer 1..7;
+@@ -232,10 +236,36 @@
+     if last < first or last - first + 1 > MAX_FIXTURE_FRAMES:
+         errors.append('fixture frame span is invalid or implausibly large')
+         return result
++    fixture_last = last
++    early = allow_early_end and any(
++        isinstance(c.get('evidence'), dict) and c['evidence'].get('exit_code') == 3
++        for c in (client_a, client_b))
++    if early:
++        try:
++            evs = [c['evidence'] for c in (client_a, client_b)]
++            for ev in evs:
++                if (type(ev.get('exit_code')) is not int or ev['exit_code'] != 3 or
++                    ev.get('match_completed') is not False or
++                    type(ev.get('end_frame')) is not int or
++                    type(ev.get('last_frame')) is not int or
++                    type(ev.get('confirmed_frame')) is not int or
++                    not first <= ev['confirmed_frame'] <= ev['end_frame'] < ev['last_frame'] or
++                    ev['last_frame'] - first + 1 > MAX_FIXTURE_FRAMES):
++                    raise ValueError('invalid early-end evidence')
++            if evs[0]['end_frame'] != evs[1]['end_frame'] or evs[0]['last_frame'] != evs[1]['last_frame']:
++                raise ValueError('clients ended at different frames or used different fixture lengths')
++            ends = [_complete_replay(Path(c['recording'])).last_frame for c in (client_a, client_b)]
++            if any(not first <= end <= ev['confirmed_frame'] for end, ev in zip(ends, evs)):
++                raise ValueError('recording exceeds confirmed early-end range')
++            last = min(last, *ends)
++            result['end_frame'] = evs[0]['end_frame']
++        except (KeyError, TypeError, OSError, ValueError, IndexError, struct.error) as exc:
++            errors.append(f'early end: {exc}')
++            return result
+     frames = set(range(first, last + 1))
+     count = len(frames)
+     result.update(first_frame=first, last_frame=last)
+-    if first != -123 or set(original.post) != frames or set(original.pre) != frames:
++    if first != -123 or set(original.post) != set(range(first, fixture_last + 1)) or set(original.pre) != set(range(first, fixture_last + 1)):
+         errors.append('fixture does not contain a complete frame sequence from -123')
+     if any(not {(0, False), (1, False)} <= set(players) for players in original.post.values()):
+         errors.append('fixture does not contain both P1 and P2 on every frame')
+@@ -268,8 +298,8 @@
+             evidence = {}
+         evidences.append(evidence)
+         exact = dict(schema=1, mode=require_mode, role=role, connection_selected=True,
+-                     match_started=True, match_completed=True, first_frame=first,
+-                     last_frame=last, remote_fixture_reads=0, desyncs=0)
++                     match_started=True, match_completed=not early, first_frame=first,
++                     last_frame=evidence.get('last_frame') if early else last, remote_fixture_reads=0, desyncs=0)
+         for key, expected in exact.items():
+             value = evidence.get(key)
+             if type(value) is not type(expected) or value != expected:
+@@ -297,7 +327,18 @@
+             state = _trace(Path(client['trace']))
+             recording = _complete_replay(Path(client['recording']))
+             traces.append(state)
+-            hash_sets.append(_hashes(Path(client['hashes'])))
++            hashes = _hashes(Path(client['hashes']))
++            if early:
++                own_frames = set(range(first, recording.last_frame + 1))
++                if (set(recording.pre) != own_frames or set(recording.post) != own_frames or
++                    set(state) != own_frames or not own_frames <= set(hashes) or
++                    not set(hashes) <= set(range(first, evidence['confirmed_frame'] + 2))):
++                    raise ValueError('incomplete early-end artifacts')
++                recording.pre = {f: v for f, v in recording.pre.items() if f in frames}
++                recording.post = {f: v for f, v in recording.post.items() if f in frames}
++                state = {f: v for f, v in state.items() if f in frames}
++                hashes = {f: v for f, v in hashes.items() if f in frames}
++            hash_sets.append(hashes)
+             if set(recording.pre) != frames or any(
+                 set(recording.pre.get(frame, {})) != set(original.pre.get(frame, {}))
+                 for frame in frames
+@@ -325,7 +366,7 @@
+                 if previous is None or input_mismatch['frame'] < previous['frame']:
+                     result['first_input_divergence'] = input_mismatch
+             for label, actual in (('trace', state), ('recording', recording.post)):
+-                comparison = replay_diff.compare(original.post, actual)
++                comparison = replay_diff.compare({f: original.post[f] for f in frames}, actual)
+                 exact_shape = set(actual) == frames and all(
+                     set(actual[frame]) == set(original.post[frame]) for frame in frames
+                     if frame in actual and frame in original.post)
+@@ -342,7 +383,7 @@
+                     if previous is None or candidate['frame'] < previous['frame']:
+                         result['first_divergence'] = candidate
+             if role == 1:
+-                result['compared_player_frames'] = sum(len(p) for p in original.post.values())
++                result['compared_player_frames'] = sum(len(original.post[f]) for f in frames)
+         except (OSError, KeyError, TypeError, ValueError, IndexError, struct.error) as exc:
+             post_ok = False
+             inputs_ok = False
+--- a/tools/slippi/two_client_replay.py
++++ b/tools/slippi/two_client_replay.py
+@@ -13,7 +13,6 @@
+ import os
+ from pathlib import Path
+ import secrets
+-import shutil
+ import socket
+ import subprocess
+ import sys
+@@ -197,6 +196,7 @@
+                MELEE_SLIPPI_REMOTE_PORT=str(proxy_ports[role-1] if proxy_ports else ports[2-role]),
+                MELEE_SLIPPI_MATCH_ID=run_id,
+                MELEE_SLIPPI_DELAY=str(args.delay), MELEE_SLIPPI_RUN_SALT=salt,
++               MELEE_SLIPPI_TIMEOUT_MS=str(getattr(args, 'peer_timeout_ms', 5000)),
+                MELEE_SLP=(fixture_override or args.fixture).as_posix(),
+                MELEE_INPUT='none', MELEE_VOLUME='3',
+                MELEE_MODS_DIR=args.empty_mods.as_posix(),
+@@ -208,7 +208,7 @@
+     if profiles:
+         env['MELEE_SLIPPI_USER_JSON'] = '-'
+         env['MELEE_SLIPPI_CODE'] = profiles[2-role]['connectCode']
+-    command = [os.environ.get('GW_BASH') or shutil.which('bash') or 'bash', '-c',
++    command = ['C:/Program Files/Git/bin/bash.exe', '-c',
+                'export PATH=/usr/bin:/bin:$PATH; exec bash "$GW_ROOT/tools/port/run.sh" '
+                '"$MELEE_SLIPPI_RUN_NAME" --iso "$MELEE_ISO"']
+     process = None
+@@ -236,6 +236,10 @@
+         raise
+ 
+ 
++def valid_pair_exits(codes, negative_control: bool) -> bool:
++    return tuple(codes) == (0, 0) or (negative_control and tuple(codes) == (3, 3))
++
++
+ def evaluate_negative_control(mutation: dict, normal: dict, consensus: dict) -> dict:
+     """Require a changed result versus source and exact agreement between clients."""
+     errors = []
+@@ -268,6 +272,8 @@
+         raise RunError('UDP impairment is only available in loopback mode')
+     if args.negative_control and args.mode != 'loopback':
+         raise RunError('input negative control is only available in loopback mode')
++    if not 1000 <= args.peer_timeout_ms <= 60000:
++        raise RunError('peer timeout must be 1000..60000 ms')
+     replay = _complete_replay(args.fixture)
+     profiles = profiles_from_args(args)
+     ports = free_ports()
+@@ -303,19 +309,20 @@
+                                altered_fixture if role == 1 else None))
+         deadline = time.monotonic() + (args.timeout or max(180, (replay.last_frame+124)/60*3+120))
+         next_update = time.monotonic()
++        allowed_exits = (0, 3) if args.negative_control else (0,)
+         while any(item.process.poll() is None for item in runs):
+             for item in runs:
+                 item.discover()
+             if time.monotonic() >= deadline:
+                 raise RunError('paired match exceeded its deadline')
+-            if any(item.process.poll() not in (None, 0) for item in runs):
++            if any(item.process.poll() not in (None, *allowed_exits) for item in runs):
+                 raise RunError('a native client exited with failure; inspect its private run log')
+             if time.monotonic() >= next_update:
+                 print(json.dumps(dict(status='running', mode=args.mode,
+                                       observed_game_processes=sum(len(item.games) for item in runs))), flush=True)
+                 next_update = time.monotonic()+10
+             time.sleep(0.2)
+-        if any(item.process.returncode != 0 for item in runs):
++        if not valid_pair_exits([item.process.returncode for item in runs], args.negative_control):
+             raise RunError('native client failed')
+         clients = []
+         expected_tags = {account_tag(profile, salt) for profile in profiles}
+@@ -327,6 +334,8 @@
+             if profiles and (evidence.get('run_salt') != salt or
+                              evidence.get('account_tag') not in expected_tags):
+                 raise RunError('matchmaking identity does not match the requested account pair')
++            if (item.process.returncode == 3 or 'exit_code' in evidence) and evidence.get('exit_code') != item.process.returncode:
++                raise RunError('early exit lacks explicit in-game end evidence')
+             clients.append(dict(evidence=evidence, trace=item.directory/'state.csv',
+                                 recording=item.directory/'match.slp', hashes=item.directory/'hashes.csv'))
+         clients.sort(key=lambda client: client['evidence'].get('role', 0))
+@@ -334,10 +343,10 @@
+             raise RunError('both evidence files name the same game process')
+         if args.negative_control:
+             normal = verify_pair(args.fixture, *clients, require_mode='loopback',
+-                                 require_rollback=args.require_rollback)
++                                 require_rollback=args.require_rollback, allow_early_end=True)
+             consensus = verify_pair(clients[0]['recording'], *clients,
+                                     require_mode='loopback',
+-                                    require_rollback=args.require_rollback)
++                                    require_rollback=args.require_rollback, allow_early_end=True)
+             result = evaluate_negative_control(mutation, normal, consensus)
+         else:
+             result = verify_pair(args.fixture, *clients, require_mode=args.mode,
+@@ -380,6 +389,8 @@
+     parser.add_argument('--accounts-helper', type=Path, help='private local Python provider exposing profiles()')
+     parser.add_argument('--delay', type=int, choices=range(1,8), default=2)
+     parser.add_argument('--timeout', type=float)
++    parser.add_argument('--peer-timeout-ms', type=int, default=5000,
++                        help='ENet and gameplay stall timeout, 1000..60000 ms')
+     parser.add_argument('--require-rollback', action='store_true')
+     parser.add_argument('--negative-control', action='store_true',
+                         help='alter one P1 A input in client 1 only; require divergence and client consensus')
+--- a/tools/slippi/test_compare_finalized.py
++++ b/tools/slippi/test_compare_finalized.py
+@@ -95,6 +95,63 @@
+     def verify(self, **kwargs):
+         return verify_pair(self.fixture, self.clients[0], self.clients[1], **kwargs)
+ 
++    def early_pair(self):
++        for client in self.clients:
++            client['evidence'].update(match_completed=False, exit_code=3,
++                                     end_frame=-120, last_frame=10)
++        # P2 finalized one fewer frame; the common prefix still has changing input.
++        client = self.clients[1]
++        data = client['recording'].read_bytes()
++        rawlen = struct.unpack_from('>I', data, 11)[0]
++        # Each frame has two pre/post event pairs (67 + 85 bytes each).
++        start = 15 + rawlen - 7 - 304
++        data = data[:start] + data[start+304:]
++        data = data[:11] + struct.pack('>I', rawlen-304) + data[15:]
++        client['recording'].write_bytes(data)
++        rows = client['trace'].read_text().splitlines()
++        client['trace'].write_text('\n'.join(rows[:-2])+'\n')
++        client['hashes'].write_text('-123,00000001\n-122,00000002\n')
++        client['evidence']['confirmed_frame'] = -122
++
++    def test_early_common_finalized_prefix(self):
++        self.early_pair()
++        result = self.verify(allow_early_end=True)
++        self.assertTrue(result['ok'], result)
++        self.assertEqual(result['last_frame'], -122)
++        self.assertEqual(result['compared_player_frames'], 4)
++        self.assertFalse(self.verify()['ok'])
++
++    def test_early_different_end_is_rejected(self):
++        self.early_pair()
++        self.clients[1]['evidence']['end_frame'] = -119
++        self.assertFalse(self.verify(allow_early_end=True)['ok'])
++
++    def test_early_missing_checksum_is_rejected(self):
++        self.early_pair()
++        self.clients[0]['hashes'].write_text('-123,00000001\n')
++        self.assertFalse(self.verify(allow_early_end=True)['ok'])
++
++    def test_early_client_mismatch_is_rejected(self):
++        self.early_pair()
++        self.clients[1]['hashes'].write_text('-123,00000001\n-122,000000FF\n')
++        self.assertFalse(self.verify(allow_early_end=True)['ok'])
++
++    def test_early_negative_control_requires_real_divergence(self):
++        from two_client_replay import evaluate_negative_control
++        self.early_pair()
++        normal = self.verify(allow_early_end=True)
++        consensus = verify_pair(self.clients[0]['recording'], *self.clients, allow_early_end=True)
++        self.assertFalse(evaluate_negative_control({'frame': -122}, normal, consensus)['ok'])
++        # Change an original post-state at the mutated frame, leaving both clients equal.
++        data = bytearray(self.fixture.read_bytes())
++        cursor = 15 + 14 + 421 + 304 + 67
++        self.assertEqual(data[cursor], 0x38)
++        struct.pack_into('>f', data, cursor + 0x0A, 99.0)
++        self.fixture.write_bytes(data)
++        normal = self.verify(allow_early_end=True)
++        self.assertTrue(evaluate_negative_control({'frame': -122}, normal, consensus)['ok'])
++        self.assertFalse(evaluate_negative_control({'frame': -121}, normal, consensus)['ok'])
++
+     def test_complete_pair_passes(self):
+         result = self.verify(require_rollback=True)
+         self.assertTrue(result['ok'], result)
+--- a/tools/slippi/test_two_client_replay.py
++++ b/tools/slippi/test_two_client_replay.py
+@@ -118,5 +118,14 @@
+                 runner.launch(SimpleNamespace(min_free_gib=8), 1, (45001, 45002), 'test', 'ab'*16, [])
+ 
+ 
++class EarlyExitTest(unittest.TestCase):
++    def test_only_matching_early_exit_is_accepted(self):
++        self.assertTrue(runner.valid_pair_exits([3, 3], True))
++        self.assertTrue(runner.valid_pair_exits([0, 0], False))
++        for codes, negative in (([3, 3], False), ([0, 3], True),
++                                ([3, 2], True), ([2, 2], True)):
++            self.assertFalse(runner.valid_pair_exits(codes, negative))
++
++
+ if __name__ == '__main__':
+     unittest.main()

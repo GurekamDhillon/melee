@@ -56,6 +56,8 @@
 #include <sysdolphin/baselib/tev.h>
 #include <sysdolphin/baselib/archive.h>
 #include <sysdolphin/baselib/jobj.h>
+#include "script_mode.h"
+#include "script_mode.inc"
 
 /* Each scripted line owns two vertices and one joint. mpCheckFloor and its wall/ceiling
  * siblings walk joint ranges (mplib.c), so a single appended global range cannot mix kinds.
@@ -198,6 +200,7 @@ void ScriptGame_StageEnd(void)
     /* Invalidate every handle now, including enemies and lines. StagePrepare may
      * not run in the next scene (CSS, menus), so it cannot own this reset. */
     memset(&script_stage, 0, sizeof(script_stage));
+    memset(script_mode, 0, sizeof(script_mode));
     Script_StageModelsReset(); /* native mesh/atlas bytes; the memset above cleared the instances */
 }
 
@@ -1170,15 +1173,52 @@ int ScriptGame_SpawnEnemy(int which, int xb, int yb, int facing, int handle)
     return handle;
 }
 
+/* ---- Scripted enemy terminal lifecycle (independent of kind/spawn adapters) ----
+ * it_8027CE44 reports stock defeats; Item_8026A8EC/itzako's destroyed callback
+ * cover every other item end, including fallout and lifetime expiry. The latter
+ * do not expose a cause, so report item_destroyed rather than inventing a KO.
+ * defeated: 0 = live, 1 = defeated, 2 = removed. Mark before queuing; both
+ * destroyed hooks may run for the same item. This state is snapshotted game BSS.
+ */
+static void script_enemy_terminal(ScriptStageEnemy* e, int reason)
+{
+    extern void Script_EnemyDefeated(int kind, int handle);
+    extern void Script_EnemyRemoved(int kind, int handle, int reason);
+    if (e->defeated) return;
+    e->defeated = reason == 0 ? 1 : 2;
+    if (reason == 0)
+        Script_EnemyDefeated(script_enemy_index(e->kind), e->handle);
+    else
+        Script_EnemyRemoved(script_enemy_index(e->kind), e->handle, reason);
+    OSReport("script enemy: terminal kind=%d handle=%d reason=%s\n", e->kind,
+             e->handle, reason == 0 ? "defeated" :
+             reason == 1 ? "explicit_remove" : "item_destroyed");
+}
+
+/* Scalar status for an owned-handle watchdog; never expose a game pointer.
+ * 0 = removed/unknown, 1 = live, 2 = defeated (possibly still animating). */
+int ScriptGame_EnemyStatus(int handle)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        if (e->handle != handle) continue;
+        if (e->defeated == 1) return 2;
+        return e->active && e->gobj != NULL && !e->defeated;
+    }
+    return 0;
+}
+
 int ScriptGame_EnemyRemove(int handle)
 {
     int i;
     for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
         ScriptStageEnemy* e = &script_stage.enemy[i];
         if (!e->active || e->handle != handle) continue;
-        e->active = 0;
+        script_enemy_terminal(e, 1);
         /* Item_8026A8EC calls ScriptGame_EnemyDestroyed before releasing this gobj. */
         Item_8026A8EC(e->gobj);
+        e->active = 0;
         e->gobj = NULL;
         OSReport("script enemy: removed handle=%d\n", handle);
         return 1;
@@ -1193,12 +1233,7 @@ int ScriptGame_EnemyDefeated(Item_GObj* gobj)
         ScriptStageEnemy* e = &script_stage.enemy[i];
         if (!e->active || e->gobj != gobj) continue;
         if (e->defeated) return 2;
-        {
-            extern void Script_EnemyDefeated(int kind, int handle);
-            e->defeated = 1;
-            Script_EnemyDefeated(script_enemy_index(e->kind), e->handle);
-            OSReport("script enemy: defeated kind=%d handle=%d\n", e->kind, e->handle);
-        }
+        script_enemy_terminal(e, 0);
         return 1;
     }
     return 0;
@@ -1210,12 +1245,14 @@ int ScriptGame_EnemyDestroyed(Item_GObj* gobj)
     for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
         ScriptStageEnemy* e = &script_stage.enemy[i];
         if (e->gobj != gobj || gobj == NULL) continue;
+        script_enemy_terminal(e, 2);
         e->active = 0;
         e->gobj = NULL;
         return 1;
     }
     return 0;
 }
+/* ---- End scripted enemy terminal lifecycle ---- */
 
 float ScriptGame_StageTargetF(int i, int field)
 {

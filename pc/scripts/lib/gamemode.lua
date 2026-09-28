@@ -1,0 +1,423 @@
+-- Gamemode v1. Bundle before a mod's entry; the game sandbox has no require.
+-- Definitions are immutable. All simulation state lives in state and mode_blob.
+Gamemode = {}
+local Mode = {}
+Mode.__index = Mode
+
+local function keys(t)
+    local out = {}
+    for k in pairs(t) do
+        assert(type(k) == 'string' or math.type(k) == 'integer', 'state key must be string/integer')
+        out[#out + 1] = k
+    end
+    table.sort(out, function(a, b)
+        if type(a) ~= type(b) then return type(a) < type(b) end
+        return a < b
+    end)
+    return out
+end
+
+-- Length-prefixed data, never executable Lua. Sorted keys make bytes canonical.
+local function encode(value, seen, depth)
+    seen, depth = seen or {}, depth or 0
+    assert(depth < 16, 'state nesting limit')
+    local kind = type(value)
+    if kind == 'string' then return 's' .. #value .. ':' .. value end
+    if kind == 'boolean' then return value and 'b1' or 'b0' end
+    if math.type(value) == 'integer' then return 'i' .. tostring(value) .. ':' end
+    assert(kind == 'table' and not seen[value], 'state needs acyclic tables and integer/string/boolean values')
+    seen[value] = true
+    local order, out = keys(value), {}
+    out[1] = 't' .. #order .. ':'
+    for _, k in ipairs(order) do
+        out[#out + 1] = encode(k, seen, depth + 1)
+        out[#out + 1] = encode(value[k], seen, depth + 1)
+    end
+    seen[value] = nil
+    return table.concat(out)
+end
+
+local function decode(bytes)
+    local pos = 1
+    local function read(depth)
+        assert(depth < 16, 'state nesting limit')
+        local tag = bytes:sub(pos, pos)
+        pos = pos + 1
+        if tag == 'b' then
+            local v = bytes:sub(pos, pos); pos = pos + 1
+            assert(v == '0' or v == '1', 'invalid boolean'); return v == '1'
+        end
+        local stop = assert(bytes:find(':', pos, true), 'invalid state length')
+        local n = assert(tonumber(bytes:sub(pos, stop - 1)), 'invalid state number')
+        assert(math.type(n) == 'integer', 'invalid state integer')
+        pos = stop + 1
+        if tag == 'i' then return n end
+        assert(n >= 0 and n <= 8192, 'invalid state count')
+        if tag == 's' then
+            assert(pos + n - 1 <= #bytes, 'short state string')
+            local v = bytes:sub(pos, pos + n - 1); pos = pos + n; return v
+        end
+        assert(tag == 't', 'invalid state tag')
+        local t = {}
+        for _ = 1, n do
+            local k = read(depth + 1)
+            assert(type(k) == 'string' or math.type(k) == 'integer', 'invalid state key')
+            assert(t[k] == nil, 'duplicate state key')
+            t[k] = read(depth + 1)
+        end
+        return t
+    end
+    local result = read(0)
+    assert(pos == #bytes + 1, 'trailing state data')
+    return result
+end
+local function copy(t) return decode(encode(t)) end
+local function empty(t) return next(t) == nil end
+local function inside(p, box)
+    return p and p.x >= box[1] and p.y >= box[2] and p.x <= box[3] and p.y <= box[4]
+end
+local function finite(n) return type(n) == 'number' and n == n and math.abs(n) <= 100000 end
+local function point(p) assert(p and finite(p.x) and finite(p.y), 'invalid entry/placement') end
+local function box(b)
+    assert(b and finite(b[1]) and finite(b[2]) and finite(b[3]) and finite(b[4]) and
+           b[1] <= b[3] and b[2] <= b[4], 'invalid goal/door box')
+end
+
+function Gamemode.new(def)
+    assert(type(def.id) == 'string' and #def.id <= 64 and math.type(def.version) == 'integer' and
+           def.version >= 1, 'mode id (max 64 bytes)/positive version required')
+    assert(def.areas and def.areas[def.start], 'missing start area')
+    local fade = def.fade_frames or 20
+    assert(math.type(fade) == 'integer' and fade >= 1 and fade <= 600, 'invalid fade_frames')
+    local port = def.port or 1
+    assert(math.type(port) == 'integer' and port >= 1 and port <= 4, 'invalid player port')
+    for _, id in ipairs(keys(def.areas)) do
+        assert(type(id) == 'string' and #id <= 64, 'area ids must be strings up to 64 bytes')
+        local a = def.areas[id]
+        assert(a.entries and a.entries.start, 'each area needs entries.start')
+        for _, name in ipairs(keys(a.entries)) do
+            assert(type(name) == 'string' and #name <= 64, 'entry names must be strings up to 64 bytes')
+            point(a.entries[name])
+        end
+        assert(#(a.layout or {}) <= 128 and #(a.targets or {}) <= 32, 'room exceeds model/target pool')
+        for _, p in ipairs(a.layout or {}) do point(p); assert(type(p.model) == 'string', 'model name required') end
+        for _, p in ipairs(a.targets or {}) do point(p) end
+        for _, w in ipairs(a.waves or {}) do
+            assert(#w > 0 and #w <= 32, 'wave size must be 1..32')
+            for _, e in ipairs(w) do point(e); assert(type(e.kind) == 'string', 'enemy kind required') end
+        end
+        for _, g in ipairs(a.goals or {}) do
+            assert(g.kind == 'reach_exit' or g.kind == 'defeat_all' or g.kind == 'break_targets' or
+                   g.kind == 'survive' or g.kind == 'boss', 'unknown goal')
+            if g.kind == 'survive' then assert(finite(g.seconds) and g.seconds >= 0, 'invalid survival time') end
+            if g.kind == 'reach_exit' and g.box then box(g.box) end
+            if g.kind == 'boss' then assert(a.boss, 'boss goal needs boss filter') end
+            if g.kind == 'defeat_all' then
+                assert(g.count_removed == nil or type(g.count_removed) == 'boolean', 'invalid count_removed')
+            end
+        end
+        if a.boss then
+            assert(type(a.boss.kind) == 'string' and math.type(a.boss.port) == 'integer' and
+                   a.boss.port >= 1 and a.boss.port <= 6, 'boss kind/port required')
+            assert(finite(a.boss.hold_seconds) and a.boss.hold_seconds >= 1 / 60 and
+                   a.boss.hold_seconds <= 599, 'boss hold_seconds must be 1/60..599')
+        end
+        for _, d in ipairs(a.doors or {}) do
+            box(d.box)
+            if d.to then assert(def.areas[d.to] and def.areas[d.to].entries[d.entry or 'start'], 'invalid door destination') end
+        end
+    end
+    return setmetatable({def = def, fade = fade, port = port}, Mode)
+end
+
+function Mode:_log(text) gd.log('gamemode ' .. self.def.id .. ': ' .. text) end
+function Mode:_save()
+    local bytes = encode(self.state)
+    assert(#bytes <= 8192, 'mode state exceeds 8192 bytes')
+    gd.mode_blob(bytes)
+end
+function Mode:_release()
+    if self.state.holding then gd.boss_release(); self.state.holding = false end
+end
+function Mode:_clean()
+    local s = self.state
+    local failed, models = nil, {}
+    local function remove(fn, h)
+        local ok, err = pcall(fn, h)
+        if not ok then failed = tostring(err); self:_log('cleanup ' .. h .. ': ' .. failed) end
+        return ok
+    end
+    -- Stable removal order also matters to native item/GObj allocation order.
+    for _, h in ipairs(keys(s.enemies)) do if remove(gd.enemy_remove, h) then s.enemies[h] = nil end end
+    for _, h in ipairs(keys(s.targets)) do if remove(gd.stage_remove, h) then s.targets[h] = nil end end
+    for _, h in ipairs(s.models) do if not remove(gd.model_despawn, h) then models[#models + 1] = h end end
+    s.models = models
+    assert(not failed, failed)
+end
+function Mode:_safe(fn)
+    local ok, err = pcall(fn)
+    if not ok then
+        self:_log('error: ' .. tostring(err))
+        if self.state then
+            self.state.phase, self.state.error = 'error', tostring(err):sub(1, 240)
+            pcall(function() self:_release() end)
+            pcall(function() self:_clean() end)
+            pcall(gd.camera_attach, 0)
+            -- Error is explicit; never treat a failed allocation as an empty completed wave.
+            local saved = pcall(function() self:_save() end)
+            if not saved then
+                -- A checkpoint can duplicate an otherwise valid progress payload.
+                -- Never leave old handles/phase paired with the cleaned world.
+                self.state.progress, self.state.cleared, self.state.reached = {}, {}, {}
+                self.state.checkpoint = nil
+                local stored, reason = pcall(function() self:_save() end)
+                self:_log('error recovery discarded progress/checkpoint')
+                if not stored then self:_log('error state could not be stored: ' .. tostring(reason)) end
+            end
+        end
+    end
+    return ok, err
+end
+function Mode:_wave()
+    local s, a = self.state, self.def.areas[self.state.area]
+    if s.wave >= #(a.waves or {}) or not empty(s.enemies) then return end
+    s.wave = s.wave + 1
+    for _, e in ipairs(a.waves[s.wave]) do
+        local h, why = gd.spawn_enemy(e.kind, e.x, e.y, {facing = e.facing or 1})
+        assert(h, why); s.enemies[h] = true
+    end
+    self:_log('wave ' .. s.wave .. ' in ' .. s.area)
+end
+function Mode:_enter(id, entry)
+    local s, a = self.state, self.def.areas[id]
+    self:_clean()
+    s.area, s.entry, s.elapsed, s.wave, s.boss_done = id, entry, 0, 0, false
+    s.error = nil -- checkpoint retry starts a fresh attempt after a strict-goal failure
+    s.ready_announced = false
+    s.reached = {}
+    for _, p in ipairs(a.layout or {}) do
+        local asset, why = gd.model_load(p.model)
+        assert(asset, why)
+        local ok, h, reason = pcall(gd.model_spawn, asset, {
+            x = p.x, y = p.y, z = p.z or 0, scale = p.scale or 1, rot = p.rot or 0,
+            floor_flags = p.floor_flags, collision = p.collision,
+        })
+        gd.model_release(asset)
+        assert(ok and h, reason or h)
+        s.models[#s.models + 1] = h
+    end
+    for _, p in ipairs(a.targets or {}) do
+        local h, why = gd.spawn_target(p.x, p.y); assert(h, why); s.targets[h] = true
+    end
+    local p = a.entries[entry]
+    -- live fighter relocation; does not resurrect a dead slot. A fighter in its entry or respawn
+    -- refuses a teleport: keep the spot and retry each frame (Mode:frame) until it takes.
+    if not pcall(gd.teleport, self.port, p.x, p.y) then s.pending_tp = {x = p.x, y = p.y} else s.pending_tp = nil end
+    if a.camera then gd.camera_set(a.camera) else gd.camera_attach(0) end
+    self:_wave()
+    if a.checkpoint then
+        s.checkpoint = {area = id, entry = entry, progress = copy(s.progress), cleared = copy(s.cleared)}
+        self:_log('checkpoint ' .. id .. '/' .. entry)
+    end
+    self:_log('enter ' .. id .. '/' .. entry)
+end
+function Mode:start()
+    if self.state then return false, 'stop the previous run before starting' end
+    return self:_safe(function()
+        assert(gd.mode_blob, 'engine needs gd.mode_blob')
+        assert(not gd.match().netplay, 'offline only')
+        local existing = gd.mode_blob()
+        assert(not existing or existing == '', 'one director per script; load or clear existing state')
+        -- Claim storage before allocating anything; this also rejects fake rollback natively.
+        self.state = {schema = 1, id = self.def.id, version = self.def.version,
+            area = self.def.start, entry = 'start', phase = 'play', clock = 0,
+            elapsed = 0, wave = 0, enemies = {}, targets = {}, models = {},
+            progress = {}, cleared = {}, reached = {}, holding = false, boss_done = false}
+        self:_save()
+        self:_enter(self.def.start, 'start')
+        self:_save()
+    end)
+end
+function Mode:ready()
+    local s = self.state
+    if not s or s.phase == 'error' then return false end
+    local a = self.def.areas[s.area]
+    for i, g in ipairs(a.goals or {}) do
+        if g.kind == 'defeat_all' and (s.wave < #(a.waves or {}) or not empty(s.enemies)) then return false end
+        if g.kind == 'break_targets' and not empty(s.targets) then return false end
+        if g.kind == 'survive' and s.elapsed < math.ceil(g.seconds * 60) then return false end
+        if g.kind == 'boss' and not s.boss_done then return false end
+        if g.kind == 'reach_exit' and g.box and not s.reached[i] then return false end
+    end
+    return true
+end
+function Mode:_transition(to, entry, retry)
+    local s = self.state
+    s.phase, s.fade_left = 'out', self.fade
+    s.destination, s.destination_entry, s.retrying = to or '', entry or 'start', retry or false
+    self:_log((retry and 'retry ' or 'door ') .. s.area .. ' -> ' .. (to or 'complete'))
+end
+function Mode:retry()
+    return self:_safe(function()
+        assert(self.state and self.state.checkpoint, 'no checkpoint')
+        local cp = self.state.checkpoint
+        self:_transition(cp.area, cp.entry, true)
+        self:_save()
+    end)
+end
+function Mode:frame()
+    if not self.state then return end
+    return self:_safe(function()
+        local s = self.state
+        if s.phase == 'error' or s.phase == 'complete' then return end
+        if s.pending_tp and pcall(gd.teleport, self.port, s.pending_tp.x, s.pending_tp.y) then
+            s.pending_tp = nil
+        end
+        s.clock = s.clock + 1
+        if s.holding and s.clock >= s.hold_until then
+            self:_release(); self:_log('boss hold timeout')
+        end
+        if s.phase == 'out' or s.phase == 'in' then
+            s.fade_left = s.fade_left - 1
+            if s.fade_left == 0 then
+                if s.phase == 'in' then s.phase = 'play'
+                elseif s.destination == '' then
+                    s.cleared[s.area] = true
+                    s.phase = 'complete'; self:_release(); gd.camera_attach(30)
+                    self:_log('complete')
+                else
+                    if s.retrying then
+                        s.progress, s.cleared = copy(s.checkpoint.progress), copy(s.checkpoint.cleared)
+                        self:_release()
+                    else s.cleared[s.area] = true end
+                    self:_enter(s.destination, s.destination_entry)
+                    s.phase, s.fade_left = 'in', self.fade
+                end
+            end
+        elseif s.phase == 'play' then
+            s.elapsed = s.elapsed + 1
+            self:_enemy_watchdog()
+            self:_wave()
+            local a, p = self.def.areas[s.area], gd.player(self.port)
+            for i, g in ipairs(a.goals or {}) do
+                if g.kind == 'reach_exit' and g.box and inside(p, g.box) then s.reached[i] = true end
+            end
+            if self:ready() then
+                if not s.ready_announced then
+                    s.ready_announced = true; self:_log('goals complete in ' .. s.area)
+                end
+                for _, d in ipairs(a.doors or {}) do
+                    if inside(p, d.box) then self:_transition(d.to, d.entry); break end
+                end
+            end
+        end
+        self:_save()
+    end)
+end
+function Mode:enemy_defeated(e)
+    if self.state and self.state.enemies[e.handle] then
+        return self:_safe(function()
+            self.state.enemies[e.handle] = nil
+            self:_log('enemy defeated ' .. e.handle); self:_save()
+        end)
+    end
+end
+function Mode:_removed(handle, reason)
+    local s = self.state
+    s.enemies[handle] = nil
+    self:_log('enemy removed ' .. handle .. ' reason=' .. tostring(reason or 'unknown'))
+    for _, g in ipairs(self.def.areas[s.area].goals or {}) do
+        assert(g.kind ~= 'defeat_all' or g.count_removed ~= false,
+               'defeat_all requires defeat: enemy ' .. handle .. ' removed (' .. tostring(reason) .. ')')
+    end
+end
+function Mode:enemy_removed(e)
+    if self.state and self.state.enemies[e.handle] then
+        return self:_safe(function()
+            self:_removed(e.handle, e.reason); self:_save()
+        end)
+    end
+end
+function Mode:_enemy_watchdog()
+    -- Query owned handles, not all stage items: unrelated enemies cannot lock this
+    -- room. Reconcile before spawning the next wave. Events normally arrive first;
+    -- queue overflow or a missed forwarded hook must not leave a phantom enemy.
+    for _, h in ipairs(keys(self.state.enemies)) do
+        local status = gd.enemy_status(h)
+        if status == 'defeated' then
+            self.state.enemies[h] = nil
+            self:_log('enemy watchdog: defeated ' .. h)
+        elseif status == 'removed' then
+            self:_log('enemy watchdog: missing ' .. h)
+            self:_removed(h, 'watchdog_missing')
+        else
+            assert(status == 'alive', 'invalid enemy status')
+        end
+    end
+end
+function Mode:target_broken(handle)
+    if self.state and self.state.targets[handle] then
+        return self:_safe(function()
+            self.state.targets[handle] = nil
+            self:_log('target broken ' .. handle); self:_save()
+        end)
+    end
+end
+function Mode:boss_defeated(e)
+    local s = self.state
+    if not s or s.phase ~= 'play' or s.boss_done then return end
+    local b = self.def.areas[s.area].boss
+    if not b or e.kind ~= b.kind or e.port ~= b.port then return end
+    return self:_safe(function()
+        assert(gd.boss_hold(b.hold_seconds + 1), 'boss hold refused')
+        s.holding, s.boss_done = true, true
+        s.hold_until = s.clock + math.ceil(b.hold_seconds * 60)
+        self:_log('boss defeated ' .. e.kind .. ' P' .. e.port); self:_save()
+    end)
+end
+function Mode:progress_set(key, value)
+    return self:_safe(function()
+        local progress = copy(self.state.progress)
+        progress[key] = value
+        local trial = copy(self.state); trial.progress = progress
+        assert(#encode(trial) <= 8192, 'mode state exceeds 8192 bytes')
+        self.state.progress = progress; self:_save(); self:_log('progress changed: ' .. tostring(key))
+    end)
+end
+function Mode:load()
+    -- World objects/camera/hold have already restored. Never spawn, clean or advance here.
+    local bytes = gd.mode_blob()
+    if not bytes or bytes == '' then self.state = nil; return end
+    local s = decode(bytes)
+    assert(s.schema == 1 and s.id == self.def.id and s.version == self.def.version and
+           self.def.areas[s.area], 'incompatible mode state')
+    self.state = s
+    if self.def.areas[s.area].camera and s.phase ~= 'error' and s.phase ~= 'complete' then
+        gd.camera_detach() -- reclaim host ownership at the restored native pose
+    end
+    self:_log('restored ' .. s.area .. ' phase=' .. s.phase .. ' wave=' .. s.wave)
+end
+function Mode:stop(scene_ended)
+    if not self.state then return end
+    if not scene_ended then
+        local ok = self:_safe(function() self:_release(); self:_clean(); gd.camera_attach(0); gd.mode_blob('') end)
+        if not ok then return false end
+    end
+    self.state = nil
+end
+function Mode:draw()
+    local s = self.state
+    if not s then return end
+    if gd.kit.available() then
+        gd.kit.panel(18, 16, 370, 66)
+        gd.kit.text(32, 32, self.def.areas[s.area].title or s.area, 'label', 'gold', 'left', {max_w = 340})
+        local label = s.error or (s.phase == 'complete' and 'Route complete' or
+            (self:ready() and 'Exit open' or 'Complete the objectives'))
+        gd.kit.text(32, 58, label, 'label', 'bone', 'left', {max_w = 340})
+    end
+    if s.phase == 'out' or s.phase == 'in' then
+        local alpha = s.fade_left / self.fade
+        if s.phase == 'out' then alpha = 1 - alpha end
+        gd.fill(0, 0, 640, 480, math.floor(alpha * 255)) -- RGBA black
+    end
+end

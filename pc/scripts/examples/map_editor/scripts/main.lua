@@ -48,6 +48,7 @@ local spawns = {} -- moved start/respawn points, slot -> {x=, y=} (bible §6.3)
 local bounds_drag = nil -- dragging a camera-bounds edge (bible §8 P2)
 local group = {} -- extra selected part ids beside the anchor (bible §5.4)
 local marquee = nil -- select-tool drag rectangle: {sx,sy,x,y,add} (bible §5.4)
+local hover_gizmo = nil -- the handle or bounds edge under the pointer (bible §5.11)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
 local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
@@ -828,13 +829,32 @@ local function seg_dist(x1,y1,x2,y2,mx,my)
   local cx,cy=x1+t*dx,y1+t*dy
   return math.sqrt((mx-cx)^2+(my-cy)^2)
 end
+local function gizmo_handle_positions()
+  local p=find(parts,selected)
+  if not p then return nil end
+  local px,py,visible=gd.project(p.x,p.y,p.z)
+  if not (px and visible) then return nil end
+  local ax,ay=gd.project(p.x+2,p.y,p.z)
+  local bx,by=gd.project(p.x,p.y+2,p.z)
+  local function unit(sx,sy)
+    local dx,dy=sx-px,sy-py
+    local d=math.sqrt(dx*dx+dy*dy)
+    if d<0.001 then return 0,-1 end
+    return dx/d,dy/d
+  end
+  local ux,uy=unit(ax or px+2,ay or py)
+  local vx,vy=unit(bx or px,by or py-2)
+  local L=34
+  return {px=px, py=py, hx2=px+ux*L, hy2=py+uy*L, gx2=px+vx*L, gy2=py+vy*L,
+          sx2=px-vx*L, sy2=py-vy*L, r=20}
+end
 local function hit_handle(mx,my)
-  local h=handles_ui
-  if not h or not find(parts,selected) then return nil end
-  if seg_dist(h.movex[1],h.movex[2],h.movex[3],h.movex[4],mx,my)<=7 then return 'move','x' end
-  if seg_dist(h.movey[1],h.movey[2],h.movey[3],h.movey[4],mx,my)<=7 then return 'move','y' end
-  if math.abs(math.sqrt((mx-h.rot[1])^2+(my-h.rot[2])^2)-h.rot[3])<=6 then return 'rotate' end
-  if math.sqrt((mx-h.scale[1])^2+(my-h.scale[2])^2)<=8 then return 'scale' end
+  local h=gizmo_handle_positions()
+  if not h then return nil end
+  if seg_dist(h.px,h.py,h.hx2,h.hy2,mx,my)<=7 then return 'move','x' end
+  if seg_dist(h.px,h.py,h.gx2,h.gy2,mx,my)<=7 then return 'move','y' end
+  if math.abs(math.sqrt((mx-h.px)^2+(my-h.py)^2)-h.r)<=6 then return 'rotate' end
+  if math.sqrt((mx-h.sx2)^2+(my-h.sy2)^2)<=8 then return 'scale' end
   return nil
 end
 
@@ -1434,6 +1454,21 @@ function on_frame_pre()
   if not editing or not offline() then return end
   if mouse_api then poll_mouse() end
   ghost_sync()
+  local hg=nil
+  if mouse.over and not modal and not help_open and not typing and not filtering and not search
+     and not field_drag and not bounds_drag and not marquee then
+    local edge=hit_bounds(mouse.x,mouse.y)
+    if edge then
+      hg='camera '..edge
+    else
+      local hmode,hax=hit_handle(mouse.x,mouse.y)
+      if hmode then hg=hmode..(hax and (' '..hax) or '') end
+    end
+  end
+  if hg~=hover_gizmo then
+    hover_gizmo=hg
+    if hg then say('drag: '..hg) end
+  end
   hover=hover_part()
   if menu or help_open or modal or filtering or typing or field_drag or search or bounds_drag or marquee or gd.key('CTRL') then return end
   local p=gd.player(1) if not p then return end
@@ -1468,7 +1503,7 @@ HELP = {
   {'F7 / F8', 'scale -10% / +10%'},
   {'Shift+X / Y', 'mirror selection X / Y'},
   {'Shift+C', 'move constraint free / X / Y'},
-  {'gizmo', 'drag the object handles: red/green move X/Y, cyan scale, gold ring rotate'},
+  {'gizmo', 'drag the handles (hover names them): red/green move X/Y, cyan scale, gold ring rotate'},
   {'ghost', 'translucent placement preview; map ghost on|off'},
   {'Space', 'search actions; Enter runs the top match'},
   {'action log', 'map log on: click a step to go back'},
@@ -1547,6 +1582,12 @@ function on_draw()
         local t=math.rad(p.rot)
         gd.line(px,py,px+math.cos(t)*22,py-math.sin(t)*22,0xFFD060FF)
       end
+      if hover_gizmo=='move x' then gd.box(hx2-6,hy2-6,12,12,0xFFFFFFFF)
+      elseif hover_gizmo=='move y' then gd.box(gx2-6,gy2-6,12,12,0xFFFFFFFF)
+      elseif hover_gizmo=='scale' then gd.box(sx2-7,sy2-7,14,14,0xFFFFFFFF)
+      elseif hover_gizmo=='rotate' then
+        gd.box(px-24,py-24,48,48,0x60FFFFFF)
+      end
       handles_ui={movex={px,py,hx2,hy2}, movey={px,py,gx2,gy2}, scale={sx2,sy2}, rot={px,py,r}}
     end
   end
@@ -1560,7 +1601,12 @@ function on_draw()
       x1,y1,x2,y2=clampv(x1,0,cw),clampv(y1,0,480),clampv(x2,0,cw),clampv(y2,0,480)
       gd.box(x1,y1,x2-x1,y2-y1,color)
       if kind=='camera' then
-        for _,h in pairs(bounds_handle_positions() or {}) do gd.box(h.x-4,h.y-4,8,8,0x40E060FF) end
+        local hp=bounds_handle_positions() or {}
+        for _,h in pairs(hp) do gd.box(h.x-4,h.y-4,8,8,0x40E060FF) end
+        if hover_gizmo and hover_gizmo:find('^camera') then
+          local edge=hover_gizmo:match('^camera (%a+)$')
+          if edge and hp[edge] then gd.box(hp[edge].x-7,hp[edge].y-7,14,14,0xFFFFFFFF) end
+        end
       end
     end
     if bounds.camera then draw_rect(bounds.camera,0x40E060FF,'camera') end

@@ -48,7 +48,7 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Help / keybinds | F1 or H (Esc or a click closes) | Z menu: Help / keybinds |
 | Palette filter | F4, then type; Enter done, Esc clears; `map filter <text>` | — |
 | Selection inspector | right panel: drag x/y/z/rot/scale to scrub, click a field to type a value (Enter applies, Esc cancels); click collision / floor flags | — |
-| Gizmo handles | drag the selected part's handles: red X / green Y = move, cyan = scale, gold ring = rotate | — |
+| Gizmo handles | drag the selected part's handles: red X / green Y = move, cyan = scale, gold ring = rotate; hovering names the handle in the status line and rings it white | — |
 | Placement ghost | translucent preview at the cursor while placing; `map ghost on\|off` | — |
 | Action search | Space: type to filter actions, Up/Down, Enter runs; `map run <text>` | — |
 | Action log | `map log on`: named steps; click one to step back or a `redo:` row to step forward (`map history <n>` / `map redo <n>`) | — |

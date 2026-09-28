@@ -503,4 +503,16 @@ local zero, fifteen = 0, 0
 for _,p in ipairs(mq) do if p.rot==15 then fifteen=fifteen+1 else zero=zero+1 end end
 assert(fifteen==3 and zero==1, 'the box selects the two inside parts (plus the anchor rotates)')
 command('off')
+-- P3 hover hints: hovering a handle names it (bible §5.11)
+active=false on_match_end()
+active=true models={} on_match_start()
+command('on') command('clear') command('tool place') command('place')
+command('set x 500') command('set y 300')
+logs={}
+mouse_state={x=510, y=300, buttons=0} on_frame_pre()
+assert(logged('drag: move x'), 'hovering the X handle logs a drag hint')
+logs={}
+mouse_state={x=800, y=100, buttons=0} on_frame_pre()
+assert(not logged('drag: move x'), 'moving away clears the hint state')
+command('off')
 print('map_editor_test: PASS')

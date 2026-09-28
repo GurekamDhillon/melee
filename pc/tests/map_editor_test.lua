@@ -3,6 +3,8 @@ local commands, files, models, serial, loads = {}, {}, {}, 0, 0
 local active, online, flying, fail_spawn = true, false, false, false
 local pad, keys, overlay, reject_rotation = {}, {}, false, false
 local p = {x=13, y=26, z=0}
+local mouse_state = {x=-1000, y=-1000, buttons=0}
+local camera = {eye={x=0,y=0,z=100}, interest={x=0,y=0,z=0}, fov=30, roll=0, mode='standard'}
 local function copy(t) local o={} for k,v in pairs(t) do o[k]=v end return o end
 gd = {
   command=function(n,f) commands[n]=f end, log=function() end,
@@ -27,7 +29,10 @@ gd = {
   pad=function() return pad end, time=function() return 0 end,
   fly_speed=function() return 2 end, teleport=function(_,x,y) p.x,p.y=x,y end,
   project=function(x,y) return x,y,true end, line=function() end, box=function() end,
+  mouse=function() return mouse_state.x, mouse_state.y, mouse_state.buttons, 0 end,
+  camera_get=function() return camera end,
   kit={available=function() return true end,panel=function() end,text=function() end,
+       button=function() return 20 end,
        list=function(...) assert(select('#',...)==6, 'kit.list opts must be argument 6') end},
 }
 local chunk = loadfile('pc/scripts/examples/map_editor/scripts/main.lua')
@@ -73,6 +78,31 @@ command('save ../escape.lua') assert(not files['../escape.lua'])
 command('save test.lua') assert(files['test.lua.bak']==first)
 files['test.lua']=first
 on_draw()
+-- New surface: tools, the mouse->plane mapping, scale/mirror transforms and the help overlay.
+command('tool place')
+mouse_state={x=320, y=240, buttons=1} on_frame_pre()
+mouse_state={x=320, y=240, buttons=0} on_frame_pre()
+command('save mouse.lua')
+local placed=assert(load(files['mouse.lua'],'','t',{}))().parts
+assert(#placed==3, 'LMB with the place tool adds one part')
+assert(math.abs(placed[3].x-320)<7 and math.abs(placed[3].y-240)<7, 'mouse place maps the pointer to the depth plane')
+assert(placed[3].scale==nil and placed[3].scale_x==nil, 'unit scale is omitted from the file')
+command('tool scale')
+command('scale 2') command('mirror x')
+command('save mirrored.lua')
+local mirrored=assert(load(files['mirrored.lua'],'','t',{}))().parts
+assert(#mirrored==3, 'mirror keeps the part count')
+assert(mirrored[3].scale==2 and mirrored[3].scale_x==-1, 'scale and mirror reach the document')
+command('unscale')
+command('save unscaled.lua')
+local un=assert(load(files['unscaled.lua'],'','t',{}))().parts[3]
+assert((un.scale or 1)==1 and (un.scale_x or 1)==1, 'reset scale restores the axes')
+command('tool move') command('snap off') command('snap on') command('tool place')
+keys={F1=true} on_tick() keys={} on_draw() -- the help overlay draws through the kit
+keys={F1=true} on_tick() keys={}
+for _=1,4 do command('undo') end
+command('save back.lua')
+assert(#assert(load(files['back.lua'],'','t',{}))().parts==2, 'undo unwinds the tool edits')
 command('off') assert(not flying)
 assert(not overlay, 'editor must restore overlay')
 -- Controller edges: holding A places once; action menu reaches undo without keyboard.

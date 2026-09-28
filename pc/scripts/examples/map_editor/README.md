@@ -15,7 +15,8 @@ The exporter updates the delimited palette/grid block in `scripts/main.lua` with
 actually emitted and `UNIT = 5 * KIT_SCALE`. The checked-in catalog matches the current export:
 6.5 game units per kit metre. Recopy the script and models together after changing kit scale.
 
-Enter any offline match with P1. Press **F6** or **Z + D-pad Up** to start editing.
+Enter any offline match with P1. Press **F6** or **Z + D-pad Up** to start editing. **F1** opens
+the keybind help; the left panel's rows are clickable with the mouse.
 P1 becomes the cursor using the existing debug fly mode and its camera beyond stage bounds.
 The gold cross is the snapped placement origin; the cyan square is the selected part origin.
 Select uses nearest origin in XYZ, including the selected depth plane. It is not a mesh raycast.
@@ -23,19 +24,47 @@ Select uses nearest origin in XYZ, including the selected depth plane. It is not
 | Action | Keyboard | Controller (P1) |
 |---|---|---|
 | Flight | WASD; Shift fast | Left stick; A slow, B fast (existing fly controls) |
+| Tool | 1..5: place, select, move, rotate, scale | Z menu: Tool: ... / Next tool |
 | Palette part | Up/Down | D-pad Up/Down |
-| Depth | PageUp/PageDown | D-pad Right/Left |
+| Depth | PageUp/PageDown, or wheel | D-pad Right/Left |
+| Use the tool at the pointer | LMB (drag with move) | — (pad keeps the fly cursor) |
 | Place | Insert | A |
 | Select nearest | Tab | X |
 | Move selected to cursor | M | Y |
-| Rotate selected about Z | R / T (+/-15 degrees) | R / L |
+| Rotate selected about Z | R / T (+/-15 degrees); rotate tool: drag to face the pointer | R / L |
+| Scale selected | F7 / F8 (-10% / +10%), clamped 0.25..4 | Z menu: Scale -/+ |
+| Mirror selected | Shift+X / Shift+Y | Z menu: Mirror X / Y |
+| Move constraint | C: free / X only / Y only | Z menu: Move constraint |
+| Snap | G: on / off | Z menu: Snap on/off |
 | Duplicate at cursor | Ctrl+D | Z menu: Duplicate |
 | Delete | Delete | Z menu: Delete |
 | Undo / redo | Ctrl+Z / Ctrl+Y | Z menu: Undo / Redo |
 | Save / load current file | Ctrl+S / Ctrl+O | Z menu: Save / Load |
 | Collision overlay | F3 | Z menu: Collision overlay |
 | Action menu | F2; Up/Down, Enter; Esc closes | Z; D-pad, A; B closes |
+| Help / keybinds | F1 or H (Esc or a click closes) | Z menu: Help / keybinds |
+| Panel rows | click a tool, part or action row | — |
 | Exit editing, keep map live | F6 | Z menu: Exit editor / play |
+
+## Tools and the mouse
+
+The left panel is clickable: the five tool rows, the palette (place tool) or the action list
+(every other tool, the row the keyboard menu is on), and the Help row. The top bar shows the
+active tool and part; the bottom bar shows the document, cursor, grid, snap and part count.
+
+With the mouse, a plain click uses the current tool at the pointer: **place** drops a part there,
+**select** picks the nearest part, **move** starts a drag that follows the pointer (one undo entry
+for the whole drag; `C` constrains it to one axis), **rotate** faces the part at the pointer
+(snapped to 15 degrees while snap is on) and **scale** steps +10%. The right button opens the
+action menu, the wheel changes depth by one grid step, and the mapping is a homography solved
+from four projected plane samples each time the camera or depth changes, so it follows the real
+projection (widescreen included) without assuming camera constants.
+
+Rotation and mirroring follow the model API: scenery rotates freely; mirroring an instance that
+owns collision goes through despawn/respawn because the engine rejects effective axis-sign
+changes in place. Scale magnitudes and translations stay atomic updates. Scale fields are written
+to the layout only when they differ from 1, so existing v1 files stay valid.
+
 
 Every operation is available from the kit action menu, including grid subdivisions (1, 0.5,
 0.25 metre), new-part rotation, collision enable and floor flags. Flags are the native sidecar

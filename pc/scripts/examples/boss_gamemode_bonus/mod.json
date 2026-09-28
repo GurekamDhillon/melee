@@ -1,0 +1,12 @@
+{
+  "id": "boss_gamemode_bonus",
+  "name": "Master Hand game-mode bonus",
+  "version": "1.0.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "After Master Hand falls, hold the finish and run the two-area game-mode demo (hall, door, gallery, exit) off to the right of the stage, then restore everything.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

@@ -386,6 +386,14 @@ int GenoFly_Set(int slot, int mode)
             return -2;
         }
         fly_drop(gobj);
+        /* Hover in the idle pose, not Fall's looping fall: Wait's animation only (no
+         * translation), the fighter stays airborne (ground_or_air is Fall's), and the fly
+         * callbacks below replace Wait's, so nothing lands, falls or tumbles. Leaving the
+         * flight re-enters Fall (fly_drop), where gravity resumes from here. */
+        if (fp->ground_or_air == GA_Air) {
+            Fighter_ChangeMotionState(gobj, ftCo_MS_Wait, 0, 0.0f, 1.0f, 0.0f, NULL);
+            fp->self_vel.x = fp->self_vel.y = fp->self_vel.z = 0.0f;
+        }
         fp->anim_cb = fly_anim;
         fp->input_cb = fly_input;
         fp->phys_cb = fly_phys;

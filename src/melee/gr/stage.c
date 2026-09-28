@@ -40,28 +40,37 @@ void Stage_MexInitIds(void);
 struct StageSelection selected_stage = { St_Kind_Izumi, NULL };
 StageIdPair default_stage_pair = { Gr_Kind_Izumi, St_Kind_Izumi };
 
+/* arena-hooks: retail scrolling stages may rewrite stage_info mid-frame. Keep
+ * camera fitting and fighter KO tests on the same script-owned rectangle. */
+#if defined(TARGET_PC)
+extern float ScriptGame_ArenaBound(int field, float fallback);
+#define ARENA_BOUND(field, fallback) ScriptGame_ArenaBound(field, fallback)
+#else
+#define ARENA_BOUND(field, fallback) (fallback)
+#endif
+
 f32 Stage_GetCamBoundsLeftOffset(void)
 {
-    return stage_info.cam_info.cam_bounds.left +
-           stage_info.cam_info.cam_x_offset;
+    return ARENA_BOUND(0, stage_info.cam_info.cam_bounds.left +
+           stage_info.cam_info.cam_x_offset);
 }
 
 f32 Stage_GetCamBoundsRightOffset(void)
 {
-    return stage_info.cam_info.cam_bounds.right +
-           stage_info.cam_info.cam_x_offset;
+    return ARENA_BOUND(1, stage_info.cam_info.cam_bounds.right +
+           stage_info.cam_info.cam_x_offset);
 }
 
 f32 Stage_GetCamBoundsTopOffset(void)
 {
-    return stage_info.cam_info.cam_bounds.top +
-           stage_info.cam_info.cam_y_offset;
+    return ARENA_BOUND(2, stage_info.cam_info.cam_bounds.top +
+           stage_info.cam_info.cam_y_offset);
 }
 
 f32 Stage_GetCamBoundsBottomOffset(void)
 {
-    return stage_info.cam_info.cam_bounds.bottom +
-           stage_info.cam_info.cam_y_offset;
+    return ARENA_BOUND(3, stage_info.cam_info.cam_bounds.bottom +
+           stage_info.cam_info.cam_y_offset);
 }
 
 f32 Stage_GetCamPanAngleRadians(void)
@@ -106,35 +115,42 @@ f32 Stage_GetCamTrackSmooth(void)
 
 f32 Stage_GetBlastZoneRightOffset(void)
 {
-    return stage_info.blast_zone.right + stage_info.cam_info.cam_x_offset;
+    return ARENA_BOUND(5, stage_info.blast_zone.right + stage_info.cam_info.cam_x_offset);
 }
 
 f32 Stage_GetBlastZoneLeftOffset(void)
 {
-    return stage_info.blast_zone.left + stage_info.cam_info.cam_x_offset;
+    return ARENA_BOUND(4, stage_info.blast_zone.left + stage_info.cam_info.cam_x_offset);
 }
 
 /// named stGetPlyDeadUp according to an assert in ftcamera.c
 f32 Stage_GetBlastZoneTopOffset(void)
 {
-    return stage_info.blast_zone.top + stage_info.cam_info.cam_y_offset;
+    return ARENA_BOUND(6, stage_info.blast_zone.top + stage_info.cam_info.cam_y_offset);
 }
 
 f32 Stage_GetBlastZoneBottomOffset(void)
 {
-    return stage_info.blast_zone.bottom + stage_info.cam_info.cam_y_offset;
+    return ARENA_BOUND(7, stage_info.blast_zone.bottom + stage_info.cam_info.cam_y_offset);
 }
 
 f32 Stage_CalcUnkCamY(void)
 {
+#if defined(TARGET_PC)
+    return 0.5F * (Stage_GetCamBoundsBottomOffset() + Stage_GetBlastZoneBottomOffset());
+#else
     f32 cam_y_offset = stage_info.cam_info.cam_y_offset;
     f32 y_pos = stage_info.cam_info.cam_bounds.bottom + cam_y_offset +
                 (stage_info.blast_zone.bottom + cam_y_offset);
     return 0.5F * y_pos;
+#endif
 }
 
 f32 Stage_CalcUnkCamYBounds(void)
 {
+#if defined(TARGET_PC)
+    return 0.5F * (Stage_GetCamBoundsBottomOffset() + Stage_CalcUnkCamY());
+#else
     f32 cam_offset = (stage_info.cam_info.cam_bounds.bottom +
                       stage_info.cam_info.cam_y_offset);
     f32 y_pos_product =
@@ -144,14 +160,17 @@ f32 Stage_CalcUnkCamYBounds(void)
          (stage_info.blast_zone.bottom + stage_info.cam_info.cam_y_offset));
 
     return 0.5F * (cam_offset + y_pos_product);
+#endif
 }
 
 void Stage_UnkSetVec3TCam_Offset(Vec3* vec3)
 {
-    vec3->x = stage_info.cam_info.cam_x_offset;
-    vec3->y = stage_info.cam_info.cam_y_offset;
+    vec3->x = ARENA_BOUND(8, stage_info.cam_info.cam_x_offset);
+    vec3->y = ARENA_BOUND(9, stage_info.cam_info.cam_y_offset);
     vec3->z = 0.0F;
 }
+
+#undef ARENA_BOUND
 
 f32 Stage_GetPauseCamZPosMin(void)
 {

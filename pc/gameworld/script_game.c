@@ -117,6 +117,9 @@ static struct {
 static Article* script_target_old_article;
 #include "script_bounds.inc"
 
+/* ---- arena-hooks: deterministic origin, bounds and retail collision groups ---- */
+#include "script_arena.inc"
+
 static int script_stage_same_file(const char* a, const char* b)
 {
     for (; *a && *b; ++a, ++b) {
@@ -132,6 +135,8 @@ static int script_stage_same_file(const char* a, const char* b)
 void ScriptGame_StageEnd(void)
 {
     int i;
+    /* arena-hooks: no scene's ownership or transition can survive teardown. */
+    memset(&script_arena, 0, sizeof script_arena);
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
         if (script_stage.model[i].active && script_stage.model[i].gobj != NULL)
             HSD_GObjFree(script_stage.model[i].gobj);
@@ -317,6 +322,9 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     extern MapCollData mpLib_803BF760;
     MapCollData* dst;
     int i;
+    /* arena-hooks: count retail joints before the script pool is appended. */
+    memset(&script_arena, 0, sizeof script_arena);
+    script_arena.groups = src ? src->joint_count : mpLib_803BF760.joint_count;
     script_stage.map = NULL;
     script_stage.target_remaining = 0;
     script_stage.target_model_ready = 0;
@@ -938,6 +946,8 @@ void ScriptGame_StageFrame(void)
 {
     CollVtx* cv;
     int i;
+    /* arena-hooks: also runs for full maps with no spare scripted geometry. */
+    script_arena_frame();
     if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return;
     cv = mpGetGroundCollVtx();
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {

@@ -562,6 +562,24 @@ local function select_add()
   if best then group[best]=true say('Added '..find(parts,best).part,'action')
   else say('All parts selected') end
 end
+local function select_remove()
+  edit()
+  assert(#selected_ids()>1,'select more parts first')
+  local x,y,z=fly_cursor()
+  local worst,wd=nil,math.huge
+  for _,p in ipairs(parts) do
+    if group[p.id] then
+      local distance=(p.x-x)^2+(p.y-y)^2+(p.z-z)^2
+      if distance<wd then worst,wd=p.id,distance end
+    end
+  end
+  if worst then
+    group[worst]=nil
+    say('Removed '..find(parts,worst).part,'action')
+  else
+    clear_group() say('Selection cleared','action')
+  end
+end
 local function select_near(wx, wy)
   edit()
   local x,y,z
@@ -869,6 +887,7 @@ gd.command('map',function(arg)
       if n and n>1 then duplicate_many(math.floor(n)) else place(true) end
     elseif op=='select' then
       if name=='add' then select_add()
+      elseif name=='remove' then select_remove()
       elseif name=='all' then
         clear_group()
         if not selected and parts[1] then selected=parts[1].id end
@@ -1340,7 +1359,9 @@ function on_tick()
     if gd.key_pressed('PAGEDOWN') or pressed('LEFT') then depth=depth-U*grid end
     if gd.key_pressed('INSERT') or pressed('A') then attempt(function() place(false) end) end
     if gd.key_pressed('TAB') or pressed('X') then
-      if gd.key('SHIFT') then attempt(select_add) else attempt(select_near) end
+      if gd.key('SHIFT') then attempt(select_add)
+      elseif gd.key('CTRL') then attempt(select_remove)
+      else attempt(select_near) end
     end
     if gd.key_pressed('M') or pressed('Y') then attempt(function() transform('move') end) end
     if gd.key_pressed('R') or pressed('R') then attempt(function() transform('rotate',15) end) end
@@ -1411,7 +1432,7 @@ HELP = {
   {'bounds', 'map bounds capture|restore|camera l r t b|blast l r t b (drag a green edge)'},
   {'spawns', 'map spawn <slot> [x y]: starts 0-3, respawns 4-7, item spawns 127-146'},
   {'out of bounds', 'placing outside the blast zone / camera bounds warns (toast + log)'},
-  {'multi-select', 'Shift+Tab / map select add: add nearest; select all|clear; transforms and Delete hit the whole selection'},
+  {'multi-select', 'Shift+Tab adds / Ctrl+Tab drops a part; select all|clear; transforms and Delete hit the whole selection'},
   {'inspector', 'drag a field to scrub; click a field to type; Enter applies'},
   {'PgUp/PgDn', 'depth +/- one grid step'},
   {'Ctrl+D', 'duplicate at cursor'},

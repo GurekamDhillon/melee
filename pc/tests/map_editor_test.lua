@@ -466,4 +466,18 @@ command('undo')
 assert(count()==3, 'undo restores the deleted group')
 command('select clear')
 command('off')
+-- P3 multi-select: Ctrl-subtract (bible §5.4)
+active=false on_match_end()
+active=true models={} on_match_start()
+command('on') command('clear') command('tool place')
+command('place') command('place') command('place')
+command('select all')
+command('select remove')
+command('rotate 15')
+command('save sub.lua')
+local sub=assert(load(files['sub.lua'],'','t',{}))().parts
+local rotated=0
+for _,p in ipairs(sub) do if p.rot==15 then rotated=rotated+1 end end
+assert(rotated==2, 'select remove drops one part from the group (2 of 3 rotate together)')
+command('off')
 print('map_editor_test: PASS')

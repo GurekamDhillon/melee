@@ -1,0 +1,5 @@
+{
+  "schema": 1,
+  "notes": "No current-build failures have been verified in this code-only lane. Add only reviewed exact signatures: tag, result, rva (null if unavailable), detail, reason. Do not use wildcards or infer a fault RVA from a stack return address.",
+  "issues": []
+}

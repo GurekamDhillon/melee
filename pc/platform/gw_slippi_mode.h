@@ -5,4 +5,5 @@
  * settings fail before matchmaking; a configured run owns its process lifetime. */
 const char *gw_SlippiMode_Scene(void);
 void gw_SlippiMode_Tick(int online_frame);
+void gw_SlippiMode_SceneBegin(int scene_kind);
 #endif

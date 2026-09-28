@@ -288,6 +288,8 @@ int gw_rb_active(void) {
  * fresh session state (the snapshot slots are kept). GS_VS is scene kind 2. */
 void gw_RB_SceneBegin(int scene_kind) {
     extern void gw_Netplay_MatchOver(void);
+    extern void gw_SlippiMode_SceneBegin(int scene_kind);
+    gw_SlippiMode_SceneBegin(scene_kind);
     rb_init();
     /* Netplay is armed from the online menu at runtime, long after the first rb_init: start the
        session now (and stand it down once the netplay match is over). */

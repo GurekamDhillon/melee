@@ -190,6 +190,18 @@ void gw_SlippiMode_Tick(int online_frame) {
     }
 }
 
+/* gw_RB_SceneBegin: a scene after the Slippi match began. Gameplay can end the match before the
+ * fixture's last frame (an altered input changes who wins, as in the runner's negative control);
+ * without this the client sat on the results screen and never wrote its evidence. End the session
+ * now, as a failure with the reason, so the runner reads finalized artifacts instead of none. */
+void gw_SlippiMode_SceneBegin(int scene_kind) {
+    char why[128];
+    if (!sm.active || !sm.started || sm.complete || scene_kind == 2) return;
+    snprintf(why, sizeof why, "the match ended in game at frame %d, before the fixture's last frame %d",
+             gw_Replay_Frame(), sm.fixture.last_frame);
+    sm_exit(3, why);
+}
+
 const char *gw_SlippiMode_Scene(void) {
     const char *why=NULL,*scene;
     GwSlippiPeerConfig peer={0};

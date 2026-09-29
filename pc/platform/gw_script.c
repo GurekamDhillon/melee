@@ -35,7 +35,11 @@
 #include <time.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include "../third_party/lua-5.4.7/src/lua.h"
 #include "../third_party/lua-5.4.7/src/lauxlib.h"

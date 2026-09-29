@@ -29,7 +29,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+/* MEM_WRITE_WATCH is never honored by the Linux VirtualAlloc() shim (gw_mem1_watched is always
+ * false there), so sn.dirty_mode is always false and these are never actually called - stubs
+ * only so the file compiles. See gw_compat_linux.c's VirtualAlloc(). */
+typedef void *PVOID;
+typedef unsigned int UINT;
+#define WRITE_WATCH_FLAG_RESET 1
+static inline UINT GetWriteWatch(DWORD flags, PVOID base, size_t size, PVOID *addrs,
+                                 ULONG_PTR *count, DWORD *granularity) {
+  (void)flags;
+  (void)base;
+  (void)size;
+  (void)addrs;
+  (void)granularity;
+  *count = 0;
+  return 1; /* nonzero: failure, matching "cannot tell: everything is suspect" */
+}
+static inline UINT ResetWriteWatch(PVOID base, size_t size) {
+  (void)base;
+  (void)size;
+  return 0;
+}
+#endif
 
 #define GW_SNAP_MAX_RANGES 4096
 #define GW_SNAP_MAX_SYMS 8192

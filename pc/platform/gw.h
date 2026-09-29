@@ -131,6 +131,20 @@ void gw_watch_tick(void);
  * which produce no log output and look exactly like a hang from outside. */
 void gw_start_watchdog(void);
 
+/* ---- window (Linux only; Windows call sites use Win32 window APIs directly) --------------- */
+#ifndef _WIN32
+/* The SDL_Window Aurora created (AuroraInfo.window), set once from main() before anything else
+ * could need it. Declared as void* here so gw.h need not pull in SDL headers for every file that
+ * includes it; the handful of callers that need the real type cast it themselves. */
+void gw_set_window(void *sdl_window);
+void *gw_get_window(void);
+/* Whether Aurora's window currently has keyboard focus - the Linux equivalent of the
+ * GetForegroundWindow()+GetWindowThreadProcessId()+GetCurrentProcessId() chain several files use
+ * on Windows to answer "is this process's own window focused". */
+bool gw_window_focused(void);
+void gw_set_window_title(const char *title);
+#endif
+
 /* ---- process-wide runtime ---------------------------------------------------------------- */
 
 /* MEM1: the game's 24 MB main memory, mapped at 0x80000000 when the OS allows it, because game

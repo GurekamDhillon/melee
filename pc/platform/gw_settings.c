@@ -16,7 +16,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #define ST_MAX 64
 #define ST_KEY 32

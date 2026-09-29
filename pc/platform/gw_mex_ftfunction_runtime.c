@@ -35,7 +35,11 @@
 #include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 /* Index spaces (see INDEX SPACES below). The port reserves a block of fighter kinds and a block
  * of character kinds for m-ex fighters (melee/ft/forward.h Ft_Kind_Mex0, ChKind_Mex0). Slots are

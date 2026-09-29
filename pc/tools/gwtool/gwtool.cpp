@@ -3,7 +3,7 @@
 // Input : LLVM IR or bitcode produced by
 //           clang --target=ppc32-none-eabi -O2 -Xclang -disable-llvm-passes -emit-llvm -c
 //         (big-endian data layout, 32-bit pointers, PowerPC SysV struct/bitfield layout).
-// Output: i686-pc-windows-msvc code (COFF object by default) in which all memory touched by
+// Output: i686-unknown-linux-gnu code (ELF object by default) in which all memory touched by
 //         game code keeps the exact GameCube byte image:
 //
 //  * Every load/store of a multi-byte scalar (integer, float, double, pointer, or a vector of
@@ -21,7 +21,7 @@
 //    "__gwrt_" are runtime hooks and keep their name.
 //  * Integer division/remainder never traps (PowerPC divw/divwu semantics), variable shifts by
 //    >= the bit width follow slw/srw/sraw, and float->int conversions saturate like fctiwz.
-//  * The module is retargeted to i686-pc-windows-msvc after verifying that every aggregate
+//  * The module is retargeted to i686-unknown-linux-gnu after verifying that every aggregate
 //    layout is identical under the PowerPC and x86 data layouts, then optimized and emitted.
 //===----------------------------------------------------------------------===//
 
@@ -49,6 +49,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/InitLLVM.h"
@@ -536,7 +537,10 @@ private:
     auto *AT = ArrayType::get(P, Entries.size());
     auto *Table = new GlobalVariable(M, AT, /*isConstant=*/true, GlobalValue::InternalLinkage,
                                      ConstantArray::get(AT, Entries), "__gw_fixups");
-    Table->setSection(".gwfix$m");
+    // ELF: no MSVC-style "$"-suffixed section merging/sorting. Use a plain, C-identifier section
+    // name instead ("gwfix", no leading dot) so GNU ld/lld auto-generate __start_gwfix/__stop_gwfix
+    // bounding the concatenation of every TU's contribution, in link order. See gw_runtime.c.
+    Table->setSection("gwfix");
     Table->setAlignment(Align(4));
     appendToUsed(M, {Table});
   }
@@ -818,7 +822,7 @@ int main(int argc, char **argv) {
   if (!OldDL.isBigEndian())
     fatal("expected a big-endian data layout");
 
-  Triple NewT("i686-pc-windows-msvc");
+  Triple NewT("i686-unknown-linux-gnu");
   std::string Error;
   const Target *Tgt = TargetRegistry::lookupTarget(NewT, Error);
   if (!Tgt)

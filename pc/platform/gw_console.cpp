@@ -15,7 +15,11 @@
 
 #include <imgui.h>
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <cstdio>
 #include <cstring>

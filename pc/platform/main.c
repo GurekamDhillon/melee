@@ -14,7 +14,15 @@
 #include <aurora/event.h>
 #include <aurora/main.h>
 
+#ifndef _WIN32
+#include <SDL3/SDL_video.h>
+#endif
+
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,13 +56,13 @@ static void gw_apply_window_env(void) {
   int x, y, hide = 0;
   bool have_x = gw_env_int("MELEE_WINDOW_X", &x);
   bool have_y = gw_env_int("MELEE_WINDOW_Y", &y);
-  HWND hwnd;
 
   (void)gw_env_int("MELEE_WINDOW_HIDE", &hide);
   if (!hide && !((have_x && x < 0) || (have_y && y < 0))) {
     return; /* the config path already placed it */
   }
-  hwnd = FindWindowA(NULL, "Melee PC");
+#ifdef _WIN32
+  HWND hwnd = FindWindowA(NULL, "Melee PC");
   if (hwnd == NULL) {
     gw_log("melee-pc: window placement: could not find the window");
     return;
@@ -68,6 +76,21 @@ static void gw_apply_window_env(void) {
     ShowWindow(hwnd, SW_HIDE);
     gw_log("melee-pc: window hidden (MELEE_WINDOW_HIDE=1)");
   }
+#else
+  SDL_Window *win = (SDL_Window *)gw_get_window();
+  if (win == NULL) {
+    gw_log("melee-pc: window placement: no window");
+    return;
+  }
+  if ((have_x && x < 0) || (have_y && y < 0)) {
+    SDL_SetWindowPosition(win, have_x ? x : 0, have_y ? y : 0);
+    gw_log("melee-pc: window moved to %d,%d", have_x ? x : 0, have_y ? y : 0);
+  }
+  if (hide) {
+    SDL_HideWindow(win);
+    gw_log("melee-pc: window hidden (MELEE_WINDOW_HIDE=1)");
+  }
+#endif
 }
 
 const char *gw_iso_path(void) { return gw_iso_path_buf[0] != '\0' ? gw_iso_path_buf : NULL; }
@@ -125,6 +148,7 @@ static bool gw_find_iso(int argc, char **argv) {
 /* Backend override so D3D11 and D3D12 can be compared without a rebuild:
  *   MELEE_BACKEND=d3d12   (or d3d11, auto, vulkan)
  * Defaults to D3D11 for the reason documented at .desiredBackend below. */
+#ifdef _WIN32
 static AuroraBackend gw_desired_backend(void) {
   const char *env = getenv("MELEE_BACKEND");
   if (env == NULL) {
@@ -144,6 +168,24 @@ static AuroraBackend gw_desired_backend(void) {
   }
   return BACKEND_D3D11;
 }
+#else
+/* No D3D11/D3D12 on Linux - Vulkan is the only backend, so MELEE_BACKEND only chooses between
+ * an explicit request and Aurora's own auto-detection. */
+static AuroraBackend gw_desired_backend(void) {
+  const char *env = getenv("MELEE_BACKEND");
+  if (env != NULL && _stricmp(env, "auto") == 0) {
+    gw_log("melee-pc: MELEE_BACKEND=auto");
+    return BACKEND_AUTO;
+  }
+  if (env != NULL && _stricmp(env, "d3d11") != 0 && _stricmp(env, "d3d12") != 0 &&
+      _stricmp(env, "vulkan") != 0) {
+    gw_log("melee-pc: MELEE_BACKEND=%s not recognized, using vulkan", env);
+  } else if (env != NULL && _stricmp(env, "vulkan") != 0) {
+    gw_log("melee-pc: MELEE_BACKEND=%s not available on Linux, using vulkan", env);
+  }
+  return BACKEND_VULKAN;
+}
+#endif
 
 /* Dawn's compiled-pipeline cache, kept OUT of the shared per-user prefs directory.
  *
@@ -171,7 +213,11 @@ static const char *gw_cache_path(void) {
   if (n == 0 || n >= sizeof buf) {
     return NULL; /* let aurora fall back to its default */
   }
+#ifdef _WIN32
   slash = strrchr(buf, '\\');
+#else
+  slash = strrchr(buf, '/');
+#endif
   if (slash == NULL) {
     return NULL;
   }
@@ -184,7 +230,12 @@ static const char *gw_exe_dir(void) {
   static char buf[MAX_PATH];
   DWORD n = GetModuleFileNameA(NULL, buf, (DWORD)sizeof buf);
   char *slash;
-  if (n == 0 || n >= sizeof buf || (slash = strrchr(buf, '\\')) == NULL) {
+#ifdef _WIN32
+  slash = (n == 0 || n >= sizeof buf) ? NULL : strrchr(buf, '\\');
+#else
+  slash = (n == 0 || n >= sizeof buf) ? NULL : strrchr(buf, '/');
+#endif
+  if (slash == NULL) {
     return NULL;
   }
   slash[1] = '\0';
@@ -285,6 +336,9 @@ int main(int argc, char *argv[]) {
   AuroraInfo info = aurora_initialize(argc, argv, &config);
   gw_log("melee-pc: aurora backend %d, window %ux%u", (int)info.backend, info.windowSize.width,
          info.windowSize.height);
+#ifndef _WIN32
+  gw_set_window(info.window);
+#endif
   gw_apply_window_env();
 
   /* Letterbox rather than stretch when the window is not 4:3.

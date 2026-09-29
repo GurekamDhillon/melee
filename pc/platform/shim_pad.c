@@ -11,7 +11,11 @@
 #include <stdlib.h>
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 /* Raw WinUSB GameCube adapter (gc_adapter.c). It takes precedence over Aurora's SDL pad path
  * when present, because SDL's gamepad layer remaps this adapter's buttons incorrectly and

@@ -34,7 +34,11 @@
 #include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #define CARD_RESULT_READY (0)
 #define CARD_RESULT_NOCARD (-3)

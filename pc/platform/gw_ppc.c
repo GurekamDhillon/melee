@@ -2294,8 +2294,12 @@ typedef struct {
 
 /* Declared by hand rather than pulling <windows.h> into the interpreter: this file is otherwise
  * free of Windows headers and their macros. kernel32 is already linked. */
+#ifdef _WIN32
 extern __declspec(dllimport) void __stdcall GetCurrentThreadStackLimits(uintptr_t *low,
                                                                         uintptr_t *high);
+#else
+void GetCurrentThreadStackLimits(uintptr_t *low, uintptr_t *high); /* gw_compat_linux.c */
+#endif
 
 /* Mirror every host-stack argument into guest scratch. Returns the guest stack pointer the run
  * should use (lowered past the scratch when anything was mirrored). */

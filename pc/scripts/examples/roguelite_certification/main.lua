@@ -2,7 +2,7 @@
 -- @version: 1.0.0
 --
 -- This file is NOT loaded as a standalone mod. tools/roguelite/certify_rooms.py
--- prepends the reviewed pure modules (RoomCatalogue, RoomRecipes, Rooms) exactly
+-- prepends the reviewed modules (RoomCatalogue, RoomRecipes, Rooms, RuntimeRooms)
 -- as tools/roguelite/prepare.py does, then installs the bundle as an isolated
 -- gameplay mod. The probe:
 --
@@ -113,29 +113,37 @@ end
 
 local function build_collision()
   local plan = S.plan
-  local handles = {}
+  local handles, endpoints = {}, {}
   -- draw=true is the diagnostic default so evidence is unambiguous. `clean`
   -- hides only the debug slabs; the collision lines are identical either way.
   local draw = not S.clean
   S.handles = handles -- retain partial builds for cleanup on any refusal
+  S.collision_count = 0
+  local function record(h, x0, y0, x1, y1)
+    handles[#handles + 1] = h
+    endpoints[#endpoints + 1] = {handle=h, x0=x0, y0=y0, x1=x1, y1=y1}
+    S.collision_count = #handles
+  end
   for _, seg in ipairs(plan.floor_segments) do
     local h, why = gd.stage_add_platform((seg.left + seg.right) / 2, seg.y, seg.right - seg.left,
       {passthrough = false, ledges = true, draw = draw})
     if not h then return nil, 'floor segment at ' .. tostring(seg.left) .. ': ' .. tostring(why) end
-    handles[#handles + 1] = h
+    record(h, seg.left, seg.y, seg.right, seg.y)
   end
   for _, p in ipairs(plan.platforms) do
     local h, why = gd.stage_add_platform(p.x, p.y, p.width,
       {passthrough = p.passthrough, ledges = p.ledges, draw = draw})
     if not h then return nil, 'platform at ' .. tostring(p.x) .. ': ' .. tostring(why) end
-    handles[#handles + 1] = h
+    record(h, p.x-p.width/2, p.y, p.x+p.width/2, p.y)
   end
   for _, line in ipairs(plan.lines) do
     local h, why = gd.stage_add_line(line.x0, line.y0, line.x1, line.y1, 'floor',
       {passthrough = line.passthrough, ledges = line.ledges, draw = draw})
     if not h then return nil, 'line at ' .. tostring(line.x0) .. ': ' .. tostring(why) end
-    handles[#handles + 1] = h
+    record(h, line.x0, line.y0, line.x1, line.y1)
   end
+  local linked, why = RuntimeRooms.link_floor_seams(gd, endpoints)
+  if not linked then return nil, why end
   S.handles = handles
   return true, #handles
 end
@@ -152,6 +160,7 @@ local function cleanup()
     end
   end
   S.handles = pending
+  S.collision_count = #pending
   if S.visuals then
     local ok, cleared, why = pcall(Rooms.clear, S.visuals)
     if not (ok and cleared) then
@@ -185,14 +194,14 @@ local function advance()
   if S.phase == 'loading' then
     local ready, why = Rooms.preload_step(S.visuals, S.node)
     if ready == nil then fail('preload', why)
-    elseif ready then S.phase = 'visuals' end
+    elseif ready then S.phase = 'collision' end
   elseif S.phase == 'visuals' then
     local ok, why = Rooms.enter(S.visuals, S.node)
-    if not ok then fail('visuals', why) else S.phase = 'collision' end
+    if not ok then fail('visuals', why) else S.phase = 'isolate' end
   elseif S.phase == 'collision' then
     local ok, count = build_collision()
     if not ok then fail('collision', count)
-    else S.collision_count = count; S.phase = 'isolate' end
+    else S.collision_count = count; S.phase = 'visuals' end
   elseif S.phase == 'isolate' then
     local ok, result = pcall(gd.stage_isolate, true)
     if not ok or result ~= true then
@@ -238,7 +247,7 @@ gd.command('certify_apis', function()
   for _, name in ipairs(BUILD_APIS) do
     say('certify_api name=%s present=%s', name, flag(gd[name] ~= nil))
   end
-  for _, name in ipairs({'stage_bounds', 'camera_get', 'model_get'}) do
+  for _, name in ipairs({'stage_link', 'stage_bounds', 'camera_get', 'model_get'}) do
     say('certify_api name=%s present=%s', name, flag(gd[name] ~= nil))
   end
 end, 'report current API availability')
@@ -276,7 +285,7 @@ gd.command('certify_build', function(arg)
   if not node then fail('build', recipe); return end
   local plan, why = Rooms.plan(node)
   if not plan then fail('build', tostring(why)); return end
-  if S.visuals then
+  if S.visuals or #S.handles > 0 then
     local errors = cleanup()
     if #errors > 0 then fail('build', 'previous cleanup refused: ' .. table.concat(errors, '; ')); return end
   end
@@ -455,6 +464,7 @@ function on_match_end()
   -- refused handles for retry.
   if S.visuals then Rooms.reset(S.visuals) end
   S.visuals, S.handles, S.arm, S.hud, S.camera_mode = nil, {}, nil, nil, nil
+  S.collision_count = 0
   S.isolated, S.phase = false, 'idle'
 end
 function on_unload() cleanup() end

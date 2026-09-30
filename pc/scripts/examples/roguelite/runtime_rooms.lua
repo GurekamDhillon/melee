@@ -26,7 +26,7 @@
 -- certifies a recipe: the adapter's certification gate stays upstream.
 --
 -- Engine and room modules are injected, never read from globals:
---   engine: stage_isolate, stage_add_platform, stage_add_line, stage_remove,
+--   engine: stage_isolate, stage_add_platform, stage_add_line, stage_link, stage_remove,
 --           player, teleport (player/teleport are required for :place)
 --   rooms:  new, plan, collision, anchor, arrival, preload_step, enter, clear,
 --           release, view
@@ -37,6 +37,43 @@ local function copy(t)
 end
 local function finite(v) return type(v)=='number' and v==v and math.abs(v)<math.huge end
 local function handle(h) return finite(h) and h%1==0 and h>0 end
+
+-- Only the caller's newly allocated room floors participate. Sharing a native
+-- script owner with a resident source room must never weld the two rooms. Check
+-- the entire endpoint graph before linking, so a fork cannot pick an arbitrary
+-- neighbour. Interiors, crossings and same-side endpoints are not seams.
+function RuntimeRooms.link_floor_seams(engine,entries)
+ local seams,candidates,seen={},{},{}
+ local epsilon2=0.05*0.05
+ for i,e in ipairs(entries) do
+  if not handle(e.handle) or seen[e.handle] or not finite(e.x0) or not finite(e.y0)
+   or not finite(e.x1) or not finite(e.y1) or e.x0>=e.x1 then return false,'invalid room floor endpoint record' end
+  seen[e.handle]=true;candidates[i]={left=0,right=0}
+ end
+ for i,a in ipairs(entries) do
+  for j,b in ipairs(entries) do
+   if i~=j then
+    local dx,dy=a.x1-b.x0,a.y1-b.y0
+    if dx*dx+dy*dy<=epsilon2 then
+     candidates[i].right=candidates[i].right+1;candidates[j].left=candidates[j].left+1
+     seams[#seams+1]={a.handle,b.handle}
+    end
+   end
+  end
+ end
+ for _,c in ipairs(candidates) do
+  if c.left>1 or c.right>1 then return false,'ambiguous room floor seam' end
+ end
+ if #seams==0 then return true,0 end
+ if type(engine.stage_link)~='function' then return false,'stage_link API unavailable for room floor seams' end
+ for _,s in ipairs(seams) do
+  local ok,linked,why=pcall(engine.stage_link,s[1],s[2])
+  if not ok or linked~=true then
+   return false,'room floor seam link refused: '..tostring(not ok and linked or why or linked)
+  end
+ end
+ return true,#seams
+end
 
 function RuntimeRooms.new(engine,rooms,opts)
  assert(type(engine)=='table' and engine.stage_add_platform and engine.stage_add_line and engine.stage_remove,'stage engine required')
@@ -157,13 +194,13 @@ function RuntimeRooms:_construct(room)
  local function platform(x,y,width,opts)
   local ok,h,why=pcall(engine.stage_add_platform,x,y,width,opts)
   if not ok or not handle(h) then return nil,tostring(not ok and h or why or 'platform allocation refused') end
-  room.handles[#room.handles+1]={kind='platform',handle=h};self.total_lines=self.total_lines+1
+  room.handles[#room.handles+1]={kind='platform',handle=h,x0=x-width/2,y0=y,x1=x+width/2,y1=y};self.total_lines=self.total_lines+1
   return h
  end
  local function line(x0,y0,x1,y1,opts)
   local ok,h,why=pcall(engine.stage_add_line,x0,y0,x1,y1,'floor',opts)
   if not ok or not handle(h) then return nil,tostring(not ok and h or why or 'line allocation refused') end
-  room.handles[#room.handles+1]={kind='line',handle=h};self.total_lines=self.total_lines+1
+  room.handles[#room.handles+1]={kind='line',handle=h,x0=x0,y0=y0,x1=x1,y1=y1};self.total_lines=self.total_lines+1
   return h
  end
  local _,why
@@ -179,6 +216,8 @@ function RuntimeRooms:_construct(room)
   _,why=platform(p.x,p.y,p.width,{passthrough=p.passthrough,ledges=p.ledges,draw=false})
   if why then return false,why end
  end
+ local linked,link_why=RuntimeRooms.link_floor_seams(engine,room.handles)
+ if not linked then return false,link_why end
  local ok,enter_why=self.rooms.enter(room.state,room.node)
  if not ok then return false,enter_why end
  return true

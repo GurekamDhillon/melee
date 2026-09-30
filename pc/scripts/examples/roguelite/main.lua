@@ -24,6 +24,8 @@ local movement={0,0}
 local enemy_host,enemy_gene,enemy_kos=nil,nil,0
 local BASE_STOCKS=99
 local generation,save_error=0,false
+-- Slots holding an unsupported future checkpoint; never overwritten by a save.
+local protected={}
 local starter='g1'
 local config=gd.data_read('config.txt') or ''
 local demo=config:find('demo=true',1,true)~=nil
@@ -42,7 +44,16 @@ local function checkpoint(raw)
  if type(raw)~='string' or #raw>1048700 then return nil end
  -- TBD3: resolved manifest (+ optional progress) with an integrity checksum. A
  -- section of the wrong schema version is refused and preserved, not returned.
- local decoded=Checkpoint.decode(raw,Core,Codec)
+ local decoded,dwhy=Checkpoint.decode(raw,Core,Codec)
+ if not decoded and dwhy and dwhy:find('preserved',1,true) then
+  -- A future envelope version (>3) or an unsupported inner manifest/progress
+  -- version is preserved and explained, not treated as a disposable slot.
+  local tag=raw:match('^(TBD%d+) ')
+  local ver=tag and tonumber(tag:sub(4))
+  if (ver and ver>Checkpoint.version) or dwhy:find('manifest schema',1,true) or dwhy:find('progress version',1,true) then
+   return nil,dwhy
+  end
+ end
  if decoded then
   local p=decoded.profile
   if not p or p.type~='profile' then return nil end
@@ -91,6 +102,13 @@ local function save()
   mtext=encoded
  end
  local next_generation=generation+1;local file=next_generation%2==0 and 'checkpoint-a.txt' or 'checkpoint-b.txt'
+ -- Never overwrite a preserved unsupported future checkpoint.
+ if protected[file] then
+  local other=file=='checkpoint-a.txt' and 'checkpoint-b.txt' or 'checkpoint-a.txt'
+  if protected[other] then say('Save disabled: unsupported future checkpoints are preserved; remove them to continue','error','save');return false end
+  gd.log('roguelite: saving to '..other..' to preserve an unsupported future checkpoint')
+  file=other
+ end
  local metadata=assert(Roster.encode(selected_fighter))..assert(Roster.encode(run_fighter))
  local text
  do
@@ -107,14 +125,26 @@ local function save()
  generation=next_generation
  return true
 end
+local function classify(name,raw)
+ if type(raw)~='string' or raw=='' then return nil end
+ local ok,data,why=pcall(checkpoint,raw)
+ if not ok then gd.log('roguelite: checkpoint '..name..' threw: '..tostring(data));return nil end
+ if data then return data end
+ if why and why:find('preserved',1,true) then protected[name]=why end
+ return nil
+end
 local function load_data()
+ protected={}
  local a,b=gd.data_read('checkpoint-a.txt'),gd.data_read('checkpoint-b.txt')
- local ca,cb=checkpoint(a),checkpoint(b)
+ local ca,cb=classify('checkpoint-a.txt',a),classify('checkpoint-b.txt',b)
  local best=ca;if cb and (not best or cb.generation>best.generation) then best=cb end
  if best then profile,run,generation=best.profile,best.run,best.generation;selected_fighter,run_fighter=best.selected,best.fighter
    manifest=best.manifest
    if run and (profile.finished[run.id] or run.status~='active') then run=nil end
- elseif (a and a~='') or (b and b~='') then save_error=true;profile=Core.new_profile(17029);menu='error';say('Both checkpoints invalid; files preserved')
+ elseif (a and a~='') or (b and b~='') then
+   save_error=true;profile=Core.new_profile(17029);menu='error'
+   if protected['checkpoint-a.txt'] or protected['checkpoint-b.txt'] then say('Unsupported future checkpoints preserved; remove them to continue')
+   else say('Both checkpoints invalid; files preserved') end
  else profile=Core.new_profile(17029) end
 end
 local enemy_tells={}

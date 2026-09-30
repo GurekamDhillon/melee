@@ -63,4 +63,30 @@ function Legacy.migrate(text, deps)
   return encoded
 end
 
+-- Upgrade a stored progress record to the current schema when the information is
+-- sufficient, otherwise preserve and explain it. Schema 1 lacked the opened,
+-- pickups and encounter_kos maps; those default to empty and the result is
+-- re-validated. Unknown versions are never rewritten. `record` is not mutated.
+function Legacy.migrate_progress(record, progress)
+  assert(type(progress) == 'table' and type(progress.version) == 'number' and progress.validate, 'progress module required')
+  if type(record) ~= 'table' then return nil, 'invalid progress record' end
+  if record.version == progress.version then
+    local ok, why = progress.validate(record)
+    if not ok then return nil, why end
+    return record
+  end
+  if record.version == 1 and progress.version == 2 then
+    local out = {}
+    for k, v in pairs(record) do out[k] = v end
+    out.opened = record.opened or {}
+    out.pickups = record.pickups or {}
+    out.encounter_kos = record.encounter_kos or {}
+    out.version = 2
+    local ok, why = progress.validate(out)
+    if not ok then return nil, 'migrated progress invalid: ' .. tostring(why) end
+    return out
+  end
+  return nil, 'unsupported progress version ' .. tostring(record.version) .. '; preserved'
+end
+
 return Legacy

@@ -39,7 +39,25 @@ local function feedback_sync(frames,paused)
 end
 local function keys(t) local a={} for k in pairs(t) do a[#a+1]=k end table.sort(a) return a end
 local function checkpoint(raw)
- if type(raw)~='string' or #raw>530000 then return nil end
+ if type(raw)~='string' or #raw>1048700 then return nil end
+ -- TBD3: resolved manifest (+ optional progress) with an integrity checksum. A
+ -- section of the wrong schema version is refused and preserved, not returned.
+ local decoded=Checkpoint.decode(raw,Core,Codec)
+ if decoded then
+  local p=decoded.profile
+  if not p or p.type~='profile' then return nil end
+  local r=decoded.run
+  if r then local serial=tonumber(r.id:match('^run(%d+)$'));if not serial or serial>=p.next_run then return nil end end
+  local selected,played={id='falco',costume=0},{id='falco',costume=0}
+  if decoded.roster then
+   local a,b=decoded.roster:match('^(ROSTER1 [^\n]+\n)(ROSTER1 [^\n]+\n)$')
+   selected,played=Roster.decode(a),Roster.decode(b)
+   if not selected or not played then return nil end
+  end
+  return {generation=decoded.generation,profile=p,run=r,selected=selected,fighter=played,manifest=decoded.manifest,progress=decoded.progress}
+ end
+ -- Legacy TBD2/TBD1 envelope.
+ if #raw>530000 then return nil end
  local g,plen,rlen,mlen,body=raw:match('^TBD2 (%d+) (%d+) (%d+) (%d+)\n(.*)$')
  local legacy=not g
  if legacy then g,plen,rlen,body=raw:match('^TBD1 (%d+) (%d+) (%d+)\n(.*)$');mlen=0 end
@@ -63,10 +81,27 @@ local function save()
  local p,why=Core.snapshot(profile);if not p then say('Save refused: '..tostring(why),'error','save');return false end
  local r=''
  if run then r,why=Core.snapshot(run);if not r then say('Run save refused: '..tostring(why),'error','save');return false end end
+ -- Persist the resolved manifest so a later catalogue/generator change cannot
+ -- relocate a saved doorway. v1 runs carry no separate progress record yet.
+ local mtext=nil
+ if run then
+  local man=(manifest and manifest.seed==run.world_seed) and manifest or Dungeon.generate(run.world_seed)
+  local encoded,ewhy=Codec.encode(man)
+  if not encoded then say('Manifest encode refused: '..tostring(ewhy),'error','save');return false end
+  mtext=encoded
+ end
  local next_generation=generation+1;local file=next_generation%2==0 and 'checkpoint-a.txt' or 'checkpoint-b.txt'
  local metadata=assert(Roster.encode(selected_fighter))..assert(Roster.encode(run_fighter))
- local text='TBD2 '..next_generation..' '..#p..' '..#r..' '..#metadata..'\n'..p..r..metadata
- local ok,result=pcall(gd.data_write,file,text)
+ local text
+ do
+  local ok,res=pcall(Checkpoint.encode,{generation=next_generation,profile=p,run=r~='' and r or nil,manifest=mtext,roster=metadata})
+  if not ok then say('Checkpoint encode refused: '..tostring(res),'error','save');return false end
+  text=res
+ end
+ -- Atomic when the native helper is present; otherwise the raw write with the
+ -- same readback proof. Previous bytes survive a refused or failed write.
+ local write=gd.data_write_atomic or gd.data_write
+ local ok,result=pcall(write,file,text)
  local read_ok,readback=pcall(gd.data_read,file)
  if not ok or result==false or not read_ok or readback~=text or not checkpoint(text) then say('Save write/readback failed; previous checkpoint retained','error','save');return false end
  generation=next_generation
@@ -77,7 +112,8 @@ local function load_data()
  local ca,cb=checkpoint(a),checkpoint(b)
  local best=ca;if cb and (not best or cb.generation>best.generation) then best=cb end
  if best then profile,run,generation=best.profile,best.run,best.generation;selected_fighter,run_fighter=best.selected,best.fighter
-  if run and (profile.finished[run.id] or run.status~='active') then run=nil end
+   manifest=best.manifest
+   if run and (profile.finished[run.id] or run.status~='active') then run=nil end
  elseif (a and a~='') or (b and b~='') then save_error=true;profile=Core.new_profile(17029);menu='error';say('Both checkpoints invalid; files preserved')
  else profile=Core.new_profile(17029) end
 end
@@ -223,7 +259,11 @@ local function begin(resume)
   run=Core.new_run(profile,{stocks=3});run_fighter=assert(Roster.validate(selected_fighter))
   for id,g in pairs(run.genes) do if g.origin==starter then Core.equip(run,'player','assault',nil);Core.equip(run,'player','assault',id);break end end
  end
- manifest=Dungeon.generate(run.world_seed)
+ -- Resume uses the saved resolved manifest; a new run generates one. A loaded
+ -- manifest whose seed does not match the run is stale and regenerated.
+ if not (resume and manifest and manifest.seed==run.world_seed) then
+  manifest=Dungeon.generate(run.world_seed)
+ end
  if not Dungeon.validate(manifest) or not manifest.nodes[run.progress.room] then say('Saved route unavailable');pause_menu('error');return end
  if launched_scene~=Roster.scene(run_fighter) then pending_begin=true;launch(run_fighter);return end
  pending_begin=false;gd.set_percent(1,0);active=false;pending_room=run.progress.room;unpause()

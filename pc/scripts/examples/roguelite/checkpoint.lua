@@ -43,7 +43,10 @@ function Checkpoint.encode(fields)
   return header .. body
 end
 
-function Checkpoint.decode(text, core, codec)
+-- `opts` may carry expected schema versions: opts.progress_version and
+-- opts.manifest_schema. A section of the wrong version is refused with a
+-- "preserved" reason rather than returned as if interchangeable.
+function Checkpoint.decode(text, core, codec, opts)
   if type(text) ~= 'string' then return nil, 'invalid checkpoint text' end
   if #text > Checkpoint.max_body + 128 then return nil, 'checkpoint too large' end
   local tag = text:match('^(TBD%d+) ')
@@ -71,10 +74,14 @@ function Checkpoint.decode(text, core, codec)
     run = core.restore(body:sub(plen + 1, plen + rlen))
     if not run or run.type ~= 'run' or run.owner ~= profile.id then return nil, 'invalid run section' end
   end
+  opts = opts or {}
   local manifest = nil
   if mlen > 0 then
     local ok, decoded = pcall(codec.decode, body:sub(plen + rlen + 1, plen + rlen + mlen))
     if not ok or type(decoded) ~= 'table' then return nil, 'invalid manifest section' end
+    if opts.manifest_schema ~= nil and decoded.schema_version ~= opts.manifest_schema then
+      return nil, string.format('unsupported manifest schema %s; preserved', tostring(decoded.schema_version))
+    end
     manifest = decoded
   end
   local roster = xlen > 0 and body:sub(plen + rlen + mlen + 1, plen + rlen + mlen + xlen) or nil
@@ -82,6 +89,9 @@ function Checkpoint.decode(text, core, codec)
   if glen > 0 then
     local ok, decoded = pcall(codec.decode, body:sub(plen + rlen + mlen + xlen + 1))
     if not ok or type(decoded) ~= 'table' then return nil, 'invalid progress section' end
+    if opts.progress_version ~= nil and decoded.version ~= opts.progress_version then
+      return nil, string.format('unsupported progress version %s; preserved', tostring(decoded.version))
+    end
     progress = decoded
   end
   return {generation = generation, profile = profile, run = run, manifest = manifest,

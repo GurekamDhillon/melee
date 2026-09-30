@@ -27,6 +27,12 @@
 extern "C" {
 #endif
 
+/* Paths from native APIs use platform separators; content may use either spelling. */
+static inline char *gw_path_separator(const char *path) {
+  const char *back = strrchr(path, '\\'), *forward = strrchr(path, '/');
+  return (char *)(!back ? forward : !forward ? back : back > forward ? back : forward);
+}
+
 /* ---- byte-swapped access to game memory ------------------------------------------------- */
 
 static inline uint16_t gw_bswap16(uint16_t v) { return (uint16_t)((v >> 8) | (v << 8)); }

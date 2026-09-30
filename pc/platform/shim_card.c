@@ -185,7 +185,7 @@ void gw_CARDInit(void) {
      * not have to be told where to put the card. */
     DWORD n = GetModuleFileNameA(NULL, path, (DWORD)sizeof(path));
     if (n > 0 && n < sizeof(path)) {
-      char *slash = strrchr(path, '\\');
+      char *slash = gw_path_separator(path);
       if (slash != NULL) {
         slash[1] = '\0';
         strncat(path, "card", sizeof(path) - strlen(path) - 1);

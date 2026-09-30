@@ -5,7 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include "gw.h"
 
@@ -116,6 +120,7 @@ void gw_test_panic_hit(const char *msg) {
  * direction of the bad access usually name the bug outright. gw_log_code_addr turns the
  * instruction pointer into a melee-pc.map RVA, which is how every other fault in this port is
  * read. */
+#ifdef _WIN32
 static EXCEPTION_POINTERS *gw_test_exc;
 static int gw_test_exc_filter(EXCEPTION_POINTERS *ep) {
   gw_test_exc = ep;
@@ -150,6 +155,11 @@ static int gw_test_invoke(gw_test_fn fn) {
     return 1;
   }
 }
+#else /* !_WIN32 */
+/* No structured exceptions off Windows: the test body runs directly. A faulting test is a fault
+ * in the process; the harness reports the crash rather than emulating SEH. */
+static int gw_test_invoke(gw_test_fn fn) { return fn(); }
+#endif /* _WIN32 */
 
 /* Per-test timeout. SEH contains faults but cannot interrupt an infinite loop, so without this a
  * hung test freezes the run with no diagnostic. A worker thread watches the current test's
@@ -169,7 +179,11 @@ static DWORD WINAPI gw_test_watchdog(LPVOID unused) {
         (LONG)(GetTickCount() - gw_test_deadline) > 0) {
       gw_log("TESTS: TIMEOUT in \"%s\" after %lu ms", gw_tests[gw_test_index].name,
              (unsigned long)gw_test_timeout_ms);
+#ifdef _WIN32
       ExitProcess(2);
+#else
+      exit(2);
+#endif
     }
   }
   return 0;
@@ -197,8 +211,10 @@ int gw_test_run_all(void) {
     gw_log("TESTS: wall-clock safety timeout %lu ms per test", (unsigned long)gw_test_timeout_ms);
     CreateThread(NULL, 0, gw_test_watchdog, NULL, 0, NULL);
   }
+  const char *filter = getenv("MELEE_TEST_FILTER");
   for (i = 0; i < gw_test_count; ++i) {
     int rc;
+    if (filter && *filter && !strstr(gw_tests[i].name, filter)) continue;
     gw_test_msg[0] = '\0';
     gw_test_msg_used = 0;
     gw_test_isolate_begin();

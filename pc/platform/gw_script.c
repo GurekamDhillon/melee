@@ -33,9 +33,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifndef _WIN32
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_events.h>
+#endif
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#ifdef _WIN32
 #include <windows.h>
 #else
 #include "gw_compat_linux.h"
@@ -1757,6 +1761,7 @@ static int gs_fly_console(const char *cmd, const char *arg) {
         }
         snprintf(text, sizeof text, "%.2f %.2f", gw_ScriptGame_FighterF(slot, SF_X), gw_ScriptGame_FighterF(slot, SF_Y));
         gw_Console_Print(GS_GREEN, "P%d pos %s%s (copied)", slot + 1, text, gs_fly_on(slot) ? "  flying" : "");
+#ifdef _WIN32
         if (OpenClipboard(NULL)) {
             HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, strlen(text) + 1);
             EmptyClipboard();
@@ -1767,6 +1772,9 @@ static int gs_fly_console(const char *cmd, const char *arg) {
             }
             CloseClipboard();
         }
+#else
+        SDL_SetClipboardText(text);
+#endif
         return 0;
     }
     why = gs_fly_refused();
@@ -2081,15 +2089,25 @@ static int l_screenshot(lua_State *L) {
 }
 
 /* gd.quit(): close the game window the way the user would (gameplay scripts and the console) */
+#ifdef _WIN32
 static BOOL CALLBACK gs_close_cb(HWND w, LPARAM lp) {
     (void) lp;
     if (IsWindowVisible(w)) PostMessageA(w, WM_CLOSE, 0, 0);
     return TRUE;
 }
+static void gs_request_quit(void) {
+    EnumThreadWindows(GetCurrentThreadId(), gs_close_cb, 0);
+}
+#else
+static void gs_request_quit(void) {
+    SDL_Event event = { .type = SDL_EVENT_QUIT };
+    SDL_PushEvent(&event);
+}
+#endif
 static int l_quit(lua_State *L) {
     gs_require_gameplay(L, "quit");
     gw_log("script [%s]: quit", gs_script_id(gs.cur));
-    EnumThreadWindows(GetCurrentThreadId(), gs_close_cb, 0);
+    gs_request_quit();
     return 0;
 }
 
@@ -5493,7 +5511,7 @@ static void gs_find_ui_dir(const char *entry, char *out, size_t cap) {
     out[0] = '\0';
     snprintf(dir, sizeof dir, "%s", entry);
     for (up = 0; up < 2; up++) {
-        slash = strrchr(dir, '\\');
+        slash = gw_path_separator(dir);
         if (strrchr(dir, '/') > slash) slash = strrchr(dir, '/');
         if (slash == NULL) return;
         *slash = '\0';
@@ -5642,7 +5660,7 @@ static int gs_load_named(const char *name) {
             gs_json_field(manifest, "entry", entry, sizeof entry);
         }
         snprintf(full, sizeof full, "%s\\%s", path, entry);
-        base = strrchr(path, '\\');
+        base = gw_path_separator(path);
         snprintf(id, sizeof id, "%s", base != NULL ? base + 1 : path);
         if (manifest != NULL && gs_json_field(manifest, "id", manifest_path, sizeof manifest_path)) {
             snprintf(id, sizeof id, "%s", manifest_path);
@@ -5655,7 +5673,7 @@ static int gs_load_named(const char *name) {
     if (n < 4 || _stricmp(path + n - 4, ".lua") != 0) {
         snprintf(path + n, sizeof path - n, ".lua");
     }
-    base = strrchr(path, '\\');
+    base = gw_path_separator(path);
     base = base != NULL ? base + 1 : path;
     snprintf(id, sizeof id, "%s", base);
     n = strlen(id);
@@ -5755,7 +5773,7 @@ static void gs_init(void) {
     gs.console = -1;
     gs.scene_kind = -1;
     GetModuleFileNameA(NULL, gs.exe_dir, sizeof gs.exe_dir);
-    slash = strrchr(gs.exe_dir, '\\');
+    slash = gw_path_separator(gs.exe_dir);
     if (slash != NULL) {
         *slash = '\0';
     }
@@ -5765,7 +5783,9 @@ static void gs_init(void) {
     } else {
         snprintf(gs.scripts_dir, sizeof gs.scripts_dir, "%s\\scripts", gs.exe_dir);
     }
-    snprintf(gs.data_dir, sizeof gs.data_dir, "%s\\scripts-data", gs.exe_dir);
+    v = getenv("MELEE_SCRIPT_DATA_DIR");
+    if (v && *v) snprintf(gs.data_dir, sizeof gs.data_dir, "%s", v);
+    else snprintf(gs.data_dir, sizeof gs.data_dir, "%s\\scripts-data", gs.exe_dir);
     v = getenv("MELEE_LAB"); /* the Geno Lab on from the start (as the frontend's LAB entry) */
     gs.lab_request = v != NULL && v[0] != '\0' && v[0] != '0';
     if (gs.lab_request) {
@@ -6502,7 +6522,7 @@ static void gs_rw_tick_top(void) {
 static void gs_state_dir_of(const char *path, char *out, size_t cap) {
     char *s;
     snprintf(out, cap, "%s", path);
-    s = strrchr(out, '\\');
+    s = gw_path_separator(out);
     if (s != NULL) *s = '\0';
 }
 
@@ -7195,7 +7215,7 @@ static int gs_exec(const char *line_in) {
     }
     if (IS("quit")) {
         gw_log("console: quit");
-        EnumThreadWindows(GetCurrentThreadId(), gs_close_cb, 0);
+        gs_request_quit();
         return 0;
     }
     if (IS("label")) { /* the run label (top-left caption and window title) */
@@ -7372,7 +7392,11 @@ static void gs_socket_init(void) {
 
 static void gs_send_all(SOCKET s, const char *p, int n) {
     while (n > 0) {
+        #ifdef _WIN32
         int k = send(s, p, n, 0);
+#else
+        int k = send(s, p, n, MSG_NOSIGNAL);
+#endif
         if (k <= 0) return;
         p += k;
         n -= k;
@@ -8268,11 +8292,13 @@ static int test_script_kit_mod_art(void) {
     }
     snprintf(path, sizeof path, "%s\\test_ui.json", ui);
     f = fopen(path, "w");
+    if (!f) { gw_test_fail("could not create test fixture %s", path); return 1; }
     fputs("{\"palette\": {\"mine\": {\"accentx\": {\"hex\": \"#38c9d9\", \"u32\": \"0x38C9D9FF\"}}},\n"
           " \"textures\": [{\"name\": \"ico_testmark\", \"size_1x\": [12, 10], \"tint\": \"accentx\"}]}\n", f);
     fclose(f);
     snprintf(path, sizeof path, "%s\\scripts\\kit.lua", dir);
     f = fopen(path, "w");
+    if (!f) { gw_test_fail("could not create test fixture %s", path); return 1; }
     fputs("function on_draw()\n"
           "  gd.text(1, 1, 'plain first')\n"
           "  local w, h = gd.kit.icon('testmark', 10, 10)\n"

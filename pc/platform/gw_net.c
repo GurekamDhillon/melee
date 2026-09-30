@@ -21,10 +21,14 @@
 #include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
 #pragma comment(lib, "ws2_32.lib")
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #define MAGIC 0x4E47u
 #define HDR_LEN 18

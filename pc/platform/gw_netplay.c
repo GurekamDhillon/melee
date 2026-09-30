@@ -62,14 +62,20 @@ static const char *np_global_describe(void) {
  * gw_MexId_GlobalDescribe follows it */
 #define NP_GLOBAL_REFUSAL "different global game data; host has: "
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+#include <SDL3/SDL_clipboard.h>
+#endif
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #define NP_DEFAULT_PORT 51500
 #define NP_PAYLOAD 11 /* buttons u16, stick x/y, c-stick x/y, L, R, analog A, analog B, err */
@@ -622,6 +628,7 @@ static uint32_t np_lan_ip(void) {
 /* UPnP: ask the router to forward the UDP port to this machine, through Windows' own UPnP client
  * (HNetCfg.NATUPnP), in a hidden PowerShell so the game never waits on the router. */
 static void np_upnp_start(uint16_t port) {
+#ifdef _WIN32
     char cmd[1024], tmp[MAX_PATH];
     uint32_t lan = np_lan_ip();
     STARTUPINFOA si;
@@ -655,9 +662,14 @@ static void np_upnp_start(uint16_t port) {
             np.upnp_state = 3;
         }
     }
+#else
+    (void)port;
+    np.upnp_state = 3; /* Linux does not have Windows' built-in NATUPnP client. */
+#endif
 }
 
 static void np_upnp_poll(void) {
+#ifdef _WIN32
     if (np.upnp_state != 1 || np.upnp_proc == NULL ||
         WaitForSingleObject(np.upnp_proc, 0) != WAIT_OBJECT_0) {
         return;
@@ -675,10 +687,12 @@ static void np_upnp_poll(void) {
         np.upnp_state = strstr(buf, "ok") != NULL ? 2 : 3;
     }
     gw_log("netplay: UPnP port forwarding %s", np.upnp_state == 2 ? "opened" : "not available");
+#endif
 }
 
 /* The clipboard (CF_TEXT). */
 static int np_clip_get(char *out, int cap) {
+#ifdef _WIN32
     int ok = 0;
     out[0] = '\0';
     if (OpenClipboard(NULL)) {
@@ -698,9 +712,28 @@ static int np_clip_get(char *out, int cap) {
         CloseClipboard();
     }
     return ok;
+#else
+    char *text;
+    int ok = 0;
+    if (cap <= 0 || out == NULL) return 0;
+    text = SDL_GetClipboardText();
+    out[0] = '\0';
+    if (text != NULL) {
+        const char *p = text;
+        int i = 0;
+        while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') ++p;
+        while (*p && *p != '\r' && *p != '\n' && i < cap - 1) out[i++] = *p++;
+        while (i > 0 && (out[i - 1] == ' ' || out[i - 1] == '\t')) --i;
+        out[i] = '\0';
+        ok = i > 0;
+        SDL_free(text);
+    }
+    return ok;
+#endif
 }
 
 static void np_clip_set(const char *s) {
+#ifdef _WIN32
     size_t n = strlen(s) + 1;
     HGLOBAL g;
     if (!OpenClipboard(NULL)) return;
@@ -712,6 +745,9 @@ static void np_clip_set(const char *s) {
         SetClipboardData(CF_TEXT, g);
     }
     CloseClipboard();
+#else
+    SDL_SetClipboardText(s);
+#endif
 }
 
 static void np_fmt_addr(char *out, size_t cap, const gw_net_addr *a) {
@@ -792,7 +828,7 @@ static int np_rdv_config(void) {
     } else {
         char path[MAX_PATH];
         DWORD k = GetModuleFileNameA(NULL, path, sizeof path);
-        char *slash = k > 0 && k < sizeof path ? strrchr(path, '\\') : NULL;
+        char *slash = k > 0 && k < sizeof path ? gw_path_separator(path) : NULL;
         if (slash != NULL) {
             FILE *f;
             snprintf(slash + 1, sizeof path - (size_t) (slash + 1 - path), "netplay_server.txt");
@@ -2604,11 +2640,15 @@ wait:
     {
         DWORD t0 = GetTickCount();
         while (np_poll() == NP_WORKING && GetTickCount() - t0 < 600000u) {
+#ifdef _WIN32
             MSG m;
             while (PeekMessageA(&m, NULL, 0, 0, PM_REMOVE)) {
                 TranslateMessage(&m);
                 DispatchMessageA(&m);
             }
+#else
+            gw_pump_events();
+#endif
             Sleep(2);
         }
     }
@@ -2621,6 +2661,7 @@ wait:
 
 /* ---- the match ------------------------------------------------------------------------------------ */
 
+#ifdef _WIN32
 static BOOL CALLBACK np_title_cb(HWND w, LPARAM title) {
     if (IsWindowVisible(w)) SetWindowTextA(w, (const char *) title);
     return TRUE;
@@ -2628,6 +2669,9 @@ static BOOL CALLBACK np_title_cb(HWND w, LPARAM title) {
 static void np_set_title(const char *t) {
     EnumThreadWindows(GetCurrentThreadId(), np_title_cb, (LPARAM) t);
 }
+#else
+static void np_set_title(const char *t) { gw_set_window_title(t); }
+#endif
 
 static void np_connected_title(char *title, size_t cap) {
     size_t n;
@@ -2655,13 +2699,19 @@ uint32_t gw_Netplay_Handshake(uint8_t *d, int len, int keep_off, int keep_len) {
     gw_net_release(np.net);
     np_set_title("Melee netplay - waiting for the other player to load...");
     while (!np.started && !np.dead && GetTickCount() - t0 < GW_NET_HOLD_TIMEOUT_MS) {
+#ifdef _WIN32
         MSG m;
+#endif
         gw_net_poll(np.net, NP_FIRST_FRAME);
         np_rdv_service();
+#ifdef _WIN32
         while (PeekMessageA(&m, NULL, 0, 0, PM_REMOVE)) {
             TranslateMessage(&m);
             DispatchMessageA(&m);
         }
+#else
+        gw_pump_events();
+#endif
         Sleep(1);
     }
     if (!np.started) {

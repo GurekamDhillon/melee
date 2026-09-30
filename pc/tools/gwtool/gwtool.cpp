@@ -3,8 +3,9 @@
 // Input : LLVM IR or bitcode produced by
 //           clang --target=ppc32-none-eabi -O2 -Xclang -disable-llvm-passes -emit-llvm -c
 //         (big-endian data layout, 32-bit pointers, PowerPC SysV struct/bitfield layout).
-// Output: i686-unknown-linux-gnu code (ELF object by default) in which all memory touched by
-//         game code keeps the exact GameCube byte image:
+// Output: i686 code in the object format named by --target - COFF for the Windows port's
+//         i686-pc-windows-msvc, ELF for the Linux port's i686-pc-windows-msvc-elf - in which all
+//         memory touched by game code keeps the exact GameCube byte image:
 //
 //  * Every load/store of a multi-byte scalar (integer, float, double, pointer, or a vector of
 //    those) goes through llvm.bswap: values are big-endian in memory and native in registers.
@@ -21,8 +22,8 @@
 //    "__gwrt_" are runtime hooks and keep their name.
 //  * Integer division/remainder never traps (PowerPC divw/divwu semantics), variable shifts by
 //    >= the bit width follow slw/srw/sraw, and float->int conversions saturate like fctiwz.
-//  * The module is retargeted to i686-unknown-linux-gnu after verifying that every aggregate
-//    layout is identical under the PowerPC and x86 data layouts, then optimized and emitted.
+//  * The module is retargeted to the --target triple after verifying that every aggregate layout is
+//    identical under the PowerPC and that triple's data layout, then optimized and emitted.
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseMap.h"
@@ -82,6 +83,19 @@ cl::opt<std::string> ImportsFile("imports",
                                  cl::desc("Write undefined external symbols to this file"),
                                  cl::init(""));
 cl::opt<std::string> CPUName("mcpu", cl::desc("x86 CPU"), cl::init("pentium4"));
+// The output target. COFF/i686-pc-windows-msvc is what the Windows port links; the Linux port wants
+// ELF, and the one ELF i686 triple that keeps the GAME's aggregate layout is the Windows one with an
+// ELF object format: i686-pc-windows-msvc-elf.
+//
+// Why that is not fussiness: the frontend laid every game aggregate out for PowerPC, where i64 is
+// 8-byte aligned, and LayoutChecker below refuses any x86 layout that differs. Plain
+// i686-unknown-linux-gnu aligns i64 to 4 bytes, so `struct HSD_GObj` (six pointers, an i64, four more
+// pointers) fails the check on the first TU - correctly, because the port must keep the GameCube byte
+// image of game memory. i686-pc-windows-msvc-elf has the same environment as the Windows build
+// (i64:64, aggregate alignment 32, so the layouts the port was validated against) but writes ELF, so
+// its objects link against the Linux shims.
+cl::opt<std::string> TargetTriple("target", cl::desc("Output target triple"),
+                                  cl::init("i686-pc-windows-msvc"));
 cl::opt<std::string> FeatureStr("mattr", cl::desc("x86 features"),
                                 cl::init("+sse,+sse2,+cmov,+cx8,+mmx,+fxsr"));
 cl::opt<bool> NoSafeArith("no-safe-arith",
@@ -537,10 +551,15 @@ private:
     auto *AT = ArrayType::get(P, Entries.size());
     auto *Table = new GlobalVariable(M, AT, /*isConstant=*/true, GlobalValue::InternalLinkage,
                                      ConstantArray::get(AT, Entries), "__gw_fixups");
-    // ELF: no MSVC-style "$"-suffixed section merging/sorting. Use a plain, C-identifier section
-    // name instead ("gwfix", no leading dot) so GNU ld/lld auto-generate __start_gwfix/__stop_gwfix
-    // bounding the concatenation of every TU's contribution, in link order. See gw_runtime.c.
-    Table->setSection("gwfix");
+    // How the table is bracketed by link order is the one thing that differs between the object
+    // formats, and it has to follow the triple rather than the host:
+    //   COFF: MSVC's "$"-suffixed section merging, marked by the .gwfix$a/.gwfix$z sentinels that
+    //         gw_runtime.c allocates into those sections.
+    //   ELF:  no "$" merging. A plain C-identifier section name makes GNU ld/lld define
+    //         __start_gwfix/__stop_gwfix around the concatenation of every TU's contribution,
+    //         which is what gw_runtime.c reads in its non-Windows branch.
+    const bool ElfTarget = Triple(M.getTargetTriple()).getObjectFormat() == Triple::ELF;
+    Table->setSection(ElfTarget ? "gwfix" : ".gwfix$m");
     Table->setAlignment(Align(4));
     appendToUsed(M, {Table});
   }
@@ -822,7 +841,7 @@ int main(int argc, char **argv) {
   if (!OldDL.isBigEndian())
     fatal("expected a big-endian data layout");
 
-  Triple NewT("i686-unknown-linux-gnu");
+  Triple NewT(TargetTriple);
   std::string Error;
   const Target *Tgt = TargetRegistry::lookupTarget(NewT, Error);
   if (!Tgt)
@@ -836,7 +855,13 @@ int main(int argc, char **argv) {
       NewT, CPUName, FeatureStr, TOpts, Reloc::Static, std::nullopt, CGOpt));
   if (!TM)
     fatal("could not create target machine");
-  const DataLayout NewDL = TM->createDataLayout();
+  // Preserve guest aggregate storage while using Linux calling conventions and runtime
+  // helpers. A Windows triple with ELF output still emits _chkstk/_alldiv and the
+  // Windows stack ABI; object format alone is not a platform port.
+  std::string Layout = TM->createDataLayout().getStringRepresentation();
+  if (NewT.isOSLinux())
+    Layout += "-i64:64-f64:64";
+  const DataLayout NewDL(Layout);
 
   checkForbidden(*M);
   LayoutChecker LC(OldDL, NewDL);

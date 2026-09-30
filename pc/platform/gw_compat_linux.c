@@ -6,6 +6,12 @@
 #include "gw_compat_linux.h"
 
 #include <dirent.h>
+#include <fnmatch.h>
+#include <elf.h>
+#include <signal.h>
+#include <ucontext.h>
+#include <limits.h>
+#include <sys/ioctl.h>
 #include <errno.h>
 #include <poll.h>
 #include <pthread.h>
@@ -61,54 +67,95 @@ DWORD GetLastError(void) { return (DWORD)errno; }
 void SetLastError(DWORD err) { errno = (int)err; }
 
 /* ---- threading ---- */
-struct gw_thread_trampoline_arg {
+enum gw_handle_kind { GW_HANDLE_THREAD, GW_HANDLE_TIMER };
+struct gw_handle {
+    enum gw_handle_kind kind;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    unsigned refs;
+    int done;
+    int fd;
     gw_thread_fn fn;
     LPVOID arg;
 };
+static struct gw_handle *gw_handle_new(enum gw_handle_kind kind) {
+    struct gw_handle *h = calloc(1, sizeof *h);
+    pthread_condattr_t attr;
+    if (!h) return NULL;
+    h->kind = kind;
+    h->refs = 1;
+    h->fd = -1;
+    pthread_mutex_init(&h->mutex, NULL);
+    pthread_condattr_init(&attr);
+    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+    pthread_cond_init(&h->cond, &attr);
+    pthread_condattr_destroy(&attr);
+    return h;
+}
+static void gw_handle_release(struct gw_handle *h) {
+    unsigned refs;
+    pthread_mutex_lock(&h->mutex);
+    refs = --h->refs;
+    pthread_mutex_unlock(&h->mutex);
+    if (!refs) {
+        if (h->fd >= 0) close(h->fd);
+        pthread_cond_destroy(&h->cond);
+        pthread_mutex_destroy(&h->mutex);
+        free(h);
+    }
+}
 static void *gw_thread_trampoline(void *raw) {
-    struct gw_thread_trampoline_arg *a = (struct gw_thread_trampoline_arg *)raw;
-    gw_thread_fn fn = a->fn;
-    LPVOID arg = a->arg;
-    free(a);
-    fn(arg);
+    struct gw_handle *h = raw;
+    if (!gw_linux_signal_thread_init()) abort();
+    h->fn(h->arg);
+    pthread_mutex_lock(&h->mutex);
+    h->done = 1;
+    pthread_cond_broadcast(&h->cond);
+    pthread_mutex_unlock(&h->mutex);
+    gw_handle_release(h);
     return NULL;
 }
-
-/* Neither call site in this codebase ever waits on the handle CreateThread returns (both do
- * `CloseHandle(CreateThread(...))` immediately - see gw_start_watchdog, gw_test_run_all) - they
- * are fire-and-forget background threads, so this detaches immediately rather than emulating a
- * joinable Win32 handle nothing ever joins. */
-HANDLE CreateThread(void *unused_sa, size_t unused_stack_size, gw_thread_fn start, LPVOID arg,
-                    DWORD unused_flags, DWORD *unused_out_tid) {
+HANDLE CreateThread(void *sa, size_t stack_size, gw_thread_fn start, LPVOID arg,
+                    DWORD flags, DWORD *out_tid) {
     pthread_t tid;
-    struct gw_thread_trampoline_arg *a =
-        (struct gw_thread_trampoline_arg *)malloc(sizeof *a);
-    (void)unused_sa;
-    (void)unused_stack_size;
-    (void)unused_flags;
-    (void)unused_out_tid;
-    if (a == NULL) {
+    pthread_attr_t attr;
+    struct gw_handle *h;
+    int rc;
+    (void)sa;
+    if (!start || flags || out_tid) { errno = ENOTSUP; return NULL; }
+    h = gw_handle_new(GW_HANDLE_THREAD);
+    if (!h) return NULL;
+    h->fn = start;
+    h->arg = arg;
+    h->refs = 2; /* caller and worker have independent lifetimes */
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    rc = stack_size ? pthread_attr_setstacksize(&attr, stack_size) : 0;
+    if (!rc) rc = pthread_create(&tid, &attr, gw_thread_trampoline, h);
+    pthread_attr_destroy(&attr);
+    if (rc) {
+        gw_handle_release(h);
+        gw_handle_release(h);
+        errno = rc;
         return NULL;
     }
-    a->fn = start;
-    a->arg = arg;
-    if (pthread_create(&tid, NULL, gw_thread_trampoline, a) != 0) {
-        free(a);
-        return NULL;
-    }
-    pthread_detach(tid);
-    return (HANDLE)(intptr_t)1; /* opaque non-NULL "started ok"; nothing dereferences this */
+    return h;
 }
-
-BOOL CloseHandle(HANDLE h) {
-    (void)h;
+BOOL CloseHandle(HANDLE raw) {
+    if (!raw || raw == INVALID_HANDLE_VALUE) { errno = EINVAL; return FALSE; }
+    gw_handle_release(raw);
     return TRUE;
 }
 
 /* ---- critical sections ---- */
 void InitializeCriticalSection(CRITICAL_SECTION *cs) {
     pthread_mutex_t *m = (pthread_mutex_t *)malloc(sizeof *m);
-    pthread_mutex_init(m, NULL);
+    pthread_mutexattr_t attr;
+    if (!m) abort();
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    if (pthread_mutex_init(m, &attr)) abort();
+    pthread_mutexattr_destroy(&attr);
     cs->opaque = m;
 }
 void DeleteCriticalSection(CRITICAL_SECTION *cs) {
@@ -121,61 +168,109 @@ void DeleteCriticalSection(CRITICAL_SECTION *cs) {
 void EnterCriticalSection(CRITICAL_SECTION *cs) { pthread_mutex_lock((pthread_mutex_t *)cs->opaque); }
 void LeaveCriticalSection(CRITICAL_SECTION *cs) { pthread_mutex_unlock((pthread_mutex_t *)cs->opaque); }
 
+BOOL InitOnceExecuteOnce(PINIT_ONCE once, PINIT_ONCE_FN callback, PVOID param, PVOID *context) {
+    BOOL ok;
+    void *result = NULL;
+    pthread_mutex_lock(&once->mutex);
+    while (once->state == 1) pthread_cond_wait(&once->cond, &once->mutex);
+    if (once->state == 2) {
+        if (context) *context = once->context;
+        pthread_mutex_unlock(&once->mutex);
+        return TRUE;
+    }
+    once->state = 1;
+    pthread_mutex_unlock(&once->mutex);
+    ok = callback(once, param, &result);
+    pthread_mutex_lock(&once->mutex);
+    once->state = ok ? 2 : 0;
+    if (ok) once->context = result;
+    if (ok && context) *context = result;
+    pthread_cond_broadcast(&once->cond);
+    pthread_mutex_unlock(&once->mutex);
+    return ok;
+}
+
+/* Publication is serialized; every caller obtains the same mutex. */
+static pthread_mutex_t gw_srw_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t *gw_srw_mutex(SRWLOCK *lock) {
+    pthread_mutex_t *m;
+    pthread_mutex_lock(&gw_srw_init_mutex);
+    if (!lock->opaque) {
+        m = malloc(sizeof *m);
+        if (!m || pthread_mutex_init(m, NULL)) abort();
+        lock->opaque = m;
+    }
+    m = lock->opaque;
+    pthread_mutex_unlock(&gw_srw_init_mutex);
+    return m;
+}
+void AcquireSRWLockExclusive(SRWLOCK *lock) { pthread_mutex_lock(gw_srw_mutex(lock)); }
+void ReleaseSRWLockExclusive(SRWLOCK *lock) { pthread_mutex_unlock(gw_srw_mutex(lock)); }
+
 /* ---- waitable timer (frame pacing) ----
  * Backed by timerfd: WaitForSingleObject polls the fd for readability, matching the "wait up to
  * this many ms" contract the pacer uses it for. */
-HANDLE CreateWaitableTimerExW(void *unused_attrs, void *unused_name, DWORD flags,
-                              DWORD unused_access) {
-    int fd;
-    (void)unused_attrs;
-    (void)unused_name;
-    (void)flags;
-    (void)unused_access;
-    fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
-    if (fd < 0) {
-        return NULL;
-    }
-    return (HANDLE)(intptr_t)(fd + 1); /* +1 so fd 0 never collides with NULL */
+HANDLE CreateWaitableTimerExW(void *attrs, void *name, DWORD flags, DWORD access) {
+    struct gw_handle *h;
+    (void)attrs; (void)access;
+    if (name || (flags & ~CREATE_WAITABLE_TIMER_HIGH_RESOLUTION)) { errno = ENOTSUP; return NULL; }
+    h = gw_handle_new(GW_HANDLE_TIMER);
+    if (!h) return NULL;
+    h->fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+    if (h->fd < 0) { gw_handle_release(h); return NULL; }
+    return h;
 }
-
-BOOL SetWaitableTimer(HANDLE h, const LARGE_INTEGER *due, LONG unused_period,
-                      void *unused_completion_routine, void *unused_completion_arg,
-                      BOOL unused_resume) {
-    int fd = (int)(intptr_t)h - 1;
-    struct itimerspec its;
-    long long ns = -due->QuadPart * 100ll; /* due->QuadPart: negative 100ns units -> ns */
-    (void)unused_period;
-    (void)unused_completion_routine;
-    (void)unused_completion_arg;
-    (void)unused_resume;
-    if (ns < 1) {
-        ns = 1;
-    }
-    its.it_value.tv_sec = ns / 1000000000ll;
-    its.it_value.tv_nsec = ns % 1000000000ll;
-    its.it_interval.tv_sec = 0;
-    its.it_interval.tv_nsec = 0;
-    return timerfd_settime(fd, 0 /* relative */, &its, NULL) == 0;
+BOOL SetWaitableTimer(HANDLE raw, const LARGE_INTEGER *due, LONG period,
+                      void *routine, void *arg, BOOL resume) {
+    struct gw_handle *h = raw;
+    struct itimerspec its = {0};
+    uint64_t ticks;
+    (void)arg;
+    if (!h || h->kind != GW_HANDLE_TIMER || !due || due->QuadPart > 0 ||
+        period < 0 || routine || resume) { errno = EINVAL; return FALSE; }
+    /* Split before multiplication to avoid overflow for large relative intervals. */
+    ticks = 0ull - (uint64_t)due->QuadPart;
+    its.it_value.tv_sec = ticks / 10000000;
+    its.it_value.tv_nsec = (ticks % 10000000) * 100;
+    if (!ticks) its.it_value.tv_nsec = 1;
+    its.it_interval.tv_sec = period / 1000;
+    its.it_interval.tv_nsec = (period % 1000) * 1000000;
+    return timerfd_settime(h->fd, 0, &its, NULL) == 0;
 }
-
-DWORD WaitForSingleObject(HANDLE h, DWORD timeout_ms) {
-    int fd = (int)(intptr_t)h - 1;
-    struct pollfd pfd;
-    int rc;
-    if (fd < 0) {
-        return WAIT_FAILED;
+DWORD WaitForSingleObject(HANDLE raw, DWORD timeout_ms) {
+    struct gw_handle *h = raw;
+    struct timespec deadline;
+    uint64_t end = gw_now_ns() + (uint64_t)timeout_ms * 1000000;
+    int rc = 0;
+    if (!h || raw == INVALID_HANDLE_VALUE) { errno = EINVAL; return WAIT_FAILED; }
+    if (h->kind == GW_HANDLE_THREAD) {
+        deadline.tv_sec = end / 1000000000;
+        deadline.tv_nsec = end % 1000000000;
+        pthread_mutex_lock(&h->mutex);
+        while (!h->done && !rc) {
+            rc = timeout_ms == UINT32_MAX ? pthread_cond_wait(&h->cond, &h->mutex) :
+                pthread_cond_timedwait(&h->cond, &h->mutex, &deadline);
+        }
+        int done = h->done;
+        pthread_mutex_unlock(&h->mutex);
+        return done ? WAIT_OBJECT_0 : rc == ETIMEDOUT ? WAIT_TIMEOUT : WAIT_FAILED;
     }
-    pfd.fd = fd;
-    pfd.events = POLLIN;
-    pfd.revents = 0;
-    rc = poll(&pfd, 1, (int)timeout_ms);
-    if (rc > 0 && (pfd.revents & POLLIN)) {
-        uint64_t n;
-        ssize_t r = read(fd, &n, sizeof n); /* drain the timerfd expiration count */
-        (void)r;
-        return WAIT_OBJECT_0;
+    for (;;) {
+        struct pollfd pfd = { h->fd, POLLIN, 0 };
+        uint64_t now = gw_now_ns();
+        uint64_t remaining = now < end ? (end - now + 999999) / 1000000 : 0;
+        int ms = timeout_ms == UINT32_MAX ? -1 : remaining > INT_MAX ? INT_MAX : (int)remaining;
+        rc = poll(&pfd, 1, ms);
+        if (rc < 0 && errno == EINTR) continue;
+        if (!rc) {
+            if (gw_now_ns() < end) continue;
+            return WAIT_TIMEOUT;
+        }
+        if (rc < 0 || !(pfd.revents & POLLIN)) return WAIT_FAILED;
+        uint64_t count;
+        if (read(h->fd, &count, sizeof count) == sizeof count) return WAIT_OBJECT_0;
+        if (errno != EAGAIN && errno != EINTR) return WAIT_FAILED;
     }
-    return (rc == 0) ? WAIT_TIMEOUT : WAIT_FAILED;
 }
 
 /* ---- memory ---- */
@@ -192,11 +287,14 @@ void *VirtualAlloc(void *addr, size_t size, DWORD alloc_type, DWORD protect) {
 #ifdef MAP_FIXED_NOREPLACE
         flags |= MAP_FIXED_NOREPLACE;
 #else
-        flags |= MAP_FIXED;
+        /* Use a hint and verify it below; never replace an existing mapping. */
 #endif
     }
     p = mmap(addr, size, PROT_READ | PROT_WRITE, flags, -1, 0);
-    if (p == MAP_FAILED) {
+    if (p == MAP_FAILED) return NULL;
+    if (addr && p != addr) {
+        munmap(p, size);
+        errno = EEXIST;
         return NULL;
     }
     return p;
@@ -215,6 +313,43 @@ DWORD GetModuleFileNameA(HANDLE unused_module, char *out, DWORD cap) {
         return 0;
     }
     out[n] = '\0';
+    return (DWORD)n;
+}
+
+static void gw_normalize_path(const char *in, char *out, size_t cap);
+DWORD GetFullPathNameA(const char *path, DWORD cap, char *out, char **file_part) {
+    char input[PATH_MAX], absolute[PATH_MAX], resolved[PATH_MAX];
+    char *save, *token;
+    size_t n = 1;
+    if (file_part) *file_part = NULL;
+    if (!path || !*path) { errno = EINVAL; return 0; }
+    if (strlen(path) >= sizeof input) { errno = ENAMETOOLONG; return 0; }
+    gw_normalize_path(path, input, sizeof input);
+    if (*input == '/') strcpy(absolute, input);
+    else {
+        if (!getcwd(absolute, sizeof absolute)) return 0;
+        size_t cwd_len = strlen(absolute);
+        if (cwd_len + strlen(input) + 2 > sizeof absolute) { errno = ENAMETOOLONG; return 0; }
+        absolute[cwd_len++] = '/';
+        strcpy(absolute + cwd_len, input);
+    }
+    resolved[0] = '/';
+    for (token = strtok_r(absolute, "/", &save); token; token = strtok_r(NULL, "/", &save)) {
+        if (!strcmp(token, ".")) continue;
+        if (!strcmp(token, "..")) {
+            while (n > 1 && resolved[n - 1] != '/') --n;
+            if (n > 1) --n;
+            continue;
+        }
+        if (n > 1) resolved[n++] = '/';
+        size_t len = strlen(token);
+        memcpy(resolved + n, token, len);
+        n += len;
+    }
+    resolved[n] = 0;
+    if (n >= cap || !out) return (DWORD)(n + 1);
+    memcpy(out, resolved, n + 1);
+    if (file_part) *file_part = strrchr(out, '/') + 1;
     return (DWORD)n;
 }
 
@@ -258,28 +393,16 @@ int gw_compat_remove(const char *path) {
 /* ---- directory enumeration ---- */
 struct gw_find_handle {
     DIR *dir;
+    char pattern[256];
     char base[1024]; /* directory part, normalized, no trailing slash */
 };
 
 /* pattern is always "<dir>\*" (verified: every call site in this codebase uses exactly this
  * form, never a more specific glob) - strip the trailing wildcard and normalize the rest. */
-static void gw_find_split_dir(const char *pattern, char *out, size_t cap) {
-    char norm[1024];
-    size_t n;
-    gw_normalize_path(pattern, norm, sizeof norm);
-    n = strlen(norm);
-    if (n >= 2 && norm[n - 1] == '*' && norm[n - 2] == '/') {
-        norm[n - 2] = '\0';
-    }
-    if (norm[0] == '\0') {
-        snprintf(out, cap, ".");
-    } else {
-        snprintf(out, cap, "%s", norm);
-    }
-}
-
 static BOOL gw_find_advance(struct gw_find_handle *fh, WIN32_FIND_DATAA *out) {
-    struct dirent *de = readdir(fh->dir);
+    struct dirent *de;
+    do { de = readdir(fh->dir); }
+    while (de && fnmatch(fh->pattern, de->d_name, 0) != 0);
     struct stat st;
     char full[2048];
     if (de == NULL) {
@@ -306,7 +429,15 @@ HANDLE FindFirstFileA(const char *pattern, WIN32_FIND_DATAA *out) {
     if (fh == NULL) {
         return INVALID_HANDLE_VALUE;
     }
-    gw_find_split_dir(pattern, fh->base, sizeof fh->base);
+    char normalized[1280];
+    if (!pattern || strlen(pattern) >= sizeof normalized) { free(fh); errno=ENAMETOOLONG; return INVALID_HANDLE_VALUE; }
+    gw_normalize_path(pattern, normalized, sizeof normalized);
+    char *slash = strrchr(normalized, '/');
+    const char *glob = slash ? slash + 1 : normalized;
+    if (strlen(glob) >= sizeof fh->pattern) { free(fh); errno=ENAMETOOLONG; return INVALID_HANDLE_VALUE; }
+    strcpy(fh->pattern, glob);
+    if (slash) *slash = 0;
+    snprintf(fh->base, sizeof fh->base, "%s", slash ? (*normalized ? normalized : "/") : ".");
     fh->dir = opendir(fh->base);
     if (fh->dir == NULL) {
         free(fh);
@@ -352,6 +483,14 @@ BOOL GetFileAttributesExA(const char *path, GET_FILEEX_INFO_LEVELS level, void *
         return FALSE;
     }
     data->dwFileAttributes = S_ISDIR(st.st_mode) ? FILE_ATTRIBUTE_DIRECTORY : 0u;
+    data->nFileSizeHigh = (DWORD)((uint64_t)st.st_size >> 32);
+    data->nFileSizeLow = (DWORD)((uint64_t)st.st_size & 0xFFFFFFFFu);
+    {
+        uint64_t stamp = ((uint64_t)st.st_mtim.tv_sec + 11644473600ull) * 10000000ull +
+                         (uint64_t)st.st_mtim.tv_nsec / 100;
+        data->ftLastWriteTime.dwLowDateTime = (DWORD)stamp;
+        data->ftLastWriteTime.dwHighDateTime = (DWORD)(stamp >> 32);
+    }
     return TRUE;
 }
 BOOL CreateDirectoryA(const char *path, void *unused_sa) {
@@ -508,4 +647,75 @@ void gw_set_window_title(const char *title) {
 HWND GetForegroundWindow(void) { return gw_window_focused() ? (HWND)gw_window : NULL; }
 void GetWindowThreadProcessId(HWND h, DWORD *out_pid) {
     *out_pid = (h != NULL && h == (HWND)gw_window) ? GetCurrentProcessId() : 0;
+}
+
+int gw_compat_ioctlsocket(SOCKET s, long cmd, unsigned long *argp) {
+    if (cmd != FIONBIO || !argp) { errno = EINVAL; return -1; }
+    int flags = fcntl(s, F_GETFL);
+    if (flags < 0) return -1;
+    return fcntl(s, F_SETFL, *argp ? flags | O_NONBLOCK : flags & ~O_NONBLOCK);
+}
+
+/* The executable is ET_EXEC. ELF program headers describe its actual executable ranges. */
+extern const unsigned char __executable_start[];
+int gw_linux_is_native_code(uintptr_t address) {
+    const Elf32_Ehdr *eh = (const Elf32_Ehdr *)__executable_start;
+    const Elf32_Phdr *ph = (const Elf32_Phdr *)(__executable_start + eh->e_phoff);
+    for (unsigned i = 0; i < eh->e_phnum; ++i) {
+        if (ph[i].p_type == PT_LOAD && (ph[i].p_flags & PF_X) &&
+            address >= ph[i].p_vaddr && address - ph[i].p_vaddr < ph[i].p_memsz) return 1;
+    }
+    return 0;
+}
+static _Thread_local unsigned char gw_signal_stack[65536] __attribute__((aligned(16)));
+static gw_linux_exec_resolver gw_exec_resolver;
+static pthread_once_t gw_signals_once = PTHREAD_ONCE_INIT;
+static int gw_signals_ok;
+int gw_linux_signal_thread_init(void) {
+    stack_t old, stack = { .ss_sp = gw_signal_stack, .ss_size = sizeof gw_signal_stack };
+    if (sigaltstack(NULL, &old)) return 0;
+    if (!(old.ss_flags & SS_DISABLE)) return 1;
+    return sigaltstack(&stack, NULL) == 0;
+}
+void gw_linux_set_exec_resolver(gw_linux_exec_resolver resolver) {
+    __atomic_store_n(&gw_exec_resolver, resolver, __ATOMIC_RELEASE);
+}
+static void gw_linux_signal(int signal_number, siginfo_t *info, void *raw) {
+    ucontext_t *ctx = raw;
+    uintptr_t ip = (uintptr_t)ctx->uc_mcontext.gregs[REG_EIP];
+    gw_linux_exec_resolver resolver = __atomic_load_n(&gw_exec_resolver, __ATOMIC_ACQUIRE);
+    /* x86 page-fault error bit 4 identifies an instruction fetch. Never redirect data faults. */
+    if (signal_number == SIGSEGV && info->si_code == SEGV_ACCERR &&
+        (ctx->uc_mcontext.gregs[REG_ERR] & 16) && (uintptr_t)info->si_addr == ip && resolver) {
+        uintptr_t target = resolver(ip);
+        if (target && gw_linux_is_native_code(target)) {
+            ctx->uc_mcontext.gregs[REG_EIP] = (greg_t)target;
+            return;
+        }
+    }
+    /* Only async-signal-safe operations here; the core contains the complete original context. */
+    char message[] = "gw: fatal Linux signal at ELF address 0x00000000; inspect matching debug ELF/core\n";
+    const char hex[] = "0123456789abcdef";
+    for (unsigned i = 0; i < 8; ++i) message[sizeof("gw: fatal Linux signal at ELF address 0x") - 1 + i] = hex[(ip >> ((7 - i) * 4)) & 15];
+    (void)write(STDERR_FILENO, message, sizeof message - 1);
+    struct sigaction action = {0};
+    action.sa_handler = SIG_DFL;
+    sigemptyset(&action.sa_mask);
+    sigaction(signal_number, &action, NULL);
+    if (info->si_code <= 0) raise(signal_number);
+    /* Returning retries a synchronous fault with the default disposition, preserving the core. */
+}
+static void gw_linux_signals_init(void) {
+    struct sigaction action = {0};
+    action.sa_sigaction = gw_linux_signal;
+    action.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&action.sa_mask);
+    gw_signals_ok = sigaction(SIGSEGV, &action, NULL) == 0 &&
+                    sigaction(SIGBUS, &action, NULL) == 0 &&
+                    sigaction(SIGILL, &action, NULL) == 0;
+}
+int gw_linux_install_signals(void) {
+    if (!gw_linux_signal_thread_init()) return 0;
+    pthread_once(&gw_signals_once, gw_linux_signals_init);
+    return gw_signals_ok;
 }

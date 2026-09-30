@@ -11,9 +11,13 @@
 #include "gw_slippi_pad.h"
 #include "gw_slippi_peer.h"
 #include "gw_slippi_match.h"
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <wincrypt.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 #include <stdio.h>
 
 extern const char *gw_replay_scene(void);
@@ -38,6 +42,7 @@ static struct {
 static int sm_hex(char c) {
     return c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:-1;
 }
+#ifdef _WIN32
 static int sm_account_tag(uint64_t fingerprint, const char *salt, char out[65]) {
     static const char domain[]="GD Slippi account v1";
     static const char hex[]="0123456789abcdef";
@@ -201,7 +206,6 @@ void gw_SlippiMode_SceneBegin(int scene_kind) {
              gw_Replay_Frame(), sm.fixture.last_frame);
     sm_exit(3, why);
 }
-
 const char *gw_SlippiMode_Scene(void) {
     const char *why=NULL,*scene;
     GwSlippiPeerConfig peer={0};
@@ -301,3 +305,12 @@ const char *gw_SlippiMode_Scene(void) {
            sm.fixture.first_frame,sm.fixture.last_frame,sm.config.delay);
     return scene;
 }
+#else
+const char *gw_SlippiMode_Scene(void) {
+    const char *mode = getenv("MELEE_SLIPPI_MODE");
+    if (mode && *mode) gw_panic("Slippi mode is unavailable in the Linux build; use GD netplay");
+    return NULL;
+}
+void gw_SlippiMode_Tick(int online_frame) { (void)online_frame; }
+void gw_SlippiMode_SceneBegin(int scene_kind) { (void)scene_kind; }
+#endif

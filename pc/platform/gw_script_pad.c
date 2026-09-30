@@ -27,6 +27,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+#include <strings.h> /* strcasecmp; MSVC declares _stricmp in <string.h> */
+#define _stricmp strcasecmp
+#endif
 
 extern void gw_pad_log(const char *fmt, ...); /* rate-limited pad transition log (shim_pad.c) */
 

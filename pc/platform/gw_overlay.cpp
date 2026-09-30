@@ -457,7 +457,7 @@ void build_panel() {
   panel_rule();
   panel_wrapped("scene", scene != nullptr ? scene : "(none - booted to the menu)");
   if (pad != nullptr) {
-    const char *leaf = std::strrchr(pad, '\\');
+    const char *leaf = gw_path_separator(pad);
     panel_add(1, "pad     %s", leaf != nullptr ? leaf + 1 : pad);
   }
   panel_rule();

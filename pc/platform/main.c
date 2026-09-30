@@ -216,7 +216,7 @@ static const char *gw_cache_path(void) {
     return NULL; /* let aurora fall back to its default */
   }
 #ifdef _WIN32
-  slash = strrchr(buf, '\\');
+  slash = gw_path_separator(buf);
 #else
   slash = strrchr(buf, '/');
 #endif
@@ -233,7 +233,7 @@ static const char *gw_exe_dir(void) {
   DWORD n = GetModuleFileNameA(NULL, buf, (DWORD)sizeof buf);
   char *slash;
 #ifdef _WIN32
-  slash = (n == 0 || n >= sizeof buf) ? NULL : strrchr(buf, '\\');
+  slash = (n == 0 || n >= sizeof buf) ? NULL : gw_path_separator(buf);
 #else
   slash = (n == 0 || n >= sizeof buf) ? NULL : strrchr(buf, '/');
 #endif
@@ -350,12 +350,16 @@ int main(int argc, char *argv[]) {
     gw_log("melee-pc: DirectInput joysticks %s (MELEE_DIRECTINPUT)", dinput ? "on" : "off");
   }
   AuroraInfo info = aurora_initialize(argc, argv, &config);
+
+#ifdef _WIN32
   if (!gw_window_drag_install(info.window)) {
     gw_panic("could not install nonmodal window drag");
   }
+#endif
   gw_log("melee-pc: aurora backend %d, window %ux%u", (int)info.backend, info.windowSize.width,
          info.windowSize.height);
 #ifndef _WIN32
+  gw_window_drag_install(info.window);
   gw_set_window(info.window);
 #endif
   gw_apply_window_env();

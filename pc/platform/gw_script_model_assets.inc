@@ -113,7 +113,7 @@ static int gs_stage_model_open(lua_State *L, const char *name)
         return luaL_error(L, "model must be a basename of at most 48 letters, digits, _ or -");
     snprintf(dir, sizeof dir, "%s", s->entry);
     for (up = 0; up < 2; ++up) {
-        char *slash = strrchr(dir, '\\'), *forward = strrchr(dir, '/');
+        char *slash = gw_path_separator(dir), *forward = strrchr(dir, '/');
         if (forward && (!slash || forward > slash)) slash = forward;
         if (!slash) break;
         *slash = 0;

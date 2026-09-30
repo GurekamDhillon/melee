@@ -49,12 +49,22 @@
 #include "gw_test.h"
 
 #include <ctype.h>
-#include <intrin.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+#include <sys/sysinfo.h>
+#include <sys/utsname.h>
+#include <pwd.h>
+#include <unistd.h>
+#endif
+#ifdef _WIN32
+#include <intrin.h>
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 extern int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt);
 extern int gw_Settings_Summary(char *out, int cap);
@@ -637,7 +647,9 @@ static void rep(const char *fmt, ...) {
 
 static void gl_exe_dir(char *out, size_t cap) {
   DWORD k = GetModuleFileNameA(NULL, out, (DWORD)cap);
-  char *slash = k > 0 && k < cap ? strrchr(out, '\\') : NULL;
+  char *slash = k > 0 && k < cap ? gw_path_separator(out) : NULL;
+  char *slash2 = k > 0 && k < cap ? strrchr(out, '/') : NULL;
+  if (slash2 != NULL && (slash == NULL || slash2 > slash)) slash = slash2;
   if (slash != NULL) {
     slash[1] = '\0';
   } else {
@@ -646,12 +658,16 @@ static void gl_exe_dir(char *out, size_t cap) {
 }
 
 static DWORD gl_link_stamp(void) {
+#ifdef _WIN32
   const unsigned char *base = (const unsigned char *)GetModuleHandleA(NULL);
   const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)base;
   const IMAGE_NT_HEADERS *nt;
   if (base == NULL || dos->e_magic != IMAGE_DOS_SIGNATURE) return 0;
   nt = (const IMAGE_NT_HEADERS *)(base + dos->e_lfanew);
   return nt->Signature == IMAGE_NT_SIGNATURE ? nt->FileHeader.TimeDateStamp : 0;
+#else
+  return 0; /* ELF map timestamps are not part of the MSVC-shaped symbolizer format. */
+#endif
 }
 
 static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *st) {
@@ -676,7 +692,7 @@ static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *s
   rep("build id:        %08lX (melee-pc.exe link time)\n", (unsigned long)gl_link_stamp());
   {
     char title[0x41] = "";
-    const char *base = strrchr(gl.disc_path, '\\');
+    const char *base = gw_path_separator(gl.disc_path);
     const char *base2 = strrchr(gl.disc_path, '/');
     if (base2 != NULL && (base == NULL || base2 > base)) base = base2;
     f = gl.disc_path[0] != '\0' ? fopen(gl.disc_path, "rb") : NULL;
@@ -698,17 +714,31 @@ static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *s
     /* MELEE_* switches in effect (the launcher's toggles arrive this way) */
     char env[1024];
     size_t n = 0;
+    env[0] = '\0';
+#ifdef _WIN32
+    {
     LPCH block = GetEnvironmentStringsA();
     LPCH v;
-    env[0] = '\0';
     for (v = block; v != NULL && *v != '\0'; v += strlen(v) + 1) {
       if (strncmp(v, "MELEE_", 6) == 0 && n + strlen(v) + 2 < sizeof env) {
         n += (size_t)snprintf(env + n, sizeof env - n, "%s%s", n ? " " : "", v);
       }
     }
     if (block != NULL) FreeEnvironmentStringsA(block);
+    }
+#else
+    {
+    extern char **environ;
+    char **v;
+    for (v = environ; v != NULL && *v != NULL; ++v) {
+      if (strncmp(*v, "MELEE_", 6) == 0 && n + strlen(*v) + 2 < sizeof env)
+        n += (size_t)snprintf(env + n, sizeof env - n, "%s%s", n ? " " : "", *v);
+    }
+    }
+#endif
     rep("environment:     %s\n", env[0] != '\0' ? env : "(no MELEE_* variables)");
   }
+#ifdef _WIN32
   {
     typedef LONG(WINAPI * RtlGetVersionFn)(OSVERSIONINFOW *);
     OSVERSIONINFOW v;
@@ -727,6 +757,18 @@ static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *s
         v.dwBuildNumber, wow ? "32-bit game on 64-bit Windows" : "32-bit Windows", si.dwNumberOfProcessors,
         ms.ullTotalPhys / (1024ull * 1024ull));
   }
+#else
+  {
+    struct utsname u;
+    struct sysinfo si;
+    long cpus = sysconf(_SC_NPROCESSORS_ONLN);
+    memset(&si, 0, sizeof si);
+    sysinfo(&si);
+    if (uname(&u) == 0)
+      rep("os:              %s %s, %ld cpus, %llu MB RAM\n", u.sysname, u.release, cpus,
+          (unsigned long long)(si.totalram * si.mem_unit / (1024ull * 1024ull)));
+  }
+#endif
 }
 
 /* Symbolizes every "rva 0x........" in the fault lines against melee-pc.map (only when the map's
@@ -815,12 +857,20 @@ static int gl_write_report(const char *dst, const char *kind, const char *reason
   size_t budget, used;
   gl_nrep = 0;
   gl_rep[0] = '\0';
+#ifdef _WIN32
   {
     DWORD n = sizeof gl_user;
     if (!GetUserNameA(gl_user, &n)) gl_user[0] = '\0';
     n = GetEnvironmentVariableA("USERPROFILE", gl_profile, sizeof gl_profile);
     if (n == 0 || n >= sizeof gl_profile) gl_profile[0] = '\0';
   }
+#else
+  {
+    struct passwd *pw = getpwuid(getuid());
+    snprintf(gl_user, sizeof gl_user, "%s", pw != NULL ? pw->pw_name : "");
+    snprintf(gl_profile, sizeof gl_profile, "%s", getenv("HOME") != NULL ? getenv("HOME") : "");
+  }
+#endif
   rep_header(kind, reason, st);
 
   /* the fault: a few lines of lead-in, then everything since the crash began (capped) */
@@ -863,6 +913,7 @@ void gw_crash_report(const char *kind, const char *reason) {
   FILE *in, *out;
   gw_log_crash_begin();
   gl_lock();
+#ifdef _WIN32
   if (strncmp(kind, "panic", 5) == 0) {
     /* an assert has no fault frames of its own: walk this stack (frames in the exe only, as map
      * rvas, so the report symbolizes them) */
@@ -893,6 +944,7 @@ void gw_crash_report(const char *kind, const char *reason) {
       }
     }
   }
+#endif
   GetLocalTime(&st);
   CreateDirectoryA("crashlogs", NULL);
   snprintf(stem, sizeof stem, "crashlogs\\crash-%04u%02u%02u-%02u%02u%02u", st.wYear, st.wMonth, st.wDay,

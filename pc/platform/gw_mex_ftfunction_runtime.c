@@ -2147,13 +2147,20 @@ static uint32_t gw_mex_callable(uint32_t guest, const char *why) {
  * but not for anything per-frame; the first trap per target is logged so a hot one can be given an
  * explicit route (as accessory4_cb has in fighter.c) instead. */
 
+#ifdef _WIN32
 static __declspec(thread) uint32_t gw_mex_trap_target;
+#else
+static _Thread_local uint32_t gw_mex_trap_target;
+#endif
 
 #define GW_MEX_TRAP_SEEN_MAX 32
 static uint32_t gw_mex_trap_seen[GW_MEX_TRAP_SEEN_MAX];
 static uint32_t gw_mex_trap_seen_count[GW_MEX_TRAP_SEEN_MAX];
 static int gw_mex_trap_seen_n;
 
+#ifndef _WIN32
+__attribute__((force_align_arg_pointer))
+#endif
 static uint32_t gw_mex_trap_trampoline(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3) {
     /* Capture the target FIRST: the guest function may itself make a native call that traps
      * again, and that nested trap overwrites gw_mex_trap_target. */
@@ -2205,6 +2212,7 @@ static void gw_mex_trap_note(uint32_t eip, const uint32_t *frame) {
            gw_mex_in_blob(eip) ? "interpreting" : "redirected to its native build");
 }
 
+#ifdef _WIN32
 static LONG CALLBACK gw_mex_exec_trap(PEXCEPTION_POINTERS ep) {
     PEXCEPTION_RECORD er = ep->ExceptionRecord;
     uint32_t eip;
@@ -2240,6 +2248,19 @@ static LONG CALLBACK gw_mex_exec_trap(PEXCEPTION_POINTERS ep) {
     ep->ContextRecord->Eip = (DWORD) (uintptr_t) gw_mex_trap_trampoline;
     return EXCEPTION_CONTINUE_EXECUTION;
 }
+
+#else
+static uintptr_t gw_mex_exec_trap(uintptr_t address) {
+    if (!gw_mex_any_installed) return 0;
+    if (gw_mex_in_blob((uint32_t)address)) {
+        gw_mex_trap_target = (uint32_t)address;
+        return (uintptr_t)gw_mex_trap_trampoline;
+    }
+    int kind = 0;
+    uint32_t native = gw_mex_bridge_lookup((uint32_t)address, &kind);
+    return kind == 1 ? native : 0;
+}
+#endif
 
 /* Call the real native engine function for `guest_addr` with the generic bridge shape. */
 static uint32_t gw_mex_call_native(uint32_t guest_addr, uint32_t a0, uint32_t a1, uint32_t a2,
@@ -2558,6 +2579,7 @@ static uint32_t gw_mex_shim_bare_blr(uint32_t a0, uint32_t a1, uint32_t a2, uint
 
 /* True when `a` lies in this executable's code section (from its own PE header, read once). */
 static int gw_mex_is_native_code(uint32_t a) {
+#ifdef _WIN32
     static uint32_t lo, hi;
     if (hi == 0u) {
         const uint8_t *base = (const uint8_t *)GetModuleHandleA(NULL);
@@ -2577,6 +2599,9 @@ static int gw_mex_is_native_code(uint32_t a) {
         }
     }
     return a >= lo && a < hi;
+#else
+    return gw_linux_is_native_code(a);
+#endif
 }
 
 /* The MexTK API entries in m-ex's helper region, by guest address (m-ex's MexTK/links/melee.link
@@ -3394,10 +3419,15 @@ void gw_Mex_RuntimeInit(void) {
     gw_ppc_set_symbolizer(gw_mex_symbolize);
     /* First in the chain, so it runs before the port's own crash handling - which it defers to
      * for anything that is not an execute fault inside the blob. */
+#ifdef _WIN32
     if (AddVectoredExceptionHandler(1, gw_mex_exec_trap) == NULL) {
         gw_log("interp: could not install the guest execute trap - direct native calls into "
                "guest code will crash");
     }
+#else
+    if (!gw_linux_install_signals()) gw_panic("could not install Linux guest execution handler");
+    gw_linux_set_exec_resolver(gw_mex_exec_trap);
+#endif
 }
 
 /* The shared rtoc (r2) and guest stack top every interpreted m-ex blob runs on. Both are 0 until
@@ -4064,7 +4094,7 @@ static int test_bridge_lookup_memcpy(void) {
                      kind);
         return 1;
     }
-    if (native < 0x10000000u || native > 0x20000000u) {
+    if (!gw_mex_is_native_code(native)) {
         gw_test_fail("bridge memcpy native 0x%08X not in the image range", native);
         return 1;
     }

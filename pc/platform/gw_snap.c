@@ -224,11 +224,17 @@ static int sn_load_map(void) {
     int i;
     GetModuleFileNameA(NULL, path, sizeof path);
     {
+#ifdef _WIN32
         char *dot = strrchr(path, '.');
         if (dot == NULL) {
             return -1;
         }
         strcpy(dot, ".map");
+#else
+        char *slash = gw_path_separator(path);
+        if (!slash || (size_t)(slash - path) + sizeof "/melee-pc.msvc.map" > sizeof path) return -1;
+        strcpy(slash + 1, "melee-pc.msvc.map");
+#endif
     }
     f = fopen(path, "r");
     if (f == NULL) {
@@ -247,12 +253,22 @@ static int sn_load_map(void) {
             continue;
         }
         /* symbols: " 0003:0000a1b0       _name        1000xxxx f?  obj" */
-        if (sscanf(line, " 0003:%x %255s %x %255s %63s", &off, a, &va, b, c) >= 4) {
+#ifdef _WIN32
+        int parsed = sscanf(line, " 0003:%x %255s %x %255s %63s", &off, a, &va, b, c) >= 4;
+#else
+        int parsed = sscanf(line, "GW_STATE %x %x %255s %255s", &va, &len, a, b) == 4;
+        off = va;
+#endif
+        if (parsed) {
             const char *obj = strcmp(b, "f") == 0 || strcmp(b, "i") == 0 ? c : b;
             if (sn.nsyms < GW_SNAP_MAX_SYMS) {
                 GwSnapSym *s = &sn.syms[sn.nsyms++];
                 s->va = va;
+#ifdef _WIN32
                 s->len = 0;
+#else
+                s->len = len;
+#endif
                 snprintf(s->name, sizeof s->name, "%s", a);
                 snprintf(s->obj, sizeof s->obj, "%s", obj);
             }
@@ -277,11 +293,14 @@ static int sn_load_map(void) {
     }
     fclose(f);
     qsort(sn.syms, (size_t) sn.nsyms, sizeof sn.syms[0], sn_sym_cmp);
+    if (!sn.nsyms) { gw_log("snap: no state symbols in %s", path); return -1; }
+#ifdef _WIN32
     sec3_start = sec3_base;
     for (i = 0; i < sn.nsyms; ++i) {
         uint32_t end = i + 1 < sn.nsyms ? sn.syms[i + 1].va : sec3_start + sec3_end;
         sn.syms[i].len = end > sn.syms[i].va ? end - sn.syms[i].va : 0;
     }
+ #endif
     /* merge the game symbols into ranges */
     sn.nranges = 0;
     sn.globals_len = 0;

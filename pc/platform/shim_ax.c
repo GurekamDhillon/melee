@@ -47,8 +47,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h> /* GetModuleFileNameA: audio.cfg beside the exe */
+#else
+#include "gw_compat_linux.h" /* GetModuleFileNameA: audio.cfg beside the exe */
+#endif
 
 /* ---- voice pool ---------------------------------------------------------------------------
  * AXAcquireVoice cannot return NULL: the synth's stream path (HSD_Synth_8038B5AC) reads
@@ -651,7 +655,7 @@ static const char *gw_ax_cfg_path(void) {
     char *slash;
     if (buf[0] == '\0') {
         DWORD n = GetModuleFileNameA(NULL, buf, (DWORD) sizeof buf);
-        if (n == 0 || n >= sizeof buf || (slash = strrchr(buf, '\\')) == NULL) {
+        if (n == 0 || n >= sizeof buf || (slash = gw_path_separator(buf)) == NULL) {
             strcpy(buf, "audio.cfg");
         } else {
             strcpy(slash + 1, "audio.cfg");

@@ -160,6 +160,7 @@ void gw_UI_RasterI4Guest(int w, int h, const uint8_t *rgba_host, void *guest_dst
  * strip is squeezed horizontally, never clipped. `dst` holds gw_UI_I4Size(w, round8(h)) bytes:
  * I4 tiles are 8 texels tall, so the rows past h are padding, as they are in the disc's own
  * textures. Returns 1 when drawn, 0 on any failure (dst is then left all zero = blank). */
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
@@ -275,6 +276,91 @@ done:
     free(rgba);
     return ok;
 }
+
+#else /* !_WIN32 */
+
+#include "gw_compat_linux.h"
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+int gw_UI_TextI4(const char *text, int w, int h, int style, void *dst) {
+    if (!dst || !text || w < 8 || w > 1024 || h < 4 || h > 256) return 0;
+    int hp=(h+7)&~7, size=gw_UI_I4Size(w,hp);
+    if (!size) return 0;
+    memset(dst,0,(size_t)size);
+    size_t len=strlen(text);
+    if (!len || len>1024) return 0;
+    FT_Library library=NULL; FT_Face face=NULL;
+    uint8_t *mask=NULL,*rgba=NULL;
+    int ok=0;
+    const char *name=style==1 ? "LiberationSerif-Bold.ttf" : "LiberationSans-Bold.ttf";
+    char font[2048],exe[1024];
+    const char *fontdir=getenv("MELEE_FONT_DIR");
+    if (FT_Init_FreeType(&library)) goto done;
+    if (fontdir) snprintf(font,sizeof font,"%s/%s",fontdir,name);
+    else {
+        GetModuleFileNameA(NULL,exe,sizeof exe);
+        char *slash=strrchr(exe,'/'); if(slash) *slash=0;
+        snprintf(font,sizeof font,"%s/assets/fonts/%s",exe,name);
+    }
+    if (FT_New_Face(library,font,0,&face)) {
+        snprintf(font,sizeof font,"/usr/share/fonts/liberation/%s",name);
+        if (FT_New_Face(library,font,0,&face)) {
+            snprintf(font,sizeof font,"/usr/share/fonts/truetype/liberation2/%s",name);
+            if (FT_New_Face(library,font,0,&face)) goto done;
+        }
+    }
+    if (FT_Set_Pixel_Sizes(face,0,(unsigned)(h-3))) goto done;
+    int width=0, top=0, bottom=0, spacing=style==1?3:0;
+    for(size_t i=0;i<len;++i) {
+        if(FT_Load_Char(face,(unsigned char)text[i],FT_LOAD_RENDER)) goto done;
+        FT_GlyphSlot g=face->glyph;
+        width+=(int)(g->advance.x>>6)+spacing;
+        if(g->bitmap_top>top) top=g->bitmap_top;
+        int down=(int)g->bitmap.rows-g->bitmap_top; if(down>bottom) bottom=down;
+    }
+    width-=spacing;
+    if(width<1 || width>65536) goto done;
+    mask=calloc((size_t)(width+8)*(size_t)h,1);
+    rgba=calloc((size_t)w*(size_t)hp,4);
+    if(!mask || !rgba) goto done;
+    int pen=4, baseline=(h-top-bottom)/2+top;
+    for(size_t i=0;i<len;++i) {
+        if(FT_Load_Char(face,(unsigned char)text[i],FT_LOAD_RENDER)) goto done;
+        FT_GlyphSlot g=face->glyph;
+        if(g->bitmap.pixel_mode!=FT_PIXEL_MODE_GRAY) goto done;
+        for(unsigned y=0;y<g->bitmap.rows;++y) for(unsigned x=0;x<g->bitmap.width;++x) {
+            int dx=pen+g->bitmap_left+(int)x, dy=baseline-g->bitmap_top+(int)y;
+            if(dx<0 || dx>=width+8 || dy<0 || dy>=h) continue;
+            const uint8_t *row=g->bitmap.buffer+(g->bitmap.pitch>=0?(int)y:(int)g->bitmap.rows-1-(int)y)*abs(g->bitmap.pitch);
+            uint8_t *target=&mask[(size_t)dy*(width+8)+dx]; if(row[x]>*target) *target=row[x];
+        }
+        pen+=(int)(g->advance.x>>6)+spacing;
+    }
+    int drawn=width+8; if(drawn>w-2) drawn=w-2;
+    int left=(w-drawn)/2;
+    for(int y=0;y<h;++y) for(int x=0;x<drawn;++x) {
+        int sx=x*(width+8)/drawn;
+        uint8_t v=mask[(size_t)y*(width+8)+sx];
+        if(style==1) for(int dy=-1;dy<=1;++dy) for(int dx=-1;dx<=1;++dx) {
+            int xx=sx+dx, yy=y+dy;
+            if(xx>=0 && xx<width+8 && yy>=0 && yy<h) {
+                uint8_t edge=(uint8_t)(mask[(size_t)yy*(width+8)+xx]*110/255);
+                if(edge>v) v=edge;
+            }
+        }
+        uint8_t *pixel=rgba+((size_t)y*w+x+left)*4;
+        pixel[0]=pixel[1]=pixel[2]=v; pixel[3]=255;
+    }
+    gw_UI_RasterI4(w,hp,rgba,dst); ok=1;
+done:
+    free(mask); free(rgba);
+    if(face) FT_Done_Face(face);
+    if(library) FT_Done_FreeType(library);
+    return ok;
+}
+
+#endif /* _WIN32 */
 
 /* The runtime UI-generation experiment flag. Game code cannot call getenv (no gw_getenv shim), so
  * gmGenUI_Active() in the game TU delegates here. */

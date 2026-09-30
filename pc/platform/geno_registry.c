@@ -30,8 +30,12 @@
 #include "gw_test.h"
 #include "../geno/geno.h"
 
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <stdint.h>
 #include <stdio.h>

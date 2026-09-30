@@ -27,7 +27,7 @@ def read_dol_from_iso(path):
         if game_id != "GALE01":
             raise SystemExit(f"{path}: game ID is {game_id}, expected GALE01 (Melee NTSC-U)")
         if revision != 2:
-            print(f"warning: disc revision is {revision}, the decomp targets revision 2 (v1.02)")
+            raise SystemExit(f"disc revision is {revision}; extraction requires revision 2 (v1.02)")
         dol_offset = struct.unpack(">I", header[0x420:0x424])[0]
         f.seek(dol_offset)
         dol_header = f.read(0x100)
@@ -97,10 +97,7 @@ def main():
     dol_path = args.dol or os.path.join(REPO, "orig", "GALE01", "sys", "main.dol")
     if args.iso:
         dol = read_dol_from_iso(args.iso)
-        os.makedirs(os.path.dirname(dol_path), exist_ok=True)
-        with open(dol_path, "wb") as f:
-            f.write(dol)
-        print(f"extracted {len(dol)} bytes of main.dol from {args.iso} -> {dol_path}")
+
     else:
         if not os.path.exists(dol_path):
             raise SystemExit(f"{dol_path} not found; pass --iso to extract it from a disc image")
@@ -109,7 +106,7 @@ def main():
 
     digest = hashlib.sha1(dol).hexdigest()
     if digest != EXPECTED_DOL_SHA1:
-        print(f"warning: main.dol sha1 is {digest}, expected {EXPECTED_DOL_SHA1}")
+        raise SystemExit(f"main.dol sha1 is {digest}, expected vanilla {EXPECTED_DOL_SHA1}")
 
     read = dol_reader(dol)
     symbols = parse_symbols(os.path.join(REPO, "config", "GALE01", "symbols.txt"), set(EXTRACTS))

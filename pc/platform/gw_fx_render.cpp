@@ -18,8 +18,13 @@
 // and uploaded on the render worker.
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
+#ifdef _WIN32
 #include <windows.h>
 #include <wincodec.h>
+#else
+#include "gw_compat_linux.h"
+#include <png.h>
+#endif
 
 #include <aurora/gfx.hpp>
 #include <webgpu/webgpu_cpp.h>
@@ -55,10 +60,13 @@ struct FxTex {
 };
 std::vector<std::vector<FxTex>> g_tex; // [pkg][tex]
 
+#ifdef _WIN32
 const GUID kClsidWic = {0xcacaf262, 0x9370, 0x4615, {0xa1, 0x3b, 0x9f, 0x55, 0x39, 0xda, 0x4c, 0x0a}};
 const GUID kFmtRGBA = {0xf5c7ad2d, 0x6a8d, 0x43dd, {0xa7, 0xa8, 0xa2, 0x99, 0x35, 0x26, 0x1a, 0xe9}};
+#endif
 
 bool decode_png(const char* path, const char* swz, FxTex& t) {
+#ifdef _WIN32
   IWICImagingFactory* f = nullptr;
   IWICBitmapDecoder* dec = nullptr;
   IWICBitmapFrameDecode* fr = nullptr;
@@ -96,6 +104,40 @@ bool decode_png(const char* path, const char* swz, FxTex& t) {
   if (dec) dec->Release();
   f->Release();
   return ok;
+#else
+  png_image image{};
+  std::string native_path(path);
+  for (char& c : native_path) if (c == '\\') c = '/';
+  image.version = PNG_IMAGE_VERSION;
+  if (!png_image_begin_read_from_file(&image, native_path.c_str())) return false;
+  // The host is 32-bit: bound dimensions before libpng's size macro or allocation.
+  if (!image.width || !image.height || image.width > 16384 || image.height > 16384 ||
+      uint64_t(image.width) * image.height * 4 > 256u * 1024u * 1024u) {
+    png_image_free(&image);
+    return false;
+  }
+  image.format = PNG_FORMAT_RGBA;
+  std::vector<uint8_t> src(PNG_IMAGE_SIZE(image));
+  const bool ok = png_image_finish_read(&image, nullptr, src.data(), 0, nullptr) != 0;
+  if (ok && image.width && image.height) {
+    int sel[4];
+    for (int c = 0; c < 4; ++c) {
+      const char s = swz[c];
+      sel[c] = s == 'r' ? 0 : s == 'g' ? 1 : s == 'b' ? 2 : s == 'a' ? 3 : s == '0' ? 4 : 5;
+    }
+    t.rgba.resize(src.size());
+    for (size_t i = 0; i < size_t(image.width) * image.height; ++i)
+      for (int c = 0; c < 4; ++c)
+        t.rgba[i * 4 + c] = sel[c] < 4 ? src[i * 4 + sel[c]] : sel[c] == 4 ? 0 : 255;
+    t.w = image.width;
+    t.h = image.height;
+  } else if (ok) {
+    png_image_free(&image);
+    return false;
+  }
+  png_image_free(&image);
+  return ok;
+#endif
 }
 
 void ensure_textures(int pk) {

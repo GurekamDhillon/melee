@@ -1,23 +1,66 @@
 /* Win32-primitive compatibility shim for the Linux build of the port.
  *
  * The platform layer was written against a bounded, repeated set of Win32 primitives (timing,
- * threading, critical sections, module-path lookup, page mapping, directory enumeration) rather
- * than anything Windows-specific in spirit. Each file keeps its `#include <windows.h>` under
- * `#ifdef _WIN32` and falls back to this header otherwise, so the same call sites work on both
- * platforms unchanged. Genuinely Windows-only mechanisms (winsock, the GC adapter's HID access,
- * SEH, PAGE_GUARD watchpoints) are NOT here - each of those gets its own `#ifdef _WIN32` block at
- * its (few) call sites instead of a fake shim, because faking them well enough to matter would be
- * its own subsystem, not a one-line compat shim. See gw_compat_linux.c for the implementations. */
+ * threading, critical sections, module-path lookup, page mapping, directory enumeration, and a
+ * standard BSD-socket subset) rather than anything Windows-specific in spirit. Each file keeps its
+ * `#include <windows.h>` under `#ifdef _WIN32` and falls back to this header otherwise, so the same
+ * call sites work on both platforms unchanged. Genuinely Windows-only mechanisms (the GC adapter's
+ * HID access, SEH, PAGE_GUARD watchpoints, GDI text, WIC image decode, the CryptoAPI) are NOT
+ * faked to full fidelity here - each of those gets its own `#ifdef _WIN32` block at its (few) call
+ * sites with a documented fallback. See gw_compat_linux.c for the implementations. */
 #ifndef GW_COMPAT_LINUX_H
 #define GW_COMPAT_LINUX_H
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <pthread.h>
+#include <string.h>
+
+/* ---- sockets (gw_net.c / gw_netplay.c / gw_script.c's console server) ----
+ * Those call sites use a standard BSD-socket subset; Windows spells it with Winsock names plus a
+ * startup/cleanup pair and two per-connection error codes. send/recv/bind/connect/getaddrinfo are
+ * already identical on both platforms, so only the names and the startup pair differ. This block
+ * is outside extern "C" because it pulls in the system socket headers, which carry their own
+ * linkage blocks. */
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+typedef int SOCKET;
+#define INVALID_SOCKET (-1)
+#define SOCKET_ERROR (-1)
+#define closesocket(fd) close(fd)
+typedef struct {
+    int unused;
+} WSADATA;
+#define MAKEWORD(a, b) ((unsigned short)(((a) & 0xff) | (((b) & 0xff) << 8)))
+static inline int WSAStartup(unsigned short v, WSADATA *d) {
+    (void)v;
+    (void)d;
+    return 0;
+}
+static inline int WSACleanup(void) { return 0; }
+#define WSAGetLastError() (errno)
+#define WSAEWOULDBLOCK EWOULDBLOCK
+#define WSAECONNRESET ECONNRESET
+#define WSAEMSGSIZE EMSGSIZE
+/* Windows' ioctlsocket(FIONBIO) is Linux fcntl(O_NONBLOCK); the arg is a u_long 1/0. */
+#ifndef FIONBIO
+#define FIONBIO 0x5421
+#endif
+
+#define ioctlsocket(s, cmd, argp) gw_compat_ioctlsocket((s), (cmd), (unsigned long *)(argp))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+int gw_compat_ioctlsocket(SOCKET s, long cmd, unsigned long *argp);
 
 /* ---- basic Win32 typedefs actually used by this codebase ---- */
 typedef unsigned int DWORD;
@@ -27,6 +70,15 @@ typedef unsigned long ULONG_PTR;
 typedef void *LPVOID;
 typedef const char *LPCSTR;
 typedef void *HANDLE;
+typedef unsigned long long ULONGLONG;
+typedef long long LONGLONG;
+typedef unsigned char BYTE;
+#define WINAPI /* __stdcall on Windows; empty here so the same signatures compile */
+#define CALLBACK
+
+/* A read/write compiler barrier, the one x86 intrinsic the platform layer uses directly
+ * (shim_ax.c's sample-buffer handoff). A memory-clobber asm is the portable equivalent. */
+#define _ReadWriteBarrier() __asm__ __volatile__("" ::: "memory")
 
 #ifndef TRUE
 #define TRUE 1
@@ -73,6 +125,23 @@ void DeleteCriticalSection(CRITICAL_SECTION *cs);
 void EnterCriticalSection(CRITICAL_SECTION *cs);
 void LeaveCriticalSection(CRITICAL_SECTION *cs);
 
+typedef struct { pthread_mutex_t mutex; pthread_cond_t cond; int state; void *context; } INIT_ONCE;
+typedef INIT_ONCE *PINIT_ONCE;
+typedef void *PVOID;
+typedef BOOL (*PINIT_ONCE_FN)(PINIT_ONCE, PVOID, PVOID *);
+#define INIT_ONCE_STATIC_INIT { PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0, NULL }
+BOOL InitOnceExecuteOnce(PINIT_ONCE once, PINIT_ONCE_FN callback, PVOID param, PVOID *context);
+
+/* Win32 slim reader/writer lock, exclusive-only (shim_pad.c's pad log uses just the exclusive
+ * path). Same lazy-pthread_mutex shape as CRITICAL_SECTION so a static SRWLOCK_INIT (all-NULL) is
+ * valid before any initializer runs. */
+typedef struct {
+    void *opaque;
+} SRWLOCK;
+#define SRWLOCK_INIT { NULL }
+void AcquireSRWLockExclusive(SRWLOCK *lock);
+void ReleaseSRWLockExclusive(SRWLOCK *lock);
+
 /* ---- high-resolution waitable timer (frame pacing; see shim_vi.c) ---- */
 #define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION 0x00000002u
 #define TIMER_ALL_ACCESS 0x1F0000u
@@ -83,6 +152,13 @@ BOOL SetWaitableTimer(HANDLE h, const LARGE_INTEGER *due, LONG unused_period,
                       void *unused_completion_routine, void *unused_completion_arg,
                       BOOL unused_resume);
 
+/* Linux ELF and signal support. Callback must only inspect immutable tables/TLS. */
+typedef uintptr_t (*gw_linux_exec_resolver)(uintptr_t address);
+int gw_linux_is_native_code(uintptr_t address);
+int gw_linux_signal_thread_init(void);
+int gw_linux_install_signals(void);
+void gw_linux_set_exec_resolver(gw_linux_exec_resolver resolver);
+
 /* ---- memory ---- */
 #define MEM_RESERVE 0x00002000u
 #define MEM_COMMIT 0x00001000u
@@ -92,6 +168,7 @@ void *VirtualAlloc(void *addr, size_t size, DWORD alloc_type, DWORD protect);
 
 /* ---- module path ---- */
 DWORD GetModuleFileNameA(HANDLE unused_module, char *out, DWORD cap);
+DWORD GetFullPathNameA(const char *path, DWORD cap, char *out, char **file_part);
 
 /* ---- directory enumeration (only the "<dir>\*" pattern this codebase issues) ---- */
 typedef struct {
@@ -109,8 +186,20 @@ BOOL FindClose(HANDLE h);
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 typedef enum { GetFileExInfoStandard } GET_FILEEX_INFO_LEVELS;
 typedef struct {
+    DWORD dwLowDateTime;
+    DWORD dwHighDateTime;
+} FILETIME;
+typedef struct {
     DWORD dwFileAttributes;
+    DWORD nFileSizeHigh;
+    DWORD nFileSizeLow;
+    FILETIME ftLastWriteTime;
 } WIN32_FILE_ATTRIBUTE_DATA;
+static inline int CompareFileTime(const FILETIME *a, const FILETIME *b) {
+    uint64_t av = ((uint64_t)a->dwHighDateTime << 32) | a->dwLowDateTime;
+    uint64_t bv = ((uint64_t)b->dwHighDateTime << 32) | b->dwLowDateTime;
+    return av < bv ? -1 : av > bv ? 1 : 0;
+}
 DWORD GetFileAttributesA(const char *path);
 BOOL GetFileAttributesExA(const char *path, GET_FILEEX_INFO_LEVELS level, void *out);
 BOOL CreateDirectoryA(const char *path, void *unused_sa);
@@ -122,6 +211,7 @@ BOOL MoveFileExA(const char *from, const char *to, DWORD flags);
 #include <stdlib.h> /* malloc/free/calloc/strtoull - several files reached these transitively
                       * through windows.h and don't include <stdlib.h> themselves */
 #include <strings.h> /* strcasecmp/strncasecmp */
+#define strtok_s strtok_r
 #define _stricmp strcasecmp
 #define _strnicmp strncasecmp
 #define _strtoui64 strtoull
@@ -132,6 +222,18 @@ BOOL MoveFileExA(const char *from, const char *to, DWORD flags);
  * <stdio.h> would already have declared the real symbols, so this only rewrites call sites, not
  * the libc declaration itself. */
 #include <stdio.h>
+FILE *gw_compat_fopen(const char *path, const char *mode);
+static inline void *SecureZeroMemory(void *p, size_t n) {
+    volatile unsigned char *q = (volatile unsigned char *)p;
+    while (n--) *q++ = 0;
+    return p;
+}
+static inline int gw_compat_fopen_s(FILE **out, const char *path, const char *mode) {
+    if (!out || !path || !mode) return EINVAL;
+    *out = gw_compat_fopen(path, mode);
+    return *out != NULL ? 0 : errno;
+}
+#define fopen_s gw_compat_fopen_s
 FILE *gw_compat_fopen(const char *path, const char *mode);
 int gw_compat_remove(const char *path);
 /* gw_compat_linux.c itself defines gw_compat_fopen/gw_compat_remove in terms of the real fopen()/

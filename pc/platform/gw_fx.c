@@ -22,8 +22,12 @@
 #include "gw_fx_internal.h"
 #include "gw_fx_query.h"
 
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <math.h>
 #include <stdint.h>
@@ -275,7 +279,7 @@ static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const
     const int m = p->nmesh_loaded;
     if (m >= FX_MAX_MESH) return;
     snprintf(path, sizeof path, "%s", pkgpath);
-    slash = strrchr(path, '\\');
+    slash = gw_path_separator(path);
     if (strrchr(path, '/') > slash) slash = strrchr(path, '/');
     if (slash == NULL) return;
     snprintf(slash + 1, sizeof path - (size_t) (slash + 1 - path), "%s", file);
@@ -348,7 +352,7 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
     snprintf(p->path, sizeof p->path, "%s", path);
     snprintf(p->dir, sizeof p->dir, "%s", path);
     {
-        char *sl = strrchr(p->dir, '\\'), *sl2 = strrchr(p->dir, '/');
+        char *sl = gw_path_separator(p->dir), *sl2 = strrchr(p->dir, '/');
         if (sl2 > sl) sl = sl2;
         if (sl) *sl = 0;
     }

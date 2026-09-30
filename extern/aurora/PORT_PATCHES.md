@@ -3,7 +3,11 @@
 This directory is a vendored copy of [encounter/aurora](https://github.com/encounter/aurora)
 (MIT — see [`LICENSE`](LICENSE)), taken at upstream commit
 `cb0e279` ("Fix imgui texture upload race", updated from `749d6ee7a22bdfab78c8ece9047bca5d79aa72ca`).
-Nine files carry changes made for this port. They fall into five groups.
+This tree carries the port-specific changes documented below.
+
+`lib/gfx/pipeline_cache.cpp` also uses `const char*` for the VFS filename argument
+instead of the newer `sqlite3_filename` alias, preserving the same callback ABI
+while supporting Ubuntu 22.04's SQLite headers.
 
 To update: clone upstream, commit the port's changed files onto the old base commit (with LF
 line endings), rebase onto the new upstream head, then replace this tree with the result

@@ -32,6 +32,8 @@ local S = {
   handles = {},
   collision_count = 0,
   isolated = false,
+  clean = false,          -- clean preview: hide diagnostic slabs, keep collision
+  camera_mode = nil,      -- 'wide' while a preview camera is owned
   hud = nil,
   error = nil,
   arm = nil,
@@ -112,22 +114,25 @@ end
 local function build_collision()
   local plan = S.plan
   local handles = {}
+  -- draw=true is the diagnostic default so evidence is unambiguous. `clean`
+  -- hides only the debug slabs; the collision lines are identical either way.
+  local draw = not S.clean
   S.handles = handles -- retain partial builds for cleanup on any refusal
   for _, seg in ipairs(plan.floor_segments) do
     local h, why = gd.stage_add_platform((seg.left + seg.right) / 2, seg.y, seg.right - seg.left,
-      {passthrough = false, ledges = true, draw = true})
+      {passthrough = false, ledges = true, draw = draw})
     if not h then return nil, 'floor segment at ' .. tostring(seg.left) .. ': ' .. tostring(why) end
     handles[#handles + 1] = h
   end
   for _, p in ipairs(plan.platforms) do
     local h, why = gd.stage_add_platform(p.x, p.y, p.width,
-      {passthrough = p.passthrough, ledges = p.ledges, draw = true})
+      {passthrough = p.passthrough, ledges = p.ledges, draw = draw})
     if not h then return nil, 'platform at ' .. tostring(p.x) .. ': ' .. tostring(why) end
     handles[#handles + 1] = h
   end
   for _, line in ipairs(plan.lines) do
     local h, why = gd.stage_add_line(line.x0, line.y0, line.x1, line.y1, 'floor',
-      {passthrough = line.passthrough, ledges = line.ledges, draw = true})
+      {passthrough = line.passthrough, ledges = line.ledges, draw = draw})
     if not h then return nil, 'line at ' .. tostring(line.x0) .. ': ' .. tostring(why) end
     handles[#handles + 1] = h
   end
@@ -165,6 +170,11 @@ local function cleanup()
   end
   S.isolated = false
   S.arm = nil
+  if S.camera_mode and gd.camera_attach then
+    local ok = pcall(gd.camera_attach, 0)
+    if not ok then errors[#errors + 1] = 'camera restore' end
+  end
+  S.camera_mode = nil
   S.last_cleanup = { colliders = collider_count, errors = errors }
   if S.hud ~= nil and gd.hud_visible then pcall(gd.hud_visible, true) end
   S.hud = nil
@@ -216,10 +226,12 @@ end
 -- Console commands -----------------------------------------------------------------
 
 gd.command('certify_status', function()
-  say('certify_status diag_version=%d api_version=%s phase=%s template=%s recipe=%s recipe_version=%s certified=%s isolated=%s colliders=%d samples=%s error=%s',
+  say('certify_status diag_version=%d api_version=%s phase=%s template=%s recipe=%s recipe_version=%s certified=%s isolated=%s draw=%s clean=%s camera=%s floor_y=%s colliders=%d samples=%s error=%s',
     S.version, tostring(gd.api_version), S.phase, tostring(S.template),
     S.recipe and 'true' or 'false', tostring(S.recipe_version), flag(S.certified),
-    flag(gd.stage_isolate and gd.stage_isolate() or false), #S.handles, S.arm and tostring(S.arm.count) or '0', tostring(S.error))
+    flag(gd.stage_isolate and gd.stage_isolate() or false), flag(not S.clean), flag(S.clean),
+    tostring(S.camera_mode or 'auto'), tostring(S.node and S.node.room.floor.y or 0),
+    #S.handles, S.arm and tostring(S.arm.count) or '0', tostring(S.error))
 end, 'certification probe status')
 
 gd.command('certify_apis', function()
@@ -253,7 +265,7 @@ gd.command('certify_recipe', function(arg)
 end, 'resolve an uncertified recipe directly (no certification gate)')
 
 gd.command('certify_build', function(arg)
-  local id = (arg or ''):match('^(%S+)')
+  local id, mode = (arg or ''):match('^(%S+)%s*(%S*)')
   local missing = missing_apis()
   if #missing > 0 then
     for _, name in ipairs(missing) do say('certify_missing_api name=%s', name) end
@@ -270,29 +282,40 @@ gd.command('certify_build', function(arg)
   end
   S.template, S.node, S.recipe, S.plan = id, node, recipe, plan
   S.recipe_version, S.certified = recipe.version, recipe.certified
+  S.clean = (mode == 'clean')
   S.visuals, S.phase, S.error = Rooms.new(), 'loading', nil
-  say('certify_build_start template=%s recipe=%s recipe_version=%s certified=%s parts=%d platforms=%d lines=%d floor_segments=%d',
+  say('certify_build_start template=%s recipe=%s recipe_version=%s certified=%s clean=%s draw=%s parts=%d platforms=%d lines=%d floor_segments=%d',
     tostring(id), tostring(node.recipe), tostring(recipe.version), flag(recipe.certified),
-    #plan.parts, #plan.platforms, #plan.lines, #plan.floor_segments)
-end, 'load, build and isolate an uncertified recipe')
+    flag(S.clean), flag(not S.clean), #plan.parts, #plan.platforms, #plan.lines, #plan.floor_segments)
+end, 'load, build and isolate an uncertified recipe (optional clean preview)')
 
+-- A refused fixture teleport is an operational outcome, not a probe failure:
+-- the player can be dead between rooms. Report ok=false and keep the constructed
+-- phase/isolation so the driver can wait for respawn and retry.
 gd.command('certify_place', function(arg)
   local id = (arg or ''):match('^(%S+)')
+  if S.phase ~= 'ready' then say('certify_place ok=false reason=phase_%s', tostring(S.phase)); return end
   local socket = socket_for(S.node, id)
-  if not socket then fail('place', 'no such socket: ' .. tostring(id)); return end
+  if not socket then say('certify_place ok=false reason=unknown_socket socket=%s', tostring(id)); return end
   local a = arrival_for(S.node, socket) or anchor_for(S.node, socket)
-  if not a then fail('place', 'socket has no arrival or anchor: ' .. tostring(id)); return end
+  if not a then say('certify_place ok=false reason=no_arrival socket=%s', tostring(id)); return end
+  if not gd.player(1) then say('certify_place ok=false reason=no_fighter socket=%s', tostring(id)); return end
   local ok = pcall(gd.teleport, 1, a.x, a.y + 2)
-  if not ok then fail('place', 'teleport refused'); return end
-  say('certify_place socket=%s x=%s y=%s fixture=true note=placement-only-not-traversal', socket.socket, tostring(a.x), tostring(a.y))
+  if not ok then
+    say('certify_place ok=false reason=refused socket=%s x=%s y=%s fixture=true', socket.socket, tostring(a.x), tostring(a.y))
+    return
+  end
+  say('certify_place ok=true socket=%s x=%s y=%s fixture=true note=placement-only-not-traversal', socket.socket, tostring(a.x), tostring(a.y))
 end, 'FINISH fixture teleport to a socket arrival (inspection only)')
 
 gd.command('certify_place_at', function(arg)
   local x, y = (arg or ''):match('^(%-?[%d%.]+)%s+(%-?[%d%.]+)')
-  if not x then fail('place_at', 'usage: certify_place_at <x> <y>'); return end
+  if not x then say('certify_place ok=false reason=usage'); return end
+  if S.phase ~= 'ready' then say('certify_place ok=false reason=phase_%s', tostring(S.phase)); return end
+  if not gd.player(1) then say('certify_place ok=false reason=no_fighter'); return end
   local ok = pcall(gd.teleport, 1, tonumber(x), tonumber(y) + 2)
-  if not ok then fail('place_at', 'teleport refused'); return end
-  say('certify_place x=%s y=%s fixture=true note=placement-only-not-traversal', x, y)
+  if not ok then say('certify_place ok=false reason=refused x=%s y=%s fixture=true', x, y); return end
+  say('certify_place ok=true x=%s y=%s fixture=true note=placement-only-not-traversal', x, y)
 end, 'FINISH fixture teleport to a coordinate (inspection only)')
 
 local function open_window(label, target, socket_name)
@@ -335,7 +358,7 @@ gd.command('certify_result', function()
     if s.y > max_y then max_y = s.y end
     air = air + s.air
   end
-  say('certify_result label=%s socket=%s target_x=%s target_y=%s floor_y=%s samples=%d truncated=%s min_y=%s max_y=%s air_frames=%d start_x=%s start_y=%s',
+  say('certify_result header=1 label=%s socket=%s target_x=%s target_y=%s floor_y=%s samples=%d truncated=%s min_y=%s max_y=%s air_frames=%d start_x=%s start_y=%s',
     a.label, a.socket or 'window', a.target and tostring(a.target.x) or 'none',
     a.target and tostring(a.target.y) or 'none', tostring(a.floor_y), a.count,
     flag(a.truncated), tostring(a.count > 0 and min_y or nil), tostring(a.count > 0 and max_y or nil),
@@ -404,12 +427,34 @@ gd.command('certify_hud', function(arg)
   say('certify_hud hidden=%s ok=%s result=%s', flag(value), flag(ok), tostring(result))
 end, 'hide or restore the native status HUD')
 
+-- Preview-only fixed wide camera over the isolated room. It uses the registered
+-- camera pose API (camera_detach/camera_set{fov,eye,interest}/camera_attach);
+-- there is no gd.camera_pose in this build. It is a fixture for attractive PNG
+-- capture and must never be active during a traversal trace.
+local CAMERA_WIDE = {eye = {x = 0, y = 14, z = 200}, interest = {x = 0, y = 13, z = 0}, fov = 55}
+gd.command('certify_camera', function(arg)
+  local mode = (arg or 'auto'):match('^(%S+)') or 'auto'
+  if not (gd.camera_detach and gd.camera_set and gd.camera_attach) then
+    say('certify_camera ok=false mode=%s reason=camera_api_missing', mode)
+    return
+  end
+  if mode == 'wide' then
+    local ok = pcall(function() gd.camera_detach(); gd.camera_set(CAMERA_WIDE) end)
+    S.camera_mode = ok and 'wide' or nil
+    say('certify_camera ok=%s mode=wide preview=true fixture=true', flag(ok))
+  else
+    local ok = pcall(gd.camera_attach, 0)
+    S.camera_mode = nil
+    say('certify_camera ok=%s mode=auto preview=true fixture=true', flag(ok))
+  end
+end, 'preview-only camera: auto (match) or wide (fixed whole-room shot)')
+
 function on_match_end()
   -- This notification follows native scene teardown: the old model/collision
   -- handles are already invalid. Forget them here only; live cleanup retains
   -- refused handles for retry.
   if S.visuals then Rooms.reset(S.visuals) end
-  S.visuals, S.handles, S.arm, S.hud = nil, {}, nil, nil
+  S.visuals, S.handles, S.arm, S.hud, S.camera_mode = nil, {}, nil, nil, nil
   S.isolated, S.phase = false, 'idle'
 end
 function on_unload() cleanup() end

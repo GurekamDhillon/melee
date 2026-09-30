@@ -19,6 +19,11 @@ local toast=''
 local feedback=Feedback.new()
 local room_visuals=Rooms.new()
 local command_state=Commands.new()
+-- v2 route services (pure). Live generation still uses Dungeon v1 until a
+-- template set is certified; these are wired for creation/diagnostics.
+local topology=Topology.new(RoomCatalogue,EncounterCatalogue,Progression,Rng)
+local adapter=Adapter.new(RoomCatalogue,RoomRecipes)
+local routes=Route.new({topology=topology,adapter=adapter,progress=Progress,progression=Progression,encounters=EncounterCatalogue})
 local previous_stocks={};local move_serial={0,0};local move_ids={}
 local movement={0,0}
 local enemy_host,enemy_gene,enemy_kos=nil,nil,0
@@ -564,6 +569,15 @@ gd.command('rogue_state',function()
  -- is the assault gene's charge state. The legacy `ready` fields stay for
  -- existing readers until live_acceptance has fully migrated.
  gd.log('rogue_state ready='..tostring(ready)..' active='..tostring(active)..' menu='..tostring(menu)..' room='..tostring(node and node.id)..' stocks='..tostring(run and run.stocks)..' charge='..tostring(a and a.charge)..' runframe='..tostring(run and run.frame)..' saveerror='..tostring(save_error)..' command='..command_state.node..' cleared='..tostring(run and node and run.progress.cleared[node.id]==true)..' claimed='..tostring(run and node and run.progress.claimed[node.id]==true)..' collection='..tostring(profile and #keys(profile.genes))..' finished='..tostring(profile and #keys(profile.finished))..' outcome='..tostring(run and run.status)..' cost='..tostring(a and a.cost)..' ready='..tostring(a and a.ready)..' remaining='..tostring(a and a.remaining)..' reach='..tostring(a and a.reach)..' diag_version=1 runtime_ready='..tostring(ready)..' ability_ready='..tostring(a and a.ready))
+end)
+-- Read-only v2 route diagnostics: generate a topology for a seed and report the
+-- adapter's admission decision. Never mutates the live run or starts a route.
+gd.command('rogue_route',function(arg)
+ local seed=tonumber(arg) or (run and run.world_seed) or 12345
+ local ok,manifest=pcall(topology.generate,topology,seed)
+ if not ok then gd.log('rogue_route seed='..seed..' generation_error='..tostring(manifest));return end
+ local d=adapter:diagnostics(manifest)
+ gd.log('rogue_route diag_version='..tostring(d.diag_version)..' schema='..tostring(d.schema_version)..' seed='..seed..' rooms='..tostring(d.rooms)..' spine='..tostring(d.spine)..' fallback='..tostring(d.fallback_used)..' admissible='..tostring(d.manifest_admissible)..' signature='..tostring(d.topology_signature)..' refusal='..tostring(d.refusal))
 end)
 gd.command('rogue_start',function() if not ready then demo=true end end)
 gd.command('rogue_enemies',function()

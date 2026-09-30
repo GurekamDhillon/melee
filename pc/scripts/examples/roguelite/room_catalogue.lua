@@ -41,7 +41,7 @@ RoomCatalogue.rooms = {
   arena_pillars = room('arena_pillars', 'combat', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'arena_pillars'),
   arena_drop = room('arena_drop', 'combat', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'lane_pit'),
   arena_tiered = room('arena_tiered', 'combat', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}, {id = 'up', side = 'top'}}, 'arena_tiered'),
-  branch_y = room('branch_y', 'branch', {{id = 'in', side = 'left'}, {id = 'branch_a', side = 'up'}, {id = 'branch_b', side = 'down'}}, 'branch_y', 'split'),
+  branch_y = room('branch_y', 'branch', {{id = 'in', side = 'left'}, {id = 'branch_a', side = 'right'}, {id = 'branch_b', side = 'top'}}, 'branch_y', 'split'),
   junction_cross = room('junction_cross', 'branch', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}, {id = 'branch_a', side = 'top'}, {id = 'branch_b', side = 'bottom'}}, 'junction_cross', 'cross'),
   rejoin_merge = room('rejoin_merge', 'branch', {{id = 'in_a', side = 'left'}, {id = 'in_b', side = 'top'}, {id = 'out', side = 'right'}}, 'rejoin_merge', 'merge'),
   rest_alcove = room('rest_alcove', 'rest', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'rest_alcove'),

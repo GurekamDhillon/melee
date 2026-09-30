@@ -1,52 +1,64 @@
 -- Physical recipe contract for room templates (Gate 3 foundation). A recipe
 -- resolves an authored template to concrete lane geometry and per-side socket
--- anchors that the runtime adapter can hand to the existing room planner.
+-- anchors that the runtime adapter can hand to the room planner.
 --
--- The BF kit only authorises two lane ends (left/right at +/-52) plus the
--- current floor/platform pieces. Templates that declare a third socket (top or
--- bottom) or a split/merge/cross shape have no authored geometry yet, so they
--- are marked unsupported with an explicit reason: the runtime must fail before
--- spawning actors rather than drawing stairs the fighter cannot stand on.
+-- Geometry stays inside the certified BF kit grid (floor [-65,65], 13-unit
+-- grid, 26 bay/storey). Upper (top) doors use a stair/balcony ascent whose rises
+-- and gaps fit the standard mobility profile; the drop (bottom) socket is a
+-- floor-level opening used for shortcuts.
 --
--- `certified` is false everywhere: geometric consistency and bounds are checked
--- here, but in-engine traversal/combat certification is a separate native gate.
+-- `certified` is false everywhere. Bounds and anchor coverage are checked here,
+-- but Gate 3 requires an in-engine traversal/combat clip before any template is
+-- admitted for spawning. The runtime must refuse uncertified recipes.
 local RoomRecipes = {version = 1, unit = 6.5, grid = 13, bay = 26, height = 26}
 
 local KIT = {unit = 6.5, grid = 13, bay = 26, height = 26, depth = 0}
 local LEFT, RIGHT = {x = -52, y = 0}, {x = 52, y = 0}
-
-local function geometry(platforms, anchors)
-  return {floor = {left = -65, right = 65, y = 0}, kit = KIT, platforms = platforms or {}, exit_anchors = anchors}
-end
+local TOP = {x = 10, y = 26}          -- upper doorway reached by the ascent below
+local BOTTOM = {x = 0, y = 0, drop = true} -- floor-level drop-through opening
 
 local function platform(x, y, width)
   return {x = x, y = y, width = width, passthrough = true, ledges = true}
 end
 
-RoomRecipes.recipes = {
-  entry_lane = {id = 'entry_lane', version = 1, certified = false, geometry = geometry({}, {right = RIGHT})},
-  finish_lane = {id = 'finish_lane', version = 1, certified = false, geometry = geometry({}, {left = LEFT})},
-  lane_open = {id = 'lane_open', version = 1, certified = false, geometry = geometry({}, {left = LEFT, right = RIGHT})},
-  lane_two_level = {id = 'lane_two_level', version = 1, certified = false,
-    geometry = geometry({platform(-22, 12, 22), platform(22, 12, 22), platform(0, 24, 24)}, {left = LEFT, right = RIGHT})},
-  lane_pit = {id = 'lane_pit', version = 1, certified = false,
-    geometry = geometry({platform(-33, 12, 20), platform(33, 12, 20)}, {left = LEFT, right = RIGHT})},
-  arena_flat = {id = 'arena_flat', version = 1, certified = false, geometry = geometry({}, {left = LEFT, right = RIGHT})},
-  arena_pillars = {id = 'arena_pillars', version = 1, certified = false,
-    geometry = geometry({platform(-20, 10, 14), platform(20, 10, 14)}, {left = LEFT, right = RIGHT})},
-  rest_alcove = {id = 'rest_alcove', version = 1, certified = false, geometry = geometry({}, {left = LEFT, right = RIGHT})},
-  reward_vault = {id = 'reward_vault', version = 1, certified = false, geometry = geometry({}, {left = LEFT, right = RIGHT})},
-  boss_arena = {id = 'boss_arena', version = 1, certified = false, geometry = geometry({}, {left = LEFT, right = RIGHT})},
+-- Three passthrough steps rising to the y=26 balcony; every rise/gap is within
+-- the standard jump profile from the v1 analytic screen.
+local function ascent()
+  return {platform(-22, 9, 16), platform(-6, 18, 16), platform(10, 26, 26)}
+end
 
-  -- Awaiting authored geometry / native certification.
-  lane_balcony = {id = 'lane_balcony', version = 1, supported = false, reason = 'top socket needs authored balcony/upper-door geometry'},
-  lane_fork = {id = 'lane_fork', version = 1, supported = false, reason = 'top socket needs authored fork geometry'},
-  arena_tiered = {id = 'arena_tiered', version = 1, supported = false, reason = 'top socket needs authored tier geometry'},
-  rest_balcony = {id = 'rest_balcony', version = 1, supported = false, reason = 'top socket needs authored balcony geometry'},
-  shortcut_door = {id = 'shortcut_door', version = 1, supported = false, reason = 'bottom socket needs authored drop-door geometry'},
-  branch_y = {id = 'branch_y', version = 1, supported = false, reason = 'split needs authored up/down doorway geometry'},
-  junction_cross = {id = 'junction_cross', version = 1, supported = false, reason = 'cross needs authored four-way geometry'},
-  rejoin_merge = {id = 'rejoin_merge', version = 1, supported = false, reason = 'merge needs authored up/down doorway geometry'},
+local function geometry(platforms, anchors)
+  return {
+    floor = {left = -65, right = 65, y = 0}, kit = KIT,
+    platforms = platforms or {}, exit_anchors = anchors,
+    spawn = {x = -42, y = 0}, enemy_spawns = {},
+    camera = {left = -65, right = 65, bottom = 0, top = 60},
+  }
+end
+
+local function recipe(id, platforms, anchors)
+  return {id = id, version = 1, certified = false, geometry = geometry(platforms, anchors)}
+end
+
+RoomRecipes.recipes = {
+  entry_lane = recipe('entry_lane', {}, {right = RIGHT}),
+  finish_lane = recipe('finish_lane', {}, {left = LEFT}),
+  lane_open = recipe('lane_open', {}, {left = LEFT, right = RIGHT}),
+  lane_two_level = recipe('lane_two_level', {platform(-22, 12, 22), platform(22, 12, 22), platform(0, 24, 24)}, {left = LEFT, right = RIGHT}),
+  lane_pit = recipe('lane_pit', {platform(-33, 12, 20), platform(33, 12, 20)}, {left = LEFT, right = RIGHT}),
+  lane_balcony = recipe('lane_balcony', ascent(), {left = LEFT, right = RIGHT, top = TOP}),
+  lane_fork = recipe('lane_fork', ascent(), {left = LEFT, right = RIGHT, top = TOP}),
+  arena_flat = recipe('arena_flat', {}, {left = LEFT, right = RIGHT}),
+  arena_pillars = recipe('arena_pillars', {platform(-20, 10, 14), platform(20, 10, 14)}, {left = LEFT, right = RIGHT}),
+  arena_tiered = recipe('arena_tiered', ascent(), {left = LEFT, right = RIGHT, top = TOP}),
+  branch_y = recipe('branch_y', ascent(), {left = LEFT, right = RIGHT, top = TOP}),
+  junction_cross = recipe('junction_cross', ascent(), {left = LEFT, right = RIGHT, top = TOP, bottom = BOTTOM}),
+  rejoin_merge = recipe('rejoin_merge', ascent(), {left = LEFT, top = TOP, right = RIGHT}),
+  rest_alcove = recipe('rest_alcove', {}, {left = LEFT, right = RIGHT}),
+  rest_balcony = recipe('rest_balcony', ascent(), {left = LEFT, right = RIGHT, top = TOP}),
+  reward_vault = recipe('reward_vault', {}, {left = LEFT, right = RIGHT}),
+  shortcut_door = recipe('shortcut_door', {}, {left = LEFT, right = RIGHT, bottom = BOTTOM}),
+  boss_arena = recipe('boss_arena', {}, {left = LEFT, right = RIGHT}),
 }
 
 function RoomRecipes.get(id) return RoomRecipes.recipes[id] end
@@ -54,11 +66,15 @@ function RoomRecipes.is_supported(id)
   local recipe = RoomRecipes.recipes[id]
   return recipe ~= nil and recipe.supported ~= false
 end
+function RoomRecipes.is_certified(id)
+  local recipe = RoomRecipes.recipes[id]
+  return recipe ~= nil and recipe.certified == true
+end
 
 local function finite(x) return type(x) == 'number' and x == x and math.abs(x) < math.huge end
 
--- Returns a `room` geometry table plus anchors, or nil, reason. A supported
--- recipe whose declared sockets have no anchor is refused rather than guessed.
+-- Returns a `room` geometry table, or nil, reason. A supported recipe whose
+-- declared sockets have no anchor is refused rather than guessed.
 function RoomRecipes.resolve(template)
   if type(template) ~= 'table' or type(template.recipe) ~= 'string' then return nil, 'template needs a recipe' end
   local recipe = RoomRecipes.recipes[template.recipe]
@@ -97,6 +113,41 @@ function RoomRecipes.validate(catalogue)
       for _, socket in ipairs(template.sockets) do
         if not g.exit_anchors[socket.side] then return false, 'recipe ' .. recipe.id .. ' missing anchor for ' .. socket.side end
       end
+    end
+  end
+  return true
+end
+
+-- Analytic ascent check: every platform and the top anchor must be reachable
+-- from the floor under the standard mobility profile. This mirrors the v1
+-- screen and is a fast pre-filter, not an engine traversal proof.
+function RoomRecipes.reachable(recipe, mobility)
+  if type(recipe) ~= 'table' or not recipe.geometry then return false, 'not a supported recipe' end
+  mobility = mobility or {}
+  local height = mobility.jump_height or 18
+  local lateral = mobility.horizontal_gap or 30
+  local surfaces = {{lo = -65, hi = 65, y = 0}}
+  for _, p in ipairs(recipe.geometry.platforms) do
+    surfaces[#surfaces + 1] = {lo = p.x - p.width / 2 + 2, hi = p.x + p.width / 2 - 2, y = p.y}
+  end
+  local seen, changed = {[1] = true}, true
+  while changed do
+    changed = false
+    for i, a in ipairs(surfaces) do if seen[i] then
+      for j, b in ipairs(surfaces) do
+        local gap = math.max(0, b.lo - a.hi, a.lo - b.hi)
+        if not seen[j] and b.y - a.y <= height and gap <= lateral then seen[j] = true; changed = true end
+      end
+    end end
+  end
+  for i in ipairs(surfaces) do if not seen[i] then return false, 'unreachable platform surface' end end
+  for side, anchor in pairs(recipe.geometry.exit_anchors) do
+    if not anchor.drop then
+      local found = false
+      for i, s in ipairs(surfaces) do
+        if seen[i] and anchor.x >= s.lo and anchor.x <= s.hi and math.abs(anchor.y - s.y) < 0.01 then found = true end
+      end
+      if not found then return false, 'anchor ' .. side .. ' is not on a reachable surface' end
     end
   end
   return true

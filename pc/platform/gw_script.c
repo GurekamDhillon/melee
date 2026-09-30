@@ -2396,6 +2396,47 @@ static int l_data_write(lua_State *L) {
     return 0;
 }
 
+static int gs_push_fail(lua_State *L, const char *why); /* defined with the other script helpers */
+
+/* gd.data_write_atomic(name, text) -> true | false, why
+ * Writes a sibling temporary file, checks every write/flush/close result, then
+ * replaces the target. A failure leaves the previous file untouched. This is
+ * atomic against a torn write (a reader sees the old or the new file, never a
+ * partial one); it is not a power-loss durability guarantee on its own. On
+ * Windows MoveFileExA replaces an existing destination; on Linux the shim maps
+ * it to rename(2), which is atomic within a directory. */
+static int l_data_write_atomic(lua_State *L) {
+    char path[MAX_PATH], tmp[MAX_PATH];
+    const char *name = luaL_checkstring(L, 1);
+    size_t len, wrote;
+    const char *text = luaL_checklstring(L, 2, &len);
+    FILE *f;
+    int failed;
+    gs_data_path(L, name, path, sizeof path);
+    if (len > (1 << 20)) {
+        return gs_push_fail(L, "data files are at most 1 MB");
+    }
+    snprintf(tmp, sizeof tmp, "%s.tmp", path);
+    f = fopen(tmp, "wb");
+    if (f == NULL) {
+        return gs_push_fail(L, "cannot open the temporary file");
+    }
+    wrote = fwrite(text, 1, len, f);
+    failed = wrote != len;
+    if (fflush(f) != 0) failed = 1;
+    if (fclose(f) != 0) failed = 1;
+    if (failed) {
+        DeleteFileA(tmp);
+        return gs_push_fail(L, "temporary write failed");
+    }
+    if (!MoveFileExA(tmp, path, MOVEFILE_REPLACE_EXISTING)) {
+        DeleteFileA(tmp);
+        return gs_push_fail(L, "could not replace the previous file");
+    }
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
 static int l_script_info(lua_State *L) {
     GsScript *s = gs_cur_script();
     lua_createtable(L, 0, 6);
@@ -5105,7 +5146,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
     {"key_pressed", l_key_pressed}, {"mouse", l_mouse}, {"command", l_command}, {"run", l_run},
-    {"data_read", l_data_read}, {"data_write", l_data_write}, {"script", l_script_info},
+    {"data_read", l_data_read}, {"data_write", l_data_write}, {"data_write_atomic", l_data_write_atomic}, {"script", l_script_info},
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
     {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
     /* the Geno Lab (docs/geno.md) */
@@ -8610,6 +8651,46 @@ fail:
     return 1;
 }
 
+/* gd.data_write_atomic replaces a file only after a complete temporary write, and
+ * leaves the previous file intact when the write is refused or fails. The data
+ * path is scoped to the current script, so load a probe script and point gs.cur
+ * at it while the console drives the calls. */
+static int test_script_data_write_atomic(void) {
+    static const char code[] = "probe_loaded = true";
+    char out[256];
+    char *src;
+    int i, prev, rc = 0;
+    if (t_exec("= 1", out, sizeof out) != 0) return 1;
+    src = (char *)malloc(sizeof code);
+    if (src == NULL) return 1;
+    memcpy(src, code, sizeof code);
+    i = gs_load_text("atomic_probe", "atomic_probe.lua", src, sizeof code - 1,
+                     "{\"gameplay\": true}", "test");
+    if (i < 0) {
+        gw_test_fail("could not load the atomic-write probe");
+        return 1;
+    }
+    prev = gs.cur;
+    gs.cur = i;
+#define CHECK_ATOMIC(expr, msg) \
+    if (t_exec(expr, out, sizeof out) != 0 || strstr(out, "true") == NULL) { \
+        gw_test_fail(msg ": %s", out); \
+        rc = 1; \
+        goto done; \
+    }
+    if (t_exec("gd.data_write('atomic_probe.txt','old')", out, sizeof out) != 0) { rc = 1; goto done; }
+    CHECK_ATOMIC("= gd.data_write_atomic('atomic_probe.txt','new')", "data_write_atomic did not report success")
+    CHECK_ATOMIC("= (gd.data_read('atomic_probe.txt') == 'new')", "data_write_atomic did not replace the file")
+    CHECK_ATOMIC("= (gd.data_write_atomic('atomic_probe.txt', ('x'):rep(1048577)) == false)", "oversized atomic write was not refused")
+    CHECK_ATOMIC("= (gd.data_read('atomic_probe.txt') == 'new')", "a refused atomic write damaged the previous file")
+    CHECK_ATOMIC("= gd.data_write_atomic('atomic_probe.txt','')", "empty atomic write failed")
+    CHECK_ATOMIC("= ((gd.data_read('atomic_probe.txt') or '') == '')", "empty atomic write did not replace the file")
+#undef CHECK_ATOMIC
+done:
+    gs.cur = prev;
+    return rc;
+}
+
 void gw_script_tests_register(void) {
     gw_test_register("script_model_api", test_script_model_api);
     gw_test_register("script_stage_events", test_script_stage_events);
@@ -8620,6 +8701,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);
     gw_test_register("script_lua_runs", test_script_lua_runs);
+    gw_test_register("script_data_write_atomic", test_script_data_write_atomic);
     gw_test_register("script_camera_api", test_script_camera_api);
     gw_test_register("script_sandbox", test_script_sandbox);
     gw_test_register("script_budget", test_script_budget);

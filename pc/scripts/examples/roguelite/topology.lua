@@ -71,11 +71,16 @@ end
 local function add_room(self, state, template_id, theme, mandatory)
   local template = self.rooms.rooms[template_id]
   local instance = new_id(state, 'r')
+  -- A template may pin its theme composition ("theme contract"). Honoring it
+  -- keeps the room's encounter/reward filtering consistent with the authored
+  -- layout, and it is still one of the three valid themes. Templates without a
+  -- contract keep the generator's assigned theme.
+  local room_theme = template.theme or theme
   local room = {
     id = instance, template_id = template_id, template_version = template.version,
-    role = template.role, shape = template.shape, theme = theme, mandatory = mandatory or false,
+    role = template.role, shape = template.shape, theme = room_theme, mandatory = mandatory or false,
     depth = 0, spine_index = nil,
-    title = (self.rooms.themes[theme] and self.rooms.themes[theme].name or theme) .. ' ' .. (ROLE_TITLE[template.role] or template.role),
+    title = (self.rooms.themes[room_theme] and self.rooms.themes[room_theme].name or room_theme) .. ' ' .. (ROLE_TITLE[template.role] or template.role),
     sockets_by_id = {}, encounter = nil, reward = nil, grants_key = nil,
   }
   for _, socket in ipairs(template.sockets) do

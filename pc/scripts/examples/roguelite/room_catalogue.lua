@@ -20,8 +20,8 @@ RoomCatalogue.themes = {
 
 -- role -> templates allowed. Sockets: array of {id, side}. side is an authored
 -- abstract direction used by the physical adapter; it must be unique per room.
-local function room(id, role, sockets, recipe, shape)
-  return {id = id, version = 1, role = role, sockets = sockets, recipe = recipe, shape = shape or 'line',
+local function room(id, role, sockets, recipe, shape, theme)
+  return {id = id, version = 1, role = role, sockets = sockets, recipe = recipe, shape = shape or 'line', theme = theme,
     mobility = 'standard', budget = {parts = 28, collisions = 16},
     encounters = role == 'combat' and {'pressure', 'guard', 'zone', 'elite'}
       or role == 'boss' and {'boss'} or {},
@@ -49,6 +49,19 @@ RoomCatalogue.rooms = {
   reward_vault = room('reward_vault', 'reward', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'reward_vault'),
   shortcut_door = room('shortcut_door', 'connector', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}, {id = 'shortcut', side = 'bottom'}}, 'shortcut_door'),
   boss_arena = room('boss_arena', 'boss', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'boss_arena'),
+
+  -- Gate 3 bulk expansion: distinct authored movement demands. Themes reuse the
+  -- three existing compositions (cobalt/fire/frost); no new art or palette-only
+  -- variants. All remain `certified = false` until a native replay lands.
+  traverse_stagger = room('traverse_stagger', 'traversal', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'traverse_stagger', 'line', 'frost'),
+  traverse_bridge = room('traverse_bridge', 'traversal', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'traverse_bridge', 'line', 'cobalt'),
+  combat_flank = room('combat_flank', 'combat', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'combat_flank', 'line', 'fire'),
+  combat_dais = room('combat_dais', 'combat', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'combat_dais', 'line', 'frost'),
+  combat_ring = room('combat_ring', 'combat', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'combat_ring', 'line', 'cobalt'),
+  boss_dais = room('boss_dais', 'boss', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'boss_dais', 'line', 'fire'),
+  rest_platform = room('rest_platform', 'rest', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'rest_platform', 'line', 'frost'),
+  reward_ledge = room('reward_ledge', 'reward', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}}, 'reward_ledge', 'line', 'cobalt'),
+  crossing_door = room('crossing_door', 'connector', {{id = 'in', side = 'left'}, {id = 'out', side = 'right'}, {id = 'drop', side = 'bottom'}}, 'crossing_door', 'line', 'frost'),
 }
 
 RoomCatalogue.by_role = {}
@@ -89,6 +102,53 @@ function RoomCatalogue.validate(self)
     assert(#list > 0, 'empty role list')
   end
   return true
+end
+
+-- Distinct-layout audit. Diversity is geometry diversity: a canonical, theme-
+-- free signature over movement geometry and module placements only (camera,
+-- spawn, arrivals, socket names, shape and translation are ignored). Aliases
+-- are explicit, so a recolour, a relabel or a translated copy never inflates
+-- the catalogue.
+function RoomCatalogue.audit(self, recipes)
+  self = self or RoomCatalogue
+  local templates, by_role, aliases, recipe_users, signature_users = 0, {}, {}, {}, {}
+  for id, template in pairs(self.rooms) do
+    templates = templates + 1
+    local group = by_role[template.role] or {templates = 0, distinct = {}}
+    group.templates = group.templates + 1
+    by_role[template.role] = group
+    local signature
+    if recipes and recipes.signature then
+      local recipe = recipes.get(template.recipe)
+      signature = recipe and recipes.signature(recipe, template)
+        or (template.recipe .. ':' .. tostring(template.shape) .. ':' .. tostring(#template.sockets))
+    else
+      signature = template.recipe
+    end
+    group.distinct[signature] = true
+    local users = signature_users[signature]
+    if not users then users = {}; signature_users[signature] = users end
+    users[#users + 1] = id
+    local recipe_users_for = recipe_users[template.recipe]
+    if not recipe_users_for then recipe_users_for = {}; recipe_users[template.recipe] = recipe_users_for end
+    recipe_users_for[#recipe_users_for + 1] = id
+  end
+  for signature, users in pairs(signature_users) do
+    if #users > 1 then table.sort(users); aliases[signature] = users end
+  end
+  local recipe_aliases = {}
+  for recipe, users in pairs(recipe_users) do
+    if #users > 1 then table.sort(users); recipe_aliases[recipe] = users end
+  end
+  local distinct = 0
+  for _ in pairs(signature_users) do distinct = distinct + 1 end
+  for _, group in pairs(by_role) do
+    local count = 0
+    for _ in pairs(group.distinct) do count = count + 1 end
+    group.distinct_count = count
+    group.distinct = nil
+  end
+  return {templates = templates, distinct = distinct, by_role = by_role, aliases = aliases, recipe_aliases = recipe_aliases}
 end
 
 return RoomCatalogue

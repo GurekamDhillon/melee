@@ -288,7 +288,7 @@ local function build(self, seed, attempt)
     end
     local template = self.rooms.rooms[room.template_id]
     if #template.rewards > 0 and (room.role == 'reward' or room.role == 'combat') then
-      local family = room.theme == 'fire' and 'fire' or room.theme == 'frost' and 'frost' or 'any'
+      local family = room.theme
       local pool = {}
       for _, reward_id in ipairs(reward_ids) do
         local spec = self.encounters.rewards[reward_id]

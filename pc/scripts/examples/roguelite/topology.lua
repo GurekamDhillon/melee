@@ -153,7 +153,8 @@ local function build(self, seed, attempt)
     if topology:chance(1, 3) then role = role == 'combat' and 'traversal' or 'combat' end
     segments[#segments + 1] = {kind = 'single', role = role}
   end
-  table.insert(segments, topology:range(2, #segments + 1), {kind = 'branch'})
+  -- Insert the branch after the teaching room so orientation precedes choice.
+  table.insert(segments, topology:range(3, #segments + 1), {kind = 'branch'})
   segments[#segments + 1] = {kind = 'single', role = 'rest'}
   segments[#segments + 1] = {kind = 'single', role = 'traversal'}
   segments[#segments + 1] = {kind = 'single', role = 'boss'}

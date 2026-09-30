@@ -16,6 +16,16 @@ local function copy_map(t)
   return out
 end
 
+-- Objective bitmask without bitwise operators (LuaJIT-safe). Setting a bit must
+-- be idempotent: a plain addition would carry into the next objective when a
+-- room is revisited and falsely mark an unvisited objective complete.
+local function bit_value(index) return 2 ^ (index - 1) end
+local function has_bit(mask, value) return mask % (value * 2) >= value end
+local function with_bit(mask, value)
+  if has_bit(mask, value) then return mask end
+  return mask + value
+end
+
 local function key_signature(keys)
   local list = {}
   for k in pairs(keys) do list[#list + 1] = k end
@@ -54,7 +64,7 @@ function Progression.validate(manifest, opts)
   for i, id in ipairs(order) do bit[id] = i end
   if #order > 40 then return false, 'too many mandatory rooms for bounded search' end
   local full = 0
-  for _, id in ipairs(order) do full = full + 2 ^ (bit[id] - 1) end
+  for _, id in ipairs(order) do full = full + bit_value(bit[id]) end
 
   local adjacency = {}
   for id, edge in pairs(manifest.edges_by_id) do
@@ -82,7 +92,7 @@ function Progression.validate(manifest, opts)
   local locks = manifest.locks or {}
   local max_states = math.min(opts.max_states or Progression.max_states, Progression.max_states)
   local visited = {}
-  local queue = {{room = start, keys = {}, consumables = {}, mask = bit[start] and 2 ^ (bit[start] - 1) or 0}}
+  local queue = {{room = start, keys = {}, consumables = {}, mask = bit[start] and bit_value(bit[start]) or 0}}
   local head, states = 1, 0
   while head <= #queue do
     local state = queue[head]
@@ -95,10 +105,16 @@ function Progression.validate(manifest, opts)
       keys = copy_map(keys)
       keys[room.grants_key] = true
     end
+    local consumables = state.consumables
+    if room.grants_consumable then
+      consumables = copy_map(consumables)
+      for key, amount in pairs(room.grants_consumable) do
+        consumables[key] = (consumables[key] or 0) + amount
+      end
+    end
     if state.mask == full then return true, {states = states} end
     for _, link in ipairs(adjacency[state.room] or {}) do
-      local consumables = state.consumables
-      local allowed = true
+      local allowed, edge_consumables = true, consumables
       if link.edge.gate_rule then
         local lock = locks[link.edge.gate_rule]
         if not lock then return false, 'edge references unknown lock' end
@@ -107,9 +123,9 @@ function Progression.validate(manifest, opts)
         elseif lock.kind == 'consumable_key' then
           allowed = (consumables[lock.key] or 0) > 0
           if allowed then
-            consumables = copy_map(consumables)
-            consumables[lock.key] = consumables[lock.key] - 1
-            if consumables[lock.key] <= 0 then consumables[lock.key] = nil end
+            edge_consumables = copy_map(consumables)
+            edge_consumables[lock.key] = edge_consumables[lock.key] - 1
+            if edge_consumables[lock.key] <= 0 then edge_consumables[lock.key] = nil end
           end
         else
           return false, 'invalid lock kind'
@@ -117,11 +133,11 @@ function Progression.validate(manifest, opts)
       end
       if allowed then
         local mask = state.mask
-        if bit[link.to] then mask = mask + 2 ^ (bit[link.to] - 1) end
-        local sig = link.to .. '|' .. key_signature(keys) .. '|' .. count_signature(consumables) .. '|' .. mask
+        if bit[link.to] then mask = with_bit(mask, bit_value(bit[link.to])) end
+        local sig = link.to .. '|' .. key_signature(keys) .. '|' .. count_signature(edge_consumables) .. '|' .. mask
         if not visited[sig] then
           visited[sig] = true
-          queue[#queue + 1] = {room = link.to, keys = keys, consumables = consumables, mask = mask}
+          queue[#queue + 1] = {room = link.to, keys = keys, consumables = edge_consumables, mask = mask}
         end
       end
     end

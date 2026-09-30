@@ -2416,8 +2416,28 @@ static int l_data_write_atomic(lua_State *L) {
     if (len > (1 << 20)) {
         return gs_push_fail(L, "data files are at most 1 MB");
     }
-    snprintf(tmp, sizeof tmp, "%s.tmp", path);
-    f = fopen(tmp, "wb");
+    {
+        /* The temporary lives in the target's directory as a component that
+         * starts with '.', which the script data-name grammar cannot address
+         * (a leading '.' or "/." is rejected), so it can never collide with or
+         * delete a user's data file such as "x.tmp". */
+        const char *slash = strrchr(path, '/');
+        const char *bslash = strrchr(path, '\\');
+        if (bslash != NULL && (slash == NULL || bslash > slash)) slash = bslash;
+        const char *base = slash != NULL ? slash + 1 : path;
+        int dlen = slash != NULL ? (int) (slash - path) : 0;
+        int n = snprintf(tmp, sizeof tmp, "%.*s/.atomic-%.*s.tmp", dlen, path, (int) sizeof tmp - 40, base);
+        if (n < 0 || n >= (int) sizeof tmp) {
+            return gs_push_fail(L, "data path too long for an atomic write");
+        }
+    }
+    f = fopen(tmp, "wbx"); /* exclusive: never clobber an existing temp */
+    if (f == NULL) {
+        /* A stale unaddressable temp from a crash blocks creation; it is not a
+         * user data file, so removing it and retrying once is safe. */
+        DeleteFileA(tmp);
+        f = fopen(tmp, "wbx");
+    }
     if (f == NULL) {
         return gs_push_fail(L, "cannot open the temporary file");
     }
@@ -8685,6 +8705,14 @@ static int test_script_data_write_atomic(void) {
     CHECK_ATOMIC("= (gd.data_read('atomic_probe.txt') == 'new')", "a refused atomic write damaged the previous file")
     CHECK_ATOMIC("= gd.data_write_atomic('atomic_probe.txt','')", "empty atomic write failed")
     CHECK_ATOMIC("= ((gd.data_read('atomic_probe.txt') or '') == '')", "empty atomic write did not replace the file")
+    /* The temporary is unaddressable, so a real "<name>.tmp" data file survives. */
+    CHECK_ATOMIC("= (gd.data_write('probe.tmp','keep') or true)", "could not seed probe.tmp")
+    CHECK_ATOMIC("= gd.data_write_atomic('probe','new')", "atomic write beside probe.tmp failed")
+    CHECK_ATOMIC("= (gd.data_read('probe.tmp') == 'keep')", "atomic write destroyed a sibling .tmp data file")
+    /* A failed replacement (target is a directory) keeps other data readable. */
+    CHECK_ATOMIC("= (gd.data_write('rdir/f.txt','keep') or true)", "could not seed rdir/f.txt")
+    CHECK_ATOMIC("= (gd.data_write_atomic('rdir','x') == false)", "atomic write onto a directory was not refused")
+    CHECK_ATOMIC("= (gd.data_read('rdir/f.txt') == 'keep')", "a failed replace damaged sibling data")
 #undef CHECK_ATOMIC
 done:
     gs.cur = prev;

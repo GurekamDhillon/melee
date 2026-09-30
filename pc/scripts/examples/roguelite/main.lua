@@ -1,6 +1,11 @@
--- Installer prepends lexical Core, Dungeon and Commands modules. No require.
--- Initial offline vertical slice: bounded FD rooms and ordinary native CPU AI.
+-- Installer prepends lexical Core, Dungeon, DungeonV1 and Commands modules. No
+-- require. Initial offline vertical slice: bounded FD rooms and ordinary native
+-- CPU AI.
 local profile,run,manifest,node
+-- v2 route state kept explicit and separate from the v1 manifest: a validated
+-- adapter view plus its own schema-2 progress record. Non-nil only when a saved
+-- v2 route has been loaded and re-validated; never derived from a v1 seed.
+local route=nil
 local ready,launching,active=false,false,false
 local launch_seen=false
 local pending_entry=false
@@ -45,20 +50,50 @@ local function feedback_sync(frames,paused)
  Feedback.update(feedback,abilities,frames or 0,paused,run and run.hosts.player and run.hosts.player.slots)
 end
 local function keys(t) local a={} for k in pairs(t) do a[#a+1]=k end table.sort(a) return a end
-local function checkpoint(raw)
- if type(raw)~='string' or #raw>1048700 then return nil end
- -- TBD3: resolved manifest (+ optional progress) with an integrity checksum. A
- -- section of the wrong schema version is refused and preserved, not returned.
- local decoded,dwhy=Checkpoint.decode(raw,Core,Codec)
- if not decoded and dwhy and dwhy:find('preserved',1,true) then
-  -- A future envelope version (>3) or an unsupported inner manifest/progress
-  -- version is preserved and explained, not treated as a disposable slot.
-  local tag=raw:match('^(TBD%d+) ')
-  local ver=tag and tonumber(tag:sub(4))
-  if (ver and ver>Checkpoint.version) or dwhy:find('manifest schema',1,true) or dwhy:find('progress version',1,true) then
-   return nil,dwhy
+-- Keep Core's run mirrors synchronized with the schema-2 progress record so the
+-- saved run and route cannot disagree. Route.validate_save checks these exactly;
+-- called before every v2 write and after every v2 load.
+local function route_mirror(r,record)
+ r.progress.room=record.current_room
+ r.progress.supplies=record.supplies
+ r.stocks=record.lives
+ local cleared,claimed={},{}
+ for id,state in pairs(record.objectives) do if state=='done' then cleared[id]=true end end
+ for id in pairs(record.claimed) do local room=id:match('^reward:(.+)$');if room then claimed[room]=true end end
+ r.progress.cleared,r.progress.claimed=cleared,claimed
+end
+-- Schema-1 progress records never tracked opened locks, finite pickup claims or
+-- encounter KO counts. Upgrading them with empty maps is safe only when the
+-- route cannot carry that history; otherwise preserve and refuse rather than
+-- silently grant or duplicate finite pickups and locks.
+local function progress_migration_safe(m,record)
+ if m.locks~=nil and type(m.locks)~='table' then return false,'route lock table is malformed' end
+ if type(m.rooms_by_id)~='table' then return false,'route rooms are malformed' end
+ local pickups,gates=false,false
+ for _,room in pairs(m.rooms_by_id) do
+  if type(room)=='table' then
+   if room.pickups and next(room.pickups) then pickups=true end
+   if room.grants_consumable~=nil then pickups=true end
   end
  end
+ for _,lock in pairs(m.locks or {}) do
+  if type(lock)=='table' and lock.kind=='consumable_key' then gates=true end
+ end
+ if pickups and record.pickups==nil then return false,'route has finite pickups with no saved claim history' end
+ if gates and record.opened==nil then return false,'route has consumable gates with no saved open history' end
+ return true
+end
+local function checkpoint(raw)
+ if type(raw)~='string' or #raw>1048700 then return nil end
+ -- TBD3: resolved manifest (+ optional progress) with an integrity checksum.
+ -- Expected inner versions are declared so a future manifest/progress schema is
+ -- refused and preserved, not returned as if interchangeable. A v1 dungeon
+ -- manifest carries no schema_version and is treated as schema 1. The decoder
+ -- reports an explicit preserve flag for newer-than-supported versions so this
+ -- loader never has to guess from reason text.
+ local opts={manifest_schemas={[1]=true,[2]=true},progress_versions={[1]=true,[2]=true}}
+ local decoded,dwhy,dpreserve=Checkpoint.decode(raw,Core,Codec,opts)
+ if not decoded and dpreserve then return nil,dwhy,true end
  if decoded then
   local p=decoded.profile
   if not p or p.type~='profile' then return nil end
@@ -70,9 +105,40 @@ local function checkpoint(raw)
    selected,played=Roster.decode(a),Roster.decode(b)
    if not selected or not played then return nil end
   end
-  return {generation=decoded.generation,profile=p,run=r,selected=selected,fighter=played,manifest=decoded.manifest,progress=decoded.progress}
+  local m=decoded.manifest
+  -- A run must carry its resolved manifest; do not let resume regenerate one.
+  if r and not m then return nil,'run is missing its resolved manifest' end
+  if m and m.schema_version==2 then
+   -- v2 route: manifest and a separate schema-2 progress record are both
+   -- mandatory. Missing or unsupported sections are refused, never treated as a
+   -- legacy or new run. An unknown generator version is a preserved future
+   -- record, detected here rather than through a free-text validator reason.
+   if m.generator_version~=Topology.version then
+    return nil,'unsupported generator version '..tostring(m.generator_version)..'; preserved',true
+   end
+   if not r then return nil,'v2 route is missing its run' end
+   local record=decoded.progress
+   if not record then return nil,'v2 route is missing its progress record' end
+   if record.version==1 then
+    -- Explicit, supported migration only. Schema 1 never tracked opened locks,
+    -- finite pickup claims or encounter KOs: migrate with empty maps only when
+    -- the route has no such history to lose, otherwise preserve and refuse.
+    local safe,mwhy=progress_migration_safe(m,record)
+    if not safe then return nil,'progress migration refused: '..tostring(mwhy)..'; preserved',true end
+    local migrated,why=Legacy.migrate_progress(record,Progress)
+    if not migrated then return nil,'progress migration refused: '..tostring(why) end
+    record=migrated
+   end
+   local ok,res,why=pcall(routes.resume,routes,r,m,record)
+   if not ok then return nil,'route resume error: '..tostring(res) end
+   if not res then return nil,why end
+   return {generation=decoded.generation,profile=p,run=r,selected=selected,fighter=played,route=res}
+  end
+  -- A progress record without a v2 manifest is inconsistent.
+  if decoded.progress then return nil,'progress record without a v2 route' end
+  return {generation=decoded.generation,profile=p,run=r,selected=selected,fighter=played,manifest=m}
  end
- -- Legacy TBD2/TBD1 envelope.
+ -- Legacy TBD2/TBD1 envelope. No separate progress was ever stored.
  if #raw>530000 then return nil end
  local g,plen,rlen,mlen,body=raw:match('^TBD2 (%d+) (%d+) (%d+) (%d+)\n(.*)$')
  local legacy=not g
@@ -90,65 +156,115 @@ local function checkpoint(raw)
   selected,played=Roster.decode(a),Roster.decode(b)
   if not selected or not played then return nil end
  end
- return {generation=g,profile=p,run=r,selected=selected,fighter=played}
+ -- Reconstruct the historical route with the frozen v1 generator so an old run
+ -- keeps its original room ids rather than a newer generator's layout.
+ local man
+ if r then
+  local generated,result=pcall(DungeonV1.generate,r.world_seed)
+  if not generated or type(result)~='table' then return nil end
+  local validated,valid,why=pcall(DungeonV1.validate,result)
+  if not validated or not valid or not result.nodes[r.progress.room] then return nil end
+  man=result
+ end
+ return {generation=g,profile=p,run=r,selected=selected,fighter=played,manifest=man}
 end
 local function save()
  if save_error then say('Save disabled: repair the preserved invalid checkpoint first','error','save');return false end
+ -- Stage Core mirrors on a deep copy; live in-memory state is committed only
+ -- after a durable, validated write so a refused save cannot leave the run
+ -- altered. A v2 write carries the exact validated resolved manifest and its
+ -- own progress record.
+ local staged=nil
+ if run then
+  local rs,rwhy=Core.snapshot(run)
+  if not rs then say('Run save refused: '..tostring(rwhy),'error','save');return false end
+  local restored=Core.restore(rs)
+  if not restored then say('Run save refused: working copy failed','error','save');return false end
+  staged=restored
+  if route then route_mirror(staged,route.progress) end
+ end
  local p,why=Core.snapshot(profile);if not p then say('Save refused: '..tostring(why),'error','save');return false end
  local r=''
- if run then r,why=Core.snapshot(run);if not r then say('Run save refused: '..tostring(why),'error','save');return false end end
- -- Persist the resolved manifest so a later catalogue/generator change cannot
- -- relocate a saved doorway. v1 runs carry no separate progress record yet.
- local mtext=nil
- if run then
-  local man=(manifest and manifest.seed==run.world_seed) and manifest or Dungeon.generate(run.world_seed)
-  local encoded,ewhy=Codec.encode(man)
-  if not encoded then say('Manifest encode refused: '..tostring(ewhy),'error','save');return false end
-  mtext=encoded
+ if staged then r,why=Core.snapshot(staged);if not r then say('Run save refused: '..tostring(why),'error','save');return false end end
+ -- Persist resolved data so a later catalogue/generator change cannot relocate
+ -- a saved doorway or recompute saved progress. v2 carries the route's own
+ -- manifest and schema-2 progress; v1 keeps the existing resolved manifest only.
+ local mtext,ptext
+ if staged then
+  if route then
+   local ewhy
+   mtext,ewhy=Codec.encode(route.manifest)
+   if not mtext then say('Route manifest encode refused: '..tostring(ewhy),'error','save');return false end
+   ptext,ewhy=Codec.encode(route.progress)
+   if not ptext then say('Route progress encode refused: '..tostring(ewhy),'error','save');return false end
+  else
+   local man=(manifest and manifest.seed==staged.world_seed) and manifest or Dungeon.generate(staged.world_seed)
+   local encoded,ewhy=Codec.encode(man)
+   if not encoded then say('Manifest encode refused: '..tostring(ewhy),'error','save');return false end
+   mtext=encoded
+  end
  end
  local next_generation=generation+1;local file=next_generation%2==0 and 'checkpoint-a.txt' or 'checkpoint-b.txt'
  -- Never overwrite a preserved unsupported future checkpoint.
  if protected[file] then
   local other=file=='checkpoint-a.txt' and 'checkpoint-b.txt' or 'checkpoint-a.txt'
-  if protected[other] then say('Save disabled: unsupported future checkpoints are preserved; remove them to continue','error','save');return false end
-  gd.log('roguelite: saving to '..other..' to preserve an unsupported future checkpoint')
+  if protected[other] then say('Save disabled: a preserved checkpoint must be removed first','error','save');return false end
+  gd.log('roguelite: saving to '..other..' to preserve a protected checkpoint')
   file=other
  end
  local metadata=assert(Roster.encode(selected_fighter))..assert(Roster.encode(run_fighter))
  local text
  do
-  local ok,res=pcall(Checkpoint.encode,{generation=next_generation,profile=p,run=r~='' and r or nil,manifest=mtext,roster=metadata})
+  local ok,res=pcall(Checkpoint.encode,{generation=next_generation,profile=p,run=r~='' and r or nil,manifest=mtext,roster=metadata,progress=ptext})
   if not ok then say('Checkpoint encode refused: '..tostring(res),'error','save');return false end
   text=res
  end
- -- Atomic when the native helper is present; otherwise the raw write with the
- -- same readback proof. Previous bytes survive a refused or failed write.
+ -- Validate the staged generation BEFORE any disk write: a semantic refusal
+ -- must never clobber the last usable slot, especially when the other slot is
+ -- protected and this save was redirected into it.
+ local vok,vres,vwhy=pcall(checkpoint,text)
+ if not (vok and vres) then
+  say('Save refused: '..tostring(vwhy or 'checkpoint failed validation')..'; previous checkpoint retained','error','save');return false
+ end
+ -- Atomic only when the native helper is present. The gd.data_write fallback is
+ -- a plain write and is NOT atomic; the readback proof below detects a failed or
+ -- short write but cannot make the fallback crash-safe.
  local write=gd.data_write_atomic or gd.data_write
  local ok,result=pcall(write,file,text)
  local read_ok,readback=pcall(gd.data_read,file)
- if not ok or result==false or not read_ok or readback~=text or not checkpoint(text) then say('Save write/readback failed; previous checkpoint retained','error','save');return false end
+ if not (ok and result~=false and read_ok and readback==text) then
+  say('Save write/readback failed; previous checkpoint retained','error','save');return false
+ end
+ -- Commit the live mirrored values only now that the bytes are validated and
+ -- durable; failures above leave the previous in-memory state exactly intact.
+ if staged and route then route_mirror(run,route.progress) end
  generation=next_generation
  return true
 end
 local function classify(name,raw)
  if type(raw)~='string' or raw=='' then return nil end
- local ok,data,why=pcall(checkpoint,raw)
+ local ok,data,why,preserve=pcall(checkpoint,raw)
  if not ok then gd.log('roguelite: checkpoint '..name..' threw: '..tostring(data));return nil end
  if data then return data end
- if why and why:find('preserved',1,true) then protected[name]=why end
+ if preserve then protected[name]=why end
  return nil
 end
 local function load_data()
  protected={}
+ route=nil
  local a,b=gd.data_read('checkpoint-a.txt'),gd.data_read('checkpoint-b.txt')
  local ca,cb=classify('checkpoint-a.txt',a),classify('checkpoint-b.txt',b)
  local best=ca;if cb and (not best or cb.generation>best.generation) then best=cb end
  if best then profile,run,generation=best.profile,best.run,best.generation;selected_fighter,run_fighter=best.selected,best.fighter
    manifest=best.manifest
-   if run and (profile.finished[run.id] or run.status~='active') then run=nil end
+   -- A validated v2 route is retained intact for later orchestration; a v1
+   -- manifest continues to drive the live fixed-room runtime.
+   route=best.route
+   if run and (profile.finished[run.id] or run.status~='active') then run=nil;route=nil end
+   if route and run then route_mirror(run,route.progress) end
  elseif (a and a~='') or (b and b~='') then
    save_error=true;profile=Core.new_profile(17029);menu='error'
-   if protected['checkpoint-a.txt'] or protected['checkpoint-b.txt'] then say('Unsupported future checkpoints preserved; remove them to continue')
+   if protected['checkpoint-a.txt'] or protected['checkpoint-b.txt'] then say('A preserved checkpoint could not be used; files left intact. Remove it to continue')
    else say('Both checkpoints invalid; files preserved') end
  else profile=Core.new_profile(17029) end
 end
@@ -291,8 +407,19 @@ local function begin(resume)
  if save_error then say('Invalid checkpoints preserved; cannot start until repaired');return end
  Feedback.reset(feedback)
  if not resume then
+  -- A new run is still the v1 vertical slice; drop any retained v2 route so its
+  -- view is never mistaken for this run.
+  route=nil
   run=Core.new_run(profile,{stocks=3});run_fighter=assert(Roster.validate(selected_fighter))
   for id,g in pairs(run.genes) do if g.origin==starter then Core.equip(run,'player','assault',nil);Core.equip(run,'player','assault',id);break end end
+ end
+ -- A validated v2 route is retained for later orchestration, but physical
+ -- traversal is not wired yet. Refuse to hand its view to the fixed-room v1
+ -- runtime rather than silently falling back to a v1 route. The collection menu
+ -- stays open so review and legacy play remain available.
+ if route then
+  say('Saved v2 route loaded; traversal is not enabled yet. Collection and legacy runs remain available.','blocked','v2-route')
+  return
  end
  -- Resume uses the saved resolved manifest; a new run generates one. A loaded
  -- manifest whose seed does not match the run is stale and regenerated.
@@ -562,7 +689,7 @@ end
 function on_match_end() pending_room=nil;ready=false;active=false;pending_entry=false;enemy_controller:clear();platforms={};enemies={};fx_handles={};enemy_host=nil;Feedback.reset(feedback);Rooms.reset(room_visuals) end
 function on_unload() pending_room=nil;if gd.stage_isolate then pcall(gd.stage_isolate,false) end;if ready then cleanup();if gd.cpu_mode then gd.cpu_mode(2,'fight') end end;Rooms.release(room_visuals);if gd.hud_visible then pcall(gd.hud_visible,true) end;gd.release_pad(4);gd.input_mask(1,0);gd.resume() end
 -- Read-only inspection for integration tests and script-console diagnostics.
-function roguelite_state() return {loading=pending_room~=nil,ready=ready,active=active,menu=menu,profile=profile,run=run,node=node and node.id,toast=toast,command=command_state.node,fighter=selected_fighter,run_fighter=run_fighter,menu_view=menu and (menu=='fighter' and Roster.view(roster_state,{coverage=Bindings.coverage}) or Menus.view(menu_state,menu_context())),feedback=Feedback.view(feedback)} end
+function roguelite_state() return {loading=pending_room~=nil,ready=ready,active=active,menu=menu,profile=profile,run=run,node=node and node.id,toast=toast,command=command_state.node,fighter=selected_fighter,run_fighter=run_fighter,menu_view=menu and (menu=='fighter' and Roster.view(roster_state,{coverage=Bindings.coverage}) or Menus.view(menu_state,menu_context())),feedback=Feedback.view(feedback),save_error=save_error,v2=route and {schema=route.manifest.schema_version,generator=route.manifest.generator_version,rooms=#route.manifest.order,current=route.progress.current_room,progress=route.progress.version} or nil} end
 gd.command('rogue_state',function()
  local a=run and Core.ability(run,'player','assault')
  -- Versioned diagnostics: runtime_ready is engine/scene readiness, ability_ready

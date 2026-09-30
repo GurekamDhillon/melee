@@ -1,10 +1,13 @@
 -- Versioned checkpoint envelope (TBD3). Bundles one validated generation:
--- profile, optional run, resolved run manifest and roster metadata, with a
--- length-delimited body and a cheap integrity checksum. The caller owns A/B
--- file selection and atomic rename; this module only frames and validates.
+-- profile, optional run, resolved run manifest, roster metadata and the
+-- separate run-progress record, with a length-delimited body and a cheap
+-- integrity checksum. The caller owns A/B file selection and atomic rename;
+-- this module only frames and validates.
 --
 -- Decoding does not regenerate or migrate content: it restores exactly what was
--- written. Core's codec validates profile/run; Codec validates the manifest.
+-- written. Core's codec validates profile/run; Codec validates the manifest and
+-- progress tables. The caller must still validate route/progress semantics
+-- (see route.lua); a valid table is not a valid run.
 local Checkpoint = {version = 3, tag = 'TBD3', max_body = 1048576, max_generation = 1000000000}
 
 local function checksum(text)
@@ -30,11 +33,13 @@ function Checkpoint.encode(fields)
   assert(manifest == nil or is_text(manifest, Checkpoint.max_body), 'invalid manifest text')
   local roster = fields.roster
   assert(roster == nil or is_text(roster, Checkpoint.max_body), 'invalid roster text')
-  run, manifest, roster = run or '', manifest or '', roster or ''
-  local body = profile .. run .. manifest .. roster
+  local progress = fields.progress
+  assert(progress == nil or is_text(progress, Checkpoint.max_body), 'invalid progress text')
+  run, manifest, roster, progress = run or '', manifest or '', roster or '', progress or ''
+  local body = profile .. run .. manifest .. roster .. progress
   assert(#body <= Checkpoint.max_body, 'checkpoint body too large')
-  local header = string.format('%s %d %d %d %d %d %s\n',
-    Checkpoint.tag, generation, #profile, #run, #manifest, #roster, checksum(body))
+  local header = string.format('%s %d %d %d %d %d %d %s\n',
+    Checkpoint.tag, generation, #profile, #run, #manifest, #roster, #progress, checksum(body))
   return header .. body
 end
 
@@ -44,13 +49,19 @@ function Checkpoint.decode(text, core, codec)
   local tag = text:match('^(TBD%d+) ')
   if not tag then return nil, 'missing checkpoint header' end
   if tag ~= Checkpoint.tag then return nil, 'unsupported checkpoint version ' .. tag:sub(4) .. '; preserved' end
-  local generation, plen, rlen, mlen, xlen, sum = text:match('^TBD3 (%d+) (%d+) (%d+) (%d+) (%d+) (%x+)\n')
-  generation, plen, rlen, mlen, xlen = tonumber(generation), tonumber(plen), tonumber(rlen), tonumber(mlen), tonumber(xlen)
-  if not (generation and plen and rlen and mlen and xlen and sum) then return nil, 'malformed checkpoint header' end
+  -- Current form carries a progress section (glen); the earlier roster-only
+  -- form is accepted for round-trip compatibility.
+  local generation, plen, rlen, mlen, xlen, glen, sum = text:match('^TBD3 (%d+) (%d+) (%d+) (%d+) (%d+) (%d+) (%x+)\n')
+  if not generation then
+    generation, plen, rlen, mlen, xlen, sum = text:match('^TBD3 (%d+) (%d+) (%d+) (%d+) (%d+) (%x+)\n')
+    glen = 0
+  end
+  generation, plen, rlen, mlen, xlen, glen = tonumber(generation), tonumber(plen), tonumber(rlen), tonumber(mlen), tonumber(xlen), tonumber(glen)
+  if not (generation and plen and rlen and mlen and xlen and glen and sum) then return nil, 'malformed checkpoint header' end
   if generation > Checkpoint.max_generation then return nil, 'invalid generation' end
   local _, body_start = text:find('\n', 1, true)
   local body = text:sub(body_start + 1)
-  if #body ~= plen + rlen + mlen + xlen then return nil, 'checkpoint length mismatch' end
+  if #body ~= plen + rlen + mlen + xlen + glen then return nil, 'checkpoint length mismatch' end
   if checksum(body) ~= sum then return nil, 'checkpoint checksum mismatch' end
   assert(core and core.restore and codec and codec.decode, 'decoder dependencies required')
   local profile = core.restore(body:sub(1, plen))
@@ -66,8 +77,15 @@ function Checkpoint.decode(text, core, codec)
     if not ok or type(decoded) ~= 'table' then return nil, 'invalid manifest section' end
     manifest = decoded
   end
-  local roster = xlen > 0 and body:sub(plen + rlen + mlen + 1) or nil
-  return {generation = generation, profile = profile, run = run, manifest = manifest, roster = roster}
+  local roster = xlen > 0 and body:sub(plen + rlen + mlen + 1, plen + rlen + mlen + xlen) or nil
+  local progress = nil
+  if glen > 0 then
+    local ok, decoded = pcall(codec.decode, body:sub(plen + rlen + mlen + xlen + 1))
+    if not ok or type(decoded) ~= 'table' then return nil, 'invalid progress section' end
+    progress = decoded
+  end
+  return {generation = generation, profile = profile, run = run, manifest = manifest,
+    roster = roster, progress = progress}
 end
 
 return Checkpoint

@@ -5,7 +5,7 @@
 -- Stable identities only: room instance ids, edge ids, reward ids, logical
 -- entity ids and key names. Native handles, pointers and closures never belong
 -- here.
-local Progress = {version = 1, max_rooms = 64, max_edges = 192, max_keys = 16,
+local Progress = {version = 2, max_rooms = 64, max_edges = 192, max_keys = 16,
   max_entities = 64, max_claimed = 64, max_objectives = 32, max_supplies = 9, max_lives = 99}
 
 local function valid_id(x) return type(x) == 'string' and #x > 0 and #x <= 64 and not x:find('[%z\1-\31]') end
@@ -30,6 +30,7 @@ function Progress.new(run_id, start_room, opts)
     current_room = start_room, current_socket = nil, start_room = start_room,
     visited = {[start_room] = true}, discovered = {[start_room] = true},
     revealed = {}, claimed = {}, keys = {}, consumables = {}, defeated = {}, objectives = {},
+    opened = {}, pickups = {}, encounter_kos = {},
     supplies = integer(opts.supplies, 0, Progress.max_supplies) and opts.supplies or 2,
     lives = integer(opts.lives, 0, Progress.max_lives) and opts.lives or 3,
     outcome = nil,
@@ -40,17 +41,20 @@ end
 function Progress.enter(record, room_id, socket)
   if record.version ~= Progress.version or record.outcome then return nil, 'run not active' end
   if not valid_id(room_id) or (socket ~= nil and not valid_id(socket)) then return nil, 'invalid destination' end
-  record.current_room, record.current_socket = room_id, socket
   local ok, why = set_flag(record.visited, room_id, Progress.max_rooms, 'visited')
   if not ok then return nil, why end
+  record.current_room, record.current_socket = room_id, socket
   record.discovered[room_id] = true
   return true
 end
 
 function Progress.reveal(record, room_id, edge_id)
   if not valid_id(room_id) or not valid_id(edge_id) then return nil, 'invalid reveal' end
+  if not record.discovered[room_id] and count(record.discovered) >= Progress.max_rooms then return nil, 'discovered capacity' end
+  local ok,why=set_flag(record.revealed, edge_id, Progress.max_edges, 'revealed edge')
+  if not ok then return nil,why end
   record.discovered[room_id] = true
-  return set_flag(record.revealed, edge_id, Progress.max_edges, 'revealed edge')
+  return true
 end
 
 function Progress.claim(record, reward_id)
@@ -114,6 +118,7 @@ end
 local FIELDS = {version = true, run_id = true, current_room = true, current_socket = true,
   start_room = true, visited = true, discovered = true, revealed = true, claimed = true,
   keys = true, consumables = true, defeated = true, objectives = true, supplies = true,
+  opened = true, pickups = true, encounter_kos = true,
   lives = true, outcome = true}
 
 function Progress.validate(record)
@@ -124,7 +129,7 @@ function Progress.validate(record)
   if record.outcome ~= nil and record.outcome ~= 'success' and record.outcome ~= 'failure' then return false, 'invalid outcome' end
   if not integer(record.supplies, 0, Progress.max_supplies) or not integer(record.lives, 0, Progress.max_lives) then return false, 'invalid supplies/lives' end
   local bounds = {{'visited', Progress.max_rooms}, {'discovered', Progress.max_rooms}, {'revealed', Progress.max_edges},
-    {'claimed', Progress.max_claimed}, {'keys', Progress.max_keys}, {'defeated', Progress.max_entities}, {'objectives', Progress.max_objectives}}
+    {'opened', Progress.max_edges}, {'pickups', Progress.max_claimed}, {'claimed', Progress.max_claimed}, {'keys', Progress.max_keys}, {'defeated', Progress.max_entities}, {'objectives', Progress.max_objectives}}
   for _, pair in ipairs(bounds) do
     local t, max = record[pair[1]], pair[2]
     if type(t) ~= 'table' then return false, 'missing ' .. pair[1] end
@@ -142,6 +147,8 @@ function Progress.validate(record)
   for k, v in pairs(record.consumables) do
     if not valid_id(k) or not integer(v, 1, Progress.max_supplies) then return false, 'invalid consumable entry' end
   end
+  if type(record.encounter_kos) ~= 'table' or count(record.encounter_kos) > Progress.max_rooms then return false, 'invalid encounter progress' end
+  for id,kos in pairs(record.encounter_kos) do if not valid_id(id) or not integer(kos,0,16) then return false, 'invalid encounter stocks' end end
   if not record.visited[record.current_room] then return false, 'current room not visited' end
   return true
 end

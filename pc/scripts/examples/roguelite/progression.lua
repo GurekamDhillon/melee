@@ -1,14 +1,21 @@
 -- Progression validator. A connected graph is not enough: every mandatory
 -- objective must be reachable under one-way/edge/gate rules. The search walks
--- bounded states (room, persistent unlocks, remaining consumable keys, visited
--- required-objective bitmask) so a lock cannot strand the player and a shortcut
--- cannot skip a required boss.
+-- bounded states (room, persistent unlocks, consumable inventory, opened locks,
+-- claimed one-shot pickups, visited-objective bitmask) so a lock cannot strand
+-- the player, a shortcut cannot skip a required boss, and a finite pickup cannot
+-- be harvested twice by revisiting its room.
 --
 -- Manifest contract (see topology.lua):
 --   start_room, final_room, rooms_by_id, edges_by_id, locks (by id), spine
---   (ordered required room ids, start/finish included or added here).
--- A room may carry `grants_key` (persistent key granted on entry).
-local Progression = {version = 1, max_states = 200000, max_keys = 64}
+--   (ordered required room ids; start/finish are always required).
+-- A room may carry:
+--   grants_key         persistent key granted once on entry
+--   grants_consumable  map key -> amount, a one-shot pickup per (room,key)
+--   pickups            array of {id, key, amount, repeatable?} explicit pickups
+-- A lock's `repeat` policy declares whether a consumable gate charges on every
+-- traversal (true) or opens permanently after the first payment (false default).
+local Progression = {version = 2, max_states = 200000, max_keys = 64,
+  max_pickups = 64, max_opened = 128, max_consumable_total = 64}
 
 local function copy_map(t)
   local out = {}
@@ -26,19 +33,20 @@ local function with_bit(mask, value)
   return mask + value
 end
 
-local function key_signature(keys)
+local function signature(parts)
   local list = {}
-  for k in pairs(keys) do list[#list + 1] = k end
+  for k in pairs(parts) do list[#list + 1] = k end
   table.sort(list)
   return table.concat(list, '+')
 end
-
 local function count_signature(counts)
   local list = {}
   for k in pairs(counts) do list[#list + 1] = k .. '=' .. counts[k] end
   table.sort(list)
   return table.concat(list, '+')
 end
+
+local function bounded_amount(x) return type(x) == 'number' and x % 1 == 0 and x >= 1 and x <= 64 end
 
 function Progression.validate(manifest, opts)
   opts = opts or {}
@@ -66,6 +74,38 @@ function Progression.validate(manifest, opts)
   local full = 0
   for _, id in ipairs(order) do full = full + bit_value(bit[id]) end
 
+  -- Stable pickup identity. Explicit pickups take precedence; grants_consumable
+  -- derives one named pickup per (room,key) so revisiting cannot replenish it.
+  local pickups, pickups_by_room = {}, {}
+  local function add_pickup(pid, room, key, amount, repeatable)
+    if type(pid) ~= 'string' or #pid == 0 or #pid > 96 then return false, 'invalid pickup id' end
+    if type(key) ~= 'string' or #key == 0 or #key > 64 then return false, 'invalid pickup key' end
+    if not bounded_amount(amount) then return false, 'invalid pickup amount' end
+    if pickups[pid] then return false, 'duplicate pickup id ' .. pid end
+    if #pickups >= Progression.max_pickups then return false, 'pickup catalogue too large' end
+    pickups[pid] = {id = pid, room = room, key = key, amount = amount, repeatable = repeatable == true}
+    pickups_by_room[room] = pickups_by_room[room] or {}
+    pickups_by_room[room][#pickups_by_room[room] + 1] = pid
+    return true
+  end
+  for id, room in pairs(manifest.rooms_by_id) do
+    if room.grants_consumable ~= nil then
+      if type(room.grants_consumable) ~= 'table' then return false, 'invalid grants_consumable' end
+      for key, amount in pairs(room.grants_consumable) do
+        local ok, why = add_pickup(id .. '/' .. key, id, key, amount, false)
+        if not ok then return false, why end
+      end
+    end
+    if room.pickups ~= nil then
+      if type(room.pickups) ~= 'table' then return false, 'invalid room pickups' end
+      for _, pickup in ipairs(room.pickups) do
+        local ok, why = add_pickup(pickup.id, id, pickup.key, pickup.amount or 1, pickup.repeatable)
+        if not ok then return false, why end
+      end
+    end
+  end
+  for _, list in pairs(pickups_by_room) do table.sort(list) end
+
   local adjacency = {}
   for id, edge in pairs(manifest.edges_by_id) do
     if not manifest.rooms_by_id[edge.from_room] or not manifest.rooms_by_id[edge.to_room] then
@@ -92,7 +132,8 @@ function Progression.validate(manifest, opts)
   local locks = manifest.locks or {}
   local max_states = math.min(opts.max_states or Progression.max_states, Progression.max_states)
   local visited = {}
-  local queue = {{room = start, keys = {}, consumables = {}, mask = bit[start] and bit_value(bit[start]) or 0}}
+  local queue = {{room = start, keys = {}, consumables = {}, opened = {}, claimed = {},
+    mask = bit[start] and bit_value(bit[start]) or 0}}
   local head, states = 1, 0
   while head <= #queue do
     local state = queue[head]
@@ -100,32 +141,49 @@ function Progression.validate(manifest, opts)
     states = states + 1
     if states > max_states then return false, 'progression state space exceeded' end
     local room = manifest.rooms_by_id[state.room]
-    local keys = state.keys
+    local keys, consumables, opened, claimed = state.keys, state.consumables, state.opened, state.claimed
+
+    -- Persistent keys: one grant, immutable afterwards.
     if room.grants_key and not keys[room.grants_key] then
       keys = copy_map(keys)
       keys[room.grants_key] = true
     end
-    local consumables = state.consumables
-    if room.grants_consumable then
-      consumables = copy_map(consumables)
-      for key, amount in pairs(room.grants_consumable) do
-        consumables[key] = (consumables[key] or 0) + amount
+    -- One-shot pickups: claim once; a repeatable pickup (explicit) re-grants.
+    for _, pid in ipairs(pickups_by_room[state.room] or {}) do
+      local pickup = pickups[pid]
+      if pickup.repeatable or not claimed[pid] then
+        claimed = copy_map(claimed)
+        consumables = copy_map(consumables)
+        claimed[pid] = true
+        consumables[pickup.key] = (consumables[pickup.key] or 0) + pickup.amount
+        if consumables[pickup.key] > Progression.max_consumable_total then
+          return false, 'consumable inventory exceeded'
+        end
       end
     end
     if state.mask == full then return true, {states = states} end
+
     for _, link in ipairs(adjacency[state.room] or {}) do
-      local allowed, edge_consumables = true, consumables
+      local allowed, edge_consumables, edge_opened = true, consumables, opened
       if link.edge.gate_rule then
         local lock = locks[link.edge.gate_rule]
         if not lock then return false, 'edge references unknown lock' end
         if lock.kind == 'persistent_key' then
           allowed = keys[lock.key] == true
         elseif lock.kind == 'consumable_key' then
-          allowed = (consumables[lock.key] or 0) > 0
-          if allowed then
-            edge_consumables = copy_map(consumables)
-            edge_consumables[lock.key] = edge_consumables[lock.key] - 1
-            if edge_consumables[lock.key] <= 0 then edge_consumables[lock.key] = nil end
+          if opened[link.edge.gate_rule] and not lock['repeat'] then
+            allowed = true
+          else
+            allowed = (consumables[lock.key] or 0) > 0
+            if allowed then
+              edge_consumables = copy_map(consumables)
+              edge_consumables[lock.key] = edge_consumables[lock.key] - 1
+              if edge_consumables[lock.key] <= 0 then edge_consumables[lock.key] = nil end
+              if not lock['repeat'] then
+                edge_opened = copy_map(opened)
+                edge_opened[link.edge.gate_rule] = true
+              end
+            end
           end
         else
           return false, 'invalid lock kind'
@@ -134,10 +192,12 @@ function Progression.validate(manifest, opts)
       if allowed then
         local mask = state.mask
         if bit[link.to] then mask = with_bit(mask, bit_value(bit[link.to])) end
-        local sig = link.to .. '|' .. key_signature(keys) .. '|' .. count_signature(edge_consumables) .. '|' .. mask
+        local sig = table.concat({link.to, signature(keys), count_signature(edge_consumables),
+          signature(edge_opened), signature(claimed), mask}, '|')
         if not visited[sig] then
           visited[sig] = true
-          queue[#queue + 1] = {room = link.to, keys = keys, consumables = edge_consumables, mask = mask}
+          queue[#queue + 1] = {room = link.to, keys = keys, consumables = edge_consumables,
+            opened = edge_opened, claimed = claimed, mask = mask}
         end
       end
     end

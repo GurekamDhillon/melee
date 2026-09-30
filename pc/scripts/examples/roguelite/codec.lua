@@ -6,7 +6,13 @@
 -- Rules:
 --  * values are nil-free; a table is either a contiguous integer-keyed array
 --    (1..n) or a string-keyed object, never mixed; empty tables encode as {}.
---  * object numeric keys are limited to 1..max_object_key and become strings.
+--  * object numeric keys are limited to 1..max_object_key and canonicalize to
+--    their decimal string; distinct Lua keys that would collide (1 and "1") are
+--    rejected before output. Contiguous 1..n integer tables encode as arrays and
+--    preserve numeric keys on decode; a non-contiguous integer object encodes
+--    with string keys, so {[2]='a'} round-trips as {['2']='a'}.
+--  * a table mixing contiguous integers and string keys is an object, not an
+--    array, and is subject to the collision rule above.
 --  * strings <= max_string bytes; only ASCII controls are escaped.
 --  * numbers must be finite; the encoder emits %.17g and the decoder enforces a
 --    strict decimal grammar (no leading zeros, no bare exponents).
@@ -55,18 +61,22 @@ local function encode(v, depth, nodes)
         return table.concat(parts, ',')
       end)() .. ']'
     end
-    local keys = {}
+    -- Object keys are canonicalized to strings. Two distinct Lua keys that
+    -- canonicalize to the same string (number 1 and string "1") would produce a
+    -- duplicate JSON key the decoder rejects, so refuse before writing.
+    local keys, canonical = {}, {}
     for k in pairs(v) do
       assert(type(k) == 'string' or integer(k, 1, Codec.max_object_key), 'bad object key')
+      local name = tostring(k)
+      assert(not canonical[name], 'colliding object keys')
+      canonical[name] = true
       keys[#keys + 1] = k
     end
     table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
     assert(#keys <= Codec.max_fields, 'too many fields')
     local parts = {}
     for _, k in ipairs(keys) do
-      local value = v[k]
-      if value == nil then value = v[tonumber(k)] end
-      parts[#parts + 1] = quote(tostring(k)) .. ':' .. encode(value, depth + 1, nodes)
+      parts[#parts + 1] = quote(tostring(k)) .. ':' .. encode(v[k], depth + 1, nodes)
     end
     return '{' .. table.concat(parts, ',') .. '}'
   end

@@ -462,7 +462,10 @@ local function validate(v)
  local prefix=v.type=='profile' and 'g' or 'r';local count=0
  for id,g in pairs(v.genes) do count=count+1;validate_gene(g,id);local suffix=id:match('^'..prefix..'(%d+)$');assert(suffix and tonumber(suffix)<v.next_id,'invalid gene id') end;assert(count<=128,'too many genes')
  if v.type=='profile' then
-  fields(v,{type=true,id=true,version=true,seed=true,world_seed=true,next_id=true,next_run=true,genes=true,finished=true});assert(name(v.id),'invalid profile identity')
+  fields(v,{type=true,id=true,version=true,seed=true,world_seed=true,next_id=true,next_run=true,genes=true,finished=true,history=true});assert(name(v.id),'invalid profile identity')
+  -- history is OPTIONAL and owned by RunHistory; Core only checks it is a
+  -- plain table so an old profile without it still validates.
+  assert(v.history==nil or type(v.history)=='table','invalid history')
   assert(v.world_seed==nil or seed(v.world_seed),'invalid profile world seed')
   assert(integer(v.next_run,1,1000000000) and type(v.finished)=='table','invalid profile')
   local n=0;for id,result in pairs(v.finished) do n=n+1;local serial=id:match('^run(%d+)$');assert(serial and tonumber(serial)<v.next_run,'invalid result id');fields(result,{outcome=true,export=true,pending=true,declined=true,deferred=true});assert(result.outcome=='success' or result.outcome=='failure','bad outcome');assert((result.outcome=='success' and (result.export==nil or v.genes[result.export])) or (result.outcome=='failure' and result.export==nil),'bad export');assert(result.pending==nil or result.pending==true,'invalid pending');assert(result.declined==nil or result.declined==true,'invalid declined');if result.deferred~=nil then validate_gene(result.deferred,result.deferred.id);assert(result.export==nil and result.pending==true,'deferred export conflicts with a completed export');assert(result.outcome=='success','only a successful run defers an export') end;assert(not(result.deferred~=nil and result.declined==true),'a deferred export cannot also be declined') end;assert(n<=512,'ledger full')

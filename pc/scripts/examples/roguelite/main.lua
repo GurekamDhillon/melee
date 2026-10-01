@@ -322,6 +322,34 @@ local inventory_service=Inventory.new({Core=Core,Progress=Progress})
 local equipment_service=Equipment.new(Core,{})
 -- Seed a run inventory from the legacy supplies counter exactly once, so an old
 -- save migrates without inventing or double-sourcing anything.
+-- R3a: run-scoped equipment. It owns real modifiers on the run host and is
+-- reverted on teardown, so an item never leaks into the next run or survives a
+-- scene change. Equipment records persist on the run.
+local function run_equipment(r)
+ if not r then return nil end
+ if r.equipment~=nil then return r.equipment end
+ local rec,why=Equipment.create({owner=r.id,host='player',capacity=4})
+ if not rec then gd.log('roguelite: equipment unavailable: '..tostring(why));return nil end
+ r.equipment=rec
+ return rec
+end
+-- Apply (or re-apply) the run's equipment to its host. Refusals are logged, not
+-- silently ignored: an advertised item must have actual consequences or be
+-- reported as unavailable.
+local function sync_equipment(r)
+ local rec=run_equipment(r)
+ if not rec or not r then return false,'no equipment' end
+ local applied,why=equipment_service:apply(r,rec)
+ if not applied then gd.log('roguelite: equipment refused: '..tostring(why));return false,why end
+ return true
+end
+local function revert_equipment(r)
+ if not r or not r.equipment then return true end
+ local rec=run_equipment(r)
+ local ok,why=equipment_service:revert(r,rec)
+ if not ok then gd.log('roguelite: equipment revert pending: '..tostring(why));return false end
+ return true
+end
 local function run_inventory(r)
  if not r then return nil end
  if r.inventory~=nil then return r.inventory end
@@ -457,6 +485,23 @@ local function finish(outcome)
   profile=assert(Core.restore(old_profile));rebind_current_run(assert(Core.restore(old_run)));sync_loadout()
   pending_finish=outcome;active=false;transition_error='Run result could not be saved. Retry after fixing storage.';pause_menu('error');return
  end
+ -- Run history is appended from the finished record, so the durable ledger is
+ -- also the visible history; an existing profile keeps its prior entries.
+ if not profile.history then
+  local seeded=RunHistory.from_core_finished(profile.id,profile)
+  if seeded then profile.history=seeded end
+ end
+ if profile.history then
+  -- append returns a NEW history record; discarding it would silently drop the
+  -- entry, which is the exact failure mode this service exists to prevent.
+  local entry,ewhy=RunHistory.make_entry(run,{outcome=outcome,export=result.export})
+  if entry then
+   local staged,hwhy=RunHistory.append(profile.history,entry)
+   if staged then profile.history=staged
+   else gd.log('roguelite: run history append refused: '..tostring(hwhy)) end
+  else gd.log('roguelite: run history entry refused: '..tostring(ewhy)) end
+ end
+ revert_equipment(run)
  pending_finish=nil;active=false;presentation:release_hud();pause_menu('collection');Feedback.finish(feedback,result)
  toast=outcome=='success' and 'Run complete' or 'Run ended';gd.log('roguelite: '..toast)
  if result.deferred then
@@ -700,7 +745,9 @@ local function begin(resume)
   end
   if not v2_isolate() then transition_error='Empty playfield unavailable; install the updated native build.';pause_menu('error');return end
   campaign=ensure_campaign(route,run)
-  -- Resuming installs this run's loadout as the live command tree.
+  -- Resuming re-establishes this run's consumables and equipment, then installs
+  -- its loadout as the live command tree.
+  run_inventory(run);sync_equipment(run)
   sync_loadout()
   if launched_scene~=Roster.scene(run_fighter) then pending_begin=true;launch(run_fighter);return end
   pending_begin=false;gd.set_percent(1,0);active=false
@@ -726,6 +773,7 @@ local function begin(resume)
    for id,g in pairs(run.genes) do if g.origin==starter then Core.equip(run,'player','assault',nil);Core.equip(run,'player','assault',id);break end end
    route={manifest=result.manifest,view=result.view,progress=result.progress}
    campaign=ensure_campaign(route,run)
+   run_inventory(run);sync_equipment(run)
    sync_loadout()
    if not (v2_isolate() and save()) then
     -- Restore the exact previous references; the previous owner was never
@@ -753,6 +801,7 @@ local function begin(resume)
   campaign=nil;route=nil
   run=Core.new_run(profile,{stocks=3});run_fighter=assert(Roster.validate(selected_fighter))
   for id,g in pairs(run.genes) do if g.origin==starter then Core.equip(run,'player','assault',nil);Core.equip(run,'player','assault',id);break end end
+  run_inventory(run);sync_equipment(run)
   sync_loadout()
  end
  -- Resume uses the saved resolved manifest; a new run generates one. A loaded
@@ -762,6 +811,7 @@ local function begin(resume)
  end
  if not Dungeon.validate(manifest) or not manifest.nodes[run.progress.room] then say('Saved route unavailable');pause_menu('error');return end
  if launched_scene~=Roster.scene(run_fighter) then pending_begin=true;launch(run_fighter);return end
+ run_inventory(run);sync_equipment(run)
  sync_loadout()
  pending_begin=false;gd.set_percent(1,0);active=false;pending_room=run.progress.room;unpause()
 end
@@ -895,7 +945,7 @@ local function choose_menu(action)
   return
  end
  if action.kind=='continue' then run.progress.cleared[node.id]=true;if save() then unpause() end;return end
- if action.kind=='leave' then if save() then active=false;cleanup();presentation:release_hud();pause_menu('collection') end;return end
+ if action.kind=='leave' then if save() then active=false;revert_equipment(run);cleanup();presentation:release_hud();pause_menu('collection') end;return end
  local before,slot
  if action.kind=='reward' and action.id then
   for k,id in pairs(run.hosts.player.slots) do if id==action.id then slot=k;before=Core.resolve(run,'player',k) end end
@@ -930,6 +980,13 @@ local function choose_menu(action)
  feedback_sync(0,menu~=nil)
 end
 load_data()
+-- Seed run history from the durable finished ledger as soon as a profile exists,
+-- so the collection screen can show prior runs before the first one finishes.
+-- An existing history is never rebuilt, so entries are never duplicated.
+if profile and not profile.history then
+ local seeded=RunHistory.from_core_finished(profile.id,profile)
+ if seeded then profile.history=seeded end
+end
 launch=function(choice)
  choice=choice or selected_fighter
  if ready then active=false;cleanup() end

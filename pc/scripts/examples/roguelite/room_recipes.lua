@@ -93,6 +93,12 @@ local function recipe(id, platforms, anchors, opts)
     -- layout that declares `upper_doorway`; validate keys the ascent check off
     -- it so new module layouts do not need a top socket.
     r.upper_doorway = ASCENT_MODULES[#ASCENT_MODULES]
+    -- Arrive on the flat lead-in, before the stairs start at x=-52.
+    -- The former x=-42 arrival sat beneath the one-way slope; short fighters
+    -- could stay on the lower floor and clip through the visual stair module.
+    local entry_x = r.geometry.lines[1].x0 - KIT.unit
+    r.geometry.spawn = {x=entry_x,y=0}
+    r.geometry.arrivals.left = {x=entry_x,y=0,facing=1}
   else
     if opts.modules then r.modules = opts.modules end
     if opts.lines then r.geometry.lines = opts.lines end

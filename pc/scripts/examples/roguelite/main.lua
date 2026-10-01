@@ -313,6 +313,63 @@ local function save_route(route_table,progress2,run_override)
  route_table.progress=progress2
  return true
 end
+-- R3a: the reviewed inventory/equipment services, constructed for real. Placed
+-- after save() so the persistence seam below is the one that commits a spend.
+-- They own
+-- consumables so the raw `progress.supplies` counter is no longer the only source;
+-- the counter stays mirrored for the campaign's own supply path.
+local inventory_service=Inventory.new({Core=Core,Progress=Progress})
+local equipment_service=Equipment.new(Core,{})
+-- Seed a run inventory from the legacy supplies counter exactly once, so an old
+-- save migrates without inventing or double-sourcing anything.
+local function run_inventory(r)
+ if not r then return nil end
+ if r.inventory~=nil then return r.inventory end
+ local inv=Inventory.from_legacy_supplies(r.progress and r.progress.supplies or 0,{owner=r.id,scope='run',capacity=8})
+ if inv then r.inventory=inv end
+ return inv
+end
+-- Spend one consumable through the real plan/validate/commit sequence. The heal
+-- is applied and read back before the record is committed, and a refused save
+-- rolls the whole thing back, so a refused spend neither consumes an item nor
+-- grants a heal.
+local function use_inventory_item(r,id,context,apply)
+ local inv=run_inventory(r)
+ if not inv then return false,'no inventory' end
+ -- validate_plan re-derives the canonical action from the AUTHORITATIVE record,
+ -- so the context must carry `inventory` and `item`; the plan's own fields are
+ -- never trusted as authority.
+ local ctx={frame=r.frame,context=context,run=r,profile=profile,
+  progress=Progress.new(r.id,r.progress and r.progress.room or 'r1'),
+  inventory=inv,item=id,
+  effects={version=1,heal=true,max_heal=100}}
+ local plan,why=inventory_service:plan_use(inv,id,ctx)
+ if not plan then return false,why end
+ local ok,vwhy=inventory_service:validate_plan(plan,ctx)
+ if not ok then return false,vwhy end
+ -- apply must return true[,undo]. The undo restores the native effect when the
+ -- durable write is refused, so a refused save can never leave a free heal behind.
+ -- NOTE: `apply and apply(...)` truncates to a single value in Lua, which would
+ -- silently drop the undo. Call it directly instead.
+ -- apply returns (true, undo) on success and (false, reason) on refusal.
+ local applied,extra
+ if apply then applied,extra=apply(plan.effects) end
+ if applied==false then return false,extra or 'effect refused' end
+ local undo=applied==true and type(extra)=='function' and extra or nil
+ -- Capture the exact prior values. Core.snapshot returns encoded text, not a
+ -- table, so it cannot be used to restore fields.
+ local before_inventory=r.inventory
+ local before_supplies=r.progress and r.progress.supplies or nil
+ r.inventory=plan.inventory
+ if r.progress then r.progress.supplies=(r.inventory.items.legacy_restore or 0) end
+ if not save() then
+  r.inventory=before_inventory
+  if r.progress then r.progress.supplies=before_supplies end
+  if undo then pcall(undo) end
+  return false,'spend could not be saved; nothing changed'
+ end
+ return true
+end
 local function classify(name,raw)
  if type(raw)~='string' or raw=='' then return nil end
  local ok,data,why,preserve=pcall(checkpoint,raw)
@@ -1028,10 +1085,26 @@ function on_tick()
    if event.action=='gene' then
     if apply_gene(1,event.slot) then presentation:observe({kind='cast'}) end
    elseif event.action=='restore' then
-    -- A refused spend rolls its heal back and spends nothing; the reason is
-    -- reported rather than swallowed, so a save refusal is never a silent no-op.
-    local spent,why=campaign:use_supply()
-    if spent then sync_loadout() else say('Restore refused: '..tostring(why or 'unavailable'),'blocked','supply') end
+    -- Spend through the reviewed inventory service: plan, re-validate the plan
+    -- against the authoritative record, apply and read back, then commit. A
+    -- refused save consumes nothing and grants no heal.
+    local spent,why=use_inventory_item(run,'legacy_restore','combat',function(effects)
+     local e=effects[1];if not e or e.kind~='heal' then return false,'unsupported effect' end
+     local p=gd.player(1);if not p or p.percent<=0 then return false,'Nothing to restore' end
+     local before=p.percent
+     local target=math.max(0,before-e.amount)
+     local ok,res=pcall(gd.set_percent,1,target)
+     if not ok or res==false then return false,'native heal refused' end
+     local back=gd.player(1)
+     if type(back)~='table' or back.percent~=target then
+      pcall(gd.set_percent,1,before)
+      return false,'heal readback mismatch'
+     end
+     -- Undo restores the exact pre-heal percent if the durable write is refused.
+     return true,function() pcall(gd.set_percent,1,before) end
+    end)
+    if spent then say('Restore used','info','supply');sync_loadout()
+    else say('Restore refused: '..tostring(why or 'unavailable'),'blocked','supply') end
    elseif event.action=='route' then local map=campaign:route_map();if map then say('Route: '..map.counts.discovered_rooms..' rooms, '..map.counts.known_exits..' exits','info','map') end
    elseif event.action=='loadout' then pause_menu('rest')
    elseif event.action=='collection' then save();active=false;cleanup();presentation:release_hud();pause_menu('collection') end
@@ -1065,8 +1138,16 @@ function on_tick()
     if event and event.kind=='execute' then
      if event.action=='gene' then
       if apply_gene(1,event.slot) then presentation:observe({kind='cast'}) end
-     elseif event.action=='restore' and run.progress.supplies>0 then run.progress.supplies=run.progress.supplies-1;gd.set_percent(1,math.max(0,gd.player(1).percent-30));save();sync_loadout();say('Supply used: percent -30')
-     elseif event.action=='restore' then say('Restore refused: no supplies in this run','blocked','supply') end
+     elseif event.action=='restore' then
+      local spent,why=use_inventory_item(run,'legacy_restore','combat',function(effects)
+       local e=effects[1];if not e or e.kind~='heal' then return false,'unsupported effect' end
+       local p=gd.player(1);if not p or p.percent<=0 then return false,'Nothing to restore' end
+       local before=p.percent
+       gd.set_percent(1,math.max(0,before-e.amount))
+       return true,function() pcall(gd.set_percent,1,before) end
+      end)
+      if spent then sync_loadout();say('Supply used: percent -30','info','supply') else say('Restore refused: '..tostring(why or 'no supplies in this run'),'blocked','supply') end
+     end
      if event.action=='loadout' then pause_menu('rest')
      elseif event.action=='collection' then save();active=false;cleanup();presentation:release_hud();pause_menu('collection') end
     elseif event and event.kind=='blocked' then say(event.reason or 'Command unavailable','blocked','command') end

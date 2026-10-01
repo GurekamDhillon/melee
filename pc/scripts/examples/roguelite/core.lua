@@ -467,7 +467,12 @@ local function validate(v)
   assert(integer(v.next_run,1,1000000000) and type(v.finished)=='table','invalid profile')
   local n=0;for id,result in pairs(v.finished) do n=n+1;local serial=id:match('^run(%d+)$');assert(serial and tonumber(serial)<v.next_run,'invalid result id');fields(result,{outcome=true,export=true,pending=true,declined=true,deferred=true});assert(result.outcome=='success' or result.outcome=='failure','bad outcome');assert((result.outcome=='success' and (result.export==nil or v.genes[result.export])) or (result.outcome=='failure' and result.export==nil),'bad export');assert(result.pending==nil or result.pending==true,'invalid pending');assert(result.declined==nil or result.declined==true,'invalid declined');if result.deferred~=nil then validate_gene(result.deferred,result.deferred.id);assert(result.export==nil and result.pending==true,'deferred export conflicts with a completed export');assert(result.outcome=='success','only a successful run defers an export') end;assert(not(result.deferred~=nil and result.declined==true),'a deferred export cannot also be declined') end;assert(n<=512,'ledger full')
  elseif v.type=='run' then
-  fields(v,{type=true,version=true,seed=true,world_seed=true,id=true,owner=true,next_id=true,frame=true,stocks=true,status=true,genes=true,hosts=true,marks=true,runtime=true,progress=true});assert(name(v.owner) and seed(v.world_seed),'invalid run owner/world seed')
+  fields(v,{type=true,version=true,seed=true,world_seed=true,id=true,owner=true,next_id=true,frame=true,stocks=true,status=true,genes=true,hosts=true,marks=true,runtime=true,progress=true,inventory=true,equipment=true});assert(name(v.owner) and seed(v.world_seed),'invalid run owner/world seed')
+  -- inventory/equipment are OPTIONAL run state owned by those services. Core
+  -- cannot validate their contents (they are bundled after it), so it only checks
+  -- they are plain tables; Inventory.validate/Equipment.validate own the rest. Old
+  -- saves without them keep validating.
+  for _,side in ipairs{'inventory','equipment'} do local x=v[side];assert(x==nil or type(x)=='table','invalid '..side) end
   fields(v.progress,{room=true,cleared=true,claimed=true,supplies=true})
   assert(name(v.progress.room) and #v.progress.room<=64 and integer(v.progress.supplies,0,9),'invalid progress')
   for _,dict in ipairs({v.progress.cleared,v.progress.claimed}) do assert(type(dict)=='table','invalid progress flags');local n=0;for k,x in pairs(dict) do n=n+1;assert(name(k) and #k<=64 and type(x)=='boolean','invalid progress flag') end;assert(n<=32,'too many progress flags') end

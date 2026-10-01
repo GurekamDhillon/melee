@@ -632,6 +632,10 @@ static inline IfDamageState* getPlayerByHUDParent(HSD_GObj* parent)
 
 void ifStatus_802F5DE0(HSD_GObj* player, s32 arg1)
 {
+#if defined(TARGET_PC)
+    extern int Script_StatusHUDVisible(void);
+    if (!Script_StatusHUDVisible()) return;
+#endif
     if (!getPlayerByHUDParent(player)->flags.hide_all_digits) {
         HSD_GObj_JObjCallback(player, arg1);
     }
@@ -650,6 +654,10 @@ static inline IfDamageState* getPlayerByNext(HSD_GObj* gobj)
 
 void ifStatus_802F5E50(HSD_GObj* gobj, s32 arg1)
 {
+#if defined(TARGET_PC)
+    extern int Script_StatusHUDVisible(void);
+    if (!Script_StatusHUDVisible()) return;
+#endif
     IfDamageState* player = getPlayerByNext(gobj);
     if (!player->flags.hide_all_digits) {
         HSD_GObj_JObjCallback(gobj, arg1);

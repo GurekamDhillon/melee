@@ -38,6 +38,7 @@
 #include "gm_1601.h"
 #include "gm_1884.h"
 #include "gm_1A3F.h"
+#include "gmmain_lib.h"
 
 /* Port side (pc/platform/gw_runtime.c). */
 int SceneLaunch_Active(void);
@@ -68,6 +69,17 @@ void SceneReport_State(int phase, int mode, int state_id, int scene_kind);
 void SceneReport_Cursor(const char* what, int a, int b);
 void SceneReport_Memcard(int decision, int option);
 void SceneReport_Menu(int kind, int hovered, int confirmed);
+
+/* Off is a parser sentinel (-2), not frequency index zero. Apply to both the
+ * immediate rules and saved preferences from which VS reconstructs the match. */
+static void SceneLaunch_ApplyItemFrequency(StartMeleeRules* rules, struct GamePrefs* prefs)
+{
+    int frequency = SceneLaunch_ItemFreq();
+    if (frequency != -1) {
+        rules->item_freq = (s8) (frequency == -2 ? -1 : frequency);
+        prefs->item_freq = (u8) rules->item_freq;
+    }
+}
 
 /**
  * @brief Seeds a VsModeData from the configured scene and jumps the mode's state machine to the
@@ -199,9 +211,6 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         vs->start.rules.timer_enabled = SceneLaunch_TimeLimit() != 0;
         vs->start.rules.time_limit = (u32) SceneLaunch_TimeLimit();
     }
-    if (SceneLaunch_ItemFreq() >= 0) {
-        vs->start.rules.item_freq = (s8) SceneLaunch_ItemFreq();
-    }
 
     /* The saved rules. VS mode rebuilds every match's rules from GameRules/GamePrefs when it
      * starts the match (gm_80167BC8), so a time or stock count set only in vs->start is lost -
@@ -250,10 +259,7 @@ static bool SceneLaunch_SeedVs(VsModeData* vs, bool dummy_fallback)
         if (SceneLaunch_RulePause() >= 0) {
             gr->pause = (u8) SceneLaunch_RulePause();
         }
-        if (SceneLaunch_ItemFreq() != -1) {
-            /* -2 = off: the frequency byte's "none" is 0xFF (-1 as a signed byte) */
-            gp->item_freq = (u8) (SceneLaunch_ItemFreq() == -2 ? 0xFF : SceneLaunch_ItemFreq());
-        }
+        SceneLaunch_ApplyItemFrequency(&vs->start.rules, gp);
         if (any) {
             /* the rest of a clean competitive rule set: no handicap, 1.0x damage */
             gr->handicap = 0;

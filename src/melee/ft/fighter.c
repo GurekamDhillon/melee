@@ -2149,6 +2149,10 @@ static void ftUcf_Cardinal(int x, int y, Vec2* out)
 }
 #endif
 
+#if defined(TARGET_PC)
+#include "technical_ai.inc"
+#endif
+
 void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -2283,6 +2287,10 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                 fp->input.held_buttons[0] =
                     HSD_PadGameStatus[fp->x618_player_id].button;
             }
+
+#if defined(TARGET_PC)
+            if (ftCo_IsCpuControlled(fp)) technical_ai_overlay(fp);
+#endif
 
             if (gm_8016B0FC()) {
                 fp->input.triggers[0] = 0.0f;

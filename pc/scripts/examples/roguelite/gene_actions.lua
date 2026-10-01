@@ -203,6 +203,24 @@ function methods:begin(host, slot, opts)
   end
   if count(self.records) >= self.caps.records then return nil, 'action record cap' end
   local run = self:get_run()
+  -- Optional generic intent hook: capture an opaque, immutable native identity
+  -- token after target selection and before any spend. A present hook must
+  -- return a token (nil refuses) and an explicit validate_intent must return
+  -- exactly true at the spend point. Absent hooks leave injected worlds that do
+  -- not implement them unchanged.
+  local intent
+  if type(self.world.capture_intent) == 'function' then
+    local pok, token, iwhy = pcall(self.world.capture_intent, run, plan.host, plan.slot, plan.target, plan.spec)
+    if not pok then
+      self.stats.refused = self.stats.refused + 1
+      return nil, 'intent capture threw: ' .. tostring(token)
+    end
+    if token == nil then
+      self.stats.refused = self.stats.refused + 1
+      return nil, type(iwhy) == 'string' and iwhy or 'intent unavailable'
+    end
+    intent = token
+  end
   local host_rec = run.hosts[plan.host]
   self.serial = self.serial + 1
   local move_id = host .. ':' .. tostring(run.frame) .. ':' .. slot .. ':' .. tostring(self.serial)
@@ -212,7 +230,7 @@ function methods:begin(host, slot, opts)
     target = plan.target, phase = 'startup', start_frame = run.frame,
     release_frame = run.frame + plan.spec.startup, active_until = nil, recovery_until = nil,
     move_id = move_id, serial = self.serial, spent = false, applied = false, contrib = nil,
-    reaction = nil, lineage = nil}
+    reaction = nil, lineage = nil, intent = intent}
   self.records[plan.key] = rec
   self.stats.started = self.stats.started + 1
   self:emit({kind = 'startup', host = host, slot = slot, move_id = move_id, gene = plan.gene.id,
@@ -224,7 +242,7 @@ function methods:request(rec, action)
   return {host = rec.host, slot = rec.slot, gene = rec.gene_id, id = rec.id, action = action,
     spec = copy(rec.spec), move_id = rec.move_id, route = rec.route, native = rec.spec.native,
     target = rec.target and rec.target.host or nil, target_view = rec.target and copy(rec.target) or nil,
-    host_view = self:observe(rec.host)}
+    host_view = self:observe(rec.host), intent = rec.intent}
 end
 
 function methods:view_record(rec)
@@ -382,6 +400,20 @@ function methods:release(rec, run)
   end
   local free, freason = self.world.can_start(run, rec.host, rec.slot)
   if free ~= true then self:interrupt(rec.host, rec.slot, freason or 'not free to act') return end
+  -- Validate the captured native intent before the spend point. A changed
+  -- source/target/run/room identity or a now-missing capability cancels the
+  -- action with no spend; a present hook must return exactly true.
+  if rec.intent ~= nil then
+    if type(self.world.validate_intent) ~= 'function' then
+      self:interrupt(rec.host, rec.slot, 'intent validate seam missing')
+      return
+    end
+    local pok, vok, iwhy = pcall(self.world.validate_intent, run, rec.intent)
+    if not pok or vok ~= true then
+      self:interrupt(rec.host, rec.slot, iwhy or 'intent changed')
+      return
+    end
+  end
   local valid, twhy = self:refresh_target(rec, run)
   if not valid then self:interrupt(rec.host, rec.slot, twhy or 'target escaped') return end
   local st = rec.state

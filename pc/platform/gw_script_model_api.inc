@@ -1,6 +1,7 @@
 /* Native half of the runtime model API. Only immutable assets live here; the
  * request buffers are read synchronously and copied by ScriptGame_Model*. */
 extern int gw_ScriptGame_ModelRef(int asset, int token, int delta);
+extern int gw_ScriptGame_ModelRefOwned(int asset, int token, int owner, int delta);
 extern int gw_ScriptGame_ModelSlot(int handle);
 extern int gw_ScriptGame_ModelField(int slot, int field);
 extern int gw_ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first_line);
@@ -61,7 +62,8 @@ static int gs_model_asset(lua_State *L, int at)
 {
     int token = gs_stage_handle_arg(L, at), i;
     for (i = 0; i < gs_stage_nmodels; ++i)
-        if (gs_stage_models[i].token == token && gw_ScriptGame_ModelRef(i, token, 0)) return i;
+        if (gs_stage_models[i].token == token &&
+            gw_ScriptGame_ModelRefOwned(i, token, gw_Script_StageResourceOwner(), 0)) return i;
     return luaL_error(L, "stale or released model handle");
 }
 static int l_model_load(lua_State *L)
@@ -72,7 +74,8 @@ static int l_model_load(lua_State *L)
     gs_require_stage(L, "model_load");
     i = gs_model_open(L, path) - 1;
     gs_rw_branch();
-    if (!gw_ScriptGame_ModelRef(i, gs_stage_models[i].token, 1)) return luaL_error(L, "model reference limit exceeded");
+    if (!gw_ScriptGame_ModelRefOwned(i, gs_stage_models[i].token, gw_Script_StageResourceOwner(), 1))
+        return luaL_error(L, "model reference or owner limit exceeded");
     gw_log("script model: retain asset=%d handle=%d", i, gs_stage_models[i].token);
     lua_pushinteger(L, gs_stage_models[i].token); return 1;
 }
@@ -81,7 +84,7 @@ static int l_model_release(lua_State *L)
     int i;
     gs_require_stage(L, "model_release"); i = gs_model_asset(L, 1);
     gs_rw_branch();
-    gw_ScriptGame_ModelRef(i, gs_stage_models[i].token, -1);
+    gw_ScriptGame_ModelRefOwned(i, gs_stage_models[i].token, gw_Script_StageResourceOwner(), -1);
     gw_log("script model: release handle=%d (scene pin retained)", gs_stage_models[i].token);
     return 0;
 }
@@ -134,6 +137,8 @@ static int gs_model_update(lua_State *L, int move)
     gs_require_stage(L, move ? "model_move" : "model_set");
     handle = gs_stage_handle_arg(L, 1); slot = gw_ScriptGame_ModelSlot(handle);
     if (slot < 0) return luaL_error(L, "stale model instance");
+    if (gw_ScriptGame_StageResourceAccess(handle, gw_Script_StageResourceOwner()) < 0)
+        return luaL_error(L, "model instance belongs to another script");
     for (i = 0; i < SM_FIELDS; ++i) field[i] = gw_ScriptGame_ModelField(slot, i);
     if (move && !lua_istable(L, 2)) {
         field[SM_X] = gs_fbits(gs_stage_num(L, 2)); field[SM_Y] = gs_fbits(gs_stage_num(L, 3));
@@ -150,6 +155,8 @@ static int l_model_despawn(lua_State *L)
 {
     int h = gs_stage_handle_arg(L, 1);
     gs_require_stage(L, "model_despawn"); gs_rw_branch();
+    if (gw_ScriptGame_StageResourceAccess(h, gw_Script_StageResourceOwner()) < 0)
+        return luaL_error(L, "model instance belongs to another script");
     lua_pushboolean(L, gw_ScriptGame_ModelDespawn(h)); return 1;
 }
 static void gs_model_push_instance(lua_State *L, int slot)

@@ -196,6 +196,14 @@ void HSD_StateInitTev(void)
     current_tev = 0;
 }
 
+#if defined(TARGET_PC)
+static int committed_tev_stages;
+int HSD_StateGetCommittedTevStages(void)
+{
+    return committed_tev_stages;
+}
+#endif
+
 int HSD_StateGetNumTevStages(void)
 {
     return current_tev;
@@ -208,6 +216,9 @@ int HSD_StateAssignTev(void)
 
 void HSD_StateSetNumTevStages(void)
 {
+#if defined(TARGET_PC)
+    committed_tev_stages = current_tev;
+#endif
     GXSetNumTevStages(current_tev);
     current_tev = 0;
 }

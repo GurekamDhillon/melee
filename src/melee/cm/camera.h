@@ -176,6 +176,7 @@ int Camera_ScriptCompletion(void);
 int Camera_ScriptCompletionKind(void);
 int Camera_ScriptGetBits(int field);
 void Camera_ScriptSet(int field, int bits);
+void Camera_ScriptCommit(void);
 void Camera_ScriptMoveBegin(void);
 void Camera_ScriptMove(int frames, int ease);
 void Camera_ScriptPathClear(void);

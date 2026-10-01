@@ -13,6 +13,47 @@ int ScriptGame_ModelRef(int asset, int token, int delta)
     return 1;
 }
 
+/* A load reference belongs to one script generation. Assets and atlas bytes stay
+ * scene-pinned; retiring a script releases only its scalar retain counts. */
+int ScriptGame_ModelRefOwned(int asset, int token, int owner, int delta)
+{
+    int i, free_slot = -1;
+    if (owner <= 0 || asset < 0 || asset >= SCRIPT_MESH_ASSETS) return 0;
+    for (i = 0; i < SCRIPT_MESH_OWNERS; ++i) {
+        if (script_stage.model_owner[i].owner == owner) break;
+        if (!script_stage.model_owner[i].owner && free_slot < 0) free_slot = i;
+    }
+    if (delta <= 0) {
+        int j;
+        if (i == SCRIPT_MESH_OWNERS || !script_stage.model_owner[i].refs[asset] ||
+            !ScriptGame_ModelRef(asset, token, delta)) return 0;
+        if (delta == 0) return 1;
+        --script_stage.model_owner[i].refs[asset];
+        for (j = 0; j < SCRIPT_MESH_ASSETS; ++j)
+            if (script_stage.model_owner[i].refs[j]) return 1;
+        script_stage.model_owner[i].owner = 0;
+        return 1;
+    }
+    if (i == SCRIPT_MESH_OWNERS) i = free_slot;
+    if (i < 0 || !ScriptGame_ModelRef(asset, token, 1)) return 0;
+    script_stage.model_owner[i].owner = owner;
+    ++script_stage.model_owner[i].refs[asset];
+    return 1;
+}
+
+static void script_model_release_owner_refs(int owner)
+{
+    int i, j;
+    for (i = 0; i < SCRIPT_MESH_OWNERS; ++i) {
+        if (script_stage.model_owner[i].owner != owner) continue;
+        for (j = 0; j < SCRIPT_MESH_ASSETS; ++j) {
+            script_stage.asset[j].refs -= script_stage.model_owner[i].refs[j];
+            script_stage.model_owner[i].refs[j] = 0;
+        }
+        script_stage.model_owner[i].owner = 0;
+    }
+}
+
 int ScriptGame_ModelSlot(int handle)
 {
     int i;
@@ -29,6 +70,7 @@ int ScriptGame_ModelField(int slot, int field)
     if (field == -2) return m->asset;
     if (field == -3) return m->count;
     if (field == -4) return m->dynamic;
+    if (field == -5) return m->owner;
     return field >= 0 && field < SM_FIELDS ? m->field[field] : 0;
 }
 
@@ -79,15 +121,17 @@ int ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first
 {
     ScriptMeshInstance candidate;
     float points[SCRIPT_MESH_LINES][4];
-    int i, slot, free_lines = 0;
+    int i, slot, free_lines = 0, owner = Script_StageResourceOwner();
     if (!ScriptGame_ModelRef(asset, token, 0) || count < 0 || count > SCRIPT_MESH_LINES ||
         script_stage.draw == NULL) return -1;
+    if (owner > 0 && !ScriptGame_ModelRefOwned(asset, token, owner, 0)) return -1;
     for (slot = 0; slot < SCRIPT_MESH_INSTANCES && script_stage.instance[slot].handle; ++slot) {}
     if (slot == SCRIPT_MESH_INSTANCES) return -2;
     for (i = 0; i < script_stage.cap; ++i) if (!script_stage.line[i].active) ++free_lines;
     if (count > free_lines || (count && script_stage.map == NULL)) return -3;
     memset(&candidate, 0, sizeof candidate);
     candidate.handle = handle; candidate.asset = asset; candidate.count = count;
+    candidate.owner = owner;
     for (i = 0; i < SM_FIELDS; ++i) candidate.field[i] = Script_ModelInput(i, -1);
     for (i = 0; i < 3; ++i) candidate.center[i] = script_mesh_float(Script_ModelInput(SM_FIELDS + i, -1));
     for (i = 0; i < count; ++i) {
@@ -170,7 +214,15 @@ int ScriptGame_ModelDespawn(int handle)
     ScriptMeshInstance* m;
     if (slot < 0) return 0;
     m = &script_stage.instance[slot];
-    for (i = 0; i < m->count; ++i) ScriptGame_StageRemove(m->line[i].handle);
+    /* Keep the instance and its reference if even one live collision segment
+     * cannot be retired. A later retry may finish partially removed segments. */
+    for (i = 0; i < m->count; ++i) {
+        int j;
+        for (j = 0; j < script_stage.cap; ++j)
+            if (script_stage.line[j].active && script_stage.line[j].handle == m->line[i].handle) break;
+        if (j == script_stage.cap) continue;
+        if (!ScriptGame_StageRemove(m->line[i].handle)) return 0;
+    }
     --script_stage.asset[m->asset].instances;
     memset(m, 0, sizeof *m);
     OSReport("script model: despawn instance=%d\n", handle);

@@ -386,7 +386,18 @@ end
 local function finish(outcome)
  campaign_recovery_error=false
  local h=run.hosts.player;local id=h.slots.assault or h.slots.traversal or h.slots.guard
- if outcome=='success' and #keys(profile.genes)>=128 then id=nil end
+ -- Core REFUSES a non-nil id at capacity (core.lua:321 'choose no export'); it is
+ -- main that elects to finish with no export. That election must never be silent
+ -- and must never be automatic (ROGUELITE-100-100-LEDGER R2). Until a real
+ -- choose/replace/discard flow exists, at least name the gene and state the
+ -- consequence honestly. NOTE: a finished run cannot be resumed and a second
+ -- finish returns the existing result, so the gene is NOT recoverable.
+ local unexported=nil
+ local finished_run_id=run.id
+ if outcome=='success' and #keys(profile.genes)>=128 then
+  unexported=id
+  id=nil
+ end
  local old_profile,old_run=assert(Core.snapshot(profile)),assert(Core.snapshot(run))
  local result,why=Core.finish(profile,run,outcome,id)
  if not result then say('Finish refused: '..tostring(why));return end
@@ -397,6 +408,18 @@ local function finish(outcome)
  end
  pending_finish=nil;active=false;presentation:release_hud();pause_menu('collection');Feedback.finish(feedback,result)
  toast=outcome=='success' and 'Run complete' or 'Run ended';gd.log('roguelite: '..toast)
+ if unexported then
+  -- Say it plainly, in the loudest channel available, with an actionable next
+  -- step. The run keeps its genes in the checkpoint, so the id is recoverable.
+  gd.log('roguelite: collection full; '..tostring(unexported)..' was not exported')
+  -- Truthful about the consequence. There is no discard/replace action yet and a
+  -- finished run cannot be resumed, so this gene is NOT recoverable from this
+  -- run. Do not promise an action that does not exist; the export choice is
+  -- still open (ROGUELITE-100-100-LEDGER R2).
+  Feedback.notify(feedback,{key='export:full:'..tostring(finished_run_id),kind='failure',
+   title='Collection full / '..tostring(unexported)..' NOT exported',
+   detail='Collection is 128/128. This run is over and its gene cannot be recovered from it.',ttl=900})
+ end
 end
 -- Live v2 campaign controller, created the first time a validated v2 route is
 -- loaded or created. All persistence goes back through save_route, so this

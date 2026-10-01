@@ -1835,6 +1835,12 @@ static bool processCallback(HSD_GObjPredicate cb, HSD_GObj* gobj,
 
 static bool OnTakeDamageThink(HSD_GObj* gobj, Item* item_data)
 {
+#if defined(TARGET_PC)
+    {
+        extern void ScriptGame_EnemyReceived(Item_GObj*, Fighter_GObj*, int);
+        ScriptGame_EnemyReceived(gobj, item_data->xCEC_fighterGObj, item_data->xCA0);
+    }
+#endif
     item_data->xC9C += item_data->xCA0;
     if (item_data->xC9C > 999) {
         item_data->xC9C = 999;
@@ -1948,6 +1954,17 @@ static void Item_8026A294(HSD_GObj* gobj)
     }
     Item_80269CC4(gobj);
 }
+
+#if defined(TARGET_PC)
+/* The script prepares the ordinary item damage result. Commit through the same
+ * callbacks, hitlag and cleanup used by the collision phase; never force a stock defeat. */
+int Item_ScriptCommitDamage(Item_GObj* gobj)
+{
+    if (gobj == NULL || GET_ITEM(gobj)->xCA0 <= 0) return 0;
+    Item_8026A294(gobj);
+    return 1;
+}
+#endif
 
 /// Item Think - Process Dynamic Bones
 static void Item_8026A788(HSD_GObj* gobj)

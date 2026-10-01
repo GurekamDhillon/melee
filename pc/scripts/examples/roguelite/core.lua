@@ -330,21 +330,74 @@ function C.discard(p,id)
  p.genes[id]=nil
  return true
 end
-function C.finish(p,r,outcome,id)
+function C.finish(p,r,outcome,id,opts)
+ opts=opts or {}
  local serial=r.id and r.id:match('^run(%d+)$')
  if r.owner~=p.id or not serial or tonumber(serial)>=p.next_run then return nil,'run belongs to another profile' end
  if p.finished[r.id] then return copy(p.finished[r.id]) end
  if not active(r) or (outcome~='success' and outcome~='failure') then return nil,'invalid finish' end
  if #sorted(p.finished)>=512 then return nil,'finish ledger full' end
- if outcome=='success' and id~=nil and (not r.genes[id] or #sorted(p.genes)>=128) then return nil,'invalid export or collection full; choose no export' end
+ -- The gene must be owned by this run and player-placed before any outcome below;
+ -- an absent or enemy-owned gene is never exported and never deferred.
+ local owed=nil
  if outcome=='success' and id~=nil then
+  if not r.genes[id] then return nil,'invalid export' end
   for host,h in pairs(r.hosts) do if host~='player' then for _,owned in pairs(h.slots) do
    if owned==id then return nil,'enemy-owned genes cannot be exported' end
   end end end
+  owed=r.genes[id]
  end
  local result={outcome=outcome}
- if outcome=='success' and id~=nil then local g=copy(r.genes[id]);local nid='g'..p.next_id;g.id=nid;g.upgrades={};g.origin=nil;p.genes[nid]=g;p.next_id=p.next_id+1;result.export=nid end
+ if owed~=nil then
+  if #sorted(p.genes)>=128 then
+   -- A full collection must never drop the earned gene. A deferring caller keeps
+   -- it on this finish record so the player can claim or decline it later,
+   -- including after a relaunch. A non-deferring caller must still choose
+   -- explicitly; it never gets a silent no-export.
+   if opts.defer_export~=true then return nil,'invalid export or collection full; choose no export' end
+   local g=copy(owed);g.upgrades={};g.origin=nil
+   result.deferred=g;result.pending=true
+  else
+   local g=copy(owed);local nid='g'..p.next_id;g.id=nid;g.upgrades={};g.origin=nil;p.genes[nid]=g;p.next_id=p.next_id+1;result.export=nid
+  end
+ end
  r.status=outcome;mark_revisions[r]=nil;clear_run_spend(r);p.finished[r.id]=copy(result);return result
+end
+
+-- Read-only list of finish records that still hold an unclaimed export.
+function C.pending_exports(p)
+ if p.type~='profile' then return {} end
+ local out={}
+ for rid,result in pairs(p.finished) do
+  if result.deferred~=nil then out[#out+1]={run=rid,gene=result.deferred.id,kind=result.deferred.kind} end
+ end
+ table.sort(out,function(a,b) return a.run<b.run end)
+ return out
+end
+
+-- Claim one deferred export into the permanent collection. Exactly once: the
+-- deferred gene is cleared in the same operation that records the export, so a
+-- repeated claim or a retried save can never duplicate it, and ownership stays
+-- with the finish record until the claim actually commits.
+function C.claim_deferred(p,run_id)
+ if p.type~='profile' or type(run_id)~='string' then return nil,'invalid run' end
+ local result=p.finished[run_id]
+ if not result or result.deferred==nil then return nil,'nothing to claim' end
+ if #sorted(p.genes)>=128 then return nil,'collection full' end
+ local nid='g'..p.next_id
+ local g=copy(result.deferred);g.id=nid;g.upgrades={};g.origin=nil
+ p.genes[nid]=g;p.next_id=p.next_id+1
+ result.deferred=nil;result.pending=nil;result.export=nid
+ return nid
+end
+
+-- Deliberately decline. Recorded, so the player can see that they chose this.
+function C.decline_deferred(p,run_id)
+ if p.type~='profile' or type(run_id)~='string' then return nil,'invalid run' end
+ local result=p.finished[run_id]
+ if not result or result.deferred==nil then return nil,'nothing to decline' end
+ result.deferred=nil;result.pending=nil;result.declined=true
+ return true
 end
 
 -- Bounded JSON data codec. Objects only: no executable Lua, functions or metatables.
@@ -412,7 +465,7 @@ local function validate(v)
   fields(v,{type=true,id=true,version=true,seed=true,world_seed=true,next_id=true,next_run=true,genes=true,finished=true});assert(name(v.id),'invalid profile identity')
   assert(v.world_seed==nil or seed(v.world_seed),'invalid profile world seed')
   assert(integer(v.next_run,1,1000000000) and type(v.finished)=='table','invalid profile')
-  local n=0;for id,result in pairs(v.finished) do n=n+1;local serial=id:match('^run(%d+)$');assert(serial and tonumber(serial)<v.next_run,'invalid result id');fields(result,{outcome=true,export=true});assert(result.outcome=='success' or result.outcome=='failure','bad outcome');assert((result.outcome=='success' and (result.export==nil or v.genes[result.export])) or (result.outcome=='failure' and result.export==nil),'bad export') end;assert(n<=512,'ledger full')
+  local n=0;for id,result in pairs(v.finished) do n=n+1;local serial=id:match('^run(%d+)$');assert(serial and tonumber(serial)<v.next_run,'invalid result id');fields(result,{outcome=true,export=true,pending=true,declined=true,deferred=true});assert(result.outcome=='success' or result.outcome=='failure','bad outcome');assert((result.outcome=='success' and (result.export==nil or v.genes[result.export])) or (result.outcome=='failure' and result.export==nil),'bad export');assert(result.pending==nil or result.pending==true,'invalid pending');assert(result.declined==nil or result.declined==true,'invalid declined');if result.deferred~=nil then validate_gene(result.deferred,result.deferred.id);assert(result.export==nil and result.pending==true,'deferred export conflicts with a completed export');assert(result.outcome=='success','only a successful run defers an export') end;assert(not(result.deferred~=nil and result.declined==true),'a deferred export cannot also be declined') end;assert(n<=512,'ledger full')
  elseif v.type=='run' then
   fields(v,{type=true,version=true,seed=true,world_seed=true,id=true,owner=true,next_id=true,frame=true,stocks=true,status=true,genes=true,hosts=true,marks=true,runtime=true,progress=true});assert(name(v.owner) and seed(v.world_seed),'invalid run owner/world seed')
   fields(v.progress,{room=true,cleared=true,claimed=true,supplies=true})

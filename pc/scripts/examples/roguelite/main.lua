@@ -94,6 +94,7 @@ local function feedback_sync(frames,paused)
  Feedback.update(feedback,abilities,frames or 0,paused,run and run.hosts.player and run.hosts.player.slots)
  presentation:notice_charges(abilities)
 end
+local function count_keys(t) local n=0 if type(t)=='table' then for _ in pairs(t) do n=n+1 end end return n end
 local function keys(t) local a={} for k in pairs(t) do a[#a+1]=k end table.sort(a) return a end
 -- Keep Core's run mirrors synchronized with the schema-2 progress record so the
 -- saved run and route cannot disagree. Route.validate_save checks these exactly;
@@ -386,20 +387,13 @@ end
 local function finish(outcome)
  campaign_recovery_error=false
  local h=run.hosts.player;local id=h.slots.assault or h.slots.traversal or h.slots.guard
- -- Core REFUSES a non-nil id at capacity (core.lua:321 'choose no export'); it is
- -- main that elects to finish with no export. That election must never be silent
- -- and must never be automatic (ROGUELITE-100-100-LEDGER R2). Until a real
- -- choose/replace/discard flow exists, at least name the gene and state the
- -- consequence honestly. NOTE: a finished run cannot be resumed and a second
- -- finish returns the existing result, so the gene is NOT recoverable.
- local unexported=nil
+ -- A full collection must never silently elect "no export". main defers instead:
+ -- Core keeps the earned gene on the finish record, so it survives the run, a
+ -- relaunch and a refused save, and the player claims or declines it from the
+ -- collection. main never chooses on the player's behalf.
  local finished_run_id=run.id
- if outcome=='success' and #keys(profile.genes)>=128 then
-  unexported=id
-  id=nil
- end
  local old_profile,old_run=assert(Core.snapshot(profile)),assert(Core.snapshot(run))
- local result,why=Core.finish(profile,run,outcome,id)
+ local result,why=Core.finish(profile,run,outcome,id,{defer_export=true})
  if not result then say('Finish refused: '..tostring(why));return end
  Feedback.reset(feedback)
  if not save() then
@@ -408,16 +402,15 @@ local function finish(outcome)
  end
  pending_finish=nil;active=false;presentation:release_hud();pause_menu('collection');Feedback.finish(feedback,result)
  toast=outcome=='success' and 'Run complete' or 'Run ended';gd.log('roguelite: '..toast)
- if unexported then
-  gd.log('roguelite: collection full; '..tostring(unexported)..' was not exported')
-  -- Truthful about the consequence. There is no discard/replace action yet, a
-  -- finished run cannot be resumed, and a second finish returns the existing
-  -- result, so this gene is NOT recoverable. Serializing it in the checkpoint
-  -- does not make it player-reachable. Do not promise an action that does not
-  -- exist; the export choice is still open (ROGUELITE-100-100-LEDGER R2).
-  Feedback.notify(feedback,{key='export:full:'..tostring(finished_run_id),kind='failure',
-   title='Collection full / '..tostring(unexported)..' NOT exported',
-   detail='Collection is 128/128. This run is over and its gene cannot be recovered from it.',ttl=900})
+ if result.deferred then
+  -- Honest: the gene was NOT lost, it is waiting on the finish record. The plain
+  -- completion notice outranks an info notice and would read as "everything was
+  -- kept", so retire it in favour of the one thing the player must act on.
+  gd.log('roguelite: export deferred for '..tostring(result.deferred.id)..' on '..tostring(finished_run_id))
+  Feedback.dismiss(feedback,'finish')
+  Feedback.notify(feedback,{key='export:pending:'..tostring(finished_run_id),kind='blocked',
+   title='Run complete / export pending',
+   detail=tostring(result.deferred.id)..' could not join the collection (128/128). Claim or decline it from the collection.',ttl=900})
  end
 end
 -- Live v2 campaign controller, created the first time a validated v2 route is
@@ -802,7 +795,10 @@ local function menu_context()
  return {menu=menu,profile=profile,run=run,starter=starter,node=node,fighters=Roster.list,fighter={name=Roster.name(selected_fighter)},notice=Feedback.view(feedback).notification,retry=pending_finish~=nil,error=transition_error or (save_error and 'Both checkpoints are invalid. Files preserved; repair before continuing.'),
   -- Real presentation state, so the reviewed tutorial/settings screens never
   -- render against fabricated input.
-  onboarding=presentation:view(),settings=presentation:settings_view()}
+  onboarding=presentation:view(),settings=presentation:settings_view(),
+  -- Declared collection facts the menus render but never invented themselves.
+  capacity={count=count_keys(profile and profile.genes),max=128,full=count_keys(profile and profile.genes)>=128},
+  pending_exports=Core.pending_exports(profile)}
 end
 local function choose_menu(action)
  if not action then return end
@@ -812,6 +808,35 @@ local function choose_menu(action)
  if action.kind=='fighter_selected' then local previous=selected_fighter;selected_fighter=assert(Roster.validate(action.fighter));if not save() then selected_fighter=previous;return end;pause_menu('collection');say('Selected '..Roster.name(selected_fighter));return end
  if action.kind=='blocked' then say(action.message,'blocked','menu');return end
  if action.kind=='start' or action.kind=='resume' then begin(action.kind=='resume');return end
+ if action.kind=='claim_export' or action.kind=='decline_export' then
+  local before_profile=assert(Core.snapshot(profile))
+  local claimed,why
+  if action.kind=='claim_export' then claimed,why=Core.claim_deferred(profile,action.run)
+  else claimed,why=Core.decline_deferred(profile,action.run) end
+  if not claimed then say((action.kind=='claim_export' and 'Export claim refused: ' or 'Export decline refused: ')..tostring(why),'blocked','export');return end
+  -- Exactly-once and failure-safe: if the durable write is refused, the pending
+  -- gene stays exactly where it was, so the claim can be retried and the gene is
+  -- neither duplicated nor lost.
+  if not save() then
+   profile=assert(Core.restore(before_profile))
+   say('Export change could not be saved; nothing changed. Retry after fixing storage.','error','export')
+   return
+  end
+  say(action.kind=='claim_export' and ('Exported '..tostring(claimed)) or ('Declined export for run '..tostring(action.run)),
+   action.kind=='claim_export' and 'upgrade' or 'info','export')
+  feedback_sync(0,menu~=nil)
+  return
+ end
+ if action.kind=='discard' then
+  local before_profile=assert(Core.snapshot(profile))
+  local ok,why=Core.discard(profile,action.id)
+  if not ok then say('Discard refused: '..tostring(why),'blocked','discard');return end
+  if not save() then profile=assert(Core.restore(before_profile));say('Discard could not be saved; nothing changed.','error','discard');return end
+  say('Discarded '..tostring(action.id),'info','discard')
+  menu_state.selected=nil
+  feedback_sync(0,menu~=nil)
+  return
+ end
  if action.kind=='continue' then run.progress.cleared[node.id]=true;if save() then unpause() end;return end
  if action.kind=='leave' then if save() then active=false;cleanup();presentation:release_hud();pause_menu('collection') end;return end
  local before,slot

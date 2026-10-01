@@ -232,10 +232,26 @@ function M.view(s,ctx)
   if type(ctx.capacity)=='table' then
    v.capacity=ctx.capacity
    v.capacity_note='Collection '..tostring(ctx.capacity.count or '?')..' / '..tostring(ctx.capacity.max or '?')
-   if ctx.capacity.full==true and v.selected then
+   if v.selected then
     control(v,'discard',26,363,168,30,'DISCARD SELECTED',
      {kind='discard',id=s.selected,destructive=true,
       prompt='Discard '..tostring(s.selected)..'? This cannot be undone.'})
+   end
+  end
+  -- Unclaimed exports from finished runs. These are the player's genes that a
+  -- full collection could not take yet; they are durable, not lost. Claiming is
+  -- exactly once and declines nothing implicitly.
+  local pending=ctx.pending_exports
+  if type(pending)=='table' and #pending>0 then
+   v.pending_exports=pending
+   local can_claim=not (type(ctx.capacity)=='table' and ctx.capacity.full==true)
+   for i,item in ipairs(pending) do
+    control(v,'claim_export:'..item.run,210,113+(i-1)*30,194,26,
+     'CLAIM '..item.gene,
+     {kind='claim_export',run=item.run},
+     can_claim,can_claim and nil or 'Collection full / discard a gene first')
+    control(v,'decline_export:'..item.run,416,113+(i-1)*30,198,26,
+     'DECLINE '..item.gene,{kind='decline_export',run=item.run})
    end
   end
  else

@@ -312,6 +312,24 @@ function C.fuse(r,a,b)
  for stat,bounds in pairs(limits) do local delta=((r.genes[a].upgrades[stat] or 0)+(r.genes[b].upgrades[stat] or 0))/2;g.upgrades[stat]=math.max(bounds[1],math.min(bounds[2],g.base[stat]+delta))-g.base[stat] end
  r.seed=s;r.next_id=r.next_id+1;r.genes[a]=nil;r.genes[b]=nil;r.runtime[a]=nil;r.runtime[b]=nil;r.genes[id]=g;return id
 end
+-- Remove one gene from the permanent collection. This is the only way the
+-- collection can ever shrink, so it is deliberately conservative: it refuses a
+-- locked gene, a gene that is an ancestor of a retained gene (which would orphan
+-- recorded parentage), and a discard that would empty the collection. Nothing
+-- else is touched -- no other gene, no finish record, no ledger entry.
+function C.discard(p,id)
+ if p.type~='profile' or type(id)~='string' or not p.genes[id] then return nil,'unknown gene' end
+ local g=p.genes[id]
+ for stat,locked in pairs(g.locks or {}) do if locked then return nil,'gene has a locked '..tostring(stat) end end
+ for other,keep in pairs(p.genes) do
+  if other~=id then
+   for _,parent in ipairs(keep.parents or {}) do if parent==id then return nil,'gene is a parent of '..other end end
+  end
+ end
+ if #sorted(p.genes)<=1 then return nil,'collection must keep at least one gene' end
+ p.genes[id]=nil
+ return true
+end
 function C.finish(p,r,outcome,id)
  local serial=r.id and r.id:match('^run(%d+)$')
  if r.owner~=p.id or not serial or tonumber(serial)>=p.next_run then return nil,'run belongs to another profile' end

@@ -409,13 +409,12 @@ local function finish(outcome)
  pending_finish=nil;active=false;presentation:release_hud();pause_menu('collection');Feedback.finish(feedback,result)
  toast=outcome=='success' and 'Run complete' or 'Run ended';gd.log('roguelite: '..toast)
  if unexported then
-  -- Say it plainly, in the loudest channel available, with an actionable next
-  -- step. The run keeps its genes in the checkpoint, so the id is recoverable.
   gd.log('roguelite: collection full; '..tostring(unexported)..' was not exported')
-  -- Truthful about the consequence. There is no discard/replace action yet and a
-  -- finished run cannot be resumed, so this gene is NOT recoverable from this
-  -- run. Do not promise an action that does not exist; the export choice is
-  -- still open (ROGUELITE-100-100-LEDGER R2).
+  -- Truthful about the consequence. There is no discard/replace action yet, a
+  -- finished run cannot be resumed, and a second finish returns the existing
+  -- result, so this gene is NOT recoverable. Serializing it in the checkpoint
+  -- does not make it player-reachable. Do not promise an action that does not
+  -- exist; the export choice is still open (ROGUELITE-100-100-LEDGER R2).
   Feedback.notify(feedback,{key='export:full:'..tostring(finished_run_id),kind='failure',
    title='Collection full / '..tostring(unexported)..' NOT exported',
    detail='Collection is 128/128. This run is over and its gene cannot be recovered from it.',ttl=900})

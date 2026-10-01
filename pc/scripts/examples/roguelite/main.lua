@@ -1184,7 +1184,7 @@ local function draw_scene()
  local opponent
  if campaign then opponent=ae and not run.progress.cleared[node.id] and gd.player(2)
  else opponent=enemy_host and not run.progress.cleared[node.id] and gd.player(2) end
- local opp_lives=campaign and ((ae and ae.remaining) or 1) or ((node.kind=='boss' and 2 or 1)-enemy_kos)
+ local opp_lives=campaign and ((ae and ae.remaining) or 1) or ((node and node.kind=='boss' and 2 or 1)-enemy_kos)
  -- The real reviewed layout (the port's fixed 640x480 canvas) drives every
  -- box: the compact life/percent/ability rail, its opponent block and the
  -- notification strips. A window resize cannot enlarge HUD coverage.

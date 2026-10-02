@@ -53,6 +53,135 @@ function C.new_run(p,opts)
  return r
 end
 local function active(r) return type(r)=='table' and r.type=='run' and r.status=='active' end
+
+-- Ephemeral per-run, per-target mark mutation revisions. This is deliberately
+-- NOT part of the save schema: it exists only so a refunding action can undo its
+-- own mark transaction conditionally, and never resurrect a mark that another
+-- action or an expiry already consumed. Every mark write in this module (set,
+-- consume, expiry) bumps the target's revision. A restore is accepted only if
+-- the revision still matches and the value is still live. Weak keys plus a
+-- bounded target count keep it from growing without limit, and pending engine
+-- actions never resume across a load, so no revision needs to persist.
+-- Bound rationale: topology.lua rejects a route outside 12..18 rooms, and the
+-- RuntimeEncounters actor budget defaults to 12 live actors per encounter, so a
+-- whole route can retire up to 18*12 = 216 distinct actor hosts; add the two
+-- fighter ports. 256 covers that with headroom. The engine also resets the
+-- registry on room leave once pending actions are cancelled, which keeps the
+-- resident set near one room's needs. Saturation never evicts: it refuses the
+-- offending mark mutation before any charge/cooldown is spent.
+local mark_revisions = setmetatable({}, {__mode = 'k'})
+local MARK_TARGET_CAP = 256
+local function rev_state(r, create)
+ if not create then return mark_revisions[r] end
+ local t = mark_revisions[r]
+ if not t then t = {revs = {}, count = 0, overflow = false, seq = 0};mark_revisions[r] = t end
+ return t
+end
+
+-- Spend ownership is keyed by the EXACT runtime state object, not by slot name:
+-- the same gene instance can be unequipped from one slot and equipped to another
+-- while an action is in flight, and the state object moves with it. Weak keys
+-- bound residency to live state objects (a run's runtime states plus any state
+-- still held by an in-flight action); the shared monotonic clock means an old
+-- expected revision can never equal a newer spend, including an equal-value ABA.
+local spend_revisions = setmetatable({}, {__mode = 'k'})
+local spend_clock = 0
+local function bump_spend_state(state)
+ spend_clock = spend_clock + 1
+ spend_revisions[state] = spend_clock
+ return true
+end
+local function clear_run_spend(r)
+ for _,st in pairs(r.runtime or {}) do spend_revisions[st]=nil end
+ for _,h in pairs(r.hosts or {}) do for _,st in pairs(h.state or {}) do spend_revisions[st]=nil end end
+end
+local function mark_capacity_ok(r, target)
+ local t = rev_state(r, false)
+ if not t then return true end
+ if t.revs[target] ~= nil then return true end
+ if t.overflow or t.count >= MARK_TARGET_CAP then return false end
+ return true
+end
+local function bump_mark_revision(r, target)
+ local t = rev_state(r, true)
+ if t.revs[target] == nil then
+  if t.overflow or t.count >= MARK_TARGET_CAP then t.overflow = true;return false end
+  t.count = t.count + 1
+ end
+ -- Per-run monotonic clock: never reused, never rewound, so a revision captured
+ -- before a reset can never equal one issued after it.
+ t.seq = (t.seq or 0) + 1
+ t.revs[target] = t.seq
+ return true
+end
+-- Ephemeral per-runtime-state spend clock. Incremented by every Core.activate
+-- spend, so a refund can tell whether the exact state it spent from was later
+-- spent again, even from a different slot/host, and even in the same frame with
+-- an identical ready_at value.
+function C.spend_revision(state)
+ if type(state) ~= 'table' then return nil end
+ return spend_revisions[state] or 0
+end
+-- Conditional refund of one owned spend. `state` is the exact runtime state
+-- object the action spent from, so a state moved to another slot cannot be
+-- refunded through the old slot, and a newer spend on that same state refuses.
+function C.restore_spend(state, expected, before_ready, cost, capacity)
+ if type(state) ~= 'table' then return nil,'invalid state' end
+ if type(expected) ~= 'number' or expected % 1 ~= 0 or expected < 0 then return nil,'invalid revision' end
+ if type(before_ready) ~= 'number' or before_ready % 1 ~= 0 or before_ready < 0 then return nil,'invalid ready_at' end
+ if type(cost) ~= 'number' or cost ~= cost or cost < 0 or math.abs(cost) == math.huge then return nil,'invalid cost' end
+ if type(capacity) ~= 'number' or capacity ~= capacity or capacity < 0 or math.abs(capacity) == math.huge then return nil,'invalid capacity' end
+ if C.spend_revision(state) ~= expected then return nil,'stale spend transaction' end
+ state.charge = math.min(capacity, (state.charge or 0) + cost)
+ state.ready_at = before_ready
+ bump_spend_state(state)
+ return true
+end
+function C.mark_revision(r, target)
+ if type(r) ~= 'table' or r.type ~= 'run' or not valid_name(target) then return nil end
+ local t = mark_revisions[r];if not t then return 0 end
+ -- An untracked target reads nil once the registry is saturated, so callers
+ -- fail closed instead of performing an untracked mutation.
+ if t.revs[target] == nil and (t.overflow or t.count >= MARK_TARGET_CAP) then return nil end
+ return t.revs[target] or 0
+end
+-- Conditional restore of an owned mark transaction. `expected` is the revision
+-- read immediately after the caller's own mutation. A stale revision, an
+-- already-expired `before`, or a full registry refuses and leaves state alone.
+function C.restore_mark(r, target, before, expected)
+ if not active(r) then return nil,'run ended' end
+ if type(expected) ~= 'number' or expected % 1 ~= 0 or expected < 0 then return nil,'invalid revision' end
+ local rev = C.mark_revision(r, target)
+ if rev == nil or rev ~= expected then return nil,'stale mark transaction' end
+ if before ~= nil then
+  if type(before) ~= 'table' or not valid_name(before.source) or not integer(before.expires,0,1000000180) then return nil,'invalid mark' end
+  -- A retired source host cannot be restored: the save validator would reject
+  -- the orphaned mark, so refuse without mutating.
+  if not r.hosts[before.source] then return nil,'mark source removed' end
+  if before.expires <= r.frame then return nil,'mark already expired' end
+ end
+ r.marks[target] = copy(before)
+ bump_mark_revision(r, target)
+ return true
+end
+-- Hard removal for run end. Route/room resets should use reset_mark_revisions,
+-- which drops the target map but keeps the monotonic clock so stale revisions
+-- from before the reset can never become valid again.
+function C.forget_run(r)
+ if type(r) == 'table' then mark_revisions[r] = nil;clear_run_spend(r) end
+ return true
+end
+function C.reset_mark_revisions(r)
+ if type(r) ~= 'table' or r.type ~= 'run' then return nil,'invalid run' end
+ local t = mark_revisions[r]
+ -- Reset mark tombstones at room scope but keep the monotonic clock, so a mark
+ -- revision captured before the reset can never become valid again. Spend
+ -- ownership is state-keyed and deliberately NOT cleared here: an ordinary
+ -- in-flight spend must still be refundable after a room clear.
+ if t then t.revs = {};t.count = 0;t.overflow = false end
+ return true
+end
+
 function C.equip(r,host,slot,id)
  if not active(r) or not valid_name(host) or #host>64 or not slots[slot] then return nil,'invalid host or slot' end
  if id~=nil and (not r.genes[id] or not C.definitions[r.genes[id].kind].variants[slot]) then return nil,'unsupported gene placement' end
@@ -95,7 +224,7 @@ function C.tick(r,n)
   -- Move IDs expire after 600 frames; callers must supply genuine unique move instances.
   for id,f in pairs(st.seen) do if r.frame-f>600 then st.seen[id]=nil end end
  end end
- for id,m in pairs(r.marks) do if m.expires<=r.frame then r.marks[id]=nil end end
+ for id,m in pairs(r.marks) do if m.expires<=r.frame then r.marks[id]=nil;bump_mark_revision(r,id) end end
  return true
 end
 function C.ability(r,host,slot)
@@ -130,11 +259,20 @@ function C.activate(r,host,slot,opts)
  if not a.ready then return nil,'not ready' end
  opts=opts or {}; if opts.target~=nil and (not valid_name(opts.target) or #opts.target>64) then return nil,'invalid target' end
  if a.action=='mark' and not opts.target then return nil,'target required' end
+ -- Preflight any mark mutation BEFORE spending charge/cooldown. If the target is
+ -- untracked and the revision registry is saturated, refuse the whole action
+ -- with no mutation so a refund is never needed for an unowned mark.
+ local will_mark = a.action=='mark'
+ local will_consume = a.family=='fire' and opts.target~=nil and r.marks[opts.target]~=nil
+ if (will_mark or will_consume) and not mark_capacity_ok(r, opts.target) then
+  return nil,'mark revision capacity'
+ end
  local st=r.hosts[host].state[slot];st.charge=0;st.ready_at=r.frame+a.cooldown
+ bump_spend_state(st)
  a.source=host;a.target=opts.target;a.lineage='reaction';a.charge=nil;a.ready=nil
- if a.action=='mark' then r.marks[opts.target]={source=host,expires=r.frame+180}
+ if a.action=='mark' then r.marks[opts.target]={source=host,expires=r.frame+180};bump_mark_revision(r,opts.target)
  elseif a.family=='fire' and opts.target and r.marks[opts.target] then
-  r.marks[opts.target]=nil;a.reaction='thermal_shock';a.damage=math.min(30,a.damage+4)
+  r.marks[opts.target]=nil;bump_mark_revision(r,opts.target);a.reaction='thermal_shock';a.damage=math.min(30,a.damage+4)
  end
  return a
 end
@@ -188,7 +326,7 @@ function C.finish(p,r,outcome,id)
  end
  local result={outcome=outcome}
  if outcome=='success' and id~=nil then local g=copy(r.genes[id]);local nid='g'..p.next_id;g.id=nid;g.upgrades={};g.origin=nil;p.genes[nid]=g;p.next_id=p.next_id+1;result.export=nid end
- r.status=outcome;p.finished[r.id]=copy(result);return result
+ r.status=outcome;mark_revisions[r]=nil;clear_run_spend(r);p.finished[r.id]=copy(result);return result
 end
 
 -- Bounded JSON data codec. Objects only: no executable Lua, functions or metatables.

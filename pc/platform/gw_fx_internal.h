@@ -115,6 +115,9 @@ typedef struct {
     int has_local, fixed, keep;
     float local[3][4];
     uint32_t tag;
+    int lab_handle, natural_end, lab_tween, lab_fade;
+    /* opacity, rate, speed, life, size, brightness, turbulence; rollback saved. */
+    float lab_control[7], lab_target[7];
 } fx_inst;
 
 /* one fighter driven by a binding set: what happened in its current state (rollback-restored with the rest) */

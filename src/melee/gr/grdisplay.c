@@ -15,6 +15,10 @@
 #include <sysdolphin/baselib/mtx.h>
 #include <sysdolphin/baselib/state.h>
 
+#if defined(TARGET_PC)
+#include "../../../pc/gameworld/script_stage_isolation.h"
+#endif
+
 /* 1C5B90 */ static void grDisplay_801C5B90(HSD_JObj* jobj, Mtx vmtx, u32 arg2,
                                             u32 rendermode);
 
@@ -78,6 +82,12 @@ void grDisplay_801C5DB0(HSD_GObj* gobj, int code)
     int i;
     HSD_GObj* fighter;
     u32 unused[14];
+
+#if defined(TARGET_PC)
+    /* Only the original stage callback is hidden. Script-added line/model
+     * callbacks still draw, and no native material/GObj flags are changed. */
+    if (!ScriptGame_StageOriginalVisible()) return;
+#endif
 
     gp = GET_GROUND(gobj);
     if (gp->x11_flags.b012 == Camera_8003108C()) {

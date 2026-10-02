@@ -17,6 +17,8 @@
  */
 
 #include "geno_lab_mode.h"
+#include <math.h>
+#include <string.h>
 
 #include <dolphin/os.h>
 
@@ -274,6 +276,52 @@ int GenoLab_Leave(int where)
 static float fly_speed = 2.0f; /* units per frame at full stick */
 static int fly_solid;          /* 1: keep hurtboxes */
 
+typedef struct {
+    Fighter* fighter;
+    int target, attack, damage, pulses;
+    float x, y, radius;
+} FlyCursor;
+static FlyCursor fly_cursor[6];
+extern u16 plStale_IncrementAttackInstance(void);
+extern int Netplay_Enabled(void);
+extern int RB_Enabled(void);
+extern int Replay_Active(void);
+
+static int fly_boundary_blocked(int netplay, int rollback, int replay)
+{
+    return netplay || rollback || replay;
+}
+
+int GenoFly_OfflineAllowed(void)
+{
+    return !fly_boundary_blocked(Netplay_Enabled(), RB_Enabled(), Replay_Active());
+}
+
+static FlyCursor* fly_cursor_for(Fighter* fp)
+{
+    int slot = fp->player_id;
+    return slot >= 0 && slot < 6 && fly_cursor[slot].fighter == fp ? &fly_cursor[slot] : NULL;
+}
+
+/* Rearm ordinary collision, not damage injection. Both fighter and item victim
+ * histories belong to this attack instance and must be fresh for every pulse. */
+static void fly_cursor_pulse(Fighter* fp, FlyCursor* c)
+{
+    HitCapsule* h = &fp->x914[0];
+    int i;
+    for (i = 0; i < 4; ++i) fp->x914[i].state = HitCapsule_Disabled;
+    memset(h, 0, sizeof *h);
+    h->state = HitCapsule_Enabled;
+    h->damage = c->damage; h->unk_count = c->damage; h->scale = c->radius;
+    h->kb_angle = 45; h->x24 = 70; h->x2C = 20;
+    h->x40_b0 = 1; h->x40_b2 = 1; h->x40_b3 = 1;
+    h->x42_b5 = 1; h->x42_b7 = 1; /* native fighter AND item target eligibility */
+    h->b_offset = fp->cur_pos;
+    h->x4C = h->x58 = fp->cur_pos;
+    fp->x206C_attack_instance = plStale_IncrementAttackInstance();
+    if (c->pulses < 0x7FFFFFFF) ++c->pulses;
+}
+
 static void fly_input(Fighter_GObj* gobj);
 static void fly_phys(Fighter_GObj* gobj);
 static void fly_coll(Fighter_GObj* gobj);
@@ -302,6 +350,8 @@ static void fly_phys(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     float sx = fp->input.lstick[0].x, sy = fp->input.lstick[0].y, v = fly_speed;
+    FlyCursor* cursor = fly_cursor_for(fp);
+    if (!GenoFly_OfflineAllowed()) { GenoFly_Watch(); return; }
     if (fp->input.held_buttons[0] & HSD_PAD_A) {
         v *= 0.25f;
     }
@@ -316,6 +366,13 @@ static void fly_phys(Fighter_GObj* gobj)
     }
     fp->self_vel.x = sx * v;
     fp->self_vel.y = sy * v;
+    if (cursor && cursor->target) {
+        float dx = cursor->x - fp->cur_pos.x, dy = cursor->y - fp->cur_pos.y;
+        float distance = sqrtf(dx * dx + dy * dy);
+        float fraction = distance > fly_speed ? fly_speed / distance : 1.0f;
+        fp->self_vel.x = dx * fraction;
+        fp->self_vel.y = dy * fraction;
+    }
     fp->self_vel.z = 0.0f;
     fp->x8c_kb_vel.x = fp->x8c_kb_vel.y = fp->x8c_kb_vel.z = 0.0f;
     if (sx > 0.0f) {
@@ -327,13 +384,22 @@ static void fly_phys(Fighter_GObj* gobj)
     /* intangible (ftColl_8007B62C's state 2, without its colour flash), or normal when solid: set every
      * frame, so switching solid mid-flight takes effect at once */
     fp->x1988 = fly_solid ? 0 : 2;
+    if (cursor && cursor->attack && fp->dmg.x195c_hitlag_frames <= 0.0f) fly_cursor_pulse(fp, cursor);
 }
 
 static void fly_coll(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+    FlyCursor* cursor = fly_cursor_for(fp);
     mpColl_80043680(&fp->coll_data, &fp->cur_pos); /* follow: no floor, wall, ceiling or ledge */
     fp->coll_data.env_flags = 0;
+    /* Physics integrates velocity after fly_phys. Centre the world capsule only
+     * now, before native hitbox updates/collision. This is not another pulse:
+     * victim histories and the attack instance survive hitlag unchanged. */
+    if (cursor && cursor->attack && fp->x914[0].state != HitCapsule_Disabled) {
+        fp->x914[0].b_offset = fp->cur_pos;
+        fp->x914[0].x4C = fp->x914[0].x58 = fp->cur_pos;
+    }
 }
 
 int GenoFly_Fighter(Fighter* fp)
@@ -356,6 +422,77 @@ static Fighter_GObj* fly_gobj(int slot)
     }
     return NULL;
 }
+
+void GenoFly_Clear(int slot)
+{
+    Fighter_GObj* gobj;
+    FlyCursor* c;
+    if (slot < 0 || slot >= 6) return;
+    c = &fly_cursor[slot]; gobj = fly_gobj(slot);
+    /* A replaced action owns its own hitboxes: never clear those using stale
+     * cursor data. Enabling a new flight always clears its old configuration. */
+    if (c->attack && gobj && GET_FIGHTER(gobj) == c->fighter && GenoFly_Fighter(c->fighter))
+        c->fighter->x914[0].state = HitCapsule_Disabled;
+    memset(c, 0, sizeof *c);
+}
+
+void GenoFly_Reset(void) { int i; for (i = 0; i < 6; ++i) GenoFly_Clear(i); }
+
+static Fighter* fly_cursor_actor(int slot)
+{
+    Fighter_GObj* g = fly_gobj(slot);
+    Fighter* fp = g ? GET_FIGHTER(g) : NULL;
+    return fp && !fp->is_sub_fighter && GenoFly_Fighter(fp) ? fp : NULL;
+}
+
+int GenoFly_Target(int slot, int x_bits, int y_bits)
+{
+    union { int i; float f; } x, y;
+    Fighter* fp = fly_cursor_actor(slot);
+    x.i = x_bits; y.i = y_bits;
+    if (!fp) return -1;
+    if (!(x.f >= -10000 && x.f <= 10000 && y.f >= -10000 && y.f <= 10000)) return -2;
+    fly_cursor[slot].fighter = fp; fly_cursor[slot].target = 1;
+    fly_cursor[slot].x = x.f; fly_cursor[slot].y = y.f;
+    return 0;
+}
+
+int GenoFly_AttackSet(int slot, int on, int damage, int radius_bits)
+{
+    union { int i; float f; } radius;
+    Fighter* fp = fly_cursor_actor(slot);
+    FlyCursor* c;
+    if (slot < 0 || slot >= 6) return -1;
+    c = &fly_cursor[slot];
+    if (!on) {
+        if (fp && c->fighter == fp && c->attack) fp->x914[0].state = HitCapsule_Disabled;
+        c->attack = 0; return 0;
+    }
+    if (!fp) return -1;
+    radius.i = radius_bits;
+    if (damage < 1 || damage > 30 || !(radius.f >= 1 && radius.f <= 30)) return -2;
+    c->fighter = fp; c->attack = 1; c->damage = damage; c->radius = radius.f;
+    return 0;
+}
+
+int GenoFly_State(int slot, int field)
+{
+    FlyCursor* c;
+    union { int i; float f; } value;
+    if (slot < 0 || slot >= 6) return -1;
+    if (!fly_cursor_actor(slot)) return 0;
+    c = &fly_cursor[slot];
+    if (c->fighter != fly_cursor_actor(slot)) return 0;
+    switch (field) {
+    case 0: return c->attack; case 1: return c->target; case 2: return c->damage;
+    case 3: value.f = c->radius; return value.i;
+    case 4: value.f = c->x; return value.i;
+    case 5: value.f = c->y; return value.i;
+    case 6: return c->pulses;
+    }
+    return -1;
+}
+int GenoFly_Pulses(int slot) { return GenoFly_State(slot, 6); }
 
 /* states a fighter cannot be lifted out of cleanly: dead / asleep / respawning, held or thrown,
  * the entry, holding someone, the hands */
@@ -385,6 +522,35 @@ static void fly_drop(Fighter_GObj* gobj)
     fp->x1988 = 0;
 }
 
+/* Separate the boundary predicate from the normal motion transition so a small
+ * headless fixture can verify cleanup without constructing Fall's disc data. */
+static int fly_boundary_fighter(Fighter_GObj* gobj, int blocked,
+                                void (*drop)(Fighter_GObj*))
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    FlyCursor* cursor;
+    if (!blocked || !GenoFly_Fighter(fp)) return 0;
+    cursor = fly_cursor_for(fp);
+    if (cursor) {
+        if (cursor->attack) fp->x914[0].state = HitCapsule_Disabled;
+        memset(cursor, 0, sizeof *cursor);
+    }
+    drop(gobj);
+    return 1;
+}
+
+int GenoFly_Watch(void)
+{
+    HSD_GObj* g;
+    if (GenoFly_OfflineAllowed()) return 0; /* ordinary offline flight stays on */
+    if (HSD_GObjPLinkHead) {
+        for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; g; g = g->next)
+            fly_boundary_fighter(g, 1, fly_drop);
+    }
+    GenoFly_Reset(); /* retire stale configs too, even if the fighter went away */
+    return 1;
+}
+
 int GenoFly_Set(int slot, int mode)
 {
     Fighter_GObj* gobj = fly_gobj(slot);
@@ -397,6 +563,7 @@ int GenoFly_Set(int slot, int mode)
         if (GenoFly_Fighter(fp)) {
             return 0;
         }
+        GenoFly_Clear(slot);
         if (fly_refused(fp)) {
             return -2;
         }
@@ -418,6 +585,7 @@ int GenoFly_Set(int slot, int mode)
         }
         return 0;
     }
+    GenoFly_Clear(slot);
     if (!GenoFly_Fighter(fp)) {
         return 0;
     }
@@ -534,4 +702,81 @@ void GenoFly_TestArm(Fighter* fp)
     fp->input_cb = fly_input;
     fp->phys_cb = fly_phys;
     fp->coll_cb = fly_coll;
+}
+
+/* Isolated fixtures verify native attack rearming and target convergence. */
+static void fly_boundary_test_drop(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    fp->phys_cb = NULL;
+    fp->x1988 = 0;
+}
+
+int GenoFly_CursorTest(void)
+{
+    static Fighter fp;
+    static Fighter_GObj gobj;
+    FlyCursor saved = fly_cursor[0];
+    float speed = fly_speed;
+    int solid = fly_solid, rc = 0, instance;
+    memset(&fp, 0, sizeof fp); memset(&gobj, 0, sizeof gobj);
+    gobj.user_data = &fp; fp.player_id = 0;
+    GenoFly_TestArm(&fp); fly_speed = 2; fly_solid = 1;
+    memset(&fly_cursor[0], 0, sizeof fly_cursor[0]);
+    fly_cursor[0].fighter = &fp; fly_cursor[0].target = 1;
+    fly_cursor[0].x = 3; fly_cursor[0].y = 4;
+    fly_cursor[0].attack = 1; fly_cursor[0].damage = 3; fly_cursor[0].radius = 6;
+    fp.x914[0].x44 = fp.x914[0].x45 = 12;
+    fly_phys(&gobj);
+    if (fp.self_vel.x < 1.199f || fp.self_vel.x > 1.201f ||
+        fp.self_vel.y < 1.599f || fp.self_vel.y > 1.601f || fp.x1988 != 0 ||
+        fp.x914[0].x44 || fp.x914[0].x45 || fp.x914[0].damage != 3 || fp.x914[0].scale != 6 ||
+        !fp.x914[0].x42_b5 || !fp.x914[0].x42_b7 || fp.x914[0].x2C != 20) rc = 1;
+    instance = fp.x206C_attack_instance;
+    /* Match real callback order: integrate velocity, then run map collision.
+     * The original implementation left the capsule at the pre-integration point. */
+    fp.cur_pos.x += fp.self_vel.x; fp.cur_pos.y += fp.self_vel.y;
+    fp.x914[0].x44 = fp.x914[0].x45 = 1;
+    fp.x914[0].victims_1[0].victim = &gobj;
+    fp.x914[0].victims_2[0].victim = &gobj;
+    fly_coll(&gobj);
+    if (fp.x914[0].b_offset.x != fp.cur_pos.x || fp.x914[0].b_offset.y != fp.cur_pos.y ||
+        fp.x914[0].x4C.x != fp.cur_pos.x || fp.x914[0].x58.y != fp.cur_pos.y ||
+        fp.x206C_attack_instance != instance || fly_cursor[0].pulses != 1 ||
+        fp.x914[0].x44 != 1 || fp.x914[0].x45 != 1 ||
+        fp.x914[0].victims_1[0].victim != &gobj || fp.x914[0].victims_2[0].victim != &gobj) rc = 1;
+    fp.x914[0].x44 = fp.x914[0].x45 = 1;
+    fp.x914[0].victims_1[0].victim = &gobj;
+    fp.x914[0].victims_2[0].victim = &gobj;
+    fp.cur_pos.x = 2.9f; fp.cur_pos.y = 3.9f;
+    fly_phys(&gobj);
+    if (fp.x206C_attack_instance == instance || fp.x914[0].x44 || fp.x914[0].x45 ||
+        fp.x914[0].victims_1[0].victim || fp.x914[0].victims_2[0].victim ||
+        fp.self_vel.x < .099f || fp.self_vel.x > .101f ||
+        fp.self_vel.y < .099f || fp.self_vel.y > .101f || fly_cursor[0].pulses != 2) rc = 1;
+    fp.dmg.x195c_hitlag_frames = 2; fly_phys(&gobj);
+    if (fly_cursor[0].pulses != 2) rc = 1;
+    instance = fp.x206C_attack_instance;
+    fp.x914[0].x44 = fp.x914[0].x45 = 1;
+    fp.x914[0].victims_1[0].victim = &gobj;
+    fp.x914[0].victims_2[0].victim = &gobj;
+    fp.cur_pos.x = 10; fp.cur_pos.y = 20; fly_coll(&gobj);
+    if (fp.x914[0].b_offset.x != 10 || fp.x914[0].x4C.y != 20 || fp.x914[0].x58.y != 20 ||
+        fp.x206C_attack_instance != instance || fly_cursor[0].pulses != 2 ||
+        fp.x914[0].x44 != 1 || fp.x914[0].x45 != 1 ||
+        fp.x914[0].victims_1[0].victim != &gobj || fp.x914[0].victims_2[0].victim != &gobj) rc = 1;
+    /* Each boundary ends a configured cursor; ordinary offline flight survives. */
+    if (fly_boundary_blocked(0, 0, 0) || !fly_boundary_blocked(1, 0, 0) ||
+        !fly_boundary_blocked(0, 1, 0) || !fly_boundary_blocked(0, 0, 1)) rc = 1;
+    if (fly_boundary_fighter(&gobj, 0, fly_boundary_test_drop) || !GenoFly_Fighter(&fp) ||
+        !fly_cursor[0].attack || fp.x914[0].state == HitCapsule_Disabled) rc = 1;
+    if (!fly_boundary_fighter(&gobj, 1, fly_boundary_test_drop) || GenoFly_Fighter(&fp) ||
+        fp.x1988 != 0 || fly_cursor[0].attack || fly_cursor[0].target ||
+        fp.x914[0].state != HitCapsule_Disabled) rc = 1;
+    GenoFly_TestArm(&fp); /* existing stale-actor check still exercises fly_phys */
+    fly_cursor[0].fighter = NULL; fp.x914[0].state = HitCapsule_Disabled;
+    fp.dmg.x195c_hitlag_frames = 0; fly_phys(&gobj);
+    if (fp.x914[0].state != HitCapsule_Disabled) rc = 1;
+    fly_cursor[0] = saved; fly_speed = speed; fly_solid = solid;
+    return rc;
 }

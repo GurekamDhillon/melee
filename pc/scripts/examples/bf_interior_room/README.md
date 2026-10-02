@@ -23,6 +23,43 @@ docstring has the command). `KIT_SCALE` there is the kit's size in game (1.3: th
 doorway reads as a door next to Fox); it scales meshes, sidecars and the room grid together.
 The binaries are generated, not committed (about 13 MB).
 
+## Placement contract
+
+The authoring generator stores `grid_m=2`, `module_size`, `purpose` and an asset
+description on each Blender collection. See
+[`module()` and the doorway geometry](../../../assets_src/bf_interior/bf_interior_playset.py)
+and the coordinate conversion in
+[`export_kit.py`](../../../assets_src/bf_interior/export_kit.py).
+The exported mesh and collision sidecar do **not** carry or enforce all of this
+placement metadata; the layout builder must enforce it.
+
+| Rule | Kit metres | Current game units (`UNIT=6.5`) |
+| --- | --- | --- |
+| Structural snapping grid | 2 | 13 |
+| Floor/wall bay width | 4 | 26 |
+| Wall storey height | 4 | 26 |
+| Doorway clear opening | 1.6 wide × 2.6 high | 10.4 wide × 16.9 high |
+
+A doorway is a complete back-wall bay. Replace a solid wall bay with
+`bf_wall_doorway_4m`; do not place both at the same bay or shrink the doorway
+into a freestanding sign. Its origin is centred horizontally at the floor level.
+Place adjacent bay centres 26 units apart, and align the doorway origin with the
+floor bay beneath it. Keep the original scale of wall and door modules so their
+baseboards, trim and ceilings meet. A global kit-size change belongs in
+`KIT_SCALE`, which regenerates meshes, collision and layout units together.
+
+Walls, doors, beams and rear posts already contain their rear depth offsets in
+their local geometry. Give them the same placement depth as the matching floor
+(`z=0` in the example); do not add another arbitrary rear offset to just the door.
+Blender X/Z/-Y export to game X/Y/Z. Place posts at bay seams and beams at storey
+tops. The optional `bf_door_leaf` uses the doorway's exact origin and transform.
+
+Doorway scenery has no collision or transition trigger. The gameplay layout must
+derive the interaction anchor from the same doorway origin, and separately
+implement room gating. A visible leaf alone does not physically block passage.
+These rules describe the structural shell; smaller decorative details and
+explicitly authored gameplay platforms can use other dimensions.
+
 The previous 41-instance lane was reported tested in LAB/VS on FD and Battlefield,
 Classic/Adventure, despawn/restore and LAB restart. Those results describe the old
 opaque, uniform-scale renderer. The revised 43-instance glass/mirrored room has

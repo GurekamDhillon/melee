@@ -200,7 +200,21 @@ static struct {
   unsigned buttons;
   int sx, sy, cx, cy, tl, tr;
 } gw_seen[4];
+/* Menu interception preserves the controller's analog state and connection.
+ * Raw buttons remain available to the owning script for edge detection. */
+static unsigned gw_raw_buttons[4];
+static struct { int owner; unsigned buttons; } gw_menu_mask[4];
 static int gw_paused_sample;
+
+int gw_script_pad_mask(int ch, int owner, unsigned buttons) {
+  if (ch < 0 || ch > 3 || owner <= 0 || (buttons & ~15u)) return 0;
+  if (gw_menu_mask[ch].owner && gw_menu_mask[ch].owner != owner) return 0;
+  gw_menu_mask[ch].owner = buttons ? owner : 0;
+  gw_menu_mask[ch].buttons = buttons;
+  return 1;
+}
+void gw_script_pad_masks_clear(void) { memset(gw_menu_mask, 0, sizeof gw_menu_mask); }
+unsigned gw_script_pad_raw_buttons(int ch) { return ch >= 0 && ch < 4 ? gw_raw_buttons[ch] : 0; }
 
 /* gd.pad() still sees the paused menu sample, but it is not one of the logic
  * PADReads promised by gd.input/console input. */
@@ -240,6 +254,9 @@ void gw_Script_PadFrameConsumed(void) {
 }
 
 void gw_script_pad_release(int ch, int owner) {
+  if (ch >= 0 && ch < 4 && owner > 0 && gw_menu_mask[ch].owner == owner) {
+    memset(&gw_menu_mask[ch], 0, sizeof gw_menu_mask[ch]);
+  }
   if (ch >= 0 && ch <= 3 && gw_ovr[ch].owner == owner && owner > 0) {
     gw_ovr[ch].samples = 0;
     gw_ovr[ch].owner = 0;
@@ -315,6 +332,10 @@ unsigned gw_Script_PadApply(void *pad_status_array) {
     }
   }
   for (ch = 0; ch < 4; ++ch) {
+    gw_raw_buttons[ch] = gw_r16(&st[ch].button);
+    if (!gw_RB_Enabled() && !gw_Netplay_Enabled()) {
+      gw_w16(&st[ch].button, (uint16_t)(gw_raw_buttons[ch] & ~gw_menu_mask[ch].buttons));
+    }
     gw_seen[ch].buttons = gw_r16(&st[ch].button);
     gw_seen[ch].sx = st[ch].stickX;
     gw_seen[ch].sy = st[ch].stickY;

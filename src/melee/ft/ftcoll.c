@@ -1372,8 +1372,15 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                         Geno_ArticleStunBonus(item, hit, fp); /* v5.5: a Geno article's extra hitstun */
                     }
                     bits.f = scaled_dmg;
-                    Script_GameEvent(2 /* LAB_EV_HIT */, owner, fp->player_id,
-                                     0xFF | 0x400 | (fp->is_sub_fighter ? 0x200 : 0), bits.i);
+                    {
+                        extern int ScriptGame_EnemyContact(Item_GObj*, int, int);
+                        extern void Script_EnemyGameEvent(int, int, int, int, int, int);
+                        int enemy = fp->is_sub_fighter ? 0 :
+                            ScriptGame_EnemyContact(item->entity, fp->player_id, hit->x4);
+                        int flags = 0xFF | 0x400 | (fp->is_sub_fighter ? 0x200 : 0);
+                        if (enemy) Script_EnemyGameEvent(enemy, owner, fp->player_id, flags, bits.i, 0);
+                        else Script_GameEvent(2 /* LAB_EV_HIT */, owner, fp->player_id, flags, bits.i);
+                    }
                 }
 #endif
                 ftColl_80078998(item->entity, fp->gobj, scaled_dmg);

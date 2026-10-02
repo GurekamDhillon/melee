@@ -2225,6 +2225,9 @@ static int test_geno_lab_stale_fighter(void)
 #include <melee/gm/gmfrontend.h>
 #include <melee/gm/gmscdata.h>
 #include <melee/gm/gmvsmelee.h>
+#include <melee/gm/gmvs.h>
+#include <melee/gm/gmscenelaunch.h>
+#include <melee/it/itspawn.h>
 #include "geno_lab_mode.h"
 
 extern void SceneLaunch_LoadForTest(const char* text);
@@ -2271,6 +2274,50 @@ static int test_geno_lab_mode_table(void)
 
 /* the rules: no timer, no stocks (a KO respawns: time mode never eliminates), no items, Melee's
    pause off - applied over whatever VS's saved rules said (stock mode, 4 stocks, 8 minutes) */
+static int test_scene_item_frequency_rules(void)
+{
+    StartMeleeRules* live = gm_GetStartMeleeRules();
+    StartMeleeRules saved = *live;
+    struct GamePrefs prefs = { 0 };
+    int rc = 0;
+    live->item_freq = 3;
+    live->x20 = ~0ULL; /* Allowed kinds remain separate from frequency. */
+    prefs.item_freq = 3;
+    prefs.item_mask = ~0ULL;
+    SceneLaunch_LoadForTest("mode=vs;items=off");
+    SceneLaunch_ApplyItemFrequency(live, &prefs);
+    if (SceneLaunch_ItemFreq() != -2 || live->item_freq != -1 ||
+        prefs.item_freq != 0xFF || gm_8016AE80() != -1 ||
+        live->x20 != ~0ULL || prefs.item_mask != ~0ULL) {
+        TestFail("items=off must disable native/saved frequency without changing allowed kinds");
+        rc = 1;
+    } else {
+        /* The actual random-item initializer must exit safely with all kinds allowed. */
+        it_8026D018();
+        if (it_8026D324(It_Kind_BombHei)) {
+            TestFail("items=off left native random-item eligibility enabled");
+            rc = 1;
+        }
+    }
+    SceneLaunch_LoadForTest("mode=vs;items=0");
+    SceneLaunch_ApplyItemFrequency(live, &prefs);
+    if (SceneLaunch_ItemFreq() != 0 || live->item_freq != 0 ||
+        prefs.item_freq != 0 || gm_8016AE80() != 0) {
+        TestFail("items=0 is frequency index zero, not disabled");
+        rc = 1;
+    }
+    SceneLaunch_LoadForTest(NULL);
+    live->item_freq = 2;
+    prefs.item_freq = 2;
+    SceneLaunch_ApplyItemFrequency(live, &prefs);
+    if (live->item_freq != 2 || prefs.item_freq != 2) {
+        TestFail("unspecified item frequency must preserve existing rules");
+        rc = 1;
+    }
+    *live = saved;
+    return rc;
+}
+
 static int test_geno_lab_rules(void)
 {
     static StartMeleeData d;
@@ -2983,6 +3030,11 @@ extern bool ftCo_800D3158(Fighter_GObj* gobj);
 
 static int test_geno_fly(void)
 {
+    extern int GenoFly_CursorTest(void);
+    if (GenoFly_CursorTest()) {
+        TestFail("debug attack cursor: native rearm, victim caches, convergence or hitlag failed");
+        return 1;
+    }
     float old = GenoFly_Speed();
     int rc = 0;
     t_setup();
@@ -3093,6 +3145,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v4_tornado_spin", test_geno_v4_tornado_spin);
     TestRegister("geno_lab_mode_table", test_geno_lab_mode_table);
     TestRegister("geno_lab_rules", test_geno_lab_rules);
+    TestRegister("scene_item_frequency_rules", test_scene_item_frequency_rules);
     TestRegister("geno_lab_scene", test_geno_lab_scene);
     TestRegister("geno_lab_select_flow", test_geno_lab_select_flow);
     TestRegister("geno_lab_mismatch_fields", test_geno_lab_mismatch_fields);

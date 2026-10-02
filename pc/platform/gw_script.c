@@ -7667,7 +7667,7 @@ static void gs_dispatch_events(void) {
                 continue;
             }
             switch (e->what) {
-            case 9:
+            case 10: /* on_enemy_hit; 9 is on_enemy_removed below */
                 lua_createtable(L, 0, 4);
                 gs_setint(L, "handle", e->a);
                 gs_setint(L, "from", e->b);

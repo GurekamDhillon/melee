@@ -18,6 +18,9 @@ void HSD_StateRegisterTexGen(int);
 void HSD_StateSetNumTexGens(void);
 void HSD_StateInitTev(void);
 int HSD_StateGetNumTevStages(void);
+#if defined(TARGET_PC)
+int HSD_StateGetCommittedTevStages(void);
+#endif
 int HSD_StateAssignTev(void);
 void HSD_StateSetNumTevStages(void);
 void HSD_SetupTevStage(HSD_TevDesc*);

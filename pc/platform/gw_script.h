@@ -56,6 +56,10 @@ void gw_Script_TargetBroken(int handle, int remaining);
 /* script_game.c at stage load: 1 = reserve the Lua stage layer's collision room (offline
  * gameplay scene, including for scripts loaded later); 0 = the stage's map exactly as before */
 int gw_Script_StageWanted(void);
+/* Scalar ownership identity for stage/model creators. A script reload receives a
+ * fresh generation; restored resources of retired generations are reclaimed. */
+int gw_Script_StageResourceOwner(void);
+int gw_Script_StageResourceOwnerAlive(int owner);
 /* Called only by the 1P boss controller; an event hook is opt-in and offline only. */
 int gw_Script_BossHookEnabled(void);
 

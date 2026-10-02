@@ -116,3 +116,114 @@ done:
     RemoveDirectoryA(dir);
     return rc;
 }
+
+extern int gw_ScriptGame_ModelOwnerTestFixture(int on);
+static int t_model_script_int(int script, const char *field)
+{
+    int value;
+    lua_rawgeti(gs.L, LUA_REGISTRYINDEX, gs.s[script].env_ref);
+    lua_getfield(gs.L, -1, field);
+    value = (int) lua_tointeger(gs.L, -1);
+    lua_pop(gs.L, 2);
+    return value;
+}
+static int t_model_owner_script(const char *id, const char *entry, const char *source)
+{
+    size_t len = strlen(source);
+    char *copy = malloc(len + 1);
+    if (!copy) return -1;
+    memcpy(copy, source, len + 1);
+    return gs_load_text(id, entry, copy, len, "{\"gameplay\":true}", "test");
+}
+
+/* Exercise gs_unload and the actual gd.model_* wrappers against game-side
+ * visual instances. Real collision-joint removal additionally needs a live
+ * stage; model_instance_test.c covers its ledger with explicit collision fakes. */
+static int test_script_model_owner_cleanup(void)
+{
+    static const char side[] = "{\"version\":1,\"atlas\":\"kit\",\"lines\":[]}";
+    static const char base[] = "asset=gd.model_load('a'); handle=assert(gd.model_spawn(asset,{collision=false})); ";
+    static const char *files[] = {"a.gxmesh", "a.coll.json", "kit.gxtex"};
+    unsigned char mesh[138] = {0}, tex[128] = {0}, *image;
+    char out[128], dir[MAX_PATH], models[MAX_PATH], entry[MAX_PATH], path[MAX_PATH], source[1024];
+    int a = -1, b = -1, c = -1, d = -1, owner_a = 0, owner_b = 0, handle_b = 0;
+    int token = 0, i, rc = 1, fixture = 0, fail_line = 0, was_match;
+    if (t_exec("= 1", out, sizeof out) || gs_stage_nmodels) {
+        gw_test_fail("model owner test requires an empty headless scene"); return 1;
+    }
+    was_match = gs.match_active;
+    if (!gw_ScriptGame_ModelOwnerTestFixture(1)) {
+        gw_test_fail("model owner test cannot enter visual-only fixture"); return 1;
+    }
+    fixture = 1;
+    snprintf(dir, sizeof dir, "%s\\gw_model_owner_test", gs.exe_dir); CreateDirectoryA(dir, NULL);
+    snprintf(models, sizeof models, "%s\\models", dir); CreateDirectoryA(models, NULL);
+    snprintf(entry, sizeof entry, "%s\\scripts\\main.lua", dir);
+    memcpy(mesh, "GXMS", 4); gw_w32(mesh + 4, 2); gw_w32(mesh + 8, 3); gw_w32(mesh + 12, 3);
+    for (i = 16; i < 28; i += 4) gw_w32(mesh + i, (unsigned)gs_fbits(2));
+    gw_w32(mesh + 28, 36); gw_w32(mesh + 32, 132);
+    gw_w32(mesh + 68, (unsigned)gs_fbits(1)); gw_w32(mesh + 104, (unsigned)gs_fbits(1));
+    for (i = 0; i < 3; ++i) {
+        gw_w32(mesh + 36 + i * 32 + 28, (unsigned)gs_fbits(1)); gw_w16(mesh + 132 + i * 2, (uint16_t)i);
+    }
+    memcpy(tex, "GXTX", 4); gw_w32(tex + 4, 1); gw_w32(tex + 8, GX_TF_RGBA8);
+    gw_w32(tex + 12, 4); gw_w32(tex + 16, 4); gw_w32(tex + 20, 0xFFFFFFFF);
+    gw_w32(tex + 28, 64); gw_w32(tex + 36, 64); memset(tex + 64, 255, 64);
+#define MODEL_OWNER_CHECK(condition) do { if (!(condition)) { fail_line = __LINE__; goto done; } } while (0)
+    MODEL_OWNER_CHECK(t_model_file(models, files[0], mesh, sizeof mesh) &&
+        t_model_file(models, files[1], side, sizeof side - 1) && t_model_file(models, files[2], tex, sizeof tex));
+    gs.match_active = 1;
+    snprintf(source, sizeof source, "%sgd.model_load('a'); function on_unload() error('cleanup refusal') end", base);
+    a = t_model_owner_script("model_owner_a", entry, source);
+    MODEL_OWNER_CHECK(a >= 0);
+    owner_a = gs.s[a].stage_owner;
+    b = t_model_owner_script("model_owner_b", entry, base);
+    MODEL_OWNER_CHECK(b >= 0 && gs_stage_nmodels == 1);
+    owner_b = gs.s[b].stage_owner; handle_b = t_model_script_int(b, "handle");
+    token = t_model_script_int(b, "asset"); image = gs_stage_models[0].image;
+    MODEL_OWNER_CHECK(gw_ScriptGame_ModelRefOwned(0, token, owner_a, 0) &&
+        gw_ScriptGame_ModelRefOwned(0, token, owner_b, 0));
+    gs_unload(a); a = -1;
+    MODEL_OWNER_CHECK(!gw_ScriptGame_ModelRefOwned(0, token, owner_a, 0) &&
+        gw_ScriptGame_ModelRefOwned(0, token, owner_b, 0) && gw_ScriptGame_ModelSlot(handle_b) >= 0 &&
+        gs_stage_nmodels == 1 && gs_stage_models[0].image == image);
+    /* The reused script slot gets a fresh generation. Explicit release and a
+     * foreign instance mutation cannot consume the second owner's references. */
+    snprintf(source, sizeof source, "%sassert(not pcall(gd.model_despawn,%d)); "
+        "gd.model_release(asset); assert(not pcall(gd.model_release,asset)); "
+        "assert(not pcall(gd.model_spawn,asset,{})); assert(gd.model_set(handle,{x=3}));", base, handle_b);
+    c = t_model_owner_script("model_owner_c", entry, source);
+    MODEL_OWNER_CHECK(c >= 0 && gs.s[c].stage_owner != owner_a &&
+        gw_ScriptGame_StageReleaseOwner(owner_a) == 0 && gw_ScriptGame_ModelSlot(t_model_script_int(c, "handle")) >= 0);
+    gs_unload(c); c = -1; /* no on_unload hook */
+    MODEL_OWNER_CHECK(gw_ScriptGame_ModelSlot(handle_b) >= 0 && gw_ScriptGame_ModelRefOwned(0, token, owner_b, 0));
+    gs.s[b].disabled = 1; /* native fallback runs even when hooks are skipped */
+    gs_unload(b); b = -1;
+    MODEL_OWNER_CHECK(!gw_ScriptGame_ModelRef(0, token, 0) && gw_ScriptGame_ModelSlot(handle_b) < 0 &&
+        gs_stage_nmodels == 1 && gs_stage_models[0].image == image);
+    d = t_model_owner_script("model_owner_d", entry, base);
+    MODEL_OWNER_CHECK(d >= 0 && gw_ScriptGame_ModelOwnerTestFixture(2)); /* actual StageEnd path */
+    fixture = 0; gs.match_active = 0;
+    gs_unload(d); d = -1;
+    MODEL_OWNER_CHECK(!gs_stage_nmodels && gw_ScriptGame_StageReleaseOwner(owner_b) == 0 &&
+        gw_ScriptGame_StageReleaseDeadOwners() == 0);
+    rc = 0;
+done:
+    if (a >= 0) gs_unload(a);
+    if (b >= 0) gs_unload(b);
+    if (c >= 0) gs_unload(c);
+    if (d >= 0) gs_unload(d);
+    if (fixture && !gw_ScriptGame_ModelOwnerTestFixture(0)) {
+        gw_test_fail("model owner fixture retained native resources"); rc = 1;
+    }
+    gs.match_active = was_match;
+    gs_stage_cleanup_dead();
+    if (gs_stage_nmodels) gw_Script_StageModelsReset();
+    for (i = 0; i < sizeof files / sizeof *files; ++i) {
+        snprintf(path, sizeof path, "%s\\%s", models, files[i]); DeleteFileA(path);
+    }
+    RemoveDirectoryA(models); RemoveDirectoryA(dir);
+    if (rc) gw_test_fail("model owner unload failed at source line %d", fail_line);
+#undef MODEL_OWNER_CHECK
+    return rc;
+}

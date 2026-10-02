@@ -14,6 +14,8 @@
 #include <melee/ft/fighter.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/types.h>
+#include <melee/ft/kinds/ftCommon/forward.h>
+#include <melee/ft/kinds/ftCommon/ftCo_0A01.h>
 #include <melee/gm/gm_1A3F.h>
 #include <melee/gm/gmmain_lib.h>
 #include <melee/gm/gmscene.h>
@@ -24,6 +26,7 @@
 #include <melee/it/forward.h>
 #include <melee/it/inlines.h>
 #include <melee/it/item.h>
+#include <melee/it/itcoll.h>
 #include <melee/it/it_3F14.h>
 #include <melee/it/it_26B1.h>
 #include <melee/it/itzako.h>
@@ -34,6 +37,7 @@
 #include <melee/mp/mpcoll.h>
 #include "../geno/geno.h"
 #include "script_items.h"
+#include "script_parts.h"
 #include "script_model.h"
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjobject.h>
@@ -68,20 +72,22 @@
 #define SCRIPT_STAGE_ARCHIVES 8
 #define SCRIPT_STAGE_ARCHIVE_MAX (8 * 1024 * 1024)
 typedef struct {
-    int handle, active, kind, flags, model_handle;
+    int handle, active, kind, flags, model_handle, owner;
     float x0, y0, x1, y1;
 } ScriptStageLine;
 typedef struct {
-    int handle, active;
+    int handle, active, owner;
     Item_GObj* gobj;
     float x, y;
 } ScriptStageTarget;
 typedef struct {
     int handle, kind, active, defeated;
     Item_GObj* gobj;
+    int hits, attack_id, last_state, last_group, last_victim, active_hits;
+    int received, last_attacker, last_damage, scripted_hurt;
 } ScriptStageEnemy;
 typedef struct {
-    int handle, active, line_handle;
+    int handle, active, line_handle, owner;
     HSD_GObj* gobj;
     float x, y, z, scale, rot;
 } ScriptStageModel;
@@ -94,6 +100,8 @@ typedef struct {
 extern int Script_ModelInput(int field, int line);
 extern void Script_ModelDraw(int slot, Mtx view);
 extern void Script_StageModelsReset(void);
+extern int Script_StageResourceOwner(void);
+extern int Script_StageResourceOwnerAlive(int owner);
 static int script_mesh_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
 static float script_mesh_float(int i) { union { float f; int i; } u; u.i = i; return u.f; }
 static struct {
@@ -113,9 +121,11 @@ static struct {
     ScriptStageArchive archives[SCRIPT_STAGE_ARCHIVES];
     ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
     struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
+    struct { int owner, refs[SCRIPT_MESH_ASSETS]; } model_owner[SCRIPT_MESH_OWNERS];
 } script_stage;
 static Article* script_target_old_article;
 #include "script_bounds.inc"
+#include "script_stage_isolation.inc"
 
 static int script_stage_same_file(const char* a, const char* b)
 {
@@ -132,6 +142,8 @@ static int script_stage_same_file(const char* a, const char* b)
 void ScriptGame_StageEnd(void)
 {
     int i;
+    ScriptGame_StageIsolationClear(0);
+    ScriptGame_PartsReset(-1);
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) {
         if (script_stage.model[i].active && script_stage.model[i].gobj != NULL)
             HSD_GObjFree(script_stage.model[i].gobj);
@@ -317,6 +329,7 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     extern MapCollData mpLib_803BF760;
     MapCollData* dst;
     int i;
+    ScriptGame_StageIsolationClear(0);
     script_stage.map = NULL;
     script_stage.target_remaining = 0;
     script_stage.target_model_ready = 0;
@@ -326,6 +339,7 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     Script_StageModelsReset();
     memset(script_stage.instance, 0, sizeof script_stage.instance);
     memset(script_stage.asset, 0, sizeof script_stage.asset);
+    memset(script_stage.model_owner, 0, sizeof script_stage.model_owner);
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) script_stage.model[i].active = 0;
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
@@ -490,7 +504,7 @@ static void script_stage_render(HSD_GObj* gobj, int code)
         ScriptStageLine* s = &script_stage.line[i];
         float dx, dy, len, ux, uy, mx, my;
         int model;
-        if (!s->active || s->model_handle) continue;
+        if (!s->active || s->model_handle || (s->flags & 4)) continue; /* draw=false: collision remains active */
         model = s->kind == 1 ? Script_StageModelFor(s->handle) : 0;
         if (model > 0)
             continue; /* textured model is drawn in the one-material pass below */
@@ -617,6 +631,8 @@ void ScriptGame_StageReady(void)
              script_stage.base_j);
 }
 
+#include "script_stage_seams.inc"
+
 int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int flags,
                             int handle)
 {
@@ -639,6 +655,7 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     l = script_stage.base_l + i;
     j = script_stage.base_j + i;
     ml = &map->lines[l]; mj = &map->joints[j];
+    ml->prev_id0 = ml->prev_id1 = ml->next_id0 = ml->next_id1 = -1;
     cv = mpGetGroundCollVtx(); cl = mpGetGroundCollLine(); cj = mpGetGroundCollJoint();
     scale = Ground_801C0498();
     if (scale <= 0.001f) scale = 1.0f;
@@ -670,6 +687,7 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     script_stage.line[i].kind = kind;
     script_stage.line[i].flags = flags;
     script_stage.line[i].model_handle = 0;
+    script_stage.line[i].owner = Script_StageResourceOwner();
     script_stage.line[i].x0 = x0; script_stage.line[i].y0 = y0;
     script_stage.line[i].x1 = x1; script_stage.line[i].y1 = y1;
     mpJointListAdd(j);
@@ -687,10 +705,10 @@ int ScriptGame_StageRemove(int handle)
         if (m->active && m->handle == handle) {
             int attached = m->line_handle;
             HSD_GObj* gobj = m->gobj;
+            if (attached && !ScriptGame_StageRemove(attached)) return 0;
             m->active = 0;
             m->gobj = NULL;
             m->line_handle = 0;
-            if (attached) ScriptGame_StageRemove(attached);
             HSD_GObjFree(gobj);
             OSReport("script stage: removed model handle=%d\n", handle);
             return 1;
@@ -699,10 +717,17 @@ int ScriptGame_StageRemove(int handle)
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
         if (script_stage.line[i].active && script_stage.line[i].handle == handle) {
             int j = script_stage.base_j + i;
+            int linked;
+            if (!script_stage_seam_current()) return 0;
+            linked = script_stage_seam_clear(i);
             mpLib_80057BC0(j);
             script_stage.map->joints[j].ranges[MapLineGroup_Dynamic].count = 0;
             script_stage.line[i].active = 0;
             script_stage.line[i].model_handle = 0;
+            /* 57BC0 refreshes while the range still contains the retired line.
+             * Empty it first, then retire that joint's cached dynamic island. */
+            mpLib_8005667C(j);
+            if (linked) script_stage_seam_refresh();
             {
                 int k;
                 for (k = 0; k < SCRIPT_STAGE_MODELS; ++k)
@@ -733,6 +758,7 @@ int ScriptGame_StageRemove(int handle)
 static int script_stage_line_set(int handle, float x0, float y0, float x1, float y1)
 {
     int i;
+    if (!script_stage_seam_current()) return 0;
     for (i = 0; i < script_stage.cap; ++i) {
         ScriptStageLine* s = &script_stage.line[i];
         CollVtx* v;
@@ -750,7 +776,7 @@ static int script_stage_line_set(int handle, float x0, float y0, float x1, float
         j->bounding_max.y = (y0 > y1 ? y0 : y1) + 30;
         j->flags |= CollJoint_B8;
         j->xE = true;
-        mpLib_8005667C(script_stage.base_j + i);
+        script_stage_seam_moved(i);
         mpUncheckBounding();
         return 1;
     }
@@ -801,6 +827,46 @@ int ScriptGame_StageMove(int handle, int xb, int yb)
 }
 
 #include "script_model.inc"
+#include "script_stage_owner.inc"
+
+/* Headless --test fixture: visual instances exercise their real native lifecycle
+ * without stage/GX objects. The sentinel is never rendered or passed to GObjFree.
+ * Refuse an actual scene, and require complete cleanup before retiring it. */
+int ScriptGame_ModelOwnerTestFixture(int on)
+{
+    static int active;
+    int i;
+    if (script_stage.map || script_stage.cap) return 0;
+    for (i = 0; i < SCRIPT_STAGE_LINES; ++i)
+        if (script_stage.line[i].active) return 0;
+    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i)
+        if (script_stage.model[i].active) return 0;
+    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i)
+        if (script_stage.target[i].active) return 0;
+    if (on == 2) {
+        if (!active || script_stage.draw != (HSD_GObj*) &script_stage) return 0;
+        script_stage.draw = NULL;
+        active = 0;
+        ScriptGame_StageEnd();
+        return 1;
+    }
+    for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
+        if (script_stage.instance[i].handle) return 0;
+    for (i = 0; i < SCRIPT_MESH_ASSETS; ++i)
+        if (script_stage.asset[i].refs || script_stage.asset[i].instances) return 0;
+    if (on) {
+        if (active || script_stage.draw) return 0;
+        active = 1;
+        script_stage.draw = (HSD_GObj*) &script_stage;
+    } else {
+        if (!active || script_stage.draw != (HSD_GObj*) &script_stage) return 0;
+        script_stage.draw = NULL;
+        active = 0;
+        memset(script_stage.asset, 0, sizeof script_stage.asset);
+        memset(script_stage.model_owner, 0, sizeof script_stage.model_owner);
+    }
+    return 1;
+}
 
 /* Ground_801C126C's preorder numbering, scoped to a map_head model group. A copy of
  * the chosen descriptor cuts its next sibling, so HSD_JObjLoadJoint owns this branch only. */
@@ -899,6 +965,7 @@ int ScriptGame_StageAddModel(int group, int joint_index, int xb, int yb, int zb,
     script_stage.model[i].handle = handle;
     script_stage.model[i].active = 1;
     script_stage.model[i].line_handle = 0;
+    script_stage.model[i].owner = Script_StageResourceOwner();
     script_stage.model[i].gobj = gobj;
     script_stage.model[i].x = pos.x;
     script_stage.model[i].y = pos.y;
@@ -919,7 +986,7 @@ int ScriptGame_StageAttachModel(int model_handle, int line_handle)
         for (k = 0; k < SCRIPT_STAGE_LINES; ++k) {
             ScriptStageLine* s = &script_stage.line[k];
             if (s->active && s->handle == line_handle && s->kind == 1 &&
-                s->model_handle == 0) {
+                s->model_handle == 0 && s->owner == m->owner) {
                 m->line_handle = line_handle;
                 s->model_handle = model_handle;
                 OSReport("script stage: model %d carries line %d\n", model_handle,
@@ -934,10 +1001,28 @@ int ScriptGame_StageAttachModel(int model_handle, int line_handle)
 /* A line moved by Lua carries its delta for exactly one logic frame. mpGetSpeed
  * (mplib.c) remaps x10/x14 to pos for grounded fighters; leaving the old endpoint
  * there would keep imparting velocity on every later frame. */
+static void script_enemy_sample(ScriptStageEnemy* e)
+{
+    Item* ip = GET_ITEM(e->gobj);
+    int k, mask = 0;
+    for (k = 0; k < 4; ++k) if (ip->x5D4_hitboxes[k].hit.state != HitCapsule_Disabled) mask |= 1 << k;
+    if (e->last_state != ip->msid || (mask & ~e->active_hits)) {
+        e->last_state = ip->msid;
+        if (e->attack_id < 0x7FFFFFFF) e->attack_id++;
+    }
+    e->active_hits = mask;
+}
+
 void ScriptGame_StageFrame(void)
 {
     CollVtx* cv;
     int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        if (e->active && e->gobj != NULL) {
+            script_enemy_sample(e);
+        }
+    }
     if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return;
     cv = mpGetGroundCollVtx();
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
@@ -1033,6 +1118,7 @@ int ScriptGame_SpawnTarget(int xb, int yb, int handle)
     GET_ITEM(gobj)->xDCC_flag.b4567 = 0;
     script_stage.target[i].handle = handle;
     script_stage.target[i].active = 1;
+    script_stage.target[i].owner = Script_StageResourceOwner();
     script_stage.target[i].gobj = gobj;
     script_stage.target[i].x = pos.x;
     script_stage.target[i].y = pos.y;
@@ -1115,14 +1201,112 @@ int ScriptGame_SpawnEnemy(int which, int xb, int yb, int facing, int handle)
     mpCollSetFacingDir(&ip->x378_itemColl, facing);
     if (kind == It_Kind_Kuriboh || kind == It_Kind_Octarock || kind == It_Kind_Whitebea)
         it_8027C56C(gobj, (float) facing);
+    memset(&script_stage.enemy[i], 0, sizeof script_stage.enemy[i]);
     script_stage.enemy[i].handle = handle;
     script_stage.enemy[i].kind = kind;
     script_stage.enemy[i].active = 1;
     script_stage.enemy[i].defeated = 0;
     script_stage.enemy[i].gobj = gobj;
+    script_stage.enemy[i].attack_id = 1;
+    script_stage.enemy[i].last_state = ip->msid;
+    script_stage.enemy[i].last_group = -1;
+    script_stage.enemy[i].last_victim = -1;
+    script_stage.enemy[i].last_attacker = -1;
     OSReport("script enemy: spawned kind=%d handle=%d at (%f,%f) facing=%d\n",
              kind, handle, pos.x, pos.y, facing);
     return handle;
+}
+
+static ScriptStageEnemy* script_enemy(int handle)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        if (e->handle == handle && e->active && e->gobj != NULL) return e;
+    }
+    return NULL;
+}
+
+int ScriptGame_EnemyAlive(int handle) { return script_enemy(handle) != NULL; }
+
+int ScriptGame_EnemyI(int handle, int field)
+{
+    ScriptStageEnemy* e = script_enemy(handle);
+    Item* ip;
+    if (e == NULL) return -1;
+    ip = GET_ITEM(e->gobj);
+    switch (field) {
+    case 0: return script_enemy_index(e->kind);
+    case 1: return ip->msid;
+    case 2: return ip->xC9C;
+    case 3: return e->hits;
+    case 4: return e->attack_id;
+    case 5: return e->last_victim + 1;
+    case 6: return e->received;
+    case 7: return e->last_attacker + 1;
+    case 8: return !e->defeated && ip->xAC8_hurtboxNum > 0 &&
+        ip->xACC_itemHurtbox[0].state == HurtCapsule_Enabled && ip->xD0C != 2 &&
+        ip->xCBC_hitlagFrames <= 0.0f && ip->xCA0 == 0 && ip->xCC8_knockback == 0.0f;
+    case 9: return e->last_damage;
+    }
+    return -1;
+}
+
+float ScriptGame_EnemyF(int handle, int field)
+{
+    ScriptStageEnemy* e = script_enemy(handle);
+    Item* ip;
+    if (e == NULL) return 0.0f;
+    ip = GET_ITEM(e->gobj);
+    switch (field) {
+    case 0: return ip->pos.x;
+    case 1: return ip->pos.y;
+    case 2: return ip->x40_vel.x;
+    case 3: return ip->x40_vel.y;
+    case 4: return ip->facing_dir;
+    }
+    return 0.0f;
+}
+
+/* Called only at genuine item->fighter collision contact, not scripted procs. */
+int ScriptGame_EnemyContact(Item_GObj* gobj, int victim, int group)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        Item* ip;
+        if (!e->active || e->defeated || e->gobj != gobj || gobj == NULL) continue;
+        ip = GET_ITEM(gobj);
+        if (e->last_state != ip->msid || e->last_group != group) {
+            if (e->attack_id < 0x7FFFFFFF) e->attack_id++;
+            e->last_state = ip->msid; e->last_group = group;
+        }
+        if (e->hits < 0x7FFFFFFF) e->hits++;
+        e->last_victim = victim;
+        return e->handle;
+    }
+    return 0;
+}
+
+/* Incoming natural fighter attacks allow the shared player genes to gain charge. */
+void ScriptGame_EnemyReceived(Item_GObj* gobj, Fighter_GObj* source, int damage)
+{
+    int i;
+    Fighter* fp = source != NULL ? GET_FIGHTER(source) : NULL;
+    if (fp == NULL || fp->is_sub_fighter || damage <= 0) return;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
+        ScriptStageEnemy* e = &script_stage.enemy[i];
+        if (e->active && !e->scripted_hurt && e->gobj == gobj) {
+            if (e->received < 0x7FFFFFFF) e->received++;
+            e->last_attacker = fp->player_id;
+            e->last_damage = damage;
+            {
+                extern void Script_EnemyHit(int handle, int from, int damage);
+                Script_EnemyHit(e->handle, fp->player_id, damage);
+            }
+            return;
+        }
+    }
 }
 
 int ScriptGame_EnemyRemove(int handle)
@@ -2088,6 +2272,8 @@ static HSD_TObj* lab_tobj(HSD_DObj* dobj, int t)
     return tp;
 }
 
+#include "script_parts.inc"
+
 /* field: LAB_DI_* */
 int ScriptGame_LabDObjI(int slot, int d, int field)
 {
@@ -2097,6 +2283,14 @@ int ScriptGame_LabDObjI(int slot, int d, int field)
     int n = 0;
     if (fp == NULL) {
         return -1;
+    }
+    if (((u32) field & 0xE0000000u) == LAB_DI_SET_SOLID ||
+        ((u32) field & 0xE0000000u) == LAB_DI_CLEAR_SOLID)
+    {
+        dobj = lab_dobj(fp, d);
+        return dobj != NULL ? ScriptGame_PartsControl(slot, d,
+            ((u32)field & 0xE0000000u) == LAB_DI_SET_SOLID ? PART_CTL_COLOR : PART_CTL_CLEAR,
+            field & 0xFFFFFF, 0) : -1;
     }
     switch (field) {
     case LAB_DI_COUNT:
@@ -2170,6 +2364,43 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
 }
 
 /* ---- Stage E: the knockback preview (the game's own knockback functions) -------------------- */
+/* Bounded traversal impulse during ordinary locomotion. Leaves position,
+ * action, ECB, jumps and knockback velocity untouched. */
+/* Reset the ordinary fighter CPU controller through its native initializer.
+ * Primary entities only: partners such as Nana have special controller rules. */
+int ScriptGame_CpuMode(int slot, int fight)
+{
+    Fighter* fp = script_fighter(slot);
+    if (fp == NULL || (fight != 0 && fight != 1) || fp->is_sub_fighter ||
+        Player_GetPlayerSlotType(slot) != Gm_PKind_Cpu ||
+        fp->cpu.level < 0 || fp->cpu.level > 9) return 0;
+    ftCo_800A101C(fp, fight ? CpuKind_4 : CpuKind_0, fp->cpu.level, fp->cpu.x14);
+    return 1;
+}
+
+int ScriptGame_Impulse(int slot, int x_bits, int y_bits)
+{
+    Fighter* fp = script_fighter(slot);
+    union { int i; float f; } x, y;
+    float vx, vy;
+    x.i = x_bits; y.i = y_bits;
+    if (fp == NULL || x.f != x.f || y.f != y.f ||
+        x.f < -4.0f || x.f > 4.0f || y.f < -3.0f || y.f > 3.0f ||
+        fp->motion_id < ftCo_MS_Wait || fp->motion_id > ftCo_MS_FallAerialB ||
+        fp->motion_id == ftCo_MS_KneeBend || fp->dmg.x195c_hitlag_frames > 0.0f ||
+        (fp->ground_or_air == GA_Ground && y.f != 0.0f)) return 0;
+    vx = (fp->ground_or_air == GA_Ground ? fp->gr_vel : fp->self_vel.x) + x.f;
+    vy = fp->self_vel.y + y.f;
+    if (vx < -5.0f) vx = -5.0f;
+    if (vx > 5.0f) vx = 5.0f;
+    if (vy < -4.0f) vy = -4.0f;
+    if (vy > 4.0f) vy = 4.0f;
+    if (fp->ground_or_air == GA_Ground) fp->gr_vel = vx;
+    fp->self_vel.x = vx;
+    fp->self_vel.y = vy;
+    return 1;
+}
+
 #include <melee/ft/ftcoll.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Damage.h>
 #include <melee/lb/forward.h>
@@ -2233,6 +2464,151 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
              slot + 1, from_slot + 1, damage, angle, kbg, bkb,
              (int) fp->dmg.x1830_percent);
     return 1;
+}
+
+/* Guest math.h predates C99 isfinite. Ordered comparisons reject NaN/Inf. */
+static int script_enemy_finite(float value)
+{
+    return value >= -3.402823466e38F && value <= 3.402823466e38F;
+}
+
+static int script_enemy_spec(int damage, int angle, int kbg, int bkb, float reach)
+{
+    return damage >= 1 && damage <= 30 && angle >= 0 && angle <= 361 &&
+           kbg >= 0 && kbg <= 1000 && bkb >= 0 && bkb <= 1000 &&
+           script_enemy_finite(reach) && reach >= 1.0f && reach <= 30.0f;
+}
+
+int ScriptGame_EnemyStrike(int handle, int slot, int damage, int angle, int kbg, int bkb, int reach_bits)
+{
+    ScriptStageEnemy* e = script_enemy(handle);
+    Fighter* fp = script_fighter(slot);
+    Item* ip;
+    union { int i; float f; } reach;
+    HitCapsule hit = { 0 };
+    DmgLogEntry entry = { 0 };
+    float applied = damage;
+    reach.i = reach_bits;
+    if (!script_enemy_spec(damage, angle, kbg, bkb, reach.f) || e == NULL || e->defeated ||
+        fp == NULL || fp->is_sub_fighter || fp->motion_id < ftCo_MS_Wait ||
+        (fp->motion_id >= ftCo_MS_GuardOn && fp->motion_id <= ftCo_MS_GuardReflect) ||
+        fp->dmg.x195c_hitlag_frames > 0.0f) return 0;
+    ip = GET_ITEM(e->gobj);
+    if (!script_enemy_finite(ip->pos.x) || !script_enemy_finite(ip->pos.y) || !script_enemy_finite(fp->cur_pos.x) ||
+        !script_enemy_finite(fp->cur_pos.y) || ip->xCBC_hitlagFrames > 0.0f || fabsf(ip->pos.x - fp->cur_pos.x) > reach.f ||
+        fabsf(ip->pos.y - fp->cur_pos.y) > 12.0f ||
+        (fp->cur_pos.x - ip->pos.x) * ip->facing_dir < 0.0f ||
+        (ip->owner == fp->gobj && !ip->xDCE_flag.b0) ||
+        (gm_8016B168() && !gm_8016B0D4() && !ip->xDCE_flag.b1 && fp->team == ip->x20_team_id) ||
+        !ftColl_80076640(fp, &applied)) return 0;
+    hit.damage = applied; hit.unk_count = (u32) applied;
+    hit.kb_angle = angle; hit.x24 = kbg; hit.x2C = bkb; hit.element = HitElement_Normal;
+    entry.x0 = 2; entry.kind = ip->kind; entry.gobj = ip->entity;
+    entry.hit0 = &hit; entry.hurt1 = &fp->hurt_capsules[0];
+    entry.pos = fp->cur_pos; entry.x20 = applied; entry.size_of_xC = (size_t) applied;
+    {
+        extern void ftColl_8007A06C(Fighter_GObj*, void*, void*, size_t, int);
+        extern void Script_EnemyGameEvent(int, int, int, int, int, int);
+        union { float f; int i; } bits;
+        ftColl_8007A06C(fp->gobj, &fp->dmg.facing_dir_1, &entry, 1, 0);
+        Fighter_ProcessHit_8006D1EC(fp->gobj);
+        bits.f = applied;
+        Script_EnemyGameEvent(handle, -1, slot, 0xFF | 0x400, bits.i, 1);
+    }
+    return 1;
+}
+
+int ScriptGame_EnemyHurt(int handle, int from_slot, int damage, int angle, int kbg, int bkb, int reach_bits)
+{
+    ScriptStageEnemy* e = script_enemy(handle);
+    Fighter* fp = script_fighter(from_slot);
+    Item* ip;
+    HitCapsule hit = { 0 };
+    DamageLogEntry log_saved[15];
+    u32 count_saved;
+    union { int i; float f; } reach;
+    extern int Item_ScriptCommitDamage(Item_GObj*);
+    reach.i = reach_bits;
+    if (!script_enemy_spec(damage, angle, kbg, bkb, reach.f) || e == NULL || e->defeated ||
+        fp == NULL || fp->is_sub_fighter || fp->motion_id < ftCo_MS_Wait ||
+        fp->dmg.x195c_hitlag_frames > 0.0f) return 0;
+    ip = GET_ITEM(e->gobj);
+    if (!script_enemy_finite(ip->pos.x) || !script_enemy_finite(ip->pos.y) || !script_enemy_finite(fp->cur_pos.x) ||
+        !script_enemy_finite(fp->cur_pos.y) || ip->xAC8_hurtboxNum == 0 || ip->xACC_itemHurtbox[0].state != HurtCapsule_Enabled ||
+        ip->xD0C == 2 || ip->xCBC_hitlagFrames > 0.0f || ip->xCA0 != 0 || ip->xCC8_knockback != 0.0f ||
+        fabsf(ip->pos.x - fp->cur_pos.x) > reach.f || fabsf(ip->pos.y - fp->cur_pos.y) > 12.0f ||
+        (ip->pos.x - fp->cur_pos.x) * fp->facing_dir < 0.0f ||
+        (ip->owner == fp->gobj && !ip->xDCE_flag.b0) ||
+        (gm_8016B168() && !gm_8016B0D4() && !ip->xDCE_flag.b1 && fp->team == ip->x20_team_id)) return 0;
+    hit.state = HitCapsule_Enabled; hit.damage = damage; hit.unk_count = damage;
+    hit.kb_angle = angle; hit.x24 = kbg; hit.x2C = bkb; hit.element = HitElement_Normal;
+    hit.hurt_coll_pos = ip->pos;
+    count_saved = it_804D6D18; memcpy(log_saved, it_804A0E70, sizeof log_saved);
+    it_804D6D18 = 0;
+    ip->xCA0 = damage; ip->xCA4 = damage;
+    it_8026F9AC(1, fp, &hit, ip, &ip->xACC_itemHurtbox[0]);
+    it_80270E30(e->gobj);
+    e->scripted_hurt = 1;
+    {
+        int committed = Item_ScriptCommitDamage(e->gobj);
+        e->scripted_hurt = 0;
+        memcpy(it_804A0E70, log_saved, sizeof log_saved); it_804D6D18 = count_saved;
+        return committed != 0;
+    }
+}
+
+/* Isolated scalar/ownership lifecycle and source-contact regressions without disc assets. */
+int ScriptGame_EnemyTest(void)
+{
+    static Item item;
+    static Fighter source;
+    HSD_GObj gobj = { 0 }, from = { 0 };
+    ScriptStageEnemy* e = &script_stage.enemy[SCRIPT_STAGE_ENEMIES - 1];
+    ScriptStageEnemy saved = *e;
+    union { float f; int i; } reach;
+    int rc = 0, attack, i;
+    extern int Item_ScriptCommitDamage(Item_GObj*);
+    memset(&item, 0, sizeof item); memset(&source, 0, sizeof source); memset(e, 0, sizeof *e);
+    gobj.user_data = &item; from.user_data = &source;
+    item.entity = &gobj; item.pos.x = 4; item.pos.y = 2;
+    item.xAC8_hurtboxNum = 1; item.xACC_itemHurtbox[0].state = HurtCapsule_Enabled;
+    e->handle = 0x7FFFFFFF; e->active = 1; e->gobj = &gobj; e->last_group = -1;
+    source.player_id = 0; reach.f = 10;
+    for (i = 0; i <= 2; i += 2) {
+        e->kind = script_enemy_kinds[i];
+        if (ScriptGame_EnemyI(e->handle, 0) != i) rc = 1;
+    }
+    if (ScriptGame_EnemyF(e->handle, 0) != 4 || !ScriptGame_EnemyI(e->handle, 8)) rc = 1;
+    ScriptGame_EnemyContact(&gobj, 0, 7); attack = e->attack_id;
+    ScriptGame_EnemyContact(&gobj, 1, 7);
+    if (e->hits != 2 || e->attack_id != attack || e->last_victim != 1) rc = 1;
+    item.msid = 1; script_enemy_sample(e); item.msid = 0; script_enemy_sample(e);
+    ScriptGame_EnemyContact(&gobj, 0, 7);
+    if (e->attack_id <= attack) rc = 1;
+    attack = e->attack_id;
+    item.x5D4_hitboxes[0].hit.state = HitCapsule_Disabled; script_enemy_sample(e);
+    item.x5D4_hitboxes[0].hit.state = HitCapsule_Enabled; script_enemy_sample(e);
+    if (e->attack_id <= attack) rc = 1;
+    ScriptGame_EnemyReceived(&gobj, &from, 9);
+    source.is_sub_fighter = 1; ScriptGame_EnemyReceived(&gobj, &from, 9);
+    source.is_sub_fighter = 0; e->scripted_hurt = 1; ScriptGame_EnemyReceived(&gobj, &from, 9);
+    e->scripted_hurt = 0;
+    if (e->received != 1 || e->last_attacker != 0 || e->last_damage != 9) rc = 1;
+    item.xD0C = 2;
+    if (ScriptGame_EnemyI(e->handle, 8) || Item_ScriptCommitDamage(&gobj)) rc = 1;
+    item.xD0C = 0; item.xACC_itemHurtbox[0].state = HurtCapsule_Intangible;
+    if (ScriptGame_EnemyI(e->handle, 8)) rc = 1;
+    if (ScriptGame_EnemyStrike(e->handle, -1, 10, 45, 70, 20, reach.i) ||
+        ScriptGame_EnemyHurt(e->handle, -1, 10, 45, 70, 20, reach.i) ||
+        script_enemy_spec(31, 45, 70, 20, 10) || script_enemy_spec(10, 362, 70, 20, 10) ||
+        script_enemy_spec(10, 45, 70, 20, 0) || script_enemy_spec(10, 45, 70, 20, 31)) rc = 1;
+    e->active = 0;
+    if (ScriptGame_EnemyAlive(e->handle) || ScriptGame_EnemyI(e->handle, 3) != -1 ||
+        ScriptGame_EnemyContact(&gobj, 0, 7)) rc = 1;
+    e->active = 1; e->handle--;
+    if (ScriptGame_EnemyAlive(0x7FFFFFFF)) rc = 1;
+    *e = saved;
+    return rc;
 }
 
 /* The knockback a hit would give the fighter in `slot` now: ftColl_80079AB0 (the fighter-hit

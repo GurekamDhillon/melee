@@ -11,4 +11,15 @@ typedef struct GwFxQuery {
     float min_x, min_y, min_z, max_x, max_y, max_z;
 } GwFxQuery;
 int gw_Fx_Query(int index, GwFxQuery *out);
+int gw_Fx_LabAttach(const char *package, int jobj, int script, int port, int joint, int frame, int facing,
+                    float x, float y, float z, float scale);
+void gw_Fx_LabStop(int script);
+typedef struct GwFxLabQuery {
+    int age, emitters, particles, emitting, refused, refused_emitters;
+} GwFxLabQuery;
+int gw_Fx_LabPlay(const char *package, int jobj, int script, int port, int joint,
+                 int frame, int facing, float x, float y, float z, float scale, unsigned seed);
+int gw_Fx_LabControl(int handle, int script, int emitter, const float values[7], int frames);
+int gw_Fx_LabEnd(int handle, int script, int fade_frames);
+int gw_Fx_LabQuery(int handle, int script, GwFxLabQuery *out);
 #endif

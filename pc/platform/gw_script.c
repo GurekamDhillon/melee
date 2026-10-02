@@ -5601,7 +5601,7 @@ static int l_enemy_state(lua_State *L) {
     gs_setint(L, "handle", h); gs_setbool(L, "alive", 1);
     for (i = 0; i < 8; ++i) {
         int value = gw_ScriptGame_EnemyI(h, i);
-        if (!i) gs_setstr(L, "kind", value >= 0 && value < 6 ? gs_enemy_names[value] : "unknown");
+        if (!i) gs_setstr(L, "kind", value >= 0 && value < GS_ENEMY_KINDS ? gs_enemy_names[value] : "unknown");
         else gs_setint(L, ints[i], value);
     }
     for (i = 0; i < 5; ++i) gs_setnum(L, floats[i], gw_ScriptGame_EnemyF(h, i));

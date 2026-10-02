@@ -1,0 +1,102 @@
+{
+  "branch": "agent/sol-native-owner-cleanup-20260930",
+  "seed": "/home/gd/melee_linux_test/gdm/_build/sol-worktrees/native-owner-cleanup-seed",
+  "patch": "/home/gd/melee_linux_test/gdm/_build/sol-worktrees/native-owner-cleanup/native-owner-cleanup.patch",
+  "files": [
+    {
+      "path": "pc/gameworld/script_game.c",
+      "seed_sha256": "2561a4360ea0ec6d56535cbc31f292aa45f12f623b21917787491e7ef0267afa",
+      "sha256": "fa2e2584ac7971e7fa3c43f2e8329aa8e850542eb4dc14827e0f9d25517b9d6d",
+      "added": 53,
+      "removed": 5
+    },
+    {
+      "path": "pc/gameworld/script_model.h",
+      "seed_sha256": "c6d0fd784d7d30cabb926d8c4b1605be5164f88f20ae766bc02c955c1d348148",
+      "sha256": "708d8c2cd02be8547b12a31b7546414edab48a60d6418968b8e4e53a3ca67b36",
+      "added": 2,
+      "removed": 1
+    },
+    {
+      "path": "pc/gameworld/script_model.inc",
+      "seed_sha256": "2196b946d12c81118bb48e493c37154888685ce2b7d10ebfc252c2ae88b1d52a",
+      "sha256": "a74f4e8e425e47376c75b650c6e7fc679b9f10fd7c9e2422656ce91bc959fc3e",
+      "added": 54,
+      "removed": 2
+    },
+    {
+      "path": "pc/gameworld/script_stage_owner.inc",
+      "seed_sha256": null,
+      "sha256": "60a63d539b0b2a62a9df07723aab3df2ec36d113f11e8d64d179667273c4319e",
+      "added": 79,
+      "removed": 0
+    },
+    {
+      "path": "pc/platform/gw_script.c",
+      "seed_sha256": "d3c4833dfc3cc1a8b74ad7e5c73106f40cb0d40e44a6d026e99972237c7c6398",
+      "sha256": "a7be932fa522c17ced03dd3591f25c00f638b5083d0f613a7d8782affb1dae83",
+      "added": 43,
+      "removed": 0
+    },
+    {
+      "path": "pc/platform/gw_script.h",
+      "seed_sha256": "b80a3c5fc1a116b131b0dcbcac131e496c699d4535baaee5e2a999a3851de647",
+      "sha256": "7adeff92bec4e9bcab88b345d66f40597052eab998aea388f38d6593270623b1",
+      "added": 4,
+      "removed": 0
+    },
+    {
+      "path": "pc/platform/gw_script_model_api.inc",
+      "seed_sha256": "84c15a5aef8c1482509f39228bd0ae8c2728debcd55e6edf4feb484f88c2777c",
+      "sha256": "ae3b7f61a8393e4bb623d0d49832e9ac98c2cb69a12f8690e10dc803e1ec2f25",
+      "added": 10,
+      "removed": 3
+    },
+    {
+      "path": "pc/platform/gw_script_model_tests.inc",
+      "seed_sha256": "6e3cd76c4898d97d0085eaf460e8bd10512ed22b4006afb74ba8e28423617077",
+      "sha256": "0a975b2491ebcedd578ad4eb3cda57a37b0ca2eedc317e75f51be35264ce80f2",
+      "added": 111,
+      "removed": 0
+    },
+    {
+      "path": "pc/tests/model_instance_test.c",
+      "seed_sha256": "2384b65c7f299c410609dddf9b1cf1f34b4458579d1ed20dba24dac3bbadfee2",
+      "sha256": "40da16effff1875ee74c569ae64b698732239575791d75000d36b6d7d7be690a",
+      "added": 75,
+      "removed": 2
+    }
+  ],
+  "verified": [
+    "actual-source model_instance_test.c with -Wall -Wextra -Werror",
+    "same standalone test with ASan and UBSan",
+    "i686 syntax check pc/platform/gw_script.c",
+    "PPC syntax check pc/gameworld/script_game.c",
+    "git diff --check"
+  ],
+  "pending": [
+    "Rebuild native gw_script.c and game script_game.c; relink and regenerate bridge to fixpoint with ABI audit",
+    "Run registered script_model_api and script_model_owner_cleanup in linked --test harness",
+    "Live native two-script model/floor unload probe, preserving the second script and shared atlas",
+    "Live native refusal/shadowed Lua cleanup then unload, plus scene-end and optional saved-state generation reclamation"
+  ],
+  "api": [
+    "ScriptGame_ModelRefOwned(asset, token, owner, delta) returns owned-load-ref validity / retain / release success",
+    "ScriptGame_StageResourceAccess(handle, owner) returns 1 owned, -1 foreign, 0 absent",
+    "ScriptGame_StageReleaseOwner(owner) returns remaining live records after bounded cleanup",
+    "ScriptGame_StageReleaseDeadOwners() returns remaining dead-owner records after reconciliation",
+    "Script_StageResourceOwner()/Alive(owner) platform callbacks use monotonically allocated generation IDs"
+  ],
+  "limits": [
+    "Standalone collision operations are explicit fakes; they do not certify mpLib or traversal",
+    "Registered native fixture uses real GXMS/GXTX loader and game-side visual instances but no GPU or collision map; it has only been syntax checked",
+    "Immutable assets and shared atlases remain scene-pinned until actual StageEnd/StagePrepare",
+    "If active collision map is absent or changed, native removal retains records and schedules bounded retry"
+  ],
+  "snapshot": [
+    "script_game.c BSS already included in gw_snap.c game global snapshot set",
+    "Owner fields extend runtime instance, floor line, DAT model, target records; bounded model load-reference ledger adds 64 x (1+32) scalar ints",
+    "Owner generation serial and loaded-script identities remain native and never rewind; retired snapshot generations are reconciled before on_loadstate callbacks",
+    "No instance struct crosses the bridge; new native functions use scalar arguments only; no generated bridge files were edited"
+  ]
+}

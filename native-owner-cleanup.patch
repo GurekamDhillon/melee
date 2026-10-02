@@ -1,0 +1,802 @@
+--- a/pc/gameworld/script_game.c
++++ b/pc/gameworld/script_game.c
+@@ -72,11 +72,11 @@
+ #define SCRIPT_STAGE_ARCHIVES 8
+ #define SCRIPT_STAGE_ARCHIVE_MAX (8 * 1024 * 1024)
+ typedef struct {
+-    int handle, active, kind, flags, model_handle;
++    int handle, active, kind, flags, model_handle, owner;
+     float x0, y0, x1, y1;
+ } ScriptStageLine;
+ typedef struct {
+-    int handle, active;
++    int handle, active, owner;
+     Item_GObj* gobj;
+     float x, y;
+ } ScriptStageTarget;
+@@ -87,7 +87,7 @@
+     int received, last_attacker, last_damage, scripted_hurt;
+ } ScriptStageEnemy;
+ typedef struct {
+-    int handle, active, line_handle;
++    int handle, active, line_handle, owner;
+     HSD_GObj* gobj;
+     float x, y, z, scale, rot;
+ } ScriptStageModel;
+@@ -100,6 +100,8 @@
+ extern int Script_ModelInput(int field, int line);
+ extern void Script_ModelDraw(int slot, Mtx view);
+ extern void Script_StageModelsReset(void);
++extern int Script_StageResourceOwner(void);
++extern int Script_StageResourceOwnerAlive(int owner);
+ static int script_mesh_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
+ static float script_mesh_float(int i) { union { float f; int i; } u; u.i = i; return u.f; }
+ static struct {
+@@ -119,6 +121,7 @@
+     ScriptStageArchive archives[SCRIPT_STAGE_ARCHIVES];
+     ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
+     struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
++    struct { int owner, refs[SCRIPT_MESH_ASSETS]; } model_owner[SCRIPT_MESH_OWNERS];
+ } script_stage;
+ static Article* script_target_old_article;
+ #include "script_bounds.inc"
+@@ -336,6 +339,7 @@
+     Script_StageModelsReset();
+     memset(script_stage.instance, 0, sizeof script_stage.instance);
+     memset(script_stage.asset, 0, sizeof script_stage.asset);
++    memset(script_stage.model_owner, 0, sizeof script_stage.model_owner);
+     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) script_stage.line[i].active = 0;
+     for (i = 0; i < SCRIPT_STAGE_MODELS; ++i) script_stage.model[i].active = 0;
+     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i) {
+@@ -680,6 +684,7 @@
+     script_stage.line[i].kind = kind;
+     script_stage.line[i].flags = flags;
+     script_stage.line[i].model_handle = 0;
++    script_stage.line[i].owner = Script_StageResourceOwner();
+     script_stage.line[i].x0 = x0; script_stage.line[i].y0 = y0;
+     script_stage.line[i].x1 = x1; script_stage.line[i].y1 = y1;
+     mpJointListAdd(j);
+@@ -697,10 +702,10 @@
+         if (m->active && m->handle == handle) {
+             int attached = m->line_handle;
+             HSD_GObj* gobj = m->gobj;
++            if (attached && !ScriptGame_StageRemove(attached)) return 0;
+             m->active = 0;
+             m->gobj = NULL;
+             m->line_handle = 0;
+-            if (attached) ScriptGame_StageRemove(attached);
+             HSD_GObjFree(gobj);
+             OSReport("script stage: removed model handle=%d\n", handle);
+             return 1;
+@@ -709,6 +714,7 @@
+     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+         if (script_stage.line[i].active && script_stage.line[i].handle == handle) {
+             int j = script_stage.base_j + i;
++            if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return 0;
+             mpLib_80057BC0(j);
+             script_stage.map->joints[j].ranges[MapLineGroup_Dynamic].count = 0;
+             script_stage.line[i].active = 0;
+@@ -811,6 +817,46 @@
+ }
+ 
+ #include "script_model.inc"
++#include "script_stage_owner.inc"
++
++/* Headless --test fixture: visual instances exercise their real native lifecycle
++ * without stage/GX objects. The sentinel is never rendered or passed to GObjFree.
++ * Refuse an actual scene, and require complete cleanup before retiring it. */
++int ScriptGame_ModelOwnerTestFixture(int on)
++{
++    static int active;
++    int i;
++    if (script_stage.map || script_stage.cap) return 0;
++    for (i = 0; i < SCRIPT_STAGE_LINES; ++i)
++        if (script_stage.line[i].active) return 0;
++    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i)
++        if (script_stage.model[i].active) return 0;
++    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i)
++        if (script_stage.target[i].active) return 0;
++    if (on == 2) {
++        if (!active || script_stage.draw != (HSD_GObj*) &script_stage) return 0;
++        script_stage.draw = NULL;
++        active = 0;
++        ScriptGame_StageEnd();
++        return 1;
++    }
++    for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
++        if (script_stage.instance[i].handle) return 0;
++    for (i = 0; i < SCRIPT_MESH_ASSETS; ++i)
++        if (script_stage.asset[i].refs || script_stage.asset[i].instances) return 0;
++    if (on) {
++        if (active || script_stage.draw) return 0;
++        active = 1;
++        script_stage.draw = (HSD_GObj*) &script_stage;
++    } else {
++        if (!active || script_stage.draw != (HSD_GObj*) &script_stage) return 0;
++        script_stage.draw = NULL;
++        active = 0;
++        memset(script_stage.asset, 0, sizeof script_stage.asset);
++        memset(script_stage.model_owner, 0, sizeof script_stage.model_owner);
++    }
++    return 1;
++}
+ 
+ /* Ground_801C126C's preorder numbering, scoped to a map_head model group. A copy of
+  * the chosen descriptor cuts its next sibling, so HSD_JObjLoadJoint owns this branch only. */
+@@ -909,6 +955,7 @@
+     script_stage.model[i].handle = handle;
+     script_stage.model[i].active = 1;
+     script_stage.model[i].line_handle = 0;
++    script_stage.model[i].owner = Script_StageResourceOwner();
+     script_stage.model[i].gobj = gobj;
+     script_stage.model[i].x = pos.x;
+     script_stage.model[i].y = pos.y;
+@@ -929,7 +976,7 @@
+         for (k = 0; k < SCRIPT_STAGE_LINES; ++k) {
+             ScriptStageLine* s = &script_stage.line[k];
+             if (s->active && s->handle == line_handle && s->kind == 1 &&
+-                s->model_handle == 0) {
++                s->model_handle == 0 && s->owner == m->owner) {
+                 m->line_handle = line_handle;
+                 s->model_handle = model_handle;
+                 OSReport("script stage: model %d carries line %d\n", model_handle,
+@@ -1061,6 +1108,7 @@
+     GET_ITEM(gobj)->xDCC_flag.b4567 = 0;
+     script_stage.target[i].handle = handle;
+     script_stage.target[i].active = 1;
++    script_stage.target[i].owner = Script_StageResourceOwner();
+     script_stage.target[i].gobj = gobj;
+     script_stage.target[i].x = pos.x;
+     script_stage.target[i].y = pos.y;
+--- a/pc/gameworld/script_model.h
++++ b/pc/gameworld/script_model.h
+@@ -4,13 +4,14 @@
+ #define SCRIPT_MESH_ASSETS 32
+ #define SCRIPT_MESH_INSTANCES 128
+ #define SCRIPT_MESH_LINES 32
++#define SCRIPT_MESH_OWNERS 64
+ enum { SM_X, SM_Y, SM_Z, SM_ROT, SM_SCALE, SM_LAYER, SM_VISIBLE, SM_TINT,
+        SM_SX, SM_SY, SM_SZ, SM_ALPHA, SM_FIELDS };
+ #define SM_FLOAT_FIELD(i) ((i) <= SM_SCALE || ((i) >= SM_SX && (i) <= SM_SZ))
+ #define SM_IS_ALPHA(m) ((m)->field[SM_ALPHA] || (((m)->field[SM_TINT] & 255) != 255))
+ /* Transform fields are float bits; layer, visible and RGBA tint are integers. */
+ typedef struct {
+-    int handle, asset, field[SM_FIELDS], count, dynamic;
++    int handle, asset, field[SM_FIELDS], count, dynamic, owner;
+     float center[3]; /* immutable mesh bounds centre, mirrored with its transform */
+     struct { float x0, y0, x1, y1; int kind, flags, handle; } line[SCRIPT_MESH_LINES];
+ } ScriptMeshInstance;
+--- a/pc/gameworld/script_model.inc
++++ b/pc/gameworld/script_model.inc
+@@ -13,6 +13,47 @@
+     return 1;
+ }
+ 
++/* A load reference belongs to one script generation. Assets and atlas bytes stay
++ * scene-pinned; retiring a script releases only its scalar retain counts. */
++int ScriptGame_ModelRefOwned(int asset, int token, int owner, int delta)
++{
++    int i, free_slot = -1;
++    if (owner <= 0 || asset < 0 || asset >= SCRIPT_MESH_ASSETS) return 0;
++    for (i = 0; i < SCRIPT_MESH_OWNERS; ++i) {
++        if (script_stage.model_owner[i].owner == owner) break;
++        if (!script_stage.model_owner[i].owner && free_slot < 0) free_slot = i;
++    }
++    if (delta <= 0) {
++        int j;
++        if (i == SCRIPT_MESH_OWNERS || !script_stage.model_owner[i].refs[asset] ||
++            !ScriptGame_ModelRef(asset, token, delta)) return 0;
++        if (delta == 0) return 1;
++        --script_stage.model_owner[i].refs[asset];
++        for (j = 0; j < SCRIPT_MESH_ASSETS; ++j)
++            if (script_stage.model_owner[i].refs[j]) return 1;
++        script_stage.model_owner[i].owner = 0;
++        return 1;
++    }
++    if (i == SCRIPT_MESH_OWNERS) i = free_slot;
++    if (i < 0 || !ScriptGame_ModelRef(asset, token, 1)) return 0;
++    script_stage.model_owner[i].owner = owner;
++    ++script_stage.model_owner[i].refs[asset];
++    return 1;
++}
++
++static void script_model_release_owner_refs(int owner)
++{
++    int i, j;
++    for (i = 0; i < SCRIPT_MESH_OWNERS; ++i) {
++        if (script_stage.model_owner[i].owner != owner) continue;
++        for (j = 0; j < SCRIPT_MESH_ASSETS; ++j) {
++            script_stage.asset[j].refs -= script_stage.model_owner[i].refs[j];
++            script_stage.model_owner[i].refs[j] = 0;
++        }
++        script_stage.model_owner[i].owner = 0;
++    }
++}
++
+ int ScriptGame_ModelSlot(int handle)
+ {
+     int i;
+@@ -29,6 +70,7 @@
+     if (field == -2) return m->asset;
+     if (field == -3) return m->count;
+     if (field == -4) return m->dynamic;
++    if (field == -5) return m->owner;
+     return field >= 0 && field < SM_FIELDS ? m->field[field] : 0;
+ }
+ 
+@@ -79,15 +121,17 @@
+ {
+     ScriptMeshInstance candidate;
+     float points[SCRIPT_MESH_LINES][4];
+-    int i, slot, free_lines = 0;
++    int i, slot, free_lines = 0, owner = Script_StageResourceOwner();
+     if (!ScriptGame_ModelRef(asset, token, 0) || count < 0 || count > SCRIPT_MESH_LINES ||
+         script_stage.draw == NULL) return -1;
++    if (owner > 0 && !ScriptGame_ModelRefOwned(asset, token, owner, 0)) return -1;
+     for (slot = 0; slot < SCRIPT_MESH_INSTANCES && script_stage.instance[slot].handle; ++slot) {}
+     if (slot == SCRIPT_MESH_INSTANCES) return -2;
+     for (i = 0; i < script_stage.cap; ++i) if (!script_stage.line[i].active) ++free_lines;
+     if (count > free_lines || (count && script_stage.map == NULL)) return -3;
+     memset(&candidate, 0, sizeof candidate);
+     candidate.handle = handle; candidate.asset = asset; candidate.count = count;
++    candidate.owner = owner;
+     for (i = 0; i < SM_FIELDS; ++i) candidate.field[i] = Script_ModelInput(i, -1);
+     for (i = 0; i < 3; ++i) candidate.center[i] = script_mesh_float(Script_ModelInput(SM_FIELDS + i, -1));
+     for (i = 0; i < count; ++i) {
+@@ -170,7 +214,15 @@
+     ScriptMeshInstance* m;
+     if (slot < 0) return 0;
+     m = &script_stage.instance[slot];
+-    for (i = 0; i < m->count; ++i) ScriptGame_StageRemove(m->line[i].handle);
++    /* Keep the instance and its reference if even one live collision segment
++     * cannot be retired. A later retry may finish partially removed segments. */
++    for (i = 0; i < m->count; ++i) {
++        int j;
++        for (j = 0; j < script_stage.cap; ++j)
++            if (script_stage.line[j].active && script_stage.line[j].handle == m->line[i].handle) break;
++        if (j == script_stage.cap) continue;
++        if (!ScriptGame_StageRemove(m->line[i].handle)) return 0;
++    }
+     --script_stage.asset[m->asset].instances;
+     memset(m, 0, sizeof *m);
+     OSReport("script model: despawn instance=%d\n", handle);
+--- /dev/null
++++ b/pc/gameworld/script_stage_owner.inc
+@@ -0,0 +1,79 @@
++/* Included after script_model.inc. All ownership is scalar game snapshot data;
++ * immutable model/atlas bytes remain pinned in the native scene cache. */
++int ScriptGame_StageResourceAccess(int handle, int owner)
++{
++    int i, found = -1;
++    for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
++        if (script_stage.instance[i].handle == handle && handle > 0)
++            found = script_stage.instance[i].owner;
++    for (i = 0; i < SCRIPT_STAGE_LINES; ++i)
++        if (script_stage.line[i].active && script_stage.line[i].handle == handle)
++            found = script_stage.line[i].owner;
++    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i)
++        if (script_stage.model[i].active && script_stage.model[i].handle == handle)
++            found = script_stage.model[i].owner;
++    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i)
++        if (script_stage.target[i].active && script_stage.target[i].handle == handle)
++            found = script_stage.target[i].owner;
++    return found < 0 ? 0 : found == owner && owner > 0 ? 1 : -1;
++}
++
++/* Return the remaining live records, never a confirmation based on Lua tables.
++ * A wrong/currently absent mpLib map makes StageRemove refuse, leaving records
++ * available for another attempt or the real StageEnd lifecycle reset. */
++int ScriptGame_StageReleaseOwner(int owner)
++{
++    int i, remaining = 0;
++    if (owner <= 0) return 0;
++    for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
++        if (script_stage.instance[i].handle && script_stage.instance[i].owner == owner)
++            ScriptGame_ModelDespawn(script_stage.instance[i].handle);
++    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i)
++        if (script_stage.model[i].active && script_stage.model[i].owner == owner)
++            ScriptGame_StageRemove(script_stage.model[i].handle);
++    for (i = 0; i < SCRIPT_STAGE_LINES; ++i)
++        if (script_stage.line[i].active && script_stage.line[i].owner == owner &&
++            !script_stage.line[i].model_handle)
++            ScriptGame_StageRemove(script_stage.line[i].handle);
++    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i)
++        if (script_stage.target[i].active && script_stage.target[i].owner == owner)
++            ScriptGame_StageRemove(script_stage.target[i].handle);
++    script_model_release_owner_refs(owner);
++    for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
++        if (script_stage.instance[i].handle && script_stage.instance[i].owner == owner) ++remaining;
++    for (i = 0; i < SCRIPT_STAGE_LINES; ++i)
++        if (script_stage.line[i].active && script_stage.line[i].owner == owner) ++remaining;
++    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i)
++        if (script_stage.model[i].active && script_stage.model[i].owner == owner) ++remaining;
++    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i)
++        if (script_stage.target[i].active && script_stage.target[i].owner == owner) ++remaining;
++    return remaining;
++}
++
++/* An old snapshot can resurrect a retired script generation. Resolve each dead
++ * owner once, also serving as a bounded retry after unsafe-map cleanup refusal. */
++int ScriptGame_StageReleaseDeadOwners(void)
++{
++    int owners[SCRIPT_MESH_INSTANCES + SCRIPT_STAGE_LINES + SCRIPT_STAGE_MODELS +
++               SCRIPT_STAGE_TARGETS + SCRIPT_MESH_OWNERS];
++    int i, j, n = 0, remaining = 0;
++#define STAGE_DEAD_OWNER(id) do { \
++    int candidate_owner = (id); \
++    if (candidate_owner > 0 && !Script_StageResourceOwnerAlive(candidate_owner)) { \
++        for (j = 0; j < n && owners[j] != candidate_owner; ++j) {} \
++        if (j == n) owners[n++] = candidate_owner; \
++    } \
++} while (0)
++    for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
++        if (script_stage.instance[i].handle) STAGE_DEAD_OWNER(script_stage.instance[i].owner);
++    for (i = 0; i < SCRIPT_STAGE_LINES; ++i)
++        if (script_stage.line[i].active) STAGE_DEAD_OWNER(script_stage.line[i].owner);
++    for (i = 0; i < SCRIPT_STAGE_MODELS; ++i)
++        if (script_stage.model[i].active) STAGE_DEAD_OWNER(script_stage.model[i].owner);
++    for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i)
++        if (script_stage.target[i].active) STAGE_DEAD_OWNER(script_stage.target[i].owner);
++    for (i = 0; i < SCRIPT_MESH_OWNERS; ++i) STAGE_DEAD_OWNER(script_stage.model_owner[i].owner);
++#undef STAGE_DEAD_OWNER
++    for (i = 0; i < n; ++i) remaining += ScriptGame_StageReleaseOwner(owners[i]);
++    return remaining;
++}
+--- a/pc/platform/gw_script.c
++++ b/pc/platform/gw_script.c
+@@ -74,6 +74,9 @@
+ extern float gw_ScriptGame_ItemF(int index, int field);
+ extern void gw_ScriptGame_LaunchScene(int game_mode);
+ extern int gw_ScriptGame_StageAddLine(int x0, int y0, int x1, int y1, int kind, int flags, int handle);
++extern int gw_ScriptGame_StageResourceAccess(int handle, int owner);
++extern int gw_ScriptGame_StageReleaseOwner(int owner);
++extern int gw_ScriptGame_StageReleaseDeadOwners(void);
+ extern int gw_ScriptGame_StageRemove(int handle);
+ extern int gw_ScriptGame_StageMove(int handle, int x, int y);
+ extern int gw_ScriptGame_StageAddModel(int group, int joint, int x, int y, int z,
+@@ -233,6 +236,7 @@
+     int errors;
+     int disabled;
+     int used;
++    int stage_owner; /* unique script-load generation; never restored or reused */
+     uint64_t src_hash;
+ } GsScript;
+ 
+@@ -375,6 +379,19 @@
+ /* Token allocation is native and never rewound: a handle from a discarded savestate future
+  * cannot alias a new object after load. The object's handle itself lives in game memory. */
+ static int gs_stage_handle_serial;
++static int gs_stage_owner_serial;
++static int gs_stage_cleanup_pending;
++static void gs_stage_cleanup_dead(void);
++int gw_Script_StageResourceOwner(void) {
++    return gs.cur >= 0 && gs.cur < gs.n && gs.s[gs.cur].used && gs.s[gs.cur].gameplay ?
++        gs.s[gs.cur].stage_owner : 0;
++}
++int gw_Script_StageResourceOwnerAlive(int owner) {
++    int i;
++    for (i = 0; i < gs.n; ++i)
++        if (gs.s[i].used && gs.s[i].stage_owner == owner && owner > 0) return 1;
++    return 0;
++}
+ static void gs_fly_clear_owner(int owner);
+ static void gs_fly_cursor_reset(void);
+ static int gs_stage_isolation_owner;
+@@ -4927,6 +4944,8 @@
+     lua_getfield(L, 1, "platform");
+     if (!lua_isnil(L, -1)) platform = gs_stage_handle_arg(L, -1);
+     lua_pop(L, 1);
++    if (platform && gw_ScriptGame_StageResourceAccess(platform, gw_Script_StageResourceOwner()) < 0)
++        return luaL_error(L, "platform handle belongs to another script");
+     x = gs_stage_field_num(L, "x", 0.0f);
+     y = gs_stage_field_num(L, "y", 0.0f);
+     z = gs_stage_field_num(L, "z", 0.0f);
+@@ -5290,6 +5309,8 @@
+ static int l_stage_remove(lua_State *L) {
+     int h = gs_stage_handle_arg(L, 1);
+     gs_require_stage(L, "stage_remove");
++    if (gw_ScriptGame_StageResourceAccess(h, gw_Script_StageResourceOwner()) < 0)
++        return luaL_error(L, "stage handle belongs to another script");
+     if (gw_ScriptGame_ModelLineOwner(h))
+         return luaL_error(L, "line belongs to a runtime model; use model_despawn");
+     gs_rw_branch();
+@@ -5301,6 +5322,8 @@
+     int h = gs_stage_handle_arg(L, 1);
+     float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
+     gs_require_stage(L, "stage_move");
++    if (gw_ScriptGame_StageResourceAccess(h, gw_Script_StageResourceOwner()) < 0)
++        return luaL_error(L, "stage handle belongs to another script");
+     if (gw_ScriptGame_ModelLineOwner(h))
+         return luaL_error(L, "line belongs to a runtime model; use model_move");
+     gs_rw_branch();
+@@ -5899,6 +5922,11 @@
+     return -1;
+ }
+ 
++static void gs_stage_cleanup_dead(void) {
++    gs_rw_branch();
++    gs_stage_cleanup_pending = gw_ScriptGame_StageReleaseDeadOwners() != 0;
++}
++
+ static void gs_unload(int i) {
+     GsScript *s = &gs.s[i];
+     int k;
+@@ -5907,6 +5935,14 @@
+     }
+     if (gs_get_hook(i, "on_unload")) {
+         gs_pcall(i, 0, 0, "on_unload");
++    }
++    /* Lua may be disabled, throw, or refuse cleanup. The native registry remains
++     * authoritative, and this fallback cannot release another script's assets. */
++    gs_rw_branch();
++    k = gw_ScriptGame_StageReleaseOwner(s->stage_owner);
++    if (k) {
++        gs_stage_cleanup_pending = 1;
++        gw_log("script [%s] native stage cleanup pending (%d live records)", s->id, k);
+     }
+     if (gs.camera_owner == i + 1) {
+         gs_rw_branch();
+@@ -5943,6 +5979,7 @@
+ 
+ static int gs_alloc_script(void) {
+     int i, k;
++    if (gs_stage_owner_serial == INT_MAX) return -1;
+     for (i = 0; i < gs.n && gs.s[i].used; ++i) {
+     }
+     if (i == gs.n) {
+@@ -5952,6 +5989,7 @@
+         gs.n++;
+     }
+     memset(&gs.s[i], 0, sizeof gs.s[i]);
++    gs.s[i].stage_owner = ++gs_stage_owner_serial;
+     gs.s[i].env_ref = LUA_NOREF;
+     for (k = 0; k < GS_MAX_TASKS; ++k) {
+         gs.s[i].tasks[k] = LUA_NOREF;
+@@ -7010,6 +7048,7 @@
+     if (gs.rw_notify) {
+         gs.rw_notify = 0;
+         gs.nev = 0;
++        gs_stage_cleanup_dead();
+         gs_hook_all("on_loadstate", 1, 0, 0); /* slot 0 = the history */
+         if (gs.rwt_phase == 3) {
+             gs.rwt_phase = 4;
+@@ -7033,6 +7072,7 @@
+    or the loop top when paused (at_tick). A rewind starts a re-simulation burst, so it only
+    happens at the loop top. */
+ static void gs_apply_pending(int at_tick) {
++    if (gs_stage_cleanup_pending) gs_stage_cleanup_dead();
+     if ((gs.pending_save || gs.pending_load || gs.rw_pending_on || gs.st_pending_save[0] ||
+          gs.st_pending_load[0]) &&
+         gs_rw_session()) {
+@@ -7063,6 +7103,7 @@
+             gs_slot_restore(&gs.slot[slot]);
+             gs.rw_began = 0; /* the history belongs to the timeline we just left: start over */
+             gw_Console_Print(GS_GREEN, "loaded state %d", slot + 1);
++            gs_stage_cleanup_dead();
+             gs_hook_all("on_loadstate", 1, slot + 1, 0);
+         } else {
+             gw_Console_Print(GS_RED, "could not load state %d", slot + 1);
+@@ -7104,6 +7145,7 @@
+             gs.nev = 0;
+             gs.rw_began = 0; /* a new timeline */
+             gw_Console_Print(GS_GREEN, "state loaded: %s (frame %d)", h.name, h.match_frame);
++            gs_stage_cleanup_dead();
+             gs_hook_all("on_loadstate", 1, 9, 0); /* slot 9 = the library */
+         }
+     }
+@@ -9394,6 +9436,7 @@
+ 
+ void gw_script_tests_register(void) {
+     gw_test_register("script_model_api", test_script_model_api);
++    gw_test_register("script_model_owner_cleanup", test_script_model_owner_cleanup);
+     gw_test_register("script_stage_events", test_script_stage_events);
+     gw_test_register("script_boss_event", test_script_boss_event);
+     gw_test_register("script_set_damage", test_script_set_damage);
+--- a/pc/platform/gw_script.h
++++ b/pc/platform/gw_script.h
+@@ -56,6 +56,10 @@
+ /* script_game.c at stage load: 1 = reserve the Lua stage layer's collision room (offline
+  * gameplay scene, including for scripts loaded later); 0 = the stage's map exactly as before */
+ int gw_Script_StageWanted(void);
++/* Scalar ownership identity for stage/model creators. A script reload receives a
++ * fresh generation; restored resources of retired generations are reclaimed. */
++int gw_Script_StageResourceOwner(void);
++int gw_Script_StageResourceOwnerAlive(int owner);
+ /* Called only by the 1P boss controller; an event hook is opt-in and offline only. */
+ int gw_Script_BossHookEnabled(void);
+ 
+--- a/pc/platform/gw_script_model_api.inc
++++ b/pc/platform/gw_script_model_api.inc
+@@ -1,6 +1,7 @@
+ /* Native half of the runtime model API. Only immutable assets live here; the
+  * request buffers are read synchronously and copied by ScriptGame_Model*. */
+ extern int gw_ScriptGame_ModelRef(int asset, int token, int delta);
++extern int gw_ScriptGame_ModelRefOwned(int asset, int token, int owner, int delta);
+ extern int gw_ScriptGame_ModelSlot(int handle);
+ extern int gw_ScriptGame_ModelField(int slot, int field);
+ extern int gw_ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first_line);
+@@ -61,7 +62,8 @@
+ {
+     int token = gs_stage_handle_arg(L, at), i;
+     for (i = 0; i < gs_stage_nmodels; ++i)
+-        if (gs_stage_models[i].token == token && gw_ScriptGame_ModelRef(i, token, 0)) return i;
++        if (gs_stage_models[i].token == token &&
++            gw_ScriptGame_ModelRefOwned(i, token, gw_Script_StageResourceOwner(), 0)) return i;
+     return luaL_error(L, "stale or released model handle");
+ }
+ static int l_model_load(lua_State *L)
+@@ -72,7 +74,8 @@
+     gs_require_stage(L, "model_load");
+     i = gs_model_open(L, path) - 1;
+     gs_rw_branch();
+-    if (!gw_ScriptGame_ModelRef(i, gs_stage_models[i].token, 1)) return luaL_error(L, "model reference limit exceeded");
++    if (!gw_ScriptGame_ModelRefOwned(i, gs_stage_models[i].token, gw_Script_StageResourceOwner(), 1))
++        return luaL_error(L, "model reference or owner limit exceeded");
+     gw_log("script model: retain asset=%d handle=%d", i, gs_stage_models[i].token);
+     lua_pushinteger(L, gs_stage_models[i].token); return 1;
+ }
+@@ -81,7 +84,7 @@
+     int i;
+     gs_require_stage(L, "model_release"); i = gs_model_asset(L, 1);
+     gs_rw_branch();
+-    gw_ScriptGame_ModelRef(i, gs_stage_models[i].token, -1);
++    gw_ScriptGame_ModelRefOwned(i, gs_stage_models[i].token, gw_Script_StageResourceOwner(), -1);
+     gw_log("script model: release handle=%d (scene pin retained)", gs_stage_models[i].token);
+     return 0;
+ }
+@@ -134,6 +137,8 @@
+     gs_require_stage(L, move ? "model_move" : "model_set");
+     handle = gs_stage_handle_arg(L, 1); slot = gw_ScriptGame_ModelSlot(handle);
+     if (slot < 0) return luaL_error(L, "stale model instance");
++    if (gw_ScriptGame_StageResourceAccess(handle, gw_Script_StageResourceOwner()) < 0)
++        return luaL_error(L, "model instance belongs to another script");
+     for (i = 0; i < SM_FIELDS; ++i) field[i] = gw_ScriptGame_ModelField(slot, i);
+     if (move && !lua_istable(L, 2)) {
+         field[SM_X] = gs_fbits(gs_stage_num(L, 2)); field[SM_Y] = gs_fbits(gs_stage_num(L, 3));
+@@ -150,6 +155,8 @@
+ {
+     int h = gs_stage_handle_arg(L, 1);
+     gs_require_stage(L, "model_despawn"); gs_rw_branch();
++    if (gw_ScriptGame_StageResourceAccess(h, gw_Script_StageResourceOwner()) < 0)
++        return luaL_error(L, "model instance belongs to another script");
+     lua_pushboolean(L, gw_ScriptGame_ModelDespawn(h)); return 1;
+ }
+ static void gs_model_push_instance(lua_State *L, int slot)
+--- a/pc/platform/gw_script_model_tests.inc
++++ b/pc/platform/gw_script_model_tests.inc
+@@ -116,3 +116,114 @@
+     RemoveDirectoryA(dir);
+     return rc;
+ }
++
++extern int gw_ScriptGame_ModelOwnerTestFixture(int on);
++static int t_model_script_int(int script, const char *field)
++{
++    int value;
++    lua_rawgeti(gs.L, LUA_REGISTRYINDEX, gs.s[script].env_ref);
++    lua_getfield(gs.L, -1, field);
++    value = (int) lua_tointeger(gs.L, -1);
++    lua_pop(gs.L, 2);
++    return value;
++}
++static int t_model_owner_script(const char *id, const char *entry, const char *source)
++{
++    size_t len = strlen(source);
++    char *copy = malloc(len + 1);
++    if (!copy) return -1;
++    memcpy(copy, source, len + 1);
++    return gs_load_text(id, entry, copy, len, "{\"gameplay\":true}", "test");
++}
++
++/* Exercise gs_unload and the actual gd.model_* wrappers against game-side
++ * visual instances. Real collision-joint removal additionally needs a live
++ * stage; model_instance_test.c covers its ledger with explicit collision fakes. */
++static int test_script_model_owner_cleanup(void)
++{
++    static const char side[] = "{\"version\":1,\"atlas\":\"kit\",\"lines\":[]}";
++    static const char base[] = "asset=gd.model_load('a'); handle=assert(gd.model_spawn(asset,{collision=false})); ";
++    static const char *files[] = {"a.gxmesh", "a.coll.json", "kit.gxtex"};
++    unsigned char mesh[138] = {0}, tex[128] = {0}, *image;
++    char out[128], dir[MAX_PATH], models[MAX_PATH], entry[MAX_PATH], path[MAX_PATH], source[1024];
++    int a = -1, b = -1, c = -1, d = -1, owner_a = 0, owner_b = 0, handle_b = 0;
++    int token = 0, i, rc = 1, fixture = 0, fail_line = 0, was_match;
++    if (t_exec("= 1", out, sizeof out) || gs_stage_nmodels) {
++        gw_test_fail("model owner test requires an empty headless scene"); return 1;
++    }
++    was_match = gs.match_active;
++    if (!gw_ScriptGame_ModelOwnerTestFixture(1)) {
++        gw_test_fail("model owner test cannot enter visual-only fixture"); return 1;
++    }
++    fixture = 1;
++    snprintf(dir, sizeof dir, "%s\\gw_model_owner_test", gs.exe_dir); CreateDirectoryA(dir, NULL);
++    snprintf(models, sizeof models, "%s\\models", dir); CreateDirectoryA(models, NULL);
++    snprintf(entry, sizeof entry, "%s\\scripts\\main.lua", dir);
++    memcpy(mesh, "GXMS", 4); gw_w32(mesh + 4, 2); gw_w32(mesh + 8, 3); gw_w32(mesh + 12, 3);
++    for (i = 16; i < 28; i += 4) gw_w32(mesh + i, (unsigned)gs_fbits(2));
++    gw_w32(mesh + 28, 36); gw_w32(mesh + 32, 132);
++    gw_w32(mesh + 68, (unsigned)gs_fbits(1)); gw_w32(mesh + 104, (unsigned)gs_fbits(1));
++    for (i = 0; i < 3; ++i) {
++        gw_w32(mesh + 36 + i * 32 + 28, (unsigned)gs_fbits(1)); gw_w16(mesh + 132 + i * 2, (uint16_t)i);
++    }
++    memcpy(tex, "GXTX", 4); gw_w32(tex + 4, 1); gw_w32(tex + 8, GX_TF_RGBA8);
++    gw_w32(tex + 12, 4); gw_w32(tex + 16, 4); gw_w32(tex + 20, 0xFFFFFFFF);
++    gw_w32(tex + 28, 64); gw_w32(tex + 36, 64); memset(tex + 64, 255, 64);
++#define MODEL_OWNER_CHECK(condition) do { if (!(condition)) { fail_line = __LINE__; goto done; } } while (0)
++    MODEL_OWNER_CHECK(t_model_file(models, files[0], mesh, sizeof mesh) &&
++        t_model_file(models, files[1], side, sizeof side - 1) && t_model_file(models, files[2], tex, sizeof tex));
++    gs.match_active = 1;
++    snprintf(source, sizeof source, "%sgd.model_load('a'); function on_unload() error('cleanup refusal') end", base);
++    a = t_model_owner_script("model_owner_a", entry, source);
++    MODEL_OWNER_CHECK(a >= 0);
++    owner_a = gs.s[a].stage_owner;
++    b = t_model_owner_script("model_owner_b", entry, base);
++    MODEL_OWNER_CHECK(b >= 0 && gs_stage_nmodels == 1);
++    owner_b = gs.s[b].stage_owner; handle_b = t_model_script_int(b, "handle");
++    token = t_model_script_int(b, "asset"); image = gs_stage_models[0].image;
++    MODEL_OWNER_CHECK(gw_ScriptGame_ModelRefOwned(0, token, owner_a, 0) &&
++        gw_ScriptGame_ModelRefOwned(0, token, owner_b, 0));
++    gs_unload(a); a = -1;
++    MODEL_OWNER_CHECK(!gw_ScriptGame_ModelRefOwned(0, token, owner_a, 0) &&
++        gw_ScriptGame_ModelRefOwned(0, token, owner_b, 0) && gw_ScriptGame_ModelSlot(handle_b) >= 0 &&
++        gs_stage_nmodels == 1 && gs_stage_models[0].image == image);
++    /* The reused script slot gets a fresh generation. Explicit release and a
++     * foreign instance mutation cannot consume the second owner's references. */
++    snprintf(source, sizeof source, "%sassert(not pcall(gd.model_despawn,%d)); "
++        "gd.model_release(asset); assert(not pcall(gd.model_release,asset)); "
++        "assert(not pcall(gd.model_spawn,asset,{})); assert(gd.model_set(handle,{x=3}));", base, handle_b);
++    c = t_model_owner_script("model_owner_c", entry, source);
++    MODEL_OWNER_CHECK(c >= 0 && gs.s[c].stage_owner != owner_a &&
++        gw_ScriptGame_StageReleaseOwner(owner_a) == 0 && gw_ScriptGame_ModelSlot(t_model_script_int(c, "handle")) >= 0);
++    gs_unload(c); c = -1; /* no on_unload hook */
++    MODEL_OWNER_CHECK(gw_ScriptGame_ModelSlot(handle_b) >= 0 && gw_ScriptGame_ModelRefOwned(0, token, owner_b, 0));
++    gs.s[b].disabled = 1; /* native fallback runs even when hooks are skipped */
++    gs_unload(b); b = -1;
++    MODEL_OWNER_CHECK(!gw_ScriptGame_ModelRef(0, token, 0) && gw_ScriptGame_ModelSlot(handle_b) < 0 &&
++        gs_stage_nmodels == 1 && gs_stage_models[0].image == image);
++    d = t_model_owner_script("model_owner_d", entry, base);
++    MODEL_OWNER_CHECK(d >= 0 && gw_ScriptGame_ModelOwnerTestFixture(2)); /* actual StageEnd path */
++    fixture = 0; gs.match_active = 0;
++    gs_unload(d); d = -1;
++    MODEL_OWNER_CHECK(!gs_stage_nmodels && gw_ScriptGame_StageReleaseOwner(owner_b) == 0 &&
++        gw_ScriptGame_StageReleaseDeadOwners() == 0);
++    rc = 0;
++done:
++    if (a >= 0) gs_unload(a);
++    if (b >= 0) gs_unload(b);
++    if (c >= 0) gs_unload(c);
++    if (d >= 0) gs_unload(d);
++    if (fixture && !gw_ScriptGame_ModelOwnerTestFixture(0)) {
++        gw_test_fail("model owner fixture retained native resources"); rc = 1;
++    }
++    gs.match_active = was_match;
++    gs_stage_cleanup_dead();
++    if (gs_stage_nmodels) gw_Script_StageModelsReset();
++    for (i = 0; i < sizeof files / sizeof *files; ++i) {
++        snprintf(path, sizeof path, "%s\\%s", models, files[i]); DeleteFileA(path);
++    }
++    RemoveDirectoryA(models); RemoveDirectoryA(dir);
++    if (rc) gw_test_fail("model owner unload failed at source line %d", fail_line);
++#undef MODEL_OWNER_CHECK
++    return rc;
++}
+--- a/pc/tests/model_instance_test.c
++++ b/pc/tests/model_instance_test.c
+@@ -6,14 +6,22 @@
+ #include <stdio.h>
+ #include <string.h>
+ #include "../gameworld/script_model.h"
++#define SCRIPT_STAGE_LINES 200
++#define SCRIPT_STAGE_MODELS 64
++#define SCRIPT_STAGE_TARGETS 32
+ static struct {
+     void *map, *draw;
+     int cap;
+-    struct { int active, handle, model_handle; float x0, y0, x1, y1; } line[200];
++    struct { int active, handle, model_handle, owner; float x0, y0, x1, y1; } line[200];
++    struct { int active, handle, owner; } model[SCRIPT_STAGE_MODELS], target[SCRIPT_STAGE_TARGETS];
+     ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
+     struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
++    struct { int owner, refs[SCRIPT_MESH_ASSETS]; } model_owner[SCRIPT_MESH_OWNERS];
+ } script_stage, snapshot;
+ static int input[SM_FIELDS + 3], line_input[6], line_sets, fail_after = -1;
++static int current_owner, alive_owner, remove_refused;
++static int Script_StageResourceOwner(void) { return current_owner; }
++static int Script_StageResourceOwnerAlive(int owner) { return owner == alive_owner; }
+ static int script_mesh_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
+ static float script_mesh_float(int i) { union { float f; int i; } u; u.i = i; return u.f; }
+ static int Script_ModelInput(int field, int line) { return line < 0 ? input[field] : line_input[field]; }
+@@ -25,6 +33,7 @@
+     if (fail_after > 0) --fail_after;
+     for (i = 0; i < script_stage.cap; ++i) if (!script_stage.line[i].active) {
+         script_stage.line[i].active = 1; script_stage.line[i].handle = handle;
++        script_stage.line[i].owner = current_owner;
+         script_stage.line[i].x0 = script_mesh_float(x0); script_stage.line[i].y0 = script_mesh_float(y0);
+         script_stage.line[i].x1 = script_mesh_float(x1); script_stage.line[i].y1 = script_mesh_float(y1);
+         return handle;
+@@ -34,7 +43,8 @@
+ static int ScriptGame_StageRemove(int handle)
+ {
+     int i;
+-    for (i = 0; i < script_stage.cap; ++i) if (script_stage.line[i].handle == handle) {
++    if (!script_stage.map || remove_refused == handle) return 0;
++    for (i = 0; i < script_stage.cap; ++i) if (script_stage.line[i].active && script_stage.line[i].handle == handle) {
+         script_stage.line[i].active = 0; return 1;
+     }
+     return 0;
+@@ -51,6 +61,7 @@
+ }
+ #define OSReport(...) ((void)0)
+ #include "../gameworld/script_model.inc"
++#include "../gameworld/script_stage_owner.inc"
+ 
+ int main(void)
+ {
+@@ -130,6 +141,68 @@
+     assert(ScriptGame_ModelSpawn(0, 7, 999, 0, 0) == -2);
+     assert(ScriptGame_ModelDespawn(100));
+     assert(ScriptGame_ModelSpawn(0, 7, 999, 0, 0) == 999 && ScriptGame_ModelSlot(100) == -1);
++    /* Two script generations share one immutable asset, but neither owns the
++     * other's load retains, instances or collision lines. */
++    memset(&script_stage, 0, sizeof script_stage);
++    script_stage.map = script_stage.draw = &script_stage; script_stage.cap = 8;
++    current_owner = 41;
++    assert(ScriptGame_ModelRefOwned(0, 17, 41, 1));
++    assert(ScriptGame_ModelRefOwned(0, 17, 41, 1));
++    assert(!ScriptGame_ModelRefOwned(0, 17, 42, 0));
++    assert(!ScriptGame_ModelRefOwned(0, 17, 42, -1));
++    assert(ScriptGame_ModelSpawn(0, 17, 400, 2, 401) == 400);
++    assert(ScriptGame_ModelSpawn(0, 17, 403, 0, 0) == 403);
++    assert(ScriptGame_StageAddLine(0, 0, script_mesh_bits(10), 0, 1, 0, 404) == 404);
++    current_owner = 42; alive_owner = 42;
++    assert(ScriptGame_ModelSpawn(0, 17, 500, 0, 0) == -1); /* foreign retain */
++    assert(ScriptGame_ModelRefOwned(0, 17, 42, 1));
++    assert(ScriptGame_ModelSpawn(0, 17, 500, 1, 501) == 500);
++    assert(ScriptGame_StageAddLine(0, 0, script_mesh_bits(10), 0, 1, 0, 502) == 502);
++    assert(ScriptGame_StageResourceAccess(400, 41) == 1);
++    assert(ScriptGame_StageResourceAccess(400, 42) == -1);
++    assert(ScriptGame_StageResourceAccess(9999, 42) == 0);
++    snapshot = script_stage;
++    /* Removal can partially succeed. Preserve the failed instance and its
++     * asset count until the outstanding line is actually gone. */
++    remove_refused = 402;
++    assert(ScriptGame_StageReleaseOwner(41) == 2);
++    assert(ScriptGame_ModelSlot(400) >= 0 && ScriptGame_ModelSlot(403) < 0);
++    assert(script_stage.asset[0].instances == 2 && script_stage.asset[0].refs == 1);
++    assert(ScriptGame_ModelRefOwned(0, 17, 42, 0));
++    assert(!ScriptGame_ModelRefOwned(0, 17, 41, 0));
++    remove_refused = 0;
++    assert(ScriptGame_StageReleaseDeadOwners() == 0);
++    assert(ScriptGame_ModelSlot(400) < 0 && ScriptGame_ModelSlot(500) >= 0);
++    assert(script_stage.asset[0].instances == 1 && script_stage.asset[0].refs == 1);
++    assert(!memcmp(&script_stage.instance[2], &snapshot.instance[2], sizeof script_stage.instance[2]));
++    assert(!memcmp(&script_stage.line[3], &snapshot.line[3], sizeof script_stage.line[3]));
++    assert(!memcmp(&script_stage.line[4], &snapshot.line[4], sizeof script_stage.line[4]));
++    assert(ScriptGame_StageResourceAccess(501, 42) == 1 && ScriptGame_StageResourceAccess(502, 42) == 1);
++    assert(ScriptGame_StageReleaseOwner(41) == 0); /* idempotent */
++    /* A stale/absent map must refuse collision cleanup without dropping
++     * handles. Once the map returns, the same registry supports retry. */
++    script_stage = snapshot; script_stage.map = NULL;
++    assert(ScriptGame_StageReleaseOwner(41) > 0 && ScriptGame_ModelSlot(400) >= 0);
++    script_stage.map = &script_stage;
++    assert(ScriptGame_StageReleaseDeadOwners() == 0);
++    assert(ScriptGame_ModelSlot(500) >= 0 && script_stage.asset[0].refs == 1);
++    /* Restoring the old snapshot resurrects owner 41, not a replacement
++     * owner's generation. Reconciliation retires 41 and preserves live 42. */
++    script_stage = snapshot;
++    assert(ScriptGame_StageReleaseDeadOwners() == 0);
++    assert(ScriptGame_ModelSlot(400) < 0 && ScriptGame_ModelSlot(500) >= 0);
++    assert(ScriptGame_ModelRefOwned(0, 17, 42, -1));
++    assert(ScriptGame_ModelSet(500) == 1); /* instance outlives explicit load release */
++    assert(ScriptGame_StageReleaseOwner(42) == 0 && !script_stage.asset[0].instances);
++    memset(&script_stage, 0, sizeof script_stage); /* genuine scene reset */
++    assert(ScriptGame_StageReleaseOwner(42) == 0 && ScriptGame_StageReleaseDeadOwners() == 0);
++    for (i = 1; i <= SCRIPT_MESH_OWNERS; ++i) assert(ScriptGame_ModelRefOwned(0, 33, i, 1));
++    assert(!ScriptGame_ModelRefOwned(0, 33, 65, 1) && script_stage.asset[0].refs == 64);
++    assert(ScriptGame_StageReleaseOwner(1) == 0 && script_stage.asset[0].refs == 63);
++    assert(ScriptGame_ModelRefOwned(0, 33, 65, 1));
++    alive_owner = 65;
++    assert(ScriptGame_StageReleaseDeadOwners() == 0 && script_stage.asset[0].refs == 1);
++    assert(ScriptGame_StageReleaseOwner(65) == 0 && !script_stage.asset[0].refs);
+     puts("model instance lifecycle validation passed");
+     return 0;
+ }

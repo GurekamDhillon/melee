@@ -75,12 +75,18 @@ end
 local function recipe_plan(node)
  if type(node.id)~='string' or type(node.template_id)~='string' or type(node.recipe)~='string'
   or type(node.exits)~='table' then return nil,'unsupported recipe room' end
+ -- Geometry is always read back from the resolved snapshot (`node.room`); the
+ -- planner never consults the live recipe table, so a saved route keeps the
+ -- recipe version it was certified with even after the catalogue changes.
+ if node.recipe_version~=nil and (not finite(node.recipe_version) or node.recipe_version%1~=0 or node.recipe_version<1) then
+  return nil,'invalid recipe version'
+ end
  local collision,why=R.collision(node);if not collision then return nil,why end
  local g=node.room;local f,k=g.floor,g.kit
  if f.left~=-65 or f.right~=65 or f.y~=0 or type(k)~='table' or k.unit~=6.5 or k.bay~=26 or k.grid~=13 or k.height~=26 then
   return nil,'incompatible kit structure'
  end
- local plan={room_id=node.id,theme=node.theme or 'cobalt',parts={},platforms=collision.platforms,
+ local plan={room_id=node.id,recipe_version=node.recipe_version,theme=node.theme or 'cobalt',parts={},platforms=collision.platforms,
   floor_segments=collision.floor_segments,lines=collision.lines,anchors=copy(g.exit_anchors),arrivals=copy(g.arrivals)}
  local function add(kind,model,x,y,sx,sy)
   if #plan.parts>=R.max_instances or type(model)~='string' or not model:match('^bf_')

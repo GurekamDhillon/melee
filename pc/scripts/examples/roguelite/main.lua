@@ -226,10 +226,13 @@ local function save()
  if not (vok and vres) then
   say('Save refused: '..tostring(vwhy or 'checkpoint failed validation')..'; previous checkpoint retained','error','save');return false
  end
- -- Atomic only when the native helper is present. The gd.data_write fallback is
- -- a plain write and is NOT atomic; the readback proof below detects a failed or
- -- short write but cannot make the fallback crash-safe.
- local write=gd.data_write_atomic or gd.data_write
+ -- A/B is insufficient when the sibling slot is preserved: a raw partial
+ -- write could destroy the only supported checkpoint. Require the native
+ -- atomic helper for every checkpoint mutation, including ordinary A/B writes.
+ local write=gd.data_write_atomic
+ if type(write)~='function' then
+  say('Save refused: native atomic checkpoint writer unavailable; previous checkpoint retained','error','save');return false
+ end
  local ok,result=pcall(write,file,text)
  local read_ok,readback=pcall(gd.data_read,file)
  if not (ok and result~=false and read_ok and readback==text) then

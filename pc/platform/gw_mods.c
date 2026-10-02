@@ -15,7 +15,11 @@
 #include "gw_test.h"
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -545,7 +549,7 @@ static const char *default_dir(char *buf, size_t cap) {
     }
     {
         DWORD len = GetModuleFileNameA(NULL, buf, (DWORD) cap);
-        char *slash = (len > 0 && len < cap) ? strrchr(buf, '\\') : NULL;
+        char *slash = (len > 0 && len < cap) ? gw_path_separator(buf) : NULL;
         if (slash == NULL) {
             copy_str(buf, cap, "mods");
             return buf;

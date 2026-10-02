@@ -10,7 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 int gw_slippi_match_internal_error(const char *why);
 enum { MM_IDLE, MM_CONNECT, MM_CREATE, MM_WAIT, MM_ASSIGNED, MM_ERROR };

@@ -57,5 +57,13 @@ void GenoFly_SetSpeed(int speed_bits);                  ///< units per frame at 
 float GenoFly_Speed(void);
 void GenoFly_SetSolid(int solid); ///< 1: hurtboxes stay on while flying (default 0: intangible)
 int GenoFly_Solid(void);
+int GenoFly_Target(int slot, int x_bits, int y_bits);
+int GenoFly_AttackSet(int slot, int on, int damage, int radius_bits);
+int GenoFly_State(int slot, int field);
+int GenoFly_Pulses(int slot);
+void GenoFly_Clear(int slot);
+void GenoFly_Reset(void);
+int GenoFly_OfflineAllowed(void); ///< false during replay, netplay or rollback
+int GenoFly_Watch(void); ///< restore normal flight/clear cursor state when offline boundary ends
 
 #endif

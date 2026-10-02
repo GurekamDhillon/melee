@@ -43,6 +43,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+#include <unistd.h> /* _exit in rp_parity_end */
+#endif
 
 #define GW_RP_GAME_INFO 0x138u
 #define GW_RP_SLOTS 8 /* 4 ports x (leader, follower) */

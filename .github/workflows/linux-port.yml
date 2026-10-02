@@ -1,0 +1,49 @@
+name: Linux port
+on:
+  push:
+    branches: [pc-port, agent/linux]
+  pull_request:
+    branches: [pc-port]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: linux-port-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux:
+    # This public repository's disc-backed runner executes trusted pushes/manual
+    # runs only. PR source must never execute on a machine holding personal discs.
+    if: vars.LINUX_RUNNER_ENABLED == 'true' && github.event_name != 'pull_request'
+    runs-on: [self-hosted, Linux, X64, melee-linux]
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          path: game
+      - uses: actions/checkout@v6
+        with:
+          repository: GurekamDhillon/gd-melee-workspace
+          ref: ${{ vars.LINUX_TOOLS_REF || 'master' }}
+          path: tools
+          clean: false
+      - name: Build and test the current game commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source "$HOME/.config/melee-linux/build.env"
+          set +a
+          export GW_MELEE="$GITHUB_WORKSPACE/game"
+          bash "$GITHUB_WORKSPACE/tools/tools/port/ci_linux.sh"
+      - name: Upload Linux build and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ github.sha }}
+          if-no-files-found: warn
+          path: |
+            tools/_build/linux/packages/*.tar.xz
+            tools/_build/ci/linux/run-*/run.log
+            tools/_build/ci/linux/run-*/run.txt
+            tools/_build/ci/linux/validated.sha256

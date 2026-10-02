@@ -4,8 +4,9 @@
  * owns the names Lua sees). Plain enums only, so both compilers can include it. docs/geno.md
  * section "Geno Lab" is the reference.
  *
- * Everything here is READ-ONLY except the two cosmetic debug-draw switches (LabDebugDraw /
- * LabStageDraw), which gw_script.c refuses during a netplay/rollback session.
+ * Most inspection fields are READ-ONLY. The solid-colour commands below are temporary, cosmetic
+ * Lab controls; gw_script.c refuses them during netplay/rollback. They override individual draws
+ * without mutating the original material state.
  */
 #ifndef SCRIPT_LAB_H
 #define SCRIPT_LAB_H
@@ -171,6 +172,9 @@ enum {
     LAB_DI_TOBJS,          /* its MObj's TObj count */
     LAB_DI_COUNT_
 };
+/* Private command values passed through ScriptGame_LabDObjI; ordinary query fields stay below 32. */
+#define LAB_DI_SET_SOLID 0x40000000u /* d = DObj index, low 24 bits of field = RGB */
+#define LAB_DI_CLEAR_SOLID 0x20000000u /* d = DObj index */
 /* ScriptGame_LabTObjF(slot, d, t, field): TObj t of DObj d (d = -1: costume TObj t) */
 enum {
     LAB_TF_ID = 0,  /* GXTexMapID */

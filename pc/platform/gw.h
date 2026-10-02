@@ -27,6 +27,12 @@
 extern "C" {
 #endif
 
+/* Paths from native APIs use platform separators; content may use either spelling. */
+static inline char *gw_path_separator(const char *path) {
+  const char *back = strrchr(path, '\\'), *forward = strrchr(path, '/');
+  return (char *)(!back ? forward : !forward ? back : back > forward ? back : forward);
+}
+
 /* ---- byte-swapped access to game memory ------------------------------------------------- */
 
 static inline uint16_t gw_bswap16(uint16_t v) { return (uint16_t)((v >> 8) | (v << 8)); }
@@ -130,6 +136,20 @@ void gw_watch_tick(void);
 /* Samples the game thread's pc every few seconds. Finds loops that never present a frame,
  * which produce no log output and look exactly like a hang from outside. */
 void gw_start_watchdog(void);
+
+/* ---- window (Linux only; Windows call sites use Win32 window APIs directly) --------------- */
+#ifndef _WIN32
+/* The SDL_Window Aurora created (AuroraInfo.window), set once from main() before anything else
+ * could need it. Declared as void* here so gw.h need not pull in SDL headers for every file that
+ * includes it; the handful of callers that need the real type cast it themselves. */
+void gw_set_window(void *sdl_window);
+void *gw_get_window(void);
+/* Whether Aurora's window currently has keyboard focus - the Linux equivalent of the
+ * GetForegroundWindow()+GetWindowThreadProcessId()+GetCurrentProcessId() chain several files use
+ * on Windows to answer "is this process's own window focused". */
+bool gw_window_focused(void);
+void gw_set_window_title(const char *title);
+#endif
 
 /* ---- process-wide runtime ---------------------------------------------------------------- */
 

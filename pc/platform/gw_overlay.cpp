@@ -7,12 +7,17 @@
  * That is the whole reason this works without touching the GX path.
  */
 #include "gw_overlay.h"
+#include "gw.h"
 
 #include <imgui.h>
 
 /* Only for GetAsyncKeyState: the overlay needs a key that does not go through the game's
- * pad path, and this port is Windows-only. */
+ * pad path. */
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <chrono>
 #include <cstdarg>
@@ -116,6 +121,7 @@ char g_label[160] = {0};
 int g_label_state = 0; /* 0 = not decided, 1 = decided (g_label may be empty) */
 int g_label_serial = 0; /* bumps when the label changes: the window title follows */
 
+#ifdef _WIN32
 void derive_label_from_exe() {
   wchar_t wpath[MAX_PATH];
   char path[MAX_PATH * 2];
@@ -156,6 +162,43 @@ void derive_label_from_exe() {
     std::snprintf(g_label, sizeof g_label, "%s / %s", lane, name);
   }
 }
+#else
+void derive_label_from_exe() {
+  char path[MAX_PATH * 2];
+  DWORD n = GetModuleFileNameA(nullptr, path, sizeof path);
+  if (n == 0 || n >= sizeof path) {
+    return;
+  }
+  /* find "/_build/" case-insensitively */
+  char lower[MAX_PATH * 2];
+  std::snprintf(lower, sizeof lower, "%s", path);
+  for (char *c = lower; *c != '\0'; ++c) {
+    if (*c >= 'A' && *c <= 'Z') *c = (char) (*c + 32);
+  }
+  const char *b = std::strstr(lower, "/_build/");
+  if (b == nullptr) {
+    return;
+  }
+  const char *rest = path + (b - lower) + 8; /* after "/_build/" */
+  char lane[64] = "main", name[96] = "";
+  if (strncasecmp(rest, "agents/", 7) == 0) {
+    const char *l = rest + 7, *e = std::strchr(l, '/');
+    if (e == nullptr || strncasecmp(e, "/runs/", 6) != 0) return;
+    std::snprintf(lane, sizeof lane, "%.*s", (int) (e - l), l);
+    rest = e + 6;
+  } else if (strncasecmp(rest, "runs/", 5) == 0) {
+    rest += 5;
+  } else {
+    return;
+  }
+  const char *e = std::strchr(rest, '/');
+  if (e == nullptr) return; /* the exe itself must sit inside the sandbox folder */
+  std::snprintf(name, sizeof name, "%.*s", (int) (e - rest), rest);
+  if (name[0] != '\0') {
+    std::snprintf(g_label, sizeof g_label, "%s / %s", lane, name);
+  }
+}
+#endif
 
 const char *run_label() {
   if (g_label_state == 0) {
@@ -171,10 +214,12 @@ const char *run_label() {
   return g_label[0] != '\0' ? g_label : nullptr;
 }
 
+#ifdef _WIN32
 BOOL CALLBACK title_cb(HWND w, LPARAM title) {
   if (IsWindowVisible(w)) SetWindowTextA(w, (const char *) title);
   return TRUE;
 }
+#endif
 
 /* The window title carries the label too ("Melee PC - charlie / c3live"). */
 void apply_title() {
@@ -187,7 +232,11 @@ void apply_title() {
   } else {
     std::snprintf(title, sizeof title, "Melee PC");
   }
+#ifdef _WIN32
   EnumThreadWindows(GetCurrentThreadId(), title_cb, (LPARAM) title);
+#else
+  gw_set_window_title(title);
+#endif
   applied = g_label_serial;
 }
 
@@ -408,7 +457,7 @@ void build_panel() {
   panel_rule();
   panel_wrapped("scene", scene != nullptr ? scene : "(none - booted to the menu)");
   if (pad != nullptr) {
-    const char *leaf = std::strrchr(pad, '\\');
+    const char *leaf = gw_path_separator(pad);
     panel_add(1, "pad     %s", leaf != nullptr ? leaf + 1 : pad);
   }
   panel_rule();

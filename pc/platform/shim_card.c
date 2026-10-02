@@ -34,7 +34,11 @@
 #include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #define CARD_RESULT_READY (0)
 #define CARD_RESULT_NOCARD (-3)
@@ -181,7 +185,7 @@ void gw_CARDInit(void) {
      * not have to be told where to put the card. */
     DWORD n = GetModuleFileNameA(NULL, path, (DWORD)sizeof(path));
     if (n > 0 && n < sizeof(path)) {
-      char *slash = strrchr(path, '\\');
+      char *slash = gw_path_separator(path);
       if (slash != NULL) {
         slash[1] = '\0';
         strncat(path, "card", sizeof(path) - strlen(path) - 1);

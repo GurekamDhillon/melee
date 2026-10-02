@@ -15,7 +15,11 @@
 #include "gw_uigen.h"
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -448,7 +452,7 @@ static uint64_t mx_mexflags(void) {
     h = mx_hash_str(h, env != NULL ? env : "");
     n = GetModuleFileNameA(NULL, path, (DWORD) sizeof path);
     if (n > 0 && n < (DWORD) sizeof path) { /* gw_runtime.c's gw_mex_load reads exactly this */
-        char *slash = strrchr(path, '\\');
+        char *slash = gw_path_separator(path);
         FILE *f;
         if (slash != NULL) {
             slash[1] = '\0';

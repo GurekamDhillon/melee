@@ -234,7 +234,9 @@ static constexpr sqlite3_io_methods SdlVfsIoMethods{
     .xDeviceCharacteristics = sdl_vfs_device_characteristics,
 };
 
-static int sdl_vfs_open(sqlite3_vfs*, sqlite3_filename name, sqlite3_file* file, int flags, int* outFlags) {
+// sqlite3_filename is a newer alias for const char*. Use the underlying type
+// so this VFS also builds against Ubuntu 22.04's SQLite headers.
+static int sdl_vfs_open(sqlite3_vfs*, const char* name, sqlite3_file* file, int flags, int* outFlags) {
   auto* vfsFile = sdl_vfs_file(file);
   vfsFile->base.pMethods = nullptr;
   vfsFile->io = nullptr;

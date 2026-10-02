@@ -22,8 +22,12 @@
 #include "gw_fx_internal.h"
 #include "gw_fx_query.h"
 
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include <math.h>
 #include <stdint.h>
@@ -275,7 +279,7 @@ static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const
     const int m = p->nmesh_loaded;
     if (m >= FX_MAX_MESH) return;
     snprintf(path, sizeof path, "%s", pkgpath);
-    slash = strrchr(path, '\\');
+    slash = gw_path_separator(path);
     if (strrchr(path, '/') > slash) slash = strrchr(path, '/');
     if (slash == NULL) return;
     snprintf(slash + 1, sizeof path - (size_t) (slash + 1 - path), "%s", file);
@@ -348,7 +352,7 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
     snprintf(p->path, sizeof p->path, "%s", path);
     snprintf(p->dir, sizeof p->dir, "%s", path);
     {
-        char *sl = strrchr(p->dir, '\\'), *sl2 = strrchr(p->dir, '/');
+        char *sl = gw_path_separator(p->dir), *sl2 = strrchr(p->dir, '/');
         if (sl2 > sl) sl = sl2;
         if (sl) *sl = 0;
     }
@@ -540,6 +544,11 @@ int gw_Fx_Stat(int what);
 void gw_Fx_Census(int handle, int frame);
 
 static fx_state fx_cur;
+/* Offline handles never reuse an active or expired id during this process. */
+static int fx_lab_serial;
+static int fx_is_lab_instance(const fx_inst *in) {
+    return (in->tag & 0xFFFF0000u) == 0x40000000u;
+}
 static fx_state fx_ring[FX_RING];
 /* An idle state (no instance in use, nothing live) is kept as its header only: every slot is fully
  * re-initialised when it is taken, so a cleared state is equivalent to it. Copying the whole block (600 KB)
@@ -638,8 +647,9 @@ static void fx_visual_update(fx_part *p, const fx_emitter *e, const fx_inst *in)
     }
     for (k = 0; k < 3; ++k)
         p->visual_pos[k] = p->pos[k] + in->m[k][0] * w[0] + in->m[k][1] * w[1];
-    if (in->detached && e->fade_on_stop && e->fade_alpha_frames > 0)
-        fade = fx_clamp(1.0f - (float) (fx_cur.frame - in->detach_frame + 1) / (float) e->fade_alpha_frames, 0.0f, 1.0f);
+    if (in->detached && !in->natural_end && (in->lab_fade > 0 || (e->fade_on_stop && e->fade_alpha_frames > 0)))
+        fade = fx_clamp(1.0f - (float) (fx_cur.frame - in->detach_frame + 1) /
+            (float) (in->lab_fade > 0 ? in->lab_fade : e->fade_alpha_frames), 0.0f, 1.0f);
     if (e->alpha_fade_in && e->fade_in_frames > 0)
         fade *= fx_clamp((float) p->age / (float) e->fade_in_frames, 0.0f, 1.0f);
     p->fade_alpha = fade;
@@ -659,6 +669,16 @@ static void fx_visual_update(fx_part *p, const fx_emitter *e, const fx_inst *in)
     p->visual_color1[3] = fx_curve_part_at(&e->alpha1, p->age, p->life, 0) * fade;
     if (e->wave_apply[0]) { p->visual_color0[3] *= p->wave_scale[0]; p->visual_color1[3] *= p->wave_scale[0]; }
     p->visual_param = fx_curve_part_at(&e->param, p->age, p->life, 0);
+    if (in->lab_handle) {
+        for (k = 0; k < 2; ++k) p->visual_scale[k] *= in->lab_control[4];
+        for (c = 0; c < 3; ++c) {
+            p->visual_color0[c] *= in->lab_control[5];
+            p->visual_color1[c] *= in->lab_control[5];
+        }
+        p->visual_color0[3] *= in->lab_control[0];
+        p->visual_color1[3] *= in->lab_control[0];
+        p->visual_param *= in->lab_control[6];
+    }
     for (k = 0; k < FX_SAMPLERS; ++k) {
         const fx_sampler *s = &e->smp[k];
         const int cols = s->div[0] > 0 ? s->div[0] : 1, rows = s->div[1] > 0 ? s->div[1] : 1;
@@ -798,6 +818,7 @@ static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel
         float f = 1.0f - e->vel_random * fx_rndf(&p->seed);
         for (k = 0; k < 3; ++k) v[k] *= f;
     }
+    if (in->lab_handle) for (k = 0; k < 3; ++k) v[k] *= in->lab_control[2];
     for (k = 0; k < 3; ++k) local[k] += e->trans[k];
     fx_erot(e, local);
     fx_erot(e, v);
@@ -812,7 +833,7 @@ static void fx_spawn(int ii, fx_inst *in, const fx_emitter *e, const float emvel
         p->lvel[k] = e->follow == 0 ? v[k] : p->vel[k];
     }
     len = e->life_random > 0 ? 1.0f - e->life_random * fx_rndf(&p->seed) : 1.0f;
-    p->life = (int) (e->life * len + 0.5f);
+    p->life = (int) (e->life * len * (in->lab_handle ? in->lab_control[3] : 1.0f) + 0.5f);
     if (p->life < 1) p->life = 1;
     p->scale = 1.0f - e->scale_random * fx_rndf(&p->seed);
     p->rot = e->rot_init[2] + e->rot_init_random[2] * fx_rndf(&p->seed);
@@ -855,6 +876,16 @@ static void fx_step(void) {
         if (in->have_prev) for (k = 0; k < 3; ++k) emvel[k] = in->pos[k] - in->prev[k];
         travel = sqrtf(emvel[0] * emvel[0] + emvel[1] * emvel[1] + emvel[2] * emvel[2]);
         in->age++;
+        if (in->lab_tween > 0) {
+            for (k = 0; k < 7; ++k)
+                in->lab_control[k] += (in->lab_target[k] - in->lab_control[k]) / in->lab_tween;
+            in->lab_tween--;
+        }
+        /* Lab finite duration stops emission before the first out-of-range frame. */
+        if (fx_is_lab_instance(in) && in->keep && !in->detached &&
+            e->duration > 0 && in->age > e->start + e->duration) {
+            in->detached = 1; in->natural_end = 1; in->detach_frame = fx_cur.frame;
+        }
         if (!in->detached && (!e->mesh || e->mesh_idx >= 0) && in->age > e->start) {
             float n = 0.0f;
             if (e->one_time) {
@@ -865,6 +896,7 @@ static void fx_step(void) {
             } else if (e->interval <= 1 || (in->age - e->start - 1) % e->interval == 0) {
                 n = e->rate;
             }
+            if (in->lab_handle) n *= in->lab_control[1];
             in->accum += n;
             while (in->accum >= 1.0f) { fx_spawn(i, in, e, emvel); in->accum -= 1.0f; }
         }
@@ -872,6 +904,8 @@ static void fx_step(void) {
         if (in->keep && !in->detached &&
             ((e->one_time && in->age > e->start) || (e->duration > 0 && in->age > e->start + e->duration))) {
             in->detached = 1;
+            /* Keep existing fighter/article binding lifetime semantics unchanged. */
+            in->natural_end = fx_is_lab_instance(in);
             in->detach_frame = fx_cur.frame;
         }
         in->prev[0] = in->pos[0]; in->prev[1] = in->pos[1]; in->prev[2] = in->pos[2];
@@ -917,8 +951,10 @@ static void fx_step(void) {
         p->age++;
         fx_visual_update(p, e, &fx_cur.inst[p->inst]);
         if ((p->age >= p->life && (!e->infinite ||
-             (fx_cur.inst[p->inst].detached && !(e->fade_on_stop && e->fade_alpha_frames > 0)))) ||
-            (fx_cur.inst[p->inst].detached && e->fade_on_stop && e->fade_alpha_frames > 0 && p->fade_alpha <= 0.0f)) {
+             (fx_cur.inst[p->inst].detached && (fx_cur.inst[p->inst].natural_end ||
+              !(e->fade_on_stop && e->fade_alpha_frames > 0))))) ||
+            (fx_cur.inst[p->inst].detached && !fx_cur.inst[p->inst].natural_end &&
+             (fx_cur.inst[p->inst].lab_fade > 0 || (e->fade_on_stop && e->fade_alpha_frames > 0)) && p->fade_alpha <= 0.0f)) {
             p->inst = -1; fx_cur.nlive--; fx_cur.killed++;
         }
     }
@@ -1304,6 +1340,34 @@ static void fx_call_local(const fx_bcall *k, float L[3][4]) {
         for (c = 0; c < 3; ++c) L[r][c] = R[r][c] * k->scale;
         L[r][3] = k->off[r];
     }
+}
+
+/* Script-owned showcase instances are separate from fighter/article bindings. */
+void gw_Fx_LabStop(int script) {
+    int i;
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i];
+        if (in->used && in->tag == (0x40000000u | (uint32_t)(script & 0xFFFF))) {
+            in->detached = 1; in->natural_end = 0; in->detach_frame = fx_cur.frame;
+            /* Script unload cleans even a naturally finished/infinite emitter. */
+            in->lab_fade = 12;
+        }
+    }
+}
+int gw_Fx_LabAttach(const char *package, int jobj, int script, int port, int joint, int frame, int facing,
+                    float x, float y, float z, float scale) {
+    int pk=gw_Fx_Find(package), handle;
+    fx_attach_extra ex;
+    if(pk<0 || !jobj)return 0;
+    memset(&ex,0,sizeof ex);
+    ex.local[0][0]=ex.local[1][1]=ex.local[2][2]=scale;
+    ex.local[0][3]=x;ex.local[1][3]=y;ex.local[2][3]=z;
+    ex.tag=0x40000000u|(uint32_t)(script&0xFFFF);
+    ex.follow=1;ex.keep=1;ex.port=port;ex.joint=joint;
+    fx_attach_ex=&ex;
+    handle=gw_Fx_Attach(pk,jobj,0x44,frame,facing);
+    fx_attach_ex=NULL;
+    return handle;
 }
 
 /* Once per scene frame per fighter with a binding set, BEFORE gw_Fx_Frame(frame), after the fighter's joints are
@@ -1838,4 +1902,156 @@ static int test_fx_sim(void) {
     return rc;
 }
 
-void gw_fx_tests_register(void) { gw_test_register("fx_sim", test_fx_sim); }
+static int test_fx_lab(void);
+void gw_fx_tests_register(void) { gw_test_register("fx_sim", test_fx_sim); gw_test_register("fx_lab", test_fx_lab); }
+
+/* Seeded, script-owned package handles. These do not expose/reuse pool indices. */
+int gw_Fx_LabPlay(const char *package, int jobj, int script, int port, int joint,
+                 int frame, int facing, float x, float y, float z, float scale, unsigned seed) {
+    int pk = gw_Fx_Find(package), i, free_slots = 0, h, id;
+    unsigned char was_used[FX_MAX_INST];
+    if (pk < 0 || !jobj || fx_lab_serial >= 0x3FFFFFFF) return 0;
+    if (!fx_ready) fx_reset();
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        was_used[i] = (unsigned char)fx_cur.inst[i].used; free_slots += !was_used[i];
+    }
+    if (free_slots < fx_pkgs[pk]->nem) {
+        fx_cur.refused += fx_pkgs[pk]->nem; fx_cur.refused_emitters += fx_pkgs[pk]->nem; return 0;
+    }
+    h = gw_Fx_LabAttach(package, jobj, script, port, joint, frame, facing, x, y, z, scale);
+    if (!h) return 0;
+    id = ++fx_lab_serial;
+    /* Attach allocates emitters in increasing free slots, starting at h-1. */
+    for (i = h - 1; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i]; int k;
+        if (was_used[i] || !in->used || in->pkg != pk || in->attach_frame != frame ||
+            in->tag != (0x40000000u | (uint32_t)(script & 0xFFFF)) || in->lab_handle) continue;
+        in->lab_handle = id; in->rng = seed ^ ((uint32_t)(in->em + 1) * 0x9E3779B9u);
+        for (k = 0; k < 7; ++k) in->lab_control[k] = in->lab_target[k] = 1.0f;
+    }
+    return id;
+}
+static int fx_lab_owned(const fx_inst *in, int handle, int script) {
+    return handle > 0 && in->used && in->lab_handle == handle &&
+        in->tag == (0x40000000u | (uint32_t)(script & 0xFFFF));
+}
+int gw_Fx_LabControl(int handle, int script, int emitter, const float values[7], int frames) {
+    int i, k, count = 0;
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i];
+        if (!fx_lab_owned(in, handle, script) || (emitter >= 0 && in->em != emitter)) continue;
+        for (k = 0; k < 7; ++k) {
+            in->lab_target[k] = values[k]; if (!frames) in->lab_control[k] = values[k];
+        }
+        in->lab_tween = frames; count++;
+    }
+    return count;
+}
+int gw_Fx_LabEnd(int handle, int script, int fade_frames) {
+    int i, k, count = 0;
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i];
+        if (!fx_lab_owned(in, handle, script)) continue;
+        if (fade_frames == 0) {
+            for (k = 0; k < FX_MAX_PARTICLES; ++k) if (fx_cur.part[k].inst == i) {
+                fx_cur.part[k].inst = -1; fx_cur.nlive--; fx_cur.killed++;
+            }
+            in->used = 0;
+        } else {
+            in->detached = 1; in->natural_end = 0; in->detach_frame = fx_cur.frame; in->lab_fade = fade_frames;
+        }
+        count++;
+    }
+    return count;
+}
+int gw_Fx_LabQuery(int handle, int script, GwFxLabQuery *out) {
+    int i, k;
+    memset(out, 0, sizeof *out);
+    out->refused = (int)fx_cur.refused; out->refused_emitters = (int)fx_cur.refused_emitters;
+    for (i = 0; i < FX_MAX_INST; ++i) if (fx_lab_owned(&fx_cur.inst[i], handle, script)) {
+        out->emitters++; out->emitting += !fx_cur.inst[i].detached;
+        if (fx_cur.inst[i].age > out->age) out->age = fx_cur.inst[i].age;
+        for (k = 0; k < FX_MAX_PARTICLES; ++k) out->particles += fx_cur.part[k].inst == i;
+    }
+    return out->emitters > 0;
+}
+
+static int test_fx_lab(void) {
+    fx_pkg *p = (fx_pkg *)calloc(1, sizeof *p);
+    static float root[32];
+    fx_part first;
+    GwFxLabQuery q;
+    float values[7] = {0,0,1,1,1,1,1};
+    int pk, h, h2, f, i, rc = 0;
+    if (!p || fx_npkg >= FX_MAX_PKGS) { free(p); return 1; }
+    strcpy(p->name, "lab_native_test"); p->nem = 1; p->forward[0] = p->up[1] = 1;
+    p->em[0].start = 2; p->em[0].duration = 3; p->em[0].rate = 1;
+    p->em[0].life = 6; p->em[0].life_random = .15f;
+    p->em[0].scale[0] = p->em[0].scale[1] = p->em[0].air = 1;
+    p->em[0].scale_keys.value[0] = p->em[0].scale_keys.value[1] = 1;
+    p->em[0].color_scale = p->em[0].alpha0.value[0] = 1;
+    p->em[0].fade_on_stop = 1; p->em[0].fade_alpha_frames = 2;
+    p->em[0].form_scale[0] = p->em[0].form_scale[1] = p->em[0].form_scale[2] = 1;
+    memset(root, 0, sizeof root);
+    for (i = 0; i < 12; i += 5) gw_wf32(&root[17+i], 1);
+    pk = fx_npkg; fx_pkgs[fx_npkg++] = p; fx_reset();
+    h = gw_Fx_LabPlay(p->name,(int)(uintptr_t)root,71,1,0,0,1,0,0,0,1,1234);
+    for (f = 1; f <= 5; ++f) { fx_cur.frame = f; fx_step(); }
+    first = fx_cur.part[0];
+    if (fx_cur.spawned != 3 || !gw_Fx_LabQuery(h,71,&q) || q.particles != 3 || q.age != 5) {
+        gw_test_fail("fx lab: finite emitter must spawn exactly three particles in frames 3..5"); rc=1;
+    }
+    fx_cur.frame = 6; fx_step();
+    if (fx_cur.spawned != 3 || fx_cur.part[0].fade_alpha != 1 || !fx_cur.inst[0].natural_end) {
+        gw_test_fail("fx lab: duration must stop before frame 6 and preserve natural particle decay"); rc=1;
+    }
+    for (f = 7; f <= 12; ++f) { fx_cur.frame = f; fx_step(); }
+    if (gw_Fx_LabQuery(h,71,&q) || fx_cur.nlive || gw_Fx_Stat(1)) {
+        gw_test_fail("fx lab: finite package must clean up all particles/emitters"); rc=1;
+    }
+    fx_reset();
+    h2 = gw_Fx_LabPlay(p->name,(int)(uintptr_t)root,71,1,0,900,1,0,0,0,1,1234);
+    for (f = 1; f <= 5; ++f) { fx_cur.frame = f+900; fx_step(); }
+    if (h2 == h || memcmp(&first, &fx_cur.part[0], sizeof first) != 0 ||
+        gw_Fx_LabControl(h2,72,-1,values,4) || gw_Fx_LabEnd(h2,72,0) || gw_Fx_LabEnd(h,71,0)) {
+        gw_test_fail("fx lab: same seed must replay identically at a later frame; handles cannot be stolen/reused"); rc=1;
+    }
+    if (!gw_Fx_LabControl(h2,71,-1,values,4)) { gw_test_fail("fx lab: live control refused owner"); rc=1; }
+    fx_cur.frame++;fx_step();
+    if (fabsf(fx_cur.inst[0].lab_control[0]-.75f)>.001f || fabsf(fx_cur.part[0].visual_color0[3]-.75f)>.001f) {
+        gw_test_fail("fx lab: first tween frame must update active particle opacity continuously"); rc=1;
+    }
+    if (!gw_Fx_LabEnd(h2,71,3)) { gw_test_fail("fx lab: fade stop refused owner"); rc=1; }
+    for (i=0;i<3;++i) { fx_cur.frame++;fx_step(); }
+    if (gw_Fx_LabQuery(h2,71,&q) || fx_cur.nlive) { gw_test_fail("fx lab: fade must release its handle");rc=1; }
+    /* Immediate stop, including naturally detached emitters; no particles left behind. */
+    h = gw_Fx_LabPlay(p->name,(int)(uintptr_t)root,71,1,0,1000,1,0,0,0,1,9);
+    for (i=0;i<4;++i) {fx_cur.frame++;fx_step();}
+    gw_Fx_LabEnd(h,71,0);
+    if (fx_cur.nlive || gw_Fx_Stat(1)) {gw_test_fail("fx lab: immediate stop leaked");rc=1;}
+    /* The lab's strict emission window/natural tail must not alter imported bindings. */
+    fx_reset();
+    {
+        fx_attach_extra ex;
+        memset(&ex, 0, sizeof ex);
+        ex.keep = 1;
+        ex.tag = 0x80000000u;
+        fx_attach_ex = &ex;
+        h = gw_Fx_Attach(pk, (int)(uintptr_t)root, 0x44, 0, 1);
+        fx_attach_ex = NULL;
+        for (f = 1; f <= 6; ++f) { fx_cur.frame = f; fx_step(); }
+        if (!h || fx_cur.spawned != 4 || fx_cur.inst[h-1].natural_end ||
+            !fx_cur.inst[h-1].detached || fabsf(fx_cur.part[0].fade_alpha-.5f)>.001f) {
+            gw_test_fail("fx lab: changed an existing binding's emission/fade semantics"); rc=1;
+        }
+    }
+    fx_reset();
+    /* Lab package attachment is atomic at the shared pool cap. */
+    p->nem=2;
+    for(i=0;i<FX_MAX_INST-1;++i)fx_cur.inst[i].used=1;
+    h=gw_Fx_LabPlay(p->name,(int)(uintptr_t)root,71,1,0,1001,1,0,0,0,1,9);
+    if(h || fx_cur.inst[FX_MAX_INST-1].used || fx_cur.refused_emitters!=2) {
+        gw_test_fail("fx lab: partial package must refuse atomically with emitter counters");rc=1;
+    }
+    fx_npkg=pk;free(p);fx_reset();return rc;
+}

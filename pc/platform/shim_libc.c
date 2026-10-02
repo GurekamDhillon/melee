@@ -14,7 +14,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
 
+#if defined(_MSC_VER) && !defined(__clang__)
 #include <intrin.h>
+#endif
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -119,8 +121,16 @@ unsigned char gw__stack_addr[4];
  * The game's jmp_buf (src/Runtime/Gecko_setjmp.h) is larger than the CRT's and is only ever
  * touched by these two functions, so the CRT's save/restore is a drop-in. Aliasing at link time
  * matters: setjmp saves the calling function's frame, so a C wrapper would be wrong. */
+#ifdef _WIN32
 #pragma comment(linker, "/alternatename:_gw___setjmp=_setjmp")
 #pragma comment(linker, "/alternatename:_gw___longjmp=_longjmp")
+#else
+/* Tail branches save the game caller, with no intervening shim stack frame. */
+__asm__(".text\n.globl gw___setjmp\n.type gw___setjmp,@function\ngw___setjmp:\n"
+        "jmp _setjmp@PLT\n.size gw___setjmp,.-gw___setjmp\n"
+        ".globl gw___longjmp\n.type gw___longjmp,@function\ngw___longjmp:\n"
+        "jmp longjmp@PLT\n.size gw___longjmp,.-gw___longjmp\n");
+#endif
 
 /* ---- ctype --------------------------------------------------------------------------------
  * The flags must match src/MSL/ctype.h: control 0x01, motion 0x02, space 0x04, punctuation 0x08,

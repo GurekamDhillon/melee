@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "mobj.h"
 #include "pobj.h"
+#include "state.h"
 #include <dolphin/os.h>
 
 static void DObjInfoInit(void);
@@ -292,13 +293,25 @@ void forceStringAllocation(
     }
 }
 
+#if defined(TARGET_PC)
+#include "../../../pc/gameworld/script_parts.h"
+#endif
+
 void HSD_DObjDisp(HSD_DObj* dobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
 {
     HSD_PObj* p;
+    int lab_override = 0;
 
+#if defined(TARGET_PC)
+    lab_override = ScriptParts_Draw(dobj);
+    if (lab_override == 2) return;
+#endif
     HSD_MObjSetCurrent(dobj->mobj);
-    if ((rendermode & 0x4000000) == 0) {
+    if (!lab_override && (rendermode & 0x4000000) == 0) {
         HSD_MOBJ_METHOD(dobj->mobj)->setup(dobj->mobj, rendermode);
+#if defined(TARGET_PC)
+        if (ScriptParts_Tint(dobj)) lab_override = 1;
+#endif
     }
     for (p = dobj->pobj; p != NULL; p = p->next) {
         HSD_POBJ_METHOD(p)->disp(p, vmtx, pmtx, rendermode);
@@ -307,11 +320,17 @@ void HSD_DObjDisp(HSD_DObj* dobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
         HSD_MOBJ_METHOD(dobj->mobj)->unset(dobj->mobj, rendermode);
     }
     HSD_MObjSetCurrent(NULL);
+    if (lab_override) {
+        HSD_StateInvalidate(HSD_STATE_ALL);
+    }
 }
 
 static void DObjRelease(HSD_Class* o)
 {
     HSD_DObj* dobj = HSD_DOBJ(o);
+#if defined(TARGET_PC)
+    ScriptParts_Forget(dobj);
+#endif
 
     HSD_MObjRemove(dobj->mobj);
     HSD_PObjRemoveAll(dobj->pobj);

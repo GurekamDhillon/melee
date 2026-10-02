@@ -16,7 +16,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #define ST_MAX 64
 #define ST_KEY 32
@@ -37,7 +41,7 @@ static const char *st_path(void) {
             snprintf(st.path, sizeof st.path, "%s", e);
         } else {
             DWORD k = GetModuleFileNameA(NULL, st.path, sizeof st.path);
-            char *slash = k > 0 && k < sizeof st.path ? strrchr(st.path, '\\') : NULL;
+            char *slash = k > 0 && k < sizeof st.path ? gw_path_separator(st.path) : NULL;
             if (slash != NULL) {
                 snprintf(slash + 1, sizeof st.path - (size_t) (slash + 1 - st.path), "settings.cfg");
             } else {

@@ -94,6 +94,10 @@ static size_t const groundCollJoint_count = 256;
 /* 4D64E4 */ static s32 mpLib_804D64E4;
 /* 458888 */ Vec3 mpLib_80458888[0x80];
 
+#if defined(TARGET_PC)
+#include "script_stage_isolation.inc"
+#endif
+
 struct mpLib_803BF248_t_x4 mpLib_803BD3D8 = {
     1.0F,         { -1, -1, -1, -1 }, { 0, -1, 0 }, { -1, -1, -1, -1 },
     { 0, -1, 0 }, { -1, -1, -1, -1 }, { 0, -1, 0 },
@@ -5721,6 +5725,12 @@ static inline void mpLib_GetJointVtxRange(CollJoint* joint, int* start,
 
 void mpLib_800581DC(int joint_id0, int joint_id1)
 {
+#if defined(TARGET_PC)
+    /* Scripted rooms share owners and world coordinates while transitioning.
+     * Their seam graph is explicit; vanilla proximity stitching would join rooms. */
+    extern int ScriptGame_StageJoint(int joint_id);
+    if (ScriptGame_StageJoint(joint_id0) || ScriptGame_StageJoint(joint_id1)) return;
+#endif
     CollJoint* j0_r9;
     CollJoint* j1_r10;
     CollLine* line_base;

@@ -29,7 +29,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+/* MEM_WRITE_WATCH is never honored by the Linux VirtualAlloc() shim (gw_mem1_watched is always
+ * false there), so sn.dirty_mode is always false and these are never actually called - stubs
+ * only so the file compiles. See gw_compat_linux.c's VirtualAlloc(). */
+typedef void *PVOID;
+typedef unsigned int UINT;
+#define WRITE_WATCH_FLAG_RESET 1
+static inline UINT GetWriteWatch(DWORD flags, PVOID base, size_t size, PVOID *addrs,
+                                 ULONG_PTR *count, DWORD *granularity) {
+  (void)flags;
+  (void)base;
+  (void)size;
+  (void)addrs;
+  (void)granularity;
+  *count = 0;
+  return 1; /* nonzero: failure, matching "cannot tell: everything is suspect" */
+}
+static inline UINT ResetWriteWatch(PVOID base, size_t size) {
+  (void)base;
+  (void)size;
+  return 0;
+}
+#endif
 
 #define GW_SNAP_MAX_RANGES 4096
 #define GW_SNAP_MAX_SYMS 8192
@@ -199,11 +224,17 @@ static int sn_load_map(void) {
     int i;
     GetModuleFileNameA(NULL, path, sizeof path);
     {
+#ifdef _WIN32
         char *dot = strrchr(path, '.');
         if (dot == NULL) {
             return -1;
         }
         strcpy(dot, ".map");
+#else
+        char *slash = gw_path_separator(path);
+        if (!slash || (size_t)(slash - path) + sizeof "/melee-pc.msvc.map" > sizeof path) return -1;
+        strcpy(slash + 1, "melee-pc.msvc.map");
+#endif
     }
     f = fopen(path, "r");
     if (f == NULL) {
@@ -222,12 +253,22 @@ static int sn_load_map(void) {
             continue;
         }
         /* symbols: " 0003:0000a1b0       _name        1000xxxx f?  obj" */
-        if (sscanf(line, " 0003:%x %255s %x %255s %63s", &off, a, &va, b, c) >= 4) {
+#ifdef _WIN32
+        int parsed = sscanf(line, " 0003:%x %255s %x %255s %63s", &off, a, &va, b, c) >= 4;
+#else
+        int parsed = sscanf(line, "GW_STATE %x %x %255s %255s", &va, &len, a, b) == 4;
+        off = va;
+#endif
+        if (parsed) {
             const char *obj = strcmp(b, "f") == 0 || strcmp(b, "i") == 0 ? c : b;
             if (sn.nsyms < GW_SNAP_MAX_SYMS) {
                 GwSnapSym *s = &sn.syms[sn.nsyms++];
                 s->va = va;
+#ifdef _WIN32
                 s->len = 0;
+#else
+                s->len = len;
+#endif
                 snprintf(s->name, sizeof s->name, "%s", a);
                 snprintf(s->obj, sizeof s->obj, "%s", obj);
             }
@@ -252,11 +293,14 @@ static int sn_load_map(void) {
     }
     fclose(f);
     qsort(sn.syms, (size_t) sn.nsyms, sizeof sn.syms[0], sn_sym_cmp);
+    if (!sn.nsyms) { gw_log("snap: no state symbols in %s", path); return -1; }
+#ifdef _WIN32
     sec3_start = sec3_base;
     for (i = 0; i < sn.nsyms; ++i) {
         uint32_t end = i + 1 < sn.nsyms ? sn.syms[i + 1].va : sec3_start + sec3_end;
         sn.syms[i].len = end > sn.syms[i].va ? end - sn.syms[i].va : 0;
     }
+ #endif
     /* merge the game symbols into ranges */
     sn.nranges = 0;
     sn.globals_len = 0;

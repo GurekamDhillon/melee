@@ -33,9 +33,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#ifndef _WIN32
+#include <SDL3/SDL_clipboard.h>
+#include <SDL3/SDL_events.h>
+#endif
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include "../third_party/lua-5.4.7/src/lua.h"
 #include "../third_party/lua-5.4.7/src/lauxlib.h"
@@ -46,8 +54,19 @@ extern float gw_ScriptGame_FighterF(int slot, int field);
 extern int gw_ScriptGame_FighterI(int slot, int field);
 extern void gw_ScriptGame_SetPercent(int slot, int percent);
 extern int gw_ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int bkb);
+extern int gw_ScriptGame_Impulse(int slot, int x_bits, int y_bits);
+extern int gw_ScriptGame_CpuMode(int slot, int fight);
+extern int gw_ScriptGame_CpuTechnical(int slot, int owner, int skill, int seed);
+extern void gw_ScriptGame_CpuTechnicalClear(int owner);
+extern int gw_ScriptGame_CpuTechnicalState(int slot, int owner, int field);
+extern int gw_ScriptGame_CpuTechnicalTest(void);
 extern void gw_ScriptGame_SetStocks(int slot, int stocks);
 extern int gw_ScriptGame_StageKind(void);
+extern int gw_ScriptGame_StageIsolate(int owner, int isolate);
+extern int gw_ScriptGame_StageIsolationState(int owner);
+extern void gw_ScriptGame_StageIsolationClear(int owner);
+extern void gw_ScriptGame_StageIsolationWatch(void);
+extern int gw_mpScriptStageIsolationTest(void);
 extern int gw_ScriptGame_StageGameplayScene(void);
 extern int gw_ScriptGame_GameMode(void);
 extern int gw_ScriptGame_ItemCount(void);
@@ -55,8 +74,12 @@ extern int gw_ScriptGame_ItemI(int index, int field);
 extern float gw_ScriptGame_ItemF(int index, int field);
 extern void gw_ScriptGame_LaunchScene(int game_mode);
 extern int gw_ScriptGame_StageAddLine(int x0, int y0, int x1, int y1, int kind, int flags, int handle);
+extern int gw_ScriptGame_StageResourceAccess(int handle, int owner);
+extern int gw_ScriptGame_StageReleaseOwner(int owner);
+extern int gw_ScriptGame_StageReleaseDeadOwners(void);
 extern int gw_ScriptGame_StageRemove(int handle);
 extern int gw_ScriptGame_StageMove(int handle, int x, int y);
+extern int gw_ScriptGame_StageLink(int handle_a, int handle_b, int owner);
 extern int gw_ScriptGame_StageAddModel(int group, int joint, int x, int y, int z,
                                        int scale, int rot, int handle);
 extern int gw_ScriptGame_StageAttachModel(int model_handle, int line_handle);
@@ -66,6 +89,15 @@ extern float gw_ScriptGame_StageLineF(int slot, int field);
 extern int gw_ScriptGame_SpawnTarget(int x, int y, int handle);
 extern int gw_ScriptGame_SpawnEnemy(int which, int x, int y, int facing, int handle);
 extern int gw_ScriptGame_EnemyRemove(int handle);
+extern int gw_ScriptGame_EnemyAlive(int handle);
+extern int gw_ScriptGame_EnemyI(int handle, int field);
+extern float gw_ScriptGame_EnemyF(int handle, int field);
+extern int gw_ScriptGame_EnemyStrike(int handle, int slot, int damage, int angle, int kbg, int bkb, int reach);
+extern int gw_ScriptGame_EnemyHurt(int handle, int slot, int damage, int angle, int kbg, int bkb, int reach);
+extern int gw_ScriptGame_EnemyTest(void);
+extern void gw_ifAll_HideHUD(void);
+extern void gw_ifAll_ShowHUD(void);
+extern int gw_ifAll_IsHUDHidden(void);
 extern int gw_ScriptGame_StageTargetI(int slot);
 extern float gw_ScriptGame_StageTargetF(int slot, int field);
 extern int gw_snap_open(int k);
@@ -78,6 +110,12 @@ enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTU
 
 /* ---- the Geno Lab's inspection half (script_game.c; field numbers in script_lab.h) ------------ */
 #include "../gameworld/script_lab.h"
+#include "../gameworld/script_parts.h"
+extern int gw_ScriptGame_PartsI(int slot, int d, int field);
+extern float gw_ScriptGame_PartsF(int slot, int d, int field);
+extern int gw_ScriptGame_PartsControl(int slot, int d, int what, int rgb, int owner);
+extern void gw_ScriptGame_PartsReset(int owner);
+extern int gw_ScriptGame_PartsJoint(int slot, int joint);
 extern float gw_ScriptGame_LabF(int slot, int field);
 extern int gw_ScriptGame_LabI(int slot, int field);
 extern const char *gw_ScriptGame_LabAnimSymbol(int slot);
@@ -100,6 +138,7 @@ extern int gw_Camera_ScriptCompletion(void);
 extern int gw_Camera_ScriptCompletionKind(void);
 extern int gw_Camera_ScriptGetBits(int field);
 extern void gw_Camera_ScriptSet(int field, int bits);
+extern void gw_Camera_ScriptCommit(void);
 extern void gw_Camera_ScriptMoveBegin(void);
 extern void gw_Camera_ScriptMove(int frames, int ease);
 extern void gw_Camera_ScriptPathClear(void);
@@ -166,6 +205,9 @@ extern void gw_script_pad_override(int ch, int owner, unsigned buttons, int sx, 
                                    int cy, int l, int r, int samples);
 extern void gw_script_pad_release(int ch, int owner);
 extern void gw_script_pad_release_owner(int owner);
+extern int gw_script_pad_mask(int ch, int owner, unsigned buttons);
+extern void gw_script_pad_masks_clear(void);
+extern unsigned gw_script_pad_raw_buttons(int ch);
 extern const char *gw_script_pad_lua_path(void); /* MELEE_PAD_SCRIPT when it names a .lua */
 
 #define GS_MAX_SCRIPTS 64
@@ -195,6 +237,7 @@ typedef struct {
     int errors;
     int disabled;
     int used;
+    int stage_owner; /* unique script-load generation; never restored or reused */
     uint64_t src_hash;
 } GsScript;
 
@@ -249,6 +292,7 @@ typedef struct {
     int hit[LAB_HI_COUNT]; /* LAB_EV_HIT: the attacker's hitbox as it was when it connected */
     float hitf[LAB_HF_COUNT];
     int has_hit;
+    int source_enemy, reaction;
 } GsEvent;
 
 #define GS_MAX_DRAW 2048
@@ -325,6 +369,7 @@ static struct {
     float set_rate[6];
     float set_lift[6];
     int lab_request;   /* the frontend's LAB entry / MELEE_LAB=1 asked for the Lab */
+    int tbd_request;   /* the installed roguelite's main-menu entry */
     /* keys */
     unsigned char key_now[256], key_prev[256];
     /* console */
@@ -337,6 +382,59 @@ static struct {
 /* Token allocation is native and never rewound: a handle from a discarded savestate future
  * cannot alias a new object after load. The object's handle itself lives in game memory. */
 static int gs_stage_handle_serial;
+static int gs_stage_owner_serial;
+static int gs_stage_cleanup_pending;
+static void gs_stage_cleanup_dead(void);
+int gw_Script_StageResourceOwner(void) {
+    return gs.cur >= 0 && gs.cur < gs.n && gs.s[gs.cur].used && gs.s[gs.cur].gameplay ?
+        gs.s[gs.cur].stage_owner : 0;
+}
+int gw_Script_StageResourceOwnerAlive(int owner) {
+    int i;
+    for (i = 0; i < gs.n; ++i)
+        if (gs.s[i].used && gs.s[i].stage_owner == owner && owner > 0) return 1;
+    return 0;
+}
+static void gs_fly_clear_owner(int owner);
+static void gs_fly_cursor_reset(void);
+static int gs_stage_isolation_owner;
+int gw_Script_StageIsolationAllowed(int owner) {
+    return owner > 0 && owner == gs_stage_isolation_owner && owner <= gs.n &&
+        gs.s[owner - 1].used && gs.s[owner - 1].gameplay && !gs.s[owner - 1].disabled &&
+        gs.match_active && !gw_RB_Enabled() && !gw_Netplay_Enabled();
+}
+void gw_Script_StageIsolationReleased(int owner) {
+    if (owner > 0 && gs_stage_isolation_owner == owner) gs_stage_isolation_owner = 0;
+}
+static void gs_stage_isolation_release_owner(int owner) {
+    if (owner > 0 && gs_stage_isolation_owner == owner) {
+        gw_ScriptGame_StageIsolationClear(owner);
+        gs_stage_isolation_owner = 0;
+    }
+}
+static int gs_hud_owner;
+int gw_Script_StatusHUDVisible(void) {
+    return gs_hud_owner == 0 || gw_RB_Enabled() || gw_Netplay_Enabled();
+}
+static void gs_hud_release_owner(int owner) {
+    if (owner > 0 && gs_hud_owner == owner) gs_hud_owner = 0;
+}
+/* Scene-local ownership of the bounded Adventure enemy pool. Never recycle a live handle. */
+static struct { int handle, owner; } gs_enemy_owned[32];
+static int gs_enemy_access(int handle, int owner) {
+    int i;
+    for (i = 0; i < 32; ++i)
+        if (gs_enemy_owned[i].handle == handle)
+            return gs_enemy_owned[i].owner == owner ? 1 : -1;
+    return 0;
+}
+static void gs_enemy_release_owner(int owner) {
+    int i;
+    for (i = 0; i < 32; ++i) if (gs_enemy_owned[i].owner == owner) {
+        gw_ScriptGame_EnemyRemove(gs_enemy_owned[i].handle);
+        memset(&gs_enemy_owned[i], 0, sizeof gs_enemy_owned[i]);
+    }
+}
 static int gs_stage_overlay; /* gd.stage_view(_, true): the host-overlay debug strokes */
 /* Cosmetic associations are native, keyed by the collision handle that *is* snapshotted. A
  * rewind to before a line existed therefore has no model to draw; a new future gets a new handle.
@@ -509,6 +607,9 @@ static void gs_report(int script, const char *what, const char *err) {
     GsScript *s = (script >= 0 && script < gs.n) ? &gs.s[script] : NULL;
     gw_Console_Print(GS_RED, "[%s] %s: %s", gs_script_id(script), what, err);
     gw_log("script [%s] %s: %s", gs_script_id(script), what, err);
+    /* Isolation is reverted on the first error; do not wait for disablement. */
+    gs_stage_isolation_release_owner(script + 1);
+    gs_fly_clear_owner(script + 1);
     if (s != NULL && script != gs.console && ++s->errors >= GS_MAX_ERRORS && !s->disabled) {
         int k;
         s->disabled = 1;
@@ -517,7 +618,12 @@ static void gs_report(int script, const char *what, const char *err) {
             gs.camera_owner = gs.camera_task_owner = 0;
             gw_log("script [%s] camera restored (script disabled)", s->id);
         }
+        gw_ScriptGame_PartsReset(script + 1);
+        gw_ScriptGame_CpuTechnicalClear(script + 1);
+        gw_Fx_LabStop(script + 1);
         gw_script_pad_release_owner(script + 1);
+        gs_enemy_release_owner(script + 1);
+        gs_hud_release_owner(script + 1);
         for (k = 0; k < GS_MAX_TASKS; ++k) {
             gw_script_pad_release_owner(s->task_pad_owner[k]);
         }
@@ -768,6 +874,7 @@ static int l_camera_set(lua_State *L) {
     int mask = gs_camera_check_pose(L, 1, 0);
     gs_camera_claim(L, "camera_set");
     gs_camera_apply_pose(L, 1, mask);
+    gw_Camera_ScriptCommit();
     gw_log("script [%s] camera set", gs_script_id(gs.cur));
     return 0;
 }
@@ -1506,6 +1613,7 @@ static int l_pad(lua_State *L) {
         luaL_error(L, "gd.pad: ports are 1-4");
     }
     gw_script_pad_state(ch, &b, &sx, &sy, &cx, &cy, &tl, &tr);
+    if (lua_toboolean(L, 2)) b = gw_script_pad_raw_buttons(ch);
     lua_createtable(L, 0, 20);
     gs_setint(L, "buttons", b);
     gs_setint(L, "x", sx);
@@ -1517,6 +1625,15 @@ static int l_pad(lua_State *L) {
     for (k = 0; k < 12; ++k) { /* the first 12 entries are the distinct names */
         gs_setbool(L, gs_buttons[k].name, (b & gs_buttons[k].bit) != 0);
     }
+    return 1;
+}
+
+static int l_input_mask(lua_State *L) {
+    int ch = gs_slot_arg(L, 1);
+    lua_Integer bits = luaL_checkinteger(L, 2);
+    gs_require_offline(L, "input_mask");
+    if (ch > 3 || bits < 0 || bits > 15) return luaL_error(L, "input_mask: port 1-4, D-pad bits 0-15");
+    lua_pushboolean(L, gw_script_pad_mask(ch, gs.cur + 1, (unsigned)bits));
     return 1;
 }
 
@@ -1628,6 +1745,37 @@ static int l_hit(lua_State *L) {
     lua_pushboolean(L, enemy
         ? gw_ScriptGame_EnemyHit(enemy, from, (int) damage, (int) angle, (int) kbg, (int) bkb)
         : gw_ScriptGame_Hit(slot, from, (int) damage, (int) angle, (int) kbg, (int) bkb));
+    return 1;
+}
+
+static int l_cpu_mode(lua_State *L) {
+    int slot = gs_slot_arg(L, 1), fight;
+    size_t len;
+    const char *mode;
+    luaL_checktype(L, 2, LUA_TSTRING);
+    mode = lua_tolstring(L, 2, &len);
+    if (len == 5 && memcmp(mode, "stand", 5) == 0) fight = 0;
+    else if (len == 5 && memcmp(mode, "fight", 5) == 0) fight = 1;
+    else return luaL_error(L, "cpu_mode: expected stand or fight");
+    gs_require_offline(L, "cpu_mode");
+    gs_rw_branch();
+    lua_pushboolean(L, gw_ScriptGame_CpuMode(slot, fight));
+    return 1;
+}
+
+#include "gw_script_cpu.inc"
+
+static int l_impulse(lua_State *L) {
+    int slot = gs_slot_arg(L, 1);
+    union { float f; int i; } x, y;
+    luaL_checktype(L, 2, LUA_TTABLE);
+    gs_require_offline(L, "impulse");
+    lua_getfield(L, 2, "x"); x.f = (float)luaL_optnumber(L, -1, 0); lua_pop(L, 1);
+    lua_getfield(L, 2, "y"); y.f = (float)luaL_optnumber(L, -1, 0); lua_pop(L, 1);
+    if (!isfinite(x.f) || !isfinite(y.f) || fabsf(x.f) > 4.0f || fabsf(y.f) > 3.0f)
+        return luaL_error(L, "impulse: finite x in -4..4, y in -3..3 required");
+    gs_rw_branch();
+    lua_pushboolean(L, gw_ScriptGame_Impulse(slot, x.i, y.i));
     return 1;
 }
 
@@ -1803,14 +1951,16 @@ static int l_fly_solid(lua_State *L) {
     return 1;
 }
 
+#include "gw_script_fly_attack.inc"
+
 /* the console: fly [port] [on|off|place|toggle] | fly speed <n> | fly solid on|off | fly port <n>
  * | fly readout on|off; noclip = fly; tp [port] <x> <y>; pos [port] */
 static int gs_fly_console(const char *cmd, const char *arg) {
-    char a[4][64];
+    char a[6][64];
     int n, slot = gs_fly_port, rc;
     const char *why;
     memset(a, 0, sizeof a);
-    n = sscanf(arg, "%63s %63s %63s %63s", a[0], a[1], a[2], a[3]);
+    n = sscanf(arg, "%63s %63s %63s %63s %63s %63s", a[0], a[1], a[2], a[3], a[4], a[5]);
     if (n < 0) n = 0;
     if (_stricmp(cmd, "pos") == 0) {
         char text[96];
@@ -1821,6 +1971,7 @@ static int gs_fly_console(const char *cmd, const char *arg) {
         }
         snprintf(text, sizeof text, "%.2f %.2f", gw_ScriptGame_FighterF(slot, SF_X), gw_ScriptGame_FighterF(slot, SF_Y));
         gw_Console_Print(GS_GREEN, "P%d pos %s%s (copied)", slot + 1, text, gs_fly_on(slot) ? "  flying" : "");
+#ifdef _WIN32
         if (OpenClipboard(NULL)) {
             HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, strlen(text) + 1);
             EmptyClipboard();
@@ -1831,6 +1982,9 @@ static int gs_fly_console(const char *cmd, const char *arg) {
             }
             CloseClipboard();
         }
+#else
+        SDL_SetClipboardText(text);
+#endif
         return 0;
     }
     why = gs_fly_refused();
@@ -1881,6 +2035,10 @@ static int gs_fly_console(const char *cmd, const char *arg) {
         return 0;
     }
     /* fly / noclip */
+    if (n >= 1 && (!_stricmp(a[0], "target") || !_stricmp(a[0], "attack") || !_stricmp(a[0], "clear"))) {
+        if (why != NULL) { gw_Console_Print(GS_RED, "%s", why); return -1; }
+        return gs_fly_cursor_console(a, n, slot);
+    }
     if (n >= 1 && _stricmp(a[0], "speed") == 0) {
         if (n >= 2) {
             if (why != NULL) {
@@ -1977,9 +2135,10 @@ static void gs_fly_text_update(void) {
     }
     for (slot = 0; slot < 6 && len < (int) sizeof gs_fly_text - 1; ++slot) {
         if (gs_fly_on(slot)) {
-            len += snprintf(gs_fly_text + len, sizeof gs_fly_text - (size_t) len, "%sFLY P%d   x %.1f   y %.1f   speed %.2f",
+            len += snprintf(gs_fly_text + len, sizeof gs_fly_text - (size_t) len, "%sFLY P%d   x %.1f   y %.1f   speed %.2f   attack %s  #%d",
                             len ? "\n" : "", slot + 1, gw_ScriptGame_FighterF(slot, SF_X),
-                            gw_ScriptGame_FighterF(slot, SF_Y), gw_GenoFly_Speed());
+                            gw_ScriptGame_FighterF(slot, SF_Y), gw_GenoFly_Speed(),
+                            gw_GenoFly_State(slot, 0) ? "ON" : "off", gw_GenoFly_State(slot, 6));
         }
     }
 }
@@ -2159,15 +2318,25 @@ static int l_screenshot(lua_State *L) {
 }
 
 /* gd.quit(): close the game window the way the user would (gameplay scripts and the console) */
+#ifdef _WIN32
 static BOOL CALLBACK gs_close_cb(HWND w, LPARAM lp) {
     (void) lp;
     if (IsWindowVisible(w)) PostMessageA(w, WM_CLOSE, 0, 0);
     return TRUE;
 }
+static void gs_request_quit(void) {
+    EnumThreadWindows(GetCurrentThreadId(), gs_close_cb, 0);
+}
+#else
+static void gs_request_quit(void) {
+    SDL_Event event = { .type = SDL_EVENT_QUIT };
+    SDL_PushEvent(&event);
+}
+#endif
 static int l_quit(lua_State *L) {
     gs_require_gameplay(L, "quit");
     gw_log("script [%s]: quit", gs_script_id(gs.cur));
-    EnumThreadWindows(GetCurrentThreadId(), gs_close_cb, 0);
+    gs_request_quit();
     return 0;
 }
 
@@ -2390,25 +2559,21 @@ static void gs_data_path(lua_State *L, const char *name, char *out, size_t cap) 
             luaL_error(L, "data file names use letters, digits, _ - . and / (got \"%s\")", name);
         }
     }
-    snprintf(dir, sizeof dir, "%s\\%s", gs.data_dir, s->id);
-    for (p = dir; *p != '\0'; ++p) {
-        if (*p == '/') {
-            *(char *) p = '_'; /* a mod script's id "mod/file" is one folder */
+    {
+        char id[128];
+        snprintf(id, sizeof id, "%s", s->id);
+        for (char *q = id; *q; ++q) if (*q == '/' || *q == '\\') *q = '_';
+        if (snprintf(dir, sizeof dir, "%s/%s", gs.data_dir, id) >= (int) sizeof dir) {
+            luaL_error(L, "data directory path too long");
         }
     }
     CreateDirectoryA(gs.data_dir, NULL);
     CreateDirectoryA(dir, NULL);
-    snprintf(out, cap, "%s\\%s", dir, name);
-    {
-        /* the folders of a "dir/sub/file" name (stage E: versioned frame-data exports) */
-        char *q = out + strlen(dir) + 1;
-        for (; *q != '\0'; ++q) {
-            if (*q == '/') {
-                *q = '\0';
-                CreateDirectoryA(out, NULL);
-                *q = '\\';
-            }
-        }
+    if (snprintf(out, cap, "%s/%s", dir, name) >= (int) cap) {
+        luaL_error(L, "data file path too long");
+    }
+    for (char *q = out + strlen(dir) + 1; *q; ++q) {
+        if (*q == '/') { *q = 0; CreateDirectoryA(out, NULL); *q = '/'; }
     }
 }
 
@@ -2463,6 +2628,67 @@ static int l_data_write(lua_State *L) {
 
 /* campaign-save: isolated local persistence; no game/snapshot state. */
 #include "gw_script_campaign.inc"
+
+static int gs_push_fail(lua_State *L, const char *why); /* defined with the other script helpers */
+
+/* gd.data_write_atomic(name, text) -> true | false, why
+ * Writes a sibling temporary file, checks every write/flush/close result, then
+ * replaces the target. A failure leaves the previous file untouched. This is
+ * atomic against a torn write (a reader sees the old or the new file, never a
+ * partial one); it is not a power-loss durability guarantee on its own. On
+ * Windows MoveFileExA replaces an existing destination; on Linux the shim maps
+ * it to rename(2), which is atomic within a directory. */
+static int l_data_write_atomic(lua_State *L) {
+    char path[MAX_PATH], tmp[MAX_PATH];
+    const char *name = luaL_checkstring(L, 1);
+    size_t len, wrote;
+    const char *text = luaL_checklstring(L, 2, &len);
+    FILE *f;
+    int failed;
+    gs_data_path(L, name, path, sizeof path);
+    if (len > (1 << 20)) {
+        return gs_push_fail(L, "data files are at most 1 MB");
+    }
+    {
+        /* The temporary lives in the target's directory as a component that
+         * starts with '.', which the script data-name grammar cannot address
+         * (a leading '.' or "/." is rejected), so it can never collide with or
+         * delete a user's data file such as "x.tmp". */
+        const char *slash = strrchr(path, '/');
+        const char *bslash = strrchr(path, '\\');
+        if (bslash != NULL && (slash == NULL || bslash > slash)) slash = bslash;
+        const char *base = slash != NULL ? slash + 1 : path;
+        int dlen = slash != NULL ? (int) (slash - path) : 0;
+        int n = snprintf(tmp, sizeof tmp, "%.*s/.atomic-%.*s.tmp", dlen, path, (int) sizeof tmp - 40, base);
+        if (n < 0 || n >= (int) sizeof tmp) {
+            return gs_push_fail(L, "data path too long for an atomic write");
+        }
+    }
+    f = fopen(tmp, "wbx"); /* exclusive: never clobber an existing temp */
+    if (f == NULL) {
+        /* A stale unaddressable temp from a crash blocks creation; it is not a
+         * user data file, so removing it and retrying once is safe. */
+        DeleteFileA(tmp);
+        f = fopen(tmp, "wbx");
+    }
+    if (f == NULL) {
+        return gs_push_fail(L, "cannot open the temporary file");
+    }
+    wrote = fwrite(text, 1, len, f);
+    failed = wrote != len;
+    if (fflush(f) != 0) failed = 1;
+    if (fclose(f) != 0) failed = 1;
+    if (failed) {
+        DeleteFileA(tmp);
+        return gs_push_fail(L, "temporary write failed");
+    }
+    if (!MoveFileExA(tmp, path, MOVEFILE_REPLACE_EXISTING)) {
+        DeleteFileA(tmp);
+        return gs_push_fail(L, "could not replace the previous file");
+    }
+    lua_pushboolean(L, 1);
+    return 1;
+}
 
 static int l_script_info(lua_State *L) {
     GsScript *s = gs_cur_script();
@@ -2797,6 +3023,178 @@ static int l_dobjs(lua_State *L) {
 }
 
 /* gd.attrs(port) -> {name = value} for the 40 named ftCo_DatAttrs fields, as the fighter has them */
+/* Live, offline-only solid-color override for one fighter draw/material part. */
+static int l_dobj_solid(lua_State *L) {
+    int slot = gs_present_arg(L, 1);
+    int d = (int) luaL_checkinteger(L, 2);
+    uint32_t rgba;
+    int result;
+    if (slot < 0) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    gs_require_offline(L, "dobj_solid");
+    gs_rw_branch();
+    rgba = gs_color_arg(L, 3, 0xFFFFFFFFu);
+    result = gw_ScriptGame_PartsControl(slot, d, PART_CTL_COLOR, (int)(rgba >> 8), gs.cur + 1);
+    if (result < 0) {
+        return luaL_error(L, "gd.dobj_solid: invalid part or override capacity exhausted (%d)", result);
+    }
+    lua_pushboolean(L, result != 0);
+    return 1;
+}
+
+static int l_dobj_solid_off(lua_State *L) {
+    int slot = gs_present_arg(L, 1);
+    int d = (int) luaL_checkinteger(L, 2);
+    int result;
+    if (slot < 0) {
+        lua_pushboolean(L, 0);
+        return 1;
+    }
+    gs_require_offline(L, "dobj_solid_off");
+    gs_rw_branch();
+    result = gw_ScriptGame_PartsControl(slot, d, PART_CTL_CLEAR, 0, gs.cur + 1);
+    if (result < 0) {
+        return luaL_error(L, "gd.dobj_solid_off: invalid part");
+    }
+    lua_pushboolean(L, result != 0);
+    return 1;
+}
+
+static int l_dobj_tint(lua_State *L) {
+    int slot = gs_present_arg(L, 1), d = (int)luaL_checkinteger(L, 2), result;
+    uint32_t rgba;
+    if (slot < 0) { lua_pushboolean(L, 0); return 1; }
+    gs_require_offline(L, "dobj_tint");
+    gs_rw_branch();
+    rgba = gs_color_arg(L, 3, 0xFFFFFFFFu);
+    result = gw_ScriptGame_PartsControl(slot, d, PART_CTL_TINT, (int)(rgba >> 8), gs.cur + 1);
+    if (result < 0) return luaL_error(L, "dobj_tint: invalid part or owned by another script (%d)", result);
+    lua_pushboolean(L, result != 0);
+    return 1;
+}
+
+static int l_parts(lua_State *L) {
+    static const char *regions[PART_REGIONS] = {"unclassified","head","torso","left_arm","right_arm",
+        "left_hand","right_hand","left_leg","right_leg","left_foot","right_foot","equipment"};
+    static const char *fields[] = {"joint","material","material_data","triangles","status","hidden",
+        "source","item_kind","item_ordinal","path","hash_lo","hash_hi","joint_flags","models",
+        "visibility_model","visibility_state","body_joint"};
+    int slot = gs_present_arg(L,1), n, i, k;
+    char signature[32];
+    gs_require_offline(L,"parts");
+    if (slot < 0) {lua_pushnil(L); return 1;}
+    if (lua_toboolean(L,2) || gw_ScriptGame_PartsI(slot,0,PART_I_COUNT)<0)
+        n=gw_ScriptGame_PartsI(slot,0,PART_I_REFRESH);
+    else n=gw_ScriptGame_PartsI(slot,0,PART_I_COUNT);
+    if (n<0 || n>512) return luaL_error(L,"gd.parts: invalid draw-list mapping (%d)",n);
+    lua_createtable(L,n,4);
+    gs_setint(L,"schema",1);
+    snprintf(signature,sizeof signature,"%08x%08x",(unsigned)gw_ScriptGame_PartsI(slot,0,PART_I_HASH_HI),
+        (unsigned)gw_ScriptGame_PartsI(slot,0,PART_I_HASH_LO));
+    gs_setstr(L,"geometry_signature",signature);
+    gs_setstr(L,"measurement_space","current_pose_world");
+    gs_setstr(L,"coverage_mode","opaque_geometry_paired_ids");
+    for(i=0;i<n;++i) {
+        lua_createtable(L,0,22); gs_setint(L,"index",i);
+        for(k=PART_I_OWNER_JOINT;k<=PART_I_BODY_JOINT;++k) {
+            if(k==PART_I_HASH_LO || k==PART_I_HASH_HI || k==PART_I_MODELS) continue;
+            gs_setint(L,fields[k-PART_I_OWNER_JOINT],gw_ScriptGame_PartsI(slot,i,k));
+        }
+        gs_setnum(L,"area",gw_ScriptGame_PartsF(slot,i,PART_F_AREA));
+        lua_createtable(L,6,0);
+        for(k=0;k<6;++k) {lua_pushnumber(L,gw_ScriptGame_PartsF(slot,i,PART_F_MIN_X+k));lua_rawseti(L,-2,k+1);}
+        lua_setfield(L,-2,"bounds");
+        lua_createtable(L,0,PART_REGIONS);
+        for(k=0;k<PART_REGIONS;++k)gs_setnum(L,regions[k],gw_ScriptGame_PartsF(slot,i,PART_F_REGION+k));
+        lua_setfield(L,-2,"regions");
+        gs_setstr(L,"recolor_capability","independent_draw_override");
+        lua_rawseti(L,-2,i+1);
+    }
+    return 1;
+}
+static int l_parts_id(lua_State *L) {
+    int slot=gs_present_arg(L,1), rc;
+    gs_require_offline(L,"parts_id"); gs_rw_branch();
+    rc=gw_ScriptGame_PartsControl(slot,0,PART_CTL_IDS,lua_toboolean(L,2),gs.cur+1);
+    if(rc<0)return luaL_error(L,"gd.parts_id: unavailable snapshot or another owner (%d)",rc);
+    lua_pushboolean(L,1);return 1;
+}
+static int l_parts_id_off(lua_State *L) {
+    int rc;
+    gs_require_offline(L,"parts_id_off");
+    rc=gw_ScriptGame_PartsControl(0,0,PART_CTL_IDS_OFF,0,gs.cur+1);
+    if(rc<0)return luaL_error(L,"gd.parts_id_off: owned by another script");
+    return 0;
+}
+static int l_parts_clear(lua_State *L) {
+    gs_require_offline(L,"parts_clear");gw_ScriptGame_PartsReset(gs.cur+1);return 0;
+}
+static int l_fx_attach(lua_State *L) {
+    const char *package=luaL_checkstring(L,1);
+    int slot=gs_present_arg(L,2), joint=(int)luaL_optinteger(L,3,0), address,handle;
+    float x=(float)luaL_optnumber(L,4,0),y=(float)luaL_optnumber(L,5,9),z=(float)luaL_optnumber(L,6,0);
+    float scale=(float)luaL_optnumber(L,7,1);
+    gs_require_offline(L,"fx_attach");gs_rw_branch();
+    if(!isfinite(x)||!isfinite(y)||!isfinite(z)||!isfinite(scale)||scale<=0||scale>100)
+        return luaL_error(L,"fx_attach requires finite offsets and scale in (0,100]");
+    address=gw_ScriptGame_PartsJoint(slot,joint);
+    handle=gw_Fx_LabAttach(package,address,gs.cur+1,slot+1,joint,gs.frame,
+        gw_ScriptGame_FighterF(slot,SF_FACING)<0?-1:1,x,y,z,scale);
+    lua_pushboolean(L,handle>0);return 1;
+}
+static int l_fx_stop(lua_State *L) {
+    gs_require_offline(L,"fx_stop");gw_Fx_LabStop(gs.cur+1);return 0;
+}
+
+/* Offline effects-lab controls. A handle belongs to the creating script. */
+static int l_fx_play(lua_State *L) {
+    const char *package=luaL_checkstring(L,1);
+    int slot=gs_present_arg(L,2), joint=(int)luaL_optinteger(L,3,0), address,handle;
+    float x=(float)luaL_optnumber(L,4,0),y=(float)luaL_optnumber(L,5,9),z=(float)luaL_optnumber(L,6,0);
+    float scale=(float)luaL_optnumber(L,7,1);
+    lua_Integer seed=luaL_optinteger(L,8,1);
+    gs_require_offline(L,"fx_play");gs_rw_branch();
+    if(!isfinite(x)||!isfinite(y)||!isfinite(z)||!isfinite(scale)||scale<=0||scale>100||seed<0||seed>2147483647)
+        return luaL_error(L,"fx_play requires finite offsets, scale in (0,100], seed in [0,2147483647]");
+    address=gw_ScriptGame_PartsJoint(slot,joint);
+    handle=gw_Fx_LabPlay(package,address,gs.cur+1,slot+1,joint,gs.frame,
+        gw_ScriptGame_FighterF(slot,SF_FACING)<0?-1:1,x,y,z,scale,(unsigned)seed);
+    lua_pushinteger(L,handle);return 1;
+}
+static int gs_fx_handle(lua_State *L,int arg) {
+    lua_Integer h=luaL_checkinteger(L,arg);
+    if(h<1||h>0x3FFFFFFF)return luaL_error(L,"invalid effect instance handle");
+    return (int)h;
+}
+static int l_fx_control(lua_State *L) {
+    static const char *keys[]={"opacity","rate","speed","life","size","brightness","turbulence"};
+    static const float lo[]={0,0,0.1f,0.1f,0.1f,0,0};
+    static const float hi[]={1,2,3,3,3,3,3};
+    int h=gs_fx_handle(L,1), em=(int)luaL_checkinteger(L,2), frames=(int)luaL_optinteger(L,4,12),k;
+    float values[7];
+    gs_require_offline(L,"fx_control");gs_rw_branch();luaL_checktype(L,3,LUA_TTABLE);
+    if(em < -1 || em >= 32 || frames<0 || frames>600)return luaL_error(L,"emitter -1..31, tween 0..600 game frames");
+    for(k=0;k<7;++k){
+        lua_getfield(L,3,keys[k]);values[k]=(float)luaL_optnumber(L,-1,1);lua_pop(L,1);
+        if(!isfinite(values[k])||values[k]<lo[k]||values[k]>hi[k])return luaL_error(L,"effect control %s out of range",keys[k]);
+    }
+    lua_pushboolean(L,gw_Fx_LabControl(h,gs.cur+1,em,values,frames)>0);return 1;
+}
+static int l_fx_end(lua_State *L) {
+    int h=gs_fx_handle(L,1), fade=(int)luaL_optinteger(L,2,12);
+    gs_require_offline(L,"fx_end");gs_rw_branch();
+    if(fade<0||fade>600)return luaL_error(L,"effect fade 0..600 game frames");
+    lua_pushboolean(L,gw_Fx_LabEnd(h,gs.cur+1,fade)>0);return 1;
+}
+static int l_fx_instance(lua_State *L) {
+    GwFxLabQuery q;int h=(int)luaL_optinteger(L,1,0),alive=gw_Fx_LabQuery(h,gs.cur+1,&q);
+    lua_createtable(L,0,7);gs_setbool(L,"alive",alive);gs_setint(L,"age",q.age);
+    gs_setint(L,"particles",q.particles);gs_setint(L,"emitters",q.emitters);gs_setint(L,"emitting",q.emitting);
+    gs_setint(L,"refused",q.refused);gs_setint(L,"refused_emitters",q.refused_emitters);return 1;
+}
+
 static int l_attrs(lua_State *L) {
     int slot = gs_present_arg(L, 1), i, n = gw_ScriptGame_LabAttrCount();
     if (slot < 0) {
@@ -3249,6 +3647,13 @@ static int l_lab_request(lua_State *L) {
     int clear = lua_toboolean(L, 1); /* before the push: with no argument index 1 IS the push */
     lua_pushboolean(L, gs.lab_request);
     if (clear) gs.lab_request = 0;
+    return 1;
+}
+
+static int l_tbd_request(lua_State *L) {
+    int clear = lua_toboolean(L, 1);
+    lua_pushboolean(L, gs.tbd_request);
+    if (clear) gs.tbd_request = 0;
     return 1;
 }
 
@@ -4595,6 +5000,8 @@ static void gs_require_stage(lua_State *L, const char *fn) {
     if (!gs.match_active) luaL_error(L, "gd.%s requires an active match", fn);
 }
 
+#include "gw_script_stage_isolation.inc"
+
 static float gs_stage_num(lua_State *L, int idx) {
     double v = luaL_checknumber(L, idx);
     if (!isfinite(v) || v < -100000.0 || v > 100000.0)
@@ -4681,6 +5088,8 @@ static int l_stage_add_model(lua_State *L) {
     lua_getfield(L, 1, "platform");
     if (!lua_isnil(L, -1)) platform = gs_stage_handle_arg(L, -1);
     lua_pop(L, 1);
+    if (platform && gw_ScriptGame_StageResourceAccess(platform, gw_Script_StageResourceOwner()) < 0)
+        return luaL_error(L, "platform handle belongs to another script");
     x = gs_stage_field_num(L, "x", 0.0f);
     y = gs_stage_field_num(L, "y", 0.0f);
     z = gs_stage_field_num(L, "z", 0.0f);
@@ -4984,6 +5393,12 @@ static int gs_stage_opts(lua_State *L, int idx, int *model) {
     lua_getfield(L, idx, "ledges");
     if (lua_toboolean(L, -1)) flags |= 2;
     lua_pop(L, 1);
+    lua_getfield(L, idx, "draw");
+    if (!lua_isnil(L, -1)) {
+        luaL_checktype(L, -1, LUA_TBOOLEAN);
+        if (!lua_toboolean(L, -1)) flags |= 4;
+    }
+    lua_pop(L, 1);
     lua_getfield(L, idx, "model");
     if (!lua_isnil(L, -1)) *model = gs_stage_model_open(L, luaL_checkstring(L, -1));
     lua_pop(L, 1);
@@ -5038,6 +5453,8 @@ static int l_stage_add_platform(lua_State *L) {
 static int l_stage_remove(lua_State *L) {
     int h = gs_stage_handle_arg(L, 1);
     gs_require_stage(L, "stage_remove");
+    if (gw_ScriptGame_StageResourceAccess(h, gw_Script_StageResourceOwner()) < 0)
+        return luaL_error(L, "stage handle belongs to another script");
     if (gw_ScriptGame_ModelLineOwner(h))
         return luaL_error(L, "line belongs to a runtime model; use model_despawn");
     gs_rw_branch();
@@ -5049,11 +5466,32 @@ static int l_stage_move(lua_State *L) {
     int h = gs_stage_handle_arg(L, 1);
     float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
     gs_require_stage(L, "stage_move");
+    if (gw_ScriptGame_StageResourceAccess(h, gw_Script_StageResourceOwner()) < 0)
+        return luaL_error(L, "stage handle belongs to another script");
     if (gw_ScriptGame_ModelLineOwner(h))
         return luaL_error(L, "line belongs to a runtime model; use model_move");
     gs_rw_branch();
     lua_pushboolean(L, gw_ScriptGame_StageMove(h, gs_fbits(x), gs_fbits(y)));
     return 1;
+}
+
+/* Explicit room-local adjacency; duplicate source/destination room geometry is
+ * intentionally ignored. Refusal never guesses a different partner handle. */
+static int l_stage_link(lua_State *L) {
+    static const char *const why[] = {
+        "current stage collision map unavailable", "stale or identical floor handles",
+        "floor handle belongs to another script", "seams require two floor lines",
+        "opposite floor endpoints exceed 0.05 units", "ambiguous or cyclic floor seam",
+        "floor endpoint already linked", "inconsistent or disabled floor seam topology"
+    };
+    int a = gs_stage_handle_arg(L, 1), b = gs_stage_handle_arg(L, 2), result;
+    gs_require_stage(L, "stage_link");
+    gs_rw_branch();
+    result = gw_ScriptGame_StageLink(a, b, gw_Script_StageResourceOwner());
+    lua_pushboolean(L, result == 1);
+    if (result == 1) return 1;
+    lua_pushstring(L, result >= -8 && result <= -1 ? why[-result - 1] : "floor seam unavailable");
+    return 2;
 }
 
 /* gd.stage_view([geometry [, overlay]]) -> geometry, overlay: the in-game shapes (on by default)
@@ -5091,10 +5529,13 @@ static const char *const gs_enemy_names[GS_ENEMY_KINDS] = {
 static int l_spawn_enemy(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
     float x = gs_stage_num(L, 2), y = gs_stage_num(L, 3);
-    int i, facing = 1, h;
+    int i, facing = 1, h, owned;
     gs_require_stage(L, "spawn_enemy");
     for (i = 0; i < GS_ENEMY_KINDS && strcmp(name, gs_enemy_names[i]) != 0; ++i) {}
     if (i == GS_ENEMY_KINDS) return luaL_error(L, "unknown enemy kind: %s", name);
+    for (owned = 0; owned < 32; ++owned)
+        if (!gs_enemy_owned[owned].handle || !gw_ScriptGame_EnemyAlive(gs_enemy_owned[owned].handle)) break;
+    if (owned == 32) return luaL_error(L, "enemy ownership capacity exhausted");
     if (!lua_isnoneornil(L, 4)) {
         luaL_checktype(L, 4, LUA_TTABLE);
         lua_getfield(L, 4, "facing");
@@ -5114,15 +5555,105 @@ static int l_spawn_enemy(lua_State *L) {
         lua_pushstring(L, "enemy capacity or item data unavailable");
         return 2;
     }
+    gs_enemy_owned[owned].handle = h;
+    gs_enemy_owned[owned].owner = gs.cur + 1;
     lua_pushinteger(L, h);
     return 1;
 }
 
 static int l_enemy_remove(lua_State *L) {
     int h = gs_stage_handle_arg(L, 1);
+    int access, i;
     gs_require_stage(L, "enemy_remove");
+    access = gs_enemy_access(h, gs.cur + 1);
+    if (access < 0) return luaL_error(L, "enemy handle belongs to another script");
+    if (!access) { lua_pushboolean(L, 0); return 1; }
     gs_rw_branch();
     lua_pushboolean(L, gw_ScriptGame_EnemyRemove(h));
+    for (i = 0; i < 32; ++i) if (gs_enemy_owned[i].handle == h)
+        memset(&gs_enemy_owned[i], 0, sizeof gs_enemy_owned[i]);
+    return 1;
+}
+
+static int l_enemy_alive(lua_State *L) {
+    int h = gs_stage_handle_arg(L, 1), access;
+    gs_require_stage(L, "enemy_alive");
+    access = gs_enemy_access(h, gs.cur + 1);
+    if (access < 0) return luaL_error(L, "enemy handle belongs to another script");
+    lua_pushboolean(L, access && gw_ScriptGame_EnemyAlive(h));
+    return 1;
+}
+
+static int gs_enemy_owned_arg(lua_State *L, const char *fn) {
+    int h = gs_stage_handle_arg(L, 1), access;
+    gs_require_stage(L, fn);
+    access = gs_enemy_access(h, gs.cur + 1);
+    if (access < 0) luaL_error(L, "enemy handle belongs to another script");
+    return access && gw_ScriptGame_EnemyAlive(h) ? h : 0;
+}
+
+static int l_enemy_state(lua_State *L) {
+    int h = gs_enemy_owned_arg(L, "enemy_state"), i;
+    static const char *const ints[] = {"kind", "state", "damage", "hits", "attack_id", "last_victim", "received", "last_attacker"};
+    static const char *const floats[] = {"x", "y", "vx", "vy", "facing"};
+    if (!h) { lua_pushnil(L); return 1; }
+    lua_createtable(L, 0, 17);
+    gs_setint(L, "handle", h); gs_setbool(L, "alive", 1);
+    for (i = 0; i < 8; ++i) {
+        int value = gw_ScriptGame_EnemyI(h, i);
+        if (!i) gs_setstr(L, "kind", value >= 0 && value < 6 ? gs_enemy_names[value] : "unknown");
+        else gs_setint(L, ints[i], value);
+    }
+    for (i = 0; i < 5; ++i) gs_setnum(L, floats[i], gw_ScriptGame_EnemyF(h, i));
+    gs_setbool(L, "vulnerable", gw_ScriptGame_EnemyI(h, 8) > 0);
+    gs_setint(L, "last_damage", gw_ScriptGame_EnemyI(h, 9));
+    return 1;
+}
+
+static int gs_enemy_combat(lua_State *L, int hurt) {
+    int h, slot, idx = hurt ? 2 : 3, i, values[4];
+    static const char *const names[] = {"damage", "angle", "kbg", "bkb"};
+    static const int max[] = {30, 361, 1000, 1000};
+    union { float f; int i; } reach;
+    luaL_checktype(L, idx, LUA_TTABLE);
+    for (i = 0; i < 4; ++i) {
+        lua_Integer value;
+        lua_getfield(L, idx, names[i]); value = luaL_checkinteger(L, -1); lua_pop(L, 1);
+        if (value < (i == 0 ? 1 : 0) || value > max[i])
+            return luaL_error(L, "enemy combat: damage 1-30, angle 0-361, kbg/bkb 0-1000 required");
+        values[i] = (int)value;
+    }
+    lua_getfield(L, idx, "reach"); reach.f = (float)luaL_checknumber(L, -1); lua_pop(L, 1);
+    if (!isfinite(reach.f) || reach.f < 1.0f || reach.f > 30.0f)
+        return luaL_error(L, "enemy combat: finite reach 1-30 required");
+    if (hurt) { lua_getfield(L, idx, "from"); slot = gs_slot_arg(L, -1); lua_pop(L, 1); }
+    else slot = gs_slot_arg(L, 2);
+    h = gs_enemy_owned_arg(L, hurt ? "enemy_hurt" : "enemy_strike");
+    if (!h) { lua_pushboolean(L, 0); return 1; }
+    gs_rw_branch();
+    lua_pushboolean(L, hurt ? gw_ScriptGame_EnemyHurt(h, slot, values[0], values[1], values[2], values[3], reach.i) :
+        gw_ScriptGame_EnemyStrike(h, slot, values[0], values[1], values[2], values[3], reach.i));
+    return 1;
+}
+static int l_enemy_strike(lua_State *L) { return gs_enemy_combat(L, 0); }
+static int l_enemy_hurt(lua_State *L) { return gs_enemy_combat(L, 1); }
+
+static int l_hud_visible(lua_State *L) {
+    gs_require_offline(L, "hud_visible");
+    if (gs.cur == gs.console || gs_cur_script() == NULL)
+        return luaL_error(L, "hud_visible requires a gameplay mod script");
+    if (!lua_isnoneornil(L, 1)) {
+        int visible;
+        luaL_checktype(L, 1, LUA_TBOOLEAN);
+        visible = lua_toboolean(L, 1);
+        if (gs_hud_owner && gs_hud_owner != gs.cur + 1)
+            return luaL_error(L, "HUD visibility belongs to another script");
+        if (!visible) {
+            if (!gs.match_active) return luaL_error(L, "hiding HUD requires an active match");
+            gs_hud_owner = gs.cur + 1;
+        } else gs_hud_owner = 0;
+    }
+    lua_pushboolean(L, gw_Script_StatusHUDVisible());
     return 1;
 }
 
@@ -5267,20 +5798,28 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"savestate", l_savestate},
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage},
-    {"hit", l_hit}, {"set_stocks", l_set_stocks},
-    {"fly", l_fly}, {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
+    {"hit", l_hit}, {"impulse", l_impulse}, {"cpu_mode", l_cpu_mode}, {"cpu_technical", l_cpu_technical}, {"set_stocks", l_set_stocks},
+    {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox},
+    {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
+    {"fly_target", l_fly_target}, {"fly_attack", l_fly_attack}, {"fly_clear", l_fly_clear}, {"fly_state", l_fly_state},
     {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"mode_blob", l_mode_blob},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
     {"key_pressed", l_key_pressed}, {"mouse", l_mouse}, {"command", l_command}, {"run", l_run},
-    {"data_read", l_data_read}, {"data_write", l_data_write}, {"script", l_script_info},
+    {"data_read", l_data_read}, {"data_write", l_data_write}, {"data_write_atomic", l_data_write_atomic}, {"script", l_script_info},
     {"campaign_storage", l_campaign_storage}, /* campaign-save */
     {"rgb", l_rgb}, {"label", l_label}, {"screenshot", l_screenshot}, {"quit", l_quit},
     {"menu", l_menu}, {"netplay", l_netplay}, {"netplay_act", l_netplay_act},
     /* the Geno Lab (docs/geno.md) */
     {"debug_draw", l_debug_draw}, {"debug_stage", l_debug_stage}, {"hitboxes", l_hitboxes},
-    {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs}, {"project", l_project}, {"attrs", l_attrs},
+    {"hurtboxes", l_hurtboxes}, {"joints", l_joints}, {"dobjs", l_dobjs},
+    {"dobj_solid", l_dobj_solid}, {"dobj_solid_off", l_dobj_solid_off},
+    {"dobj_tint", l_dobj_tint},
+    {"parts", l_parts}, {"parts_id", l_parts_id}, {"parts_id_off", l_parts_id_off}, {"parts_clear", l_parts_clear},
+    {"fx_attach", l_fx_attach}, {"fx_stop", l_fx_stop},
+    {"fx_play", l_fx_play}, {"fx_control", l_fx_control}, {"fx_end", l_fx_end}, {"fx_instance", l_fx_instance},
+    {"project", l_project}, {"attrs", l_attrs},
     {"safe_area", l_safe_area},
     {"motion_name", l_motion_name}, {"history", l_history}, {"step_back", l_step_back},
     {"rewind_to", l_rewind_to}, {"rewind_live", l_rewind_live}, {"rewind_test", l_rewind_test},
@@ -5290,6 +5829,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"state_rename", l_state_rename}, {"state_gen", l_state_gen}, {"lab_peek", l_lab_peek},
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
     {"lab_request", l_lab_request}, {"lab_mode", l_lab_mode}, {"lab_leave", l_lab_leave},
+    {"tbd_request", l_tbd_request}, {"input_mask", l_input_mask},
     {"training_select", l_training_select},
     /* stage E */
     {"motion_list", l_motion_list}, {"kb_preview", l_kb_preview}, {"rollbacks", l_rollbacks},
@@ -5318,9 +5858,12 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"area_load", l_area_load}, {"area_unload", l_area_unload},
     {"area_loaded", l_area_loaded}, {"stage_stats", l_stage_stats},
     {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move},
+    {"stage_link", l_stage_link}, {"stage_isolate", l_stage_isolate},
     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove},
-    {"enemy_status", l_enemy_status},
+    {"enemy_status", l_enemy_status}, {"enemy_alive", l_enemy_alive},
+    {"enemy_state", l_enemy_state}, {"enemy_strike", l_enemy_strike}, {"enemy_hurt", l_enemy_hurt},
+    {"hud_visible", l_hud_visible},
     {NULL, NULL}};
 
 #include "gw_script_comm.inc"
@@ -5617,6 +6160,11 @@ static int gs_find(const char *id) {
     return -1;
 }
 
+static void gs_stage_cleanup_dead(void) {
+    gs_rw_branch();
+    gs_stage_cleanup_pending = gw_ScriptGame_StageReleaseDeadOwners() != 0;
+}
+
 static void gs_unload(int i) {
     GsScript *s = &gs.s[i];
     int k;
@@ -5627,6 +6175,14 @@ static void gs_unload(int i) {
         gs_pcall(i, 0, 0, "on_unload");
     }
     gs_mode_drop(i);
+    /* Lua may be disabled, throw, or refuse cleanup. The native registry remains
+     * authoritative, and this fallback cannot release another script's assets. */
+    gs_rw_branch();
+    k = gw_ScriptGame_StageReleaseOwner(s->stage_owner);
+    if (k) {
+        gs_stage_cleanup_pending = 1;
+        gw_log("script [%s] native stage cleanup pending (%d live records)", s->id, k);
+    }
     if (gs.camera_owner == i + 1) {
         gs_rw_branch();
         gw_Camera_ScriptReset();
@@ -5642,6 +6198,13 @@ static void gs_unload(int i) {
         gw_ScriptGame_ArenaRelease(i + 1);
         gw_log("script [%s] arena-hooks released (unload)", s->id);
     }
+    gw_ScriptGame_PartsReset(i + 1);
+    gw_ScriptGame_CpuTechnicalClear(i + 1);
+    gs_stage_isolation_release_owner(i + 1);
+    gs_fly_clear_owner(i + 1);
+    gw_Fx_LabStop(i + 1);
+    gs_enemy_release_owner(i + 1);
+    gs_hud_release_owner(i + 1);
     for (k = 0; k < GS_MAX_TASKS; ++k) {
         if (s->tasks[k] != LUA_NOREF) {
             gw_script_pad_release_owner(s->task_pad_owner[k]);
@@ -5663,6 +6226,7 @@ static void gs_unload(int i) {
 
 static int gs_alloc_script(void) {
     int i, k;
+    if (gs_stage_owner_serial == INT_MAX) return -1;
     for (i = 0; i < gs.n && gs.s[i].used; ++i) {
     }
     if (i == gs.n) {
@@ -5672,6 +6236,7 @@ static int gs_alloc_script(void) {
         gs.n++;
     }
     memset(&gs.s[i], 0, sizeof gs.s[i]);
+    gs.s[i].stage_owner = ++gs_stage_owner_serial;
     gs.s[i].env_ref = LUA_NOREF;
     for (k = 0; k < GS_MAX_TASKS; ++k) {
         gs.s[i].tasks[k] = LUA_NOREF;
@@ -5714,7 +6279,7 @@ static void gs_find_ui_dir(const char *entry, char *out, size_t cap) {
     out[0] = '\0';
     snprintf(dir, sizeof dir, "%s", entry);
     for (up = 0; up < 2; up++) {
-        slash = strrchr(dir, '\\');
+        slash = gw_path_separator(dir);
         if (strrchr(dir, '/') > slash) slash = strrchr(dir, '/');
         if (slash == NULL) return;
         *slash = '\0';
@@ -5863,7 +6428,7 @@ static int gs_load_named(const char *name) {
             gs_json_field(manifest, "entry", entry, sizeof entry);
         }
         snprintf(full, sizeof full, "%s\\%s", path, entry);
-        base = strrchr(path, '\\');
+        base = gw_path_separator(path);
         snprintf(id, sizeof id, "%s", base != NULL ? base + 1 : path);
         if (manifest != NULL && gs_json_field(manifest, "id", manifest_path, sizeof manifest_path)) {
             snprintf(id, sizeof id, "%s", manifest_path);
@@ -5876,7 +6441,7 @@ static int gs_load_named(const char *name) {
     if (n < 4 || _stricmp(path + n - 4, ".lua") != 0) {
         snprintf(path + n, sizeof path - n, ".lua");
     }
-    base = strrchr(path, '\\');
+    base = gw_path_separator(path);
     base = base != NULL ? base + 1 : path;
     snprintf(id, sizeof id, "%s", base);
     n = strlen(id);
@@ -5976,7 +6541,7 @@ static void gs_init(void) {
     gs.console = -1;
     gs.scene_kind = -1;
     GetModuleFileNameA(NULL, gs.exe_dir, sizeof gs.exe_dir);
-    slash = strrchr(gs.exe_dir, '\\');
+    slash = gw_path_separator(gs.exe_dir);
     if (slash != NULL) {
         *slash = '\0';
     }
@@ -5986,7 +6551,9 @@ static void gs_init(void) {
     } else {
         snprintf(gs.scripts_dir, sizeof gs.scripts_dir, "%s\\scripts", gs.exe_dir);
     }
-    snprintf(gs.data_dir, sizeof gs.data_dir, "%s\\scripts-data", gs.exe_dir);
+    v = getenv("MELEE_SCRIPT_DATA_DIR");
+    if (v && *v) snprintf(gs.data_dir, sizeof gs.data_dir, "%s", v);
+    else snprintf(gs.data_dir, sizeof gs.data_dir, "%s/scripts-data", gs.exe_dir);
     v = getenv("MELEE_LAB"); /* the Geno Lab on from the start (as the frontend's LAB entry) */
     gs.lab_request = v != NULL && v[0] != '\0' && v[0] != '0';
     if (gs.lab_request) {
@@ -6057,6 +6624,13 @@ void gw_Script_SceneBegin(int scene_kind) {
         return;
     }
     prev = gs.scene_kind;
+    gs_fly_cursor_reset();
+    gw_ScriptGame_CpuTechnicalClear(0);
+    gw_ScriptGame_StageIsolationClear(0);
+    gs_stage_isolation_owner = 0;
+    gs_hud_release_owner(gs_hud_owner);
+    memset(gs_enemy_owned, 0, sizeof gs_enemy_owned);
+    gw_script_pad_masks_clear();
     if (gs.match_active) {
         gs.match_active = 0;
         gs_hook_all("on_match_end", 0, 0, 0);
@@ -6096,10 +6670,10 @@ void gw_Script_SceneBegin(int scene_kind) {
    scripts that define a hook late, e.g. from the console) */
 static void gs_update_want_events(void) {
     static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land",
-                                       "on_boss_defeated"};
+                                       "on_boss_defeated", "on_enemy_hit"};
     int i, k, want = 0;
     for (i = 0; i < gs.n && !want; ++i) {
-        for (k = 0; k < 5 && !want; ++k) {
+        for (k = 0; k < 6 && !want; ++k) {
             if (gs_get_hook(i, hooks[k])) {
                 lua_pop(gs.L, 1);
                 want = 1;
@@ -6200,6 +6774,8 @@ static void gs_rw_tick_top(void);
 
 void gw_Script_Tick(void) {
     gs_init();
+    gw_ScriptGame_StageIsolationWatch();
+    gs_fly_cursor_watch();
     if (gs.L == NULL) {
         return;
     }
@@ -6259,6 +6835,17 @@ int gw_Script_LabAvailable(void) {
     return 0;
 }
 void gw_Script_LabRequest(void) { gs.lab_request = 1; }
+
+int gw_Script_TbdAvailable(void) {
+    int i;
+    gs_init();
+    for (i = 0; i < gs.n; ++i) {
+        if (gs.s[i].used && !gs.s[i].disabled &&
+            strcmp(gs.s[i].id, "roguelite/main") == 0 && gs.s[i].gameplay) return 1;
+    }
+    return 0;
+}
+void gw_Script_TbdRequest(void) { gs.tbd_request = 1; }
 
 void gw_Script_PostRender(void) {
     if (gs.L == NULL) {
@@ -6736,6 +7323,7 @@ static void gs_rw_tick_top(void) {
     if (gs.rw_notify) {
         gs.rw_notify = 0;
         gs.nev = 0;
+        gs_stage_cleanup_dead();
         gs_hook_all("on_loadstate", 1, 0, 0); /* slot 0 = the history */
         if (gs.rwt_phase == 3) {
             gs.rwt_phase = 4;
@@ -6751,7 +7339,7 @@ static void gs_rw_tick_top(void) {
 static void gs_state_dir_of(const char *path, char *out, size_t cap) {
     char *s;
     snprintf(out, cap, "%s", path);
-    s = strrchr(out, '\\');
+    s = gw_path_separator(out);
     if (s != NULL) *s = '\0';
 }
 
@@ -6759,6 +7347,7 @@ static void gs_state_dir_of(const char *path, char *out, size_t cap) {
    or the loop top when paused (at_tick). A rewind starts a re-simulation burst, so it only
    happens at the loop top. */
 static void gs_apply_pending(int at_tick) {
+    if (gs_stage_cleanup_pending) gs_stage_cleanup_dead();
     if ((gs.pending_save || gs.pending_load || gs.rw_pending_on || gs.st_pending_save[0] ||
          gs.st_pending_load[0]) &&
         gs_rw_session()) {
@@ -6791,6 +7380,7 @@ static void gs_apply_pending(int at_tick) {
             gs_slot_restore(&gs.slot[slot]);
             gs.rw_began = 0; /* the history belongs to the timeline we just left: start over */
             gw_Console_Print(GS_GREEN, "loaded state %d", slot + 1);
+            gs_stage_cleanup_dead();
             gs_hook_all("on_loadstate", 1, slot + 1, 0);
         } else {
             gw_Console_Print(GS_RED, "could not load state %d", slot + 1);
@@ -6832,6 +7422,7 @@ static void gs_apply_pending(int at_tick) {
             gs.nev = 0;
             gs.rw_began = 0; /* a new timeline */
             gw_Console_Print(GS_GREEN, "state loaded: %s (frame %d)", h.name, h.match_frame);
+            gs_stage_cleanup_dead();
             gs_hook_all("on_loadstate", 1, 9, 0); /* slot 9 = the library */
         }
     }
@@ -6886,6 +7477,8 @@ static void gs_apply_set_motion(void) {
 
 void gw_Script_FramePre(void) {
     int resim = 0;
+    gw_ScriptGame_StageIsolationWatch();
+    gs_fly_cursor_watch();
     if (gs.L == NULL) {
         return;
     }
@@ -6930,12 +7523,22 @@ void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
     e->c = c;
     e->d = d;
     e->has_hit = 0;
+    e->source_enemy = e->reaction = 0;
     if (what == LAB_EV_HIT && a >= 0 && a < 6 && (c & LAB_HIT_INDEX_MASK) < 5 &&
         !(c & (LAB_HIT_ATTACKER_SUB | LAB_HIT_BY_ITEM))) {
         int k, idx = c & LAB_HIT_INDEX_MASK;
         for (k = 0; k < LAB_HI_COUNT; ++k) e->hit[k] = gw_ScriptGame_HitI(a, idx, k);
         for (k = 0; k < LAB_HF_COUNT; ++k) e->hitf[k] = gw_ScriptGame_HitF(a, idx, k);
         e->has_hit = 1;
+    }
+}
+
+void gw_Script_EnemyGameEvent(int handle, int attacker, int victim, int flags, int damage, int reaction) {
+    int before = gs.nev;
+    gw_Script_GameEvent(LAB_EV_HIT, attacker, victim, flags, damage);
+    if (gs.nev == before + 1) {
+        gs.ev[before].source_enemy = handle;
+        gs.ev[before].reaction = reaction != 0;
     }
 }
 
@@ -6992,6 +7595,18 @@ void gw_Script_EnemyRemoved(int which, int handle, int reason) {
            gs_enemy_names[which], handle, reason == 1 ? "explicit_remove" : "item_destroyed");
 }
 
+/* Capture before item callbacks destroy the actor. No fighter-victim fabrication.
+ * Event 10, not the enemy's 9: 9 is on_enemy_removed and carries (kind, handle, reason). */
+void gw_Script_EnemyHit(int handle, int from, int damage) {
+    GsEvent *e;
+    if (gs.L == NULL || !gs.want_events || gw_Snap_Resimulating() ||
+        from < 0 || from >= 6 || damage <= 0) return;
+    if (gs.nev >= GS_MAX_EVENTS) { gs.ev_dropped++; return; }
+    e = &gs.ev[gs.nev++];
+    memset(e, 0, sizeof *e);
+    e->what = 10; e->a = handle; e->b = from + 1; e->c = damage;
+}
+
 static const char *const gs_element_names[] = {
     "normal", "fire", "electric", "slash", "coin", "ice", "nap", "sleep", "catch",
     "ground", "cape", "inert", "disable", "dark", "scball", "lipstick", "leadead"};
@@ -7040,8 +7655,8 @@ static void gs_dispatch_events(void) {
         const GsEvent *e = &gs.ev[k];
         static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land",
                                             "on_target_broken", "on_all_targets_broken",
-                                            "on_boss_defeated", "on_enemy_defeated", "on_enemy_removed"};
-        if (e->what < 1 || e->what > 9) {
+                                            "on_boss_defeated", "on_enemy_defeated", "on_enemy_removed", "on_enemy_hit"};
+        if (e->what < 1 || e->what > 10) {
             continue;
         }
         for (i = 0; i < gs.n; ++i) {
@@ -7052,6 +7667,14 @@ static void gs_dispatch_events(void) {
                 continue;
             }
             switch (e->what) {
+            case 9:
+                lua_createtable(L, 0, 4);
+                gs_setint(L, "handle", e->a);
+                gs_setint(L, "from", e->b);
+                gs_setint(L, "damage", e->c);
+                gs_setbool(L, "reaction", 0);
+                nargs = 1;
+                break;
             case 5:
                 lua_pushinteger(L, e->a);
                 lua_pushinteger(L, e->b);
@@ -7115,6 +7738,8 @@ static void gs_dispatch_events(void) {
                     gs_setint(L, "hitbox", e->c & LAB_HIT_INDEX_MASK);
                 }
                 gs_setbool(L, "item", (e->c & LAB_HIT_BY_ITEM) != 0);
+                if (e->source_enemy) gs_setint(L, "source_enemy", e->source_enemy);
+                gs_setbool(L, "reaction", e->reaction);
                 gs_setbool(L, "attacker_sub", (e->c & LAB_HIT_ATTACKER_SUB) != 0);
                 gs_setbool(L, "victim_sub", (e->c & LAB_HIT_VICTIM_SUB) != 0);
                 if (e->has_hit) {
@@ -7413,6 +8038,7 @@ static void gs_cmd_help(void) {
     gw_Console_Print(GS_WHITE, "  input <port> <buttons> [frames] [x y]   e.g. input 1 A+B 10");
     gw_Console_Print(GS_WHITE, "  shot [path] | label <text> | echo <text> | clear | api | quit");
     gw_Console_Print(GS_WHITE, "  fly|noclip [port] [on|off|place] | fly speed|solid|port|readout .. | tp [port] x y | pos [port]  (F11 = fly, offline)");
+    gw_Console_Print(GS_WHITE, "  fly target [port] x y | fly attack [port] on|off [damage radius] | fly clear [port]");
     for (i = 0; i < gs.ncmd; ++i) {
         gw_Console_Print(GS_WHITE, "  %s  %s  [%s]", gs.cmd[i].name, gs.cmd[i].help,
                          gs_script_id(gs.cmd[i].script));
@@ -7494,7 +8120,7 @@ static int gs_exec(const char *line_in) {
     }
     if (IS("quit")) {
         gw_log("console: quit");
-        EnumThreadWindows(GetCurrentThreadId(), gs_close_cb, 0);
+        gs_request_quit();
         return 0;
     }
     if (IS("label")) { /* the run label (top-left caption and window title) */
@@ -7671,7 +8297,11 @@ static void gs_socket_init(void) {
 
 static void gs_send_all(SOCKET s, const char *p, int n) {
     while (n > 0) {
+        #ifdef _WIN32
         int k = send(s, p, n, 0);
+#else
+        int k = send(s, p, n, MSG_NOSIGNAL);
+#endif
         if (k <= 0) return;
         p += k;
         n -= k;
@@ -7756,6 +8386,11 @@ static void gs_socket_poll(void) {
 #include "gw_test.h"
 
 static int t_exec(const char *line, char *out, int cap) { return gw_Script_Exec(line, out, cap); }
+
+#include "gw_script_cpu_tests.inc"
+#include "gw_script_stage_draw_tests.inc"
+#include "gw_script_stage_isolation_tests.inc"
+#include "gw_script_fly_attack_tests.inc"
 
 static int test_script_lua_runs(void) {
     char out[512];
@@ -8087,6 +8722,187 @@ done:
     return rc;
 }
 
+static int test_script_pad_mask(void) {
+    PADStatus st[4], expected[4];
+    char out[512];
+    const int owner = 100001;
+    unsigned buttons = 0, driven;
+    int x, y, cx, cy, l, r, rc = 0;
+    if (t_exec("= 1", out, sizeof out) != 0) return 1;
+    gw_script_pad_masks_clear();
+    memset(st, 0x35, sizeof st); /* include pressure/reserved bytes in the preservation check */
+    st[3].stickX = -42;
+    st[3].stickY = 61;
+    st[3].substickX = 17;
+    st[3].substickY = -29;
+    st[3].triggerLeft = 123;
+    st[3].triggerRight = 234;
+    st[3].err = (s8)-1; /* masking must not turn a disconnected sample into a claim */
+    gw_w16(&st[3].button, 0x010F); /* A plus every D-pad direction */
+    memcpy(expected, st, sizeof st);
+    if (!gw_script_pad_mask(3, owner, 8) || gw_script_pad_mask(3, owner + 1, 8) ||
+        gw_script_pad_mask(3, owner + 1, 0) || gw_script_pad_mask(3, owner, 0x0100) ||
+        gw_script_pad_mask(-1, owner, 8) || gw_script_pad_mask(4, owner, 8) ||
+        gw_script_pad_mask(3, 0, 8)) {
+        gw_test_fail("D-pad mask did not enforce owner, channel or allowed bits");
+        rc = 1;
+        goto done;
+    }
+    driven = gw_Script_PadApply(st);
+    gw_w16(&expected[3].button, 0x0107);
+    gw_script_pad_state(3, &buttons, &x, &y, &cx, &cy, &l, &r);
+    if ((driven & (1u << 3)) != 0 || memcmp(&st[3], &expected[3], sizeof st[3]) != 0 ||
+        gw_script_pad_raw_buttons(3) != 0x010F || buttons != 0x0107 ||
+        x != -42 || y != 61 || cx != 17 || cy != -29 || l != 123 || r != 234) {
+        gw_test_fail("mask changed analog/status fields, claimed the pad, or lost the raw UP sample");
+        rc = 1;
+        goto done;
+    }
+    gw_script_pad_release_owner(owner); /* must work without any gd.input claim */
+    memcpy(st, expected, sizeof st);
+    gw_w16(&st[3].button, 0x010F);
+    driven = gw_Script_PadApply(st);
+    if ((driven & (1u << 3)) != 0 || gw_r16(&st[3].button) != 0x010F ||
+        !gw_script_pad_mask(3, owner + 1, 8)) {
+        gw_test_fail("release_owner left mask-only ownership or filtering behind");
+        rc = 1;
+        goto done;
+    }
+    gw_script_pad_masks_clear();
+    gw_w16(&st[3].button, 0x010F);
+    gw_Script_PadApply(st);
+    if (gw_r16(&st[3].button) != 0x010F || !gw_script_pad_mask(3, owner, 0)) {
+        gw_test_fail("mask clear helper failed to restore buttons/ownership");
+        rc = 1;
+        goto done;
+    }
+    if (t_exec("assert(not pcall(gd.input_mask, 1, 256)); "
+               "assert(not pcall(gd.input_mask, 1, -1)); "
+               "assert(not pcall(gd.input_mask, 5, 8)); "
+               "assert(not pcall(gd.input_mask, 1, 1.5)); "
+               "assert(gd.input_mask(4, 8))", out, sizeof out) != 0) {
+        gw_test_fail("Lua D-pad mask validation failed: %s", out);
+        rc = 1;
+        goto done;
+    }
+    gw_w16(&st[3].button, 0x010F);
+    gw_Script_PadApply(st);
+    if (t_exec("assert(gd.pad(4, true).UP and not gd.pad(4).UP); "
+               "assert(gd.input_mask(4, 0))", out, sizeof out) != 0) {
+        gw_test_fail("Lua raw/final pad samples or mask release failed: %s", out);
+        rc = 1;
+    }
+done:
+    gw_script_pad_release_owner(owner);
+    gw_script_pad_release_owner(owner + 1);
+    gw_script_pad_masks_clear();
+    return rc;
+}
+
+static int test_script_enemy_alive(void) {
+    unsigned char saved[sizeof gs_enemy_owned], before[sizeof gs_enemy_owned];
+    char out[512];
+    int rc = 0, events;
+    if (t_exec("assert(type(gd.enemy_alive)=='function'); "
+               "assert(not pcall(gd.enemy_alive, 0)); "
+               "assert(not pcall(gd.enemy_alive, -1)); "
+               "assert(not pcall(gd.enemy_alive, 1.5)); "
+               "assert(not pcall(gd.enemy_alive, 2147483648)); "
+               "assert(not pcall(gd.enemy_alive, 1))", out, sizeof out) != 0) {
+        gw_test_fail("enemy_alive arguments/console activity restriction failed: %s", out);
+        return 1;
+    }
+    memcpy(saved, gs_enemy_owned, sizeof saved);
+    memset(gs_enemy_owned, 0, sizeof gs_enemy_owned);
+    gs_enemy_owned[0].handle = INT_MAX;
+    gs_enemy_owned[0].owner = 77;
+    memcpy(before, gs_enemy_owned, sizeof before);
+    events = gs.nev;
+    if (gs_enemy_access(INT_MAX, 77) != 1 || gs_enemy_access(INT_MAX, 78) != -1 ||
+        gs_enemy_access(INT_MAX - 1, 77) != 0 ||
+        gw_ScriptGame_EnemyAlive(INT_MAX) || gw_ScriptGame_EnemyAlive(-1) ||
+        memcmp(before, gs_enemy_owned, sizeof before) != 0 || gs.nev != events) {
+        gw_test_fail("enemy_alive missing/dead ownership query mutated state or emitted an event");
+        rc = 1;
+    }
+    gs_enemy_release_owner(77);
+    if (gs_enemy_access(INT_MAX, 77) != 0 || gs.nev != events) {
+        gw_test_fail("enemy ownership release retained a dead handle or synthesized defeat");
+        rc = 1;
+    }
+    memcpy(gs_enemy_owned, saved, sizeof saved);
+    return rc;
+}
+
+static int test_script_enemy_genes(void) {
+    char out[768];
+    int before, want, hud, hidden, rc = 0;
+    if (t_exec("assert(type(gd.enemy_state)=='function' and type(gd.enemy_hurt)=='function' and type(gd.enemy_strike)=='function'); "
+               "assert(not pcall(gd.enemy_state, 1)); "
+               "assert(not pcall(gd.enemy_strike,1,1,{damage=31,angle=45,kbg=70,bkb=20,reach=10})); "
+               "assert(not pcall(gd.enemy_hurt,1,{from=1,damage=10,angle=45,kbg=70,bkb=20,reach=0/0})); "
+               "assert(not pcall(gd.enemy_hurt,1,{from=1,damage=1.5,angle=45,kbg=70,bkb=20,reach=10})); "
+               "assert(type(gd.hud_visible)=='function' and not pcall(gd.hud_visible,false))",
+               out, sizeof out) != 0) {
+        gw_test_fail("enemy gene/HUD API argument or console restrictions failed: %s", out);
+        return 1;
+    }
+    before = gs.nev; want = gs.want_events;
+    gs.want_events = 1;
+    if (gw_ScriptGame_EnemyTest()) { gw_test_fail("native enemy contact/lifecycle/guard invariants failed"); rc = 1; }
+    /* Fixture includes one natural hit, one subfighter hit and one scripted proc.
+       Only the natural hit survives retirement; defeat must follow it in FIFO. */
+    if (gs.nev != before + 1 || gs.ev[before].what != 9 ||
+        gs.ev[before].b != 1 || gs.ev[before].c != 9) {
+        gw_test_fail("natural enemy hit lost, duplicated or subfighter/proc charged"); rc = 1;
+    }
+    gw_Script_EnemyDefeated(0, gs.ev[before].a);
+    if (gs.nev != before + 2 || gs.ev[before + 1].what != 8 ||
+        gs.ev[before + 1].b != gs.ev[before].a) {
+        gw_test_fail("lethal enemy hit/defeat queue ordering failed"); rc = 1;
+    }
+    gs.nev = before;
+    gw_Script_EnemyGameEvent(123, -1, 0, LAB_HIT_BY_ITEM | LAB_HIT_INDEX_MASK, 0, 1);
+    if (gs.nev != before + 1 || gs.ev[before].source_enemy != 123 || !gs.ev[before].reaction ||
+        !(gs.ev[before].c & LAB_HIT_BY_ITEM) || gs.ev[before].a != -1 || gs.ev[before].b != 0) {
+        gw_test_fail("enemy strike provenance was lost or attributed to a fighter"); rc = 1;
+    }
+    gs.nev = before; gs.want_events = want;
+    hud = gs_hud_owner; hidden = gw_ifAll_IsHUDHidden();
+    gs_hud_owner = 77;
+    if (gw_Script_StatusHUDVisible()) { gw_test_fail("owned status HUD hide flag failed"); rc = 1; }
+    gs_hud_release_owner(78);
+    if (gs_hud_owner != 77) { gw_test_fail("other script released owned status HUD"); rc = 1; }
+    gs_hud_release_owner(77);
+    if (!gw_Script_StatusHUDVisible() || gw_ifAll_IsHUDHidden() != hidden) {
+        gw_test_fail("status HUD restoration changed whole HUD/magnifier visibility"); rc = 1;
+    }
+    gs_hud_owner = hud;
+    return rc;
+}
+
+static int test_script_cpu_mode(void) {
+    char out[512];
+    if (t_exec("assert(type(gd.cpu_mode) == 'function'); "
+               "assert(not pcall(gd.cpu_mode, 0, 'stand')); "
+               "assert(not pcall(gd.cpu_mode, 7, 'fight')); "
+               "assert(not pcall(gd.cpu_mode, 1, 'attack')); "
+               "assert(not pcall(gd.cpu_mode, 1, 0)); "
+               "assert(not pcall(gd.cpu_mode, 1, {})); "
+               "local p=gd.player(1); if p and not p.cpu then "
+               "assert(not gd.cpu_mode(1, 'stand')); assert(not gd.cpu_mode(1, 'fight')) end",
+               out, sizeof out) != 0) {
+        gw_test_fail("CPU mode argument/human validation failed: %s", out);
+        return 1;
+    }
+    if (gw_ScriptGame_CpuMode(-1, 0) || gw_ScriptGame_CpuMode(6, 1) ||
+        gw_ScriptGame_CpuMode(0, -1) || gw_ScriptGame_CpuMode(0, 2)) {
+        gw_test_fail("CPU mode bridge accepted invalid slot/mode");
+        return 1;
+    }
+    return 0;
+}
+
 static int test_script_paused_input(void) {
     unsigned char st[4 * 32];
     char out[512];
@@ -8146,6 +8962,7 @@ static int test_script_paused_input(void) {
 
 /* ---- Geno Lab ---------------------------------------------------------------------------------- */
 #include "gw_script_model_tests.inc"
+#include "gw_script_stage_seam_tests.inc"
 
 static int test_script_stage_events(void) {
     char dir[MAX_PATH], path[MAX_PATH], out[512];
@@ -8589,11 +9406,13 @@ static int test_script_kit_mod_art(void) {
     }
     snprintf(path, sizeof path, "%s\\test_ui.json", ui);
     f = fopen(path, "w");
+    if (!f) { gw_test_fail("could not create test fixture %s", path); return 1; }
     fputs("{\"palette\": {\"mine\": {\"accentx\": {\"hex\": \"#38c9d9\", \"u32\": \"0x38C9D9FF\"}}},\n"
           " \"textures\": [{\"name\": \"ico_testmark\", \"size_1x\": [12, 10], \"tint\": \"accentx\"}]}\n", f);
     fclose(f);
     snprintf(path, sizeof path, "%s\\scripts\\kit.lua", dir);
     f = fopen(path, "w");
+    if (!f) { gw_test_fail("could not create test fixture %s", path); return 1; }
     fputs("function on_draw()\n"
           "  gd.text(1, 1, 'plain first')\n"
           "  local w, h = gd.kit.icon('testmark', 10, 10)\n"
@@ -8907,9 +9726,70 @@ fail:
 
 #include "gw_script_mode_tests.inc"
 
+/* gd.data_write_atomic replaces a file only after a complete temporary write, and
+ * leaves the previous file intact when the write is refused or fails. The data
+ * path is scoped to the current script, so load a probe script and point gs.cur
+ * at it while the console drives the calls. */
+static int test_script_data_write_atomic(void) {
+    static const char code[] = "probe_loaded = true";
+    char out[256], saved_data_dir[MAX_PATH];
+    char *src;
+    int i, prev, rc = 0, changed_data_dir = 0;
+    if (t_exec("= 1", out, sizeof out) != 0) return 1;
+    src = (char *)malloc(sizeof code);
+    if (src == NULL) return 1;
+    memcpy(src, code, sizeof code);
+    i = gs_load_text("atomic_probe", "atomic_probe.lua", src, sizeof code - 1,
+                     "{\"gameplay\": true}", "test");
+    if (i < 0) {
+        gw_test_fail("could not load the atomic-write probe");
+        return 1;
+    }
+    prev = gs.cur;
+    gs.cur = i;
+#define CHECK_ATOMIC(expr, msg) \
+    if (t_exec(expr, out, sizeof out) != 0 || strstr(out, "true") == NULL) { \
+        gw_test_fail(msg ": %s", out); \
+        rc = 1; \
+        goto done; \
+    }
+    if (t_exec("gd.data_write('atomic_probe.txt','old')", out, sizeof out) != 0) { rc = 1; goto done; }
+    CHECK_ATOMIC("= gd.data_write_atomic('atomic_probe.txt','new')", "data_write_atomic did not report success")
+    CHECK_ATOMIC("= (gd.data_read('atomic_probe.txt') == 'new')", "data_write_atomic did not replace the file")
+    CHECK_ATOMIC("= (gd.data_write_atomic('atomic_probe.txt', ('x'):rep(1048577)) == false)", "oversized atomic write was not refused")
+    CHECK_ATOMIC("= (gd.data_read('atomic_probe.txt') == 'new')", "a refused atomic write damaged the previous file")
+    CHECK_ATOMIC("= gd.data_write_atomic('atomic_probe.txt','')", "empty atomic write failed")
+    CHECK_ATOMIC("= ((gd.data_read('atomic_probe.txt') or '') == '')", "empty atomic write did not replace the file")
+    /* The temporary is unaddressable, so a real "<name>.tmp" data file survives. */
+    CHECK_ATOMIC("= (gd.data_write('probe.tmp','keep') or true)", "could not seed probe.tmp")
+    CHECK_ATOMIC("= gd.data_write_atomic('probe','new')", "atomic write beside probe.tmp failed")
+    CHECK_ATOMIC("= (gd.data_read('probe.tmp') == 'keep')", "atomic write destroyed a sibling .tmp data file")
+    /* A failed replacement (target is a directory) keeps other data readable. */
+    CHECK_ATOMIC("= (gd.data_write('rdir/f.txt','keep') or true)", "could not seed rdir/f.txt")
+    CHECK_ATOMIC("= (gd.data_write_atomic('rdir','x') == false)", "atomic write onto a directory was not refused")
+    CHECK_ATOMIC("= (gd.data_read('rdir/f.txt') == 'keep')", "a failed replace damaged sibling data")
+    /* A long installation/data root must refuse before creating a truncated
+     * directory or touching the old file. Restore the root on every exit. */
+    memcpy(saved_data_dir, gs.data_dir, sizeof saved_data_dir);
+    memset(gs.data_dir, 'a', sizeof gs.data_dir - 1);
+    gs.data_dir[sizeof gs.data_dir - 1] = '\0';
+    changed_data_dir = 1;
+    CHECK_ATOMIC("= (function() local ok,why=pcall(gd.data_write_atomic,'probe','bad'); return not ok and tostring(why):find('path too long',1,true)~=nil end)()", "long data path was not safely refused")
+    memcpy(gs.data_dir, saved_data_dir, sizeof gs.data_dir);
+    changed_data_dir = 0;
+    CHECK_ATOMIC("= (gd.data_read('probe') == 'new')", "long data path refusal damaged the old file")
+#undef CHECK_ATOMIC
+done:
+    if (changed_data_dir) memcpy(gs.data_dir, saved_data_dir, sizeof gs.data_dir);
+    gs.cur = prev;
+    return rc;
+}
+
 void gw_script_tests_register(void) {
     gw_test_register("script_mode_blob", test_script_mode_blob);
     gw_test_register("script_model_api", test_script_model_api);
+    gw_test_register("script_model_owner_cleanup", test_script_model_owner_cleanup);
+    gw_test_register("script_stage_link", test_script_stage_link);
     gw_test_register("script_stage_events", test_script_stage_events);
     gw_test_register("script_boss_event", test_script_boss_event);
     gw_test_register("script_set_damage", test_script_set_damage);
@@ -8918,6 +9798,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);
     gw_test_register("script_lua_runs", test_script_lua_runs);
+    gw_test_register("script_data_write_atomic", test_script_data_write_atomic);
     gw_test_register("script_camera_api", test_script_camera_api);
     gw_test_register("script_sandbox", test_script_sandbox);
     gw_test_register("script_budget", test_script_budget);
@@ -8925,6 +9806,14 @@ void gw_script_tests_register(void) {
     gw_test_register("script_manifest_and_hash", test_script_manifest_and_hash);
     gw_test_register("script_input_task", test_script_input_task);
     gw_test_register("script_pad_claim_gaps", test_script_pad_claim_gaps);
+    gw_test_register("script_pad_mask", test_script_pad_mask);
+    gw_test_register("script_cpu_mode", test_script_cpu_mode);
+    gw_test_register("script_cpu_technical", test_script_cpu_technical);
+    gw_test_register("script_stage_draw", test_script_stage_draw);
+    gw_test_register("script_stage_isolate", test_script_stage_isolate);
+    gw_test_register("script_fly_attack", test_script_fly_attack);
+    gw_test_register("script_enemy_alive", test_script_enemy_alive);
+    gw_test_register("script_enemy_genes", test_script_enemy_genes);
     gw_test_register("script_paused_input", test_script_paused_input);
     gw_test_register("script_lab_api", test_script_lab_api);
     gw_test_register("lab_rewind_store", test_lab_rewind_store);

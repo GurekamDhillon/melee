@@ -8,13 +8,17 @@
 
 #include <aurora/gfx.h>
 
-#include <intrin.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
+#include <intrin.h>
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 /* ---- link-time pointer fixups -------------------------------------------------------------
  * gwtool stores scalars in global initializers pre-swapped, but a slot holding the address of
@@ -22,8 +26,13 @@
  * file lists those slots in section .gwfix$m; the markers below bracket the merged list. */
 #pragma section(".gwfix$a", read)
 #pragma section(".gwfix$z", read)
+#ifdef _WIN32
 __declspec(allocate(".gwfix$a")) static void *const gw_fixups_start[1] = {0};
 __declspec(allocate(".gwfix$z")) static void *const gw_fixups_end[1] = {0};
+#else
+extern uint32_t *__start_gwfix[];
+extern uint32_t *__stop_gwfix[];
+#endif
 
 /* This is a TOGGLE, not an assignment: it byte-swaps each pointer in place, so calling it twice
  * puts every game global back to its unswapped link-time value. Nothing ever wants that, and it
@@ -40,8 +49,13 @@ __declspec(allocate(".gwfix$z")) static void *const gw_fixups_end[1] = {0};
 static int gw_fixups_applied;
 
 void gw_apply_fixups(void) {
+#ifdef _WIN32
   uint32_t **p = (uint32_t **)(gw_fixups_start + 1);
   uint32_t **end = (uint32_t **)gw_fixups_end;
+#else
+  uint32_t **p = __start_gwfix;
+  uint32_t **end = __stop_gwfix;
+#endif
   size_t count = 0;
   if (gw_fixups_applied) {
     return;
@@ -98,7 +112,15 @@ bool gw_mem_init(void) {
              GetLastError());
   }
   gw_mem1_size = GW_MEM1_SIZE;
+#ifdef _WIN32
   gw_aram = (unsigned char *)calloc(1, GW_ARAM_SIZE);
+#else
+  /* Keep ARAM below the guest MEM1 boundary; never overwrite an occupied range. */
+  for (uintptr_t addr = 0x20000000u; addr + GW_ARAM_SIZE < 0x80000000u; addr += 0x04000000u) {
+    gw_aram = VirtualAlloc((void *)addr, GW_ARAM_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    if (gw_aram) break;
+  }
+#endif
   if (gw_aram == NULL) {
     return false;
   }
@@ -239,6 +261,7 @@ static uintptr_t gw_image_base;
 /* Describes a code address as "melee-pc.map rva 0x...", or as "module+offset" when the fault is
  * inside Dawn/SDL3/the CRT instead. Without the distinction a DLL address gets reported as a map
  * RVA that resolves to an unrelated game function. Returns dst. */
+#ifdef _WIN32
 static const char *gw_describe_code_addr(uintptr_t addr, char *dst, size_t dstlen) {
   HMODULE mod = NULL;
   if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
@@ -612,6 +635,29 @@ void gw_start_watchdog(void) {
   }
   CloseHandle(CreateThread(NULL, 0, &gw_watchdog, NULL, 0, NULL));
 }
+#else
+static const char *gw_describe_code_addr(uintptr_t addr, char *dst, size_t dstlen) {
+  snprintf(dst, dstlen, "ELF address 0x%08X", (uint32_t)addr);
+  return dst;
+}
+
+void gw_log_code_addr(const char *label, const void *addr) {
+  char where[MAX_PATH + 64];
+  gw_log("gw: %s %s", label, gw_describe_code_addr((uintptr_t)addr, where, sizeof where));
+}
+
+void gw_install_crash_handler(void) {
+  if (!gw_linux_install_signals()) gw_panic("could not install Linux signal handler");
+}
+
+void gw_watch_page(void *addr, size_t size) {
+  (void)addr;
+  (void)size;
+}
+
+void gw_watch_tick(void) {}
+void gw_start_watchdog(void) {}
+#endif
 
 /* ---- data-driven Target Test layouts (mods/targettest/<name>.tt) ---------------------------
  * Phase 1: custom target layouts that reuse each character's existing Target Test geometry. A
@@ -645,7 +691,7 @@ static int tt_loaded;
 static void tt_base_dir(char *path, size_t cap) {
   DWORD n = GetModuleFileNameA(NULL, path, (DWORD)cap);
   if (n > 0 && n < (DWORD)cap) {
-    char *slash = strrchr(path, '\\');
+    char *slash = gw_path_separator(path);
     if (slash != NULL) {
       slash[1] = '\0';
       strncat(path, "mods\\targettest", cap - strlen(path) - 1);
@@ -1036,7 +1082,7 @@ static void gw_mex_load(void) {
   }
   n = GetModuleFileNameA(NULL, path, (DWORD)sizeof path);
   if (n > 0 && n < (DWORD)sizeof path) {
-    char *slash = strrchr(path, '\\');
+    char *slash = gw_path_separator(path);
     if (slash != NULL) {
       slash[1] = '\0';
       strncat(path, "mods\\mex.txt", sizeof path - strlen(path) - 1);
@@ -2802,7 +2848,7 @@ int gw_GxTex_OpenUI(const char *name) {
     return gw_GxTex_Open(name);
   }
   n = GetModuleFileNameA(NULL, dir, (DWORD)sizeof dir);
-  slash = (n > 0 && n < sizeof dir) ? strrchr(dir, '\\') : NULL;
+  slash = (n > 0 && n < sizeof dir) ? gw_path_separator(dir) : NULL;
   if (slash == NULL) {
     return -1;
   }
@@ -2836,7 +2882,7 @@ int gw_UiFile_Read(const char *name, void *dst, int cap) {
     return -1;
   }
   n = GetModuleFileNameA(NULL, dir, (DWORD)sizeof dir);
-  slash = (n > 0 && n < sizeof dir) ? strrchr(dir, '\\') : NULL;
+  slash = (n > 0 && n < sizeof dir) ? gw_path_separator(dir) : NULL;
   for (i = -1; i < 3; i++) {
     FILE *f;
     long len;
@@ -3045,7 +3091,7 @@ int gw_Gfx_SeedCoreCount(void) {
   if (core < 0) {
     char path[MAX_PATH];
     DWORD n = GetModuleFileNameA(NULL, path, (DWORD)sizeof path);
-    char *slash = (n > 0 && n < sizeof path) ? strrchr(path, '\\') : NULL;
+    char *slash = (n > 0 && n < sizeof path) ? gw_path_separator(path) : NULL;
     FILE *f;
     core = 0;
     if (slash != NULL) {

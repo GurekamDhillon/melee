@@ -32,9 +32,14 @@
 #include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
 #include <windows.h>
 #include <timeapi.h> /* timeBeginPeriod: see gw_pace_field */
 #include <tlhelp32.h> /* the sampling profiler's thread list */
+#else
+#include "gw_compat_linux.h"
+#include <time.h>
+#endif
 
 typedef void (*gw_retrace_cb)(uint32_t retraceCount);
 typedef void (*gw_drawdone_cb)(void);
@@ -54,6 +59,7 @@ static bool gw_exiting;
  * Since the game's simulation and ENet pump run on that thread, it stops both
  * until mouse-up. Consume only the caption's primary-button down message and
  * move the exact Aurora HWND during the ordinary frame tick instead. */
+#ifdef _WIN32
 static struct {
   HWND hwnd;
   GwWindowDrag position;
@@ -156,6 +162,10 @@ static void gw_window_drag_tick(void) {
                     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE))
     gw_window_drag_cancel(&gw_drag.position);
 }
+#else
+bool gw_window_drag_install(SDL_Window *window) { gw_video_window = window; return true; }
+static void gw_window_drag_tick(void) {}
+#endif
 
 /* ---- virtual GameCube clock -------------------------------------------------------------- */
 
@@ -336,19 +346,27 @@ void gw_run_deferred(void) {
  * the process then ends with TerminateProcess(0): the CRT's exit path would run static destructors
  * that release the same Dawn objects a second time. */
 static void gw_aurora_shutdown_guarded(void) {
+#ifdef _WIN32
   __try {
     aurora_shutdown();
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     gw_log("melee-pc: aurora teardown faulted inside Dawn (0x%08lX); ignored at exit",
            (unsigned long)GetExceptionCode());
   }
+#else
+  aurora_shutdown();
+#endif
 }
 
 void gw_exit_clean(int code) {
   gw_aurora_shutdown_guarded();
   gw_log("melee-pc: exit %d", code);
   fflush(NULL);
+#ifdef _WIN32
   TerminateProcess(GetCurrentProcess(), (UINT)code);
+#else
+  _exit(code);
+#endif
 }
 
 extern void gw_pad_focus_event(int focused); /* shim_pad.c */
@@ -388,6 +406,8 @@ static void gw_handle_events(void) {
   }
 }
 
+void gw_pump_events(void) { gw_handle_events(); }
+
 /* ---- video settings ----------------------------------------------------------------------
  * Render scale: the internal resolution as a multiple of the game's own 640x480 EFB, like
  * Dolphin's Internal Resolution (1 = native, 2 = 1280x960, 3 = 1920x1440, fractions allowed),
@@ -418,7 +438,7 @@ static const char *gw_video_cfg_path(void) {
   }
   if (buf[0] == '\0') {
     DWORD n = GetModuleFileNameA(NULL, buf, (DWORD)sizeof buf);
-    if (n == 0 || n >= sizeof buf || (slash = strrchr(buf, '\\')) == NULL) {
+    if (n == 0 || n >= sizeof buf || (slash = gw_path_separator(buf)) == NULL) {
       strcpy(buf, "video.cfg");
     } else {
       strcpy(slash + 1, "video.cfg");
@@ -804,6 +824,7 @@ void gw_perf_gx_end(int64_t start) {
  * game work from the pad-wait spin, and those call for opposite fixes (optimise the work vs.
  * yield the spin); this is the number that separates them. */
 static long long gw_prof_thread_cpu(void) {
+#ifdef _WIN32
   FILETIME create, exit, kernel, user;
   ULARGE_INTEGER k, u;
   if (!GetThreadTimes(GetCurrentThread(), &create, &exit, &kernel, &user)) {
@@ -814,6 +835,11 @@ static long long gw_prof_thread_cpu(void) {
   u.LowPart = user.dwLowDateTime;
   u.HighPart = user.dwHighDateTime;
   return (long long)(k.QuadPart + u.QuadPart);
+#else
+  struct timespec ts;
+  if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts) != 0) return 0;
+  return (long long)ts.tv_sec * 10000000ll + ts.tv_nsec / 100ll;
+#endif
 }
 
 static int gw_prof_cmp(const void *a, const void *b) {
@@ -1377,7 +1403,11 @@ static void gw_pace_field(void) {
         uint64_t nap = target - now - spin;
         gw_pace_nap(nap < GW_TIMER_CLOCK / 1000u ? nap : GW_TIMER_CLOCK / 1000u);
       } else {
+#ifdef _WIN32
         YieldProcessor();
+#else
+        __asm__ __volatile__("pause" ::: "memory");
+#endif
       }
     }
     if (gw_inprof_on() && now >= target) {
@@ -1388,6 +1418,7 @@ static void gw_pace_field(void) {
   gw_polls_since_pace = 0;
 }
 
+#ifdef _WIN32
 /* ---- sampling profiler (MELEE_PROFILE_SAMPLE=<start seconds>) ------------------------------
  * A background thread suspends the frame thread about once a millisecond, reads its EIP and
  * counts it. Every 5 s it rewrites melee-pc.samples (in the working directory) with the running
@@ -1472,7 +1503,7 @@ static void gw_sample_dump(void) {
                                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                            (LPCSTR)(uintptr_t)gw_sample_tab[i].eip, &mod) &&
         GetModuleFileNameA(mod, path, sizeof path) != 0) {
-      base = strrchr(path, '\\');
+      base = gw_path_separator(path);
       base = (base != NULL) ? base + 1 : path;
     } else {
       base = "?";
@@ -1673,7 +1704,7 @@ static void gw_spike_dump(void) {
                                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                            (LPCSTR)(uintptr_t)gw_spike_tab[i].eip, &mod) &&
         GetModuleFileNameA(mod, path, sizeof path) != 0) {
-      base = strrchr(path, '\\');
+      base = gw_path_separator(path);
       base = (base != NULL) ? base + 1 : path;
     } else {
       base = "?";
@@ -1703,6 +1734,20 @@ static void gw_spike_dump(void) {
   gw_log("gw: PROF spike profile: %u spike frames, %u samples -> melee-pc.spike.samples",
          gw_spike_frames, gw_spike_total);
 }
+
+#else
+static const double gw_spike_threshold_ms = 0.0;
+static void gw_sample_maybe_start(void) {
+  static int checked;
+  if (!checked) {
+    checked = 1;
+    if (getenv("MELEE_PROFILE_SAMPLE") || getenv("MELEE_PROFILE_SPIKE"))
+      gw_log("gw: Windows sampling/spike profiling is unavailable on Linux");
+  }
+}
+static void gw_spike_collect(long long a, long long b) { (void)a; (void)b; }
+static void gw_spike_dump(void) {}
+#endif
 
 /* MELEE_PROFILE_FRAMES=<file>: one CSV row per presented frame - the split, texture inits, GX
  * counters and aurora's pipeline counters - so a spike can be lined up with what the frame did. */

@@ -1,3 +1,4 @@
+#include "gw.h"
 /* gw_kit.c - the frontend kit for scripts: fonts, palette, textures and the frame's draw list
  * (gw_kit.h says what and why; docs/scripting.md "Kit drawing" is the script-facing reference).
  *
@@ -11,7 +12,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "gw_compat_linux.h"
+#endif
 
 #include "gw_test.h"
 
@@ -269,7 +274,7 @@ static int kit_ui_dirs(char dirs[4][MAX_PATH]) {
         snprintf(dirs[k++], MAX_PATH, "%s", env);
     }
     n = GetModuleFileNameA(NULL, exe, (DWORD)sizeof exe);
-    slash = (n > 0 && n < sizeof exe) ? strrchr(exe, '\\') : NULL;
+    slash = (n > 0 && n < sizeof exe) ? gw_path_separator(exe) : NULL;
     for (i = 0; slash != NULL && i < 3 && k < 4; i++) {
         *(slash + 1) = '\0';
         snprintf(dirs[k++], MAX_PATH, "%s%s", exe, rel[i]);

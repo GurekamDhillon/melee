@@ -4712,6 +4712,17 @@ void Camera_RefreshViewingMtx(void)
         HSD_CObjGetViewingMtxPtr(GET_COBJ(game_camera.gobj));
     }
 }
+
+/* A direct Lua pose edit must also work while simulation is paused. Do not advance camera
+ * animation, follow or shake clocks just to refresh a still image. */
+void Camera_ScriptCommit(void)
+{
+    if (cm_script.state != 1 || game_camera.gobj == NULL) return;
+    game_camera.transform.position = cm_script.pose.eye;
+    game_camera.transform.interest = cm_script.pose.interest;
+    game_camera.transform.fov = cm_script.pose.fov;
+    Camera_RefreshViewingMtx();
+}
 #endif
 
 HSD_GObj* Camera_80030A50(void)

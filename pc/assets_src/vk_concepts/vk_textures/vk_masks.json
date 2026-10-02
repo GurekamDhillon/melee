@@ -1,0 +1,26 @@
+{
+  "vk_panel": {
+    "file": "vk_panel.png",
+    "channels": "luminance",
+    "colorspace": "Non-Color",
+    "tileable": true
+  },
+  "vk_brushed": {
+    "file": "vk_brushed.png",
+    "channels": "luminance",
+    "colorspace": "Non-Color",
+    "tileable": true
+  },
+  "vk_hull": {
+    "file": "vk_hull.png",
+    "channels": "luminance",
+    "colorspace": "Non-Color",
+    "tileable": true
+  },
+  "vk_glow": {
+    "file": "vk_glow.png",
+    "channels": "luminance",
+    "colorspace": "Non-Color",
+    "tileable": true
+  }
+}

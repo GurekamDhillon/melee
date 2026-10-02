@@ -1,0 +1,245 @@
+{
+  "unit": 6.5,
+  "grid_m": 2.0,
+  "front": "-Y",
+  "flag_encoding": "1 passthrough + 2 ledges",
+  "placement": [
+    {
+      "part": "VK_Platform_Main",
+      "w": 20.0,
+      "d": 2.4,
+      "th": 0.45,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "solid": true
+    },
+    {
+      "part": "VK_Platform_SideL",
+      "w": 8.0,
+      "d": 2.0,
+      "th": 0.35,
+      "x": -13,
+      "y": 0,
+      "z": 5.0
+    },
+    {
+      "part": "VK_Platform_SideR",
+      "w": 8.0,
+      "d": 2.0,
+      "th": 0.35,
+      "x": 13,
+      "y": 0,
+      "z": 5.0
+    },
+    {
+      "part": "VK_Platform_Centre",
+      "w": 5.0,
+      "d": 1.8,
+      "th": 0.3,
+      "x": 0,
+      "y": 0.6,
+      "z": 8.0
+    },
+    {
+      "part": "VK_Wall_Solid_4m",
+      "x": -6,
+      "y": 9,
+      "z": 0
+    },
+    {
+      "part": "VK_Wall_Doorway_4m",
+      "x": -2,
+      "y": 9,
+      "z": 0
+    },
+    {
+      "part": "VK_Wall_Window_4m",
+      "x": 2,
+      "y": 9,
+      "z": 0
+    },
+    {
+      "part": "VK_Wall_Solid_4m",
+      "x": 6,
+      "y": 9,
+      "z": 0
+    },
+    {
+      "part": "VK_Glass_Pane_4m",
+      "x": 2,
+      "y": 9,
+      "z": 0
+    },
+    {
+      "part": "VK_Pillar_4m",
+      "x": -8,
+      "y": 9,
+      "z": 0
+    },
+    {
+      "part": "VK_Pillar_4m",
+      "x": 8,
+      "y": 9,
+      "z": 0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": -6,
+      "y": 9,
+      "z": 4.0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": -2,
+      "y": 9,
+      "z": 4.0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": 2,
+      "y": 9,
+      "z": 4.0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": 6,
+      "y": 9,
+      "z": 4.0
+    },
+    {
+      "part": "VK_Floor_4m",
+      "x": -6,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Floor_4m",
+      "x": -2,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Floor_Opening_4m",
+      "x": 2,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Floor_4m",
+      "x": 6,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Wall_Solid_4m",
+      "x": -6,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Wall_Solid_4m",
+      "x": -2,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Wall_Doorway_4m",
+      "x": 2,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Wall_Solid_4m",
+      "x": 6,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Pillar_4m",
+      "x": -8,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Pillar_4m",
+      "x": 8,
+      "y": 17,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": -6,
+      "y": 17,
+      "z": 6.0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": -2,
+      "y": 17,
+      "z": 6.0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": 2,
+      "y": 17,
+      "z": 6.0
+    },
+    {
+      "part": "VK_Beam_4m",
+      "x": 6,
+      "y": 17,
+      "z": 6.0
+    },
+    {
+      "part": "VK_Floor_4m",
+      "x": -20,
+      "y": 13,
+      "z": 0,
+      "solid": true
+    },
+    {
+      "part": "VK_Stairs_4m_Rise2m",
+      "x": -16,
+      "y": 13,
+      "z": 0
+    },
+    {
+      "part": "VK_Balcony_4m",
+      "x": -12,
+      "y": 13,
+      "z": 2.0
+    },
+    {
+      "part": "VK_Ramp_4m_Rise2m",
+      "x": 12,
+      "y": 13,
+      "z": 0
+    },
+    {
+      "part": "VK_Floor_2m",
+      "x": 16,
+      "y": 13,
+      "z": 0,
+      "solid": true
+    },
+    {
+      "part": "VK_End_Trim",
+      "x": -22,
+      "y": 13,
+      "z": 0
+    },
+    {
+      "part": "VK_End_Trim",
+      "x": 18,
+      "y": 13,
+      "z": 0
+    },
+    {
+      "part": "VK_End_Trim",
+      "x": 0,
+      "y": 17,
+      "z": 2.0
+    }
+  ]
+}

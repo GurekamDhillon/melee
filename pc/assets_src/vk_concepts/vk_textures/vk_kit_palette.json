@@ -1,0 +1,166 @@
+{
+  "deck": {
+    "colour": [
+      0.66,
+      0.628,
+      0.552
+    ],
+    "mask": "vk_panel",
+    "uv": 0.34,
+    "rough": [
+      0.52,
+      0.86
+    ],
+    "metal": 0.05,
+    "grain": 0.1
+  },
+  "trim": {
+    "colour": [
+      0.52,
+      0.268,
+      0.112
+    ],
+    "mask": "vk_brushed",
+    "uv": 1.1,
+    "rough": [
+      0.22,
+      0.48
+    ],
+    "metal": 0.92,
+    "grain": 0.06
+  },
+  "patina": {
+    "colour": [
+      0.128,
+      0.268,
+      0.252
+    ],
+    "mask": "vk_hull",
+    "uv": 0.55,
+    "rough": [
+      0.38,
+      0.72
+    ],
+    "metal": 0.35,
+    "grain": 0.12
+  },
+  "hull": {
+    "colour": [
+      0.072,
+      0.086,
+      0.104
+    ],
+    "mask": "vk_hull",
+    "uv": 0.4,
+    "rough": [
+      0.55,
+      0.92
+    ],
+    "metal": 0.55,
+    "grain": 0.14
+  },
+  "glow": {
+    "colour": [
+      1.0,
+      0.56,
+      0.15
+    ],
+    "mask": "vk_glow",
+    "uv": 1.6,
+    "rough": [
+      0.3,
+      0.3
+    ],
+    "metal": 0.0,
+    "grain": 0.0,
+    "emit": 6.5
+  },
+  "core": {
+    "colour": [
+      1.0,
+      0.76,
+      0.42
+    ],
+    "mask": "vk_glow",
+    "uv": 2.4,
+    "rough": [
+      0.3,
+      0.3
+    ],
+    "metal": 0.0,
+    "grain": 0.0,
+    "emit": 13.0
+  },
+  "wall": {
+    "colour": [
+      0.105,
+      0.118,
+      0.14
+    ],
+    "mask": "vk_hull",
+    "uv": 0.45,
+    "rough": [
+      0.55,
+      0.92
+    ],
+    "metal": 0.15
+  },
+  "panel": {
+    "colour": [
+      0.175,
+      0.19,
+      0.215
+    ],
+    "mask": "vk_panel",
+    "uv": 0.75,
+    "rough": [
+      0.38,
+      0.66
+    ],
+    "metal": 0.35
+  },
+  "accent": {
+    "colour": [
+      0.22,
+      0.78,
+      0.72
+    ],
+    "mask": "vk_glow",
+    "uv": 2.0,
+    "rough": [
+      0.3,
+      0.3
+    ],
+    "metal": 0.0,
+    "emit": 4.2
+  },
+  "glass": {
+    "colour": [
+      0.24,
+      0.48,
+      0.56
+    ],
+    "mask": "vk_glow",
+    "uv": 0.9,
+    "rough": [
+      0.05,
+      0.12
+    ],
+    "metal": 0.0
+  },
+  "vista": {
+    "colour": [
+      0.48,
+      0.3,
+      0.18
+    ],
+    "mask": "vk_glow",
+    "uv": 0.5,
+    "rough": [
+      0.9,
+      0.9
+    ],
+    "metal": 0.0,
+    "emit": 1.5
+  }
+}

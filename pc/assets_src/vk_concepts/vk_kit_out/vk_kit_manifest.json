@@ -1,0 +1,136 @@
+{
+  "unit": 6.5,
+  "atlas": "vk_masks",
+  "modules": {
+    "VK_Floor_4m": {
+      "objects": 1,
+      "tris": 154,
+      "size": [
+        4.0,
+        2.4,
+        0.4
+      ],
+      "collision_lines": 1
+    },
+    "VK_Floor_2m": {
+      "objects": 1,
+      "tris": 106,
+      "size": [
+        2.0,
+        2.4,
+        0.4
+      ],
+      "collision_lines": 1
+    },
+    "VK_Floor_Opening_4m": {
+      "objects": 1,
+      "tris": 252,
+      "size": [
+        4.0,
+        2.4,
+        0.4
+      ],
+      "collision_lines": 2
+    },
+    "VK_Ramp_4m_Rise2m": {
+      "objects": 1,
+      "tris": 238,
+      "size": [
+        4.0,
+        2.4,
+        2.0
+      ],
+      "collision_lines": 1
+    },
+    "VK_Stairs_4m_Rise2m": {
+      "objects": 1,
+      "tris": 324,
+      "size": [
+        4.0,
+        2.4,
+        2.0
+      ],
+      "collision_lines": 1
+    },
+    "VK_Balcony_4m": {
+      "objects": 1,
+      "tris": 250,
+      "size": [
+        4.0,
+        2.4,
+        0.4
+      ],
+      "collision_lines": 1
+    },
+    "VK_Wall_Solid_4m": {
+      "objects": 1,
+      "tris": 180,
+      "size": [
+        4.0,
+        0.18,
+        4.0
+      ],
+      "collision_lines": 0
+    },
+    "VK_Wall_Doorway_4m": {
+      "objects": 1,
+      "tris": 468,
+      "size": [
+        4.0,
+        0.18,
+        4.0
+      ],
+      "collision_lines": 0
+    },
+    "VK_Wall_Window_4m": {
+      "objects": 1,
+      "tris": 600,
+      "size": [
+        4.0,
+        0.18,
+        4.0
+      ],
+      "collision_lines": 0
+    },
+    "VK_Glass_Pane_4m": {
+      "objects": 1,
+      "tris": 16,
+      "size": [
+        3.0,
+        0.02,
+        2.1
+      ],
+      "collision_lines": 0
+    },
+    "VK_Pillar_4m": {
+      "objects": 1,
+      "tris": 60,
+      "size": [
+        0.26,
+        0.34,
+        4.0
+      ],
+      "collision_lines": 0
+    },
+    "VK_Beam_4m": {
+      "objects": 1,
+      "tris": 48,
+      "size": [
+        4.0,
+        0.3,
+        0.3
+      ],
+      "collision_lines": 0
+    },
+    "VK_End_Trim": {
+      "objects": 1,
+      "tris": 44,
+      "size": [
+        0.08,
+        2.4,
+        0.4
+      ],
+      "collision_lines": 0
+    }
+  }
+}

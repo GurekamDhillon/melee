@@ -64,24 +64,111 @@ local rewards={
  {title='QUICK RHYTHM',desc='Build charge faster.',changes={{'gain',.5}}},
  {title='NEW RIME',desc='Add an unplaced frost individual.',kind='rime'}
 }
-function M.new() return {focus=nil,selected=nil,page=1,section='main'} end
-function M.reset(s,which) s.menu=which;s.focus=nil;s.selected=nil;s.page=1;s.section='main';s.parent=nil end
+function M.new() return {focus=nil,selected=nil,page=1,section='main',pending=nil,gen=0} end
+-- Reset invalidates any half-finished destructive confirmation: its bound
+-- identity and source generation are no longer live.
+function M.reset(s,which) s.menu=which;s.focus=nil;s.selected=nil;s.page=1;s.section='main';s.parent=nil;s.pending=nil;s.gen=(s.gen or 0)+1 end
 local function sync(s,ctx)
  if s.menu~=ctx.menu then M.reset(s,ctx.menu) end
  local ids=inventory(ctx)
  local exists=false;for _,id in ipairs(ids) do if id==s.selected then exists=true end end
  if not exists then s.selected=ctx.menu=='collection' and ctx.profile and ctx.profile.genes[ctx.starter] and ctx.starter or ids[1] end
- s.page=math.max(1,math.min(s.page,math.max(1,math.ceil(#ids/6))))
+ -- Only the collection/rest/reward lists page over gene inventory; the map owns
+ -- its own pagination and must not be clamped back to page 1 on every view.
+ if ctx.menu~='map' then s.page=math.max(1,math.min(s.page,math.max(1,math.ceil(#ids/6)))) end
 end
 local function control(v,id,x,y,w,h,label,action,enabled,reason)
  local b={id=id,x=x,y=y,w=w,h=h,label=label,action=action,enabled=enabled~=false,reason=reason}
  v.controls[#v.controls+1]=b;return b
 end
 local function delta(before,after,stat) return num(before[stat])..' > '..num(after[stat]) end
+-- Declared-data screens -------------------------------------------------------
+-- These consume read-only context handed in by main. They never derive game
+-- mechanics: an absent declaration shows an honest message, not a fabricated
+-- option. Every control goes through the same focus/controller/mouse path as
+-- the collection and rest screens.
+local function view_map(s,v,ctx)
+ v.title='DISCOVERED MAP'
+ local map=ctx.map
+ control(v,'map_close',484,410,130,30,'CLOSE',{kind='map_close'})
+ if type(map)~='table' then v.error='No map available yet.';return v end
+ v.map=map;v.map_current=map.current;v.map_counts=map.counts or {}
+ v.map_exits=map.exits or {};v.map_locks=map.locks or {}
+ v.map_rooms={}
+ for id in pairs(map.rooms or {}) do v.map_rooms[#v.map_rooms+1]=id end
+ table.sort(v.map_rooms,function(a,b)
+  local ra,rb=map.rooms[a],map.rooms[b];local da,db=(ra and ra.depth) or 0,(rb and rb.depth) or 0
+  if da~=db then return da<db end;return a<b end)
+ -- Only revealed/visited rooms exist in the map record, so nothing hidden can
+ -- leak through a label, title or id. Real runs hold ~12-18 rooms, so the list
+ -- paginates rather than drawing past the safe area.
+ local per=9
+ v.map_pages=math.max(1,math.ceil(#v.map_rooms/per))
+ s.page=math.max(1,math.min(s.page,v.map_pages));v.page=s.page;v.pages=v.map_pages
+ for j=(s.page-1)*per+1,math.min(s.page*per,#v.map_rooms) do
+  local id=v.map_rooms[j];local r=map.rooms[id]
+  local label=(r.current and '> ' or r.visited and '* ' or '')..(r.title or id)
+  control(v,'map_room:'..id,26,110+(j-(s.page-1)*per-1)*30,300,27,label,{kind='map_inspect',room=id})
+ end
+ if v.map_pages>1 then
+  control(v,'previous',26,384,80,24,'< PAGE',{kind='page',delta=-1},s.page>1)
+  control(v,'next',114,384,80,24,'PAGE >',{kind='page',delta=1},s.page<v.map_pages)
+ end
+ if s.map_selected and map.rooms[s.map_selected] then v.map_selected=s.map_selected
+ elseif map.rooms[map.current] then v.map_selected=map.current
+ elseif #v.map_rooms>0 then v.map_selected=v.map_rooms[1] end
+ return v
+end
+local function view_onboarding(v,ctx)
+ v.title='TUTORIAL'
+ local o=ctx.onboarding
+ control(v,'onboarding_close',484,410,130,30,'CLOSE',{kind='onboarding_close'})
+ control(v,'onboarding_skip',347,410,130,30,o and o.skipped and 'ENABLE' or 'SKIP',{kind='onboarding_skip'})
+ if type(o)~='table' then v.error='Tutorial state unavailable.';return v end
+ v.onboarding=o
+ -- Onboarding must never pause combat; assert the contract in the view itself.
+ v.no_pause=o.pause==false
+ if o.skipped or not o.step then v.scope='Tutorial complete.'
+ else v.scope=o.text;v.detail=o.hint;v.step_index=o.index;v.step_total=o.total end
+ return v
+end
+local function view_settings(v,ctx)
+ v.title='SETTINGS'
+ local cfg=ctx.settings
+ control(v,'settings_close',484,410,130,30,'CLOSE',{kind='settings_close'})
+ if type(cfg)~='table' or type(cfg.items)~='table' then
+  v.error='No settings are declared in this build.';return v
+ end
+ v.settings=cfg.items
+ for i,item in ipairs(cfg.items) do
+  if type(item)=='table' and type(item.id)=='string' and type(item.label)=='string' then
+   local value=item.value~=nil and (' / '..tostring(item.value)) or ''
+   control(v,'setting:'..item.id,26,110+(i-1)*34,588,30,item.label..value,
+    {kind='setting',id=item.id,value=item.value})
+  end
+ end
+ return v
+end
+local function view_ending(v,ctx)
+ local e=ctx.ending
+ v.title=type(e)=='table' and (e.outcome=='success' and 'RUN COMPLETE' or 'RUN ENDED') or 'RESULT'
+ if type(e)~='table' then v.error='No run result to show.';return v end
+ v.ending=e;v.lines=e.lines
+ control(v,'ending_continue',210,410,310,30,e.next or 'CONTINUE',{kind=e.next_kind or 'ending_continue'})
+ return v
+end
+local function view_extra(s,v,ctx)
+ if ctx.menu=='map' then return view_map(s,v,ctx) end
+ if ctx.menu=='onboarding' then return view_onboarding(v,ctx) end
+ if ctx.menu=='settings' then return view_settings(v,ctx) end
+ if ctx.menu=='ending' then return view_ending(v,ctx) end
+ return nil
+end
 function M.view(s,ctx)
  sync(s,ctx)
  local ids,source=inventory(ctx)
  local v={controls={},menu=ctx.menu,section=s.section,ids=ids,source=source,selected=detail(ctx,s.selected),page=s.page,pages=math.max(1,math.ceil(#ids/6)),starter=ctx.starter}
+ local extra=view_extra(s,v,ctx);if extra then return extra end
  if ctx.menu~='collection' and ctx.menu~='error' and (not ctx.run or ctx.run.status~='active') then v.title='RUN UNAVAILABLE';v.error='There is no active run to modify.';return v end
  if ctx.menu=='error' then v.title='CHECKPOINT UNAVAILABLE';v.error=ctx.error or 'Saved files preserved. Repair the checkpoint to continue.';if ctx.retry then control(v,'retry',26,166,588,32,'RETRY SAVING RUN RESULT',{kind='retry_finish'}) end;return v end
  v.title=ctx.menu=='collection' and 'GENE COLLECTION' or ctx.menu=='reward' and 'ENCOUNTER REWARD' or 'REST / BUILD WORKBENCH'
@@ -99,9 +186,12 @@ function M.view(s,ctx)
    local after=ok and detail({menu='rest',run=r},target)
    local card=control(v,'reward'..i,304,99+(i-1)*75,310,67,rule.title,{kind='reward',index=i,id=id},ok,why)
    card.desc=rule.desc;card.before=v.reward_target;card.after=after;card.changes=rule.changes;v.rewards[i]=card
+   end
+   if type(ctx.capacity)=='table' and ctx.capacity.full==true then
+    v.capacity_note='Collection full / choose a replacement or discard before keeping a new gene'
+   end
+   return v
   end
-  return v
- end
  for j=(s.page-1)*6+1,math.min(s.page*6,#ids) do
   local id=ids[j];local g=source.genes[id];local d=C.definitions[g.kind]
   local b=control(v,'gene:'..id,26,113+(j-(s.page-1)*6-1)*35,168,30,id..' / '..(g.kind=='cinder' and 'CINDER' or 'RIME'),{kind='inspect',id=id})
@@ -136,6 +226,18 @@ function M.view(s,ctx)
   local can_start=#keys(ctx.profile.finished)<512 and ctx.profile.next_run<1000000000
   control(v,'start',26,410,274,32,ctx.run and ctx.run.status=='active' and 'START FRESH RUN' or 'START A RUN',{kind='start'},can_start,'Run ledger is full')
   control(v,'resume',312,410,302,32,'RESUME SAVED RUN',{kind='resume'},ctx.run~=nil and ctx.run.status=='active','No saved active run')
+  -- Declared capacity only. When the collection is full, discarding is offered
+  -- as an explicit destructive action that requires a second confirmation; the
+  -- actual owner change stays in main/Core.
+  if type(ctx.capacity)=='table' then
+   v.capacity=ctx.capacity
+   v.capacity_note='Collection '..tostring(ctx.capacity.count or '?')..' / '..tostring(ctx.capacity.max or '?')
+   if ctx.capacity.full==true and v.selected then
+    control(v,'discard',26,363,168,30,'DISCARD SELECTED',
+     {kind='discard',id=s.selected,destructive=true,
+      prompt='Discard '..tostring(s.selected)..'? This cannot be undone.'})
+   end
+  end
  else
   v.placements={}
   for i,slot in ipairs(slots) do
@@ -179,12 +281,26 @@ function M.update(s,ctx,input)
  end end
  current=controls[focus];s.focus=current.id
  if not activate then return nil end
- if not current.enabled then return {kind='blocked',message=current.reason or 'Unavailable'} end
+ if not current.enabled then s.pending=nil;return {kind='blocked',message=current.reason or 'Unavailable'} end
  local a=current.action
- if a.kind=='inspect' then s.selected=a.id
- elseif a.kind=='page' then s.page=s.page+a.delta;s.focus=nil
- elseif a.kind=='parents' then s.parent=s.selected;s.section='parents';s.focus=nil
- elseif a.kind=='back' then s.section='main';s.focus=nil
+ -- Destructive actions (discard, replace at full capacity) require two deliberate
+ -- presses on the exact same action. The pending prompt is bound to the action
+ -- identity, the menu/section context and a source generation, so resetting the
+ -- menu or changing the selection invalidates it: a prompt raised for g1 can
+ -- never be confirmed against g2 on the next click.
+ if a.destructive then
+  local sig=a.kind..'\0'..tostring(a.id)..'\0'..tostring(a.slot)..'\0'..tostring(s.menu)..'\0'..tostring(s.section)
+  if not (s.pending and s.pending.sig==sig and s.pending.gen==(s.gen or 0)) then
+   s.pending={sig=sig,gen=(s.gen or 0)}
+   return {kind='blocked',message=a.prompt or 'Press again to confirm',confirm_pending=current.id}
+  end
+  s.pending=nil
+ else s.pending=nil end
+ if a.kind=='inspect' then s.selected=a.id;s.pending=nil;s.gen=(s.gen or 0)+1
+ elseif a.kind=='page' then s.page=s.page+a.delta;s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
+ elseif a.kind=='parents' then s.parent=s.selected;s.section='parents';s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
+ elseif a.kind=='back' then s.section='main';s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
+ elseif a.kind=='map_inspect' then s.map_selected=a.room;s.pending=nil;s.gen=(s.gen or 0)+1
  else return clone(a) end
 end
 function M.apply(ctx,a)
@@ -306,6 +422,55 @@ local function parent_panel(v,ctx)
  end
  text(223,332,'Child '..v.child.id..' / '..(v.child.placed or ctx.menu=='collection' and 'inherited' or 'unplaced')..' / base power '..num(v.child.gene.base.potency),'caption','muted',378)
 end
+local function focused(s,v,b) return s.focus==b.id or (not s.focus and b==v.controls[1]) end
+local function draw_map(s,v)
+ panel(26,96,300,300)
+ text(36,108,'DISCOVERED '..tostring(v.map_counts.discovered_rooms or #v.map_rooms)..' / EXITS '..tostring(v.map_counts.known_exits or 0),'caption','muted',280)
+ if (v.map_counts.undiscovered_reward_count or 0)>0 then
+  text(36,126,tostring(v.map_counts.undiscovered_reward_count)..' reward(s) still hidden','caption','muted',280)
+ end
+ for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+ panel(336,96,278,300)
+ text(348,108,'EXITS','caption','muted',254)
+ local room=v.map_selected or v.map_current
+ local r=room and v.map.rooms[room]
+ text(348,128,r and (r.title or room) or 'No room selected','label','gold',254)
+ local exits=room and v.map_exits[room] or {}
+ if #exits==0 then text(348,156,'No known exits','caption','muted',254) end
+ for i,e in ipairs(exits) do local y=156+(i-1)*28
+  local dest=v.map.rooms[e.to]
+  text(348,y,(e.side or '?')..' / '..(dest and dest.title or e.to),'caption',e.gate_open and 'bone' or 'muted',190)
+  if not e.gate_open then text(536,y,'LOCKED','caption','gold',76) end
+ end
+end
+local function draw_onboarding(s,v)
+ panel(26,96,588,270)
+ if v.onboarding and v.onboarding.step then
+  text(40,120,'STEP '..tostring(v.onboarding.index or '?')..' / '..tostring(v.step_total or '?'),'caption','muted',560)
+  text(40,146,v.scope or '','label','gold',560)
+  text(40,178,v.detail or '','caption','bone',560)
+  if v.onboarding.early then text(40,206,'This step is taught in the first rooms.','caption','muted',560) end
+ else
+  text(40,150,'Tutorial complete. Revisit any time from the pause menu.','caption','bone',560)
+ end
+ for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+end
+local function draw_settings(s,v)
+ panel(26,96,588,290)
+ if v.settings then
+  for i,item in ipairs(v.settings) do
+   text(40,112+(i-1)*34,item.label..(item.value~=nil and (' / '..tostring(item.value)) or ''),'caption','bone',560)
+  end
+ else text(40,120,'No settings are declared in this build.','caption','bone',560) end
+ for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+end
+local function draw_ending(s,v)
+ panel(26,96,588,290)
+ local e=v.ending
+ text(40,130,e.outcome=='success' and 'RUN COMPLETE' or 'RUN ENDED','label','gold',560)
+ if type(e.lines)=='table' then for i,line_text in ipairs(e.lines) do text(40,162+(i-1)*24,line_text,'caption','bone',560) end end
+ for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+end
 function M.draw(s,ctx)
  local v=M.view(s,ctx)
  gd.fill(0,0,640,480,0x030712ea)
@@ -315,7 +480,9 @@ function M.draw(s,ctx)
  if not ctx.notice then text(27,78,v.scope or 'SAVE RECOVERY','caption','muted',587) end
  line(26,87,588,0xf0b429ff)
  if v.error then text(29,130,v.error,'caption','bone',576);for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,true,{h=b.h}) end;return end
- if v.menu=='reward' then
+ if v.menu=='map' then draw_map(s,v) elseif v.menu=='onboarding' then draw_onboarding(s,v)
+ elseif v.menu=='settings' then draw_settings(s,v) elseif v.menu=='ending' then draw_ending(s,v)
+ elseif v.menu=='reward' then
   panel(26,99,266,292)
   local d=v.reward_target
   text(40,123,'CURRENT GENE','caption','muted',238)

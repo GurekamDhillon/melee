@@ -1,4 +1,10 @@
 #include <melee/ft/forward.h>
+
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
 #include <sysdolphin/baselib/forward.h>
 
 #include <placeholder.h>
@@ -115,7 +121,7 @@ void ftKb_NsSpecialNStart_Anim(HSD_GObj* gobj)
     if (!ftAnim_IsFramesRemaining(gobj)) {
         Fighter_ChangeMotionState(gobj, 436, 0, 0, 1, 0, NULL);
         ftKb_NsSpecialNStart_Anim_inline(gobj, &flash_pos);
-        fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+        fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     }
 }
 
@@ -179,7 +185,7 @@ void ftKb_NsSpecialAirNStart_Anim(Fighter_GObj* gobj)
         Fighter_ChangeMotionState(gobj, ftKb_MS_NsSpecialAirNHold0, 0, 0, 1, 0,
                                   NULL);
         ftKb_NsSpecialNStart_Anim_inline(gobj, &flash_pos);
-        fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+        fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     }
 }
 

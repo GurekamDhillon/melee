@@ -232,6 +232,7 @@ void ftCo_800DCFD4(Fighter_GObj* gobj)
 
     ftColl_80078710(fp->victim_gobj, gobj, &fp->dmg.facing_dir_1);
     ScriptGame_HitRuleReport(victim_fp,fp,hit,ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(victim_fp,hit->damage),0));
+    ScriptGame_HitRulePercentQueue(hit,fp,ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(victim_fp, hit->damage),0));
     Fighter_UnkTakeDamage_8006CC30(fp, ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(victim_fp, hit->damage),0));
     ftCo_Damage_CalcKnockback(fp);
     ftCo_8008E908(gobj, 0.0F);

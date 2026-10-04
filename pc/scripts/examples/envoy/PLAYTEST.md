@@ -1,5 +1,9 @@
 # Envoy retail playtest - 2026-10-04 fix1
 
+EM4 follow-up supersedes the tight EM4 LAB ceilings and mirror fallback below. Opponent rolls are
+LAB diagnostics; the earlier retail Classic stat/reward flow remains separate.
+Use the follow-up acceptance section at the end for current progression and opponents. Earlier EM4 sections are historical acceptance recipes.
+
 Classic is now the intended default; Adventure follows. The historical maze
 playtest below is parked. Start Mario on Normal with three stocks, on vanilla,
 offline. Source/stub tests do not establish controller or visual acceptance.
@@ -162,3 +166,104 @@ The generated146-pair TSV describes vocabulary overlaps and filtered directional
 status/event links. It does not establish146 tested causal combinations;
 classification-tag overlap alone, including two keystones, is not a legal
 single-player chain. The seven scripts above are separately tested causal chains.
+
+EM4 balance and opponent acceptance (2026-10-04; native rebuild required):
+
+1. Integrator: rebuild through `tools/port/build.sh`, complete the bridge ABI
+   audit, then mount the refreshed Envoy folder. The older EXE must refuse LAB
+   edits with a rebuild message. Native hit rules now expose percent-only damage
+   and final launch fields; old native snapshots/journals cannot cross this
+   binary change. Run the registered hit-rule tests before owner play.
+2. Offline LAB, Mario P1 and standing CPU P2 on Final Destination: `mod clear`;
+   `drive give rare 45`; `drive give rare 8`; `drive give rare 76`;
+   `drive give unique 6`; `bag`. Equip all four slots, close with B and resume
+   until the pending edits commit. This is a real depth-1 seeded build: Pyre /
+   Burning / Crosswind / Bastion / Updraft; Lingering / Kindling / Malice;
+   Heavy / Rush; Glass Core. Duplicate IDs contribute once. Check every family
+   total/cap and equip preview at 640x360 and 853x480 with controller paging.
+3. Glass Core adds 60% percent damage dealt and taken, with current launch
+   unchanged. Fire smashes start Burn, later hits activate Pyre and Malice's
+   small Curse. Aerial hits then landing retain Momentum/Haste/Guarded chains.
+   Percent should climb visibly; launch should follow the stated launch rules
+   rather than suddenly doubling with the damage bonus. Glass remains risky.
+4. `foe roll` matches P2 to the current player strength (about 2.06 for the
+   recipe above). Resume for warmup/application. Read its timed nameplate,
+   shader treatments and `foe list`. A difficult target can use a logged exact
+   player-build fallback; it must not silently pretend that was a different
+   random roll. `foe fight 2` makes the existing CPU fight without losing its
+   build; `foe stand 2` returns it to standing, preserving the native CPU level.
+5. For an explicit deterministic comparison: `foe roll 1.4 42 2`; resume;
+   inspect `foe list`; clear/repeat the same seed/stage/port. It must reproduce.
+   Change seed or stage to explore different modifiers. Uniques and keystones
+   are legal. Impossible high explicit strengths should refuse visibly.
+6. Let the opponent hit P1. Its conversions, statuses, healing/other chains
+   and native damage/launch rules must affect P1 through the same engine. Lose
+   a stock on each side: equipped builds persist; transient statuses clear.
+   `foe clear` must remove its builds/nameplates/native rules and descended
+   statuses while retaining P1 bag and equipment. Scene/unload must clean up.
+7. Check native semantics with matched attacks at the same starting percent:
+   extra percent must not change the current launch inputs, shield damage,
+   clank priority, staling or hitlag inputs. Test charged/staled attacks, an
+   owned projectile, throws, phantom hits and a zero-damage detector. Test two
+   simultaneous victims with different statuses; no shared-hit mutation.
+8. Complete a checkpoint with twelve bag drives, four equipped slots, multiple
+   modded CPUs and nameplate timers. Require live LAB `rewind_test`
+   differing_bytes=0 through hits, stock loss, stand/fight and clear. Source
+   codec/helper roundtrips are not this acceptance. For manual physical drops,
+   wait for the completed following checkpoint before saving.
+
+Numeric budget witness: three valid depth-10 Rare records plus Glass Core
+produce Heavy +7.5%, Pyre +12% and target Curse +3.75%: final launch 1.2398125.
+The real-weight retail-formula FD-centre no-DI launch-distance proxy passes
+Mario 99% -> 70% and Peach 93% -> 66%, about 29% earlier. It excludes gravity,
+drift, DI, animation geometry, stale moves and hitstun exits; it is a tuning
+test, not a measured in-game KO. The four-drive test's fixed labels 401..404
+are fixture identities, not commands that reproduce those exact generated
+records. Live KO feel, controller layout and rewind remain owner acceptance.
+
+Queued CPU modifier edits and foe rolls must commit separately: resume and wait
+for one edit before issuing the other. During the four-second foe nameplate,
+the debug HUD is temporarily hidden; it returns when the nameplate expires.
+
+
+## EM4 follow-up1: escalating depth and independent opponents
+
+## Owner play script (after rebuilding)
+
+Use Mario P1 and Mario P2 on Final Destination, enter LAB and allow queued changes to commit by resuming a logic frame. These commands assume a clean bag. Give commands and subsequent bag equipment must commit separately (the pending edit limit is12). Open the drive bag after the gives commit, equip the listed records in order, and select the named keystones. Close it and resume before rolling the CPU.
+
+Early:
+```text
+foe clear
+mod clear
+depth 0 0
+drive give rare 6756413
+drive give rare 1617784304
+drive give unique 370289401
+drive give rare 1958367041
+```
+Resume; open bag, equip all four and choose Pyromancer; close/resume.
+```text
+foe roll - 2143609173 2
+foe fight 2
+```
+Strength1.466 against1.449; model8/7 attacks. Observe percent versus launch, names and visible family totals.
+
+Then clear the CPU and player build and commit the clears. Set the late dial and give:
+```text
+depth 12 3
+drive give rare 218490
+drive give rare 1767098125
+drive give rare 1988514207
+drive give rare 1313358071
+drive give unique 1784243822
+drive give rare 2116403131
+```
+Resume; open bag, equip all six; choose Frozen Oath, Pyromancer and Still Heart; close/resume.
+```text
+foe roll - 2144865533 2
+foe fight 2
+```
+The late records are tier11, include Glass Core and unlock all three keys. Strength226.890 versus257.161; model4/4 attacks. For a boss/final boss, clear/commit before `foe roll - 2144865533 2 boss` or `foe roll - 2144865533 2 finalboss`. Expected strengths287.690/348.456 and modeled4/3 or3/3 attacks. Recreate a fresh stock between directions; statuses, healing, spacing and ledge triggers change actual results.
+
+FD seeds compensate the model fixtures' stage0/12 against gd.match().stage's internal FD kind37, preserving the exact independent rolled build. Verified by codec equality, not assumed from the external stage ID. Model/player fixtures use sample401 early and sample12 late.

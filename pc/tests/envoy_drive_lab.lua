@@ -94,4 +94,16 @@ T.test('occupied swap cannot race native collection and ordinary item rows are h
  assert(a.bag.equipped[1].seed==1 and #a.bag.items==3 and a.bag.items[3].seed==40)
  a.drops:restore{next_id=1,records={}};a.drops:retry_retired()
 end)
+T.test('family budget details show all numeric totals safety strength and prospective deltas',function()
+ local _,a=fixture();assert(a:command('give rare 12'));a:apply()
+ local lines=a:budget_lines();local text=table.concat(lines,' ')
+ for _,f in ipairs({'Damage dealt','Launch dealt','Damage taken','Launch taken','Speed'}) do assert(text:find(f,1,true),'missing '..f) end
+ assert(text:find('Strength',1,true) and text:find('safety',1,true))
+ assert(table.concat(a:delta(1,1),' '):find('Family',1,true))
+ a.menu:open();a.menu.focus=1;a.menu.page=2;local shown={};a.g.safe_area=function()return{x=0,y=0,w=640,h=360}end
+ a.g.kit={panel=function()end,list=function()end,text=function(_,y,t)assert(y<=336);shown[#shown+1]=t end};a.menu:draw();assert(#shown>0)
+end)
+T.test('empty player derivation retires neutral roots',function()
+ local _,a=fixture();a:apply();assert(a.lab.engine.equipped[1]==nil and a.lab.engine.implicits[1]==nil)
+end)
 T.done()

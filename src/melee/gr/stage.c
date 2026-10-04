@@ -638,3 +638,7 @@ void Stage_8022532C(StKind stkind, s32 arg1)
 
     Ground_DemoInit(&local_data, arg1);
 }
+
+#if defined(TARGET_PC)
+#include "stage_stage_slot_retail.inc"
+#endif

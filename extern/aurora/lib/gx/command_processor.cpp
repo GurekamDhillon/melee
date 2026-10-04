@@ -12,6 +12,7 @@
 #include "regs.hpp"
 #include "shader_info.hpp"
 #include "surface.hpp"
+#include "motion_capture.hpp"
 #include "texture.hpp"
 
 #include <tracy/Tracy.hpp>
@@ -707,7 +708,7 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
     }
   }
   // A capture walks the real material state but never sends geometry to the screen.
-  if (gfx::pipeline_warm_capturing()) { gfx::pipeline_warm_record(cache.pipelineRef); return; }
+  if (gfx::pipeline_warm_capturing()) { motion::warm(cache.config); gfx::pipeline_warm_record(cache.pipelineRef); return; }
   if (sPipelineWait) {
     static gfx::PipelineRef sLastTagged = 0;
     if (cache.pipelineRef != sLastTagged) {
@@ -770,7 +771,7 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
     instanceCount = vtxCount;
   }
   cache.lastDrawFmt = fmt;
-  gfx::push_draw_command(DrawData{
+  const DrawData motionDraw{
       .pipeline = cache.pipelineRef,
       .vertRange = vertRange,
       .idxRange = idxRange,
@@ -781,7 +782,9 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
       .instanceCount = instanceCount,
       .bindGroups = cache.bindGroups,
       .dstAlpha = state.dstAlpha,
-  });
+  };
+  motion::retain(motionDraw,cache.config);
+  if(!motion::suppress_live())gfx::push_draw_command(motionDraw);
 }
 
 static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
@@ -816,7 +819,7 @@ static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& 
 
   const bool cleanState = g_gxState.dirty == 0 && fmt == sDrawCache.lastDrawFmt && sDrawCache.lineMode == 0 &&
                           prim != GX_LINES && prim != GX_LINESTRIP && prim != GX_POINTS;
-  auto* lastDraw = cleanState ? gfx::get_last_draw_command<DrawData>() : nullptr;
+  auto* lastDraw = cleanState && !motion::active() && !motion::suppress_live() ? gfx::get_last_draw_command<DrawData>() : nullptr;
 
   // Read the vertex data before deciding whether to merge: the merge predicate below needs the
   // indices these vertices reference.
@@ -907,7 +910,11 @@ void handle_aurora(ByteReader& reader) noexcept {
   ZoneScoped;
   const u16 subCmd = reader.read<u16>();
 
-  if (subCmd == GX_AURORA_SURFACE) {
+  if (subCmd == GX_AURORA_MOTION_CALLBACK) {
+    auto fn = reinterpret_cast<void (*)(const void*,u32)>(reader.read<u64>());
+    const auto size=reader.read<u16>();auto data=reader.take(size);
+    if(fn){fifo::detail::tInCallback=true;fn(data.data(),size);fifo::detail::tInCallback=false;}
+  } else if (subCmd == GX_AURORA_SURFACE) {
     const auto program = reader.read<u32>();
     const auto bytes = reader.take(sizeof(gw_surface::Params));
     surface::activeProgram = program;
@@ -1215,3 +1222,5 @@ void clear_draw_cache() noexcept {
 namespace aurora::gx {
 PaletteState g_palette;
 } // namespace aurora::gx
+
+#include "motion_replay.inc"

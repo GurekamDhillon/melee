@@ -81,6 +81,8 @@ void shutdown_resource_cache() {
 
 } // namespace detail
 
+#include "motion_bindings.inc"
+
 BindGroupRef bind_group_ref(const WGPUBindGroupDescriptor& descriptor) {
   const auto id = xxh3_hash(descriptor);
   std::lock_guard lock{g_bindGroupCacheMutex};

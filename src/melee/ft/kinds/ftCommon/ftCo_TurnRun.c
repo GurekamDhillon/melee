@@ -1,5 +1,9 @@
 #include "ftCo_TurnRun.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <melee/ft/forward.h>
 
 #include <placeholder.h>
@@ -19,6 +23,9 @@
 bool fn_800C9CEC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 4)) return false;
+#endif
     if (fp->input.lstick[0].x * fp->facing_dir <=
         p_ftCommonData->x38_someLStickXThreshold)
     {
@@ -31,6 +38,9 @@ bool fn_800C9CEC(Fighter_GObj* gobj)
 bool fn_800C9D40(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 4)) return false;
+#endif
 
     if (fp->input.lstick[0].x * fp->facing_dir <=
         p_ftCommonData->x38_someLStickXThreshold)

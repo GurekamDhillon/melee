@@ -1,5 +1,9 @@
 #include "ftCo_Turn.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <melee/ft/forward.h>
 
 #include <placeholder.h>
@@ -206,7 +210,11 @@ void ftCo_Turn_IASA(Fighter_GObj* gobj)
     RETURN_IF(ftCo_Jump_CheckInput(gobj));
 
     fn_800C9C2C(gobj);
-    if (fp->mv.co.turn.just_turned && fp->mv.co.turn.x8) {
+    if (fp->mv.co.turn.just_turned && fp->mv.co.turn.x8
+#if defined(TARGET_PC)
+        && FT_CAPS_ACTION_ALLOWED(fp, 4)
+#endif
+    ) {
         if (fp->input.lstick[0].x * fp->mv.co.turn.facing_after >=
             p_ftCommonData->dash_smash_stick_threshold)
         {

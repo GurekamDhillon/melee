@@ -1,5 +1,11 @@
 #include "ftzeldaspecialhi.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/forward.h>
@@ -435,7 +441,7 @@ void ftZd_SpecialHi_8013A058(HSD_GObj* gobj)
                 fp = GET_FIGHTER(gobj);
                 attributes = fp->dat_attrs;
                 fp->mv.zd.specialhi.x0 = attributes->x48;
-                fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+                fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
                 fp->x2223_b4 = 1;
 
                 ftColl_8007B62C(gobj, 2);
@@ -527,7 +533,7 @@ void ftZd_SpecialHi_8013A244(HSD_GObj* gobj)
     fp = GET_FIGHTER(gobj);
     attributes = fp->dat_attrs;
     fp->mv.zd.specialhi.x0 = attributes->x48;
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     fp->x2223_b4 = 1;
 
     ftColl_8007B62C(gobj, 2);

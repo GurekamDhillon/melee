@@ -1,5 +1,11 @@
 #include "ftcaptainspecialhi.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/forward.h>
@@ -34,7 +40,7 @@ static void ftCa_SpecialLw_800E49FC(HSD_GObj* gobj)
     u8 _[16];
     Fighter* fp = GET_FIGHTER(gobj);
     ftCaptain_DatAttrs* da = fp->dat_attrs;
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     fp->mv.ca.specialhi.x0 = da->specialhi_air_var;
     fp->cmd_vars[0] = 0;
     fp->cmd_vars[1] = da->specialhi_unk2;

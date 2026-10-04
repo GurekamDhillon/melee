@@ -815,7 +815,15 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
     Fighter* fp = gobj->user_data;
     float facing_dir = 0;
     PAD_STACK(96);
-    if (fp->x2220_b3 || fp->x2220_b4 || !fp->dmg.kb_applied) {
+#if defined(TARGET_PC)
+    /* Script armour reuses retail's no-reaction branch; percent was already committed. */
+    extern int ScriptGame_CapsNoFlinch(Fighter*);
+#endif
+    if (fp->x2220_b3 || fp->x2220_b4 || !fp->dmg.kb_applied
+#if defined(TARGET_PC)
+        || ScriptGame_CapsNoFlinch(fp)
+#endif
+    ) {
         inlineB2(gobj);
         goto ret_A8C;
     } else if (fp->dmg.x1860_element == HitElement_Cape) {

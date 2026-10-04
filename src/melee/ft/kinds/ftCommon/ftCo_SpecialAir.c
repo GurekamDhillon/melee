@@ -1,5 +1,9 @@
 #include "ftCo_SpecialAir.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <Runtime/platform.h>
 
 #include <dolphin/mtx.h>
@@ -11,6 +15,9 @@
 bool ftCo_SpecialAir_CheckInput(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (fp->input.pressed_buttons & HSD_PAD_B) {
         if (fp->input.lstick[0].y >= p_ftCommonData->x21C) {
             if (ftData_SpecialAirHi[fp->kind] == NULL) {

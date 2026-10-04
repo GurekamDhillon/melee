@@ -14,7 +14,7 @@ T.test('deterministic statuses and intended tagged chains',function()
   local r=D.mod_engine.new(41,D.mod_pool);r:equip(1,'kindling');r:equip(1,'pyre');r:equip(1,'feasting')
   r:begin_frame({[1]={percent=70,stocks=3,grounded=true},[2]={percent=0,stocks=3,grounded=true}})
   r:emit{kind='hit_dealt',port=1,target=2,tags={fire=true},damage=8};r:drain()
-  assert(r:status(2,'burn'));local rules=r:native_rules(1);assert(rules[1].change.knockback_taken==1.25)
+  assert(r:status(2,'burn'));local rules=r:native_rules(1);assert(rules[1].change.launch==1.08)
   local origin,used=r:native_origin({rules[1].id},2)
   r:emit{kind='hit_dealt',port=1,target=2,tags={normal=true},damage=8,origin=origin,native_trace=true,native_statuses=used};r:drain()
   assert(not r:status(2,'curse'));r:emit{kind='ko_dealt',port=1,target=2,tags={}};r:drain()
@@ -30,7 +30,7 @@ T.test('two other chains plus unique and keystone use only supported effects',fu
  r:emit{kind='hit_dealt',port=1,target=2,tags={aerial=true}};r:drain();assert(r:status(1,'momentum'))
  r:emit{kind='landing',port=1,tags={grounded=true}};r:drain()
  assert(not r:status(1,'haste') and r:status(1,'guarded'))
- local v=r:values(1);assert(v.damage_dealt==2 and v.damage_taken>1)
+ local v=r:values(1);assert(v.damage_dealt==1.6 and v.damage_taken>1)
  r:equip(2,'icebound');r:equip(2,'brittle');r:emit{kind='hit_dealt',port=2,target=1,tags={ice=true}};r:drain()
  r:emit{kind='hit_dealt',port=2,target=1,tags={normal=true}};r:drain();assert(r:status(1,'curse'))
 end)
@@ -53,7 +53,7 @@ for _,id in ipairs({'kindling','pyre','feasting','updraft','crosswind','icebound
   if id=='kindling' then hit(r,{fire=true});assert(r:status(2,'burn'))
   elseif id=='icebound' then hit(r,{ice=true});assert(r:status(2,'chill'))
   elseif id=='updraft' then hit(r,{aerial=true});assert(r:status(1,'momentum'))
-  elseif id=='glass_core' then local v=r:values(1);assert(v.damage_dealt==2 and v.damage_taken==2)
+  elseif id=='glass_core' then local v=r:values(1);assert(v.damage_dealt==1.6 and v.damage_taken==1.6)
   elseif id=='reprisal' then r:emit{kind='perfect_shield',port=1};r:drain();assert(r:status(1,'guarded') and r:status(1,'momentum'))
   else
    local status=({pyre='burn',feasting='chill',crosswind='momentum',brittle='chill',still_heart='haste'})[id]
@@ -62,7 +62,7 @@ for _,id in ipairs({'kindling','pyre','feasting','updraft','crosswind','icebound
    if id=='crosswind' then r:emit{kind='landing',port=1};r:drain();assert(r:status(1,'haste') and not r:status(1,'momentum'))
    elseif id=='still_heart' then r:emit{kind='status_applied',port=1,status='haste'};r:drain();assert(r:status(1,'guarded') and not r:status(1,'haste'))
    elseif id=='feasting' then r:emit{kind='ko_dealt',port=1,target=2};r:drain();assert(r.damage[1]==-10)
-   elseif id=='pyre' then local rules=r:native_rules(1);assert(rules[1].match.status_bits==1 and rules[1].change.knockback_taken==1.25);hit(r);assert(not r:status(2,'curse'))
+   elseif id=='pyre' then local rules=r:native_rules(1);assert(rules[1].match.status_bits==1 and rules[1].change.launch==1.08);hit(r);assert(not r:status(2,'curse'))
    else hit(r);assert(r:status(2,'curse')) end
   end
   assert(#D.mod_schema.tooltip(r.rules[id])>10)
@@ -85,13 +85,13 @@ T.test('status duration refresh stacks exact expiration and KO cleanup',function
  local players=r.players;for _=1,299 do r:begin_frame(players);r:drain() end
  assert(r:status(1,'momentum'));hit(r,{aerial=true});assert(r:status(1,'momentum').expires==600)
  for _=1,300 do r:begin_frame(players);r:drain() end;assert(not r:status(1,'momentum'))
- r:equip(1,'glass_core');r:emit{kind='stock_lost',port=1};r:drain();assert(r:values(1).damage_dealt==2 and r.equipped[1].glass_core==1 and not r.statuses[1] and not r.recent[1])
+ r:equip(1,'glass_core');r:emit{kind='stock_lost',port=1};r:drain();assert(r:values(1).damage_dealt==1.6 and r.equipped[1].glass_core==1 and not r.statuses[1] and not r.recent[1])
  r=fresh('kindling');hit(r,{fire=true});players=r.players;local total=0
  for _=1,180 do r:begin_frame(players);r:drain();total=total+(r.damage[2] or 0) end
  assert(total==9 and not r:status(2,'burn'))
 end)
 T.test('synthetic event cycle obeys depth and interval is logic-frame deterministic',function()
- local m=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[1]));m.id='cycle';m.trigger='interval';m.interval=2;m.conditions={};m.effects={{op='emit',event='interval',tag='damage'}}
+ local m=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[1]));m.families={'conversion'};m.id='cycle';m.trigger='interval';m.interval=2;m.conditions={};m.effects={{op='emit',event='interval',tag='damage'}}
  local r=D.mod_engine.new(17,{m},{budget=128,depth=3});r:equip(1,'cycle');r:begin_frame({[1]={percent=0}});r:drain();assert(r.used==0)
  r:begin_frame(r.players);r:drain();assert(r.used==3 and r.dropped==1)
  local saved=r:export();local rr=D.mod_engine.new(1,{m});rr:import(saved)
@@ -105,7 +105,7 @@ end)
 T.test('budget exhaustion never prevents stock lifetime cleanup',function()
  local r=D.mod_engine.new(2,D.mod_pool,{budget=1});r:equip(1,'kindling');r:equip(2,'glass_core')
  r:begin_frame({[1]={percent=0},[2]={percent=0}});r:emit{kind='hit_dealt',port=1,target=2,tags={fire=true}};r:emit{kind='stock_lost',port=2};r:drain()
- assert(r.equipped[2].glass_core==1 and not r:status(2,'burn') and r:values(2).damage_dealt==2)
+ assert(r.equipped[2].glass_core==1 and not r:status(2,'burn') and r:values(2).damage_dealt==1.6)
 end)
 T.test('unknown contact context never means zero damage or grounded',function()
  local m=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[1]));m.conditions={{self_damage_below=40}}

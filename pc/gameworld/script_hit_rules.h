@@ -13,10 +13,14 @@ void ScriptGame_HitRuleDamage(HitCapsule*);
 void ScriptGame_HitRuleForget(HitCapsule*);
 void ScriptGame_HitRuleSpecial(HitCapsule*);
 float ScriptGame_HitRuleContact(HitCapsule*,Fighter*,float,int);
+void ScriptGame_HitRulePercentQueue(HitCapsule*,Fighter*,float);
+float ScriptGame_HitRulePercentCommit(Fighter*,float);
+void ScriptGame_HitRulePercentClear(Fighter*);
 void ScriptGame_HitRuleWon(HitCapsule*,Fighter*);
 void ScriptGame_HitRuleContext(HitCapsule*,Fighter*);
 void ScriptGame_HitRuleReport(Fighter*,Fighter*,HitCapsule*,float);
 #else
+#define ScriptGame_HitRulePercentQueue(hit,victim,damage) ((void)0)
 #define ScriptGame_HitRuleReport(attacker,victim,hit,damage) ((void)0)
 #define ScriptGame_HitRuleBaseDamage(hit) ((hit)->damage)
 #define ScriptGame_HitRuleContact(hit,victim,value,kb) (value)

@@ -1,11 +1,13 @@
 local slots = {}
 local arm,queued=false,false
 local function queue()
-  if #slots ~= 3 then return end
+  if #slots ~= 5 then return end
   local ok,why=gd.stage_queue{
     {slot=slots[2],after=10,indicator=1,transition="wipe"},
     {slot=slots[3],after=10,indicator=1,transition="flash"},
-    {slot=slots[1],after=10,indicator=1,transition="morph"},
+    {slot=slots[4],after=10,indicator=1,transition="morph"},
+    {slot=slots[5],after=10,indicator=1,transition="wipe"},
+    {slot=slots[1],after=10,indicator=1,transition="flash"},
     loop=true,shuffle=false,seed=42,
   }
   if not ok then gd.log(tostring(why)) end
@@ -13,7 +15,7 @@ end
 function on_match_start()
   slots={}
   arm,queued=false,false
-  for _,name in ipairs{"final_destination","battlefield","yoshis_story"} do
+  for _,name in ipairs{"final_destination","battlefield","yoshis_story","dream_land","fountain_of_dreams"} do
     local slot,why=gd.stage_slot_load(name)
     if not slot then gd.log("stage preload: "..tostring(why));return end
     slots[#slots+1]=slot

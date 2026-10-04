@@ -204,3 +204,7 @@ GroundParam grDatFiles_803E0848 = {
 };
 
 UnkStageDat grDatFiles_803E0924 = { 0 };
+
+#if defined(TARGET_PC)
+#include "grdatfiles_stage_slot_retail.inc"
+#endif

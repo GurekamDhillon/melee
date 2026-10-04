@@ -798,6 +798,17 @@
     "controls": "Start LAB: identity world pass reports readiness after actual recording/resolving."
   },
   {
+    "id": "demo_zones",
+    "path": "demos/zones",
+    "title": "Native zone membership",
+    "api": "Zones; membership and residence events",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "tour": false,
+    "controls": "Walk between the outlined rooms and doorway; turn back, leave all zones and return. Native acceptance requires operator."
+  },
+  {
     "id": "demo_hit_rules",
     "path": "demos/hit-rules",
     "title": "Native hit rules",
@@ -806,6 +817,94 @@
     "new": true,
     "in_game": false,
     "controls": "Mario P1: up-smash Fire, aerial Electric; H toggles; real collisions require operator",
+    "setup": []
+  },
+  {
+    "id": "demo_fighter_air_jumps",
+    "path": "demos/fighter-air-jumps",
+    "title": "Air-jump allowance",
+    "api": "fighter_caps",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "J: cycle 0, 1, 3, 8 extra jumps; R: retail defaults",
+    "setup": []
+  },
+  {
+    "id": "demo_fighter_restrictions",
+    "path": "demos/fighter-restrictions",
+    "title": "Fighter action restrictions",
+    "api": "fighter_caps",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "F: next forbidden action; R: allow all actions",
+    "setup": []
+  },
+  {
+    "id": "demo_fighter_armour",
+    "path": "demos/fighter-armour",
+    "title": "Flinch resistance",
+    "api": "fighter_armour",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "A: damage threshold / knockback threshold; R: clear armour",
+    "setup": []
+  },
+  {
+    "id": "demo_fighter_give_item",
+    "path": "demos/fighter-give-item",
+    "title": "Give a held item",
+    "api": "give_item",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "I: give random item again; release the held item first",
+    "setup": []
+  },
+  {
+    "id": "demo_fighter_effects",
+    "path": "demos/fighter-effects",
+    "title": "Timed self effects",
+    "api": "fighter_effect",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "E: next effect for 180 frames; R: clear current effect",
+    "setup": []
+  },
+  {
+    "id": "demo_fighter_targeting",
+    "path": "demos/fighter-targeting",
+    "title": "Opponent queries and timed status",
+    "api": "nearest_opponent; opponents_in_radius; fighter_timed_status",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "T: mark nearest opponent for 120 frames; radius 80 units",
+    "setup": []
+  },
+  {
+    "id": "demo_afterimages",
+    "path": "demos/afterimages",
+    "title": "Afterimages",
+    "api": "Motion history",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "See demo overlay for live parameters",
+    "setup": []
+  },
+  {
+    "id": "demo_tracers",
+    "path": "demos/tracers",
+    "title": "Tracers",
+    "api": "Motion history",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "See demo overlay for live parameters",
     "setup": []
   }
 ]

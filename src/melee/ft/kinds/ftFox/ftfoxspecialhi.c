@@ -1,5 +1,11 @@
 #include "ftfoxspecialhi.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/forward.h>
@@ -531,7 +537,7 @@ void ftFx_SpecialAirHi_Enter(HSD_GObj* gobj)
     ftFox_SpecialHi_RotateModel(gobj);
     fp->x21F8 = ftCommon_8007F76C;
     fp->accessory4_cb = ftFx_SpecialHi_CreateLaunchGFX;
-    fp->x1968_jumpsUsed = ca->max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
 }
 
 /// 0x800E7E3C
@@ -681,7 +687,7 @@ void ftFx_SpecialHiBound_Anim(HSD_GObj* gobj)
     if (fp->cmd_vars[0] != 0 && fp->ground_or_air == GA_Air) {
         ftCo_80096900(gobj, 1, 0, true, da->x8C_FOX_FIREFOX_FREEFALL_MOBILITY,
                       da->x90_FOX_FIREFOX_LANDING_LAG);
-        fp->x1968_jumpsUsed = (u8) ca->max_jumps;
+        fp->x1968_jumpsUsed = (u8) FT_CAPS_MAX_JUMPS(fp);
         return;
     }
     if (!ftAnim_IsFramesRemaining(gobj)) {
@@ -689,7 +695,7 @@ void ftFx_SpecialHiBound_Anim(HSD_GObj* gobj)
             ftCo_80096900(gobj, 1, 0, true,
                           da->x8C_FOX_FIREFOX_FREEFALL_MOBILITY,
                           da->x90_FOX_FIREFOX_LANDING_LAG);
-            fp->x1968_jumpsUsed = (u8) ca->max_jumps;
+            fp->x1968_jumpsUsed = (u8) FT_CAPS_MAX_JUMPS(fp);
             return;
         }
         ft_8008A2BC(gobj);

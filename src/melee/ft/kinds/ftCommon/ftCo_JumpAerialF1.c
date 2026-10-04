@@ -1,4 +1,10 @@
 #include "ftCo_Attack100.h"
+
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
 #include "ftCo_Fall.h"
 #include "ftCo_FallAerial.h"
 #include "ftCo_ItemScrew.h"
@@ -34,6 +40,9 @@ bool ftCo_800D730C(Fighter_GObj* gobj, bool arg1)
 
     fp = GET_FIGHTER(gobj);
     x2d0 = fp->x2D0;
+#if defined(TARGET_PC)
+    if (fp->x1968_jumpsUsed >= FT_CAPS_MAX_JUMPS(fp)) return false;
+#endif
     if (fp->motion_id == 0x9B) {
         if (ft_did_jump(fp, arg1)) {
             ftCo_800D74A4(gobj);
@@ -56,7 +65,7 @@ bool ftCo_800D730C(Fighter_GObj* gobj, bool arg1)
         }
     } else {
         r29 = 1;
-        canJump = fp->x1968_jumpsUsed < fp->co_attrs.max_jumps;
+        canJump = fp->x1968_jumpsUsed < FT_CAPS_MAX_JUMPS(fp);
         if (ftCo_800D72A0(fp) && fp->cmd_vars[0] == 0) {
             r29 = 0;
         }
@@ -106,10 +115,12 @@ void ftCo_800D74A4(Fighter_GObj* gobj)
          * For retail jumps the index and result are unchanged. */
         int jump_row = msid - tmp->x2C;
         int rows = p->x28;
+        int state_row = msid2 - tmp->x2C;
         if (rows < 1 || rows > 5) rows = 5;
         if (jump_row < 0) jump_row = 0;
         if (jump_row >= rows) jump_row = rows - 1;
         vel.y = p->x14[jump_row];
+        if (state_row >= rows) msid2 = tmp->x2C + rows - 1;
     }
 #else
     vel.y = p->x14[msid - tmp->x2C];
@@ -121,7 +132,21 @@ void ftCo_800D74A4(Fighter_GObj* gobj)
          * The impulse read above is bounded before Geno chooses the effective motion. */
         extern void Geno_MultiJump(Fighter * fp, int first_state, int* msid, float* vy);
         int geno_msid = msid2;
-        Geno_MultiJump(fp, msid2 - (fp->x1968_jumpsUsed - 1), &geno_msid, &vel.y);
+        Geno_MultiJump(fp, tmp->x2C, &geno_msid, &vel.y);
+        {
+            /* Retail's final Kirby jump script has no next-jump gate. Like
+             * Geno_MultiJump, repeat the penultimate script while jumps remain.
+             * Use the original first state, independent of the bounded motion. */
+            int rows = p->x28;
+            int limit = FT_CAPS_MAX_JUMPS(fp);
+            int row = fp->x1968_jumpsUsed - 1;
+            if (rows < 1 || rows > 5) rows = 5;
+            if (limit != fp->co_attrs.max_jumps && row >= rows - 1) {
+                geno_msid = tmp->x2C + rows - 1;
+                if (rows > 1 && fp->x1968_jumpsUsed + 1 < limit)
+                    geno_msid = tmp->x2C + rows - 2;
+            }
+        }
         msid2 = geno_msid;
     }
 #endif
@@ -144,7 +169,7 @@ void ftCo_JumpAerialF1_Anim(Fighter_GObj* gobj)
     co = &temp_r30->co_attrs;
     ft_800CB6EC(temp_r30, tmp);
     if (ftAnim_IsFramesRemaining(gobj) == 0) {
-        if (temp_r30->x1968_jumpsUsed >= co->max_jumps) {
+        if (temp_r30->x1968_jumpsUsed >= FT_CAPS_MAX_JUMPS(temp_r30)) {
             ftCo_FallAerial_Enter(gobj);
         } else {
             ftCo_Fall_Enter(gobj);

@@ -1,5 +1,9 @@
 #include "ftCo_EscapeAir.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <Runtime/platform.h>
 
 #include <math.h>
@@ -26,6 +30,9 @@ typedef enum cmd_var_idx {
 bool ftCo_80099A58(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 2)) return false;
+#endif
     if (fp->input.pressed_buttons & (HSD_PAD_R | HSD_PAD_L)) {
         ftCo_80099A9C(gobj, p_ftCommonData->x334);
         return true;

@@ -1,10 +1,10 @@
 local T=dofile('melee/pc/tests/envoy_testlib.lua');local D=T.rules()
 T.test('full pool golden tiers, stock loss, snapshots, seven chains and synergy payloads',function()
 D.mod_codec=T.module('mod_codec',D);D.mod_schema=T.module('mod_schema',D);D.mod_pool=T.module('mod_pool',D);D.mod_engine=T.module('mod_engine',D)
-assert(#D.mod_pool==30,'full pool requires 30 records')
+assert(#D.mod_pool==32,'full pool requires 30 originals plus armour/cleansing')
 local r=D.mod_engine.new(1,D.mod_pool);r:set_build(1,{kindling=1,glass_core=1},{damage_dealt=1.1,status_duration=1.5})
 r:begin_frame({[1]={percent=0},[2]={percent=0}});r:emit{kind='hit_dealt',port=1,target=2,tags={fire=true}};r:drain()
-assert(r:status(2,'burn').expires-r.frame==270);r:emit{kind='stock_lost',port=1,tags={}};r:drain();assert(r.equipped[1].glass_core==1 and r:values(1).damage_dealt==2.2)
+assert(r:status(2,'burn').expires-r.frame==270);r:emit{kind='stock_lost',port=1,tags={}};r:drain();assert(r.equipped[1].glass_core==1 and math.abs(r:values(1).damage_dealt-1.7)<1e-9)
 local restored=D.mod_engine.new(1,D.mod_pool);restored:import(r:export());assert(restored:export()==r:export())
 print('EM3 pool/build PASS')
 
@@ -14,29 +14,30 @@ D.mod_synergy=T.module('mod_synergy',D);local synergy_pairs,degree=D.mod_synergy
 -- Golden balancing outcomes, independent of the record resolver.
 local expected={
  kindling={status={2,'burn',{180,225,270},{3,3.75,4.5},1}},
- pyre={native={{match={move='any',status_bits=1},change={knockback_taken={1.25,1.3125,1.375}}}}},
+ pyre={native={{match={move='any',status_bits=1},change={launch={1.08,1.1,1.12}}}}},
  burning={native={{match={move='smash'},change={element='fire'}}}},
  charged={native={{match={move='aerial'},change={element='electric'}}}},
- pyromancer={native={{match={move='any'},change={element='fire'}},{match={move='any',incoming=true,element='ice'},change={damage=2}}}},
+ pyromancer={native={{match={move='any'},change={element='fire'}},{match={move='any',incoming=true,element='ice'},change={percent_damage=1.6}}}},
  feasting={heal={10,12.5,15}},updraft={status={1,'momentum',{300,375,450},1,5}},
  crosswind={status={1,'haste',{180,225,270},1,1},absent='momentum'},
- icebound={status={2,'chill',{180,225,270},1,1}},brittle={status={2,'curse',{120,150,180},{.25,.3125,.375},1}},
+ icebound={status={2,'chill',{180,225,270},1,1}},brittle={status={2,'curse',{120,150,180},{.025,.03125,.0375},1}},
  reprisal={status={1,'guarded',{180,225,270},1,1},second={1,'momentum',{180,225,270},1,5}},
- glass_core={values={damage_dealt=2,damage_taken=2}},still_heart={status={1,'guarded',180,1,1},absent='haste'},
+ glass_core={values={damage_dealt=1.6,damage_taken=1.6}},still_heart={status={1,'guarded',180,1,1},absent='haste'},
  frosted={native={{match={move='smash'},change={element='ice'}}}},
- heavy={values={run_speed=.85},native={{match={move='any'},change={knockback_growth={1.15,1.1875,1.225}}}}},
- featherweight={values={jump_height={1.15,1.1875,1.225},knockback_taken=1.2}},
+ heavy={values={run_speed=.85},native={{match={move='any'},change={launch={1.05,1.0625,1.075}}}}},
+ featherweight={values={jump_height={1.15,1.1875,1.225},knockback_taken=1.1}},
  lingering={values={status_duration={1.2,1.25,1.3}}},
- cinder={native={{match={move='any',status_bits=1},change={damage={1.15,1.1875,1.225}}}}},
- shatter={native={{match={move='any',status_bits=4},change={damage={1.2,1.25,1.3}}}}},
+ cinder={native={{match={move='any',status_bits=1},change={percent_damage={1.1,1.125,1.15}}}}},
+ shatter={native={{match={move='any',status_bits=4},change={percent_damage={1.1,1.125,1.15}}}}},
  ledge={status={1,'haste',{180,225,270},1,1}},bastion={status={1,'guarded',{120,150,180},1,1}},
  renewal={heal={2,2.5,3}},rush={status={1,'momentum',{240,300,360},1,5}},
- shelter={status={1,'guarded',{120,150,180},1,1}},malice={status={2,'curse',{120,150,180},{.15,.1875,.225},1}},
+ shelter={status={1,'guarded',{120,150,180},1,1}},malice={status={2,'curse',{120,150,180},{.025,.03125,.0375},1}},
  ember_crown={values={damage_taken=1.3},native={{match={move='any'},change={element='fire'}}}},
  winter_heart={values={run_speed=.8},native={{match={move='any'},change={element='ice'}}}},
  storm_shell={values={damage_dealt=.8,damage_taken=.8},native={{match={move='any'},change={element='electric'}}}},
  mirror_shard={damage=17},
- frozen_oath={native={{match={move='any'},change={element='ice'}},{match={move='any',incoming=true,element='fire'},change={damage=2}}}}
+ armoured={values={damage_taken={.92,.9,.88}}},cleansing={},
+ frozen_oath={native={{match={move='any'},change={element='ice'}},{match={move='any',incoming=true,element='fire'},change={percent_damage=1.6}}}}
 }
 local function at(v,tier)return type(v)=='table' and v[tier] or v end
 local function equal(actual,want,label)
@@ -44,7 +45,7 @@ local function equal(actual,want,label)
  else assert(actual==want,label..': '..tostring(actual)..' != '..tostring(want)) end
 end
 local function outcome(solo,id,tier)
- local want=assert(expected[id],'missing golden outcome '..id);local values=solo:values(1);local native=solo:native_rules(1)
+ local want=assert(expected[id],'missing golden outcome '..id);local values=solo:values(1);local all=solo:native_rules(1);local native={};for _,rule in ipairs(all) do if rule.id<1000 then native[#native+1]=rule end end
  for key,v in pairs(want.values or {})do equal(values[key],at(v,tier),id..' '..key)end
  equal(#native,#(want.native or {}),id..' native count')
  for i,rule in ipairs(want.native or {})do
@@ -71,13 +72,14 @@ for _,m in ipairs(D.mod_pool) do
    if c.status then ev.status=c.status end
   end
   if m.id=='still_heart' then solo.statuses[1]={haste={expires=1000,stacks=1,max=1,amount=1,next_tick=60,origin={}}} end
+  if m.trigger=='interval' then solo.frame=60 end
   solo:emit(ev);solo:drain();outcome(solo,m.id,tier)
   if m.trigger=='equip' then local values=solo:values(1);local rules=solo:native_rules(1);for _,effect in ipairs(m.effects) do if effect.op=='value' then assert(values[effect.key],m.id) else assert(#rules>0,m.id) end end
   else assert(solo.used>0,m.id..' alone never fires') end
  end
 end
 T.refuses(function()r:set_build(1,{pyromancer=1,frozen_oath=1},{})end)
-T.refuses(function()r:set_build(1,{kindling=99},{})end)
+T.refuses(function()r:set_build(1,{kindling=1.5},{})end)
 T.refuses(function()r:set_build(1,{},{status_duration=0/0})end)
 local function chain(ids,events,check)
  local e=D.mod_engine.new(1,D.mod_pool);local mods={};for _,id in ipairs(ids)do mods[id]=1 end;e:set_build(1,mods,{})

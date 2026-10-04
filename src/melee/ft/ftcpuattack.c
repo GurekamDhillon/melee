@@ -1,5 +1,11 @@
 #include "ftcpuattack.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <math.h>
 
 #include "fighter.h"
@@ -1336,7 +1342,7 @@ int ftCo_800B7638(Fighter* fp)
         return 0;
     }
     if (fp->ground_or_air == GA_Air) {
-        if (fp->co_attrs.max_jumps <= fp->x1968_jumpsUsed) {
+        if (FT_CAPS_MAX_JUMPS(fp) <= fp->x1968_jumpsUsed) {
             return 0;
         }
         if (fp->pos_delta.y > 0.0) {

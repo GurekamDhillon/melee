@@ -2,11 +2,12 @@
 return function(D)
  local L={};L.__index=L
  L.colours={'red','green','blue','yellow','purple','white'}
+ L.implicit_families=D.mod_budget.implicit_families
  L.implicits={red={damage_dealt=1.08},green={run_speed=1.08,air_speed=1.08},blue={knockback_taken=.92},yellow={jump_height=1.08},purple={status_duration=1.2},white={}}
  local function integer(n) return type(n)=='number' and n==math.floor(n) and n>=0 and n<=2147483646 end
  local function keys(t,allowed) for k in pairs(t) do assert(allowed[k],'unknown record field '..tostring(k)) end end
  function L.new(pool,config)
-  local self=setmetatable({pool=pool,rules={},normal={},uniques={},config=config or {}},L)
+  D.mod_budget.validate_pool(pool,L.implicits);local self=setmetatable({pool=pool,rules={},normal={},uniques={},config=config or {}},L)
   assert(integer(self.config.tier_depth or 5) and (self.config.tier_depth or 5)>0,'invalid tier depth')
   for _,m in ipairs(pool) do
    assert(not self.rules[m.id],'duplicate modifier');self.rules[m.id]=m
@@ -21,7 +22,8 @@ return function(D)
   local state=(seed*104729)%2147483646+1
   return function(n) state=(state*16807)%2147483647;return (state-1)/2147483646*n end
  end
- function L:roll(seed,depth,forced)
+ function L:roll(seed,depth,forced,loop)
+  local context=D.mod_progression.context(depth,loop);depth=context.depth
   assert(integer(seed) and integer(depth),'invalid seed/depth');local rand=rng(seed)
   local rarity=forced and string.lower(forced)
   if not rarity then
@@ -31,18 +33,19 @@ return function(D)
    for _,r in ipairs({'common','magic','rare','unique'}) do pick=pick-weights[r];if pick<0 then rarity=r;break end end
   end
   assert(rarity=='common' or rarity=='magic' or rarity=='rare' or rarity=='unique','invalid rarity')
-  local rec={seed=seed,depth=depth,colour=L.colours[math.floor(rand(6))+1],rarity=rarity,affixes={}}
+  local rec={seed=seed,depth=depth,loop=context.loop,colour=L.colours[math.floor(rand(6))+1],rarity=rarity,affixes={}}
   if rarity=='unique' then
-   assert(#self.uniques>0,'no uniques');local m=self.uniques[math.floor(rand(#self.uniques))+1]
-   rec.unique=m.id;rec.colour=m.fixed_colour or 'white';rec.affixes={{id=m.id,tier=1}}
+   assert(#self.uniques>0,'no uniques');local total=0;for _,m in ipairs(self.uniques)do local w=(self.config.unique_weights or {})[m.id] or 1;assert(type(w)=='number' and w==w and w>0 and w<1e9,'invalid unique weight');total=total+w end
+   local pick=rand(total);local m;for _,v in ipairs(self.uniques)do pick=pick-((self.config.unique_weights or {})[v.id] or 1);if pick<0 then m=v;break end end
+   rec.unique=m.id;rec.colour=m.fixed_colour or 'white';rec.affixes={{id=m.id,tier=D.mod_progression.tier(context)}}
   else
-   local groups={};local floor=math.min(3,1+math.floor(depth/(self.config.tier_depth or 5)))
+   local groups={};local floor=1+math.floor(D.mod_progression.effective(context)/(self.config.tier_depth or 5))
    local function affix(kind)
     local choices,total={},0
-    for _,m in ipairs(self.normal) do if not groups[m.group] and (not kind or m.affix==kind) then choices[#choices+1]=m;total=total+m.weight end end
+    for _,m in ipairs(self.normal) do if not groups[m.group] and (not kind or m.affix==kind) then choices[#choices+1]=m;local w=m.weight*((self.config.affix_weights or {})[m.id] or 1);assert(type(w)=='number' and w==w and w>0 and w<1e9,'invalid affix weight');total=total+w end end
     assert(total>0,'pool exhausted');local pick=rand(total);local chosen
-    for _,m in ipairs(choices) do pick=pick-m.weight;if pick<0 then chosen=m;break end end
-    groups[chosen.group]=true;local tier=math.min(floor,#chosen.tiers)
+    for _,m in ipairs(choices) do pick=pick-m.weight*((self.config.affix_weights or {})[m.id] or 1);if pick<0 then chosen=m;break end end
+    groups[chosen.group]=true;local tier=floor
     rec.affixes[#rec.affixes+1]={id=chosen.id,tier=tier}
    end
    local count=rarity=='rare' and 2 or rarity=='magic' and 1 or 0
@@ -52,21 +55,21 @@ return function(D)
   self:validate(rec);return rec
  end
  function L:validate(r)
-  assert(type(r)=='table');keys(r,{seed=true,depth=true,colour=true,rarity=true,affixes=true,unique=true})
-  assert(integer(r.seed) and integer(r.depth),'invalid seed/depth');assert(L.implicits[r.colour],'invalid colour')
+  assert(type(r)=='table');keys(r,{seed=true,depth=true,colour=true,rarity=true,affixes=true,unique=true,loop=true})
+  local context=D.mod_progression.context(r.depth,r.loop);assert(integer(r.seed),'invalid seed');assert(L.implicits[r.colour],'invalid colour')
   assert(type(r.affixes)=='table');local groups={};local prefix,suffix,n=0,0,0
   for k,a in pairs(r.affixes) do
    assert(type(k)=='number' and k==math.floor(k) and k>=1 and k<=#r.affixes,'invalid affix array')
    assert(type(a)=='table');keys(a,{id=true,tier=true});local m=assert(self.rules[a.id],'unknown affix')
-   assert(integer(a.tier) and a.tier>=1 and m.tiers[a.tier],'invalid tier')
-   if m.kind=='normal' then assert(a.tier==math.min(#m.tiers,3,1+math.floor(r.depth/(self.config.tier_depth or 5))),'tier does not match depth') end
+   D.mod_schema.level(a.tier)
+   if m.kind=='normal' then assert(a.tier==(r.loop==nil and math.min(#m.tiers,3,1+math.floor(r.depth/(self.config.tier_depth or 5))) or 1+math.floor(D.mod_progression.effective(context)/(self.config.tier_depth or 5))),'tier does not match depth') end
    assert(m.kind=='normal' or (r.rarity=='unique' and m.id==r.unique and m.kind=='unique'),'non-loot affix')
    local group=m.group or m.id;assert(not groups[group],'duplicate group');groups[group]=true;n=n+1
    if m.affix=='prefix' then prefix=prefix+1 elseif m.affix=='suffix' then suffix=suffix+1 end
   end
   assert(n==#r.affixes,'sparse affix array');for i=1,n do assert(r.affixes[i]~=nil,'sparse affix array') end
   if r.rarity=='unique' then
-   local m=assert(self.rules[r.unique],'unknown unique');assert(m.kind=='unique' and n==1 and r.affixes[1].id==m.id and r.affixes[1].tier==1 and r.colour==(m.fixed_colour or 'white'),'invalid fixed unique')
+   local m=assert(self.rules[r.unique],'unknown unique');assert(m.kind=='unique' and n==1 and r.affixes[1].id==m.id and r.affixes[1].tier==(r.loop==nil and 1 or D.mod_progression.tier(context)) and r.colour==(m.fixed_colour or 'white'),'invalid fixed unique')
   else
    assert(r.unique==nil,'unexpected unique');local count=({common=0,magic=1,rare=2})[r.rarity];assert(count,'invalid rarity')
    local extra=r.colour=='white' and 1 or 0;assert(n==count*2+extra and prefix>=count and suffix>=count,'invalid affix counts')
@@ -80,10 +83,10 @@ return function(D)
   return (#before>0 and table.concat(before,' ')..' ' or '')..base..(#after>0 and ' of the '..table.concat(after,' and ') or '')
  end
  function L:tooltip(r)
-  self:validate(r);local out={};local implicit={red='+8% damage dealt',green='+8% run and air speed',blue='-8% knockback taken',yellow='+8% jump height',purple='+20% status duration',white='One extra modifier; no base implicit'}
+  self:validate(r);local out={};local implicit={red='+8% attack percent damage; launch unchanged',green='+8% run and air speed',blue='-8% launch taken',yellow='+8% jump height',purple='+20% status duration',white='One extra modifier; no base implicit'}
   out[1]=r.unique and r.colour=='white' and 'No base implicit; fixed unique rules' or implicit[r.colour]
-  for _,a in ipairs(r.affixes) do local m=self.rules[a.id];local tier=m.tiers[a.tier]
-   out[#out+1]=m.text:gsub('{([%w_]+)(%%?)}',function(key,pct) local v=assert(tier[key],'missing tooltip tier value');return pct=='%' and tostring(v*100)..'%' or tostring(v) end)
+  for _,a in ipairs(r.affixes) do local m=self.rules[a.id];local tier=a.tier
+   out[#out+1]=D.mod_schema.describe(m,tier)
    if m.cost then out[#out+1]=m.cost end
   end
   return out

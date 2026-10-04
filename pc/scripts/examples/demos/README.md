@@ -178,3 +178,19 @@ its payload/count in the operator run. No game was launched for these additions.
 - `demo_event_perfect_shield`: [on_perfect_shield](event-perfect-shield/). Contract smoke only; operator acceptance requires the actual native event.
 
 - `demo_hit_rules`: [Native hit rules](hit-rules/). Mario P1 up-smash converts to Fire and aerials to Electric. H toggles the ahead-of-time rules; real hit effects, hitlag and trace IDs require operator acceptance. Original move sounds remain.
+- `demo_zones`: [Native zone membership](zones/). Walk between two outlined rooms and their doorway; residence frames and enter/exit/none/some events use the native membership API. Source and Lua checks pass; native acceptance requires operator.
+
+
+Fighter capabilities (2026-10-04, source pass; native acceptance pending):
+
+- `demo_fighter_air_jumps`: [Air jumps](fighter-air-jumps/): J cycles 0/1/3/8 air jumps, R restores retail defaults; repeat on Kirby and Jigglypuff.
+- `demo_fighter_restrictions`: [Action restrictions](fighter-restrictions/): F cycles the forbidden entry action, R clears; flags true forbid.
+- `demo_fighter_armour`: [Armour](fighter-armour/): A selects damage/knockback thresholds, R clears; percent still accumulates.
+- `demo_fighter_give_item`: [Give item](fighter-give-item/): one stage-start grant, I retries after dropping; requires enabled portable items.
+- `demo_fighter_targeting`: [Targeting](fighter-targeting/): T marks the nearest opponent with a native timed value; radius 80.
+- `demo_fighter_effects`: [Timed effects](fighter-effects/): E cycles intangible/invincible/metal/size, R clears current kind.
+
+`lua melee/pc/gameworld/script_fighter_caps_demo_check.lua` runs the isolated contract stubs.
+The shared global smoke stub does not yet define these new APIs; its six catalogue rows require integrator stub updates.
+`fighter-targeting/scripts/rewind-proof.lua` is a separate offline LAB fixture requiring timer expiry and 0 differing bytes.
+It has not run in the game and supplies no runtime proof yet.

@@ -202,6 +202,7 @@ void ftCo_800DE854(Fighter_GObj* gobj)
     fp->dmg.x1854_collpos = collpos;
     fp->dmg.x1860_element = hit->element;
     ScriptGame_HitRuleReport(thrower_fp,fp,hit,ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(thrower_fp,hit->damage),0));
+    ScriptGame_HitRulePercentQueue(hit,fp,ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(thrower_fp, hit->damage),0));
     Fighter_UnkTakeDamage_8006CC30(fp, ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(thrower_fp, hit->damage),0));
     ftColl_8007891C(thrower_gobj, gobj, hit->damage);
 }

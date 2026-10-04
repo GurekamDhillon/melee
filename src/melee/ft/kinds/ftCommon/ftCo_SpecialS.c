@@ -1,5 +1,9 @@
 #include "ftCo_SpecialS.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <Runtime/platform.h>
 
 #include <dolphin/mtx.h>
@@ -14,6 +18,9 @@
 /// Check @c SpecialS input without entering the state.
 bool ftCo_SpecialS_HasInput(Fighter* fp)
 {
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (fp->input.pressed_buttons & HSD_PAD_B &&
         ABS(fp->input.lstick[0].x) >= p_ftCommonData->x218)
     {
@@ -25,6 +32,9 @@ bool ftCo_SpecialS_HasInput(Fighter* fp)
 bool ftCo_SpecialS_CheckInput(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (ftData_SpecialS[fp->kind] == NULL) {
         return false;
     }

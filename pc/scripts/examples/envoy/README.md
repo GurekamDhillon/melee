@@ -75,25 +75,40 @@ flow; its historical tests remain, but it is not the default.
 
 See MENUS.md, PLAYTEST.md and NATIVE-TEST-PLAN.md for controller/native acceptance.
 
-EM3 adds rolled drives and a controller bag in the offline LAB debugger. The
-pool contains30 records (22normal,5fixed uniques,3separate keystones). `drive give
-rare 42` grants loot; `drive drop magic 123` spawns the existing physical pickup
-near P2. `bag` or Z+START opens four equipped slots and a twelve-drive bag.
-Select a bag drive, then an equipped slot to equip/swap; select an occupied slot
-without a bag selection to unequip. Discard and keystone choices are menu rows.
-Details include rule text and equip changes; Left/Right pages long details.
+Rolled drives and a controller bag are available in the offline LAB debugger.
+The shared pool has 32 records: 24 normal modifiers, five uniques and three
+keystones. `drive give rare 42` grants loot; `drive drop magic 123` spawns a
+physical pickup near P2. `bag` or Z+START opens the twelve-drive bag. Select a
+drive, then a slot to equip/swap; select an occupied slot to unequip. Left/Right
+pages details, including current family totals, safety limits and equip previews.
 
-Lost stocks now clear temporary statuses/stacks/events, while equipment,
-implicits, steady values, looks and native rules persist through respawn.
-`mod add <id>` still works beside loot and is merged at the highest tier per ID.
-One keystone and eight native rules are enforced before a build edit. Defaults
-start fresh on scene/run; drive_lab.tuning.persist controls retained inventory.
-No opponent rolls or Classic loot attachment are enabled in this packet.
+`depth <n> [loop]` sets the LAB progression dial. Effective depth is depth +
+13 times the New Game+ loop. Four slots and one keystone grow to five/two at
+effective depth 5 and six/three at 10. Tiers keep growing after three; repeated
+uniques stack their benefits. Physical drives retain their rolled tiers, while
+chosen keystones follow the current dial. A downshift that cannot hold existing
+slots or keystones refuses without discarding equipment. Collect ground drops
+and commit pending edits before changing depth.
 
-Normal elements convert ahead of combat; protected originals are immune.
-Pyre is a real1.25x contact launch multiplier against Burning targets, without
-inventing Curse. Pyromancer converts ordinary owned attacks to Fire and doubles
-damage taken from original Ice hits. Native owner/ID traces name actual changes.
-Split damage is refused. The generator, bag, rules/status outputs and look
-summary share checkpoint state; live LAB rewind and screen acceptance remain
-integrator work. See PLAYTEST.md and the EM3 report for scripts and exclusions.
+`foe roll [strength] [seed] [port] [normal|boss|finalboss]` rolls an independent
+same-pool CPU build. Omit strength, or use `-`, to target the player strength.
+The opponent receives only that number, progression and role; it never copies
+the player's modifier identities. Difficulty rises with depth/loop; bosses get
+larger factors. High-strength rolls weight Armoured, Cleansing and defensive
+chains more heavily than raw launch. `foe list` shows the actual result;
+`foe fight [port]` / `foe stand [port]` switch CPU mode; `foe clear` cleans up.
+The same shaders and timed nameplates show the rolled modifiers. CPU modifier
+edits and foe rolls must commit separately; timed plates replace the debug HUD.
+
+Percent damage remains separate from current-hit launch. Bonuses add within a
+family, while interactions between offensive, defensive and status families can
+become extreme. EM4 follow-up replaces the former tight balance ceilings with
+numerical/physics safety bounds. Event-chain depth and per-frame work stay
+bounded. Lost stocks clear transient statuses while equipment, steady values,
+looks and native rules persist. Scene/run defaults start fresh; the LAB debugger
+remains separate from Classic loot integration.
+
+This follow-up requires a native rebuild: 32-rule capacity, percent/launch
+safety and snapshot/journal layouts changed. Older engines refuse progression
+edits. Source tests and formula models do not establish live KO, controller,
+shader or LAB rewind acceptance. See PLAYTEST.md for the current owner script.

@@ -657,6 +657,10 @@ void Ground_801C0754(StageIdPair* pair)
         return;
     }
 #endif
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureBegin(void);
+      ScriptGame_StageSlotRetailCaptureBegin(); }
+#endif
     Ground_801BFFB0();
     stage_info.grkind = pair->grkind;
     stage = stage_datas[pair->grkind];
@@ -684,6 +688,10 @@ void Ground_801C0754(StageIdPair* pair)
     stage_info.on_touch_line = stage->on_touch_line;
     stage_info.on_check_shadow_render = stage->on_check_shadow_render;
     Ground_801C5878();
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureEnd(void);
+      ScriptGame_StageSlotRetailCaptureEnd(); }
+#endif
 }
 
 #if defined(TARGET_PC)
@@ -812,6 +820,10 @@ void Ground_801C0800(StageIdPair* pair)
         return;
     }
 #endif
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureResume(void);
+      ScriptGame_StageSlotRetailCaptureResume(); }
+#endif
     StageData* stage_data = stage_datas[pair->grkind];
     Ground_801C38D0(stage_info.param->x8, stage_info.param->x14,
                     stage_info.param->x1C, stage_info.param->x18);
@@ -877,10 +889,16 @@ void Ground_801C0800(StageIdPair* pair)
                 coll = merged;
             }
         }
-        coll = ScriptGame_StagePrepare(coll);
-        mpLibLoad(coll);
-        if (merged != NULL) Ground_TTMod_InitLines(coll, nplat);
-        ScriptGame_StageReady();
+        { extern int ScriptGame_StageSlotRetailLoading(void);
+          extern void ScriptGame_StageSlotRetailCollision(void);
+          if (ScriptGame_StageSlotRetailLoading()) {
+              ScriptGame_StageSlotRetailCollision();
+          } else {
+              coll = ScriptGame_StagePrepare(coll);
+              mpLibLoad(coll);
+              if (merged != NULL) Ground_TTMod_InitLines(coll, nplat);
+              ScriptGame_StageReady();
+          } }
     }
 #else
     mpLibLoad(stage_info.coll_data);
@@ -916,6 +934,10 @@ void Ground_801C0800(StageIdPair* pair)
                  (int) stage_info.blast_zone.left, (int) stage_info.blast_zone.right,
                  (int) stage_info.blast_zone.top, (int) stage_info.blast_zone.bottom);
     }
+#endif
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureEnd(void);
+      ScriptGame_StageSlotRetailCaptureEnd(); }
 #endif
 }
 
@@ -1102,7 +1124,15 @@ void Ground_OnLoad(StageIdPair* pair)
         return;
     }
 #endif
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureResume(void);
+      ScriptGame_StageSlotRetailCaptureResume(); }
+#endif
     stage_datas[pair->grkind]->on_load();
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureEnd(void);
+      ScriptGame_StageSlotRetailCaptureEnd(); }
+#endif
 }
 
 void Ground_801C0FB8(StageIdPair* pair)
@@ -1118,6 +1148,10 @@ void Ground_801C0FB8(StageIdPair* pair)
         return;
     }
 #endif
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureResume(void);
+      ScriptGame_StageSlotRetailCaptureResume(); }
+#endif
     stage_datas[pair->grkind]->on_start();
     for (cur = stage_info.x6A4; cur != NULL; cur = next) {
         next = cur->unk0;
@@ -1127,6 +1161,10 @@ void Ground_801C0FB8(StageIdPair* pair)
     stage_info.x6A4 = NULL;
     HSD_GObj_SetupProc(GObj_Create(HSD_GOBJ_CLASS_STAGE, 5, 0),
                        Ground_801C0C2C, 10);
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotRetailCaptureEnd(void);
+      ScriptGame_StageSlotRetailCaptureEnd(); }
+#endif
 }
 
 void Ground_DemoInit(StageIdPair* pair, s32 arg1)
@@ -4175,4 +4213,9 @@ static int unused_ints[] = { 1, 1, 0, 0, 0, 180, 0, 0, 0 };
 
 #ifdef TARGET_PC
 #include "ground_stage_slots.inc"
+#endif
+
+#if defined(TARGET_PC)
+#include "ground_stage_slot_lighting.inc"
+#include "ground_stage_slot_retail.inc"
 #endif

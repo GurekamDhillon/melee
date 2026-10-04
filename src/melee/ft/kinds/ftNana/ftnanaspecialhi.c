@@ -1,5 +1,11 @@
 #include <Runtime/platform.h>
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <melee/ft/forward.h>
 #include <melee/ft/kinds/ftPopo/forward.h>
 
@@ -102,7 +108,7 @@ void ftNn_Init_801232A4(Fighter_GObj* nana_gobj)
     if (nana_fp->ground_or_air == GA_Ground) {
         ftCommon_8007D60C(nana_fp);
     } else {
-        nana_fp->x1968_jumpsUsed = attrs->max_jumps;
+        nana_fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(nana_fp);
     }
     ftNn_Init_801233F8(nana_gobj);
     ftNn_Init_801232A4_inline(nana_gobj);

@@ -26,6 +26,7 @@
 #include "gw.h"
 #include "gw_test.h"
 #include "gw_uigen.h"
+#include "gw_roster_runtime.h"
 #include "gw_mex_sss.h"
 #include "gw_mex_grfunction.h"
 
@@ -690,3 +691,5 @@ void gw_uigen_tests_register(void) {
     gw_test_register("uigen_text_i4", test_uigen_text_i4);
     gw_test_register("uigen_enumeration", test_uigen_enumeration);
 }
+
+#include "gw_roster_ui.inc"

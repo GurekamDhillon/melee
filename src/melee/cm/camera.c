@@ -4253,7 +4253,9 @@ static void fn_800301D0(HSD_GObj* gobj, int arg1)
 #if defined(TARGET_PC)
         {
             /* Completed world, including effects and near translucent kit pieces; HUD cameras follow. */
+            extern void MotionWorldDraw(int view);
             extern void Shader_PostDraw(int stage);
+            MotionWorldDraw((int)&HSD_CObjGetCurrent()->view_mtx);
             Shader_PostDraw(0);
         }
 #endif
@@ -4426,9 +4428,19 @@ bool Camera_800307D0(f32* left, f32* center, f32* right)
         if ((ABS(edge_z) > 0.0001L) && same_side(forward.z, edge_z)) {
             project_ground_x(left, &eye_pos, edge_x, edge_z);
         } else if (edge_x > 0.0f) {
+#if defined(TARGET_PC)
+            /* x = eye.x - eye.z * dx/dz tends opposite dx at the
+             * horizon. Keep the authored simulation bounds unchanged. */
+            *left = logic ? 8.5070587e37f : -8.5070587e37f;
+#else
             *left = 8.5070587e37f;
+#endif
         } else {
+#if defined(TARGET_PC)
+            *left = logic ? -8.5070587e37f : 8.5070587e37f;
+#else
             *left = -8.5070587e37f;
+#endif
         }
 
         s2 = sinf(-half_fov);
@@ -4438,9 +4450,17 @@ bool Camera_800307D0(f32* left, f32* center, f32* right)
         if ((ABS(edge_z2) > 0.0001L) && same_side(forward.z, edge_z2)) {
             project_ground_x(right, &eye_pos, edge_x2, edge_z2);
         } else if (edge_x2 > 0.0f) {
+#if defined(TARGET_PC)
+            *right = logic ? 8.5070587e37f : -8.5070587e37f;
+#else
             *right = 8.5070587e37f;
+#endif
         } else {
+#if defined(TARGET_PC)
+            *right = logic ? -8.5070587e37f : 8.5070587e37f;
+#else
             *right = -8.5070587e37f;
+#endif
         }
     } else {
         *left = -8.5070587e37f;
@@ -5053,6 +5073,16 @@ void Camera_StopQuake(CmQuakeKind kind)
 {
     game_camera.quake_frames_left[kind] = 0;
 }
+
+#if defined(TARGET_PC)
+/* The cobj the match is actually drawn through. Camera creation makes two from the same descriptor: this
+ * one is attached to the camera gobj; cm_804D6464 is a separate copy and is never the current camera while
+ * fighters draw. */
+HSD_CObj* Camera_PCMainCObj(void)
+{
+    return game_camera.gobj != NULL ? GET_COBJ(game_camera.gobj) : NULL;
+}
+#endif
 
 enum_t Camera_80031060(void)
 {

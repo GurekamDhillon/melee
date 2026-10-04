@@ -1296,6 +1296,8 @@ void insert_debug_marker(std::string label) {
 #endif
 }
 
+#include "motion_arena.inc"
+
 void push_debug_group(std::string label) {
 #if defined(AURORA_GFX_DEBUG_GROUPS)
   g_recorder.debugGroupStack.push_back(std::move(label));

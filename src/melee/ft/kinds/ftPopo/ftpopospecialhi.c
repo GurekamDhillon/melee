@@ -1,4 +1,10 @@
 
+
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
 #include "ftpopospecialhi.h"
 
 #include <melee/ft/forward.h>
@@ -188,7 +194,7 @@ void ftPp_SpecialAirHi_Enter(Fighter_GObj* gobj)
 
     ftPp_SpecialHi_801218F8(gobj);
 
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
 
     fp = GET_FIGHTER(gobj);
     fp->cmd_vars[2] = 0;
@@ -881,7 +887,7 @@ void ftPp_SpecialHi_8012280C(Fighter_GObj* gobj)
     if (fp->ground_or_air == GA_Ground) {
         ftCommon_8007D60C(fp);
     } else {
-        fp->x1968_jumpsUsed = co->max_jumps;
+        fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     }
     ftPp_SpecialS_80120E68(gobj);
     Fighter_ChangeMotionState(gobj, 0x162, 0, 0.0f, 1.0f, 0.0f, NULL);

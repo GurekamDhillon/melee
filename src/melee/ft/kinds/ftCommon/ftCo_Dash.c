@@ -1,5 +1,9 @@
 #include "ftCo_Dash.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <melee/ft/forward.h>
 
 #include <placeholder.h>
@@ -27,6 +31,9 @@
 bool ftCo_Dash_CheckInput(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 4)) return false;
+#endif
     float lsx_abs = fp->input.lstick[0].x;
     if (lsx_abs < 0.0F) {
         lsx_abs = -lsx_abs;

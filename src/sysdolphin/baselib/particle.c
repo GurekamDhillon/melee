@@ -37,7 +37,13 @@ typedef struct {
 /* 4D78DC */ static u16 numPeakParticles;
 /* 4D78DE */ u16 hsd_804D78DE = 0;
 /* 4D78E0 */ u16 hsd_804D78E0 = 0;
+#if defined(TARGET_PC)
+/* Not static on PC: the stage-slot teardown (pc/gameworld/script_stage_slot_retail.inc) frees a stage's
+ * particles itself and must keep this live count right. */
+/* 4D78E2 */ u16 hsd_804D78E2;
+#else
 /* 4D78E2 */ static u16 hsd_804D78E2;
+#endif
 #ifdef MUST_MATCH
 #pragma push
 #pragma force_active on

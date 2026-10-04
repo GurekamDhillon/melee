@@ -1,5 +1,11 @@
 #include "ftfoxspecials.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <melee/ft/forward.h>
 
 #include "types.h"
@@ -126,7 +132,7 @@ void ftFx_SpecialAirSStart_Enter(HSD_GObj* gobj)
                               0.0f, NULL);
     ftAnim_8006EBA4(gobj);
 
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
 }
 
 /// 0x800EA004

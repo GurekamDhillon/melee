@@ -1,5 +1,11 @@
 #include "ftseakspecialhi.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <melee/ft/forward.h>
 
 #include <math.h>
@@ -374,7 +380,7 @@ static inline void inlineA0(Fighter_GObj* gobj)
     ftSeakAttributes* attributes;
     attributes = fp->dat_attrs;
     fp->mv.sk.specialhi.x0 = attributes->x38;
-    fp->x1968_jumpsUsed = (u8) fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = (u8) FT_CAPS_MAX_JUMPS(fp);
     fp->x2223_b4 = 1;
     ftColl_8007B62C(gobj, 2);
     fp->invisible = 1;

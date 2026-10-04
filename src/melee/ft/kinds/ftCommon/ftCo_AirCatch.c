@@ -1,5 +1,9 @@
 #include "ftCo_AirCatch.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/kinds/ftSamus/forward.h>
@@ -54,6 +58,9 @@ bool ftCo_800C3A14(Fighter_GObj* gobj)
 bool ftCo_800C3B10(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 8)) return false;
+#endif
     if (fp->used_tether) {
         return false;
     }

@@ -1,5 +1,11 @@
 #include "ftnessspecialn.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/forward.h>
@@ -204,7 +210,7 @@ void ftNs_SpecialNStart_Anim(HSD_GObj* gobj)
 
     ftNs_PKFlash_Init(gobj);
 
-    fp->x1968_jumpsUsed = (u8) fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = (u8) FT_CAPS_MAX_JUMPS(fp);
 }
 
 /// Ness's grounded PK Flash Charge Animation callback
@@ -299,7 +305,7 @@ void ftNs_SpecialAirNStart_Anim(HSD_GObj* gobj)
                               0.0f, NULL);
     ftNs_PKFlash_Init(gobj);
 
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
 }
 
 /// Ness's aerial PK Flash Charge Animation callback

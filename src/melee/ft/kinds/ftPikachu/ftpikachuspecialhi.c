@@ -1,5 +1,11 @@
 #include "ftpikachuspecialhi.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/forward.h>
@@ -505,7 +511,7 @@ void ftPk_SpecialHi_80126C0C(HSD_GObj* gobj)
                 ((ftPikachuAttributes*) fighter2->dat_attrs)->x60;
 
             // lose double jump(s)
-            fighter2->x1968_jumpsUsed = fighter2->co_attrs.max_jumps;
+            fighter2->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fighter2);
 
             // set ground velocity to (zip_slope * stick_mag) + zip_intercept
             // and then flip based on facing direction
@@ -588,7 +594,7 @@ void ftPk_SpecialHi_80126E1C(HSD_GObj* gobj)
         ((ftPikachuAttributes*) fighter2->dat_attrs)->x60;
 
     // lose double jump(s)
-    fighter2->x1968_jumpsUsed = fighter2->co_attrs.max_jumps;
+    fighter2->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fighter2);
 
     // compute velocity as (zip slope * stick_mag) + zip intercept
     // x velocity is the same but flips based on facing direction

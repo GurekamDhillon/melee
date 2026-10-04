@@ -20,7 +20,7 @@ end)
 T.test('depth floor, forced rarity, fixed unique and white extra',function()
  for seed=1,100 do for _,rarity in ipairs({'common','magic','rare','unique'}) do
   local r=loot:roll(seed*104729,20,rarity)
-  for _,a in ipairs(r.affixes) do assert(a.tier==(rarity=='unique' and 1 or 3)) end
+  for _,a in ipairs(r.affixes) do assert(a.tier==5) end
   if rarity~='unique' then assert(#r.affixes==({common=0,magic=2,rare=4})[rarity]+(r.colour=='white' and 1 or 0)) end
  end end
  T.refuses(function() loot:roll(1,1,'keystone') end)
@@ -34,7 +34,7 @@ T.test('every bag record is validated and malformed arrays/groups refused',funct
  for i=1,12 do local bad=bag:snapshot();bad.items[i].affixes[1].id='invalid';assert(not bag:restore(bad));assert(equal(baseline,bag:snapshot())) end
  local r=loot:roll(104729,1,'rare');r.affixes[2]=r.affixes[1];T.refuses(function() loot:validate(r) end)
  r=loot:roll(104729,1,'rare');r.affixes[9]={id='kindling',tier=1};T.refuses(function() loot:validate(r) end)
- r=loot:roll(104729,1,'rare');r.affixes[1].tier=99;assert(not bag:give(r))
+ r=loot:roll(104729,1,'rare');r.affixes[1].tier=1.5;assert(not bag:give(r))
  -- Exact review regression: keys 2..5, four valid normal affixes, no index1.
  local dense=loot:roll(1,0,'rare');dense.colour='red'
  local hole={false,dense.affixes[1],dense.affixes[2],dense.affixes[3],dense.affixes[4]}
@@ -61,11 +61,15 @@ T.test('atomic preflight refusal, highest tier and separate keystone',function()
  assert(bag:choose_keystone(key));assert(bag:choose_keystone(nil));assert(not bag:choose_keystone('kindling'))
  local persistent=D.drive_bag.new(loot,{persist=true});assert(persistent:give(r));assert(persistent:new_run());assert(#persistent.items==1)
 end)
-T.test('complete native rule budget rejects ninth rule without editing',function()
- local pool={};for i=1,12 do pool[i]={id='r'..i,label='Rule '..i,kind='normal',affix=i%2==0 and 'prefix' or 'suffix',group='r'..i,weight=1,tiers={{}},text='Rule',effects={{op='convert'}}} end
+T.test('complete native rule budget rejects more than thirty regular rules without editing',function()
+ local pool={};local codec=T.module('mod_codec');for i=1,12 do
+  local m=codec.decode(codec.encode(D.mod_pool[3]));m.id='rule_'..string.char(96+i);m.label='Rule '..i;m.affix=i%2==0 and 'prefix' or 'suffix';m.group=m.id;m.effects={m.effects[1],m.effects[1],m.effects[1],m.effects[1]};pool[i]=m
+ end
  local l=D.drive_loot.new(pool);local bag=D.drive_bag.new(l)
- for start=1,9,4 do local r={seed=start,depth=0,colour='red',rarity='rare',affixes={}};for i=start,start+3 do r.affixes[#r.affixes+1]={id='r'..i,tier=1} end;assert(bag:give(r)) end
- assert(bag:equip(1,1));assert(bag:equip(1,2));local before=bag:snapshot();assert(not bag:equip(1,3));assert(equal(before,bag:snapshot()))
+ for start=1,9,4 do local r={seed=start,depth=0,colour='white',rarity='rare',affixes={}};for i=start,math.min(start+4,12) do r.affixes[#r.affixes+1]={id=pool[i].id,tier=1} end
+  if #r.affixes==5 then assert(bag:give(r)) end
+ end
+ assert(bag:equip(1,1));local before=bag:snapshot();assert(not bag:equip(1,2));assert(equal(before,bag:snapshot()))
 end)
 T.test('duplicate IDs retain the higher tier and unequip restores the lower tier',function()
  local bag=D.drive_bag.new(loot)

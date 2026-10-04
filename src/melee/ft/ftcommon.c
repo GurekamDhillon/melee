@@ -1,5 +1,11 @@
 #include "ftcommon.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <melee/it/forward.h>
 #include <melee/mp/forward.h>
 
@@ -576,7 +582,7 @@ void ftCommon_8007D60C(Fighter* fp)
     fp->ground_or_air = GA_Air;
     fp->gr_vel = 0;
     fp->x74_self_accel.y = 0;
-    fp->x1968_jumpsUsed = ca->max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     fp->ecb_lock = 5;
     fp->coll_data.x130_flags |= CollData_X130_Locked;
 #if defined(TARGET_PC)
@@ -588,7 +594,7 @@ void ftCommon_8007D60C(Fighter* fp)
 
 void ftCommon_UseAllJumps(Fighter* fp)
 {
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
 }
 
 #if defined(TARGET_PC)

@@ -29,9 +29,11 @@ return function(D)
  end
  function M:entries()
   local b=self.owner:view();local rows={}
-  for i=1,4 do rows[#rows+1]={label='Slot '..i..': '..(b.equipped[i] and self.owner.loot:name(b.equipped[i]) or 'Empty'),slot=i} end
+  for i=1,b:slots() do rows[#rows+1]={label='Slot '..i..': '..(b.equipped[i] and self.owner.loot:name(b.equipped[i]) or 'Empty'),slot=i} end
   for i,r in ipairs(b.items) do rows[#rows+1]={label=self.owner.loot:name(r),bag=i,colour=colours[r.rarity]} end
-  rows[#rows+1]={label='Keystone: '..(b.keystone or 'None')..' (choose) ',key=true}
+  local selected={};for _,id in ipairs(b.keystones or {}) do selected[id]=true end;if b.keystone then selected[b.keystone]=true end
+  for _,r in ipairs(self.owner.lab.engine.list) do if r.kind=='keystone' then rows[#rows+1]={label=(selected[r.id] and '[x] ' or '[ ] ')..r.label,key=true,id=r.id} end end
+  rows[#rows+1]={label='Clear keystones',key=true}
   rows[#rows+1]={label='Discard selected bag drive',discard=true}
   rows[#rows+1]={label='Close',close=true};return rows
  end
@@ -53,9 +55,7 @@ return function(D)
      elseif self.owner:view().equipped[e.slot] then self.owner:queue('unequip',e.slot) end
     elseif e.discard and self.selected then self.owner:queue('discard',self.selected);self.selected=nil
     elseif e.key then
-     local ids={false};for _,r in ipairs(self.owner.lab.engine.list) do if r.kind=='keystone' then ids[#ids+1]=r.id end end
-     local n=1;for i,id in ipairs(ids) do if id==self.owner:view().keystone then n=i end end
-     self.owner:queue('choose_keystone',ids[n%#ids+1] or nil)
+     self.owner:queue('choose_keystone',e.id)
     end
    end
   end
@@ -64,16 +64,18 @@ return function(D)
   if not self.active or not self.g.kit then return end
   local g,k=self.g,self.g.kit;local a=g.safe_area();local w=math.min(740,a.w-32);local x=a.x+(a.w-w)/2;local y=a.y+12
   k.panel(x,y,w,a.h-24);k.text(x+20,y+28,'Envoy / Drive bag','body','bone','left')
-  local rows=self:entries();local visible=8;local first=math.max(1,self.focus-visible+1)
+  local rows=self:entries();local visible=5;local first=math.max(1,self.focus-visible+1)
   k.list(x+20,y+48,w-40,rows,self.focus,{pitch=24,h=24,first=first,visible=math.min(visible,#rows)})
   local e=rows[self.focus];local r=e and (e.bag and self.owner:view().items[e.bag] or e.slot and self.owner:view().equipped[e.slot])
-  if r then
-   local dy=260;local lines={r.rarity..' / '..self.owner.loot:name(r)}
+  do
+   local dy=190;local lines=self.owner:budget_lines()
+   if r then lines[#lines+1]=r.rarity..' / '..self.owner.loot:name(r)
    for _,line in ipairs(self.owner.loot:tooltip(r)) do lines[#lines+1]=line end
    if e.bag then for _,line in ipairs(self.owner:delta(e.bag,self.slot)) do lines[#lines+1]=line end end
+   end
    local wrapped={};for _,line in ipairs(lines) do for _,part in ipairs(M.wrap(k,line,w-40)) do wrapped[#wrapped+1]=part end end;lines=wrapped
    local budget=math.max(1,math.floor((a.h-76-dy)/19));local pages=math.max(1,math.ceil(#lines/budget));self.page=math.min(self.page or 0,pages-1)
-   for i=1,budget do local line=lines[self.page*budget+i];if line then k.text(x+20,y+dy+(i-1)*19,line,'body',i==1 and colours[r.rarity] or 'bone','left',{max_w=w-40}) end end
+   for i=1,budget do local line=lines[self.page*budget+i];if line then k.text(x+20,y+dy+(i-1)*19,line,'body',r and i==1 and colours[r.rarity] or 'bone','left',{max_w=w-40}) end end
    k.text(x+20,y+a.h-76,('Details %d/%d: Left / Right'):format(self.page+1,pages),'body','bone','left',{max_w=w-40})
   end
   k.text(x+20,y+a.h-58,self.notice or 'A: select / equip   B: close   Up / Down: choose','body','bone','left',{max_w=w-40})

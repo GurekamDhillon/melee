@@ -11,15 +11,21 @@ D.mod_display={new=function(g,engine)
  function v:draw() end
  return v
 end}
+for _,n in ipairs({'drive_loot','drive_bag','foe_roll'}) do D[n]=T.module(n,D) end
+T.test('foe LAB adapter exists',function()assert(io.open(T.root..'foe_lab.lua'),'foe LAB missing')end)
+D.foe_lab=T.module('foe_lab',D)
+D.pickup_juice={pitch={},new=function()return {clear=function()end,tick=function()end}end}
+for _,n in ipairs({'menu_input','drive_menu','drive_drop','drive_lab'}) do D[n]=T.module(n,D) end
 D.mod_lab=T.module('mod_lab',D)
 local function fixture()
  local s={ready=true,lab=true,net=false,replay=false,commits=0,clears=0,visual_clear=0,mods={},hit_rules={},players={
   [1]={percent=30,stocks=4,falls=0,char=1,action=14,airborne=false},
   [2]={percent=20,stocks=4,falls=0,char=2,action=14,airborne=false,cpu=true}}}
- local g={fixture=s,sim_supported=true,hit_rule_add=function()error('direct hit-rule write is not replayable')end,fighter_status=function()error('direct status write is not replayable')end,command=function(_,fn) s.command=fn end,log=function() end,
-  match=function() return {active=true,netplay=s.net} end,lab_mode=function() return s.lab end,
+ local g={pad=function()return {}end,input_mask=function()end,items=function()return {}end,paused=function()return true end,fixture=s,sim_supported=true,hit_rule_add=function()error('direct hit-rule write is not replayable')end,fighter_status=function()error('direct status write is not replayable')end,command=function(_,fn) s.command=fn end,log=function() end,
+  cpu_mode=function(p,m) if s.cpu_refuse then return false end;s.mode={port=p,mode=m};return true end,
+  match=function() return {active=true,netplay=s.net,stage=32} end,lab_mode=function() return s.lab end,
   player=function(p) return s.players[p] end,sim_replaying=function() return s.replay end,
-  hit_rules=function(p) return {owner=s.hit_rules[p] and 7 or 0} end,
+  hit_rules=function(p) return {owner=s.hit_rules[p] and 7 or 0,percent_only=s.capability~=false,progression=s.progression~=false} end,
   sim_read=function() return s.blob end,sim_clear=function() s.clears=s.clears+1;s.blob=nil;s.mods={};s.hit_rules={} end,
   sim_commit=function(blob,ops)
    if s.refuse then error("checkpoint budget exhausted") end
@@ -38,7 +44,7 @@ end)
 T.test('warm gate queues equip and no overlay before ready',function()
  local s,a=fixture();s.ready=false;assert(a:command('add glass_core 2'))
  a:frame();assert(not s.mods[2] and #a.pending==1)
- s.ready=true;a:frame();assert(s.mods[2].damage_dealt==2 and s.mods[2].damage_taken==2)
+ s.ready=true;a:frame();assert(s.mods[2]==nil and a.engine:values(2).damage_dealt==1.6)
  assert(a.engine.equipped[2].glass_core==1 and #a.pending==0)
 end)
 T.test('combat hooks queue captured contexts until one frame commit',function()
@@ -48,7 +54,7 @@ T.test('combat hooks queue captured contexts until one frame commit',function()
  assert(s.commits==before and not a.engine:status(2,'burn'))
  local e=a.engine.queue[1];assert(e.tags.fire and e.tags.aerial and e.self_context.percent==7 and e.self_context.grounded==false and e.self_context.stocks==4)
  a:frame();assert(s.commits==before+1 and a.engine:status(2,'burn') and not a.engine:status(2,'curse'))
- assert(not s.mods[2] and s.hit_rules[1].rules[1].change.knockback_taken==1.25 and s.hit_rules[2].bits==1)
+ assert(not s.mods[2] and s.hit_rules[1].rules[1].change.launch==1.08 and s.hit_rules[2].bits==1)
 end)
 T.test('KO consumes target status before stock cleanup then heals',function()
  local s,a=fixture();for _,id in ipairs({'kindling','pyre','feasting'}) do assert(a:command('add '..id)) end
@@ -61,18 +67,18 @@ T.test('checkpoint restores adapter lifecycle and engine roots',function()
  local s,a=fixture();assert(a:command('add glass_core'));a:frame()
  local blob=s.blob;local frame=a.engine.frame
  a:frame();assert(a.engine.frame>frame);s.blob=blob;a:loadstate()
- assert(a.engine.frame==frame and a.owned[1] and a.engine.equipped[1].glass_core)
+ assert(a.engine.frame==frame and a.hit_owned[1] and a.engine.equipped[1].glass_core)
  local commits=s.commits;s.replay=true;a:hit(1,2,{context_valid=true,element_tag='fire'});a:frame()
  assert(s.commits==commits and #a.engine.queue==0)
 end)
 T.test('manual clear is immediate with no future frame and missing blob retires stale ownership',function()
- local s,a=fixture();assert(a:command('add glass_core'));a:frame();assert(s.mods[1])
+ local s,a=fixture();assert(a:command('add glass_core'));a:frame();assert(s.hit_rules[1])
  assert(a:command('clear'));assert(not s.mods[1] and not a.enabled and not next(a.engine.statuses))
  s.mods[1]={damage_dealt=2};s.blob=nil;a:loadstate();assert(not s.mods[1] and not a.enabled)
 end)
 T.test('respawn and character replacement retain build until scene ends',function()
  local s,a=fixture();assert(a:command('add glass_core'));a:frame()
- local clears=s.visual_clear;s.players[1].action=12;a:frame();assert(s.mods[1].damage_dealt==2 and a.engine.equipped[1].glass_core and a.enabled)
+ local clears=s.visual_clear;s.players[1].action=12;a:frame();assert(a.engine:values(1).damage_dealt==1.6 and a.engine.equipped[1].glass_core and a.enabled)
  s.players[1].action=14;assert(a:command('add glass_core'));a:frame();s.players[1]=nil;a:frame();assert(not s.mods[1])
  a:scene();assert(not a.enabled and not next(a.owned))
  s.lab=false;assert(not a:command('add kindling'));assert(not a:frame())
@@ -92,7 +98,7 @@ T.test('invalid hit context stays unclassified and nil attacker still emits take
  assert(not a:command('clear 2'));assert(a.enabled)
 end)
 T.test('checkpoint refusal retires old gameplay and mutated Lua state',function()
- local s,a=fixture();assert(a:command('add glass_core'));a:frame();assert(s.mods[1])
+ local s,a=fixture();assert(a:command('add glass_core'));a:frame();assert(s.hit_rules[1])
  s.refuse=true;a:frame();assert(not a.enabled and not s.mods[1] and not next(a.engine.equipped))
  assert(s.clears==1)
 end)
@@ -103,7 +109,7 @@ T.test('paused host tick polls display without advancing gameplay timers',functi
 end)
 T.test('last stock and final status expiry retire all visual resources immediately',function()
  local s,a=fixture();assert(a:command('add glass_core'));a:frame();local cleared=s.visual_clear
- a:stock_lost(1);a:frame();assert(a.enabled and s.mods[1].damage_dealt==2 and a.engine.equipped[1].glass_core)
+ a:stock_lost(1);a:frame();assert(a.enabled and a.engine:values(1).damage_dealt==1.6 and a.engine.equipped[1].glass_core)
  local blob=s.blob;s.visual_clear=0;a:loadstate();assert(a.enabled and a.engine.equipped[1].glass_core)
  s.blob=blob;a:command("clear");a.enabled=true;a.engine.statuses[2]={haste={expires=a.engine.frame+1,next_tick=100,stacks=1,max=1,amount=1,origin={}}}
  a:frame();assert(not a.enabled and not next(a.engine.statuses))
@@ -133,5 +139,127 @@ T.test('clank captures native pair damage and opposite fighter without inventing
  a:clank{port_a=1,port_b=0,damage_a=8,damage_b=12};assert(#a.engine.queue==0)
  a:clank{port_a=1,port_b=2,damage_a=0/0,damage_b=math.huge}
  assert(a.engine.queue[1].damage_a==nil and a.engine.queue[1].damage_b==nil)
+end)
+T.test('stale native refuses before queuing any edit',function()
+ local s,a=fixture();s.capability=false;assert(not a:command('add glass_core'));assert(#a.pending==0 and not a.enabled)
+end)
+T.test('percent and launch values never enter fighter overlays',function()
+ local s,a=fixture();assert(a:command('add glass_core'));a:frame()
+ for _,op in ipairs(s.ops) do if op.op=='fighter_mod' and op.values then assert(not op.values.damage_dealt and not op.values.damage_taken and not op.values.knockback_taken and not op.values.status_duration) end end
+ assert(s.hit_rules[1] and #s.hit_rules[1].rules>0)
+end)
+T.test('foes queue warmup and clear cancels pending without touching P1',function()
+ local s,a=fixture();assert(a:command('add kindling'));a:frame();s.ready=false
+ assert(a.foes:command('roll 1.4 25 2'));assert(not a.engine.equipped[2]);a:frame();assert(#a.foes.pending==1)
+ assert(a.foes:command('clear'));s.ready=true;a:frame();assert(not next(a.engine.equipped[2] or {}) and a.engine.equipped[1].kindling)
+ assert(a.foes:command('roll 1.4 25 2'));a:frame();assert(a.foes.builds[2] and a.foes.labels[2].left>0)
+ local saved=s.blob;a.foes:command('clear');a:frame();s.blob=saved;a:loadstate();assert(a.foes.builds[2] and a.foes.labels[2])
+end)
+T.test('foe guards and CPU mode refusal do not fake acceptance',function()
+ local s,a=fixture();assert(not a.foes:command('roll 1.4 1 1'));s.players[2].cpu=false;assert(not a.foes:command('roll'));s.players[2].cpu=true
+ s.replay=true;assert(not a.foes:command('roll'));s.replay=false;s.net=true;assert(not a.foes:command('roll'));s.net=false
+ s.cpu_refuse=true;assert(not a.foes:command('fight'));s.cpu_refuse=false;assert(a.foes:command('fight'));assert(s.mode.mode=='fight')
+ assert(a.foes:command('stand'));assert(s.mode.mode=='stand')
+end)
+T.test('CPU engine statuses and native percent rules affect P1 and retire on clear',function()
+ local s,a=fixture();assert(a.foes:command('roll 1.4 32 2'));a:frame();a.engine:set_build(2,{burning=1,kindling=1,glass_core=1},{})
+ a:hit(2,1,{context_valid=true,element_tag='fire'});a:frame();assert(a.engine:status(1,'burn'));assert(s.hit_rules[2])
+ assert(a.foes:command('clear'));a:frame();assert(not a.engine.statuses[1] and not a.engine.equipped[2]);assert(#s.hit_rules[2].rules==0)
+end)
+T.test('high valid player strength defaults to independent scalar targeted roll',function()
+ local s,a=fixture();local mods={};for _,m in ipairs(a.engine.list) do if m.kind=='normal' then local native=false;for _,e in ipairs(m.effects) do if e.op=='convert' or e.op=='versus-status' then native=true end end;if not native then mods[m.id]=#m.tiers end end end
+ a.engine:set_build(1,mods,{});local _,strength=a.engine:family_budget(1);assert(strength>1.8)
+ assert(a.foes:command('roll'));a:frame();local r=a.foes.builds[2];assert(r.strength>=strength*.8 and r.strength<=strength*1.2 and not r.reference and not r.mods)
+end)
+T.test('corrupt foe checkpoint leaves all live roots untouched',function()
+ local s,a=fixture();assert(a.foes:command('roll 1.4 32 2'));a:frame();local before=a:export();local bad=D.mod_codec.decode(s.blob);bad.foes.builds[2].strength=99;s.blob=D.mod_codec.encode(bad)
+ T.refuses(function()a:loadstate()end);assert(a:export()==before)
+end)
+T.test('full bag and CPU pending label lifecycle checkpoint restore exactly',function()
+ local s,a=fixture();for i=1,12 do assert(a.drives:command('give rare '..i));a:frame() end
+ assert(a.drives:queue('equip',1,1));a:frame();assert(a.drives:command('give common 44'));a:frame()
+ assert(a.foes:command('roll 1.4 41 2'));a:frame();assert(a.foes:command('roll 1.4 43 2'));s.ready=false;a:frame()
+ assert(#a.drives.bag.items==12 and #a.foes.pending==1);local blob=a:export();s.blob=blob
+ a.foes:command('clear');s.ready=true;a:frame();s.blob=blob;a:loadstate();assert(a:export()==blob)
+ s.refuse=true;a:frame();assert(not a.enabled and not next(a.foes.builds) and #a.foes.pending==0)
+end)
+T.test('every accepted pending CPU equip fits native rule capacity before commit',function()
+ local _,a=fixture()
+ for _,m in ipairs(a.engine.list) do if m.kind=='normal' then
+  local native=false;for _,e in ipairs(m.effects) do if e.op=='convert' or e.op=='versus-status' then native=true end end
+  if native and a:command('add '..m.id..' 2') then local probe=D.mod_engine.new(1,D.mod_pool);for _,e in ipairs(a.pending) do probe:equip(e.port,e.id) end;assert(pcall(probe.native_rules,probe,2),'accepted pending build overflow') end
+ end end
+end)
+T.test('five CPU nameplates paginate inside 640 by 360 viewport',function()
+ local s,a=fixture();for p=2,6 do s.players[p]={cpu=true,percent=0,stocks=4,falls=0,char=p,action=14};assert(a.foes:command('roll 1.4 '..p..' '..p)) end;a:frame()
+ a.g.safe_area=function()return{x=0,y=0,w=640,h=360}end;a.g.kit={panel=function(_,y,_,h)assert(y+h<=336,'nameplate overflow')end,text=function(_,y)assert(y<=336)end};a.foes:draw()
+end)
+T.test('foe list exposes all rolled records without mutating builds',function()
+ local _,a=fixture();assert(a.foes:command('roll 1.4 99'));a:frame();local before=a:export();assert(a.foes:command('list'));assert(before==a:export())
+end)
+T.test('invalid pending checkpoint cannot publish any adapter state',function()
+ local s,a=fixture();assert(a:command('add kindling'));a:frame();local before=a:export();local bad=D.mod_codec.decode(before);bad.pending={{port=2,id='missing'}};s.blob=D.mod_codec.encode(bad)
+ T.refuses(function()a:loadstate()end);assert(before==a:export())
+end)
+T.test('CPU disappearing during shader warmup disables pending build safely',function()
+ local s,a=fixture();s.ready=false;assert(a.foes:command('roll 1.4 32 2'));s.players[2]=nil;s.ready=true;assert(a:frame());assert(not a.enabled and #a.foes.pending==0 and not next(a.foes.builds))
+end)
+T.test('invalid drive checkpoint cannot replace prospective debug or pending roots',function()
+ local s,a=fixture();assert(a:command('add kindling'));a:frame();local before=a:export();local bad=D.mod_codec.decode(before)
+ bad.pending={{port=2,id='burning'}};bad.debug_equipped[1]={kindling=1,charged=1};bad.drives.seed=0;s.blob=D.mod_codec.encode(bad)
+ T.refuses(function()a:loadstate()end);assert(before==a:export(),'invalid drive replaced live state')
+end)
+T.test('foe and mod CPU queues refuse conflicts in either command order preserving inventory',function()
+ for _,id in ipairs({'frozen_oath','burning'}) do for _,first in ipairs({'foe','mod'}) do
+  local _,a=fixture();assert(a.drives:command('give rare 77'));a:frame();local bag=D.mod_codec.encode(a.drives:snapshot())
+  if first=='foe' then assert(a.foes:command('roll 1.8 1 2'));assert(not a:command('add '..id..' 2'),'accepted mod alongside foe pending')
+  else assert(a:command('add '..id..' 2'));assert(not a.foes:command('roll 1.8 1 2'),'accepted foe alongside mod pending') end
+  assert(a:frame());assert(bag==D.mod_codec.encode(a.drives:snapshot()))
+ end end
+end)
+T.test('unexpected pending publication failure does not escape frame or replace P1 inventory',function()
+ local s,a=fixture();assert(a.drives:command('give rare 78'));a:frame();local bag=D.mod_codec.encode(a.drives:snapshot());assert(a:command('add kindling 2'))
+ a.engine.equip=function()error('unexpected publication failure')end
+ local ok=pcall(a.frame,a);assert(ok,'pending error escaped frame');assert(not a.enabled and #a.pending==0);assert(bag==D.mod_codec.encode(a.drives:snapshot()))
+end)
+T.test('combined actual HUD and CPU plates never paint over each other',function()
+ local s,a=fixture();s.players[3]={cpu=true,percent=0,stocks=4,falls=0,char=3,action=14};assert(a.foes:command('roll 1.4 32 2'));assert(a.foes:command('roll 1.4 33 3'));a:frame()
+ a.engine.statuses[1]={burn={stacks=1,expires=200}};local fills,panels=0,0;a.g.safe_area=function()return{x=0,y=0,w=640,h=360}end
+ a.g.kit={available=function()return true end,panel=function(_,y,_,h)assert(y+h<=336);panels=panels+1 end,text=function(_,y)assert(y<=336)end};a.g.fill=function()fills=fills+1 end
+ local actual=T.module('mod_display',D);a.display=actual.new(a.g,a.engine);a:draw();assert(panels>0 and fills==0,'debug HUD overlaps foe plate')
+ a.foes.labels={};a:draw();assert(fills==1,'debug HUD missing after timed plates retire')
+end)
+T.test('clear remains available at full foe queue capacity',function()
+ local _,a=fixture();for i=1,12 do assert(a.foes:command('roll 1.4 '..i..' 2')) end;assert(a.foes:command('clear'));assert(#a.foes.pending==1 and a.foes.pending[1].op=='clear')
+end)
+T.test('legacy jointly queued incompatible CPU keystones refuse before publishing while retaining bag',function()
+ local _,a=fixture();assert(a.drives:command('give rare 79'));a:frame();local bag=D.mod_codec.encode(a.drives:snapshot())
+ local build={items={},equipped={},keystones={'pyromancer'},context=D.mod_progression.context()};local mods,implicit=D.drive_bag.new(a.drives.loot):validate(build);local _,strength=D.mod_budget.build(D.mod_pool,mods,implicit,{});local r={seed=1,stage=32,port=2,requested=strength,target=strength,strength=strength,build=build,context=D.mod_progression.context(),role='normal'}
+ a.foes.roller:validate(r);a.foes.pending={{op='roll',record=r}};a.pending={{port=2,id='frozen_oath'}};a.enabled=true
+ assert(pcall(a.frame,a));assert(not a.enabled and not next(a.foes.builds));assert(bag==D.mod_codec.encode(a.drives:snapshot()))
+end)
+T.test('drive restore validates against prospective debug context not previous live keystone',function()
+ local s,a=fixture();assert(a:command('add pyromancer'));a:frame();local bad=D.mod_codec.decode(a:export());bad.debug_equipped={[1]={frozen_oath=1}};bad.pending={};bad.drives.bag.keystone='frozen_oath'
+ local engine=D.mod_codec.decode(bad.engine);engine.equipped[1]={frozen_oath=1};bad.engine=D.mod_codec.encode(engine);s.blob=D.mod_codec.encode(bad)
+ a:loadstate();assert(a.debug_equipped[1].frozen_oath and a.drives.bag.keystone=='frozen_oath')
+end)
+T.test('finite raw native coefficients clamp once at contact and malformed implicit refuses atomically',function()
+ for _,case in ipairs({
+  {mods={storm_shell=1},implicit={damage_dealt=.01}},
+  {mods={glass_core=1},implicit={damage_dealt=65}},
+  {mods={},implicit={knockback_taken=.01}},
+  {mods={},implicit={knockback_taken=5}},
+  {mods={glass_core=100},implicit={},outgoing=64}
+ }) do
+  local s,a=fixture();assert(a:command('add kindling'));a:frame();local before=a:export();local bad=D.mod_codec.decode(before);local engine=D.mod_codec.decode(bad.engine)
+  engine.equipped[2]=case.mods;engine.implicits[2]=case.implicit;bad.engine=D.mod_codec.encode(engine);s.blob=D.mod_codec.encode(bad)
+  a:loadstate();local rules=a.engine:native_rules(2);for _,r in ipairs(rules)do for key,v in pairs(r.change)do if key=='percent_damage' or key=='launch' then assert(v==v and math.abs(v)<=1e9)end end end
+  local out=a.engine:contact_ratios(2,1);local incoming=a.engine:contact_ratios(1,2)
+  assert(out.outgoing>=.05 and out.outgoing<=64 and out.launch_out>=.05 and out.launch_out<=4)
+  assert(incoming.incoming>=.15 and incoming.incoming<=64 and incoming.launch_in>=.05 and incoming.launch_in<=4)
+  if case.outgoing then assert(out.outgoing==case.outgoing)end
+  local stable=a:export();bad=D.mod_codec.decode(stable);engine=D.mod_codec.decode(bad.engine);engine.implicits[2]={damage_dealt=1000001};bad.engine=D.mod_codec.encode(engine);s.blob=D.mod_codec.encode(bad)
+  T.refuses(function()a:loadstate()end);assert(stable==a:export(),'malformed implicit replaced live state')
+ end
 end)
 T.done()

@@ -740,6 +740,10 @@ HSD_CameraDescPerspective ReflectCObjDesc = {
     1.2173333168029785f,
 };
 
+#if defined(TARGET_PC)
+#include "grizumi_stage_slot_retail.inc"
+#endif
+
 HSD_GObj* grIzumi_801CCD98(void)
 {
     HSD_GObj* gobj = GObj_Create(0x11, 0x12, 0);
@@ -755,7 +759,11 @@ HSD_GObj* grIzumi_801CCD98(void)
         dat->unk0, "GrdIzumi_cd_wt_GrdIzumiDummy1_1_image_desc");
     if (refl->image != NULL) {
         memzero(refl->image, sizeof(HSD_ImageDesc));
+#if defined(TARGET_PC)
+        grIzumi_StageSlotReflection(refl->image);
+#else
         lb_800121FC(refl->image, 80, 60, 4, 2001);
+#endif
     } else {
         OSReport("not found mirror image desc! "
                  "(GrdIzumi_cd_wt_GrdIzumiDummy1_1_image_desc)\n");

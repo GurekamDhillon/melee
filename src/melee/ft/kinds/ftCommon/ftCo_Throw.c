@@ -542,7 +542,9 @@ void ftCo_800DDDE4(Fighter_GObj* gobj, Fighter_GObj* gobj2, bool arg)
     } else {
         damage = 0.0f;
     }
-    ftColl_80076640(fp2, &damage);
+    if(ftColl_80076640(fp2, &damage)) {
+        ScriptGame_HitRulePercentQueue(&hit[0],fp2,damage);
+    }
     fp2->dmg.kb_applied = ftColl_80079AB0(
         fp2, &hit[0], hit[0].unk_count, gm_8016B248(),
         Player_GetAttackRatio(fp->player_id),

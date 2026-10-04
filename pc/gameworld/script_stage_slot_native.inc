@@ -7,6 +7,9 @@
 #include <melee/it/it_26B1.h>
 #include <melee/ef/eflib.h>
 static StOwned script_slot_owned;
+static StOwned script_retail_owned;
+static int script_retail_capture,script_retail_live,script_retail_loading,script_retail_proc;
+static void script_retail_forget_devices(HSD_GObj*);
 static ScriptStageSlot* script_slot_native;
 static StageInfo script_slot_native_info,script_slot_proc_saved,script_slot_native_base;
 static Article* script_slot_articles[30];
@@ -23,18 +26,24 @@ extern void* grStory_StageSlotParamSwap(void*);
 extern void* grIzumi_StageSlotParamSwap(void*);
 
 int ScriptGame_StageSlotOwned(HSD_GObj* g)
-{return script_slot_native && st_owned_find(&script_slot_owned,g)>=0;}
+{return (!STAGE_SLOT_PARTIAL_FALLBACK && script_retail_live && st_owned_find(&script_retail_owned,g)>=0) ||
+        (script_slot_native && st_owned_find(&script_slot_owned,g)>=0);}
 int ScriptGame_StageSlotNativeContext(void)
 {return script_slot_native && script_slot_callback_context==script_slot_native;}
 void ScriptGame_StageSlotCreated(HSD_GObj* g)
 {
+    if(!STAGE_SLOT_PARTIAL_FALLBACK && script_retail_live && script_retail_capture) {
+        if(!st_owned_add(&script_retail_owned,g,0))OSReport("stage switch: ERROR retail ownership exhausted\n");
+        return;
+    }
     if(ScriptGame_StageSlotNativeContext() && !st_owned_add(&script_slot_owned,g,0))
         OSReport("stage switch: ERROR ownership capacity exhausted\n");
 }
 int ScriptGame_StageSlotCanCreate(void)
-{ return !ScriptGame_StageSlotNativeContext() || script_slot_owned.count<ST_OWNED_MAX; }
+{ if(!STAGE_SLOT_PARTIAL_FALLBACK && script_retail_capture)return script_retail_owned.count<ST_OWNED_MAX;
+  return !ScriptGame_StageSlotNativeContext() || script_slot_owned.count<ST_OWNED_MAX; }
 void ScriptGame_StageSlotDestroyed(HSD_GObj* g)
-{st_owned_remove(&script_slot_owned,g);}
+{script_retail_forget_devices(g);st_owned_remove(&script_retail_owned,g);st_owned_remove(&script_slot_owned,g);}
 
 static void script_slot_reset_joints(HSD_JObj* j,HSD_Joint* d)
 {
@@ -120,11 +129,18 @@ static void script_slot_native_scope_begin(void)
 }
 int ScriptGame_StageSlotProcBegin(HSD_GObj* g)
 {
+    if(!STAGE_SLOT_PARTIAL_FALLBACK && script_retail_live && st_owned_find(&script_retail_owned,g)>=0) {
+        script_retail_capture=1;script_retail_proc=1;return 1;
+    }
     if(!ScriptGame_StageSlotOwned(g))return 0;
     script_slot_native_scope_begin();script_slot_native_ground=g->classifier==HSD_GOBJ_CLASS_STAGE;return 1;
 }
 int ScriptGame_StageSlotParticleBegin(int link)
 {
+    if(!STAGE_SLOT_PARTIAL_FALLBACK && link==3 && script_retail_live) {
+        if(script_retail_capture)return 0;
+        script_retail_capture=1;script_retail_proc=1;return 1;
+    }
     if(link!=3 || !script_slot_native || script_slot_callback_context)return 0;
     script_slot_native_ground=0;
     script_slot_native_scope_begin();return 1;
@@ -132,6 +148,7 @@ int ScriptGame_StageSlotParticleBegin(int link)
 void ScriptGame_StageSlotProcEnd(void)
 {
     unsigned freebytes=lbHeap_Free(0);
+    if(script_retail_proc){script_retail_proc=0;script_retail_capture=0;return;}
     if(freebytes<script_slot_proc_heap)script_slot_native_cost+=script_slot_proc_heap-freebytes;
     else {
         unsigned released=freebytes-script_slot_proc_heap;

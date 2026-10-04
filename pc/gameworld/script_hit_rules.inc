@@ -9,6 +9,9 @@ typedef struct {
  float damage_scale,original_damage; unsigned original_growth,original_base,original_count; int original_shield;
 } HRMeta;
 static HRPort script_hit_ports[12];
+/* Pending percent is separate from retail percentTemp: all same-frame launch
+ * calculations see the original hit contributions. These bytes live in game BSS. */
+static float script_hit_percent_delta[12];
 static HRMeta script_hit_meta[HR_META_MAX];
 static int script_hit_next_handle;
 static int script_hit_capacity_warned;
@@ -41,11 +44,11 @@ int ScriptGame_HitRuleRead(int slot,int at,int field) {
  case 0:return r->id;case 1:return r->move;case 2:return r->grounded;case 3:return r->original_element;
  case 4:return r->status_bits;case 5:return r->element;case 6:return script_hr_bits(r->damage);
  case 7:return script_hr_bits(r->growth);case 8:return script_hr_bits(r->base);case 9:return r->shield;
- case 10:return r->stun;case 11:return script_hr_bits(r->knockback_taken);case 12:return r->handle;case 13:return r->incoming;
+ case 10:return r->stun;case 11:return script_hr_bits(r->knockback_taken);case 12:return r->handle;case 13:return r->incoming;case 14:return script_hr_bits(r->percent_damage);case 15:return script_hr_bits(r->launch);
  } return 0;
 }
 int ScriptGame_HitRulesReplace(int slot,int owner,int count,int status) {
- HRPort next; int i,j;
+ HRPort next; int i,j,next_handle=script_hit_next_handle;
  if(slot<0 || slot>=12 || owner<=0 || count<0 || count>HR_MAX || status<0 ||
    (script_hit_ports[slot].owner && script_hit_ports[slot].owner!=owner)) return 0;
  memset(&next,0,sizeof next); next.owner=(count || status) ? owner : 0; next.count=count;next.status=status;
@@ -54,10 +57,13 @@ int ScriptGame_HitRulesReplace(int slot,int owner,int count,int status) {
   for(j=0;j<HR_FIELDS;++j) b[j]=Script_HitRulesInput(i*HR_FIELDS+j);
   r->id=b[0];r->move=b[1];r->grounded=b[2];r->original_element=b[3];r->status_bits=b[4];r->element=b[5];
   r->damage=script_hr_float(b[6]);r->growth=script_hr_float(b[7]);r->base=script_hr_float(b[8]);
-  r->shield=b[9];r->stun=b[10];r->knockback_taken=script_hr_float(b[11]);r->handle=b[12];r->incoming=b[13];
-  if(!r->handle) { if(script_hit_next_handle==0x7fffffff) return 0; r->handle=++script_hit_next_handle; }
+  r->shield=b[9];r->stun=b[10];r->knockback_taken=script_hr_float(b[11]);r->handle=b[12];r->incoming=b[13];r->percent_damage=script_hr_float(b[14]);r->launch=script_hr_float(b[15]);
+  if(!hr_ratio_valid(r->damage,.1f,4) || !hr_ratio_valid(r->growth,.1f,4) ||
+     !hr_ratio_valid(r->base,.1f,4) || !hr_ratio_valid(r->knockback_taken,.1f,4) ||
+     !hr_ratio_valid(r->percent_damage,-1e9f,1e9f) || !hr_ratio_valid(r->launch,-1e9f,1e9f))return 0;
+  if(!r->handle) { if(next_handle==0x7fffffff) return 0; r->handle=++next_handle; }
  }
- script_hit_ports[slot]=next; return 1;
+ script_hit_ports[slot]=next;script_hit_next_handle=next_handle; return 1;
 }
 void ScriptGame_HitRulesRelease(int owner) {
  int i;
@@ -67,7 +73,7 @@ void ScriptGame_HitRulesRelease(int owner) {
   if(!owner) memset(m,0,sizeof *m);
   else if(m->owner==owner) {m->owner=m->count=m->stun=0;m->damage_scale=1;memset(m->ids,0,sizeof m->ids);}
  }
- if(!owner){script_hit_capacity_warned=0;script_hit_meta_count=0;}
+ if(!owner){memset(script_hit_percent_delta,0,sizeof script_hit_percent_delta);script_hit_capacity_warned=0;script_hit_meta_count=0;}
 }
 void ScriptGame_HitRuleForget(HitCapsule* hit) {
  HRMeta* m=script_hit_metadata(hit,0); if(m){memset(m,0,sizeof *m);--script_hit_meta_count;}
@@ -101,6 +107,7 @@ void ScriptGame_HitRuleItemCreate(Item* item,HitCapsule* hit) {
  extern int ftLib_80086960(HSD_GObj*);
  ScriptGame_HitRuleCreate(item->owner && ftLib_80086960(item->owner) ? GET_FIGHTER(item->owner) : NULL,hit,1);
 }
+static HRResult script_hit_family(HitCapsule*,Fighter*,int);
 /* This reads per-victim status, and returns a scalar. Never mutate shared hit. */
 float ScriptGame_HitRuleContact(HitCapsule* hit,Fighter* victim,float value,int knockback) {
  HRMeta* m=script_hit_metadata(hit,0);HRResult v,w;HRPort* defender;
@@ -109,8 +116,42 @@ float ScriptGame_HitRuleContact(HitCapsule* hit,Fighter* victim,float value,int 
      m ? m->move : 0,m ? m->grounded : -1,m ? m->original : hit->element,script_hit_ports[script_hit_entity(victim)].status,1);
  defender=&script_hit_ports[script_hit_entity(victim)];
  w=hr_evaluate(defender->rules,defender->count,m ? m->move : 0,m ? m->grounded : -1,m ? m->original : hit->element,defender->status,2);
- value*=knockback ? hr_cap(v.knockback_taken*w.knockback_taken) : hr_cap(v.damage*w.damage);
+ value=hr_safe_float((double)value*(knockback ? hr_cap(v.knockback_taken*w.knockback_taken) : hr_cap(v.damage*w.damage)));
+ if(knockback) {
+  HRResult outgoing=script_hit_family(hit,victim,0),incoming=script_hit_family(hit,victim,1);
+  value=hr_safe_float((double)value*hr_family_cap(outgoing.launch,4)*hr_family_cap(incoming.launch,4));
+ }
  return !knockback && hr_cap(v.damage*w.damage)!=1 && value>500 ? 500 : value;
+}
+/* New fields are evaluated at the accepted contact using current rule tables.
+ * Metadata supplies source identity and original move/element, not a mutable hit. */
+static HRResult script_hit_family(HitCapsule* hit,Fighter* victim,int incoming) {
+ HRMeta* m=script_hit_metadata(hit,0);int entity=script_hit_entity(victim);
+ HRPort* p=incoming ? &script_hit_ports[entity] : m ? &script_hit_ports[m->port] : NULL;
+ return hr_evaluate(p ? p->rules : NULL,p ? p->count : 0,m ? m->move : 0,
+   m ? m->grounded : -1,m ? m->original : hit->element,script_hit_ports[entity].status,incoming ? 4 : 3);
+}
+void ScriptGame_HitRulePercentQueue(HitCapsule* hit,Fighter* victim,float damage) {
+ HRResult outgoing,incoming;float scale;double delta;int entity;
+ if(!victim || victim->player_id>=6 || !hr_ordinary(hit->element) || !hr_finite(damage) || damage<=0)return;
+ outgoing=script_hit_family(hit,victim,0);incoming=script_hit_family(hit,victim,1);
+ scale=hr_percent_cap(outgoing.percent_damage,0)*hr_percent_cap(incoming.percent_damage,1);
+ entity=script_hit_entity(victim);
+ /* A legal 64*64 product with large finite damage can overflow float. Keep
+  * the snapshotted delta finite; apply display safety only at the final commit. */
+ delta=(hr_finite(script_hit_percent_delta[entity]) ? (double)script_hit_percent_delta[entity] : 0)+(double)damage*((double)scale-1);
+ script_hit_percent_delta[entity]=hr_safe_float(delta);
+}
+float ScriptGame_HitRulePercentCommit(Fighter* victim,float damage) {
+ int entity;float delta;double result;
+ if(!victim || victim->player_id>=6)return damage;
+ entity=script_hit_entity(victim);delta=script_hit_percent_delta[entity];script_hit_percent_delta[entity]=0;
+ if(!hr_finite(damage))damage=damage>0 ? 999 : 0;
+ if(!hr_finite(delta))delta=0;
+ result=(double)damage+delta;return result<0 ? 0 : result>999 ? 999 : (float)result;
+}
+void ScriptGame_HitRulePercentClear(Fighter* victim) {
+ if(victim && victim->player_id<6)script_hit_percent_delta[script_hit_entity(victim)]=0;
 }
 void ScriptGame_HitRuleWon(HitCapsule* hit,Fighter* victim) {
  HRMeta* m=script_hit_metadata(hit,0);
@@ -118,16 +159,19 @@ void ScriptGame_HitRuleWon(HitCapsule* hit,Fighter* victim) {
  if(m && hr_ordinary(hit->element)) Geno_GiveStunBonus(victim,m->stun);
 }
 void ScriptGame_HitRuleContext(HitCapsule* hit,Fighter* victim) {
- HRMeta* m=script_hit_metadata(hit,0); HRResult v,w;HRPort* defender;int i;
+ HRMeta* m=script_hit_metadata(hit,0); HRResult v,w,x,y;HRPort* defender;int i;
  extern void Script_HitRuleContext(int,int,int,int,int);
  if(!victim || victim->player_id>=6 || !hr_ordinary(hit->element))return;
  v=hr_evaluate(m ? script_hit_ports[m->port].rules : NULL,m ? script_hit_ports[m->port].count : 0,
      m ? m->move : 0,m ? m->grounded : -1,m ? m->original : hit->element,script_hit_ports[script_hit_entity(victim)].status,1);
  defender=&script_hit_ports[script_hit_entity(victim)];
  w=hr_evaluate(defender->rules,defender->count,m ? m->move : 0,m ? m->grounded : -1,m ? m->original : hit->element,defender->status,2);
+ x=script_hit_family(hit,victim,0);y=script_hit_family(hit,victim,1);
  for(i=0;m && i<m->count;++i) Script_HitRuleContext(victim->player_id,m->ids[i],m->move,m->grounded,m->owner);
  for(i=0;i<v.count;++i) Script_HitRuleContext(victim->player_id,v.ids[i],m->move,m->grounded,script_hit_ports[m->port].owner);
  for(i=0;i<w.count;++i) Script_HitRuleContext(victim->player_id,w.ids[i],m ? m->move : 0,m ? m->grounded : -1,defender->owner);
+ for(i=0;i<x.count;++i) Script_HitRuleContext(victim->player_id,x.ids[i],m ? m->move : 0,m ? m->grounded : -1,m ? script_hit_ports[m->port].owner : 0);
+ for(i=0;i<y.count;++i) Script_HitRuleContext(victim->player_id,y.ids[i],m ? m->move : 0,m ? m->grounded : -1,defender->owner);
 }
 
 /* Called after a retail damage-only setter (charge, powershield and script edits).

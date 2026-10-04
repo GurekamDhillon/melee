@@ -18,7 +18,17 @@ local function fixture(fresh,no_kit)
   g.data_exists=function() return s.text~=nil end
   g.data_write_atomic=function(_,v) s.writes=s.writes+1;if s.disk then return false,'disk full' end;s.text=v;return true end
   g.log=function(t) s.logs[#s.logs+1]=t end
-  g.match=function() return {active=s.active,netplay=false} end
+  g.match=function() return {active=s.active,netplay=s.net==true,stage=32} end
+  g.lab_mode=function()return s.lab==true end;g.sim_supported=true
+  g.hit_rule_add=function()error('nonjournal write')end;g.fighter_status=function()error('nonjournal write')end
+  g.hit_rules=function()return {percent_only=true,progression=s.progression~=false,owner=7}end
+  g.sim_read=function()return s.blob end;g.sim_replaying=function()return s.replay==true end
+  g.sim_clear=function()s.blob=nil;s.rule_ops=nil end
+  g.sim_commit=function(blob,ops)s.blob=blob;s.rule_ops=ops;return true end
+  g.fighter_shader=function()return true end;g.fighter_shader_set=function()return true end;g.shader_load=function()return 77 end
+  g.shader_status=function()return {valid=true}end;g.post_add=function()return 88 end
+  g.post_ready=function()return true end;g.post_remove=function()end
+  g.warm=function()return 99 end;g.warm_done=function()return true end;g.warm_release=function()end
   g.player=function(n) if not s.p[n] then return end;local p={};for k,v in pairs(s.p[n]) do p[k]=v end;return p end
   g.enemy_state=function(h) local e=s.enemies[h];return e and e.status=='alive' and e or nil end
   g.enemy_status=function(h) return s.enemies[h] and s.enemies[h].status or 'gone' end
@@ -66,13 +76,13 @@ local function fixture(fresh,no_kit)
   g.fighter_bench=function(n) s.reserve[n]=true;return true end
   g.fighter_call=function(n,x,y) s.reserve[n]=false;s.p[n].x=x;s.p[n].y=y;return true end
   g.camera_params=function() return {} end;g.stage_set_origin=function() return true end
-  g.pad=function() return {} end;g.input_mask=function(_,mask) s.masks[#s.masks+1]=mask end
+  g.pad=function() return s.pad or {} end;g.input_mask=function(_,mask) s.masks[#s.masks+1]=mask end
   g.paused=function() return s.paused end;g.pause=function() s.paused=true end;g.resume=function() s.paused=false end
   g.time=function() return 0 end
   g.safe_area=function() return {x=0,y=0,w=853,h=480,right=853,bottom=480} end
   g.fill=function() end;g.text=function() end;g.project=function(x,y) return x,y,true end
   local env=setmetatable({gd=g,math=setmetatable({random=function() return .1 end},{__index=math})},{__index=_G})
-  local f=assert(io.open(os.getenv('ENVOY_TEST_ENTRY') or T.root..'main.lua'));local source=f:read('a');f:close();source=source:gsub('local app = envoy.app.new%(gd, mission%)','local app = envoy.app.new(gd, mission, function() return .1 end)\n__envoy_test_app = app');local ok,why=pcall(assert(load(source,'@envoy-test','t',env)));assert(ok,why)
+  local f=assert(io.open(os.getenv('ENVOY_TEST_ENTRY') or T.root..'main.lua'));local source=f:read('a');f:close();source=source:gsub('local app = envoy.app.new%(gd, mission%)','local app = envoy.app.new(gd, mission, function() return .1 end)\n__envoy_test_app = app'):gsub('app.retire = function%(%)','__envoy_test_mods = mods\napp.retire = function()');local ok,why=pcall(assert(load(source,'@envoy-test','t',env)));assert(ok,why)
   env.__envoy_test_app.menu.run_type="campaign" -- Explicit parked mission regression lane.
   return s,env
 end
@@ -298,7 +308,33 @@ T.test('generated entry exposes LAB loot and refuses writes outside LAB',functio
  assert((s.spawned or 0)==before,'refused command spawned a physical drive')
  e.on_unload()
 end)
+T.test('generated entry shares native percent and foe checkpoint hooks',function()
+ local s,e=fixture();s.lab=true;assert(type(s.commands.foe)=='function','foe factory missing')
+ assert(s.commands.mod('add glass_core'));assert(s.commands.foe('roll 1.4 32 2'));assert(not s.blob);e.on_frame();assert(s.blob and s.rule_ops)
+ local D={};D.mod_codec=T.module('mod_codec',D);local at=D.mod_codec.decode(s.blob);assert(at.foes.builds[2] and D.mod_codec.decode(at.engine).equipped[1].glass_core)
+ for _,op in ipairs(s.rule_ops) do if op.op=='fighter_mod' and op.values then assert(not op.values.damage_dealt and not op.values.damage_taken and not op.values.knockback_taken) end end
+ local fills,plate=0,false;e.gd.safe_area=function()return{x=0,y=0,w=640,h=360}end
+ e.gd.kit={available=function()return true end,panel=function(_,y,_,h)assert(y+h<=336);plate=true end,text=function(_,y,t)assert(y<=336);assert(not t:find('Modifier LAB',1,true),'debug HUD covers plate')end}
+ e.gd.fill=function(x,y)if x==12 and y==12 then fills=fills+1 end end;e.on_draw();assert(plate and fills==0,'combined generated HUD overlaps')
+ local saved=s.blob;assert(s.commands.foe('clear'));e.on_frame();s.blob=saved;e.on_loadstate();e.on_frame();at=D.mod_codec.decode(s.blob);assert(at.foes.builds[2])
+ e.on_scene();e.on_unload();assert(not s.blob)
+end)
+T.test('generated LAB depth roles six slots multikey checkpoint refusal and cleanup',function()
+ local s,e=fixture();e.gd.item_spawn=s.item_spawn;assert(type(s.commands.depth)=='function','depth factory missing')
+ assert(not s.commands.depth('12 3'));s.lab=true;s.progression=false;assert(not s.commands.depth('12 3'));s.progression=true
+ assert(s.commands.depth('12 3'));local a=e.__envoy_test_mods;assert(a and a.engine.context.loop==3)
+ for i=1,6 do assert(s.commands.drive('give unique '..i));e.on_frame();assert(a.drives:queue('equip',1,i));e.on_frame()end
+ assert(#a.engine.display.drive_build[1]==6 and a.drives.bag.equipped[6])
+ for _,id in ipairs({'pyromancer','frozen_oath','still_heart'})do assert(a.drives:queue('choose_keystone',id));e.on_frame()end
+ assert(#a.drives.bag.keystones==3);assert(s.commands.foe('roll - 31 2 finalboss'));e.on_frame()
+ local r=a.foes.builds[2];assert(r and r.role=='finalboss' and r.context.depth==12 and r.context.loop==3 and not r.reference)
+ local before=a:export();assert(not s.commands.depth('0'));assert(before==a:export())
+ s.replay=true;assert(not s.commands.depth('5'));e.on_frame();assert(before==a:export());s.replay=false
+ local D={};D.mod_codec=T.module('mod_codec',D);local bad=D.mod_codec.decode(before);bad.drives.bag.context.loop=0;s.blob=D.mod_codec.encode(bad)
+ T.refuses(e.on_loadstate);assert(before==a:export());s.blob=before;e.on_loadstate();assert(before==a:export())
+ assert(s.commands.drive('drop rare 113'));local h,item=next(s.items);assert(h)
+ assert(a.drives.drops.records[item.payload.amount].record.loop==3);e.on_item_collect{name='drive',port=1,item=h,payload=item.payload};s.items[h]=nil;e.on_frame()
+ assert(s.commands.bag());s.pad={DOWN=true};e.on_tick();s.pad={};e.on_tick();assert(s.paused)
+ e.on_unload();assert(not s.paused and not s.blob and not next(s.items) and not next(s.fx));assert(s.masks[#s.masks]==0)
+end)
 T.done()
-
-
-

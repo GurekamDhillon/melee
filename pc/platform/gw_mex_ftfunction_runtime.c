@@ -64,6 +64,7 @@ int gw_Mex_InternalCount(void);
 int gw_Mex_CssIconCount(void);
 int gw_Mex_FtCostumeCount(int k);
 static int gw_mex_slot_of_internal(int k);
+static void gwr_boot_load(void);
 
 /* Arch_FighterFunc slot indices (Header.s: onLoad 0x00 ... GetTrailData 0xB4). See
  * gw_mex_ftfunction.c's slot_names table; onFrame is slot 23. */
@@ -1098,6 +1099,7 @@ static void gw_mex_slots_build(void) {
                "some fighter mods", dropped, GW_MEX_SLOTS);
     }
     gw_log("mexdata: %d m-ex fighter slots (of %d)", gw_mex_slot_count, GW_MEX_SLOTS);
+    gwr_boot_load(); /* Tables and overlays are now available; native rows keep separate ids. */
 }
 
 /* m-ex internal id of port slot `slot`, or -1. */
@@ -4725,3 +4727,4 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
 }
 
 #include "gw_mex_items_query.inc"
+#include "gw_roster_runtime.inc"

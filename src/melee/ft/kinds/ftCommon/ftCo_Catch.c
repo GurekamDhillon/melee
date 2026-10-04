@@ -1,4 +1,8 @@
 #include "ftCo_Attack100.h"
+
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
 #include "ftCo_CapturePulled.h"
 #include "ftCo_CatchPull.h"
 #include "ftCo_Fall.h"
@@ -20,6 +24,9 @@ bool ftCo_Catch_CheckInput(Fighter_GObj* gobj)
     if (ftCo_800951D0(gobj)) {
         return true;
     }
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 8)) return false;
+#endif
     if (!fn_800D8E94(gobj)) {
         return false;
     }
@@ -42,6 +49,9 @@ bool ftCo_800D8A38(Fighter_GObj* gobj)
     if (ftCo_80095254(gobj)) {
         return true;
     }
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 8)) return false;
+#endif
     if (!fn_800D8E94(gobj)) {
         return false;
     }
@@ -64,6 +74,9 @@ bool ftCo_800D8AE0(Fighter_GObj* gobj)
     if (ftCo_800952DC(gobj)) {
         return true;
     }
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 8)) return false;
+#endif
     if (!fn_800D8E94(gobj)) {
         return false;
     }
@@ -83,6 +96,9 @@ bool ftCo_800D8AE0(Fighter_GObj* gobj)
 bool ftCo_800D8B9C(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 8)) return false;
+#endif
 
     if ((fp->input.pressed_buttons & HSD_PAD_A) && fp->mv.co.guard.x24 != 0) {
         ftCo_800D8C54(gobj, ftCo_MS_CatchDash);

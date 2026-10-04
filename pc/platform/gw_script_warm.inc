@@ -74,7 +74,7 @@ static int l_warm_status(lua_State* L)
 }
 static int l_warm(lua_State* L)
 {
-    static const char* keys[]={"enemies","items","models","fighters",NULL};
+    static const char* keys[]={"enemies","items","models","fighters","tracers",NULL};
     GsWarmJob request;int k,i,slot=-1;
     gs_require_stage(L,"warm");luaL_checktype(L,1,LUA_TTABLE);gs_item_keys(L,1,keys);
     memset(&request,0,sizeof request);
@@ -109,6 +109,11 @@ static int l_warm(lua_State* L)
             }
         }lua_pop(L,1);
     }
+    lua_getfield(L,1,"tracers");
+    if(!lua_isnil(L,-1)){luaL_checktype(L,-1,LUA_TBOOLEAN);if(lua_toboolean(L,-1)){
+        if(request.count==GS_WARM_OBJECTS)return luaL_error(L,"warm object capacity exhausted");
+        request.objects[request.count++]=(GsWarmObject){4,0};
+    }}lua_pop(L,1);
     for(i=0;i<GS_WARM_JOBS;++i) if(!gs_warm_jobs[i].token) {slot=i;break;}
     if(slot<0)return luaL_error(L,"warm job capacity exhausted; release completed handles");
     if(gs_warm_serial==INT_MAX)return luaL_error(L,"warm handle space exhausted");
@@ -148,7 +153,9 @@ static void gs_warm_tick(void)
           aurora_pipeline_warm_label(origin);
         }
         gs_rw_branch();
-        if(object->kind==2)result=gw_ScriptGame_WarmModel(object->value);
+        if(object->kind==3)gw_motion_warm(object->value+1,1);
+        if(object->kind==4)gw_motion_prepare_ribbons();
+        else if(object->kind==2)result=gw_ScriptGame_WarmModel(object->value);
         else if(object->kind==1 && object->value>=GENO_ITEM_KIND_BASE && object->value<GENO_ITEM_KIND_END) {
             int def=object->value-GENO_ITEM_KIND_BASE,c,p,colours=gw_Geno_ItemColourVariants(def)?5:1;
             for(c=0;c<colours;++c)if(!gs_item_visual_ready(def,c))result=0;
@@ -156,6 +163,7 @@ static void gs_warm_tick(void)
                 if(gs_item_models[def][c][p]>0)result=gw_ScriptGame_WarmModel(gs_item_models[def][c][p]-1);
         }
         else result=gw_ScriptGame_WarmDraw(object->kind==3?2:object->kind,object->value);
+        if(object->kind==3)gw_motion_warm(object->value+1,0);
         aurora_pipeline_warm_end();
         if(result<=0) {aurora_pipeline_warm_release(capture);if(result<0)job->failed=1;return;}
         job->captures[job->cursor++]=capture;

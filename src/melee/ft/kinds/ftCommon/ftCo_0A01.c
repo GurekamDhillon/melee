@@ -1,4 +1,10 @@
 #if defined(TARGET_PC)
+
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
 extern int ScriptGame_StageJointActive(int joint);
 #endif
 #include "ftCo_0A01.h"
@@ -4574,7 +4580,7 @@ void ftCo_800A9904(Fighter* fp)
     struct CpuFighter* data = &fp->cpu;
 
     if (ftCo_800A3498(fp) != 0) {
-        if (fp->co_attrs.max_jumps > fp->x1968_jumpsUsed) {
+        if (FT_CAPS_MAX_JUMPS(fp) > fp->x1968_jumpsUsed) {
             ftCo_800B46B8(fp, CpuCmd_LstickTowardDestination, 0x7F);
             ftCo_800B463C(fp, CpuCmd_PressY);
             ftCo_800B46B8(fp, CpuCmd_WaitFor, 1);
@@ -4735,7 +4741,7 @@ void ftCo_800A9CB4(Fighter* fp)
         return;
     }
     if (ftCo_800A3234(fp)) {
-        if (fp->co_attrs.max_jumps > fp->x1968_jumpsUsed) {
+        if (FT_CAPS_MAX_JUMPS(fp) > fp->x1968_jumpsUsed) {
             ftCo_CpuUseAvailableJump(fp, data);
             return;
         }

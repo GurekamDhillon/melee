@@ -1,5 +1,11 @@
 #include "ftkoopaspecialhi.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <melee/ft/forward.h>
 
 #include "ftkoopa.h"
@@ -25,7 +31,7 @@ void ftKp_SpecialHi_Enter(Fighter_GObj* gobj)
     Fighter_SetDamageCallback(gobj, ftKp_Init_80132B38);
     Fighter_ClearCmdVars(fp);
     fp->self_vel.y = 0.0f;
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     fp->mv.co.capturekoopa.xC = 0.0f;
     fp->mv.kp.specials.x10 = 0;
     efSync_Spawn(0x4DA, gobj, fp->parts->joint);
@@ -44,7 +50,7 @@ void ftKp_SpecialAirHi_Enter(Fighter_GObj* gobj)
     Fighter_ClearCmdVars(fp);
     ftCommon_ClampGroundVel(fp, da->x60);
     fp->self_vel.y = da->x54;
-    fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+    fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     fp->mv.co.capturekoopa.xC = 0.0f;
     fp->mv.kp.specials.x10 = 0;
     efSync_Spawn(0x4DA, gobj, fp->parts->joint);

@@ -414,6 +414,9 @@ void Fighter_UnkInitReset_80067C98(Fighter* fp)
 
     fp->dmg.x1830_percent = Player_GetDamage(fp->player_id);
 
+#if defined(TARGET_PC)
+    ScriptGame_HitRulePercentClear(fp);
+#endif
     fp->dmg.x1838_percentTemp = 0;
 
     fp->dmg.x183C_applied = 0;
@@ -3290,6 +3293,10 @@ void Fighter_8006CB94(Fighter_GObj* gobj)
 
 void Fighter_UnkTakeDamage_8006CC30(Fighter* fp, float arg0)
 {
+#if defined(TARGET_PC)
+    /* Collision/throw launch is resolved before this retail damage commit. */
+    arg0=ScriptGame_HitRulePercentCommit(fp,arg0);
+#endif
     Fighter_TakeDamage_8006CC7C(fp, arg0);
     ftCommon_8007EA90(fp, arg0);
 }
@@ -3726,6 +3733,9 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
             ftCommon_8007E2A4(gobj);
         }
 
+#if defined(TARGET_PC)
+        ScriptGame_HitRulePercentClear(fp);
+#endif
         fp->dmg.x1838_percentTemp = 0.0f;
         fp->dmg.x183C_applied = 0;
         fp->x1828 = 0;

@@ -179,6 +179,11 @@ static Article* script_target_old_article;
 #include "script_1p.inc"
 void ScriptGame_FighterBenchRelease(int owner);
 static void script_bench_frame(void);
+void ScriptGame_CapsMovementRelease(int owner);
+void ScriptGame_CapsEffectsRelease(int owner);
+void ScriptGame_CapsEffectsFrame(void);
+void ScriptGame_CapsStatusRelease(int owner);
+static void script_caps_status_frame(void);
 
 static int script_stage_same_file(const char* a, const char* b)
 {
@@ -204,6 +209,9 @@ void ScriptGame_StageEnd(void)
     int i;
     ScriptGame_CameraParamsRelease(0);
     ScriptGame_FighterModsRelease(0);
+    ScriptGame_CapsMovementRelease(0);
+    ScriptGame_CapsEffectsRelease(0);
+    ScriptGame_CapsStatusRelease(0);
     ScriptGame_SimRelease(0);
     ScriptGame_HitRulesRelease(0);
     ScriptGame_FighterBenchRelease(0);
@@ -1167,6 +1175,8 @@ void ScriptGame_StageFrame(void)
     /* arena-hooks: also runs for full maps with no spare scripted geometry. */
     script_arena_frame();
     script_bench_frame();
+    ScriptGame_CapsEffectsFrame();
+    script_caps_status_frame();
     ScriptGame_AreaDrain();
     for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
         ScriptStageEnemy* e = &script_stage.enemy[i];
@@ -1688,6 +1698,9 @@ static Fighter* script_fighter(int slot)
  * live fighter list and Item_80268B18's unique item serial can be checked without a native
  * pointer crossing the PPC bridge. */
 #include "script_fighter_bench.inc"
+#include "script_fighter_caps_target.inc"
+#include "script_fighter_caps_movement.inc"
+#include "script_fighter_caps_effects.inc"
 #include "script_zones.inc"
 #include "script_six_slots.inc"
 #include "script_six_slots_tests.inc"
@@ -2876,6 +2889,7 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
     ScriptGame_HitRuleCreate(from,&hit,0);
     applied=ScriptGame_HitRuleContact(&hit,fp,ScriptGame_FighterDealtDamage(from,hit.damage),0);
     if (!ftColl_80076640(fp,&applied)) {ScriptGame_HitRuleForget(&hit);return 0;}
+    ScriptGame_HitRulePercentQueue(&hit,fp,applied);
     entry.pos = fp->cur_pos;
     entry.x20 = applied;
     entry.size_of_xC = (size_t) hit.unk_count;
@@ -3369,3 +3383,5 @@ void ScriptGame_OnePSpawnTint(Fighter* fp,int owner,int rgb)
         if(i>=lab_part_colors_hi)lab_part_colors_hi=i+1;
     }
 }
+
+#include "script_motion.inc"

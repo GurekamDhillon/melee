@@ -1,5 +1,9 @@
 #include "ftCo_Guard.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <math.h>
 
 #include "ftCo_0C35.h"
@@ -59,6 +63,9 @@
 bool ftCo_80091A2C(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 1)) return false;
+#endif
     return fp->input.held_buttons[0] & HSD_PAD_LR ? true : false;
 }
 
@@ -70,6 +77,9 @@ static inline bool inlineA0(Fighter* fp)
 bool ftCo_80091A4C(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 1)) return false;
+#endif
     if (fp->input.pressed_buttons & (HSD_PAD_R | HSD_PAD_L) &&
         fp->active_timer.trigger < p_ftCommonData->powershield_input_window)
     {
@@ -88,6 +98,9 @@ bool ftCo_80091AD8(Fighter_GObj* gobj, int mv_x20)
 {
     bool ret0;
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 1)) return false;
+#endif
     PAD_STACK(8);
     if (fp->input.pressed_buttons & (HSD_PAD_R | HSD_PAD_L) &&
         fp->active_timer.trigger < p_ftCommonData->powershield_input_window)

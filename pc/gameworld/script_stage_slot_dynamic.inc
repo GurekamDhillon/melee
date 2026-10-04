@@ -37,6 +37,11 @@ int ScriptGame_StageSlotDynamic(int handle,int owner,int want)
     static const char* files[]={"GrNLa.dat","GrNBa.dat","GrSt.dat","GrOp.dat","GrIz.dat","GrPs.dat"};
     static const int kinds[]={Gr_Kind_Last,Gr_Kind_Battle,Gr_Kind_Story,Gr_Kind_OldPupupu,Gr_Kind_Izumi,Gr_Kind_PStadium};
     if(!s)return -5;
+    if(!STAGE_SLOT_PARTIAL_FALLBACK) {
+        for(i=0;i<6;++i)if(script_stage_same_file(s->file,files[i]))kind=kinds[i];
+        if(kind<0 || !st_retail_supported(kind))return -18;
+        s->dynamic_kind=kind;s->dynamic=4;return 4;
+    }
     for(i=0;i<6;++i)if(script_stage_same_file(s->file,files[i]))kind=kinds[i];
     if(want<0)want=kind>=0;
     /* A static FD still needs its authored starting backdrop pose. */
@@ -135,7 +140,7 @@ static void script_slot_dynamic_bind(void)
     ScriptStageSlot* s;int i;
     if(!script_switch.active)return;
     s=script_slot(script_switch.active,0);
-    if(!s || !s->dynamic)return;
+    if(!s || !s->dynamic || s->dynamic==4)return;
     for(i=0;i<script_switch.nlines;++i) {
         int at=script_stage_seam_slot(script_switch.lines[i]),group=s->lines[i].joint,j;
         CollVtx* vertices;
@@ -158,7 +163,7 @@ void ScriptGame_StageSlotsFrame(void)
     ScriptStageSlot* s;int g;StageInfo saved;
     if(!script_switch.active)return;
     s=script_slot(script_switch.active,0);
-    if(!s || !s->dynamic)return;
+    if(!s || !s->dynamic || s->dynamic==4)return;
     if(s->dynamic==3)return; /* Retail scheduler animates/controllers once. */
     for(g=0;g<s->ngroups;++g)if(s->models[g])HSD_JObjAnimAll(s->models[g]->hsd_obj);
     if(s->callback_proof && s->models[0]) {

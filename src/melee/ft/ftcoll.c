@@ -753,6 +753,8 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                             fp1->dmg.x1838_percentTemp = 0.0f;
                         }
                     }
+                    if(inner_ret && !(Geno_HitFlags(fp0, idx, fp1) & 4))
+                        ScriptGame_HitRulePercentQueue(hit0,fp1,dmg);
                     bits.f = dmg;
                     Script_GameEvent(2 /* LAB_EV_HIT */, fp0->player_id, fp1->player_id,
                                      ((idx >= 0 && idx < 4) ? idx : 0xFF) |
@@ -1421,6 +1423,7 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                         ScriptGame_HitRuleWon(hit, fp);
                         Geno_ArticleStunBonus(item, hit, fp); /* v5.5: a Geno article's extra hitstun */
                     }
+                    if(should_log)ScriptGame_HitRulePercentQueue(hit,fp,scaled_dmg);
                     bits.f = scaled_dmg;
                     {
                         extern int ScriptGame_EnemyContact(Item_GObj*, int, int);

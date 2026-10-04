@@ -12,6 +12,16 @@
 #include <melee/ft/ftwaitanim.h>
 #include <melee/cm/camera.h>
 #endif
+#ifndef STAGE_SLOT_PARTIAL_FALLBACK
+#ifdef STAGE_SLOT_FIXTURE
+#define STAGE_SLOT_PARTIAL_FALLBACK 1
+#else
+#define STAGE_SLOT_PARTIAL_FALLBACK 0
+#endif
+#endif
+#ifndef STAGE_SLOT_FIXTURE
+#include "script_stage_slot_retail.h"
+#endif
 #define ST_SLOT_COUNT 16
 #define ST_SLOT_GROUPS 64
 #define ST_SLOT_HEADROOM (512*1024)
@@ -21,6 +31,9 @@ extern int lbAudioAx_StageSlotMusic(void);
 typedef struct {
     int handle,owner,nlines,nverts,njoints,ngroups,music;
     unsigned bytes,model_estimate;
+    void* raw; unsigned raw_bytes;
+    GroundParam numeric_param;
+    Vec3 marker_pos[261]; unsigned char marker_present[261];
     void* data;
     HSD_Archive* archive;
     StDatLine* lines;
@@ -38,6 +51,11 @@ typedef struct {
 static ScriptStageSlot script_slots[ST_SLOT_COUNT];
 static void script_slot_dynamic_bind(void);
 #ifndef STAGE_SLOT_FIXTURE
+static int script_slot_retail_check(ScriptStageSlot*);
+static int script_slot_retail_switch(ScriptStageSlot*,int,int);
+static int script_slot_retail_cache_host(void);
+static void script_slot_retail_metadata(ScriptStageSlot*);
+static int script_slot_retail_release(int);
 static void script_slot_native_leave(void);
 static void script_slot_native_enter(ScriptStageSlot*);
 static unsigned script_slot_native_bytes(ScriptStageSlot*);
@@ -112,6 +130,7 @@ static void script_slot_dispose(ScriptStageSlot* s)
     if(s->lines) lbHeap_80015CA8(0,s->lines);
     if(s->archive) lbHeap_80015CA8(0,s->archive);
     if(s->data) lbHeap_80015CA8(0,s->data);
+    if(s->raw) lbHeap_80015CA8(0,s->raw);
     memset(s,0,sizeof *s);
 }
 /* Preflight bounds every pointer used by slot metadata. Model descriptor tree
@@ -157,6 +176,13 @@ int ScriptGame_StageSlotLoad(int owner,int handle,int music)
         for(;j<bytes;++j) dst[j]=(u8)Script_StageArchiveInput(4,j);
         read_bytes=bytes;
     } else lbFile_8001668C(path,s->data,&read_bytes);
+#ifndef STAGE_SLOT_FIXTURE
+    if(!STAGE_SLOT_PARTIAL_FALLBACK) {
+        s->raw=lbHeap_StageSlotTryAlloc((bytes+31)&~31u);
+        if(!s->raw){script_slot_dispose(s);return -4;}
+        memcpy(s->raw,s->data,bytes);s->raw_bytes=bytes;
+    }
+#endif
     rc=read_bytes==bytes ? st_dat_open(s->data,bytes,&v) : ST_DAT_RANGE;
     if(!rc) rc=st_dat_collision(&v,script_stage.cap>1?script_stage.cap-1:0,&n);
     if(!rc)rc=st_dat_models_mask(&v,&models,group_mask);
@@ -261,6 +287,12 @@ int ScriptGame_StageSlotLoad(int owner,int handle,int music)
        script_slot_ptr(s->archive,s->param->stage_params,s->param->stage_param_count*sizeof(StageParam)))
         s->music=s->param->stage_params[0].x4;
     strcpy(s->file,file);
+#ifndef STAGE_SLOT_FIXTURE
+    if(!STAGE_SLOT_PARTIAL_FALLBACK) {
+        if(!script_slot_retail_cache_host()){script_slot_dispose(s);return -4;}
+        script_slot_retail_metadata(s);
+    }
+#endif
     OSReport("stage slot: handle=%d file=%s bytes=%u lines=%d groups=%d heap0=%u/%u headroom=%u\n",
              handle,file,s->bytes,s->nlines,s->ngroups,lbHeap_Free(0),lbHeap_Capacity(0),ST_SLOT_HEADROOM);
     return handle;
@@ -330,10 +362,11 @@ int ScriptGame_StageSlotRead(int handle,int owner,int field,int index)
     case 0:return s->handle; case 1:return s->bytes+script_slot_native_bytes(s); case 2:return s->nverts;
     case 3:return s->nlines; case 4:return s->njoints; case 5:return s->ngroups;
     case 6:return script_switch.active==handle; case 7:return s->music;
-    case 8:return index>=0 && index<261 && s->markers[index]!=NULL;
+    case 8:return index>=0 && index<261 && (s->marker_present[index] || s->markers[index]!=NULL);
     case 9:case 10:case 11:
-        if(index<0 || index>=261 || !s->markers[index]) return 0;
-        lb_8000B1CC(s->markers[index],NULL,&p);
+        if(index<0 || index>=261) return 0;
+        if(s->marker_present[index])p=s->marker_pos[index];
+        else { if(!s->markers[index])return 0;lb_8000B1CC(s->markers[index],NULL,&p); }
         return script_mesh_bits(field==9?p.x:field==10?p.y:p.z);
     case 29:return script_switch.epoch;
     case 34:return s->model_estimate;
@@ -374,7 +407,14 @@ static void script_switch_detach(void)
         cpu=fp->cpu;
         if((fp->coll_data.env_flags&Collide_LedgeGrabMask) ||
            (fp->motion_id>=ftCo_MS_CliffCatch && fp->motion_id<=ftCo_MS_CliffJumpQuick2)) {
+#ifndef STAGE_SLOT_FIXTURE
+            Vec3 self=fp->self_vel,kb=fp->x8c_kb_vel,shield=fp->x98_atk_shield_kb;
+            float grvel=fp->gr_vel;
+#endif
             ftCo_Fall_Enter(g);
+#ifndef STAGE_SLOT_FIXTURE
+            fp->self_vel=self;fp->x8c_kb_vel=kb;fp->x98_atk_shield_kb=shield;fp->gr_vel=grvel;
+#endif
             /* cliff.ledge_id aliases fall.smid: do not overwrite the new
              * action's union after Fall has initialized it. */
         }
@@ -398,13 +438,16 @@ int ScriptGame_StageSwitchCheck(int handle,int owner,int place)
     HSD_GObj* g; ScriptStageSlot* s=script_slot(handle,owner);
     if(!s) return -5;
 #ifndef STAGE_SLOT_FIXTURE
+    if(!STAGE_SLOT_PARTIAL_FALLBACK) { int check;
+        if(!ScriptGame_StageGameplayScene())return -1;
+        check=script_slot_retail_check(s);if(check)return check; }
     if(s->dynamic==3 && lbHeap_Free(0)<ST_SLOT_HEADROOM+256*1024)return -4;
 #endif
     { int i,has_floor=0;for(i=0;i<s->nlines;++i)if(s->lines[i].kind==1)has_floor=1;
       if(!has_floor)return -2; }
     if(Netplay_Enabled() || RB_Enabled() || Replay_Active()) return -1;
     if(script_switch.owner && script_switch.owner!=owner) return -6;
-    if(!script_stage.map || mpLib_8004D164()!=script_stage.map || !script_switch_room(s)) return -7;
+    if(!script_stage.map || mpLib_8004D164()!=script_stage.map || (STAGE_SLOT_PARTIAL_FALLBACK && !script_switch_room(s))) return -7;
     if(place<0 || place>1) return -8;
     if(!script_stage_host_allowed()) return -6;
     if(ScriptGame_ArenaOwner() || script_camera_params.owner) return -6;
@@ -444,6 +487,9 @@ int ScriptGame_StageSwitch(int handle,int owner,int serial,int place)
     ScriptStageSlot* s=script_slot(handle,owner); int i,rc,safety;
     HSD_GObj* g;
     rc=ScriptGame_StageSwitchCheck(handle,owner,place); if(rc) return rc;
+#ifndef STAGE_SLOT_FIXTURE
+    if(!STAGE_SLOT_PARTIAL_FALLBACK)return script_slot_retail_switch(s,owner,place);
+#endif
     if(!ScriptGame_StageIsolate(owner,1)) return -6;
     if(!script_switch.owner) {
         script_switch.owner=owner; script_switch.camera=stage_info.cam_info;
@@ -563,6 +609,12 @@ int ScriptGame_StageSwitch(int handle,int owner,int serial,int place)
 void ScriptGame_StageSlotsRelease(int owner)
 {
     int i;
+#ifndef STAGE_SLOT_FIXTURE
+    if(!STAGE_SLOT_PARTIAL_FALLBACK) {
+        if(!script_slot_retail_release(owner))return;
+        goto dispose_slots;
+    }
+#endif
     if(script_switch.owner && (!owner || script_switch.owner==owner)) {
         script_switch_detach();
         script_slot_native_leave();
@@ -584,6 +636,7 @@ void ScriptGame_StageSlotsRelease(int owner)
                     ftCo_Fall_Enter(g);script_switch_contacts(fp);fp->cpu=cpu; }
         }
     }
+dispose_slots:
     for(i=0;i<ST_SLOT_COUNT;++i) if(script_slots[i].handle && (!owner || script_slots[i].owner==owner)) script_slot_dispose(&script_slots[i]);
 }
 int ScriptGame_StageSlotFree(int handle,int owner)
@@ -602,4 +655,5 @@ int ScriptGame_StageSlotsActive(void)
 #include "script_stage_slot_dynamic.inc"
 #ifndef STAGE_SLOT_FIXTURE
 #include "script_stage_slot_native.inc"
+#include "script_stage_slot_retail.inc"
 #endif

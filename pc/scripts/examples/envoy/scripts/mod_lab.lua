@@ -7,7 +7,9 @@ return function(D)
   self.engine=D.mod_engine.new(104729,D.mod_pool)
   self.display=D.mod_display.new(g,self.engine)
   if D.drive_lab then self.drives=D.drive_lab.new(g,self) end
+  if D.foe_lab then self.foes=D.foe_lab.new(g,self) end
   g.command('mod',function(arg) return self:command(arg or '') end,'list | add <id> [port] | clear | trace | intensity <0..1>')
+  g.command('depth',function(arg) return self:depth_command(arg or '') end,'<nonnegative depth> [New Game+ loop]')
   return self
  end
  function L:allowed()
@@ -16,14 +18,46 @@ return function(D)
   if self.options.blocked and self.options.blocked() then return false,'stop the Envoy run/director before using LAB modifiers' end
   if not self.g.sim_supported or not self.g.sim_commit or not self.g.sim_clear then return false,'modifier checkpoint engine unavailable' end
   if not self.g.hit_rule_add or not self.g.fighter_status then return false,'native hit-rule engine unavailable; rebuild required' end
+  if not self.g.hit_rules or self.g.hit_rules(1).percent_only~=true then return false,'percent-only hit-rule engine unavailable; rebuild required' end
+  if self.g.hit_rules(1).progression~=true then return false,'progression hit-rule engine unavailable; rebuild required' end
   return true
  end
  function L:replaying() return self.g.sim_replaying and self.g.sim_replaying() end
  function L:reset()
+  if self.foes then self.foes:reset() end
   if self.drives then self.drives:clear() end
-  self.engine=D.mod_engine.new(104729,D.mod_pool);self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped={}
+  local ctx=self.drives and self.drives.bag.context
+  self.engine=D.mod_engine.new(104729,D.mod_pool,{context=ctx});self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped={}
   self.display:clear();self.display.engine=self.engine
   if self.drives and (self.drives:has_build() or #self.drives.bag.items>0) then self.enabled=true end
+ end
+ function L:depth_command(arg)
+  local ok,why=pcall(function()
+   local allowed,reason=self:allowed();assert(allowed,reason);assert(not self:replaying(),'depth edit refused during rewind')
+   local w={};for v in arg:gmatch('%S+') do w[#w+1]=v end
+   assert(#w==1 or #w==2,'usage: depth <n> [loop]');local ctx=D.mod_progression.context(assert(tonumber(w[1]),'numeric depth required'),w[2] and assert(tonumber(w[2]),'numeric loop required') or 0)
+   assert(#self.engine.queue==0,'wait for combat events to commit before changing depth')
+   local probe=D.mod_engine.new(self.engine.seed,D.mod_pool);probe:import(self.engine:export());probe:set_context(ctx)
+   for _,e in ipairs(self.pending) do probe:equip(e.port,e.id) end
+   if self.foes then
+    local function check(r)
+     local build=D.mod_codec.decode(D.mod_codec.encode(r.build));build.context=ctx
+     local bag=D.drive_bag.new(self.foes.roller.loot,{context=ctx});local mods,implicit=bag:validate(build);probe:set_build(r.port,mods,implicit)
+    end
+    for _,r in pairs(self.foes.builds) do check(r) end
+    for _,e in ipairs(self.foes.pending) do if e.op=='roll' then check(e.record) end end
+   end
+   if self.drives then
+    local state=self.drives:snapshot();state.bag.context=ctx
+    self.drives:validate(state,{engine=probe,debug_equipped=self.debug_equipped,pending=self.pending})
+   end
+   for p=1,6 do probe:native_rules(p) end
+   -- All roots (including queued edits) passed; physical rolls keep their tiers.
+   self.engine.context=ctx;if self.drives then self.drives.bag.context=D.mod_progression.context(ctx) end
+   self.enabled=true;if self.options.activate then self.options.activate() end
+   self.g.log(('depth: %d / loop %d / effective %d'):format(ctx.depth,ctx.loop,D.mod_progression.effective(ctx)))
+  end)
+  if not ok then self.g.log('depth: refused '..tostring(why));return false,why end;return true
  end
  function L:command(arg)
   local ok,result=pcall(function()
@@ -41,8 +75,10 @@ return function(D)
     if w[1]=='add' then
      assert(#w==2 or #w==3,'usage: mod add <id> [port]');local p=port(w[3] or 1)
      assert(self.engine.rules[w[2]],'unknown modifier; mod list');assert(self.g.player(p),'fighter absent')
+     if p>1 and self.foes then for _,e in ipairs(self.foes.pending) do assert(e.op~='roll','wait for pending foe edits to commit') end end
      -- Validate the command without mutating the live rule root before warmup.
-     local probe=D.mod_engine.new(self.engine.seed,D.mod_pool);probe:import(self.engine:export());for _,e in ipairs(self.pending) do probe:equip(e.port,e.id) end;probe:equip(p,w[2]);if self.drives and p==1 then local mods,implicit=self.drives:view():derive();mods=self.drives:combined(mods);mods[w[2]]=math.max(mods[w[2]] or 0,1);probe:set_build(1,mods,implicit) end
+     local probe=D.mod_engine.new(self.engine.seed,D.mod_pool,{context=self.engine.context})
+    probe.equipped=D.mod_codec.decode(D.mod_codec.encode(self.engine.equipped));probe.implicits=D.mod_codec.decode(D.mod_codec.encode(self.engine.implicits));probe.statuses=D.mod_codec.decode(D.mod_codec.encode(self.engine.statuses));for _,e in ipairs(self.pending) do probe:equip(e.port,e.id) end;probe:equip(p,w[2]);if self.drives and p==1 then local mods,implicit=self.drives:view():derive();mods=self.drives:combined(mods);mods[w[2]]=mods[w[2]] or 1;probe:set_build(1,mods,implicit) end;probe:native_rules(p)
      local ready,detail=self.display:warm(self.engine)
      assert(not self.display.error,detail or 'modifier shader warmup unavailable')
      assert(#self.pending<12,'modifier pending equip budget exhausted')
@@ -91,7 +127,8 @@ return function(D)
     if owner and owner~=0 and (e.hit_rule_owners or {})[i]==owner then ids[#ids+1]=id end
    end
   end
-  local origin,used=self.engine:native_origin(ids,victim)
+  local origin,used=self.engine:native_origin(ids,victim,attacker)
+  if attacker and self.foes and self.foes.builds[attacker] then table.insert(origin,1,'Envoy foe P'..attacker) end
   if attacker then self:event{kind='hit_dealt',port=attacker,target=victim,tags=tags,
    self_context=attacker_context,target_context=victim_context,origin=origin,native_trace=true,native_statuses=used} end
   local taken={};for key,value in pairs(tags) do if key~='grounded' and key~='airborne' then taken[key]=value end end
@@ -123,7 +160,35 @@ return function(D)
   return players,life
  end
  function L:export()
-  return D.mod_codec.encode{version=1,debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed}
+  return D.mod_codec.encode{version=1,foes=self.foes and self.foes:snapshot(),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed}
+ end
+ function L:prospective(engine,debug,pending,foes,drives,players)
+  local function clone(v) return D.mod_codec.decode(D.mod_codec.encode(v)) end
+  local probe=D.mod_engine.new(engine.seed,D.mod_pool,{context=engine.context})
+  probe.equipped=clone(engine.equipped);probe.implicits=clone(engine.implicits);probe.statuses=clone(engine.statuses);debug=clone(debug)
+  local foe_ports={};for p in pairs(foes and foes.builds or {}) do foe_ports[p]=true end
+  -- Match actual publication order, including rolls subsequently retired by clear.
+  for _,e in ipairs(foes and foes.pending or {}) do
+   if e.op=='roll' then
+    if players then self.foes:cpu(e.record.port) end
+    local mods,implicit=self.foes.roller:validate(e.record);probe:set_build(e.record.port,mods,implicit);foe_ports[e.record.port]=true
+   elseif e.op=='clear' then
+    for p in pairs(foe_ports) do probe:clear(p);debug[p]=nil end;foe_ports={}
+    for _,at in pairs(probe.statuses) do for name,v in pairs(at) do for _,line in ipairs(v.origin or {}) do if line:match('^Envoy foe P[2-6]$') then at[name]=nil;break end end end end
+   end
+  end
+  for _,e in ipairs(pending) do if not players or players[e.port] then probe:equip(e.port,e.id) end end
+  local staged
+  if drives then
+   local roots={engine=probe,debug_equipped=debug,pending=pending};staged=self.drives:validate(drives,roots)
+   local draft=D.drive_bag.new(self.drives.loot);assert(draft:restore(staged.bag))
+   for _,e in ipairs(staged.pending or {}) do assert(draft[e.op](draft,e.a,e.b)) end
+   if #(staged.pending or {})>0 or next(draft.equipped) or draft.keystone or #(draft.keystones or {})>0 then
+    local mods,implicit=draft:derive();probe:set_build(1,self.drives:combined(mods,roots),implicit)
+   end
+  end
+  for p=1,6 do probe:native_rules(p) end
+  return staged
  end
  function L:loadstate()
   local blob=self.g.sim_read and self.g.sim_read()
@@ -136,9 +201,21 @@ return function(D)
    return
   end
   local s=D.mod_codec.decode(blob);assert(s.version==1 and type(s.enabled)=='boolean','invalid LAB modifier checkpoint')
-  self.debug_equipped=s.debug_equipped or s.engine.equipped or {};self.pending=s.pending
-  if self.drives and s.drives then self.drives:restore(s.drives) end
+  local probe=D.mod_engine.new(self.engine.seed,D.mod_pool);probe:import(s.engine)
+  local foes=self.foes and s.foes and self.foes:validate(s.foes)
+  assert(type(s.pending)=='table' and type(s.owned)=='table' and type(s.observed)=='table','invalid adapter roots')
+  local n=0;for i,e in pairs(s.pending) do
+   assert(type(i)=='number' and i%1==0 and i>=1 and i<=12 and type(e)=='table','invalid pending equip')
+   for k in pairs(e) do assert(k=='port' or k=='id','unknown pending equip field') end
+   port(e.port);assert(probe.rules[e.id],'unknown pending modifier');n=n+1
+  end;assert(n==#s.pending,'sparse pending equips')
+  for _,root in ipairs({s.owned,s.hit_owned or {}}) do for p,v in pairs(root) do port(p);assert(v==true,'invalid ownership') end end
+  local debug=s.debug_equipped or probe.equipped;for p,mods in pairs(debug) do local check=D.mod_engine.new(1,D.mod_pool,{context=probe.context});check:set_build(port(p),mods,{}) end
+  local drives=self:prospective(probe,debug,s.pending,foes,self.drives and s.drives)
+  self.debug_equipped=debug;self.pending=s.pending
+  if drives then self.drives:publish(drives) end
   self.engine:import(s.engine);self.enabled=s.enabled;self.owned=s.owned;self.hit_owned=s.hit_owned or {};self.pending=s.pending;self.observed=s.observed
+  if self.foes then if foes then self.foes:restore(foes) else self.foes:reset() end end
   if self.enabled then self.display:on_loadstate(self.engine) else self.display:clear() end
  end
  function L:frame()
@@ -152,10 +229,23 @@ return function(D)
   local players,life=self:sample()
   local ready=self.display:warm(self.engine)
   if ready then
-   for _,e in ipairs(self.pending) do if players[e.port] then self.engine:equip(e.port,e.id);self.debug_equipped[e.port]=self.debug_equipped[e.port] or {};self.debug_equipped[e.port][e.id]=1 end end
-   self.pending={}
-   if self.drives and (#self.drives.pending>0 or next(self.drives.bag.equipped) or self.drives.bag.keystone) then self.drives:apply() end
+   local bag=self.drives and self.drives.bag:snapshot();local debug=D.mod_codec.decode(D.mod_codec.encode(self.debug_equipped))
+   local accepted,why=pcall(function()
+    self:prospective(self.engine,self.debug_equipped,self.pending,self.foes,self.drives and self.drives:snapshot(),players)
+    if self.foes then self.foes:apply() end
+    for _,e in ipairs(self.pending) do if players[e.port] then self.engine:equip(e.port,e.id);self.debug_equipped[e.port]=self.debug_equipped[e.port] or {};self.debug_equipped[e.port][e.id]=1 end end
+    self.pending={}
+    if self.drives and (#self.drives.pending>0 or self.drives:has_build()) then self.drives:apply() end
+   end)
+   if not accepted then
+    pcall(self.g.sim_clear);self.display:clear();self.engine=D.mod_engine.new(104729,D.mod_pool,{context=self.engine.context});self.display.engine=self.engine
+    self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped=debug
+    if self.foes then self.foes:reset() end
+    if self.drives then self.drives.bag.items=bag.items;self.drives.bag.equipped=bag.equipped;self.drives.bag.keystone=bag.keystone;self.drives.bag.keystones=bag.keystones or {};self.drives.bag.context=bag.context;self.drives.pending={} end
+    self.g.log('mod: disabled after pending publication refusal '..tostring(why));return true
+   end
   end
+  if self.foes then self.foes:frame() end
   if self.drives then self.drives:frame() end
   local stock_queued={};for _,e in ipairs(self.engine.queue) do if e.kind=='stock_lost' then stock_queued[e.port]=true end end
   for p=1,6 do local before,now=self.observed[p],life[p]
@@ -173,7 +263,7 @@ return function(D)
   self.observed=life
   local ops,new_owned,new_hit_owned={},{},{}
   for p=1,6 do
-   local values=self.engine:values(p);values.status_duration=nil
+   local values=self.engine:values(p);values.status_duration=nil;values.damage_dealt=nil;values.damage_taken=nil;values.knockback_taken=nil
    if players[p] and next(values) then ops[#ops+1]={op='fighter_mod',port=p,values=values};new_owned[p]=true
    elseif self.owned[p] then ops[#ops+1]={op='fighter_mod',port=p} end
    local rules,bits=self.engine:native_rules(p)
@@ -185,7 +275,7 @@ return function(D)
   end
   self.owned=new_owned;self.hit_owned=new_hit_owned
   for p=1,6 do if self.engine.statuses[p] and not next(self.engine.statuses[p]) then self.engine.statuses[p]=nil end end
-  self.enabled=(self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0)) or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
+  self.enabled=D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0)) or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
   -- Visual pulse/cooldown metadata is pure state and belongs in the checkpoint.
   if self.enabled then self.display:update(self.engine) else self.display:clear() end
   local committed,why=pcall(function() return self.g.sim_commit(self:export(),ops) end)
@@ -204,7 +294,12 @@ return function(D)
   return self.drives and self.drives.menu.active or false
  end
  function L:scene() self:reset();self.display=D.mod_display.new(self.g,self.engine) end -- scene invalidates shader handles
- function L:draw() if self.enabled then self.display:draw(self.engine) end;if self.drives then self.drives:draw() end end
+ function L:draw()
+  if self.drives and self.drives.menu.active then self.drives:draw();return end
+  local plate=self.foes and self.g.kit and next(self.foes.labels)~=nil
+  if plate then self.foes:draw() elseif self.enabled then self.display:draw(self.engine) end
+  if self.drives and not plate then self.drives:draw() end
+ end
  function L:unload()
   if self.g.sim_clear and not (self.g.match() or {}).netplay then self.g.sim_clear() end
   self:reset()

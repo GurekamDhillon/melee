@@ -1,5 +1,11 @@
 #include "ftzeldaspecials.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#else
+#define FT_CAPS_MAX_JUMPS(fp) ((fp)->co_attrs.max_jumps)
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/forward.h>
@@ -119,7 +125,7 @@ void ftZd_SpecialSStart_Anim(HSD_GObj* gobj)
     if (!ftAnim_IsFramesRemaining(gobj)) {
         temp_f1 = 0;
         Fighter_ChangeMotionState(gobj, 344, 0, temp_f1, 1.0, temp_f1, NULL);
-        fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+        fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     }
 }
 
@@ -247,7 +253,7 @@ void ftZd_SpecialAirSStart_Anim(HSD_GObj* gobj)
     if (!ftAnim_IsFramesRemaining(gobj)) {
         temp_f1 = 0;
         Fighter_ChangeMotionState(gobj, 347, 0, temp_f1, 1.0, temp_f1, NULL);
-        fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
+        fp->x1968_jumpsUsed = FT_CAPS_MAX_JUMPS(fp);
     }
 }
 

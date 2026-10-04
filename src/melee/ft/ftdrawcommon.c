@@ -428,13 +428,16 @@ void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
 }
 
 #if defined(TARGET_PC)
+#include <gameworld/script_motion_draw.h>
 extern void SurfaceBegin(int slot);
 extern void SurfaceEnd(void);
 void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
 {
+    int motion = script_motion_draw_begin(gobj);
     SurfaceBegin(((Fighter*)gobj->user_data)->player_id + 1);
     ftDrawCommon_80080E18_surface_impl(gobj, arg1);
     SurfaceEnd();
+    if (motion) MotionFighterEnd();
 }
 #endif
 

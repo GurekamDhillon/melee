@@ -1,6 +1,6 @@
 /* Scalar-only API and journal encoding; authoritative state is game BSS. */
-#define GS_HR_MAX 8
-#define GS_HR_FIELDS 14
+#define GS_HR_MAX 32
+#define GS_HR_FIELDS 16
 extern int gw_ScriptGame_HitRulesOwner(int);
 extern int gw_ScriptGame_HitRulesCount(int);
 extern int gw_ScriptGame_FighterStatus(int);
@@ -32,10 +32,10 @@ static int gs_hr_int(lua_State* L,int at,const char* key,int fallback,int lo,int
 static void gs_hr_rule(lua_State* L,int at,int* b) {
  static const char* const top[]={"id","match","change"};
  static const char* const match[]={"move","grounded","element","status_bits","incoming"};
- static const char* const change[]={"element","damage","knockback_growth","knockback_base","shield_damage","hitstun","knockback_taken"};
- static const char* const mult[]={"damage","knockback_growth","knockback_base","knockback_taken"};
+ static const char* const change[]={"element","damage","knockback_growth","knockback_base","shield_damage","hitstun","knockback_taken","percent_damage","launch"};
+ static const char* const mult[]={"damage","knockback_growth","knockback_base","knockback_taken","percent_damage","launch"};
  int j;at=lua_absindex(L,at);luaL_checktype(L,at,LUA_TTABLE);gs_hr_keys(L,at,top,3);memset(b,0,GS_HR_FIELDS*sizeof *b);
- b[0]=gs_hr_int(L,at,"id",0,0,0x7fffffff);b[1]=b[2]=b[3]=b[5]=-1;b[6]=b[7]=b[8]=b[11]=gs_fbits(1);
+ b[0]=gs_hr_int(L,at,"id",0,0,0x7fffffff);b[1]=b[2]=b[3]=b[5]=-1;b[6]=b[7]=b[8]=b[11]=b[14]=b[15]=gs_fbits(1);
  lua_getfield(L,at,"match");if(!lua_isnil(L,-1)) {
   int m=lua_absindex(L,-1);luaL_checktype(L,m,LUA_TTABLE);gs_hr_keys(L,m,match,5);
   lua_getfield(L,m,"move");if(!lua_isnil(L,-1)) {const char* s=luaL_checkstring(L,-1);if(strcmp(s,"any")){for(j=0;j<10;++j)if(!strcmp(s,gs_hr_moves[j]))break;if(j==10)luaL_error(L,"unknown hit rule move tag");b[1]=j;}}lua_pop(L,1);
@@ -45,12 +45,12 @@ static void gs_hr_rule(lua_State* L,int at,int* b) {
   lua_getfield(L,m,"incoming");if(!lua_isnil(L,-1)){luaL_checktype(L,-1,LUA_TBOOLEAN);b[13]=lua_toboolean(L,-1);}lua_pop(L,1);
  }lua_pop(L,1);
  lua_getfield(L,at,"change");luaL_checktype(L,-1,LUA_TTABLE);{
-  int c=lua_absindex(L,-1);gs_hr_keys(L,c,change,7);
+  int c=lua_absindex(L,-1);gs_hr_keys(L,c,change,9);
   lua_getfield(L,c,"element");if(!lua_isnil(L,-1))b[5]=gs_hr_element(L,-1);lua_pop(L,1);
-  for(j=0;j<4;++j){double v;lua_getfield(L,c,mult[j]);v=lua_isnil(L,-1)?1:luaL_checknumber(L,-1);lua_pop(L,1);if(!isfinite(v)||v<0.1||v>4)luaL_error(L,"hit rule multiplier %s must be 0.1..4",mult[j]);b[j==3?11:6+j]=gs_fbits((float)v);}
+  for(j=0;j<6;++j){double v,lo=j>=4 ? -1e9 : .1,hi=j>=4 ? 1e9 : 4;lua_getfield(L,c,mult[j]);v=lua_isnil(L,-1)?1:luaL_checknumber(L,-1);lua_pop(L,1);if(!isfinite(v)||v<lo||v>hi)luaL_error(L,"hit rule multiplier %s must be %f..%f",mult[j],lo,hi);b[j>=4?10+j:j==3?11:6+j]=gs_fbits((float)v);}
   b[9]=gs_hr_int(L,c,"shield_damage",0,-100,100);b[10]=gs_hr_int(L,c,"hitstun",0,0,120);
  }lua_pop(L,1);
- if((b[4]||b[13]) && (b[5]>=0 || b[7]!=gs_fbits(1) || b[8]!=gs_fbits(1) || b[9] || b[10]))luaL_error(L,"contact rule permits only damage and knockback_taken changes");
+ if((b[4]||b[13]) && (b[5]>=0 || b[7]!=gs_fbits(1) || b[8]!=gs_fbits(1) || b[9] || b[10]))luaL_error(L,"contact rule permits only damage, knockback_taken, percent_damage and launch changes");
  if(!b[4]&&!b[13]&&b[11]!=gs_fbits(1))luaL_error(L,"knockback_taken requires status_bits or incoming");
 }
 static void gs_hr_read(int port,GsHitRules* r) {int i,j;memset(r,0,sizeof *r);r->count=gw_ScriptGame_HitRulesCount(port);r->status=gw_ScriptGame_FighterStatus(port);for(i=0;i<r->count;++i)for(j=0;j<GS_HR_FIELDS;++j)r->rules[i][j]=gw_ScriptGame_HitRuleRead(port,i,j);}
@@ -65,7 +65,7 @@ static int gs_hr_apply(int port,int owner,const GsHitRules* r) {
 }
 static void gs_hr_parse(lua_State* L,int at,GsHitRules* r) {
  int i;size_t n;at=lua_absindex(L,at);memset(r,0,sizeof *r);r->status=gs_hr_int(L,at,"status_bits",0,0,0x7fffffff);
- lua_getfield(L,at,"rules");luaL_checktype(L,-1,LUA_TTABLE);n=lua_rawlen(L,-1);if(n>GS_HR_MAX)luaL_error(L,"hit rules capacity is 8 per fighter entity");r->count=(int)n;
+ lua_getfield(L,at,"rules");luaL_checktype(L,-1,LUA_TTABLE);n=lua_rawlen(L,-1);if(n>GS_HR_MAX)luaL_error(L,"hit rules capacity is 32 per fighter entity");r->count=(int)n;
  for(i=0;i<r->count;++i){lua_rawgeti(L,-1,i+1);gs_hr_rule(L,-1,r->rules[i]);lua_pop(L,1);}lua_pop(L,1);
 }
 
@@ -91,7 +91,7 @@ static int l_hit_rule_add(lua_State* L) {
  gs_require_gameplay(L,"hit_rule_add");gs_hr_targets_owner(L,port,sub);gs_hr_rule(L,2,parsed);
  for(entity=first;entity<=last;++entity) {
   GsHitRules* r=&draft[entity-first];gs_hr_read(entity,r);
-  if(r->count==GS_HR_MAX)return luaL_error(L,"hit rules capacity is 8 per fighter entity");
+  if(r->count==GS_HR_MAX)return luaL_error(L,"hit rules capacity is 32 per fighter entity");
   memcpy(r->rules[r->count++],parsed,sizeof parsed);
  }
  gs_rw_branch();
@@ -128,8 +128,8 @@ static int l_fighter_status(lua_State* L) {
 }
 static int l_hit_rules(lua_State* L) {
  int port=gs_slot_arg(L,1),sub=gs_hr_selector(L,2),p=port*2+(sub>0),i,j;GsHitRules r;gs_hr_read(p,&r);
- lua_createtable(L,r.count,3);gs_setint(L,"status_bits",r.status);gs_setint(L,"owner",gw_ScriptGame_HitRulesOwner(p));gs_setbool(L,"sub",sub>0);
+ lua_createtable(L,r.count,3);gs_setbool(L,"percent_only",1);gs_setbool(L,"progression",1);gs_setint(L,"status_bits",r.status);gs_setint(L,"owner",gw_ScriptGame_HitRulesOwner(p));gs_setbool(L,"sub",sub>0);
  for(i=0;i<r.count;++i){int* b=r.rules[i];lua_createtable(L,0,4);gs_setint(L,"id",b[0]);gs_setint(L,"handle",b[12]);lua_createtable(L,0,5);gs_setstr(L,"move",b[1]<0?"any":gs_hr_moves[b[1]]);if(b[2]>=0)gs_setbool(L,"grounded",b[2]);gs_setstr(L,"element",gs_hr_element_name(b[3]));gs_setint(L,"status_bits",b[4]);gs_setbool(L,"incoming",b[13]);lua_setfield(L,-2,"match");lua_createtable(L,0,7);if(b[5]>=0)gs_setstr(L,"element",gs_hr_element_name(b[5]));
-  for(j=0;j<4;++j){static const char* const keys[]={"damage","knockback_growth","knockback_base","knockback_taken"};union{int i;float f;}v;v.i=b[j==3?11:6+j];gs_setnum(L,keys[j],v.f);}gs_setint(L,"shield_damage",b[9]);gs_setint(L,"hitstun",b[10]);lua_setfield(L,-2,"change");lua_rawseti(L,-2,i+1);}
+  for(j=0;j<6;++j){static const char* const keys[]={"damage","knockback_growth","knockback_base","knockback_taken","percent_damage","launch"};union{int i;float f;}v;v.i=b[j>=4?10+j:j==3?11:6+j];gs_setnum(L,keys[j],v.f);}gs_setint(L,"shield_damage",b[9]);gs_setint(L,"hitstun",b[10]);lua_setfield(L,-2,"change");lua_rawseti(L,-2,i+1);}
  return 1;
 }

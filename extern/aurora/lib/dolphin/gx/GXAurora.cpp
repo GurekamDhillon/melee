@@ -8,6 +8,7 @@
 
 #include "../../gx/fifo.hpp"
 #include "../../gx/surface.hpp"
+#include <aurora/motion.hpp>
 
 static void GXWriteString(const char* label) {
   auto length = strlen(label);
@@ -48,6 +49,14 @@ void GXAuroraCallback(void (*fn)(const void* data, u32 size), const void* data, 
   if (size > 0) {
     GX_WRITE_DATA(data, size);
   }
+}
+
+void GXAuroraMotionCallback(void (*fn)(const void*,u32),const void* data,u32 size) {
+  if (!fn || size > 65535) return;
+  GX_WRITE_AURORA(GX_AURORA_MOTION_CALLBACK);
+  GX_WRITE_U64(reinterpret_cast<uintptr_t>(fn));
+  GX_WRITE_U16(static_cast<u16>(size));
+  if(size) GX_WRITE_DATA(data,size);
 }
 
 void GXAuroraLoadPalette(u32 n, u32 key, const float* data) {

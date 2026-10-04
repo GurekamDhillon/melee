@@ -15,6 +15,7 @@
 #include "gw.h"
 #include "gw_script.h"
 #include "gw_surface.h"
+#include "gw_motion.h"
 #include "gw_mods.h"
 #include "gw_model_format.h"
 #include "../gameworld/script_model.h"
@@ -304,13 +305,16 @@ static int gs_sfx_map_from[GS_SFX_MAP], gs_sfx_map_to[GS_SFX_MAP], gs_sfx_map_ne
 #include "gw_clank_event.h"
 static int gs_want_clanks;
 #define GS_MAX_EVENTS 256
+/* A surviving capsule retains its32 creation IDs after table replacement;
+ * current attacker and defender tables can contribute32 distinct IDs each. */
+#define GS_HIT_RULE_CONTEXT_MAX 96
 typedef struct {
     int what, a, b, c, d;
     int hit[LAB_HI_COUNT]; /* LAB_EV_HIT: the attacker's hitbox as it was when it connected */
     float hitf[LAB_HF_COUNT];
     int has_hit;
     int context_valid, context_element, context_action, context_move;
-    int hit_rule_count, hit_rule_ids[24], hit_rule_owners[24];
+    int hit_rule_count, hit_rule_ids[GS_HIT_RULE_CONTEXT_MAX], hit_rule_owners[GS_HIT_RULE_CONTEXT_MAX];
     int context_attacker_ground, context_victim_ground, context_attacker_damage, context_victim_damage;
     int source_enemy, reaction;
     int item_y, item_colour, item_amount, item_reason;
@@ -655,6 +659,7 @@ static void gs_report(int script, const char *what, const char *err) {
         gs_presentation_release(s->stage_owner);
         gw_Shader_Release(s->stage_owner);
         gw_surface_release((unsigned)script + 1);
+        gw_motion_release((unsigned)script + 1);
         if (gs.camera_owner == script + 1) {
             gw_Camera_ScriptReset();
             gs.camera_owner = gs.camera_task_owner = 0;
@@ -2736,6 +2741,7 @@ static void gs_data_path(lua_State *L, const char *name, char *out, size_t cap) 
 
 #include "gw_script_mission.inc"
 #include "gw_script_surface.inc"
+#include "gw_script_motion.inc"
 
 #include "gw_script_data_read.inc"
 
@@ -5277,6 +5283,7 @@ static int gs_stage_handle_arg(lua_State *L, int idx) {
 #include "gw_script_arena.inc"
 #include "gw_script_camera_params.inc"
 #include "gw_script_fighter_mod.inc"
+#include "gw_script_fighter_caps.inc"
 #include "gw_script_hit_rules.inc"
 #include "gw_script_sim_state.inc"
 #include "gw_script_tint_query.inc"
@@ -6232,6 +6239,9 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"contact_events", l_contact_events}, {"contact_trace", l_contact_trace},
     {"wait_until", l_wait_until}, {"wait_status", l_wait_status},
     {"contact_overlay", l_contact_overlay},
+    {"afterimage_add", l_afterimage_add}, {"afterimage_set", l_afterimage_set}, {"afterimage_remove", l_afterimage_remove},
+    {"tracer_add", l_tracer_add}, {"tracer_set", l_tracer_set}, {"tracer_remove", l_tracer_remove},
+    {"tracer_hitboxes", l_tracer_hitboxes}, {"motion_intensity", l_motion_intensity}, {"motion_stats", l_motion_stats},
     {"fighter_shader", l_fighter_shader},
     {"fighter_shader_set", l_fighter_shader_set},
     {"stage_shader", l_stage_shader},
@@ -6301,6 +6311,10 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"loop_1p", l_loop_1p},
     {"spawn_1p", l_spawn_1p},
     {"fighter_mod", l_fighter_mod},
+    {"fighter_caps", l_fighter_caps}, {"fighter_effect", l_fighter_effect},
+    {"fighter_armour", l_fighter_armour}, {"give_item", l_give_item},
+    {"nearest_opponent", l_nearest_opponent}, {"opponents_in_radius", l_opponents_in_radius},
+    {"fighter_timed_status", l_fighter_timed_status},
     {"hit_rule_add", l_hit_rule_add}, {"hit_rule_remove", l_hit_rule_remove},
     {"hit_rules", l_hit_rules}, {"hit_rules_clear", l_hit_rules_clear},
     {"fighter_status", l_fighter_status},
@@ -6664,6 +6678,7 @@ static void gs_unload(int i) {
     gs_presentation_release(s->stage_owner);
     gw_Shader_Release(s->stage_owner);
     gw_surface_release((unsigned)i + 1);
+    gw_motion_release((unsigned)i + 1);
     /* Lua may be disabled, throw, or refuse cleanup. The native registry remains
      * authoritative, and this fallback cannot release another script's assets. */
     gs_rw_branch();
@@ -6695,6 +6710,7 @@ static void gs_unload(int i) {
     gw_ScriptGame_PartsReset(i + 1);
     gw_ScriptGame_CpuTechnicalClear(i + 1);
     gw_ScriptGame_FighterModsRelease(i + 1);
+    gs_caps_release(i + 1);
     gw_ScriptGame_OnePTemplatesRelease(i + 1);
     for(k=0;k<6;++k)if(gs_1p.tint_owner[k]==i+1)gs_1p.tint_owner[k]=0;
     if(gs_1p.owner==i+1)gs_1p.loop=0;
@@ -7134,10 +7150,12 @@ void gw_Script_SceneBegin(int scene_kind) {
     memset(gs_contact_labels, 0, sizeof gs_contact_labels);
     prev = gs.scene_kind;
     gw_surface_release(0);
+    gw_motion_release(0);
     gs_fly_cursor_reset();
     gw_ScriptGame_CpuTechnicalClear(0);
     gw_ScriptGame_CameraParamsRelease(0);
     gw_ScriptGame_FighterModsRelease(0);
+    gs_caps_release(0);
     gw_ScriptGame_OnePTemplatesClear();
     gw_ScriptGame_FighterBenchRelease(0);
     gw_ScriptGame_StageIsolationClear(0);
@@ -7932,6 +7950,8 @@ static void gs_state_dir_of(const char *path, char *out, size_t cap) {
    or the loop top when paused (at_tick). A rewind starts a re-simulation burst, so it only
    happens at the loop top. */
 static void gs_apply_pending(int at_tick) {
+    if (gs.pending_load || gs.st_pending_load[0] || (gs.rw_pending_on && at_tick))
+        gw_motion_frame(gs.frame, 1);
     if (gs_stage_cleanup_pending) gs_stage_cleanup_dead();
     if ((gs.pending_save || gs.pending_load || gs.rw_pending_on || gs.st_pending_save[0] ||
          gs.st_pending_load[0]) && gw_ScriptGame_StageSlotsActive()) {
@@ -8154,7 +8174,7 @@ void gw_Script_HitRuleContext(int victim,int id,int move,int grounded,int owner)
     e=&gs.ev[gs.nev-1];if(e->what!=LAB_EV_HIT || e->b!=victim)return;
     e->context_move=move;e->context_attacker_ground=grounded;
     for(i=0;i<e->hit_rule_count;++i)if(e->hit_rule_ids[i]==id && e->hit_rule_owners[i]==owner)return;
-    if(e->hit_rule_count<24){e->hit_rule_owners[e->hit_rule_count]=owner;e->hit_rule_ids[e->hit_rule_count++]=id;}
+    if(e->hit_rule_count<GS_HIT_RULE_CONTEXT_MAX){e->hit_rule_owners[e->hit_rule_count]=owner;e->hit_rule_ids[e->hit_rule_count++]=id;}
 }
 
 void gw_Script_EnemyGameEvent(int handle, int attacker, int victim, int flags, int damage, int reaction) {
@@ -8446,6 +8466,7 @@ static void gs_dispatch_events(void) {
 }
 
 void gw_Script_FramePost(void) {
+    gw_motion_frame(gs.frame, gw_Snap_Resimulating() || gs_lab_frame_kind != 0);
     int slot, any = 0, kind = gs_lab_frame_kind;
     int sim_tag = gs_ring_now();
     gs_sim_replay_mode = kind != 0;
@@ -9111,6 +9132,7 @@ static int t_exec(const char *line, char *out, int cap) { return gw_Script_Exec(
 #include "gw_script_cpu_tests.inc"
 #include "gw_script_camera_params_tests.inc"
 #include "gw_script_fighter_mod_tests.inc"
+#include "gw_script_fighter_caps_tests.inc"
 #include "gw_script_sim_state_tests.inc"
 #include "gw_script_hit_rules_tests.inc"
 #include "gw_script_gameplay_events_tests.inc"
@@ -10615,6 +10637,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_mission_archive", test_script_mission_archive);
     gw_test_register("script_mission_lifetime", test_script_model_owner_cleanup);
 #endif
+    gw_motion_register_tests();
     gw_test_register("script_mission_player", test_script_mission_player);
     gw_test_register("script_mode_blob", test_script_mode_blob);
     gw_test_register("script_model_api", test_script_model_api);
@@ -10638,6 +10661,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_zones_api", test_script_zones_api);
     gw_test_register("script_camera_params", test_script_camera_params);
     gw_test_register("script_fighter_mod", test_script_fighter_mod);
+    gw_test_register("script_fighter_caps", test_script_fighter_caps);
     gw_test_register("script_sim_state", test_script_sim_state);
     gw_test_register("script_hit_rules", test_script_hit_rules);
     gw_test_register("script_gameplay_events", test_script_gameplay_events);

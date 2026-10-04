@@ -14,7 +14,7 @@
 
 #include "gw.h"
 
-#define GW_TEST_MAX 256
+#define GW_TEST_MAX 2048
 #define GW_TEST_MSG_MAX 256
 
 static struct {
@@ -22,12 +22,16 @@ static struct {
   gw_test_fn fn;
 } gw_tests[GW_TEST_MAX];
 static int gw_test_count;
+static int gw_test_overflow;
 
 static char gw_test_msg[GW_TEST_MSG_MAX];
 static int gw_test_msg_used;
 
 void gw_test_register(const char *name, gw_test_fn fn) {
   if (gw_test_count >= GW_TEST_MAX) {
+    /* Never drop a test silently: for a day the suite reported 256/256 while every test registered after the
+     * 256th was not being run. */
+    gw_test_overflow++;
     return;
   }
   gw_tests[gw_test_count].name = name;
@@ -241,6 +245,10 @@ int gw_test_run_all(void) {
       gw_log("  %s", gw_test_msg_used ? gw_test_msg : "(no reason recorded)");
     }
   }
-  gw_log("TESTS: pass=%d fail=%d total=%d", pass, fail, gw_test_count);
+  if (gw_test_overflow) {
+    gw_log("not ok - test registry full: %d test(s) were not registered (raise GW_TEST_MAX)", gw_test_overflow);
+    fail += gw_test_overflow;
+  }
+  gw_log("TESTS: pass=%d fail=%d total=%d", pass, fail, gw_test_count + gw_test_overflow);
   return fail;
 }

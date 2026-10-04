@@ -1,5 +1,9 @@
 #include "ftCo_Attack100.h"
 
+#if defined(TARGET_PC)
+#include "script_fighter_caps.h"
+#endif
+
 #include <Runtime/platform.h>
 
 #include <melee/ft/forward.h>
@@ -44,6 +48,9 @@ typedef struct {
 bool ftCo_800D6824(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (ftData_SpecialN[fp->kind] == NULL) {
         return false;
     }
@@ -66,6 +73,9 @@ bool ftCo_800D6824(Fighter_GObj* gobj)
 
 bool ftCo_800D688C(Fighter* fp)
 {
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (fp->input.pressed_buttons & HSD_PAD_B) {
         if (fp->input.lstick[0].y < -p_ftCommonData->x21C) {
             return true;
@@ -77,6 +87,9 @@ bool ftCo_800D688C(Fighter* fp)
 bool ftCo_800D68C0(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (ftData_SpecialLw[fp->kind] == NULL) {
         return false;
     }
@@ -99,6 +112,9 @@ bool ftCo_800D68C0(Fighter_GObj* gobj)
 
 bool ftCo_800D6928(Fighter* fp)
 {
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (fp->input.pressed_buttons & 0x200) {
         if (fp->input.lstick[0].y >= p_ftCommonData->x21C) {
             return true;
@@ -110,6 +126,9 @@ bool ftCo_800D6928(Fighter* fp)
 bool ftCo_Attack100_CheckInput(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (ftData_SpecialHi[fp->kind] == NULL) {
         return false;
     }
@@ -133,6 +152,9 @@ bool ftCo_Attack100_CheckInput(Fighter_GObj* gobj)
 bool ftCo_800D69C4(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
+#if defined(TARGET_PC)
+    if (!FT_CAPS_ACTION_ALLOWED(fp, 16)) return false;
+#endif
     if (ftData_SpecialHi[fp->kind] == NULL) {
         return false;
     }

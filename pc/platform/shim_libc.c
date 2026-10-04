@@ -38,6 +38,8 @@ size_t gw_strlen(const char *s) { return strlen(s); }
 char *gw_strcpy(char *dst, const char *src) { return strcpy(dst, src); }
 char *gw_strncpy(char *dst, const char *src, size_t n) { return strncpy(dst, src, n); }
 int gw_strcmp(const char *a, const char *b) { return strcmp(a, b); }
+char *gw_strchr(const char *s, int c) { return (char *) strchr(s, c); }
+char *gw_strcat(char *dst, const char *src) { return strcat(dst, src); }
 int gw_strncmp(const char *a, const char *b, size_t n) { return strncmp(a, b, n); }
 unsigned long gw_strtoul(const char *s, char **end, int base) { return strtoul(s, end, base); }
 

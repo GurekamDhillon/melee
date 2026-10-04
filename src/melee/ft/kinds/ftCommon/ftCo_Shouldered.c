@@ -72,6 +72,7 @@ void ftCo_8009C744(Fighter_GObj* gobj)
     fp->dmg.x1860_element = hit->element;
     ftColl_80078710(vic_gobj, gobj, &fp->dmg.facing_dir_1);
     ScriptGame_HitRuleReport(vic_fp,fp,hit,ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(vic_fp,hit->damage),0));
+    ScriptGame_HitRulePercentQueue(hit,fp,ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(vic_fp, hit->damage),0));
     Fighter_UnkTakeDamage_8006CC30(fp, ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(vic_fp, hit->damage),0));
     ftCo_Damage_CalcKnockback(fp);
     ftCo_8008E908(gobj, 0);
@@ -113,6 +114,7 @@ void ftCo_Shouldered_Anim(Fighter_GObj* gobj)
         fp1->dmg.x1860_element = hit->element;
         ftColl_80078710(gobj1, fp1->victim_gobj, &fp1->dmg.facing_dir_1);
         ScriptGame_HitRuleReport(fp2,fp1,hit,ScriptGame_HitRuleContact(hit,fp1,FT_SCRIPT_DEALT(fp2,hit->damage),0));
+        ScriptGame_HitRulePercentQueue(hit,fp1,ScriptGame_HitRuleContact(hit,fp1,FT_SCRIPT_DEALT(fp2, hit->damage),0));
         Fighter_UnkTakeDamage_8006CC30(fp1, ScriptGame_HitRuleContact(hit,fp1,FT_SCRIPT_DEALT(fp2, hit->damage),0));
         ftCo_Damage_CalcKnockback(fp1);
         ftCo_8008E908(gobj1, 0);

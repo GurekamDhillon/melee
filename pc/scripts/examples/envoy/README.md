@@ -94,7 +94,7 @@ and commit pending edits before changing depth.
 same-pool CPU build. Omit strength, or use `-`, to target the player strength.
 The opponent receives only that number, progression and role; it never copies
 the player's modifier identities. Difficulty rises with depth/loop; bosses get
-larger factors. High-strength rolls weight Armoured, Cleansing and defensive
+larger factors. High-strength rolls weight Damage resistant, Cleansing and defensive
 chains more heavily than raw launch. `foe list` shows the actual result;
 `foe fight [port]` / `foe stand [port]` switch CPU mode; `foe clear` cleans up.
 The same shaders and timed nameplates show the rolled modifiers. CPU modifier

@@ -1,6 +1,6 @@
 -- Derived from vocabulary only: no curated modifier pair registry.
 return function(D)
- local status_tags={burn='burning',chill='chilled',curse='cursed',haste='hasted',guarded='guarded',momentum='momentum'}
+ local status_tags=D.mod_status.tags
  local function profile(m)
   local tags,produces,consumes,events={},{},{},{}
   for _,tag in ipairs(m.tags) do tags[tag]=true end

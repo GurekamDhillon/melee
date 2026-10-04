@@ -1318,6 +1318,10 @@ Ground_GObj* Ground_GetStageGObj(int map_id)
     GObj_InitUserData(gobj, 3, mem_free, gp);
     gp->map_id = map_id;
     gp->gobj = gobj;
+#if defined(TARGET_PC)
+    { extern void ScriptGame_RefsGroundBorn(int,int);
+      ScriptGame_RefsGroundBorn(map_id,(int)gobj); }
+#endif
     gp->x10_flags.b0 = 0;
     gp->x10_flags.b1 = 0;
     gp->x10_flags.b2 = 1;
@@ -1497,6 +1501,8 @@ void Ground_StageSlotPrepare(HSD_GObj* gobj, int map_id)
     HSD_GObjProc_RemoveAllProcs(gobj);
     memset(gp, 0, sizeof *gp);
     gp->map_id = map_id; gp->gobj = gobj; gp->x10_flags.b2 = 1;
+    { extern void ScriptGame_RefsGroundBorn(int,int);
+      ScriptGame_RefsGroundBorn(map_id,(int)gobj); }
     for(i=0;i<8;++i)gp->x20[i]=-1;
     grMaterial_801C95C4(gobj);
     HSD_GObj_SetupProc(gobj, Ground_801C1CD0, 1);

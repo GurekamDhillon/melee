@@ -1,4 +1,6 @@
--- Dormant LAB debug adapter. Combat hooks only enqueue pure-data events.
+-- The rule host: pool, bag, slots, opponent rolls and looks, evaluated at the checkpoint boundary.
+-- Two adapters install it. The LAB (debug) needs an offline LAB match and no run. A retail run (Classic /
+-- Adventure, run_host() true) needs only an active offline match: same engine, same ops, same looks.
 return function(D)
  local L={};L.__index=L
  local function port(n) n=tonumber(n);assert(n and n%1==0 and n>=1 and n<=6,'port 1..6 required');return n end
@@ -13,10 +15,15 @@ return function(D)
   g.command('depth',function(arg) return self:depth_command(arg or '') end,'<nonnegative depth> [New Game+ loop]')
   return self
  end
+ function L:hosted() return self.options.run_host~=nil and self.options.run_host()==true end
  function L:allowed()
   local m=self.g.match()
-  if not m or not m.active or m.netplay or not self.g.lab_mode or not self.g.lab_mode() then return false,'offline active LAB match required' end
-  if self.options.blocked and self.options.blocked() then return false,'stop the Envoy run/director before using LAB modifiers' end
+  if self:hosted() then
+   if not m or not m.active or m.netplay then return false,'offline active match required' end
+  else
+   if not m or not m.active or m.netplay or not self.g.lab_mode or not self.g.lab_mode() then return false,'offline active LAB match required' end
+   if self.options.blocked and self.options.blocked() then return false,'stop the Envoy run/director before using LAB modifiers' end
+  end
   if not self.g.sim_supported or not self.g.sim_commit or not self.g.sim_clear then return false,'modifier checkpoint engine unavailable' end
   if not self.g.hit_rule_add or not self.g.fighter_status then return false,'native hit-rule engine unavailable; rebuild required' end
   if not self.g.hit_rules or self.g.hit_rules(1).percent_only~=true then return false,'percent-only hit-rule engine unavailable; rebuild required' end
@@ -24,10 +31,14 @@ return function(D)
   return true
  end
  function L:replaying() return self.g.sim_replaying and self.g.sim_replaying() end
- function L:reset()
+ -- A retail run keeps its bag, slots and progression across stages (persistent build); everything a stage
+ -- produced (statuses, history, ground drops, opponent rolls, looks) is transient and is rebuilt. `full`
+ -- ends the run's build too. The LAB is a debug sandbox and always clears fully.
+ function L:reset(full)
+  local keep=not full and self:hosted() and self.drives
   if self.echoes then self.echoes:reset() end
   if self.foes then self.foes:reset() end
-  if self.drives then self.drives:clear() end
+  if keep then self.drives:soft_clear() elseif self.drives then self.drives:clear() end
   local ctx=self.drives and self.drives.bag.context
   self.engine=D.mod_engine.new(104729,D.mod_pool,{context=ctx});self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped={}
   self.display:clear();self.display.engine=self.engine
@@ -158,7 +169,7 @@ return function(D)
   local players,life={},{}
   for p=1,6 do local v=self.g.player(p)
    if v then players[p]={percent=v.percent or 0,grounded=not v.airborne,stocks=v.stocks or 0}
-    life[p]={falls=v.falls or 0,stocks=v.stocks or 0,char=v.char or -1,action=v.action or 14}
+    life[p]={falls=v.falls or 0,stocks=v.stocks or 0,char=v.char or -1,action=v.action or 14,entity_ref=v.entity_ref}
    end
   end
   return players,life
@@ -216,6 +227,14 @@ return function(D)
   local probe=D.mod_engine.new(self.engine.seed,D.mod_pool);probe:import(s.engine)
   local foes=self.foes and s.foes and self.foes:validate(s.foes)
   assert(type(s.pending)=='table' and type(s.owned)=='table' and type(s.observed)=='table','invalid adapter roots')
+  for p,v in pairs(s.observed) do
+   port(p);assert(type(v)=='table','invalid observed fighter')
+   if v.entity_ref then
+    assert(self.g.entity_valid and self.g.entity_resolve,'entity reference validation unavailable; rebuild required')
+    assert(self.g.entity_valid(v.entity_ref),'stale checkpoint fighter reference')
+    local ref=self.g.entity_resolve(v.entity_ref);assert(ref and ref.kind=='fighter' and ref.port==p and not ref.sub,'checkpoint fighter binding mismatch')
+   end
+  end
   local n=0;for i,e in pairs(s.pending) do
    assert(type(i)=='number' and i%1==0 and i>=1 and i<=12 and type(e)=='table','invalid pending equip')
    for k in pairs(e) do assert(k=='port' or k=='id','unknown pending equip field') end
@@ -234,6 +253,8 @@ return function(D)
  end
  function L:frame()
   if self:replaying() then return true end
+  -- In a run the host waits for the stage's entrance to finish before it draws or commits anything.
+  if self.options.run_ready and self:hosted() and not self.options.run_ready() then return false end
   if not self.enabled and not next(self.owned) and not next(self.hit_owned) then return false end
   local allowed=self:allowed()
   if not allowed then
@@ -270,7 +291,7 @@ return function(D)
    self.display:clear(p);self.engine.display.pulse_start=-100;self.engine.display.pulse_strength=0
   end end
   for p=1,6 do local before,now=self.observed[p],life[p]
-   if not now or before and (now.char~=before.char or (now.action==12 or now.action==13) and before.action~=12 and before.action~=13) then
+   if not now or before and (now.char~=before.char or before.entity_ref and now.entity_ref~=before.entity_ref or (now.action==12 or now.action==13) and before.action~=12 and before.action~=13) then
     stock_queued[p]=true;self.engine.statuses[p]=nil;self.engine.recent[p]=nil;self.engine.damage[p]=nil;self.display:clear(p)
    end
   end
@@ -318,7 +339,16 @@ return function(D)
  end
  function L:unload()
   if self.g.sim_clear and not (self.g.match() or {}).netplay then self.g.sim_clear() end
-  self:reset()
+  self:reset(true)
+ end
+ -- Run adapter entry points (called by run_host.lua at the director's lifecycle boundaries).
+ function L:run_end()
+  if self.g.sim_clear and not (self.g.match() or {}).netplay then pcall(self.g.sim_clear) end
+  self:reset(true)
+ end
+ function L:set_context(ctx)
+  ctx=D.mod_progression.context(ctx.depth,ctx.loop)
+  self.engine.context=ctx;if self.drives then self.drives.bag.context=D.mod_progression.context(ctx) end
  end
  return L
 end

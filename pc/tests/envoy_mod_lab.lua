@@ -321,4 +321,15 @@ T.test('scene resets echo warm ticket and emitter ownership',function()
  a.echoes.warm_jobs[1]=91;a.echoes.visual[1]=17;a:scene()
  assert(releases==1 and removed==1 and not next(a.echoes.warm_jobs) and not next(a.echoes.visual))
 end)
+T.test('canonical fighter bindings checkpoint and clear same-kind replacement transients',function()
+ local s,a=fixture();local old='e1:1:1:0:100:1';s.players[1].entity_ref=old
+ s.g.entity_valid=function(r)return r==s.players[1].entity_ref end
+ s.g.entity_resolve=function(r)if s.g.entity_valid(r)then return{kind='fighter',port=1,sub=false}end end
+ assert(a:command('add glass_core'));a:frame();local saved=s.blob
+ assert(D.mod_codec.decode(saved).observed[1].entity_ref==old)
+ a.engine.statuses[1]={haste={stacks=1,max=8,expires=100,next_tick=100,amount=1,origin={'fixture'}}}
+ s.players[1].entity_ref='e1:1:1:0:101:1';a:frame();assert(not a.engine.statuses[1])
+ local before=a:export();s.blob=saved;assert(not pcall(a.loadstate,a));assert(a:export()==before,'stale checkpoint changed roots')
+ s.players[1].entity_ref=old;assert(pcall(a.loadstate,a));assert(a.observed[1].entity_ref==old)
+end)
 T.done()

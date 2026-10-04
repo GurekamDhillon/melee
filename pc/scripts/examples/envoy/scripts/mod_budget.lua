@@ -1,18 +1,17 @@
 -- One authority: additive deltas, numerical safety families, bounded utility, conservative pool audit.
 return function(D)
  local S=D.mod_schema;local B={}
+ -- Every registered effect needs a budget answer; a field the schema admits cannot be silently unbudgeted.
+ B.effect_ops={echo=true,value=true,convert=true,['versus-status']=true,status=true,stacks=true,remove_status=true,heal=true,damage=true,clank_damage=true,emit=true}
+ for op in pairs(D.mod_registry.effects) do assert(B.effect_ops[op],'registered effect has no budget rule: '..op) end
+ for op in pairs(B.effect_ops) do assert(D.mod_registry.effects[op],'budget rule for an unregistered effect: '..op) end
  B.order={'echo','damage_dealt','launch_dealt','damage_taken','launch_taken','speed','jump','status_duration','sustain','conversion','momentum','clank','cleanse','curse_dealt'}
  B.caps={echo={0,12},damage_dealt={-.95,63},launch_dealt={-.95,3},damage_taken={-.85,63},launch_taken={-.95,3},speed={-.8,1},jump={-.8,1},status_duration={-.95,19},sustain={0,100},conversion={0,30},momentum={0,40},clank={0,6},cleanse={0,30},curse_dealt={0,3}}
  B.families={damage_dealt='damage_dealt',launch_dealt='launch_dealt',damage_taken='damage_taken',knockback_taken='launch_taken',run_speed='speed',air_speed='speed',jump_height='jump',air_jump_height='jump',status_duration='status_duration'}
  B.implicit_families={red={'damage_dealt'},green={'speed'},blue={'launch_taken'},yellow={'jump'},purple={'status_duration'},white={}}
  local function clamp(f,n) local c=assert(B.caps[f],'uncapped family');return math.max(c[1],math.min(c[2],n)) end
  local function add(t,f,n) t[f]=(t[f] or 0)+n end
- local function status(name,amount,max)
-  if name=='burn' then return {sustain=amount*(max or 1)} elseif name=='curse' then return {launch_taken=amount}
-  elseif name=='chill' then return {speed=-.2} elseif name=='haste' then return {speed=.2}
-  elseif name=='guarded' then return {damage_taken=-.25,launch_taken=-.15} elseif name=='momentum' then return {momentum=max or 5} end
-  error('unbudgeted status')
- end
+ local status=D.mod_status.budget
  local function effect(e,m,tier)
   local out={};local function value(v) return S.resolve(v,m,tier) end
   if e.op=='echo' then
@@ -71,10 +70,8 @@ return function(D)
    end
   end end
   for id in pairs(mods or {}) do assert(found[id],'unknown modifier') end
-  local statuskeys={chill={run_speed=-.2,air_speed=-.2},haste={run_speed=.2,air_speed=.2},guarded={damage_taken=-.25,knockback_taken=-.15}}
   for name,v in pairs(statuses or {}) do
-   local ks=statuskeys[name] or (name=='curse' and {knockback_taken=v.amount}) or {}
-   for k,n in pairs(ks) do add(keys,k,n) end
+   for k,n in pairs(D.mod_status.values(name,v)) do add(keys,k,n) end
   end
   -- Multiple keys in speed/jump share caps but do not double-count one implicit.
   local familykeys={}

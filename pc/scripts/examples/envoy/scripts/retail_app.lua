@@ -33,6 +33,15 @@ return function(D)
    self:sync_pause();return ok,why
   end
   function A:command(arg)
+   -- The rule host switch: Classic / Adventure runs install the pool, bag, slots, opponent rolls and looks
+   -- instead of the companion-stat templates. Takes effect on the next run; the old route is the default.
+   if arg=='rules' or arg=='rules on' or arg=='rules off' then
+    if arg~='rules' then
+     if self.retail.active or self.retail.pending then return false,'finish the retail run before switching the rule host' end
+     self.retail.rules=arg=='rules on'
+    end
+    self.g.log('envoy: rule host for retail runs is '..(self.retail.rules and 'ON' or 'off (companion stats)'));return true
+   end
    if arg=='start' then
     if self.menu.run_type=='campaign' then return old.command(self,'start') end
     return self:start_retail()

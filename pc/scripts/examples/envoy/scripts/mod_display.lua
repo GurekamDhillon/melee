@@ -1,7 +1,7 @@
 -- Visual adapter: shader state is rebuilt from checkpointed Lua metadata.
 return function(D)
  local M={};M.__index=M
- local names={'burn','shock','chill','curse','haste','guarded','momentum'}
+ local names=D.mod_status.order
  local look_index={};for i,name in ipairs(names) do look_index[name]=i end
  local function clamp(x,a,b) return math.max(a,math.min(b,x)) end
  local function keys(t) local out={};for k in pairs(t or {}) do out[#out+1]=k end;table.sort(out);return out end

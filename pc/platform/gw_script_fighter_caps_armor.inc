@@ -90,6 +90,9 @@ void gw_Script_ArmorEvent(int entity,int type,int absorbed,int broke,int damage_
     e=&gs.ev[gs.nev++];memset(e,0,sizeof *e);
     e->what=17;e->a=entity;e->b=type;e->c=(absorbed ? 1 : 0)|(broke ? 2 : 0);
     e->d=damage_bits;e->item_y=kb_bits;
+#ifdef GS_SPINE_EVENTS
+    gs_spine_event_capture(e);
+#endif
 }
 static void gs_armor_push(lua_State* L,const GsEvent* e)
 {

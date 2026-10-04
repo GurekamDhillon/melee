@@ -174,7 +174,10 @@ void ScriptGame_HitRuleWon(HitCapsule* hit,Fighter* victim) {
 void ScriptGame_HitRuleContext(HitCapsule* hit,Fighter* victim) {
  HRMeta* m=script_hit_metadata(hit,0); HRResult v,w,x,y;HRPort* defender;int i;
  extern void Script_HitRuleContext(int,int,int,int,int);
+ extern void Script_HitOriginalElement(int);
  if(!victim || victim->player_id>=6 || !hr_ordinary(hit->element))return;
+ /* The creation-time element before any conversion; the context already carries the effective one. */
+ Script_HitOriginalElement(m ? m->original : hit->element);
  v=hr_evaluate(m ? script_hit_ports[m->port].rules : NULL,m ? script_hit_ports[m->port].count : 0,
      m ? m->move : 0,m ? m->grounded : -1,m ? m->original : hit->element,script_hit_ports[script_hit_entity(victim)].status,1);
  defender=&script_hit_ports[script_hit_entity(victim)];

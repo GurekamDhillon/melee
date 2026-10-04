@@ -6,6 +6,7 @@
 #undef main
 #include "../gameworld/script_lab.h"
 #include "../platform/gw_clank_event.h"
+#include "../platform/gw_script_spine_event.h"
 #include "em4f1-context-event.inc"
 static struct {int want_events,nev;GsEvent ev[GS_MAX_EVENTS];} gs;
 static int resim;

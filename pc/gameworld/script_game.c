@@ -43,6 +43,7 @@
 #include "script_parts.h"
 #include "script_model.h"
 #include "script_zones.h"
+#include "script_spine_refs.h"
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjobject.h>
 #include <sysdolphin/baselib/memory.h>
@@ -216,6 +217,7 @@ void ScriptGame_StageEnd(void)
     ScriptGame_SimRelease(0);
     ScriptGame_HitRulesRelease(0);
     ScriptGame_EchoReset();
+    ScriptGame_RefsSceneEnd();
     ScriptGame_FighterBenchRelease(0);
     /* arena-hooks: no scene's ownership or transition can survive teardown. */
     memset(&script_arena, 0, sizeof script_arena);
@@ -1709,6 +1711,8 @@ static Fighter* script_fighter(int slot)
 #include "script_zones.inc"
 #include "script_six_slots.inc"
 #include "script_six_slots_tests.inc"
+int ScriptGame_FighterI(int slot,int field);
+#include "script_spine_refs.inc"
 
 static void script_mod_shield_clamp(int slot)
 {

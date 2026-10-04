@@ -289,6 +289,9 @@ void gw_ItemEvent(int what,int handle,int def,int port,int xb,int yb,int colour,
  if(gs.nev>=GS_MAX_EVENTS) {++gs.ev_dropped;return;}
  e=&gs.ev[gs.nev++];memset(e,0,sizeof *e);e->what=what==0?GS_EV_ITEM_COLLECT:GS_EV_ITEM_EXPIRE;
  e->a=handle;e->b=def;e->c=port;e->d=xb;e->item_y=yb;e->item_colour=colour;e->item_amount=amount;e->item_reason=what;
+#ifdef GS_SPINE_EVENTS
+ gs_spine_event_capture(e);
+#endif
 }
 static void gs_item_event_push(lua_State* L,const GsEvent* e) {
  int kind=e->b>=0?GENO_ITEM_KIND_BASE+e->b:-e->b-1;

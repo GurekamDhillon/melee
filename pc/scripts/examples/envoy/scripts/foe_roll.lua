@@ -77,12 +77,20 @@ return function(D)
   assert(strength>=target*self.band[1] and strength<=target*self.band[2],'opponent outside tracking band')
   return mods,implicits
  end
- function R:roll(strength,seed,stage,port,context,role)
+ -- A roll is a bounded search over candidate builds. roll_job/roll_step expose it in slices so a run can spend
+ -- a few attempts per script call (one call is limited to 2M instructions or 50 ms); roll() runs them all.
+ function R:roll_job(strength,seed,stage,port,context,role)
   assert(type(strength)=='number' and strength==strength and strength>=self.minimum and strength<=self.maximum,'strength request must be finite 1..1e12')
   assert(integer(seed) and integer(stage) and integer(port) and port>=2 and port<=6,'invalid foe seed/stage/port')
   context=P.context(context);local target=strength*P.factor(context,role)
-  local rand=random((seed+stage*104729+port*8191)%2147483646);local best,distance
-  for attempt=0,self.candidates do
+  return {strength=strength,seed=seed,stage=stage,port=port,context=context,role=role,target=target,rand=random((seed+stage*104729+port*8191)%2147483646),attempt=0}
+ end
+ -- Runs up to `attempts` candidates; returns the finished record once the search and its validation are done.
+ function R:roll_step(job,attempts)
+  local strength,seed,stage,port,context,role,target,rand=job.strength,job.seed,job.stage,job.port,job.context,job.role,job.target,job.rand
+  local best,distance=job.best,job.distance
+  while job.attempt<=self.candidates and attempts>0 and not job.found do
+   local attempt=job.attempt;job.attempt=attempt+1;attempts=attempts-1
    local candidate=P.context(context)
    if attempt>0 then candidate.depth=math.min(2147483646,candidate.depth+math.floor(rand(16)))end
    local build=attempt==0 and {items={},equipped={},keystones={},context=context} or self:construct(rand,candidate,target,false)
@@ -96,12 +104,18 @@ return function(D)
     diff=diff+target*.2*quality
     if power<target*self.band[1] or power>target*self.band[2]then diff=diff+target*100 end
     if not distance or diff<distance then best={seed=seed,stage=stage,port=port,requested=strength,target=target,strength=power,build=build,context=context,role=role};distance=diff end
-    if diff<=target*.04 then break end
+    if diff<=target*.04 then job.found=true end
    end
+   job.best,job.distance=best,distance
   end
+  if job.attempt<=self.candidates and not job.found then return nil end
   assert(best,'no valid independent opponent build')
   assert(best.strength>=target*self.band[1] and best.strength<=target*self.band[2],'requested strength unreachable by bounded same-pool search')
   self:validate(best);return best
+ end
+ function R:roll(strength,seed,stage,port,context,role)
+  local job=self:roll_job(strength,seed,stage,port,context,role)
+  return self:roll_step(job,math.huge)
  end
  return R
 end

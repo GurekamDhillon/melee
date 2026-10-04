@@ -1,7 +1,7 @@
 local T={count=0}
 T.root='pc/scripts/examples/envoy/scripts/'
 if not io.open(T.root..'genetics.lua') then T.root='melee/'..T.root end
-function T.module(name,D) if D and not D.mod_echo and name~='mod_echo' then D.mod_echo=assert(loadfile(T.root..'mod_echo.lua'))()(D) end;if D and not D.mod_progression and name~='mod_progression' then D.mod_progression=assert(loadfile(T.root..'mod_progression.lua'))()(D) end;if D and D.mod_schema and not D.mod_budget and name~='mod_budget' then D.mod_budget=assert(loadfile(T.root..'mod_budget.lua'))()(D) end;return assert(loadfile(T.root..name..'.lua'))()(D) end
+function T.module(name,D) if D and not D.mod_status and name~='mod_status' then D.mod_status=assert(loadfile(T.root..'mod_status.lua'))()(D) end;if D and not D.mod_registry and name~='mod_registry' then D.mod_registry=assert(loadfile(T.root..'mod_registry.lua'))()(D) end;if D and not D.mod_echo and name~='mod_echo' then D.mod_echo=assert(loadfile(T.root..'mod_echo.lua'))()(D) end;if D and not D.mod_progression and name~='mod_progression' then D.mod_progression=assert(loadfile(T.root..'mod_progression.lua'))()(D) end;if D and D.mod_schema and not D.mod_budget and name~='mod_budget' then D.mod_budget=assert(loadfile(T.root..'mod_budget.lua'))()(D) end;return assert(loadfile(T.root..name..'.lua'))()(D) end
 function T.test(name,f)
   local ok,err=pcall(f)
   assert(ok,name..': '..tostring(err));T.count=T.count+1

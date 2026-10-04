@@ -54,7 +54,11 @@ static void gs_1p_push(lua_State* L) {
 static void gs_1p_hook(const char* name,int port,int entity) {
     int i;
     if(!gs.L || !gs_1p_offline())return;
-    for(i=0;i<gs.n;++i)if(gs_may_run(i)&&gs.s[i].gameplay&&gs_get_hook(i,name)) {
+    GsEvent env;int made=0;
+    for(i=0;i<gs.n;++i)if(gs_may_run(i)&&gs.s[i].gameplay) {
+        if(!made&&(gs_get_hook(i,"on_event"))){lua_pop(gs.L,1);gs_spine_signal_begin(&env,6,-1,port,entity);made=1;}
+        if(made)gs_spine_signal_deliver(i,&env,name);
+        if(!gs_get_hook(i,name))continue;
         gs_1p_push(gs.L);
         if(port>=0){gs_setint(gs.L,"port",port+1);gs_setint(gs.L,"entity",entity);}
         if(!strcmp(name,"on_1p_boss_defeated"))

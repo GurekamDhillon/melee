@@ -144,6 +144,8 @@ static int l_zone_members(lua_State* L) {
 static void gs_zones_arm(void) {
     int i,k,mask=0;if(gw_Snap_Resimulating())return;
     for(i=0;i<gs.n;i++)for(k=0;k<4;k++)if(gs_get_hook(i,gs_zone_hooks[k])){lua_pop(gs.L,1);mask|=1<<k;}
+    /* A script listening on the common envelope hears every zone signal. */
+    for(i=0;i<gs.n;i++)if(gs_get_hook(i,"on_event")){lua_pop(gs.L,1);mask|=15;}
     gw_ScriptGame_ZonesArm(mask);
 }
 static void gs_zones_dispatch(void) {
@@ -158,13 +160,15 @@ static void gs_zones_dispatch(void) {
         for(k=0;k<SZ_CAP;k++)v->from[k]=gw_ScriptGame_ZoneEvent(e,SZE_FROM+k);
     }
     gs_zone_dispatching=1;
-    for(e=0;e<n;e++)for(i=0;i<gs.n;i++) {
+    for(e=0;e<n;e++){GsEvent env;int made=0;for(i=0;i<gs.n;i++) {
         SzEvent* v=&batch[e];const char* hook=gs_zone_hooks[v->what-1];lua_State* L=gs.L;
+        if(gs_may_run(i) && !made && gs_get_hook(i,"on_event")){lua_pop(L,1);gs_spine_signal_begin(&env,5,-1,v->port,v->zone.handle);made=1;}
+        if(made && gs_may_run(i))gs_spine_signal_deliver(i,&env,hook);
         if(!gs_may_run(i) || !gs_get_hook(i,hook))continue;
         lua_newtable(L);gs_setint(L,"zone",v->zone.handle);gs_setstr(L,"name",v->zone.name);gs_setstr(L,"label",v->zone.label);gs_setstr(L,"kind",v->zone.kind);gs_setint(L,"port",v->port);gs_setint(L,"entity",v->entity);gs_setint(L,"sub",v->sub);gs_setnum(L,"x",v->x);gs_setnum(L,"y",v->y);
         lua_newtable(L);for(k=0;k<SZ_CAP;k++)if(v->from[k]){lua_pushinteger(L,v->from[k]);lua_rawseti(L,-2,lua_rawlen(L,-2)+1);}lua_setfield(L,-2,"from");
         gs_pcall(i,1,0,hook);
-    }
+    }}
     gs_zone_dispatching=0;
     if(gs_zone_pending_release) {
         int terminal=gs_zone_pending_release;gs_zone_pending_release=0;

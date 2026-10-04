@@ -36,6 +36,22 @@ return function(D)
   if not ok then self.g.log('foe: refused '..tostring(why));return false,why end
   self.g.log('foe: '..arg..' accepted');return true
  end
+ -- Run adapter: the roll the console `foe roll` stages, minus the command parsing, in slices. A script call
+ -- is limited to 2M instructions or 50 ms and a whole roll is more, so the run spends a few candidate builds
+ -- per call. The CPU must already be present. The host's own frame warms the look shaders before publishing.
+ function F:roll_begin(p,strength,seed,stage,role)
+  assert(#self.pending<12,'foe pending queue full');self:cpu(p)
+  self.jobs=self.jobs or {}
+  self.jobs[p]={job=self.roller:roll_job(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),role or 'normal'),seed=seed,stage=stage}
+ end
+ function F:roll_advance(p,attempts)
+  local j=self.jobs and self.jobs[p];if not j then return false end
+  local ok,r=pcall(self.roller.roll_step,self.roller,j.job,attempts)
+  if not ok then self.jobs[p]=nil;error(r,0) end
+  if not r then return false end
+  self.jobs[p]=nil;self.pending[#self.pending+1]={op='roll',record=r};self.seed=j.seed;self.stage=j.stage;self.lab.enabled=true
+  return true
+ end
  function F:retire()
   local engine=self.lab.engine
   for p in pairs(self.builds) do engine:clear(p);self.lab.display:clear(p);self.lab.debug_equipped[p]=nil;if engine.display.drive_build then engine.display.drive_build[p]=nil end end
@@ -84,6 +100,6 @@ return function(D)
   return clone(s)
  end
  function F:restore(s) s=self:validate(s);self.seed=s.seed;self.stage=s.stage;self.builds=s.builds;self.pending=s.pending;self.labels=s.labels end
- function F:reset() self.builds={};self.pending={};self.labels={};self.seed=104729;self.stage=0 end
+ function F:reset() self.builds={};self.pending={};self.labels={};self.jobs={};self.seed=104729;self.stage=0 end
  return F
 end

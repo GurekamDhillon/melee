@@ -67,7 +67,7 @@ return function(D)
    else ok,why=self.bag[e.op](self.bag,e.a,e.b) end
    if not ok then self.g.log('bag: refused '..tostring(why)) end
   end
-  self.pending={};local mods,implicits=self.bag:derive();mods=self:combined(mods);self.lab.engine:set_build(1,mods,implicits);if not next(mods) then self.lab.engine.equipped[1]=nil end;if not next(implicits) then self.lab.engine.implicits[1]=nil end
+  self.pending={};self.applied=true;local mods,implicits=self.bag:derive();mods=self:combined(mods);self.lab.engine:set_build(1,mods,implicits);if not next(mods) then self.lab.engine.equipped[1]=nil end;if not next(implicits) then self.lab.engine.implicits[1]=nil end
   self.lab.engine.display.drive_build=self.lab.engine.display.drive_build or {};local looks={};for i=1,self.bag:slots() do local r=self.bag.equipped[i];if r then looks[#looks+1]={colour=r.colour,rarity=r.rarity} end end;self.lab.engine.display.drive_build[1]=looks
  end
  function V:budget_lines()
@@ -124,8 +124,24 @@ return function(D)
  function V:restore(s) self:publish(self:validate(s))
  end
  function V:clear()
-  self.menu:close();self.drops:clear();self.bag:new_run();self.pending={}
+  self.menu:close();self.drops:clear();self.bag:new_run();self.pending={};self.applied=false
   if not self.bag.config.persist then self.bag.context=D.mod_progression.context() end
+ end
+ -- Stage teardown inside a run: ground drops, queued edits and the open menu belong to the old scene; the
+ -- bag, slots and equipped build persist.
+ function V:soft_clear()
+  self.menu:close();self.drops:clear();self.pending={};self.applied=false
+ end
+ -- Run adapter: put one rolled drive in the bag and equip it into the first free slot (the bag menu can
+ -- still swap it). Returns false with a reason when the bag or the checkpoint refuses it right now.
+ function V:grant(record)
+  local draft=self:view();local ok,why=draft:give(record);if not ok then return false,tostring(why) end
+  if #self.bag.items+#self.pending+self.drops:count()>=12 then return false,'bag full' end
+  local queued,reason=self:queue('give',record);if not queued then return false,reason end
+  local index=#draft.items;local free
+  for slot=1,draft:slots() do if not draft.equipped[slot] then free=slot;break end end
+  if free then local equipped=self:queue('equip',index,free);if not equipped then self.pending[#self.pending]=nil;return true,'bagged' end end
+  return true,free and 'equipped' or 'bagged'
  end
  function V:has_build() return next(self.bag.equipped)~=nil or self.bag.keystone~=nil or #(self.bag.keystones or {})>0 end
  function V:tick()

@@ -81,6 +81,7 @@ extern float gw_ScriptGame_ItemF(int index, int field);
 extern void gw_Geno_ItemReleaseOwner(int owner);
 extern void gw_Geno_ItemsSceneReset(void);
 static void gs_item_row(lua_State* L,int serial,int kind);
+static void gs_entity_push_current(lua_State*,int,int,const char*);
 static void gs_item_models_reset(void);
 static int gs_item_call_begin(void);
 static void gs_item_call_end(int mark,int success);
@@ -303,6 +304,8 @@ static int gs_sfx_map_from[GS_SFX_MAP], gs_sfx_map_to[GS_SFX_MAP], gs_sfx_map_ne
 
 /* events the engine reports mid-frame (Script_GameEvent), dispatched after the frame */
 #include "gw_clank_event.h"
+#include "gw_script_spine_event.h"
+#define GS_SPINE_EVENTS 1
 static int gs_want_clanks;
 #define GS_MAX_EVENTS 256
 /* A surviving capsule retains its32 creation IDs after table replacement;
@@ -310,16 +313,21 @@ static int gs_want_clanks;
 #define GS_HIT_RULE_CONTEXT_MAX 96
 typedef struct {
     int what, a, b, c, d;
+    GsSpineEvent spine;
     int hit[LAB_HI_COUNT]; /* LAB_EV_HIT: the attacker's hitbox as it was when it connected */
     float hitf[LAB_HF_COUNT];
     int has_hit;
-    int context_valid, context_element, context_action, context_move;
+    int context_valid, context_element, context_action, context_move, context_original_element;
     int hit_rule_count, hit_rule_ids[GS_HIT_RULE_CONTEXT_MAX], hit_rule_owners[GS_HIT_RULE_CONTEXT_MAX];
     int context_attacker_ground, context_victim_ground, context_attacker_damage, context_victim_damage;
     int source_enemy, reaction;
     int item_y, item_colour, item_amount, item_reason;
     GsClank clank;
 } GsEvent;
+static void gs_spine_event_capture(GsEvent*);
+static void gs_spine_signal_begin(GsEvent*,int phase,int port,int a,int b);
+static int gs_spine_signal_deliver(int script,const GsEvent*,const char* kind);
+static void gs_spine_actor(char[80],int,int);
 
 #define GS_MAX_DRAW 2048
 
@@ -1292,6 +1300,7 @@ static void gs_push_lab_fields(lua_State *L, int slot) {
 static void gs_push_player(lua_State *L, int slot) {
     lua_createtable(L, 0, 20);
     gs_setint(L, "port", slot + 1);
+    gs_entity_push_current(L,1,slot*2,"entity_ref");
     gs_setint(L, "char", gw_ScriptGame_FighterI(slot, SI_CHAR));
     gs_setstr(L, "char_name", gs_char_name(gw_ScriptGame_FighterI(slot, SI_CHAR)));
     gs_setint(L, "kind", gw_ScriptGame_FighterI(slot, SI_KIND));
@@ -1531,6 +1540,7 @@ static int l_items(lua_State *L) {
         }
         gs_setint(L, "owner_port", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_OWNER));
         gs_setint(L, "id", gw_ScriptGame_ItemI(i, SCRIPT_ITEM_ID));
+        gs_entity_push_current(L,2,gw_ScriptGame_ItemI(i,SCRIPT_ITEM_ID),"entity_ref");
         gs_setnum(L, "x", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_X));
         gs_setnum(L, "y", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Y));
         gs_setnum(L, "z", gw_ScriptGame_ItemF(i, SCRIPT_ITEM_Z));
@@ -6228,6 +6238,9 @@ static int l_stage_bounds(lua_State *L)
 
 #include "gw_script_zones.inc"
 #include "gw_script_contacts.inc"
+#include "gw_script_spine_refs.inc"
+#include "gw_script_spine_targets.inc"
+#include "gw_script_spine_events.inc"
 
 static const luaL_Reg gs_gd_funcs[] = {
     {"deadline", l_deadline}, {"deadline_done", l_deadline_done},
@@ -6247,6 +6260,8 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"contact_events", l_contact_events}, {"contact_trace", l_contact_trace},
     {"wait_until", l_wait_until}, {"wait_status", l_wait_status},
     {"contact_overlay", l_contact_overlay},
+    {"entity_ref",l_entity_ref},{"entity_resolve",l_entity_resolve},{"entity_valid",l_entity_valid},
+    {"source_ref",l_source_ref},{"source_resolve",l_source_resolve},{"entity_call",l_entity_call},
     {"fighter_history", l_fighter_history}, {"fighter_history_depth", l_fighter_history_depth},
     {"echo_add", l_echo_add}, {"echo_remove", l_echo_remove}, {"echoes", l_echoes},
     {"echo_afterimage", l_echo_afterimage}, {"afterimage_copy", l_afterimage_copy}, {"afterimage_copy_set", l_afterimage_copy_set},
@@ -7223,7 +7238,7 @@ void gw_Script_SceneBegin(int scene_kind) {
    scripts that define a hook late, e.g. from the console) */
 static void gs_update_want_events(void) {
     static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land",
-                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield", "on_armor"};
+                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield", "on_armor", "on_event"};
     int i, k, want = 0;
     for (i = 0; i < gs.n && !want; ++i) {
         for (k = 0; k < (int)(sizeof hooks / sizeof hooks[0]) && !want; ++k) {
@@ -7238,11 +7253,11 @@ static void gs_update_want_events(void) {
     gs_want_item_collect = gs_want_item_expire = 0;
     gs_item_collect_families=gs_item_expire_families=0;
     for (i=0;i<gs.n;++i) {
-        if(gs_get_hook(i,"on_item_collect")) { lua_pop(gs.L,1);gs_want_item_collect=1;gs_item_collect_families|=1|gs.s[i].item_event_families; }
-        if(gs_get_hook(i,"on_item_expire")) { lua_pop(gs.L,1);gs_want_item_expire=1;gs_item_expire_families|=1|gs.s[i].item_event_families; }
+        if(gs_get_hook(i,"on_item_collect")||gs_get_hook(i,"on_event")) { lua_pop(gs.L,1);gs_want_item_collect=1;gs_item_collect_families|=1|gs.s[i].item_event_families; }
+        if(gs_get_hook(i,"on_item_expire")||gs_get_hook(i,"on_event")) { lua_pop(gs.L,1);gs_want_item_expire=1;gs_item_expire_families|=1|gs.s[i].item_event_families; }
     }
     gs_want_clanks=0;
-    for(i=0;i<gs.n;++i)if(gs_get_hook(i,"on_clank")) {
+    for(i=0;i<gs.n;++i)if(gs_get_hook(i,"on_clank")||gs_get_hook(i,"on_event")) {
         lua_pop(gs.L,1);gs_want_clanks=1;break;
     }
 }
@@ -7253,7 +7268,7 @@ int gw_Script_BossHookEnabled(void) {
         return 0;
     }
     for (i = 0; i < gs.n; ++i) {
-        if (gs_get_hook(i, "on_boss_defeated") || gs_get_hook(i, "on_1p_boss_defeated")) {
+        if (gs_get_hook(i, "on_boss_defeated") || gs_get_hook(i, "on_1p_boss_defeated") || gs_get_hook(i,"on_event")) {
             lua_pop(gs.L, 1);
             return 1;
         }
@@ -8149,6 +8164,7 @@ void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
         return;
     }
     e = &gs.ev[gs.nev++];
+    memset(e,0,sizeof *e);
     e->what = what;
     e->a = a;
     e->b = b;
@@ -8164,11 +8180,17 @@ void gw_Script_GameEvent(int what, int a, int b, int c, int d) {
         for (k = 0; k < LAB_HF_COUNT; ++k) e->hitf[k] = gw_ScriptGame_HitF(a, idx, k);
         e->has_hit = 1;
     }
+    gs_spine_event_capture(e);
     if(what==LAB_EV_ACTION && b!=c) {
         extern int gw_ScriptGame_ActionCategory(int motion);
         int category=gw_ScriptGame_ActionCategory(c);
-        if(category) gw_Script_GameEvent(16,a,c,category,d);
+        if(category){int next=gs.nev;unsigned cause=e->spine.sequence;gw_Script_GameEvent(16,a,c,category,d);
+            if(gs.nev==next+1)gs.ev[next].spine.cause=cause;}
     }
+}
+
+static const char* gs_element_tag(int element) {
+    return element==0 ? "normal" : element==1 ? "fire" : element==2 ? "electric" : element==5 ? "ice" : element==13 ? "darkness" : "unknown";
 }
 
 /* Scalar-only payload captured by the game collision site, never native struct reads. */
@@ -8180,9 +8202,19 @@ void gw_Script_HitContext(int attacker,int victim,int element,int action,int mov
     if (e->what!=LAB_EV_HIT || e->b!=victim) return;
     /* Throw-body attribution can differ from the physical collider. */
     e->a=attacker;
+    gs_spine_hit_context_actor(e);
     e->context_valid=1; e->context_element=element; e->context_action=action; e->context_move=move;
+    e->context_original_element=element; /* until the hit rules report a different creation-time element */
     e->context_attacker_ground=attacker_ground; e->context_victim_ground=victim_ground;
     e->context_attacker_damage=attacker_damage; e->context_victim_damage=victim_damage;
+}
+
+/* Creation-time element before any hit-rule conversion; the effective element is the one HitContext carried. */
+void gw_Script_HitOriginalElement(int original) {
+    GsEvent* e;
+    if(!gs.want_events || !gs.nev || gs.nev>=GS_MAX_EVENTS || gw_Snap_Resimulating())return;
+    e=&gs.ev[gs.nev-1];if(e->what!=LAB_EV_HIT || !e->context_valid)return;
+    e->context_original_element=original;
 }
 
 void gw_Script_HitRuleContext(int victim,int id,int move,int grounded,int owner) {
@@ -8225,10 +8257,12 @@ void gw_Script_TargetBroken(int handle, int remaining) {
     e = &gs.ev[gs.nev++];
     memset(e, 0, sizeof *e);
     e->what = 5; e->a = handle; e->b = remaining;
+    gs_spine_event_capture(e);
     if (remaining == 0) {
         e = &gs.ev[gs.nev++];
         memset(e, 0, sizeof *e);
         e->what = 6;
+        gs_spine_event_capture(e);
     }
 }
 
@@ -8239,6 +8273,7 @@ void gw_Script_EnemyDefeated(int which, int handle) {
     e = &gs.ev[gs.nev++];
     memset(e, 0, sizeof *e);
     e->what = 8; e->a = which; e->b = handle;
+    gs_spine_event_capture(e);
     gw_log("script enemy: queued defeat kind=%s handle=%d", gs_enemy_names[which], handle);
 }
 
@@ -8252,6 +8287,7 @@ void gw_Script_EnemyRemoved(int which, int handle, int reason) {
     e = &gs.ev[gs.nev++];
     memset(e, 0, sizeof *e);
     e->what = 9; e->a = which; e->b = handle; e->c = reason;
+    gs_spine_event_capture(e);
     gw_log("script enemy: queued removed kind=%s handle=%d reason=%s",
            gs_enemy_names[which], handle, reason == 1 ? "explicit_remove" : "item_destroyed");
 }
@@ -8266,6 +8302,7 @@ void gw_Script_EnemyHit(int handle, int from, int damage) {
     e = &gs.ev[gs.nev++];
     memset(e, 0, sizeof *e);
     e->what = 10; e->a = handle; e->b = from + 1; e->c = damage;
+    gs_spine_event_capture(e);
 }
 
 static const char *const gs_element_names[] = {
@@ -8341,10 +8378,11 @@ static void gs_dispatch_events(void) {
                 hook=actions[e->c];
             }
             if (!gs_may_run(i) || (e->what >= 5 && e->what < GS_EV_ITEM_COLLECT && e->what != GS_EV_CLANK && !gs.s[i].gameplay) ||
-                ((e->what==GS_EV_ITEM_COLLECT||e->what==GS_EV_ITEM_EXPIRE)&&!gs_item_event_accept(i,e->b)) ||
-                !gs_get_hook(i, hook)) {
+                ((e->what==GS_EV_ITEM_COLLECT||e->what==GS_EV_ITEM_EXPIRE)&&!gs_item_event_accept(i,e->b))) {
                 continue;
             }
+            if(gs_get_hook(i,"on_event")){gs_spine_event_push(L,e,hook);gs_pcall(i,1,0,"on_event");}
+            if(!gs_may_run(i)||!gs_get_hook(i,hook))continue;
             switch (e->what) {
             case 17:
                 gs_armor_push(L,e); nargs=1; break;
@@ -8442,11 +8480,13 @@ static void gs_dispatch_events(void) {
                 lua_setfield(L,-2,"hit_rule_owners");
                 if (e->context_valid) {
                     static const char* const moves[]={"unknown","jab","dash_attack","tilt","smash","aerial","grab","throw","special","projectile"};
-                    const char* element=e->context_element==0 ? "normal" : e->context_element==1 ? "fire" :
-                        e->context_element==2 ? "electric" : e->context_element==5 ? "ice" : e->context_element==13 ? "darkness" : "unknown";
+                    const char* element=gs_element_tag(e->context_element);
                     union { int i; float f; } value;
                     gs_setstr(L,"move_tag",moves[e->context_move>=0 && e->context_move<10 ? e->context_move : 0]);
                     gs_setstr(L,"element_tag",element); gs_setint(L,"element",e->context_element);
+                    /* effective = the element the hit connected with; original = before hit-rule conversion */
+                    gs_setstr(L,"original_element_tag",gs_element_tag(e->context_original_element)); gs_setint(L,"original_element",e->context_original_element);
+                    gs_setbool(L,"element_converted",e->context_original_element!=e->context_element);
                     gs_setint(L,"attacker_action",e->context_action);
                     if(e->context_attacker_ground>=0) gs_setbool(L,"attacker_grounded",e->context_attacker_ground);
                     gs_setbool(L,"victim_grounded",e->context_victim_ground);
@@ -8491,8 +8531,10 @@ void gw_Script_FramePost(void) {
     gs_sim_replay_mode = kind != 0;
     if (kind == 0 && !gw_Snap_Resimulating()) gs_sim_live(sim_tag);
     gw_hang_logic();
+    gs_spine_post_pending = 1;
     gs_in_frame = 0;
     if (gs.L == NULL) {
+        gs_spine_post_pending = 0;
         return;
     }
     if (gs.match_active) {
@@ -8509,6 +8551,7 @@ void gw_Script_FramePost(void) {
         }
     }
     if (gw_Snap_Resimulating() && kind != 1) {
+        gs_spine_post_pending = 0;
         return; /* a rollback's resimulated frame */
     }
     if(kind!=1)gs_zones_dispatch(); /* deliver before other hooks can retire resources */
@@ -8518,6 +8561,7 @@ void gw_Script_FramePost(void) {
         gw_Script_PadFrameConsumed();
     }
     gs_lab_frame_kind = 0;
+    gs_spine_post_pending = 0;
     gs.frame++;
     if (kind != 1) gs_deadline_frame();
     gs_items_track();
@@ -9156,6 +9200,7 @@ static int t_exec(const char *line, char *out, int cap) { return gw_Script_Exec(
 #include "gw_script_sim_state_tests.inc"
 #include "gw_script_hit_rules_tests.inc"
 #include "gw_script_echo_tests.inc"
+#include "gw_script_spine_tests.inc"
 #include "gw_script_gameplay_events_tests.inc"
 #include "gw_script_1p_tests.inc"
 #include "gw_script_fighter_bench_tests.inc"
@@ -10687,6 +10732,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_sim_state", test_script_sim_state);
     gw_test_register("script_hit_rules", test_script_hit_rules);
     gw_test_register("script_echo_parser", test_script_echo_parser);
+    gw_test_register("script_spine_events", test_script_spine_events);
     gw_test_register("script_gameplay_events", test_script_gameplay_events);
     gw_test_register("script_1p", test_script_1p);
     gw_test_register("script_fighter_bench", test_script_fighter_bench);

@@ -26,7 +26,9 @@ return function(D)
   return out
  end
  function R.new(g,profile,commit)
-  return setmetatable({g=g,profile=profile,commit=commit,active=false,owned={},items={},observed={},cleared={},loop=0,elapsed=0},R)
+  -- rules: the new route. When true the run installs the rule host (pool, bag, slots, opponent rolls,
+  -- looks) instead of the companion-stat templates; false keeps the old stat route exactly as it was.
+  return setmetatable({g=g,profile=profile,commit=commit,active=false,owned={},items={},observed={},cleared={},loop=0,elapsed=0,rules=false},R)
  end
  function R:available()
   for _,api in ipairs({'start_1p','mode_1p','hold_1p','release_1p','loop_1p','spawn_1p','end_1p'}) do
@@ -54,7 +56,8 @@ return function(D)
   if not ok then self.g.end_1p();self.working=nil;self.companion=nil;return false,why end
   self.active=true;self.mode=mode;self.seed=seed;self.loop=0;self.elapsed=0;self.cleared={};self.reward=nil;self.results=nil;self.completed={};self.final_rewards={};self.deferred_complete=nil
   self.initial=clone(self.profile).companions[working.active].stats
-  self.g.log('envoy: retail '..mode..' started seed='..seed);return true
+  if self.rules and self.host then self.host:run_begin(seed) end
+  self.g.log('envoy: retail '..mode..' started seed='..seed..(self.rules and ' (rule host)' or ' (companion stats)'));return true
  end
  local function modifiers(c)
   local e=C.retail_effects(c);return {damage_dealt=e.damage_dealt,damage_taken=e.damage_taken,
@@ -82,6 +85,9 @@ return function(D)
   end
   self:clear_mods();self:clear_items();self.state=e;self.loop=e.loop or self.loop;self.tags={};self.tag_ticks=C.tuning.retail.tag_ticks
   self.boss=false;self.last_damage=nil;self.guard_flash=0
+  -- The rule host replaces the stat templates: it rolls opponents when each fighter spawns and applies the
+  -- bag at the checkpoint, so nothing below (companion modifiers, stat nameplates) runs on this route.
+  if self.rules and self.host then self.enemy_templates={};self.host:stage_start(e);return end
   local port=e.player_port or 1
   assert(self.g.spawn_1p(port,modifiers(self.companion)),'player retail modifiers refused');self.owned[port]=true
   local count=#(e.opponents or {});self.enemy_templates={}
@@ -100,6 +106,7 @@ return function(D)
   self.g.log('envoy: '..self.mode..' stage='..tostring(e.stage_index)..' NG+'..self.loop..' '..table.concat(labels,', '))
  end
  function R:spawn(e)
+  if self.rules and self.host then self.host:spawn(e);return end
   if self.active and self.enemy_templates and self.enemy_templates[e.port] then
    -- Native templates already applied before this notification/first logic.
    self.owned[e.port]=true
@@ -112,11 +119,14 @@ return function(D)
   local key=(e.loop or self.loop)..':'..stage;if self.cleared[key] then return end
   self.cleared[key]=true
   local final=e.final==true
+  if self.rules and self.host then self:offer_reward(stage,e.loop or self.loop,final);return end
   if not final and (t.reward_every<=0 or (stage+1)%t.reward_every~=0) then return end
   self:offer_reward(stage,e.loop or self.loop,final)
  end
  function R:offer_reward(stage,loop,final)
   local t=C.tuning.retail
+  -- Rule host route: the reward is a drive for the bag, not a held stat choice; nothing pauses the run.
+  if self.rules and self.host then if final then self.final_rewards[loop]=true end;return self.host:stage_reward(stage,loop,final) end
   if not self.g.hold_1p(t.hold_ticks) then self.g.log('envoy: reward hold unavailable');return false end
   local random=rng(self.seed,stage,loop,final and 11 or 7);local options={};local first=math.floor(random()*4)
   for i=1,3 do options[i]={colour=colours[(first+i-1)%4+1],points=t.reward_points[i]*(final and t.final_multiplier or 1)} end
@@ -201,7 +211,11 @@ return function(D)
      self.g.release_1p();self.g.log('envoy: reward hold expired; retail continues')
     end
    end
-  else self:clear_mods();self:clear_items() end
+  else
+   self:clear_mods();self:clear_items()
+   -- Every way a run ends (clear, game over, stop) passes through here once the run is inactive.
+   if self.host and self.host.running then self.host:run_end() end
+  end
  end
  function R:item_collect(e)
   local v=self.items[e.item]
@@ -228,7 +242,8 @@ return function(D)
  end
  function R:frame()
   if self.active then
-   self.elapsed=math.min(999999999,self.elapsed+1);self:physical_tick()
+   self.elapsed=math.min(999999999,self.elapsed+1)
+   if self.rules and self.host then self.host:frame() else self:physical_tick() end
    self.guard_flash=math.max(0,(self.guard_flash or 0)-1)
    local p=self.g.player and self.g.player(self.state and self.state.player_port or 1)
    local damage=p and p.percent

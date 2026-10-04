@@ -21,6 +21,11 @@ void gw_Script_Clank(int a,int b,int item,int kind,int x,int y,int z,
     c->entity_a=ea;c->entity_b=eb;c->cancel_a=flags&1;c->cancel_b=(flags>>1)&1;
     c->x=gs_camera_float(x);c->y=gs_camera_float(y);c->z=gs_camera_float(z);
     c->damage_a=gs_camera_float(da);c->damage_b=gs_camera_float(db);
+#ifdef GS_SPINE_EVENTS
+    gs_spine_event_capture(e);
+    gs_spine_address(e->spine.actor,1,ea);
+    gs_spine_address(e->spine.target,item?2:1,eb);
+#endif
 }
 /* Snapshot ALL queued clashes before ANY Lua handler (even a different event)
  * can issue an immediate gd.hit or another gameplay write. Every listener sees

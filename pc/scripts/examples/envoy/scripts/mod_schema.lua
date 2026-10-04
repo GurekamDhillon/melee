@@ -4,16 +4,15 @@ return function(D)
  local function set(words) local out={};for w in words:gmatch('%S+') do out[w]=true end;return out end
  S.tags=set('jab tilt smash aerial special grab throw projectile dash_attack grounded airborne normal fire electric ice darkness burning shocked chilled cursed hasted guarded momentum damage healing unique keystone')
  S.events=set('equip hit_dealt hit_taken ko_dealt stock_lost shield_hit perfect_shield clank jump air_jump landing ledge_grab grab throw taunt item_pickup stage_start interval status_applied status_removed stacks_changed')
- S.statuses=set('burn chill curse haste guarded momentum') -- Shock's hitstun effect awaits safe hit mutation.
+ S.statuses=D.mod_status.implemented -- Shock's hitstun effect awaits safe hit mutation (see mod_status).
  S.values=set('damage_dealt damage_taken run_speed air_speed shield_max jump_height air_jump_height knockback_taken fall_speed weight shield_regen status_duration')
- S.status_bits={burn=1,chill=4,curse=8,haste=16,guarded=32,momentum=64}
+ S.status_bits=D.mod_status.bits
  S.hit_moves=set('any unknown jab dash_attack tilt smash aerial special grab throw projectile')
  S.elements=set('normal fire electric ice darkness')
  local record=set('id label kind cost tags tiers trigger interval conditions effects stacking text visual affix group weight fixed_colour families')
  local cond=set('tag self_status target_status status self_damage_above self_damage_below target_damage_above grounded airborne last_stock recently stage_kind')
- local fields={status=set('op status subject duration amount max refresh when'),value=set('op key value when'),heal=set('op amount subject when'),damage=set('op amount subject when'),stacks=set('op status subject duration amount max refresh when'),remove_status=set('op status subject when'),emit=set('op event subject tag when')}
- fields.echo=set('op copies slots delay match damage knockback element once_per_move status');fields.clank_damage=set('op subject')
- fields.convert=set('op match change');fields['versus-status']=set('op status match change')
+ -- Effect field lists come from the one effect registry (mod_registry), shared with budget and the checkpoint compiler.
+ local fields=setmetatable({},{__index=function(_,op) local d=D.mod_registry.effects[op];return d and d.fields end})
  local function keys(t,allowed) assert(type(t)=='table' and not getmetatable(t),'plain record required');for k in pairs(t) do assert(allowed[k],'unsupported record field '..tostring(k)) end end
  local function number(v,m)
   if type(v)=='string' then assert(v:match('^%$[a-z_]+$'),'only tier references allowed');for _,tier in ipairs(m.tiers) do assert(type(tier[v:sub(2)])=='number','missing tier value') end

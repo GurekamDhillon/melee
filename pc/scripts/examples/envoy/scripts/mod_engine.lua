@@ -1,8 +1,7 @@
 -- Pure bounded rule evaluation. Native adapter owns checkpointed gameplay writes.
 return function(D)
  local S,C=D.mod_schema,D.mod_codec;local E={};E.__index=E
- local ordered={'burn','shock','chill','curse','haste','guarded','momentum'}
- local status_tags={burn='burning',chill='chilled',curse='cursed',haste='hasted',guarded='guarded',momentum='momentum'}
+ local ordered,status_tags=D.mod_status.order,D.mod_status.tags
  local function copy(v) return C.decode(C.encode(v)) end
  local function append(out,text) for _,v in ipairs(out) do if v==text then return end end;if #out<24 then out[#out+1]=text end end
  function E.new(seed,pool,limits)

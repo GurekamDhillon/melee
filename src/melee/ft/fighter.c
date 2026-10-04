@@ -2270,6 +2270,20 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                  * MELEE_MEX=enable_c_stick_always_spoof_debug_level or
                  * enable_c_stick_always_interrupt1. */
                 extern int Mex_Enabled(const char *);
+                /* The port's default in 1P modes is C-stick attacks, not the
+                 * retail camera zoom: settings.cfg `cstick_1p_attacks=0`
+                 * restores retail, and L+R+START still toggles in a match. */
+                {
+                    extern int Settings_Int(const char* key, int dflt);
+                    static bool cstick_1p_default_read;
+                    if (!cstick_1p_default_read) {
+                        gm_CStickSmashTargetTest =
+                            Settings_Int("cstick_1p_attacks", 1) != 0;
+                        cstick_1p_default_read = true;
+                        OSReport("C-STICK: 1P default %s\n",
+                                 gm_CStickSmashTargetTest ? "SMASH" : "CAMERA");
+                    }
+                }
                 if ((DbLevel < DbLKind_DebugRom ||
                      Mex_Enabled("enable_c_stick_always_spoof_debug_level")) &&
                     (gm_IsCurrently1PMode_inline() == 0 ||

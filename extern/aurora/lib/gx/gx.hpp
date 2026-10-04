@@ -516,6 +516,7 @@ struct ShaderConfig {
   AlphaCompare alphaCompare;
   std::array<IndStage, MaxIndStages> indStages{};
   u32 numIndStages = 0;
+  u32 surfaceProgram = 0; // immutable, process-local override identity
 
   bool operator==(const ShaderConfig& rhs) const { return memcmp(this, &rhs, sizeof(*this)) == 0; }
 };
@@ -540,6 +541,7 @@ struct ShaderInfo {
   std::bitset<MaxTextures> sampledIndTextures;
   std::bitset<MaxIndTexMtxs> usedIndTexMtxs;
   u32 uniformSize = 0;
+  bool surface = false;
   bool usesFog : 1 = false;
   bool lightingEnabled : 1 = false;
   u8 lineMode : 2 = 0;

@@ -13,6 +13,7 @@
 #include <melee/ft/inlines.h>
 #include <melee/ft/types.h>
 #include <melee/it/types.h>
+#include <melee/it/kinds/types.h>
 #include <melee/lb/types.h>
 #include <melee/pl/player.h>
 #include <sysdolphin/baselib/controller.h>
@@ -31,6 +32,9 @@ extern void Geno_FighterReset(Fighter* fp);
 extern void Geno_OnActionChange(Fighter_GObj* gobj);
 extern void Geno_ApplyAttrs(Fighter* fp);
 extern void Geno_MultiJump(Fighter* fp, int first_state, int* msid, float* vy);
+extern int Geno_TestReloadLayout(const char* text);
+extern int GenoGame_ScriptRange(u32 address, u32 bytes);
+extern int GenoGame_ScriptHasIasa(const void* script);
 extern int Geno_TestInstall(const char* text);
 extern void Geno_TestRestore(void);
 extern int snap_open(int k);
@@ -339,8 +343,8 @@ static int test_geno_multijump(void)
     msid = 306;
     vy = 123.0f;
     Geno_MultiJump(&t_fp, 300, &msid, &vy);
-    if (msid != 304 || vy != 1.0f) {
-        TestFail("jump 7: expected state 304 (last row), vy 1.0");
+    if (msid != 303 || vy != 1.0f) {
+        TestFail("jump 7: expected state 303 (repeatable row), vy 1.0");
         rc = 1;
     }
     Geno_TestRestore();
@@ -352,6 +356,174 @@ static int test_geno_multijump(void)
         TestFail("without a profile Geno_MultiJump must not touch anything");
         rc = 1;
     }
+    return rc;
+}
+
+/* The last retail Kirby script never sets cmd_var0: only enter it on the final jump. */
+static int test_geno_multijump_script_gate(void)
+{
+    int used, base, msid, rc = 0;
+    float vy;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":9}}]}");
+    t_setup();
+    t_zero(&t_mj, sizeof t_mj);
+    t_mj.x28 = 5;
+    t_fp.x2D0 = &t_mj;
+    t_fp.co_attrs.max_jumps = 6;
+    Geno_ApplyAttrs(&t_fp);
+    t_mj.x14[3] = 1.25f;
+    t_mj.x14[4] = 1.0f;
+    for (base = 341; base <= 346; base += 5) {
+        for (used = 1; used < 9; used++) {
+            int row = used - 1 < 4 ? used - 1 : used == 8 ? 4 : 3;
+            t_fp.x1968_jumpsUsed = used;
+            msid = base + used - 1;
+            vy = 123.0f;
+            Geno_MultiJump(&t_fp, base, &msid, &vy);
+            if (msid != base + row || vy != t_mj.x14[used > 5 ? 4 : used - 1]) {
+                TestFail("multi-jump must keep a script with a next-jump gate until the last jump");
+                rc = 1;
+            }
+        }
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
+static int test_geno_reload_state_callbacks(void)
+{
+    const char* a = "{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+        "{\"name\":\"TutorialB\",\"behavior\":\"geno.ground\",\"subaction\":3}]}]}";
+    const char* b = "{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"states\":["
+        "{\"name\":\"TutorialB\",\"behavior\":\"geno.ground\",\"subaction\":3,\"iasa\":\"interrupt\"}]}]}";
+    int rc = 0;
+    Geno_TestInstall(a);
+    if (Geno_TestReloadLayout(a) != 0 || Geno_TestReloadLayout(b) != 1) {
+        TestFail("IASA callback edits must restart; unchanged rows must stay live");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
+static int test_geno_effective_script_range(void)
+{
+    extern u32 Geno_ScriptPool[GENO_POOL_WORDS];
+    int rc = 0;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\","
+        "\"subactions\":[{\"index\":3,\"words\":[\"0x04000004\",\"0x5c000000\"]}]}]}");
+    t_setup();
+    if (!GenoGame_ScriptRange((u32) &Geno_ScriptPool[0], 12) ||
+        GenoGame_ScriptRange((u32) &Geno_ScriptPool[0], 16) ||
+        GenoGame_ScriptRange((u32) &Geno_ScriptPool[0] - 4, 4) ||
+        !GenoGame_ScriptHasIasa(t_subactions[3].xC)) {
+        TestFail("effective overlay script must be readable only inside its installed slot");
+        rc = 1;
+    }
+    t_script[0] = GENO_W0(GENO_SUB_CALL, 3, 0);
+    t_script[1] = 0x5c000000; /* operand, not IASA */
+    t_script[2] = 0;
+    t_script[3] = 0;
+    if (GenoGame_ScriptHasIasa(t_script)) {
+        TestFail("IASA warning must decode command lengths rather than scan operands");
+        rc = 1;
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
+/* Ordinary double-jump input uses the same declared count, including the final boundary. */
+static int test_geno_ordinary_jumps(void)
+{
+    extern ftCommonData* p_ftCommonData;
+    extern bool ft_did_jump(Fighter* fp, bool arg1);
+    static ftCommonData common;
+    ftCommonData* saved = p_ftCommonData;
+    int used, rc = 0;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"mario\",\"jumps\":{\"max\":9}}]}");
+    t_setup();
+    t_fp.kind = Ft_Kind_Mario;
+    t_fp.co_attrs.max_jumps = 2;
+    Geno_ApplyAttrs(&t_fp);
+    t_zero(&common, sizeof common);
+    common.tap_jump_threshold = 1.0f;
+    p_ftCommonData = &common;
+    t_fp.input.pressed_buttons = HSD_PAD_X;
+    for (used = 1; used < 9; used++) {
+        t_fp.x1968_jumpsUsed = used;
+        if (!ft_did_jump(&t_fp, false)) rc = 1;
+    }
+    t_fp.x1968_jumpsUsed = 9;
+    if (ft_did_jump(&t_fp, false) || t_fp.co_attrs.max_jumps != 9) rc = 1;
+    t_fp.x1968_jumpsUsed = 2;
+    t_fp.input.pressed_buttons = 0;
+    if (ft_did_jump(&t_fp, false)) rc = 1;
+    p_ftCommonData = saved;
+    Geno_TestRestore();
+    if (rc) TestFail("ordinary jump input must allow eight air jumps and stop at max 9");
+    return rc;
+}
+
+static int test_geno_jump_limits(void)
+{
+    int rc = 0;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":1e50}}]}");
+    t_setup();
+    Geno_ApplyAttrs(&t_fp);
+    if (t_fp.co_attrs.max_jumps != 250) rc = 1;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"attributes\":{\"max_jumps\":300}}]}");
+    t_setup();
+    Geno_ApplyAttrs(&t_fp);
+    if (t_fp.co_attrs.max_jumps != 250) rc = 1;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":0}}]}");
+    t_setup();
+    Geno_ApplyAttrs(&t_fp);
+    if (t_fp.co_attrs.max_jumps != 1) rc = 1;
+    Geno_TestRestore();
+    if (rc) TestFail("both max-jump keys must clamp safely to the u8-supported range");
+    return rc;
+}
+
+/* Native decoder fixture: actual effective Geno row, pool outside MEM1, with ORIG tail. */
+const void* GenoTest_LabScript(u32 original)
+{
+    t_subactions[3].xC = (CmdUnion*) original;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\","
+        "\"states\":[{\"name\":\"TutorialB\",\"subaction\":3,\"iasa\":\"interrupt\"}],"
+        "\"subactions\":[{\"index\":3,\"words\":[\"0x04000005\","
+        "\"0xed030000\",0,5,\"0x2c80100c\",\"0x04000000\",0,\"0xb4990000\",\"0x0a000000\","
+        "\"0x5c000000\",\"0xec930000\",3,\"0x40000000\",\"0xed310000\"]}]}]}");
+    t_setup();
+    t_fp.x24 = t_subactions;
+    return t_fp.x24[3].xC;
+}
+
+void GenoTest_LabScriptEnd(void)
+{
+    t_subactions[3].xC = NULL;
+    Geno_TestRestore();
+}
+
+static int test_geno_iasa_script_validation(void)
+{
+    int rc = 0;
+    Geno_TestInstall("{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\",\"subactions\":["
+        "{\"index\":3,\"words\":[\"0x14000000\",1]},"
+        "{\"index\":4,\"words\":[\"0xec1f0000\",\"0x5c000000\"]},"
+        "{\"index\":5,\"words\":[\"0xec230000\",\"0x5c000000\",0]},"
+        "{\"index\":6,\"words\":[\"0xed030000\",0,1,0,\"0x5c000000\",0]}]}]}");
+    t_setup();
+    if (GenoGame_ScriptHasIasa(t_subactions[3].xC) ||
+        GenoGame_ScriptHasIasa(t_subactions[4].xC) ||
+        GenoGame_ScriptHasIasa(t_subactions[5].xC)) {
+        TestFail("IASA load scan must reject bad pointers/lengths and ignore operand opcodes");
+        rc = 1;
+    }
+    if (!GenoGame_ScriptHasIasa(t_subactions[6].xC)) {
+        TestFail("IASA load warning must inspect a conditional arm beyond a fall-through End");
+        rc = 1;
+    }
+    Geno_TestRestore();
     return rc;
 }
 
@@ -2550,6 +2722,44 @@ static int test_geno_v5_registry(void)
     return rc;
 }
 
+/* Reflection scales the travel state as well as the next velocity written to the item. */
+static int test_geno_v5_article_reflection(void)
+{
+    static Item item;
+    static HSD_GObj gobj;
+    ItemLogicTable* logic;
+    GenoArtVars* vars;
+    int rc = 0;
+    if (Geno_TestInstall(t_v5_json) != 1) {
+        TestFail("could not install the v5 profile");
+        return 1;
+    }
+    t_zero(&item, sizeof(item));
+    t_zero(&gobj, sizeof(gobj));
+    gobj.user_data = &item;
+    vars = (GenoArtVars*) &item.xDD4_itemVar;
+    vars->vx = 2.0f;
+    vars->vy = -4.0f;
+    vars->frame = 1;
+    /* Same facing avoids a visual JObj update in this headless item. */
+    item.facing_dir = item.xC68 = -1.0f;
+    item.xC70 = 1.5f;
+    logic = Geno_ArticleLogic(GENO_ART_KIND_BASE);
+    if (logic == NULL || logic->reflected(&gobj)) {
+        TestFail("a reflected Geno article must survive");
+        rc = 1;
+    } else {
+        logic->states[0].physics_updated(&gobj);
+        if (vars->vx != -3.0f || vars->vy != -6.0f ||
+            item.x40_vel.x != -3.0f || item.x40_vel.y != -6.0f) {
+            TestFail("reflector speed multiplier must survive the following article physics step");
+            rc = 1;
+        }
+    }
+    Geno_TestRestore();
+    return rc;
+}
+
 /* The travel: a straight shot keeps its velocity; gravity to max_fall; homing turns at most
  * `turn` degrees a frame toward the target, only after `delay`; max_speed caps the speed. */
 static int test_geno_v5_article_motion(void)
@@ -2783,6 +2993,83 @@ static int test_geno_v51(void)
     }
     GenoGame_TestCapture(0, 0);
     Geno_TestRestore();
+    return rc;
+}
+
+/* v5.4: the directed dash's pure cores (Sonic Blade as Ultimate's status code aims it) */
+extern int GenoGame_DashStick(f32 sx, f32 sy, f32 thr, f32* cx, f32* cy);
+extern void GenoGame_DashAim(int has_target, f32 dx, f32 dy, int has_stick, f32 cx, f32 cy, f32 facing,
+                             f32 vert_deg, f32 up_min, f32 up_max, f32* ux, f32* uy, f32* face, int* kind);
+extern void GenoGame_Brake(f32* vx, f32* vy, f32 brake, f32 max);
+extern int GenoGame_HookFind(const char* name);
+
+static int test_geno_v54_dash(void)
+{
+    f32 cx = 9.0f, cy = 9.0f, ux, uy, face, vx, vy;
+    int kind, rc = 0;
+    /* the stick: a vector-length dead zone, then the raw polar angle, the whole circle */
+    if (GenoGame_DashStick(0.15f, 0.15f, 0.25f, &cx, &cy) != 0 || cx != 9.0f) {
+        TestFail("dash stick: inside the dead zone writes nothing");
+        rc = 1;
+    }
+    if (!GenoGame_DashStick(0.0f, -1.0f, 0.25f, &cx, &cy) || !t_near(cx, 0.0f) || !t_near(cy, -1.0f)) {
+        TestFail("dash stick: straight down is straight down");
+        rc = 1;
+    }
+    if (!GenoGame_DashStick(-0.5f, 0.5f, 0.25f, &cx, &cy) || !t_near(cx, -0.70710678f) || !t_near(cy, 0.70710678f)) {
+        TestFail("dash stick: up-back is 135 degrees, unclamped");
+        rc = 1;
+    }
+    /* stick straight up, facing right: heading up, facing kept (within 20 of vertical), up clip */
+    GenoGame_DashAim(0, 0.0f, 0.0f, 1, 0.0f, 1.0f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
+    if (!t_near(ux, 0.0f) || !t_near(uy, 1.0f) || face != 1.0f || kind != 1) {
+        TestFail("dash aim: straight up keeps the facing");
+        rc = 1;
+    }
+    /* stick back and down (225 deg): turns, down clip, on the ground too (no ground rule) */
+    GenoGame_DashAim(0, 0.0f, 0.0f, 1, -0.70710678f, -0.70710678f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
+    if (!t_near(ux, -0.70710678f) || !t_near(uy, -0.70710678f) || face != -1.0f || kind != 2) {
+        TestFail("dash aim: 225 degrees turns and aims down");
+        rc = 1;
+    }
+    /* a target wins over the stick; the heading is exactly at it, any angle */
+    GenoGame_DashAim(1, -30.0f, -40.0f, 1, 1.0f, 0.0f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
+    if (!t_near(ux, -0.6f) || !t_near(uy, -0.8f) || face != -1.0f || kind != 2) {
+        TestFail("dash aim: the target overrides the stick");
+        rc = 1;
+    }
+    /* a target exactly on top, or nothing at all: straight ahead along the facing */
+    GenoGame_DashAim(1, 0.0f, 0.0f, 1, 0.0f, 1.0f, -1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
+    if (!t_near(ux, -1.0f) || !t_near(uy, 0.0f) || face != -1.0f || kind != 0) {
+        TestFail("dash aim: a zero offset dashes along the facing");
+        rc = 1;
+    }
+    GenoGame_DashAim(0, 0.0f, 0.0f, 0, 0.0f, 1.0f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
+    if (!t_near(ux, 1.0f) || !t_near(uy, 0.0f) || kind != 0) {
+        TestFail("dash aim: no target and no stick is straight ahead");
+        rc = 1;
+    }
+    /* the brake: cap 2.0 first, then 0.34 along the vector; never past rest */
+    vx = 3.0f;
+    vy = 4.0f;
+    GenoGame_Brake(&vx, &vy, 0.34f, 2.0f);
+    if (!t_near(vx, 0.996f) || !t_near(vy, 1.328f)) {
+        TestFail("brake: capped to 2.0 then 0.34 off along the vector");
+        rc = 1;
+    }
+    vx = -0.1f;
+    vy = 0.0f;
+    GenoGame_Brake(&vx, &vy, 0.24f, 0.0f);
+    if (vx != 0.0f || vy != 0.0f) {
+        TestFail("brake: stops at rest, never reverses");
+        rc = 1;
+    }
+    if (GenoGame_HookFind("geno.dash.search") != 8 || GenoGame_HookFind("geno.dash.aim") != 9 ||
+        GenoGame_HookFind("geno.brake") != 10)
+    {
+        TestFail("dash hooks: stable ids 8, 9, 10");
+        rc = 1;
+    }
     return rc;
 }
 
@@ -3121,6 +3408,12 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_state_resets", test_geno_state_resets);
     TestRegister("geno_attr_table", test_geno_attr_table);
     TestRegister("geno_multijump", test_geno_multijump);
+    TestRegister("geno_multijump_script_gate", test_geno_multijump_script_gate);
+    TestRegister("geno_ordinary_jumps", test_geno_ordinary_jumps);
+    TestRegister("geno_jump_limits", test_geno_jump_limits);
+    TestRegister("geno_reload_state_callbacks", test_geno_reload_state_callbacks);
+    TestRegister("geno_effective_script_range", test_geno_effective_script_range);
+    TestRegister("geno_iasa_script_validation", test_geno_iasa_script_validation);
     TestRegister("geno_state_savestate", test_geno_state_savestate);
     TestRegister("geno_v1_values", test_geno_v1_values);
     TestRegister("geno_v1_change_action", test_geno_v1_change_action);
@@ -3151,7 +3444,9 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_lab_mismatch_fields", test_geno_lab_mismatch_fields);
     TestRegister("geno_v5_registry", test_geno_v5_registry);
     TestRegister("geno_v5_article_motion", test_geno_v5_article_motion);
+    TestRegister("geno_v5_article_reflection", test_geno_v5_article_reflection);
     TestRegister("geno_v5_on_hit", test_geno_v5_on_hit);
     TestRegister("geno_v51", test_geno_v51);
     TestRegister("geno_v52_lockon", test_geno_v52_lockon);
+    TestRegister("geno_v54_dash", test_geno_v54_dash);
 }

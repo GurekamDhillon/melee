@@ -136,6 +136,12 @@ static void lab_exit_match(GameModeState* state)
 {
     (void) state;
     lab_in_match = 0;
+    if ((lab_vs.start.players[4].slot_type != Gm_PKind_NA ||
+         lab_vs.start.players[5].slot_type != Gm_PKind_NA) &&
+        lab_next != GENO_LAB_TO_MATCH && lab_next != GENO_LAB_TO_MENU) {
+        OSReport("geno lab: six-slot match cannot return through CSS/SSS; going to menus\n");
+        lab_next = GENO_LAB_TO_MENU;
+    }
     switch (lab_next) {
     case GENO_LAB_TO_SSS:
         gm_SetNextGameModeStateId(LAB_STATE_SSS);
@@ -239,6 +245,12 @@ int GenoLab_InMatch(void)
 int GenoLab_Leave(int where)
 {
     if (gm_GetCurrentGameMode() != GM_LAB || !lab_in_match) {
+        return 0;
+    }
+    if ((lab_vs.start.players[4].slot_type != Gm_PKind_NA ||
+         lab_vs.start.players[5].slot_type != Gm_PKind_NA) &&
+        where != GENO_LAB_TO_MATCH && where != GENO_LAB_TO_MENU) {
+        OSReport("geno lab: six-slot selection refused; restart the match or leave to menus\n");
         return 0;
     }
     lab_next = where == GENO_LAB_TO_SSS || where == GENO_LAB_TO_MENU || where == GENO_LAB_TO_MATCH
@@ -576,7 +588,7 @@ int GenoFly_Target(int slot, int x_bits, int y_bits)
     Fighter* fp = fly_cursor_actor(slot);
     x.i = x_bits; y.i = y_bits;
     if (!fp) return -1;
-    if (!(x.f >= -10000 && x.f <= 10000 && y.f >= -10000 && y.f <= 10000)) return -2;
+    if (!(x.f >= -49000 && x.f <= 49000 && y.f >= -49000 && y.f <= 49000)) return -2;
     fly_cursor[slot].fighter = fp; fly_cursor[slot].target = 1;
     fly_cursor[slot].x = x.f; fly_cursor[slot].y = y.f;
     return 0;
@@ -629,7 +641,14 @@ static int fly_refused(Fighter* fp)
     if (fp->motion_id >= ftCo_MS_DeadDown && fp->motion_id <= ftCo_MS_RebirthWait) {
         return 1;
     }
-    if (fp->motion_id >= ftCo_MS_CapturePulledHi && fp->motion_id <= ftCo_MS_ThrownCrazyHand) {
+    /* Held, thrown or carried. The enum runs CapturePulledHi..ThrownCrazyHand with free states in the
+     * middle (rolls, Rebound, Pass, Ottotto / OttottoWait, wall stops, the ledge, taunts): those fly
+     * and teleport like any other. A fighter teetering at an edge (OttottoWait never ends on its own)
+     * used to be refused, which left the map editor's return-to-cursor stuck. */
+    if ((fp->motion_id >= ftCo_MS_CapturePulledHi && fp->motion_id <= ftCo_MS_CaptureFoot) ||
+        (fp->motion_id >= ftCo_MS_ThrownF && fp->motion_id <= ftCo_MS_ThrownlwWomen) ||
+        (fp->motion_id >= ftCo_MS_ShoulderedWait && fp->motion_id <= ftCo_MS_ThrownCrazyHand))
+    {
         return 1;
     }
     return fp->victim_gobj != NULL || fp->x1A5C != NULL;
@@ -905,4 +924,28 @@ int GenoFly_CursorTest(void)
     if (fp.x914[0].state != HitCapsule_Disabled) rc = 1;
     fly_cursor[0] = saved; fly_speed = speed; fly_solid = solid;
     return rc;
+}
+
+/* Native scene suite supplies a parsed VS config; no heaps, preload or scene transitions. */
+int GenoLab_SixSeedTest(int six)
+{
+    static VsModeData fixture;
+    int i;
+    memset(&fixture,0,sizeof fixture);
+    gm_SetupAllPlayerDefaults(fixture.start.players);
+    if (!six) {
+        fixture.start.players[4].ckind=fixture.start.players[5].ckind=2;
+        fixture.start.players[4].slot_type=fixture.start.players[5].slot_type=Gm_PKind_Cpu;
+        SceneLaunch_SeedPlayers(&fixture,false);
+        return fixture.start.players[4].ckind!=ChKind_None || fixture.start.players[5].ckind!=ChKind_None ||
+               fixture.start.players[4].slot_type!=Gm_PKind_NA || fixture.start.players[5].slot_type!=Gm_PKind_NA;
+    }
+    if (SceneLaunch_SeedPlayers(&fixture,false)!=6) return 1;
+    for (i=0;i<GM_MAX_PLAYERS;++i) {
+        PlayerInitData* p=&fixture.start.players[i];
+        if (p->slot!=i+1 || p->ckind!=2 || p->slot_type!=(i ? Gm_PKind_Cpu : Gm_PKind_Human) ||
+            p->team!=(i ? 1 : 0) || p->stocks!=i+1 || p->color>=gm_GetNumCostumesForCKind(2) ||
+            (i>=4 && (p->spawn_pos!=-1 || p->attack_ratio!=1.0f || p->defense_ratio!=1.0f))) return 1;
+    }
+    return 0;
 }

@@ -1,3 +1,4 @@
+#include "gw_profiler.h"
 /* gw_ppc.c - Gekko/PowerPC subset interpreter (Phase 1). See gw_ppc.h for the contract.
  *
  * Instruction words are fetched from guest memory big-endian (gw_r32), so a hand-built blob
@@ -2229,6 +2230,9 @@ static uint32_t gw_ppc_run(gw_ppc_machine *m) {
         insn = gw_ppc_fetch(m, ip);
         m->cpu.pc = ip + 4;
         if (gw_ppc_execute(m, insn)) {
+            gw_prof_counter_detail(GW_PROF_MEX_INSTRUCTIONS,
+                                   gw_ppc_depth > 0 ? gw_ppc_entry[gw_ppc_depth - 1] : m->cpu.pc,
+                                   GW_PPC_MAX_INSNS - budget);
             return m->cpu.gpr[3];
         }
     }
@@ -2402,7 +2406,18 @@ static void gw_ppc_host_args_out(const gw_ppc_host_args *hb) {
     }
 }
 
+uint32_t gw_ppc_call_profile_body(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,
+                     uint32_t sp);
 uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,
+                     uint32_t sp) {
+    uint32_t result;
+    gw_prof_begin(GW_PROF_MEX, guest_fn);
+    result = gw_ppc_call_profile_body(guest_fn, gpr_args, nargs, rtoc, sp);
+    gw_prof_end();
+    return result;
+}
+
+uint32_t gw_ppc_call_profile_body(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,
                      uint32_t sp) {
     gw_ppc_machine saved = gw_ppc_m; /* full reentrant save (cpu + bridge) */
     gw_ppc_ctx *c = &gw_ppc_m.cpu;

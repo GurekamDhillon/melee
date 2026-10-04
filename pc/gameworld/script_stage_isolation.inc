@@ -7,12 +7,14 @@ extern void Script_StageIsolationReleased(int owner);
 extern int Netplay_Enabled(void);
 extern int RB_Enabled(void);
 extern int Replay_Active(void);
+#include "script_stage_host.inc"
 
 void ScriptGame_StageIsolationClear(int owner)
 {
     if (owner == 0 || (owner > 0 && script_stage_isolation_owner == owner)) {
         int released = script_stage_isolation_owner;
         mpScriptStageIsolationSet(0, 0, 0);
+        script_stage_host_hide(0);
         script_stage_isolation_owner = 0;
         if (released) Script_StageIsolationReleased(released);
     }
@@ -23,7 +25,7 @@ void ScriptGame_StageIsolationWatch(void)
     if (script_stage_isolation_owner &&
         (!Script_StageIsolationAllowed(script_stage_isolation_owner) ||
          Netplay_Enabled() || RB_Enabled() || Replay_Active() ||
-         stage_info.grkind != Gr_Kind_Last || !mpScriptStageIsolationActive()))
+         !script_stage_host_allowed() || !mpScriptStageIsolationActive()))
         ScriptGame_StageIsolationClear(0);
 }
 
@@ -32,10 +34,11 @@ int ScriptGame_StageIsolate(int owner, int isolate)
     if (owner <= 0 || (script_stage_isolation_owner && script_stage_isolation_owner != owner)) return 0;
     if (!isolate) { ScriptGame_StageIsolationClear(owner); return 1; }
     if (!script_stage.map || script_stage.cap <= 0 ||
-        script_stage.map != mpLib_8004D164() || stage_info.grkind != Gr_Kind_Last ||
+        script_stage.map != mpLib_8004D164() || !script_stage_host_allowed() ||
         Netplay_Enabled() || RB_Enabled() || Replay_Active()) return 0;
     if (!mpScriptStageIsolationSet(script_stage.base_l, script_stage.base_j, 1)) return 0;
     script_stage_isolation_owner = owner;
+    script_stage_host_hide(1);
     return 1;
 }
 

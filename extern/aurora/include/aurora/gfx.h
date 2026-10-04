@@ -46,14 +46,25 @@ typedef struct {
 /// Pipeline tag bits, recorded per pipeline config in the pipeline cache (and its seed).
 /// MUST_DRAW: drawn while GXSetPipelineWaitAURORA was on (item models).
 #define AURORA_PIPELINE_TAG_MUST_DRAW 1u
+#define AURORA_PIPELINE_TAG_CORE 2u
 
-/// Queue every known pipeline config carrying any of `tagMask` at normal priority for the current
-/// scene layout, ahead of the background warm-up. They count in urgentPipelinesPending until built,
-/// so a loading screen that waits on that also waits on them. Returns how many were not built yet.
+/// Queue known tagged configs in the background for the scene layout. Unrelated
+/// item coverage must not pin a scene's hold; declared warm handles gate staging.
+/// Returns how many were not built yet.
 uint32_t aurora_prewarm_tagged_pipelines(uint32_t tagMask);
 /// How many known pipeline configs carry any of `tagMask`. The boot warm-up builds MUST_DRAW
 /// configs first, so a frontend waiting on the first N seed builds should add this to N.
 uint32_t aurora_count_tagged_pipelines(uint32_t tagMask);
+/// Capture existing GX material traversal, queue compiles, discard draw submission.
+/// begin returns 0 on nesting/capacity; pending is -1 stale, -2 unsealed, or remaining.
+uint32_t aurora_pipeline_warm_begin(void);
+void aurora_pipeline_warm_end(void);
+void aurora_pipeline_warm_label(const char* content);
+int aurora_pipeline_warm_pending(uint32_t handle);
+void aurora_pipeline_warm_release(uint32_t handle);
+/// Actual current scene-layout core configurations still unbuilt (not a job count).
+uint32_t aurora_pipeline_core_pending(void);
+uint32_t aurora_pipeline_core_count(void);
 
 const AuroraStats* aurora_get_stats();
 float aurora_get_fps();
@@ -66,6 +77,16 @@ int64_t aurora_get_worker_busy_ns();
 /// GX vertices decoded for the last completed frame, including display lists.
 uint32_t aurora_get_last_vertex_count();
 /// Enable the two extra performance counters used by the in-game visualizer.
+/* Optional diagnostics sink. Called on the render worker, never from simulation.
+ * GPU results are delayed; frame is Aurora's presentation id, not a logic frame.
+ * Register before initialization; clear only after the worker has synchronized.
+ * Names have callback lifetime. durationNs is a duration, not a CPU timestamp. */
+typedef void (*AuroraProfilerSink)(const char* name, uint64_t frame, uint64_t durationNs, void* userdata);
+void aurora_profiler_set_sink(AuroraProfilerSink sink, void* userdata);
+void aurora_profiler_enable(bool enabled);
+bool aurora_profiler_gpu_available(void);
+uint64_t aurora_profiler_gpu_dropped_zones(void);
+uint64_t aurora_profiler_gpu_dropped_frames(void);
 void aurora_perf_enable(bool enabled);
 bool aurora_perf_enabled();
 

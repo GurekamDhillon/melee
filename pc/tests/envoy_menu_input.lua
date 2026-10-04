@@ -1,0 +1,11 @@
+local T=dofile((io.open('pc/tests/envoy_testlib.lua') and '' or 'melee/')..'pc/tests/envoy_testlib.lua')
+assert(io.open(T.root..'menu_input.lua'),'menu input missing')
+local I=T.module('menu_input')
+T.test('edges repeat no C stick and mask cleanup',function()
+ local p={};local masks={};local i=I.new({pad=function(port,raw) assert(port==1 and raw);return p end,input_mask=function(port,b) masks[#masks+1]=b;return true end})
+ i:set_active(true);p={A=true,cx=127,cy=127};assert(i:poll()[1]=='accept');assert(#i:poll()==0)
+ p={UP=true};assert(i:poll()[1]=='up');for n=1,17 do assert(#i:poll()==0) end;assert(i:poll()[1]=='up')
+ p={};i:poll();p={START=true};assert(i:poll()[1]=='start');i:close();assert(masks[#masks]==0)
+end)
+T.done()
+

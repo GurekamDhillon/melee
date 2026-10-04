@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 #include "jobj.h"
 
 #include <math.h>
@@ -590,11 +591,14 @@ void JObjAnimAll(HSD_JObj* jobj)
 
 void HSD_JObjAnimAll(HSD_JObj* jobj)
 {
+    PC_PROF_BEGIN(GW_PROF_ANIMATION, 0);
     if (jobj != NULL) {
         HSD_AObjInitEndCallBack();
         JObjAnimAll(jobj);
         HSD_AObjInvokeCallBacks();
     }
+
+    PC_PROF_END();
 }
 
 void HSD_JObjDispAll(HSD_JObj* jobj, Mtx vmtx, u32 flags, u32 rendermode)

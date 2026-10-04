@@ -1599,8 +1599,7 @@ static void fl_desc(const char* s)
 {
     float bone[3];
     fm_tok("bone", KS_VERSUS, bone);
-    fm_text("fl_desc", FPR_OTHER, -1, kit.desc_role, kit.desc_anchor[0], kit.desc_anchor[1], s,
-            bone, kit.desc_max);
+    fm_description("fl_desc", FPR_OTHER, -1, s, bone);
 }
 
 /* The status strip, from online_layout.json. */

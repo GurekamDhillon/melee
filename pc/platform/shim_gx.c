@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "shim_gx.h"
+#include "gw_hang.h"
 #include "shim_vi.h"
 #include "gw_overlay.h"
 
@@ -100,6 +101,8 @@ void gw_read_render_mode(GXRenderModeObj *dst, const void *src_be) {
  * fires, so both entry points go through the VI shim, which calls back synchronously. */
 void gw_GXSetDrawDone(void) { gw_gx_set_draw_done(); }
 void gw_GXWaitDrawDone(void) { gw_gx_wait_draw_done(); }
+/* The warm-up draw (ScriptGame_WarmDraw) flushes its off-screen batch so the pipelines it needs are requested now. */
+void gw_GXFlush(void) { GXFlush(); }
 void *gw_GXSetDrawDoneCallback(void *cb) { return gw_gx_set_draw_done_callback(cb); }
 
 /* Counters behind gw_gx_get_stats, so the frame driver's heartbeat can say whether the game is
@@ -467,6 +470,7 @@ void gw_diag_jobj_report(void) {
 
 /* The one point where a finished EFB copy means the frame is complete (see shim_vi.h). */
 void gw_GXCopyDisp(void *dest, u8 clear) {
+  gw_hang_shim("GXCopyDisp");
   if ((gw_gx_copydisp_count % 30u) == 0u) {
     gw_log("gw: DIAG copy #%u  since-last prim=%u dlist=%u  clear=%u colorupd=%u alphaupd=%u "
            "zcmp=%u zupd=%u clearclr=%u,%u,%u,%u",
@@ -1081,9 +1085,7 @@ void gw_GXSetTevIndirect(u32 tev_stage, u32 ind_stage, u32 format, u32 bias_sel,
 
 /* ---- pixel / frame buffer ----------------------------------------------------------------- */
 
-void gw_GXSetFog(u32 type, f32 startz, f32 endz, f32 nearz, f32 farz, GXColor color) {
-  GXSetFog((GXFogType)type, startz, endz, nearz, farz, color);
-}
+#include "gw_gx_fog_scope.inc"
 
 /* The SDK computes this table on the CPU; Aurora has no equivalent, so port the reference body
  * from melee's own GXPixel.c and store the result as big-endian game data. */

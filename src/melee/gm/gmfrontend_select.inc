@@ -259,7 +259,7 @@ static struct {
     int teams;
     int training;                 ///< Training's select: one human (train_h), the CPU dummy (train_c)
     int train_h, train_c;
-    char toast[FE_STR];
+    char toast[FE_HELP_STR];
     int toast_until;
     /* SSS */
     int ns;
@@ -285,7 +285,7 @@ static u32 fs_held(int port)
 
 static void fs_toast(const char* s)
 {
-    fp_copy(fcs.toast, s, FE_STR);
+    fp_copy(fcs.toast, s, FE_HELP_STR);
     fcs.toast_until = fl.frames + 150;
 }
 
@@ -936,7 +936,7 @@ static void fs_card_rect(int c, float* r)
 static const char* fs_css_hint(char* buf)
 {
     FsPort* s = &fcs.p[0];
-    char why[FE_STR];
+    char why[FE_HELP_STR];
     if (fcs.toast[0] != 0 && fl.frames < fcs.toast_until) {
         return fcs.toast;
     }
@@ -976,7 +976,7 @@ static void fs_build_css(void)
     int solo = fcs.training || (fe_sel_mode != NULL && !fcs.online);
     float ink[3], face[3], bone[3], muted[3], gold[3], white[3] = { 1, 1, 1 }, dim[3], disabled[3];
     float r[4];
-    char id[FP_ID], buf[FE_STR];
+    char id[FP_ID], buf[FE_HELP_STR];
     int slot, p, first = fcs.page * fcs.per, last = first + fcs.per, q;
     fs_drop_borrowed();
     fs_tok("ink", ink);
@@ -1399,7 +1399,7 @@ static void fs_build_sss(void)
     const char* const* crumbs = fe_sel_training ? crumbs_tr : fe_sel_mode != NULL ? crumbs_md : crumbs_vs;
     int solo = fe_sel_training || fe_sel_mode != NULL;
     float ink[3], face[3], bone[3], muted[3], gold[3], white[3] = { 1, 1, 1 }, r[4], c[3];
-    char id[FP_ID], buf[FE_STR];
+    char id[FP_ID], buf[FE_HELP_STR];
     int i, first = fcs.page * fcs.per, last = first + fcs.per;
     float w = (FS_GX1 - FS_GX0 - (fcs.cols - 1) * 6.0F) / (float) fcs.cols, h = w * 7.0F / 8.0F;
     fs_drop_borrowed();

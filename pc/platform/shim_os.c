@@ -14,6 +14,7 @@
  * Game code reads __OSCurrHeap directly, and gwtool byte-swaps every access, so its storage here is
  * big-endian like any other game-visible data. */
 #include "shim_os.h"
+#include "gw_hang.h"
 #include "shim_vi.h"
 
 #include <dolphin/os.h>
@@ -482,6 +483,7 @@ int gw_OSGetResetSwitchState(void) { return 0; }
 void gw_OSResetSystem(int reset, u32 code, int force) {
   gw_log("gw: OSResetSystem(%d, 0x%08X, %d)", reset, code, force);
   gw_dump_stub_summary();
+  gw_hang_final("OSResetSystem", 0);
   exit(0);
 }
 

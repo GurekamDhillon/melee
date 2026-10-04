@@ -969,12 +969,20 @@ void hsd_8039EE24(u32 mask)
 
     while (hsd_804D78F4 != 0) {
         gp = (HSD_Generator*) ((HSD_SList*) hsd_804D78F4)->data;
+#if defined(TARGET_PC)
+        { extern int ScriptGame_StageSlotParticleBegin(int);
+          extern void ScriptGame_StageSlotProcEnd(void);
+          int owned=ScriptGame_StageSlotParticleBegin(gp->linkNo);
+#endif
         hsd_8039D71C(gp);
         hsd_804D78F4 = (u32) HSD_SListRemove((HSD_SList*) hsd_804D78F4);
         if (gp->jobj != NULL) {
             HSD_JObjUnref(gp->jobj);
             gp->jobj = NULL;
         }
+#if defined(TARGET_PC)
+          if(owned)ScriptGame_StageSlotProcEnd(); }
+#endif
     }
 
     gen = hsd_804D78FC;
@@ -991,6 +999,11 @@ void hsd_8039EE24(u32 mask)
             gen = gen->next;
             continue;
         }
+#if defined(TARGET_PC)
+        { extern int ScriptGame_StageSlotParticleBegin(int);
+          extern void ScriptGame_StageSlotProcEnd(void);
+          int owned=ScriptGame_StageSlotParticleBegin(gen->linkNo);
+#endif
         hsd_8039D214(gen);
         if (gen->random < 0.0F) {
             gen->count -= gen->random;
@@ -1011,11 +1024,17 @@ void hsd_8039EE24(u32 mask)
                 } else {
                     gen = hsd_804D78FC;
                 }
+#if defined(TARGET_PC)
+                if(owned)ScriptGame_StageSlotProcEnd();
+#endif
                 continue;
             }
         }
         hsd_804D78F8 = (u32) gen;
         gen = gen->next;
+#if defined(TARGET_PC)
+        if(owned)ScriptGame_StageSlotProcEnd(); }
+#endif
     }
 }
 
@@ -1041,6 +1060,10 @@ HSD_Generator* hsd_8039EFAC(s32 linkNo, s32 bank, s32 gfx_id, HSD_JObj* jobj)
 /// `psNumCmdList`; the two names look swapped against their addresses.
 HSD_Generator* hsd_8039F05C(s32 linkNo, s32 bank, s32 idx)
 {
+#if defined(TARGET_PC)
+    { extern int ScriptGame_StageSlotNativeContext(void);
+      if (ScriptGame_StageSlotNativeContext()) linkNo = 3; }
+#endif
     HSD_Generator* gen;
 
     if (bank >= 0x41) {
@@ -1242,3 +1265,32 @@ HSD_Generator* hsd_8039F6CC(s32 linkNo, s32 bank, s32 gfx_id, HSD_JObj* jobj)
         (u32) HSD_SListAllocAndAppend((HSD_SList*) hsd_804D78F4, gen);
     return gen;
 }
+
+#if defined(TARGET_PC)
+void HSD_StageSlotParticlesClear(void)
+{
+    HSD_SList* cur=(HSD_SList*)hsd_804D78F4;
+    HSD_SList* prev=NULL;
+    HSD_Generator* gen;
+    HSD_Generator* previous;
+    extern void HSD_StageSlotParticleLinkClear(void);
+    /* Remove queued joint-bound generators before deleting their storage. */
+    while(cur) {
+        HSD_Generator* g=cur->data;
+        if(g->linkNo==3) {
+            HSD_SList* next=HSD_SListRemove(cur);
+            if(prev)prev->next=next;else hsd_804D78F4=(u32)next;
+            cur=next;
+        } else {prev=cur;cur=cur->next;}
+    }
+    HSD_StageSlotParticleLinkClear();
+    gen=hsd_804D78FC;previous=NULL;
+    while(gen) {
+        HSD_Generator* next=gen->next;
+        if(gen->linkNo==3) {
+            if(hsd_8039D3AC(gen,previous)==gen)previous=gen;
+        } else previous=gen;
+        gen=next;
+    }
+}
+#endif

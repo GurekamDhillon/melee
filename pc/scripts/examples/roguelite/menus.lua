@@ -4,12 +4,22 @@ local M={}
 local C=Core
 local slots={'assault','guard','traversal'}
 local traits={'potency','capacity','gain','reach','cooldown'}
-local labels={potency='POWER',capacity='CAPACITY',gain='GAIN / EVENT',reach='REACH',cooldown='RECOVERY / F'}
+local labels={potency='POWER',capacity='CAPACITY',gain='CHARGE GAIN',reach='REACH',cooldown='RECOVERY / FRAMES'}
+local slot_labels={assault='ATTACK',guard='DEFENSE',traversal='MOVEMENT'}
+local gene_labels={cinder='Cinder / Fire',rime='Rime / Frost'}
 local regions={assault='Hands / striking pieces',guard='Torso / defense pieces',traversal='Feet / movement pieces'}
-local triggers={direct_hit='Clean fighter hits',move='Ground movement',defend='Native shieldstun'}
+local triggers={direct_hit='Land hits to charge',move='Run to charge',defend='Shield hits to charge'}
 local function keys(t) local a={} for k in pairs(t or {}) do a[#a+1]=k end table.sort(a,function(x,y) local a,b=tonumber(x:match('%d+$')),tonumber(y:match('%d+$'));return a and b and a~=b and a<b or ((not a or not b or a==b) and x<y) end);return a end
-local function clone(v) if type(v)~='table' then return v end local out={} for k,x in pairs(v) do out[k]=clone(x) end return out end
-local function copy(v) return assert(C.restore(assert(C.snapshot(v)))) end
+local function clone(v,memo)
+ if type(v)~='table' then return v end
+ memo=memo or {};if memo[v] then return memo[v] end
+ local out={};memo[v]=out
+ for k,x in pairs(v) do out[k]=clone(x,memo) end
+ return out
+end
+-- Menu sources are trusted live Core tables. Preserve shared runtime/host state
+-- without serializing event histories for each preview; main validates saves.
+local function copy(v) return clone(v) end
 local function num(n) return string.format('%.2f',n):gsub('0+$',''):gsub('%.$','') end
 local function used(r,id)
  for host,h in pairs(r.hosts) do for slot,x in pairs(h.slots) do if x==id then return host,slot end end end
@@ -70,12 +80,15 @@ function M.new() return {focus=nil,selected=nil,page=1,section='main',pending=ni
 function M.reset(s,which) s.menu=which;s.focus=nil;s.selected=nil;s.page=1;s.section='main';s.parent=nil;s.pending=nil;s.gen=(s.gen or 0)+1 end
 local function sync(s,ctx)
  if s.menu~=ctx.menu then M.reset(s,ctx.menu) end
+ if ctx.menu=='collection' and s.section=='parents' then
+  s.section='main';s.parent=nil;s.focus=nil;s.pending=nil
+ end
  local ids=inventory(ctx)
  local exists=false;for _,id in ipairs(ids) do if id==s.selected then exists=true end end
  if not exists then s.selected=ctx.menu=='collection' and ctx.profile and ctx.profile.genes[ctx.starter] and ctx.starter or ids[1] end
  -- Only the collection/rest/reward lists page over gene inventory; the map owns
  -- its own pagination and must not be clamped back to page 1 on every view.
- if ctx.menu~='map' then s.page=math.max(1,math.min(s.page,math.max(1,math.ceil(#ids/6)))) end
+ if ctx.menu~='map' and s.section~='exports' then s.page=math.max(1,math.min(s.page,math.max(1,math.ceil(#ids/6)))) end
 end
 local function control(v,id,x,y,w,h,label,action,enabled,reason)
  local b={id=id,x=x,y=y,w=w,h=h,label=label,action=action,enabled=enabled~=false,reason=reason}
@@ -164,14 +177,30 @@ local function view_extra(s,v,ctx)
  if ctx.menu=='ending' then return view_ending(v,ctx) end
  return nil
 end
-function M.view(s,ctx)
+local function base_view(s,ctx)
  sync(s,ctx)
  local ids,source=inventory(ctx)
  local v={controls={},menu=ctx.menu,section=s.section,ids=ids,source=source,selected=detail(ctx,s.selected),page=s.page,pages=math.max(1,math.ceil(#ids/6)),starter=ctx.starter}
+ v.primary=s.section=='main' and (ctx.menu=='collection' and (ctx.run and ctx.run.status=='active' and 'resume' or 'start') or ctx.menu=='rest' and 'continue') or nil
  local extra=view_extra(s,v,ctx);if extra then return extra end
  if ctx.menu~='collection' and ctx.menu~='error' and (not ctx.run or ctx.run.status~='active') then v.title='RUN UNAVAILABLE';v.error='There is no active run to modify.';return v end
  if ctx.menu=='error' then v.title='CHECKPOINT UNAVAILABLE';v.error=ctx.error or 'Saved files preserved. Repair the checkpoint to continue.';if ctx.retry then control(v,'retry',26,166,588,32,'RETRY SAVING RUN RESULT',{kind='retry_finish'}) end;return v end
- v.title=ctx.menu=='collection' and 'GENE COLLECTION' or ctx.menu=='reward' and 'ENCOUNTER REWARD' or 'REST / BUILD WORKBENCH'
+ if ctx.menu=='collection' and s.section=='exports' then
+  local pending=ctx.pending_exports or {};local per=8
+  v.title='PENDING RUN REWARDS';v.scope='CLAIM AFTER MAKING ROOM / DECLINE PERMANENTLY'
+  v.pages=math.max(1,math.ceil(#pending/per));s.page=math.max(1,math.min(s.page,v.pages));v.page=s.page
+  for i=(s.page-1)*per+1,math.min(s.page*per,#pending) do
+   local item=pending[i];local y=113+(i-(s.page-1)*per-1)*30
+   control(v,'claim_export:'..item.run,210,y,194,26,'CLAIM '..item.run,{kind='claim_export',run=item.run},not(ctx.capacity and ctx.capacity.full),'Discard a gene first')
+   control(v,'decline_export:'..item.run,416,y,198,26,'DECLINE '..item.run,
+    {kind='decline_export',run=item.run,destructive=true,prompt='Decline this earned gene permanently? Press again to confirm.'})
+  end
+  control(v,'previous',210,374,92,26,'< PAGE',{kind='page',delta=-1},s.page>1)
+  control(v,'next',310,374,92,26,'PAGE >',{kind='page',delta=1},s.page<v.pages)
+  control(v,'back',416,410,198,30,'BACK TO COLLECTION',{kind='back'})
+  return v
+ end
+ v.title=ctx.menu=='collection' and 'SUPERTIME ENVOY / GENES' or ctx.menu=='reward' and 'ENCOUNTER REWARD' or 'REST / BUILD WORKBENCH'
  v.scope=ctx.menu=='collection' and 'INHERITED LIBRARY / KEPT BETWEEN RUNS' or 'RUN COPIES / UPGRADES END WITH THIS RUN'
  if ctx.menu=='collection' and ctx.fighter then v.scope=v.scope..' / '..tostring(type(ctx.fighter)=='table' and (ctx.fighter.name or (ctx.fighter.id..' / c'..ctx.fighter.costume)) or ctx.fighter) end
  if ctx.menu=='reward' then
@@ -194,7 +223,7 @@ function M.view(s,ctx)
   end
  for j=(s.page-1)*6+1,math.min(s.page*6,#ids) do
   local id=ids[j];local g=source.genes[id];local d=C.definitions[g.kind]
-  local b=control(v,'gene:'..id,26,113+(j-(s.page-1)*6-1)*35,168,30,id..' / '..(g.kind=='cinder' and 'CINDER' or 'RIME'),{kind='inspect',id=id})
+  local b=control(v,'gene:'..id,26,113+(j-(s.page-1)*6-1)*35,168,30,(gene_labels[g.kind] or d.name)..' / '..id,{kind='inspect',id=id})
   b.kind=g.kind;b.selected=id==s.selected;b.starter=id==ctx.starter
  end
  if #ids>6 then
@@ -214,14 +243,12 @@ function M.view(s,ctx)
    end
   end
   control(v,'confirm',210,371,200,31,ctx.menu=='collection' and 'BREED CHILD' or 'FUSE PARENTS',{kind=ctx.menu=='collection' and 'breed' or 'fuse',a=s.parent,b=s.selected},v.child~=nil,v.preview_error)
-  control(v,'back',422,371,192,31,'BACK TO BUILD',{kind='back'})
+  control(v,'back',422,371,192,31,'BACK TO GENES',{kind='back'})
   return v
  end
  if ctx.menu=='collection' then
-  local is_cinder=v.selected and v.selected.kind=='cinder'
-  control(v,'starter',210,326,194,30,s.selected==ctx.starter and 'CURRENT STARTER' or 'SET AS STARTER',{kind='starter',id=s.selected},is_cinder and s.selected~=ctx.starter,is_cinder and 'Already your starter' or 'This slice starts with Cinder')
-  control(v,'lock',416,326,198,30,v.selected and v.selected.gene.locks.potency and 'UNLOCK POWER' or 'LOCK INHERITED POWER',{kind='lock',id=s.selected,stat='potency'},v.selected~=nil)
-  control(v,'parents',210,363,194,31,'CHOOSE BREEDING PAIR',{kind='parents'},v.selected~=nil)
+  local has_gene=v.selected and v.selected.kind=='cinder'
+  control(v,'starter',210,326,194,30,s.selected==ctx.starter and 'STARTING ABILITY' or 'USE AS STARTING ABILITY',{kind='starter',id=s.selected},has_gene and s.selected~=ctx.starter,has_gene and 'Already your starter' or 'Choose a Cinder gene')
   if ctx.fighters then control(v,'fighter',416,363,198,31,'CHANGE FIGHTER',{kind='choose_fighter'}) end
   local can_start=#keys(ctx.profile.finished)<512 and ctx.profile.next_run<1000000000
   control(v,'start',26,410,274,32,ctx.run and ctx.run.status=='active' and 'START FRESH RUN' or 'START A RUN',{kind='start'},can_start,'Run ledger is full')
@@ -244,15 +271,7 @@ function M.view(s,ctx)
   local pending=ctx.pending_exports
   if type(pending)=='table' and #pending>0 then
    v.pending_exports=pending
-   local can_claim=not (type(ctx.capacity)=='table' and ctx.capacity.full==true)
-   for i,item in ipairs(pending) do
-    control(v,'claim_export:'..item.run,210,113+(i-1)*30,194,26,
-     'CLAIM '..item.gene,
-     {kind='claim_export',run=item.run},
-     can_claim,can_claim and nil or 'Collection full / discard a gene first')
-    control(v,'decline_export:'..item.run,416,113+(i-1)*30,198,26,
-     'DECLINE '..item.gene,{kind='decline_export',run=item.run})
-   end
+   control(v,'exports',210,363,194,30,'PENDING REWARDS / '..#pending,{kind='exports'})
   end
  else
   v.placements={}
@@ -261,23 +280,43 @@ function M.view(s,ctx)
    local r=copy(ctx.run);local ok,why
    if s.selected then ok,why=move(r,s.selected,slot) else why='Select a gene first' end
    local after=ok and detail({menu='rest',run=r},s.selected)
-   local b=control(v,'place:'..slot,210+(i-1)*137,326,130,30,'PLACE / '..slot:upper(),{kind='place',id=s.selected,slot=slot},ok==true,why)
+   local b=control(v,'place:'..slot,210+(i-1)*137,326,130,30,'EQUIP / '..slot_labels[slot],{kind='place',id=s.selected,slot=slot},ok==true,why)
    b.preview=after;b.current=current;v.placements[slot]=current
   end
   control(v,'unequip',210,364,130,31,'UNEQUIP GENE',{kind='unequip',id=s.selected},v.selected~=nil and v.selected.placed~=nil,'Selected gene is unplaced')
-  control(v,'parents',347,364,130,31,'FUSION PAIR',{kind='parents'},v.selected~=nil)
-  control(v,'leave',484,364,130,31,'SAVE / LEAVE',{kind='leave'})
+  control(v,'parents',347,364,130,31,'FUSE TWO GENES',{kind='parents'},v.selected~=nil)
+  control(v,'leave',484,364,130,31,'SAVE / RETURN HOME',{kind='leave'})
   control(v,'continue',26,410,588,32,'CONTINUE EXPLORING',{kind='continue'})
  end
+ return v
+end
+-- The overlay keeps 480 vertical units; safe_area widens its horizontal canvas.
+-- Reflow columns and controls across that width while keeping fonts/icons natural.
+local function layout()
+ local area=gd and gd.safe_area and gd.safe_area() or nil
+ local width=area and tonumber(area.w) or 640
+ if not width or width<640 or width~=width then width=640 end
+ return {x=area and tonumber(area.x) or 0,y=area and tonumber(area.y) or 0,sx=width/640,w=width}
+end
+function M.view(s,ctx)
+ local v=base_view(s,ctx);local a=layout()
+ for _,b in ipairs(v.controls) do
+  b.x=a.x+b.x*a.sx;b.y=a.y+b.y;b.w=b.w*a.sx
+ end
+ v.canvas={x=a.x,y=a.y,w=a.w,h=480}
  return v
 end
 -- update receives fresh button edges, not held levels. No combat input is owned here.
 function M.update(s,ctx,input)
  local v=M.view(s,ctx);local controls=v.controls
+ if input.back and s.section=='exports' then s.section='main';s.page=1;s.focus=nil;s.pending=nil;return nil end
+ if input.back and ctx.back_action and s.section~='parents' then s.pending=nil;return clone(ctx.back_action) end
  if #controls==0 then return nil end
- local focus=1;for i,b in ipairs(controls) do if b.id==s.focus then focus=i end end
+ local preferred=s.focus or (s.section=='main' and (ctx.menu=='collection' and (ctx.run and ctx.run.status=='active' and 'resume' or 'start') or ctx.menu=='rest' and 'continue'))
+ local focus=1;for i,b in ipairs(controls) do if b.id==preferred then focus=i end end
  local current=controls[focus]
- if input.back and s.section=='parents' then s.section='main';s.focus=nil;return nil end
+ if input.back and s.section=='parents' then s.section='main';s.focus=nil;s.pending=nil;return nil end
+ if input.back and ctx.back_action then s.pending=nil;return clone(ctx.back_action) end
  local dx=input.right and 1 or input.left and -1 or 0;local dy=input.down and 1 or input.up and -1 or 0
  if dx~=0 or dy~=0 then
   local cx,cy=current.x+current.w/2,current.y+current.h/2;local best,score
@@ -305,7 +344,7 @@ function M.update(s,ctx,input)
  -- menu or changing the selection invalidates it: a prompt raised for g1 can
  -- never be confirmed against g2 on the next click.
  if a.destructive then
-  local sig=a.kind..'\0'..tostring(a.id)..'\0'..tostring(a.slot)..'\0'..tostring(s.menu)..'\0'..tostring(s.section)
+  local sig=a.kind..'\0'..tostring(a.id)..'\0'..tostring(a.slot)..'\0'..tostring(a.run)..'\0'..tostring(s.menu)..'\0'..tostring(s.section)
   if not (s.pending and s.pending.sig==sig and s.pending.gen==(s.gen or 0)) then
    s.pending={sig=sig,gen=(s.gen or 0)}
    return {kind='blocked',message=a.prompt or 'Press again to confirm',confirm_pending=current.id}
@@ -315,18 +354,22 @@ function M.update(s,ctx,input)
  if a.kind=='inspect' then s.selected=a.id;s.pending=nil;s.gen=(s.gen or 0)+1
  elseif a.kind=='page' then s.page=s.page+a.delta;s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
  elseif a.kind=='parents' then s.parent=s.selected;s.section='parents';s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
- elseif a.kind=='back' then s.section='main';s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
+ elseif a.kind=='exports' then s.section='exports';s.page=1;s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
+ elseif a.kind=='back' then s.section='main';s.page=1;s.focus=nil;s.pending=nil;s.gen=(s.gen or 0)+1
  elseif a.kind=='map_inspect' then s.map_selected=a.room;s.pending=nil;s.gen=(s.gen or 0)+1
  else return clone(a) end
 end
 function M.apply(ctx,a)
  local result={ok=false}
  if type(a)~='table' then return {ok=false,message='Invalid menu action'} end
+ if ctx.menu=='collection' and (a.kind=='breed' or a.kind=='lock') then
+  return {ok=false,message='Collection genes are kept from completed runs.'}
+ end
  if a.kind=='place' or a.kind=='unequip' or a.kind=='fuse' or a.kind=='reward' then
   if not ctx.run or ctx.run.status~='active' then return {ok=false,message='No active run'} end
  end
  if a.kind=='starter' then
-  if ctx.profile.genes[a.id] and ctx.profile.genes[a.id].kind=='cinder' then return {ok=true,starter=a.id,message='Starter '..a.id..' selected; collection originals retained'} end
+  if ctx.profile.genes[a.id] and ctx.profile.genes[a.id].kind=='cinder' then ctx.profile.starter=a.id;return {ok=true,starter=a.id,message='Starter '..a.id..' selected; collection originals retained'} end
   result.message='Unsupported starter';return result
  elseif a.kind=='lock' then
   local g=ctx.profile.genes[a.id];local ok,why=C.lock(ctx.profile,a.id,a.stat,g and not g.locks[a.stat] or false)
@@ -362,14 +405,27 @@ function M.apply(ctx,a)
  end
  return {ok=false,message='Lifecycle action must be handled by main'}
 end
-local function text(x,y,s,role,color,w)
- return gd.kit.text(x,y,tostring(s),role or 'caption',color or 'bone','left',{max_w=w or 220,shear=0})
+local draw_area={x=0,y=0,sx=1,w=640}
+local function draw_fill(x,y,w,h,color)
+ return gd.fill(draw_area.x+x*draw_area.sx,draw_area.y+y,w*draw_area.sx,h,color)
 end
-local function line(x,y,w,color) gd.fill(x,y,w,1,color or 0x354664ff) end
-local function panel(x,y,w,h) gd.fill(x+3,y+3,w,h,0x030712ff);gd.fill(x,y,w,h,0x101a2cff) end
+local function draw_button(x,y,w,label,selected,opts)
+ return gd.kit.button(draw_area.x+x*draw_area.sx,draw_area.y+y,w*draw_area.sx,label,selected,opts)
+end
+local function draw_panel(x,y,w,h,opts)
+ return gd.kit.panel(draw_area.x+x*draw_area.sx,draw_area.y+y,w*draw_area.sx,h,opts)
+end
+local function draw_icon(name,x,y,scale,color)
+ return gd.kit.icon(name,draw_area.x+x*draw_area.sx,draw_area.y+y,scale,color)
+end
+local function text(x,y,s,role,color,w)
+ return gd.kit.text(draw_area.x+x*draw_area.sx,draw_area.y+y,tostring(s),role or 'caption',color or 'bone','left',{max_w=(w or 220)*draw_area.sx,shear=0})
+end
+local function line(x,y,w,color) draw_fill(x,y,w,1,color or 0x354664ff) end
+local function panel(x,y,w,h) draw_fill(x+3,y+3,w,h,0x030712ff);draw_fill(x,y,w,h,0x101a2cff) end
 local function kind_color(kind) return kind=='cinder' and 0xffa16bff or kind=='rime' and 0x75ccffff or 0x344761ff end
 local function mannequin(x,y,placements)
- local function block(a,b,w,h,c) gd.fill(x+a*.65,y+b*.65,w*.65,h*.65,c) end
+ local function block(a,b,w,h,c) draw_fill(x+a*.65,y+b*.65,w*.65,h*.65,c) end
  -- Original rectilinear mannequin: head, torso, hands, legs and boots.
  local fire=placements.assault and kind_color(placements.assault.kind) or 0x344761ff
  local guard=placements.guard and kind_color(placements.guard.kind) or 0x344761ff
@@ -393,9 +449,9 @@ local function stat_panel(v,ctx,s)
  local d=v.selected
  panel(364,96,250,220)
  if not d then return end
- gd.kit.icon('rogue_'..d.kind,376,107,.6,d.kind=='cinder' and 'gold' or 'bone')
+ draw_icon('rogue_'..d.kind,376,107,.6,d.kind=='cinder' and 'gold' or 'bone')
  text(402,122,d.name,'label','gold',199)
- text(377,145,d.id..' / '..(d.placed and d.placed:upper() or ctx.menu=='collection' and 'INHERITED BASE' or 'UNPLACED'),'caption','muted',224)
+ text(377,145,d.id..' / '..(d.placed and slot_labels[d.placed] or ctx.menu=='collection' and 'INHERITED BASE' or 'UNPLACED'),'caption','muted',224)
  text(377,163,d.ability.name,'caption','bone',224)
  metrics(d,377,187,218)
  local parent=d.gene.parents
@@ -419,8 +475,8 @@ local function build_panel(v,ctx)
  mannequin(271,129,placed)
  for i,slot in ipairs(slots) do
   local d=placed[slot];local y=241+(i-1)*25
-  text(221,y,slot:upper()..' / '..(d and d.id or 'EMPTY'),'caption',d and 'bone' or 'muted',121)
-  text(221,y+12,slot=='assault' and 'Hands / held pieces' or slot=='guard' and 'Torso / defense' or 'Feet / movement','caption','muted',121)
+  text(221,y,slot_labels[slot]..' / '..(d and d.id or 'EMPTY'),'caption',d and 'bone' or 'muted',121)
+  text(221,y+12,slot=='assault' and 'Land hits to charge' or slot=='guard' and 'Shield hits to charge' or 'Run to charge','caption','muted',121)
  end
 
 end
@@ -438,14 +494,14 @@ local function parent_panel(v,ctx)
  end
  text(223,332,'Child '..v.child.id..' / '..(v.child.placed or ctx.menu=='collection' and 'inherited' or 'unplaced')..' / base power '..num(v.child.gene.base.potency),'caption','muted',378)
 end
-local function focused(s,v,b) return s.focus==b.id or (not s.focus and b==v.controls[1]) end
+local function focused(s,v,b) return s.focus==b.id or (not s.focus and (v.primary and b.id==v.primary or not v.primary and b==v.controls[1])) end
 local function draw_map(s,v)
  panel(26,96,300,300)
  text(36,108,'DISCOVERED '..tostring(v.map_counts.discovered_rooms or #v.map_rooms)..' / EXITS '..tostring(v.map_counts.known_exits or 0),'caption','muted',280)
  if (v.map_counts.undiscovered_reward_count or 0)>0 then
   text(36,126,tostring(v.map_counts.undiscovered_reward_count)..' reward(s) still hidden','caption','muted',280)
  end
- for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+ for _,b in ipairs(v.controls) do draw_button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
  panel(336,96,278,300)
  text(348,108,'EXITS','caption','muted',254)
  local room=v.map_selected or v.map_current
@@ -469,7 +525,7 @@ local function draw_onboarding(s,v)
  else
   text(40,150,'Tutorial complete. Revisit any time from the pause menu.','caption','bone',560)
  end
- for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+ for _,b in ipairs(v.controls) do draw_button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
 end
 local function draw_settings(s,v)
  panel(26,96,588,290)
@@ -478,25 +534,30 @@ local function draw_settings(s,v)
    text(40,112+(i-1)*34,item.label..(item.value~=nil and (' / '..tostring(item.value)) or ''),'caption','bone',560)
   end
  else text(40,120,'No settings are declared in this build.','caption','bone',560) end
- for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+ for _,b in ipairs(v.controls) do draw_button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
 end
 local function draw_ending(s,v)
  panel(26,96,588,290)
  local e=v.ending
  text(40,130,e.outcome=='success' and 'RUN COMPLETE' or 'RUN ENDED','label','gold',560)
  if type(e.lines)=='table' then for i,line_text in ipairs(e.lines) do text(40,162+(i-1)*24,line_text,'caption','bone',560) end end
- for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+ for _,b in ipairs(v.controls) do draw_button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
 end
 function M.draw(s,ctx)
- local v=M.view(s,ctx)
- gd.fill(0,0,640,480,0x030712ea)
- gd.kit.panel(14,17,612,438,{piece=12})
- gd.kit.icon('rogue_'..(v.section=='parents' and 'fusion' or v.menu=='collection' and 'gene' or v.menu=='reward' and 'check' or 'guard'),27,30,.65,'gold')
+ local v=base_view(s,ctx);draw_area=layout()
+ draw_fill(0,0,640,480,0x030712ea)
+ draw_panel(14,17,612,438,{piece=12})
+ draw_icon('rogue_'..(v.section=='parents' and 'fusion' or v.menu=='collection' and 'gene' or v.menu=='reward' and 'check' or 'guard'),27,30,.65,'gold')
  text(61,52,v.title,'label','gold',550)
  if not ctx.notice then text(27,78,v.scope or 'SAVE RECOVERY','caption','muted',587) end
  line(26,87,588,0xf0b429ff)
- if v.error then text(29,130,v.error,'caption','bone',576);for _,b in ipairs(v.controls) do gd.kit.button(b.x,b.y,b.w,b.label,true,{h=b.h}) end;return end
- if v.menu=='map' then draw_map(s,v) elseif v.menu=='onboarding' then draw_onboarding(s,v)
+ if v.error then text(29,130,v.error,'caption','bone',576);for _,b in ipairs(v.controls) do draw_button(b.x,b.y,b.w,b.label,true,{h=b.h}) end;return end
+ if v.section=='exports' then
+  text(27,112,'PAGE '..v.page..' / '..v.pages,'caption','muted',170)
+  text(27,144,'Earned genes stay pending','caption','bone',170)
+  text(27,168,'until claimed or declined.','caption','bone',170)
+  for _,b in ipairs(v.controls) do draw_button(b.x,b.y,b.w,b.label,focused(s,v,b),{h=b.h}) end
+ elseif v.menu=='map' then draw_map(s,v) elseif v.menu=='onboarding' then draw_onboarding(s,v)
  elseif v.menu=='settings' then draw_settings(s,v) elseif v.menu=='ending' then draw_ending(s,v)
  elseif v.menu=='reward' then
   panel(26,99,266,292)
@@ -508,10 +569,10 @@ function M.draw(s,ctx)
   text(40,331,'UPGRADES APPLY TO THIS RUN','caption','muted',238)
   text(40,355,'New Rime starts unplaced.','caption','muted',238)
   for _,b in ipairs(v.rewards) do
-   local active=s.focus==b.id or not s.focus and b==v.controls[1]
-   gd.fill(b.x,b.y,b.w,b.h,active and 0x253d65ff or 0x19283fff)
-   gd.fill(b.x,b.y,3,b.h,active and 0xf0b429ff or 0x3d557aff)
-   gd.kit.icon('rogue_'..(b.after and b.after.kind or 'gene'),b.x+10,b.y+9,.42,b.enabled and 'gold' or 'muted')
+   local active=s.focus==b.id or not s.focus and (v.primary and b.id==v.primary or not v.primary and b==v.controls[1])
+   draw_fill(b.x,b.y,b.w,b.h,active and 0x253d65ff or 0x19283fff)
+   draw_fill(b.x,b.y,3,b.h,active and 0xf0b429ff or 0x3d557aff)
+   draw_icon('rogue_'..(b.after and b.after.kind or 'gene'),b.x+10,b.y+9,.42,b.enabled and 'gold' or 'muted')
    text(b.x+33,b.y+21,b.label,'caption',active and 'gold' or 'bone',b.w-43)
    text(b.x+12,b.y+40,b.desc,'caption','muted',b.w-24)
    local parts={}
@@ -525,15 +586,17 @@ function M.draw(s,ctx)
   text(36,108,'INDIVIDUALS '..#v.ids..' / '..v.page..' OF '..v.pages,'caption','muted',148)
   if v.section=='parents' then parent_panel(v,ctx) else build_panel(v,ctx);stat_panel(v,ctx,s) end
   for _,b in ipairs(v.controls) do
-   local focused=s.focus==b.id or not s.focus and b==v.controls[1]
+   local focused=s.focus==b.id or not s.focus and (v.primary and b.id==v.primary or not v.primary and b==v.controls[1])
    local selected=b.selected or focused
-   gd.kit.button(b.x,b.y,b.w,b.label,selected,{h=b.h})
-   if not b.enabled then gd.fill(b.x,b.y,b.w,b.h,0x03071265) end
-   if b.selected then gd.fill(b.x,b.y,3,b.h,kind_color(b.kind)) end
-   if b.starter then gd.kit.icon('rogue_check',b.x+b.w-22,b.y+8,.35,'gold') end
+   draw_button(b.x,b.y,b.w,b.label,selected,{h=b.h})
+   if not b.enabled then draw_fill(b.x,b.y,b.w,b.h,0x03071265) end
+   if b.selected then draw_fill(b.x,b.y,3,b.h,kind_color(b.kind)) end
+   if b.starter then draw_icon('rogue_check',b.x+b.w-22,b.y+8,.35,'gold') end
   end
  end
- text(27,474,'D-PAD: FOCUS   A: SELECT   B: BACK   /   MOUSE: CLICK','caption','muted',587)
+ local prompt='D-PAD: MOVE   A: CHOOSE'
+ if v.section=='parents' or v.section=='exports' or ctx.back_action then prompt=prompt..'   B: BACK' end
+ text(27,474,prompt..'   /   MOUSE: CLICK','caption','muted',587)
  local active
  for _,b in ipairs(v.controls) do if b.id==s.focus then active=b end end
  if active and not active.enabled and active.reason then
@@ -542,8 +605,8 @@ function M.draw(s,ctx)
   local preview=active and active.preview
   local caption=preview and (preview.ability.name..' / '..triggers[preview.ability.trigger]..' / '..regions[preview.slot]) or 'Body + held pieces share a slot; extra meshes add no charge capacity.'
   text(27,401,caption,'caption',preview and 'gold' or 'muted',587)
- elseif ctx.menu=='collection' and v.section~='parents' then
-  text(27,401,'Run copies preserve originals. Failure loses run changes.','caption','muted',587)
+ elseif ctx.menu=='collection' and v.section=='main' then
+  text(27,401,'Explore, defeat encounters, choose upgrades, reach the exit.','caption','muted',587)
  end
 end
 M.regions=regions

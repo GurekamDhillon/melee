@@ -53,6 +53,13 @@ void efLib_render_callback(HSD_GObj*, int);
 #define PTCL_SKIP_LINKNO_0 0x10000
 #define PTCL_SKIP_LINKNO_1 0x20000
 #define PTCL_SKIP_LINKNO_2 0x40000
+#if defined(TARGET_PC)
+#define PTCL_STAGE_SKIP 0x80000
+#define PTCL_STAGE_RENDER 0x8
+#else
+#define PTCL_STAGE_SKIP 0
+#define PTCL_STAGE_RENDER 0
+#endif
 
 // Particle linkNo render masks (bits 0+) for psDispParticles
 // Set bit = include for rendering
@@ -652,7 +659,7 @@ void efLib_render_callback(HSD_GObj* gobj, int code)
     }
     HSD_StateSetColorUpdate(1);
     if (gobj->gx_link == 7) {
-        psDispParticles(PTCL_RENDER_LINKNO_0 | PTCL_RENDER_LINKNO_2,
+        psDispParticles(PTCL_RENDER_LINKNO_0 | PTCL_RENDER_LINKNO_2 | PTCL_STAGE_RENDER,
                         particles_code);
         return;
     }
@@ -667,8 +674,8 @@ void efLib_particles_proc_main(HSD_GObj* gobj)
 
 void efLib_particles_proc_aux(HSD_GObj* gobj)
 {
-    hsd_8039CEAC(PTCL_SKIP_LINKNO_0);
-    hsd_8039EE24(PTCL_SKIP_LINKNO_0);
+    hsd_8039CEAC(PTCL_SKIP_LINKNO_0 | PTCL_STAGE_SKIP);
+    hsd_8039EE24(PTCL_SKIP_LINKNO_0 | PTCL_STAGE_SKIP);
 }
 
 HSD_Generator* efLib_CreateGenerator(s32 gfx_id, Vec3* pos)

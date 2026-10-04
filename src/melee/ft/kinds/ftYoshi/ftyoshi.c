@@ -423,7 +423,7 @@ void ftYs_Init_8012B8A4(HSD_GObj* gobj)
     u8 _[8];
     float tempf =
         da->xC *
-        (1.0f - (fp->shield_health / p_ftCommonData->x260_startShieldHealth));
+        (1.0f - (fp->shield_health / FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth)));
     ftYs_Init_8012B804(fp, (struct S_UNK_YOSHI1*) fp->x5AC.xC[0], tempf);
     ftYs_Init_8012B804(fp, (struct S_UNK_YOSHI1*) fp->x5AC.xC[1], tempf);
 }

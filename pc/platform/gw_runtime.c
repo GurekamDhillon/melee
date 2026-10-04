@@ -1,6 +1,8 @@
 /* Core runtime for the game world: startup fixups, memory regions, logging. */
 #include "gw.h"
+#include "gw_hang.h"
 #include "gw_uigen.h"
+#include "gw_mods.h"
 
 #include "shim_gx.h"
 #include "shim_os.h"
@@ -211,6 +213,7 @@ void gw_panic(const char *fmt, ...) {
   }
   gw_log_crash_begin();
   gw_log("gw: PANIC %s", msg);
+  gw_hang_final("panic", 3);
   gw_crash_report("panic (assert / OSPanic)", msg);
   gw_dump_stub_summary();
   abort();
@@ -337,6 +340,7 @@ static LONG WINAPI gw_unhandled_exception(EXCEPTION_POINTERS *ep) {
   const CONTEXT *ctx = ep->ContextRecord;
   const uintptr_t pc = (uintptr_t)er->ExceptionAddress;
   char where[MAX_PATH + 64];
+  gw_hang_final("unhandled exception", (unsigned)er->ExceptionCode);
 
   gw_log_crash_begin();
   gw_log("gw: FATAL %s (0x%08lX) at %p  %s%s", gw_exception_name(er->ExceptionCode),
@@ -422,6 +426,19 @@ void gw_log_code_addr(const char *label, const void *addr) {
   gw_log("gw: %s %s", label, gw_describe_code_addr((uintptr_t)addr, where, sizeof where));
 }
 
+const char *gw_hang_describe_addr(uintptr_t pc, char *out, unsigned cap) {
+  MEMORY_BASIC_INFORMATION mem;
+  /* GetModuleHandleEx/GetModuleFileName can wait on a loader lock held by the
+   * stuck thread. VirtualQuery needs no loader lock; retain the crash RVA form. */
+  if (VirtualQuery((const void *)pc, &mem, sizeof mem) && mem.Type == MEM_IMAGE) {
+    uintptr_t base = (uintptr_t)mem.AllocationBase;
+    if (base == gw_image_base)
+      snprintf(out, cap, "melee-pc.map rva 0x%08X", (unsigned)(pc - base + GW_MAP_IMAGE_BASE));
+    else snprintf(out, cap, "image@0x%08X+0x%X", (unsigned)base, (unsigned)(pc - base));
+  } else snprintf(out, cap, "0x%08X (no image)", (unsigned)pc);
+  return out;
+}
+
 /* The CRT does not raise a catchable exception when it rejects an argument -- it calls __fastfail,
  * which bypasses SEH, so gw_unhandled_exception never runs and the process simply disappears with
  * STATUS_STACK_BUFFER_OVERRUN (0xC0000409) in the Windows event log. Intercepting the handler is
@@ -431,6 +448,7 @@ static void gw_invalid_parameter(const wchar_t *expr, const wchar_t *func, const
                                  unsigned int line, uintptr_t reserved) {
   char where[MAX_PATH + 64];
   (void)reserved;
+  gw_hang_final("CRT invalid parameter", 3);
   gw_log_crash_begin();
   gw_log("gw: FATAL CRT rejected an argument: expr=%ls func=%ls file=%ls line=%u",
          expr != NULL ? expr : L"(release CRT: unavailable)", func != NULL ? func : L"?",
@@ -1517,7 +1535,7 @@ int gw_Env1(const char *name) {
  * touching the process environment. gw_SceneLaunch_LoadForTest() is that entry point.
  */
 
-#define GW_SL_SLOTS 4
+#define GW_SL_SLOTS 6
 
 /* Gm_PKind (src/melee/pl/forward.h). */
 #define GW_SL_PK_HUMAN 0
@@ -1549,6 +1567,8 @@ typedef struct {
 } GwSlPlayer;
 
 typedef struct {
+  char mission[128];
+  int maze_seed, maze_size;
   int configured;   /* a scene was requested at all */
   int game_mode;    /* GameModeKind to boot into, or -1 */
   int vs_mode;      /* GmVsMode index into gmMainLib_804D3EE0->modes.table, or -1 */
@@ -1569,10 +1589,16 @@ typedef struct {
   int rule_pause;   /* 0 off, 1 on */
   int errors;       /* count of rejected fields; a config with errors is still used */
   GwSlPlayer p[GW_SL_SLOTS];
+  int enemy_team_colors; /* 0 off, 1 force untinted enemy team costumes */
+  int invalid_slot;
+  int preload[2]; /* remaining GameCache.entries[6..7], costume zero */
 } GwSceneConfig;
 
 static GwSceneConfig gw_sl_cfg;
 static int gw_sl_loaded;
+static unsigned gw_sl_revision;
+static char gw_sl_launch_mod[64];
+unsigned gw_SceneLaunch_Revision(void) { return gw_sl_revision; }
 
 /* CharacterKind -> FighterKind for the retail cast, transcribed from ftMapping_list
  * (src/melee/pl/player.c). The two orders are DIFFERENT permutations - CKind_Fox is 2 and
@@ -1673,6 +1699,7 @@ static void gw_sl_player_init(GwSlPlayer *p) {
 static void gw_sl_config_init(GwSceneConfig *c) {
   int i;
   memset(c, 0, sizeof *c);
+  c->preload[0] = c->preload[1] = -1;
   c->game_mode = -1;
   c->vs_mode = -1;
   c->entry_state = -1;
@@ -1958,9 +1985,33 @@ static int gw_sl_parse_player(const char *v, GwSlPlayer *p) {
   return 0;
 }
 
+/* Launch arguments stay mod-relative: no filesystem paths or traversal. */
+static int gw_sl_launch_value(GwSceneConfig *c, const char *key, const char *val) {
+  if (tt_ieq(key, "mission")) {
+    size_t i, n = strlen(val);
+    if (!n || n >= sizeof c->mission) return -1;
+    for (i = 0; i < n; ++i)
+      if (!((val[i] >= 'a' && val[i] <= 'z') || (val[i] >= 'A' && val[i] <= 'Z') ||
+            (val[i] >= '0' && val[i] <= '9') || val[i] == '-' || val[i] == '_')) return -1;
+    memcpy(c->mission, val, n + 1); c->maze_size = 0;
+  } else {
+    char *end;
+    unsigned long seed, size;
+    if (val[0] < '0' || val[0] > '9') return -1;
+    seed = strtoul(val, &end, 10);
+    if (*end != ',' || seed > 2147483647UL || end[1] < '0' || end[1] > '9') return -1;
+    size = strtoul(end + 1, &end, 10);
+    if (*end || size < 1 || size > 1024) return -1;
+    c->maze_seed = (int)seed; c->maze_size = (int)size; c->mission[0] = 0;
+  }
+  c->configured = 1;
+  return 0;
+}
+
 /* One `key=value` (or `key value`) pair. Returns 0 on success, -1 when the field is rejected. */
 static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
   size_t i;
+  if (tt_ieq(key, "mission") || tt_ieq(key, "maze")) return gw_sl_launch_value(c, key, val);
   if (tt_ieq(key, "mode")) {
     for (i = 0; i < sizeof gw_sl_modes / sizeof gw_sl_modes[0]; ++i) {
       if (tt_ieq(val, gw_sl_modes[i].name)) {
@@ -2000,8 +2051,19 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
   if (tt_ieq(key, "stage")) {
     return gw_sl_parse_stage(val, &c->stage_ext);
   }
-  if (key[0] == 'p' && key[1] >= '1' && key[1] <= '4' && key[2] == '\0') {
+  if (key[0] == 'p' && key[1] >= '1' && key[1] <= '6' && key[2] == '\0') {
     return gw_sl_parse_player(val, &c->p[key[1] - '1']);
+  }
+  if (tt_ieq(key, "preload")) {
+    char copy[160], *name, *next;
+    int list[2]={-1,-1}, n=0, random=0;
+    snprintf(copy,sizeof copy,"%s",val); name=copy;
+    do {
+      next=strchr(name,'/'); if (next) *next++='\0';
+      if (n>=2 || gw_sl_parse_char(name,&list[n],&random) || random || list[n]==GW_SL_CK_NONE) return -1;
+      ++n; name=next;
+    } while (name);
+    c->preload[0]=list[0]; c->preload[1]=list[1]; return 0;
   }
   if (tt_ieq(key, "step")) {
     if (!gw_sl_all_digits(val) || atoi(val) > 31) return -1;
@@ -2016,6 +2078,15 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
   if (tt_ieq(key, "skipmemcard")) {
     c->skip_memcard = (val[0] == '1');
     return 0;
+  }
+  if (tt_ieq(key, "enemy_team_colors")) {
+    if (strcmp(val,"0") && strcmp(val,"1")) return -1;
+    c->enemy_team_colors=atoi(val); return 0;
+  }
+  if ((key[0]=='p' || key[0]=='P') && gw_sl_all_digits(key+1) &&
+      (atoi(key+1)<1 || atoi(key+1)>GW_SL_SLOTS)) {
+    gw_log("gw: scene: %s refused: fighter slots are p1 through p6",key);
+    c->invalid_slot=1; return -1;
   }
   if (tt_ieq(key, "teams")) {
     c->teams = (val[0] == '1');
@@ -2059,6 +2130,36 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
   return -1;
 }
 
+/* Validate the complete route, independent of field order. Never silently drop
+ * the requested enemies and launch a different match. */
+static void gw_sl_validate_route(GwSceneConfig *c) {
+  int i, extra = 0;
+  if (c->invalid_slot) { c->configured=0; return; }
+  for (i=4; i<GW_SL_SLOTS; ++i)
+    if (c->p[i].random || (c->p[i].ckind >= 0 && c->p[i].ckind != GW_SL_CK_NONE)) extra=1;
+  if (!extra && c->preload[0]<0) return;
+  if (c->preload[0]>=0 && ((c->game_mode!=0x02 && c->game_mode!=0x2F) ||
+      (c->entry_state>=0 && c->entry_state!=GW_SL_AT_MATCH))) {
+    gw_log("gw: scene: extra preloads require direct VS/LAB match launch");
+    c->configured=0; c->errors++; return;
+  }
+  if (!extra) return;
+  if ((c->game_mode != 0x02 && c->game_mode != 0x2F) ||
+      (c->entry_state >= 0 && c->entry_state != GW_SL_AT_MATCH)) {
+    gw_log("gw: scene: six-slot launch refused: use mode=vs or lab, at=match; CSS, SSS and Training are four-slot routes");
+    c->configured=0; c->errors++; return;
+  }
+  for (i=4; i<GW_SL_SLOTS; ++i) {
+    GwSlPlayer *p=&c->p[i];
+    if (!p->random && (p->ckind < 0 || p->ckind == GW_SL_CK_NONE)) continue;
+    if (p->slot_type != -1 && p->slot_type != GW_SL_PK_CPU) {
+      gw_log("gw: scene: p%d refused: slots 5-6 must be CPU/script-driven; only four physical controllers",i+1);
+      c->configured=0; c->errors++; return;
+    }
+    p->slot_type=GW_SL_PK_CPU;
+  }
+}
+
 /* Parses a whole config string. Separators: ';', ',' or newline. `#` comments to end of line.
  * A rejected field is logged and counted but does not throw the rest of the config away. */
 static void gw_sl_parse(GwSceneConfig *c, const char *text, const char *source) {
@@ -2085,7 +2186,13 @@ static void gw_sl_parse(GwSceneConfig *c, const char *text, const char *source) 
     key[klen] = '\0';
     while (*s == '=' || *s == ' ' || *s == '\t') s++;
     start = s;
-    while (*s != '\0' && *s != ';' && *s != ',' && *s != '\n' && *s != '\r' && *s != '#') s++;
+    {
+      int maze_comma = tt_ieq(key, "maze");
+      while (*s && *s != ';' && *s != '\n' && *s != '\r' && *s != '#') {
+        if (*s == ',') { if (!maze_comma) break; maze_comma = 0; }
+        s++;
+      }
+    }
     vlen = (size_t)(s - start);
     while (vlen > 0 && (start[vlen - 1] == ' ' || start[vlen - 1] == '\t')) vlen--;
     if (vlen >= sizeof val) vlen = sizeof val - 1;
@@ -2099,6 +2206,12 @@ static void gw_sl_parse(GwSceneConfig *c, const char *text, const char *source) 
              source, key, val);
     }
   }
+  if (c->mission[0] || c->maze_size > 0) {
+    c->game_mode = 0x1C; c->vs_mode = 6; c->entry_state = GW_SL_AT_MATCH;
+    if (c->p[0].ckind < 0) c->p[0].ckind = 4;
+    if (c->stage_ext < 0) c->stage_ext = 32;
+  }
+  gw_sl_validate_route(c);
 }
 
 /* The legacy single-purpose variables, folded into the same config so there is one seeding path. */
@@ -2162,6 +2275,7 @@ static void gw_sl_load(void) {
   if (gw_sl_loaded) return;
   gw_sl_loaded = 1;
   gw_sl_config_init(&gw_sl_cfg);
+  gw_sl_launch_mod[0] = 0;
   {
     extern const char *gw_SlippiMode_Scene(void);
     text = gw_SlippiMode_Scene();
@@ -2209,7 +2323,24 @@ static void gw_sl_load(void) {
     gw_sl_parse(&gw_sl_cfg, text, "MELEE_SCENE");
   }
 parsed:
-  gw_sl_load_legacy(&gw_sl_cfg);
+  if (!gw_sl_cfg.configured) {
+    int i;
+    for (i = 0; i < gw_Mods_Count(); ++i) {
+      const char *decl = gw_Mods_Autostart(i);
+      GwSceneConfig candidate;
+      if (!gw_Mods_IsActive(i) || !decl[0]) continue;
+      gw_sl_parse(&candidate, decl, "mod autostart");
+      if (candidate.errors || (!candidate.mission[0] && candidate.maze_size <= 0)) {
+        gw_log("gw: scene: mod %s autostart rejected", gw_Mods_Id(i)); continue;
+      }
+      gw_sl_cfg = candidate;
+      snprintf(gw_sl_launch_mod, sizeof gw_sl_launch_mod, "%s", gw_Mods_Id(i));
+      gw_log("gw: scene: mod %s autostart %s", gw_sl_launch_mod, decl);
+      break;
+    }
+  }
+  if (!gw_sl_cfg.mission[0] && !gw_sl_cfg.maze_size) gw_sl_load_legacy(&gw_sl_cfg);
+  gw_sl_validate_route(&gw_sl_cfg);
   /* Target Test has no VsModeData; gmmultiman.c asks for the character directly, so lift it
    * out of player 1 when the config spelled it that way. */
   if (gw_sl_cfg.game_mode == 0x0F && gw_sl_cfg.tt_ckind < 0) {
@@ -2223,8 +2354,10 @@ parsed:
  * getenv-backed switch here testable more than once per process - the thing the old
  * read-once-into-a-static hooks could not do. */
 void gw_SceneLaunch_LoadForTest(const char *text) {
+  ++gw_sl_revision;
   gw_sl_loaded = 1;
   gw_sl_config_init(&gw_sl_cfg);
+  gw_sl_launch_mod[0] = 0;
   if (text != NULL) {
     gw_sl_parse(&gw_sl_cfg, text, "test");
   }
@@ -2241,13 +2374,20 @@ const void *gw_SceneLaunch_ConfigForTest(void) {
  * mode entry seeds its match from it exactly as a boot-time MELEE_SCENE would - or clear it, so
  * later offline play is untouched. */
 void gw_SceneLaunch_SetText(const char *text) {
+  ++gw_sl_revision;
   gw_sl_loaded = 1;
   gw_sl_config_init(&gw_sl_cfg);
+  gw_sl_launch_mod[0] = 0;
   if (text != NULL && text[0] != '\0') {
     gw_log("gw: scene: set at runtime \"%s\"", text);
     gw_sl_parse(&gw_sl_cfg, text, "runtime");
   }
 }
+
+const char *gw_SceneLaunch_Mission(void) { gw_sl_load(); return gw_sl_cfg.mission; }
+int gw_SceneLaunch_MazeSeed(void) { gw_sl_load(); return gw_sl_cfg.maze_seed; }
+int gw_SceneLaunch_MazeSize(void) { gw_sl_load(); return gw_sl_cfg.maze_size; }
+const char *gw_SceneLaunch_Mod(void) { gw_sl_load(); return gw_sl_launch_mod; }
 
 int gw_SceneLaunch_Active(void) {
   gw_sl_load();
@@ -2402,6 +2542,12 @@ int gw_SceneLaunch_PlayerStocks(int n) {
   gw_sl_load();
   return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].stocks : -1;
 }
+int gw_SceneLaunch_EnemyTeamColors(void) { gw_sl_load(); return gw_sl_cfg.enemy_team_colors; }
+
+int gw_SceneLaunch_PreloadCKind(int n) {
+  gw_sl_load();
+  return n>=0 && n<2 ? gw_sl_cfg.preload[n] : -1;
+}
 int gw_SceneLaunch_PlayerNametag(int n) {
   gw_sl_load();
   return (n >= 0 && n < GW_SL_SLOTS) ? gw_sl_cfg.p[n].nametag : -1;
@@ -2465,6 +2611,7 @@ const char *gw_SceneReport_ModeName(int mode) { return gw_sr_mode_name(mode); }
 const char *gw_SceneReport_SceneName(int scene_kind) { return gw_sr_scene_name(scene_kind); }
 
 void gw_SceneReport_State(int phase, int mode, int state_id, int scene_kind) {
+  if (phase == 0) gw_hang_scene(scene_kind);
   if (!gw_SceneReport_Enabled()) return;
   gw_log("scene: %s mode=%s(%d) state=%d screen=%s(%d)", phase == 0 ? "enter" : "leave ",
          gw_sr_mode_name(mode), mode, state_id, gw_sr_scene_name(scene_kind), scene_kind);
@@ -2558,6 +2705,27 @@ static int test_scene_ckind_fkind_table(void) {
     gw_test_fail("m-ex slot 0: fk 0x21 -> ck %d, want 0x22", gw_SceneLaunch_FKindToCKind(0x21));
     return 1;
   }
+  return 0;
+}
+
+/* Launch grammar is covered by the same pure parser as ordinary scenes. */
+static int test_scene_launch_keywords(void) {
+  GwSceneConfig c;
+  gw_sl_parse(&c, "mission=first-room", "launch test");
+  if (!c.configured || c.game_mode != 0x1C || c.entry_state != GW_SL_AT_MATCH || c.errors) {
+    gw_test_fail("mission did not route directly to an offline training host"); return 1;
+  }
+  gw_sl_parse(&c, "maze=7,12;stage=fd", "launch test");
+  if (!c.configured || c.errors || c.stage_ext != 32 || c.maze_seed != 7 || c.maze_size != 12) {
+    gw_test_fail("maze comma must belong to its seed,size value"); return 1;
+  }
+  if (strcmp(c.mission, "") != 0) { gw_test_fail("maze retained mission"); return 1; }
+  gw_sl_parse(&c, "maze=2147483648,12", "launch test");
+  if (!c.errors) { gw_test_fail("overflow maze seed accepted"); return 1; }
+  gw_sl_parse(&c, "mission=../escape", "launch test");
+  if (!c.errors) { gw_test_fail("mission traversal accepted"); return 1; }
+  gw_sl_parse(&c, "maze=7,0", "launch test");
+  if (!c.errors) { gw_test_fail("empty maze accepted"); return 1; }
   return 0;
 }
 
@@ -3087,28 +3255,9 @@ int gw_Gfx_PipelinesPending(void) {
  * exe). Aurora warms the seed in that order, so the loading screen waits for this many. 0 when
  * there is no seed. */
 int gw_Gfx_SeedCoreCount(void) {
-  static int core = -1;
-  if (core < 0) {
-    char path[MAX_PATH];
-    DWORD n = GetModuleFileNameA(NULL, path, (DWORD)sizeof path);
-    char *slash = (n > 0 && n < sizeof path) ? gw_path_separator(path) : NULL;
-    FILE *f;
-    core = 0;
-    if (slash != NULL) {
-      snprintf(slash + 1, sizeof path - (size_t)(slash + 1 - path), "initial_pipeline_cache.core");
-      f = fopen(path, "r");
-      if (f != NULL) {
-        if (fscanf(f, "%d", &core) != 1 || core < 0) {
-          core = 0;
-        }
-        fclose(f);
-      }
-    }
-  }
-  /* Aurora warms MUST_DRAW (item) pipelines ahead of the seed's order, so the core is warm only
-   * after those too. */
-  return core > 0 ? core + (int) aurora_count_tagged_pipelines(AURORA_PIPELINE_TAG_MUST_DRAW) : 0;
+  return (int)aurora_pipeline_core_count();
 }
+
 uint32_t gw_aurora_count_tagged_none(uint32_t mask) { (void) mask; return 0; }
 #pragma comment(linker, "/alternatename:_aurora_count_tagged_pipelines=_gw_aurora_count_tagged_none")
 
@@ -3131,6 +3280,10 @@ int gw_Gfx_PrewarmMustDraw(void) {
   gw_log("gfx: prewarm %u must-draw (item) pipeline(s) at match load", (unsigned) n);
   return (int) n;
 }
+
+/* Actual unfinished scene/core keys, rather than an unrelated total-built counter. */
+extern uint32_t aurora_pipeline_core_pending(void);
+int gw_Gfx_SeedCorePending(void) { return (int)aurora_pipeline_core_pending(); }
 
 int gw_Gfx_SeedPipelinesBuilt(void) {
   const AuroraStats *s = aurora_get_stats();
@@ -3239,9 +3392,17 @@ static int test_gxtex_header_and_copy(void) {
   return rc;
 }
 
+#include "gw_scene_six_tests.inc"
+
 void gw_scene_tests_register(void) {
+  gw_test_register("scene_six_slots", test_scene_six_slots);
+  gw_test_register("scene_six_fix1", test_scene_six_fix1);
+  gw_test_register("scene_six_seed", test_scene_six_seed);
+  gw_test_register("scene_six_budget", test_scene_six_budget);
+  gw_test_register("scene_six_refusals", test_scene_six_refusals);
   gw_test_register("gxtex_header_and_copy", test_gxtex_header_and_copy);
   gw_test_register("scene_ckind_fkind_table", test_scene_ckind_fkind_table);
+  gw_test_register("scene_launch_keywords", test_scene_launch_keywords);
   gw_test_register("scene_parse_training", test_scene_parse_training);
   gw_test_register("scene_index_spaces", test_scene_index_spaces);
   gw_test_register("scene_parse_vs_four", test_scene_parse_vs_four);

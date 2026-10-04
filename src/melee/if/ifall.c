@@ -1,4 +1,7 @@
 #include "ifall.h"
+#if defined(TARGET_PC)
+#include "ifhud_math.h"
+#endif
 
 #include "if_2F6E.h"
 #include "if_2F72.h"
@@ -123,6 +126,31 @@ void ifAll_802F343C(int arg0)
         }
         break;
     }
+#if defined(TARGET_PC)
+    if (arg0 == 6) {
+        Vec3 authored_left, authored_right;
+        f32 source_left = ifAll_804A0FD8.x18[0].x;
+        f32 source_right = source_left;
+        /* Read unscaled four-player anchors on every relayout, so fitting
+         * cannot accumulate when the active player count changes. */
+        lb_80011E24(jobj, &spC, 2, -1);
+        lb_8000B1CC(spC, NULL, &authored_left);
+        lb_80011E24(jobj, &spC, 5, -1);
+        lb_8000B1CC(spC, NULL, &authored_right);
+        for (i = 1; i < 6; ++i) {
+            f32 x = ifAll_804A0FD8.x18[i].x;
+            if (x < source_left) source_left = x;
+            if (x > source_right) source_right = x;
+        }
+        if (authored_right.x > authored_left.x) {
+            for (i = 0; i < 6; ++i) {
+                ifAll_804A0FD8.x18[i].x = ifHUD_FitCentre(
+                    ifAll_804A0FD8.x18[i].x, source_left, source_right,
+                    authored_left.x, authored_right.x);
+            }
+        }
+    }
+#endif
 }
 
 HSD_Archive** ifAll_GetArchive(void)
@@ -211,6 +239,11 @@ void ifAll_802F390C(void)
     {
         HSD_CObjDesc* desc = sp14->cameras[0].desc;
         HSD_GObj* gobj = GObj_Create(0x13, 0x14, 0);
+#if defined(TARGET_PC)
+        /* Keep every stock/percent group at its authored position. The loaded
+         * perspective camera widens symmetrically about its optical centre;
+         * no per-player offsets or different HUD spreading rules. */
+#endif
         HSD_CObj* cobj = lb_80013B14(&desc->perspective);
         HSD_GObjObject_80390A70(gobj, HSD_GObj_CameraKind, cobj);
         GObj_SetupGXLinkMax(gobj, fn_802F36B8, 8);

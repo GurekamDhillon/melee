@@ -1,0 +1,1 @@
+{"id": "demo_1p_loop", "name": "Scripted 1P launch and New Game+", "version": "0.1.0", "kind": "script", "api_version": 1, "gameplay": true, "rollback_safe": false, "entry": "scripts/main.lua"}

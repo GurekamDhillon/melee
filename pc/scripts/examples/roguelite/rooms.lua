@@ -1,6 +1,8 @@
 -- Original authored environment assembly. Core/Dungeon physics remain root-owned.
 -- BF sidecars are suppressed with collision=false; explicit route colliders own physics.
-local R={version=3,max_instances=28,max_assets=10,unit=6.5}
+local R={version=3,max_instances=48,max_assets=10,unit=6.5}
+-- Preserve authored world projection; background depth keeps decorative kit
+-- self-occlusion while leaving gameplay fighters and effects in front.
 local valid={entry='entry',trail='traversal',arena_a='arena',arena_b='arena',
  rest='rest',approach='traversal',boss='boss',exit='exit'}
 local function finite(v) return type(v)=='number' and v==v and math.abs(v)<math.huge end
@@ -13,7 +15,7 @@ local function handle(h) return finite(h) and h%1==0 and h>0 end
 local preload={'bf_floor_4m','bf_floor_end_trim','bf_wall_solid_4m','bf_beam_4m','bf_rear_post_4m','bf_wall_doorway_4m'}
 function R.preload_step(s,node)
  local models=preload
- if node and node.recipe then
+ if node and (node.recipe or node.physical) then
   local plan,why=R.plan(node);if not plan then return nil,why end
   local seen={};models={}
   for _,part in ipairs(plan.parts) do if not seen[part.model] then models[#models+1]=part.model;seen[part.model]=true end end
@@ -36,6 +38,7 @@ function R.collision(node)
  local g=type(node)=='table' and node.room
  if type(g)~='table' or type(g.floor)~='table' or type(g.platforms)~='table' then return nil,'missing geometry' end
  local f=g.floor
+ local max_y=node.campaign==true and node.room.physical_bounds.top or node.physical==true and 156 or 60
  if not finite(f.left) or not finite(f.right) or not finite(f.y) or f.left>=f.right then return nil,'invalid floor' end
  local holes={}
  for _,o in ipairs(f.openings or {}) do
@@ -45,14 +48,20 @@ function R.collision(node)
  table.sort(holes,function(a,b) return a.left<b.left end)
  for _,p in ipairs(g.platforms) do
   if type(p)~='table' or not finite(p.x) or not finite(p.y) or not finite(p.width) or p.width<=0
-   or p.x-p.width/2<f.left or p.x+p.width/2>f.right or p.y<0 or p.y>60
+   or p.x-p.width/2<f.left or p.x+p.width/2>f.right or p.y<0 or p.y>max_y
    or type(p.passthrough)~='boolean' or type(p.ledges)~='boolean' then return nil,'invalid collision platform' end
  end
  for _,line in ipairs(g.lines or {}) do
-  if type(line)~='table' or line.kind~='floor' or not finite(line.x0) or not finite(line.y0)
-   or not finite(line.x1) or not finite(line.y1) or line.x0>=line.x1
-   or line.x0<f.left or line.x1>f.right or line.y0<0 or line.y1>60
+  local allowed=type(line)=='table' and (line.kind=='floor' or ((node.maze==true or node.physical==true) and
+   (line.kind=='left_wall' or line.kind=='right_wall' or line.kind=='ceiling')))
+  if not allowed or not finite(line.x0) or not finite(line.y0)
+   or not finite(line.x1) or not finite(line.y1)
+   or math.min(line.x0,line.x1)<f.left or math.max(line.x0,line.x1)>f.right
+   or math.min(line.y0,line.y1)<0 or math.max(line.y0,line.y1)>max_y
    or type(line.passthrough)~='boolean' or type(line.ledges)~='boolean' then return nil,'invalid collision line' end
+  if (line.kind=='floor' and line.x0>=line.x1) or (line.kind=='ceiling' and line.x0<=line.x1)
+   or (line.kind=='left_wall' and (line.x0~=line.x1 or line.y0>=line.y1))
+   or (line.kind=='right_wall' and (line.x0~=line.x1 or line.y0<=line.y1)) then return nil,'invalid collision line orientation' end
  end
  local spans,cursor={},f.left
  for _,o in ipairs(holes) do
@@ -92,7 +101,7 @@ local function recipe_plan(node)
   if #plan.parts>=R.max_instances or type(model)~='string' or not model:match('^bf_')
    or not finite(x) or not finite(y) or not finite(sx or 1) or not finite(sy or 1)
    or math.abs(sx or 1)<.001 or math.abs(sx or 1)>100 or (sy or 1)<.001 or (sy or 1)>100 then error('invalid recipe model transform/budget') end
-  plan.parts[#plan.parts+1]={kind=kind,model=model,x=x,y=y,z=0,scale_x=sx or 1,scale_y=sy or 1,scale_z=1,collision=false}
+  plan.parts[#plan.parts+1]={kind=kind,model=model,x=x,y=y,z=0,scale_x=sx or 1,scale_y=sy or 1,scale_z=1,collision=false,background=true}
  end
  local ok,detail=pcall(function()
   local holes=f.openings or {}
@@ -131,7 +140,81 @@ local function recipe_plan(node)
  return plan
 end
 function R.plan(node)
- if type(node)=='table' and node.recipe then return recipe_plan(node) end
+ if type(node)=='table' and node.physical==true then
+  local c,why=R.collision(node);if not c then return nil,why end
+  local generator=node.campaign and PhysicalCampaign or Traversal
+  if not generator then return nil,'physical geometry module unavailable' end
+  local admitted,reason=generator.screen(node.room);if not admitted then return nil,reason end
+  local f=node.room.floor
+  local count=#c.floor_segments+#c.platforms+#c.lines
+  if f.left~=-416 or f.right~=416 or f.y~=0 or (node.campaign and count>32 or not node.campaign and count~=24) then return nil,'incompatible physical room' end
+  local ok,parts=pcall(generator.parts,node);if not ok then return nil,tostring(parts) end
+  if (not node.campaign and #parts~=48) or #parts>R.max_instances then return nil,'physical instance budget' end
+  for _,part in ipairs(parts) do
+   part.kind=part.model=='bf_wall_solid_4m' and 'blocker' or 'physical'
+   -- The authored solid wall is centred behind z=0. Bring only filled
+   -- collision blockers onto the fighter plane; scenery keeps its depth.
+   if part.kind=='blocker' then part.z=17.68 end
+  end
+  return {room_id=node.id,theme='cobalt',parts=parts,platforms=c.platforms,
+   floor_segments=c.floor_segments,lines=c.lines,anchors=copy(node.room.exit_anchors),arrivals=copy(node.room.arrivals)}
+ end
+ if type(node)=='table' and node.maze==true then
+  local c,why=R.collision(node);if not c then return nil,why end
+  if #c.floor_segments+#c.platforms+#c.lines>16 then return nil,'maze collision budget' end
+  local proxy=copy(node);proxy.maze=nil;proxy.id='trail';proxy.kind='traversal'
+  proxy.room.platforms={};proxy.exits={}
+  for _,e in ipairs(node.exits or {}) do
+   if e.side=='left' or e.side=='right' then proxy.exits[#proxy.exits+1]=copy(e)
+   elseif e.side~='top' and e.side~='bottom' then return nil,'unsupported maze socket' end
+  end
+  local p,detail=R.plan(proxy);if not p then return nil,detail end
+  p.room_id=node.id;p.platforms=c.platforms;p.floor_segments=c.floor_segments;p.lines=c.lines
+  p.anchors=copy(node.room.exit_anchors);p.arrivals=copy(node.room.arrivals)
+  local function add(kind,model,x,y,sx,sy)
+   p.parts[#p.parts+1]={kind=kind,model=model,x=x,y=y,z=0,
+    scale_x=sx,scale_y=sy,scale_z=2,collision=false,background=true}
+  end
+  for _,platform in ipairs(c.platforms) do add('platform','bf_floor_4m',platform.x,platform.y,platform.width/26,2) end
+  -- Paired vertical edges and floor caps describe filled internal blockers.
+  for _,line in ipairs(c.lines) do if line.kind=='floor' and line.y0==line.y1 then
+   add('blocker','bf_wall_solid_4m',(line.x0+line.x1)/2,0,(line.x1-line.x0)/26,line.y0/26)
+   p.parts[#p.parts].z=17.68
+  end end
+  for _,e in ipairs(node.exits or {}) do if e.side=='top' or e.side=='bottom' then
+   local a=R.anchor(node,e)
+   if not a or not finite(a.x) or not finite(a.y) then return nil,'invalid upper maze socket' end
+   add('portal','bf_wall_doorway_4m',a.x,a.y,2,2)
+  end end
+  if #p.parts>R.max_instances then return nil,'maze instance budget' end
+  return p
+ end
+ if type(node)=='table' and node.recipe then
+  if node.room and node.room.kit and node.room.kit.unit==13 then
+   -- Normalize a private snapshot for the reviewed kit assembler, then scale
+   -- its visuals back up. The original collision and socket snapshot is intact.
+   local n=copy(node)
+   local dimensions={x=true,y=true,x0=true,y0=true,x1=true,y1=true,left=true,right=true,
+    width=true,unit=true,grid=true,bay=true,height=true,depth=true}
+   local function halve(t)
+    for k,v in pairs(t) do
+     if type(v)=='table' then halve(v)
+     elseif dimensions[k] and type(v)=='number' then t[k]=v/2 end
+    end
+   end
+   halve(n.room);halve(n.exits);halve(n.recipe_modules or {})
+   local p,why=recipe_plan(n);if not p then return nil,why end
+   for _,part in ipairs(p.parts) do
+    part.x=part.x*2;part.y=part.y*2
+    part.scale_x=part.scale_x*2;part.scale_y=part.scale_y*2;part.scale_z=2
+   end
+   local c=R.collision(node)
+   p.platforms=c.platforms;p.floor_segments=c.floor_segments;p.lines=c.lines
+   p.anchors=copy(node.room.exit_anchors);p.arrivals=copy(node.room.arrivals)
+   return p
+  end
+  return recipe_plan(node)
+ end
  if type(node)~='table' or valid[node.id]~=node.kind or not valid[node.id]
   or type(node.room)~='table' or type(node.room.platforms)~='table'
   or type(node.exits)~='table' then return nil,'unsupported room' end
@@ -140,27 +223,31 @@ function R.plan(node)
  elseif node.encounter=='pressure' or node.id=='boss' or node.id=='approach' then theme='fire'
  elseif node.kind=='arena' then return nil,'missing arena encounter' end
  local plan={room_id=node.id,theme=theme,parts={},platforms={}}
+ local kit=node.room.kit or {}
+ local factor=kit.unit==13 and 2 or 1
  local function add(kind,model,x,y,z,sx,sy)
   assert(#plan.parts<R.max_instances,'room instance budget')
   sx=sx or 1;sy=sy or 1
   assert(finite(x) and finite(y) and finite(z) and finite(sx) and math.abs(sx)>=.001
    and math.abs(sx)<=100 and finite(sy) and sy>=.001 and sy<=100,'invalid room transform')
   plan.parts[#plan.parts+1]={kind=kind,model=model,x=x,y=y,z=z,
-   scale_x=sx,scale_y=sy,scale_z=1,collision=false}
+   scale_x=sx*factor,scale_y=sy*factor,scale_z=factor,collision=false,background=true}
  end
  local ok,why=pcall(function()
   if #node.room.platforms>3 then error('platform budget') end
   local f,k=node.room.floor,node.room.kit
-  assert(type(f)=='table' and f.left==-65 and f.right==65 and f.y==0 and type(k)=='table'
-   and k.unit==6.5 and k.grid==13 and k.bay==26 and k.height==26 and k.depth==0,'incompatible kit structure')
+  assert(type(f)=='table' and (f.left==-130 or f.left==-65) and f.right==-f.left and f.y==0 and type(k)=='table'
+   and k.unit==6.5*factor and k.grid==13*factor and k.bay==26*factor and k.height==26*factor and k.depth==0,'incompatible kit structure')
   local bay=k.bay
-  for i=1,5 do add('mainfloor','bf_floor_4m',f.left+(i-.5)*bay,f.y,0) end
+  local bays=(f.right-f.left)/bay
+  assert(bays==5 or bays==10,'incompatible room bay count')
+  for i=1,bays do add('mainfloor','bf_floor_4m',f.left+(i-.5)*bay,f.y,0) end
   add('trim','bf_floor_end_trim',f.left,f.y,0,-1)
   add('trim','bf_floor_end_trim',f.right,f.y,0,1)
   for _,p in ipairs(node.room.platforms) do
    assert(type(p)=='table' and finite(p.x) and finite(p.y) and p.y>=0 and finite(p.width)
-    and p.width>0 and p.width<=130 and p.x-p.width/2>=-65 and p.x+p.width/2<=65,'invalid platform')
-   add('platform','bf_floor_4m',p.x,p.y,0,p.width/26)
+    and p.width>0 and p.width<=260 and p.x-p.width/2>=f.left and p.x+p.width/2<=f.right,'invalid platform')
+   add('platform','bf_floor_4m',p.x,p.y,0,p.width/(26*factor))
    plan.platforms[#plan.platforms+1]={x=p.x,y=p.y,width=p.width,visual_top=p.y}
   end
   local doors={}
@@ -171,15 +258,14 @@ function R.plan(node)
    assert(type(anchor)=='table' and anchor.x==expected and anchor.y==f.y,'incompatible door grid')
    doors[e.side]=true
   end
-  -- Replace the outer wall bay with its door. Authored local depth is already
-  -- behind fighters; every structural part uses the same unshifted kit origin.
-  for i=1,5 do
+  -- Replace the outer wall bay with its door; all parts share the authored origin.
+  for i=1,bays do
    local x=f.left+(i-.5)*bay
-   local door=(i==1 and doors.left) or (i==5 and doors.right)
+   local door=(i==1 and doors.left) or (i==bays and doors.right)
    add(door and 'portal' or 'wall',door and 'bf_wall_doorway_4m' or 'bf_wall_solid_4m',x,f.y,k.depth)
    add('beam','bf_beam_4m',x,k.height,k.depth)
   end
-  for i=1,4 do add('post','bf_rear_post_4m',f.left+i*bay,f.y,k.depth) end
+  for i=1,bays-1 do add('post','bf_rear_post_4m',f.left+i*bay,f.y,k.depth) end
 
  end)
  if not ok then return nil,tostring(why) end
@@ -220,7 +306,7 @@ function R.enter(s,node)
   end
   if not why then
    local opts={x=part.x,y=part.y,z=part.z,scale_x=part.scale_x,scale_y=part.scale_y,
-    scale_z=1,collision=false}
+    scale_z=part.scale_z,collision=false,background=part.background}
    local ok,result,detail=pcall(gd.model_spawn,asset,opts)
    if ok and handle(result) then s.handles[#s.handles+1]=result
    else why=tostring(ok and detail or result or 'model spawn refused') end

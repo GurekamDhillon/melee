@@ -35,6 +35,23 @@
 
 /* 094B6C */ static void ftpickupitem_80094B6C(Fighter_GObj* gobj,
                                                Item_GObj* item_gobj);
+#if defined(TARGET_PC)
+static void geno_consumable_collect(Item_GObj* item, int port)
+{
+    switch (itGetKind(item)) {
+    case It_Kind_Heart: case It_Kind_Tomato: case It_Kind_Foods:
+    case It_Kind_Lucky_Egg: case It_Kind_WhispyHealApple: case It_Kind_WStar:
+    case It_Kind_Hammer: case It_Kind_RabbitC: case It_Kind_MetalB:
+    case It_Kind_Spycloak: case It_Kind_Coin:
+        {
+            extern void Geno_ItemFamilyEvent(HSD_GObj*, int, int);
+            Geno_ItemFamilyEvent(item, 0, port);
+        }
+        break;
+    default: break;
+    }
+}
+#endif
 
 bool ftpickupitem_80094150(Fighter_GObj* gobj, Item_GObj* item_gobj)
 {
@@ -155,6 +172,9 @@ bool ftpickupitem_8009447C(Fighter_GObj* gobj, Item_GObj* item_gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     HSD_ASSERTREPORT(174, item_gobj, "ftGetImmItem item_gobj is NULL!!\n");
     if (it_8026B30C(item_gobj) == 5) {
+#if defined(TARGET_PC)
+        geno_consumable_collect(item_gobj, fp->player_id);
+#endif
         switch (itGetKind(item_gobj)) {
         case It_Kind_Heart:
             Fighter_8006CF5C(fp, it_8026B47C(item_gobj));
@@ -352,6 +372,9 @@ void ftpickupitem_80094B6C(Fighter_GObj* gobj, Item_GObj* item_gobj)
     PAD_STACK(4);
     HSD_ASSERTREPORT(399, item_gobj, "ftGetImmItem item_gobj is NULL!!\n");
     if (it_8026B30C(item_gobj) == 5) {
+#if defined(TARGET_PC)
+        geno_consumable_collect(item_gobj, fp->player_id);
+#endif
         switch (itGetKind(item_gobj)) {
         case It_Kind_Heart:
             Fighter_8006CF5C(fp, it_8026B47C(item_gobj));

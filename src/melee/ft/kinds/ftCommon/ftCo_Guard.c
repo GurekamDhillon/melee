@@ -180,7 +180,7 @@ static inline float inlineB0(Fighter* fp)
         return fp->co_attrs.initial_shield_size;
     } else {
         float n1 =
-            (fp->shield_health / p_ftCommonData->x260_startShieldHealth) *
+            (fp->shield_health / FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth)) *
             (fp->lightshield_amount *
                  (p_ftCommonData->x2D8 - p_ftCommonData->x2D4) +
              p_ftCommonData->x2D4);

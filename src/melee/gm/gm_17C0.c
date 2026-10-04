@@ -67,6 +67,11 @@ static struct {
 } boss_hook;
 
 extern int Script_BossHookEnabled(void);
+extern int Script_OnePScripted(void);
+extern int Script_OnePComplete(void);
+extern void Script_OnePGameOver(void);
+extern void Script_OnePClear(void);
+extern void Script_OnePStage(int mode, int stage, int flags, int player);
 extern void Script_GameEvent(int what, int a, int b, int c, int d);
 
 static int BossHook_Kind(int kind)
@@ -550,8 +555,18 @@ void gm_8017CA38(DebugGameOverData* arg0, Unk1PData* arg1, gmm_x0_528_t* arg2,
     u8 temp_r31;
 
     arg1->xC.x14 = arg0->x18;
+#if defined(TARGET_PC)
+    if (!Script_OnePScripted())
+#endif
     gm_801623FC(arg1->xC.x14);
     if (arg0->xC == 0) {
+#if defined(TARGET_PC)
+        Script_OnePGameOver();
+        if (Script_OnePScripted()) {
+            gm_ChangeGameModeAfterCurrentScene(GM_MENU);
+            return;
+        }
+#endif
         temp_r31 = gm_80173224(arg3, 0);
         switch (gm_GetCurrentGameMode()) {
         case GM_CLASSIC:
@@ -592,6 +607,14 @@ void gm_8017CBAC(UnkAdventureData* arg0, gmm_x0_528_t* arg1, u8 arg2)
     u8 temp_r31;
     u8* temp_r3;
 
+#if defined(TARGET_PC)
+    if ((gm_GetCurrentGameMode()==GM_CLASSIC || gm_GetCurrentGameMode()==GM_ADVENTURE) &&
+        Script_OnePComplete()) {
+        Ground_801C5A60();
+        gm_ChangeGameModeAfterCurrentScene(GM_MENU);
+        return; /* No trophy/credits/card records for a scripted run. */
+    }
+#endif
     temp_r31 = gm_CKindToSelKind(arg0->x0.x0.ckind);
     Ground_801C5A60();
     switch (arg2) {
@@ -736,6 +759,9 @@ void gm_8017CE34(StartMeleeData* arg0, Unk1PData* arg1, s8* arg2, u8 arg3,
     boss_count = 0;
     enemy_level = 0;
     enemy_cpu_type = 0;
+#if defined(TARGET_PC)
+    Script_OnePStage(gm_GetCurrentGameMode(), count, arg1->x8, 0);
+#endif
     arg1->xC.xC = 1;
     fn_8017E21C();
     fn_8016F030(arg0);
@@ -1061,9 +1087,15 @@ bool gm_8017D7AC(MatchExitInfo* arg0, Unk1PData* arg1, u8 arg2)
 
     arg1->xC.x14 =
         lbTime_8000AEC8(arg1->xC.x14, arg0->match_end.player_standings[0].xE);
+#if defined(TARGET_PC)
+    if (!Script_OnePScripted())
+#endif
     gm_8016247C(arg0->match_end.player_standings[0].xE);
     arg1->xC.x1C =
         lbTime_8000AEC8(arg1->xC.x1C, arg0->match_end.player_standings[0].x44);
+#if defined(TARGET_PC)
+    if (!Script_OnePScripted())
+#endif
     gm_80162968(arg0->match_end.frame_count / 60);
     if (!(arg1->x8 & 0x80)) {
         arg1->xC.x20 =
@@ -1084,6 +1116,10 @@ bool gm_8017D7AC(MatchExitInfo* arg0, Unk1PData* arg1, u8 arg2)
     if ((temp_r0 == OUTCOME_NO_CONTEST || temp_r0 == OUTCOME_RETRY) &&
         DbLevel <= DbLKind_DebugDevelop)
     {
+#if defined(TARGET_PC)
+        Script_OnePGameOver();
+        if (!Script_OnePScripted())
+#endif
         switch (gm_GetCurrentGameMode()) {
         case GM_CLASSIC:
             fn_80162BFC(arg1->x0.ckind, arg1->xC.x18);
@@ -1098,6 +1134,9 @@ bool gm_8017D7AC(MatchExitInfo* arg0, Unk1PData* arg1, u8 arg2)
         gm_ChangeGameModeAfterCurrentScene(GM_MENU);
         return 0;
     }
+#if defined(TARGET_PC)
+    if (!Script_OnePScripted())
+#endif
     fn_8017E3C8();
     if (!(arg1->x8 & 0x80)) {
         arg1->x0.stocks = arg0->match_end.player_standings[0].stocks;
@@ -1122,6 +1161,9 @@ bool gm_8017D7AC(MatchExitInfo* arg0, Unk1PData* arg1, u8 arg2)
     }
     arg1->xC.x18 = arg0->x0;
     arg1->xC.x10 = 0;
+#if defined(TARGET_PC)
+    Script_OnePClear();
+#endif
     return 1;
 }
 

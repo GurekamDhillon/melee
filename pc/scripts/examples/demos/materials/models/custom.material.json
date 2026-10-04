@@ -1,0 +1,11 @@
+{
+  "fragment": "shaders/model.wgsl",
+  "params": {
+    "tint": [
+      0.4,
+      0.8,
+      1,
+      1
+    ]
+  }
+}

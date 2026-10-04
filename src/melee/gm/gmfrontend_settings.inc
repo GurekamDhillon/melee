@@ -177,6 +177,9 @@ static int fsv_get_rate(void)
     return 0;
 }
 static void fsv_set_rate(int v) { Video_SetFrameRate(fsv_rates[v]); }
+extern int Widescreen_Enabled(void);
+static int fsv_get_widescreen(void) { return Widescreen_Enabled(); }
+static void fsv_set_widescreen(int v) { Settings_SetInt("widescreen", v); }
 static int fsv_get_vsync(void) { return Video_Vsync(); }
 static void fsv_set_vsync(int v) { Video_SetVsync(v); }
 static int fsv_get_fps(void) { return Video_ShowFps(); }
@@ -184,6 +187,8 @@ static void fsv_set_fps(int v) { Video_SetShowFps(v); }
 static const char* const fsv_fps_names[] = { "Off", "FPS", "Performance" };
 
 static const FrontendItem fe_items_set_video[] = {
+    { FE_TOGGLE, 0, "Widescreen", "Follow the window from 4:3 to 32:9. Native screens keep bars. MELEE_WIDESCREEN overrides this.",
+      fsv_get_widescreen, fsv_set_widescreen, 0, 1, 1 },
     { FE_CHOICE, 0, "Render Scale", "The picture's internal size. Auto follows the window.",
       fsv_get_scale, fsv_set_scale, 0, 5, 1, fsv_scale_names },
     { FE_CHOICE, 0, "Frame Rate",
@@ -339,7 +344,10 @@ static void fsc_howto(void) { fe_switch_screen(&fe_screen_howto_online); }
 
 /* The keyboard does not play: controllers play, the keyboard is hotkeys (and mods' keys). The first
  * boot opens this page once (gmfrontend_menus.inc, Onboard_Pending). */
+#include "gmfrontend_controls.inc"
 static const FrontendItem fe_items_set_controls[] = {
+    { FE_ACTION, FE_DO_CALL, "Remap Controller", "Choose a game input, then press the controller input you want.",
+      NULL, NULL, 0, 0, 0, NULL, NULL, NULL, fcr_open },
     { FE_SLIDER, 0, "Port 1", "What port 1 reads right now: press buttons and move the sticks to test them.",
       fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p1 },
     { FE_SLIDER, 0, "Port 2", "What port 2 reads right now.", fsc_zero, NULL, 0, 0, 0, NULL, fsc_fmt_p2 },
@@ -446,13 +454,13 @@ static const struct {
     FSM_P(25), FSM_P(26), FSM_P(27), FSM_P(28), FSM_P(29), FSM_P(30), FSM_P(31), FSM_P(32),
     FSM_P(33), FSM_P(34), FSM_P(35), FSM_P(36), FSM_P(37), FSM_P(38), FSM_P(39),
 };
-static char fsm_help[FSM_MAX][FE_STR];
+static char fsm_help[FSM_MAX][FE_HELP_STR];
 
 /* Append, bounded to a help line. */
 static void fsm_cat(char* dst, const char* src)
 {
     int n = (int) strlen(dst);
-    while (src != NULL && *src != 0 && n < FE_STR - 1) {
+    while (src != NULL && *src != 0 && n < FE_HELP_STR - 1) {
         dst[n++] = *src++;
     }
     dst[n] = 0;
@@ -539,9 +547,19 @@ static const FrontendScreen fe_screen_settings[FSP_COUNT] = {
     { "SETTINGS", "GAMEPLAY", fe_items_set_gameplay, FSP_N(fe_items_set_gameplay) },
 };
 
+static void fcr_back(void) {
+    Controls_Cancel(); Controls_Menu(-1); fe_ol_note[0] = '\0';
+    fe_switch_screen(&fe_screen_settings[FSP_CONTROLS]);
+}
+
+static bool fe_is_controls_help(const FrontendScreen* s)
+{
+    return s == &fe_screen_howto_online;
+}
+
 static bool fe_is_settings(const FrontendScreen* s)
 {
-    return s >= &fe_screen_settings[0] && s < &fe_screen_settings[FSP_COUNT];
+    return fe_is_controls_help(s) || s == &fe_screen_remap || (s >= &fe_screen_settings[0] && s < &fe_screen_settings[FSP_COUNT]);
 }
 
 /* The saved online defaults, into the ONLINE screen's state (once per boot is enough, but cheap). */

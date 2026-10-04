@@ -758,7 +758,11 @@ HSD_CObj* lb_80013B14(HSD_CameraDescPerspective* desc)
     Scissor scissor;
 
     if (HSD_CObjGetProjectionType(cobj) == 1 &&
+#if defined(TARGET_PC)
+        HSD_CObjGetAuthoredAspect(cobj) == 1.18F)
+#else
         HSD_CObjGetAspect(cobj) == 1.18F)
+#endif
     {
         HSD_CObjSetAspect(cobj, 1.2173333F);
     }

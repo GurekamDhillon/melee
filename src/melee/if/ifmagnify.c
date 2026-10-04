@@ -30,6 +30,22 @@
 #include <sysdolphin/baselib/tobj.h>
 #include <sysdolphin/baselib/wobj.h>
 
+#if defined(TARGET_PC)
+static f32 ifMagnify_ViewAspect(void)
+{
+    extern int View_AspectBits(void);
+    union { int i; float f; } aspect;
+    aspect.i = View_AspectBits();
+    return aspect.f;
+}
+static bool ifMagnify_VisualOffscreen(HSD_GObj* fighter)
+{
+    Vec3 world;
+    ftLib_80086B90(fighter, &world);
+    return !Camera_80030BBC(&world, NULL);
+}
+#endif
+
 static HSD_WObjDesc ifMagnify_803F97C0 = { NULL,
                                            { 0.0F, 0.0F, 300.0F },
                                            NULL };
@@ -102,6 +118,89 @@ s32 ifMagnify_802FB6E8(s32 slot)
     return 0;
 }
 
+#if defined(TARGET_PC)
+ifMagnifyPlayer* ifMagnify_802FB73C(ifMagnifyPlayer* player, Vec2* pos,
+                                    Vec2* out)
+{
+    f32 x_clamped;
+    f32 y_clamped;
+    f32 out_x;
+    f32 x;
+    f32 ratio;
+    f32 y;
+
+    f32 horizontal_bound = 252.70001f;
+    f32 edge_ratio = 0.6438464f;
+#if defined(TARGET_PC)
+    horizontal_bound *= ifMagnify_ViewAspect() / (4.0f / 3.0f);
+    edge_ratio = 162.7f / horizontal_bound;
+#endif
+    x = pos->x;
+    y = pos->y;
+    if (0.0f == x) {
+        if (y > 0.0f) {
+            out->y = 162.7f;
+        } else {
+            out->y = -162.7f;
+        }
+        out->x = 0.0f;
+    } else {
+        ratio = y / x;
+        if ((ratio > edge_ratio) || (ratio < -edge_ratio)) {
+            if (y > 0.0f) {
+                out->y = 162.7f;
+            } else {
+                out->y = -162.7f;
+            }
+            x_clamped = out->y;
+            x_clamped = x_clamped * x;
+            x_clamped /= y;
+            if (x_clamped < -horizontal_bound) {
+                out->x = -horizontal_bound;
+            } else if (x_clamped > horizontal_bound) {
+                out->x = horizontal_bound;
+            } else {
+                out->x = x_clamped;
+            }
+        } else {
+            if (x > 0.0f) {
+                out->x = horizontal_bound;
+            } else {
+                out->x = -horizontal_bound;
+            }
+            y_clamped = out->x;
+            y_clamped = y_clamped * y;
+            y_clamped /= x;
+            if (y_clamped < -162.7f) {
+                out->y = -162.7f;
+            } else if (y_clamped > 162.7f) {
+                out->y = 162.7f;
+            } else {
+                out->y = y_clamped;
+            }
+        }
+    }
+
+    out_x = out->x;
+    x = -horizontal_bound;
+    if (out_x == x) {
+        player->state.edge = 2;
+        return player;
+    }
+    x = horizontal_bound;
+    if (out_x == x) {
+        player->state.edge = 4;
+        return player;
+    }
+    x = 162.7f;
+    if (out->y == x) {
+        player->state.edge = 1;
+        return player;
+    }
+    player->state.edge = 3;
+    return player;
+}
+#else
 ifMagnifyPlayer* ifMagnify_802FB73C(ifMagnifyPlayer* player, Vec2* pos,
                                     Vec2* out)
 {
@@ -177,6 +276,7 @@ ifMagnifyPlayer* ifMagnify_802FB73C(ifMagnifyPlayer* player, Vec2* pos,
     player->state.edge = 3;
     return player;
 }
+#endif
 
 void ifMagnify_802FB8C0(HSD_GObj* gobj, int code)
 {
@@ -207,9 +307,20 @@ void ifMagnify_802FB8C0(HSD_GObj* gobj, int code)
     if (should_display && player->state.is_offscreen) {
         fighter_gobj = Player_GetEntity(slot);
         if (fighter_gobj != NULL) {
+#if defined(TARGET_PC)
+            {
+                Vec3 world;
+                ftLib_80086B90(fighter_gobj, &world);
+                Camera_80030BBC(&world, &screen_pos);
+            }
+#else
             ftLib_80086A58(fighter_gobj, &screen_pos);
+#endif
             dir.x = screen_pos.x - 320.0f;
             dir.y = -((f32) screen_pos.y - 240.0f);
+#if defined(TARGET_PC)
+            dir.x *= ifMagnify_ViewAspect() / (4.0f / 3.0f);
+#endif
 
             HSD_JObjSetRotationZ(player->jobj, atan2f(dir.y, dir.x));
 
@@ -313,6 +424,11 @@ void ifMagnify_802FBBDC(HSD_GObj* gobj)
     if (should_display) {
         cobj = gobj->hsd_obj;
         HSD_CObjGetOrtho(cobj, &top, &bottom, &left, &right);
+#if defined(TARGET_PC)
+        /* This camera captures a fixed-size bubble texture, not the main
+         * window. Keep its authored width/height so the fighter stays round;
+         * the HUD camera handles the wide composite and arrows. */
+#endif
         if (HSD_CObjSetCurrent(cobj) != 0) {
             HSD_GObj_80390ED0(gobj, 7);
             HSD_CObjEndCurrent();
@@ -322,7 +438,11 @@ void ifMagnify_802FBBDC(HSD_GObj* gobj)
             player = &magnify->player[i];
             fighter_gobj = Player_GetEntity(i);
             if (player->state.ignore_offscreen || fighter_gobj == NULL ||
+#if defined(TARGET_PC)
+                !ifMagnify_VisualOffscreen(fighter_gobj) || !ftLib_80086ED0(fighter_gobj))
+#else
                 !ftLib_80086B64(fighter_gobj) || !ftLib_80086ED0(fighter_gobj))
+#endif
             {
                 continue;
             }

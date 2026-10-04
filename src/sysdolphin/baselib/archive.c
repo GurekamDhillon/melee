@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 #include "archive.h"
 
 #include <string.h>
@@ -15,7 +16,16 @@ static inline void Locate(HSD_Archive* archive)
     }
 }
 
-s32 HSD_ArchiveParse(HSD_Archive* archive, u8* src, size_t file_size)
+s32 HSD_ArchiveParse_profile_body(HSD_Archive* archive, u8* src, size_t file_size);
+s32 HSD_ArchiveParse(HSD_Archive* archive, u8* src, size_t file_size) {
+    s32 result;
+    PC_PROF_BEGIN(GW_PROF_DECODE, file_size);
+    result = HSD_ArchiveParse_profile_body(archive, src, file_size);
+    PC_PROF_END();
+    return result;
+}
+
+s32 HSD_ArchiveParse_profile_body(HSD_Archive* archive, u8* src, size_t file_size)
 {
     u32 offset;
 

@@ -253,7 +253,9 @@ void gw_Script_PadFrameConsumed(void) {
   }
 }
 
+extern void gw_ScriptGame_VirtualPadRelease(int slot,int owner);
 void gw_script_pad_release(int ch, int owner) {
+  if (ch>=4 && ch<6 && owner>0) { gw_ScriptGame_VirtualPadRelease(ch,owner); return; }
   if (ch >= 0 && ch < 4 && owner > 0 && gw_menu_mask[ch].owner == owner) {
     memset(&gw_menu_mask[ch], 0, sizeof gw_menu_mask[ch]);
   }
@@ -266,6 +268,7 @@ void gw_script_pad_release(int ch, int owner) {
 
 void gw_script_pad_release_owner(int owner) {
   int ch;
+  if (owner>0) gw_ScriptGame_VirtualPadRelease(-1,owner);
   for (ch = 0; ch < 4; ++ch) {
     gw_script_pad_release(ch, owner);
   }

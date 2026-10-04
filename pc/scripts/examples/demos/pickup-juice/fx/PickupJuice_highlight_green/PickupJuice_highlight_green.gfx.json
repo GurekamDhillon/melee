@@ -1,0 +1,77 @@
+{
+  "geno_fx": 1,
+  "name": "PickupJuice_highlight_green",
+  "textures": [],
+  "emitters": [
+    {
+      "name": "highlight",
+      "kind": "sprite",
+      "follow": "srt",
+      "emission": {
+        "rate": 1,
+        "duration": 0,
+        "one_time": 1
+      },
+      "shape": {
+        "type": "sphere_fill",
+        "radius": [
+          0,
+          0,
+          0
+        ]
+      },
+      "particle": {
+        "life": 1800,
+        "shape": "billboard",
+        "scale": {
+          "base": [
+            0.8,
+            0.8,
+            0.8
+          ]
+        },
+        "velocity": {
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "direction_scale": 0
+        }
+      },
+      "color": {
+        "color0": {
+          "value": [
+            1,
+            1,
+            1
+          ]
+        },
+        "alpha0": {
+          "value": 0.8
+        }
+      },
+      "material": {
+        "shader": {
+          "type": "custom",
+          "fragment": "soft.wgsl",
+          "params": {
+            "tint": [
+              0.2,
+              1,
+              0.55,
+              1
+            ]
+          }
+        },
+        "blend": "add",
+        "depth_test": 1,
+        "additive_batch": true,
+        "bloom": {
+          "threshold": 0.15,
+          "intensity": 0
+        }
+      }
+    }
+  ]
+}

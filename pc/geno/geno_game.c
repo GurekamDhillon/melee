@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 /*
  * geno_game.c - Geno's game half: per-fighter state, the ftcmd escape interpreter, native hooks,
  * attribute overrides and the multi-jump mechanic. Design: docs/geno.md; constants: geno.h.
@@ -59,6 +60,7 @@ extern int Geno_SpecialCount(int p);
 extern int Geno_SpecialIndex(int p, int i);
 extern int Geno_SpecialBits(int p, int i);
 extern int Geno_OnLandCount(int p);
+extern int Geno_MotionAnim(int p, int motion);
 extern int Geno_OnLandFrom(int p, int i);
 extern int Geno_OnLandTo(int p, int i);
 extern int Geno_OverlayCount(int p);
@@ -283,6 +285,197 @@ static int hook_lockon(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
     return 0;
 }
 
+/* ---- v5.4: a directed multi-dash as Ultimate's status code runs it (Sora's Sonic Blade; the
+ * behaviour and its sources are in the workspace's _research/ultimate-sonic-blade-spec-2026-10-03.md).
+ * Between two dashes there is an aim window: a target in range locks and then the stick is ignored,
+ * otherwise the last stick sample past the threshold is the aim, the full circle with no clamp.
+ * The pure cores are separate so the headless tests run them. ---- */
+
+/* The window's stick sample: the unit vector of the stick's raw polar angle, or 0 below thr. */
+int GenoGame_DashStick(f32 sx, f32 sy, f32 thr, f32* cx, f32* cy)
+{
+    f32 a;
+    if (sx * sx + sy * sy < thr * thr || (sx == 0.0f && sy == 0.0f)) {
+        return 0;
+    }
+    a = atan2f(sy, sx);
+    *cx = cosf(a);
+    *cy = sinf(a);
+    return 1;
+}
+
+/* The heading a dash takes, in world axes: at a target (d = target minus self, re-read when the dash
+ * starts), else along the stored stick sample, else straight ahead. The facing follows the heading's
+ * horizontal sign unless it is within vert_deg of straight up or down. kind: 1 = up_min..up_max
+ * degrees, 2 = the same range mirrored below (180 more), 0 = level: Ultimate's turn clip and its
+ * upward speed factor, never an aim limit. */
+void GenoGame_DashAim(int has_target, f32 dx, f32 dy, int has_stick, f32 cx, f32 cy, f32 facing,
+                      f32 vert_deg, f32 up_min, f32 up_max, f32* ux, f32* uy, f32* face, int* kind)
+{
+    f32 lr = facing < 0.0f ? -1.0f : 1.0f, a, deg;
+    if (has_target && (dx != 0.0f || dy != 0.0f)) {
+        a = atan2f(dy, dx);
+    } else if (!has_target && has_stick) {
+        a = atan2f(cy, cx);
+    } else {
+        a = lr < 0.0f ? (f32) M_PI : 0.0f;
+    }
+    deg = a * 180.0f / (f32) M_PI;
+    if (deg < 0.0f) {
+        deg += 360.0f;
+    }
+    *ux = cosf(a);
+    *uy = sinf(a);
+    *face = lr;
+    if (!((deg >= 90.0f - vert_deg && deg <= 90.0f + vert_deg) ||
+          (deg >= 270.0f - vert_deg && deg <= 270.0f + vert_deg)))
+    {
+        if (*ux > 0.0001f) {
+            *face = 1.0f;
+        } else if (*ux < -0.0001f) {
+            *face = -1.0f;
+        }
+    }
+    *kind = (deg >= up_min && deg <= up_max) ? 1 : (deg >= up_min + 180.0f && deg <= up_max + 180.0f) ? 2 : 0;
+}
+
+/* Ultimate's set_brake on one energy: cap the speed at max (0 = no cap), then take brake off it
+ * along its own direction, never past rest. */
+void GenoGame_Brake(f32* vx, f32* vy, f32 brake, f32 max)
+{
+    f32 len = sqrtf(*vx * *vx + *vy * *vy), to;
+    if (len <= 0.0f) {
+        return;
+    }
+    to = max > 0.0f && len > max ? max : len;
+    to = to > brake ? to - brake : 0.0f;
+    *vx *= to / len;
+    *vy *= to / len;
+}
+
+/* The fighter of another port a dash locked onto, by its port (MOVE_I1); NULL once it is gone. */
+static Fighter* geno_dash_target(Fighter_GObj* gobj, Fighter* fp, int port)
+{
+    HSD_GObj* cur;
+    if (HSD_GObjPLinkHead == NULL) {
+        return NULL;
+    }
+    for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
+        Fighter* o = GET_FIGHTER(cur);
+        if (o != NULL && cur != (HSD_GObj*) gobj && o->player_id != fp->player_id && o->player_id == port) {
+            return o;
+        }
+    }
+    return NULL;
+}
+
+/* hook 8 geno.dash.search, arg [7:0] stick threshold x100, [23:8] range (units, 0 = none): one frame
+ * of the aim window. No target yet: the nearest fighter of another port within range locks
+ * (MOVE_I0 = 1, MOVE_I1 = its port). Still none: a stick sample past the threshold is stored
+ * (MOVE_F2/F3 world unit vector, MOVE_I2 = 1). A script clears MOVE_I0 and MOVE_I2 where the window
+ * opens. Event 43. */
+static int hook_dash_search(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
+{
+    f32 range = (f32) ((arg >> 8) & 0xFFFF), best = -1.0f;
+    if (!st->move_i[0] && range > 0.0f && HSD_GObjPLinkHead != NULL) {
+        HSD_GObj* cur;
+        for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
+            Fighter* o = GET_FIGHTER(cur);
+            f32 dx, dy, d;
+            if (o == NULL || cur == (HSD_GObj*) gobj || o->player_id == fp->player_id) {
+                continue;
+            }
+            dx = o->cur_pos.x - fp->cur_pos.x;
+            dy = o->cur_pos.y - fp->cur_pos.y;
+            d = dx * dx + dy * dy;
+            if (d <= range * range && (best < 0.0f || d < best)) {
+                best = d;
+                st->move_i[0] = 1;
+                st->move_i[1] = o->player_id;
+            }
+        }
+    }
+    if (!st->move_i[0]) {
+        f32 cx, cy;
+        if (GenoGame_DashStick(fp->input.lstick[0].x, fp->input.lstick[0].y, (f32) (arg & 0xFF) / 100.0f, &cx, &cy)) {
+            st->move_f[2] = cx;
+            st->move_f[3] = cy;
+            st->move_i[2] = 1;
+        }
+    }
+    Geno_Event(43, fp->kind, fp->player_id, st->move_i[0] ? 1 + st->move_i[1] : 0,
+               st->move_i[2] ? (int) (atan2f(st->move_f[3], st->move_f[2]) * 180.0f / (f32) M_PI) : -1);
+    return 0;
+}
+
+/* hook 9 geno.dash.aim, arg [7:0] degrees from vertical inside which the facing is kept, [15:8] /
+ * [23:16] the "up" range in degrees: MOVE_F0/F1 = the heading (world unit vector) from the locked
+ * target's position now, else the stored stick sample, else straight ahead; MOVE_I3 = 1 up, 2 down,
+ * 0 level; the fighter turns to the heading's side. A target that is gone unlocks. Event 44. */
+static int hook_dash_aim(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
+{
+    Fighter* o = st->move_i[0] ? geno_dash_target(gobj, fp, st->move_i[1]) : NULL;
+    f32 face;
+    int kind;
+    if (o == NULL) {
+        st->move_i[0] = 0;
+    }
+    GenoGame_DashAim(o != NULL, o != NULL ? o->cur_pos.x - fp->cur_pos.x : 0.0f,
+                     o != NULL ? o->cur_pos.y - fp->cur_pos.y : 0.0f, st->move_i[2], st->move_f[2],
+                     st->move_f[3], fp->facing_dir, (f32) (arg & 0xFF), (f32) ((arg >> 8) & 0xFF),
+                     (f32) ((arg >> 16) & 0xFF), &st->move_f[0], &st->move_f[1], &face, &kind);
+    st->move_i[3] = kind;
+    if (face != fp->facing_dir) {
+        fp->facing_dir = face;
+        if (fp->parts != NULL) {
+            ftPartSetRotY(fp, 0, 1.5707964f * fp->facing_dir);
+        }
+    }
+    Geno_Event(44, fp->kind, fp->player_id, (o != NULL) | (st->move_i[2] << 1) | (kind << 2),
+               (int) (atan2f(st->move_f[1], st->move_f[0]) * 180.0f / (f32) M_PI));
+    return 0;
+}
+
+/* hook 10 geno.brake, arg [15:0] brake x1000 per frame, [30:16] speed cap x100 (0 = none), bit 31
+ * horizontal only: Ultimate's per-energy brake on the fighter's own velocity, for states whose phys
+ * is "none". On the ground it is the ground speed. */
+static int hook_brake(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
+{
+    f32 brake = (f32) (arg & 0xFFFF) / 1000.0f, max = (f32) ((arg >> 16) & 0x7FFF) / 100.0f, zero = 0.0f;
+    (void) gobj;
+    (void) st;
+    if (fp->ground_or_air == GA_Ground) {
+        GenoGame_Brake(&fp->gr_vel, &zero, brake, max);
+        fp->self_vel.x = fp->gr_vel;
+    } else if ((u32) arg >> 31) {
+        GenoGame_Brake(&fp->self_vel.x, &zero, brake, max);
+    } else {
+        GenoGame_Brake(&fp->self_vel.x, &fp->self_vel.y, brake, max);
+    }
+    return 0;
+}
+
+/* v5.4 "motion_anims": the row this fighter's profile gives a common motion state, -1 = Melee's.
+ * Fighter_ChangeMotionState asks for every state; the grab-connect code (fn_800D9CE8) asks so it
+ * can start the pull-in clip at its first frame, not carry the Catch clip on. */
+static int geno_inert(GenoState* st);
+int Geno_MotionAnimRow(Fighter* fp, int motion)
+{
+    GenoState* st = geno_state(fp);
+    if (geno_inert(st) || st->profile < 0) {
+        return -1;
+    }
+    return Geno_MotionAnim(st->profile, motion);
+}
+
+/* GENO_VAL_FALL_LIMIT for ftCommon_Fall: a script that sets a dive faster than the fighter's terminal
+ * velocity (Ultimate's SET_SPEED_EX on a down air) raises the clamp for that action. */
+f32 Geno_FallLimit(Fighter* fp, f32 terminal)
+{
+    GenoState* st = geno_state(fp);
+    return st != NULL && st->fall_limit > terminal ? st->fall_limit : terminal;
+}
+
 /* A Geno feature registers a hook by adding a row here with a new stable number from geno.h. The
  * table is const on purpose: registration is part of the build, so it can never differ between
  * two peers or between a snapshot and the live game. */
@@ -298,6 +491,9 @@ static const struct {
     { GENO_HOOK_ARTICLE_SPAWN, "geno.article.spawn", hook_article_spawn },
     { GENO_HOOK_LOCKON, "geno.lockon", hook_lockon },
     { GENO_HOOK_AIM_STICK, "geno.aim_stick", hook_aim_stick },
+    { GENO_HOOK_DASH_SEARCH, "geno.dash.search", hook_dash_search },
+    { GENO_HOOK_DASH_AIM, "geno.dash.aim", hook_dash_aim },
+    { GENO_HOOK_BRAKE, "geno.brake", hook_brake },
 };
 #define GENO_NHOOKS ((int) (sizeof(geno_hooks) / sizeof(geno_hooks[0])))
 
@@ -427,6 +623,122 @@ static int geno_slot_of(u32* w)
     return -1;
 }
 
+/* LAB reads game globals too, but only the installed script slot, never arbitrary EXE memory. */
+int GenoGame_ScriptRange(u32 address, u32 bytes)
+{
+    int s, n = Geno_SlotCount();
+    if (bytes == 0 || address + bytes < address || (address & 3)) {
+        return 0;
+    }
+    for (s = 0; s < n && s < 256; s++) {
+        int off = Geno_SlotOffset(s), len = Geno_SlotLen(s);
+        u32 start;
+        if (off < 0 || len < 1 || off > GENO_POOL_WORDS - len) {
+            continue;
+        }
+        start = (u32) &Geno_ScriptPool[off];
+        if (address >= start && address - start <= (u32) len * 4 &&
+            bytes <= (u32) len * 4 - (address - start)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+u32 GenoGame_ScriptOriginal(u32 address)
+{
+    int s = geno_slot_of((u32*) address);
+    return s >= 0 ? (u32) Geno_OverlayOrig[s] : 0;
+}
+
+/* Load diagnostic, not execution: decode lengths so an operand resembling IASA cannot warn.
+ * Follow retail calls and ORIG; scan both conditional arms conservatively without evaluating
+ * fighter variables. Bounded like the LAB walker, including cyclic vanilla calls. */
+int GenoGame_ScriptHasIasa(const void* script)
+{
+    extern int Geno_ScriptAddressValid(u32 address, u32 bytes);
+    static const u8 lengths[59] = {
+        1,1,1,1,1,2,1,2,1,1, 5,5,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,3,1,1,1,7,4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,3,2,1,4
+    };
+    const u32* pc = script;
+    const u32* ret[8];
+    struct {
+        const u32* pc;
+        const u32* ret[8];
+        int nret;
+    } pending[32];
+    int nret = 0, npending = 0, steps;
+    for (steps = 0; pc != NULL && steps < 2000; steps++) {
+        u32 w;
+        int op, len;
+        if (!Geno_ScriptAddressValid((u32) pc, 4)) goto next_path;
+        w = *pc;
+        op = w >> 26;
+        if (op == 23) return 1;
+        if (op == 0 || op == 8) goto next_path;
+        if (op == 5 || op == 7) {
+            if (!Geno_ScriptAddressValid((u32) pc, 8)) goto next_path;
+            if (op == 5) {
+                if (nret == 8) goto next_path;
+                ret[nret++] = pc + 2;
+            }
+            pc = (const u32*) pc[1];
+            if (pc == NULL) goto next_path;
+            continue;
+        }
+        if (op == 6) {
+            if (nret == 0) goto next_path;
+            pc = ret[--nret];
+            continue;
+        }
+        if (op == GENO_FTCMD_OP) {
+            len = (w >> 16) & 15;
+            if (((w >> 20) & 63) == GENO_SUB_ORIG) {
+                pc = (const u32*) GenoGame_ScriptOriginal((u32) pc);
+                if (pc == NULL) goto next_path;
+                continue;
+            }
+            if (len == 0) len = 1;
+        } else {
+            if (op > 58) goto next_path;
+            len = lengths[op];
+        }
+        if (!Geno_ScriptAddressValid((u32) pc, len * 4)) goto next_path;
+        if (op == GENO_FTCMD_OP) {
+            int sub = (w >> 20) & 63;
+            int skip_word = sub == GENO_SUB_IF ? 2 : sub == GENO_SUB_IFV ? 3 : 0;
+            if (skip_word && len > skip_word && npending < 32) {
+                u32 skip = pc[skip_word];
+                if (skip <= (0xffffffffu - (u32) pc) / 4 - len) {
+                    int r;
+                    pending[npending].pc = (const u32*) ((u32) pc + (len + skip) * 4);
+                    pending[npending].nret = nret;
+                    for (r = 0; r < nret; r++) pending[npending].ret[r] = ret[r];
+                    npending++;
+                }
+            } else if (sub == GENO_SUB_SKIP && len >= 2) {
+                u32 skip = pc[1];
+                if (skip > (0xffffffffu - (u32) pc) / 4 - len) goto next_path;
+                pc = (const u32*) ((u32) pc + (len + skip) * 4);
+                continue;
+            }
+        }
+        pc += len;
+        continue;
+    next_path:
+        if (npending == 0) return 0;
+        {
+            int r;
+            npending--;
+            pc = pending[npending].pc;
+            nret = pending[npending].nret;
+            for (r = 0; r < nret; r++) ret[r] = pending[npending].ret[r];
+        }
+    }
+    return 0;
+}
+
 /* ---- dispatch points (called from the engine under TARGET_PC) ------------------------------- */
 
 static int geno_inert(GenoState* st)
@@ -517,30 +829,37 @@ int GenoGame_LabReload(void)
  * rehit timers and autolink flags belong to one action. */
 void Geno_OnActionChange(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_id << 16) | GET_FIGHTER(gobj)->kind);
     GenoState* st = geno_state(GET_FIGHTER(gobj));
     if (geno_inert(st)) {
-        return;
+        { PC_PROF_END(); return; }
     }
     geno_clear_action(st);
     /* v5.3: ATTACK_CONNECTED belongs to one action; the previous one's result stays readable */
     st->atk_connected_prev = st->atk_connected;
     st->atk_connected = 0;
+    st->fall_limit = 0.0f;
     if ((s32) GET_FIGHTER(gobj)->motion_id < GENO_MOTION_BASE) {
         st->hidden = 0; /* v3: HIDDEN lives only across Geno states (damage etc. show the fighter) */
     }
     if (st->profile >= 0) {
         geno_run_event(gobj, st, GENO_EV_ACTION);
     }
+
+    PC_PROF_END();
 }
 
 /* Fighter_8006A360, after the m-ex onFrame dispatch. */
 void Geno_OnFrame(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_id << 16) | GET_FIGHTER(gobj)->kind);
     GenoState* st = geno_state(GET_FIGHTER(gobj));
     if (st->profile < 0) {
-        return;
+        { PC_PROF_END(); return; }
     }
     geno_run_event(gobj, st, GENO_EV_FRAME);
+
+    PC_PROF_END();
 }
 
 /* ---- attributes ----------------------------------------------------------------------------- */
@@ -686,8 +1005,9 @@ void Geno_ApplyAttrs(Fighter* fp)
  * x2C, and x14[5] vertical impulses, indexed by jumpsUsed - 1. The engine never bounds that index,
  * so max_jumps above 6 would read past x14 and enter motion ids past the multi-jump states.
  * ftCo_800D74A4 calls this with the state and impulse it computed; for a Geno fighter, air jumps
- * past the table repeat the LAST multi-jump state (so ftCo_800D72A0 still recognises it), and
- * take their impulse from the profile's air_vy list (the last entry repeats), else the table's
+ * past the table repeat the penultimate state while jumps remain (its script opens the next-jump
+ * gate); the last state is reserved for the final jump. ftCo_800D72A0 recognises both. Impulses
+ * come from the profile's air_vy list (the last entry repeats), else the table's
  * last row. air_vy also overrides the table's own rows, which is how Brawl numbers ship. */
 void Geno_MultiJump(Fighter* fp, int first_state, int* msid, float* vy)
 {
@@ -706,10 +1026,18 @@ void Geno_MultiJump(Fighter* fp, int first_state, int* msid, float* vy)
         rows = 5;
     }
     nvy = Geno_JumpVyCount(p);
+    /* ftKb JumpAerialF5 (and its helmet variant) never sets cmd_var0. Keep F4's
+     * frame-28 gate while another jump remains; use F5 only for the final jump.
+     * Velocity still belongs to the requested jump, independent of the repeated clip. */
+    if (n >= rows - 1 && rows > 1 && fp->x1968_jumpsUsed + 1 < fp->co_attrs.max_jumps) {
+        *msid = first_state + rows - 2;
+    }
+    *vy = fp->x2D0->x14[n < rows ? n : rows - 1];
     if (n >= rows) {
         GenoState* st = geno_state(fp);
-        *msid = first_state + rows - 1;
-        *vy = fp->x2D0->x14[rows - 1];
+        if (fp->x1968_jumpsUsed + 1 >= fp->co_attrs.max_jumps) {
+            *msid = first_state + rows - 1;
+        }
         st->extra_jumps++;
         Geno_Event(1, fp->kind, fp->player_id, n + 1, fp->co_attrs.max_jumps - 1);
     } else {
@@ -1009,6 +1337,9 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
     case GENO_VAL_STICK_FWD:
         r.f = fp->input.lstick[0].x * fp->facing_dir;
         break;
+    case GENO_VAL_STICK_LEN:
+        r.f = sqrtf(fp->input.lstick[0].x * fp->input.lstick[0].x + fp->input.lstick[0].y * fp->input.lstick[0].y);
+        break;
     case GENO_VAL_CSTICK_X:
         r.f = fp->input.cstick[0].x;
         break;
@@ -1099,6 +1430,9 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
     case GENO_VAL_ATTACK_CONNECTED_PREV:
         r.i = st->atk_connected_prev;
         break;
+    case GENO_VAL_FALL_LIMIT:
+        r.f = st->fall_limit;
+        break;
     default:
         if (id >= GENO_VAL_MOVE_F0 && id <= GENO_VAL_MOVE_F7) {
             r.f = st->move_f[id - GENO_VAL_MOVE_F0];
@@ -1174,6 +1508,9 @@ static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
         return 1;
     case GENO_VAL_ATTACK_CONNECTED:
         geno_state(fp)->atk_connected = v.i != 0;
+        return 1;
+    case GENO_VAL_FALL_LIMIT:
+        geno_state(fp)->fall_limit = v.f > 0.0f ? v.f : 0.0f;
         return 1;
     case GENO_VAL_JUMPS_USED:
         fp->x1968_jumpsUsed = (u8) (v.i < 0 ? 0 : v.i > 255 ? 255 : v.i);
@@ -1647,6 +1984,7 @@ int Geno_Autolink(Fighter* attacker, HitCapsule* hit, float* dir, float* angle, 
  * from the three ftAction loops for opcode GENO_FTCMD_OP only. */
 void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
 {
+    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_id << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
     GenoState* st = geno_state(fp);
     u32* w = (u32*) cmd->u;
@@ -1716,7 +2054,7 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
     case GENO_SUB_ORIG: {
         int slot = geno_slot_of(w);
         cmd->u = slot >= 0 ? Geno_OverlayOrig[slot] : NULL;
-        return;
+        { PC_PROF_END(); return; }
     }
     case GENO_SUB_CALL:
         if (mode != GENO_MODE_SKIP) {
@@ -1800,6 +2138,8 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
         skip = 0x10000; /* a corrupt count must not send the pointer across the heap */
     }
     cmd->u = (CmdUnion*) (w + len + skip);
+
+    PC_PROF_END();
 }
 
 /* v5.5 hitstun bonus. ftcoll.c: fighter `atk`'s hitbox id `idx` hit fighter `vic` (a won hit). The victim keeps
@@ -1959,3 +2299,5 @@ int GenoGame_StateFieldBase(int off)
     int i = geno_sfield(off);
     return i >= 0 ? geno_sfields[i].off : off;
 }
+
+#include "geno_game_items.inc"

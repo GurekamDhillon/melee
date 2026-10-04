@@ -456,6 +456,9 @@ void it_802703E8(Item_GObj* arg_item_gobj)
                 if (hit->element != HitElement_Inert) {
                     ftColl_80076808(fighter, hit, 0, arg_item, 0);
                     dmg = hit->damage;
+#if defined(TARGET_PC)
+                    dmg = ScriptGame_FighterDealtDamage(fighter,dmg);
+#endif
                     fighter->dmg.x1914 = dmg;
                     arg_item->xCA0 += dmg;
                     if (dmg > arg_item->xCA4) {
@@ -508,6 +511,13 @@ static inline void it_802706D0_sub3(Item* item, Item* arg_item,
     item->xCB8_outDamageDirection = dir;
     dmg = hit->damage;
     item->xC34_damageDealt = dmg;
+#if defined(TARGET_PC)
+    {
+        extern float ScriptGame_ItemModDamage(Item* item, float damage);
+        dmg = ScriptGame_ItemModDamage(item,dmg);
+        item->xC34_damageDealt = dmg;
+    }
+#endif
     item->xCF4_fighterGObjUnk = NULL;
     item->xC38 = arg_item->kind;
     item->xCD4 = arg_item->pos;

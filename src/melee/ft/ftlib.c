@@ -536,6 +536,11 @@ bool ftLib_80086A58(HSD_GObj* gobj, S32Vec2* x)
 
 bool ftLib_80086A8C(HSD_GObj* gobj)
 {
+#if defined(TARGET_PC)
+    /* Render all high-poly fighters (Slippi NP behaviour), without mutating
+     * the deterministic off-camera damage flag from a local view. */
+    return true;
+#else
     HSD_GObj* camera_gobj;
 
     Fighter* fp = GET_FIGHTER(gobj);
@@ -559,6 +564,7 @@ bool ftLib_80086A8C(HSD_GObj* gobj)
 
     fp->x221F_b0 = false;
     return true;
+#endif
 }
 
 #if defined(TARGET_PC)
@@ -569,9 +575,9 @@ bool ftLib_80086A8C(HSD_GObj* gobj)
  * off-screen damage reads the result - so logic depended on rendering: catch-up frames under load,
  * and rollback resimulation, which renders nothing. Every fighter draw of a match render happens
  * inside the game camera's CObjSetCurrent block (fn_800301D0), so the render's final value is the
- * main-camera test, which is what this computes; the projection (Camera_80030CD8 ->
+ * authored main-camera test, which this computes; the projection (Camera_LogicToScreen ->
  * lbVector_WorldToScreen with d=1 -> GXProject) is pure math on the cobj's fields, no GX state.
- * The draw callback keeps writing the same value when it renders. */
+ * On PC the draw callback no longer writes this flag; display aspect is local. */
 void ftLib_UpdateLogicOffCamera(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -579,7 +585,7 @@ void ftLib_UpdateLogicOffCamera(HSD_GObj* gobj)
         return; /* ftDrawCommon_80080E18 skips the test then too */
     }
     if (!fp->x2229_b3 && !fp->x2220_b7 && Camera_80030A50() != NULL) {
-        fp->x221F_b0 = !Camera_80030CD8(fp->x890_cameraBox, &fp->x2188);
+        fp->x221F_b0 = !Camera_LogicToScreen(fp->x890_cameraBox, &fp->x2188);
     } else {
         fp->x221F_b0 = false;
     }

@@ -4723,3 +4723,5 @@ void gw_mex_ftfunction_runtime_tests_register(void) {
     gw_test_register("mex_demo_table_bounded", test_mex_demo_table_bounded);
     gw_test_register("ppc_tail_branch_returns", test_ppc_tail_branch_returns);
 }
+
+#include "gw_mex_items_query.inc"

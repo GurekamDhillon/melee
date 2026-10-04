@@ -32,7 +32,10 @@ function Route:create(run, opts)
   if type(run) ~= 'table' or type(run.id) ~= 'string' or type(run.world_seed) ~= 'number' then
     return nil, 'invalid run'
   end
-  local generated,manifest = pcall(self.topology.generate,self.topology,run.world_seed,opts)
+  local generation_opts = copy(opts or {})
+  -- The caller cannot open production admission through generation options.
+  generation_opts.eligible_templates = self.adapter:eligible_templates()
+  local generated,manifest = pcall(self.topology.generate,self.topology,run.world_seed,generation_opts)
   if not generated then return nil, 'generation refused: '..tostring(manifest) end
   for _,id in ipairs(manifest.order) do
     local room=manifest.rooms_by_id[id]

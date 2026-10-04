@@ -19,4 +19,8 @@ typedef enum LbHeapStatus {
 /* 015DF8 */ void lbHeap_80015DF8(void);
 /* 015F3C */ void lbHeap_80015F3C(void);
 
+#if defined(TARGET_PC)
+unsigned lbHeap_Capacity(int heap);
+unsigned lbHeap_Free(int heap);
+#endif
 #endif

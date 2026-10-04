@@ -2970,6 +2970,11 @@ void hsd_8039CEAC(u32 mask)
     bits = mask;
     for (i = 0; i < 16; i++) {
         if (!(bits & 0x10000)) {
+#if defined(TARGET_PC)
+            extern int ScriptGame_StageSlotParticleBegin(int);
+            extern void ScriptGame_StageSlotProcEnd(void);
+            int owned=ScriptGame_StageSlotParticleBegin(i);
+#endif
             cur = hsd_804D0908[i];
             prev = NULL;
             while (cur != NULL) {
@@ -2985,6 +2990,9 @@ void hsd_8039CEAC(u32 mask)
                 }
                 cur = next;
             }
+#if defined(TARGET_PC)
+            if(owned)ScriptGame_StageSlotProcEnd();
+#endif
         }
         bits >>= 1;
     }
@@ -3030,6 +3038,23 @@ void hsd_8039D048(void* particle)
         }
     }
 }
+
+#if defined(TARGET_PC)
+void HSD_StageSlotParticleLinkClear(void)
+{
+    HSD_Particle* p=hsd_804D0908[3];
+    hsd_804D0908[3]=NULL;
+    while(p) {
+        HSD_Particle* next=p->next;
+        if(p->gen && p->gen->userfunc && p->gen->userfunc->hookDelete)
+            p->gen->userfunc->hookDelete(p);
+        if(p->gen)p->gen->numChild--;
+        if(p->appsrt)psRemoveParticleAppSRT(p);
+        hsd_8039D048(p);HSD_ObjFree(&hsd_804D0F60.alloc_data,p);hsd_804D78E2--;
+        p=next;
+    }
+}
+#endif
 
 void hsd_8039D0A0(HSD_Generator* gen)
 {

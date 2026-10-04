@@ -479,7 +479,11 @@ void stageGObj2_GObjProc(Ground_GObj* arg0)
                        ((2.0f * (0, HSD_Randf())) - 1.0f)) +
                           70.0f);
             HSD_JObjSetTranslateZ(jobj, -200.0f);
+#if defined(TARGET_PC)
+            Camera_LogicBounds(&left, &center, &right);
+#else
             Camera_800307D0(&left, &center, &right);
+#endif
             if (HSD_Randi(2) != 0) {
                 if (200.0f < right) {
                     x = right;

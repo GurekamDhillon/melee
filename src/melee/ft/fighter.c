@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 #include "fighter.h"
 
 #include <math.h>
@@ -526,7 +527,7 @@ void Fighter_UnkInitReset_80067C98(Fighter* fp)
     fp->x2098 = 0;
     fp->x2092 = 0;
     fp->x2094 = 0;
-    fp->shield_health = p_ftCommonData->x260_startShieldHealth;
+    fp->shield_health = FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth);
 
     fp->x221A_b7 = 0;
     fp->x221B_b0 = 0;
@@ -1093,6 +1094,12 @@ Fighter_GObj* Fighter_Create(struct plAllocInfo* input)
         }
     }
     ftLib_800867E8(gobj);
+#if defined(TARGET_PC)
+    {
+        extern void ScriptGame_OnePSpawn(Fighter* fp);
+        ScriptGame_OnePSpawn(fp);
+    }
+#endif
     return gobj;
 }
 
@@ -1451,6 +1458,16 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
         }
 
         fp->anim_id = new_motion_state->anim_id;
+#if defined(TARGET_PC)
+        {
+            /* Geno "motion_anims": a fighter's own row for a common state (docs/geno.md) */
+            extern int Geno_MotionAnimRow(Fighter* fp, int motion);
+            int geno_row = Geno_MotionAnimRow(fp, (int) msid);
+            if (geno_row >= 0) {
+                fp->anim_id = geno_row;
+            }
+        }
+#endif
         fp->frame_speed_mul = anim_speed;
         fp->x8A0_unk = anim_speed;
 
@@ -1596,7 +1613,14 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
         if (animflags_bool) {
             if (!fp->x594_b0 && !fp->x594_b0) {
                 !fp;
+#if defined(TARGET_PC)
+                /* the same scaled limit getAccelAndTarget uses, or a script
+                 * run-speed above 1 is cut back to the base at dash -> run */
+                ftCommon_ClampGroundVel(
+                    fp, FT_SCRIPT_VALUE(fp, 2, fp->co_attrs.dash_max_velocity));
+#else
                 ftCommon_ClampGroundVel(fp, fp->co_attrs.dash_max_velocity);
+#endif
             }
         }
 
@@ -1704,6 +1728,7 @@ static bool ftSlippi_IsOffscreen(Fighter* fp)
 
 void Fighter_8006A360(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_ANIMATION, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
 
     if (!fp->x221F_b3) {
@@ -1796,7 +1821,7 @@ void Fighter_8006A360(Fighter_GObj* gobj)
                 fp->x2034--;
                 if (!fp->x2034 || fp->x2038 <= 0) {
                     ftCo_800C9034(gobj);
-                    return;
+                    { PC_PROF_END(); return; }
                 }
             }
         }
@@ -1825,7 +1850,7 @@ void Fighter_8006A360(Fighter_GObj* gobj)
                 fp->x2030--;
                 if (fp->x2030 == 0) {
                     ftCo_800C8A64(gobj);
-                    return;
+                    { PC_PROF_END(); return; }
                 }
                 if (!fp->x2226_b3 && fp->x2030 == p_ftCommonData->x7D0 &&
                     ftCo_800C8B2C(fp, 0x7D, 0))
@@ -1992,14 +2017,32 @@ void Fighter_8006A360(Fighter_GObj* gobj)
         ftCommon_8007E0E4(gobj);
         ftCo_800C0408(gobj);
     }
+
+    PC_PROF_END();
 }
 
 void Fighter_8006ABA0(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_FIGHTER_INPUT, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
+#if defined(TARGET_PC)
+    ScriptGame_FighterBenchTick(fp);
+    {
+        extern int ScriptGame_VirtualPadApply(Fighter*);
+        if (ScriptGame_VirtualPadApply(fp)) { PC_PROF_END(); return; }
+    }
+#endif
     if (!fp->x221F_b3 && ftCo_IsCpuControlled(fp)) {
         ftCo_800B3900(gobj);
     }
+#if defined(TARGET_PC)
+    {
+        extern void ScriptGame_VirtualPadObserve(Fighter*);
+        ScriptGame_VirtualPadObserve(fp);
+    }
+#endif
+
+    PC_PROF_END();
 }
 
 /// https://decomp.me/scratch/A7CgG
@@ -2155,6 +2198,7 @@ static void ftUcf_Cardinal(int x, int y, Vec2* out)
 
 void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_FIGHTER_ACTION, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
     float tempf1;
     float tempf0;
@@ -2289,7 +2333,10 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             }
 
 #if defined(TARGET_PC)
-            if (ftCo_IsCpuControlled(fp)) technical_ai_overlay(fp);
+            {
+                extern int ScriptGame_CpuStanding(Fighter*);
+                if (ftCo_IsCpuControlled(fp) && !ScriptGame_CpuStanding(fp)) technical_ai_overlay(fp);
+            }
 #endif
 
             if (gm_8016B0FC()) {
@@ -2633,6 +2680,8 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             }
         }
     }
+
+    PC_PROF_END();
 }
 
 //// https://decomp.me/scratch/oFu1o
@@ -2645,11 +2694,15 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
 
 void Fighter_procUpdate(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_FIGHTER_PHYSICS, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
     Vec3 windOffset;
+#if defined(TARGET_PC)
+    ScriptGame_FighterBenchTick(fp);
+#endif
 
     if (fp->x221F_b3) {
-        return;
+        { PC_PROF_END(); return; }
     }
 
     if (!fp->x2219_b5) {
@@ -2928,6 +2981,8 @@ void Fighter_procUpdate(Fighter_GObj* gobj)
                          "fighter procUpdate pos error.\tpos.x=%f\tpos.y=%f\n",
                          fp->cur_pos.x, fp->cur_pos.y);
     }
+
+    PC_PROF_END();
 }
 
 void Fighter_UnkApplyTransformation_8006C0F0(Fighter_GObj* gobj)
@@ -2985,6 +3040,7 @@ static void ftReplay_TraceFighter(Fighter* fp)
 
 void Fighter_procMap(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_FIGHTER_COLLISION, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
 
     if (!fp->x221F_b3) {
@@ -3081,6 +3137,8 @@ void Fighter_procMap(Fighter_GObj* gobj)
         }
     }
 #endif
+
+    PC_PROF_END();
 }
 
 void Fighter_8006C5F4(Fighter_GObj* gobj)
@@ -3119,6 +3177,7 @@ void Fighter_CallAcessoryCallbacks_8006C624(Fighter_GObj* gobj)
 
 void Fighter_8006C80C(Fighter_GObj* gobj)
 {
+    PC_PROF_BEGIN(GW_PROF_HITBOX, ((GET_FIGHTER(gobj)->player_id + 1) << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
 
     if (!fp->x221F_b3) {
@@ -3157,6 +3216,8 @@ void Fighter_8006C80C(Fighter_GObj* gobj)
             }
         }
     }
+
+    PC_PROF_END();
 }
 
 void Fighter_UnkProcessGrab_8006CA5C(Fighter_GObj* gobj)
@@ -3220,6 +3281,11 @@ void Fighter_UnkTakeDamage_8006CC30(Fighter* fp, float arg0)
 
 void Fighter_TakeDamage_8006CC7C(Fighter* fp, float damage_amount)
 {
+#if defined(TARGET_PC)
+    /* Common percent/HP entry point, including hazards, pummels and recoil.
+     * Collision damage_dealt is already applied; take this overlay once here. */
+    damage_amount=ScriptGame_ModDamage(fp->player_id,1,damage_amount);
+#endif
     if (!fp->x2226_b4 || fp->x2226_b3) {
         fp->dmg.x1830_percent += damage_amount;
         if (fp->metal_timer != 0) {
@@ -3420,11 +3486,11 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
         }
 #endif
         if (!fp->x221A_b7) {
-            if (fp->shield_health < p_ftCommonData->x260_startShieldHealth) {
+            if (fp->shield_health < FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth)) {
                 fp->shield_health += p_ftCommonData->x27C;
-                if (fp->shield_health > p_ftCommonData->x260_startShieldHealth)
+                if (fp->shield_health > FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth))
                 {
-                    fp->shield_health = p_ftCommonData->x260_startShieldHealth;
+                    fp->shield_health = FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth);
                 }
             }
         }

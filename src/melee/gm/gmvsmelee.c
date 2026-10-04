@@ -138,6 +138,19 @@ void gmVsMelee_EnterCss(GameModeState* state, VsModeData* vs,
                         CSSMatchType match_type)
 {
     CSSData* css = gm_GetGameModeStateEnterData(state);
+#if defined(TARGET_PC)
+    if (vs->start.players[4].slot_type != Gm_PKind_NA ||
+        vs->start.players[5].slot_type != Gm_PKind_NA) {
+        int i;
+        OSReport("gw: scene: six-slot CSS route refused; returning to menus\n");
+        for (i=4; i<GM_MAX_PLAYERS; ++i) {
+            vs->start.players[i].slot_type=Gm_PKind_NA;
+            vs->start.players[i].ckind=ChKind_None;
+        }
+        for (i=4; i<8; ++i) lbDvd_GetPreloadCacheScene()->game_cache.entries[i].char_id=ChKind_None;
+        gm_ChangeGameModeAfterCurrentScene(GM_MENU);
+    }
+#endif
     css->match_type = match_type;
     css->ko_counts = ko_counts;
     css->vs = *vs;
@@ -231,6 +244,17 @@ void gmVsMelee_EnterVs(GameModeState* state, VsModeData* vs,
     StartMeleeData* start = gm_GetGameModeStateEnterData(state);
 
     gm_80167BC8(vs);
+#if defined(TARGET_PC)
+    /* Saved VS rules have one global stock count. Restore explicit per-slot
+     * values after rebuilding those rules, including the two extra enemies. */
+    if (SceneLaunch_Active() && SceneLaunch_EntryStateId()==2) {
+        int i;
+        for (i=0; i<GM_MAX_PLAYERS; ++i) {
+            int stocks=SceneLaunch_PlayerStocks(i);
+            if (stocks>=0) vs->start.players[i].stocks=(s8) stocks;
+        }
+    }
+#endif
     start->rules = vs->start.rules;
 
     if (start->rules.match_kind == MatchKind_Stock) {
@@ -255,6 +279,9 @@ void gmVsMelee_EnterVs(GameModeState* state, VsModeData* vs,
         }
     }
 
+#if defined(TARGET_PC)
+    SceneLaunch_HudCount(start); /* after saved rules, callbacks and player copy */
+#endif
     gm_SetupSubColors(start);
     gm_LoadRumbleEnabled(start);
     gm_LoadAnnouncer();
@@ -266,6 +293,14 @@ void gmVsMelee_ExitVs(GameModeState* state, u8 id0, u8 id1)
 {
     MatchExitInfo* exit = gm_GetGameModeStateExitData(state);
     ssize_t i;
+#if defined(TARGET_PC)
+    if (exit->match_end.player_standings[4].pkind != Gm_PKind_NA ||
+        exit->match_end.player_standings[5].pkind != Gm_PKind_NA) {
+        OSReport("gw: scene: six-slot VS finished; returning to menus (CSS/results round-trip unsupported)\n");
+        gm_ChangeGameModeAfterCurrentScene(GM_MENU);
+        return;
+    }
+#endif
 
 #if defined(TARGET_PC)
     {

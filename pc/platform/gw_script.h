@@ -22,10 +22,10 @@
  *
  * DETERMINISM RULE (netplay/rollback): during a rollback session no script hook runs on a
  * RESIMULATED frame, and only scripts whose manifest says "gameplay": true may call the gameplay
- * writes (gd.set_percent, gd.set_stocks, gd.input, savestates, pause) - and in a netplay session
- * even those are refused unless the manifest also says "rollback_safe": true, which promises the
- * script derives everything it writes from game state (no Lua-side memory across frames). The
- * gameplay scripts' sources are hashed into gw_Script_GameplayHash for the must-match set.
+ * writes (gd.set_percent, gd.set_stocks, gd.input, savestates, pause) offline. During netplay or
+ * rollback all Lua gameplay writes are refused: hooks are skipped and mutations are not replayed.
+ * The legacy "rollback_safe" flag grants no exception. The historical gameplay source hash set
+ * is retained in gw_Script_GameplayHash for handshake compatibility.
  * Stage collision and target writes are stricter: manifest-backed gameplay scripts only,
  * in an active offline match (even a rollback_safe script cannot call them online).
  */
@@ -41,6 +41,15 @@ extern "C" {
 #define GW_SCRIPT_API_VERSION 1
 
 /* ---- scene loop (gmscene.c; the game calls these without the gw_ prefix) --------------------- */
+/* Retail 1P notifications are queued; hooks run only at offline boundaries. */
+int gw_Script_OnePScripted(void);
+int gw_Script_OnePOffline(void);
+void gw_Script_OnePStage(int mode,int stage,int flags,int player);
+void gw_Script_OnePSpawn(int port,int generation);
+void gw_Script_OnePClear(void);
+void gw_Script_OnePGameOver(void);
+int gw_Script_OnePComplete(void);
+int gw_Script_OnePBarrierPending(void);
 void gw_Script_SceneBegin(int scene_kind);
 void gw_Script_Tick(void);
 int gw_Script_Iterations(int count);
@@ -51,6 +60,10 @@ void gw_Script_PostRender(void); /* after the render pass: on_draw, then the lis
  * pc/gameworld/script_lab.h): queued, dispatched to on_action_change / on_hit / on_hitlag /
  * on_land / on_boss_defeated after the frame, never for a resimulated frame */
 void gw_Script_GameEvent(int what, int a, int b, int c, int d);
+/* Clank midpoint/damages are float bit patterns; entity ids never dereferenced natively. */
+int gw_Script_ClankWanted(void);
+void gw_Script_Clank(int a,int b,int item,int kind,int x,int y,int z,
+                     int damage_a,int damage_b,int flags,int entity_a,int entity_b);
 /* Scripted Mato hit callback; queued for on_target_broken / on_all_targets_broken after the frame. */
 void gw_Script_TargetBroken(int handle, int remaining);
 /* script_game.c at stage load: 1 = reserve the Lua stage layer's collision room (offline

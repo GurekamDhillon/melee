@@ -124,7 +124,16 @@ Options are `x`, `y`, `z` (default 0), `rot` (degrees about +Z, default 0),
 `scale` (uniform multiplier, default 1), `scale_x`, `scale_y`, `scale_z`
 (per-axis multipliers, each default 1), `layer` (integer -8..8, default 0),
 `visible` (boolean, default true), `alpha` (boolean, defaults to the sidecar
-setting), and `tint` (packed `0xRRGGBBAA`, default `0xFFFFFFFF`).
+setting), `background` (boolean, default false), and `tint` (packed
+`0xRRGGBBAA`, default `0xFFFFFFFF`). `background = true` keeps the authored
+world projection but places decorative depth in the farthest 1% of the camera
+depth range. These models draw once in the main camera, after refraction and
+before fighters, projectiles, shields, and particle effects. Opaque parts still test and
+write depth against each other. Native stage fog is disabled for these decorative
+draws because its depth calculation would consume the compressed depth. The
+complete viewport and native fog settings are restored before gameplay draws;
+collision is unaffected. Use this for decorative room kits, not solid foreground
+obstacles that should hide fighters.
 Fields are raw table entries; extra fields are ignored so data-table rows can
 include script metadata. Coordinates must be finite and within ±100000; scale
 has magnitude 0.001..100 (negative values mirror) and rotation is -360..360. Invalid options and stale mutation
@@ -340,3 +349,32 @@ unrun FD/Battlefield lane procedure and explicit verification limits.
 The instance harness uses fake collision calls, so it tests transactions and
 snapshot data, not fighter contact behavior. See [model-api-report.md](../model-api-report.md)
 for what was checked and the required stage/mode/savestate lane test plan.
+
+## Six-fighter direct matches (source update 2026-10-03)
+
+**Fix1 source update (2026-10-03):** `p7=` is logged and refuses the complete launch. With six fighters, `gd.lab_leave("css"|"sss")` returns `false, reason` and logs that reason; use `"menu"` or `"restart"`. A refused leave preserves pause state.
+
+Team launches normally keep the requested/default costume (`/colorN`) and run Melee's same-team, same-character duplicate tint assignment. Five identical teammates can therefore have shades 0 through 4; shading does not select their physical controller. Add `teams=1;enemy_team_colors=1` to force each active fighter on a team different from P1's team to its CSS team costume (team0 red, team1 blue, team2 green) and shade zero. This overrides enemy `/colorN`, preloads the chosen costume, and supports five enemies sharing one costume without a fifth nonzero tint. P1's team retains ordinary duplicate shading.
+
+Admission now plans the actual match preload requests before any fighter load, independently of the previous screen's heap policy. `six-slot planned` lines give deduplicated request counts and byte budgets; `six-slot after-load` lines give allocator free bytes after the complete preload queue finishes. They are distinct measurements. Main-heap runtime peaks still need live testing.
+
+The tester verified the original six-slot build's camera, port APIs, KO/respawn, recycling, restart, savestates and rewind (zero differing bytes) in `_build/audit-20261003/batch2-verify/`. Fix1's HUD, admission, refusal and colour changes have syntax checks and added regression fixtures; they have not been built or run. See `_build/tmp/codex-six-slots-fix1-report.md` for acceptance steps.
+
+
+`MELEE_SCENE` and `gd.scene_launch` accept `p1` through `p6` for **direct VS or LAB matches**. Slots 5-6 default to CPUs and refuse human/demo types. Physical controllers remain four. Six-slot CSS, SSS and Training routes are refused; VS finishes return to menus, and LAB permits restart or exit to menus. Use `/team0` for the player and `/team1` for each enemy with `teams=1`.
+
+```lua
+gd.scene_launch{mode="lab", stage="fd", teams=1,
+  p1="fox/hu/team0", p2="marth/cpu0/team1", p3="marth/cpu0/team1",
+  p4="marth/cpu0/team1", p5="marth/cpu0/team1", p6="marth/cpu0/team1"}
+gd.input(6, {buttons="A", x=-80}, 10)
+gd.release(6)
+```
+
+Fighter APIs use slots 1-6: `player`, `players`, CPU modes, modifiers, bench/call/benched, shaders, teleport, hit and contacts. `input`, `press`, `pad` and `release` now also support slots 5-6 through CPU input records. Holds count logic frames; a claimed slot stays neutral until released. `pad(5/6)` reports the most recently sampled CPU input; its optional physical/raw selector has no separate meaning there. `mirror_pad` and `input_mask` remain physical-controller APIs for ports 1-4. LAB panel targets cycle the fighters actually present; menu navigation still polls four controllers.
+
+`gd.fighter_recycle(port, {x=, y=, facing=1, intangible_frames=0, character=})` returns `true` or `false, reason`. The optional character is an explicit CharacterKind (`gd.player(port).char`). Recycle requires a CPU that has completed its KO and is in Sleep/Rebirth/RebirthWait. Use an infinite time/LAB match: stock elimination can destroy the entity before a script can recycle it. Retail respawn reset refreshes the retained fighter, damage becomes zero, and floor/camera/input placement uses the reserve call path. Paired fighters, transforms, bosses and character changes are currently refused. For a different enemy character, call another fighter slot seeded with that character at match start.
+
+`preload=fox/marth` reserves up to **two** additional costume-zero characters in the eight-entry launch cache. This preloads files only; it does **not** enable character-changing recycle. Six-slot launches and extra preloads check deduplicated file sizes, alignment and archive/allocator overhead against the file heaps, retain 1 MiB admission headroom in each fighter heap, and require 4 MiB free in the main heap. Refusals and headroom are logged. These conservative floors are not measured runtime peak guarantees for arbitrary mod assets or stages.
+
+The snapshot header already describes six fighters. Virtual input records and sampled values live in snapshotted game memory, and LAB input logs include the two extra slots for replay. The initial source pass did not build or run the game. The subsequent tester results and outstanding Fix1 acceptance are distinguished above; six-way HUD spacing remains pending visual verification.

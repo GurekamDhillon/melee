@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "name": "demo_juice",
+  "physics": {
+    "gravity": 0.12,
+    "terminal_velocity": 4,
+    "bounce": 0,
+    "friction": 0.15,
+    "floor_rest": true,
+    "stage_collision": true
+  },
+  "collection": "touch",
+  "radius": 7,
+  "ports": 1,
+  "teams": 15,
+  "lifetime": 900,
+  "blink": 120,
+  "count_against_cap": false,
+  "held": false,
+  "thrown": false,
+  "payload": {
+    "colour": "red",
+    "amount": 1
+  },
+  "visual": {
+    "colour_variants": true,
+    "scale": 2.5,
+    "spin": 6,
+    "bob": 0.6,
+    "hover": 6,
+    "tilt": 12,
+    "bob_speed": 3,
+    "height": 4.55
+  }
+}

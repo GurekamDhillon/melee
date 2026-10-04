@@ -63,17 +63,6 @@ ItemModelDesc Geno_ArtModel[GENO_MAX_PROFILES][GENO_MAX_ARTICLES];
 ItemStateArray Geno_ArtStates; /* never read: the one state has no animation (anim_id -1) */
 
 /* The per-item variables, in the item's per-kind block (Item.xDD4_itemVar). */
-typedef struct GenoArtVars {
-    s32 profile;
-    s32 article;
-    s32 frame;  /* frames alive (1 on the first) */
-    s32 why;    /* the despawn reason (event 29) */
-    f32 vx, vy; /* the travel velocity the phys callback writes to x40_vel */
-    Vec3 prev;  /* the position before this frame's move (the stage ray test) */
-    f32 spin;   /* the model's roll (visual) */
-    s8 cur[GENO_ART_HITBOXES]; /* v5.1: the hitbox entry each Melee slot holds now, -1 off */
-} GenoArtVars;
-
 static GenoArtVars* geno_art_vars(Item* ip)
 {
     return (GenoArtVars*) &ip->xDD4_itemVar;
@@ -783,7 +772,10 @@ static bool geno_art_reflected(Item_GObj* gobj)
         ip->facing_dir = ip->xC68;
         HSD_JObjSetRotationY(GET_JOBJ(gobj), (f32) (M_PI / 2) * ip->facing_dir);
     }
-    v->vx = (v->vx < 0.0f ? -v->vx : v->vx) * ip->facing_dir;
+    /* Item_80269F14 leaves the speed multiplier to the projectile callback. Update the
+       snapshotted travel velocity, otherwise the next phys callback would undo it. */
+    v->vx = (v->vx < 0.0f ? -v->vx : v->vx) * ip->facing_dir * ip->xC70;
+    v->vy *= ip->xC70;
     return false;
 }
 

@@ -569,13 +569,23 @@ end
 local function menu_close()
   menu.open = false
   if not menu.was_paused then gd.resume() end
-  for port = 1, 4 do pcall(gd.input, port, 0, 10) end
+  for port = 1, 6 do pcall(gd.input, port, 0, 10) end
 end
 
 local function menu_leave(where)
   menu.open = false
-  for port = 1, 4 do pcall(gd.input, port, 0, 10) end
+  for port = 1, 6 do pcall(gd.input, port, 0, 10) end
   gd.lab_leave(where)
+end
+
+-- Fighter targets are six-wide; menu navigation still polls four physical pads.
+menu.next_fighter = function(current, direction)
+  local players = gd.players()
+  if #players == 0 then return current end
+  for i, p in ipairs(players) do
+    if p.port == current then return players[((i - 1 + direction) % #players) + 1].port end
+  end
+  return players[1].port
 end
 
 local function fighter_name(port)
@@ -728,8 +738,8 @@ local TABS = {
   { name = "DUMMY", icon = "lab_dummy", items = {
     { label = "Target", icon = "lab_dummy", desc = "The fighter the dummy settings act on.",
       value = function() return fighter_name(menu.target) end,
-      run = function() menu.target = menu.target % 4 + 1 end,
-      adjust = function(d) menu.target = ((menu.target - 1 + d) % 4) + 1 end },
+      run = function() menu.target = menu.next_fighter(menu.target, 1) end,
+      adjust = function(d) menu.target = menu.next_fighter(menu.target, d) end },
     { label = "Damage", icon = "lab_percent",
       desc = "Left / right in steps of 10, A applies it. Test the kill percent, not the vibes.",
       value = function() return menu.pct .. "%" end,
@@ -995,6 +1005,7 @@ end
 local function ease(t) t = math.max(0, math.min(1, t)) return 1 - (1 - t) ^ 3 end
 
 local function lab_menu_draw()
+  local sa = gd.safe_area and gd.safe_area() or { w = 640, right = 640 }
   if not menu.open or not kit_ok() then return end
   menu.hits = {}
   local o = ease(menu.t / 7)
@@ -1004,7 +1015,7 @@ local function lab_menu_draw()
   local slide = (1 - o) * 200
 
   -- the game, dimmed and pushed back; a glass slab down the left with a cyan edge
-  quad(0, 0, 640, 480, alpha(INK, math.floor(0xB0 * o)))
+  quad(0, 0, sa.w, 480, alpha(INK, math.floor(0xB0 * o)))
   quad(-80 - slide, 0, 420, 480, alpha(GLASS_SOLID, 0xEE), SHEAR)
   quad(330 - slide, 0, 8, 480, ACCENT, SHEAR)
   quad(346 - slide, 0, 3, 480, alpha(ACCENT, 0x80), SHEAR)
@@ -1139,8 +1150,8 @@ local function lab_menu_draw()
   end
 
   -- the controls strip
-  quad(0, 446, 640, 2, ACCENT)
-  quad(0, 448, 640, 32, alpha(INK, 0xF4))
+  quad(0, 446, sa.w, 2, ACCENT)
+  quad(0, 448, sa.w, 32, alpha(INK, 0xF4))
   local cx = 20
   for _, g in ipairs({ { "glyph_a", "SELECT" }, { "glyph_b", "BACK" }, { "glyph_l", nil }, { "glyph_r", "TAB" },
                        { "glyph_stick", "CHANGE" }, { "glyph_start", "CLOSE" } }) do
@@ -1148,7 +1159,7 @@ local function lab_menu_draw()
     cx = cx + (w or 16) + 5
     if g[2] then cx = cx + stxt(cx, 470, g[2], "row", BONE) + 18 end
   end
-  txt(620, 469, "keys: arrows  ENTER  Q/E  ESC", "caption", DISABLED, "right")
+  txt(sa.right - 20, 469, "keys: arrows  ENTER  Q/E  ESC", "caption", DISABLED, "right")
 end
 
 -- ---- the HUD (menu closed): mode chip, key strip, panels ------------------------------------
@@ -1211,6 +1222,7 @@ local function draw_notice()
 end
 
 local function draw_strip()
+  local sa = gd.safe_area and gd.safe_area() or { w = 640, right = 640 }
   local md = mode()
   local y = 456
   local paused = gd.paused()
@@ -1221,7 +1233,7 @@ local function draw_strip()
   end
   local nm_w = measure(md.name, "row")
   local x = 8
-  quad(0, y - 4, 640, 26, alpha(GLASS_SOLID, 0xC8))
+  quad(0, y - 4, sa.w, 26, alpha(GLASS_SOLID, 0xC8))
   quad(x, y - 2, nm_w + 38, 22, paused and GOLD or ACCENT, SHEAR)
   icon(md.icon, x + 6, y + 1, 16, INK)
   stxt(x + 26, y + 15, md.name, "row", INK)
@@ -1241,7 +1253,7 @@ local function draw_strip()
   local h = gd.history()
   local status = string.format("f %d  %s", gd.match().frame,
     h.replaying and string.format("REPLAY +%s s", secs(h.fwd)) or string.format("rewind %s s", secs(h.back)))
-  local rx = 632
+  local rx = sa.right - 8
   txt(rx, y + 12, "help", "caption", MUTED, "right")
   rx = rx - measure("help", "caption") - 4 - key_w("F3")
   key_chip(rx, y, "F3")
@@ -1477,7 +1489,8 @@ local function draw_timeline(p, x0, y, w, is_focus)
   local len = math.max(c.len, 1)
   local sx = w / len
   local now = p.anim_frame_f + 1
-  txt(x0, y + 10, string.format("%s  %s", fighter_name(p.port), c.tl.motion_name), "caption",
+  txt(x0, y + 10, string.format("%s  %s%s", fighter_name(p.port), c.tl.motion_name,
+    c.tl.conditional and " [conditional script]" or ""), "caption",
     is_focus and GOLD or BONE, "left", w * 0.6)
   local iasa
   for _, e in ipairs(c.marks) do if e.name == "iasa" then iasa = e.frame break end end
@@ -1808,7 +1821,8 @@ local function draw_moves()
   if m.input then
   elseif c then
     txt(dx + 12, 76, string.format("script %d frames%s%s", math.floor(c.len + 0.5),
-      c.iasa and ("   IASA " .. c.iasa) or "", c.tl.stop ~= "end" and ("   (" .. c.tl.stop .. ")") or ""),
+      c.iasa and ("   IASA " .. c.iasa) or "", c.tl.conditional and " [conditional script]" or
+        c.tl.stop ~= "end" and ("   (" .. c.tl.stop .. ")") or ""),
       "caption", BONE, "left", dw - 24)
     local yy = 92
     if #c.windows == 0 then txt(dx + 12, yy, "no hitboxes in its script", "caption", DISABLED) end
@@ -2386,6 +2400,8 @@ local function bx_static(port, m)
     -- cmd_vars[0] set = a landing takes the move's landing lag (ftCo_LandingAir_EnterWithLag)
     st.ac = string.format("1-%d%s", lag_on - 1, lag_off and string.format(" %d-", lag_off) or "")
   end
+  st.conditional = tl.conditional or false
+  if st.conditional then st.iasa, st.ac = nil, nil end -- live sampling supplies actual frames
   return st
 end
 
@@ -2421,7 +2437,8 @@ local function bx_finish_move(cur)
   local lag_attr = LANDING_ATTR[m.name]
   local lag = lag_attr and bx.attrs and bx.attrs[lag_attr] or nil
   local row = { id = m.id, name = m.name, group = m.group, air = m.air or (air_name(m.name) and true or false),
-    total = total, total_script = st.len, startup = startup, active = windows_of(active),
+    total = total, total_script = st.len, script_conditional = st.conditional or false,
+    startup = startup, active = windows_of(active),
     -- the measured IASA; the script's only when it falls inside the state (Fox ftilt's is past its end)
     iasa = iasa or (st.iasa and (total == 0 or st.iasa <= total) and st.iasa or nil),
     landing_lag = lag and math.floor(lag + 0.5) or nil, lcancel_lag = lag and math.floor(lag / 2) or nil,
@@ -2449,7 +2466,7 @@ local function jstr(v)
 end
 
 local MOVE_COLS = { "id", "name", "group", "air", "startup", "active", "total", "iasa", "total_script",
-  "landing_lag", "lcancel_lag", "autocancel", "landed", "ended", "chain" }
+  "landing_lag", "lcancel_lag", "autocancel", "landed", "ended", "chain", "script_conditional" }
 local HB_COLS = { "id", "damage", "angle", "kbg", "bkb", "wbk", "radius", "bone", "element", "shield_damage", "frames" }
 
 local function bx_write()
@@ -3105,7 +3122,8 @@ local function card_info(p)
   if (c == nil or #c.windows == 0) and lag_attr == nil then return nil end
   local st = LE.move_static(p.port, p.action)
   local lag = lag_attr and attrs_of(p)[lag_attr] or nil
-  local info = { name = p.motion_name, char = p.char_name, key = p.char .. ":" .. p.action, ac = st.ac }
+  local info = { name = p.motion_name .. (st.conditional and " [conditional script]" or ""),
+    char = p.char_name, key = p.char .. ":" .. p.action, ac = st.ac }
   if lag then
     info.lag = math.floor(lag + 0.5)
     info.lcl = math.max(1, math.floor(lag / common().lcancel_div))
@@ -3354,7 +3372,7 @@ function LD.frame()
       if a then fa_start(a, p.port, p.motion_name == "GuardReflect" and "powershield" or "shield") end
     end
     prev_lag[p.port] = p.in_hitlag
-    if p.port <= 4 then tech_port(p, now) end
+    tech_port(p, now)
   end
   fa_frame(now)
   card_frame()
@@ -4245,7 +4263,7 @@ local extra = {
     end,
     value = function() return "P" .. dm.port .. (dm.on and "" or " OFF") end,
     run = function() dm.on = not dm.on if not dm.on then LD.dummy_cut() end dm_save() end,
-    adjust = function(d) LD.dummy_cut() dm.port = ((dm.port - 1 + d) % 4) + 1 dm_save() end },
+    adjust = function(d) LD.dummy_cut() dm.port = menu.next_fighter(dm.port, d) dm_save() end },
   { label = "Record slot", icon = "lab_record", key = "R",
     desc = function()
       local r = rec[dm.slot]
@@ -5239,10 +5257,11 @@ gd.command("lab", function(arg)
     if tl then
       gd.log(string.format("%s (%s) %d events, length %.0f, %s", tl.motion_name, tl.anim_name,
         #tl.events, tl.length, tl.stop or "-"))
+      if tl.conditional then gd.log("  conditional script: frames show the fall-through path; measure the move for actual frames") end
       for _, e in ipairs(tl.events) do
         local extra = e.name == "hitbox" and string.format(" #%d b%d %d%% a%d g%d b%d w%d r%.2f %s",
           e.id, e.bone, e.damage, e.angle, e.kbg, e.bkb, e.wbk, e.size, e.element_name) or
-          (e.value and (" " .. e.value) or "")
+          (e.detail and (" " .. e.detail) or e.value and (" " .. e.value) or "")
         gd.log(string.format("  f%-3d %s%s", e.frame, e.name, extra))
       end
     end

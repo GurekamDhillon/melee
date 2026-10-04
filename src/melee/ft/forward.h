@@ -20,6 +20,18 @@ typedef struct ArticleDynamicBones ArticleDynamicBones;
 typedef struct CostumeTObjList CostumeTObjList;
 typedef struct DObjList DObjList;
 typedef struct Fighter Fighter;
+#if defined(TARGET_PC)
+/* Snapshot-owned Lua overlays; game-to-game float ABI, no native pointers. */
+float ScriptGame_ModValue(int slot, int field, float base);
+float ScriptGame_ModDamage(int slot, int field, float base);
+float ScriptGame_FighterDealtDamage(Fighter* attacker, float damage);
+int ScriptGame_FighterBenchTick(Fighter* fp);
+#define FT_SCRIPT_VALUE(fp, field, base) ScriptGame_ModValue((fp)->player_id, (field), (base))
+#define FT_SCRIPT_DEALT(fp, base) ScriptGame_FighterDealtDamage((fp), (base))
+#else
+#define FT_SCRIPT_VALUE(fp, field, base) (base)
+#define FT_SCRIPT_DEALT(fp, base) (base)
+#endif
 typedef struct Fighter_804D653C_t Fighter_804D653C_t;
 typedef struct Fighter_CostumeStrings Fighter_CostumeStrings;
 typedef struct Fighter_DemoStrings Fighter_DemoStrings;

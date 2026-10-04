@@ -75,6 +75,14 @@ typedef struct IzumiUnkCC {
 #define GET_REFLECTION(gobj) ((IzumiReflection*) HSD_GObjGetUserData(gobj))
 
 static struct grIzumi_YakumonoParam* yakumono_param;
+#if defined(TARGET_PC)
+void* grIzumi_StageSlotParamSwap(void* param)
+{
+    void* previous=yakumono_param;
+    yakumono_param=param;
+    return previous;
+}
+#endif
 
 GrJoint grIz_803E0D60[] = { { 0, 3, 1 }, { 1, 3, 2 }, { 2, 3, 3 } };
 StageCallbacks grIz_StageCallbacks[] = {
@@ -310,6 +318,24 @@ void grIzumi_801CBE64(Ground_GObj* gobj)
     gp->x10_flags.b5 = 1;
     gp->u.izumi.xD0 = Ground_801C3FA4(gobj, 1);
     gp->u.izumi.xD4 = Ground_801C3FA4(gobj, 2);
+#if defined(TARGET_PC)
+    {
+        extern int ScriptGame_StageSlotNativeContext(void);
+        if (ScriptGame_StageSlotNativeContext()) {
+            /* Retail platform constructors/state machines, without a second
+             * scene reflection camera or a stage particle-bank replacement. */
+            Vec3 p;
+            HSD_GObj* plat;
+            lb_8000B1CC(Ground_801C3FA4(gobj, 4), NULL, &p);
+            plat = grIzumi_801CCBDC(yakumono_param->x0, &p, 0, gp->u.izumi.xD0);
+            GET_GROUND(plat)->u.izumi2.xDC = yakumono_param->xC;
+            lb_8000B1CC(Ground_801C3FA4(gobj, 6), NULL, &p);
+            plat = grIzumi_801CCBDC(yakumono_param->x8, &p, 1, gp->u.izumi.xD4);
+            GET_GROUND(plat)->u.izumi2.xDC = yakumono_param->xC;
+            return;
+        }
+    }
+#endif
     gp->u.izumi.xC8 = grIzumi_801CCD98();
     tobj = grIzumi_801CD090(gobj, GET_REFLECTION(gp->u.izumi.xC8)->image);
     if (tobj != NULL) {
@@ -762,7 +788,11 @@ void grIzumi_801CCEA0(HSD_GObj* gobj, int renderpass)
                 HSD_CObjSetNear(dst, HSD_CObjGetNear(src));
                 HSD_CObjSetFar(dst, HSD_CObjGetFar(src));
                 HSD_CObjSetFov(dst, HSD_CObjGetFov(src));
+#if defined(TARGET_PC)
+                HSD_CObjSetAspect(dst, HSD_CObjGetAuthoredAspect(src));
+#else
                 HSD_CObjSetAspect(dst, HSD_CObjGetAspect(src));
+#endif
                 HSD_CObjGetEyePosition(src, &vec);
                 vec.y = -vec.y;
                 HSD_CObjSetEyePosition(dst, &vec);

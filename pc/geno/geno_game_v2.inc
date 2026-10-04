@@ -285,6 +285,8 @@ typedef struct {
 
 static const GenoCbDef* geno_cb_def(int slot, int id);
 static const GenoBhvDef* geno_bhv_def(int id);
+static void geno_cb_nothing(Fighter_GObj* gobj);
+extern void Geno_WarnIasa(int profile, int state);
 
 /* Build profile p's rows (idempotent: the same bytes every time, from the registry and the
  * fighter's own vanilla / m-ex rows). */
@@ -353,6 +355,12 @@ static void geno_build_rows(Fighter* fp, int p)
                 row->coll_cb = fn;
                 break;
             }
+        }
+        if ((row->input_cb == NULL || row->input_cb == geno_cb_nothing) &&
+            (int) row->anim_id >= 0 && (int) row->anim_id <= 0x3ff && fp->ft_data != NULL &&
+            fp->ft_data->xC != NULL &&
+            GenoGame_ScriptHasIasa(fp->ft_data->xC[row->anim_id].xC)) {
+            Geno_WarnIasa(p, s);
         }
         Geno_Event(20, fp->kind, fp->player_id, s, (int) row->anim_id);
     }
@@ -555,6 +563,39 @@ static void geno_cb_phys_air_drift(Fighter_GObj* gobj)
     }
 }
 
+/* phys "brake" (v5.4): Ultimate's per-status kinetics for a state whose velocity the script sets
+ * (Sonic Blade's aim window, turn and endings). Once a game frame, whatever the animation rate:
+ * MOVE_F5 comes off the speed along its own direction (the ground speed on the ground; MOVE_I4 bit 0
+ * = the horizontal only in the air); in the air MOVE_F6 is the gravity per frame and MOVE_F7 the
+ * vertical speed's clamp either way (0 = none). The script PUTs the three where the state begins. */
+extern void GenoGame_Brake(f32* vx, f32* vy, f32 brake, f32 max);
+static void geno_cb_phys_brake(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    f32 zero = 0.0f;
+    if (st == NULL) {
+        return;
+    }
+    if (fp->ground_or_air == GA_Ground) {
+        GenoGame_Brake(&fp->gr_vel, &zero, st->move_f[5], 0.0f);
+        ftCommon_SetSelfMovementFromGroundedMovement(gobj);
+        return;
+    }
+    if (st->move_i[4] & 1) {
+        GenoGame_Brake(&fp->self_vel.x, &zero, st->move_f[5], 0.0f);
+    } else {
+        GenoGame_Brake(&fp->self_vel.x, &fp->self_vel.y, st->move_f[5], 0.0f);
+    }
+    if (st->move_f[6] > 0.0f) {
+        f32 lim = st->move_f[7];
+        fp->self_vel.y -= st->move_f[6];
+        if (lim > 0.0f) {
+            fp->self_vel.y = fp->self_vel.y > lim ? lim : fp->self_vel.y < -lim ? -lim : fp->self_vel.y;
+        }
+    }
+}
+
 static void geno_cb_phys_ground(Fighter_GObj* gobj)
 {
     ft_80084F3C(gobj); /* ground friction */
@@ -636,7 +677,16 @@ static void geno_become_air(Fighter_GObj* gobj)
 
 static void geno_become_ground(Fighter_GObj* gobj)
 {
-    ftCommon_8007D7FC(GET_FIGHTER(gobj));
+    Fighter* fp = GET_FIGHTER(gobj);
+    f32 vx = fp->self_vel.x;
+    ftCommon_8007D7FC(fp);
+    /* A row whose clip drives the fighter (x594_b0) makes ftCommon_8007D6A4 replace the horizontal
+     * speed with the clip's root motion. In a "both" state the speed is the script's: a dash aimed
+     * into the floor slides along it with the horizontal part it had (Sonic Blade, spec 3.6). */
+    if (fp->x594_b0) {
+        fp->self_vel.x = vx;
+        fp->gr_vel = vx;
+    }
 }
 
 static void geno_coll_both(Fighter_GObj* gobj)
@@ -844,6 +894,7 @@ enum {
     GENO_CBID_ANIM_MOTION = 12, /* v3 */
     GENO_CBID_INTERRUPT = 13,   /* v3 */
     GENO_CBID_AIR_DRIFT = 14,   /* v5.2 */
+    GENO_CBID_BRAKE = 15,       /* v5.4 */
     GENO_CBID_CAPE = 50,        /* v3 */
     GENO_CBID_CAPE_AFTER = 51,  /* v3 */
     GENO_CBID_GLIDE_AFTER = 25, /* v3 */
@@ -879,6 +930,7 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_AIR, GENO_CB_PHYS, "air", geno_cb_phys_air },
     { GENO_CBID_AIR_NODRIFT, GENO_CB_PHYS, "air_nodrift", geno_cb_phys_air_nodrift },
     { GENO_CBID_AIR_DRIFT, GENO_CB_PHYS, "air_drift", geno_cb_phys_air_drift },
+    { GENO_CBID_BRAKE, GENO_CB_PHYS, "brake", geno_cb_phys_brake },
     { GENO_CBID_GROUND, GENO_CB_PHYS, "ground", geno_cb_phys_ground },
     { GENO_CBID_AUTO, GENO_CB_PHYS, "auto", geno_cb_phys_auto },
     { GENO_CBID_ANIM_MOTION, GENO_CB_PHYS, "anim_motion", geno_cb_phys_anim_motion },

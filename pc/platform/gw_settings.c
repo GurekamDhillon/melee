@@ -12,6 +12,8 @@
  * Game code calls these without the gw_ prefix (gwtool adds it); strings cross as bytes. */
 #include "gw.h"
 #include "gw_test.h"
+#include "gw_view_math.h"
+#include "gw_controls_model.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,9 +24,9 @@
 #include "gw_compat_linux.h"
 #endif
 
-#define ST_MAX 64
+#define ST_MAX 512
 #define ST_KEY 32
-#define ST_VAL 128
+#define ST_VAL 512
 
 static struct {
     int loaded;
@@ -33,6 +35,8 @@ static struct {
     char val[ST_MAX][ST_VAL];
     char path[MAX_PATH];
 } st;
+static int st_save_ok = 1;
+int gw_Settings_LastSaveOk(void) { return st_save_ok; }
 
 static const char *st_path(void) {
     if (st.path[0] == '\0') {
@@ -59,7 +63,7 @@ static void st_trim(char *s) {
 
 static void st_load(void) {
     FILE *f;
-    char line[256];
+    char line[ST_KEY + ST_VAL + 4];
     if (st.loaded) return;
     st.loaded = 1;
     st.n = 0;
@@ -94,13 +98,19 @@ static int st_find(const char *key) {
 static void st_save(void) {
     FILE *f = fopen(st_path(), "w");
     int i;
+    st_save_ok = 0;
     if (f == NULL) {
         gw_log("settings: cannot write %s", st_path());
         return;
     }
     fprintf(f, "# GD's Melee settings (written by the SETTINGS screens; environment variables win)\n");
     for (i = 0; i < st.n; ++i) fprintf(f, "%s=%s\n", st.key[i], st.val[i]);
-    fclose(f);
+    {
+        int failed = ferror(f);
+        if (fclose(f) != 0) failed = 1;
+        st_save_ok = !failed;
+        if (failed) gw_log("settings: incomplete write to %s", st_path());
+    }
 }
 
 /* The saved string for `key` (copied into out), or `dflt` when there is none. 1 = found. */
@@ -117,7 +127,7 @@ int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt) {
 void gw_Settings_SetStr(const char *key, const char *value) {
     int i = st_find(key);
     if (i < 0) {
-        if (st.n >= ST_MAX) return;
+        if (st.n >= ST_MAX) { st_save_ok = 0; gw_log("settings: key capacity reached"); return; }
         i = st.n++;
         snprintf(st.key[i], ST_KEY, "%s", key);
     }
@@ -137,11 +147,20 @@ void gw_Settings_SetInt(const char *key, int value) {
 }
 
 /* Widescreen (16:9 Hor+). MELEE_WIDESCREEN wins over the saved "widescreen" key so scripted runs
- * and lanes can force it; game code calls Widescreen_Enabled() across the gw.h boundary.
+ * and lanes can force it. Without either override, use the window (desktop before creation)
+ * when wider than 4:3; never write this automatic choice into settings.cfg.
+ * Game code calls Widescreen_Enabled() across the gw.h boundary.
  * Specification and credits: _research/widescreen.md. */
 int gw_Widescreen_Enabled(void) {
     const char *v = getenv("MELEE_WIDESCREEN");
-    return (v != NULL && v[0] != '\0') ? atoi(v) != 0 : gw_Settings_Int("widescreen", 0) != 0;
+    extern int gw_View_DefaultWide(void);
+    int dflt;
+    if (v != NULL && v[0] != '\0') return atoi(v) != 0;
+    dflt = gw_View_DefaultWide();
+#ifdef _WIN32
+    if (dflt < 0) dflt = GetSystemMetrics(SM_CXSCREEN) * 3 > GetSystemMetrics(SM_CYSCREEN) * 4;
+#endif
+    return gw_Settings_Int("widescreen", dflt > 0) != 0;
 }
 
 /* Every saved key=value on one line for a crash report, leaving out what can identify the
@@ -228,6 +247,7 @@ static int test_settings_roundtrip(void) {
     gw_Settings_SetStr("name", "GD");
     gw_Settings_SetInt("delay", 3);
     gw_Settings_SetInt("delay", 4);
+    gw_Settings_SetInt("widescreen", 1);
     memset(&st, 0, sizeof st); /* read it back from the file */
     snprintf(st.path, sizeof st.path, "%s", path);
     if (!gw_Settings_Str("name", b, sizeof b, "") || strcmp(b, "GD") != 0) {
@@ -238,15 +258,96 @@ static int test_settings_roundtrip(void) {
         gw_test_fail("ints did not round-trip");
         rc = 1;
     }
-    if (st.n != 2) {
+    if (gw_Settings_Int("widescreen", 0) != 1) {
+        gw_test_fail("widescreen did not persist");
+        rc = 1;
+    }
+    gw_Settings_SetInt("widescreen", 0);
+    memset(&st, 0, sizeof st);
+    snprintf(st.path, sizeof st.path, "%s", path);
+    if (gw_Settings_Int("widescreen", 1) != 0) {
+        gw_test_fail("widescreen off did not persist");
+        rc = 1;
+    }
+    if (st.n != 3) {
         gw_test_fail("a key was written twice");
         rc = 1;
+    }
+    {
+        GcMap before, after;
+        char encoded[512], loaded[512];
+        int i;
+        gc_map_default(&before);
+        after = before;
+        /* Migration: missing mappings preserve defaults and old user keys. */
+        if (gw_Settings_Str("ctl00_p0_map", loaded, sizeof loaded, "") ||
+            gc_map_decode(&after, loaded) || memcmp(&before, &after, sizeof before)) {
+            gw_test_fail("old settings changed the default mapping"); rc = 1;
+        }
+        for (i = 0; i < GC_PHYSICAL; ++i) before.dest[i] = GC_DEST_MASK;
+        before.swap = 1; before.analog_off = 1; before.shield = 80;
+        before.dz[0] = 10; before.dz[1] = 30; before.rumble = 0;
+        gc_map_encode(&before, encoded, sizeof encoded);
+        gw_Settings_SetStr("ctl00_id", "gc-adapter-port-1");
+        gw_Settings_SetStr("ctl00_p0_map", encoded);
+        gw_Settings_SetStr("ctl00_p0_name", "Tournament");
+        memset(&st, 0, sizeof st);
+        snprintf(st.path, sizeof st.path, "%s", path);
+        if (!gw_Settings_Str("ctl00_p0_map", loaded, sizeof loaded, "") ||
+            !gc_map_decode(&after, loaded) || memcmp(&before, &after, sizeof before) ||
+            gw_Settings_Int("delay", 0) != 4) {
+            gw_test_fail("long controller profile or legacy values failed roundtrip"); rc = 1;
+        }
+        if (!gw_Settings_Str("ctl00_p0_name", loaded, sizeof loaded, "") || strcmp(loaded, "Tournament")) {
+            gw_test_fail("controller profile name failed roundtrip"); rc = 1;
+        }
     }
     DeleteFileA(path);
     memset(&st, 0, sizeof st);
     return rc;
 }
 
+#include "../tests/view_aspect_cases.h"
+static int test_view_projection_rect(void) {
+    int rc = gw_view_aspect_cases();
+    if (rc) gw_test_fail("view aspect/projection/rectangle case %d", rc);
+    return rc != 0;
+}
+
+static int test_view_canvas(void) {
+    if (gw_view_default_wide(800, 600) != 0 || gw_view_default_wide(1280, 720) != 1 ||
+        gw_view_default_wide(2520, 1080) != 1 || gw_view_default_wide(600, 800) != 0 ||
+        gw_view_default_wide(0, 0) != -1) {
+        gw_test_fail("automatic widescreen aspect default");
+        return 1;
+    }
+    const float windows[5][3] = {
+        {800, 600, 640}, {1280, 720, 853.333333f},
+        {2520, 1080, 1120}, {2520, 1080, 640}, {0, 0, 640}
+    };
+    int i;
+    for (i = 0; i < 5; i++) {
+        float width = 480.0f * gw_view_aspect(windows[i][0], windows[i][1], i != 3);
+        float left = gw_view_left(width), scale, ox, oy, px, x;
+        float error = width - windows[i][2];
+        if (error < -0.001f || error > 0.001f) {
+            gw_test_fail("view canvas case %d width %.3f", i, width);
+            return 1;
+        }
+        gw_view_map(windows[i][0], windows[i][1], width, &scale, &ox, &oy);
+        px = (91.5f - left) * scale + ox;
+        x = (px - ox) / scale + left;
+        error = x - 91.5f;
+        if (error < -0.001f || error > 0.001f || left + width * 0.5f != 320.0f) {
+            gw_test_fail("view canvas case %d mouse/centering", i);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void gw_settings_tests_register(void) {
+    gw_test_register("view_canvas", test_view_canvas);
+    gw_test_register("view_projection_rect", test_view_projection_rect);
     gw_test_register("settings_roundtrip", test_settings_roundtrip);
 }

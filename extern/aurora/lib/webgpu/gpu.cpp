@@ -941,11 +941,9 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
         }
         requiredFeatures.push_back(feature);
       }
-#ifdef TRACY_ENABLE
-      if (feature == wgpu::FeatureName::TimestampQuery) {
+      if (feature == wgpu::FeatureName::TimestampQuery && gpu_prof::requested()) {
         requiredFeatures.push_back(feature);
       }
-#endif
     }
     std::string featureList;
     for (auto featureName : requiredFeatures) {

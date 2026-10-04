@@ -120,6 +120,14 @@ extern "C" {
 #define GX_AURORA_END_PALETTE 0x0045
 #define GX_AURORA_PALETTE_MAX 64
 
+/* GD surface extension v1. Immutable program IDs are process-local; do not persist.
+ * Params: vec4(time, object_id, normal_valid, reserved), then four authored vec4s.
+ * The FIFO command is replayed on interpolated presents. No command when unused. */
+#define AURORA_GD_SURFACE_VERSION 1
+#define GX_AURORA_SURFACE 0x0046
+u32 GXAuroraSurfaceRegister(const char* source, const char* label, char* error, u32 errorSize);
+void GXAuroraSurface(u32 program, const float* params20);
+
 #define GX2_SET_POLYGON_OFFSET 0x1000
 
 
@@ -162,6 +170,7 @@ void GXAuroraEndPalette(void);
 typedef enum _AuroraViewportPolicy {
   AURORA_VIEWPORT_FIT = 0,     // Preserve logical aspect in the content framebuffer
   AURORA_VIEWPORT_STRETCH = 1, // Match content framebuffer aspect to the native surface
+  AURORA_VIEWPORT_ASPECT = 3,  // Logical GX pixels remapped into a fitted content aspect
   AURORA_VIEWPORT_NATIVE = 2,  // Use active framebuffer pixels directly
 } AuroraViewportPolicy;
 
@@ -170,6 +179,7 @@ typedef enum _AuroraViewportPolicy {
  * When AURORA_VIEWPORT_NATIVE is used, GXSetTexCopySrc/GXSetTexCopyDst will use native framebuffer resolution.
  */
 void AuroraSetViewportPolicy(AuroraViewportPolicy policy);
+void AuroraSetContentAspect(float aspect);
 
 /**
  * Retrieves the current content framebuffer size.

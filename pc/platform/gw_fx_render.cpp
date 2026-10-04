@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include "gw_fx_batch.hpp"
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -188,6 +189,7 @@ struct Payload {
   Range uni, sto;
   Range mv;    // mesh kinds: the mesh's expanded vertices (12 floats each)
   uint32_t nv; // mesh kinds: vertex count
+  uint64_t custom; // immutable shader + parameter packet; 0 = unchanged built-in path
 };
 static_assert(sizeof(Payload) <= aurora::gfx::InlineDrawPayloadSize, "payload");
 
@@ -416,6 +418,13 @@ wgpu::Sampler make_sampler(const wgpu::Device& dev, wgpu::AddressMode m) {
   return dev.CreateSampler(&sd);
 }
 
+} // namespace
+#include "gw_shader_runtime.inc"
+#include "gw_shader_models.inc"
+#include "gw_shader_effects.inc"
+#include "gw_shader_tests.inc"
+namespace {
+
 void init_gpu(const aurora::gfx::DrawContext& ctx) {
   if (g_module) return;
   const auto& dev = ctx.device;
@@ -474,10 +483,11 @@ void init_gpu(const aurora::gfx::DrawContext& ctx) {
          ctx.layout.colorAttachmentCount, ctx.layout.sampleCount);
 }
 
-wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind, uint32_t blend, uint32_t depthTest) {
+wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind, uint32_t blend, uint32_t depthTest,
+                              const shader_runtime::FxPrepared* custom = nullptr) {
   const uint64_t key = ctx.layout.key * 1000003ull ^ (uint64_t(kind) << 8 | uint64_t(blend) << 4 | depthTest);
   auto it = g_pipes.find(key);
-  if (it != g_pipes.end()) return it->second;
+  if (!custom && it != g_pipes.end()) return it->second;
   const auto& L = ctx.layout;
   wgpu::BlendState bs{};
   auto comp = [](wgpu::BlendOperation op, wgpu::BlendFactor s, wgpu::BlendFactor d) {
@@ -536,6 +546,7 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
   rd.depthStencil = L.depthStencilFormat != wgpu::TextureFormat::Undefined ? &ds : nullptr;
   rd.multisample.count = L.sampleCount;
   rd.fragment = &fs;
+  if (custom) return shader_runtime::fx_pipeline(*custom, rd, ctx.layout.key, kind, blend, depthTest);
   auto p = ctx.device.CreateRenderPipeline(&rd);
   g_pipes.emplace(key, p);
   gw_log("fx: pipeline kind %u blend %u depth %u created (%zu total)", kind, blend, depthTest, g_pipes.size());
@@ -569,6 +580,10 @@ void draw_cb(const aurora::gfx::DrawContext& ctx, const wgpu::RenderPassEncoder&
   Payload d;
   std::memcpy(&d, payload, sizeof d);
   init_gpu(ctx);
+  shader_runtime::FxPrepared custom;
+  if (d.custom && !shader_runtime::fx_take(d.custom, custom)) return;
+  auto pipe = pipeline(ctx, d.kind, d.blend, d.depthTest, d.custom ? &custom : nullptr);
+  if (!pipe) return; // user compilation/pipeline errors never enter SetPipeline
   Slot slot;
   {
     std::lock_guard<std::mutex> lk(g_slotMutex);
@@ -622,8 +637,9 @@ void draw_cb(const aurora::gfx::DrawContext& ctx, const wgpu::RenderPassEncoder&
   bgd.entryCount = 12;
   bgd.entries = be;
   auto bg = ctx.device.CreateBindGroup(&bgd);
-  pass.SetPipeline(pipeline(ctx, d.kind, d.blend, d.depthTest));
+  pass.SetPipeline(pipe);
   pass.SetBindGroup(0, bg);
+  if (d.custom) shader_runtime::fx_bind(custom, ctx, pass);
   if (is_mesh_kind(d.kind))
     pass.Draw(d.nv, d.count);
   else if (d.kind == KParticles || d.kind == KBloomParticles)
@@ -805,7 +821,7 @@ struct FrameData {
   GpuU base;
   std::vector<GpuP> buf;
   std::vector<Group> groups;
-  bool needFrame = false, needBloom = false;
+  bool needFrame = false, needBloom = false, needDepth = false;
   uint32_t slotIdx = 0, frame = 0;
 };
 constexpr uint32_t kFrames = 4; // the GX thread consumes a frame's data before the frame ends (aurora_end_frame drains)
@@ -893,7 +909,17 @@ extern "C" void gw_Fx_Draw(int view_guest) {
   std::vector<GpuP> buf;
   std::vector<Group> groups;
   buf.reserve(size_t(st->nlive));
-  bool needFrame = false, needBloom = false;
+  bool needFrame = false, needBloom = false, needDepth = false;
+  // Fixed linked buckets preserve particle-slot order without per-instance
+  // vectors/allocations or scanning the whole pool for every emitter.
+  int head[FX_MAX_INST],next[FX_MAX_PARTICLES];
+  std::fill(head,head+FX_MAX_INST,-1);
+  for(int k=FX_MAX_PARTICLES-1;k>=0;--k) {
+    const int instance=st->part[k].inst;
+    if(instance>=0 && instance<FX_MAX_INST) {
+      next[k]=head[instance];head[instance]=k;
+    }
+  }
   for (int i = 0; i < FX_MAX_INST; ++i) {
     const fx_inst& in = st->inst[i];
     if (!in.used) continue;
@@ -901,8 +927,7 @@ extern "C" void gw_Fx_Draw(int view_guest) {
     if (p == nullptr || in.em >= p->nem) continue;
     const fx_emitter& e = p->em[in.em];
     const int first = int(buf.size());
-    for (int k = 0; k < FX_MAX_PARTICLES; ++k)
-      if (st->part[k].inst == i) {
+    for (int k=head[i];k>=0;k=next[k]) {
         buf.emplace_back();
         particle_data(e, st->part[k], in, base.view, buf.back());
       }
@@ -910,9 +935,18 @@ extern "C" void gw_Fx_Draw(int view_guest) {
     ensure_textures(in.pkg);
     groups.push_back({in.pkg, in.em, first, int(buf.size()) - first,
                       e.mesh && e.mesh_idx >= 0 && e.mesh_idx < p->nmesh_loaded && p->mesh_nv[e.mesh_idx] > 0 ? e.mesh_idx : -1});
-    needFrame |= e.shader == FX_SH_DISTORTION;
+    const int custom_shader = gw_Shader_FxSelect(in.pkg, in.em, e.custom_shader);
+    needFrame |= e.shader == FX_SH_DISTORTION || custom_shader != 0;
+    needDepth |= custom_shader != 0;
     needBloom |= e.bloom_intensity > 0.0f;
   }
+  gw_fx_batch_additive(groups,buf,[](const Group& g) {
+    const fx_emitter& e=gw_fx_pkg(g.pkg)->em[g.em];
+    // Custom package bodies and Lua overrides may depend on in.ii. Only
+    // explicit author consent permits regrouping their storage/index space.
+    return e.blend==FX_BLEND_ADD && (e.additive_batch ||
+      gw_Shader_FxSelect(g.pkg,g.em,e.custom_shader)==0);
+  });
   if (groups.empty()) return;
   {
     // MELEE_FX_DRAWLOG=1: per emitter group, what is drawn and where it lands on screen (NDC bbox of the particle
@@ -969,6 +1003,7 @@ extern "C" void gw_Fx_Draw(int view_guest) {
   fd.groups.swap(groups);
   fd.needFrame = needFrame;
   fd.needBloom = needBloom;
+  fd.needDepth = needDepth;
   fd.slotIdx = frame % kSlots;
   fd.frame = frame;
   const uint32_t idx = uint32_t(&fd - g_frames);
@@ -1006,13 +1041,14 @@ void record_frame(const void* data, u32 size) {
   if (needFrame || needBloom) {
     aurora::gfx::ResolveDesc rd{};
     rd.color = needFrame;
-    rd.depth = needBloom;
+    rd.depth = needBloom || fd.needDepth;
     aurora::gfx::ResolvedTargets rt{};
     if (aurora::gfx::resolve_pass(rd, rt)) {
       slot.color = rt.color;
       slot.depth = rt.depth;
       slot.w = rt.width;
       slot.h = rt.height;
+      if (fd.needDepth) { std::lock_guard<std::mutex> state(shader_runtime::state_mutex); ++shader_runtime::perf.resolves; }
     }
     if (!slot.depth) needBloom = false;
   }
@@ -1097,7 +1133,15 @@ void record_frame(const void* data, u32 size) {
     u.screen[3] = th > 0 ? 1.0f / th : 0.0f;
     u.mat2[3] = depthScale;
     d.uni = aurora::gfx::push_uniform(reinterpret_cast<const uint8_t*>(&u), sizeof u);
-    aurora::gfx::push_custom_draw(g_drawType, &d, sizeof d);
+    const int custom_shader = gw_Shader_FxSelect(g.pkg, g.em, e.custom_shader);
+    if (custom_shader) {
+      d.custom = shader_runtime::fx_prepare(custom_shader);
+      if (!d.custom) return;
+    }
+    if (!aurora::gfx::push_custom_draw(g_drawType, &d, sizeof d) && d.custom) {
+      shader_runtime::FxPrepared dropped;
+      shader_runtime::fx_take(d.custom, dropped);
+    }
   };
   for (size_t gi = 0; gi < groups.size(); ++gi) push_group(KParticles, gi, W, H, 1.0f);
 

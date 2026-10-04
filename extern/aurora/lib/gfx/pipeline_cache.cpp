@@ -5,6 +5,7 @@
 #include "resources.hpp"
 #include "hash.hpp"
 #include "../gx/pipeline.hpp"
+#include "../gx/fifo.hpp"
 #include "../io.hpp"
 #ifdef AURORA_ENABLE_RMLUI
 #include "../rmlui/pipeline.hpp"
@@ -26,9 +27,17 @@
 #include <thread>
 #include <chrono>
 #include <cstdlib>
+#include <cstdio>
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif
 #include <vector>
 
 #include <aurora/gfx.h>
+#include <aurora/pipeline_warm.hpp>
+#include "../webgpu/gpu_prof.hpp"
 
 #include <SDL3/SDL_iostream.h>
 #include <absl/container/flat_hash_map.h>
@@ -63,6 +72,7 @@ struct PipelineCacheWrite {
   ByteBuffer config;
   uint32_t firstFrameUsed = UINT32_MAX;
   uint32_t tags = 0; // PipelineTag* bits, kept in the pipeline_tags side table
+  std::string origin;
 };
 
 using SavedPipelineConfig = std::variant<gx::PipelineConfig, clear::PipelineConfig
@@ -77,6 +87,7 @@ struct KnownPipeline {
   SavedPipelineConfig config;
   uint32_t firstFrameUsed;
   uint32_t tags = 0;
+  std::vector<std::string> origins;
 };
 
 struct SdlVfsSqliteFile {
@@ -85,6 +96,9 @@ struct SdlVfsSqliteFile {
 };
 
 static std::mutex g_pipelineMutex;
+static PipelineWarmRegistry g_warm;
+static std::string g_warmOrigin;
+static uint32_t g_coreCount = 0;
 static bool g_hasPipelineThread = false;
 static size_t g_pipelinesPerFrame = 0;
 // For synchronous pipeline fallback (OpenGL)
@@ -484,7 +498,7 @@ static void remember_pipeline_config(ShaderType type, const Config& config, uint
 }
 
 // Adds tag bits to a known config (by its runtime key) and persists them the first time.
-static void tag_pipeline(PipelineRef runtimeKey, uint32_t tags) {
+static void tag_pipeline(PipelineRef runtimeKey, uint32_t tags, const char* origin = nullptr) {
   PipelineCacheWrite write{};
   {
     std::lock_guard lock{g_pipelineMutex};
@@ -493,9 +507,12 @@ static void tag_pipeline(PipelineRef runtimeKey, uint32_t tags) {
       return;
     }
     const auto knownIt = g_knownPipelines.find(keyIt->second);
-    if (knownIt == g_knownPipelines.end() || (knownIt->second.tags & tags) == tags) {
+    if (knownIt == g_knownPipelines.end()) return;
+    const bool seenOrigin = !origin || std::ranges::find(knownIt->second.origins, origin) != knownIt->second.origins.end();
+    if (seenOrigin && (knownIt->second.tags & tags) == tags) {
       return;
     }
+    if(origin && !seenOrigin)knownIt->second.origins.emplace_back(origin);
     knownIt->second.tags |= tags;
     std::visit(
         [&](const auto& config) {
@@ -504,6 +521,7 @@ static void tag_pipeline(PipelineRef runtimeKey, uint32_t tags) {
         },
         knownIt->second.config);
     write.tags = knownIt->second.tags;
+    if (origin) write.origin = origin;
   }
   enqueue_pipeline_cache_write(std::move(write));
 }
@@ -660,6 +678,46 @@ static std::string pipeline_cache_seed_path() {
   return path;
 }
 
+// Each sandbox retains its own mutable DB. Only finalized SQLite backup snapshots
+// cross sandboxes: a reader never observes another process's partially written rows.
+static std::filesystem::path learned_directory() {
+  if (const char* path = std::getenv("MELEE_PIPELINE_COVERAGE_DIR")) return path;
+  if (const char* path = std::getenv("LOCALAPPDATA"))
+    return std::filesystem::path(path) / "GD Melee" / "pipeline-coverage";
+  return {}; // explicit opt-in outside Windows
+}
+
+static void publish_learned_cache() {
+  const auto dir = learned_directory();
+  if (dir.empty() || !g_pipelineCacheDb || g_pipelineCacheBroken) return;
+  std::error_code ec;
+  std::filesystem::create_directories(dir, ec);
+  if (ec) { Log.warn("pipeline coverage directory unavailable: {}", ec.message()); return; }
+  const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+  static std::atomic_uint32_t sequence{0};
+  const auto serial = ++sequence;
+#ifdef _WIN32
+  const auto pid = _getpid();
+#else
+  const auto pid = getpid();
+#endif
+  const auto temporary = dir / fmt::format("{}-{}-{}.tmp", stamp, pid, serial);
+  const auto final = dir / fmt::format("{}-{}-{}.db", stamp, pid, serial);
+  sqlite3* destination = nullptr;
+  if (sqlite3_open(io::fs_path_to_string(temporary).c_str(), &destination) != SQLITE_OK) {
+    if (destination) sqlite3_close(destination);
+    return;
+  }
+  auto* backup = sqlite3_backup_init(destination, "main", g_pipelineCacheDb, "main");
+  const bool copied = backup && sqlite3_backup_step(backup, -1) == SQLITE_DONE;
+  const bool finished = backup && sqlite3_backup_finish(backup) == SQLITE_OK;
+  sqlite3_close(destination);
+  if (copied && finished) {
+    std::filesystem::rename(temporary, final, ec);
+    if (!ec) Log.info("pipeline coverage: published {}", io::fs_path_to_string(final));
+  } else std::filesystem::remove(temporary, ec);
+}
+
 static sqlite3* open_pipeline_cache_seed_db(const std::string& path) {
   if (!register_sdl_vfs()) {
     Log.warn("Failed to register SDL pipeline cache seed VFS");
@@ -694,12 +752,11 @@ static sqlite3* open_pipeline_cache_seed_db(const std::string& path) {
   return seedDb;
 }
 
-static void seed_pipeline_cache() {
+static void seed_pipeline_cache(const std::string& seedPath = pipeline_cache_seed_path()) {
   if (g_pipelineCacheBroken || g_pipelineCacheDb == nullptr || g_pipelineCacheUpsertStmt == nullptr) {
     return;
   }
 
-  const auto seedPath = pipeline_cache_seed_path();
   sqlite3* seedDb = open_pipeline_cache_seed_db(seedPath);
   if (seedDb == nullptr) {
     return;
@@ -760,6 +817,8 @@ static void seed_pipeline_cache() {
           .config = ByteBuffer(static_cast<size_t>(configBlobSize)),
           .firstFrameUsed = static_cast<uint32_t>(firstFrameUsedValue),
       };
+      if (seedPath == pipeline_cache_seed_path() && write.firstFrameUsed < g_coreCount)
+        write.tags |= AURORA_PIPELINE_TAG_CORE;
       if (configBlobSize > 0) {
         std::memcpy(write.config.data(), configBlob, static_cast<size_t>(configBlobSize));
       }
@@ -784,7 +843,7 @@ static void seed_pipeline_cache() {
       while (sqlite3_step(tagStmt) == SQLITE_ROW) {
         if (!write_pipeline_tag(static_cast<ShaderType>(sqlite3_column_int(tagStmt, 0)),
                                 static_cast<PipelineRef>(sqlite3_column_int64(tagStmt, 1)),
-                                static_cast<uint32_t>(sqlite3_column_int64(tagStmt, 2)))) {
+                                static_cast<uint32_t>(sqlite3_column_int64(tagStmt, 2)) & ~AURORA_PIPELINE_TAG_CORE)) {
           writeFailed = true;
           break;
         }
@@ -793,6 +852,18 @@ static void seed_pipeline_cache() {
     if (tagStmt != nullptr) {
       sqlite3_finalize(tagStmt);
     }
+    sqlite3_stmt *origins=nullptr,*insert=nullptr;
+    if(!writeFailed && !readFailed && sqlite3_prepare_v2(seedDb,"SELECT type,hash,origin FROM pipeline_origins",-1,&origins,nullptr)==SQLITE_OK &&
+       sqlite3_prepare_v2(g_pipelineCacheDb,"INSERT OR IGNORE INTO pipeline_origins VALUES (?,?,?)",-1,&insert,nullptr)==SQLITE_OK) {
+      while(sqlite3_step(origins)==SQLITE_ROW) {
+        const auto* label=sqlite3_column_text(origins,2);const auto size=sqlite3_column_bytes(origins,2);
+        if(!label || size>128)continue;
+        sqlite3_bind_int(insert,1,sqlite3_column_int(origins,0));sqlite3_bind_int64(insert,2,sqlite3_column_int64(origins,1));
+        sqlite3_bind_text(insert,3,reinterpret_cast<const char*>(label),size,SQLITE_TRANSIENT);
+        sqlite3_step(insert);sqlite3_reset(insert);sqlite3_clear_bindings(insert);
+      }
+    }
+    if(origins)sqlite3_finalize(origins);if(insert)sqlite3_finalize(insert);
 
     if (!writeFailed && !readFailed) {
       tx.commit();
@@ -941,7 +1012,23 @@ INSERT INTO aurora_schema VALUES ({});)",
     return false;
   }
 
+  // Core membership is exclusively the current bundled seed's rank manifest.
+  // Learned firstFrameUsed values are real frames and cannot be compared to ranks.
+  sqlite::exec(g_pipelineCacheDb, "UPDATE pipeline_tags SET tags = tags & ~2");
+  sqlite::exec(g_pipelineCacheDb, "CREATE TABLE IF NOT EXISTS pipeline_origins ("
+              "type INTEGER NOT NULL, hash INTEGER NOT NULL, origin TEXT NOT NULL, PRIMARY KEY(type,hash,origin))");
   seed_pipeline_cache();
+  const auto learned = learned_directory();
+  std::error_code ec;
+  std::vector<std::filesystem::path> snapshots;
+  if (!learned.empty()) {
+    for (std::filesystem::directory_iterator it(learned, ec), end; !ec && it != end; it.increment(ec))
+      if (it->path().extension() == ".db") snapshots.push_back(it->path());
+    std::ranges::sort(snapshots, std::greater<>{});
+    // Each snapshot includes its imported ancestors; bounded reads retain recent concurrent lanes.
+    if (snapshots.size() > 8) snapshots.resize(8);
+    for (const auto& path : snapshots) seed_pipeline_cache(io::fs_path_to_string(path));
+  }
   if (g_pipelineCacheBroken) {
     return false;
   }
@@ -1029,6 +1116,15 @@ static bool write_pipeline_cache_record(const PipelineCacheWrite& write) {
 
   sqlite3_reset(g_pipelineCacheUpsertStmt);
   sqlite3_clear_bindings(g_pipelineCacheUpsertStmt);
+  if (!write.origin.empty()) {
+    sqlite3_stmt* origin = nullptr;
+    if (sqlite3_prepare_v2(g_pipelineCacheDb, "INSERT OR IGNORE INTO pipeline_origins VALUES (?,?,?)", -1, &origin, nullptr) == SQLITE_OK) {
+      sqlite3_bind_int(origin, 1, underlying(write.type));
+      sqlite3_bind_int64(origin, 2, static_cast<sqlite3_int64>(write.hash));
+      sqlite3_bind_text(origin, 3, write.origin.c_str(), -1, SQLITE_TRANSIENT);
+      sqlite3_step(origin);sqlite3_finalize(origin);
+    }
+  }
   return write.tags == 0 || write_pipeline_tag(write.type, write.hash, write.tags);
 }
 
@@ -1222,8 +1318,14 @@ PipelineRef find_pipeline(const clear::PipelineConfig& config, const RenderTarge
 }
 
 PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLayout& layout) {
-  remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
-  return resolve_pipeline(ShaderType::GX, config, layout, PipelinePriority::Normal);
+  // Mod programs are process-local and must never reach persistent warm-up tables.
+  if (!config.shaderConfig.surfaceProgram)
+    remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
+  const auto ref = resolve_pipeline(ShaderType::GX, config, layout, PipelinePriority::Normal);
+  std::string origin;
+  { std::lock_guard lock{g_pipelineMutex}; g_warm.record(ref); if(g_warm.capturing())origin=g_warmOrigin; }
+  if(!origin.empty())tag_pipeline(ref,0,origin.c_str());
+  return ref;
 }
 
 #ifdef AURORA_ENABLE_RMLUI
@@ -1254,6 +1356,9 @@ void rebuild_pipeline_cache() {
   // blocks (wait_pipeline), so they are warmed from boot - through the intro and menus - rather
   // than only at match load, where a slow machine can reach the loading hold's ceiling first.
   std::ranges::sort(known, [](const KnownPipeline& a, const KnownPipeline& b) {
+    const bool coreA = (a.tags & AURORA_PIPELINE_TAG_CORE) != 0;
+    const bool coreB = (b.tags & AURORA_PIPELINE_TAG_CORE) != 0;
+    if (coreA != coreB) return coreA;
     const bool mustA = (a.tags & AURORA_PIPELINE_TAG_MUST_DRAW) != 0;
     const bool mustB = (b.tags & AURORA_PIPELINE_TAG_MUST_DRAW) != 0;
     if (mustA != mustB) {
@@ -1265,11 +1370,15 @@ void rebuild_pipeline_cache() {
     std::visit(
         [&](const auto& config) {
           resolve_pipeline(pipeline.type, config, scene, PipelinePriority::Background);
-          if (offscreen.key != scene.key) {
-            resolve_pipeline(pipeline.type, config, offscreen, PipelinePriority::Background);
-          }
         },
         pipeline.config);
+  }
+  // Build all scene-layout keys before optional offscreen variants. Interleaving
+  // the latter used half the compile budget without advancing scene readiness.
+  if (offscreen.key != scene.key) for (const auto& pipeline : known) {
+    std::visit([&](const auto& config) {
+      resolve_pipeline(pipeline.type, config, offscreen, PipelinePriority::Background);
+    }, pipeline.config);
   }
 }
 
@@ -1296,6 +1405,14 @@ void initialize_pipeline_cache() {
     Log.info("{} pipeline compile worker(s)", workers);
   }
 
+  // The rank belongs to configs, not compile completions: each layout is a separate job.
+  g_coreCount = 0;
+  const auto corePath = io::fs_path_from_string(pipeline_cache_seed_path()).replace_extension("core");
+  if (FILE* file = std::fopen(io::fs_path_to_string(corePath).c_str(), "r")) {
+    unsigned count = 0;
+    if (std::fscanf(file, "%u", &count) == 1) g_coreCount = count;
+    std::fclose(file);
+  }
   const size_t loadedCount = load_pipeline_cache();
   rebuild_pipeline_cache();
   if (!g_pipelineCacheBroken && loadedCount > 0) {
@@ -1321,12 +1438,14 @@ void shutdown_pipeline_cache() {
   g_hasPipelineThread = false;
 
   stop_pipeline_cache_writer();
+  publish_learned_cache();
   pipeline_cache_abort();
   g_pipelineCacheBroken = false;
   g_pipelinesPerFrame = 0;
   g_gpuCachePrunePending = false;
   g_pipelines.clear();
   g_knownPipelines.clear();
+  g_warm.clear();
   g_pipelineLayoutKey.reset();
   g_pipelineQueue.clear();
   g_backgroundPipelineQueue.clear();
@@ -1360,6 +1479,20 @@ void wait_pipeline(PipelineRef ref) {
   if (g_pipelines.contains(ref) || !g_pendingPipelines.contains(ref)) {
     return;
   }
+  // Item callers request MUST_DRAW, but gameplay's default is an asynchronous skip.
+  // Legacy blocking remains opt-in for diagnosing short-lived article visibility.
+  static const bool skip = [] {
+    const char* value = std::getenv("MELEE_PIPELINE_SKIP");
+    return value == nullptr || std::atoi(value) != 0;
+  }();
+  if (skip || g_warm.capturing()) {
+    lock.unlock();
+    webgpu::gpu_prof::emit_cpu("cpu.pipeline_skip", 0);
+    // Keep the blocking log below for opt-in waits. Rate-limit skips by pipeline.
+    static PipelineRef previous = 0;
+    if (previous != ref) { previous = ref; Log.warn("pipeline skip: pipeline {:x} compiling asynchronously", ref); }
+    return;
+  }
   const auto start = std::chrono::steady_clock::now();
   ++g_pipelineWaiters;
   // Still queued (no worker has it): take it and build it right here, so the wait is one compile
@@ -1377,6 +1510,7 @@ void wait_pipeline(PipelineRef ref) {
   if (stolen) {
     lock.unlock();
     auto result = stolen->create();
+    tag_pipeline(ref, 4u, "inline item draw");
     lock.lock();
     g_pipelines.try_emplace(ref, CachedPipeline{std::move(result)});
     g_pendingPipelines.erase(ref);
@@ -1403,11 +1537,34 @@ void wait_pipeline(PipelineRef ref) {
   auto& stats = detail::resources().stats;
   stats.pipelineWaitHits = ++g_pipelineWaitHits;
   stats.pipelineWaitUs = (g_pipelineWaitUs += us);
+  webgpu::gpu_prof::emit_cpu("cpu.pipeline_wait", static_cast<uint64_t>(us) * 1000);
   Log.warn("pipeline wait: draw blocked {:.1f} ms on pipeline {:x} ({}) - not covered by any warm-up", us / 1000.0,
            ref, stolen ? "built inline" : "worker");
 }
 
-void tag_pipeline_must_draw(PipelineRef ref) { tag_pipeline(ref, AURORA_PIPELINE_TAG_MUST_DRAW); }
+void tag_pipeline_must_draw(PipelineRef ref) { tag_pipeline(ref, AURORA_PIPELINE_TAG_MUST_DRAW, "item draw"); }
+
+bool pipeline_warm_capturing() {
+  std::lock_guard lock{g_pipelineMutex}; return g_warm.capturing();
+}
+void pipeline_warm_record(PipelineRef ref) {
+  std::string origin;
+  {std::lock_guard lock{g_pipelineMutex};g_warm.record(ref);origin=g_warmOrigin;}
+  if(!origin.empty())tag_pipeline(ref,0,origin.c_str());
+}
+
+static uint32_t core_pending() {
+  const auto layout = scene_render_target_layout();
+  std::lock_guard lock{g_pipelineMutex};
+  uint32_t count = 0;
+  for (const auto& [key, known] : g_knownPipelines) {
+    if (!(known.tags & AURORA_PIPELINE_TAG_CORE)) continue;
+    if (known.type == ShaderType::Rml) continue; // RML has no scene-layout key.
+    const auto ref = xxh3_hash(layout.key, key);
+    count += !g_pipelines.contains(ref);
+  }
+  return count;
+}
 
 static uint32_t count_tagged(uint32_t tagMask) {
   std::lock_guard lock{g_pipelineMutex};
@@ -1434,7 +1591,7 @@ static uint32_t prewarm_tagged(uint32_t tagMask) {
   for (const auto& pipeline : tagged) {
     std::visit(
         [&](const auto& config) {
-          const auto ref = resolve_pipeline(pipeline.type, config, scene, PipelinePriority::Normal);
+          const auto ref = resolve_pipeline(pipeline.type, config, scene, PipelinePriority::Background);
           std::lock_guard lock{g_pipelineMutex};
           notReady += g_pipelines.contains(ref) ? 0 : 1;
         },
@@ -1460,3 +1617,24 @@ bool get_pipeline(PipelineRef ref, wgpu::RenderPipeline& pipeline) {
 uint32_t aurora_prewarm_tagged_pipelines(uint32_t tagMask) { return aurora::gfx::prewarm_tagged(tagMask); }
 
 uint32_t aurora_count_tagged_pipelines(uint32_t tagMask) { return aurora::gfx::count_tagged(tagMask); }
+
+uint32_t aurora_pipeline_warm_begin(void) {
+  aurora::gx::fifo::drain();
+  std::lock_guard lock{aurora::gfx::g_pipelineMutex}; return aurora::gfx::g_warm.begin();
+}
+void aurora_pipeline_warm_end(void) {
+  aurora::gx::fifo::drain();
+  std::lock_guard lock{aurora::gfx::g_pipelineMutex}; aurora::gfx::g_warm.end();aurora::gfx::g_warmOrigin.clear();
+}
+void aurora_pipeline_warm_label(const char* content) {
+  std::lock_guard lock{aurora::gfx::g_pipelineMutex};aurora::gfx::g_warmOrigin=content?content:"warm declaration";
+}
+int aurora_pipeline_warm_pending(uint32_t handle) {
+  std::lock_guard lock{aurora::gfx::g_pipelineMutex};
+  return aurora::gfx::g_warm.pending(handle, [](uint64_t ref) { return aurora::gfx::g_pipelines.contains(ref); });
+}
+void aurora_pipeline_warm_release(uint32_t handle) {
+  std::lock_guard lock{aurora::gfx::g_pipelineMutex}; aurora::gfx::g_warm.release(handle);
+}
+uint32_t aurora_pipeline_core_pending(void) { return aurora::gfx::core_pending(); }
+uint32_t aurora_pipeline_core_count(void) { return aurora::gfx::count_tagged(AURORA_PIPELINE_TAG_CORE); }

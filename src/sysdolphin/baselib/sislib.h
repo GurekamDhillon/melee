@@ -103,6 +103,11 @@ struct sislib_UnkAlloc3 {
     u8 xF;
 };
 
+#if defined(TARGET_PC)
+/* Opt in only the port kit's canvas, never native screens or the match HUD. */
+void HSD_SisLib_SetWideCanvas(int font_idx, int canvas);
+#endif
+
 extern SIS* HSD_SisLib_804D1124[5];
 extern u8 lbl_8040C8C0[0x240];
 extern u8 HSD_SisLib_8040C680[0x240];

@@ -100,13 +100,25 @@ void ftCo_800D74A4(Fighter_GObj* gobj)
     vel.x = fp->input.lstick[0].x * p->x8;
     tmp = fp->x2D0;
     tmp = (struct Fighter_x2D0_t*) ((s32*) tmp + ftCo_800D7268(fp));
+#if defined(TARGET_PC)
+    {
+        /* Bound before reading: Geno can request more jumps than the five impulses.
+         * For retail jumps the index and result are unchanged. */
+        int jump_row = msid - tmp->x2C;
+        int rows = p->x28;
+        if (rows < 1 || rows > 5) rows = 5;
+        if (jump_row < 0) jump_row = 0;
+        if (jump_row >= rows) jump_row = rows - 1;
+        vel.y = p->x14[jump_row];
+    }
+#else
     vel.y = p->x14[msid - tmp->x2C];
+#endif
     vel.z = 0.0F;
 #if defined(TARGET_PC)
     {
-        /* Geno: jumps past the 5-row multi-jump table (and Brawl-number impulses). The retail
-         * code above reads x14[] out of bounds and picks a motion past the multi-jump states
-         * once jumpsUsed > 5; for a fighter with no Geno profile this changes nothing. */
+        /* Geno: jumps past the 5-row table, repeated gate-bearing scripts and custom impulses.
+         * The impulse read above is bounded before Geno chooses the effective motion. */
         extern void Geno_MultiJump(Fighter * fp, int first_state, int* msid, float* vy);
         int geno_msid = msid2;
         Geno_MultiJump(fp, msid2 - (fp->x1968_jumpsUsed - 1), &geno_msid, &vel.y);

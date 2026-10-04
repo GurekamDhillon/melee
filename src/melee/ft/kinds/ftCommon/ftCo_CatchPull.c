@@ -61,6 +61,19 @@ void fn_800D9CE8(Fighter_GObj* gobj)
     }
 
     fp->throw_flags = 0;
+#if defined(TARGET_PC)
+    {
+        /* A fighter with a pull-in clip of its own (Geno "motion_anims" on this state) plays it
+         * from its first frame with its own script; Melee's fighters carry the Catch clip on. */
+        extern int Geno_MotionAnimRow(Fighter* fp, int motion);
+        if (Geno_MotionAnimRow(fp, nextMotion) >= 0) {
+            Fighter_ChangeMotionState(gobj, nextMotion, 0, 0.0f, 1.0f, 0.0f, NULL);
+            fp->accessory1_cb = fn_800DA190;
+            fp->x221B_b7 = 0;
+            return;
+        }
+    }
+#endif
     Fighter_ChangeMotionState(gobj, nextMotion, 0x4000, startFrame, 1.0f, 0.0f,
                               NULL);
     fp->accessory1_cb = fn_800DA190;

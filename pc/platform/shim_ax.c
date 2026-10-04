@@ -38,6 +38,7 @@
 #include "gw.h"
 #include "shim_vi.h"
 #include "shim_ax.h"
+#include "gw_profiler.h"
 
 #include <SDL3/SDL_audio.h>
 #include <SDL3/SDL_init.h>
@@ -597,6 +598,8 @@ static void gw_ax_ring_push(const void *data, uint32_t n) {
  * on underrun). Never touches game memory or takes game locks. */
 static void SDLCALL gw_ax_sdl_callback(void *userdata, SDL_AudioStream *stream,
                                        int additional_amount, int total_amount) {
+    const int profiling = gw_prof_enabled();
+    const double prof_start = profiling ? gw_prof_clock_ms() : 0;
     uint8_t buf[8192];
     uint32_t avail, take, done, remain;
     (void) userdata;
@@ -641,6 +644,8 @@ static void SDLCALL gw_ax_sdl_callback(void *userdata, SDL_AudioStream *stream,
         SDL_PutAudioStreamData(stream, buf, (int) chunk);
         remain -= chunk;
     }
+    if (profiling) gw_prof_try_cpu_completed(GW_PROF_AUDIO, 0,
+        gw_prof_clock_ms() - prof_start);
 }
 
 /* ---- master volume ---------------------------------------------------------------------------
@@ -1220,7 +1225,7 @@ static void gw_ax_run_frame(void) {
  * that is the clock the DSP's 5 ms interrupt runs on, it self-corrects against every source of
  * drift and jitter, and it keeps a fixed cushion in front of the SDL callback. The previous
  * wall-clock scheme kept no cushion at all, so ordinary frame jitter emptied the ring and the
- * callback padded silence — a continuous crackle.
+ * callback padded silence â€” a continuous crackle.
  *
  * Without a device there is no such clock, so the wall clock drives the synth callback instead
  * (the game's audio state machine has to keep running either way). */
@@ -1230,7 +1235,7 @@ static void gw_ax_run_frame(void) {
 
 static uint64_t gw_ax_last_tick;
 
-void gw_ax_frame_tick(void) {
+static void gw_ax_frame_tick_body(void) {
     uint32_t nframes;
     uint32_t f;
 
@@ -1267,6 +1272,12 @@ void gw_ax_frame_tick(void) {
     for (f = 0; f < nframes; f++) {
         gw_ax_run_frame();
     }
+}
+
+void gw_ax_frame_tick(void) {
+    gw_prof_begin(GW_PROF_AUDIO_MIX, 0);
+    gw_ax_frame_tick_body();
+    gw_prof_end();
 }
 
 /* ---- entry points -------------------------------------------------------------------------- */

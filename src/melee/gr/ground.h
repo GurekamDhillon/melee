@@ -18,6 +18,12 @@
 #include <dolphin/mtx.h>
 #include <melee/gr/types.h>
 
+#ifdef TARGET_PC
+const char* Ground_StageSlotDataFile(int kind);
+StageCallbacks* Ground_StageSlotProofCallbacks(void);
+const GrJoint* Ground_StageSlotJoints(int kind, unsigned* count);
+#endif
+
 /* 1BFFB0 */ void Ground_801BFFB0(void);
 /* 1C0378 */ void Ground_801C0378(int);
 /* 1C0498 */ float Ground_801C0498(void);

@@ -1,4 +1,5 @@
 #include "gw_test.h"
+#include "gw_hang.h"
 
 #include <setjmp.h>
 #include <stdarg.h>
@@ -180,6 +181,7 @@ static DWORD WINAPI gw_test_watchdog(LPVOID unused) {
       gw_log("TESTS: TIMEOUT in \"%s\" after %lu ms", gw_tests[gw_test_index].name,
              (unsigned long)gw_test_timeout_ms);
 #ifdef _WIN32
+      gw_hang_final("headless test safety timeout", 2);
       ExitProcess(2);
 #else
       exit(2);
@@ -218,6 +220,7 @@ int gw_test_run_all(void) {
     gw_test_msg[0] = '\0';
     gw_test_msg_used = 0;
     gw_test_isolate_begin();
+    gw_hang_tick();
     gw_test_running = 1;
     gw_test_index = i;
     gw_test_deadline = GetTickCount() + gw_test_timeout_ms;

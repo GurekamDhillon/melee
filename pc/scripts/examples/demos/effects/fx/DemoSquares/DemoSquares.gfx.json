@@ -1,0 +1,63 @@
+{
+  "geno_fx": 1,
+  "name": "DemoSquares",
+  "textures": [],
+  "emitters": [
+    {
+      "name": "squares",
+      "kind": "sprite",
+      "follow": "none",
+      "emission": {
+        "rate": 1,
+        "duration": 0
+      },
+      "shape": {
+        "type": "sphere_fill",
+        "radius": [
+          4,
+          4,
+          0
+        ]
+      },
+      "particle": {
+        "life": 45,
+        "scale": {
+          "base": [
+            2,
+            2,
+            2
+          ]
+        },
+        "velocity": {
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "direction_scale": 0.4
+        }
+      },
+      "color": {
+        "color0": {
+          "value": [
+            1,
+            0.7,
+            0.2
+          ]
+        },
+        "alpha0": {
+          "value": 0.8
+        }
+      },
+      "material": {
+        "shader": {
+          "type": "sprite",
+          "color": "flat",
+          "color_textures": [],
+          "alpha_textures": []
+        },
+        "blend": "add"
+      }
+    }
+  ]
+}

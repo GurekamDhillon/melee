@@ -73,7 +73,11 @@ void grDisplay_801C5B90(HSD_JObj* jobj, Mtx vmtx, u32 flags, u32 rendermode)
     }
 }
 
+#if defined(TARGET_PC)
+static void grDisplay_801C5DB0_surface_impl(HSD_GObj* gobj, int code)
+#else
 void grDisplay_801C5DB0(HSD_GObj* gobj, int code)
+#endif
 {
     Ground* gp;
     HSD_GObj* camgobj;
@@ -86,7 +90,8 @@ void grDisplay_801C5DB0(HSD_GObj* gobj, int code)
 #if defined(TARGET_PC)
     /* Only the original stage callback is hidden. Script-added line/model
      * callbacks still draw, and no native material/GObj flags are changed. */
-    if (!ScriptGame_StageOriginalVisible()) return;
+    { extern int ScriptGame_StageSlotOwned(HSD_GObj*);
+      if (!ScriptGame_StageOriginalVisible() && !ScriptGame_StageSlotOwned(gobj)) return; }
 #endif
 
     gp = GET_GROUND(gobj);
@@ -150,6 +155,17 @@ void grDisplay_801C5DB0(HSD_GObj* gobj, int code)
         }
     }
 }
+
+#if defined(TARGET_PC)
+extern void SurfaceBegin(int slot);
+extern void SurfaceEnd(void);
+void grDisplay_801C5DB0(HSD_GObj* gobj, int code)
+{
+    SurfaceBegin(7);
+    grDisplay_801C5DB0_surface_impl(gobj, code);
+    SurfaceEnd();
+}
+#endif
 
 void grDisplay_801C5F60(HSD_GObj* gobj, int code)
 {

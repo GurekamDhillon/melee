@@ -625,3 +625,58 @@ void mpIsland_8005B334(int arg0, int arg1, int arg2, bool arg3)
     }
     mpIsland_80458E88.xC = temp;
 }
+
+#if defined(TARGET_PC)
+/* Script joints have only dynamic ranges. Recycle dirty islands in ONE list
+ * walk, build each changed joint on an empty temporary list, then stitch once.
+ * B334 used to scan and reverse every island for every added line. */
+static void mpIsland_ScriptRecycle(mp_UnkStruct0** list, const u8* dirty, int count)
+{
+    mp_UnkStruct0** at = list;
+    while (*at) {
+        mp_UnkStruct0* cur = *at;
+        if (cur->x28 >= 0 && cur->x28 < count && dirty[cur->x28]) {
+            *at = cur->next;
+            cur->next = mpIsland_80458E88.x20;
+            mpIsland_80458E88.x20 = cur;
+        } else at = &cur->next;
+    }
+}
+
+void mpIsland_ScriptBatch(const u8* dirty, int count)
+{
+    int i, any = 0, kind;
+    CollJoint* joints = mpGetGroundCollJoint();
+    if (count > 1024) count = 1024;
+    for (i = 0; i < count; ++i) any |= dirty[i];
+    if (!any) return;
+    if (mpIsland_80458E88.x8) mpIsland_80458E88.x8->next = NULL;
+    else mpIsland_80458E88.next = NULL;
+    if (mpIsland_80458E88.xC) mpIsland_80458E88.xC->next = NULL;
+    else mpIsland_80458E88.x4 = NULL;
+    mpIsland_ScriptRecycle(&mpIsland_80458E88.x10, dirty, count);
+    mpIsland_ScriptRecycle(&mpIsland_80458E88.x14, dirty, count);
+    for (kind = 1; kind <= 2; ++kind) {
+        mp_UnkStruct0** list = kind == 1 ? &mpIsland_80458E88.x10 : &mpIsland_80458E88.x14;
+        mp_UnkStruct0** tail = list;
+        while (*tail) tail = &(*tail)->next;
+        for (i = 0; i < count; ++i) {
+            mp_UnkStruct0* fresh = NULL;
+            CollJoint* joint;
+            bool enabled;
+            if (!dirty[i]) continue;
+            joint = &joints[i];
+            enabled = (joint->flags & CollJoint_Enabled) &&
+                !(joint->flags & (CollJoint_Hidden | CollJoint_B11));
+            mpIsland_8005B004(&fresh, &mpIsland_80458E88.x20, i, kind,
+                              joint->inner->vtx_start, joint->inner->vtx_count, enabled);
+            *tail = fresh;
+            while (*tail) tail = &(*tail)->next;
+        }
+    }
+    if (mpIsland_80458E88.x8) mpIsland_80458E88.x8->next = mpIsland_80458E88.x10;
+    else mpIsland_80458E88.next = mpIsland_80458E88.x10;
+    if (mpIsland_80458E88.xC) mpIsland_80458E88.xC->next = mpIsland_80458E88.x14;
+    else mpIsland_80458E88.x4 = mpIsland_80458E88.x14;
+}
+#endif

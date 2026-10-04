@@ -67,7 +67,7 @@ typedef struct FeMenu {
 #define FM_N(a) ((int) (sizeof a / sizeof a[0]))
 
 static const FeMenuItem fm_main[] = {
-    { "TBD", "Explore, fight and evolve your build.", "ico_adventure", SEL_MAIN_TBD, FA_TBD },
+    { "SUPERTIME ENVOY", "Explore, fight and evolve your build.", "ico_adventure", SEL_MAIN_TBD, FA_TBD },
     { "SOLO", "Classic, Adventure, events, training and more.", "ico_solo", SEL_MAIN_1P, FA_SUB,
       MENU_KIND_1P },
     { "VERSUS", "Up to four players. Your rules, your stage.", "ico_versus", SEL_MAIN_VS, FA_SUB,
@@ -253,7 +253,7 @@ static bool fm_visible(const FeMenu* m, const FeMenuItem* it)
     if (m->kind == MENU_KIND_MULTI_VS) {
         return true;
     }
-    if (it->sel == SEL_1P_LAB) {
+    if (m->kind == MENU_KIND_1P && it->sel == SEL_1P_LAB) {
         /* only when the Geno Lab script mod is loaded (gw_script.c) */
         extern int Script_LabAvailable(void);
         return Script_LabAvailable() != 0;
@@ -419,6 +419,16 @@ static void fm_tok(const char* tok, int section, float* rgb)
     }
 }
 
+static void fm_canvas_anchor(int q, int edge, float x0, float x1)
+{
+    if (q < 0) return;
+    fp.q[q].canvas_edge = (u8) edge;
+    fp.q[q].canvas_x0 = x0;
+    fp.q[q].canvas_x1 = x1;
+    fp.q[q].canvas_y0 = fp.q[q].v[0][1];
+    fp.q[q].canvas_y1 = fp.q[q].v[2][1];
+}
+
 /* One resizable panel per material target. The primitive slices it after the
  * player's transforms, keeping tile/row selection and widget channels intact. */
 static int fm_panel(const char* id, u8 role, int tile, float x0, float y0, float x1, float y1,
@@ -503,6 +513,16 @@ static int fm_text(const char* id, u8 role, int tile, const char* ff_name, float
     return q;
 }
 
+/* All description producers use this slot, including online/select and notices. */
+static int fm_description(const char* id, u8 role, int tile, const char* s,
+                          const float* rgb)
+{
+    int q = fm_text(id, role, tile, kit.desc_role, kit.desc_anchor[0], kit.desc_anchor[1],
+                    s, rgb, kit_desc_width());
+    if (q >= 0) kit_desc_set(&fp.q[q], s);
+    return q;
+}
+
 static void fm_default_states(int section)
 {
     float gold[3], gold_dk[3], ink[3], bone[3];
@@ -572,8 +592,7 @@ static void fm_tile(int slot, const FeMenuItem* it, int section, int rank, float
                     w - 2 * pad - 4 - (h < 2 * pad + icon + 28.0F ? icon + 6.0F : 0.0F));
     }
     sprintf(qid, "%s_desc", id);
-    t->q_desc = fm_text(qid, FPR_DESC, fp.nt, kit.desc_role, kit.desc_anchor[0],
-                        kit.desc_anchor[1], it->desc, bone, kit.desc_max);
+    t->q_desc = fm_description(qid, FPR_DESC, fp.nt, it->desc, bone);
     fp.nt++;
 }
 
@@ -581,6 +600,32 @@ static void fm_tile(int slot, const FeMenuItem* it, int section, int rank, float
  * sized by its title, the breadcrumb (`crumbs`, root first) with the section icon at its root,
  * the description strip, and the footer hints (glyph + text; A in `ok`, B in `danger`, the
  * kit's suggested tints, anything else bone). */
+static void fm_chrome_bands(const KitSection* ks)
+{
+    int i, q;
+    bool has_left = false, has_right = false;
+    char id[FP_ID];
+    for (i = 0; i < ks->nbands; i++) {
+        if (ks->band_x[i] + ks->band_w[i] * 0.5F < FE_W * 0.5F) has_left = true;
+        else has_right = true;
+    }
+    for (i = 0; i < ks->nbands; i++) {
+        float x = ks->band_x[i], w = ks->band_w[i];
+        bool left = x + w * 0.5F < FE_W * 0.5F;
+        sprintf(id, "band_%d", i);
+        q = fm_panel(id, FPR_DECOR, -1, x, -40, x + w, 520, ks->band);
+        if (q >= 0) fp.q[q].canvas_band = true;
+        fm_canvas_anchor(q, left ? 2 : 3, -8, 648);
+        if (has_left != has_right) {
+            x = FE_W - ks->band_x[i] - ks->band_w[i];
+            sprintf(id, "band_mirror_%d", i);
+            q = fm_panel(id, FPR_DECOR, -1, x, -40, x + w, 520, ks->band);
+            if (q >= 0) fp.q[q].canvas_band = true;
+            fm_canvas_anchor(q, left ? 3 : 2, -8, 648);
+        }
+    }
+}
+
 static void fm_chrome_panel(const char* title, const char* const* crumbs, int ncrumbs,
                            int section, int nhints, const char* const* hglyph,
                            const char* const* htext, const FePanel* description)
@@ -596,17 +641,14 @@ static void fm_chrome_panel(const char* title, const char* const* crumbs, int nc
     fm_tok("bone", section, bone);
     fm_tok("ok", section, ok);
     fm_tok("danger", section, danger);
-    for (i = 0; i < ks->nbands; i++) {
-        sprintf(id, "band_%d", i);
-        fm_panel(id, FPR_DECOR, -1, ks->band_x[i], -40, ks->band_x[i] + ks->band_w[i], 520,
-                ks->band);
-    }
+    fm_chrome_bands(ks);
     /* header: the title decides the slab's width */
     q = fm_text("header_title", FPR_TITLE, -1, kit.title_role, kit.title_anchor[0],
                 kit.title_anchor[1], title, ink, kit.title_max);
     slab_x1 = kit.title_anchor[0] + fm_last_w + 20.0F;
-    fm_panel("header_rule", FPR_CHROME, -1, slab_x1 - 4, kit.rule[1], kit.rule[2], kit.rule[3],
+    i = fm_panel("header_rule", FPR_CHROME, -1, slab_x1 - 4, kit.rule[1], kit.rule[2], kit.rule[3],
             ink);
+    fm_canvas_anchor(i, 4, slab_x1 - 4, kit.rule[2]);
     fm_panel("header_slab", FPR_CHROME, -1, kit.slab[0], kit.slab[1], slab_x1, kit.slab[3], gold);
     /* the title draws over its slab */
     if (q >= 0) {
@@ -638,11 +680,13 @@ static void fm_chrome_panel(const char* title, const char* const* crumbs, int nc
         }
     }
     if (description == NULL || fe_panel_add("desc_strip", description) < 0) {
-        fm_panel("desc_strip", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1],
+        q = fm_panel("desc_strip", FPR_CHROME, -1, kit.desc_strip[0], kit.desc_strip[1],
                 kit.desc_strip[2], kit.desc_strip[3], ink);
+        fm_canvas_anchor(q, 1, kit.desc_strip[0], kit.desc_strip[2]);
     }
-    fm_panel("footer_strip", FPR_CHROME, -1, kit.footer[0], kit.footer[1], kit.footer[2],
+    q = fm_panel("footer_strip", FPR_CHROME, -1, kit.footer[0], kit.footer[1], kit.footer[2],
             kit.footer[3], ink);
+    fm_canvas_anchor(q, 1, kit.footer[0], kit.footer[2]);
     fm_panel("footer_mark", FPR_CHROME, -1, kit.footer_mark[0], kit.footer_mark[1],
             kit.footer_mark[2], kit.footer_mark[3], gold);
     /* hints: glyph, 4px, text, 12px (each one a button for the mouse) */

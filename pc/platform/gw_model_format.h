@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#define GM_COLLISION_LINES 32
+#define GM_COLLISION_LINES 64
 typedef struct { float x0, y0, x1, y1; int kind, flags; } GmLine;
 typedef struct { char atlas[49]; int count, alpha; GmLine line[GM_COLLISION_LINES]; } GmCollision;
 

@@ -1,3 +1,4 @@
+#include "gw_profiler.h"
 /* gw_rollback.c - the rollback session: input delay, prediction, rollback and stalls.
  * See gw_rollback.h for the model and the interface a network layer calls. Design notes and the
  * acceptance test: _research/rollback-session.md.
@@ -963,6 +964,7 @@ int gw_RB_Iterations(int count) {
     if (rb.iter_kind != 0) {
         double d = rb_ms() - rb.iter_t0;
         if (rb.iter_kind == 2) {
+            gw_prof_cpu_completed(GW_PROF_ROLLBACK, (unsigned) rb.iter_frame, d);
             rb.ms_resim += d;
             rb.cur_extra_ms += d;
         } else {
@@ -1082,6 +1084,7 @@ int gw_RB_Iterations(int count) {
         rb.wait_ticks--; /* time sync: give a frame back (gw_rb_request_wait) */
         rb.plan.new_frame = 0;
     }
+    gw_prof_counter(GW_PROF_ROLLBACK_FRAMES, rb.plan.rollback ? rb.plan.k : 0);
     rb.plan.active = rb.plan.rollback || rb.plan.new_frame;
     rb.prev_planned_new = rb.plan.new_frame;
     rb.prev_idle = frame >= RB_FIRST && !rb.plan.new_frame;
@@ -1253,6 +1256,7 @@ void gw_RB_IterStart(void) {
     if (rb.iter_kind != 0) {
         double d = now - rb.iter_t0;
         if (rb.iter_kind == 2) {
+            gw_prof_cpu_completed(GW_PROF_ROLLBACK, (unsigned) rb.iter_frame, d);
             rb.ms_resim += d;
             rb.c_resim += d;
             rb.cur_extra_ms += d;

@@ -1,3 +1,4 @@
+#include "gw_profiler.h"
 /* gw_snap.c - in-process savestates and SyncTest: the foundation of rollback.
  *
  *   MELEE_SYNCTEST=<k>   during MELEE_SLP playback, roll back k frames EVERY frame and resimulate
@@ -152,6 +153,22 @@ static struct {
 uint64_t gw_snap_hash(void);
 void gw_Snap_Time(int what, int begin);
 extern int gw_Replay_Frame(void);
+extern int gw_ProfBenchFrame(void);
+extern int gw_script_match_active(void);
+extern int gw_RB_Enabled(void);
+extern int gw_Netplay_Enabled(void);
+static int sn_bench_mode(void) {
+    static int enabled = -1;
+    if (enabled < 0) {
+        const char *v = getenv("MELEE_SYNCTEST_BENCH");
+        enabled = v != NULL && atoi(v) == 1;
+        if (enabled) gw_log("snap: offline benchmark SyncTest frame source enabled");
+    }
+    return enabled && !gw_RB_Enabled() && !gw_Netplay_Enabled();
+}
+static int sn_frame(void) {
+    return sn_bench_mode() ? gw_ProfBenchFrame() : gw_Replay_Frame();
+}
 extern void gw_Replay_GetCursor(int out[4]);
 extern void gw_Replay_SetCursor(const int in[4]);
 
@@ -858,7 +875,9 @@ static void sn_verify_equal(const GwSnapSlot *s, const char *what) {
 }
 
 static void sn_save_to(GwSnapSlot *s, int frame) {
+    gw_prof_begin(GW_PROF_SNAPSHOT_SAVE, frame);
     double t0 = sn_ms();
+    long prof_copy_start = sn.n_copy_pages;
     sn_boundary_asserts("save");
     s->frame = frame;
     if (sn.dirty_mode) {
@@ -878,6 +897,8 @@ static void sn_save_to(GwSnapSlot *s, int frame) {
                       0);
     }
     sn_last_saved = s;
+    gw_prof_counter(GW_PROF_SNAPSHOT_BYTES,
+        (sn.dirty_mode ? (sn.n_copy_pages - prof_copy_start) * (double) SN_PAGE : gw_mem1_size) + sn.globals_len);
     sn_gather(s->globals);
     gw_Replay_GetCursor(s->replay_cursor);
     sn.ms_save += sn_ms() - t0;
@@ -889,10 +910,22 @@ static void sn_save_to(GwSnapSlot *s, int frame) {
     if (sn.hash_on) {
         s->hash = gw_snap_hash();
     }
+
+    gw_prof_end();
 }
 
+static int sn_load_from_profile_body(GwSnapSlot *s);
 static int sn_load_from(GwSnapSlot *s) {
+    int result;
+    gw_prof_begin(GW_PROF_SNAPSHOT_RESTORE, s->frame);
+    result = sn_load_from_profile_body(s);
+    gw_prof_end();
+    return result;
+}
+
+static int sn_load_from_profile_body(GwSnapSlot *s) {
     double t0 = sn_ms();
+    long prof_copy_start = sn.n_copy_pages;
     sn_boundary_asserts("load");
     sn_async_collect();
     sn_fixed_collect();
@@ -932,6 +965,8 @@ static int sn_load_from(GwSnapSlot *s) {
     } else {
         sn_copy_pages(NULL, s->pg, NULL, 1);
     }
+    gw_prof_counter(GW_PROF_SNAPSHOT_BYTES,
+        (sn.dirty_mode ? (sn.n_copy_pages - prof_copy_start) * (double) SN_PAGE : gw_mem1_size) + sn.globals_len);
     sn_scatter(s->globals);
     sn_async_put_back();
     sn_fixed_put_back();
@@ -1550,10 +1585,10 @@ void gw_Snap_CuratedMix(const uint32_t *w, int n) {
     }
 }
 
-/* Top of a logic iteration: the previous iteration simulated frame gw_Replay_Frame(); its
+/* Top of a logic iteration: the previous iteration simulated frame sn_frame(); its
  * accumulator is the first pass's record (recorded) or a resimulation's (compared). */
 static void sn_cur_take(void) {
-    int f = gw_Replay_Frame();
+    int f = sn_frame();
     int slot = (f & 0x7FFFFFFF) % 32;
     uint64_t h = sn_cur_acc;
     sn_cur_acc = 0;
@@ -1678,7 +1713,7 @@ static void sn_init(void) {
 
 /* The replay has run at least one frame: the loading hold is over and the match is live. */
 static int sn_live(void) {
-    return gw_Replay_Frame() >= -123;
+    return sn_bench_mode() ? gw_script_match_active() : sn_frame() >= -123;
 }
 
 /* Before the scene loop's logic iterations for this render tick. */
@@ -1691,11 +1726,11 @@ int gw_SyncTest_Iterations(int count) {
     {
         static int ticks;
         if ((++ticks % 250) == 0) {
-            gw_log("snap: heartbeat tick %d frame %d rollbacks %d mismatching %d slot(F-k)=%s", ticks, gw_Replay_Frame(),
-                   sn.passes, sn.mismatches, sn_slot_for(gw_Replay_Frame() + 1 - sn.k, 0) != NULL ? "yes" : "no");
+            gw_log("snap: heartbeat tick %d frame %d rollbacks %d mismatching %d slot(F-k)=%s", ticks, sn_frame(),
+                   sn.passes, sn.mismatches, sn_slot_for(sn_frame() + 1 - sn.k, 0) != NULL ? "yes" : "no");
         }
     }
-    sn.target = gw_Replay_Frame() + 1;
+    sn.target = sn_frame() + 1;
     /* A render pool discovered this recently has not been stocked by logic in the frames a
        rollback would resimulate, so the first pass and the resimulation would disagree about
        whether the heap grew (objalloc.c HSD_ObjAllocTopUp). Let the frames pass unrolled until
@@ -1704,6 +1739,7 @@ int gw_SyncTest_Iterations(int count) {
         return count;
     }
     if (sn_slot_for(sn.target - sn.k, 0) != NULL) {
+        gw_prof_counter(GW_PROF_ROLLBACK_FRAMES, sn.k);
         sn.plan_rollback = 1;
         return sn.k + 1;
     }
@@ -1727,7 +1763,7 @@ void gw_SyncTest_IterStart(void) {
         }
         sn_cur_take();
     }
-    next = gw_Replay_Frame() + 1;
+    next = sn_frame() + 1;
     if (sn.plan_rollback) {
         double rbv_t0 = sn_ms();
         sn.plan_rollback = 0;
@@ -1902,7 +1938,10 @@ void gw_Snap_Time(int what, int begin) {
     if (begin) {
         t0[what] = sn_ms();
     } else {
-        sn_t[what] += sn_ms() - t0[what];
+        double elapsed = sn_ms() - t0[what];
+        if (what == 0 || what == 2)
+            gw_prof_cpu_completed(GW_PROF_ROLLBACK, (unsigned) sn_frame(), elapsed);
+        sn_t[what] += elapsed;
         sn_tn[what]++;
     }
 }
@@ -1918,7 +1957,7 @@ static struct {
 static int sn_sfx_misses;
 
 void gw_Snap_SfxPut(int sound_id, int result) {
-    int f = gw_Replay_Frame();
+    int f = sn_frame();
     int s = (f & 0x7FFFFFFF) % GW_SNAP_SFX_FRAMES;
     if (!sn.enabled || !sn_live()) {
         return;
@@ -1950,7 +1989,7 @@ static void sn_sfx_rewind(int frame) {
  * that emits the same sounds in a different order must not double-play them. GW_SFX_PLAY_NEW (-2):
  * a sound this timeline plays that the abandoned one did not - the caller plays it for real. */
 int gw_Snap_SfxTake(int sound_id) {
-    int f = gw_Replay_Frame();
+    int f = sn_frame();
     int s = (f & 0x7FFFFFFF) % GW_SNAP_SFX_FRAMES;
     if (sn_sfx[s].frame == f) {
         int i;
@@ -1970,7 +2009,7 @@ int gw_Snap_SfxTake(int sound_id) {
 /* The sound the caller just played for real during a resimulated frame: remembered (claimed), so a
  * later resimulation of the same frame finds it. */
 void gw_Snap_SfxAdd(int sound_id, int result) {
-    int f = gw_Replay_Frame();
+    int f = sn_frame();
     int s = (f & 0x7FFFFFFF) % GW_SNAP_SFX_FRAMES;
     if (sn_sfx[s].frame != f) {
         sn_sfx[s].frame = f;
@@ -2032,7 +2071,7 @@ void gw_Snap_NoteMem(int size, void *ptr, unsigned caller, int freeing) {
         return;
     }
     ++sn_obj_notes;
-    gw_log("memtrace f=%d r=%d%s %s size %d ptr %p from %08X", gw_Replay_Frame(),
+    gw_log("memtrace f=%d r=%d%s %s size %d ptr %p from %08X", sn_frame(),
            sn.cur_is_resim ? 1 : 0, sn_in_render ? " R" : "", freeing ? "free " : "alloc", size,
            ptr, caller);
 }
@@ -2044,7 +2083,7 @@ void gw_Snap_NoteObj(void *data, void *obj, int freeing) {
        sequences for one frame and the pool whose order drifted names itself. */
     if (trace && sn.enabled && sn_obj_notes < 400000) {
         ++sn_obj_notes;
-        gw_log("objtrace f=%d r=%d%s %s pool %p cell %p", gw_Replay_Frame(),
+        gw_log("objtrace f=%d r=%d%s %s pool %p cell %p", sn_frame(),
                sn.cur_is_resim ? 1 : 0, sn_in_render ? " R" : "", freeing ? "free " : "alloc",
                data, obj);
         return;
@@ -2054,7 +2093,7 @@ void gw_Snap_NoteObj(void *data, void *obj, int freeing) {
     }
     ++sn_obj_notes;
     gw_log("snap: render pass Obj%s pool %p cell %p (frame %d)", freeing ? "Free " : "Alloc",
-           data, obj, gw_Replay_Frame());
+           data, obj, sn_frame());
 }
 
 /* objalloc.c asks, so it can bill a pool's cells to the render pass and refill them during logic
@@ -2101,9 +2140,9 @@ void gw_Snap_NoteRenderPool(void *data) {
         }
     }
     if (sn_nrender_pools < 16) {
-        sn_last_pool_frame = gw_Replay_Frame();
+        sn_last_pool_frame = sn_frame();
         sn_render_pool[sn_nrender_pools++] = p;
-        gw_log("snap: pool %p is render-owned (frame %d); its arenas stop being compared", data, gw_Replay_Frame());
+        gw_log("snap: pool %p is render-owned (frame %d); its arenas stop being compared", data, sn_frame());
     }
 }
 
@@ -2599,7 +2638,16 @@ int gw_rw_begin(int tag, const void *user, int ulen) {
 }
 
 /* Save a keyframe of the live state, tagged `tag` (> every stored tag). 0 = ok. */
+int gw_rw_save_profile_body(int tag, const void *user, int ulen);
 int gw_rw_save(int tag, const void *user, int ulen) {
+    int result;
+    gw_prof_begin(GW_PROF_REWIND, tag);
+    result = gw_rw_save_profile_body(tag, user, ulen);
+    gw_prof_end();
+    return result;
+}
+
+int gw_rw_save_profile_body(int tag, const void *user, int ulen) {
     double t0 = sn_ms();
     size_t bmb;
     uint32_t pg, n = 0, c;
@@ -2696,7 +2744,16 @@ int gw_rw_save(int tag, const void *user, int ulen) {
 }
 
 /* Load the keyframe tagged `tag` (the base included) into the live state. 0 = ok. */
+int gw_rw_load_profile_body(int tag, void *user_out, int ulen);
 int gw_rw_load(int tag, void *user_out, int ulen) {
+    int result;
+    gw_prof_begin(GW_PROF_REWIND, tag);
+    result = gw_rw_load_profile_body(tag, user_out, ulen);
+    gw_prof_end();
+    return result;
+}
+
+int gw_rw_load_profile_body(int tag, void *user_out, int ulen) {
     double t0 = sn_ms();
     uint8_t stream[4 * 0x24];
     size_t bmb;

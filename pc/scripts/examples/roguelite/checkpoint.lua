@@ -11,10 +11,16 @@
 local Checkpoint = {version = 3, tag = 'TBD3', max_body = 1048576, max_generation = 1000000000}
 
 local function checksum(text)
-  -- Polynomial hash mod 2^31-1 keeps every product below 2^53, so results are
-  -- identical on any IEEE-754 double platform and do not need bitwise ops.
-  local h = 7
-  for i = 1, #text do h = (h * 131 + text:byte(i)) % 2147483647 end
+  -- Three polynomial steps share one modulo and one C byte lookup. Even with
+  -- double-only Lua, h*131^3 + byte terms stays below 2^53 (under 4.83e15),
+  -- so batching preserves the exact historical integer hash. Four would not.
+  local h, length = 7, #text
+  local batched = length - length % 3
+  for i = 1, batched, 3 do
+    local a, b, c = text:byte(i, i + 2)
+    h = (h * 2248091 + a * 17161 + b * 131 + c) % 2147483647
+  end
+  for i = batched + 1, length do h = (h * 131 + text:byte(i)) % 2147483647 end
   return string.format('%08x', h)
 end
 Checkpoint.checksum = checksum

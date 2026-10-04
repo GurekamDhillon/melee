@@ -370,14 +370,18 @@ void copy_staging_to_high_water(wgpu::CommandEncoder& cmd, FramePacket& frame, c
   const webgpu::gpu_prof::Zone zone{cmd, "Staging copies"};
   const auto& highWater = op.highWater;
   auto& res = resources();
+  {
+  const webgpu::gpu_prof::Zone meshZone{cmd, "Mesh and uniform upload"};
   copy_staging_buffer_range(cmd, frame, frame.copied.verts, highWater.verts, VertexStagingOffset, res.vertexBuffer);
   copy_staging_buffer_range(cmd, frame, frame.copied.uniforms, highWater.uniforms, UniformStagingOffset,
                             res.uniformBuffer);
   copy_staging_buffer_range(cmd, frame, frame.copied.indices, highWater.indices, IndexStagingOffset, res.indexBuffer);
   copy_staging_buffer_range(cmd, frame, frame.copied.storage, highWater.storage, StorageStagingOffset,
                             res.storageBuffer);
+  }
 
   if constexpr (UseTextureBuffer) {
+    const webgpu::gpu_prof::Zone textureZone{cmd, "Texture upload"};
     for (size_t i = frame.copied.textureUploadCount; i < op.textureUploads.size(); ++i) {
       const auto& item = *op.textureUploads[i];
       const wgpu::TexelCopyBufferInfo buf{
@@ -426,7 +430,7 @@ bool bind_pipeline(PipelineRef ref, const wgpu::RenderPassEncoder& pass) {
     return true;
   }
   wgpu::RenderPipeline pipeline;
-  if (!get_pipeline(ref, pipeline)) {
+  if (!get_pipeline(ref, pipeline) || !pipeline) {
     return false;
   }
   pass.SetPipeline(pipeline);

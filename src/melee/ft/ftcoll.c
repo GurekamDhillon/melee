@@ -414,6 +414,8 @@ static inline bool inlineA1(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
     return true;
 }
 
+#include "../../../pc/gameworld/script_clank_observe.inc"
+
 bool ftColl_8007699C(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                      HitCapsule* hit1)
 {
@@ -423,6 +425,9 @@ bool ftColl_8007699C(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
     midpoint.x = 0.5f * (hit0->hurt_coll_pos.x + hit1->hurt_coll_pos.x);
     midpoint.y = 0.5f * (hit0->hurt_coll_pos.y + hit1->hurt_coll_pos.y);
     midpoint.z = 0.5f * (hit0->hurt_coll_pos.z + hit1->hurt_coll_pos.z);
+#if defined(TARGET_PC)
+    script_clank_observe(fp0, hit0, fp1, NULL, hit1);
+#endif
 
     {
         float dmg = hit1->damage;
@@ -577,7 +582,14 @@ static inline float inlineB3(Fighter* fp0, HitCapsule* hit0, Fighter* fp1)
         ret *= p_ftCommonData->x714;
     }
 
+#if defined(TARGET_PC)
+    {
+        /* Thrown-body attacks belong to the thrower, like tiplog below. */
+        return ScriptGame_FighterDealtDamage(fp0,ret * fp1->dmg.x182c_behavior);
+    }
+#else
     return ret * fp1->dmg.x182c_behavior;
+#endif
 }
 
 bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
@@ -1115,6 +1127,9 @@ void ftColl_80077970(Item* item, HitCapsule* hit1, Fighter* fp,
     midpoint.x = (hit1->hurt_coll_pos.x + hit2->hurt_coll_pos.x) * 0.5f;
     midpoint.y = (hit1->hurt_coll_pos.y + hit2->hurt_coll_pos.y) * 0.5f;
     midpoint.z = (hit1->hurt_coll_pos.z + hit2->hurt_coll_pos.z) * 0.5f;
+#if defined(TARGET_PC)
+    script_clank_observe(fp, hit2, NULL, item, hit1);
+#endif
 
     {
         float dmg = hit2->damage;
@@ -1143,6 +1158,13 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
         }
         it_8026FAC4(item, hit, mode, fp, 0);
         if (!fp->x2224_b2) {
+#if defined(TARGET_PC)
+            if (item->kind == It_Kind_Star || item->kind == It_Kind_Kinoko ||
+                item->kind == It_Kind_DKinoko) {
+                extern void Geno_ItemFamilyEvent(HSD_GObj*, int, int);
+                Geno_ItemFamilyEvent(item->entity, 0, fp->player_id);
+            }
+#endif
             switch (item->kind) {
             case It_Kind_Star:
                 hit->state = HitCapsule_Disabled;
@@ -1183,6 +1205,12 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
             f3 *= p_ftCommonData->x714;
         }
         scaled_dmg = f3 * fp->dmg.x182c_behavior;
+#if defined(TARGET_PC)
+        {
+            extern float ScriptGame_ItemModDamage(Item* item, float damage);
+            scaled_dmg = ScriptGame_ItemModDamage(item, scaled_dmg);
+        }
+#endif
 
         if (inlineB1(hit)) {
             if (dmg_log0_idx == 0 && !fp->dmg.x189C_unk_num_frames) {
@@ -3445,6 +3473,10 @@ void ftColl_GetWindOffsetVec(HSD_GObj* fgp, Vec3* out_wind)
         int i;
         for (i = 0; i < ft_804D6578.x0; i++) {
             Ground_GObj* grp = ft_80459A68[i].ground;
+            #ifdef TARGET_PC
+            { extern int ScriptStageHostHidden;
+              if (ScriptStageHostHidden && grp && grp->classifier == 3) continue; }
+            #endif
             if (ft_80459A68[i].ground) {
                 if (ftCo_800C0A28(fgp, grp, ft_80459A68[i].type) &&
                     ft_80459A68[i].active_cb(grp, fgp, &wind))

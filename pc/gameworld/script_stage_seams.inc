@@ -16,7 +16,7 @@ static int script_stage_seam_slot(int handle)
 {
     int i;
     for (i = 0; i < script_stage.cap; ++i)
-        if (handle > 0 && script_stage.line[i].active && script_stage.line[i].handle == handle) return i;
+        if (handle > 0 && script_stage.line[i].active && !script_area_retiring(script_stage.line[i].area) && script_stage.line[i].handle == handle) return i;
     return -1;
 }
 
@@ -61,14 +61,18 @@ static int script_stage_seam_endpoint_valid(int slot, int next)
 /* Refresh every active floor joint: its dynamic island can cache the endpoints
  * of a chain spanning many joints, including joints beyond the changed pair.
  * 8005667C delegates to mpIsland_8005B334 without changing vertex frame history. */
-static void script_stage_seam_refresh(void)
+static void script_stage_seam_refresh_area(int area)
 {
     int i;
+    mpScriptBatchBegin();
     for (i = 0; i < script_stage.cap; ++i)
-        if (script_stage.line[i].active && script_stage.line[i].kind == 1)
+        if (script_stage.line[i].active && script_stage.line[i].kind == 1 &&
+            (area < 0 || script_stage.line[i].area == area))
             mpLib_8005667C(script_stage.base_j + i);
-    mpUncheckBounding();
+    mpScriptBatchEnd();
+    mpScriptInvalidateBounding();
 }
+static void script_stage_seam_refresh(void) { script_stage_seam_refresh_area(-1); }
 
 /* Clear the selected endpoint and every incoming reciprocal reference, including
  * inconsistent id0/id1 pairs. Slot reuse must never resurrect an old seam. */
@@ -125,7 +129,7 @@ static void script_stage_seam_moved(int slot)
                 script_stage_seam_unlink_endpoint(i, 0);
         }
     }
-    if (linked) script_stage_seam_refresh();
+    if (linked) script_stage_seam_refresh_area(script_stage.line[slot].area);
     else mpLib_8005667C(script_stage.base_j + slot);
 }
 
@@ -141,6 +145,8 @@ int ScriptGame_StageLink(int handle_a, int handle_b, int owner)
     if (a < 0 || b < 0 || a == b) return -2;
     if (owner <= 0 || script_stage.line[a].owner != owner || script_stage.line[b].owner != owner) return -3;
     if (script_stage.line[a].kind != 1 || script_stage.line[b].kind != 1) return -4;
+    /* Independently gated rooms cannot share a cached traversable island. */
+    if (script_stage.line[a].area != script_stage.line[b].area) return -8;
     collision = mpGetGroundCollLine();
     for (i = 0; i < 2; ++i) {
         int slot = i ? b : a, index = script_stage.base_l + slot;
@@ -170,6 +176,6 @@ int ScriptGame_StageLink(int handle_a, int handle_b, int owner)
     if (i == script_stage.cap) return -6;
     ml->next_id0 = ml->next_id1 = script_stage.base_l + right;
     mr->prev_id0 = mr->prev_id1 = script_stage.base_l + left;
-    script_stage_seam_refresh();
+    script_stage_seam_refresh_area(script_stage.line[a].area);
     return 1;
 }

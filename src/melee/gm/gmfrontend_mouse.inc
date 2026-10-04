@@ -6,8 +6,8 @@
  * cursor (the same move a d-pad press makes, with its sound and motion), a left click selects
  * what is under the pointer, a right click is B, the wheel scrolls lists (or steps a value / turns
  * a page where that is what the screen scrolls), and the footer's button hints are buttons. The
- * pointer comes from the host (gw_console.cpp) in the same 640x480 space the screens are laid out
- * in; hit tests use the player's evaluated quads (fp.q[].w: sheared, scrolled and lifted exactly as
+ * pointer comes from the host (gw_console.cpp) in the wide overlay space. Polling
+ * adds the kit canvas's left edge to recover centred authored coordinates; hit tests use the player's evaluated quads (fp.q[].w: sheared, scrolled and lifted exactly as
  * drawn) or, for the room and select screens' rects, the pointer unsheared into layout space.
  *
  * Mouse input is local UI input only: it turns into what a local pad press would have done on this
@@ -50,6 +50,8 @@ static void fms_poll(void)
     fms.x = (float) Mouse_X();
     fms.y = (float) Mouse_Y();
     fms.in = fms.x > -999.0F;
+    /* Host overlays start at x=0; the authored kit is centred in that canvas. */
+    if (fms.in) fms.x += fe_canvas_left();
     fms.ux = fms.x - (fp.shear_y0 - fms.y) * fp.shear_s;
     fms.uy = fms.y;
     fms.moved = fms.in && seq != fms.seq;

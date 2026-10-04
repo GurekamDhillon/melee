@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 /*
  * script_game.c - the game-side half of the Lua scripting API (pc/platform/gw_script.c).
  *
@@ -10,6 +11,7 @@
  */
 
 #include <Runtime/platform.h>
+#include <melee/cm/camera.h>
 
 #include <melee/ft/fighter.h>
 #include <melee/ft/inlines.h>
@@ -40,6 +42,7 @@
 #include "script_items.h"
 #include "script_parts.h"
 #include "script_model.h"
+#include "script_zones.h"
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjobject.h>
 #include <sysdolphin/baselib/memory.h>
@@ -63,6 +66,7 @@
 #include <sysdolphin/baselib/jobj.h>
 #include "script_mode.h"
 #include "script_mode.inc"
+#include "script_clank.inc"
 
 /* Each scripted line owns two vertices and one joint. mpCheckFloor and its wall/ceiling
  * siblings walk joint ranges (mplib.c), so a single appended global range cannot mix kinds.
@@ -100,7 +104,8 @@ typedef struct {
     float x, y, z, scale, rot;
 } ScriptStageModel;
 typedef struct {
-    char file[32];
+    char file[260]; /* root DAT or final contained mission path; scalar text protocol */
+    int source_stamp[2];
     void* data;
     HSD_Archive* archive;
     size_t bytes;
@@ -118,6 +123,7 @@ static struct {
     int target_model_ready;
     int cap;           /* lines reserved on this stage (<= SCRIPT_STAGE_LINES) */
     HSD_GObj* draw;    /* the world-pass drawing GObj (gxlink 3, with the stage) */
+    HSD_GObj* background_draw; /* opt-in backdrop bucket before fighters/items */
     u8* cube;          /* the unit box's 8 corners, MEM1 (a GX_INDEX8 position array) */
     ScriptStageLine line[SCRIPT_STAGE_LINES];
     ScriptStageTarget target[SCRIPT_STAGE_TARGETS];
@@ -130,17 +136,46 @@ static struct {
     ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
     struct { int token, refs, instances; } asset[SCRIPT_MESH_ASSETS];
     /* largemap: memberships and names are snapshot state, not Lua bookkeeping. */
-    struct { int owner; char name[48]; } area[SCRIPT_STAGE_AREAS];
+    struct { int owner, handle, state, drain; char name[48]; } area[SCRIPT_STAGE_AREAS];
     int loading_area, bounds_saved;
     StageBlastZone saved_camera, saved_blast;
     struct { int owner, refs[SCRIPT_MESH_ASSETS]; } model_owner[SCRIPT_MESH_OWNERS];
 } script_stage;
+/* Area state is in the same MEM1 snapshot as collision and GXMS records.
+ * 0 free, 1 prepared, 2 live, 3 logically unloaded / awaiting bounded drain. */
+int ScriptGame_AreaVisible(int area)
+{
+    return !area || (area > 0 && area <= SCRIPT_STAGE_AREAS &&
+                    script_stage.area[area - 1].state == 2);
+}
+static int script_area_retiring(int area)
+{
+    return area > 0 && area <= SCRIPT_STAGE_AREAS && script_stage.area[area - 1].state == 3;
+}
+int ScriptGame_StageJointActive(int joint)
+{
+    int slot = joint - script_stage.base_j;
+    if (!script_stage.map || slot < 0 || slot >= script_stage.cap) return 1;
+    return script_stage.line[slot].active && ScriptGame_AreaVisible(script_stage.line[slot].area);
+}
+int ScriptGame_StageLineActive(int line)
+{
+    int slot = line - script_stage.base_l;
+    if (!script_stage.map || slot < 0 || slot >= script_stage.cap) return 1;
+    return script_stage.line[slot].active && ScriptGame_AreaVisible(script_stage.line[slot].area);
+}
+static void ScriptGame_AreaDrain(void);
 static Article* script_target_old_article;
 #include "script_bounds.inc"
 #include "script_stage_isolation.inc"
 
 /* ---- arena-hooks: deterministic origin, bounds and retail collision groups ---- */
 #include "script_arena.inc"
+#include "script_camera_params.inc"
+#include "script_fighter_mod.inc"
+#include "script_1p.inc"
+void ScriptGame_FighterBenchRelease(int owner);
+static void script_bench_frame(void);
 
 static int script_stage_same_file(const char* a, const char* b)
 {
@@ -154,9 +189,19 @@ static int script_stage_same_file(const char* a, const char* b)
 }
 
 /* Called at the end of gm_801A4D34, while this scene's objects still exist. */
+void ScriptGame_VirtualPadRelease(int slot, int owner);
+
 void ScriptGame_StageEnd(void)
 {
+    extern void ScriptGame_StageSlotsRelease(int);
+    extern void Script_StageSlotsEnded(void);
+    ScriptGame_StageSlotsRelease(0);
+    Script_StageSlotsEnded();
+    ScriptGame_VirtualPadRelease(-1,0);
     int i;
+    ScriptGame_CameraParamsRelease(0);
+    ScriptGame_FighterModsRelease(0);
+    ScriptGame_FighterBenchRelease(0);
     /* arena-hooks: no scene's ownership or transition can survive teardown. */
     memset(&script_arena, 0, sizeof script_arena);
     if (script_stage.bounds_saved) {
@@ -183,6 +228,8 @@ void ScriptGame_StageEnd(void)
     }
     if (script_stage.draw != NULL) HSD_GObjFree(script_stage.draw);
     script_stage.draw = NULL;
+    if (script_stage.background_draw != NULL) HSD_GObjFree(script_stage.background_draw);
+    script_stage.background_draw = NULL;
     if (script_stage.target_model_ready) {
         it_804A0F60[It_Kind_Mato - It_Kind_Old_Kuri] = script_target_old_article;
         script_target_old_article = NULL;
@@ -224,19 +271,29 @@ static HSD_Archive* script_stage_archive(const char* file)
     HSD_Archive* archive;
     void* data;
     ScriptStageArchive* a = NULL;
-    char path[34];
+    char path[262];
+    int mission_bytes, stamp_hi, stamp_lo;
+    extern int Script_StageArchiveInput(int which, int at);
+    mission_bytes = Script_StageArchiveInput(0, 0);
+    stamp_hi = mission_bytes ? Script_StageArchiveInput(1, 0) : 0;
+    stamp_lo = mission_bytes ? Script_StageArchiveInput(2, 0) : 0;
     for (i = 0; i < SCRIPT_STAGE_ARCHIVES; ++i) {
         if (script_stage.archives[i].archive != NULL &&
-            script_stage_same_file(script_stage.archives[i].file, file))
+            script_stage_same_file(script_stage.archives[i].file, file) &&
+            script_stage.archives[i].source_stamp[0] == stamp_hi &&
+            script_stage.archives[i].source_stamp[1] == stamp_lo)
             return script_stage.archives[i].archive;
         if (a == NULL && script_stage.archives[i].archive == NULL) a = &script_stage.archives[i];
     }
     if (a == NULL) return NULL;
     path[0] = '/';
     strcpy(path + 1, file);
-    entry = DVDConvertPathToEntrynum(path); /* shim_dvd also finds a mounted mod's own DAT */
-    if (entry < 0) return NULL;
-    bytes = lbFile_8001634C(entry);
+    if (mission_bytes) bytes = mission_bytes;
+    else {
+        entry = DVDConvertPathToEntrynum(path); /* shim_dvd also finds a mounted mod's own DAT */
+        if (entry < 0) return NULL;
+        bytes = lbFile_8001634C(entry);
+    }
     if (bytes < sizeof(HSD_ArchiveHeader) || bytes > SCRIPT_STAGE_ARCHIVE_MAX) return NULL;
     data = lbHeap_80015BD0(0, (bytes + 31) & ~(size_t) 31);
     archive = lbHeap_80015BD0(0, sizeof(*archive));
@@ -245,7 +302,14 @@ static HSD_Archive* script_stage_archive(const char* file)
         if (data != NULL) lbHeap_80015CA8(0, data);
         return NULL;
     }
-    lbFile_8001668C(path, data, &read_bytes);
+    if (mission_bytes) {
+        u8* dst = data;
+        size_t j;
+        for (j = 0; j + 4 <= bytes; j += 4)
+            *(u32*) (dst + j) = (u32) Script_StageArchiveInput(3, (int) j);
+        for (; j < bytes; ++j) dst[j] = (u8) Script_StageArchiveInput(4, (int) j);
+        read_bytes = bytes;
+    } else lbFile_8001668C(path, data, &read_bytes);
     if (read_bytes != bytes || HSD_ArchiveParse(archive, data, bytes) < 0) {
         lbHeap_80015CA8(0, archive);
         lbHeap_80015CA8(0, data);
@@ -255,6 +319,7 @@ static HSD_Archive* script_stage_archive(const char* file)
     for (i = 0; HSD_ArchiveGetExtern(archive, i) != NULL; ++i)
         HSD_ArchiveLocateExtern(archive, HSD_ArchiveGetExtern(archive, i), NULL);
     strcpy(a->file, file);
+    a->source_stamp[0] = stamp_hi; a->source_stamp[1] = stamp_lo;
     a->data = data;
     a->archive = archive;
     a->bytes = bytes;
@@ -366,6 +431,7 @@ MapCollData* ScriptGame_StagePrepare(MapCollData* src)
     script_stage.cap = 0;
     script_stage.draw = NULL;
     script_stage.cube = NULL;
+    script_stage.background_draw = NULL;
     Script_StageModelsReset();
     memset(script_stage.instance, 0, sizeof script_stage.instance);
     memset(script_stage.asset, 0, sizeof script_stage.asset);
@@ -492,24 +558,23 @@ static void script_mesh_render(Mtx view, int alpha)
     Script_ModelDraw(-2, view); /* flush before another GObj changes GX state */
 }
 
+#include "script_stage_render_pass.inc"
 static void script_stage_render(HSD_GObj* gobj, int code)
 {
     Mtx view;
     HSD_TevDesc tev;
     int i;
-    static int seen;
+    int camera_mode=Camera_8003108C();
     (void) gobj;
-    if (!(seen & (1 << (code & 7)))) {
-        seen |= 1 << (code & 7);
-        OSReport("script stage: world pass render code %d\n", code); /* once per pass code */
-    }
-    if ((code != 0 && code != 2) || !script_stage_geometry || gx_suppress_draws || script_stage.cube == NULL) {
+    if (!script_stage_render_pass(camera_mode, code) || !script_stage_geometry || gx_suppress_draws || script_stage.cube == NULL) {
         return;
     }
     if (code == 2) {
         HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), view);
         HSD_StateInvalidate(-1);
+        script_mesh_split = camera_mode == 3 ? 2 : 1;
         script_mesh_render(view, 1);
+        script_mesh_split = 0;
         HSD_StateInvalidate(-1);
         return;
     }
@@ -542,7 +607,7 @@ static void script_stage_render(HSD_GObj* gobj, int code)
         ScriptStageLine* s = &script_stage.line[i];
         float dx, dy, len, ux, uy, mx, my;
         int model;
-        if (!s->active || s->model_handle || (s->flags & 4)) continue; /* draw=false: collision remains active */
+        if (!s->active || !ScriptGame_AreaVisible(s->area) || s->model_handle || (s->flags & 4)) continue; /* draw=false: collision remains active */
         model = s->kind == 1 ? Script_StageModelFor(s->handle) : 0;
         if (model > 0)
             continue; /* textured model is drawn in the one-material pass below */
@@ -578,7 +643,7 @@ static void script_stage_render(HSD_GObj* gobj, int code)
         for (i = 0; i < script_stage.cap; ++i) {
             ScriptStageLine* s = &script_stage.line[i];
             int model;
-            if (!s->active || s->kind != 1) continue;
+            if (!s->active || !ScriptGame_AreaVisible(s->area) || s->kind != 1) continue;
             model = Script_StageModelFor(s->handle);
             if (model < 1) continue;
             if (!any) { HSD_StateInvalidate(-1); any = 1; }
@@ -596,6 +661,28 @@ static void script_stage_model_render(HSD_GObj* gobj, int code)
     HSD_GObj_JObjCallback(gobj, code); /* the stage's lit, textured JObj path */
 }
 
+static void script_background_render(HSD_GObj* gobj, int code)
+{
+    Mtx view;
+    int alpha, i, count, order[SCRIPT_MESH_INSTANCES];
+    HSD_GObj* camera = Camera_80030A50();
+    int phase=Camera_80031060();
+    (void) gobj;
+    /* Ordinary link4 runs after refraction but before fighter link5 and item
+     * link6. Skip the earlier fighter shadow pass; do not redraw after beams. */
+    if (!script_background_render_pass(code, camera != NULL && camera->hsd_obj == HSD_CObjGetCurrent(), phase) ||
+        !script_stage_geometry || gx_suppress_draws) return;
+    HSD_CObjGetViewingMtx(HSD_CObjGetCurrent(), view);
+    HSD_StateInvalidate(-1);
+    for (alpha = 0; alpha <= 1; ++alpha) {
+        count = script_mesh_order_bucket(view, alpha, 1, order);
+        Script_ModelDraw(-1, view);
+        for (i = 0; i < count; ++i) Script_ModelDraw(order[i], view);
+        Script_ModelDraw(-2, view);
+    }
+    HSD_StateInvalidate(-1);
+}
+
 /* at stage load (ScriptGame_StageReady): the unit box's corners in MEM1 and the drawing GObj */
 static void script_stage_draw_init(void)
 {
@@ -610,6 +697,10 @@ static void script_stage_draw_init(void)
     script_stage.draw = GObj_Create(HSD_GOBJ_CLASS_STAGE, 13, 0);
     if (script_stage.draw != NULL) {
         GObj_SetupGXLink(script_stage.draw, script_stage_render, 3, 0);
+    }
+    script_stage.background_draw = GObj_Create(HSD_GOBJ_CLASS_STAGE, 13, 0);
+    if (script_stage.background_draw != NULL) {
+        GObj_SetupGXLink(script_stage.background_draw, script_background_render, SCRIPT_BACKGROUND_GX_LINK, 0);
     }
 }
 
@@ -730,9 +821,10 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     script_stage.line[i].x0 = x0; script_stage.line[i].y0 = y0;
     script_stage.line[i].x1 = x1; script_stage.line[i].y1 = y1;
     mpJointListAdd(j);
-    mpUncheckBounding();
-    OSReport("script stage: line handle=%d map line=%d kind=%d\n",
-             handle, l, kind);
+    mpScriptInvalidateBounding();
+    if (!script_stage.loading_area)
+        OSReport("script stage: line handle=%d map line=%d kind=%d\n",
+                 handle, l, kind);
     return handle;
 }
 
@@ -766,14 +858,14 @@ int ScriptGame_StageRemove(int handle)
             /* 57BC0 refreshes while the range still contains the retired line.
              * Empty it first, then retire that joint's cached dynamic island. */
             mpLib_8005667C(j);
-            if (linked) script_stage_seam_refresh();
+            if (linked) script_stage_seam_refresh_area(script_stage.line[i].area);
             {
                 int k;
                 for (k = 0; k < SCRIPT_STAGE_MODELS; ++k)
                     if (script_stage.model[k].line_handle == handle)
                         script_stage.model[k].line_handle = 0;
             }
-            mpUncheckBounding();
+            mpScriptInvalidateBounding();
             OSReport("script stage: removed line handle=%d\n", handle);
             return 1;
         }
@@ -802,7 +894,7 @@ static int script_stage_line_set(int handle, float x0, float y0, float x1, float
         ScriptStageLine* s = &script_stage.line[i];
         CollVtx* v;
         CollJoint* j;
-        if (!s->active || s->handle != handle) continue;
+        if (!s->active || script_area_retiring(s->area) || s->handle != handle) continue;
         v = &mpGetGroundCollVtx()[script_stage.base_v + 2 * i];
         /* ScriptGame_StageFrame captured the frame-start positions. Preserve those
          * across multiple moves so mpColl sees the whole frame's floor displacement. */
@@ -816,7 +908,7 @@ static int script_stage_line_set(int handle, float x0, float y0, float x1, float
         j->flags |= CollJoint_B8;
         j->xE = true;
         script_stage_seam_moved(i);
-        mpUncheckBounding();
+        mpScriptInvalidateBounding();
         return 1;
     }
     return 0;
@@ -857,7 +949,7 @@ int ScriptGame_StageMove(int handle, int xb, int yb)
     }
     for (i = 0; i < script_stage.cap; ++i) {
         ScriptStageLine* s = &script_stage.line[i];
-        if (!s->active || s->handle != handle) continue;
+        if (!s->active || script_area_retiring(s->area) || s->handle != handle) continue;
         dx = x - (s->x0 + s->x1) * 0.5f;
         dy = y - (s->y0 + s->y1) * 0.5f;
         return script_stage_line_set(handle, s->x0 + dx, s->y0 + dy, s->x1 + dx, s->y1 + dy);
@@ -949,7 +1041,7 @@ int ScriptGame_StageAddModel(int group, int joint_index, int xb, int yb, int zb,
                              int sb, int rb, int handle)
 {
     union { int i; float f; } u;
-    char file[32], symbol[64];
+    char file[260], symbol[64];
     HSD_Archive* archive;
     UnkStageDat* head;
     HSD_Joint* source;
@@ -959,6 +1051,7 @@ int ScriptGame_StageAddModel(int group, int joint_index, int xb, int yb, int zb,
     Vec3 pos, scale;
     float rot;
     int i, n;
+    if (script_stage.loading_area && script_stage.area[script_stage.loading_area - 1].state == 1) return -1;
     if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map ||
         !script_stage_text(0, file, sizeof file) ||
         !script_stage_text(1, symbol, sizeof symbol)) return -1;
@@ -1040,6 +1133,15 @@ int ScriptGame_StageAttachModel(int model_handle, int line_handle)
 /* A line moved by Lua carries its delta for exactly one logic frame. mpGetSpeed
  * (mplib.c) remaps x10/x14 to pos for grounded fighters; leaving the old endpoint
  * there would keep imparting velocity on every later frame. */
+/* Diagnostic ownership query: no registry or item writes. */
+int ScriptGame_ProfEnemy(HSD_GObj* gobj)
+{
+    int i;
+    for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i)
+        if (script_stage.enemy[i].active && script_stage.enemy[i].gobj == gobj) return 1;
+    return 0;
+}
+
 static void script_enemy_sample(ScriptStageEnemy* e)
 {
     Item* ip = GET_ITEM(e->gobj);
@@ -1054,17 +1156,20 @@ static void script_enemy_sample(ScriptStageEnemy* e)
 
 void ScriptGame_StageFrame(void)
 {
+    PC_PROF_BEGIN(GW_PROF_STAGE, 0);
     CollVtx* cv;
     int i;
     /* arena-hooks: also runs for full maps with no spare scripted geometry. */
     script_arena_frame();
+    script_bench_frame();
+    ScriptGame_AreaDrain();
     for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
         ScriptStageEnemy* e = &script_stage.enemy[i];
         if (e->active && e->gobj != NULL) {
             script_enemy_sample(e);
         }
     }
-    if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return;
+    if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) { PC_PROF_END(); return; }
     cv = mpGetGroundCollVtx();
     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
         int v;
@@ -1074,18 +1179,21 @@ void ScriptGame_StageFrame(void)
         cv[v + 1].x10 = cv[v + 1].pos.x; cv[v + 1].x14 = cv[v + 1].pos.y;
         mpGetGroundCollJoint()[script_stage.base_j + i].flags &= ~CollJoint_B8;
     }
+
+    { extern void ScriptGame_StageSlotsFrame(void); ScriptGame_StageSlotsFrame(); }
+    PC_PROF_END();
 }
 
 int ScriptGame_StageLineI(int i, int field)
 {
-    if (i < 0 || i >= SCRIPT_STAGE_LINES || !script_stage.line[i].active) return 0;
+    if (i < 0 || i >= SCRIPT_STAGE_LINES || !script_stage.line[i].active || !ScriptGame_AreaVisible(script_stage.line[i].area)) return 0;
     return field == 0 ? script_stage.line[i].kind : script_stage.line[i].handle;
 }
 
 float ScriptGame_StageLineF(int i, int field)
 {
     ScriptStageLine* s;
-    if (i < 0 || i >= SCRIPT_STAGE_LINES || !script_stage.line[i].active) return 0;
+    if (i < 0 || i >= SCRIPT_STAGE_LINES || !script_stage.line[i].active || !ScriptGame_AreaVisible(script_stage.line[i].area)) return 0;
     s = &script_stage.line[i];
     return field == 0 ? s->x0 : field == 1 ? s->y0 : field == 2 ? s->x1 : s->y1;
 }
@@ -1148,6 +1256,7 @@ int ScriptGame_SpawnTarget(int xb, int yb, int handle)
     Vec3 pos;
     Item_GObj* gobj;
     int i;
+    if (script_stage.loading_area && script_stage.area[script_stage.loading_area - 1].state == 1) return -1;
     if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return -1;
     for (i = 0; i < SCRIPT_STAGE_TARGETS && script_stage.target[i].active; ++i) {}
     if (i == SCRIPT_STAGE_TARGETS) return -1;
@@ -1224,6 +1333,7 @@ int ScriptGame_SpawnEnemy(int which, int xb, int yb, int facing, int handle)
     Item_GObj* gobj = NULL;
     Item* ip;
     int i, kind;
+    if (script_stage.loading_area && script_stage.area[script_stage.loading_area - 1].state == 1) return -1;
     if (which < 0 || which >= SCRIPT_ENEMY_KINDS || (facing != -1 && facing != 1))
         return -1;
     if (!script_enemy_preload(which)) return -1;
@@ -1534,6 +1644,7 @@ enum {
     SCRIPT_I_STOCKS,
     SCRIPT_I_COSTUME,
     SCRIPT_I_SLOT_TYPE, /* 0 human, 1 cpu, 2 demo, 3 none */
+    SCRIPT_I_FALLS, /* main fighter deaths, including time-mode/LAB */
 };
 
 /* A slot's fighter counts only while its gobj is in the live fighter list. The scene start clears
@@ -1571,6 +1682,37 @@ static Fighter* script_fighter(int slot)
 /* Camera_8002A4AC and its script override run in the game TU. Resolve handles here, where the
  * live fighter list and Item_80268B18's unique item serial can be checked without a native
  * pointer crossing the PPC bridge. */
+#include "script_fighter_bench.inc"
+#include "script_zones.inc"
+#include "script_six_slots.inc"
+#include "script_six_slots_tests.inc"
+
+static void script_mod_shield_clamp(int slot)
+{
+    int i;
+    if (!p_ftCommonData) return;
+    for (i=0; i<2; ++i) {
+        HSD_GObj* gobj=Player_GetEntityAtIndex(slot,i);
+        if (script_gobj_live(gobj))
+            script_mod_shield_reconcile(GET_FIGHTER(gobj),p_ftCommonData->x260_startShieldHealth);
+    }
+}
+
+/* Item owners are resolved through the live fighter list, never a host pointer.
+ * Reflection naturally changes the owner whose dealt multiplier applies. */
+float ScriptGame_FighterDealtDamage(Fighter* attacker, float damage)
+{
+    if (attacker && script_gobj_live(attacker->x1064_thrownHitbox.owner))
+        attacker=GET_FIGHTER(attacker->x1064_thrownHitbox.owner);
+    return attacker ? ScriptGame_ModDamage(attacker->player_id,0,damage) : damage;
+}
+float ScriptGame_ItemModDamage(Item* item, float damage)
+{
+    if (item && script_gobj_live(item->owner))
+        damage=ScriptGame_ModDamage(GET_FIGHTER(item->owner)->player_id,0,damage);
+    return damage;
+}
+
 int ScriptGame_CameraFollowTarget(int kind, int id, Vec3* out)
 {
     if (kind == 1) {
@@ -1642,6 +1784,8 @@ int ScriptGame_FighterI(int slot, int field)
         return fp->ground_or_air == GA_Air ? 1 : 0;
     case SCRIPT_I_STOCKS:
         return (int) Player_GetStocks(slot);
+    case SCRIPT_I_FALLS:
+        return (int) Player_GetFallsByIndex(slot, 0);
     case SCRIPT_I_COSTUME:
         return (int) Player_GetCostumeId(slot);
     }
@@ -1700,6 +1844,87 @@ void ScriptGame_LaunchScene(int game_mode)
 
 #include "script_lab.h"
 
+/* Pure fighter reads are shared with the headless fake-fighter regression.
+ * A cached floor index alone survives takeoff, so require current contact. */
+static int script_lab_mission_i(Fighter* fp, int field)
+{
+    CollData* cd = &fp->coll_data;
+    int floor = fp->ground_or_air == GA_Ground && cd->floor.index >= 0 &&
+                (cd->env_flags & Collide_FloorMask) != 0;
+    switch (field) {
+    case LAB_I_ON_FLOOR: return floor;
+    case LAB_I_FLOOR_PASSTHROUGH: return floor && (cd->floor.flags & LINE_FLAG_PLATFORM) != 0;
+    case LAB_I_WALL:
+        /* Names describe the wall normal, not its side relative to a fighter:
+         * ftCo_8009EE30 uses RightWallMask with the left ECB point. */
+        if (cd->env_flags & Collide_RightWallMask) return -1;
+        return (cd->env_flags & Collide_LeftWallMask) ? 1 : 0;
+    case LAB_I_CEILING: return (cd->env_flags & Collide_CeilingMask) != 0;
+    case LAB_I_LEDGE: return fp->motion_id == ftCo_MS_CliffCatch || fp->motion_id == ftCo_MS_CliffWait;
+    default: return -1;
+    }
+}
+
+static int script_lab_mission_floor_valid(Fighter* fp)
+{
+    MapCollData* map = mpLib_8004D164();
+    int line = fp->coll_data.floor.index;
+    CollLine* lines = mpGetGroundCollLine();
+    MapLine* segment;
+    if (!script_lab_mission_i(fp, LAB_I_ON_FLOOR) || map == NULL ||
+        line >= map->line_count || lines == NULL || mpGetGroundCollVtx() == NULL ||
+        !(lines[line].flags & CollLine_Floor)) return 0;
+    segment = lines[line].x0;
+    return segment != NULL && segment->v0_idx < map->vert_count && segment->v1_idx < map->vert_count;
+}
+
+static float script_lab_mission_floor_height(Fighter* fp, Vec3* left, Vec3* right)
+{
+    float x = fp->coll_data.cur_pos.x + fp->coll_data.ecb.bottom.x;
+    if (right->x <= left->x) return left->y;
+    if (x < left->x) x = left->x;
+    if (x > right->x) x = right->x;
+    return left->y + (right->y - left->y) * (x - left->x) / (right->x - left->x);
+}
+
+int ScriptGame_MissionPlayerTest(void)
+{
+    static Fighter fp;
+    Vec3 left = { -10, 30, 0 }, right = { 10, 40, 0 };
+    int failed = 0;
+    memset(&fp, 0, sizeof fp);
+    fp.ground_or_air = GA_Ground; fp.coll_data.floor.index = 0;
+    fp.coll_data.env_flags = Collide_FloorHug;
+    if (!script_lab_mission_i(&fp, LAB_I_ON_FLOOR) ||
+        script_lab_mission_i(&fp, LAB_I_FLOOR_PASSTHROUGH)) ++failed;
+    fp.coll_data.floor.flags = LINE_FLAG_PLATFORM;
+    if (!script_lab_mission_i(&fp, LAB_I_FLOOR_PASSTHROUGH)) ++failed;
+    if (script_lab_mission_floor_height(&fp, &left, &right) != 35) ++failed;
+    fp.coll_data.ecb.bottom.x = 4;
+    if (script_lab_mission_floor_height(&fp, &left, &right) != 37) ++failed;
+    fp.ground_or_air = GA_Air;
+    if (script_lab_mission_i(&fp, LAB_I_ON_FLOOR) ||
+        script_lab_mission_i(&fp, LAB_I_FLOOR_PASSTHROUGH)) ++failed;
+    fp.ground_or_air = GA_Ground; fp.coll_data.env_flags = 0;
+    if (script_lab_mission_i(&fp, LAB_I_ON_FLOOR)) ++failed;
+    fp.coll_data.env_flags = Collide_LeftWallHug | Collide_CeilingPush;
+    if (script_lab_mission_i(&fp, LAB_I_WALL) != 1 || !script_lab_mission_i(&fp, LAB_I_CEILING)) ++failed;
+    fp.coll_data.env_flags = Collide_RightWallPush;
+    if (script_lab_mission_i(&fp, LAB_I_WALL) != -1 || script_lab_mission_i(&fp, LAB_I_CEILING)) ++failed;
+    fp.coll_data.env_flags = Collide_WallMask;
+    if (script_lab_mission_i(&fp, LAB_I_WALL) != -1) ++failed;
+    fp.coll_data.env_flags = Collide_LedgeGrabMask;
+    if (script_lab_mission_i(&fp, LAB_I_WALL) || script_lab_mission_i(&fp, LAB_I_LEDGE)) ++failed;
+    fp.motion_id = ftCo_MS_CliffCatch;
+    if (!script_lab_mission_i(&fp, LAB_I_LEDGE)) ++failed;
+    fp.motion_id = ftCo_MS_CliffWait;
+    if (!script_lab_mission_i(&fp, LAB_I_LEDGE)) ++failed;
+    return failed;
+}
+
+/* Contact scalar reads share the floor/contact helpers above. */
+#include "script_contacts.inc"
+
 float ScriptGame_LabF(int slot, int field)
 {
     Fighter* fp = script_fighter(slot);
@@ -1753,6 +1978,18 @@ float ScriptGame_LabF(int slot, int field)
         return fp->shield_hit.pos.y;
     case LAB_F_SHIELD_R:
         return fp->shield_hit.size;
+    case LAB_F_FLOOR_Y:
+        if (script_lab_mission_floor_valid(fp)) {
+            Vec3 left, right;
+            MapLine* line = mpGetGroundCollLine()[cd->floor.index].x0;
+            CollVtx* verts = mpGetGroundCollVtx();
+            /* mpFloorGetLeft/Right walk an entire linked floor chain; using
+             * that chain's endpoints would flatten a sequence of slopes. */
+            left.x = verts[line->v0_idx].pos.x; left.y = verts[line->v0_idx].pos.y; left.z = 0;
+            right.x = verts[line->v1_idx].pos.x; right.y = verts[line->v1_idx].pos.y; right.z = 0;
+            return script_lab_mission_floor_height(fp, &left, &right);
+        }
+        return 0.0f;
     }
     return 0.0f;
 }
@@ -1834,6 +2071,14 @@ int ScriptGame_LabI(int slot, int field)
         return lab_joint_count(fp);
     case LAB_I_HURTBOXES:
         return (int) fp->hurt_capsules_len;
+    case LAB_I_FLOOR_VALID:
+        return script_lab_mission_floor_valid(fp);
+    case LAB_I_ON_FLOOR:
+    case LAB_I_FLOOR_PASSTHROUGH:
+    case LAB_I_WALL:
+    case LAB_I_CEILING:
+    case LAB_I_LEDGE:
+        return script_lab_mission_i(fp, field);
     }
     return -1;
 }
@@ -2173,8 +2418,10 @@ int ScriptGame_LabCommonCount(int slot)
     return fp != NULL ? (int) fp->x18 : -1;
 }
 
-/* The subaction script of animation `anim` (-1 = the one playing), as its guest address. Never
- * the live cursor: the start of the script, which the native side walks read-only. */
+/* The effective subaction script of animation `anim` (-1 = the one playing), as its game address.
+ * x24 is the table Fighter_ChangeMotionState reads, including Geno overlays and Geno states'
+ * reused subactions. Its Geno pool pointers are game globals outside MEM1: the native walker
+ * validates installed pool slots as well as MEM1. Never return the live command cursor. */
 const void* ScriptGame_LabScript(int slot, int anim)
 {
     Fighter* fp = script_fighter(slot);
@@ -2356,6 +2603,7 @@ static HSD_TObj* lab_tobj(HSD_DObj* dobj, int t)
 }
 
 #include "script_parts.inc"
+#include "script_tint_query.inc"
 
 /* field: LAB_DI_* */
 int ScriptGame_LabDObjI(int slot, int d, int field)
@@ -2449,17 +2697,73 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
 /* ---- Stage E: the knockback preview (the game's own knockback functions) -------------------- */
 /* Bounded traversal impulse during ordinary locomotion. Leaves position,
  * action, ECB, jumps and knockback velocity untouched. */
-/* Reset the ordinary fighter CPU controller through its native initializer.
- * Primary entities only: partners such as Nana have special controller rules. */
-int ScriptGame_CpuMode(int slot, int fight)
+/* Validate both entities before changing either controller. Retail initialization
+ * preserves Nana's special kind; dormant Zelda/Sheik gets the requested mode too. */
+int ScriptGame_CpuStanding(Fighter* fp)
 {
-    Fighter* fp = script_fighter(slot);
-    if (fp == NULL || (fight != 0 && fight != 1) || fp->is_sub_fighter ||
-        Player_GetPlayerSlotType(slot) != Gm_PKind_Cpu ||
-        fp->cpu.level < 0 || fp->cpu.level > 9) return 0;
-    ftCo_800A101C(fp, fight ? CpuKind_4 : CpuKind_0, fp->cpu.level, fp->cpu.x14);
+    int slot=fp->player_id;
+    return slot>=0 && slot<6 && Player_GetPlayerSlotType(slot)==Gm_PKind_Cpu &&
+           Player_GetCpuType(slot)==CpuKind_0;
+}
+static int script_cpu_stand_quiet(Fighter* fp, int standing)
+{
+    if (!standing) return 0;
+    /* Retail kind 0 still runs recovery/character plans, including the timed
+     * Zelda/Sheik transform. Stand is an input policy, not a frozen fighter. */
+    fp->cpu.buttons=0;
+    fp->cpu.lstick.x=fp->cpu.lstick.y=0;
+    fp->cpu.cstick.x=fp->cpu.cstick.y=0;
+    fp->cpu.ltrigger=fp->cpu.rtrigger=0;
+    fp->cpu.csP=NULL; fp->cpu.command_duration=0;
+    fp->cpu.write_pos=fp->cpu.buffer;
+    fp->cpu.xC8=fp->cpu.xEC=0; fp->cpu.xF8_b5=0;
+    memset(&fp->input,0,sizeof fp->input);
     return 1;
 }
+int ScriptGame_CpuStandTick(Fighter* fp)
+{
+    return script_cpu_stand_quiet(fp,ScriptGame_CpuStanding(fp));
+}
+static int script_cpu_mode_pair(Fighter** pair, int fight,
+                               void (*init)(Fighter*, int, int, int))
+{
+    int i;
+    if (!pair[0] || pair[0]->is_sub_fighter || (fight!=0 && fight!=1)) return 0;
+    for (i=0; i<2; ++i) if (pair[i] &&
+        (pair[i]->cpu.level<0 || pair[i]->cpu.level>9)) return 0;
+    for (i=0; i<2; ++i) if (pair[i]) {
+        init(pair[i],fight ? CpuKind_4 : CpuKind_0,pair[i]->cpu.level,pair[i]->cpu.x14);
+        script_cpu_stand_quiet(pair[i],!fight);
+        script_bench_cpu_changed(pair[i]);
+    }
+    return 1;
+}
+static int script_cpu_mode_persist(Fighter** pair,int slot,int fight,
+                                   void (*init)(Fighter*,int,int,int),
+                                   void (*persist)(int,int))
+{
+    if (!script_cpu_mode_pair(pair,fight,init)) return 0;
+    /* Fighter reset/rebirth reads Player_GetCpuType after the first Lua frame. */
+    persist(slot,fight ? CpuKind_4 : CpuKind_0);
+    return script_cpu_mode_pair(pair,fight,init);
+}
+int ScriptGame_CpuMode(int slot, int fight)
+{
+    Fighter* pair[2]; HSD_GObj* other;
+    if (slot<0 || slot>=6 || Player_GetPlayerSlotType(slot)!=Gm_PKind_Cpu) return 0;
+    pair[0]=script_fighter(slot); pair[1]=NULL;
+    if (!pair[0]) return 0;
+    /* This accessor follows transformed[] and returns Nana or the other form.
+     * Bench's action-safety gate is inappropriate for a controller-only write. */
+    other=Player_GetEntityAtIndex(slot,1);
+    if (other && other!=pair[0]->gobj) {
+        if (!script_gobj_live(other) || !GET_FIGHTER(other)) return 0;
+        pair[1]=GET_FIGHTER(other);
+    }
+    return script_cpu_mode_persist(pair,slot,fight,ftCo_800A101C,
+                                   Player_SetPlayerAndEntityCpuType);
+}
+#include "script_cpu_mode_tests.inc"
 
 int ScriptGame_Impulse(int slot, int x_bits, int y_bits)
 {
@@ -2557,6 +2861,7 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
     if (fp == NULL || (from_slot >= 0 && from == NULL)) {
         return 0;
     }
+    applied=ScriptGame_FighterDealtDamage(from,applied);
     if (!ftColl_80076640(fp, &applied)) {
         return 0;
     }
@@ -3005,10 +3310,56 @@ int ScriptGame_LabFighterFieldBase(int off)
 
 /* ---- largemap: isolated area, capacity and bounds API ---- */
 #include "script_largemap.inc"
+#include "script_warm.inc"
 
 /* gd.play_sound(id): a game sound id (the ids Ground_801C5440 / lbAudioAx_800237A8 take), full volume, centre pan.
  * Returns the AX voice handle. */
 int ScriptGame_PlaySound(int id)
 {
     return lbAudioAx_800237A8(id, 0x7F, 0x40);
+}
+/* Scalar boundary; HSD pitch is cents (axdriver.c converts with 2^(cents/1200)). */
+int ScriptGame_PlaySoundOptions(int id, int volume, int pitch)
+{
+    int voice;
+    if (id <= 0 || volume < 0 || volume > 127 || pitch < -1200 || pitch > 1200) {
+        return -1;
+    }
+    voice = lbAudioAx_800237A8(id, volume, 0x40);
+    if (voice >= 0 && pitch != 0) {
+        lbAudioAx_80024B94(voice, pitch);
+    }
+    return voice;
+}
+#include "script_stage_slots.inc"
+
+void ScriptGame_OnePEndBarrier(void) { gm_801A4B60(); }
+
+void ScriptGame_OnePTintClear(int slot,int owner)
+{
+    int i;
+    for(i=0;i<PART_COLORS;++i) if(lab_part_colors[i].slot==slot &&
+        lab_part_colors[i].owner==owner && lab_part_colors[i].mode==PART_CTL_TINT)
+        memset(&lab_part_colors[i],0,sizeof lab_part_colors[i]);
+}
+
+void ScriptGame_OnePSpawnTint(Fighter* fp,int owner,int rgb)
+{
+    int d,i,empty;
+    for(d=0;d<fp->dobj_list.count;++d) {
+        HSD_DObj* dobj=fp->dobj_list.data[d];
+        if(!dobj||part_tint_register(dobj)<0)continue;
+        empty=-1;
+        for(i=0;i<PART_COLORS;++i) {
+            if(lab_part_colors[i].dobj==dobj)break;
+            if(empty<0&&!lab_part_colors[i].dobj)empty=i;
+        }
+        if(i<PART_COLORS&&lab_part_colors[i].owner!=owner)continue;
+        if(i==PART_COLORS)i=empty;
+        if(i<0)continue;
+        lab_part_colors[i].dobj=dobj;lab_part_colors[i].rgb=(u32)rgb;
+        lab_part_colors[i].owner=owner;lab_part_colors[i].mode=PART_CTL_TINT;
+        lab_part_colors[i].slot=fp->player_id;
+        if(i>=lab_part_colors_hi)lab_part_colors_hi=i+1;
+    }
 }

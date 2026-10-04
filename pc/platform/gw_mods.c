@@ -36,6 +36,7 @@ typedef struct gw_mod {
     char kind[16];
     char pack[32];
     char desc[GW_MODS_TEXT_MAX];
+    char autostart[160];
     char hash[80];
     char requires_text[GW_MODS_TEXT_MAX];
     char req[GW_MODS_LIST_MAX][GW_MODS_ID_MAX];
@@ -202,6 +203,7 @@ static void mod_set_field(gw_mod *m, const char *key, const char *val) {
     else if (strcmp(key, "kind") == 0) copy_str(m->kind, sizeof m->kind, val);
     else if (strcmp(key, "pack") == 0) copy_str(m->pack, sizeof m->pack, val);
     else if (strcmp(key, "description") == 0) copy_str(m->desc, sizeof m->desc, val);
+    else if (strcmp(key, "autostart") == 0) copy_str(m->autostart, sizeof m->autostart, val);
     else if (strcmp(key, "hash") == 0) copy_str(m->hash, sizeof m->hash, val);
     else if (strcmp(key, "id") == 0 && _stricmp(val, m->id) != 0) {
         gw_log("gw: mods: %s/mod.json says id \"%s\" - the folder name wins", m->id, val);
@@ -786,6 +788,7 @@ const char *gw_Mods_Version(int i) { MOD_STR(version); }
 const char *gw_Mods_Kind(int i) { MOD_STR(kind); }
 const char *gw_Mods_Pack(int i) { MOD_STR(pack); }
 const char *gw_Mods_Description(int i) { MOD_STR(desc); }
+const char *gw_Mods_Autostart(int i) { MOD_STR(autostart); }
 const char *gw_Mods_Requires(int i) { MOD_STR(requires_text); }
 const char *gw_Mods_StatusText(int i) { MOD_STR(status_text); }
 const char *gw_Mods_PayloadDir(int i) { MOD_STR(payload); }
@@ -930,6 +933,20 @@ static gw_mods_set *t_set(void) {
 static int t_status(gw_mods_set *s, const char *id) {
     int i = set_find(s, id);
     return i >= 0 ? s->mod[i].status : -1;
+}
+
+static int test_mods_autostart(void) {
+    gw_mod m;
+    memset(&m, 0, sizeof m);
+    if (mod_parse_json(&m, "{\"kind\":\"script\",\"autostart\":\"maze=7,12\"}") ||
+        strcmp(m.autostart, "maze=7,12")) {
+        gw_test_fail("mod autostart declaration did not survive JSON parsing"); return 1;
+    }
+    memset(&m, 0, sizeof m);
+    if (mod_parse_json(&m, "{\"autostart\":{\"mission\":\"ignored\"}}") || m.autostart[0]) {
+        gw_test_fail("non-string autostart must remain absent"); return 1;
+    }
+    return 0;
 }
 
 static int test_mods_scan_and_json(void) {
@@ -1119,6 +1136,7 @@ static int test_mods_fingerprint_and_diff(void) {
 }
 
 void gw_mods_tests_register(void) {
+    gw_test_register("mods_autostart", test_mods_autostart);
     gw_test_register("mods_scan_and_json", test_mods_scan_and_json);
     gw_test_register("mods_resolve", test_mods_resolve);
     gw_test_register("mods_engine", test_mods_engine);

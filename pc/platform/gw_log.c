@@ -46,7 +46,10 @@
  * crash-<time>-full.log. A fault after "window closed, shutting down" is marked "during shutdown:
  * yes": the launcher neither alarms the player nor uploads those. */
 #include "gw.h"
+#include "gw_hang.h"
 #include "gw_test.h"
+#include "gw_profiler.h"
+#include "gw_disc_privacy.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -102,6 +105,9 @@ static const char *const gl_name[GL_COUNT] = {"core", "scene", "pad", "net", "re
 
 static INIT_ONCE gl_once = INIT_ONCE_STATIC_INIT;
 static CRITICAL_SECTION gl_cs;
+#ifdef _WIN32
+static HANDLE gl_append;
+#endif
 
 static struct {
   int state;                /* 0 = not configured, 1 = configuring, 2 = ready */
@@ -322,15 +328,35 @@ static void gl_describe(char *out, size_t cap) {
 /* ---- the sink ------------------------------------------------------------------------------ */
 
 static void gl_write(const char *s) {
+  char private_line[8192], stamped[8192];
+  gw_disc_clean(private_line,sizeof private_line,s);
+  snprintf(stamped, sizeof stamped, "[frame=%u ms=%llu] %s", gw_prof_log_frame(),
+           GetTickCount64() - gl.t0, private_line);
+  s=stamped;
+  gw_hang_log_time();
   fputs(s, stdout);
   fputc('\n', stdout);
   fflush(stdout);
+#ifdef _WIN32
+  /* The watchdog appends with an independent handle even when this thread owns
+   * gl_cs. FILE_APPEND_DATA prevents a stale stdio cursor overwriting evidence. */
+  if (!gl_append) gl_append = CreateFileA("melee-pc.log", FILE_APPEND_DATA,
+      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, CREATE_ALWAYS,
+      FILE_ATTRIBUTE_NORMAL, NULL);
+  if (gl_append != INVALID_HANDLE_VALUE) {
+    char line[4096]; DWORD done;
+    snprintf(line, sizeof line, "%s\r\n", s);
+    WriteFile(gl_append, line, (DWORD)strlen(line), &done, NULL);
+    FlushFileBuffers(gl_append);
+  }
+#else
   if (gl.file == NULL) gl.file = fopen("melee-pc.log", "w");
   if (gl.file != NULL) {
     fputs(s, gl.file);
     fputc('\n', gl.file);
     fflush(gl.file);
   }
+#endif
   gl_copy(gl.tail[gl.ntail % GL_TAIL], GL_LINE, s);
   ++gl.ntail;
 }
@@ -359,10 +385,8 @@ static void gl_snoop(const char *s, int cat) {
     const char *p = s + strlen("gw: disc image ");
     const char *id = strstr(p, ", disk id ");
     if (id != NULL) {
-      size_t n = (size_t)(id - p);
-      if (n >= sizeof gl.disc_path) n = sizeof gl.disc_path - 1;
-      memcpy(gl.disc_path, p, n);
-      gl.disc_path[n] = '\0';
+      const char *disc = gw_iso_path();
+      gl_copy(gl.disc_path, sizeof gl.disc_path, disc != NULL ? disc : "");
       gl_copy(gl.disc_id, sizeof gl.disc_id, id + strlen(", disk id "));
     }
   }
@@ -597,6 +621,8 @@ static char gl_user[64];    /* %USERNAME% */
 static char gl_profile[MAX_PATH]; /* %USERPROFILE% */
 
 static void rep_raw(const char *s) {
+  char private_line[8192];
+  gw_disc_clean(private_line,sizeof private_line,s);s=private_line;
   size_t n = strlen(s);
   if (gl_nrep + n + 1 >= GL_REPORT_MAX) n = GL_REPORT_MAX - 1 - gl_nrep;
   memcpy(gl_rep + gl_nrep, s, n);
@@ -636,12 +662,13 @@ static void gl_sanitize(const char *in, char *out, size_t cap) {
 }
 
 static void rep(const char *fmt, ...) {
-  char raw[1024], clean[1200];
+  char raw[1024], clean[1200], private_line[1200];
   va_list ap;
   va_start(ap, fmt);
   vsnprintf(raw, sizeof raw, fmt, ap);
   va_end(ap);
-  gl_sanitize(raw, clean, sizeof clean);
+  gw_disc_clean(private_line,sizeof private_line,raw);
+  gl_sanitize(private_line, clean, sizeof clean);
   rep_raw(clean);
 }
 
@@ -692,9 +719,6 @@ static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *s
   rep("build id:        %08lX (melee-pc.exe link time)\n", (unsigned long)gl_link_stamp());
   {
     char title[0x41] = "";
-    const char *base = gw_path_separator(gl.disc_path);
-    const char *base2 = strrchr(gl.disc_path, '/');
-    if (base2 != NULL && (base == NULL || base2 > base)) base = base2;
     f = gl.disc_path[0] != '\0' ? fopen(gl.disc_path, "rb") : NULL;
     if (f != NULL) {
       if (fseek(f, 0x20, SEEK_SET) == 0 && fread(title, 1, 0x40, f) == 0x40) title[0x40] = '\0';
@@ -702,7 +726,7 @@ static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *s
       fclose(f);
     }
     rep("disc:            %s \"%s\" (%s)\n", gl.disc_id[0] ? gl.disc_id : "?", title,
-        base != NULL ? base + 1 : gl.disc_path[0] ? gl.disc_path : "no disc yet");
+        gl.disc_path[0] ? "<disc>" : "no disc yet");
   }
   rep("mods mounted:    %s\n", gl.mods[0] != '\0' ? gl.mods : "none");
   settings[0] = '\0';

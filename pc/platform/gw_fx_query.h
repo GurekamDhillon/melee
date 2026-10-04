@@ -20,6 +20,9 @@ typedef struct GwFxLabQuery {
 int gw_Fx_LabPlay(const char *package, int jobj, int script, int port, int joint,
                  int frame, int facing, float x, float y, float z, float scale, unsigned seed);
 int gw_Fx_LabControl(int handle, int script, int emitter, const float values[7], int frames);
+int gw_Fx_LabWorld(const char *package, int script, int frame,
+                   float x, float y, float z, float scale, unsigned seed);
+int gw_Fx_LabMove(int handle, int script, float x, float y, float z);
 int gw_Fx_LabEnd(int handle, int script, int fade_frames);
 int gw_Fx_LabQuery(int handle, int script, GwFxLabQuery *out);
 #endif

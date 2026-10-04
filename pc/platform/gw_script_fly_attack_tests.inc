@@ -10,7 +10,7 @@ static int test_script_fly_attack(void) {
                "assert(not pcall(gd.fly_target,0,0,0)); "
                "assert(not pcall(gd.fly_target,1,0/0,0)); "
                "assert(not pcall(gd.fly_target,1,0,math.huge)); "
-               "assert(not pcall(gd.fly_target,1,10001,0)); "
+               "assert(not pcall(gd.fly_target,1,49001,0)); "
                "assert(not pcall(gd.fly_attack,7,true)); "
                "assert(not pcall(gd.fly_attack,1,'on')); "
                "assert(not pcall(gd.fly_attack,1,true,31,6)); "

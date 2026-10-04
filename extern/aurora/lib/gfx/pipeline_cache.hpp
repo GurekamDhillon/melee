@@ -42,5 +42,7 @@ void wait_pipeline(PipelineRef ref);
 // Records AURORA_PIPELINE_TAG_MUST_DRAW on the config behind `ref` (persisted with the cache), so
 // aurora_prewarm_tagged_pipelines can build it ahead of the next scene that may draw it.
 void tag_pipeline_must_draw(PipelineRef ref);
+bool pipeline_warm_capturing();
+void pipeline_warm_record(PipelineRef ref);
 
 } // namespace aurora::gfx

@@ -18,6 +18,9 @@
                                     int arg2, int arg3, int arg4, int arg5,
                                     bool arg6);
 /* 05B334 */ void mpIsland_8005B334(int arg0, int arg1, int arg2, bool arg3);
+#if defined(TARGET_PC)
+void mpIsland_ScriptBatch(const u8* dirty, int count);
+#endif
 /* 3B73E8 */ extern mpIsland_Palette const mpIsland_TerrainPalette;
 /* 458E88 */ extern struct mpIsland_80458E88_t mpIsland_80458E88;
 

@@ -18,6 +18,7 @@ each `gw_*.c` is that file's design note and is kept current; start there, not i
 | `gw_mods.c`, `gw_uigen.c` | mod discovery and the m-ex CSS/SSS entries |
 | `gw_kit.c`, `gw_overlay.cpp`, `gw_console.cpp` | the script-side kit drawing, the F9 panel, the console UI |
 | `gc_adapter.c` | the raw GameCube adapter reader (bypasses SDL); `shim_pad.c` merges it with SDL pads |
+| `gw_controls_model.h`, `gw_controls_runtime.inc` | local physical-input remapping, included by `shim_pad.c` before script pads; profiles in settings.cfg, menu-only original START+B restore; no local profile reads in simulation |
 | `gw_test*.c`, `gw_tests_core.c`, `gw_net_tests.c` | headless tests (`run.sh --test`) |
 
 ## Rules
@@ -28,8 +29,8 @@ each `gw_*.c` is that file's design note and is kept current; start there, not i
   return scalars only; floats cross as bit patterns.
 - **Gameplay writes fork the LAB timeline.** Anything that changes game state from a script goes
   through `gs_require_gameplay` / `gs_require_offline` and `gs_rw_branch()` (see `l_set_percent`).
-  Writes during a netplay session are refused unless the script is `rollback_safe`, never from the
-  console.
+  Writes during netplay/rollback are refused for every Lua script and the console.
+  `rollback_safe` is retained metadata, not a permission: script mutations are not replayed.
 - **Rewind exactness.** Native state the simulation reads must be in the per-frame log
   (`gs_log`: pads, voice handles) or the snapshot; the exactness test is `gd.rewind_test`. A
   native helper called from the game must leave no state behind (`mpCheckFloor` clears its own

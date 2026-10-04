@@ -3421,7 +3421,9 @@ void fn_8016719C(s32 slot, s32 subchar)
          * player among the present slots and looks the stage up in a per-stage neutral respawn
          * table, so players respawn at balanced positions. Opt-in: MELEE_MEX=neutral_respawn. */
         extern int Mex_Enabled(const char *);
-        if (Mex_Enabled("neutral_respawn") && !gm_IsCurrently1PMode_inline() && slot < 5) {
+        if (Mex_Enabled("neutral_respawn") && !gm_IsCurrently1PMode_inline() && slot < 5 &&
+            Player_GetPlayerSlotType(4)==Gm_PKind_NA &&
+            Player_GetPlayerSlotType(5)==Gm_PKind_NA) {
             static const s8 neutral_respawn_table[][5] = {
                 { 0x20, 0, 1, 2, 3 }, /* Final Destination */
                 { 0x1F, 2, 3, 0, 1 }, /* Battlefield */

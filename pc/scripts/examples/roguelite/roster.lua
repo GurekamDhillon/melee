@@ -57,6 +57,12 @@ end
 local function add(v,id,x,y,w,h,label,action)
  local c={id=id,x=x,y=y,w=w,h=h,label=label,action=action};v.controls[#v.controls+1]=c;return c
 end
+local function layout()
+ local area=gd and gd.safe_area and gd.safe_area() or nil
+ local width=area and tonumber(area.w) or 640
+ if not width or width<640 or width~=width then width=640 end
+ return {x=area and tonumber(area.x) or 0,y=area and tonumber(area.y) or 0,sx=width/640,w=width}
+end
 function R.view(s,ctx)
  local v={controls={},choice=R.validate(s.choice) or {id='falco',costume=0}}
  for i,e in ipairs(R.list) do
@@ -72,6 +78,8 @@ function R.view(s,ctx)
  add(v,'costume:next',181,362,143,30,'COSTUME >',{kind='costume',delta=1})
  add(v,'accept',26,427,285,32,'USE FIGHTER / '..v.choice.costume,{kind='fighter_selected',fighter=v.choice})
  add(v,'back',324,427,289,32,'BACK TO COLLECTION',{kind='fighter_back'})
+ local a=layout();v.canvas={x=a.x,y=a.y,w=a.w,h=480}
+ for _,c in ipairs(v.controls) do c.x=a.x+c.x*a.sx;c.y=a.y+c.y;c.w=c.w*a.sx end
  return v
 end
 function R.update(s,ctx,input)
@@ -100,14 +108,15 @@ function R.update(s,ctx,input)
  else return a end
 end
 local function text(x,y,value,role,color,w)
- gd.kit.text(x,y,value,role or 'caption',color or 'bone','left',{max_w=w or 588,shear=0})
+ local a=layout()
+ gd.kit.text(a.x+x*a.sx,a.y+y,value,role or 'caption',color or 'bone','left',{max_w=(w or 588)*a.sx,shear=0})
 end
 function R.draw(s,ctx)
- local v=R.view(s,ctx)
- gd.fill(0,0,640,480,0x030712ea);gd.kit.panel(14,17,612,450,{piece=12})
- gd.kit.icon('rogue_assault',27,30,.65,'gold');text(61,52,'CHOOSE FIGHTER / COSTUME','label','gold',550)
+ local v=R.view(s,ctx);local a=layout()
+ gd.fill(a.x,a.y,a.w,480,0x030712ea);gd.kit.panel(a.x+14*a.sx,a.y+17,612*a.sx,450,{piece=12})
+ gd.kit.icon('rogue_assault',a.x+27*a.sx,a.y+30,.65,'gold');text(61,52,'CHOOSE FIGHTER / COSTUME','label','gold',550)
  text(27,78,v.coverage or '26 STOCK SELECTIONS / GENES USE THE SAME RULES','caption','muted')
- gd.fill(26,87,588,1,0xf0b429ff)
+ gd.fill(a.x+26*a.sx,a.y+87,588*a.sx,1,0xf0b429ff)
  for _,c in ipairs(v.controls) do gd.kit.button(c.x,c.y,c.w,c.label,s.focus==c.id or c.selected,{h=c.h}) end
  text(338,382,v.name,'caption','gold',274)
  text(27,407,v.note,'caption','muted',586)

@@ -1,8 +1,11 @@
+#include "gw_profiler.h"
 /* PAD shims.
  *
  * Aurora implements the pad layer on SDL3, so most of these forward. PADStatus is 16 bytes in
  * both trees under TARGET_PC, so the arrays the game passes cross unchanged. */
 #include "gw.h"
+#include "gw_hang.h"
+#include "gc_adapter_policy.h"
 #include "gw_overlay.h"
 #include "shim_vi.h"
 
@@ -164,31 +167,15 @@ static int gw_input_mode(void) {
   return cached;
 }
 
-/* MELEE_PAD_RELEASE_ON_BLUR (env) / pad_release_on_blur (settings.cfg): 1 (default) = when the
- * window goes to the background, let go of the GameCube adapter so another program (Dolphin, a
- * second copy of the game) can use it, and take it back on focus. 0 = keep it claimed, as Dolphin
- * itself does. Never released during a netplay session. */
-static int gw_pad_release_on_blur(void) {
-  static int cached = -1;
-  if (cached < 0) {
-    char v[8];
-    const char *from = gw_pad_setting("MELEE_PAD_RELEASE_ON_BLUR", "pad_release_on_blur", v,
-                                      sizeof v);
-    cached = from != NULL ? (v[0] != '0') : 1;
-    gw_log("gw: pad: release the GC adapter when unfocused: %s (%s)", cached ? "on" : "off",
-           from != NULL ? from : "default");
-  }
-  return cached;
-}
-
+/* Raw adapter ownership always follows the foreground interactive window.
+ * MELEE_PAD_RELEASE_ON_BLUR=0 and netplay cannot reserve it in the background. */
 int gw_PADInit(void) {
   int ret;
 
   gw_pad_diag_level();
   /* Claim the adapter before Aurora brings SDL's joystick subsystem up. SDL's HIDAPI GameCube
    * driver opens the same device, and whichever side gets there first locks the other out. */
-  if (gw_input_mode() != GW_INPUT_NONE) {
-    gw_pad_release_on_blur();
+  if (gw_input_mode() != GW_INPUT_NONE && !gw_gc_forbidden()) {
     gw_gc_adapter_init();
     gw_gc_adapter_start_hotplug(); /* plugged in later, or moved to another port: picked up */
   }
@@ -200,7 +187,6 @@ int gw_PADInit(void) {
 static int gw_focus_have = 1;
 static DWORD gw_focus_lost_at;
 static int gw_focus_released;
-static int gw_focus_kept_logged;
 
 /* shim_vi.c, on SDL_EVENT_WINDOW_FOCUS_LOST / _GAINED. */
 void gw_pad_focus_event(int focused) {
@@ -211,7 +197,6 @@ void gw_pad_focus_event(int focused) {
   gw_focus_have = focused;
   if (!focused) {
     gw_focus_lost_at = GetTickCount();
-    gw_focus_kept_logged = 0;
   }
 }
 
@@ -220,20 +205,12 @@ void gw_pad_focus_event(int focused) {
  * a gain acts at once. */
 void gw_pad_focus_tick(void) {
   int want;
-  if (gw_input_mode() == GW_INPUT_NONE || !gw_pad_release_on_blur()) {
+  if (gw_input_mode() == GW_INPUT_NONE || gw_gc_forbidden()) {
     return;
   }
   want = 0;
   if (!gw_focus_have && GetTickCount() - gw_focus_lost_at >= 100u) {
-    if (gw_Netplay_SessionActive()) {
-      if (!gw_focus_kept_logged) {
-        gw_focus_kept_logged = 1;
-        gw_log("gw: pad: window unfocused during a netplay match - GC adapter kept "
-               "(the match needs input in the background)");
-      }
-    } else {
-      want = 1;
-    }
+    want = 1; /* foreground interactive owner wins, including during netplay */
   }
   if (want && !gw_focus_released) {
     gw_focus_released = 1;
@@ -244,14 +221,11 @@ void gw_pad_focus_tick(void) {
   }
 }
 
-/* MELEE_PAD_IGNORE_ADAPTER=1 drops the raw GC adapter's contribution, so only the
- * script/live input drives the pad. Useful when a plugged-in controller drifts or
- * holds a button and would otherwise fight the scripted input. */
+/* Ignore/unattended prevents raw device opens as well as controller input. */
 static int gw_pad_ignore_adapter(void) {
   static int cached = -1;
   if (cached < 0) {
-    const char *v = getenv("MELEE_PAD_IGNORE_ADAPTER");
-    cached = (v != NULL && v[0] == '1') ? 1 : 0;
+    cached = gw_gc_forbidden();
     if (gw_input_mode() == GW_INPUT_NONE) {
       cached = 1;
     }
@@ -583,6 +557,8 @@ static void gw_pad_apply_deadzone(const int *src) {
   }
 }
 
+#include "gw_controls_runtime.inc"
+
 /* The first boot's visit to SETTINGS > CONTROLS: once, when settings.cfg has no onboarded=1, and
  * never for a run somebody automated (a scene launch, a pad script, MELEE_NO_ONBOARD=1). */
 int gw_Onboard_Pending(void) {
@@ -604,7 +580,17 @@ void gw_Onboard_Done(void) {
   gw_Settings_SetInt("onboarded", 1);
 }
 
+int gw_PADRead_profile_body(void *status);
 int gw_PADRead(void *status) {
+    gw_hang_shim("PADRead");
+    int result;
+    gw_prof_begin(GW_PROF_INPUT, 0);
+    result = gw_PADRead_profile_body(status);
+    gw_prof_end();
+    return result;
+}
+
+int gw_PADRead_profile_body(void *status) {
   PADStatus *st = (PADStatus *)status;
   PADStatus adp[PAD_CHANMAX];
   int src[PAD_CHANMAX];
@@ -685,6 +671,8 @@ int gw_PADRead(void *status) {
     src[0] = GW_SRC_IDLE;
   }
 
+  ctl_poll(st, src);
+
   /* Scripted and live input take precedence over the adapter. */
   script_driven = gw_Script_PadApply(st);
   for (i = 0; i < PAD_CHANMAX; ++i) {
@@ -732,7 +720,8 @@ void gw_PADSetSpec(int spec) { PADSetSpec((u32)spec); }
 
 void gw_PADControlMotor(int chan, int cmd) {
   /* PAD_MOTOR_STOP = 0, PAD_MOTOR_RUMBLE = 1, PAD_MOTOR_STOP_HARD = 2. */
-  if (gw_gc_adapter_present()) {
+  if (chan >= 0 && chan < 4 && ctl[chan].connected && !ctl[chan].map.rumble && cmd == 1) cmd = 0;
+  if (chan >= 0 && chan < 4 && ctl[chan].connected && ctl[chan].source == GW_SRC_ADAPTER) {
     gw_gc_adapter_rumble(chan, cmd == 1);
     return;
   }
@@ -749,6 +738,13 @@ void gw_PADSetSamplingRate(int rate) {
 
 /* ---- tests (run.sh --test) ------------------------------------------------------------------ */
 #include "gw_test.h"
+#include "gw_controls_tests.inc"
+
+static int test_controls_mapping(void) {
+  int line = controls_model_check();
+  if (line) gw_test_fail("controls model check line %d", line);
+  return line != 0;
+}
 
 static int test_pad_connected_sources(void) {
   int src[PAD_CHANMAX] = { GW_SRC_NONE, GW_SRC_NONE, GW_SRC_NONE, GW_SRC_NONE };
@@ -784,6 +780,7 @@ static int test_pad_really_used_thresholds(void) {
 void gw_pad_tests_register(void) {
   extern void gw_gc_adapter_tests_register(void);
   gw_gc_adapter_tests_register();
+  gw_test_register("controls_mapping", test_controls_mapping);
   gw_test_register("pad_connected_sources", test_pad_connected_sources);
   gw_test_register("pad_really_used_thresholds", test_pad_really_used_thresholds);
 }

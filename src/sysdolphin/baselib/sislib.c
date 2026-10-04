@@ -488,6 +488,36 @@ void fn_803A60EC(void* gobj)
     }
 }
 
+#if defined(TARGET_PC)
+static void sislib_WideCamera(HSD_GObj* gobj, int pass)
+{
+    extern int View_AspectBits(void);
+    union { int i; float f; } aspect;
+    float width, left;
+    aspect.i = View_AspectBits();
+    width = 480.0F * aspect.f;
+    left = (640.0F - width) * 0.5F;
+    HSD_CObjSetOrtho(gobj->hsd_obj, 0.0F, -480.0F, left, left + width);
+    HSD_GObj_803910D8(gobj, pass);
+}
+
+void HSD_SisLib_SetWideCanvas(int font_idx, int canvas)
+{
+    sislib_UnkAlloc3* entry = HSD_SisLib_804D797C;
+    int index = 0;
+    while (entry != NULL) {
+        if (entry->xA == font_idx && index++ == canvas) {
+            if (entry->x4 != NULL) {
+                /* Already linked: replacing the callback must not relink it. */
+                entry->x4->render_cb = sislib_WideCamera;
+            }
+            return;
+        }
+        entry = entry->x0;
+    }
+}
+#endif
+
 int HSD_SisLib_803A611C(int font_idx, HSD_GObj* parent_gobj, u16 class_id,
                         u8 p_link, u8 p_prio, u8 gx_link, u8 gx_prio,
                         u32 render_prio)

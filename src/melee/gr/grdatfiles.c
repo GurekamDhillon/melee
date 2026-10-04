@@ -143,11 +143,21 @@ UnkArchiveStruct* grDatFiles_801C62B4(void)
 
 UnkArchiveStruct* grDatFiles_GetArchive(void)
 {
+#ifdef TARGET_PC
+    extern UnkArchiveStruct* ScriptGame_StageSlotArchive(int);
+    UnkArchiveStruct* slot = ScriptGame_StageSlotArchive(0);
+    if (slot != NULL) return slot;
+#endif
     return grDatFiles_8049EE10;
 }
 
 UnkArchiveStruct* grDatFiles_801C6330(s32 arg0)
 {
+#ifdef TARGET_PC
+    extern UnkArchiveStruct* ScriptGame_StageSlotArchive(int);
+    UnkArchiveStruct* slot_archive = ScriptGame_StageSlotArchive(arg0);
+    if (slot_archive != NULL) return slot_archive;
+#endif
     if (arg0 >= 0) {
         s32 i;
         for (i = 0; i < 4; i++) {

@@ -4,7 +4,7 @@
  *
  * ---- THE LAYOUT + MOTION PLAYER ------------------------------------------------------------
  *
- * Plays the art pipeline's screen format (C:/Users/Gurek/Desktop/menu, pipeline/hub.py and
+ * Plays the art pipeline's screen format (<home>/Desktop/menu, pipeline/hub.py and
  * hub_motion.py; the contract is out_hub/hub_layout.json + hub_motion.json):
  *
  *   LAYOUT  quads with explicit vertices in 640x480 (y down): flat (colour) or textured (a white
@@ -400,6 +400,10 @@ typedef struct FpQuad {
     s8 tex;   ///< FpTex index, -1 none/missing
     s8 joint; ///< the joint that draws it, -1 none
     bool has_colour;
+    bool canvas_band; ///< backdrop rhythm translates without stretching
+    u8 canvas_edge; ///< 1 stretch, 2 left, 3 right, 4 right endpoint
+    bool canvas_exit; ///< translate a toast off the actual canvas, including text
+    float canvas_x0, canvas_x1, canvas_y0, canvas_y1; ///< unsheared parent bounds for edge anchoring
     bool late;     ///< drawn after everything else (the toast over the description strip)
     float v[4][2]; ///< TL TR BR BL at rest
     float uv[4];   ///< u0 v0 u1 v1
@@ -411,7 +415,10 @@ typedef struct FpQuad {
     bool hollow;
     /* FPK_TEXT */
     const char* text;
-    char textbuf[64]; ///< the fitted string (the fit rule may truncate it)
+    char textbuf[FE_HELP_STR]; ///< fitted text; full host help reaches the width/ellipsis rule
+    bool fit_desc; ///< description slot follows the canvas, not the row width
+    float desc_fit_width;
+    char desc_source[FE_HELP_STR]; ///< retain the original through shrink/grow refits
     s8 ff_role;       ///< atlas role, -1 = SisLib
     float ax, ay;     ///< unsheared baseline anchor
     float text_h;  ///< cap height in 640x480 units
@@ -1639,6 +1646,25 @@ static int fp_screen_in_length(void)
 
 /* ---- evaluation and drawing -------------------------------------------------------------- */
 
+/* Scale the whole active horizontal travel curve, including its slopes and
+ * delayed hold, rather than switching scale part-way through a slide. */
+static float fp_view_translation(FpChan* ch, int f)
+{
+    int i, k;
+    float value = fp_value(ch, f);
+    for (i = ch->n - 1; i >= 0; i--) {
+        FpPlay* p = &ch->play[i];
+        if (p->start > f) continue;
+        for (k = 0; k < p->n; k++) {
+            if (p->k[k].v <= -FE_W * 0.5F || p->k[k].v >= FE_W * 0.5F) {
+                return value * (1.0F + 2.0F * fe_canvas_extra() / FE_W);
+            }
+        }
+        break;
+    }
+    return value;
+}
+
 static void fp_evaluate(int f)
 {
     int i, k, c;
@@ -1647,7 +1673,7 @@ static void fp_evaluate(int f)
         float sx = fp_value(fp_jch(i, FJC_SCA_X), f);
         float sy = fp_value(fp_jch(i, FJC_SCA_Y), f);
         float r = fp_value(fp_jch(i, FJC_RECOIL), f) * fp.recoil_px;
-        float tx = fp_value(fp_jch(i, FJC_TRA_X), f) + r * j->recoil_dir[0];
+        float tx = fp_view_translation(fp_jch(i, FJC_TRA_X), f) + r * j->recoil_dir[0];
         float ty = fp_value(fp_jch(i, FJC_TRA_Y), f) + r * j->recoil_dir[1];
         float px = j->has_pivot ? j->pivot[0] : 0.0F;
         float py = j->has_pivot ? j->pivot[1] : 0.0F;
@@ -1780,6 +1806,17 @@ static void fp_draw_quad(int i)
         return;
     }
     q = &fp.q[i];
+    {
+        static FpQuad exit_quad;
+        if (q->canvas_exit && q->joint >= 0) {
+            float travel = fp_value(fp_jch(q->joint, FJC_TRA_X), fp.frame) / 600.0F;
+            int k;
+            exit_quad = *q;
+            for (k = 0; k < 4; k++)
+                exit_quad.w[k][0] += 2.0F * fe_canvas_extra() * travel;
+            q = &exit_quad;
+        }
+    }
     if (q->wa <= 0.01F) {
         return;
     }
@@ -1803,10 +1840,27 @@ static void fp_draw_quad(int i)
         }
         return;
     }
-    if (q->kind == FPK_PANEL) {
-        fe_panel_draw(q, c);
-    } else {
-        fp_flat(q->w, c);
+    {
+        FpQuad wide = *q;
+        int k;
+        /* Quad metadata, shared by solid and sliced chrome. Overdraw absorbs shear. */
+        float shear0 = (fp.shear_y0 - q->canvas_y0) * fp.shear_s;
+        float shear1 = (fp.shear_y0 - q->canvas_y1) * fp.shear_s;
+        float dl = fe_canvas_left() - 8.0F - q->canvas_x0 - (shear0 > shear1 ? shear0 : shear1);
+        float dr = fe_canvas_left() + fe_canvas_width() + 8.0F - q->canvas_x1 - (shear0 < shear1 ? shear0 : shear1);
+        if (q->canvas_band) { dl = -fe_canvas_extra(); dr = fe_canvas_extra(); }
+        for (k = 0; k < 4; k++) {
+            float d = q->canvas_edge == 2 ? dl : q->canvas_edge == 3 ? dr :
+                      q->canvas_edge == 1 ? ((k == 0 || k == 3) ? dl : dr) :
+                      q->canvas_edge == 4 && (k == 1 || k == 2) ? dr : 0.0F;
+            wide.w[k][0] += d;
+        }
+        if (q->kind == FPK_PANEL && q->canvas_edge == 1) {
+            wide.v[1][0] += dr - dl;
+            wide.v[2][0] += dr - dl;
+        }
+        if (q->kind == FPK_PANEL) fe_panel_draw(&wide, c);
+        else fp_flat(wide.w, c);
     }
 }
 
@@ -1820,10 +1874,10 @@ static void fp_draw(void)
         return;
     }
     hsd_80391A04(1.0F, 1.0F, 1);
-    bg[0][0] = -8; bg[0][1] = -8;
-    bg[1][0] = 648; bg[1][1] = -8;
-    bg[2][0] = 648; bg[2][1] = 488;
-    bg[3][0] = -8; bg[3][1] = 488;
+    bg[0][0] = fe_canvas_left() - 8; bg[0][1] = -8;
+    bg[1][0] = fe_canvas_left() + fe_canvas_width() + 8; bg[1][1] = -8;
+    bg[2][0] = fe_canvas_left() + fe_canvas_width() + 8; bg[2][1] = 488;
+    bg[3][0] = fe_canvas_left() - 8; bg[3][1] = 488;
     clear.r = fp_u8(fp.clear[0]);
     clear.g = fp_u8(fp.clear[1]);
     clear.b = fp_u8(fp.clear[2]);

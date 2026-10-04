@@ -35,6 +35,7 @@ enum {
     LAB_F_SHIELD_X,      /* the shield bubble as the game has it this frame (shield_hit.pos, .size) (stage D) */
     LAB_F_SHIELD_Y,
     LAB_F_SHIELD_R,
+    LAB_F_FLOOR_Y,      /* supporting floor at the fighter's ECB bottom x */
     LAB_F_COUNT
 };
 
@@ -64,6 +65,12 @@ enum {
     LAB_I_LR_AGE,         /* fp->x67F: frames since L / R / Z was pressed (255 = none); the L-cancel reads it (stage D) */
     LAB_I_JUMP_AGE,       /* fp->x67E: frames since X / Y was pressed (255 = none) (stage D) */
     LAB_I_SHIELD_ON,      /* fp->x221B_b0: the shield bubble is up (ftColl_8007B1B8) (stage D) */
+    LAB_I_ON_FLOOR,
+    LAB_I_FLOOR_VALID,    /* floor_y can be read without an invalid line lookup */
+    LAB_I_FLOOR_PASSTHROUGH,
+    LAB_I_WALL,           /* -1 left, +1 right, 0 none (left wins if squeezed) */
+    LAB_I_CEILING,
+    LAB_I_LEDGE,          /* CliffCatch / CliffWait, not merely a grab opportunity */
     LAB_I_COUNT
 };
 

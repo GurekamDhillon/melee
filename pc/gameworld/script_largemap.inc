@@ -34,26 +34,108 @@ int ScriptGame_AreaBegin(int owner)
     for (i = 0; i < SCRIPT_STAGE_AREAS && script_stage.area[i].owner; ++i) {}
     if (i == SCRIPT_STAGE_AREAS) return -2;
     script_stage.area[i].owner = owner;
+    script_stage.area[i].state = 2;
     for (j = 0; j < 48; ++j) script_stage.area[i].name[j] = Script_AreaNameByte(j);
     script_stage.loading_area = i + 1;
+    mpScriptBatchBegin();
     OSReport("largemap: area load %s owner=%d slot=%d\n", script_stage.area[i].name, owner, i + 1);
     return i + 1;
+}
+
+int ScriptGame_AreaPrepare(int owner, int handle)
+{
+    int area = ScriptGame_AreaBegin(owner);
+    if (area > 0) {
+        script_stage.area[area - 1].state = 1;
+        script_stage.area[area - 1].handle = handle;
+    }
+    return area;
+}
+
+int ScriptGame_AreaHandle(int owner)
+{
+    int area = ScriptGame_AreaFind(owner);
+    return area ? script_stage.area[area - 1].handle : 0;
+}
+
+int ScriptGame_AreaStatus(int owner, int handle)
+{
+    int i;
+    for (i = 0; handle > 0 && i < SCRIPT_STAGE_AREAS; ++i)
+        if (script_stage.area[i].owner == owner && script_stage.area[i].handle == handle)
+            return script_stage.area[i].state;
+    return 0;
+}
+
+int ScriptGame_AreaActivate(int owner, int handle)
+{
+    int i;
+    if (script_stage.loading_area) return 0;
+    for (i = 0; handle > 0 && i < SCRIPT_STAGE_AREAS; ++i) {
+        if (script_stage.area[i].owner != owner || script_stage.area[i].handle != handle) continue;
+        if (script_stage.area[i].state != 1 && script_stage.area[i].state != 2) return 0;
+        script_stage.area[i].state = 2;
+        mpScriptInvalidateBounding(); /* O(1): avoid clearing every joint's cache */
+        OSReport("largemap: area activate %s handle=%d\n", script_stage.area[i].name, handle);
+        return 1;
+    }
+    return 0;
 }
 
 static void script_area_remove(int area)
 {
     int i;
-    for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
-        if (script_stage.instance[i].handle && script_stage.instance[i].area == area)
-            ScriptGame_ModelDespawn(script_stage.instance[i].handle);
-    for (i = 0; i < script_stage.cap; ++i)
-        if (script_stage.line[i].active && script_stage.line[i].area == area)
-            ScriptGame_StageRemove(script_stage.line[i].handle);
+    /* Gates hide both draw and collision immediately. Physical frees are bounded
+     * work in StageFrame; immutable native assets remain scene pinned. */
+    if (script_stage.area[area - 1].state == 3) return;
+    script_stage.area[area - 1].state = 3;
+    script_stage.area[area - 1].drain = 0;
+    /* Retail target items have their own simulation GObjs, outside the area
+     * geometry gate. Preserve area_load's target semantics by retiring them
+     * immediately; prepare refuses live items and legacy DAT model GObjs. */
     for (i = 0; i < SCRIPT_STAGE_TARGETS; ++i)
         if (script_stage.target[i].active && script_stage.target[i].area == area)
             ScriptGame_StageRemove(script_stage.target[i].handle);
-    OSReport("largemap: area unload %s slot=%d\n", script_stage.area[area - 1].name, area);
-    memset(&script_stage.area[area - 1], 0, sizeof script_stage.area[0]);
+    mpScriptInvalidateBounding();
+    OSReport("largemap: area retire %s slot=%d\n", script_stage.area[area - 1].name, area);
+}
+
+static void ScriptGame_AreaDrain(void)
+{
+    int a, work = 0;
+    for (a = 0; a < SCRIPT_STAGE_AREAS && work < 2; ++a) {
+        int i, area = a + 1;
+        if (script_stage.area[a].state != 3) continue;
+        mpScriptBatchBegin();
+        /* Retire at most TWO collision segments per logic frame before freeing
+         * instances. A 64-line model must not turn one drain unit into 64 frees.
+         * Cursor/references are all snapshot state. */
+        while (script_stage.area[a].drain < SCRIPT_MESH_INSTANCES + script_stage.cap + SCRIPT_STAGE_TARGETS && work < 2) {
+            i = script_stage.area[a].drain;
+            if (i < script_stage.cap) {
+                if (script_stage.line[i].active && script_stage.line[i].area == area) {
+                    if (!ScriptGame_StageRemove(script_stage.line[i].handle)) break;
+                    ++work;
+                }
+            } else if (i < SCRIPT_MESH_INSTANCES + script_stage.cap) {
+                i -= script_stage.cap;
+                if (script_stage.instance[i].handle && script_stage.instance[i].area == area) {
+                    if (!ScriptGame_ModelDespawn(script_stage.instance[i].handle)) break;
+                    ++work;
+                }
+            } else {
+                i -= SCRIPT_MESH_INSTANCES + script_stage.cap;
+                if (script_stage.target[i].active && script_stage.target[i].area == area) {
+                    if (!ScriptGame_StageRemove(script_stage.target[i].handle)) break;
+                    ++work;
+                }
+            }
+            ++script_stage.area[a].drain;
+        }
+        mpScriptBatchEnd();
+        if (script_stage.area[a].drain == SCRIPT_MESH_INSTANCES + script_stage.cap + SCRIPT_STAGE_TARGETS)
+            memset(&script_stage.area[a], 0, sizeof script_stage.area[0]);
+    }
 }
 
 void ScriptGame_AreaEnd(int success)
@@ -61,6 +143,10 @@ void ScriptGame_AreaEnd(int success)
     int area = script_stage.loading_area;
     script_stage.loading_area = 0;
     if (!success && area) script_area_remove(area);
+    if (area) mpScriptBatchEnd();
+    if (success && area)
+        OSReport("largemap: area ready %s handle=%d state=%d\n", script_stage.area[area - 1].name,
+                 script_stage.area[area - 1].handle, script_stage.area[area - 1].state);
 }
 
 int ScriptGame_AreaUnload(int owner)
@@ -83,10 +169,10 @@ int ScriptGame_StageStat(int field)
 {
     int i, n = 0;
     switch (field) {
-    case 0: for (i = 0; i < script_stage.cap; ++i) n += script_stage.line[i].active != 0; return n;
-    case 1: for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i) n += script_stage.instance[i].handle != 0; return n;
+    case 0: for (i = 0; i < script_stage.cap; ++i) n += script_stage.line[i].active && !script_area_retiring(script_stage.line[i].area); return n;
+    case 1: for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i) n += script_stage.instance[i].handle && !script_area_retiring(script_stage.instance[i].area); return n;
     case 2: return script_stage.target_remaining;
-    case 3: for (i = 0; i < SCRIPT_STAGE_AREAS; ++i) n += script_stage.area[i].owner != 0; return n;
+    case 3: for (i = 0; i < SCRIPT_STAGE_AREAS; ++i) n += script_stage.area[i].owner && script_stage.area[i].state != 3; return n;
     case 4: return script_stage.map ? script_stage.cap : 0;
     case 5: return SCRIPT_MESH_INSTANCES;
     case 6: return SCRIPT_STAGE_TARGETS;
@@ -102,7 +188,7 @@ int ScriptGame_StageStat(int field)
             ScriptGame_StageJointCapacity() * sizeof(CollJoint);
     case 10:
         for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
-            n += script_stage.instance[i].handle && script_stage.instance[i].field[SM_VISIBLE];
+            n += script_stage.instance[i].handle && ScriptGame_AreaVisible(script_stage.instance[i].area) && script_stage.instance[i].field[SM_VISIBLE];
         return n;
     default: return 0;
     }

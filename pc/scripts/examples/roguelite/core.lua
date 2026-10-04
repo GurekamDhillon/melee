@@ -34,6 +34,15 @@ function C.new_profile(s)
   -- it is separate from the gene stream seed. Legacy profiles may omit it.
   return {type='profile',id='p'..s,version=1,seed=s,world_seed=next_seed(s),next_id=4,next_run=1,genes=genes,finished={}}
 end
+-- Optional profile metadata keeps old checkpoints readable. A discarded
+-- starter falls back deterministically to a retained individual.
+function C.starting_gene(p)
+ if p.starter and p.genes[p.starter] then return p.starter end
+ if p.genes.g1 then return 'g1' end
+ local ids=sorted(p.genes)
+ for _,id in ipairs(ids) do if p.genes[id].kind=='cinder' then return id end end
+ return ids[1]
+end
 function C.new_run(p,opts)
  opts=opts or {}; assert(p.type=='profile' and p.version==1,'invalid profile')
  assert(#sorted(p.finished)<512,'finish ledger full; cannot start another run')
@@ -49,7 +58,9 @@ function C.new_run(p,opts)
   local g=copy(p.genes[k]); g.id='r'..r.next_id; g.origin=k; r.next_id=r.next_id+1; r.genes[g.id]=g
  end
  local starter={};for id,g in pairs(r.genes) do starter[g.origin]=id end
- C.equip(r,'player','assault',starter.g1); C.equip(r,'player','guard',starter.g2)
+ local chosen=starter[C.starting_gene(p)]
+ C.equip(r,'player','assault',chosen)
+ if starter.g2~=chosen then C.equip(r,'player','guard',starter.g2) end
  return r
 end
 local function active(r) return type(r)=='table' and r.type=='run' and r.status=='active' end
@@ -315,8 +326,8 @@ end
 -- Remove one gene from the permanent collection. This is the only way the
 -- collection can ever shrink, so it is deliberately conservative: it refuses a
 -- locked gene, a gene that is an ancestor of a retained gene (which would orphan
--- recorded parentage), and a discard that would empty the collection. Nothing
--- else is touched -- no other gene, no finish record, no ledger entry.
+-- recorded parentage), and a discard that would empty the collection. A finish
+-- keeps an explicit discarded-export reference after its gene leaves collection.
 function C.discard(p,id)
  if p.type~='profile' or type(id)~='string' or not p.genes[id] then return nil,'unknown gene' end
  local g=p.genes[id]
@@ -327,7 +338,11 @@ function C.discard(p,id)
   end
  end
  if #sorted(p.genes)<=1 then return nil,'collection must keep at least one gene' end
+ for _,result in pairs(p.finished) do
+  if result.export==id then result.export=nil;result.discarded_export=id end
+ end
  p.genes[id]=nil
+ if p.starter==id then p.starter=nil;p.starter=C.starting_gene(p) end
  return true
 end
 function C.finish(p,r,outcome,id,opts)
@@ -410,7 +425,7 @@ local function encode(v,depth)
  elseif type(v)=='number' then assert(finite(v),'nonfinite');return string.format('%.17g',v)
  elseif type(v)=='boolean' then return tostring(v)
  elseif type(v)=='table' then
-  assert(not getmetatable(v),'metatable');local keys={};for k in pairs(v) do assert(type(k)=='string' or (integer(k,1,16)),'bad key');keys[#keys+1]=tostring(k) end;table.sort(keys)
+  assert(not getmetatable(v),'metatable');local keys={};for k in pairs(v) do assert(type(k)=='string' or (integer(k,1,512)),'bad key');keys[#keys+1]=tostring(k) end;table.sort(keys)
   assert(#keys<=512,'too many fields');local a={};for _,k in ipairs(keys) do local value=v[k];if value==nil then value=v[tonumber(k)] end;a[#a+1]=quote(k)..':'..encode(value,depth+1) end
   return '{'..table.concat(a,',')..'}'
  end
@@ -418,28 +433,44 @@ local function encode(v,depth)
 end
 local function decode(text)
  assert(type(text)=='string' and #text<=262144,'invalid size');local pos,nodes=1,0
- local function ws() local _,b=text:find('^%s*',pos);pos=(b or pos-1)+1 end
+ local function ws() local ch=text:byte(pos);if ch==32 or (ch and ch>=9 and ch<=13) then local _,b=text:find('^%s*',pos);pos=b+1 end end
+ local escapes={['"']='"',['\\']='\\',['/']='/',b='\b',f='\f',n='\n',r='\r',t='\t'}
  local function str()
-  assert(text:sub(pos,pos)=='"','expected string');pos=pos+1;local a={}
-  while pos<=#text do local ch=text:sub(pos,pos);pos=pos+1
-   if ch=='"' then local s=table.concat(a);assert(#s<=256,'string too long');return s end
-   if ch=='\\' then local esc=text:sub(pos,pos);pos=pos+1
-    if esc=='u' then local hex=text:sub(pos,pos+3);assert(hex:match('^%x%x%x%x$'),'bad escape');local x=tonumber(hex,16);assert(x<=127,'unsupported unicode');a[#a+1]=string.char(x);pos=pos+4
-    else local map={['"']='"',['\\']='\\',['/']='/',b='\b',f='\f',n='\n',r='\r',t='\t'};assert(map[esc],'bad escape');a[#a+1]=map[esc] end
-   else assert(ch:byte()>=32,'control character');a[#a+1]=ch end
-  end;error('unterminated string')
+  assert(text:sub(pos,pos)=='"','expected string');pos=pos+1
+  local start,length,out=pos,0,nil
+  while true do
+   local stop=text:find('[%z\1-\31\\"]',pos);assert(stop,'unterminated string')
+   local run=stop-pos;length=length+run;assert(length<=256,'string too long')
+   local ch=text:sub(stop,stop)
+   if ch=='"' then
+    if not out then pos=stop+1;return text:sub(start,stop-1) end
+    if run>0 then out[#out+1]=text:sub(pos,stop-1) end
+    pos=stop+1;return table.concat(out)
+   end
+   assert(ch=='\\','control character');out=out or {}
+   if run>0 then out[#out+1]=text:sub(pos,stop-1) end
+   pos=stop+1;local esc=text:sub(pos,pos);pos=pos+1
+    if esc=='u' then local hex=text:sub(pos,pos+3);assert(hex:match('^%x%x%x%x$'),'bad escape');local x=tonumber(hex,16);assert(x<=127,'unsupported unicode');out[#out+1]=string.char(x);pos=pos+4
+    else assert(escapes[esc],'bad escape');out[#out+1]=escapes[esc] end
+   length=length+1;assert(length<=256,'string too long')
+  end
  end
  local parse
  parse=function(depth)
   nodes=nodes+1;assert(nodes<=20000 and depth<=16,'too complex');ws();local ch=text:sub(pos,pos)
   if ch=='{' then pos=pos+1;ws();local out={};local count=0;if text:sub(pos,pos)=='}' then pos=pos+1;return out end
-   while true do ws();local k=str();assert(out[k]==nil,'duplicate key');ws();assert(text:sub(pos,pos)==':','expected colon');pos=pos+1;out[k]=parse(depth+1);count=count+1;assert(count<=512,'too many fields');ws();ch=text:sub(pos,pos);pos=pos+1;if ch=='}' then return out end;assert(ch==',','expected comma') end
+   while true do ws();local k=str();assert(out[k]==nil,'duplicate key');if text:byte(pos)~=58 then ws() end;assert(text:byte(pos)==58,'expected colon');pos=pos+1;out[k]=parse(depth+1);count=count+1;assert(count<=512,'too many fields');ws();ch=text:sub(pos,pos);pos=pos+1;if ch=='}' then return out end;assert(ch==',','expected comma') end
   elseif ch=='"' then return str()
-  elseif text:sub(pos,pos+3)=='true' then pos=pos+4;return true
-  elseif text:sub(pos,pos+4)=='false' then pos=pos+5;return false
-  else local token=text:match('^[%-0-9%.eE+]+',pos);assert(token,'expected value');local mantissa,exponent=token:match('^(.-)[eE]([+-]?%d+)$');mantissa=mantissa or token
-   assert(not mantissa:find('[eE+]') and (mantissa:match('^-?%d+$') or mantissa:match('^-?%d+%.%d+$')),'bad number')
-   local unsigned=mantissa:gsub('^-','');assert(not unsigned:match('^0%d'),'leading zero');local x=tonumber(token);assert(finite(x),'bad number');pos=pos+#token;return x end
+  elseif ch=='t' then assert(text:sub(pos,pos+3)=='true','expected true');pos=pos+4;return true
+  elseif ch=='f' then assert(text:sub(pos,pos+4)=='false','expected false');pos=pos+5;return false
+  else local token=text:match('^[%-0-9%.eE+]+',pos);assert(token,'expected value')
+   if token:match('^-?%d+$') then assert(not token:match('^-?0%d'),'leading zero')
+   else
+    local mantissa=token:match('^(.-)[eE][+-]?%d+$') or token
+    assert(not mantissa:find('[eE+]') and mantissa:match('^-?%d+%.?%d*$') and not mantissa:match('%.$'),'bad number')
+    assert(not mantissa:match('^-?0%d'),'leading zero')
+   end
+   local x=tonumber(token);assert(finite(x),'bad number');pos=pos+#token;return x end
  end
  local value=parse(0);ws();assert(pos>#text,'trailing input');return value
 end
@@ -462,13 +493,37 @@ local function validate(v)
  local prefix=v.type=='profile' and 'g' or 'r';local count=0
  for id,g in pairs(v.genes) do count=count+1;validate_gene(g,id);local suffix=id:match('^'..prefix..'(%d+)$');assert(suffix and tonumber(suffix)<v.next_id,'invalid gene id') end;assert(count<=128,'too many genes')
  if v.type=='profile' then
-  fields(v,{type=true,id=true,version=true,seed=true,world_seed=true,next_id=true,next_run=true,genes=true,finished=true,history=true});assert(name(v.id),'invalid profile identity')
+  fields(v,{type=true,id=true,version=true,seed=true,world_seed=true,next_id=true,next_run=true,genes=true,finished=true,history=true,starter=true});assert(name(v.id),'invalid profile identity')
+  assert(v.starter==nil or (name(v.starter) and v.genes[v.starter]),'invalid starter')
   -- history is OPTIONAL and owned by RunHistory; Core only checks it is a
   -- plain table so an old profile without it still validates.
   assert(v.history==nil or type(v.history)=='table','invalid history')
+  -- Core's object codec stores array indexes as string keys. Restore the
+  -- history service's bounded sequences before its next append; otherwise
+  -- numeric 1 and string '1' can encode as duplicate keys after a relaunch.
+  if v.history and v.history.entries~=nil then
+   local function sequence(t,max)
+    assert(type(t)=='table','invalid history sequence');local out,n={},0
+    for k,value in pairs(t) do
+     local i=tonumber(k)
+     assert(integer(i,1,max) and tostring(i)==tostring(k) and out[i]==nil,'invalid history index')
+     out[i]=value;n=math.max(n,i)
+    end
+    for i=1,n do assert(out[i]~=nil,'sparse history sequence') end
+    return out
+   end
+   v.history.entries=sequence(v.history.entries,512)
+   for _,entry in ipairs(v.history.entries) do
+    assert(type(entry)=='table','invalid history entry')
+    for _,key in ipairs({'rewards','mutations','rooms'}) do
+     if entry[key]~=nil then entry[key]=sequence(entry[key],16) end
+    end
+   end
+  end
+
   assert(v.world_seed==nil or seed(v.world_seed),'invalid profile world seed')
   assert(integer(v.next_run,1,1000000000) and type(v.finished)=='table','invalid profile')
-  local n=0;for id,result in pairs(v.finished) do n=n+1;local serial=id:match('^run(%d+)$');assert(serial and tonumber(serial)<v.next_run,'invalid result id');fields(result,{outcome=true,export=true,pending=true,declined=true,deferred=true});assert(result.outcome=='success' or result.outcome=='failure','bad outcome');assert((result.outcome=='success' and (result.export==nil or v.genes[result.export])) or (result.outcome=='failure' and result.export==nil),'bad export');assert(result.pending==nil or result.pending==true,'invalid pending');assert(result.declined==nil or result.declined==true,'invalid declined');if result.deferred~=nil then validate_gene(result.deferred,result.deferred.id);assert(result.export==nil and result.pending==true,'deferred export conflicts with a completed export');assert(result.outcome=='success','only a successful run defers an export') end;assert(not(result.deferred~=nil and result.declined==true),'a deferred export cannot also be declined') end;assert(n<=512,'ledger full')
+  local n=0;for id,result in pairs(v.finished) do n=n+1;local serial=id:match('^run(%d+)$');assert(serial and tonumber(serial)<v.next_run,'invalid result id');fields(result,{outcome=true,export=true,pending=true,declined=true,deferred=true,discarded_export=true});assert(result.outcome=='success' or result.outcome=='failure','bad outcome');assert((result.outcome=='success' and (result.export==nil or v.genes[result.export])) or (result.outcome=='failure' and result.export==nil),'bad export');assert(result.discarded_export==nil or (name(result.discarded_export) and result.export==nil and result.deferred==nil and result.outcome=='success'),'invalid discarded export');assert(result.pending==nil or result.pending==true,'invalid pending');assert(result.declined==nil or result.declined==true,'invalid declined');if result.deferred~=nil then validate_gene(result.deferred,result.deferred.id);assert(result.export==nil and result.pending==true,'deferred export conflicts with a completed export');assert(result.outcome=='success','only a successful run defers an export') end;assert(not(result.deferred~=nil and result.declined==true),'a deferred export cannot also be declined') end;assert(n<=512,'ledger full')
  elseif v.type=='run' then
   fields(v,{type=true,version=true,seed=true,world_seed=true,id=true,owner=true,next_id=true,frame=true,stocks=true,status=true,genes=true,hosts=true,marks=true,runtime=true,progress=true,inventory=true,equipment=true});assert(name(v.owner) and seed(v.world_seed),'invalid run owner/world seed')
   -- inventory/equipment are OPTIONAL run state owned by those services. Core

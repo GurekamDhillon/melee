@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 #include "gmscene.h"
 
 #include "gm_1A36.h"
@@ -40,6 +41,11 @@
 /* 4D672C */ HSD_GObj* gm_804D672C;
 /* 4D6728 */ UNK_T gm_804D6728;
 /* 4D6724 */ void (*gm_804D6724)(void);
+#if defined(TARGET_PC)
+/* Benchmark-only frame source: the scene counter is in snapshotted game BSS. */
+int ProfBenchFrame(void) { return (int) gm_80479D58.unk_0 - 1; }
+#endif
+
 /* 4D6720 */ struct GameSceneInfo* gm_804D6720;
 
 static u64 gm_803DA888[8] = {
@@ -200,6 +206,12 @@ void gm_801A4B74(void)
 void gm_801A4B88(struct GameSceneInfo* info)
 {
     gm_804D6720 = info;
+#if defined(TARGET_PC)
+    {
+        extern void View_SceneBegin(int scene);
+        View_SceneBegin(info != NULL ? info->scene_kind : -1);
+    }
+#endif
 }
 
 /// @brief returns a pointer to the current scenes enter data
@@ -348,6 +360,8 @@ extern int Gfx_PrewarmMustDraw(void);
 extern int Gfx_LoadScreenEnabled(void);
 extern int Gfx_SeedCoreCount(void);
 extern int Gfx_SeedPipelinesBuilt(void);
+extern int Gfx_SeedCorePending(void);
+extern int Script_LaunchPending(void);
 /* The host draws the kit's loading screen over the held scene (pc/platform/gw_overlay.cpp): the
    DevText panel and caption this used to create looked nothing like the menus and were the last
    old-style loading screen. on/warm, see gw_Gfx_HostLoading. */
@@ -411,9 +425,11 @@ static void mnLoadScreen_Release(char* why)
         mnLoadScreen_panel = NULL;
     }
     /* the match clock, which the freeze keeps where it started */
-    OSReport("loadscreen: released (%s) after %d frames, %d pipelines created, seed core %d/%d, "
+    OSReport("loadscreen: released (%s) after %d frames, hold_ms=%u, %d pipelines created, core_pending=%d/%d, "
              "clock %u.%02u\n",
-             why, mnLoadScreen_frames, Gfx_PipelinesCreated(), Gfx_SeedPipelinesBuilt(),
+             why, mnLoadScreen_frames,
+             (u32) ((OSGetTime() - mnLoadScreen_started) / (OSSecondsToTicks(1) / 1000)),
+             Gfx_PipelinesCreated(), Gfx_SeedCorePending(),
              Gfx_SeedCoreCount(), gm_8016AEEC(),
              (u32) gm_8016AF0C());
 }
@@ -425,7 +441,7 @@ static void mnLoadScreen_Begin(GameSceneInfo* info)
     mnLoadScreen_holding = 0;
     mnLoadScreen_panel = NULL;
     mnLoadScreen_text = NULL;
-    if (info == NULL || !Gfx_LoadScreenEnabled()) {
+    if (info == NULL || (!Gfx_LoadScreenEnabled() && !Script_LaunchPending())) {
         return;
     }
     /* After the frontend's loading screen (after the SSS) the renderer is warm; the hold still
@@ -501,7 +517,7 @@ static bool mnLoadScreen_Frame(void)
 
     created = Gfx_PipelinesCreated();
     mnLoadScreen_created = created;
-    if (Gfx_PipelinesUrgent() != 0) {
+    if (Gfx_PipelinesUrgent() != 0 || Script_LaunchPending()) {
         mnLoadScreen_settled = 0;
     } else {
         mnLoadScreen_settled++;
@@ -526,14 +542,15 @@ static bool mnLoadScreen_Frame(void)
        part by part after the hold. No seed (core 0): no condition. */
     if (mnLoadScreen_frames >=
             (mnLoadScreen_warm ? LOADSCREEN_WARM_MIN_FRAMES : LOADSCREEN_MIN_FRAMES) &&
-        Gfx_SeedPipelinesBuilt() >= Gfx_SeedCoreCount() &&
+        Gfx_SeedCorePending() == 0 && !Script_LaunchPending() &&
         mnLoadScreen_settled >=
             (mnLoadScreen_warm ? LOADSCREEN_WARM_SETTLE_FRAMES : LOADSCREEN_SETTLE_FRAMES))
     {
         mnLoadScreen_Release("warm");
         return false;
     }
-    if (OSGetTime() - mnLoadScreen_started >
+    /* Staging never exposes its host, even at the renderer ceiling. */
+    if (!Script_LaunchPending() && OSGetTime() - mnLoadScreen_started >
         (OSTime) OSSecondsToTicks(LOADSCREEN_CEILING_SECONDS))
     {
         mnLoadScreen_Release("ceiling");
@@ -753,6 +770,9 @@ static inline u64 maybe_gm_801A48A4(u8 i)
     }
 }
 
+#if defined(TARGET_PC)
+static int gm_onep_interstage;
+#endif
 void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
 {
     int pad_queue_count;
@@ -768,6 +788,9 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
     gm_80479D58.unk_8 = 0;
     gm_80479D58.unk_C = 0;
     HSD_PadFlushQueue(HSD_PAD_FLUSH_QUEUE_LEAVE1);
+#if defined(TARGET_PC)
+    if (!gm_onep_interstage)
+#endif
     lbCardGame_InitScene();
 #if defined(TARGET_PC)
     mnLoadScreen_Begin(info);
@@ -779,7 +802,7 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
     {
         /* the Lua scripting engine (pc/platform/gw_script.c): on_scene / on_match_end */
         extern void Script_SceneBegin(int scene_kind);
-        Script_SceneBegin(info != NULL ? (int) info->scene_kind : -1);
+        if (!gm_onep_interstage) Script_SceneBegin(info != NULL ? (int) info->scene_kind : -1);
     }
 #endif
 
@@ -840,7 +863,7 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         {
             /* scripting: pause / frame advance (never during a rollback session) */
             extern int Script_Iterations(int count);
-            pad_queue_count = Script_Iterations(pad_queue_count);
+            pad_queue_count = gm_onep_interstage ? 0 : Script_Iterations(pad_queue_count);
         }
 #endif
 
@@ -1125,9 +1148,20 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
         /* Scripted model descriptors and Mato article point into heap-0 archive buffers.
          * Retire their GObjs before releasing the buffers, while this scene is still live. */
         extern void ScriptGame_StageEnd(void);
-        ScriptGame_StageEnd();
+        if (!gm_onep_interstage) ScriptGame_StageEnd();
     }
     mnLoadScreen_Release("scene ended");
 #endif
     HSD_VIWaitXFBFlush();
 }
+
+#if defined(TARGET_PC)
+void gm_OnePInterstage(void)
+{
+    /* The retail state has handled its exit; no next scene is loaded yet.
+     * Pump input/scripts and drawing, but no retail proc, timer or AI frame. */
+    gm_onep_interstage=1;
+    gm_801A4D34(NULL,NULL);
+    gm_onep_interstage=0;
+}
+#endif

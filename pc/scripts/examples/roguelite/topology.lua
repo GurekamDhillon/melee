@@ -50,7 +50,8 @@ local function picker(usage)
     local candidates, best
     for _, id in ipairs(self.rooms.by_role[role] or {}) do
       local template = self.rooms.rooms[id]
-      if #template.sockets >= min_sockets and (shape == nil or template.shape == shape) then
+      if (self.eligible_templates == nil or self.eligible_templates[id] == true)
+        and #template.sockets >= min_sockets and (shape == nil or template.shape == shape) then
         local u = usage[id] or 0
         if best == nil or u < best then best, candidates = u, {id}
         elseif u == best then candidates[#candidates + 1] = id end
@@ -410,6 +411,27 @@ end
 function Topology:generate(seed, opts)
   opts = opts or {}
   assert(type(seed) == 'number' and seed % 1 == 0 and seed >= 1 and seed <= MODEL - 1, 'invalid seed')
+  -- Per-call admission leaves the catalogue and this generator untouched.
+  -- Check structural coverage before consuming RNG or entering retries.
+  if opts.eligible_templates ~= nil then
+    assert(type(opts.eligible_templates) == 'table', 'eligible templates must be a table')
+    local generating = setmetatable({eligible_templates = opts.eligible_templates}, {__index = self})
+    local requirements = {{'entry',1},{'teach',2},{'traversal',2},{'combat',2},
+      {'rest',2},{'boss',2},{'finish',1},{'branch',3,'split'},{'branch',3,'merge'}}
+    local missing = {}
+    for _, requirement in ipairs(requirements) do
+      local role, sockets, shape = requirement[1], requirement[2], requirement[3]
+      local found = false
+      for _, id in ipairs(self.rooms.by_role[role] or {}) do
+        local template = self.rooms.rooms[id]
+        if opts.eligible_templates[id] == true and #template.sockets >= sockets
+          and (shape == nil or template.shape == shape) then found = true; break end
+      end
+      if not found then missing[#missing+1] = role .. (shape and '/' .. shape or '') .. ' (' .. sockets .. '+ sockets)' end
+    end
+    assert(#missing == 0, 'no ready catalogue: required recipes not certified or unsupported for ' .. table.concat(missing, ', '))
+    self = generating
+  end
   local attempts = opts.attempts or 32
   local reasons = {}
   for attempt = 1, attempts do

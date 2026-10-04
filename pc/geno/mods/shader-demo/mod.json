@@ -1,0 +1,6 @@
+{
+  "id": "shader-demo", "name": "Shader examples", "version": "0.1.0",
+  "author": "GD", "kind": "script", "api_version": 1,
+  "gameplay": false, "rollback_safe": true,
+  "description": "Opt-in visual post passes; F6 toggles the sample chain. No gameplay writes."
+}

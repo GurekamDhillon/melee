@@ -78,6 +78,21 @@ HSD_CameraDescPerspective lbl_803BB028 = {
     1.3333333f,
 };
 
+#if defined(TARGET_PC)
+/* Map authored 640-wide wipe progress across the current camera plane. */
+static void bgflash_position(f32 x, f32 y)
+{
+#if defined(TARGET_PC)
+    HSD_CObj* camera = HSD_CObjGetCurrent();
+    if (camera != NULL) {
+        f32 width = 480.0f * HSD_CObjGetAspect(camera);
+        x = 320.0f + (x - 320.0f) * width / 640.0f;
+    }
+#endif
+    GXPosition2f32(x, y);
+}
+#endif
+
 void fn_8001FC08(void)
 {
     // TODO: Un-unroll this somehow?
@@ -196,13 +211,29 @@ void fn_8001FEC4(HSD_GObj* gobj, s32 code)
         r = data->xC.r;
 
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+#if defined(TARGET_PC)
+        bgflash_position(0.0f, 0.0f);
+#else
         GXPosition2f32(0.0f, 0.0f);
+#endif
         GXColor4u8(r, g, b, a);
+#if defined(TARGET_PC)
+        bgflash_position(640.0f, 0.0f);
+#else
         GXPosition2f32(640.0f, 0.0f);
+#endif
         GXColor4u8(r, g, b, a);
+#if defined(TARGET_PC)
+        bgflash_position(640.0f, -480.0f);
+#else
         GXPosition2f32(640.0f, -480.0f);
+#endif
         GXColor4u8(r, g, b, a);
+#if defined(TARGET_PC)
+        bgflash_position(0.0f, -480.0f);
+#else
         GXPosition2f32(0.0f, -480.0f);
+#endif
         GXColor4u8(r, g, b, a);
         return;
     }
@@ -210,13 +241,29 @@ void fn_8001FEC4(HSD_GObj* gobj, s32 code)
     if (data->x33 != 0) {
         if ((u32) mode == 3U) {
             GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+#if defined(TARGET_PC)
+            bgflash_position(0.0f, 0.0f);
+#else
             GXPosition2f32(0.0f, 0.0f);
+#endif
             GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+            bgflash_position(640.0f, 0.0f);
+#else
             GXPosition2f32(640.0f, 0.0f);
+#endif
             GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+            bgflash_position(640.0f, -480.0f);
+#else
             GXPosition2f32(640.0f, -480.0f);
+#endif
             GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+            bgflash_position(0.0f, -480.0f);
+#else
             GXPosition2f32(0.0f, -480.0f);
+#endif
             GXColor4u8(0, 0, 0, 0xFF);
         }
         return;
@@ -238,13 +285,29 @@ void fn_8001FEC4(HSD_GObj* gobj, s32 code)
                     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
                     neg_y = -y;
                     neg_yh = -(y + strip_h);
+#if defined(TARGET_PC)
+                    bgflash_position(0.0f, (f32) neg_y);
+#else
                     GXPosition2f32(0.0f, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position((f32) width, (f32) neg_y);
+#else
                     GXPosition2f32((f32) width, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position((f32) width, (f32) neg_yh);
+#else
                     GXPosition2f32((f32) width, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position(0.0f, (f32) neg_yh);
+#else
                     GXPosition2f32(0.0f, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
                 } else {
                     u8 strip_h = data->x32;
@@ -254,13 +317,29 @@ void fn_8001FEC4(HSD_GObj* gobj, s32 code)
                     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
                     neg_y = -y;
                     neg_yh = -(y + strip_h);
+#if defined(TARGET_PC)
+                    bgflash_position(0.0f, (f32) neg_y);
+#else
                     GXPosition2f32(0.0f, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position(640.0f, (f32) neg_y);
+#else
                     GXPosition2f32(640.0f, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position(640.0f, (f32) neg_yh);
+#else
                     GXPosition2f32(640.0f, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position(0.0f, (f32) neg_yh);
+#else
                     GXPosition2f32(0.0f, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
                 }
                 y += data->x32;
@@ -287,13 +366,29 @@ void fn_8001FEC4(HSD_GObj* gobj, s32 code)
                     neg_y = -y2;
                     xr = x34 + right;
                     neg_yh = -(y2 + strip_h);
+#if defined(TARGET_PC)
+                    bgflash_position((f32) x34, (f32) neg_y);
+#else
                     GXPosition2f32((f32) x34, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position((f32) xr, (f32) neg_y);
+#else
                     GXPosition2f32((f32) xr, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position((f32) xr, (f32) neg_yh);
+#else
                     GXPosition2f32((f32) xr, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position((f32) x34, (f32) neg_yh);
+#else
                     GXPosition2f32((f32) x34, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
                 } else {
                     s32 neg_y;
@@ -303,13 +398,29 @@ void fn_8001FEC4(HSD_GObj* gobj, s32 code)
                     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
                     neg_y = -y2;
                     neg_yh = -(y2 + strip_h);
+#if defined(TARGET_PC)
+                    bgflash_position(0.0f, (f32) neg_y);
+#else
                     GXPosition2f32(0.0f, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position(640.0f, (f32) neg_y);
+#else
                     GXPosition2f32(640.0f, (f32) neg_y);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position(640.0f, (f32) neg_yh);
+#else
                     GXPosition2f32(640.0f, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
+#if defined(TARGET_PC)
+                    bgflash_position(0.0f, (f32) neg_yh);
+#else
                     GXPosition2f32(0.0f, (f32) neg_yh);
+#endif
                     GXColor4u8(0, 0, 0, 0xFF);
                 }
                 /* Keep strip_h live across both arms (required for match). */

@@ -337,6 +337,14 @@ bool itNokonoko_UnkMotion5_Anim(Item_GObj* gobj)
                 ip->xDD4_itemVar.nokonoko.x4;
             ip->xDD4_itemVar.nokonoko.x4 = -1;
         }
+#if defined(TARGET_PC)
+        /* Conversion ends the enemy even if shell allocation failed. The
+         * snapshotted terminal guard suppresses a later destruction event. */
+        {
+            extern int ScriptGame_EnemyDefeated(Item_GObj*);
+            ScriptGame_EnemyDefeated(gobj);
+        }
+#endif
         return 1;
     }
     return 0;

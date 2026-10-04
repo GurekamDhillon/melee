@@ -542,7 +542,11 @@ void grOnett_801E43E0(Ground_GObj* gobj)
         HSD_JObj* car_jobj2;
         HSD_GObj* iter;
 
+#if defined(TARGET_PC)
+        Camera_LogicBounds(&cam_x, &cam_y, &cam_z);
+#else
         Camera_800307D0(&cam_x, &cam_y, &cam_z);
+#endif
 
         car_jobj = gp->u.onettcar.car_jobjs[saved_car];
         car_jobj2 = gp->u.onettcar.car_jobjs2[saved_car];

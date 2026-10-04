@@ -59,6 +59,8 @@ const char *gw_Mods_Name(int i);         /* mod.json name, else the id */
 const char *gw_Mods_Version(int i);      /* "" when unknown */
 const char *gw_Mods_Kind(int i);         /* "base" | "fighter" | "stage" | "misc" | "script" */
 const char *gw_Mods_Pack(int i);         /* e.g. "ace", "akaneia"; "" when unknown */
+/* Optional mod.json autostart scene grammar; active mods only. */
+const char *gw_Mods_Autostart(int i);
 const char *gw_Mods_Description(int i);  /* "" when none */
 const char *gw_Mods_Requires(int i);     /* comma-separated ids, "" when none */
 int gw_Mods_Find(const char *id);        /* index of `id` (case-insensitive), or -1 */

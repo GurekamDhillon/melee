@@ -6,6 +6,7 @@
  * compatibility with an unmodified Dolphin opponent.
  */
 #include "gw.h"
+#include "gw_hang.h"
 #include "gw_overlay.h"
 #include "gw_slippi_mode.h"
 #include "gw_slippi_mode_config.h"
@@ -128,6 +129,7 @@ static void sm_exit(int code, const char *reason) {
     /* Like rp_parity_end: the finite run has flushed its artifacts. CRT static
      * destructors are unsafe for Dawn here (see shim_vi.c's gw_exit_clean). */
     fflush(NULL);
+    gw_hang_final(reason, (unsigned)code);
     _exit(code);
 }
 static int sm_remote_pad(void *user,int online_frame,const uint8_t bytes[8]) {
@@ -243,8 +245,9 @@ const char *gw_SlippiMode_Scene(void) {
     sm.tried=1;
     status=sm_config(&sm.config,&why);
     if (!status) return NULL;
-    if (status<0) { gw_log("slippi: invalid configuration: %s",why); fflush(NULL); _exit(2); }
+    if (status<0) { gw_hang_final("Slippi invalid configuration",2); gw_log("slippi: invalid configuration: %s",why); fflush(NULL); _exit(2); }
     if (!gw_Replay_SlippiFixtureInfo(&sm.fixture)) {
+        gw_hang_final("Slippi rejected fixture",2);
         gw_log("slippi: rejected fixture: %s",gw_Replay_SlippiFixtureReason()); fflush(NULL); _exit(2);
     }
     sm.local_port=sm.config.role-1;

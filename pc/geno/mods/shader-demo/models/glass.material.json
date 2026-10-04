@@ -1,0 +1,6 @@
+{
+  "builtin": "glass",
+  "opacity": 0.32,
+  "tint": [0.65, 0.85, 1.0, 1.0],
+  "roughness": 0.25
+}

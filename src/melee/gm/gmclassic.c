@@ -701,6 +701,7 @@ extern int SceneLaunch_OnePLevel(void);
 extern int SceneLaunch_PlayerCKind(int n);
 extern int SceneLaunch_PlayerColor(int n);
 extern int SceneLaunch_PlayerStocks(int n);
+extern int Script_OnePScripted(void);
 
 static int gm_OnePSceneDirect(struct gmm_x0_528_t* s, struct Unk1PData* d, int game_mode)
 {
@@ -1086,7 +1087,11 @@ void gmClassic_801B3B40(GameModeState* arg0)
         gm_8017CBAC((UnkAdventureData*) asd, gmMainLib_8015CDC8(), 0x15);
     }
 
-    if (entry->x1 == 0x80 && entry->x2 == 1) {
+    if (entry->x1 == 0x80 && entry->x2 == 1
+#if defined(TARGET_PC)
+        && !Script_OnePScripted()
+#endif
+    ) {
         char_id = gm_CKindToSelKind((u8) asd->x0.x0.ckind);
         time_ptr = gmMainLib_8015D438(char_id);
         best_ptr = gmMainLib_8015D450(char_id);

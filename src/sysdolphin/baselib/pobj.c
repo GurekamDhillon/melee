@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 #include "pobj.h"
 
 #include <math.h> // IWYU pragma: keep
@@ -1147,6 +1148,7 @@ static void geno_pal_selftest_check(HSD_PObj* pobj, Mtx vmtx, MtxPtr right, int 
 static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
                                   u32 rendermode)
 {
+    PC_PROF_BEGIN(GW_PROF_SKINNING, 0);
     HSD_JObj* jobj;
     HSD_SList* list;
     int MtxIdx = 0;
@@ -1254,6 +1256,8 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
         geno_pal_selftest_check(pobj, vmtx, right, MtxIdx);
     }
 #endif
+
+    PC_PROF_END();
 }
 
 static void PObjSetupMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)

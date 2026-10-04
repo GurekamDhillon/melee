@@ -71,6 +71,11 @@ struct HSD_CObj {
     /* +54 */ Mtx view_mtx;
     /* +84 */ HSD_AObj* aobj;
     /* +88 */ Mtx* proj_mtx;
+#if defined(TARGET_PC)
+    /* Append only: preserve all retail/disc descriptor offsets. */
+    f32 view_authored_aspect;
+    u8 view_auto;
+#endif
 };
 
 struct HSD_CameraDescCommon {
@@ -146,6 +151,11 @@ typedef struct _cobj_Unk1 cobj_Unk1;
 #define HSD_COBJ(o) ((HSD_CObj*) (o))
 #define HSD_COBJ_INFO(i) ((HSD_CObjInfo*) (i))
 #define HSD_COBJ_METHOD(o) HSD_COBJ_INFO(HSD_OBJECT_METHOD(o))
+
+#if defined(TARGET_PC)
+void HSD_CObjUpdateView(HSD_CObj* cobj);
+float HSD_CObjGetAuthoredAspect(HSD_CObj* cobj);
+#endif
 
 void HSD_CObjEraseScreen(HSD_CObj* cobj, s32 enable_color, s32 enable_alpha,
                          s32 enable_depth);

@@ -27,6 +27,7 @@ static void script_arena_claim(int owner)
 {
     if (script_arena.owner) return;
     script_arena.owner = owner;
+    OSReport("script arena-hooks: tracking acquired owner=%d\n", owner);
     script_arena.x = script_arena.saved_x = stage_info.cam_info.cam_x_offset;
     script_arena.y = script_arena.saved_y = stage_info.cam_info.cam_y_offset;
     script_arena.camera = script_arena.saved_camera = stage_info.cam_info.cam_bounds;
@@ -60,24 +61,34 @@ void ScriptGame_ArenaBounds(int owner, int blast, int l, int r, int t, int b)
 
 extern void lb_8000B1CC(HSD_JObj* jobj, Vec3* pos0, Vec3* pos1); /* lb/lb_00B0.h; not in this TU's set */
 
-void ScriptGame_ArenaSpawn(int owner, int slot, int x, int y)
+int ScriptGame_ArenaSpawn(int owner, int slot, int x, int y)
 {
     HSD_JObj* jobj;
-    Vec3 pos;
-    if (slot < 0 || slot > 260) return; /* general points: starts 0-3, respawns 4-7, items 127-146 */
+    HSD_JObj* parent;
+    Vec3 pos, local;
+    Mtx inverse;
+    if (slot < 0 || slot > 260) return 0; /* general points: starts 0-3, respawns 4-7, items 127-146 */
     jobj = Ground_801C2CF4(slot);
-    if (!jobj) return;
-    script_arena_claim(owner);
-    if (!script_arena.spawn_saved_ok[slot]) {
-        /* Ground_801C2D24 reads spawns the same way: the point's world translate. */
-        lb_8000B1CC(jobj, NULL, &pos);
-        script_arena.spawn_saved[slot] = pos;
-        script_arena.spawn_saved_ok[slot] = 1;
-    }
+    if (!jobj) return 0;
+    /* Public coordinates and readback are world-space; the joint setter is local.
+     * Refuse a singular parent before acquiring ownership or changing anything. */
+    lb_8000B1CC(jobj, NULL, &pos);
     pos.x = script_mesh_float(x);
     pos.y = script_mesh_float(y);
-    pos.z = script_arena.spawn_saved[slot].z;
-    HSD_JObjSetTranslate(jobj, &pos);
+    parent = HSD_JObjGetParent(jobj);
+    if (parent) {
+        HSD_JObjSetupMatrix(parent);
+        if (!PSMTXInverse(parent->mtx, inverse)) return 0;
+        MTXMultVec(inverse, &pos, &local);
+    } else local = pos;
+    script_arena_claim(owner);
+    if (!script_arena.spawn_saved_ok[slot]) {
+        /* Save the exact local transform so restore survives a moving parent. */
+        HSD_JObjGetTranslation(jobj, &script_arena.spawn_saved[slot]);
+        script_arena.spawn_saved_ok[slot] = 1;
+    }
+    HSD_JObjSetTranslate(jobj, &local);
+    return 1;
 }
 
 float ScriptGame_ArenaSpawnPos(int slot, int axis, float fallback)

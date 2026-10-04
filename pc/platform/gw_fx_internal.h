@@ -80,6 +80,8 @@ typedef struct {
     float wave_amplitude[2], wave_cycle[2], wave_phase_random[2], wave_phase_init[2];
     /* material (the shader library type + parameters) */
     int shader, color_mode, offset, offset_mask, color_mask, alpha_mask, blend, depth_test, alpha_test;
+    int custom_shader;          /* host-only immutable material; 0 legacy, -1 invalid, >0 custom handle */
+    int additive_batch;         /* opt-in: custom body accepts regrouped particle indices/order */
     float strength[2], alpha_threshold, bloom_threshold, bloom_intensity;
     fx_sampler smp[FX_SAMPLERS];
 } fx_emitter;

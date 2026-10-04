@@ -6,6 +6,10 @@
 
 namespace aurora::webgpu::gpu_prof {
 
+// Runtime opt-in; feature must have been requested when the device was created.
+bool requested();
+bool active();
+void emit_cpu(const char* name, uint64_t durationNs);
 void initialize();
 void shutdown();
 

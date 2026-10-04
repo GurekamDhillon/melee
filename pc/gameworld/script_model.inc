@@ -58,7 +58,8 @@ int ScriptGame_ModelSlot(int handle)
 {
     int i;
     for (i = 0; i < SCRIPT_MESH_INSTANCES; ++i)
-        if (script_stage.instance[i].handle == handle && handle > 0) return i;
+        if (script_stage.instance[i].handle == handle && handle > 0 &&
+            !script_area_retiring(script_stage.instance[i].area)) return i;
     return -1;
 }
 int ScriptGame_ModelField(int slot, int field)
@@ -66,7 +67,7 @@ int ScriptGame_ModelField(int slot, int field)
     ScriptMeshInstance* m;
     if (slot < 0 || slot >= SCRIPT_MESH_INSTANCES) return 0;
     m = &script_stage.instance[slot];
-    if (field == -1) return m->handle;
+    if (field == -1) return script_area_retiring(m->area) ? 0 : m->handle;
     if (field == -2) return m->asset;
     if (field == -3) return m->count;
     if (field == -4) return m->dynamic;
@@ -97,6 +98,10 @@ static int script_mesh_points(ScriptMeshInstance* m, float points[SCRIPT_MESH_LI
     float c = cosf(rot), s = sinf(rot);
     float x = script_mesh_float(m->field[SM_X]), y = script_mesh_float(m->field[SM_Y]);
     int i, j;
+    /* mpLib lines are 2D. Refuse an out-of-plane transform rather than
+     * leave the visible surface and the gameplay collision disagreeing. */
+    if (m->count && (script_mesh_float(m->field[SM_RX]) != 0 ||
+                     script_mesh_float(m->field[SM_RY]) != 0)) return 0;
     for (i = 0; i < m->count; ++i) {
         float* p = points[i];
         int kind = m->line[i].kind;
@@ -155,6 +160,7 @@ int ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first
         candidate.line[i].handle = first_line + i;
     }
     if (!script_mesh_points(&candidate, points)) return -4;
+    mpScriptBatchBegin();
     for (i = 0; i < count; ++i) {
         int k;
         float* p = points[i];
@@ -162,6 +168,7 @@ int ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first
               script_mesh_bits(p[2]), script_mesh_bits(p[3]), candidate.line[i].kind,
               candidate.line[i].flags, first_line + i) < 0) {
             while (i > 0) ScriptGame_StageRemove(first_line + --i);
+            mpScriptBatchEnd();
             return -3;
         }
         for (k = 0; k < script_stage.cap; ++k)
@@ -169,6 +176,7 @@ int ScriptGame_ModelSpawn(int asset, int token, int handle, int count, int first
                 script_stage.line[k].model_handle = handle; /* hide the debug slab */
     }
     script_stage.instance[slot] = candidate;
+    mpScriptBatchEnd();
     ++script_stage.asset[asset].instances;
     OSReport("script model: spawn instance=%d asset=%d lines=%d\n", handle, asset, count);
     return handle;
@@ -197,6 +205,7 @@ int ScriptGame_ModelSet(int handle)
     for (i = 0; i < SM_FIELDS; ++i)
         if (SM_FLOAT_FIELD(i) && candidate.field[i] != script_stage.instance[slot].field[i])
             candidate.dynamic = 1;
+    mpScriptBatchBegin();
     if (candidate.field[SM_X] != script_stage.instance[slot].field[SM_X] ||
         candidate.field[SM_Y] != script_stage.instance[slot].field[SM_Y] ||
         candidate.field[SM_ROT] != script_stage.instance[slot].field[SM_ROT] ||
@@ -205,16 +214,22 @@ int ScriptGame_ModelSet(int handle)
         candidate.field[SM_SY] != script_stage.instance[slot].field[SM_SY])
         for (i = 0; i < candidate.count; ++i)
             script_stage_line_set(candidate.line[i].handle, points[i][0], points[i][1], points[i][2], points[i][3]);
+    mpScriptBatchEnd();
     script_stage.instance[slot] = candidate;
     return 1; /* movement is per-frame; only lifetime operations log */
 }
 
 int ScriptGame_ModelDespawn(int handle)
 {
-    int slot = ScriptGame_ModelSlot(handle), i;
+    int slot, i;
     ScriptMeshInstance* m;
-    if (slot < 0) return 0;
+    /* Internal cleanup must still resolve logically retired instances. Public
+     * ModelSlot intentionally stops exposing them on the unload frame. */
+    for (slot = 0; slot < SCRIPT_MESH_INSTANCES; ++slot)
+        if (handle > 0 && script_stage.instance[slot].handle == handle) break;
+    if (slot == SCRIPT_MESH_INSTANCES) return 0;
     m = &script_stage.instance[slot];
+    mpScriptBatchBegin();
     /* Keep the instance and its reference if even one live collision segment
      * cannot be retired. A later retry may finish partially removed segments. */
     for (i = 0; i < m->count; ++i) {
@@ -222,10 +237,11 @@ int ScriptGame_ModelDespawn(int handle)
         for (j = 0; j < script_stage.cap; ++j)
             if (script_stage.line[j].active && script_stage.line[j].handle == m->line[i].handle) break;
         if (j == script_stage.cap) continue;
-        if (!ScriptGame_StageRemove(m->line[i].handle)) return 0;
+        if (!ScriptGame_StageRemove(m->line[i].handle)) { mpScriptBatchEnd(); return 0; }
     }
     --script_stage.asset[m->asset].instances;
     memset(m, 0, sizeof *m);
+    mpScriptBatchEnd();
     OSReport("script model: despawn instance=%d\n", handle);
     return 1;
 }

@@ -53,8 +53,8 @@ static const char *gs_fly_cursor_error(int rc) {
 static int l_fly_target(lua_State *L) {
     int slot = gs_slot_arg(L, 1), rc;
     float x = (float)luaL_checknumber(L, 2), y = (float)luaL_checknumber(L, 3);
-    if (!isfinite(x) || !isfinite(y) || fabsf(x) > 10000 || fabsf(y) > 10000)
-        return luaL_error(L, "fly_target requires finite coordinates within +/-10000");
+    if (!isfinite(x) || !isfinite(y) || fabsf(x) > 49000 || fabsf(y) > 49000)
+        return luaL_error(L, "fly_target requires finite coordinates within +/-49000");
     gs_require_offline(L, "fly_target");
     rc = gs_fly_target_set(slot, gs_fly_cursor_caller(), x, y);
     if (rc < 0) return luaL_error(L, "fly_target: %s", gs_fly_cursor_error(rc));
@@ -106,8 +106,8 @@ static int gs_fly_cursor_console(char a[][64], int n, int slot) {
         (_stricmp(a[0], "target") || n == 4)) { slot = a[1][0] - '1'; k = 2; }
     if (_stricmp(a[0], "target") == 0) {
         if (n != k + 2) goto usage;
-        x = strtof(a[k], &end); if (*end || !*a[k] || !isfinite(x) || fabsf(x) > 10000) goto usage;
-        y = strtof(a[k + 1], &end); if (*end || !*a[k + 1] || !isfinite(y) || fabsf(y) > 10000) goto usage;
+        x = strtof(a[k], &end); if (*end || !*a[k] || !isfinite(x) || fabsf(x) > 49000) goto usage;
+        y = strtof(a[k + 1], &end); if (*end || !*a[k + 1] || !isfinite(y) || fabsf(y) > 49000) goto usage;
         rc = gs_fly_target_set(slot, GS_MAX_SCRIPTS + 1, x, y);
     } else if (_stricmp(a[0], "attack") == 0) {
         if (n < k + 1 || n > k + 3 || (_stricmp(a[k], "on") && _stricmp(a[k], "off"))) goto usage;

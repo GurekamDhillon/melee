@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+extern int ScriptGame_StageJointActive(int joint);
+#endif
 #include "ftCo_0A01.h"
 
 #include <Runtime/platform.h>
@@ -2045,6 +2048,9 @@ bool ftCo_800A3908(Fighter* fp, bool arg1)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         struct CpuFighter* data2 = &fp->cpu;
         island_pos = island->x14;
         ex = island_pos.x;
@@ -2215,6 +2221,9 @@ bool ftCo_800A4038(Fighter* fp, bool arg1)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         struct CpuFighter* data2 = &fp->cpu;
         island_pos = island->x8;
         ex = island_pos.x;
@@ -2346,6 +2355,9 @@ s32 ftCo_800A4768(Fighter* fp, Vec3* arg1)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         pt = island->x14;
         tmp_y = pt.y;
         if (!ftCo_800A4768_inline0(fp, &pt)) {
@@ -3240,6 +3252,9 @@ bool ftCo_800A6700(Fighter* fp, Vec3* arg1, Vec3* arg2)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         if (ftCo_800A2718(island) == 0) {
             int line_id;
             u32 flags;
@@ -3319,6 +3334,9 @@ s32 ftCo_800A6A98(Fighter* fp, Vec3* arg1)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         if (ftCo_800A2718(island) == 0) {
             a = island->x8;
             b = island->x14;
@@ -3407,6 +3425,9 @@ s32 ftCo_800A6D2C(Fighter* fp, Vec3* arg1)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         if (ftCo_800A2718(island) == 0 && island != cur_island) {
             a = island->x8;
             b = island->x14;
@@ -3493,6 +3514,9 @@ bool ftCo_800A6FC4(Fighter* fp, Vec3* arg1, Vec3* arg2)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         if (island == cur_island) {
             continue;
         }
@@ -4166,6 +4190,9 @@ void ftCo_800A8940(Fighter* fp)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         if (cur_island != island && ftCo_800A2718_dontinline3(island) == 0) {
             if (!ftCo_800A6700_inline0(fp, island->x14.x, island->x14.y)) {
                 if (!ftCo_800A6700_inline0(fp, island->x8.x, island->x8.y)) {
@@ -4187,6 +4214,9 @@ void ftCo_800A8940(Fighter* fp)
     for (island = mpIsland_80458E88.next; island != NULL;
          island = island->next)
     {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(island->x28)) continue;
+#endif
         if (cur_island != island) {
             if (!ftCo_800A6700_inline0(fp, island->x14.x, island->x14.y)) {
                 if (!ftCo_800A6700_inline0(fp, island->x8.x, island->x8.y)) {
@@ -5113,6 +5143,9 @@ bool ftCo_800AAF48(Fighter* fp)
     }
     if (fp->facing_dir > 0.0) {
         for (cur = mpIsland_80458E88.next; cur != NULL; cur = cur->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(cur->x28)) continue;
+#endif
             sp44 = cur->x8;
             dx = sp44.x - fp->cur_pos.x;
             dy = sp44.y - fp->cur_pos.y;
@@ -5146,6 +5179,9 @@ bool ftCo_800AAF48(Fighter* fp)
         }
     } else {
         for (cur = mpIsland_80458E88.next; cur != NULL; cur = cur->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive(cur->x28)) continue;
+#endif
             Vec3 spC = cur->x14;
             dx = fp->cur_pos.x - spC.x;
             dy = fp->cur_pos.y - spC.y;
@@ -8616,6 +8652,12 @@ void ftCo_800B3900(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     PAD_STACK(8);
+#if defined(TARGET_PC)
+    {
+        extern int ScriptGame_CpuStandTick(Fighter*);
+        if (ScriptGame_CpuStandTick(fp)) return;
+    }
+#endif
 
     ftCo_800B33B0(fp);
     ftCo_800B2AFC(fp);

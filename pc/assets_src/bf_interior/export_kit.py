@@ -62,6 +62,38 @@ COLLISION = {
 }
 
 
+def solid_outline(left, right, bottom, top):
+    """Solid block faces, corrected by mission-verify runs / integrator patch 05.
+
+    Block left face: left_wall bottom-to-top (blocks approach from left).
+    Block right face: right_wall top-to-bottom (blocks approach from right).
+    Floors left-to-right, ceilings right-to-left. Room interior edges are
+    the opposite faces: never confuse the room edge with the block's edge.
+    """
+    return [line(left, top, right, top, passthrough=False, ledges=False),
+            line(left, bottom, left, top, kind="left_wall"),     # solid block: left face, bottom->top
+            line(right, top, right, bottom, kind="right_wall"),  # right face, top->bottom
+            line(right, bottom, left, bottom, kind="ceiling")]
+
+
+# Default floors stay one-way. The mission add-on's explicit gd_solid variant
+# owns an underside only for that instance; it never changes this default kit.
+
+COLLISION.update({
+    "Wall_Solid_4m": solid_outline(-2, 2, 0, 4),
+    "Wall_Side_Return": solid_outline(-.09, .09, 0, 4),
+    "Corner_Inside_4m": solid_outline(.06, .34, 0, 4),
+    "Corner_Outside_4m": solid_outline(-.21, .21, 0, 4),
+})
+# Side-view travel is along X: jambs would seal the entire bay, not make a
+# traversable door. Treat doorway/window art as background scenery. Their
+# 16.9/13-unit clear openings are below the large-level note's 45-unit policy;
+# add no lintel ceiling at these heights. Author a separate blocker if needed.
+COLLISION["Wall_Doorway_4m"] = []
+COLLISION["Wall_Window_4m"] = []
+assert all(len(lines) <= 64 for lines in COLLISION.values())
+
+
 def options():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", type=Path, required=True, help="models/ directory")

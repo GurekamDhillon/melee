@@ -227,7 +227,8 @@ static const FrontendScreen fe_screen_vs_setup = {
     sizeof fe_items_vs_setup / sizeof fe_items_vs_setup[0],
 };
 
-#define FE_STR 80 ///< longest string a row, value or help line shows
+#define FE_STR 80 ///< short row values
+#define FE_HELP_STR 512 ///< complete mod kind/status/description (each host field <=127 bytes)
 
 /* ---- ONLINE: rooms over the internet --------------------------------------------------------
  * VERSUS > ONLINE opens this screen (toolkit rows): Host a Room, Join a Room, Random Opponent
@@ -491,13 +492,13 @@ static void fe_np_pick_char(void)
 }
 
 /* ---- the ONLINE screen ------------------------------------------------------------------------ */
-static char fe_ol_note[FE_STR]; ///< a notice over the description strip ("You left the room.")
+static char fe_ol_note[FE_HELP_STR]; ///< a notice over the description strip ("You left the room.")
 static bool fe_ol_note_bad;
 static int fe_ol_note_frames;
 static void fe_ol_notice(const char* s, bool bad)
 {
     int i = 0;
-    for (; s != NULL && s[i] != '\0' && i < FE_STR - 1; i++) fe_ol_note[i] = s[i];
+    for (; s != NULL && s[i] != '\0' && i < FE_HELP_STR - 1; i++) fe_ol_note[i] = s[i];
     fe_ol_note[i] = '\0';
     fe_ol_note_bad = bad;
     fe_ol_note_frames = 0;
@@ -516,8 +517,8 @@ static void fe_ol_host(void)
         fe_np_phase = FE_NP_WORKING;
         fe_switch_screen(&fe_screen_wait);
     } else {
-        char why[FE_STR];
-        Netplay_MenuStatus(why, FE_STR);
+        char why[FE_HELP_STR];
+        Netplay_MenuStatus(why, FE_HELP_STR);
         fe_ol_notice(why, true);
         fe_np_phase = FE_NP_IDLE;
     }
@@ -534,8 +535,8 @@ static void fe_ol_random(void)
         fe_np_phase = FE_NP_WORKING;
         fe_switch_screen(&fe_screen_wait);
     } else {
-        char why[FE_STR];
-        Netplay_MenuStatus(why, FE_STR);
+        char why[FE_HELP_STR];
+        Netplay_MenuStatus(why, FE_HELP_STR);
         fe_ol_notice(why, true);
         fe_np_phase = FE_NP_IDLE;
     }
@@ -641,9 +642,9 @@ static struct {
     HSD_Text* hint_back;
     HSD_Text* label[FE_MAX_ROWS];
     HSD_Text* value[FE_MAX_ROWS];
-    char label_str[FE_MAX_ROWS][FE_STR]; ///< what each text currently shows
+    char label_str[FE_MAX_ROWS][FE_HELP_STR]; ///< what each text currently shows
     char value_str[FE_MAX_ROWS][FE_STR];
-    char help_str[FE_STR];
+    char help_str[FE_HELP_STR];
     int vis[FE_MAX_ITEMS]; ///< indices of the visible items: the list, then the button
     int n_vis;
     int n_list;      ///< how many of vis are list rows; vis[n_list] is the button, if any
@@ -883,6 +884,20 @@ u8 gmFrontend_ReportedMode(void)
 #define FE_GX_LINK 14
 #define FE_W 640.0F
 #define FE_H 480.0F
+
+extern int View_AspectBits(void);
+static float fe_canvas_width(void)
+{
+    union { int i; float f; } v;
+    v.i = View_AspectBits();
+    return FE_H * v.f;
+}
+static float fe_canvas_left(void) { return (FE_W - fe_canvas_width()) * 0.5F; }
+static float fe_canvas_extra(void)
+{
+    float extra = -fe_canvas_left();
+    return extra > 0.0F ? extra : 0.0F;
+}
 #define FE_FRAME_M 8.0F ///< the 9-slice frame's inset from the screen edge
 #define FE_PANEL_X 28.0F
 #define FE_PANEL_Y 68.0F
@@ -1104,6 +1119,7 @@ static void fe_match_setup_from_menus(void);
 static void fe_online_from_menus(void);
 static void fe_settings_from_menus(int page);
 static bool fe_is_settings(const FrontendScreen* s);
+static bool fe_is_controls_help(const FrontendScreen* s);
 static int fm_back_kind = -1, fm_back_sel; ///< backing out of a frontend scene lands on this menu item
 static void fe_load_begin(void);
 static bool fe_load_step(void);
@@ -1259,7 +1275,7 @@ static int fe_rows_shown(void)
 static void fe_draw_frame(void)
 {
     const FePanelRect bounds = {
-        FE_FRAME_M, FE_FRAME_M, FE_W - 2 * FE_FRAME_M, FE_H - 2 * FE_FRAME_M
+        fe_canvas_left() + FE_FRAME_M, FE_FRAME_M, fe_canvas_width() - 2 * FE_FRAME_M, FE_H - 2 * FE_FRAME_M
     };
     fe_panel_art_frame(&bounds, 64.0F, 16.0F, 0, false);
 }
@@ -1274,6 +1290,8 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     }
     if (fm.active || fk.on || fl.on) {
         fp_draw();
+        if (fk.on) fp_scroll_cue(fk.scroll, fk.nrows);
+        else if (fm.active && fm.menu->style == FM_LIST) fp_scroll_cue(fm_scroll, fm.nvis);
         return;
     }
     if (fe.screen == NULL) {
@@ -1281,7 +1299,7 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     }
     hsd_80391A04(1.0F, 1.0F, 1);
 
-    fe_solid(0, 0, FE_W, FE_H, FE_INK);
+    fe_solid(fe_canvas_left(), 0, fe_canvas_width(), FE_H, FE_INK);
     fe_draw_frame();
 
     pulse = (float) (fe.frames % 60) / 60.0F;
@@ -1370,7 +1388,7 @@ static void fe_draw_fade(HSD_GObj* gobj, int pass)
     if (fm.active) {
         if (fm.fade > 0) {
             hsd_80391A04(1.0F, 1.0F, 1);
-            fe_solid(0, 0, FE_W, FE_H, fe_rgba(0, 0, 0, (u8) (255 * fm.fade / FM_FADE)));
+            fe_solid(fe_canvas_left(), 0, fe_canvas_width(), FE_H, fe_rgba(0, 0, 0, (u8) (255 * fm.fade / FM_FADE)));
         }
         return;
     }
@@ -1378,7 +1396,7 @@ static void fe_draw_fade(HSD_GObj* gobj, int pass)
         return;
     }
     hsd_80391A04(1.0F, 1.0F, 1);
-    fe_solid(0, 0, FE_W, FE_H, fe_rgba(0, 0, 0, (u8) (255 * fe.fade / FE_FADE_FRAMES)));
+    fe_solid(fe_canvas_left(), 0, fe_canvas_width(), FE_H, fe_rgba(0, 0, 0, (u8) (255 * fe.fade / FE_FADE_FRAMES)));
 }
 
 /* ---- text ---------------------------------------------------------------------------------- */
@@ -1483,7 +1501,7 @@ static void fe_refresh_rows(void)
         {
             const FrontendItem* it = &fe.screen->items[fe.vis[fe.scroll + slot]];
             float dx = fe_row_offset(slot);
-            fe_set_text(&fe.label[slot], fe.label_str[slot], FE_STR, it->label, FE_LABEL_COLOR);
+            fe_set_text(&fe.label[slot], fe.label_str[slot], FE_HELP_STR, it->label, FE_LABEL_COLOR);
             fe_value_string(it, buf);
             fe_set_text(&fe.value[slot], fe.value_str[slot], FE_STR, buf, FE_VALUE_COLOR);
             l = fe.label[slot];
@@ -1502,7 +1520,7 @@ static void fe_refresh_rows(void)
         if ((fe.screen == &fe_screen_online || fe_is_settings(fe.screen)) && fe_ol_note[0] != '\0') {
             h = fe_ol_note;
         }
-        fe_set_text(&fe.help, fe.help_str, FE_STR, h != NULL ? h : "", FE_HELP_COLOR);
+        fe_set_text(&fe.help, fe.help_str, FE_HELP_STR, h != NULL ? h : "", FE_HELP_COLOR);
     }
 }
 
@@ -1596,6 +1614,7 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     if (fe.next_menus) {
         fe.next_menus = false;
         fe.canvas = HSD_SisLib_803A611C(0, NULL, 0x13, 0x14, 0, FE_GX_LINK, 10, 0);
+        HSD_SisLib_SetWideCanvas(0, fe.canvas);
         gobj = GObj_Create(0xE, 0xF, 0);
         if (gobj != NULL) {
             GObj_SetupGXLink(gobj, fe_draw_panels, FE_GX_LINK, 0);
@@ -1615,6 +1634,7 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
     if (fe.screen->art != 0) {
         /* a room screen: its own model, drawn on the panels' link */
         fe.canvas = HSD_SisLib_803A611C(0, NULL, 0x13, 0x14, 0, FE_GX_LINK, 10, 0);
+        HSD_SisLib_SetWideCanvas(0, fe.canvas);
         gobj = GObj_Create(0xE, 0xF, 0);
         if (gobj != NULL) {
             GObj_SetupGXLink(gobj, fe_draw_panels, FE_GX_LINK, 0);
@@ -1631,9 +1651,10 @@ void gm_Scene_Frontend_OnEnter(void* enter_data)
         fe.cursor = fe.n_vis - 1; /* A straight away continues, as the menus do */
     }
 
-    /* The text canvas makes its own 640x480 orthographic camera; the panels draw on its link
-       below the text, the fade above it. */
+    /* Only this kit canvas opts into the wide ortho; native SisLib users
+       retain their camera. Panels draw below the text, the fade above it. */
     fe.canvas = HSD_SisLib_803A611C(0, NULL, 0x13, 0x14, 0, FE_GX_LINK, 10, 0);
+    HSD_SisLib_SetWideCanvas(0, fe.canvas);
     gobj = GObj_Create(0xE, 0xF, 0);
     if (gobj != NULL) {
         GObj_SetupGXLink(gobj, fe_draw_panels, FE_GX_LINK, 0);
@@ -1802,6 +1823,7 @@ static void fe_change(const FrontendItem* it, int dir)
 static void fe_load_begin(void)
 {
     extern int Gfx_PipelinesCreated(void);
+    extern int Gfx_PipelinesUrgent(void);
     fe.load_frames = 0;
     fe.load_base = Gfx_PipelinesCreated();
     {
@@ -1827,6 +1849,8 @@ static bool fe_load_step(void)
     extern int Gfx_PipelinesCreated(void);
     extern int Gfx_LoadScreenEnabled(void);
     extern int Gfx_SeedPipelinesBuilt(void);
+    extern int Gfx_SeedCorePending(void);
+    extern int Gfx_PipelinesUrgent(void);
     int pending, done;
     float target;
 
@@ -1834,10 +1858,10 @@ static bool fe_load_step(void)
     /* Warm means the seed's core is built - aurora compiles the seed in its own order, which is
        most-used first, and counts what it has built (Gfx_SeedPipelinesBuilt) - or that nothing
        is pending at all. */
-    pending = Gfx_PipelinesPending();
+    pending = Gfx_PipelinesUrgent();
     done = Gfx_PipelinesCreated();
-    if (pending > 0 && fe.load_core > 0 && Gfx_SeedPipelinesBuilt() < fe.load_core) {
-        target = (float) Gfx_SeedPipelinesBuilt() / (float) fe.load_core;
+    if (Gfx_SeedCorePending() > 0 && fe.load_core > 0) {
+        target = 1.0F - (float) Gfx_SeedCorePending() / (float) fe.load_core;
         fe.load_settled = 0;
     } else if (pending > 0 && fe.load_core == 0) {
         target = (float) (done - fe.load_base) / (float) (done - fe.load_base + pending);
@@ -1908,6 +1932,7 @@ void gm_Scene_Frontend_OnFrame(void)
     u32 in;
     const FrontendItem* it;
 
+    Controls_Menu(fe.screen == &fe_screen_remap ? fcr_port : -1);
     fms_poll();
     if (fm.active) {
         fm_scene_frame();
@@ -1954,6 +1979,11 @@ void gm_Scene_Frontend_OnFrame(void)
 
     if (fe.screen->art != 0) {
         fl_frame(); /* a room screen: its own input and model */
+        return;
+    }
+    if (fe.screen == &fe_screen_remap && fcr_frame()) {
+        fe_refresh_rows();
+        if (fe_kit) fk_frame();
         return;
     }
     if (fte.on) {
@@ -2036,7 +2066,10 @@ void gm_Scene_Frontend_OnFrame(void)
             }
         } else if (in & MenuInput_Back) {
             sfxBack();
-            fe.leaving = 2; /* ONLINE backs out to the VERSUS menu; MATCH SETUP to where it came from */
+            if (fe.screen == &fe_screen_remap) fcr_back();
+            else if (fe_is_controls_help(fe.screen)) {
+                fe_switch_screen(&fe_screen_settings[FSP_CONTROLS]);
+            } else fe.leaving = 2; /* ONLINE backs out to the VERSUS menu; MATCH SETUP to where it came from */
         }
         if (fe.cursor >= fe.n_list) {
             /* on the button: the plate waits on the row the cursor will come back to */

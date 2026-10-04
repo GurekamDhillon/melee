@@ -1,0 +1,630 @@
+[
+  {
+    "id": "demo_input",
+    "path": "demos/input",
+    "title": "Input and pad reads",
+    "api": "Input; Tasks (scripts that wait)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "I: hold right 30 frames; R: release; mouse/pad readout",
+    "setup": [
+      "demo_key I"
+    ]
+  },
+  {
+    "id": "demo_kit",
+    "path": "demos/kit",
+    "title": "Text, kit and safe area",
+    "api": "Drawing (call from on_draw); Kit drawing",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "K: toggle kit; resize the window to see safe-area layout"
+  },
+  {
+    "id": "demo_fighters",
+    "acting_cpu": true,
+    "path": "demos/fighters",
+    "title": "Fighter state and control",
+    "api": "State; Gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "T: teleport P1; P: P2 percent +25; C: stand/fight CPU"
+  },
+  {
+    "id": "demo_modifiers",
+    "path": "demos/modifiers",
+    "title": "Passive fighter modifiers",
+    "api": "Passive fighter modifiers (engine batch 2)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "M: toggle P1 speed/attack buff; baseline is 1.0",
+    "setup": [
+      "demo_key M"
+    ]
+  },
+  {
+    "id": "demo_reserve",
+    "path": "demos/reserve",
+    "title": "Bench and call a reserve",
+    "api": "Reserve fighters (engine batch 2)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "B: bench P2; C: call P2 onto floor; refused states shown",
+    "setup": [
+      "demo_key B"
+    ]
+  },
+  {
+    "id": "demo_fly",
+    "path": "demos/fly",
+    "title": "Debug fly cursor",
+    "api": "Gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "F: fly toggle; T: target 30,40; A: native debug attack; R: clear",
+    "setup": [
+      "demo_key T"
+    ]
+  },
+  {
+    "id": "demo_contacts",
+    "path": "demos/contacts",
+    "title": "Contacts, trace and wait",
+    "api": "Contacts and traces",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "W: land near x=0 within 180 frames; O: overlay; trace auto on",
+    "setup": [
+      "demo_key W"
+    ]
+  },
+  {
+    "id": "demo_camera",
+    "path": "demos/camera",
+    "title": "Camera control",
+    "api": "Camera (offline, gameplay mods)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "F: follow P1; M: tween; S: shake; R: return to retail camera",
+    "setup": [
+      "demo_key M"
+    ]
+  },
+  {
+    "id": "demo_camera_params",
+    "path": "demos/camera-params",
+    "title": "Retail camera parameters",
+    "api": "Camera parameters (engine batch 2)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "G: zero yaw/pitch gains; R: stage baseline; walk away from origin",
+    "setup": [
+      "demo_key G"
+    ]
+  },
+  {
+    "id": "demo_collision",
+    "path": "demos/collision",
+    "title": "Collision lines and platforms",
+    "api": "Stage content (offline, gameplay mods)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "P: move cyan platform; walls red, ceilings violet; jump/drop through"
+  },
+  {
+    "id": "demo_models",
+    "path": "demos/models",
+    "title": "Model handles and labels",
+    "api": "Stage content; Mission model paths and reloads; Contacts and traces",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "R: reload optional models/demo.gxmesh; cyan slab is the no-export fallback",
+    "setup": [
+      "demo_key R"
+    ]
+  },
+  {
+    "id": "demo_materials",
+    "path": "demos/materials",
+    "title": "Custom material, glass and light",
+    "api": "Custom shaders, post passes and model materials",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "L: warm/cool light; optional lit/glass/custom meshes; fallback slabs",
+    "setup": [
+      "demo_key L"
+    ]
+  },
+  {
+    "id": "demo_chunks",
+    "path": "demos/chunks",
+    "title": "Mission folder, chunks and reload",
+    "api": "Mission model paths and reloads; Stage content",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "R: reread tiny level; arrows choose chunk; fresh handles per area"
+  },
+  {
+    "id": "demo_enemies",
+    "path": "demos/enemies",
+    "title": "Enemy waves",
+    "api": "Adventure enemies (offline gameplay mods)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Fight two goombas, then one redead; N: next wave after clear"
+  },
+  {
+    "id": "demo_pickups",
+    "path": "demos/pickups",
+    "title": "Standalone Geno pickup",
+    "api": "Standalone items and model rotation",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "I: drop a native coloured pickup by P1; touch it to collect",
+    "setup": [
+      "demo_key I"
+    ]
+  },
+  {
+    "id": "demo_items",
+    "path": "demos/items",
+    "title": "Unified item list",
+    "api": "State; Standalone items and model rotation",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "I: spawn common capsule (kind 0); inspect layer, name and owner",
+    "setup": [
+      "demo_key I"
+    ]
+  },
+  {
+    "id": "demo_events",
+    "path": "demos/events",
+    "title": "Native game events",
+    "api": "Hooks; Clank observation and timed presentation; Stage slots and switching",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Fight/clank; E: spawn enemy; events log after logic; no fabricated events",
+    "setup": [
+      "demo_key E"
+    ]
+  },
+  {
+    "id": "demo_hitstop",
+    "path": "demos/hitstop",
+    "title": "Timed hitstop",
+    "api": "Clank observation and timed presentation",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "H: 30 nominal frames of freeze; C: cancel own request",
+    "setup": [
+      "demo_key H"
+    ]
+  },
+  {
+    "id": "demo_post_grade",
+    "path": "demos/post-grade",
+    "title": "Colour grade",
+    "api": "Custom shaders, post passes and model materials",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "P: enable/disable pass; compare the same view"
+  },
+  {
+    "id": "demo_post_vignette",
+    "path": "demos/post-vignette",
+    "title": "Vignette",
+    "api": "Custom shaders, post passes and model materials",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "P: enable/disable pass; compare the same view"
+  },
+  {
+    "id": "demo_post_outline",
+    "path": "demos/post-outline",
+    "title": "Depth outline",
+    "api": "Custom shaders, post passes and model materials",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "P: enable/disable pass; compare the same view"
+  },
+  {
+    "id": "demo_post_bloom",
+    "path": "demos/post-bloom",
+    "title": "Whole-scene bloom",
+    "api": "Custom shaders, post passes and model materials",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "P: enable/disable pass; compare the same view"
+  },
+  {
+    "id": "demo_post_custom",
+    "path": "demos/post-custom",
+    "title": "Custom WGSL live reload",
+    "api": "Custom shaders, post passes and model materials",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Edit/save shaders/pulse.wgsl; U: change tint parameter"
+  },
+  {
+    "id": "demo_surface_fighter",
+    "path": "demos/surface-fighter",
+    "title": "Fighter surface shader",
+    "api": "Fighter and original-stage surface shaders",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "S: toggle surface tint"
+  },
+  {
+    "id": "demo_surface_stage",
+    "path": "demos/surface-stage",
+    "title": "Stage surface shader",
+    "api": "Fighter and original-stage surface shaders",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "S: toggle surface tint"
+  },
+  {
+    "id": "demo_parts",
+    "path": "demos/parts",
+    "title": "Per-part texture-preserving tint",
+    "api": "Offline character-part inspection",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "T: tint first supported P1 part; R: clear; refresh before indexing",
+    "setup": [
+      "demo_key T"
+    ]
+  },
+  {
+    "id": "demo_six_slots",
+    "path": "demos/six-slots",
+    "title": "Six fighter launch and recycling",
+    "api": "Six-fighter direct matches",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "L: launch six-slot LAB; K: send P6 below blast; R: recycle after KO",
+    "tour_scene": "mode=lab;stage=fd;p1=fox/hu;p2=marth/cpu0;p3=marth/cpu0;p4=marth/cpu0;p5=marth/cpu0;p6=marth/cpu0"
+  },
+  {
+    "id": "demo_data",
+    "path": "demos/data",
+    "title": "Saving script data",
+    "api": "Console and files; Data and fighter-state readback",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "S: add one and atomically save; R: reread; data stays after unload",
+    "setup": [
+      "demo_key S"
+    ]
+  },
+  {
+    "id": "demo_profiler",
+    "path": "demos/profiler",
+    "title": "Profiler and zone readout",
+    "api": "State (gd.perf); docs/profiling.md",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "O: prof on/off; console prof report / prof trace 8 / prof hitch 20",
+    "setup": [
+      "demo_key O"
+    ]
+  },
+  {
+    "id": "demo_lab_inspection",
+    "path": "demos/lab-inspection",
+    "title": "LAB hitboxes and frame timeline",
+    "api": "LAB inspection and control",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "J: request jab frame 1 (pauses); SPACE: resume; B: debug draw toggle"
+  },
+  {
+    "id": "demo_rewind",
+    "path": "demos/rewind",
+    "title": "Save, step and rewind",
+    "api": "Rewind, reload and persistent states",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "S: snapshot 1; L: load; P: pause; N: step; R: resume"
+  },
+  {
+    "id": "demo_callouts",
+    "path": "demos/callouts",
+    "title": "Text-only comm callout",
+    "api": "Comms callouts (offline)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "C: queue a text callout with fallback portrait initial",
+    "setup": [
+      "demo_key C"
+    ]
+  },
+  {
+    "id": "stage_switch_demo",
+    "tour": true,
+    "skip_reason": "Existing reference has no owner-state behavior scenario; run its README manually",
+    "path": "stage_switch_demo",
+    "title": "Static slots, switches and queue",
+    "api": "Stage slots and switching",
+    "category": "existing",
+    "in_game": "see engine-day handoff; this packet did not run it",
+    "setup": []
+  },
+  {
+    "id": "missions",
+    "path": "missions",
+    "title": "Mission folders, streaming, camera modes and maze",
+    "api": "Mission model paths and reloads; mission camera modes; maze generator",
+    "category": "existing",
+    "in_game": "see engine-day handoff; this packet did not run it",
+    "setup": [
+      "mission maze 42 8",
+      "mission maze map"
+    ],
+    "tour": false,
+    "skip_reason": "Requires user-installed mission kit exports; use mission cameras/chunks for primitive-only tour"
+  },
+  {
+    "id": "bench",
+    "path": "bench",
+    "title": "Existing measured-workload bench",
+    "api": "docs/profiling.md",
+    "category": "existing",
+    "in_game": "see engine-day handoff; this packet did not run it",
+    "setup": [
+      "bench status"
+    ],
+    "tour": false,
+    "skip_reason": "Use tools/bench/run.py for generated workload configuration"
+  },
+  {
+    "id": "shader-demo",
+    "path": "../../geno/mods/shader-demo",
+    "title": "Existing combined post sample",
+    "api": "Custom shaders, post passes and model materials",
+    "category": "existing",
+    "in_game": "see engine-day handoff; this packet did not run it",
+    "setup": [],
+    "tour": false,
+    "reference_only": true,
+    "run": "Mount shader-demo at boot; F6 toggles; scripts/demo.lua is auto-discovered (manifest has no entry)"
+  },
+  {
+    "id": "surface-shaders",
+    "tour": true,
+    "skip_reason": "Existing reference has no owner-state behavior scenario; new surface demos cover tour checks",
+    "path": "surface-shaders",
+    "title": "Existing surface shader techniques",
+    "api": "Fighter and original-stage surface shaders",
+    "category": "existing",
+    "in_game": "see engine-day handoff; this packet did not run it",
+    "setup": []
+  },
+  {
+    "id": "envoy",
+    "path": "envoy",
+    "title": "Supertime Envoy (fourth showcase)",
+    "api": "Combined mission, fighter, item, UI and save systems",
+    "category": "showcase",
+    "in_game": "see engine-day handoff; this packet did not run it",
+    "setup": [],
+    "tour": false,
+    "skip_reason": "Existing showcase has its own acceptance run; leave unchanged"
+  },
+  {
+    "id": "geno-fighter-tutorial",
+    "path": "../../../../docs/learn/geno-fighters",
+    "title": "Geno fighter overlay tutorial",
+    "api": "melee/docs/geno.md; docs/learn/geno-fighters",
+    "category": "reference",
+    "reference_only": true,
+    "tour": false,
+    "in_game": false
+  },
+  {
+    "id": "demo_effects",
+    "path": "demos/effects",
+    "title": "Native effects and emitter controls",
+    "api": "State (gd.fx); LAB effect control",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "E: play square sparks; C: slow/brighten; R: fade out; F: attach package",
+    "mount": true,
+    "setup": [
+      "demo_key E"
+    ]
+  },
+  {
+    "id": "demo_mission_cameras",
+    "path": "demos/mission-cameras",
+    "title": "Mission camera modes",
+    "api": "Camera; missions README Camera",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "F: follow; C: chunk; V: shaft; R: retail; jump along primitive route"
+  },
+  {
+    "id": "demo_gauntlet",
+    "acting_cpu": true,
+    "path": "demos/gauntlet",
+    "title": "Gauntlet",
+    "api": "Combined missions, maze, waves, reserve, pickups, cameras, slots, post and data",
+    "category": "showcase",
+    "new": true,
+    "in_game": false,
+    "controls": "Fight room 1; reach maze goal in room 2; KO boss in room 3; ENTER retries",
+    "mount": true
+  },
+  {
+    "id": "demo_training_card",
+    "path": "demos/training-card",
+    "title": "Training card",
+    "api": "Combined LAB timeline, hitboxes, contacts, trace and wait_until",
+    "category": "showcase",
+    "new": true,
+    "in_game": false,
+    "controls": "LEFT/RIGHT: move; M: inspect chosen move; D: landing drill; SPACE: resume",
+    "setup": [
+      "demo_key D"
+    ]
+  },
+  {
+    "id": "demo_stage_tour",
+    "path": "demos/stage-tour",
+    "title": "Stage tour",
+    "api": "Combined stage slots, queue, transition events, surface shaders and HUD",
+    "category": "showcase",
+    "new": true,
+    "in_game": false,
+    "controls": "N: next stage; cycles FD/BF/YS every 8s; wipe/flash/morph"
+  },
+  {
+    "id": "demo_tasks",
+    "path": "demos/tasks",
+    "title": "Coroutine input task",
+    "api": "Tasks (scripts that wait); Input",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Q: jump, drift, wait for landing; task releases its pad claim when complete",
+    "setup": [
+      "demo_key Q"
+    ]
+  },
+  {
+    "id": "demo_console_socket",
+    "path": "demos/console-socket",
+    "title": "External console socket",
+    "api": "The console (localhost socket)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Python client.py <port> demo_ping; external commands read player state",
+    "setup": [
+      "demo_ping"
+    ]
+  },
+  {
+    "id": "mission-first",
+    "path": "missions/missions/first",
+    "reference_only": true,
+    "title": "Existing tiny mission folder",
+    "api": "missions README; mission schema",
+    "category": "reference",
+    "tour": false,
+    "in_game": "See engine-day handoff"
+  },
+  {
+    "id": "maze-generator",
+    "path": "missions",
+    "reference_only": true,
+    "title": "Seeded generator and ASCII map",
+    "api": "missions README Generated maze extension; tools/maze/README.md",
+    "category": "reference",
+    "tour": false,
+    "in_game": false,
+    "run": "Load missions, then mission maze 42 8; mission maze map"
+  },
+  {
+    "id": "demo_pickup_juice",
+    "path": "demos/pickup-juice",
+    "title": "Pickup with juice",
+    "api": "Standalone Geno items; native effects; pitched sound",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "I plain pickup; J same pickup with juice; R clear",
+    "setup": [
+      "demo_key J"
+    ]
+  },
+  {
+    "id": "demo_warm",
+    "path": "demos/warm",
+    "title": "Warm before first enemy draw",
+    "api": "Pipeline warm declarations",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Automatic: warm seven enemy kinds, then spawn one Goomba"
+  },
+  {
+    "id": "demo_1p_awareness",
+    "path": "demos/1p-awareness",
+    "title": "Retail 1P lifecycle",
+    "api": "Retail Classic and Adventure (1P)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "tour": false,
+    "controls": "Read lifecycle snapshots during a manually started Classic/Adventure run."
+  },
+  {
+    "id": "demo_1p_hold",
+    "path": "demos/1p-hold",
+    "title": "Bounded interstage hold",
+    "api": "Retail Classic and Adventure (1P)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "tour": false,
+    "controls": "Clear a stage; press A on controller 1 or wait 180 host ticks. No retail logic runs during the panel."
+  },
+  {
+    "id": "demo_1p_spawn",
+    "path": "demos/1p-spawn",
+    "title": "Retail opponent spawn template",
+    "api": "Retail Classic and Adventure (1P)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "tour": false,
+    "controls": "Enter Classic and reach the wireframe team: each replacement receives the same port template before its first logic frame. Enemy CPU AI is unchanged."
+  },
+  {
+    "id": "demo_1p_loop",
+    "path": "demos/1p-loop",
+    "title": "Scripted 1P launch and New Game+",
+    "api": "Retail Classic and Adventure (1P)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "tour": false,
+    "controls": "Press C to start Classic Mario Normal/3 stocks; B cancels. Completion restarts. Scripted runs do not write retail progression records and skip trophy/credits/congratulations."
+  }
+]

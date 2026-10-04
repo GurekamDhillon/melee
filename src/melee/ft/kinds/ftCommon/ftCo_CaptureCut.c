@@ -230,7 +230,7 @@ void ftCo_800DCFD4(Fighter_GObj* gobj)
     fp->dmg.x1860_element = hit->element;
 
     ftColl_80078710(fp->victim_gobj, gobj, &fp->dmg.facing_dir_1);
-    Fighter_UnkTakeDamage_8006CC30(fp, hit->damage);
+    Fighter_UnkTakeDamage_8006CC30(fp, FT_SCRIPT_DEALT(victim_fp, hit->damage));
     ftCo_Damage_CalcKnockback(fp);
     ftCo_8008E908(gobj, 0.0F);
 }

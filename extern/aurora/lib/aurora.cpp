@@ -253,6 +253,8 @@ bool begin_frame(bool offscreen = false) noexcept {
     }
   }
 
+  gx::update();
+  window::apply_frame_buffer_aspect();
   imgui::new_frame(window::get_window_size());
   if (!gfx::begin_frame()) {
     return false;
@@ -321,6 +323,7 @@ void end_frame(bool offscreen = false) noexcept {
                 .view = currentView,
                 .loadOp = wgpu::LoadOp::Clear,
                 .storeOp = wgpu::StoreOp::Store,
+                .clearValue = {0.0, 0.0, 0.0, 1.0},
             },
         };
         const wgpu::RenderPassDescriptor renderPassDescriptor{
@@ -379,6 +382,8 @@ void end_frame(bool offscreen = false) noexcept {
     gfx::png::after_submit_screenshot();
     if (canPresent && g_surface) {
       ZoneScopedN("Present");
+      const bool gdMeasurePresent = webgpu::gpu_prof::active();
+      const auto gdPresentStart = gdMeasurePresent ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
       wgpu::ConvertibleStatus status = wgpu::Status::Error;
       {
         window::SurfaceLock surfaceLock;
@@ -386,6 +391,8 @@ void end_frame(bool offscreen = false) noexcept {
           status = g_surface.Present();
         }
       }
+      if (gdMeasurePresent) webgpu::gpu_prof::emit_cpu("cpu.present", static_cast<uint64_t>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - gdPresentStart).count()));
       if (status) {
         gfx::after_present();
       } else {

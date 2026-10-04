@@ -3,6 +3,7 @@
 
 #include "gw.h"
 #include "gw_test.h"
+#include "gw_hang.h"
 
 int gw_Mex_CssIconCount(void);
 void *gw_Mex_CssIconTable(void);
@@ -432,6 +433,7 @@ static int test_unlock_all(void) {
 }
 
 void gw_tests_register_all(void) {
+  gw_hang_tests_register();
   extern void gw_MexTestRegisterAll(void);
   extern void gw_ppc_tests_register(void);
   extern void gw_ftfunction_tests_register(void);
@@ -467,6 +469,7 @@ void gw_tests_register_all(void) {
   gw_mods_tests_register();
   gw_mexid_tests_register();
   gw_script_tests_register();
+  { extern void gw_profiler_tests_register(void); gw_profiler_tests_register(); }
   gw_kit_tests_register();
   gw_pad_tests_register();
   gw_mouse_tests_register();

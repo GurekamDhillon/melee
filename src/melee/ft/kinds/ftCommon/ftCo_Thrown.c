@@ -200,7 +200,7 @@ void ftCo_800DE854(Fighter_GObj* gobj)
     fp->dmg.x184c_damaged_hurtbox = 1;
     fp->dmg.x1854_collpos = collpos;
     fp->dmg.x1860_element = hit->element;
-    Fighter_UnkTakeDamage_8006CC30(fp, hit->damage);
+    Fighter_UnkTakeDamage_8006CC30(fp, FT_SCRIPT_DEALT(thrower_fp, hit->damage));
     ftColl_8007891C(thrower_gobj, gobj, hit->damage);
 }
 

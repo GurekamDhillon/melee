@@ -9,7 +9,8 @@ static int t_model_options(lua_State *L)
     lua_pushnumber(L, gs_camera_float(field[SM_SY]));
     lua_pushnumber(L, gs_camera_float(field[SM_SZ]));
     lua_pushboolean(L, field[SM_ALPHA]);
-    return 6;
+    lua_pushboolean(L, field[SM_BACKGROUND]);
+    return 7;
 }
 static int t_model_open(lua_State *L)
 {
@@ -84,8 +85,10 @@ static int test_script_model_api(void)
         "local x,t=options{x=12.5,tint=0x12345678}; assert(x==12.5 and t==0x12345678) "
         "local _,_,sx,sy,sz,a=options{scale=-1,scale_x=-2,scale_y=3,scale_z=-0.5,alpha=true}; "
         "assert(sx==-2 and sy==3 and sz==-0.5 and a) "
+        "local _,_,_,_,_,_,b=options{background=true}; assert(b) "
+        "local _,_,_,_,_,_,b=options{}; assert(not b) "
         "for _,v in ipairs{{scale=0},{scale=101},{x=0/0},{z=math.huge},{layer=9},"
-        "{scale_x=0},{scale_y=math.huge},{scale_z=-101},{alpha=1},"
+        "{scale_x=0},{scale_y=math.huge},{scale_z=-101},{alpha=1},{background=1},"
         "{rot=361},{visible=1},{tint=-1},{tint=0x100000000}} do assert(not pcall(options,v)) end "
         "assert(open_model('a')==open_model('A')); assert(open_model('b')~=open_model('a'))")) {
         gw_test_fail("model Lua validation/cache: %s", lua_tostring(L, -1)); { fail_line = __LINE__; goto done; }

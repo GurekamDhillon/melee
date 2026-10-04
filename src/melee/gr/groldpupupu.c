@@ -385,7 +385,11 @@ void grOldPupupu_80210D10(Ground_GObj* gobj)
         } else {
             count = 1;
         }
+#if defined(TARGET_PC)
+        Camera_LogicBounds(&cam_left, &cam_center, &cam_right);
+#else
         Camera_800307D0(&cam_left, &cam_center, &cam_right);
+#endif
         if (grOp_803E67B0[index].x0 == 1) {
             step = -10.0F;
             if (cam_right < 200.0F) {

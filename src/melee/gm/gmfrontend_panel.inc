@@ -210,6 +210,14 @@ static int fe_panel_add(const char* id, const FePanel* p)
         }
         qi = fp_add_quad(name, FPK_FLAT, p->role, -1);
         q = &fp.q[qi];
+        if (strcmp(id, "desc_strip") == 0) {
+            q->canvas_y0 = p->bounds.y;
+            q->canvas_y1 = p->bounds.y + p->bounds.h;
+            q->canvas_x0 = p->bounds.x;
+            q->canvas_x1 = p->bounds.x + p->bounds.w;
+            q->canvas_edge = i == FPANEL_LEFT || i == FPANEL_TL || i == FPANEL_BL ? 2 :
+                             i == FPANEL_RIGHT || i == FPANEL_TR || i == FPANEL_BR ? 3 : 1;
+        }
         q->has_colour = true;
         if (!kit_colour(token, section, q->rgb)) {
             q->rgb[0] = q->rgb[1] = q->rgb[2] = 1.0F;

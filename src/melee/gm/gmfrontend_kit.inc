@@ -1,6 +1,6 @@
 /* gmfrontend_kit.inc - included by gmfrontend.c (TARGET_PC only), after the player.
  *
- * ---- THE KIT (art brief section 1: C:/Users/Gurek/Desktop/menu/out_kit) --------------------
+ * ---- THE KIT (art brief section 1: <home>/Desktop/menu/out_kit) --------------------
  *
  *   kit.json            palette, the five sections' colours and band rhythms, port colours
  *   font_manifest.json  the atlas: per role (caption 12 .. display 56) metrics, glyphs (advance,
@@ -235,6 +235,7 @@ static int ff_fit(int role, const char* s, float max_w, char* out, int cap)
 {
     int i, n;
     fp_copy(out, s, cap);
+    if (s != NULL && cap > 1 && strlen(s) >= (size_t) cap) out[cap - 2] = 0x01;
     if (max_w <= 0.0F) {
         return role;
     }
@@ -703,16 +704,46 @@ static void fp_mask_state(FpTex* tx)
     GXLoadTexObj(&tx->t.obj, GX_TEXMAP0);
 }
 
-/* A text quad set in the atlas: laid out unsheared from its baseline anchor, sheared, then
- * moved by its joint like every other quad. */
+/* Preserve the authored 4:3 right margin while exposing the added right side
+ * of the canvas. Description text stays at its authored left anchor. */
+static float kit_desc_width(void) { return kit.desc_max + fe_canvas_extra(); }
+
+static void kit_desc_refit(FpQuad* q)
+{
+    float width;
+    int role;
+    if (!q->fit_desc) return;
+    width = kit_desc_width();
+    if (q->desc_fit_width == width) return;
+    role = ff_role(kit.desc_role);
+    if (role >= 0) {
+        q->ff_role = (s8) ff_fit(role, q->desc_source, width, q->textbuf,
+                                (int) sizeof q->textbuf);
+        q->text = q->textbuf;
+        q->text_h = ff.r[q->ff_role].cap;
+    }
+    q->desc_fit_width = width;
+}
+
+static void kit_desc_set(FpQuad* q, const char* s)
+{
+    fp_copy(q->desc_source, s, (int) sizeof q->desc_source);
+    q->fit_desc = true;
+    q->desc_fit_width = 0;
+    kit_desc_refit(q);
+}
+
+/* Atlas text is sheared at its baseline and moved by its joint like other quads. */
 static void fp_draw_text(FpQuad* q)
 {
-    const FfRole* r = &ff.r[q->ff_role];
+    const FfRole* r;
     int page, n, prev;
     const char* s;
     GXColor c;
     float S = fp.shear_s, Y0 = fp.shear_y0;
     FpJoint* j = q->joint >= 0 ? &fp.j[q->joint] : NULL;
+    kit_desc_refit(q);
+    r = &ff.r[q->ff_role];
     c.r = fp_u8(q->wrgb[0]);
     c.g = fp_u8(q->wrgb[1]);
     c.b = fp_u8(q->wrgb[2]);
@@ -757,6 +788,8 @@ static void fp_draw_text(FpQuad* q)
                         X = j->ws[0] * X + j->wo[0];
                         Y = j->ws[1] * Y + j->wo[1];
                     }
+                    if (q->canvas_exit && q->joint >= 0)
+                        X += 2.0F * fe_canvas_extra() * fp_value(fp_jch(q->joint, FJC_TRA_X), fp.frame) / 600.0F;
                     GXPosition2f32(X, -Y);
                     GXColor4u8(c.r, c.g, c.b, c.a);
                     GXTexCoord2f32(u[k], v[k]);
@@ -767,4 +800,45 @@ static void fp_draw_text(FpQuad* q)
     }
     HSD_StateInvalidate(-1);
     hsd_80391A04(1.0F, 1.0F, 1);
+}
+
+/* Reuse the kit atlas up/down arrows; plain chevrons only if a glyph is absent. */
+static void fp_scroll_cue(int scroll, int count)
+{
+    float rgb[3], v[4][2];
+    GXColor c;
+    int end, k;
+    if (count <= kit.visible) return;
+    kit_colour("gold", KS_OPTIONS, rgb);
+    c.r = fp_u8(rgb[0]); c.g = fp_u8(rgb[1]); c.b = fp_u8(rgb[2]); c.a = 255;
+    for (end = 0; end < 2; end++) {
+        float y = end ? kit.rows_top + (kit.visible - 1) * kit.pitch + 18 : kit.rows_top - 6;
+        float dir = end ? 1.0F : -1.0F;
+        if (end ? scroll + kit.visible >= count : scroll <= 0) continue;
+        {
+            int role = ff_role(kit.row_role);
+            int glyph = FF_ARROW + (end ? 3 : 1);
+            if (role >= 0 && ff.r[role].g[glyph].ok) {
+                FpQuad cue;
+                memset(&cue, 0, sizeof cue);
+                cue.ff_role = (s8) role;
+                cue.joint = -1;
+                cue.ax = 592.0F;
+                cue.ay = y + 6.0F;
+                cue.text = end ? "\x05" : "\x03";
+                cue.wrgb[0] = rgb[0]; cue.wrgb[1] = rgb[1]; cue.wrgb[2] = rgb[2];
+                cue.wa = 1.0F;
+                fp_draw_text(&cue);
+                continue;
+            }
+        }
+        for (k = 0; k < 2; k++) {
+            float x = 592.0F + k * 6;
+            v[0][0] = x; v[0][1] = y + (k ? 6 * dir : 0);
+            v[1][0] = x + 6; v[1][1] = y + (k ? 0 : 6 * dir);
+            v[2][0] = v[1][0]; v[2][1] = v[1][1] + 2;
+            v[3][0] = v[0][0]; v[3][1] = v[0][1] + 2;
+            fp_flat(v, c);
+        }
+    }
 }

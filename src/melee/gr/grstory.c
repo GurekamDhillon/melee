@@ -52,6 +52,14 @@ static StageCallbacks grSt_StageCallbacks[] = {
 };
 
 static struct grStory_YakumonoParam* yakumono_param;
+#if defined(TARGET_PC)
+void* grStory_StageSlotParamSwap(void* param)
+{
+    void* previous=yakumono_param;
+    yakumono_param=param;
+    return previous;
+}
+#endif
 
 StageData grSt_StageData = {
     Gr_Kind_Story,

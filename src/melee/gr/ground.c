@@ -828,6 +828,11 @@ void Ground_801C0800(StageIdPair* pair)
     Ground_801C3950(stage_info.param->x24);
     {
         int i;
+#if defined(TARGET_PC)
+        /* Previous scene heap may already be reused (including texture bytes).
+         * Clear descriptors BEFORE registering this stage's current itemdata. */
+        it_ResetStageArticleTable();
+#endif
         if (stage_info.itemdata != NULL) {
             for (i = 0; stage_info.itemdata[i] != NULL; i++) {
                 it_8026B40C(stage_info.itemdata[i]->unk4,
@@ -1236,6 +1241,11 @@ static HSD_JObj* get_jobj_inline(float phi_f0)
 
 Ground_GObj* Ground_GetStageGObj(int map_id)
 {
+#if defined(TARGET_PC)
+    extern HSD_GObj* ScriptGame_StageSlotGround(int);
+    HSD_GObj* slot_gobj = ScriptGame_StageSlotGround(map_id);
+    if (slot_gobj != NULL) return slot_gobj;
+#endif
     StageInfo* stageinfo = &stage_info;
     float phi_f0;
     HSD_JObj* new_var;
@@ -1439,6 +1449,23 @@ static void Ground_801C1D38(HSD_GObj* gobj)
         gp->xC_callback(gobj);
     }
 }
+
+#if defined(TARGET_PC)
+/* Reuse preloaded slot joints; preserve the retail callback priorities. */
+void Ground_StageSlotPrepare(HSD_GObj* gobj, int map_id)
+{
+    Ground* gp = GET_GROUND(gobj);
+    int i;
+    HSD_GObjProc_RemoveAllProcs(gobj);
+    memset(gp, 0, sizeof *gp);
+    gp->map_id = map_id; gp->gobj = gobj; gp->x10_flags.b2 = 1;
+    for(i=0;i<8;++i)gp->x20[i]=-1;
+    grMaterial_801C95C4(gobj);
+    HSD_GObj_SetupProc(gobj, Ground_801C1CD0, 1);
+    HSD_GObj_SetupProc(gobj, Ground_801C1D38, 4);
+    stage_info.map_gobjs[map_id] = gobj;
+}
+#endif
 
 void Ground_801C1D6C(u32 arg0)
 {
@@ -2256,6 +2283,10 @@ bool Ground_801C2D24(enum_t arg0, Vec3* arg1)
 
 bool Ground_InitMapColl(HSD_JObj* jobj, s32 arg1)
 {
+#if defined(TARGET_PC)
+    extern int ScriptGame_StageSlotCollision(int);
+    if (ScriptGame_StageSlotCollision(arg1)) return true;
+#endif
     u8 _[4];
     bool result = false;
     UnkArchiveStruct* temp_r3 = grDatFiles_801C6330(arg1);
@@ -2295,6 +2326,10 @@ static s16 Ground_804D6954;
 
 bool Ground_UpdateMapColl(Ground_GObj* arg0)
 {
+#if defined(TARGET_PC)
+    extern int ScriptGame_StageSlotCollision(int);
+    if (ScriptGame_StageSlotCollision(GET_GROUND(arg0)->map_id)) return true;
+#endif
     StageData* stagedata;
     UnkArchiveStruct* archive;
 
@@ -4137,3 +4172,7 @@ void Ground_801C5AEC(Vec3* v, Vec3* arg1, Vec3* arg2, Vec3* arg3)
 
 /// @todo Is this used by base pointer anywhere? Not stripped by mwcc.
 static int unused_ints[] = { 1, 1, 0, 0, 0, 180, 0, 0, 0 };
+
+#ifdef TARGET_PC
+#include "ground_stage_slots.inc"
+#endif

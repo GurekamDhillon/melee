@@ -23,6 +23,7 @@ local retiring=nil
 local retire_attempts=0
 local pending_promote=nil
 local v2_paused=false
+local v2_set_paused
 local reward_ui=nil
 local v2_previous={}
 -- Sustained grounded-movement counter used as truthful tutorial evidence.
@@ -32,14 +33,48 @@ local launch_seen=false
 local pending_entry=false
 local tick_serial,entry_after_tick=0,0
 local pending_room=nil
+local arrival_side=nil
+local handover_side,pending_room_side=nil,nil
 local pending_ticks=0
 local transition_error,pending_finish=nil,nil
 local campaign_recovery_error=false
+local pending_inventory_undo=nil
 local menu='collection'
 local menu_state=Menus.new()
 local selected_fighter,run_fighter={id='falco',costume=0},{id='falco',costume=0}
 local roster_state=Roster.new(selected_fighter)
 local launched_scene,pending_begin,launch=nil,false,nil
+local launched_combat=false
+local traversal_camera=false
+local handover_percent=nil
+local function restore_percent()
+ gd.set_percent(1,handover_percent or 0);handover_percent=nil
+end
+local native_bounds,bounds_owned,bounds_room=nil,false,nil
+local function restore_bounds()
+ if traversal_camera then
+  if gd.camera_attach then pcall(gd.camera_attach,0) end
+  if gd.camera_bounds then pcall(gd.camera_bounds,false) end
+  traversal_camera=false
+ end
+ if bounds_owned and gd.stage_bounds then pcall(gd.stage_bounds,false) end
+ bounds_owned=false;bounds_room=nil
+end
+local function room_bounds(room)
+ if not gd.stage_bounds or not room or not room.camera then return true end
+ if not native_bounds then
+  local ok,value=pcall(gd.stage_bounds)
+  if not ok or type(value)~='table' or type(value.blast)~='table' then return false,'Native stage bounds unavailable' end
+  native_bounds=value
+ end
+ local f=room.floor;local b=native_bounds.blast
+ -- Preserve the native host's margins relative to the original 130-unit floor.
+ local blast={left=f.left+(b.left+65),right=f.right+(b.right-65),bottom=b.bottom+f.y,top=b.top+f.y}
+ if room.physical_bounds then blast.top=math.max(blast.top,room.physical_bounds.top+100) end
+ local ok,value=pcall(gd.stage_bounds,{camera=room.camera,blast=blast})
+ if not ok or value==false then return false,'Room camera/blast bounds refused: '..tostring(value) end
+ bounds_owned=true;return true
+end
 local platforms,enemies,fx_handles={},{},{}
 local buttons,mouse_buttons,last_frame=0,0,-1
 local toast=''
@@ -52,6 +87,7 @@ local topology=Topology.new(RoomCatalogue,EncounterCatalogue,Progression,Rng)
 local adapter=Adapter.new(RoomCatalogue,RoomRecipes)
 local routes=Route.new({topology=topology,adapter=adapter,progress=Progress,progression=Progression,encounters=EncounterCatalogue})
 local previous_stocks={};local move_serial={0,0};local move_ids={}
+local previous_falls=nil
 local movement={0,0}
 local enemy_host,enemy_gene,enemy_kos=nil,nil,0
 local BASE_STOCKS=99
@@ -129,6 +165,25 @@ local function progress_migration_safe(m,record)
  if gates and record.opened==nil then return false,'route has consumable gates with no saved open history' end
  return true
 end
+-- Resolved node manifests retain their authored geometry on resume.
+-- Unversioned historical and widened prototypes have distinct validators.
+local function validate_simple_manifest(m)
+ if type(m)~='table' then return false,'missing node manifest' end
+ local generator=m.generator_version
+ if generator==5 then return PhysicalCampaign.validate(m)
+ elseif generator==4 then return Traversal.validate(m)
+ elseif generator==3 then return Maze.validate(m)
+ elseif generator==2 then return Dungeon.validate(m)
+ elseif generator~=nil and generator~=1 then return false,'unsupported node generator '..tostring(generator),true end
+ local first=m.nodes and m.nodes[m.start]
+ local floor=first and first.room and first.room.floor
+ if floor and floor.left==-65 then return DungeonV1.validate(m) end
+ return PrototypeV1.validate(m)
+end
+local function node_route_label()
+ if manifest and manifest.generator_version==3 then return 'Maze run' end
+ return 'SuperTime Envoy'
+end
 local function checkpoint(raw)
  if type(raw)~='string' or #raw>1048700 then return nil end
  -- TBD3: resolved manifest (+ optional progress) with an integrity checksum.
@@ -179,6 +234,12 @@ local function checkpoint(raw)
    if not ok then return nil,'route resume error: '..tostring(res) end
    if not res then return nil,why end
    return {generation=decoded.generation,profile=p,run=r,selected=selected,fighter=played,route=res}
+  end
+  if m then
+   local ok,valid,why,preserve=pcall(validate_simple_manifest,m)
+   if not ok or not valid then return nil,why or tostring(valid),preserve==true end
+   if r and m.seed~=r.world_seed then return nil,'saved manifest seed mismatch; preserved',true end
+   if r and not m.nodes[r.progress.room] then return nil,'saved room missing from manifest' end
   end
   -- A progress record without a v2 manifest is inconsistent.
   if decoded.progress then return nil,'progress record without a v2 route' end
@@ -273,7 +334,7 @@ local function save(override_route, override_run)
  -- protected and this save was redirected into it.
  local vok,vres,vwhy=pcall(checkpoint,text)
  if not (vok and vres) then
-  say('Save refused: '..tostring(vwhy or 'checkpoint failed validation')..'; previous checkpoint retained','error','save');return false
+  say('Save refused: '..tostring((not vok and vres) or vwhy or 'checkpoint failed validation')..'; previous checkpoint retained','error','save');return false
  end
  -- A/B is insufficient when the sibling slot is preserved: a raw partial
  -- write could destroy the only supported checkpoint. Require the native
@@ -357,6 +418,32 @@ local function run_inventory(r)
  if inv then r.inventory=inv end
  return inv
 end
+-- Apply Restore only when the native setter and readback agree. Even a setter
+-- that reports refusal may have changed native state, so every mismatch gets
+-- an exact rollback; an unconfirmed rollback remains owned and pauses play.
+local function apply_verified_restore(amount)
+ local player=gd.player(1)
+ if not player or player.percent<=0 then return false,'Nothing to restore' end
+ local before=player.percent;local target=math.max(0,before-amount)
+ local ok,result=pcall(gd.set_percent,1,target)
+ local read_ok,after=pcall(gd.player,1)
+ local reached=read_ok and type(after)=='table' and after.percent==target
+ local function undo()
+  local set_ok,set_result=pcall(gd.set_percent,1,before)
+  local back_ok,back=pcall(gd.player,1)
+  return set_ok and set_result~=false and back_ok and type(back)=='table' and back.percent==before
+ end
+ if ok and result~=false and reached then return true,undo end
+ local unchanged=read_ok and type(after)=='table' and after.percent==before
+ if not unchanged then
+  local undone,restored=pcall(undo)
+  if not undone or restored~=true then
+   pending_inventory_undo=undo
+   v2_set_paused(true)
+  end
+ end
+ return false, (not ok or result==false) and 'native heal refused' or 'heal readback mismatch'
+end
 -- Spend one consumable through the real plan/validate/commit sequence. The heal
 -- is applied and read back before the record is committed, and a refused save
 -- rolls the whole thing back, so a refused spend neither consumes an item nor
@@ -388,12 +475,24 @@ local function use_inventory_item(r,id,context,apply)
  -- table, so it cannot be used to restore fields.
  local before_inventory=r.inventory
  local before_supplies=r.progress and r.progress.supplies or nil
+ local before_route_supplies=route and route.progress and route.progress.supplies or nil
  r.inventory=plan.inventory
  if r.progress then r.progress.supplies=(r.inventory.items.legacy_restore or 0) end
+ -- The v2 campaign's progress record is serialized separately and owns its
+ -- supply mirror. Keep it in the same staged transaction as run.inventory.
+ if route and route.progress then route.progress.supplies=(r.inventory.items.legacy_restore or 0) end
  if not save() then
   r.inventory=before_inventory
   if r.progress then r.progress.supplies=before_supplies end
-  if undo then pcall(undo) end
+  if route and route.progress then route.progress.supplies=before_route_supplies end
+  if undo then
+   local undo_ok,undo_result=pcall(undo)
+   if not undo_ok or undo_result==false then
+    pending_inventory_undo=undo
+    v2_set_paused(true)
+    return false,'spend save failed; restoring the native effect before play resumes'
+   end
+  end
   return false,'spend could not be saved; nothing changed'
  end
  return true
@@ -424,6 +523,7 @@ local function load_data()
    if protected['checkpoint-a.txt'] or protected['checkpoint-b.txt'] then say('A preserved checkpoint could not be used; files left intact. Remove it to continue')
    else say('Both checkpoints invalid; files preserved') end
  else profile=Core.new_profile(17029) end
+ starter=Core.starting_gene(profile)
 end
 local enemy_tells={}
 local enemy_controller=EnemyGenes.new(Core,gd,{get_run=function()return run end,
@@ -435,9 +535,11 @@ local enemy_controller=EnemyGenes.new(Core,gd,{get_run=function()return run end,
   end
  end})
 local function cleanup()
+ restore_bounds()
+ local clean,clean_why=true,nil
  if campaign then
   local ok,why=campaign:teardown()
-  if not ok then gd.log('roguelite: v2 teardown pending: '..tostring(why))
+  if not ok then clean=false;clean_why=why;gd.log('roguelite: v2 teardown pending: '..tostring(why))
   else campaign:reset(false);campaign=nil end
  end
  -- Retry any orphaned previous owner; keep whatever the engine still refuses.
@@ -447,19 +549,41 @@ local function cleanup()
   if clean then c:reset(false) else pending_orphans[#pending_orphans+1]=c;gd.log('roguelite: orphan v2 cleanup pending: '..tostring(why)) end
  end
  orphan_campaigns=pending_orphans
- TechAI.clear(2)
+ if #pending_orphans>0 then clean=false;clean_why=clean_why or 'Previous generated room cleanup pending' end
+ if gd.player(2) then TechAI.clear(2) end
  local cleared,why=Rooms.clear(room_visuals)
  enemy_controller:clear();enemy_tells={}
- for _,h in ipairs(platforms) do gd.stage_remove(h) end;platforms={}
- for h in pairs(enemies) do gd.enemy_remove(h) end;enemies={}
+ local retained={}
+ for _,h in ipairs(platforms) do
+  local ok,result=pcall(gd.stage_remove,h)
+  if not ok or result==false then retained[#retained+1]=h;clean=false;clean_why='Room collision release refused' end
+ end
+ platforms=retained
+ local remaining={}
+ for h,e in pairs(enemies) do
+  local ok,result=pcall(gd.enemy_remove,h)
+  local absent=false
+  if ok and result==false and gd.enemy_alive then
+   local queried,alive=pcall(gd.enemy_alive,h);absent=queried and alive==false
+  end
+  if not ok or (result==false and not absent) then remaining[h]=e;clean=false;clean_why='Room enemy release refused' end
+ end
+ enemies=remaining
  for _,h in ipairs(fx_handles) do gd.fx_end(h,0) end;fx_handles={}
  if gd.parts_clear then gd.parts_clear() end
  Visuals.clear()
- return cleared,why
+ return cleared and clean,why or clean_why
 end
 local function held(b,bit) return (b//bit)%2==1 end
 local function edge(b,bit) return held(b,bit) and not held(buttons,bit) end
-local function pause_menu(which) menu=which;Menus.reset(menu_state,which);gd.pause();gd.input_mask(1,15);Commands.reset(command_state,buttons);if which=='error' then presentation:release_hud() end end
+local function pause_menu(which)
+ menu=which;Menus.reset(menu_state,which);gd.pause();gd.input_mask(1,15);Commands.reset(command_state,buttons)
+ if which=='error' then presentation:release_hud() end
+ -- V2 retains its existing CPU-host campaign lifecycle until scene handover
+ -- becomes a transaction owned by RuntimeCampaign. Its unresolved effects and
+ -- rollback handles must never be retired merely by opening a collection menu.
+ if which=='collection' and ready and launched_combat and not route then pending_begin=false;launch(selected_fighter,false) end
+end
 local function unpause() menu=nil;gd.resume();Commands.reset(command_state,buttons) end
 local function host(port)
  if port==1 then return 'player' end
@@ -481,25 +605,32 @@ local function finish(outcome)
  local result,why=Core.finish(profile,run,outcome,id,{defer_export=true})
  if not result then say('Finish refused: '..tostring(why));return end
  Feedback.reset(feedback)
- if not save() then
-  profile=assert(Core.restore(old_profile));rebind_current_run(assert(Core.restore(old_run)));sync_loadout()
-  pending_finish=outcome;active=false;transition_error='Run result could not be saved. Retry after fixing storage.';pause_menu('error');return
- end
- -- Run history is appended from the finished record, so the durable ledger is
- -- also the visible history; an existing profile keeps its prior entries.
+ -- Stage history with the finish ledger before the one durable checkpoint write.
+ -- A pre-existing history must include this run; only profiles without one are
+ -- migrated from the complete finish ledger.
  if not profile.history then
-  local seeded=RunHistory.from_core_finished(profile.id,profile)
+  local seeded=RunHistory.from_core_finished(profile.id,profile,{max_entries=512})
   if seeded then profile.history=seeded end
  end
  if profile.history then
-  -- append returns a NEW history record; discarding it would silently drop the
-  -- entry, which is the exact failure mode this service exists to prevent.
+  -- The Core ledger retains up to 512 outcomes. Expand older 64-entry history
+  -- containers in place, preserving all entries and allowing the same bound.
+  profile.history.max_entries=math.max(profile.history.max_entries or 0,512)
   local entry,ewhy=RunHistory.make_entry(run,{outcome=outcome,export=result.export})
-  if entry then
-   local staged,hwhy=RunHistory.append(profile.history,entry)
-   if staged then profile.history=staged
-   else gd.log('roguelite: run history append refused: '..tostring(hwhy)) end
-  else gd.log('roguelite: run history entry refused: '..tostring(ewhy)) end
+  if not entry then
+   profile=assert(Core.restore(old_profile));rebind_current_run(assert(Core.restore(old_run)));sync_loadout()
+   say('Finish refused: run history entry invalid: '..tostring(ewhy));return
+  end
+  local staged,hwhy=RunHistory.append(profile.history,entry)
+  if not staged then
+   profile=assert(Core.restore(old_profile));rebind_current_run(assert(Core.restore(old_run)));sync_loadout()
+   say('Finish refused: run history full: '..tostring(hwhy));return
+  end
+  profile.history=staged
+ end
+ if not save() then
+  profile=assert(Core.restore(old_profile));rebind_current_run(assert(Core.restore(old_run)));sync_loadout()
+  pending_finish=outcome;active=false;transition_error='Run result could not be saved. Retry after fixing storage.';pause_menu('error');return
  end
  revert_equipment(run)
  pending_finish=nil;active=false;presentation:release_hud();pause_menu('collection');Feedback.finish(feedback,result)
@@ -535,7 +666,7 @@ end
 -- Pause ownership for v2 transitions/recovery. main keeps the engine paused for
 -- the whole request/build/persist/commit/recovery sequence and only resumes when
 -- the campaign is running again, restoring the ordinary command tree.
-local function v2_set_paused(want)
+v2_set_paused=function(want)
  if want and not v2_paused then
   if type(gd.pause)=='function' then pcall(gd.pause) end
   v2_paused=true
@@ -559,7 +690,10 @@ local function ensure_campaign(route_arg,run_arg)
    finish=function(outcome)finish(outcome) end,say=say,
    on_event=function(e)if gd.log then gd.log('roguelite_v2 '..tostring(e.kind))end end,
    fighter_family='cinder',fighter_slot='assault',
-   spawn_point=function()return {x=28,y=2}end})
+   spawn_point=function(n)
+    local s=n and n.room and n.room.enemy_spawns and n.room.enemy_spawns[1]
+    return {x=s and s.x or 56,y=(s and s.y or 0)+2}
+   end})
 end
 local function v2_ready() return campaign~=nil and campaign.phase~='idle' end
 -- A campaign error that has actually recovered is retired with the error: the run
@@ -591,8 +725,8 @@ end
 -- any previous owner has actually released its resources.
 local function finish_promotion(result)
  if not v2_isolate() then transition_error='Empty playfield unavailable; install the updated native build.';pause_menu('error');return end
- if launched_scene~=Roster.scene(run_fighter) then pending_begin=true;launch(run_fighter);return end
- pending_begin=false;gd.set_percent(1,0);active=false
+ if launched_scene~=Roster.scene(run_fighter) or not launched_combat then pending_begin=true;launch(run_fighter,true);return end
+ pending_begin=false;restore_percent();active=false
  previous_stocks[1]=BASE_STOCKS;previous_stocks[2]=BASE_STOCKS
  v2_set_paused(true)
  local ok,why=campaign:enter_current()
@@ -637,13 +771,13 @@ end
 local function room_clear()
  if run.progress.cleared[node.id] then return end
  run.progress.cleared[node.id]=true;save()
- TechAI.clear(2)
- if gd.cpu_mode then gd.cpu_mode(2,'stand') end
+ if gd.player(2) then TechAI.clear(2);if gd.cpu_mode then gd.cpu_mode(2,'stand') end end
  local reward=node.kind=='arena' or node.kind=='boss'
  if reward then pause_menu('reward') end
  Feedback.clear(feedback,{key='clear:'..node.id,title=node.title,reward=reward})
 end
 local function configure_ai()
+ if not gd.player(2) then return end
  if enemy_host and not run.progress.cleared[node.id] then
   local ok,why=TechAI.configure(2,node.kind=='boss' and 3 or 2,(run.world_seed+node.depth*31)%2147483646+1)
   if not ok then gd.log('roguelite: '..why) end
@@ -661,16 +795,19 @@ local function setup_enemy()
   gd.set_percent(2,0);gd.set_stocks(2,BASE_STOCKS)
   if gd.cpu_mode then gd.cpu_mode(2,run.progress.cleared[node.id] and 'stand' or 'fight') end
   configure_ai()
- else if gd.cpu_mode then gd.cpu_mode(2,'stand') end end
+ else if gd.player(2) and gd.cpu_mode then gd.cpu_mode(2,'stand') end end
  previous_stocks[2]=BASE_STOCKS
  if node.kind=='traversal' and not run.progress.cleared[node.id] then
-  local kind=node.id=='approach' and 'redead' or 'goomba'
-  local h,why=gd.spawn_enemy(kind,12,2,{facing=-1})
+  local specs=node.monsters or {{kind=node.id=='approach' and 'redead' or 'goomba',x=24,y=0}}
+  for i,spec in ipairs(specs) do
+  local kind=spec.kind
+  local h,why=gd.spawn_enemy(kind,spec.x,spec.y+2,{facing=-1})
   if h then
-   local identity='enemy_'..node.id..'_1';enemies[h]={host=identity,kind=kind}
+   local identity='enemy_'..node.id..'_'..i;enemies[h]={host=identity,kind=kind}
    local attached,reason=enemy_controller:attach(h,{host=identity,family=kind=='redead' and 'rime' or 'cinder',slot='assault'})
-   if not attached then say('Enemy gene unavailable: '..tostring(reason),'error','enemy-setup') end
-  else say('Adventure enemy unavailable: '..tostring(why)..'; passage remains open') end
+   assert(attached,'Enemy gene unavailable: '..tostring(reason))
+  else error('Adventure enemy unavailable: '..tostring(why)) end
+  end
  end
 end
 local function complete_entry()
@@ -678,8 +815,17 @@ local function complete_entry()
  -- placement before enabling the encounter or freezing a room menu.
  local combat=node.kind=='arena' or node.kind=='boss'
  local placed=pcall(function()
-  gd.teleport(1,node.room.spawn.x,node.room.spawn.y+2)
-  gd.teleport(2,combat and 28 or 58,2)
+  local spawn=node.room.spawn
+  if node.maze and arrival_side then
+   local opposite={left='right',right='left',top='bottom',bottom='top'}
+   local anchor=node.room.exit_anchors[opposite[arrival_side]]
+   if anchor then spawn={x=anchor.x+(opposite[arrival_side]=='left' and 12 or opposite[arrival_side]=='right' and -12 or 0),y=anchor.y} end
+  end
+  gd.teleport(1,spawn.x,spawn.y+2)
+  if combat then
+   local spawn=node.room.enemy_spawns and node.room.enemy_spawns[1] or {x=56,y=0}
+   gd.teleport(2,spawn.x,spawn.y+2)
+  end
  end)
  if not placed then
   pending_ticks=pending_ticks+1
@@ -689,36 +835,99 @@ local function complete_entry()
   end
   return false
  end
- pending_entry=false
+ pending_entry=false;arrival_side=nil
+ if node.physical and gd.camera_set and gd.camera_follow then
+  local player=gd.player(1)
+  traversal_camera=true -- Cleanup also restores a partially refused claim.
+  local ok,why=pcall(function()
+   assert(gd.camera_bounds(true)~=false,'bounds refused')
+   assert(gd.camera_set({eye={x=player.x,y=player.y+24,z=180},interest={x=player.x,y=player.y+24,z=0},fov=30})~=false,'pose refused')
+   assert(gd.camera_follow(player,{x=0,y=24,z=0})~=false,'follow refused')
+  end)
+  if not ok then cleanup();transition_error='Traversal camera unavailable: '..tostring(why);pause_menu('error');return false end
+  traversal_camera=true
+ end
  local ok,why=pcall(function()
-  gd.set_stocks(1,BASE_STOCKS);previous_stocks[1]=BASE_STOCKS;setup_enemy()
+  gd.set_stocks(1,BASE_STOCKS);previous_stocks[1]=BASE_STOCKS
+  local player=gd.player(1);previous_falls=player and player.falls or nil
+  setup_enemy()
  end)
  if not ok then
   cleanup();transition_error='Encounter setup failed; prior checkpoint retained. Restart to resume.'
   say(transition_error..' '..tostring(why));pause_menu('error');return false
  end
- active=true;save()
+ -- Terminal arrival is committed by finish itself; an intermediate room save
+ -- would duplicate the complete manifest transaction within this callback.
+ if node.kind=='exit' then
+  active=false;finish('success');return pending_finish==nil and run.status~='active'
+ end
+ -- Setup has already acquired encounter state. A refused checkpoint must not
+ -- retry setup every tick or allow play against an uncommitted destination.
+ -- Reopen the collection and Resume after storage recovery; restarting loads
+ -- the untouched durable checkpoint instead.
+ if not save() then
+  active=false
+  transition_error='Room checkpoint refused; gameplay paused. Reopen and Resume after storage recovery, or restart to load the preserved checkpoint.'
+  pause_menu('error');return false
+ end
+ active=true
  Visuals.update(run,{[1]='player',[2]=enemy_host},true)
- if node.kind=='exit' then finish('success');return true end
  if combat and run.progress.cleared[node.id] and not run.progress.claimed[node.id] then pause_menu('reward')
  elseif node.kind=='rest' then pause_menu('rest') else unpause() end
- say(node.title..' — '..(combat and 'Defeat the fighter by ring-out.' or 'Explore both elevations; exits are at the lane ends.'))
+ say(node_route_label()..' / '..(node.title or 'Physical traversal')..(node.grid and (' ('..node.grid.x..','..node.grid.y..')') or '')..' — '..(combat and 'Defeat the fighter by ring-out.' or 'Explore the room; use Down at a doorway.'))
  return true
 end
-local function enter(id)
+local function enter(id,from_side)
+ local destination=manifest.nodes[id]
+ if destination and destination.terminal then
+  finish('success');return pending_finish==nil and run.status~='active'
+ end
+ arrival_side=from_side
+ local combat=destination.kind=='arena' or destination.kind=='boss'
+ if launched_combat~=combat then
+  -- Save the destination before the native scene teardown. On refusal retain
+  -- the current room and its live actors; no incomplete handover is recorded.
+  local previous=run.progress.room;run.progress.room=id
+  if not save() then run.progress.room=previous;return false end
+  node=destination;pending_begin=true
+  if not launch(run_fighter,combat) then
+   pending_begin=false;run.progress.room=previous;node=manifest.nodes[previous]
+   if not save() then
+    -- The destination remains the last durable checkpoint if rollback storage
+    -- also refuses. Keep the live logical record coherent with that checkpoint.
+    run.progress.room=id;node=destination
+    transition_error='Scene change refused; destination checkpoint retained. Restart to resume it.';pause_menu('error')
+   end
+   return false
+  end
+  handover_side=from_side
+  return true
+ end
  active=false;local cleared,clear_why=cleanup()
  if not cleared then transition_error='Room cleanup refused: '..tostring(clear_why);pause_menu('error');return false end
  move_ids={};movement={0,0};node=manifest.nodes[id];run.progress.room=id
+ local bounded,bound_why=room_bounds(node.room)
+ if not bounded then transition_error=bound_why;pause_menu('error');return false end
  tutorial_room(node and node.depth)
  local art,art_why=Rooms.enter(room_visuals,node)
  if not art then gd.log('roguelite: room visuals unavailable: '..tostring(art_why)) end
- local f=node.room.floor
- local floor,floor_why=gd.stage_add_platform((f.left+f.right)/2,f.y,f.right-f.left,{passthrough=false,ledges=true,draw=not art})
- if not floor then cleanup();transition_error='Room floor could not be constructed: '..tostring(floor_why);pause_menu('error');return false end
- platforms[#platforms+1]=floor
+ local geometry,geometry_why=Rooms.collision(node)
+ if not geometry then cleanup();transition_error='Room collision refused: '..tostring(geometry_why);pause_menu('error');return false end
+ for _,f in ipairs(geometry.floor_segments) do
+  local floor,floor_why=gd.stage_add_platform((f.left+f.right)/2,f.y,f.right-f.left,{passthrough=false,ledges=true,draw=not art})
+  if not floor then cleanup();transition_error='Room floor could not be constructed: '..tostring(floor_why);pause_menu('error');return false end
+  platforms[#platforms+1]=floor
+ end
  for _,p in ipairs(node.room.platforms) do
   local h,why=gd.stage_add_platform(p.x,p.y,p.width,{passthrough=p.passthrough,ledges=p.ledges,draw=not art})
   if not h then cleanup();say('Room construction failed: '..tostring(why));pause_menu('error');return false end
+  platforms[#platforms+1]=h
+ end
+ -- Maze blockers are real native walls/caps, owned by the same cleanup list.
+ for _,line in ipairs(node.room.lines or {}) do
+  if type(gd.stage_add_line)~='function' then cleanup();transition_error='Maze collision API unavailable';pause_menu('error');return false end
+  local ok,h,why=pcall(gd.stage_add_line,line.x0,line.y0,line.x1,line.y1,line.kind,{passthrough=line.passthrough==true,ledges=line.ledges==true,draw=not art})
+  if not ok or not h then cleanup();transition_error='Maze wall construction refused: '..tostring(why or h);pause_menu('error');return false end
   platforms[#platforms+1]=h
  end
  local isolated,isolation_result=false,false
@@ -727,12 +936,14 @@ local function enter(id)
   cleanup();transition_error='Empty playfield unavailable; install the updated native build.';pause_menu('error');return false
  end
  pending_entry=true;entry_after_tick=tick_serial;pending_ticks=0;transition_error=nil;enemy_host=nil;enemy_gene=nil
- if gd.cpu_mode then gd.cpu_mode(2,'stand') end
+ if gd.player(2) and gd.cpu_mode then gd.cpu_mode(2,'stand') end
  unpause();say('Entering room; waiting for fighters to finish respawning.')
  return true
 end
 local function begin(resume)
+ if not pending_begin then handover_side=nil end
  campaign_recovery_error=false
+ if not resume then handover_percent=nil end
  if save_error then say('Invalid checkpoints preserved; cannot start until repaired');return end
  Feedback.reset(feedback)
  if resume and route then
@@ -749,8 +960,8 @@ local function begin(resume)
   -- its loadout as the live command tree.
   run_inventory(run);sync_equipment(run)
   sync_loadout()
-  if launched_scene~=Roster.scene(run_fighter) then pending_begin=true;launch(run_fighter);return end
-  pending_begin=false;gd.set_percent(1,0);active=false
+  if launched_scene~=Roster.scene(run_fighter) or not launched_combat then pending_begin=true;launch(run_fighter,true);return end
+  pending_begin=false;restore_percent();active=false
   previous_stocks[1]=BASE_STOCKS;previous_stocks[2]=BASE_STOCKS
   v2_set_paused(true)
   local ok,why=campaign:enter_current()
@@ -766,7 +977,7 @@ local function begin(resume)
   local old_profile,old_run,old_route,old_campaign,old_fighter=profile,run,route,campaign,run_fighter
   local staged_profile=Core.restore(assert(Core.snapshot(profile)))
   local staged_run=Core.new_run(staged_profile,{stocks=3})
-  local created,result=pcall(routes.create,routes,staged_run)
+  local created,result,reason=pcall(routes.create,routes,staged_run)
   if created and result then
    profile,run=staged_profile,staged_run
    run_fighter=assert(Roster.validate(selected_fighter))
@@ -792,7 +1003,10 @@ local function begin(resume)
    end
    finish_promotion(result);return
   end
-  gd.log('roguelite: v2 route unavailable: '..tostring(created and result))
+  local refusal=created and reason or result
+  gd.log('roguelite: v2 route unavailable: '..tostring(refusal))
+  gd.log(config:find('generator=legacy',1,true) and 'roguelite: starting legacy generator fallback' or 'roguelite: starting physical campaign; native/controller certification pending')
+  say('SuperTime Envoy: press Down at a doorway to explore.','info','route-fallback')
   -- Falling back to the legacy slice is a deliberate replacement of any live v2
   -- owner; a refused cleanup aborts rather than forgetting its handles.
   if old_campaign and not retire_campaign(old_campaign) then
@@ -804,16 +1018,24 @@ local function begin(resume)
   run_inventory(run);sync_equipment(run)
   sync_loadout()
  end
- -- Resume uses the saved resolved manifest; a new run generates one. A loaded
- -- manifest whose seed does not match the run is stale and regenerated.
- if not (resume and manifest and manifest.seed==run.world_seed) then
-  manifest=Dungeon.generate(run.world_seed)
+ -- A resumed route is never regenerated: its exact saved layout is authority.
+ if resume then
+  if not manifest or manifest.seed~=run.world_seed then say('Saved route seed mismatch; nothing regenerated');pause_menu('error');return end
+ else
+  local generator=config:find('generator=legacy',1,true) and Dungeon or (config:find('generator=maze',1,true) and Maze or (config:find('generator=physical',1,true) and Traversal or PhysicalCampaign))
+  local ok,result=pcall(generator.generate,run.world_seed)
+  if not ok then say('Maze generation refused: '..tostring(result));pause_menu('error');return end
+  manifest=result;run.progress.room=manifest.start
  end
- if not Dungeon.validate(manifest) or not manifest.nodes[run.progress.room] then say('Saved route unavailable');pause_menu('error');return end
- if launched_scene~=Roster.scene(run_fighter) then pending_begin=true;launch(run_fighter);return end
+ local valid,why=validate_simple_manifest(manifest)
+ if not valid or not manifest.nodes[run.progress.room] then say('Saved route unavailable: '..tostring(why));pause_menu('error');return end
+ local current=manifest.nodes[run.progress.room]
+ local combat=current.kind=='arena' or current.kind=='boss'
+ if launched_scene~=Roster.scene(run_fighter) or launched_combat~=combat then pending_begin=true;launch(run_fighter,combat);return end
  run_inventory(run);sync_equipment(run)
  sync_loadout()
- pending_begin=false;gd.set_percent(1,0);active=false;pending_room=run.progress.room;unpause()
+ pending_room_side=handover_side;handover_side=nil
+ pending_begin=false;restore_percent();active=false;pending_room=run.progress.room;unpause()
 end
 local function nearest_target(source,reach)
  local a=gd.player(source);if not a or not node or run.progress.cleared[node.id] then return nil end
@@ -900,6 +1122,7 @@ local function apply_gene(source,slot)
 end
 local function menu_context()
  return {menu=menu,profile=profile,run=run,starter=starter,node=node,fighters=Roster.list,fighter={name=Roster.name(selected_fighter)},notice=Feedback.view(feedback).notification,retry=pending_finish~=nil,error=transition_error or (save_error and 'Both checkpoints are invalid. Files preserved; repair before continuing.'),
+  back_action=(menu=='collection' or menu=='error') and {kind='home'} or (menu=='rest' and {kind='continue'} or nil),
   -- Real presentation state, so the reviewed tutorial/settings screens never
   -- render against fabricated input.
   onboarding=presentation:view(),settings=presentation:settings_view(),
@@ -909,6 +1132,17 @@ local function menu_context()
 end
 local function choose_menu(action)
  if not action then return end
+ if action.kind=='home' then
+  if not save() then return end
+  local cleared,why=cleanup()
+  if not cleared then transition_error='Room cleanup refused: '..tostring(why);pause_menu('error');return end
+  active=false;pending_begin=false;pending_room=nil;pending_room_side=nil;handover_side=nil;demo=false;revert_equipment(run);presentation:release_hud()
+  gd.input_mask(1,0);gd.release_pad(4);gd.resume();launching=false
+  local ok,why=pcall(gd.scene_launch,{mode='menu'})
+  if not ok or why==false then transition_error='Main menu unavailable: '..tostring(why);pause_menu('error')
+  else ready=false end
+  return
+ end
  if menu=='error' then if action.kind=='retry_finish' and pending_finish then finish(pending_finish) end;return end
  if action.kind=='choose_fighter' then roster_state=Roster.new(selected_fighter);pause_menu('fighter');return end
  if action.kind=='fighter_back' then pause_menu('collection');return end
@@ -938,8 +1172,9 @@ local function choose_menu(action)
   local before_profile=assert(Core.snapshot(profile))
   local ok,why=Core.discard(profile,action.id)
   if not ok then say('Discard refused: '..tostring(why),'blocked','discard');return end
-  if not save() then profile=assert(Core.restore(before_profile));say('Discard could not be saved; nothing changed.','error','discard');return end
+  if not save() then profile=assert(Core.restore(before_profile));say('Discard could not be saved; nothing changed. '..tostring(toast),'error','discard');return end
   say('Discarded '..tostring(action.id),'info','discard')
+  starter=Core.starting_gene(profile)
   menu_state.selected=nil
   feedback_sync(0,menu~=nil)
   return
@@ -987,25 +1222,35 @@ if profile and not profile.history then
  local seeded=RunHistory.from_core_finished(profile.id,profile)
  if seeded then profile.history=seeded end
 end
-launch=function(choice)
+launch=function(choice,combat)
  choice=choice or selected_fighter
- if ready then active=false;cleanup() end
+ local previous_percent=gd.player(1) and gd.player(1).percent
+ if ready then
+  active=false;local cleared,why=cleanup()
+  if not cleared then transition_error='Room cleanup refused: '..tostring(why);pause_menu('error');return false end
+ end
  -- A fresh TBD launch clears a transient transition error so the new scene
  -- returns to the collection menu instead of re-opening the stale error page.
  if menu=='error' and not save_error then menu=nil;transition_error=nil;Commands.reset(command_state,buttons) end
  local scene=assert(Roster.scene(choice))
- local ok,why=pcall(gd.scene_launch,{mode='vs',p1=scene,p2='fox/c0/cpu9',stage='fd',stocks=99,items='off',time=0})
- if not ok then launching=false;ready=false;say('TBD launch refused: '..tostring(why));return false end
- launching=true;ready=false;launch_seen=false;launched_scene=scene;return true
+ local ok,why=pcall(gd.scene_launch,{mode=combat and 'vs' or 'lab',p1=scene,p2=combat and 'fox/c0/cpu9' or 'none',stage='fd',stocks=99,items='off',time=0})
+ if not ok or why==false then launching=false;transition_error='Scene launch refused: '..tostring(why);pause_menu('error');return false end
+ if pending_begin and run and run.status=='active' then handover_percent=previous_percent end
+ launching=true;ready=false;launch_seen=false;launched_scene=scene;launched_combat=combat==true;return true
 end
 function on_tick()
  tick_serial=tick_serial+1
  gd.input(4,{},1)
+ if pending_inventory_undo then
+  local ok,result=pcall(pending_inventory_undo)
+  if ok and result~=false then pending_inventory_undo=nil;v2_set_paused(false)
+  else gd.input_mask(1,15);return end
+ end
  if demo and not ready and not launching then demo=false;launch();return end
  if gd.tbd_request(true) then launch();return end
  local match=gd.match()
  if launching and (not match.active or match.frame<=90) then launch_seen=true end
- if launching and launch_seen and match.active and match.frame>90 and gd.player(1) and gd.player(2) then launching=false;ready=true;gd.set_stocks(1,BASE_STOCKS);gd.set_stocks(2,BASE_STOCKS);if pending_begin then begin(true) else pause_menu(menu=='error' and 'error' or 'collection') end end
+ if launching and launch_seen and match.active and match.frame>90 and gd.player(1) and (not launched_combat or gd.player(2)) then launching=false;ready=true;gd.set_stocks(1,BASE_STOCKS);if gd.player(2) then gd.set_stocks(2,BASE_STOCKS) end;if pending_begin then begin(true) else pause_menu(menu=='error' and 'error' or 'collection') end end
  if not ready then return end
  -- The compact rail is what replaces the vanilla stock/percent cluster, so
   -- claiming the native HUD and enabling the rail are one decision, taken only
@@ -1048,9 +1293,12 @@ function on_tick()
   gd.input_mask(1,15)
   local preloaded,why=Rooms.preload_step(room_visuals)
   if preloaded==nil then
-   pending_room=nil;active=false;cleanup();Rooms.release(room_visuals)
+   pending_room=nil;pending_room_side=nil;active=false;cleanup();Rooms.release(room_visuals)
    transition_error='Room assets unavailable: '..tostring(why);pause_menu('error')
-  elseif preloaded then local id=pending_room;pending_room=nil;enter(id) end
+  elseif preloaded then
+   local id,side=pending_room,pending_room_side
+   pending_room=nil;pending_room_side=nil;enter(id,side)
+  end
   buttons=b;return
  end
  if active or pending_entry then
@@ -1104,6 +1352,11 @@ function on_tick()
   -- error no longer applies must not strand the player behind inert controls.
   if menu=='error' then v2_recovered() end
   active=campaign:running() and menu~='error'
+  if active and node and bounds_room~=node.id then
+   local bounded,why=room_bounds(node.room)
+   if not bounded then active=false;transition_error=why;pause_menu('error');buttons=b;return end
+   bounds_room=node.id
+  end
   if v2_paused and campaign:running() and menu~='error' then v2_set_paused(false) end
   if notice then say(notice,'info','v2') end
   feedback_sync(0,menu~=nil)
@@ -1145,20 +1398,9 @@ function on_tick()
     -- Spend through the reviewed inventory service: plan, re-validate the plan
     -- against the authoritative record, apply and read back, then commit. A
     -- refused save consumes nothing and grants no heal.
-    local spent,why=use_inventory_item(run,'legacy_restore','combat',function(effects)
+     local spent,why=use_inventory_item(run,'legacy_restore','combat',function(effects)
      local e=effects[1];if not e or e.kind~='heal' then return false,'unsupported effect' end
-     local p=gd.player(1);if not p or p.percent<=0 then return false,'Nothing to restore' end
-     local before=p.percent
-     local target=math.max(0,before-e.amount)
-     local ok,res=pcall(gd.set_percent,1,target)
-     if not ok or res==false then return false,'native heal refused' end
-     local back=gd.player(1)
-     if type(back)~='table' or back.percent~=target then
-      pcall(gd.set_percent,1,before)
-      return false,'heal readback mismatch'
-     end
-     -- Undo restores the exact pre-heal percent if the durable write is refused.
-     return true,function() pcall(gd.set_percent,1,before) end
+     return apply_verified_restore(e.amount)
     end)
     if spent then say('Restore used','info','supply');sync_loadout()
     else say('Restore refused: '..tostring(why or 'unavailable'),'blocked','supply') end
@@ -1184,7 +1426,10 @@ function on_tick()
    if p and command_state.node=='root' and edge(b,gd.buttons.DOWN) and (run.progress.cleared[node.id] or (node.kind~='arena' and node.kind~='boss' and not next(enemies))) then
     for _,e in ipairs(node.exits) do local anchor=node.room.exit_anchors[e.side]
      if math.abs(p.x-anchor.x)<13 and math.abs(p.y-anchor.y)<10 then
-      if enter(e.to) then presentation:observe({kind='door'});Commands.reset(command_state,b);travelled=true end
+      if enter(e.to,e.side) then presentation:observe({kind='door'}) end
+      -- A doorway owns this edge even when its transaction refuses; otherwise
+      -- the same Down press also descends into the command tree.
+      Commands.reset(command_state,b);travelled=true
       break
      end end
    end
@@ -1198,10 +1443,7 @@ function on_tick()
      elseif event.action=='restore' then
       local spent,why=use_inventory_item(run,'legacy_restore','combat',function(effects)
        local e=effects[1];if not e or e.kind~='heal' then return false,'unsupported effect' end
-       local p=gd.player(1);if not p or p.percent<=0 then return false,'Nothing to restore' end
-       local before=p.percent
-       gd.set_percent(1,math.max(0,before-e.amount))
-       return true,function() pcall(gd.set_percent,1,before) end
+       return apply_verified_restore(e.amount)
       end)
       if spent then sync_loadout();say('Supply used: percent -30','info','supply') else say('Restore refused: '..tostring(why or 'no supplies in this run'),'blocked','supply') end
      end
@@ -1315,8 +1557,18 @@ function on_frame()
  end end
  if vanished and not next(enemies) and node.kind=='traversal' then room_clear() end
  for port=1,2 do local p=gd.player(port)
-  if p and p.stocks< (previous_stocks[port] or BASE_STOCKS) then
-   if port==1 then run.stocks=run.stocks-1;if run.stocks<=0 then finish('failure');return end;say('Stock lost — '..run.stocks..' remaining');gd.set_stocks(1,BASE_STOCKS);save()
+  -- LAB respawns indefinitely and does not decrement native stocks. Its
+  -- unconditional per-player falls counter owns solo life accounting. Never
+  -- also count a native stock drop for the same solo death.
+  local solo_falls=port==1 and not launched_combat and p and type(p.falls)=='number'
+  local deaths=0
+  if solo_falls then
+   if previous_falls~=nil and p.falls>previous_falls then deaths=p.falls-previous_falls end
+   previous_falls=p.falls
+  end
+  local stock_lost=p and p.stocks<(previous_stocks[port] or BASE_STOCKS)
+  if p and (deaths>0 or (stock_lost and not solo_falls)) then
+   if port==1 then run.stocks=math.max(0,run.stocks-math.max(1,deaths));if run.stocks<=0 then finish('failure');return end;say('Stock lost — '..run.stocks..' remaining');gd.set_stocks(1,BASE_STOCKS);save()
    elseif enemy_host and not run.progress.cleared[node.id] then enemy_kos=enemy_kos+1
     if enemy_kos >= (node.kind=='boss' and 2 or 1) then room_clear() else gd.set_stocks(2,BASE_STOCKS);gd.set_percent(2,0);say('Champion stock cleared; one remains') end
    end
@@ -1352,7 +1604,7 @@ local function draw_scene()
  if menu then
   if menu=='fighter' then Roster.draw(roster_state,{coverage=Bindings.coverage}) else Menus.draw(menu_state,menu_context()) end
  else
-  gd.fill(12,12,188,24,0x101a2c90);gd.kit.text(20,29,node.title,'caption','gold','left',{max_w=172,shear=0})
+  gd.fill(12,12,188,24,0x101a2c90);gd.kit.text(20,29,node.title or 'Physical traversal','caption','gold','left',{max_w=172,shear=0})
   local tree=presentation:view_commands(command_state,availability)
   if tree then Visuals.tree(tree) end
   local enemy_states=campaign and campaign.encounters:states() or enemy_controller:states()
@@ -1362,7 +1614,7 @@ local function draw_scene()
     if x and y then gd.kit.text(math.max(4,math.min(550,x-38)),math.max(16,math.min(390,y)),enemy.phase=='telegraph' and 'CASTING' or 'READY','caption',enemy.family=='rime' and 'bone' or 'gold','left',{max_w=82,shear=0}) end
    end
   end
-  for _,e in ipairs(node.exits) do local a=node.room.exit_anchors[e.side];local x,y=gd.project(a.x,a.y+8,0);if x and y then text(x,y,e.label,'caption','gold') end end
+  for _,e in ipairs(node.exits) do local a=node.room.exit_anchors[e.side];local x,y=gd.project(a.x,a.y+8,0);if x and y then text(x,y,e.label or ({left='West corridor',right='East corridor',top='North corridor',bottom='South corridor'})[e.side] or 'Corridor','caption','gold') end end
  end
  local player=gd.player(1)
  local ae=campaign and campaign:active_entity() or nil
@@ -1389,7 +1641,9 @@ function on_draw()
  end
 end
 function on_match_end()
- pending_room=nil;ready=false;active=false;pending_entry=false
+ previous_falls=nil
+ bounds_owned=false;native_bounds=nil;last_frame=-1
+ pending_room=nil;pending_room_side=nil;ready=false;active=false;pending_entry=false
  -- The scene is gone with the stage, so the vanilla HUD goes back with it.
  presentation:release_hud()
  -- Confirmed native scene teardown (a new scene has begun): owned handles are
@@ -1399,8 +1653,28 @@ function on_match_end()
  orphan_campaigns={}
  enemy_controller:clear();platforms={};enemies={};fx_handles={};enemy_host=nil;Feedback.reset(feedback);Rooms.reset(room_visuals)
 end
+function on_loadstate(slot)
+ -- Native snapshots restore fighters/colliders, never the Lua director or
+ -- durable economy. Tear down through a fresh native scene and reopen the
+ -- latest validated checkpoint instead of running mismatched room ownership.
+ active=false;ready=false;pending_begin=false;pending_entry=false
+ pending_room=nil;pending_room_side=nil;handover_side=nil;arrival_side=nil
+ pending_finish=nil;pending_inventory_undo=nil;reward_ui=nil
+ retiring=nil;pending_promote=nil;campaign_recovery_error=false
+ bounds_owned=false;native_bounds=nil;bounds_room=nil;traversal_camera=false
+ generation=0;save_error=false;load_data()
+ -- With no usable durable slot load_data opened the error screen; the fresh
+ -- scene is still needed, but the collection must not be drawn over it.
+ if not save_error then menu='collection' end
+ Menus.reset(menu_state,menu)
+ presentation:release_hud();gd.input_mask(1,15)
+ if not launch(selected_fighter,false) then return end
+ if save_error then return end
+ say('State loaded: returned to the saved collection. Resume restarts the saved room.','info','snapshot-recovery')
+end
 function on_unload()
- pending_room=nil
+ restore_bounds()
+ pending_room=nil;pending_room_side=nil;handover_side=nil;arrival_side=nil
  -- gs_unload only drops the script environment, commands and tasks; it does NOT
  -- tear down the scene or remove stage colliders. So this is not a confirmed
  -- scene teardown and reset(true) must never be fabricated here. Release what
@@ -1417,11 +1691,12 @@ function on_unload()
  end
  orphan_campaigns={}
  if gd.stage_isolate then pcall(gd.stage_isolate,false) end
- if ready then cleanup();if gd.cpu_mode then gd.cpu_mode(2,'fight') end end
+ if ready then cleanup();if gd.player(2) and gd.cpu_mode then gd.cpu_mode(2,'fight') end end
  Rooms.release(room_visuals);presentation:release_hud();gd.release_pad(4);gd.input_mask(1,0);gd.resume()
 end
 -- Read-only inspection for integration tests and script-console diagnostics.
 function roguelite_state() return {loading=pending_room~=nil,ready=ready,active=active,menu=menu,
+ scene_mode=launched_combat and 'combat' or 'solo',route_mode=route and 'generated' or (manifest and manifest.generator_version==5 and 'campaign' or manifest and manifest.generator_version==4 and 'physical' or manifest and manifest.generator_version==3 and 'maze' or 'legacy'),
  command_event=last_command_event,presentation=presentation:status(),hud_rail=presentation:hud_owned(),profile=profile,run=run,node=node and node.id,toast=toast,command=command_state.node,fighter=selected_fighter,run_fighter=run_fighter,menu_view=menu and (menu=='fighter' and Roster.view(roster_state,{coverage=Bindings.coverage}) or Menus.view(menu_state,menu_context())),feedback=Feedback.view(feedback),save_error=save_error,retiring=retiring~=nil,orphans=#orphan_campaigns,v2=route and {schema=route.manifest.schema_version,generator=route.manifest.generator_version,rooms=#route.manifest.order,current=route.progress.current_room,progress=route.progress.version,campaign=campaign and campaign:status() or nil} or nil,reward_ui=reward_ui~=nil} end
 -- Public handle for focused integration tests (read/drive the live campaign).
 function roguelite_v2() return campaign end

@@ -11,6 +11,8 @@ static int l_stage_isolate(lua_State *L) {
     }
     luaL_checktype(L, 1, LUA_TBOOLEAN);
     isolate = lua_toboolean(L, 1);
+    if (!isolate && gw_ScriptGame_StageSlotsActive())
+        return luaL_error(L, "stage slots live: unload the owning script before restoring host geometry");
     if (gs_stage_isolation_owner && gs_stage_isolation_owner != gs.cur + 1)
         return luaL_error(L, "stage isolation belongs to another script");
     if (isolate) {
@@ -26,5 +28,23 @@ static int l_stage_isolate(lua_State *L) {
         gs_stage_isolation_release_owner(gs.cur + 1);
     }
     lua_pushboolean(L, isolate && gw_ScriptGame_StageIsolationState(gs.cur + 1));
+    return 1;
+}
+
+/* Compatibility wrapper: stage_isolate(false) returns the state (false),
+ * while stage_hide(false) reports successful restoration (true). */
+static int l_stage_hide(lua_State *L) {
+    int hide, result;
+    luaL_checktype(L, 1, LUA_TBOOLEAN);
+    hide = lua_toboolean(L, 1);
+    gs_require_stage(L, "stage_hide"); /* includes restore: never accepted online */
+    result = l_stage_isolate(L);
+    if (hide && !lua_toboolean(L, -1)) {
+        lua_pushstring(L, "host stage isolation unavailable (audited legal retail hosts only)");
+        return 2;
+    }
+    lua_pop(L, result);
+    lua_pushboolean(L, 1);
+    gw_log("script mission: stage_hide %s accepted", hide ? "true" : "false");
     return 1;
 }

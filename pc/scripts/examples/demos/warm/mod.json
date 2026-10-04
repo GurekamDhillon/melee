@@ -1,0 +1,1 @@
+{"id":"demo_warm","name":"Warm before first enemy draw","version":"0.1.0","kind":"script","api_version":1,"gameplay":true,"rollback_safe":false,"entry":"scripts/main.lua"}

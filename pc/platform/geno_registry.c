@@ -68,8 +68,8 @@ typedef struct {
     int count;
 } jnode;
 
-#define JDOC_NODES 2048
-#define JDOC_ARENA 32768
+#define JDOC_NODES 4096 /* Sora's merged profile reached 1920 of the old 2048 */
+#define JDOC_ARENA 65536
 
 typedef struct {
     jnode n[JDOC_NODES];
@@ -395,6 +395,10 @@ typedef struct {
     int nland;
     uint32_t land_from[GENO_MAX_ONLAND]; /* target words (GENO_TARGET) */
     uint32_t land_to[GENO_MAX_ONLAND];
+    /* v5.4 motion_anims: a common motion state plays this fighter's own row */
+    int nmanim;
+    int manim_motion[GENO_MAX_MOTION_ANIM];
+    int manim_row[GENO_MAX_MOTION_ANIM];
     int nov;
     int ov_anim[GENO_MAX_OVERLAYS]; /* subaction index */
     int ov_slot[GENO_MAX_OVERLAYS]; /* registry-wide overlay slot */
@@ -454,6 +458,31 @@ typedef struct {
 } gn_registry;
 
 static int gn_pool_gen = 1; /* bumped whenever a registry is (re)installed: the game half refills */
+/* Diagnostics only, never consulted by simulation; at most one line per state per load. */
+static int gn_iasa_warn_gen;
+static uint64_t gn_iasa_warned[GENO_MAX_PROFILES];
+static gn_registry *gn_reg(void);
+extern int gw_GenoGame_ScriptRange(uint32_t address, uint32_t bytes);
+
+int gw_Geno_ScriptAddressValid(uint32_t address, uint32_t bytes) {
+    uint32_t base = (uint32_t) (uintptr_t) gw_mem1;
+    if (bytes == 0 || address + bytes <= address || (address & 3)) return 0;
+    return (gw_mem1 != NULL && address >= base && bytes <= gw_mem1_size &&
+            address - base <= gw_mem1_size - bytes) || gw_GenoGame_ScriptRange(address, bytes);
+}
+
+void gw_Geno_WarnIasa(int p, int s) {
+    gn_registry *r = gn_reg();
+    if (p < 0 || p >= r->n || s < 0 || s >= r->p[p].nstate) return;
+    if (gn_iasa_warn_gen != gn_pool_gen) {
+        memset(gn_iasa_warned, 0, sizeof gn_iasa_warned);
+        gn_iasa_warn_gen = gn_pool_gen;
+    }
+    if (gn_iasa_warned[p] & (1ull << s)) return;
+    gn_iasa_warned[p] |= 1ull << s;
+    gw_log("geno: %s: state %s: script contains IASA but iasa is none; use iasa: interrupt to enable cancels",
+           r->p[p].name, r->p[p].st_name[s]);
+}
 
 static gn_registry gn_boot;
 static int gn_boot_loaded;
@@ -640,6 +669,24 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
             p->land_from[p->nland] = from;
             p->land_to[p->nland] = to;
             p->nland++;
+        }
+    }
+    /* motion_anims: [ { "motion": id, "subaction": row } ] - a common motion state that Melee plays
+     * on another state's clip gets this fighter's own row (the grab pull-in: Melee's CatchPull keeps
+     * playing the Catch clip; an Ultimate fighter has a pull clip of its own) */
+    x = jd_get(d, e, "motion_anims");
+    if (x >= 0 && d->n[x].type == JN_ARR) {
+        for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
+            int mo = jd_get(d, c, "motion"), sa = jd_get(d, c, "subaction");
+            if (mo < 0 || sa < 0 || d->n[mo].type != JN_NUM || d->n[sa].type != JN_NUM ||
+                d->n[mo].num < 0 || d->n[mo].num > 0x3FF || d->n[sa].num < 0 || d->n[sa].num > 0x3FF) {
+                gw_log("geno: %s: a motion_anims entry needs \"motion\" and \"subaction\" 0-1023 - ignored", where);
+                continue;
+            }
+            if (p->nmanim >= GENO_MAX_MOTION_ANIM) break;
+            p->manim_motion[p->nmanim] = (int) d->n[mo].num;
+            p->manim_row[p->nmanim] = (int) d->n[sa].num;
+            p->nmanim++;
         }
     }
     /* subactions: [ { "index": n, "words": [..] | "file": "geno/x.txt" } ] - script overlays */
@@ -1072,6 +1119,14 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
     }
 }
 
+static int gn_jump_max(double requested, const char *where, const char *key) {
+    int value = requested < 1 ? 1 : requested > 250 ? 250 : (int) requested;
+    if (requested != value)
+        gw_log("geno: %s: %s %g clamped to %d (integer supported range 1..250)",
+               where, key, requested, value);
+    return value;
+}
+
 static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where) {
     static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",
                                                          "on_land", "on_hit" };
@@ -1121,7 +1176,9 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
             }
             if (p->nattr >= GENO_MAX_ATTRS) break;
             p->attr_index[p->nattr] = idx;
-            p->attr_bits[p->nattr] = gw_GenoGame_AttrIsInt(idx) ? (uint32_t) (int32_t) d->n[c].num
+            p->attr_bits[p->nattr] = strcmp(d->n[c].key, "max_jumps") == 0 ?
+                (uint32_t) gn_jump_max(d->n[c].num, where, "attributes.max_jumps") :
+                gw_GenoGame_AttrIsInt(idx) ? (uint32_t) (int32_t) d->n[c].num
                                                                : gn_fbits(d->n[c].num);
             p->nattr++;
         }
@@ -1136,8 +1193,7 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
     if (x >= 0 && d->n[x].type == JN_OBJ) {
         int m = jd_get(d, x, "max"), v = jd_get(d, x, "air_vy");
         if (m >= 0 && d->n[m].type == JN_NUM) {
-            int mj = (int) d->n[m].num;
-            p->max_jumps = mj < 1 ? 1 : mj > 250 ? 250 : mj; /* x1968_jumpsUsed is a u8 */
+            p->max_jumps = gn_jump_max(d->n[m].num, where, "jumps.max"); /* jumpsUsed is a u8 */
         }
         if (v >= 0 && d->n[v].type == JN_ARR) {
             for (c = d->n[v].first; c >= 0 && p->njvy < GENO_MAX_JUMP_VY; c = d->n[c].next)
@@ -1184,7 +1240,7 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
 
 /* Parse one geno.json text into r. Returns the number of fighter entries taken, -1 on bad JSON. */
 static int gn_parse_text(gn_registry *r, const char *text, const char *mod) {
-    static jdoc d; /* 70 KB: not on the stack */
+    static jdoc d; /* 230 KB: not on the stack */
     int root, v, f, e, before = r->n;
     char where[96];
     snprintf(where, sizeof where, "%s/geno.json", mod);
@@ -1366,6 +1422,15 @@ int gw_Geno_OnLandFrom(int p, int i) {
 int gw_Geno_OnLandTo(int p, int i) {
     const gn_profile *x = gn_at(p);
     return x != NULL && i >= 0 && i < x->nland ? (int) x->land_to[i] : -1;
+}
+/* v5.4: the row profile p gives motion state `motion`, -1 = Melee's own */
+int gw_Geno_MotionAnim(int p, int motion) {
+    const gn_profile *x = gn_at(p);
+    int i;
+    if (x == NULL) return -1;
+    for (i = 0; i < x->nmanim; ++i)
+        if (x->manim_motion[i] == motion) return x->manim_row[i];
+    return -1;
 }
 int gw_Geno_OverlayCount(int p) { return gn_at(p) ? gn_at(p)->nov : 0; }
 int gw_Geno_OverlayAnim(int p, int i) {
@@ -1646,10 +1711,58 @@ const char *gw_Geno_ProfileHex(int p) { return gn_at(p) ? gn_at(p)->hex : ""; }
  * overlay words. The registry is otherwise never changed during a match, and the game half keeps
  * per-fighter state keyed to it (a profile index per fighter, a subaction table row per overlay, a
  * row per Geno state), so a reload that changes that LAYOUT - the set of profiles and what they
- * attach to, a profile's Geno state count, its overlay list - is reported as unsafe: the caller
+ * attach to, a profile's Geno state count, its article/overlay lists and overlay pool layout - is
+ * reported as unsafe: the caller
  * restarts the match. Returns 1 installed (layout unchanged), 0 installed (layout changed),
  * -1 not installed (a geno.json does not parse: the old data stays). `msg` says what changed. */
 static gn_registry gn_next;
+
+/* Live fighters/items and command cursors use these numeric indices and pool addresses.
+   Changing their meaning requires a match restart even when the profile count stays fixed. */
+static int gn_reload_layout_changed(const gn_registry *cur, const gn_registry *next,
+                                    char *why, size_t cap) {
+    int i;
+    if (next->n != cur->n) {
+        snprintf(why, cap, "fighter entries %d -> %d", cur->n, next->n);
+        return 1;
+    }
+    for (i = 0; i < cur->n; ++i) {
+        const gn_profile *p = &cur->p[i], *q = &next->p[i];
+        if (p->kind != q->kind || _stricmp(p->plfile, q->plfile) != 0) {
+            snprintf(why, cap, "%s now attaches to %s", q->name, q->plfile);
+        } else if (p->nstate != q->nstate) {
+            snprintf(why, cap, "%s: Geno states %d -> %d", q->name, p->nstate, q->nstate);
+        } else if (memcmp(p->st_bhv, q->st_bhv, sizeof p->st_bhv) != 0 ||
+                   memcmp(p->st_cb, q->st_cb, sizeof p->st_cb) != 0) {
+            snprintf(why, cap, "%s: state behavior/callbacks changed (active fighter callbacks are copied)", q->name);
+        } else if (memcmp(p->st_name, q->st_name, sizeof p->st_name) != 0 ||
+                   memcmp(p->st_anim, q->st_anim, sizeof p->st_anim) != 0 ||
+                   memcmp(p->st_anim_from, q->st_anim_from, sizeof p->st_anim_from) != 0 ||
+                   memcmp(p->st_like, q->st_like, sizeof p->st_like) != 0 ||
+                   memcmp(p->st_flags_set, q->st_flags_set, sizeof p->st_flags_set) != 0 ||
+                   memcmp(p->st_flags, q->st_flags, sizeof p->st_flags) != 0 ||
+                   memcmp(p->st_move_id, q->st_move_id, sizeof p->st_move_id) != 0) {
+            snprintf(why, cap, "%s: state motion rows changed (active fighter row is copied)", q->name);
+        } else if (p->nart != q->nart ||
+                   memcmp(p->art_name, q->art_name, sizeof p->art_name[0] * (size_t) p->nart) != 0) {
+            snprintf(why, cap, "%s: the article list changed", q->name);
+        } else if (p->nov != q->nov ||
+                   memcmp(p->ov_anim, q->ov_anim, sizeof p->ov_anim[0] * (size_t) p->nov) != 0 ||
+                   memcmp(p->ov_slot, q->ov_slot, sizeof p->ov_slot[0] * (size_t) p->nov) != 0) {
+            snprintf(why, cap, "%s: the subaction overlay list changed", q->name);
+        } else {
+            continue;
+        }
+        return 1;
+    }
+    if (next->nslot != cur->nslot ||
+        memcmp(cur->slot_off, next->slot_off, sizeof cur->slot_off[0] * (size_t) cur->nslot) != 0 ||
+        memcmp(cur->slot_len, next->slot_len, sizeof cur->slot_len[0] * (size_t) cur->nslot) != 0) {
+        snprintf(why, cap, "overlay pool layout changed (live command pointers would move)");
+        return 1;
+    }
+    return 0;
+}
 
 int gw_Geno_Reload(char *msg, int cap) {
     gn_registry *cur = gn_reg();
@@ -1676,30 +1789,9 @@ int gw_Geno_Reload(char *msg, int cap) {
         free(text);
     }
     gn_build_kinds(&gn_next);
-    if (gn_next.n != cur->n) {
-        snprintf(why, sizeof why, "fighter entries %d -> %d", cur->n, gn_next.n);
-        layout = 1;
-    }
-    for (i = 0; !layout && i < cur->n; ++i) {
-        const gn_profile *p = &cur->p[i], *q = &gn_next.p[i];
-        if (p->kind != q->kind || _stricmp(p->plfile, q->plfile) != 0) {
-            snprintf(why, sizeof why, "%s now attaches to %s", q->name, q->plfile);
-            layout = 1;
-        } else if (p->nstate != q->nstate) {
-            snprintf(why, sizeof why, "%s: Geno states %d -> %d", q->name, p->nstate, q->nstate);
-            layout = 1;
-        } else if (p->nov != q->nov || memcmp(p->ov_anim, q->ov_anim, sizeof p->ov_anim[0] * (size_t) p->nov) != 0 ||
-                   memcmp(p->ov_slot, q->ov_slot, sizeof p->ov_slot[0] * (size_t) p->nov) != 0) {
-            snprintf(why, sizeof why, "%s: the subaction overlay list changed", q->name);
-            layout = 1;
-        } else if (p->id != q->id) {
-            changed++;
-        }
-    }
-    if (!layout && gn_next.nslot != cur->nslot) {
-        snprintf(why, sizeof why, "overlay slots %d -> %d", cur->nslot, gn_next.nslot);
-        layout = 1;
-    }
+    layout = gn_reload_layout_changed(cur, &gn_next, why, sizeof why);
+    for (i = 0; !layout && i < cur->n; ++i)
+        if (cur->p[i].id != gn_next.p[i].id) changed++;
     pool_changed = gn_next.npool != cur->npool ||
                    memcmp(gn_next.pool, cur->pool, sizeof cur->pool[0] * (size_t) cur->npool) != 0;
     gn_boot = gn_next;
@@ -1721,6 +1813,14 @@ int gw_Geno_Reload(char *msg, int cap) {
  * back. Never called outside --test. */
 static gn_registry gn_saved;
 static int gn_saved_loaded, gn_swapped;
+
+int gw_Geno_TestReloadLayout(const char *text) {
+    char why[160];
+    memset(&gn_next, 0, sizeof gn_next);
+    if (gn_parse_text(&gn_next, text, "reload-test") < 0) return -1;
+    gn_build_kinds(&gn_next);
+    return gn_reload_layout_changed(gn_reg(), &gn_next, why, sizeof why);
+}
 
 int gw_Geno_TestInstall(const char *text) {
     int n;
@@ -1992,7 +2092,86 @@ static int test_geno_registry_v2(void) {
     return 0;
 }
 
+static int test_geno_registry_reload_layout(void) {
+    static gn_registry a, b;
+    char why[160];
+    int slot;
+    const char *json = "{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\","
+        "\"articles\":[{\"name\":\"Fire\"},{\"name\":\"Ice\"}],"
+        "\"subactions\":[{\"index\":44,\"words\":[\"0x04000001\"]},"
+        "{\"index\":45,\"words\":[\"0x04000002\"]}]}]}";
+    memset(&a, 0, sizeof a);
+    if (gn_parse_text(&a, json, "reload-test") != 1) {
+        gw_test_fail("could not parse reload fixture");
+        return 1;
+    }
+    gn_build_kinds(&a);
+    a.p[0].nstate = 1;
+    a.p[0].st_bhv[0] = GENO_BHV_GROUND;
+    for (slot = 0; slot < GENO_CB_SLOTS; slot++) a.p[0].st_cb[0][slot] = -1;
+    for (slot = 0; slot < GENO_CB_SLOTS; slot++) {
+        b = a;
+        b.p[0].st_cb[0][slot] = gw_GenoGame_CallbackFind(slot, slot == GENO_CB_ANIM ? "hold" : "none");
+        if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+            gw_test_fail("changing state callback slot %d must restart", slot);
+            return 1;
+        }
+    }
+    b = a;
+    b.p[0].st_bhv[0] = GENO_BHV_AIR;
+    if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+        gw_test_fail("changing state behavior must restart");
+        return 1;
+    }
+    b = a;
+    b.p[0].st_anim[0]++;
+    if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+        gw_test_fail("changing state's effective animation row must restart");
+        return 1;
+    }
+    b = a;
+    b.p[0].art_param[0][GENO_AP_LIFETIME] = gn_fbits(20.0);
+    b.pool[b.slot_off[0]] = 0x04000003;
+    if (gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+        gw_test_fail("article parameters and same-layout overlay words should reload in place");
+        return 1;
+    }
+    b = a;
+    b.p[0].nart--;
+    if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+        gw_test_fail("removing an article must restart the match");
+        return 1;
+    }
+    b = a;
+    memcpy(b.p[0].art_name[0], a.p[0].art_name[1], sizeof b.p[0].art_name[0]);
+    memcpy(b.p[0].art_name[1], a.p[0].art_name[0], sizeof b.p[0].art_name[1]);
+    if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+        gw_test_fail("reordering articles must restart the match");
+        return 1;
+    }
+    b = a;
+    b.slot_off[1]++;
+    if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+        gw_test_fail("relocating overlay words must restart the match");
+        return 1;
+    }
+    b = a;
+    b.slot_len[1]++;
+    if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
+        gw_test_fail("resizing even the last overlay must restart the match");
+        return 1;
+    }
+    return 0;
+}
+
+#include "geno_items_registry.inc"
+#include "geno_items_registry_tests.inc"
+#include "geno_items_runtime_tests.inc"
 void geno_registry_tests_register(void) {
+    gw_test_register("geno_items_registry",gn_items_registry_test);
+    gw_test_register("geno_items_physics",gn_items_physics_test);
+    gw_test_register("geno_items_snapshot",gn_items_snapshot_test);
+    gw_test_register("geno_registry_reload_layout", test_geno_registry_reload_layout);
     gw_test_register("geno_registry_v2", test_geno_registry_v2);
     gw_test_register("geno_registry_v1", test_geno_registry_v1);
     gw_test_register("geno_registry_parse", test_geno_registry_parse);

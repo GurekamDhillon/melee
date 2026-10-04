@@ -1,3 +1,4 @@
+#include "gw_profiler.h"
 /* VI shims and the frame driver.
  *
  * On a GameCube the video interface raises an interrupt every field, and HSD hangs its whole
@@ -11,6 +12,7 @@
 #include "gw_perf.h"
 
 #include "gw.h"
+#include "gw_hang.h"
 #include "shim_ax.h"
 #include "shim_gx.h"
 #include "shim_os.h"
@@ -52,6 +54,38 @@ static bool gw_frame_begun;
 static bool gw_frame_has_content;
 static uint32_t gw_retrace_count;
 static SDL_Window *gw_video_window;
+
+/* The kit and Lua share one resize-aware view. Floats cross the game boundary
+ * as bits; this never exposes a native pointer to the PPC world. */
+#include "gw_view_math.h"
+/* Automatic default never calls Widescreen_Enabled (avoid recursion). */
+int gw_View_DefaultWide(void) {
+  int w = 0, h = 0;
+  if (gw_video_window != NULL) SDL_GetWindowSize(gw_video_window, &w, &h);
+  return gw_view_default_wide(w, h);
+}
+static int gw_view_scene = -1;
+static float gw_view_effective_aspect = GW_VIEW_MIN_ASPECT;
+static float gw_view_effective_projection = 1.0f;
+static void gw_video_sync_viewport_policy(void);
+/* Latch once at frame start: cameras, kit, scripts and framebuffer use the
+ * same view even if settings/window events change while game logic runs. */
+static bool gw_view_begin_frame(int offscreen) {
+  gw_video_sync_viewport_policy();
+  return offscreen ? aurora_begin_frame_offscreen() : aurora_begin_frame();
+}
+void gw_View_SceneBegin(int scene) { gw_view_scene = scene; }
+float gw_View_Aspect(void) { return gw_view_effective_aspect; }
+int gw_View_AspectBits(void) {
+  union { float f; int i; } v;
+  v.f = gw_View_Aspect();
+  return v.i;
+}
+int gw_View_ProjectionScaleBits(void) {
+  union { float f; int i; } v;
+  v.f = gw_view_effective_projection;
+  return v.i;
+}
 static void *gw_next_framebuffer;
 static bool gw_exiting;
 
@@ -359,7 +393,10 @@ static void gw_aurora_shutdown_guarded(void) {
 }
 
 void gw_exit_clean(int code) {
+  gw_hang_final("clean shutdown", (unsigned)code);
   gw_aurora_shutdown_guarded();
+  gw_prof_frame_end();
+  gw_prof_shutdown();
   gw_log("melee-pc: exit %d", code);
   fflush(NULL);
 #ifdef _WIN32
@@ -708,6 +745,7 @@ void gw_Video_SetRenderScale(float scale) {
 static void gw_present_overlays(void);
 
 bool gw_frame_init(void) {
+  gw_prof_frame_begin();
   gw_video_load();
   gw_video_apply_scale();
   gw_video_apply_rate();
@@ -716,14 +754,14 @@ bool gw_frame_init(void) {
   }
   /* Realtime puts a cleared frame on screen before SDL opens input. Turbo starts offscreen so a
    * hidden window cannot block its first Present; later fields follow the render interval. */
-  if (gw_turbo ? aurora_begin_frame_offscreen() : aurora_begin_frame()) {
+  if (gw_turbo ? gw_view_begin_frame(1) : gw_view_begin_frame(0)) {
     gw_present_overlays();
     if (gw_turbo) aurora_end_frame_offscreen();
     else aurora_end_frame();
   }
   gw_log("melee-pc: first frame %s", gw_turbo ? "completed offscreen" : "presented");
   gw_handle_events();
-  gw_frame_begun = gw_turbo ? aurora_begin_frame_offscreen() : aurora_begin_frame();
+  gw_frame_begun = gw_turbo ? gw_view_begin_frame(1) : gw_view_begin_frame(0);
   return true;
 }
 
@@ -745,7 +783,7 @@ void gw_frame_mark_content(void) { gw_frame_has_content = true; }
  *             that worker thread, and the game thread's only render back-pressure is the frame
  *             slot acquired in begin
  *   events  - gw_handle_events()
- *   begin   - aurora_begin_frame()
+ *   begin   - aurora_begin_frame
  *
  * "empty" counts ticks that presented nothing and took the Sleep(1) path: the game polling
  * retrace more than once per frame. Those cost a millisecond each and are a smoothness suspect
@@ -791,7 +829,7 @@ static double gw_prof_sum_cpu;
 static double gw_prof_sum_pace, gw_prof_sum_submit; /* present = overlay + pace + submit */
 static long long gw_prof_t_pace0, gw_prof_t_pace1;
 static double gw_prof_sum_pace_after; /* pacing after the submit (the default order) */
-static uint32_t gw_prof_frames, gw_prof_empty;
+static uint32_t gw_legacy_prof_frames, gw_prof_empty;
 static uint32_t gw_prof_hist[GW_PROF_BUCKETS];
 static int gw_prof_spikes;
 
@@ -855,12 +893,12 @@ static double gw_prof_pct(const double *sorted, int n, double p) {
   return sorted[i];
 }
 
-static void gw_prof_report(void) {
+static void gw_legacy_prof_report(void) {
   double sorted[GW_PROF_FRAMES];
   int n = gw_prof_count;
   int i;
 
-  if (n < 2 || gw_prof_frames == 0u) {
+  if (n < 2 || gw_legacy_prof_frames == 0u) {
     return;
   }
   for (i = 0; i < n; ++i) {
@@ -872,22 +910,22 @@ static void gw_prof_report(void) {
          gw_prof_pct(sorted, n, 0.50), gw_prof_pct(sorted, n, 0.95), gw_prof_pct(sorted, n, 0.99),
          sorted[n - 1], n);
   gw_log("gw: PROF split ms  game=%.2f present=%.2f events=%.2f begin=%.2f  empty_ticks=%u",
-         gw_prof_sum_game / gw_prof_frames, gw_prof_sum_present / gw_prof_frames,
-         gw_prof_sum_events / gw_prof_frames, gw_prof_sum_begin / gw_prof_frames, gw_prof_empty);
+         gw_prof_sum_game / gw_legacy_prof_frames, gw_prof_sum_present / gw_legacy_prof_frames,
+         gw_prof_sum_events / gw_legacy_prof_frames, gw_prof_sum_begin / gw_legacy_prof_frames, gw_prof_empty);
   {
     extern uint32_t gw_gx_texobj_inits;
     static uint32_t last_inits;
     gw_log("gw: PROF texobj   inits/frame=%.1f (each a new aurora cache entry kept 600 frames)",
-           (double)(gw_gx_texobj_inits - last_inits) / gw_prof_frames);
+           (double)(gw_gx_texobj_inits - last_inits) / gw_legacy_prof_frames);
     last_inits = gw_gx_texobj_inits;
   }
   gw_log("gw: PROF present   pace_wait=%.2f submit=%.2f (aurora_end_frame; >1 ms = render back-pressure)"
          "  of which pacing after submit=%.2f",
-         gw_prof_sum_pace / gw_prof_frames, gw_prof_sum_submit / gw_prof_frames,
-         gw_prof_sum_pace_after / gw_prof_frames);
+         gw_prof_sum_pace / gw_legacy_prof_frames, gw_prof_sum_submit / gw_legacy_prof_frames,
+         gw_prof_sum_pace_after / gw_legacy_prof_frames);
   gw_log("gw: PROF cpu ms    game_cpu=%.2f  of_game_wall=%.2f  wait=%.2f",
-         gw_prof_sum_cpu / gw_prof_frames, gw_prof_sum_game / gw_prof_frames,
-         (gw_prof_sum_game - gw_prof_sum_cpu) / gw_prof_frames);
+         gw_prof_sum_cpu / gw_legacy_prof_frames, gw_prof_sum_game / gw_legacy_prof_frames,
+         (gw_prof_sum_game - gw_prof_sum_cpu) / gw_legacy_prof_frames);
   gw_log("gw: PROF hist      <14:%u  <16:%u  <17.5:%u  <20:%u  <25:%u  <34:%u  <50:%u  50+:%u",
          gw_prof_hist[0], gw_prof_hist[1], gw_prof_hist[2], gw_prof_hist[3], gw_prof_hist[4],
          gw_prof_hist[5], gw_prof_hist[6], gw_prof_hist[7]);
@@ -895,7 +933,7 @@ static void gw_prof_report(void) {
   gw_prof_sum_game = gw_prof_sum_present = gw_prof_sum_events = gw_prof_sum_begin = 0.0;
   gw_prof_sum_cpu = 0.0;
   gw_prof_sum_pace = gw_prof_sum_submit = gw_prof_sum_pace_after = 0.0;
-  gw_prof_frames = 0u;
+  gw_legacy_prof_frames = 0u;
   gw_prof_empty = 0u;
   gw_prof_spikes = 0;
   for (i = 0; i < GW_PROF_BUCKETS; ++i) {
@@ -1305,7 +1343,7 @@ static void gw_uncap_replay(uint64_t now) {
     alpha = 1.0f;
   }
   aurora_frame_replay_mark(true);
-  if (aurora_begin_frame()) {
+  if (gw_view_begin_frame(0)) {
     gw_present_overlays();
     aurora_frame_replay(alpha);
     aurora_end_frame();
@@ -1337,6 +1375,7 @@ static int gw_uncap_try(uint64_t now, uint64_t target) {
 }
 
 static void gw_pace_field(void) {
+    gw_prof_begin(GW_PROF_PACING, 0);
   if (gw_turbo) {
     /* The realtime wait below ends at the pad alarm's deadline and the poll follows at once, at the
        start of the next tick. Do the same on the virtual clock: jump to the deadline here, so the
@@ -1348,7 +1387,7 @@ static void gw_pace_field(void) {
       gw_turbo_ticks = deadline;
     }
     gw_polls_since_pace = 0;
-    return;
+    { gw_prof_end(); return; }
   }
   uint64_t now = gw_time_ticks();
   uint64_t last_pump;
@@ -1357,7 +1396,7 @@ static void gw_pace_field(void) {
   uint64_t deadline;
   if (gw_last_field_tick == 0) {
     gw_last_field_tick = now;
-    return;
+    { gw_prof_end(); return; }
   }
   if (!gw_pace_timer_res_set) {
     /* Raise the OS timer resolution for the life of the process, so the Sleep(1) fallback wakes
@@ -1416,6 +1455,8 @@ static void gw_pace_field(void) {
   }
   gw_last_field_tick = now;
   gw_polls_since_pace = 0;
+
+    gw_prof_end();
 }
 
 #ifdef _WIN32
@@ -1754,31 +1795,43 @@ static void gw_spike_dump(void) {}
 static FILE *gw_prof_csv;
 static int gw_prof_csv_tried;
 
-/* Widescreen: STRETCH fills the window with the game's frame (anamorphic), pairing with the camera
- * widened game-side (src/sysdolphin/baselib/cobj.c); FIT keeps the native 73:60 picture letterboxed.
- * Toggled on change so the "widescreen" setting / MELEE_WIDESCREEN applies live. */
+/* Sample and publish the next content view before starting its GX frame. */
 static void gw_video_sync_viewport_policy(void) {
+  static int last_w = -1, last_h = -1;
+  static float last_aspect;
+  int w = 0, h = 0, x, y, rw, rh;
   extern int gw_Widescreen_Enabled(void);
-  static int ws_last = -1;
-  const int ws = gw_Widescreen_Enabled();
-  if (ws != ws_last) {
-    ws_last = ws;
-    AuroraSetViewportPolicy(ws ? AURORA_VIEWPORT_STRETCH : AURORA_VIEWPORT_FIT);
+  int logical_w = 0, logical_h = 0;
+  const int wide = gw_Widescreen_Enabled() && gw_view_scene_wide(gw_view_scene);
+  if (gw_video_window != NULL) SDL_GetWindowSize(gw_video_window, &logical_w, &logical_h);
+  float aspect = gw_view_aspect((float)logical_w, (float)logical_h, wide);
+  gw_view_effective_aspect = aspect;
+  gw_view_effective_projection = gw_view_projection_scale(aspect, wide);
+  if (gw_video_window != NULL) SDL_GetWindowSizeInPixels(gw_video_window, &w, &h);
+  AuroraSetViewportPolicy(AURORA_VIEWPORT_ASPECT);
+  AuroraSetContentAspect(aspect);
+  if (w != last_w || h != last_h || aspect != last_aspect) {
+    gw_view_rectangle(w, h, aspect, &x, &y, &rw, &rh);
+    gw_log("view: aspect %.6f rect %d,%d %dx%d bars L%d R%d T%d B%d",
+           aspect, x, y, rw, rh, x, w-rw-x, y, h-rh-y);
+    last_w = w; last_h = h; last_aspect = aspect;
   }
 }
 
 void gw_frame_tick(void) {
+  gw_hang_tick();
+  gw_hang_shim("VI frame tick");
   const int prof = gw_prof_on();
   extern int gw_GenoLab_InMatch(void);
   const int perf = (gw_video_show_fps == 2 && !gw_GenoLab_InMatch()) ||
                    (int32_t)(gw_perf_lease_end - gw_retrace_count) > 0;
 
-  gw_video_sync_viewport_policy();
 
   gw_sample_maybe_start();
   long long t_enter = 0, t_present = 0, t_events = 0, t_begin = 0;
   long long t_submit0 = 0, t_submit1 = 0;
   int presented = 0;
+  const int prof_complete_frame = gw_frame_has_content && gw_frame_begun;
 
   gw_time_advance_field();
 
@@ -1823,8 +1876,10 @@ void gw_frame_tick(void) {
       gw_inprof_submit();
     }
     if (perf) t_submit0 = gw_prof_now();
+    gw_prof_begin(GW_PROF_SUBMIT, 0);
     if (show) aurora_end_frame();
     else aurora_end_frame_offscreen(); /* drain GX and submit EFB work, without swapchain Present */
+    gw_prof_end();
     if (perf) t_submit1 = gw_prof_now();
     ++gw_end_frames;
     if (gw_inprof_on()) {
@@ -1863,7 +1918,7 @@ void gw_frame_tick(void) {
   }
 
   if (!gw_frame_begun) {
-    gw_frame_begun = gw_turbo ? aurora_begin_frame_offscreen() : aurora_begin_frame();
+    gw_frame_begun = gw_turbo ? gw_view_begin_frame(1) : gw_view_begin_frame(0);
   }
   if (gw_inprof_on() && presented) {
     gw_ip_push(&gw_ip_begin, gw_prof_ms(gw_ip_last_events, gw_prof_now()));
@@ -1918,7 +1973,7 @@ void gw_frame_tick(void) {
         gw_prof_sum_submit += gw_prof_ms(gw_prof_t_pace1, t_present);
         gw_prof_sum_events += gw_prof_ms(t_present, t_events);
         gw_prof_sum_begin += gw_prof_ms(t_events, t_begin);
-        ++gw_prof_frames;
+        ++gw_legacy_prof_frames;
         gw_prof_record(total);
         if (!gw_prof_csv_tried) {
           const char *cv = getenv("MELEE_PROFILE_FRAMES");
@@ -1978,8 +2033,8 @@ void gw_frame_tick(void) {
                  total, game, cpu, gw_prof_ms(t_enter, t_present), gw_prof_ms(t_present, t_events),
                  gw_prof_ms(t_events, t_begin));
         }
-        if ((gw_prof_frames % 180u) == 0u) {
-          gw_prof_report();
+        if ((gw_legacy_prof_frames % 180u) == 0u) {
+          gw_legacy_prof_report();
           if (gw_spike_threshold_ms > 0.0) {
             gw_spike_dump();
           }
@@ -2015,6 +2070,10 @@ void gw_frame_tick(void) {
    * shim_ax.c and drives HSD_SynthCallback + voice mixing). */
   gw_ax_frame_tick();
 
+  if (prof_complete_frame) {
+    gw_prof_frame_end();
+    gw_prof_frame_begin();
+  }
   if (presented && gw_inprof_on()) {
     gw_inprof_return();
   }
@@ -2030,6 +2089,7 @@ void gw_frame_stats(uint32_t *retrace, uint32_t *presented, uint32_t *waits) {
  * runs on its own now, so this only has to give alarms and completions a chance to run; the
  * once-per-millisecond gate keeps a tight spin from calling them millions of times a second. */
 void gw_wait_idle(void) {
+  gw_hang_shim("wait_idle");
   uint64_t next_alarm;
   ++gw_wait_idle_count;
   /* A queued completion is already DUE: the DVD/ARQ shims do the transfer inline and only defer

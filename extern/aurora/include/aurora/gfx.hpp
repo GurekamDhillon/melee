@@ -178,6 +178,8 @@ bool resolve_pass(const ResolveDesc& desc, ResolvedTargets& out);
 /// EFB. Nesting is unsupported: returns false (with a warning) outside an
 /// active render pass or while any offscreen pass is already open.
 bool create_pass(uint32_t width, uint32_t height);
+/// Diagnostics-only label for the resulting offscreen pass (copied during recording).
+bool create_pass_profiled(uint32_t width, uint32_t height, const char* label);
 
 /// True while an offscreen pass (create_pass or GXCreateFrameBuffer) is open.
 bool is_offscreen() noexcept;

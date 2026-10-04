@@ -2563,3 +2563,4 @@ void lbAudioAx_80028B90(void)
 {
     lbl_804D38CC = 0x7F;
 }
+#include "lbaudio_stage_slots.inc"

@@ -19,6 +19,8 @@
  * gd.mouse), so a match shows no cursor unless a script's menu is open.
  */
 #include "gw_kit.h"
+#include "gw_view_math.h"
+extern "C" float gw_View_Aspect(void);
 #include "gw_overlay.h"
 #include "gw_script.h"
 
@@ -54,19 +56,20 @@ struct {
   unsigned ui_frame = 0, script_frame = 0, frame = 0;
   bool os_hidden = false;
   bool logged = false;
+  SDL_WindowID window = 0;
+  float px = 0, py = 0; /* refresh stationary pointers after a resize/toggle */
 } g_mouse;
 
-/* The script overlay fills the frame: height 480, the width the window's aspect (canvas_w = W/s).
- * 640x480 stays the origin and the minimum; a 16:9 window widens the canvas (~853). */
+/* Same view as the kit: height 480, width 480*View_Aspect. Lua starts
+ * at zero; the game kit adds (640-width)/2 to map into authored coordinates.
+ * With widescreen off the overlay is centred and uniformly fitted. */
 void script_map(float ww, float wh, float *s, float *ox, float *oy, float *cw) {
   if (ww <= 0.0f || wh <= 0.0f) {
     *s = 1.0f; *ox = 0.0f; *oy = 0.0f; *cw = 640.0f;
     return;
   }
-  *s = wh / 480.0f;
-  *ox = 0.0f;
-  *oy = 0.0f;
-  *cw = ww / *s;
+  *cw = 480.0f * gw_View_Aspect();
+  gw_view_map(ww, wh, *cw, s, ox, oy);
 }
 
 /* Window point -> the script canvas above (what draw_script_list does). */
@@ -87,7 +90,14 @@ void mouse_to_kit(SDL_WindowID wid, float px, float py) {
   if (w == nullptr || !SDL_GetWindowSize(w, &ww, &wh)) {
     return;
   }
+  g_mouse.window = wid;
+  g_mouse.px = px;
+  g_mouse.py = py;
   g_mouse.inside = mouse_map(ww, wh, px, py, &g_mouse.x, &g_mouse.y);
+}
+void mouse_refresh() {
+  if (g_mouse.inside && g_mouse.window != 0)
+    mouse_to_kit(g_mouse.window, g_mouse.px, g_mouse.py);
 }
 } // namespace
 
@@ -142,8 +152,8 @@ extern "C" void gw_mouse_event(const void *ev) {
 
 /* Game side (the frontend): position in 640x480 (-1000 when outside), buttons, the wheel's whole
  * notches since the last call (+ = up), a counter that changes whenever the pointer moves. */
-extern "C" int gw_Mouse_X(void) { return g_mouse.inside ? (int)g_mouse.x : -1000; }
-extern "C" int gw_Mouse_Y(void) { return g_mouse.inside ? (int)g_mouse.y : -1000; }
+extern "C" int gw_Mouse_X(void) { mouse_refresh(); return g_mouse.inside ? (int)g_mouse.x : -1000; }
+extern "C" int gw_Mouse_Y(void) { mouse_refresh(); return g_mouse.inside ? (int)g_mouse.y : -1000; }
 extern "C" int gw_Mouse_Buttons(void) { return g_mouse.inside ? g_mouse.buttons : 0; }
 extern "C" int gw_Mouse_MoveSeq(void) { return (int)g_mouse.move_seq; }
 extern "C" int gw_Mouse_Wheel(void) {
@@ -159,6 +169,7 @@ extern "C" void gw_Mouse_ScriptTick(void) {
   g_mouse.wheel_script = 0.0f;
 }
 extern "C" void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) {
+  mouse_refresh();
   g_mouse.script_frame = g_mouse.frame;
   *x = g_mouse.inside ? g_mouse.x : -1000.0f;
   *y = g_mouse.inside ? g_mouse.y : -1000.0f;
@@ -168,6 +179,7 @@ extern "C" void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *whe
 
 /* The native side's view (the cursor drawing): no side effects. */
 extern "C" void gw_Mouse_Peek(float *x, float *y, int *buttons, float *wheel) {
+  mouse_refresh();
   *x = g_mouse.x;
   *y = g_mouse.y;
   *buttons = g_mouse.buttons;
@@ -621,29 +633,10 @@ extern "C" int gw_Console_DrawLoadScreen(const char *title, const char *crumb, c
   return 1;
 }
 
-/* The script canvas width in overlay units (height is always 480): the overlay spans the window,
- * so a 16:9 window reports ~853. gw_script scales gd.project by width/640 and exposes gd.safe_area. */
+/* No ImGui context is needed: gd.safe_area and the kit read the same host
+ * view aspect, including before the first overlay draw and after resizes. */
 extern "C" float gw_Console_ScriptWidth(void) {
-  if (ImGui::GetCurrentContext() == nullptr) {
-    return 640.0f;
-  }
-  const ImGuiIO &io = ImGui::GetIO();
-  float s, ox, oy, cw;
-  script_map(io.DisplaySize.x, io.DisplaySize.y, &s, &ox, &oy, &cw);
-  static bool logged = false;
-  if (!logged) {
-    logged = true;
-    int ww = 0, wh = 0, dw = 0, dh = 0;
-    SDL_Window *win = SDL_GetKeyboardFocus();
-    if (win != nullptr) {
-      SDL_GetWindowSize(win, &ww, &wh);
-      SDL_GetWindowSizeInPixels(win, &dw, &dh);
-    }
-    gw_log("gw: overlay: DisplaySize %.0fx%.0f fb %.3fx%.3f | window %dx%d drawable %dx%d | canvas %.1f",
-           io.DisplaySize.x, io.DisplaySize.y, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y,
-           ww, wh, dw, dh, cw);
-  }
-  return cw;
+  return 480.0f * gw_View_Aspect();
 }
 
 /* show_fps=1 and =2 share the menu kit's host renderer. They are called only by shim_vi.c
@@ -733,21 +726,22 @@ extern "C" {
 namespace {
 int test_mouse_map() {
   float x = 0, y = 0;
-  /* 1280x720: scale 1.5, the canvas 853.3 wide (the overlay fills the frame). */
-  if (!mouse_map(1280, 720, 310.0f, 300.0f, &x, &y) || x < 206.6f || x > 206.8f || y < 199.9f || y > 200.1f) {
-    gw_test_fail("1280x720 mapped to (%.2f, %.2f), want (206.7, 200)", x, y);
+  /* Use the same live canvas as drawing; synthetic window sizes do not
+   * change the renderer's aspect. Verify the centre and both map directions. */
+  float s, ox, oy, cw;
+  script_map(1280, 720, &s, &ox, &oy, &cw);
+  if (!mouse_map(1280, 720, 640, 360, &x, &y) ||
+      std::fabs(x - cw * 0.5f) > 0.01f || std::fabs(y - 240) > 0.01f) {
+    gw_test_fail("canvas centre mouse mapping failed");
     return 1;
   }
-  if (mouse_map(1280, 720, 100.0f, 800.0f, &x, &y)) {
-    gw_test_fail("a point below the canvas counted as inside");
+  if (!mouse_map(1280, 720, ox + 91.5f * s, oy + 33.5f * s, &x, &y) ||
+      std::fabs(x - 91.5f) > 0.01f || std::fabs(y - 33.5f) > 0.01f) {
+    gw_test_fail("canvas mouse round-trip failed");
     return 1;
   }
-  if (!mouse_map(1280, 720, 1270.0f, 10.0f, &x, &y) || x < 846.6f || x > 846.8f) {
-    gw_test_fail("the wide right edge is not reachable (%f)", x);
-    return 1;
-  }
-  if (!mouse_map(640, 480, 639.0f, 0.0f, &x, &y) || x != 639.0f || y != 0.0f) {
-    gw_test_fail("640x480 is not the identity");
+  if (mouse_map(1280, 720, -1, 800, &x, &y)) {
+    gw_test_fail("outside canvas mouse accepted");
     return 1;
   }
   return 0;

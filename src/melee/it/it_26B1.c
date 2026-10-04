@@ -229,6 +229,40 @@ void it_Mex_RegisterIfEmpty(Article* article, s32 kind)
 }
 #endif
 
+#if defined(TARGET_PC)
+/* These descriptors live in the previous scene's DAT heaps. Non-null cannot
+ * mean ready after heap reset; Ground registers the new scene immediately. */
+void it_ResetStageArticleTable(void)
+{
+    int i;
+    for (i=0;i<30;++i) it_804A0F60[i]=NULL;
+}
+/* Disc-free regression: the exact Article->modelDesc->joint access which
+ * faulted must reach a new descriptor after retirement, never the old row. */
+int Item_StageArticleTableTest(void)
+{
+    Article* saved[30]; Article old={0},fresh={0}; ItemModelDesc model={0};
+    ItemAttr attr={0}; HSD_Joint joint={0}; Item ip={0}; HSD_GObj g={0};
+    int i,phase,failed=0;
+    for(i=0;i<30;++i)saved[i]=it_804A0F60[i];
+    fresh.x0_common_attr=&attr;fresh.x10_modelDesc=&model;model.x0_joint=&joint;
+    ip.kind=It_Kind_Nokonoko;g.user_data=&ip;
+    for(phase=0;phase<2;++phase) {
+        old.x10_modelDesc=phase ? (ItemModelDesc*)0xFF73FF73 : NULL;
+        it_804A0F60[It_Kind_Nokonoko-It_Kind_Old_Kuri]=&old;
+        it_ResetStageArticleTable();
+        for(i=0;i<30;++i)if(it_804A0F60[i]!=NULL)++failed;
+        it_8026B40C(&fresh,It_Kind_Nokonoko);
+        Item_80267978(&g);
+        if(ip.xC4_article_data!=&fresh)++failed;
+        else if(ip.xC4_article_data->x10_modelDesc->x0_joint!=&joint ||
+                ip.xC4_article_data->x0_common_attr!=&attr)++failed;
+    }
+    for(i=0;i<30;++i)it_804A0F60[i]=saved[i];
+    return failed;
+}
+#endif
+
 /// Store Stage Item article pointer to table
 void it_8026B40C(Article* article, s32 kind)
 {

@@ -52,7 +52,7 @@ static struct {
     int rows_joint;
     int toast_joint, q_toast_text, q_toast_accent;
     bool toast_up;
-    char toast_str[FE_STR];
+    char toast_str[FE_HELP_STR];
 } fk;
 
 static u8 fk_widget_of(const FrontendItem* it)
@@ -76,6 +76,10 @@ static void fk_retext(int q, const char* s, float x, int align, float max_w)
         return;
     }
     d = &fp.q[q];
+    if (d->fit_desc) {
+        kit_desc_set(d, s);
+        return;
+    }
     if (d->ff_role >= 0) {
         int role = ff_role(d->ff_role >= 0 ? ff.r[d->ff_role].name : "row");
         /* start from the slot's own role again, so a shorter string gets its size back */
@@ -169,6 +173,12 @@ static void fk_build(bool animate_in)
     const FjNode* L;
     const FjNode* M;
     int section = fe_is_settings(fe.screen) ? KS_OPTIONS : KS_VERSUS, r, i;
+    int ncrumbs = fe.screen == &fe_screen_online || fe_is_settings(fe.screen) ? 2 : 3;
+    bool readonly = true;
+    for (i = 0; i < fe.n_vis; i++) {
+        const FrontendItem* it = &fe.screen->items[fe.vis[i]];
+        if (it->kind == FE_ACTION || it->set != NULL || it->call != NULL) readonly = false;
+    }
     kit_load();
     ff_load();
     kit_widgets_load();
@@ -194,9 +204,13 @@ static void fk_build(bool animate_in)
         crumbs[0] = "SETTINGS"; /* SETTINGS > <page> */
         crumbs[1] = fe.screen->subtitle;
     }
-    fm_chrome_with(fe.screen->subtitle, crumbs,
-                   fe.screen == &fe_screen_online || fe_is_settings(fe.screen) ? 2 : 3,
-                   section, 3, hg, ht);
+    if (fe_is_controls_help(fe.screen)) {
+        crumbs[1] = "CONTROLS";
+        crumbs[2] = fe.screen->subtitle;
+        ncrumbs = 3;
+    }
+    fm_chrome_with(fe.screen->subtitle, crumbs, ncrumbs, section,
+                   readonly ? 1 : 3, readonly ? hg + 2 : hg, readonly ? ht + 2 : ht);
 
     fk.nrows = fe.n_vis < FK_MAX_ROWS ? fe.n_vis : FK_MAX_ROWS;
     for (r = 0; r < fk.nrows; r++) {
@@ -273,9 +287,7 @@ static void fk_build(bool animate_in)
                                     kit.desc_strip[1], kit.desc_strip[0] + 6, kit.desc_strip[3],
                                     ok);
         if (fk.q_toast_accent >= 0) fp.q[fk.q_toast_accent].late = true;
-        fk.q_toast_text = fm_text("toast_text", FPR_CHROME, -1, kit.desc_role,
-                                  kit.desc_anchor[0], kit.desc_anchor[1], " ", bone,
-                                  kit.desc_max);
+        fk.q_toast_text = fm_description("toast_text", FPR_CHROME, -1, " ", bone);
         if (fk.q_toast_text >= 0) fp.q[fk.q_toast_text].late = true;
     }
 
@@ -378,6 +390,8 @@ static void fk_build(bool animate_in)
     fp_joint_draws(fk.toast_joint, "toast_plate");
     fp_joint_draws(fk.toast_joint, "toast_accent");
     fp_joint_draws(fk.toast_joint, "toast_text");
+    for (i = 0; i < fp.nq; i++)
+        if (fp.q[i].joint == fk.toast_joint) fp.q[i].canvas_exit = true;
     for (i = 0; i < fp.nq; i++) { /* atlas pages now, not mid-draw */
         if (fp.q[i].kind == FPK_TEXT && fp.q[i].ff_role >= 0) {
             int p;
@@ -570,7 +584,7 @@ static void fk_frame(void)
         bool want = fe_ol_note[0] != 0;
         if (want) {
             if (strcmp(fe_ol_note, fk.toast_str) != 0) {
-                fp_copy(fk.toast_str, fe_ol_note, FE_STR);
+                fp_copy(fk.toast_str, fe_ol_note, FE_HELP_STR);
                 fk_retext(fk.q_toast_text, fe_ol_note, kit.desc_anchor[0], 0, kit.desc_max);
             }
             if (fk.q_toast_accent >= 0) {

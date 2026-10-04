@@ -205,6 +205,13 @@ void gm_801A4014(GameMode* mode)
             state->on_exit(state);
         }
 
+#if defined(TARGET_PC)
+        {
+            extern int Script_OnePBarrierPending(void);
+            extern void gm_OnePInterstage(void);
+            if (Script_OnePBarrierPending()) gm_OnePInterstage();
+        }
+#endif
         state_machine.routing.prev_state_id = sm->routing.curr_state_id;
 
         if (sm->routing.next_state_id) {

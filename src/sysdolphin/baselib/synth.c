@@ -1471,6 +1471,12 @@ int HSD_SynthPStreamStart(int entrynum, u8 vol, u8 vol2, int channel)
     PAD_STACK(8);
 
     do {
+#if defined(TARGET_PC)
+        /* DVD/AR completions are deferred on PC. This wait can precede the
+         * frame tick even without pause, so service them as loading waits do. */
+        extern void wait_idle(void);
+        wait_idle();
+#endif
     } while (HSD_Synth_804D7778 != 0);
 
     HSD_Synth_804D7778 = 1;

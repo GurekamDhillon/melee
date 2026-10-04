@@ -1,0 +1,25 @@
+local T={count=0}
+T.root='pc/scripts/examples/envoy/scripts/'
+if not io.open(T.root..'genetics.lua') then T.root='melee/'..T.root end
+function T.module(name,D) return assert(loadfile(T.root..name..'.lua'))()(D) end
+function T.test(name,f)
+  local ok,err=pcall(f)
+  assert(ok,name..': '..tostring(err));T.count=T.count+1
+end
+function T.done() print('PASS '..T.count..' tests') end
+function T.rules()
+  local D={};D.pickup_juice=assert(loadfile(T.root:gsub('examples/envoy/scripts/$','lib/')..'pickup_juice.lua'))();D.genetics=T.module('genetics');D.companion=T.module('companion',D)
+  return D
+end
+function T.missions()
+  local path=T.root:gsub('envoy/scripts/$','missions/scripts/')
+  local f=io.open('tools/port/missions_bundle.py') or assert(io.open('../tools/port/missions_bundle.py'))
+  local source=f:read('a');f:close();local D={}
+  for name in assert(source:match('MODULES = %((.-)%)')):gmatch("'([%w_]+)'") do
+    local factory=assert(loadfile(path..name..'.lua'))()
+    D[name]=name=='mission' and factory or factory(D)
+  end
+  return D
+end
+function T.refuses(f) assert(not pcall(f),'expected refusal') end
+return T

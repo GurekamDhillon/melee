@@ -19,17 +19,17 @@ local CORE = {
   {id = 'charge', event = 'charge', text = 'Earn one ability charge',
    hint = 'Land hits to charge your placed ability. Watch the HUD segment.'},
   {id = 'branch', event = 'command_navigate', early = true, text = 'Open a command branch',
-   hint = 'Left / Right / Down opens a command branch. Combat keeps running.'},
+   hint = 'D-pad Left: abilities. Right: supplies. Down: run options. Combat keeps running.'},
   {id = 'back', event = 'command_back', early = true, text = 'Back out with Up',
    hint = 'Up returns one level. At the root, a fresh Up is your normal taunt.'},
   {id = 'cast', event = 'cast', text = 'Cast one ability',
-   hint = 'Left / Right / Down on the final branch casts the ability. Costs and readiness are shown.'},
+   hint = 'D-pad Left opens abilities. Left / Right / Down on the final branch casts. Release between presses.'},
   {id = 'tell', event = 'tell', text = 'Recognize an enemy tell',
    hint = 'When an enemy casts, move or shield before the hit lands.'},
   {id = 'door', event = 'door', text = 'Use a door',
-   hint = 'At a cleared exit, press Down on the doorway to travel.'},
+   hint = 'Clear enemies, stand at an exit, then press D-pad Down to enter the next room.'},
   {id = 'reward', event = 'reward', text = 'Accept a reward',
-   hint = 'Pick one reward. The exact stat change is previewed first.'},
+   hint = 'Read the reward, choose its target with the D-pad, then press A to apply.'},
 }
 
 local function copy(t) if type(t) ~= 'table' then return t end local o = {} for k, v in pairs(t) do o[k] = copy(v) end return o end

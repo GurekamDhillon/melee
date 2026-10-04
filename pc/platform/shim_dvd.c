@@ -1,3 +1,4 @@
+#include "gw_profiler.h"
 /* DVD shims: read the user's disc image directly.
  *
  * Aurora's DVD support is compiled out of this build (AURORA_ENABLE_DVD=OFF), and the port needs
@@ -28,6 +29,7 @@
  * offsets stay below 2 GiB), and reads of it go to the host file instead of the image. */
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
+#include "gw_hang.h"
 #include "shim_vi.h"
 #include "gw_overlay.h"
 #include "gw_mods.h"
@@ -74,13 +76,13 @@ static bool gw_iso_open(void) {
   }
   gw_iso = fopen(path, "rb");
   if (gw_iso == NULL) {
-    gw_log("gw: cannot open disc image %s", path);
+    gw_log("gw: cannot open disc image <disc>");
     return false;
   }
 
   unsigned char boot[GW_DVD_FST_SIZE_FIELD + 4];
   if (fread(boot, 1, sizeof boot, gw_iso) != sizeof boot) {
-    gw_log("gw: disc image %s is too short", path);
+    gw_log("gw: disc image <disc> is too short");
     fclose(gw_iso);
     gw_iso = NULL;
     return false;
@@ -113,7 +115,7 @@ static bool gw_iso_open(void) {
     gw_log("gw: disc FST looks corrupt (root length %u, size %u)", gw_fst_nodes, fst_size);
     gw_fst_nodes = 0;
   }
-  gw_log("gw: disc image %s, disk id %.6s, FST %u nodes", path, gw_disk_id, gw_fst_nodes);
+  gw_log("gw: disc image <disc>, disk id %.6s, FST %u nodes", gw_disk_id, gw_fst_nodes);
   return true;
 }
 
@@ -533,7 +535,19 @@ uint32_t gw_DVDReadPrefix(const char *path, void *dst, uint32_t length) {
   return (uint32_t)fread(dst, 1, length, gw_iso);
 }
 
+int gw_DVDReadAsyncPrio_profile_body(void *file_info, void *addr, int length, int offset, void *callback,
+                        int prio);
 int gw_DVDReadAsyncPrio(void *file_info, void *addr, int length, int offset, void *callback,
+                        int prio) {
+    gw_hang_shim("DVDReadAsyncPrio");
+    int result;
+    gw_prof_begin(GW_PROF_FILE_READ, gw_r32((const unsigned char *)file_info + 0x30));
+    result = gw_DVDReadAsyncPrio_profile_body(file_info, addr, length, offset, callback, prio);
+    gw_prof_end();
+    return result;
+}
+
+int gw_DVDReadAsyncPrio_profile_body(void *file_info, void *addr, int length, int offset, void *callback,
                         int prio) {
   (void)prio;
 

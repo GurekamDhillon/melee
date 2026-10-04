@@ -7,6 +7,7 @@
 #include "../../window.hpp"
 
 #include "../../gx/fifo.hpp"
+#include "../../gx/surface.hpp"
 
 static void GXWriteString(const char* label) {
   auto length = strlen(label);
@@ -59,7 +60,42 @@ void GXAuroraLoadPalette(u32 n, u32 key, const float* data) {
   GX_WRITE_DATA(data, n * 96u);
 }
 
+u32 GXAuroraSurfaceRegister(const char* source, const char* label, char* error, u32 errorSize) {
+  std::string message;
+  u32 id = 0;
+  if (!source || !label || strlen(source) > 65536 || strstr(source, "@group") ||
+      strstr(source, "@binding") || strstr(source, "@vertex") || strstr(source, "@fragment")) {
+    message = "surface must be <=64 KiB, with no entry points or resource bindings";
+  } else {
+    id = aurora::gx::surface::registry.find(source);
+    if (id) {
+      if (error && errorSize) error[0] = 0;
+      return id;
+    }
+    std::string probe = aurora::gx::surface::contract() + source;
+    probe += "\n@fragment fn fs_main() -> @location(0) vec4f { return gd_surface(vec4f(1.0), "
+             "GdSurfaceInput(vec4f(1.0), vec3f(0.0,0.0,1.0), vec3f(0.0,0.0,1.0), "
+             "vec2f(0.0), 0.0, 0.0, 1.0, array<vec4f,4>(vec4f(0.0),vec4f(0.0),vec4f(0.0),vec4f(0.0)))); }";
+    auto module = aurora::gx::surface::checked_module(probe, label, message);
+    if (module) id = aurora::gx::surface::registry.add(source, label);
+    if (module && !id) message = "surface registry exhausted (256 immutable sources per process)";
+  }
+  if (error && errorSize) snprintf(error, errorSize, "%s", message.c_str());
+  return id;
+}
+
+void GXAuroraSurface(u32 program, const float* params20) {
+  if (!params20) return;
+  GX_WRITE_AURORA(GX_AURORA_SURFACE);
+  GX_WRITE_U32(program);
+  GX_WRITE_DATA(params20, 80);
+}
+
 void GXAuroraEndPalette(void) { GX_WRITE_AURORA(GX_AURORA_END_PALETTE); }
+
+void AuroraSetContentAspect(float aspect) {
+  aurora::window::set_frame_buffer_aspect(aspect);
+}
 
 void AuroraSetViewportPolicy(AuroraViewportPolicy policy) {
   aurora::gx::set_viewport_policy(policy);

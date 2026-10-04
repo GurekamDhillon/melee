@@ -157,6 +157,9 @@
 /* 031154 */ bool Camera_80031154(Vec3*);
 /* 03118C */ bool Camera_8003118C(Vec3*, float);
 /* 0311CC */ void Camera_800311CC(f32);
+#ifdef TARGET_PC
+void Camera_StageSlotClipGet(f32*, f32*);
+#endif
 /* 0311DC */ void Camera_800311DC(f32);
 /* 0311EC */ void Camera_800311EC(HSD_GObj*, u64);
 /* 031328 */ void Camera_80031328(HSD_GObj*, u64);
@@ -185,6 +188,11 @@ void Camera_ScriptPathStart(void);
 int Camera_ScriptFollow(int kind, int id, int px, int py, int pz, int ox, int oy, int oz);
 void Camera_ScriptShake(int intensity_bits, int frames);
 void Camera_ScriptLiftBounds(int lift);
+#endif
+
+#if defined(TARGET_PC)
+bool Camera_LogicToScreen(CmSubject* subject, S32Vec2* point);
+bool Camera_LogicBounds(f32* left, f32* center, f32* right);
 #endif
 
 #endif

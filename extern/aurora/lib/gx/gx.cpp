@@ -375,7 +375,7 @@ wgpu::RenderPipeline build_pipeline(const PipelineConfig& config, const gfx::Ren
     const char* env = std::getenv("AURORA_PIPELINE_ASYNC");
     return env != nullptr && env[0] == '1';
   }();
-  if (!useAsync) {
+  if (!useAsync && !config.shaderConfig.surfaceProgram) {
     return g_device.CreateRenderPipeline(&descriptor);
   }
   struct AsyncResult {

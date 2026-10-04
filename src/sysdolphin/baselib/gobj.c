@@ -1,3 +1,4 @@
+#include <gameworld/profiler_game.h>
 #include "gobj.h"
 
 #include "class.h"
@@ -12,6 +13,7 @@
 #if defined(TARGET_PC)
 #include <dolphin/os.h>
 extern int GObjLogEnabled(void);
+extern int ScriptStageHostHidden;
 
 static void gobj_trace_render(const char* walk, HSD_GObj* gobj, GObj_RenderFunc cb)
 {
@@ -101,6 +103,17 @@ void HSD_GObj_80390CD4(HSD_GObj* gobj)
 /// GObj_RunProcs
 void HSD_GObj_RunProcs(void)
 {
+    PC_PROF_BEGIN(GW_PROF_LOGIC, 0);
+#if defined(TARGET_PC)
+    if (ProfEnabled()) {
+        extern unsigned lbHeap_Free(int heap);
+        /* Per logic frame; admission heaps from the six-slot source audit. */
+        ProfCounter(GW_PROF_HEAP0_FREE, lbHeap_Free(0));
+        ProfCounter(GW_PROF_HEAP3_FREE, lbHeap_Free(3));
+        ProfCounter(GW_PROF_HEAP4_FREE, lbHeap_Free(4));
+        ProfCounter(GW_PROF_HEAP5_FREE, lbHeap_Free(5));
+    }
+#endif
     s32 i;
     HSD_GObjProc* proc;
     HSD_GObj* gobj;
@@ -125,7 +138,38 @@ void HSD_GObj_RunProcs(void)
                 {
                     HSD_GObj_CurrentInvokedProcGObj = gobj;
                     HSD_GObj_CurrentInvokedProc = proc;
+#if defined(TARGET_PC)
+                    {
+                        int zone = GW_PROF_OBJECT_CALLBACK;
+                        int detail = (gobj->classifier << 16) | gobj->p_link;
+                        switch (gobj->classifier) {
+                        case 4: zone = GW_PROF_FIGHTER; break;
+                        case 6: case 7:
+                            zone = GW_PROF_ITEMS;
+                            if (ProfEnabled()) {
+                                extern int ScriptGame_ProfEnemy(HSD_GObj*);
+                                if (ScriptGame_ProfEnemy(gobj)) zone = GW_PROF_ENEMIES;
+                            }
+                            break;
+                        case 3: zone = GW_PROF_STAGE; break;
+                        case 8: zone = GW_PROF_PARTICLES; break;
+                        case 14: zone = GW_PROF_HUD; break;
+                        case 19: zone = GW_PROF_CAMERA; break;
+                        }
+                        PC_PROF_BEGIN(zone, detail);
+                        {
+                            extern int ScriptGame_StageSlotProcBegin(HSD_GObj*);
+                            extern void ScriptGame_StageSlotProcEnd(void);
+                            int owned = ScriptGame_StageSlotProcBegin(gobj);
+                            if (!ScriptStageHostHidden || gobj->classifier != 3 || owned)
+                                proc->on_invoke(proc->gobj);
+                            if (owned) ScriptGame_StageSlotProcEnd();
+                        }
+                        PC_PROF_END();
+                    }
+#else
                     proc->on_invoke(proc->gobj);
+#endif
                     HSD_GObj_NextInvokedProc = proc->next;
                     if (HSD_GObj_DelayedProcInfo.flags != 0) {
                         HSD_GObj_DelayedProcInfo.in_delayed_proc = 1;
@@ -153,6 +197,8 @@ void HSD_GObj_RunProcs(void)
             proc = HSD_GObj_NextInvokedProc;
         }
     }
+
+    PC_PROF_END();
 }
 
 /// GObj_GetFlagFromArray
@@ -172,6 +218,7 @@ static inline void render_gobj(HSD_GObj* cur, int i)
 /// GObj_SetTextureCamera
 void HSD_GObj_80390ED0(HSD_GObj* gobj, u32 mask)
 {
+    PC_PROF_BEGIN(GW_PROF_DRAW, 0);
     s32 i = 0;
     while (mask) {
         if (mask & 1) {
@@ -198,11 +245,14 @@ void HSD_GObj_80390ED0(HSD_GObj* gobj, u32 mask)
         i++;
         mask >>= 1;
     }
+
+    PC_PROF_END();
 }
 
 /// GObj_RunGXLinkMaxCallbacks
 void HSD_GObj_80390FC0(void)
 {
+    PC_PROF_BEGIN(GW_PROF_DRAW, 0);
     HSD_GObj* saved;
     HSD_GObj* cur = HSD_GObjGXLinkHead[HSD_GObjLibInitData.gx_link_max + 1];
     while (cur != NULL) {
@@ -236,6 +286,8 @@ void HSD_GObj_80390FC0(void)
 #endif
         cur = cur->next_gx;
     }
+
+    PC_PROF_END();
 }
 
 void HSD_GObj_LObjCallback(HSD_GObj* gobj, int unused)

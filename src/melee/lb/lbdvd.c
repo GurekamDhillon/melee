@@ -17,10 +17,109 @@
 
 /* 0189EC */ static void lbDvd_800189EC(int);
 
+#if defined(TARGET_PC)
+#include "lbsixbudget.h"
+static int six_budget_check, six_budget_ok, six_budget_measure;
+static struct GameCache six_budget_measure_cache;
+int lbDvd_IsPlanningSixSlot(void) { return six_budget_check; }
+static int lbDvd_SixBudget(void)
+{
+    unsigned used[7] = {0};
+    unsigned counts[7] = {0};
+    int i, h, files=0, ok = six_budget_ok;
+    /* One MiB left in each fighter heap for relocation/runtime bookkeeping.
+     * Main-heap fighter objects are separate and need native peak measurement. */
+    for (i=0; i<(int) ARRAY_SIZE(preloadCache.entries); ++i) {
+        PreloadEntry* e=&preloadCache.entries[i];
+        unsigned bytes, capacity;
+        if (!e->state || e->load_score <= 0) continue;
+        ++files;
+        h=e->heap;
+        if (h<2 || h>6 || e->entry_num<0) { ok=0; continue; }
+        ++counts[h];
+        bytes=e->size ? e->size : lbFile_8001634C(e->entry_num);
+        capacity=lbHeap_Capacity(h);
+        if (h==4 || h==5) capacity=capacity>0x100000 ? capacity-0x100000 : 0;
+        if (!lbSixBudget_Add(&used[h],capacity,bytes,
+              (e->type>=2 && e->type<=4) ? sizeof(HSD_Archive) : 0)) {
+            OSReport("gw: scene: six-slot file rejected entry=%d heap=%d bytes=%u admitted=%u budget=%u\n",
+                     e->entry_num,h,bytes,used[h],capacity);
+            ok=0;
+        }
+    }
+    /* A separate conservative admission floor for fighter instances, JObjs,
+     * per-fighter animation buffers and stage objects in the main heap. */
+    {
+        unsigned main_free=lbHeap_Free(0);
+        OSReport("gw: scene: six-slot main heap headroom=%u admission_floor=%u\n",main_free,0x400000);
+        if (main_free<0x400000) ok=0;
+    }
+    for (h=3; h<=5; ++h)
+        OSReport("gw: scene: six-slot planned heap %d requests=%u bytes=%u capacity=%u headroom=%d reserve=%u\n",
+                 h,counts[h],used[h],lbHeap_Capacity(h),(int)lbHeap_Capacity(h)-(int)used[h],
+                 (h==4 || h==5) ? 0x100000 : 0);
+    if (!files || (!used[4] && !used[5])) ok=0; /* empty admission is never success */
+    if (!ok) OSReport("gw: scene: six-slot preload refused: missing file, cache capacity or heap budget exceeded\n");
+    return ok;
+}
+int lbDvd_TrySetupSixSlotCache(void)
+{
+    /* Plan with the match's heap policy, not the previous screen's. The
+     * production queue builder supplies stage, fighter, costume and Kirby
+     * requests. No heap transition, cleanup or asynchronous load in this pass. */
+    bool enabled=OSDisableInterrupts();
+    PreloadCache saved=preloadCache;
+    int i, ok;
+    for (i=0; i<(int)ARRAY_SIZE(preloadCache.entries); ++i)
+        preloadCache.entries[i]=lbDvd_803BA68C;
+    preloadCache.persistent_heaps=3;
+    preloadCache.scene.is_heap_persistent[0]=true;
+    preloadCache.scene.is_heap_persistent[1]=true;
+    preloadCache.new_scene=preload_cache_scene;
+    preloadCache.scene.mode_scene_changes++;
+    six_budget_check=1; six_budget_ok=1;
+    lbDvd_80018254();
+    ok=six_budget_ok;
+    preloadCache=saved;
+    six_budget_check=0;
+    six_budget_measure=ok;
+    if (ok) six_budget_measure_cache=saved.scene.game_cache;
+    OSRestoreInterrupts(enabled);
+    return ok;
+}
+
+/* Disc-free regression: the admission path must reject an oversized queued
+ * file without starting a load or retaining the synthetic scene. */
+int lbDvd_SixBudgetTest(void)
+{
+    PreloadCache saved=preloadCache;
+    int saved_ok=six_budget_ok, rc;
+    unsigned cap=lbHeap_Capacity(4);
+    memset(preloadCache.entries,0,sizeof preloadCache.entries);
+    preloadCache.entries[0].state=1;
+    preloadCache.entries[0].load_score=8;
+    preloadCache.entries[0].heap=4;
+    preloadCache.entries[0].entry_num=1;
+    preloadCache.entries[0].size=cap+1;
+    six_budget_ok=1;
+    rc=lbDvd_SixBudget()!=0;
+    rc |= preloadCache.entries[0].state!=1 ||
+          preloadCache.persistent_heap!=saved.persistent_heap;
+    memset(preloadCache.entries,0,sizeof preloadCache.entries);
+    rc |= lbDvd_SixBudget()!=0; /* empty request set must fail too */
+    preloadCache=saved;
+    six_budget_ok=saved_ok;
+    return rc;
+}
+#endif
+
 void lbDvd_SetupVsPreloadCache(void)
 {
     lbDvd_80018C6C();
     lbDvd_80018254();
+#if defined(TARGET_PC)
+    if (six_budget_check && !six_budget_ok) return;
+#endif
     lbDvd_80017700(4);
 }
 
@@ -144,12 +243,19 @@ void* lbDvd_80017740(int type, int entry_num, int transient_heap, int heap,
         }
     }
 
+#if defined(TARGET_PC)
+    if (free_index == -1 && six_budget_check) { six_budget_ok=0; return NULL; }
+#endif
     HSD_ASSERT(0x1C1, free_index != -1);
     entry = &preloadCache.entries[free_index];
     entry->state = 1;
     entry->type = type;
     entry->entry_num = entry_num;
-    if (lbHeap_80015BB8(heap)) {
+    if (lbHeap_80015BB8(heap)
+#if defined(TARGET_PC)
+        && !six_budget_check /* planning precedes match heap creation */
+#endif
+    ) {
         HSD_ASSERTREPORT(0x1CB, 0, "%d, %d\n", heap, entry_num);
     }
     entry->heap = heap;
@@ -306,6 +412,27 @@ void lbDvd_80017CC4(void)
     max_load_score = 0;
     file_to_cache = -1;
 
+#if defined(TARGET_PC)
+    if (six_budget_measure && preloadCache.persistent_heaps==3 &&
+        memcmp(&preloadCache.new_scene.game_cache,&six_budget_measure_cache,
+               sizeof six_budget_measure_cache)==0) {
+        int pending=0, loaded=0, h;
+        for (i=0; i<(int)ARRAY_SIZE(preloadCache.entries); ++i) {
+            PreloadEntry* e=&preloadCache.entries[i];
+            if (e->state && e->load_score>0) {
+                if (e->state==1 || e->state==2) pending=1;
+                if ((e->heap==4 || e->heap==5) && e->state>=3) ++loaded;
+            }
+        }
+        if (!pending && loaded) {
+            six_budget_measure=0;
+            for (h=0; h<=5; ++h)
+                if (h==0 || h>=3)
+                    OSReport("gw: scene: six-slot after-load heap=%d free=%u capacity=%u fighter_files=%d\n",
+                             h,lbHeap_Free(h),lbHeap_Capacity(h),loaded);
+        }
+    }
+#endif
     if (preloadCache.persistent_heap == 6) {
         for (i = 0; i < (signed) ARRAY_SIZE(preloadCache.entries); i++) {
             entry = &preloadCache.entries[i];
@@ -585,8 +712,23 @@ void lbDvd_80018254(void)
 
     inline_pad();
     inline_cleanup_entries();
-
-    lbDvd_80017CC4();
+#if defined(TARGET_PC)
+    if (six_budget_check && !(six_budget_ok=lbDvd_SixBudget())) {
+        /* Nothing queued by this scene is permitted to start loading. Retain
+         * already loaded entries; remove pending requests, invalidate scene so
+         * the subsequent four-slot selection can seed its own cache. */
+        int i;
+        for (i=0; i<(int) ARRAY_SIZE(preloadCache.entries); ++i)
+            if (preloadCache.entries[i].state==1) preloadCache.entries[i]=lbDvd_803BA68C;
+        preloadCache.new_scene=preload_cache_scene;
+        OSRestoreInterrupts(enabled);
+        return;
+    }
+#endif
+#if defined(TARGET_PC)
+    if (!six_budget_check)
+#endif
+        lbDvd_80017CC4();
     OSRestoreInterrupts(enabled);
 }
 

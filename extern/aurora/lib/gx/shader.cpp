@@ -8,6 +8,7 @@
 #include "gx.hpp"
 #include "gx_fmt.hpp"
 #include "shader_info.hpp"
+#include "surface.hpp"
 
 #include <dolphin/gx/GXEnum.h>
 
@@ -926,6 +927,7 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
   ZoneScoped;
   const auto hash = xxh3_hash(normalAttachment, xxh3_hash(config));
   const auto info = build_shader_info(config);
+  if (config.surfaceProgram && !info.uniformSize) return {};
   if (EnableDebugPrints && !s_seenShaders.contains(hash)) {
     s_seenShaders.insert(hash);
 
@@ -996,6 +998,7 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
 
   std::string uniformPre;
   std::string uniBufAttrs;
+  if (config.surfaceProgram) uniBufAttrs += "\n    gd_data: array<vec4f, 5>,";
   std::string texBindings;
   std::string vtxOutAttrs;
   std::string vtxInAttrs;
@@ -1137,6 +1140,16 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
   if constexpr (EnableNormalVisualization) {
     vtxOutAttrs += fmt::format("\n    @location({}) nrm: vec3f,", vtxOutIdx++);
     vtxXfrAttrsPre += "\n    out.nrm = mv_nrm;";
+  }
+  if (config.surfaceProgram) {
+    // Dedicated varyings avoid changing TEV lighting/texgen decisions.
+    vtxOutAttrs += fmt::format("\n    @location({}) gd_eye: vec3f,", vtxOutIdx++);
+    vtxOutAttrs += fmt::format("\n    @location({}) gd_normal: vec3f,", vtxOutIdx++);
+    vtxOutAttrs += fmt::format("\n    @location({}) gd_vertex: vec4f,", vtxOutIdx++);
+    vtxOutAttrs += fmt::format("\n    @location({}) gd_uv: vec2f,", vtxOutIdx++);
+    vtxXfrAttrsPre += "\n    out.gd_eye = mv_pos;\n    out.gd_normal = mv_nrm;";
+    vtxXfrAttrsPre += fmt::format("\n    out.gd_vertex = {};", vtx_attr(config, GX_VA_CLR0));
+    vtxXfrAttrsPre += fmt::format("\n    out.gd_uv = ({}).xy;", vtx_attr(config, GX_VA_TEX0));
   }
   const bool useNormalTarget = normalAttachment != UINT32_MAX && config.attrs[GX_VA_NRM].attrType != GX_NONE;
   if (useNormalTarget && !(UsePerPixelLighting && info.lightingEnabled)) {
@@ -1731,7 +1744,7 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
     fragmentReturn += "\n    return out;";
   }
 
-  const auto shaderSource =
+  auto shaderSource =
       fmt::format(R"""(
 fn bswap32(v: u32, le: bool) -> u32 {{
   if (le) {{
@@ -2083,8 +2096,10 @@ var<storage, read> abuf: array<u32>;
 @group(1) @binding(0)
 var<uniform> ubuf: Uniform;{1}
 
+// Matching GX position calculations must agree across material shader variants.
+// Otherwise compiler reassociation can change a coplanar layer's depth by an ULP.
 struct VertexOutput {{
-    @builtin(position) pos: vec4f,{2}
+    @invariant @builtin(position) pos: vec4f,{2}
 }};
 
 @vertex
@@ -2106,6 +2121,15 @@ fn fs_main(in: VertexOutput) -> {10} {{{6}{5}{11}
     Log.info("Generated shader (hash {:x}): {}", hash, shaderSource);
   }
 
+  if (config.surfaceProgram) {
+    const auto program = surface::registry.get(config.surfaceProgram);
+    if (!program) return {};
+    const auto valid = config.attrs[GX_VA_NRM].attrType != GX_NONE ? "1.0" : "0.0";
+    shaderSource = gw_surface::splice(std::move(shaderSource), surface::contract() + program->source,
+        fmt::format("prev = gd_surface(prev, GdSurfaceInput(in.gd_vertex, in.gd_normal, "
+                    "in.gd_eye, in.gd_uv, ubuf.gd_data[0].x, ubuf.gd_data[0].y, {}, "
+                    "array<vec4f, 4>(ubuf.gd_data[1], ubuf.gd_data[2], ubuf.gd_data[3], ubuf.gd_data[4])));", valid));
+  }
   return shaderSource;
 }
 
@@ -2127,6 +2151,14 @@ wgpu::ShaderModule build_shader(const ShaderConfig& config, const gfx::RenderTar
     if (shaderLog) {
       Log.info("shaderlog cfg {:016x} wgsl {:016x}", hash, XXH3_64bits(shaderSource.data(), shaderSource.size()));
     }
+  }
+  if (config.surfaceProgram) {
+    std::string error;
+    const auto program = surface::registry.get(config.surfaceProgram);
+    const char* label = program ? program->label.c_str() : "GD surface";
+    auto module = surface::checked_module(shaderSource, label, error);
+    if (!module) Log.error("GD surface {} ({}): {}", config.surfaceProgram, label, error);
+    return module;
   }
   wgpu::ShaderSourceWGSL wgslDescriptor{};
   wgslDescriptor.code = shaderSource.c_str();

@@ -38,6 +38,9 @@
 #include <melee/it/kinds/itsword.h>
 #include <melee/lb/lb_013B.h>
 #include <melee/mp/mplib.h>
+#if defined(TARGET_PC)
+#include <melee/mp/types.h>
+#endif
 #include <melee/pl/player.h>
 #include <melee/pl/plbonuslib.h>
 #include <melee/sfx/crowdsfx.h>
@@ -74,9 +77,9 @@ void ftCommon_CalcGroundAccel_DashRun(Fighter* fp, float accel,
                     accel = target_vel - fp->gr_vel;
                 }
                 if (fp->gr_vel + accel >
-                    fp->co_attrs.ground_max_horizontal_velocity)
+                    FT_SCRIPT_VALUE(fp, 2, fp->co_attrs.ground_max_horizontal_velocity))
                 {
-                    accel = fp->co_attrs.ground_max_horizontal_velocity -
+                    accel = FT_SCRIPT_VALUE(fp, 2, fp->co_attrs.ground_max_horizontal_velocity) -
                             fp->gr_vel;
                 }
             }
@@ -86,10 +89,10 @@ void ftCommon_CalcGroundAccel_DashRun(Fighter* fp, float accel,
                 accel = target_vel - fp->gr_vel;
             }
             if (fp->gr_vel + accel <
-                -fp->co_attrs.ground_max_horizontal_velocity)
+                -FT_SCRIPT_VALUE(fp, 2, fp->co_attrs.ground_max_horizontal_velocity))
             {
                 accel =
-                    -fp->co_attrs.ground_max_horizontal_velocity - fp->gr_vel;
+                    -FT_SCRIPT_VALUE(fp, 2, fp->co_attrs.ground_max_horizontal_velocity) - fp->gr_vel;
             }
         }
     }
@@ -297,7 +300,7 @@ bool ftCommon_CalcSelfAccel_DeaccelQuickAir(Fighter* fp)
     float vel = fp->self_vel.x;
     float _ = ABS(vel);
 
-    if (ABS(vel) > ca->air_drift_max) {
+    if (ABS(vel) > FT_SCRIPT_VALUE(fp, 3, ca->air_drift_max)) {
         float accel = p_ftCommonData->aerial_friction_oob;
         if (ABS(accel) >= ABS(vel)) {
             accel = -vel;
@@ -368,8 +371,8 @@ void ftCommon_CalcSelfAccel_AccelToVelClampedFrom(Fighter* fp, float vel,
                 if (vel + accel < target_vel) {
                     accel = target_vel - vel;
                 }
-                if (vel + accel > fp->co_attrs.air_max_horizontal_velocity) {
-                    accel = fp->co_attrs.air_max_horizontal_velocity - vel;
+                if (vel + accel > FT_SCRIPT_VALUE(fp, 3, fp->co_attrs.air_max_horizontal_velocity)) {
+                    accel = FT_SCRIPT_VALUE(fp, 3, fp->co_attrs.air_max_horizontal_velocity) - vel;
                 }
             }
         } else if (vel + accel < target_vel) {
@@ -377,8 +380,8 @@ void ftCommon_CalcSelfAccel_AccelToVelClampedFrom(Fighter* fp, float vel,
             if (vel + accel > target_vel) {
                 accel = target_vel - vel;
             }
-            if (vel + accel < -fp->co_attrs.air_max_horizontal_velocity) {
-                accel = -fp->co_attrs.air_max_horizontal_velocity - vel;
+            if (vel + accel < -FT_SCRIPT_VALUE(fp, 3, fp->co_attrs.air_max_horizontal_velocity)) {
+                accel = -FT_SCRIPT_VALUE(fp, 3, fp->co_attrs.air_max_horizontal_velocity) - vel;
             }
         }
     }
@@ -404,7 +407,7 @@ void ftCommon_CalcSelfAccel_DriftFrom(Fighter* fp, float vel)
         accel_flat = -attrs->aerial_drift_base;
     }
     ftCommon_CalcSelfAccel_AccelToVelClampedFrom(
-        fp, vel, accel_scaling + accel_flat, lsx * attrs->air_drift_max,
+        fp, vel, accel_scaling + accel_flat, lsx * FT_SCRIPT_VALUE(fp, 3, attrs->air_drift_max),
         attrs->aerial_friction);
 }
 
@@ -474,11 +477,16 @@ void ftCommon_ClampSelfVelX(Fighter* fp, float max)
 
 void ftCommon_ClampAirDrift(Fighter* fp)
 {
-    ftCommon_ClampSelfVelX(fp, fp->co_attrs.air_drift_max);
+    ftCommon_ClampSelfVelX(fp, FT_SCRIPT_VALUE(fp, 3, fp->co_attrs.air_drift_max));
 }
 
 void ftCommon_Fall(Fighter* fp, float gravity, float terminal_vel)
 {
+#if defined(TARGET_PC)
+    /* Geno: a script may raise this action's fall-speed limit (GENO_VAL_FALL_LIMIT); else unchanged */
+    extern f32 Geno_FallLimit(Fighter* fp, f32 terminal);
+    terminal_vel = Geno_FallLimit(fp, terminal_vel);
+#endif
     fp->self_vel.y -= gravity;
     if (fp->self_vel.y < -terminal_vel) {
         fp->self_vel.y = -terminal_vel;
@@ -583,15 +591,50 @@ void ftCommon_UseAllJumps(Fighter* fp)
     fp->x1968_jumpsUsed = fp->co_attrs.max_jumps;
 }
 
+#if defined(TARGET_PC)
+/* Script collision can disappear between a landing/ground-state request and
+ * its commit. Never publish a landing event or reset jumps for a missing floor. */
+static unsigned ftCommon_PcFloorMisses[6];
+static bool ftCommon_PcFloorGuard(Fighter* fp, bool valid,
+                                  void (*fall)(Fighter_GObj*))
+{
+    unsigned n = 0;
+    if (valid) {
+        return false;
+    }
+    if (fp->player_id < 6) {
+        n = ftCommon_PcFloorMisses[fp->player_id]++;
+    }
+    if (n % 120 == 0) {
+        OSReport("pc fighter floor lost: player=%d motion=%d pos=(%g,%g,%g) line=%d; falling\n",
+                 fp->player_id, fp->motion_id, fp->cur_pos.x, fp->cur_pos.y,
+                 fp->cur_pos.z, fp->coll_data.floor.index);
+    }
+    fall(fp->gobj);
+    return true;
+}
+static bool ftCommon_PcFloorValid(Fighter* fp)
+{
+    MapCollData* map = mpLib_8004D164();
+    int line = fp->coll_data.floor.index;
+    /* mpLib_80054ED8 spins on an out-of-range stale line; guard that too. */
+    return map != NULL && line >= 0 && line < map->line_count &&
+           ft_80084A18(fp->gobj);
+}
+#endif
+
 void ftCommon_8007D6A4(Fighter* fp)
 {
 #if defined(TARGET_PC)
     int was_air = fp->ground_or_air == GA_Air;
+    if (ftCommon_PcFloorGuard(fp, ftCommon_PcFloorValid(fp), ftCo_Fall_Enter)) {
+        return;
+    }
 #endif
     if (fp->x594_b0) {
         fp->self_vel.x = fp->x6A4_transNOffset.z * fp->facing_dir;
     }
-    ftCommon_ClampGroundVel(fp, fp->co_attrs.ground_max_horizontal_velocity);
+    ftCommon_ClampGroundVel(fp, FT_SCRIPT_VALUE(fp, 2, fp->co_attrs.ground_max_horizontal_velocity));
 #if defined(TARGET_PC)
     if (fp->ground_or_air == GA_Air) {
         /* Lua on_land (gw_script.c; dispatched after the frame, never on a resimulated one) */
@@ -606,11 +649,13 @@ void ftCommon_8007D6A4(Fighter* fp)
     fp->x1969_walljumpUsed = 0;
     fp->x2227_b0 = 0;
     ftCommon_UnlockECB(fp);
+#if !defined(TARGET_PC)
     if (!ft_80084A18(fp->gobj)) {
         OSReport("fighter ground no under Id! %d %d\n", fp->player_id,
                  fp->motion_id);
         HSD_ASSERT(686, 0);
     }
+#endif
 #if defined(TARGET_PC)
     if (was_air) {
         Geno_GroundEdge(fp, 1);
@@ -1968,3 +2013,48 @@ void ftCommon_800804FC(Fighter* fp)
         fp->dmg.x18C8 = -1;
     }
 }
+
+#if defined(TARGET_PC)
+/* Disc-free fixture for the production missing-floor branch. The fall callback
+ * stands in for disc-backed motion entry; no live fighter/map is mutated. */
+static Fighter* ftCommon_PcFloorFixture;
+static void ftCommon_PcFixtureFall(Fighter_GObj* gobj)
+{
+    Fighter* fp = ftCommon_PcFloorFixture;
+    (void) gobj;
+    fp->ground_or_air = GA_Air;
+    fp->motion_id = ftCo_MS_Fall;
+    fp->coll_data.floor.index = -1;
+}
+int ftCommon_PcFloorGuardTest(void)
+{
+    Fighter fp = { 0 };
+    CollLine floor = { 0 };
+    int failed = 0;
+    unsigned saved_misses = ftCommon_PcFloorMisses[0];
+    Fighter* saved_fixture = ftCommon_PcFloorFixture;
+    fp.player_id = 0;
+    fp.motion_id = ftCo_MS_WalkSlow;
+    fp.ground_or_air = GA_Ground;
+    fp.coll_data.floor.index = 17;
+    floor.flags = LINE_FLAG_ENABLED;
+    ftCommon_PcFloorFixture = &fp;
+    if (ftCommon_PcFloorGuard(&fp, (floor.flags & LINE_FLAG_ENABLED) != 0,
+                             ftCommon_PcFixtureFall)) {
+        failed++;
+    }
+    if (fp.ground_or_air != GA_Ground) {
+        failed++;
+    }
+    floor.flags &= ~LINE_FLAG_ENABLED; /* script removes the floor under P1 */
+    if (!ftCommon_PcFloorGuard(&fp, (floor.flags & LINE_FLAG_ENABLED) != 0,
+                              ftCommon_PcFixtureFall) ||
+        fp.ground_or_air != GA_Air || fp.motion_id != ftCo_MS_Fall ||
+        fp.coll_data.floor.index != -1) {
+        failed++;
+    }
+    ftCommon_PcFloorFixture = saved_fixture;
+    ftCommon_PcFloorMisses[0] = saved_misses;
+    return failed;
+}
+#endif

@@ -10,7 +10,7 @@
 -- Bounds: max_entries is configurable; every id/string array is capped at
 -- max_array (16) with an honest `truncated` flag. Append returns a staged copy
 -- and refuses or evicts the oldest entry according to the configured overflow.
-local RunHistory = {version = 1, default_max_entries = 64, max_entries = 1024, max_array = 16, max_id = 64}
+local RunHistory = {version = 1, default_max_entries = 512, max_entries = 1024, max_array = 16, max_id = 64}
 RunHistory.outcomes = {success = true, failure = true}
 RunHistory.overflow_policies = {refuse = true, evict = true}
 
@@ -194,7 +194,10 @@ function RunHistory.from_core_finished(owner, profile, opts)
   local ids = sorted_keys(profile.finished)
   for _, run_id in ipairs(ids) do
     local result = profile.finished[run_id]
-    local entry = RunHistory.make_entry({id = run_id}, {outcome = result.outcome, export = result.export})
+    -- A discarded earned gene is absent from collection but remains part of
+    -- the historical run outcome. Core records that identity separately.
+    local entry = RunHistory.make_entry({id = run_id},
+      {outcome = result.outcome, export = result.export or result.discarded_export})
     if not entry then return nil, 'invalid legacy finish record ' .. run_id end
     local next_history, append_why = RunHistory.append(history, entry)
     if not next_history then return nil, append_why end

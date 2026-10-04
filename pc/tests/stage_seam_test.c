@@ -42,11 +42,11 @@ typedef struct { Vec3 translate; } HSD_JObj;
 typedef struct { HSD_JObj root; } HSD_GObj;
 typedef HSD_GObj Item_GObj;
 #define GET_JOBJ(object) (&(object)->root)
-typedef struct { int handle, active, kind, flags, model_handle, owner; float x0, y0, x1, y1; } ScriptStageLine;
+typedef struct { int handle, active, kind, flags, model_handle, owner, area; float x0, y0, x1, y1; } ScriptStageLine;
 typedef struct { int handle, active, line_handle, owner; HSD_GObj* gobj; float x, y; } ScriptStageModel;
 typedef struct { int handle, active; Item_GObj* gobj; } ScriptStageTarget;
 static struct {
-    MapCollData* map; int cap, base_v, base_l, base_j, target_remaining;
+    MapCollData* map; int cap, base_v, base_l, base_j, target_remaining, loading_area;
     ScriptStageLine line[SCRIPT_STAGE_LINES]; ScriptStageModel model[SCRIPT_STAGE_MODELS]; ScriptStageTarget target[SCRIPT_STAGE_TARGETS];
 } script_stage;
 static MapLine lines[32], saved_lines[32];
@@ -68,6 +68,15 @@ static CollJoint* mpGetGroundCollJoint(void) { return groundCollJoint; }
 static int Script_StageResourceOwner(void) { return owner; }
 static float Ground_801C0498(void) { return 1; }
 static void mpUncheckBounding(void) { ++bounding_checks; }
+/* This fixture tests standalone seams (area 0); area gates/batching have their
+ * own actual-source fixture. Keep host scalar hooks explicit. */
+#define ScriptGame_StageJointActive(joint) 1
+#define ScriptGame_StageLineActive(line) 1
+#define script_area_retiring(area) 0
+#define mpScriptBatchBegin() ((void)0)
+#define mpScriptBatchEnd() ((void)0)
+#define mpScriptInvalidateBounding() mpUncheckBounding()
+#define mpScriptIslandRefresh mpIsland_8005B334
 static void HSD_GObjFree(HSD_GObj* object) { (void)object; assert(!"unexpected GObj fixture"); }
 static void Item_8026A8EC(Item_GObj* object) { (void)object; assert(!"unexpected target fixture"); }
 static void HSD_JObjSetTranslate(HSD_JObj* object, const Vec3* pos) { object->translate = *pos; }
@@ -134,6 +143,7 @@ static void no_seams(int line) {
 
 int main(void) {
     int a, b, c, d, copies[4], i, before;
+    (void)script_stage_seam_refresh; /* full-slot rebuild used by stage slots */
     fixture();
     a = add(101, -52, 0, -26, 13, 1, 1); b = add(102, -26, 13, 0, 13, 1, 0);
     c = add(103, 0, 13, 26, 26, 1, 1); d = add(104, 26, 26, 52, 26, 1, 0);

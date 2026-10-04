@@ -18,7 +18,7 @@ local tree = {
  ice={title='ICE',parent='magic',branches={leaf('Rime Strike','assault','gene','rime','assault'),leaf('Rime Glide','traversal','gene','rime','traversal'),leaf('Rime Response','guard','gene','rime','guard')}},
  reaction={title='REACTION',parent='magic',branches={leaf('Thermal Shock','fusion','thermal_shock')}},
  item={title='ITEM',parent='root',branches={leaf('Restore','item','restore')}},
- special={title='SPECIAL',parent='root',branches={leaf('Loadout','gene','loadout'),leaf('Route','route','route'),leaf('Collection','focus','collection')}}
+ special={title='SPECIAL',parent='root',branches={leaf('Change abilities','gene','loadout'),leaf('Map','route','route'),leaf('Save / return home','focus','collection')}}
 }
 default_tree = tree
 local function tree_of(s) return (type(s)=='table' and s.tree) or default_tree end
@@ -103,7 +103,7 @@ end
 --   capacities {items={restore=n},supplies=n} declared inventory only
 --   assign     {root={left=...,right=...,down=...},abilities={...}} prepared
 --              branch assignments made between rooms
-local slot_names={assault='ASSAULT',guard='GUARD',traversal='TRAVERSAL'}
+local slot_names={assault='ATTACK',guard='DEFENSE',traversal='MOVEMENT'}
 local dir_names={'left','right','down'}
 local function clean(s,n)
  if type(s)~='string' then return nil end
@@ -111,7 +111,7 @@ local function clean(s,n)
 end
 local function kind_label(kind,opts)
  local l=opts.labels and opts.labels[kind]
- return clean(l,24) or ((kind or 'EMPTY'):upper())
+ return clean(l,24) or ({cinder='CINDER FIRE',rime='RIME FROST'})[kind] or ((kind or 'EMPTY'):upper())
 end
 local function slot_label(slot,opts)
  local l=opts.labels and opts.labels[slot]
@@ -176,8 +176,8 @@ function C.plan(run,opts)
  -- Root: three forks only.
  t.root={title='COMMAND',branches={}}
  local root_spec={abilities={node='abilities',title='ABILITIES',icon='magic',label='Abilities'},
-  items={node='item',title='ITEM',icon='item',label='Item'},
-  special={node='special',title='SPECIAL',icon='focus',label='Special'}}
+  items={node='item',title='ITEM',icon='item',label='Supplies'},
+  special={node='special',title='SPECIAL',icon='focus',label='Run options'}}
  for i,key in ipairs(ra) do
   local spec=root_spec[key]
   t.root.branches[i]={label=spec.label,icon=spec.icon,node=spec.node,title=spec.title}
@@ -204,7 +204,7 @@ function C.plan(run,opts)
  end
  -- Special fork: between-room surfaces. Route opens the discovered map.
  t.special={title='SPECIAL',parent='root',branches={
-  leaf('Loadout','gene','loadout'),leaf('Route','route','route'),leaf('Collection','focus','collection')}}
+  leaf('Change abilities','gene','loadout'),leaf('Map','route','route'),leaf('Save / return home','focus','collection')}}
  return t
 end
 -- Convenience: build and install in one call. Returns the installed tree.

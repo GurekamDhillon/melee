@@ -424,3 +424,28 @@ void lbHeap_80015F3C(void)
         desc++;
     }
 }
+
+#if defined(TARGET_PC)
+unsigned lbHeap_Capacity(int heap)
+{
+    return heap >= 0 && heap < LBHEAP_HEAP_COUNT ? lbHeap_80431FA0.heap_array[heap].size : 0;
+}
+#endif
+
+#if defined(TARGET_PC)
+unsigned lbHeap_Free(int heap)
+{
+    struct Heap* p;
+    int free_bytes;
+    if (heap<0 || heap>=LBHEAP_HEAP_COUNT) return 0;
+    p=&lbHeap_80431FA0.heap_array[heap];
+    if (p->status!=LbHeapStatus_Create) return 0;
+    if (p->type==0) {
+        free_bytes=OSCheckHeap(p->id);
+        return free_bytes>0 ? free_bytes : 0;
+    }
+    if (!p->handle || p->handle==(Handle*) -1) return 0;
+    return lbMemory_80014F7C(p->handle);
+}
+#endif
+#include "lbheap_stage_slots.inc"

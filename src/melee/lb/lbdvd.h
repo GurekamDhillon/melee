@@ -34,4 +34,8 @@ typedef void (*lbDvd_Callback)(int, int index, int, int);
 /* 018F58 */ void lbDvd_80018F58(bool value);
 /* 018F68 */ void lbDvd_80018F68(void);
 
+#if defined(TARGET_PC)
+int lbDvd_TrySetupSixSlotCache(void);
+int lbDvd_IsPlanningSixSlot(void);
+#endif
 #endif

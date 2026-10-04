@@ -56,6 +56,10 @@ HSD_GObj* CreateGObj(s32 where, u16 classifier, u8 p_link, u8 priority,
                      HSD_GObj* position)
 {
     HSD_GObj* gobj;
+#if defined(TARGET_PC)
+    { extern int ScriptGame_StageSlotCanCreate(void);
+      if(!ScriptGame_StageSlotCanCreate())return NULL; }
+#endif
 
     HSD_ASSERT(0xA8, p_link <= HSD_GObjLibInitData.p_link_max);
     if ((gobj = gobj_allocate()) == NULL) {
@@ -90,6 +94,10 @@ HSD_GObj* CreateGObj(s32 where, u16 classifier, u8 p_link, u8 priority,
         GObj_PReorder(gobj, position->prev);
         break;
     }
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotCreated(HSD_GObj*);
+      ScriptGame_StageSlotCreated(gobj); }
+#endif
     return gobj;
 }
 
@@ -107,6 +115,10 @@ void HSD_GObjFree(HSD_GObj* gobj)
         HSD_GObj_DelayedProcInfo.delay_remove_gobj = 1;
         return;
     }
+#if defined(TARGET_PC)
+    { extern void ScriptGame_StageSlotDestroyed(HSD_GObj*);
+      ScriptGame_StageSlotDestroyed(gobj); }
+#endif
     GObj_RemoveUserData(gobj);
     HSD_GObjObject_80390B0C(gobj);
     HSD_GObjProc_RemoveAllProcs(gobj);

@@ -1,0 +1,12 @@
+{
+  "id": "envoy",
+  "name": "SuperTime Envoy",
+  "version": "0.5.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Retail Classic and Adventure with companion drive rewards, normalized opponents and offline New Game+; physical garden and progression.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

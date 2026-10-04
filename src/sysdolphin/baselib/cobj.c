@@ -198,6 +198,9 @@ void HSD_CObjReqAnim(HSD_CObj* cobj, float startframe)
 
 GXProjectionType makeProjectionMtx(HSD_CObj* cobj, Mtx44 mtx)
 {
+#if defined(TARGET_PC)
+    HSD_CObjUpdateView(cobj);
+#endif
     GXProjectionType projection_type;
     switch (cobj->projection_type) {
     case PROJ_PERSPECTIVE:
@@ -491,8 +494,33 @@ void HSD_CObjSetupViewingMtx(HSD_CObj* cobj)
     }
 }
 
+#if defined(TARGET_PC)
+void HSD_CObjUpdateView(HSD_CObj* cobj)
+{
+#if defined(TARGET_PC)
+    if (cobj != NULL && cobj->view_auto && cobj->projection_type == PROJ_PERSPECTIVE) {
+        extern int View_ProjectionScaleBits(void);
+        union { int i; float f; } scale;
+        scale.i = View_ProjectionScaleBits();
+        cobj->projection_param.perspective.aspect = cobj->view_authored_aspect * scale.f;
+    }
+#endif
+}
+
+float HSD_CObjGetAuthoredAspect(HSD_CObj* cobj)
+{
+#if defined(TARGET_PC)
+    if (cobj != NULL && cobj->view_auto) return cobj->view_authored_aspect;
+#endif
+    return HSD_CObjGetAspect(cobj);
+}
+#endif
+
 bool HSD_CObjSetCurrent(HSD_CObj* cobj)
 {
+#if defined(TARGET_PC)
+    HSD_CObjUpdateView(cobj);
+#endif
     HSD_RenderPass render_pass;
     bool result;
 
@@ -874,6 +902,9 @@ void HSD_CObjSetFov(HSD_CObj* cobj, float fov)
 
 float HSD_CObjGetAspect(HSD_CObj* cobj)
 {
+#if defined(TARGET_PC)
+    HSD_CObjUpdateView(cobj);
+#endif
     if (cobj == NULL || cobj->projection_type != 1) {
         return 0.0f;
     }
@@ -886,6 +917,12 @@ void HSD_CObjSetAspect(HSD_CObj* cobj, float aspect)
         return;
     }
     cobj->projection_param.perspective.aspect = aspect;
+#if defined(TARGET_PC)
+    if (cobj->view_auto) {
+        cobj->view_authored_aspect = aspect;
+        HSD_CObjUpdateView(cobj);
+    }
+#endif
 }
 
 float HSD_CObjGetTop(HSD_CObj* cobj)
@@ -967,6 +1004,9 @@ void HSD_CObjSetBottom(HSD_CObj* cobj, float bottom)
 
 float HSD_CObjGetLeft(HSD_CObj* cobj)
 {
+#if defined(TARGET_PC)
+    HSD_CObjUpdateView(cobj);
+#endif
     if (cobj == NULL) {
         return 0.0f;
     }
@@ -1003,6 +1043,9 @@ void HSD_CObjSetLeft(HSD_CObj* cobj, float left)
 
 float HSD_CObjGetRight(HSD_CObj* cobj)
 {
+#if defined(TARGET_PC)
+    HSD_CObjUpdateView(cobj);
+#endif
     if (cobj == NULL) {
         return 0.0f;
     }
@@ -1139,6 +1182,9 @@ void HSD_CObjSetViewportfx4(HSD_CObj* cobj, float left, float right, float top,
 
 int HSD_CObjGetProjectionType(HSD_CObj* cobj)
 {
+#if defined(TARGET_PC)
+    HSD_CObjUpdateView(cobj);
+#endif
     if (cobj == NULL) {
         return 1;
     }
@@ -1161,6 +1207,12 @@ void HSD_CObjSetPerspective(HSD_CObj* cobj, float fov, float aspect)
     cobj->projection_type = PROJ_PERSPECTIVE;
     cobj->projection_param.perspective.fov = fov;
     cobj->projection_param.perspective.aspect = aspect;
+#if defined(TARGET_PC)
+    if (cobj->view_auto) {
+        cobj->view_authored_aspect = aspect;
+        HSD_CObjUpdateView(cobj);
+    }
+#endif
 }
 
 void HSD_CObjSetFrustum(HSD_CObj* cobj, float top, float bottom, float left,
@@ -1191,6 +1243,9 @@ void HSD_CObjSetOrtho(HSD_CObj* cobj, float top, float bottom, float left,
 
 void HSD_CObjGetPerspective(HSD_CObj* cobj, float* top, float* bottom)
 {
+#if defined(TARGET_PC)
+    HSD_CObjUpdateView(cobj);
+#endif
     if (cobj == NULL || cobj->projection_type != PROJ_PERSPECTIVE) {
         return;
     }
@@ -1296,23 +1351,15 @@ static int CObjLoad(HSD_CObj* cobj, HSD_CObjDesc* desc)
     }
     switch (desc->common.projection_type) {
     case PROJ_PERSPECTIVE:
-#if defined(TARGET_PC)
-        {
-            /* Widescreen (Hor+): scale the camera aspect by 320/219 — 73/60 * 320/219 is exactly
-             * 16:9. Mirrors the hook Slippi's "Optional: Widescreen 16:9" code installs at
-             * CObjLoad+0x1BC (Dan Salvato, mirrorbender, Achilles1515, UnclePunch), reimplemented
-             * natively; enabled by MELEE_WIDESCREEN / the "widescreen" setting.
-             * Specification and the remaining sites: _research/widescreen.md. */
-            extern int Widescreen_Enabled(void);
-            f32 aspect = desc->perspective.aspect;
-            if (Widescreen_Enabled()) {
-                aspect *= 320.0f / 219.0f;
-            }
-            HSD_CObjSetPerspective(cobj, desc->perspective.fov, aspect);
-        }
-#else
         HSD_CObjSetPerspective(cobj, desc->perspective.fov,
                                desc->perspective.aspect);
+#if defined(TARGET_PC)
+        /* Hor+ generalisation of Slippi's 320/219 hook (Dan Salvato,
+         * mirrorbender, Achilles1515, UnclePunch). 73/60 authored pixel
+         * aspect * (view aspect * 60/73) gives the real display aspect. */
+        cobj->view_authored_aspect = desc->perspective.aspect;
+        cobj->view_auto = 1;
+        HSD_CObjUpdateView(cobj);
 #endif
         break;
     case PROJ_ORTHO:
@@ -1366,6 +1413,10 @@ static int CObjInit(HSD_Class* o)
         return status;
     }
     cobj = HSD_COBJ(o);
+#if defined(TARGET_PC)
+    cobj->view_auto = 0;
+    cobj->view_authored_aspect = 0.0f;
+#endif
     if (cobj != NULL) {
         HSD_CObjSetMtxDirty(cobj);
     }

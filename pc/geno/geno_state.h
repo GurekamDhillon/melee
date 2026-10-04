@@ -1,4 +1,4 @@
-/* geno_state.h - Geno's per-fighter state block (game half only: geno_game.c and geno_tests.c,
+/* geno_state.h - Geno's per-fighter and per-article state (game half only: geno_game.c and geno_tests.c,
  * both compiled through gwtool, so the layout is the same in both). Never included by native code.
  *
  * ROLLBACK: one block per fighter object lives in Geno_StateBlock, a plain game global, so gw_snap
@@ -7,6 +7,18 @@
 #define GENO_STATE_H
 
 #include "geno.h"
+
+/* Per-item article state: kept in Item.xDD4_itemVar and snapshotted with the item heap. */
+typedef struct GenoArtVars {
+    s32 profile;
+    s32 article;
+    s32 frame;  /* frames alive (1 on the first) */
+    s32 why;    /* the despawn reason (event 29) */
+    f32 vx, vy; /* the travel velocity the phys callback writes to x40_vel */
+    Vec3 prev;  /* the position before this frame's move (the stage ray test) */
+    f32 spin;   /* the model's roll (visual) */
+    s8 cur[GENO_ART_HITBOXES]; /* the hitbox entry each Melee slot holds now, -1 off */
+} GenoArtVars;
 
 typedef struct GenoCond {
     u32 head; /* word0 [15:0] of the CHG / CHGAND: [15:8] cond, [7] B var, [6:4] cmp, [3] NOT */
@@ -80,6 +92,8 @@ typedef struct GenoState {
     /* ---- v5.3 (GENO_VAL_ATTACK_CONNECTED*): Geno_OnActionChange moves cur to prev and clears cur ---- */
     s32 atk_connected;               /* one of this fighter's hitboxes hit a fighter in this action */
     s32 atk_connected_prev;          /* atk_connected as the previous action ended */
+    /* ---- v5.4 (GENO_VAL_FALL_LIMIT): cleared with the action ---- */
+    f32 fall_limit;                  /* > 0: ftCommon_Fall clamps to this, not to terminal velocity */
 } GenoState;
 
 #define GENO_SF_SCRIPT 1u /* a script used the escape since the reset */

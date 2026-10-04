@@ -399,7 +399,11 @@ static inline void ftDrawCommon_80080E18_inline2(HSD_GObj* gobj, Fighter* old)
     HSD_JObjSetTranslate(jobj, pos);
 }
 
+#if defined(TARGET_PC)
+static void ftDrawCommon_80080E18_surface_impl(HSD_GObj* gobj, int arg1)
+#else
 void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
+#endif
 {
     Fighter* fp = gobj->user_data;
 
@@ -422,6 +426,17 @@ void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
         }
     }
 }
+
+#if defined(TARGET_PC)
+extern void SurfaceBegin(int slot);
+extern void SurfaceEnd(void);
+void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
+{
+    SurfaceBegin(((Fighter*)gobj->user_data)->player_id + 1);
+    ftDrawCommon_80080E18_surface_impl(gobj, arg1);
+    SurfaceEnd();
+}
+#endif
 
 void ftDrawCommon_80081118(void)
 {

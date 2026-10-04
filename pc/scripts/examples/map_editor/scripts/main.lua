@@ -26,6 +26,365 @@ local PALETTE = {
   "bf_window_glass_insert_glass",
 }
 -- END GENERATED KIT
+-- BEGIN GENERATED MISSION (scripts/mission.lua; regenerate with tools/port/map_mission_sync.py)
+local Mission = (function()
+-- Mission state machine for the kit map editor. Pure Lua: no gd calls, so it loads under plain lua
+-- and the tests drive it with made-up observations. main.lua embeds this file verbatim between
+-- "BEGIN/END GENERATED MISSION" (the engine loads one entry file per mod and has no require);
+-- regenerate it with tools/port/map_mission_sync.py after editing.
+local M = {}
+-- Keep in step with gs_enemy_names in pc/platform/gw_script.c (topi is registered but not yet in the docs).
+M.KINDS = { 'goomba', 'koopa', 'redead', 'like_like', 'octorok', 'polar_bear', 'topi' }
+-- per_wave: gd.spawn_enemy allows 32 live script enemies; waves, checkpoints and the rest are authoring caps.
+M.LIMITS = { enemies = 64, per_wave = 32, waves = 8, checkpoints = 16, zone = 2000, time = 3600, lives = 99,
+             triggers = 16, text = 80, radius = 200 }
+-- Trigger actions: wave (spawn a wave now), message (HUD line), collision (open or close the parts near
+-- a point), complete / fail (end the mission).
+M.ACTIONS = { wave = true, message = true, collision = true, complete = true, fail = true }
+M.MESSAGE_FRAMES = 240 -- how long a message stays on the HUD
+M.OBJECTIVES = { reach_goal = 'Reach the goal', defeat_all = 'Defeat all enemies',
+                 defeat_then_goal = 'Defeat all enemies, then reach the goal' }
+M.FPS = 60 -- logic frames per second; time limits count on_frame calls
+-- P1 respawns through the engine's own sequence (platform and all) at stage spawn slot 4; the state
+-- machine only says where that point is ('respawn_point' actions: the start, then each checkpoint).
+M.RESPAWN_SLOT = 4
+
+local known = {}
+for _, k in ipairs(M.KINDS) do known[k] = true end
+
+local function num(n) return type(n) == 'number' and n == n and math.abs(n) <= 100000 end
+local function plain(t, what) assert(type(t) == 'table' and getmetatable(t) == nil, what .. ' must be a table') end
+local function only(t, allowed, what)
+  for k in pairs(t) do assert(allowed[k], 'unknown ' .. what .. ' field: ' .. tostring(k)) end
+end
+local function list(t, what, max)
+  plain(t, what .. ' list')
+  local n = 0
+  for k in pairs(t) do
+    assert(type(k) == 'number' and k % 1 == 0 and k >= 1, what .. ' must be a plain list')
+    n = n + 1
+  end
+  assert(n == #t, what .. ' must be a plain list')
+  assert(n <= max, 'too many ' .. what .. ' (max ' .. max .. ')')
+  return t
+end
+local function point(t, what)
+  plain(t, what) only(t, { x = true, y = true }, what)
+  assert(num(t.x) and num(t.y), what .. ' needs finite x and y')
+  return { x = t.x, y = t.y }
+end
+local function zone(t, what)
+  plain(t, what) only(t, { x = true, y = true, w = true, h = true }, what)
+  assert(num(t.x) and num(t.y), what .. ' needs finite x and y')
+  assert(num(t.w) and num(t.h) and t.w > 0 and t.h > 0 and t.w <= M.LIMITS.zone and t.h <= M.LIMITS.zone,
+         what .. ' needs w and h in (0, ' .. M.LIMITS.zone .. ']')
+  return { x = t.x, y = t.y, w = t.w, h = t.h }
+end
+
+-- Strict structural check; returns a normalized copy (lists always present, wave defaulted). Whether
+-- the mission is complete enough to play is check_playable's job, so authoring can go step by step.
+function M.validate(m)
+  plain(m, 'mission')
+  only(m, { start = true, enemies = true, goal = true, checkpoints = true, objective = true,
+            waves = true, triggers = true }, 'mission')
+  local out = { enemies = {}, checkpoints = {}, waves = {}, triggers = {} }
+  if m.start ~= nil then out.start = point(m.start, 'start') end
+  if m.goal ~= nil then out.goal = zone(m.goal, 'goal') end
+  local per = {}
+  local es = m.enemies == nil and {} or list(m.enemies, 'enemies', M.LIMITS.enemies)
+  for i, e in ipairs(es) do
+    plain(e, 'enemy') only(e, { kind = true, x = true, y = true, wave = true }, 'enemy')
+    assert(known[e.kind], 'unknown enemy kind: ' .. tostring(e.kind))
+    assert(num(e.x) and num(e.y), 'enemy needs finite x and y')
+    local w = e.wave == nil and 1 or e.wave
+    assert(type(w) == 'number' and w % 1 == 0 and w >= 1 and w <= M.LIMITS.waves,
+           'enemy wave must be an integer 1..' .. M.LIMITS.waves)
+    per[w] = (per[w] or 0) + 1
+    assert(per[w] <= M.LIMITS.per_wave, 'too many enemies in wave ' .. w .. ' (max ' .. M.LIMITS.per_wave .. ')')
+    out.enemies[i] = { kind = e.kind, x = e.x, y = e.y, wave = w }
+  end
+  local cs = m.checkpoints == nil and {} or list(m.checkpoints, 'checkpoints', M.LIMITS.checkpoints)
+  for i, c in ipairs(cs) do out.checkpoints[i] = zone(c, 'checkpoint') end
+  -- Wave rules: a ruled wave appears on its own condition (seconds since the start, or P1 crossing x)
+  -- instead of waiting for the earlier waves to be cleared.
+  local ws = m.waves == nil and {} or list(m.waves, 'waves', M.LIMITS.waves)
+  local ruled = {}
+  for i, r in ipairs(ws) do
+    plain(r, 'wave rule') only(r, { wave = true, time = true, x = true, dir = true }, 'wave rule')
+    assert(type(r.wave) == 'number' and r.wave % 1 == 0 and r.wave >= 1 and r.wave <= M.LIMITS.waves,
+           'wave rule needs an integer wave 1..' .. M.LIMITS.waves)
+    assert(not ruled[r.wave], 'wave ' .. r.wave .. ' has two rules')
+    ruled[r.wave] = true
+    assert((r.time ~= nil) ~= (r.x ~= nil), 'wave rule needs exactly one of time or x')
+    assert(r.time == nil or (num(r.time) and r.time >= 0 and r.time <= M.LIMITS.time),
+           'wave rule time must be 0..' .. M.LIMITS.time .. ' seconds')
+    assert(r.x == nil or num(r.x), 'wave rule x must be finite')
+    assert(r.dir == nil or (r.x ~= nil and (r.dir == 1 or r.dir == -1)), 'wave rule dir is 1 or -1 and goes with x')
+    out.waves[i] = { wave = r.wave, time = r.time, x = r.x, dir = r.x ~= nil and (r.dir or 1) or nil }
+  end
+  -- Trigger zones: entering one runs its action (once unless once = false).
+  local ts = m.triggers == nil and {} or list(m.triggers, 'triggers', M.LIMITS.triggers)
+  for i, t in ipairs(ts) do
+    plain(t, 'trigger')
+    only(t, { x = true, y = true, w = true, h = true, action = true, wave = true, text = true, at = true,
+              r = true, open = true, once = true }, 'trigger')
+    local z = zone({ x = t.x, y = t.y, w = t.w, h = t.h }, 'trigger')
+    assert(M.ACTIONS[t.action], 'trigger action must be wave, message, collision, complete or fail')
+    assert(t.once == nil or type(t.once) == 'boolean', 'trigger once must be true or false')
+    local o = { x = z.x, y = z.y, w = z.w, h = z.h, action = t.action, once = t.once ~= false }
+    local function only_for(field, action)
+      assert(t[field] == nil or t.action == action,
+             'trigger field ' .. field .. ' only goes with the ' .. action .. ' action')
+    end
+    only_for('wave', 'wave') only_for('text', 'message') only_for('at', 'collision')
+    only_for('r', 'collision') only_for('open', 'collision')
+    if t.action == 'wave' then
+      assert(type(t.wave) == 'number' and t.wave % 1 == 0 and t.wave >= 1 and t.wave <= M.LIMITS.waves,
+             'trigger wave must be an integer 1..' .. M.LIMITS.waves)
+      o.wave = t.wave
+    elseif t.action == 'message' then
+      assert(type(t.text) == 'string' and #t.text >= 1 and #t.text <= M.LIMITS.text and not t.text:find('%c'),
+             'trigger text must be 1..' .. M.LIMITS.text .. ' printable characters')
+      o.text = t.text
+    elseif t.action == 'collision' then
+      o.at = point(t.at, 'trigger at')
+      assert(type(t.open) == 'boolean', 'trigger collision needs open = true or false')
+      o.open = t.open
+      assert(t.r == nil or (num(t.r) and t.r > 0 and t.r <= M.LIMITS.radius),
+             'trigger r must be in (0, ' .. M.LIMITS.radius .. ']')
+      o.r = t.r or 6.5
+    end
+    out.triggers[i] = o
+  end
+  local o = m.objective
+  if o ~= nil then
+    plain(o, 'objective') only(o, { type = true, time = true, lives = true }, 'objective')
+    assert(M.OBJECTIVES[o.type], 'objective must be reach_goal, defeat_all or defeat_then_goal')
+    assert(o.time == nil or (num(o.time) and o.time > 0 and o.time <= M.LIMITS.time),
+           'objective time must be 1..' .. M.LIMITS.time .. ' seconds')
+    assert(o.lives == nil or (type(o.lives) == 'number' and o.lives % 1 == 0 and o.lives >= 1 and o.lives <= M.LIMITS.lives),
+           'objective lives must be an integer 1..' .. M.LIMITS.lives)
+    out.objective = { type = o.type, time = o.time, lives = o.lives }
+  end
+  return out
+end
+
+function M.empty(m)
+  return m == nil or (not m.start and not m.goal and not m.objective and #m.enemies == 0 and #m.checkpoints == 0
+                      and #m.waves == 0 and #m.triggers == 0)
+end
+
+-- nil when the mission can run, else what is missing.
+function M.check_playable(m)
+  if not m.start then return 'mission has no start (map mission start)' end
+  if not m.objective then return 'mission has no objective (map mission objective <type>)' end
+  local t = m.objective.type
+  if (t == 'reach_goal' or t == 'defeat_then_goal') and not m.goal then
+    return t .. ' needs a goal zone (map mission goal <w> <h>)'
+  end
+  if (t == 'defeat_all' or t == 'defeat_then_goal') and #m.enemies == 0 then
+    return t .. ' needs at least one enemy (map mission enemy <kind>)'
+  end
+  local have = {}
+  for _, e in ipairs(m.enemies) do have[e.wave] = true end
+  for _, r in ipairs(m.waves) do
+    if not have[r.wave] then return 'wave rule for wave ' .. r.wave .. ' but that wave has no enemies' end
+  end
+  for _, t in ipairs(m.triggers) do
+    if t.action == 'wave' and not have[t.wave] then return 'trigger spawns wave ' .. t.wave .. ' but it has no enemies' end
+  end
+end
+
+local function inside(z, p)
+  return p ~= nil and math.abs(p.x - z.x) <= z.w / 2 and math.abs(p.y - z.y) <= z.h / 2
+end
+
+function M.new(m)
+  local seen, waves = {}, {}
+  for _, e in ipairs(m.enemies) do
+    if not seen[e.wave] then seen[e.wave] = true waves[#waves + 1] = e.wave end
+  end
+  table.sort(waves)
+  -- A wave is sequential (starts when everything before it is gone) unless a rule or a trigger owns it.
+  local rule, owned = {}, {}
+  for _, r in ipairs(m.waves or {}) do rule[r.wave] = r owned[r.wave] = true end
+  for _, t in ipairs(m.triggers or {}) do if t.action == 'wave' then owned[t.wave] = true end end
+  return { m = m, waves = waves, rule = rule, owned = owned, begun = {}, nbegun = 0, tracked = {}, pending = 0,
+           frames = 0, deaths = 0, falls = nil, cp = nil, started = false, defeated = 0, vanished = 0,
+           total = #m.enemies, cleared = #waves == 0, result = nil, fail = nil, fired = {}, inside_now = {} }
+end
+
+-- The glue reports each spawn action's outcome before the next step.
+function M.spawned(st, index, handle)
+  st.pending = st.pending - 1
+  st.tracked[handle] = { index = index, frame = st.frames }
+end
+function M.spawn_failed(st, index, why)
+  st.pending = st.pending - 1
+  local e = st.m.enemies[index]
+  st.fail = st.fail or { reason = 'spawn', detail = ('%s refused: %s'):format(e and e.kind or 'enemy', tostring(why)) }
+end
+
+local function sorted_handles(t)
+  local out = {}
+  for h in pairs(t) do out[#out + 1] = h end
+  table.sort(out)
+  return out
+end
+
+-- obs: {frames = logic frames since the mission began, player = {x,y} or nil, falls = P1's fall count,
+-- alive = {[handle] = true} for the enemies still fighting, defeated = {[handle] = true} for the ones
+-- the engine reports as stock-defeated (omitted: every enemy that is gone counts as defeated)}.
+-- A tracked enemy that is neither alive nor defeated has vanished (blast zone, item destroyed): it
+-- leaves the fight so the objective cannot stall, but it is not counted as a defeat.
+-- Returns actions (spawn / respawn_point / cleanup, for the glue to carry out) and events (for logging).
+function M.step(st, obs)
+  local actions, events = {}, {}
+  if st.result then return actions, events end
+  st.frames = obs.frames
+  local m, obj = st.m, st.m.objective
+
+  local function finish(status, reason, detail)
+    st.result = { status = status, reason = reason, detail = detail, frames = st.frames,
+                  deaths = st.deaths, defeated = st.defeated, vanished = st.vanished }
+    actions[#actions + 1] = { type = 'cleanup' }
+    events[#events + 1] = { type = status, reason = reason, detail = detail, frames = st.frames,
+                            deaths = st.deaths, defeated = st.defeated, vanished = st.vanished }
+  end
+  if st.fail then finish('failed', st.fail.reason, st.fail.detail) return actions, events end
+
+  -- The start is the first respawn point.
+  if not st.started then
+    st.started = true
+    if m.start then actions[#actions + 1] = { type = 'respawn_point', x = m.start.x, y = m.start.y } end
+  end
+
+  -- Defeats. A handle is not judged on the frame it spawned: the pool may not report it yet.
+  for _, h in ipairs(sorted_handles(st.tracked)) do
+    local t = st.tracked[h]
+    if obs.frames > t.frame and not obs.alive[h] then
+      st.tracked[h] = nil
+      local kind = m.enemies[t.index].kind
+      if obs.defeated == nil or obs.defeated[h] then
+        st.defeated = st.defeated + 1
+        events[#events + 1] = { type = 'defeat', handle = h, index = t.index, kind = kind }
+      else
+        st.vanished = st.vanished + 1
+        events[#events + 1] = { type = 'vanish', handle = h, index = t.index, kind = kind }
+      end
+    end
+  end
+
+  -- Triggers fire on entry. They run before the waves so a triggered wave appears the same step.
+  local function begin_wave(w)
+    if st.begun[w] then return end
+    st.begun[w] = true st.nbegun = st.nbegun + 1
+    local px = obs.player and obs.player.x or (m.start and m.start.x) or 0
+    for i, e in ipairs(m.enemies) do
+      if e.wave == w then
+        st.pending = st.pending + 1
+        actions[#actions + 1] = { type = 'spawn', index = i, kind = e.kind, x = e.x, y = e.y,
+                                  wave = w, facing = px >= e.x and 1 or -1 }
+      end
+    end
+    events[#events + 1] = { type = 'wave', n = st.nbegun, of = #st.waves, wave = w }
+  end
+  for i, t in ipairs(m.triggers) do
+    local now = inside(t, obs.player)
+    if now and not st.inside_now[i] and not (t.once and st.fired[i]) then
+      st.fired[i] = true
+      events[#events + 1] = { type = 'trigger', index = i, action = t.action }
+      if t.action == 'wave' then begin_wave(t.wave)
+      elseif t.action == 'message' then events[#events + 1] = { type = 'message', text = t.text }
+      elseif t.action == 'collision' then
+        actions[#actions + 1] = { type = 'collision', x = t.at.x, y = t.at.y, r = t.r, open = t.open }
+      elseif t.action == 'complete' then finish('complete') return actions, events
+      elseif t.action == 'fail' then finish('failed', 'trigger', 'trigger zone ' .. i) return actions, events
+      end
+    end
+    st.inside_now[i] = now
+  end
+
+  -- Waves. Ruled waves start on their own condition; the rest go in order once everything spawned is gone.
+  for _, w in ipairs(st.waves) do
+    local r = st.rule[w]
+    if r and not st.begun[w] then
+      local px = obs.player and obs.player.x
+      if (r.time and obs.frames >= r.time * M.FPS) or
+         (r.x and px and ((r.dir == 1 and px >= r.x) or (r.dir == -1 and px <= r.x))) then
+        begin_wave(w)
+      end
+    end
+  end
+  if next(st.tracked) == nil and st.pending == 0 then
+    for _, w in ipairs(st.waves) do
+      if not st.owned[w] and not st.begun[w] then begin_wave(w) break end
+    end
+  end
+  if not st.cleared and st.nbegun == #st.waves and next(st.tracked) == nil and st.pending == 0 then
+    st.cleared = true
+  end
+
+  -- Checkpoints: touching one makes it the respawn point.
+  local held = st.cp and inside(m.checkpoints[st.cp], obs.player) -- overlapping zones must not flip-flop
+  for i, z in ipairs(m.checkpoints) do
+    if not held and inside(z, obs.player) and st.cp ~= i then
+      st.cp = i
+      actions[#actions + 1] = { type = 'respawn_point', x = z.x, y = z.y }
+      events[#events + 1] = { type = 'checkpoint', index = i }
+      break
+    end
+  end
+
+  -- Deaths: the fall count rising is the KO. Lives only fail the mission when the author set them.
+  if st.falls == nil then st.falls = obs.falls end
+  local lost = obs.falls - st.falls
+  if lost > 0 then
+    st.falls = obs.falls st.deaths = st.deaths + lost
+    events[#events + 1] = { type = 'death', deaths = st.deaths,
+                            remaining = obj.lives and math.max(0, obj.lives - st.deaths) or nil }
+  end
+
+  local goal_open = obj.type == 'reach_goal' or (obj.type == 'defeat_then_goal' and st.cleared)
+  if (obj.type == 'defeat_all' and st.cleared) or (goal_open and inside(m.goal, obs.player)) then
+    finish('complete') return actions, events
+  end
+  if obj.lives and st.deaths >= obj.lives then finish('failed', 'lives') return actions, events end
+  if obj.time and obs.frames >= obj.time * M.FPS then finish('failed', 'time') return actions, events end
+  return actions, events
+end
+
+local function clock(frames, up)
+  local s = math.max(0, (up and math.ceil or math.floor)(frames / M.FPS))
+  return ('%d:%02d'):format(s // 60, s % 60)
+end
+
+-- One HUD line: objective, enemies left, time (remaining when limited, else elapsed), lives left.
+function M.hud(st)
+  local o = st.m.objective
+  local parts = { o.type == 'reach_goal' and 'Reach the goal' or o.type == 'defeat_all' and 'Defeat all'
+                  or (st.cleared and 'Reach the goal' or 'Defeat all, then the goal') }
+  if st.total > 0 then parts[#parts + 1] = 'enemies ' .. (st.total - st.defeated - st.vanished) end
+  if o.time then
+    parts[#parts + 1] = 'time ' .. clock(o.time * M.FPS - st.frames, true)
+  else
+    parts[#parts + 1] = 'time ' .. clock(st.frames)
+  end
+  if o.lives then parts[#parts + 1] = 'lives ' .. math.max(0, o.lives - st.deaths) end
+  return table.concat(parts, ' | ')
+end
+
+local WHY = { time = 'time ran out', lives = 'out of lives' }
+function M.result_text(st)
+  local r = st.result
+  if not r then return nil end
+  if r.status == 'complete' then return 'MISSION COMPLETE  ' .. clock(r.frames) end
+  return 'MISSION FAILED: ' .. (WHY[r.reason] or r.detail or r.reason)
+end
+
+return M
+end)()
+-- END GENERATED MISSION
 
 local known = {}
 for _, name in ipairs(PALETTE) do known[name] = true end
@@ -33,7 +392,10 @@ local parts, handles, assets, undo, redo = {}, {}, {}, {}, {}
 local selected, next_id, palette = nil, 0, 1
 local filter, filtering, recents, toasts = '', false, {}, {}
 local editing, menu, action_index = false, false, 1
-local depth, rotation, grid = 0, 0, 1
+-- Authoring scale is separate from the exported base asset unit U.
+-- Existing layout transforms remain literal; only new parts and reset use 2x.
+local AUTHOR_SCALE = 2
+local depth, rotation, grid = 0, 0, 2
 local collision, floor_flags, overlay = true, 3, true
 local previous, old_pad, saved_states = nil, {}, {}
 local filename, dirty, status = 'layout.lua', false, 'F1 help | F6 edit | map play layout.lua: load'
@@ -45,12 +407,19 @@ local action_log, undo_names, redo_names, log_open, log_rows = {}, {}, {}, false
 local search, search_rows = nil, nil -- action search overlay (bible §5.10)
 local bounds = {camera=nil, blast=nil} -- stage bounds the map is authored against (bible §6.6, §8 P2)
 local spawns = {} -- moved start/respawn points, slot -> {x=, y=} (bible §6.3)
+local mission_doc = nil -- authored mission markers (see mission.lua); part of the document and its history
+local run = nil -- the running mission: {state=, frames=, last_falls=}; kept after the result so the banner stays
+local mission_stop -- forward: start() ends a running mission before editing resumes
+local mission_pick -- forward: 'map mission pick' (defined with the marker tools)
+local MK = { kind = 'enemy', pick = { enemy = 'goomba', wave = 1, action = 'message' } } -- marker tools (state: sel, kind, pick, drag)
+local want_edit = nil -- {left=} frames to keep retrying start() after a test (the fighter may be mid-move)
+local test_return = nil -- where P1 was in the editor when 'map mission test' began; editing resumes there
 local bounds_drag = nil -- dragging a camera-bounds edge (bible §8 P2)
 local group = {} -- extra selected part ids beside the anchor (bible §5.4)
 local marquee = nil -- select-tool drag rectangle: {sx,sy,x,y,add} (bible §5.4)
 local hover_gizmo = nil -- the handle or bounds edge under the pointer (bible §5.11)
 local MAX_PARTS, HISTORY = 128, 64 -- ScriptGame_ModelSpawn's instance pool; shared with other mods.
-local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale' }
+local TOOLS = { 'place', 'select', 'move', 'rotate', 'scale', 'mission' }
 local tool, axis_lock, snap_on, help_open = 'place', nil, true, false
 local SCALE_STEP, SCALE_MIN, SCALE_MAX = 1.1, 0.25, 4.0
 local hover, dragging, help_first = nil, false, 1
@@ -61,6 +430,7 @@ local HINTS = {
   move='hold G: drag to move; M: to cursor; Shift+C: constraint',
   rotate='hold E: drag to face the pointer; R / T: +-15 deg',
   scale='hold C: drag to scale; F7 / F8: -10% / +10%; Shift+X/Y: mirror',
+  mission='LMB: place the marker / select / drag to move or resize; Up/Down: kind; Del: delete',
 }
 local mouse = { x = -1000, y = -1000, buttons = 0, prev = 0, over = false, used = 0 }
 local map_hinv, map_key = nil, nil
@@ -187,7 +557,8 @@ local function inv3(h)
   local G,H,I =  (b*f - c*e), -(a*f - c*d),  (a*e - b*d)
   local det = a*A + b*B + c*C
   if math.abs(det) < 1e-12 then return nil end
-  return { A/det,B/det,C/det,D/det,E/det,F/det,G/det,H/det,I/det }
+  -- the inverse is the TRANSPOSED cofactor matrix over the determinant
+  return { A/det,D/det,G/det,B/det,E/det,H/det,C/det,F/det,I/det }
 end
 local function build_map()
   if not mouse_api then return nil end
@@ -263,7 +634,7 @@ local function ghost_sync()
   local x,y,z=shown_cursor()
   local ok=#parts<MAX_PARTS
   if ghost and ghost.name~=name then ghost_despawn() end
-  local opts={x=x,y=y,z=z,rot=rotation,scale=1,visible=true,alpha=true,collision=false,floor_flags=0,
+  local opts={x=x,y=y,z=z,rot=rotation,scale=AUTHOR_SCALE,visible=true,alpha=true,collision=false,floor_flags=0,
               tint=ok and 0xFFFFFFAA or 0xDF4433AA}
   if not ghost then
     local h=gd.model_spawn(asset(name),opts)
@@ -303,7 +674,7 @@ local function copy_rect(r)
 end
 local function doc_snapshot()
   return {parts=clone(parts), bounds={camera=copy_rect(bounds.camera), blast=copy_rect(bounds.blast)},
-          spawns=clone(spawns)}
+          spawns=clone(spawns), mission=mission_doc and clone(mission_doc)}
 end
 local function apply(target, record)
   assert(offline(), 'active offline match required')
@@ -349,6 +720,12 @@ local function validate(data)
          'layout version must be 1 or 2')
   assert(data.units==U, 'kit scale differs; re-export the kit or convert the layout')
   local lay_bounds={camera=nil,blast=nil}
+  local lay_mission=nil
+  if data.mission~=nil then
+    assert(data.version==2, 'mission requires layout version 2')
+    lay_mission=Mission.validate(data.mission)
+    if Mission.empty(lay_mission) then lay_mission=nil end
+  end
   if data.version==2 then
     for _,kind in ipairs({'camera','blast'}) do
       local b=data[kind]
@@ -393,7 +770,7 @@ local function validate(data)
                 scale=opt_scale(p,'scale'),scale_x=opt_scale(p,'scale_x'),
                 scale_y=opt_scale(p,'scale_y'),scale_z=opt_scale(p,'scale_z')}
   end
-  return out, lay_bounds
+  return out, lay_bounds, lay_mission
 end
 local function file_name(name)
   assert(type(name)=='string' and #name<=80 and name:match('^[%w_-]+%.lua$'),
@@ -401,7 +778,7 @@ local function file_name(name)
   return name
 end
 local function serialize()
-  local version=((bounds.camera or bounds.blast) or next(spawns)) and 2 or 1
+  local version=((bounds.camera or bounds.blast) or next(spawns) or mission_doc) and 2 or 1
   local out={('-- Kit layout v%d; world units, Z is visual depth. Grid: %.17g units/metre.'):format(version,U)}
   out[#out+1]=('return {version=%d,units=%.17g,'):format(version,U)
   for _,kind in ipairs({'camera','blast'}) do
@@ -418,6 +795,51 @@ local function serialize()
     table.sort(slots)
     for _,slot in ipairs(slots) do
       out[#out+1]=('[%d]={x=%.17g,y=%.17g},'):format(slot,spawns[slot].x,spawns[slot].y)
+    end
+    out[#out+1]='},'
+  end
+  if mission_doc then
+    local m=mission_doc
+    local function z(t) return ('{x=%.17g,y=%.17g,w=%.17g,h=%.17g}'):format(t.x,t.y,t.w,t.h) end
+    out[#out+1]='mission={'
+    if m.start then out[#out+1]=('start={x=%.17g,y=%.17g},'):format(m.start.x,m.start.y) end
+    if #m.enemies>0 then
+      out[#out+1]='enemies={'
+      for _,e in ipairs(m.enemies) do
+        out[#out+1]=('{kind=%q,x=%.17g,y=%.17g,wave=%d},'):format(e.kind,e.x,e.y,e.wave)
+      end
+      out[#out+1]='},'
+    end
+    if #m.waves>0 then
+      out[#out+1]='waves={'
+      for _,r in ipairs(m.waves) do
+        out[#out+1]=r.time and ('{wave=%d,time=%.17g},'):format(r.wave,r.time) or
+                    ('{wave=%d,x=%.17g,dir=%d},'):format(r.wave,r.x,r.dir)
+      end
+      out[#out+1]='},'
+    end
+    if #m.triggers>0 then
+      out[#out+1]='triggers={'
+      for _,t in ipairs(m.triggers) do
+        local f=('{x=%.17g,y=%.17g,w=%.17g,h=%.17g,action=%q'):format(t.x,t.y,t.w,t.h,t.action)
+        if t.wave then f=f..(',wave=%d'):format(t.wave) end
+        if t.text then f=f..(',text=%q'):format(t.text) end
+        if t.at then f=f..(',at={x=%.17g,y=%.17g},open=%s,r=%.17g'):format(t.at.x,t.at.y,tostring(t.open),t.r) end
+        if not t.once then f=f..',once=false' end
+        out[#out+1]=f..'},'
+      end
+      out[#out+1]='},'
+    end
+    if m.goal then out[#out+1]='goal='..z(m.goal)..',' end
+    if #m.checkpoints>0 then
+      out[#out+1]='checkpoints={'
+      for _,c in ipairs(m.checkpoints) do out[#out+1]=z(c)..',' end
+      out[#out+1]='},'
+    end
+    if m.objective then
+      local o=m.objective
+      out[#out+1]=('objective={type=%q%s%s},'):format(o.type,o.time and (',time=%.17g'):format(o.time) or '',
+                                                        o.lives and (',lives=%d'):format(o.lives) or '')
     end
     out[#out+1]='},'
   end
@@ -452,14 +874,42 @@ local function apply_bounds()
   end
 end
 local function doc_restore(d)
-  bounds={camera=copy_rect(d.bounds.camera), blast=copy_rect(d.bounds.blast)}
-  spawns=d.spawns
-  if bounds.camera or bounds.blast then
-    pcall(apply_bounds)
-  else
-    pcall(gd.stage_restore_bounds)
+  local old_bounds,old_spawns,old_mission=bounds,spawns,mission_doc
+  -- The mission's start is P1's slot-0 spawn and wins over a hand-set slot 0.
+  local function effective(s,m)
+    local out=clone(s)
+    if m and m.start then out[0]={x=m.start.x,y=m.start.y} end
+    return out
   end
-  for slot,b in pairs(spawns) do pcall(gd.stage_set_spawn,slot,b.x,b.y) end
+  local function reconcile(b,s,m)
+    -- Restore also clears every owned spawn. Omitted document fields mean defaults.
+    assert(gd.stage_restore_bounds(), 'stage restore refused')
+    bounds=b
+    apply_bounds()
+    for slot,p in pairs(effective(s,m)) do assert(gd.stage_set_spawn(slot,p.x,p.y), 'spawn refused: '..slot) end
+  end
+  local next_bounds={camera=copy_rect(d.bounds.camera),blast=copy_rect(d.bounds.blast)}
+  local next_spawns=clone(d.spawns or {})
+  local next_mission=d.mission and clone(d.mission) or nil
+  local ok,why=pcall(reconcile,next_bounds,next_spawns,next_mission)
+  if not ok then
+    local recovered,err=pcall(reconcile,old_bounds,old_spawns,old_mission)
+    bounds,spawns=old_bounds,old_spawns
+    if not recovered then broken=true say('Arena recovery failed: '..tostring(err),'error') end
+    error(why,0)
+  end
+  bounds,spawns,mission_doc=next_bounds,next_spawns,next_mission
+end
+local function restore_document(d)
+  local old=doc_snapshot()
+  apply(d.parts,false)
+  local ok,why=pcall(doc_restore,d)
+  if not ok then
+    local recovered,err=pcall(apply,old.parts,false)
+    if not recovered then broken=true say('Model recovery failed: '..tostring(err),'error') end
+    error(why,0)
+  end
+  return old
 end
 local function outside_bounds(p)
   local b=bounds.blast
@@ -478,18 +928,9 @@ local function load_map(name)
   local text=assert(gd.data_read(name), 'layout file not found: '..name)
   -- Text-only chunk with no globals: files cannot access gd, io or the script environment.
   local chunk,why=load(text,'@'..name,'t',{}) assert(chunk,why)
-  local target,lay_bounds=validate(chunk())
-  acted(target,'Loaded '..name) filename=name dirty=false
-  if lay_bounds.camera or lay_bounds.blast then
-    bounds=lay_bounds
-    if not pcall(apply_bounds) then say('Stage refused the layout bounds','error') end
-  end
-  if lay_bounds.spawn then
-    spawns=lay_bounds.spawn
-    local ok=true
-    for slot,b in pairs(spawns) do ok=pcall(gd.stage_set_spawn,slot,b.x,b.y) and ok end
-    if not ok then say('Stage refused some spawn points','error') end
-  end
+  local target,lay_bounds,lay_mission=validate(chunk())
+  local before=restore_document({parts=target,bounds=lay_bounds,spawns=lay_bounds.spawn or {},mission=lay_mission})
+  doc_commit(before,'Loaded '..name) filename=name dirty=false
   say('Loaded '..#parts..' parts from '..name) toast('Loaded '..#parts..' parts')
 end
 local function set_overlay()
@@ -507,21 +948,554 @@ local function start()
   assert(offline(), 'active offline match required')
   assert(gd.player(1), 'P1 is required')
   assert(not broken, 'save layout and restart match before editing')
+  mission_stop('editing')
   if editing then return end
+  local back=test_return
   local geometry,lines=gd.stage_view()
   previous={fly=gd.fly(1),geometry=geometry,overlay=lines}
-  assert(gd.fly(1,true), 'flight refused')
+  local flew,on=pcall(gd.fly,1,true)
+  assert(flew and on, flew and 'flight refused' or 'P1 cannot fly while dead, held or respawning; try again in a moment')
   editing=true autoload=nil set_overlay() say('Editing '..filename)
+  test_return=nil
+  if back then pcall(gd.teleport,1,back.x,back.y) end -- back to the cursor a mission test left from
 end
 local function edit()
   assert(editing and offline(), 'enable the editor in an offline match first')
   assert(not broken, 'save and restart: engine state needs recovery')
 end
+-- Missions (see mission.lua): the document holds the markers, the runtime below carries out the
+-- state machine's actions with gd.spawn_enemy / gd.enemy_alive / gd.enemy_remove / gd.teleport.
+local function mission_remove_enemies()
+  if not run then return end
+  local hs={}
+  for h in pairs(run.state.tracked) do hs[#hs+1]=h end
+  table.sort(hs)
+  for _,h in ipairs(hs) do pcall(gd.enemy_remove,h) end
+  run.state.tracked={}
+end
+mission_stop=function(reason)
+  if not run then return end
+  mission_remove_enemies()
+  if not run.state.result then gd.log('mission: aborted ('..tostring(reason)..')') end
+  local moved,opened=run.respawn_moved,next(run.coll)~=nil
+  run=nil
+  if opened then pcall(sync,parts) end -- trigger-opened or -closed parts go back to the document
+  -- The respawn slot was borrowed: put the document's spawns back (no-op when the stage is gone).
+  if moved then pcall(doc_restore,doc_snapshot()) end
+end
+local function mission_act(actions,events)
+  for _,ev in ipairs(events) do
+    local seconds=(ev.frames or 0)/Mission.FPS
+    if ev.type=='wave' then gd.log(('mission: wave %d of %d'):format(ev.n,ev.of))
+    elseif ev.type=='defeat' then gd.log('mission: defeated '..ev.kind)
+    elseif ev.type=='trigger' then gd.log(('mission: trigger %d %s'):format(ev.index,ev.action))
+    elseif ev.type=='message' then
+      run.message={text=ev.text,left=Mission.MESSAGE_FRAMES}
+      gd.log('mission: message '..ev.text)
+    elseif ev.type=='vanish' then gd.log('mission: lost '..ev.kind..' (left the stage, not a defeat)')
+    elseif ev.type=='checkpoint' then gd.log('mission: checkpoint '..ev.index)
+    elseif ev.type=='death' then
+      gd.log('mission: death '..ev.deaths..(ev.remaining and (' lives left '..ev.remaining) or ''))
+    elseif ev.type=='complete' then
+      gd.log(('mission: complete time=%.1fs deaths=%d defeated=%d vanished=%d'):format(seconds,ev.deaths,ev.defeated,ev.vanished))
+    elseif ev.type=='failed' then
+      gd.log(('mission: failed reason=%s%s time=%.1fs deaths=%d defeated=%d vanished=%d'):format(ev.reason,
+        ev.detail and (' ('..ev.detail..')') or '',seconds,ev.deaths,ev.defeated,ev.vanished))
+    end
+  end
+  for _,a in ipairs(actions) do
+    if a.type=='spawn' then
+      local ok,h,why=pcall(gd.spawn_enemy,a.kind,a.x,a.y,{facing=a.facing})
+      if ok and h then Mission.spawned(run.state,a.index,h)
+      else Mission.spawn_failed(run.state,a.index,ok and why or h) end
+    elseif a.type=='collision' then
+      -- Parts near the point change collision for this run only: the document is untouched and the
+      -- override is cleared by mission_stop. sync respawns an instance whose collision differs.
+      local n=0
+      for _,p in ipairs(parts) do
+        if math.sqrt((p.x-a.x)^2+(p.y-a.y)^2)<=a.r then run.coll[p.id]=not a.open n=n+1 end
+      end
+      local effective=clone(parts)
+      for _,p in ipairs(effective) do if run.coll[p.id]~=nil then p.collision=run.coll[p.id] end end
+      local ok,why=pcall(sync,effective)
+      gd.log(('mission: collision %s on %d part(s) near %.1f,%.1f%s'):format(a.open and 'open' or 'closed',n,a.x,a.y,
+                                                                          ok and '' or (' FAILED: '..tostring(why))))
+    elseif a.type=='respawn_point' then
+      -- P1's engine respawn (rebirth platform included) reads stage spawn slot 4.
+      local ok,res=pcall(gd.stage_set_spawn,Mission.RESPAWN_SLOT,a.x,a.y)
+      if ok and res then run.respawn_moved=true
+      else say('Respawn point refused: '..tostring(res),'error') end
+    elseif a.type=='cleanup' then mission_remove_enemies() end
+  end
+end
+-- An enemy that ends without the engine's defeat event is either lost off the stage or was
+-- transformed by a kill (a Koopa becomes a shell item: ScriptGame_EnemyStatus reports 0 either way).
+-- Position tells them apart: last seen within EDGE of the blast zone means it fell out.
+local EDGE=30
+local function near_blast(x,y)
+  local b=bounds.blast
+  if not b and gd.stage_bounds then local live=gd.stage_bounds() b=live and live.blast end
+  return b~=nil and (x<=b.left+EDGE or x>=b.right-EDGE or y<=b.bottom+EDGE or y>=b.top-EDGE)
+end
+local function mission_step()
+  if not run or run.state.result then return end
+  local p=gd.player(1)
+  -- enemy_status: 1 fighting, 2 stock-defeated (may still be animating), 0 gone without a defeat.
+  local alive,defeated={}, {}
+  for h in pairs(run.state.tracked) do
+    local ok,status=true,nil
+    if gd.enemy_status then
+      local code
+      ok,code=pcall(gd.enemy_status,h)
+      status=ok and (code=='alive' and 1 or code=='defeated' and 2 or 0) or nil
+    else
+      local live
+      ok,live=pcall(gd.enemy_alive,h)
+      status=ok and (live and 1 or 2) or nil -- no status API: any end counts as a defeat
+    end
+    if status==1 then
+      alive[h]=true
+      local got,e=pcall(gd.enemy_state,h)
+      if got and e then run.last[h]={x=e.x,y=e.y} end
+    elseif status==2 then defeated[h]=true
+    else
+      local at=run.last[h]
+      if not (at and near_blast(at.x,at.y)) then defeated[h]=true end
+    end
+  end
+  run.last_falls=p and p.falls or run.last_falls
+  local actions,events=Mission.step(run.state,{frames=run.frames,player=p and {x=p.x,y=p.y} or nil,
+                                               falls=run.last_falls,alive=alive,defeated=defeated})
+  mission_act(actions,events)
+end
+-- opts.from = {x,y}: a test run that starts P1 there (the cursor) instead of at the authored start.
+-- The document is not touched; the run works on a copy.
+local function mission_begin(opts)
+  assert(offline(), 'active offline match required')
+  assert(gd.player(1), 'P1 is required')
+  local m=clone(mission_doc or Mission.validate({}))
+  if opts and opts.from then m.start={x=opts.from.x,y=opts.from.y} end
+  local why=Mission.check_playable(m)
+  assert(not why, why)
+  mission_stop('restart')
+  test_return=nil
+  if opts and opts.test then
+    local p1=gd.player(1)
+    test_return=opts.back or {x=p1.x,y=p1.y}
+  end
+  if editing then stop() end
+  gd.teleport(1,m.start.x,m.start.y)
+  -- Lives are counted from P1's fall count (the LAB has no stocks at all). Where stocks do exist, one
+  -- spare keeps the engine's game-over from ending the match before the mission's own failure.
+  if m.objective.lives then pcall(gd.set_stocks,1,math.min(99,m.objective.lives+1)) end
+  local p=gd.player(1)
+  run={state=Mission.new(clone(m)),frames=0,last_falls=p and p.falls or 0,last={},coll={},
+       test=opts and opts.test or false,from=opts and opts.from,back=test_return}
+  gd.log('mission: start '..m.objective.type..(run.test and (' (test from the cursor %.1f,%.1f)'):format(m.start.x,m.start.y) or ''))
+  mission_step() -- wave 1 appears with the mission, not a frame later
+end
+local function mission_autostart()
+  if not mission_doc then return end
+  local ok,why=pcall(mission_begin)
+  if not ok then say('Mission not started: '..tostring(why),'error') end
+end
+local function mission_entries(m)
+  local out={}
+  if m.start then out[#out+1]={('start %.1f %.1f'):format(m.start.x,m.start.y),function(t) t.start=nil end} end
+  if m.goal then
+    out[#out+1]={('goal %.1f %.1f %gx%g'):format(m.goal.x,m.goal.y,m.goal.w,m.goal.h),function(t) t.goal=nil end}
+  end
+  for i,c in ipairs(m.checkpoints) do
+    out[#out+1]={('checkpoint %.1f %.1f %gx%g'):format(c.x,c.y,c.w,c.h),function(t) table.remove(t.checkpoints,i) end}
+  end
+  for i,e in ipairs(m.enemies) do
+    out[#out+1]={('enemy %s %.1f %.1f wave %d'):format(e.kind,e.x,e.y,e.wave),function(t) table.remove(t.enemies,i) end}
+  end
+  for i,r in ipairs(m.waves) do
+    out[#out+1]={('wave %d %s'):format(r.wave,r.time and ('after %gs'):format(r.time) or
+                                       ('when P1 passes x=%g going %s'):format(r.x,r.dir==1 and 'right' or 'left')),
+                 function(t) table.remove(t.waves,i) end}
+  end
+  for i,z in ipairs(m.triggers) do
+    local what=z.action=='wave' and (' wave '..z.wave) or z.action=='message' and (' "'..z.text..'"') or
+               z.action=='collision' and (' %s near %.1f %.1f r%g'):format(z.open and 'open' or 'close',z.at.x,z.at.y,z.r) or ''
+    out[#out+1]={('trigger %s%s %.1f %.1f %gx%g%s'):format(z.action,what,z.x,z.y,z.w,z.h,z.once and '' or ' repeat'),
+                 function(t) table.remove(t.triggers,i) end}
+  end
+  return out
+end
+-- One undo step per edit; Mission.validate refuses before anything changes. Only a moved start
+-- touches the engine (slot 0, through doc_restore's reconcile with its recovery path).
+local function mission_edit(label,fn)
+  edit()
+  local before=doc_snapshot()
+  local m=clone(mission_doc or Mission.validate({}))
+  fn(m)
+  m=Mission.validate(m)
+  if Mission.empty(m) then m=nil end
+  local function at(t) return t and t.start and (t.start.x..','..t.start.y) or '' end
+  if at(m)~=at(mission_doc) then
+    doc_restore({bounds=before.bounds,spawns=before.spawns,mission=m})
+  else
+    mission_doc=m
+  end
+  dirty=true doc_commit(before,label)
+end
+local function mission_xy(rest,usage)
+  local x,y=rest:match('^(%S+)%s+(%S+)$')
+  if x then
+    x,y=tonumber(x),tonumber(y)
+    assert(x and y and number(x) and number(y),'start needs a finite x y')
+    return x,y
+  end
+  assert(rest=='',usage)
+  local cx,cy=fly_cursor()
+  return cx,cy
+end
+local function mission_command(arg)
+  local sub,rest=(arg or ''):match('^(%S*)%s*(.-)%s*$')
+  if sub=='start' then
+    local x,y=mission_xy(rest,'map mission start [x y]')
+    mission_edit('mission start',function(m) m.start={x=x,y=y} end)
+  elseif sub=='enemy' then
+    local kind,wave=rest:match('^(%S+)%s*(%S*)$')
+    assert(kind,'map mission enemy <kind> [wave]: '..table.concat(Mission.KINDS,' '))
+    if wave=='' then wave=nil else wave=assert(tonumber(wave),'wave must be a number') end
+    local x,y=fly_cursor()
+    mission_edit('mission enemy '..kind,function(m) m.enemies[#m.enemies+1]={kind=kind,x=x,y=y,wave=wave} end)
+  elseif sub=='goal' or sub=='checkpoint' then
+    local w,h=rest:match('^(%S+)%s+(%S+)$')
+    w,h=tonumber(w),tonumber(h)
+    assert(w and h,'map mission '..sub..' <w> <h> (world units, centred on the cursor)')
+    local x,y=fly_cursor()
+    mission_edit('mission '..sub,function(m)
+      local z={x=x,y=y,w=w,h=h}
+      if sub=='goal' then m.goal=z else m.checkpoints[#m.checkpoints+1]=z end
+    end)
+  elseif sub=='wave' then
+    local n,how,arg=rest:match('^(%d+)%s+(%S+)%s*(.-)$')
+    assert(n,'map mission wave <n> time <seconds> | x [<x>] [left|right] | clear')
+    n=tonumber(n)
+    mission_edit('mission wave '..n..' '..how,function(m)
+      for i=#m.waves,1,-1 do if m.waves[i].wave==n then table.remove(m.waves,i) end end
+      if how=='time' then
+        m.waves[#m.waves+1]={wave=n,time=assert(tonumber(arg),'wave time needs a number of seconds')}
+      elseif how=='x' then
+        local xs,dir=arg:match('^(%S*)%s*(%S*)$')
+        local x=tonumber(xs)
+        if not x then dir=xs x=(fly_cursor()) end
+        assert(dir=='' or dir=='left' or dir=='right','direction is left or right')
+        m.waves[#m.waves+1]={wave=n,x=x,dir=dir=='left' and -1 or 1}
+      else assert(how=='clear','wave rule is time, x or clear') end
+    end)
+  elseif sub=='trigger' then
+    local action,w,h,args=rest:match('^(%S+)%s+(%S+)%s+(%S+)%s*(.-)$')
+    w,h=tonumber(w),tonumber(h)
+    assert(action and w and h,'map mission trigger wave <w> <h> <n> | message <w> <h> <text> | collision <w> <h> open|close [r] | complete <w> <h> | fail <w> <h>  (add "repeat" to fire on every entry)')
+    local once=true
+    local stripped=args:gsub('%s*repeat$','')
+    if stripped~=args then once=false args=stripped end
+    local x,y=fly_cursor()
+    local z={x=x,y=y,w=w,h=h,action=action,once=once}
+    if action=='wave' then z.wave=assert(tonumber(args),'trigger wave needs a wave number')
+    elseif action=='message' then z.text=args
+    elseif action=='collision' then
+      local mode,r=args:match('^(%S+)%s*(%S*)$')
+      assert(mode=='open' or mode=='close','trigger collision needs open or close')
+      z.open=mode=='open' z.r=tonumber(r)
+      local part=assert(find(parts,selected),'select a part first: the trigger acts on the parts near it')
+      z.at={x=part.x,y=part.y}
+    else assert(args=='','this trigger action takes no arguments') end
+    mission_edit('mission trigger '..action,function(m) m.triggers[#m.triggers+1]=z end)
+  elseif sub=='objective' then
+    local kind,opts=rest:match('^(%S+)%s*(.-)$')
+    assert(kind,'map mission objective <reach_goal|defeat_all|defeat_then_goal> [time=<s>] [lives=<n>]')
+    local o={type=kind}
+    for k,v in opts:gmatch('(%w+)=(%S+)') do
+      assert(k=='time' or k=='lives','unknown option: '..k..' (time=, lives=)')
+      o[k]=assert(tonumber(v),k..' must be a number')
+    end
+    mission_edit('mission objective',function(m) m.objective=o end)
+  elseif sub=='list' then
+    if Mission.empty(mission_doc) then say('no mission (map mission start|enemy|goal|checkpoint|objective)','action') return end
+    local o=mission_doc.objective
+    gd.log('map_editor: mission objective '..(o and (o.type..(o.time and (' time='..o.time) or '')..
+           (o.lives and (' lives='..o.lives) or '')) or '(none)'))
+    local entries=mission_entries(mission_doc)
+    for i,e in ipairs(entries) do gd.log(('map_editor: mission %d %s'):format(i,e[1])) end
+    say(('mission: %d items, objective %s'):format(#entries,o and o.type or 'none'),'action')
+  elseif sub=='delete' then
+    local n=tonumber(rest)
+    assert(n and n%1==0,'map mission delete <index> (numbers from map mission list)')
+    local entries=mission_entries(mission_doc or Mission.validate({}))
+    assert(entries[n],'index '..n..' is out of range (see map mission list)')
+    mission_edit('mission delete '..n,function(m) mission_entries(m)[n][2](m) end)
+  elseif sub=='clear' then
+    assert(not Mission.empty(mission_doc),'no mission to clear')
+    mission_edit('mission clear',function(m)
+      m.start,m.goal,m.objective=nil,nil,nil m.enemies,m.checkpoints,m.waves,m.triggers={},{},{},{}
+    end)
+  elseif sub=='pick' then mission_pick(rest)
+  elseif sub=='test' then
+    assert(editing,'map on first: a test starts P1 at the editing cursor')
+    local p1=assert(gd.player(1),'P1 is required')
+    mission_begin({from={x=p1.x,y=p1.y},test=true})
+  elseif sub=='play' or sub=='restart' then
+    if sub=='play' and rest~='' then load_map(rest) end
+    if sub=='restart' and run and run.test then mission_begin({from=run.from,test=true,back=run.back}) else mission_begin() end
+  elseif sub=='stop' then
+    assert(run,'no mission is running')
+    local was_test=run.test
+    mission_stop('stopped')
+    say('Mission stopped','action')
+    -- A test hands the editor back, at the cursor it left from. The fighter can be in a state flight
+    -- refuses for a few frames (the goal pose, a respawn), so on_frame keeps trying.
+    if was_test then want_edit={left=180} pcall(start) end
+  else
+    error('map mission start [x y]|enemy <kind> [wave]|goal <w> <h>|checkpoint <w> <h>|objective <type> [time=s] [lives=n]|wave <n> time|x ...|trigger <action> <w> <h> ...|list|delete <index>|clear|test|play [file]|restart|stop')
+  end
+end
+do
+-- Mouse and inspector authoring of the mission markers (tool 'mission'). A click on empty space places
+-- the picked kind, a click on a marker selects it, dragging moves it, dragging a selected zone's edge
+-- resizes it. Every gesture is one undo step through mission_edit.
+local MKINDS={'start','enemy','checkpoint','goal','trigger'}
+local TRIGGER_ACTIONS={'message','wave','collision','complete','fail'}
+local ZONE_W,ZONE_H,EDGE_PX=26,60,6
+local function cycle(list,cur)
+  for i,v in ipairs(list) do if v==cur then return list[i%#list+1] end end
+  return list[1]
+end
+local function marker_at(m,sel)
+  if not m or not sel then return nil end
+  if sel.kind=='start' then return m.start
+  elseif sel.kind=='goal' then return m.goal
+  elseif sel.kind=='checkpoint' then return m.checkpoints[sel.index]
+  elseif sel.kind=='enemy' then return m.enemies[sel.index]
+  elseif sel.kind=='trigger' then return m.triggers[sel.index] end
+end
+local function is_zone(kind) return kind=='goal' or kind=='checkpoint' or kind=='trigger' end
+local function marker_rect(t)
+  local x1,y1=gd.project(t.x-t.w/2,t.y+t.h/2,0)
+  local x2,y2=gd.project(t.x+t.w/2,t.y-t.h/2,0)
+  if not (x1 and y1 and x2 and y2) then return nil end
+  return math.min(x1,x2),math.min(y1,y2),math.abs(x2-x1),math.abs(y2-y1)
+end
+-- Under the pointer: the selected zone's edge (resize), else the top marker (move). Returns
+-- sel, mode, ex, ey with ex/ey = -1 / 1 for the left or right and the top or bottom world edge.
+local function marker_hit(mx,my)
+  local m=mission_doc
+  if not m then return nil end
+  local cur=marker_at(m,MK.sel)
+  if cur and is_zone(MK.sel.kind) then
+    -- Compare against the projected world edges, so the test does not depend on which way the camera is
+    -- flipped. ex = -1 / 1: left / right edge; ey = 1 / -1: top / bottom edge in world space.
+    local sl,sy1=gd.project(cur.x-cur.w/2,cur.y+cur.h/2,0)
+    local sr,sy2=gd.project(cur.x+cur.w/2,cur.y-cur.h/2,0)
+    if sl and sr and sy1 and sy2 and mx>=math.min(sl,sr)-EDGE_PX and mx<=math.max(sl,sr)+EDGE_PX and
+       my>=math.min(sy1,sy2)-EDGE_PX and my<=math.max(sy1,sy2)+EDGE_PX then
+      local ex=math.abs(mx-sl)<=EDGE_PX and -1 or math.abs(mx-sr)<=EDGE_PX and 1 or 0
+      local ey=math.abs(my-sy1)<=EDGE_PX and 1 or math.abs(my-sy2)<=EDGE_PX and -1 or 0
+      if ex~=0 or ey~=0 then return MK.sel,'resize',ex,ey end
+    end
+  end
+  local function near(t)
+    local sx,sy=gd.project(t.x,t.y,0)
+    return sx and math.abs(mx-sx)<=9 and math.abs(my-sy)<=9
+  end
+  for i=#m.enemies,1,-1 do if near(m.enemies[i]) then return {kind='enemy',index=i},'move' end end
+  if m.start and near(m.start) then return {kind='start'},'move' end
+  local function inzone(t)
+    local l,tp,w,h=marker_rect(t)
+    return l and mx>=l and mx<=l+w and my>=tp and my<=tp+h
+  end
+  for i=#m.triggers,1,-1 do if inzone(m.triggers[i]) then return {kind='trigger',index=i},'move' end end
+  for i=#m.checkpoints,1,-1 do if inzone(m.checkpoints[i]) then return {kind='checkpoint',index=i},'move' end end
+  if m.goal and inzone(m.goal) then return {kind='goal'},'move' end
+  return nil
+end
+local function place_marker(x,y)
+  local kind,idx=MK.kind,nil
+  mission_edit('mission '..kind,function(m)
+    if kind=='start' then m.start={x=x,y=y}
+    elseif kind=='enemy' then
+      m.enemies[#m.enemies+1]={kind=MK.pick.enemy,x=x,y=y,wave=MK.pick.wave} idx=#m.enemies
+    elseif kind=='checkpoint' then
+      m.checkpoints[#m.checkpoints+1]={x=x,y=y,w=ZONE_W,h=ZONE_H} idx=#m.checkpoints
+    elseif kind=='goal' then m.goal={x=x,y=y,w=ZONE_W,h=ZONE_H}
+    else
+      local z={x=x,y=y,w=ZONE_W,h=ZONE_H,action=MK.pick.action,once=true}
+      if MK.pick.action=='wave' then z.wave=MK.pick.wave
+      elseif MK.pick.action=='message' then z.text='Message'
+      elseif MK.pick.action=='collision' then
+        local part=assert(find(parts,selected),'select a part first: the trigger acts on the parts near it')
+        z.at={x=part.x,y=part.y} z.open=true
+      end
+      m.triggers[#m.triggers+1]=z idx=#m.triggers
+    end
+  end)
+  MK.sel={kind=kind,index=idx}
+end
+local function marker_delete()
+  local sel=assert(MK.sel,'select a marker first')
+  mission_edit('mission delete '..sel.kind,function(m)
+    assert(marker_at(m,sel),'that marker is gone')
+    if sel.kind=='start' then m.start=nil elseif sel.kind=='goal' then m.goal=nil
+    elseif sel.kind=='checkpoint' then table.remove(m.checkpoints,sel.index)
+    elseif sel.kind=='enemy' then table.remove(m.enemies,sel.index)
+    else table.remove(m.triggers,sel.index) end
+  end)
+  MK.sel=nil
+end
+local function marker_field_set(field,value)
+  local n=tonumber(value)
+  assert(n and number(n),'type a number')
+  local sel=assert(MK.sel,'select a marker first')
+  mission_edit('mission '..field,function(m)
+    local t=assert(marker_at(m,sel),'that marker is gone')
+    t[field]=n
+  end)
+end
+local function mission_press()
+  local wx,wy=mouse_world()
+  if not wx then return end
+  local sel,mode,ex,ey=marker_hit(mouse.x,mouse.y)
+  if sel then
+    MK.sel=sel
+    local t=marker_at(mission_doc,sel)
+    MK.drag={sel=sel,mode=mode,ex=ex,ey=ey,ox=t.x-wx,oy=t.y-wy,px=mouse.x,py=mouse.y,base=doc_snapshot(),used=false,
+           l=t.w and t.x-t.w/2,r=t.w and t.x+t.w/2,top=t.h and t.y+t.h/2,bottom=t.h and t.y-t.h/2}
+    return
+  end
+  place_marker(sn(wx),sn(wy))
+end
+-- Runs each frame while a marker is being dragged; the document is edited live and replaced by one
+-- undoable edit when the button is released.
+local function mission_drag_step()
+  local d=MK.drag
+  local t=marker_at(mission_doc,d.sel)
+  if (mouse.buttons & 1)==1 then
+    local wx,wy=mouse_world()
+    if wx and t then
+      if math.abs(mouse.x-d.px)+math.abs(mouse.y-d.py)>3 then d.used=true end
+      if d.used then
+        if d.mode=='move' then t.x,t.y=sn(wx+d.ox),sn(wy+d.oy)
+        else
+          local step=U*grid
+          local l,r,top,bottom=d.l,d.r,d.top,d.bottom
+          if d.ex<0 then l=math.min(sn(wx),r-step) elseif d.ex>0 then r=math.max(sn(wx),l+step) end
+          if d.ey>0 then top=math.max(sn(wy),bottom+step) elseif d.ey<0 then bottom=math.min(sn(wy),top-step) end
+          t.x,t.w=(l+r)/2,r-l
+          t.y,t.h=(top+bottom)/2,top-bottom
+        end
+      end
+    end
+    return
+  end
+  MK.drag=nil
+  if not d.used or not t then mission_doc=d.base.mission return end
+  local final=clone(t)
+  mission_doc=d.base.mission -- back to the pre-drag document; the edit below records one undo step
+  local ok,why=pcall(mission_edit,'mission '..d.mode..' '..d.sel.kind,function(m)
+    local u=assert(marker_at(m,d.sel),'that marker is gone')
+    u.x,u.y,u.w,u.h=final.x,final.y,final.w,final.h
+  end)
+  if not ok then say('Error: '..tostring(why),'error') end
+end
+
+mission_pick=function(rest)
+  local kind,what=rest:match('^(%S+)%s*(%S*)$')
+  local ok=false
+  for _,k in ipairs(MKINDS) do if k==kind then ok=true end end
+  assert(ok,'map mission pick <'..table.concat(MKINDS,'|')..'> [enemy kind | trigger action]')
+  if what~='' then
+    local list=kind=='enemy' and Mission.KINDS or kind=='trigger' and TRIGGER_ACTIONS or nil
+    assert(list,'only enemy and trigger take a second word')
+    local known=false
+    for _,k in ipairs(list) do if k==what then known=true end end
+    assert(known,(kind=='enemy' and 'unknown enemy kind: ' or 'unknown trigger action: ')..what)
+    if kind=='enemy' then MK.pick.enemy=what else MK.pick.action=what end
+  end
+  MK.kind=kind tool='mission'
+  say('Click places: '..MK.kind,'action')
+end
+local function mission_rows()
+  local rows={}
+  local x,y=canvas_w()-240,70
+  local function row(label,value,act)
+    rows[#rows+1]={kind='m',label=label,value=value,act=act,x=x,y=y,w=224,h=18} y=y+20
+  end
+  row('click places',MK.kind,function() MK.kind=cycle(MKINDS,MK.kind) end)
+  if MK.kind=='enemy' then
+    row('enemy kind',MK.pick.enemy,function() MK.pick.enemy=cycle(Mission.KINDS,MK.pick.enemy) end)
+    row('wave',tostring(MK.pick.wave),function() MK.pick.wave=MK.pick.wave%Mission.LIMITS.waves+1 end)
+  elseif MK.kind=='trigger' then
+    row('trigger action',MK.pick.action,function() MK.pick.action=cycle(TRIGGER_ACTIONS,MK.pick.action) end)
+    if MK.pick.action=='wave' then row('wave',tostring(MK.pick.wave),function() MK.pick.wave=MK.pick.wave%Mission.LIMITS.waves+1 end) end
+  end
+  y=y+6
+  local t=MK.sel and marker_at(mission_doc,MK.sel)
+  if not t then
+    rows[#rows+1]={kind='info',label='no marker selected',x=x,y=y,w=224,h=18}
+    return rows
+  end
+  row(MK.sel.kind..(MK.sel.index and (' '..MK.sel.index) or ''),'',nil)
+  for _,f in ipairs(is_zone(MK.sel.kind) and {'x','y','w','h'} or {'x','y'}) do
+    local value=(typing and typing.field=='m:'..f) and (typing.text..'_') or ('%.2f'):format(t[f])
+    row(f,value,function() typing={field='m:'..f,text=''} say('Type a value; Enter applies, ESC cancels') end)
+  end
+  local function change(fn)
+    local sel=MK.sel
+    mission_edit('mission '..sel.kind,function(m) fn(assert(marker_at(m,sel),'that marker is gone')) end)
+  end
+  if MK.sel.kind=='enemy' then
+    row('kind',t.kind,function() change(function(u) u.kind=cycle(Mission.KINDS,u.kind) end) end)
+    row('wave',tostring(t.wave),function() change(function(u) u.wave=u.wave%Mission.LIMITS.waves+1 end) end)
+  elseif MK.sel.kind=='trigger' then
+    row('action',t.action,nil)
+    row('fires',t.once and 'once' or 'every entry',function() change(function(u) u.once=not u.once end) end)
+  end
+  row('delete','Del',function() marker_delete() end)
+  return rows
+end
+-- Controller path (the Z menu): the same edits at the flight cursor instead of the pointer.
+local function select_nearest_marker()
+  local m=assert(mission_doc,'no mission yet')
+  local cx,cy=fly_cursor()
+  local best,bd=nil,math.huge
+  local function consider(kind,index,t)
+    local d=(t.x-cx)^2+(t.y-cy)^2
+    if d<bd then best,bd={kind=kind,index=index},d end
+  end
+  if m.start then consider('start',nil,m.start) end
+  if m.goal then consider('goal',nil,m.goal) end
+  for i,c in ipairs(m.checkpoints) do consider('checkpoint',i,c) end
+  for i,e in ipairs(m.enemies) do consider('enemy',i,e) end
+  for i,t in ipairs(m.triggers) do consider('trigger',i,t) end
+  assert(best,'no markers to select')
+  MK.sel=best
+  say(('Selected %s%s'):format(best.kind,best.index and (' '..best.index) or ''),'action')
+end
+local function move_marker_to_cursor()
+  local sel=assert(MK.sel,'select a marker first (Mission: select nearest marker)')
+  local cx,cy=fly_cursor()
+  mission_edit('mission move '..sel.kind,function(m)
+    local t=assert(marker_at(m,sel),'that marker is gone')
+    t.x,t.y=cx,cy
+  end)
+end
+MK.place_at_cursor=function() local x,y=fly_cursor() place_marker(x,y) end
+MK.select_nearest=select_nearest_marker
+MK.move_to_cursor=move_marker_to_cursor
+MK.next_kind=function() MK.kind=cycle(MKINDS,MK.kind) tool='mission' say('Click places: '..MK.kind,'action') end
+MK.rows=mission_rows MK.press=mission_press MK.drag_step=mission_drag_step
+MK.delete=marker_delete MK.field_set=marker_field_set MK.cycle=cycle MK.KINDS=MKINDS
+end
 local function place(duplicate, wx, wy)
   edit()
   local p=duplicate and assert(find(parts,selected), 'select a part first') or
     {part=palette_part(),rot=rotation,collision=collision,floor_flags=floor_flags,
-     scale=1,scale_x=1,scale_y=1,scale_z=1}
+     scale=AUTHOR_SCALE,scale_x=1,scale_y=1,scale_z=1}
   p=clone(p)
   if wx then p.x,p.y,p.z=sn(wx),sn(wy),depth else p.x,p.y,p.z=fly_cursor() end
   next_id=next_id+1 p.id=next_id
@@ -605,7 +1579,7 @@ local function transform(mode,delta,record,wx,wy)
   elseif mode=='scale' then
     p.scale=math.max(SCALE_MIN,math.min(SCALE_MAX,scale_of(p,'scale')*delta))
   elseif mode=='mirror' then p['scale_'..delta]=-scale_of(p,'scale_'..delta)
-  elseif mode=='unscale' then p.scale,p.scale_x,p.scale_y,p.scale_z=1,1,1,1
+  elseif mode=='unscale' then p.scale,p.scale_x,p.scale_y,p.scale_z=AUTHOR_SCALE,1,1,1
   end
   if next(group) then
     local mx,my,mz=p.x-ax,p.y-ay,p.z-az
@@ -619,7 +1593,7 @@ local function transform(mode,delta,record,wx,wy)
         elseif mode=='rotateto' then q.rot=((delta+180)%360)-180
         elseif mode=='scale' then q.scale=math.max(SCALE_MIN,math.min(SCALE_MAX,scale_of(q,'scale')*delta))
         elseif mode=='mirror' then q['scale_'..delta]=-scale_of(q,'scale_'..delta)
-        elseif mode=='unscale' then q.scale,q.scale_x,q.scale_y,q.scale_z=1,1,1,1
+        elseif mode=='unscale' then q.scale,q.scale_x,q.scale_y,q.scale_z=AUTHOR_SCALE,1,1,1
         end
       end
     end
@@ -642,7 +1616,7 @@ end
 local function history(back)
   edit() local from,to=back and undo or redo,back and redo or undo
   local target=from[#from] assert(target,back and 'Nothing to undo' or 'Nothing to redo')
-  local old=doc_snapshot() apply(target.parts,false) doc_restore(target)
+  local old=restore_document(target)
   table.remove(from) to[#to+1]=old
   if back then
     local n=table.remove(undo_names)
@@ -869,7 +1843,7 @@ local ACTIONS = {
   {'Undo',function() history(true) end}, {'Redo',function() history(false) end},
   {'Save layout',function() save() end}, {'Load layout',function() load_map() end},
   {'Collision overlay',function() overlay=not overlay set_overlay() end},
-  {'Grid 1 / 0.5 / 0.25 metre',function() grid=grid==1 and 0.5 or grid==0.5 and 0.25 or 1 end},
+  {'Grid 2 / 1 / 0.5 base metres',function() grid=grid==2 and 1 or grid==1 and 0.5 or 2 end},
   {'New parts: collision on/off',function() collision=not collision end},
   {'New floors: flags 0..3',function() floor_flags=(floor_flags+1)%4 end},
   {'New parts: rotation +15',function() rotation=((rotation+15+180)%360)-180 end},
@@ -883,7 +1857,7 @@ local ACTIONS = {
   {'Tool: scale',function() tool='scale' axis_lock=nil say('Tool: scale') end},
   {'Scale selected +10%',function() transform('scale',SCALE_STEP) end},
   {'Scale selected -10%',function() transform('scale',1/SCALE_STEP) end},
-  {'Reset scale',function() transform('unscale') end},
+  {'Reset scale to 2x',function() transform('unscale') end},
   {'Mirror selected X',function() transform('mirror','x') end},
   {'Mirror selected Y',function() transform('mirror','y') end},
   {'Reset rotation',function() transform('rotateto',0) end},
@@ -891,6 +1865,15 @@ local ACTIONS = {
   {'Snap on/off',function() snap_on=not snap_on say('Snap '..(snap_on and 'on' or 'off')) end},
   {'Help / keybinds',function() help_open=not help_open end},
   {'Duplicate x4 at cursor',function() duplicate_many(4) end},
+  {'Mission: start at cursor',function() mission_command('start') end},
+  {'Mission: play',function() mission_command('play') end},
+  {'Mission: restart',function() mission_command('restart') end},
+  {'Mission: test from cursor',function() mission_command('test') end},
+  {'Mission: next marker kind',function() MK.next_kind() end},
+  {'Mission: place marker at cursor',function() MK.place_at_cursor() end},
+  {'Mission: select nearest marker',function() MK.select_nearest() end},
+  {'Mission: move marker to cursor',function() MK.move_to_cursor() end},
+  {'Mission: delete marker',function() MK.delete() end},
 }
 local function attempt(fn)
   local ok,why=pcall(fn) if not ok then say('Error: '..tostring(why),'error') end return ok
@@ -916,10 +1899,11 @@ gd.command('map',function(arg)
     if op=='save' then save(name) return end -- Permit recovery of unsaved data outside a match.
     assert(offline(), 'active offline match required')
     if op=='on' then start()
-    elseif op=='off' then stop()
+    elseif op=='off' then mission_stop('map off') stop()
     elseif op=='toggle' then if editing then stop() else start() end
     elseif op=='load' then load_map(name) start()
-    elseif op=='play' then load_map(name) stop() autoload=filename
+    elseif op=='play' then load_map(name) stop() autoload=filename mission_autostart()
+    elseif op=='mission' then mission_command(name)
     elseif op=='place' then place(false)
     elseif op=='duplicate' then
       local n=tonumber(name)
@@ -956,7 +1940,7 @@ gd.command('map',function(arg)
     elseif op=='redo' then
       local n=tonumber(name)
       if n and n>1 then redo_jump(math.floor(n)) else history(false) end
-    elseif op=='clear' then edit() acted({},'Cleared map')
+    elseif op=='clear' then edit() acted({},'Cleared map') grid=2
     elseif op=='part' then
       local want=name and (name:find('^bf_') and name or 'bf_'..name)
       local found=nil
@@ -1006,6 +1990,7 @@ gd.command('map',function(arg)
         elseif kind=='restore' then
           assert(gd.stage_restore_bounds())
           bounds={camera=nil,blast=nil} spawns={}
+          if mission_doc and mission_doc.start then assert(gd.stage_set_spawn(0,mission_doc.start.x,mission_doc.start.y)) end
           dirty=true doc_commit(before,'Bounds restored')
         else
           local l,r,t,bt=rest:match('^(%S+)%s+(%S+)%s+(%S+)%s+(%S+)$')
@@ -1044,19 +2029,19 @@ gd.command('map',function(arg)
     elseif op=='filter' then
       filter=(name or ''):lower() filtering=false palette=1
       say(filter=='' and 'Filter cleared' or ('Filter: '..filter))
-    else error('map on|off|part <name>|tool <name>|filter [text]|ghost on|off|set <field> <value>|log [on|off]|history [n]|run <text>|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]') end
+    else error('map on|off|part <name>|tool <name>|filter [text]|ghost on|off|set <field> <value>|log [on|off]|history [n]|run <text>|scale <f>|mirror x|y|snap on|off|help on|off|place|select|move|rotate [deg]|duplicate|delete|undo|redo|clear|save|load|play [file.lua]|mission ...') end
   end)
-end,'map on/off; part <name>; tool <place|select|move|rotate|scale>; scale <factor>; mirror x|y; snap on|off; place/select/move/rotate/duplicate/delete/undo/redo/clear; save/load/play [file.lua]')
+end,'map on/off; part <name>; tool <place|select|move|rotate|scale>; scale <factor>; mirror x|y; snap on|off; place/select/move/rotate/duplicate/delete/undo/redo/clear; save/load/play [file.lua]; mission start|enemy|goal|checkpoint|objective|list|delete|clear|play|restart|stop')
 
 -- Panel geometry is one function for drawing and hit-testing, so rows and clicks cannot drift.
 local function panel_rows()
   local rows={}
   local y=70
   for i,t in ipairs(TOOLS) do
-    rows[#rows+1]={kind='tool',index=i,label=(tool==t and '> ' or '  ')..t,x=16,y=y,w=230,h=20}
-    y=y+21
+    rows[#rows+1]={kind='tool',index=i,label=(tool==t and '> ' or '  ')..t,x=16,y=y,w=230,h=19}
+    y=y+20
   end
-  y=192
+  y=204
   if tool=='place' then
     local view=palette_view()
     if #view==0 then
@@ -1094,6 +2079,7 @@ local function in_rect(mx,my,r)
   return r and mx>=r.x and mx<=r.x+r.w and my>=r.y and my<=r.y+r.h
 end
 local function inspector_rows()
+  if tool=='mission' then return MK.rows() end
   local rows={}
   local p=find(parts,selected)
   local x=canvas_w()-240
@@ -1120,7 +2106,9 @@ local function click_inspector(mx,my)
   if help_open then return false end
   for _,r in ipairs(inspector_rows()) do
     if in_rect(mx,my,r) then
-      if r.kind=='collision' then
+      if r.kind=='m' then
+        if r.act then attempt(r.act) end
+      elseif r.kind=='collision' then
         attempt(function()
           edit()
           local target=clone(parts) local p=find(target,selected)
@@ -1182,6 +2170,11 @@ local function poll_mouse()
     mouse.used,mouse.lastx,mouse.lasty=60,mouse.x,mouse.y
   elseif mouse.used>0 then
     mouse.used=mouse.used-1
+  end
+  if MK.drag then
+    MK.drag_step()
+    mouse.prev=mouse.buttons
+    return
   end
   if modal then
     if modal.src=='mouse' then
@@ -1284,8 +2277,10 @@ local function poll_mouse()
   elseif pressed then
     if not click_panel(mouse.x,mouse.y) and not click_inspector(mouse.x,mouse.y) and
        not click_overlay(mouse.x,mouse.y) and mouse.over and not help_open then
-      local bedge=hit_bounds(mouse.x,mouse.y)
-      if bedge then
+      local bedge=tool~='mission' and hit_bounds(mouse.x,mouse.y)
+      if tool=='mission' then
+        attempt(MK.press)
+      elseif bedge then
         bounds_drag={edge=bedge, base=doc_snapshot()}
       else
       local hmode,hax=hit_handle(mouse.x,mouse.y)
@@ -1369,7 +2364,10 @@ function on_tick()
     if gd.key_pressed('BACKSPACE') then typing.text=typing.text:sub(1,-2) end
     if gd.key_pressed('ENTER') then
       local f=typing typing=nil
-      if f.text~='' then attempt(function() field_set(f.field,f.text) end) end
+      if f.text~='' then
+        if f.field:sub(1,2)=='m:' then attempt(function() MK.field_set(f.field:sub(3),f.text) end)
+        else attempt(function() field_set(f.field,f.text) end) end
+      end
     elseif gd.key_pressed('ESCAPE') then
       typing=nil say('Cancelled')
     end
@@ -1413,7 +2411,11 @@ function on_tick()
     end
     if not help_open then
       local view=palette_view()
-      if #view>0 then
+      if tool=='mission' then
+        if gd.key_pressed('UP') or pressed('UP') or gd.key_pressed('DOWN') or pressed('DOWN') then
+          MK.kind=MK.cycle(MK.KINDS,MK.kind) say('Click places: '..MK.kind)
+        end
+      elseif #view>0 then
         if gd.key_pressed('UP') or pressed('UP') then palette=(palette-2)%#view+1 end
         if gd.key_pressed('DOWN') or pressed('DOWN') then palette=(palette-1)%#view+1 end
       end
@@ -1434,7 +2436,7 @@ function on_tick()
     if gd.key('SHIFT') and gd.key_pressed('C') then cycle_axis() end
     if gd.key_pressed('Z') then snap_on=not snap_on say('Snap '..(snap_on and 'on' or 'off'),'action') end
     if gd.key_pressed('F') then attempt(frame_selection) end
-    if gd.key_pressed('DELETE') then attempt(remove) end
+    if gd.key_pressed('DELETE') then attempt(tool=='mission' and MK.delete or remove) end
     if gd.key_pressed('F3') then overlay=not overlay set_overlay() end
     if gd.key('CTRL') then
       if gd.key_pressed('D') then attempt(function() place(true) end) end
@@ -1494,6 +2496,7 @@ HELP = {
   {'LMB', 'use the tool at the pointer'},
   {'drag LMB', 'move tool: drag the selection'},
   {'RMB', 'action menu'},
+  {'grid', 'new parts / reset: 2x; grid cycles 2 / 1 / 0.5 base metres'},
   {'wheel', 'depth, one grid step per notch'},
   {'Tab / X', 'select nearest part'},
   {'Insert / A', 'place at the cursor'},
@@ -1518,6 +2521,7 @@ HELP = {
   {'Ctrl+Z / Y', 'undo / redo'},
   {'Ctrl+S / O', 'save / load layout'},
   {'F3', 'collision overlay'},
+  {'missions', 'map mission start|enemy|goal|checkpoint|objective|list|delete|clear|play|restart: markers drawn in the overlay'},
 }
 local function draw_help()
   local kit=gd.kit
@@ -1544,7 +2548,69 @@ local function draw_help()
     kit.paragraph(hx+130,y,410,HELP[i][2],'caption','muted')
   end
 end
-function on_draw()
+-- Mission markers use their own colours: start green, enemies red, checkpoints blue, goal gold.
+local function draw_mission_markers()
+  local m=mission_doc
+  if not m then return end
+  local kit=gd.kit
+  local function label(x,y,text,color) if kit.available() then kit.text(x,y,text,'caption',color) end end
+  local function chosen(kind,i) return tool=='mission' and MK.sel and MK.sel.kind==kind and MK.sel.index==i end
+  local function rect(z,color,fill,text,name,on)
+    local x1,y1=gd.project(z.x-z.w/2,z.y+z.h/2,0)
+    local x2,y2=gd.project(z.x+z.w/2,z.y-z.h/2,0)
+    if not (x1 and y1 and x2 and y2) then return end
+    local l,t,w,h=math.min(x1,x2),math.min(y1,y2),math.abs(x2-x1),math.abs(y2-y1)
+    gd.fill(l,t,w,h,fill) gd.box(l,t,w,h,on and 0xFFFFFFFF or color) label(l+3,t+12,text,name)
+    if on then for _,c in ipairs({{l,t},{l+w,t},{l,t+h},{l+w,t+h},{l+w/2,t},{l+w/2,t+h},{l,t+h/2},{l+w,t+h/2}}) do
+      gd.fill(c[1]-3,c[2]-3,6,6,0xFFFFFFFF)
+    end end
+  end
+  local function pin(x,y,color,text,name,on)
+    local sx,sy,vis=gd.project(x,y,0)
+    if not (sx and vis) then return end
+    gd.box(sx-6,sy-6,12,12,on and 0xFFFFFFFF or color) gd.line(sx-9,sy,sx+9,sy,color) gd.line(sx,sy-9,sx,sy+9,color)
+    label(sx+9,sy-8,text,name)
+  end
+  if m.goal then rect(m.goal,0xFFD040FF,0xFFD04030,'GOAL','gold',chosen('goal',nil)) end
+  for i,t in ipairs(m.triggers) do
+    rect(t,0xC080FFFF,0xC080FF30,('T%d %s%s'):format(i,t.action,t.wave and (' '..t.wave) or ''),'bone',chosen('trigger',i))
+    if t.at then pin(t.at.x,t.at.y,0xC080FFFF,'T'..i..' target','bone') end
+  end
+  local rule={}
+  for _,r in ipairs(m.waves) do rule[r.wave]=r end
+  for i,c in ipairs(m.checkpoints) do rect(c,0x40C0FFFF,0x40C0FF30,'CP'..i,'bone',chosen('checkpoint',i)) end
+  if m.start then pin(m.start.x,m.start.y,0x60FF60FF,'START','ok',chosen('start',nil)) end
+  for i,e in ipairs(m.enemies) do
+    local r=rule[e.wave]
+    pin(e.x,e.y,0xFF5050FF,('E%d %s w%d%s'):format(i,e.kind,e.wave,
+        r and (r.time and (' @%gs'):format(r.time) or (' x%s%g'):format(r.dir==1 and '>' or '<',r.x)) or ''),'danger',
+        chosen('enemy',i))
+  end
+end
+-- HUD while a mission runs, banner once it has a result; both read the pure state.
+local function draw_mission()
+  if not run or not offline() then return end
+  local kit=gd.kit
+  local W=canvas_w()
+  local result=run.state.result
+  local function text(x,y,s,color,role)
+    if kit.available() then kit.text(x,y,s,role or 'caption',color,nil,{max_w=W-40}) else gd.text(x,y-12,s) end
+  end
+  if result then
+    local good=result.status=='complete'
+    gd.fill(W/2-190,190,380,70,0x0E1218F0) gd.box(W/2-190,190,380,70,good and 0x60FF60FF or 0xFF5050FF)
+    text(W/2-176,220,Mission.result_text(run.state),good and 'ok' or 'danger','label')
+    text(W/2-176,246,'map mission restart to retry; F6 to edit','muted')
+  else
+    gd.fill(W/2-230,8,460,22,0x0E1218E0)
+    text(W/2-220,24,Mission.hud(run.state),'gold')
+  end
+  if run.message then
+    gd.fill(W/2-230,36,460,22,0x0E1218E0)
+    text(W/2-220,52,run.message.text,'bone')
+  end
+end
+local function draw_editor()
   if not editing or not offline() or not gd.player(1) then handles_ui=nil return end
   local x,y,z=shown_cursor()
   local sx,sy,on=gd.project(x,y,z)
@@ -1612,6 +2678,7 @@ function on_draw()
     if bounds.camera then draw_rect(bounds.camera,0x40E060FF,'camera') end
     if bounds.blast then draw_rect(bounds.blast,0xE06060FF,'blast') end
   end
+  draw_mission_markers()
   if marquee then
     local x1,x2=math.min(marquee.sx,marquee.x),math.max(marquee.sx,marquee.x)
     local y1,y2=math.min(marquee.sy,marquee.y),math.max(marquee.sy,marquee.y)
@@ -1640,7 +2707,7 @@ function on_draw()
   gd.fill(8,44,246,338,0x0E1218FF)
   kit.panel(8,44,246,338,{piece=16,fill=PANEL_FILL})
   kit.text(20,62,'TOOL','caption','gold')
-  kit.text(20,186,tool=='place' and ('PART'..(filter~='' and (' /'..filter..(filtering and '_' or '')) or '')) or 'ACTIONS','caption','gold')
+  kit.text(20,198,tool=='place' and ('PART'..(filter~='' and (' /'..filter..(filtering and '_' or '')) or '')) or 'ACTIONS','caption','gold')
   for _,r in ipairs(panel_rows()) do
     if r.kind=='header' then
       kit.text(r.x+4,r.y+12,r.label,'caption','gold')
@@ -1664,7 +2731,7 @@ function on_draw()
   kit.text(20,392,HINTS[tool],'caption','bone',nil,{max_w=440})
   kit.text(W-12,392,('XYZ %.2f %.2f %.2f'):format(x,y,z),'caption','muted','right',{max_w=170})
   kit.text(20,408,(dirty and '* ' or '')..filename,'caption','muted',nil,{max_w=300})
-  kit.text(W-12,408,('grid %.2g m | snap %s | parts %d/%d'):format(grid,snap_on and 'on' or 'off',#parts,MAX_PARTS),
+  kit.text(W-12,408,('grid %.2g world units | snap %s | parts %d/%d'):format(U*grid,snap_on and 'on' or 'off',#parts,MAX_PARTS),
     'caption','muted','right',{max_w=300})
   local line=error_text and ('error: '..error_text) or (last_action or '')
   kit.text(20,424,line,'caption',error_text and 'danger' or 'gold',nil,{max_w=598})
@@ -1713,28 +2780,65 @@ function on_draw()
   end
   if help_open then gd.fill(0,0,W,480,0x000000A8) draw_help() end
 end
+function on_draw()
+  draw_mission()
+  draw_editor()
+end
+function on_frame()
+  if want_edit then
+    local w=want_edit
+    if editing or not offline() then
+      want_edit=nil
+      if w.nudged then pcall(gd.release_pad,1) end
+    else
+      w.left=w.left-1
+      -- Flight and teleport are both refused in states such as OttottoWait (teetering at a floor edge),
+      -- which never ends by itself: a short stick-down nudge ends it. The pad claim is released after.
+      if w.left%10==0 then w.nudged=pcall(gd.input,1,{y=-100},2) or w.nudged end
+      if pcall(start) and editing then
+        want_edit=nil
+        if w.nudged then pcall(gd.release_pad,1) end
+      elseif w.left<=0 then
+        want_edit=nil
+        if w.nudged then pcall(gd.release_pad,1) end
+        say('Could not return to editing: press F6','error')
+      end
+    end
+  end
+  if not run or run.state.result then return end
+  if not offline() then mission_stop('left the offline match') return end
+  run.frames=run.frames+1
+  if run.message then run.message.left=run.message.left-1 if run.message.left<=0 then run.message=nil end end
+  mission_step()
+end
 
 -- Model slots are snapshotted, Lua is not. Pair manual savestates with document snapshots;
 -- on other loads, refuse to mutate until a new match rather than deleting unknown instances.
 function on_savestate(slot)
   saved_states[slot]={parts=clone(parts),handles=clone(handles),assets=clone(assets),
-                      previous=previous and clone(previous),selected=selected,broken=broken,
-                      bounds={camera=copy_rect(bounds.camera),blast=copy_rect(bounds.blast)},spawns=clone(spawns)}
+                      previous=previous and clone(previous),ghost=ghost and clone(ghost),selected=selected,broken=broken,
+                      bounds={camera=copy_rect(bounds.camera),blast=copy_rect(bounds.blast)},spawns=clone(spawns),
+                      mission=mission_doc and clone(mission_doc)}
 end
 function on_loadstate(slot)
   if not offline() then return end
   -- Host overlay is not snapshotted. Restore it from the current UI session, but do not
   -- overwrite restored native flight with the current timeline's saved fly setting.
   stop(false)
+  mission_stop('state load') -- Lua state is not in the snapshot
   local saved=saved_states[slot]
   if saved then
+    -- The native snapshot restored this ghost, including its asset reference.
+    ghost=saved.ghost and clone(saved.ghost)
+    ghost_despawn()
     if saved.previous then gd.fly(1,saved.previous.fly) end
     parts,handles,assets=clone(saved.parts),clone(saved.handles),clone(saved.assets)
     selected=saved.selected
     undo={} redo={} dirty=true broken=saved.broken
     if saved.bounds then bounds=saved.bounds end
     if saved.spawns then spawns=saved.spawns end
-    pcall(doc_restore,{bounds=bounds,spawns=spawns})
+    mission_doc=saved.mission
+    pcall(doc_restore,{bounds=bounds,spawns=spawns,mission=mission_doc})
     for _,h in pairs(handles) do if not gd.model_get(h.handle) then broken=true end end
     say(broken and 'Savestate handles missing; save and restart' or 'Restored document; undo history cleared')
   else
@@ -1744,16 +2848,17 @@ function on_loadstate(slot)
 end
 function on_match_end()
   -- Engine already frees scene models. Retain unsaved document for save/reinstantiation.
-  stop() handles={} assets={} undo={} redo={} saved_states={} broken=false
+  mission_stop('match end') test_return=nil stop() handles={} assets={} undo={} redo={} saved_states={} broken=false
 end
 function on_match_start()
   handles={} assets={} broken=false
   if not offline() then return end
   attempt(function()
-    if autoload then load_map(autoload) elseif #parts>0 then sync(parts) say('Restored layout on new stage') end
+    if autoload then load_map(autoload) mission_autostart() else sync(parts) doc_restore(doc_snapshot()) say('Restored layout on new stage') end
   end)
 end
 function on_unload()
+  mission_stop('unload') test_return=nil
   stop()
   ghost_despawn()
   if offline() then

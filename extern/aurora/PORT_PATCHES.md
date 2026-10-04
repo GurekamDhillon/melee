@@ -87,3 +87,28 @@ bugs, use temp files") implements all three.
   `aurora_get_present_count()`: when the render worker last returned from `Present()`, so the
   port can measure input-to-present latency (MELEE_INPUT_PROFILE). The port links against an
   older library too (`/alternatename` fallbacks in `shim_vi.c`).
+
+## 6. Native profiler (2026-10-03)
+
+Separate carried patch: _build/patches/aurora-gd-profiler-v1.patch and its .md recipe.
+Adds opt-in CPU duration sink and optional GPU timestamp-query frame/pass collection,
+post identity/upload labels and loss counters. Already applied; not rebuilt or runtime
+verified. Requires matching Aurora libraries before linking the native profiler.
+
+
+## 7. Covered material warming and no-hitch entry (2026-10-03)
+
+Incremental carried patch: `_build/patches/aurora-gd-no-hitch-v1.patch` with its
+`.md` recipe, after the existing surface/profiler patches. Its paths are relative
+to the game repository root, unlike the older Aurora-relative carried patches.
+Adds host-only generation-safe material capture handles, content-origin records,
+actual bundled-seed CORE membership/readiness, core and all scene layouts before
+optional offscreen variants, and background tagged prewarming. Default item
+pipeline misses skip asynchronously; `MELEE_PIPELINE_SKIP=0` retains opt-in waits.
+Finalized learned SQLite snapshots cross sandbox boundaries without sharing a
+mutable DB. Capture drops visible submission while retaining real GX key creation.
+
+Only no-hitch additions are carried: prior surface, profiler, SSE/palette and
+other dirty changes are preserved. The patch is already reflected here; a
+read-only reverse apply check passed. New symbols require matching rebuilt Aurora
+libraries. No rebuild, game launch or native timing/visual acceptance was run.

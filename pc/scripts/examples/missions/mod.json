@@ -1,0 +1,12 @@
+{
+  "id": "missions",
+  "name": "Mission folders",
+  "version": "0.1.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Offline folder missions, streamed chunks and fly test commands.",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

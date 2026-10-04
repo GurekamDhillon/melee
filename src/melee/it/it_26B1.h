@@ -9,6 +9,10 @@
 #include <dolphin/mtx.h>
 #include <melee/ft/types.h>
 
+#if defined(TARGET_PC)
+void it_ResetStageArticleTable(void);
+#endif
+
 /// Apply Item Damage
 /* 26B1D4 */ float it_8026B1D4(Item_GObj* gobj, HitCapsule* itemHitboxUnk);
 

@@ -5,9 +5,12 @@
 
 #include <tracy/Tracy.hpp>
 
-#ifdef TRACY_ENABLE
+#include <aurora/gfx.h>
+#include <cstdlib>
 
+#ifdef TRACY_ENABLE
 #include <tracy/TracyC.h>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -22,6 +25,25 @@
 #include <absl/container/flat_hash_map.h>
 #include <magic_enum.hpp>
 
+namespace {
+std::atomic<AuroraProfilerSink> gdSink{nullptr};
+void* gdSinkData = nullptr; // immutable while the worker is alive
+std::atomic_bool gdActive{false};
+std::atomic_bool gdGpuAvailable{false};
+std::atomic_uint64_t gdDroppedZones{0}, gdDroppedFrames{0};
+void gd_emit(const char* name, uint64_t frame, uint64_t duration) {
+  if (!gdActive.load(std::memory_order_relaxed)) return;
+  if (auto sink = gdSink.load(std::memory_order_acquire)) sink(name, frame, duration, gdSinkData);
+}
+}
+void aurora_profiler_set_sink(AuroraProfilerSink sink, void* userdata) {
+  gdSinkData = userdata;
+  gdSink.store(sink, std::memory_order_release);
+}
+void aurora_profiler_enable(bool enabled) { gdActive.store(enabled, std::memory_order_relaxed); }
+bool aurora_profiler_gpu_available(void) { return gdGpuAvailable.load(std::memory_order_acquire); }
+uint64_t aurora_profiler_gpu_dropped_zones(void) { return gdDroppedZones.load(std::memory_order_relaxed); }
+uint64_t aurora_profiler_gpu_dropped_frames(void) { return gdDroppedFrames.load(std::memory_order_relaxed); }
 namespace aurora::webgpu::gpu_prof {
 namespace {
 Module Log("aurora::webgpu::gpu_prof");
@@ -62,6 +84,7 @@ struct Slot {
   std::vector<Event> events;
   uint32_t passCount = 0;
   int64_t submitNs = 0;
+  uint64_t frameId = 0;
   std::atomic<SlotState> state{SlotState::Free};
 };
 
@@ -83,10 +106,14 @@ bool g_frameActive = false;
 bool g_framePending = false;
 uint32_t g_zoneCount = 0;
 
+#ifdef TRACY_ENABLE
 bool g_contextEmitted = false;
 uint16_t g_queryId = 0;
 uint64_t g_lastEmittedTs = 0;
 uint64_t g_lastFrameEnd = 0;
+
+#endif
+std::atomic_uint64_t g_frameId{0};
 
 int64_t now_ns() {
   return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())
@@ -107,6 +134,7 @@ const char* intern_name(std::string_view name) {
   return stable;
 }
 
+#ifdef TRACY_ENABLE
 // tracy::GpuContextType not exposed through TracyC.h
 uint8_t tracy_context_type(wgpu::BackendType backend) {
   switch (backend) {
@@ -162,6 +190,8 @@ void emit_zone_end(uint64_t gpuNs) {
   ___tracy_emit_gpu_time_serial({.gpuTime = int64_t(gpuNs), .queryId = queryId, .context = ContextId});
 }
 
+#endif
+
 TimestampBounds event_bounds(const Slot& slot, const uint64_t* ts) {
   TimestampBounds bounds;
   for (const auto& event : slot.events) {
@@ -199,6 +229,16 @@ void emit_frame(Slot& slot) {
     return;
   }
 
+  gd_emit("gpu.frame", slot.frameId, frameEnd - frameBegin);
+  for (const auto& event : slot.events) {
+    if (event.kind == EventKind::End) continue;
+    const uint64_t begin = ts[event.query], end = ts[event.query + 1];
+    if (begin != 0 && end > begin) {
+      const std::string label = std::string("gpu.") + event.name;
+      gd_emit(label.c_str(), slot.frameId, end - begin);
+    }
+  }
+#ifdef TRACY_ENABLE
   const uint64_t lastFrameEnd = std::exchange(g_lastFrameEnd, frameEnd);
   if (lastFrameEnd != 0) {
     if (frameBegin < lastFrameEnd) {
@@ -277,20 +317,32 @@ void emit_frame(Slot& slot) {
   TracyPlot("aurora: gpuFrameMs", double(frameEnd - frameBegin) * 1e-6);
   TracyPlot("aurora: gpuIdleMs", double(idleNs) * 1e-6);
   TracyPlot("aurora: gpuPasses", int64_t(slot.passCount));
+#endif
 }
 
 Slot& record_slot() { return g_slots[g_recordSlot]; }
 
 uint32_t alloc_zone() {
-  if (!g_frameActive || g_zoneCount >= MaxZones) {
-    return UINT32_MAX;
-  }
+  if (!g_frameActive) return UINT32_MAX;
+  if (g_zoneCount >= MaxZones) { gdDroppedZones.fetch_add(1, std::memory_order_relaxed); return UINT32_MAX; }
   return g_zoneCount++;
 }
 } // namespace
 
+bool requested() {
+#ifdef TRACY_ENABLE
+  return true;
+#else
+  const auto on = [](const char* key) { const char* v = std::getenv(key); return v && std::strcmp(v, "1") == 0; };
+  return on("MELEE_PROFILER") || on("MELEE_PROF_GPU");
+#endif
+}
+bool active() { return gdActive.load(std::memory_order_relaxed); }
+void emit_cpu(const char* name, uint64_t durationNs) { gd_emit(name, g_frameId.load(std::memory_order_relaxed), durationNs); }
+
 void initialize() {
   g_enabled = g_device.HasFeature(wgpu::FeatureName::TimestampQuery);
+  gdGpuAvailable.store(g_enabled, std::memory_order_release);
   if (!g_enabled) {
     Log.info("Timestamp queries unsupported; GPU profiling disabled");
     return;
@@ -321,13 +373,16 @@ void initialize() {
   g_recordSlot = 0;
   g_emitSlot = 0;
   g_framePending = false;
+#ifdef TRACY_ENABLE
   TracyPlotConfig("aurora: gpuFrameMs", tracy::PlotFormatType::Number, false, true, 0);
   TracyPlotConfig("aurora: gpuIdleMs", tracy::PlotFormatType::Number, false, true, 0);
   TracyPlotConfig("aurora: gpuPasses", tracy::PlotFormatType::Number, true, true, 0);
+#endif
   Log.info("GPU profiling enabled ({} zones max)", MaxZones);
 }
 
 void shutdown() {
+  gdGpuAvailable.store(false, std::memory_order_release);
   g_querySet = {};
   g_resolveBuffer = {};
   for (auto& slot : g_slots) {
@@ -343,15 +398,19 @@ void shutdown() {
 }
 
 void frame_begin(const wgpu::CommandEncoder& encoder) {
-  if (!g_enabled) {
+  ++g_frameId;
+  if (!g_enabled || !active()) {
+    g_frameActive = false;
     return;
   }
   auto& slot = record_slot();
   if (slot.state != SlotState::Free) {
+    gdDroppedFrames.fetch_add(1, std::memory_order_relaxed);
     g_frameActive = false;
     return;
   }
   slot.state = SlotState::Recording;
+  slot.frameId = g_frameId;
   slot.events.clear();
   slot.passCount = 0;
   g_zoneCount = 0;
@@ -457,18 +516,3 @@ Zone::~Zone() {
 }
 
 } // namespace aurora::webgpu::gpu_prof
-
-#else
-
-namespace aurora::webgpu::gpu_prof {
-void initialize() {}
-void shutdown() {}
-void frame_begin(const wgpu::CommandEncoder&) {}
-void frame_end(const wgpu::CommandEncoder&) {}
-void after_submit() {}
-const wgpu::PassTimestampWrites* pass_writes(std::string_view) { return nullptr; }
-Zone::Zone(const wgpu::CommandEncoder&, std::string_view) {}
-Zone::~Zone() = default;
-} // namespace aurora::webgpu::gpu_prof
-
-#endif

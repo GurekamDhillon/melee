@@ -11,7 +11,7 @@
 #define SCRIPT_STAGE_TARGETS 32
 static struct {
     void *map, *draw;
-    int cap;
+    int cap, loading_area;
     struct { int active, handle, model_handle, owner; float x0, y0, x1, y1; } line[200];
     struct { int active, handle, owner; } model[SCRIPT_STAGE_MODELS], target[SCRIPT_STAGE_TARGETS];
     ScriptMeshInstance instance[SCRIPT_MESH_INSTANCES];
@@ -111,6 +111,20 @@ int main(void)
     assert(script_stage.asset[0].instances == 1 && script_stage.line[0].model_handle == 100);
     assert(ScriptGame_ModelLineOwner(200) == 100);
     snapshot = script_stage;
+    input[SM_RX] = script_mesh_bits(45);
+    assert(ScriptGame_ModelSet(100) == -4);
+    assert(!memcmp(&snapshot, &script_stage, sizeof snapshot));
+    assert(ScriptGame_ModelSpawn(0, 7, 901, 1, 902) == -4);
+    input[SM_RX] = 0; input[SM_RY] = script_mesh_bits(90);
+    assert(ScriptGame_ModelSet(100) == -4);
+    assert(!memcmp(&snapshot, &script_stage, sizeof snapshot));
+    assert(ScriptGame_ModelSpawn(0, 7, 901, 0, 0) == 901);
+    assert(ScriptGame_ModelField(1, SM_RY) == script_mesh_bits(90));
+    input[SM_RX] = script_mesh_bits(30);
+    assert(ScriptGame_ModelSet(901) == 1 && ScriptGame_ModelField(1, -4) == 1);
+    assert(ScriptGame_ModelDespawn(901));
+    input[SM_RX] = input[SM_RY] = 0;
+    assert(!memcmp(&snapshot.instance[0], &script_stage.instance[0], sizeof snapshot.instance[0]));
     input[SM_ALPHA] = 1; input[SM_SZ] = script_mesh_bits(-2);
     input[SM_X] = script_mesh_bits(20);
     assert(ScriptGame_ModelSet(100) == 1 && script_stage.line[0].x0 == 10);

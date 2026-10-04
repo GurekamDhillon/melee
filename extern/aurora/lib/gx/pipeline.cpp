@@ -7,6 +7,8 @@
 
 #include "gx_fmt.hpp"
 #include "shader_info.hpp"
+#include "../webgpu/gpu_prof.hpp"
+#include <chrono>
 
 #include <tracy/Tracy.hpp>
 
@@ -14,10 +16,18 @@ namespace aurora::gx {
 
 wgpu::RenderPipeline create_pipeline(const PipelineConfig& config, const gfx::RenderTargetLayout& layout) {
   ZoneScoped;
+  const bool measure = webgpu::gpu_prof::active();
+  const auto start = measure ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
   const auto shader = build_shader(config.shaderConfig, layout);
   const auto label = fmt::format("GX Pipeline {:x}",
                                  xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(gfx::ShaderType::GX))));
-  return build_pipeline(config, layout, {}, shader, label.c_str());
+  auto pipeline = shader ? build_pipeline(config, layout, {}, shader, label.c_str()) : wgpu::RenderPipeline{};
+  if (measure) {
+    const auto name = std::string("cpu.pipeline_compile.") + label;
+    webgpu::gpu_prof::emit_cpu(name.c_str(), static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-start).count()));
+  }
+  return pipeline;
 }
 
 void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {

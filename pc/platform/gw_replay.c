@@ -36,6 +36,7 @@
  * byte order on both sides - exactly what memcpy is right for.
  */
 #include "gw.h"
+#include "gw_hang.h"
 #include "gw_rollback.h"
 #include "gw_slippi_pad.h"
 
@@ -690,6 +691,7 @@ static void rec_post(int port, int follower, int ckind, int action, float x, flo
  * port and the field; reaching the replay's end with every recorded post-frame matched ends it
  * with 0 and "parity: PASS". A record the port never produced is a failure too. */
 static void rp_parity_end(int rc) {
+    gw_hang_final("replay parity complete", (unsigned)rc);
     fflush(NULL);
     _exit(rc);
 }

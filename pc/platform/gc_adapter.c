@@ -26,6 +26,7 @@
  */
 #ifdef _WIN32
 #include "gw.h"
+#include "gc_adapter_policy.h"
 
 #include <dolphin/pad.h>
 
@@ -144,6 +145,20 @@ static volatile LONG gw_gc_resume_pending; /* the next scanner open is a resume:
 static HANDLE gw_gc_scan_wake;             /* auto-reset: wakes the scanner early */
 static volatile LONG gw_gc_reports_total;  /* every good report since start (never reset) */
 static int (*gw_gc_test_open)(void);
+static void (*gw_gc_test_rumble)(void);
+static int gw_gc_test_policy; /* fake devices: 1 focused; 2 ignored; 3 unattended; 4/5 real env */
+static int gw_gc_allowed(void) {
+  HWND w; DWORD pid=0;
+  if (gw_gc_test_open && gw_gc_test_policy>=4)
+    return gw_gc_policy_allows(gw_gc_env_on("MELEE_PAD_IGNORE_ADAPTER"),
+        gw_gc_env_on("MELEE_UNATTENDED"),gw_gc_test_policy==4);
+  if (gw_gc_test_open && gw_gc_test_policy)
+    return gw_gc_policy_allows(gw_gc_test_policy==2,gw_gc_test_policy==3,gw_gc_test_policy==1);
+  if (gw_gc_forbidden()) return 0;
+  w=GetForegroundWindow();
+  if (w) GetWindowThreadProcessId(w,&pid);
+  return gw_gc_policy_allows(0,0,pid==GetCurrentProcessId() && IsWindowVisible(w) && !IsIconic(w));
+}
 static int gw_gc_open_quiet;  /* scanner reclaim chain: skip the per-attempt failure lines */
 static DWORD gw_gc_open_err;  /* last CreateFile error of a WinUSB open */
 
@@ -280,6 +295,7 @@ static int gw_gc_open_hid(void) {
       continue;
     }
 
+    if (!gw_gc_allowed()) {LocalFree(detail);break;}
     h = CreateFileA(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                     FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
@@ -420,7 +436,7 @@ static int gw_gc_open(void) {
     }
     detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
     if (SetupDiGetDeviceInterfaceDetailA(info, &ifdata, detail, needed, NULL, NULL) &&
-        gw_gc_stristr(detail->DevicePath, want) != NULL) {
+        gw_gc_stristr(detail->DevicePath, want) != NULL && gw_gc_allowed()) {
       gw_gc_dev = CreateFileA(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
@@ -619,7 +635,7 @@ static int gw_gc_open_locked(void);
  * device enumeration, the reader start) closes an adapter a background window must not hold. */
 static int gw_gc_init_locked(void) {
   int ok = gw_gc_open_locked();
-  if (ok && InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
+  if (ok && (!gw_gc_allowed() || InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0)) {
     gw_log("gw: gc adapter: opened while suspended - closing it again");
     gw_gc_shutdown_locked();
     return 0;
@@ -633,6 +649,7 @@ static int gw_gc_open_locked(void) {
   ULONG timeout = 20;
   ULONG raw = 1;
 
+  if (!gw_gc_allowed()) return 0; /* before enumeration and every device open */
   if (gw_gc_tried) {
     return gw_gc_ready;
   }
@@ -796,15 +813,16 @@ static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
   LONG chain_gen = 0;
   int chain = 0;
   int attempt = 0;
+  int policy_blurred = 0;
   (void)arg;
   for (;;) {
     DWORD now;
-    DWORD wait = 1000;
+    DWORD wait = 100; /* native focus ownership also works when the main loop stalls */
     int pending;
     int ok;
     if (chain) {
       const int d = (int)(retry_at - GetTickCount());
-      wait = d <= 0 ? 0 : (d > 1000 ? 1000 : (DWORD)d);
+      wait = d <= 0 ? 0 : (d > 100 ? 100 : (DWORD)d);
     }
     if (gw_gc_scan_wake != NULL) {
       WaitForSingleObject(gw_gc_scan_wake, wait);
@@ -812,6 +830,20 @@ static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
       Sleep(wait);
     }
     now = GetTickCount();
+    if (!gw_gc_allowed()) {
+      AcquireSRWLockExclusive(&gw_gc_init_srw);
+      if (gw_gc_ready) gw_gc_shutdown_locked();
+      ReleaseSRWLockExclusive(&gw_gc_init_srw);
+      policy_blurred=1; chain=0;
+      continue;
+    }
+    if (policy_blurred) {
+      policy_blurred=0;
+      InterlockedExchange(&gw_gc_suspended,0);
+      InterlockedExchange(&gw_gc_resume_pending,1);
+      InterlockedIncrement(&gw_gc_resume_gen);
+      retry_at=now;
+    }
     if (InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
       chain = 0;
       continue;
@@ -838,6 +870,7 @@ static DWORD WINAPI gw_gc_scanner(LPVOID arg) {
     if ((int)(now - retry_at) < 0) {
       continue;
     }
+    if (!chain) retry_at=now+1000; /* ownership checks stay fast; enumeration does not */
     if (!gw_gc_adapter_device_plugged()) {
       if (chain) {
         gw_pad_log("gw: gc adapter: resume - no adapter plugged in, nothing to reclaim");
@@ -931,6 +964,7 @@ int gw_gc_adapter_suspend(void) {
  * never waits on USB enumeration), retrying each second for 15 s if the other program is slow to
  * let go. */
 void gw_gc_adapter_resume(void) {
+  if (!gw_gc_allowed()) return;
   if (InterlockedExchange(&gw_gc_suspended, 0) == 0) {
     return;
   }
@@ -943,6 +977,7 @@ void gw_gc_adapter_resume(void) {
 }
 
 void gw_gc_adapter_start_hotplug(void) {
+  if (gw_gc_forbidden()) return;
   if (gw_gc_scan_wake == NULL) {
     gw_gc_scan_wake = CreateEventA(NULL, FALSE, FALSE, NULL);
   }
@@ -1104,6 +1139,11 @@ int gw_gc_adapter_read(void *status) {
   int recal;
   unsigned char snap[GC_PAYLOAD_SIZE];
 
+  if (!gw_gc_allowed()) {
+    if (gw_gc_ready) gw_gc_adapter_shutdown();
+    return 0;
+  }
+
   if (gw_gc_ready && InterlockedCompareExchange(&gw_gc_suspended, 0, 0) != 0) {
     /* can't happen (every open re-checks the flag under the lock) - but if it ever does, a
      * background window must not keep the adapter from the program in front */
@@ -1137,11 +1177,13 @@ void gw_gc_adapter_rumble(int chan, int on) {
   ULONG written = 0;
   int i;
 
-  if (!gw_gc_ready || chan < 0 || chan >= GC_PORTS) {
+  if (chan < 0 || chan >= GC_PORTS) {
     return;
   }
+  AcquireSRWLockShared(&gw_gc_init_srw);
+  if (!gw_gc_ready || !gw_gc_allowed()) goto done;
   if (state[chan] == (unsigned char)(on ? 1 : 0)) {
-    return;
+    goto done;
   }
   state[chan] = (unsigned char)(on ? 1 : 0);
 
@@ -1149,6 +1191,7 @@ void gw_gc_adapter_rumble(int chan, int on) {
   for (i = 0; i < GC_PORTS; ++i) {
     cmd[1 + i] = state[i];
   }
+  if (gw_gc_test_rumble) {gw_gc_test_rumble();goto done;}
   if (gw_gc_backend == GW_GC_HID) {
     unsigned char out[64];
     ULONG len = gw_gc_hid_out_len;
@@ -1159,9 +1202,11 @@ void gw_gc_adapter_rumble(int chan, int on) {
     out[0] = 0x00; /* report ID */
     memcpy(out + 1, cmd, sizeof(cmd));
     HidD_SetOutputReport(gw_gc_hid, out, len);
-    return;
+    goto done;
   }
   WinUsb_WritePipe(gw_gc_usb, GC_EP_OUT, cmd, sizeof(cmd), &written, NULL);
+done:
+  ReleaseSRWLockShared(&gw_gc_init_srw);
 }
 
 /* Dump the adapter's raw report bytes, so a mapping question can be settled against what was
@@ -1215,6 +1260,7 @@ static int test_gc_suspend_beats_slow_open(void) {
     return 0; /* a real adapter session is live in this process: nothing to fake */
   }
   gw_gc_test_open = gw_gc_t_slow_open;
+  gw_gc_test_policy = 1;
   InterlockedExchange(&gw_gc_suspended, 0);
   InterlockedExchange(&gw_gc_t_opens, 0);
   gw_gc_t_suspend_inside = 0;
@@ -1253,10 +1299,80 @@ static int test_gc_suspend_beats_slow_open(void) {
   InterlockedExchange(&gw_gc_resume_pending, 0);
   gw_gc_tried = 0;
   gw_gc_test_open = NULL;
+  gw_gc_test_policy = 0;
   return rc;
 }
 
+static int test_gc_ownership_policy(void) {
+  int failed=0,policy;
+  char *saved_ignore,*saved_unattended;const char *env;
+  if (gw_gc_ready || gw_gc_scan_thread) return 0;
+  env=getenv("MELEE_PAD_IGNORE_ADAPTER");saved_ignore=_strdup(env?env:"");
+  env=getenv("MELEE_UNATTENDED");saved_unattended=_strdup(env?env:"");
+  if (!saved_ignore || !saved_unattended) {free(saved_ignore);free(saved_unattended);return 1;}
+  gw_gc_test_open=gw_gc_t_slow_open;gw_gc_t_suspend_inside=0;
+  InterlockedExchange(&gw_gc_suspended,0);InterlockedExchange(&gw_gc_t_opens,0);
+  for (policy=2;policy<=3;++policy) {
+    gw_gc_test_policy=policy;gw_gc_tried=0;
+    failed|=gw_gc_adapter_init()!=0 || gw_gc_t_opens!=0 || gw_gc_ready;
+  }
+  failed|=gw_gc_policy_allows(0,0,0) || gw_gc_policy_allows(1,0,1) ||
+    gw_gc_policy_allows(0,1,1) || !gw_gc_policy_allows(0,0,1);
+  gw_gc_test_policy=4;
+  _putenv_s("MELEE_PAD_IGNORE_ADAPTER","1");_putenv_s("MELEE_UNATTENDED","0");gw_gc_tried=0;
+  failed|=gw_gc_adapter_init()!=0 || gw_gc_t_opens!=0;
+  _putenv_s("MELEE_PAD_IGNORE_ADAPTER","0");_putenv_s("MELEE_UNATTENDED","1");gw_gc_tried=0;
+  failed|=gw_gc_adapter_init()!=0 || gw_gc_t_opens!=0;
+  _putenv_s("MELEE_UNATTENDED","0");gw_gc_test_policy=5;gw_gc_tried=0;
+  failed|=gw_gc_adapter_init()!=0 || gw_gc_t_opens!=0;
+  gw_gc_test_policy=4;gw_gc_tried=0;
+  failed|=!gw_gc_adapter_init();
+  gw_gc_test_policy=5;
+  failed|=gw_gc_adapter_read(NULL)!=0 || gw_gc_ready;
+  gw_gc_adapter_shutdown();gw_gc_test_open=NULL;gw_gc_test_policy=0;gw_gc_tried=0;
+  _putenv_s("MELEE_PAD_IGNORE_ADAPTER",saved_ignore);_putenv_s("MELEE_UNATTENDED",saved_unattended);
+  free(saved_ignore);free(saved_unattended);
+  if (failed) gw_test_fail("adapter ownership opened ignored/unattended/unfocused device");
+  return failed;
+}
+static HANDLE gw_gc_t_rumble_started,gw_gc_t_rumble_release;
+static volatile LONG gw_gc_t_rumble_invalid;
+static void gw_gc_t_rumble_write(void) {
+  SetEvent(gw_gc_t_rumble_started);
+  WaitForSingleObject(gw_gc_t_rumble_release,2000);
+  if (!gw_gc_ready) InterlockedExchange(&gw_gc_t_rumble_invalid,1);
+}
+static void gw_gc_t_rumble_noop(void) {}
+static DWORD WINAPI gw_gc_t_rumbler(LPVOID arg) {
+  (void)arg;gw_gc_adapter_rumble(0,1);return 0;
+}
+static DWORD WINAPI gw_gc_t_closer(LPVOID arg) {
+  (void)arg;gw_gc_adapter_shutdown();return 0;
+}
+static int test_gc_rumble_close_race(void) {
+  HANDLE writer,closer;int failed=0;
+  if (gw_gc_ready || gw_gc_scan_thread) return 0;
+  gw_gc_test_open=gw_gc_t_slow_open;gw_gc_test_policy=1;
+  gw_gc_ready=1;gw_gc_backend=GW_GC_NONE;gw_gc_t_rumble_invalid=0;
+  gw_gc_t_rumble_started=CreateEventA(NULL,TRUE,FALSE,NULL);
+  gw_gc_t_rumble_release=CreateEventA(NULL,TRUE,FALSE,NULL);
+  gw_gc_test_rumble=gw_gc_t_rumble_noop;gw_gc_adapter_rumble(0,0);
+  gw_gc_test_rumble=gw_gc_t_rumble_write;
+  writer=CreateThread(NULL,0,gw_gc_t_rumbler,NULL,0,NULL);
+  failed|=WaitForSingleObject(gw_gc_t_rumble_started,1000)!=WAIT_OBJECT_0;
+  closer=CreateThread(NULL,0,gw_gc_t_closer,NULL,0,NULL);
+  failed|=WaitForSingleObject(closer,50)!=WAIT_TIMEOUT;
+  SetEvent(gw_gc_t_rumble_release);
+  failed|=WaitForSingleObject(writer,2000)!=WAIT_OBJECT_0;
+  failed|=WaitForSingleObject(closer,2000)!=WAIT_OBJECT_0 || gw_gc_t_rumble_invalid || gw_gc_ready;
+  CloseHandle(writer);CloseHandle(closer);CloseHandle(gw_gc_t_rumble_started);CloseHandle(gw_gc_t_rumble_release);
+  gw_gc_test_rumble=NULL;gw_gc_test_open=NULL;gw_gc_test_policy=0;gw_gc_tried=0;
+  if (failed) gw_test_fail("adapter close invalidated an in-flight rumble handle");
+  return failed;
+}
 void gw_gc_adapter_tests_register(void) {
+  gw_test_register("gc_rumble_close_race", test_gc_rumble_close_race);
+  gw_test_register("gc_ownership_policy", test_gc_ownership_policy);
   gw_test_register("gc_suspend_beats_slow_open", test_gc_suspend_beats_slow_open);
 }
 #else

@@ -1,29 +1,29 @@
 -- Pure seeded route and authored geometry. Analytical screening only: real Melee
 -- movement, seams, camera and controller play must still be tested in-engine.
-local D = {version=1}
+local D = {version=1,schema_version=1,generator_version=2}
 local function finite(v) return type(v)=='number' and v==v and math.abs(v)<math.huge end
-local function point(p) return type(p)=='table' and finite(p.x) and finite(p.y) and math.abs(p.x)<=65 and p.y>=0 and p.y<=60 end
+local function point(p) return type(p)=='table' and finite(p.x) and finite(p.y) and math.abs(p.x)<=130 and p.y>=0 and p.y<=60 end
 local function rng(seed)
  return function(n) seed=(seed*48271)%2147483647; return seed%n+1 end
 end
 local function room(kind,rand)
- local shift=rand(9)-5
+ local shift=(rand(9)-5)*2
  local platforms={}
  if kind=='traversal' or kind=='arena' or kind=='boss' then
-  platforms={{x=-22+shift,y=12,width=22,passthrough=true,ledges=true},
-             {x=22+shift,y=12,width=22,passthrough=true,ledges=true},
-             {x=shift,y=24,width=24,passthrough=true,ledges=true}}
+  platforms={{x=-44+shift,y=24,width=44,passthrough=true,ledges=false},
+             {x=44+shift,y=24,width=44,passthrough=true,ledges=false},
+             {x=shift,y=48,width=48,passthrough=true,ledges=false}}
  end
- return {platforms=platforms,lines={},spawn={x=-42,y=0},
-  floor={left=-65,right=65,y=0},kit={unit=6.5,grid=13,bay=26,height=26,depth=0},
-  enemy_spawns=(kind=='arena' or kind=='boss') and {{x=28,y=0,kind=kind=='boss' and 'champion' or (rand(2)==1 and 'pressure' or 'guard')}} or {},
-  exit_anchors={left={x=-52,y=0},right={x=52,y=0}},
-  camera={left=-65,right=65,bottom=0,top=60}}
+ return {platforms=platforms,lines={},spawn={x=-84,y=0},
+  floor={left=-130,right=130,y=0},kit={unit=13,grid=26,bay=52,height=52,depth=0},
+  enemy_spawns=(kind=='arena' or kind=='boss') and {{x=56,y=0,kind=kind=='boss' and 'champion' or (rand(2)==1 and 'pressure' or 'guard')}} or {},
+  exit_anchors={left={x=-104,y=0},right={x=104,y=0}},
+  camera={left=-130,right=130,bottom=-36,top=108}}
 end
 function D.generate(seed,opts)
  assert(finite(seed) and seed%1==0 and seed>=1 and seed<=2147483646,'seed must be integer 1..2147483646')
  local rand=rng(seed)
- local m={version=D.version,seed=seed,start='entry',nodes={},order={}}
+ local m={version=D.version,schema_version=D.schema_version,generator_version=D.generator_version,traversal_certified=false,seed=seed,start='entry',nodes={},order={}}
  local specs={{'entry','entry','The Threshold',0},{'trail','traversal','Inner Passage',1},
   {'arena_a','arena','Ember Court',2},{'arena_b','arena','Rime Gallery',2},
   {'rest','rest','Quiet Landing',3},{'approach','traversal','Champion Approach',4},
@@ -56,11 +56,11 @@ local function reachable(nodes,start,allow_gates)
  end
  return seen
 end
-local function screen_room(r,mobility)
+local function screen_room(r,mobility,strict)
  if type(r)=='table' then
   local f,k=r.floor,r.kit
-  if type(f)~='table' or f.left~=-65 or f.right~=65 or f.y~=0 or type(k)~='table' or
-   k.unit~=6.5 or k.grid~=13 or k.bay~=26 or k.height~=26 or k.depth~=0 then return false,'incompatible kit structure' end
+  if type(f)~='table' or f.left~=-130 or f.right~=130 or f.y~=0 or type(k)~='table' or
+   k.unit~=13 or k.grid~=26 or k.bay~=52 or k.height~=52 or k.depth~=0 then return false,'incompatible kit structure' end
  end
  if type(r)~='table' or type(r.platforms)~='table' or type(r.lines or {})~='table' then return false,'missing room geometry' end
  if #r.platforms+#(r.lines or {})>16 then return false,'room collision budget exceeds 16' end
@@ -73,7 +73,7 @@ local function screen_room(r,mobility)
  -- drops onto lower floors. This is not an exact dynamics or recovery simulator.
  local surfaces={{lo=r.floor.left,hi=r.floor.right,y=r.floor.y}}
  for _,p in ipairs(r.platforms) do
-  if not point(p) or not finite(p.width) or p.width<=0 or p.x-p.width/2 < -65 or p.x+p.width/2 >65 then return false,'invalid platform bounds' end
+  if not point(p) or not finite(p.width) or p.width<=0 or p.x-p.width/2 < -130 or p.x+p.width/2 >130 then return false,'invalid platform bounds' end
   if type(p.passthrough)~='boolean' or type(p.ledges)~='boolean' then return false,'missing platform flags' end
   if not p.passthrough then return false,'solid overhead platform needs authored clearance validation' end
   surfaces[#surfaces+1]={lo=p.x-p.width/2+2,hi=p.x+p.width/2-2,y=p.y}
@@ -99,7 +99,14 @@ local function screen_room(r,mobility)
    end
   end end
  end
- for i in ipairs(surfaces) do if not seen[i] then return false,'unreachable platform' end end
+ local all_platforms=true
+ for i in ipairs(surfaces) do if not seen[i] then
+  all_platforms=false
+  if strict then return false,'unreachable platform' end
+ end end
+ -- Ground doors are mandatory; raised platforms are optional in this analytic
+ -- screen. Scaling room cells never scales the player's movement profile.
+ -- Certification still requires normal-speed native traversal observations.
  local anchors=r.exit_anchors
  if type(anchors)~='table' then return false,'missing exit anchors' end
  for _,side in ipairs({'left','right'}) do
@@ -110,12 +117,13 @@ local function screen_room(r,mobility)
   if not found then return false,'unreachable exit anchor' end
  end
  for _,p in ipairs(r.enemy_spawns or {}) do if not point(p) then return false,'invalid enemy spawn' end end
- return true
+ return true,nil,{all_platforms_reachable=all_platforms,traversal_certified=false}
 end
 function D.validate(m,mobility)
- if type(m)~='table' or m.version~=D.version or type(m.nodes)~='table' or not m.nodes[m.start] then return false,'invalid manifest/start' end
+ if type(m)~='table' or m.version~=D.version or m.schema_version~=D.schema_version or m.generator_version~=D.generator_version or type(m.nodes)~='table' or not m.nodes[m.start] then return false,'invalid manifest/start' end
  if type(m.order)~='table' then return false,'missing order' end
  local count,ordered=0,{}
+ local report={all_platforms_reachable=true,traversal_certified=false,mobility_scaled=false}
  for _,id in ipairs(m.order) do if ordered[id] or not m.nodes[id] then return false,'invalid order' end; ordered[id]=true end
  local exit_count=0
  local kinds={entry=true,traversal=true,arena=true,rest=true,boss=true,exit=true}
@@ -123,8 +131,9 @@ function D.validate(m,mobility)
   count=count+1
   if not ordered[id] or type(n)~='table' or n.id~=id or not kinds[n.kind] or type(n.exits)~='table' then return false,'invalid node' end
   if n.kind=='exit' then exit_count=exit_count+1 end
-  local ok,why=screen_room(n.room,mobility or {})
+  local ok,why,room_report=screen_room(n.room,mobility or {},mobility~=nil)
   if not ok then return false,id..': '..why end
+  if not room_report.all_platforms_reachable then report.all_platforms_reachable=false end
   for _,e in ipairs(n.exits) do
    if type(e)~='table' or not m.nodes[e.to] or (e.side~='left' and e.side~='right') then return false,'invalid graph edge' end
   end
@@ -143,6 +152,6 @@ function D.validate(m,mobility)
   for to in pairs(downstream) do if m.nodes[to].kind=='exit' then finish=true end end
   if not finish then return false,'branch has no unconditional exit '..id end
  end
- return true
+ return true,nil,report
 end
 return D

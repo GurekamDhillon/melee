@@ -1,15 +1,23 @@
 # Geno - GD's Melee's fighter-extension layer
 
-**Current as of 2026-09-27 (game `4c676892a`).** This dated overview supersedes older status
+**Source reference current as of 2026-10-03.** This dated overview supersedes older status
 summaries in this file; versioned verification sections remain historical results for their
 named runs, not HEAD validation. JSON `GENO_VERSION` is **5**, with additive v5.5 commands,
 articles, on-hit/counter hooks and native effects. The LAB and its `gd` API are public.
 Stable earlier instruction ids retain their meanings; sections 15-20 describe their additions.
 
+**Verification limits:** the 2026-10-03 guide-gap repairs were syntax-checked and the standalone
+LAB checker passed; they were not built or run in the game. Counts such as 133/133, 149/149 and
+189/189 below belong to historical runs, not the current suite. Paths under `_build/agents/`
+and their demo mods, pad drivers, screenshots and NOTES are private historical evidence,
+not repository examples or reproducible prerequisites. Use the committed `geno_*` tests and
+`pc/geno/tools/lab_stage_d_check.lua`; gameplay acceptance for these repairs is still pending.
+
 ## 1. What Geno is, and what it is not
 
-Geno is the native layer for **new fighter content** in GD's Melee. Its first customers are a Brawl
-Kirby port and then Meta Knight, which need character abilities m-ex cannot express: more jumps than
+Geno is the native layer for **new fighter content** in GD's Melee. Its current customers are
+Halberd (Meta Knight), Ultimate Kirby and Sora (the workspace's `ports/README.md` lists the pipelines).
+They use character abilities beyond the port's m-ex compatibility surface: more jumps than
 Melee's multi-jump table, gliding, crawling, wall clinging, new specials, and script logic
 (variables and if/else) of the kind Brawl's PSA scripts use.
 
@@ -101,9 +109,8 @@ dispatch). Geno never edits m-ex's tables, slot numbering or hook registration.
 | engine sites | game | `ftaction.c` (3 loops), `fighter.c` (reset, action change, on_frame; v1: pre-anim checks, around the collision callback), `ftchangeparam.c` (attributes), `ftCo_JumpAerialF1.c` (multi-jump); v1: `ftcommon.c` (landing / take-off edges), `ftcoll.c` (autolink) |
 | `gw_snap.c`, `gw_mexid.c`, `gw_tests_core.c` | native | snapshot coverage, netplay identity salt, test registration |
 
-Link: the three objects are listed in `_build/agents/beta/melee_link_objects_geno.rsp` (beta's list
-plus `pc_geno_geno_game.c.obj`, `pc_geno_geno_tests.c.obj`, `geno_registry.obj`); build with
-`GW_LINK_OBJECTS` pointing at it. They are deliberately **not** in the shared link list.
+Build through the workspace's `tools/port/build.sh` (see `pc/docs/PORT_DEV_QUICKREF.md`). The
+old beta-only link-list recipe was historical; do not depend on that uncommitted lane's files.
 
 ## 7. geno.json
 
@@ -128,6 +135,10 @@ mods folder (`docs/mods-packaging.md` in the root repo), so it can also ship rep
 - `attach`: an existing fighter - a vanilla name (`kirby`, `marth`, `gnw`, ...) or a Pl file
   (`PlKb.dat`, or an m-ex fighter's `PlSh.dat`). This is **(a)**: overlays on existing fighters, the
   Phase 1 path.
+  The registry's 27 retail names (aliases after `/`) are `mario`, `fox`, `captain/falcon`,
+  `donkey/dk`, `kirby`, `koopa/bowser`, `link`, `seak/sheik`, `ness`, `peach`, `popo`, `nana`,
+  `pikachu`, `samus`, `yoshi`, `purin/jigglypuff`, `mewtwo`, `luigi`, `mars/marth`, `zelda`,
+  `clink/younglink`, `drmario`, `falco`, `pichu`, `gamewatch/gnw`, `ganon/ganondorf`, `emblem/roy`.
 - `define`: **(b)** brand-new fighters. Reserved; v0 logs and skips it (section 13).
 - `attributes`: any `ftCo_DatAttrs` field by its decomp name (40 of them: walk/dash/jump/air/
   gravity/weight/shield...). Applied right after the engine copies the attributes from the file,
@@ -217,15 +228,22 @@ bounded: `max_jumps` above 6 would read past `x14` and enter motion ids after th
 Normal fighters use `JumpAerial` and only compare `jumpsUsed < max_jumps` (a u8), so raising
 `max_jumps` alone already works for them.
 
-Geno: `jumps.max` sets `max_jumps` (via the attribute hook). In `ftCo_800D74A4`, `Geno_MultiJump`
-repeats the **last** multi-jump state for air jumps past the table (so `ftCo_800D72A0` still
-recognises it) and takes the impulse from `air_vy` (last entry repeats) or the table's last row;
-`air_vy` also overrides the table's own rows (Brawl numbers). Meta Knight (5 air jumps in Brawl)
-and Brawl Kirby need exactly this.
+Geno: `jumps.max` sets `max_jumps` (via the attribute hook). Both `jumps.max` and
+`attributes.max_jumps` accept integer totals **1..250**, clamping outside that range with a
+named log line; the limit keeps the game's u8 jump counter from wrapping. `jumps.max` wins
+when both keys are present. Ordinary double-jumpers use their existing input/count check;
+`air_vy` overrides remain specific to multi-jump fighters.
 
-Demo: `_build/agents/beta/mods-geno/geno-demo-kirby` (not committed) gives vanilla Kirby 9 jumps.
-Run log: `geno: kind 4 player 0 air jump 8 of 8 (beyond Melee's multi-jump table)`; screenshot
-`_build/agents/beta/shots/geno_kirby_1500.png` (Kirby high above Battlefield mid-chain).
+In `ftCo_800D74A4`, the impulse index is bounded **before** reading the table.
+`Geno_MultiJump` repeats the **penultimate** multi-jump state while more jumps remain,
+and uses the last state for the declared final jump. Kirby's last script never sets the
+next-jump `cmd_var[0]`; the penultimate script opens that gate at animation frame 28.
+Helmet variants use their own first-state base. The impulse still follows the requested
+jump number: `air_vy` (last entry repeats), or the table's own row/last impulse past its end.
+
+The old private demo's nine-jump claim was contradicted by the 2026-10-03 course run, which
+stopped at five air jumps. The source repair has regressions `geno_multijump_script_gate`
+and `geno_ordinary_jumps`; a fresh gameplay retest is required before claiming nine jumps work.
 
 ## 11. Design: glide (superseded: built in v2, see section 16)
 
@@ -302,18 +320,23 @@ Geno version - data-driven, drawn natively, no fighter code:
 | v0 | registry + stable ids + netplay salt, state block, escape (vars, if/else, CALL), 4 hooks, 3 dispatch points, attribute overrides, multi-jump past the table, tests, opcode census |
 | v1 (built, section 15) | subaction script overlays; engine values GET/PUT/IFV; DIV, RAND; change action (Brawl requirements, persistent/once, CHGAND); REHIT; LINK (autolink 365); special-attribute overrides; `on_land` (script checks, geno.json map, hooks). Not done from the old v1 list: `air_vy` for non-multi-jump fighters (`on_hit`: v5) |
 | v5 (built, section 19) | articles (projectiles as Melee items, models from a .dat), `on_hit` dispatch point 4, counter windows |
-| v2 | Geno action states (section 11): glide, then crawl and wall cling; Meta Knight on top |
-| v2.5 | HUD elements (section 11b): data-driven meters/icons bound to Geno variables |
-| v3 | `define`: brand-new fighters with Geno-native registration (their own kind range and content ids, independent of m-ex's dense slots), CSS/SSS entries via gw_uigen |
+| v2 (built, section 16) | Geno action states, glide and native specials; crawl and wall cling remain future work |
+| v3 (built, section 17) | root-motion states, Dimensional Cape and Drill Rush refinements |
+| v4 (built, section 18) | animation-rate and glide refinements |
+| future, unversioned | HUD elements (section 11b): data-driven meters/icons bound to Geno variables |
+| future, unversioned | `define`: brand-new fighters with Geno-native registration (their own kind range and content ids, independent of m-ex's dense slots), CSS/SSS entries via gw_uigen |
 | later | an IR emitter/loader for `melee.geno`; per-profile merge rules instead of "later mod wins" |
 
 Constraints that stay: Melee's global rules (section 1), m-ex untouched (section 3), rollback-safe
 (section 4), stable public encodings and explicit version checks.
 
+The old roadmap used "v3" for the still-reserved `define` design. That label was a plan,
+not a second meaning for JSON version 3; sections 17-19 use the implemented feature versions.
+
 ## 14. Geno Lab (inspection tool)
 
-An in-engine, frame-steppable lab for seeing *why* a fighter feels the way it does (first use:
-Brawl Kirby vs vanilla Kirby). The native part is thin: scalar read-only getters, the game's own
+An in-engine, frame-steppable lab for seeing *why* a fighter feels the way it does, including
+Halberd, Ultimate Kirby and Sora. The native part is thin: scalar read-only getters, the game's own
 develop-mode drawing switches, a camera projection, engine event hooks and a snapshot history.
 The tool itself is a public Lua script mod, shipped as `mods/geno-lab`. Its native calls extend
 scripting API 1; `gd.lab_api == 1`. The workspace's `docs/scripting.md` inventories all registered
@@ -435,7 +458,7 @@ Online the Lab only reads.
 
 | function | |
 |---|---|
-| `gd.timeline(port [, motion])` | the subaction script of the current action (or of `motion`'s row), walked read-only the way ftAction times it: `wait` adds frames, `wait_until` jumps to an animation frame, loops / calls / gotos are followed; stops at `end`, `wait_anim` ("anim_end"), 2000 commands or frame 1000 ("limit"). Returns `{motion, motion_name, anim_id, anim_name, end_frame, length, stop, script, events}`; each event `{frame (1-based, as frame-data sites count), op, name, addr, words, ...}` with decoded fields for `hitbox` (`id, group, bone, damage, size, ox/oy/oz, angle, kbg, wbk, bkb, element, element_name, shield_damage, hit_ground, hit_air`), `gfx`, `sfx`, `hitbox_damage/size`, `hitbox_remove`, `cmd_var`, `body_state`, `hurtbox_state`, `visibility`, ... Names for opcodes 10-58 follow the community decoders, checked against the decomp's handlers; 59 is Geno's escape (skipped by its length) |
+| `gd.timeline(port [, motion])` | the **effective** script of the current action (or of `motion`'s row), including Geno overlays and Geno states' reused subactions. Walked read-only: `wait` adds frames, `wait_until` jumps to an animation frame, loops / calls / gotos and Geno ORIG / SKIP are followed; stops at `end`, `wait_anim` ("anim_end"), 2000 commands or frame 1000 ("limit"). Returns `{motion, motion_name, anim_id, anim_name, end_frame, length, stop, script, events, conditional}`; each event `{frame (1-based), op, name, addr, words, ...}` with decoded fields for `hitbox` (`id, group, bone, damage, size, ox/oy/oz, angle, kbg, wbk, bkb, element, element_name, shield_damage, hit_ground, hit_air`), `gfx`, `sfx`, `hitbox_damage/size`, `hitbox_remove`, `cmd_var`, body/hurtbox/visibility states. Opcode 59 names are `geno.SET`, `geno.PUT`, `geno.CALL`, `geno.CHG`, etc.; fields include `sub`, `flags`, `var`, `operand_is_var`, `compare`, `arg1..argN`, readable `detail`, and raw `words`. IF/IFV mark `conditional=true`: the static walk shows their fall-through path, not evaluated fighter variables |
 | `gd.set_motion(port or {ports}, motion [, frame [, rate [, lift]]])` | offline, gameplay. At the next boundary (at once when paused) the fighter enters `motion` - the plain `Fighter_ChangeMotionState` its entry function would make - then the game runs up to `frame` (default 1; entering is frame 1) and pauses, so the fighter shows that frame **with everything its script did on the way** (hitboxes included). `lift` > 0 puts a grounded fighter in the air that high first (aerials would land at once). Several ports in one call (or calls before the same boundary) start together: **lock-step**. Motions are bounded by the decomp's tables (common states; a vanilla fighter's specials, Kirby clones use Kirby's) so a garbage row is never entered. States whose entry function sets more up than the motion change itself may misbehave (specials with state variables) |
 | `gd.mirror_pad(from, to)` / `gd.mirror_pad()` | offline, gameplay: port `to` gets exactly what port `from` sends (after every other source) - two fighters under the same inputs; `to` must be a human port (CPUs ignore pads) |
 | `gd.lab_request([clear])` | true when SOLO > LAB (or `MELEE_LAB=1`) asked for the Lab |
@@ -454,7 +477,7 @@ shown; a text line lists every window `fN-M #id dmg% angle kbg bkb wbk radius`),
 `PAGEDOWN` scrub the focused fighter's move one frame (replays it from frame 1 via
 `set_motion`; hold to repeat), `HOME` replay from frame 1, `C` lock-step (every fighter into the
 focused fighter's move at its scrub frame), `R` mirror P1's controller onto P2. Console: `lab move
-<motion id> [frame]`, `lab events [port]` (the decoded script).
+<motion id> [frame]`, `lab events` (the focused fighter's decoded script).
 
 Not built: live edits written back to `experiment/brawl-kirby/tuning.json` (the "later" item).
 
@@ -685,12 +708,15 @@ Debug read: `gd.lab_peek(addr [, n])` returns n (<= 64) raw MEM1 bytes as hex, r
    live.
 
 What reloads cleanly: attributes, jumps, special attributes, hooks, on_land, change-action checks,
-behaviour parameters, Geno state rows (behaviour, callbacks, flags, landing, motion), subaction
-overlay words (inline or words files), and the Lab script.
+behaviour parameters, state next/land targets and landing/root-motion/counter parameters,
+same-layout subaction overlay words (inline or words files), and the Lab script.
 
 What does not:
-- **Layout changes.** The profile set, what a profile attaches to, a profile's Geno state count,
-  or its overlay list. The restored state would not fit, so it says so and **restarts the match**
+- **Layout changes.** The profile set or attachment; state count/order/names, behavior or any
+  anim/iasa/phys/coll callback; state subaction/like/flags/move id; article list/order; overlay
+  list/order or script-slot lengths/offsets. Active fighters copy motion rows and callbacks, so
+  rebuilding those rows alone cannot safely update them. Reload names the reason in
+  `geno: hot reload: layout changed (...)` and **restarts the match**
   (`gd.lab_leave("restart")`: the loading screen, then the same fighters on the same stage).
 - **Disc / file data** (Pl*.dat, animations, models): these need a new match.
 - `on_init` hooks are not re-run.
@@ -1601,6 +1627,12 @@ leave it through Melee's own code. Geno never edits the vanilla or m-ex tables.
 | `land` | where it goes when it lands (air collision); default Melee's Landing |
 | `landing_lag` | with the default landing: LandingFallSpecial with this lag |
 
+Numeric `subaction` and the LAB's `anim_id` are the same row number. A Geno state reuses that
+row's animation and effective script, including any `subactions` overlay on it. `lab events`,
+the timeline, move card and frame-data export all read it through `gd.timeline`.
+Conditional scripts label the static fall-through path; exports include `script_conditional`
+and omit conditional static IASA/autocancel estimates, while sampled frame data remains measured.
+
 Targets (everywhere in geno.json: `next`, `land`, `on_land`, `specials`): a motion id, `"motion:N"`,
 `"special:N"`, `"geno:N"`, `"geno:<name>"`, `"auto"` (Wait on the ground, Fall in the air),
 `"helpless"` (Wait / FallSpecial).
@@ -1637,12 +1669,20 @@ writable from scripts (GET / PUT / IFV / VALUE conditions).
 | `geno.drill.end` | drill.end | none | drill.end | both | helpless unless it hit | (stays) |
 
 "The Glide state" = the profile's first state with that behaviour. Callback names per slot:
-anim `next loop hold glide.start glide tornado drill drill.end`; iasa `none glide`; phys `none air
+anim `next loop hold glide.start glide tornado drill drill.end`; iasa `none interrupt glide`; phys `none air
 air_nodrift ground auto glide.start glide glide.attack glide.end tornado drill.start drill
 drill.end`; coll `none air air_noledge ground ground_stop both glide drill`; any slot `like`.
 `air` = Melee's aerial physics (gravity, fast fall, drift) / air collision with ledge grab
 (platforms drop-through like FallSpecial). `both` = ground and air without changing state (walk
 off -> airborne, land -> grounded, same state). Stable ids in geno_game_v2.inc.
+
+**IASA trap:** the default `iasa` is `none` for ordinary `geno.air` / `geno.ground` states.
+An IASA script command sets the flag but does not provide an input callback. Use
+`"iasa": "interrupt"` to make the flagged window accept normal interrupts. At fighter load,
+Geno warns once per state per registry load if the effective script contains IASA while its
+effective callback is none, naming the fighter and state. The diagnostic follows calls,
+ORIG and both IF/IFV arms with bounds (2000 commands, 32 pending paths, 8 calls); it does not
+execute the script. Callback edits require a reload restart (14.10).
 
 Per-move variables (`GenoState.move_f[8]` / `move_i[8]`) are **not** cleared by action changes:
 the states of one move hand them on (GlideStart -> Glide -> GlideAttack). Each behaviour's entry
@@ -2255,12 +2295,131 @@ steady states rate x life {2 (flare1), 5.8 (fire1), 6.5 (fireline1), 6.6 (fire2)
 | sub **0x3B HBSTUN** (len 2, v5.5) | word0 `[15:8]` hitbox mask (Melee ids 0-3), `[7]` B is a var; word1 = extra hitstun frames (int immediate 0-255, or an int var ref). A hit by a masked hitbox id adds word1 frames to the victim's hitstun (the damage state's frame count, `mv.co.damage.x0`, after Melee's knockback x 0.4) - Ultimate's `AttackModule::set_add_reaction_frame_revised`. Kept for the rest of the action (cleared at the action change, like REHIT / LINK), so it may come before or after the hitbox command. Two bonused hits on one victim in one frame: the larger. Word0 = `0xEFB2mm00` (mm = mask; `| 0x80` for a var). Rollback: attacker per-hitbox values and the victim's pending bonus live in Geno_StateBlock (a game global). Checked (ACE): Sora jab (overlay on subaction 46: `0xEFB20F00, 20, 0xED310000`) on Fox: hitstun 11 -> 31 frames; `MELEE_GENO_STUNLOG=1` logs base + bonus |
 | sub **0x3C HBFLAGS** (len 2, v5.5) | word0 `[15:8]` hitbox mask (Melee ids 0-3), `[7]` B is a var; word1 = contact flags (int): 1 NO_HITLAG (no hitlag for the victim or the attacker), 2 FLINCHLESS (the damage lands; no knockback, no damage state), 4 ZERO_DAMAGE (the hit adds no damage: a detector), 8 FORCE_REACTION (the victim reacts even with `no_kb` set; wins over FLINCHLESS). Ultimate's ATTACK `disable_hitlag` / `flinchless` / zero damage and `AttackModule::set_force_reaction`. Kept for the action (cleared at the action change); fighter hitboxes on fighters. The hit still registers (on_hit, ATTACK_CONNECTED, the victim list). Word0 = `0xEFC2mm00`. Checked (ACE): Sora jab with flags 7 on Fox: 3 hits registered, 0 % and no damage state (without: 11 hitstun frames and 8.2 % after 3) |
 | value **0x1B ANIM_RATE writable** | `ftAnim_8006F0FC(gobj, rate)`: clip rate and `frame_speed_mul`; ftAction's timer steps by `frame_speed_mul`, so script waits stay in clip frames while game time stretches (Ultimate FT_MOTION_RATE r = PUT ANIM_RATE 1/r) |
+| hook **8 `geno.dash.search`** (v5.4) | arg `[7:0]` stick threshold x100, `[23:8]` range (units, 0 = none). One frame of an aim window between two dashes. No target yet: the nearest fighter of another port within range locks (MOVE_I0 = 1, MOVE_I1 = its port). Still none: a stick sample whose vector length reaches the threshold is stored as a world unit vector (MOVE_F2/F3, MOVE_I2 = 1), the raw polar angle, the full circle, no clamp and no ground rule. A script clears MOVE_I0 / MOVE_I2 where the window opens. Event 43 |
+| hook **9 `geno.dash.aim`** (v5.4) | arg `[7:0]` degrees from vertical inside which the facing is kept, `[15:8]` / `[23:16]` the "up" range in degrees. MOVE_F0/F1 = the heading as a **world** unit vector: at the locked target's position now, else the stored stick sample, else straight ahead. MOVE_I3 = 1 inside the up range, 2 inside the same range 180 degrees round, else 0. The fighter turns to the heading's side unless it is within the first argument of straight up or down. A target that is gone unlocks. Scripts multiply into a speed and PUT VEL_X / VEL_Y. Event 44 |
+| hook **10 `geno.brake`** (v5.4) | arg `[15:0]` brake x1000, `[30:16]` speed cap x100 (0 = none), bit 31 horizontal only: cap the fighter's own speed, then take the brake off it along its own direction, never past rest. On the ground it acts on the ground speed. One call = one step |
+| value **0x3D STICK_LEN** (f, v5.4) | the stick vector's length (the dead-zone test Ultimate's status code makes: `IFV STICK_LEN GE 0.25`) |
+| value **0x3E FALL_LIMIT** (f, W, v5.4) | this action's fall-speed limit: while it is above the fighter's terminal velocity, `ftCommon_Fall` clamps the vertical speed to it instead (every aerial phys that falls goes through there). Cleared at each action change; 0 = the fighter's own. For a script-set dive faster than terminal velocity (Ultimate's `SET_SPEED_EX` on a down air); a fighter whose scripts never PUT it is unchanged |
+| key **`motion_anims`** (v5.4) | `[{"motion": id, "subaction": row}]`, up to 8 per fighter: a common motion state plays this fighter's own row (clip and script) instead of the one Melee's state table names. Made for the grab pull-in: Melee's CatchPull (213) and CatchDashPull (215) carry the Catch clip on at its current frame, so a fighter with a pull clip of its own (every Ultimate fighter) looked like a whiff on a successful grab. With an entry for those states the grab-connect code (`fn_800D9CE8`) starts the row at frame 0; `Fighter_ChangeMotionState` applies the map to any state. Give the row an empty overlay script if the host row has one. No entry = unchanged |
+| phys **`brake`** (callback id 15, v5.4) | once a game frame, whatever the clip's rate: MOVE_F5 comes off the speed along its own direction (the ground speed on the ground; MOVE_I4 bit 0 = the horizontal only in the air); in the air MOVE_F6 is the gravity per frame and MOVE_F7 the vertical speed's clamp either way (0 = none). The script PUTs them where the state begins. For states whose kinetics are a status's own numbers, not the fighter's attributes |
+| coll **`both`**, landing (v5.4) | a state on a row whose clip drives the fighter (`x594_b0`) keeps the horizontal speed it had on landing; before, `ftCommon_8007D6A4` replaced it with the clip's root motion, so a scripted dash into the floor stopped dead |
+
+Sora's side special is the status code's own state machine (workspace
+`_research/ultimate-sonic-blade-spec-2026-10-03.md`): dash 1 straight and never aimed, then SEARCH
+(hook 8 each frame, phys `brake`), TURN (level / up / down clip), and a dash along hook 9's heading;
+the chain continues on stick deflection at a dash's last frame or the special button latched inside
+its window. Test `geno_v54_dash` (the three pure cores, hook names). Hooks 6 and 7 are unchanged and
+no longer used by that move.
 
 Sora's side / up / down specials (workspace `ports/ir/tools/trail_specials_geno.py`, with `--magic` the
 combine step that puts trail_magic_geno.py's neutral special first) are 13 Geno states; long overlays go
 in word files (`"file"`), the registry's JSON reader has a node cap. Test `geno_v52_lockon` (the aim,
 hook 6 by name, PUT ANIM_RATE, HBDMG). Counter scaling in game (ACE): Fox jab 3.64 % -> 9.0 (min), Ganondorf
 jab 7.28 -> 10.9, fsmash 16.71 -> 25.1 (x1.5), fresh fsmash 22.0 -> 30.0 (max); Sora took 0 each time. In-game numbers: the workspace lane notes (`_build/agents/echo/NOTES.md`).
+
+### 19.13 Standalone native items (source update 2026-10-03)
+
+Fix1: material roots and canonical mesh paths share Windows drive/UNC namespace
+normalization. Visual colour/part assets preload one job per engine tick, outside
+Lua callbacks. Spawn refuses while its colour is preparing; optional-art errors
+finish with the fallback, and spawn itself performs no loading. Failed/budget-
+aborted creating callbacks remove their newly created items without awards.
+The drive defaults to bob 0.6 and logs when its four-visible/four-hidden blink
+phase starts. These corrections need native acceptance after integration.
+
+Item hooks default to standalone Geno items. Each script explicitly enables
+common vanilla/m-ex events using `gd.item_events{vanilla=true,mex=true}`. Vanilla
+projectiles/stage enemies and fighter-owned Geno articles stay excluded. Payload
+belongs only to standalone Geno rows/events; vanilla/m-ex payload options refuse.
+
+
+Standalone definitions are independent of fighter profiles. Their native kinds are
+`GENO_ITEM_KIND_BASE = GENO_ART_KIND_END = 4608` through `4671` (64 immutable
+registry slots); existing article numbers remain unchanged. Vanilla/Pokemon/stage
+kinds are below the native range. On mod discs, registration checks the active
+m-ex item table for overlap and refuses conflicting definitions. These items do
+not require `MxDt.dat`, PowerPC item code, a fighter owner, or a DAT model writer.
+
+A mounting mod supplies `items/<name>/item.json`, with `version: 1` and a lowercase
+name using letters, digits, `_` or `-`. Definitions register at mod boot; repeated
+identical registration from the same origin returns the same definition, while
+changed definitions or duplicate names from another origin are refused until
+restart. Unknown/duplicate fields and invalid numeric ranges are refused. Item files use
+an intentionally strict lexical subset: JSON objects, decimal numbers (including
+fraction/exponent forms), booleans, and unescaped printable ASCII strings. Arrays,
+null, comments, trailing commas, backslashes/escapes, non-ASCII and raw control
+characters are refused; this does not change the older fighter-profile parser.
+
+```json
+{
+  "version": 1,
+  "name": "drive",
+  "physics": {
+    "gravity": 0.12, "terminal_velocity": 4,
+    "bounce": 0, "friction": 0.15,
+    "floor_rest": true, "stage_collision": true
+  },
+  "collection": "touch", "radius": 7, "ports": 1, "teams": 15,
+  "lifetime": 300, "blink": 60,
+  "count_against_cap": false, "held": false, "thrown": false,
+  "payload": {"colour": "red", "amount": 20},
+  "visual": {
+    "asset_mod": "envoy_drives_sa2",
+    "model": "models/drive_red", "glass": "models/drive_glass",
+    "scale": 2.5, "spin": 6, "tilt": 12, "height": 4.55,
+    "hover": 6, "bob": 0.6, "bob_speed": 3
+  }
+}
+```
+
+`collection` accepts `touch` or `none`; `grab`, held and thrown standalone items
+are explicitly refused. Default hitboxes/hurtboxes are absent. `ports` is a six-bit
+fighter-slot mask (bit 0 is slot 1); `teams` is a four-bit team mask. Lifetime and
+blink count logic frames, and blink cannot exceed lifetime. Payload currently has
+only `colour` (`red`, `green`, `blue`, `yellow`, `white`) and integer `amount`
+(0..1000000), rather than arbitrary script values.
+
+`count_against_cap` selects the `Item_802674AC` hold-kind policy: true uses
+common-item class `ITEM_HOLD_0`, false uses character-item class `ITEM_HOLD_8`.
+The default is false so mission drops do not consume the common random-item cap;
+a hard limit of 128 live native standalone items also applies, alongside the
+game's total item pool. This classification is a cap
+policy, not permission to hold the item. No vanilla hold/throw procedures are
+reused for standalone definitions.
+
+Physics uses swept point collision against floor, wall and ceiling segments,
+including script/mission collision and pass-through floors. Resting pickups track
+the floor line and use mpLib speed for moving-floor carry. Bounce affects reflected
+velocity and floor friction removes the specified fraction of horizontal velocity
+(default 0.15). This is point collision, not a model-sized ECB. These source paths
+have not been run in the game.
+
+Visual paths are contained relative stems without extensions; the loader resolves
+GXMS assets and their material sidecars, with an optional glass part and optional
+asset mod. The fallback is an engine primitive, so optional converted art is not
+required. `hover` (0..100, default 0) lifts the visual above the physics anchor;
+`height` (0..1000, default 0) is unscaled model height and also sets fallback
+primitive height when positive. `tilt` (-90..90 degrees, default 0) inclines the
+long axis before Y spin. Spin and bob speed are degrees per logic frame. The
+example turns at 360 degrees/second and bobs with a two-second period at 60 Hz;
+its model height is 11.375 units before tilt. Visual Y is anchor Y plus hover
+and the sinusoidal bob. Collision stays on the floor, following its moving line
+and falling off edges. Collection uses a capsule from the anchor to the visual
+top, with radius multiplied by visual scale; standing underneath and jumping
+through it both collect. These fields reconstruct from snapshot-owned age and
+position, without a second host-side trajectory. Their fixtures are source and
+syntax checked; native execution and appearance remain pending.
+Script model instances also accept X/Y/Z rotations, with inverse-transpose normals
+and matching alpha sorting. Collision-bearing script model instances refuse X/Y
+rotation because mpLib sidecars describe two-dimensional segments.
+
+The per-item runtime belongs to snapshotted game memory. Immutable definitions
+and visual assets remain host-side. Source fixtures cover parsing, lifecycle and
+visual contracts; no game build or launch was performed for this source update.
+Native acceptance still requires floor/pass-through-platform rest, collection,
+expiry, thirty live items, and LAB save/load/rewind with items in flight. Full
+netplay still needs item-definition fingerprints and deterministic replicated
+spawn/despawn inputs; Lua gameplay writes remain offline-only.
 
 ## 20. Geno effects (`.gfx.json`, format v1): the effect IR
 

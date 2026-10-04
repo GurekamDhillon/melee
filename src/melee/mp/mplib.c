@@ -14,6 +14,9 @@
 #include <placeholder.h>
 #include <stdbool.h>
 #include <stddef.h>
+#if defined(TARGET_PC)
+#include <string.h>
+#endif
 
 #include "forward.h"
 #include "mpcoll.h"
@@ -85,6 +88,35 @@ static size_t const groundCollJoint_count = 256;
 /* 4D64C0 */ static CollJoint* groundCollJoint;
 /* 4D64C4 */ static CollJoint* jointListStart;
 /* 4D64C8 */ static CollJoint* jointListEnd;
+#if defined(TARGET_PC)
+extern int ScriptGame_StageJointActive(int joint);
+extern int ScriptGame_StageLineActive(int line);
+extern int ScriptGame_StageJoint(int joint);
+static int scriptBatchDepth;
+static u8 scriptBatchDirty[1024];
+void mpScriptInvalidateBounding(void) { didCheckBounding = false; }
+void mpScriptBatchBegin(void) { ++scriptBatchDepth; }
+void mpScriptBatchEnd(void)
+{
+    if (scriptBatchDepth <= 0 || --scriptBatchDepth) return;
+    /* No stage collision is loaded in a headless scene: there is nothing to rebuild. */
+    if (mpLib_804D64B4 != NULL) {
+        mpIsland_ScriptBatch(scriptBatchDirty, mpLib_804D64B4->joint_count);
+    }
+    memset(scriptBatchDirty, 0, sizeof scriptBatchDirty);
+    mpScriptInvalidateBounding();
+}
+static void mpScriptIslandRefresh(int joint, int start, int count, bool enabled)
+{
+    if (scriptBatchDepth && joint >= 0 && joint < 1024 && ScriptGame_StageJoint(joint)) {
+        scriptBatchDirty[joint] = 1;
+        return;
+    }
+    mpIsland_8005B334(joint, start, count, enabled);
+}
+#else
+#define mpScriptIslandRefresh mpIsland_8005B334
+#endif
 /* 4D64CC */ static s32 mpLib_804D64CC;
 /* 4D64D0 */ static s32 mpLib_804D64D0;
 /* 4D64D4 */ static s32 mpLib_804D64D4;
@@ -1043,11 +1075,18 @@ int mpLineGetNext(int line_id)
 {
     s16 result = groundCollLine[line_id].x0->next_id1;
     int ret = result;
+#if defined(TARGET_PC)
+    if (!ScriptGame_StageLineActive(line_id)) return -1;
+#endif
 
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v1 = &groundCollVtx[groundCollLine[line_id].x0->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].x0->v0_idx];
 
@@ -1064,11 +1103,18 @@ int mpLineGetPrev(int line_id)
 {
     s16 result = groundCollLine[line_id].x0->prev_id1;
     int ret = result;
+#if defined(TARGET_PC)
+    if (!ScriptGame_StageLineActive(line_id)) return -1;
+#endif
 
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v0 = &groundCollVtx[groundCollLine[line_id].x0->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].x0->v1_idx];
 
@@ -1648,6 +1694,9 @@ bool mpCheckFloor(float ax, float ay, float bx, float by, float y_offset,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         CollLine* line_r26;
         int var_r25;
         int var_r24;
@@ -1795,6 +1844,9 @@ bool mpCheckFloorRemap(float ax, float ay, float bx, float by, float y_offset,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         CollLine* line;
         int count;
         int count2;
@@ -1965,6 +2017,9 @@ bool mpCheckCeiling(float ax, float ay, float bx, float by, Vec3* vec_out,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         CollLine* line_r26;
         int var_r25;
         int var_r24;
@@ -2105,6 +2160,9 @@ bool mpCheckCeilingRemap(float ax, float ay, float bx, float by, Vec3* vec_out,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         CollLine* r26;
         int r25;
         int r24;
@@ -2337,6 +2395,9 @@ bool mpCheckLeftWall(float ax, float ay, float bx, float by, Vec3* vec_out,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         if (joint->flags & CollJoint_TooFar) {
             continue;
         }
@@ -2477,6 +2538,9 @@ bool mpCheckLeftWallRemap(float ax, float ay, float bx, float by,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         if (joint->flags & CollJoint_TooFar) {
             continue;
         }
@@ -2649,6 +2713,9 @@ bool mpCheckRightWall(float ax, float ay, float bx, float by, Vec3* vec_out,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         if (joint->flags & CollJoint_TooFar) {
             continue;
         }
@@ -2784,6 +2851,9 @@ bool mpCheckRightWallRemap(float ax, float ay, float bx, float by,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         CollLine* line;
         int count;
         int dynamic_count;
@@ -2957,6 +3027,9 @@ bool mpLib_800511A4_RightWall(float ax, float ay, float bx, float by, float cx,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         CollLine* line;
         int count;
         int dynamic_count;
@@ -3101,6 +3174,9 @@ bool mpLib_800515A0_LeftWall(float a0x, float a0y, float a1x, float a1y,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         CollLine* line;
         int count;
         int dynamic_count;
@@ -3240,6 +3316,9 @@ int mpLib_8005199C_Floor(Vec3* vec, int joint_id_skip, int joint_id_only)
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         if (joint->flags & CollJoint_TooFar ||
             joint_id_skip == joint - groundCollJoint)
         {
@@ -3333,6 +3412,9 @@ int mpLib_80051BA8_Floor(Vec3* out_vec, int line_id_skip, int joint_id_skip,
     }
 
     for (joint = jointListStart; joint != NULL; joint = joint->next) {
+#if defined(TARGET_PC)
+        if (!ScriptGame_StageJointActive((int)(joint - groundCollJoint))) continue;
+#endif
         if (joint->flags & CollJoint_TooFar) {
             continue;
         }
@@ -3640,7 +3722,11 @@ static inline int mpLineGetNextCheckInline(MapLine* line, s16 result)
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].x0->v0_idx];
 
@@ -3650,7 +3736,11 @@ static inline int mpLineGetNextCheckInline(MapLine* line, s16 result)
         }
     }
 
-    return line->next_id0;
+    return
+#if defined(TARGET_PC)
+        (line->next_id0 != -1 && !ScriptGame_StageLineActive(line->next_id0)) ? -1 :
+#endif
+        line->next_id0;
 }
 
 static inline int mpLineGetPrevCheckInline(MapLine* line, s16 result)
@@ -3658,7 +3748,11 @@ static inline int mpLineGetPrevCheckInline(MapLine* line, s16 result)
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].x0->v1_idx];
 
@@ -3668,7 +3762,11 @@ static inline int mpLineGetPrevCheckInline(MapLine* line, s16 result)
         }
     }
 
-    return line->prev_id0;
+    return
+#if defined(TARGET_PC)
+        (line->prev_id0 != -1 && !ScriptGame_StageLineActive(line->prev_id0)) ? -1 :
+#endif
+        line->prev_id0;
 }
 
 static inline int mpLineGetPrevCheckInlineVtx(MapLine* line, s16 result,
@@ -3677,7 +3775,11 @@ static inline int mpLineGetPrevCheckInlineVtx(MapLine* line, s16 result,
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v0 = &vtx[line->v0_idx];
             CollVtx* v1 = &vtx[groundCollLine[result].x0->v1_idx];
 
@@ -3697,7 +3799,11 @@ static inline int mpLineGetNextCheckInlineVtx(MapLine* line, s16 result,
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v1 = &vtx[line->v1_idx];
             CollVtx* v0 = &vtx[groundCollLine[result].x0->v0_idx];
 
@@ -3909,7 +4015,11 @@ static inline int mpLineGetNextInline(int line_id)
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v1 = &groundCollVtx[groundCollLine[line_id].x0->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].x0->v0_idx];
 
@@ -3930,7 +4040,11 @@ static inline int mpLineGetNextCachedInline(int line_id)
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].x0->v0_idx];
 
@@ -3940,7 +4054,11 @@ static inline int mpLineGetNextCachedInline(int line_id)
         }
     }
 
-    return line->next_id0;
+    return
+#if defined(TARGET_PC)
+        (line->next_id0 != -1 && !ScriptGame_StageLineActive(line->next_id0)) ? -1 :
+#endif
+        line->next_id0;
 }
 
 static inline int mpLineGetNextCheckResultFirst(int result, MapLine* line)
@@ -3948,7 +4066,11 @@ static inline int mpLineGetNextCheckResultFirst(int result, MapLine* line)
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].x0->v0_idx];
 
@@ -3958,7 +4080,11 @@ static inline int mpLineGetNextCheckResultFirst(int result, MapLine* line)
         }
     }
 
-    return line->next_id0;
+    return
+#if defined(TARGET_PC)
+        (line->next_id0 != -1 && !ScriptGame_StageLineActive(line->next_id0)) ? -1 :
+#endif
+        line->next_id0;
 }
 
 int mpLib_800534FC_Floor(int line_id)
@@ -4000,7 +4126,11 @@ static inline int mpLineGetPrevInline(int line_id)
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].x0->v1_idx];
 
@@ -4010,7 +4140,11 @@ static inline int mpLineGetPrevInline(int line_id)
         }
     }
 
-    return line->prev_id0;
+    return
+#if defined(TARGET_PC)
+        (line->prev_id0 != -1 && !ScriptGame_StageLineActive(line->prev_id0)) ? -1 :
+#endif
+        line->prev_id0;
 }
 
 static inline int mpLineGetPrevCheckResultFirst(int result, MapLine* line)
@@ -4018,7 +4152,11 @@ static inline int mpLineGetPrevCheckResultFirst(int result, MapLine* line)
     if (result != -1) {
         u32 flags = groundCollLine[result].flags;
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].x0->v1_idx];
 
@@ -4028,7 +4166,11 @@ static inline int mpLineGetPrevCheckResultFirst(int result, MapLine* line)
         }
     }
 
-    return line->prev_id0;
+    return
+#if defined(TARGET_PC)
+        (line->prev_id0 != -1 && !ScriptGame_StageLineActive(line->prev_id0)) ? -1 :
+#endif
+        line->prev_id0;
 }
 
 int mpLib_800536CC_Floor(int line_id)
@@ -4562,6 +4704,9 @@ Vec3* mpLineGetNormal(int line_id, Vec3* normal_out)
 
 bool mpLib_80054ED8(int line_id)
 {
+#if defined(TARGET_PC)
+    if (!ScriptGame_StageLineActive(line_id)) return false;
+#endif
     if (line_id == -1) {
         return false;
     }
@@ -4585,7 +4730,11 @@ static inline int mpLineGetNextFrom(MapLine* line, const u32* flags_base)
     if (result != -1) {
         u32 flags = flags_base[result * 2];
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].x0->v0_idx];
 
@@ -4595,7 +4744,11 @@ static inline int mpLineGetNextFrom(MapLine* line, const u32* flags_base)
         }
     }
 
-    return line->next_id0;
+    return
+#if defined(TARGET_PC)
+        (line->next_id0 != -1 && !ScriptGame_StageLineActive(line->next_id0)) ? -1 :
+#endif
+        line->next_id0;
 }
 
 static inline int mpLineGetPrevFrom(MapLine* line, const u32* flags_base)
@@ -4605,7 +4758,11 @@ static inline int mpLineGetPrevFrom(MapLine* line, const u32* flags_base)
     if (result != -1) {
         u32 flags = flags_base[result * 2];
 
-        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)) {
+        if ((flags & LINE_FLAG_ENABLED) && !(flags & LINE_FLAG_HIDDEN)
+#if defined(TARGET_PC)
+            && ScriptGame_StageLineActive(result)
+#endif
+        ) {
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].x0->v1_idx];
 
@@ -4615,7 +4772,11 @@ static inline int mpLineGetPrevFrom(MapLine* line, const u32* flags_base)
         }
     }
 
-    return line->prev_id0;
+    return
+#if defined(TARGET_PC)
+        (line->prev_id0 != -1 && !ScriptGame_StageLineActive(line->prev_id0)) ? -1 :
+#endif
+        line->prev_id0;
 }
 
 bool mpLinesConnected(int start_id, int target_id)
@@ -4862,12 +5023,16 @@ void mpLib_80055E24(int joint_id)
     {
         var_r6 = true;
     }
-    mpIsland_8005B334(joint_id, joint->inner->vtx_start,
+    mpScriptIslandRefresh(joint_id, joint->inner->vtx_start,
                       joint->inner->vtx_count, var_r6);
 }
 
 void mpLib_80055E9C(int joint_id)
 {
+#if defined(TARGET_PC)
+    extern int ScriptGame_StageSlotJointUpdate(int);
+    if (ScriptGame_StageSlotJointUpdate(joint_id)) return;
+#endif
     float f31;
     float f30;
     float f0;
@@ -4912,7 +5077,7 @@ void mpLib_80055E9C(int joint_id)
             {
                 var_r6 = true;
             }
-            mpIsland_8005B334(joint_id, joint->inner->vtx_start,
+            mpScriptIslandRefresh(joint_id, joint->inner->vtx_start,
                               joint->inner->vtx_count, var_r6);
         }
         return;
@@ -5059,7 +5224,7 @@ after1:
     {
         var_r6 = true;
     }
-    mpIsland_8005B334(joint_id, joint->inner->vtx_start,
+    mpScriptIslandRefresh(joint_id, joint->inner->vtx_start,
                       joint->inner->vtx_count, var_r6);
 }
 
@@ -5097,7 +5262,7 @@ void mpLib_8005667C(int joint_id)
     {
         var_r6 = true;
     }
-    mpIsland_8005B334(joint_id, joint->inner->vtx_start,
+    mpScriptIslandRefresh(joint_id, joint->inner->vtx_start,
                       joint->inner->vtx_count, var_r6);
 }
 
@@ -5449,7 +5614,7 @@ void mpLib_80057528(int line_id)
         CollLine* line = &groundCollLine[line_id];
         CollJoint* joint = &groundCollJoint[joint_id];
         line->flags |= LINE_FLAG_ENABLED;
-        mpIsland_8005B334(joint_id, joint->inner->vtx_start,
+        mpScriptIslandRefresh(joint_id, joint->inner->vtx_start,
                           joint->inner->vtx_count,
                           !(joint->flags & CollJoint_B11));
         joint->xE = true;
@@ -5463,7 +5628,7 @@ void mpLib_800575B0(int line_id)
         CollLine* line = &groundCollLine[line_id];
         CollJoint* joint = &groundCollJoint[joint_id];
         line->flags &= ~LINE_FLAG_ENABLED;
-        mpIsland_8005B334(joint_id, joint->inner->vtx_start,
+        mpScriptIslandRefresh(joint_id, joint->inner->vtx_start,
                           joint->inner->vtx_count,
                           !(joint->flags & CollJoint_B11));
         joint->xE = true;
@@ -5533,7 +5698,7 @@ void mpJointListAdd(int joint_id)
 
     mpLib_80057424(joint_id);
     j_inner = joint->inner;
-    mpIsland_8005B334(joint_id, j_inner->vtx_start, j_inner->vtx_count,
+    mpScriptIslandRefresh(joint_id, j_inner->vtx_start, j_inner->vtx_count,
                       !(joint->flags & CollJoint_B11));
     joint->xE = true;
 }
@@ -5619,7 +5784,7 @@ void mpLib_80057BC0(int joint_id)
         line_r6++;
     }
     j_inner = joint->inner;
-    mpIsland_8005B334(joint_id, j_inner->vtx_start, j_inner->vtx_count, false);
+    mpScriptIslandRefresh(joint_id, j_inner->vtx_start, j_inner->vtx_count, false);
     joint->xE = true;
 }
 
@@ -5636,7 +5801,7 @@ void mpLib_80057FDC(int joint_id)
         var_r6 = true;
     }
     j_inner = joint->inner;
-    mpIsland_8005B334(joint_id, j_inner->vtx_start, j_inner->vtx_count,
+    mpScriptIslandRefresh(joint_id, j_inner->vtx_start, j_inner->vtx_count,
                       var_r6);
 }
 
@@ -5653,7 +5818,7 @@ void mpLib_80058044(int joint_id)
         var_r6 = true;
     }
     j_inner = joint->inner;
-    mpIsland_8005B334(joint_id, j_inner->vtx_start, j_inner->vtx_count,
+    mpScriptIslandRefresh(joint_id, j_inner->vtx_start, j_inner->vtx_count,
                       var_r6);
 }
 
@@ -5895,7 +6060,11 @@ void mpLib_80058560(void)
         for (j = i + 1; j < temp_r29->joint_count; j++) {
             cur_i = &groundCollJoint[i];
             cur_j = &groundCollJoint[j];
-            if (cur_i->flags & CollJoint_Enabled &&
+            if (
+#if defined(TARGET_PC)
+                ScriptGame_StageJointActive(i) && ScriptGame_StageJointActive(j) &&
+#endif
+                cur_i->flags & CollJoint_Enabled &&
                 !(cur_i->flags & CollJoint_Hidden) &&
                 cur_j->flags & CollJoint_Enabled &&
                 !(cur_j->flags & CollJoint_Hidden))
@@ -6065,7 +6234,11 @@ void mpBoundingCheck(float left, float bottom, float right, float top)
     CollJoint* curr = jointListStart;
 
     while (curr != NULL) {
-        if (curr->flags & CollJoint_Enabled &&
+        if (
+#if defined(TARGET_PC)
+            ScriptGame_StageJointActive((int)(curr - groundCollJoint)) &&
+#endif
+            curr->flags & CollJoint_Enabled &&
             !(curr->flags & CollJoint_Hidden))
         {
             if (curr->flags & CollJoint_B10) {

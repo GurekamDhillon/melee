@@ -71,6 +71,13 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | Variable | Effect |
 |---|---|
 | `MELEE_ISO=<path>` | disc image, if not passed as `--iso` |
+| `MELEE_RUN_OWNER=<tag>` | launcher ownership; agents must set it and finish with `runs.py wait NAME`, then `runs.py status --owner TAG` empty |
+| `MELEE_UNATTENDED=1` | wrapper defaults: 300-second overall limit and watchdog action `exit`; `run.sh --test` sets it |
+| `MELEE_MAX_SECONDS=N` | wrapper overall limit; `run.sh --max-seconds N` overrides; 0 disables, interactive default 0 |
+| `MELEE_WATCHDOG_SECS=N` | missing-main-tick deadline, default 10 seconds; 0 disables; debugger/system-modal dialogs suspend enforcement |
+| `MELEE_WATCHDOG_ACTION=log\|dump\|exit` | interactive default log, unattended default exit; dump/exit attempt `hang.dmp`, exit uses code 86 |
+| `MELEE_SCRIPT_WATCHDOG_SECS=N` | recurring failing/refusing Lua callback summary interval, default 10 seconds |
+| `MELEE_WATCHDOG_TEST=1` | explicit opt-in for console `watchdog-stall 1..120` (diagnostic tests only) |
 | `MELEE_DIRECTINPUT=1` | let SDL enumerate DirectInput joysticks (off by default: it could stall the first frame for seconds) |
 | `MELEE_SLIPPI_MODE=loopback\|direct` | opt-in experimental two-client replay driver; absent means the existing replay/netplay paths |
 | `MELEE_SLIPPI_REPLAY_ROLE=1\|2` | fixture player owned locally; Direct adopts the server's assigned port |
@@ -88,7 +95,16 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted input) |
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
 | `MELEE_NO_ONBOARD=1` | skip the first boot's visit to SETTINGS > CONTROLS (also skipped for any `MELEE_SCENE` / `MELEE_PAD_SCRIPT` run; settings.cfg `onboarded=1` records it) |
+| `MELEE_PROFILER=1` | bounded native zones/counters; see workspace `docs/profiling.md` |
+| `MELEE_PROF_REPORT=<path>` | JSON run report on clean shutdown or `prof report` |
+| `MELEE_PROF_TRACE=<path>` | Chrome/Perfetto JSON trace; also enables shutdown trace |
+| `MELEE_PROF_HITCH_MS=<ms>` | work-time hitch threshold, default 16.6667 ms; excludes pacing |
+| `MELEE_PROF_GPU=1` | request optional timestamp-query device feature at startup |
+| `MELEE_MSAA=1 or 4` | native multisampling request; benchmark uses 4, default 1 |
+| `MELEE_SYNCTEST_BENCH=1` | test-only offline scene-counter SyncTest; combine with `MELEE_SYNCTEST=12` |
+| `GW_PROF_TRACY=1` | build-time optional Tracy client; forbidden with `GW_RELEASE_BUILD=1` |
 | `MELEE_PROFILE=1` | per-frame timing split, percentiles, histogram (see section 20) |
+| `MELEE_SYNCTEST_BENCH=1` | test-only offline SyncTest frame source for ordinary matches; pair with `MELEE_SYNCTEST=12` to force the deployed maximum rollback depth after warmup. Existing render-pool safety may defer resimulation; report achieved `rollback.frames`. Refuses takeover while rollback/netplay owns snapshots. |
 | `MELEE_TURBO=1` / `--turbo` | accelerate simulation with a virtual clock and muted audio; requires `MELEE_PAD_SCRIPT` or `MELEE_LAB_BATCH`, refuses netplay/Slippi/fake rollback and ordinary player windows |
 | `MELEE_TURBO_RENDER=N` | present every Nth game frame in turbo (default 8, 0 never; 0-10000); hidden/minimised windows never present |
 | `MELEE_TURBO_DRAWS=1` | retain display lists and skinning on unpresented turbo match frames; normally suppressed while render callbacks still run |
@@ -108,6 +124,48 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 `MELEE_WINDOW_HIDE=1` remains unsuitable for realtime play: a hidden window makes the D3D11
 present block. Turbo runs GX/EFB work offscreen and skips swapchain presentation while hidden.
 
+### Agent lifetime ownership
+
+Always launch through the workspace's `tools/port/run.sh` with `MELEE_RUN_OWNER`
+and a distinct sandbox. Native Windows Python creates the suspended child inside
+a Windows 10+ Job Object atomically, with kill-on-close and no inherited job
+handle. Wrapper death, Ctrl+C, or supervisor death ends only that owned game.
+The supervisor watches bash's native parent handle, including when MSYS `timeout`
+ends only the wrapper. Finish with `python tools/port/runs.py wait NAME`, then
+`python tools/port/runs.py status --owner TAG`; confirm empty before claiming no
+games remain. `--max-seconds N` belongs before the sandbox name; unattended
+default 300 seconds, interactive default no overall limit.
+
+`runs.py status` lists all live games, ownership, window/monitor position, memory
+and heartbeat state; `reap --owner TAG` / `--sandbox NAME` / `--hung` /
+`--older-than SECONDS` combine with AND and only terminate verified tracked
+identities. It never reaps untracked games. Default root `_build` includes agent
+lanes; supply global `--root PATH` before the command to narrow it. `wait` refuses
+ambiguous names. The one-line verdict and `verdict.json` preserve outcome; code
+86 is a hang, 124 an overall timeout, 125 wrapper/reap/launch failure, 130 interrupt.
+
+`heartbeat.json` is atomically refreshed about once a second independently of
+the main thread. `hang.txt` gives stuck main-thread PC/map symbol or image offset,
+scene, last instrumented shim and Lua callback/instruction count. Intentional
+pause, hidden/minimized/DWM cloak, no presentation and no logic progress are
+distinct states. Only the foreground interactive window may hold the adapter;
+ignore/unattended runs cannot open it. General covering by
+other windows is not measurable (`occlusion_known=false`). Native and supervisor
+watchdog enforcement are disabled by `MELEE_WATCHDOG_SECS=0`; the overall limit
+is separate. Debugger/system-modal exemption has a fresh grace interval on release.
+
+Creation-time identity checks allow 1 ms for CIM rounding; no-match `reap` exits 1.
+Disc paths appear as `<disc>` in diagnostic output and run metadata. Unattended
+volume defaults to 0, interactive to 3; explicit `MELEE_VOLUME` overrides either.
+Scene launch has a bounded 30-second `scene-transition` state and never exempts
+a stalled main loop. Pause logging has a 30-second entry cap and summaries.
+
+Progress deadlines: `gd.deadline("staging maze",600)` before staging and
+`gd.deadline_done("staging maze")` after it. Expiry logs once and invokes the
+owner's `on_deadline(name,frames_waited)`; it counts completed live logic frames
+and pauses with logic. A repeated open does not extend a deadline; cancel before
+rearming. See the workspace `tools/port/README.md` for evidence files and tests.
+
 ## Run without the window appearing on a monitor
 
 Some work needs the game running while the user is doing something else on screen. Place the window
@@ -116,7 +174,7 @@ off every monitor at creation time and hide the console:
 ```powershell
 $env:MELEE_WINDOW_X = "30000"; $env:MELEE_WINDOW_Y = "30000"
 Start-Process -FilePath C:\gdm\_build\melee-pc.exe `
-  -ArgumentList '--iso','"C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"' `
+  -ArgumentList '--iso','"<GW_ISO_VANILLA>"' `
   -WorkingDirectory C:\gdm\_build -WindowStyle Hidden -PassThru
 ```
 
@@ -203,8 +261,25 @@ Restore vanilla before handing the machine back (same write, with the original 6
   also the controller test. It has GameCube Adapter recalibrate, a Stick Dead Zone row for SDL
   controllers (settings.cfg `stick_deadzone`, percent; applied through Aurora's `PADGetDeadZones`
   as each SDL pad appears; not shown without one), and How to Play Online (six read-only steps).
-- Not built: button remapping (Aurora's `PADSetButtonMapping` is there for SDL pads; it needs a
-  "press the button for Z" capture screen).
+- Controller remapping is implemented in source at CONTROLS > Remap Controller
+  (`gmfrontend_controls.inc`, `shim_pad.c` / `gw_controls_runtime.inc`). Choose a
+  Game Input, Bind Input, then press/release a physical input. Swap/Also resolves
+  conflicts, with four named profiles, three data presets, live testing, per-stick
+  deadzones, swap sticks, analog-off, digital light/full shield and rumble.
+  The editor uses the original layout for navigation. START+B cancels capture;
+  hold the original START+B for two real seconds in menus to reset the active
+  profile. GC identities are adapter ports; SDL uses GUID/name, falling back to
+  VID/PID/name. Identical SDL devices share profiles. Assign to Port copies the
+  current profile to a connected pad of the same source kind; it does not move
+  the hardware. Persistence uses settings.cfg `ctlNN_id`, `ctlNN_active`,
+  `ctlNN_pP_map/name` (16 device identities, four profiles each).
+  Untouched profiles retain Aurora/adapter calibration. Custom SDL samples use
+  the public SDL handle exposed by Aurora; no Aurora source edits are needed.
+  Script pads are overlaid afterwards and are never remapped.
+- Tap-jump-off remains outstanding: clamping up would break tilts/aim and a
+  local-only game-side preference would desync. No such approximation is shipped.
+  Compile/link, executable tests and real controller/aspect-ratio acceptance are
+  pending. See workspace `_build/tmp/codex-controls-remap-report.md`.
 
 ### The keyboard does not play
 The keyboard is hotkeys only (F9/F10, the console's backquote, `gd.key` for scripts); it never
@@ -254,3 +329,29 @@ endianness bug.
 **Rule for new shims:** any field a shim writes that the game can read must go through a `gw_*`
 accessor. When in doubt, use the accessor - a wrong native store surfaces later as a garbage
 pointer, not as an obvious endianness bug.
+
+### Pipeline warming and covered launches (2026-10-03)
+
+`MELEE_PIPELINE_SKIP` defaults to `1`: a missing GX pipeline on the native
+worker backend skips its draw while compilation proceeds. `0` restores blocking
+waits for diagnostics. This applies to GX draws, including undeclared fighter
+permutations; explicitly warm loaded fighter ports when staging them.
+`AURORA_PIPELINE_WORKERS` selects 1..8 workers (default hardware threads minus
+two, clamped). WebGPU's existing synchronous backend is outside this guarantee.
+
+`MELEE_PIPELINE_COVERAGE_DIR` overrides the learned snapshot directory; Windows
+defaults to `%LOCALAPPDATA%/GD Melee/pipeline-coverage`. Each sandbox retains its
+own mutable SQLite database. Clean shutdown publishes a uniquely named immutable
+snapshot; boot imports the latest eight snapshots. Crashes do not publish a new
+snapshot. The immutable database carries content keys and origin labels, not
+portable driver binaries.
+
+`MELEE_SCENE=mission=<folder>` or `maze=<seed>,<size>` requests staging under
+the loader. An active `mod.json` may declare `"autostart":"mission=<folder>"`
+or `"autostart":"maze=7,12"`; an explicit scene wins. The owning gameplay
+script implements `on_launch(request)` and calls `gd.launch_ready()` after its
+stage and `gd.warm` handles are ready. Missing/failing owners keep the host
+covered; `gd.launch_cancel(reason)` is the explicit escape. See the workspace's
+`docs/scripting.md` no-hitch APIs and `_build/tmp/codex-no-hitch-engine-report.md`
+for restrictions and native acceptance targets. A matching Aurora rebuild is
+required; syntax checks do not establish behavior in an existing EXE.

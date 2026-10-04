@@ -216,7 +216,8 @@ Params make_params(wgpu::Extent3D sourceSize, Vec2<uint32_t> dstSize) noexcept {
     return params;
   }
 
-  const bool stretch = gx::g_gxState.viewportPolicy == AURORA_VIEWPORT_STRETCH;
+  const bool stretch = (gx::g_gxState.viewportPolicy == AURORA_VIEWPORT_STRETCH ||
+                        gx::g_gxState.viewportPolicy == AURORA_VIEWPORT_ASPECT);
   const float scaleX = static_cast<float>(sourceSize.width) / static_cast<float>(logicalSize.x);
   const float scaleY = static_cast<float>(sourceSize.height) / static_cast<float>(logicalSize.y);
   const float scale = std::min(scaleX, scaleY);

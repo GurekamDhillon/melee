@@ -30,6 +30,18 @@ function Adapter.new(catalogue, recipes)
   return setmetatable({catalogue = catalogue, recipes = recipes}, {__index = Adapter})
 end
 
+-- Production generation may select only layouts admitted by the same contract
+-- that checks saved manifests. Never changes recipe certification.
+function Adapter:eligible_templates()
+  local eligible = {}
+  for id, template in pairs(self.catalogue.rooms) do
+    if self.recipes.is_certified(template.recipe) and self.recipes.resolve(template) then
+      eligible[id] = true
+    end
+  end
+  return eligible
+end
+
 local function template_for(self, room)
   return self.catalogue.rooms[room.template_id]
 end

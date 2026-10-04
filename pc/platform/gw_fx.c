@@ -1,3 +1,4 @@
+#include "gw_profiler.h"
 /* gw_fx.c - Geno effects runtime, part 1: the package loader, the simulation and the numeric census.
  * Design: workspace _research/geno-effects-runtime.md; format: docs/geno.md section 20 (.gfx.json v1).
  *
@@ -199,6 +200,8 @@ static void fx_material_read(const fjdoc *d, int root, int e, fx_emitter *m) {
     fj_vec(d, fj_get(d, s, "strength"), m->strength, 2);
     m->blend = fx_enum(fj_s(d, fj_get(d, ma, "blend")), bl, 5, FX_BLEND_ALPHA);
     m->depth_test = (int) fj_num(d, fj_get(d, ma, "depth_test"), 1);
+    { int batch = fj_get(d, ma, "additive_batch");
+      m->additive_batch = batch >= 0 && d->n[batch].type == FJ_BOOL && d->n[batch].num == 1; }
     m->alpha_test = at >= 0 && d->n[at].type == FJ_OBJ;
     m->alpha_threshold = (float) fj_num(d, fj_get(d, at, "threshold"), 0);
     m->bloom_threshold = (float) fj_num(d, fj_get(d, b, "threshold"), 1);
@@ -334,6 +337,8 @@ static void fx_load_mesh(fx_pkg *p, const char *pkgpath, const char *name, const
     p->mesh_nv[m] = v != NULL ? n : 0;
     p->nmesh_loaded++;
 }
+
+#include "gw_fx_shaders.inc"
 
 static fx_pkg *fx_parse(const char *text, const char *path) {
     fjdoc d;
@@ -492,6 +497,8 @@ static fx_pkg *fx_parse(const char *text, const char *path) {
         fj_vec(&d, fj_get(&d, ro, "add"), m->rot_add, 3);
         fj_vec(&d, fj_get(&d, ro, "add_random"), m->rot_add_random, 3);
         fx_material_read(&d, root, e, m);
+        m->custom_shader = fx_custom_shader(&d, e, path);
+        if (m->custom_shader < 0) gw_log("shader: %s: emitter %s custom shader definition rejected; draw skipped", path, m->name);
     }
     fj_free(&d);
     return p;
@@ -1104,6 +1111,7 @@ static void fx_rewind(int frame) {
 }
 
 void gw_Fx_Frame(int frame) {
+    gw_prof_begin(GW_PROF_GENO_EFFECTS, frame);
     fx_rewind(frame);
     if (fx_idle()) {
         fx_state *r = &fx_ring[frame & (FX_RING - 1)];
@@ -1113,7 +1121,7 @@ void gw_Fx_Frame(int frame) {
         r->refused = fx_cur.refused; r->refused_emitters = fx_cur.refused_emitters;
         memcpy(r->drv, fx_cur.drv, sizeof r->drv);
         fx_ring_idle[frame & (FX_RING - 1)] = 1;
-        return;
+        { gw_prof_end(); return; }
     }
     fx_step();
     fx_cur.frame = frame;
@@ -1127,6 +1135,8 @@ void gw_Fx_Frame(int frame) {
         fx_ring_hi[frame & (FX_RING - 1)] = hi;
         fx_ring_idle[frame & (FX_RING - 1)] = 0;
     }
+
+    gw_prof_end();
 }
 
 /* Attach every emitter of package `pkg` to the guest JObj at `owner` (world matrix at `mtx_off`); returns a
@@ -1903,7 +1913,7 @@ static int test_fx_sim(void) {
 }
 
 static int test_fx_lab(void);
-void gw_fx_tests_register(void) { gw_test_register("fx_sim", test_fx_sim); gw_test_register("fx_lab", test_fx_lab); }
+void gw_fx_tests_register(void) { gw_test_register("fx_sim", test_fx_sim); gw_test_register("fx_lab", test_fx_lab); gw_shader_tests_register(); }
 
 /* Seeded, script-owned package handles. These do not expose/reuse pool indices. */
 int gw_Fx_LabPlay(const char *package, int jobj, int script, int port, int joint,
@@ -1934,6 +1944,56 @@ int gw_Fx_LabPlay(const char *package, int jobj, int script, int port, int joint
 static int fx_lab_owned(const fx_inst *in, int handle, int script) {
     return handle > 0 && in->used && in->lab_handle == handle &&
         in->tag == (0x40000000u | (uint32_t)(script & 0xFFFF));
+}
+/* World anchors contain no guest pointers. Their matrices and scoped handles
+ * live in the same rewindable effect state as ordinary script attachments. */
+int gw_Fx_LabWorld(const char *package, int script, int frame,
+                   float x, float y, float z, float scale, unsigned seed) {
+    int pk = gw_Fx_Find(package), i, h, id, free_slots = 0;
+    unsigned char was_used[FX_MAX_INST];
+    if (pk < 0 || fx_lab_serial >= 0x3FFFFFFF || !isfinite(x) || !isfinite(y) ||
+        !isfinite(z) || !isfinite(scale) || scale <= 0 || scale > 100) return 0;
+    if (!fx_ready) fx_reset();
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        was_used[i] = (unsigned char)fx_cur.inst[i].used; free_slots += !was_used[i];
+    }
+    if (free_slots < fx_pkgs[pk]->nem) {
+        fx_cur.refused += fx_pkgs[pk]->nem; fx_cur.refused_emitters += fx_pkgs[pk]->nem; return 0;
+    }
+    h = gw_Fx_Attach(pk, 0, 0, frame, 1);
+    if (!h) return 0;
+    id = ++fx_lab_serial;
+    for (i = h - 1; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i]; int k;
+        if (was_used[i] || !in->used || in->pkg != pk || in->attach_frame != frame) continue;
+        in->fixed = 1; in->keep = 1; in->joint = -1;
+        in->tag = 0x40000000u | (uint32_t)(script & 0xFFFF); in->lab_handle = id;
+        in->rng = seed ^ ((uint32_t)(in->em + 1) * 0x9E3779B9u);
+        memset(in->m, 0, sizeof in->m);
+        in->m[0][0] = in->m[1][1] = in->m[2][2] = scale;
+        in->m[0][3] = x; in->m[1][3] = y; in->m[2][3] = z;
+        for (k = 0; k < 7; ++k) in->lab_control[k] = in->lab_target[k] = 1.0f;
+    }
+    return id;
+}
+int gw_Fx_LabMove(int handle, int script, float x, float y, float z) {
+    int i, k, c, count = 0; float target[3] = {x,y,z};
+    if (!isfinite(x) || !isfinite(y) || !isfinite(z)) return 0;
+    for (i = 0; i < FX_MAX_INST; ++i) {
+        fx_inst *in = &fx_cur.inst[i]; float delta[3];
+        if (!fx_lab_owned(in, handle, script) || !in->fixed || in->owner) continue;
+        for (c = 0; c < 3; ++c) { delta[c] = target[c] - in->m[c][3]; in->m[c][3] = target[c]; }
+        /* Local/translate followers move now, including their rendered wave
+         * positions; world-space particles retain their trail positions. */
+        if ((delta[0] != 0 || delta[1] != 0 || delta[2] != 0) &&
+            fx_pkgs[in->pkg]->em[in->em].follow != 1)
+            for (k = 0; k < FX_MAX_PARTICLES; ++k) if (fx_cur.part[k].inst == i)
+                for (c = 0; c < 3; ++c) {
+                    fx_cur.part[k].pos[c] += delta[c]; fx_cur.part[k].visual_pos[c] += delta[c];
+                }
+        count++;
+    }
+    return count;
 }
 int gw_Fx_LabControl(int handle, int script, int emitter, const float values[7], int frames) {
     int i, k, count = 0;
@@ -2029,6 +2089,26 @@ static int test_fx_lab(void) {
     for (i=0;i<4;++i) {fx_cur.frame++;fx_step();}
     gw_Fx_LabEnd(h,71,0);
     if (fx_cur.nlive || gw_Fx_Stat(1)) {gw_test_fail("fx lab: immediate stop leaked");rc=1;}
+    /* World movement follows local particles but leaves world trails behind. */
+    fx_reset();
+    h = gw_Fx_LabWorld(p->name,71,0,2,3,4,1,1234);
+    for(f=1;f<=3;++f) {fx_cur.frame=f;fx_step();}
+    first=fx_cur.part[0];
+    if(!h || gw_Fx_LabMove(h,72,10,11,12) || !gw_Fx_LabMove(h,71,10,11,12) ||
+       fabsf(fx_cur.part[0].pos[0]-first.pos[0]-8)>.001f ||
+       fabsf(fx_cur.part[0].visual_pos[1]-first.visual_pos[1]-8)>.001f) {
+        gw_test_fail("fx lab: world follower movement/ownership failed");rc=1;
+    }
+    p->em[0].follow=1; first=fx_cur.part[0];
+    gw_Fx_LabMove(h,71,20,21,22);
+    if(memcmp(first.pos,fx_cur.part[0].pos,sizeof first.pos)!=0 ||
+       memcmp(first.visual_pos,fx_cur.part[0].visual_pos,sizeof first.visual_pos)!=0) {
+        gw_test_fail("fx lab: world movement pulled a detached trail");rc=1;
+    }
+    gw_Fx_LabEnd(h,71,0);p->em[0].follow=0;
+    if(gw_Fx_LabMove(h,71,0,0,0) || fx_cur.nlive || gw_Fx_Stat(1)) {
+        gw_test_fail("fx lab: world handle leaked after immediate end");rc=1;
+    }
     /* The lab's strict emission window/natural tail must not alter imported bindings. */
     fx_reset();
     {
@@ -2052,6 +2132,10 @@ static int test_fx_lab(void) {
     h=gw_Fx_LabPlay(p->name,(int)(uintptr_t)root,71,1,0,1001,1,0,0,0,1,9);
     if(h || fx_cur.inst[FX_MAX_INST-1].used || fx_cur.refused_emitters!=2) {
         gw_test_fail("fx lab: partial package must refuse atomically with emitter counters");rc=1;
+    }
+    h=gw_Fx_LabWorld(p->name,71,1001,0,0,0,1,9);
+    if(h || fx_cur.inst[FX_MAX_INST-1].used || fx_cur.refused_emitters!=4) {
+        gw_test_fail("fx lab: world package must refuse atomically at capacity");rc=1;
     }
     fx_npkg=pk;free(p);fx_reset();return rc;
 }

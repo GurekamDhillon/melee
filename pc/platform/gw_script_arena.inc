@@ -2,7 +2,7 @@
  * state (including ownership) lives in script_game.c's snapshotted BSS. */
 extern int gw_ScriptGame_ArenaOwner(void);
 extern void gw_ScriptGame_ArenaOrigin(int owner, int x, int y, int frames);
-extern void gw_ScriptGame_ArenaSpawn(int owner, int slot, int x, int y);
+extern int gw_ScriptGame_ArenaSpawn(int owner, int slot, int x, int y);
 extern float gw_ScriptGame_ArenaSpawnPos(int slot, int axis, float fallback);
 extern void gw_ScriptGame_ArenaBounds(int owner, int blast, int l, int r, int t, int b);
 extern void gw_ScriptGame_ArenaRestore(void);
@@ -25,9 +25,9 @@ static int l_stage_set_spawn(lua_State *L) {
     if (!((slot >= 0 && slot <= 7) || (slot >= 127 && slot <= 146)))
         return luaL_error(L, "spawn slot must be 0-7 (starts/respawns) or 127-146 (item spawns)");
     gs_rw_branch();
-    gw_ScriptGame_ArenaSpawn(gs.cur + 1, slot, gs_fbits(x), gs_fbits(y));
+    int applied = gw_ScriptGame_ArenaSpawn(gs.cur + 1, slot, gs_fbits(x), gs_fbits(y));
     gw_log("script arena-hooks: spawn %d -> %g %g", slot, x, y);
-    lua_pushboolean(L, 1); return 1;
+    lua_pushboolean(L, applied); return 1;
 }
 static int l_stage_spawn(lua_State *L) {
     int slot = (int) luaL_checkinteger(L, 1);
@@ -49,9 +49,7 @@ static int l_stage_set_origin(lua_State *L) {
         lua_pop(L, 1);
     }
     if (frames < 0 || frames > INT_MAX) return luaL_error(L, "frames must be in 0..INT_MAX");
-    gs_rw_branch();
     gw_ScriptGame_ArenaOrigin(gs.cur + 1, gs_fbits(x), gs_fbits(y), (int)frames);
-    gw_log("script arena-hooks: origin %g %g frames=%d", x, y, (int)frames);
     lua_pushboolean(L, 1); return 1;
 }
 static int gs_arena_bounds(lua_State *L, int blast) {
@@ -59,9 +57,9 @@ static int gs_arena_bounds(lua_State *L, int blast) {
     float t = gs_stage_num(L, 3), b = gs_stage_num(L, 4);
     gs_arena_require(L, blast ? "stage_set_blast_bounds" : "stage_set_camera_bounds");
     if (l >= r || b >= t) return luaL_error(L, "bounds require left < right and bottom < top");
-    gs_rw_branch();
+    if (blast) gs_rw_branch();
     gw_ScriptGame_ArenaBounds(gs.cur + 1, blast, gs_fbits(l), gs_fbits(r), gs_fbits(t), gs_fbits(b));
-    gw_log("script arena-hooks: %s bounds %g %g %g %g", blast ? "blast" : "camera", l, r, t, b);
+    if (blast) gw_log("script arena-hooks: blast bounds %g %g %g %g", l, r, t, b);
     lua_pushboolean(L, 1); return 1;
 }
 static int l_stage_set_camera_bounds(lua_State *L) { return gs_arena_bounds(L, 0); }

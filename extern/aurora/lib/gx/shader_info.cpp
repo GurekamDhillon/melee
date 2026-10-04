@@ -1,4 +1,5 @@
 #include "shader_info.hpp"
+#include "surface.hpp"
 
 #include "../gfx/recording.hpp"
 
@@ -362,8 +363,15 @@ ShaderInfo build_shader_info(const ShaderConfig& config) noexcept {
     info.uniformSize += MaxIndTexMtxs * sizeof(Mat2x4<float>);
   }
   info.uniformSize += info.sampledTextures.count() * sizeof(Vec4<float>);
+  info.surface = config.surfaceProgram != 0;
+  if (info.surface) info.uniformSize += sizeof(gw_surface::Params);
   info.uniformSize = gfx::align_uniform(info.uniformSize);
   if (info.uniformSize > MaxUniformSize) {
+    if (info.surface) {
+      Log.error("GD surface {} exceeds GX uniform limit; draw skipped", config.surfaceProgram);
+      info.uniformSize = 0;
+      return info;
+    }
     Log.fatal("Uniform size exceeds maximum: {} > {}", info.uniformSize, MaxUniformSize);
   }
   return info;
@@ -376,6 +384,7 @@ static void fill_uniform(ByteBuffer& buf, const ShaderInfo& info) noexcept {
   buf.append<f32>(g_gxState.renderViewport.height);
   buf.append<f32>(g_gxState.logicalViewport.width);
   buf.append<f32>(g_gxState.logicalViewport.height);
+  if (info.surface) buf.append(surface::activeParams.data);
   if (info.lineMode != 0) {
     if (info.lineMode == 3) { // GX_POINTS
       buf.append<f32>(static_cast<f32>(g_gxState.pointSize) / 6.f);

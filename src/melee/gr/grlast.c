@@ -1048,3 +1048,7 @@ static bool grLast_OnCheckShadowRender(Vec3* v, int i, HSD_JObj* jobj)
 {
     return true;
 }
+
+#ifdef TARGET_PC
+#include "grlast_stage_slots.inc"
+#endif

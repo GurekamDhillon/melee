@@ -13,6 +13,7 @@ workspace `_research/frontend-menus.md`; the art itself: workspace `menu/`.
 | `gmfrontend.c` | the toolkit: `FrontendItem` rows (action / choice / slider / toggle; read-only rows are a slider with `set = NULL` and a `format`), `FrontendScreen`, routing, `fe_switch_screen`, `fe_ol_notice` |
 | `gmfrontend_menus.inc` | the menu tree (`fm_menus[]`, `FeMenuItem` with `FA_SUB / FA_MODE / FA_NATIVE / FA_MATCH_SETUP / FA_ONLINE / FA_PAGE`), confirm → `fm.pend_kind` → `fm_do_pending` after the fade; `fm_first_boot` |
 | `gmfrontend_settings.inc` | SETTINGS pages: `FSP_*` enum, `fe_screen_settings[]`, one `fe_items_set_*[]` per page. A new page = an enum value, a table, a screen entry, a `FA_PAGE` menu row |
+| `gmfrontend_controls.inc` | controller remap editor (included by settings): timed press/release capture, Swap/Also, profiles, presets and mapped tester; original layout navigates this page |
 | `gmfrontend_online.inc` | the room screens (`art != 0`), the lobby, strikes |
 | `gmfrontend_select.inc` | the kit's character and stage select |
 | `gmfrontend_kit.inc`, `_kitlist.inc`, `_player.inc` | drawing: the font atlas and palettes (`kit.json`), the row list (`list_layout.json`, `widgets_layout.json`), the layout/motion player |

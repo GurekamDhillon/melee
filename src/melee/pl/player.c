@@ -19,6 +19,7 @@
 #include <melee/gm/gm_unsplit.h>
 #include <melee/if/ifstatus.h>
 #include <melee/lb/lbarchive.h>
+#include <melee/lb/lbdvd.h>
 #include <sysdolphin/baselib/debug.h>
 #include <sysdolphin/baselib/gobjplink.h>
 #include <sysdolphin/baselib/objalloc.h>
@@ -278,7 +279,7 @@ void Player_80031D2C(CharacterKind kind, u8 color)
      * the first Kirby demo crashes. Run it once, here, before any fighter is set up. */
     {
         static bool hats_preloaded;
-        if (!hats_preloaded) {
+        if (!hats_preloaded && !lbDvd_IsPlanningSixSlot()) {
             hats_preloaded = true;
             ftLib_80087610(0);
         }
@@ -878,6 +879,12 @@ f32 Player_GetAttackRatio(int slot)
     Player_CheckSlot(slot);
     player = &player_slots[slot];
     attack_ratio = player->attack_ratio;
+#if defined(TARGET_PC)
+    {
+        extern float ScriptGame_ModValue(int slot, int field, float base);
+        attack_ratio = ScriptGame_ModValue(slot, 0, attack_ratio);
+    }
+#endif
     return attack_ratio;
 }
 
@@ -896,6 +903,12 @@ f32 Player_GetDefenseRatio(int slot)
     Player_CheckSlot(slot);
     player = &player_slots[slot];
     defense_ratio = player->defense_ratio;
+#if defined(TARGET_PC)
+    {
+        extern float ScriptGame_ModValue(int slot, int field, float base);
+        defense_ratio = ScriptGame_ModValue(slot, 1, defense_ratio);
+    }
+#endif
     return defense_ratio;
 }
 

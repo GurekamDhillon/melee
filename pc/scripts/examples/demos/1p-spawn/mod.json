@@ -1,0 +1,1 @@
+{"id": "demo_1p_spawn", "name": "Retail opponent spawn template", "version": "0.1.0", "kind": "script", "api_version": 1, "gameplay": true, "rollback_safe": false, "entry": "scripts/main.lua"}

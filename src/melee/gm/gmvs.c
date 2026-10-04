@@ -2139,7 +2139,9 @@ void fn_8016E2BC(void)
                    (0, 8) instead of (-38.8, 35.2). */
                 extern int Replay_Active(void);
                 if ((Mex_Enabled("neutral_spawn") || Replay_Active()) &&
-                    !gm_IsCurrently1PMode_inline() && i < 5)
+                    !gm_IsCurrently1PMode_inline() && i < 5 &&
+                    Player_GetPlayerSlotType(4)==Gm_PKind_NA &&
+                    Player_GetPlayerSlotType(5)==Gm_PKind_NA)
                 {
                     bool neutral_is_teams = controller.start.is_teams == true;
                     if (neutral_is_teams) {
@@ -2390,6 +2392,10 @@ void gm_Scene_Vs_OnExit(void* user_data)
         {
             for (i = 0; i < 6; i++) {
                 if (Player_GetPlayerSlotType(i) == Gm_PKind_Human) {
+#if defined(TARGET_PC)
+                    extern int Script_OnePScripted(void);
+                    if (!Script_OnePScripted())
+#endif
                     gmMainLib_8015D00C(
                         gm_CKindToSelKind(Player_GetPlayerCharacter(i)));
                 }

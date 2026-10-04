@@ -1,0 +1,12 @@
+{
+  "id": "surface-shaders",
+  "name": "Fighter Surface Shaders",
+  "version": "0.1.0",
+  "author": "GD's Melee",
+  "kind": "script",
+  "description": "Original cel edge shading, rim light and dissolve surface examples.",
+  "api_version": 1,
+  "gameplay": false,
+  "rollback_safe": true,
+  "entry": "scripts/main.lua"
+}

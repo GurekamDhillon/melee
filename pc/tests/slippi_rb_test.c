@@ -11,6 +11,9 @@
 
 static int replay_frame = -124, fixture_reads[2], ticks, fixture_active = 1, flushed = -999;
 static int startup_processed_bad_port = -1;
+static int scene_begins;
+/* Mode setup is tested separately; this seam verifies rollback forwards the scene. */
+void gw_SlippiMode_SceneBegin(int scene_kind) { assert(scene_kind == 2); ++scene_begins; }
 static void tick(int online_frame) { assert(online_frame == 1); ++ticks; }
 void gw_log(const char *fmt, ...) { (void) fmt; }
 int gw_Replay_Active(void) { return fixture_active; }
@@ -82,6 +85,7 @@ int main(void) {
     assert(gw_rb_slippi_configure(0, 2, tick));
     assert(gw_RB_Enabled());
     gw_RB_SceneBegin(2);
+    assert(scene_begins == 1);
     epoch = gw_rb_epoch();
     assert(gw_RB_Iterations(1) >= 1);
     assert(ticks == 1);
@@ -118,6 +122,7 @@ int main(void) {
     replay_frame = -124; ticks = 0;
     assert(gw_rb_slippi_configure(1, 2, tick));
     gw_RB_SceneBegin(2); assert(gw_RB_Iterations(1) >= 1); gw_RB_IterStart();
+    assert(scene_begins == 2);
     assert(gw_rb_local_fixture_reads(0) == 0 && gw_rb_local_fixture_reads(1) == 1);
     assert(!gw_rb_slippi_receive(gw_rb_epoch(), 1, 3, &bad));
     gw_rb_slippi_disable();

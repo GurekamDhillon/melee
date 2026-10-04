@@ -24,7 +24,7 @@ static u32 lab_parts_hash[2];
 static struct {
     HSD_DObj* dobj;
     u32 rgb;
-    int owner, mode;
+    int owner, mode, slot;
 } lab_part_colors[PART_COLORS];
 static struct {
     int active, owner, inverted, count;
@@ -924,6 +924,7 @@ int ScriptGame_PartsControl(int slot, int d, int what, int rgb, int owner)
     lab_part_colors[i].rgb = (u32) rgb & 0xFFFFFFu;
     lab_part_colors[i].owner = owner;
     lab_part_colors[i].mode = what;
+    lab_part_colors[i].slot = slot;
     if (i >= lab_part_colors_hi) {
         lab_part_colors_hi = i + 1;
     }

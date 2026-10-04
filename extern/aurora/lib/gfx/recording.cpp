@@ -18,6 +18,7 @@
 #include "../rmlui/pipeline.hpp"
 #endif
 #include "../window.hpp"
+#include "../webgpu/gpu_prof.hpp"
 
 #include <array>
 #include <cstring>
@@ -1067,6 +1068,13 @@ bool create_pass(uint32_t width, uint32_t height) {
   }
 
   begin_offscreen(width, height);
+  return true;
+}
+
+bool create_pass_profiled(uint32_t width, uint32_t height, const char* label) {
+  if (!create_pass(width, height)) return false;
+  if (webgpu::gpu_prof::active() && label && *label)
+    current_render_passes()[g_recorder.currentRenderPass].label = label;
   return true;
 }
 

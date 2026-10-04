@@ -1,0 +1,77 @@
+{
+  "geno_fx": 1,
+  "name": "PickupJuice_pop_trail_blue",
+  "textures": [],
+  "emitters": [
+    {
+      "name": "pop_trail",
+      "kind": "sprite",
+      "follow": "none",
+      "emission": {
+        "rate": 0.3,
+        "duration": 20,
+        "one_time": 0
+      },
+      "shape": {
+        "type": "sphere_fill",
+        "radius": [
+          2,
+          3,
+          1
+        ]
+      },
+      "particle": {
+        "life": 16,
+        "shape": "billboard",
+        "scale": {
+          "base": [
+            1.2,
+            1.2,
+            1.2
+          ]
+        },
+        "velocity": {
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "direction_scale": 0.25
+        }
+      },
+      "color": {
+        "color0": {
+          "value": [
+            1,
+            1,
+            1
+          ]
+        },
+        "alpha0": {
+          "value": 0.8
+        }
+      },
+      "material": {
+        "shader": {
+          "type": "custom",
+          "fragment": "soft.wgsl",
+          "params": {
+            "tint": [
+              0.32,
+              0.65,
+              1,
+              1
+            ]
+          }
+        },
+        "blend": "add",
+        "depth_test": 1,
+        "additive_batch": true,
+        "bloom": {
+          "threshold": 0.15,
+          "intensity": 0
+        }
+      }
+    }
+  ]
+}

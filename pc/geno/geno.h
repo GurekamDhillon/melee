@@ -125,7 +125,9 @@ enum {
     GENO_VAL_ATTACK_CONNECTED = 0x3B,      /* i W (v5.3): a hitbox of this fighter hit a fighter in this
                                               action; 0 at every action change (Geno states too) */
     GENO_VAL_ATTACK_CONNECTED_PREV = 0x3C, /* i (v5.3): ATTACK_CONNECTED as the previous action ended */
-    GENO_VAL_COUNT = 0x3D,
+    GENO_VAL_STICK_LEN = 0x3D, /* f (v5.4): the stick vector's length, the test Ultimate's status code makes */
+    GENO_VAL_FALL_LIMIT = 0x3E, /* f W (v5.4): this action's fall-speed limit in place of terminal velocity; 0 = the fighter's */
+    GENO_VAL_COUNT = 0x3F,
     GENO_VAL_SPECIAL_F = 0x1000,  /* + word index: fp->dat_attrs word as float */
     GENO_VAL_SPECIAL_I = 0x2000,  /* + word index: fp->dat_attrs word as int */
 };
@@ -222,7 +224,10 @@ enum {
     GENO_HOOK_ARTICLE_SPAWN = 5, /* v5 "geno.article.spawn": spawn the profile's article arg */
     GENO_HOOK_LOCKON = 6,        /* v5.2 "geno.lockon": aim at the nearest other fighter -> MOVE_F0/F1/I0 */
     GENO_HOOK_AIM_STICK = 7,     /* v5.3 "geno.aim_stick": heading from the stick's polar angle -> MOVE_F0/F1 */
-    GENO_HOOK_BUILTIN_COUNT = 8,
+    GENO_HOOK_DASH_SEARCH = 8,   /* v5.4 "geno.dash.search": one frame of an aim window -> MOVE_I0/I1 target, MOVE_F2/F3/I2 stick */
+    GENO_HOOK_DASH_AIM = 9,      /* v5.4 "geno.dash.aim": the window's result -> MOVE_F0/F1 world heading, MOVE_I3 up/down, facing */
+    GENO_HOOK_BRAKE = 10,        /* v5.4 "geno.brake": clamp, then decelerate the fighter's own velocity along itself */
+    GENO_HOOK_BUILTIN_COUNT = 11,
     GENO_HOOK_MAX = 64
 };
 
@@ -245,6 +250,7 @@ enum {
 #define GENO_MAX_PROFILES 32
 #define GENO_MAX_SPECIAL 64      /* v1: special_attributes entries per profile */
 #define GENO_MAX_ONLAND 16       /* v1: on_land map entries per profile */
+#define GENO_MAX_MOTION_ANIM 8   /* v5.4: "motion_anims" entries per profile */
 #define GENO_MAX_OVERLAYS 64     /* v1: subaction script overlays per profile */
 #define GENO_POOL_WORDS 16384    /* v1: all overlay words of every profile (64 KB) */
 

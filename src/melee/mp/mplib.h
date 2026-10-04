@@ -17,6 +17,12 @@
 #include <melee/mp/types.h>
 
 /* 04D164 */ MapCollData* mpLib_8004D164(void);
+#if defined(TARGET_PC)
+/* Script area builders coalesce dynamic-island rebuilds in MEM1 snapshot state. */
+void mpScriptBatchBegin(void);
+void mpScriptBatchEnd(void);
+void mpScriptInvalidateBounding(void);
+#endif
 /* 04D16C */ CollVtx* mpGetGroundCollVtx(void);
 /* 04D174 */ CollLine* mpGetGroundCollLine(void);
 /* 04D17C */ CollJoint* mpGetGroundCollJoint(void);

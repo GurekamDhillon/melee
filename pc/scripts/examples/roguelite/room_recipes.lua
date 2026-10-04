@@ -35,7 +35,7 @@ local ASCENT_MODULES = {
 RoomRecipes.ascent_modules = ASCENT_MODULES
 
 local function platform(x, y, width)
-  return {x = x, y = y, width = width, passthrough = true, ledges = true}
+  return {x = x, y = y, width = width, passthrough = true, ledges = false}
 end
 
 -- A one-way surface that runs continuously into a ramp or an adjoining bay:

@@ -11,6 +11,7 @@
 #include "pipeline.hpp"
 #include "regs.hpp"
 #include "shader_info.hpp"
+#include "surface.hpp"
 #include "texture.hpp"
 
 #include <tracy/Tracy.hpp>
@@ -691,7 +692,9 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
     const auto prevSampledTextures = cache.shaderInfo.sampledTextures;
     const auto prevSampledIndTextures = cache.shaderInfo.sampledIndTextures;
     populate_pipeline_config(cache.config, prim, fmt);
+    cache.config.shaderConfig.surfaceProgram = surface::activeProgram;
     cache.shaderInfo = build_shader_info(cache.config.shaderConfig);
+    if (!cache.shaderInfo.uniformSize) return;
     cache.pipelineRef = gfx::pipeline_ref(cache.config);
     cache.targetLayoutKey = targetLayoutKey;
     cache.fmt = fmt;
@@ -703,6 +706,8 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
       cache.bindGeneration = 0;
     }
   }
+  // A capture walks the real material state but never sends geometry to the screen.
+  if (gfx::pipeline_warm_capturing()) { gfx::pipeline_warm_record(cache.pipelineRef); return; }
   if (sPipelineWait) {
     static gfx::PipelineRef sLastTagged = 0;
     if (cache.pipelineRef != sLastTagged) {
@@ -902,7 +907,13 @@ void handle_aurora(ByteReader& reader) noexcept {
   ZoneScoped;
   const u16 subCmd = reader.read<u16>();
 
-  if (subCmd == GX_AURORA_PIPELINE_WAIT) {
+  if (subCmd == GX_AURORA_SURFACE) {
+    const auto program = reader.read<u32>();
+    const auto bytes = reader.take(sizeof(gw_surface::Params));
+    surface::activeProgram = program;
+    memcpy(surface::activeParams.data.data(), bytes.data(), bytes.size());
+    g_gxState.dirty |= DirtyPipeline | DirtyUniform;
+  } else if (subCmd == GX_AURORA_PIPELINE_WAIT) {
     sPipelineWait = reader.read<u8>() != 0;
   } else if (subCmd == GX_AURORA_LOAD_VIEWPORT_RENDER) {
     const f32 left = reader.read<f32>();

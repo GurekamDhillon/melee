@@ -8,10 +8,14 @@
 #include "gw.h"
 #include "shim_gx.h"
 #include "shim_vi.h"
+#include "gw_profiler.h"
+#include "gw_hang.h"
+#include "gc_adapter_policy.h"
 
 #include <aurora/aurora.h>
 #include <dolphin/gx/GXAurora.h>
 #include <aurora/event.h>
+#include <aurora/gfx.h>
 #include <aurora/main.h>
 
 #include <SDL3/SDL_hints.h>
@@ -31,6 +35,25 @@
 #include <string.h>
 
 static char gw_iso_path_buf[1024];
+
+/* Delayed worker/GPU measurements stay native and cannot affect snapshot state.
+ * detail identifies the pass; CPU worker samples overlap game-thread zones. */
+static void gw_aurora_profiler_sink(const char *name, uint64_t frame, uint64_t ns, void *data) {
+  unsigned id, detail = 2166136261u;
+  const unsigned char *p = (const unsigned char *)name;
+  (void)data;
+  if (!gw_prof_enabled()) return;
+  if (!strcmp(name, "cpu.pipeline_skip")) { gw_prof_counter(GW_PROF_PIPELINE_SKIPS, 1); return; }
+  if (!strcmp(name, "cpu.pipeline_wait")) { gw_prof_counter(GW_PROF_PIPELINE_WAITS, 1); }
+  for (; *p; ++p) detail = (detail ^ *p) * 16777619u;
+  if (strcmp(name, "cpu.render_worker") == 0) id = GW_PROF_RENDER;
+  else if (strcmp(name, "cpu.present") == 0) id = GW_PROF_PRESENT;
+  else if (strncmp(name, "cpu.pipeline_compile.", 21) == 0 || strcmp(name, "cpu.pipeline_wait") == 0) id = GW_PROF_PIPELINE_COMPILE;
+  else id = strcmp(name, "gpu.frame") == 0 ? GW_PROF_GPU : GW_PROF_GPU_PASS;
+  gw_prof_detail_name(detail, name);
+  if (strncmp(name, "cpu.", 4) == 0) gw_prof_cpu_completed(id, detail, (double)ns * 0.000001);
+  else gw_prof_gpu_completed(id, detail, (double)ns * 0.000001, frame);
+}
 
 /* Window placement, for running the port without it landing on the user's main display - a
  * second monitor, off-screen entirely, or hidden. Aurora only honours non-negative positions
@@ -247,26 +270,19 @@ static const char *gw_exe_dir(void) {
 int main(int argc, char *argv[]) {
   gw_install_crash_handler();
   gw_log("melee-pc: starting");
+  gw_hang_start();
 
-  /* Keep SDL's HIDAPI GameCube driver off the adapter. The port reads the WUP-028 directly over
-   * WinUSB (pc/platform/gc_adapter.c) to get the console's own analog ranges and button layout;
-   * if SDL opens the device first, that open fails and the pad falls back to SDL's remapped,
-   * deadzoned view of the same hardware. SDL reads its hints from the environment, so setting
-   * this before Aurora starts is enough -- no SDL linkage needed here. Set
-   * MELEE_SDL_GAMECUBE=1 to hand the adapter back to SDL instead. */
-  {
-    const char *prefer_sdl = getenv("MELEE_SDL_GAMECUBE");
-    if (prefer_sdl == NULL || prefer_sdl[0] != '1') {
-      _putenv("SDL_JOYSTICK_HIDAPI_GAMECUBE=0");
-    }
-  }
+  /* Only the raw adapter backend implements foreground ownership. SDL's GameCube
+   * driver must not claim it behind that policy, even with MELEE_SDL_GAMECUBE=1. */
+  _putenv("SDL_JOYSTICK_HIDAPI_GAMECUBE=0");
 
   if (!gw_find_iso(argc, argv)) {
     gw_log("melee-pc: no disc image found. Pass --iso <path to a GALE01 v1.02 image>, set"
            " MELEE_ISO, or put melee.iso next to the executable.");
+    gw_hang_final("no disc image", 1);
     return 1;
   }
-  gw_log("melee-pc: disc image %s", gw_iso_path_buf);
+  gw_log("melee-pc: disc image <disc>");
   gw_turbo_configure(argc, argv);
 
   /* Scan the Target Test mod directory now so the loader reports what it found at boot, instead of
@@ -284,14 +300,17 @@ int main(int argc, char *argv[]) {
     extern bool gw_test_requested(int argc, char **argv);
     extern int gw_test_run_all(void);
     if (gw_test_requested(argc, argv)) {
+      gw_hang_pause(4); /* headless suite intentionally has no logic/presentation driver */
       gw_apply_fixups();
       if (!gw_mem_init()) {
         gw_log("melee-pc: tests: could not reserve MEM1/ARAM");
+        gw_hang_final("tests MEM1/ARAM reservation failed", 1);
         return 1;
       }
       {
         int failures = gw_test_run_all();
         gw_log("melee-pc: tests complete, failures=%d", failures);
+        gw_hang_final("tests complete", failures != 0);
         return failures != 0;
       }
     }
@@ -304,6 +323,12 @@ int main(int argc, char *argv[]) {
   int vsync = 1;
   (void)gw_env_int("MELEE_VSYNC", &vsync);
   if (gw_turbo_enabled()) vsync = 0;
+  int msaa = 1;
+  (void)gw_env_int("MELEE_MSAA", &msaa);
+  if (msaa != 1 && msaa != 4) {
+    gw_log("gw: video: MELEE_MSAA must be 1 or 4; using 1");
+    msaa = 1;
+  }
   int win_x = 0, win_y = 0, win_w = 1280, win_h = 960;
   bool have_x = gw_env_int("MELEE_WINDOW_X", &win_x);
   bool have_y = gw_env_int("MELEE_WINDOW_Y", &win_y);
@@ -324,6 +349,7 @@ int main(int argc, char *argv[]) {
        * +0x363548). D3D11's queue/serial path does not, so pin it until Dawn is fixed. */
       .desiredBackend = gw_desired_backend(),
       .vsync = vsync != 0,
+      .msaa = (uint32_t)msaa,
       /* Aurora reads a negative x or y as "undefined"; those are applied after init instead
        * (gw_apply_window_env), so pass -1 to keep its centring default in that case. */
       .windowPosX = (have_x && win_x >= 0) ? win_x : -1,
@@ -349,7 +375,12 @@ int main(int argc, char *argv[]) {
     SDL_SetHint(SDL_HINT_JOYSTICK_DIRECTINPUT, dinput ? "1" : "0");
     gw_log("melee-pc: DirectInput joysticks %s (MELEE_DIRECTINPUT)", dinput ? "on" : "off");
   }
+  gw_prof_init();
+  aurora_profiler_set_sink(gw_aurora_profiler_sink, NULL);
+  aurora_profiler_enable(gw_prof_enabled() != 0);
   AuroraInfo info = aurora_initialize(argc, argv, &config);
+  gw_log("prof: GPU timestamps %s (D3D11 has no Dawn timestamp feature; opt into D3D12 for supported adapters)",
+         aurora_profiler_gpu_available() ? "available" : "unavailable");
 
 #ifdef _WIN32
   if (!gw_window_drag_install(info.window)) {

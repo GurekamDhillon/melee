@@ -1290,6 +1290,8 @@ void mpColl_80043F40(CollData* coll, int line_id, bool ignore_bottom)
     }
 }
 
+#include "mpcoll_stage_slots.inc"
+
 bool mpColl_80044164(CollData* cd, int* p_ledge_id)
 {
     float left;
@@ -1341,12 +1343,12 @@ bool mpColl_80044164(CollData* cd, int* p_ledge_id)
                             cd->cur_pos.y + cd->ecb.top.y, cd->contact.x,
                             cd->contact.y, NULL, &line_id, NULL, NULL, 6,
                             cd->joint_id_skip, cd->joint_id_only) ||
-           mpJointFromLine(ledge_id) == mpJointFromLine(line_id)) &&
+           mpColl_stage_same_joint(ledge_id, line_id)) &&
           (!mpCheckMultiple(cd->cur_pos.x + cd->ecb.bottom.x,
                             -2.0F + (cd->cur_pos.y + cd->ecb.bottom.y),
                             cd->contact.x, cd->contact.y, NULL, &line_id, NULL,
                             NULL, 6, cd->joint_id_skip, cd->joint_id_only) ||
-           mpJointFromLine(ledge_id) == mpJointFromLine(line_id)))))
+           mpColl_stage_same_joint(ledge_id, line_id)))))
     {
         if (p_ledge_id != NULL) {
             *p_ledge_id = ledge_id;
@@ -1413,12 +1415,12 @@ bool mpColl_800443C4(CollData* cd, int* p_ledge_id)
                             cd->cur_pos.y + cd->ecb.top.y, cd->contact.x,
                             cd->contact.y, NULL, &line_id, NULL, NULL, 10,
                             cd->joint_id_skip, cd->joint_id_only) ||
-           mpJointFromLine(ledge_id) == mpJointFromLine(line_id)) &&
+           mpColl_stage_same_joint(ledge_id, line_id)) &&
           (!mpCheckMultiple(cd->cur_pos.x + cd->ecb.bottom.x,
                             -2.0F + (cd->cur_pos.y + cd->ecb.bottom.y),
                             cd->contact.x, cd->contact.y, NULL, &line_id, NULL,
                             NULL, 10, cd->joint_id_skip, cd->joint_id_only) ||
-           mpJointFromLine(ledge_id) == mpJointFromLine(line_id)))))
+           mpColl_stage_same_joint(ledge_id, line_id)))))
     {
         if (p_ledge_id != NULL) {
             *p_ledge_id = ledge_id;

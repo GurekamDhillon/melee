@@ -137,4 +137,157 @@ All edits require offline editing mode. Save also works after a match ends for r
   removes this script's known instances and releases its asset references. Scene end frees pools.
 - Offline gating also exists in the model/fly engine APIs. This manifest is never rollback-safe.
 
+## Missions
+
+A layout can carry a **mission**: a start, enemies in waves, checkpoints, a goal zone, trigger zones and
+an objective. Author it on any map built here, then `map mission play`. Everything is Lua on the
+existing `gd.*` calls (`gd.spawn_enemy`, `gd.enemy_status`, `gd.enemy_state`, `gd.enemy_remove`,
+`gd.stage_set_spawn`, `gd.model_set` through the editor's own sync); there is no engine change.
+
+Try the samples: copy `samples/first_mission.lua` (flat strip: two waves, a checkpoint, a goal) or
+`samples/multi_level_mission.lua` (two ramps up to a goal at the top: a trigger-spawned wave, a
+position-started wave, a mid-way checkpoint, messages) to `scripts-data/map_editor_main/`, start an
+offline match on Final Destination (the LAB works) and enter `map play first_mission.lua`.
+
+| Command | Does |
+|---|---|
+| `map mission start [x y]` | where P1 begins (default: the cursor). Goes through the editor's spawn mechanism: slot 0, so it wins over a hand-set `map spawn 0` |
+| `map mission enemy <kind> [wave]` | an enemy marker at the cursor, wave 1 by default |
+| `map mission goal <w> <h>` | the goal zone, centred on the cursor (replaces the old one) |
+| `map mission checkpoint <w> <h>` | a checkpoint zone centred on the cursor |
+| `map mission objective <type> [time=<s>] [lives=<n>]` | `reach_goal`, `defeat_all` or `defeat_then_goal`; replaces the previous objective, so omitted `time`/`lives` are cleared |
+| `map mission wave <n> time <s>` / `x [<x>] [left\|right]` / `clear` | a **wave rule**: wave `n` starts after `s` seconds, or when P1 crosses `x` (default: the cursor; `right` unless `left`), without waiting for the earlier waves. One rule per wave; a new one replaces it |
+| `map mission trigger wave <w> <h> <n>` | a **trigger zone** at the cursor that spawns wave `n` when P1 enters |
+| `map mission trigger message <w> <h> <text>` | shows `text` (up to 80 characters) on the HUD for 4 s |
+| `map mission trigger collision <w> <h> open\|close [r]` | for this run only, removes (`open`) or restores (`close`) the collision of every part within `r` units (default 6.5) of the **selected part**. Only floors and ramps carry collision in the kit |
+| `map mission trigger complete\|fail <w> <h>` | ends the mission |
+| (any trigger) `... repeat` | fire on every entry instead of once |
+| `map mission pick <start\|enemy\|checkpoint\|goal\|trigger> [enemy kind \| trigger action]` | choose what a click places with the mission tool |
+| `map mission list` / `delete <index>` / `clear` | numbered items (start, goal, checkpoints, enemies, wave rules, triggers) and the objective, to the log / remove one / remove the whole mission |
+| `map mission test` | start the mission from the editing cursor without leaving the document; the cursor's position is kept |
+| `map mission play [file]` | load `file` first if given, leave editing, place P1 at the start, spawn wave 1 and run |
+| `map mission restart` / `stop` | start over (a test restarts from the same spot) / end the run and remove its enemies; stopping a test hands the editor back at the cursor (the engine refuses flight in some poses, e.g. teetering at a floor edge, so for up to 3 s the editor retries and nudges the stick down) |
+
+Each edit is one undo step and a refused one changes nothing. The action menu has Mission: start at
+cursor, play, restart and test from cursor.
+
+**Mouse and the mission tool (key 6).** With the mission tool a click on empty space places the picked
+kind (Up/Down or the inspector's first row changes it; `map mission pick`), a click on a marker selects
+it, dragging moves it, and dragging an edge or corner of the *selected* zone resizes it (minimum one grid
+step). Every gesture is one undo step; Delete removes the selected marker. The right-hand inspector
+shows the selected marker's x, y (and w, h for zones) (click a number to type a value), an enemy's kind
+and wave (click to step), a trigger's firing mode, and a delete row. Markers are drawn in the overlay:
+green START, red enemies (`E1 goomba w1`, with the wave's rule, `@5s` or `x>130`), blue `CP<n>` zones,
+gold GOAL, purple `T<n>` trigger zones (a collision trigger also marks its target). The selected marker gets
+a white outline and handles.
+
+`map play <file>` also runs the mission if the layout has a playable one (and again on each later
+offline match); an unplayable one still loads the map and says what is missing.
+
+**Layout.** An optional `mission` table, only in `version=2` files (a mission makes the saved file v2;
+v1 files, and v2 files without one, load as before; a v1 file that has a `mission` key is refused):
+
+```lua
+mission={
+  start={x=-120,y=40},
+  enemies={{kind="goomba",x=-50,y=36,wave=1}, ...},       -- wave defaults to 1
+  goal={x=125,y=45,w=24,h=60},                            -- x,y is the centre, w,h the full size
+  checkpoints={{x=20,y=45,w=16,h=60}},
+  objective={type="defeat_then_goal",time=120,lives=3},   -- time and lives optional
+  waves={{wave=2,time=5},{wave=3,x=130,dir=1}},           -- optional rules: time (s) XOR x (+ dir 1 or -1)
+  triggers={                                              -- optional; zones are x,y centre + w,h
+    {x=20,y=70,w=24,h=60,action="wave",wave=2},
+    {x=-130,y=60,w=40,h=70,action="message",text="Climb",once=false},
+    {x=0,y=60,w=20,h=60,action="collision",at={x=26,y=26},r=30,open=false},
+    {x=190,y=100,w=30,h=70,action="complete"},            -- or "fail"
+  },
+}
+```
+
+Loading is strict: unknown keys, fields that do not belong to a trigger's action, wrong types,
+non-finite numbers, unknown kinds, actions or objective types and over-limit counts refuse the whole load
+with a message and leave the current document untouched. Whether the mission is *complete enough to
+play* is checked at play time, so you can author step by step: `reach_goal` needs a goal, `defeat_all` an
+enemy, `defeat_then_goal` both; every mission needs a start and an objective; a rule or a trigger must
+name a wave that has enemies.
+
+**Limits.** Kinds: `goomba`, `koopa`, `redead`, `like_like`, `octorok`, `polar_bear`, `topi` (the
+engine's `gd.spawn_enemy` list). Waves 1-8, 32 enemies per wave (the engine allows 32 live script
+enemies at once, shared with other scripts), 64 enemies, 16 checkpoints, 16 triggers, zones up to 2000
+units a side, `time` 1-3600 s, `lives` 1-99.
+
+**Rules.**
+- *Waves.* A wave with no rule and no trigger is sequential: the next one spawns when every enemy
+  spawned so far is gone, in ascending order. A wave with a rule starts on its own condition, a wave named
+  by a `wave` trigger starts when that trigger fires; both start whatever is still alive. The enemies are
+  "all gone" only once every wave has started, so a defeat objective cannot finish while a rule or trigger
+  wave is still waiting.
+- *Zones* test P1's origin (the feet), so make them tall enough. Triggers fire on entry (outside to
+  inside), once by default.
+- *Checkpoints and death.* Touching a checkpoint makes it the respawn point (the latest touch wins; the
+  start is the first one). The point is written to stage spawn slot 4, which is where the engine puts P1
+  after a KO: P1 comes back on the engine's own rebirth platform at the checkpoint and the engine moves
+  it, with no script teleport. Slot 4 is given back to the document when the mission stops.
+- *Lives* count P1's falls themselves (the LAB has infinite respawn and no stocks, so `gd.set_stocks`
+  means nothing there; elsewhere P1's stocks are set to `lives + 1` so the engine's game-over cannot end
+  the match before the mission's own failure). The KO that uses the last life fails the mission
+  (`reason=lives`); the engine then respawns P1 as usual and the match goes on. Without `lives`, KOs never
+  fail it.
+- *Time* counts logic frames at 60 per second, so it follows pause and turbo.
+- *Defeats.* An enemy is **defeated** when the engine reports a stock defeat (`gd.enemy_status`
+  `defeated`; this is what `on_enemy_defeated` fires on), or when it ends without that event while last
+  seen well inside the stage: a Koopa killed into its shell is reported only as removed. An enemy that ends
+  within 30 units of the blast zone is **lost** (it fell out of the stage): it leaves the fight so the
+  objective cannot stall, is logged `mission: lost <kind>`, and is not counted as a defeat (`defeated=` and
+  `vanished=` in the result line).
+- *Result.* A result ends the mission, removes its enemies, shows MISSION COMPLETE or MISSION FAILED and logs
+  one line, `mission: complete time=...` or `mission: failed reason=<time|lives|spawn|trigger> ...`. A HUD
+  line shows objective, enemies left, time and lives. `map mission restart` retries.
+- *Cleanup.* Returning to edit mode (`map on`, F6 into editing), `map off`, match end, a savestate load
+  and unload remove what the mission spawned, restore collision a trigger changed and log
+  `mission: aborted (...)`.
+
+**Verified in the real engine** (isolated mods root, LAB, Falco, ACE disc, scripted pad input;
+`_build/audit-20261003/mission-native2/RESULTS.md` has the log lines): start, waves, checkpoint, goal and
+complete; death and checkpoint respawn through slot 4; lives failing on the last KO and the match going on;
+the `time` limit failing at exactly 300 frames for `time=5`; restart, stop, returning to editing and `map
+off` leaving no enemy alive; the whole editing command set from an empty document (place, mission start /
+enemy / goal / checkpoint / trigger / wave / objective, undo, redo, save, load), then playing the result;
+`reach_goal`, `defeat_all` and `defeat_then_goal` completing; a killed Goomba counted as defeated and one
+that fell off the stage counted as lost; a Koopa killed into its shell counted as defeated; a timed wave
+appearing at its second, a conditional wave on crossing x, a wave trigger, a message trigger, a collision
+trigger (a gap bridged for the run, restored after); `topi` spawning; `map mission test` and its return
+to the cursor; the mission tool's click / drag / resize / undo with a synthetic pointer computed from
+`gd.project` (the editor's own screen-to-world mapping, hit tests and drags ran; the real OS mouse was not
+driven); the multi-level sample completed with real pad input; no script error in any run.
+
+**Controller path.** The Z menu (or F2) has Mission: next marker kind, place marker at cursor, select nearest
+marker, move marker to cursor and delete marker, which do the same edits at the flight cursor (resizing a
+zone from the pad is not possible: type w and h in the inspector, or use the mouse). Stub-tested only.
+
+**Not verified.** How anything *looks*: the overlay markers, handles, HUD, message line and result banner
+were drawn without a Lua error but nobody looked at them. A physical mouse. The Z-menu controller path in the engine. Netplay (missions are offline only). Rollback or savestate
+interplay beyond "loading a state ends the mission". More than two or three enemies at once, or the other
+four enemy kinds in a fight (`like_like`, `octorok`, `polar_bear` were not used in a mission run).
+
+**Fixed on the way.** The editor's screen-to-world mouse mapping (`inv3`, used by every mouse tool, not
+only missions) returned the cofactor matrix instead of its transpose, so on the real, non-symmetric
+camera projection every click mapped to about (0, 0): the existing click-to-place tool could not have
+worked in the engine. The stub's identity projection hid it; there is now a test with a real homography.
+
+**Not supported.** Doors that open on a key or kill (use a collision trigger), items, dialogue, per-enemy
+behaviour or health tweaks, more than one player, netplay, editing while a mission runs, a mission in a
+savestate (loading one ends it), controller-driven marker authoring.
+
+**Module layout.** The state machine is `scripts/mission.lua` (no `gd` calls; loads under plain `lua`).
+The engine loads one entry file per mod and has no `require`, so `main.lua` embeds it verbatim between
+`BEGIN/END GENERATED MISSION` markers, like the kit block. After editing `mission.lua`, run
+`python tools/port/map_mission_sync.py` from the workspace (`--check` verifies; the tests do; it refuses a
+`main.lua` with more or fewer than one block). Copying the folder to `mods/map_editor` is enough;
+`mission.lua` is only the source.
+
+Tests: `lua pc/tests/map_mission_test.lua` from `melee/` (pure module plus editor commands, the mouse
+tool and the runtime glue against the `gd` stub), wrapped by `tools/port/map_mission_sync.py --check` and
+`tools/port/test_map_mission.py`.
+
 Validation and the unexecuted Windows lane are recorded in `map-editor-report.md` at repo root.

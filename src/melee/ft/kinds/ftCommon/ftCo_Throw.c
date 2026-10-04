@@ -533,7 +533,11 @@ void ftCo_800DDDE4(Fighter_GObj* gobj, Fighter_GObj* gobj2, bool arg)
     lb_8000B1CC(fp3->parts[ftParts_GetBoneIndex(fp3, FtPart_TransN2)].joint,
                 NULL, &vec);
     if (ftColl_8007B868(gobj2) == 0) {
+#if defined(TARGET_PC)
+        damage = ScriptGame_FighterDealtDamage(fp,hit[0].damage);
+#else
         damage = hit[0].damage;
+#endif
     } else {
         damage = 0.0f;
     }

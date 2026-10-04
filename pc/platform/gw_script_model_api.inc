@@ -30,10 +30,11 @@ int gw_Script_ModelInput(int field, int line)
 #include "gw_script_model_draw.inc"
 
 static const char *gs_model_fields[SM_FIELDS] = { "x", "y", "z", "rot", "scale", "layer", "visible", "tint",
-    "scale_x", "scale_y", "scale_z", "alpha" };
+    "scale_x", "scale_y", "scale_z", "alpha", "background", "rot_x", "rot_y" };
 static void gs_model_options(lua_State *L, int at, int field[SM_FIELDS])
 {
     int i;
+    at=lua_absindex(L,at);
     if (lua_isnoneornil(L, at)) return;
     luaL_checktype(L, at, LUA_TTABLE);
     for (i = 0; i < SM_FIELDS; ++i) {
@@ -44,9 +45,9 @@ static void gs_model_options(lua_State *L, int at, int field[SM_FIELDS])
                 float v = gs_stage_num(L, -1);
                 if ((i == SM_SCALE || (i >= SM_SX && i <= SM_SZ)) && (fabsf(v) < 0.001f || fabsf(v) > 100))
                     luaL_error(L, "model scale magnitude must be 0.001..100");
-                if (i == SM_ROT && (v < -360 || v > 360)) luaL_error(L, "model rot must be -360..360 degrees");
+                if ((i == SM_ROT || i == SM_RX || i == SM_RY) && (v < -360 || v > 360)) luaL_error(L, "model rotation must be -360..360 degrees");
                 field[i] = gs_fbits(v);
-            } else if (i == SM_VISIBLE || i == SM_ALPHA) {
+            } else if (i == SM_VISIBLE || i == SM_ALPHA || i == SM_BACKGROUND) {
                 luaL_checktype(L, -1, LUA_TBOOLEAN); field[i] = lua_toboolean(L, -1);
             } else {
                 lua_Integer v = luaL_checkinteger(L, -1);
@@ -126,7 +127,7 @@ static int l_model_spawn(lua_State *L)
         lua_pushnil(L);
         lua_pushstring(L, result == -2 ? "model instance pool full (256)" : result == -3 ?
                        "collision line capacity unavailable" : result == -4 ?
-                       "model transform reverses collision kind or exceeds world bounds" : "model scene renderer unavailable");
+                       "model transform has X/Y collision rotation, reverses collision kind or exceeds world bounds" : "model scene renderer unavailable");
         return 2;
     }
     lua_pushinteger(L, result); return 1;
@@ -146,7 +147,7 @@ static int gs_model_update(lua_State *L, int move)
     } else { luaL_checktype(L, 2, LUA_TTABLE); gs_model_options(L, 2, field); }
     gs_rw_branch(); memcpy(gs_model_input, field, sizeof field);
     result = gw_ScriptGame_ModelSet(handle);
-    if (result < 0) return luaL_error(L, "model transform reverses collision kind or exceeds world bounds");
+    if (result < 0) return luaL_error(L, "model transform has X/Y collision rotation, reverses collision kind or exceeds world bounds");
     lua_pushboolean(L, result); return 1;
 }
 static int l_model_move(lua_State *L) { return gs_model_update(L, 1); }
@@ -171,7 +172,7 @@ static void gs_model_push_instance(lua_State *L, int slot)
     for (i = 0; i < SM_FIELDS; ++i) {
         int v = gw_ScriptGame_ModelField(slot, i);
         if (SM_FLOAT_FIELD(i)) lua_pushnumber(L, gs_camera_float(v));
-        else if (i == SM_VISIBLE || i == SM_ALPHA) lua_pushboolean(L, v);
+        else if (i == SM_VISIBLE || i == SM_ALPHA || i == SM_BACKGROUND) lua_pushboolean(L, v);
         else lua_pushinteger(L, i == SM_TINT ? (lua_Integer)(unsigned)v : v);
         lua_setfield(L, -2, gs_model_fields[i]);
     }

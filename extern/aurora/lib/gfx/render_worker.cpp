@@ -1,6 +1,7 @@
 #include "render_worker.hpp"
 
 #include "../thread.hpp"
+#include "../webgpu/gpu_prof.hpp"
 #include "aurora/gfx.h"
 
 #include <algorithm>
@@ -47,12 +48,15 @@ void worker_main(std::stop_token token) {
     }
 
     if (item->work) {
-      const bool measure = aurora_perf_enabled();
+      const bool measure = aurora_perf_enabled() || webgpu::gpu_prof::active();
       const auto start = measure ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
       ZoneScopedN("QueueItem work");
       item->work();
-      if (measure) g_busyNs.fetch_add(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                         std::chrono::steady_clock::now() - start).count(), std::memory_order_relaxed);
+      if (measure) {
+        const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count();
+        g_busyNs.fetch_add(ns, std::memory_order_relaxed);
+        webgpu::gpu_prof::emit_cpu("cpu.render_worker", static_cast<uint64_t>(ns));
+      }
     }
     complete_sync(item->sync);
     g_pendingItems.fetch_sub(1, std::memory_order_acq_rel);

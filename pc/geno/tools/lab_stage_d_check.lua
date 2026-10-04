@@ -479,10 +479,48 @@ env.gd.key_pressed = function() return false end
 for _ = 1, 3 do if okm then okm, errm = pcall(env.on_tick) end end
 if okm then okm, errm = pcall(env.on_draw) end
 expect(okm, "pause menu with gd.mouse's four numbers: tick and draw (" .. tostring(errm) .. ")")
+-- Kit widescreen regression: exercise the actual LAB drawing at each canvas
+-- width, without adding locals to lab.lua's already full top-level scope.
+do
+  local image, text = K.image, K.text
+  local drawn, right_x
+  K.image = function(name, x, y, w, h, ...)
+    if name == "lab_solid" and x == 0 then drawn[y] = {w = w, h = h} end
+    return image(name, x, y, w, h, ...)
+  end
+  K.text = function(x, y, s, ...)
+    if s == "keys: arrows  ENTER  Q/E  ESC" then right_x = x end
+    return text(x, y, s, ...)
+  end
+  for _, width in ipairs({640, 480 * 16 / 9, 480 * 21 / 9}) do
+    env.gd.safe_area = function() return {x = 0, y = 0, w = width, h = 480, right = width, bottom = 480} end
+    drawn, right_x = {}, nil
+    local ok, err = pcall(env.on_draw)
+    expect(ok, "wide LAB draw: " .. tostring(err))
+    expect(drawn[0] and drawn[0].w == width and drawn[0].h == 480, "LAB dim fills " .. width)
+    expect(drawn[446] and drawn[446].w == width and drawn[448] and drawn[448].w == width,
+           "LAB footer fills " .. width)
+    expect(right_x == width - 20, "LAB footer text anchors at right " .. width)
+  end
+  K.image, K.text = image, text
+  env.gd.safe_area = nil
+end
 env.gd.key_pressed = function(k) return k == "ESCAPE" end
 pcall(env.on_tick)
 env.gd.key_pressed = function() return false end
 env.gd.mouse = function() return -1000, -1000, 0, 0 end
+
+do
+  local image, drawn = K.image, nil
+  env.gd.safe_area = function() return {w = 1120, right = 1120} end
+  K.image = function(name, x, y, w, h, ...)
+    if name == "lab_solid" and x == 0 and y == 452 then drawn = w end
+    return image(name, x, y, w, h, ...)
+  end
+  local ok, err = pcall(env.on_draw)
+  expect(ok and drawn == 1120, "LAB mode strip fills ultrawide: " .. tostring(err))
+  K.image, env.gd.safe_area = image, nil
+end
 
 -- 7. Draw everything once (catches nil arithmetic in the drawing code)
 local ok, err = pcall(env.on_draw)
@@ -498,7 +536,58 @@ now = keep_now
 env.on_loadstate(0)
 ok, err = pcall(env.on_draw)
 expect(ok, "on_draw after a step back: " .. tostring(err))
+-- Exercise the real panel target selector and drawing with six fighters.
+do
+  local menu
+  for i=1,100 do
+    local name,value=debug.getupvalue(cmdfn,i)
+    if not name then break end
+    if name=="menu" then menu=value break end
+  end
+  local old_players=gd.players
+  for i=3,6 do P[i]=mkp(i,1) end
+  gd.players=function() local t={} for i=1,6 do if P[i] then t[#t+1]=P[i] end end return t end
+  expect(menu and menu.next_fighter(4,1)==5 and menu.next_fighter(5,1)==6 and
+         menu.next_fighter(6,1)==1 and menu.next_fighter(1,-1)==6,
+         "LAB targets cycle all six fighter slots")
+  P[5]=nil
+  expect(menu and menu.next_fighter(4,1)==6, "LAB target selector skips empty fifth slot")
+  P[5]=mkp(5,1)
+  cmdfn("menu dummy")
+  local ok,err=pcall(env.on_draw)
+  expect(ok,"six-fighter LAB panel draws: "..tostring(err))
+  cmdfn("menu close")
+  expect(inputs[5]==0 and inputs[6]==0,"LAB close neutralizes virtual fighter inputs")
+  gd.players=old_players
+  for i=3,6 do P[i]=nil end
+end
+
 local u = {}
+-- Geno events retain decoded operands in the console instead of printing only "geno".
+do
+  local old = gd.timeline
+  gd.timeline = function()
+    return { motion_name = "TutorialB", anim_name = "SpecialN", length = 9, stop = "end", conditional = true,
+      events = { { frame = 2, name = "geno.PUT", sub = 9, detail = "value=3 operand=1073741824" },
+        { frame = 5, name = "hitbox", id = 0, bone = 2, damage = 8, angle = 361, kbg = 100,
+          bkb = 0, wbk = 0, size = 3, element_name = "normal" }, { frame = 9, name = "iasa" } } }
+  end
+  local out = lab("events")
+  expect(out:find("geno.PUT value=3 operand=1073741824", 1, true) ~= nil,
+    "geno_escape_events: decoded escape name and operands reach lab events")
+  expect(out:find("hitbox", 1, true) and out:find("iasa", 1, true),
+    "geno_overlay_events: hitbox and IASA events survive alongside escapes")
+  expect(out:find("conditional script", 1, true), "geno_conditional_events: static path is labelled")
+  local st -- LE is local: find it through the console closure below
+  for i = 1, 100 do
+    local name, value = debug.getupvalue(cmdfn, i)
+    if name == "LE" then st = value.move_static(1, 44) break end
+    if not name then break end
+  end
+  expect(type(st) == "table" and st.conditional and st.iasa == nil and st.ac == nil,
+    "geno_conditional_static: conditional IASA/autocancel cannot masquerade as measured values")
+  gd.timeline = old
+end
 for k in pairs(unknown) do u[#u + 1] = k end
 print("gd functions stubbed as no-ops: " .. table.concat(u, " "))
 if FAILED then os.exit(1) end

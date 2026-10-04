@@ -1,0 +1,10 @@
+{
+  "id": "demo_collision",
+  "name": "Collision lines and platforms",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

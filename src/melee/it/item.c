@@ -1,6 +1,9 @@
 #include "item.h"
 #if defined(TARGET_PC)
 #include "../../../pc/geno/geno.h" /* GENO_ART_KIND_* */
+#include "../../../pc/geno/geno_items.h"
+#include <melee/ft/inlines.h>
+#include <melee/ft/types.h>
 #endif
 
 #include <melee/lb/forward.h>
@@ -294,6 +297,11 @@ static void Item_802674AC(SpawnItem* spawnItem)
     ItemKind kind = spawnItem->kind;
 
 #if defined(TARGET_PC)
+    if (kind >= GENO_ITEM_KIND_BASE && kind < GENO_ITEM_KIND_END && Geno_ItemActive(kind)) {
+        extern int Geno_ItemCap(int kind);
+        spawnItem->hold_kind = Geno_ItemCap(kind);
+        return;
+    }
     if (kind >= GENO_ART_KIND_BASE && kind < GENO_ART_KIND_END) {
         spawnItem->hold_kind = 8; /* a Geno article counts as a fighter article (no item cap) */
         return;
@@ -571,6 +579,12 @@ void Item_80267978(HSD_GObj* gobj)
         extern void* Geno_ArticleLogic(int kind);
         item_data->xC4_article_data = Geno_ArticleDesc(item_data->kind);
         item_data->xB8_itemLogicTable = Geno_ArticleLogic(item_data->kind);
+    } else if (item_data->kind >= GENO_ITEM_KIND_BASE && item_data->kind < GENO_ITEM_KIND_END &&
+               Geno_ItemActive(item_data->kind)) {
+        extern void* Geno_ItemDesc(int kind);
+        extern void* Geno_ItemLogic(int kind);
+        item_data->xC4_article_data = Geno_ItemDesc(item_data->kind);
+        item_data->xB8_itemLogicTable = Geno_ItemLogic(item_data->kind);
     } else if (item_data->kind >= 237) {
         /* Ported from m-ex (https://github.com/akaneia/m-ex):
          * asm/m-ex/Item Extension/Create Item.asm, @ 0x80267990. m-ex adds a fifth range for custom
@@ -1030,6 +1044,10 @@ HSD_GObj* Item_8026862C(SpawnItem* spawnItem)
         int idx = spawnItem->kind - It_PKind_Start;
         GObj_SetupGXLink(gobj, it_803F2310[idx].x0_renderFunc, 6, 0);
 #if defined(TARGET_PC)
+    } else if (spawnItem->kind >= GENO_ITEM_KIND_BASE && spawnItem->kind < GENO_ITEM_KIND_END &&
+               Geno_ItemActive(spawnItem->kind)) {
+        extern void Geno_ItemDraw(HSD_GObj*, int);
+        GObj_SetupGXLink(gobj, Geno_ItemDraw, 6, 0);
     } else if (spawnItem->kind >= 237) {
         /* m-ex custom items render with the generic item renderer; otherwise the stage branch
          * below reads it_803F4CA8 far past its end for any kind >= 237. */
@@ -1076,6 +1094,37 @@ HSD_GObj* Item_8026862C(SpawnItem* spawnItem)
     }
     return gobj;
 }
+
+#if defined(TARGET_PC)
+/* Use the engine's exact hold-category policy. The cap probe's Pokemon
+ * category has a legacy decrement: preserve all counters during a query. */
+int Item_ScriptSpawnAtCap(SpawnItem* spawn)
+{
+    SpawnItem copy = *spawn;
+    HSD_ObjAllocUnk saved = Item_804A0C64;
+    int result;
+    Item_802674AC(&copy);
+    result = Item_8026784C(copy.hold_kind, copy.kind);
+    Item_804A0C64 = saved;
+    return result;
+}
+/* A disc-free query fixture: category-zero cap and caller/counter immutability. */
+int Item_ScriptSpawnCapTest(void)
+{
+    HSD_ObjAllocUnk saved = Item_804A0C64;
+    SpawnItem spawn = {0};
+    int failed=0;
+    spawn.kind=It_Kind_Capsule; spawn.hold_kind=99;
+    Item_804A0C64.x0=3; Item_804A0C64.x4=3;
+    if(!Item_ScriptSpawnAtCap(&spawn) || Item_804A0C64.x0!=3 ||
+       Item_804A0C64.x4!=3 || spawn.hold_kind!=99) ++failed;
+    Item_804A0C64.x0=2;
+    if(Item_ScriptSpawnAtCap(&spawn) || Item_804A0C64.x0!=2 ||
+       Item_804A0C64.x4!=3 || spawn.hold_kind!=99) ++failed;
+    Item_804A0C64=saved;
+    return failed;
+}
+#endif
 
 /// Item spawn prefunction - spawn airborne
 Item_GObj* Item_80268B18(SpawnItem* spawnItem)
@@ -1412,6 +1461,10 @@ static void Item_80269528(HSD_GObj* gobj)
     {
         item_data->xD44_lifeTimer -= 1.0f;
         if (item_data->xD44_lifeTimer <= 0.0f) {
+#if defined(TARGET_PC)
+            extern void Geno_ItemFamilyEvent(HSD_GObj*, int, int);
+            Geno_ItemFamilyEvent(gobj, 1, -1);
+#endif
             item_data->destroy_type = 0;
             Item_8026A8EC(gobj);
             return;
@@ -2070,6 +2123,10 @@ static void func_8026A8EC_inline1(HSD_GObj* gobj)
 static void func_8026A8EC_inline2(HSD_GObj* gobj)
 {
     Item* it = GET_ITEM(gobj);
+#if defined(TARGET_PC)
+    extern void Geno_ItemFamilyEvent(HSD_GObj*, int, int);
+    Geno_ItemFamilyEvent(gobj, 2, -1);
+#endif
     RunGObjCallback(gobj, it->xB8_itemLogicTable->destroyed);
 }
 
@@ -2138,6 +2195,12 @@ void Item_8026AB54(Item_GObj* gobj, HSD_GObj* owner_gobj, Fighter_Part part)
 
     it_80273168(gobj); // sets pickup sfx?
     it_802742F4(gobj, owner_gobj, part);
+#if defined(TARGET_PC)
+    {
+        extern void Geno_ItemFamilyEvent(HSD_GObj*, int, int);
+        Geno_ItemFamilyEvent(gobj, 0, owner_gobj ? GET_FIGHTER(owner_gobj)->player_id : -1);
+    }
+#endif
     RunGObjCallback(gobj, item_data->xB8_itemLogicTable->picked_up);
     Item_8026B074(item_data);
 }

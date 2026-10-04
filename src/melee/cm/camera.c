@@ -1716,6 +1716,12 @@ static inline void update_transform(CameraBounds* bounds,
 
     Camera_8002958C(bounds, ts);
     ts->target_fov = cm_803BCCA0.x40;
+#if defined(TARGET_PC)
+    {
+        extern float ScriptGame_CameraFov(float fallback);
+        ts->target_fov = ScriptGame_CameraFov(ts->target_fov);
+    }
+#endif
     delta = ts->target_fov - ts->fov;
     ts->fov += delta * cm_803BCCA0.x44;
     Camera_80029BC4(bounds, ts);
@@ -4244,6 +4250,14 @@ static void fn_800301D0(HSD_GObj* gobj, int arg1)
 
         render_gxlink_pass(gobj, 3, 7);
 
+#if defined(TARGET_PC)
+        {
+            /* Completed world, including effects and near translucent kit pieces; HUD cameras follow. */
+            extern void Shader_PostDraw(int stage);
+            Shader_PostDraw(0);
+        }
+#endif
+
         if (Camera_80030AC4() != 0) {
             if (Camera_80030A78() != 0) {
                 mpLib_8005A2DC();
@@ -4356,7 +4370,11 @@ static inline bool same_side(f32 fwd_z, f32 dir_z)
     return (fwd_z * dir_z) > 0.0L;
 }
 
+#if defined(TARGET_PC)
+static bool Camera_Bounds(f32* left, f32* center, f32* right, int logic)
+#else
 bool Camera_800307D0(f32* left, f32* center, f32* right)
+#endif
 {
     HSD_CObj* cobj;
     f32 half_fov;
@@ -4374,8 +4392,19 @@ bool Camera_800307D0(f32* left, f32* center, f32* right)
     f32 edge_z2;
 
     cobj = GET_COBJ(game_camera.gobj);
+#if defined(TARGET_PC)
+    if (logic) {
+        /* Stage spawns must not depend on a peer's window size. */
+        half_fov = 0.5f * MTXDegToRad(HSD_CObjGetFov(cobj)) *
+                   HSD_CObjGetAuthoredAspect(cobj);
+    } else {
+        half_fov = atanf(tanf(0.5f * MTXDegToRad(HSD_CObjGetFov(cobj))) *
+                         HSD_CObjGetAspect(cobj));
+    }
+#else
     half_fov =
         0.5 * (MTXDegToRad(HSD_CObjGetFov(cobj)) * HSD_CObjGetAspect(cobj));
+#endif
 
     result = true;
     HSD_CObjGetEyePosition(cobj, &eye_pos);
@@ -4421,6 +4450,17 @@ bool Camera_800307D0(f32* left, f32* center, f32* right)
     }
     return result;
 }
+
+#if defined(TARGET_PC)
+bool Camera_800307D0(f32* left, f32* center, f32* right)
+{
+    return Camera_Bounds(left, center, right, 0);
+}
+bool Camera_LogicBounds(f32* left, f32* center, f32* right)
+{
+    return Camera_Bounds(left, center, right, 1);
+}
+#endif
 
 #if defined(TARGET_PC)
 /* Rollback / determinism (pc/platform/gw_snap.c): the camera's viewing matrix is a CACHE that the
@@ -4727,6 +4767,9 @@ void Camera_ScriptCommit(void)
 
 HSD_GObj* Camera_80030A50(void)
 {
+#if defined(TARGET_PC)
+    if (game_camera.gobj != NULL) HSD_CObjUpdateView(GET_COBJ(game_camera.gobj));
+#endif
     return game_camera.gobj;
 }
 
@@ -4808,6 +4851,58 @@ bool Camera_80030BA8(void)
 }
 
 /// Camera_ToScreen
+#if defined(TARGET_PC)
+static bool Camera_ProjectToScreen(HSD_CObj* cobj, Vec3* arg0, S32Vec2* arg1)
+{
+    Vec3 point;
+    Scissor scissor;
+    s32 px;
+    s32 py;
+    PAD_STACK(4);
+
+    if (lbVector_WorldToScreen(cobj, arg0, &point, 1) == NULL) {
+        return false;
+    }
+
+    if ((point.x > 2.1474836e9f) || (point.x < -2.1474836e9f) ||
+        (point.y > 2.1474836e9f) || (point.y < -2.1474836e9f))
+    {
+        return false;
+    }
+
+    px = point.x;
+    py = point.y;
+    if (arg1 != NULL) {
+        arg1->x = px;
+        arg1->y = py;
+    }
+    HSD_CObjGetScissor(cobj, &scissor);
+    if ((px < scissor.left) || (px >= scissor.right) || (py < scissor.top) ||
+        (py >= scissor.bottom))
+    {
+        return false;
+    }
+    return true;
+}
+
+bool Camera_80030BBC(Vec3* arg0, S32Vec2* arg1)
+{
+    return Camera_ProjectToScreen(GET_COBJ(game_camera.gobj), arg0, arg1);
+}
+
+#if defined(TARGET_PC)
+/* Damage logic uses a retail authored camera, independent of local display size.
+ * Copy only; never change the live render camera or blast zones. */
+bool Camera_LogicToScreen(CmSubject* subject, S32Vec2* point)
+{
+    HSD_CObj* source = GET_COBJ(game_camera.gobj);
+    HSD_CObj camera = *source;
+    camera.view_auto = 0;
+    camera.projection_param.perspective.aspect = HSD_CObjGetAuthoredAspect(source);
+    return Camera_ProjectToScreen(&camera, &subject->bone_pos, point);
+}
+#endif
+#else
 bool Camera_80030BBC(Vec3* arg0, S32Vec2* arg1)
 {
     Vec3 point;
@@ -4842,6 +4937,7 @@ bool Camera_80030BBC(Vec3* arg0, S32Vec2* arg1)
     }
     return true;
 }
+#endif
 
 bool Camera_80030CD8(CmSubject* arg0, S32Vec2* arg1)
 {
@@ -5020,6 +5116,13 @@ void Camera_800311CC(f32 arg8)
 {
     game_camera.farz = arg8;
 }
+
+#ifdef TARGET_PC
+void Camera_StageSlotClipGet(f32* nearz, f32* farz)
+{
+    *nearz=game_camera.nearz;*farz=game_camera.farz;
+}
+#endif
 
 void Camera_800311DC(f32 arg8)
 {

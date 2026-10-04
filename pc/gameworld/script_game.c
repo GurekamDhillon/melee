@@ -176,6 +176,7 @@ static Article* script_target_old_article;
 #include "script_sim_state.inc"
 #include "script_hit_context.inc"
 #include "script_hit_rules.inc"
+#include "script_echo.inc"
 #include "script_1p.inc"
 void ScriptGame_FighterBenchRelease(int owner);
 static void script_bench_frame(void);
@@ -214,6 +215,7 @@ void ScriptGame_StageEnd(void)
     ScriptGame_CapsStatusRelease(0);
     ScriptGame_SimRelease(0);
     ScriptGame_HitRulesRelease(0);
+    ScriptGame_EchoReset();
     ScriptGame_FighterBenchRelease(0);
     /* arena-hooks: no scene's ownership or transition can survive teardown. */
     memset(&script_arena, 0, sizeof script_arena);
@@ -1176,6 +1178,7 @@ void ScriptGame_StageFrame(void)
     script_arena_frame();
     script_bench_frame();
     ScriptGame_CapsEffectsFrame();
+    ScriptGame_EchoFrame();
     script_caps_status_frame();
     ScriptGame_AreaDrain();
     for (i = 0; i < SCRIPT_STAGE_ENEMIES; ++i) {
@@ -1606,7 +1609,7 @@ int ScriptGame_ItemI(int index, int field)
     case SCRIPT_ITEM_GENO_PROFILE:
     case SCRIPT_ITEM_GENO_ARTICLE:
     case SCRIPT_ITEM_GENO_FRAME:
-        if (ip->kind >= GENO_ART_KIND_BASE && ip->kind < GENO_ART_KIND_END) {
+        if (GENO_ART_IS_KIND(ip->kind)) {
             if (ip->kind < GENO_ART_KIND_BASE2) {
                 p = (ip->kind - GENO_ART_KIND_BASE) / GENO_ART_PER_RANGE;
                 a = (ip->kind - GENO_ART_KIND_BASE) % GENO_ART_PER_RANGE;
@@ -1700,6 +1703,8 @@ static Fighter* script_fighter(int slot)
 #include "script_fighter_bench.inc"
 #include "script_fighter_caps_target.inc"
 #include "script_fighter_caps_movement.inc"
+#include "script_fighter_caps_armor.inc"
+#include "script_fighter_caps_armor_formula_tests.inc"
 #include "script_fighter_caps_effects.inc"
 #include "script_zones.inc"
 #include "script_six_slots.inc"

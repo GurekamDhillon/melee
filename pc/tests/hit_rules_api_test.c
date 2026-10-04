@@ -32,6 +32,18 @@ static int api_replace(int slot,int owner,int count,int status);
 #define gw_ScriptGame_HitRulesReplace api_replace
 #include "../platform/gw_script_hit_rules.inc"
 static int api_replace(int slot,int owner,int count,int status){memcpy(input,gs_hit_rules_input,sizeof input);return ScriptGame_HitRulesReplace(slot,owner,count,status);}
+/* This older fixture exercises hit-rule operations only. Mirror the new echo
+ * payload layout for journal sizing; echo_api_test.c covers the real adapter. */
+typedef struct {int count,rules[8][9];} GsEchoRules;
+static int gw_ScriptGame_EchoOwner(int entity){(void)entity;return 0;}
+static int gw_ScriptGame_EchoNextHandle(void){return 1;}
+static void gw_ScriptGame_EchoClear(int owner){(void)owner;}
+static void gs_echo_visual_release(int owner){(void)owner;}
+static int gs_echo_sub(lua_State* L,int at){if(lua_isnoneornil(L,at))return 0;luaL_checktype(L,at,LUA_TBOOLEAN);return lua_toboolean(L,at);}
+static void gs_echo_parse(lua_State* L,int at,GsEchoRules* rules){(void)at;(void)rules;luaL_error(L,"echo operations belong to echo_api_test");}
+static void gs_echo_prepare(lua_State* L,int entity,GsEchoRules* rules,int* next){(void)L;(void)entity;(void)rules;(void)next;}
+static void gs_echo_pair(lua_State* L,int a,const GsEchoRules* ar,int b,const GsEchoRules* br){(void)L;(void)a;(void)ar;(void)b;(void)br;}
+static int gs_echo_apply(int entity,int owner,const GsEchoRules* rules){(void)entity;(void)owner;(void)rules;return 0;}
 /* Consume real journal layout and replay application, with fixture-only game
  * services for unused operation kinds. The journal never derives fixed offsets. */
 #define GS_LOG_N 2

@@ -1752,6 +1752,9 @@ static bool fn_80026E58(int arg0)
 u64 lbAudioAx_80026E84(CharacterKind ckind)
 {
 #if defined(TARGET_PC)
+    extern int Geno_DefineBaseCK(int ck);
+    int native_base = Geno_DefineBaseCK(ckind);
+    if (native_base >= 0) ckind = native_base;
     if (LBAX_N > 55 && ckind >= 0) { /* before the retail bound: m-ex kinds are past it */
         /* m-ex: the fighter's own bank from mexData. A bank past the u64 mask (Sonic's 66) has no
          * mask bit - it is requested by index at match start; the retail entry at the same

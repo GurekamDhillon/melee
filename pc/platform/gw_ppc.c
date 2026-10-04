@@ -2411,6 +2411,8 @@ uint32_t gw_ppc_call_profile_body(uint32_t guest_fn, const uint32_t *gpr_args, i
 uint32_t gw_ppc_call(uint32_t guest_fn, const uint32_t *gpr_args, int nargs, uint32_t rtoc,
                      uint32_t sp) {
     uint32_t result;
+    extern int gw_Geno_DefinePPCProbe(uint32_t argument);
+    if (gpr_args != NULL && nargs > 0 && gw_Geno_DefinePPCProbe(gpr_args[0])) return 0;
     gw_prof_begin(GW_PROF_MEX, guest_fn);
     result = gw_ppc_call_profile_body(guest_fn, gpr_args, nargs, rtoc, sp);
     gw_prof_end();

@@ -1,0 +1,7 @@
+# Authored Hero jab: 12% instead of the inherited normal.
+wait 2
+hitbox slot=0 joint=0 damage=12 size=5 x=4 y=7 angle=361 kbg=100 bkb=30
+wait 3
+clear_hitboxes
+wait 6
+iasa

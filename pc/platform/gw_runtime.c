@@ -1809,6 +1809,8 @@ static int gw_sl_mex_name(const char *v) {
 /* Parses a character reference into a CharacterKind. Returns 0 on success.
  * `*random` is set for the "random" keyword, which is resolved when the scene is seeded. */
 static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
+  extern int gw_Geno_DefineResolve(const char *token);
+  extern int gw_Geno_DefineBaseCK(int ck);
   extern int gw_Mex_ExtToPortCKind(int ext);
   const char *rest;
   int n;
@@ -1824,6 +1826,10 @@ static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
   }
   if ((rest = gw_sl_after(v, "ck:")) != NULL && gw_sl_all_digits(rest)) {
     n = atoi(rest);
+    if (gw_Netplay_Enabled() && gw_Geno_DefineBaseCK(n) >= 0) {
+      gw_log("scene: Geno definition refused online: admission/identity contract unavailable");
+      return -1;
+    }
     if (n == GW_SL_CK_NONE) {
       /* ck:33 reads like "the first m-ex fighter" (m-ex's own external numbering starts its
          added fighters at 33) but in the port it is ChKind_None, which builds Mario with nothing
@@ -1868,6 +1874,17 @@ static int gw_sl_parse_char(const char *v, int *ck_out, int *random_out) {
     *ck_out = n;
     return 0;
   }
+  rest = gw_sl_after(v, "geno:");
+  n = gw_Geno_DefineResolve(rest ? rest : v);
+  if (n >= 0) {
+    if (gw_Netplay_Enabled()) {
+      gw_log("scene: Geno definition refused online: admission/identity contract unavailable");
+      return -1;
+    }
+    *ck_out = n;
+    return 0;
+  }
+  if (rest) return -1;
   n = gw_sl_mex_name(v);
   if (n != -2) {
     /* an m-ex disc names its fighters itself: its name wins, and a retail name the disc no longer

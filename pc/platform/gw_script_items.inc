@@ -43,7 +43,7 @@ static unsigned gs_item_event_family(int def) {
  if(def>=0) return def<GENO_ITEM_MAX_DEFS?1:0;
  if(def==INT_MIN)return 0;kind=-def-1;
  if(kind<=34)return 2;
- if(kind>=237&&kind<5000&&!(kind>=GENO_ART_KIND_BASE&&kind<GENO_ART_KIND_END))return 4;
+ if(kind>=237&&kind<5000&&!GENO_ART_IS_KIND(kind))return 4;
  return 0;
 }
 static int gs_item_event_accept(int script,int def) {
@@ -258,7 +258,7 @@ static void gs_item_payload(lua_State* L,int colour,int amount) {
  lua_createtable(L,0,2);gs_setstr(L,"colour",colour>=0&&colour<5?gs_item_colours[colour]:"unknown");gs_setint(L,"amount",amount);
 }
 static const char* gs_item_layer(int kind) {
- return gw_Geno_ItemActive(kind)?"geno":kind>=GENO_ART_KIND_BASE&&kind<GENO_ART_KIND_END?"geno_article":kind>=237?"mex":"vanilla";
+ return gw_Geno_ItemActive(kind)?"geno":GENO_ART_IS_KIND(kind)?"geno_article":kind>=237?"mex":"vanilla";
 }
 static void gs_item_row(lua_State* L,int serial,int kind) {
  int def=kind-GENO_ITEM_KIND_BASE,handle=gw_Geno_ItemMeta(serial,GENO_II_HANDLE);

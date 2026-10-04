@@ -1,8 +1,10 @@
 # Geno - GD's Melee's fighter-extension layer
 
+**2026-10-04 GF1 update:** the Geno engine has an offline native Mario-reference `define` backend in format 6. Section 22 supersedes earlier statements that `define` is reserved. Source/tooling verification is separate from game acceptance; no GF1 game build or launch has been performed.
+
 **Source reference current as of 2026-10-03.** This dated overview supersedes older status
 summaries in this file; versioned verification sections remain historical results for their
-named runs, not HEAD validation. JSON `GENO_VERSION` is **5**, with additive v5.5 commands,
+named runs, not HEAD validation. JSON `GENO_VERSION` is **6**, with additive v5.5 commands,
 articles, on-hit/counter hooks and native effects. The LAB and its `gd` API are public.
 Stable earlier instruction ids retain their meanings; sections 15-20 describe their additions.
 
@@ -139,7 +141,7 @@ mods folder (`docs/mods-packaging.md` in the root repo), so it can also ship rep
   `donkey/dk`, `kirby`, `koopa/bowser`, `link`, `seak/sheik`, `ness`, `peach`, `popo`, `nana`,
   `pikachu`, `samus`, `yoshi`, `purin/jigglypuff`, `mewtwo`, `luigi`, `mars/marth`, `zelda`,
   `clink/younglink`, `drmario`, `falco`, `pichu`, `gamewatch/gnw`, `ganon/ganondorf`, `emblem/roy`.
-- `define`: **(b)** brand-new fighters. Reserved; v0 logs and skips it (section 13).
+- `define`: **(b)** native fighter definitions. Version 6 implements the offline Mario-reference preset (section 22); runtime acceptance awaits the integrator rebuild.
 - `attributes`: any `ftCo_DatAttrs` field by its decomp name (40 of them: walk/dash/jump/air/
   gravity/weight/shield...). Applied right after the engine copies the attributes from the file,
   *before* scale/metal/etc. modifiers, at spawn, respawn and every re-apply.
@@ -324,7 +326,7 @@ Geno version - data-driven, drawn natively, no fighter code:
 | v3 (built, section 17) | root-motion states, Dimensional Cape and Drill Rush refinements |
 | v4 (built, section 18) | animation-rate and glide refinements |
 | future, unversioned | HUD elements (section 11b): data-driven meters/icons bound to Geno variables |
-| future, unversioned | `define`: brand-new fighters with Geno-native registration (their own kind range and content ids, independent of m-ex's dense slots), CSS/SSS entries via gw_uigen |
+| v6, integration pending | `define`: offline Mario-reference native registration, independent effective rows and descriptors, unused resident aliases, selection defaults (section 22) |
 | later | an IR emitter/loader for `melee.geno`; per-profile merge rules instead of "later mod wins" |
 
 Constraints that stay: Melee's global rules (section 1), m-ex untouched (section 3), rollback-safe
@@ -2525,3 +2527,26 @@ and air); a LAB rewind restores and re-fires.
 Importer check (GD's ef_trail.eff; shader types: Fire 7 warp / 2 sprite / 1 distortion, Ice 10 sprite / 1 warp,
 Thunder sprite): P_TrailFireBullet 10 emitters, 9 textures, 4 meshes, 10 / 10 fragment programs read; P_TrailIceBullet 11 / 10 textures / 5 meshes / 10 of 11; P_TrailThunderCloud 5 / 4 / 4 /
 4 of 5; P_TrailThunderBullet 4 / 3 / 4 / 4 of 4.
+
+
+## 22. v6: native definitions, GF1 (integration pending)
+
+The Geno engine accepts `define` beside the existing `attach` format. Slice 1 supports exactly:
+
+```json
+{"geno":6,"fighters":[{"define":{"key":"vanilla-hero","name":"Vanilla Hero","base":"mario","common":"melee.common.v1","resources":"retail:mario"},"attributes":{"walk_max_vel":1.8},"subactions":[{"index":46,"file":"moves/hero-jab.words"}]}]}
+```
+
+The authored Hero jab uses a 12-damage root-joint hitbox. All remaining scripts/actions inherit the Mario/common preset. Native callback and archive-name tables are inherited explicitly, then effective attributes, animation descriptors, common and special state rows are copied independently. Pristine Mario script descriptors are captured before Geno attachments can change them. Immutable model/clip/effect/audio descriptors remain installed-disc references. Other mods or an m-ex disc may replace the referenced Mario resources; GF1 does not certify them as vanilla-byte-identical. No disc bytes are distributed in Hero.
+
+`common_states` overrides motion rows 0..350 (341 common rows and ten Mario-specific rows), with optional `like`, `subaction`, `flags`, `move_id`, and registered `anim`/`iasa`/`phys`/`coll` callbacks. Omitted values inherit. Explicit installed subaction indices must be 0..302 for the audited Mario preset. Existing Geno states/scripts/hooks remain available; new resources/articles/Lua are later slices. Attaching and defining in one entry is an error.
+
+The native catalogue reuses the P5 roster catalogue's ordering/identity primitives independently of MxDt discovery. Definitions receive unused resident CK aliases 127 downward to 34 at boot. Occupied m-ex slots are preserved; at most 94 aliases exist, fewer with m-ex installed. Duplicate identities, allocation/budget failures and exhaustion refuse admission with logs rather than truncate. All active definitions must fit; GF1 has no on-demand resident swapping. This does not activate P5's wide m-ex clone manifests.
+
+Native profile storage grows beyond 32 with a 65,535 id bound and a 256 MiB metadata budget. Game descriptor pointer tables and lazy allocations use a 2 MiB, explicitly budgeted static game-global arena, with snapshotted bytes/cursor/pointers and scene reset. GF1 follow-up 1 removes their dependency on an initialized HSD heap, including in headless attachment tests; runtime suite acceptance awaits the integrator rebuild. Historical article kinds for profiles 0..31 are unchanged; further profiles use a disjoint range starting at 0x20000. Overlay slots/word-pool budgets remain bounded and invalid/partial native overlays refuse the definition.
+
+Native identities and interpreter-attempt counters are game globals; host registry/aliases are process-immutable. A guard at the PPC interpreter entry recognizes a native fighter owner passed as GObj or Fighter pointer, increments its counter and logs/refuses the attempt. Normal native fallback dispatch does not increment it. Load/spawn logs show the count. These are diagnostics, not a claim that a complete stock match has been executed.
+
+Definitions are offline only, absent from online CSS, and refused by named/CK scene selection and the loader guard. Changing definitions requires restart; adding the first definition through hot reload is also refused. Online remains blocked pending resource identity/preset certification, negotiated admission and mapping, replay metadata, compatibility/hash checks and real deterministic resimulation validation. The source SHA-256 export manifest is packaging metadata, not an online certificate. Existing attachments retain their previous format and id behavior.
+
+Author commands are in workspace `tools/geno/README.md`; packet 11 in `docs/learn/geno-fighters/` is an untested teaching stub. The catalogue companion requires the separate Hero folder and is excluded from automatic tours until accepted. Registered tests `geno_define_registry`, `geno_define_repeated_install` and `geno_define_snapshot` require the integrator rebuild. Full action coverage, mixed stock match, save/restore/repeated-input hashes, frontend/audio/results and second-match memory lifetime remain runtime acceptance gates.

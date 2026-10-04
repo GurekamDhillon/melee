@@ -65,6 +65,7 @@ return function(D)
  rush={'momentum'},shelter={'damage_taken','launch_taken'},malice={'launch_taken'},ember_crown={'conversion','damage_taken'},
  winter_heart={'conversion','speed'},storm_shell={'conversion','damage_taken','damage_dealt'},mirror_shard={'clank'},frozen_oath={'conversion','damage_taken'},armoured={'damage_taken'},cleansing={'sustain','speed','launch_taken','cleanse'}}
  for _,m in ipairs(pool) do m.families=assert(declared[m.id]) end
+ for _,m in ipairs(D.mod_echo.records())do pool[#pool+1]=m end
  for _,m in ipairs(pool) do D.mod_schema.validate(m) end
  if D.mod_budget then D.mod_budget.validate_pool(pool,{}) end
  return pool

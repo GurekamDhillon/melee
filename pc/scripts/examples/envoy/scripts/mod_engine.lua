@@ -160,7 +160,9 @@ return function(D)
  end
  function E:family_budget(port) return D.mod_budget.build(self.list,self.equipped[port],self.implicits[port],self.statuses[port]) end
  function E:values(port) return D.mod_budget.values(self.list,self.equipped[port],self.implicits[port],self.statuses[port]) end
+ function E:echo_description(port) return D.mod_echo.engine(self,port) end
  function E:native_rules(port)
+  if D.mod_echo then self:echo_description(port) end
   local out,bits={},0
   for _,name in ipairs(ordered) do if self:status(port,name) then bits=bits+(S.status_bits[name] or 0) end end
   for i,m in ipairs(self.list) do local tier=(self.equipped[port] or {})[m.id]

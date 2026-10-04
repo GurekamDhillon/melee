@@ -5,6 +5,7 @@
 #include <melee/it/forward.h>
 #include <melee/lb/forward.h>
 void ScriptGame_HitRuleCreate(Fighter*,HitCapsule*,int);
+void ScriptGame_HitRuleEchoCreate(Fighter*,HitCapsule*,int,int,int);
 void ScriptGame_HitRuleItemCreate(Item*,HitCapsule*);
 void ScriptGame_HitRuleRetire(void*,unsigned);
 float ScriptGame_HitRuleBaseDamage(HitCapsule*);

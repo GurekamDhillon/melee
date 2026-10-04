@@ -504,6 +504,9 @@ static int gs_pad_owner(void) {
 }
 
 static void gs_sim_release(int token);
+extern void gw_ScriptGame_EchoClear(int owner);
+extern void gw_ScriptGame_EchoReset(void);
+static void gs_echo_visual_release(int owner);
 static void gs_rw_branch(void); /* the Lab's rewind: a write forks the timeline here */
 static void gs_warm_retire(int owner);
 static void gs_launch_retire(int owner);
@@ -660,6 +663,8 @@ static void gs_report(int script, const char *what, const char *err) {
         gw_Shader_Release(s->stage_owner);
         gw_surface_release((unsigned)script + 1);
         gw_motion_release((unsigned)script + 1);
+        gs_echo_visual_release(script + 1);
+        gw_ScriptGame_EchoClear(script + 1);
         if (gs.camera_owner == script + 1) {
             gw_Camera_ScriptReset();
             gs.camera_owner = gs.camera_task_owner = 0;
@@ -5284,7 +5289,10 @@ static int gs_stage_handle_arg(lua_State *L, int idx) {
 #include "gw_script_camera_params.inc"
 #include "gw_script_fighter_mod.inc"
 #include "gw_script_fighter_caps.inc"
+#include "gw_script_fighter_caps_armor.inc"
 #include "gw_script_hit_rules.inc"
+#include "gw_script_echo.inc"
+#include "gw_script_echo_visual.inc"
 #include "gw_script_sim_state.inc"
 #include "gw_script_tint_query.inc"
 #include "gw_script_1p.inc"
@@ -6239,6 +6247,9 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"contact_events", l_contact_events}, {"contact_trace", l_contact_trace},
     {"wait_until", l_wait_until}, {"wait_status", l_wait_status},
     {"contact_overlay", l_contact_overlay},
+    {"fighter_history", l_fighter_history}, {"fighter_history_depth", l_fighter_history_depth},
+    {"echo_add", l_echo_add}, {"echo_remove", l_echo_remove}, {"echoes", l_echoes},
+    {"echo_afterimage", l_echo_afterimage}, {"afterimage_copy", l_afterimage_copy}, {"afterimage_copy_set", l_afterimage_copy_set},
     {"afterimage_add", l_afterimage_add}, {"afterimage_set", l_afterimage_set}, {"afterimage_remove", l_afterimage_remove},
     {"tracer_add", l_tracer_add}, {"tracer_set", l_tracer_set}, {"tracer_remove", l_tracer_remove},
     {"tracer_hitboxes", l_tracer_hitboxes}, {"motion_intensity", l_motion_intensity}, {"motion_stats", l_motion_stats},
@@ -6312,7 +6323,8 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"spawn_1p", l_spawn_1p},
     {"fighter_mod", l_fighter_mod},
     {"fighter_caps", l_fighter_caps}, {"fighter_effect", l_fighter_effect},
-    {"fighter_armour", l_fighter_armour}, {"give_item", l_give_item},
+    {"fighter_armour", l_fighter_armour},
+        {"fighter_armor", l_fighter_armor}, {"give_item", l_give_item},
     {"nearest_opponent", l_nearest_opponent}, {"opponents_in_radius", l_opponents_in_radius},
     {"fighter_timed_status", l_fighter_timed_status},
     {"hit_rule_add", l_hit_rule_add}, {"hit_rule_remove", l_hit_rule_remove},
@@ -6464,6 +6476,7 @@ static void gs_build_base(lua_State *L) {
     lua_setfield(L, -2, "api_version");
     lua_pushboolean(L,1);lua_setfield(L,-2,"clank_event");
     lua_pushboolean(L,1);lua_setfield(L,-2,"sim_supported");
+    lua_pushboolean(L,1);lua_setfield(L,-2,"echo_supported");
     lua_pushstring(L, "GD's Melee scripting API 1");
     lua_setfield(L, -2, "api_name");
     lua_pushinteger(L, 1);
@@ -6679,6 +6692,8 @@ static void gs_unload(int i) {
     gw_Shader_Release(s->stage_owner);
     gw_surface_release((unsigned)i + 1);
     gw_motion_release((unsigned)i + 1);
+    gs_echo_visual_release(i + 1);
+    gw_ScriptGame_EchoClear(i + 1);
     /* Lua may be disabled, throw, or refuse cleanup. The native registry remains
      * authoritative, and this fallback cannot release another script's assets. */
     gs_rw_branch();
@@ -7151,6 +7166,8 @@ void gw_Script_SceneBegin(int scene_kind) {
     prev = gs.scene_kind;
     gw_surface_release(0);
     gw_motion_release(0);
+    gs_echo_visual_release(0);
+    gw_ScriptGame_EchoReset();
     gs_fly_cursor_reset();
     gw_ScriptGame_CpuTechnicalClear(0);
     gw_ScriptGame_CameraParamsRelease(0);
@@ -7206,7 +7223,7 @@ void gw_Script_SceneBegin(int scene_kind) {
    scripts that define a hook late, e.g. from the console) */
 static void gs_update_want_events(void) {
     static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land",
-                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield"};
+                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield", "on_armor"};
     int i, k, want = 0;
     for (i = 0; i < gs.n && !want; ++i) {
         for (k = 0; k < (int)(sizeof hooks / sizeof hooks[0]) && !want; ++k) {
@@ -8306,8 +8323,8 @@ static void gs_dispatch_events(void) {
         static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land",
                                             "on_target_broken", "on_all_targets_broken",
                                             "on_boss_defeated", "on_enemy_defeated", "on_enemy_removed", "on_enemy_hit", [GS_EV_CLANK] = "on_clank",
-                                            [GS_EV_ITEM_COLLECT]="on_item_collect", [GS_EV_ITEM_EXPIRE]="on_item_expire", [14]="on_ko", [15]="on_stock_lost", [16]="on_action_signal"};
-        if (e->what < 1 || e->what > 16) {
+                                            [GS_EV_ITEM_COLLECT]="on_item_collect", [GS_EV_ITEM_EXPIRE]="on_item_expire", [14]="on_ko", [15]="on_stock_lost", [16]="on_action_signal", [17]="on_armor"};
+        if (e->what < 1 || e->what > 17) {
             continue;
         }
         if(e->what==GS_EV_ITEM_COLLECT||e->what==GS_EV_ITEM_EXPIRE) {
@@ -8329,6 +8346,8 @@ static void gs_dispatch_events(void) {
                 continue;
             }
             switch (e->what) {
+            case 17:
+                gs_armor_push(L,e); nargs=1; break;
             case 16:
                 lua_pushinteger(L,e->a+1); lua_pushinteger(L,e->b); lua_pushboolean(L,e->d);
                 nargs=3; break;
@@ -9133,8 +9152,10 @@ static int t_exec(const char *line, char *out, int cap) { return gw_Script_Exec(
 #include "gw_script_camera_params_tests.inc"
 #include "gw_script_fighter_mod_tests.inc"
 #include "gw_script_fighter_caps_tests.inc"
+#include "gw_script_fighter_caps_armor_tests.inc"
 #include "gw_script_sim_state_tests.inc"
 #include "gw_script_hit_rules_tests.inc"
+#include "gw_script_echo_tests.inc"
 #include "gw_script_gameplay_events_tests.inc"
 #include "gw_script_1p_tests.inc"
 #include "gw_script_fighter_bench_tests.inc"
@@ -10662,8 +10683,10 @@ void gw_script_tests_register(void) {
     gw_test_register("script_camera_params", test_script_camera_params);
     gw_test_register("script_fighter_mod", test_script_fighter_mod);
     gw_test_register("script_fighter_caps", test_script_fighter_caps);
+    gw_test_register("script_fighter_armor", test_script_fighter_caps_armor);
     gw_test_register("script_sim_state", test_script_sim_state);
     gw_test_register("script_hit_rules", test_script_hit_rules);
+    gw_test_register("script_echo_parser", test_script_echo_parser);
     gw_test_register("script_gameplay_events", test_script_gameplay_events);
     gw_test_register("script_1p", test_script_1p);
     gw_test_register("script_fighter_bench", test_script_fighter_bench);

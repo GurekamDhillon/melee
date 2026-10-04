@@ -12,7 +12,7 @@ return function(D)
  local record=set('id label kind cost tags tiers trigger interval conditions effects stacking text visual affix group weight fixed_colour families')
  local cond=set('tag self_status target_status status self_damage_above self_damage_below target_damage_above grounded airborne last_stock recently stage_kind')
  local fields={status=set('op status subject duration amount max refresh when'),value=set('op key value when'),heal=set('op amount subject when'),damage=set('op amount subject when'),stacks=set('op status subject duration amount max refresh when'),remove_status=set('op status subject when'),emit=set('op event subject tag when')}
- fields.clank_damage=set('op subject')
+ fields.echo=set('op copies slots delay match damage knockback element once_per_move status');fields.clank_damage=set('op subject')
  fields.convert=set('op match change');fields['versus-status']=set('op status match change')
  local function keys(t,allowed) assert(type(t)=='table' and not getmetatable(t),'plain record required');for k in pairs(t) do assert(allowed[k],'unsupported record field '..tostring(k)) end end
  local function number(v,m)
@@ -53,7 +53,12 @@ return function(D)
   for _,e in ipairs(m.effects) do assert(fields[e.op],'unsupported effect (no connecting-hit mutation)');keys(e,fields[e.op])
    if e.subject then assert(e.subject=='self' or e.subject=='target','unsupported effect subject') end
    if e.when then assert(e.when==m.trigger,'effect event must match trigger') end
-   if e.op=='convert' or e.op=='versus-status' then
+   if e.op=='echo' then
+    assert(m.trigger=='equip','echo requires unconditional equip');range(e.copies or 3,m,1,3,true);range(e.delay or 12,m,1,20,true);range(e.damage or .4,m,.1,4);range(e.knockback or 1,m,.1,4)
+    if e.slots then array(e.slots,0,3);local seen={};for _,i in ipairs(e.slots)do assert(type(i)=='number' and i%1==0 and i>=1 and i<=3 and not seen[i],'invalid echo slots');seen[i]=true end end
+    keys(e.match or {},set('move element airborne'));assert(not e.match or not e.match.move or D.mod_echo.moves[e.match.move],'unknown echo move');assert(not e.match or not e.match.element or S.elements[e.match.element]);assert(not e.match or e.match.airborne==nil or type(e.match.airborne)=='boolean')
+    assert(e.element==nil or S.elements[e.element]);assert(e.once_per_move==nil or type(e.once_per_move)=='boolean');assert(e.status==nil or S.statuses[e.status])
+   elseif e.op=='convert' or e.op=='versus-status' then
     assert(m.trigger=='equip','native hit rules require unconditional equip')
     keys(e.match,set('move grounded element incoming'));assert(e.match.move==nil or S.hit_moves[e.match.move],'hit match must use vocabulary')
     assert(e.match.element==nil or S.elements[e.match.element],'only ordinary original elements supported')
@@ -128,7 +133,8 @@ return function(D)
  end
  function S.describe(m,tier)
   S.validate(m);local text=m.text:gsub('{([a-z_]+)(%%?)}',function(k,pct) local v=S.resolve('$'..k,m,tier);return pct=='%' and tostring(v*100)..'%' or tostring(v) end)
-  if m.kind=='unique' then
+  local has_echo=false;for _,effect in ipairs(m.effects)do if effect.op=='echo' then has_echo=true end end
+  if m.kind=='unique' and not has_echo then
    local lines={};local changed=false
    local labels={damage_dealt='Attack percent damage',damage_taken='Attack percent damage taken',run_speed='Run speed',air_speed='Air speed'}
    for _,e in ipairs(m.effects)do

@@ -906,5 +906,41 @@
     "in_game": false,
     "controls": "See demo overlay for live parameters",
     "setup": []
-  }
+  },
+{
+  "id": "demo_armor_types",
+  "path": "demos/armor-types",
+  "title": "Armour types",
+  "api": "fighter_armor; on_armor; hit",
+  "category": "demo",
+  "new": true,
+  "in_game": false,
+  "controls": "A: cycle armour; R: refresh; W/M/S: collision hits; SPACE: auto barrage",
+  "setup": []
+},
+  {
+    "id": "demo_echoes",
+    "path": "demos/echoes",
+    "title": "Echoes: delayed aerials",
+    "api": "fighter_history; echo_add; echo_afterimage; afterimage_copy",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "E: copy2 aerials; N: neutral-air on copies1/2; jump past standing P2",
+    "setup": []
+  },
+{
+  "id": "demo_geno_define",
+  "tour": false,
+  "path": "demos/geno-define",
+  "title": "Vanilla Hero: native Geno definition",
+  "api": "geno v6 define; LAB snapshots",
+  "category": "demo",
+  "new": true,
+  "in_game": false,
+  "controls": "S save; L load; P pause; N step; R resume",
+  "requires_assets": true,
+  "skip_reason": "Requires integrator rebuild and separately enabled vanilla-hero fighter folder; offline acceptance pending",
+  "setup": []
+}
 ]

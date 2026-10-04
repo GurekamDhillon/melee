@@ -57,9 +57,10 @@ extern int Geno_SpecialSelect(int p, int which, int i);
 
 /* ---- game globals: one descriptor per (profile, article) ------------------------------------- */
 
-Article Geno_ArtDesc[GENO_MAX_PROFILES][GENO_MAX_ARTICLES];
-ItemAttr Geno_ArtAttr[GENO_MAX_PROFILES][GENO_MAX_ARTICLES];
-ItemModelDesc Geno_ArtModel[GENO_MAX_PROFILES][GENO_MAX_ARTICLES];
+Article** Geno_ArtDesc;
+ItemAttr** Geno_ArtAttr;
+ItemModelDesc** Geno_ArtModel;
+int Geno_ArtProfileCapacity;
 ItemStateArray Geno_ArtStates; /* never read: the one state has no animation (anim_id -1) */
 
 /* The per-item variables, in the item's per-kind block (Item.xDD4_itemVar). */
@@ -91,10 +92,13 @@ static f32 geno_art_hf(int p, int a, int h, int id)
 /* An item kind -> (profile, article); 0 when it is not a Geno article. */
 static int geno_art_of_kind(int kind, int* p, int* a)
 {
-    if (kind < GENO_ART_KIND_BASE || kind >= GENO_ART_KIND_END) {
+    if (!GENO_ART_IS_KIND(kind)) {
         return 0;
     }
-    if (kind < GENO_ART_KIND_BASE2) {
+    if (kind >= GENO_ART_EXTRA_BASE) {
+        *p = 32 + (kind - GENO_ART_EXTRA_BASE) / 16;
+        *a = (kind - GENO_ART_EXTRA_BASE) % 16;
+    } else if (kind < GENO_ART_KIND_BASE2) {
         *p = (kind - GENO_ART_KIND_BASE) / GENO_ART_PER_RANGE;
         *a = (kind - GENO_ART_KIND_BASE) % GENO_ART_PER_RANGE;
     } else {
@@ -126,8 +130,25 @@ void Geno_ArticleStunBonus(Item* item, HitCapsule* hit, Fighter* vic)
 }
 
 /* The descriptor, from the registry (idempotent: the same values at every spawn). */
+static void geno_art_prepare(int p)
+{
+    int n = Geno_ProfileCount(), i;
+    if (n > Geno_ArtProfileCapacity) {
+        Article** ds = geno_profile_alloc(n * sizeof(*ds));
+        ItemAttr** as = geno_profile_alloc(n * sizeof(*as));
+        ItemModelDesc** ms = geno_profile_alloc(n * sizeof(*ms));
+        for (i = 0; i < Geno_ArtProfileCapacity; ++i) {
+            ds[i] = Geno_ArtDesc[i]; as[i] = Geno_ArtAttr[i]; ms[i] = Geno_ArtModel[i];
+        }
+        Geno_ArtDesc = ds; Geno_ArtAttr = as; Geno_ArtModel = ms; Geno_ArtProfileCapacity = n;
+    }
+    if (!Geno_ArtDesc[p]) Geno_ArtDesc[p] = geno_profile_alloc(GENO_MAX_ARTICLES * sizeof(Article));
+    if (!Geno_ArtAttr[p]) Geno_ArtAttr[p] = geno_profile_alloc(GENO_MAX_ARTICLES * sizeof(ItemAttr));
+    if (!Geno_ArtModel[p]) Geno_ArtModel[p] = geno_profile_alloc(GENO_MAX_ARTICLES * sizeof(ItemModelDesc));
+}
 static void geno_art_build(int p, int a)
 {
+    geno_art_prepare(p);
     Article* d = &Geno_ArtDesc[p][a];
     ItemAttr* at = &Geno_ArtAttr[p][a];
     ItemModelDesc* m = &Geno_ArtModel[p][a];

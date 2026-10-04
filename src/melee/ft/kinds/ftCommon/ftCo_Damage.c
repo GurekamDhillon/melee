@@ -1,4 +1,7 @@
 #include "ftCo_Damage.h"
+#if defined(TARGET_PC)
+#include <gameworld/script_fighter_caps.h>
+#endif
 
 #include <Runtime/platform.h>
 
@@ -117,6 +120,9 @@ bool ftCo_8008D8E8(float f)
 
 void ftCo_Damage_CalcKnockback(Fighter* fp)
 {
+#if defined(TARGET_PC)
+    ScriptGame_ArmorResetReaction(fp);
+#endif
     if (!fp->dmg.kb_applied) {
         return;
     }
@@ -140,6 +146,9 @@ void ftCo_Damage_CalcKnockback(Fighter* fp)
             armor += p_ftCommonData->metal_armor;
         }
         fp->dmg.kb_applied -= armor;
+#if defined(TARGET_PC)
+        fp->dmg.kb_applied = ScriptGame_ArmorSubtract(fp, fp->dmg.kb_applied);
+#endif
         if (fp->dmg.kb_applied < p_ftCommonData->kb_min) {
             fp->dmg.kb_applied = p_ftCommonData->kb_min;
         }
@@ -818,10 +827,11 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
     /* Script armour reuses retail's no-reaction branch; percent was already committed. */
     extern int ScriptGame_CapsNoFlinch(Fighter*);
+    int script_armor_absorbed = ScriptGame_ArmorReact(fp);
 #endif
     if (fp->x2220_b3 || fp->x2220_b4 || !fp->dmg.kb_applied
 #if defined(TARGET_PC)
-        || ScriptGame_CapsNoFlinch(fp)
+        || script_armor_absorbed || ScriptGame_CapsNoFlinch(fp)
 #endif
     ) {
         inlineB2(gobj);

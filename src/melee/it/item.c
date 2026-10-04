@@ -303,7 +303,7 @@ static void Item_802674AC(SpawnItem* spawnItem)
         spawnItem->hold_kind = Geno_ItemCap(kind);
         return;
     }
-    if (kind >= GENO_ART_KIND_BASE && kind < GENO_ART_KIND_END) {
+    if (GENO_ART_IS_KIND(kind)) {
         spawnItem->hold_kind = 8; /* a Geno article counts as a fighter article (no item cap) */
         return;
     }
@@ -573,7 +573,7 @@ void Item_80267978(HSD_GObj* gobj)
         item_data->xC4_article_data = it_804D6D30[idx];
         item_data->xB8_itemLogicTable = &it_803F23CC[idx];
 #if defined(TARGET_PC)
-    } else if (item_data->kind >= GENO_ART_KIND_BASE && item_data->kind < GENO_ART_KIND_END) {
+    } else if (GENO_ART_IS_KIND(item_data->kind)) {
         /* A Geno article (pc/geno/geno_game_articles.inc, docs/geno.md section 19): its own item
          * kind range, above m-ex's custom kinds and below m-ex's 5000 spawn remap. */
         extern void* Geno_ArticleDesc(int kind);
@@ -991,7 +991,7 @@ HSD_GObj* Item_8026862C(SpawnItem* spawnItem)
      * parent or a stage parent against the current stage's; any other parent leaves the kind
      * alone, as m-ex does. It must happen before Item_8026784C, which already reads the kind.
      * Without it ext:294's stage article reached Item_80267978 as kind 5000. */
-    if (spawnItem->kind >= 5000) {
+    if (spawnItem->kind >= 5000 && !GENO_ART_IS_KIND(spawnItem->kind)) {
         extern int Mex_SpawnArticleKind(int article, int owner_class, int fighter_kind);
         HSD_GObj* parent = spawnItem->x0_parent_gobj;
         int cls = parent != NULL ? (int) parent->classifier : -1;

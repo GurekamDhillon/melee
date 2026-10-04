@@ -29,9 +29,7 @@
 
 /* ---- game globals: rows and parameters per profile -------------------------------------------- */
 
-MotionState Geno_Rows[GENO_MAX_PROFILES][GENO_MAX_STATES];
-f32 Geno_Params[GENO_MAX_PROFILES][GENO_PARAMS];
-s32 Geno_RowCount[GENO_MAX_PROFILES];
+#include "geno_profiles.inc"
 
 /* Internal target kinds (never in a script): the profile's first state with behaviour `id`, and
  * "Wait on the ground / Fall in the air". */
@@ -175,7 +173,7 @@ int GenoGame_ParamFind(const char* family, const char* name)
 static f32 geno_param(GenoState* st, int id)
 {
     int p = st->profile;
-    if (p < 0 || p >= GENO_MAX_PROFILES || id < 0 || id >= GENO_PARAMS) {
+    if (p < 0 || p >= Geno_ProfileCapacity || !Geno_Params[p] || id < 0 || id >= GENO_PARAMS) {
         return 0.0f;
     }
     return Geno_Params[p][id];
@@ -372,6 +370,7 @@ static void geno_v2_build(Fighter* fp, int p)
     if (p < 0 || p >= GENO_MAX_PROFILES) {
         return;
     }
+    geno_profile_prepare(p);
     geno_build_params(p);
     geno_build_rows(fp, p);
 }

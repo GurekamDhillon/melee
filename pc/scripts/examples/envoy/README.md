@@ -76,7 +76,7 @@ flow; its historical tests remain, but it is not the default.
 See MENUS.md, PLAYTEST.md and NATIVE-TEST-PLAN.md for controller/native acceptance.
 
 Rolled drives and a controller bag are available in the offline LAB debugger.
-The shared pool has 32 records: 24 normal modifiers, five uniques and three
+The shared pool has 36 records: 26 normal modifiers, six uniques and four
 keystones. `drive give rare 42` grants loot; `drive drop magic 123` spawns a
 physical pickup near P2. `bag` or Z+START opens the twelve-drive bag. Select a
 drive, then a slot to equip/swap; select an occupied slot to unequip. Left/Right
@@ -112,3 +112,20 @@ This follow-up requires a native rebuild: 32-rule capacity, percent/launch
 safety and snapshot/journal layouts changed. Older engines refuse progression
 edits. Source tests and formula models do not establish live KO, controller,
 shader or LAB rewind acceptance. See PLAYTEST.md for the current owner script.
+
+Echo upgrades (EM5, source pass): of Echoes arms aerial copies at ages8/16/24,
+with higher tiers arming more copies. Trailing leaves pictures while Hasted;
+Echo Heart repeats all supported fighter hitboxes at a global25% attack-damage
+cost; Echo Oath trades global50% attack damage for stronger echoes. The visible
+echo family uses assembled outputs and is shared by independently rolled CPUs.
+Different aerial/all-move filters remain separate; matching copies add within
+the final bounded rule. Article/projectile hitboxes are outside this carrier.
+
+`echo add 8 nair .4`, then `echo add 16 nair .4`, arms neutral-air echoes for
+the primary player; `echo clear` removes manual rules. Manual arbitrary-delay
+commands currently create collision rules without their own picture emitter.
+The catalogue Echoes demo has three pictures: E arms aerial copy2, N arms only
+neutral-air on copies1/2. Those use a joint native description for picture age
+and collision delay. Copy tint/flash data is implemented, but its renderer hook
+is an integration request to the afterimage lane; visible armed styling remains
+pending. See PLAYTEST.md for rebuilding and actual collision/rewind acceptance.

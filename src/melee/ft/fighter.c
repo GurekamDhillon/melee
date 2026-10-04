@@ -1,6 +1,12 @@
 #include <gameworld/script_hit_rules.h>
 #include <gameworld/profiler_game.h>
 #include "fighter.h"
+#if defined(TARGET_PC)
+#include <gameworld/script_fighter_caps.h>
+#endif
+#if defined(TARGET_PC)
+#include "geno/geno_define_game.h"
+#endif
 
 #include <math.h>
 #include <placeholder.h>
@@ -154,6 +160,7 @@ void Fighter_800679B0(void)
                      /*align*/ 4);
 #if defined(TARGET_PC)
     ftData_MexInitKinds(); /* m-ex kind rows, before anything reads the per-kind tables */
+    GenoDefine_InitKinds();
 #endif
     ft_800852B0();
     Fighter_LoadCommonData();
@@ -216,13 +223,14 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
     /* PlCo's tables are indexed the disc's way: retail kinds on a vanilla disc, m-ex INTERNAL ids
      * on an m-ex disc (bosses moved to the end, added fighters from 27). */
     for (i = 0; i < Ft_Kind_Max; ++i) {
-        int k = Mex_InternalForPortKind(i);
+        int base = Geno_DefineBaseKind(i);
+        int k = Mex_InternalForPortKind(base >= 0 ? base : i);
         if (k < 0) {
             /* vanilla disc: retail layout, no m-ex rows - but retail's row 0x21 is real: Captain
                Falcon's throws put figatrees authored for kind 0x21 on the victim (x597_bits), so
                blanking it made every Falcon throw on a vanilla disc fault in ftPartsRemap. Found
                by .slp playback (Marth vs Falcon, frame 555). */
-            k = i <= Ft_Kind_Mex0 ? i : -1;
+            k = base >= 0 ? base : i <= Ft_Kind_Mex0 ? i : -1;
         }
         out[i] = k >= 0 ? loaded[k] : NULL;
     }
@@ -884,6 +892,9 @@ void Fighter_UnkInitLoad_80068914(Fighter_GObj* gobj,
     fp->x20_actionStateList = ftData_CharacterStateTables[fp->kind];
 #endif
     fp->x24 = fp->ft_data->xC;
+#if defined(TARGET_PC)
+    GenoDefine_BindFighter(fp);
+#endif
     fp->x28 = fp->ft_data->x10;
 
     fp->input.lstick[2].y = 0.0f;
@@ -3577,6 +3588,9 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
 
                 damage_bool = fp->dmg.x183C_applied;
                 bool2 = 1;
+#if defined(TARGET_PC)
+                if (fp->x1828 == 0 && ScriptGame_ArmorAbsorbed(fp)) bool2 = 0;
+#endif
                 ftCo_80090594(fp, fp->dmg.x1860_element, damage_bool,
                               motion_state_index, ground_or_air,
                               fp->x1960_vibrateMult);

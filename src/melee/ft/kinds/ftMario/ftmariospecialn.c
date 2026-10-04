@@ -1,4 +1,7 @@
 #include "ftmariospecialn.h"
+#if defined(TARGET_PC)
+extern int Geno_DefineBaseKind(int kind);
+#endif
 
 #include <Runtime/platform.h>
 
@@ -116,7 +119,11 @@ void ftMr_SpecialN_ItemFireSpawn(HSD_GObj* gobj)
     if (flag_res != 0) {
         lb_8000B1CC(fp->parts[ftParts_GetBoneIndex(fp, FtPart_L1stNb)].joint,
                     NULL, &coords);
-        if (fp->kind == Ft_Kind_Mario) {
+        if (fp->kind == Ft_Kind_Mario
+#if defined(TARGET_PC)
+            || Geno_DefineBaseKind(fp->kind) == Ft_Kind_Mario
+#endif
+        ) {
             it_8029B6F8(gobj, &coords, It_Kind_Mario_Fire, fp->facing_dir);
             efSync_Spawn(
                 1146, gobj,

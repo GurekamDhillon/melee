@@ -28,6 +28,10 @@
 extern int mnCharSel_PcArtOpen(HSD_Archive* archive);
 extern int mnCharSel_PcArtIcon(int i, int* ck, int* ext, HSD_ImageDesc** img, HSD_Tlut** tlut);
 extern int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD_Tlut** tlut);
+extern int Geno_DefineCount(void);
+extern int Geno_DefineCKAt(int index);
+extern int Geno_DefineBaseCK(int ck);
+extern int Geno_DefineName(int ck, char* out, int cap);
 extern int mnStageSel_PcArtOpen(HSD_Archive* archive);
 extern int mnStageSel_PcArtIcon(int i, int* ext, int* type, HSD_ImageDesc** img, HSD_Tlut** tlut);
 extern int mnStageSel_PcArtName(int i, HSD_ImageDesc** img, HSD_Tlut** tlut);
@@ -327,6 +331,8 @@ static bool fs_slot_ok(int slot)
 
 static int fs_costumes(int ck)
 {
+    int base = Geno_DefineBaseCK(ck);
+    if (base >= 0) ck = base;
     int n = ck >= 0 ? gm_GetNumCostumesForCKind((u8) ck) : 1;
     return n > 0 ? n : 1;
 }
@@ -377,6 +383,19 @@ static void fs_css_roster(void)
         fcs.icon[fcs.n] = t;
         fcs.ok[fcs.n] = !fcs.online || Netplay_FighterAvailable(ck);
         fcs.n++;
+    }
+    /* Native definitions borrow retail art and remain offline-only in GF1. */
+    if (!fcs.online) {
+        int d, count = Geno_DefineCount();
+        for (d = 0; d < count && fcs.n < FS_MAX_FIGHTERS; ++d) {
+            int ck = Geno_DefineCKAt(d), base = Geno_DefineBaseCK(ck), source;
+            if (ck < 0) continue;
+            for (source = 0; source < fcs.n && fcs.ck[source] != base; ++source) {}
+            fcs.ck[fcs.n] = ck;
+            if (source < fcs.n) fcs.icon[fcs.n] = fcs.icon[source];
+            else { fcs.icon[fcs.n].img = NULL; fcs.icon[fcs.n].tl = NULL; }
+            fcs.ok[fcs.n++] = true;
+        }
     }
     fcs.cols = 11;
     fcs.rows = 4;
@@ -1113,7 +1132,7 @@ static void fs_build_css(void)
             sprintf(id, "cs%d", p);
             mnCharSel_PcArtPortrait(s->ck, s->costume, &a.img, &a.tl);
             fs_tex_fit(id, fs_art_tex(a), pr[0] + 2, pr[1] + 2, pr[2] - 2, pr[3] - 2, white);
-            Netplay_FighterName(s->ck, buf, 32);
+            if (!Geno_DefineName(s->ck, buf, 32)) Netplay_FighterName(s->ck, buf, 32);
         } else if (s->ck == FS_CK_RANDOM) {
             sprintf(id, "cq%d", p);
             fl_text_at(id, "heading", (pr[0] + pr[2]) * 0.5F, (pr[1] + pr[3]) * 0.5F + 10, "centre", 40, "?",

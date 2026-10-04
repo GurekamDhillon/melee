@@ -126,6 +126,8 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
 static int geno_v2_preanim(Fighter_GObj* gobj, Fighter* fp, GenoState* st);
 static int geno_cur_state(Fighter* fp, GenoState* st);
 /* v5: articles (geno_game_articles.inc) */
+extern int Geno_ArticleCount(int p);
+static void geno_art_prepare(int p);
 static int geno_art_live(HSD_GObj* owner, int article);
 static int hook_article_spawn(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg);
 
@@ -589,6 +591,11 @@ static void geno_install_overlays(Fighter* fp, int p)
         int slot = Geno_OverlaySlot(p, i);
         int off = Geno_SlotOffset(slot);
         CmdUnion* mine;
+        extern int Geno_DefineBaseKind(int kind);
+        if (Geno_DefineBaseKind(fp->kind) >= 0 && anim >= fp->x58C) {
+            OSReport("geno: native definition refused out-of-range overlay %d (rows %d)\n", anim, fp->x58C);
+            continue;
+        }
         if (anim < 0 || slot < 0 || slot >= 256 || off < 0 || off >= GENO_POOL_WORDS) {
             continue;
         }
@@ -789,6 +796,8 @@ void Geno_FighterReset(Fighter* fp)
         Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
         geno_install_overlays(fp, st->profile);
         geno_v2_build(fp, st->profile);
+        /* Reserve article descriptors at fighter setup, never on its first move. */
+        if (Geno_ArticleCount(st->profile) > 0) geno_art_prepare(st->profile);
         if (fp->gobj != NULL) {
             geno_run_event(fp->gobj, st, GENO_EV_INIT);
         }
@@ -822,6 +831,7 @@ int GenoGame_LabReload(void)
         geno_pool_sync();
         geno_install_overlays(fp, st->profile);
         geno_v2_build(fp, st->profile);
+        if (Geno_ArticleCount(st->profile) > 0) geno_art_prepare(st->profile);
         ftCo_800D105C(cur);
         n++;
     }
@@ -2257,9 +2267,20 @@ void* GenoGame_StateOf(Fighter* fp)
 
 /* ---- v2 ---------------------------------------------------------------------------------------- */
 #include "geno_game_v2.inc"
+#include "geno_define_rows.inc"
 
 /* ---- v5: articles, on_hit, counter windows ------------------------------------------------------ */
 #include "geno_game_articles.inc"
+
+/* Scene reset releases the descriptor arena. Clear its bytes as well as the
+   cursor/pointers so repeated matches and snapshots do not retain old data. */
+void GenoGame_ClearProfileStorage(void)
+{
+    Geno_Rows = NULL; Geno_Params = NULL; Geno_RowCount = NULL; Geno_ProfileCapacity = 0;
+    Geno_ArtDesc = NULL; Geno_ArtAttr = NULL; Geno_ArtModel = NULL; Geno_ArtProfileCapacity = 0;
+    geno_zero(Geno_ProfileStorage.bytes, Geno_ProfileStorageUsed);
+    Geno_ProfileStorageUsed = 0;
+}
 
 /* ---- Stage E: name a SyncTest mismatch inside a GenoState (the Lab's rollback visualiser) --- */
 #define GENO_SF(field) { #field, (int) __builtin_offsetof(GenoState, field), (int) sizeof(((GenoState*) 0)->field) }

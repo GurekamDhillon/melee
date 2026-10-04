@@ -108,6 +108,19 @@ void ScriptGame_HitRuleItemCreate(Item* item,HitCapsule* hit) {
  ScriptGame_HitRuleCreate(item->owner && ftLib_80086960(item->owner) ? GET_FIGHTER(item->owner) : NULL,hit,1);
 }
 static HRResult script_hit_family(HitCapsule*,Fighter*,int);
+/* The historical capsule already contains creation-time outgoing transforms.
+ * Populate its contact-time vocabulary without applying those transforms twice. */
+void ScriptGame_HitRuleEchoCreate(Fighter* fp,HitCapsule* hit,int move,int grounded,int original) {
+ HRMeta* m;HRPort* p;HRResult v;int i;
+ if(!fp || !hr_ordinary(hit->element))return;
+ m=script_hit_metadata(hit,1);if(!m)return;
+ m->port=script_hit_entity(fp);p=&script_hit_ports[m->port];m->owner=p->owner;
+ m->move=move;m->grounded=grounded;m->original=original;m->damage_scale=1;
+ m->original_damage=hit->damage;m->original_count=hit->unk_count;
+ m->original_growth=hit->x24;m->original_base=hit->x2C;m->original_shield=hit->x34;
+ v=hr_evaluate(p->rules,p->count,move,grounded,original,0,0);
+ m->count=v.count;m->stun=v.stun;for(i=0;i<v.count;++i)m->ids[i]=v.ids[i];
+}
 /* This reads per-victim status, and returns a scalar. Never mutate shared hit. */
 float ScriptGame_HitRuleContact(HitCapsule* hit,Fighter* victim,float value,int knockback) {
  HRMeta* m=script_hit_metadata(hit,0);HRResult v,w;HRPort* defender;

@@ -12,7 +12,7 @@ extern void gw_ScriptGame_SimRelease(int token);
 static int gs_ring_now(void);
 static int gs_rw_replaying(int tag);
 static void gs_rw_stop(void);
-typedef struct { int kind, slot, enabled, bits[11]; GsHitRules hit_rules; } GsSimOp;
+typedef struct { int kind, slot, enabled, bits[11]; GsHitRules hit_rules; GsEchoRules echoes; } GsSimOp;
 typedef struct GsSimCommit {
     struct GsSimCommit *next;
     int script, token, size, count;
@@ -48,7 +48,7 @@ static void gs_sim_release(int token) {
         int i;
         gs_rw_stop(); gs_sim_reset(); gw_ScriptGame_SimRelease(token);
         for(i=0;i<gs.n;++i) if(gs.s[i].stage_owner==token)
-            { gw_ScriptGame_FighterModsRelease(i+1); gw_ScriptGame_HitRulesRelease(i+1); }
+            { gw_ScriptGame_FighterModsRelease(i+1); gw_ScriptGame_HitRulesRelease(i+1); gw_ScriptGame_EchoClear(i+1); gs_echo_visual_release(i+1); }
     }
 }
 static int l_sim_clear(lua_State *L) {
@@ -60,9 +60,11 @@ static int l_sim_clear(lua_State *L) {
      * future history and forces the next boundary to snapshot this new state. */
     for(i=0;i<6;++i) if(gw_ScriptGame_FighterModOwner(i)==gs.cur+1) owned=1;
     for(i=0;i<12;++i) if(gw_ScriptGame_HitRulesOwner(i)==gs.cur+1) owned=1;
+    for(i=0;i<12;++i) if(gw_ScriptGame_EchoOwner(i)==gs.cur+1) owned=1;
     if(owned || gw_ScriptGame_SimSize(s->stage_owner)>=0) gs_rw_branch();
     gw_ScriptGame_FighterModsRelease(gs.cur+1);
     gw_ScriptGame_HitRulesRelease(gs.cur+1);
+    gw_ScriptGame_EchoClear(gs.cur+1);
     gw_ScriptGame_SimRelease(s->stage_owner);
     lua_pushboolean(L,1); return 1;
 }
@@ -82,6 +84,7 @@ static void gs_sim_apply(GsSimCommit *c) {
                 o->bits[0],o->bits[1],o->bits[2],o->bits[3],o->bits[4],o->bits[5],o->bits[6],o->bits[7]);
             if(o->enabled) gw_ScriptGame_FighterModExtra(o->slot,c->script+1,o->bits[8],o->bits[9],o->bits[10]);
         } else if(o->kind==3) gs_hr_apply_targets(o->slot,o->enabled,c->script+1,&o->hit_rules);
+        else if(o->kind==4) gs_echo_apply(o->slot*2+o->enabled,c->script+1,&o->echoes);
         else gw_ScriptGame_SetPercent(o->slot,o->bits[0]);
     }
     gs_sim_input=c->blob; gs_sim_input_size=c->size;
@@ -116,7 +119,7 @@ static int l_sim_read(lua_State *L) {
 static int l_sim_commit(lua_State *L) {
     static const char *keys[11]={"damage_dealt","damage_taken","run_speed","air_speed","shield_max","jump_height","air_jump_height","knockback_taken","fall_speed","weight","shield_regen"};
     GsSimCommit draft,*c; GsSimFrame *f; GsScript *s=gs_cur_script();
-    const char *blob; size_t size,allocated,n; int i,j;
+    const char *blob; size_t size,allocated,n; int i,j,echo_next=gw_ScriptGame_EchoNextHandle();
     gs_require_offline(L,"sim_commit");
     if(!gs_sim_window || !gs.match_active || gw_Snap_Resimulating() || gs.cur==gs.console || !s || s->stage_owner<=0)
         return luaL_error(L,"sim_commit requires a gameplay mod on_frame in an offline match");
@@ -132,7 +135,7 @@ static int l_sim_commit(lua_State *L) {
         lua_rawgeti(L,2,i+1); luaL_checktype(L,-1,LUA_TTABLE);
         lua_getfield(L,-1,"port"); o->slot=gs_slot_arg(L,-1); lua_pop(L,1);
         lua_getfield(L,-1,"op"); name=luaL_checkstring(L,-1);
-        o->kind=!strcmp(name,"fighter_mod") ? 1 : !strcmp(name,"damage") ? 2 : !strcmp(name,"hit_rules") ? 3 : 0; lua_pop(L,1);
+        o->kind=!strcmp(name,"fighter_mod") ? 1 : !strcmp(name,"damage") ? 2 : !strcmp(name,"hit_rules") ? 3 : !strcmp(name,"echoes") ? 4 : 0; lua_pop(L,1);
         if(!o->kind) return luaL_error(L,"sim_commit unsupported operation");
         if(o->kind==1) {
             owner=gw_ScriptGame_FighterModOwner(o->slot);
@@ -154,6 +157,13 @@ static int l_sim_commit(lua_State *L) {
         } else if(o->kind==3) {
             lua_getfield(L,-1,"sub");o->enabled=gs_hr_selector(L,-1);lua_pop(L,1);
             gs_hr_targets_owner(L,o->slot,o->enabled); gs_hr_parse(L,-1,&o->hit_rules);
+        } else if(o->kind==4) {
+            lua_getfield(L,-1,"sub");o->enabled=gs_echo_sub(L,-1);lua_pop(L,1);
+            gs_echo_parse(L,-1,&o->echoes);
+            gs_echo_prepare(L,o->slot*2+o->enabled,&o->echoes,&echo_next);
+            for(j=0;j<i;++j) if(draft.ops[j].kind==4)
+                gs_echo_pair(L,o->slot*2+o->enabled,&o->echoes,
+                    draft.ops[j].slot*2+draft.ops[j].enabled,&draft.ops[j].echoes);
         } else {
             double value; lua_getfield(L,-1,"value"); value=luaL_checknumber(L,-1); lua_pop(L,1);
             if(!isfinite(value) || value<0 || value>999) return luaL_error(L,"sim_commit damage must be 0..999");

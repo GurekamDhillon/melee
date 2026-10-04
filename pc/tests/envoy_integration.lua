@@ -24,6 +24,11 @@ local function fixture(fresh,no_kit)
   g.hit_rules=function()return {percent_only=true,progression=s.progression~=false,owner=7}end
   g.sim_read=function()return s.blob end;g.sim_replaying=function()return s.replay==true end
   g.sim_clear=function()s.blob=nil;s.rule_ops=nil end
+  -- Descriptive echo journal/presentation contract; this fixture does not simulate collision or rendering.
+  g.echoes=function()return {journal=s.echo_capability~=false}end
+  s.echo_emitters={}
+  g.echo_afterimage=function(p,d)assert(d.presentation_only and d.spacing==8);local h=id();s.echo_emitters[h]={port=p,description=d};return h,{}end
+  g.afterimage_remove=function(h)s.echo_emitters[h]=nil end
   g.sim_commit=function(blob,ops)s.blob=blob;s.rule_ops=ops;return true end
   g.fighter_shader=function()return true end;g.fighter_shader_set=function()return true end;g.shader_load=function()return 77 end
   g.shader_status=function()return {valid=true}end;g.post_add=function()return 88 end
@@ -311,6 +316,7 @@ end)
 T.test('generated entry shares native percent and foe checkpoint hooks',function()
  local s,e=fixture();s.lab=true;assert(type(s.commands.foe)=='function','foe factory missing')
  assert(s.commands.mod('add glass_core'));assert(s.commands.foe('roll 1.4 32 2'));assert(not s.blob);e.on_frame();assert(s.blob and s.rule_ops)
+ local echo=false;for _,op in ipairs(s.rule_ops)do if op.op=='echoes' and op.port==2 and #op.rules>0 then echo=true end end;assert(echo,'seed32 shared-pool foe echo journal missing')
  local D={};D.mod_codec=T.module('mod_codec',D);local at=D.mod_codec.decode(s.blob);assert(at.foes.builds[2] and D.mod_codec.decode(at.engine).equipped[1].glass_core)
  for _,op in ipairs(s.rule_ops) do if op.op=='fighter_mod' and op.values then assert(not op.values.damage_dealt and not op.values.damage_taken and not op.values.knockback_taken) end end
  local fills,plate=0,false;e.gd.safe_area=function()return{x=0,y=0,w=640,h=360}end
@@ -336,5 +342,10 @@ T.test('generated LAB depth roles six slots multikey checkpoint refusal and clea
  assert(a.drives.drops.records[item.payload.amount].record.loop==3);e.on_item_collect{name='drive',port=1,item=h,payload=item.payload};s.items[h]=nil;e.on_frame()
  assert(s.commands.bag());s.pad={DOWN=true};e.on_tick();s.pad={};e.on_tick();assert(s.paused)
  e.on_unload();assert(not s.paused and not s.blob and not next(s.items) and not next(s.fx));assert(s.masks[#s.masks]==0)
+end)
+T.test('generated LAB retains explicit refusal on old echo capability',function()
+ local s,e=fixture();s.lab=true;s.echo_capability=false;local a=e.__envoy_test_mods;local before=a:export()
+ assert(not s.commands.echo('add 8 nair'));assert(not s.commands.mod('add echoes'))
+ assert(a:export()==before and not s.blob and not next(s.echo_emitters));e.on_unload()
 end)
 T.done()

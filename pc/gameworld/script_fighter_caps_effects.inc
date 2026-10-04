@@ -1,5 +1,6 @@
 /* Fighter capability effects. Included after ScriptGame_CapsFighter.
  * Guest BSS is part of LAB/rollback memory; never retain native pointers here. */
+#include "script_fighter_caps.h"
 #include <melee/ft/ftcoll.h>
 #include <melee/ft/ftcolanim.h>
 #include <melee/ft/ftlib.h>
@@ -168,6 +169,7 @@ int ScriptGame_CapsNoFlinch(Fighter* fp)
 void ScriptGame_CapsEffectsRelease(int owner)
 {
     int i,k;
+    ScriptGame_ArmorRelease(owner);
     for (i=0;i<12;++i) {
         for (k=0;k<4;++k) if (script_caps_effects[i][k].owner &&
             (!owner || script_caps_effects[i][k].owner == owner)) script_caps_effect_end(i+1,k);
@@ -179,6 +181,7 @@ void ScriptGame_CapsEffectsReset(void) { ScriptGame_CapsEffectsRelease(0); }
 void ScriptGame_CapsEffectsFrame(void)
 {
     int i,k;
+    ScriptGame_ArmorFrame();
     for (i=0;i<12;++i) {
         for (k=0;k<4;++k) {
             struct script_caps_effect* s = &script_caps_effects[i][k];

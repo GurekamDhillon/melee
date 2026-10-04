@@ -6,7 +6,7 @@ return function(D)
   local self=setmetatable({g=g,lab=lab,pending={},seed=104729},V)
   self.loot=D.drive_loot.new(D.mod_pool)
   self.bag=D.drive_bag.new(self.loot,{context=lab.engine.context,persist=V.tuning.persist,preflight=function(mods,implicits,context)
-   local probe=D.mod_engine.new(lab.engine.seed,D.mod_pool);probe:import(lab.engine:export());probe:set_context(context);probe:set_build(1,self:combined(mods),implicits);probe:native_rules(1);return true
+   local probe=D.mod_engine.new(lab.engine.seed,D.mod_pool);probe:import(lab.engine:export());probe:set_context(context);probe:set_build(1,self:combined(mods),implicits);probe:native_rules(1);if lab.check_echo_capacity then lab:check_echo_capacity(probe)end;return true
   end})
   self.drops=D.drive_drop.new(g);self.menu=D.drive_menu.new(g,self)
   g.command('drive',function(a) return self:command(a or '') end,'give|drop [rarity] [seed]')
@@ -107,7 +107,7 @@ return function(D)
   local config={};for k,v in pairs(self.bag.config) do config[k]=v end
   local context=D.mod_progression.context(s.bag.context or lab.engine.context);assert(context.depth==lab.engine.context.depth and context.loop==lab.engine.context.loop,'bag/engine progression mismatch');s.bag.context=context;config.context=context
   config.preflight=function(mods,implicits,ctx)
-   local engine=D.mod_engine.new(lab.engine.seed,D.mod_pool);engine:import(lab.engine:export());engine:set_context(ctx);engine:set_build(1,self:combined(mods,lab),implicits);engine:native_rules(1);return true
+   local engine=D.mod_engine.new(lab.engine.seed,D.mod_pool);engine:import(lab.engine:export());engine:set_context(ctx);engine:set_build(1,self:combined(mods,lab),implicits);engine:native_rules(1);if lab.check_echo_capacity then lab:check_echo_capacity(engine,lab.echo_manual)end;return true
   end
   local probe=D.drive_bag.new(self.loot,config);assert(probe:restore(s.bag))
   for _,d in pairs(s.drops.records or {}) do self.loot:validate(d.record) end

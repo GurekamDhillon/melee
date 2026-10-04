@@ -1,3 +1,8 @@
+EM5 echo source pass (2026-10-04) is the current addition below. Its36-record
+pool changes deterministic loot/foe recipes from the preceding32-record EM4
+follow-up. Preserve those sections as historical model evidence, not current
+seed guarantees. Echo source fixtures do not establish live gameplay acceptance.
+
 # Envoy retail playtest - 2026-10-04 fix1
 
 EM4 follow-up supersedes the tight EM4 LAB ceilings and mirror fallback below. Opponent rolls are
@@ -267,3 +272,41 @@ foe fight 2
 The late records are tier11, include Glass Core and unlock all three keys. Strength226.890 versus257.161; model4/4 attacks. For a boss/final boss, clear/commit before `foe roll - 2144865533 2 boss` or `foe roll - 2144865533 2 finalboss`. Expected strengths287.690/348.456 and modeled4/3 or3/3 attacks. Recreate a fresh stock between directions; statuses, healing, spacing and ledge triggers change actual results.
 
 FD seeds compensate the model fixtures' stage0/12 against gd.match().stage's internal FD kind37, preserving the exact independent rolled build. Verified by codec equality, not assumed from the external stage ID. Model/player fixtures use sample401 early and sample12 late.
+
+## EM5 echoes owner acceptance
+
+Rebuild through the normal port pipeline after integrating the afterimage-lane
+renderer patch described in the EM5 report. Mount the Echoes catalogue demo by
+itself, choose Mario P1 and Mario CPU P2 on Final Destination in offline LAB.
+Allow several frames for history/pictures to fill. P2 stands automatically.
+Jump and neutral-air past P2: three pictures are spaced4 frames apart, with
+copy2's aerial capsule replaying at its recorded world position at age8.
+E restarts this setup. N switches to the owner's example: three pictures with
+only neutral-air on copies1/2, ages4/8. Verify copy3 stays unarmed. Direct hit and
+echo are separate hits with their own target memory; each echo consumes a target
+once per move by default. Owner hitlag/rebound is suppressed; target reactions,
+shields, clanks, team rules, stale history and KO credit use retail paths.
+
+Check an aerial that hits live and delayed; an aerial that misses live but whose
+old capsule catches P2; shield and clank interactions; P1 immunity and team attack
+off/on; Ice Climbers partners; a thrown-body capsule credited to the thrower;
+stock loss/respawn; scene change and unload. Echoes repeat recorded fighter
+capsules, not an article/projectile's hitboxes or a new animation on old bones.
+
+In Envoy, stop the director, use `mod clear`, then:
+```text
+echo add 8 nair .4
+echo add 16 nair .4
+```
+Resume a logic frame to publish rules. These manual commands are collision-only;
+use the demo for the three-picture example. `echo clear` retires manual rules.
+Use `mod add echoes` to test the tier1 aerial suffix; use loot and depth for
+higher tiers and the shared family totals. Commit edits separately if capacity
+would overflow; an invalid combined edit refuses without replacing the build.
+
+Start LAB history, perform repeated aerials, save/query `gd.fighter_history`,
+seek backward and resume. Require actual `gd.rewind_test` to report0 differing
+bytes for the rebuilt EXE; compare delayed contacts after replay. The standalone
+source fixture's zero-byte comparison is separate evidence. Presentation caches
+refill after rewind and may temporarily lack old poses. Check visible armed
+element tint/contact flash only after the deferred renderer hook is integrated.

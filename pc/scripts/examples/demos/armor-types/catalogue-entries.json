@@ -1,0 +1,13 @@
+[
+  {
+    "id": "demo_armor_types",
+    "path": "demos/armor-types",
+    "title": "Armour types",
+    "api": "fighter_armor; on_armor; hit",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "A: cycle armour; R: refresh; W/M/S: collision hits; SPACE: auto barrage",
+    "setup": []
+  }
+]

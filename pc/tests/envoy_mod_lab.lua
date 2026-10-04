@@ -1,5 +1,5 @@
 local T=dofile((io.open('pc/tests/envoy_testlib.lua') and '' or 'melee/')..'pc/tests/envoy_testlib.lua')
-local D={};for _,name in ipairs({'mod_schema','mod_codec','mod_engine','mod_pool'}) do D[name]=T.module(name,D) end
+local D={};for _,name in ipairs({'mod_schema','mod_codec','mod_engine','mod_pool','mod_echo_lab'}) do D[name]=T.module(name,D) end
 D.mod_display={new=function(g,engine)
  local v={engine=engine}
  function v:warm(e) self.engine=e;return g.fixture.ready,'warming' end
@@ -26,11 +26,12 @@ local function fixture()
   match=function() return {active=true,netplay=s.net,stage=32} end,lab_mode=function() return s.lab end,
   player=function(p) return s.players[p] end,sim_replaying=function() return s.replay end,
   hit_rules=function(p) return {owner=s.hit_rules[p] and 7 or 0,percent_only=s.capability~=false,progression=s.progression~=false} end,
+  echoes=function()return {journal=s.echo_capability~=false}end,
   sim_read=function() return s.blob end,sim_clear=function() s.clears=s.clears+1;s.blob=nil;s.mods={};s.hit_rules={} end,
   sim_commit=function(blob,ops)
    if s.refuse then error("checkpoint budget exhausted") end
    s.commits=s.commits+1;s.blob=blob;s.ops=ops
-   for _,e in ipairs(ops) do if e.op=='fighter_mod' then s.mods[e.port]=e.values elseif e.op=='hit_rules' then s.hit_rules[e.port]={rules=e.rules,bits=e.status_bits} else s.players[e.port].percent=e.value end end
+   for _,e in ipairs(ops) do if e.op=='fighter_mod' then s.mods[e.port]=e.values elseif e.op=='hit_rules' then s.hit_rules[e.port]={rules=e.rules,bits=e.status_bits} elseif e.op=='echoes' then s.echoes=s.echoes or {};s.echoes[e.port]=e.rules else s.players[e.port].percent=e.value end end
    return true
   end}
  s.g=g;s.a=D.mod_lab.new(g);return s,s.a
@@ -261,5 +262,63 @@ T.test('finite raw native coefficients clamp once at contact and malformed impli
   local stable=a:export();bad=D.mod_codec.decode(stable);engine=D.mod_codec.decode(bad.engine);engine.implicits[2]={damage_dealt=1000001};bad.engine=D.mod_codec.encode(engine);s.blob=D.mod_codec.encode(bad)
   T.refuses(function()a:loadstate()end);assert(stable==a:export(),'malformed implicit replaced live state')
  end
+end)
+T.test('echo LAB commands journal and checkpoint cleanup preserve live builds',function()
+ local s,a=fixture();assert(a.echoes:command('add 24 nair .4'));a:frame();assert(s.echoes[1][1].delay==24)
+ local blob=s.blob;assert(a.echoes:command('clear'));a:frame();assert(#s.echoes[1]==0)
+ s.blob=blob;a:loadstate();assert(a.echoes.manual[1][1].match.move=='nair')
+ a:stock_lost(1);a:frame();assert(#s.echoes[1]==0 and not a.echoes.manual[1])
+ assert(a:command('add echoes'));a:frame();assert(#s.echoes[1]==1)
+ s.players[1]=nil;a:frame();assert(#s.echoes[1]==0)
+ a:unload();assert(not a.echoes:active())
+end)
+T.test('old echo executable refuses explicit capability',function()
+ local s,a=fixture();s.echo_capability=false;assert(not a.echoes:command('add 24'))
+ assert(not a.echoes:active() and s.commits==0)
+end)
+T.test('rewind stages checkpoint echo roots independent of future manual rules',function()
+ local s,a=fixture();a.engine:set_build(1,{echoes=3},{});s.blob=a:export()
+ for i=1,8 do a.echoes.manual[1]=a.echoes.manual[1] or {};a.echoes.manual[1][i]={delay=i,match={move='any'},damage=.4,knockback=1,once_per_move=true} end
+ a:loadstate();assert(a.engine.equipped[1].echoes==3 and not a.echoes.manual[1])
+ local before=a:export();local bad=D.mod_codec.decode(before);bad.echoes.manual[1]={}
+ for i=1,8 do bad.echoes.manual[1][i]={delay=i,match={move='any'},damage=.4,knockback=1,once_per_move=true}end
+ s.blob=D.mod_codec.encode(bad);T.refuses(function()a:loadstate()end);assert(a:export()==before)
+end)
+T.test('manual and queued build commands refuse combined overflow atomically',function()
+ local s,a=fixture();for i=1,8 do assert(a.echoes:command('add '..i))end
+ local before=a:export();assert(not a:command('add echoes'));assert(a:export()==before and #a.pending==0 and s.clears==0)
+ local s2,b=fixture();s2.ready=false;assert(b:command('add echoes'))
+ for i=1,7 do assert(b.echoes:command('add '..i))end
+ before=b:export();assert(not b.echoes:command('add 8'));assert(b:export()==before)
+end)
+T.test('publication abandonment retires echo roots and visuals',function()
+ local s,a=fixture();assert(a.echoes:command('add 8'));a.echoes.visual[1]=42
+ local removed=0;s.g.afterimage_remove=function(h)assert(h==42);removed=removed+1 end
+ a.pending={{port=1,id='missing_rule'}};a:frame()
+ assert(not a.enabled and not a.echoes:active() and not next(a.echoes.visual) and removed==1)
+end)
+T.test('drive equip and pending drive roots share manual echo capacity checks',function()
+ local function record(a)
+  for seed=1,100 do local r=a.drives.loot:roll(seed,a.engine.context,'unique');if r.unique=='echo_heart' then return r end end;error('echo unique witness missing')
+ end
+ local s,a=fixture();a.drives.bag.items={record(a)};for i=1,6 do assert(a.echoes:command('add '..i))end
+ local before=a:export();assert(not a.drives:queue('equip',1,1));assert(a:export()==before and #a.drives.pending==0)
+ local s2,b=fixture();b.drives.bag.items={record(b)};assert(b.drives:queue('equip',1,1))
+ for i=1,5 do assert(b.echoes:command('add '..i))end
+ before=b:export();assert(not b.echoes:command('add 6'));assert(b:export()==before)
+end)
+T.test('depth command rejects incompatible staged echoes before context publication',function()
+ local s,a=fixture();for i=1,8 do assert(a.echoes:command('add '..i))end
+ a.pending={{port=1,id='echoes'}};local before=a:export();assert(not a:depth_command('5'));assert(a:export()==before and a.engine.context.depth==0)
+end)
+T.test('echo command exact native move vocabulary refuses unsupported projectile atomically',function()
+ local s,a=fixture();local before=a:export();assert(not a.echoes:command('add 8 projectile'));assert(a:export()==before and s.commits==0)
+ for _,move in ipairs{'nair','fair','bair','uair','dair'}do assert(a.echoes:command('add 8 '..move))end
+end)
+T.test('scene resets echo warm ticket and emitter ownership',function()
+ local s,a=fixture();local releases,removed=0,0
+ s.g.warm_release=function(h)assert(h==91);releases=releases+1 end;s.g.afterimage_remove=function(h)assert(h==17);removed=removed+1 end
+ a.echoes.warm_jobs[1]=91;a.echoes.visual[1]=17;a:scene()
+ assert(releases==1 and removed==1 and not next(a.echoes.warm_jobs) and not next(a.echoes.visual))
 end)
 T.done()

@@ -1,7 +1,7 @@
 local T=dofile('melee/pc/tests/envoy_testlib.lua');local D=T.rules()
 T.test('full pool golden tiers, stock loss, snapshots, seven chains and synergy payloads',function()
 D.mod_codec=T.module('mod_codec',D);D.mod_schema=T.module('mod_schema',D);D.mod_pool=T.module('mod_pool',D);D.mod_engine=T.module('mod_engine',D)
-assert(#D.mod_pool==32,'full pool requires 30 originals plus armour/cleansing')
+assert(#D.mod_pool==36,'full pool requires 32 existing plus four echo records')
 local r=D.mod_engine.new(1,D.mod_pool);r:set_build(1,{kindling=1,glass_core=1},{damage_dealt=1.1,status_duration=1.5})
 r:begin_frame({[1]={percent=0},[2]={percent=0}});r:emit{kind='hit_dealt',port=1,target=2,tags={fire=true}};r:drain()
 assert(r:status(2,'burn').expires-r.frame==270);r:emit{kind='stock_lost',port=1,tags={}};r:drain();assert(r.equipped[1].glass_core==1 and math.abs(r:values(1).damage_dealt-1.7)<1e-9)
@@ -13,6 +13,7 @@ dead:begin_frame({[1]={percent=0}});dead:emit{kind='ledge_grab',port=1,tags={}};
 D.mod_synergy=T.module('mod_synergy',D);local synergy_pairs,degree=D.mod_synergy.generate(D.mod_pool)
 -- Golden balancing outcomes, independent of the record resolver.
 local expected={
+ trailing={},echoes={},echo_heart={values={damage_dealt=.75}},echo_oath={values={damage_dealt=.5}},
  kindling={status={2,'burn',{180,225,270},{3,3.75,4.5},1}},
  pyre={native={{match={move='any',status_bits=1},change={launch={1.08,1.1,1.12}}}}},
  burning={native={{match={move='smash'},change={element='fire'}}}},
@@ -74,7 +75,7 @@ for _,m in ipairs(D.mod_pool) do
   if m.id=='still_heart' then solo.statuses[1]={haste={expires=1000,stacks=1,max=1,amount=1,next_tick=60,origin={}}} end
   if m.trigger=='interval' then solo.frame=60 end
   solo:emit(ev);solo:drain();outcome(solo,m.id,tier)
-  if m.trigger=='equip' then local values=solo:values(1);local rules=solo:native_rules(1);for _,effect in ipairs(m.effects) do if effect.op=='value' then assert(values[effect.key],m.id) else assert(#rules>0,m.id) end end
+  if m.trigger=='equip' then local values=solo:values(1);local rules=solo:native_rules(1);for _,effect in ipairs(m.effects) do if effect.op=='value' then assert(values[effect.key],m.id) elseif effect.op=='echo' then assert(solo:echo_description(1)) else assert(#rules>0,m.id) end end
   else assert(solo.used>0,m.id..' alone never fires') end
  end
 end

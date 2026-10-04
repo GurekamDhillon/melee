@@ -6520,6 +6520,9 @@ int mnCharSel_PcArtIcon(int i, int* ck, int* ext, HSD_ImageDesc** img, HSD_Tlut*
 /* The portrait (CSP) of fighter `ck` in `costume`: the portrait joint animated to its frame. */
 int mnCharSel_PcArtPortrait(int ck, int costume, HSD_ImageDesc** img, HSD_Tlut** tlut)
 {
+    extern int Geno_DefineBaseCK(int ck);
+    int base = Geno_DefineBaseCK(ck);
+    if (base >= 0) ck = base;
     extern int Mex_PortCKindToExt(int);
     HSD_JObj* j = NULL;
     HSD_TObj* t = NULL;

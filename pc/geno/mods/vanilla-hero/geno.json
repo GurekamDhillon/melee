@@ -1,0 +1,23 @@
+{
+  "geno": 6,
+  "fighters": [
+    {
+      "define": {
+        "key": "vanilla-hero",
+        "name": "Vanilla Hero",
+        "base": "mario",
+        "common": "melee.common.v1",
+        "resources": "retail:mario"
+      },
+      "attributes": {
+        "walk_max_vel": 1.8
+      },
+      "subactions": [
+        {
+          "index": 46,
+          "file": "moves/hero-jab.words"
+        }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,7 @@
 #include "ft_0877.h"
 #if defined(TARGET_PC)
 #include "ftparts.h" /* FT_ANIM_BUF_SIZE */
+#include "geno/geno_define_game.h"
 #endif
 #include "inlines.h"
 #include "kinds/ftCaptain/ftcaptain.h"
@@ -187,6 +188,10 @@ static inline void ft_800852B0_Reset_ft_8045993C(ftData** list, int i)
 
 void ft_800852B0(void)
 {
+#if defined(TARGET_PC)
+    GenoGame_ClearProfileStorage();
+    GenoDefine_ResetDescriptors();
+#endif
     ftData** list;
 #if defined(TARGET_PC)
     ftData_UnkCountStruct* unk0 = ftData_Table_Unk0;
@@ -1549,6 +1554,7 @@ u8 ftData_UnkBytePerCharacter[Ft_Kind_Max] = {
  *   - tables m-ex does not describe: copied from the retail fighter it was cloned from (the one
  *     whose default onLoad it shares) - Kirby's copy tables, demo-motion count, effect file.
  * A disc without MxDt.dat leaves every slot empty. */
+#include "geno/geno_define_data.inc"
 static Fighter_CostumeStrings ftData_MexCostumeStrings[Ft_Kind_Max - Ft_Kind_Mex0][16];
 
 /* Whether a motion-table row (Fighter_WaitAnimData, main or demo table) of an m-ex fighter's file
@@ -1828,7 +1834,7 @@ void ftData_MexInitKinds(void)
 /* Is `kind` an m-ex fighter with a row? */
 bool ftData_IsMexKind(FighterKind kind)
 {
-    return kind >= Ft_Kind_Mex0 && kind < Ft_Kind_Max &&
+    return Geno_DefineBaseKind(kind) < 0 && kind >= Ft_Kind_Mex0 && kind < Ft_Kind_Max &&
            ftData_803C1F40[kind].a != NULL;
 }
 #endif
@@ -1853,6 +1859,7 @@ void ftData_800855C8(FighterKind kind, u8 color)
 
 #if defined(TARGET_PC)
     ftData_MexInitKinds();
+    GenoDefine_InitKinds();
 #endif
 
     if (color != 0xFF &&
@@ -1888,6 +1895,15 @@ void ftData_8008572C(FighterKind kind)
 {
 #if defined(TARGET_PC)
     ftData_MexInitKinds();
+    GenoDefine_InitKinds();
+    {
+        int base = Geno_DefineBaseKind(kind);
+        if (base >= 0) {
+            ftData_8008572C(base);
+            GenoDefine_Load(kind, base);
+            return;
+        }
+    }
 #endif
     if (gFtDataList[kind] == NULL) {
 #if defined(TARGET_PC)
@@ -2058,6 +2074,9 @@ void ftData_8008572C(FighterKind kind)
         }
 #endif
     }
+#if defined(TARGET_PC)
+    if (kind == Ft_Kind_Mario) GenoDefine_CaptureMario();
+#endif
 }
 
 void ftData_8008578C(int arg0, u8 color)

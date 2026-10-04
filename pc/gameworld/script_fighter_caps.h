@@ -10,6 +10,12 @@ enum ScriptCapsAction {
     ScriptCaps_NoSpecials = 16
 };
 #if defined(TARGET_PC)
+void ScriptGame_ArmorResetReaction(Fighter* fp);
+float ScriptGame_ArmorSubtract(Fighter* fp, float kb);
+int ScriptGame_ArmorReact(Fighter* fp);
+int ScriptGame_ArmorAbsorbed(Fighter* fp);
+void ScriptGame_ArmorRelease(int owner);
+void ScriptGame_ArmorFrame(void);
 int ScriptGame_CapsMaxJumps(Fighter* fp);
 int ScriptGame_CapsActionAllowed(Fighter* fp, int flag);
 #define FT_CAPS_MAX_JUMPS(fp) ScriptGame_CapsMaxJumps(fp)

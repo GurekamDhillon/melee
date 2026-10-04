@@ -3399,8 +3399,10 @@ static int test_geno_fly(void)
     return rc;
 }
 
+#include "geno_define_snapshot_tests.inc"
 void GenoTestRegisterAll(void)
 {
+    TestRegister("geno_define_snapshot", test_geno_define_snapshot);
     TestRegister("geno_fly", test_geno_fly);
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
     TestRegister("geno_ftcmd_loops", test_geno_ftcmd_loops);

@@ -194,3 +194,7 @@ Fighter capabilities (2026-10-04, source pass; native acceptance pending):
 The shared global smoke stub does not yet define these new APIs; its six catalogue rows require integrator stub updates.
 `fighter-targeting/scripts/rewind-proof.lua` is a separate offline LAB fixture requiring timer expiry and 0 differing bytes.
 It has not run in the game and supplies no runtime proof yet.
+
+- `demo_armor_types`: [Armour types](armor-types/): A cycles six named types, R refreshes; W/M/S inject P2-sourced collision hits. `on_armor` shows absorption and breaks. Native acceptance pending.
+
+- `demo_echoes`: [Echoes](echoes/): three afterimages; E arms aerial copy2, N arms neutral-air copies1/2; P2 stands. Native source/journal checks pass; renderer armed tint/flash integration and actual delayed collision/rewind acceptance remain pending.

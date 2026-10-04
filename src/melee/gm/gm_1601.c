@@ -749,6 +749,10 @@ u32 gm_80160854(u8 slot, u8 team, u8 is_teams, u8 slot_type)
  * everywhere except a retail table lookup. */
 int gm_MexVanillaKind(int kind, int character_kind)
 {
+    extern int Geno_DefineBaseKind(int kind);
+    extern int Geno_DefineBaseCK(int ck);
+    int native_base = character_kind ? Geno_DefineBaseCK(kind) : Geno_DefineBaseKind(kind);
+    if (native_base >= 0) return native_base;
     extern int Mex_InternalForPortKind(int fk);
     extern int Mex_FtBaseKind(int internal);
     int fk = character_kind ? kind - ChKind_Mex0 + Ft_Kind_Mex0 : kind;
@@ -795,7 +799,11 @@ static const char* gm_MexName(u8 ckind)
     if (out[0] != '\0') {
         return out;
     }
-    src = Mex_FighterName(Mex_PortCKindToExt(ckind));
+    {
+        extern int Geno_DefineName(int ck, char* out, int cap);
+        static char native_name[48];
+        src = Geno_DefineName(ckind, native_name, sizeof native_name) ? native_name : Mex_FighterName(Mex_PortCKindToExt(ckind));
+    }
     if (src == NULL) {
         return "?";
     }
@@ -4397,6 +4405,11 @@ void fn_80169000(MatchEnd* arg0, u8* arg1)
 /// @param ckind ::CharacterKind
 u8 gm_GetNumCostumesForCKind(u8 ckind)
 {
+#if defined(TARGET_PC)
+    extern int Geno_DefineBaseCK(int ck);
+    int native_base = Geno_DefineBaseCK(ckind);
+    if (native_base >= 0) ckind = native_base;
+#endif
     /// @todo Matching tactic: pad the pre-inline statement count so MWCC
     /// keeps direct calls to this accessor instead of auto-inlining them.
     if (0) {
@@ -4440,6 +4453,9 @@ u8 gm_GetNumCostumesForCKind(u8 ckind)
 u8 gm_80169264(u8 ckind)
 {
 #if defined(TARGET_PC)
+    extern int Geno_DefineBaseCK(int ck);
+    int native_base = Geno_DefineBaseCK(ckind);
+    if (native_base >= 0) ckind = native_base;
     if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].red_idx */
         extern int Mex_CostumeInfo(int ckind, int field);
         return Mex_CostumeInfo(ckind, 1);
@@ -4454,6 +4470,9 @@ u8 gm_80169264(u8 ckind)
 u8 gm_80169290(u8 ckind)
 {
 #if defined(TARGET_PC)
+    extern int Geno_DefineBaseCK(int ck);
+    int native_base = Geno_DefineBaseCK(ckind);
+    if (native_base >= 0) ckind = native_base;
     if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].green_idx */
         extern int Mex_CostumeInfo(int ckind, int field);
         return Mex_CostumeInfo(ckind, 3);
@@ -4468,6 +4487,9 @@ u8 gm_80169290(u8 ckind)
 u8 gm_801692BC(u8 ckind)
 {
 #if defined(TARGET_PC)
+    extern int Geno_DefineBaseCK(int ck);
+    int native_base = Geno_DefineBaseCK(ckind);
+    if (native_base >= 0) ckind = native_base;
     if (GM_IS_MEX_CK(ckind)) { /* m-ex: costume_info[ext].blue_idx */
         extern int Mex_CostumeInfo(int ckind, int field);
         return Mex_CostumeInfo(ckind, 2);

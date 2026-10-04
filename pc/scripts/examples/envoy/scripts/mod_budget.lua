@@ -1,8 +1,8 @@
 -- One authority: additive deltas, numerical safety families, bounded utility, conservative pool audit.
 return function(D)
  local S=D.mod_schema;local B={}
- B.order={'damage_dealt','launch_dealt','damage_taken','launch_taken','speed','jump','status_duration','sustain','conversion','momentum','clank','cleanse','curse_dealt'}
- B.caps={damage_dealt={-.95,63},launch_dealt={-.95,3},damage_taken={-.85,63},launch_taken={-.95,3},speed={-.8,1},jump={-.8,1},status_duration={-.95,19},sustain={0,100},conversion={0,30},momentum={0,40},clank={0,6},cleanse={0,30},curse_dealt={0,3}}
+ B.order={'echo','damage_dealt','launch_dealt','damage_taken','launch_taken','speed','jump','status_duration','sustain','conversion','momentum','clank','cleanse','curse_dealt'}
+ B.caps={echo={0,12},damage_dealt={-.95,63},launch_dealt={-.95,3},damage_taken={-.85,63},launch_taken={-.95,3},speed={-.8,1},jump={-.8,1},status_duration={-.95,19},sustain={0,100},conversion={0,30},momentum={0,40},clank={0,6},cleanse={0,30},curse_dealt={0,3}}
  B.families={damage_dealt='damage_dealt',launch_dealt='launch_dealt',damage_taken='damage_taken',knockback_taken='launch_taken',run_speed='speed',air_speed='speed',jump_height='jump',air_jump_height='jump',status_duration='status_duration'}
  B.implicit_families={red={'damage_dealt'},green={'speed'},blue={'launch_taken'},yellow={'jump'},purple={'status_duration'},white={}}
  local function clamp(f,n) local c=assert(B.caps[f],'uncapped family');return math.max(c[1],math.min(c[2],n)) end
@@ -15,7 +15,9 @@ return function(D)
  end
  local function effect(e,m,tier)
   local out={};local function value(v) return S.resolve(v,m,tier) end
-  if e.op=='value' then add(out,assert(B.families[e.key],'unbudgeted fighter value'),S.ratio(e.value,m,tier,B.families[e.key])-1)
+  if e.op=='echo' then
+   local d=D.mod_echo.resolve(e,m,tier);out.echo=0;for _,c in ipairs(d.copies)do if c.echo then out.echo=out.echo+c.echo.damage*c.echo.knockback end end;out.echo=out.echo*S.copies(tier)
+  elseif e.op=='value' then add(out,assert(B.families[e.key],'unbudgeted fighter value'),S.ratio(e.value,m,tier,B.families[e.key])-1)
   elseif e.op=='convert' or e.op=='versus-status' then
    for k,v in pairs(e.change) do
     if k=='element' then out.conversion=S.copies(tier)
@@ -79,6 +81,10 @@ return function(D)
   for k,n in pairs(keys) do local f=B.families[k];if familykeys[f]==nil or math.abs(n)>math.abs(familykeys[f]) or (math.abs(n)==math.abs(familykeys[f]) and n>familykeys[f]) then familykeys[f]=n end end
   for f,n in pairs(familykeys) do add(raw,f,n) end
   for k,v in pairs(implicits or {}) do local f=B.families[k];if k~='air_speed' and k~='air_jump_height' then add(potential,f,v-1);add(power,f,(f=='damage_taken' or f=='launch_taken') and 1-v or v-1) end end
+  if D.mod_echo then
+   local d=D.mod_echo.engine({list=pool,equipped={[1]=mods or {}},status=function(_,_,name)return (statuses or {})[name]end},1);local n=0
+   for _,r in ipairs(d.rules)do n=n+r.damage*r.knockback end;potential.echo=n;power.echo=n
+  end
   return raw,potential,keys,power
  end
  function B.sustain_delta(previous,delta) local cap=B.caps.sustain[2];local next=math.max(-cap,math.min(cap,(previous or 0)+delta));return next,next-(previous or 0) end
@@ -91,7 +97,7 @@ return function(D)
   local toughness=1/out.damage_taken.potential
   local launch=out.launch_dealt.potential*out.curse_dealt.potential/math.max(.05,out.launch_taken.potential)
   local utility=1+.025*math.max(0,out.sustain.potential-1)+.04*math.max(0,out.momentum.potential-1)+.12*math.max(0,out.conversion.potential-1)+.2*math.max(0,out.clank.potential-1)+.1*math.max(0,out.cleanse.potential-1)
-  strength=offence*toughness^.25*math.max(.25,launch)^.25*utility
+  strength=(1+math.max(0,out.echo.potential-1))*offence*toughness^.25*math.max(.25,launch)^.25*utility
   return out,math.max(1,strength)
  end
  function B.values(pool,mods,implicits,statuses)

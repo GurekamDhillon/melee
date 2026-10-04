@@ -13,7 +13,7 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 5    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
+#define GENO_VERSION 6    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
                              4 = v5: articles, on_hit, counter windows - docs/geno.md section 19) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
 #define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
@@ -247,7 +247,7 @@ enum {
  * through the game half's table (GenoGame_AttrFind). */
 #define GENO_MAX_ATTRS 48
 #define GENO_MAX_JUMP_VY 16
-#define GENO_MAX_PROFILES 32
+#define GENO_MAX_PROFILES 65535 /* v6: allocated profiles; explicit id-space ceiling, not fixed storage */
 #define GENO_MAX_SPECIAL 64      /* v1: special_attributes entries per profile */
 #define GENO_MAX_ONLAND 16       /* v1: on_land map entries per profile */
 #define GENO_MAX_MOTION_ANIM 8   /* v5.4: "motion_anims" entries per profile */
@@ -358,10 +358,15 @@ enum {
 #define GENO_ART_PER_RANGE 8
 /* v5.1: articles 8..15 of profile p are kind GENO_ART_KIND_BASE2 + p * 8 + (a - 8), so the v5
  * numbers (0x1000 + p * 8 + a for a < 8) never change. Both ranges end below 5000. */
-#define GENO_ART_KIND_BASE2 (GENO_ART_KIND_BASE + GENO_MAX_PROFILES * GENO_ART_PER_RANGE)
-#define GENO_ART_KIND_END (GENO_ART_KIND_BASE2 + GENO_MAX_PROFILES * GENO_ART_PER_RANGE)
+#define GENO_ART_KIND_BASE2 (GENO_ART_KIND_BASE + 32 * GENO_ART_PER_RANGE)
+#define GENO_ART_KIND_END (GENO_ART_KIND_BASE2 + 32 * GENO_ART_PER_RANGE)
+#define GENO_ART_EXTRA_BASE 0x20000
+#define GENO_ART_EXTRA_END (GENO_ART_EXTRA_BASE + (GENO_MAX_PROFILES - 32) * 16)
+#define GENO_ART_IS_KIND(k) (((k) >= GENO_ART_KIND_BASE && (k) < GENO_ART_KIND_END) || \
+                           ((k) >= GENO_ART_EXTRA_BASE && (k) < GENO_ART_EXTRA_END))
 #define GENO_ART_KIND(p, a) \
-    ((a) < GENO_ART_PER_RANGE ? GENO_ART_KIND_BASE + (p) * GENO_ART_PER_RANGE + (a) \
+    ((p) >= 32 ? GENO_ART_EXTRA_BASE + ((p) - 32) * 16 + (a) : \
+     (a) < GENO_ART_PER_RANGE ? GENO_ART_KIND_BASE + (p) * GENO_ART_PER_RANGE + (a) \
                               : GENO_ART_KIND_BASE2 + (p) * GENO_ART_PER_RANGE + (a) - GENO_ART_PER_RANGE)
 #define GENO_ART_HITBOXES 4 /* Melee items have 4 hitbox slots */
 #define GENO_ART_HIT_ENTRIES 8 /* v5.1: hitbox entries per article; entries sharing a "slot" hand over

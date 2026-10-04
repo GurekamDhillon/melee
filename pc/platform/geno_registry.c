@@ -26,6 +26,7 @@
  */
 #define _CRT_SECURE_NO_WARNINGS
 #include "gw.h"
+#include "geno_define_core.h"
 #include "gw_mods.h"
 #include "gw_test.h"
 #include "../geno/geno.h"
@@ -377,6 +378,11 @@ typedef struct {
     char target[64];
     char plfile[32];
     char name[64];
+    int defined;
+    char define_key[40];
+    int ncommon;
+    int common_row[64][9]; /* motion, like, subaction, flags, move_id, anim/iasa/phys/coll */
+    uint64_t iasa_warned;
     int kind; /* resolved at install; -1 = the target fighter is not on this install */
     int max_jumps; /* -1 = keep the fighter's own */
     int fx_set;    /* v5.5: "fx_bindings" (gw_fx.c binding set), -1 none */
@@ -444,7 +450,9 @@ typedef struct {
 #define GN_MAX_SLOTS 256 /* overlay slots over every profile */
 
 typedef struct {
-    gn_profile p[GENO_MAX_PROFILES];
+    gn_profile* p;
+    int capacity;
+    GdfCatalog definitions;
     int n;
     int files;
     int kind_profile[GN_KINDS]; /* FighterKind -> profile index, -1 none */
@@ -460,8 +468,9 @@ typedef struct {
 static int gn_pool_gen = 1; /* bumped whenever a registry is (re)installed: the game half refills */
 /* Diagnostics only, never consulted by simulation; at most one line per state per load. */
 static int gn_iasa_warn_gen;
-static uint64_t gn_iasa_warned[GENO_MAX_PROFILES];
+
 static gn_registry *gn_reg(void);
+static void gn_build_kinds(gn_registry* r);
 extern int gw_GenoGame_ScriptRange(uint32_t address, uint32_t bytes);
 
 int gw_Geno_ScriptAddressValid(uint32_t address, uint32_t bytes) {
@@ -475,11 +484,12 @@ void gw_Geno_WarnIasa(int p, int s) {
     gn_registry *r = gn_reg();
     if (p < 0 || p >= r->n || s < 0 || s >= r->p[p].nstate) return;
     if (gn_iasa_warn_gen != gn_pool_gen) {
-        memset(gn_iasa_warned, 0, sizeof gn_iasa_warned);
+        int i;
+        for (i = 0; i < r->n; ++i) r->p[i].iasa_warned = 0;
         gn_iasa_warn_gen = gn_pool_gen;
     }
-    if (gn_iasa_warned[p] & (1ull << s)) return;
-    gn_iasa_warned[p] |= 1ull << s;
+    if (r->p[p].iasa_warned & (1ull << s)) return;
+    r->p[p].iasa_warned |= 1ull << s;
     gw_log("geno: %s: state %s: script contains IASA but iasa is none; use iasa: interrupt to enable cancels",
            r->p[p].name, r->p[p].st_name[s]);
 }
@@ -1127,43 +1137,54 @@ static int gn_jump_max(double requested, const char *where, const char *key) {
     return value;
 }
 
-static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where) {
+static int gn_profile_reserve(gn_registry* r)
+{
+    gn_profile* next; int cap;
+    if (r->n >= GENO_MAX_PROFILES) return 0;
+    if (r->n < r->capacity) return 1;
+    cap = r->capacity ? r->capacity * 2 : 8;
+    if (cap > GENO_MAX_PROFILES) cap = GENO_MAX_PROFILES;
+    if ((size_t)cap * sizeof *next > 256u * 1024u * 1024u) return 0;
+    next = (gn_profile*) realloc(r->p, (size_t)cap * sizeof *next);
+    if (!next) return 0;
+    r->p = next; r->capacity = cap; return 1;
+}
+static void gn_registry_clear(gn_registry* r)
+{
+    free(r->p); gdf_free(&r->definitions); memset(r, 0, sizeof *r);
+}
+#include "geno_define_registry.inc"
+
+static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod, const char *where, int version) {
     static const char *const ev_names[GENO_EV_COUNT] = { "on_init", "on_frame", "on_action",
                                                          "on_land", "on_hit" };
     gn_profile *p;
-    int x, c, ev;
+    int x, c, ev, pool_before = r->npool, slots_before = r->nslot;
     if (d->n[e].type != JN_OBJ) {
         gw_log("geno: %s: a fighters[] entry is not an object - skipped", where);
         return;
     }
-    if (jd_get(d, e, "define") >= 0) {
-        gw_log("geno: %s: \"define\" (new fighters) is not supported by Geno v%d yet - entry skipped",
-               where, GENO_VERSION);
-        return;
-    }
+    int is_define = jd_get(d, e, "define") >= 0;
     x = jd_get(d, e, "attach");
-    if (x < 0 || d->n[x].type != JN_STR) {
-        gw_log("geno: %s: entry has no \"attach\" - skipped", where);
-        return;
+    if (!is_define && (x < 0 || d->n[x].type != JN_STR)) {
+        gw_log("geno: %s: entry has no attach or define - refused", where); return;
     }
-    if (r->n >= GENO_MAX_PROFILES) {
-        gw_log("geno: %s: more than %d fighter entries - the rest are skipped", where, GENO_MAX_PROFILES);
-        return;
-    }
+    if (!gn_profile_reserve(r)) { gw_log("geno: %s: profile allocation/id space exhausted - refused", where); return; }
     p = &r->p[r->n];
     memset(p, 0, sizeof *p);
-    p->kind = -1;
-    p->max_jumps = -1;
+    p->kind = -1; p->max_jumps = -1;
     snprintf(p->mod, sizeof p->mod, "%s", mod);
-    snprintf(p->target, sizeof p->target, "%s", d->n[x].str);
-    gn_target_file(p->target, p->plfile, sizeof p->plfile);
-    if (p->plfile[0] == '\0') {
-        gw_log("geno: %s: attach \"%s\" names no fighter I know (use a vanilla name or a Pl*.dat)",
-               where, p->target);
-        return;
+    if (is_define) {
+        if (gn_define_parse(p, d, e, version, where) < 0) return;
+        snprintf(p->target, sizeof p->target, "%s", p->define_key);
+        snprintf(p->plfile, sizeof p->plfile, "PlMr.dat");
+    } else {
+        snprintf(p->target, sizeof p->target, "%s", d->n[x].str);
+        gn_target_file(p->target, p->plfile, sizeof p->plfile);
+        if (!p->plfile[0]) { gw_log("geno: %s: unknown attach target - refused", where); return; }
+        x = jd_get(d, e, "name");
+        snprintf(p->name, sizeof p->name, "%s", x >= 0 && d->n[x].type == JN_STR ? d->n[x].str : p->plfile);
     }
-    x = jd_get(d, e, "name");
-    snprintf(p->name, sizeof p->name, "%s", x >= 0 && d->n[x].type == JN_STR ? d->n[x].str : p->plfile);
 
     x = jd_get(d, e, "attributes");
     if (x >= 0 && d->n[x].type == JN_OBJ) {
@@ -1220,6 +1241,14 @@ static void gn_add_fighter(gn_registry *r, const jdoc *d, int e, const char *mod
     gn_add_v2(p, d, e, where);
     gn_add_v5(p, d, e, where);
     gn_add_v1(r, p, d, e, mod, where);
+    if (p->defined) {
+        int overlays = jd_get(d, e, "subactions");
+        if (overlays >= 0 && (d->n[overlays].type != JN_ARR || d->n[overlays].count != p->nov)) {
+            r->npool = pool_before; r->nslot = slots_before;
+            gw_log("geno: %s: native definition refused: invalid overlay or script budget exhausted", where);
+            return;
+        }
+    }
     /* the id covers the whole entry as written - including keys this version ignores, which a
        newer Geno might act on, so two installs never agree on an id while behaving differently */
     p->id = gn_hash_node(d, e, gn_mix(0x47454E4F00000000ull, GENO_ID_VERSION)); /* "GENO" */
@@ -1259,7 +1288,7 @@ static int gn_parse_text(gn_registry *r, const char *text, const char *mod) {
                (int) d.n[v].num, GENO_VERSION);
     f = jd_get(&d, root, "fighters");
     if (f >= 0 && d.n[f].type == JN_ARR)
-        for (e = d.n[f].first; e >= 0; e = d.n[e].next) gn_add_fighter(r, &d, e, mod, where);
+        for (e = d.n[f].first; e >= 0; e = d.n[e].next) gn_add_fighter(r, &d, e, mod, where, (int)d.n[v].num);
     r->files++;
     return r->n - before;
 }
@@ -1268,10 +1297,11 @@ static int gn_parse_text(gn_registry *r, const char *text, const char *mod) {
  * (mount order; later mods win a disc path too) wins, and the loser is logged. */
 static void gn_build_kinds(gn_registry *r) {
     int i;
+    gn_define_bind(r);
     for (i = 0; i < GN_KINDS; ++i) r->kind_profile[i] = -1;
     for (i = 0; i < r->n; ++i) {
         gn_profile *p = &r->p[i];
-        p->kind = gn_kind_for_file(p->plfile);
+        if (!p->defined) p->kind = gn_kind_for_file(p->plfile);
         if (p->kind < 0 || p->kind >= GN_KINDS) {
             gw_log("geno: %s/%s attaches to %s, which this install does not have - inactive", p->mod,
                    p->name, p->plfile);
@@ -1698,7 +1728,7 @@ uint64_t gw_Geno_SaltForPlFile(const char *pl) {
     if (pl == NULL || r->n == 0) return 0;
     while (*pl == '/') ++pl;
     for (i = 0; i < r->n; ++i)
-        if (_stricmp(r->p[i].plfile, pl) == 0) best = i; /* later wins, as in gn_build_kinds */
+        if (!r->p[i].defined && _stricmp(r->p[i].plfile, pl) == 0) best = i; /* attach only; define never salts its donor */
     return best >= 0 ? r->p[best].id : 0;
 }
 
@@ -1771,7 +1801,11 @@ int gw_Geno_Reload(char *msg, int cap) {
     char why[160];
     why[0] = '\0';
     if (!cur->kinds_built) gn_build_kinds(cur);
-    memset(&gn_next, 0, sizeof gn_next);
+    if (cur->definitions.catalog.count) {
+        snprintf(msg, (size_t)cap, "native definitions require a process restart; current data kept");
+        return -1;
+    }
+    gn_registry_clear(&gn_next);
     for (k = 0; k < GN_KINDS; ++k) gn_next.kind_profile[k] = -1;
     n = gw_Mods_ActiveCount();
     for (k = 0; k < n && dir != NULL && dir[0]; ++k) {
@@ -1789,12 +1823,19 @@ int gw_Geno_Reload(char *msg, int cap) {
         free(text);
     }
     gn_build_kinds(&gn_next);
+    for (i = 0; i < gn_next.n; ++i) if (gn_next.p[i].defined) {
+        snprintf(msg, (size_t)cap, "native definitions require a process restart; current data kept");
+        gn_registry_clear(&gn_next);
+        return -1;
+    }
     layout = gn_reload_layout_changed(cur, &gn_next, why, sizeof why);
     for (i = 0; !layout && i < cur->n; ++i)
         if (cur->p[i].id != gn_next.p[i].id) changed++;
     pool_changed = gn_next.npool != cur->npool ||
                    memcmp(gn_next.pool, cur->pool, sizeof cur->pool[0] * (size_t) cur->npool) != 0;
+    gn_registry_clear(&gn_boot);
     gn_boot = gn_next;
+    memset(&gn_next, 0, sizeof gn_next);
     gn_boot_loaded = 1;
     gn_pool_gen++;
     if (layout) {
@@ -1816,7 +1857,7 @@ static int gn_saved_loaded, gn_swapped;
 
 int gw_Geno_TestReloadLayout(const char *text) {
     char why[160];
-    memset(&gn_next, 0, sizeof gn_next);
+    gn_registry_clear(&gn_next);
     if (gn_parse_text(&gn_next, text, "reload-test") < 0) return -1;
     gn_build_kinds(&gn_next);
     return gn_reload_layout_changed(gn_reg(), &gn_next, why, sizeof why);
@@ -1829,6 +1870,8 @@ int gw_Geno_TestInstall(const char *text) {
         gn_saved = gn_boot;
         gn_saved_loaded = gn_boot_loaded;
         gn_swapped = 1;
+    } else {
+        gn_registry_clear(&gn_boot);
     }
     memset(&gn_boot, 0, sizeof gn_boot);
     gn_boot_loaded = 1;
@@ -1840,7 +1883,9 @@ int gw_Geno_TestInstall(const char *text) {
 
 void gw_Geno_TestRestore(void) {
     if (!gn_swapped) return;
+    gn_registry_clear(&gn_boot);
     gn_boot = gn_saved;
+    memset(&gn_saved, 0, sizeof gn_saved);
     gn_boot_loaded = gn_saved_loaded;
     gn_swapped = 0;
     gn_pool_gen++;
@@ -1866,7 +1911,7 @@ static int test_geno_registry_parse(void) {
     static gn_registry r;
     const gn_profile *p;
     float f;
-    memset(&r, 0, sizeof r);
+    gn_registry_clear(&r);
     if (gn_parse_text(&r, gn_test_json, "test-mod") != 2) {
         gw_test_fail("expected 2 entries (kirby, PlZz.dat; the define is skipped), got %d", r.n);
         return 1;
@@ -1911,9 +1956,9 @@ static int test_geno_registry_stable_ids(void) {
     const char *t1 = "{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":9}}]}";
     const char *t2 = "{ \"geno\": 1, \"fighters\": [ {\n \"attach\" : \"kirby\" , \"jumps\" : { \"max\" : 9.0 } } ] }";
     const char *t3 = "{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":8}}]}";
-    memset(&a, 0, sizeof a);
-    memset(&b, 0, sizeof b);
-    memset(&c, 0, sizeof c);
+    gn_registry_clear(&a);
+    gn_registry_clear(&b);
+    gn_registry_clear(&c);
     if (gn_parse_text(&a, t1, "one") != 1 || gn_parse_text(&b, t2, "two") != 1 ||
         gn_parse_text(&c, t3, "one") != 1) {
         gw_test_fail("parse failed");
@@ -1938,7 +1983,7 @@ static int test_geno_registry_stable_ids(void) {
 
 static int test_geno_registry_bad_json(void) {
     static gn_registry r;
-    memset(&r, 0, sizeof r);
+    gn_registry_clear(&r);
     if (gn_parse_text(&r, "{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\"", "bad") != -1 || r.n != 0) {
         gw_test_fail("truncated JSON was accepted");
         return 1;
@@ -1990,7 +2035,7 @@ static int test_geno_registry_v1(void) {
         "\"subactions\":[{\"index\":87,\"words\":[\"0xEC220001\",5,4294967295]},{\"index\":2000,\"words\":[1]},"
         "{\"index\":88,\"words\":[]}],"
         "\"hooks\":{\"on_land\":[\"geno.count_frames:5\"]}}]}";
-    memset(&r, 0, sizeof r);
+    gn_registry_clear(&r);
     if (gn_parse_text(&r, t, "v1") != 1) {
         gw_test_fail("v1 entry not parsed");
         return 1;
@@ -2042,7 +2087,7 @@ static int test_geno_registry_v2(void) {
         "\"tornado\":{\"w13\":17},"
         "\"specials\":{\"n\":\"geno:Glide\",\"hi\":\"special:3\",\"air_hi\":\"geno:X\",\"lw\":\"geno:Nope\"},"
         "\"on_land\":[{\"from\":\"geno:Glide\",\"to\":\"geno:GlideLanding\"}]}]}";
-    memset(&r, 0, sizeof r);
+    gn_registry_clear(&r);
     if (gn_parse_text(&r, t, "v2") != 1) {
         gw_test_fail("v2 entry not parsed");
         return 1;
@@ -2094,13 +2139,14 @@ static int test_geno_registry_v2(void) {
 
 static int test_geno_registry_reload_layout(void) {
     static gn_registry a, b;
+    static gn_profile b_profile;
     char why[160];
     int slot;
     const char *json = "{\"geno\":5,\"fighters\":[{\"attach\":\"kirby\","
         "\"articles\":[{\"name\":\"Fire\"},{\"name\":\"Ice\"}],"
         "\"subactions\":[{\"index\":44,\"words\":[\"0x04000001\"]},"
         "{\"index\":45,\"words\":[\"0x04000002\"]}]}]}";
-    memset(&a, 0, sizeof a);
+    gn_registry_clear(&a);
     if (gn_parse_text(&a, json, "reload-test") != 1) {
         gw_test_fail("could not parse reload fixture");
         return 1;
@@ -2110,52 +2156,52 @@ static int test_geno_registry_reload_layout(void) {
     a.p[0].st_bhv[0] = GENO_BHV_GROUND;
     for (slot = 0; slot < GENO_CB_SLOTS; slot++) a.p[0].st_cb[0][slot] = -1;
     for (slot = 0; slot < GENO_CB_SLOTS; slot++) {
-        b = a;
+        b = a; b_profile = a.p[0]; b.p = &b_profile;
         b.p[0].st_cb[0][slot] = gw_GenoGame_CallbackFind(slot, slot == GENO_CB_ANIM ? "hold" : "none");
         if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
             gw_test_fail("changing state callback slot %d must restart", slot);
             return 1;
         }
     }
-    b = a;
+    b = a; b_profile = a.p[0]; b.p = &b_profile;
     b.p[0].st_bhv[0] = GENO_BHV_AIR;
     if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
         gw_test_fail("changing state behavior must restart");
         return 1;
     }
-    b = a;
+    b = a; b_profile = a.p[0]; b.p = &b_profile;
     b.p[0].st_anim[0]++;
     if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
         gw_test_fail("changing state's effective animation row must restart");
         return 1;
     }
-    b = a;
+    b = a; b_profile = a.p[0]; b.p = &b_profile;
     b.p[0].art_param[0][GENO_AP_LIFETIME] = gn_fbits(20.0);
     b.pool[b.slot_off[0]] = 0x04000003;
     if (gn_reload_layout_changed(&a, &b, why, sizeof why)) {
         gw_test_fail("article parameters and same-layout overlay words should reload in place");
         return 1;
     }
-    b = a;
+    b = a; b_profile = a.p[0]; b.p = &b_profile;
     b.p[0].nart--;
     if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
         gw_test_fail("removing an article must restart the match");
         return 1;
     }
-    b = a;
+    b = a; b_profile = a.p[0]; b.p = &b_profile;
     memcpy(b.p[0].art_name[0], a.p[0].art_name[1], sizeof b.p[0].art_name[0]);
     memcpy(b.p[0].art_name[1], a.p[0].art_name[0], sizeof b.p[0].art_name[1]);
     if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
         gw_test_fail("reordering articles must restart the match");
         return 1;
     }
-    b = a;
+    b = a; b_profile = a.p[0]; b.p = &b_profile;
     b.slot_off[1]++;
     if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
         gw_test_fail("relocating overlay words must restart the match");
         return 1;
     }
-    b = a;
+    b = a; b_profile = a.p[0]; b.p = &b_profile;
     b.slot_len[1]++;
     if (!gn_reload_layout_changed(&a, &b, why, sizeof why)) {
         gw_test_fail("resizing even the last overlay must restart the match");
@@ -2164,10 +2210,13 @@ static int test_geno_registry_reload_layout(void) {
     return 0;
 }
 
+#include "geno_define_tests.inc"
 #include "geno_items_registry.inc"
 #include "geno_items_registry_tests.inc"
 #include "geno_items_runtime_tests.inc"
 void geno_registry_tests_register(void) {
+    gw_test_register("geno_define_registry", test_geno_define_registry);
+    gw_test_register("geno_define_repeated_install", test_geno_define_repeated_install);
     gw_test_register("geno_items_registry",gn_items_registry_test);
     gw_test_register("geno_items_physics",gn_items_physics_test);
     gw_test_register("geno_items_snapshot",gn_items_snapshot_test);

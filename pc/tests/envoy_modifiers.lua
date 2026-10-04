@@ -85,7 +85,7 @@ T.test('status duration refresh stacks exact expiration and KO cleanup',function
  local players=r.players;for _=1,299 do r:begin_frame(players);r:drain() end
  assert(r:status(1,'momentum'));hit(r,{aerial=true});assert(r:status(1,'momentum').expires==600)
  for _=1,300 do r:begin_frame(players);r:drain() end;assert(not r:status(1,'momentum'))
- r:equip(1,'glass_core');r:emit{kind='stock_lost',port=1};r:drain();assert(next(r:values(1))==nil and not r.equipped[1])
+ r:equip(1,'glass_core');r:emit{kind='stock_lost',port=1};r:drain();assert(r:values(1).damage_dealt==2 and r.equipped[1].glass_core==1 and not r.statuses[1] and not r.recent[1])
  r=fresh('kindling');hit(r,{fire=true});players=r.players;local total=0
  for _=1,180 do r:begin_frame(players);r:drain();total=total+(r.damage[2] or 0) end
  assert(total==9 and not r:status(2,'burn'))
@@ -105,7 +105,7 @@ end)
 T.test('budget exhaustion never prevents stock lifetime cleanup',function()
  local r=D.mod_engine.new(2,D.mod_pool,{budget=1});r:equip(1,'kindling');r:equip(2,'glass_core')
  r:begin_frame({[1]={percent=0},[2]={percent=0}});r:emit{kind='hit_dealt',port=1,target=2,tags={fire=true}};r:emit{kind='stock_lost',port=2};r:drain()
- assert(not r.equipped[2] and not r:status(2,'burn') and next(r:values(2))==nil)
+ assert(r.equipped[2].glass_core==1 and not r:status(2,'burn') and r:values(2).damage_dealt==2)
 end)
 T.test('unknown contact context never means zero damage or grounded',function()
  local m=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[1]));m.conditions={{self_damage_below=40}}

@@ -1,0 +1,77 @@
+{
+  "geno_fx": 1,
+  "name": "DriveLoot_signature_storm_shell",
+  "textures": [],
+  "emitters": [
+    {
+      "name": "glow",
+      "kind": "sprite",
+      "follow": "srt",
+      "emission": {
+        "rate": 1,
+        "duration": 0,
+        "one_time": 1
+      },
+      "shape": {
+        "type": "sphere_fill",
+        "radius": [
+          0,
+          0,
+          0
+        ]
+      },
+      "particle": {
+        "life": 1800,
+        "shape": "billboard",
+        "scale": {
+          "base": [
+            6,
+            3,
+            6
+          ]
+        },
+        "velocity": {
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "direction_scale": 0
+        }
+      },
+      "color": {
+        "color0": {
+          "value": [
+            1,
+            0.85,
+            0.15
+          ]
+        },
+        "alpha0": {
+          "value": 0.35
+        }
+      },
+      "material": {
+        "shader": {
+          "type": "custom",
+          "fragment": "soft.wgsl",
+          "params": {
+            "tint": [
+              1,
+              0.85,
+              0.15,
+              1
+            ]
+          }
+        },
+        "blend": "add",
+        "depth_test": 1,
+        "additive_batch": true,
+        "bloom": {
+          "threshold": 0.15,
+          "intensity": 1
+        }
+      }
+    }
+  ]
+}

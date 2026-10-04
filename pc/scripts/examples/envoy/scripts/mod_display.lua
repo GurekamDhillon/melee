@@ -79,6 +79,11 @@ return function(D)
   end
   local mods={};for _,id in ipairs(keys(e.equipped[p])) do local rule=e.rules[id]
    if rule and rule.visual then mods[#mods+1]={id=id,v=rule.visual} end end
+  local hues={red=.02,green=.33,blue=.57,yellow=.14,purple=.76,white=0};local looks={red='burn',green='haste',blue='chill',yellow='momentum',purple='curse',white='guarded'}
+  local strengths={common=0,magic=.15,rare=.35,unique=.6}
+  for i,drive in ipairs((meta.drive_build or {})[p] or {}) do local rarity=tostring(drive.rarity):lower();local strength=strengths[rarity] or 0
+   if strength>0 then mods[#mods+1]={id='drive_'..i,v={look=looks[drive.colour] or 'guarded',hue=hues[drive.colour] or 0,strength=strength,priority=rarity=='unique' and 30 or 5}} end
+  end
   table.sort(mods,function(a,b) if (a.v.priority or 0)==(b.v.priority or 0) then return a.id<b.id end;return (a.v.priority or 0)>(b.v.priority or 0) end)
   local cx,cy,total=0,0,0
   for i,m in ipairs(mods) do local hue=(m.v.hue or 0)%1;local strength=clamp(m.v.strength or .35,0,1)
@@ -132,7 +137,7 @@ return function(D)
    return false,self.note
   end
   for p=1,6 do
-   local active=next(self.engine.equipped[p] or {}) or next(self.engine.statuses[p] or {})
+   local active=next(self.engine.equipped[p] or {}) or next(self.engine.statuses[p] or {}) or next((state(self.engine).drive_build or {})[p] or {})
    if active and self.g.player(p) and not self.selected[p] then
     if not (self.warmed_ports or {})[p] then
      self.ready=false;self.restoring=false

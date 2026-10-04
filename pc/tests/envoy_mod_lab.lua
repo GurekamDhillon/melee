@@ -70,9 +70,9 @@ T.test('manual clear is immediate with no future frame and missing blob retires 
  assert(a:command('clear'));assert(not s.mods[1] and not a.enabled and not next(a.engine.statuses))
  s.mods[1]={damage_dealt=2};s.blob=nil;a:loadstate();assert(not s.mods[1] and not a.enabled)
 end)
-T.test('respawn disappearance scene and Classic gate retire fields',function()
+T.test('respawn and character replacement retain build until scene ends',function()
  local s,a=fixture();assert(a:command('add glass_core'));a:frame()
- local clears=s.visual_clear;s.players[1].action=12;a:frame();assert(not s.mods[1] and not a.engine.equipped[1] and not a.enabled and s.visual_clear>clears)
+ local clears=s.visual_clear;s.players[1].action=12;a:frame();assert(s.mods[1].damage_dealt==2 and a.engine.equipped[1].glass_core and a.enabled)
  s.players[1].action=14;assert(a:command('add glass_core'));a:frame();s.players[1]=nil;a:frame();assert(not s.mods[1])
  a:scene();assert(not a.enabled and not next(a.owned))
  s.lab=false;assert(not a:command('add kindling'));assert(not a:frame())
@@ -103,9 +103,9 @@ T.test('paused host tick polls display without advancing gameplay timers',functi
 end)
 T.test('last stock and final status expiry retire all visual resources immediately',function()
  local s,a=fixture();assert(a:command('add glass_core'));a:frame();local cleared=s.visual_clear
- a:stock_lost(1);a:frame();assert(not a.enabled and not s.mods[1] and s.visual_clear>cleared)
- local blob=s.blob;s.visual_clear=0;a:loadstate();assert(not a.enabled and s.visual_clear>0)
- s.blob=blob;a.enabled=true;a.engine.statuses[2]={haste={expires=a.engine.frame+1,next_tick=100,stacks=1,max=1,amount=1,origin={}}}
+ a:stock_lost(1);a:frame();assert(a.enabled and s.mods[1].damage_dealt==2 and a.engine.equipped[1].glass_core)
+ local blob=s.blob;s.visual_clear=0;a:loadstate();assert(a.enabled and a.engine.equipped[1].glass_core)
+ s.blob=blob;a:command("clear");a.enabled=true;a.engine.statuses[2]={haste={expires=a.engine.frame+1,next_tick=100,stacks=1,max=1,amount=1,origin={}}}
  a:frame();assert(not a.enabled and not next(a.engine.statuses))
 end)
 T.test('native conversions and statuses are journaled without direct setters',function()
@@ -122,5 +122,16 @@ T.test('native traces refuse another script with the same rule ID',function()
  local id=s.hit_rules[1].rules[1].id
  a:hit(1,2,{context_valid=true,hit_rule_ids={id},hit_rule_owners={8}})
  assert(#a.engine.queue[1].origin==0)
+end)
+T.test('clank captures native pair damage and opposite fighter without inventing item target',function()
+ local s,a=fixture();assert(a:command('add glass_core'));a:frame()
+ a:clank{port_a=1,port_b=2,damage_a=8,damage_b=12}
+ local x,y=a.engine.queue[1],a.engine.queue[2]
+ assert(x.port==1 and x.target==2 and y.port==2 and y.target==1)
+ assert(x.damage_a==8 and x.damage_b==12 and y.damage_a==8 and y.damage_b==12)
+ a.engine.queue={};a:clank{port_a=1,damage_a=8,damage_b=12};assert(#a.engine.queue==0)
+ a:clank{port_a=1,port_b=0,damage_a=8,damage_b=12};assert(#a.engine.queue==0)
+ a:clank{port_a=1,port_b=2,damage_a=0/0,damage_b=math.huge}
+ assert(a.engine.queue[1].damage_a==nil and a.engine.queue[1].damage_b==nil)
 end)
 T.done()

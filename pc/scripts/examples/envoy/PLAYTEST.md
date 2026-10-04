@@ -105,3 +105,60 @@ EM2 native hit-rule acceptance (unrun in the source-only packet):
 
 The hit-rules catalogue scenario only checks the real table toggle; collision,
 particles, sound and timing require the operator steps above.
+
+
+EM3 drive loot acceptance (2026-10-04; source tests only):
+
+1. Mount the refreshed Envoy folder on an EM2-capable build. Restart the game
+   to register new DriveLoot FX declarations. This packet adds no native C.
+2. Offline LAB: Mario P1 and a standing level0 P2, Final Destination. Run
+   `mod clear`, `drive give rare 45`, `drive give unique 6`, then `bag`.
+   A selects a drive; A on a slot equips/swaps. A on an occupied slot without
+   selection unequips. Discard and keystone are explicit rows. Z+START also
+   opens the bag; B closes. Left/Right pages details. All text must be readable
+   at853x480 and smaller640x360, including long names/rules and equip deltas.
+3. Resume simulation and use `drive drop magic 123`, `drive drop rare 456`,
+   `drive drop unique 789`. Walk P1 over each. Check native hover/spin, core
+   glow, rarity beam/sparkle, pickup sound and short generated-name card.
+   Duplicate callbacks cannot award twice. Ground drops reserve bag capacity;
+   full bag must refuse gracefully, including pending paused inventory edits.
+   Collect all ground drops before editing inventory; pending edits must finish
+   before another drop. Paused drops refuse until simulation resumes.
+4. Test red damage, green run/air speed, blue launch resistance, yellow jump,
+   purple applied-status duration, and white extra affix/no implicit. Tier
+   depth bands are1 at0..4,2 at5..9,3 at10+. Keystones never roll as loot.
+5. Equip Glass Core and other steady effects; lose a stock. The same build
+   must remain, and damage modifiers/native rules/looks return on respawn.
+   Burn, Momentum, Haste, Guarded, Curse, recent events and transient values
+   must clear. Repeat with twelve bag drives plus four equipped drives.
+6. Equip/unequip/swap/discard while paused repeatedly; previews must track
+   the draft, refused edits must leave everything intact, and closing commits
+   once warm. More than twelve queued edits must refuse without disabling Lua.
+7. Snapshot a full bag/equipment/keystone and an active physical drop after
+   the first post-drop frame checkpoint. Require live rewind_test
+   differing_bytes=0 and same inventory/rules/statuses after seek. Manual
+   drops branch history and record their map at the next checkpoint; avoid
+   saving in the interval before that checkpoint. Isolated roundtrip evidence
+   is not acceptance of that manual boundary or real LAB rewind.
+8. Clear, unload/reload and change scene. Check native rules/overlays/shaders
+   and physical drops clean up; default bag starts fresh. Change the single
+   drive_lab.tuning.persist switch to test retained bag/build across scenes.
+   Classic/Adventure and netplay must refuse these LAB diagnostics.
+
+Five two-modifier scripts (each begins with mod clear):
+- `mod add updraft`; `mod add crosswind`: aerial hit then land, Momentum -> Haste.
+- `mod add ledge`; `mod add rush`: grab ledge then hit, Haste -> Momentum.
+- `mod add shelter`; `mod add renewal`: grab ledge, Guarded -> heal2.
+- `mod add icebound`; `mod add brittle`: an Ice hit then another hit, Chill -> Curse.
+- `mod add kindling`; `mod add malice`: Fire hit then another hit, Burn -> Curse.
+
+Two three-modifier scripts:
+- Updraft + Crosswind + Still Heart: aerial hit then land, Momentum -> Haste -> Guarded.
+- Ledge + Rush + Bastion: ledge grab, hit, land, Haste -> Momentum -> Guarded.
+
+Use Mario forward smash for Fire in Kindling's script; use Ice Climbers' native
+Ice attack for the Icebound/Brittle pair.
+The generated146-pair TSV describes vocabulary overlaps and filtered directional
+status/event links. It does not establish146 tested causal combinations;
+classification-tag overlap alone, including two keystones, is not a legal
+single-player chain. The seven scripts above are separately tested causal chains.

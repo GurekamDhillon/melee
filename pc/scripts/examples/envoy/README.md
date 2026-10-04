@@ -75,15 +75,25 @@ flow; its historical tests remain, but it is not the default.
 
 See MENUS.md, PLAYTEST.md and NATIVE-TEST-PLAN.md for controller/native acceptance.
 
-EM2 restores native conversions in the offline LAB debugger: `mod add burning`
-converts smash hitboxes to Fire; `mod add charged` converts aerials to Electric.
-Ember/electric shader treatments accompany retail effects. `mod add kindling`
-applies Burn after a Fire hit; `mod add pyre` gives subsequent connecting hits
-+25% launch against Burning targets, with a purple treatment and no invented
-Curse status. `mod add pyromancer` converts ordinary owned hitboxes to Fire and
-doubles damage taken from hits with an original Ice element; its fire treatment
-shows the keystone. Protected originals remain unchanged; there is no split damage.
-`mod trace` names actual native changes attributed to this script plus status
-ancestry. Thirteen records compile in fixed sorted order and journal native
-rules/status masks with checkpoints. These are source-tested LAB diagnostics,
-not campaign loot activation.
+EM3 adds rolled drives and a controller bag in the offline LAB debugger. The
+pool contains30 records (22normal,5fixed uniques,3separate keystones). `drive give
+rare 42` grants loot; `drive drop magic 123` spawns the existing physical pickup
+near P2. `bag` or Z+START opens four equipped slots and a twelve-drive bag.
+Select a bag drive, then an equipped slot to equip/swap; select an occupied slot
+without a bag selection to unequip. Discard and keystone choices are menu rows.
+Details include rule text and equip changes; Left/Right pages long details.
+
+Lost stocks now clear temporary statuses/stacks/events, while equipment,
+implicits, steady values, looks and native rules persist through respawn.
+`mod add <id>` still works beside loot and is merged at the highest tier per ID.
+One keystone and eight native rules are enforced before a build edit. Defaults
+start fresh on scene/run; drive_lab.tuning.persist controls retained inventory.
+No opponent rolls or Classic loot attachment are enabled in this packet.
+
+Normal elements convert ahead of combat; protected originals are immune.
+Pyre is a real1.25x contact launch multiplier against Burning targets, without
+inventing Curse. Pyromancer converts ordinary owned attacks to Fire and doubles
+damage taken from original Ice hits. Native owner/ID traces name actual changes.
+Split damage is refused. The generator, bag, rules/status outputs and look
+summary share checkpoint state; live LAB rewind and screen acceptance remain
+integrator work. See PLAYTEST.md and the EM3 report for scripts and exclusions.

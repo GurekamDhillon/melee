@@ -3,9 +3,10 @@ return function(D)
  local L={};L.__index=L
  local function port(n) n=tonumber(n);assert(n and n%1==0 and n>=1 and n<=6,'port 1..6 required');return n end
  function L.new(g,options)
-  local self=setmetatable({g=g,options=options or {},enabled=false,owned={},hit_owned={},pending={},observed={}},L)
+  local self=setmetatable({g=g,options=options or {},enabled=false,owned={},hit_owned={},pending={},observed={},debug_equipped={}},L)
   self.engine=D.mod_engine.new(104729,D.mod_pool)
   self.display=D.mod_display.new(g,self.engine)
+  if D.drive_lab then self.drives=D.drive_lab.new(g,self) end
   g.command('mod',function(arg) return self:command(arg or '') end,'list | add <id> [port] | clear | trace | intensity <0..1>')
   return self
  end
@@ -19,8 +20,10 @@ return function(D)
  end
  function L:replaying() return self.g.sim_replaying and self.g.sim_replaying() end
  function L:reset()
-  self.engine=D.mod_engine.new(104729,D.mod_pool);self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={}
+  if self.drives then self.drives:clear() end
+  self.engine=D.mod_engine.new(104729,D.mod_pool);self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped={}
   self.display:clear();self.display.engine=self.engine
+  if self.drives and (self.drives:has_build() or #self.drives.bag.items>0) then self.enabled=true end
  end
  function L:command(arg)
   local ok,result=pcall(function()
@@ -39,7 +42,7 @@ return function(D)
      assert(#w==2 or #w==3,'usage: mod add <id> [port]');local p=port(w[3] or 1)
      assert(self.engine.rules[w[2]],'unknown modifier; mod list');assert(self.g.player(p),'fighter absent')
      -- Validate the command without mutating the live rule root before warmup.
-     local probe=D.mod_engine.new(self.engine.seed,D.mod_pool);probe:import(self.engine:export());for _,e in ipairs(self.pending) do probe:equip(e.port,e.id) end;probe:equip(p,w[2])
+     local probe=D.mod_engine.new(self.engine.seed,D.mod_pool);probe:import(self.engine:export());for _,e in ipairs(self.pending) do probe:equip(e.port,e.id) end;probe:equip(p,w[2]);if self.drives and p==1 then local mods,implicit=self.drives:view():derive();mods=self.drives:combined(mods);mods[w[2]]=math.max(mods[w[2]] or 0,1);probe:set_build(1,mods,implicit) end
      local ready,detail=self.display:warm(self.engine)
      assert(not self.display.error,detail or 'modifier shader warmup unavailable')
      assert(#self.pending<12,'modifier pending equip budget exhausted')
@@ -101,9 +104,15 @@ return function(D)
  function L:stock_lost(p) self:event{kind='stock_lost',port=p,tags={}} end
  function L:action(kind,p,_,sub) if not sub then self:event{kind=kind,port=p,tags={}} end end
  function L:clank(e)
-  for _,p in ipairs({e.port_a or 0,e.port_b or 0}) do if p>=1 and p<=6 then self:event{kind='clank',port=p,tags={}} end end
+  local a,b=e.port_a,e.port_b
+  if type(a)~='number' or type(b)~='number' or a%1~=0 or b%1~=0 or a<1 or a>6 or b<1 or b>6 or a==b then return end
+  local function damage(n) if type(n)=='number' and n==n and n>=0 and n<=100000 then return n end end
+  local da,db=damage(e.damage_a),damage(e.damage_b)
+  self:event{kind='clank',port=a,target=b,tags={},damage_a=da,damage_b=db}
+  self:event{kind='clank',port=b,target=a,tags={},damage_a=da,damage_b=db}
  end
- function L:pickup(e) if e.port then self:event{kind='item_pickup',port=e.port,tags={}} end end
+ function L:pickup_expire(e) if self.drives and not self:replaying() then self.drives.drops:expire(e) end end
+ function L:pickup(e) if self.drives then self.drives:pickup(e) end;if e.port then self:event{kind='item_pickup',port=e.port,tags={}} end end
  function L:sample()
   local players,life={},{}
   for p=1,6 do local v=self.g.player(p)
@@ -114,7 +123,7 @@ return function(D)
   return players,life
  end
  function L:export()
-  return D.mod_codec.encode{version=1,engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed}
+  return D.mod_codec.encode{version=1,debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed}
  end
  function L:loadstate()
   local blob=self.g.sim_read and self.g.sim_read()
@@ -127,6 +136,8 @@ return function(D)
    return
   end
   local s=D.mod_codec.decode(blob);assert(s.version==1 and type(s.enabled)=='boolean','invalid LAB modifier checkpoint')
+  self.debug_equipped=s.debug_equipped or s.engine.equipped or {};self.pending=s.pending
+  if self.drives and s.drives then self.drives:restore(s.drives) end
   self.engine:import(s.engine);self.enabled=s.enabled;self.owned=s.owned;self.hit_owned=s.hit_owned or {};self.pending=s.pending;self.observed=s.observed
   if self.enabled then self.display:on_loadstate(self.engine) else self.display:clear() end
  end
@@ -141,9 +152,11 @@ return function(D)
   local players,life=self:sample()
   local ready=self.display:warm(self.engine)
   if ready then
-   for _,e in ipairs(self.pending) do if players[e.port] then self.engine:equip(e.port,e.id) end end
+   for _,e in ipairs(self.pending) do if players[e.port] then self.engine:equip(e.port,e.id);self.debug_equipped[e.port]=self.debug_equipped[e.port] or {};self.debug_equipped[e.port][e.id]=1 end end
    self.pending={}
+   if self.drives and (#self.drives.pending>0 or next(self.drives.bag.equipped) or self.drives.bag.keystone) then self.drives:apply() end
   end
+  if self.drives then self.drives:frame() end
   local stock_queued={};for _,e in ipairs(self.engine.queue) do if e.kind=='stock_lost' then stock_queued[e.port]=true end end
   for p=1,6 do local before,now=self.observed[p],life[p]
    if before and now and (now.falls>before.falls or now.stocks<before.stocks) and not stock_queued[p] then self:stock_lost(p);stock_queued[p]=true end
@@ -154,13 +167,13 @@ return function(D)
   end end
   for p=1,6 do local before,now=self.observed[p],life[p]
    if not now or before and (now.char~=before.char or (now.action==12 or now.action==13) and before.action~=12 and before.action~=13) then
-    self.engine:clear(p);self.display:clear(p)
+    self.engine.statuses[p]=nil;self.engine.recent[p]=nil;self.engine.damage[p]=nil;self.display:clear(p)
    end
   end
   self.observed=life
   local ops,new_owned,new_hit_owned={},{},{}
   for p=1,6 do
-   local values=self.engine:values(p)
+   local values=self.engine:values(p);values.status_duration=nil
    if players[p] and next(values) then ops[#ops+1]={op='fighter_mod',port=p,values=values};new_owned[p]=true
    elseif self.owned[p] then ops[#ops+1]={op='fighter_mod',port=p} end
    local rules,bits=self.engine:native_rules(p)
@@ -172,7 +185,7 @@ return function(D)
   end
   self.owned=new_owned;self.hit_owned=new_hit_owned
   for p=1,6 do if self.engine.statuses[p] and not next(self.engine.statuses[p]) then self.engine.statuses[p]=nil end end
-  self.enabled=#self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
+  self.enabled=(self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0)) or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
   -- Visual pulse/cooldown metadata is pure state and belongs in the checkpoint.
   if self.enabled then self.display:update(self.engine) else self.display:clear() end
   local committed,why=pcall(function() return self.g.sim_commit(self:export(),ops) end)
@@ -186,10 +199,12 @@ return function(D)
   return true
  end
  function L:tick()
+  if self.drives then self.drives:tick() end
   if self.enabled and self:allowed() and not self:replaying() and self.display.tick then self.display:tick(self.engine) end
+  return self.drives and self.drives.menu.active or false
  end
  function L:scene() self:reset();self.display=D.mod_display.new(self.g,self.engine) end -- scene invalidates shader handles
- function L:draw() if self.enabled then self.display:draw(self.engine) end end
+ function L:draw() if self.enabled then self.display:draw(self.engine) end;if self.drives then self.drives:draw() end end
  function L:unload()
   if self.g.sim_clear and not (self.g.match() or {}).netplay then self.g.sim_clear() end
   self:reset()

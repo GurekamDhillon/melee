@@ -5,13 +5,14 @@ return function()
  S.tags=set('jab tilt smash aerial special grab throw projectile dash_attack grounded airborne normal fire electric ice darkness burning shocked chilled cursed hasted guarded momentum damage healing unique keystone')
  S.events=set('equip hit_dealt hit_taken ko_dealt stock_lost shield_hit perfect_shield clank jump air_jump landing ledge_grab grab throw taunt item_pickup stage_start interval status_applied status_removed stacks_changed')
  S.statuses=set('burn chill curse haste guarded momentum') -- Shock's hitstun effect awaits safe hit mutation.
- S.values=set('damage_dealt damage_taken run_speed air_speed shield_max jump_height air_jump_height knockback_taken fall_speed weight shield_regen')
+ S.values=set('damage_dealt damage_taken run_speed air_speed shield_max jump_height air_jump_height knockback_taken fall_speed weight shield_regen status_duration')
  S.status_bits={burn=1,chill=4,curse=8,haste=16,guarded=32,momentum=64}
  S.hit_moves=set('any unknown jab dash_attack tilt smash aerial special grab throw projectile')
  S.elements=set('normal fire electric ice darkness')
- local record=set('id label kind cost tags tiers trigger interval conditions effects stacking text visual')
+ local record=set('id label kind cost tags tiers trigger interval conditions effects stacking text visual affix group weight fixed_colour')
  local cond=set('tag self_status target_status status self_damage_above self_damage_below target_damage_above grounded airborne last_stock recently stage_kind')
  local fields={status=set('op status subject duration amount max refresh when'),value=set('op key value when'),heal=set('op amount subject when'),damage=set('op amount subject when'),stacks=set('op status subject duration amount max refresh when'),remove_status=set('op status subject when'),emit=set('op event subject tag when')}
+ fields.clank_damage=set('op subject')
  fields.convert=set('op match change');fields['versus-status']=set('op status match change')
  local function keys(t,allowed) assert(type(t)=='table' and not getmetatable(t),'plain record required');for k in pairs(t) do assert(allowed[k],'unsupported record field '..tostring(k)) end end
  local function number(v,m)
@@ -32,6 +33,8 @@ return function()
   assert(type(m.label)=='string' and #m.label<=50 and type(m.text)=='string','label/text required')
   assert(m.kind=='normal' or m.kind=='unique' or m.kind=='keystone','invalid rarity')
   if m.kind~='normal' then assert(type(m.cost)=='string' and #m.cost>0,'rule-breaker needs explicit cost') end
+  if m.affix then assert(m.kind=='normal' and (m.affix=='prefix' or m.affix=='suffix'),'invalid affix');assert(type(m.group)=='string' and #m.group>0 and type(m.weight)=='number' and m.weight>0 and m.weight<100000,'invalid loot metadata') end
+  if m.fixed_colour then assert(m.kind=='unique' and set('red green blue yellow purple white')[m.fixed_colour],'invalid unique colour') end
   array(m.tags,0,8);for _,tag in ipairs(m.tags) do assert(S.tags[tag],'tag must be vocabulary, never a move/modifier name') end
   array(m.tiers,1,5)
   for _,tier in ipairs(m.tiers) do assert(type(tier)=='table');for k,v in pairs(tier) do assert(type(k)=='string' and k:match('^[a-z_]+$'));number(v,m);assert(type(v)=='number','numeric tier required') end end
@@ -72,6 +75,7 @@ return function()
     end
    elseif e.op=='value' then assert(m.trigger=='equip' and S.values[e.key],'fighter values require unconditional equip');range(e.value,m,.1,4)
    elseif e.op=='status' or e.op=='stacks' then assert(m.trigger~='equip' and S.statuses[e.status],'unsupported status');range(e.duration,m,1,3600,true);range(e.amount or 1,m,0,100);assert(e.refresh=='refresh' or e.refresh=='extend' or e.refresh=='keep');assert(type(e.max)=='number' and e.max%1==0 and e.max>=1 and e.max<=8)
+   elseif e.op=='clank_damage' then assert(m.trigger=='clank' and e.subject=='target','clank damage requires opposing fighter')
    elseif e.op=='remove_status' then assert(S.statuses[e.status])
    elseif e.op=='emit' then assert(S.events[e.event] and S.tags[e.tag]) else range(e.amount,m,0,100) end
   end

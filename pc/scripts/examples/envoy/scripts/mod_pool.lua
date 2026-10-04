@@ -23,6 +23,35 @@ return function(D)
   rule('glass_core','Glass Core',{'unique','damage'},'equip',{},{{op='value',key='damage_dealt',value=2},{op='value',key='damage_taken',value=2}},{},'Double attack damage dealt and taken.','shock',.89,'unique','You also take double attack damage.'),
   rule('still_heart','Still Heart',{'keystone','hasted','guarded'},'status_applied',{{status='haste'}},{{op='remove_status',status='haste',subject='self'},status('guarded','self','$duration')},{duration=180},'Your Haste becomes Guarded for {duration} frames.','guarded',.62,'keystone','You lose Haste movement bonuses.')
  }
+ local function add(...) pool[#pool+1]=rule(...) end
+ add('frosted','Frosted',{'ice','chilled'},'equip',{},{{op='convert',match={move='smash'},change={element='ice'}}},{},'Your ordinary smash hitboxes become Ice.','chill',.51)
+ add('heavy','Heavy',{'damage','momentum'},'equip',{},{{op='convert',match={move='any'},change={knockback_growth='$ratio'}},{op='value',key='run_speed',value=.85}},{ratio=1.15},'Ordinary hitbox knockback growth x{ratio}; run speed x0.85.','momentum',.18)
+ add('featherweight','Featherweight',{'aerial','momentum'},'equip',{},{{op='value',key='jump_height',value='$ratio'},{op='value',key='knockback_taken',value=1.2}},{ratio=1.15},'Jump height x{ratio}; launch impulse taken x1.2.','momentum',.12)
+ add('lingering','Lingering',{'burning','chilled','hasted'},'equip',{},{{op='value',key='status_duration',value='$ratio'}},{ratio=1.2},'Statuses you apply last x{ratio} as long.','curse',.69)
+ add('cinder','Cinder',{'burning','damage'},'equip',{},{{op='versus-status',status='burn',match={},change={damage='$ratio'}}},{ratio=1.15},'Connecting hits damage Burning targets x{ratio}.','burn',.06)
+ add('shatter','Shatter',{'chilled','damage'},'equip',{},{{op='versus-status',status='chill',match={},change={damage='$ratio'}}},{ratio=1.2},'Connecting hits damage Chilled targets x{ratio}.','chill',.55)
+ add('ledge','Ledge',{'hasted','momentum'},'ledge_grab',{}, {status('haste','self','$duration')},{duration=180},'Grab a ledge: gain Haste for {duration} frames.','haste',.32)
+ add('bastion','Bastion',{'guarded','momentum'},'landing',{{self_status='momentum'}}, {status('guarded','self','$duration')},{duration=120},'Land with Momentum: gain Guarded for {duration} frames.','guarded',.6)
+ add('renewal','Renewal',{'healing','guarded'},'status_applied',{{status='guarded'}}, {{op='heal',subject='self',amount='$heal'}},{heal=2},'When you gain Guarded: heal {heal} damage points.','guarded',.42)
+ add('rush','Rush',{'hasted','momentum'},'hit_dealt',{{self_status='haste'}}, {status('momentum','self','$duration',1,5)},{duration=240},'Hit while Hasted: gain Momentum for {duration} frames.','momentum',.19)
+ add('shelter','Shelter',{'guarded','healing'},'ledge_grab',{}, {status('guarded','self','$duration')},{duration=120},'Grab a ledge: gain Guarded for {duration} frames.','guarded',.64)
+ add('malice','Malice',{'cursed','burning'},'hit_dealt',{{target_status='burn'}}, {status('curse','target','$duration','$bonus')},{duration=120,bonus=.15},'Hit a Burning target: apply Curse (+{bonus%} later launch) for {duration} frames.','curse',.8)
+ add('ember_crown','Ember Crown',{'unique','fire','burning'},'equip',{},{{op='convert',match={move='any'},change={element='fire'}},{op='value',key='damage_taken',value=1.3}},{},'Your ordinary hitboxes become Fire; take x1.3 damage.','burn',.025,'unique','Take 30% more attack damage.')
+ add('winter_heart','Winter Heart',{'unique','ice','chilled'},'equip',{},{{op='convert',match={move='any'},change={element='ice'}},{op='value',key='run_speed',value=.8}},{},'Your ordinary hitboxes become Ice; run speed x0.8.','chill',.52,'unique','Run 20% slower.')
+ add('storm_shell','Storm Shell',{'unique','electric','guarded'},'equip',{},{{op='convert',match={move='any'},change={element='electric'}},{op='value',key='damage_taken',value=.8},{op='value',key='damage_dealt',value=.8}},{},'Ordinary hitboxes become Electric; damage dealt and taken x0.8.','shock',.58,'unique','Deal 20% less attack damage.')
+ add('mirror_shard','Mirror Shard',{'unique','damage','guarded'},'clank',{},{{op='clank_damage',subject='target'}},{},'Clank with a fighter: that opponent takes damage equal to both clashing attacks combined.','curse',.82,'unique','Requires a fighter-to-fighter clank; no benefit against item clanks.')
+ add('frozen_oath','Frozen Oath',{'keystone','ice','chilled','damage'},'equip',{},{{op='convert',match={move='any'},change={element='ice'}},{op='versus-status',match={incoming=true,element='fire'},change={damage=2}}},{},'Your ordinary owned hitboxes become Ice.','chill',.5,'keystone','Original Fire hits against you deal double damage.')
+ local colours={glass_core='white',ember_crown='red',winter_heart='blue',storm_shell='yellow',mirror_shard='purple'}
+ for _,m in ipairs(pool) do
+  if m.kind=='normal' then
+   m.affix=m.trigger=='equip' and 'prefix' or 'suffix';m.group=m.id;m.weight=100
+   local first=m.tiers[1];for tier=2,3 do local at={};for key,value in pairs(first) do
+    if key=='duration' then at[key]=math.floor(value*(1+.25*(tier-1)))
+    elseif key=='ratio' then at[key]=1+(value-1)*(1+.25*(tier-1))
+    else at[key]=value*(1+.25*(tier-1)) end
+   end;m.tiers[tier]=at end
+  else m.visual.priority=35;m.visual.strength=.6;if m.kind=='unique' then m.fixed_colour=colours[m.id] end end
+ end
  for _,m in ipairs(pool) do D.mod_schema.validate(m) end
  return pool
 end

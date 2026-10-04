@@ -288,8 +288,17 @@ T.test('real loader refused start keeps profile unchanged and absent kit returns
   assert(not app.hub.active and app.menu.screen=='hub' and not app.garden_available)
   e.on_unload();assert(not next(s.models) and not next(s.areas))
 end)
+T.test('generated entry exposes LAB loot and refuses writes outside LAB',function()
+ local s,e=fixture()
+ assert(type(s.commands.drive)=='function' and type(s.commands.bag)=='function','loot factories missing from generated entry')
+ local before=s.spawned or 0
+ assert(s.commands.drive('give rare 7')==false)
+ assert(s.commands.drive('drop unique 9')==false)
+ assert(s.commands.bag()==false)
+ assert((s.spawned or 0)==before,'refused command spawned a physical drive')
+ e.on_unload()
+end)
 T.done()
-
 
 
 

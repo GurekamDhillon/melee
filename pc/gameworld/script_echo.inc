@@ -18,6 +18,8 @@ static struct {
  int next_handle,prepared;
 } script_echo;
 extern int Script_EchoInput(int field);
+/* Echo rules are owned by script slot + 1 (like fighter mods and hit rules), not by the stage-resource token. */
+extern int Script_EchoOwnerAlive(int owner);
 extern unsigned short plStale_IncrementAttackInstance(void);
 extern int gm_8016B168(void);
 extern int gm_8016B0D4(void);
@@ -132,7 +134,7 @@ void ScriptGame_EchoFrame(void) {
  if(!script_echo.prepared)ScriptGame_EchoPrepare();
  script_echo.prepared=0;++script_echo.epoch;
  for(i=0;i<12;++i)for(j=0;j<8;++j) {ScriptEchoRule* r=&script_echo.rule[i][j];
- if(r->owner && !Script_StageResourceOwnerAlive(r->owner))ScriptGame_EchoRemove(r->handle,r->owner);}
+ if(r->owner && !Script_EchoOwnerAlive(r->owner))ScriptGame_EchoRemove(r->handle,r->owner);}
 }
 static Fighter* script_echo_live_owner(HSD_GObj* owner) {
  HSD_GObj* g;if(!owner)return NULL;

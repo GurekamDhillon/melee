@@ -144,6 +144,21 @@ static inline void ft_JumpAerial_Sound(Fighter* fp, FighterKind ftkind)
     }
 }
 
+#if defined(TARGET_PC)
+/* ftCommon_8007D5D4 marks the fighter airborne with exactly one jump used (the ground jump). Every
+ * air-jump enter called it unconditionally, which was invisible at retail's limit of 2 (the count is
+ * always 1 here, then +1) but reset the counter on each of a script's extra air jumps (gd.fighter_caps
+ * air_jumps >= 2, jumps_used stuck at 2). An air jump in progress keeps what it has used. */
+static inline void ft_JumpAerial_MarkAir(Fighter* fp)
+{
+    u8 used = fp->x1968_jumpsUsed;
+    ftCommon_8007D5D4(fp);
+    if (used > 1) fp->x1968_jumpsUsed = used;
+}
+#else
+#define ft_JumpAerial_MarkAir(fp) ftCommon_8007D5D4(fp)
+#endif
+
 void ftCo_800CBAC4(Fighter_GObj* gobj, FtMotionId msid, Vec3* vel, bool arg3)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -177,7 +192,7 @@ void ftCo_JumpAerial_Enter_Basic(Fighter_GObj* gobj)
     co_attrs = &fp->co_attrs;
     PAD_STACK(8);
 
-    ftCommon_8007D5D4(fp);
+    ft_JumpAerial_MarkAir(fp);
     fp->cmd_vars[0] = 1;
     msid = (fp->input.lstick[0].x * fp->facing_dir) > -p_ftCommonData->x78
                ? ftCo_MS_JumpAerialF
@@ -198,7 +213,7 @@ void ftNs_JumpAerial_Enter(Fighter_GObj* gobj)
     PAD_STACK(4);
     co_attrs_r31 = &fp->co_attrs;
 
-    ftCommon_8007D5D4(fp);
+    ft_JumpAerial_MarkAir(fp);
     fp->cmd_vars[0] = 1;
     msid = (fp->input.lstick[0].x * fp->facing_dir) > -p_ftCommonData->x78
                ? ftCo_MS_JumpAerialF
@@ -219,7 +234,7 @@ void ftYs_JumpAerial_Enter(Fighter_GObj* gobj)
     int arg1;
     PAD_STACK(16);
 
-    ftCommon_8007D5D4(fp);
+    ft_JumpAerial_MarkAir(fp);
     fp->cmd_vars[0] = 1;
     vel.x = fp->input.lstick[0].x * fp->co_attrs.air_jump_h_multiplier;
     vel.y = 0.0F;
@@ -247,7 +262,7 @@ void ftPe_JumpAerial_Enter(Fighter_GObj* gobj)
     co_attrs = &fp_r31->co_attrs;
     PAD_STACK(8);
 
-    ftCommon_8007D5D4(fp_r31);
+    ft_JumpAerial_MarkAir(fp_r31);
     fp_r31->cmd_vars[0] = 1;
     msid =
         (fp_r31->input.lstick[0].x * fp_r31->facing_dir) > -p_ftCommonData->x78
@@ -269,7 +284,7 @@ void ftMt_JumpAerial_Enter(Fighter_GObj* gobj)
     co_attrs = &fp_r31->co_attrs;
     PAD_STACK(8);
 
-    ftCommon_8007D5D4(fp_r31);
+    ft_JumpAerial_MarkAir(fp_r31);
     fp_r31->cmd_vars[0] = 1;
     msid =
         (fp_r31->input.lstick[0].x * fp_r31->facing_dir) > -p_ftCommonData->x78

@@ -41,6 +41,7 @@ static int script_hit_family_move(Fighter* f) {return f->motion_id>=65 && f->mot
 int Script_HitRulesInput(int n) {return input[n];}
 int Script_EchoInput(int n) {return input[n];}
 int Script_StageResourceOwnerAlive(int n) {(void)n;return resource_alive;}
+int Script_EchoOwnerAlive(int n) {(void)n;return resource_alive;}
 int ftLib_80086960(HSD_GObj* g) {return g!=0;}
 /* Use the actual retail allocator and deduplication, with only player storage stubbed. */
 #define _plstale_h_

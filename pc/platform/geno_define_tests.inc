@@ -52,3 +52,40 @@ static int test_geno_define_repeated_install(void)
     }
     return rc;
 }
+
+/* A move tag may be declared per Geno state, per subaction overlay and per define common_states row.
+ * The hit context reads them (script_hit_context.inc); here only the registry half is checked. */
+static int test_geno_move_tags(void)
+{
+    static gn_registry r;
+    int rc = 0;
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r,
+            "{\"geno\":6,\"fighters\":[{\"attach\":\"kirby\","
+            "\"states\":[{\"name\":\"A\",\"behavior\":\"geno.air\",\"move_tag\":\"special\"},"
+            "{\"name\":\"B\",\"behavior\":\"geno.air\"},"
+            "{\"name\":\"C\",\"behavior\":\"geno.air\",\"move_tag\":\"aerial\"},"
+            "{\"name\":\"D\",\"behavior\":\"geno.air\",\"move_tag\":\"nonsense\"}],"
+            "\"subactions\":[{\"index\":46,\"words\":[\"0x04000002\"],\"move_tag\":\"smash\"},"
+            "{\"index\":47,\"words\":[\"0x04000002\"]}]}]}", "tags") != 1) {
+        gw_test_fail("move tag entry not parsed"); gn_registry_clear(&r); return 1;
+    }
+    if (r.p[0].st_tag[0] != 8 || r.p[0].st_tag[1] != 0 || r.p[0].st_tag[2] != 5 || r.p[0].st_tag[3] != 0 ||
+        r.p[0].ov_tag[0] != 4 || r.p[0].ov_tag[1] != 0) {
+        gw_test_fail("move tags: state/overlay declarations %d %d %d %d / %d %d",
+            r.p[0].st_tag[0], r.p[0].st_tag[1], r.p[0].st_tag[2], r.p[0].st_tag[3],
+            r.p[0].ov_tag[0], r.p[0].ov_tag[1]);
+        rc = 1;
+    }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r,
+            "{\"geno\":6,\"fighters\":[{\"define\":{\"key\":\"tag-hero\",\"name\":\"Tag Hero\",\"base\":\"mario\","
+            "\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},"
+            "\"common_states\":[{\"motion\":44,\"subaction\":46,\"move_tag\":\"jab\"},{\"motion\":60}]}]}", "tags-define") != 1 ||
+        r.p[0].ncommon != 2 || r.p[0].cs_tag[0] != 1 || r.p[0].cs_tag[1] != 0 || r.p[0].common_row[0][2] != 46) {
+        gw_test_fail("move tags: define common_states row declaration");
+        rc = 1;
+    }
+    gn_registry_clear(&r);
+    return rc;
+}

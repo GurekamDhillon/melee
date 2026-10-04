@@ -2550,3 +2550,23 @@ Native identities and interpreter-attempt counters are game globals; host regist
 Definitions are offline only, absent from online CSS, and refused by named/CK scene selection and the loader guard. Changing definitions requires restart; adding the first definition through hot reload is also refused. Online remains blocked pending resource identity/preset certification, negotiated admission and mapping, replay metadata, compatibility/hash checks and real deterministic resimulation validation. The source SHA-256 export manifest is packaging metadata, not an online certificate. Existing attachments retain their previous format and id behavior.
 
 Author commands are in workspace `tools/geno/README.md`; packet 11 in `docs/learn/geno-fighters/` is an untested teaching stub. The catalogue companion requires the separate Hero folder and is excluded from automatic tours until accepted. Registered tests `geno_define_registry`, `geno_define_repeated_install` and `geno_define_snapshot` require the integrator rebuild. Full action coverage, mixed stock match, save/restore/repeated-input hashes, frontend/audio/results and second-match memory lifetime remain runtime acceptance gates.
+
+### Frame-counting convention: the first `wait` of an authored script
+
+A subaction script's `wait N` is the engine's own synchronous timer, run by retail's ftAction loop
+for authored and retail scripts alike (a `define` overlay is installed as an ordinary script row; there
+is no Geno-side first-event handling). Measured in the LAB with `gd.player(1).action_frame` and
+`.hitboxes` sampled after `gd.wait(1)` following a one-frame A press: `wait 2` then a hitbox shows the
+hitbox from action frame 0, `wait 5` from action frame 3 (the iasa shifts by the same amount), i.e.
+**the hitbox is live from readout action frame N-2**. Retail Mario's jab shows the same offset: its
+script places the hitbox at timeline frame 3 (`gd.timeline(1, 44)`) and it is live from action frame 1.
+So this is a convention of the readout, not an off-by-N in `define`: read `gd.timeline` frames as
+script frames, and subtract two for the sampled action frame.
+
+### Declaring a move tag
+
+A state (`states[].move_tag`), a subaction overlay (`subactions[].move_tag`) or a `define`
+`common_states` row may declare `"move_tag"`: one of `jab dash_attack tilt smash aerial grab throw
+special projectile`. Hit rules, `on_hit` info and echoes read it. An undeclared fighter-specific state
+reports `special` when it was entered through a special input (any fighter, Geno or m-ex), keeps the
+vanilla special-range answer for a `define` (Mario) or `attach` fighter, and is otherwise `unknown`.

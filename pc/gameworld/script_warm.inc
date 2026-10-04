@@ -27,6 +27,9 @@ int ScriptGame_WarmDraw(int category, int index)
 {
     HSD_JObj* joint = NULL;
     HSD_JObj* sub_joint = NULL;
+    HSD_GObj* warm_main = NULL;
+    HSD_GObj* warm_sub = NULL;
+    HSD_GObj* saved_current = HSD_GObj_804D7814;
     Article* article = NULL;
     Mtx view;
     int owned = 0, kind = index;
@@ -43,9 +46,10 @@ int ScriptGame_WarmDraw(int category, int index)
         if (index < 0 || index >= 6) return -1;
         fighter = Player_GetEntityAtIndex(index, 0);
         if (!fighter) return -1;
+        warm_main = fighter;
         joint = GET_JOBJ(fighter);
         fighter = Player_GetEntityAtIndex(index, 1);
-        if (fighter) sub_joint = GET_JOBJ(fighter);
+        if (fighter) { warm_sub = fighter; sub_joint = GET_JOBJ(fighter); }
     } else {
         article=script_warm_article(kind);
         if (!article || !article->x10_modelDesc || !article->x10_modelDesc->x0_joint) return -1;
@@ -55,10 +59,20 @@ int ScriptGame_WarmDraw(int category, int index)
     if (!joint) return -1;
     HSD_StateInvalidate(-1);
     if (category == 2) { extern void SurfaceBegin(int); SurfaceBegin(index + 1); }
+    /* Fighter joints are drawn through ftParts_JObjMakePositionMtx and the ftmaterial callbacks, which
+     * read the fighter from HSD_GObj_804D7814, the "gobj being drawn" global that HSD_GObj_Draw sets
+     * around a real draw. It is NULL until the first fighter draw (the crash: a read of 0x2C near NULL
+     * when warming within a few frames of a match start) and stale afterwards. Publish the fighter being
+     * warmed for exactly this draw, as the real gobj draw does, and restore it. */
+    if (warm_main) HSD_GObj_804D7814 = warm_main;
     HSD_JObjDispAll(joint, view, HSD_GObj_80390EB8(0) | HSD_GObj_80390EB8(1) |
                    HSD_GObj_80390EB8(2), 0);
-    if (sub_joint) HSD_JObjDispAll(sub_joint, view, HSD_GObj_80390EB8(0) |
+    if (sub_joint) {
+        HSD_GObj_804D7814 = warm_sub;
+        HSD_JObjDispAll(sub_joint, view, HSD_GObj_80390EB8(0) |
                    HSD_GObj_80390EB8(1) | HSD_GObj_80390EB8(2), 0);
+    }
+    if (category == 2) HSD_GObj_804D7814 = saved_current;
     if (category == 2) { extern void SurfaceEnd(void); SurfaceEnd(); }
     GXFlush();
     { extern void Script_WarmSync(void); Script_WarmSync(); }

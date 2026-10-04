@@ -433,6 +433,10 @@ int gw_Script_StageResourceOwnerAlive(int owner) {
         if (gs.s[i].used && gs.s[i].stage_owner == owner && owner > 0) return 1;
     return 0;
 }
+/* Echo/hit-rule/fighter-mod owners are script slot + 1; the stage-resource token above is a different number space. */
+int gw_Script_EchoOwnerAlive(int owner) {
+    return owner > 0 && owner <= gs.n && gs.s[owner - 1].used;
+}
 static void gs_fly_clear_owner(int owner);
 static void gs_fly_cursor_reset(void);
 static int gs_stage_isolation_owner;

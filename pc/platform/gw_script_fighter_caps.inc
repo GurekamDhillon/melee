@@ -9,6 +9,7 @@ extern void gw_ScriptGame_CapsEffectsRelease(int owner);
 extern int gw_ScriptGame_CapsArmour(int entity,int owner,int damage,int knockback);
 extern int gw_ScriptGame_CapsArmourRead(int entity,int field);
 extern int gw_ScriptGame_CapsGiveItem(int entity,int owner,int kind);
+extern const char* gw_ScriptGame_CapsGiveItemReason(int reason);
 extern int gw_ScriptGame_CapsOpponent(int entity,int radius,int nth,int exclude);
 extern int gw_ScriptGame_CapsStatus(int entity,int channel,int owner,int value,int frames);
 extern int gw_ScriptGame_CapsStatusRead(int entity,int channel,int field);
@@ -130,7 +131,14 @@ static int l_give_item(lua_State* L)
         if(n<0 || n>255) return luaL_error(L,"item kind outside retail ID range");
         kind=(int)n;
     }
-    gs_rw_branch(); lua_pushboolean(L,gw_ScriptGame_CapsGiveItem(e,gs.cur+1,kind)); return 1;
+    gs_rw_branch();
+    {
+        int r=gw_ScriptGame_CapsGiveItem(e,gs.cur+1,kind);
+        lua_pushboolean(L,r>0);
+        if(r>0) return 1;
+        /* Second result: why it was refused (also logged natively with the entity and kind). */
+        lua_pushstring(L,gw_ScriptGame_CapsGiveItemReason(r)); return 2;
+    }
 }
 static int l_nearest_opponent(lua_State* L)
 {

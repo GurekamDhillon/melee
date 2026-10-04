@@ -9,7 +9,7 @@
  *  - its select screens are always the kit's (gmFrontend_ModeSelect, breadcrumbs SOLO / LAB), even
  *    with MELEE_NATIVE_CSS=1; Training's own select is untouched;
  *  - the rules (GenoLab_ApplyRules): time mode with the clock off, so a KO respawns forever and the
- *    match never ends on its own; no items; Melee's pause off (the Lab script draws its own);
+ *    match never ends on its own; no items unless the scene sets items=N; Melee's pause off (the Lab script draws its own);
  *  - the match ends only through GenoLab_Leave (the Lab's pause menu, or a no contest), and goes
  *    back to LAB's character select, the stage select, or the menus - never to a results screen,
  *    and nothing is recorded to the save's statistics.
@@ -96,7 +96,9 @@ void GenoLab_ApplyRules(StartMeleeData* start)
     start->rules.timer_enabled = false; /* no clock: gm_GetMatchOutcome never times out */
     start->rules.timer_counts_up = false;
     start->rules.time_limit = 0;
-    start->rules.item_freq = -1;        /* no items */
+    /* No items, unless the scene asks (items=1..4): gd.give_item and item mods need the match's item
+     * data loaded, which VS only does when the frequency is not off. The default stays off. */
+    start->rules.item_freq = SceneLaunch_ItemFreq() >= 0 ? (s8) SceneLaunch_ItemFreq() : -1;
     start->rules.disable_pausing = true; /* START opens the Lab's pause menu instead */
     start->rules.x5_0 = false;
     start->rules.x4_2 = false; /* no "P1 out of stocks" game over */

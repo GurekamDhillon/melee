@@ -1077,6 +1077,11 @@ int Geno_SpecialEnter(Fighter_GObj* gobj, int which)
     Fighter* fp = GET_FIGHTER(gobj);
     GenoState* st = geno_state(fp);
     u32 t;
+    {
+        /* every fighter, Geno or not: the special input family, for the hit move tag */
+        extern void ScriptGame_NoteSpecialInput(Fighter * fp);
+        ScriptGame_NoteSpecialInput(fp);
+    }
     if (st->profile < 0) {
         return 0;
     }

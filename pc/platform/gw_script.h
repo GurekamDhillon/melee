@@ -76,6 +76,7 @@ int gw_Script_StageWanted(void);
  * fresh generation; restored resources of retired generations are reclaimed. */
 int gw_Script_StageResourceOwner(void);
 int gw_Script_StageResourceOwnerAlive(int owner);
+int gw_Script_EchoOwnerAlive(int owner);
 /* Called only by the 1P boss controller; an event hook is opt-in and offline only. */
 int gw_Script_BossHookEnabled(void);
 

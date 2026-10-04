@@ -2514,6 +2514,16 @@ static int test_geno_lab_rules(void)
         TestFail("LAB rules: items off, Melee's pause off");
         return 1;
     }
+    /* A scene may opt in to items (gd.give_item needs the match's item data); off stays off. */
+    SceneLaunch_LoadForTest("mode=lab;items=3");
+    d.rules.item_freq = -1;
+    GenoLab_ApplyRules(&d);
+    if (d.rules.item_freq != 3) { SceneLaunch_LoadForTest(NULL); TestFail("LAB rules: items=3 must reach the match"); return 1; }
+    SceneLaunch_LoadForTest("mode=lab;items=off");
+    d.rules.item_freq = 2;
+    GenoLab_ApplyRules(&d);
+    if (d.rules.item_freq != -1) { SceneLaunch_LoadForTest(NULL); TestFail("LAB rules: items=off stays off"); return 1; }
+    SceneLaunch_LoadForTest(NULL);
     for (i = 0; i < Gm_Player_NumMax; i++) {
         if (d.players[i].stocks != 0) {
             TestFail("LAB rules: no stocks on any player");

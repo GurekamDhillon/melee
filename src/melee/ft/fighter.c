@@ -1421,6 +1421,11 @@ void Fighter_ChangeMotionState(Fighter_GObj* gobj, FtMotionId msid,
     ftPartSetRotZ(fp, 0, 0.0F);
 
 #if defined(TARGET_PC)
+    {
+        /* script hit move tags: a return to a common state ends a special's chain */
+        extern void ScriptGame_NoteMotion(Fighter * fp, int motion);
+        ScriptGame_NoteMotion(fp, msid);
+    }
     if (msid >= 0x400) {
         /* Geno v2 (pc/geno/geno_game_v2.inc): motion ids from 0x400 (GENO_MOTION_BASE) are Geno
          * action states declared in a geno.json; their rows are built by Geno. No vanilla or m-ex

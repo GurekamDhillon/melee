@@ -10,7 +10,7 @@ return function(D)
  end
  -- settle_frames: the look warm-up draws the fighters' models, and a retail stage's fighters are not safe to draw
  -- until the entrance has played (a crash in the model draw 30 frames in was seen on the first try).
- H.tuning={drop_chance=.25,max_owed=6,settle_frames=180,roll_attempts=2}
+ H.tuning={drop_chance=.25,max_owed=6,settle_frames=30,roll_attempts=2}
  function H.new(g,mods,retail)
   return setmetatable({g=g,mods=mods,retail=retail,running=false,owed={},fell={},rolls={},stage=0,loop=0,drops=0,since=0},H)
  end

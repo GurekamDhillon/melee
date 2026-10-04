@@ -51,7 +51,9 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
         for (row = d->n[v].first; row >= 0; row = d->n[row].next) {
             if (d->n[row].type != JN_OBJ) goto refused;
             for (j = 0; j < 9; ++j) p->common_row[p->ncommon][j] = -1;
+            p->cs_tag[p->ncommon] = gn_move_tag(d, row);
             for (x = d->n[row].first; x >= 0; x = d->n[x].next) {
+                if (!strcmp(d->n[x].key, "move_tag")) continue; /* a declaration, not a row field */
                 for (j = 0; j < 9 && strcmp(d->n[x].key, fields[j]); ++j) {}
                 if (j == 9) goto refused;
                 if (j < 5) {
@@ -131,6 +133,14 @@ int gw_Geno_DefineCKAt(int index)
     gn_registry* r = gn_reg();
     if (!r->kinds_built) gn_build_kinds(r);
     return index >= 0 && (unsigned)index < r->definitions.catalog.count ? r->definitions.aliases[index] : -1;
+}
+/* The declared move tag of a define fighter's common_states row for `motion`, 0 = none. */
+int gw_Geno_CommonMoveTag(int p, int motion) {
+    int i;
+    if (p < 0) return 0;
+    for (i = 0; i < gn_reg()->p[p].ncommon; ++i)
+        if (gn_reg()->p[p].common_row[i][0] == motion) return gn_reg()->p[p].cs_tag[i];
+    return 0;
 }
 int gw_Geno_DefineBaseKind(int kind)
 {

@@ -10,6 +10,20 @@ static int script_hit_move_tag(int motion)
     if (motion>=ftCo_MS_ThrowF && motion<=ftCo_MS_ThrowLw) return 7;
     return 0; /* family-specific states are not all specials */
 }
+/* Which fighters have just started a special by input. Geno_SpecialEnter runs at all eight special
+ * dispatch sites (ftCo_Attack100.c, ftCo_SpecialAir.c, ftCo_SpecialS.c) for every fighter, before the
+ * fighter's own special; so a fighter-specific state reached after it is that input family's move,
+ * even when the engine has no table for the fighter (m-ex) or a Geno state carries no declaration.
+ * Cleared when the fighter returns to a common state (Fighter_ChangeMotionState). Game BSS. */
+static unsigned char script_special_open[12];
+static int script_special_slot(Fighter* fp) {
+ return fp && fp->player_id<6 ? fp->player_id*2+(fp->is_sub_fighter ? 1 : 0) : -1;
+}
+void ScriptGame_NoteSpecialInput(Fighter* fp) {int e=script_special_slot(fp);if(e>=0)script_special_open[e]=1;}
+void ScriptGame_NoteMotion(Fighter* fp,int motion) {
+ int e=script_special_slot(fp);
+ if(e>=0 && motion>=0 && motion<341)script_special_open[e]=0; /* 341: the first fighter-specific state */
+}
 /* Inclusive Special ranges audited from each ft family forward.h enum.
  * Non-special extension states (taunts, extra jumps/smashes, zair, float) stay unknown.
  * DrMario/Falco/Pichu/Ganon/Emblem/CLink share their base-family tables. */
@@ -20,11 +34,36 @@ static int script_hit_family_move(Fighter* fp)
  {348,376},{352,368},{341,366},{341,366},{341,366},{341,356},{346,368},{346,372},
  {341,360},{341,358},{341,372},{341,358},{344,359},{343,350},{341,369},{341,366},
  {353,380},{347,363},{341,372},{0,0},{0,0},{0,0},{0,0},{341,363},{0,0}};
- int tag=script_hit_move_tag(fp->motion_id);
+ int tag=script_hit_move_tag(fp->motion_id),profile,base,e=script_special_slot(fp);
  extern int Geno_ProfileForKind(int kind);
+ extern int Geno_DefineBaseKind(int kind);
+ extern int Geno_StateMoveTag(int profile,int state);
+ extern int Geno_OverlayMoveTag(int profile,int index);
+ extern int Geno_OverlayCount(int profile);
+ extern int Geno_OverlayAnim(int profile,int index);
+ extern int Geno_CommonMoveTag(int profile,int motion);
  if(tag)return tag;
- if(fp->kind<0 || fp->kind>=33 || Geno_ProfileForKind(fp->kind)>=0)return 0;
- return range[fp->kind][0] && fp->motion_id>=range[fp->kind][0] && fp->motion_id<=range[fp->kind][1] ? 8 : 0;
+ profile=Geno_ProfileForKind(fp->kind);
+ if(profile>=0) {
+  int i,declared=0;
+  /* Declared in the fighter's data first: a Geno state, a define common_states row, or a subaction
+   * overlay on the animation now playing. */
+  if(fp->motion_id>=0x400)declared=Geno_StateMoveTag(profile,fp->motion_id-0x400);
+  else declared=Geno_CommonMoveTag(profile,fp->motion_id);
+  for(i=0;!declared && i<Geno_OverlayCount(profile);++i)
+   if(Geno_OverlayAnim(profile,i)==(int)fp->anim_id)declared=Geno_OverlayMoveTag(profile,i);
+  if(declared)return declared;
+  /* Undeclared: a state a special input started is that special; a state in the base fighter's own
+   * special range (define = native Mario, attach = the vanilla kind) keeps the vanilla answer. */
+  if(fp->motion_id>=0x400)return e>=0 && script_special_open[e] ? 8 : 0;
+  base=Geno_DefineBaseKind(fp->kind)>=0 ? 0 : fp->kind;
+  if(base>=0 && base<33 && range[base][0] && fp->motion_id>=range[base][0] && fp->motion_id<=range[base][1])return 8;
+  return e>=0 && script_special_open[e] && fp->motion_id>=341 ? 8 : 0;
+ }
+ if(fp->kind>=0 && fp->kind<33)
+  return range[fp->kind][0] && fp->motion_id>=range[fp->kind][0] && fp->motion_id<=range[fp->kind][1] ? 8 : 0;
+ /* m-ex fighters: no table of their own, so the input family is the honest answer. */
+ return e>=0 && script_special_open[e] && fp->motion_id>=341 ? 8 : 0;
 }
 void ScriptGame_ReportHitContext(Fighter* attacker,Fighter* victim,int element,int item)
 {

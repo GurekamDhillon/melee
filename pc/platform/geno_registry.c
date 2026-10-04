@@ -408,6 +408,9 @@ typedef struct {
     int nov;
     int ov_anim[GENO_MAX_OVERLAYS]; /* subaction index */
     int ov_slot[GENO_MAX_OVERLAYS]; /* registry-wide overlay slot */
+    int ov_tag[GENO_MAX_OVERLAYS];  /* declared move tag (1..9, hit-rule vocabulary), 0 = none */
+    int st_tag[GENO_MAX_STATES];    /* the same, per Geno action state */
+    int cs_tag[64];                 /* the same, per define common_states row */
     /* v2: Geno action states, behaviour parameters, specials bound to states */
     int nstate;
     char st_name[GENO_MAX_STATES][32];
@@ -560,6 +563,18 @@ static int gn_target_p(const jdoc *d, int x, uint32_t *out, const gn_profile *p)
     if (end == s || *end != '\0' || id < 0 || id > 0xFFFF) return 0;
     *out = GENO_TARGET(kind, (unsigned) id);
     return 1;
+}
+
+/* "move_tag" on a state, a subaction overlay or a define common_states row: the hit-rule move
+ * vocabulary (jab, dash_attack, tilt, smash, aerial, grab, throw, special, projectile). 0 = none or
+ * not a name (an unknown name is ignored, like every unknown value in a geno.json). */
+static int gn_move_tag(const jdoc *d, int obj) {
+    static const char *const names[] = { "", "jab", "dash_attack", "tilt", "smash", "aerial", "grab",
+                                         "throw", "special", "projectile" };
+    int v = jd_get(d, obj, "move_tag"), i;
+    if (v < 0 || d->n[v].type != JN_STR) return 0;
+    for (i = 1; i < 10; ++i) if (!strcmp(d->n[v].str, names[i])) return i;
+    return 0;
 }
 
 static int gn_target(const jdoc *d, int x, uint32_t *out) { return gn_target_p(d, x, out, NULL); }
@@ -744,6 +759,7 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
             r->pool[r->npool++] = 0;
             n++;
             p->ov_anim[p->nov] = (int) d->n[ix].num;
+            p->ov_tag[p->nov] = gn_move_tag(d, c);
             p->ov_slot[p->nov] = r->nslot;
             r->slot_off[r->nslot] = start;
             r->slot_len[r->nslot] = n;
@@ -805,6 +821,7 @@ static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
             p->st_anim_from[k] = GN_NONE;
             p->st_like[k] = GN_NONE;
             p->st_move_id[k] = -1;
+            p->st_tag[k] = gn_move_tag(d, c);
             p->st_next[k] = GN_NONE;
             p->st_land[k] = GN_NONE;
             for (slot = 0; slot < GENO_CB_SLOTS; ++slot) p->st_cb[k][slot] = -1;
@@ -1495,6 +1512,11 @@ int gw_Geno_StateAnimFrom(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->s
 int gw_Geno_StateLike(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_like[s] : -1; }
 int gw_Geno_StateFlagsSet(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_flags_set[s] : 0; }
 int gw_Geno_StateFlags(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_flags[s] : 0; }
+int gw_Geno_StateMoveTag(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_tag[s] : 0; }
+int gw_Geno_OverlayMoveTag(int p, int i) {
+    const gn_profile *x = gn_at(p);
+    return x != NULL && i >= 0 && i < x->nov ? x->ov_tag[i] : 0;
+}
 int gw_Geno_StateMoveId(int p, int s) { return GN_ST(p, s) ? gn_at(p)->st_move_id[s] : -1; }
 int gw_Geno_StateNext(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_next[s] : -1; }
 int gw_Geno_StateLand(int p, int s) { return GN_ST(p, s) ? (int) gn_at(p)->st_land[s] : -1; }
@@ -2222,6 +2244,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_items_snapshot",gn_items_snapshot_test);
     gw_test_register("geno_registry_reload_layout", test_geno_registry_reload_layout);
     gw_test_register("geno_registry_v2", test_geno_registry_v2);
+    gw_test_register("geno_move_tags", test_geno_move_tags);
     gw_test_register("geno_registry_v1", test_geno_registry_v1);
     gw_test_register("geno_registry_parse", test_geno_registry_parse);
     gw_test_register("geno_registry_stable_ids", test_geno_registry_stable_ids);

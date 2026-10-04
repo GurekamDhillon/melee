@@ -207,25 +207,52 @@ static int script_caps_holdable(int kind)
     default: return 0;
     }
 }
+/* Reasons a grant is refused. ScriptGame_CapsGiveItem returns 1 on success or -reason; every refusal is logged
+ * with its reason and Lua gets false plus the same text. */
+enum {
+    SCRIPT_GIVE_OK = 0, SCRIPT_GIVE_NO_FIGHTER, SCRIPT_GIVE_BAD_OWNER, SCRIPT_GIVE_HANDS_FULL,
+    SCRIPT_GIVE_HITLAG, SCRIPT_GIVE_ITEMS_OFF, SCRIPT_GIVE_STATE, SCRIPT_GIVE_NOT_HOLDABLE,
+    SCRIPT_GIVE_KIND_DISABLED, SCRIPT_GIVE_NO_CANDIDATE, SCRIPT_GIVE_POOL_FULL, SCRIPT_GIVE_SPAWN_FAILED,
+    SCRIPT_GIVE_PICKUP_REFUSED, SCRIPT_GIVE_REASONS
+};
+const char* ScriptGame_CapsGiveItemReason(int reason)
+{
+    static const char* const text[SCRIPT_GIVE_REASONS] = {
+        "ok", "no fighter in that slot", "no owning script", "hands occupied (already holding or grabbing)",
+        "fighter is in hitlag", "items are off in this match (item switch)",
+        "fighter is not in a neutral state (stand, fall or jump)", "item kind cannot be held",
+        "item kind is not enabled for this match", "no holdable item is enabled for this match (random)",
+        "item pool is full", "item spawn failed", "fighter refused the pickup"
+    };
+    if (reason < 0) reason = -reason;
+    return reason >= 0 && reason < SCRIPT_GIVE_REASONS ? text[reason] : "unknown";
+}
+static int script_caps_give_refuse(int entity, int kind, int reason)
+{
+    OSReport("script give_item: entity=%d kind=%d refused: %s\n", entity, kind, ScriptGame_CapsGiveItemReason(reason));
+    return -reason;
+}
 int ScriptGame_CapsGiveItem(int entity, int owner, int kind)
 {
     Fighter* fp = ScriptGame_CapsFighter(entity);
     Item_GObj* item;
     SpawnItem spawn;
     /* Conservative portable holdable set; reject heavy/consumable/character articles. */
-    if (!fp || owner <= 0 || fp->item_gobj || fp->x1978 ||
-        fp->dmg.x195c_hitlag_frames > 0 || !Item_80266F3C()) return 0;
+    if (!fp) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_NO_FIGHTER);
+    if (owner <= 0) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_BAD_OWNER);
+    if (fp->item_gobj || fp->x1978) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_HANDS_FULL);
+    if (fp->dmg.x195c_hitlag_frames > 0) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_HITLAG);
+    if (!Item_80266F3C()) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_ITEMS_OFF);
     /* Grant only in neutral locomotion, avoiding capture/death/get-item state assumptions. */
     switch (fp->motion_id) {
     case ftCo_MS_Wait: case ftCo_MS_Fall: case ftCo_MS_JumpF: case ftCo_MS_JumpB:
     case ftCo_MS_JumpAerialF: case ftCo_MS_JumpAerialB: break;
-    default: return 0;
+    default: return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_STATE);
     }
     if (kind == -1) {
         ItemPickTable* t = &it_804A0E30.x4;
         int i, total = 0;
-        kind = -1;
-        if (!t->size || !t->x8 || !t->x4 || !t->xC) return 0;
+        if (!t->size || !t->x8 || !t->x4 || !t->xC) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_NO_CANDIDATE);
         for (i=0;i<t->size;++i) {
             int candidate = t->x4[i];
             int weight = (i+1 < t->size ? t->xC[i+1] : t->x8) - t->xC[i];
@@ -233,10 +260,11 @@ int ScriptGame_CapsGiveItem(int entity, int owner, int kind)
             total += weight;
             if (HSD_Randi(total) < weight) kind = candidate;
         }
-        if (kind < 0) return 0;
+        if (kind < 0) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_NO_CANDIDATE);
     }
-    if (!script_caps_holdable(kind)) return 0;
-    if (!it_8026D324(kind) || Item_804A0C64.x60 >= Item_804A0C64.x64) return 0;
+    if (!script_caps_holdable(kind)) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_NOT_HOLDABLE);
+    if (!it_8026D324(kind)) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_KIND_DISABLED);
+    if (Item_804A0C64.x60 >= Item_804A0C64.x64) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_POOL_FULL);
     memset(&spawn,0,sizeof spawn);
     spawn.kind = kind; spawn.pos = spawn.prev_pos = fp->cur_pos;
     {
@@ -246,14 +274,14 @@ int ScriptGame_CapsGiveItem(int entity, int owner, int kind)
     }
     spawn.prev_pos = spawn.pos; spawn.facing_dir = fp->facing_dir; spawn.x44_flag.b0 = 1;
     item = Item_80268B18(&spawn);
-    if (!item) return 0;
-    if (!ftpickupitem_80094150(fp->gobj,item)) { Item_8026A8EC(item); return 0; }
+    if (!item) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_SPAWN_FAILED);
+    if (!ftpickupitem_80094150(fp->gobj,item)) { Item_8026A8EC(item); return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_PICKUP_REFUSED); }
     ftpickupitem_800948A8(fp->gobj,item);
     if (fp->item_gobj == item) {
         OSReport("script fighter item: entity=%d kind=%d owner=%d\n",entity,kind,owner);
         return 1;
     }
     Item_8026A8EC(item);
-    return 0;
+    return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_PICKUP_REFUSED);
 }
 #include "script_fighter_caps_effects_tests.inc"

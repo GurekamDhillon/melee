@@ -2,7 +2,7 @@
 return function(D)
  local C,S=D.companion,D.save;local R={};R.__index=R
  local colours={'red','green','blue','yellow'}
- local tint={power='#F07474FF',speed='#77CD9CFF',guard='#79AAF0FF',jump='#EBD175FF'}
+ local tint={power=0xF07474FF,speed=0x77CD9CFF,guard=0x79AAF0FF,jump=0xEBD175FF}
  local function clone(p) return S.decode(S.encode(p)) end
  local function rng(seed,stage,loop,port)
   local state=(seed+stage*104729+loop*15485863+port*32452843)%2147483646+1
@@ -12,7 +12,7 @@ return function(D)
  function R.roll(c,seed,stage,loop,port,count)
   local t=C.tuning.retail;local random=rng(seed,stage,loop,port);local total=0
   for _,k in ipairs(C.stats) do total=total+c.stats[k].level end
-  total=total*(1+t.loop_scale*loop)/math.max(1,count or 1)^t.team_exponent
+  total=math.max(t.starter_budget,total)*(1+t.loop_scale*loop)/math.max(1,count or 1)^t.team_exponent
   total=math.max(4*t.stat_floor,math.min(4*t.stat_ceiling,total))
   local width=math.min(total*t.budget_width,total-4*t.stat_floor,4*t.stat_ceiling-total)
   total=math.floor(total+(random()*2-1)*width+.5)
@@ -57,8 +57,9 @@ return function(D)
   self.g.log('envoy: retail '..mode..' started seed='..seed);return true
  end
  local function modifiers(c)
-  local e=C.effects(c);return {damage_dealt=e.damage_dealt,damage_taken=e.damage_taken,
-   run_speed=e.speed,air_speed=e.air_speed,shield_max=e.shield_max}
+  local e=C.retail_effects(c);return {damage_dealt=e.damage_dealt,damage_taken=e.damage_taken,
+   run_speed=e.speed,air_speed=e.air_speed,shield_max=e.shield_max,
+   jump_height=e.jump_height,air_jump_height=e.air_jump_height,knockback_taken=e.knockback_taken}
  end
  function R:clear_mods()
   for port in pairs(self.owned) do
@@ -80,7 +81,7 @@ return function(D)
    local ok=self:save();if not ok then self:finish('fail');return end
   end
   self:clear_mods();self:clear_items();self.state=e;self.loop=e.loop or self.loop;self.tags={};self.tag_ticks=C.tuning.retail.tag_ticks
-  self.boss=false
+  self.boss=false;self.last_damage=nil;self.guard_flash=0
   local port=e.player_port or 1
   assert(self.g.spawn_1p(port,modifiers(self.companion)),'player retail modifiers refused');self.owned[port]=true
   local count=#(e.opponents or {});self.enemy_templates={}
@@ -93,9 +94,10 @@ return function(D)
    end
    local v=modifiers(c);v.tint=tint[leader];self.enemy_templates[enemy.port]=v
    assert(self.g.spawn_1p(enemy.port,v),'opponent retail modifiers refused');self.owned[enemy.port]=true
-   self.tags[#self.tags+1]='P'..enemy.port..': '..C.tuning.stat_names[leader]
+   self.tags[#self.tags+1]={port=enemy.port,stat=leader,colour=tint[leader],label='P'..enemy.port..': '..C.tuning.stat_names[leader]}
   end
-  self.g.log('envoy: '..self.mode..' stage='..tostring(e.stage_index)..' NG+'..self.loop..' '..table.concat(self.tags,', '))
+  local labels={};for _,tag in ipairs(self.tags) do labels[#labels+1]=tag.label end
+  self.g.log('envoy: '..self.mode..' stage='..tostring(e.stage_index)..' NG+'..self.loop..' '..table.concat(labels,', '))
  end
  function R:spawn(e)
   if self.active and self.enemy_templates and self.enemy_templates[e.port] then
@@ -120,6 +122,7 @@ return function(D)
   for i=1,3 do options[i]={colour=colours[(first+i-1)%4+1],points=t.reward_points[i]*(final and t.final_multiplier or 1)} end
   if random()<t.white_chance then options[3]={colour='white',points=1} end
   if final then self.final_rewards[loop]=true end
+  for _,v in ipairs(options) do v.effect=C.reward_effect(self.companion,v.colour,v.points) end
   self.reward={options=options,focus=1,stage=stage,final=final,ticks=0};self.g.log('envoy: reward choice stage='..stage);return true
  end
  function R:pick(index)
@@ -132,7 +135,9 @@ return function(D)
   elseif index~=r.choice then return false,'retry the prepared reward' end
   local ok,why=self.commit(r.prepared);if not ok then r.error=why;return false,why end
   self.working=r.prepared;self.companion=self.working.companions[self.working.active];self.profile=clone(self.working)
-  r.error=nil;r.preview=true;return true
+  r.error=nil;r.preview=true;r.animation=0;r.animation_frames=C.tuning.retail.reward_animation_frames;r.levelups={}
+  for _,k in ipairs(C.stats) do if r.after[k].level>r.before[k].level then r.levelups[k]=r.after[k].level-r.before[k].level end end
+  return true
  end
  function R:acknowledge()
   if not self.reward or not self.reward.preview then return false,'choose a reward first' end
@@ -188,6 +193,7 @@ return function(D)
   if self.active then
    if self.tag_ticks and self.tag_ticks>0 then self.tag_ticks=self.tag_ticks-1 end
    if self.reward then
+    if self.reward.preview then self.reward.animation=math.min(self.reward.animation_frames,self.reward.animation+1) end
     self.reward.ticks=self.reward.ticks+1;local mode=self.g.mode_1p()
     if not mode or mode.held==false or self.reward.ticks>=C.tuning.retail.hold_ticks then
      self.reward=nil
@@ -221,7 +227,16 @@ return function(D)
   end
  end
  function R:frame()
-  if self.active then self.elapsed=math.min(999999999,self.elapsed+1);self:physical_tick() end
+  if self.active then
+   self.elapsed=math.min(999999999,self.elapsed+1);self:physical_tick()
+   self.guard_flash=math.max(0,(self.guard_flash or 0)-1)
+   local p=self.g.player and self.g.player(self.state and self.state.player_port or 1)
+   local damage=p and p.percent
+   if type(damage)=='number' then
+    if self.last_damage and damage>self.last_damage and self.companion.stats.guard.level>0 then self.guard_flash=C.tuning.retail.guard_flash_frames end
+    self.last_damage=damage
+   else self.last_damage=nil end
+  end
  end
  return R
 end

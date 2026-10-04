@@ -22,13 +22,17 @@ typedef struct DObjList DObjList;
 typedef struct Fighter Fighter;
 #if defined(TARGET_PC)
 /* Snapshot-owned Lua overlays; game-to-game float ABI, no native pointers. */
+void ScriptGame_ReportHitContext(Fighter* attacker,Fighter* victim,int element,int item);
 float ScriptGame_ModValue(int slot, int field, float base);
 float ScriptGame_ModDamage(int slot, int field, float base);
 float ScriptGame_FighterDealtDamage(Fighter* attacker, float damage);
 int ScriptGame_FighterBenchTick(Fighter* fp);
+float ScriptGame_ModJump(int slot, int field, float base);
+#define FT_SCRIPT_JUMP(fp, field, base) ScriptGame_ModJump((fp)->player_id, (field), (base))
 #define FT_SCRIPT_VALUE(fp, field, base) ScriptGame_ModValue((fp)->player_id, (field), (base))
 #define FT_SCRIPT_DEALT(fp, base) ScriptGame_FighterDealtDamage((fp), (base))
 #else
+#define FT_SCRIPT_JUMP(fp, field, base) (base)
 #define FT_SCRIPT_VALUE(fp, field, base) (base)
 #define FT_SCRIPT_DEALT(fp, base) (base)
 #endif

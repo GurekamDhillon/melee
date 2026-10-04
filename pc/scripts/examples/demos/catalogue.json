@@ -626,5 +626,186 @@
     "in_game": false,
     "tour": false,
     "controls": "Press C to start Classic Mario Normal/3 stocks; B cancels. Completion restarts. Scripted runs do not write retail progression records and skip trophy/credits/congratulations."
+  },
+  {
+    "id": "demo_modifier_fall_speed",
+    "path": "demos/modifier-fall-speed",
+    "title": "Fighter fall_speed",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "M toggles only fall_speed on P1; clearing restores live baseline calculations."
+  },
+  {
+    "id": "demo_modifier_weight",
+    "path": "demos/modifier-weight",
+    "title": "Fighter weight",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "M toggles only weight on P1; clearing restores live baseline calculations."
+  },
+  {
+    "id": "demo_modifier_shield_regen",
+    "path": "demos/modifier-shield-regen",
+    "title": "Fighter shield_regen",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "M toggles only shield_regen on P1; clearing restores live baseline calculations."
+  },
+  {
+    "id": "demo_hit_context",
+    "path": "demos/hit-context",
+    "title": "Hit-time move and element tags",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Hit the standing CPU with a jab, tilt, smash, then aerial; observer only."
+  },
+  {
+    "id": "demo_event_ko",
+    "path": "demos/event-ko",
+    "title": "on_ko event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "KO P2; attacker is retail attribution, nil for self/environment."
+  },
+  {
+    "id": "demo_event_stock_lost",
+    "path": "demos/event-stock-lost",
+    "title": "on_stock_lost event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "KO P2; LAB reports a fall even with unlimited respawn."
+  },
+  {
+    "id": "demo_event_jump",
+    "path": "demos/event-jump",
+    "title": "on_jump event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Ground-jump."
+  },
+  {
+    "id": "demo_event_air_jump",
+    "path": "demos/event-air-jump",
+    "title": "on_air_jump event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Air-jump with a fighter using common jump states."
+  },
+  {
+    "id": "demo_event_ledge_grab",
+    "path": "demos/event-ledge-grab",
+    "title": "on_ledge_grab event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Grab the ledge."
+  },
+  {
+    "id": "demo_event_grab",
+    "path": "demos/event-grab",
+    "title": "on_grab event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Successfully grab P2."
+  },
+  {
+    "id": "demo_event_throw",
+    "path": "demos/event-throw",
+    "title": "on_throw event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Throw P2 from a common throw state."
+  },
+  {
+    "id": "demo_event_taunt",
+    "path": "demos/event-taunt",
+    "title": "on_taunt event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Taunt."
+  },
+  {
+    "id": "demo_event_shield_hit",
+    "path": "demos/event-shield-hit",
+    "title": "on_shield_hit event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Have P2 hit your shield."
+  },
+  {
+    "id": "demo_event_perfect_shield",
+    "path": "demos/event-perfect-shield",
+    "title": "on_perfect_shield event",
+    "api": "EM1 gameplay",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Powershield a fighter hitbox; reflected item contacts excluded."
+  },
+  {
+    "id": "demo_sim_checkpoint",
+    "path": "demos/sim-checkpoint",
+    "title": "Offline checkpoint and effect journal",
+    "api": "Simulation checkpoints",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "LAB history, step_back and rewind_test; P1 clock drives percent/run speed"
+  },
+  {
+    "id": "demo_surface_params",
+    "path": "demos/surface-params",
+    "title": "Surface parameter updates",
+    "api": "Fighter surface shaders; fighter_shader_set",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Start LAB: P1 rim updates uniforms every logic frame; cumulative loads remain steady."
+  },
+  {
+    "id": "demo_post_ready",
+    "path": "demos/post-ready",
+    "title": "Post pipeline readiness",
+    "api": "Post chains; post_ready",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Start LAB: identity world pass reports readiness after actual recording/resolving."
+  },
+  {
+    "id": "demo_hit_rules",
+    "path": "demos/hit-rules",
+    "title": "Native hit rules",
+    "api": "Gameplay; native hit rules",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Mario P1: up-smash Fire, aerial Electric; H toggles; real collisions require operator",
+    "setup": []
   }
 ]

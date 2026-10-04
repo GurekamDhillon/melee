@@ -78,3 +78,28 @@ static int l_fighter_shader(lua_State *L)
     return gs_surface_shader(L, (unsigned)port, 2, 3);
 }
 static int l_stage_shader(lua_State *L) { return gs_surface_shader(L, 7, 1, 2); }
+
+/* Parameter-only updates never read a shader file or register/compile a body. */
+static int l_fighter_shader_set(lua_State *L)
+{
+    lua_Integer port = luaL_checkinteger(L, 1);
+    float params[16] = {0};
+    size_t n, count;
+    if (port < 1 || port > 6) return luaL_argerror(L, 1, "fighter port must be 1..6");
+    luaL_checktype(L, 2, LUA_TTABLE);
+    lua_getfield(L, 2, "params");
+    luaL_checktype(L, -1, LUA_TTABLE);
+    count = lua_rawlen(L, -1);
+    if (count > 16) return luaL_error(L, "surface params has at most 16 floats");
+    for (n = 0; n < count; ++n) {
+        lua_rawgeti(L, -1, (lua_Integer)n + 1);
+        params[n] = (float)luaL_checknumber(L, -1);
+        lua_pop(L, 1);
+        if (!isfinite(params[n])) return luaL_error(L, "surface params must be finite");
+    }
+    lua_pop(L, 1);
+    if (!gw_surface_update((unsigned)port, (unsigned)(gs.cur + 1), params)) {
+        lua_pushnil(L); lua_pushliteral(L, "no surface selection owned by this script"); return 2;
+    }
+    lua_pushboolean(L, 1); return 1;
+}

@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <gameworld/script_hit_rules.h>
+#endif
 #include <gameworld/profiler_game.h>
 /*
  * geno_game.c - Geno's game half: per-fighter state, the ftcmd escape interpreter, native hooks,
@@ -2125,6 +2128,7 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
         for (i = 0; i < 4; i++) {
             if (a & (1 << i)) {
                 fp->x914[i].damage = d < 0.0f ? 0.0f : d;
+                ScriptGame_HitRuleDamageOnly(&fp->x914[i]);
             }
         }
         break;

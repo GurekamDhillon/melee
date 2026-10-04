@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <gameworld/script_hit_rules.h>
+#endif
 #include "itanimlist.h"
 
 #include "forward.h"
@@ -96,6 +99,9 @@ void it_802790C0(Item_GObj* item_gobj, CommandInfo* cmd)
     } else {
         hit->jobj = item_gobj->hsd_obj;
     }
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleForget(hit);
+#endif
     it_80272460(hit,
                 item->xC3C *
                     ((f32) cmd->u->it_create_hitbox_0.damage * item->xC40),
@@ -146,6 +152,9 @@ void it_802790C0(Item_GObj* item_gobj, CommandInfo* cmd)
     ++cmd->u;
 
     hit->x43_b2 = 0;
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleItemCreate(item, hit);
+#endif
     if (HSD_GObj_CurrentInvokedProc != NULL &&
         HSD_GObj_CurrentInvokedProc->s_link > 11)
     {

@@ -10,7 +10,14 @@ return function(D)
   c=c or {};local n=self.screen
   if n=='title' then return {row('Enter Envoy','profile'),row('Close Envoy','close')}
   elseif n=='profile' then return {row('Continue profile','hub',c.error~=nil),row('Close Envoy','close')}
-  elseif n=='hub' then return {row('Walk in garden','hub'),row('Fighter','fighter'),row('Companion','companion'),row('Records','records'),row('Nest / Breeding - unavailable',nil,true),row('Later campaigns - unavailable',nil,true),row('Quit','quit')}
+  elseif n=='hub' then
+   if c.retail_menu then
+    local rows={row('Begin run','setup')}
+    if c.garden_available then rows[#rows+1]=row('Walk in garden','hub') end
+    for _,v in ipairs({row('Fighter','fighter'),row('Companion','companion'),row('Records','records'),row('Quit','quit')}) do rows[#rows+1]=v end
+    return rows
+   end
+   return {row('Walk in garden','hub'),row('Fighter','fighter'),row('Companion','companion'),row('Records','records'),row('Nest / Breeding - unavailable',nil,true),row('Later campaigns - unavailable',nil,true),row('Quit','quit')}
   elseif n=='fighter' then
    local rows={};for _,f in ipairs(c.fighters or {'fox','marth','kirby'}) do
     local id=type(f)=='table' and f.id or f
@@ -22,14 +29,14 @@ return function(D)
    row('Change fighter','fighter'),row('Back to hub','hub')}
   elseif n=='reward' then
    local r=c.reward or {};if r.preview then return {row('Continue','reward_done')} end
-   local rows={};for i,v in ipairs(r.options or {}) do rows[i]={label=v.colour..' drive / '..v.points..(v.colour=='white' and ' grade step' or ' points'),reward=i} end;return rows
+   local rows={};for i,v in ipairs(r.options or {}) do rows[i]={label=v.colour..' drive / '..(v.effect or 'Growth bonus'),reward=i} end;return rows
   elseif n=='pause' then return {row('Resume','playing'),row('Companion','companion'),row('Abandon Run','confirm')}
   elseif n=='confirm' then return {row('Keep playing','pause'),row('Confirm abandon','hub')}
   elseif n=='quit' then return {row('Stay in Envoy','hub'),row('Confirm quit','title')}
   elseif n=='interlude' then return {row('Continue','playing')}
   elseif n=='results' then
    if c.retail_pending then return {row('Save pending: A retries','retail_retry')} end
-   return {row('Return to garden','hub')}
+   return {row('Return to menu','hub')}
   elseif n=='playing' then return {} end
   return {row('Back',n=='results' and 'hub' or self.return_to or 'hub')}
  end

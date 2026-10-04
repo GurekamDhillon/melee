@@ -140,3 +140,41 @@ No external techniques, third-party assets or disc-derived data were imported. S
 - `demo_1p_hold` - [Bounded interstage hold](1p-hold/README.md): Clear a stage; press A on controller 1 or wait 180 host ticks. No retail logic runs during the panel.
 - `demo_1p_spawn` - [Retail opponent spawn template](1p-spawn/README.md): Enter Classic and reach the wireframe team: each replacement receives the same port template before its first logic frame. Enemy CPU AI is unchanged.
 - `demo_1p_loop` - [Scripted 1P launch and New Game+](1p-loop/README.md): Press C to start Classic Mario Normal/3 stocks; B cancels. Completion restarts. Scripted runs do not write retail progression records and skip trophy/credits/congratulations.
+
+- [Simulation checkpoint](sim-checkpoint/) (`demo_sim_checkpoint`): a Lua clock,
+  percent and speed persist through offline LAB rewind. Integration acceptance pending.
+
+
+- [Surface parameters](surface-params/) (`demo_surface_params`): one fighter rim
+  selection, per-frame uniforms and a cumulative shader-load readout. Lua/source
+  checked; native appearance acceptance pending.
+- [Post readiness](post-ready/) (`demo_post_ready`): an identity world pass becomes
+  ready only after that exact owned pass recorded/resolved. Source checked;
+  native rendering acceptance pending.
+
+
+## EM1 gameplay source demos (native acceptance pending)
+
+These demos prove one API at a time. Getter/control scenarios check the three
+live overlays; hit-context uses a real jab collision and requires captured scalar
+context. Event scenarios check that the owning demo defines its hook and explicitly
+report `acceptance=operator-required`. Hook admission is not proof that a jump,
+KO, grab or powershield occurred; generate the documented real event and inspect
+its payload/count in the operator run. No game was launched for these additions.
+
+- `demo_modifier_fall_speed`: [fall_speed](modifier-fall-speed/). M toggles P1 multiplier; setter/getter and clear assertions accompany the tour.
+- `demo_modifier_weight`: [weight](modifier-weight/). M toggles P1 multiplier; setter/getter and clear assertions accompany the tour.
+- `demo_modifier_shield_regen`: [shield_regen](modifier-shield-regen/). M toggles P1 multiplier; setter/getter and clear assertions accompany the tour.
+- `demo_hit_context`: [Collision snapshot](hit-context/). Real jab must report valid grounded flags, damage scalars and common move/element tags.
+- `demo_event_ko`: [on_ko](event-ko/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_stock_lost`: [on_stock_lost](event-stock-lost/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_jump`: [on_jump](event-jump/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_air_jump`: [on_air_jump](event-air-jump/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_ledge_grab`: [on_ledge_grab](event-ledge-grab/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_grab`: [on_grab](event-grab/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_throw`: [on_throw](event-throw/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_taunt`: [on_taunt](event-taunt/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_shield_hit`: [on_shield_hit](event-shield-hit/). Contract smoke only; operator acceptance requires the actual native event.
+- `demo_event_perfect_shield`: [on_perfect_shield](event-perfect-shield/). Contract smoke only; operator acceptance requires the actual native event.
+
+- `demo_hit_rules`: [Native hit rules](hit-rules/). Mario P1 up-smash converts to Fire and aerials to Electric. H toggles the ahead-of-time rules; real hit effects, hitlag and trace IDs require operator acceptance. Original move sounds remain.

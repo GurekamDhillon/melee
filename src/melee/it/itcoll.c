@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 #include "itcoll.h"
 
 #include <Runtime/platform.h>
@@ -1427,8 +1428,14 @@ void it_80272460(HitCapsule* hitbox, u32 damage, Item_GObj* arg_item_gobj)
         hitbox->damage =
             ft_80089228(owner, arg_item->xD88_attackID,
                         arg_item->xD8C_attack_instance, hitbox->unk_count);
+#if defined(TARGET_PC)
+        ScriptGame_HitRuleDamage(hitbox);
+#endif
         return;
     }
     hitbox->unk_count = dmg;
     hitbox->damage = dmg;
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleDamage(hitbox);
+#endif
 }

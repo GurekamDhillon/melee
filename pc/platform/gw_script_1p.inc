@@ -2,7 +2,7 @@
  * transition barrier keeps the old retail scene frozen before next preload. */
 extern int gw_ScriptGame_OnePI(int field,int slot);
 extern void gw_ScriptGame_OnePTemplatesClear(void);
-extern int gw_ScriptGame_OnePTemplate(int,int,int,int,int,int,int,int,int);
+extern int gw_ScriptGame_OnePTemplate(int,int,int,int,int,int,int,int,int,int,int,int);
 extern void gw_ScriptGame_OnePEndBarrier(void);
 extern void gw_ScriptGame_OnePTemplatesRelease(int owner);
 extern void gw_ScriptGame_OnePTintClear(int slot,int owner);
@@ -25,6 +25,12 @@ static const char* gs_1p_kind(void) {
     if(gs_1p.flags & (8|0x10)) return "team";
     return "battle";
 }
+/* Keep initial and replacement payload filtering on the same live slot data. */
+static int gs_1p_enemy(int slot) {
+    return gs_players_present(slot) && slot!=gs_1p.player &&
+        gw_ScriptGame_FighterI(slot,SI_SLOT_TYPE)==1 &&
+        gw_ScriptGame_OnePI(1,slot)!=gw_ScriptGame_OnePI(1,gs_1p.player);
+}
 static void gs_1p_push(lua_State* L) {
     int s,n=0;
     lua_createtable(L,0,9);
@@ -36,9 +42,7 @@ static void gs_1p_push(lua_State* L) {
     gs_setbool(L,"held",gs_1p.held);
     gs_setbool(L,"final",gs_1p.completed);
     lua_newtable(L);
-    for(s=0;s<6;++s) if(gs_players_present(s) && s!=gs_1p.player &&
-        gw_ScriptGame_FighterI(s,SI_SLOT_TYPE)==1 &&
-        gw_ScriptGame_OnePI(1,s)!=gw_ScriptGame_OnePI(1,gs_1p.player)) {
+    for(s=0;s<6;++s) if(gs_1p_enemy(s)) {
         lua_createtable(L,0,4);gs_setint(L,"port",s+1);
         gs_setint(L,"char",gw_ScriptGame_FighterI(s,SI_CHAR));
         gs_setint(L,"kind",gw_ScriptGame_FighterI(s,SI_KIND));
@@ -236,9 +240,9 @@ static int l_start_1p(lua_State* L) {
     gs_pending_launch=game;lua_pushboolean(L,1);return 1;
 }
 static int l_spawn_1p(lua_State* L) {
-    static const char* keys[]={"damage_dealt","damage_taken","run_speed","air_speed","shield_max"};
+    static const char* keys[]={"damage_dealt","damage_taken","run_speed","air_speed","shield_max","jump_height","air_jump_height","knockback_taken"};
     int slot=gs_slot_arg(L,1),i,enabled=!lua_isnoneornil(L,2),tint=-1;
-    float value[5]={1,1,1,1,1};
+    float value[8]={1,1,1,1,1,1,1,1};
     gs_require_offline(L,"spawn_1p");
     if(enabled&&(!gs_1p.mode||!gs.match_active||
         (gs_1p.scripted&&gs_1p.owner!=gs.cur+1))){lua_pushboolean(L,0);return 1;}
@@ -251,8 +255,8 @@ static int l_spawn_1p(lua_State* L) {
             if(key&&!strcmp(key,"tint"))tint=(int)(gs_color_arg(L,-1,0xffffffffu)>>8);
             else {
                 double v=luaL_checknumber(L,-1);
-                for(i=0;i<5;++i)if(key&&!strcmp(key,keys[i]))break;
-                if(i==5)return luaL_error(L,"unknown 1P spawn modifier");
+                for(i=0;i<8;++i)if(key&&!strcmp(key,keys[i]))break;
+                if(i==8)return luaL_error(L,"unknown 1P spawn modifier");
                 if(!isfinite(v))return luaL_error(L,"1P modifier must be finite");
                 value[i]=(float)(v<.1?.1:v>4?4:v);
             }
@@ -260,7 +264,7 @@ static int l_spawn_1p(lua_State* L) {
         }
     }
     if(!gw_ScriptGame_OnePTemplate(slot,gs.cur+1,enabled,gs_fbits(value[0]),gs_fbits(value[1]),
-       gs_fbits(value[2]),gs_fbits(value[3]),gs_fbits(value[4]),tint)){lua_pushboolean(L,0);return 1;}
+       gs_fbits(value[2]),gs_fbits(value[3]),gs_fbits(value[4]),tint,gs_fbits(value[5]),gs_fbits(value[6]),gs_fbits(value[7]))){lua_pushboolean(L,0);return 1;}
     if(enabled&&!gs_1p.scripted) {
         /* Modifying a manually entered retail run must not produce vanilla records. */
         gs_1p.scripted=1;gs_1p.owner=gs.cur+1;gs_1p.target_mode=gs_1p.mode;
@@ -268,7 +272,7 @@ static int l_spawn_1p(lua_State* L) {
     }
     gs_rw_branch();
     if(!gw_ScriptGame_FighterMod(slot,gs.cur+1,enabled,gs_fbits(value[0]),gs_fbits(value[1]),
-       gs_fbits(value[2]),gs_fbits(value[3]),gs_fbits(value[4]))){lua_pushboolean(L,0);return 1;}
+       gs_fbits(value[2]),gs_fbits(value[3]),gs_fbits(value[4]),gs_fbits(value[5]),gs_fbits(value[6]),gs_fbits(value[7]))){lua_pushboolean(L,0);return 1;}
     gw_ScriptGame_OnePTintClear(slot,gs.cur+1);
     gs_1p.tint_owner[slot]=tint>=0&&enabled?gs.cur+1:0;gs_1p.tint[slot]=tint;
     if(gs_1p.tint_owner[slot]) {

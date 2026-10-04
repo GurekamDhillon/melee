@@ -60,6 +60,9 @@ void gw_Script_PostRender(void); /* after the render pass: on_draw, then the lis
  * pc/gameworld/script_lab.h): queued, dispatched to on_action_change / on_hit / on_hitlag /
  * on_land / on_boss_defeated after the frame, never for a resimulated frame */
 void gw_Script_GameEvent(int what, int a, int b, int c, int d);
+/* Collision observer enrichment; float percentages cross as f32 bit patterns. */
+void gw_Script_HitContext(int attacker,int victim,int element,int action,int move,
+                         int attacker_ground,int victim_ground,int attacker_damage,int victim_damage);
 /* Clank midpoint/damages are float bit patterns; entity ids never dereferenced natively. */
 int gw_Script_ClankWanted(void);
 void gw_Script_Clank(int a,int b,int item,int kind,int x,int y,int z,

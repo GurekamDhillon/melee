@@ -1,0 +1,10 @@
+{
+  "id": "demo_modifier_shield_regen",
+  "name": "Fighter shield_regen",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

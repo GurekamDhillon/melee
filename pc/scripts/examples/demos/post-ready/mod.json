@@ -1,0 +1,10 @@
+{
+  "id": "demo_post_ready",
+  "name": "Post pipeline readiness",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": false,
+  "rollback_safe": true,
+  "entry": "scripts/main.lua"
+}

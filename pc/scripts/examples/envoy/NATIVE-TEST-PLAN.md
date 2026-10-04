@@ -1,4 +1,4 @@
-# Envoy Classic/Adventure native acceptance ? 2026-10-03
+# Envoy Classic/Adventure native acceptance - 2026-10-04 fix1
 
 Source-only work does not establish native acceptance. This plan supersedes the
 maze campaign as the default acceptance route; historical mission checks follow.
@@ -14,13 +14,15 @@ a current stamped EXE, an isolated run folder and backed-up Envoy script data.
    bonus stages, intermissions, giant, metal and wireframes. CPU allies must not
    receive enemy budgets. Check replacement wireframes and sub-fighters.
 3. Clear each stage. A controller alone must navigate three drive choices; choose
-   each colour in turn, verify one award and immediate before/after stats. Hold
+   each colour in turn, verify one award, pickup sound/FX and 48-tick before/after
+   bar animation with level-up crossings. Read the concrete percentage changes. Hold
    A through transitions: no repeated reward. Retry after continuing: same spread.
 4. Reach Master Hand; also test retail Crazy Hand conditions on an eligible
    difficulty/time. Check the larger final reward, evolution and two NG+ loops.
    Fighter/difficulty/stocks and companion age/stats carry; enemy budgets scale.
 5. Decline a continue halfway through a run. Growth is retained, results settle
-   once, owned stats/tints/holds clear, and garden return works. Repeat with
+   once, owned stats/tints/holds clear, and results return to a working menu with
+   no garden assets. With resolved assets, explicitly enter the optional garden. Repeat with
    abandon, script unload and scene change. Check all six ports and sub-fighters.
 6. Back up the memory card and compare retail Classic/Adventure/Target Test
    scores, clear counts, trophies and unlocks before/after scripted runs.
@@ -34,6 +36,12 @@ a current stamped EXE, an isolated run folder and backed-up Envoy script data.
    and continue flows, final Bowser/Giga Bowser conditions and NG+ restart.
 9. Judge panel readability, stage-start tags, modifier feel, team balance, NG+
    scaling, reward cadence and whether progression feels useful and fair.
+10. Check one start and accepted clear per fight/bonus (including every single,
+    team, giant and metal fight). Each CPU enemy receives its spread; allies do not.
+    Read the four-second coloured marker even on meshes without working tint.
+    Compare green/yellow/blue after 1/3/7 picks; test full hop, short hop, double and
+    multijumps/animation-driven jumps. Guard should resist launch and flash blue
+    on damage. Respawn/replacement must retain effects; mode exit restores them.
 
 ## Parked mission acceptance (historical)
 

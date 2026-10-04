@@ -32,6 +32,15 @@ int main() {
     Params p{}; p.data[4] = 0.3f;
     assert(s.set(1, a, 7, p));
     assert(!s.set(1, b, 8, p)); // another script cannot steal a selection
+    Params updated = p; updated.data[4] = 0.7f;
+    assert(!s.update(1, 8, updated));
+    assert(!s.update(2, 7, updated));
+    assert(s.update(1, 7, updated));
+    auto picture = s.enter(1);
+    assert(picture.program == a && picture.params.data[4] == 0.7f);
+    s.leave();
+    updated.data[5] = INFINITY;
+    assert(!s.update(1, 7, updated));
     assert(s.enter(1).program == a);
     assert(s.enter(0).program == 0); // nested unrelated draw must be vanilla
     assert(s.leave().program == a);

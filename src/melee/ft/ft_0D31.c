@@ -164,6 +164,16 @@ void ftCo_800D34E0(Fighter_GObj* gobj)
     } else {
         Player_IncSelfDestructs(fp->player_id, fp->is_sub_fighter);
     }
+#if defined(TARGET_PC)
+    if (!fp->is_sub_fighter) {
+        /* Retail attribution, after fall/stock accounting; no inferred last hit. */
+        extern void Script_GameEvent(int,int,int,int,int);
+        int attacker=fp->dmg.x18c4_source_ply;
+        if (attacker<0 || attacker>=6 || attacker==fp->player_id) attacker=-1;
+        Script_GameEvent(14,attacker,fp->player_id,0,0);
+        Script_GameEvent(15,fp->player_id,Player_GetStocks(fp->player_id),0,0);
+    }
+#endif
     pl_8003D644(fp->player_id, fp->is_sub_fighter, fp->mv.co.unk_800D34E0.x6C,
                 fp->mv.co.unk_800D34E0.x70);
     Player_SetHPByIndex(fp->player_id, fp->is_sub_fighter, 0);

@@ -276,7 +276,7 @@ T.test('fresh install without maze assets completes authored campaign',function(
   assert(app.run.profile.last_result=='win' and s.writes==2)
   e.on_unload();assert(not next(s.models) and not next(s.fx) and not s.mod and not s.tint)
 end)
-T.test('real loader refused start keeps profile unchanged and garden works',function()
+T.test('real loader refused start keeps profile unchanged and absent kit returns menu',function()
   local s,e=fixture(false,true);local app=e.__envoy_test_app;local before=s.text
   local read=e.gd.mod_read;e.gd.mod_read=function(p) if p=='missions/path/level.lua' then return nil,'missing' end;return read(p) end
   s.commands.envoy('campaign')
@@ -285,11 +285,10 @@ T.test('real loader refused start keeps profile unchanged and garden works',func
   assert(app.menu.screen=='setup' and not s.paused and not s.mod and not s.tint and not s.reserve[2])
   assert(s.p[1].percent==39 and s.p[2].percent==116,'failed start restores damage')
   e.gd.mod_read=read;assert(s.commands.envoy('hub'));drain(e)
-  assert(app.hub.active and app.mission.current.doc.name=='hub')
+  assert(not app.hub.active and app.menu.screen=='hub' and not app.garden_available)
   e.on_unload();assert(not next(s.models) and not next(s.areas))
 end)
 T.done()
-
 
 
 

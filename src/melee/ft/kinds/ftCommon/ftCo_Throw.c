@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 #include "ftCo_Throw.h"
 
 #include <Runtime/platform.h>
@@ -534,7 +535,7 @@ void ftCo_800DDDE4(Fighter_GObj* gobj, Fighter_GObj* gobj2, bool arg)
                 NULL, &vec);
     if (ftColl_8007B868(gobj2) == 0) {
 #if defined(TARGET_PC)
-        damage = ScriptGame_FighterDealtDamage(fp,hit[0].damage);
+        damage = ScriptGame_HitRuleContact(&hit[0],fp2,ScriptGame_FighterDealtDamage(fp,hit[0].damage),0);
 #else
         damage = hit[0].damage;
 #endif
@@ -546,6 +547,11 @@ void ftCo_800DDDE4(Fighter_GObj* gobj, Fighter_GObj* gobj2, bool arg)
         fp2, &hit[0], hit[0].unk_count, gm_8016B248(),
         Player_GetAttackRatio(fp->player_id),
         Player_GetDefenseRatio(fp2->player_id), p_ftCommonData->x10C);
+#if defined(TARGET_PC)
+    fp2->dmg.kb_applied=ScriptGame_HitRuleContact(&hit[0],fp2,fp2->dmg.kb_applied,1);
+    ScriptGame_HitRuleWon(&hit[0],fp2);
+    ScriptGame_HitRuleReport(fp,fp2,&hit[0],damage);
+#endif
     fp2->dmg.x1848_kb_angle = hit[0].kb_angle;
     fp2->dmg.facing_dir_1 = -(fp->facing_dir);
     fp2->dmg.x184c_damaged_hurtbox = 1;
@@ -608,7 +614,7 @@ void ftCo_800DE2F0(Fighter_GObj* gobj)
                 NULL, &vec);
     fp->dmg.kb_applied =
         ftColl_80079AB0(fp, &hit, hit.unk_count, gm_8016B248(), 1.0f,
-                        Player_GetDefenseRatio(fp->player_id), attrs->weight);
+                        Player_GetDefenseRatio(fp->player_id), FT_SCRIPT_VALUE(fp, 9, attrs->weight));
     fp->dmg.x1848_kb_angle = hit.kb_angle;
     fp->dmg.facing_dir_1 = fp->facing_dir;
     fp->dmg.x184c_damaged_hurtbox = 1;

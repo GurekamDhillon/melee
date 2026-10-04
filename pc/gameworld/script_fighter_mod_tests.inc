@@ -17,7 +17,7 @@ int ScriptGame_FighterModTest(void)
     fp.co_attrs.air_max_horizontal_velocity = 1;
     memcpy(original, &fp.co_attrs, sizeof original);
     if (!ScriptGame_FighterMod(0,1,1,script_mesh_bits(2),script_mesh_bits(0.5f),
-        script_mesh_bits(1.5f),script_mesh_bits(2),script_mesh_bits(1.25f))) rc++;
+        script_mesh_bits(1.5f),script_mesh_bits(2),script_mesh_bits(1.25f),script_mesh_bits(1),script_mesh_bits(1),script_mesh_bits(1))) rc++;
     if (ScriptGame_ModValue(0,0,3)!=6 || ScriptGame_ModValue(0,1,2)!=1 ||
         FT_SCRIPT_VALUE(&fp,2,fp.co_attrs.ground_max_horizontal_velocity)!=3 ||
         FT_SCRIPT_VALUE(&fp,2,fp.co_attrs.dash_max_velocity)!=4.5f) rc++;
@@ -31,7 +31,7 @@ int ScriptGame_FighterModTest(void)
     if (ScriptGame_FighterDealtDamage(&respawn,10)!=10) rc++;
     HSD_GObjPLinkHead=old_heads;
     if (!ScriptGame_FighterMod(0,1,1,script_mesh_bits(2),script_mesh_bits(0.5f),
-        script_mesh_bits(1.5f),script_mesh_bits(2),script_mesh_bits(1.25f))) rc++;
+        script_mesh_bits(1.5f),script_mesh_bits(2),script_mesh_bits(1.25f),script_mesh_bits(1),script_mesh_bits(1),script_mesh_bits(1))) rc++;
     if (ScriptGame_FighterModRead(0,0)!=script_mesh_bits(2) ||
         ScriptGame_FighterModRead(0,1)!=script_mesh_bits(0.5f)) rc++;
     if (ScriptGame_ModValue(0,0,3)!=6) rc++; /* replacement, not multiplication */
@@ -53,10 +53,10 @@ int ScriptGame_FighterModTest(void)
             respawn.x74_self_accel.x!=0.01f) rc++;
         script_fighter_mod[0].value[3]=2; p_ftCommonData=old;
     }
-    if (ScriptGame_FighterMod(0,2,0,0,0,0,0,0)) rc++; /* another owner */
+    if (ScriptGame_FighterMod(0,2,0,0,0,0,0,0,script_mesh_bits(1),script_mesh_bits(1),script_mesh_bits(1))) rc++; /* another owner */
     ScriptGame_FighterModsRelease(2);
     if (ScriptGame_ModValue(0,0,3)!=6) rc++;
-    if (!ScriptGame_FighterMod(0,1,0,0,0,0,0,0)) rc++;
+    if (!ScriptGame_FighterMod(0,1,0,0,0,0,0,0,script_mesh_bits(1),script_mesh_bits(1),script_mesh_bits(1))) rc++;
     if (memcmp(original,&fp.co_attrs,sizeof original) || ScriptGame_ModValue(0,0,3)!=3) rc++;
     if (ScriptGame_FighterModRead(0,0)!=0 || ScriptGame_FighterModOwner(0)!=0) rc++;
     fp.shield_health=120;
@@ -68,8 +68,23 @@ int ScriptGame_FighterModTest(void)
     ScriptGame_FighterModsRelease(1);
     fp.co_attrs.air_max_horizontal_velocity=4; /* latest Geno state is preserved */
     if (FT_SCRIPT_VALUE(&fp,3,fp.co_attrs.air_max_horizontal_velocity)!=4) rc++;
-    if (ScriptGame_FighterMod(-1,1,1,0,0,0,0,0) ||
-        ScriptGame_FighterMod(6,1,1,0,0,0,0,0)) rc++;
+    if (ScriptGame_FighterMod(-1,1,1,0,0,0,0,0,script_mesh_bits(1),script_mesh_bits(1),script_mesh_bits(1)) ||
+        ScriptGame_FighterMod(6,1,1,0,0,0,0,0,script_mesh_bits(1),script_mesh_bits(1),script_mesh_bits(1))) rc++;
+    script_fighter_mod[0].owner=1;
+    script_fighter_mod[0].value[5]=1.44f;
+    script_fighter_mod[0].value[6]=1.21f;
+    script_fighter_mod[0].value[7]=0.75f;
+    if (ScriptGame_ModJump(0,5,10)<11.99f || ScriptGame_ModJump(0,5,10)>12.01f ||
+        ScriptGame_ModJump(0,6,10)<10.99f || ScriptGame_ModJump(0,6,10)>11.01f ||
+        ScriptGame_ModValue(0,7,100)!=75) rc++;
+    if (!ScriptGame_FighterModExtra(0,1,script_mesh_bits(1.5f),script_mesh_bits(2),script_mesh_bits(.5f))) rc++;
+    if (ScriptGame_ModValue(0,8,2)!=3 || ScriptGame_ModValue(0,9,100)!=200 || ScriptGame_ModValue(0,10,2)!=1) rc++;
+    if (ScriptGame_FighterModExtra(0,2,script_mesh_bits(1),script_mesh_bits(1),script_mesh_bits(1))) rc++;
+    if (ScriptGame_FighterModExtra(0,1,script_mesh_bits(0),script_mesh_bits(1),script_mesh_bits(1))) rc++;
+    if (ScriptGame_ModValue(0,8,2)!=3) rc++; /* rejected update is atomic */
+    ScriptGame_FighterModsRelease(1);
+    if (ScriptGame_ModValue(0,8,2)!=2 || ScriptGame_ModValue(0,9,100)!=100 || ScriptGame_ModValue(0,10,2)!=2) rc++;
+    if (ScriptGame_ModJump(0,5,10)!=10 || ScriptGame_ModValue(0,7,100)!=100) rc++;
     script_fighter_mod[0]=saved;
     script_fighter_mod[1]=saved1;
     return rc;

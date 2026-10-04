@@ -45,6 +45,12 @@ extern "C" int gw_surface_select(unsigned slot, uint32_t program, unsigned owner
     if (enabled[slot]) ++enabled_count;
     return 1;
 }
+extern "C" int gw_surface_update(unsigned slot, unsigned owner, const float *params16) {
+    gw_surface::Params params{};
+    if (params16) memcpy(params.data.data() + 4, params16, sizeof(float) * 16);
+    params.data[1] = static_cast<float>(slot);
+    return selections.update(slot, owner, params) ? 1 : 0;
+}
 extern "C" void gw_surface_release(unsigned owner) {
     selections.release(owner);
     // Scopes are empty at script lifecycle boundaries. Count remaining selections.

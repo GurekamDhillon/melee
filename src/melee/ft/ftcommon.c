@@ -495,7 +495,7 @@ void ftCommon_Fall(Fighter* fp, float gravity, float terminal_vel)
 
 void ftCommon_FallBasic(Fighter* fp)
 {
-    ftCommon_Fall(fp, fp->co_attrs.gravity, fp->co_attrs.terminal_velocity);
+    ftCommon_Fall(fp, fp->co_attrs.gravity, FT_SCRIPT_VALUE(fp, 8, fp->co_attrs.terminal_velocity));
 }
 
 void ftCommon_FallFast(Fighter* fp)

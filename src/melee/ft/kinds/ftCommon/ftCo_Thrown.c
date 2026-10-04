@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 #include "ftCo_Thrown.h"
 
 #include <melee/ft/forward.h>
@@ -200,7 +201,8 @@ void ftCo_800DE854(Fighter_GObj* gobj)
     fp->dmg.x184c_damaged_hurtbox = 1;
     fp->dmg.x1854_collpos = collpos;
     fp->dmg.x1860_element = hit->element;
-    Fighter_UnkTakeDamage_8006CC30(fp, FT_SCRIPT_DEALT(thrower_fp, hit->damage));
+    ScriptGame_HitRuleReport(thrower_fp,fp,hit,ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(thrower_fp,hit->damage),0));
+    Fighter_UnkTakeDamage_8006CC30(fp, ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_DEALT(thrower_fp, hit->damage),0));
     ftColl_8007891C(thrower_gobj, gobj, hit->damage);
 }
 

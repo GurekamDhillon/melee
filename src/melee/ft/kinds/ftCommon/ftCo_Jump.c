@@ -120,10 +120,10 @@ void ftCo_800CB110(Fighter_GObj* gobj, bool arg1, f32 jump_mul)
         float v_init_v;
         if (fp->mv.co.jump.x0) {
             v_init_v =
-                co_attrs->hop_v_initial_velocity * fp->mv.co.jump.jump_mul;
+                FT_SCRIPT_JUMP(fp, 5, co_attrs->hop_v_initial_velocity) * fp->mv.co.jump.jump_mul;
         } else {
             v_init_v =
-                co_attrs->jump_v_initial_velocity * fp->mv.co.jump.jump_mul;
+                FT_SCRIPT_JUMP(fp, 5, co_attrs->jump_v_initial_velocity) * fp->mv.co.jump.jump_mul;
         }
 
         fp->self_vel.y = v_init_v;

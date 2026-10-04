@@ -20,10 +20,12 @@ return function(D)
     depth_drive_points={20,25,30,35},
     levelup_frames=48,hub_station_radius=22,
     retail={default_mode='classic',difficulty=2,stocks=3,reward_every=1,
-      reward_points={20,30,40},final_multiplier=3,white_chance=.04,
+      reward_points={120,180,240},final_multiplier=3,white_chance=.04,
       physical_drops=false,physical_drop_chance=1,ngplus=true,loop_scale=.15,budget_width=.15,
-      spread_width=1,stat_floor=0,stat_ceiling=99,team_exponent=.5,
-      hold_ticks=1800,tag_ticks=180,change_ai=false},
+      spread_width=4,stat_floor=0,stat_ceiling=99,team_exponent=.5,starter_budget=4,
+      effect_half=2,damage_cap=.24,speed_cap=.30,guard_cap=.24,shield_cap=.35,
+      knockback_cap=.20,jump_height_cap=.30,air_jump_height_cap=.25,jump_air_cap=.15,
+      hold_ticks=1800,tag_ticks=240,reward_animation_frames=48,guard_flash_frames=12,change_ai=false},
     juice={glow=true,pool=true,sparkles=true,highlight=true,pop_trail=true,
       collect_burst=true,sound=true,hud_flash=true,blink=true},
     visuals={recolour=true,pulse=true,shiny=true,pulse_frames=12},
@@ -108,6 +110,41 @@ return function(D)
     e.jump_air_bonus=math.min(e.jump_air_bonus,t.jump_air_cap)
     e.air_speed=math.min(1+t.speed_cap+t.jump_air_cap,e.speed+e.jump_air_bonus+e.air_speed_bonus)
     return e
+  end
+  function C.retail_effects(c)
+    C.validate(c);local t=C.tuning.retail
+    local function bonus(k,cap) local l=c.stats[k].level;return cap*l/(l+t.effect_half) end
+    local e={damage_dealt=1+bonus('power',t.damage_cap),speed=1+bonus('speed',t.speed_cap),
+      damage_taken=1-bonus('guard',t.guard_cap),shield_max=1+bonus('guard',t.shield_cap),
+      knockback_taken=1-bonus('guard',t.knockback_cap),
+      air_speed=1+bonus('speed',t.speed_cap)+bonus('jump',t.jump_air_cap),
+      jump_height=1+bonus('jump',t.jump_height_cap),air_jump_height=1+bonus('jump',t.air_jump_height_cap)}
+    local p=C.passive(c)
+    if p then
+      local v=p.effects;e.damage_dealt=e.damage_dealt+(v.damage_dealt or 0);e.damage_taken=e.damage_taken+(v.damage_taken or 0)
+      e.speed=e.speed+(v.speed or 0);e.air_speed=e.air_speed+(v.speed or 0)+(v.air_speed_bonus or 0)+(v.jump_air_bonus or 0)
+    end
+    e.damage_dealt=math.min(1+t.damage_cap,e.damage_dealt);e.damage_taken=math.max(1-t.guard_cap,e.damage_taken)
+    e.speed=math.min(1+t.speed_cap,e.speed);e.air_speed=math.min(1+t.speed_cap+t.jump_air_cap,e.air_speed)
+    return e
+  end
+  function C.reward_effect(c,colour,points)
+    if colour=='white' then
+      for _,k in ipairs(C.stats) do if G.rank[c.stats[k].grade]<6 then return 'Raise a lowest grade; future drives grow faster' end end
+      return 'All grades capped; no further grade gain'
+    end
+    local before=C.retail_effects(c);local next={};for k,v in pairs(c) do next[k]=v end;next.stats={}
+    for k,v in pairs(c.stats) do next.stats[k]={};for n,x in pairs(v) do next.stats[k][n]=x end end
+    C.feed(next,colour,points);local after=C.retail_effects(next)
+    local function delta(key,words,negative)
+      local n=(after[key]-before[key])*100*(negative and -1 or 1)
+      if n<.05 then return words..' at cap' end
+      return ('+%.1f%% %s'):format(n,words)
+    end
+    if colour=='red' then return delta('damage_dealt','damage')
+    elseif colour=='green' then return delta('speed','run speed')
+    elseif colour=='blue' then return delta('damage_taken','damage resistance',true)..' / '..delta('knockback_taken','launch resistance',true)
+    else return delta('jump_height','jump height')..' / '..delta('air_jump_height','air jump height') end
   end
   function C.start_life_run(c)
     C.validate(c);assert(c.age<C.tuning.lifespan,'companion life ended')

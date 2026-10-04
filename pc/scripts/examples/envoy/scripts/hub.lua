@@ -6,6 +6,10 @@ return function(D)
  {x=180,name='Nest - slice 5',closed=true}}
  local function call(fn,...) if type(fn)~='function' then return nil,'engine API absent' end;local ok,r,e=pcall(fn,...);if ok then return r,e end;return nil,r end
  function H.new(g,mission) return setmetatable({g=g,mission=mission,active=false},H) end
+ function H:resolve()
+  if not self.asset then self.asset=call(self.g.model_load,'models/bf_floor_4m.gxmesh') end
+  return self.asset~=nil and self.asset~=false
+ end
  function H:enter()
   if self.active then return true end
   if self.mission.staging or self.mission.stopping or self.mission.recovery then return false,'garden waiting for cleanup' end

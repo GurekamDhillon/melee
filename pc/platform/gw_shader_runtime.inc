@@ -40,7 +40,7 @@ struct Asset {
   std::vector<float> values;
   bool effect=false;
 };
-struct Post { int shader=0, order=0, stage=0; uint32_t serial=0; bool half=false,owns_shader=false,engine=false; std::vector<float> values; };
+struct Post { int shader=0, order=0, stage=0; uint32_t serial=0; bool half=false,owns_shader=false,engine=false; std::vector<float> values; std::shared_ptr<Program> prepared; };
 Handles<std::shared_ptr<Asset>,128> assets;
 Handles<Post,32> posts;
 std::map<uint64_t,std::vector<std::weak_ptr<Program>>> cache;
@@ -428,7 +428,10 @@ void post_record(const void* bytes,u32 size) {
     aurora::gfx::ResolvedTargets out;aurora::gfx::ResolveDesc color_only{};
     bool closed=aurora::gfx::resolve_pass(color_only,out);++perf.resolves;
     // Never adopt the cleared offscreen output if the draw could not be recorded.
-    if(drawn&&closed&&out.color){previous=out.color;++perf.passes;perf.pixels+=uint64_t(w)*h;}
+    if(drawn&&closed&&out.color){
+      previous=out.color;++perf.passes;perf.pixels+=uint64_t(w)*h;
+      if(auto live=posts.get(ready[i].post.serial,0)) live->prepared=ready[i].program;
+    }
     if(!closed) { ++perf.skipped; return; }
   }
   if(previous.Get()!=scene.color.Get()){
@@ -474,6 +477,14 @@ extern "C" int gw_Post_Set(int owner,int handle,const char* params_json,char* ou
   auto a=p?find(owner,p->shader):nullptr;
   if(!a){error_out("post handle expired or belongs to another script",out,cap);return 0;}
   if(!update_values(a->schema,p->values,params_json,error)){error_out(error,out,cap);return 0;}return 1;
+}
+extern "C" int gw_Post_Ready(int owner,int handle) {
+  using namespace shader_runtime;std::lock_guard<std::mutex> state(state_mutex);
+  if(owner<=0)return -1;
+  auto p=posts.get(uint32_t(handle),owner);
+  auto a=p?find(owner,p->shader):nullptr;
+  if(!a)return -1;
+  return p->prepared && p->prepared==a->program && a->program->pipeline_error.empty()?1:0;
 }
 extern "C" int gw_Post_Remove(int owner,int h) {using namespace shader_runtime;std::lock_guard<std::mutex> state(state_mutex);
   auto p=posts.get(uint32_t(h),owner);if(p&&p->owns_shader)assets.remove(uint32_t(p->shader),owner);

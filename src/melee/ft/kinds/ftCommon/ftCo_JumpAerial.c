@@ -95,7 +95,7 @@ bool ftCo_JumpAerial_CheckInput(Fighter_GObj* gobj, bool arg1)
             PAD_STACK(8);
             v.x = fp->input.lstick[0].x * co_attrs->air_jump_h_multiplier;
             v.y = co_attrs->jump_v_initial_velocity *
-                  co_attrs->air_jump_v_multiplier;
+                  FT_SCRIPT_JUMP(fp, 6, co_attrs->air_jump_v_multiplier);
             v.z = 0.0F;
             ft_800D2E7C(gobj, &v);
             return true;
@@ -178,7 +178,7 @@ void ftCo_JumpAerial_Enter_Basic(Fighter_GObj* gobj)
                : ftCo_MS_JumpAerialB;
     vel.x = fp->input.lstick[0].x * co_attrs->air_jump_h_multiplier;
     vel.y =
-        co_attrs->jump_v_initial_velocity * co_attrs->air_jump_v_multiplier;
+        co_attrs->jump_v_initial_velocity * FT_SCRIPT_JUMP(fp, 6, co_attrs->air_jump_v_multiplier);
     vel.z = 0.0F;
     ftCo_800CBAC4(gobj, msid, &vel, true);
 }
@@ -323,6 +323,8 @@ void ftNs_JumpAerial_Phys_Cb(Fighter_GObj* gobj)
     fp->self_vel.x = fp->x6A4_transNOffset.z * fp->facing_dir +
                      fp->mv.co.jumpaerial.init_h_vel;
     ft_800851D0(gobj);
+    /* Animation-driven jumps supply displacement each frame, not an impulse. */
+    fp->self_vel.y = FT_SCRIPT_VALUE(fp, 6, fp->self_vel.y);
 }
 
 void ftCo_JumpAerial_Phys_Cb(Fighter_GObj* gobj)
@@ -330,6 +332,8 @@ void ftCo_JumpAerial_Phys_Cb(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     ftCommon_CalcSelfAccel_Drift(fp);
     ft_800851D0(gobj);
+    /* Animation-driven jumps supply displacement each frame, not an impulse. */
+    fp->self_vel.y = FT_SCRIPT_VALUE(fp, 6, fp->self_vel.y);
 }
 
 void ftCo_JumpAerial_Coll(Fighter_GObj* gobj)

@@ -211,3 +211,9 @@ static void gs_shader_perf(lua_State *L)
     gs_setnum(L, "uniform_bytes", (double)p.uniform_bytes); gs_setnum(L, "vertex_bytes", (double)p.vertex_bytes);
     gs_setnum(L, "record_ms", p.record_ms); lua_setfield(L, -2, "shaders");
 }
+
+static int l_post_ready(lua_State *L) {
+    int result=gw_Post_Ready(gs_shader_owner(),gs_stage_handle_arg(L,1));
+    if(result<0)return gs_shader_error(L,"post handle expired or belongs to another script");
+    lua_pushboolean(L,result>0);return 1;
+}

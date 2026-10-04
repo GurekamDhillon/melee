@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 /*
  * geno_lab_mode.c - LAB, the Geno Lab's own game mode (private, Geno build). See geno_lab_mode.h.
  *
@@ -332,6 +333,7 @@ static void fly_cursor_pulse(Fighter* fp, FlyCursor* c)
     h->x42_b5 = 1; h->x42_b7 = 1; /* native fighter AND item target eligibility */
     h->b_offset = fp->cur_pos;
     h->x4C = h->x58 = fp->cur_pos;
+    ScriptGame_HitRuleCreate(fp,h,0);
     fp->x206C_attack_instance = plStale_IncrementAttackInstance();
     if (c->pulses < 0x7FFFFFFF) ++c->pulses;
 }

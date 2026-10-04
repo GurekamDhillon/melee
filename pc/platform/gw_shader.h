@@ -13,6 +13,7 @@ int gw_Shader_Set(int owner, int shader, const char *params_json, char *error, i
 int gw_Shader_Status(int owner, int shader, char *error, int cap);
 int gw_Post_Add(int owner, int shader, int order, int stage, int half, int owns_shader, char *error, int cap);
 int gw_Post_Set(int owner, int handle, const char *params_json, char *error, int cap);
+int gw_Post_Ready(int owner, int handle);
 int gw_Post_Remove(int owner, int handle);
 /* Director-owned pass: survives script post_clear, until explicit removal. */
 void gw_Post_Protect(int owner, int handle);

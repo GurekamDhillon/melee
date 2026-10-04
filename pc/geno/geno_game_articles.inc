@@ -374,6 +374,7 @@ static void geno_art_hitbox_on(Item_GObj* gobj, Item* ip, int p, int a, int h, i
         it_8026FCF8(ip, hit);
     }
     hit->jobj = gobj->hsd_obj;
+    ScriptGame_HitRuleForget(hit);
     it_80272460(hit, (u32) (ip->xC3C * ((dmg + 0.5f) * ip->xC40)), gobj);
     hit->scale = geno_art_hf(p, a, h, GENO_AH_SIZE);
     ip->x3C = hit->scale;
@@ -410,6 +411,7 @@ static void geno_art_hitbox_on(Item_GObj* gobj, Item* ip, int p, int a, int h, i
     hit->x43_b0 = 0;
     hb->x138 = 1;
     hit->x43_b2 = 0;
+    ScriptGame_HitRuleItemCreate(ip, hit);
     if (HSD_GObj_CurrentInvokedProc != NULL && HSD_GObj_CurrentInvokedProc->s_link > 11) {
         it_8027129C(gobj, slot);
     }

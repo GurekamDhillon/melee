@@ -8,7 +8,9 @@ local function fixture(engine)
   data_write_atomic=function(_,v) if s.disk then return false,'disk refused' end;s.writes=s.writes+1;s.text=v;return true end,
   match=function() return {active=true,netplay=false} end,player=function() return {} end,
   pad=function() return s.pad end,input_mask=function() end,paused=function() return false end,
-  pause=function() s.paused=true end,resume=function() s.paused=false end}
+  pause=function() s.paused=true end,resume=function() s.paused=false end,
+  fx_world=function(name) s.fx=(s.fx or 0)+1;s.fx_name=name;return s.fx end,
+  fx_move=function() end,fx_control=function() end,fx_end=function() end}
  if engine then
   g.mode_1p=function() return s.mode end;g.start_1p=function(v) s.launch=v;return true end
   g.spawn_1p=function(p,v) s.mods[p]=v;return true end;g.loop_1p=function(v) s.loop=v;return true end;g.end_1p=function() s.ended=true;return true end
@@ -57,5 +59,44 @@ T.test('final reward timeout becomes terminal win and exposes refused save retry
  a:retail_event('stage_clear',s.mode);a:retail_event('complete',s.mode);s.disk=true;s.mode.held=false;a:tick()
  assert(not a.retail.active and not a.retail.awaiting_loop and a.retail.pending and a.menu.screen=='results')
  s.disk=false;s.pad={A=true};a:tick();assert(not a.retail.pending and a.run.profile.records.wins==1)
+end)
+T.test('retail results returns asset-free menu without scene or mission launch',function()
+ local s,a=fixture(true);assert(a:command('start'));a:retail_event('game_over',s.mode)
+ local launches=0;a.mission.command=function() launches=launches+1;error('asset-free return must not launch garden') end
+ a:menu_effect(a.menu:input('accept',a:context()))
+ assert(a.menu.screen=='hub' and a.visible and not a.hub.active and launches==0)
+ assert(a.menu:entries(a:context())[1].target=='setup')
+end)
+T.test('retail reward invokes existing juice and visual once after save success',function()
+ local s,a=fixture(true);assert(a:command('start'));a:retail_event('stage_clear',s.mode)
+ local sounds,pulses=0,0;s.a.g.play_sound=function(id) assert(id==170 or id==250);sounds=sounds+1 end
+ a.visual.pickup=function() pulses=pulses+1 end
+ s.disk=true;a:menu_effect{type='reward',index=1};assert(sounds==0 and pulses==0 and not s.fx)
+ s.disk=false;a:menu_effect{type='reward',index=1};assert(sounds==1 and pulses==1 and next(a.flashes) and s.fx==1 and s.fx_name:find('collect_burst',1,true))
+ a:menu_effect{type='reward',index=1};assert(sounds==1 and pulses==1 and s.fx==1)
+end)
+T.test('garden is offered only after model resolution and spawn refusal returns menu',function()
+ local s,a=fixture(true);a.menu:show('hub');assert(a:enter_hub());assert(not a:context().garden_available)
+ local releases=0;s.a.g.model_load=function() return 77 end;s.a.g.model_release=function() releases=releases+1;return true end
+ assert(a.hub:resolve() and a.hub.asset==77);a.hub:clear();assert(releases==1)
+ a.hub.active=true;a.hub.waiting=true;a.mission.current={doc={name='hub'}};a.g.model_spawn=function() return false end;a.mission.stop=function() s.stopped=true end
+ a:frame();assert(a.menu.screen=='hub' and not a.hub.active and s.stopped and not a.garden_available)
+end)
+T.test('stage tag and opponent marker draw in rolled colour plus Guard hit flash',function()
+ local s,a=fixture(true);assert(a:command('start'));a:retail_event('stage_start',s.mode)
+ local texts={};a.g.kit={available=function() return true end,panel=function() end,text=function(_,_,label,_,colour) texts[#texts+1]={label=label,colour=colour} end}
+ a.g.safe_area=function() return {x=0,y=0,w=960,h=540,right=960} end;a.g.fill=function() end
+ a.g.player=function() return {x=0,y=0} end;a.g.project=function() return 100,100,true end
+ a.retail.guard_flash=12;a:draw();local marker,guard=false,false
+ for _,v in ipairs(texts) do if v.label==a.retail.tags[1].label and v.colour==a.retail.tags[1].colour then marker=true end;if v.label=='GUARD' then guard=true end end
+ assert(marker and guard)
+end)
+T.test('final acknowledged reward returns menu even with resolved garden',function()
+ local s,a=fixture(true);assert(a:command('start'));s.mode.final=true
+ a:retail_event('stage_clear',s.mode);a:retail_event('complete',s.mode);a:menu_effect{type='reward',index=1}
+ local ngplus=D.companion.tuning.retail.ngplus;D.companion.tuning.retail.ngplus=false;a:menu_effect{type='reward_done'};D.companion.tuning.retail.ngplus=ngplus
+ assert(a.menu.screen=='results' and not a.retail.active)
+ a.g.model_load=function() return 77 end;a.mission.command=function() error('return menu must not enter resolved garden') end
+ a:menu_effect(a.menu:input('accept',a:context()));assert(a.menu.screen=='hub' and not a.hub.active)
 end)
 T.done()

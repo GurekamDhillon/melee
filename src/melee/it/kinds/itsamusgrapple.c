@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 #include "itsamusgrapple.h"
 
 #include <melee/ft/forward.h>
@@ -185,6 +186,9 @@ void it_802B7160(Fighter_GObj* gobj, itSamusGrapple_HitboxData* data)
     }
     damage_arg = *damage;
     damage_arg &= 0x3FF;
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleForget(hitbox);
+#endif
     ftColl_8007ABD0(hitbox, damage_arg, gobj);
     hitbox->scale = data->create_hitbox.create_hitbox_1.size * 0.003906f;
     hitbox->b_offset.x =
@@ -225,6 +229,9 @@ void it_802B7160(Fighter_GObj* gobj, itSamusGrapple_HitboxData* data)
     hitbox->x42_b1 = 1;
     hitbox->x42_b2 = 0;
     hitbox->x43_b2 = 0;
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleCreate(fp,hitbox,0);
+#endif
 }
 
 void it_802B743C(HSD_GObj* gobj, Item* ip, s32 type)

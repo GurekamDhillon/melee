@@ -1,0 +1,10 @@
+{
+  "id": "demo_event_shield_hit",
+  "name": "on_shield_hit event",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

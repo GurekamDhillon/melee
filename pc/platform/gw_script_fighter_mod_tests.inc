@@ -13,9 +13,11 @@ static int test_script_fighter_mod(void) {
                "assert(not ok and tostring(e):find(s,1,true),tostring(e)) end; "
                "reject({run_speed=0/0},'must be finite'); "
                "reject({damage_taken=math.huge},'must be finite'); "
+               "reject({jump_height=0/0},'must be finite'); "
+               "reject({air_jump_height=math.huge},'must be finite'); "
                "reject({typo=1},'unknown fighter modifier'); "
-               "assert(gd.fighter_mod(1,{run_speed=99,damage_taken=-1})); "
-               "local q=gd.fighter_mod(1); assert(q and q.run_speed==4 and math.abs(q.damage_taken-.1)<.00001); "
+               "assert(gd.fighter_mod(1,{run_speed=99,damage_taken=-1,jump_height=1.3,air_jump_height=1.25,knockback_taken=.8,fall_speed=1.5,weight=2,shield_regen=.5})); "
+               "local q=gd.fighter_mod(1); assert(q.fall_speed==1.5 and q.weight==2 and q.shield_regen==.5); assert(q and q.run_speed==4 and math.abs(q.jump_height-1.3)<.00001 and math.abs(q.air_jump_height-1.25)<.00001 and math.abs(q.knockback_taken-.8)<.00001 and math.abs(q.damage_taken-.1)<.00001); "
                "assert(gd.fighter_mod(1,nil)); assert(gd.fighter_mod(1)==nil)",out,sizeof out);
     gs.match_active=saved_active;
     if (rc) {

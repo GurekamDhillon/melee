@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 #include "ftpurinspecialhi.h"
 
 #include <melee/ft/forward.h>
@@ -72,6 +73,9 @@ void ftPr_SpecialHi_Anim(Fighter_GObj* fighter_gobj)
         fighter->x914[0].state != HitCapsule_Disabled)
     {
         fighter->x914[0].x43_b2 = 1;
+#if defined(TARGET_PC)
+        ScriptGame_HitRuleSpecial(&fighter->x914[0]);
+#endif
         fighter->x914[0].element = HitElement_Sleep;
     }
 
@@ -87,6 +91,9 @@ void ftPr_SpecialAirHi_Anim(Fighter_GObj* fighter_gobj)
         fighter->x914[0].state != HitCapsule_Disabled)
     {
         fighter->x914[0].x43_b2 = 1;
+#if defined(TARGET_PC)
+        ScriptGame_HitRuleSpecial(&fighter->x914[0]);
+#endif
         fighter->x914[0].element = HitElement_Sleep;
     }
     if (!ftAnim_IsFramesRemaining(fighter_gobj)) {

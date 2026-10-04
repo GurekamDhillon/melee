@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 #include <gameworld/profiler_game.h>
 #include "fighter.h"
 
@@ -3501,7 +3502,7 @@ void Fighter_ProcessHit_8006D1EC(Fighter_GObj* gobj)
 #endif
         if (!fp->x221A_b7) {
             if (fp->shield_health < FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth)) {
-                fp->shield_health += p_ftCommonData->x27C;
+                fp->shield_health += FT_SCRIPT_VALUE(fp, 10, p_ftCommonData->x27C);
                 if (fp->shield_health > FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth))
                 {
                     fp->shield_health = FT_SCRIPT_VALUE(fp, 4, p_ftCommonData->x260_startShieldHealth);
@@ -3857,6 +3858,9 @@ void Fighter_Unload_8006DABC(void* user_data)
     HSD_ObjFree(&fighter_dobj_list_alloc_data, fp->dobj_list.data);
     HSD_ObjFree(&fighter_x2040_alloc_data, fp->x203C.data);
     HSD_ObjFree(&fighter_dat_attrs_alloc_data, fp->dat_attrs_backup);
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleRetire(fp,sizeof *fp);
+#endif
     HSD_ObjFree(&fighter_alloc_data, fp);
 }
 

@@ -1,3 +1,4 @@
+#include <gameworld/script_hit_rules.h>
 #include "item.h"
 #if defined(TARGET_PC)
 #include "../../../pc/geno/geno.h" /* GENO_ART_KIND_* */
@@ -1780,7 +1781,7 @@ static bool Item_80269F14(HSD_GObj* gobj)
         {
             if (temp_item->x5D4_hitboxes[i].hit.state != HitCapsule_Disabled) {
                 temp_f30 =
-                    temp_item->x5D4_hitboxes[i].hit.damage * temp_item->xC6C +
+                    ScriptGame_HitRuleBaseDamage(&temp_item->x5D4_hitboxes[i].hit) * temp_item->xC6C +
                     0.99f;
                 var_r27 = temp_f30;
                 if (var_r27 > it_804D6D28->xD8) {
@@ -2262,6 +2263,9 @@ void Item_8026ADC0(HSD_GObj* gobj)
 void Item_OnUserDataRemove(void* user_data)
 {
     Item* item_data = (Item*) user_data;
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleRetire(item_data,sizeof *item_data);
+#endif
 
     if (item_data->xBBC_dynamicBoneTable != NULL) {
         HSD_ObjFree(&item_dynamic_bones_alloc_data,

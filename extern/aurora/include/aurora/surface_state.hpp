@@ -62,6 +62,14 @@ public:
         b = program ? Binding{program, owner, params} : Binding{};
         return true;
     }
+    bool update(unsigned slot, uint32_t owner, const Params& params) {
+        if (!slot || slot >= bindings.size() || !owner) return false;
+        for (float f : params.data) if (!std::isfinite(f)) return false;
+        auto& b = bindings[slot];
+        if (!b.program || b.owner != owner) return false;
+        b.params = params;
+        return true;
+    }
     Binding enter(unsigned slot) {
         if (depth == stack.size()) { ++overflow; return current = {}; }
         stack[depth++] = current;

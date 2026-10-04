@@ -1,21 +1,25 @@
-# Envoy retail 1P menu contract ? 2026-10-03
+# Envoy retail 1P menu contract - 2026-10-04 fix1
 
 This retail contract supersedes the default maze/campaign flow below. The old
 mission flow remains parked for diagnostics; it is not extended by this packet.
 
-- Garden exit and setup default to Classic; Adventure is the second run choice.
+- Asset-free menu and setup default to Classic; Adventure is the second run choice.
   Fighter, difficulty and stocks carry into each NG+ playthrough.
 - A selects a drive reward after each cleared retail stage. Three coloured/size
   choices appear in an existing kit panel; the final clear has a larger reward.
-  The selected reward shows before/after stats and applies immediately. Coloured
+  Each choice states its concrete percentage effect. The selected reward plays
+  existing drive pickup sounds/FX and animates before/after growth across level-ups.
+  It applies after the atomic save succeeds. Coloured
   drive glyphs use existing kit text; retained 3D models have no kit preview API. B cannot
   bypass the reward. A bounded engine hold keeps a broken panel from stranding
   retail progression.
 - Opponent leaning-stat tags appear at stage start. Retail teams, giant/metal
   handicaps and AI levels retain their normal behavior; drive multipliers stack
   with those handicaps. Physical in-stage drive drops default off.
-- The HUD retains Power, Speed, Guard and Jump bars. Jump remains an air-speed
-  bonus until a native jump-height API exists.
+- The HUD retains Power, Speed, Guard and Jump bars. Jump changes ground/air jump
+  height and air speed; Guard reduces damage/knockback and briefly flashes on a hit.
+- Results return to a working menu without assets. The walkable garden appears
+  only after its model resolves; failed spawning returns to the menu.
 - Master Hand completion (Adventure: its own final boss) evolves a young
   companion, then NG+ continues with the same stats and age. Continue retries use
   the same seeded opponent spread. Game over settles growth and returns to results.

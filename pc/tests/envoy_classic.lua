@@ -53,10 +53,10 @@ T.test('seeded opponent spread deterministic normalized and bounded over 1000 ro
  local function total(t) local n=0;for _,k in ipairs(D.companion.stats) do n=n+t[k] end;return n end
  assert(total(team)<total(single) and total(harder)>total(single))
 end)
-T.test('zero and saturated budgets remain centered without clipping bias',function()
+T.test('starter and saturated budgets remain bounded without clipping bias',function()
  local c=D.companion.new();for _,k in ipairs(D.companion.stats) do c.stats[k].points=D.companion.threshold(99);c.stats[k].life_gain=c.stats[k].points;c.stats[k].level=99 end
  for seed=1,1000 do local a=D.classic.roll(c,seed,4,0,2,1);local sum=0;for _,k in ipairs(D.companion.stats) do sum=sum+a[k] end;assert(sum==396) end
- c=D.companion.new();for seed=1,1000 do local a=D.classic.roll(c,seed,4,0,2,1);for _,k in ipairs(D.companion.stats) do assert(a[k]==0) end end
+ c=D.companion.new();for seed=1,1000 do local a=D.classic.roll(c,seed,4,0,2,1);local total=0;for _,k in ipairs(D.companion.stats) do total=total+a[k] end;assert(total>=3 and total<=5) end
 end)
 T.test('retry identical and spawn modifier tint templates clear at terminal',function()
  local s,r=fixture();assert(r:start('classic','mario',2,3,123));r:stage_start(s.mode)
@@ -107,7 +107,7 @@ T.test('Adventure definitive completion offers larger reward after retail Giga d
  local s,r=fixture();assert(r:start('adventure','mario',2,3,123));s.mode.stage_index=11
  r:stage_clear(s.mode);assert(r:pick(1));assert(r:acknowledge())
  r:complete{mode='adventure',stage_index=11,loop=0,final=true}
- assert(r.reward and r.reward.final and r.reward.options[1].points==60 and r.profile.records.wins==0)
+ assert(r.reward and r.reward.final and r.reward.options[1].points==D.companion.tuning.retail.reward_points[1]*D.companion.tuning.retail.final_multiplier and r.profile.records.wins==0)
  assert(r:pick(1));assert(r:acknowledge());assert(r.profile.records.wins==1)
 end)
 T.test('physical drops require confirmed fall and despawn refusals retain cleanup ownership',function()

@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <gameworld/script_hit_rules.h>
+#endif
 #include "ftaction.h"
 
 #include <Runtime/platform.h>
@@ -322,6 +325,9 @@ void ftAction_8007121C(Fighter_GObj* gobj, CommandInfo* cmd)
         } else {
             hitbox->jobj = fp->parts[idx].joint;
         }
+#if defined(TARGET_PC)
+        ScriptGame_HitRuleForget(hitbox);
+#endif
         ftColl_8007ABD0(hitbox, cmd->u->create_hitbox_0.damage, gobj);
         NEXT_CMD(cmd);
         hitbox->scale = 0.003906f * cmd->u->create_hitbox_1.size;
@@ -358,6 +364,9 @@ void ftAction_8007121C(Fighter_GObj* gobj, CommandInfo* cmd)
         hitbox->x42_b1 = 1;
         hitbox->x42_b2 = 0;
         hitbox->x43_b2 = 0;
+#if defined(TARGET_PC)
+        ScriptGame_HitRuleCreate(fp, hitbox, 0);
+#endif
         if ((HSD_GObj_CurrentInvokedProc != NULL) &&
             (HSD_GObj_CurrentInvokedProc->s_link > 9))
         {
@@ -709,6 +718,9 @@ void ftAction_80071E04(Fighter_GObj* gobj, CommandInfo* cmd)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     HitCapsule* hit = &fp->xDF4[cmd->u->set_throw_hitbox_0.idx];
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleForget(hit);
+#endif
     ftColl_8007ABD0(hit, cmd->u->set_throw_hitbox_0.damage, gobj);
     NEXT_CMD(cmd);
 
@@ -721,6 +733,9 @@ void ftAction_80071E04(Fighter_GObj* gobj, CommandInfo* cmd)
     hit->element = cmd->u->set_throw_hitbox_2.element;
     hit->sfx_severity = cmd->u->set_throw_hitbox_2.sfx_severity;
     hit->sfx_kind = cmd->u->set_throw_hitbox_2.sfx_kind;
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleCreate(fp, hit, 0);
+#endif
     NEXT_CMD(cmd);
 }
 

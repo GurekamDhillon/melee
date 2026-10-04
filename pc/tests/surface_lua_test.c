@@ -18,6 +18,9 @@ uint32_t gw_surface_register(const char *source, const char *label, char *error,
 int gw_surface_select(unsigned slot, uint32_t program, unsigned owner, const float *params) {
     assert(owner == 1 && params); ++calls; last_slot = (int)slot; last_id = (int)program; return 1;
 }
+int gw_surface_update(unsigned slot, unsigned owner, const float *params) {
+    assert(owner == 1 && params); return slot == 1;
+}
 static int gs_mission_script_root(char out[MAX_PATH]) {
     return GetFullPathNameA("melee/pc/scripts/examples/surface-shaders", MAX_PATH, out, NULL) < MAX_PATH;
 }
@@ -33,10 +36,14 @@ int main(void) {
     luaL_requiref(L, "_G", luaopen_base, 1); lua_pop(L, 1);
     lua_newtable(L);
     lua_pushcfunction(L, l_fighter_shader); lua_setfield(L, -2, "fighter_shader");
+    lua_pushcfunction(L, l_fighter_shader_set); lua_setfield(L, -2, "fighter_shader_set");
     lua_pushcfunction(L, l_stage_shader); lua_setfield(L, -2, "stage_shader");
     lua_setglobal(L, "gd");
     run(L, "assert(gd.fighter_shader(1, 'shaders/rim-light.wgsl', {params={1,2,3}}))");
     assert(calls == 1 && last_slot == 1 && last_id == 1);
+    run(L, "assert(gd.fighter_shader_set(1,{params={2,3}})); local ok,e=gd.fighter_shader_set(2,{params={}}); assert(ok==nil and e)");
+    run(L, "assert(not pcall(gd.fighter_shader_set,1,{params={1/0}})); assert(not pcall(gd.fighter_shader_set,0,{params={}}))");
+    assert(calls == 1); /* no registration/file selection on parameter updates */
     run(L, "assert(gd.stage_shader('shaders/cel-outline.wgsl'))");
     assert(last_slot == 7);
     run(L, "assert(gd.fighter_shader(1,nil))"); assert(last_id == 0);

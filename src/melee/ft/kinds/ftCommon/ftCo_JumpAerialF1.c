@@ -45,7 +45,7 @@ bool ftCo_800D730C(Fighter_GObj* gobj, bool arg1)
         if (ft_did_jump(fp, arg1)) {
             if (ft_800D2D0C(gobj)) {
                 vel.x = fp->input.lstick[0].x * x2d0->x8;
-                vel.y = x2d0->x14[0];
+                vel.y = FT_SCRIPT_JUMP(fp, 6, x2d0->x14[0]);
                 vel.z = 0.0F;
                 ft_800D2E7C(gobj, &vel);
             } else {
@@ -125,6 +125,7 @@ void ftCo_800D74A4(Fighter_GObj* gobj)
         msid2 = geno_msid;
     }
 #endif
+    vel.y = FT_SCRIPT_JUMP(fp, 6, vel.y);
     ftCo_800CBAC4(gobj, msid2, &vel, false);
     if ((fp->input.lstick[0].x * fp->facing_dir) < -p->x4) {
         *(s32*) &fp->mv.ca.specials.grav = p->x0;

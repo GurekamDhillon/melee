@@ -173,6 +173,9 @@ static Article* script_target_old_article;
 #include "script_arena.inc"
 #include "script_camera_params.inc"
 #include "script_fighter_mod.inc"
+#include "script_sim_state.inc"
+#include "script_hit_context.inc"
+#include "script_hit_rules.inc"
 #include "script_1p.inc"
 void ScriptGame_FighterBenchRelease(int owner);
 static void script_bench_frame(void);
@@ -201,6 +204,8 @@ void ScriptGame_StageEnd(void)
     int i;
     ScriptGame_CameraParamsRelease(0);
     ScriptGame_FighterModsRelease(0);
+    ScriptGame_SimRelease(0);
+    ScriptGame_HitRulesRelease(0);
     ScriptGame_FighterBenchRelease(0);
     /* arena-hooks: no scene's ownership or transition can survive teardown. */
     memset(&script_arena, 0, sizeof script_arena);
@@ -2861,10 +2866,6 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
     if (fp == NULL || (from_slot >= 0 && from == NULL)) {
         return 0;
     }
-    applied=ScriptGame_FighterDealtDamage(from,applied);
-    if (!ftColl_80076640(fp, &applied)) {
-        return 0;
-    }
     hit.damage = applied;
     hit.unk_count = (u32) applied;
     hit.kb_angle = angle;
@@ -2872,9 +2873,12 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
     hit.x28 = 0;
     hit.x2C = bkb;
     hit.element = HitElement_Normal;
+    ScriptGame_HitRuleCreate(from,&hit,0);
+    applied=ScriptGame_HitRuleContact(&hit,fp,ScriptGame_FighterDealtDamage(from,hit.damage),0);
+    if (!ftColl_80076640(fp,&applied)) {ScriptGame_HitRuleForget(&hit);return 0;}
     entry.pos = fp->cur_pos;
     entry.x20 = applied;
-    entry.size_of_xC = (size_t) applied;
+    entry.size_of_xC = (size_t) hit.unk_count;
     if (from != NULL) {
         entry.x0 = 1; /* ftColl_80076ED8: fighter hitbox against fighter hurtbox */
         entry.kind = from->kind;
@@ -2898,7 +2902,9 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
         extern void ftColl_8007A06C(Fighter_GObj*, void*, void*, size_t, int);
         ftColl_8007A06C(fp->gobj, &fp->dmg.facing_dir_1, &entry, 1, 0);
     }
+    ScriptGame_HitRuleWon(&hit,fp);
     Fighter_ProcessHit_8006D1EC(fp->gobj);
+    ScriptGame_HitRuleForget(&hit);
     OSReport("script: hit victim=%d from=%d damage=%d angle=%d kbg=%d bkb=%d percent=%d\n",
              slot + 1, from_slot + 1, damage, angle, kbg, bkb,
              (int) fp->dmg.x1830_percent);

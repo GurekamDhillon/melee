@@ -46,8 +46,14 @@ return function(D)
   elseif s.screen=='reward' then
    local r=c.reward or {};text(r.final and 'FINAL CLEAR / larger drive reward' or 'STAGE CLEAR / choose a drive',65)
    if r.preview then
-    for i,name in ipairs(stats) do local b=(r.before or {})[name] or {};local v=(r.after or {})[name] or {}
-     text(label(name)..': '..val(b.grade)..' -> '..val(v.grade)..' | L'..val(b.level)..' -> L'..val(v.level)..' | points '..val(b.points)..' -> '..val(v.points),80+i*26)
+    for i,name in ipairs(stats) do
+     local v,fraction,current,needed,moment=D.hud.stat_view({stats=r.after or {}},name,r)
+     local dy=76+i*34;local bar=w-40
+     local progress=needed==0 and 'MAX' or tostring(current)..'/'..tostring(needed)
+     text(label(name)..' '..val(v.grade)..' L'..val(v.level)..' '..progress..(moment and ' LEVEL UP!' or ''),dy,moment and 0xEBD175FF or 'bone')
+     g.fill(x+20,y+dy+7,bar,5,0x44525CFF)
+     g.fill(x+20,y+dy+7,bar*fraction,5,D.hud.colours[({'red','green','blue','yellow'})[i]])
+     if moment then g.fill(x+20,y+dy+6,bar,7,0xEBD17560) end
     end
     list_y=y+250;list_h=80
    else

@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <gameworld/script_hit_rules.h>
+#endif
 #include "ftcoll.h"
 
 #include <Runtime/platform.h>
@@ -455,6 +458,14 @@ static inline bool ftColl_8007699C_dontinline(Fighter* fp0, HitCapsule* hit0,
 void ftColl_80076CBC(Fighter* fp0, HitCapsule* hit0, Fighter* fp1)
 {
     ftColl_80076808(fp0, hit0, 1, fp1, false);
+#if defined(TARGET_PC)
+    {
+        /* Real shield collision, including repeated contacts during shield stun. */
+        extern void Script_GameEvent(int,int,int,int,int);
+        Script_GameEvent(16,fp1->player_id,fp1->motion_id,7,fp1->is_sub_fighter);
+        if (fp1->x221C_b2) Script_GameEvent(16,fp1->player_id,fp1->motion_id,8,fp1->is_sub_fighter);
+    }
+#endif
 
     {
         int int_dmg = getEnvDmg(hit0->damage);
@@ -585,7 +596,7 @@ static inline float inlineB3(Fighter* fp0, HitCapsule* hit0, Fighter* fp1)
 #if defined(TARGET_PC)
     {
         /* Thrown-body attacks belong to the thrower, like tiplog below. */
-        return ScriptGame_FighterDealtDamage(fp0,ret * fp1->dmg.x182c_behavior);
+        return ScriptGame_HitRuleContact(hit0,fp1,ScriptGame_FighterDealtDamage(fp0,ret * fp1->dmg.x182c_behavior),0);
     }
 #else
     return ret * fp1->dmg.x182c_behavior;
@@ -734,6 +745,7 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                     int idx = (int) (hit0 - fp0->x914);
                     extern void Geno_HitStunBonus(Fighter * atk, int idx, Fighter * vic);
                     extern int Geno_HitFlags(Fighter * atk, int idx, Fighter * vic);
+                    ScriptGame_HitRuleWon(hit0, fp1);
                     Geno_HitStunBonus(fp0, idx, fp1); /* v5.5: extra hitstun from this hitbox, if any */
                     if (Geno_HitFlags(fp0, idx, fp1) & 4 /* GENO_HBF_ZERO_DAMAGE */) {
                         fp1->dmg.x1838_percentTemp -= dmg; /* a detector: the hit registers, adds nothing */
@@ -747,6 +759,8 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                                          (fp0->is_sub_fighter ? 0x100 : 0) |
                                          (fp1->is_sub_fighter ? 0x200 : 0),
                                      bits.i);
+                    ScriptGame_ReportHitContext(fp0,fp1,hit0->element,0);
+                    ScriptGame_HitRuleContext(hit0,fp1);
                 }
 #endif
                 ftColl_8007891C(fp0->gobj, fp1->gobj, dmg);
@@ -886,6 +900,13 @@ void ftColl_80077464(Item* item, HitCapsule* hit, Fighter* fp)
 void ftColl_80077688(Item* item, HitCapsule* hurt, Fighter* fp, Vec3* pos,
                      f32 val)
 {
+#if defined(TARGET_PC)
+    {
+        extern void Script_GameEvent(int,int,int,int,int);
+        Script_GameEvent(16,fp->player_id,fp->motion_id,7,fp->is_sub_fighter);
+    }
+#endif
+
     int dmg;
     int mode;
     PAD_STACK(24);
@@ -1208,7 +1229,7 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
 #if defined(TARGET_PC)
         {
             extern float ScriptGame_ItemModDamage(Item* item, float damage);
-            scaled_dmg = ScriptGame_ItemModDamage(item, scaled_dmg);
+            scaled_dmg = ScriptGame_HitRuleContact(hit,fp,ScriptGame_ItemModDamage(item, scaled_dmg),0);
         }
 #endif
 
@@ -1397,6 +1418,7 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                     }
                     {
                         extern void Geno_ArticleStunBonus(Item * item, HitCapsule * hit, Fighter * vic);
+                        ScriptGame_HitRuleWon(hit, fp);
                         Geno_ArticleStunBonus(item, hit, fp); /* v5.5: a Geno article's extra hitstun */
                     }
                     bits.f = scaled_dmg;
@@ -1408,6 +1430,8 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                         int flags = 0xFF | 0x400 | (fp->is_sub_fighter ? 0x200 : 0);
                         if (enemy) Script_EnemyGameEvent(enemy, owner, fp->player_id, flags, bits.i, 0);
                         else Script_GameEvent(2 /* LAB_EV_HIT */, owner, fp->player_id, flags, bits.i);
+                        ScriptGame_ReportHitContext(owner<0 ? NULL : GET_FIGHTER(item->owner),fp,hit->element,1);
+                        ScriptGame_HitRuleContext(hit,fp);
                     }
                 }
 #endif
@@ -2457,13 +2481,13 @@ float ftColl_80079AB0(Fighter* fp, HitCapsule* hit, u32 unk_count, float arg3,
         result = ftd->x108;
     }
 
-    return result;
+    return FT_SCRIPT_VALUE(fp, 7, result);
 }
 
 float ftColl_80079C70(Fighter* fp, Fighter* attacker, HitCapsule* hit,
                       int unk_count)
 {
-    float weight = fp->co_attrs.weight;
+    float weight = FT_SCRIPT_VALUE(fp, 9, fp->co_attrs.weight);
     float defense = Player_GetDefenseRatio(fp->player_id);
     float attack = Player_GetAttackRatio(attacker->player_id);
     float stage = gm_8016B248();
@@ -2525,7 +2549,12 @@ float ftColl_80079C70(Fighter* fp, Fighter* attacker, HitCapsule* hit,
         result = ftd->x108;
     }
 
-    return result;
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleWon(hit,fp);
+    return ScriptGame_HitRuleContact(hit,fp,FT_SCRIPT_VALUE(fp,7,result),1);
+#else
+    return FT_SCRIPT_VALUE(fp, 7, result);
+#endif
 }
 
 float ftColl_80079EA8(Fighter* fp, HitCapsule* hit, u32 unk_count)
@@ -2533,7 +2562,7 @@ float ftColl_80079EA8(Fighter* fp, HitCapsule* hit, u32 unk_count)
     ftCommonData* ftd = p_ftCommonData;
     float decay;
     float result;
-    float w = fp->co_attrs.weight;
+    float w = FT_SCRIPT_VALUE(fp, 9, fp->co_attrs.weight);
     w *= ftd->xF4;
 
     if (hit->x28 != 0) {
@@ -2565,7 +2594,7 @@ float ftColl_80079EA8(Fighter* fp, HitCapsule* hit, u32 unk_count)
         result = ftd->x108;
     }
 
-    return result;
+    return FT_SCRIPT_VALUE(fp, 7, result);
 }
 
 #ifdef MUST_MATCH
@@ -2639,7 +2668,7 @@ void ftColl_8007A06C(Fighter_GObj* gobj, void* dmg_ptr, void* log, size_t idx,
             kb = ftColl_80079AB0(fp, hit, unk_count, gm_8016B248(),
                                  Player_GetAttackRatio(attacker_fp->player_id),
                                  Player_GetDefenseRatio(fp->player_id),
-                                 co->weight);
+                                 FT_SCRIPT_VALUE(fp, 9, co->weight));
 
             if (arg4 != 0) {
                 u32 u_dmg = (u32) entry->x20;
@@ -2856,6 +2885,9 @@ void ftColl_8007A06C(Fighter_GObj* gobj, void* dmg_ptr, void* log, size_t idx,
             break;
         }
 
+#if defined(TARGET_PC)
+        if(entry->x0==1 || entry->x0==2) kb=ScriptGame_HitRuleContact(entry->hit0,fp,kb,1);
+#endif
         if (kb > best_kb.v) {
             if (entry->x0 == 1 && fp->victim_gobj != NULL && !fp->x221B_b5 &&
                 fp->victim_gobj == entry->gobj)
@@ -3051,6 +3083,9 @@ void ftColl_8007ABD0(HitCapsule* arg0, u32 arg1, Fighter_GObj* arg2)
     arg0->unk_count = (u32) (s32) scaled_dmg;
     arg0->damage = ft_80089228(fp, fp->x2068_attackID,
                                (s32) fp->x206C_attack_instance, scaled_dmg);
+#if defined(TARGET_PC)
+    ScriptGame_HitRuleDamage(arg0);
+#endif
 }
 
 bool ftColl_8007AC68(u32 kb_angle)

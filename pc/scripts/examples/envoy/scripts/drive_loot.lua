@@ -5,6 +5,8 @@ return function(D)
  L.max_merges=3
  L.implicit_families=D.mod_budget.implicit_families
  L.implicits={red={damage_dealt=1.08},green={run_speed=1.08,air_speed=1.08},blue={knockback_taken=.92},yellow={jump_height=1.08},purple={status_duration=1.2},white={}}
+ -- The depth a record opens at now (mod_tuning.min_depth_cap lowers it for the technique drives; validation accepts the lowest, so a switch never invalidates a held drive).
+ local function md(m) return D.mod_tuning and D.mod_tuning.min_depth(m) or m.min_depth end
  local function integer(n) return type(n)=='number' and n==math.floor(n) and n>=0 and n<=2147483646 end
  local function keys(t,allowed) for k in pairs(t) do assert(allowed[k],'unknown record field '..tostring(k)) end end
  function L.new(pool,config)
@@ -23,9 +25,11 @@ return function(D)
   local state=(seed*104729)%2147483646+1
   return function(n) state=(state*16807)%2147483647;return (state-1)/2147483646*n end
  end
- function L:roll(seed,depth,forced,loop)
+ -- `bias` (optional): id -> weight multiplier for this one roll (connecting offers pull partners of held pieces; nothing else about the seed changes).
+ function L:roll(seed,depth,forced,loop,bias)
   local context=D.mod_progression.context(depth,loop);depth=context.depth
   assert(integer(seed) and integer(depth),'invalid seed/depth');local rand=rng(seed)
+  local function wt(m) return m.weight*((self.config.affix_weights or {})[m.id] or 1)*(bias and bias[m.id] or 1) end
   local rarity=forced and string.lower(forced)
   if not rarity then
    local weights=self.config.rarity_weights or (self.config.ungated and {common=60,magic=28,rare=10,unique=2}) or D.mod_progression.rarity_weights(context);local total=0
@@ -46,7 +50,7 @@ return function(D)
    local redraw;local groups={};local floor=1+math.floor(D.mod_progression.effective(context)/(self.config.tier_depth or 5))
    local function affix(kind)
     local choices,total={},0
-    for _,m in ipairs(self.normal) do if not groups[m.group] and (not kind or m.affix==kind) then choices[#choices+1]=m;local w=m.weight*((self.config.affix_weights or {})[m.id] or 1);assert(type(w)=='number' and w==w and w>0 and w<1e9,'invalid affix weight');total=total+w end end
+    for _,m in ipairs(self.normal) do if not groups[m.group] and (not kind or m.affix==kind) then choices[#choices+1]=m;local w=wt(m);assert(type(w)=='number' and w==w and w>0 and w<1e9,'invalid affix weight');total=total+w end end
     assert(total>0,'pool exhausted')
     -- A record with a minimum depth (the technique modifiers) is drawn from the same weighted list as every other. While it is
     -- still too early for it, the pick is redrawn from the records that are open, using a stream of its own (the seed's main
@@ -54,11 +58,11 @@ return function(D)
     local effective=D.mod_progression.effective(context);local chosen
     do
      local pick=rand(total)
-     for _,m in ipairs(choices) do pick=pick-m.weight*((self.config.affix_weights or {})[m.id] or 1);if pick<0 then chosen=m;break end end
-     if chosen and chosen.min_depth and effective<chosen.min_depth then
-      local open,sum={},0;for _,m in ipairs(choices) do if not m.min_depth or effective>=m.min_depth then open[#open+1]=m;sum=sum+m.weight*((self.config.affix_weights or {})[m.id] or 1) end end
+     for _,m in ipairs(choices) do pick=pick-wt(m);if pick<0 then chosen=m;break end end
+     if chosen and chosen.min_depth and effective<md(chosen) then
+      local open,sum={},0;for _,m in ipairs(choices) do if not m.min_depth or effective>=md(m) then open[#open+1]=m;sum=sum+wt(m) end end
       assert(sum>0,'pool exhausted');redraw=redraw or rng(seed+7919);local p2=redraw(sum);chosen=nil
-      for _,m in ipairs(open) do p2=p2-m.weight*((self.config.affix_weights or {})[m.id] or 1);if p2<0 then chosen=m;break end end
+      for _,m in ipairs(open) do p2=p2-wt(m);if p2<0 then chosen=m;break end end
       chosen=chosen or open[#open]
      end
     end
@@ -87,7 +91,7 @@ return function(D)
     -- A merge (drive_merge.lua) may lift a modifier above its depth tier, at most one tier per merge.
     assert(a.tier>=base and a.tier<=base+merged,'tier does not match depth') end
    assert(m.kind=='normal' or (r.rarity=='unique' and m.id==r.unique and m.kind=='unique'),'non-loot affix')
-   assert(not m.min_depth or D.mod_progression.effective(context)>=m.min_depth,'modifier is not available at this depth')
+   assert(not m.min_depth or D.mod_progression.effective(context)>=(D.mod_tuning and D.mod_tuning.min_depth_floor(m) or m.min_depth),'modifier is not available at this depth')
    local group=m.group or m.id;assert(not groups[group],'duplicate group');groups[group]=true;n=n+1
    if m.affix=='prefix' then prefix=prefix+1 elseif m.affix=='suffix' then suffix=suffix+1 end
   end

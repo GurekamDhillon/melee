@@ -86,7 +86,8 @@ T.test('crit: none by default; chance, multiplier, tag slot, percent floor and n
  assert(engine({}):crit_config(1)==nil)
  local e=engine({keen=3,brutal=3,ruthless=1})
  local c=e:crit_config(1);assert(c and c.min_percent==0)
- assert(math.abs(c.slots.default.chance-.075)<1e-9 and math.abs(c.slots.default.mean-(1.5+.375))<1e-9 and c.slots.default.multiplier<c.slots.default.mean and c.slots.default.multiplier_max>c.slots.default.mean,c.slots.default.mean)
+ assert(math.abs(c.slots.default.chance-(.075+.03))<1e-9 -- Brutal now carries a 3% chance of its own
+ and math.abs(c.slots.default.mean-(1.5+.375))<1e-9 and c.slots.default.multiplier<c.slots.default.mean and c.slots.default.multiplier_max>c.slots.default.mean,c.slots.default.mean)
  assert(c.slots.aerial and c.slots.aerial.chance>c.slots.default.chance and c.slots.aerial.mean>=1.6)
  local f=engine({finishing=1});assert(f:crit_config(1).min_percent==100)
  local n=engine({wave_edge=3});local cn=n:crit_config(1);assert(cn and cn.slots.default.chance==0 and cn.slots.default.mean>=1.8,'a forced-crit rule needs a configuration to exist')

@@ -1,6 +1,6 @@
 // Real GX surface composite: two equipment bands first, then seven status treatments.
 // params: seconds,intensity,burn,shock / chill,curse,haste,guarded /
-// momentum,equip1 look+hue,equip1 strength,equip2 look+hue / equip2 strength,guard flash,combined hue,combined strength.
+// momentum,equip1 look+hue,equip1 strength,equip2 look+hue / equip2 strength,ARCHETYPE (index + level*0.99; 0 = none),combined hue,combined strength.
 fn em1_hue(h: f32) -> vec3f {
     return clamp(abs(fract(vec3f(h) + vec3f(0.0, 0.666667, 0.333333)) * 6.0 - 3.0) - 1.0, vec3f(0.0), vec3f(1.0));
 }
@@ -53,6 +53,33 @@ fn em1_equipment(encoded: f32, base: vec3f, s: GdSurfaceInput, rim: f32, t: f32)
     }
     return mix(treatment, em1_hue(fract(encoded)), 0.25);
 }
+fn em1_arch_colour(id: u32) -> vec3f {
+    switch id {
+        case 1u: { return vec3f(1.0, 0.29, 0.16); }   // Burn stacking: ember
+        case 2u: { return vec3f(0.50, 0.84, 1.0); }   // Chill stacking: ice
+        case 3u: { return vec3f(0.13, 0.90, 0.90); }   // Shock chain: electric cyan
+        case 4u: { return vec3f(1.0, 0.69, 0.12); }   // Momentum speed: amber
+        case 5u: { return vec3f(0.36, 0.94, 0.30); }  // Haste web: green
+        case 6u: { return vec3f(0.30, 0.48, 1.0); }   // Guard and heal: royal blue
+        case 7u: { return vec3f(1.0, 0.25, 0.64); }   // Technique crit: magenta
+        case 8u: { return vec3f(0.65, 0.49, 1.0); }  // Passive crit: violet
+        default: { return vec3f(0.78, 0.82, 0.86); }  // Armour retaliation: steel
+    }
+}
+// The motif of an assembled archetype: a faint pattern over the model (0..1). Subtle by design: the rim carries most of it.
+fn em1_arch_pattern(id: u32, s: GdSurfaceInput, t: f32) -> f32 {
+    switch id {
+        case 1u: { return pow(0.5 + 0.5 * sin(s.uv0.y * 14.0 - t * 4.0 + sin(s.uv0.x * 7.0 + t) * 2.0), 3.0); }
+        case 2u: { return step(0.86, fract(s.uv0.x * 7.0 + s.uv0.y * 5.0)) + 0.5 * step(0.9, fract(s.uv0.x * 5.0 - s.uv0.y * 7.0)); }
+        case 3u: { return pow(0.5 + 0.5 * sin(s.uv0.y * 26.0 + sin(s.uv0.x * 11.0 + t * 7.0) * 3.0), 10.0); }
+        case 4u: { return step(0.78, fract(s.uv0.y * 5.0 - abs(s.uv0.x - 0.5) * 3.0 - t * 0.5)); }
+        case 5u: { return step(min(abs(fract(s.uv0.x * 6.0 + s.uv0.y * 6.0) - 0.5), abs(fract(s.uv0.x * 6.0 - s.uv0.y * 6.0) - 0.5)), 0.07); }
+        case 6u: { let f = abs(fract(s.uv0 * vec2f(4.0, 6.0)) - vec2f(0.5)); return step(0.44, max(f.x, f.y)); }
+        case 7u: { return step(abs(fract(length(s.uv0 - vec2f(0.5)) * 8.0 - t * 0.3) - 0.5), 0.1); }
+        case 8u: { return step(0.965, fract(sin(dot(floor(s.uv0 * 40.0), vec2f(12.9898, 78.233))) * 43758.5 + t * 0.5)); }
+        default: { return step(0.7, fract(s.uv0.x * 10.0 + abs(fract(s.uv0.y * 3.0) - 0.5) * 2.0)); }
+    }
+}
 fn gd_surface(base: vec4f, s: GdSurfaceInput) -> vec4f {
     let p = s.params;
     let t = p[0].x; // explicit logic clock; never s.time (host time)
@@ -84,7 +111,7 @@ fn gd_surface(base: vec4f, s: GdSurfaceInput) -> vec4f {
             case 2u: { value = p[1].x; color = em1_chill(rgb, s, rim); }
             case 3u: { value = p[1].y; color = em1_curse(rim); }
             case 4u: { value = p[1].z; color = em1_haste(s, t); }
-            case 5u: { value = p[1].w; color = em1_guard(s, rim, p[3].y); }
+            case 5u: { value = p[1].w; color = em1_guard(s, rim, 0.0); }
             default: { value = p[2].x; color = em1_momentum(s, value, 0.0); }
         }
         if (value > 0.0) {
@@ -103,6 +130,17 @@ fn gd_surface(base: vec4f, s: GdSurfaceInput) -> vec4f {
             if (shown < 3u) { rgb = rgb + color * rim * clamp(value, 0.0, 1.0) * intensity * 0.30; }
             shown = shown + 1u;
         }
+    }
+    // An assembled archetype (lane 14): a persistent, subtle motif in its colour, stronger while its chain fires. Never a trail, never an afterimage.
+    let arch = p[3].y;
+    if (arch >= 1.0) {
+        let aid = u32(floor(arch));
+        let level = clamp(fract(arch) / 0.99, 0.0, 1.0);
+        let acol = em1_arch_colour(aid);
+        let pattern = clamp(em1_arch_pattern(aid, s, t), 0.0, 1.0);
+        let wash = clamp(level * (0.16 + 0.34 * rim) + pattern * level * 0.55, 0.0, 0.72);
+        rgb = mix(rgb, acol * (0.75 + 0.25 * rim), wash * intensity);
+        rgb = rgb + acol * rim * level * 0.45 * intensity;
     }
     return vec4f(clamp(rgb, vec3f(0.0), vec3f(1.0)), base.a);
 }

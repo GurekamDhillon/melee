@@ -30,6 +30,7 @@ return function(D)
   local self=setmetatable({g=g,mods=mods,retail=retail,running=false,fell={},rolls={},stage=0,loop=0,drops=0,since=0,
    offers={},key_offers={},decide={},deferred={},new_keys={},kos=0,hurt={},dropped={},foe_ports={},stage_kind='battle',faded={},seen_slots=nil,seen_keys=nil,seen_tier=nil,seen_loop=nil,rolled={}},H)
   self.screen=D.run_screen.new(g,self);self.hud=D.run_hud.new(g,self)
+  self.synfx=D.synergy_fx and D.synergy_fx.new(g,self)
   if mods.drives then
    mods.drives.opener=function() if self.running then self.screen:open('bag') end end
    mods.drives.on_pickup=function(r) self:picked_up(r) end
@@ -63,6 +64,26 @@ return function(D)
    self.stage=self.stage or 0;if (a or '')=='keys' then self.key_offers=D.keystones.offer(D.mod_progression.context(10,0),77,3,self:keystone_ids()) end
    self.screen:open('reward');self.screen.preview=true;return true
   end,'test hook: open the reward grid with real offers: uxpreview [keys]')
+  -- Test hooks for synergy captures: `uxgive <id> [id...]` gains one single-modifier drive per record id through the pickup rule (the real rules, an artificial
+  -- trigger); `uxoffer <id> [id...]` opens the reward grid with those single-modifier drives as the offer. A record that is not open at this depth is refused by the loot rules.
+  local function made(self,id,n)
+   local d=self.mods.drives;local ctx=self.mods.engine.context;local m=d.loot.rules[id];if not m or m.kind~='normal' then return nil,'unknown drive record '..tostring(id) end
+   local r={seed=9000+n,depth=ctx.depth,loop=ctx.loop,colour=({'red','green','blue','yellow','purple'})[n%5+1],rarity='common',affixes={{id=id,tier=D.mod_progression.tier(ctx)}}}
+   local ok,why=pcall(d.loot.validate,d.loot,r);if not ok then return nil,tostring(why) end
+   return r
+  end
+  g.command('uxgive',function(a)
+   if not self.running then g.log('uxgive: no run');return false end
+   local n=0;for id in (a or ''):gmatch('%S+') do n=n+1;local r,why=made(self,id,n);if not r then g.log('uxgive: '..why);return false end
+    local action=self:gain(r,'uxgive');g.log(('uxgive: %s -> %s'):format(self:name(r),tostring(action)));if action=='choose' and not self.screen.active then self.screen:open('bag') end end
+   return true
+  end,'test hook: gain single-modifier drives by record id: uxgive <id> [id...]')
+  g.command('uxoffer',function(a)
+   if not self.running or self.screen.active then return false end
+   self.offers={};self.stage_kind='battle';local n=0
+   for id in (a or ''):gmatch('%S+') do n=n+1;local r,why=made(self,id,n+40);if not r then g.log('uxoffer: '..why);return false end;self.offers[#self.offers+1]=r end
+   self.stage=self.stage or 0;self.screen:open('reward');self.screen.preview=true;return true
+  end,'test hook: open the reward grid with single-modifier drives as the offer: uxoffer <id> [id...]')
   g.command('uxmodel',function(a) local w={};for x in (a or ''):gmatch('%S+') do w[#w+1]=tonumber(x) end
    local mo=D.run_screen.model_opts;if w[1] then mo.yaw=w[1] end;if w[2] then mo.pitch=w[2] end;if w[3] then mo.margin=w[3] end
    g.log(('uxmodel: yaw %s pitch %s margin %s'):format(mo.yaw,mo.pitch,mo.margin));return true end,'look tuning: how a drive model sits in its cell: uxmodel [yaw] [pitch] [margin]')
@@ -83,6 +104,8 @@ return function(D)
  function H:keystone_ids() local b=self:bag();local ids={};for _,id in ipairs(b.keystones or {}) do ids[#ids+1]=id end;return ids end
  function H:keystone_rule(id) return self.mods.drives.loot.rules[id] end
  function H:name(r) return self.mods.drives.loot:name(r) end
+ -- A tuning value changed: the derived numbers (budgets, native hit rules) are rebuilt from the same records at the next frame.
+ function H:touch_tuning() if self.mods.drives then self:touch() end end
  function H:touch() local d=self.mods.drives;d:bump();self.mods.enabled=true;self.hud.m=nil;self.screen:invalidate() end
  -- Totals for the build as it is, or with `edit(draft_bag)` applied to a throwaway copy.
  function H:totals(edit)
@@ -296,10 +319,27 @@ return function(D)
   self:touch();self:log('grant: keystone '..rule.label);self.hud:flash('Keystone: '..rule.label);return true
  end
  -- Roll (or re-roll after a pick) the keystone choice when allowance steps are owed; the same stage always offers the same three.
+ -- Every record id the build holds: equipped drives, bag drives and keystones (id -> true). Connecting offers and the grid's links read it.
+ function H:held_ids()
+  local b=self:bag();local out={}
+  for slot=1,b:slots() do local r=b.equipped[slot];if r then for _,a in ipairs(r.affixes) do out[a.id]=true end end end
+  for _,r in ipairs(b.items) do for _,a in ipairs(r.affixes) do out[a.id]=true end end
+  for _,id in ipairs(self:keystone_ids()) do out[id]=true end
+  return out
+ end
+ function H:connecting() return D.mod_tuning and D.mod_graph and D.mod_tuning.get('connect_offers')~=0 end
+ -- When none of the offered drives connects to anything held, one is swapped for a roll pulled toward partners of a held piece (same rarity, seeded:
+ -- the same stage always shows the same offers). Returns the index swapped, or nil.
+ function H:connect_offers(base,ctx,rarity_of)
+  if not self:connecting() then return nil end
+  local k,r=D.mod_graph.connect_offers(D.mod_pool,self.mods.drives.loot,self.offers,self:held_ids(),base,ctx,rarity_of,function(try,k) return seed_for(self.seed,base,try,701+k) end)
+  if k then self:log(('connecting offers: none of the offers connected to the build; offer %d became %s'):format(k,self:name(r))) end
+  return k
+ end
  function H:offer_keystones()
   local ctx=self.mods.engine.context;local held=self:keystone_ids()
   if D.keystones.owed(ctx,held)>0 then
-   self.key_offers=D.keystones.offer(ctx,seed_for(self.seed,self.stage,self.loop,99),3,held)
+   self.key_offers=D.keystones.offer(ctx,seed_for(self.seed,self.stage,self.loop,99),3,held,self:connecting() and {held=self:held_ids(),pool=D.mod_pool,graph=D.mod_graph} or nil)
    if #self.key_offers>0 then local names={};for _,id in ipairs(self.key_offers) do names[#names+1]=(self:keystone_rule(id) or {label=id}).label end;self:log('keystone offer: '..table.concat(names,' / ')) end
   else self.key_offers={} end
  end
@@ -327,7 +367,7 @@ return function(D)
   -- Crits draw from the engine's generator; restart it from the run seed so a run is reproducible (never a default seed).
   if self.g.crit_seed then pcall(self.g.crit_seed,seed_for(seed,0,0,9)) end
   self.running=true;self.seed=seed;self.fell={};self.rolls={};self.stage=0;self.loop=0;self.drops=0
-  self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.hud:clear();if self.screen.active then self.screen:close() end
+  self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
   self.mods:run_end() -- a new run starts from an empty bag, whatever the last one left
   local ctx=D.mod_progression.context(0,0);self.mods:set_context(ctx)
   self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=D.mod_progression.slots(ctx),D.mod_progression.keystones(ctx),D.mod_progression.tier(ctx),0
@@ -591,6 +631,7 @@ return function(D)
   if not self.running then return end
   self.since=self.since+1;self.hud:frame();if not self:ready() then return end
   self.hud:watch(self.mods.engine)
+  if self.synfx then local ok,err=pcall(self.synfx.frame,self.synfx,self.mods.engine,self.retail.state and self.retail.state.player_port or 1);if not ok and not self.synfx_failed then self.synfx_failed=true;self:log('synergy fx frame failed: '..tostring(err)) end end
   local port0=self.retail.state and self.retail.state.player_port or 1
   -- any CPU fighter that has appeared since the stage began is an opponent too (a spawn event may not have named it). Seen on the
   -- frame it exists, and its roll starts at once (a fast kill must not beat the roll).
@@ -646,6 +687,7 @@ return function(D)
    local n=many and econ().bonus_offers or econ().offers
    local forced=final and {'rare','rare','unique'} or nil
    for i=1,n do self.offers[i]=d.loot:roll(seed_for(self.seed,stage,loop,(final and 11 or 7)+i*13),ctx,forced and forced[i] or D.drive_economy.reward_rarity(ctx,i)) end
+   self:connect_offers(seed_for(self.seed,stage,loop,3),ctx,function(i) return forced and forced[i] or D.drive_economy.reward_rarity(ctx,i) end)
    local names={};for _,o in ipairs(self.offers) do names[#names+1]=self:name(o) end
    self:log(('stage clear (%s%s): offers %s'):format(kind,final and ', final' or '',table.concat(names,' / ')))
   else self:log(('stage clear (%s): no drive reward this stage'):format(kind)) end
@@ -721,6 +763,7 @@ return function(D)
   if self.screen.active then self.screen:draw();sample(self,'screen draw',t0);return end
   local m=self.g.match();if not (m and m.active) or not self:ready() or self.menu_up then return end
   self.hud:draw();sample(self,'strip draw',t0)
+  if self.synfx then local t1=self.g.time and self.g.time();local ok,err=pcall(self.synfx.draw,self.synfx,self.mods.engine,self.retail.state and self.retail.state.player_port or 1);sample(self,'synergy draw',t1);if not ok and not self.synfx_failed then self.synfx_failed=true;self:log('synergy fx draw failed: '..tostring(err)) end end
   self:draw_hold()
  end
  function H:run_end()
@@ -729,7 +772,7 @@ return function(D)
   self:set_hold(false,'run end')
   if self.screen.active then self.screen:close() end
   if #self.offers>0 or #self.key_offers>0 or #self.decide>0 then self:finish_reward('run-end') end
-  self.running=false;self.fell={};self.rolls={};self.mods:run_end();self.hud:clear();self:log('run end: bag and build cleared')
+  self.running=false;self.fell={};self.rolls={};self.mods:run_end();self.hud:clear();if self.synfx then self.synfx:reset() end;self:log('run end: bag and build cleared')
  end
  -- The model as text, for the console and the tests.
  function H:dump()

@@ -50,6 +50,18 @@ return function(D)
     if self.retail.active and self.retail.rules and host and host.running then return host:grant(id) end
     return self.mods_command and self.mods_command('add '..id) or false,'start a rules-on run first (envoy rules on, envoy classic)'
    end
+   -- `envoy tuning` lists the named tuning values (current column, proposed column); `envoy tuning proposed|current` switches the whole preset for the run;
+   -- `envoy tuning <name> <value>` sets one; `envoy strength v1|v2` picks the strength formula. Values are rule data: they apply on every peer alike.
+   if arg=='tuning' or arg:match('^tuning ') or arg:match('^strength ') then
+    local T=D.mod_tuning;local w={};for x in arg:gmatch('%S+') do w[#w+1]=x end
+    if w[1]=='strength' then local ok,err=pcall(T.set,'strength',w[2]);if not ok then return false,'usage: envoy strength v1|v2' end
+    elseif w[2]=='proposed' or w[2]=='current' then T.preset(w[2])
+    elseif w[2] and w[3] then local ok,err=pcall(T.set,w[2],w[3]);if not ok then self.g.log('envoy tuning: '..tostring(err));return false,tostring(err) end end
+    self.g.log('envoy tuning: preset '..T.preset_name)
+    for _,l in ipairs(T.lines()) do self.g.log('envoy tuning: '..l) end
+    if self.retail.host then self.retail.host:touch_tuning() end
+    return true
+   end
    if arg=='start' then
     if self.menu.run_type=='campaign' then return old.command(self,'start') end
     return self:start_retail()

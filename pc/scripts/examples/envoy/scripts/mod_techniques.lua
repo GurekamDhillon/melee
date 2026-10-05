@@ -34,21 +34,24 @@ return function(D)
    tiers3({duration=60},{duration=90},{duration=120}),'Tech: Guarded for {duration} frames.','guarded',.5,{'guarded','technique'},5,
    'Technique: tech (verified; tech directions are partly measured). Guarded is earned: teal afterimages.'))
   add(rec('combo_surge','of the Combo','suffix','combo',{{combo_at_least=3}},{status('haste','$duration')},
-   tiers3({duration=45},{duration=60},{duration=75}),'Land the third or later hit of a combo: Haste for {duration} frames.','haste',.98,{'hasted','technique'},6,
-   'Technique: combo count (verified). Opponents fire it too: it needs only hits.'))
+   tiers3({duration=45},{duration=60},{duration=75}),'Land the third or later hit of a combo (the second on a Shocked target): Haste for {duration} frames.','haste',.98,{'hasted','technique'},6,
+   'Technique: combo count (verified). Opponents fire it too: it needs only hits. Also fires from the second hit on a Shocked target: a reader of Shock.'))
+  out[#out].also={{trigger='combo',conditions={{combo_at_least=2},{target_status='shock'}}}}
   add(rec('combo_finish','of the Finish','suffix','combo_end',{{combo_at_least=3}},{{op='heal',amount='$heal',subject='self'}},
-   tiers3({heal=3},{heal=4},{heal=5}),'Finish a combo of three or more hits: heal {heal} damage points.','guarded',.42,{'healing','technique'},6,
-   'Technique: combo end (verified).'))
+   tiers3({heal=3},{heal=4},{heal=5}),'Finish a combo of three or more hits (two on a Shocked or Cursed target): heal {heal} damage points.','guarded',.42,{'healing','technique'},6,
+   'Technique: combo end (verified). Also fires from two hits on a Shocked or a Cursed target: a reader of both.'))
+  out[#out].also={{trigger='combo_end',conditions={{combo_at_least=2},{target_status='shock'}}},{trigger='combo_end',conditions={{combo_at_least=2},{target_status='curse'}}}}
   add(rec('retaliation','of Retaliation','suffix','armor',{{armor_result='absorbed'}},{{op='crit_next',count=1,multiplier='$mult'}},
-   tiers3({mult=1.4},{mult=1.6},{mult=1.8}),'When your armour absorbs a hit: your next hit crits for x{mult}.','burn',.04,{'critical','guarded'},8,
-   'Needs an armour source (Stance, a Wavedasher or Juggernaut keystone): a dead roll otherwise. Armour events are verified.',30))
+   tiers3({mult=1.4},{mult=1.6},{mult=1.8}),'When your armour absorbs a hit, or you take a hit while Guarded: your next hit crits for x{mult}.','burn',.04,{'critical','guarded'},8,
+   'Armour source (Stance, a Wavedasher or Juggernaut keystone), or any Guarded source through a hit taken: a reader of Guarded. Armour events are verified.',30))
+  out[#out].also={{trigger='hit_taken',conditions={{self_status='guarded'}}}}
   -- ---- crit families (prefixes: passive) -----------------------------------------------------------------------------
   add(rec('keen','Keen','prefix','equip',{},{{op='crit',chance='$chance'}},
    tiers3({chance=.05},{chance=.0625},{chance=.075}),'Your hits crit {chance%} of the time (x1.5 damage).','burn',.08,{'critical','damage'},4,
    'Crit chance. The engine default is no crits; every crit starts from a rule like this one.',60))
-  add(rec('brutal','Brutal','prefix','equip',{},{{op='crit',multiplier='$mult'}},
-   tiers3({mult=1.25},{mult=1.3125},{mult=1.375}),'Your crits deal more: the multiplier gains {mult}.','burn',.0,{'critical','damage'},6,
-   'Crit multiplier (a gain on top of the base). A dead roll without a crit chance from another modifier.'))
+  add(rec('brutal','Brutal','prefix','equip',{},{{op='crit',chance=.03},{op='crit',multiplier='$mult'}},
+   tiers3({mult=1.25},{mult=1.3125},{mult=1.375}),'Your hits crit 3% of the time; your crits deal more: the multiplier gains {mult}.','burn',.0,{'critical','damage'},6,
+   'Crit multiplier (a gain on top of the base) with a small chance of its own, so it is never a dead roll; other crit chances add to it.'))
   add(rec('ruthless','Ruthless','prefix','equip',{},{{op='crit',tag='aerial',chance='$chance',multiplier='$mult'}},
    tiers3({chance=.12,mult=1.6},{chance=.15,mult=1.7},{chance=.18,mult=1.8}),'Your aerial hits crit {chance%} of the time (x{mult}).','momentum',.1,{'critical','aerial'},6,
    'Per-move-tag crit (aerial slot).'))

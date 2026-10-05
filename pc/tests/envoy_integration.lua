@@ -315,8 +315,8 @@ T.test('generated entry exposes LAB loot and refuses writes outside LAB',functio
 end)
 T.test('generated entry shares native percent and foe checkpoint hooks',function()
  local s,e=fixture();s.lab=true;assert(type(s.commands.foe)=='function','foe factory missing')
- assert(s.commands.mod('add glass_core'));assert(s.commands.foe('roll 1.4 8 2'));assert(not s.blob);e.on_frame();assert(s.blob and s.rule_ops)
- local echo=false;for _,op in ipairs(s.rule_ops)do if op.op=='echoes' and op.port==2 and #op.rules>0 then echo=true end end;assert(echo,'seed8 shared-pool foe echo journal missing (re-seeded when the pool grew)')
+ assert(s.commands.mod('add glass_core'));assert(s.commands.foe('roll 1.4 9 2'));assert(not s.blob);e.on_frame();assert(s.blob and s.rule_ops)
+ local echo=false;for _,op in ipairs(s.rule_ops)do if op.op=='echoes' and op.port==2 and #op.rules>0 then echo=true end end;assert(echo,'seed9 shared-pool foe echo journal missing (re-seeded when the pool grew; again for strength v2)')
  local D={};D.mod_codec=T.module('mod_codec',D);local at=D.mod_codec.decode(s.blob);assert(at.foes.builds[2] and D.mod_codec.decode(at.engine).equipped[1].glass_core)
  for _,op in ipairs(s.rule_ops) do if op.op=='fighter_mod' and op.values then assert(not op.values.damage_dealt and not op.values.damage_taken and not op.values.knockback_taken) end end
  local fills,plate=0,false;e.gd.safe_area=function()return{x=0,y=0,w=640,h=360}end

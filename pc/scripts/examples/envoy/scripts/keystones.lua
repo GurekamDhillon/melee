@@ -151,7 +151,8 @@ return function(D)
   {effect=function(x) return 'Land a crit: gain Momentum (up to 5) for '..secs(x.res('duration'))..' and Shock the target (its next hit taken stuns longer)' end,drawback='Drawback: each crit also makes you launched 5% farther for 1.5 seconds',starter=false,uses='crit event, Momentum, Shock on the target, Curse on self'})
  ks('combo_conduit','Combo Conduit','red','combo',{{combo_at_least=3}},
   {{op='crit_next',count=1,multiplier=1.6},status('chill','self',60)},{},'Each such hit Chills you for 1 second.','curse',.98,tags('critical','technique'),
-  {effect=function() return 'Land the third or later hit of a combo: your next hit crits for x1.6' end,drawback='Drawback: each such hit Chills you (20% slower) for 1 second',starter=false,technique={'combo'},uses='combo skill event with a count condition, forced crit, Chill on self'})
+  {effect=function() return 'Land the third or later hit of a combo (the second on a Cursed target): your next hit crits for x1.6' end,drawback='Drawback: each such hit Chills you (20% slower) for 1 second',starter=false,technique={'combo'},uses='combo skill event with a count condition, forced crit, Chill on self'})
+ K.records_list[#K.records_list].also={{trigger='combo',conditions={{combo_at_least=2},{target_status='curse'}}}}   -- also fires from the second hit on a Cursed target: a reader of Curse
  ks('aerialist','Aerialist','yellow','equip',{},
   {{op='air_jumps',count=5},{op='restrict',forbid={'shield'}}},{},'You cannot shield.','momentum',.14,tags('aerial','technique'),
   {effect=function() return 'You have five air jumps' end,drawback='Drawback: you cannot shield',starter=false,excludes={'powershield_oath'},uses='air-jump count and a shield restriction (fighter caps)'})
@@ -244,7 +245,9 @@ return function(D)
  end
  -- A choice of `n` (default 3) keystones not held, compatible with the held ones, from different drive families
  -- where possible, deterministic in (seed, how many are held) so a retry shows the same choice.
- function K.offer(context,seed,n,held)
+ -- `connect` (optional {held=id set, pool=, graph=}): when none of the offered keystones connects to anything held (the derived graph, mod_graph),
+ -- one offer (a seeded choice) is swapped for a candidate that does; nothing else about the offer changes.
+ function K.offer(context,seed,n,held,connect)
   assert(integer(seed),'invalid seed');n=n or 3;held=held or {}
   local owed=D.mod_progression.allowance(context)-#held
   if owed<=0 then return {} end
@@ -258,6 +261,15 @@ return function(D)
   local out,families={},{}
   for _,id in ipairs(candidates) do if #out<n and not families[K.meta[id].family] then out[#out+1]=id;families[K.meta[id].family]=true end end
   for _,id in ipairs(candidates) do if #out<n then local dup;for _,o in ipairs(out) do if o==id then dup=true end end;if not dup then out[#out+1]=id end end end
+  if connect and #out>0 and next(connect.held or {}) then
+   local G=connect.graph;local pool=connect.pool
+   if not G.connects(pool,out,connect.held) then
+    local partners={}
+    for _,id in ipairs(candidates) do local dup;for _,o in ipairs(out) do if o==id then dup=true end end
+     if not dup and G.connects(pool,{id},connect.held) then partners[#partners+1]=id end end
+    if #partners>0 then local pick=partners[math.floor(rand(#partners))+1];out[math.floor(rand(#out))+1]=pick end
+   end
+  end
   return out
  end
  -- Allowance steps not yet used: how many keystones the player may still be offered.

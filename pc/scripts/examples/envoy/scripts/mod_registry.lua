@@ -10,7 +10,7 @@ return function(D)
  R.effects={
   status={fields=set('op status subject duration amount max refresh when'),journal='lua_state'},
   stacks={fields=set('op status subject duration amount max refresh when'),journal='lua_state'},
-  remove_status={fields=set('op status subject when'),journal='lua_state'},
+  remove_status={fields=set('op status subject when count'),journal='lua_state'},
   value={fields=set('op key value when'),journal='fighter_mod'},
   heal={fields=set('op amount subject when'),journal='damage'},
   damage={fields=set('op amount subject when'),journal='damage'},

@@ -11,7 +11,7 @@ return function(D)
  S.status_bits=D.mod_status.bits
  S.hit_moves=set('any unknown jab dash_attack tilt smash aerial special grab throw projectile')
  S.elements=set('normal fire electric ice darkness')
- local record=set('id label kind cost tags tiers trigger interval conditions effects stacking text visual affix group weight fixed_colour families notes min_depth')
+ local record=set('id label kind cost tags tiers trigger interval conditions also effects stacking text visual affix group weight fixed_colour families notes min_depth')
  local cond=set('tag self_status target_status status self_damage_above self_damage_below target_damage_above grounded airborne last_stock recently stage_kind combo_at_least combo_damage_above hit aerial direction strength_above armor_result air_frames_above aerial_hit')
  -- Effect field lists come from the one effect registry (mod_registry), shared with budget and the checkpoint compiler.
  local fields=setmetatable({},{__index=function(_,op) local d=D.mod_registry.effects[op];return d and d.fields end})
@@ -29,6 +29,26 @@ return function(D)
   number(v,m);for i=1,#m.tiers do local x=type(v)=='string' and m.tiers[i][v:sub(2)] or v
    assert(x>=lo and x<=hi and (not integer or x%1==0),'parameter out of bounds') end
  end
+  local function check_conditions(m,trigger,conditions)
+  array(conditions or {},0,8)
+  if trigger=='equip' then assert(#(conditions or {})==0,'passive equip conditions unsupported') end
+  for _,c in ipairs(conditions or {}) do keys(c,cond);for k,v in pairs(c) do
+   if k=='tag' then assert(S.tags[v],'condition tag must be vocabulary')
+   elseif k=='self_status' or k=='target_status' or k=='status' then assert(v=='any' or S.statuses[v],'unsupported status condition')
+   elseif k=='recently' then keys(v,set('event frames'));assert(S.events[v.event]);range(v.frames,m,1,3600,true)
+   elseif k=='stage_kind' then assert(set('battle team giant metal bonus boss')[v],'unsupported stage kind')
+   elseif k=='grounded' or k=='airborne' or k=='last_stock' or k=='hit' or k=='aerial_hit' then assert(type(v)=='boolean')
+    if k=='hit' or k=='aerial_hit' then assert(D.mod_skill.is_skill(trigger),'technique condition needs a technique trigger') end
+   elseif k=='combo_at_least' then assert(trigger=='combo' or trigger=='combo_end','combo condition needs a combo trigger');range(v,m,2,30,true)
+   elseif k=='combo_damage_above' then assert(trigger=='combo' or trigger=='combo_end','combo condition needs a combo trigger');range(v,m,0,999)
+   elseif k=='aerial' then assert(set('nair fair bair uair dair')[v] and D.mod_skill.is_skill(trigger),'unknown aerial')
+   elseif k=='direction' then assert(trigger=='tech' and set('in_place toward away wall ceiling')[v],'unknown tech direction')
+   elseif k=='strength_above' then assert(trigger=='crit');range(v,m,0,1)
+   elseif k=='armor_result' then assert(trigger=='armor' and (v=='absorbed' or v=='broke'),'armour result absorbed or broke')
+   elseif k=='air_frames_above' then assert(D.mod_skill.is_skill(trigger));range(v,m,0,600,true)
+   else number(v,m) end
+  end end
+  end
  function S.validate(m)
   keys(m,record);assert(type(m.id)=='string' and m.id:match('^[a-z][a-z_]+$') and #m.id<=40,'invalid modifier id')
   assert(type(m.label)=='string' and #m.label<=50 and type(m.text)=='string','label/text required')
@@ -43,24 +63,11 @@ return function(D)
   for _,tier in ipairs(m.tiers) do assert(type(tier)=='table');for k,v in pairs(tier) do assert(type(k)=='string' and k:match('^[a-z_]+$'));number(v,m);assert(type(v)=='number','numeric tier required') end end
   assert(S.events[m.trigger],'unsupported trigger')
   if m.trigger=='interval' then range(m.interval,m,1,3600,true) else assert(m.interval==nil,'interval requires interval trigger') end
-  array(m.conditions or {},0,8)
-  if m.trigger=='equip' then assert(#(m.conditions or {})==0,'passive equip conditions unsupported') end
-  for _,c in ipairs(m.conditions or {}) do keys(c,cond);for k,v in pairs(c) do
-   if k=='tag' then assert(S.tags[v],'condition tag must be vocabulary')
-   elseif k=='self_status' or k=='target_status' or k=='status' then assert(v=='any' or S.statuses[v],'unsupported status condition')
-   elseif k=='recently' then keys(v,set('event frames'));assert(S.events[v.event]);range(v.frames,m,1,3600,true)
-   elseif k=='stage_kind' then assert(set('battle team giant metal bonus boss')[v],'unsupported stage kind')
-   elseif k=='grounded' or k=='airborne' or k=='last_stock' or k=='hit' or k=='aerial_hit' then assert(type(v)=='boolean')
-    if k=='hit' or k=='aerial_hit' then assert(D.mod_skill.is_skill(m.trigger),'technique condition needs a technique trigger') end
-   elseif k=='combo_at_least' then assert(m.trigger=='combo' or m.trigger=='combo_end','combo condition needs a combo trigger');range(v,m,2,30,true)
-   elseif k=='combo_damage_above' then assert(m.trigger=='combo' or m.trigger=='combo_end','combo condition needs a combo trigger');range(v,m,0,999)
-   elseif k=='aerial' then assert(set('nair fair bair uair dair')[v] and D.mod_skill.is_skill(m.trigger),'unknown aerial')
-   elseif k=='direction' then assert(m.trigger=='tech' and set('in_place toward away wall ceiling')[v],'unknown tech direction')
-   elseif k=='strength_above' then assert(m.trigger=='crit');range(v,m,0,1)
-   elseif k=='armor_result' then assert(m.trigger=='armor' and (v=='absorbed' or v=='broke'),'armour result absorbed or broke')
-   elseif k=='air_frames_above' then assert(D.mod_skill.is_skill(m.trigger));range(v,m,0,600,true)
-   else number(v,m) end
-  end end
+  check_conditions(m,m.trigger,m.conditions)
+  if m.also~=nil then
+   array(m.also,1,3);for _,a in ipairs(m.also) do keys(a,set('trigger conditions'));assert(S.events[a.trigger] and a.trigger~='equip','an alternative trigger must be a real event');check_conditions(m,a.trigger,a.conditions) end
+   assert(m.trigger~='equip','an equip rule has no alternative triggers')
+  end
   array(m.effects,1,8)
   for _,e in ipairs(m.effects) do assert(fields[e.op],'unsupported effect (no connecting-hit mutation)');keys(e,fields[e.op])
    if e.subject then assert(e.subject=='self' or e.subject=='target','unsupported effect subject') end
@@ -95,7 +102,7 @@ return function(D)
    elseif e.op=='value' then assert(m.trigger=='equip' and S.values[e.key],'fighter values require unconditional equip');range(e.value,m,.1,4)
    elseif e.op=='status' or e.op=='stacks' or e.op=='chain_status' then assert(m.trigger~='equip' and S.statuses[e.status],'unsupported status');if e.op=='chain_status' then assert(m.trigger=='hit_dealt','a status chain needs a hit trigger') end;range(e.duration,m,1,3600,true);range(e.amount or 1,m,0,100);assert(e.refresh=='refresh' or e.refresh=='extend' or e.refresh=='keep');assert(type(e.max)=='number' and e.max%1==0 and e.max>=1 and e.max<=8)
    elseif e.op=='clank_damage' then assert(m.trigger=='clank' and e.subject=='target','clank damage requires opposing fighter')
-   elseif e.op=='remove_status' then assert(S.statuses[e.status])
+   elseif e.op=='remove_status' then assert(S.statuses[e.status]);if e.count~=nil then assert(type(e.count)=='number' and e.count%1==0 and e.count>=1 and e.count<=8,'remove count 1..8') end
    elseif e.op=='emit' then assert(S.events[e.event] and S.tags[e.tag])
    elseif e.op=='armor' or e.op=='intangible' or e.op=='interrupt' or e.op=='crit_next' then
     -- Native timed effects (armour, intangibility, an interrupt window, a forced crit) run from a trigger and carry their own expiry.
@@ -171,6 +178,8 @@ return function(D)
    if (family=='launch_taken' or family=='launch_dealt') and type(v)=='string' then n=1+(n-1)*D.mod_progression.launch_growth(t)/D.mod_progression.growth(t)end
    delta=delta+n-1
   end
+  -- The payoff drives of a chain are scaled by one named tuning value (mod_tuning: payoff_scale; 1 = as authored).
+  local k=D.mod_tuning and D.mod_tuning.ratio_scale(m);if k and k~=1 then delta=delta*k end
   local n=1+delta;assert(n==n and math.abs(n)<=1e9,'native contribution exceeds finite safety');return n
  end
  function S.describe(m,tier)

@@ -31,7 +31,7 @@ local function fixture()
   sim_commit=function(blob,ops)
    if s.refuse then error("checkpoint budget exhausted") end
    s.commits=s.commits+1;s.blob=blob;s.ops=ops
-   for _,e in ipairs(ops) do if e.op=='fighter_mod' then s.mods[e.port]=e.values elseif e.op=='hit_rules' then s.hit_rules[e.port]={rules=e.rules,bits=e.status_bits} elseif e.op=='echoes' then s.echoes=s.echoes or {};s.echoes[e.port]=e.rules else s.players[e.port].percent=e.value end end
+   for _,e in ipairs(ops) do if e.op=='fighter_mod' then s.mods[e.port]=e.values elseif e.op=='hit_rules' then s.hit_rules[e.port]={rules=e.rules,bits=e.status_bits} elseif e.op=='echoes' then s.echoes=s.echoes or {};s.echoes[e.port]=e.rules elseif e.op=='damage' then s.players[e.port].percent=e.value end end   -- technique ops (crit, armour...) are not modelled by this fixture
    return true
   end}
  s.g=g;s.a=D.mod_lab.new(g);return s,s.a

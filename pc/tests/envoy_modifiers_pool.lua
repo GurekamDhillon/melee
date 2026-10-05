@@ -10,7 +10,7 @@ print('EM3 pool/build PASS')
 
 local dead=D.mod_engine.new(1,D.mod_pool);dead:set_build(1,{ledge=1,still_heart=1},{})
 dead:begin_frame({[1]={percent=0}});dead:emit{kind='ledge_grab',port=1,tags={}};dead:emit{kind='stock_lost',port=1,tags={}};dead:drain();assert(not dead:status(1,'guarded'),'queued statuses must not resurrect after KO')
-D.mod_synergy=T.module('mod_synergy',D);local synergy_pairs,degree=D.mod_synergy.generate(D.mod_pool)
+D.mod_tuning=D.mod_tuning or T.module('mod_tuning',D);D.mod_graph=D.mod_graph or T.module('mod_graph',D);D.mod_synergy=T.module('mod_synergy',D);local synergy_pairs,degree=D.mod_synergy.generate(D.mod_pool)
 -- Golden balancing outcomes, independent of the record resolver.
 local expected={
  trailing={},echoes={},echo_heart={values={damage_dealt=.75}},echo_oath={values={damage_dealt=.5}},
@@ -62,8 +62,10 @@ local function outcome(solo,id,tier)
  if want.damage then equal(solo.damage[2],want.damage,id..' clank damage');assert(not solo.damage[1],id..' damaged self')end
  if want.heal then equal(solo.damage[1],-at(want.heal,tier),id..' heal');assert(not solo.damage[2],id..' healed target')end
 end
+local isolated
 for _,m in ipairs(D.mod_pool) do
- assert(degree[m.id]>=2,m.id..' isolated');if m.kind=='normal' then assert(#m.tiers==3 and m.affix and m.group and m.weight>0) end
+ if degree[m.id]==0 then isolated=(isolated or 0)+1 end -- stat sticks connect to nothing (the derived graph says so; the old tag table hid it)
+ if m.kind=='normal' then assert(#m.tiers==3 and m.affix and m.group and m.weight>0) end
  for tier=1,#m.tiers do
   if m.min_depth then break end -- technique modifiers: envoy_technique.lua
   local solo=D.mod_engine.new(1,D.mod_pool);solo:set_build(1,{[m.id]=tier},{})
@@ -95,7 +97,7 @@ chain({'shelter','renewal'},{{kind='ledge_grab'}},function(e)assert(e.damage[1]=
 chain({'icebound','brittle'},{{kind='hit_dealt',tags={ice=true}},{kind='hit_dealt'}},function(e)assert(e:status(2,'curse'))end)
 chain({'kindling','malice'},{{kind='hit_dealt',tags={fire=true}},{kind='hit_dealt'}},function(e)assert(e:status(2,'curse'))end)
 chain({'updraft','crosswind','still_heart'},{{kind='hit_dealt',tags={aerial=true}},{kind='landing'}},function(e)assert(e:status(1,'guarded') and not e:status(1,'haste'))end)
-chain({'ledge','rush','bastion'},{{kind='ledge_grab'},{kind='hit_dealt'},{kind='landing'}},function(e)assert(e:status(1,'guarded') and e:status(1,'momentum'))end)
+chain({'ledge','rush','bastion'},{{kind='ledge_grab'},{kind='hit_dealt'},{kind='landing'}},function(e)assert(e:status(1,'guarded') and not e:status(1,'momentum'),'Bastion spends one Momentum stack')end)
 local output=assert(io.open('_build/tmp/em3-synergy.tsv','w'));output:write('a\tb\treasons\n');for _,pair in ipairs(synergy_pairs)do output:write(pair.a,'\t',pair.b,'\t',table.concat(pair.reasons,','),'\n')end;output:close()
 print('EM3 every record/tier, seven chains, '..#synergy_pairs..' synergy pairs PASS')
 local function has_event(a,b)

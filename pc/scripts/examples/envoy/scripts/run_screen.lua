@@ -174,7 +174,7 @@ return function(D)
   elseif plan.action=='bag' then return 'Goes into your bag.' end
   return 'Your bag is full: you will pick a drive to give up.'
  end
- function S:detail_lines(cell)
+ function S:detail_lines_base(cell)
   local h=self.host;local d=self:drives();local loot=d.loot;local tx=T();local ref=cell.ref;local lines={}
   -- the long name lives in the detail panel (wrapped), the cell and the header carry the short one
   local function drive_lines(r) local full,short=loot:name(r),tx.short(loot,r);lines[#lines+1]=tx.rarity_label[r.rarity]..' drive'..(full~=short and (': '..full) or ''); for _,l in ipairs(tx.drive_lines(loot,r)) do lines[#lines+1]=l end end
@@ -203,6 +203,21 @@ return function(D)
    lines[#lines+1]='';lines[#lines+1]=(D.keystones.family_names[fam] or 'Wild')..' keystone.'
    lines[#lines+1]=ref.kind=='key' and 'You keep it for the whole run.' or 'Pick one. If you skip, it stays owed.'
   elseif cell.lines then return cell.lines end
+  return lines
+ end
+ -- The synergy lines (what a connection does, what an offer would complete) go after the description, before the comparison numbers.
+ function S:detail_lines(cell)
+  local lines=self:detail_lines_base(cell)
+  local sf=self.host.synfx
+  if sf and self.layout=='main' and cell.ref and cell.ref.kind~='locked' and not cell.empty then
+   local ok,extra=pcall(sf.detail_lines,sf,self,cell)
+   if ok and #extra>0 then
+    local out,at={},nil;for i,l in ipairs(lines) do if l=='' and not at and i>1 then at=i end end
+    for i,l in ipairs(lines) do if i==at then out[#out+1]='';for _,x in ipairs(extra) do out[#out+1]=x end end;out[#out+1]=l end
+    if not at then out[#out+1]='';for _,x in ipairs(extra) do out[#out+1]=x end end
+    return out
+   end
+  end
   return lines
  end
  -- ---- model ---------------------------------------------------------------------------------------------------
@@ -433,6 +448,7 @@ return function(D)
   if not self.active or not self.view then return end
   local g=self.g
   self.view:draw()
+  if self.host.synfx then local ok,err=pcall(self.host.synfx.draw_grid,self.host.synfx,self);if not ok and not self.synfx_failed then self.synfx_failed=true;self.host:log('synergy grid overlay failed: '..tostring(err)) end end
   local k=g.kit;local L=self.view.lay
   if self.notice and k and L then
    local h=L.head

@@ -26,7 +26,7 @@ return function(D)
   return self.m
  end
  function Hd:flash(text) self.flash_left=Hd.tuning.flash_frames;self.flash_text=text end
- function Hd:announce(lines) self.toasts[#self.toasts+1]={lines=lines,left=Hd.tuning.announce_frames};self.dirty=true end
+ function Hd:announce(lines,arch) self.toasts[#self.toasts+1]={lines=lines,left=Hd.tuning.announce_frames,arch=arch};self.dirty=true end
  function Hd:show_card(title,lines,colour) self.card={title=title,lines=lines,colour=colour};self.card_left=Hd.tuning.card_frames end
  function Hd:clear() self.toasts={};self.card=nil;self.card_left=0;self.flash_left=0;self.m=nil;self.last_trace=nil end
  -- Called from the logic frame: timers count logic frames, so a pause stops them.
@@ -50,6 +50,7 @@ return function(D)
   local x,y=a.x+10,a.y+10;local pip,gap=14,4
   local w=8+#m.pips*(pip+gap)+6+m.text_w+10+m.depth_w+10
   if m.keys_w>0 then w=w+m.keys_w+10 end
+  self.strip_w=w
   local flash=self.flash_left>0
   g.fill(x,y,w,26,flash and 0x3A3320E8 or 0x10181EC8)
   local px=x+8
@@ -80,13 +81,20 @@ return function(D)
    t.rows={};t.rows_w=w
    for i,l in ipairs(t.lines) do
     local text=l.text or l
-    local parts=(D.drive_menu and D.drive_menu.wrap) and D.drive_menu.wrap(k,text,w-32) or {text}
+    local parts=(D.drive_menu and D.drive_menu.wrap) and D.drive_menu.wrap(k,text,w-32-(t.arch and 56 or 0)) or {text}
     for _,part in ipairs(parts) do t.rows[#t.rows+1]={text=part,colour=l.colour or (i==1 and 'gold' or 'bone')} end
    end
   end
   local h=22+#t.rows*20
+  if t.arch then h=math.max(h,64) end
   k.panel(x,y,w,h)
-  for i,r in ipairs(t.rows) do k.text(x+16,y+14+i*20-4,r.text,'body',r.colour,'left',{max_w=w-32}) end
+  -- An archetype card: its emblem in its own colour on a tinted tile (the first time a build is assembled), the lines beside it.
+  local ox=0
+  if t.arch and D.synergy_fx then
+   ox=56;g.fill(x+14,y+14,40,40,0x0A0D12F0);g.box(x+14,y+14,40,40,(t.arch.colour<<8)|255)
+   D.synergy_fx.emblem(g,t.arch,x+20,y+20,28,255)
+  end
+  for i,r in ipairs(t.rows) do k.text(x+16+ox,y+14+i*20-4,r.text,'body',r.colour,'left',{max_w=w-32-ox}) end
  end
  function Hd:draw_card()
   local c=self.card;if not c then return end

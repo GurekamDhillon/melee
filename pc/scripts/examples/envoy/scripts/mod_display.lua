@@ -51,11 +51,11 @@ return function(D)
    end end
   end
   if not self.shader then
-   local shader,why=call(self.g,'shader_load','shaders/modifiers_chain.wgsl',{params={progress=0,strength=0}})
+   local shader,why=call(self.g,'shader_load','shaders/modifiers_chain.wgsl',{params={progress=0,strength=0,tint={.95,.65,.25,1},shape=0}})
    if not shader then return fail(self,why) end;self.shader=shader
   end
   if not self.job then
-   local post,why=call(self.g,'post_add',self.shader,{stage='world',order=50,params={progress=0,strength=0}})
+   local post,why=call(self.g,'post_add',self.shader,{stage='world',order=50,params={progress=0,strength=0,tint={.95,.65,.25,1},shape=0}})
    if not post then return fail(self,why) end;self.warm_post=post
    local job,err=call(self.g,'warm',{fighters=ports})
    if not job then return fail(self,err) end;self.job=job
@@ -77,7 +77,8 @@ return function(D)
  -- first slot (the clock) changes every frame. `look_key` is that content as one cheap string; the array for a
  -- port is rebuilt only when it changes, and otherwise the clock slot is rewritten in place.
  local function look_key(e,p,meta)
-  local parts={tostring(meta.intensity)}
+  local sf=D.synergy_fx and D.synergy_fx.current
+  local parts={tostring(meta.intensity),sf and tostring(sf:lane(e,p)) or '0'}
   for _,name in ipairs(names) do local v=(e.statuses[p] or {})[name];if v then parts[#parts+1]=name..(v.stacks or 1)..'/'..(v.max or 1) end end
   local eq=e.equipped[p];if eq and next(eq) then parts[#parts+1]=table.concat(keys(eq),',') end
   for i,drive in ipairs((meta.drive_build or {})[p] or {}) do parts[#parts+1]=i..tostring(drive.rarity)..tostring(drive.colour) end
@@ -94,6 +95,7 @@ return function(D)
   for i,name in ipairs(names) do local v=(e.statuses[p] or {})[name]
    if v then out[i+2]=clamp((v.stacks or 1)/(v.max or 1),0,1) end
   end
+  local sf=D.synergy_fx and D.synergy_fx.current;if sf then out[14]=sf:lane(e,p) end   -- lane 14: the assembled archetype (index + level), see synergy_fx.lua
   local mods={};for _,id in ipairs(keys(e.equipped[p])) do local rule=e.rules[id]
    if rule and rule.visual then mods[#mods+1]={id=id,v=rule.visual} end end
   local hues={red=.02,green=.33,blue=.57,yellow=.14,purple=.76,white=0};local looks={red='burn',green='haste',blue='chill',yellow='momentum',purple='curse',white='guarded'}
@@ -127,6 +129,8 @@ return function(D)
    end
    if count>=2 and e.frame-meta.last_pulse>=30 then
     meta.last_pulse=e.frame;meta.pulse_start=e.frame;meta.pulse_strength=math.min(.06,.015*count)
+    -- the pulse's colour and shape come from the archetype of the chain that fired it (presentation only; per peer, not checkpointed)
+    local look=D.synergy_fx and D.synergy_fx.pulse_look(e);self.pulse_look=look
    end
   end
   for p in pairs(self.selected) do
@@ -137,9 +141,12 @@ return function(D)
   end
   local age=e.frame-meta.pulse_start
   if age>=0 and age<18 and meta.intensity>0 then
-   if not self.post then local post,why=self.g.post_add(self.shader,{stage='world',order=50,params={progress=age/18,strength=meta.pulse_strength*meta.intensity}})
+   local look=self.pulse_look;local tint=look and look.tint or {.95,.65,.25,1};local shape=look and look.shape or 0
+   local boost=look and 1.6 or 1   -- an archetype's pulse is a little stronger than the plain one (still capped well below a flash)
+   local pr={progress=age/18,strength=meta.pulse_strength*meta.intensity*boost,tint=tint,shape=shape}
+   if not self.post then local post,why=self.g.post_add(self.shader,{stage='world',order=50,params=pr})
     if not post then return fail(self,why) end;self.post=post
-   else self.g.post_set(self.post,{params={progress=age/18,strength=meta.pulse_strength*meta.intensity}}) end
+   else self.g.post_set(self.post,{params=pr}) end
   elseif self.post then self.g.post_remove(self.post);self.post=nil end
   return true
  end

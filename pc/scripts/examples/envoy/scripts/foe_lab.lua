@@ -121,6 +121,7 @@ return function(D)
   end
   local per=self.lab:hosted() and 3 or 2
   self.g.kit.panel(a.x+16,y,a.w-32,40+per*19);self.g.kit.text(a.x+24,y+19,l.title,'body','bone','left',{max_w=a.w-48})
+  if D.synergy_fx and D.synergy_fx.current then pcall(D.synergy_fx.current.plate_tag,D.synergy_fx.current,a,y,shown,self.lab.engine) end
   local pages=math.max(1,math.ceil(#lines/per));local page=math.floor((240-l.left)/(per==3 and 70 or 45))%pages
   for n=1,per do self.g.kit.text(a.x+24,y+23+n*19,lines[page*per+n] or (n==1 and 'Vanilla build' or ''),'body','bone','left',{max_w=a.w-48}) end
  end

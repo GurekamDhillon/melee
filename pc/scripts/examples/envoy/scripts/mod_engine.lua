@@ -76,10 +76,17 @@ return function(D)
   for port=1,6 do if self.players[port] then self:emit_trusted{kind='interval',port=port,tags={},depth=1,origin={}} end end
  end
  function E:matches(m,e,tier)
-  if m.trigger~=e.kind then return false end
-  if m.trigger=='interval' and self.frame%S.resolve(m.interval,m,tier)~=0 then return false end
+  local main=m.trigger==e.kind
+  if not main then local any;for _,a in ipairs(m.also or {}) do if a.trigger==e.kind then any=true;break end end;if not any then return false end end
+  if main and m.trigger=='interval' and self.frame%S.resolve(m.interval,m,tier)~=0 then return false end
+  if main and self:conditions_hold(m,e,tier,m.conditions) then return true end
+  -- A record can carry alternative triggers (`also`): any one whose own conditions hold fires the same effects.
+  for _,a in ipairs(m.also or {}) do if a.trigger==e.kind and self:conditions_hold(m,e,tier,a.conditions) then return true end end
+  return false
+ end
+ function E:conditions_hold(m,e,tier,conditions)
   local own=e.self_context or self.players[e.port] or {};local target=e.target_context or self.players[e.target] or {}
-  for _,c in ipairs(m.conditions or {}) do for k,v in pairs(c) do
+  for _,c in ipairs(conditions or {}) do for k,v in pairs(c) do
    if type(v)=='string' and v:sub(1,1)=='$' then v=S.resolve(v,m,tier) end
    if k=='tag' and not e.tags[v] then return false
    elseif k=='status' and (v=='any' and not e.status or v~='any' and e.status~=v) then return false
@@ -134,7 +141,7 @@ return function(D)
       local at=self.statuses[port] or {};self.statuses[port]=at;local v=at[effect.status];local expires=self.frame+duration
       -- A status granted by a technique trigger is EARNED: it keeps its cause (the earned afterimage's colour) while it lasts.
       local cause=D.mod_skill.is_skill(e.kind) and D.mod_skill.cause_of(e.kind) or nil
-      local amount=math.max(0,math.min(100,value(effect.amount or 1)))
+      local amount=math.max(0,math.min(100,value(effect.amount or 1)*(D.mod_tuning and D.mod_tuning.amount_scale(m,effect) or 1)))
       if v then
        v.stacks=math.min(effect.max,v.stacks+1)
        if effect.refresh=='refresh' then v.expires=expires elseif effect.refresh=='extend' then v.expires=math.min(self.frame+3600,v.expires+duration) end
@@ -145,7 +152,12 @@ return function(D)
       self:emit{kind='status_applied',port=port,target=e.target,status=effect.status,tags={[status_tags[effect.status]]=true},depth=e.depth+1,origin=origin}
       if effect.op=='stacks' or v.stacks>1 then self:emit{kind='stacks_changed',port=port,status=effect.status,tags={[status_tags[effect.status]]=true},depth=e.depth+1,origin=origin} end
      elseif effect.op=='remove_status' then
-      if self:status(port,effect.status) then self.statuses[port][effect.status]=nil;append(origin,effect.status..' spent by '..label)
+      local held=self:status(port,effect.status)
+      if held and effect.count and held.stacks>effect.count then
+       -- spend `count` stacks, keep the status (Momentum: a landing spends one, so a higher stack count still matters)
+       held.stacks=held.stacks-effect.count;append(origin,effect.status..' stack spent by '..label)
+       self:emit{kind='stacks_changed',port=port,status=effect.status,tags={[status_tags[effect.status]]=true},depth=e.depth+1,origin=origin}
+      elseif held then self.statuses[port][effect.status]=nil;append(origin,effect.status..' spent by '..label)
        self:emit{kind='status_removed',port=port,status=effect.status,tags={},depth=e.depth+1,origin=origin}
       end
      elseif effect.op=='clank_damage' then
@@ -167,7 +179,7 @@ return function(D)
     end
    end
   end
-  if #origin>0 then self.trace=origin;self.display.trace_generation=(self.display.trace_generation or 0)+1 end
+  if #origin>0 then self.trace=origin;self.trace_port=e.port;self.display.trace_generation=(self.display.trace_generation or 0)+1 end   -- trace_port: presentation only, not checkpointed
  end
  function E:drain()
   local at,lost=1,{}
@@ -175,7 +187,7 @@ return function(D)
    local e=self.queue[at];at=at+1
    if not (lost[e.port] and e.depth>1) then
    if e.native_trace and #e.origin>0 then
-    self.trace=copy(e.origin);self.display.trace_generation=(self.display.trace_generation or 0)+1
+    self.trace=copy(e.origin);self.trace_port=e.port;self.display.trace_generation=(self.display.trace_generation or 0)+1
     -- Remember real native use of a status for later KO ancestry; no new status
     -- or gameplay effect is invented by this provenance annotation.
     for _,name in ipairs(e.native_statuses or {}) do local v=self:status(e.target,name);if v then v.origin=copy(e.origin) end end
@@ -207,7 +219,7 @@ return function(D)
   local parts,n={},0
   local eq=self.equipped[port]
   if eq then for id,tier in pairs(eq) do n=n+1;parts[n]=id..'='..(type(tier)=='table' and C.encode(tier) or tostring(tier)) end;table.sort(parts) end
-  local out=table.concat(parts,';')..'|'
+  local out=table.concat(parts,';')..'|t'..tostring(D.mod_tuning and D.mod_tuning.rev or 0)..'|'
   local im=self.implicits[port]
   if im then local k={};for key,v in pairs(im) do k[#k+1]=key..'='..tostring(v) end;table.sort(k);out=out..table.concat(k,';') end
   local at=self.statuses[port]
@@ -385,7 +397,10 @@ return function(D)
   return best
  end
  function E:listens(port,kind)
-  for _,rule in ipairs(self.list) do if rule.trigger==kind and (self.equipped[port] or {})[rule.id] then return true end end
+  for _,rule in ipairs(self.list) do if (self.equipped[port] or {})[rule.id] then
+   if rule.trigger==kind then return true end
+   for _,a in ipairs(rule.also or {}) do if a.trigger==kind then return true end end
+  end end
   return false
  end
  -- Whether the fighter carries a rule that can EARN a status (a technique trigger with a status effect): the host prepares its

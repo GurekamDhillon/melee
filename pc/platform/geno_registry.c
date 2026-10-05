@@ -434,6 +434,10 @@ typedef struct {
     /* v5: counter windows per state, articles */
     uint32_t st_ctr[GENO_MAX_STATES][4];      /* GENO_CTR_*; st_ctr_on = the state has one */
     int st_ctr_on[GENO_MAX_STATES];
+    int nsnd;                                   /* v8: the named-sound table (the resolver) */
+    char snd_name[GENO_MAX_SOUNDS][32];
+    uint32_t snd_id[GENO_MAX_SOUNDS];           /* an engine sound id, ft_PlaySFX's */
+    uint32_t snd_vol[GENO_MAX_SOUNDS];          /* 0..127 */
     int nart;
     char art_name[GENO_MAX_ARTICLES][32];
     uint32_t art_param[GENO_MAX_ARTICLES][GENO_AP_COUNT];  /* float bits (ints for the int params) */
@@ -957,6 +961,64 @@ static uint32_t gn_int(const jdoc *d, int obj, const char *key, int def) {
     return gn_num(d, obj, key, &v) ? (uint32_t) (int) v : (uint32_t) def;
 }
 
+/* ---- v8 (slice 3): the named-sound resolver --------------------------------------------------------
+ * "sounds": [ { "name", "retail_sfx": <engine sound id>, "volume": 0..127 (default 127) } ]. A name is the only way an
+ * article refers to a sound ("spawn_sound", "end_sound"); there is no donor fallback: a reference to a name that is not in
+ * the table is a load error for a define (gn_sounds_check), and a lenient log plus "no sound" for an attach entry.
+ * The ids are numbers the game's own code plays (ft_PlaySFX); no audio data is ever read or shipped here. */
+static int gn_sound_index(const jdoc *d, int sounds, const char *name) {
+    int c, i = 0;
+    if (sounds < 0 || d->n[sounds].type != JN_ARR) return -1;
+    for (c = d->n[sounds].first; c >= 0; c = d->n[c].next, ++i) {
+        int n = jd_get(d, c, "name");
+        if (n >= 0 && d->n[n].type == JN_STR && strcmp(d->n[n].str, name) == 0) return i;
+    }
+    return -1;
+}
+
+/* Strict validation of the whole table and of every article reference. Returns 1 when sound. */
+static int gn_sounds_check(const jdoc *d, int e, const char *where) {
+    int s = jd_get(d, e, "sounds"), a = jd_get(d, e, "articles"), c, i, j, n = 0;
+    if (s >= 0) {
+        if (d->n[s].type != JN_ARR) { gw_log("geno: %s: \"sounds\" must be an array", where); return 0; }
+        for (c = d->n[s].first; c >= 0; c = d->n[c].next, ++n) {
+            int nm = jd_get(d, c, "name"), id = jd_get(d, c, "retail_sfx"), vol = jd_get(d, c, "volume");
+            if (n >= GENO_MAX_SOUNDS) { gw_log("geno: %s: more than %d sounds", where, GENO_MAX_SOUNDS); return 0; }
+            if (d->n[c].type != JN_OBJ || nm < 0 || d->n[nm].type != JN_STR || !d->n[nm].str[0] || strlen(d->n[nm].str) >= 32) {
+                gw_log("geno: %s: sound %d needs a \"name\" of 1..31 characters", where, n); return 0;
+            }
+            if (id < 0 || d->n[id].type != JN_NUM || d->n[id].num != (int) d->n[id].num || d->n[id].num < 1 || d->n[id].num > 999999) {
+                gw_log("geno: %s: sound \"%s\": \"retail_sfx\" must be an engine sound id, an integer 1..999999", where, d->n[nm].str);
+                return 0;
+            }
+            if (vol >= 0 && (d->n[vol].type != JN_NUM || d->n[vol].num != (int) d->n[vol].num || d->n[vol].num < 0 || d->n[vol].num > 127)) {
+                gw_log("geno: %s: sound \"%s\": \"volume\" must be an integer 0..127", where, d->n[nm].str); return 0;
+            }
+            for (j = d->n[s].first, i = 0; i < n; j = d->n[j].next, ++i) {
+                int o = jd_get(d, j, "name");
+                if (o >= 0 && d->n[o].type == JN_STR && strcmp(d->n[o].str, d->n[nm].str) == 0) {
+                    gw_log("geno: %s: duplicate sound name \"%s\"", where, d->n[nm].str); return 0;
+                }
+            }
+        }
+    }
+    if (a >= 0 && d->n[a].type == JN_ARR) {
+        static const char *const keys[2] = { "spawn_sound", "end_sound" };
+        for (c = d->n[a].first, n = 0; c >= 0; c = d->n[c].next, ++n) {
+            for (i = 0; i < 2; ++i) {
+                int r = jd_get(d, c, keys[i]);
+                if (r < 0) continue;
+                if (d->n[r].type != JN_STR || gn_sound_index(d, s, d->n[r].str) < 0) {
+                    gw_log("geno: %s: article %d \"%s\": %s is not a name in \"sounds\" (no donor fallback)", where, n, keys[i],
+                           d->n[r].type == JN_STR ? d->n[r].str : "a value that");
+                    return 0;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
 static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
     static const char *const despawn_keys[4] = { "hit", "shield", "stage", "clank" };
     static const char *const hits_keys[5] = { "ground", "air", "reflect", "absorb", "counter" };
@@ -984,6 +1046,20 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
                      "gravity", "max_fall", "accel", "max_speed", "homing": { "turn", "range",
                      "delay" }, "spawn": [fwd, up], "scale", "spin", "max_live",
                      "despawn": { "hit", "shield", "stage", "clank" }, "hitboxes": [ {...} ] } ] */
+    { /* v8: the sound table, before the articles that name it */
+        int s = jd_get(d, e, "sounds"), sc;
+        if (s >= 0 && d->n[s].type == JN_ARR) {
+            for (sc = d->n[s].first; sc >= 0 && p->nsnd < GENO_MAX_SOUNDS; sc = d->n[sc].next) {
+                double sv;
+                int nm = jd_get(d, sc, "name");
+                if (d->n[sc].type != JN_OBJ || nm < 0 || d->n[nm].type != JN_STR || !gn_num(d, sc, "retail_sfx", &sv)) continue;
+                snprintf(p->snd_name[p->nsnd], sizeof p->snd_name[0], "%s", d->n[nm].str);
+                p->snd_id[p->nsnd] = (uint32_t) (int) sv;
+                p->snd_vol[p->nsnd] = gn_num(d, sc, "volume", &sv) && sv >= 0 && sv <= 127 ? (uint32_t) (int) sv : 127u;
+                p->nsnd++;
+            }
+        }
+    }
     x = jd_get(d, e, "articles");
     if (x < 0 || d->n[x].type != JN_ARR) return;
     for (c = d->n[x].first; c >= 0; c = d->n[c].next) {
@@ -1036,6 +1112,18 @@ static void gn_add_v5(gn_profile *p, const jdoc *d, int e, const char *where) {
         if (gn_num(d, c, "min_speed", &v)) p->art_param[a][GENO_AP_MIN_SPEED] = gn_fbits(v);
         if (gn_num(d, c, "angle", &v)) p->art_param[a][GENO_AP_ANGLE] = gn_fbits(v);
         p->art_param[a][GENO_AP_BONE] = gn_int(d, c, "bone", -1);
+        { /* v8: named sounds (resolved above; an unknown name in an attach entry is only a log) */
+            static const char *const skeys[2] = { "spawn_sound", "end_sound" };
+            int si, q;
+            for (si = 0; si < 2; ++si) {
+                int r = jd_get(d, c, skeys[si]);
+                if (r < 0 || d->n[r].type != JN_STR) continue;
+                for (q = 0; q < p->nsnd && strcmp(p->snd_name[q], d->n[r].str); ++q) {}
+                if (q == p->nsnd) { gw_log("geno: %s: article %s: %s \"%s\" is not in \"sounds\" - no sound", where, p->art_name[a], skeys[si], d->n[r].str); continue; }
+                p->art_param[a][si ? GENO_AP_END_SFX : GENO_AP_SPAWN_SFX] = p->snd_id[q];
+                p->art_param[a][si ? GENO_AP_END_VOL : GENO_AP_SPAWN_VOL] = p->snd_vol[q];
+            }
+        }
         p->art_param[a][GENO_AP_EFFECT] = gn_int(d, c, "effect", 0);
         if ((m = jd_get(d, c, "fx")) >= 0 && d->n[m].type == JN_STR) { /* v5.4: a Geno effect package (gw_fx.c) */
             extern int gw_Fx_Find(const char *name);
@@ -1587,6 +1675,18 @@ int gw_Geno_ArticleHitParam(int p, int a, int h, int id) {
     return GN_ART(p, a) && h >= 0 && h < gn_at(p)->art_nhit[a] && id >= 0 && id < GENO_AH_COUNT
                ? (int) gn_at(p)->art_hit[a][h][id]
                : 0;
+}
+/* v8: the resolver's table (diagnostics, report, tests): count, then name/id/volume of entry i */
+int gw_Geno_SoundCount(int p) { return gn_at(p) ? gn_at(p)->nsnd : 0; }
+int gw_Geno_SoundId(int p, int i) { return gn_at(p) && i >= 0 && i < gn_at(p)->nsnd ? (int) gn_at(p)->snd_id[i] : 0; }
+int gw_Geno_SoundVolume(int p, int i) { return gn_at(p) && i >= 0 && i < gn_at(p)->nsnd ? (int) gn_at(p)->snd_vol[i] : 0; }
+const char *gw_Geno_SoundName(int p, int i) { return gn_at(p) && i >= 0 && i < gn_at(p)->nsnd ? gn_at(p)->snd_name[i] : NULL; }
+/* name -> id (0 when absent): the lookup an article or a script word resolves through */
+int gw_Geno_SoundByName(int p, const char *name) {
+    int i;
+    if (!gn_at(p) || !name) return 0;
+    for (i = 0; i < gn_at(p)->nsnd; ++i) if (strcmp(gn_at(p)->snd_name[i], name) == 0) return (int) gn_at(p)->snd_id[i];
+    return 0;
 }
 const char *gw_Geno_ArticleName(int p, int a) { return GN_ART(p, a) ? gn_at(p)->art_name[a] : NULL; }
 
@@ -2252,6 +2352,8 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_attrs_v7", test_geno_define_attrs_v7);
     gw_test_register("geno_define_v7_parse", test_geno_define_v7_parse);
     gw_test_register("geno_define_overlay_budget", test_geno_define_overlay_budget);
+    gw_test_register("geno_define_v8_parse", test_geno_define_v8_parse);
+    gw_test_register("geno_define_resolver", test_geno_define_resolver);
     gw_test_register("geno_items_registry",gn_items_registry_test);
     gw_test_register("geno_items_physics",gn_items_physics_test);
     gw_test_register("geno_items_snapshot",gn_items_snapshot_test);

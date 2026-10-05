@@ -32,6 +32,7 @@
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjgxlink.h>
 #include <melee/ef/forward.h>
+#include <melee/ft/ft_0877.h>
 
 extern HSD_Particle* hsd_804D0908[16]; /* particle.c: the live particles, one list per link */
 #include <melee/it/it_26B1.h>
@@ -297,6 +298,40 @@ static void geno_fx_drive(int frame)
     }
 }
 
+/* Is `j` a joint object that is alive right now: the root of a live item, or a joint of a live fighter's tree? The effect owner
+ * table (gw_fx.c, restored with each resimulated frame) can name a joint whose item is gone in the timeline being replayed;
+ * HSD_JObjSetupMatrix on freed memory called through a null user-matrix callback (SyncTest, slice 3). Only a cheap pointer
+ * comparison per owner and frame. */
+static int geno_fx_owner_alive(HSD_JObj* j);
+static int geno_fx_tree_has(HSD_JObj* root, HSD_JObj* j, int depth)
+{
+    for (; root != NULL && depth < 64; root = root->next) {
+        if (root == j || geno_fx_tree_has(root->child, j, depth + 1)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+static int geno_fx_owner_alive(HSD_JObj* j)
+{
+    HSD_GObj* cur;
+    int slot;
+    if (HSD_GObjPLinkHead != NULL) {
+        for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]; cur != NULL; cur = cur->next) {
+            if (GET_JOBJ(cur) == j) {
+                return 1;
+            }
+        }
+    }
+    for (slot = 0; slot < 6; slot++) {
+        HSD_GObj* g = Player_GetEntity(slot);
+        if (g != NULL && geno_fx_tree_has(GET_JOBJ(g), j, 0)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void Geno_FxFramePost(int frame)
 {
     if (frame <= 1) {
@@ -309,7 +344,17 @@ void Geno_FxFramePost(int frame)
         int i, owner;
         for (i = 0; i < 256; i++) {
             if ((owner = Fx_Owner(i)) != 0) {
-                HSD_JObjSetupMatrix((HSD_JObj*) owner);
+                /* The matrix is wanted now; the "matrix dirty" bit is a cache flag that a logic-only resimulation (rewind,
+                 * rollback: no post-frame pass) leaves set, so leave it as the logic left it - otherwise a Geno effect
+                 * following an article makes the rewind test's byte compare differ by this one bit (slice 3, measured). */
+                HSD_JObj* oj = (HSD_JObj*) owner;
+                u32 dirty;
+                if (!geno_fx_owner_alive(oj)) {
+                    continue;
+                }
+                dirty = oj->flags & JOBJ_MTX_DIRTY;
+                HSD_JObjSetupMatrix(oj);
+                oj->flags |= dirty;
             }
         }
     }
@@ -374,6 +419,45 @@ static int geno_art_live(HSD_GObj* owner, int article)
         }
     }
     return n;
+}
+
+/* Slice 3: a digest of the live Geno articles this fighter owns, for the rollback hash word (GenoDefine_StateDigest).
+ * Each item contributes one word (its profile, article, age, despawn flag, travel velocity, position, engine velocity, hitbox
+ * slots); the words are SUMMED, so the order of the item list does not matter. 0 when it owns none. */
+static u32 geno_art_digest(Fighter* fp)
+{
+    HSD_GObj* cur;
+    u32 sum = 0;
+    int n = 0, k, p, a;
+    if (HSD_GObjPLinkHead == NULL || fp == NULL || fp->gobj == NULL) {
+        return 0;
+    }
+    for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]; cur != NULL; cur = cur->next) {
+        Item* ip = GET_ITEM(cur);
+        GenoArtVars* v;
+        u32 h = 0x41525449u; /* "ARTI" */
+        if (ip == NULL || ip->owner != fp->gobj || !geno_art_of_kind(ip->kind, &p, &a)) {
+            continue;
+        }
+        v = geno_art_vars(ip);
+        h = geno_dg(h, (u32) v->profile);
+        h = geno_dg(h, (u32) v->article);
+        h = geno_dg(h, (u32) v->frame);
+        h = geno_dg(h, (u32) v->why);
+        h = geno_dgf(h, v->vx);
+        h = geno_dgf(h, v->vy);
+        h = geno_dgf(h, ip->pos.x);
+        h = geno_dgf(h, ip->pos.y);
+        h = geno_dgf(h, ip->pos.z);
+        h = geno_dgf(h, ip->x40_vel.x);
+        h = geno_dgf(h, ip->x40_vel.y);
+        for (k = 0; k < GENO_ART_HITBOXES; k++) {
+            h = geno_dg(h, (u32) (s32) v->cur[k]);
+        }
+        sum += h;
+        n++;
+    }
+    return n != 0 ? (sum != 0 ? sum : 1u) : 0;
 }
 
 /* ---- hitboxes: what the item script's hitbox command (it_802790C0) does, from geno.json -------- */
@@ -546,10 +630,23 @@ static int geno_art_target(Item* ip, f32* tx, f32* ty)
 
 /* ---- the state's callbacks --------------------------------------------------------------------- */
 
+/* v8 (slice 3): a named sound of an article, resolved at load to an engine sound id (geno_registry.c, the resolver).
+ * Played by the owner like any fighter sound (ft_PlaySFX); 0 = none. Presentation only: no game state reads it. */
+static void geno_art_sound(HSD_GObj* owner, int p, int a, int id_param, int vol_param, const char* what)
+{
+    int id = Geno_ArticleParam(p, a, id_param), vol = Geno_ArticleParam(p, a, vol_param);
+    if (id <= 0 || owner == NULL) {
+        return;
+    }
+    ft_PlaySFX(GET_FIGHTER(owner), id, (u8) vol, 64);
+    OSReport("geno: article sound: %s of article %d plays sound %d at volume %d\n", what, a, id, vol);
+}
+
 static void geno_art_gone(Item* ip, GenoArtVars* v, int why)
 {
     HSD_GObj* o = ip->owner;
     v->why = why;
+    geno_art_sound(o, v->profile, v->article, GENO_AP_END_SFX, GENO_AP_END_VOL, "end");
     Geno_Event(29, o != NULL ? GET_FIGHTER(o)->kind : -1, o != NULL ? GET_FIGHTER(o)->player_id : -1,
                v->article, why);
 }
@@ -878,6 +975,7 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     ip->x40_vel.y = v->vy;
     ip->x40_vel.z = 0.0f;
     db_80225DD8(ig, owner);
+    geno_art_sound(owner, p, a, GENO_AP_SPAWN_SFX, GENO_AP_SPAWN_VOL, "spawn");
     geno_art_effects(ig, ip, p, a, 0, facing); /* the frame-0 effects; later ones from the anim callback */
     if (Geno_ArticleParam(p, a, GENO_AP_FX) > 0) {
         HSD_JObjSetTranslate(GET_JOBJ(ig), &ip->pos); /* the spawn position, before the effect reads the matrix */

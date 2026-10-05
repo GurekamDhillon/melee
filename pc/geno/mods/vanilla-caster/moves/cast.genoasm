@@ -1,0 +1,5 @@
+# Neutral special, ground and air: throw the Caster's own article (index 0, CasterBolt), then recover.
+wait 8
+CALL geno.article.spawn 0
+wait 22
+CHG auto ALWAYS ONCE

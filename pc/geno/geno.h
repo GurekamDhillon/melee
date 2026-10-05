@@ -13,10 +13,11 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 7    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
+#define GENO_VERSION 8    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
                              4 = v5: articles, on_hit, counter windows - docs/geno.md section 19;
                              7 = slice 2: a define may use the full attribute table, special_attributes,
-                             fx_bindings) */
+                             fx_bindings;
+                             8 = slice 3: a define may declare articles and a named-sound table) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
 #define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
 
@@ -370,6 +371,7 @@ enum {
     ((p) >= 32 ? GENO_ART_EXTRA_BASE + ((p) - 32) * 16 + (a) : \
      (a) < GENO_ART_PER_RANGE ? GENO_ART_KIND_BASE + (p) * GENO_ART_PER_RANGE + (a) \
                               : GENO_ART_KIND_BASE2 + (p) * GENO_ART_PER_RANGE + (a) - GENO_ART_PER_RANGE)
+#define GENO_MAX_SOUNDS 16 /* v8: named sounds per profile (the resolver table) */
 #define GENO_ART_HITBOXES 4 /* Melee items have 4 hitbox slots */
 #define GENO_ART_HIT_ENTRIES 8 /* v5.1: hitbox entries per article; entries sharing a "slot" hand over
                                   (Ultimate's ATTACK re-issued on one id: the victim list stays) */
@@ -416,7 +418,13 @@ enum {
     GENO_AP_SPINS = 56,      /* v5.3 56..63: "spins" - 4 x (joint index, radians a frame about its Z, float bits):
                                 a joint of the article's model turning on its own (Ultimate primitive
                                 emitters' RotateAddZ, e.g. Firaga's ring and core) */
-    GENO_AP_COUNT = 64
+    /* v8 (slice 3): named sounds resolved at load ("sounds": [{name, retail_sfx, volume}]; an article names them with
+       "spawn_sound" / "end_sound"): the engine sound id played with ft_PlaySFX by the owner, 0 = none */
+    GENO_AP_SPAWN_SFX = 64,  /* int: sound id at spawn */
+    GENO_AP_SPAWN_VOL = 65,  /* int: its volume 0..127 */
+    GENO_AP_END_SFX = 66,    /* int: sound id when the article goes (hit, timeout, stage, absorbed) */
+    GENO_AP_END_VOL = 67,    /* int: its volume */
+    GENO_AP_COUNT = 68
 };
 #define GENO_ART_DESPAWN_HIT 1u    /* its hitbox hit a fighter / item */
 #define GENO_ART_DESPAWN_SHIELD 2u /* it hit a shield */

@@ -128,3 +128,68 @@ static int test_geno_define_state_hash(void)
     Geno_TestRestore();
     return rc;
 }
+
+/* Slice 3: a define's live articles are in its digest word (ftRb_GenoDefineWord -> GenoDefine_StateDigest): 0 articles keeps the
+ * slice-2 digest; an article's position, age and travel move it; the order of the item list does not. The items are fakes linked
+ * into the item list (a headless suite has no item heap). */
+static int test_geno_define_article_digest(void)
+{
+    static HSD_GObj ig[2];
+    static Item it[2];
+    int rc = 0, kind, prof, k;
+    TestGenoState* s;
+    u32 d0, d1, d2;
+    HSD_GObj* head_save;
+    static HSD_GObj* fake_links[64];
+    HSD_GObj** table_save = HSD_GObjPLinkHead;
+    t_setup();
+    Geno_TestInstall("{\"geno\":8,\"fighters\":[{\"define\":{\"key\":\"art-def\",\"name\":\"Art Def\",\"base\":\"mario\","
+        "\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},\"articles\":[{\"name\":\"Bolt\",\"hitboxes\":[{\"damage\":5}]}]}]}");
+    if (Geno_DefineCount() != 1) { TestFail("define with an article not bound for the digest test"); Geno_TestRestore(); return 1; }
+    kind = Geno_DefineCKAt(0) - 1;
+    t_fp.kind = kind;
+    Geno_FighterReset(&t_fp);
+    s = GenoGame_StateOf(&t_fp);
+    prof = s->profile;
+    if (prof < 0 || Geno_ArticleCount(prof) != 1) { TestFail("the define's article is not registered"); Geno_TestRestore(); return 1; }
+    HSD_GObjPLinkHead = fake_links; /* a headless suite has no GObj link table: use a private, empty one */
+    head_save = NULL;
+    
+    d0 = GenoDefine_StateDigest(&t_fp);
+    for (k = 0; k < 2; ++k) {
+        t_zero(&ig[k], sizeof ig[k]); t_zero(&it[k], sizeof it[k]);
+        ig[k].user_data = &it[k];
+        it[k].owner = &t_gobj;
+        it[k].kind = GENO_ART_KIND(prof, 0);
+        ((GenoArtVars*) &it[k].xDD4_itemVar)->profile = prof;
+        ((GenoArtVars*) &it[k].xDD4_itemVar)->frame = 3 + k;
+        it[k].pos.x = 10.0f + k; it[k].x40_vel.x = 2.0f;
+    }
+    HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] = &ig[0];
+    ig[0].next = NULL;
+    d1 = GenoDefine_StateDigest(&t_fp);
+    if (d1 == d0 || d1 == 0) { TestFail("a live article did not enter the digest"); rc = 1; }
+    it[0].pos.x = 12.5f;
+    d2 = GenoDefine_StateDigest(&t_fp);
+    if (d2 == d1) { TestFail("the digest ignores an article's position"); rc = 1; }
+    it[0].pos.x = 10.0f;
+    ((GenoArtVars*) &it[0].xDD4_itemVar)->frame = 9;
+    if (GenoDefine_StateDigest(&t_fp) == d1) { TestFail("the digest ignores an article's age"); rc = 1; }
+    ((GenoArtVars*) &it[0].xDD4_itemVar)->frame = 3;
+    if (GenoDefine_StateDigest(&t_fp) != d1) { TestFail("the digest is not a function of the article state"); rc = 1; }
+    /* two items: the order of the list does not matter */
+    HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] = &ig[0]; ig[0].next = &ig[1]; ig[1].next = NULL;
+    d1 = GenoDefine_StateDigest(&t_fp);
+    HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] = &ig[1]; ig[1].next = &ig[0]; ig[0].next = NULL;
+    d2 = GenoDefine_StateDigest(&t_fp);
+    if (d1 != d2) { TestFail("the digest depends on the item list order"); rc = 1; }
+    /* another fighter's article is not this fighter's state */
+    it[0].owner = NULL; it[1].owner = NULL;
+    if (GenoDefine_StateDigest(&t_fp) != d0) { TestFail("an article this fighter does not own moved its digest"); rc = 1; }
+    HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] = head_save;
+    ig[0].next = ig[1].next = NULL;
+    if (GenoDefine_StateDigest(&t_fp) != d0) { TestFail("the digest did not return to the no-article value"); rc = 1; }
+    HSD_GObjPLinkHead = table_save;
+    Geno_TestRestore();
+    return rc;
+}

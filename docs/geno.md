@@ -2551,6 +2551,47 @@ Definitions are offline only, absent from online CSS, and refused by named/CK sc
 
 Author commands are in workspace `tools/geno/README.md`; packet 11 in `docs/learn/geno-fighters/` is an untested teaching stub. The catalogue companion requires the separate Hero folder and is excluded from automatic tours until accepted. Registered tests `geno_define_registry`, `geno_define_repeated_install` and `geno_define_snapshot` require the integrator rebuild. Full action coverage, mixed stock match, save/restore/repeated-input hashes, frontend/audio/results and second-match memory lifetime remain runtime acceptance gates.
 
+### 22.1 v7: a define with its own move set (slice 2, built 2026-10-05)
+
+`"geno": 7` (and `GENO_VERSION` 7) marks a define file that uses the widened attribute list, `special_attributes` or `fx_bindings`; a v6
+file, the Hero included, keeps its v6 meaning and id (the id hashes the entry, not the version). A v7 state library is not read by an older
+build (the header check compares `geno_version`). What a define can now do, with the fixture that proves it,
+`pc/geno/mods/vanilla-striker/` ("Vanilla Striker", key `vanilla-striker`, Mario's model and clips, own behaviour):
+
+| area | how | notes |
+|---|---|---|
+| attributes | all 67 common attributes (`GENO_MAX_ATTRS` 128), by their `geno_attrs[]` names (`landingairn_lag`, `initial_shield_size`, `jab_2_input_window`, ...) | a define is strict: an unknown name is a load error naming it; an attach stays lenient. Not in the table: dodge, roll and ledge scalars that live elsewhere than `ftCo_DatAttrs` |
+| special attributes, fx bindings | `special_attributes`, `fx_bindings` (Geno effect packages, `fx/*.gfx.json` of the mod, not retail effects) | `articles` stayed refused until slice 3 |
+| grounded and air attacks, grab, throws | overlays on subactions 0..302 plus `common_states` rows | 26 rows are the Striker's own (`python -m tools.geno.report`) |
+| specials | `specials` bound to Geno states (`geno.ground`, `geno.air`, `geno.anim_motion`) for all eight entries | the Striker binds all eight to six states; `report` shows `DONOR` for an unbound entry (it runs Mario's code) |
+| move tags | `move_tag` on states, overlays and `common_states`; **a define's declared tag wins over the tag derived from the motion id** (D6). Retail, m-ex and attach fighters keep the old order | verified in the game: hit rules and crits by tag class give the same multipliers for the Striker and Mario |
+| rollback | `RB_GameHash` folds a digest of the fighter's `GenoState` (variables, change checks, move variables, action time, hold and hit words) for defined kinds only (`ftRb_GenoDefineWord`, `GenoDefine_StateDigest`); 0 for every other kind, so no retail hash changes | diagnostics counters are excluded |
+
+Budgets, logged once per define at boot as `geno: define budgets: kind N overlays a/64, pool w words (all profiles t/16384), states s/48, arena b/2097152`: the Striker uses 32/64 overlays, 728 words (4.4%), 6/48 states; the pool was not raised.
+
+**Known default arms.** Retail code that switches on `fp->kind` treats a define as an unknown fighter and takes the default arm: `ftCo_800C70D0.c:28`, `ftCo_800C7178.c:28`, `ftcpuattack.c:1106,1446` (CPU recovery and attack choice), `ftCo_0A01.c:4487`, `ftCo_Landing.c:49` (Mario's tornado/cape flags are not reset on landing), `ftkirby.c:3371,3932` (a define is not a copy-ability source), `player.c:52`. Nothing in the slice-2 sweep misbehaved on these (the table is in `docs/learn/geno-fighters/10-known-gaps.md`); AI hints are slice 6.
+
+**Frame-timing readouts for a define** (measured): hitboxes at joint 0 map the offset x to world Z (sideways) and y to forward; a persistent savestate load does not restore a Lua `gd.input` hold, so a charge resumes only while the pad is held again.
+
+### 22.2 v8: a define with its own articles, effect and named sounds (slice 3, built 2026-10-05)
+
+`"geno": 8` (and `GENO_VERSION` 8) lets a define carry `articles` (the v5 machinery, section 19) and a `sounds` table. A v7 file with either key is refused
+with `define articles and sounds need "geno": 8`; v6/v7 files, the Hero and the Striker, keep their ids. Fixture: `pc/geno/mods/vanilla-caster/`
+("Vanilla Caster": its neutral special, ground and air, is a Geno state whose script runs `CALL geno.article.spawn 0`).
+
+| what | how |
+|---|---|
+| article | the section 19 keys, unchanged: `lifetime`, `velocity`, `spawn`, `hitboxes`, `despawn`, `max_live`, `fx` (a Geno effect package of the mod's `fx/` folder), optional `model` (the Caster has none: the item is invisible and its look is the effect) |
+| item kind | profile arithmetic (`GENO_ART_KIND(p, a)`): a define is a profile, so its articles take their own kind range (profiles 0..31 the historical ranges, 32 and up from `0x20000`); two defines never share a kind (test `geno_define_v8_parse`). The Mario fireball path (`ftmariospecialn.c:124`) only runs for Mario's own special entry, which a define binds to its own state |
+| sounds (the resolver) | `"sounds": [{"name", "retail_sfx": <engine sound id 1..999999>, "volume": 0..127 (default 127)}]`, at most 16 per profile (`GENO_MAX_SOUNDS`). An article names them: `"spawn_sound"` (played when it spawns) and `"end_sound"` (when it goes: hit, timeout, stage, absorbed). Resolved at load into article params 64-67 (`GENO_AP_SPAWN_SFX` ...); played by the owner with `ft_PlaySFX(fp, id, volume, 64)`, logged `geno: article sound: spawn of article 0 plays sound 234 at volume 100` |
+| strictness | for a define an unknown name, a duplicate name, an id or volume out of range, more than 16 sounds or a malformed table refuses the entry with the reason in the log; there is no donor fallback. An attach entry only logs and plays nothing |
+| rollback | the item and its `GenoArtVars` live in the item heap (snapshotted); the descriptors in the snapshot-covered arena. `GenoDefine_StateDigest` (called by `ftRb_GenoDefineWord`, the only hash edit of this slice) now also folds the fighter's live articles (an order-independent sum of per-item words: profile, article, age, despawn flag, travel velocity, position, velocity, hitbox slots; folded only when one exists, so a define without articles keeps its slice-2 digest). `Geno_FxFramePost` keeps the "matrix dirty" bit of an effect owner's joint as the logic left it (that bit made `gd.rewind_test` report 1 simulation byte with an effect on an article) and only touches an owner that is still a live item root or fighter joint (a stale owner crashed the bench SyncTest at frame 864 once; cause class inferred, not proven) |
+
+What the resolver supports and what a real character needs: it maps a NAME to an engine sound id the game's own code already plays (the numbers in `src/melee/ft/*.c`
+such as 234 and 228); nothing reads or ships audio. Own audio (WAV converted offline to the mixer's representation, named events `(tick, owner, ordinal)` for rollback
+suppression, a bank of the fighter's own, voice and announcer) is not built: it needs an audio container the engine can mount from a mod folder, which is open work for slice 6
+(voice, announcer) and a follow-up of this slice. The Caster's two ids are placeholders for that; looks, sounds and feel are unreviewed.
+
 ### Frame-counting convention: the first `wait` of an authored script
 
 A subaction script's `wait N` is the engine's own synchronous timer, run by retail's ftAction loop

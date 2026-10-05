@@ -17,6 +17,17 @@ static int test_script_fly_attack(void) {
                "assert(not pcall(gd.fly_attack,1,true,3,0/0)); "
                "assert(not pcall(gd.fly_attack,1,true,3,0)); "
                "assert(not pcall(gd.fly_attack,1,true,3,31)); "
+               "assert(not pcall(gd.fly_attack,1,true,{damage=31})); "
+               "assert(not pcall(gd.fly_attack,1,true,{radius=0})); "
+               "assert(not pcall(gd.fly_attack,1,true,{active=0})); "
+               "assert(not pcall(gd.fly_attack,1,true,{active=601})); "
+               "assert(not pcall(gd.fly_attack,1,true,{gap=-1})); "
+               "assert(not pcall(gd.fly_attack,1,true,{kb=0})); "
+               "assert(not pcall(gd.fly_attack,1,true,{kbg=2001})); "
+               "assert(not pcall(gd.fly_attack,1,true,{angle=362})); "
+               "assert(not pcall(gd.fly_attack,1,true,{active=2.5})); "
+               "assert(not pcall(gd.fly_attack,1,true,{every_frame=1})); "
+               "assert(not pcall(gd.fly_attack,7,true,{damage=3})); "
                "local s=gd.fly_state(1); assert(not s.attacking and not s.targeting and s.pulses==0)",
                out, sizeof out) != 0) {
         gw_test_fail("fly cursor boundary validation: %s", out); return 1;

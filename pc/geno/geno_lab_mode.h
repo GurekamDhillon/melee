@@ -59,6 +59,7 @@ void GenoFly_SetSolid(int solid); ///< 1: hurtboxes stay on while flying (defaul
 int GenoFly_Solid(void);
 int GenoFly_Target(int slot, int x_bits, int y_bits);
 int GenoFly_AttackSet(int slot, int on, int damage, int radius_bits);
+int GenoFly_AttackConfig(int slot, int flags, int damage, int radius_bits, int active_gap, int kb_kbg, int angle);
 int GenoFly_State(int slot, int field);
 int GenoFly_Pulses(int slot);
 void GenoFly_Clear(int slot);

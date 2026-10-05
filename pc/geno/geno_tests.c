@@ -3436,6 +3436,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_define_snapshot", test_geno_define_snapshot);
     TestRegister("geno_define_hit_tag", test_geno_define_hit_tag);
     TestRegister("geno_define_state_hash", test_geno_define_state_hash);
+    TestRegister("geno_define_article_digest", test_geno_define_article_digest);
     TestRegister("geno_fly", test_geno_fly);
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
     TestRegister("geno_ftcmd_loops", test_geno_ftcmd_loops);

@@ -2327,6 +2327,7 @@ static u32 geno_dgf(u32 h, f32 f)
  * start of a logic frame. 0 for every fighter that is not a define, so no other fighter's hash changes
  * (RB_GameHash mixes the word only when it is nonzero). */
 extern int Geno_DefineBaseKind(int kind);
+static u32 geno_art_digest(Fighter* fp); /* slice 3: the fighter's live articles (geno_game_articles.inc) */
 u32 GenoDefine_StateDigest(Fighter* fp)
 {
     GenoState* s;
@@ -2387,6 +2388,14 @@ u32 GenoDefine_StateDigest(Fighter* fp)
     h = geno_dg(h, (u32) s->atk_connected);
     h = geno_dg(h, (u32) s->atk_connected_prev);
     h = geno_dgf(h, s->fall_limit);
+    {
+        /* slice 3: the fighter's live articles are simulation state (their travel decides hits); folded only when
+         * there is one, so a define without articles keeps the digest it had in slice 2 */
+        u32 ad = geno_art_digest(fp);
+        if (ad != 0) {
+            h = geno_dg(h, ad);
+        }
+    }
     return h != 0 ? h : 1u;
 }
 

@@ -218,3 +218,80 @@ static int test_geno_define_overlay_budget(void)
     gn_registry_clear(&r);
     return rc;
 }
+
+/* Slice 3 (geno 8): a define may declare articles and the named-sound table. The resolver is strict for a define:
+ * an unknown name, a duplicate name, an id or volume out of range, or more than GENO_MAX_SOUNDS refuses the entry. */
+#define GN_T_ART(sound_refs) ",\"sounds\":[{\"name\":\"Zap\",\"retail_sfx\":234,\"volume\":100},{\"name\":\"Fade\",\"retail_sfx\":228}]," \
+    "\"articles\":[{\"name\":\"Bolt\",\"lifetime\":70,\"velocity\":[2.2,0]" sound_refs ",\"hitboxes\":[{\"damage\":5,\"size\":3.5}]}]"
+static int test_geno_define_v8_parse(void)
+{
+    static gn_registry r;
+    int rc = 0;
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, GN_T_ART(",\"spawn_sound\":\"Zap\",\"end_sound\":\"Fade\"")), "v8") != 1 || !r.p[0].defined ||
+        r.p[0].nart != 1 || r.p[0].nsnd != 2 ||
+        r.p[0].art_param[0][GENO_AP_SPAWN_SFX] != 234 || r.p[0].art_param[0][GENO_AP_SPAWN_VOL] != 100 ||
+        r.p[0].art_param[0][GENO_AP_END_SFX] != 228 || r.p[0].art_param[0][GENO_AP_END_VOL] != 127) {
+        gw_test_fail("v8 define with articles and sounds: n=%d nart=%d nsnd=%d", r.n, r.n ? r.p[0].nart : -1, r.n ? r.p[0].nsnd : -1); rc = 1;
+    }
+    if (r.n == 1 && (r.p[0].art_nhit[0] != 1 || gw_Geno_ArticleCount(0) < 0)) { gw_test_fail("v8 article lost its hitbox"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(7, GN_T_ART("")), "v7art") != 0 || r.n != 0) { gw_test_fail("the same entry as geno 7 was accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(7, ",\"sounds\":[{\"name\":\"Zap\",\"retail_sfx\":234}]"), "v7snd") != 0) { gw_test_fail("v7 sounds accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    /* a v8 define without articles or sounds is the same entry as before: the id is the entry's hash */
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"attributes\":{\"walk_max_vel\":1.8}"), "id8") != 1 || r.p[0].id != 0xa2759ebe1530b465ull) {
+        gw_test_fail("v8 define id changed: %016llx", (unsigned long long)(r.n ? r.p[0].id : 0)); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* two defines with articles never share an item kind (the kind is profile arithmetic) */
+    if (GENO_ART_KIND(0, 0) == GENO_ART_KIND(1, 0) || GENO_ART_KIND(33, 0) == GENO_ART_KIND(34, 0) ||
+        GENO_ART_KIND(33, 15) >= GENO_ART_KIND(34, 0) || !GENO_ART_IS_KIND(GENO_ART_KIND(40, 3))) {
+        gw_test_fail("article kinds collide across profiles"); rc = 1;
+    }
+    return rc;
+}
+
+static int test_geno_define_resolver(void)
+{
+    static gn_registry r;
+    static char many[1200], text[1600];
+    int rc = 0, i, n = 0;
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, GN_T_ART(",\"spawn_sound\":\"Nope\"")), "unknown") != 0 || r.n != 0) { gw_test_fail("unknown sound name accepted (donor fallback?)"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, GN_T_ART(",\"end_sound\":\"Nope\"")), "unknown-end") != 0) { gw_test_fail("unknown end sound name accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"sounds\":[{\"name\":\"A\",\"retail_sfx\":5},{\"name\":\"A\",\"retail_sfx\":6}]"), "dup") != 0) { gw_test_fail("duplicate sound name accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"sounds\":[{\"name\":\"A\",\"retail_sfx\":0}]"), "id0") != 0) { gw_test_fail("sound id 0 accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"sounds\":[{\"name\":\"A\",\"retail_sfx\":1000000}]"), "idbig") != 0) { gw_test_fail("sound id 1000000 accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"sounds\":[{\"name\":\"A\",\"retail_sfx\":5,\"volume\":128}]"), "vol") != 0) { gw_test_fail("volume 128 accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"sounds\":[{\"retail_sfx\":5}]"), "noname") != 0) { gw_test_fail("a sound without a name accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, GN_T_HEAD(8, ",\"sounds\":{}"), "notarray") != 0) { gw_test_fail("sounds as an object accepted"); rc = 1; }
+    gn_registry_clear(&r);
+    n = snprintf(many, sizeof many, ",\"sounds\":[");
+    for (i = 0; i < GENO_MAX_SOUNDS + 1; ++i) n += snprintf(many + n, sizeof many - n, "%s{\"name\":\"S%d\",\"retail_sfx\":%d}", i ? "," : "", i, 100 + i);
+    snprintf(many + n, sizeof many - n, "]");
+    snprintf(text, sizeof text, "{\"geno\":8,\"fighters\":[{\"define\":{\"key\":\"t8\",\"name\":\"T8\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"}%s}]}", many);
+    if (gn_parse_text(&r, text, "toomany") != 0) { gw_test_fail("%d sounds accepted", GENO_MAX_SOUNDS + 1); rc = 1; }
+    gn_registry_clear(&r);
+    n = snprintf(many, sizeof many, ",\"sounds\":[");
+    for (i = 0; i < GENO_MAX_SOUNDS; ++i) n += snprintf(many + n, sizeof many - n, "%s{\"name\":\"S%d\",\"retail_sfx\":%d}", i ? "," : "", i, 100 + i);
+    snprintf(many + n, sizeof many - n, "]");
+    snprintf(text, sizeof text, "{\"geno\":8,\"fighters\":[{\"define\":{\"key\":\"t8\",\"name\":\"T8\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"}%s}]}", many);
+    if (gn_parse_text(&r, text, "max") != 1 || r.p[0].nsnd != GENO_MAX_SOUNDS || r.p[0].snd_id[GENO_MAX_SOUNDS - 1] != 100 + GENO_MAX_SOUNDS - 1) {
+        gw_test_fail("%d sounds were not all kept", GENO_MAX_SOUNDS); rc = 1;
+    }
+    gn_registry_clear(&r);
+    /* resolution by name: the table maps the name to the engine id and volume the article was given */
+    if (gn_parse_text(&r, GN_T_HEAD(8, GN_T_ART(",\"spawn_sound\":\"Fade\"")), "byname") != 1 ||
+        r.p[0].art_param[0][GENO_AP_SPAWN_SFX] != 228 || r.p[0].art_param[0][GENO_AP_END_SFX] != 0) { gw_test_fail("name -> id resolution"); rc = 1; }
+    gn_registry_clear(&r);
+    return rc;
+}

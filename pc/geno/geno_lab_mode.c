@@ -297,7 +297,16 @@ typedef struct {
     Fighter* fighter;
     int target, attack, damage, pulses;
     float x, y, radius;
+    /* burst timing (logic frames, advanced only while the attacker is out of hitlag): the capsule is one
+     * fresh attack instance at phase 0, enabled for `active` frames, disabled for `gap` frames, then again.
+     * every_frame (or an empty cycle) is the old mode: a fresh instance on every frame. */
+    int every_frame, active, gap, phase, kb_base, kbg, angle;
 } FlyCursor;
+#define FLY_ACTIVE_DEFAULT 3
+#define FLY_GAP_DEFAULT 24
+#define FLY_KB_DEFAULT 30
+#define FLY_KBG_DEFAULT 100
+#define FLY_ANGLE_DEFAULT 45
 static FlyCursor fly_cursor[6];
 extern u16 plStale_IncrementAttackInstance(void);
 extern int Netplay_Enabled(void);
@@ -330,7 +339,8 @@ static void fly_cursor_pulse(Fighter* fp, FlyCursor* c)
     memset(h, 0, sizeof *h);
     h->state = HitCapsule_Enabled;
     h->damage = c->damage; h->unk_count = c->damage; h->scale = c->radius;
-    h->kb_angle = 45; h->x24 = 70; h->x2C = 20;
+    h->kb_angle = c->every_frame ? 45 : c->angle; h->x24 = c->every_frame ? 70 : c->kbg;
+    h->x2C = c->every_frame ? 20 : c->kb_base;
     h->x40_b0 = 1; h->x40_b2 = 1; h->x40_b3 = 1;
     h->x42_b5 = 1; h->x42_b7 = 1; /* native fighter AND item target eligibility */
     h->b_offset = fp->cur_pos;
@@ -338,6 +348,19 @@ static void fly_cursor_pulse(Fighter* fp, FlyCursor* c)
     ScriptGame_HitRuleCreate(fp,h,0);
     fp->x206C_attack_instance = plStale_IncrementAttackInstance();
     if (c->pulses < 0x7FFFFFFF) ++c->pulses;
+}
+
+/* One logic frame of the attack timing. Every-frame mode rearms each frame; burst mode rearms at phase 0
+ * only, so the victim's hitlag ends and its knockback carries it before the next instance, and the
+ * same-victim history of the old instance is gone by then. */
+static void fly_cursor_step(Fighter* fp, FlyCursor* c)
+{
+    int cycle = c->active + c->gap;
+    if (c->every_frame || c->active < 1 || cycle < 1) { fly_cursor_pulse(fp, c); return; }
+    if (c->phase >= cycle) c->phase = 0;
+    if (c->phase == 0) fly_cursor_pulse(fp, c);
+    else if (c->phase == c->active) fp->x914[0].state = HitCapsule_Disabled;
+    ++c->phase;
 }
 
 static void fly_input(Fighter_GObj* gobj);
@@ -410,7 +433,7 @@ static void fly_phys(Fighter_GObj* gobj)
     fp->x1988 = fly_solid ? 0 : 2;
     /* The pulse reads the frame's real hitlag, so it precedes hold_step, which zeroes
      * x195c_hitlag_frames; hold_step stays last so a held hitbox re-arms last. */
-    if (cursor && cursor->attack && fp->dmg.x195c_hitlag_frames <= 0.0f) fly_cursor_pulse(fp, cursor);
+    if (cursor && cursor->attack && fp->dmg.x195c_hitlag_frames <= 0.0f) fly_cursor_step(fp, cursor);
     hold_step(gobj);
 }
 
@@ -598,11 +621,15 @@ int GenoFly_Target(int slot, int x_bits, int y_bits)
     return 0;
 }
 
-int GenoFly_AttackSet(int slot, int on, int damage, int radius_bits)
+/* flags: bit 0 on, bit 1 every-frame mode. active_gap = active | gap << 16, kb_kbg = base | growth << 16
+ * (0 in a field means its default). Returns -2 for a value out of range. */
+int GenoFly_AttackConfig(int slot, int flags, int damage, int radius_bits, int active_gap, int kb_kbg, int angle)
 {
     union { int i; float f; } radius;
     Fighter* fp = fly_cursor_actor(slot);
     FlyCursor* c;
+    int on = flags & 1, active = active_gap & 0xFFFF, gap = (active_gap >> 16) & 0xFFFF;
+    int kb = kb_kbg & 0xFFFF, kbg = (kb_kbg >> 16) & 0xFFFF;
     if (slot < 0 || slot >= 6) return -1;
     c = &fly_cursor[slot];
     if (!on) {
@@ -612,8 +639,20 @@ int GenoFly_AttackSet(int slot, int on, int damage, int radius_bits)
     if (!fp) return -1;
     radius.i = radius_bits;
     if (damage < 1 || damage > 30 || !(radius.f >= 1 && radius.f <= 30)) return -2;
+    if (active > 600 || gap > 3000 || kb > 2000 || kbg > 2000 || angle < 0 || angle > 361) return -2;
     c->fighter = fp; c->attack = 1; c->damage = damage; c->radius = radius.f;
+    c->every_frame = (flags >> 1) & 1;
+    c->active = active ? active : FLY_ACTIVE_DEFAULT;
+    c->gap = (active || gap) ? gap : FLY_GAP_DEFAULT;
+    c->kb_base = kb ? kb : FLY_KB_DEFAULT; c->kbg = kbg ? kbg : FLY_KBG_DEFAULT;
+    c->angle = angle ? angle : FLY_ANGLE_DEFAULT;
+    c->phase = 0;
     return 0;
+}
+
+int GenoFly_AttackSet(int slot, int on, int damage, int radius_bits)
+{
+    return GenoFly_AttackConfig(slot, on ? 1 : 0, damage, radius_bits, 0, 0, 0);
 }
 
 int GenoFly_State(int slot, int field)
@@ -630,6 +669,8 @@ int GenoFly_State(int slot, int field)
     case 4: value.f = c->x; return value.i;
     case 5: value.f = c->y; return value.i;
     case 6: return c->pulses;
+    case 7: return c->every_frame; case 8: return c->active; case 9: return c->gap;
+    case 10: return c->kb_base; case 11: return c->kbg; case 12: return c->angle; case 13: return c->phase;
     }
     return -1;
 }
@@ -875,6 +916,7 @@ int GenoFly_CursorTest(void)
     fly_cursor[0].fighter = &fp; fly_cursor[0].target = 1;
     fly_cursor[0].x = 3; fly_cursor[0].y = 4;
     fly_cursor[0].attack = 1; fly_cursor[0].damage = 3; fly_cursor[0].radius = 6;
+    fly_cursor[0].every_frame = 1; /* the original per-frame mode: these checks predate the bursts */
     fp.x914[0].x44 = fp.x914[0].x45 = 12;
     fly_phys(&gobj);
     if (fp.self_vel.x < 1.199f || fp.self_vel.x > 1.201f ||
@@ -926,6 +968,30 @@ int GenoFly_CursorTest(void)
     fly_cursor[0].fighter = NULL; fp.x914[0].state = HitCapsule_Disabled;
     fp.dmg.x195c_hitlag_frames = 0; fly_phys(&gobj);
     if (fp.x914[0].state != HitCapsule_Disabled) rc = 1;
+    /* Burst mode: pulse at phase 0 only, capsule off from `active`, next pulse after active+gap frames, a
+     * hitlag frame does not advance the cycle, every_frame=1 pulses each frame again. */
+    {
+        int k, pulses0, enabled_frames = 0, pulse_frames[16], np = 0;
+        fp.dmg.x195c_hitlag_frames = 0;
+        memset(&fly_cursor[0], 0, sizeof fly_cursor[0]);
+        fly_cursor[0].fighter = &fp; fly_cursor[0].attack = 1; fly_cursor[0].damage = 3; fly_cursor[0].radius = 6;
+        fly_cursor[0].active = 2; fly_cursor[0].gap = 3; fly_cursor[0].kb_base = 33; fly_cursor[0].kbg = 77; fly_cursor[0].angle = 55;
+        pulses0 = fly_cursor[0].pulses;
+        for (k = 0; k < 12; ++k) {
+            int before = fly_cursor[0].pulses;
+            fly_phys(&gobj);
+            if (fly_cursor[0].pulses != before && np < 16) pulse_frames[np++] = k;
+            if (fp.x914[0].state == HitCapsule_Enabled) ++enabled_frames;
+            if (k == 0 && (fp.x914[0].x2C != 33 || fp.x914[0].x24 != 77 || fp.x914[0].kb_angle != 55)) rc = 1;
+            if (k == 1) { fp.dmg.x195c_hitlag_frames = 2; fly_phys(&gobj); fp.dmg.x195c_hitlag_frames = 0; } /* no advance */
+        }
+        /* cycle 5: pulses at frames 0, 5, 10; enabled on 2 of every 5 frames (0,1 | 5,6 | 10,11) */
+        if (np != 3 || pulse_frames[0] != 0 || pulse_frames[1] != 5 || pulse_frames[2] != 10 || enabled_frames != 6 ||
+            fly_cursor[0].pulses - pulses0 != 3) rc = 1;
+        fly_cursor[0].every_frame = 1; pulses0 = fly_cursor[0].pulses;
+        for (k = 0; k < 4; ++k) fly_phys(&gobj);
+        if (fly_cursor[0].pulses - pulses0 != 4) rc = 1;
+    }
     fly_cursor[0] = saved; fly_speed = speed; fly_solid = solid;
     return rc;
 }

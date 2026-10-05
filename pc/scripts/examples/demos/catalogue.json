@@ -944,6 +944,34 @@
   "setup": []
 },
 {
+  "id": "demo_geno_define_striker",
+  "tour": false,
+  "path": "demos/geno-define-striker",
+  "title": "Vanilla Striker: a defined fighter with its own move set",
+  "api": "geno v7 define; gd.input; LAB snapshots",
+  "category": "demo",
+  "new": true,
+  "in_game": false,
+  "controls": "1-4 the four specials; 5 jab; 6 forward smash; 7 grab; S save; L load; P pause; N step; R resume",
+  "requires_assets": true,
+  "skip_reason": "Requires the separately enabled vanilla-striker fighter folder and the LAB; offline only",
+  "setup": []
+},
+{
+  "id": "demo_geno_define_caster",
+  "tour": false,
+  "path": "demos/geno-define-caster",
+  "title": "Vanilla Caster: a defined fighter with its own projectile",
+  "api": "geno v8 define articles and named sounds; gd.input; LAB snapshots",
+  "category": "demo",
+  "new": true,
+  "in_game": false,
+  "controls": "1 neutral special (the projectile); S save; L load; P pause; N step; R resume",
+  "requires_assets": true,
+  "skip_reason": "Requires the separately enabled vanilla-caster fighter folder and the LAB; offline only",
+  "setup": []
+},
+{
   "id": "demo_cpu_controller",
   "tour": false,
   "path": "demos/cpu-controller",

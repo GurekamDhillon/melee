@@ -1,0 +1,57 @@
+{
+  "geno": 8,
+  "fighters": [
+    {
+      "define": {
+        "key": "vanilla-caster",
+        "name": "Vanilla Caster",
+        "base": "mario",
+        "common": "melee.common.v1",
+        "resources": "retail:mario"
+      },
+      "attributes": {
+        "walk_max_vel": 1.3,
+        "gravity": 0.085
+      },
+      "sounds": [
+        { "name": "CasterCast", "retail_sfx": 234, "volume": 100 },
+        { "name": "CasterFade", "retail_sfx": 228, "volume": 90 }
+      ],
+      "articles": [
+        {
+          "name": "CasterBolt",
+          "lifetime": 70,
+          "velocity": [2.2, 0],
+          "spawn": [6, 9],
+          "max_live": 3,
+          "fx": "CasterGlow",
+          "spawn_sound": "CasterCast",
+          "end_sound": "CasterFade",
+          "despawn": { "hit": true, "shield": true, "stage": true, "clank": true },
+          "hitboxes": [
+            { "damage": 5, "size": 3.5, "offset": [0, 0, 0], "angle": 361, "kbg": 60, "bkb": 25,
+              "element": 0, "sfx_severity": 1, "start": 1, "end": 0 }
+          ]
+        }
+      ],
+      "states": [
+        {
+          "name": "CastN",
+          "behavior": "geno.ground",
+          "subaction": 295,
+          "like": "motion:343",
+          "phys": "auto",
+          "coll": "both",
+          "move_tag": "special"
+        }
+      ],
+      "specials": {
+        "n": "geno:CastN",
+        "air_n": "geno:CastN"
+      },
+      "subactions": [
+        { "index": 295, "file": "moves/cast.words", "move_tag": "special" }
+      ]
+    }
+  ]
+}

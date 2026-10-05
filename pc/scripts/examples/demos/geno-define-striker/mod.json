@@ -1,0 +1,10 @@
+{
+  "id": "demo_geno_define_striker",
+  "name": "Vanilla Striker: a defined fighter with its own move set",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

@@ -885,6 +885,30 @@ MatchOutcome gm_GetTeamBattleOutcome(void)
     return OUTCOME_NONE;
 }
 
+#if defined(TARGET_PC)
+/* Script match-end hold (gd.match_end_hold, platform/gw_script.c): while set, a stock-based win/loss is not an
+ * outcome yet if the human (slot 0) still has a stock, so the match keeps running (the player keeps control,
+ * timer and hazards continue). Time-outs, terminations, no-contest/retry and the bonus-stage end are not deferred;
+ * the player losing the last stock ends the match as usual. Offline only: the script layer refuses it online and
+ * clears it at every scene change. */
+static int gmVs_end_hold;
+
+void gmVs_SetEndHold(int on)
+{
+    gmVs_end_hold = on != 0;
+}
+
+static MatchOutcome gmVs_HoldOutcome(MatchOutcome outcome)
+{
+    if (gmVs_end_hold && outcome != OUTCOME_NONE && Player_GetStocks(0) > 0) {
+        return OUTCOME_NONE;
+    }
+    return outcome;
+}
+#else
+#define gmVs_HoldOutcome(outcome) (outcome)
+#endif
+
 MatchOutcome gm_GetMatchOutcome(void)
 {
     MatchOutcome team_battle_outcome;
@@ -920,13 +944,13 @@ MatchOutcome gm_GetMatchOutcome(void)
     if (!controller.start.is_teams) {
         ffa_outcome = gm_GetFFAOutcome();
         if (ffa_outcome != OUTCOME_NONE) {
-            return ffa_outcome;
+            return gmVs_HoldOutcome(ffa_outcome);
         }
     }
     if (controller.start.is_teams == true) {
         team_battle_outcome = gm_GetTeamBattleOutcome();
         if (team_battle_outcome != 0) {
-            return team_battle_outcome;
+            return gmVs_HoldOutcome(team_battle_outcome);
         }
     }
     if (Ground_801C1D84() != 0) {

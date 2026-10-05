@@ -9,7 +9,8 @@ extern void gw_ScriptGame_OnePTintClear(int slot,int owner);
 extern int gw_SceneLaunch_OnePDirect(int mode);
 static struct {
     int mode, target_mode, stage, flags, player, owner, scripted, loop, loops;
-    int events, barrier, dispatch, held, hold_owner, remaining, used_hold;
+    int events, barrier, dispatch, held, hold_owner, remaining, used_hold, hold_spent;
+    double hold_ms;
     int ended, completed, aborting, boss_port, boss_kind, spawn[6], generation[6], tint[6], tint_owner[6];
     char launch[256];
 } gs_1p;
@@ -143,16 +144,44 @@ static void gs_1p_start_dispatch(void) {
         gs_1p.spawn[s]=0;gs_1p_hook("on_1p_spawn",s,gs_1p.generation[s]);
     }
 }
+/* The interstage hold is counted in 60 Hz logic units, not host ticks: a host tick is a render tick (60 or 120 a
+   second), so the old tick count made the hold half as long at 120 Hz. One unit is 1000/60 ms of wall time
+   (gs_1p_hold_clock); a hitch is clamped so a stalled frame cannot spend the hold. The default is 1800 units
+   (30 s); a script may ask for up to GS_1P_HOLD_MAX (120 s) in all, counted from the claim, and may renew a live
+   claim with another gd.hold_1p call until that ceiling is spent. */
+#define GS_1P_HOLD_DEFAULT 1800
+#define GS_1P_HOLD_MAX 7200
 static int gs_1p_hold_accept(int frames,int owner) {
-    if(!gs_1p.dispatch||!gs_1p.barrier||gs_1p.used_hold||frames<1)return 0;
-    gs_1p.held=gs_1p.used_hold=1;gs_1p.hold_owner=owner;
-    gs_1p.remaining=frames>1800?1800:frames;return 1;
+    if(frames<1)return 0;
+    if(gs_1p.held&&gs_1p.hold_owner==owner) { /* renew: the new length from now, never past the ceiling */
+        int cap=GS_1P_HOLD_MAX-gs_1p.hold_spent;
+        if(cap<1)return 0;
+        gs_1p.remaining=frames>cap?cap:frames;return 1;
+    }
+    if(!gs_1p.dispatch||!gs_1p.barrier||gs_1p.used_hold)return 0;
+    gs_1p.held=gs_1p.used_hold=1;gs_1p.hold_owner=owner;gs_1p.hold_spent=0;gs_1p.hold_ms=gs_now_ms();
+    gs_1p.remaining=frames>GS_1P_HOLD_MAX?GS_1P_HOLD_MAX:frames;return 1;
+}
+/* Whole 60 Hz units of wall time since the last call (the fraction carries over), at most 6 per call. */
+static int gs_1p_hold_clock(void) {
+    double now=gs_now_ms(),d=now-gs_1p.hold_ms;int u;
+    if(d<0)d=0;
+    if(d>100.0)d=100.0;
+    u=(int)(d*0.06);
+    gs_1p.hold_ms+=u*(1000.0/60.0);
+    if(now-gs_1p.hold_ms>100.0)gs_1p.hold_ms=now;
+    return u;
+}
+static int gs_1p_hold_step_units(int owner_live,int units) {
+    if(!gs_1p.held)return 0;
+    if(owner_live) {
+        gs_1p.hold_spent+=units;gs_1p.remaining-=units;
+        if(gs_1p.remaining>0&&gs_1p.hold_spent<GS_1P_HOLD_MAX)return 0;
+    }
+    gs_1p.held=0;return 1;
 }
 static int gs_1p_hold_step(int owner_live) {
-    if(gs_1p.held&&(!owner_live||--gs_1p.remaining<=0)) {
-        gs_1p.held=0;return 1;
-    }
-    return 0;
+    return gs_1p_hold_step_units(owner_live,gs_1p.held?gs_1p_hold_clock():0);
 }
 static void gs_1p_end(void);
 static void gs_1p_tick(void) {
@@ -194,7 +223,7 @@ static int l_mode_1p(lua_State* L) {
     return 1;
 }
 static int l_hold_1p(lua_State* L) {
-    int n=(int)luaL_optinteger(L,1,1800);
+    int n=(int)luaL_optinteger(L,1,GS_1P_HOLD_DEFAULT);
     gs_require_offline(L,"hold_1p");
     lua_pushboolean(L,gs_1p_hold_accept(n,gs.cur+1));return 1;
 }

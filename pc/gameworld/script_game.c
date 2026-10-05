@@ -2873,6 +2873,13 @@ int ScriptGame_Impulse(int slot, int x_bits, int y_bits)
 #include <melee/gr/stage.h>
 #include <melee/mp/mplib.h>
 
+/* gd.match_end_hold: the retail side lives in gmvs.c (gmVs_HoldOutcome in gm_GetMatchOutcome). */
+extern void gmVs_SetEndHold(int on);
+void ScriptGame_MatchEndHold(int on)
+{
+    gmVs_SetEndHold(on);
+}
+
 /* ---- enemies2: explicit enemy hits; fighter port semantics remain unchanged ---- */
 #include <melee/it/itcoll.h>
 

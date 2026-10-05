@@ -9,13 +9,21 @@ static int test_script_1p(void) {
     gs_1p.mode=3;if(gs_1p_can_start(0x2f))fail=1;gs_1p.mode=0;
     if(gs_1p_hold_accept(1800,1))fail=1; /* no safe callback */
     gs_1p.barrier=gs_1p.dispatch=1;
-    if(gs_1p_hold_accept(0,1)||!gs_1p_hold_accept(9999,1)||gs_1p.remaining!=1800)fail=1;
-    if(gs_1p_hold_accept(1800,1)||gs_1p_hold_release(2))fail=1;
-    for(i=0;i<1799;++i)if(gs_1p_hold_step(1))fail=1;
-    if(!gs_1p.held||!gs_1p_hold_step(1)||gs_1p.held)fail=1;
-    if(gs_1p_hold_accept(20,1))fail=1; /* deadline never renews */
+    if(gs_1p_hold_accept(0,1)||!gs_1p_hold_accept(9999,1)||gs_1p.remaining!=7200)fail=1; /* ceiling: 120 s of 60 Hz units */
+    if(gs_1p_hold_release(2))fail=1;
+    for(i=0;i<7199;++i)if(gs_1p_hold_step_units(1,1))fail=1;
+    if(!gs_1p.held||!gs_1p_hold_step_units(1,1)||gs_1p.held)fail=1;
+    gs_1p.used_hold=0;gs_1p.hold_spent=0; /* a 120 Hz host tick is half a unit: the length does not depend on the tick rate */
+    if(!gs_1p_hold_accept(1800,1)||gs_1p.remaining!=1800)fail=1;
+    for(i=0;i<1799;++i)if(gs_1p_hold_step_units(1,1))fail=1;
+    if(!gs_1p.held||!gs_1p_hold_step_units(1,1)||gs_1p.held)fail=1;
+    gs_1p.used_hold=0;gs_1p.hold_spent=0; /* renewal: extends a live claim to the ceiling, then refuses */
+    if(!gs_1p_hold_accept(100,1)||gs_1p_hold_step_units(1,50)||!gs_1p_hold_accept(5000,1)||gs_1p.remaining!=5000)fail=1;
+    if(gs_1p_hold_accept(100,2)||gs_1p_hold_step_units(1,4000)||!gs_1p_hold_accept(9000,1)||gs_1p.remaining!=7200-4050)fail=1;
+    if(!gs_1p_hold_step_units(1,3150)||gs_1p.held||gs_1p_hold_accept(10,1))fail=1;
+    if(gs_1p_hold_accept(20,1))fail=1; /* one claim per barrier */
     gs_1p.used_hold=0;
-    if(!gs_1p_hold_accept(20,3)||!gs_1p_hold_step(0)||gs_1p.held)fail=1;
+    if(!gs_1p_hold_accept(20,3)||!gs_1p_hold_step_units(0,0)||gs_1p.held)fail=1;
     gs_1p.used_hold=0;
     if(!gs_1p_hold_accept(20,3)||!gs_1p_hold_release(3)||gs_1p_hold_release(3))fail=1;
     memset(&gs_1p,0,sizeof gs_1p);

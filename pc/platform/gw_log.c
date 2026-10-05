@@ -59,6 +59,8 @@
 #ifndef _WIN32
 #include <sys/sysinfo.h>
 #include <sys/utsname.h>
+#include <link.h>
+#include <elf.h>
 #include <pwd.h>
 #include <unistd.h>
 #endif
@@ -684,6 +686,37 @@ static void gl_exe_dir(char *out, size_t cap) {
   }
 }
 
+#ifndef _WIN32
+struct gl_note_scan { int found; DWORD id; };
+/* The first object dl_iterate_phdr reports is the main program. */
+static int gl_note_cb(struct dl_phdr_info *info, size_t size, void *data) {
+  struct gl_note_scan *s = (struct gl_note_scan *)data;
+  int i;
+  (void)size;
+  for (i = 0; i < info->dlpi_phnum; ++i) {
+    const ElfW(Phdr) *ph = &info->dlpi_phdr[i];
+    const unsigned char *p, *end;
+    if (ph->p_type != PT_NOTE) continue;
+    p = (const unsigned char *)(info->dlpi_addr + ph->p_vaddr);
+    end = p + ph->p_memsz;
+    while ((size_t)(end - p) >= sizeof(ElfW(Nhdr))) {
+      const ElfW(Nhdr) *n = (const ElfW(Nhdr) *)p;
+      const unsigned char *name = p + sizeof *n;
+      const unsigned char *desc = name + ((n->n_namesz + 3u) & ~3u);
+      size_t next = sizeof *n + ((n->n_namesz + 3u) & ~3u) + ((n->n_descsz + 3u) & ~3u);
+      if (next > (size_t)(end - p)) break;
+      if (n->n_type == NT_GNU_BUILD_ID && n->n_namesz == 4 && memcmp(name, "GNU", 4) == 0 && n->n_descsz >= 4) {
+        s->id = ((DWORD)desc[0] << 24) | ((DWORD)desc[1] << 16) | ((DWORD)desc[2] << 8) | (DWORD)desc[3];
+        s->found = 1;
+        return 1;
+      }
+      p += next;
+    }
+  }
+  return 1; /* only the main program */
+}
+#endif
+
 static DWORD gl_link_stamp(void) {
 #ifdef _WIN32
   const unsigned char *base = (const unsigned char *)GetModuleHandleA(NULL);
@@ -693,7 +726,13 @@ static DWORD gl_link_stamp(void) {
   nt = (const IMAGE_NT_HEADERS *)(base + dos->e_lfanew);
   return nt->Signature == IMAGE_NT_SIGNATURE ? nt->FileHeader.TimeDateStamp : 0;
 #else
-  return 0; /* ELF map timestamps are not part of the MSVC-shaped symbolizer format. */
+  /* The Linux link passes -Wl,--build-id=sha1 (tools/port/link_linux.sh), so the exe carries a GNU build-id note;
+   * the id shown is its first four bytes, the usual short form. 0 only if the exe was linked without one.
+   * (Not the Windows link timestamp: the map symbolizer below is MSVC-shaped and stays Windows-only.)
+   * Untested on Linux: written by inspection, not built there. */
+  struct gl_note_scan s = {0, 0};
+  dl_iterate_phdr(gl_note_cb, &s);
+  return s.found ? s.id : 0;
 #endif
 }
 
@@ -716,7 +755,11 @@ static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *s
   }
   line[strcspn(line, "\r\n")] = '\0';
   rep("version:         %s\n", line[0] != '\0' ? line : "development build (no version.txt)");
+#ifdef _WIN32
   rep("build id:        %08lX (melee-pc.exe link time)\n", (unsigned long)gl_link_stamp());
+#else
+  rep("build id:        %08lX (melee-pc ELF build-id, first 4 bytes)\n", (unsigned long)gl_link_stamp());
+#endif
   {
     char title[0x41] = "";
     f = gl.disc_path[0] != '\0' ? fopen(gl.disc_path, "rb") : NULL;

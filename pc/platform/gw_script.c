@@ -222,8 +222,10 @@ extern void gw_script_pad_override(int ch, int owner, unsigned buttons, int sx, 
                                    int cy, int l, int r, int samples);
 extern void gw_script_pad_release(int ch, int owner);
 extern void gw_script_pad_release_owner(int owner);
+static void gs_end_hold_release_owner(int owner);
 extern int gw_script_pad_mask(int ch, int owner, unsigned buttons);
 extern void gw_script_pad_masks_clear(void);
+extern int gw_script_pad_chord(int ch, int owner, unsigned buttons);
 extern unsigned gw_script_pad_raw_buttons(int ch);
 extern const char *gw_script_pad_lua_path(void); /* MELEE_PAD_SCRIPT when it names a .lua */
 
@@ -689,6 +691,7 @@ static void gs_report(int script, const char *what, const char *err) {
         gw_ScriptGame_CpuTechnicalClear(script + 1);
         gw_Fx_LabStop(script + 1);
         gw_script_pad_release_owner(script + 1);
+        gs_end_hold_release_owner(script + 1);
         gs_enemy_release_owner(script + 1);
         gw_Geno_ItemReleaseOwner(script + 1);
         gs_hud_release_owner(script + 1);
@@ -1085,6 +1088,78 @@ static int l_boss_release(lua_State *L) {
     gs_require_offline(L, "boss_release");
     gs_rw_branch();
     lua_pushboolean(L, gw_BossHook_Release());
+    return 1;
+}
+
+/* gd.match_end_hold(reason, on): defer the end of a stock-based match while a condition a script owns is true. Reason-keyed
+ * (a script's own words, up to GS_END_HOLDS at once); the match end is deferred while any reason is held. gd.match_end_hold(reason)
+ * reads one back, gd.match_end_hold() lists them. Offline only; cleared at every scene change; logged on start and release.
+ * The retail side is gmVs_HoldOutcome (src/melee/gm/gmvs.c). */
+#define GS_END_HOLDS 8
+extern void gw_ScriptGame_MatchEndHold(int on);
+#define gmVs_SetEndHold gw_ScriptGame_MatchEndHold
+static char gs_end_hold_reason[GS_END_HOLDS][24];
+static int gs_end_hold_owner[GS_END_HOLDS];
+static int gs_end_hold_find(const char *reason) {
+    int i;
+    for (i = 0; i < GS_END_HOLDS; ++i) {
+        if (gs_end_hold_reason[i][0] && strcmp(gs_end_hold_reason[i], reason) == 0) return i;
+    }
+    return -1;
+}
+static int gs_end_hold_any(void) {
+    int i;
+    for (i = 0; i < GS_END_HOLDS; ++i) if (gs_end_hold_reason[i][0]) return 1;
+    return 0;
+}
+static void gs_end_hold_release_owner(int owner) { /* owner 0: every hold (scene change) */
+    int i, had = gs_end_hold_any();
+    for (i = 0; i < GS_END_HOLDS; ++i) {
+        if (gs_end_hold_reason[i][0] && (owner == 0 || gs_end_hold_owner[i] == owner)) {
+            gw_log("script: match end hold '%s' released (%s)", gs_end_hold_reason[i], owner ? "script unloaded" : "scene change");
+            gs_end_hold_reason[i][0] = ' ';
+            gs_end_hold_owner[i] = 0;
+        }
+    }
+    if (had && !gs_end_hold_any()) gmVs_SetEndHold(0);
+}
+static int l_match_end_hold(lua_State *L) {
+    const char *reason;
+    int i;
+    if (lua_isnoneornil(L, 1)) { /* the list of reasons held */
+        int n = 0;
+        lua_newtable(L);
+        for (i = 0; i < GS_END_HOLDS; ++i) {
+            if (gs_end_hold_reason[i][0]) { lua_pushstring(L, gs_end_hold_reason[i]); lua_rawseti(L, -2, ++n); }
+        }
+        return 1;
+    }
+    reason = luaL_checkstring(L, 1);
+    if (reason[0] == ' ' || strlen(reason) >= sizeof gs_end_hold_reason[0]) {
+        return luaL_error(L, "gd.match_end_hold: reason must be 1-23 characters");
+    }
+    if (lua_isnoneornil(L, 2)) { /* read one back */
+        lua_pushboolean(L, gs_end_hold_find(reason) >= 0);
+        return 1;
+    }
+    gs_require_offline(L, "match_end_hold");
+    i = gs_end_hold_find(reason);
+    if (lua_toboolean(L, 2)) {
+        if (i < 0) {
+            for (i = 0; i < GS_END_HOLDS && gs_end_hold_reason[i][0]; ++i) {}
+            if (i == GS_END_HOLDS) { lua_pushboolean(L, 0); return 1; }
+            snprintf(gs_end_hold_reason[i], sizeof gs_end_hold_reason[i], "%s", reason);
+            gs_end_hold_owner[i] = gs.cur + 1;
+            gw_log("script [%s]: match end held: '%s'", gs_script_id(gs.cur), reason);
+            gmVs_SetEndHold(1);
+        }
+    } else if (i >= 0) {
+        gs_end_hold_reason[i][0] = ' ';
+        gs_end_hold_owner[i] = 0;
+        gw_log("script [%s]: match end hold '%s' released", gs_script_id(gs.cur), reason);
+        if (!gs_end_hold_any()) gmVs_SetEndHold(0);
+    }
+    lua_pushboolean(L, 1);
     return 1;
 }
 
@@ -1757,8 +1832,19 @@ static int l_input_mask(lua_State *L) {
     int ch = gs_slot_arg(L, 1);
     lua_Integer bits = luaL_checkinteger(L, 2);
     gs_require_offline(L, "input_mask");
-    if (ch > 3 || bits < 0 || bits > 15) return luaL_error(L, "input_mask: port 1-4, D-pad bits 0-15");
+    if (ch > 3 || bits < 0 || (bits & ~(lua_Integer) 0x100F)) return luaL_error(L, "input_mask: port 1-4, D-pad bits 0-15 plus 0x1000 for START");
     lua_pushboolean(L, gw_script_pad_mask(ch, gs.cur + 1, (unsigned)bits));
+    return 1;
+}
+
+/* gd.input_chord(port, "Z+START"): while all those buttons are held together the game sees none of them (offline). */
+static int l_input_chord(lua_State *L) {
+    int ch = gs_slot_arg(L, 1);
+    unsigned bits;
+    gs_require_offline(L, "input_chord");
+    bits = gs_parse_buttons(L, 2);
+    if (ch > 3) return luaL_error(L, "input_chord: port 1-4");
+    lua_pushboolean(L, gw_script_pad_chord(ch, gs.cur + 1, bits));
     return 1;
 }
 
@@ -6376,7 +6462,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"fly_target", l_fly_target}, {"fly_attack", l_fly_attack}, {"fly_clear", l_fly_clear}, {"fly_state", l_fly_state},
-    {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
+    {"match_end_hold", l_match_end_hold}, {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"mode_blob", l_mode_blob},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},
@@ -6405,7 +6491,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"state_rename", l_state_rename}, {"state_gen", l_state_gen}, {"lab_peek", l_lab_peek},
     {"timeline", l_timeline}, {"set_motion", l_set_motion}, {"mirror_pad", l_mirror_pad},
     {"lab_request", l_lab_request}, {"lab_mode", l_lab_mode}, {"lab_leave", l_lab_leave},
-    {"tbd_request", l_tbd_request}, {"input_mask", l_input_mask},
+    {"tbd_request", l_tbd_request}, {"input_mask", l_input_mask}, {"input_chord", l_input_chord},
     {"training_select", l_training_select},
     /* stage E */
     {"motion_list", l_motion_list}, {"kb_preview", l_kb_preview}, {"rollbacks", l_rollbacks},
@@ -6818,6 +6904,7 @@ static void gs_unload(int i) {
     gs_launch_retire(s->stage_owner);
     gs_stage_slots_release(i);
     gw_script_pad_release_owner(i + 1);
+    gs_end_hold_release_owner(i + 1);
     /* arena-hooks: ownership is read from the restored game snapshot. */
     if (gs.match_active) {
         gs_rw_branch();
@@ -7284,6 +7371,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     memset(gs_enemy_owned, 0, sizeof gs_enemy_owned);
     gw_Geno_ItemsSceneReset();
     gw_script_pad_masks_clear();
+    gs_end_hold_release_owner(0);
     if (gs.match_active) {
         gs.match_active = 0;
         gs_hook_all("on_match_end", 0, 0, 0);
@@ -9688,18 +9776,41 @@ static int test_script_pad_mask(void) {
         rc = 1;
         goto done;
     }
+    if (!gw_script_pad_chord(3, owner, 0x1010) || gw_script_pad_chord(3, owner + 1, 0x1010) ||
+        gw_script_pad_chord(3, owner, 0x1000) || gw_script_pad_chord(3, owner, 0x2000) ||
+        gw_script_pad_chord(4, owner, 0x1010)) {
+        gw_test_fail("chord did not enforce owner, channel or two-button minimum");
+        rc = 1;
+        goto done;
+    }
+    gw_w16(&st[3].button, 0x1110); /* A + Z + START */
+    gw_Script_PadApply(st);
+    if (gw_r16(&st[3].button) != 0x0100 || gw_script_pad_raw_buttons(3) != 0x1110) {
+        gw_test_fail("chord did not hide the whole chord from the game while keeping the raw sample");
+        rc = 1;
+        goto done;
+    }
+    gw_w16(&st[3].button, 0x1100); /* START alone is not the chord */
+    gw_Script_PadApply(st);
+    if (gw_r16(&st[3].button) != 0x1100 || !gw_script_pad_chord(3, owner, 0)) {
+        gw_test_fail("chord hid a partial press, or release failed");
+        rc = 1;
+        goto done;
+    }
     if (t_exec("assert(not pcall(gd.input_mask, 1, 256)); "
                "assert(not pcall(gd.input_mask, 1, -1)); "
                "assert(not pcall(gd.input_mask, 5, 8)); "
                "assert(not pcall(gd.input_mask, 1, 1.5)); "
-               "assert(gd.input_mask(4, 8))", out, sizeof out) != 0) {
+               "assert(not pcall(gd.input_mask, 1, 0x1100)); "
+               "assert(gd.input_mask(4, 0x1008))", out, sizeof out) != 0) {
         gw_test_fail("Lua D-pad mask validation failed: %s", out);
         rc = 1;
         goto done;
     }
-    gw_w16(&st[3].button, 0x010F);
+    gw_w16(&st[3].button, 0x110F);
     gw_Script_PadApply(st);
     if (t_exec("assert(gd.pad(4, true).UP and not gd.pad(4).UP); "
+               "assert(gd.pad(4, true).START and not gd.pad(4).START); "
                "assert(gd.input_mask(4, 0))", out, sizeof out) != 0) {
         gw_test_fail("Lua raw/final pad samples or mask release failed: %s", out);
         rc = 1;

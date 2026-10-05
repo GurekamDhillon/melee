@@ -204,16 +204,34 @@ static struct {
  * Raw buttons remain available to the owning script for edge detection. */
 static unsigned gw_raw_buttons[4];
 static struct { int owner; unsigned buttons; } gw_menu_mask[4];
+/* A chord a script keeps from the game: while every button of `buttons` is held in one sample, the game sees none
+ * of them. Decided on the same sample, so it works when the buttons arrive on the same frame (a mask set from the
+ * previous frame's read could not). Raw buttons stay readable through gd.pad(port, true). */
+static struct { int owner; unsigned buttons; } gw_chord[4];
 static int gw_paused_sample;
 
+/* D-pad (bits 0-3) and START (0x1000, the PAD button bit): what a script may keep from the game. START lets an
+ * overlay opened by a chord (Envoy's Z+START bag) stop the same press from also pausing the match. */
+#define GW_PAD_MASKABLE (15u | 0x1000u)
 int gw_script_pad_mask(int ch, int owner, unsigned buttons) {
-  if (ch < 0 || ch > 3 || owner <= 0 || (buttons & ~15u)) return 0;
+  if (ch < 0 || ch > 3 || owner <= 0 || (buttons & ~GW_PAD_MASKABLE)) return 0;
   if (gw_menu_mask[ch].owner && gw_menu_mask[ch].owner != owner) return 0;
   gw_menu_mask[ch].owner = buttons ? owner : 0;
   gw_menu_mask[ch].buttons = buttons;
   return 1;
 }
-void gw_script_pad_masks_clear(void) { memset(gw_menu_mask, 0, sizeof gw_menu_mask); }
+int gw_script_pad_chord(int ch, int owner, unsigned buttons) {
+  if (ch < 0 || ch > 3 || owner <= 0 || (buttons & ~0x1F7Fu)) return 0;
+  if (buttons && (buttons & (buttons - 1)) == 0) return 0; /* a chord is two or more buttons; 0 releases */
+  if (gw_chord[ch].owner && gw_chord[ch].owner != owner) return 0;
+  gw_chord[ch].owner = buttons ? owner : 0;
+  gw_chord[ch].buttons = buttons;
+  return 1;
+}
+void gw_script_pad_masks_clear(void) {
+  memset(gw_menu_mask, 0, sizeof gw_menu_mask);
+  memset(gw_chord, 0, sizeof gw_chord);
+}
 unsigned gw_script_pad_raw_buttons(int ch) { return ch >= 0 && ch < 4 ? gw_raw_buttons[ch] : 0; }
 
 /* gd.pad() still sees the paused menu sample, but it is not one of the logic
@@ -258,6 +276,9 @@ void gw_script_pad_release(int ch, int owner) {
   if (ch>=4 && ch<6 && owner>0) { gw_ScriptGame_VirtualPadRelease(ch,owner); return; }
   if (ch >= 0 && ch < 4 && owner > 0 && gw_menu_mask[ch].owner == owner) {
     memset(&gw_menu_mask[ch], 0, sizeof gw_menu_mask[ch]);
+  }
+  if (ch >= 0 && ch < 4 && owner > 0 && gw_chord[ch].owner == owner) {
+    memset(&gw_chord[ch], 0, sizeof gw_chord[ch]);
   }
   if (ch >= 0 && ch <= 3 && gw_ovr[ch].owner == owner && owner > 0) {
     gw_ovr[ch].samples = 0;
@@ -337,7 +358,11 @@ unsigned gw_Script_PadApply(void *pad_status_array) {
   for (ch = 0; ch < 4; ++ch) {
     gw_raw_buttons[ch] = gw_r16(&st[ch].button);
     if (!gw_RB_Enabled() && !gw_Netplay_Enabled()) {
-      gw_w16(&st[ch].button, (uint16_t)(gw_raw_buttons[ch] & ~gw_menu_mask[ch].buttons));
+      unsigned hide = gw_menu_mask[ch].buttons;
+      if (gw_chord[ch].buttons && (gw_raw_buttons[ch] & gw_chord[ch].buttons) == gw_chord[ch].buttons) {
+        hide |= gw_chord[ch].buttons;
+      }
+      gw_w16(&st[ch].button, (uint16_t)(gw_raw_buttons[ch] & ~hide));
     }
     gw_seen[ch].buttons = gw_r16(&st[ch].button);
     gw_seen[ch].sx = st[ch].stickX;

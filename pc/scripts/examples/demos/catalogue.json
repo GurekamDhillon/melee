@@ -999,5 +999,38 @@
     "in_game": false,
     "controls": "console: shock_set <frames> <charges> <hitstun> [bonus], shock_clear; the overlay shows the status and the last shocked hit",
     "setup": []
+  },
+  {
+    "id": "demo_grid_inventory",
+    "path": "demos/grid-inventory",
+    "title": "Grid inventory menu component",
+    "api": "Kit drawing; Input; Drawing (call from on_draw)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "D-pad/stick move; A/X/Y/B act (logged); pad L or TAB: next layout (bag4/5/6, reward2/3, swap); F6 hide; console gi_layout, gi_press, gi_state, gi_bench",
+    "setup": []
+  },
+  {
+    "id": "demo_impact_drill",
+    "path": "demos/impact-drill",
+    "title": "Crit impact frames on Fox's drill",
+    "api": "Hooks (on_hit attacker_action); Custom shaders and post passes; Clank observation and timed presentation",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Short hop, down air over P2; console: impact preset|strength|ramp|chance|who|test|off; hold L+R and tap the D-pad to cycle presets; F6/F7/F8",
+    "setup": []
+  },
+  {
+    "id": "demo_turbo_combo",
+    "path": "demos/turbo-combo",
+    "title": "Turbo zero-to-death combo",
+    "api": "Turbo match rule (scene turbo=on); CPU virtual controller (gd.cpu_mode, gd.cpu_pad); hitstun readback",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "Starts a few seconds into the match; press R or console turbo_combo [waveshine|classic] to replay. Scene: mode=lab;stage=fd;turbo=on;p1=fox/cpu0;p2=falco/cpu0/idle",
+    "setup": []
   }
 ]

@@ -8862,6 +8862,11 @@ static int gs_exec(const char *line_in) {
         gw_Console_Print(ok ? GS_GREEN : GS_RED, "%s", message);
         return ok ? 0 : -1;
     }
+    if (IS("arenafill")) { /* test: leave <n> usable uniform-arena bytes, then overflow it once; must not crash */
+        gw_motion_test_arena_fill((unsigned)atoi(arg));
+        gw_Console_Print(GS_WHITE, "arenafill queued");
+        return 0;
+    }
     if (IS("contacts") || IS("trace") || IS("wait")) return gs_contact_console(line, arg);
     if (IS("help") || IS("?")) {
         gs_cmd_help();

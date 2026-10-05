@@ -24,7 +24,7 @@ class MotionCaptureWiring(unittest.TestCase):
         self.assertIn('const bool flat=textureless||copied_texture',s)
         self.assertIn('fogType=GX_FOG_NONE',s)
         self.assertIn('fogRangeEnabled=false',s)
-        self.assertIn('const auto uniform=build_uniform(info)',s)
+        self.assertIn('build_uniform_bytes(info,scratch)',s)
         self.assertNotIn('if(config.shaderConfig.fogRangeEnabled){capture->failed',s)
 
     def test_warm_variants_are_real(self):

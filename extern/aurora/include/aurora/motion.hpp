@@ -30,6 +30,18 @@ enum class Fallback : unsigned { NoFog,Textureless,CopySilhouette,PaletteWarm,He
 inline constexpr size_t FailureCount=static_cast<size_t>(Failure::Count);
 inline constexpr size_t FallbackCount=static_cast<size_t>(Fallback::Count);
 const char* failure_name(Failure);
+// GX-thread wall time per category, drained by the game once per frame: capture (all of retain), capture_info (shader info
+// and variant), capture_copy (vertex/index/uniform copy), capture_blocks (storage blocks), capture_merge (merge/push),
+// pose_end, replay (replay_group), replay_prepare, replay_push.
+enum Timing : unsigned { TimingCapture,TimingInfo,TimingCopy,TimingBlocks,TimingMerge,TimingEnd,TimingReplay,TimingReplayPrep,TimingReplayPush,TimingPalette,CountBlockBytes,CountBlocks,CountBlockHits,TimingCount };
+uint64_t take_timing(unsigned which);
+void set_timing(bool on); // timers read the clock only while on (the game turns them on with its profiler)
+// Pose storage: unique bytes held, content-pool hits and misses, and the logical (per-pose, unshared) resident bytes.
+void pool_stats(uint64_t out[4]);
+// Test hook (GX thread): fill this frame's uniform arena until about `leave` usable bytes remain, then attempt one more
+// push that cannot fit. The refused push must degrade the frame (draws dropped, logged), never abort the process.
+void test_fill_uniform_arena(size_t leave);
+const char* timing_name(unsigned which);
 void diagnostics(uint64_t* failures,uint64_t* fallbacks,uint64_t* warm_variants);
 Failure last_failure();
 void rejected(Failure);

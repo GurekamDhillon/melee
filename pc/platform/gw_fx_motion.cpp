@@ -99,6 +99,7 @@ void clear_callback(const void* data,uint32_t size){
 }
 void clear_history(int h){GXAuroraMotionCallback(clear_callback,&h,sizeof h);}
 void begin_callback(const void* data,uint32_t size){
+    aurora::gx::motion::set_timing(gw_prof_enabled()!=0);
     MotionProfile profile(0x4d4f0001,"motion/afterimage-replay");
     if(size!=sizeof(Begin))return;Begin b;memcpy(&b,data,size);active_begin=b;
     capturing=false;
@@ -173,8 +174,20 @@ void end_callback(const void*,uint32_t){
     }
     { static int probe; if(probe<6 && (pose||aurora::gx::motion::last_failure()!=aurora::gx::motion::Failure::Count)){++probe;gw_log("motion: probe end pose=%d draws=%d bytes=%d fighter=P%d sub=%d reason=%s",int(bool(pose)),pose?int(aurora::gx::motion::draws(pose)):-1,pose?int(aurora::gx::motion::bytes(pose)):-1,active_begin.emitter.o.port,active_begin.emitter.o.sub,aurora::gx::motion::failure_name(aurora::gx::motion::last_failure()));} }
 }
+// Once per presented frame: report the GX-thread time the afterimage code spent (capture, replay, ...) as profiler details
+// of the object_callback zone, one observation per frame per category. Drained even when the profiler is off.
+void report_timings(){
+    for(unsigned i=0;i<aurora::gx::motion::TimingCount;++i){
+        uint64_t ns=aurora::gx::motion::take_timing(i);
+        if(!ns||!gw_prof_enabled())continue;
+        char name[64];snprintf(name,sizeof name,"motion/%s",aurora::gx::motion::timing_name(i));
+        unsigned detail=0x4d4f0100u+i;gw_prof_detail_name(detail,name);
+        gw_prof_sample(GW_PROF_OBJECT_CALLBACK,double(ns)/1e6,detail);
+    }
+}
 void finish_callback(const void*,uint32_t){
     if(aurora::gx::motion::replaying())return;
+    report_timings();
     for(auto& entry:ghosts){auto& h=entry.second;if(h.pending_frame<0)continue;
         if(h.pending_failed||h.pending.draws.empty()){
             if(!h.pending_failed){aurora::gx::motion::rejected(aurora::gx::motion::Failure::EmptyPose);diagnose(h.port,h.sub,aurora::gx::motion::Failure::EmptyPose);}
@@ -271,16 +284,18 @@ extern "C" void gw_motion_release(unsigned owner){
 extern "C" void gw_motion_frame(int frame,int replay){logic_frame=frame;if(replay){held_frame.fill(-1);if(after_count||tracer_count)clear_history(0);}}
 extern "C" void gw_motion_intensity(float f){if(std::isfinite(f))global_intensity=std::clamp(f,0.f,1.f);}
 extern "C" void gw_motion_stats(uint64_t out[GW_MOTION_STATS_COUNT]){
-    static_assert(GW_MOTION_STATS_COUNT==8+aurora::gx::motion::FailureCount+aurora::gx::motion::FallbackCount+1);
+    static_assert(GW_MOTION_STATS_COUNT==8+aurora::gx::motion::FailureCount+aurora::gx::motion::FallbackCount+1+4);
     memset(out,0,GW_MOTION_STATS_COUNT*sizeof *out);for(auto& e:registry)if(e.handle)++out[e.o.kind-1];
     out[2]=samples;out[3]=copy_draws;out[4]=skipped;out[5]=ribbon_vertices;out[6]=reset_count;out[7]=copy_budget_skips;
-    aurora::gx::motion::diagnostics(out+8,out+8+aurora::gx::motion::FailureCount,out+GW_MOTION_STATS_COUNT-1);
+    aurora::gx::motion::diagnostics(out+8,out+8+aurora::gx::motion::FailureCount,out+GW_MOTION_STATS_COUNT-5);
+    aurora::gx::motion::pool_stats(out+GW_MOTION_STATS_COUNT-4);
 }
 extern "C" const char* gw_motion_stat_name(unsigned i){
     static const char* names[]={"afterimages","tracers","poses","copy_draws","skipped","ribbon_vertices","resets","copy_budget_skips",
         "fail_pipeline_missing","fail_vertex_arena","fail_index_arena","fail_uniform_arena","fail_copy_texture","fail_index_array","fail_palette","fail_fog_lut",
         "fail_pose_bytes","fail_draw_count","fail_frame_arena","fail_resident_bytes","fail_empty_pose","fail_pipeline_pending","fail_replay_arena","fail_geometry",
-        "fallback_no_fog","fallback_textureless","fallback_copy_silhouette","warm_palette_variants","held_draw_scopes","held_retained_draws","warm_variants"};
+        "fallback_no_fog","fallback_textureless","fallback_copy_silhouette","warm_palette_variants","held_draw_scopes","held_retained_draws","warm_variants",
+        "pool_bytes","pool_hits","pool_misses","resident_bytes"};
     static_assert(sizeof names/sizeof names[0]==GW_MOTION_STATS_COUNT);
     return i<GW_MOTION_STATS_COUNT?names[i]:"invalid";
 }
@@ -313,6 +328,11 @@ extern "C" void gw_motion_warm(int port,int begin){
         Warm w{e.program,e.o.blend,begin,e.o.surface!=0,port};GXAuroraMotionCallback(warm_callback,&w,sizeof w);return;
     }
 }
+static void arena_fill_callback(const void* data,uint32_t size){
+    if(size!=sizeof(unsigned))return;unsigned leave;memcpy(&leave,data,sizeof leave);
+    aurora::gx::motion::test_fill_uniform_arena(leave);
+}
+extern "C" void gw_motion_test_arena_fill(unsigned leave){GXAuroraMotionCallback(arena_fill_callback,&leave,sizeof leave);}
 extern "C" void gw_motion_prepare_ribbons(void){GXAuroraMotionCallback(ribbon_warm_callback,nullptr,0);}
 extern "C" void gw_MotionWorldDraw(int view){
     if(after_count)GXAuroraMotionCallback(finish_callback,nullptr,0);

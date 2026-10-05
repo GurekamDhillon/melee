@@ -501,6 +501,8 @@ static void fill_uniform(ByteBuffer& buf, const ShaderInfo& info) noexcept {
   }
 }
 
+void build_uniform_bytes(const ShaderInfo& info, ByteBuffer& out) noexcept { fill_uniform(out, info); }
+
 gfx::Range build_uniform(const ShaderInfo& info) noexcept {
   ZoneScoped;
   static ByteBuffer buf;

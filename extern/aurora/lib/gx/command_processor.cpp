@@ -625,6 +625,9 @@ static void revalidate_array(AttrArray& array) noexcept {
 
 // GX_AURORA_PIPELINE_WAIT: draws wait for their pipeline instead of being skipped.
 static bool sPipelineWait = false;
+// Host-side index bytes of the draw being pushed (the arena copy is write-combined and must not be read back).
+static const u8* sMotionIndexData = nullptr;
+static const struct MotionHostInit { MotionHostInit() { motion::host_storage = +[](const gfx::Range& r) -> const uint8_t* { return snapshot_data(r); }; } } sMotionHostInit;
 
 static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
                          gfx::Range vertRange, gfx::Range idxRange, u32 numIndices) noexcept {
@@ -735,12 +738,19 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
   const bool uniformValid = (state.dirty & DirtyUniform) == 0 && cache.uniformRange.size != 0;
   if (!uniformValid) {
     cache.uniformRange = build_uniform(cache.shaderInfo);
+    if (gfx::frame_overflowed()) {
+      cache.uniformRange = {}; // refused push: never record a draw against an empty range
+      return;
+    }
     state.dirty &= ~DirtyUniform;
   }
   if (cache.config.shaderConfig.fogRangeEnabled) {
     const auto key = fog_range_lut_key();
     if (!cache.hasFogRange || cache.fogRangeKey != key) {
       cache.fogRange = push_fog_range_lut(key);
+      if (gfx::frame_overflowed()) {
+        return;
+      }
       cache.fogRangeKey = key;
       cache.hasFogRange = true;
     }
@@ -783,7 +793,7 @@ static void push_gx_draw(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span
       .bindGroups = cache.bindGroups,
       .dstAlpha = state.dstAlpha,
   };
-  motion::retain(motionDraw,cache.config);
+  motion::retain(motionDraw,cache.config,cache.shaderInfo,vertexData.data(),sMotionIndexData);
   if(!motion::suppress_live())gfx::push_draw_command(motionDraw);
 }
 
@@ -792,16 +802,18 @@ static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, s
   ZoneScoped;
   u32 numIndices = 0;
   gfx::Range idxRange;
+  static ByteBuffer idxBuf;
 
   if (prim != GX_TRIANGLES) {
     ZoneScopedN("build idx buffer");
-    static ByteBuffer idxBuf;
     numIndices = prepare_idx_buffer(idxBuf, prim, 0, vtxCount);
     idxRange = gfx::push_indices(idxBuf.data(), idxBuf.size(), 4);
-    idxBuf.clear();
+    sMotionIndexData = idxBuf.data();
   }
 
   push_gx_draw(prim, fmt, vtxCount, vertexData, vertRange, idxRange, numIndices);
+  sMotionIndexData = nullptr;
+  idxBuf.clear();
 }
 
 static void draw_prim(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, ByteReader& reader) noexcept {
@@ -1104,6 +1116,7 @@ void handle_aurora(ByteReader& reader) noexcept {
     // Index data is always host-endian; push it to the GPU buffer as-is
     const auto indexData = reader.take(idxBytes);
     const gfx::Range idxRange = gfx::push_indices(indexData.data(), indexData.size(), 4);
+    sMotionIndexData = indexData.data();
     u32 vtxSize;
     if (g_gxState.lastVtxFmt == fmt) {
       vtxSize = g_gxState.lastVtxSize;
@@ -1120,6 +1133,7 @@ void handle_aurora(ByteReader& reader) noexcept {
     if (indexCount != 0 && !gfx::frame_overflowed()) {
       push_gx_draw(prim, fmt, vtxCount, vertexData, vertRange, idxRange, indexCount);
     }
+    sMotionIndexData = nullptr;
   } else if (subCmd == GX_AURORA_DEBUG_GROUP_PUSH) {
     auto label = reader.read_string();
     gfx::push_debug_group(std::move(label));
@@ -1143,6 +1157,9 @@ void handle_aurora(ByteReader& reader) noexcept {
     g_palette.n = n;
     g_palette.key = key;
     g_palette.base = range.offset / sizeof(u32);
+    if (!gfx::frame_overflowed()) {
+      shadow_record(range, palBuf.data(), n * 96u); // host copy for motion retention (the arena is write-combined)
+    }
     ++sPalLoads;
     g_gxState.dirty |= DirtyPipeline | DirtyImmediates; // new shader variant; and no merge across palettes
   } else if (subCmd == GX_AURORA_END_PALETTE) {

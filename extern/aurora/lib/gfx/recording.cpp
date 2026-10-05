@@ -280,13 +280,18 @@ void seal_pass(FramePacket& frame, uint32_t passIndex) {
 // overflowed, and draws check frame_overflowed() and drop out for the rest of the frame: one frame with
 // missing geometry, logged, instead of a dead process.
 static bool sFrameOverflowed = false;
+static uint64_t sRecordingSerial = 0; // bumped by every begin_recording: arena contents die with it
 static uint32_t sOverflowLogs = 0;
 static bool arena_fits(ByteBuffer& target, size_t length, size_t alignment, const char* what) {
   if (target.owned()) {
     return true;
   }
   const size_t begin = alignment != 0 ? AURORA_ALIGN(target.size(), alignment) : target.size();
-  if (begin + length <= target.capacity()) {
+  // The uniform arena must always keep room for finish()'s trailing MaxUniformSize padding (the last dynamic-offset
+  // binding window); ByteBuffer::append aborts (0xC0000409) if that padding does not fit, so a push that would eat
+  // into it is refused like any other overflow.
+  const size_t reserve = &target == &current_frame_packet().uniforms ? size_t(gx::MaxUniformSize) : size_t(0);
+  if (begin + length + reserve <= target.capacity()) {
     return true;
   }
   sFrameOverflowed = true;
@@ -595,6 +600,7 @@ namespace detail {
 
 void begin_recording(FramePacket& packet, size_t frameSlot) {
   sFrameOverflowed = false;
+  ++sRecordingSerial;
   CHECK(!g_recorder.active(), "A recording session is already active");
   if (g_recorder.normalRequested && webgpu::enable_normal_buffer()) {
     g_recorder.normalRequested = false;
@@ -1189,6 +1195,10 @@ bool push_encoder_task(EncoderTaskId type, const void* payload, size_t payloadSi
 
 template <>
 void push_draw_command(gx::DrawData data) {
+  // A draw recorded after an arena push was refused would reference an empty or stale range.
+  if (sFrameOverflowed) {
+    return;
+  }
   push_draw_command(make_draw_command<gx::render>(data));
 }
 
@@ -1228,6 +1238,7 @@ void finish() {
 }
 
 bool frame_overflowed() noexcept { return sFrameOverflowed; }
+uint64_t recording_serial() noexcept { return sRecordingSerial; }
 void clear_frame_overflow() noexcept { sFrameOverflowed = false; }
 
 Range push_verts(const uint8_t* data, size_t length, size_t alignment) {

@@ -193,3 +193,87 @@ static int test_geno_define_article_digest(void)
     Geno_TestRestore();
     return rc;
 }
+
+/* RB_GameHash widening (2026-10-05): RB_FighterHash must move with every simulation field it was widened with, must NOT move with
+ * render-owned bytes, and legacy mode must reproduce the pre-widening value (re-derived here, independently, from the old formula). */
+extern u32 RB_FighterHash(u32 h, Fighter* fp, int slot);
+extern void RB_HashSetLegacy(int on);
+extern u32 RB_ItemHash(u32* count_out);
+static u32 t_rbmix(u32 h, u32 v)
+{
+    h ^= v;
+    h *= 0x01000193u;
+    h ^= h >> 15;
+    return h;
+}
+static u32 t_rbbits(f32 f)
+{
+    u32 u;
+    memcpy(&u, &f, 4);
+    return u;
+}
+/* the pre-widening per-fighter mix, written out again (slot 0, no Turbo window, no define) */
+static u32 t_rb_old_formula(Fighter* fp, u32 h)
+{
+    h = t_rbmix(h, 0x100u);
+    h = t_rbmix(h, (u32) fp->motion_id);
+    h = t_rbmix(h, t_rbbits(fp->cur_pos.x));
+    h = t_rbmix(h, t_rbbits(fp->cur_pos.y));
+    h = t_rbmix(h, t_rbbits(fp->cur_pos.z));
+    h = t_rbmix(h, t_rbbits(fp->self_vel.x));
+    h = t_rbmix(h, t_rbbits(fp->self_vel.y));
+    h = t_rbmix(h, t_rbbits(fp->dmg.x1830_percent));
+    h = t_rbmix(h, t_rbbits(fp->facing_dir));
+    h = t_rbmix(h, 0);
+    return h;
+}
+static int test_rb_game_hash(void)
+{
+    int rc = 0;
+    u32 base, v, n;
+    t_setup();
+    t_fp.player_id = 0;
+    t_fp.kind = Ft_Kind_Mario;
+    t_fp.motion_id = 14;
+    t_fp.cur_pos.x = 3.5f;
+    t_fp.self_vel.y = -1.25f;
+    t_fp.facing_dir = 1.0f;
+    RB_HashSetLegacy(1);
+    if (RB_FighterHash(0x811C9DC5u, &t_fp, 0) != t_rb_old_formula(&t_fp, 0x811C9DC5u)) {
+        TestFail("rb hash: legacy mode no longer reproduces the pre-widening value"); rc = 1;
+    }
+    RB_HashSetLegacy(0);
+    base = RB_FighterHash(0x811C9DC5u, &t_fp, 0);
+    if (base == t_rb_old_formula(&t_fp, 0x811C9DC5u)) { TestFail("rb hash: widened equals legacy"); rc = 1; }
+    if (RB_FighterHash(0x811C9DC5u, &t_fp, 0) != base) { TestFail("rb hash: not a pure function of the state"); rc = 1; }
+#define T_RB_FIELD(name, stmt)                                                                                                do {                                                                                                                          Fighter save_ = t_fp;                                                                                                     stmt;                                                                                                                     v = RB_FighterHash(0x811C9DC5u, &t_fp, 0);                                                                                if (v == base) { TestFail("rb hash: widened field does not change the hash: " name); rc = 1; }                            t_fp = save_;                                                                                                         } while (0)
+    T_RB_FIELD("ground_or_air", t_fp.ground_or_air = GA_Air);
+    T_RB_FIELD("kb_vel.x", t_fp.x8c_kb_vel.x = 2.0f);
+    T_RB_FIELD("kb_vel.y", t_fp.x8c_kb_vel.y = 2.0f);
+    T_RB_FIELD("gr_vel", t_fp.gr_vel = 0.75f);
+    T_RB_FIELD("hitlag", t_fp.dmg.x195c_hitlag_frames = 3.0f);
+    T_RB_FIELD("x2219_b5", t_fp.x2219_b5 = 1);
+    T_RB_FIELD("shield_health", t_fp.shield_health = 12.0f);
+    T_RB_FIELD("cmd frame", t_fp.x3E4_fighterCmdScript.frame_count = 7.0f);
+    T_RB_FIELD("jumpsUsed", t_fp.x1968_jumpsUsed = 1);
+    T_RB_FIELD("x67F", t_fp.x67F = 2);
+    T_RB_FIELD("x680", t_fp.x680 = 2);
+    /* -0.0 and +0.0 differ by bit pattern: a hash by value would hide a sign flip */
+    T_RB_FIELD("float by bit pattern", t_fp.self_vel.y = -0.0f; t_fp.x8c_kb_vel.x = -0.0f);
+    /* render-owned bytes the draw phase writes, and the audio voice ids: NEVER part of the hash */
+    {
+        Fighter save_ = t_fp;
+        ((u8*) &t_fp.x20A4)[0] ^= 1;
+        t_fp.x2224_b0 = !t_fp.x2224_b0;
+        t_fp.x2144 += 5;
+        t_fp.x214C += 5;
+        t_fp.x2160 += 5;
+        if (RB_FighterHash(0x811C9DC5u, &t_fp, 0) != base) { TestFail("rb hash: a render-owned field changed the hash"); rc = 1; }
+        t_fp = save_;
+    }
+    /* items: none hashes to 0 with count 0 (a match without items is untouched) */
+    v = RB_ItemHash(&n);
+    if (n != 0 || v != 0) { TestFail("rb hash: item word nonzero with no items"); rc = 1; }
+    RB_HashSetLegacy(-1);
+    return rc;
+}

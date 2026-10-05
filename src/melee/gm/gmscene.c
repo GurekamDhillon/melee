@@ -976,6 +976,14 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                             }
                         }
                     }
+                    {   /* MELEE_SYNCTEST_CURATED (the bench does not run a replay, so this sits outside the block above): the item/projectile
+                           words of the widened rollback hash, as curated records (fighter.c), checked before the hash carries them */
+                        extern int Snap_Curated(void);
+                        extern void Snap_CuratedItems(void);
+                        if (Snap_Curated()) {
+                            Snap_CuratedItems();
+                        }
+                    }
                 }
 #endif
                 if (temp_r25->unk_10.pre_gobj_proc != NULL) {

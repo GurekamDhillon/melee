@@ -3162,7 +3162,7 @@ void Fighter_procMap(Fighter_GObj* gobj)
                 f32 f;
                 u32 u;
             } c[26];
-            u32 w[26];
+            u32 w[32];
             int i = 0, n;
             w[i++] = (u32) fp->player_id;
             w[i++] = (u32) fp->is_sub_fighter;
@@ -3191,6 +3191,10 @@ void Fighter_procMap(Fighter_GObj* gobj)
             for (n = 0; n < 17; ++n) {
                 w[i++] = c[n].u;
             }
+            w[i++] = (u32) fp->x2219_b5; /* the widened hash's words, verified here before they are hashed */
+            w[i++] = (u32) fp->x1968_jumpsUsed;
+            w[i++] = (u32) fp->x67F;
+            w[i++] = (u32) fp->x680;
             { /* the Turbo interrupt window (0 unless a window ever opened): inside the compare, so a resimulated window that differs is a mismatch */
                 extern unsigned ScriptGame_IntrWinHashWord(int entity);
                 w[i++] = ScriptGame_IntrWinHashWord(fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0));
@@ -3974,6 +3978,147 @@ static u32 ftRb_GenoDefineWord(Fighter* fp)
     return d != 0 ? d ^ 0x47444946u : 0;
 }
 
+/* LEGACY MODE (MELEE_RB_HASH_LEGACY=1, or RB_HashSetLegacy): the hash as it was before the widening (seed; per fighter motion,
+ * position, velocity x/y, percent, facing, Turbo window, define word). Only for the negative control (a legacy build must NOT see a
+ * desync in a field the widening added) and for the native test that pins the old value; two peers must agree on the mode. */
+static int ftRb_hash_legacy = -1;
+
+void RB_HashSetLegacy(int on)
+{
+    ftRb_hash_legacy = on < 0 ? -1 : (on != 0); /* negative: read the environment again */
+}
+
+static int ftRb_HashLegacy(void)
+{
+    if (ftRb_hash_legacy < 0) {
+        extern int RbHashLegacyEnv(void); /* pc/platform/gw_rollback.c: the env read lives on the platform side (no hosted libc here) */
+        ftRb_hash_legacy = RbHashLegacyEnv();
+    }
+    return ftRb_hash_legacy;
+}
+
+/* The WIDENED per-fighter words. Every one is simulation state the rollback snapshot restores and that a logic-only or rendered
+ * resimulation reproduces bit for bit (verified: _research/rollback-synctest-status.md, the curated bench). Nothing the draw phase
+ * writes (joint matrix caches and flags, LbShadow/render flags, AX voice ids, hurt/hit capsule positions) and no pointer. Floats are
+ * hashed by bit pattern. */
+u32 RB_FighterHash(u32 h, Fighter* fp, int slot)
+{
+    h = ftRb_Mix(h, (u32) slot + 0x100u);
+    h = ftRb_Mix(h, (u32) fp->motion_id);
+    h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.x));
+    h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.y));
+    h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.z));
+    h = ftRb_Mix(h, ftRb_Bits(fp->self_vel.x));
+    h = ftRb_Mix(h, ftRb_Bits(fp->self_vel.y));
+    h = ftRb_Mix(h, ftRb_Bits(fp->dmg.x1830_percent));
+    h = ftRb_Mix(h, ftRb_Bits(fp->facing_dir));
+    h = ftRb_Mix(h, ScriptGame_IntrWinHashWord(slot < 12 ? (slot >> 1) + 1 + 6 * (slot & 1) : 0)); /* 0 unless a window ever opened */
+    {
+        u32 gw = ftRb_GenoDefineWord(fp);
+        if (gw != 0) {
+            h = ftRb_Mix(h, gw);
+        }
+    }
+    if (!ftRb_HashLegacy()) {
+        h = ftRb_Mix(h, 0x57494445u); /* "WIDE": a widened hash never equals a legacy one by accident */
+        h = ftRb_Mix(h, (u32) fp->ground_or_air);
+        h = ftRb_Mix(h, ftRb_Bits(fp->x8c_kb_vel.x));
+        h = ftRb_Mix(h, ftRb_Bits(fp->x8c_kb_vel.y));
+        h = ftRb_Mix(h, ftRb_Bits(fp->gr_vel));
+        h = ftRb_Mix(h, ftRb_Bits(fp->dmg.x195c_hitlag_frames));
+        h = ftRb_Mix(h, (u32) fp->x2219_b5);
+        h = ftRb_Mix(h, ftRb_Bits(fp->shield_health));
+        h = ftRb_Mix(h, ftRb_Bits(fp->x3E4_fighterCmdScript.frame_count));
+        h = ftRb_Mix(h, (u32) fp->x1968_jumpsUsed);
+        h = ftRb_Mix(h, (u32) fp->x67F);
+        h = ftRb_Mix(h, (u32) fp->x680);
+        h = ftRb_Mix(h, (u32) Player_GetStocks(fp->player_id));
+    }
+    return h;
+}
+
+/* The match's item/projectile word: count, and for each item kind, state, position, velocity. The items of a match sit on the item
+ * plink list (HSD_GOBJ_PLINK_ITEM); the per-item hashes are SUMMED, so the word does not depend on list order (insertion order is
+ * simulation-deterministic, but a sum cannot raise a false desync if it ever is not). Returns 0 with no items. */
+u32 RB_ItemHash(u32* count_out)
+{
+    HSD_GObj* g;
+    u32 sum = 0, n = 0;
+    for (g = HSD_GObjPLinkHead != NULL ? HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] : NULL; g != NULL; g = g->next) {
+        Item* ip = g->user_data;
+        u32 ih;
+        if (ip == NULL) {
+            continue;
+        }
+        ih = ftRb_Mix(0x4954454Du, (u32) ip->kind);
+        ih = ftRb_Mix(ih, (u32) ip->msid);
+        ih = ftRb_Mix(ih, ftRb_Bits(ip->pos.x));
+        ih = ftRb_Mix(ih, ftRb_Bits(ip->pos.y));
+        ih = ftRb_Mix(ih, ftRb_Bits(ip->pos.z));
+        ih = ftRb_Mix(ih, ftRb_Bits(ip->x40_vel.x));
+        ih = ftRb_Mix(ih, ftRb_Bits(ip->x40_vel.y));
+        ih = ftRb_Mix(ih, ftRb_Bits(ip->x40_vel.z));
+        sum += ih;
+        n++;
+    }
+    if (count_out != NULL) {
+        *count_out = n;
+    }
+    return sum;
+}
+
+/* MELEE_SYNCTEST_CURATED: the item words as curated records (gmscene.c, at the seed's point), so the bench verifies them before the
+ * hash carries them; one record per item, then a count record. A difference names the item and the word. */
+void Snap_CuratedItems(void)
+{
+    extern void Snap_CuratedMix(const u32* w, int n);
+    HSD_GObj* g;
+    u32 n = 0;
+    for (g = HSD_GObjPLinkHead != NULL ? HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] : NULL; g != NULL; g = g->next) {
+        Item* ip = g->user_data;
+        union {
+            f32 f;
+            u32 u;
+        } c[6];
+        u32 w[10];
+        if (ip == NULL) {
+            continue;
+        }
+        c[0].f = ip->pos.x;
+        c[1].f = ip->pos.y;
+        c[2].f = ip->pos.z;
+        c[3].f = ip->x40_vel.x;
+        c[4].f = ip->x40_vel.y;
+        c[5].f = ip->x40_vel.z;
+        w[0] = 0x4954454Du;
+        w[1] = n;
+        w[2] = (u32) ip->kind;
+        w[3] = (u32) ip->msid;
+        w[4] = c[0].u;
+        w[5] = c[1].u;
+        w[6] = c[2].u;
+        w[7] = c[3].u;
+        w[8] = c[4].u;
+        w[9] = c[5].u;
+        Snap_CuratedMix(w, 10);
+        n++;
+    }
+    {
+        static u32 seen_max, seen_frames;
+        u32 w[2];
+        if (n != 0) {
+            seen_frames++;
+        }
+        if (n > seen_max) {
+            seen_max = n;
+            OSReport("curated items: %d on the list (max so far), %d frames with items\n", (int) n, (int) seen_frames);
+        }
+        w[0] = 0x4954434Eu;
+        w[1] = n;
+        Snap_CuratedMix(w, 2);
+    }
+}
+
 u32 RB_GameHash(void)
 {
     extern u32* HSD_RandSeedPtr;
@@ -3983,30 +4128,59 @@ u32 RB_GameHash(void)
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 2; j++) {
             HSD_GObj* g = Player_GetEntityAtIndex(i, j);
+            if (g == NULL) {
+                continue;
+            }
+            h = RB_FighterHash(h, g->user_data, i * 2 + j);
+        }
+    }
+    if (!ftRb_HashLegacy()) {
+        u32 n, w = RB_ItemHash(&n);
+        if (n != 0) {
+            h = ftRb_Mix(h, n);
+            h = ftRb_Mix(h, w);
+        }
+    }
+    return h;
+}
+
+/* NEGATIVE CONTROL (gw_rollback.c rb_perturb, MELEE_RB_PERTURB=<field>, code = the field's number there): perturb ONE hashed value of the first fighter found
+ * (port order), or the first item. Test only; never reached without the env switch. */
+void RB_Perturb(int code)
+{
+    int i, j;
+    if (code == 11) { /* item */
+        HSD_GObj* g = HSD_GObjPLinkHead != NULL ? HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM] : NULL;
+        if (g != NULL && g->user_data != NULL) {
+            ((Item*) g->user_data)->pos.x += 1.0f;
+        }
+        return;
+    }
+    for (i = 0; i < 6; i++) {
+        for (j = 0; j < 2; j++) {
+            HSD_GObj* g = Player_GetEntityAtIndex(i, j);
             Fighter* fp;
             if (g == NULL) {
                 continue;
             }
             fp = g->user_data;
-            h = ftRb_Mix(h, (u32) (i * 2 + j) + 0x100u);
-            h = ftRb_Mix(h, (u32) fp->motion_id);
-            h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.x));
-            h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.y));
-            h = ftRb_Mix(h, ftRb_Bits(fp->cur_pos.z));
-            h = ftRb_Mix(h, ftRb_Bits(fp->self_vel.x));
-            h = ftRb_Mix(h, ftRb_Bits(fp->self_vel.y));
-            h = ftRb_Mix(h, ftRb_Bits(fp->dmg.x1830_percent));
-            h = ftRb_Mix(h, ftRb_Bits(fp->facing_dir));
-            h = ftRb_Mix(h, ScriptGame_IntrWinHashWord(i + 1 + 6 * j)); /* 0 unless a window ever opened */
-            {
-                u32 gw = ftRb_GenoDefineWord(fp);
-                if (gw != 0) {
-                    h = ftRb_Mix(h, gw);
-                }
+            switch (code) {
+            case 1: fp->dmg.x195c_hitlag_frames += 1.0f; break;      /* hitlag */
+            case 2: fp->x1968_jumpsUsed += 1; break;                 /* jumps */
+            case 3: fp->shield_health -= 1.0f; break;                /* shield */
+            case 4: fp->x680 += 1; break;                            /* x680 */
+            case 5: fp->x67F += 1; break;                            /* x67f */
+            case 6: fp->x8c_kb_vel.x += 0.25f; break;                /* kbvel */
+            case 7: fp->gr_vel += 0.25f; break;                      /* groundvel */
+            case 8: fp->x3E4_fighterCmdScript.frame_count += 1.0f; break; /* cmdframe */
+            case 9: fp->x2219_b5 = !fp->x2219_b5; break;             /* b5 */
+            case 10: fp->cur_pos.x += 0.01f; break;                  /* pos (a legacy field) */
+            case 12: Player_SetStocks(fp->player_id, Player_GetStocks(fp->player_id) + 1); break; /* stocks */
+            default: break;
             }
+            return;
         }
     }
-    return h;
 }
 #endif
 

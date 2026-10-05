@@ -205,3 +205,46 @@ matrix setup on, a clean long run was not demonstrated. The fix that would settl
 rollback does, and accept the particle-state mask; the SyncTest then becomes the strict mode with its known particle family.
 Risk this puts on netplay: a peer that does NOT run the render pass (headless, a render-throttled window, `MELEE_TURBO_RENDER=0`)
 is not equivalent to one that does, in the sim's low-order float bits and in allocation order; nothing prevents it today.
+
+## The rollback desync checksum (RB_GameHash), widened 2026-10-05
+
+`RB_GameHash` (`src/melee/ft/fighter.c`) is what two netplay peers compare every frame (`gw_rollback.c` hashes at the start of each
+iteration; `gw_net.c` exchanges and compares). It used to cover the RNG seed and, per fighter, motion, position, velocity x/y, percent,
+facing, the Turbo window word and the Geno define word. It now also covers, per fighter (`RB_FighterHash(h, fp, slot)`): `ground_or_air`,
+knockback velocity x/y, ground velocity, hitlag frames (`dmg.x195c`), the hitlag flag `x2219_b5`, shield health, the action/subaction
+frame counter (`x3E4_fighterCmdScript.frame_count`), `x1968_jumpsUsed`, the L/R timers `x67F` and `x680`, and stocks; and per match one
+item word (`RB_ItemHash`: count, then the SUM over the item plink list of a hash of kind, state, position and velocity, so list order cannot
+raise a false desync). Floats go in by bit pattern. Nothing the draw phase writes (joint matrix caches and flags, shadow flags, AX voice ids,
+capsule positions) and no pointer is hashed; `RB_GameHashTest` (`rb_game_hash`, native suite) pins that.
+
+- **Legacy mode**: `MELEE_RB_HASH_LEGACY=1` (set on BOTH peers) hashes exactly the old fields. Test and negative control only: the mode is not
+  in the handshake, so peers in different modes report a desync at frame -123.
+- **Negative control**: `MELEE_RB_PERTURB=<field>` on ONE peer perturbs one hashed value at the start of frame `MELEE_RB_PERTURB_FRAME` (default 600),
+  live and on every resimulation of that frame: `hitlag jumps shield x680 x67f kbvel groundvel cmdframe b5 stocks item pos` (`pos` is a legacy
+  field). The widened hash reports `netplay: DESYNC at frame N` at once; legacy mode does not for the added fields.
+- **Verifying a field before it is hashed**: `MELEE_SYNCTEST_CURATED=1` records the same words per frame (fighter records now 29 words, plus one record
+  per item and an item-count record, `Snap_CuratedItems`), and `snap: curated word changes` in the log says how often each word changed in the first
+  pass, so a word that never moved is visible as unexercised. Items need a VS scene with `items=<n>` (LAB-style `items=4`).
+- **Cost**: the log line `rb: tick ... hash X/call` is the mean time inside `gw_RB_GameHash` (about 2 microseconds for two fighters).
+- **Startup fix found on the way** (`gw_rollback.c`, `rb_early`): remote inputs delivered before the session OPENS (the first logic tick of the match)
+  were wiped by the open while the transport counted them delivered, a permanent hole; with `MELEE_NET_SIM` set (even `lag=0`) both peers stalled
+  at frame about -115 for ever, on the unmodified base too. They are now buffered and submitted right after the open.
+
+### Evidence for the widening (2026-10-05, worktree checksum, build root _build/agents/checksum; logs and scripts in _build/audit-20261003/checksum/)
+
+- **Bench SyncTest** (resimulates with the render block, curated record + item records, Turbo on and off, `items=4`): 110,400 compared / 0
+  mismatching (Turbo word 1) and 110,400 / 0 (Turbo word 0, seed 777), items on the list up to 22-23 at once; plus 2 x 43,200 / 0 and 2 x 36,000 / 0
+  with the same record. Every word of the record in the hash was bit-equal. **Exercised**: ground_or_air, knockback velocity, ground velocity, hitlag,
+  `x2219_b5`, `jumpsUsed`, the action frame counter and the item words moved thousands of times (`snap: curated word changes`). **Not exercised by the
+  bench**: shield health, `x67F`, `x680` and stocks stayed constant (60.0, 255, 255, 99) in every bench run (the pad bot never shields or presses L/R, no
+  KO happens); they never differed, and an attempt to force L/R/shield presses through the bench input hook did not reach them (the pad pass's
+  `HSD_PAD_LR` edge is not produced there), so they are in the hash on code review (plain counters/floats advanced from the synchronised input) and
+  flagged as unexercised.
+- **Netplay soak** (two real clients over loopback, `MELEE_PAD_BOT` both sides, Fox v Fox, FD, 600 s, about 40,000 frames each): clean and
+  lag 50 / jitter 20 / loss 3 %, delay 2 and 0, Turbo on and off: 0 desyncs in all 8 configurations on both peers (rollbacks per run up to
+  4,064, max depth 7).
+- **Negative control** (`MELEE_RB_PERTURB` on the host only, frame 600, clean network, delay 2, Turbo on): the widened hash reported
+  `DESYNC at frame 600` on both peers for `jumps`, `x680`, `hitlag` and `pos`; with `MELEE_RB_HASH_LEGACY=1` on both peers the added fields
+  (`jumps`, `x680`, `hitlag`) were NOT reported (the match ran on to frame 6,200-7,000 with the peers silently different), while `pos`, a
+  legacy field, was reported at frame 600 in both modes.
+- **Cost**: `hash 0.0017-0.0020 ms/call` legacy, `0.0015-0.0024 ms/call` widened (timer noise dominates), about 0.01 % of a frame.

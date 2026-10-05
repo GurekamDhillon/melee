@@ -1,0 +1,7 @@
+{
+  "id": "vanilla-courier",
+  "name": "Vanilla Courier",
+  "version": "0.1.0",
+  "kind": "fighter",
+  "engine": { "pobj_palette": 1 }
+}

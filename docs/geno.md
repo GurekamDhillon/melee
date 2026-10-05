@@ -2592,6 +2592,38 @@ such as 234 and 228); nothing reads or ships audio. Own audio (WAV converted off
 suppression, a bank of the fighter's own, voice and announcer) is not built: it needs an audio container the engine can mount from a mod folder, which is open work for slice 6
 (voice, announcer) and a follow-up of this slice. The Caster's two ids are placeholders for that; looks, sounds and feel are unreviewed.
 
+### 22.3 Slice 4, first steps: the authored-fighter converter and a drawn stand-in (built 2026-10-05; the rest of slice 4 is NOT built)
+
+**Done and run.** An original fighter (the Courier, `ports/vanilla-original/`: 2,580 triangles, 39 bones, 179 clips, 15 hurtboxes) goes
+through `tools/geno/build_courier.sh` (one command) into engine files with no disc read at any point:
+
+| stage | tool | output (under `_build/geno-slice4/courier/`, never committed) |
+|---|---|---|
+| validate | `python -m tools.geno.check_art ports/vanilla-original` | clear errors by file and field: unmapped motion row, hurtbox bone, inverted ECB, missing costume texture, glb vs manifest counts |
+| plan + mesh | `ports/ir/tools/authored_fighter.py mesh` (reuses `plan_parts.py`) | `plan.json`: 42 joints (the 39 bones plus synthesized `TopN`, `XRotN`, `YRotN`, depth-first), the 54-slot Melee parts table, role -> joint, the `ftData` joint fields by role, hurtboxes and ECB in joint-local space; `mesh_<costume>.json` |
+| model | `fighterbuild build <mesh> - <out> courier_joint courier_matanim --pc-palette 64` (template `-` = authored: no disc template; the material is built from scratch, `AuthoredMobj`) | `GnCourier_<default,red,blue,green>.dat`, 109,834 bytes each, ONE palette POBJ, `verify`: rest pose error 0, triangle and weight differences 0 |
+| clips | `authored_fighter.py anim` (`figatree.py` encoder) | `GnCourierAJ.dat`: 179 figatree sub-archives (`PlyCourier_Share_ACTION_<Clip>_figatree`), 1.5 MB, largest clip 20 KB (buffer 128 KB), rotation as per-frame Euler (R = Rz Ry Rx, unwrapped), `trans`/`hips` translation, constant channels as one key, tree `frames` = key count - 1 (as `convert_ultimate_anim.py`); decoded back and compared to the glTF: max error 0.00012 rad |
+
+Facts that cost time: glTF Y-up facing +Z is HSD model space, so no axis change and no flip (the winding drew correctly as `Cull_Outside`).
+**A retail costume material is "the texture is the diffuse lightmap": TOBJ flags `0x00050010` (lightmap diffuse, colour operation REPLACE), material
+ambient/diffuse 179.** The first authored material (MODULATE, no lightmap bit, ambient 255) drew the model as a flat white silhouette; changing only
+those flags drew it textured. Two files in one process that share a name share one load (the article model cache is keyed by file name): variant
+files need distinct names.
+
+**Seen in the game** (vanilla disc, this build, LAB, a window capture of my own game, the repo fixture `pc/geno/mods/vanilla-courier/` mounted alone with geno-lab): its neutral special spawned the article; the model drew
+textured (teal tunic, cream helmet, visor, crest, boots) in the rest A-pose at 1.0 scale through the palette path. (The white-material test drew identically through the plain and the palette path, so the material, not the path, was the fault.) Not run: any
+clip on the skeleton, any fighter use of the files (the model is an article, not a costume), hurtboxes, performance.
+
+**What is left (the engine side, none of it started).** Read from source, not run:
+1. **Registry.** `gn_define_parse` (`pc/platform/geno_define_registry.inc`) accepts only `base: "mario"`, `common`, `resources: "retail:mario"`; `gw_Geno_DefineBaseKind` returns 0 for any define (line ~151) and `gw_Geno_DefineBaseCK` maps it to CK 8. `base: "none"` needs the parse, a per-define resource record (model files, bank file, `plan.json`) and the base lookup to answer "no donor".
+2. **Loader.** `GenoDefine_Load` (`pc/geno/geno_define_data.inc`) copies Mario's `ftData`, `ftCo_DatAttrs`, `ftMario_DatAttrs`, the 303 `xC` rows and the specific state table. A none define builds `ftData` natively: attributes from the define alone (an authored default table is needed: zeroed gravity breaks the fighter), `xC` rows from `manifest.json` `motion_rows` (name `x0` = the clip symbol, flags low 6 bits = the define's kind, as `ftData_8008572C` does for m-ex), `x14` demo rows, and the `xC`/`x14` counts (`ftData_Table_Unk0[kind].count`), which are now copied from the base.
+3. **Files.** `ftData_803C2360[kind]` (costume file names), `ftData_803C23E4[kind]` (animation file) and `ftData_803C1F40[kind]` (data file) are what `ftData_800855C8` loads; point them at `GnCourier_<costume>.dat` / `GnCourierAJ.dat` (mod `files/` resolve by name, as the article model already does).
+4. **Skeleton roles.** `ftCommonData_ExtendKindTable` (`src/melee/ft/fighter.c:210`) builds `ftPartsTable[kind]` from PlCo.dat's table of the BASE kind; a define needs its own `FighterPartsTable` from `plan.json` `parts`. The `ftData` joint fields (`x8` part bytes, `x30` hurtbox bones, `x34`, `x38`, `x44` ECB bones, `x54`, `x58`) come from `plan.json` `ftdata`; the hurtbox capsules from `hurtboxes` (15, the engine's `hurt_capsules[15]`); the extra roles (grab/victim anchor, camera focus, absorb/reflect origin, scarf) are in `role_joint`. `LHaveN` has no bone (the Courier has one item socket, right): the converter reports it unresolved.
+5. **Rollback.** New per-fighter gameplay state goes into `GenoDefine_StateDigest`; today the clips are not state (they are indexed by the motion id the hash already covers).
+6. **Fixture, acceptance, performance.** The Striker's move set on the Courier's bank, the checks in the build brief (readback and captures), `bench.sh` against a retail fighter.
+
+Not decided because not reached: how clip rate follows ground speed (retail's walk/run rate follows velocity; the Courier's reference speeds are 2 to 15 times below the Striker's gameplay speeds), the facing flip frames of `Turn`/`TurnRun`, the real ECB and hurtbox radii, and the model scale (1.0 was used; the Courier is about 11.7 units tall).
+
 ### Frame-counting convention: the first `wait` of an authored script
 
 A subaction script's `wait N` is the engine's own synchronous timer, run by retail's ftAction loop

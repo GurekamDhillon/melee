@@ -16,6 +16,7 @@
 #include "gw_script.h"
 #include "gw_surface.h"
 #include "gw_motion.h"
+static void gs_earned_release(unsigned owner); /* gw_script_earned.inc */
 #include "gw_mods.h"
 #include "gw_model_format.h"
 #include "../gameworld/script_model.h"
@@ -681,6 +682,7 @@ static void gs_report(int script, const char *what, const char *err) {
         gw_Shader_Release(s->stage_owner);
         gw_surface_release((unsigned)script + 1);
         gw_motion_release((unsigned)script + 1);
+        gs_earned_release((unsigned)script + 1);
         gs_echo_visual_release(script + 1);
         gw_ScriptGame_EchoClear(script + 1);
         if (gs.camera_owner == script + 1) {
@@ -2892,6 +2894,7 @@ static void gs_data_path(lua_State *L, const char *name, char *out, size_t cap) 
 #include "gw_script_mission.inc"
 #include "gw_script_surface.inc"
 #include "gw_script_motion.inc"
+#include "gw_script_earned.inc"
 
 #include "gw_script_data_read.inc"
 
@@ -5435,6 +5438,8 @@ static int gs_stage_handle_arg(lua_State *L, int idx) {
 #include "gw_script_fighter_mod.inc"
 #include "gw_script_fighter_caps.inc"
 #include "gw_script_fighter_caps_armor.inc"
+#include "gw_script_skill.inc"
+#include "gw_script_crit.inc"
 #include "gw_script_hit_rules.inc"
 #include "gw_script_echo.inc"
 #include "gw_script_echo_visual.inc"
@@ -6521,6 +6526,12 @@ static const luaL_Reg gs_gd_funcs[] = {
         {"fighter_armor", l_fighter_armor}, {"give_item", l_give_item},
     {"nearest_opponent", l_nearest_opponent}, {"opponents_in_radius", l_opponents_in_radius},
     {"fighter_timed_status", l_fighter_timed_status},
+    {"skill_history", l_skill_history}, {"skill_state", l_skill_state}, {"skill_kinds", l_skill_kinds},
+    {"skill_thresholds", l_skill_thresholds},
+    {"crit", l_crit}, {"crit_force", l_crit_force}, {"crit_seed", l_crit_seed},
+    {"stage_objectives", l_stage_objectives},
+    {"afterimage_bind", l_afterimage_bind}, {"afterimage_window", l_afterimage_window}, {"afterimage_unbind", l_afterimage_unbind},
+    {"tracer_bind", l_tracer_bind}, {"tracer_window", l_tracer_window}, {"tracer_unbind", l_tracer_unbind},
     {"hit_rule_add", l_hit_rule_add}, {"hit_rule_remove", l_hit_rule_remove},
     {"hit_rules", l_hit_rules}, {"hit_rules_clear", l_hit_rules_clear},
     {"fighter_status", l_fighter_status},
@@ -6886,6 +6897,7 @@ static void gs_unload(int i) {
     gw_Shader_Release(s->stage_owner);
     gw_surface_release((unsigned)i + 1);
     gw_motion_release((unsigned)i + 1);
+    gs_earned_release((unsigned)i + 1);
     gs_echo_visual_release(i + 1);
     gw_ScriptGame_EchoClear(i + 1);
     /* Lua may be disabled, throw, or refuse cleanup. The native registry remains
@@ -7361,6 +7373,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     prev = gs.scene_kind;
     gw_surface_release(0);
     gw_motion_release(0);
+    gs_earned_release(0);
     gs_echo_visual_release(0);
     gw_ScriptGame_EchoReset();
     gs_fly_cursor_reset();
@@ -7419,7 +7432,7 @@ void gw_Script_SceneBegin(int scene_kind) {
    scripts that define a hook late, e.g. from the console) */
 static void gs_update_want_events(void) {
     static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land",
-                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield", "on_armor", "on_event"};
+                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield", "on_armor", "on_skill", "on_crit", "on_lcancel", "on_lcancel_miss", "on_auto_cancel", "on_lcancel_hit", "on_wavedash", "on_waveland", "on_ledge_dash", "on_air_dodge", "on_perfect_shield_skill", "on_tech", "on_tech_miss", "on_dash_dance", "on_short_hop", "on_full_hop", "on_fast_fall", "on_shield_drop", "on_jump_cancel_grab", "on_jump_cancel_usmash", "on_sdi", "on_combo", "on_combo_end", "on_event"};
     int i, k, want = 0;
     for (i = 0; i < gs.n && !want; ++i) {
         for (k = 0; k < (int)(sizeof hooks / sizeof hooks[0]) && !want; ++k) {
@@ -8542,8 +8555,8 @@ static void gs_dispatch_events(void) {
         static const char *const names[] = {"", "on_action_change", "on_hit", "on_hitlag", "on_land",
                                             "on_target_broken", "on_all_targets_broken",
                                             "on_boss_defeated", "on_enemy_defeated", "on_enemy_removed", "on_enemy_hit", [GS_EV_CLANK] = "on_clank",
-                                            [GS_EV_ITEM_COLLECT]="on_item_collect", [GS_EV_ITEM_EXPIRE]="on_item_expire", [14]="on_ko", [15]="on_stock_lost", [16]="on_action_signal", [17]="on_armor"};
-        if (e->what < 1 || e->what > 17) {
+                                            [GS_EV_ITEM_COLLECT]="on_item_collect", [GS_EV_ITEM_EXPIRE]="on_item_expire", [14]="on_ko", [15]="on_stock_lost", [16]="on_action_signal", [17]="on_armor", [18]="on_skill", [19]="on_crit"};
+        if (e->what < 1 || e->what > 19) {
             continue;
         }
         if(e->what==GS_EV_ITEM_COLLECT||e->what==GS_EV_ITEM_EXPIRE) {
@@ -8564,10 +8577,15 @@ static void gs_dispatch_events(void) {
                 continue;
             }
             if(gs_get_hook(i,"on_event")){gs_spine_event_push(L,e,hook);gs_pcall(i,1,0,"on_event");}
+            if(e->what==GS_EV_SKILL&&gs_may_run(i)) gs_skill_dispatch_specific(i,e);
             if(!gs_may_run(i)||!gs_get_hook(i,hook))continue;
             switch (e->what) {
             case 17:
                 gs_armor_push(L,e); nargs=1; break;
+            case GS_EV_SKILL:
+                gs_skill_push(L,e); nargs=1; break;
+            case GS_EV_CRIT:
+                gs_crit_push(L,e); nargs=1; break;
             case 16:
                 lua_pushinteger(L,e->a+1); lua_pushinteger(L,e->b); lua_pushboolean(L,e->d);
                 nargs=3; break;
@@ -8747,6 +8765,7 @@ void gw_Script_FramePost(void) {
     gs.frame++;
     if (kind != 1) gs_deadline_frame();
     gs_items_track();
+    if (kind == 0 && !gw_Snap_Resimulating()) gs_earned_frame(); /* earned afterimage/tracer flags follow their status or window */
     if (gs_1p.mode && gs_1p_offline()) gs_1p_start_dispatch();
     for (slot = 0; slot < 6; ++slot) {
         if (gs_players_present(slot)) {
@@ -9391,6 +9410,7 @@ static int t_exec(const char *line, char *out, int cap) { return gw_Script_Exec(
 #include "gw_script_echo_tests.inc"
 #include "gw_script_spine_tests.inc"
 #include "gw_script_gameplay_events_tests.inc"
+#include "gw_script_skill_tests.inc"
 #include "gw_script_1p_tests.inc"
 #include "gw_script_fighter_bench_tests.inc"
 #include "gw_script_six_slots_tests.inc"
@@ -10948,6 +10968,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_echo_parser", test_script_echo_parser);
     gw_test_register("script_spine_events", test_script_spine_events);
     gw_test_register("script_gameplay_events", test_script_gameplay_events);
+    gw_test_register("script_skill", test_script_skill);
     gw_test_register("script_1p", test_script_1p);
     gw_test_register("script_fighter_bench", test_script_fighter_bench);
     gw_test_register("script_six_slots", test_script_six_slots);

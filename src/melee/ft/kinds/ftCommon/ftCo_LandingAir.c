@@ -11,11 +11,19 @@
 #include <melee/ft/ftcommon.h>
 #include <melee/ft/types.h>
 
+#if defined(TARGET_PC)
+#include <gameworld/script_skill.h>
+#endif
+
 void ftCo_LandingAir_EnterWithLag(Fighter_GObj* gobj)
 {
     u8 _[20] = { 0 };
     float lag;
     FtMotionId msid = ftCo_MS_None;
+#if defined(TARGET_PC)
+    float skill_lag0 = 0.0f;
+    int skill_mode = -1; /* 1 L-cancelled, 0 missed, -1 auto-cancelled */
+#endif
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->cmd_vars[0]) {
         switch (fp->motion_id) {
@@ -40,7 +48,14 @@ void ftCo_LandingAir_EnterWithLag(Fighter_GObj* gobj)
             lag = fp->co_attrs.landingairlw_lag;
             break;
         }
+#if defined(TARGET_PC)
+        skill_lag0 = lag;
+        skill_mode = 0;
+#endif
         if (msid != ftCo_MS_None && fp->x67F < p_ftCommonData->xE4) {
+#if defined(TARGET_PC)
+            skill_mode = 1;
+#endif
             float div_lag = lag / p_ftCommonData->xE8;
             int int_lag = div_lag;
             if ((int) div_lag == 0) {
@@ -49,6 +64,11 @@ void ftCo_LandingAir_EnterWithLag(Fighter_GObj* gobj)
             lag = int_lag;
         }
     }
+#if defined(TARGET_PC)
+    /* Skill telemetry: the retail L-cancel decision above, read-only. */
+    ScriptGame_SkillLanding(fp, msid != ftCo_MS_None ? skill_mode : -1, skill_lag0,
+                           msid != ftCo_MS_None ? lag : 0.0f);
+#endif
     if (msid != ftCo_MS_None) {
         ftCo_LandingAir_EnterWithMsidLag(gobj, msid, lag);
     } else {

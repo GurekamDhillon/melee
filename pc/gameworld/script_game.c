@@ -186,6 +186,7 @@ void ScriptGame_CapsMovementRelease(int owner);
 void ScriptGame_CapsEffectsRelease(int owner);
 void ScriptGame_IntrWinRelease(int owner);
 void ScriptGame_CapsEffectsFrame(void);
+void ScriptGame_SkillFrame(void);
 void ScriptGame_CapsStatusRelease(int owner);
 static void script_caps_status_frame(void);
 
@@ -1183,6 +1184,7 @@ void ScriptGame_StageFrame(void)
     script_arena_frame();
     script_bench_frame();
     ScriptGame_CapsEffectsFrame();
+    ScriptGame_SkillFrame();
     ScriptGame_EchoFrame();
     script_caps_status_frame();
     ScriptGame_AreaDrain();
@@ -1711,6 +1713,7 @@ static Fighter* script_fighter(int slot)
 #include "script_fighter_caps_armor.inc"
 #include "script_fighter_caps_armor_formula_tests.inc"
 #include "script_fighter_caps_effects.inc"
+#include "script_skill.inc"
 #include "script_fighter_interrupt.inc"
 #include "script_zones.inc"
 #include "script_six_slots.inc"

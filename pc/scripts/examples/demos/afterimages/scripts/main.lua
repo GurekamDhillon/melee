@@ -1,11 +1,17 @@
 -- Presentation demo. Offline only because warm-up is an offline diagnostic API.
+-- No always-on afterimages: they are the visible sign of a status you EARNED. Land an aerial on the opponent and
+-- L-cancel the landing: a speed status starts and blue afterimages run for exactly its length. Miss the L-cancel
+-- and nothing shows. Press D for a continuous debug view (clearly labelled; it needs debug=true).
 local handle,warm,status=nil,nil,'Waiting for P1'
+local debug,earned,misses=false,0,0
+function on_lcancel_hit(e) if e.port==1 then earned=earned+1;gd.fighter_timed_status(e.entity,1,1,120) end end
+function on_lcancel_miss(e) if e.port==1 then misses=misses+1 end end
 local copies,follow,intensity=6,false,1
 local lives,life,spacings,space={8,16,31,60},3,{2,4,8},2
 local styles,style,width,length,hits={'solid','glow','fire','electric','frost','dark'},2,1.2,12,false
 local function start()
   if handle or not gd.match().active or not gd.player(1) then return end
-  handle=assert(gd.afterimage_add(1,{copies=6,spacing=4,lifetime=31,fade=0.5,blend='additive',trigger='always',surface='silhouette',tint={0.1,1,1,1},tail={1,0.1,0.9,0.8},intensity=0}))
+  handle=assert(gd.afterimage_add(1,{copies=6,spacing=4,lifetime=31,fade=0.5,blend='additive',trigger='flag',surface='silhouette',tint={0.1,1,1,1},tail={1,0.1,0.9,0.8},intensity=0}))
   warm=gd.warm{fighters={1}}
   status='Preparing motion pipelines'
 end
@@ -18,9 +24,10 @@ function on_tick()
     local done,why=gd.warm_done(warm)
     if why then status='Warm refused: '..tostring(why);gd.log(status);gd.warm_release(warm);warm=nil;return end
     if not done then return end
-    gd.warm_release(warm);warm=nil;assert(gd.afterimage_set(handle,{intensity=intensity}));status='Ready'
+    gd.warm_release(warm);warm=nil;assert(gd.afterimage_set(handle,{intensity=intensity}));assert(gd.afterimage_bind(handle,{status=1,tint={0.15,0.45,1,0.8},tail={0.05,0.1,0.6,0}}));status='Ready (earn it: aerial hit + L-cancel)'
   end
-  if status~='Ready' then return end
+  if status:sub(1,5)~='Ready' then return end
+  if gd.key_pressed('D') then debug=not debug;if debug then assert(gd.afterimage_unbind(handle));assert(gd.afterimage_set(handle,{trigger='always',debug=true})) else assert(gd.afterimage_set(handle,{trigger='flag',flag=false}));assert(gd.afterimage_bind(handle,{status=1,tint={0.15,0.45,1,0.8},tail={0.05,0.1,0.6,0}})) end end
   if gd.key_pressed('C') then copies=copies%12+1;assert(gd.afterimage_set(handle,{copies=copies})) end
   if gd.key_pressed('F') then follow=not follow;assert(gd.afterimage_set(handle,{follow=follow})) end
   if gd.key_pressed('I') then intensity=intensity==1 and 0.45 or intensity==0.45 and 0 or 1;assert(gd.afterimage_set(handle,{intensity=intensity})) end
@@ -31,7 +38,7 @@ function on_draw()
   local a=gd.safe_area()
   gd.fill(a.x+12,a.y+12,math.min(a.w-24,760),92,0x101827dd)
   gd.text(a.x+24,a.y+22,'Afterimages: '..status,0xffd369ff,1.2)
-  gd.text(a.x+24,a.y+48,'C: copies 1..12  T: lifetime to 60  G: spacing  F: world/follow  I: intensity (1 / 0.45 / off)')
+  gd.text(a.x+24,a.y+48,'C: copies  T: lifetime  G: spacing  F: follow  I: intensity  D: DEBUG continuous view ('..(debug and 'ON' or 'off')..')   earned '..earned..' / missed '..misses)
   gd.text(a.x+24,a.y+70,('copies=%d lifetime=%d spacing=%d follow=%s intensity=%.2f'):format(copies,lives[life],spacings[space],tostring(follow),intensity))
 end
 function on_unload() if warm then gd.warm_release(warm) end end

@@ -2,6 +2,7 @@
 #include <gameworld/script_hit_rules.h>
 #include <gameworld/script_echo.h>
 #include <gameworld/script_fighter_caps.h>
+#include <gameworld/script_skill.h>
 #endif
 #include "ftcoll.h"
 
@@ -490,6 +491,7 @@ void ftColl_80076CBC(Fighter* fp0, HitCapsule* hit0, Fighter* fp1)
         extern void Script_GameEvent(int,int,int,int,int);
         Script_GameEvent(16,fp1->player_id,fp1->motion_id,7,fp1->is_sub_fighter);
         if (fp1->x221C_b2) Script_GameEvent(16,fp1->player_id,fp1->motion_id,8,fp1->is_sub_fighter);
+        if (fp1->x221C_b2) ScriptGame_SkillPerfectShield(fp1,fp0,0,hit0->damage);
         ScriptGame_IntrWinHit(fp0,1 /* shield hit */); /* turbo rule window */
     }
 #endif
@@ -782,6 +784,8 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                     }
                     if(inner_ret && !((idx>=0 ? Geno_HitFlags(fp0, idx, fp1) : 0) & 4))
                         ScriptGame_HitRulePercentQueue(hit0,fp1,dmg);
+                    if(inner_ret && !((idx>=0 ? Geno_HitFlags(fp0, idx, fp1) : 0) & 4))
+                        ScriptGame_CritHit(fp0,hit0,fp1,dmg,0); /* seeded crit: percent-only, same point */
                     bits.f = dmg;
                     Script_GameEvent(2 /* LAB_EV_HIT */, fp0->player_id, fp1->player_id,
                                      ((idx >= 0 && idx < 4) ? idx : 0xFF) |
@@ -791,6 +795,7 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                     if(!ScriptGame_EchoReportContext(fp0,fp1,hit0)) ScriptGame_ReportHitContext(fp0,fp1,hit0->element,0);
                     if(inner_ret) ScriptGame_EchoConnected(hit0,fp1);
                     if(inner_ret) ScriptGame_IntrWinHit(fp0,0 /* fighter hit */); /* turbo rule window */
+                    if(inner_ret) ScriptGame_SkillHit(fp0,fp1,dmg); /* combo and hit-confirm telemetry */
                     ScriptGame_HitRuleContext(hit0,fp1);
                 }
 #endif
@@ -938,6 +943,7 @@ void ftColl_80077688(Item* item, HitCapsule* hurt, Fighter* fp, Vec3* pos,
     {
         extern void Script_GameEvent(int,int,int,int,int);
         Script_GameEvent(16,fp->player_id,fp->motion_id,7,fp->is_sub_fighter);
+        if (fp->x221C_b2) ScriptGame_SkillPerfectShield(fp,NULL,1,0.0f);
     }
 #endif
 
@@ -1456,6 +1462,7 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                         Geno_ArticleStunBonus(item, hit, fp); /* v5.5: a Geno article's extra hitstun */
                     }
                     if(should_log)ScriptGame_HitRulePercentQueue(hit,fp,scaled_dmg);
+                    if(should_log && owner >= 0)ScriptGame_CritHit(GET_FIGHTER(item->owner),hit,fp,scaled_dmg,1);
                     bits.f = scaled_dmg;
                     {
                         extern int ScriptGame_EnemyContact(Item_GObj*, int, int);
@@ -1469,6 +1476,7 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                         ScriptGame_HitRuleContext(hit,fp);
                         if (inner_ret && owner >= 0 && GET_FIGHTER(item->owner) != fp)
                             ScriptGame_IntrWinHit(GET_FIGHTER(item->owner),2 /* projectile hit */); /* turbo rule window */
+                        if (inner_ret) ScriptGame_SkillHit(owner >= 0 ? GET_FIGHTER(item->owner) : NULL,fp,scaled_dmg);
                     }
                 }
 #endif

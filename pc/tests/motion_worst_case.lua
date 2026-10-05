@@ -7,7 +7,7 @@ gd.run(function()
   assert(gd.wait_until(function() return gd.match().active and gd.player(6)~=nil end,3000),'six fighters required')
   local ports={1,2,3,4,5,6}
   for _,p in ipairs(ports) do
-    assert(gd.afterimage_add(p,{copies=6,spacing=1,lifetime=31,surface='silhouette'}))
+    assert(gd.afterimage_add(p,{copies=6,spacing=1,lifetime=31,surface='silhouette',trigger='always',debug=true}))
     for _,anchor in ipairs({'right_hand','left_foot'}) do assert(gd.tracer_add{port=p,anchor=anchor,length=31,smoothing=8,width=2,shader='glow',params={1,1,0,0}}) end
   end
   local w=gd.warm{fighters=ports,tracers=true}

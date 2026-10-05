@@ -6,7 +6,7 @@ gd.run(function()
   local ok,why=pcall(function()
     assert(gd.wait_until(function() return gd.match().active and gd.player(1)~=nil end,3000),'match timeout')
     local before=gd.motion_stats()
-    local pose=assert(gd.afterimage_add(1,{copies=6,spacing=1,lifetime=31,surface='silhouette'}))
+    local pose=assert(gd.afterimage_add(1,{copies=6,spacing=1,lifetime=31,surface='silhouette',trigger='always',debug=true}))
     local handles={}
     for i=1,64 do handles[i]=assert(gd.tracer_add{port=1,anchor='right_hand'}) end
     local extra,reason=gd.tracer_add{port=1,anchor='left_hand'}

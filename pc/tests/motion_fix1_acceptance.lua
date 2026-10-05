@@ -11,7 +11,7 @@ end
 gd.run(function()
   local ok,why=pcall(function()
     assert(gd.wait_until(function() return gd.match().active and gd.match().frame>180 and gd.player(1)~=nil end,3000),'P1 timeout')
-    local h=assert(gd.afterimage_add(1,{copies=12,lifetime=60,spacing=4,surface='silhouette',trigger='always',intensity=0}))
+    local h=assert(gd.afterimage_add(1,{copies=12,lifetime=60,spacing=4,surface='silhouette',trigger='always',debug=true,intensity=0}))
     warm();local before=gd.motion_stats();assert(gd.afterimage_set(h,{intensity=1}))
     gd.wait(90);local first=gd.motion_stats()
     assert(first.poses>before.poses,'no complete fighter poses retained')

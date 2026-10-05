@@ -6,6 +6,8 @@ extern void gw_ScriptGame_CapsMovementRelease(int owner);
 extern int gw_ScriptGame_CapsEffect(int entity,int owner,int kind,int value,int frames);
 extern int gw_ScriptGame_CapsEffectRead(int entity,int kind,int field);
 extern void gw_ScriptGame_CapsEffectsRelease(int owner);
+extern void gw_ScriptGame_CritRelease(int owner);
+extern int gw_ScriptGame_CritSet(int entity,int owner,int slot,int chance,int mult,int mult_max,int launch,int min_percent,int force,int flags);
 extern int gw_ScriptGame_CapsArmour(int entity,int owner,int damage,int knockback);
 extern int gw_ScriptGame_CapsArmourRead(int entity,int field);
 extern int gw_ScriptGame_CapsGiveItem(int entity,int owner,int kind);
@@ -232,4 +234,5 @@ static void gs_caps_release(int owner)
     gw_ScriptGame_CapsMovementRelease(owner);
     gw_ScriptGame_CapsEffectsRelease(owner);
     gw_ScriptGame_CapsStatusRelease(owner);
+    gw_ScriptGame_CritRelease(owner);
 }

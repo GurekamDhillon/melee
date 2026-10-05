@@ -251,6 +251,9 @@ extern "C" void gw_motion_defaults(GwMotionOptions* o,int kind){
     o->index=-2;o->scale=1;o->curve=1.5f;o->width=0.8f;o->taper=1;o->intensity=0.45f;o->depth=1;o->params[0]=1;
     float tint[]={0.35f,0.8f,1,0.65f},tail[]={0.15f,0.25f,0.7f,0},edge[]={1,1,1,0};
     memcpy(o->tint,tint,16);memcpy(o->tail,tail,16);memcpy(o->edge,edge,16);
+    /* Owner rule: no always-on afterimages. They start lowered (flag trigger) until a script raises the flag, binds it to a
+       status, or opens a window; "always" and "moving" need debug=true in the options (gw_script_earned.inc). */
+    if(kind==GW_MOTION_AFTERIMAGE){o->trigger=2;o->flag=0;}
 }
 extern "C" int gw_motion_add(unsigned owner,const GwMotionOptions* o,const char** error){
     if(!owner||!o||!valid(*o)){*error="invalid motion options";return 0;}

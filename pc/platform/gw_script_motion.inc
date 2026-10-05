@@ -44,7 +44,7 @@ static int gs_motion_joint(lua_State* L,int index)
 }
 static void gs_motion_options(lua_State* L,int table,GwMotionOptions* o)
 {
-    static const char* keys[]={"port","sub","anchor","copies","spacing","lifetime","length","smoothing","blend","trigger","flag","follow","clear_on_respawn","surface","shader","depth","speed","scale","fade","width","taper","intensity","params","offset","tint","tail","edge",NULL};
+    static const char* keys[]={"port","sub","anchor","copies","spacing","lifetime","length","smoothing","blend","trigger","flag","follow","clear_on_respawn","surface","shader","depth","speed","scale","fade","width","taper","intensity","params","offset","tint","tail","edge","debug",NULL};
     static const char* blends[]={"alpha","additive"},*triggers[]={"always","moving","flag"},*surfaces[]={"own","silhouette","gradient"};
     static const char* shaders[]={"solid","glow","fire","electric","frost","dark"};
     luaL_checktype(L,table,LUA_TTABLE);gs_item_keys(L,table,keys);
@@ -55,6 +55,12 @@ static void gs_motion_options(lua_State* L,int table,GwMotionOptions* o)
     o->blend=gs_motion_enum(L,table,"blend",blends,2,o->blend);o->trigger=gs_motion_enum(L,table,"trigger",triggers,3,o->trigger);
     o->surface=gs_motion_enum(L,table,"surface",surfaces,3,o->surface);o->shader=gs_motion_enum(L,table,"shader",shaders,6,o->shader);
     gs_motion_bool(L,table,"flag",&o->flag);gs_motion_bool(L,table,"follow",&o->follow);
+    {   /* no always-on afterimages: a continuous trigger is a labelled debug view, never a default */
+        int debug=0;gs_motion_bool(L,table,"debug",&debug);lua_getfield(L,table,"trigger");
+        if(!lua_isnil(L,-1)&&o->kind==GW_MOTION_AFTERIMAGE&&o->trigger!=2&&!debug)
+            luaL_error(L,"afterimages must be earned: use trigger=\"flag\" with gd.afterimage_bind/gd.afterimage_window (trigger \"always\"/\"moving\" needs debug=true, a debug view)");
+        lua_pop(L,1);
+    }
     gs_motion_bool(L,table,"clear_on_respawn",&o->clear_on_respawn);gs_motion_bool(L,table,"depth",&o->depth);
     gs_motion_number(L,table,"speed",&o->speed,0,100);gs_motion_number(L,table,"scale",&o->scale,0.25f,2);
     gs_motion_number(L,table,"fade",&o->curve,0.25f,4);gs_motion_number(L,table,"width",&o->width,0.05f,24);

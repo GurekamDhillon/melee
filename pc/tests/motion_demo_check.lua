@@ -11,6 +11,7 @@ local gd={
   warm=function(o) assert(calls.add);assert(o.tracers==true or o.fighters[1]==1);calls.warm=true;return 2 end,
   warm_done=function(h) assert(h==2);return ready end,
   warm_release=function(h) assert(h==2);calls.release=true end,
+  afterimage_bind=function() return true end,afterimage_unbind=function() return true end,fighter_timed_status=function() return true end,
   key_pressed=function(k) return keys[k] or false end,
   safe_area=function() return {x=0,y=0,w=900,h=600} end,
   fill=function() end,text=function() end,log=function() end,

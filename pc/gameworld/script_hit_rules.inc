@@ -17,6 +17,9 @@ static int script_hit_next_handle;
 static int script_hit_capacity_warned;
 static int script_hit_meta_count;
 extern int Script_HitRulesInput(int at);
+/* crit launch (script_skill.inc, included later): the multiplier a crit on this capsule asked for, and its retirement */
+static float script_crit_launch(HitCapsule* hit,Fighter* victim);
+static void script_crit_launch_clear(Fighter* victim);
 static int script_hit_entity(Fighter* f) {return f->player_id*2+(f->is_sub_fighter ? 1 : 0); }
 static HRMeta* script_hit_metadata(HitCapsule* h,int create) {
  unsigned start=((unsigned)h>>2)%HR_META_MAX; int i;
@@ -133,6 +136,7 @@ float ScriptGame_HitRuleContact(HitCapsule* hit,Fighter* victim,float value,int 
  if(knockback) {
   HRResult outgoing=script_hit_family(hit,victim,0),incoming=script_hit_family(hit,victim,1);
   value=hr_safe_float((double)value*hr_family_cap(outgoing.launch,4)*hr_family_cap(incoming.launch,4));
+  value=hr_safe_float((double)value*script_crit_launch(hit,victim));
  }
  return !knockback && hr_cap(v.damage*w.damage)!=1 && value>500 ? 500 : value;
 }
@@ -158,13 +162,14 @@ void ScriptGame_HitRulePercentQueue(HitCapsule* hit,Fighter* victim,float damage
 float ScriptGame_HitRulePercentCommit(Fighter* victim,float damage) {
  int entity;float delta;double result;
  if(!victim || victim->player_id>=6)return damage;
+ script_crit_launch_clear(victim);
  entity=script_hit_entity(victim);delta=script_hit_percent_delta[entity];script_hit_percent_delta[entity]=0;
  if(!hr_finite(damage))damage=damage>0 ? 999 : 0;
  if(!hr_finite(delta))delta=0;
  result=(double)damage+delta;return result<0 ? 0 : result>999 ? 999 : (float)result;
 }
 void ScriptGame_HitRulePercentClear(Fighter* victim) {
- if(victim && victim->player_id<6)script_hit_percent_delta[script_hit_entity(victim)]=0;
+ if(victim && victim->player_id<6){script_hit_percent_delta[script_hit_entity(victim)]=0;script_crit_launch_clear(victim);}
 }
 void ScriptGame_HitRuleWon(HitCapsule* hit,Fighter* victim) {
  HRMeta* m=script_hit_metadata(hit,0);

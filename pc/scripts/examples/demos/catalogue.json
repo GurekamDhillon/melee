@@ -966,5 +966,27 @@
   "in_game": false,
   "controls": "arrows move the focus; TAB switches cells / real grid component; console: sm_bench all, sm_mode, sm_focus",
   "setup": []
-}
+},
+  {
+    "id": "demo_skill_events",
+    "path": "demos/skill-events",
+    "title": "Skill events",
+    "api": "on_skill, on_<kind>, gd.skill_history, gd.skill_thresholds",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "console: skill_do <macro> drives the P2 CPU; the overlay lists events",
+    "setup": []
+  },
+  {
+    "id": "demo_crit_events",
+    "path": "demos/crit-events",
+    "title": "Crits and on_crit",
+    "api": "gd.crit, gd.crit_force, gd.crit_seed, on_crit",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "console: crit_force <n>, crit_seed <n>; the overlay shows the last crit",
+    "setup": []
+  }
 ]

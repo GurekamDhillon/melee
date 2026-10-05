@@ -33,7 +33,7 @@ static void gs_spine_event_capture(GsEvent* e)
     memset(&e->spine,0,sizeof e->spine);
     if(gs_spine_event_epoch!=epoch||gs_spine_event_frame!=frame){gs_spine_event_epoch=epoch;gs_spine_event_frame=frame;gs_spine_event_sequence=0;}
     e->spine.frame=frame;e->spine.epoch=epoch;e->spine.sequence=++gs_spine_event_sequence;
-    e->spine.phase=e->what==17?3:e->what==LAB_EV_HIT||e->what==11?2:
+    e->spine.phase=e->what==17?3:e->what==LAB_EV_HIT||e->what==11||e->what==19?2:
         (e->what>=5&&e->what<=9)||e->what==12||e->what==13||e->what==14||e->what==15?4:1;
     /* The legacy hit actor may be an item owner or a thrown body; its sub bit
      * cannot establish credited identity, including a full-queue last slot.
@@ -42,7 +42,8 @@ static void gs_spine_event_capture(GsEvent* e)
     else if(e->what==LAB_EV_ACTION||e->what==LAB_EV_LAND||e->what==16)gs_spine_actor(e->spine.actor,e->a,e->d);
     else if(e->what==LAB_EV_HITLAG||e->what==15)gs_spine_actor(e->spine.actor,e->a,e->c);
     else if(e->what==14){gs_spine_actor(e->spine.actor,e->a,0);gs_spine_actor(e->spine.target,e->b,0);}
-    else if(e->what==17){int entity=e->a-1;gs_spine_actor(e->spine.actor,entity%6,entity/6);}
+    else if(e->what==17||e->what==18){int entity=e->a-1;gs_spine_actor(e->spine.actor,entity%6,entity/6);}
+    else if(e->what==19){int entity=e->a-1,v=e->b-1;if(entity>=0)gs_spine_actor(e->spine.actor,entity%6,entity/6);if(v>=0)gs_spine_actor(e->spine.target,v%6,v/6);}
 }
 static void gs_spine_event_push(lua_State* L,const GsEvent* e,const char* hook)
 {

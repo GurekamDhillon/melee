@@ -15,6 +15,7 @@
  * wire are INDEXES from cfg.first_frame (u32); the API speaks the session's signed frame numbers.
  */
 #include "gw_net.h"
+#include "gw_matchbuild.h" /* the Envoy mode word of protocol 5 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -196,6 +197,7 @@ struct gw_net {
   uint8_t blob[GW_NET_MAX_BLOB];
   uint16_t blob_len;
   uint32_t host_rules;      /* guest: the rules word the host sent in ACCEPT */
+  uint32_t host_envoy;      /* guest: the Envoy mode word the host sent in ACCEPT (protocol 5) */
   int have_remote_cfg;
   int held;                          /* cfg.hold_start and gw_net_release not called yet */
   /* lobby channel: outgoing messages kept until the peer acknowledges them */
@@ -367,6 +369,8 @@ static void send_hello(gw_net *n) {
   put32(&p, (uint32_t)n->first);
   put32(&p, n->cfg.rules);                         /* protocol 4: the guest's rules word... */
   *p++ = n->cfg.rules_expect ? 1 : 0;              /* ...and whether it insists on it */
+  put32(&p, n->cfg.envoy);                         /* protocol 5: the guest's Envoy mode word... */
+  *p++ = n->cfg.envoy_expect ? 1 : 0;              /* ...and whether it insists on it */
   /* optional tail (older hosts ignore it): the guest's own choices */
   *p++ = n->cfg.guest_info_len;
   if (n->cfg.guest_info_len != 0) {
@@ -396,6 +400,7 @@ static void send_accept(gw_net *n) {
   *p++ = n->host_slots;
   *p++ = n->guest_slots;
   put32(&p, n->cfg.rules);                         /* protocol 4: the host's match rules */
+  put32(&p, n->cfg.envoy);                         /* protocol 5: the host's Envoy mode word */
   put16(&p, n->blob_len);
   memcpy(p, n->blob, n->blob_len);
   p += n->blob_len;
@@ -660,8 +665,8 @@ static void on_input(gw_net *n, const uint8_t *p, const uint8_t *end) {
 }
 
 static const char *refuse_check(gw_net *n, uint32_t ver, uint64_t exe, uint64_t iso, uint64_t mods,
-                                int pb, int32_t first, uint32_t rules, int rules_expect, char *why,
-                                size_t cap) {
+                                int pb, int32_t first, uint32_t rules, int rules_expect, uint32_t envoy,
+                                int envoy_expect, char *why, size_t cap) {
   if (ver != GW_NET_PROTOCOL_VERSION) {
     snprintf(why, cap, "protocol version mismatch (host %u, you %u)", GW_NET_PROTOCOL_VERSION, ver);
     return why;
@@ -694,6 +699,11 @@ static const char *refuse_check(gw_net *n, uint32_t ver, uint64_t exe, uint64_t 
     snprintf(why, cap, "different match rules (host %08x, you %08x)", (unsigned)n->cfg.rules, (unsigned)rules);
     return why;
   }
+  if (envoy != n->cfg.envoy && (envoy_expect || !gw_envoy_mode_valid(envoy))) {
+    /* the Envoy rule set is part of what both peers simulate: refused here, never discovered mid-match */
+    snprintf(why, cap, "different Envoy rules (host %08x, you %08x)", (unsigned)n->cfg.envoy, (unsigned)envoy);
+    return why;
+  }
   return NULL;
 }
 
@@ -718,17 +728,19 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
     uint64_t exe, iso, mods;
     int pb;
     int32_t first;
-    uint32_t rules;
-    int rules_expect;
+    uint32_t rules, envoy;
+    int rules_expect, envoy_expect;
     if (type != T_HELLO || end - p < 2 + 24 + 1 + 4) return;
     ver = get16(&p); exe = get64(&p); iso = get64(&p); mods = get64(&p);
     pb = *p++;
     first = (int32_t)get32(&p);
     /* a protocol-3 HELLO ends here (and fails the version check below); 4 carries the rules */
-    if (ver == GW_NET_PROTOCOL_VERSION && end - p < 5) return;
+    if (ver == GW_NET_PROTOCOL_VERSION && end - p < 5 + 5) return;
     rules = ver == GW_NET_PROTOCOL_VERSION ? get32(&p) : 0;
     rules_expect = ver == GW_NET_PROTOCOL_VERSION ? *p++ : 0;
-    if (refuse_check(n, ver, exe, iso, mods, pb, first, rules, rules_expect, why, sizeof why) != NULL) {
+    envoy = ver == GW_NET_PROTOCOL_VERSION ? get32(&p) : 0; /* protocol 5 */
+    envoy_expect = ver == GW_NET_PROTOCOL_VERSION ? *p++ : 0;
+    if (refuse_check(n, ver, exe, iso, mods, pb, first, rules, rules_expect, envoy, envoy_expect, why, sizeof why) != NULL) {
       send_refuse_to(n, from, 1, why);
       return;                            /* stay listening: a refused guest does not consume the slot */
     }
@@ -790,16 +802,26 @@ static void on_packet(gw_net *n, const gw_net_addr *from, const uint8_t *buf, in
         fire(n, GW_NET_EV_REFUSED, n->reason);
         return;
       }
-      if (end - p < 4 + 3 + 4 + 2) { n->st.bad_packets++; return; }
+      if (end - p < 4 + 3 + 4 + 4 + 2) { n->st.bad_packets++; return; }
       n->seed = get32(&p);
       n->input_delay = *p++;
       n->host_slots = *p++;
       n->guest_slots = *p++;
       n->host_rules = get32(&p);
+      n->host_envoy = get32(&p);
       if (n->cfg.rules_expect && n->host_rules != n->cfg.rules) {
         char why[96];
         snprintf(why, sizeof why, "different match rules (host %08x, you %08x)", (unsigned)n->host_rules,
                  (unsigned)n->cfg.rules);
+        n->state = GW_NET_REFUSED;
+        set_reason(n, why);
+        fire(n, GW_NET_EV_REFUSED, n->reason);
+        return;
+      }
+      if (!gw_envoy_mode_valid(n->host_envoy) || (n->cfg.envoy_expect && n->host_envoy != n->cfg.envoy)) {
+        char why[96];
+        snprintf(why, sizeof why, "different Envoy rules (host %08x, you %08x)", (unsigned)n->host_envoy,
+                 (unsigned)n->cfg.envoy);
         n->state = GW_NET_REFUSED;
         set_reason(n, why);
         fire(n, GW_NET_EV_REFUSED, n->reason);
@@ -1017,6 +1039,7 @@ int gw_net_remote_config(const gw_net *n, gw_net_config *out_cfg, void *blob_buf
     out_cfg->first_frame = n->first;
     out_cfg->payload_bytes = (uint8_t)n->pb;
     out_cfg->rules = n->is_host ? n->cfg.rules : n->host_rules;
+    out_cfg->envoy = n->is_host ? n->cfg.envoy : n->host_envoy;
   }
   if (blob_buf != NULL && blob_cap >= (int)n->blob_len) memcpy(blob_buf, n->blob, n->blob_len);
   return 1;

@@ -279,6 +279,9 @@ extern void Settings_SetInt(const char* key, int value);
 void Netplay_SetTurbo(int on);
 int Netplay_TurboPref(void);
 int Netplay_Turbo(void);
+void Netplay_SetEnvoy(int on);
+int Netplay_EnvoyPref(void);
+int Netplay_Envoy(void);
 int Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay);
 void Netplay_RandomCancel(void);
 int Netplay_RandomStatus(void);
@@ -541,6 +544,17 @@ static void fe_np_set_turbo(int v)
     OSReport("frontend: online Turbo rule -> %s%c", v ? "on" : "off", 10);
 }
 
+/* Envoy: an adversarial set with each player's own build, for rooms this player hosts (private rooms only; Random Opponent never uses it).
+ * Saved in settings.cfg (`envoy_online`) like Turbo. Shown beside it; the look of this row is unverified (no screenshots were taken). */
+static const char* const fe_np_envoy_modes[] = { "Off", "On" };
+static int fe_np_get_envoy(void) { return Netplay_EnvoyPref(); }
+static void fe_np_set_envoy(int v)
+{
+    Netplay_SetEnvoy(v);
+    Settings_SetInt("envoy_online", v);
+    OSReport("frontend: online Envoy rules -> %s%c", v ? "on" : "off", 10);
+}
+
 /* Random Opponent: the server pairs us with whoever else is looking; the waiting room shows the
  * search, then the lobby as for a room. */
 static void fe_ol_random(void)
@@ -578,6 +592,8 @@ static const FrontendItem fe_items_online[] = {
       fe_np_get_stage_mode, fe_np_set_stage_mode, 0, 1, 1, fe_np_stage_modes },
     { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled into most moves.",
       fe_np_get_turbo, fe_np_set_turbo, 0, 1, 1, fe_np_turbo_modes },
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: a best-of set where each player fights with an Envoy build and picks a reward between games.",
+      fe_np_get_envoy, fe_np_set_envoy, 0, 1, 1, fe_np_envoy_modes },
     { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", fe_np_get_stocks,
       fe_np_set_stocks, 1, 9, 1 },
     { FE_SLIDER, 0, "Time Limit", "Minutes per game, in rooms you host.", fe_np_get_minutes,

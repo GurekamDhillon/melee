@@ -47,7 +47,7 @@ return function(D)
   local match=self.g.match();if match and match.netplay then return false,'offline only' end
   if not self.profile or self.profile.next_run>=1000000 then return false,'profile unavailable or ledger full' end
   local working=clone(self.profile);local c=working.companions[working.active]
-  seed=working.pending_seed or seed or math.random(0,2147483646)
+  seed=working.pending_seed or seed or (D.mod_codec and D.mod_codec.fresh_seed(self.g) or math.random(0,2147483646)) -- the one per-peer draw, refused online (mod_codec.fresh_seed)
   if not working.pending_seed then C.start_run(c);S.record_start(working,seed) end
   ok,why=self.g.start_1p{mode=mode,fighter=fighter,difficulty=difficulty or C.tuning.retail.difficulty,
    stocks=stocks or C.tuning.retail.stocks,loop=C.tuning.retail.ngplus}

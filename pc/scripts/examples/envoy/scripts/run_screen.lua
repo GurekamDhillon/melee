@@ -318,6 +318,7 @@ return function(D)
   self:load_models()
   self.input:set_active(true,true);self.input.previous.start=true;self.input.previous.accept=true;self.input.previous.back=true
   self.input.previous.x=true;self.input.previous.y=true
+  self.deterministic=self.host and self.host.online or false -- an online run counts ticks: the reward countdown is a rule both peers share
   self.opened=self.g.time and self.g.time() or 0;self.ticks=0
   if mode=='bag' and self.g.paused and not self.g.paused() then self.g.pause();self.owns_pause=true end
   self:refresh()
@@ -334,7 +335,7 @@ return function(D)
  -- of the hold less the margin, so the screen always resolves itself first.
  function S:seconds_left()
   if self.mode~='reward' then return nil end
-  local wall=self.g.time and (self.g.time()-self.opened) or self.ticks/60
+  local wall=(not self.deterministic and self.g.time) and (self.g.time()-self.opened) or self.ticks/60 -- deterministic (online): counted ticks, never the wall clock
   local by_hold=(S.tuning.hold_ticks-S.tuning.tick_margin)/60-wall
   return math.max(0,math.min(S.tuning.safe_seconds-wall,by_hold))
  end

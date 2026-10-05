@@ -3196,6 +3196,13 @@ void Fighter_procMap(Fighter_GObj* gobj)
                 w[i++] = ScriptGame_IntrWinHashWord(fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0));
             }
             Snap_CuratedMix(w, i);
+            {   /* the applied Envoy build (0 when none): a restored or resimulated table that differs is a mismatch */
+                extern unsigned ScriptGame_BuildHashWord(void);
+                u32 bw = ScriptGame_BuildHashWord();
+                if (bw != 0) {
+                    Snap_CuratedMix(&bw, 1);
+                }
+            }
             {   /* MELEE_SYNCTEST_CURATED_DIFF: the fighter's whole struct and its GObj, for a byte compare against the first pass */
                 extern void Snap_CuratedRegion(int tag, u32 va, u32 len);
                 Snap_CuratedRegion(fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0), (u32) fp, (u32) sizeof(Fighter));
@@ -3980,6 +3987,13 @@ u32 RB_GameHash(void)
     u32 h = 0x811C9DC5u;
     int i, j;
     h = ftRb_Mix(h, *HSD_RandSeedPtr);
+    {   /* Online Envoy: ONE word for the applied builds (pc/gameworld/script_build.inc); 0 when none is, so no other match hashes differently */
+        extern unsigned ScriptGame_BuildHashWord(void);
+        u32 bw = ScriptGame_BuildHashWord();
+        if (bw != 0) {
+            h = ftRb_Mix(h, bw);
+        }
+    }
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 2; j++) {
             HSD_GObj* g = Player_GetEntityAtIndex(i, j);

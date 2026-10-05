@@ -1478,6 +1478,12 @@ extern void gw_Netplay_LobbyChar(int ck, int color);
 extern void gw_Netplay_LobbyStageAct(int i);
 extern void gw_Netplay_LobbyReady(int on);
 extern int gw_Netplay_SetCode(const char *code);
+extern unsigned gw_Netplay_EnvoyInfo(int what);
+extern const char *gw_Netplay_EnvoyFail(void);
+extern int gw_Netplay_EnvoyPick(int idx);
+extern int gw_Netplay_EnvoyHist(int game, int who);
+extern void gw_Netplay_SetEnvoy(int on);
+extern int gw_Netplay_EnvoyPref(void);
 
 /* gd.menu() -> {frontend = {title, screen, cursor, item} (the port's own menus: gmfrontend.c),
  * native = {menu, hovered} (Melee's menu tree)}. Which one is live follows gd.scene(). */
@@ -1539,6 +1545,37 @@ static int l_netplay(lua_State *L) {
     }
     lua_setfield(L, -2, "groups");
     gs_setint(L, "cursor", gw_Frontend_LobbyCursor() + 1); /* the lobby screen's stage cursor, 1-based */
+    { /* envoy: the online Envoy set's state (read-only). picks are -1 until made; 0..2 an offer, 3 keep; ticks are lobby ticks, never milliseconds */
+        char hex[16];
+        lua_createtable(L, 0, 12);
+        gs_setbool(L, "on", gw_Netplay_EnvoyInfo(0));
+        gs_setint(L, "seed", (lua_Integer) gw_Netplay_EnvoyInfo(1));
+        gs_setbool(L, "open", gw_Netplay_EnvoyInfo(2));
+        gs_setint(L, "round", (int) gw_Netplay_EnvoyInfo(6));
+        gs_setint(L, "left", (int) gw_Netplay_EnvoyInfo(5));
+        gs_setint(L, "refused", (int) gw_Netplay_EnvoyInfo(9));
+        gs_setstr(L, "fail", gw_Netplay_EnvoyFail());
+        lua_createtable(L, 2, 0);
+        lua_pushinteger(L, (int) gw_Netplay_EnvoyInfo(3)); lua_rawseti(L, -2, 1);
+        lua_pushinteger(L, (int) gw_Netplay_EnvoyInfo(4)); lua_rawseti(L, -2, 2);
+        lua_setfield(L, -2, "picks");
+        { /* history[g] = {host pick, guest pick} of every game whose reward resolved: the builds are recomputed from it, so a script that reloads loses nothing */
+            int g, r = (int) gw_Netplay_EnvoyInfo(6);
+            lua_createtable(L, 0, 8);
+            for (g = 2; g <= r && g < 32; ++g) {
+                if (gw_Netplay_EnvoyHist(g, 0) < 0 || gw_Netplay_EnvoyHist(g, 1) < 0) continue;
+                lua_createtable(L, 2, 0);
+                lua_pushinteger(L, gw_Netplay_EnvoyHist(g, 0)); lua_rawseti(L, -2, 1);
+                lua_pushinteger(L, gw_Netplay_EnvoyHist(g, 1)); lua_rawseti(L, -2, 2);
+                lua_rawseti(L, -2, g);
+            }
+            lua_setfield(L, -2, "history");
+        }
+        snprintf(hex, sizeof hex, "%08x", gw_Netplay_EnvoyInfo(10)); gs_setstr(L, "word", hex);
+        snprintf(hex, sizeof hex, "%08x", gw_Netplay_EnvoyInfo(7)); gs_setstr(L, "peer_word", hex);
+        gs_setbool(L, "peer_reported", gw_Netplay_EnvoyInfo(8));
+        lua_setfield(L, -2, "envoy");
+    }
     return 1;
 }
 
@@ -1557,8 +1594,13 @@ static int l_netplay_act(lua_State *L) {
         gw_Netplay_LobbyReady(lua_isnone(L, 2) ? 1 : lua_toboolean(L, 2));
     } else if (_stricmp(what, "code") == 0) {
         ok = gw_Netplay_SetCode(luaL_checkstring(L, 2));
+    } else if (_stricmp(what, "envoy") == 0) { /* the host's Online > Envoy choice for rooms it opens (menu routing, like the menu row) */
+        if (!lua_isnone(L, 2)) gw_Netplay_SetEnvoy(lua_toboolean(L, 2));
+        ok = gw_Netplay_EnvoyPref();
+    } else if (_stricmp(what, "rpick") == 0) { /* an Envoy set's reward: 0..2 an offer, 3 keeps the build (host-validated) */
+        ok = gw_Netplay_EnvoyPick((int) luaL_checkinteger(L, 2));
     } else {
-        return luaL_error(L, "gd.netplay_act: unknown action \"%s\" (char, stage, ready, code)", what);
+        return luaL_error(L, "gd.netplay_act: unknown action \"%s\" (char, stage, ready, code, rpick, envoy)", what);
     }
     lua_pushboolean(L, ok);
     return 1;
@@ -5451,6 +5493,7 @@ static int gs_stage_handle_arg(lua_State *L, int idx) {
 #include "gw_script_echo.inc"
 #include "gw_script_echo_visual.inc"
 #include "gw_script_sim_state.inc"
+#include "gw_script_netbuild.inc"
 #include "gw_script_tint_query.inc"
 #include "gw_script_1p.inc"
 #include "gw_script_fighter_bench.inc"
@@ -6544,6 +6587,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"fighter_status", l_fighter_status},
     {"sim_commit", l_sim_commit},
     {"sim_clear", l_sim_clear},
+    {"netbuild_stage", l_netbuild_stage}, {"netbuild_clear", l_netbuild_clear}, {"netbuild", l_netbuild},
     {"sim_read", l_sim_read},
     {"sim_replaying", l_sim_replaying},
     {"dobj_tints", l_dobj_tints},
@@ -8804,6 +8848,10 @@ void gw_Script_FramePost(void) {
         gs.match_active = 1;
         gs.match_frame = 0;
         gw_ScriptGame_CpuModeReset(); /* a script's stand/fight choice lasts one match */
+        {   /* the bench SyncTest has no rollback session to open: an Envoy build a test staged by hand is applied here, before any snapshot (a match is live from this frame) */
+            const char *bench = getenv("MELEE_SYNCTEST_BENCH");
+            if (bench != NULL && atoi(bench) == 1 && !gw_Netplay_Enabled() && !gw_RB_Enabled()) gw_Script_NetBuildApply();
+        }
         gs_hook_all("on_match_start", 0, 0, 0);
         gs_cpu_log_all();
     } else if (gs.match_active) {
@@ -10926,6 +10974,7 @@ static int test_geno_lab_effective_timeline(void) {
 #include "gw_script_items_preload_tests.inc"
 #include "gw_script_items_interleave_tests.inc"
 #include "gw_script_sound_tests.inc"
+#include "gw_script_netbuild_tests.inc"
 void gw_script_tests_register(void) {
     gw_test_register("script_sound_options",test_script_sound_options);
     gw_test_register("script_item_interleave",test_script_item_interleave);
@@ -10934,6 +10983,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_item_events",test_script_item_events);
     gw_test_register("script_shader_api", test_script_shader_api);
     gw_test_register("script_clank_event", test_script_clank_event);
+    gw_test_register("netbuild", test_netbuild);
     gw_test_register("script_presentation_timer", test_script_presentation_timer);
 #ifdef _WIN32
     gw_test_register("script_mission_paths", test_script_mission_paths);

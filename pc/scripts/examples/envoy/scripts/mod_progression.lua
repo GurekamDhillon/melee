@@ -81,5 +81,63 @@ return function()
   return nil,'launch proxy unreachable at percent display ceiling'
 
  end
+ -- ---- the Versus set (online Envoy, stage 3) -------------------------------------------------------------------------------------
+ -- Pure functions of (set seed, game, seat, the picks so far): every client computes BOTH players' builds and offers the same way, so nothing but the
+ -- seed and each pick (an index) crosses the network. The records are passive only (see mod_engine E.online_safe); a build is one starter record,
+ -- one keystone, and what the picks added. Needs D.mod_pool, D.mod_codec and D.mod_engine at call time (this module loads first).
+ -- Picks use the native lobby's numbering: 0..2 = the offer shown, 3 = keep the build (also the late default would be 0, see gw_netplay.c).
+ P.set={offers=3,keep=3,max_tier=3}
+ local function set_ids(D,kind)
+  local ids={}
+  for _,m in ipairs(D.mod_pool) do if m.kind==kind and D.mod_engine.online_safe(m) then ids[#ids+1]=m.id end end
+  table.sort(ids);return ids
+ end
+ -- The starter record and the keystone of one seat. Seats differ (the seed is mixed with the seat) and the choice is a pure function of the seed.
+ function P.set_starter(D,seed,seat)
+  local r=D.mod_codec.rng(D.mod_codec.seed_for(seed,0,0,seat*7+1))
+  local normal,keys=set_ids(D,'normal'),set_ids(D,'keystone')
+  assert(#normal>=3 and #keys>=1,'no online-safe records to start a set from')
+  return normal[math.floor(r()*#normal)+1],keys[math.floor(r()*#keys)+1]
+ end
+ -- Three distinct offers for a seat at a game: online-safe normal records, those already at the top tier last.
+ function P.set_offers(D,seed,game,seat,eq)
+  local r=D.mod_codec.rng(D.mod_codec.seed_for(seed,game,0,seat*7+3))
+  local pool=set_ids(D,'normal');local fresh,full={},{}
+  for _,id in ipairs(pool) do local t=eq and eq[id] or 0;if type(t)~='number' then t=0 end;if t>=P.set.max_tier then full[#full+1]=id else fresh[#fresh+1]=id end end
+  local out={}
+  while #out<P.set.offers do
+   local from=#fresh>0 and fresh or full;assert(#from>0,'offer pool empty')
+   local i=math.floor(r()*#from)+1;out[#out+1]=table.remove(from,i)
+  end
+  return out
+ end
+ -- The build after a pick: the offered record at tier 1, or one tier up if it is held; keep (3) or anything outside the offer changes nothing.
+ function P.set_apply(eq,offers,pick)
+  local out={};for k,v in pairs(eq) do out[k]=v end
+  local id=offers[(pick or P.set.keep)+1];if not id or pick==P.set.keep then return out end
+  local t=out[id];out[id]=math.min(P.set.max_tier,(type(t)=='number' and t or 0)+1)
+  return out
+ end
+ -- The build of a seat at the start of `game` (1 = the starters). picks[g] = {[1]=host's pick,[2]=guest's pick} for g = 2..game.
+ function P.set_build(D,seed,game,seat,picks)
+  local starter,key=P.set_starter(D,seed,seat);local eq={[starter]=1,[key]=1}
+  for g=2,game do
+   local pick=picks and picks[g] and picks[g][seat]
+   if pick==nil then pick=0 end -- a missing pick is the deterministic default: the first offer
+   eq=P.set_apply(eq,P.set_offers(D,seed,g,seat,eq),pick)
+  end
+  return eq,{}
+ end
+ -- Everything a client stages for the next game: both seats' records and passive ops. Returns {[seat]={record=,digest=,ops=,build=}}.
+ function P.set_stage(D,seed,game,picks)
+  local out={}
+  for seat=1,2 do
+   local eq,imp=P.set_build(D,seed,game,seat,picks)
+   local record,digest=D.mod_codec.build_record({seed=seed,game=game,loop=0,port=seat},eq,imp)
+   local engine=D.mod_engine.new(seed,D.mod_pool);engine:set_build(seat,eq,imp)
+   out[seat]={record=record,digest=digest,ops=engine:passive_ops(seat,seat),build=eq}
+  end
+  return out
+ end
  return P
 end

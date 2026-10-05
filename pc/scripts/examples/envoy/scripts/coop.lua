@@ -179,7 +179,7 @@ return function(D)
   self:ensure_hosts(opts.new_host or D.run_host.new)
   self.seats[1].fighter=opts.f1 or 'fox';self.seats[2].fighter=opts.f2 or 'marth'
   self.seats[1].policy=opts.p1 or 'human';self.seats[2].policy=opts.p2 or 'human'
-  self.seed=opts.seed or math.random(0,2147483646)  -- the only per-peer draw: online the host chooses the seed and sends it
+  self.seed=opts.seed or (D.mod_codec and D.mod_codec.fresh_seed(self.g) or math.random(0,2147483646))  -- the only per-peer draw: online the host chooses the seed and sends it
   self.max_loops=opts.max_loops
   self.stage,self.loop=0,0;self.events={};self.stats={};self.owner_of={};self.last_hitter={};self.results={}
   self.attempt=0;self.active=true;self.state='launching';self.state_info={player_port=1}

@@ -362,6 +362,51 @@ return function(D)
   end
   m[key]={config=config};return config
  end
+ -- ---- online play: the passive build as native ops (Envoy netplay plan, stage 2) --------------------------------------------------
+ -- Offline, mod_lab commits these ops after every logic frame. Online nothing may write from Lua during a match, so the SAME ops for the
+ -- passive part of a build are compiled once, before the match, and staged (gd.netbuild_stage) for the native side to apply before frame 0.
+ -- A record is online-safe today when it is passive (trigger 'equip') and every effect is one of the ops below, all of which have a native carrier
+ -- already living in snapshotted game memory: value (fighter overlay), convert and versus-status (hit rules), crit (crit configuration),
+ -- armor and air_jumps and restrict (armour and capability tables). Echoes and every triggered record need the native evaluator (stage 4).
+ local online_ops={value=true,convert=true,['versus-status']=true,crit=true,armor=true,air_jumps=true,restrict=true}
+ function E.online_safe(rule)
+  if rule.trigger~='equip' then return false,'triggered ('..tostring(rule.trigger)..'): needs the native evaluator' end
+  for _,e in ipairs(rule.effects) do if not online_ops[e.op] then return false,'effect '..e.op..' has no native carrier yet' end end
+  return true
+ end
+ -- Every record in the pool that is online-safe, in pool order.
+ function E.online_pool(list)
+  local out={};for _,m in ipairs(list) do if E.online_safe(m) then out[#out+1]=m.id end end;return out
+ end
+ -- The op list for one port's build, deterministic and canonical: fighter values, hit rules, crit configuration (begin, default, then the tags in a fixed
+ -- order), capability caps, permanent armour. Raises for a record that is not online-safe. `slot` (default: the port) is the 1-based seat the ops are for.
+ function E:passive_ops(port,slot)
+  slot=slot or port
+  for id in pairs(self.equipped[port] or {}) do
+   local rule=assert(self.rules[id],'unknown modifier '..tostring(id));local ok,why=E.online_safe(rule)
+   assert(ok,'record '..id..' is not online-safe: '..tostring(why))
+  end
+  local ops={}
+  local values=self:values(port);values.status_duration=nil;values.damage_dealt=nil;values.damage_taken=nil;values.knockback_taken=nil
+  if next(values) then ops[#ops+1]={op='fighter_mod',port=slot,values=values} end
+  local rules,bits=self:native_rules(port)
+  if #rules>0 or bits~=0 then ops[#ops+1]={op='hit_rules',port=slot,rules=rules,status_bits=bits} end
+  local cfg=self:crit_config(port)
+  if cfg then
+   ops[#ops+1]={op='crit',entity=slot,begin=true,min_percent=cfg.min_percent}
+   local function add(tag,s) local o={op='crit',entity=slot,slot=tag,chance=s.chance,multiplier=s.multiplier,launch=s.launch};if s.multiplier_max then o.multiplier_max=s.multiplier_max end;ops[#ops+1]=o end
+   add('default',cfg.slots.default)
+   for _,tag in ipairs({'jab','dash_attack','tilt','smash','aerial','grab','throw','special','projectile'}) do if cfg.slots[tag] then add(tag,cfg.slots[tag]) end end
+  end
+  local ps=self:passive_state(port)
+  local caps={}
+  if ps.air_jumps then caps.air_jumps=math.max(0,math.min(6,ps.air_jumps)) end
+  for _,x in ipairs(ps.forbid) do caps[x]=true end
+  if next(caps) then ops[#ops+1]={op='fighter_caps',entity=slot,values=caps} end
+  if ps.armor then ops[#ops+1]={op='fighter_armor',entity=slot,type=ps.armor.type,value=math.min(10,ps.armor.value),frames=0} end
+  for _,o in ipairs(ops) do D.mod_registry.operation(o) end
+  return ops
+ end
  -- The status a technique earned that an afterimage should show right now: the longest-lasting earned status of the fighter
  -- ({cause, status, frames}), or nil. Pure.
  function E:earned(port)

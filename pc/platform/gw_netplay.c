@@ -36,6 +36,7 @@
 #include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
 #include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
 #include "gw_matchrules.h" /* the match rule word (Turbo) agreed in the handshake */
+#include "gw_matchbuild.h" /* the Envoy mode word and the build record (online Envoy) */
 #include "shim_vi.h"
 #include <stdio.h>
 #include <stdint.h>
@@ -119,6 +120,9 @@ static struct {
     unsigned turbo;       /* the Turbo match rule word agreed for this match (gw_matchrules.h); 0 = off */
     unsigned turbo_pref;  /* the host's choice for rooms it opens (menu / MELEE_NETPLAY_TURBO); never used for random matches */
     int turbo_env;        /* guest, scripted: MELEE_NETPLAY_TURBO is set, so the guest insists on that word */
+    unsigned envoy;       /* the Envoy mode word agreed for this match (gw_matchbuild.h); 0 = off */
+    unsigned envoy_pref;  /* the host's choice for private rooms it opens (menu / MELEE_NETPLAY_ENVOY); never used for random matches */
+    int envoy_env;        /* guest, scripted: MELEE_NETPLAY_ENVOY is set, so the guest insists on that word */
     int t_open_session;   /* random matchmaking: the session on the queue socket has started */
     int started, dead, accepted;
     long ticks;
@@ -140,6 +144,11 @@ int gw_Netplay_TurboRules(void) { return (int) np.turbo; }
 void gw_Netplay_SetTurbo(int on) { np.turbo_pref = on ? GW_TURBO_V1 : 0; }
 int gw_Netplay_TurboPref(void) { return np.turbo_pref != 0; }
 int gw_Netplay_Turbo(void) { return np.turbo != 0; }
+/* Online Envoy (adversarial sets, passive builds): the same three entry points as Turbo. The host of a private room chooses; a guest takes the
+ * host's word from the handshake; random matchmaking never carries it. */
+void gw_Netplay_SetEnvoy(int on) { np.envoy_pref = on ? GW_ENVOY_MODE_V1 : 0; }
+int gw_Netplay_EnvoyPref(void) { return np.envoy_pref != 0; }
+int gw_Netplay_Envoy(void) { return np.envoy != 0; }
 int gw_Netplay_LocalPort(void) { return np.host ? 0 : 1; }
 int gw_Netplay_RemotePort(void) { return np.host ? 1 : 0; }
 int gw_Netplay_Delay(void) { return np.delay; }
@@ -212,6 +221,13 @@ static void np_build_scene(char *out, size_t cap, int host_ck, int host_c, int g
         size_t l = strlen(out);
         snprintf(out + l, cap - l, ";turbo=%x", np.turbo);
     }
+    /* an Envoy match names the builds it is played with: one word over both players' records and compiled ops (gw_Script_NetBuildWord); the
+       guest checks it against the builds it staged itself and refuses the match on a difference (np_scene_envoy) */
+    if (np.envoy != 0) {
+        extern unsigned gw_Script_NetBuildWord(void);
+        size_t l = strlen(out);
+        snprintf(out + l, cap - l, ";envoy=%08x", gw_Script_NetBuildWord());
+    }
 }
 
 /* The Turbo word a scene string carries (0 if none; (unsigned) -1 if malformed or unsupported). */
@@ -223,6 +239,18 @@ static unsigned np_scene_turbo(const char *scene) {
     w = strtoul(t + 7, &end, 16);
     if (end == t + 7 || (*end != ';' && *end != '\0') || !gw_turbo_valid((unsigned) w)) return (unsigned) -1;
     return (unsigned) w;
+}
+
+/* The Envoy build word a scene string carries: 1 and *w when it has one, 0 when it has none. */
+static int np_scene_envoy(const char *scene, unsigned *w) {
+    const char *t = strstr(scene, ";envoy=");
+    char *end = NULL;
+    unsigned long v;
+    if (t == NULL) return 0;
+    v = strtoul(t + 7, &end, 16);
+    if (end == t + 7 || (*end != ';' && *end != ' ')) return 0;
+    *w = (unsigned) v;
+    return 1;
 }
 
 static void np_cb_lobby_any(void *user, const uint8_t *data, int len); /* delta */
@@ -283,6 +311,9 @@ static void np_cb_event(void *user, int ev, const char *msg) {
         np_status("%s: %s", ev == GW_NET_EV_REFUSED ? "Refused" : "Disconnected",
                   msg != NULL ? msg : "the other player left");
         /* the match rules differ: say it in the player's words (gw_net.c "different match rules (host H, you G)") */
+        if (ev == GW_NET_EV_REFUSED && msg != NULL && strncmp(msg, "different Envoy rules", 21) == 0) {
+            np_status("Refused: the Envoy setting differs (%s)", msg + 22);
+        }
         if (ev == GW_NET_EV_REFUSED && msg != NULL && strncmp(msg, "different match rules", 21) == 0) {
             unsigned hw = 0, gw = 0;
             const char *q = strstr(msg, "(host ");
@@ -1217,6 +1248,7 @@ static void np_copy(char *out, int cap, const char *s);
 enum { LB_OFF, LB_CHAR_BLIND, LB_STRIKE, LB_BAN, LB_PICK, LB_CHAR_WINNER, LB_CHAR_LOSER, LB_READY, LB_GO };
 enum { LB_FREE = 0, LB_STRUCK_P1 = 1, LB_STRUCK_P2 = 2, LB_BANNED = 3, LB_PICKED = 4 };
 #define LB_MAX_STAGES 256
+#define LB_ENV_HIST 32 /* games of an Envoy set whose picks are remembered (a set is a handful of games) */
 #define LB_LIST_CHUNK 8 /* identity tokens per "L" message (they are 19 bytes each) */
 #define LB_COUNTDOWN 180 /* 3-2-1 */
 /* The starters (external ids), in the order the grid shows them: Battlefield, Final Destination,
@@ -1246,7 +1278,26 @@ static struct {
     int have_state;      /* guest: the host's state has arrived on this connection */
     uint32_t cd_t0;      /* GetTickCount at the countdown's zero, 0 = not running */
     uint32_t seq;        /* state version, for the menu to notice changes */
+    /* ONLINE ENVOY (an adversarial set, each player with a passive build). The host arbitrates: the set's run seed is its choice, the reward pick
+       between games is host-validated with a countdown counted in lobby ticks (never milliseconds), and the builds are re-agreed (a word each side
+       reports) before every game. Every roll (starters, offers) is a pure function of the seed on both clients; only an index crosses the wire. */
+    int env_on;          /* this set is an Envoy set (the room's agreed mode word was nonzero) */
+    uint32_t env_seed;   /* the set's run seed: 1..2147483646, the host's choice; the guest holds the host's */
+    int env_open;        /* a reward pick is open (before games 2 and later) */
+    int env_pick[2];     /* per player: -1 none yet, 0..2 the offer taken, 3 keep the build */
+    int env_left;        /* lobby ticks left to pick (the host counts; the guest shows the host's value) */
+    int env_round;       /* the game number whose reward last resolved (0 = none yet) */
+    int env_hist[LB_ENV_HIST][2]; /* the resolved picks of every game of the set (index = game number, -1 = none): what a script recomputes the builds from */
+    unsigned env_peer_word; /* the build word the other side last reported */
+    int env_peer_ok;
+    unsigned env_sent_word; /* the word this side last reported */
+    int env_sent;
+    int env_tx;          /* host: the Envoy state must be (re)sent to the guest */
+    int env_refused;     /* matches refused for differing builds (this process) */
+    char env_fail[120];  /* why, in words, for the lobby and the log */
 } lb;
+#define LB_ENV_TICKS 1800 /* 30 s at 60 lobby ticks a second: the reward pick */
+#define LB_ENV_KEEP 3     /* the pick that keeps the build; a timeout takes offer 0 (the first) */
 
 static const int lb_strike_counts[3] = { 1, 2, 2 }; /* 1-2-2 */
 
@@ -1337,6 +1388,13 @@ static void lb_new_set(int host_ck, int guest_ck) {
     lb.game = 1;
     lb.winner = -1;
     lb.score[0] = lb.score[1] = 0;
+    lb.env_on = np.envoy != 0;
+    lb.env_seed = (np.seed & 0x7FFFFFFFu) % 2147483646u + 1u; /* the host's choice; a guest's value is replaced by the host's E message */
+    lb.env_open = 0;
+    lb.env_pick[0] = lb.env_pick[1] = -1;
+    lb.env_round = 0;
+    memset(lb.env_hist, 0xFF, sizeof lb.env_hist); /* -1: no game's picks yet */
+    lb.env_tx = 1;
     lb.ck[0] = host_ck;
     lb.ck[1] = guest_ck;
     lb.color[0] = lb.color[1] = 0;
@@ -1365,7 +1423,26 @@ static void lb_reset_game(void) {
         lb.turn = lb.winner;
         lb.left = 2;
     }
+    /* an Envoy set pays out between games: before game 2 and every later one each player picks a reward, then the usual pick/ban follows */
+    if (lb.env_on && lb.game >= 2 && lb.env_round != lb.game) {
+        lb.env_open = 1;
+        lb.env_pick[0] = lb.env_pick[1] = -1;
+        lb.env_left = LB_ENV_TICKS;
+        lb.env_tx = 1;
+    }
     lb.seq++;
+}
+
+/* The reward pick is over (both picked, or the countdown ran out and the default was taken for whoever had not): everyone applies the same picks. */
+static void lb_env_resolve(void) {
+    int w;
+    for (w = 0; w < 2; ++w) if (lb.env_pick[w] < 0) lb.env_pick[w] = 0; /* the deterministic default: the first offer */
+    lb.env_open = 0;
+    lb.env_round = lb.game;
+    if (lb.game >= 2 && lb.game < LB_ENV_HIST) { lb.env_hist[lb.game][0] = lb.env_pick[0]; lb.env_hist[lb.game][1] = lb.env_pick[1]; }
+    lb.env_tx = 1;
+    lb.seq++;
+    gw_log("netplay: envoy - game %d reward resolved: host takes %d, guest takes %d", lb.game, lb.env_pick[0], lb.env_pick[1]);
 }
 
 static int lb_stages_free(void) {
@@ -1395,6 +1472,14 @@ static void lb_after_stage(void) {
 /* Apply one player's action (host). Returns 1 if the state changed. */
 static int lb_apply_(int who, const char *act, int a, int b) {
     if (who < 0 || who > 1) return 0;
+    if (strcmp(act, "RPICK") == 0) { /* Envoy: this player's reward pick (an index into the offer both clients computed; 3 keeps the build) */
+        if (!lb.env_on || !lb.env_open || a < 0 || a > LB_ENV_KEEP || lb.env_pick[who] >= 0) return 0;
+        lb.env_pick[who] = a;
+        if (lb.env_pick[0] >= 0 && lb.env_pick[1] >= 0) lb_env_resolve();
+        lb.env_tx = 1;
+        return 1;
+    }
+    if (lb.env_open) return 0; /* nothing else happens in the lobby until both have picked or the countdown has run out */
     if (strcmp(act, "CHAR") == 0) {
         if (lb.phase == LB_CHAR_BLIND && !lb.locked[who]) {
             lb.ck[who] = a;
@@ -1607,9 +1692,74 @@ static void lb_broadcast(void) {
     lb_send(m);
 }
 
+/* ---- Envoy: the Envoy state, the build words and the refusal -------------------------------------------------------------------------- */
+extern unsigned gw_Script_NetBuildWord(void);
+static int np_peer_gone_pending; /* the guest found the builds differ at the match: it leaves, the host sees a disconnect */
+/* host -> guest: "E <on> <seed> <open> <host pick> <guest pick> <ticks left> <round>" - everything the reward phase needs, small enough to resend often */
+static void lb_env_send(void) {
+    char m[96];
+    snprintf(m, sizeof m, "E %d %u %d %d %d %d %d", lb.env_on, lb.env_seed, lb.env_open, lb.env_pick[0], lb.env_pick[1], lb.env_left, lb.env_round);
+    lb_send(m);
+    lb.env_tx = 0;
+}
+static int lb_env_decode(const char *m) {
+    int on = 0, open = 0, p0 = -1, p1 = -1, left = 0, round = 0, k;
+    unsigned seed = 0;
+    k = sscanf(m + 2, "%d %u %d %d %d %d %d", &on, &seed, &open, &p0, &p1, &left, &round);
+    if (k < 7 || seed == 0 || seed > 2147483646u || p0 < -1 || p0 > LB_ENV_KEEP || p1 < -1 || p1 > LB_ENV_KEEP) return 0;
+    lb.env_on = on != 0;
+    lb.env_seed = seed;
+    lb.env_open = open != 0;
+    lb.env_pick[0] = p0;
+    lb.env_pick[1] = p1;
+    lb.env_left = left < 0 ? 0 : left > LB_ENV_TICKS ? LB_ENV_TICKS : left;
+    lb.env_round = round;
+    if (!lb.env_open && round >= 2 && round < LB_ENV_HIST && p0 >= 0 && p1 >= 0) { lb.env_hist[round][0] = p0; lb.env_hist[round][1] = p1; } /* the guest's copy of what the host resolved */
+    lb.seq++;
+    return 1;
+}
+/* Each side reports the word of the builds it has staged ("W <hex>"), on entering the lobby and whenever it changes (after a reward was applied). */
+static void lb_env_report_word(void) {
+    char m[32];
+    unsigned w = gw_Script_NetBuildWord();
+    if (!np.envoy || (lb.env_sent && lb.env_sent_word == w)) return;
+    snprintf(m, sizeof m, "W %08x", w);
+    lb_send(m);
+    lb.env_sent = 1;
+    lb.env_sent_word = w;
+    gw_log("netplay: envoy - this side's build word is %08x", w);
+}
+/* A match cannot start: say why in words, tell the other side, and leave both in the lobby to try again once the builds agree. */
+static void lb_env_refuse(const char *why) {
+    char m[GW_NET_LOBBY_MAX];
+    lb.env_refused++;
+    snprintf(lb.env_fail, sizeof lb.env_fail, "%s", why);
+    gw_log("netplay: envoy - REFUSED the match: %s", why);
+    np_status("Refused: %s", why);
+    snprintf(m, sizeof m, "X %s", why);
+    lb_send(m);
+}
+
 /* The match, once the countdown is over (host). */
 static void lb_go(void) {
     char m[GW_NET_LOBBY_MAX];
+    if (np.envoy) { /* the builds must be the same on both sides, as each reports them, before anyone loads the match */
+        unsigned mine = gw_Script_NetBuildWord();
+        char why[120];
+        why[0] = ' ';
+        if (mine == 0) snprintf(why, sizeof why, "no Envoy build is staged on the host (is the Envoy mod loaded?)");
+        else if (!lb.env_peer_ok) snprintf(why, sizeof why, "the guest has not reported an Envoy build (is the Envoy mod loaded?)");
+        else if (lb.env_peer_word != mine) snprintf(why, sizeof why, "Envoy builds differ (host %08x, guest %08x)", mine, lb.env_peer_word);
+        if (why[0] != ' ') {
+            lb_env_refuse(why);
+            lb.ready[0] = lb.ready[1] = 0; /* nobody is ready any more; the countdown is over */
+            lb.countdown = 0;
+            lb.phase = LB_READY;
+            lb.seq++;
+            lb_broadcast();
+            return;
+        }
+    }
     np.stage_ext = lb.stage_ext[lb.chosen >= 0 ? lb.chosen : 0];
     np_build_scene(np.scene, sizeof np.scene, lb.ck[0], lb.color[0], lb.ck[1], lb.color[1]);
     lb.phase = LB_GO;
@@ -1674,10 +1824,34 @@ static void np_cb_lobby(void *user, const uint8_t *data, int len) {
         lb.ck[1] = np_ck_from_peer(lb.ck[1]);
         gw_log("netplay: lobby - state from the host: phase %d, turn P%d, %d left, locked %d/%d, ready %d/%d",
                lb.phase, lb.turn + 1, lb.left, lb.locked[0], lb.locked[1], lb.ready[0], lb.ready[1]);
+    } else if (m[0] == 'E' && m[1] == ' ') {
+        if (!np.host) lb_env_decode(m);
+    } else if (m[0] == 'W' && m[1] == ' ') {
+        unsigned w = (unsigned) strtoul(m + 2, NULL, 16);
+        lb.env_peer_word = w;
+        lb.env_peer_ok = 1;
+        gw_log("netplay: envoy - the other side's build word is %08x", w);
+    } else if (m[0] == 'X' && m[1] == ' ') {
+        if (np.envoy) {
+            lb.env_refused++;
+            snprintf(lb.env_fail, sizeof lb.env_fail, "%s", m + 2);
+            gw_log("netplay: envoy - the other side REFUSED the match: %s", m + 2);
+            np_status("Refused: %s", m + 2);
+        }
     } else if (!np.host && m[0] == 'G') {
         unsigned seed = 0;
         int off = 0;
         if (sscanf(m + 2, "%u %n", &seed, &off) >= 1) {
+            if (np.envoy) { /* defence in depth: the host checked the words, the guest checks the match's own word against what it staged */
+                unsigned hw = 0, mine = gw_Script_NetBuildWord();
+                if (!np_scene_envoy(m + 2 + off, &hw) || mine == 0 || hw != mine) {
+                    char why[120];
+                    snprintf(why, sizeof why, "Envoy builds differ (host %08x, guest %08x)", hw, mine);
+                    lb_env_refuse(why);
+                    np_peer_gone_pending = 1; /* the guest leaves: the host sees the disconnect and the set ends */
+                    return;
+                }
+            }
             np.seed = seed;
             snprintf(np.scene, sizeof np.scene, "%s", m + 2 + off);
             lb.phase = LB_GO;
@@ -1696,18 +1870,38 @@ static void np_peer_gone(void) {
     np_close();
     np_keep_room = 0;
     lb.game = 0; /* the next opponent starts a new set */
+    lb.env_on = 0; /* an Envoy set ends with the connection: the survivor is back at the menu, nothing is carried over */
+    lb.env_open = 0;
 }
 
 /* Every frame while in the lobby - also while a player is away on the CSS (gmscene.c calls
  * Netplay_Background from every scene): keep the connection alive, run the countdown, and hand
  * the match to the menu once it is agreed. */
 static void np_lobby_tick(void) {
+    static unsigned env_beat;
     if (np.phase != NP_LOBBY || np.net == NULL) return;
     gw_net_poll(np.net, NP_FIRST_FRAME);
     np_rdv_service();
-    if (np.dead) {
+    if (np.dead || np_peer_gone_pending) {
+        np_peer_gone_pending = 0;
         np_peer_gone();
         return;
+    }
+    if (np.envoy) {
+        lb_env_report_word();
+        if (np.host) {
+            if (lb.env_open) { /* the reward countdown: lobby ticks, counted by the host alone */
+                if (--lb.env_left <= 0) {
+                    lb.env_left = 0;
+                    lb_env_resolve();
+                    lb_broadcast();
+                } else if ((lb.env_left % 60) == 0) {
+                    lb.env_tx = 1;
+                }
+            }
+            if ((++env_beat % 120) == 0) lb.env_tx = 1;
+            if (lb.env_tx) lb_env_send();
+        }
     }
     /* MELEE_LOBBY_AUTOPLAY is now the built-in script lobby_autoplay (pc/scripts/examples),
        which gw_script.c loads when the variable is set; it acts through gd.netplay_act. */
@@ -1785,6 +1979,9 @@ static void np_lobby_enter(void) {
         lb_send(nm); /* this player's name, for the opponent's cards */
     }
     lb.seed = np.seed;
+    lb.env_sent = 0;     /* a new connection: report the build word again, expect the other side's again */
+    lb.env_peer_ok = 0;
+    lb.env_tx = 1;
     if (np.host) {
         if (lb.game <= 0) lb.mode = np.stage_mode; /* a new set takes the room's stage list */
         lb_build_list();
@@ -1945,6 +2142,15 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
     } else if (np.turbo_env) {
         cfg.rules = np.turbo_pref;
         cfg.rules_expect = 1;
+    }
+    /* Online Envoy: the same shape. Only the host of a private room; a scripted guest with MELEE_NETPLAY_ENVOY insists on its word. */
+    np.envoy = (np.host && rnd.state != NP_RAND_MATCHED) ? np.envoy_pref : 0;
+    if (np.host) {
+        cfg.envoy = np.envoy;
+        if (np.envoy != 0) gw_log("netplay: hosting with Envoy rules 0x%08x", np.envoy);
+    } else if (np.envoy_env) {
+        cfg.envoy = np.envoy_pref;
+        cfg.envoy_expect = 1;
     }
     cfg.hold_start = 1;
     cfg.handshake_timeout_ms = 180000u; /* the host may be waiting on a friend's router */
@@ -2121,6 +2327,11 @@ static int np_poll(void) {
                     gw_log("netplay: the host's match rules: turbo=0x%08x (%d free frames)", np.turbo,
                            gw_turbo_frames(np.turbo));
                     np_status("Host rules: Turbo ON");
+                }
+                np.envoy = hc.envoy; /* protocol 5: the host's Envoy mode, already checked valid by the handshake */
+                if (np.envoy != 0) {
+                    gw_log("netplay: the host's Envoy rules: 0x%08x", np.envoy);
+                    np_status("Host rules: Envoy ON");
                 }
             }
             np.accepted = 1;
@@ -2426,8 +2637,38 @@ int gw_Netplay_LobbyInfo(int what) {
     case 10: return lb.countdown;
     case 11: return lb.mode;
     case 12: return np.host || lb.list_ok; /* the stage list is here (a guest waits for it) */
+    case 13: return lb.env_on && lb.env_open; /* an Envoy reward pick is open */
+    case 14: return lb.env_left;              /* ...and the lobby ticks left to make it */
     default: return 0;
     }
+}
+/* Envoy, for the script layer (read-only) and the menu. what: 0 on, 1 seed, 2 reward open, 3 host's pick, 4 guest's pick (-1 none), 5 ticks left,
+ * 6 the game whose reward last resolved, 7 the other side's build word (as reported), 8 it has reported, 9 refusals so far, 10 this side's staged word. */
+unsigned gw_Netplay_EnvoyInfo(int what) {
+    switch (what) {
+    case 0: return (unsigned) (np.envoy != 0 && lb.env_on);
+    case 1: return lb.env_seed;
+    case 2: return (unsigned) (lb.env_on && lb.env_open);
+    case 3: return (unsigned) lb.env_pick[0];
+    case 4: return (unsigned) lb.env_pick[1];
+    case 5: return (unsigned) lb.env_left;
+    case 6: return (unsigned) lb.env_round;
+    case 7: return lb.env_peer_word;
+    case 8: return (unsigned) lb.env_peer_ok;
+    case 9: return (unsigned) lb.env_refused;
+    case 10: return gw_Script_NetBuildWord();
+    default: return 0;
+    }
+}
+const char *gw_Netplay_EnvoyFail(void) { return lb.env_fail; }
+/* the resolved pick of `who` (0 host, 1 guest) at game `game`: -1 when that game has none (also for game 1, which pays nothing) */
+int gw_Netplay_EnvoyHist(int game, int who) { return game >= 2 && game < LB_ENV_HIST && (who == 0 || who == 1) ? lb.env_hist[game][who] : -1; }
+/* This player's reward pick: 0..2 an offer, 3 keep the build. The host validates (guests ask). Returns 0 when not accepted locally. */
+int gw_Netplay_EnvoyPick(int idx) {
+    if (!lb.env_on || !lb.env_open || idx < 0 || idx > LB_ENV_KEEP) return 0;
+    if (lb.env_pick[np.host ? 0 : 1] >= 0) return 0;
+    lb_action("RPICK", idx, 0);
+    return 1;
 }
 int gw_Netplay_LobbyStage(int i) { return i >= 0 && i < lb.nstages ? lb.stage[i] : 0; }
 int gw_Netplay_LobbyStageExt(int i) { return i >= 0 && i < lb.nstages ? lb.stage_ext[i] : 0; }
@@ -2713,6 +2954,15 @@ const char *gw_Netplay_Scene(void) {
             }
         }
     }
+    {   /* MELEE_NETPLAY_ENVOY=on|off: the host's choice, or what a guest insists on */
+        const char *e = getenv("MELEE_NETPLAY_ENVOY");
+        np.envoy_pref = 0;
+        np.envoy_env = 0;
+        if (e != NULL && e[0] != ' ') {
+            np.envoy_pref = strcmp(e, "off") == 0 || e[0] == '0' ? 0u : GW_ENVOY_MODE_V1;
+            np.envoy_env = 1;
+        }
+    }
     np.use_lobby = 0;
     if (np_begin(0) != 0) return NULL;
 wait:
@@ -2972,6 +3222,79 @@ static int test_lobby_wire(void) {
     return 0;
 }
 
+/* Online Envoy: the reward phase is host rules like the pick/ban (pure functions of `lb`): no reward before game 1; before game 2 and later both
+   players pick (0..2 an offer, 3 keep), nothing else is allowed while it is open, a double or out-of-range pick is refused, the pick resolves when both
+   have picked or the countdown's default fills in, it never reopens for the same game, a set without Envoy is untouched, and the host's state message
+   round-trips and refuses nonsense. */
+static int test_lobby_envoy(void) {
+    unsigned saved = np.envoy, seed = np.seed;
+    int rc = 0;
+    np.envoy = GW_ENVOY_MODE_V1;
+    np.seed = 0x1234567u;
+    lbt_start(5);
+    if (!lb.env_on || lb.env_seed == 0 || lb.env_seed > 2147483646u) rc = lbt_fail("an Envoy set carries a run seed in 1..2147483646");
+    else if (lb.env_open) rc = lbt_fail("no reward before game 1");
+    else {
+        lb.winner = 0;
+        lb.game = 2;
+        lb_reset_game();
+        if (!lb.env_open || lb.env_pick[0] != -1 || lb.env_pick[1] != -1 || lb.env_left != LB_ENV_TICKS || lb.phase != LB_BAN) rc = lbt_fail("game 2 opens the reward, then bans");
+        else if (lb_apply_(lb.turn, "BAN", 0, 0) || lb_apply_(0, "CHAR", 2, 0)) rc = lbt_fail("nothing else happens while the reward is open");
+        else if (lb_apply_(0, "RPICK", 4, 0) || lb_apply_(0, "RPICK", -1, 0) || lb_apply_(2, "RPICK", 0, 0)) rc = lbt_fail("out-of-range picks and players are refused");
+        else if (!lb_apply_(0, "RPICK", 2, 0) || lb_apply_(0, "RPICK", 1, 0) || lb.env_pick[0] != 2 || !lb.env_open) rc = lbt_fail("a first pick counts, a second is refused, the phase stays open");
+        else if (!lb_apply_(1, "RPICK", LB_ENV_KEEP, 0) || lb.env_open || lb.env_round != 2 || lb.env_pick[1] != LB_ENV_KEEP) rc = lbt_fail("both picks close the phase");
+        else if (!lb_apply_(lb.turn, "BAN", 0, 0)) rc = lbt_fail("the pick/ban resumes once the reward is over");
+        else {
+            lb.game = 3;
+            lb_reset_game();
+            if (!lb.env_open) rc = lbt_fail("game 3 opens the reward again");
+            else {
+                lb_apply_(1, "RPICK", 1, 0);
+                lb_env_resolve(); /* the countdown ran out: the host's default for whoever had not picked */
+                if (lb.env_open || lb.env_pick[0] != 0 || lb.env_pick[1] != 1 || lb.env_round != 3) rc = lbt_fail("the timeout default is the first offer");
+                else if (lb.env_hist[2][0] != 2 || lb.env_hist[2][1] != LB_ENV_KEEP || lb.env_hist[3][0] != 0 || lb.env_hist[3][1] != 1 || lb.env_hist[1][0] != -1) rc = lbt_fail("the picks of every game are remembered");
+                else {
+                    lb_reset_game();
+                    if (lb.env_open) rc = lbt_fail("a game's reward does not reopen after it resolved");
+                }
+            }
+        }
+    }
+    if (!rc) { /* the state message */
+        unsigned seed0 = lb.env_seed;
+        if (!lb_env_decode("E 1 777 1 -1 2 1500 2") || !lb.env_on || lb.env_seed != 777 || !lb.env_open || lb.env_pick[0] != -1 || lb.env_pick[1] != 2 || lb.env_left != 1500 || lb.env_round != 2)
+            rc = lbt_fail("the Envoy state message round-trips");
+        else if (lb_env_decode("E 1 777 0 1 2 1500 4") != 1 || lb.env_hist[4][0] != 1 || lb.env_hist[4][1] != 2 || lb.env_hist[5][0] != -1)
+            rc = lbt_fail("a guest remembers the picks the host resolved");
+        else if (lb_env_decode("E 1 0 1 -1 2 1500 2") || lb_env_decode("E 1 777 1 9 2 1500 2") || lb_env_decode("E 1 777 1") || lb_env_decode("E 1 2147483647 1 -1 2 1500 2") || lb.env_seed != 777)
+            rc = lbt_fail("a malformed Envoy state is refused and changes nothing");
+        (void) seed0;
+    }
+    if (!rc) { /* a set without Envoy is exactly as before */
+        np.envoy = 0;
+        lbt_start(5);
+        lb.winner = 0;
+        lb.game = 2;
+        lb_reset_game();
+        if (lb.env_on || lb.env_open || lb_apply_(0, "RPICK", 0, 0) || lb.phase != LB_BAN) rc = lbt_fail("a set without Envoy has no reward phase");
+    }
+    if (!rc) { /* the scene's build word */
+        unsigned w = 0;
+        char scene[400];
+        np.envoy = GW_ENVOY_MODE_V1;
+        np_build_scene(scene, sizeof scene, 2, 0, 9, 0);
+        if (strstr(scene, ";envoy=") == NULL || !np_scene_envoy(scene, &w)) rc = lbt_fail("an Envoy match's scene names its builds");
+        else if (!np_scene_envoy("mode=vs;envoy=0000beef;x=1", &w) || w != 0xbeefu) rc = lbt_fail("the scene's build word parses");
+        else if (np_scene_envoy("mode=vs;turbo=5fb", &w) || np_scene_envoy("mode=vs;envoy=zz", &w)) rc = lbt_fail("no or malformed token means no word");
+        np.envoy = 0;
+        np_build_scene(scene, sizeof scene, 2, 0, 9, 0);
+        if (strstr(scene, "envoy") != NULL) rc = lbt_fail("a match without Envoy carries no token");
+    }
+    np.envoy = saved;
+    np.seed = seed;
+    return rc;
+}
+
 /* All stages: game 1 is ban-and-pick from the coin winner; the list travels as identities in
    chunks and comes back as the same external ids; the state names the list it goes with. */
 static int test_lobby_all_stages(void) {
@@ -3055,4 +3378,5 @@ void gw_netplay_tests_register(void) {
     gw_test_register("netplay_lobby_game1", test_lobby_game1);
     gw_test_register("netplay_lobby_game2", test_lobby_game2);
     gw_test_register("netplay_lobby_wire", test_lobby_wire);
+    gw_test_register("netplay_lobby_envoy", test_lobby_envoy);
 }

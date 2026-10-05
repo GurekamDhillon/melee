@@ -187,7 +187,7 @@ return function(D)
   -- Z+START is the bag: keep the whole chord from the game so the press that opens the bag does not also pause the
   -- match (and the START that closes it is hidden by the menu's own mask). Re-asserted now and then: a scene change
   -- clears the engine's masks.
-  if self.g.input_chord then
+  if self.g.input_chord and not (self.g.match and (self.g.match() or {}).netplay) then -- the chord is a local convenience the engine refuses online
    local want=self.lab:allowed() and not self.lab:replaying()
    self.chord_age=(self.chord_age or 0)+1
    if want~=self.chord_on or (want and self.chord_age>=120) then self.chord_on=want;self.chord_age=0;self.g.input_chord(self.port,want and 'Z+START' or nil) end

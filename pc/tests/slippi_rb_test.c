@@ -15,6 +15,8 @@ static int scene_begins;
 /* Mode setup is tested separately; this seam verifies rollback forwards the scene. */
 void gw_SlippiMode_SceneBegin(int scene_kind) { assert(scene_kind == 2); ++scene_begins; }
 void gw_MatchRules_SceneBegin(int scene_kind) { (void) scene_kind; }
+void gw_Script_NetBuildSceneBegin(void) {}
+void gw_Script_NetBuildApply(void) {}
 static void tick(int online_frame) { assert(online_frame == 1); ++ticks; }
 void gw_log(const char *fmt, ...) { (void) fmt; }
 int gw_Replay_Active(void) { return fixture_active; }

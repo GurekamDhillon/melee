@@ -47,8 +47,12 @@ extern "C" {
  * match rule, gw_matchrules.h). A version-3 peer cannot read them and, more to the point, cannot
  * play a match whose rules it does not implement: both sides refuse each other at the first packet
  * ("protocol version mismatch (host 4, you 3)"; the guest of a v3 host hears "host speaks a
- * different protocol version"). */
-#define GW_NET_PROTOCOL_VERSION 4u
+ * different protocol version").
+ * 5: HELLO and ACCEPT also carry the Envoy mode word (gw_matchbuild.h): which Envoy rule set, if any, the match
+ * is played under. A version-4 peer cannot read it and cannot apply an Envoy build, so the pair refuse each
+ * other at the first packet, exactly as they did for Turbo. The builds themselves are agreed per game in the
+ * lobby (the scene's envoy= word), not here. */
+#define GW_NET_PROTOCOL_VERSION 5u
 #define GW_NET_MAX_BLOB 900        /* match-config blob: StartMeleeData + extras */
 #define GW_NET_MAX_SLOTS 8         /* port * 2 + follower */
 #define GW_NET_MAX_PAYLOAD 32      /* bytes of one slot's input for one frame */
@@ -149,6 +153,9 @@ typedef struct gw_net_config {
    * one refuses it; without, the guest takes the host's (gw_net_remote_config -> rules). */
   uint32_t rules;
   uint8_t rules_expect;
+  /* protocol 5: the Envoy MODE word (gw_matchbuild.h), carried and refused exactly like `rules`. */
+  uint32_t envoy;
+  uint8_t envoy_expect;
   const void *match_blob;
   uint16_t match_blob_len;         /* <= GW_NET_MAX_BLOB */
   /* guest only: its own choices, sent in the HELLO (see cb.guest_hello) */

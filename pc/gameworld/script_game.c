@@ -1715,6 +1715,7 @@ static Fighter* script_fighter(int slot)
 #include "script_fighter_caps_effects.inc"
 #include "script_skill.inc"
 #include "script_fighter_interrupt.inc"
+#include "script_build.inc"
 #include "script_zones.inc"
 #include "script_six_slots.inc"
 #include "script_six_slots_tests.inc"

@@ -712,10 +712,10 @@ static void tt_base_dir(char *path, size_t cap) {
     char *slash = gw_path_separator(path);
     if (slash != NULL) {
       slash[1] = '\0';
-      strncat(path, "mods\\targettest", cap - strlen(path) - 1);
+      strncat(path, "mods/targettest", cap - strlen(path) - 1);
     }
   } else {
-    strcpy(path, "mods\\targettest");
+    strcpy(path, "mods/targettest");
   }
 }
 
@@ -855,7 +855,7 @@ static void tt_load(void) {
   if (tt_loaded) return;
   tt_loaded = 1;
   tt_base_dir(dir, sizeof dir);
-  snprintf(pattern, sizeof pattern, "%s\\*.tt", dir);
+  snprintf(pattern, sizeof pattern, "%s/*.tt", dir);
   h = FindFirstFileA(pattern, &fd);
   if (h == INVALID_HANDLE_VALUE) {
     gw_log("gw: targettest: no mods found in %s", dir);
@@ -864,7 +864,7 @@ static void tt_load(void) {
   do {
     char path[MAX_PATH];
     if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) continue;
-    snprintf(path, sizeof path, "%s\\%s", dir, fd.cFileName);
+    snprintf(path, sizeof path, "%s/%s", dir, fd.cFileName);
     tt_parse_file(path, fd.cFileName);
   } while (FindNextFileA(h, &fd) != 0);
   FindClose(h);
@@ -1103,7 +1103,7 @@ static void gw_mex_load(void) {
     char *slash = gw_path_separator(path);
     if (slash != NULL) {
       slash[1] = '\0';
-      strncat(path, "mods\\mex.txt", sizeof path - strlen(path) - 1);
+      strncat(path, "mods/mex.txt", sizeof path - strlen(path) - 1);
       gw_mex_load_file(path);
     }
   }
@@ -3171,7 +3171,7 @@ int gw_UiFile_Read(const char *name, void *dst, int cap) {
     } else {
       if (slash == NULL) break;
       snprintf(slash + 1, sizeof dir - (size_t)(slash + 1 - dir), "%s", rel[i]);
-      snprintf(path, sizeof path, "%s\\%s", dir, name);
+      snprintf(path, sizeof path, "%s/%s", dir, name);
     }
     f = fopen(path, "rb");
     if (f == NULL) continue;

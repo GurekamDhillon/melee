@@ -942,5 +942,17 @@
   "requires_assets": true,
   "skip_reason": "Requires integrator rebuild and separately enabled vanilla-hero fighter folder; offline acceptance pending",
   "setup": []
+},
+{
+  "id": "demo_cpu_controller",
+  "tour": false,
+  "path": "demos/cpu-controller",
+  "title": "CPU virtual controller",
+  "api": "gd.cpu_mode script, cpu_macro, cpu_script, cpu_goto",
+  "category": "demo",
+  "new": true,
+  "in_game": false,
+  "controls": "console: cpu_demo reruns; Battlefield LAB with a CPU on port 2",
+  "setup": []
 }
 ]

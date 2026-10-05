@@ -64,6 +64,7 @@ extern int gw_ScriptGame_Impulse(int slot, int x_bits, int y_bits);
 extern int gw_ScriptGame_CpuMode(int slot, int fight);
 extern int gw_ScriptGame_CpuModeInfo(int slot);
 extern void gw_ScriptGame_CpuModeReset(void);
+extern int gw_ScriptGame_CpuScriptMode(int slot);
 extern int gw_ScriptGame_CpuTechnical(int slot, int owner, int skill, int seed);
 extern void gw_ScriptGame_CpuTechnicalClear(int owner);
 extern int gw_ScriptGame_CpuTechnicalState(int slot, int owner, int field);
@@ -1884,9 +1885,9 @@ static int l_hit(lua_State *L) {
 }
 
 static int gs_cpu_mode_words(int info, const char **mode, const char **source) {
-    static const char *const m[] = {"", "fight", "idle", "idle", "idle", "fight", "fight", "idle"};
-    static const char *const src[] = {"", "retail", "global", "slot", "script", "script", "slot", "retail"};
-    if (info <= 0 || info > 7) return 0;
+    static const char *const m[] = {"", "fight", "idle", "idle", "idle", "fight", "fight", "idle", "script"};
+    static const char *const src[] = {"", "retail", "global", "slot", "script", "script", "slot", "retail", "script"};
+    if (info <= 0 || info > 8) return 0;
     *mode = m[info]; *source = src[info];
     return 1;
 }
@@ -1909,11 +1910,12 @@ static int l_cpu_mode(lua_State *L) {
     if (len == 5 && memcmp(mode, "stand", 5) == 0) fight = 0;
     else if (len == 5 && memcmp(mode, "fight", 5) == 0) fight = 1;
     else if (len == 7 && memcmp(mode, "default", 7) == 0) fight = 2; /* back to the launch setting */
-    else return luaL_error(L, "cpu_mode: expected stand, fight or default");
+    else if (len == 6 && memcmp(mode, "script", 6) == 0) fight = 3; /* gd.cpu_pad / gd.cpu_script drive it */
+    else return luaL_error(L, "cpu_mode: expected stand, fight, script or default");
     gs_require_offline(L, "cpu_mode");
     gs_rw_branch();
     {
-        int ok = gw_ScriptGame_CpuMode(slot, fight);
+        int ok = fight == 3 ? gw_ScriptGame_CpuScriptMode(slot) : gw_ScriptGame_CpuMode(slot, fight);
         if (ok) gs_cpu_log_slot(slot);
         lua_pushboolean(L, ok);
     }
@@ -1938,6 +1940,7 @@ static int l_cpu_modes(lua_State *L) {
 }
 
 #include "gw_script_cpu.inc"
+#include "gw_script_cpu_ctl.inc"
 
 static int l_impulse(lua_State *L) {
     int slot = gs_slot_arg(L, 1);
@@ -6366,7 +6369,10 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"hitstop", l_hitstop}, {"hitstop_cancel", l_hitstop_cancel},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage},
-    {"hit", l_hit}, {"impulse", l_impulse}, {"cpu_mode", l_cpu_mode}, {"cpu_modes", l_cpu_modes}, {"cpu_technical", l_cpu_technical}, {"set_stocks", l_set_stocks},
+    {"hit", l_hit}, {"impulse", l_impulse}, {"cpu_mode", l_cpu_mode}, {"cpu_modes", l_cpu_modes},
+    {"cpu_pad", l_cpu_pad}, {"cpu_script", l_cpu_script}, {"cpu_dest", l_cpu_dest}, {"cpu_target", l_cpu_target},
+    {"cpu_script_done", l_cpu_script_done}, {"cpu_script_status", l_cpu_script_status},
+    {"cpu_commands", l_cpu_commands}, {"cpu_goto", l_cpu_goto}, {"cpu_goto_status", l_cpu_goto_status}, {"cpu_cancel", l_cpu_cancel}, {"cpu_macro", l_cpu_macro}, {"cpu_attrs", l_cpu_attrs}, {"cpu_technical", l_cpu_technical}, {"set_stocks", l_set_stocks},
     {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"fly_target", l_fly_target}, {"fly_attack", l_fly_attack}, {"fly_clear", l_fly_clear}, {"fly_state", l_fly_state},
@@ -10834,6 +10840,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_pad_claim_gaps", test_script_pad_claim_gaps);
     gw_test_register("script_pad_mask", test_script_pad_mask);
     gw_test_register("script_cpu_mode", test_script_cpu_mode);
+    gw_test_register("script_cpu_ctl", test_script_cpu_ctl);
     gw_test_register("script_cpu_technical", test_script_cpu_technical);
     gw_test_register("script_stage_draw", test_script_stage_draw);
     gw_test_register("script_stage_isolate", test_script_stage_isolate);

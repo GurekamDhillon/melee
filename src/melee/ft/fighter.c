@@ -2255,10 +2255,14 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                  * MELEE_MEX=enable_c_stick_always_cpu_debug or
                  * enable_c_stick_always_interrupt2. */
                 extern int Mex_Enabled(const char *);
+                extern int ScriptGame_CpuStanding(Fighter*);
+                /* A script-driven CPU (gd.cpu_mode "script") writes its own C-stick, in 1P too;
+                 * an idle one writes zeros, so routing it changes nothing. */
                 if ((DbLevel < DbLKind_DebugRom ||
                      Mex_Enabled("enable_c_stick_always_cpu_debug")) &&
                     (!gm_IsCurrently1PMode_inline() ||
-                     Mex_Enabled("enable_c_stick_always_interrupt2")))
+                     Mex_Enabled("enable_c_stick_always_interrupt2") ||
+                     ScriptGame_CpuStanding(fp)))
 #else
                 if (DbLevel < DbLKind_DebugRom &&
                     !gm_IsCurrently1PMode_inline())

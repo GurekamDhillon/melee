@@ -26,3 +26,25 @@ static int test_script_fighter_bench(void) {
     }
     return 0;
 }
+
+extern int gw_ScriptGame_CpuCtlTest(void);
+/* gd.cpu_pad / cpu_script / cpu_macro: the controller on a fixture, and the Lua surface's refusals */
+static int test_script_cpu_ctl(void) {
+    char out[1024];
+    if (gw_ScriptGame_CpuCtlTest()) { gw_test_fail("CPU virtual controller fixture failed"); return 1; }
+    if (t_exec("assert(type(gd.cpu_pad)=='function' and type(gd.cpu_script)=='function'); "
+               "local c=gd.cpu_commands(); assert(c.press_a.code==1 and c.wait.args==1 and c.wait_for.code==c.wait.code); "
+               "assert(c.lstick_toward_destination_clamped.args==2 and c.set_lstick_x.code==0x80); "
+               "assert(not pcall(gd.cpu_script,1,{}) and not pcall(gd.cpu_script,1,{'nope'})); "
+               "assert(not pcall(gd.cpu_script,1,{{'wait'}}) and not pcall(gd.cpu_script,1,{{'press_a',1}})); "
+               "assert(not pcall(gd.cpu_script,1,{{'set_lstick_x',128}}) and not pcall(gd.cpu_script,1,{{'wait',256}})); "
+               "assert(not pcall(gd.cpu_pad,1,{x=1},0) and not pcall(gd.cpu_pad,0,{})); "
+               "assert(not pcall(gd.cpu_macro,1,'nope')); assert(not pcall(gd.cpu_dest,1,0/0,0)); "
+               "local long={} for i=1,200 do long[i]={'wait',1} end; assert(not pcall(gd.cpu_script,1,long)); "
+               "assert(not pcall(gd.cpu_goto,1,0/0,0) and not pcall(gd.cpu_goto,1,0,0,{radius=0}) and not pcall(gd.cpu_goto,1,0,0,{timeout=0}) and not pcall(gd.cpu_goto,9,0,0)); "
+               "assert(not pcall(gd.cpu_goto_status,1) and not pcall(gd.cpu_cancel,1) and type(gd.cpu_goto_status)=='function')",
+               out, sizeof out) != 0) {
+        gw_test_fail("CPU controller Lua validation: %s", out); return 1;
+    }
+    return 0;
+}

@@ -14,6 +14,7 @@
 #include <melee/cm/camera.h>
 
 #include <melee/ft/fighter.h>
+#include <melee/ft/ftcmdscript.h>
 #include <melee/ft/inlines.h>
 #include <melee/ft/types.h>
 #include <melee/ft/kinds/ftCommon/forward.h>
@@ -2732,10 +2733,12 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
  * 1 = script said stand, 2 = script said fight. Reset at every match start. */
 extern int Script_CpuIdleDefault(int slot);
 static unsigned char script_cpu_override[6];
-void ScriptGame_CpuModeReset(void){memset(script_cpu_override,0,sizeof script_cpu_override);}
+static void script_cpu_ctl_reset(void);
+void ScriptGame_CpuModeReset(void){memset(script_cpu_override,0,sizeof script_cpu_override); script_cpu_ctl_reset();}
 /* Pure policy (tested): is this CPU slot idle? */
 static int script_cpu_idle_policy(int kind0,int override,int dflt)
 {
+    if (override==3) return 1; /* script: the retail AI stays out, see script_cpu_ctl.inc */
     if (override==2) return 0;
     if (override==1 || kind0) return 1;
     return dflt==1 || dflt==2;
@@ -2753,6 +2756,7 @@ int ScriptGame_CpuModeInfo(int slot)
 {
     int d;
     if (slot<0 || slot>=6 || Player_GetPlayerSlotType(slot)!=Gm_PKind_Cpu) return 0;
+    if (script_cpu_override[slot]==3) return 8;
     if (script_cpu_override[slot]==1) return 4;
     if (script_cpu_override[slot]==2) return 5;
     if (Player_GetCpuType(slot)==CpuKind_0) return 7;
@@ -2774,8 +2778,15 @@ static int script_cpu_stand_quiet(Fighter* fp, int standing)
     memset(&fp->input,0,sizeof fp->input);
     return 1;
 }
+static void script_cpu_script_tick(Fighter* fp);
 int ScriptGame_CpuStandTick(Fighter* fp)
 {
+    int slot=fp->player_id;
+    if (slot>=0 && slot<6 && script_cpu_override[slot]==3 &&
+        Player_GetPlayerSlotType(slot)==Gm_PKind_Cpu) {
+        script_cpu_script_tick(fp);
+        return 1;
+    }
     return script_cpu_stand_quiet(fp,ScriptGame_CpuStanding(fp));
 }
 static int script_cpu_mode_pair(Fighter** pair, int fight,
@@ -2825,6 +2836,8 @@ int ScriptGame_CpuMode(int slot, int fight)
     script_cpu_override[slot]=fight ? 2 : 1;
     return 1;
 }
+#include "script_cpu_ctl.inc"
+#include "script_cpu_ctl_tests.inc"
 #include "script_cpu_mode_tests.inc"
 
 int ScriptGame_Impulse(int slot, int x_bits, int y_bits)

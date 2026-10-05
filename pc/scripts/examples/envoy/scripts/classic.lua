@@ -125,7 +125,7 @@ return function(D)
  end
  function R:offer_reward(stage,loop,final)
   local t=C.tuning.retail
-  -- Rule host route: the reward is a drive for the bag, not a held stat choice; nothing pauses the run.
+  -- Rule host route: the reward is a choice of drives; the host claims the barrier hold and shows the reward screen.
   if self.rules and self.host then if final then self.final_rewards[loop]=true end;return self.host:stage_reward(stage,loop,final) end
   if not self.g.hold_1p(t.hold_ticks) then self.g.log('envoy: reward hold unavailable');return false end
   local random=rng(self.seed,stage,loop,final and 11 or 7);local options={};local first=math.floor(random()*4)

@@ -10,7 +10,7 @@ return function(D)
   end})
   self.drops=D.drive_drop.new(g);self.menu=D.drive_menu.new(g,self)
   g.command('drive',function(a) return self:command(a or '') end,'give|drop [rarity] [seed]')
-  g.command('bag',function() local ok,why=lab:allowed();if not ok or lab:replaying() then g.log(why or 'bag edit refused during rewind');return false end;self.menu:open();return true end,'open drive bag')
+  g.command('bag',function() local ok,why=lab:allowed();if not ok or lab:replaying() then g.log(why or 'bag edit refused during rewind');return false end;if self.opener and lab:hosted() then self.opener() else self.menu:open() end;return true end,'open drive bag')
   return self
  end
  function V:combined(mods,lab)
@@ -97,7 +97,13 @@ return function(D)
  end
  function V:pickup(e)
   if self.lab:replaying() then return end
-  local r=self.drops:pickup(e,self.bag);self:bump();if r then self.menu.notice='Picked up '..self.loot:name(r);self.card=self.menu.notice;self.card_left=120;self.g.log(self.menu.notice) end
+  local r=self.drops:pickup(e,self.bag);self:bump()
+  if r and self.on_pickup and self.lab:hosted() then self.on_pickup(r)  -- a run shows its own card and logs
+  elseif r then self.menu.notice='Picked up '..self.loot:name(r);self.card=self.menu.notice;self.card_left=120;self.g.log(self.menu.notice) end
+ end
+ -- A drop's lifetime ran out: a run keeps the record (collected at stage end), the LAB forgets it.
+ function V:expire(e)
+  local r=self.drops:expire(e);if r and self.on_expire and self.lab:hosted() then self.on_expire(r,e.reason) end
  end
  function V:snapshot(raw)
   local b=self.bag;local bag=raw and {items=b.items,equipped=b.equipped,keystone=b.keystone,keystones=b.keystones,context=b.context} or b:snapshot()
@@ -162,7 +168,7 @@ return function(D)
   self.drops:retry_retired()
   if self.menu.active and (not self.lab:allowed() or self.lab:replaying()) then self.menu:close();return end
   local p=self.g.pad(1,true) or {};local chord=p.Z and p.START
-  if chord and not self.chord and not self.menu.active and not self.lab:replaying() then local ok=self.lab:allowed();if ok then self.menu:open();if self.lab.options.activate then self.lab.options.activate() end end end
+  if chord and not self.chord and not self.menu.active and not self.lab:replaying() then local ok=self.lab:allowed();if ok then if self.opener and self.lab:hosted() then self.opener() else self.menu:open();if self.lab.options.activate then self.lab.options.activate() end end end end
   self.chord=chord;self.menu:tick()
  end
  function V:frame() self.drops.juice:tick();if self.card_left then self.card_left=self.card_left-1;if self.card_left<=0 then self.card=nil;self.card_left=nil end end end

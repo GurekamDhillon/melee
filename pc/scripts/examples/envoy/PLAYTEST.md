@@ -1,3 +1,14 @@
+# Envoy rule-host run: what to see, stage by stage (ux pass 2026-10-04)
+
+Setup: `envoy rules on`, then `envoy classic` (console), vanilla disc, offline. Controller: A / B / X / Y, D-pad or stick.
+1. Stage 1 start: a panel says "Your starter drive" and names it; the strip top-left shows one filled pip and three dark ones, Strength, Depth 0.
+2. Fight: the opponent's plate lists its modifiers (probably "No modifiers" this early). Hit it past 50%: "A drive dropped!" appears, a drive with a beam sits on the floor near you. Walk over it: a pickup card, the strip flashes.
+3. Stage clear: the reward screen. Left rows: two offered drives, Skip, your four slots, your bag (new drives marked NEW), keystones. Press A on an offered drive: it goes into slot 2. Watch the totals line. You have about 15 s (countdown at the top); if it runs out, nothing is lost: the first offer is taken, free slots fill, the rest stays in the bag.
+4. Stages 2-4 (team stage drops more): fill all four slots, then choose an offer: you are asked which drive to swap out, with before -> after totals. Try "Keep it in the bag", Skip (A twice), and X.
+5. Stage 6 (depth 5): "Fifth slot unlocked", "Keystone allowance: 2", "Drive tier 2". Open the bag (Z+START) and pick a keystone; each shows its drawback.
+6. Bonus stage: three offered drives. Master Hand: three offered, one Unique. After it: "New Game+ 1" and your build carries over.
+Judge: can you tell in five seconds what a drive does; is 15 s enough (the engine hold is capped at 1800 host ticks); strip position vs the retail percent display; drop frequency. The logs (`melee-pc.log`, lines `envoy rules:`) say exactly what was equipped, swapped, bagged or discarded.
+
 EM5 echo source pass (2026-10-04) is the current addition below. Its36-record
 pool changes deterministic loot/foe recipes from the preceding32-record EM4
 follow-up. Preserve those sections as historical model evidence, not current

@@ -15,12 +15,14 @@ return function(D)
   return setmetatable({g=g,next_id=1,records={},juice=D.pickup_juice.new(presentation)},R)
  end
  function R:count() local n=0;for _ in pairs(self.records) do n=n+1 end;return n end
- function R:spawn(record)
-  assert(self:count()<12,'drop capacity exhausted');local p=self.g.player(2) or self.g.player(1);assert(p,'fighter absent')
+ -- `at_x, at_y`: where the drop appears (a run drops where the player can reach it); default beside CPU 2 (the LAB).
+ function R:spawn(record,at_x,at_y)
+  assert(self:count()<12,'drop capacity exhausted')
+  if not at_x then local p=self.g.player(2) or self.g.player(1);assert(p,'fighter absent');at_x,at_y=p.x+10,p.y+8 end
   local id=self.next_id;assert(id<=1000000,'drop id budget exhausted');local c=record.colour=='purple' and 'white' or record.colour
-  local h,why=self.g.item_spawn('drive',p.x+10,p.y+8,{payload={colour=c,amount=id}})
+  local h,why=self.g.item_spawn('drive',at_x,at_y,{payload={colour=c,amount=id}})
   assert(h,why or 'drive spawn refused');self.next_id=id+1
-  self.records[id]={handle=h,record=record};self:visual(h,record,p.x+10,p.y+8)
+  self.records[id]={handle=h,record=record};self:visual(h,record,at_x,at_y)
   return h
  end
  function R:visual(h,record,x,y)
@@ -36,7 +38,7 @@ return function(D)
  end
  function R:expire(e)
   local id=e.payload and e.payload.amount;local d=id and self.records[id]
-  if d and d.handle==(e.item or e.handle) then self.records[id]=nil;self.juice:expire(d.handle) end
+  if d and d.handle==(e.item or e.handle) then self.records[id]=nil;self.juice:expire(d.handle);return d.record end
  end
  function R:snapshot() return {next_id=self.next_id,records=self.records} end
  function R:validate(s)

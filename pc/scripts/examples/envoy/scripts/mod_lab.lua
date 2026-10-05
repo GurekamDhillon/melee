@@ -164,7 +164,7 @@ return function(D)
   self:event{kind='clank',port=a,target=b,tags={},damage_a=da,damage_b=db}
   self:event{kind='clank',port=b,target=a,tags={},damage_a=da,damage_b=db}
  end
- function L:pickup_expire(e) if self.drives and not self:replaying() then self.drives.drops:expire(e) end end
+ function L:pickup_expire(e) if self.drives and not self:replaying() then self.drives:expire(e) end end
  function L:pickup(e) if self.drives then self.drives:pickup(e) end;if e.port then self:event{kind='item_pickup',port=e.port,tags={}} end end
  function L:sample()
   local players,life={},{}
@@ -316,7 +316,7 @@ return function(D)
   if self.echoes then self.echoes:ops(ops,players,stock_queued) end
   self.owned=new_owned;self.hit_owned=new_hit_owned
   for p=1,6 do if self.engine.statuses[p] and not next(self.engine.statuses[p]) then self.engine.statuses[p]=nil end end
-  self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0)) or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
+  self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0 or self.drives:has_build())) or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
   -- Visual pulse/cooldown metadata is pure state and belongs in the checkpoint.
   if self.enabled then self.display:update(self.engine,players) else self.display:clear() end
   local committed,why=pcall(function() return self.g.sim_commit(self:export(),ops) end)

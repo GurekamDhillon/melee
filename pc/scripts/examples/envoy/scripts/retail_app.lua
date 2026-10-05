@@ -150,7 +150,8 @@ return function(D)
   function A:draw()
    if self.retail.active or self.retail.pending then
     local r=self.retail
-    D.hud.draw(self.g,r.companion,r.mode..' NG+'..r.loop,self.flashes,self.drives.juice.flash,r.reward)
+    -- The rule-host route has no companion stats: its build strip (run_hud) is drawn by the host instead.
+    if not (r.rules and r.host) then D.hud.draw(self.g,r.companion,r.mode..' NG+'..r.loop,self.flashes,self.drives.juice.flash,r.reward) end
     if self.visible and self.menu.screen~='playing' and self.g.kit then D.menu_draw.draw(self.g,self.menu,self:context()) end
     if r.tag_ticks and r.tag_ticks>0 and self.g.kit then
      local a=self.g.safe_area();self.g.kit.panel(a.x+12,a.y+12,300,35)

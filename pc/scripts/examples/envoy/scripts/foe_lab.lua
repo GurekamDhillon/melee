@@ -70,10 +70,13 @@ return function(D)
     local names,looks={},{};for slot=1,D.mod_progression.slots(r.build.context or r.context) do local rec=r.build.equipped[slot];if rec then names[#names+1]=self.roller.loot:name(rec);looks[#looks+1]={colour=rec.colour,rarity=rec.rarity} end end
     local keys={};for _,id in ipairs(r.build.keystones or {}) do keys[id]=true end;if r.build.keystone then keys[r.build.keystone]=true end
     for _,m in ipairs(self.lab.engine.list) do if keys[m.id] then names[#names+1]=m.label end end
+    local plain=D.drive_text and D.drive_text.build_lines(self.roller.loot,r.build,self.lab.engine.list) or names
     self.lab.engine.display.drive_build=self.lab.engine.display.drive_build or {};self.lab.engine.display.drive_build[r.port]=looks
     local role=r.role or 'normal';local factor=D.mod_progression.factor(r.context or r.build.context,role)
     local title=('P%d %s / %s %.2f / target %.2f x%.2f'):format(r.port,tostring((self.g.player(r.port) or {}).char_name or (self.g.player(r.port) or {}).name or 'CPU'),role,r.strength,r.target,factor)
-    self.labels[r.port]={title=title,lines=names,left=240};self.g.log('foe: '..title..' / '..table.concat(names,', '))
+    local foe=(self.g.player(r.port) or {});local plate=('%s  (opponent strength %.1f)'):format(tostring(foe.char_name or foe.name or 'Opponent'),r.strength)
+    if #plain==0 then plain={'No modifiers: a vanilla fighter'} end
+    self.labels[r.port]={title=self.lab:hosted() and plate or title,lines=self.lab:hosted() and plain or names,left=240};self.g.log('foe: '..title..' / '..table.concat(names,', '))
    end
   end;self.pending={}
  end
@@ -92,9 +95,10 @@ return function(D)
    end
    self.wrapped[l]={w=a.w,lines=lines}
   end
-  self.g.kit.panel(a.x+16,y,a.w-32,78);self.g.kit.text(a.x+24,y+19,l.title,'body','bone','left',{max_w=a.w-48})
-  local pages=math.max(1,math.ceil(#lines/2));local page=math.floor((240-l.left)/45)%pages
-  for n=1,2 do self.g.kit.text(a.x+24,y+23+n*19,lines[page*2+n] or (n==1 and 'Vanilla build' or ''),'body','bone','left',{max_w=a.w-48}) end
+  local per=self.lab:hosted() and 3 or 2
+  self.g.kit.panel(a.x+16,y,a.w-32,40+per*19);self.g.kit.text(a.x+24,y+19,l.title,'body','bone','left',{max_w=a.w-48})
+  local pages=math.max(1,math.ceil(#lines/per));local page=math.floor((240-l.left)/(per==3 and 70 or 45))%pages
+  for n=1,per do self.g.kit.text(a.x+24,y+23+n*19,lines[page*per+n] or (n==1 and 'Vanilla build' or ''),'body','bone','left',{max_w=a.w-48}) end
  end
  -- `raw`: references instead of a detached copy, for a caller that only encodes the result (the per-frame checkpoint).
  function F:snapshot(raw) local s={seed=self.seed,stage=self.stage,builds=self.builds,pending=self.pending,labels=self.labels};if raw then return s end;return clone(s) end

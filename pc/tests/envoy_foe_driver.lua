@@ -58,4 +58,32 @@ T.test('foe_roll keeps full weight for driven techniques and weights dead ones d
  local r=D.foe_roll.new(D.mod_pool);local w=r:weights(4)
  assert(w.clean_landing==nil and w.wave_edge==nil and w.shield_stance==nil and w.tech_guard==nil,'driven records are not down-weighted')
 end)
+T.test('with gd.cpu_assist the skill maps straight to the assist, seeded, cleared on leave, and no switch ever happens',function()
+ local f=fake();local calls={}
+ f.g.cpu_assist=function(p,c) calls[#calls+1]={p=p,c=c};return true end
+ local d=X.new(f.g);d.stats={}
+ assert(d:set(2,{clean_landing=1,wavedash=nil,tech_guard=1},{depth=12,loop=0},777))
+ local c=calls[1].c;local sk=X.skill({depth=12,loop=0})
+ assert(calls[1].p==2 and c.lcancel==sk and c.tech==sk and c.fast_fall==sk and c.wavedash==nil and c.perfect_shield==nil and c.seed==777 and c.tech_dir=='random')
+ f.players[2]={port=2,cpu=true,x=0,y=10,vy=-1,airborne=true,action=67,action_frame=6,facing=1,hitlag=0};f.players[1]={port=1,x=40,y=0,action=14}
+ for fr=1,30 do f.players[2].y=math.max(0,f.players[2].y-1.2);d:frame(fr) end
+ assert(#f.calls==0,'the assist driver switched modes: '..table.concat(f.calls,','))
+ f.players[2]=nil;d:frame(31);assert(d.foes[2]==nil and calls[#calls].c==nil and calls[#calls].p==2,'cleared when the opponent left')
+ assert(not d:set(3,{kindling=1},{depth=3,loop=0},1),'a plain build installs no assist')
+end)
+T.test('the switch driver stays the fallback when the exe has no assist, and when forced',function()
+ local f=fake();local d=X.new(f.g);d:set(2,{clean_landing=1},{depth=12,loop=3},1);assert(not d.foes[2].assist)
+ local f2=fake();f2.g.cpu_assist=function() return true end;X.force_switch=true;local d2=X.new(f2.g);d2:set(2,{clean_landing=1},{depth=12,loop=3},1);X.force_switch=nil
+ assert(not d2.foes[2].assist)
+end)
+T.test('an assist refused (netplay, not a CPU) leaves the foe undriven but reported',function()
+ local f=fake();f.g.cpu_assist=function() return false end;local d=X.new(f.g);d:set(2,{wavedasher=1},{depth=3,loop=0},5)
+ assert(d.foes[2].assist and not d.foes[2].accepted and d.stats[2].refused)
+ assert(d:report()[1]:match('accepted=false'))
+end)
+T.test('assist_config: every wanted technique gets the skill; fast fall rides along; tech direction random',function()
+ local c=X.assist_config({lcancel=true,ps=true,tech=true,wavedash=true},.5,3e9)
+ assert(c.lcancel==.5 and c.perfect_shield==.5 and c.tech==.5 and c.wavedash==.5 and c.fast_fall==.5 and c.seed==2147483647)
+ assert(select(2,X.assist_config({},.5,1))==false)
+end)
 T.done()

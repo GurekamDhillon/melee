@@ -20,7 +20,7 @@
   "thrown": false,
   "payload": { "colour": "red", "amount": 1 },
   "visual": {
-    "asset_mod": "envoy_drives_sa2",
+    "asset_mod": "envoy_drives",
     "model": "models/drive",
     "colour_variants": true,
     "glass": "models/drive_glass",
@@ -30,6 +30,6 @@
     "hover": 6,
     "tilt": 12,
     "bob_speed": 3,
-    "height": 4.55
+    "height": 4.4
   }
 }

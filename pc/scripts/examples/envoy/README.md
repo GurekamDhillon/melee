@@ -55,7 +55,7 @@ Guard briefly flashes a blue marker when damage percent rises.
 The authored physical garden, DNA, grades, reincarnation, stat HUD and optional
 original drive-model adapter are retained. Existing kit components and coloured
 drive glyphs draw the reward panel; the kit has no 3D-model icon preview API.
-Optional local `envoy_drives_sa2` model art stays separate and is not copied here.
+Drive model art is the original `envoy_drives` mod (mount it beside this one); without it floor drops fall back to the engine's plain item and cells to flat colours.
 Results return to the asset-free menu. A walkable garden is offered only when
 its model resolves; a failed garden spawn falls back to that menu. No disc-derived
 assets are included. Optional garden assets can be prepared into one mod:

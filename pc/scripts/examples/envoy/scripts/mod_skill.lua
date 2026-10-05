@@ -13,7 +13,8 @@ return function(D)
  -- kind -> {verified, cpu, words, cause, noun}
  --  verified: seen firing in the game by the engine lane (docs/scripting.md "Skill events"); false = available but flagged
  --  cpu: whether a CPU opponent performs it. 'live' = hits and knockdowns happen anyway; 'driven' = the retail AI never does it but foe_driver.lua
- --       performs it for an opponent whose build rewards it (a fight -> script -> fight switch, at a skill that grows with depth);
+ --       performs it for an opponent whose build rewards it: through the engine assist gd.cpu_assist (fight mode, no plan reset) at a
+ --       skill that grows with depth, or, on an exe without the assist, a fight -> script -> fight switch (perfect shield lands ~37% of presses);
  --       'maybe' = retail AI does it at some levels (unmeasured); 'dead' = retail AI never performs it, so an opponent's roll is inert
  --  cause: afterimage colour family; the status the technique grants shows that colour while it lasts
  M.kinds={
@@ -25,7 +26,7 @@ return function(D)
   tech={verified=true,cpu='driven',words='tech',cause='shield'},
   tech_miss={verified=true,cpu='live',words='miss a tech',cause='miss'},
   short_hop={verified=true,cpu='maybe',words='short hop',cause='move'},
-  fast_fall={verified=true,cpu='maybe',words='fast fall',cause='move'},
+  fast_fall={verified=true,cpu='driven',words='fast fall',cause='move'},
   dash_dance={verified=true,cpu='dead',words='dash dance',cause='move'},
   jump_cancel_grab={verified=true,cpu='dead',words='jump-cancel a grab',cause='combo'},
   combo={verified=true,cpu='live',words='land a hit inside a combo',cause='combo'},

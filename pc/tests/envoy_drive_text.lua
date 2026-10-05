@@ -17,4 +17,10 @@ T.test('a rolled drive reads as header, base line and modifiers; totals show bef
  assert(D.drive_text.total_line('strength','Build strength',a,b)=='Build strength +0% -> +100%')
  assert(D.drive_text.better('damage_taken',1,1.1)==false and D.drive_text.better('damage_dealt',1,1.2)==true and D.drive_text.better('speed',1,1)==nil)
 end)
+T.test('a value line never promises more than the budget cap allows (no -112% damage taken)',function()
+ for _,m in ipairs(D.mod_pool) do if m.id=='armoured' then
+  assert(D.drive_text.mod_lines(m,8)[1]=='Damage you take -77%','a real deep tier reads as its number')
+  for t=9,#m.tiers do assert(D.drive_text.mod_lines(m,t)[1]:find('-85%% %(the most a build can reach%)'),D.drive_text.mod_lines(m,t)[1]) end
+ end end
+end)
 T.done()

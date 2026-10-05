@@ -32,7 +32,7 @@ return function(D)
    if self.fx then local st=self.fx.stat;out[#out+1]=('  fx crits=%d passes=%d restarts=%d tracers=%d toasts=%d bound=%d'):format(st.crits,st.passes,st.restarts,st.tracers,st.toasts,st.bound or 0) end
    for _,l in ipairs(out) do g.log(l) end;return true
   end,'log the technique layer state')
-  g.command('mod',function(arg) return self:command(arg or '') end,'list | add <id> [port] | clear | trace | intensity <0..1>')
+  g.command('mod',function(arg) return self:command(arg or '') end,'list | add <id> [port] | clear | trace | intensity <0..1> | box on|off | status <name> [port] [frames] [cause] [stacks] [max]')
   g.command('depth',function(arg) return self:depth_command(arg or '') end,'<nonnegative depth> [New Game+ loop]')
   return self
  end
@@ -117,6 +117,17 @@ return function(D)
     for _,m in ipairs(self.engine.list) do self.g.log('mod '..m.id..': '..D.mod_schema.tooltip(m,1)) end
    elseif w[1]=='trace' then
     assert(#w==1,'usage: mod trace');self.g.log(#self.engine.trace>0 and table.concat(self.engine.trace,', ') or 'mod: no chain yet')
+   elseif w[1]=='box' then -- LAB debug text on/off (captures); look only
+    assert(#w==2 and (w[2]=='on' or w[2]=='off'),'usage: mod box on|off');self.hide_box=(w[2]=='off')
+   elseif w[1]=='status' then -- debug (captures, looks): put a status on a fighter without its trigger. mod status <name> [port] [frames] [cause] [stacks]
+    local allowed,why=self:allowed();assert(allowed,why);assert(not self:replaying(),'modifier edit refused during rewind')
+    local name=w[2];local known=false;for _,n in ipairs(D.mod_status.order) do if n==name then known=true end end
+    assert(known,'usage: mod status <'..table.concat(D.mod_status.order,'|')..'> [port] [frames] [cause] [stacks] [max]')
+    local p=port(w[3] or 1);assert(self.g.player(p),'fighter absent');local n=math.max(1,math.min(3600,math.floor(tonumber(w[4] or 600) or 600)))
+    local cause=w[5];if cause=='-' then cause=nil end;assert(cause==nil or D.mod_skill.cause[cause],'cause: '..table.concat((function() local t={} for k in pairs(D.mod_skill.cause) do t[#t+1]=k end table.sort(t) return t end)(),'|'))
+    local at=self.engine.statuses[p] or {};self.engine.statuses[p]=at
+    at[name]={expires=self.engine.frame+n,stacks=math.max(1,math.floor(tonumber(w[6] or 1) or 1)),max=math.max(1,math.floor(tonumber(w[7] or w[6] or 1) or 1)),amount=1,next_tick=self.engine.frame+60,origin={'debug status'},cause=cause}
+    self.enabled=true;if self.options.activate then self.options.activate() end
    elseif w[1]=='intensity' then
     assert(#w==2,'usage: mod intensity <0..1>');local n=tonumber(w[2]);assert(n and n>=0 and n<=1,'intensity 0..1 required')
     self.display:intensity(n);self.engine.display.intensity=n
@@ -536,7 +547,7 @@ return function(D)
   if self.drives and self.drives.menu.active then self.drives:draw();return end
   local plate=self.foes and self.g.kit and next(self.foes.labels)~=nil
   -- The Modifier LAB debug text (ids, last chain) is a LAB tool: a run's own strip and plates replace it.
-  if plate then self.foes:draw() elseif self.enabled and not self:hosted() then self.display:draw(self.engine) end
+  if plate then self.foes:draw() elseif self.enabled and not self:hosted() and not self.hide_box then self.display:draw(self.engine) end
   if self.drives and not plate then self.drives:draw() end
  end
  function L:unload()

@@ -1,13 +1,13 @@
 -- Optional model layer for Envoy drives. Drawing only: drives.lua still owns drop, pickup, expiry and
--- feeding. When the asset mod `envoy_drives_sa2` is mounted, each pickup is shown as a bobbing, turning
+-- feeding. When the original asset mod `envoy_drives` is mounted, each pickup is shown as a bobbing, turning
 -- model; otherwise `active()` stays false and the existing HUD glyph is drawn. Never a gameplay write.
 return function(D)
   local V={};V.__index=V
-  V.MOD='envoy_drives_sa2'
-  V.MESH={red='drive_red',green='drive_green',yellow='drive_yellow',blue='drive_blue',white='drive_white'}
-  V.TINT={red=0xFFFFFFFF,green=0xFFFFFFFF,yellow=0xFFFFFFFF,blue=0xFFFFFFFF,white=0xFFFFFFFF}
+  V.MOD='envoy_drives'
+  V.MESH={red='drive_red',green='drive_green',yellow='drive_yellow',blue='drive_blue',white='drive_white',purple='drive_purple'}
+  V.TINT={red=0xFFFFFFFF,green=0xFFFFFFFF,yellow=0xFFFFFFFF,blue=0xFFFFFFFF,white=0xFFFFFFFF,purple=0xFFFFFFFF}
   V.GLASS={red=0xFF9C9CFF,green=0x9CFFB4FF,yellow=0xFFEE9CFF,blue=0x9CBCFFFF,white=0xFFFFFFFF}
-  V.SCALE=1.15   -- instance scale on top of the exported 4.55-unit height
+  V.SCALE=1.45   -- instance scale on top of the exported 4.4-unit height (about 40 px at 1.15; larger so a drop is found)
   V.LIFT=2.6      -- model half height (units) so the drive rests on the point the enemy left
   V.PULSE=14      -- frames of the collect pulse
   local function try(f,...) local ok,a,b=pcall(f,...);if ok then return a,b end;return nil,a end
@@ -42,8 +42,7 @@ return function(D)
   function V:visible(p) return self.live[p]~=nil end
   local function place(g,e,p,frame,extra)
     local t=(frame+e.phase)/60
-    local spin=math.cos(t*2*math.pi*0.6)         -- 0.6 turns per second, as a width squash (rot is Z-only)
-    if math.abs(spin)<0.06 then spin=spin<0 and -0.06 or 0.06 end
+    local spin=0.72+0.28*math.cos(t*2*math.pi*0.45)  -- a slow width wobble (rot is Z-only): never edge-on, the flat shapes stay readable
     local s=((extra and extra.scale) or 1)*V.SCALE
     local y=p.y+V.LIFT*s+0.7*math.sin(t*2*math.pi*0.9)+((extra and extra.lift) or 0)
     local o={x=p.x,y=y,z=0,scale=s,scale_x=spin,rot=6*math.sin(t*2*math.pi*0.45),visible=true}

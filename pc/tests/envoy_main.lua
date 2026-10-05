@@ -91,7 +91,7 @@ T.test('supported dumps are read only and records include ledger and growth',fun
 end)
 T.test('optional models replace glyph per pickup and pulse collection then clear',function()
   local s,a=fixture();local serial=0;local models={};local glyphs=0
-  s.g.model_load=function(path) assert(path:find('envoy_drives_sa2/',1,true));return path end
+  s.g.model_load=function(path) assert(path:find('envoy_drives/',1,true));return path end
   s.g.model_spawn=function() serial=serial+1;models[serial]=true;return serial end
   s.g.model_set=function(h) assert(models[h]);return true end
   s.g.model_despawn=function(h) models[h]=nil;return true end

@@ -37,7 +37,7 @@ return function(D)
   end
   -- A technique or crit moment worth a line (first technique rule fired, a strong crit): the strip's toast, presentation only.
   mods.toast=function(text) if self.running then self.hud:announce({{text='Technique',colour='gold'},text}) end end
-  if mods.foes then mods.foes.defer=function() return self.running and self.hud and #self.hud.toasts>0 end end  -- the opponent plate waits while an announcement is up (they used to overlap)
+  if mods.foes then mods.foes.defer=function() return self.running and ((self.hud and #self.hud.toasts>0) or self.menu_up==true) end end  -- the opponent plate waits while an announcement is up (they used to overlap)
   g.command('uxdump',function() self:dump();return true end,'log the rule host state: slots, bag, keystones, offers, screen, hud')
   g.command('uxpress',function(a) self:press(a or '');return true end,'press a screen action: up down left right accept back x y start')
   g.command('uxcost',function(a) if a=='reset' then self.cost={} else for _,l in ipairs(self:cost_report()) do g.log(l) end end;return true end,'script cost of the run screens and strip: uxcost [reset]')
@@ -492,6 +492,7 @@ return function(D)
   local g=self.g;if not g.match_end_hold then return end
   if (on and true or false)==(self.holding_end and true or false) then return end
   self.holding_end=on and true or false
+  if not on then self.hold_banner=nil end
   if g.match_end_hold(H.HOLD,self.holding_end) then
    self:log(on and 'match end held: collect the drives' or ('match end released'..(why and (': '..why) or '')))
   end
@@ -505,6 +506,45 @@ return function(D)
   end
   return true
  end
+ -- The "collect the drives" hold: a banner (the strip's small flash text was easy to miss) and a marker on the nearest floor drive:
+ -- a bobbing arrow over it when it is on screen, an edge arrow pointing toward it when it is not. Drawing only.
+ local function tri(g,cx,cy,dir,size,colour)
+  for i=0,size-1 do
+   local half=size-1-i   -- wide at the base, one pixel at the tip
+   if dir=='down' then g.fill(cx-half,cy+i,half*2+1,1,colour)
+   elseif dir=='left' then g.fill(cx-i,cy-half,1,half*2+1,colour)
+   elseif dir=='right' then g.fill(cx+i,cy-half,1,half*2+1,colour) end
+  end
+ end
+ function H:draw_hold()
+  local g=self.g;local k=g.kit
+  if not (self.holding_end and self.hold_banner and k and g.safe_area) then return end
+  local d=self.mods.drives;local list={}
+  if d and d.drops and d.drops.records and g.items then local want={};for _,r in pairs(d.drops.records) do want[r.handle]=true end
+   for _,e in ipairs(g.items() or {}) do if want[e.handle] and type(e.x)=='number' then list[#list+1]=e end end end
+  local a=g.safe_area();local frame=self.since or 0;local f=(self.g.frame and self.g.frame()) or 0
+  local text=self.hold_banner
+  local w=300;local x=a.x+(a.w-w)//2
+  g.fill(x,a.y+112,w,34,0x3A3320E8);g.fill(x,a.y+112,w,2,0xEBD175FF)   -- below the match timer
+  k.text(x+w//2,a.y+136,text,'body','gold','center')
+  local me=g.player(self.retail.state and self.retail.state.player_port or 1);local best,bd
+  for _,p in ipairs(list) do if me then local dd=math.abs(p.x-me.x)+math.abs(p.y-me.y);if not bd or dd<bd then best,bd=p,dd end end end
+  if not best or not g.project then return end
+  local ok,sx,sy,visible=pcall(g.project,best.x,best.y+4,0)
+  if not ok or not sx then return end
+  local gold=0xEBD175FF;local bob=math.floor(3*math.sin(f/6))
+  local margin=28
+  local on=visible and sx>=a.x+margin and sx<=a.x+a.w-margin and sy>=a.y+margin and sy<=a.y+a.h-margin
+  if on then tri(g,math.floor(sx),math.floor(sy)-34+bob,'down',14,gold)
+  else
+   local cx=math.max(a.x+margin,math.min(a.x+a.w-margin,sx));local cy=math.max(a.y+90,math.min(a.y+a.h-90,sy))
+   local dir=(sx<a.x+margin) and 'left' or 'right'
+   if dir=='left' then cx=a.x+margin else cx=a.x+a.w-margin end
+   g.fill(cx-30,cy-22,60,44,0x1B1A12D8)
+   tri(g,math.floor(cx+(dir=='left' and -2 or 2))+(dir=='left' and 0 or 0),math.floor(cy),dir,14,gold)
+   k.text(cx+(dir=='left' and 12 or -12),cy+5,'Drive','caption','gold','center')
+  end
+ end
  function H:update_hold()
   if not H.tuning.end_hold or not self.g.match_end_hold then return end
   local k=self.stage_kind
@@ -516,10 +556,12 @@ return function(D)
   if floor==0 then return self:set_hold(false,'every drive collected') end
   if not me or (me.stocks or 0)<=0 then return self:set_hold(false,'the player is out') end
   if not self.holding_end then self.hud:flash('Collect the drives') end
+  self.hold_banner='Collect the drives'
   self:set_hold(true)
   if self:foes_out() then
    self.out_frames=(self.out_frames or 0)+H.tuning.ko_poll
    local left=math.max(0,H.tuning.end_hold_frames-self.out_frames)
+   self.hold_banner=('Collect the drives  %d s'):format(math.ceil(left/60))
    if self.out_frames%30<H.tuning.ko_poll then self.hud:flash(('Collect the drives (%d s)'):format(math.ceil(left/60))) end
    if left<=0 then
     self.hold_gave_up=true
@@ -677,10 +719,12 @@ return function(D)
   if not self.running then return end
   local t0=self.g.time and self.g.time()
   if self.screen.active then self.screen:draw();sample(self,'screen draw',t0);return end
-  local m=self.g.match();if not (m and m.active) or not self:ready() then return end
+  local m=self.g.match();if not (m and m.active) or not self:ready() or self.menu_up then return end
   self.hud:draw();sample(self,'strip draw',t0)
+  self:draw_hold()
  end
  function H:run_end()
+  self.hold_banner=nil
   if not self.running then return end
   self:set_hold(false,'run end')
   if self.screen.active then self.screen:close() end

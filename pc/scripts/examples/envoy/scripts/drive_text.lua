@@ -22,7 +22,13 @@ return function(D)
    if e.op=='value' then
     local n=D.mod_schema.ratio(e.value,m,tier,D.mod_budget.families[e.key])-1
     local label=value_labels[e.key] or e.key
-    if e.key=='status_duration' then out[#out+1]=('%s %s longer'):format('Status effects you cause last',pct(math.abs(n)))
+    -- A tier's own number can run past what the engine allows (Damage resistant at tier 9 is x-1.12 raw): the budget caps each family
+    -- (damage taken floors at -85%), so the text states the capped number and says so, instead of an impossible "-112%".
+    local cap=D.mod_budget.caps[D.mod_budget.families[e.key] or '']
+    local capped=false
+    if cap and n<cap[1] then n=cap[1];capped=true elseif cap and n>cap[2] then n=cap[2];capped=true end
+    if capped then out[#out+1]=('%s %s%s (the most a build can reach)'):format(label,sign(n),pct(math.abs(n)))
+    elseif e.key=='status_duration' then out[#out+1]=('%s %s longer'):format('Status effects you cause last',pct(math.abs(n)))
     elseif e.key=='knockback_taken' then out[#out+1]=('Launch you take %s%s'):format(sign(n),pct(math.abs(n)))
     else out[#out+1]=('%s %s%s'):format(label,sign(n),pct(math.abs(n))) end
    elseif e.op=='convert' and e.change and e.change.element then

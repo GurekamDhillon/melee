@@ -10,7 +10,7 @@
 -- and logs once, it never throws into the host.
 return function(D)
  local F={};F.__index=F
- F.tuning={slow=1,intensity=1,strong=.75,tracer_frames=18,tracer_width_low=1.5,tracer_width_high=7,burst_gap=.30,repeat_tear_amt=.5,repeat_tear_r=.45,min_s=.12,afterimage={copies=6,spacing=3,lifetime=18,fade=.6}}
+ F.tuning={slow=1,intensity=1,strong=.75,tracer_frames=24,tracer_width_low=3,tracer_width_high=11,burst_gap=.30,repeat_tear_amt=.5,repeat_tear_r=.45,min_s=.12,afterimage={copies=6,spacing=3,lifetime=18,fade=.6}}
  local function clamp(x,a,b) return x<a and a or (x>b and b or x) end
  -- The impact-drill sequence: one scalar s (0..1) drives every layer (demos/impact-drill, same shader).
  function F.look(s)
@@ -128,7 +128,7 @@ return function(D)
   local c=D.mod_skill.cause.crit;local t=self.tracer[attacker]
   local width=F.tuning.tracer_width_low+(F.tuning.tracer_width_high-F.tuning.tracer_width_low)*clamp(strength,0,1)
   if not t then
-   local ok,h,why=pcall(g.tracer_add,{port=attacker,anchor='active_hitboxes',width=width,taper=.4,length=14,smoothing=4,shader='glow',trigger='flag',tint=c.tint,tail=c.tail,intensity=1})
+   local ok,h,why=pcall(g.tracer_add,{port=attacker,anchor='active_hitboxes',width=width,taper=.4,length=22,smoothing=4,shader='glow',trigger='flag',tint=c.tint,tail=c.tail,intensity=1})
    if not ok or not h then self:note('tracer','tracer unavailable: '..tostring(ok and why or h));self.failed.tracer=true;return false end
    t={handle=h};self.tracer[attacker]=t
   else pcall(g.tracer_set,t.handle,{width=width}) end

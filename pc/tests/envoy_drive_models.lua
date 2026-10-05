@@ -40,7 +40,7 @@ end)
 T.test('every colour gets two collision-free models and animated bob blink',function()
   local s,v=rig();local p={colour='blue',x=10,y=20,left=100}
   assert(v:tick({p}) and v:visible(p) and v:active());assert(s.next==2)
-  assert(s.instances[1].asset:find('envoy_drives_sa2/models/drive_blue',1,true))
+  assert(s.instances[1].asset:find('envoy_drives/models/drive_blue',1,true))
   local y=s.sets[1].y;v:tick({p});assert(s.sets[3].y~=y)
   p.left=30;local on,off=false,false
   for _=1,8 do v:tick({p});local o=s.sets[#s.sets];on=on or o.visible;off=off or not o.visible end

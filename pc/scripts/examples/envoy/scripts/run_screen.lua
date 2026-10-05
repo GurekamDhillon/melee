@@ -12,7 +12,7 @@
 return function(D)
  local S={};S.__index=S
  S.tuning={hold_ticks=2850,tick_margin=90,safe_seconds=45}
- S.model_opts={yaw=20,pitch=40,margin=.02}   -- how a drive model sits in its cell (the stone is tall and narrow in a square)
+ S.model_opts={yaw=18,pitch=12,margin=.02}   -- how a drive model sits in its cell (front-facing emblems, as wide as tall)
  local G=D.grid
  G.rarity.magic=G.rarity.magic or G.rarity.uncommon      -- Envoy's second rarity word
  G.palette.purple=G.palette.purple or 0xC79BFFFF
@@ -27,18 +27,20 @@ return function(D)
   for depth=0,60 do if D.mod_progression.slots(D.mod_progression.context(depth,0))>=slot then return depth end end
  end
  -- ---- drive models (optional, local-only assets) ---------------------------------------------------------------
- -- When the model mod `envoy_drives_sa2` is mounted and this exe has gd.kit.model, a drive cell shows its colour's model in the cell's
+ -- When the model mod `envoy_drives` is mounted and this exe has gd.kit.model, a drive cell shows its colour's model in the cell's
  -- icon square (the component's icon_draw hook). Anything missing leaves the flat coloured cell: no error, no retry per frame.
- local MESH={red='drive_red',green='drive_green',yellow='drive_yellow',blue='drive_blue',white='drive_white',purple='drive_white'}
- local TINT={blue=0x5C8CFFFF,purple=0xC79BFFFF}   -- drive_blue / drive_white are one neutral stone, tinted like the floor drives
+ local MESH={red='drive_red',green='drive_green',yellow='drive_yellow',blue='drive_blue',white='drive_white',purple='drive_purple'}
+ local RING={magic='drive_ring_magic',rare='drive_ring_rare',unique='drive_ring_unique'}   -- rarity overlays: a second model, same pose, drawn first
+ local TINT={}   -- the shapes carry their own colours
  function S:load_models()
   self.models=nil;self.descs={};self.model_failed=nil
   local g=self.g
   if not (g.kit and type(g.kit.model)=='function' and type(g.model_load)=='function') then return end
-  local mod=D.drive_models and D.drive_models.MOD or 'envoy_drives_sa2';local h,any={},false
+  local mod=D.drive_models and D.drive_models.MOD or 'envoy_drives';local h,any={},false
   for _,name in pairs(MESH) do if not h[name] then
-   local ok,r=pcall(g.model_load,mod..'/models/'..name);if ok and r then h[name]=r;any=true end
+   local ok,r,why=pcall(g.model_load,mod..'/models/'..name);if ok and r then h[name]=r;any=true elseif not self.load_logged then self.load_logged=true;if self.host and self.host.log then self.host:log('drive models: model_load refused ('..tostring(ok and why or r)..'): flat cells for this screen') end end
   end end
+  for _,name in pairs(RING) do if not h[name] then local ok,r=pcall(g.model_load,mod..'/models/'..name);if ok and r then h[name]=r end end end
   if any then self.models=h end
  end
  function S:release_models()
@@ -47,12 +49,12 @@ return function(D)
   end
   self.models=nil;self.descs={}
  end
- function S:model_desc(colour)
+ function S:model_desc(colour,rarity)
   if not self.models then return nil end
-  local d=self.descs[colour]
+  local key=colour..'/'..tostring(rarity);local d=self.descs[key]
   if d==nil then
    local hd=self.models[MESH[colour] or 'drive_white']
-   d=hd and {kind='model',asset=hd,tint=TINT[colour]} or false;self.descs[colour]=d
+   d=hd and {kind='model',asset=hd,tint=TINT[colour],ring=self.models[RING[tostring(rarity):lower()] or '']} or false;self.descs[key]=d
   end
   return d or nil
  end
@@ -60,7 +62,7 @@ return function(D)
   local h=self.host;local loot=self:drives().loot;local c=T().cell(loot,r,flags)
   local fl={};if c.new then fl[#fl+1]='new' end;if c.can_merge then fl[#fl+1]='merge' end
   ref.record=r
-  return {colour=c.colour_rgba,rarity=c.rarity,pips=c.affixes,flags=fl,icon=self:model_desc(r.colour) or (r.unique and 'crown' or nil),name=T().short(loot,r),ref=ref,actions={}}
+  return {colour=c.colour_rgba,rarity=c.rarity,pips=c.affixes,flags=fl,icon=self:model_desc(r.colour,r.rarity) or (r.unique and 'crown' or nil),name=T().short(loot,r),ref=ref,actions={}}
  end
  function S:key_cell(id,kind)
   local h=self.host;local rule=h:keystone_rule(id);local fam=D.keystones.family(id)
@@ -146,14 +148,17 @@ return function(D)
   local d=self:drives();if self.before_rev~=d.rev or not self.before then self.before=self.host:totals();self.before_rev=d.rev end
   return self.before
  end
- -- Strength always; any other number only when it changes.
+ -- Any number only when it changes; strength alone says (no change) when nothing does.
  function S:compare(lines,edit)
   local h=self.host;local tx=T();local before=self:totals_before();local after=h:totals(edit)
   lines[#lines+1]=''
-  lines[#lines+1]=tx.total_line('strength','Build strength',before,after)
+  -- Only the numbers that change are shown, strength included. "(no change)" appears alone, when nothing at all changes: beside
+  -- a changed Speed line it read as a contradiction ("Build strength +358% (no change)" over "Speed x1.08 -> x1.16").
+  local changed=0
   for _,e in ipairs(tx.total_rows) do
-   if e[1]~='strength' and math.abs(before[e[1]]-after[e[1]])>=.005 then lines[#lines+1]=tx.total_line(e[1],e[2],before,after) end
+   if math.abs(before[e[1]]-after[e[1]])>=.005 then changed=changed+1;lines[#lines+1]=tx.total_line(e[1],e[2],before,after) end
   end
+  if changed==0 then lines[#lines+1]=tx.total_line('strength','Build strength',before,after) end
  end
  local function plan_edit(plan,r,from)
   return function(d)
@@ -234,9 +239,11 @@ return function(D)
  -- screen-space model draw can be adopted here without touching the screens).
  function S:icon(desc,x,y,w,h,focused,locked,cell)
   if desc.kind=='model' then
-   local mo=S.model_opts;local ok=pcall(self.g.kit.model,desc.asset,x,y,w,h,{yaw=mo.yaw,pitch=mo.pitch,margin=mo.margin,spin=focused and 120 or 0,dim=locked and 0.35 or 1,tint=desc.tint})
+   local mo=S.model_opts;local opts={yaw=mo.yaw,pitch=mo.pitch,margin=mo.margin,spin=focused and 120 or 0,dim=locked and 0.35 or 1,tint=desc.tint}
+   if desc.ring and not S.no_rings then pcall(self.g.kit.model,desc.ring,x,y,w,h,opts) end   -- rarity ring first, so it passes behind the body
+   local ok,err=pcall(self.g.kit.model,desc.asset,x,y,w,h,opts)
    if not ok and not self.model_failed then   -- a stale handle or a refused draw: flat cells from now on, said once
-    self.model_failed=true;self:release_models();self.dirty=true;self.host:log('drive models unavailable for the grid: using flat cells')
+    self.model_failed=true;self:release_models();self.dirty=true;self.host:log('drive models unavailable for the grid: using flat cells ('..tostring(err)..')')
    end
    return
   end

@@ -45,16 +45,48 @@ return function(D)
   if D.keystones and D.keystones.records then scan(D.keystones.records()) end
   return want
  end
+ -- The engine assist (gd.cpu_assist) adds the technique on top of the retail AI in fight mode, seeded, with no plan reset. It replaces the
+ -- fight -> script -> fight switch whenever the exe has it; the switch below stays as the fallback for an older exe. X.force_switch=true
+ -- (test / debug) keeps the switch even when the assist exists.
+ function X:assisted() return not X.force_switch and type(self.g.cpu_assist)=='function' end
+ -- Mapping, skill -> assist: the assist's value IS the chance the engine performs the technique at an opportunity, so each wanted technique
+ -- gets the opponent's skill directly (the depth curve is unchanged: .03 + .06 x effective depth, capped .9). Measured on a level 9 Fox at
+ -- 1.0: L-cancel ~97% of lagged landings, tech ~86%, wavedash 100%, perfect shield only ~37% of presses (the predicted hit has to land),
+ -- so a perfect-shield foe is weaker than its skill says; that is left honest, not compensated. Fast fall: no modifier rewards it, but it
+ -- only makes a technique-wielding opponent play better (it falls faster, which brings landings and L-cancels sooner) and no record
+ -- triggers on it, so it is enabled at the skill of any foe that has a driven technique. Tech direction is random (a third each).
+ function X.assist_config(want,skill,seed)
+  local c={seed=math.max(1,math.min(2147483647,math.floor(seed or 1))),tech_dir='random'}
+  local any=false
+  if want.lcancel then c.lcancel=skill;any=true end
+  if want.ps then c.perfect_shield=skill;any=true end
+  if want.tech then c.tech=skill;any=true end
+  if want.wavedash then c.wavedash=skill;any=true end
+  if any then c.fast_fall=skill end
+  return c,any
+ end
+ -- The one install point: console debug forces and the player-as-CPU use it too. Returns true when something is now driven.
+ function X:install(port,want,skill,seed,context)
+  local st={want=want,skill=skill,seed=seed or 1,context=context,last_action=-1,cool=0,gap=0}
+  self.foes[port]=st
+  self.stats[port]={skill=skill,attempts={},events={},switches=0,opportunities={}}
+  if self:assisted() then
+   local cfg=X.assist_config(want,skill,seed)
+   local ok,res=pcall(self.g.cpu_assist,port,cfg)
+   st.assist=true;st.cfg=cfg;st.accepted=ok and res==true
+   if not st.accepted then self.stats[port].refused=true end
+  end
+  return true
+ end
  function X:set(port,mods,context,seed)
   local want=X.wanted(mods);local any=next(want)~=nil
   if not any then self:clear(port);return false end
-  self.foes[port]={want=want,skill=X.skill(context),seed=seed or 1,context=context,last_action=-1,cool=0,gap=0}
-  self.stats[port]=self.stats[port] or {skill=X.skill(context),attempts={},events={},switches=0,opportunities={}}
-  self.stats[port].skill=self.foes[port].skill
-  return true
+  return self:install(port,want,X.skill(context),seed,context)
  end
  function X:clear(port)
-  local st=self.foes[port];if st and st.active and self.g.cpu_mode then pcall(self.g.cpu_mode,port,'fight') end
+  local st=self.foes[port]
+  if st and st.assist and self.g.cpu_assist then pcall(self.g.cpu_assist,port,nil)
+  elseif st and st.active and self.g.cpu_mode then pcall(self.g.cpu_mode,port,'fight') end
   self.foes[port]=nil
  end
  function X:reset() for p in pairs(self.foes) do self:clear(p) end;self.foes={};self.stats={} end
@@ -99,7 +131,10 @@ return function(D)
   local g=self.g;local t=X.tuning
   for p,st in pairs(self.foes) do
    local me=g.player(p)
-   if me and me.cpu and me.action then
+   if st.assist then
+    -- engine assist: nothing to do per frame but notice the opponent leaving (the engine also clears at scene end)
+    if not me or not me.cpu then self:clear(p) end
+   elseif me and me.cpu and me.action then
     me.dy=st.py and (me.y-st.py) or nil;st.py=me.y
     if st.active then
      local k=st.active.kind
@@ -172,10 +207,19 @@ return function(D)
  function X:report()
   local out={}
   for p,s in pairs(self.stats) do
+   local f=self.foes[p]
+   if f and f.assist and self.g.cpu_assist then
+    local ok,r=pcall(self.g.cpu_assist,p);local c={};local ev={}
+    if ok and type(r)=='table' and r.counters then for k,v in pairs(r.counters) do c[#c+1]=('%s=%s/%s'):format(k,tostring(v.performed or v[2]),tostring(v.opportunities or v[1])) end end
+    for k,v in pairs(s.events) do ev[#ev+1]=k..'='..v end
+    table.sort(c);table.sort(ev)
+    out[#out+1]=('foe_driver assist P%d skill=%.2f accepted=%s switches=0 counters[%s] events[%s]'):format(p,s.skill,tostring(f.accepted),table.concat(c,','),table.concat(ev,','))
+   else
    local a,o,e={},{},{}
    for k,v in pairs(s.attempts) do a[#a+1]=k..'='..v end;for k,v in pairs(s.opportunities) do o[#o+1]=k..'='..v end;for k,v in pairs(s.events) do e[#e+1]=k..'='..v end
    table.sort(a);table.sort(o);table.sort(e)
    out[#out+1]=('foe_driver frames=%s P%d skill=%.2f switches=%d opportunities[%s] attempts[%s] events[%s]'):format(tostring(self.nframes),p,s.skill,s.switches,table.concat(o,','),table.concat(a,','),table.concat(e,','))
+   end
   end
   table.sort(out);return out
  end

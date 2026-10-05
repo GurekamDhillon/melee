@@ -4,7 +4,7 @@ return function(D)
  local function clone(v) return D.mod_codec.decode(D.mod_codec.encode(v)) end
  function F.new(g,lab)
   local self=setmetatable({g=g,lab=lab,roller=D.foe_roll.new(D.mod_pool),seed=104729,stage=0,builds={},pending={},labels={},drive=true,driver=D.foe_driver and D.foe_driver.new(g)},F)
-  g.command('foe',function(arg)return self:command(arg or '')end,'roll [strength or -] [seed] [CPU port] [normal|boss|finalboss] | clear | list | stand|fight [port] | drive on|off|report')
+  g.command('foe',function(arg)return self:command(arg or '')end,'roll [strength or -] [seed] [CPU port] [normal|boss|finalboss] | clear | list | stand|fight [port] | drive on|off|report|switch on|off (force the old fight/script switch driver)')
   return self
  end
  function F:cpu(p)
@@ -20,16 +20,15 @@ return function(D)
    elseif w[1]=='sliced' then self.sliced=(w[2]=='on');return
    elseif w[1]=='held' then self.held=(w[2]=='on');self.g.log('foe: held cap '..tostring(self.held));return
    elseif w[1]=='drive' then
-    assert(self.driver,'no opponent driver');if w[2]=='off' then self.drive=false;self.driver:reset() elseif w[2]=='on' then self.drive=true
+    assert(self.driver,'no opponent driver');if w[2]=='switch' then D.foe_driver.force_switch=(w[3]=='on');self.driver:reset();self.g.log('foe: switch driver '..tostring(D.foe_driver.force_switch));return
+    elseif w[2]=='off' then self.drive=false;self.driver:reset() elseif w[2]=='on' then self.drive=true
     elseif w[2]=='player' then -- debug (balance harness): drive the player's own build too, at a chosen skill, so a CPU stands in for a skilled player
      local sk=tonumber(w[3] or .5);assert(sk and sk>=0 and sk<=1,'skill 0..1');self.drive=true
      local eq=self.lab.engine.equipped[1] or {};local ctx=self.lab.engine.context
-     self.driver.foes[1]={want=D.foe_driver.wanted(eq),skill=sk,seed=tonumber(w[4] or 7),last_action=-1,cool=0,gap=0,context=ctx}
-     self.driver.stats[1]={skill=sk,attempts={},events={},switches=0,opportunities={}};self.lab.enabled=true
+     self.driver:install(1,D.foe_driver.wanted(eq),sk,tonumber(w[4] or 7),ctx);self.lab.enabled=true
     elseif w[2]=='force' then -- debug: drive every technique for a CPU at a chosen skill (rates are measured this way)
      local p=self:cpu(w[3]);local sk=tonumber(w[4] or .5);assert(sk and sk>=0 and sk<=1,'skill 0..1');self.drive=true
-     self.driver.foes[p]={want={lcancel=true,wavedash=true,ps=true,tech=true},skill=sk,seed=tonumber(w[5] or 1),last_action=-1,cool=0,gap=0}
-     self.driver.stats[p]={skill=sk,attempts={},events={},switches=0,opportunities={}};self.lab.enabled=true
+     self.driver:install(p,{lcancel=true,wavedash=true,ps=true,tech=true},sk,tonumber(w[5] or 1));self.lab.enabled=true
     else for _,l in ipairs(self.driver:report()) do self.g.log(l) end end;return
    elseif w[1]=='stand' or w[1]=='fight' then
     assert(#w<=2,'usage: foe stand|fight [port]');local p=self:cpu(w[2]);assert(self.g.cpu_mode and self.g.cpu_mode(p,w[1]),'native CPU mode refused');return

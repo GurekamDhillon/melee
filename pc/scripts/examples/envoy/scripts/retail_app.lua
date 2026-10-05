@@ -190,7 +190,7 @@ return function(D)
     -- The rule-host route has no companion stats: its build strip (run_hud) is drawn by the host instead.
     if not (r.rules and r.host) then D.hud.draw(self.g,r.companion,r.mode..' NG+'..r.loop,self.flashes,self.drives.juice.flash,r.reward) end
     if self.visible and self.menu.screen~='playing' and self.g.kit then D.menu_draw.draw(self.g,self.menu,self:context()) end
-    if r.tag_ticks and r.tag_ticks>0 and self.g.kit then
+    if r.tag_ticks and r.tag_ticks>0 and self.g.kit and not (r.rules and r.host) then   -- a rule-host run shows its own opponent plate and strip; the companion tag panel sat on top of the strip
      local a=self.g.safe_area();self.g.kit.panel(a.x+12,a.y+12,300,35)
      local labels={};for _,tag in ipairs(r.tags or {}) do labels[#labels+1]=tag.label end
      self.g.kit.text(a.x+22,a.y+35,#labels>0 and table.concat(labels,' / ') or 'BONUS / your companion stats are active','body','bone','left',{max_w=280})

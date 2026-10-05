@@ -74,10 +74,19 @@ return function(D)
  function Hd:draw_toast()
   local t=self.toasts[1];if not t then return end
   local g=self.g;local k=g.kit;if not k then return end
-  local a=g.safe_area();local w=math.min(520,a.w-40);local x=a.x+(a.w-w)/2;local y=a.y+70
-  local h=22+#t.lines*20
+  local a=g.safe_area();local w=math.min(560,a.w-40);local x=a.x+(a.w-w)/2;local y=a.y+70
+  -- Long lines wrap inside the panel (once per toast and width) instead of shrinking their text until it cannot be read.
+  if not t.rows or t.rows_w~=w then
+   t.rows={};t.rows_w=w
+   for i,l in ipairs(t.lines) do
+    local text=l.text or l
+    local parts=(D.drive_menu and D.drive_menu.wrap) and D.drive_menu.wrap(k,text,w-32) or {text}
+    for _,part in ipairs(parts) do t.rows[#t.rows+1]={text=part,colour=l.colour or (i==1 and 'gold' or 'bone')} end
+   end
+  end
+  local h=22+#t.rows*20
   k.panel(x,y,w,h)
-  for i,l in ipairs(t.lines) do k.text(x+16,y+14+i*20-4,l.text or l,'body',l.colour or (i==1 and 'gold' or 'bone'),'left',{max_w=w-32}) end
+  for i,r in ipairs(t.rows) do k.text(x+16,y+14+i*20-4,r.text,'body',r.colour,'left',{max_w=w-32}) end
  end
  function Hd:draw_card()
   local c=self.card;if not c then return end

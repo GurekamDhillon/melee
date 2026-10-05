@@ -37,6 +37,7 @@ return function(D)
   end
   -- A technique or crit moment worth a line (first technique rule fired, a strong crit): the strip's toast, presentation only.
   mods.toast=function(text) if self.running then self.hud:announce({{text='Technique',colour='gold'},text}) end end
+  if mods.foes then mods.foes.defer=function() return self.running and self.hud and #self.hud.toasts>0 end end  -- the opponent plate waits while an announcement is up (they used to overlap)
   g.command('uxdump',function() self:dump();return true end,'log the rule host state: slots, bag, keystones, offers, screen, hud')
   g.command('uxpress',function(a) self:press(a or '');return true end,'press a screen action: up down left right accept back x y start')
   g.command('uxcost',function(a) if a=='reset' then self.cost={} else for _,l in ipairs(self:cost_report()) do g.log(l) end end;return true end,'script cost of the run screens and strip: uxcost [reset]')
@@ -62,6 +63,9 @@ return function(D)
    self.stage=self.stage or 0;if (a or '')=='keys' then self.key_offers=D.keystones.offer(D.mod_progression.context(10,0),77,3,self:keystone_ids()) end
    self.screen:open('reward');self.screen.preview=true;return true
   end,'test hook: open the reward grid with real offers: uxpreview [keys]')
+  g.command('uxmodel',function(a) local w={};for x in (a or ''):gmatch('%S+') do w[#w+1]=tonumber(x) end
+   local mo=D.run_screen.model_opts;if w[1] then mo.yaw=w[1] end;if w[2] then mo.pitch=w[2] end;if w[3] then mo.margin=w[3] end
+   g.log(('uxmodel: yaw %s pitch %s margin %s'):format(mo.yaw,mo.pitch,mo.margin));return true end,'look tuning: how a drive model sits in its cell: uxmodel [yaw] [pitch] [margin]')
   g.command('uxbag',function() if self.running then self.screen:open('bag') end;return true end,'open the run bag screen')
   return self
  end

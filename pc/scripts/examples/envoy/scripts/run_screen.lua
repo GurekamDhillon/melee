@@ -12,6 +12,7 @@
 return function(D)
  local S={};S.__index=S
  S.tuning={hold_ticks=2850,tick_margin=90,safe_seconds=45}
+ S.model_opts={yaw=20,pitch=40,margin=.02}   -- how a drive model sits in its cell (the stone is tall and narrow in a square)
  local G=D.grid
  G.rarity.magic=G.rarity.magic or G.rarity.uncommon      -- Envoy's second rarity word
  G.palette.purple=G.palette.purple or 0xC79BFFFF
@@ -59,11 +60,11 @@ return function(D)
   local h=self.host;local loot=self:drives().loot;local c=T().cell(loot,r,flags)
   local fl={};if c.new then fl[#fl+1]='new' end;if c.can_merge then fl[#fl+1]='merge' end
   ref.record=r
-  return {colour=c.colour_rgba,rarity=c.rarity,pips=c.affixes,flags=fl,icon=self:model_desc(r.colour) or (r.unique and 'crown' or nil),name=loot:name(r),ref=ref,actions={}}
+  return {colour=c.colour_rgba,rarity=c.rarity,pips=c.affixes,flags=fl,icon=self:model_desc(r.colour) or (r.unique and 'crown' or nil),name=T().short(loot,r),ref=ref,actions={}}
  end
  function S:key_cell(id,kind)
   local h=self.host;local rule=h:keystone_rule(id);local fam=D.keystones.family(id)
-  return {colour=T().base_colour[fam] or 'gold',rarity='unique',pips=0,icon={kind='letter',letter=(rule and rule.label or id):sub(1,1):upper()},
+  return {colour=T().base_colour[fam] or 'gold',rarity='unique',pips=0,icon={kind='letter',letter=(rule and rule.label or id):sub(1,1):upper(),colour=T().base_colour[fam] or 0xEBD175FF},
    name=rule and rule.label or id,ref={kind=kind,id=id},actions={}}
  end
  local function empty_cell(ref,text) return {empty=true,name='Empty slot',lines={text},ref=ref,actions={}} end
@@ -170,7 +171,8 @@ return function(D)
  end
  function S:detail_lines(cell)
   local h=self.host;local d=self:drives();local loot=d.loot;local tx=T();local ref=cell.ref;local lines={}
-  local function drive_lines(r) lines[#lines+1]=tx.rarity_label[r.rarity]..' drive';for _,l in ipairs(tx.drive_lines(loot,r)) do lines[#lines+1]=l end end
+  -- the long name lives in the detail panel (wrapped), the cell and the header carry the short one
+  local function drive_lines(r) local full,short=loot:name(r),tx.short(loot,r);lines[#lines+1]=tx.rarity_label[r.rarity]..' drive'..(full~=short and (': '..full) or ''); for _,l in ipairs(tx.drive_lines(loot,r)) do lines[#lines+1]=l end end
   if ref.kind=='offer' then
    local r=ref.record;drive_lines(r);local plan=h:plan_take(r);lines[#lines+1]='';lines[#lines+1]=self:plan_line(plan)
    if plan.action~='choose' then self:compare(lines,plan_edit(plan,r)) end
@@ -232,7 +234,7 @@ return function(D)
  -- screen-space model draw can be adopted here without touching the screens).
  function S:icon(desc,x,y,w,h,focused,locked,cell)
   if desc.kind=='model' then
-   local ok=pcall(self.g.kit.model,desc.asset,x,y,w,h,{yaw=20,pitch=12,spin=focused and 120 or 0,dim=locked and 0.35 or 1,tint=desc.tint})
+   local mo=S.model_opts;local ok=pcall(self.g.kit.model,desc.asset,x,y,w,h,{yaw=mo.yaw,pitch=mo.pitch,margin=mo.margin,spin=focused and 120 or 0,dim=locked and 0.35 or 1,tint=desc.tint})
    if not ok and not self.model_failed then   -- a stale handle or a refused draw: flat cells from now on, said once
     self.model_failed=true;self:release_models();self.dirty=true;self.host:log('drive models unavailable for the grid: using flat cells')
    end
@@ -240,7 +242,17 @@ return function(D)
   end
   if self.custom_icon and desc.kind~='letter' then return self.custom_icon(desc,x,y,w,h,focused,locked,cell) end
   local k=self.g.kit
-  if desc.kind=='letter' and k then k.text(x+w/2,y+h*0.6,desc.letter,'heading','ink','center') end
+  if desc.kind=='letter' and k then
+   -- A keystone is a wedge (the keystone of an arch) in a lighter shade of its family colour, with its initial on it: no drive has this shape.
+   local g=self.g;local geo=self.wedge;if not geo or geo.w~=w then geo={w=w,rows={}};self.wedge=geo
+    local n=12;local top,bot,hh=w*.66,w*.42,w*.66;local y0=h*.1
+    for i=0,n-1 do local f=(i+.5)/n;local ww=top+(bot-top)*f;geo.rows[#geo.rows+1]={math.floor(w/2-ww/2),math.floor(y0+hh*i/n),math.ceil(ww),math.ceil(hh/n)+1} end
+   end
+   local c=G.shade(desc.colour or 0xEBD175FF,1.28)
+   for _,r in ipairs(geo.rows) do g.fill(x+r[1]-2,y+r[2],r[3]+4,r[4],0x0A0D12FF) end
+   for _,r in ipairs(geo.rows) do g.fill(x+r[1],y+r[2],r[3],r[4],c) end
+   if w>=58 then k.text(x+w/2,y+h*0.54,desc.letter,'heading','ink','center') else k.text(x+w/2,y+h*0.52,desc.letter,'body','ink','center') end
+  end
  end
  -- Focus changed: fill that cell's detail text once (and the merge arrow on the cell the focused drive would merge into).
  function S:sync()

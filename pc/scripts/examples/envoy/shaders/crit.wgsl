@@ -28,6 +28,8 @@ fn mod_fragment(in: Input) -> vec4f {
   let ring_amt = params.ring.x * env;
   var duv = uv - unmetric(dir) * ring * 0.022 * ring_amt;
 
+  // crisp accent: a thin bright ring edge. It is what a light crit reads as (strong crits have the tear and the lines on top of it).
+  let ring_edge = 1.0 - smoothstep(0.0, 0.010, abs(r - ring_r));
   // radial blur toward the contact point (5 taps, constant bound)
   let blur = params.blur.x * env * smoothstep(0.05, 0.5, r);
   // decaying chromatic aberration along the radial
@@ -69,6 +71,7 @@ fn mod_fragment(in: Input) -> vec4f {
   two = mix(two, vec3f(1.0) - two, params.tear_inv.x);
   col = mix(col, two, in_tear * params.tear_amt.x);
 
+  col = col + vec3f(1.0, 0.96, 0.82) * ring_edge * params.accent.x * sat(1.6 * env);
   col = max(col, vec3f(0.0));
   // never leave a residue: the tail fades to the untouched scene
   let fade = 1.0 - smoothstep(0.85, 1.0, prog);

@@ -104,9 +104,10 @@ return function(D)
  function F:frame()
   if self.sliced and self.jobs then for p in pairs(self.jobs) do local ok,why=pcall(self.roll_advance,self,p,2);if not ok then self.jobs[p]=nil;self.g.log('foe: roll refused '..tostring(why)) end end end
   if self.driver and self.drive and next(self.driver.foes) then local m=self.g.match();if m and m.active then self.driver:frame(m.frame) end end
+  if self.defer and self.defer() then return end -- an announcement is up: the plate waits its turn (its timer does not run)
   for p,label in pairs(self.labels) do label.left=label.left-1;if label.left<=0 then self.labels[p]=nil end end end
  function F:draw()
-  if not self.g.kit then return end;local a=self.g.safe_area();local y=a.y+42;local ports={}
+  if not self.g.kit or (self.defer and self.defer()) then return end;local a=self.g.safe_area();local y=a.y+42;local ports={}
   for p=2,6 do if self.labels[p] then ports[#ports+1]=p end end;if #ports==0 then return end
   local shown=ports[math.floor(self.lab.engine.frame/45)%#ports+1];local l=self.labels[shown]
   -- Wrapping measures text through the kit: done once per label and width, not on every drawn frame.

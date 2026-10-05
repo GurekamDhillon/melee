@@ -14,8 +14,9 @@ return function(D)
  local function clamp(x,a,b) return x<a and a or (x>b and b or x) end
  -- The impact-drill sequence: one scalar s (0..1) drives every layer (demos/impact-drill, same shader).
  function F.look(s)
-  return {dur=.16+.34*s,tear_s=(s<.45) and (1/60) or (2/60),tear_amt=.30+.70*s,tear_inv=clamp((s-.55)/.3,0,1)*.9,tear_r=.30+1.60*s,tear_thr=.45,
-   lines=clamp((s-.15)/.6,0,1)*.9,blur=.010+.070*s,ca=.002+.014*s,ring=.35+.65*s,contrast=.20+.80*s}
+  -- A light crit is a crisp accent (a bright ring edge, a firmer ring push, a short contrast pop), never a flash: `accent` fades out as the layers above it take over.
+  return {dur=.22+.28*s,tear_s=(s<.45) and (1/60) or (2/60),tear_amt=.30+.70*s,tear_inv=clamp((s-.55)/.3,0,1)*.9,tear_r=.30+1.60*s,tear_thr=.45,
+   lines=clamp((s-.15)/.6,0,1)*.9,blur=.010+.070*s,ca=.003+.013*s,ring=.60+.40*s,contrast=.38+.62*s,accent=clamp(1.0-.9*s,.15,1)}
  end
  -- Crit strength (0..1, the engine's) to the sequence strength: a floor so the lightest crit still reads, then linear.
  function F.sequence_strength(strength,intensity)
@@ -79,7 +80,7 @@ return function(D)
   if self.shader then return true end
   local g=self.g
   if not g.shader_load then self:note('shader','shader API unavailable');return false end
-  local ok,h,err=pcall(g.shader_load,'shaders/crit.wgsl',{params={center={.5,.5,0,0},progress=0,elapsed=0,tear_s=0,tear_amt=0,tear_inv=0,tear_r=0,tear_thr=.45,lines=0,blur=0,ca=0,ring=0,contrast=0}})
+  local ok,h,err=pcall(g.shader_load,'shaders/crit.wgsl',{params={center={.5,.5,0,0},progress=0,elapsed=0,tear_s=0,tear_amt=0,tear_inv=0,tear_r=0,tear_thr=.45,lines=0,blur=0,ca=0,ring=0,contrast=0,accent=0}})
   if not ok or not h then self:note('shader','crit shader disabled: '..tostring(ok and err or h));self.failed.shader=true;return false end
   self.shader=h;return true
  end

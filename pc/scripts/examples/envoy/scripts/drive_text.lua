@@ -164,7 +164,8 @@ return function(D)
  function T.short(loot,r)
   local base=r.colour:sub(1,1):upper()..r.colour:sub(2)..' Drive'
   if r.unique then return loot.rules[r.unique].label end
-  local labels={};for i,a in ipairs(r.affixes) do if i<=2 then labels[#labels+1]=loot.rules[a.id].label end end
+  local labels={};local keep=1   -- the first modifier's label and a count (+N): a name never outgrows its cell, card or panel header; the detail panel lists every modifier
+  for i,a in ipairs(r.affixes) do if i<=keep then labels[#labels+1]=loot.rules[a.id].label end end
   local more=#r.affixes-#labels
   return base..': '..table.concat(labels,', ')..(more>0 and (' +'..more) or '')
  end

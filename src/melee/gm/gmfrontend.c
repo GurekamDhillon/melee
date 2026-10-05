@@ -275,6 +275,10 @@ int Netplay_LobbyStageOpen(int i);
 void Netplay_SetStageMode(int mode);
 void Netplay_PlayerName(int who, char* out, int cap);
 int Netplay_StageMode(void);
+extern void Settings_SetInt(const char* key, int value);
+void Netplay_SetTurbo(int on);
+int Netplay_TurboPref(void);
+int Netplay_Turbo(void);
 int Netplay_RandomBegin(int ck, int color, int stocks, int minutes, int delay);
 void Netplay_RandomCancel(void);
 int Netplay_RandomStatus(void);
@@ -526,6 +530,16 @@ static void fe_ol_host(void)
 static const char* const fe_np_stage_modes[] = { "Competitive", "All Stages" };
 static int fe_np_get_stage_mode(void) { return Netplay_StageMode(); }
 static void fe_np_set_stage_mode(int v) { Netplay_SetStageMode(v); }
+/* Turbo: a match rule of rooms this player hosts (private rooms; Random Opponent never uses it).
+ * Saved in settings.cfg (`turbo_online`) for the next room, like Stage List. */
+static const char* const fe_np_turbo_modes[] = { "Off", "On" };
+static int fe_np_get_turbo(void) { return Netplay_TurboPref(); }
+static void fe_np_set_turbo(int v)
+{
+    Netplay_SetTurbo(v);
+    Settings_SetInt("turbo_online", v);
+    OSReport("frontend: online Turbo rule -> %s%c", v ? "on" : "off", 10);
+}
 
 /* Random Opponent: the server pairs us with whoever else is looking; the waiting room shows the
  * search, then the lobby as for a room. */
@@ -562,6 +576,8 @@ static const FrontendItem fe_items_online[] = {
       NULL, 0, 0, 0, NULL, NULL, NULL, fe_ol_random },
     { FE_CHOICE, 0, "Stage List", "Stages in rooms you host: the legal six, or every stage you both have.",
       fe_np_get_stage_mode, fe_np_set_stage_mode, 0, 1, 1, fe_np_stage_modes },
+    { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled into most moves.",
+      fe_np_get_turbo, fe_np_set_turbo, 0, 1, 1, fe_np_turbo_modes },
     { FE_SLIDER, 0, "Stocks", "Stocks per game, in rooms you host.", fe_np_get_stocks,
       fe_np_set_stocks, 1, 9, 1 },
     { FE_SLIDER, 0, "Time Limit", "Minutes per game, in rooms you host.", fe_np_get_minutes,

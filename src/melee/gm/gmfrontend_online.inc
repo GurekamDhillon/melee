@@ -1708,7 +1708,7 @@ static void fl_build_lobby(void)
     const FjNode* G;
     FlEl e;
     Netplay_RoomCode(code, sizeof code);
-    sprintf(room, "ROOM %s", code);
+    sprintf(room, Netplay_Turbo() ? "ROOM %s - TURBO" : "ROOM %s", code); /* the host's match rule, shown to both */
     crumbs[2] = room;
     if (fl_can_pick_char()) {
         hg[nh] = "glyph_a"; ht[nh++] = "Pick";

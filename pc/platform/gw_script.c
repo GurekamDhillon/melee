@@ -6425,7 +6425,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"loop_1p", l_loop_1p},
     {"spawn_1p", l_spawn_1p},
     {"fighter_mod", l_fighter_mod},
-    {"fighter_caps", l_fighter_caps}, {"fighter_effect", l_fighter_effect},
+    {"fighter_caps", l_fighter_caps}, {"fighter_interrupt", l_fighter_interrupt}, {"fighter_effect", l_fighter_effect},
     {"fighter_armour", l_fighter_armour},
         {"fighter_armor", l_fighter_armor}, {"give_item", l_give_item},
     {"nearest_opponent", l_nearest_opponent}, {"opponents_in_radius", l_opponents_in_radius},

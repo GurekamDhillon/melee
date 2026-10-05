@@ -403,6 +403,13 @@ static void fso_set_stages(int v)
     Settings_SetInt("stage_mode", v);
 }
 static const char* const fso_stage_modes[] = { "Competitive", "All Stages" };
+static int fso_get_turbo(void) { return Netplay_TurboPref(); }
+static void fso_set_turbo(int v)
+{
+    Netplay_SetTurbo(v);
+    Settings_SetInt("turbo_online", v);
+}
+static const char* const fso_turbo_modes[] = { "Off", "On" };
 
 static const FrontendItem fe_items_set_online[] = {
     { FE_ACTION, FE_DO_CALL, "Player Name", "Shown to your opponent in the lobby and before matches.",
@@ -413,6 +420,8 @@ static const FrontendItem fe_items_set_online[] = {
       fso_get_delay, fso_set_delay, 0, 8, 1, NULL, fe_np_fmt_delay },
     { FE_CHOICE, 0, "Stage List", "Rooms you host: the legal six, or every stage you both have.",
       fso_get_stages, fso_set_stages, 0, 1, 1, fso_stage_modes },
+    { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled. Never in Random.",
+      fso_get_turbo, fso_set_turbo, 0, 1, 1, fso_turbo_modes },
 };
 
 /* ---- MODS: one toggle per mod in the folder --------------------------------------------------- */
@@ -519,7 +528,18 @@ static void fsg_set_unlock(int v)
                  false);
 }
 
+/* Turbo for local Versus: friends on one machine. Read by the simulation through the native rule
+ * word (gw_MatchTurboRules: setting `turbo_versus`, VS scenes only, never online or in a replay). */
+static int fsg_get_turbo(void) { return Settings_Int("turbo_versus", 0) != 0; }
+static void fsg_set_turbo(int v)
+{
+    Settings_SetInt("turbo_versus", v);
+    OSReport("frontend: local Versus Turbo rule -> %s%c", v ? "on" : "off", 10);
+}
+
 static const FrontendItem fe_items_set_gameplay[] = {
+    { FE_TOGGLE, 0, "Turbo (Versus)", "A connected hit can be cancelled into most moves. Local Versus only.",
+      fsg_get_turbo, fsg_set_turbo, 0, 1, 1 },
     { FE_TOGGLE, 0, "Unlock Everything", "Every fighter, stage and option, without touching the save.",
       fsg_get_unlock, fsg_set_unlock, 0, 1, 1 },
     { FE_CHOICE, 0, "Mode", "How a VS match is won.", fe_get_mode, fe_set_mode, 0, 3, 1, fe_opt_mode },
@@ -567,4 +587,5 @@ static void fe_settings_apply_online(void)
 {
     fe_np_delay = Settings_Int("delay", fe_np_delay);
     Netplay_SetStageMode(Settings_Int("stage_mode", Netplay_StageMode()));
+    Netplay_SetTurbo(Settings_Int("turbo_online", Netplay_TurboPref()));
 }

@@ -19,6 +19,10 @@ static int test_script_fighter_caps(void)
         "no(gd.give_item,1,'typo');no(gd.give_item,1,-2); "
         "no(gd.opponents_in_radius,1,-1);no(gd.opponents_in_radius,1,0/0); "
         "no(gd.nearest_opponent,1,13);no(gd.opponents_in_radius,1,1,0); "
+        "assert(type(gd.fighter_interrupt)=='function'); "
+        "no(gd.fighter_interrupt,0,{});no(gd.fighter_interrupt,13,{});no(gd.fighter_interrupt,1,{frames=3601}); "
+        "no(gd.fighter_interrupt,1,{frames=-1});no(gd.fighter_interrupt,1,{exits={'typo'}});no(gd.fighter_interrupt,1,{typo=1}); "
+        "no(gd.fighter_interrupt,1,{guard=1});no(gd.fighter_interrupt,1,'x'); "
         "no(gd.fighter_timed_status,1,0,1,1);no(gd.fighter_timed_status,1,5,1,1); "
         "no(gd.fighter_timed_status,1,1,0/0,1);no(gd.fighter_timed_status,1,1,1,-1)",out,sizeof out);
     gs.match_active=saved;
@@ -26,7 +30,7 @@ static int test_script_fighter_caps(void)
     gs.match_active=0;
     rc=t_exec("local function inactive(f,...) local ok,e=pcall(f,...); "
         "assert(not ok and tostring(e):find('active match',1,true),tostring(e)) end; "
-        "inactive(gd.fighter_caps,1,{});inactive(gd.fighter_armour,1,nil); "
+        "inactive(gd.fighter_caps,1,{});inactive(gd.fighter_armour,1,nil);inactive(gd.fighter_interrupt,1,{frames=5}); "
         "inactive(gd.fighter_effect,1,'metal',1,1);inactive(gd.give_item,1,11); "
         "inactive(gd.fighter_timed_status,1,1,1,1)",out,sizeof out);
     gs.match_active=saved;

@@ -184,6 +184,7 @@ void ScriptGame_FighterBenchRelease(int owner);
 static void script_bench_frame(void);
 void ScriptGame_CapsMovementRelease(int owner);
 void ScriptGame_CapsEffectsRelease(int owner);
+void ScriptGame_IntrWinRelease(int owner);
 void ScriptGame_CapsEffectsFrame(void);
 void ScriptGame_CapsStatusRelease(int owner);
 static void script_caps_status_frame(void);
@@ -215,6 +216,7 @@ void ScriptGame_StageEnd(void)
     ScriptGame_CapsMovementRelease(0);
     ScriptGame_CapsEffectsRelease(0);
     ScriptGame_CapsStatusRelease(0);
+    ScriptGame_IntrWinRelease(0); /* interrupt windows (also the match rule's: BSS must start every match equal) */
     ScriptGame_SimRelease(0);
     ScriptGame_HitRulesRelease(0);
     ScriptGame_EchoReset();
@@ -1709,6 +1711,7 @@ static Fighter* script_fighter(int slot)
 #include "script_fighter_caps_armor.inc"
 #include "script_fighter_caps_armor_formula_tests.inc"
 #include "script_fighter_caps_effects.inc"
+#include "script_fighter_interrupt.inc"
 #include "script_zones.inc"
 #include "script_six_slots.inc"
 #include "script_six_slots_tests.inc"

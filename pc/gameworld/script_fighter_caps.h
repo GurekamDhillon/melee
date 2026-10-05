@@ -17,6 +17,11 @@ int ScriptGame_ArmorAbsorbed(Fighter* fp);
 void ScriptGame_ArmorRelease(int owner);
 void ScriptGame_ArmorFrame(void);
 int ScriptGame_CapsMaxJumps(Fighter* fp);
+/* interrupt window (script_fighter_interrupt.inc): open on a connecting hit (kind 0 fighter,
+ * 1 shield, 2 item), run after the fighter's own input callback, hash word for RB_GameHash */
+void ScriptGame_IntrWinHit(Fighter* fp, int kind);
+void ScriptGame_IntrWinTick(Fighter_GObj* gobj);
+unsigned ScriptGame_IntrWinHashWord(int entity);
 int ScriptGame_CapsActionAllowed(Fighter* fp, int flag);
 #define FT_CAPS_MAX_JUMPS(fp) ScriptGame_CapsMaxJumps(fp)
 #define FT_CAPS_ACTION_ALLOWED(fp, flag) ScriptGame_CapsActionAllowed(fp, flag)

@@ -369,6 +369,7 @@ static int refuse_case(int which, const char *needle) {
   hc.mods_desc = "plco#12ab,itco#34cd";
   gc = peer_cfg(&g, which == 0 ? 0x9999 : 0x1111, which == 1 ? 0x9999 : 0x2222, which == 2 ? 0x9999 : 0x3333);
   if (which == 3) gc.payload_bytes = 12;
+  if (which == 4 || which == 5) { hc.rules = 0x5FBu; gc.rules = which == 4 ? 0u : 0x5FBu ^ 1u; gc.rules_expect = 1; }
   ht = sim_transport(s, 0); gt = sim_transport(s, 1); g2t = sim_transport(s, 2);
   h.net = gw_net_host(&hc, &ht);
   g.net = gw_net_join(&gc, &gt, &haddr);
@@ -422,6 +423,37 @@ static int test_refuse_iso(void)  { return refuse_case(1, "disc"); }
 /* the host's global-data components travel in the refusal so the guest can name the difference */
 static int test_refuse_mods(void) { return refuse_case(2, "different global game data; host has: plco#12ab,itco#34cd"); }
 static int test_refuse_settings(void) { return refuse_case(3, "netplay settings"); }
+/* the match rules (Turbo): a guest that insists on a different word is refused at the handshake, with both words in the message */
+static int test_refuse_rules(void) { return refuse_case(4, "different match rules (host 000005fb, you 00000000)"); }
+static int test_refuse_rules2(void) { return refuse_case(5, "different match rules (host 000005fb, you 000005fa)"); }
+/* a guest that does not insist takes the host's word intact; one that insists on the same word joins */
+static int test_rules_agree(void) {
+  simnet *s = (simnet *)malloc(sizeof *s);
+  peer h, g;
+  gw_net_config hc, gc, rc;
+  gw_net_transport ht, gt;
+  gw_net_addr haddr = sim_addr(0);
+  int i, rv = 0, pass;
+  g_pb = GW_NET_DEFAULT_PAYLOAD;
+  for (pass = 0; pass < 2; ++pass) {
+    sim_init(s, 9 + pass);
+    init_blob();
+    peer_init(&h, s, 0, 0); peer_init(&g, s, 1, 0);
+    hc = peer_cfg(&h, 0x1111, 0x2222, 0x3333);
+    gc = peer_cfg(&g, 0x1111, 0x2222, 0x3333);
+    hc.rules = 0x5FBu;
+    if (pass == 1) { gc.rules = 0x5FBu; gc.rules_expect = 1; }
+    ht = sim_transport(s, 0); gt = sim_transport(s, 1);
+    h.net = gw_net_host(&hc, &ht);
+    g.net = gw_net_join(&gc, &gt, &haddr);
+    for (i = 0; i < 400 && !(gw_net_started(h.net) && gw_net_started(g.net)); ++i) pair_tick(s, &h, &g);
+    if (!gw_net_started(h.net) || !gw_net_started(g.net)) { gw_test_fail("rules pass %d: no start", pass); rv = 1; }
+    else if (!gw_net_remote_config(g.net, &rc, NULL, 0) || rc.rules != 0x5FBu) { gw_test_fail("guest did not get the host's rules (%08x)", (unsigned)rc.rules); rv = 1; }
+    gw_net_free(h.net); gw_net_free(g.net);
+  }
+  free(s);
+  return rv;
+}
 
 /* N frames each way, exactly once and in order, over a hostile network. */
 static int inputs_case(int loss, uint32_t jitter, int dup, int32_t frames, uint64_t seed, int pb, int pull) {
@@ -706,6 +738,9 @@ void gw_net_tests_register(void) {
   gw_test_register("net_refuse_iso", test_refuse_iso);
   gw_test_register("net_refuse_mods", test_refuse_mods);
   gw_test_register("net_refuse_settings", test_refuse_settings);
+  gw_test_register("net_refuse_rules", test_refuse_rules);
+  gw_test_register("net_refuse_rules_nearmiss", test_refuse_rules2);
+  gw_test_register("net_rules_agree", test_rules_agree);
   gw_test_register("net_inputs_clean", test_inputs_clean);
   gw_test_register("net_inputs_lossy", test_inputs_lossy);
   gw_test_register("net_inputs_hostile", test_inputs_hostile);

@@ -295,6 +295,10 @@ void gw_RB_SceneBegin(int scene_kind) {
     extern void gw_Netplay_MatchOver(void);
     extern void gw_SlippiMode_SceneBegin(int scene_kind);
     gw_SlippiMode_SceneBegin(scene_kind);
+    {
+        extern void gw_MatchRules_SceneBegin(int scene_kind);
+        gw_MatchRules_SceneBegin(scene_kind); /* the Turbo rule in force for a VS match */
+    }
     rb_init();
     /* Netplay is armed from the online menu at runtime, long after the first rb_init: start the
        session now (and stand it down once the netplay match is over). */

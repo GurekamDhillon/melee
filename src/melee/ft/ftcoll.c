@@ -1,6 +1,7 @@
 #if defined(TARGET_PC)
 #include <gameworld/script_hit_rules.h>
 #include <gameworld/script_echo.h>
+#include <gameworld/script_fighter_caps.h>
 #endif
 #include "ftcoll.h"
 
@@ -489,6 +490,7 @@ void ftColl_80076CBC(Fighter* fp0, HitCapsule* hit0, Fighter* fp1)
         extern void Script_GameEvent(int,int,int,int,int);
         Script_GameEvent(16,fp1->player_id,fp1->motion_id,7,fp1->is_sub_fighter);
         if (fp1->x221C_b2) Script_GameEvent(16,fp1->player_id,fp1->motion_id,8,fp1->is_sub_fighter);
+        ScriptGame_IntrWinHit(fp0,1 /* shield hit */); /* turbo rule window */
     }
 #endif
 
@@ -788,6 +790,7 @@ bool ftColl_80076ED8(Fighter* fp0, HitCapsule* hit0, Fighter* fp1,
                                      bits.i);
                     if(!ScriptGame_EchoReportContext(fp0,fp1,hit0)) ScriptGame_ReportHitContext(fp0,fp1,hit0->element,0);
                     if(inner_ret) ScriptGame_EchoConnected(hit0,fp1);
+                    if(inner_ret) ScriptGame_IntrWinHit(fp0,0 /* fighter hit */); /* turbo rule window */
                     ScriptGame_HitRuleContext(hit0,fp1);
                 }
 #endif
@@ -1464,6 +1467,8 @@ bool ftColl_80077C60(Item* item, HitCapsule* hit, Fighter* fp,
                         else Script_GameEvent(2 /* LAB_EV_HIT */, owner, fp->player_id, flags, bits.i);
                         ScriptGame_ReportHitContext(owner<0 ? NULL : GET_FIGHTER(item->owner),fp,hit->element,1);
                         ScriptGame_HitRuleContext(hit,fp);
+                        if (inner_ret && owner >= 0 && GET_FIGHTER(item->owner) != fp)
+                            ScriptGame_IntrWinHit(GET_FIGHTER(item->owner),2 /* projectile hit */); /* turbo rule window */
                     }
                 }
 #endif

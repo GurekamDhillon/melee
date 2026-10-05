@@ -2716,6 +2716,11 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
             if (fp->input_cb) {
                 fp->input_cb(gobj);
             }
+#if defined(TARGET_PC)
+            /* the interrupt window (turbo rule, script_fighter_interrupt.inc): after the action's
+             * own callback, outside hitlag, only if the action is still the one that opened it */
+            ScriptGame_IntrWinTick(gobj);
+#endif
         }
     }
 
@@ -3945,6 +3950,7 @@ u32 RB_GameHash(void)
             h = ftRb_Mix(h, ftRb_Bits(fp->self_vel.y));
             h = ftRb_Mix(h, ftRb_Bits(fp->dmg.x1830_percent));
             h = ftRb_Mix(h, ftRb_Bits(fp->facing_dir));
+            h = ftRb_Mix(h, ScriptGame_IntrWinHashWord(i + 1 + 6 * j)); /* 0 unless a window ever opened */
         }
     }
     return h;

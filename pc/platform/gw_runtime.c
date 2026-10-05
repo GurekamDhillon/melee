@@ -3,6 +3,7 @@
 #include "gw_hang.h"
 #include "gw_uigen.h"
 #include "gw_mods.h"
+#include "gw_matchrules.h"
 
 #include "shim_gx.h"
 #include "shim_os.h"
@@ -1589,6 +1590,7 @@ typedef struct {
   int rule_minutes; /* 0 = no limit */
   int rule_pause;   /* 0 off, 1 on */
   int cpus;         /* `cpus=idle` 1 / `cpus=fight` 0 / unset -1: every CPU slot idles */
+  int turbo;        /* `turbo=off|on|<hex rule word>` (gw_matchrules.h) / unset -1 */
   int errors;       /* count of rejected fields; a config with errors is still used */
   GwSlPlayer p[GW_SL_SLOTS];
   int enemy_team_colors; /* 0 off, 1 force untinted enemy team costumes */
@@ -1713,6 +1715,7 @@ static void gw_sl_config_init(GwSceneConfig *c) {
   c->skip_memcard = -1;
   c->teams = -1;
   c->cpus = -1;
+  c->turbo = -1;
   c->time_limit = -1;
   c->item_freq = -1;
   c->rule_match = -1;
@@ -2123,6 +2126,22 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
     else return -1;
     return 0;
   }
+  if (tt_ieq(key, "turbo")) {
+    /* the Turbo match rule (gw_matchrules.h): off, on (the first rule set), or a rule word in hex.
+     * The host's scene carries it, so both peers of an online match agree on it. */
+    unsigned w = 0;
+    char *end = NULL;
+    if (tt_ieq(val, "off") || !strcmp(val, "0")) w = 0;
+    else if (tt_ieq(val, "on")) w = GW_TURBO_V1;
+    else {
+      const char *h = (val[0] == '0' && (val[1] == 'x' || val[1] == 'X')) ? val + 2 : val;
+      w = (unsigned) strtoul(h, &end, 16);
+      if (h[0] == '\0' || end == NULL || *end != '\0') return -1;
+    }
+    if (!gw_turbo_valid(w)) return -1;
+    c->turbo = (int) w;
+    return 0;
+  }
   if (tt_ieq(key, "teams")) {
     c->teams = (val[0] == '1');
     return 0;
@@ -2423,6 +2442,43 @@ void gw_SceneLaunch_SetText(const char *text) {
     gw_log("gw: scene: set at runtime \"%s\"", text);
     gw_sl_parse(&gw_sl_cfg, text, "runtime");
     gw_cpu_idle_note(&gw_sl_cfg);
+  }
+}
+
+/* ---- the Turbo match rule: one native word, read by the simulation (gw_matchrules.h) -----------
+ * What the game asks (MatchTurboRules, from script_fighter_interrupt.inc) is, in order:
+ *   - an online match: the word both peers agreed in the handshake/lobby (gw_Netplay_TurboRules);
+ *     public/ranked matchmaking agrees 0. Never anything local.
+ *   - a replay or Slippi match: 0 (a .slp has no field for it).
+ *   - the scene's `turbo=` token, when the scene has one (scripted runs, the LAB, tests);
+ *   - local Versus: the `turbo_versus` setting (Versus > Rules), in a VS scene only.
+ * It is constant for a match: it is decided before the first frame and not by anything that
+ * differs between peers, which is what keeps it rollback- and SyncTest-safe. */
+extern int gw_Netplay_TurboRules(void);
+extern int gw_Settings_Int(const char *key, int dflt);
+extern int gw_Replay_Active(void);
+static int gw_rules_in_vs;
+int gw_MatchTurboRules(void) {
+  if (gw_Netplay_Enabled()) return gw_Netplay_TurboRules();
+  if (gw_Replay_Active()) return 0;
+  if (gw_sl_loaded && gw_sl_cfg.turbo >= 0) return gw_sl_cfg.turbo;
+  if (gw_rules_in_vs && gw_Settings_Int("turbo_versus", 0) != 0) return (int) GW_TURBO_V1;
+  return 0;
+}
+/* the indicator's colour animation id (fighter overlay); settings.cfg `turbo_colanim` retunes it
+ * without a rebuild - its look has not been seen by the agent that wrote it */
+int gw_MatchTurboColAnim(void) {
+  int id = gw_Settings_Int("turbo_colanim", 8);
+  return (id >= 0 && id < 0x7B) ? id : 8;
+}
+/* gw_RB_SceneBegin (gw_rollback.c), every scene */
+void gw_MatchRules_SceneBegin(int scene_kind) {
+  gw_rules_in_vs = scene_kind == 2;
+  if (gw_rules_in_vs) {
+    int w = gw_MatchTurboRules();
+    if (w != 0) gw_log("match rules: turbo=0x%08x (%d free frames) source=%s", (unsigned) w,
+                       gw_turbo_frames((unsigned) w), gw_Netplay_Enabled() ? "online match" :
+                       (gw_sl_loaded && gw_sl_cfg.turbo >= 0) ? "scene token" : "local Versus setting");
   }
 }
 
@@ -2866,6 +2922,46 @@ static int test_scene_index_spaces(void) {
                  c->p[1].ckind);
     return 1;
   }
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
+/* The Turbo match rule: the word's validity, the scene token, and what the simulation is asked.
+ * The interrupt window itself (rules, exclusions, repeat guard, snapshot exactness) is the
+ * game-side fixture ScriptGame_IntrWinTest. */
+extern int gw_ScriptGame_IntrWinTest(void);
+static int test_match_turbo_rule(void) {
+  const GwSceneConfig *c;
+  int rc = gw_ScriptGame_IntrWinTest();
+  if (rc != 0) { gw_test_fail("interrupt window fixture failed (mask 0x%x)", rc); return 1; }
+  if (GW_TURBO_V1 != 0x5FBu || !gw_turbo_valid(GW_TURBO_V1) || gw_turbo_valid(GW_TURBO_V1 | GW_TURBO_HITLAG) ||
+      !gw_turbo_valid(0) || gw_turbo_valid(2u)) { gw_test_fail("turbo word validity wrong"); return 1; }
+  gw_SceneLaunch_LoadForTest("mode=vs;turbo=on");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->turbo != (int) GW_TURBO_V1) { gw_test_fail("turbo=on: errors %d turbo %d", c->errors, c->turbo); return 1; }
+  if (gw_MatchTurboRules() != (int) GW_TURBO_V1 && !gw_Netplay_Enabled() && !gw_Replay_Active()) {
+    gw_test_fail("MatchTurboRules ignores the scene token: %d", gw_MatchTurboRules()); return 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=vs;turbo=0x0C0005FB"); /* 12 frames, the V1 rules */
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->turbo != 0x0C0005FB || gw_turbo_frames((unsigned) c->turbo) != 12) {
+    gw_test_fail("turbo=hex: errors %d turbo %x", c->errors, c->turbo); return 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=vs;turbo=off");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->turbo != 0) { gw_test_fail("turbo=off: errors %d turbo %d", c->errors, c->turbo); return 1; }
+  gw_SceneLaunch_LoadForTest("mode=vs;turbo=200"); /* HITLAG-reserved bit 0x200 is not built */
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors != 1 || c->turbo != -1) { gw_test_fail("turbo=200 accepted (errors %d turbo %d)", c->errors, c->turbo); return 1; }
+  gw_SceneLaunch_LoadForTest("mode=vs;turbo=zzz");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors != 1 || c->turbo != -1) { gw_test_fail("turbo=zzz accepted"); return 1; }
+  gw_SceneLaunch_LoadForTest("mode=vs;turbo=7F000001"); /* 127 frames: over the cap */
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors != 1) { gw_test_fail("turbo window over the cap accepted"); return 1; }
+  gw_SceneLaunch_LoadForTest("mode=vs;p2=fox/cpu4");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->turbo != -1) { gw_test_fail("default scene carries a turbo rule"); return 1; }
   gw_SceneLaunch_LoadForTest(NULL);
   return 0;
 }
@@ -3518,6 +3614,7 @@ void gw_scene_tests_register(void) {
   gw_test_register("scene_index_spaces", test_scene_index_spaces);
   gw_test_register("scene_parse_vs_four", test_scene_parse_vs_four);
   gw_test_register("scene_cpu_idle_tokens", test_scene_cpu_idle_tokens);
+  gw_test_register("match_turbo_rule", test_match_turbo_rule);
   gw_test_register("scene_parse_stage", test_scene_parse_stage);
   gw_test_register("scene_memcard_default", test_scene_memcard_default);
   gw_test_register("scene_parse_file_form", test_scene_parse_file_form);

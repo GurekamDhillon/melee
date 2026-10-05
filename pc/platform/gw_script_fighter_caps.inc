@@ -14,6 +14,9 @@ extern int gw_ScriptGame_CapsOpponent(int entity,int radius,int nth,int exclude)
 extern int gw_ScriptGame_CapsStatus(int entity,int channel,int owner,int value,int frames);
 extern int gw_ScriptGame_CapsStatusRead(int entity,int channel,int field);
 extern void gw_ScriptGame_CapsStatusRelease(int owner);
+extern int gw_ScriptGame_IntrWinSet(int entity,int owner,int frames,int exits,int flags);
+extern int gw_ScriptGame_IntrWinRead(int entity,int field);
+extern void gw_ScriptGame_IntrWinRelease(int owner);
 
 static int gs_caps_entity(lua_State* L,int at)
 {
@@ -175,8 +178,57 @@ static int l_fighter_timed_status(lua_State* L)
     frames=gs_caps_frames(L,4);gs_rw_branch();
     lua_pushboolean(L,gw_ScriptGame_CapsStatus(e,channel,gs.cur+1,gs_fbits(value),frames));return 1;
 }
+/* gd.fighter_interrupt(entity [, {frames=, exits={...}, guard=, restore_jumps=}]): the interrupt window
+ * (script_fighter_interrupt.inc), opened now for the fighter's CURRENT action. Offline only: online it is
+ * the Turbo match rule's, agreed by both peers, and a script cannot write it. With no table it reads:
+ * nil, or {frames, exits={names}, key, opened, cancels}. A table of frames=0 closes this script's window. */
+static const char* const gs_iw_exits[]={"jab","tilt","smash","aerial","special","grab","jump","dash","crouch","turn","walk","escape","shield","air_dodge","air_jump",NULL};
+static int l_fighter_interrupt(lua_State* L)
+{
+    int e=gs_caps_entity(L,1),frames=0,exits=0x7FFF,flags=0,i;
+    if(lua_gettop(L)==1) {
+        int m;
+        if(gw_ScriptGame_IntrWinRead(e,0)<=0) { lua_pushnil(L); return 1; }
+        lua_createtable(L,0,6);
+        gs_setint(L,"frames",gw_ScriptGame_IntrWinRead(e,0));
+        gs_setint(L,"owner",gw_ScriptGame_IntrWinRead(e,1));
+        gs_setint(L,"key",gw_ScriptGame_IntrWinRead(e,3));
+        gs_setint(L,"opened",gw_ScriptGame_IntrWinRead(e,4));
+        gs_setint(L,"cancels",gw_ScriptGame_IntrWinRead(e,5));
+        m=gw_ScriptGame_IntrWinRead(e,2);
+        lua_createtable(L,0,0);
+        for(i=0;gs_iw_exits[i];++i) if(m&(1<<i)) { lua_pushboolean(L,1); lua_setfield(L,-2,gs_iw_exits[i]); }
+        lua_setfield(L,-2,"exits");
+        return 1;
+    }
+    gs_caps_write(L,"fighter_interrupt");
+    luaL_checktype(L,2,LUA_TTABLE); lua_pushnil(L);
+    while(lua_next(L,2)) {
+        const char* k=lua_type(L,-2)==LUA_TSTRING ? lua_tostring(L,-2) : NULL;
+        if(k && !strcmp(k,"frames")) {
+            lua_Integer n=luaL_checkinteger(L,-1);
+            if(n<0 || n>3600) return luaL_error(L,"interrupt window must be 0-3600 logic frames");
+            frames=(int)n;
+        } else if(k && !strcmp(k,"exits")) {
+            luaL_checktype(L,-1,LUA_TTABLE); exits=0; lua_pushnil(L);
+            while(lua_next(L,-2)) {
+                const char* x=lua_type(L,-1)==LUA_TSTRING ? lua_tostring(L,-1) : NULL;
+                for(i=0;x && gs_iw_exits[i];++i) if(!strcmp(x,gs_iw_exits[i])) break;
+                if(!x || !gs_iw_exits[i]) return luaL_error(L,"unknown interrupt exit");
+                exits|=1<<i; lua_pop(L,1);
+            }
+        } else if(k && !strcmp(k,"guard")) { luaL_checktype(L,-1,LUA_TBOOLEAN); if(lua_toboolean(L,-1)) flags|=1; }
+        else if(k && !strcmp(k,"restore_jumps")) { luaL_checktype(L,-1,LUA_TBOOLEAN); if(lua_toboolean(L,-1)) flags|=2; }
+        else return luaL_error(L,"unknown interrupt option");
+        lua_pop(L,1);
+    }
+    gs_rw_branch();
+    lua_pushboolean(L,gw_ScriptGame_IntrWinSet(e,gs.cur+1,frames,exits,flags));
+    return 1;
+}
 static void gs_caps_release(int owner)
 {
+    gw_ScriptGame_IntrWinRelease(owner);
     gw_ScriptGame_CapsMovementRelease(owner);
     gw_ScriptGame_CapsEffectsRelease(owner);
     gw_ScriptGame_CapsStatusRelease(owner);

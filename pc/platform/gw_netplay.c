@@ -35,6 +35,7 @@
 #include "gw_rollback.h"
 #include "gw_mexid.h" /* delta: content identities - mods online (gw_mexid.h) */
 #include "gw_script.h" /* charlie: gameplay scripts join the must-match set */
+#include "gw_matchrules.h" /* the match rule word (Turbo) agreed in the handshake */
 #include "shim_vi.h"
 #include <stdio.h>
 #include <stdint.h>
@@ -115,6 +116,9 @@ static struct {
     int peer_left;        /* the connection ended because the opponent left (not an error of ours) */
     int use_lobby;        /* the menu path: connected players meet in the pick/ban lobby first */
     int stage_mode;       /* rooms this side hosts: 0 competitive stage list, 1 all stages */
+    unsigned turbo;       /* the Turbo match rule word agreed for this match (gw_matchrules.h); 0 = off */
+    unsigned turbo_pref;  /* the host's choice for rooms it opens (menu / MELEE_NETPLAY_TURBO); never used for random matches */
+    int turbo_env;        /* guest, scripted: MELEE_NETPLAY_TURBO is set, so the guest insists on that word */
     int t_open_session;   /* random matchmaking: the session on the queue socket has started */
     int started, dead, accepted;
     long ticks;
@@ -130,6 +134,12 @@ static struct {
 } np = { .phase = NP_IDLE, .desync_frame = GW_NET_NO_FRAME };
 
 int gw_Netplay_Enabled(void) { return np.enabled; }
+/* what the simulation reads in an online match (gw_MatchTurboRules, gw_runtime.c) */
+int gw_Netplay_TurboRules(void) { return (int) np.turbo; }
+/* the menus (gmfrontend): the host's choice for rooms it opens; the word agreed for the match in the lobby */
+void gw_Netplay_SetTurbo(int on) { np.turbo_pref = on ? GW_TURBO_V1 : 0; }
+int gw_Netplay_TurboPref(void) { return np.turbo_pref != 0; }
+int gw_Netplay_Turbo(void) { return np.turbo != 0; }
 int gw_Netplay_LocalPort(void) { return np.host ? 0 : 1; }
 int gw_Netplay_RemotePort(void) { return np.host ? 1 : 0; }
 int gw_Netplay_Delay(void) { return np.delay; }
@@ -197,6 +207,22 @@ static void np_build_scene(char *out, size_t cap, int host_ck, int host_c, int g
              "mode=vs;at=match;p1=%s/c%d/hu;p2=%s/c%d/hu;stage=%s;match=stock;stocks=%d;"
              "minutes=%d;items=off;pause=0",
              hk, host_c, gk, guest_c, sk, np.stocks, np.minutes);
+    /* the match rule travels in the scene too (and in the handshake): the host's word, or nothing */
+    if (np.turbo != 0) {
+        size_t l = strlen(out);
+        snprintf(out + l, cap - l, ";turbo=%x", np.turbo);
+    }
+}
+
+/* The Turbo word a scene string carries (0 if none; (unsigned) -1 if malformed or unsupported). */
+static unsigned np_scene_turbo(const char *scene) {
+    const char *t = strstr(scene, ";turbo=");
+    char *end = NULL;
+    unsigned long w;
+    if (t == NULL) return 0;
+    w = strtoul(t + 7, &end, 16);
+    if (end == t + 7 || (*end != ';' && *end != '\0') || !gw_turbo_valid((unsigned) w)) return (unsigned) -1;
+    return (unsigned) w;
 }
 
 static void np_cb_lobby_any(void *user, const uint8_t *data, int len); /* delta */
@@ -256,6 +282,15 @@ static void np_cb_event(void *user, int ev, const char *msg) {
         np.dead = 1;
         np_status("%s: %s", ev == GW_NET_EV_REFUSED ? "Refused" : "Disconnected",
                   msg != NULL ? msg : "the other player left");
+        /* the match rules differ: say it in the player's words (gw_net.c "different match rules (host H, you G)") */
+        if (ev == GW_NET_EV_REFUSED && msg != NULL && strncmp(msg, "different match rules", 21) == 0) {
+            unsigned hw = 0, gw = 0;
+            const char *q = strstr(msg, "(host ");
+            if (q != NULL && sscanf(q, "(host %x, you %x)", &hw, &gw) == 2) {
+                np_status("Refused: the host plays with Turbo %s and this game is set to Turbo %s",
+                          hw ? "ON" : "OFF", gw ? "ON" : "OFF");
+            }
+        }
         /* delta: a global-data mismatch names what differs (gw_mexid.c) */
         if (ev == GW_NET_EV_REFUSED && msg != NULL &&
             strncmp(msg, NP_GLOBAL_REFUSAL, strlen(NP_GLOBAL_REFUSAL)) == 0) {
@@ -1899,6 +1934,18 @@ static int np_start_session(const gw_net_addr *peer_in, uint32_t bind_ip) {
            gw_MexId_Count(), gw_Mods_Describe()[0] != '\0' ? gw_Mods_Describe() : "none");
     cfg.first_frame = NP_FIRST_FRAME;
     cfg.payload_bytes = NP_PAYLOAD;
+    /* the match rules (Turbo). Only the host of a room, never a random match. A scripted guest that
+       sets MELEE_NETPLAY_TURBO insists on that word and is refused by a host with another; a menu
+       guest takes the host's (and sees it in the lobby before it readies) */
+    np.turbo = (np.host && rnd.state != NP_RAND_MATCHED) ? np.turbo_pref : 0;
+    if (np.host) {
+        cfg.rules = np.turbo;
+        if (np.turbo != 0) gw_log("netplay: hosting with match rules turbo=0x%08x (%d free frames)", np.turbo,
+                                  gw_turbo_frames(np.turbo));
+    } else if (np.turbo_env) {
+        cfg.rules = np.turbo_pref;
+        cfg.rules_expect = 1;
+    }
     cfg.hold_start = 1;
     cfg.handshake_timeout_ms = 180000u; /* the host may be waiting on a friend's router */
     cfg.cb.remote_input = np_cb_remote;
@@ -2058,6 +2105,23 @@ static int np_poll(void) {
                 np.seed = hc.seed;
                 np.delay = hc.input_delay;
                 gw_RB_SetDelay(np.delay);
+                /* the match rules: the handshake's word and the host's scene must agree, and be a word this
+                   build implements - refused here, before any match, never mid-match */
+                np.turbo = hc.rules;
+                if (!gw_turbo_valid(np.turbo) || np_scene_turbo(np.scene) != np.turbo) {
+                    np_status("The host's match rules are not supported by this version");
+                    gw_log("netplay: refused the host's match rules 0x%08x (scene says 0x%08x)", np.turbo,
+                           np_scene_turbo(np.scene));
+                    np.turbo = 0;
+                    np.phase = NP_FAILED;
+                    np_close();
+                    return np.phase;
+                }
+                if (np.turbo != 0) {
+                    gw_log("netplay: the host's match rules: turbo=0x%08x (%d free frames)", np.turbo,
+                           gw_turbo_frames(np.turbo));
+                    np_status("Host rules: Turbo ON");
+                }
             }
             np.accepted = 1;
             if (np.use_lobby) {
@@ -2634,6 +2698,21 @@ const char *gw_Netplay_Scene(void) {
     np.stocks = np_env_int("MELEE_NETPLAY_STOCKS", 4);
     np.minutes = np_env_int("MELEE_NETPLAY_MINUTES", 8);
     np.delay = np_env_int("MELEE_NETPLAY_DELAY", 2);
+    {
+        /* MELEE_NETPLAY_TURBO=on|off|<hex rule word>: the host's rule, or what a guest insists on */
+        const char *t = getenv("MELEE_NETPLAY_TURBO");
+        np.turbo_pref = 0;
+        np.turbo_env = 0;
+        if (t != NULL && t[0] != '\0') {
+            unsigned w = strcmp(t, "on") == 0 ? GW_TURBO_V1 : strcmp(t, "off") == 0 ? 0u : (unsigned) strtoul(t, NULL, 16);
+            if (gw_turbo_valid(w)) {
+                np.turbo_pref = w;
+                np.turbo_env = 1;
+            } else {
+                gw_log("netplay: MELEE_NETPLAY_TURBO=%s is not a rule word this build implements - ignored", t);
+            }
+        }
+    }
     np.use_lobby = 0;
     if (np_begin(0) != 0) return NULL;
 wait:

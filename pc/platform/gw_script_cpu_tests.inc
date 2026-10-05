@@ -32,3 +32,35 @@ static int test_script_cpu_technical(void) {
     }
     return 0;
 }
+
+static int test_script_cpu_assist(void) {
+    char out[2048];
+    int failed = gw_ScriptGame_CpuAssistTest();
+    if (failed) {
+        gw_test_fail("CPU assist native policy had %d failed cases", failed);
+        return 1;
+    }
+    if (t_exec("assert(type(gd.cpu_assist)=='function'); "
+               "assert(not pcall(gd.cpu_assist,1,{lcancel=1.5})); "
+               "assert(not pcall(gd.cpu_assist,1,{tech=-0.1})); "
+               "assert(not pcall(gd.cpu_assist,1,{tech='x'})); "
+               "assert(not pcall(gd.cpu_assist,1,{tech_dir='up'})); "
+               "assert(not pcall(gd.cpu_assist,1,{seed=0})); "
+               "assert(not pcall(gd.cpu_assist,1,{seed=1.5})); "
+               "assert(not pcall(gd.cpu_assist,9,{})); assert(not pcall(gd.cpu_assist,0,{})); "
+               "assert(not pcall(gd.cpu_assist,1,7)); "
+               "local ok,r=pcall(gd.cpu_assist,1,{lcancel=1}); assert(not ok or r==false); "  /* no match: refused */
+               "local s=gd.cpu_assist(1); assert(type(s)=='table' and s.enabled==false and "
+               "type(s.probability)=='table' and type(s.counters.tech.opportunities)=='number'); "
+               "ok,r=pcall(gd.cpu_assist,1,nil); assert(not ok or r==false)", out, sizeof out) != 0) {
+        gw_test_fail("CPU assist API validation failed: %s", out);
+        return 1;
+    }
+    if (gw_ScriptGame_CpuAssist(-1, 1, 0, 0, 0, 0, 0, 0, 1) || gw_ScriptGame_CpuAssist(6, 1, 0, 0, 0, 0, 0, 0, 1) ||
+        gw_ScriptGame_CpuAssist(0, 0, 0, 0, 0, 0, 0, 0, 1) || gw_ScriptGame_CpuAssist(0, 1, 1001, 0, 0, 0, 0, 0, 1) ||
+        gw_ScriptGame_CpuAssist(0, 1, 0, 0, 0, 4, 0, 0, 1) || gw_ScriptGame_CpuAssist(0, 1, 0, 0, 0, 0, 0, 0, 0)) {
+        gw_test_fail("CPU assist accepted invalid native controls");
+        return 1;
+    }
+    return 0;
+}

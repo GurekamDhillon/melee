@@ -151,6 +151,8 @@ No external techniques, third-party assets or disc-derived data were imported. S
 - [Post readiness](post-ready/) (`demo_post_ready`): an identity world pass becomes
   ready only after that exact owned pass recorded/resolved. Source checked;
   native rendering acceptance pending.
+- [CPU technique assist](cpu-assist/) (`demo_cpu_assist`): a level 9 retail-AI CPU gets L-cancel, tech,
+  perfect shield, wavedash and fast fall from `gd.cpu_assist`, on top of its own pad; counters on screen.
 
 
 ## EM1 gameplay source demos (native acceptance pending)

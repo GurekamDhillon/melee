@@ -52,9 +52,11 @@ int ScriptGame_CpuTechnical(int slot, int owner, int skill, int seed)
     return 1;
 }
 
+void ScriptGame_CpuAssistClear(int owner);
 void ScriptGame_CpuTechnicalClear(int owner)
 {
     int i;
+    ScriptGame_CpuAssistClear(owner); /* the scene-end/script-unload hook clears both overlays */
     for (i = 0; i < 6; ++i) if (owner == 0 || technical_ai_slots[i].owner == owner)
         memset(&technical_ai_slots[i], 0, sizeof technical_ai_slots[i]);
 }

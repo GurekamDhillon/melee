@@ -1032,5 +1032,16 @@
     "in_game": false,
     "controls": "Starts a few seconds into the match; press R or console turbo_combo [waveshine|classic] to replay. Scene: mode=lab;stage=fd;turbo=on;p1=fox/cpu0;p2=falco/cpu0/idle",
     "setup": []
+  },
+  {
+    "id": "demo_cpu_assist",
+    "path": "demos/cpu-assist",
+    "title": "CPU technique assist",
+    "api": "gd.cpu_assist (L-cancel, tech, perfect shield, wavedash, fast fall on top of the retail AI); gd.cpu_mode script, cpu_goto, cpu_macro",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "console: assist <0..1>. Scene: mode=lab;stage=fd;p1=fox/cpu0;p2=fox/cpu9",
+    "setup": []
   }
 ]

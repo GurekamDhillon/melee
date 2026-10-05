@@ -165,3 +165,43 @@ out. Globals (~0.86 MB) are copied/hashed every call.
   (ReadFile into MEM1 is tracked by write-watch too); the audio thread reads it only. `MELEE_SNAP_VERIFY=1`
   is the check if that ever changes.
 * Rollback needs the input-delay / prediction session (rbsession, merged here) and the transport (netcode).
+
+
+## 2026-10-05 (engine-3): why the bench SyncTest mismatches in sustained combat
+
+Setup: `MELEE_SYNCTEST=12 MELEE_SYNCTEST_BENCH=1 MELEE_SYNCTEST_CURATED=1`, Fox v Fox, Final Destination, two `MELEE_PAD_BOT`
+programs, `MELEE_TEST_SEED=12345`, turbo (render pass on or with `MELEE_TURBO_RENDER=0`: no difference). The first
+mismatch lands anywhere from frame 1.4k to 5.9k and, once it starts, most later checks mismatch. New tool:
+`MELEE_SYNCTEST_CURATED_DIFF=1` compares every fighter's whole struct, its GObj and its joint tree against the first pass at the
+start of every resimulated frame and logs the first frame each word differs (`snap: REGION-DIFF new word: frame F tag T
++0xOFF`; tags 1-12 fighter, 100+ GObj, 1000+player*256+n joint n). What it shows, in the order the differences appear:
+
+1. Frame ~35 (match start). `fp+0x20A4` (LbShadow flag byte) and `fp+0x2224` bit 0; every joint's `flags` word (`+0x14`): the
+   rendered first pass has the joints' world matrices set up (flag `JOBJ_MTX_DIRTY` 0x40 clear, `mtx` at `+0x44` holds the
+   matrix), the logic-only resimulation has them dirty with an identity cache until logic asks for one joint
+   (`lb_8000B1CC` -> `HSD_JObjSetupMatrix`). Render-owned state, harmless by itself.
+2. Frame ~104: `fp+0x2144/0x214C/0x2160` AXDriver voice ids (a resimulation does not play sound).
+3. Frame ~161, then every few hundred frames: ULP-LEVEL float differences in the hurtbox capsules (`fp+0x11A0..`, a_pos/b_pos), the
+   hitboxes' `hurt_coll_pos` (`fp+0x978`, `+0xAB0`) and `dmg.x1854_collpos`. First pass values are identical in every run
+   (also identical with render off), resimulation values are identical in every run: deterministic, but the resimulation's
+   lazily computed world matrices are not bit-equal to the ones the render pass computed. `MELEE_SYNCTEST_CURATED_SETUP=1`
+   (`Fighter_BenchSetupMatrices`, run at the top of each curated iteration) removes classes 1 and 3 from the log.
+4. Heap ADDRESS differences from frame ~800 on: the accessory JObj (`fp+0x20A0`), `jobj->aobj` of many joints, a hitbox's victim
+   list entry (`fp+0x988`), `dmg.x1868_source` (the damage-source GObj), `fp+0x1974`. The same logical object sits at a different
+   pool slot in the resimulation: the first pass's render pass allocates and frees from the same HSD pools (the matrix pass
+   allocates `HSD_VecAlloc` scale vectors) and the resimulation does not, so the free lists are threaded differently from the
+   first resimulated allocation on. This is the "allocator free-list threading" of the uncurated mode's particle family.
+5. The first BEHAVIOURAL difference follows those by hundreds to thousands of frames: a fighter's velocity, hitlag, motion or an
+   animation counter (`fp+0x1ABC`, `+0x1B04`), then everything. Not isolated to one field.
+
+Note: runs with `MELEE_TURBO_RENDER=0` show the same first-pass values as rendered runs, so the pass that sets the matrices up is the first pass's draw phase (GObj draw callbacks), which that mode still executes; "render pass" below means that phase, not GX submission.
+
+Verdict. The curated resimulation is not equivalent to the first pass because it skips the render pass, and the game's own
+logic reads state the render pass writes (the world-matrix cache, with ulp-level different results when it is filled lazily; the
+allocator pools the draw callbacks churn). Netplay's rollback resimulates `logic + render` per iteration (`gw_rollback.c`:
+"resim iters (logic+render inside the loop)"), so both peers run the same sequence, which is why two real clients ran an hour
+without a desync. Not proven: the one remaining class (heap addresses) as the cause of the first behavioural difference; with the
+matrix setup on, a clean long run was not demonstrated. The fix that would settle it: make the bench's resimulation render, as
+rollback does, and accept the particle-state mask; the SyncTest then becomes the strict mode with its known particle family.
+Risk this puts on netplay: a peer that does NOT run the render pass (headless, a render-throttled window, `MELEE_TURBO_RENDER=0`)
+is not equivalent to one that does, in the sim's low-order float bits and in allocation order; nothing prevents it today.

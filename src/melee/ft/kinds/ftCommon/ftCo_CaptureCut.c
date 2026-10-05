@@ -204,7 +204,13 @@ void ftCo_800DCE34(Fighter_GObj* gobj0, Fighter_GObj* gobj1)
      * clears the partner's victim_gobj). When that happens gobj1 is NULL: the grab was already cut. Retail reads user_data at
      * address 0x2C of low memory and carries on with garbage; the PC build faults (a near-NULL read, seen twice after ~250
      * CPU-vs-CPU trials with a fight/script mode switcher). The capture is already released, so there is nothing to cut. */
-    if (gobj0 == NULL || gobj1 == NULL) return;
+    if (gobj0 == NULL || gobj1 == NULL) {
+        extern int Mex_Enabled(const char*);
+        static int noted;
+        if (noted < 20) { ++noted; OSReport("CAPTURECUT: ftCo_800DCE34 NULL partner (gobj0=%p gobj1=%p): the grab was already cut\n", gobj0, gobj1); }
+        /* MELEE_MEX=test_no_capturecut_guard compiles the guard out for a reproduction run (the retail-latent fault). */
+        if (!Mex_Enabled("test_no_capturecut_guard")) return;
+    }
 #endif
     Fighter* fp1 = GET_FIGHTER(gobj1);
     ftCo_800DC920(gobj0, gobj1);

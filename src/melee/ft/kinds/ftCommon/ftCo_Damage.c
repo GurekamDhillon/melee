@@ -823,6 +823,20 @@ static inline void inlineB3(Fighter_GObj* gobj)
     }
 }
 
+#if defined(TARGET_PC)
+/* MELEE_MEX=test_log_capturecut: where ftCo_8008EC90 reaches a grab-cut call, and what the grabber's victim_gobj is then. */
+static void capturecut_trace(const char* where, Fighter_GObj* gobj)
+{
+    extern int Mex_Enabled(const char*);
+    Fighter* fp = gobj->user_data;
+    if (Mex_Enabled("test_log_capturecut"))
+        OSReport("CAPTURECUT-TRACE: %s P%d victim_gobj=%p motion=%d\n", where, fp->player_id + 1, fp->victim_gobj, fp->motion_id);
+}
+#define CAPTURECUT_TRACE(w, g) capturecut_trace(w, g)
+#else
+#define CAPTURECUT_TRACE(w, g) ((void) 0)
+#endif
+
 void ftCo_8008EC90(Fighter_GObj* gobj)
 {
     bool ret0 = false;
@@ -917,6 +931,7 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
                             other_fp->x1828 = 2;
                             goto ret_A8C;
                         }
+                        CAPTURECUT_TRACE("site A", gobj);
                         ftCo_800DCE34(gobj, fp->victim_gobj);
                         ftCommon_8007DB58(gobj);
                         ftCo_8008E908(gobj, facing_dir);
@@ -930,6 +945,7 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
                     if (inlineB1(other_fp)) {
                         ftCo_800DE854(fp->victim_gobj);
                     }
+                    CAPTURECUT_TRACE("site B", gobj);
                     ftCo_800DCE34(gobj, fp->victim_gobj);
                     ftCommon_8007DB58(gobj);
                     ftCo_8008E908(gobj, facing_dir);
@@ -938,6 +954,7 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
                 }
                 ftCommon_8007DB58(fp->victim_gobj);
                 ftCo_800DCFD4(fp->victim_gobj);
+                CAPTURECUT_TRACE("site C (after 8007DB58 + 800DCFD4)", gobj);
                 ftCo_800DCE34(gobj, fp->victim_gobj);
                 ftCommon_8007DB58(gobj);
                 ftCo_8008E908(gobj, facing_dir);

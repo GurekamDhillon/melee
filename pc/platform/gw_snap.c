@@ -1636,6 +1636,107 @@ int gw_Snap_InputHook(int port, int fol, float *v, uint32_t *b) {
     return 0;
 }
 
+/* MELEE_SYNCTEST_CURATED_DIFF=1 (with CURATED): beyond the curated record, the byte-for-byte state of the memory regions game
+ * code registers while it simulates (fighter.c: each fighter's whole struct and its GObj) is compared, at the start of every
+ * resimulated frame, with the first pass's snapshot of that frame. It names the FIRST frame any registered byte differs
+ * and the exact offsets, which the curated hash (a handful of words) cannot. Report only: nothing here counts as a mismatch. */
+static int sn_cdiff = -1;
+static struct {
+    int tag;
+    uint32_t va, len;
+} sn_creg[640];
+static int sn_ncreg;
+static long sn_cd_frames;
+static int sn_cd_first = 0x7FFFFFFF;
+static int sn_cdiff_on(void) {
+    if (sn_cdiff < 0) {
+        const char *e = getenv("MELEE_SYNCTEST_CURATED_DIFF");
+        sn_cdiff = e != NULL && e[0] == '1';
+    }
+    return sn_cdiff;
+}
+/* MELEE_SYNCTEST_CURATED_SETUP=1: fighter.c sets up every fighter joint's world matrix at the curated record's point, in the first
+ * pass AND the resimulation, so a logic-only resimulation sees the matrices a rendered first pass has (the experiment for the
+ * bench's float differences in hit/hurt positions). */
+int gw_Snap_CuratedSetup(void) {
+    static int on = -1;
+    if (on < 0) {
+        const char *e = getenv("MELEE_SYNCTEST_CURATED_SETUP");
+        on = e != NULL && e[0] == '1';
+    }
+    return on && gw_Snap_Curated();
+}
+void gw_Snap_CuratedRegion(int tag, uint32_t va, uint32_t len) {
+    if (gw_Snap_Curated() && sn_cdiff_on() && sn_ncreg < 640) {
+        sn_creg[sn_ncreg].tag = tag;
+        sn_creg[sn_ncreg].va = va;
+        sn_creg[sn_ncreg].len = len;
+        sn_ncreg++;
+    }
+}
+/* one flag per (registered tag, word): logged the first time that word differs, so the log is a timeline of when each field
+ * first diverged, not the same few words repeated every frame */
+static uint8_t sn_cd_seen_f[64][2400];
+static uint8_t sn_cd_seen_j[1536][40];
+static int sn_cd_nlog, sn_cd_nlog_j;
+static void sn_region_diff(int next) {
+    GwSnapSlot *s = sn_slot_for(next, 0);
+    const uint8_t *smem, *live = (const uint8_t *) (uintptr_t) 0x80000000u;
+    int r, nd = 0, nnew = 0;
+    if (s == NULL || sn_ncreg == 0) {
+        sn_ncreg = 0;
+        return;
+    }
+    smem = sn_view(s->pg);
+    for (r = 0; r < sn_ncreg; ++r) {
+        uint32_t off, base = sn_creg[r].va - 0x80000000u;
+        /* tags: 1..12 a fighter struct, 100.. its GObj, 1000+ a joint of the fighter (1000 + player * 256 + index) */
+        int ti = sn_creg[r].tag < 100 ? sn_creg[r].tag : sn_creg[r].tag < 1000 ? 12 + (sn_creg[r].tag - 100) : 64 + ((sn_creg[r].tag - 1000) & 0x5FF);
+        uint32_t words = sn_creg[r].len > 0x2400 ? 0x2400 : sn_creg[r].len;
+        if (sn_creg[r].va < 0x80000000u || base + sn_creg[r].len > gw_mem1_size) continue;
+        for (off = 0; off + 4 <= words; off += 4) {
+            if (memcmp(smem + base + off, live + base + off, 4) != 0) {
+                ++nd;
+                uint8_t *seen = ti < 64 ? &sn_cd_seen_f[ti][off / 4] : &sn_cd_seen_j[(ti - 64) % 1536][(off / 4) % 40];
+                if (!*seen) {
+                    *seen = 1;
+                    ++nnew;
+                    {   /* two different MEM1 pointers: name what each pass has there (a GObj header: class, links, user data) */
+                        uint32_t pa = sn_rd32(smem, sn_creg[r].va + off), pb = sn_rd32(NULL, sn_creg[r].va + off);
+                        static int ptr_logs;
+                        if (ptr_logs < 12 && sn_creg[r].tag < 100 && pa >= 0x80000000u && pa < 0x81800000u &&
+                            pb >= 0x80000000u && pb < 0x81800000u && ((pa | pb) & 3) == 0) {
+                            ++ptr_logs;
+                            gw_log("snap: REGION-DIFF pointer at frame %d tag %d +0x%X: first pass %08X -> [%08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X]",
+                                   next, sn_creg[r].tag, off, pa, sn_rd32(smem, pa), sn_rd32(smem, pa + 4), sn_rd32(smem, pa + 8),
+                                   sn_rd32(smem, pa + 12), sn_rd32(smem, pa + 16), sn_rd32(smem, pa + 20), sn_rd32(smem, pa + 24),
+                                   sn_rd32(smem, pa + 28), sn_rd32(smem, pa + 32), sn_rd32(smem, pa + 36), sn_rd32(smem, pa + 40),
+                                   sn_rd32(smem, pa + 44));
+                            gw_log("snap: REGION-DIFF pointer                       resim      %08X -> [%08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X]",
+                                   pb, sn_rd32(NULL, pb), sn_rd32(NULL, pb + 4), sn_rd32(NULL, pb + 8), sn_rd32(NULL, pb + 12),
+                                   sn_rd32(NULL, pb + 16), sn_rd32(NULL, pb + 20), sn_rd32(NULL, pb + 24), sn_rd32(NULL, pb + 28),
+                                   sn_rd32(NULL, pb + 32), sn_rd32(NULL, pb + 36), sn_rd32(NULL, pb + 40), sn_rd32(NULL, pb + 44));
+                        }
+                    }
+                    if (sn_creg[r].tag >= 1000 ? sn_cd_nlog_j < 60 : sn_cd_nlog < 400) {
+                        if (sn_creg[r].tag >= 1000) ++sn_cd_nlog_j; else ++sn_cd_nlog;
+                        gw_log("snap: REGION-DIFF new word: frame %d tag %d +0x%X: first pass %08X resim %08X", next,
+                               sn_creg[r].tag, off, sn_rd32(smem, sn_creg[r].va + off), sn_rd32(NULL, sn_creg[r].va + off));
+                    }
+                }
+            }
+        }
+    }
+    if (nd > 0) {
+        ++sn_cd_frames;
+        if (next < sn_cd_first) {
+            sn_cd_first = next;
+            gw_log("snap: REGION-DIFF earliest differing frame is now %d (%d differing words in %d regions)", next, nd, sn_ncreg);
+        }
+    }
+    sn_ncreg = 0;
+}
+
 /* Top of a logic iteration: the previous iteration simulated frame sn_frame(); its
  * accumulator is the first pass's record (recorded) or a resimulation's (compared). */
 static void sn_cur_take(void) {
@@ -1832,6 +1933,10 @@ void gw_SyncTest_IterStart(void) {
         if (sn.cur_is_resim) {
             gw_Snap_Time(2, 0); /* the resimulated iteration ends here: there is no render block */
         }
+        if (gw_Snap_CuratedSetup()) {
+            extern void gw_Fighter_BenchSetupMatrices(void);
+            gw_Fighter_BenchSetupMatrices();
+        }
         sn_cur_take();
     }
     next = sn_frame() + 1;
@@ -1842,6 +1947,7 @@ void gw_SyncTest_IterStart(void) {
         gw_snap_load(sn.target - sn.k);
         gw_RbViz_Push(sn.target, sn.target - sn.k, sn.k, -1, sn_ms() - rbv_t0, 1);
         sn.resim = 1;
+        sn_ncreg = 0;
         sn.cur_is_resim = 1;
         sn_sfx_rewind(sn.target - sn.k);
         gw_Snap_Time(2, 1);
@@ -1849,6 +1955,7 @@ void gw_SyncTest_IterStart(void) {
     }
     if (sn.resim) {
         int d = gw_Snap_Curated() ? 0 : sn_compare(next);
+        if (gw_Snap_Curated() && sn_cdiff_on()) sn_region_diff(next);
         if (d != 0) {
             sn.mismatches++;
             gw_RbViz_MarkMismatch();
@@ -1906,6 +2013,7 @@ void gw_SyncTest_IterStart(void) {
                 if (gw_Snap_Curated()) {
                     gw_log("snap: curated hash: %ld compared, %ld mismatching, resim iteration (logic only) %.2f ms",
                            sn_cur_checked, sn_cur_mismatch, sn_t[2] / (sn_tn[2] ? sn_tn[2] : 1));
+                    if (sn_cdiff_on()) gw_log("snap: region diff: %ld frames compared with a differing registered byte, earliest frame %d", sn_cd_frames, sn_cd_first);
                     { extern void gw_MatchTurboLog(void); gw_MatchTurboLog(); }
                 }
                 if (sn_cb_on == 1) {
@@ -1930,6 +2038,7 @@ void gw_SyncTest_IterStart(void) {
         return;
     }
     sn.cur_is_resim = 0;
+    sn_ncreg = 0;
     gw_snap_save(next);
 }
 

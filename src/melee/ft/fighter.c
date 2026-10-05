@@ -2214,6 +2214,7 @@ static void ftUcf_Cardinal(int x, int y, Vec2* out)
 
 #if defined(TARGET_PC)
 #include "technical_ai.inc"
+#include "cpu_assist.inc"
 #endif
 
 void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
@@ -2373,7 +2374,7 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
 #if defined(TARGET_PC)
             {
                 extern int ScriptGame_CpuStanding(Fighter*);
-                if (ftCo_IsCpuControlled(fp) && !ScriptGame_CpuStanding(fp)) technical_ai_overlay(fp);
+                if (ftCo_IsCpuControlled(fp) && !ScriptGame_CpuStanding(fp)) { technical_ai_overlay(fp); cpu_assist_overlay(fp); }
             }
 #endif
 
@@ -3195,6 +3196,24 @@ void Fighter_procMap(Fighter_GObj* gobj)
                 w[i++] = ScriptGame_IntrWinHashWord(fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0));
             }
             Snap_CuratedMix(w, i);
+            {   /* MELEE_SYNCTEST_CURATED_DIFF: the fighter's whole struct and its GObj, for a byte compare against the first pass */
+                extern void Snap_CuratedRegion(int tag, u32 va, u32 len);
+                Snap_CuratedRegion(fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0), (u32) fp, (u32) sizeof(Fighter));
+                Snap_CuratedRegion(100 + fp->player_id + (fp->is_sub_fighter ? 6 : 0), (u32) fp->gobj, 0x40);
+                {   /* the fighter's joint tree: each JObj (flags, local transform, cached world matrix) */
+                    HSD_JObj* st[64];
+                    HSD_JObj* j;
+                    int sp = 0, n = 0;
+                    if (fp->gobj != NULL && fp->gobj->hsd_obj != NULL) st[sp++] = (HSD_JObj*) fp->gobj->hsd_obj;
+                    while (sp > 0 && n < 250) {
+                        j = st[--sp];
+                        Snap_CuratedRegion(1000 + fp->player_id * 256 + n, (u32) j, 0x88);
+                        ++n;
+                        if (j->next != NULL && sp < 63) st[sp++] = j->next;
+                        if (j->child != NULL && sp < 63) st[sp++] = j->child;
+                    }
+                }
+            }
         }
     }
 #endif
@@ -3972,5 +3991,33 @@ u32 RB_GameHash(void)
         }
     }
     return h;
+}
+#endif
+
+#if defined(TARGET_PC)
+/* MELEE_SYNCTEST_CURATED_SETUP=1 (gw_snap.c, curated SyncTest): the world matrices the render pass would have computed for every
+ * fighter's joint tree. A rendered first pass leaves them clean; a logic-only resimulation leaves them JOBJ_MTX_DIRTY until
+ * logic asks for one joint, so hit and hurt positions are computed along a different path (the experiment for the bench's
+ * float differences). Called at the top of each curated iteration. */
+void Fighter_BenchSetupMatrices(void)
+{
+    int i, j;
+    for (i = 0; i < 6; ++i) {
+        for (j = 0; j < 2; ++j) {
+            HSD_GObj* g = Player_GetEntityAtIndex(i, j);
+            HSD_JObj* st[64];
+            HSD_JObj* jo;
+            int sp = 0, n = 0;
+            if (g == NULL || g->hsd_obj == NULL || ((Fighter*) g->user_data)->motion_id < ftCo_MS_Wait) continue; /* not a KO, sleep or rebirth */
+            st[sp++] = (HSD_JObj*) g->hsd_obj;
+            while (sp > 0 && n < 400) {
+                jo = st[--sp];
+                HSD_JObjSetupMatrix(jo);
+                ++n;
+                if (jo->next != NULL && sp < 63) st[sp++] = jo->next;
+                if (jo->child != NULL && sp < 63 && !(jo->flags & JOBJ_INSTANCE)) st[sp++] = jo->child;
+            }
+        }
+    }
 }
 #endif

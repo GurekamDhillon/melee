@@ -1,13 +1,13 @@
 local T=dofile((io.open('pc/tests/envoy_testlib.lua') and '' or 'melee/')..'pc/tests/envoy_testlib.lua')
-local D={};for _,n in ipairs({'mod_schema','mod_pool','drive_loot','drive_bag'}) do D[n]=T.module(n,D) end
+local D={};for _,n in ipairs({'mod_schema','mod_codec','mod_pool','drive_loot','drive_bag'}) do D[n]=T.module(n,D) end
 local loot=D.drive_loot.new(D.mod_pool)
 local function equal(a,b)
  if type(a)~=type(b) then return false end;if type(a)~='table' then return a==b end
  for k,v in pairs(a) do if not equal(v,b[k]) then return false end end
  for k in pairs(b) do if a[k]==nil then return false end end;return true
 end
-T.test('10000 deterministic valid rolls and weighted rarity/colour distributions',function()
- local counts={common=0,magic=0,rare=0,unique=0};local colours={}
+T.test('10000 deterministic valid rolls and weighted rarity/colour distributions (ungated: the weights themselves)',function()
+ local loot=D.drive_loot.new(D.mod_pool,{ungated=true});local counts={common=0,magic=0,rare=0,unique=0};local colours={}
  for seed=0,9999 do
   local s=seed;local r=loot:roll(s,seed%21)
   assert(equal(r,loot:roll(s,seed%21)));assert(loot:validate(r));counts[r.rarity]=counts[r.rarity]+1
@@ -21,7 +21,7 @@ T.test('depth floor, forced rarity, fixed unique and white extra',function()
  for seed=1,100 do for _,rarity in ipairs({'common','magic','rare','unique'}) do
   local r=loot:roll(seed*104729,20,rarity)
   for _,a in ipairs(r.affixes) do assert(a.tier==5) end
-  if rarity~='unique' then assert(#r.affixes==({common=0,magic=2,rare=4})[rarity]+(r.colour=='white' and 1 or 0)) end
+  if rarity~='unique' then assert(#r.affixes==({common=1,magic=2,rare=4})[rarity]+(r.colour=='white' and 1 or 0)) end
  end end
  T.refuses(function() loot:roll(1,1,'keystone') end)
  for depth=0,10,5 do local r=loot:roll(1,depth,'rare');for _,a in ipairs(r.affixes) do assert(a.tier==1+depth/5) end end
@@ -36,7 +36,7 @@ T.test('every bag record is validated and malformed arrays/groups refused',funct
  r=loot:roll(104729,1,'rare');r.affixes[9]={id='kindling',tier=1};T.refuses(function() loot:validate(r) end)
  r=loot:roll(104729,1,'rare');r.affixes[1].tier=1.5;assert(not bag:give(r))
  -- Exact review regression: keys 2..5, four valid normal affixes, no index1.
- local dense=loot:roll(1,0,'rare');dense.colour='red'
+ local dense=loot:roll(1,12,'rare');dense.colour='red'
  local hole={false,dense.affixes[1],dense.affixes[2],dense.affixes[3],dense.affixes[4]}
  hole[1]=nil;assert(#hole==5,'regression must retain a length above its sparse count');dense.affixes=hole
  T.refuses(function() loot:validate(dense) end);assert(not bag:give(dense))
@@ -74,7 +74,8 @@ end)
 T.test('duplicate IDs retain the higher tier and unequip restores the lower tier',function()
  local bag=D.drive_bag.new(loot)
  local low=loot:roll(71,0,'rare');local high=loot:roll(71,10,'rare')
- for i,a in ipairs(high.affixes) do assert(a.id==low.affixes[i].id and a.tier==3 and low.affixes[i].tier==1) end
+ assert(#low.affixes==1 and #high.affixes==4) -- the curve: the same seed is one affix early and four deep
+ for i,a in ipairs(low.affixes) do assert(a.id==high.affixes[i].id and high.affixes[i].tier==3 and a.tier==1) end
  assert(bag:give(low));assert(bag:equip(1,1));assert(bag:give(high));assert(bag:equip(1,2))
  local mods=bag:derive();for _,a in ipairs(low.affixes) do assert(mods[a.id]==3) end
  assert(bag:unequip(2));mods=bag:derive();for _,a in ipairs(low.affixes) do assert(mods[a.id]==1) end

@@ -30,11 +30,12 @@ return function(D)
   if record.rarity~="common" and self.g.fx_world then for _,kind in ipairs({"beam","sparkles"}) do d.fx["rarity_"..kind]=self.g.fx_world("DriveLoot_"..kind.."_"..record.rarity,x,y+12,0,1,1) end end
   if record.unique and self.g.fx_world then d.fx.signature=self.g.fx_world('DriveLoot_signature_'..record.unique,x,y+12,0,1,1) end
  end
- function R:pickup(e,bag)
+ -- `hosted`: a run's host decides what happens to the drive (merge, bag, ask), so nothing is given to the bag here.
+ function R:pickup(e,bag,hosted)
   if e.name~='drive' or e.port~=1 then return false end
   local id=e.payload and e.payload.amount;local d=id and self.records[id]
   if not d or d.handle~=(e.item or e.handle) then return false end
-  assert(bag:give(d.record));self.records[id]=nil;self.juice:collect(d.handle,nil,self.g.player(e.port or 1));return d.record
+  if not hosted then assert(bag:give(d.record)) end;self.records[id]=nil;self.juice:collect(d.handle,nil,self.g.player(e.port or 1));return d.record
  end
  function R:expire(e)
   local id=e.payload and e.payload.amount;local d=id and self.records[id]

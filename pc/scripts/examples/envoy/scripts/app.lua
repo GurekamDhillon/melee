@@ -297,7 +297,7 @@ return function(D)
       for _,action in ipairs(actions) do if action=='start' then self.menu:show('hub') end end
       self:sync_pause();return
     end
-    for _,action in ipairs(actions) do self:menu_effect(self.menu:input(action,self:context())) end
+    for _,action in ipairs(actions) do if not (action=='start' and self.results_up and self.menu.screen=='playing') then self:menu_effect(self.menu:input(action,self:context())) end end
   end
   function A:match_start()
     self.models:unload()

@@ -66,10 +66,13 @@ return function(D)
  -- Lines (strings) for one modifier at one tier. A rule is described by its sentence when it has one, else from its effects.
  function T.mod_lines(m,tier)
   local out={}
+  -- Keystones (keystones.lua owns their words: the effect, then the drawback, no ids and no tier codes).
+  local k=m.kind=='keystone' and D.keystones and D.keystones.lines(m,tier)
+  if k then return {k[1],k[2]} end
   if special[m.id] then
    out[#out+1]=special[m.id](m,tier)
   else generic(m,tier,out) end
-  if #out==0 then out[1]=D.mod_schema.describe(m,tier) end
+  if #out==0 then out[1]=(D.mod_schema.describe(m,tier):gsub('^Tier %d+: ','')) end
   -- A keystone's price is its own line; a unique already states its price in its value lines.
   if m.kind=='keystone' and (drawback[m.id] or m.cost) then out[#out+1]=drawback[m.id] or ('Drawback: '..m.cost)
   elseif m.id=='mirror_shard' then out[#out+1]='Only works against fighters, not items' end
@@ -84,13 +87,14 @@ return function(D)
  end
  function T.header(loot,r) return (T.rarity_label[r.rarity] or r.rarity)..' / '..loot:name(r) end
  -- Keystone: its sentence and its price.
- function T.keystone_lines(m) return T.mod_lines(m,1) end
+ function T.keystone_lines(m,tier) return T.mod_lines(m,tier or 1) end
  -- Totals a player cares about, from the budget families. `after` may be nil.
  T.total_rows={{'strength','Build strength'},{'damage_dealt','Damage you deal'},{'launch_dealt','Launch you deal'},{'speed','Speed'},{'damage_taken','Damage you take'}}
  function T.totals(families,strength)
   return {strength=strength,damage_dealt=families.damage_dealt.value,launch_dealt=families.launch_dealt.value,speed=families.speed.value,damage_taken=families.damage_taken.value}
  end
- local function fmt(key,v) if key=='strength' then return ('%.2f'):format(v) end;return ('x%.2f'):format(v) end
+ -- Build power is shown as a percentage over a build with nothing equipped, never the budget's own number.
+ local function fmt(key,v) if key=='strength' then return ('%+d%%'):format(round((v-1)*100)) end;return ('x%.2f'):format(v) end
  -- Whether a change is good for the player: more strength/damage/launch/speed is good, more damage taken is bad.
  function T.better(key,a,b) if math.abs(a-b)<.005 then return nil end;if key=='damage_taken' then return b<a end;return b>a end
  function T.total_line(key,label,before,after)
@@ -106,8 +110,35 @@ return function(D)
    for _,a in ipairs(r.affixes) do for _,line in ipairs(T.mod_lines(loot.rules[a.id],a.tier)) do add(line) end end
   end end
   local keys={};for _,id in ipairs(build.keystones or {}) do keys[id]=true end;if build.keystone then keys[build.keystone]=true end
-  for _,m in ipairs(rules) do if keys[m.id] then for _,line in ipairs(T.mod_lines(m,1)) do add(m.label..': '..line) end end end
+  -- one line per keystone: its name and its effect (the drawback is on the player's own screens, not on an opponent's plate)
+  for _,m in ipairs(rules) do if keys[m.id] then local l=T.mod_lines(m,1);add(m.label..': '..(l[1] or '')) end end
   return out
+ end
+  -- ---- one line per drive in lists, one call per grid cell ---------------------------------------------------------
+ -- A list shows ONE short line per drive: the colour name and its modifiers' labels (at most two, then "+N").
+ -- Full detail (drive_lines, header) is for the focused item only. Never an id, a tier code or a budget number.
+ function T.short(loot,r)
+  local base=r.colour:sub(1,1):upper()..r.colour:sub(2)..' Drive'
+  if r.unique then return loot.rules[r.unique].label end
+  local labels={};for i,a in ipairs(r.affixes) do if i<=2 then labels[#labels+1]=loot.rules[a.id].label end end
+  local more=#r.affixes-#labels
+  return base..': '..table.concat(labels,', ')..(more>0 and (' +'..more) or '')
+ end
+ -- Everything a grid cell needs, from one call, with no text needed to read it: colour = family, rarity = border,
+ -- pips = how many modifiers it carries, level = 1..5 (its highest modifier's tier, clamped; drawn as pips or a
+ -- corner mark, never printed as a code), flags for NEW and for "can merge". `flags` is optional: {new=,can_merge=,equipped=}.
+ function T.cell(loot,r,flags)
+  flags=flags or {}
+  local top=0;for _,a in ipairs(r.affixes) do local t=a.tier;if type(t)=='table' then t=t.tier or 1 end;if t>top then top=t end end
+  return {kind='drive',colour=r.colour,colour_rgba=T.base_colour[r.colour],rarity=r.rarity,rarity_rgba=T.rarity_colour[r.rarity],
+   affixes=#r.affixes,level=math.max(1,math.min(5,top)),merged=r.merged or 0,unique=r.unique~=nil,
+   name=T.short(loot,r),new=flags.new==true,can_merge=flags.can_merge==true,equipped=flags.equipped==true}
+ end
+ -- A keystone's cell: its drive-family colour (red damage, green speed, blue defence, yellow air, purple status, white wild).
+ function T.keystone_cell(m,flags)
+  flags=flags or {};local family=D.keystones and D.keystones.family(m.id) or 'white'
+  return {kind='keystone',colour=family,colour_rgba=T.base_colour[family],name=m.label,
+   family=D.keystones and D.keystones.family_names[family] or 'Wild',held=flags.held==true,offered=flags.offered==true,new=flags.new==true}
  end
  return T
 end

@@ -41,7 +41,7 @@ return function(D)
   local allowed,why=self.lab:allowed();if not allowed or self.lab:replaying() then self.menu.notice=why or 'bag edit refused during rewind';return false,self.menu.notice end
   if #self.pending>=12 then self.menu.notice='drive edit queue full';return false,self.menu.notice end;local draft=self:view()
   if op~='choose_keystone' and self.drops:count()>0 then self.menu.notice='Collect ground drops before editing bag';return false,self.menu.notice end
-  if (op=='give' or op=='unequip') and #draft.items+self.drops:count()>=12 then return false,'bag full (ground drops reserve space)' end
+  if (op=='give' or op=='unequip') and #draft.items+self.drops:count()>=self.bag:capacity() then return false,'bag full (ground drops reserve space)' end
   local ok,why=draft[op](draft,a,b);if not ok then self.menu.notice=tostring(why);return false,why end
   self.pending[#self.pending+1]={op=op,a=a,b=b};self:bump();self.lab.enabled=true;return true
  end
@@ -52,7 +52,7 @@ return function(D)
    assert((w[1]=='give' or w[1]=='drop') and #w<=3,'usage: drive give|drop [rarity] [seed]')
    if w[1]=='drop' then assert(not (self.g.paused and self.g.paused()),'resume gameplay before dropping; wait one checkpoint before saving');assert(#self.pending==0,'wait for queued bag edits to commit before dropping') end
    local seed=tonumber(w[3] or self.seed);assert(seed and seed%1==0,'integer seed required')
-   local record=self.loot:roll(seed,self.lab.engine.context,w[2] and w[2]:lower());assert(self:reserved()<12,'bag full (ground drops reserve space)')
+   local record=self.loot:roll(seed,self.lab.engine.context,w[2] and w[2]:lower());assert(self:reserved()<self.bag:capacity(),'bag full (ground drops reserve space)')
    self.lab.display:warm(self.lab.engine);assert(not self.lab.display.error,'shader warmup unavailable')
    if w[1]=='give' then assert(self:queue('give',record)) else self.drops:spawn(record);self.lab.enabled=true end
    if self.lab.options.activate then self.lab.options.activate() end
@@ -64,8 +64,8 @@ return function(D)
  function V:apply()
   for _,e in ipairs(self.pending) do
    local ok,why
-   if e.op=='give' and #self.bag.items+self.drops:count()>=12 then ok,why=false,'bag full (ground drops reserve space)'
-   elseif e.op=="unequip" and #self.bag.items+self.drops:count()>=12 then ok,why=false,"bag full (ground drops reserve space)"
+   if e.op=='give' and #self.bag.items+self.drops:count()>=self.bag:capacity() then ok,why=false,'bag full (ground drops reserve space)'
+   elseif e.op=="unequip" and #self.bag.items+self.drops:count()>=self.bag:capacity() then ok,why=false,"bag full (ground drops reserve space)"
    else ok,why=self.bag[e.op](self.bag,e.a,e.b) end
    if not ok then self.g.log('bag: refused '..tostring(why)) end
   end
@@ -97,8 +97,9 @@ return function(D)
  end
  function V:pickup(e)
   if self.lab:replaying() then return end
-  local r=self.drops:pickup(e,self.bag);self:bump()
-  if r and self.on_pickup and self.lab:hosted() then self.on_pickup(r)  -- a run shows its own card and logs
+  local hosted=self.on_pickup and self.lab:hosted()
+  local r=self.drops:pickup(e,self.bag,hosted and true or false);self:bump()
+  if r and hosted then self.on_pickup(r)  -- a run shows its own card and logs
   elseif r then self.menu.notice='Picked up '..self.loot:name(r);self.card=self.menu.notice;self.card_left=120;self.g.log(self.menu.notice) end
  end
  -- A drop's lifetime ran out: a run keeps the record (collected at stage end), the LAB forgets it.
@@ -124,8 +125,8 @@ return function(D)
   local probe=D.drive_bag.new(self.loot,config);assert(probe:restore(s.bag))
   for _,d in pairs(s.drops.records or {}) do self.loot:validate(d.record) end
   local count=self.drops:validate(s.drops)
-  assert(#probe.items+count<=12,'invalid reserved capacity')
-  for _,e in ipairs(s.pending or {}) do assert(type(e)=='table','invalid pending edit');for k in pairs(e) do assert(({op=true,a=true,b=e.op=='equip'})[k],'unknown pending field') end;assert(({give=true,equip=true,unequip=true,discard=true,choose_keystone=true})[e.op],'invalid pending drive edit');if count>0 then assert(e.op=='choose_keystone','pending inventory edit races ground pickup') end;assert(probe[e.op](probe,e.a,e.b));assert(#probe.items+count<=12,'overbooked pending draft') end
+  assert(#probe.items+count<=probe:capacity(),'invalid reserved capacity')
+  for _,e in ipairs(s.pending or {}) do assert(type(e)=='table','invalid pending edit');for k in pairs(e) do assert(({op=true,a=true,b=e.op=='equip'})[k],'unknown pending field') end;assert(({give=true,equip=true,unequip=true,discard=true,choose_keystone=true})[e.op],'invalid pending drive edit');if count>0 then assert(e.op=='choose_keystone','pending inventory edit races ground pickup') end;assert(probe[e.op](probe,e.a,e.b));assert(#probe.items+count<=probe:capacity(),'overbooked pending draft') end
   assert(#(s.pending or {})<=12,'invalid pending budget')
   return D.mod_codec.decode(D.mod_codec.encode(s))
  end
@@ -148,7 +149,7 @@ return function(D)
  -- still swap it). Returns false with a reason when the bag or the checkpoint refuses it right now.
  function V:grant(record)
   local draft=self:view();local ok,why=draft:give(record);if not ok then return false,tostring(why) end
-  if #self.bag.items+#self.pending+self.drops:count()>=12 then return false,'bag full' end
+  if #self.bag.items+#self.pending+self.drops:count()>=self.bag:capacity() then return false,'bag full' end
   local queued,reason=self:queue('give',record);if not queued then return false,reason end
   local index=#draft.items;local free
   for slot=1,draft:slots() do if not draft.equipped[slot] then free=slot;break end end
@@ -168,6 +169,15 @@ return function(D)
   self.drops:retry_retired()
   if self.menu.active and (not self.lab:allowed() or self.lab:replaying()) then self.menu:close();return end
   local p=self.g.pad(1,true) or {};local chord=p.Z and p.START
+  D.menu_input.settle(self.g)
+  -- Z+START is the bag: keep the whole chord from the game so the press that opens the bag does not also pause the
+  -- match (and the START that closes it is hidden by the menu's own mask). Re-asserted now and then: a scene change
+  -- clears the engine's masks.
+  if self.g.input_chord then
+   local want=self.lab:allowed() and not self.lab:replaying()
+   self.chord_age=(self.chord_age or 0)+1
+   if want~=self.chord_on or (want and self.chord_age>=120) then self.chord_on=want;self.chord_age=0;self.g.input_chord(1,want and 'Z+START' or nil) end
+  end
   if chord and not self.chord and not self.menu.active and not self.lab:replaying() then local ok=self.lab:allowed();if ok then if self.opener and self.lab:hosted() then self.opener() else self.menu:open();if self.lab.options.activate then self.lab.options.activate() end end end end
   self.chord=chord;self.menu:tick()
  end

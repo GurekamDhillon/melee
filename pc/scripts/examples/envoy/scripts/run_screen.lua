@@ -1,280 +1,447 @@
--- The run's one build screen. It is used twice: as the reward moment inside the hold after a stage clear (mode
--- 'reward', offers + decisions + a timeout) and as the bag screen opened with Z+START in a fight (mode 'bag').
--- Controller only. Every number it shows is derived when something changes, never per drawn frame.
---   A  the focused row's main action (shown at the bottom)   X  keep in the bag / put back in the bag
---   Y  discard a bag drive (asks twice)   B  back / close   D-pad up/down move, left/right turn the text page
+-- The run's one build screen, on the grid component (demos/grid-inventory, embedded as D.grid). It is used twice: as the
+-- reward moment inside the hold after a stage clear (mode 'reward': a pick of drives and/or keystones, a countdown) and as
+-- the bag screen opened with Z+START in a fight (mode 'bag'). When a drive arrives and nothing merges, nothing is free and
+-- the bag is full, the same grid shows the swap layout ("which one do you give up?").
+--   Blocks (cells, no row list): OFFERED drives / OFFERED keystones (reward only), EQUIPPED (always six cells, locks), BAG (four),
+--   KEYSTONES (held only). One detail panel beside them describes the focused cell: one line per modifier, what A would do, and
+--   build strength before -> after.
+--   A the obvious thing (merge, else equip, else bag, else ask which to replace)   X to the bag   Y discard (asks twice)
+--   B continue / close   D-pad or stick move   Z+START closes the bag screen
+-- Controller only. Nothing is rebuilt per drawn frame: the blocks and the detail text are rebuilt when the bag, the offers or the
+-- focus change (an event), and the draw replays the component's cached layout.
 return function(D)
  local S={};S.__index=S
- S.tuning={hold_ticks=1800,tick_margin=90,safe_seconds=26,visible_rows=14}
+ S.tuning={hold_ticks=2850,tick_margin=90,safe_seconds=45}
+ local G=D.grid
+ G.rarity.magic=G.rarity.magic or G.rarity.uncommon      -- Envoy's second rarity word
+ G.palette.purple=G.palette.purple or 0xC79BFFFF
  local T=function() return D.drive_text end
  local function ceil(n) return math.ceil(n) end
  function S.new(g,host)
-  return setmetatable({g=g,host=host,input=D.menu_input.new(g),active=false,mode='bag',view='list',focus=1,page=0,prev={},rev=-1,first=1},S)
+  return setmetatable({g=g,host=host,input=D.menu_input.new(g),active=false,mode='bag',layout='main',prev={},blocks={},descs={}},S)
  end
  function S:drives() return self.host.mods.drives end
- -- ---- model -------------------------------------------------------------------------------------------------
- function S:rows()
-  local h=self.host;local d=self:drives();local b=d.bag;local rows={}
-  local function add(r) rows[#rows+1]=r;return r end
-  if self.view=='swap' then
-   add{kind='header',label='SWAP OUT WHICH DRIVE?',colour='gold'}
-   for slot=1,b:slots() do local r=b.equipped[slot]
-    add{kind='swap_slot',slot=slot,record=r,label=('Slot %d: %s'):format(slot,r and d.loot:name(r) or 'Empty')}
-   end
-   add{kind='swap_keep',label='Keep it in the bag instead'}
-   return rows
-  end
-  if self.mode=='reward' and #h.offers>0 then
-   add{kind='header',label=('STAGE REWARD: take one of %d'):format(#h.offers),colour='gold'}
-   for i,r in ipairs(h.offers) do add{kind='offer',index=i,record=r,label=T().rarity_label[r.rarity]..' '..d.loot:name(r)} end
-   add{kind='skip',label='Skip the reward (keep none)'}
-  end
-  add{kind='header',label=('EQUIPPED %d/%d'):format(self.host:equipped_count(),b:slots()),colour='gold'}
-  for slot=1,b:slots() do local r=b.equipped[slot]
-   add{kind='slot',slot=slot,record=r,label=('Slot %d: %s'):format(slot,r and d.loot:name(r) or 'Empty')}
-  end
-  add{kind='header',label=('BAG %d/%d'):format(#b.items,b.config.capacity or 12),colour='gold'}
-  if #b.items==0 then add{kind='note',label='Empty'} end
-  for i,r in ipairs(b.items) do
-   add{kind='bag',index=i,record=r,new=h:is_new(r),label=(h:is_new(r) and 'NEW ' or '')..T().rarity_label[r.rarity]..' '..d.loot:name(r)}
-  end
-  local allow=D.mod_progression.keystones(b.context)
-  local chosen=h:keystone_set()
-  local n=0;for _ in pairs(chosen) do n=n+1 end
-  add{kind='header',label=('KEYSTONES %d/%d'):format(n,allow),colour='gold'}
-  for _,m in ipairs(d.lab.engine.list) do if m.kind=='keystone' then
-   add{kind='key',id=m.id,rule=m,label=(chosen[m.id] and '[x] ' or '[ ] ')..m.label}
+ -- ---- cells ---------------------------------------------------------------------------------------------------
+ local function slot_unlock_depth(slot)
+  for depth=0,60 do if D.mod_progression.slots(D.mod_progression.context(depth,0))>=slot then return depth end end
+ end
+ -- ---- drive models (optional, local-only assets) ---------------------------------------------------------------
+ -- When the model mod `envoy_drives_sa2` is mounted and this exe has gd.kit.model, a drive cell shows its colour's model in the cell's
+ -- icon square (the component's icon_draw hook). Anything missing leaves the flat coloured cell: no error, no retry per frame.
+ local MESH={red='drive_red',green='drive_green',yellow='drive_yellow',blue='drive_blue',white='drive_white',purple='drive_white'}
+ local TINT={blue=0x5C8CFFFF,purple=0xC79BFFFF}   -- drive_blue / drive_white are one neutral stone, tinted like the floor drives
+ function S:load_models()
+  self.models=nil;self.descs={};self.model_failed=nil
+  local g=self.g
+  if not (g.kit and type(g.kit.model)=='function' and type(g.model_load)=='function') then return end
+  local mod=D.drive_models and D.drive_models.MOD or 'envoy_drives_sa2';local h,any={},false
+  for _,name in pairs(MESH) do if not h[name] then
+   local ok,r=pcall(g.model_load,mod..'/models/'..name);if ok and r then h[name]=r;any=true end
   end end
-  add{kind='done',label=self.mode=='reward' and 'Continue to the next stage' or 'Close'}
-  return rows
+  if any then self.models=h end
  end
- function S:focusable(r) return r.kind~='header' and r.kind~='note' end
- local function first_focus(rows) for i,r in ipairs(rows) do if r.kind~='header' and r.kind~='note' then return i end end;return 1 end
- -- The text block for the focused row, and the controls line.
- function S:detail(row)
-  local h=self.host;local d=self:drives();local loot=d.loot;local tx=T();local lines,col={},nil
-  local function head(r) lines[#lines+1]={tx.header(loot,r),tx.rarity_colour[r.rarity]};for _,l in ipairs(tx.drive_lines(loot,r)) do lines[#lines+1]={l} end end
-  local controls='Up/Down: move'
-  local before=h:totals()
-  local after,swapout
-  if row.record then head(row.record) end
-  if row.kind=='offer' then
-   local free=h:free_slot()
-   if free then after=h:totals(function(bag) bag:give(row.record);bag:equip(#bag.items,free) end)
-    controls='A: take it and equip in slot '..free..'   X: take it, keep in bag'
-   else controls='A: take it, then pick a slot to swap   X: take it, keep in bag' end
-   lines[#lines+1]={''}
-  elseif row.kind=='bag' then
-   local free=h:free_slot()
-   if free then after=h:totals(function(bag) bag:equip(row.index,free) end);controls='A: equip in slot '..free..'   Y: discard'
-   else controls='A: swap with an equipped drive   Y: discard' end
-  elseif row.kind=='slot' then
-   if row.record then controls='A or X: move it to the bag' else controls='Empty: pick a bag drive and press A' end
-  elseif row.kind=='swap_slot' then
-   local src=self.swap and self.swap.index
-   if src and row.record then swapout=row.record;after=h:totals(function(bag) bag:equip(src,row.slot) end);controls='A: swap it in   B: back'
-   elseif src then after=h:totals(function(bag) bag:equip(src,row.slot) end);controls='A: equip it here   B: back' end
-   lines[#lines+1]={self.swap and self.swap.record and ('Moving in: '..loot:name(self.swap.record)) or '',tx.rarity_colour[(self.swap and self.swap.record or {rarity='common'}).rarity]}
-  elseif row.kind=='swap_keep' then lines[#lines+1]={'The drive stays in your bag; nothing is lost.'};controls='A: keep it in the bag   B: back'
-  elseif row.kind=='key' then
-   lines[#lines+1]={row.rule.label..' (keystone)','gold'}
-   for _,l in ipairs(tx.keystone_lines(row.rule)) do lines[#lines+1]={l} end
-   local on=h:keystone_set()[row.id];controls=on and 'A: remove this keystone' or 'A: choose this keystone'
-   lines[#lines+1]={''};lines[#lines+1]={'A keystone is one powerful rule with a built-in drawback.'}
-  elseif row.kind=='skip' then
-   lines[#lines+1]={'Skip the reward','gold'};lines[#lines+1]={('None of the %d offered drives is kept.'):format(#h.offers)}
-   controls=self.confirm=='skip' and 'A: yes, skip them   B: no' or 'A: skip (asks again)'
-  elseif row.kind=='done' then
-   if self.mode=='reward' then
-    if #h.offers>0 then lines[#lines+1]={'You still have a reward to choose or skip.'};controls='A: not yet'
-    else lines[#lines+1]={'New drives in your bag are kept.','ok'};controls='A: continue' end
-   else controls='A: close   B: close' end
+ function S:release_models()
+  if self.models and self.g.model_release then
+   local seen={};for _,hd in pairs(self.models) do if not seen[hd] then seen[hd]=true;pcall(self.g.model_release,hd) end end
   end
-  if row.kind=='bag' or row.kind=='offer' then if #lines>0 then lines[#lines+1]={''} end end
-  -- Totals: always shown; before -> after when a drive is highlighted.
-  lines[#lines+1]={''}
-  lines[#lines+1]={after and 'IF YOU DO THIS' or 'YOUR BUILD','gold'}
+  self.models=nil;self.descs={}
+ end
+ function S:model_desc(colour)
+  if not self.models then return nil end
+  local d=self.descs[colour]
+  if d==nil then
+   local hd=self.models[MESH[colour] or 'drive_white']
+   d=hd and {kind='model',asset=hd,tint=TINT[colour]} or false;self.descs[colour]=d
+  end
+  return d or nil
+ end
+ function S:drive_cell(r,ref,flags)
+  local h=self.host;local loot=self:drives().loot;local c=T().cell(loot,r,flags)
+  local fl={};if c.new then fl[#fl+1]='new' end;if c.can_merge then fl[#fl+1]='merge' end
+  ref.record=r
+  return {colour=c.colour_rgba,rarity=c.rarity,pips=c.affixes,flags=fl,icon=self:model_desc(r.colour) or (r.unique and 'crown' or nil),name=loot:name(r),ref=ref,actions={}}
+ end
+ function S:key_cell(id,kind)
+  local h=self.host;local rule=h:keystone_rule(id);local fam=D.keystones.family(id)
+  return {colour=T().base_colour[fam] or 'gold',rarity='unique',pips=0,icon={kind='letter',letter=(rule and rule.label or id):sub(1,1):upper()},
+   name=rule and rule.label or id,ref={kind=kind,id=id},actions={}}
+ end
+ local function empty_cell(ref,text) return {empty=true,name='Empty slot',lines={text},ref=ref,actions={}} end
+ -- A one-word label for what A does with a plan.
+ local plan_label={merge='Merge',equip='Equip',bag='Take',choose='Replace which?'}
+ -- ---- the blocks ----------------------------------------------------------------------------------------------
+ function S:eq_cells(kind)
+  local h=self.host;local b=h:bag();local d=self:drives();local cells={}
+  for i=1,6 do
+   local r=b.equipped[i]
+   if i>b:slots() then cells[i]={colour='grey',flags={'locked'},name='Locked slot',lines={'Slot '..i..' unlocks at depth '..tostring(slot_unlock_depth(i))..'.'},ref={kind='locked',index=i},actions={}}
+   elseif r then cells[i]=self:drive_cell(r,{kind=kind,where='equipped',index=i},{new=h:is_new(r)})
+   else cells[i]=empty_cell({kind=kind,where='equipped',index=i,empty=true},'Empty. Pick a bag drive and press A to equip it here.') end
+  end
+  return cells
+ end
+ function S:bag_cells(kind)
+  local h=self.host;local b=h:bag();local cells={}
+  for i=1,b:capacity() do
+   local r=b.items[i]
+   if r then cells[i]=self:drive_cell(r,{kind=kind,where='bag',index=i},{new=h:is_new(r)})
+   else cells[i]=empty_cell({kind=kind,where='bag',index=i,empty=true},'Empty bag place.') end
+  end
+  return cells
+ end
+ function S:build_main()
+  local h=self.host;local b=h:bag();local blocks={};local room=#b.items<b:capacity()
+  if self.mode=='reward' and #h.offers>0 then
+   local cells={}
+   for i,r in ipairs(h.offers) do
+    local c=self:drive_cell(r,{kind='offer',index=i},{new=true});local plan=h:plan_take(r)
+    c.actions={A=plan_label[plan.action],X=(room and plan.action~='bag') and 'To bag' or false}
+    cells[i]=c
+   end
+   blocks[#blocks+1]={id='offer',title='TAKE ONE',cols=#h.offers,rows=1,band=1,cells=cells}
+  end
+  if self.mode=='reward' and #h.key_offers>0 then
+   local cells={}
+   for i,id in ipairs(h.key_offers) do local c=self:key_cell(id,'koffer');c.actions={A='Take',X=false,Y=false};cells[i]=c end
+   blocks[#blocks+1]={id='koffer',title='KEYSTONE: ONE',cols=#h.key_offers,rows=1,band=1,cells=cells}
+  end
+  local eq=self:eq_cells('eq')
+  for i,c in ipairs(eq) do if c.ref.where and not c.empty then c.actions={A=room and 'To bag' or false,X=room and 'To bag' or false} end end
+  blocks[#blocks+1]={id='eq',title=('EQUIPPED %d/%d'):format(h:equipped_count(),b:slots()),cols=6,rows=1,band=2,cells=eq}
+  local bag=self:bag_cells('bag')
+  for i,c in ipairs(bag) do
+   if c.ref.record then
+    local plan=h:plan_take(c.ref.record,{where='bag',index=i})
+    c.actions={A=plan_label[plan.action],X=false,Y='Discard'}
+   end
+  end
+  blocks[#blocks+1]={id='bag',title=('BAG %d/%d'):format(#b.items,b:capacity()),cols=b:capacity(),rows=1,band=3,cells=bag}
+  local ids=h:keystone_ids()
+  if #ids>0 then
+   local cells={};for i,id in ipairs(ids) do local c=self:key_cell(id,'key');cells[i]=c end
+   blocks[#blocks+1]={id='key',title=('KEYSTONES %d/%d'):format(#ids,D.mod_progression.allowance(b.context)),cols=6,rows=math.ceil(#ids/6),band=4,cells=cells}
+  end
+  return blocks
+ end
+ function S:build_swap()
+  local h=self.host;local b=h:bag();local sw=self.swap;local blocks={}
+  local incoming=self:drive_cell(sw.record,{kind='swap_in'},{new=sw.from~='bag'})
+  incoming.actions={}
+  blocks[#blocks+1]={id='in',title=sw.from=='bag' and 'MOVING IN' or 'NEW DRIVE',cols=1,rows=1,band=1,focusable=false,cells={incoming}}
+  local eq=self:eq_cells('swap_eq')
+  for i,c in ipairs(eq) do
+   if c.ref.where then c.actions={A=sw.from=='bag' and 'Swap in' or 'Replace',B=sw.from=='decide' and 'Leave it' or 'Back'} end
+  end
+  blocks[#blocks+1]={id='eq',title='GIVE UP WHICH?',cols=6,rows=1,band=2,cells=eq}
+  if sw.from~='bag' then
+   local bag=self:bag_cells('swap_bag')
+   for i,c in ipairs(bag) do if c.ref.record then c.actions={A='Replace',B=sw.from=='decide' and 'Leave it' or 'Back'} end end
+   blocks[#blocks+1]={id='bag',title=('OR A BAG DRIVE %d/%d'):format(#b.items,b:capacity()),cols=b:capacity(),rows=1,band=3,cells=bag}
+  end
+  return blocks
+ end
+ -- ---- detail text (for the focused cell only) -----------------------------------------------------------------
+ function S:totals_before()
+  local d=self:drives();if self.before_rev~=d.rev or not self.before then self.before=self.host:totals();self.before_rev=d.rev end
+  return self.before
+ end
+ -- Strength always; any other number only when it changes.
+ function S:compare(lines,edit)
+  local h=self.host;local tx=T();local before=self:totals_before();local after=h:totals(edit)
+  lines[#lines+1]=''
+  lines[#lines+1]=tx.total_line('strength','Build strength',before,after)
   for _,e in ipairs(tx.total_rows) do
-   local text=tx.total_line(e[1],e[2],before,after)
-   local better=after and tx.better(e[1],before[e[1]],after[e[1]])
-   lines[#lines+1]={text,better==true and 'ok' or better==false and 'danger' or nil}
+   if e[1]~='strength' and math.abs(before[e[1]]-after[e[1]])>=.005 then lines[#lines+1]=tx.total_line(e[1],e[2],before,after) end
   end
-  if swapout then lines[#lines+1]={'Swapped out: '..loot:name(swapout)..' (goes to the bag)'} end
-  return lines,controls
  end
- function S:ensure()
-  local d=self:drives();local key=table.concat({d.rev or 0,self.focus,self.view,self.mode,tostring(self.confirm),tostring(self.swap and self.swap.index),#self.host.offers,self.page},'|')
-  if self.model and self.model.key==key and not self.dirty then return self.model end
-  self.dirty=false
-  local rows=self:rows();if self.focus>#rows then self.focus=#rows end
-  while rows[self.focus] and not self:focusable(rows[self.focus]) do self.focus=self.focus%#rows+1 end
-  local lines,controls=self:detail(rows[self.focus])
-  -- wrap once per model
-  local wrapped={};local k=self.g.kit;local width=self.detail_w or 280
-  for _,l in ipairs(lines) do
-   if l[1]=='' then wrapped[#wrapped+1]={''} else for _,part in ipairs(D.drive_menu.wrap(k or {},l[1],width)) do wrapped[#wrapped+1]={part,l[2]} end end
+ local function plan_edit(plan,r,from)
+  return function(d)
+   if plan.action=='merge' then d:replace(plan.loc.where,plan.loc.index,plan.merged);if from then d:discard(from.index) end
+   elseif plan.action=='equip' then if from then d:equip(from.index,plan.slot) else d:place(plan.slot,r) end
+   elseif plan.action=='bag' then d:give(r) end
   end
-  self.model={key=key,rows=rows,lines=wrapped,controls=controls}
-  return self.model
  end
+ function S:plan_line(plan)
+  local h=self.host
+  if plan.action=='merge' then local name,line=h:merge_text(plan);return 'Merges into '..name..': '..line..'.'
+  elseif plan.action=='equip' then return 'Goes into slot '..plan.slot..'.'
+  elseif plan.action=='bag' then return 'Goes into your bag.' end
+  return 'Your bag is full: you will pick a drive to give up.'
+ end
+ function S:detail_lines(cell)
+  local h=self.host;local d=self:drives();local loot=d.loot;local tx=T();local ref=cell.ref;local lines={}
+  local function drive_lines(r) lines[#lines+1]=tx.rarity_label[r.rarity]..' drive';for _,l in ipairs(tx.drive_lines(loot,r)) do lines[#lines+1]=l end end
+  if ref.kind=='offer' then
+   local r=ref.record;drive_lines(r);local plan=h:plan_take(r);lines[#lines+1]='';lines[#lines+1]=self:plan_line(plan)
+   if plan.action~='choose' then self:compare(lines,plan_edit(plan,r)) end
+  elseif ref.kind=='bag' and ref.record then
+   local r=ref.record;drive_lines(r);local plan=h:plan_take(r,{where='bag',index=ref.index});lines[#lines+1]='';lines[#lines+1]=self:plan_line(plan)
+   if plan.action=='choose' then lines[#lines]='No free slot: A asks which equipped drive to swap with.' else self:compare(lines,plan_edit(plan,r,{where='bag',index=ref.index})) end
+  elseif ref.kind=='eq' and ref.record then
+   drive_lines(ref.record);lines[#lines+1]='';lines[#lines+1]=('Slot %d.'):format(ref.index)
+   local b=T().total_line('strength','Build strength',self:totals_before(),nil);lines[#lines+1]=b
+  elseif ref.kind=='swap_eq' or ref.kind=='swap_bag' then
+   local sw=self.swap;local old=ref.record
+   if old then
+    lines[#lines+1]='Gives up:';drive_lines(old);lines[#lines+1]=''
+    if sw.from=='bag' then lines[#lines+1]=loot:name(old)..' goes to your bag.'
+    elseif ref.where=='equipped' and #h:bag().items<h:bag():capacity() then lines[#lines+1]='It goes to your bag.'
+    else lines[#lines+1]='It is gone for good.' end
+    self:compare(lines,function(dr) if sw.from=='bag' then dr:equip(sw.index,ref.index) else dr:replace(ref.where,ref.index,sw.record) end end)
+   else lines[#lines+1]='Empty.' end
+  elseif ref.kind=='swap_in' then drive_lines(ref.record)
+  elseif ref.kind=='key' or ref.kind=='koffer' then
+   local rule=h:keystone_rule(ref.id);local fam=D.keystones.family(ref.id)
+   if rule then for _,l in ipairs(tx.keystone_lines(rule,D.mod_progression.tier(h:bag().context))) do lines[#lines+1]=l end end
+   lines[#lines+1]='';lines[#lines+1]=(D.keystones.family_names[fam] or 'Wild')..' keystone.'
+   lines[#lines+1]=ref.kind=='key' and 'You keep it for the whole run.' or 'Pick one. If you skip, it stays owed.'
+  elseif cell.lines then return cell.lines end
+  return lines
+ end
+ -- ---- model ---------------------------------------------------------------------------------------------------
  function S:invalidate() self.dirty=true end
+ local function signature(self)
+  local h=self.host;local d=self:drives()
+  return table.concat({d.rev or 0,#h.offers,#h.key_offers,#h.decide,self.layout,self.swap and self.swap.from or '',self.swap and self.swap.index or '',self.mode},'|')
+ end
+ -- Rebuild the blocks when the bag, the offers or the layout changed. The component keeps the focus on the same block/index.
+ function S:refresh()
+  local h=self.host
+  if #h.decide>0 and not (self.swap and self.swap.from=='decide') then self.layout='swap';self.swap={record=h.decide[1],from='decide'};self.confirm=nil end
+  if self.layout=='swap' and self.swap and self.swap.from=='decide' and h.decide[1]~=self.swap.record then
+   if #h.decide>0 then self.swap.record=h.decide[1] else self.layout='main';self.swap=nil end
+  end
+  local key=signature(self)
+  if not self.dirty and key==self.key and self.view then return end
+  self.dirty=false;self.key=key;self.before=nil
+  self.blocks=self.layout=='swap' and self.swap and self:build_swap() or self:build_main()
+  if not self.view then self:new_view() end
+  local old=self.view.fe
+  self.view:set_blocks(self.blocks)
+  self.view:set_title(self.layout=='swap' and (self.swap.from=='bag' and 'SWAP' or 'BAG FULL') or (self.mode=='reward' and 'STAGE CLEAR' or 'YOUR DRIVES'))
+  local back=self.layout=='swap' and (self.swap.from=='decide' and 'Leave it' or 'Back') or (self.mode=='reward' and ((#h.offers>0 or #h.key_offers>0) and 'Skip' or 'Continue') or 'Close')
+  self.view:set_actions({B=back})
+  if self.layout=='main' and self.back_focus then self.view:set_focus(self.back_focus[1],self.back_focus[2]);self.back_focus=nil end
+  self.sync_cell=nil;self:sync()
+ end
+ function S:new_view()
+  local scr=self
+  self.view=G.new{g=self.g,title='',blocks={},icon_draw=function(desc,x,y,w,h,focused,locked,cell) return scr:icon(desc,x,y,w,h,focused,locked,cell) end}
+ end
+ -- The icon hook. A keystone shows its initial; a model (or anything else) goes to `S.custom_icon` when one is set (an engine
+ -- screen-space model draw can be adopted here without touching the screens).
+ function S:icon(desc,x,y,w,h,focused,locked,cell)
+  if desc.kind=='model' then
+   local ok=pcall(self.g.kit.model,desc.asset,x,y,w,h,{yaw=20,pitch=12,spin=focused and 120 or 0,dim=locked and 0.35 or 1,tint=desc.tint})
+   if not ok and not self.model_failed then   -- a stale handle or a refused draw: flat cells from now on, said once
+    self.model_failed=true;self:release_models();self.dirty=true;self.host:log('drive models unavailable for the grid: using flat cells')
+   end
+   return
+  end
+  if self.custom_icon and desc.kind~='letter' then return self.custom_icon(desc,x,y,w,h,focused,locked,cell) end
+  local k=self.g.kit
+  if desc.kind=='letter' and k then k.text(x+w/2,y+h*0.6,desc.letter,'heading','ink','center') end
+ end
+ -- Focus changed: fill that cell's detail text once (and the merge arrow on the cell the focused drive would merge into).
+ function S:sync()
+  local v=self.view;if not v then return end
+  local fc=v:focused()
+  if fc==self.sync_cell then return end
+  self.sync_cell=fc
+  if not fc then return end
+  self:mark_target(fc)
+  fc=v:focused()
+  if fc and not fc.detail_done then fc.lines=self:detail_lines(fc);fc.detail_done=true;v.ver=v.ver+1 end
+ end
+ function S:mark_target(cell)
+  local h=self.host;local ref=cell.ref;local loc
+  if self.layout=='main' and ref and ref.record and (ref.kind=='offer' or ref.kind=='bag') then
+   local plan=h:plan_take(ref.record,ref.kind=='bag' and {where='bag',index=ref.index} or nil);if plan.action=='merge' then loc=plan.loc end
+  end
+  local want=loc and (loc.where..':'..loc.index) or nil
+  if want==self.marked then return end
+  self.marked=want
+  for _,b in ipairs(self.blocks) do
+   if b.id=='eq' or b.id=='bag' then for _,c in pairs(b.cells) do
+    local r=c.ref
+    if r and r.where and not c.empty then
+     local on=want~=nil and (r.where..':'..r.index)==want
+     local fl,had={},false
+     for _,f in ipairs(c.flags or {}) do if f=='merge' then had=true else fl[#fl+1]=f end end
+     if on then fl[#fl+1]='merge' end
+     if on~=had then c.flags=fl end
+    end
+   end end
+  end
+  self.view:rebuild()
+ end
+ -- Focus a cell by block and index (tests, the console).
+ function S:focus_on(block,index) self:refresh();local ok=self.view:set_focus(block,index);self.sync_cell=nil;self:sync();return ok end
+ function S:focused() self:refresh();local c=self.view:focused();return c,c and c.ref end
  -- ---- lifecycle -----------------------------------------------------------------------------------------------
  function S:open(mode)
-  self.active=true;self.mode=mode;self.view='list';self.swap=nil;self.confirm=nil;self.page=0;self.notice=nil;self.focus=1;self.dirty=true
-  self.input:set_active(true);self.input.previous.start=true;self.input.previous.accept=true;self.input.previous.back=true
+  self.active=true;self.mode=mode;self.layout='main';self.swap=nil;self.confirm=nil;self.notice=nil;self.dirty=true;self.view=nil;self.key=nil;self.marked=nil
+  self:load_models()
+  self.input:set_active(true,true);self.input.previous.start=true;self.input.previous.accept=true;self.input.previous.back=true
+  self.input.previous.x=true;self.input.previous.y=true
   self.opened=self.g.time and self.g.time() or 0;self.ticks=0
   if mode=='bag' and self.g.paused and not self.g.paused() then self.g.pause();self.owns_pause=true end
-  self.focus=first_focus(self:rows())
+  self:refresh()
+  if self.view then self.view:set_countdown(self:seconds_left(),S.tuning.safe_seconds) end
   self.host:log('screen open: '..mode)
  end
  function S:close()
   if self.active or self.input.masked then self.input:close() end
-  self.active=false;self.swap=nil;self.confirm=nil;self.model=nil
+  self.preview=nil;self:release_models();self.active=false;self.swap=nil;self.confirm=nil;self.view=nil;self.layout='main'
   if self.owns_pause then self.g.resume();self.owns_pause=nil end
  end
- -- The engine's hold is counted in host ticks (at most 1800), and a host tick is a render tick: 60 or 120 a second.
- -- The countdown is the shorter of the wall-clock allowance and what is left of the hold at the measured tick rate.
+ -- The engine's hold (gd.hold_1p) is counted in 60 Hz logic units of wall time, so it lasts hold_ticks/60 seconds at
+ -- any display rate (2850 = 47.5 s). The countdown is the shorter of the allowance (safe_seconds, 45 s) and what is left
+ -- of the hold less the margin, so the screen always resolves itself first.
  function S:seconds_left()
   if self.mode~='reward' then return nil end
   local wall=self.g.time and (self.g.time()-self.opened) or self.ticks/60
-  local rate=(self.ticks>=20 and wall>0.05) and self.ticks/wall or 60
-  local by_ticks=(S.tuning.hold_ticks-S.tuning.tick_margin-self.ticks)/rate
-  return math.max(0,math.min(S.tuning.safe_seconds-wall,by_ticks))
+  local by_hold=(S.tuning.hold_ticks-S.tuning.tick_margin)/60-wall
+  return math.max(0,math.min(S.tuning.safe_seconds-wall,by_hold))
  end
  -- Every way out of the reward moment goes through here with the reason, so nothing is dropped silently.
  function S:finish(reason)
   self:close();self.host:finish_reward(reason)
  end
+ -- Open the swap layout, remembering where the focus was so that backing out puts it there again.
+ function S:enter_swap(sw)
+  local _,bid,idx=self.view:focused();self.back_focus=bid and {bid,idx} or nil
+  self.layout='swap';self.swap=sw
+ end
  -- ---- input ---------------------------------------------------------------------------------------------------
- function S:notify(text) self.notice=text;self.notice_until=(self.g.time and self.g.time() or 0)+4;self.dirty=true end
- function S:move(dir)
-  local m=self:ensure();local n=#m.rows
-  for _=1,n do self.focus=(self.focus-1+dir)%n+1;if self:focusable(m.rows[self.focus]) then break end end
-  self.page=0;self.confirm=nil;self.dirty=true
+ function S:notify(text) self.notice=text;self.notice_until=(self.g.time and self.g.time() or 0)+4 end
+ local dirs={up=true,down=true,left=true,right=true}
+ -- What happened, in words, after a take.
+ local function took_text(h,action,plan)
+  if action=='merge' and plan then local name,line=h:merge_text(plan);return 'Merged into '..name..': '..line..'.' end
+  if action=='equip' and plan then return 'Equipped in slot '..plan.slot..'.' end
+  if action=='bag' then return 'In your bag.' end
+  return 'Done.'
  end
  function S:accept()
-  local m=self:ensure();local row=m.rows[self.focus];local h=self.host;if not row then return end
-  if row.kind~='skip' then self.confirm=nil end
-  if row.kind=='offer' then
-   local free=h:free_slot();local idx,why=h:take_offer(row.index)
-   if not idx then return self:notify(why) end
-   if free then self:notify(select(2,h:equip(idx,free)) or '') else self.view='swap';self.swap={index=idx,record=self:drives().bag.items[idx]};self.focus=1;self.focus=first_focus(self:rows()) end
-  elseif row.kind=='bag' then
-   local free=h:free_slot()
-   if free then local ok,msg=h:equip(row.index,free);self:notify(msg)
-   else self.view='swap';self.swap={index=row.index,record=row.record};self.focus=first_focus(self:rows()) end
-  elseif row.kind=='slot' then
-   if row.record then local ok,msg=h:unequip(row.slot);self:notify(msg) else self:notify('Pick a bag drive to equip here.') end
-  elseif row.kind=='swap_slot' then
-   local ok,msg=h:equip(self.swap.index,row.slot);self:notify(msg);self.view='list';self.swap=nil;self.focus=first_focus(self:rows())
-  elseif row.kind=='swap_keep' then
-   h:log('bagged '..self:drives().loot:name(self.swap.record));self:notify('Kept in the bag.');self.view='list';self.swap=nil;self.focus=first_focus(self:rows())
-  elseif row.kind=='key' then local ok,msg=h:toggle_keystone(row.id);self:notify(msg)
-  elseif row.kind=='skip' then
-   if self.confirm=='skip' then self.confirm=nil;h:decline_offers('skipped');self:notify('Reward skipped.');self.focus=first_focus(self:rows()) else self.confirm='skip';self:notify('Press A again to skip all '..#h.offers..' drives, or B to keep choosing.') end
-  elseif row.kind=='done' then
-   if self.mode=='reward' then
-    if #h.offers>0 then self:notify('Choose a drive or skip the reward first.') else self:finish('done') end
-   else self:finish('closed') end
+  local c,ref=self:focused();local h=self.host;if not ref then return end
+  if ref.kind~='skip' then self.confirm=nil end
+  if self.layout=='swap' then
+   if ref.kind=='swap_eq' or ref.kind=='swap_bag' then
+    if ref.empty then self:notify('Pick a drive to give up.')
+    else
+     local act,msg=h:replace_with(self.swap,ref.where,ref.index)
+     if act then self:notify(msg or 'Done.');self.layout='main';self.swap=nil else self:notify(msg or 'Not possible.') end
+    end
+   end
+   self:invalidate();return
   end
-  self.dirty=true
+  if ref.kind=='offer' then
+   local r=ref.record;local act,plan=h:take_offer(ref.index)
+   if act then self:notify(took_text(h,act,plan))
+   elseif plan=='choose' then self:enter_swap({record=r,from='offer',index=ref.index})
+   else self:notify(plan or 'Not possible.') end
+  elseif ref.kind=='koffer' then
+   local ok,msg=h:take_keystone(ref.id);self:notify(ok and ('Keystone: '..(h:keystone_rule(ref.id) or {label=ref.id}).label) or msg)
+  elseif ref.kind=='bag' and ref.record then
+   local act,plan=h:use_bag_drive(ref.index)
+   if act then self:notify(took_text(h,act,plan))
+   elseif plan=='choose' then self:enter_swap({record=ref.record,from='bag',index=ref.index})
+   else self:notify(plan or 'Not possible.') end
+  elseif ref.kind=='eq' and ref.record then local ok,msg=h:unequip(ref.index);self:notify(msg)
+  elseif ref.kind=='eq' then self:notify('Pick a bag drive and press A to equip it here.')
+  elseif ref.kind=='key' then self:notify('You keep keystones for the whole run.')
+  end
+  self:invalidate()
  end
  function S:keep()  -- X
-  local m=self:ensure();local row=m.rows[self.focus];local h=self.host
-  if row.kind=='offer' then local idx,why=h:take_offer(row.index);if idx then h:log('bagged '..self:drives().loot:name(self:drives().bag.items[idx]));self:notify('In your bag.') else self:notify(why) end;self.focus=first_focus(self:rows())
-  elseif row.kind=='slot' and row.record then local ok,msg=h:unequip(row.slot);self:notify(msg)
+  local c,ref=self:focused();local h=self.host;if not ref or self.layout=='swap' then return end
+  if ref.kind=='offer' then
+   local act,why=h:take_offer(ref.index,'bag');if act then self:notify('In your bag.') else self:notify(why) end
+  elseif ref.kind=='eq' and ref.record then local ok,msg=h:unequip(ref.index);self:notify(msg)
   end
-  self.dirty=true
+  self:invalidate()
  end
  function S:discard()  -- Y
-  local m=self:ensure();local row=m.rows[self.focus];local h=self.host
-  if row.kind~='bag' then return end
-  if self.confirm=='discard'..row.index then self.confirm=nil;local ok,msg=h:discard(row.index);self:notify(msg)
-  else self.confirm='discard'..row.index;self:notify('Press Y again to discard this drive for good, or B to cancel.') end
-  self.dirty=true
+  local c,ref=self:focused();local h=self.host
+  if self.layout=='swap' or ref==nil or ref.kind~='bag' or not ref.record then return end
+  if self.confirm=='discard'..ref.index then self.confirm=nil;local ok,msg=h:discard(ref.index);self:notify(msg)
+  else self.confirm='discard'..ref.index;self:notify('Press Y again to discard this drive, B to cancel.') end
+  self:invalidate()
  end
  function S:back()
-  if self.confirm then self.confirm=nil;self:notify('Cancelled.');return end
-  if self.view=='swap' then self.view='list';self.swap=nil;self.focus=first_focus(self:rows());self.dirty=true;return end
-  if self.mode=='bag' then self:finish('closed')
-  else
-   local m=self:ensure();for i,r in ipairs(m.rows) do if r.kind=='done' then self.focus=i end end
-   self:notify(#self.host.offers>0 and 'Choose a drive or skip the reward before continuing.' or 'Press A on Continue to leave.');self.dirty=true
+  local h=self.host
+  if self.confirm and self.confirm~='skip' and self.confirm~='leave' then self.confirm=nil;self:notify('Cancelled.');self:invalidate();return end
+  if self.layout=='swap' then
+   if self.swap.from=='decide' then
+    if self.confirm=='leave' then self.confirm=nil;h:leave_choice('player choice');self.layout='main';self.swap=nil;self:notify('Left behind.')
+    else self.confirm='leave';self:notify('Press B again to leave it behind.') end
+   else self.layout='main';self.swap=nil end
+   self:invalidate();return
   end
+  if self.mode=='bag' then self:finish('closed');return end
+  if #h.offers>0 or #h.key_offers>0 then
+   if self.confirm=='skip' then self.confirm=nil;h:decline_offers('skipped');self:finish('done');return end
+   self.confirm='skip';self:notify(#h.offers>0 and 'Press B again to skip the reward.' or 'Press B again to skip. The keystone stays owed.')
+   self:invalidate();return
+  end
+  self:finish('done')
  end
  function S:press(action)
-  if action=='up' then self:move(-1) elseif action=='down' then self:move(1)
+  if not self.active then return end
+  if dirs[action] then
+   self:refresh();if self.view:press(action) then self.confirm=nil end;self:sync()
   elseif action=='accept' then self:accept() elseif action=='back' then self:back()
   elseif action=='x' then self:keep() elseif action=='y' then self:discard()
-  elseif action=='left' then self.page=math.max(0,self.page-1);self.dirty=true
-  elseif action=='right' then self.page=self.page+1;self.dirty=true
-  elseif action=='start' and self.mode=='bag' then self:finish('closed') end
+  elseif action=='start' and self.mode=='bag' and self.layout~='swap' then self:finish('closed') end
+  if self.active then self:refresh() end
  end
  function S:tick()
   if not self.active then return end
   self.ticks=self.ticks+1
-  local p=self.g.pad(1,true) or {}
-  local acts=self.input:poll()
-  for _,a in ipairs(acts) do self:press(a) end
-  if self.active then
-   for _,k in ipairs({'x','y','left','right'}) do
-    local on=p[k:upper()]
-    if on and not self.prev[k] then self:press(k) end
-    self.prev[k]=on
-   end
-  end
-  if self.active and self.notice and self.g.time and self.g.time()>self.notice_until then self.notice=nil;self.dirty=true end
-  if self.active and self.mode=='reward' then
-   local m=self.g.mode_1p and self.g.mode_1p()
+  for _,a in ipairs(self.input:poll()) do self:press(a);if not self.active then return end end
+  self:refresh()
+  if self.notice and self.g.time and self.g.time()>self.notice_until then self.notice=nil end
+  if self.mode=='reward' and not self.preview then
    local left=self:seconds_left()
+   if self.view then self.view:set_countdown(left,S.tuning.safe_seconds) end
+   local m=self.g.mode_1p and self.g.mode_1p()
    if left<=0 then self:finish('timeout') elseif m and m.held==false then self:finish('released') end
   end
  end
  -- ---- drawing -------------------------------------------------------------------------------------------------
  function S:draw()
-  if not self.active then return end
-  local g=self.g;local k=g.kit;if not k then return end
-  local a=g.safe_area();local W=math.min(800,a.w-24);local H=a.h-24;local x0=a.x+(a.w-W)/2;local y0=a.y+12
-  local LW=math.floor(W*.46);local RX=x0+LW+32;local RW=W-LW-52
-  self.detail_w=RW
-  local m=self:ensure()
-  k.panel(x0,y0,W,H)
-  local title=self.mode=='reward' and 'STAGE CLEAR: your drives' or 'YOUR DRIVES'
-  k.text(x0+18,y0+28,title,'body','bone','left',{max_w=LW})
-  local left=self:seconds_left()
-  if left then k.text(x0+W-18,y0+28,('Time left %ds, then new drives are sorted for you'):format(ceil(left)),'body',left<8 and 'danger' or 'muted','right',{max_w=W-LW-40}) end
-  local pitch=24;local visible=math.min(S.tuning.visible_rows,math.floor((H-120)/pitch))
-  local first=self.first or 1
-  if self.focus<first then first=self.focus elseif self.focus>first+visible-1 then first=self.focus-visible+1 end
-  self.first=math.max(1,first);first=self.first
-  local ly=y0+44
-  for i=first,math.min(#m.rows,first+visible-1) do
-   local r=m.rows[i];local ry=ly+(i-first)*pitch
-   if r.kind=='header' then k.text(x0+18,ry+16,r.label,'body',r.colour or 'gold','left',{max_w=LW})
-   elseif r.kind=='note' then k.text(x0+28,ry+16,r.label,'body','muted','left',{max_w=LW})
-   else
-    local sel=i==self.focus
-    if sel then k.button(x0+14,ry,LW,r.label,'sel',{h=pitch-2})
-    else k.text(x0+28,ry+16,r.label,'body',r.record and T().rarity_colour[r.record.rarity] or 'bone','left',{max_w=LW-40}) end
-    if r.record then g.fill(x0+14+LW-18,ry+5,12,12,T().base_colour[r.record.colour] or 0xFFFFFFFF) end
-   end
+  if not self.active or not self.view then return end
+  local g=self.g
+  self.view:draw()
+  local k=g.kit;local L=self.view.lay
+  if self.notice and k and L then
+   local h=L.head
+   k.text(h.x+h.w-(self.mode=='reward' and 80 or 0),h.y+19,self.notice,'body','gold','right',{max_w=h.w-230})
   end
-  if first>1 then k.text(x0+14+LW-6,ly-4,'^','body','muted','right') end
-  if first+visible-1<#m.rows then k.text(x0+14+LW-6,ly+visible*pitch+10,'v','body','muted','right') end
-  local per=math.max(1,math.floor((H-44-70)/19));local pages=math.max(1,math.ceil(#m.lines/per));self.page=math.min(self.page,pages-1)
-  for i=1,per do local l=m.lines[self.page*per+i];if l and l[1]~='' then k.text(RX,y0+60+(i-1)*19,l[1],'body',l[2] or 'bone','left',{max_w=RW}) end end
-  if pages>1 then k.text(x0+W-18,y0+H-70,('Text %d/%d: Left / Right'):format(self.page+1,pages),'body','muted','right',{max_w=RW}) end
-  k.text(x0+18,y0+H-44,self.notice or m.controls,'body',self.notice and 'gold' or 'bone','left',{max_w=W-36})
-  k.text(x0+18,y0+H-22,self.mode=='reward' and 'B: jump to Continue   Up/Down: move   Left/Right: more text' or 'B or Z+START: close   Up/Down: move   Left/Right: more text','body','muted','left',{max_w=W-36})
  end
  -- The screen as text: what a player would read (the model, no pixels).
  function S:dump()
-  local out={};local m=self:ensure()
-  out[#out+1]=('screen %s view=%s focus=%d time_left=%s'):format(self.mode,self.view,self.focus,tostring(self:seconds_left() and math.floor(self:seconds_left())))
-  for i,r in ipairs(m.rows) do out[#out+1]=(i==self.focus and ' > ' or '   ')..r.label end
-  out[#out+1]='-- detail'
-  for _,l in ipairs(m.lines) do out[#out+1]='   '..l[1] end
-  out[#out+1]='-- controls: '..tostring(self.notice or m.controls)
+  local out={};self:refresh()
+  local fc=self.view:focused();local ref=fc and fc.ref
+  out[#out+1]=('screen %s layout=%s focus=%s time_left=%s'):format(self.mode,self.layout,ref and (ref.kind..(ref.where and (':'..ref.where) or '')..':'..tostring(ref.index or ref.id or '')) or 'none',tostring(self:seconds_left() and math.floor(self:seconds_left())))
+  local loot=self:drives().loot
+  for _,b in ipairs(self.blocks) do
+   local names={}
+   for i=1,b.cols*b.rows do
+    local c=b.cells[i]
+    if not c then names[#names+1]='-' elseif c.empty then names[#names+1]='[empty]' elseif c.flags and (function() for _,f in ipairs(c.flags) do if f=='locked' then return true end end end)() then names[#names+1]='[locked]'
+    else names[#names+1]=(c==fc and '>' or '')..c.name..(c.pips and c.pips>0 and ('*'..c.pips) or '')..((function() for _,f in ipairs(c.flags or {}) do if f=='merge' then return ' ^merge' end end;return '' end)()) end
+   end
+   out[#out+1]=b.title..': '..table.concat(names,' | ')
+  end
+  if fc then
+   out[#out+1]='-- detail: '..tostring(fc.name)
+   for _,l in ipairs(fc.lines or {}) do out[#out+1]='   '..l end
+   local acts={};for _,b in ipairs({'A','X','Y','B'}) do local a=fc.actions and fc.actions[b];if a==nil then a=self.view.actions[b] end;if a then acts[#acts+1]=b..' '..a end end
+   out[#out+1]='-- actions: '..table.concat(acts,'   ')
+  end
+  out[#out+1]='-- notice: '..tostring(self.notice)
   return out
  end
  return S

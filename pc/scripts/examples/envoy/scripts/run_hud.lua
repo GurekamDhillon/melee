@@ -11,14 +11,16 @@ return function(D)
   local b=d.bag;local key=table.concat({d.rev or 0,b.context.depth,b.context.loop,#b.items,tostring(b.equipped)},'|')
   if self.m and self.m.key==key then return self.m end
   local pips={};for slot=1,b:slots() do local r=b.equipped[slot];pips[slot]=r and {colour=T().base_colour[r.colour],border=T().rarity_colour[r.rarity]} or false end
-  local keys={};for _,m in ipairs(d.lab.engine.list) do if m.kind=='keystone' and h:keystone_set()[m.id] then keys[#keys+1]=m.label end end
+  -- Keystones are small cells (an initial letter on the family colour), never a name list.
+  local keys={};for _,id in ipairs(h:keystone_ids()) do local r=h:keystone_rule(id);local fam=D.keystones.family(id)
+   keys[#keys+1]={letter=(r and r.label or id):sub(1,1):upper(),colour=T().base_colour[fam] or 0xEBD175FF} end
   local t=h:totals()
-  self.m={key=key,pips=pips,strength=t.strength,keystone=#keys>0 and table.concat(keys,' + ') or nil,depth=b.context.depth,loop=b.context.loop,
-   bag=#b.items,label=nil}
+  self.m={key=key,pips=pips,strength=t.strength,keys=keys,depth=b.context.depth,loop=b.context.loop,bag=#b.items,label=nil}
   local k=self.g.kit
-  local text=('Strength %.2f'):format(t.strength)
+  -- Strength is a percentage over an empty build, the same number the screens use; no multiplier, no decimals.
+  local text=('%+d%%'):format(math.floor((t.strength-1)*100+.5))
   self.m.text=text;self.m.text_w=k and k.measure and k.measure(text,'caption') or #text*7
-  if self.m.keystone then self.m.key_text='Keystone: '..self.m.keystone;self.m.key_w=k and k.measure and k.measure(self.m.key_text,'caption') or #self.m.key_text*7 end
+  self.m.keys_w=#keys>0 and (math.min(#keys,6)*20+(#keys>6 and 22 or 0)) or 0
   local dl=('Depth %d'):format(b.context.depth)..(b.context.loop>0 and ('  NG+%d'):format(b.context.loop) or '')
   self.m.depth_text=dl;self.m.depth_w=k and k.measure and k.measure(dl,'caption') or #dl*7
   return self.m
@@ -47,7 +49,7 @@ return function(D)
   local k=g.kit;local a=g.safe_area()
   local x,y=a.x+10,a.y+10;local pip,gap=14,4
   local w=8+#m.pips*(pip+gap)+6+m.text_w+10+m.depth_w+10
-  if m.key_text then w=w+m.key_w+10 end
+  if m.keys_w>0 then w=w+m.keys_w+10 end
   local flash=self.flash_left>0
   g.fill(x,y,w,26,flash and 0x3A3320E8 or 0x10181EC8)
   local px=x+8
@@ -60,7 +62,10 @@ return function(D)
   if k then
    k.text(px,y+19,m.text,'caption',flash and 'gold' or 'bone','left');px=px+m.text_w+10
    k.text(px,y+19,m.depth_text,'caption','muted','left');px=px+m.depth_w+10
-   if m.key_text then k.text(px,y+19,m.key_text,'caption','gold','left') end
+   for i,kc in ipairs(m.keys) do
+    if i>6 then k.text(px,y+19,'+'..(#m.keys-6),'caption','gold','left');break end
+    g.fill(px,y+4,16,18,0xEBD175FF);g.fill(px+1,y+5,14,16,kc.colour);k.text(px+8,y+18,kc.letter,'caption','ink','center');px=px+20
+   end
    if flash and self.flash_text then k.text(x,y+44,self.flash_text,'caption','gold','left') end
   else
    g.text(px,y+6,m.text,0xF3F0E8FF,10)
@@ -89,7 +94,7 @@ return function(D)
   local m=self:model();if not m then return {'hud: no host'} end
   local out={};local pips={}
   for i,p in ipairs(m.pips) do pips[i]=p and ('[%06X/%06X]'):format(p.colour>>8,p.border>>8) or '[empty]' end
-  out[1]='hud: '..table.concat(pips,' ')..'  '..m.text..'  '..m.depth_text..(m.key_text and ('  '..m.key_text) or '')..(self.flash_left>0 and ('  FLASH '..tostring(self.flash_text)) or '')
+  out[1]='hud: '..table.concat(pips,' ')..'  '..m.text..'  '..m.depth_text..(#m.keys>0 and ('  keys['..(function() local l={};for _,kc in ipairs(m.keys) do l[#l+1]=kc.letter end;return table.concat(l,'') end)()..']') or '')..(self.flash_left>0 and ('  FLASH '..tostring(self.flash_text)) or '')
   for _,t in ipairs(self.toasts) do for _,l in ipairs(t.lines) do out[#out+1]='hud toast: '..(l.text or l) end end
   if self.card then out[#out+1]='hud card: '..self.card.title..' / '..table.concat(self.card.lines,' | ') end
   return out

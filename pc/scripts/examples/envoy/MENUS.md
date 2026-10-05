@@ -1,60 +1,79 @@
-# Envoy rule-host run screens - 2026-10-04 (ux pass; supersedes the older contracts below for `envoy rules on`)
+# Envoy rule-host run screens: the grid (2026-10-05; supersedes the older contracts below for `envoy rules on`)
 
-Controller only. Every screen states its bindings at the bottom. Text is plain words (`drive_text.lua`): no ids,
-tier labels or internal points. Layout uses existing `gd.kit` panels/lists/text and `g.fill` pips: the look is unverified.
+Controller only. One component draws both screens: the grid from `demos/grid-inventory` (embedded into the bundle as
+`D.grid`; `tools/port/envoy_bundle.py` wraps `grid.lua` unedited). A drive is a square cell that reads without text: fill = drive colour
+(red damage, green speed, blue defence, yellow air, purple status, white wild), border and corner notches = rarity,
+pips = how many modifiers, a dot = new, a plus = "the focused drive merges into this one", a lock = slot not yet unlocked.
+Text is plain words (`drive_text.lua`): no ids, tier codes or budget numbers; ONE panel describes the focused cell.
 
-## Reward screen (the hold after a stage clear)
-Opens inside the engine's barrier hold (`gd.hold_1p(1800)`). The hold is counted in host ticks, which run at the render
-rate: about 15 s at 120 Hz, 30 s at 60 Hz. The title row shows the countdown ("Time left Ns, then new drives are
-sorted for you"). Left: rows. Right: the focused drive in words, then `YOUR BUILD` totals (or `IF YOU DO THIS`, before -> after).
+## Layout (reward screen and bag screen share it)
 
-Rows: `STAGE REWARD: take one of N` (N = 2, or 3 after a bonus stage and the final boss: two Rare + one Unique) with the
-offered drives and `Skip the reward (keep none)`; `EQUIPPED n/slots` (Slot i: name or Empty); `BAG n/12` (`NEW` marks
-drives collected this stage); `KEYSTONES n/allowed` (benefit and drawback in the detail pane; "A keystone is one
-powerful rule with a built-in drawback"); `Continue to the next stage`.
+| block | cells | shown |
+|---|---|---|
+| TAKE ONE | the offered drives (3) | reward screen only, while offers remain |
+| KEYSTONE: ONE | the offered keystones (3, three different colours) | reward screen only, when the keystone allowance has a step owed |
+| EQUIPPED n/slots | always six cells: drive, empty, or locked | always |
+| BAG n/4 | four cells | always |
+| KEYSTONES n/allowed | the keystones you hold, six per row | when you hold any (a run starts with one) |
+
+The detail panel (right) shows the focused cell: name in words, the base line, one line per modifier, what A would do
+("Merges into Green Drive: Lingering: Lingering got stronger.", "Goes into slot 2.", "Goes into your bag.", "Your bag is full:
+you will pick a drive to give up."), then `Build strength +49% -> +56%` (any other total only when it changes). The bar at the bottom
+shows A / X / Y / B for the focused cell. The title row carries the countdown in the reward screen and short notices.
+
+## Buttons
 
 | Focus | A | X | Y | B |
 |---|---|---|---|---|
-| offered drive | take it and equip in the first free slot (one press); if all slots are full, take it and ask which to swap | take it, keep in bag | - | jump to Continue |
-| bag drive | equip in the first free slot, else ask which to swap | - | discard (asks twice) | jump to Continue |
-| equipped slot | move to bag | move to bag | - | jump to Continue |
-| keystone | choose / remove (the allowance limits it) | - | - | jump to Continue |
-| Skip | asks; a second A skips all offered drives | - | - | cancels the ask |
-| Continue | leaves (refused while an offer is unresolved) | - | - | - |
-Up/Down move, Left/Right turn the text page.
+| offered drive | the obvious thing: merge into a matching drive, else equip into the first free slot, else the bag, else ask which to replace | to the bag (only when the bag has room) | - | skip the rest (asks; a second B skips) |
+| offered keystone | take it | - | - | skip (the allowance stays owed) |
+| bag drive | merge into a matching drive, else equip into a free slot, else ask which equipped drive to swap with | - | discard (asks twice) | close / continue |
+| equipped drive | to the bag (when the bag has room) | to the bag | - | close / continue |
+| empty / locked cell | says what it is | - | - | close / continue |
+| held keystone | read only: you keep keystones for the whole run | - | - | close / continue |
 
-Swap view (`SWAP OUT WHICH DRIVE?`): the slots plus `Keep it in the bag instead`; the detail pane shows
-`Build strength a -> b` and the totals before -> after (green better, red worse) and which drive goes to the bag. A swaps,
-B backs out (the taken drive stays in the bag).
+D-pad or stick moves one cell (it wraps; Up/Down jump between blocks). B with nothing left on offer continues; in the bag screen B or START closes.
 
-Ways out: Continue (A), `Skip` (A, A), the countdown, or the engine ending the hold first. Countdown / release: the first
-offer is taken (never discarded), new drives fill free slots in order, the rest stay in the bag. No hold available: same
-auto-sort at once. Everything logs: `equipped into slot N`, `swapped out X`, `bagged X`, `discarded X (player choice)`,
-`skipped the stage reward: none kept (...)`, `timeout: took X automatically`.
+Swap layout ("BAG FULL" / "SWAP"): the incoming drive, the six equipped cells and the four bag cells as targets. A replaces the focused
+drive (an equipped drive goes to the bag when it has room, otherwise it is gone, and the panel says which before you press); B backs out.
+When a picked-up drive has nowhere to go this opens by itself and pauses the game; B twice leaves the drive behind (logged).
+
+## Rules the screens enforce
+
+- Taking a drive into a free slot never needs bag space (`bag:place`), so a full bag with an empty slot 6 still takes the reward.
+- A gained drive always resolves to merge / equip / bag / an explicit choice; nothing is dropped silently, and every outcome logs.
+- Keystones come one per allowance step (1 + one per five depth): a run starts with one random keystone (announced with the starter
+  drive in one panel); at a stage clear with a step owed, a pick of three from different colours that are legal with what you hold.
+- Rewards: a pick of three at every third stage (2, 5, 8...), every bonus stage and the boss; the final boss offers two Rare and one Unique.
+- Ways out of the reward screen: B (continue / confirmed skip), the 45 s countdown, or the engine ending the hold first. On a countdown
+  the first offer is taken (merge, free slot or bag, never discarded when it can be kept), new drives fill free slots.
+- Script cost: the blocks and the detail text are rebuilt only when the bag, the offers or the focus change; a drawn frame replays the
+  component's cached layout. `uxcost` logs the measured cost (`uxcost reset` first).
 
 ## Bag screen (Z+START in a fight, or `bag`)
-Same screen with `YOUR DRIVES`, no offers, no countdown, `Close` instead of Continue. Pauses the game while open
-(B or START closes). Z+START is also START to the retail pause: closing may need one more START if retail paused too.
+The same grid with `YOUR DRIVES`, no offered blocks, no countdown, `Close` for B. It pauses the game while open. Z+START is kept from the game
+by `gd.input_chord`, and the START that closes it is hidden until released, so it does not also pause.
 
 ## Build strip (during fights)
-Top-left: one pip per slot (fill = drive colour, border = rarity: grey common, blue magic, gold rare, orange unique;
-dark = empty), `Strength x.xx`, `Depth n` (`NG+n`), and `Keystone: name`. It flashes ~1.5 s when a slot changes, a drive is
-gained or a modifier fires (the modifier name appears under it). The companion stat bars are not drawn on this route.
+Top-left: one pip per slot (fill = drive colour, border = rarity; dark = empty), build strength as a percentage (`+56%`), `Depth n`
+(`NG+n`), and the keystones you hold as small cells (an initial on the family colour, six then `+n`). It flashes about 1.5 s when
+a slot changes, a drive is gained or a modifier fires.
 
 ## Announcements and cards
-Centred panel, ~6 s each, once: starter drive, "Fifth slot unlocked", "Keystone allowance: n", "Drive tier n", "New Game+ n".
-Bottom card on a drop ("A drive dropped! Walk over it") and on pickup (name + effect + "It is in your bag").
-Opponent plate (stage start, ~4 s): `Name (opponent strength x.x)` then its modifiers in plain words, three per page.
+Centred panel, about 6 s, once: the starter drive and starting keystone (one panel), "Fifth slot unlocked", "Keystone allowance: n.
+A keystone is offered at the next stage clear.", "Drive tier n", "New Game+ n". Bottom card: "A drive dropped!" plus its one short line, "Picked up: <short
+name>", "Merged!" with the drive and what got stronger, "Bag full: <name>". Opponent plate (stage start, about 4 s): its modifiers one line each
+(keystones: name and effect), three per page.
 
 ## Drops
-An opponent drops a drive when it first passes 50% damage and again when it loses a stock (a one-stock fight ends at the
-KO, so the drive must be reachable before). It appears on the floor a few steps from you, with the existing hover/spin/glow/beam.
-Battle/giant/metal: the first trigger always drops, later ones 25% (max 2). Team: one per opponent (max 3). Bonus: none (the
-clear offers 3). Final boss: none on the floor (the clear offers 3). Seeded by run seed and stage. Left on the floor at
-stage end (or faded): collected into the bag. Switches in `run_host.lua` `H.tuning`: `drops`, `auto_collect` (false = lost, and logged),
-`drop_percent`, `drop_chance`, `team_drops_max`, `offer_count`, `bonus_offer_count`.
+At most one drive per stage on the floor: battle/giant/metal 70% (at the first trigger: an opponent passes 50% damage or loses a stock),
+team one, bonus and boss none. Opponents that spawn after the stage began (Adventure side-scrollers) are registered when they appear,
+rolled once per port per stage, and can drop. The match does not end while a drive is on the floor: pick it up (or it fades, or 30 s
+after the last opponent) and then the stage ends. The numbers are `drive_economy.lua` `E.tuning`; the switches `drops`, `auto_collect`,
+`drop_percent` are in `run_host.lua` `H.tuning`. Left on the floor at stage end: gathered through the same gain rule.
 
-Console: `uxdump` logs slots, bag, offers, HUD and the open screen as text; `uxpress <up|down|left|right|accept|back|x|y|start>`; `uxbag`.
+Console: `uxdump` logs slots, bag, keystones, offers, HUD and the open screen as text; `uxpress <up|down|left|right|accept|back|x|y|start>`;
+`uxbag`; `uxcost [reset]`; test hooks `uxgain [n] [merge]` (gain rolled drives through the pickup rule) and `uxpreview [keys]` (open the reward grid with real offers).
 
 ---
 

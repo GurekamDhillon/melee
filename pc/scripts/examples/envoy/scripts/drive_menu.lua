@@ -19,7 +19,7 @@ return function(D)
   return setmetatable({g=g,owner=owner,input=D.menu_input.new(g),focus=1,slot=1,active=false},M)
  end
  function M:open()
-  self.active=true;self.input:set_active(true);self.input.previous.start=true
+  self.active=true;self.input:set_active(true,true);self.input.previous.start=true
   if self.g.paused and not self.g.paused() then self.g.pause();self.owns_pause=true end
  end
  function M:close()

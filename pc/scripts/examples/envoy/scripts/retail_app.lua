@@ -67,6 +67,7 @@ return function(D)
    self.run.profile=r.profile
    if r.reward then self.menu:show('reward');self.menu.focus.reward=1;self.visible=true
    elseif not r.active and r.results then self.menu:results(r.results);self.visible=true;self.retail_return=true end
+   if name=='stage_start' or not r.active then self.results_up=nil end
    if name=='stage_start' and r.active then self.recolour:apply(r.companion) end
    self:sync_pause()
   end
@@ -142,7 +143,7 @@ return function(D)
     if not self.retail.active and self.retail.results then self.menu:results(self.retail.results);self.retail_return=true
     elseif self.menu.screen=='reward' and not self.retail.reward then self.menu:show('playing') end
     self:sync_pause();local actions=self.input:poll()
-    if self.visible then for _,action in ipairs(actions) do self:menu_effect(self.menu:input(action,self:context())) end end
+    if self.visible then for _,action in ipairs(actions) do if not (action=='start' and self.results_up and self.menu.screen=='playing') then self:menu_effect(self.menu:input(action,self:context())) end end end
     return
    end
    self.retail:tick();return old.tick(self)
@@ -177,7 +178,7 @@ return function(D)
    return old.draw(self)
   end
   function A:stop(reason)
-   self.retail_request=nil
+   self.retail_request=nil;self.results_up=nil
    if self.retail.active or self.retail.pending then
     local ok,why=self.retail:finish(reason or 'quit');self.run.profile=self.retail.profile
     self.drives:clear();self.models:clear();self.recolour:clear();self.visual:clear()
@@ -186,7 +187,10 @@ return function(D)
    return old.stop(self,reason)
   end
   function A:match_start() if self.retail.active or self.retail.pending then self.models:unload();return end;return old.match_start(self) end
-  function A:match_end() if self.retail.active or self.retail.pending then self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
+  -- From the end of a retail stage until the next one starts the game's own results screen is up and waits for START: Envoy's
+  -- START-opens-the-pause-menu must stay out of the way, or it eats the press (and, with START hidden while a menu is open, the
+  -- game never sees it at all).
+  function A:match_end() if self.retail.active or self.retail.pending then self.results_up=true;self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
   function A:unload() self:stop('quit');return old.unload(self) end
   function A:enter_hub()
    if self.retail.active or self.retail.pending then return false,'settle retail run before garden' end

@@ -12,9 +12,9 @@ T.test('a rolled drive reads as header, base line and modifiers; totals show bef
  local lines=D.drive_text.drive_lines(loot,r);assert(#lines>=3 and lines[1]:find('Base',1,true))
  assert(D.drive_text.header(loot,r):find('Rare / ',1,true))
  local f,s=D.mod_budget.build(D.mod_pool,{},{},{});local a=D.drive_text.totals(f,s)
- assert(D.drive_text.total_line('strength','Build strength',a):find('1.00',1,true))
+ assert(D.drive_text.total_line('strength','Build strength',a)=='Build strength +0%')
  local b={strength=2,damage_dealt=1.2,launch_dealt=1,speed=1,damage_taken=1.1}
- assert(D.drive_text.total_line('strength','Build strength',a,b)=='Build strength 1.00 -> 2.00')
+ assert(D.drive_text.total_line('strength','Build strength',a,b)=='Build strength +0% -> +100%')
  assert(D.drive_text.better('damage_taken',1,1.1)==false and D.drive_text.better('damage_dealt',1,1.2)==true and D.drive_text.better('speed',1,1)==nil)
 end)
 T.done()

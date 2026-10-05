@@ -32,6 +32,13 @@ T.test('controller closes only its pause and releases input mask',function()
  local s,a=fixture();a.menu:close();assert(s.mask==nil and s.resumes==0);a.menu:open();assert(s.paused);a.menu:close();assert(not s.paused and s.mask==0 and s.resumes==1)
  s.paused=true;a.menu:open();a.menu:close();assert(s.paused and s.resumes==1)
 end)
+T.test('Z+START is kept from the game as a chord while the bag may open, and released when it may not',function()
+ local s,a=fixture();local calls={};a.g.input_chord=function(port,spec) calls[#calls+1]={port,spec};return true end
+ a:tick();assert(#calls==1 and calls[1][1]==1 and calls[1][2]=='Z+START');a:tick();assert(#calls==1,'asserted once, not every tick')
+ s.replay=true;a:tick();assert(#calls==2 and calls[2][2]==nil,'released during a rewind')
+ s.replay=false;a:tick();assert(#calls==3 and calls[3][2]=='Z+START')
+ for _=1,125 do a:tick() end;assert(#calls>=4,'re-asserted after a scene change could have cleared it')
+end)
 T.test('persistence switch retains build while default clear starts fresh',function()
  local s,a=fixture();assert(a:command('give rare 9'));a:apply();assert(a:queue('equip',1,1));a:apply();a:clear();assert(not a:has_build())
  D.drive_lab.tuning.persist=true;local _,b=fixture();assert(b:command('give rare 9'));b:apply();assert(b:queue('equip',1,1));b:apply();b:clear();assert(b:has_build());D.drive_lab.tuning.persist=false

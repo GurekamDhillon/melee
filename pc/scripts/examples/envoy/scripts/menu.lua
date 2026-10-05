@@ -46,9 +46,10 @@ return function(D)
    if action=='start' then self:show('pause');return {type='pause'} end
    return
   end
-  if action=='back' or (action=='start' and screen=='pause') then
+  if action=='back' or (action=='start' and (screen=='pause' or screen=='results')) then
    if screen=='interlude' or screen=='reward' then return end
-   if screen=='results' then if c and c.retail_pending then return end;self:show('hub');return {type='hub'} end
+   -- B (or START) on the results leaves Envoy at once: control returns to the game; the Back row still goes to the garden.
+   if screen=='results' then if c and c.retail_pending then return end;return {type='quit'} end
    if screen=='pause' then self:show('playing');return {type='resume'} end
    if screen=='title' then return {type='quit'} end
    local parents={title='title',profile='title',hub='title',fighter='hub',setup='fighter',confirm='pause',quit='hub',results='hub'}

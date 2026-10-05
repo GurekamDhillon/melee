@@ -335,11 +335,12 @@ return function(D)
   if self.enabled and self:allowed() and not self:replaying() and self.display.tick then self.display:tick(self.engine) end
   return self.drives and self.drives.menu.active or false
  end
- function L:scene() self:reset();self.display=D.mod_display.new(self.g,self.engine) end -- scene invalidates shader handles
+ function L:scene() if D.menu_input then D.menu_input.reset() end;self:reset();self.display=D.mod_display.new(self.g,self.engine) end -- scene invalidates shader handles
  function L:draw()
   if self.drives and self.drives.menu.active then self.drives:draw();return end
   local plate=self.foes and self.g.kit and next(self.foes.labels)~=nil
-  if plate then self.foes:draw() elseif self.enabled then self.display:draw(self.engine) end
+  -- The Modifier LAB debug text (ids, last chain) is a LAB tool: a run's own strip and plates replace it.
+  if plate then self.foes:draw() elseif self.enabled and not self:hosted() then self.display:draw(self.engine) end
   if self.drives and not plate then self.drives:draw() end
  end
  function L:unload()

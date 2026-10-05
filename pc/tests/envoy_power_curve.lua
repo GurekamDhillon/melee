@@ -5,7 +5,7 @@ T.test('progression owns monotonic tiers slots and independent difficulty',funct
  local P=D.mod_progression;local last=0
  for e=0,120 do local c=P.context(e,0);assert(P.growth(P.tier(c))>=last);last=P.growth(P.tier(c)) end
  assert(P.slots(P.context(0,0))==4 and P.slots(P.context(5,0))==5 and P.slots(P.context(10,0))==6)
- assert(P.keystones(P.context(12,3))==3 and P.factor(P.context(12,3),'boss')>P.factor(P.context(12,3)))
+ assert(P.keystones(P.context(12,3))==11 and P.keystones(P.context(0,0))==1 and P.keystones(P.context(5,0))==2 and P.keystones(P.context(10,0))==3 and P.keystones(P.context(0,5))==14 and P.factor(P.context(12,3),'boss')>P.factor(P.context(12,3)))
  for _,v in ipairs({-1,1.5,math.huge,0/0,2147483647}) do T.refuses(function()P.context(v,0)end) end
 end)
 for _,n in ipairs({'mod_schema','mod_codec','mod_budget','mod_pool','mod_engine','drive_loot','drive_bag','foe_roll'})do D[n]=T.module(n,D)end
@@ -55,10 +55,10 @@ T.test('seeded scalar opponents track all 52 contexts without consulting a refer
  T.refuses(function()roll:roll(2,1,0,2,poison)end)
 end)
 T.test('late balanced unique and three-keystone witness retains readable exchanges',function()
- local roll=D.foe_roll.new(D.mod_pool);local c={depth=12,loop=3};local player=roll:sample(150,c)
+ local roll=D.foe_roll.new(D.mod_pool);local c={depth=12,loop=3};local player=roll:sample(365,c)
  local foe=roll:roll(player.strength,250,12,2,c);local a,b=roll:exchange(player.build,foe.build)
  assert(player.strength>10 and a>=4 and a<=12 and b>=4 and b<=12)
- assert(player.build.equipped[5].unique and #player.build.keystones==3)
+ assert(player.build.equipped[5].unique and #player.build.keystones>=3)
  local boss=roll:roll(player.strength,250,12,2,c,'boss');local final=roll:roll(player.strength,250,12,2,c,'finalboss')
  assert(boss.target>foe.target and final.target>boss.target)
  local bad=D.mod_codec.decode(D.mod_codec.encode(foe));bad.build.context.depth=11;T.refuses(function()roll:validate(bad)end)

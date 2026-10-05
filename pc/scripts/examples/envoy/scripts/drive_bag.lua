@@ -3,6 +3,9 @@ return function(D)
  local B={};B.__index=B
  local function copy(v) if type(v)~='table' then return v end;local t={};for k,x in pairs(v) do t[k]=copy(x) end;return t end
  local function index(i,n) return type(i)=='number' and i==math.floor(i) and i>=1 and i<=n end
+ -- The bag's size comes from the economy's tuning when that module is loaded (4), else the old 12 (standalone tests).
+ function B.default_capacity() return D.drive_economy and D.drive_economy.tuning.bag_capacity or 12 end
+ function B:capacity() return self.config.capacity or B.default_capacity() end
  function B.new(loot,config)
   config=config or {};return setmetatable({loot=loot,config=config,context=D.mod_progression.context(config.context),items={},equipped={},keystone=nil,keystones={}},B)
  end
@@ -33,7 +36,7 @@ return function(D)
   D.mod_progression.context(s.context or self.context)
   if s.keystones then local n=0;for k,id in pairs(s.keystones)do assert(index(k,#s.keystones) and type(id)=='string','invalid keystone array');n=n+1 end;assert(n==#s.keystones,'sparse keystone array')end
   local count=0;for k,r in pairs(s.items) do assert(index(k,#s.items),'invalid bag index');self.loot:validate(r);count=count+1 end
-  assert(count==#s.items and count<=(self.config.capacity or 12),'bag full')
+  assert(count==#s.items and count<=self:capacity(),'bag full')
   for k,r in pairs(s.equipped) do assert(index(k,self:slots(s.context)),'invalid equipped slot');self.loot:validate(r) end
   return self:derive(s)
  end
@@ -49,7 +52,7 @@ return function(D)
  function B:restore(s) return self:publish(copy(s)) end
  function B:give(r)
   local ok,err=pcall(function() self.loot:validate(r) end);if not ok then return false,err end
-  if #self.items>=(self.config.capacity or 12) then return false,'bag full' end
+  if #self.items>=self:capacity() then return false,'bag full' end
   self.items[#self.items+1]=copy(r);return true
  end
  function B:equip(i,slot)
@@ -59,8 +62,30 @@ return function(D)
  end
  function B:unequip(slot)
   if not index(slot,self:slots()) or not self.equipped[slot] then return false,'empty slot' end
-  if #self.items>=(self.config.capacity or 12) then return false,'bag full' end
+  if #self.items>=self:capacity() then return false,'bag full' end
   local s=self:snapshot();s.items[#s.items+1]=s.equipped[slot];s.equipped[slot]=nil;return self:publish(s)
+ end
+ -- Putting a drive into an EMPTY slot never needs bag space (the drive is not in the bag first).
+ function B:place(slot,r)
+  if not index(slot,self:slots()) then return false,'invalid index' end
+  if self.equipped[slot] then return false,'slot occupied' end
+  local ok,err=pcall(function() self.loot:validate(r) end);if not ok then return false,err end
+  local s=self:snapshot();s.equipped[slot]=copy(r);return self:publish(s)
+ end
+ -- Replace a held drive by another record (a merge result, or a drive that replaces a given-up one). No space needed.
+ function B:replace(where,i,r)
+  local s=self:snapshot()
+  if where=='equipped' then if not index(i,self:slots()) or not s.equipped[i] then return false,'invalid index' end;s.equipped[i]=copy(r)
+  elseif where=='bag' then if not index(i,#s.items) then return false,'invalid index' end;s.items[i]=copy(r)
+  else return false,'invalid index' end
+  return self:publish(s)
+ end
+ -- Every drive the player holds, equipped first (slot order), then the bag: {record=,where='equipped'|'bag',index=}.
+ function B:held()
+  local out={}
+  for slot=1,self:slots() do local r=self.equipped[slot];if r then out[#out+1]={record=r,where='equipped',index=slot} end end
+  for i,r in ipairs(self.items) do out[#out+1]={record=r,where='bag',index=i} end
+  return out
  end
  function B:discard(i) if not index(i,#self.items) then return false,'invalid index' end;table.remove(self.items,i);return true end
  function B:choose_keystone(id)

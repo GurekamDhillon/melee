@@ -15,14 +15,22 @@ return function(D)
   local high=math.min(12,math.max(0,math.log(strength)))
   return {armoured=1+3*high,cleansing=1+2*high,bastion=1+high,shelter=1+high,reprisal=1+high,renewal=1+high,heavy=1/(1+high)^3,pyre=1/(1+high)^3}
  end
- function R:construct(rand,context,strength,full)
+ function R:construct(rand,context,strength,full,relaxed)
   local count=full and P.slots(context) or math.floor(rand(P.slots(context)+1))
   local b={items={},equipped={},keystones={},context=P.context(context)}
   local h=math.max(0,math.log(strength));local loot=D.drive_loot.new(self.pool,{affix_weights=self:weights(strength),unique_weights={glass_core=1+2*h,storm_shell=1+h,mirror_shard=1/(1+h)}})
-  for slot=1,count do b.equipped[slot]=loot:roll(math.floor(rand(2147483646)),context,rand(5)<1 and 'unique' or 'rare')end
+  -- Opponents follow the player's curve: the best rarity the depth has reached (a unique only once uniques roll),
+  -- and the drive's affix count is held down by the depth band exactly as for the player's drives.
+  local function rarity(c) if relaxed then return rand(5)<1 and 'unique' or 'rare' end;local top=P.rarity_allowed(c,'unique') and rand(5)<1 and 'unique' or P.rarity_allowed(c,'rare') and 'rare' or P.rarity_allowed(c,'magic') and 'magic' or 'common';return top end
+  for slot=1,count do b.equipped[slot]=loot:roll(math.floor(rand(2147483646)),context,rarity(P.context(context)))end
   local keys={};for _,id in ipairs(self.keys)do keys[#keys+1]=id end
   local keycount=full and P.keystones(context) or math.floor(rand(P.keystones(context)+1))
-  for _=1,math.min(keycount,#keys)do b.keystones[#b.keystones+1]=table.remove(keys,math.floor(rand(#keys))+1)end
+  -- Held keystones follow the allowance and the same exclusion/drawback rules as the player's (keystones.lua).
+  while #b.keystones<keycount and #keys>0 do
+   local id=table.remove(keys,math.floor(rand(#keys))+1)
+   local trial={};for _,k in ipairs(b.keystones)do trial[#trial+1]=k end;trial[#trial+1]=id
+   if not D.keystones or D.keystones.check(trial) then b.keystones=trial end
+  end
   if #b.keystones==1 then b.keystone=b.keystones[1]end
   return b
  end
@@ -92,8 +100,12 @@ return function(D)
   while job.attempt<=self.candidates and attempts>0 and not job.found do
    local attempt=job.attempt;job.attempt=attempt+1;attempts=attempts-1
    local candidate=P.context(context)
-   if attempt>0 then candidate.depth=math.min(2147483646,candidate.depth+math.floor(rand(16)))end
-   local build=attempt==0 and {items={},equipped={},keystones={},context=context} or self:construct(rand,candidate,target,false)
+   if attempt>0 then
+    -- A deeper roll buys tier, but never leaves the context's affix-count band (a depth-0 opponent stays simple).
+    local room=job.relaxed and 15 or math.min(15,P.band_top(context)-P.effective(context))
+    candidate.depth=math.min(2147483646,candidate.depth+math.min(room,math.floor(rand(16))))
+   end
+   local build=attempt==0 and {items={},equipped={},keystones={},context=context} or self:construct(rand,candidate,target,false,job.relaxed)
    build.context=context
    for slot in pairs(build.equipped)do if slot>P.slots(context)then build.equipped[slot]=nil end end
    while #build.keystones>P.keystones(context)do table.remove(build.keystones)end
@@ -109,13 +121,19 @@ return function(D)
    job.best,job.distance=best,distance
   end
   if job.attempt<=self.candidates and not job.found then return nil end
+  -- The curve bounds ordinary play. A strength it cannot reach (a LAB build far above the depth) gets a second
+  -- pass with the old unbanded rolls instead of a refusal; a normal run never reaches this.
+  if not job.found and not job.relaxed and (not best or best.strength<target*self.band[1] or best.strength>target*self.band[2]) then
+   job.relaxed=true;job.attempt=1;return nil
+  end
   assert(best,'no valid independent opponent build')
   assert(best.strength>=target*self.band[1] and best.strength<=target*self.band[2],'requested strength unreachable by bounded same-pool search')
   self:validate(best);return best
  end
  function R:roll(strength,seed,stage,port,context,role)
   local job=self:roll_job(strength,seed,stage,port,context,role)
-  return self:roll_step(job,math.huge)
+  local r;repeat r=self:roll_step(job,math.huge) until r
+  return r
  end
  return R
 end

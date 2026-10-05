@@ -1,18 +1,111 @@
-# Envoy rule-host run: what to see, stage by stage (ux pass 2026-10-04)
+# Envoy rule-host run: what to see, stage by stage (the grid pass, 2026-10-05)
 
-Setup: `envoy rules on`, then `envoy classic` (console), vanilla disc, offline. Controller: A / B / X / Y, D-pad or stick.
-1. Stage 1 start: a panel says "Your starter drive" and names it; the strip top-left shows one filled pip and three dark ones, Strength, Depth 0.
-2. Fight: the opponent's plate lists its modifiers (probably "No modifiers" this early). Hit it past 50%: "A drive dropped!" appears, a drive with a beam sits on the floor near you. Walk over it: a pickup card, the strip flashes.
-3. Stage clear: the reward screen. Left rows: two offered drives, Skip, your four slots, your bag (new drives marked NEW), keystones. Press A on an offered drive: it goes into slot 2. Watch the totals line. You have about 15 s (countdown at the top); if it runs out, nothing is lost: the first offer is taken, free slots fill, the rest stays in the bag.
-4. Stages 2-4 (team stage drops more): fill all four slots, then choose an offer: you are asked which drive to swap out, with before -> after totals. Try "Keep it in the bag", Skip (A twice), and X.
-5. Stage 6 (depth 5): "Fifth slot unlocked", "Keystone allowance: 2", "Drive tier 2". Open the bag (Z+START) and pick a keystone; each shows its drawback.
-6. Bonus stage: three offered drives. Master Hand: three offered, one Unique. After it: "New Game+ 1" and your build carries over.
-Judge: can you tell in five seconds what a drive does; is 15 s enough (the engine hold is capped at 1800 host ticks); strip position vs the retail percent display; drop frequency. The logs (`melee-pc.log`, lines `envoy rules:`) say exactly what was equipped, swapped, bagged or discarded.
+Setup: `envoy rules on`, then `envoy classic` (console), vanilla disc, offline. Controller: A / B / X / Y, D-pad or stick. See MENUS.md for the grid.
+1. Stage 1 start: ONE panel: "Your starter drive" (one modifier, e.g. `Green Drive: Lingering`) and "Your keystone: <name>" with its effect and drawback. The strip top-left: one filled pip, a `+n%` strength, Depth 0, one small keystone cell.
+2. Fight: the opponent plate lists its modifiers one line each (early on, one or two). Hit it past 50%: a drive may drop (70% on a battle stage, never more than one). The match does not end at the last KO while a drive lies on the floor: pick it up (a merge says "Merged!", otherwise it goes in the bag, or a free slot when the bag is full, or a grid asks which drive to give up).
+3. Stages 1 and 2 give no reward screen; the third stage (index 2) does: three offered cells, your six equipped cells (two locked), your four bag cells, the keystone you hold. Focus a cell: the panel shows its lines and `Build strength a -> b`; A does the obvious thing (merge, else equip, else bag, else ask).
+4. Merging: when an offered drive shares a colour and a modifier with one you hold, the held cell shows a plus and A says Merge: one modifier of the held drive goes up a tier, nothing is added.
+5. Depth 5 (stage 6): "Fifth slot unlocked", "Keystone allowance: 2. A keystone is offered at the next stage clear." At that clear the keystone row appears next to the offered drives: three cells from three colours, pick one (B twice skips; it stays owed).
+6. Bag screen: Z+START in a fight opens the same grid and pauses; B or START closes it without pausing the match. Four bag places; a fifth drive asks which to give up.
+7. Bonus stage: three offered drives. Master Hand: two Rare and one Unique. After it: "New Game+ 1", your build carries over, opponents are rolled a step above your actual strength.
+Judge: are the cells readable at a glance (colour, border, pips); is the one detail panel enough; do early drops feel tame; is 45 s enough (the engine hold is 2850 units of 1/60 s); is a drive per stage the right amount.
 
-EM5 echo source pass (2026-10-04) is the current addition below. Its36-record
-pool changes deterministic loot/foe recipes from the preceding32-record EM4
-follow-up. Preserve those sections as historical model evidence, not current
-seed guarantees. Echo source fixtures do not establish live gameplay acceptance.
+## What to expect on the next run
+- You start with one drive (one modifier) and one random keystone; the first drops are single-modifier. Two-modifier drives appear from stage 4, three from stage 7, four only deep (NG+ is always the top band).
+- Far fewer drives: at most one per stage on the floor, a reward screen only every third stage, bonus stages and the boss; a four-place bag. Duplicates merge instead of piling up.
+- 30 keystones, a new one each five depth, chosen from three; you only ever see the ones you hold and the three on offer.
+- Opponents track your actual strength and sit a little above it (about +5% at depth 5, +10% at 10, +13% in NG+1, +39% in NG+3).
+- The reward screen is a grid, not a list; the drive models show in the cells when the local model mod is installed, flat coloured cells otherwise.
+- Known, not mine: the retail results screen needs START (the first press pauses, the second advances), and bonus-stage targets cannot be enumerated by scripts.
+
+## Loot pacing, keystones, merging and the small bag (pacing lane, joined 2026-10-05; Lua-tested, numbers from its simulations)
+
+### 1. The affix-count curve (PLAYTEST table)
+
+A drive's modifier count is `min(rarity count, depth cap)`, plus one for a White drive from depth 3. Rarity counts are the old
+ones (Common 1, Magic 2, Rare 4; Unique is one fixed rule). "Depth" is effective depth: stage depth + 13 per New Game+ loop.
+
+| effective depth | cap | natural rarity weights (common/magic/rare/unique) | what a drop reads like |
+|---|---|---|---|
+| 0-2 | 1 | 100/0/0/0 | `Green Drive: Heavy`, one effect |
+| 3-5 | 2 | 85/15/0/0 | one or two; Magic appears |
+| 6-9 | 3 | 82/15/3/0 | up to three; Rare appears |
+| 10+ and every NG+ loop | 4 | 80/15/4/1 | up to four; Uniques appear |
+
+A forced rarity (a reward) is not gated by the weights but its count still is (a lucky early Rare is one modifier). Names:
+one modifier is `<Colour> Drive: <Label>`; two or more keep the old `Heavy Green Drive of Kindling` form. The starter drive is
+one modifier (depth 0). Opponents roll from the same rules: early opponents carry one-modifier drives, no uniques before depth 10
+(a LAB build far stronger than the depth falls back to the old unbanded rolls instead of refusing). Held keystones for opponents
+follow the allowance and the same exclusion rules.
+
+Power, mean build strength with every slot filled, natural rolls, 120-300 builds each (`envoy_loot_pacing.lua`, `sim_curve.lua`):
+
+| context | slots | before | after | ratio |
+|---|---|---|---|---|
+| depth 0 | 4 | 1.55 | 1.40 | 0.90 |
+| depth 5 | 5 | 1.85 | 1.88 | 1.02 |
+| depth 10 | 6 | 2.21 | 2.44 | 1.10 |
+| NG+ loop 1 (depth 0) | 6 | 2.22 | 2.44 | 1.10 |
+| depth 12, loop 3 | 6 | 9.79 | 9.97 | 1.02 |
+
+Common drives now carry one modifier, so the weights above were tuned (they were 60/28/10/2) to keep late power within about 10%
+of before. Knobs: `mod_progression.lua` `P.affix_bands`, `P.rarity_bands`, `P.rarity_affixes`.
+
+### 2. Keystones
+
+About thirty (`keystones.lua`), six drive colours: red damage, green speed, blue defence, yellow air, purple status, white wild.
+Every one has a drawback line. Rules:
+- **Allowance** = 1 + floor(effective depth / 5), no ceiling (depth 5: 2, depth 10: 3, NG+ loop 1: 3, loop 3: 11). Shown "Keystones n/allowed".
+- **Exclusive pairs** are refused by the bag, the engine and the opponent roll: Smasher's Creed / Skybreaker, Pyromancer / Frozen Oath,
+  Echo Oath / Echo Weaver, Iron Resolve / Banked Momentum.
+- **Stacked drawbacks add and are floored**: damage dealt not below x0.6 overall, run/air speed and jump not below x0.55, damage taken
+  not above x1.8, launch taken not above x1.6 (so a pile of keystones cannot build an unplayable fighter).
+- **Starting keystone**: one random keystone from the run seed, among those playable from stage one (a keystone that needs a rare trigger,
+  Clash King, Echo Weaver, Echo Oath, Last Stand, Desperado, is never the starting one).
+- **How more are gained**: at a stage clear where the allowance is above the keystones held, offer a choice of three from three different colours,
+  legal with what is held; the same offer on a retry; skipping keeps the allowance owed. Never a hidden list in the bag.
+- Frame cost (standalone Lua, two fighters, busy event stream, `bench_keystones.lua`): 0 keystones 0.009 ms/frame, 8 keystones 0.075 ms, 12
+  keystones 0.111 ms against the 8.3 ms budget (about 1.3%); no effect was dropped by the per-frame effect limit.
+
+### 3. Fewer drives, merging, a small bag
+
+Quantity, expected drives gained (starter included; the run host's numbers before; a 12-stage Classic run assumed:
+battle, battle, team, battle, bonus, battle, giant, battle, metal, battle, bonus, boss; `sim_quantity.lua`, 400 simulated runs, real rolls and the real merge rule):
+
+| by stage | gained before | gained after | held before (equipped+bag) | held after | merges after | full-bag choices after |
+|---|---|---|---|---|---|---|
+| 3 | 8.5 | 4.4 | 8.5 | 3.9 | 0.5 | 0 |
+| 5 | 11.8 | 6.1 | 11.8 | 4.8 | 1.3 | 0 |
+| 8 | 18.5 | 9.2 | 17.0 (bag full, 1.5 lost) | 6.6 | 2.6 | 0 |
+| 10 | 23.0 | 11.6 | 17.0 (6 lost) | 7.6 | 3.8 | 0.1 |
+| 12 | 25.0 | 13.6 | 18.0 | 7.9 | 5.5 | 0.2 |
+
+The proposed numbers (`drive_economy.lua` `E.tuning`, the old ones in `E.before`): at most ONE floor drop per stage (battle, giant, metal 70%,
+team one, bonus and boss none); stage rewards only at a bonus stage, the boss and every third stage, a pick of three (first two Magic, the
+third Rare once rares roll: `E.reward_rarity`); bag of 4. The run host still owns `H.tuning` (`drop_chance`, `battle_drops_max`, `team_drops_max`,
+`offer_count`, `bonus_offer_count`, `bag_capacity`): point them at `E.tuning` (`floor_chance`, `floor_max`, `team_max`, `reward_every`, `offers`,
+`bag_capacity`). The bag size is `bag_capacity` in `drive_economy.lua` and must reach `drive_bag`'s `config.capacity` (default 12), the header
+`BAG n/12` in `run_screen.lua`, and the hard-coded 12s in `drive_lab.lua` lines 44, 55, 67, 127.
+
+**Merging** (`drive_merge.lua`): a gained drive MATCHES a held one if same colour, neither Unique, they share a modifier or touch a common
+budget family (two "damage taken" modifiers), and the held drive has merges left (3 per drive). A merge lifts exactly ONE held modifier one
+tier (the exact one if shared), records one merge, and re-bases the held drive to the gained drive's depth if that is deeper. It never adds a
+modifier or changes colour, rarity or count, so merging cannot turn an early simple drive into a four-modifier one. `can_merge(held, gained, loot)`,
+`merge(held, gained, loot)`, `find_target(list, gained, loot)`. A merged record carries `merged = n` (new record field; `drive_loot` validates
+the tier lift against it).
+
+**Gaining a drive** (`E.gain_plan(held, bag_count, gained, loot)`): merge if any held drive matches (equipped first, exact match first), else bag
+if there is room, else `choose` (an immediate keep/replace: keep it and pick a drive to give up, or leave it).
+
+### 4. Text economy (`drive_text.lua`)
+
+One short line per drive in lists: `T.short(loot, drive)` = `Red Drive: Heavy, Shatter +1` (max two labels). Full detail only for the focused item
+(`drive_lines`, `header`). No ids, tier codes or budget numbers: "Build strength" now reads as a percentage over an empty build (`+56%`), not the
+budget's 1.56; a unique's fallback no longer prints `Tier n:`. Keystones read as two lines, effect then `Drawback: ...`.
+
+(The run host now reads `drive_economy.lua` `E.tuning` directly; `bag_capacity` 4 reaches `drive_bag` and `drive_lab`.)
+
+The screens that carry these rules are the grid in MENUS.md; the screen proposal in the pacing lane's notes was adopted.
 
 # Envoy retail playtest - 2026-10-04 fix1
 

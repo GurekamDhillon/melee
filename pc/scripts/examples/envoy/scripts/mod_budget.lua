@@ -31,6 +31,13 @@ return function(D)
   elseif e.op=='emit' then out.conversion=S.copies(tier) else error('unbudgeted effect') end
   return out
  end
+ -- The families a record's effects touch at any tier (what its `families` declaration must say). Used by pool
+ -- builders that write many records (keystones.lua) so a declaration is derived, never typed twice.
+ function B.effect_families(m)
+  local seen,out={},{}
+  for tier=1,#m.tiers do for _,e in ipairs(m.effects) do for f in pairs(effect(e,m,tier)) do if not seen[f] then seen[f]=true;out[#out+1]=f end end end end
+  table.sort(out);return out
+ end
  -- A pool is data fixed at load: validating the same table against the same implicit definitions twice is pure
  -- repetition (every drive_loot.new, i.e. every candidate an opponent roll constructs, did it: ~half the
  -- instructions of a deep roll). Keyed by the pool and implicit-definition tables' identity; a failure is never remembered.
@@ -67,6 +74,10 @@ return function(D)
  end
  local function compose(pool,mods,implicits,statuses)
   local raw,potential,keys,power={},{},{},{}
+  -- Held keystones must be compatible (no exclusive pair, stacked drawbacks inside the limits): one rule for the
+  -- bag, the foe roll and the engine, since all of them reach the budget.
+  if D.keystones then local held={};for id,t in pairs(mods or {}) do if D.keystones.meta[id] then held[#held+1]=id end end
+   table.sort(held);if #held>1 then local ok,why=D.keystones.check(held);assert(ok,why or 'incompatible keystones') end end
   for k,v in pairs(implicits or {}) do local f=assert(B.families[k],'unknown implicit');assert(type(v)=='number' and v==v and math.abs(v)<100,'invalid implicit');keys[k]=v-1 end
   local found={}
   for _,m in ipairs(pool) do local tier=(mods or {})[m.id];if tier then

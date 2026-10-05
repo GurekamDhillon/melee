@@ -236,11 +236,11 @@ int input_cb(ImGuiInputTextCallbackData *d) {
 
 /* The kit's textures as ImGui textures, uploaded the first time a quad uses one (they never
  * change once decoded; a handful of atlas pages and icons). */
-ImTextureID g_kit_tex[256];
-bool g_kit_tex_up[256];
+ImTextureID g_kit_tex[384];
+bool g_kit_tex_up[384];
 
 ImTextureID kit_texture(int tex) {
-  if (tex < 0 || tex >= 256) {
+  if (tex < 0 || tex >= 384) {
     return ImTextureID{};
   }
   if (!g_kit_tex_up[tex]) {
@@ -257,14 +257,53 @@ ImTextureID kit_texture(int tex) {
 /* Kit quads kq0 .. kq0+kqn-1: textured ones modulate the texture by the tint (masks are white,
  * so their RGB is the tint's), flat ones fill with it. */
 void draw_kit_quads(ImDrawList *dl, int kq0, int kqn, float s, float ox, float oy, bool shown) {
+  bool clipped = false;
+  float cl[4] = {0, 0, 0, 0};
   for (int i = kq0; i < kq0 + kqn; ++i) {
     const GwKitQuad *q = shown ? gw_Kit_ShownQuadAt(i) : gw_Kit_QuadAt(i);
     if (q == nullptr) {
       break;
     }
+    /* A script model's triangles (gd.kit.model): scissor to the model's rectangle, which is what
+     * keeps a spinning model inside its cell; the clip is popped as soon as a quad without one comes. */
+    const bool want_clip = (q->flags & GW_KITQ_CLIP) != 0;
+    if (clipped && (!want_clip || cl[0] != q->clip[0] || cl[1] != q->clip[1] || cl[2] != q->clip[2] ||
+                    cl[3] != q->clip[3])) {
+      dl->PopClipRect();
+      clipped = false;
+    }
+    if (want_clip && !clipped) {
+      for (int k = 0; k < 4; ++k) cl[k] = q->clip[k];
+      dl->PushClipRect(ImVec2(ox + cl[0] * s, oy + cl[1] * s), ImVec2(ox + cl[2] * s, oy + cl[3] * s), true);
+      clipped = true;
+    }
     ImVec2 p[4];
     for (int k = 0; k < 4; ++k) {
       p[k] = ImVec2(ox + q->x[k] * s, oy + q->y[k] * s);
+    }
+    if ((q->flags & GW_KITQ_TRI) != 0) {
+      /* no atlas (it could not be decoded): flat triangles from the font atlas' white pixel */
+      const bool flat = q->tex < 0;
+      ImTextureID id = flat ? ImTextureID{} : kit_texture(q->tex);
+      if (!flat && id == ImTextureID{}) {
+        continue;
+      }
+      const ImVec2 white = ImGui::GetFontTexUvWhitePixel();
+      if (!flat) {
+        dl->PushTextureID(id);
+      }
+      dl->PrimReserve(3, 3);
+      const ImDrawIdx base = (ImDrawIdx)dl->_VtxCurrentIdx;
+      for (int k = 0; k < 3; ++k) {
+        dl->PrimWriteIdx((ImDrawIdx)(base + k));
+      }
+      for (int k = 0; k < 3; ++k) {
+        dl->PrimWriteVtx(p[k], flat ? white : ImVec2(q->u[k], q->v[k]), col(q->vcol[k]));
+      }
+      if (!flat) {
+        dl->PopTextureID();
+      }
+      continue;
     }
     if (q->tex >= 0) {
       ImTextureID id = kit_texture(q->tex);
@@ -276,6 +315,9 @@ void draw_kit_quads(ImDrawList *dl, int kq0, int kqn, float s, float ox, float o
     } else {
       dl->AddQuadFilled(p[0], p[1], p[2], p[3], col(q->rgba));
     }
+  }
+  if (clipped) {
+    dl->PopClipRect();
   }
 }
 

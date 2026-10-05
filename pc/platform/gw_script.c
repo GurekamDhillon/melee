@@ -499,6 +499,7 @@ typedef struct {
     GXTexObj texture, glow;
     int token, atlas_owner;
     int custom_material; /* 0 keeps the existing GX path; visual host handle only */
+    int tex_w, tex_h, glow_w, glow_h; /* atlas texels, for the screen-space draw (gd.kit.model) */
     char atlas_path[MAX_PATH];
     uint64_t content_stamp[4]; /* mesh, sidecar, atlas, optional glow */
     uint64_t atlas_stamp[2];   /* sharing requires the same atlas generation */
@@ -5658,8 +5659,10 @@ static int gs_stage_tex_levels(int w, int h, int size) {
     return total == size ? levels : 0;
 }
 
+static int gs_tex_last_w, gs_tex_last_h; /* the size of the texture gs_stage_tex_init last set up */
 static void gs_stage_tex_init(GXTexObj *obj, void *image, int w, int h, int size) {
     const int levels = gs_stage_tex_levels(w, h, size);
+    gs_tex_last_w = w; gs_tex_last_h = h;
     GXInitTexObj(obj, image, (u16)w, (u16)h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP,
                  levels > 1 ? GX_TRUE : GX_FALSE);
     GXInitTexObjLOD(obj, levels > 1 ? GX_LIN_MIP_LIN : GX_LINEAR, GX_LINEAR, 0.0f,
@@ -5871,6 +5874,8 @@ void gw_Script_StageModelDraw(int model, const void *view, float x0, float y0, f
 }
 
 #include "gw_script_model_api.inc"
+#include "gw_screen_model.h"
+#include "gw_script_model_screen.inc"
 #include "gw_script_items.inc"
 #include "gw_script_items_draw.inc"
 #include "gw_script_stage_slots.inc"
@@ -6177,7 +6182,7 @@ static int l_enemy_status(lua_State *L) {
 static const luaL_Reg gs_kit_funcs[] = {
     {"available", l_kit_available}, {"text", l_kit_text}, {"measure", l_kit_measure},
     {"paragraph", l_kit_paragraph}, {"metrics", l_kit_metrics}, {"texture", l_kit_texture},
-    {"image", l_kit_image},
+    {"image", l_kit_image}, {"model", l_kit_model},
     {"icon", l_kit_icon}, {"panel", l_kit_panel}, {"button", l_kit_button}, {"list", l_kit_list},
     {"color", l_kit_color}, {NULL, NULL}};
 static void gs_prof_setfuncs(lua_State *L, const luaL_Reg *funcs, const char *prefix);
@@ -7552,6 +7557,7 @@ void gw_Script_Tick(void) {
         gw_hang_transition(1);
         gw_ScriptGame_LaunchScene(mode);
     }
+    gs_ui_clock_step();
     gs_finish_draw();
     gs_item_visual_tick();
     gs_warm_tick();
@@ -9985,6 +9991,7 @@ static int test_script_paused_input(void) {
 
 /* ---- Geno Lab ---------------------------------------------------------------------------------- */
 #include "gw_script_model_tests.inc"
+#include "gw_script_model_screen_tests.inc"
 #include "gw_script_mission_tests.inc"
 #include "gw_script_stage_seam_tests.inc"
 
@@ -10913,6 +10920,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_mission_player", test_script_mission_player);
     gw_test_register("script_mode_blob", test_script_mode_blob);
     gw_test_register("script_model_api", test_script_model_api);
+    gw_test_register("script_model_screen", test_script_model_screen);
     gw_test_register("script_model_owner_cleanup", test_script_model_owner_cleanup);
     gw_test_register("script_stage_link", test_script_stage_link);
     gw_test_register("script_stage_events", test_script_stage_events);

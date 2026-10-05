@@ -954,5 +954,17 @@
   "in_game": false,
   "controls": "console: cpu_demo reruns; Battlefield LAB with a CPU on port 2",
   "setup": []
+},
+{
+  "id": "demo_screen_models",
+  "tour": false,
+  "path": "demos/screen-models",
+  "title": "Models in screen-space cells",
+  "api": "gd.kit.model (a script model drawn into a canvas rectangle, in call order with gd.fill / gd.kit)",
+  "category": "demo",
+  "new": true,
+  "in_game": false,
+  "controls": "arrows move the focus; TAB switches cells / real grid component; console: sm_bench all, sm_mode, sm_focus",
+  "setup": []
 }
 ]

@@ -28,6 +28,7 @@
 #define GW_KIT_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +41,12 @@ typedef struct {
     float u[4], v[4];
     uint32_t rgba; /* 0xRRGGBBAA: the tint (mask colour, or the modulation) */
     int tex;       /* gw_Kit_TexInfo index, -1 = flat */
+    int flags;     /* GW_KITQ_*; 0 for everything but script models */
+    uint32_t vcol[4]; /* GW_KITQ_VCOL: a colour per corner (Gouraud) instead of rgba */
+    float clip[4]; /* GW_KITQ_CLIP: x0, y0, x1, y1 in the same 640x480 space */
 } GwKitQuad;
+/* GW_KITQ_TRI: only corners 0..2 are drawn (a model triangle) */
+enum { GW_KITQ_TRI = 1, GW_KITQ_VCOL = 2, GW_KITQ_CLIP = 4 };
 
 enum { GW_KIT_ALIGN_LEFT = 0, GW_KIT_ALIGN_CENTER = 1, GW_KIT_ALIGN_RIGHT = 2 };
 enum { GW_KIT_ROW_NG = 0, GW_KIT_ROW_SEL = 1, GW_KIT_ROW_DISABLED = 2 };
@@ -83,6 +89,10 @@ int gw_Kit_TexInfo(int tex, int *w, int *h, float *w1x, float *h1x, int *mask, c
 /* RGBA8 pixels (w*h*4, straight alpha, masks white) for the renderer's upload. */
 const uint8_t *gw_Kit_TexPixels(int tex);
 int gw_Kit_TexCount(void);
+/* A script model's GX RGBA8 atlas (+ optional glow atlas, added in) as a texture, cached by key;
+ * -1 when it cannot be decoded or the 64 model slots are used. */
+int gw_Kit_TexAddGX(const char *key, const uint8_t *img, size_t img_size, int w, int h,
+                    const uint8_t *glow, size_t glow_size, int gw, int gh, int keep_alpha);
 
 /* ---- the frame's draw list ------------------------------------------------------------------ */
 void gw_Kit_BeginFrame(void); /* empties the quad list (gw_Script_Tick, before on_tick) */
@@ -108,6 +118,9 @@ int gw_Kit_DrawParagraph(float x, float y, float max_w, const char *s, int role,
                          float shear, float *out_h);
 int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba, int flip,
                      float shear);
+int gw_Kit_DrawTri(int tex, const float x[3], const float y[3], const float u[3], const float v[3],
+                   const uint32_t col[3], const float *clip);
+int gw_Kit_QuadRoom(void); /* quads the bank can still take this frame */
 int gw_Kit_DrawFlat(float x, float y, float w, float h, uint32_t rgba, float shear);
 /* A 9-slice panel from <prefix>_corner_tl/_tr/_bl/_br, <prefix>_edge_h (top; flipped vertically
  * for the bottom), <prefix>_edge_v (left; flipped horizontally for the right) and an optional

@@ -206,16 +206,18 @@ static int gs_model_open_at_root(lua_State *L, const char *dir, const char *name
         GsStageModel *owner = &gs_stage_models[shared];
         art.image = owner->image; art.glow_image = owner->glow_image;
         art.texture = owner->texture; art.glow = owner->glow; art.has_glow = owner->has_glow;
+        art.tex_w = owner->tex_w; art.tex_h = owner->tex_h; art.glow_w = owner->glow_w; art.glow_h = owner->glow_h;
     } else {
         if (!gs_model_texture_path(root, atlaspath, &art.texture, &art.image, &art.image_bytes, available)) {
             free(mesh); return luaL_error(L, "model needs a valid RGBA8 GXTX atlas: %s", atlaspath);
         }
         available -= art.image_bytes;
+        art.tex_w = gs_tex_last_w; art.tex_h = gs_tex_last_h;
         if (stamp[3]) {
             if (!gs_model_texture_path(root, glowpath, &art.glow, &art.glow_image, &art.glow_bytes, available)) {
                 free(mesh); free(art.image); return luaL_error(L, "invalid model glow atlas: %s", glowpath);
             }
-            art.has_glow = 1;
+            art.has_glow = 1; art.glow_w = gs_tex_last_w; art.glow_h = gs_tex_last_h;
         }
     }
     snprintf(art.path, sizeof art.path, "%s", path);

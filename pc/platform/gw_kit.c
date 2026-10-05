@@ -861,7 +861,8 @@ uint32_t gw_Kit_SectionRGBA(int section, int which) {
 /* ============================================================================================
  * textures: .gxtex (pc/tools/png2gx.py) decoded from GX's tiled formats into RGBA8
  * ============================================================================================ */
-#define KT_MAX 256
+#define KT_MAX 384 /* file textures (the first 320) and script model atlases (gw_Kit_TexAddGX, at most 64) */
+#define KT_FILE_MAX 320
 
 typedef struct {
     char path[MAX_PATH]; /* the file it came from (the cache key) */
@@ -1023,7 +1024,7 @@ static int kt_load(const char *dir, const char *name) {
     }
     blob = (uint8_t *)kit_read_path(path, &len);
     if (blob == NULL) return -1;
-    if (nkt >= KT_MAX || len < 64 || kt_be32(blob) != 0x47585458u || kt_be32(blob + 4) != 1) {
+    if (nkt >= KT_FILE_MAX || len < 64 || kt_be32(blob) != 0x47585458u || kt_be32(blob + 4) != 1) {
         gw_log("kit: %s is not a v1 .gxtex (or the cache is full)", path);
         free(blob);
         return -1;
@@ -1108,6 +1109,46 @@ int gw_Kit_TexInfo(int tex, int *w, int *h, float *w1x, float *h1x, int *mask, c
 const uint8_t *gw_Kit_TexPixels(int tex) { return (tex >= 0 && tex < nkt) ? kt[tex]->rgba : NULL; }
 int gw_Kit_TexCount(void) { return nkt; }
 
+/* A script model's atlas as a kit texture: decoded once per `key` (the model file's path and stamp),
+ * glow added in (the emissive lines, the same sum the world draw's second TEV stage makes before
+ * the light is applied here), alpha forced opaque unless `keep_alpha`. */
+int gw_Kit_TexAddGX(const char *key, const uint8_t *img, size_t img_size, int w, int h,
+                    const uint8_t *glow, size_t glow_size, int gw, int gh, int keep_alpha) {
+    KitTex *t;
+    int i, n = 0, px;
+    if (key == NULL || img == NULL || w < 4 || h < 4 || w > 4096 || h > 4096) return -1;
+    for (i = 0; i < nkt; i++) {
+        if (kt[i]->fmt == -6) {
+            n++;
+            if (strcmp(kt[i]->path, key) == 0) return kt[i]->rgba != NULL ? i : -1;
+        }
+    }
+    if (nkt >= KT_MAX || n >= 64) return -1;
+    t = (KitTex *)calloc(1, sizeof *t);
+    if (t == NULL) return -1;
+    kit_copy(t->path, key, sizeof t->path);
+    kit_copy(t->name, "model", sizeof t->name);
+    t->w = w; t->h = h; t->fmt = -6; t->mask = 0;
+    t->w1x = (float)w * 0.5f; t->h1x = (float)h * 0.5f;
+    t->rgba = kt_decode(img, img_size, 6, w, h, NULL, 0, 0);
+    if (t->rgba != NULL && glow != NULL && gw == w && gh == h) {
+        uint8_t *g = kt_decode(glow, glow_size, 6, w, h, NULL, 0, 0);
+        if (g != NULL) {
+            for (px = 0; px < w * h; px++)
+                for (i = 0; i < 3; i++) {
+                    int v = t->rgba[px * 4 + i] + g[px * 4 + i];
+                    t->rgba[px * 4 + i] = (uint8_t)(v > 255 ? 255 : v);
+                }
+            free(g);
+        }
+    }
+    if (t->rgba != NULL && !keep_alpha)
+        for (px = 0; px < w * h; px++) t->rgba[px * 4 + 3] = 255;
+    kt[nkt] = t;
+    if (t->rgba == NULL) return nkt++, -1;
+    return nkt++;
+}
+
 /* ============================================================================================
  * the frame's draw list
  * ============================================================================================ */
@@ -1146,8 +1187,32 @@ static int kq_add(float x0, float y0, float x1, float y1, float u0, float v0, fl
     }
     q->rgba = rgba;
     q->tex = tex;
+    q->flags = 0;
     return 1;
 }
+
+/* One lit triangle of a script model (gd.kit.model): per-vertex colours, optionally clipped to
+ * clip = {x0, y0, x1, y1}. It rides the same list as every other kit quad, so it draws in call order. */
+int gw_Kit_DrawTri(int tex, const float x[3], const float y[3], const float u[3], const float v[3],
+                   const uint32_t col[3], const float *clip) {
+    GwKitQuad *q;
+    int k;
+    if (nkq >= KQ_MAX) return 0;
+    q = &kq[nkq++];
+    for (k = 0; k < 3; k++) {
+        q->x[k] = x[k]; q->y[k] = y[k]; q->u[k] = u[k]; q->v[k] = v[k]; q->vcol[k] = col[k];
+    }
+    q->x[3] = x[2]; q->y[3] = y[2]; q->u[3] = u[2]; q->v[3] = v[2]; q->vcol[3] = col[2];
+    q->rgba = col[0];
+    q->tex = tex;
+    q->flags = GW_KITQ_TRI | GW_KITQ_VCOL;
+    if (clip != NULL) {
+        q->flags |= GW_KITQ_CLIP;
+        q->clip[0] = clip[0]; q->clip[1] = clip[1]; q->clip[2] = clip[2]; q->clip[3] = clip[3];
+    }
+    return 1;
+}
+int gw_Kit_QuadRoom(void) { return KQ_MAX - nkq; }
 
 int gw_Kit_DrawText(float x, float y, const char *s, int role, uint32_t rgba, int align,
                     float max_w, float shear, float *out_w) {

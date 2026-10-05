@@ -8,8 +8,16 @@ return function(D)
   seed=seed or 1;limits=limits or {};assert(type(seed)=='number' and seed%1==0 and seed>=1 and seed<2147483647,'invalid seed')
   local budget,depth=limits.budget or 64,limits.depth or 8
   assert(type(budget)=='number' and budget%1==0 and budget>=1 and budget<=128 and type(depth)=='number' and depth%1==0 and depth>=1 and depth<=16,'invalid limits')
-  D.mod_budget.validate_pool(pool,{});local rules={};local list={};for _,m in ipairs(pool) do S.validate(m);assert(not rules[m.id],'duplicate modifier');rules[m.id]=m;list[#list+1]=m end
-  table.sort(list,function(a,b) return a.id<b.id end)
+  -- Validating a pool is expensive and a pool never changes after load. The bag screen builds a draft
+  -- engine several times per drawn frame; revalidating each time blew the per-call script budget and ended a run.
+  D._pool_checked=D._pool_checked or setmetatable({},{__mode='k'})
+  local checked=D._pool_checked[pool]
+  if not checked then
+   D.mod_budget.validate_pool(pool,{});local r,l={},{};for _,m in ipairs(pool) do S.validate(m);assert(not r[m.id],'duplicate modifier');r[m.id]=m;l[#l+1]=m end
+   table.sort(l,function(a,b) return a.id<b.id end)
+   checked={rules=r,list=l};D._pool_checked[pool]=checked
+  end
+  local rules,list={},{};for id,m in pairs(checked.rules) do rules[id]=m end;for i,m in ipairs(checked.list) do list[i]=m end
   return setmetatable({rules=rules,list=list,seed=seed or 1,frame=0,equipped={},implicits={},statuses={},recent={},players={},queue={},damage={},trace={},used=0,dropped=0,
    context=D.mod_progression.context(limits.context),limit=budget,depth=depth,display={last_pulse=-30,pulse_start=-100,pulse_strength=0,trace_key='',intensity=.65}},E)
  end

@@ -1564,7 +1564,7 @@ static struct {
 } sn_cur_ring[32];
 static long sn_cur_mismatch, sn_cur_checked;
 /* the raw words of each curated record, kept per frame so the first mismatches can name the field that differs */
-#define SN_CUR_RECS 8
+#define SN_CUR_RECS 16
 #define SN_CUR_W 32
 static uint32_t sn_cur_w[SN_CUR_RECS][SN_CUR_W];
 static int sn_cur_wn[SN_CUR_RECS];
@@ -1738,6 +1738,28 @@ static void sn_region_diff(int next) {
     sn_ncreg = 0;
 }
 
+/* How often each word of the first two curated records (the fighters) CHANGED from one first-pass frame to the next: a word that never
+ * changed is trivially bit-equal in a resimulation, so the bench report prints these to show each widened field was exercised. */
+static uint32_t sn_cur_prevw[2][SN_CUR_W];
+static long sn_cur_chg[2][SN_CUR_W];
+static long sn_cur_chg_frames;
+static void sn_cur_note_changes(int nrec) {
+    int r, k, fi = 0; /* fighter records only (29 words); the item and count records come first in a frame and vary in number */
+    for (r = 0; r < nrec && fi < 2; ++r) {
+        if (sn_cur_wn[r] < 29) {
+            continue;
+        }
+        for (k = 0; k < sn_cur_wn[r] && k < SN_CUR_W; ++k) {
+            if (sn_cur_prevw[fi][k] != sn_cur_w[r][k]) {
+                sn_cur_chg[fi][k]++;
+            }
+            sn_cur_prevw[fi][k] = sn_cur_w[r][k];
+        }
+        ++fi;
+    }
+    sn_cur_chg_frames++;
+}
+
 /* Top of a logic iteration: the previous iteration simulated frame sn_frame(); its
  * accumulator is the first pass's record (recorded) or a resimulation's (compared). */
 static void sn_cur_take(void) {
@@ -1779,6 +1801,7 @@ static void sn_cur_take(void) {
             }
         }
     } else {
+        sn_cur_note_changes(nrec);
         sn_cur_ring[slot].frame = f;
         sn_cur_ring[slot].h = h;
         sn_cur_words[slot].frame = f;
@@ -2014,6 +2037,19 @@ void gw_SyncTest_IterStart(void) {
                 if (gw_Snap_Curated()) {
                     gw_log("snap: curated hash: %ld compared, %ld mismatching, resim iteration (logic only) %.2f ms",
                            sn_cur_checked, sn_cur_mismatch, sn_t[2] / (sn_tn[2] ? sn_tn[2] : 1));
+                    {   /* per fighter record: in how many first-pass frames each word changed (fighter.c's word order: 3 motion, 4 ground_or_air,
+                           5 stocks, 14/15 kb_vel x/y, 16 gr_vel, 17 hitlag, 18 shield, 23 cmd frame, 24 x2219_b5, 25 jumpsUsed, 26 x67F, 27 x680) */
+                        static const int ws[] = {3, 4, 5, 14, 15, 16, 17, 18, 23, 24, 25, 26, 27};
+                        char buf[400];
+                        int r, q, o = 0;
+                        for (r = 0; r < 2; ++r) {
+                            o = 0;
+                            for (q = 0; q < (int) (sizeof ws / sizeof ws[0]); ++q) {
+                                o += snprintf(buf + o, sizeof buf - (size_t) o, " w%d=%ld", ws[q], sn_cur_chg[r][ws[q]]);
+                            }
+                            gw_log("snap: curated word changes (record %d, %ld first-pass frames):%s", r, sn_cur_chg_frames, buf);
+                        }
+                    }
                     if (sn_cdiff_on()) gw_log("snap: region diff: %ld frames compared with a differing registered byte, earliest frame %d", sn_cd_frames, sn_cd_first);
                     { extern void gw_MatchTurboLog(void); gw_MatchTurboLog(); }
                 }

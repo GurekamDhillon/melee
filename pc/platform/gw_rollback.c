@@ -135,6 +135,8 @@ static struct {
     int n_rollbacks, n_resim, depth_sum, depth_max, n_stall_ticks, n_desync, n_late_deliveries;
     int n_ticks, n_new;
     double ms_save, ms_load, ms_resim, ms_new;
+    double ms_hash;  /* time inside gw_RB_GameHash, summed over n_hash calls (the cost of the checksum itself) */
+    long n_hash;
     double rb_extra_ms_max[16], rb_extra_ms_sum[16];
     int rb_extra_n[16];
     /* whole-tick WORK time (RB_Iterations entry to the end of the render pass; the vsync wait
@@ -161,6 +163,58 @@ static double rb_ms(void) {
     }
     QueryPerformanceCounter(&c);
     return (double) c.QuadPart * 1000.0 / (double) f.QuadPart;
+}
+
+/* Remote inputs that reach the transport BEFORE this peer's session is OPENED (the other peer's first frames, delivered while this one is
+ * still loading the match; with MELEE_NET_SIM set - even at lag 0 - they arrive in that window every time). The open (the first logic tick
+ * of the match) clears the input rings, so they were lost, and the transport counts them delivered: the hole was permanent, the
+ * contiguous confirmed frame never passed it and both peers stalled at frame ~-115 for ever (found 2026-10-05 by the checksum lane; the
+ * unmodified base stalls the same way). They are kept here and submitted right after the open. */
+#define RB_EARLY_MAX 256
+static struct {
+    int slot, frame;
+    GwRbInput in;
+} rb_early[RB_EARLY_MAX];
+static int rb_nearly;
+
+/* NEGATIVE CONTROL (test only): MELEE_RB_PERTURB=<field> on ONE peer perturbs one value the widened checksum covers, at the start of
+ * frame MELEE_RB_PERTURB_FRAME (default 600), before the hash and the snapshot, on the live pass and on every resimulation of that
+ * frame (so a rollback does not heal it). The widened hash must then report a desync within a frame or two; a peer pair in legacy
+ * hash mode (MELEE_RB_HASH_LEGACY=1) must NOT see it for the fields the widening added. Fields: hitlag, jumps, shield, x680, x67f,
+ * kbvel, groundvel, cmdframe, b5, stocks, item (an item's x), pos (a legacy field: both modes must see it). */
+extern void gw_RB_Perturb(int code); /* fighter.c */
+static const char *const rb_perturb_names[] = {"", "hitlag", "jumps", "shield", "x680", "x67f", "kbvel", "groundvel",
+                                               "cmdframe", "b5", "pos", "item", "stocks"};
+/* fighter.c's RB_FighterHash reads this: the legacy (pre-widening) hash mode, set by MELEE_RB_HASH_LEGACY=1 on BOTH peers */
+int gw_RbHashLegacyEnv(void) {
+    const char *e = getenv("MELEE_RB_HASH_LEGACY");
+    return e != NULL && e[0] == '1';
+}
+static void rb_perturb(int next) {
+    static int init, frame = 600;
+    static const char *field;
+    if (!init) {
+        const char *f = getenv("MELEE_RB_PERTURB"), *fr = getenv("MELEE_RB_PERTURB_FRAME");
+        init = 1;
+        field = (f != NULL && f[0] != '\0') ? f : NULL;
+        if (fr != NULL) {
+            frame = atoi(fr);
+        }
+        if (field != NULL) {
+            gw_log("rb: PERTURB armed (test only): field %s at frame %d", field, frame);
+        }
+    }
+    if (field != NULL && next == frame) {
+        size_t k;
+        int code = 0;
+        for (k = 1; k < sizeof rb_perturb_names / sizeof rb_perturb_names[0]; ++k) {
+            if (strcmp(field, rb_perturb_names[k]) == 0) {
+                code = (int) k;
+            }
+        }
+        gw_RB_Perturb(code);
+        gw_log("rb: PERTURB applied: %s at frame %d", field, next);
+    }
 }
 
 static void rb_init(void) {
@@ -310,6 +364,7 @@ void gw_RB_SceneBegin(int scene_kind) {
         gw_Netplay_MatchOver(); /* the match scene ended: results next, offline again */
         rb.on = 0;
         rb.in_match = 0;
+        rb_nearly = 0;
         return;
     }
     if (!rb.on) {
@@ -450,8 +505,16 @@ static int rb_conf(void) {
 
 /* ---- the network-facing interface ------------------------------------------------------- */
 
+
 void gw_rb_submit_remote_input(int slot, int frame, const GwRbInput *in) {
     RbEntry *t, *u;
+    if ((!rb.on || !rb.opened) && slot >= 0 && slot < GW_RB_SLOTS && in != NULL && rb_nearly < RB_EARLY_MAX) {
+        rb_early[rb_nearly].slot = slot;
+        rb_early[rb_nearly].frame = frame;
+        rb_early[rb_nearly].in = *in;
+        rb_nearly++;
+        return;
+    }
     if (!rb.on || slot < 0 || slot >= GW_RB_SLOTS || in == NULL) {
         return;
     }
@@ -905,6 +968,13 @@ int gw_RB_Iterations(int count) {
                 }
             }
         }
+        {   /* remote inputs that arrived before the open (see rb_early) */
+            int q;
+            for (q = 0; q < rb_nearly; ++q) {
+                gw_rb_submit_remote_input(rb_early[q].slot, rb_early[q].frame, &rb_early[q].in);
+            }
+            rb_nearly = 0;
+        }
         if (rb.src == 2 && rb.delay > 0) {
             /* live pads: the first D frames have no sample behind them (a sample taken at frame F
                is for F + D): both peers agree they are neutral */
@@ -1132,11 +1202,12 @@ int gw_RB_Iterations(int count) {
     if ((rb.n_ticks % 300) == 0) {
         gw_log("rb: tick %d frame %d confirmed %d | rollbacks %d (avg depth %.2f, max %d), resim "
                "frames %d, stalls %d, held %d, desyncs %d, abandoned sounds released %d | ms: save %.2f/load %.2f per op, "
-               "resim %.2f/iter, new %.2f/iter", rb.n_ticks, frame, conf, rb.n_rollbacks,
+               "resim %.2f/iter, new %.2f/iter, hash %.4f/call (%ld calls)", rb.n_ticks, frame, conf, rb.n_rollbacks,
                rb.n_rollbacks ? (double) rb.depth_sum / rb.n_rollbacks : 0.0, rb.depth_max,
                rb.n_resim, rb.n_stall_ticks, rb.n_held, rb.n_desync, rb.n_sfx_killed,
                rb.ms_save / (rb.n_new ? rb.n_new : 1), rb.n_rollbacks ? rb.ms_load / rb.n_rollbacks : 0.0,
-               rb.n_resim ? rb.ms_resim / rb.n_resim : 0.0, rb.n_new ? rb.ms_new / rb.n_new : 0.0);
+               rb.n_resim ? rb.ms_resim / rb.n_resim : 0.0, rb.n_new ? rb.ms_new / rb.n_new : 0.0,
+               rb.n_hash ? rb.ms_hash / (double) rb.n_hash : 0.0, rb.n_hash);
     }
     return (rb.plan.rollback ? rb.plan.k : 0) + (rb.plan.new_frame ? 1 : 0);
 }
@@ -1285,8 +1356,14 @@ void gw_RB_IterStart(void) {
     }
     rb_prepare(next);
     gw_Replay_TraceBeginIter(next);
+    rb_perturb(next);
     rb.hring[(unsigned) next % RB_RING].frame = next;
-    rb.hring[(unsigned) next % RB_RING].h = gw_RB_GameHash() | 1u;
+    {
+        double th = rb_ms();
+        rb.hring[(unsigned) next % RB_RING].h = gw_RB_GameHash() | 1u;
+        rb.ms_hash += rb_ms() - th;
+        rb.n_hash++;
+    }
     if (!(rb.plan.i == 0 && rb.plan.rollback)) {
         double t0 = rb_ms();
         gw_snap_save(next);

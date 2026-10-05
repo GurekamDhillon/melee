@@ -109,6 +109,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_SYNCTEST_BENCH=1` | test-only offline SyncTest frame source for ordinary matches; pair with `MELEE_SYNCTEST=12` to force the deployed maximum rollback depth after warmup. Existing render-pool safety may defer resimulation; report achieved `rollback.frames`.  Refuses takeover while rollback/netplay owns snapshots. **The full byte compare is not a gameplay proof:** with `turbo=off`, a plain LAB match mismatches from about frame 41 on (2371 of 3600 checks in a 100 s run) in HSD particle state only (`hsd_804D0908` = `particle_list` heads, `hsd_804D0F90` = the generator pool, and the particle objects they own, which draw `HSD_Randf`); use `MELEE_SYNCTEST_CURATED=1` (gameplay-only hash) as the proof: same scene, `MELEE_SYNCTEST=12`, 70800 checks, 0 mismatching (2026-10-04). |
 | `MELEE_PAD_BOT="<slot>,<channel>,<seed>[;...]"`, `MELEE_PAD_BOT_EDGE=<half width>` | TEST-ONLY reactive pad program (gw_script_pad.c) for the Turbo soak: drives pad `channel` as the fighter in `slot` (0 = P1), reads the fighters like the Lua API does, and writes ordinary pad values, so online it is sent and rolled back like a human's input. It walks into range, throws a move and presses a DIFFERENT move on the first free frame after the Turbo window opens (jab/tilt chains, smash chains, special-jab, jab-dash, jab-crouch-jab loops, aerials with the air-jump restore). Logs `pad bot slot N: ...` counters every 1800 reads. Edge 62 = Battlefield (default), 70 = Final Destination. Not for play. |
 | `MELEE_SYNCTEST_BENCH=1` + `MELEE_SYNCTEST_CURATED=1` with changing input | A live scripted pad is re-read for a resimulated frame, so a match with changing input used to mismatch for that reason alone (only idle fighters passed). The bench now records each fighter's processed input per frame on the first pass and gives it back to the resimulation (`gw_Snap_InputHook`, fighter.c). The curated record includes the Turbo window word. A first mismatch lists the differing field (`snap:   record N ... word K`; words are byte-swapped, word 3 motion, 17 hitlag, 24 the Turbo word). Sustained heavy combat still starts mismatching after 2-4 thousand frames with Turbo OFF as well (hitlag/animation frame off by one in the resimulation): a separate, unexplained SyncTest issue, not a Turbo one. |
+| `MELEE_RB_HASH_LEGACY=1` | the rollback desync checksum as it was before the 2026-10-05 widening (BOTH peers must agree: it is not in the handshake). Test / negative control only; see section "The rollback desync checksum" |
+| `MELEE_RB_PERTURB=<field>`, `MELEE_RB_PERTURB_FRAME=<n>` | TEST-ONLY negative control for the netplay checksum: on ONE peer, perturb one hashed value (`hitlag jumps shield x680 x67f kbvel groundvel cmdframe b5 stocks item pos`) at the start of frame n (default 600). The peers must report `netplay: DESYNC at frame n` |
 | `MELEE_SYNCTEST_CURATED_DIFF=1` (with CURATED) | report-only byte compare, at every resimulated frame, of each fighter's whole struct, its GObj and its joint tree against the first pass (`gw_snap.c sn_region_diff`, regions registered by `fighter.c`). Logs the first frame each word differs (`snap: REGION-DIFF new word: frame F tag T +0xOFF`), pointer differences with both objects' headers, and a periodic `region diff:` line. Tags: 1-12 fighter struct, 100+ GObj, 1000+player*256+n a joint. See `_research/rollback-synctest-status.md` (2026-10-05). |
 | `MELEE_SYNCTEST_CURATED_SETUP=1` | experiment: run each fighter's `HSD_JObjSetupMatrix` over its joint tree at the top of every curated iteration, so a logic-only resimulation has the world matrices a rendered first pass has (removes the ulp-level hit/hurt position differences; does not by itself make the bench mismatch-free). |
 | `MELEE_MEX=test_no_capturecut_guard`, `test_log_capturecut` | test flags for the grab-cut fault (`ftCo_800DCE34` NULL partner): the first compiles the TARGET_PC NULL guard out to reproduce the retail-latent read of low memory, the second logs `CAPTURECUT-TRACE` at each `ftCo_8008EC90` call site with the grabber's `victim_gobj`. |
@@ -362,3 +364,22 @@ covered; `gd.launch_cancel(reason)` is the explicit escape. See the workspace's
 `docs/scripting.md` no-hitch APIs and `_build/tmp/codex-no-hitch-engine-report.md`
 for restrictions and native acceptance targets. A matching Aurora rebuild is
 required; syntax checks do not establish behavior in an existing EXE.
+
+## The rollback desync checksum (RB_GameHash)
+
+What two netplay peers compare every frame: `RB_GameHash` in `src/melee/ft/fighter.c` (called from `gw_rollback.c` at the start of each
+iteration, exchanged and compared by `gw_net.c`). Widened 2026-10-05; the design, the verification and the evidence are in
+`_research/rollback-synctest-status.md` (last section).
+
+- Per fighter (`RB_FighterHash`): motion, position, velocity, percent, facing, the Turbo window word and the Geno define word (the old words), plus
+  `ground_or_air`, knockback velocity x/y, ground velocity, hitlag frames and the hitlag flag, shield health, the action frame counter,
+  `jumpsUsed`, the L/R timers `x67F`/`x680` and stocks. Per match (`RB_ItemHash`): the item count and an order-independent sum over every item's
+  kind, state, position and velocity. Floats by bit pattern.
+- A field goes in only if it is simulation state the rollback snapshot restores and a resimulation reproduces bit for bit. Never hash what the draw
+  phase writes (joint matrix caches and flags, `x20A4` shadow, voice ids, capsule positions) or a pointer: that is a false desync on two healthy
+  peers. Verify a candidate first: add it to the curated record in `Fighter_procMap` (`MELEE_SYNCTEST_CURATED=1`, bench, a long run with items on:
+  `items=4` in the scene) and read `snap: curated word changes` to see it actually moved.
+- `RB_GameHashTest` (native test `rb_game_hash`) checks that each field moves the hash, that render-owned bytes do not, and that legacy mode
+  (`MELEE_RB_HASH_LEGACY=1`) reproduces the old value.
+- Cost: `rb: tick ... hash X/call` in the log; about 2 microseconds a frame for two fighters.
+- Negative control: `MELEE_RB_PERTURB=<field>` on one peer (see the env table). Run the soak pair as `_build/audit-20261003/checksum/run_soak.sh`.

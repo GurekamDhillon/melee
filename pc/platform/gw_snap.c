@@ -151,6 +151,7 @@ static struct {
 } sn = { 0 };
 
 uint64_t gw_snap_hash(void);
+int gw_Snap_CuratedNoRender(void);
 void gw_Snap_Time(int what, int begin);
 extern int gw_Replay_Frame(void);
 extern int gw_ProfBenchFrame(void);
@@ -1930,7 +1931,7 @@ void gw_SyncTest_IterStart(void) {
        between is state a resimulated frame never reproduces, so it stops being compared. */
     sn_mark_window();
     if (gw_Snap_Curated()) {
-        if (sn.cur_is_resim) {
+        if (sn.cur_is_resim && gw_Snap_CuratedNoRender()) {
             gw_Snap_Time(2, 0); /* the resimulated iteration ends here: there is no render block */
         }
         if (gw_Snap_CuratedSetup()) {
@@ -2093,9 +2094,18 @@ int gw_Snap_SkipRenderCb(void *cb) {
 
 /* Should a resimulated frame's render pass skip submitting display lists (shim_gx.c)?
  * MELEE_SNAP_RESIM_DRAWS=1 keeps them, to tell a draw-owned difference apart. */
-/* In curated mode a resimulated frame runs NO render calls at all (gmscene.c). */
+/* A curated resimulated frame runs the same render pass a rollback resimulation does (gmscene.c's block, the one
+ * gw_Snap_SessionResim also opens for netplay): the game's logic reads state the draw phase writes (the joint
+ * world-matrix cache, HSD pool allocation order), so a logic-only resimulation is not equivalent to the first pass and
+ * the bench drifted after hundreds to thousands of sustained-combat frames (_research/rollback-synctest-status.md,
+ * 2026-10-05). MELEE_SYNCTEST_CURATED_NORENDER=1 restores the old logic-only resimulation (a diagnostic). */
 int gw_Snap_CuratedNoRender(void) {
-    return gw_Snap_Curated();
+    static int v = -1;
+    if (v < 0) {
+        const char *e = getenv("MELEE_SYNCTEST_CURATED_NORENDER");
+        v = e != NULL && e[0] == '1';
+    }
+    return v && gw_Snap_Curated();
 }
 
 int gw_Snap_SuppressDraws(void) {

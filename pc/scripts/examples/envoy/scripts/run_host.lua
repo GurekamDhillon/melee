@@ -314,8 +314,8 @@ return function(D)
   if self.seen_slots and slots>self.seen_slots then add(({[5]='Fifth slot unlocked',[6]='Sixth slot unlocked'})[slots] or ('Slot '..slots..' unlocked'),'You can equip one more drive. Open the bag with Z+START.') end
   if self.seen_keys and keys>self.seen_keys then add('Keystone allowance: '..keys,'A keystone is offered at the next stage clear.') end
   if self.seen_tier and tier>self.seen_tier then add('Drive tier '..tier,'New drives roll stronger modifiers; opponents scale up too.') end
-  if self.seen_loop and ctx.loop>self.seen_loop then add('New Game+ '..ctx.loop,'Your build carries over. Opponents start stronger.') end
-  self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=slots,keys,tier,ctx.loop
+  local ng=D.mod_progression.run_loop(self.retail.mode,ctx);if self.seen_loop and ng>self.seen_loop then add('New Game+ '..ng,'Your build carries over. Opponents start stronger.') end
+  self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=slots,keys,tier,ng
   return list
  end
  -- ---- lifecycle -------------------------------------------------------------------------------------------------
@@ -359,10 +359,17 @@ return function(D)
  -- Progression follows the director's stage and NG+ loop; the bag's slots and keystones grow with it.
  function H:stage_start(e)
   if not self.running then return end
-  self.stage=e.stage_index or 0;self.loop=e.loop or self.retail.loop or 0;self.fell={};self.hurt={};self.dropped={};self.since=0;self.kos=0;self.faded={}
+  self.stage=e.stage_index or 0;self.loop=e.loop or self.retail.loop or 0
+  -- A retry (a continue after a game over keeps the ordinal) keeps the build; the stage's floor drop was already given once.
+  self.attempts=self.attempts or {};local akey=self.loop..':'..self.stage;self.attempts[akey]=(self.attempts[akey] or 0)+1
+  self.retry=self.attempts[akey]>1
+  if self.retry then self:log(('stage %d retry (attempt %d): the build is kept as it was; a drop already given on this stage is not given twice'):format(self.stage,self.attempts[akey])) end
+  self.fell={};self.hurt={};self.dropped={};self.since=0;self.kos=0;self.faded={}
+  self.travel_min,self.travel_max=nil,nil;self.foe_seen=false
   self.stage_kind=e.stage_kind or 'battle';self.foe_ports={};self.rolled={};self.drop_queue={};self.hold_gave_up=false;self.holding_end=false;self.out_frames=0
   for _,o in ipairs(e.opponents or {}) do if o.port then self.foe_ports[#self.foe_ports+1]=o.port;self.rolled[o.port]=true;self.rolls[o.port]=true end end
-  local ctx=D.mod_progression.context(math.min(self.stage,12),self.loop)
+  self.foe_seen=#self.foe_ports>0
+  local ctx=D.mod_progression.run_context(self.retail.mode,self.stage,self.loop)
   self.mods:set_context(ctx)
   for _,toast in ipairs(milestones(self,ctx)) do self.hud:announce(toast);self:log('announce: '..toast[1].text) end
   self.hud.m=nil;self.mods.drives:bump()
@@ -386,6 +393,7 @@ return function(D)
  function H:roll_wanted()
   local foes=self.mods.foes;if not foes then return end
   local d=self.mods.drives
+  for p in pairs(self.rolls) do if not self.g.player(p) then self.rolls[p]=nil;if foes.jobs then foes.jobs[p]=nil end;self:log('opponent roll dropped: P'..p..' is gone') end end
   -- Rolls scale to the player's published build: wait until the bag's build has reached the engine.
   if #d.pending>0 then return end
   if d:has_build() and (not d.applied or d:stale()) then return end
@@ -395,7 +403,7 @@ return function(D)
     local ok,why=pcall(function()
      if not (foes.jobs and foes.jobs[p]) then
       local _,strength=self.mods.engine:family_budget(1)
-      foes:roll_begin(p,strength,seed_for(self.seed,self.stage,self.loop,p),self.stage,'normal')
+      foes:roll_begin(p,strength,seed_for(self.seed,self.stage,self.loop,p),self.stage,'normal',{drives=self:equipped_count(),keystones=#self:keystone_ids()})
      end
      return foes:roll_advance(p,H.tuning.roll_attempts)
     end)
@@ -417,6 +425,8 @@ return function(D)
  function H:on_ko(p,why)
   if self.stage_kind=='team' then if self.dropped[p] then return end;self.dropped[p]=true end -- one per opponent
   self.kos=self.kos+1
+  self.drops_given=self.drops_given or {}
+  if self.retry and self.drops_given[self.loop..':'..self.stage] then self:log(('opponent P%d: no drop on a retry (the stage already gave its drop)'):format(p));return end
   if not H.tuning.drops or not self.mods.drives then return end
   local max,chance=self:drop_rule(self.stage_kind)
   local d=self.mods.drives
@@ -429,7 +439,7 @@ return function(D)
   end
   if d.drops:count()+(self.drop_queue and #self.drop_queue or 0)>=12 then self:log('drop skipped: the ground is full');return end
   local record=d.loot:roll(seed_for(self.seed,self.stage,self.loop,p+self.kos*7),self.mods.engine.context)
-  self.drop_queue=self.drop_queue or {};self.drop_queue[#self.drop_queue+1]={record=record,port=p,tries=0,why=why or 'defeated'}
+  self.drop_queue=self.drop_queue or {};self.drop_queue[#self.drop_queue+1]={record=record,port=p,tries=0,why=why or 'defeated'};self.drops_given[self.loop..':'..self.stage]=true
  end
  -- Where a drop appears: on the stage, on the floor a few steps from the player (the opponent may be off screen).
  function H:drop_position()
@@ -457,8 +467,9 @@ return function(D)
   if action=='merge' then -- apply_plan showed the merge card
   elseif action=='wait' then self.hud:show_card('Picked up: '..D.drive_text.short(d.loot,r),{'Being added to your build.'},D.drive_text.rarity_colour[r.rarity])
   elseif action=='choose' then
-   self.hud:show_card('Bag full: '..D.drive_text.short(d.loot,r),{'Pick a drive to give up, or leave it.'},D.drive_text.rarity_colour[r.rarity])
-   if not self.screen.active then self.screen:open('bag') end
+   -- Never a screen in the middle of a fight: the drive waits (shown on the strip) and is decided at the stage clear.
+   self.hud:show_card('Bag full: '..D.drive_text.short(d.loot,r),{('Held for the stage end (%d waiting).'):format(#self.decide)},D.drive_text.rarity_colour[r.rarity])
+   self.hud:flash('Drive waiting')
   elseif action then
    self.hud:show_card('Picked up: '..D.drive_text.short(d.loot,r),{action=='equip' and 'Equipped.' or 'In your bag (Z+START).'},D.drive_text.rarity_colour[r.rarity])
    self.hud:flash('+ drive')
@@ -534,10 +545,14 @@ return function(D)
   if not self.running then return end
   self.since=self.since+1;self.hud:frame();if not self:ready() then return end
   self.hud:watch(self.mods.engine)
-  if self.since%H.tuning.ko_poll~=0 then return end
   local port0=self.retail.state and self.retail.state.player_port or 1
-  -- any CPU fighter that has appeared since the stage began is an opponent too (a spawn event may not have named it)
-  for p=1,6 do if p~=port0 and not self.rolled[p] then local v=self.g.player(p);if v and v.cpu then self:register_foe(p) end end end
+  -- any CPU fighter that has appeared since the stage began is an opponent too (a spawn event may not have named it). Seen on the
+  -- frame it exists, and its roll starts at once (a fast kill must not beat the roll).
+  for p=1,6 do if p~=port0 and not self.rolled[p] then local v=self.g.player(p);if v and v.cpu then self:register_foe(p);self:roll_wanted() end end end
+  local me=self.g.player(port0)
+  if me and type(me.x)=='number' then self.travel_min=math.min(self.travel_min or me.x,me.x);self.travel_max=math.max(self.travel_max or me.x,me.x) end
+  if #self.foe_ports>0 then self.foe_seen=true end
+  if self.since%H.tuning.ko_poll~=0 then return end
   for _,p in ipairs(self.foe_ports) do
    if p~=port0 then
     local v=self.g.player(p)
@@ -554,6 +569,11 @@ return function(D)
  function H:ready() return self.running and self.since>=H.tuning.settle_frames end
  -- ---- reward moment ---------------------------------------------------------------------------------------------
  -- Does this clear owe a drive reward? Every bonus stage, the boss, the final, and every `reward_every`-th stage.
+ H.tuning.idle_travel=120
+ function H:idle_clear(kind,final)
+  if final or kind=='bonus' or kind=='boss' or self.foe_seen then return false end
+  return ((self.travel_max or 0)-(self.travel_min or 0))<H.tuning.idle_travel
+ end
  function H:reward_due(stage,final)
   if final then return true end
   local _,reward=D.drive_economy.stage(econ(),self.stage_kind,stage)
@@ -569,6 +589,12 @@ return function(D)
   local kind=self.stage_kind
   local d=self.mods.drives;local ctx=self.mods.engine.context
   self.offers={}
+  -- A stage with no opponent that ended while the player stood still (Escape from Brinstar times out and retail moves on
+  -- either way) is not earned: no drive and no keystone step (it stays owed for the next clear). Retail's own flow is untouched.
+  if self:idle_clear(kind,final) then
+   self:log(('stage clear (%s): no reward, the player stood still (%.0f units of travel, no opponent); the keystone step stays owed'):format(kind,(self.travel_max or 0)-(self.travel_min or 0)))
+   self.key_offers={};self:settle();return false
+  end
   if self:reward_due(stage,final) then
    local many=final or kind=='bonus' or kind=='boss'
    local n=many and econ().bonus_offers or econ().offers

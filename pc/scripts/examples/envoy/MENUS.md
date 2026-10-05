@@ -150,3 +150,18 @@ Normal matches remain untouched until the player explicitly enters Envoy.
 and `reset-profile confirm` provide diagnostics. `retry` reuses the last saved
 campaign seed; a saved interrupted start resumes its pending seed without aging
 again. It restarts traversal, rather than restoring unsaved room/item state.
+
+## Choosing the run's fighter
+
+The Fighter screen lists the retail roster and, below it, any Geno-defined fighter named in `missions/fighters.txt` (one
+`geno:<name>  <label>` per line; `gd.mod_read` can only read under `missions/`, and the engine has no call that lists mounted
+Geno fighters, so the folder that mounts one says so). `envoy classic <fighter>` and `envoy adventure <fighter>` take the same
+token; an unknown name or an unlisted `geno:` token is refused with a plain line and no scene is launched. A Geno fighter's
+engine name reads "character N", so nameplates use the label from the list instead.
+
+## Opponents that use technique
+
+An opponent whose rolled build holds a technique trigger (L-cancel, wavedash or air dodge, perfect shield, tech) performs that
+technique, at a skill (`.03 + .06 x effective depth`, at most .9) that grows with depth and New Game+ loop. The CPU controller
+refuses pad writes while the retail AI is running, so the driver (`foe_driver.lua`) briefly switches the opponent from the AI to the
+script controller (a few frames), presses the buttons, and hands back; `foe drive on|off|report` (console, LAB) shows it.

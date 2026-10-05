@@ -65,4 +65,10 @@ T.test('late balanced unique and three-keystone witness retains readable exchang
  local bad=D.mod_codec.decode(D.mod_codec.encode(foe));bad.build.context.depth=11;T.refuses(function()roll:validate(bad)end)
  local empty=D.mod_engine.new(1,D.mod_pool);local hit=empty:contact_ratios(1,2);assert(D.mod_progression.exchange(hit)==7)
 end)
+T.test('the opponent edge grows +1% per effective depth and stops at +25%',function()
+ local P=D.mod_progression
+ assert(math.abs(P.factor({depth=10,loop=0})-1.10)<1e-9 and math.abs(P.factor({depth=12,loop=1})-1.25)<1e-9)
+ assert(math.abs(P.factor({depth=10,loop=3})-1.25)<1e-9,'capped')
+ assert(math.abs(P.factor({depth=10,loop=3},'boss')-1.25*1.15)<1e-9 and math.abs(P.factor({depth=10,loop=3},'finalboss')-1.25*1.3)<1e-9,'roles still multiply the capped edge')
+end)
 T.done()

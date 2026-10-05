@@ -103,12 +103,17 @@ T.test('optional physical drives use native collection once and default drops no
  assert(not r:item_collect{name='drive',port=1,item=1,payload=s.payload});assert(D.save.encode(r.working)==saved)
  r:finish('quit');t.physical_drops=false
 end)
-T.test('Adventure definitive completion offers larger reward after retail Giga decision',function()
+T.test('Adventure definitive completion offers larger reward after retail Giga decision (when the stage clear gave none)',function()
  local s,r=fixture();assert(r:start('adventure','mario',2,3,123));s.mode.stage_index=11
- r:stage_clear(s.mode);assert(r:pick(1));assert(r:acknowledge())
  r:complete{mode='adventure',stage_index=11,loop=0,final=true}
  assert(r.reward and r.reward.final and r.reward.options[1].points==D.companion.tuning.retail.reward_points[1]*D.companion.tuning.retail.final_multiplier and r.profile.records.wins==0)
  assert(r:pick(1));assert(r:acknowledge());assert(r.profile.records.wins==1)
+end)
+T.test('Adventure: a final that the stage clear already rewarded is not a second reward moment',function()
+ local s,r=fixture();assert(r:start('adventure','mario',2,3,123));s.mode.stage_index=11
+ r:stage_clear(s.mode);assert(r:pick(1));assert(r:acknowledge())
+ r:complete{mode='adventure',stage_index=11,loop=0,final=true}
+ assert(not r.reward,'a second reward moment');assert(r.profile.records.wins==1)
 end)
 T.test('physical drops require confirmed fall and despawn refusals retain cleanup ownership',function()
  local s,r=fixture();local p={falls=0,x=0,y=0};s.g.player=function(port) return port==2 and p or nil end

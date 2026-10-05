@@ -3,8 +3,8 @@ return function(D)
  local F={};F.__index=F
  local function clone(v) return D.mod_codec.decode(D.mod_codec.encode(v)) end
  function F.new(g,lab)
-  local self=setmetatable({g=g,lab=lab,roller=D.foe_roll.new(D.mod_pool),seed=104729,stage=0,builds={},pending={},labels={}},F)
-  g.command('foe',function(arg)return self:command(arg or '')end,'roll [strength or -] [seed] [CPU port] [normal|boss|finalboss] | clear | list | stand|fight [port]')
+  local self=setmetatable({g=g,lab=lab,roller=D.foe_roll.new(D.mod_pool),seed=104729,stage=0,builds={},pending={},labels={},drive=true,driver=D.foe_driver and D.foe_driver.new(g)},F)
+  g.command('foe',function(arg)return self:command(arg or '')end,'roll [strength or -] [seed] [CPU port] [normal|boss|finalboss] | clear | list | stand|fight [port] | drive on|off|report')
   return self
  end
  function F:cpu(p)
@@ -17,6 +17,20 @@ return function(D)
    local w={};for word in arg:gmatch('%S+') do w[#w+1]=word end
    if w[1]=='list' then
     assert(#w==1,'usage: foe list');for p=2,6 do local r=self.builds[p];if r then local mods=self.roller:validate(r);local names={};for _,m in ipairs(self.lab.engine.list) do if mods[m.id] then names[#names+1]=m.label..' T'..D.mod_schema.level(mods[m.id])..' x'..D.mod_schema.copies(mods[m.id]) end end;self.g.log(('foe: P%d strength %.2f / target %.2f / %s'):format(p,r.strength,r.target,table.concat(names,', '))) end end;return
+   elseif w[1]=='sliced' then self.sliced=(w[2]=='on');return
+   elseif w[1]=='held' then self.held=(w[2]=='on');self.g.log('foe: held cap '..tostring(self.held));return
+   elseif w[1]=='drive' then
+    assert(self.driver,'no opponent driver');if w[2]=='off' then self.drive=false;self.driver:reset() elseif w[2]=='on' then self.drive=true
+    elseif w[2]=='player' then -- debug (balance harness): drive the player's own build too, at a chosen skill, so a CPU stands in for a skilled player
+     local sk=tonumber(w[3] or .5);assert(sk and sk>=0 and sk<=1,'skill 0..1');self.drive=true
+     local eq=self.lab.engine.equipped[1] or {};local ctx=self.lab.engine.context
+     self.driver.foes[1]={want=D.foe_driver.wanted(eq),skill=sk,seed=tonumber(w[4] or 7),last_action=-1,cool=0,gap=0,context=ctx}
+     self.driver.stats[1]={skill=sk,attempts={},events={},switches=0,opportunities={}};self.lab.enabled=true
+    elseif w[2]=='force' then -- debug: drive every technique for a CPU at a chosen skill (rates are measured this way)
+     local p=self:cpu(w[3]);local sk=tonumber(w[4] or .5);assert(sk and sk>=0 and sk<=1,'skill 0..1');self.drive=true
+     self.driver.foes[p]={want={lcancel=true,wavedash=true,ps=true,tech=true},skill=sk,seed=tonumber(w[5] or 1),last_action=-1,cool=0,gap=0}
+     self.driver.stats[p]={skill=sk,attempts={},events={},switches=0,opportunities={}};self.lab.enabled=true
+    else for _,l in ipairs(self.driver:report()) do self.g.log(l) end end;return
    elseif w[1]=='stand' or w[1]=='fight' then
     assert(#w<=2,'usage: foe stand|fight [port]');local p=self:cpu(w[2]);assert(self.g.cpu_mode and self.g.cpu_mode(p,w[1]),'native CPU mode refused');return
    end
@@ -27,7 +41,11 @@ return function(D)
     assert(#w<=5,'usage: foe roll [strength or -] [seed] [port] [role]');local p=self:cpu(w[4])
     local _,player=self.lab.engine:family_budget(1);local strength=(not w[2] or w[2]=='-') and player or tonumber(w[2]);local seed=tonumber(w[3] or self.seed)
     local m=self.g.match() or {};local stage=m.stage or m.stage_id or 0;assert(type(stage)=='number' and stage%1==0 and stage>=0,'numeric stage identity required')
-    local r=self.roller:roll(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),w[5] or 'normal')
+    local held;if self.held and self.lab.drives then local b=self.lab.drives.bag;local n=0;for i=1,b:slots() do if b.equipped[i] then n=n+1 end end;held={drives=n,keystones=#(b.keystones or {})} end
+    if self.sliced then self:roll_begin(p,strength,seed,stage,w[5] or 'normal',held);self.lab.enabled=true;return end -- debug: the search runs a few attempts per frame (the host's way), not in one call
+    local r
+    if held then local job=self.roller:roll_job(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),w[5] or 'normal',held);repeat r=self.roller:roll_step(job,math.huge) until r
+    else r=self.roller:roll(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),w[5] or 'normal') end
     self.lab.display:warm(self.lab.engine);assert(not self.lab.display.error,'shader warmup unavailable')
     self.pending[#self.pending+1]={op='roll',record=r};self.seed=seed;self.stage=stage
    else error('usage: foe roll|clear|list|stand|fight') end
@@ -39,10 +57,10 @@ return function(D)
  -- Run adapter: the roll the console `foe roll` stages, minus the command parsing, in slices. A script call
  -- is limited to 2M instructions or 50 ms and a whole roll is more, so the run spends a few candidate builds
  -- per call. The CPU must already be present. The host's own frame warms the look shaders before publishing.
- function F:roll_begin(p,strength,seed,stage,role)
+ function F:roll_begin(p,strength,seed,stage,role,held)
   assert(#self.pending<12,'foe pending queue full');self:cpu(p)
   self.jobs=self.jobs or {}
-  self.jobs[p]={job=self.roller:roll_job(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),role or 'normal'),seed=seed,stage=stage}
+  self.jobs[p]={job=self.roller:roll_job(strength,seed,stage,p,D.mod_progression.context(self.lab.engine.context),role or 'normal',held),seed=seed,stage=stage}
  end
  function F:roll_advance(p,attempts)
   local j=self.jobs and self.jobs[p];if not j then return false end
@@ -61,26 +79,32 @@ return function(D)
   end end
   local queue={};for _,e in ipairs(engine.queue) do if not self.builds[e.port] and not self.builds[e.target] then queue[#queue+1]=e end end;engine.queue=queue
   self.builds={};self.labels={}
+  if self.driver then self.driver:reset() end
  end
  function F:apply()
   for _,e in ipairs(self.pending) do
    if e.op=='clear' then self:retire()
+   elseif not (self.g.player(e.record.port) and self.g.player(e.record.port).cpu) then self.g.log('foe: roll for P'..tostring(e.record.port)..' dropped, the opponent is gone')
    else local r=e.record;self:cpu(r.port);local mods,implicit=self.roller:validate(r)
     self.lab.engine:set_build(r.port,mods,implicit);self.builds[r.port]=clone(r)
+    if self.driver and self.drive then self.driver:set(r.port,mods,r.context or r.build.context,r.seed) end
     local names,looks={},{};for slot=1,D.mod_progression.slots(r.build.context or r.context) do local rec=r.build.equipped[slot];if rec then names[#names+1]=self.roller.loot:name(rec);looks[#looks+1]={colour=rec.colour,rarity=rec.rarity} end end
     local keys={};for _,id in ipairs(r.build.keystones or {}) do keys[id]=true end;if r.build.keystone then keys[r.build.keystone]=true end
     for _,m in ipairs(self.lab.engine.list) do if keys[m.id] then names[#names+1]=m.label end end
     local plain=D.drive_text and D.drive_text.build_lines(self.roller.loot,r.build,self.lab.engine.list) or names
     self.lab.engine.display.drive_build=self.lab.engine.display.drive_build or {};self.lab.engine.display.drive_build[r.port]=looks
     local role=r.role or 'normal';local factor=D.mod_progression.factor(r.context or r.build.context,role)
-    local title=('P%d %s / %s %.2f / target %.2f x%.2f'):format(r.port,tostring((self.g.player(r.port) or {}).char_name or (self.g.player(r.port) or {}).name or 'CPU'),role,r.strength,r.target,factor)
-    local foe=(self.g.player(r.port) or {});local plate=('%s  (opponent strength %.1f)'):format(tostring(foe.char_name or foe.name or 'Opponent'),r.strength)
+    local title=('P%d %s / %s %.2f / target %.2f x%.2f'):format(r.port,tostring(D.fighters and D.fighters.plate(self.g,(self.g.player(r.port) or {}).char_name or (self.g.player(r.port) or {}).name) or 'CPU'),role,r.strength,r.target,factor)
+    local foe=(self.g.player(r.port) or {});local plate=('%s  (opponent strength %.1f)'):format(tostring(D.fighters and D.fighters.plate(self.g,foe.char_name or foe.name) or 'Opponent'),r.strength)
     if #plain==0 then plain={'No modifiers: a vanilla fighter'} end
     self.labels[r.port]={title=self.lab:hosted() and plate or title,lines=self.lab:hosted() and plain or names,left=240};self.g.log('foe: '..title..' / '..table.concat(names,', '))
    end
   end;self.pending={}
  end
- function F:frame() for p,label in pairs(self.labels) do label.left=label.left-1;if label.left<=0 then self.labels[p]=nil end end end
+ function F:frame()
+  if self.sliced and self.jobs then for p in pairs(self.jobs) do local ok,why=pcall(self.roll_advance,self,p,2);if not ok then self.jobs[p]=nil;self.g.log('foe: roll refused '..tostring(why)) end end end
+  if self.driver and self.drive and next(self.driver.foes) then local m=self.g.match();if m and m.active then self.driver:frame(m.frame) end end
+  for p,label in pairs(self.labels) do label.left=label.left-1;if label.left<=0 then self.labels[p]=nil end end end
  function F:draw()
   if not self.g.kit then return end;local a=self.g.safe_area();local y=a.y+42;local ports={}
   for p=2,6 do if self.labels[p] then ports[#ports+1]=p end end;if #ports==0 then return end
@@ -112,6 +136,6 @@ return function(D)
   return clone(s)
  end
  function F:restore(s) s=self:validate(s);self.seed=s.seed;self.stage=s.stage;self.builds=s.builds;self.pending=s.pending;self.labels=s.labels end
- function F:reset() self.builds={};self.pending={};self.labels={};self.jobs={};self.seed=104729;self.stage=0 end
+ function F:reset() if self.driver then self.driver:reset() end;self.builds={};self.pending={};self.labels={};self.jobs={};self.seed=104729;self.stage=0 end
  return F
 end

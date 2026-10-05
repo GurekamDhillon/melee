@@ -14,13 +14,14 @@ return function(D)
  function R:weights(strength)
   local high=math.min(12,math.max(0,math.log(strength)))
   local w={armoured=1+3*high,cleansing=1+2*high,bastion=1+high,shelter=1+high,reprisal=1+high,renewal=1+high,heavy=1/(1+high)^3,pyre=1/(1+high)^3}
-  -- A technique record whose trigger a retail CPU never performs is inert on an opponent: weight it down (it stays rollable, a deliberate
-  -- dead roll like the rest of the pool). 'maybe' triggers are left alone. Opponents are not scripted to perform technique.
+  -- A technique record whose trigger nobody performs for the opponent is inert on it: weight it down (it stays rollable, a deliberate
+  -- dead roll like the rest of the pool). 'driven' triggers (foe_driver.lua performs them) and 'maybe' ones are left at full weight.
   if D.mod_skill then for _,m in ipairs(self.pool) do if m.min_depth and D.mod_skill.cpu(m.trigger)=='dead' then w[m.id]=.25 end end end
   return w
  end
- function R:construct(rand,context,strength,full,relaxed)
+ function R:construct(rand,context,strength,full,relaxed,cap)
   local count=full and P.slots(context) or math.floor(rand(P.slots(context)+1))
+  if cap then count=math.min(count,math.max(1,cap.drives)) end
   local b={items={},equipped={},keystones={},context=P.context(context)}
   local h=math.max(0,math.log(strength));local loot=D.drive_loot.new(self.pool,{affix_weights=self:weights(strength),unique_weights={glass_core=1+2*h,storm_shell=1+h,mirror_shard=1/(1+h)}})
   -- Opponents follow the player's curve: the best rarity the depth has reached (a unique only once uniques roll),
@@ -29,6 +30,7 @@ return function(D)
   for slot=1,count do b.equipped[slot]=loot:roll(math.floor(rand(2147483646)),context,rarity(P.context(context)))end
   local keys={};for _,id in ipairs(self.keys)do keys[#keys+1]=id end
   local keycount=full and P.keystones(context) or math.floor(rand(P.keystones(context)+1))
+  if cap then keycount=math.min(keycount,math.max(1,cap.keystones)) end
   -- Held keystones follow the allowance and the same exclusion/drawback rules as the player's (keystones.lua).
   while #b.keystones<keycount and #keys>0 do
    local id=table.remove(keys,math.floor(rand(#keys))+1)
@@ -79,23 +81,26 @@ return function(D)
  end
  function R:validate(r)
   assert(type(r)=='table' and not getmetatable(r),'plain foe record required')
-  for k in pairs(r)do assert(({seed=true,stage=true,port=true,requested=true,target=true,strength=true,build=true,context=true,role=true})[k],'unknown foe record field')end
+  for k in pairs(r)do assert(({capped=true,seed=true,stage=true,port=true,requested=true,target=true,strength=true,build=true,context=true,role=true})[k],'unknown foe record field')end
   assert(integer(r.seed) and integer(r.stage) and integer(r.port) and r.port>=2 and r.port<=6,'invalid foe identity')
   assert(type(r.requested)=='number' and r.requested==r.requested and r.requested>=1 and r.requested<=self.maximum,'invalid requested strength')
   local c=P.context(r.context);local bc=P.context(r.build.context);assert(c.depth==bc.depth and c.loop==bc.loop,'foe build context mismatch');local target=r.requested*P.factor(c,r.role)
   assert(r.target==target,'invalid difficulty target')
   local strength,_,mods,implicits=self:evaluate(r.build,r.port)
   assert(type(r.strength)=='number' and math.abs(strength-r.strength)<1e-9,'invalid foe strength')
-  assert(strength>=target*self.band[1] and strength<=target*self.band[2],'opponent outside tracking band')
+  assert(strength<=target*self.band[2] and (r.capped or strength>=target*self.band[1]),'opponent outside tracking band')
   return mods,implicits
  end
  -- A roll is a bounded search over candidate builds. roll_job/roll_step expose it in slices so a run can spend
  -- a few attempts per script call (one call is limited to 2M instructions or 50 ms); roll() runs them all.
- function R:roll_job(strength,seed,stage,port,context,role)
+ -- `held` ({drives=,keystones=}: what the player holds) caps an EARLY opponent (effective depth below 10, the affix bands that
+ -- keep early play tame) at the player's own counts: it reaches the target through tier or settles for a lower strength.
+ function R:roll_job(strength,seed,stage,port,context,role,held)
   assert(type(strength)=='number' and strength==strength and strength>=self.minimum and strength<=self.maximum,'strength request must be finite 1..1e12')
   assert(integer(seed) and integer(stage) and integer(port) and port>=2 and port<=6,'invalid foe seed/stage/port')
   context=P.context(context);local target=strength*P.factor(context,role)
-  return {strength=strength,seed=seed,stage=stage,port=port,context=context,role=role,target=target,rand=random((seed+stage*104729+port*8191)%2147483646),attempt=0}
+  local cap=held and P.effective(context)<10 and {drives=held.drives or 1,keystones=held.keystones or 1} or nil
+  return {cap=cap,strength=strength,seed=seed,stage=stage,port=port,context=context,role=role,target=target,rand=random((seed+stage*104729+port*8191)%2147483646),attempt=0}
  end
  -- Runs up to `attempts` candidates; returns the finished record once the search and its validation are done.
  function R:roll_step(job,attempts)
@@ -109,7 +114,7 @@ return function(D)
     local room=job.relaxed and 15 or math.min(15,P.band_top(context)-P.effective(context))
     candidate.depth=math.min(2147483646,candidate.depth+math.min(room,math.floor(rand(16))))
    end
-   local build=attempt==0 and {items={},equipped={},keystones={},context=context} or self:construct(rand,candidate,target,false,job.relaxed)
+   local build=attempt==0 and {items={},equipped={},keystones={},context=context} or self:construct(rand,candidate,target,false,job.relaxed,job.cap)
    build.context=context
    for slot in pairs(build.equipped)do if slot>P.slots(context)then build.equipped[slot]=nil end end
    while #build.keystones>P.keystones(context)do table.remove(build.keystones)end
@@ -119,7 +124,7 @@ return function(D)
     local quality=target>10 and (math.max(0,families.launch_dealt.potential-1.6)+math.max(0,.5*math.sqrt(target)-families.damage_dealt.value)) or 0
     diff=diff+target*.2*quality
     if power<target*self.band[1] or power>target*self.band[2]then diff=diff+target*100 end
-    if not distance or diff<distance then best={seed=seed,stage=stage,port=port,requested=strength,target=target,strength=power,build=build,context=context,role=role};distance=diff end
+    if not distance or diff<distance then best={seed=seed,stage=stage,port=port,requested=strength,target=target,strength=power,build=build,context=context,role=role,capped=job.cap and true or nil};distance=diff end
     if diff<=target*.04 then job.found=true end
    end
    job.best,job.distance=best,distance
@@ -127,11 +132,11 @@ return function(D)
   if job.attempt<=self.candidates and not job.found then return nil end
   -- The curve bounds ordinary play. A strength it cannot reach (a LAB build far above the depth) gets a second
   -- pass with the old unbanded rolls instead of a refusal; a normal run never reaches this.
-  if not job.found and not job.relaxed and (not best or best.strength<target*self.band[1] or best.strength>target*self.band[2]) then
+  if not job.found and not job.relaxed and not job.cap and (not best or best.strength<target*self.band[1] or best.strength>target*self.band[2]) then
    job.relaxed=true;job.attempt=1;return nil
   end
   assert(best,'no valid independent opponent build')
-  assert(best.strength>=target*self.band[1] and best.strength<=target*self.band[2],'requested strength unreachable by bounded same-pool search')
+  assert(best.strength<=target*self.band[2] and (job.cap or best.strength>=target*self.band[1]),'requested strength unreachable by bounded same-pool search')
   self:validate(best);return best
  end
  function R:roll(strength,seed,stage,port,context,role)

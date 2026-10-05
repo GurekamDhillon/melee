@@ -229,10 +229,22 @@ return function(D)
   if not m.values then m.values=D.mod_budget.values(self.list,self.equipped[port],self.implicits[port],self.statuses[port]) end
   local out={};for k,v in pairs(m.values) do out[k]=v end;return out -- callers edit their copy
  end
+ -- The echo description depends on the build and on the statuses its echo rules wait for (Hasted for Trailing), not on every
+ -- status: it is kept under that narrower key, so a status that no echo rule reads (a Guarded, a Burning) does not redescribe it.
+ function E:echo_status_names()
+  if not self.echo_names then local n={};for _,m in ipairs(self.list) do for _,e in ipairs(m.effects) do if e.op=='echo' and e.status then n[e.status]=true end end end;self.echo_names=n end
+  return self.echo_names
+ end
  function E:echo_description(port)
-  local m=memo(self,port)
-  if not m.echo then m.echo=D.mod_echo.engine(self,port) end
-  return m.echo
+  local parts,n={},0
+  local eq=self.equipped[port]
+  if eq then for id,tier in pairs(eq) do n=n+1;parts[n]=id..'='..(type(tier)=='table' and C.encode(tier) or tostring(tier)) end;table.sort(parts) end
+  local key=table.concat(parts,';')
+  for name in pairs(self:echo_status_names()) do key=key..'|'..name..'='..tostring(self:status(port,name) and true or false) end
+  self.echo_memo=self.echo_memo or {}
+  local c=self.echo_memo[port]
+  if not c or c.key~=key then c={key=key,value=D.mod_echo.engine(self,port)};self.echo_memo[port]=c end
+  return c.value
  end
  function E:native_rules(port)
   local m=memo(self,port)

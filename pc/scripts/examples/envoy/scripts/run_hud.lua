@@ -8,20 +8,20 @@ return function(D)
  -- Rebuilt when the bag (rev), the progression or the engine changes.
  function Hd:model()
   local h=self.host;local d=h.mods.drives;if not d then return nil end
-  local b=d.bag;local key=table.concat({d.rev or 0,b.context.depth,b.context.loop,#b.items,tostring(b.equipped)},'|')
+  local b=d.bag;local key=table.concat({d.rev or 0,b.context.depth,b.context.loop,#b.items,tostring(b.equipped),#h.decide,h.loop or 0},'|')
   if self.m and self.m.key==key then return self.m end
   local pips={};for slot=1,b:slots() do local r=b.equipped[slot];pips[slot]=r and {colour=T().base_colour[r.colour],border=T().rarity_colour[r.rarity]} or false end
   -- Keystones are small cells (an initial letter on the family colour), never a name list.
   local keys={};for _,id in ipairs(h:keystone_ids()) do local r=h:keystone_rule(id);local fam=D.keystones.family(id)
    keys[#keys+1]={letter=(r and r.label or id):sub(1,1):upper(),colour=T().base_colour[fam] or 0xEBD175FF} end
   local t=h:totals()
-  self.m={key=key,pips=pips,strength=t.strength,keys=keys,depth=b.context.depth,loop=b.context.loop,bag=#b.items,label=nil}
+  self.m={key=key,pips=pips,strength=t.strength,keys=keys,depth=b.context.depth,loop=h.loop or b.context.loop,bag=#b.items,label=nil}
   local k=self.g.kit
   -- Strength is a percentage over an empty build, the same number the screens use; no multiplier, no decimals.
   local text=('%+d%%'):format(math.floor((t.strength-1)*100+.5))
   self.m.text=text;self.m.text_w=k and k.measure and k.measure(text,'caption') or #text*7
   self.m.keys_w=#keys>0 and (math.min(#keys,6)*20+(#keys>6 and 22 or 0)) or 0
-  local dl=('Depth %d'):format(b.context.depth)..(b.context.loop>0 and ('  NG+%d'):format(b.context.loop) or '')
+  local dl=('Depth %d'):format(b.context.depth)..(self.m.loop>0 and ('  NG+%d'):format(self.m.loop) or '')..(#h.decide>0 and ('  |  %d drive(s) waiting'):format(#h.decide) or '')
   self.m.depth_text=dl;self.m.depth_w=k and k.measure and k.measure(dl,'caption') or #dl*7
   return self.m
  end

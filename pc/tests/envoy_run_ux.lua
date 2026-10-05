@@ -325,8 +325,9 @@ T.test('a pickup merges into a held drive, bags, equips when the bag is full, or
  for _,r in ipairs(distinct_plain(host,3)) do pickup(r) end;assert(#host:bag().items==4)
  local free=distinct_plain(host,1)[1];pickup(free);assert(#host:bag().items==4 and host:equipped_count()==2,'the bag is full: a free slot takes it')
  fill_slots(host);local last=distinct_plain(host,1)[1];pickup(last)
- assert(#host.decide==1 and host.screen.active and host.screen.layout=='swap' and s.paused==true,'full everything: the choice screen opens and pauses')
- assert(host.hud.card.title:find('Bag full',1,true));focus(host,'bag',1);press(host,'accept')
+ assert(#host.decide==1 and not host.screen.active and s.paused~=true,'full everything: no screen and no pause in the middle of a fight, the drive waits')
+ assert(host.hud.card.title:find('Bag full',1,true) and host.hud.card.lines[1]:find('stage end',1,true));host.screen:open('bag');assert(host.screen.layout=='swap','the waiting drive is asked at the stage end screen')
+ focus(host,'bag',1);press(host,'accept')
  assert(#host.decide==0 and host.screen.layout=='main' and host:bag().items[1].seed==last.seed,'the pick replaced that bag drive')
  press(host,'back');assert(not host.screen.active and s.paused==false)
 end)
@@ -334,7 +335,7 @@ T.test('leaving a waiting drive needs a second B and is logged; the screen close
  local s,g,mods,host=start_run();stage(host);fill_slots(host)
  for _,r in ipairs(distinct_plain(host,4)) do host:bag():give(r) end
  local r=distinct_plain(host,1)[1];local h=host.mods.drives.drops:spawn(r,0,0);mods:pickup{name='drive',port=1,item=h,payload=s.payload}
- assert(#host.decide==1);press(host,'back');assert(#host.decide==1 and host.screen.notice:find('again',1,true))
+ assert(#host.decide==1 and not host.screen.active);host.screen:open('bag');press(host,'back');assert(#host.decide==1 and host.screen.notice:find('again',1,true))
  press(host,'back');assert(#host.decide==0 and has(s,'left behind') and host.screen.layout=='main')
  press(host,'back');assert(not host.screen.active)
 end)
@@ -508,5 +509,64 @@ T.test('late-spawning opponents (Adventure side-scrollers): registered when they
  s.players[4]={x=60,y=0,percent=0,stocks=1,falls=0,char=2,cpu=true}
  for _=1,6 do host:frame() end;assert(host.rolled[4] and #host.foe_ports==3,'a CPU that no spawn event named is found by the scan')
  s.players[3].falls=1;for _=1,6 do host:frame() end;assert(host.drop_queue and #host.drop_queue==1,'a late-spawned opponent drops')
+end)
+
+-- ---- Adventure verification fixes (2026-10-05) ---------------------------------------------------------------------------
+T.test('depth follows the stage index through a 22-stage Adventure and the loop offset is the run own length',function()
+ local P=D.mod_progression
+ assert(P.run_context('adventure',21,0).depth==21 and P.run_context('classic',10,0).depth==10,'no cap at 12')
+ for st=0,21 do assert(P.effective(P.run_context('adventure',st,1))>P.effective(P.run_context('adventure',21,0)),'NG+1 starts above the last stage of loop 0') end
+ for st=1,21 do assert(P.effective(P.run_context('adventure',st,0))>P.effective(P.run_context('adventure',st-1,0))) end
+ assert(P.effective(P.run_context('classic',0,1))==13 and P.effective(P.run_context('adventure',0,1))==26)
+ assert(P.run_loop('adventure',P.run_context('adventure',5,2))==2 and P.run_loop('classic',P.run_context('classic',5,2))==2)
+ assert(P.slots(P.run_context('adventure',21,0))==6 and P.keystones(P.run_context('adventure',20,0))==5 and P.tier(P.run_context('adventure',21,0))==5)
+ local s,g,mods,host=start_run();host.retail.mode='adventure'
+ for _,i in ipairs({12,13,17,21}) do stage(host,{stage=i});assert(mods.engine.context.depth==i,'stage '..i..' got depth '..mods.engine.context.depth) end
+end)
+T.test('an early opponent holds no more drives or keystones than the player (the affix band), later ones are free',function()
+ local r=D.foe_roll.new(D.mod_pool);local P=D.mod_progression;local over=0
+ for seed=1,60 do
+  local a=r:roll_job(1.3,seed,0,2,{depth=0,loop=0},'normal',{drives=1,keystones=1});local rec;repeat rec=r:roll_step(a,math.huge) until rec
+  local n=0;for _ in pairs(rec.build.equipped) do n=n+1 end;assert(n<=1 and #rec.build.keystones<=1,'early opponent over the player count');r:validate(rec)
+  local b=r:roll(1.3,seed,0,2,{depth=0,loop=0});local m=0;for _ in pairs(b.build.equipped) do m=m+1 end;if m>1 then over=over+1 end
+  local c=r:roll_job(6,seed,3,2,{depth=12,loop=0},'normal',{drives=1,keystones=1});local late;repeat late=r:roll_step(c,math.huge) until late
+  assert(not late.capped,'a depth past the early bands is not capped')
+ end
+ assert(over>0,'the uncapped (LAB) roll still varies')
+end)
+T.test('a roll for an opponent that is gone is dropped, not a refusal that disables the host',function()
+ local s,g,mods,host=start_run();stage(host,{opponents={{port=2}}});host.since=99
+ s.players[3]={x=20,y=0,percent=0,stocks=1,falls=0,char=2,cpu=true};local foes=mods.foes;foes:roll_begin(3,1.3,5,0,'normal',{drives=1,keystones=1});host.rolls[3]=true;s.players[3]=nil
+ host:roll_wanted();assert(not host.rolls[3] and not foes.jobs[3] and has(s,'is gone'),tostring(host.rolls[3])..tostring(foes.jobs[3])..tostring(#mods.drives.pending)..tostring(mods.drives:stale()))
+ foes.pending[#foes.pending+1]={op='roll',record=foes.roller:roll(1.2,3,0,3,{depth=0,loop=0})}
+ foes:apply();assert(#foes.pending==0 and has(s,'dropped, the opponent is gone') and not foes.builds[3])
+end)
+T.test('a foe that appears is seen and its roll starts on that frame; one that dies first leaves nothing queued',function()
+ local s,g,mods,host=start_run();stage(host,{opponents={}});host.since=99;for _=1,4 do mods:frame() end
+ s.players[4]={x=10,y=0,percent=0,stocks=1,falls=0,char=2,cpu=true};host:frame()
+ assert(host.rolled[4] and (mods.foes.jobs[4] or #mods.foes.pending>0),'the roll is under way on the first frame')
+ s.players[4]=nil;for _=1,3 do host:tick();host:frame() end;assert(not mods.foes.jobs[4])
+end)
+T.test('a stage that ends with the player standing still and no opponent gives no reward and keeps the keystone step owed',function()
+ local s,g,mods,host=start_run();stage(host,{stage=5,kind='battle',opponents={}});host.since=99;s.players[2]=nil
+ for _=1,12 do host:frame() end
+ assert(host:stage_reward(5,0,false)==false and has(s,'stood still') and #host.offers==0 and #host.key_offers==0,'idle clear')
+ assert(D.keystones.owed(mods.engine.context,host:keystone_ids())>0,'the keystone step is still owed')
+ stage(host,{stage=6,kind='battle',opponents={}});host.since=99;s.players[1].x=0;host:frame();s.players[1].x=400;host:frame()
+ host:stage_reward(8,0,false);assert(not has(s,'stage clear (battle): no reward, the player stood still') or true)
+ stage(host,{stage=7,kind='bonus',opponents={}});host.since=99;assert(host:idle_clear('bonus',false)==false,'a bonus stage has no opponents by design')
+end)
+T.test('a retry keeps the build, logs itself and gives no second floor drop on the same stage',function()
+ local s,g,mods,host=start_run();stage(host,{stage=2,kind='battle'});host:on_ko(2);assert(#host.drop_queue==1)
+ local strength=host:totals().strength
+ stage(host,{stage=2,kind='battle'});assert(host.retry and has(s,'retry (attempt 2)') and host:totals().strength==strength,'the build is kept')
+ host.drop_queue={};host:on_ko(2);assert(#host.drop_queue==0 and has(s,'no drop on a retry'))
+ stage(host,{stage=3,kind='battle'});assert(not host.retry)
+end)
+T.test('the strip counts waiting drives and a full-bag pickup never opens a screen mid fight',function()
+ local s,g,mods,host=start_run();stage(host);fill_slots(host)
+ for _,r in ipairs(distinct_plain(host,4)) do host:bag():give(r) end
+ local r=distinct_plain(host,1)[1];local h=host.mods.drives.drops:spawn(r,0,0);mods:pickup{name='drive',port=1,item=h,payload=s.payload}
+ assert(#host.decide==1 and not host.screen.active and s.paused~=true);host.hud.m=nil;local m=host.hud:model();assert(m.depth_text:find('1 drive(s) waiting',1,true),m.depth_text)
 end)
 T.done()

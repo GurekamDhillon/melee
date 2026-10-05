@@ -1,0 +1,3 @@
+# Fighters offered besides the retail roster: one `geno:<name>  <label>` per line.
+# Add the line when the Geno fighter mod is mounted, e.g.:
+# geno:vanilla-hero  Vanilla Hero

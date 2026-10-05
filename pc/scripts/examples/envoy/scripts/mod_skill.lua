@@ -12,16 +12,17 @@ return function(D)
  local M={}
  -- kind -> {verified, cpu, words, cause, noun}
  --  verified: seen firing in the game by the engine lane (docs/scripting.md "Skill events"); false = available but flagged
- --  cpu: whether a retail CPU opponent performs it by itself. 'live' = hits and knockdowns happen anyway;
+ --  cpu: whether a CPU opponent performs it. 'live' = hits and knockdowns happen anyway; 'driven' = the retail AI never does it but foe_driver.lua
+ --       performs it for an opponent whose build rewards it (a fight -> script -> fight switch, at a skill that grows with depth);
  --       'maybe' = retail AI does it at some levels (unmeasured); 'dead' = retail AI never performs it, so an opponent's roll is inert
  --  cause: afterimage colour family; the status the technique grants shows that colour while it lasts
  M.kinds={
-  lcancel={verified=true,cpu='dead',words='L-cancel a landing',cause='lcancel'},
-  lcancel_hit={verified=true,cpu='dead',words='L-cancel a landing after the aerial hit',cause='lcancel'},
+  lcancel={verified=true,cpu='driven',words='L-cancel a landing',cause='lcancel'},
+  lcancel_hit={verified=true,cpu='driven',words='L-cancel a landing after the aerial hit',cause='lcancel'},
   lcancel_miss={verified=true,cpu='maybe',words='miss an L-cancel',cause='miss'},
-  wavedash={verified=true,cpu='dead',words='wavedash',cause='wave'},
-  perfect_shield={verified=true,cpu='maybe',words='perfect shield',cause='shield',legacy=true},
-  tech={verified=true,cpu='maybe',words='tech',cause='shield'},
+  wavedash={verified=true,cpu='driven',words='wavedash',cause='wave'},
+  perfect_shield={verified=true,cpu='driven',words='perfect shield',cause='shield',legacy=true},
+  tech={verified=true,cpu='driven',words='tech',cause='shield'},
   tech_miss={verified=true,cpu='live',words='miss a tech',cause='miss'},
   short_hop={verified=true,cpu='maybe',words='short hop',cause='move'},
   fast_fall={verified=true,cpu='maybe',words='fast fall',cause='move'},
@@ -35,7 +36,7 @@ return function(D)
   sdi={verified=false,cpu='maybe',words='smash DI during hitlag',cause='shield'},
   shield_drop={verified=false,cpu='maybe',words='drop your shield',cause='shield'},
   auto_cancel={verified=false,cpu='maybe',words='auto-cancel a landing',cause='lcancel'},
-  air_dodge={verified=false,cpu='maybe',words='air dodge',cause='wave'},
+  air_dodge={verified=false,cpu='driven',words='air dodge',cause='wave'},
   full_hop={verified=false,cpu='maybe',words='full hop',cause='move'},
   jump_cancel_usmash={verified=false,cpu='dead',words='jump-cancel an up smash',cause='combo'},
   -- Not a technique: a consequence the engine reports (crit decision, armour absorbing a hit).

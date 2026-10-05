@@ -12,6 +12,13 @@ return function()
   return {depth=depth,loop=loop}
  end
  function P.effective(c) c=P.context(c);return c.depth+13*c.loop end
+ -- A run's own length sets the New Game+ offset: effective depth = stage + 13 x units x loop, so the loop never starts below the
+ -- run's last stage. Classic has 11 stages (one unit, 13); Adventure has 22 (two units, 26). The stage is NOT capped: depth follows
+ -- the stage index through the whole run.
+ P.run_units={classic=1,adventure=2}
+ function P.units(mode) return P.run_units[mode] or 1 end
+ function P.run_context(mode,stage,loop) return P.context(stage,(loop or 0)*P.units(mode)) end
+ function P.run_loop(mode,context) return math.floor(P.context(context).loop/P.units(mode)) end
  function P.tier(c) return 1+math.floor(P.effective(c)/5) end
  function P.growth(t)
   assert(type(t)=='number' and t%1==0 and t>=1 and t<=6500000000,'invalid tier')
@@ -50,9 +57,12 @@ return function()
  -- Opponents roll against the player's ACTUAL build strength times this edge, which grows with effective depth
  -- (was .003: opponents were barely ahead; .010 gives +5% at depth 5, +10% at depth 10, +13% in New Game+ 1, +39% in NG+3; a bigger edge makes the late exchanges lopsided (power_curve test)).
  P.opponent_edge=.010
+ -- The edge stops growing at +25%: AI-versus-AI runs (envoy-foes harness, 126 trials) showed opponents out-dealing the player 1.0x at loop 0,
+ -- 1.3x at NG+1 (edge 13-23%), 2.5x at NG+2 (26-36%) and 4.6x at NG+3 (39-49%) in damage dealt.
+ P.opponent_edge_cap=.25
  function P.factor(c,role)
   assert(role==nil or role=='normal' or role=='boss' or role=='finalboss','unknown opponent role')
-  return (1+P.opponent_edge*P.effective(c))*(role=='boss' and 1.15 or role=='finalboss' and 1.3 or 1)
+  return (1+math.min(P.opponent_edge_cap,P.opponent_edge*P.effective(c)))*(role=='boss' and 1.15 or role=='finalboss' and 1.3 or 1)
  end
  function P.exchange(attacker,defender)
   -- Mario sweetspot forward smash, raw/current-hit18, weight100, KBG95 BKB25.

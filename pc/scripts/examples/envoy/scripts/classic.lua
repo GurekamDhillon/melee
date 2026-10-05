@@ -159,7 +159,9 @@ return function(D)
   if not self.active or self.completing then return end
   local loop=e.loop or self.loop;if self.completed[loop] then return end
   -- Adventure may decide Giga Bowser only after the preceding clear barrier.
-  if self.mode=='adventure' and e.final and not e.no_loop and not self.final_rewards[loop] and not self.reward then
+  -- One reward moment per clear: a final that the stage's own clear already rewarded (Bowser, Giga Bowser) offers nothing a second time.
+  local already=self.cleared[loop..':'..(e.stage_index or 11)]
+  if self.mode=='adventure' and e.final and not e.no_loop and not self.final_rewards[loop] and not self.reward and not already then
    self:offer_reward(e.stage_index or 11,loop,true)
   end
   if self.reward then self.deferred_complete=e;return end

@@ -25,4 +25,12 @@ T.test('same-age different filters retain independent rules and shared strength'
  local aerial,any=0,0;for _,r in ipairs(d.rules)do assert(r.damage==.4);if r.match.move=='aerial' then aerial=aerial+1 else any=any+1 end end
  assert(aerial==3 and any==3);local budget=e:family_budget(1);assert(math.abs(budget.echo.potential-3.4)<1e-9)
 end)
+T.test('the echo description is kept under the build and the statuses echo rules read, not every status',function()
+ local e=D.mod_engine.new(1,D.mod_pool);e:set_build(1,{trailing=1},{});e.statuses[1]={haste={stacks=1,amount=1,expires=9}}
+ local a=e:echo_description(1);assert(#a.copies==3)
+ e.statuses[1].guarded={stacks=1,amount=1,expires=9};assert(e:echo_description(1)==a,'a status no echo reads redescribed the echo')
+ e.statuses[1].haste=nil;assert(#e:echo_description(1).copies==0,'the status echo rules wait for still counts')
+ e.statuses[1].haste={stacks=1,amount=1,expires=9};assert(#e:echo_description(1).copies==3)
+ e:set_build(1,{trailing=1,echoes=1},{});assert(e:echo_description(1)~=a,'a build change redescribes')
+end)
 T.done()

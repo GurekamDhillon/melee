@@ -28,7 +28,7 @@ T.test('skill triggers are in the vocabulary: verified ones plain, unverified on
  local S,K=D.mod_schema,D.mod_skill
  for _,kind in ipairs({'lcancel','lcancel_hit','lcancel_miss','wavedash','perfect_shield','tech','tech_miss','short_hop','fast_fall','dash_dance','jump_cancel_grab','combo','combo_end','crit','armor'}) do assert(S.events[kind] and K.kinds[kind].verified,kind) end
  for _,kind in ipairs({'waveland','ledge_dash','sdi','shield_drop','auto_cancel'}) do assert(S.events[kind] and K.kinds[kind].verified==false,kind) end
- for kind,k in pairs(K.kinds) do assert(k.cpu=='live' or k.cpu=='maybe' or k.cpu=='dead',kind);assert(K.cause[k.cause],kind) end
+ for kind,k in pairs(K.kinds) do assert(k.cpu=='live' or k.cpu=='maybe' or k.cpu=='dead' or k.cpu=='driven',kind);assert(K.cause[k.cause],kind) end
 end)
 T.test('an L-cancel after a hit earns Haste with its cause; a miss earns nothing; the status ends the earned state',function()
  local e=engine({clean_landing=1})

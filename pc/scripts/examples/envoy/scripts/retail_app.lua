@@ -54,6 +54,13 @@ return function(D)
     if self.menu.run_type=='campaign' then return old.command(self,'start') end
     return self:start_retail()
    end
+   do local mode,token=arg:match('^(%a+)%s+(%S+)$')
+    if (mode=='classic' or mode=='adventure') and token then
+     local id,why=D.fighters.resolve(self.g,token)
+     if not id then self.notice=why;self.g.log('envoy: '..why);return false,why end
+     self.menu.run_type=mode;self.menu.fighter=id;return self:start_retail(mode,id)
+    end
+   end
    if arg=='classic' or arg=='adventure' then self.menu.run_type=arg;return self:start_retail(arg) end
    if arg=='retry' then return self:start_retail(nil,nil,nil,nil,self.run.profile and self.run.profile.last_seed) end
    if arg=='campaign' then

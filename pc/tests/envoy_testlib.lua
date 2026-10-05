@@ -8,7 +8,7 @@ function T.test(name,f)
 end
 function T.done() print('PASS '..T.count..' tests') end
 function T.rules()
-  local D={};D.mod_echo=T.module('mod_echo',D);D.pickup_juice=assert(loadfile(T.root:gsub('examples/envoy/scripts/$','lib/')..'pickup_juice.lua'))();D.genetics=T.module('genetics');D.companion=T.module('companion',D)
+  local D={};D.mod_echo=T.module('mod_echo',D);D.pickup_juice=assert(loadfile(T.root:gsub('examples/envoy/scripts/$','lib/')..'pickup_juice.lua'))();D.genetics=T.module('genetics');D.companion=T.module('companion',D);D.fighters=T.module('fighters',D)
   return D
 end
 function T.missions()

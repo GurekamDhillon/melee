@@ -124,4 +124,13 @@ T.test('the results screen is read from game state: a decided stage ignores STAR
  pl={[1]={stocks=0},[2]={stocks=2}};a:tick();assert(a.results_up)
  a:retail_event('stage_start',s.mode);pl={[1]={stocks=3}};a.g.mode_1p=function() return {held=true} end;s.pad={};a:tick();a:tick();assert(a.results_up)
 end)
+T.test('Adventure: an intro-skip START still held at every stage start never opens the pause menu (one fresh press does)',function()
+ local s,a=fixture(true);a.menu.run_type='adventure';assert(a:command('adventure'));s.mode.mode='adventure'
+ for stage=0,3 do
+  s.mode.stage_index=stage;s.mode.held=false;s.pad={START=true};a:retail_event('stage_start',s.mode);a.menu:show('playing');a.visible=true;a:tick();a:tick()
+  assert(a.menu.screen=='playing' and not s.paused,'held START at Adventure stage '..stage..' paused the game')
+  s.pad={};a:tick();assert(a.menu.screen=='playing')
+ end
+ s.pad={START=true};a:tick();assert(a.menu.screen=='pause' and s.paused,'a fresh START must still pause')
+end)
 T.done()

@@ -10,6 +10,18 @@ return function(D)
   end})
   self.drops=D.drive_drop.new(g);self.menu=D.drive_menu.new(g,self)
   g.command('drive',function(a) return self:command(a or '') end,'give|drop [rarity] [seed]')
+  -- Balance harness hook (debug, LAB only): `simbag <file>` installs an encoded bag snapshot from the script data folder as the
+  -- player's real build (the file holds what the offline run simulator produced with the real run rules), at the snapshot's own context.
+  g.command('simbag',function(name)
+   local ok,why=pcall(function()
+    local allowed,reason=lab:allowed();assert(allowed,reason);assert(not lab:replaying(),'refused during rewind');assert(#lab.engine.queue==0,'wait for combat events to commit')
+    local text=assert(g.data_read(tostring(name)),'no such data file');local snap=D.mod_codec.decode(text)
+    local ctx=D.mod_progression.context(snap.context)
+    lab:set_context(ctx);self.bag.config.context=ctx;assert(self.bag:restore(snap));self.pending={};self:apply();lab.enabled=true
+    local _,strength=lab.engine:family_budget(1);g.log(('simbag: %s installed, depth %d loop %d, strength %.3f'):format(tostring(name),ctx.depth,ctx.loop,strength))
+   end)
+   if not ok then g.log('simbag: refused '..tostring(why));return false end;return true
+  end,'debug: install an encoded bag snapshot (script data file) as the build')
   g.command('bag',function() local ok,why=lab:allowed();if not ok or lab:replaying() then g.log(why or 'bag edit refused during rewind');return false end;if self.opener and lab:hosted() then self.opener() else self.menu:open() end;return true end,'open drive bag')
   return self
  end

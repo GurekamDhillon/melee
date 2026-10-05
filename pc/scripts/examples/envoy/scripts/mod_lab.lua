@@ -189,6 +189,7 @@ return function(D)
  -- Engine skill events (on_skill): the rules react to the engine's own decisions, never to raw inputs. perfect_shield arrives by the
  -- legacy hook (L:action), so the skill copy of it is ignored here. A combo belongs to its attacker.
  function L:skill(e)
+  if self.foes and self.foes.driver and type(e)=='table' and not e.subfighter then self.foes.driver:on_skill(e) end
   if type(e)~='table' or e.kind=='perfect_shield' or e.subfighter then return end
   if not self.enabled or self:replaying() or not self:allowed() or not D.mod_skill.is_skill(e.kind) then return end
   local port,target=e.port,nil

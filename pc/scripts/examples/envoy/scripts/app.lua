@@ -208,7 +208,7 @@ return function(D)
     if c then for i,rgb in ipairs(self.recolour:preview(c)) do
       palette[i]={label=i==1 and 'Body' or 'Accent',rgba=rgb[1]*16777216+rgb[2]*65536+rgb[3]*256+255}
     end end
-    local fighters={};for name in ('fox falco mario luigi drmario peach bowser donkey captain ganondorf link younglink zelda sheik samus yoshi kirby pikachu pichu jigglypuff mewtwo ness marth roy iceclimbers gamewatch'):gmatch('%S+') do fighters[#fighters+1]=name end
+    local fighters=D.fighters.menu(self.g)
     local p=self.run.profile;local records={}
     if p then
       local history=p.records.unknown_runs>0 and (' (older '..p.records.unknown_runs..' runs unknown)') or ''

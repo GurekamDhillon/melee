@@ -988,5 +988,16 @@
     "in_game": false,
     "controls": "console: crit_force <n>, crit_seed <n>; the overlay shows the last crit",
     "setup": []
+  },
+  {
+    "id": "demo_shock_status",
+    "path": "demos/shock-status",
+    "title": "Shock status",
+    "api": "gd.shock, on_shock, on_shock_hit, on_shock_end",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "console: shock_set <frames> <charges> <hitstun> [bonus], shock_clear; the overlay shows the status and the last shocked hit",
+    "setup": []
   }
 ]

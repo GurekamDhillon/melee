@@ -368,6 +368,7 @@ int ScriptGame_CpuAttr(int slot, int id)
     case 20: u.f = p_ftCommonData->x344; break; /* airdodge landing lag (special-fall landing) */
     case 21: u.f = fp->co_attrs.air_drift_max; break;
     case 22: u.f = fp->co_attrs.initial_shield_size; break;
+    case 23: u.f = p_ftCommonData->x250; break; /* the tech window, frames (ftCo_800986B0) */
     default: return 0;
     }
     return u.i;

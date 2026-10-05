@@ -1193,6 +1193,12 @@ void gm_DoPauseChecksAndRoutine(VsSceneController* arg0, int arg1)
                     gm_EnablePlayerPauseCamera(pauserSlot, pauser);
                 }
             }
+#if defined(TARGET_PC)
+            /* the game's own pause (never the script host's gd.pause): when and why, for the results/intro START reports */
+            OSReport("scene: game pause by player %d (kind %d hud=%d unpause_timer=%d disable_pausing=%d frame=%u)\n", pauser,
+                     arg1, arg0->state.hud_enabled, arg0->state.unpause_timer, arg0->start.disable_pausing,
+                     arg0->state.frame_count);
+#endif
             HSD_PadRumblePauseAll();
             arg0->state.pauser = pauser;
             arg0->state.pause_timer = 0xA;

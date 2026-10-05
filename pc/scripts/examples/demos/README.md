@@ -189,6 +189,7 @@ Fighter capabilities (2026-10-04, source pass; native acceptance pending):
 - `demo_fighter_give_item`: [Give item](fighter-give-item/): one stage-start grant, I retries after dropping; requires enabled portable items.
 - `demo_fighter_targeting`: [Targeting](fighter-targeting/): T marks the nearest opponent with a native timed value; radius 80.
 - `demo_fighter_effects`: [Timed effects](fighter-effects/): E cycles intangible/invincible/metal/size, R clears current kind.
+- `demo_shock_status`: [Shock status](shock-status/): every hit P1 lands shocks P2 for its next hit (hitstun x2); console shock_set / shock_clear.
 
 `lua melee/pc/gameworld/script_fighter_caps_demo_check.lua` runs the isolated contract stubs.
 The shared global smoke stub does not yet define these new APIs; its six catalogue rows require integrator stub updates.

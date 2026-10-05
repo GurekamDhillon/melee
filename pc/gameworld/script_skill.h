@@ -13,5 +13,7 @@ void ScriptGame_SkillHit(Fighter* attacker, Fighter* victim, float damage);
 void ScriptGame_SkillPerfectShield(Fighter* shielder, Fighter* attacker, int projectile, float damage);
 /* The crit decision, called right after ScriptGame_HitRulePercentQueue (script_crit.inc). */
 void ScriptGame_CritHit(Fighter* attacker, HitCapsule* hit, Fighter* victim, float damage, int projectile);
+/* Shock (script_shock.inc): extra hitstun frames for the hit a shocked fighter takes, 0 if none. */
+int ScriptGame_ShockTake(Fighter* victim, int base_hitstun);
 #endif
 #endif

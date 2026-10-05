@@ -300,12 +300,13 @@ static int l_cpu_commands(lua_State *L) {
 enum { CA_JUMP_SQUAT, CA_HOP_V, CA_JUMP_V, CA_GRAVITY, CA_TERMINAL, CA_LAND_N, CA_LAND_F, CA_LAND_B,
        CA_LAND_HI, CA_LAND_LW, CA_LAND_NORMAL, CA_DASH_INIT, CA_DASH_MAX, CA_WALK_MAX, CA_MAX_JUMPS,
        CA_FAST_FALL, CA_AIR_MAX, CA_FRICTION, CA_GROUND_TO_AIR, CA_JUMP_H, CA_AIRDODGE_LAG,
-       CA_AIR_DRIFT, CA_SHIELD, CA_COUNT };
+       CA_AIR_DRIFT, CA_SHIELD, CA_TECH_WINDOW, CA_COUNT };
 static const char *const gs_cpu_attr_names[CA_COUNT] = {
     "jump_squat", "hop_v", "jump_v", "gravity", "terminal_velocity", "landing_nair", "landing_fair",
     "landing_bair", "landing_uair", "landing_dair", "landing_normal", "dash_initial", "dash_max",
     "walk_max", "max_jumps", "fast_fall", "air_max_horizontal", "ground_friction",
-    "ground_to_air_momentum", "jump_h_initial", "airdodge_landing", "air_drift_max", "shield_size"};
+    "ground_to_air_momentum", "jump_h_initial", "airdodge_landing", "air_drift_max", "shield_size",
+    "tech_window"};
 static float gs_cpu_attr(int slot, int id) { return gs_cpu_float(gw_ScriptGame_CpuAttr(slot, id)); }
 
 /* gd.cpu_attrs(port): the attributes the macros are timed from */
@@ -445,9 +446,15 @@ static int gs_cpu_macro_build(lua_State *L, int slot, const char *name, int opts
         /* shield press toward dir; `at` frames from now. dir "in" = no stick (tech in place) */
         int tech_in = 0;
         if (opts) { lua_getfield(L, opts, "dir"); tech_in = lua_type(L, -1) == LUA_TSTRING && !strcmp(lua_tostring(L, -1), "in"); lua_pop(L, 1); }
+        /* The game reads the stick when it LANDS the fighter, up to its tech window (ftCommonData
+         * x250: ftCo_800986B0) after the shield press, not when the press happens: a stick let go
+         * three frames later made every tech that landed later an in-place tech, in either
+         * direction. So the stick is held for the whole window; `window` overrides it. */
+        int win = gs_clampi(gs_cpu_opt(L, opts, "window", (int)(gs_cpu_attr(slot, CA_TECH_WINDOW) + 0.5f)), 3, 120);
         gcb_wait(p, gs_clampi(gs_cpu_opt(L, opts, "at", 0), 0, 600));
         if (!tech_in) gcb_stick_x(p, dir, 127);
-        gcb0(p, 11); gcb1(p, 0x8E, 3); gcb0(p, 12); gcb1(p, 0x80, 0);
+        gcb0(p, 11); gcb1(p, 0x8E, 3); gcb0(p, 12);
+        if (!tech_in) { gcb_wait(p, win - 3); gcb1(p, 0x80, 0); }
     } else if (!strcmp(name, "jump_cancel_grab")) {
         gcb0(p, 5); gcb_wait(p, gs_clampi(gs_cpu_opt(L, opts, "z_at", 1), 1, J > 1 ? J - 1 : 1));
         gcb0(p, 13); gcb1(p, 0x8E, 2); gcb0(p, 14); gcb0(p, 6);

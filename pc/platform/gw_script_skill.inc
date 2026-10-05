@@ -16,9 +16,9 @@ extern int gw_ScriptGame_SkillState(int entity,int field);
 extern int gw_ScriptGame_SkillConst(int idx);
 extern void gw_ScriptGame_SkillReset(void);
 #define GS_EV_SKILL 18
-#define GS_SKILL_KINDS 22
-static const char* const gs_skill_names[GS_SKILL_KINDS]={"","lcancel","lcancel_miss","auto_cancel","lcancel_hit","wavedash","waveland","ledge_dash","air_dodge","perfect_shield","tech","tech_miss","dash_dance","short_hop","full_hop","fast_fall","shield_drop","jump_cancel_grab","jump_cancel_usmash","sdi","combo","combo_end"};
-static const char* const gs_skill_hooks[GS_SKILL_KINDS]={"","on_lcancel","on_lcancel_miss","on_auto_cancel","on_lcancel_hit","on_wavedash","on_waveland","on_ledge_dash","on_air_dodge","on_perfect_shield_skill","on_tech","on_tech_miss","on_dash_dance","on_short_hop","on_full_hop","on_fast_fall","on_shield_drop","on_jump_cancel_grab","on_jump_cancel_usmash","on_sdi","on_combo","on_combo_end"};
+#define GS_SKILL_KINDS 25
+static const char* const gs_skill_names[GS_SKILL_KINDS]={"","lcancel","lcancel_miss","auto_cancel","lcancel_hit","wavedash","waveland","ledge_dash","air_dodge","perfect_shield","tech","tech_miss","dash_dance","short_hop","full_hop","fast_fall","shield_drop","jump_cancel_grab","jump_cancel_usmash","sdi","combo","combo_end","shock","shock_hit","shock_end"};
+static const char* const gs_skill_hooks[GS_SKILL_KINDS]={"","on_lcancel","on_lcancel_miss","on_auto_cancel","on_lcancel_hit","on_wavedash","on_waveland","on_ledge_dash","on_air_dodge","on_perfect_shield_skill","on_tech","on_tech_miss","on_dash_dance","on_short_hop","on_full_hop","on_fast_fall","on_shield_drop","on_jump_cancel_grab","on_jump_cancel_usmash","on_sdi","on_combo","on_combo_end","on_shock","on_shock_hit","on_shock_end"};
 static float gs_skill_f(int bits){union{int i;float f;}u;u.i=bits;return u.f;}
 
 /* Observational queue only: skipped while resimulating, never read by gameplay. */
@@ -74,6 +74,13 @@ static void gs_skill_fill(lua_State* L,int kind,int entity,int frame,int i1,int 
         gs_setint(L,"count",i1);if(i2>0)gs_setint(L,"attacker",i2);gs_setnum(L,"damage",f1);gs_setnum(L,"last_damage",f2);break;
     case 21:
         gs_setint(L,"count",i1);if(i2>0)gs_setint(L,"attacker",i2);gs_setbool(L,"ko",i3!=0);gs_setnum(L,"damage",f1);break;
+    case 22:
+        gs_setint(L,"frames",i1);gs_setint(L,"charges",i2);gs_setint(L,"bonus",i3);gs_setnum(L,"hitstun_multiplier",f1);break;
+    case 23:
+        gs_setint(L,"base_hitstun",i1);gs_setint(L,"extra_hitstun",i2);gs_setint(L,"charges_left",i3);gs_setnum(L,"hitstun_multiplier",f1);break;
+    case 24: {
+        static const char* const why[]={"?","expired","spent","cleared","replaced"};
+        gs_setstr(L,"reason",i1>=1&&i1<5?why[i1]:"?");gs_setint(L,"hits",i2);break; }
     }
 }
 static void gs_skill_push(lua_State* L,const GsEvent* e)
@@ -134,6 +141,8 @@ static int l_skill_thresholds(lua_State* L)
 
 /* ---- bonus-stage objectives ---------------------------------------------------------------------------------- */
 extern int gw_ScriptGame_ObjectiveKind(void);
+extern int gw_ScriptGame_ObjectiveDoor(int idx,int field);
+extern int gw_ScriptGame_ObjectiveZone(int idx,int field);
 /* gd.stage_objectives(): {targets={ {id=,x=,y=,z=,state=}, ... }, remaining=n, doors=nil, finish=nil,
  * supported={targets=true, doors=false, finish=false}}. Read-only; works offline and online (it only reads items). */
 static int l_stage_objectives(lua_State* L)
@@ -151,6 +160,36 @@ static int l_stage_objectives(lua_State* L)
     }
     lua_setfield(L,-2,"targets");
     gs_setint(L,"remaining",count);
-    lua_createtable(L,0,3);gs_setbool(L,"targets",1);gs_setbool(L,"doors",0);gs_setbool(L,"finish",0);lua_setfield(L,-2,"supported");
+    {   /* Race to the Finish: map points, not items (see ScriptGame_ObjectiveDoor). doors/finish stay nil on every other stage. */
+        int race=gw_ScriptGame_ObjectiveDoor(-1,0);
+        if(race){
+            int d,k=0,latched=gw_ScriptGame_ObjectiveDoor(-1,1);
+            lua_newtable(L);
+            for(d=0;d<26;++d){
+                if(!gw_ScriptGame_ObjectiveDoor(d,0)) continue;
+                lua_createtable(L,0,10);
+                gs_setstr(L,"kind","door");gs_setint(L,"index",d);gs_setint(L,"id",0x99+d);
+                gs_setnum(L,"x",gs_skill_f(gw_ScriptGame_ObjectiveDoor(d,1)));gs_setnum(L,"y",gs_skill_f(gw_ScriptGame_ObjectiveDoor(d,2)));gs_setnum(L,"z",gs_skill_f(gw_ScriptGame_ObjectiveDoor(d,3)));
+                gs_setint(L,"score",gw_ScriptGame_ObjectiveDoor(d,4));gs_setint(L,"coins",gw_ScriptGame_ObjectiveDoor(d,5));
+                gs_setbool(L,"reached",gw_ScriptGame_ObjectiveDoor(d,6)!=0);gs_setbool(L,"inside",gw_ScriptGame_ObjectiveDoor(d,7)!=0);
+                lua_rawseti(L,-2,++k);
+            }
+            lua_setfield(L,-2,"doors");
+            lua_createtable(L,0,6);
+            gs_setbool(L,"reached",latched>=0);if(latched>=0)gs_setint(L,"door",latched);
+            gs_setbool(L,"touching",gw_ScriptGame_ObjectiveDoor(-1,2)!=0);
+            gs_setint(L,"candidate",gw_ScriptGame_ObjectiveDoor(-1,3));gs_setnum(L,"scale",gs_skill_f(gw_ScriptGame_ObjectiveDoor(-1,4)));
+            lua_newtable(L);
+            for(d=0;d<4;++d){
+                lua_createtable(L,0,4);
+                gs_setnum(L,"x_min",gs_skill_f(gw_ScriptGame_ObjectiveZone(d,0)));gs_setnum(L,"x_max",gs_skill_f(gw_ScriptGame_ObjectiveZone(d,1)));
+                gs_setnum(L,"y_top",gs_skill_f(gw_ScriptGame_ObjectiveZone(d,2)));gs_setnum(L,"y_bottom",gs_skill_f(gw_ScriptGame_ObjectiveZone(d,3)));
+                lua_rawseti(L,-2,d+1);
+            }
+            lua_setfield(L,-2,"zones");
+            lua_setfield(L,-2,"finish");
+        }
+        lua_createtable(L,0,3);gs_setbool(L,"targets",1);gs_setbool(L,"doors",race!=0);gs_setbool(L,"finish",race!=0);lua_setfield(L,-2,"supported");
+    }
     return 1;
 }

@@ -5440,6 +5440,7 @@ static int gs_stage_handle_arg(lua_State *L, int idx) {
 #include "gw_script_fighter_caps_armor.inc"
 #include "gw_script_skill.inc"
 #include "gw_script_crit.inc"
+#include "gw_script_shock.inc"
 #include "gw_script_hit_rules.inc"
 #include "gw_script_echo.inc"
 #include "gw_script_echo_visual.inc"
@@ -6528,7 +6529,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"fighter_timed_status", l_fighter_timed_status},
     {"skill_history", l_skill_history}, {"skill_state", l_skill_state}, {"skill_kinds", l_skill_kinds},
     {"skill_thresholds", l_skill_thresholds},
-    {"crit", l_crit}, {"crit_force", l_crit_force}, {"crit_seed", l_crit_seed},
+    {"crit", l_crit}, {"crit_force", l_crit_force}, {"crit_seed", l_crit_seed}, {"shock", l_shock},
     {"stage_objectives", l_stage_objectives},
     {"afterimage_bind", l_afterimage_bind}, {"afterimage_window", l_afterimage_window}, {"afterimage_unbind", l_afterimage_unbind},
     {"tracer_bind", l_tracer_bind}, {"tracer_window", l_tracer_window}, {"tracer_unbind", l_tracer_unbind},
@@ -7432,7 +7433,7 @@ void gw_Script_SceneBegin(int scene_kind) {
    scripts that define a hook late, e.g. from the console) */
 static void gs_update_want_events(void) {
     static const char *const hooks[] = {"on_action_change", "on_hit", "on_hitlag", "on_land",
-                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield", "on_armor", "on_skill", "on_crit", "on_lcancel", "on_lcancel_miss", "on_auto_cancel", "on_lcancel_hit", "on_wavedash", "on_waveland", "on_ledge_dash", "on_air_dodge", "on_perfect_shield_skill", "on_tech", "on_tech_miss", "on_dash_dance", "on_short_hop", "on_full_hop", "on_fast_fall", "on_shield_drop", "on_jump_cancel_grab", "on_jump_cancel_usmash", "on_sdi", "on_combo", "on_combo_end", "on_event"};
+                                       "on_boss_defeated", "on_1p_boss_defeated", "on_enemy_hit", "on_clank", "on_ko", "on_stock_lost", "on_jump", "on_air_jump", "on_ledge_grab", "on_grab", "on_throw", "on_taunt", "on_shield_hit", "on_perfect_shield", "on_armor", "on_skill", "on_crit", "on_lcancel", "on_lcancel_miss", "on_auto_cancel", "on_lcancel_hit", "on_wavedash", "on_waveland", "on_ledge_dash", "on_air_dodge", "on_perfect_shield_skill", "on_tech", "on_tech_miss", "on_dash_dance", "on_short_hop", "on_full_hop", "on_fast_fall", "on_shield_drop", "on_jump_cancel_grab", "on_jump_cancel_usmash", "on_sdi", "on_combo", "on_combo_end", "on_shock", "on_shock_hit", "on_shock_end", "on_event"};
     int i, k, want = 0;
     for (i = 0; i < gs.n && !want; ++i) {
         for (k = 0; k < (int)(sizeof hooks / sizeof hooks[0]) && !want; ++k) {

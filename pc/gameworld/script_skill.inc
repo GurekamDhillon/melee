@@ -16,7 +16,7 @@ extern void Script_SkillEvent(int kind, int entity, int i1, int i2, int i3, int 
 enum {
     SK_LCANCEL = 1, SK_LCANCEL_MISS, SK_AUTO_CANCEL, SK_LCANCEL_HIT, SK_WAVEDASH, SK_WAVELAND, SK_LEDGE_DASH,
     SK_AIR_DODGE, SK_PERFECT_SHIELD, SK_TECH, SK_TECH_MISS, SK_DASH_DANCE, SK_SHORT_HOP, SK_FULL_HOP, SK_FAST_FALL,
-    SK_SHIELD_DROP, SK_JC_GRAB, SK_JC_USMASH, SK_SDI, SK_COMBO, SK_COMBO_END, SK_KINDS
+    SK_SHIELD_DROP, SK_JC_GRAB, SK_JC_USMASH, SK_SDI, SK_COMBO, SK_COMBO_END, SK_SHOCK, SK_SHOCK_HIT, SK_SHOCK_END, SK_KINDS
 };
 /* Thresholds (reported by gd.skill_thresholds()). */
 #define SK_WAVE_MIN_SPEED 0.25f       /* |ground speed| on the landing frame of an air dodge, world units per frame (measured Fox: wavedash 2.62, steep waveland 0.41/0.27, a decayed dodge 0) */
@@ -40,6 +40,7 @@ static ScriptSkillRow script_skill_ring[SK_RING];
 static int script_skill_head, script_skill_n, script_skill_frame;
 
 static void script_crit_flush(void);
+static void script_shock_frame(void);
 static int script_skill_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
 static float script_skill_fabs(float f) { return f < 0 ? -f : f; }
 static void script_skill_emit(int kind, int entity, int i1, int i2, int i3, float f1, float f2)
@@ -221,6 +222,7 @@ void ScriptGame_SkillFrame(void)
         }
         script_skill_one(e, fp, r);
     }
+    script_shock_frame();
     script_crit_flush();
 }
 void ScriptGame_SkillReset(void)
@@ -270,7 +272,61 @@ int ScriptGame_SkillConst(int idx)
 }
 
 #include "script_crit.inc"
+#include "script_shock.inc"
 
 /* Bonus-stage objectives, read-only. Break the Targets targets are It_Kind_Mato items (retail targets and gd.spawn_target alike);
  * a broken target is removed by Mato's own destroy path, so every live Mato item is an intact target. */
 int ScriptGame_ObjectiveKind(void) { return It_Kind_Mato; }
+
+/* Race to the Finish (Gr_Kind_Pushon, src/melee/gr/grpushon.c), read-only. The stage has no door objects and no items: its
+ * "doors" are map points 0x99..0xB2 (26 slots; Ground_801C2D24 gives a point's world position, false where the map has none).
+ * grPushOn_802186C8 asks the ground (Ground_801C3D44) to test the first player's position every frame against a 25 x 20 box
+ * around each of those points, gated by fn_80218678 (a collision callback on map joints 3-5, fn_802190A0, sets its flag); the
+ * first point that passes is stored in stage_info.x714 and, once the stage latches it, stage_info.x6D0 (Ground_801C1DD4).
+ * That index selects the entry of the stage's Yakumono parameter table (grPushOn_80219204: x1c[id - 0x99] = {score value,
+ * coin count}) that the results screen shows as the special score (gmregclear.c, OUTCOME_UNK_1P_BONUS_STAGE_END). Four more
+ * rectangles (grPushOn_803E7CCC, scaled by Ground_801C0498) are the fighter-device area test grPushOn_802192A4 runs.
+ * idx -1: field 0 is Race to the Finish (1/0), 1 the latched door id (-1 none), 2 the touch flag, 3 the box candidate
+ * (stage_info.x714), 4 stage scale bits. idx 0..25: field 0 present, 1/2/3 x/y/z bits, 4 score value, 5 coin count,
+ * 6 latched (this is the door the race ended at), 7 candidate (the first player is inside this door's box now). */
+extern int grPushOn_80219204(int arg0, int* out1, int* out2);
+extern int fn_80218678(void);
+extern float grPushOn_803E7CCC[13];
+int ScriptGame_ObjectiveDoor(int idx, int field)
+{
+    Vec3 p; int id, score = 0, coins = 0;
+    if (idx == -1) {
+        if (stage_info.grkind != Gr_Kind_Pushon) return field == 1 ? -1 : field == 3 ? -1 : 0;
+        switch (field) {
+        case 0: return 1; case 1: return Ground_801C1DD4(); case 2: return fn_80218678() ? 1 : 0;
+        case 3: return stage_info.x714; case 4: return script_skill_bits(Ground_801C0498());
+        }
+        return 0;
+    }
+    if (stage_info.grkind != Gr_Kind_Pushon || idx < 0 || idx > 25) return 0;
+    id = 0x99 + idx;
+    if (!Ground_801C2D24(id, &p)) return 0;
+    switch (field) {
+    case 0: return 1;
+    case 1: return script_skill_bits(p.x); case 2: return script_skill_bits(p.y); case 3: return script_skill_bits(p.z);
+    case 4: grPushOn_80219204(id, &score, &coins); return score;
+    case 5: grPushOn_80219204(id, &score, &coins); return coins;
+    case 6: return Ground_801C1DD4() == id;
+    case 7: return stage_info.x714 == id;
+    }
+    return 0;
+}
+/* The four device rectangles: field 0 x min, 1 x max, 2 y top, 3 y bottom (top - 50), bits, already scaled. */
+int ScriptGame_ObjectiveZone(int idx, int field)
+{
+    float scale;
+    if (stage_info.grkind != Gr_Kind_Pushon || idx < 0 || idx > 3 || field < 0 || field > 3) return 0;
+    scale = Ground_801C0498();
+    switch (field) {
+    case 0: return script_skill_bits(scale * grPushOn_803E7CCC[idx * 3]);
+    case 1: return script_skill_bits(scale * grPushOn_803E7CCC[idx * 3 + 1]);
+    case 2: return script_skill_bits(scale * grPushOn_803E7CCC[idx * 3 + 2]);
+    case 3: return script_skill_bits(scale * (-50.0f + grPushOn_803E7CCC[idx * 3 + 2]));
+    }
+    return 0;
+}

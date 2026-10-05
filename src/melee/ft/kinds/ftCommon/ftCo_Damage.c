@@ -305,6 +305,11 @@ void ftCo_8008DCE0(Fighter_GObj* gobj, int arg1, float facing_dir)
         diag_geno_stun(fp->player_id, fp->mv.co.damage.x0, bonus);
         fp->mv.co.damage.x0 += bonus;
     }
+    {
+        /* Shock status (pc/gameworld/script_shock.inc): the next hit a shocked fighter takes stays in hitstun longer */
+        extern int ScriptGame_ShockTake(Fighter * vic, int base);
+        fp->mv.co.damage.x0 += ScriptGame_ShockTake(fp, fp->mv.co.damage.x0);
+    }
 #endif
     {
         Vec3* normal;

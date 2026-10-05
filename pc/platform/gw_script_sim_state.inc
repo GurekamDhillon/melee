@@ -13,10 +13,10 @@ static int gs_ring_now(void);
 static int gs_rw_replaying(int tag);
 static void gs_rw_stop(void);
 /* kind: 1 fighter_mod, 2 damage, 3 hit_rules, 4 echoes, then the capability writers
- * 5 fighter_caps, 6 fighter_effect, 7 fighter_armour, 8 fighter_armor (typed), 9 timed_status, 10 crit (one slot per op).
+ * 5 fighter_caps, 6 fighter_effect, 7 fighter_armour, 8 fighter_armor (typed), 9 timed_status, 10 crit (one slot per op), 11 shock.
  * eff[] holds the exact scalars the setter was called with (floats as bit patterns), so replay
  * calls the same native setter with the same arguments the live call used. */
-enum { GS_SIM_CAPS=5, GS_SIM_EFFECT, GS_SIM_ARMOUR, GS_SIM_ARMOR, GS_SIM_TIMED, GS_SIM_CRIT };
+enum { GS_SIM_CAPS=5, GS_SIM_EFFECT, GS_SIM_ARMOUR, GS_SIM_ARMOR, GS_SIM_TIMED, GS_SIM_CRIT, GS_SIM_SHOCK };
 /* eff shares storage with bits: an op is one or the other. */
 typedef struct { int kind, slot, enabled; union { int bits[11]; int eff[9]; }; GsHitRules hit_rules; GsEchoRules echoes; } GsSimOp;
 typedef struct GsSimCommit {
@@ -87,6 +87,7 @@ static void gs_sim_apply_caps(const GsSimCommit *c,const GsSimOp *o) {
             gw_ScriptGame_ArmorSet(e,owner,o->eff[0],o->eff[1],o->eff[2],o->eff[3],o->eff[4],o->eff[5],o->eff[6]);
         break;
     case GS_SIM_TIMED: ok=gw_ScriptGame_CapsStatus(e,o->eff[0],owner,o->eff[1],o->eff[2]); break;
+    case GS_SIM_SHOCK: ok=gw_ScriptGame_ShockSet(e,owner,o->eff[0],o->eff[1],o->eff[2],o->eff[3],o->eff[4]); break;
     case GS_SIM_CRIT: ok=gw_ScriptGame_CritSet(e,owner,o->eff[0],o->eff[1],o->eff[2],o->eff[3],o->eff[4],o->eff[5],o->eff[6],o->eff[7]); break;
     }
     if(!ok) gw_log("script sim: capability op %d entity %d refused (owner conflict)",o->kind,e);
@@ -191,6 +192,16 @@ static void gs_sim_parse_caps(lua_State *L,GsSimOp *o) {
         }
         o->eff[0]=type; o->eff[1]=gs_fbits((float)value); o->eff[2]=frames; o->eff[3]=state;
         o->eff[4]=gs_fbits(from); o->eff[5]=gs_fbits(to); o->eff[6]=direction; o->eff[8]=clear;
+    } else if(o->kind==GS_SIM_SHOCK) {
+        /* {op="shock", entity=, frames=1..3600, charges=1..8, hitstun=1..4, bonus=0..120, stack=bool, clear=bool} */
+        int frames=300,charges=1,bonus=0,flags=1; float mult=1.5f;
+        if(gs_sim_field(L,"frames")) { lua_Integer n=luaL_checkinteger(L,-1); if(n<1||n>3600) luaL_error(L,"shock frames must be 1-3600"); frames=(int)n; } lua_pop(L,1);
+        if(gs_sim_field(L,"charges")) { lua_Integer n=luaL_checkinteger(L,-1); if(n<1||n>8) luaL_error(L,"shock charges must be 1-8"); charges=(int)n; } lua_pop(L,1);
+        if(gs_sim_field(L,"hitstun")) mult=gs_caps_number(L,-1,1,4); lua_pop(L,1);
+        if(gs_sim_field(L,"bonus")) { lua_Integer n=luaL_checkinteger(L,-1); if(n<0||n>120) luaL_error(L,"shock bonus must be 0-120"); bonus=(int)n; } lua_pop(L,1);
+        if(gs_sim_field(L,"stack")) { luaL_checktype(L,-1,LUA_TBOOLEAN); if(lua_toboolean(L,-1)) flags=2; } lua_pop(L,1);
+        if(gs_sim_field(L,"clear")) { luaL_checktype(L,-1,LUA_TBOOLEAN); if(lua_toboolean(L,-1)) flags=4; } lua_pop(L,1);
+        o->eff[0]=frames; o->eff[1]=charges; o->eff[2]=gs_fbits(mult); o->eff[3]=bonus; o->eff[4]=flags;
     } else if(o->kind==GS_SIM_CRIT) {
         /* One slot per op: {op="crit", entity=, slot="default"|"aerial"|..., begin=true, release=true, chance=, multiplier=,
          * multiplier_max=, launch=, min_percent=, force=}. A whole configuration is `begin` plus one op per slot. */
@@ -239,7 +250,7 @@ static int l_sim_commit(lua_State *L) {
         lua_getfield(L,-1,"op"); name=luaL_checkstring(L,-1);
         o->kind=!strcmp(name,"fighter_mod") ? 1 : !strcmp(name,"damage") ? 2 : !strcmp(name,"hit_rules") ? 3 : !strcmp(name,"echoes") ? 4 :
             !strcmp(name,"fighter_caps") ? GS_SIM_CAPS : !strcmp(name,"fighter_effect") ? GS_SIM_EFFECT : !strcmp(name,"fighter_armour") ? GS_SIM_ARMOUR :
-            !strcmp(name,"fighter_armor") ? GS_SIM_ARMOR : !strcmp(name,"timed_status") ? GS_SIM_TIMED : !strcmp(name,"crit") ? GS_SIM_CRIT : 0; lua_pop(L,1);
+            !strcmp(name,"fighter_armor") ? GS_SIM_ARMOR : !strcmp(name,"timed_status") ? GS_SIM_TIMED : !strcmp(name,"crit") ? GS_SIM_CRIT : !strcmp(name,"shock") ? GS_SIM_SHOCK : 0; lua_pop(L,1);
         if(!o->kind) return luaL_error(L,"sim_commit unsupported operation");
         if(o->kind>=GS_SIM_CAPS) { gs_sim_parse_caps(L,o); lua_pop(L,1); continue; }
         lua_getfield(L,-1,"port"); o->slot=gs_slot_arg(L,-1); lua_pop(L,1);

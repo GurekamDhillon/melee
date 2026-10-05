@@ -2,6 +2,7 @@
  * fixture of the native path (gw_Script_SkillEvent / gw_Script_CritEvent -> gs_dispatch_events -> Lua); the
  * observers themselves are proven in the game (they read live fighters). */
 extern int gw_ScriptGame_CritDraws(int seed,int n,int chance_bits);
+extern int gw_ScriptGame_ShockExtra(int base,int mult_bits,int bonus);
 static int test_script_skill(void) {
     char out[2048];
     int rc=0,a,b;
@@ -26,7 +27,7 @@ static int test_script_skill(void) {
     gw_Script_SkillEvent(0,2,0,0,0,0,0);gw_Script_SkillEvent(99,2,0,0,0,0,0);gw_Script_SkillEvent(1,0,0,0,0,0,0);gw_Script_SkillEvent(1,13,0,0,0,0,0);
     if(gs.nev!=0){gw_test_fail("skill event queue accepted an invalid row");rc=1;}
     /* API surface */
-    if(t_exec("local k=gd.skill_kinds(); assert(#k==21 and k[1]=='lcancel' and k[5]=='wavedash' and k[21]=='combo_end'); "
+    if(t_exec("local k=gd.skill_kinds(); assert(#k==24 and k[1]=='lcancel' and k[5]=='wavedash' and k[21]=='combo_end' and k[22]=='shock' and k[24]=='shock_end'); "
               "local t=gd.skill_thresholds(); assert(t.lcancel_window_frames and t.wave_min_speed and t.wavedash_max_airborne_frames and t.dash_dance_frames and t.ledge_dash_frames); "
               "assert(type(gd.skill_history(1))=='table' and #gd.skill_history(1)==0); "
               "assert(not pcall(gd.skill_history,13)); assert(not pcall(gd.skill_history,1,5,'nope')); "
@@ -38,6 +39,22 @@ static int test_script_skill(void) {
     a=gw_ScriptGame_CritDraws(12345,10000,gs_fbits(0.05f));b=gw_ScriptGame_CritDraws(12345,10000,gs_fbits(0.05f));
     if(a!=b||a<413||a>587){gw_test_fail("crit generator: %d then %d crits in 10000 draws at 5%%",a,b);rc=1;}
     if(gw_ScriptGame_CritDraws(777,1000,gs_fbits(0.0f))!=0||gw_ScriptGame_CritDraws(777,1000,gs_fbits(1.0f))!=1000){gw_test_fail("crit generator bounds");rc=1;}
+    /* Shock: the hitstun formula (round(base*(mult-1)) + bonus, capped), the three events and the API's refusals */
+    if(gw_ScriptGame_ShockExtra(10,gs_fbits(1.5f),0)!=5||gw_ScriptGame_ShockExtra(10,gs_fbits(2.0f),3)!=13||gw_ScriptGame_ShockExtra(1,gs_fbits(1.5f),0)!=1||
+       gw_ScriptGame_ShockExtra(40,gs_fbits(1.0f),0)!=0||gw_ScriptGame_ShockExtra(100,gs_fbits(4.0f),60)!=120||gw_ScriptGame_ShockExtra(10,gs_fbits(0.5f),0)!=0||
+       gw_ScriptGame_ShockExtra(0,gs_fbits(2.0f),7)!=7){gw_test_fail("shock hitstun formula");rc=1;}
+    if(t_exec("sk={}; on_skill,on_lcancel,on_wavedash,on_tech,on_combo,on_crit=nil,nil,nil,nil,nil,nil; function on_shock(i) assert(i.entity==2 and i.frames==300 and i.charges==2 and i.bonus==4 and math.abs(i.hitstun_multiplier-1.5)<1e-6); sk[#sk+1]='s' end; "
+              "function on_shock_hit(i) assert(i.base_hitstun==20 and i.extra_hitstun==14 and i.charges_left==1 and i.port==2); sk[#sk+1]='h' end; "
+              "function on_shock_end(i) assert(i.reason=='spent' and i.hits==2); sk[#sk+1]='e' end",out,sizeof out)) rc=1;
+    gs_update_want_events();
+    gw_Script_SkillEvent(22,2,300,2,4,gs_fbits(1.5f),0);
+    gw_Script_SkillEvent(23,2,20,14,1,gs_fbits(1.5f),0);
+    gw_Script_SkillEvent(24,2,2,2,0,gs_fbits(1.5f),0);
+    gs_dispatch_events();
+    if(t_exec("assert(table.concat(sk,',')=='s,h,e')",out,sizeof out)){rc=1;gw_test_fail("shock events: %s",out);}
+    if(t_exec("assert(gd.shock(1)==nil); assert(not pcall(gd.shock,13)); assert(not pcall(gd.shock,1,{frames=10})); "
+              "assert(not pcall(gd.shock,1,{nope=1}))",out,sizeof out)){rc=1;gw_test_fail("shock API: %s",out);}
+    t_exec("on_shock,on_shock_hit,on_shock_end=nil,nil,nil",out,sizeof out);
     t_exec("on_skill,on_lcancel,on_wavedash,on_tech,on_combo,on_crit,sk=nil,nil,nil,nil,nil,nil,nil",out,sizeof out);
     gs_update_want_events();
     return rc;

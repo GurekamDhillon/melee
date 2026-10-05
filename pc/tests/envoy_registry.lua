@@ -3,7 +3,7 @@ D.mod_codec=T.module('mod_codec',D);D.mod_schema=T.module('mod_schema',D);D.mod_
 T.test('schema and budget cover exactly the registered effects',function()
  for op,d in pairs(D.mod_registry.effects) do
   assert(D.mod_budget.effect_ops[op],'budget misses '..op);assert(d.fields.op,'every effect declares its op field')
-  assert(({lua_state=1,fighter_mod=1,damage=1,echoes=1,hit_rules=1})[d.journal] and (d.journal=='lua_state' or D.mod_registry.operations[d.journal]),'journal route '..op)
+  assert(({lua_state=1,fighter_mod=1,damage=1,echoes=1,hit_rules=1,fighter_armor=1,fighter_effect=1,fighter_caps=1,crit=1,direct=1})[d.journal] and (d.journal=='lua_state' or d.journal=='direct' or D.mod_registry.operations[d.journal]),'journal route '..op)
  end
  T.refuses(function() D.mod_registry.field_set('shock') end)
 end)

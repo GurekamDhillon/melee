@@ -1,7 +1,7 @@
 local T=dofile('melee/pc/tests/envoy_testlib.lua');local D=T.rules()
 T.test('full pool golden tiers, stock loss, snapshots, seven chains and synergy payloads',function()
 D.mod_codec=T.module('mod_codec',D);D.mod_schema=T.module('mod_schema',D);D.mod_pool=T.module('mod_pool',D);D.mod_engine=T.module('mod_engine',D)
-assert(#D.mod_pool==36,'full pool requires 32 existing plus four echo records')
+assert(#D.mod_pool==36+#D.mod_techniques.records(),'full pool requires 32 existing plus four echo records plus the technique modifiers')
 local r=D.mod_engine.new(1,D.mod_pool);r:set_build(1,{kindling=1,glass_core=1},{damage_dealt=1.1,status_duration=1.5})
 r:begin_frame({[1]={percent=0},[2]={percent=0}});r:emit{kind='hit_dealt',port=1,target=2,tags={fire=true}};r:drain()
 assert(r:status(2,'burn').expires-r.frame==270);r:emit{kind='stock_lost',port=1,tags={}};r:drain();assert(r.equipped[1].glass_core==1 and math.abs(r:values(1).damage_dealt-1.7)<1e-9)
@@ -40,6 +40,7 @@ local expected={
  armoured={values={damage_taken={.92,.9,.88}}},cleansing={},
  frozen_oath={native={{match={move='any'},change={element='ice'}},{match={move='any',incoming=true,element='fire'},change={percent_damage=1.6}}}}
 }
+for _,m in ipairs(D.mod_techniques and D.mod_techniques.records() or {}) do expected[m.id]=expected[m.id] or {} end -- technique modifiers have trigger effects only (tested in envoy_technique.lua)
 local function at(v,tier)return type(v)=='table' and v[tier] or v end
 local function equal(actual,want,label)
  if type(want)=='number' then assert(type(actual)=='number' and math.abs(actual-want)<1e-10,label..': '..tostring(actual)..' != '..want)
@@ -64,6 +65,7 @@ end
 for _,m in ipairs(D.mod_pool) do
  assert(degree[m.id]>=2,m.id..' isolated');if m.kind=='normal' then assert(#m.tiers==3 and m.affix and m.group and m.weight>0) end
  for tier=1,#m.tiers do
+  if m.min_depth then break end -- technique modifiers: envoy_technique.lua
   local solo=D.mod_engine.new(1,D.mod_pool);solo:set_build(1,{[m.id]=tier},{})
   solo:begin_frame({[1]={percent=100,grounded=false,stocks=1},[2]={percent=100,grounded=true,stocks=1}})
   local tags={};local ev={kind=m.trigger,port=1,target=2,tags=tags,damage_a=7,damage_b=10}

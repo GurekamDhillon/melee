@@ -8,7 +8,7 @@ T.test('one status declaration feeds the old tables unchanged',function()
  local tags={burn='burning',chill='chilled',curse='cursed',haste='hasted',guarded='guarded',momentum='momentum'}
  for k,v in pairs(tags) do assert(M.tags[k]==v and D.mod_schema.tags[v]) end
  assert(table.concat(M.order,',')=='burn,shock,chill,curse,haste,guarded,momentum','engine and display order')
- assert(not D.mod_schema.statuses.shock and D.mod_schema.statuses.burn)
+ assert(D.mod_schema.statuses.shock and not D.mod_schema.status_bits.shock and D.mod_schema.statuses.burn) -- Shock is native now (gd.shock), without a hit-rule bit
 end)
 T.test('status budgets and fighter values are the old numbers',function()
  local M=D.mod_status
@@ -17,7 +17,7 @@ T.test('status budgets and fighter values are the old numbers',function()
  local g=M.budget('guarded');assert(g.damage_taken==-.25 and g.launch_taken==-.15)
  local v=M.values('guarded',{});assert(v.damage_taken==-.25 and v.knockback_taken==-.15)
  assert(M.values('curse',{amount=.04}).knockback_taken==.04 and next(M.values('burn',{}))==nil)
- T.refuses(function() M.budget('shock') end)
+ assert(M.budget('shock',1,1).launch_taken>0) -- Shock is budgeted now
 end)
 T.test('percent resistance is not called armour',function()
  for _,m in ipairs(D.mod_pool or {}) do assert(not m.label:lower():find('armour') and not m.label:lower():find('armor')) end

@@ -19,7 +19,7 @@ return function(D)
   end
   local rules,list={},{};for id,m in pairs(checked.rules) do rules[id]=m end;for i,m in ipairs(checked.list) do list[i]=m end
   D._pool_checked[list]=checked -- an engine's own list is a validated pool too (import() builds its probe from it)
-  return setmetatable({rules=rules,list=list,seed=seed or 1,frame=0,equipped={},implicits={},statuses={},recent={},players={},queue={},damage={},trace={},used=0,dropped=0,memo={},
+  return setmetatable({rules=rules,list=list,seed=seed or 1,frame=0,equipped={},implicits={},statuses={},recent={},players={},queue={},damage={},trace={},used=0,fx={},dropped=0,memo={},
    context=D.mod_progression.context(limits.context),limit=budget,depth=depth,display={last_pulse=-30,pulse_start=-100,pulse_strength=0,trace_key='',intensity=.65}},E)
  end
  function E:random() self.seed=self.seed*48271%2147483647;return self.seed/2147483647 end
@@ -60,7 +60,7 @@ return function(D)
   self.queue[#self.queue+1]=e;return true
  end
  function E:begin_frame(players)
-  self.frame=self.frame+1;local own={};for port,v in pairs(players or {}) do local t={};for k,x in pairs(v) do t[k]=x end;own[port]=t end;self.players=own;self.damage={};self.sustain={};self.used=0
+  self.frame=self.frame+1;local own={};for port,v in pairs(players or {}) do local t={};for k,x in pairs(v) do t[k]=x end;own[port]=t end;self.players=own;self.damage={};self.sustain={};self.used=0;self.fx={}
   for port=1,6 do local statuses=self.statuses[port]
    if statuses then for _,name in ipairs(ordered) do local v=statuses[name]
     if v then
@@ -93,6 +93,15 @@ return function(D)
    elseif k=='airborne' and (own.grounded==nil or (own.grounded==false)~=v) then return false
    elseif k=='last_stock' and ((own.stocks or 0)==1)~=v then return false
    elseif k=='stage_kind' and e.stage_kind~=v then return false
+   elseif k=='combo_at_least' and not ((e.count or 0)>=v) then return false
+   elseif k=='combo_damage_above' and not ((e.damage or 0)>v) then return false
+   elseif k=='hit' and (e.hit==true)~=v then return false
+   elseif k=='aerial' and e.aerial~=v then return false
+   elseif k=='direction' and e.direction~=v then return false
+   elseif k=='strength_above' and not ((e.strength or 0)>v) then return false
+   elseif k=='armor_result' and not (v=='absorbed' and e.absorbed==true or v=='broke' and e.broke==true) then return false
+   elseif k=='air_frames_above' and not ((own.air_frames or 0)>v) then return false
+   elseif k=='aerial_hit' and (own.aerial_hit==true)~=v then return false
    elseif k=='recently' then local f=(self.recent[e.port] or {})[v.event];if not f or self.frame-f>S.resolve(v.frames,m,tier) then return false end end
   end end
   return true
@@ -117,17 +126,21 @@ return function(D)
    if self.used>=self.limit then self.dropped=self.dropped+1;break end
    if not effect.when or effect.when==e.kind then
     self.used=self.used+1;local port=effect.subject=='target' and e.target or e.port
+    if effect.op=='chain_status' then port=self:nearest_other(e) end
     if port and self.players[port] then
      local value=function(v) return S.resolve(v,m,tier) end;local label=m.label
-     if effect.op=='status' or effect.op=='stacks' then
+     if effect.op=='status' or effect.op=='stacks' or effect.op=='chain_status' then
       local duration=math.max(1,math.min(3600,math.floor(value(effect.duration)*(self:values(e.port).status_duration or 1))));assert(duration>=1 and duration<=3600,'status duration out of bounds')
       local at=self.statuses[port] or {};self.statuses[port]=at;local v=at[effect.status];local expires=self.frame+duration
+      -- A status granted by a technique trigger is EARNED: it keeps its cause (the earned afterimage's colour) while it lasts.
+      local cause=D.mod_skill.is_skill(e.kind) and D.mod_skill.cause_of(e.kind) or nil
       local amount=math.max(0,math.min(100,value(effect.amount or 1)))
       if v then
        v.stacks=math.min(effect.max,v.stacks+1)
        if effect.refresh=='refresh' then v.expires=expires elseif effect.refresh=='extend' then v.expires=math.min(self.frame+3600,v.expires+duration) end
        v.amount=math.max(v.amount,amount)
       else v={expires=expires,stacks=1,max=effect.max,amount=amount,next_tick=self.frame+60,origin={}};at[effect.status]=v end
+      if cause then v.cause=cause end
       append(origin,effect.status..' applied by '..label);v.origin=copy(origin)
       self:emit{kind='status_applied',port=port,target=e.target,status=effect.status,tags={[status_tags[effect.status]]=true},depth=e.depth+1,origin=origin}
       if effect.op=='stacks' or v.stacks>1 then self:emit{kind='stacks_changed',port=port,status=effect.status,tags={[status_tags[effect.status]]=true},depth=e.depth+1,origin=origin} end
@@ -140,6 +153,14 @@ return function(D)
      elseif effect.op=='heal' or effect.op=='damage' then
       local amount=math.max(0,math.min(100,value(effect.amount)));self:sustain_damage(port,effect.op=='heal' and -amount or amount)
       append(origin,(effect.op=='heal' and 'heal ' or 'damage ')..amount..' from '..label)
+     elseif effect.op=='armor' then
+      append(origin,'armour from '..label);self.fx[#self.fx+1]={op='armor',port=port,type=effect.type,value=effect.value~=nil and value(effect.value) or nil,frames=effect.frames and math.floor(value(effect.frames)) or nil,direction=effect.direction}
+     elseif effect.op=='intangible' then
+      append(origin,'intangibility from '..label);self.fx[#self.fx+1]={op='intangible',port=port,frames=math.floor(value(effect.frames))}
+     elseif effect.op=='interrupt' then
+      append(origin,'interrupt window from '..label);self.fx[#self.fx+1]={op='interrupt',port=port,frames=math.floor(value(effect.frames)),exits=effect.exits,guard=effect.guard,restore_jumps=effect.restore_jumps}
+     elseif effect.op=='crit_next' then
+      append(origin,'next hits crit from '..label);self.fx[#self.fx+1]={op='crit_next',port=port,count=math.floor(value(effect.count))}
      elseif effect.op=='emit' then
       append(origin,'event from '..label);self:emit{kind=effect.event,port=port,target=e.target,tags={[effect.tag]=true},depth=e.depth+1,origin=origin}
      end
@@ -163,7 +184,13 @@ return function(D)
    self.recent[e.port]=self.recent[e.port] or {};self.recent[e.port][e.kind]=self.frame
    local build=self.equipped[e.port]
    if build and next(build) then for _,m in ipairs(self.list) do local tier=build[m.id]
-    if self.used<self.limit and tier then for _,instance in ipairs(S.instances(tier))do if self:matches(m,e,instance)then self:apply(m,e,instance)end end end
+    if self.used<self.limit and tier then for _,instance in ipairs(S.instances(tier))do if self:matches(m,e,instance)then
+      self:apply(m,e,instance)
+      -- The first time a technique or crit rule fires (per engine, i.e. per run) is logged for the host's announcement.
+      if m.min_depth or m.kind=='keystone' and (D.mod_skill.is_skill(e.kind) or e.kind=='crit') then
+       self.fired=self.fired or {};if not self.fired[m.id] then self.fired[m.id]=true;self.fired_log=self.fired_log or {};self.fired_log[#self.fired_log+1]={id=m.id,label=m.label,kind=e.kind,port=e.port} end
+      end
+     end end end
    end end
    -- A lost stock ends what was happening to the fighter (statuses, stacks, recent events), not the build:
    -- equipped modifiers stay and their steady effects, looks and hit rules are derived again from them.
@@ -214,6 +241,7 @@ return function(D)
  end
  function E:compute_native_rules(port)
   if D.mod_echo then self:echo_description(port) end
+  self:passive_state(port);self:crit_config(port)
   local out,bits={},0
   for _,name in ipairs(ordered) do if self:status(port,name) then bits=bits+(S.status_bits[name] or 0) end end
   for i,m in ipairs(self.list) do local tier=(self.equipped[port] or {})[m.id]
@@ -240,6 +268,125 @@ return function(D)
   if next(outgoing) then out[#out+1]={id=1001,match={move='any'},change=outgoing} end
   if next(incoming) then out[#out+1]={id=1002,match={move='any',incoming=true},change=incoming} end
   assert(#out<=32,'native hit rule capacity exceeded');return out,bits
+ end
+ -- ---- technique-derived native state (pure functions of the build and the statuses) -----------------------------
+ -- Passive caps and permanent armour come from equip rules. A restriction set is bounded here as well as in the
+ -- keystone check, so a hand-made build cannot leave a fighter defenceless or unable to move.
+ function E:passive_state(port)
+  local m=memo(self,port)
+  if m.passive then return m.passive end
+  local out={forbid={},armor=nil};local seen={}
+  for _,rule in ipairs(self.list) do local tier=(self.equipped[port] or {})[rule.id]
+   if tier then for _,effect in ipairs(rule.effects) do
+    for _,instance in ipairs(S.instances(tier)) do
+     if effect.op=='air_jumps' then local n=math.floor(S.resolve(effect.count,rule,instance));out.air_jumps=math.max(out.air_jumps or n,n)
+     elseif effect.op=='restrict' then for _,x in ipairs(effect.forbid) do if not seen[x] then seen[x]=true;out.forbid[#out.forbid+1]=x end end
+     elseif effect.op=='armor' and effect.frames==nil then local v=S.resolve(effect.value,rule,instance);if not out.armor or v>out.armor.value then out.armor={type=effect.type,value=v} end end
+    end
+   end end
+  end
+  table.sort(out.forbid)
+  local ok,why=D.mod_budget.restrictions_ok(out.forbid);assert(ok,why)
+  m.passive=out;return out
+ end
+ -- The crit configuration one fighter should have right now, or nil: slots by move tag (default first), a percent floor.
+ -- Chance adds (capped at .6 a slot); a chance rule's multiplier is the base (the largest), a multiplier-only rule adds its
+ -- gain on top; a tag slot starts from the default and adds its own. A forced-crit rule (crit_next) needs a configuration
+ -- to exist and raises the default multiplier to its own.
+ function E:crit_config(port)
+  local m=memo(self,port)
+  local names={};for _,n in ipairs(ordered) do if (self.statuses[port] or {})[n] then names[#names+1]=n end end
+  local key='crit:'..table.concat(names,',')
+  if m[key] then return m[key].config end
+  local slots,floor,force,any={},0,nil,false
+  local function slot(tag) local s=slots[tag];if not s then s={chance=0,base=nil,add=0,max_add=0,launch=1};slots[tag]=s end;return s end
+  for _,rule in ipairs(self.list) do local tier=(self.equipped[port] or {})[rule.id]
+   if tier then for _,effect in ipairs(rule.effects) do
+    if effect.op=='crit' and (not effect.status or self:status(port,effect.status)) then
+     for _,instance in ipairs(S.instances(tier)) do
+      any=true;local sl=slot(effect.tag or 'default')
+      local c=effect.chance and S.resolve(effect.chance,rule,instance) or 0;local mult=effect.multiplier and S.resolve(effect.multiplier,rule,instance)
+      sl.chance=sl.chance+c
+      if effect.chance then local b=mult or 1.5;sl.base=math.max(sl.base or 0,b) elseif mult then sl.add=sl.add+(mult-1) end
+      if effect.multiplier_max then sl.max_add=math.max(sl.max_add,S.resolve(effect.multiplier_max,rule,instance)-(mult or 1.5)) end
+      if effect.launch then sl.launch=math.max(sl.launch,S.resolve(effect.launch,rule,instance)) end
+      if effect.min_percent then floor=math.max(floor,S.resolve(effect.min_percent,rule,instance)) end
+     end
+    elseif effect.op=='crit_next' then
+     for _,instance in ipairs(S.instances(tier)) do any=true;force=math.max(force or 1,S.resolve(effect.multiplier,rule,instance)) end
+    end
+   end end
+  end
+  local config
+  if any then
+   slot('default');local out={}
+   local function finish(tag)
+    local sl=slots[tag];local d=slots.default;local isd=tag=='default'
+    local chance=math.min(floor>=80 and 1 or .6,(isd and 0 or d.chance)+sl.chance) -- a certain crit is only possible under a percent floor
+    local base=sl.base or (not isd and d.base) or 1.5
+    local mult=math.min(4,math.max(1,base+(isd and 0 or d.add)+sl.add))
+    local mmax=math.min(4,mult+(isd and 0 or d.max_add)+sl.max_add)
+    -- `mean` is the configured multiplier. The native draw is uniform in [low, high] around it (low = half the gain, high = one and a half
+    -- times the gain, plus any explicit maximum), so crits differ in strength: the engine's strength is a crit's gain over the largest gain.
+    local gain=mult-1;local extra=math.max(0,mmax-mult)
+    return {chance=chance,mean=mult,multiplier=1+gain*.5,multiplier_max=math.min(4,1+gain*1.5+extra),launch=math.max(sl.launch,isd and 1 or d.launch)}
+   end
+   out.default=finish('default')
+   if force and force>out.default.mean then local d=out.default;d.mean=force;d.multiplier=1+(force-1)*.5;d.multiplier_max=math.min(4,1+(force-1)*1.5) end
+   for tag in pairs(slots) do if tag~='default' then out[tag]=finish(tag) end end
+   config={slots=out,min_percent=floor}
+  end
+  m[key]={config=config};return config
+ end
+ -- The status a technique earned that an afterimage should show right now: the longest-lasting earned status of the fighter
+ -- ({cause, status, frames}), or nil. Pure.
+ function E:earned(port)
+  local best
+  for _,name in ipairs(ordered) do local v=(self.statuses[port] or {})[name]
+   if v and v.cause then local left=v.expires-self.frame
+    if left>0 and (not best or left>best.frames) then best={cause=v.cause,status=name,frames=math.min(left,D.mod_skill.max_frames)} end
+   end
+  end
+  return best
+ end
+ -- How many frames an echo's picture may show: while the status its rule needs is on (the status ends it), else a short
+ -- window after the fighter's own last hit. Never continuous. Pure function of checkpointed state.
+ E.echo_window_after_hit=45
+ function E:echo_window(port)
+  local best=0
+  for _,rule in ipairs(self.list) do local tier=(self.equipped[port] or {})[rule.id]
+   if tier then for _,effect in ipairs(rule.effects) do if effect.op=='echo' then
+    if effect.status then local v=self:status(port,effect.status);if v then best=math.max(best,v.expires-self.frame) end
+    else local f=(self.recent[port] or {}).hit_dealt;if f then best=math.max(best,E.echo_window_after_hit-(self.frame-f)) end end
+   end end end
+  end
+  return math.max(0,math.min(best,D.mod_skill.max_frames))
+ end
+ -- Whether any equipped rule of this fighter listens to a trigger (the host only reads skill state and builds an event then).
+ -- The opponent nearest the victim of a hit, other than the attacker and the victim (frame positions come from the host sample).
+ function E:nearest_other(e)
+  local from=self.players[e.target] or {};if type(from.x)~='number' then return nil end
+  local best,bd
+  for p,v in pairs(self.players) do if p~=e.port and p~=e.target and type(v.x)=='number' and type(v.y)=='number' then
+   local d=(v.x-from.x)^2+(v.y-(from.y or 0))^2;if not bd or d<bd or (d==bd and p<best) then best,bd=p,d end
+  end end
+  return best
+ end
+ function E:listens(port,kind)
+  for _,rule in ipairs(self.list) do if rule.trigger==kind and (self.equipped[port] or {})[rule.id] then return true end end
+  return false
+ end
+ -- Whether the fighter carries a rule that can EARN a status (a technique trigger with a status effect): the host prepares its
+ -- afterimage emitter at stage start so the first earned status shows at once.
+ function E:earned_source(port)
+  local m=memo(self,port)
+  if m.earned_source==nil then
+   m.earned_source=false
+   for _,rule in ipairs(self.list) do if (self.equipped[port] or {})[rule.id] and D.mod_skill.is_skill(rule.trigger) then
+    for _,effect in ipairs(rule.effects) do if effect.op=='status' or effect.op=='stacks' then m.earned_source=true end end
+   end end
+  end
+  return m.earned_source
  end
  function E:native_origin(ids,target,actor)
   local out,used={},{}
@@ -297,7 +444,7 @@ return function(D)
   at.implicits=at.implicits or {}
   for p,base in pairs(at.implicits) do assert(type(p)=='number' and p%1==0 and p>=1 and p<=6);for key,value in pairs(base) do assert(S.values[key] and type(value)=='number' and value==value and value>=-1000000 and value<=1000000,'invalid snapshot implicit') end end
   for p,statuses in pairs(at.statuses) do assert(type(p)=='number' and p>=1 and p<=6 and p%1==0)
-   for name,v in pairs(statuses) do assert(S.statuses[name] and type(v)=='table' and v.stacks>=1 and v.stacks<=8 and v.stacks%1==0 and v.max>=v.stacks and v.max<=8 and v.expires>=at.frame and v.expires%1==0 and v.next_tick%1==0 and v.amount>=0 and v.amount<=100 and type(v.origin)=='table','invalid snapshot status') end
+   for name,v in pairs(statuses) do assert(S.statuses[name] and type(v)=='table' and v.stacks>=1 and v.stacks<=8 and v.stacks%1==0 and v.max>=v.stacks and v.max<=8 and v.expires>=at.frame and v.expires%1==0 and v.next_tick%1==0 and v.amount>=0 and v.amount<=100 and type(v.origin)=='table' and (v.cause==nil or D.mod_skill.cause[v.cause]~=nil),'invalid snapshot status') end
   end
   for p,events in pairs(at.recent) do assert(type(p)=='number' and p%1==0 and p>=1 and p<=6);for event,frame in pairs(events) do assert(S.events[event] and type(frame)=='number' and frame%1==0 and frame>=0 and frame<=at.frame,'invalid recent event') end end
   assert(type(at.trace)=='table' and #at.trace<=24 and type(at.dropped)=='number' and at.dropped>=0 and at.dropped%1==0,'invalid snapshot trace');for _,line in ipairs(at.trace) do assert(type(line)=='string' and #line<=160) end

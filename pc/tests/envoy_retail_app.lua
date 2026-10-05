@@ -99,4 +99,29 @@ T.test('final acknowledged reward returns menu even with resolved garden',functi
  a.g.model_load=function() return 77 end;a.mission.command=function() error('return menu must not enter resolved garden') end
  a:menu_effect(a.menu:input('accept',a:context()));assert(a.menu.screen=='hub' and not a.hub.active)
 end)
+T.test('START at the retail results screen and on a stage start already held does not open Envoy menu or pause',function()
+ local s,a=fixture(true);assert(a:command('start'));a:retail_event('stage_start',s.mode)
+ -- stage clear with the results up: one START must not open the menu, must not pause
+ a.menu:show('playing');a.visible=true;a:retail_event('stage_clear',{stage_index=0,loop=0});a.menu:show('playing');a.retail.reward=nil
+ a.results_up=true;s.pad={START=true};a:tick();assert(a.menu.screen=='playing' and not s.paused,'START at the results screen opened the menu: '..a.menu.screen)
+ s.pad={};a:tick();s.pad={START=true};a:tick();assert(a.menu.screen=='playing' and not s.paused)
+ -- the next stage starts with START still held (scene change): no menu until it is released and pressed again
+ s.mode.held=false;s.pad={START=true};a:retail_event('stage_start',s.mode);a.menu:show('playing');a.visible=true;a:tick();a:tick()
+ assert(a.menu.screen=='playing' and not s.paused,'held START at a stage start opened the menu')
+ s.pad={};a:tick();assert(a.menu.screen=='playing');s.pad={START=true};a:tick()
+ assert(a.menu.screen=='pause' and s.paused,'a fresh START during the stage must still open the pause menu')
+end)
+T.test('the results screen is read from game state: a decided stage ignores START, a live one still pauses',function()
+ local s,a=fixture(true);assert(a:command('start'));a:retail_event('stage_start',s.mode)
+ local pl={[1]={stocks=3},[2]={stocks=1}};a.g.player=function(p) return pl[p] end
+ s.pad={};a:tick();a:tick();assert(a.menu.screen=='playing' and not a.results_up)
+ s.pad={START=true};a:tick();assert(a.menu.screen=='pause' and s.paused,'a live stage opens the pause menu on a fresh START')
+ a.menu:show('playing');a.g.resume();s.paused=false;a.owns_pause=nil;s.pad={};a:tick()
+ pl[2].stocks=0;a:tick();assert(a.results_up,'every opponent out of stocks: the stage is decided')
+ s.pad={START=true};a:tick();assert(a.menu.screen=='playing' and not s.paused,'one START at the results screen must reach the game')
+ s.pad={};a:tick();a:retail_event('stage_start',s.mode);assert(not a.results_up and not a.seen_foe)
+ -- P1 out of stocks, and an engine hold, also count
+ pl={[1]={stocks=0},[2]={stocks=2}};a:tick();assert(a.results_up)
+ a:retail_event('stage_start',s.mode);pl={[1]={stocks=3}};a.g.mode_1p=function() return {held=true} end;s.pad={};a:tick();a:tick();assert(a.results_up)
+end)
 T.done()

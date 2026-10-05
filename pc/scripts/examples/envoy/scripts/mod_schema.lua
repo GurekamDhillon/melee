@@ -2,15 +2,17 @@
 return function(D)
  local S={}
  local function set(words) local out={};for w in words:gmatch('%S+') do out[w]=true end;return out end
- S.tags=set('jab tilt smash aerial special grab throw projectile dash_attack grounded airborne normal fire electric ice darkness burning shocked chilled cursed hasted guarded momentum damage healing unique keystone')
+ S.tags=set('jab tilt smash aerial special grab throw projectile dash_attack grounded airborne normal fire electric ice darkness burning shocked chilled cursed hasted guarded momentum damage healing unique keystone technique critical')
  S.events=set('equip hit_dealt hit_taken ko_dealt stock_lost shield_hit perfect_shield clank jump air_jump landing ledge_grab grab throw taunt item_pickup stage_start interval status_applied status_removed stacks_changed')
+ -- Technique triggers come from the engine's skill events (mod_skill declares them, verified or flagged), plus the crit and armour reports.
+ for kind in pairs(D.mod_skill.kinds) do S.events[kind]=true end
  S.statuses=D.mod_status.implemented -- Shock's hitstun effect awaits safe hit mutation (see mod_status).
  S.values=set('damage_dealt damage_taken run_speed air_speed shield_max jump_height air_jump_height knockback_taken fall_speed weight shield_regen status_duration')
  S.status_bits=D.mod_status.bits
  S.hit_moves=set('any unknown jab dash_attack tilt smash aerial special grab throw projectile')
  S.elements=set('normal fire electric ice darkness')
- local record=set('id label kind cost tags tiers trigger interval conditions effects stacking text visual affix group weight fixed_colour families')
- local cond=set('tag self_status target_status status self_damage_above self_damage_below target_damage_above grounded airborne last_stock recently stage_kind')
+ local record=set('id label kind cost tags tiers trigger interval conditions effects stacking text visual affix group weight fixed_colour families notes min_depth')
+ local cond=set('tag self_status target_status status self_damage_above self_damage_below target_damage_above grounded airborne last_stock recently stage_kind combo_at_least combo_damage_above hit aerial direction strength_above armor_result air_frames_above aerial_hit')
  -- Effect field lists come from the one effect registry (mod_registry), shared with budget and the checkpoint compiler.
  local fields=setmetatable({},{__index=function(_,op) local d=D.mod_registry.effects[op];return d and d.fields end})
  local function keys(t,allowed) assert(type(t)=='table' and not getmetatable(t),'plain record required');for k in pairs(t) do assert(allowed[k],'unsupported record field '..tostring(k)) end end
@@ -34,6 +36,8 @@ return function(D)
   if m.kind~='normal' then assert(type(m.cost)=='string' and #m.cost>0,'rule-breaker needs explicit cost') end
   if m.affix then assert(m.kind=='normal' and (m.affix=='prefix' or m.affix=='suffix'),'invalid affix');assert(type(m.group)=='string' and #m.group>0 and type(m.weight)=='number' and m.weight>0 and m.weight<100000,'invalid loot metadata') end
   if m.fixed_colour then assert(m.kind=='unique' and set('red green blue yellow purple white')[m.fixed_colour],'invalid unique colour') end
+  if m.min_depth~=nil then assert(m.kind=='normal' and type(m.min_depth)=='number' and m.min_depth%1==0 and m.min_depth>=0 and m.min_depth<=100,'invalid minimum depth') end
+  if m.notes~=nil then assert(type(m.notes)=='string' and #m.notes<=240,'notes must be short text') end
   array(m.tags,0,8);for _,tag in ipairs(m.tags) do assert(S.tags[tag],'tag must be vocabulary, never a move/modifier name') end
   array(m.tiers,1,5)
   for _,tier in ipairs(m.tiers) do assert(type(tier)=='table');for k,v in pairs(tier) do assert(type(k)=='string' and k:match('^[a-z_]+$'));number(v,m);assert(type(v)=='number','numeric tier required') end end
@@ -46,7 +50,16 @@ return function(D)
    elseif k=='self_status' or k=='target_status' or k=='status' then assert(v=='any' or S.statuses[v],'unsupported status condition')
    elseif k=='recently' then keys(v,set('event frames'));assert(S.events[v.event]);range(v.frames,m,1,3600,true)
    elseif k=='stage_kind' then assert(set('battle team giant metal bonus boss')[v],'unsupported stage kind')
-   elseif k=='grounded' or k=='airborne' or k=='last_stock' then assert(type(v)=='boolean') else number(v,m) end
+   elseif k=='grounded' or k=='airborne' or k=='last_stock' or k=='hit' or k=='aerial_hit' then assert(type(v)=='boolean')
+    if k=='hit' or k=='aerial_hit' then assert(D.mod_skill.is_skill(m.trigger),'technique condition needs a technique trigger') end
+   elseif k=='combo_at_least' then assert(m.trigger=='combo' or m.trigger=='combo_end','combo condition needs a combo trigger');range(v,m,2,30,true)
+   elseif k=='combo_damage_above' then assert(m.trigger=='combo' or m.trigger=='combo_end','combo condition needs a combo trigger');range(v,m,0,999)
+   elseif k=='aerial' then assert(set('nair fair bair uair dair')[v] and D.mod_skill.is_skill(m.trigger),'unknown aerial')
+   elseif k=='direction' then assert(m.trigger=='tech' and set('in_place toward away wall ceiling')[v],'unknown tech direction')
+   elseif k=='strength_above' then assert(m.trigger=='crit');range(v,m,0,1)
+   elseif k=='armor_result' then assert(m.trigger=='armor' and (v=='absorbed' or v=='broke'),'armour result absorbed or broke')
+   elseif k=='air_frames_above' then assert(D.mod_skill.is_skill(m.trigger));range(v,m,0,600,true)
+   else number(v,m) end
   end end
   array(m.effects,1,8)
   for _,e in ipairs(m.effects) do assert(fields[e.op],'unsupported effect (no connecting-hit mutation)');keys(e,fields[e.op])
@@ -80,10 +93,40 @@ return function(D)
      elseif k~='element' then range(v,m,.1,4) end
     end
    elseif e.op=='value' then assert(m.trigger=='equip' and S.values[e.key],'fighter values require unconditional equip');range(e.value,m,.1,4)
-   elseif e.op=='status' or e.op=='stacks' then assert(m.trigger~='equip' and S.statuses[e.status],'unsupported status');range(e.duration,m,1,3600,true);range(e.amount or 1,m,0,100);assert(e.refresh=='refresh' or e.refresh=='extend' or e.refresh=='keep');assert(type(e.max)=='number' and e.max%1==0 and e.max>=1 and e.max<=8)
+   elseif e.op=='status' or e.op=='stacks' or e.op=='chain_status' then assert(m.trigger~='equip' and S.statuses[e.status],'unsupported status');if e.op=='chain_status' then assert(m.trigger=='hit_dealt','a status chain needs a hit trigger') end;range(e.duration,m,1,3600,true);range(e.amount or 1,m,0,100);assert(e.refresh=='refresh' or e.refresh=='extend' or e.refresh=='keep');assert(type(e.max)=='number' and e.max%1==0 and e.max>=1 and e.max<=8)
    elseif e.op=='clank_damage' then assert(m.trigger=='clank' and e.subject=='target','clank damage requires opposing fighter')
    elseif e.op=='remove_status' then assert(S.statuses[e.status])
-   elseif e.op=='emit' then assert(S.events[e.event] and S.tags[e.tag]) else range(e.amount,m,0,100) end
+   elseif e.op=='emit' then assert(S.events[e.event] and S.tags[e.tag])
+   elseif e.op=='armor' or e.op=='intangible' or e.op=='interrupt' or e.op=='crit_next' then
+    -- Native timed effects (armour, intangibility, an interrupt window, a forced crit) run from a trigger and carry their own expiry.
+    assert(e.subject==nil or e.subject=='self','technique effects apply to yourself')
+    if e.op=='armor' then
+     local limits={super={30,nil},damage_threshold={12,300},knockback_threshold={40,300},hit_count={3,600},damage_pool={30,600}}
+     local lim=assert(limits[e.type],'unsupported armour type')
+     if e.frames==nil then assert(m.trigger=='equip' and e.type=='damage_threshold','only a threshold armour may be permanent, on an equip rule');range(e.value,m,1,10)
+     else assert(m.trigger~='equip','timed armour needs a trigger');range(e.frames,m,1,lim[2] or lim[1],true);if e.type=='super' then range(e.frames,m,1,30,true) end end
+     if e.type=='super' then assert(e.value==nil or (type(e.value)=='number' and e.value==1),'super armour takes no value') else range(e.value,m,1,lim[1],e.type=='hit_count') end
+     assert(e.direction==nil or e.direction=='any' or e.direction=='front' or e.direction=='back','invalid armour direction')
+    elseif e.op=='intangible' then assert(m.trigger~='equip','intangibility needs a trigger');range(e.frames,m,1,24,true)
+    elseif e.op=='interrupt' then
+     assert(m.trigger~='equip','an interrupt window needs a trigger');range(e.frames,m,1,20,true)
+     if e.exits then array(e.exits,1,13);local ok=set('jab tilt smash aerial special grab jump dash crouch turn walk escape shield air_dodge air_jump');local seen={};for _,x in ipairs(e.exits) do assert(ok[x] and not seen[x],'unknown interrupt exit');seen[x]=true end end
+     assert(e.guard==nil or type(e.guard)=='boolean');assert(e.restore_jumps==nil or type(e.restore_jumps)=='boolean')
+    else assert(m.trigger~='equip','a forced crit needs a trigger');range(e.count,m,1,3,true);range(e.multiplier,m,1.1,4) end
+   elseif e.op=='air_jumps' then assert(m.trigger=='equip','air jumps are a passive rule');range(e.count,m,0,6,true)
+   elseif e.op=='restrict' then
+    assert(m.trigger=='equip','a restriction is a passive rule');array(e.forbid,1,2);local ok=set('shield air_dodge run grab specials');local seen={}
+    for _,x in ipairs(e.forbid) do assert(ok[x] and not seen[x],'unknown restriction');seen[x]=true end
+   elseif e.op=='crit' then
+    assert(m.trigger=='equip','crit chance is a passive rule');assert(e.chance~=nil or e.multiplier~=nil,'crit needs a chance or a multiplier')
+    if e.chance~=nil then range(e.chance,m,0,(type(e.min_percent)=='number' and e.min_percent>=80) and 1 or .6) end -- a certain crit needs a percent floor
+    if e.multiplier~=nil then range(e.multiplier,m,1,4) end
+    if e.multiplier_max~=nil then range(e.multiplier_max,m,1,4);assert(e.multiplier~=nil,'multiplier_max needs multiplier') end
+    if e.launch~=nil then range(e.launch,m,1,1.25) end
+    if e.min_percent~=nil then range(e.min_percent,m,0,300) end
+    if e.tag~=nil then assert(set('jab dash_attack tilt smash aerial grab throw special projectile')[e.tag],'crit tag must be a move tag') end
+    if e.status~=nil then assert(S.statuses[e.status],'unsupported crit status') end
+   else range(e.amount,m,0,100) end
   end
   keys(m.stacking,set('max'));assert(m.stacking.max==1,'step1 equips each rule once')
   keys(m.visual,set('look hue strength priority'));assert(set('burn shock chill curse haste guarded momentum')[m.visual.look]);assert(type(m.visual.hue)=='number' and m.visual.hue>=0 and m.visual.hue<=1 and type(m.visual.strength)=='number' and m.visual.strength>=0 and m.visual.strength<=1)

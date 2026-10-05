@@ -4,10 +4,10 @@ for _,n in ipairs({'mod_progression','mod_schema','mod_codec','mod_budget','keys
 local K,P=D.keystones,D.mod_progression;local loot=D.drive_loot.new(D.mod_pool)
 local function pool_keys() local out={};for _,m in ipairs(D.mod_pool) do if m.kind=='keystone' then out[#out+1]=m end end;return out end
 T.test('thirty keystones, six drive colours, unique ids, every one in the validated pool with a drawback',function()
- local keys=pool_keys();assert(#keys==30,#keys);local ids,fam={},{}
+ local keys=pool_keys();assert(#keys==42,#keys);local ids,fam={},{}
  for _,m in ipairs(keys) do assert(not ids[m.id]);ids[m.id]=true;assert(type(m.cost)=='string' and #m.cost>0,m.id);local f=K.family(m.id);assert(f,m.id);fam[f]=(fam[f] or 0)+1;assert(#m.families>=1) end
  for _,f in ipairs(K.families) do assert((fam[f] or 0)>=4,f..' has too few keystones') end
- assert(#K.ids()==30)
+ assert(#K.ids()==42)
 end)
 T.test('every keystone reads as an effect line then a drawback line, in plain words',function()
  for _,m in ipairs(pool_keys()) do for _,tier in ipairs({1,3,6}) do
@@ -23,15 +23,15 @@ T.test('each keystone does something in the engine: equip rules change values or
   local e=D.mod_engine.new(1,D.mod_pool,{context=ctx});e:set_build(1,{[m.id]=tier},{});e:set_build(2,{},{})
   local players={[1]={percent=120,grounded=true,stocks=1},[2]={percent=150,grounded=false,stocks=2}}
   if m.trigger=='equip' then
-   local rules=e:native_rules(1);local vals=e:values(1);local changed=#rules>0;for _,v in pairs(vals) do if v~=1 then changed=true end end
+   local rules=e:native_rules(1);local vals=e:values(1);local changed=#rules>0 or e:crit_config(1)~=nil;local ps=e:passive_state(1);if ps.armor or ps.air_jumps or #ps.forbid>0 then changed=true end;for _,v in pairs(vals) do if v~=1 then changed=true end end
    assert(changed,m.id..' has no equip effect')
   else
    if m.trigger=='interval' then e.frame=m.interval-1 end
    e:begin_frame(players)
    e.statuses[2]={chill={expires=e.frame+500,stacks=1,max=1,amount=1,next_tick=e.frame+60,origin={}}}
-   e:emit{kind=m.trigger,port=1,target=2,tags={},depth=1}
+   e:emit{kind=m.trigger,port=1,target=2,tags={electric=true},depth=1,count=5,damage=40,hit=true}
    e:drain()
-   local did=next(e.statuses[1] or {})~=nil or (e.damage[1] or 0)~=0 or (e.statuses[2] and next(e.statuses[2],'chill'))~=nil
+   local did=#e.fx>0 or next(e.statuses[1] or {})~=nil or (e.damage[1] or 0)~=0 or (e.statuses[2] and next(e.statuses[2],'chill'))~=nil
    for _,v in pairs(e.statuses[2] or {}) do did=did or v.amount~=1 end
    assert(did,m.id..' ('..m.trigger..') did nothing')
   end
@@ -69,7 +69,7 @@ T.test('offers: distinct, legal with what is held, from different colours, same 
  assert(#held>=8 and K.check(held))
 end)
 T.test('waiting keystones are data only and never in the pool; no keystone keeps afterimages on',function()
- assert(#K.waiting>=10);local ids={};for _,m in ipairs(D.mod_pool) do ids[m.id]=true end
+ assert(#K.waiting>=1);local ids={};for _,m in ipairs(D.mod_pool) do ids[m.id]=true end
  for _,w in ipairs(K.waiting) do assert(not ids[w.id] and w.needs and w.effect and w.drawback and K.family_names[w.family],w.id) end
  for _,m in ipairs(K.records()) do for _,e in ipairs(m.effects) do if e.op=='echo' then assert(e.status,m.id..': an echo needs a status that starts and ends it') end end end
 end)

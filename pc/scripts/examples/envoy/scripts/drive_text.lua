@@ -9,7 +9,7 @@ return function(D)
   purple='Base: your status effects last 20% longer',white='Base: no bonus, but one extra modifier'}
  local function round(n) return math.floor(n+.5) end
  local function pct(n) return ('%d%%'):format(round(n*100)) end
- local function secs(frames) local s=frames/60;return s==math.floor(s) and ('%d seconds'):format(s) or ('%.1f seconds'):format(s) end
+ local function secs(frames) local s=frames/60;return s==math.floor(s) and (s==1 and '1 second' or ('%d seconds'):format(s)) or ('%.1f seconds'):format(s) end
  local value_labels={damage_dealt='Damage you deal',damage_taken='Damage you take',run_speed='Run speed',air_speed='Air speed',jump_height='Jump height',
   air_jump_height='Air jump height',knockback_taken='Launch you take',status_duration='Your status effects last'}
  local elements={fire='fire',ice='ice',electric='electric'}
@@ -63,12 +63,56 @@ return function(D)
  }
  local drawback={pyromancer='Drawback: ice hits against you deal 60% more damage',frozen_oath='Drawback: fire hits against you deal 60% more damage',
   still_heart='Drawback: you cannot get a speed boost',echo_oath='Drawback: all your attack damage is 50% lower',echo_heart='Drawback: all your attack damage is 25% lower'}
+ -- ---- technique and crit modifiers: "<when>: <what>" built from the record, plus one line on what to look for ----------------------
+ local status_name={haste='Haste',guarded='Guarded',momentum='Momentum',chill='Chill',curse='Curse',burn='Burning',shock='Shock'}
+ local armor_words={super='super armour',hit_count='armour that absorbs the next hit',damage_threshold='armour against weak hits',damage_pool='armour that soaks damage',knockback_threshold='armour against weak launches'}
+ local function effect_words(m,tier,e)
+  local r=function(v) return v~=nil and D.mod_schema.resolve(v,m,tier) or nil end
+  if e.op=='status' or e.op=='stacks' then return (status_name[e.status] or e.status)..' for '..secs(r(e.duration)) end
+  if e.op=='chain_status' then return 'chain '..(status_name[e.status] or e.status)..' to the nearest other opponent' end
+  if e.op=='armor' then
+   if e.frames then local f=r(e.frames);return armor_words[e.type]..' for '..(f<60 and (round(f)..' frames') or secs(f)) end
+   return 'you do not flinch from hits under '..round(r(e.value))..' damage'
+  end
+  if e.op=='intangible' then return 'intangible for '..round(r(e.frames))..' frames' end
+  if e.op=='interrupt' then return 'cancel your move for '..round(r(e.frames))..' frames' end
+  if e.op=='crit_next' then return ('your next hit crits for x%s'):format(('%.2f'):format(r(e.multiplier)):gsub('0+$',''):gsub('%.$','')) end
+  if e.op=='heal' then return 'heal '..round(r(e.amount))..'%' end
+  if e.op=='damage' then return 'lose '..round(r(e.amount))..' damage' end
+  if e.op=='crit' then
+   local who=e.tag and ('Your '..e.tag..' hits') or 'Your hits'
+   local out=e.chance and (who..' crit '..pct(r(e.chance))..' of the time') or (who..': crits deal more')
+   local mult=r(e.multiplier);if mult then out=out..(e.chance and (' (x'..(('%.2f'):format(mult):gsub('0+$',''):gsub('%.$',''))..')') or (' (the multiplier gains '..(('%.2f'):format(mult-1):gsub('0+$',''):gsub('%.$',''))..')')) end
+   if e.min_percent then out=out..', but only on a target above '..round(r(e.min_percent))..'% damage' end
+   return out
+  end
+  if e.op=='air_jumps' then return 'you have '..round(r(e.count))..' air jumps' end
+  if e.op=='restrict' then return 'you cannot '..table.concat(e.forbid,' or ') end
+  return nil
+ end
+ local technique_look={lcancel='a blue afterimage',shield='a teal afterimage',wave='a gold afterimage',combo='a red afterimage',move='a white afterimage',miss='a violet afterimage'}
+ local function technique_lines(m,tier)
+  local words=D.mod_skill.words(m.trigger,m.conditions)
+  local parts={};for _,e in ipairs(m.effects) do local w=effect_words(m,tier,e);if w then parts[#parts+1]=w end end
+  local first
+  if m.trigger=='equip' then first=(parts[1] or ''):gsub('^%l',string.upper)..'.'
+  else
+   local verb=m.trigger=='crit' and 'Land a crit' or m.trigger=='armor' and 'When your armour absorbs a hit' or ((words or m.trigger):gsub('^%l',string.upper))
+   if m.trigger=='armor' then first=verb..': '..table.concat(parts,', ')..'.' else first=verb..': '..table.concat(parts,', ')..'.' end
+  end
+  local out={first}
+  local cause=D.mod_skill.cause_of(m.trigger);local earned=D.mod_skill.is_skill(m.trigger)
+  for _,e in ipairs(m.effects) do if earned and (e.op=='status') then out[2]='You earn it by technique: '..(technique_look[cause] or 'an afterimage')..' shows while it lasts.';break end end
+  if not out[2] and m.trigger=='crit' then out[2]='A crit flashes an impact frame and a tracer on the hit.' elseif not out[2] and m.trigger=='equip' and m.tags[1]=='critical' then out[2]='Crits are rare: the engine has none until a modifier grants a chance.' end
+  return out
+ end
  -- Lines (strings) for one modifier at one tier. A rule is described by its sentence when it has one, else from its effects.
  function T.mod_lines(m,tier)
   local out={}
   -- Keystones (keystones.lua owns their words: the effect, then the drawback, no ids and no tier codes).
   local k=m.kind=='keystone' and D.keystones and D.keystones.lines(m,tier)
   if k then return {k[1],k[2]} end
+  if m.min_depth then return technique_lines(m,tier) end
   if special[m.id] then
    out[#out+1]=special[m.id](m,tier)
   else generic(m,tier,out) end

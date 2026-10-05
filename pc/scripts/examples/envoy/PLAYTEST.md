@@ -107,6 +107,47 @@ budget's 1.56; a unique's fallback no longer prints `Tier n:`. Keystones read as
 
 The screens that carry these rules are the grid in MENUS.md; the screen proposal in the pacing lane's notes was adopted.
 
+## Technique, crits and earned looks (skill layer, 2026-10-05; Lua-tested, in-game checks listed below)
+
+The engine's skill events, crits and earned-look calls are wired into the modifier system. Everything here is data records in the existing schema
+(no Lua callbacks): a trigger, conditions, effects. `scripts/mod_skill.lua` is the one declaration of the technique vocabulary.
+
+### Triggers (`mod_skill.lua`)
+| trigger | verified in the game (engine lane) | retail CPU performs it |
+|---|---|---|
+| lcancel, lcancel_hit (hit-confirmed), lcancel_miss | yes | dead (miss: maybe) |
+| wavedash | yes | dead |
+| perfect_shield | yes | maybe |
+| tech, tech_miss | yes (directions partly measured) | maybe, live |
+| short_hop, fast_fall | yes | maybe |
+| dash_dance, jump_cancel_grab | yes | dead |
+| combo (count condition), combo_end | yes | live |
+| crit (strength condition), armor (absorbed / broke) | yes | live |
+| waveland, ledge_dash, sdi, shield_drop, auto_cancel, air_dodge, full_hop, jump_cancel_usmash | FLAGGED: available, not confirmed in play | dead / maybe |
+
+Conditions: `combo_at_least`, `combo_damage_above`, `hit`, `aerial`, `direction`, `strength_above`, `armor_result`, `air_frames_above`, `aerial_hit`.
+Opponents roll technique modifiers too. A roll whose trigger the retail AI never performs is inert for now (it costs the opponent budget it cannot
+use); opponents are not scripted. Foe rolls weight those records down (see the report).
+
+### Effect kinds (registry, schema, budget families, safety floors)
+armor (timed by type; permanent only as a threshold on an equip rule), intangible (<= 24 frames), interrupt (<= 20 frames, direct call, not journalled),
+air_jumps and restrict (caps; at most two restrictions, never shield with air dodge), crit (chance, multiplier, per-tag slot, percent floor, status gate),
+crit_next (forced crits), chain_status (Conductor's Shock to the nearest other opponent), and the fall-speed and weight value families.
+
+### Where technique modifiers sit in the depth curve
+Normal records carry `min_depth` (effective depth): Keen 4, Clean Landing 5, Tech 5, Brutal 6, Ruthless 6, Wave 6, Combo 6, Finish 6, Critical Flow 6,
+Finishing 7, Stance 7, Retaliation 8. Below that depth they are never drawn (a redraw on a separate stream keeps the seed's other picks identical).
+
+### Presentation: one meaning per output
+surface treatment = a status you have; earned afterimage = a status you earned by technique, coloured by its cause, only while it lasts (blue L-cancel,
+teal shield/tech, gold wave, red combo, white movement, violet a state paid for a miss); tracer = this hit crit; impact frame / particle = a moment.
+The echo picture is also windowed (the status its rule needs, or 45 frames after your own hit): nothing is ever on continuously.
+
+### Try it
+`envoy rules on`, `envoy classic`, then `envoy grant wavedasher` (any keystone id: wavedasher clean_lander powershield_oath juggernaut executioner
+critical_mass combo_conduit aerialist phase_dash gambler featherfall conductor). `critfx preview 0.2` / `critfx preview 1` plays the crit moment at a strength;
+`critfx slow 4` stretches it for a look; `techprobe` logs statuses with their cause and the native writes; `techprobe cost` the script cost.
+
 # Envoy retail playtest - 2026-10-04 fix1
 
 EM4 follow-up supersedes the tight EM4 LAB ceilings and mirror fallback below. Opponent rolls are

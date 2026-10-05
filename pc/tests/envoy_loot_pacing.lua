@@ -35,7 +35,7 @@ T.test('the power curve stays honest: filled slots within 12% of the pre-curve g
   local rec={seed=seed,depth=ctx.depth,loop=ctx.loop>0 and ctx.loop or nil,colour=loot.colours[math.floor(r(6))+1],rarity=rar,affixes={}}
   local tier=1+math.floor(P.effective(ctx)/5);local groups={}
   if rar=='unique' then local m=loot.uniques[math.floor(r(#loot.uniques))+1];rec.unique=m.id;rec.colour=m.fixed_colour or 'white';rec.affixes={{id=m.id,tier=rec.loop==nil and 1 or P.tier(ctx)}};return rec end
-  local function aff(kind) local c={};for _,m in ipairs(loot.normal) do if not groups[m.group] and (not kind or m.affix==kind) then c[#c+1]=m end end
+  local function aff(kind) local c={};for _,m in ipairs(loot.normal) do if not groups[m.group] and (not kind or m.affix==kind) and not m.min_depth then c[#c+1]=m end end
    local m=c[math.floor(r(#c))+1];groups[m.group]=true;rec.affixes[#rec.affixes+1]={id=m.id,tier=rec.loop==nil and math.min(3,tier) or tier} end
   for _=1,rar=='rare' and 2 or rar=='magic' and 1 or 0 do aff('prefix');aff('suffix') end
   if rec.colour=='white' then aff() end;return rec

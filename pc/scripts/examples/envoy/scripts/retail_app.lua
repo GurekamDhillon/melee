@@ -42,6 +42,14 @@ return function(D)
     end
     self.g.log('envoy: rule host for retail runs is '..(self.retail.rules and 'ON' or 'off (companion stats)'));return true
    end
+   -- `envoy grant <keystone id>`: take that keystone at once (a try-it command). In a rule-host run it replaces the held keystone when
+   -- the allowance is one; with a bigger allowance it adds it (exclusions and drawback floors still refuse an illegal build).
+   if arg:match('^grant ') then
+    local id=arg:match('^grant%s+([a-z_]+)%s*$');if not id then return false,'usage: envoy grant <keystone id>' end
+    local host=self.retail.host
+    if self.retail.active and self.retail.rules and host and host.running then return host:grant(id) end
+    return self.mods_command and self.mods_command('add '..id) or false,'start a rules-on run first (envoy rules on, envoy classic)'
+   end
    if arg=='start' then
     if self.menu.run_type=='campaign' then return old.command(self,'start') end
     return self:start_retail()
@@ -67,7 +75,13 @@ return function(D)
    self.run.profile=r.profile
    if r.reward then self.menu:show('reward');self.menu.focus.reward=1;self.visible=true
    elseif not r.active and r.results then self.menu:results(r.results);self.visible=true;self.retail_return=true end
+   self.g.log(('envoy: retail event %s active=%s reward=%s results_up(before)=%s'):format(name,tostring(r.active),tostring(r.reward~=nil),tostring(self.results_up)))
    if name=='stage_start' or not r.active then self.results_up=nil end
+   -- The retail results/clear screens belong to the game: while one is up (from the clear to the next stage's start) Envoy's own
+   -- START menu does not open, so one START advances them. A stage start also needs a FRESH press: a START that was already held
+   -- at the scene change (an Adventure intro skip) must not open the menu.
+   if (name=='stage_clear' or name=='boss_defeated' or name=='complete' or name=='game_over') and r.active and not r.reward then self.results_up=true end
+   if name=='stage_start' then self.start_ready=false;self.seen_foe=false end
    if name=='stage_start' and r.active then self.recolour:apply(r.companion) end
    self:sync_pause()
   end
@@ -117,6 +131,17 @@ return function(D)
    if kind=='run' and self.menu.run_type~='campaign' then return self:start_retail(nil,fighter) end
    return old.launch(self,kind,fighter)
   end
+  -- The engine delivers no event when a retail stage is decided (on_1p_stage_clear runs when the clear is ACCEPTED, i.e. after the
+  -- press that leaves the results screen, and on_match_end only at the next scene). So the results screen is read from game state:
+  -- an opponent was seen this stage and none has a stock left, or P1 has none, or the engine holds the clear (mode_1p().held).
+  function A:stage_decided()
+   local g=self.g;if not g.player then return false end
+   local p1=g.player(1);if p1 and p1.stocks==0 then return true end
+   local alive=false
+   for p=2,6 do local v=g.player(p);if v and type(v.stocks)=='number' and v.stocks>0 then alive=true;self.seen_foe=true end end
+   if self.seen_foe and not alive then return true end
+   local m=g.mode_1p and g.mode_1p();return type(m)=='table' and m.held==true
+  end
   function A:frame()
    if self.retail.active or self.retail.pending then
     self.retail:frame();if self.retail.active then self.recolour:tick(self.retail.companion) end;return
@@ -142,8 +167,12 @@ return function(D)
     self.run.profile=self.retail.profile
     if not self.retail.active and self.retail.results then self.menu:results(self.retail.results);self.retail_return=true
     elseif self.menu.screen=='reward' and not self.retail.reward then self.menu:show('playing') end
+    if not self.results_up and self:stage_decided() then self.results_up=true end
     self:sync_pause();local actions=self.input:poll()
-    if self.visible then for _,action in ipairs(actions) do if not (action=='start' and self.results_up and self.menu.screen=='playing') then self:menu_effect(self.menu:input(action,self:context())) end end end
+    do local pad=self.g.pad(1,true) or {};if not pad.START then self.start_ready=true end end
+    if self.visible then for _,action in ipairs(actions) do
+     if action=='start' then self.g.log(('envoy: START seen screen=%s results_up=%s start_ready=%s paused=%s'):format(tostring(self.menu.screen),tostring(self.results_up),tostring(self.start_ready),tostring(self.g.paused and self.g.paused()))) end
+     if not (action=='start' and (self.results_up or self.start_ready==false) and self.menu.screen=='playing') then self:menu_effect(self.menu:input(action,self:context())) end end end
     return
    end
    self.retail:tick();return old.tick(self)
@@ -190,7 +219,7 @@ return function(D)
   -- From the end of a retail stage until the next one starts the game's own results screen is up and waits for START: Envoy's
   -- START-opens-the-pause-menu must stay out of the way, or it eats the press (and, with START hidden while a menu is open, the
   -- game never sees it at all).
-  function A:match_end() if self.retail.active or self.retail.pending then self.results_up=true;self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
+  function A:match_end() if self.retail.active or self.retail.pending then self.g.log('envoy: match end in a retail run: results screen up');self.results_up=true;self.start_ready=false;self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
   function A:unload() self:stop('quit');return old.unload(self) end
   function A:enter_hub()
    if self.retail.active or self.retail.pending then return false,'settle retail run before garden' end

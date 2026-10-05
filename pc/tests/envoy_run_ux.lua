@@ -178,7 +178,7 @@ T.test('reward with a free slot: the grid shows blocks and A equips into the fir
  s.holds=0;present(host,{a,b,c});host.holding=true
  local text=dump(host);assert(text:find('TAKE ONE',1,true) and text:find('EQUIPPED 1/4',1,true) and text:find('BAG 0/4',1,true) and text:find('KEYSTONES 1/1',1,true),text)
  assert(text:find('[locked]',1,true) and text:find('A Equip',1,true) and text:find('X To bag',1,true) and text:find('B Skip',1,true),text)
- assert(text:find('Goes into slot 2.',1,true) and text:find('Build strength',1,true) and text:find(' -> ',1,true),text)
+ assert(text:find('Goes into slot 2.',1,true) and text:find('Build strength',1,true) and (text:find(' -> ',1,true) or text:find('(no change)',1,true)),text)
  local before=count_drives(host);press(host,'accept')
  local bag=host:bag();assert(bag.equipped[2] and #host.offers==0 and count_drives(host)==before+1)
  assert(has(s,'equipped into slot 2:') and has(s,'declined'))

@@ -8,8 +8,10 @@ return function(D)
  M.defs={
   {name='burn',bit=1,tag='burning',look='burn',implemented=true,
    budget=function(amount,max) return {sustain=amount*(max or 1)} end},
-  -- Shock's hitstun effect awaits safe hit mutation: declared for the bit and look, not applicable.
-  {name='shock',bit=2,tag='shocked',look='shock',implemented=false},
+  -- Shock is native now (gd.shock, journal op `shock`): the target's next hit taken has more hitstun. The host mirrors the Lua
+  -- status into that native state. It has no hit-rule bit (versus-status rules cannot test it), so it stays out of M.bits.
+  {name='shock',bit=2,tag='shocked',look='shock',implemented=true,no_bit=true,
+   budget=function() return {launch_taken=.06} end},
   {name='chill',bit=4,tag='chilled',look='chill',implemented=true,
    budget=function() return {speed=-.2} end,values={run_speed=-.2,air_speed=-.2}},
   {name='curse',bit=8,tag='cursed',look='curse',implemented=true,
@@ -24,7 +26,7 @@ return function(D)
  M.order,M.by_name,M.bits,M.tags,M.implemented={},{},{},{},{}
  for _,d in ipairs(M.defs) do
   M.order[#M.order+1]=d.name;M.by_name[d.name]=d
-  if d.implemented then M.bits[d.name]=d.bit;M.tags[d.name]=d.tag;M.implemented[d.name]=true end
+  if d.implemented then if not d.no_bit then M.bits[d.name]=d.bit end;M.tags[d.name]=d.tag;M.implemented[d.name]=true end
  end
  function M.budget(name,amount,max)
   local d=M.by_name[name];assert(d and d.budget,'unbudgeted status');return d.budget(amount,max)

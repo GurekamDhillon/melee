@@ -43,13 +43,26 @@ return function(D)
    local pick=rand(total);local m;for _,v in ipairs(self.uniques)do pick=pick-((self.config.unique_weights or {})[v.id] or 1);if pick<0 then m=v;break end end
    rec.unique=m.id;rec.colour=m.fixed_colour or 'white';rec.affixes={{id=m.id,tier=D.mod_progression.tier(context)}}
   else
-   local groups={};local floor=1+math.floor(D.mod_progression.effective(context)/(self.config.tier_depth or 5))
+   local redraw;local groups={};local floor=1+math.floor(D.mod_progression.effective(context)/(self.config.tier_depth or 5))
    local function affix(kind)
     local choices,total={},0
     for _,m in ipairs(self.normal) do if not groups[m.group] and (not kind or m.affix==kind) then choices[#choices+1]=m;local w=m.weight*((self.config.affix_weights or {})[m.id] or 1);assert(type(w)=='number' and w==w and w>0 and w<1e9,'invalid affix weight');total=total+w end end
-    assert(total>0,'pool exhausted');local pick=rand(total);local chosen
-    for _,m in ipairs(choices) do pick=pick-m.weight*((self.config.affix_weights or {})[m.id] or 1);if pick<0 then chosen=m;break end end
-    groups[chosen.group]=true;local tier=floor
+    assert(total>0,'pool exhausted')
+    -- A record with a minimum depth (the technique modifiers) is drawn from the same weighted list as every other. While it is
+    -- still too early for it, the pick is redrawn from the records that are open, using a stream of its own (the seed's main
+    -- stream is untouched), so a seed gives the same picks at every depth except where it picked a record not yet open.
+    local effective=D.mod_progression.effective(context);local chosen
+    do
+     local pick=rand(total)
+     for _,m in ipairs(choices) do pick=pick-m.weight*((self.config.affix_weights or {})[m.id] or 1);if pick<0 then chosen=m;break end end
+     if chosen and chosen.min_depth and effective<chosen.min_depth then
+      local open,sum={},0;for _,m in ipairs(choices) do if not m.min_depth or effective>=m.min_depth then open[#open+1]=m;sum=sum+m.weight*((self.config.affix_weights or {})[m.id] or 1) end end
+      assert(sum>0,'pool exhausted');redraw=redraw or rng(seed+7919);local p2=redraw(sum);chosen=nil
+      for _,m in ipairs(open) do p2=p2-m.weight*((self.config.affix_weights or {})[m.id] or 1);if p2<0 then chosen=m;break end end
+      chosen=chosen or open[#open]
+     end
+    end
+    assert(chosen,'pool exhausted');groups[chosen.group]=true;local tier=floor
     rec.affixes[#rec.affixes+1]={id=chosen.id,tier=tier}
    end
    -- Affix count is a function of rarity AND depth (mod_progression.affix_count); prefixes and suffixes alternate,
@@ -74,6 +87,7 @@ return function(D)
     -- A merge (drive_merge.lua) may lift a modifier above its depth tier, at most one tier per merge.
     assert(a.tier>=base and a.tier<=base+merged,'tier does not match depth') end
    assert(m.kind=='normal' or (r.rarity=='unique' and m.id==r.unique and m.kind=='unique'),'non-loot affix')
+   assert(not m.min_depth or D.mod_progression.effective(context)>=m.min_depth,'modifier is not available at this depth')
    local group=m.group or m.id;assert(not groups[group],'duplicate group');groups[group]=true;n=n+1
    if m.affix=='prefix' then prefix=prefix+1 elseif m.affix=='suffix' then suffix=suffix+1 end
   end

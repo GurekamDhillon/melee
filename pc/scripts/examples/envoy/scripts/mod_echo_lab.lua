@@ -84,6 +84,8 @@ return function(D)
       for _,r in ipairs(d.rules)do for i,c in ipairs(d.copies)do if c.age==r.delay then local rule=clone(r);rule.delay=nil;rule.copy=i;description.echoes[#description.echoes+1]=rule end end end
       local ok,h,why=pcall(g.echo_afterimage,p,description)
       if ok and type(h)=='number' and h%1==0 and h>0 then self.visual[p]=h;self.visual_keys[p]=key
+       -- The picture is on only inside a window (a status the rule needs, or a short window after the fighter's own hit): channel 2.
+       if g.afterimage_bind then pcall(g.afterimage_bind,h,{status=2,tint={.9,.8,1,.7},tail={.35,.2,.6,0}}) end
       else self:note(p,ok and (why or 'afterimage emitter unavailable; retrying') or h)end
      end
     end

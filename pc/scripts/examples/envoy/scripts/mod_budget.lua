@@ -2,12 +2,12 @@
 return function(D)
  local S=D.mod_schema;local B={}
  -- Every registered effect needs a budget answer; a field the schema admits cannot be silently unbudgeted.
- B.effect_ops={echo=true,value=true,convert=true,['versus-status']=true,status=true,stacks=true,remove_status=true,heal=true,damage=true,clank_damage=true,emit=true}
+ B.effect_ops={echo=true,value=true,convert=true,['versus-status']=true,status=true,stacks=true,remove_status=true,heal=true,damage=true,clank_damage=true,emit=true,armor=true,intangible=true,interrupt=true,chain_status=true,crit_next=true,air_jumps=true,restrict=true,crit=true}
  for op in pairs(D.mod_registry.effects) do assert(B.effect_ops[op],'registered effect has no budget rule: '..op) end
  for op in pairs(B.effect_ops) do assert(D.mod_registry.effects[op],'budget rule for an unregistered effect: '..op) end
- B.order={'echo','damage_dealt','launch_dealt','damage_taken','launch_taken','speed','jump','status_duration','sustain','conversion','momentum','clank','cleanse','curse_dealt'}
- B.caps={echo={0,12},damage_dealt={-.95,63},launch_dealt={-.95,3},damage_taken={-.85,63},launch_taken={-.95,3},speed={-.8,1},jump={-.8,1},status_duration={-.95,19},sustain={0,100},conversion={0,30},momentum={0,40},clank={0,6},cleanse={0,30},curse_dealt={0,3}}
- B.families={damage_dealt='damage_dealt',launch_dealt='launch_dealt',damage_taken='damage_taken',knockback_taken='launch_taken',run_speed='speed',air_speed='speed',jump_height='jump',air_jump_height='jump',status_duration='status_duration'}
+ B.order={'echo','damage_dealt','launch_dealt','damage_taken','launch_taken','speed','jump','status_duration','sustain','conversion','momentum','clank','cleanse','curse_dealt','armor','intangible','air_jumps','restrict','interrupt','crit','fall','weight'}
+ B.caps={echo={0,12},damage_dealt={-.95,63},launch_dealt={-.95,3},damage_taken={-.85,63},launch_taken={-.95,3},speed={-.8,1},jump={-.8,1},status_duration={-.95,19},sustain={0,100},conversion={0,30},momentum={0,40},clank={0,6},cleanse={0,30},curse_dealt={0,3},armor={0,12},intangible={0,3},air_jumps={-1,5},restrict={0,4},interrupt={0,2},crit={0,3},fall={-.6,1.5},weight={-.5,1.5}}
+ B.families={damage_dealt='damage_dealt',launch_dealt='launch_dealt',damage_taken='damage_taken',knockback_taken='launch_taken',run_speed='speed',air_speed='speed',jump_height='jump',air_jump_height='jump',status_duration='status_duration',fall_speed='fall',weight='weight'}
  B.implicit_families={red={'damage_dealt'},green={'speed'},blue={'launch_taken'},yellow={'jump'},purple={'status_duration'},white={}}
  local function clamp(f,n) local c=assert(B.caps[f],'uncapped family');return math.max(c[1],math.min(c[2],n)) end
  local function add(t,f,n) t[f]=(t[f] or 0)+n end
@@ -24,11 +24,37 @@ return function(D)
     elseif k=='launch' then add(out,e.match.incoming and 'launch_taken' or 'launch_dealt',S.ratio(v,m,tier,e.match.incoming and 'launch_taken' or 'launch_dealt')-1)
     else error('unbudgeted native field '..k) end
    end
-  elseif e.op=='status' or e.op=='stacks' then out=status(e.status,value(e.amount or 1),e.max)
+  elseif e.op=='status' or e.op=='stacks' or e.op=='chain_status' then out=status(e.status,value(e.amount or 1),e.max);if e.op=='chain_status' then out.conversion=(out.conversion or 0)+S.copies(tier) end
   elseif e.op=='remove_status' then out=status(e.status,0,0);for k in pairs(out) do out[k]=0 end;out.cleanse=S.copies(tier)
   elseif e.op=='heal' or e.op=='damage' then out.sustain=0;for _,instance in ipairs(S.instances(tier))do out.sustain=out.sustain+math.min(100,S.resolve(e.amount,m,instance))end
   elseif e.op=='clank_damage' then out.clank=S.copies(tier)
-  elseif e.op=='emit' then out.conversion=S.copies(tier) else error('unbudgeted effect') end
+  elseif e.op=='emit' then out.conversion=S.copies(tier)
+  elseif e.op=='armor' then
+   -- Protection-seconds: a type's weight times how long it stands. A permanent threshold counts as two seconds a point per ten.
+   out.armor=0;for _,instance in ipairs(S.instances(tier)) do
+    local v=e.value and S.resolve(e.value,m,instance) or 1;local f=e.frames and S.resolve(e.frames,m,instance)
+    v=math.min(v,e.type=='hit_count' and 3 or 40);if f then f=math.min(f,e.type=='super' and 30 or 600) end
+    local n
+    if e.type=='super' then n=f/60 elseif e.type=='damage_threshold' then n=f and v/10*f/60*.8 or v/10*2
+    elseif e.type=='hit_count' then n=v*.35 elseif e.type=='damage_pool' then n=v/30*1.5 else n=v/40 end
+    out.armor=out.armor+n
+   end
+  elseif e.op=='intangible' then out.intangible=0;for _,instance in ipairs(S.instances(tier)) do out.intangible=out.intangible+math.min(24,S.resolve(e.frames,m,instance))/60 end
+  elseif e.op=='interrupt' then out.interrupt=0;for _,instance in ipairs(S.instances(tier)) do out.interrupt=out.interrupt+math.min(20,S.resolve(e.frames,m,instance))/60 end
+  elseif e.op=='air_jumps' then out.air_jumps=(S.resolve(e.count,m,tier)-1)*S.copies(tier)
+  elseif e.op=='restrict' then out.restrict=#e.forbid*S.copies(tier)
+  elseif e.op=='crit_next' then out.crit=0;for _,instance in ipairs(S.instances(tier)) do out.crit=out.crit+math.min(3,S.resolve(e.count,m,instance))*(math.min(4,S.resolve(e.multiplier,m,instance))-1)*.12 end
+  elseif e.op=='crit' then
+   -- Expected extra damage: a chance times its multiplier gain, scaled by how often it can apply. A multiplier alone is worth a
+   -- fraction (it needs a chance from elsewhere); a tag, a status gate or a percent floor each narrow it.
+   out.crit=0;for _,instance in ipairs(S.instances(tier)) do
+    local c=e.chance and math.min(1,S.resolve(e.chance,m,instance));local mult=math.min(4,e.multiplier and S.resolve(e.multiplier,m,instance) or 1.5)
+    local n
+    if c then n=c*(mult-1) elseif mult>1 then n=(mult-1)*.15 else n=0 end
+    if e.tag then n=n*.35 end;if e.status then n=n*.6 end;if e.min_percent and e.min_percent>0 then n=n*.6 end
+    out.crit=out.crit+n
+   end
+  else error('unbudgeted effect') end
   return out
  end
  -- The families a record's effects touch at any tier (what its `families` declaration must say). Used by pool
@@ -106,16 +132,26 @@ return function(D)
   end
   return raw,potential,keys,power
  end
+ -- Restrictions are only ever a price. At most two at once, and never the pair that leaves a fighter with no defence at all.
+ function B.restrictions_ok(list)
+  local n,has=0,{};for _,x in ipairs(list or {}) do n=n+1;has[x]=true end
+  if n>2 then return false,'Those keystones forbid too many actions.' end
+  if has.shield and has.air_dodge then return false,'Those keystones leave you with no defence.' end
+  if has.run and has.air_dodge and has.specials then return false,'Those keystones forbid too many actions.' end
+  return true
+ end
  function B.sustain_delta(previous,delta) local cap=B.caps.sustain[2];local next=math.max(-cap,math.min(cap,(previous or 0)+delta));return next,next-(previous or 0) end
  function B.build(pool,mods,implicits,statuses)
   local raw,potential,_,scores=compose(pool,mods,implicits,statuses);local out,strength={},1
   for _,f in ipairs(B.order) do local c=B.caps[f]
    local n=raw[f] or 0;local p=potential[f] or 0;out[f]={raw=n,value=1+clamp(f,n),potential=1+clamp(f,p)}
   end
-  local offence=out.damage_dealt.potential
+  -- A crit is an expectation, not a certainty: it counts at half weight in build strength.
+  local offence=out.damage_dealt.potential*(1+(out.crit.potential-1)*.5)
   local toughness=1/out.damage_taken.potential
-  local launch=out.launch_dealt.potential*out.curse_dealt.potential/math.max(.05,out.launch_taken.potential)
-  local utility=1+.025*math.max(0,out.sustain.potential-1)+.04*math.max(0,out.momentum.potential-1)+.12*math.max(0,out.conversion.potential-1)+.2*math.max(0,out.clank.potential-1)+.1*math.max(0,out.cleanse.potential-1)
+  -- Weight divides the launch taken (a heavier fighter flies less far); more protection and mobility add to utility.
+  local launch=out.launch_dealt.potential*out.curse_dealt.potential/math.max(.05,out.launch_taken.potential/math.max(.2,out.weight.potential))
+  local utility=math.max(.5,1+.025*math.max(0,out.sustain.potential-1)+.04*math.max(0,out.momentum.potential-1)+.12*math.max(0,out.conversion.potential-1)+.2*math.max(0,out.clank.potential-1)+.1*math.max(0,out.cleanse.potential-1)+.08*math.max(0,out.armor.potential-1)+.15*math.max(0,out.intangible.potential-1)+.12*math.max(0,out.interrupt.potential-1)+.03*math.max(0,out.air_jumps.potential-1)-.08*math.max(0,out.restrict.potential-1)+.06*math.max(0,1-out.fall.potential)-.02*math.max(0,out.fall.potential-1))
   strength=(1+math.max(0,out.echo.potential-1))*offence*toughness^.25*math.max(.25,launch)^.25*utility
   return out,math.max(1,strength)
  end

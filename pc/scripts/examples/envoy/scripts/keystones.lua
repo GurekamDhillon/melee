@@ -7,8 +7,9 @@
 -- beside it (drive family, the two plain-word lines, exclusions, whether it can be a starting keystone) lives in
 -- K.meta so the record format does not change. Every record here uses only what the modifier engine and the
 -- run host apply TODAY: fighter values, native hit rules, statuses, heal/damage, one echo window, existing events.
--- K.waiting lists good keystones that need engine work (held earned-state/crit packet, armour and capability
--- effect kinds, unbudgeted values); they are data only, never in the pool, so nothing is faked.
+-- K.waiting lists good keystones that still need engine work (an item route); they are data only, never in the pool,
+-- so nothing is faked. The technique keystones (wavedash, L-cancel, perfect shield, combos, crits, armour, air jumps) moved
+-- into the pool when the engine's skill events, crits and armour types landed (see the technique section below).
 --
 -- A one-trigger record can only carry effects of that trigger, so a triggered keystone pays its drawback with
 -- an effect of the same trigger (self damage, a status on yourself, a status removed); an equip keystone pays
@@ -54,7 +55,7 @@ return function(D)
  -- ---- green: speed -------------------------------------------------------------------------------------------
  ks('sprinter','Sprinter\'s Pact','green','equip',{},
   {value('run_speed',1.35),value('air_speed',1.2),value('knockback_taken',1.2)},{},'Launched 20% farther.','haste',.34,tags('hasted'),
-  {effect=function() return 'Run speed +35% and air speed +20%' end,drawback='Drawback: you are launched 20% farther',uses='fighter values'})
+  {effect=function() return 'Run speed +35% and air speed +20%' end,drawback='Drawback: you are launched 20% farther',excludes={'juggernaut'},uses='fighter values'})
  ks('hit_and_run','Hit and Run','green','hit_dealt',{},
   {status('haste','self','$duration'),status('momentum','self','$duration',1,5),status('curse','self',120,.05)},{duration=120},
   'Launched 5% farther for 2 seconds after each hit.','haste',.3,tags('hasted','momentum'),
@@ -123,6 +124,49 @@ return function(D)
  ks('fury','Fury','white','hit_taken',{},
   {status('momentum','self',300,1,5),status('haste','self','$duration'),drop('guarded')},{duration=180},'Being hit ends your Guarded status.','momentum',.97,tags('hasted','momentum'),
   {effect=function(x) return 'When you are hit, gain Momentum and Haste for '..secs(x.res('duration')) end,drawback='Drawback: being hit ends your Guarded status',uses='hit_taken, Momentum, Haste, remove Guarded'})
+ -- ---- technique keystones: the engine's skill events, armour types, caps and crits -----------------------------
+ -- Triggered by a technique, so each earns its reward by playing Melee well, and pays on the same trigger. `technique` names
+ -- the skill events they listen to (mod_skill: verified in the game or flagged) and `cpu` says whether a retail CPU opponent can
+ -- ever fire them (an opponent's roll of a 'dead' one is inert: opponents are not scripted).
+ ks('wavedasher','Wavedasher','green','wavedash',{},
+  {{op='armor',type='super',frames=6},status('guarded','self',12),{op='damage',amount=2,subject='self'}},{},
+  'Each wavedash costs 2 damage points.','haste',.12,tags('guarded','technique'),
+  {effect=function() return 'Wavedash: super armour for 6 frames, then Guarded for 12 (gold afterimages while it lasts)' end,drawback='Drawback: each wavedash costs you 2 damage points',starter=false,technique={'wavedash'},uses='wavedash skill event, super armour (6 frames), Guarded, self damage'})
+ ks('clean_lander','Clean Lander','green','lcancel_hit',{},
+  {status('haste','self','$duration'),{op='damage',amount=1,subject='self'}},{duration=120},
+  'Each such landing costs 1 damage point.','haste',.62,tags('hasted','aerial','technique'),
+  {effect=function(x) return 'L-cancel a landing after the aerial hit: Haste for '..secs(x.res('duration'))..' (blue afterimages for exactly that long)' end,drawback='Drawback: each such landing costs you 1 damage point',starter=false,technique={'lcancel_hit'},uses='hit-confirmed L-cancel skill event, Haste (earned), self damage'})
+ ks('powershield_oath','Powershield Oath','blue','perfect_shield',{},
+  {{op='armor',type='hit_count',value=1,frames=90},status('guarded','self',90),status('chill','self',60)},{},
+  'You are Chilled for 1 second.','guarded',.5,tags('guarded','technique'),
+  {effect=function() return 'Perfect shield: absorb the next hit with armour and be Guarded for 1.5 seconds (teal afterimages)' end,drawback='Drawback: you are Chilled (20% slower) for 1 second',starter=false,excludes={'aerialist'},technique={'perfect_shield'},uses='perfect_shield, hit-count armour, Guarded (earned), Chill on self'})
+ ks('juggernaut','Juggernaut','blue','equip',{},
+  {{op='armor',type='damage_threshold',value=6},{op='restrict',forbid={'run'}}},{},'You cannot run.','guarded',.55,tags('guarded','technique'),
+  {effect=function() return 'You do not flinch from hits that deal under 6 damage' end,drawback='Drawback: you cannot run',starter=false,excludes={'sprinter'},uses='permanent damage-threshold armour + run restriction (fighter caps)'})
+ ks('executioner','Executioner','red','equip',{},
+  {{op='crit',chance=1,multiplier=2,min_percent=100},value('damage_dealt',.9)},{},'Damage you deal -10%, and hits on a target under 100% never crit.','burn',.0,tags('damage','critical'),
+  {effect=function() return 'Hits on a target above 100% damage always crit for double' end,drawback='Drawback: damage you deal -10%, and no hit below 100% can crit',starter=false,excludes={'gambler'},uses='crit chance with a percent floor, fighter value'})
+ ks('critical_mass','Critical Mass','white','crit',{},
+  {status('momentum','self','$duration',1,5),status('shock','target','$shock'),status('curse','self',90,.05)},{duration=300,shock=180},'A crit also makes you launched 5% farther for 1.5 seconds.','momentum',.1,tags('momentum','critical','shocked'),
+  {effect=function(x) return 'Land a crit: gain Momentum (up to 5) for '..secs(x.res('duration'))..' and Shock the target (its next hit taken stuns longer)' end,drawback='Drawback: each crit also makes you launched 5% farther for 1.5 seconds',starter=false,uses='crit event, Momentum, Shock on the target, Curse on self'})
+ ks('combo_conduit','Combo Conduit','red','combo',{{combo_at_least=3}},
+  {{op='crit_next',count=1,multiplier=1.6},status('chill','self',60)},{},'Each such hit Chills you for 1 second.','curse',.98,tags('critical','technique'),
+  {effect=function() return 'Land the third or later hit of a combo: your next hit crits for x1.6' end,drawback='Drawback: each such hit Chills you (20% slower) for 1 second',starter=false,technique={'combo'},uses='combo skill event with a count condition, forced crit, Chill on self'})
+ ks('aerialist','Aerialist','yellow','equip',{},
+  {{op='air_jumps',count=5},{op='restrict',forbid={'shield'}}},{},'You cannot shield.','momentum',.14,tags('aerial','technique'),
+  {effect=function() return 'You have five air jumps' end,drawback='Drawback: you cannot shield',starter=false,excludes={'powershield_oath'},uses='air-jump count and a shield restriction (fighter caps)'})
+ ks('phase_dash','Phase Dash','green','air_dodge',{},
+  {{op='intangible',frames=4},{op='damage',amount=1,subject='self'}},{},'Each air dodge costs 1 damage point.','haste',.5,tags('technique'),
+  {effect=function() return 'Air dodge: you are intangible for 4 extra frames' end,drawback='Drawback: each air dodge costs you 1 damage point',starter=false,technique={'air_dodge'},uses='air_dodge skill event (flagged: not confirmed in play), intangibility, self damage'})
+ ks('conductor','Conductor','purple','hit_dealt',{{tag='electric'}},
+  {status('shock','target','$duration'),{op='chain_status',status='shock',duration='$duration',amount=1,max=1,refresh='refresh'},{op='damage',amount=1,subject='self'}},{duration=150},'Each electric hit costs you 1 damage point.','shock',.58,tags('electric','shocked'),
+  {effect=function(x) return 'Electric hits Shock the target and chain Shock to the nearest other opponent for '..secs(x.res('duration')) end,drawback='Drawback: each electric hit costs you 1 damage point',starter=false,uses='hit_dealt with an electric condition, Shock on the target, chain_status to the nearest other opponent, self damage'})
+ ks('gambler','Gambler','white','equip',{},
+  {{op='crit',chance=.35,multiplier=2,multiplier_max=3},value('damage_dealt',.8)},{},'All your hits deal 20% less damage before any crit.','shock',.12,tags('damage','critical'),
+  {effect=function() return 'Every hit has a 35% chance to deal double or triple damage' end,drawback='Drawback: all your hits deal 20% less damage first',starter=false,excludes={'executioner'},uses='crit chance with a multiplier range, fighter value'})
+ ks('featherfall','Featherfall','yellow','equip',{},
+  {value('fall_speed',.65),value('weight',.75),value('knockback_taken',1.3)},{},'Launched 30% farther.','momentum',.15,tags('aerial'),
+  {effect=function() return 'You fall 35% slower and weigh 25% less' end,drawback='Drawback: you are launched 30% farther',uses='fall-speed and weight fighter values'})
  -- ---- keystones that already lived in mod_pool.lua (kept there; their metadata is here) ---------------------
  K.legacy={
   pyromancer={family='red',effect=function() return 'All your attacks become fire' end,drawback='Drawback: ice hits against you deal 60% more damage',excludes={'frozen_oath'},uses='native convert rule + versus-status (incoming)'},
@@ -151,7 +195,7 @@ return function(D)
  -- Mutually exclusive pairs are refused. Stacked drawbacks add (the budget families add them too) and are floored:
  -- no combination may take damage dealt below x0.6 or a speed/jump value below x0.55 overall, or raise damage taken
  -- above x1.8 or launch taken above x1.6, so a pile of keystones cannot build an unplayable character.
- K.limits={damage_dealt={-.4,nil},run_speed={-.45,nil},air_speed={-.45,nil},jump_height={-.45,nil},damage_taken={nil,.8},knockback_taken={nil,.6}}
+ K.limits={damage_dealt={-.4,nil},run_speed={-.45,nil},air_speed={-.45,nil},jump_height={-.45,nil},damage_taken={nil,.8},knockback_taken={nil,.6},fall_speed={-.6,nil},weight={-.5,nil}}
  local function by_id()
   if not K.by_id then K.by_id={};for _,r in ipairs(K.records_list) do K.by_id[r.id]=r end end
   return K.by_id
@@ -170,6 +214,12 @@ return function(D)
   for id in pairs(seen) do local r=by_id()[id]
    for _,e in ipairs(r and r.effects or {}) do if e.op=='value' and K.limits[e.key] and type(e.value)=='number' then sums[e.key]=(sums[e.key] or 0)+e.value-1 end end
   end
+  local forbid,seenf={},{}
+  for id in pairs(seen) do local r=by_id()[id]
+   for _,e in ipairs(r and r.effects or {}) do if e.op=='restrict' then for _,x in ipairs(e.forbid) do if not seenf[x] then seenf[x]=true;forbid[#forbid+1]=x end end end end
+  end
+  local okr,whyr=D.mod_budget and D.mod_budget.restrictions_ok(forbid) or true
+  if not okr then return nil,whyr end
   for key,lim in pairs(K.limits) do local n=sums[key] or 0
    if (lim[1] and n<lim[1]-1e-9) or (lim[2] and n>lim[2]+1e-9) then return nil,'Those keystones stack too many drawbacks.' end
   end
@@ -214,19 +264,7 @@ return function(D)
  function K.owed(context,held) return math.max(0,D.mod_progression.allowance(context)-#(held or {})) end
  -- Good keystones that need engine work. Data only: never in the pool. `needs` names the missing piece.
  K.waiting={
-  {id='clean_lander',label='Clean Lander',family='green',effect='An L-cancelled aerial that hit gives Haste for 2 seconds, with blue afterimages for exactly that long.',drawback='A missed L-cancel Curses you for 1 second.',needs='held packet: L-cancel skill event + status-owned afterimage'},
-  {id='wavedasher',label='Wavedasher',family='green',effect='A wavedash gives super armour for 6 frames (afterimages while it lasts).',drawback='You take 10% more damage while not dashing.',needs='held packet: wavedash skill event + armor effect kind in the modifier schema'},
-  {id='powershield_oath',label='Powershield Oath',family='blue',effect='A perfect shield gives hit-count armour 1 and teal afterimages while it lasts.',drawback='Your shield is 20% smaller.',needs='armor effect kind + shield_max budget family + status-owned afterimage'},
-  {id='juggernaut',label='Juggernaut',family='blue',effect='You do not flinch from hits below a damage threshold.',drawback='You cannot run.',needs='armor effect kind and fighter_caps effect kind (run restriction) in the schema, host adapter, journal parity'},
-  {id='executioner',label='Executioner',family='red',effect='Hits on a target above 100% always crit.',drawback='Your other hits can never crit.',needs='held packet: crit chance/multiplier families and on_crit'},
-  {id='critical_mass',label='Critical Mass',family='white',effect='A crit gives Momentum and Shock.',drawback='Non-crit hits deal 20% less.',needs='held packet: crits; Shock is not implemented'},
-  {id='combo_conduit',label='Combo Conduit',family='red',effect='Each hit of a combo of 3 or more builds your damage for that combo.',drawback='Taking a hit ends it and Chills you.',needs='held packet: combo-count telemetry as trigger/condition'},
-  {id='aerialist',label='Aerialist',family='yellow',effect='Five air jumps.',drawback='You cannot shield.',needs='fighter_caps effect kind (air jumps, shield restriction) in the schema, host adapter, journal parity'},
-  {id='phase_dash',label='Phase Dash',family='green',effect='Your dodge makes you intangible for a few extra frames.',drawback='Your dodge has more landing lag.',needs='fighter_effect (intangible) effect kind in the schema + technique event'},
-  {id='conductor',label='Conductor',family='purple',effect='Electric hits chain Shock to the nearest other opponent.',drawback='Your fire and ice hits deal 20% less.',needs='Shock status (hit mutation) and nearest-opponent effect kind'},
-  {id='hoarder',label='Hoarder',family='white',effect='Start every stage holding a random item.',drawback='You take 15% more damage from items.',needs='give_item effect kind and an item damage hook'},
-  {id='featherfall',label='Featherfall',family='yellow',effect='You fall slowly and weigh little.',drawback='You are launched 30% farther.',needs='fall_speed and weight budget families (the schema names the values; the budget rejects them)'},
-  {id='gambler',label='Gambler',family='white',effect='Each hit may do double or nothing.',drawback='Half of all hits do nothing extra.',needs='seeded random effect op in the modifier engine, journalled'},
+  {id='hoarder',label='Hoarder',family='white',effect='Start every stage holding a random item.',drawback='You take 15% more damage from items.',needs='a journalled give_item effect (sim_commit has no give_item operation) and an item-damage hook for the drawback'},
  }
  return K
 end

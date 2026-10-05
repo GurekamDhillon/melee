@@ -68,6 +68,8 @@ return function(D)
  -- The rest of the keystones (about thirty in all) are data in keystones.lua; their family declarations are
  -- derived from the budget so they cannot drift. A pool built without that module keeps the four above.
  if D.keystones then for _,m in ipairs(D.keystones.records()) do m.families=D.mod_budget.effect_families(m);m.visual.priority=35;pool[#pool+1]=m end end
+ -- Technique and crit modifiers for ordinary drives (mod_techniques.lua): they carry min_depth, so they never roll in the first stages.
+ if D.mod_techniques then for _,m in ipairs(D.mod_techniques.records()) do m.families=D.mod_budget.effect_families(m);pool[#pool+1]=m end end
  for _,m in ipairs(D.mod_echo.records())do pool[#pool+1]=m end
  for _,m in ipairs(pool) do D.mod_schema.validate(m) end
  if D.mod_budget then D.mod_budget.validate_pool(pool,{}) end

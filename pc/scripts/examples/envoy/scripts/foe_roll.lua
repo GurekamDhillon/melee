@@ -13,7 +13,11 @@ return function(D)
  end
  function R:weights(strength)
   local high=math.min(12,math.max(0,math.log(strength)))
-  return {armoured=1+3*high,cleansing=1+2*high,bastion=1+high,shelter=1+high,reprisal=1+high,renewal=1+high,heavy=1/(1+high)^3,pyre=1/(1+high)^3}
+  local w={armoured=1+3*high,cleansing=1+2*high,bastion=1+high,shelter=1+high,reprisal=1+high,renewal=1+high,heavy=1/(1+high)^3,pyre=1/(1+high)^3}
+  -- A technique record whose trigger a retail CPU never performs is inert on an opponent: weight it down (it stays rollable, a deliberate
+  -- dead roll like the rest of the pool). 'maybe' triggers are left alone. Opponents are not scripted to perform technique.
+  if D.mod_skill then for _,m in ipairs(self.pool) do if m.min_depth and D.mod_skill.cpu(m.trigger)=='dead' then w[m.id]=.25 end end end
+  return w
  end
  function R:construct(rand,context,strength,full,relaxed)
   local count=full and P.slots(context) or math.floor(rand(P.slots(context)+1))

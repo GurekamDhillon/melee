@@ -77,6 +77,15 @@ Console: `uxdump` logs slots, bag, keystones, offers, HUD and the open screen as
 
 ---
 
+## Technique modifiers in the grid (skill layer, 2026-10-05)
+
+A technique modifier reads "<when>: <what>" on the first line of its detail panel (for example "L-cancel a landing after the aerial hit: Haste for
+2 seconds."), and a second line says what to look for ("You earn it by technique: a blue afterimage shows while it lasts."). A crit modifier says
+"Your hits crit 5% of the time." and "Crits are rare: the engine has none until a modifier grants a chance." There are no ids, tiers or numbers
+from the budget in either line. Technique and crit modifiers never roll before their depth (see PLAYTEST.md), so a stage-1 drive stays one plain
+effect. The first time a technique rule fires in a run, the build strip shows one toast ("Technique rule fired: ..."). A strong crit also toasts
+("Critical hit x2.0"); a weak one only plays the light impact frame.
+
 # Envoy retail 1P menu contract - 2026-10-04 fix1
 
 This retail contract supersedes the default maze/campaign flow below. The old

@@ -19,6 +19,17 @@ return function(D)
   clank_damage={fields=set('op subject'),journal='lua_state'},
   convert={fields=set('op match change'),journal='hit_rules'},
   ['versus-status']={fields=set('op status match change'),journal='hit_rules'},
+  -- Technique effects (native timed effects with their own expiry, from a trigger; or passive caps/crit from equip).
+  armor={fields=set('op type value frames direction subject when'),journal='fighter_armor'},
+  intangible={fields=set('op frames subject when'),journal='fighter_effect'},
+  air_jumps={fields=set('op count'),journal='fighter_caps'},
+  restrict={fields=set('op forbid'),journal='fighter_caps'},
+  -- No sim_commit operation exists for an interrupt window: it is a direct gd.fighter_interrupt on the event frame (not journalled).
+  interrupt={fields=set('op frames exits guard restore_jumps subject when'),journal='direct'},
+  crit={fields=set('op chance multiplier multiplier_max launch tag min_percent status'),journal='crit'},
+  crit_next={fields=set('op count multiplier subject when'),journal='crit'},
+  -- Apply a status to the nearest OTHER opponent of the victim (Conductor's Shock chain). Lua-side target choice from the frame's positions.
+  chain_status={fields=set('op status duration amount max refresh when'),journal='lua_state'},
  }
  -- Journal operations the native checkpoint admits (gw_script_sim_state.inc). `key` is the entity field
  -- ('port' 1..6 for the first four, 'entity' 1..12 for the capability writers). Bounds mirror the C
@@ -29,6 +40,8 @@ return function(D)
   fighter_effect={key='entity',fields={effect={enum={'intangible','invincible','metal','size'}},value={0,4},frames={0,3600,integer=true}}},
   fighter_armour={key='entity',fields={damage={0,1000},knockback={0,1000}}},
   fighter_armor={key='entity',fields={type={enum={'knockback','damage_threshold','knockback_threshold','super','hit_count','damage_pool'}},value={0,1000},frames={0,36000,integer=true},state={-1,65535,integer=true},from={-1,100000},to={-1,100000},direction={enum={'any','front','back'}},clear={boolean=true}}},
+  shock={key='entity',fields={frames={1,3600,integer=true},charges={1,8,integer=true},hitstun={1,4},bonus={0,120,integer=true},stack={boolean=true},clear={boolean=true}}},
+  crit={key='entity',fields={slot={enum={'default','jab','dash_attack','tilt','smash','aerial','grab','throw','special','projectile'}},begin={boolean=true},release={boolean=true},chance={0,1},multiplier={1,16},multiplier_max={1,16},launch={1,4},min_percent={0,999},force={0,255,integer=true}}},
   timed_status={key='entity',fields={channel={1,4,integer=true},value={-100000,100000},frames={0,3600,integer=true}}},
  }
  function R.field_set(op) return assert(R.effects[op],'unsupported effect (no connecting-hit mutation)').fields end

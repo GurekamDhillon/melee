@@ -35,6 +35,8 @@ return function(D)
    mods.drives.on_pickup=function(r) self:picked_up(r) end
    mods.drives.on_expire=function(r,why) self:expired(r,why) end
   end
+  -- A technique or crit moment worth a line (first technique rule fired, a strong crit): the strip's toast, presentation only.
+  mods.toast=function(text) if self.running then self.hud:announce({{text='Technique',colour='gold'},text}) end end
   g.command('uxdump',function() self:dump();return true end,'log the rule host state: slots, bag, keystones, offers, screen, hud')
   g.command('uxpress',function(a) self:press(a or '');return true end,'press a screen action: up down left right accept back x y start')
   g.command('uxcost',function(a) if a=='reset' then self.cost={} else for _,l in ipairs(self:cost_report()) do g.log(l) end end;return true end,'script cost of the run screens and strip: uxcost [reset]')
@@ -280,6 +282,15 @@ return function(D)
   self:touch();local rule=self:keystone_rule(id);self:log('keystone chosen: '..(rule and rule.label or id));self.hud:flash('Keystone: '..(rule and rule.label or id))
   self:offer_keystones();return true
  end
+ -- The try-it command (`envoy grant <id>`): take a keystone now, outside the offer. Same legality rules as a pick.
+ function H:grant(id)
+  local rule=self:keystone_rule(id)
+  if not rule or rule.kind~='keystone' then self:log('grant refused: unknown keystone '..tostring(id));return false,'unknown keystone' end
+  for _,held in ipairs(self:keystone_ids()) do if held==id then self:log('grant: already held '..id);return true end end
+  local ok,why=self:bag():choose_keystone(id)
+  if not ok then self:log('grant refused: '..tostring(why));return false,plain(why) end
+  self:touch();self:log('grant: keystone '..rule.label);self.hud:flash('Keystone: '..rule.label);return true
+ end
  -- Roll (or re-roll after a pick) the keystone choice when allowance steps are owed; the same stage always offers the same three.
  function H:offer_keystones()
   local ctx=self.mods.engine.context;local held=self:keystone_ids()
@@ -309,6 +320,8 @@ return function(D)
  end
  -- ---- lifecycle -------------------------------------------------------------------------------------------------
  function H:run_begin(seed)
+  -- Crits draw from the engine's generator; restart it from the run seed so a run is reproducible (never a default seed).
+  if self.g.crit_seed then pcall(self.g.crit_seed,seed_for(seed,0,0,9)) end
   self.running=true;self.seed=seed;self.fell={};self.rolls={};self.stage=0;self.loop=0;self.drops=0
   self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.hud:clear();if self.screen.active then self.screen:close() end
   self.mods:run_end() -- a new run starts from an empty bag, whatever the last one left

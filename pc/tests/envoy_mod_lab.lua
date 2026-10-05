@@ -168,7 +168,7 @@ T.test('CPU engine statuses and native percent rules affect P1 and retire on cle
  assert(a.foes:command('clear'));a:frame();assert(not a.engine.statuses[1] and not a.engine.equipped[2]);assert(#s.hit_rules[2].rules==0)
 end)
 T.test('high valid player strength defaults to independent scalar targeted roll',function()
- local s,a=fixture();local mods={};for _,m in ipairs(a.engine.list) do if m.kind=='normal' then local native=false;for _,e in ipairs(m.effects) do if e.op=='convert' or e.op=='versus-status' then native=true end end;if not native then mods[m.id]=#m.tiers end end end
+ local s,a=fixture();local mods={};for _,m in ipairs(a.engine.list) do if m.kind=='normal' and not m.min_depth then local native=false;for _,e in ipairs(m.effects) do if e.op=='convert' or e.op=='versus-status' then native=true end end;if not native then mods[m.id]=#m.tiers end end end
  a.engine:set_build(1,mods,{});local _,strength=a.engine:family_budget(1);assert(strength>1.8)
  assert(a.foes:command('roll'));a:frame();local r=a.foes.builds[2];assert(r.strength>=strength*.8 and r.strength<=strength*1.2 and not r.reference and not r.mods)
 end)

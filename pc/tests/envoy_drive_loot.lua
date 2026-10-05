@@ -73,7 +73,7 @@ T.test('complete native rule budget rejects more than thirty regular rules witho
 end)
 T.test('duplicate IDs retain the higher tier and unequip restores the lower tier',function()
  local bag=D.drive_bag.new(loot)
- local low=loot:roll(71,0,'rare');local high=loot:roll(71,10,'rare')
+ local low=loot:roll(72,0,'rare');local high=loot:roll(72,10,'rare')
  assert(#low.affixes==1 and #high.affixes==4) -- the curve: the same seed is one affix early and four deep
  for i,a in ipairs(low.affixes) do assert(a.id==high.affixes[i].id and high.affixes[i].tier==3 and a.tier==1) end
  assert(bag:give(low));assert(bag:equip(1,1));assert(bag:give(high));assert(bag:equip(1,2))

@@ -14,7 +14,7 @@ return function(D)
   local ok,a,b=pcall(g[name],...);if not ok then return nil,a end;return a,b
  end
  local function cleanup(g,name,...) if g[name] then pcall(g[name],...) end end
- function M.new(g,engine) return setmetatable({g=g,engine=engine,selected={},ready=false},M) end
+ function M.new(g,engine) return setmetatable({g=g,engine=engine,selected={},ready=false,look_cache={}},M) end
  function M:intensity(value)
   assert(type(value)=='number' and value==value and value>=0 and value<=1,'intensity must be 0..1')
   state(self.engine).intensity=value
@@ -25,7 +25,7 @@ return function(D)
    if self.post then cleanup(self.g,'post_remove',self.post);self.post=nil end
    return
   else
-   for p in pairs(self.selected) do cleanup(self.g,'fighter_shader',p,nil) end;self.selected={}
+   for p in pairs(self.selected) do cleanup(self.g,'fighter_shader',p,nil) end;self.selected={};self.look_cache={}
   end
   if self.post then cleanup(self.g,'post_remove',self.post);self.post=nil end
   if self.warm_post then cleanup(self.g,'post_remove',self.warm_post);self.warm_post=nil end
@@ -33,11 +33,12 @@ return function(D)
   self.ready=false;self.error=nil;self.note=nil;self.restoring=false
  end
  local function fail(self,why) self:clear();self.error=why or "visual preparation failed";return false,self.error end
- function M:warm(engine)
+ -- `present` (optional) is the caller's own fresh port->state table from this frame; it saves six gd.player calls.
+ function M:warm(engine,present)
   self.engine=engine or self.engine;self.note=nil
   if self.error then return false,self.error end
   local ports={};local changed=false
-  for p=1,6 do if self.g.player(p) then ports[#ports+1]=p;if not self.selected[p] then changed=true end
+  for p=1,6 do if present and present[p] or not present and self.g.player(p) then ports[#ports+1]=p;if not self.selected[p] then changed=true end
    elseif self.selected[p] then call(self.g,'fighter_shader',p,nil);self.selected[p]=nil end end
   if #ports==0 then return false,'waiting for loaded fighters' end
   if self.ready and not changed then return true end
@@ -72,7 +73,23 @@ return function(D)
   for _,p in ipairs(ports) do self.warmed_ports[p]=true end
   return true
  end
- local function params(e,p)
+ -- The parameter array depends on the build, the drive looks, the statuses' stacks and the intensity; only its
+ -- first slot (the clock) changes every frame. `look_key` is that content as one cheap string; the array for a
+ -- port is rebuilt only when it changes, and otherwise the clock slot is rewritten in place.
+ local function look_key(e,p,meta)
+  local parts={tostring(meta.intensity)}
+  for _,name in ipairs(names) do local v=(e.statuses[p] or {})[name];if v then parts[#parts+1]=name..(v.stacks or 1)..'/'..(v.max or 1) end end
+  local eq=e.equipped[p];if eq and next(eq) then parts[#parts+1]=table.concat(keys(eq),',') end
+  for i,drive in ipairs((meta.drive_build or {})[p] or {}) do parts[#parts+1]=i..tostring(drive.rarity)..tostring(drive.colour) end
+  return table.concat(parts,'|')
+ end
+ local build_params
+ local function params(self,e,p)
+  local meta=state(e);local key=look_key(e,p,meta);local c=self.look_cache[p]
+  if not c or c.key~=key or c.rules~=e.rules then c={key=key,rules=e.rules,out=build_params(e,p)};self.look_cache[p]=c end
+  c.out[1]=e.frame/60;return c.out
+ end
+ function build_params(e,p)
   local meta=state(e);local out={e.frame/60,meta.intensity,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
   for i,name in ipairs(names) do local v=(e.statuses[p] or {})[name]
    if v then out[i+2]=clamp((v.stacks or 1)/(v.max or 1),0,1) end
@@ -94,7 +111,7 @@ return function(D)
   if total>0 then out[15]=(math.atan(cy,cx)/(math.pi*2))%1;out[16]=clamp(total,0,1) end
   return out
  end
- function M:update(engine)
+ function M:update(engine,present)
   local e=engine or self.engine;self.engine=e
   if not self.ready then return false,'visual pipelines not ready' end
   local meta=state(e);local key=tostring(meta.trace_generation or 0)..':'..table.concat(e.trace or {},' | ')
@@ -113,8 +130,8 @@ return function(D)
    end
   end
   for p in pairs(self.selected) do
-   if self.g.player(p) then
-    local ok,why=self.g.fighter_shader_set(p,{params=params(e,p)})
+   if present and present[p] or not present and self.g.player(p) then
+    local ok,why=self.g.fighter_shader_set(p,{params=params(self,e,p)})
     if not ok then self.error=why;self.ready=false;return false,why end
    end
   end

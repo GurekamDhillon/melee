@@ -18,7 +18,8 @@ return function(D)
    checked={rules=r,list=l};D._pool_checked[pool]=checked
   end
   local rules,list={},{};for id,m in pairs(checked.rules) do rules[id]=m end;for i,m in ipairs(checked.list) do list[i]=m end
-  return setmetatable({rules=rules,list=list,seed=seed or 1,frame=0,equipped={},implicits={},statuses={},recent={},players={},queue={},damage={},trace={},used=0,dropped=0,
+  D._pool_checked[list]=checked -- an engine's own list is a validated pool too (import() builds its probe from it)
+  return setmetatable({rules=rules,list=list,seed=seed or 1,frame=0,equipped={},implicits={},statuses={},recent={},players={},queue={},damage={},trace={},used=0,dropped=0,memo={},
    context=D.mod_progression.context(limits.context),limit=budget,depth=depth,display={last_pulse=-30,pulse_start=-100,pulse_strength=0,trace_key='',intensity=.65}},E)
  end
  function E:random() self.seed=self.seed*48271%2147483647;return self.seed/2147483647 end
@@ -53,8 +54,13 @@ return function(D)
   if e.depth>self.depth or #self.queue>=128 then self.dropped=self.dropped+1;return false end
   self.queue[#self.queue+1]=e;return true
  end
+ -- Events the engine itself builds (fresh tables, known-valid kind and port) skip the codec copy and the checks.
+ function E:emit_trusted(e)
+  if #self.queue>=128 then self.dropped=self.dropped+1;return false end
+  self.queue[#self.queue+1]=e;return true
+ end
  function E:begin_frame(players)
-  self.frame=self.frame+1;self.players=copy(players or {});self.damage={};self.sustain={};self.used=0
+  self.frame=self.frame+1;local own={};for port,v in pairs(players or {}) do local t={};for k,x in pairs(v) do t[k]=x end;own[port]=t end;self.players=own;self.damage={};self.sustain={};self.used=0
   for port=1,6 do local statuses=self.statuses[port]
    if statuses then for _,name in ipairs(ordered) do local v=statuses[name]
     if v then
@@ -67,7 +73,7 @@ return function(D)
     end
    end end
   end
-  for port=1,6 do if self.players[port] then self:emit{kind='interval',port=port,tags={}} end end
+  for port=1,6 do if self.players[port] then self:emit_trusted{kind='interval',port=port,tags={},depth=1,origin={}} end end
  end
  function E:matches(m,e,tier)
   if m.trigger~=e.kind then return false end
@@ -155,9 +161,10 @@ return function(D)
    end
    if self.used>=self.limit then self.dropped=self.dropped+1 end
    self.recent[e.port]=self.recent[e.port] or {};self.recent[e.port][e.kind]=self.frame
-   for _,m in ipairs(self.list) do local tier=(self.equipped[e.port] or {})[m.id]
+   local build=self.equipped[e.port]
+   if build and next(build) then for _,m in ipairs(self.list) do local tier=build[m.id]
     if self.used<self.limit and tier then for _,instance in ipairs(S.instances(tier))do if self:matches(m,e,instance)then self:apply(m,e,instance)end end end
-   end
+   end end
    -- A lost stock ends what was happening to the fighter (statuses, stacks, recent events), not the build:
    -- equipped modifiers stay and their steady effects, looks and hit rules are derived again from them.
    if e.kind=='stock_lost' then lost[e.port]=true;self.statuses[e.port]=nil;self.recent[e.port]=nil;self.damage[e.port]=nil end
@@ -165,10 +172,47 @@ return function(D)
   end
   self.queue={}
  end
- function E:family_budget(port) return D.mod_budget.build(self.list,self.equipped[port],self.implicits[port],self.statuses[port]) end
- function E:values(port) return D.mod_budget.values(self.list,self.equipped[port],self.implicits[port],self.statuses[port]) end
- function E:echo_description(port) return D.mod_echo.engine(self,port) end
+ -- Everything below is a pure function of one fighter's build, implicits and the statuses that matter to the
+ -- derived values (name, stacks, amount; expiry and origin never enter a value, a rule or an echo). It is
+ -- memoised by that content, so a fighter whose build and statuses did not change costs a key and a lookup
+ -- instead of a re-derivation. The key is content, not identity: any write path invalidates it by changing it.
+ local function memo_key(self,port)
+  local parts,n={},0
+  local eq=self.equipped[port]
+  if eq then for id,tier in pairs(eq) do n=n+1;parts[n]=id..'='..(type(tier)=='table' and C.encode(tier) or tostring(tier)) end;table.sort(parts) end
+  local out=table.concat(parts,';')..'|'
+  local im=self.implicits[port]
+  if im then local k={};for key,v in pairs(im) do k[#k+1]=key..'='..tostring(v) end;table.sort(k);out=out..table.concat(k,';') end
+  local at=self.statuses[port]
+  if at then out=out..'|';for _,name in ipairs(ordered) do local v=at[name];if v then out=out..name..':'..tostring(v.stacks)..':'..tostring(v.amount)..';' end end end
+  return out
+ end
+ local function memo(self,port)
+  local key=memo_key(self,port);local m=self.memo[port]
+  if not m or m.key~=key then m={key=key};self.memo[port]=m end
+  return m
+ end
+ function E:family_budget(port)
+  local m=memo(self,port)
+  if not m.budget then m.budget,m.strength=D.mod_budget.build(self.list,self.equipped[port],self.implicits[port],self.statuses[port]) end
+  return m.budget,m.strength
+ end
+ function E:values(port)
+  local m=memo(self,port)
+  if not m.values then m.values=D.mod_budget.values(self.list,self.equipped[port],self.implicits[port],self.statuses[port]) end
+  local out={};for k,v in pairs(m.values) do out[k]=v end;return out -- callers edit their copy
+ end
+ function E:echo_description(port)
+  local m=memo(self,port)
+  if not m.echo then m.echo=D.mod_echo.engine(self,port) end
+  return m.echo
+ end
  function E:native_rules(port)
+  local m=memo(self,port)
+  if not m.rules then m.rules,m.bits=self:compute_native_rules(port) end
+  return m.rules,m.bits
+ end
+ function E:compute_native_rules(port)
   if D.mod_echo then self:echo_description(port) end
   local out,bits={},0
   for _,name in ipairs(ordered) do if self:status(port,name) then bits=bits+(S.status_bits[name] or 0) end end
@@ -184,8 +228,9 @@ return function(D)
   end
   assert(#out<=30,'native hit rule capacity exceeded (two budget slots reserved)')
   local outgoing,incoming={},{}
+  local budget
   for key,field in pairs({damage_dealt='percent_damage',damage_taken='percent_damage',knockback_taken='launch'}) do
-   local f=D.mod_budget.families[key];local budget=self:family_budget(port);local raw=budget[f].raw
+   local f=D.mod_budget.families[key];budget=budget or self:family_budget(port);local raw=budget[f].raw
    if raw~=0 then
     local value=1+raw
     assert(value==value and math.abs(value)<=1e9,'aggregate native '..field..' must be finite and within native safety')

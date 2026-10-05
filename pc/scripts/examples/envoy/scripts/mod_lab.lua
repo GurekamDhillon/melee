@@ -26,8 +26,9 @@ return function(D)
   end
   if not self.g.sim_supported or not self.g.sim_commit or not self.g.sim_clear then return false,'modifier checkpoint engine unavailable' end
   if not self.g.hit_rule_add or not self.g.fighter_status then return false,'native hit-rule engine unavailable; rebuild required' end
-  if not self.g.hit_rules or self.g.hit_rules(1).percent_only~=true then return false,'percent-only hit-rule engine unavailable; rebuild required' end
-  if self.g.hit_rules(1).progression~=true then return false,'progression hit-rule engine unavailable; rebuild required' end
+  local caps=self.g.hit_rules and self.g.hit_rules(1) -- one table-building call, both flags read from it
+  if not caps or caps.percent_only~=true then return false,'percent-only hit-rule engine unavailable; rebuild required' end
+  if caps.progression~=true then return false,'progression hit-rule engine unavailable; rebuild required' end
   return true
  end
  function L:replaying() return self.g.sim_replaying and self.g.sim_replaying() end
@@ -175,7 +176,7 @@ return function(D)
   return players,life
  end
  function L:export()
-  return D.mod_codec.encode{version=1,echoes=self.echoes and self.echoes:snapshot(),foes=self.foes and self.foes:snapshot(),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed}
+  return D.mod_codec.encode{version=1,echoes=self.echoes and self.echoes:snapshot(true),foes=self.foes and self.foes:snapshot(true),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(true),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed}
  end
  function L:check_echo_capacity(engine,manual)
   if not self.echoes then return end;manual=manual or self.echoes.manual
@@ -262,8 +263,12 @@ return function(D)
    self:reset();return false
   end
   local players,life=self:sample()
-  local ready=self.display:warm(self.engine)
-  if ready then
+  local ready=self.display:warm(self.engine,players)
+  -- The staged-edit publication (validate the whole prospective state, then apply it) is only needed when an
+  -- edit is staged or the bag's derived build is stale; an unchanged, already validated state is not
+  -- re-validated every frame.
+  local staged=#self.pending>0 or (self.foes and #self.foes.pending>0) or (self.drives and (#self.drives.pending>0 or self.drives:stale()))
+  if ready and staged then
    local bag=self.drives and self.drives.bag:snapshot();local debug=D.mod_codec.decode(D.mod_codec.encode(self.debug_equipped))
    local accepted,why=pcall(function()
     self:prospective(self.engine,self.debug_equipped,self.pending,self.foes,self.drives and self.drives:snapshot(),players)
@@ -313,7 +318,7 @@ return function(D)
   for p=1,6 do if self.engine.statuses[p] and not next(self.engine.statuses[p]) then self.engine.statuses[p]=nil end end
   self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0)) or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
   -- Visual pulse/cooldown metadata is pure state and belongs in the checkpoint.
-  if self.enabled then self.display:update(self.engine) else self.display:clear() end
+  if self.enabled then self.display:update(self.engine,players) else self.display:clear() end
   local committed,why=pcall(function() return self.g.sim_commit(self:export(),ops) end)
   if not committed or not why then
    -- Validation/allocation failures are atomic natively. Retire old effects

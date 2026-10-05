@@ -1,22 +1,35 @@
 -- Canonical bounded data encoding. No load(), functions, metatables or wall clock.
 return function()
  local C={}
+ -- One shared output buffer (a table's pieces are appended in place, one concat at the end) rather than a
+ -- string per node: the checkpoint is encoded every logic frame, so allocation, not parsing, is its cost.
+ -- Sequences (keys exactly 1..n) skip the sort, which for them is the identity. Output bytes are unchanged.
+ local format,concat,sort=string.format,table.concat,table.sort
+ local function order(a,b) if type(a)~=type(b) then return type(a)=='number' end;return a<b end
  function C.encode(value)
   local nodes,active=0,{}
-  local function pack(v,depth)
+  local buf,n={},0
+  local pack
+  function pack(v,depth)
    nodes=nodes+1;assert(nodes<=6000 and depth<=20,'modifier state too complex')
    local kind=type(v)
-   if kind=='boolean' then return v and 't' or 'f' end
-   if kind=='number' then assert(v==v and math.abs(v)<1e15,'non-finite state');local s=string.format('%.17g',v);return 'd'..#s..':'..s end
-   if kind=='string' then return 's'..#v..':'..v end
+   if kind=='boolean' then n=n+1;buf[n]=v and 't' or 'f';return end
+   if kind=='number' then assert(v==v and math.abs(v)<1e15,'non-finite state');local s=format('%.17g',v);n=n+1;buf[n]='d'..#s..':'..s;return end
+   if kind=='string' then n=n+1;buf[n]='s'..#v..':'..v;return end
    assert(kind=='table' and not getmetatable(v) and not active[v],'plain acyclic state required');active[v]=true
-   local keys={};for k in pairs(v) do assert(type(k)=='string' or type(k)=='number' and k%1==0,'invalid state key');keys[#keys+1]=k end
-   assert(#keys<=512,'checkpoint table too large')
-   table.sort(keys,function(a,b) if type(a)~=type(b) then return type(a)=='number' end;return a<b end)
-   local out={'{'..#keys..':'};for _,k in ipairs(keys) do out[#out+1]=pack(k,depth+1);out[#out+1]=pack(v[k],depth+1) end
-   active[v]=nil;return table.concat(out)
+   local count=0;for k in pairs(v) do assert(type(k)=='string' or type(k)=='number' and k%1==0,'invalid state key');count=count+1 end
+   assert(count<=512,'checkpoint table too large')
+   n=n+1;buf[n]='{'..count..':'
+   local seq=#v==count;if seq then for i=1,count do if v[i]==nil then seq=false;break end end end -- a border can equal the count with holes
+   if seq then for i=1,count do pack(i,depth+1);pack(v[i],depth+1) end
+   else
+    local keys,i={},0;for k in pairs(v) do i=i+1;keys[i]=k end
+    sort(keys,order)
+    for j=1,count do local k=keys[j];pack(k,depth+1);pack(v[k],depth+1) end
+   end
+   active[v]=nil
   end
-  local out=pack(value,0);assert(#out<=16384,'modifier checkpoint exceeds 16 KiB');return out
+  pack(value,0);local out=concat(buf,'',1,n);assert(#out<=16384,'modifier checkpoint exceeds 16 KiB');return out
  end
  function C.decode(text)
   assert(type(text)=='string' and #text<=16384,'invalid modifier checkpoint');local at,nodes=1,0

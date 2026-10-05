@@ -34,6 +34,8 @@ return function(D)
   for _,e in ipairs(self.pending) do assert(draft[e.op](draft,e.a,e.b)) end
   return draft
  end
+ -- `rev` changes whenever anything the bag screen shows changes (queued edits, applied edits, restore, clear, pickup).
+ function V:bump() self.rev=(self.rev or 0)+1 end
  function V:reserved() return math.max(#self.bag.items,#self:view().items)+self.drops:count() end
  function V:queue(op,a,b)
   local allowed,why=self.lab:allowed();if not allowed or self.lab:replaying() then self.menu.notice=why or 'bag edit refused during rewind';return false,self.menu.notice end
@@ -41,7 +43,7 @@ return function(D)
   if op~='choose_keystone' and self.drops:count()>0 then self.menu.notice='Collect ground drops before editing bag';return false,self.menu.notice end
   if (op=='give' or op=='unequip') and #draft.items+self.drops:count()>=12 then return false,'bag full (ground drops reserve space)' end
   local ok,why=draft[op](draft,a,b);if not ok then self.menu.notice=tostring(why);return false,why end
-  self.pending[#self.pending+1]={op=op,a=a,b=b};self.lab.enabled=true;return true
+  self.pending[#self.pending+1]={op=op,a=a,b=b};self:bump();self.lab.enabled=true;return true
  end
  function V:command(arg)
   local ok,why=pcall(function()
@@ -67,7 +69,8 @@ return function(D)
    else ok,why=self.bag[e.op](self.bag,e.a,e.b) end
    if not ok then self.g.log('bag: refused '..tostring(why)) end
   end
-  self.pending={};self.applied=true;local mods,implicits=self.bag:derive();mods=self:combined(mods);self.lab.engine:set_build(1,mods,implicits);if not next(mods) then self.lab.engine.equipped[1]=nil end;if not next(implicits) then self.lab.engine.implicits[1]=nil end
+  self.pending={};self:bump();self.applied=true;local b,e=self.bag,self.lab.engine;self.stamp={equipped=b.equipped,keystone=b.keystone,keystones=b.keystones,depth=b.context.depth,loop=b.context.loop,engine=e,edepth=e.context.depth,eloop=e.context.loop}
+  local mods,implicits=self.bag:derive();mods=self:combined(mods);self.lab.engine:set_build(1,mods,implicits);if not next(mods) then self.lab.engine.equipped[1]=nil end;if not next(implicits) then self.lab.engine.implicits[1]=nil end
   self.lab.engine.display.drive_build=self.lab.engine.display.drive_build or {};local looks={};for i=1,self.bag:slots() do local r=self.bag.equipped[i];if r then looks[#looks+1]={colour=r.colour,rarity=r.rarity} end end;self.lab.engine.display.drive_build[1]=looks
  end
  function V:budget_lines()
@@ -94,9 +97,12 @@ return function(D)
  end
  function V:pickup(e)
   if self.lab:replaying() then return end
-  local r=self.drops:pickup(e,self.bag);if r then self.menu.notice='Picked up '..self.loot:name(r);self.card=self.menu.notice;self.card_left=120;self.g.log(self.menu.notice) end
+  local r=self.drops:pickup(e,self.bag);self:bump();if r then self.menu.notice='Picked up '..self.loot:name(r);self.card=self.menu.notice;self.card_left=120;self.g.log(self.menu.notice) end
  end
- function V:snapshot() return {bag=self.bag:snapshot(),drops=self.drops:snapshot(),pending=self.pending,seed=self.seed} end
+ function V:snapshot(raw)
+  local b=self.bag;local bag=raw and {items=b.items,equipped=b.equipped,keystone=b.keystone,keystones=b.keystones,context=b.context} or b:snapshot()
+  return {bag=bag,drops=self.drops:snapshot(),pending=self.pending,seed=self.seed}
+ end
  function V:validate(s,lab)
   lab=lab or self.lab
   assert(type(s)=='table' and type(s.pending or {})=='table','invalid drive checkpoint')
@@ -118,19 +124,19 @@ return function(D)
   return D.mod_codec.decode(D.mod_codec.encode(s))
  end
  function V:publish(s)
-  self.menu:close();self.bag.items=s.bag.items;self.bag.equipped=s.bag.equipped;self.bag.keystone=s.bag.keystone;self.bag.keystones=s.bag.keystones or {};self.bag.context=D.mod_progression.context(s.bag.context)
+  self:bump();self.menu:close();self.bag.items=s.bag.items;self.bag.equipped=s.bag.equipped;self.bag.keystone=s.bag.keystone;self.bag.keystones=s.bag.keystones or {};self.bag.context=D.mod_progression.context(s.bag.context)
   self.drops:restore(s.drops);self.pending=s.pending or {};self.seed=s.seed
  end
  function V:restore(s) self:publish(self:validate(s))
  end
  function V:clear()
-  self.menu:close();self.drops:clear();self.bag:new_run();self.pending={};self.applied=false
+  self:bump();self.menu:close();self.drops:clear();self.bag:new_run();self.pending={};self.applied=false
   if not self.bag.config.persist then self.bag.context=D.mod_progression.context() end
  end
  -- Stage teardown inside a run: ground drops, queued edits and the open menu belong to the old scene; the
  -- bag, slots and equipped build persist.
  function V:soft_clear()
-  self.menu:close();self.drops:clear();self.pending={};self.applied=false
+  self:bump();self.menu:close();self.drops:clear();self.pending={};self.applied=false
  end
  -- Run adapter: put one rolled drive in the bag and equip it into the first free slot (the bag menu can
  -- still swap it). Returns false with a reason when the bag or the checkpoint refuses it right now.
@@ -142,6 +148,14 @@ return function(D)
   for slot=1,draft:slots() do if not draft.equipped[slot] then free=slot;break end end
   if free then local equipped=self:queue('equip',index,free);if not equipped then self.pending[#self.pending]=nil;return true,'bagged' end end
   return true,free and 'equipped' or 'bagged'
+ end
+ -- True when the engine's build for the player no longer matches what apply() last derived: the bag's slots,
+ -- keystones or progression changed, or the rule engine was replaced. Every writer of those replaces a table or a
+ -- number (equip/publish/set_context/reset/loadstate), so comparing them is the whole invalidation.
+ function V:stale()
+  if not self:has_build() then return false end
+  local s,b,e=self.stamp,self.bag,self.lab.engine
+  return not self.applied or not s or s.equipped~=b.equipped or s.keystone~=b.keystone or s.keystones~=b.keystones or s.depth~=b.context.depth or s.loop~=b.context.loop or s.engine~=e or s.edepth~=e.context.depth or s.eloop~=e.context.loop
  end
  function V:has_build() return next(self.bag.equipped)~=nil or self.bag.keystone~=nil or #(self.bag.keystones or {})>0 end
  function V:tick()

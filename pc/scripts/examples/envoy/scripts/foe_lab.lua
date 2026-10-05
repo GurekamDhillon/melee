@@ -82,14 +82,22 @@ return function(D)
   if not self.g.kit then return end;local a=self.g.safe_area();local y=a.y+42;local ports={}
   for p=2,6 do if self.labels[p] then ports[#ports+1]=p end end;if #ports==0 then return end
   local shown=ports[math.floor(self.lab.engine.frame/45)%#ports+1];local l=self.labels[shown]
-  local lines={};for _,text in ipairs(l.lines) do
-   if D.drive_menu then for _,line in ipairs(D.drive_menu.wrap(self.g.kit,text,a.w-48)) do lines[#lines+1]=line end else lines[#lines+1]=text end
+  -- Wrapping measures text through the kit: done once per label and width, not on every drawn frame.
+  self.wrapped=self.wrapped or setmetatable({},{__mode='k'})
+  local cached=self.wrapped[l];local lines
+  if cached and cached.w==a.w then lines=cached.lines
+  else
+   lines={};for _,text in ipairs(l.lines) do
+    if D.drive_menu then for _,line in ipairs(D.drive_menu.wrap(self.g.kit,text,a.w-48)) do lines[#lines+1]=line end else lines[#lines+1]=text end
+   end
+   self.wrapped[l]={w=a.w,lines=lines}
   end
   self.g.kit.panel(a.x+16,y,a.w-32,78);self.g.kit.text(a.x+24,y+19,l.title,'body','bone','left',{max_w=a.w-48})
   local pages=math.max(1,math.ceil(#lines/2));local page=math.floor((240-l.left)/45)%pages
   for n=1,2 do self.g.kit.text(a.x+24,y+23+n*19,lines[page*2+n] or (n==1 and 'Vanilla build' or ''),'body','bone','left',{max_w=a.w-48}) end
  end
- function F:snapshot() return clone{seed=self.seed,stage=self.stage,builds=self.builds,pending=self.pending,labels=self.labels} end
+ -- `raw`: references instead of a detached copy, for a caller that only encodes the result (the per-frame checkpoint).
+ function F:snapshot(raw) local s={seed=self.seed,stage=self.stage,builds=self.builds,pending=self.pending,labels=self.labels};if raw then return s end;return clone(s) end
  function F:validate(s)
   assert(type(s)=='table','invalid foe checkpoint');for k in pairs(s) do assert(({seed=true,stage=true,builds=true,pending=true,labels=true})[k],'unknown foe field') end
   assert(type(s.seed)=='number' and s.seed%1==0 and s.seed>=0 and s.seed<=2147483646,'invalid foe seed');assert(type(s.stage)=='number' and s.stage%1==0 and s.stage>=0 and s.stage<=2147483646,'invalid foe stage')

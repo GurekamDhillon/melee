@@ -64,16 +64,28 @@ return function(D)
   if not self.active or not self.g.kit then return end
   local g,k=self.g,self.g.kit;local a=g.safe_area();local w=math.min(740,a.w-32);local x=a.x+(a.w-w)/2;local y=a.y+12
   k.panel(x,y,w,a.h-24);k.text(x+20,y+28,'Envoy / Drive bag','body','bone','left')
-  local rows=self:entries();local visible=5;local first=math.max(1,self.focus-visible+1)
-  k.list(x+20,y+48,w-40,rows,self.focus,{pitch=24,h=24,first=first,visible=math.min(visible,#rows)})
-  local e=rows[self.focus];local r=e and (e.bag and self.owner:view().items[e.bag] or e.slot and self.owner:view().equipped[e.slot])
-  do
-   local dy=190;local lines=self.owner:budget_lines()
+  -- Rows, the budget/tooltip/delta lines and their wrapping are derived from the bag (draft engines, budget
+  -- builds, text measurement): done when the screen's inputs change, not on every drawn frame. The key is the
+  -- owner's rev (every writer of the bag/queue bumps it) plus focus, selection, page, slot, width and the clock;
+  -- an owner without a rev is never cached.
+  local o=self.owner;local b0=o.bag
+  local key=type(o.rev)=='number' and table.concat({o.rev,self.focus,tostring(self.selected),self.slot,w,#o.pending,b0 and #b0.items or 0,tostring(b0 and b0.equipped),b0 and b0.context.depth or 0,b0 and b0.context.loop or 0,o.lab.engine.frame,tostring(self.notice)},'|')
+  local m=self.model
+  if not (key and m and m.key==key) then
+   local rows=self:entries();local first=math.max(1,self.focus-5+1)
+   local e=rows[self.focus];local r=e and (e.bag and self.owner:view().items[e.bag] or e.slot and self.owner:view().equipped[e.slot])
+   local lines=self.owner:budget_lines()
    if r then lines[#lines+1]=r.rarity..' / '..self.owner.loot:name(r)
    for _,line in ipairs(self.owner.loot:tooltip(r)) do lines[#lines+1]=line end
    if e.bag then for _,line in ipairs(self.owner:delta(e.bag,self.slot)) do lines[#lines+1]=line end end
    end
-   local wrapped={};for _,line in ipairs(lines) do for _,part in ipairs(M.wrap(k,line,w-40)) do wrapped[#wrapped+1]=part end end;lines=wrapped
+   local wrapped={};for _,line in ipairs(lines) do for _,part in ipairs(M.wrap(k,line,w-40)) do wrapped[#wrapped+1]=part end end
+   m={key=key,rows=rows,first=first,r=r,lines=wrapped};self.model=m
+  end
+  local rows,first,r,lines=m.rows,m.first,m.r,m.lines;local visible=5
+  k.list(x+20,y+48,w-40,rows,self.focus,{pitch=24,h=24,first=first,visible=math.min(visible,#rows)})
+  do
+   local dy=190
    local budget=math.max(1,math.floor((a.h-76-dy)/19));local pages=math.max(1,math.ceil(#lines/budget));self.page=math.min(self.page or 0,pages-1)
    for i=1,budget do local line=lines[self.page*budget+i];if line then k.text(x+20,y+dy+(i-1)*19,line,'body',r and i==1 and colours[r.rarity] or 'bone','left',{max_w=w-40}) end end
    k.text(x+20,y+a.h-76,('Details %d/%d: Left / Right'):format(self.page+1,pages),'body','bone','left',{max_w=w-40})

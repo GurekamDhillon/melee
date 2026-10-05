@@ -41,7 +41,7 @@ return function(D)
   end)
   if not ok then self.host.g.log('echo: refused '..tostring(err));return false,err end;return true
  end
- function A:snapshot()return {manual=clone(self.manual),owned=clone(self.owned)}end
+ function A:snapshot(raw)if raw then return {manual=self.manual,owned=self.owned}end;return {manual=clone(self.manual),owned=clone(self.owned)}end
  function A:validate(s)
   assert(type(s)=='table' and type(s.manual)=='table' and type(s.owned)=='table','invalid echo checkpoint')
   for p,rules in pairs(s.manual)do assert(type(p)=='number' and p%1==0 and p>=1 and p<=6 and type(rules)=='table' and not getmetatable(rules) and #rules<=8,'invalid echo owner');local n=0;for i in pairs(rules)do assert(type(i)=='number' and i%1==0 and i>=1 and i<=#rules,'invalid checkpoint echo array');n=n+1 end;assert(n==#rules,'sparse checkpoint echoes')
@@ -66,10 +66,14 @@ return function(D)
    elseif self.owned[p]then ops[#ops+1]={op='echoes',port=p,rules={}}end
   end;self.owned=next_owned
  end
+ -- An echo description is a memoised, never-mutated table (mod_engine): its identity is its content, so the
+ -- encoded picture key is computed once per description rather than six times a frame.
+ local keys=setmetatable({},{__mode='k'})
+ local function key_of(d) local k=keys[d];if not k then k=D.mod_codec.encode(d);keys[d]=k end;return k end
  function A:present(players)
   local g=self.host.g;self.present_frame=(self.present_frame or 0)+1;local ready=true
   for p=1,6 do
-   local d=self.host.engine:echo_description(p);local key=D.mod_codec.encode(d)
+   local d=self.host.engine:echo_description(p);local key=key_of(d)
    if not players[p] or #d.copies==0 then self:retire(p)
    else
     if self.visual_keys[p] and self.visual_keys[p]~=key then self:retire(p)end

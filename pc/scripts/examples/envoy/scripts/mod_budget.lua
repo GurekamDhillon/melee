@@ -31,7 +31,18 @@ return function(D)
   elseif e.op=='emit' then out.conversion=S.copies(tier) else error('unbudgeted effect') end
   return out
  end
+ -- A pool is data fixed at load: validating the same table against the same implicit definitions twice is pure
+ -- repetition (every drive_loot.new, i.e. every candidate an opponent roll constructs, did it: ~half the
+ -- instructions of a deep roll). Keyed by the pool and implicit-definition tables' identity; a failure is never remembered.
+ local validated=setmetatable({},{__mode='k'})
  function B.validate_pool(pool,implicitdefs)
+  local seen_defs=validated[pool]
+  if seen_defs and seen_defs[implicitdefs or false] and #pool==seen_defs.n then return true end
+  local ok=B.validate_pool_uncached(pool,implicitdefs)
+  seen_defs=seen_defs or {n=#pool};seen_defs.n=#pool;seen_defs[implicitdefs or false]=true;validated[pool]=seen_defs
+  return ok
+ end
+ function B.validate_pool_uncached(pool,implicitdefs)
   local ids={}
   for _,m in ipairs(pool) do
    S.validate(m);assert(not ids[m.id],'duplicate modifier');ids[m.id]=true

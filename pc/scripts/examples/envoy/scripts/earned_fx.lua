@@ -24,7 +24,7 @@ return function(D)
   return clamp((F.tuning.min_s+(1-F.tuning.min_s)*clamp(strength or 0,0,1))*intensity,0,1)
  end
  function F.new(host)
-  return setmetatable({host=host,g=host.g,ai={},tracer={},failed={},stat={crits=0,passes=0,restarts=0,toasts=0,tracers=0},last_start=-10},F)
+  return setmetatable({host=host,g=host.g,ai={},hold={},tracer={},failed={},stat={crits=0,passes=0,restarts=0,toasts=0,tracers=0},last_start=-10},F)
  end
  function F:note(key,text) if not self.failed[key] then self.failed[key]=true;if self.g.log then self.g.log('earned fx: '..text) end end end
  local function offline(g) local m=g.match();return m and m.active and not m.netplay end
@@ -38,7 +38,7 @@ return function(D)
  end
  function F:reset()
   for p=1,6 do self:retire_afterimage(p);self:retire_tracer(p) end
-  self:drop_pass();self.ai={};self.tracer={};self.shader=nil;self.warmed=nil;self.failed={}
+  self:drop_pass();self.ai={};self.hold={};self.tracer={};self.shader=nil;self.warmed=nil;self.failed={}
  end
  function F:wanted(engine,p) return engine:earned(p)~=nil or engine:earned_source(p) end
  function F:frame(players)
@@ -49,13 +49,13 @@ return function(D)
    local a=self.ai[p]
    if not want then if a then self:retire_afterimage(p) end
    else
-    if not a then
+    if not a and not (self.hold[p] and engine.frame<self.hold[p]) then -- a refused emitter is retried every 90 frames, not every frame (two builds with pictures on one fighter refuse each other)
      local t=F.tuning.afterimage
      local ok,h,why=pcall(g.afterimage_add,p,{copies=t.copies,spacing=t.spacing,lifetime=t.lifetime,fade=t.fade,blend='additive',trigger='flag',surface='silhouette',
       tint=D.mod_skill.cause.lcancel.tint,tail=D.mod_skill.cause.lcancel.tail,intensity=0})
      if ok and h then a={handle=h};self.ai[p]=a
       if g.warm then local w1,w2=pcall(g.warm,{fighters={p}});if w1 and type(w2)=='number' then a.warm=w2 else a.ready=true end else a.ready=true end
-     else self:note('afterimage',tostring(ok and why or h));self.ai[p]=nil end
+     else self:note('afterimage',tostring(ok and why or h));self.ai[p]=nil;self.hold[p]=engine.frame+90 end
     end
     a=self.ai[p]
     if a and not a.ready then

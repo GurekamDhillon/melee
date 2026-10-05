@@ -5,25 +5,28 @@ return function(D)
  local I={};local S={};S.__index=S
  local START=0x1000
  local shared={held_start=false} -- START still held after a menu closed: keep hiding it until it is let go
+ local extra={} -- the same latch for another port (a co-op seat); port 1 keeps `shared`, so a one-player run is unchanged
+ local function latch(port) if (port or 1)==1 then return shared end;local l=extra[port];if not l then l={held_start=false};extra[port]=l end;return l end
  -- Called every tick by the chord host: lets the hidden START go once the button is released.
- function I.settle(g)
-  if not shared.held_start then return end
-  local p=g.pad(1,true) or {}
-  if not p.START then shared.held_start=false;if g.input_mask then g.input_mask(1,0) end end
+ function I.settle(g,port)
+  port=port or 1;local l=latch(port)
+  if not l.held_start then return end
+  local p=g.pad(port,true) or {}
+  if not p.START then l.held_start=false;if g.input_mask then g.input_mask(port,0) end end
  end
  -- A scene change releases every mask in the engine: forget the latch with it, whichever host would have serviced it.
- function I.reset() shared.held_start=false end
- function I.new(g) return setmetatable({g=g,active=false,previous={},held=0},S) end
+ function I.reset() shared.held_start=false;for _,l in pairs(extra) do l.held_start=false end end
+ function I.new(g,port) return setmetatable({g=g,port=port or 1,active=false,previous={},held=0},S) end
  -- `hide_start`: this menu was opened by the Z+START chord (the bag), so its START must not reach the game. Every other menu (the
  -- app's pause menu, retail results) leaves START to the game: hiding it there ate the START the 1P results screen waits for.
  function S:set_active(active,hide_start) self.active=active;self.hide_start=active and hide_start or nil end
  function S:poll()
-  I.settle(self.g)
-  local p=self.g.pad(1,true) or {};local out={}
+  I.settle(self.g,self.port)
+  local p=self.g.pad(self.port,true) or {};local out={}
   local held=(p.LEFT and 1 or 0)+(p.RIGHT and 2 or 0)+(p.DOWN and 4 or 0)+(p.UP and 8 or 0)
   if self.g.input_mask then
-   if self.active then self.g.input_mask(1,15|(self.hide_start and START or 0));self.masked=15;self.masked_start=self.hide_start
-   elseif self.masked then local keep=self.masked_start and p.START and START or 0;self.masked=held;self.g.input_mask(1,held|keep);if held==0 and keep==0 then self.masked=nil;self.masked_start=nil end end
+   if self.active then self.g.input_mask(self.port,15|(self.hide_start and START or 0));self.masked=15;self.masked_start=self.hide_start
+   elseif self.masked then local keep=self.masked_start and p.START and START or 0;self.masked=held;self.g.input_mask(self.port,held|keep);if held==0 and keep==0 then self.masked=nil;self.masked_start=nil end end
   end
   local actions={accept=p.A,back=p.B,start=p.START,x=p.X,y=p.Y}
   for _,name in ipairs({'accept','back','start','x','y'}) do if actions[name] and not self.previous[name] then out[#out+1]=name end end
@@ -35,9 +38,9 @@ return function(D)
   self.direction=direction;self.previous=actions;return out
  end
  function S:close()
-  local p=self.g.pad and self.g.pad(1,true) or {}
-  shared.held_start=(self.hide_start and p.START) and true or false
-  if self.g.input_mask then self.g.input_mask(1,shared.held_start and START or 0) end;self.active=false;self.hide_start=nil;self.masked_start=nil;self.masked=nil;self.previous={};self.direction=nil;self.held=0
+  local p=self.g.pad and self.g.pad(self.port,true) or {};local l=latch(self.port)
+  l.held_start=(self.hide_start and p.START) and true or false
+  if self.g.input_mask then self.g.input_mask(self.port,l.held_start and START or 0) end;self.active=false;self.hide_start=nil;self.masked_start=nil;self.masked=nil;self.previous={};self.direction=nil;self.held=0
  end
  return I
 end

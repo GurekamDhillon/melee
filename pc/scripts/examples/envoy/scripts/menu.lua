@@ -25,7 +25,7 @@ return function(D)
    end
    return rows
   elseif n=='setup' then return {row('Begin '..self.run_type..' as '..self.fighter,'playing'),
-   row('Mode: '..self.run_type,'mode'),row('Difficulty: '..self.difficulty,'difficulty'),row('Stocks: '..self.stocks,'stocks'),
+   row('Mode: '..(self.run_type=='coop' and 'co-op (2 players, one team)' or self.run_type),'mode'),row('Difficulty: '..self.difficulty,'difficulty'),row('Stocks: '..self.stocks,'stocks'),
    row('Change fighter','fighter'),row('Back to hub','hub')}
   elseif n=='reward' then
    local r=c.reward or {};if r.preview then return {row('Continue','reward_done')} end
@@ -70,7 +70,7 @@ return function(D)
   if screen=='reward' then return {type=entry.reward and 'reward' or 'reward_done',index=entry.reward} end
   if entry.target=='retail_retry' then return {type='retail_retry'} end
   if screen=='setup' then
-   if entry.target=='mode' then self.run_type=self.run_type=='classic' and 'adventure' or 'classic';return end
+   if entry.target=='mode' then if c and c.coop_available then self.run_type=({classic='adventure',adventure='coop',coop='classic'})[self.run_type] or 'classic' else self.run_type=self.run_type=='classic' and 'adventure' or 'classic' end;return end
    if entry.target=='difficulty' then self.difficulty=(self.difficulty+1)%5;return end
    if entry.target=='stocks' then self.stocks=self.stocks%5+1;return end
   end

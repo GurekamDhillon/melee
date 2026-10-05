@@ -44,16 +44,23 @@ return function(D)
    if last then local who=last:match('by ([%w ]+)$') or last:match('from ([%w ]+)$');self:flash(who and (who..'!') or 'Modifier!') end
   end
  end
+ -- Co-op: each seat's strip, toasts and cards sit on its own side of the screen and carry its port colour (P1 red, P2 blue). A one-player
+ -- host has no seat and draws exactly as before.
+ Hd.port_colour={0xE0574FFF,0x4F86E0FF,0xE5C447FF,0x56B66AFF}
+ function Hd:seat() return self.host.seat end
+ function Hd:place(a,w,x0) local seat=self.host.seat;if not seat then return x0 end;if seat.index%2==0 then return a.x+a.w-w-10 end;return a.x+10 end
  function Hd:draw_strip()
   local g=self.g;local m=self:model();if not m then return end
   local k=g.kit;local a=g.safe_area()
+  local seat=self.host.seat;local tag=seat and 26 or 0
   local x,y=a.x+10,a.y+10;local pip,gap=14,4
-  local w=8+#m.pips*(pip+gap)+6+m.text_w+10+m.depth_w+10
+  local w=tag+8+#m.pips*(pip+gap)+6+m.text_w+10+m.depth_w+10
   if m.keys_w>0 then w=w+m.keys_w+10 end
-  self.strip_w=w
+  self.strip_w=w;if seat then x=self:place(a,w,x) end
   local flash=self.flash_left>0
   g.fill(x,y,w,26,flash and 0x3A3320E8 or 0x10181EC8)
-  local px=x+8
+  if seat then local pc=Hd.port_colour[seat.port] or 0xFFFFFFFF;g.fill(x,y,tag-2,26,pc);if k then k.text(x+(tag-2)//2,y+18,'P'..seat.port,'caption','ink','center') end end
+  local px=x+tag+8
   for _,p in ipairs(m.pips) do
    if p then g.fill(px,y+6,pip,pip,p.border);g.fill(px+2,y+8,pip-4,pip-4,p.colour)
    else g.fill(px,y+6,pip,pip,0x59656FFF);g.fill(px+2,y+8,pip-4,pip-4,0x161D23FF) end
@@ -68,6 +75,7 @@ return function(D)
     g.fill(px,y+4,16,18,0xEBD175FF);g.fill(px+1,y+5,14,16,kc.colour);k.text(px+8,y+18,kc.letter,'caption','ink','center');px=px+20
    end
    if flash and self.flash_text then k.text(x,y+44,self.flash_text,'caption','gold','left') end
+   if seat and #self.host.decide>0 then end
   else
    g.text(px,y+6,m.text,0xF3F0E8FF,10)
   end
@@ -75,7 +83,8 @@ return function(D)
  function Hd:draw_toast()
   local t=self.toasts[1];if not t then return end
   local g=self.g;local k=g.kit;if not k then return end
-  local a=g.safe_area();local w=math.min(560,a.w-40);local x=a.x+(a.w-w)/2;local y=a.y+70
+  local a=g.safe_area();local seat=self.host.seat;local w=math.min(560,a.w-40);if seat then w=math.min(420,a.w//2-30) end;local x=a.x+(a.w-w)/2;local y=a.y+70
+  if seat then x=self:place(a,w,x) end
   -- Long lines wrap inside the panel (once per toast and width) instead of shrinking their text until it cannot be read.
   if not t.rows or t.rows_w~=w then
    t.rows={};t.rows_w=w
@@ -88,6 +97,7 @@ return function(D)
   local h=22+#t.rows*20
   if t.arch then h=math.max(h,64) end
   k.panel(x,y,w,h)
+  if seat then g.fill(x,y,5,h,Hd.port_colour[seat.port] or 0xFFFFFFFF) end
   -- An archetype card: its emblem in its own colour on a tinted tile (the first time a build is assembled), the lines beside it.
   local ox=0
   if t.arch and D.synergy_fx then
@@ -99,8 +109,9 @@ return function(D)
  function Hd:draw_card()
   local c=self.card;if not c then return end
   local g=self.g;local k=g.kit;if not k then return end
-  local a=g.safe_area();local w=math.min(420,a.w-40);local x=a.x+(a.w-w)/2;local y=a.y+a.h-150;local h=30+#c.lines*20
-  k.panel(x,y,w,h);k.text(x+14,y+22,c.title,'body',c.colour or 'gold','left',{max_w=w-28})
+  local a=g.safe_area();local seat=self.host.seat;local w=math.min(420,a.w-40);if seat then w=math.min(340,a.w//2-30) end;local x=a.x+(a.w-w)/2;local y=a.y+a.h-150;local h=30+#c.lines*20
+  if seat then x=self:place(a,w,x) end
+  k.panel(x,y,w,h);if seat then g.fill(x,y,5,h,Hd.port_colour[seat.port] or 0xFFFFFFFF) end;k.text(x+14,y+22,c.title,'body',c.colour or 'gold','left',{max_w=w-28})
   for i,l in ipairs(c.lines) do k.text(x+14,y+22+i*20,l,'body','bone','left',{max_w=w-28}) end
  end
  function Hd:draw()

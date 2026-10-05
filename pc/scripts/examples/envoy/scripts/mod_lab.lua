@@ -10,6 +10,7 @@ return function(D)
   self.display=D.mod_display.new(g,self.engine)
   if D.mod_echo_lab then self.echoes=D.mod_echo_lab.new(self);g.command('echo',function(arg)return self.echoes:command(arg or '')end,'add <delay> [move] [scale] | clear') end
   if D.drive_lab then self.drives=D.drive_lab.new(g,self) end
+  self.seats={} -- extra build seats (co-op): port -> drive host sharing this engine and the ground; empty in every one-player use
   if D.foe_lab then self.foes=D.foe_lab.new(g,self) end
   self.tech={crit={},caps={},armor={},timed={},shock={}}
   if D.earned_fx then self.fx=D.earned_fx.new(self);g.command('critfx',function(arg) return self.fx:command(arg or '') end,'preview <0..1> | intensity <0..1> | off | (status)') end
@@ -36,6 +37,15 @@ return function(D)
   g.command('depth',function(arg) return self:depth_command(arg or '') end,'<nonnegative depth> [New Game+ loop]')
   return self
  end
+-- A co-op run adds one drive host per further local player (port 2..): own bag, slots and keystones, the same engine and the same ground.
+ function L:add_seat(port)
+  assert(self.drives and port>=2 and port<=6 and not self.seats[port],'seat port 2..6, once')
+  local seat=D.drive_lab.new(self.g,self,{port=port,drops=self.drives.drops});self.seats[port]=seat;return seat
+ end
+ function L:seat_ports() local out={};for p in pairs(self.seats) do out[#out+1]=p end;table.sort(out);return out end
+ function L:seats_busy() for _,seat in pairs(self.seats) do if #seat.pending>0 or seat:stale() then return true end end;return false end
+ function L:seats_enable() for _,seat in pairs(self.seats) do if #seat.pending>0 or #seat.bag.items>0 or seat:has_build() then return true end end;return false end
+ function L:seat_snapshots(raw) local out;for p,seat in pairs(self.seats) do out=out or {};out[p]=seat:snapshot(raw) end;return out end
  function L:hosted() return self.options.run_host~=nil and self.options.run_host()==true end
  function L:allowed()
   local m=self.g.match()
@@ -74,11 +84,13 @@ return function(D)
   if self.echoes then self.echoes:reset() end
   if self.foes then self.foes:reset() end
   if keep then self.drives:soft_clear() elseif self.drives then self.drives:clear() end
+  for _,seat in pairs(self.seats) do if keep then seat:soft_clear() else seat:clear() end end
   local ctx=self.drives and self.drives.bag.context
   self.engine=D.mod_engine.new(104729,D.mod_pool,{context=ctx});self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped={}
   self.tech={crit={},caps={},armor={},timed={},shock={}};if self.fx then self.fx:reset() end
   self.display:clear();self.display.engine=self.engine
   if self.drives and (self.drives:has_build() or #self.drives.bag.items>0) then self.enabled=true end
+  if self:seats_enable() then self.enabled=true end
  end
  function L:depth_command(arg)
   local ok,why=pcall(function()
@@ -171,6 +183,7 @@ return function(D)
   return out
  end
  function L:hit(attacker,victim,e)
+  if self.tap and attacker and victim and not self:replaying() then self.tap('hit',attacker,victim) end -- the co-op run credits damage and drops to the last player who hit
   if not self.enabled or self:replaying() or not self:allowed() or not victim then return end
   e=e or {};local valid=e.context_valid==true
   local tags={}
@@ -255,7 +268,7 @@ return function(D)
   self:event{kind='clank',port=b,target=a,tags={},damage_a=da,damage_b=db}
  end
  function L:pickup_expire(e) if self.drives and not self:replaying() then self.drives:expire(e) end end
- function L:pickup(e) if self.drives then self.drives:pickup(e) end;if e.port then self:event{kind='item_pickup',port=e.port,tags={}} end end
+ function L:pickup(e) if self.drives then self.drives:pickup(e) end;for _,seat in pairs(self.seats) do seat:pickup(e) end;if e.port then self:event{kind='item_pickup',port=e.port,tags={}} end end
  function L:sample()
   local players,life={},{}
   for p=1,6 do local v=self.g.player(p)
@@ -266,7 +279,7 @@ return function(D)
   return players,life
  end
  function L:export()
-  return D.mod_codec.encode{version=1,echoes=self.echoes and self.echoes:snapshot(true),foes=self.foes and self.foes:snapshot(true),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(true),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed,tech=self.tech}
+  return D.mod_codec.encode{version=1,echoes=self.echoes and self.echoes:snapshot(true),foes=self.foes and self.foes:snapshot(true),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(true),seats=self:seat_snapshots(true),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed,tech=self.tech}
  end
  function L:check_echo_capacity(engine,manual)
   if not self.echoes then return end;manual=manual or self.echoes.manual
@@ -275,7 +288,7 @@ return function(D)
    if #desc.copies>0 or #(manual[p] or {})>0 then assert(self.echoes:capable(),'native echo journal unavailable; rebuild required')end
   end
  end
- function L:prospective(engine,debug,pending,foes,drives,players,manual)
+ function L:prospective(engine,debug,pending,foes,drives,players,manual,seats)
   local function clone(v) return D.mod_codec.decode(D.mod_codec.encode(v)) end
   manual=manual or (self.echoes and self.echoes.manual) or {}
   local probe=D.mod_engine.new(engine.seed,D.mod_pool,{context=engine.context})
@@ -299,6 +312,14 @@ return function(D)
    for _,e in ipairs(staged.pending or {}) do assert(draft[e.op](draft,e.a,e.b)) end
    if #(staged.pending or {})>0 or next(draft.equipped) or draft.keystone or #(draft.keystones or {})>0 then
     local mods,implicit=draft:derive();probe:set_build(1,self.drives:combined(mods,roots),implicit)
+   end
+  end
+  for p,snap in pairs(seats or {}) do -- co-op seats: the same validation and publication order, one bag each
+   local seat=self.seats[p];if seat then
+    local roots={engine=probe,debug_equipped=debug,pending=pending,echo_manual=manual,check_echo_capacity=function(_,e)self:check_echo_capacity(e,manual)end};local st=seat:validate(snap,roots)
+    local draft=D.drive_bag.new(seat.loot);assert(draft:restore(st.bag))
+    for _,e in ipairs(st.pending or {}) do assert(draft[e.op](draft,e.a,e.b)) end
+    if #(st.pending or {})>0 or next(draft.equipped) or draft.keystone or #(draft.keystones or {})>0 then local mods,implicit=draft:derive();probe:set_build(p,seat:combined(mods,roots),implicit) end
    end
   end
   for p=1,6 do probe:native_rules(p) end;self:check_echo_capacity(probe,manual)
@@ -334,10 +355,11 @@ return function(D)
   for _,root in ipairs({s.owned,s.hit_owned or {}}) do for p,v in pairs(root) do port(p);assert(v==true,'invalid ownership') end end
   local debug=s.debug_equipped or probe.equipped;for p,mods in pairs(debug) do local check=D.mod_engine.new(1,D.mod_pool,{context=probe.context});check:set_build(port(p),mods,{}) end
   local echoes=self.echoes and self.echoes:validate(s.echoes or {manual={},owned={}})
-  local drives=self:prospective(probe,debug,s.pending,foes,self.drives and s.drives,nil,echoes and echoes.manual or {})
+  local drives=self:prospective(probe,debug,s.pending,foes,self.drives and s.drives,nil,echoes and echoes.manual or {},s.seats)
   if self.echoes then self.echoes:restore(echoes) end
   self.debug_equipped=debug;self.pending=s.pending
   if drives then self.drives:publish(drives) end
+  for p,snap in pairs(s.seats or {}) do local seat=self.seats[p];if seat then seat:restore(snap) end end
   self.engine:import(s.engine);self.enabled=s.enabled;self.owned=s.owned;self.hit_owned=s.hit_owned or {};self.pending=s.pending;self.observed=s.observed
   self.tech=type(s.tech)=='table' and {crit=s.tech.crit or {},caps=s.tech.caps or {},armor=s.tech.armor or {},timed=s.tech.timed or {},shock=s.tech.shock or {}} or {crit={},caps={},armor={},timed={},shock={}}
   if self.foes then if foes then self.foes:restore(foes) else self.foes:reset() end end
@@ -358,26 +380,29 @@ return function(D)
   -- The staged-edit publication (validate the whole prospective state, then apply it) is only needed when an
   -- edit is staged or the bag's derived build is stale; an unchanged, already validated state is not
   -- re-validated every frame.
-  local staged=#self.pending>0 or (self.foes and #self.foes.pending>0) or (self.drives and (#self.drives.pending>0 or self.drives:stale()))
+  local staged=#self.pending>0 or (self.foes and #self.foes.pending>0) or (self.drives and (#self.drives.pending>0 or self.drives:stale())) or self:seats_busy()
   if ready and staged then
-   local bag=self.drives and self.drives.bag:snapshot();local debug=D.mod_codec.decode(D.mod_codec.encode(self.debug_equipped))
+   local bag=self.drives and self.drives.bag:snapshot();local seat_bags={};for p,seat in pairs(self.seats) do seat_bags[p]=seat.bag:snapshot() end;local debug=D.mod_codec.decode(D.mod_codec.encode(self.debug_equipped))
    local accepted,why=pcall(function()
-    self:prospective(self.engine,self.debug_equipped,self.pending,self.foes,self.drives and self.drives:snapshot(),players)
+    self:prospective(self.engine,self.debug_equipped,self.pending,self.foes,self.drives and self.drives:snapshot(),players,nil,self:seat_snapshots())
     if self.foes then self.foes:apply() end
     for _,e in ipairs(self.pending) do if players[e.port] then self.engine:equip(e.port,e.id);self.debug_equipped[e.port]=self.debug_equipped[e.port] or {};self.debug_equipped[e.port][e.id]=1 end end
     self.pending={}
     if self.drives and (#self.drives.pending>0 or self.drives:has_build()) then self.drives:apply() end
+    for _,seat in pairs(self.seats) do if #seat.pending>0 or seat:has_build() then seat:apply() end end
    end)
    if not accepted then
     pcall(self.g.sim_clear);if self.echoes then self.echoes:reset() end;self.display:clear();self.engine=D.mod_engine.new(104729,D.mod_pool,{context=self.engine.context});self.display.engine=self.engine
     self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped=debug
     if self.foes then self.foes:reset() end
     if self.drives then self.drives.bag.items=bag.items;self.drives.bag.equipped=bag.equipped;self.drives.bag.keystone=bag.keystone;self.drives.bag.keystones=bag.keystones or {};self.drives.bag.context=bag.context;self.drives.pending={} end
+    for p,seat in pairs(self.seats) do local b=seat_bags[p];seat.bag.items=b.items;seat.bag.equipped=b.equipped;seat.bag.keystone=b.keystone;seat.bag.keystones=b.keystones or {};seat.bag.context=b.context;seat.pending={} end
     self.g.log('mod: disabled after pending publication refusal '..tostring(why));return true
    end
   end
   if self.foes then self.foes:frame() end
   if self.drives then self.drives:frame() end
+  for _,seat in pairs(self.seats) do seat:frame() end
   local stock_queued={};for _,e in ipairs(self.engine.queue) do if e.kind=='stock_lost' then stock_queued[e.port]=true end end
   for p=1,6 do local before,now=self.observed[p],life[p]
    if before and now and (now.falls>before.falls or now.stocks<before.stocks) and not stock_queued[p] then self:stock_lost(p);stock_queued[p]=true end
@@ -408,7 +433,7 @@ return function(D)
   local interrupts=self:technique_ops(ops,players,stock_queued)
   self.owned=new_owned;self.hit_owned=new_hit_owned
   for p=1,6 do if self.engine.statuses[p] and not next(self.engine.statuses[p]) then self.engine.statuses[p]=nil end end
-  self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0 or self.drives:has_build())) or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
+  self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0 or self.drives:has_build())) or self:seats_enable() or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
   -- Visual pulse/cooldown metadata is pure state and belongs in the checkpoint.
   if self.enabled then self.display:update(self.engine,players) else self.display:clear() end
   local committed,why=pcall(function() return self.g.sim_commit(self:export(),ops) end)
@@ -538,6 +563,7 @@ return function(D)
  end
  function L:tick()
   if self.drives then self.drives:tick() end
+  for _,seat in pairs(self.seats) do seat:tick() end
   if self.fx then self.fx:tick() end
   if self.enabled and self:allowed() and not self:replaying() and self.display.tick then self.display:tick(self.engine) end
   return self.drives and self.drives.menu.active or false
@@ -562,6 +588,7 @@ return function(D)
  function L:set_context(ctx)
   ctx=D.mod_progression.context(ctx.depth,ctx.loop)
   self.engine.context=ctx;if self.drives then self.drives.bag.context=D.mod_progression.context(ctx) end
+  for _,seat in pairs(self.seats) do seat.bag.context=D.mod_progression.context(ctx) end
  end
  -- Script cost of the per-frame host and of one skill event (wall clock, diagnostic only: `techprobe cost`).
  do

@@ -8,12 +8,44 @@ return function(D)
    a.menu.run_type=C.tuning.retail.default_mode;a.menu.difficulty=C.tuning.retail.difficulty;a.menu.stocks=C.tuning.retail.stocks
    a.g.log('envoy: default retail Classic / Adventure + NG+; campaigns parked');return a
   end
+  -- ---- co-op (offline, two local players; coop.lua). Off unless asked for: `envoy coop [fighter1] [fighter2] [p1=cpu] [p2=cpu] [seed=N] [loops=N]`.
+  function A:coop_ready() return self.coop~=nil and select(1,self.coop:available()) end
+  function A:start_coop(opts)
+   if not self.coop then return false,'co-op unavailable' end
+   if self.retail.active or self.retail.pending or self.run.active or self.run.pending then return false,'finish the other run first' end
+   if self.hub and self.hub.active then self.hub:clear();self.mission:stop('co-op run launch') end
+   local ok,why=self.coop:start(opts)
+   if ok then self.visible=false;self.input:close();self.menu:show('playing') else self.notice=why;self.visible=true;self.menu:show('setup');self.g.log('envoy: co-op refused '..tostring(why)) end
+   return ok,why
+  end
+  function A:coop_command(arg)
+   local w={};for x in arg:gmatch('%S+') do w[#w+1]=x end;table.remove(w,1)
+   local C=D.coop
+   if w[1]=='stop' then return self.coop and self.coop:stop() end
+   if w[1]=='tuning' then
+    if w[2]=='reset' then C.reset_tuning() end
+    if w[2] and w[3] then local ok,err=pcall(C.set,w[2],w[3]);if not ok then self.g.log('envoy coop: '..tostring(err));return false,tostring(err) end end
+    for _,l in ipairs(C.lines()) do self.g.log('envoy coop: '..l) end;return true
+   end
+   if w[1]=='record' then local text,digest=self.coop:record();for l in text:gmatch('[^\n]+') do self.g.log('envoy coop record: '..l) end;self.g.log('envoy coop record: digest '..digest);return true end
+   if w[1]=='status' then local c=self.coop;self.g.log(('envoy coop: active=%s state=%s stage=%s loop=%s seed=%s'):format(tostring(c.active),c.state,tostring(c.stage),tostring(c.loop),tostring(c.seed)));return true end
+   local opts={};local fighters={}
+   for _,tok in ipairs(w) do
+    local k,v=tok:match('^(%a+%d?)=(.+)$')
+    if k=='p1' or k=='p2' then if v~='cpu' and v~='human' then return false,k..' is cpu or human' end;opts[k]=v
+    elseif k=='seed' then opts.seed=tonumber(v) elseif k=='loops' then opts.max_loops=tonumber(v)
+    elseif k then return false,'unknown option '..k
+    else local id,why=D.fighters.resolve(self.g,tok);if not id then self.notice=why;self.g.log('envoy: '..why);return false,why end;fighters[#fighters+1]=id end
+   end
+   opts.f1=fighters[1] or self.menu.fighter or 'fox';opts.f2=fighters[2] or (opts.f1=='marth' and 'fox' or 'marth')
+   return self:start_coop(opts)
+  end
   function A:companion()
    return self.retail and (self.retail.active or self.retail.pending) and self.retail.companion or old.companion(self)
   end
   function A:context()
    local c=old.context(self);c.reward=self.retail and self.retail.reward;c.retail_pending=self.retail and self.retail.pending
-   c.retail_menu=self.menu.run_type~='campaign';c.garden_available=self.garden_available==true
+   c.retail_menu=self.menu.run_type~='campaign';c.coop_available=self:coop_ready()==true;c.garden_available=self.garden_available==true
    if self.retail and self.retail.active then c.hud=self.retail.mode..' / NG+'..self.retail.loop..' / START: pause' end
    return c
   end
@@ -62,8 +94,10 @@ return function(D)
     if self.retail.host then self.retail.host:touch_tuning() end
     return true
    end
+   if arg=='coop' or arg:match('^coop%s') then return self:coop_command(arg) end
    if arg=='start' then
     if self.menu.run_type=='campaign' then return old.command(self,'start') end
+    if self.menu.run_type=='coop' then return self:start_coop({f1=self.menu.fighter}) end
     return self:start_retail()
    end
    do local mode,token=arg:match('^(%a+)%s+(%S+)$')
@@ -114,6 +148,7 @@ return function(D)
    return old.sync_pause(self)
   end
   function A:menu_effect(e)
+   if e and e.type=='start' and e.mode=='coop' then return self:start_coop({f1=e.fighter,f2=(e.fighter=='marth') and 'fox' or 'marth'}) end
    if e and e.type=='start' then
     if self.menu.run_type=='campaign' then return old.menu_effect(self,e) end
     return self:start_retail(e.mode,e.fighter,e.difficulty,e.stocks)
@@ -162,6 +197,7 @@ return function(D)
    local m=g.mode_1p and g.mode_1p();return type(m)=='table' and m.held==true
   end
   function A:frame()
+   if self.coop and self.coop.active then return end   -- a co-op run is driven by coop.lua; the app's own menus and garden stay out of it
    if self.retail.active or self.retail.pending then
     self.retail:frame();if self.retail.active then self.recolour:tick(self.retail.companion) end;return
    end
@@ -172,6 +208,7 @@ return function(D)
    end
   end
   function A:tick()
+   if self.coop and self.coop.active then return end
    if self.retail_request then
     local q=self.retail_request;q.ticks=q.ticks+1
     if not (self.mission.stopping or self.mission.staging or self.mission.retiring or self.mission.recovery) then
@@ -197,6 +234,7 @@ return function(D)
    self.retail:tick();return old.tick(self)
   end
   function A:draw()
+   if self.coop and self.coop.active then return end
    if self.retail.active or self.retail.pending then
     local r=self.retail
     if r.host then r.host.menu_up=(self.visible and self.menu.screen~='playing') and true or false end   -- the strip and toasts stay out of the pause / app menu
@@ -227,6 +265,7 @@ return function(D)
    return old.draw(self)
   end
   function A:stop(reason)
+   if self.coop and self.coop.active then self.coop:stop();self.drives:clear();self.models:clear() end
    self.retail_request=nil;self.results_up=nil
    if self.retail.active or self.retail.pending then
     local ok,why=self.retail:finish(reason or 'quit');self.run.profile=self.retail.profile
@@ -235,11 +274,11 @@ return function(D)
    end
    return old.stop(self,reason)
   end
-  function A:match_start() if self.retail.active or self.retail.pending then self.models:unload();return end;return old.match_start(self) end
+  function A:match_start() if self.coop and self.coop.active then self.coop:scene_started();self.models:unload();return end;if self.retail.active or self.retail.pending then self.models:unload();return end;return old.match_start(self) end
   -- From the end of a retail stage until the next one starts the game's own results screen is up and waits for START: Envoy's
   -- START-opens-the-pause-menu must stay out of the way, or it eats the press (and, with START hidden while a menu is open, the
   -- game never sees it at all).
-  function A:match_end() if self.retail.active or self.retail.pending then self.g.log('envoy: match end in a retail run: results screen up');self.results_up=true;self.start_ready=false;self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
+  function A:match_end() if self.coop and self.coop.active then self.coop:scene_ended();self.models:unload();self.recolour:clear();return end;if self.retail.active or self.retail.pending then self.g.log('envoy: match end in a retail run: results screen up');self.results_up=true;self.start_ready=false;self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
   function A:unload() self:stop('quit');return old.unload(self) end
   function A:enter_hub()
    if self.retail.active or self.retail.pending then return false,'settle retail run before garden' end

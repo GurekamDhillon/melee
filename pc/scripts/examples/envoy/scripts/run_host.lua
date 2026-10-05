@@ -26,8 +26,14 @@ return function(D)
  -- is `D.drive_economy.tuning` (floor_max, floor_chance, team_max, reward_every, offers, bonus_offers, bag_capacity).
  H.tuning={settle_frames=30,roll_attempts=2,drops=true,auto_collect=true,hold_ticks=2850,end_hold=true,end_hold_frames=1800,ko_poll=6,drop_percent=50}
  local function econ() return D.drive_economy.tuning end
- function H.new(g,mods,retail)
-  local self=setmetatable({g=g,mods=mods,retail=retail,running=false,fell={},rolls={},stage=0,loop=0,drops=0,since=0,
+ -- `seat` (co-op only): {index=,port=,drives=,allies={[port]=true,...},strength=fn,gather=fn,route=fn,barrier={open=fn,release=fn},anchor=,colour=}.
+ -- No seat: the one-player host, exactly as before. Seat 1 is the lead (it owns the stage's opponents, drops and match hold); the other
+ -- seats are followers: own bag, strip and screens on their own port, a facade over the shared rule host that cannot reset it.
+ function H.new(g,mods,retail,seat)
+  if seat and seat.index>1 then
+   mods=setmetatable({drives=seat.drives,foes=false,run_end=function() end,toast=false},{__index=mods})
+  end
+  local self=setmetatable({g=g,mods=mods,retail=retail,seat=seat,follower=seat~=nil and seat.index>1,running=false,fell={},rolls={},stage=0,loop=0,drops=0,since=0,
    offers={},key_offers={},decide={},deferred={},new_keys={},kos=0,hurt={},dropped={},foe_ports={},stage_kind='battle',faded={},seen_slots=nil,seen_keys=nil,seen_tier=nil,seen_loop=nil,rolled={}},H)
   self.screen=D.run_screen.new(g,self);self.hud=D.run_hud.new(g,self)
   self.synfx=D.synergy_fx and D.synergy_fx.new(g,self)
@@ -37,8 +43,9 @@ return function(D)
    mods.drives.on_expire=function(r,why) self:expired(r,why) end
   end
   -- A technique or crit moment worth a line (first technique rule fired, a strong crit): the strip's toast, presentation only.
-  mods.toast=function(text) if self.running then self.hud:announce({{text='Technique',colour='gold'},text}) end end
-  if mods.foes then mods.foes.defer=function() return self.running and ((self.hud and #self.hud.toasts>0) or self.menu_up==true) end end  -- the opponent plate waits while an announcement is up (they used to overlap)
+  if not self.follower then mods.toast=function(text) if self.running then self.hud:announce({{text='Technique',colour='gold'},text}) end end end
+  if mods.foes and not self.follower then mods.foes.defer=function() return self.running and ((self.hud and #self.hud.toasts>0) or self.menu_up==true) end end  -- the opponent plate waits while an announcement is up (they used to overlap)
+  if self.follower then return self end -- the console commands belong to the lead seat (they take a port where it matters)
   g.command('uxdump',function() self:dump();return true end,'log the rule host state: slots, bag, keystones, offers, screen, hud')
   g.command('uxpress',function(a) self:press(a or '');return true end,'press a screen action: up down left right accept back x y start')
   g.command('uxcost',function(a) if a=='reset' then self.cost={} else for _,l in ipairs(self:cost_report()) do g.log(l) end end;return true end,'script cost of the run screens and strip: uxcost [reset]')
@@ -90,7 +97,14 @@ return function(D)
   g.command('uxbag',function() if self.running then self.screen:open('bag') end;return true end,'open the run bag screen')
   return self
  end
- function H:log(text) self.g.log('envoy rules: '..text) end
+ function H:log(text) self.g.log('envoy rules: '..(self.seat and ('P'..self.seat.port..' ') or '')..text) end
+ -- The port this host's player plays on (1 in every one-player run), whether `p` is one of the player's allies, and a seed salt that
+ -- differs per seat (0 for seat 1 and for a one-player run, so those seeds are unchanged).
+ function H:port0() return self.seat and self.seat.port or (self.retail.state and self.retail.state.player_port or 1) end
+ function H:is_ally(p) return self.seat~=nil and self.seat.allies~=nil and self.seat.allies[p]==true end
+ -- Co-op: a decision worth recording (the run's event list, the same on both peers); a one-player host records nothing.
+ function H:emit(kind,a,b) if self.seat and self.seat.emit then self.seat.emit(self,kind,a,b) end end
+ function H:salt() return self.seat and (self.seat.index-1)*1000 or 0 end
  -- ---- small accessors the screen and HUD share ------------------------------------------------------------------
  function H:bag() return self.mods.drives.bag end
  local function key(r) return table.concat({r.seed,r.depth,r.loop or 0,r.colour,r.rarity},':') end
@@ -224,7 +238,7 @@ return function(D)
    if tostring(why):find('drained event boundary',1,true) then return nil,'busy' end
    self:log(how..' refused: '..tostring(why));return nil,plain(why)
   end
-  self:touch();return plan.action
+  self:emit('gain',plan.action,self:name(r));self:touch();return plan.action
  end
  -- A drive arrives (a pickup, an uncollected drop): merge, bag or free slot, else it waits for the player's choice.
  function H:gain(r,how)
@@ -261,6 +275,7 @@ return function(D)
   else plan=self:plan_take(r) end
   if plan.action=='choose' then return nil,'choose' end
   local action,why=self:apply_plan(plan,r,'stage reward');if not action then return nil,why end
+  self:emit('take_offer',i,self:name(r))
   local others={};for j,o in ipairs(self.offers) do if j~=i then others[#others+1]=self:name(o) end end
   self.offers={};self:touch()
   self:log(('took %s from the stage reward%s'):format(self:name(r),#others>0 and ('; declined '..table.concat(others,', ')) or ''))
@@ -290,7 +305,7 @@ return function(D)
   if not ok then self:log('replace refused: '..tostring(why));return nil,plain(why) end
   local lost=true
   if where=='equipped' and #b.items<b:capacity() then lost=not b:give(old) end
-  self:mark_new(r);self:touch()
+  self:emit('replace',self:name(r),self:name(old));self:mark_new(r);self:touch()
   self:log(('%s replaces %s in %s %d: %s'):format(self:name(r),self:name(old),where=='equipped' and 'slot' or 'bag place',index,lost and 'the old drive is gone' or 'the old drive went to the bag'))
   if swap.from=='offer' then
    local others={};for _,o in ipairs(self.offers) do if o~=r then others[#others+1]=self:name(o) end end
@@ -300,13 +315,13 @@ return function(D)
  end
  -- A drive that cannot be kept is left behind, said so.
  function H:leave_choice(why)
-  local r=table.remove(self.decide,1);if r then self:log(('left behind %s (%s)'):format(self:name(r),why or 'player choice')) end;self:touch();return r
+  local r=table.remove(self.decide,1);if r then self:emit('left_behind',self:name(r),why);self:log(('left behind %s (%s)'):format(self:name(r),why or 'player choice')) end;self:touch();return r
  end
  -- Keystones: the choice offered at a stage clear while the allowance has steps owed.
  function H:take_keystone(id)
   local ok,why=self:bag():choose_keystone(id)
   if not ok then self:log('keystone refused: '..tostring(why));return nil,plain(why) end
-  self:touch();local rule=self:keystone_rule(id);self:log('keystone chosen: '..(rule and rule.label or id));self.hud:flash('Keystone: '..(rule and rule.label or id))
+  self:emit('keystone',id);self:touch();local rule=self:keystone_rule(id);self:log('keystone chosen: '..(rule and rule.label or id));self.hud:flash('Keystone: '..(rule and rule.label or id))
   self:offer_keystones();return true
  end
  -- The try-it command (`envoy grant <id>`): take a keystone now, outside the offer. Same legality rules as a pick.
@@ -332,14 +347,14 @@ return function(D)
  -- the same stage always shows the same offers). Returns the index swapped, or nil.
  function H:connect_offers(base,ctx,rarity_of)
   if not self:connecting() then return nil end
-  local k,r=D.mod_graph.connect_offers(D.mod_pool,self.mods.drives.loot,self.offers,self:held_ids(),base,ctx,rarity_of,function(try,k) return seed_for(self.seed,base,try,701+k) end)
+  local k,r=D.mod_graph.connect_offers(D.mod_pool,self.mods.drives.loot,self.offers,self:held_ids(),base,ctx,rarity_of,function(try,k) return seed_for(self.seed,base,try,701+k+self:salt()) end)
   if k then self:log(('connecting offers: none of the offers connected to the build; offer %d became %s'):format(k,self:name(r))) end
   return k
  end
  function H:offer_keystones()
   local ctx=self.mods.engine.context;local held=self:keystone_ids()
   if D.keystones.owed(ctx,held)>0 then
-   self.key_offers=D.keystones.offer(ctx,seed_for(self.seed,self.stage,self.loop,99),3,held,self:connecting() and {held=self:held_ids(),pool=D.mod_pool,graph=D.mod_graph} or nil)
+   self.key_offers=D.keystones.offer(ctx,seed_for(self.seed,self.stage,self.loop,99+self:salt()),3,held,self:connecting() and {held=self:held_ids(),pool=D.mod_pool,graph=D.mod_graph} or nil)
    if #self.key_offers>0 then local names={};for _,id in ipairs(self.key_offers) do names[#names+1]=(self:keystone_rule(id) or {label=id}).label end;self:log('keystone offer: '..table.concat(names,' / ')) end
   else self.key_offers={} end
  end
@@ -357,15 +372,15 @@ return function(D)
   local function add(title,line) list[#list+1]={{text=title,colour='gold'},line} end
   if self.seen_slots and slots>self.seen_slots then add(({[5]='Fifth slot unlocked',[6]='Sixth slot unlocked'})[slots] or ('Slot '..slots..' unlocked'),'You can equip one more drive. Open the bag with Z+START.') end
   if self.seen_keys and keys>self.seen_keys then add('Keystone allowance: '..keys,'A keystone is offered at the next stage clear.') end
-  if self.seen_tier and tier>self.seen_tier then add('Drive tier '..tier,'New drives roll stronger modifiers; opponents scale up too.') end
-  local ng=D.mod_progression.run_loop(self.retail.mode,ctx);if self.seen_loop and ng>self.seen_loop then add('New Game+ '..ng,'Your build carries over. Opponents start stronger.') end
+  if self.seen_tier and tier>self.seen_tier and not self.follower then add('Drive tier '..tier,'New drives roll stronger modifiers; opponents scale up too.') end
+  local ng=D.mod_progression.run_loop(self.retail.mode,ctx);if self.seen_loop and ng>self.seen_loop and not self.follower then add('New Game+ '..ng,'Your build carries over. Opponents start stronger.') end
   self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=slots,keys,tier,ng
   return list
  end
  -- ---- lifecycle -------------------------------------------------------------------------------------------------
  function H:run_begin(seed)
   -- Crits draw from the engine's generator; restart it from the run seed so a run is reproducible (never a default seed).
-  if self.g.crit_seed then pcall(self.g.crit_seed,seed_for(seed,0,0,9)) end
+  if self.g.crit_seed and not self.follower then pcall(self.g.crit_seed,seed_for(seed,0,0,9)) end
   self.running=true;self.seed=seed;self.fell={};self.rolls={};self.stage=0;self.loop=0;self.drops=0
   self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
   self.mods:run_end() -- a new run starts from an empty bag, whatever the last one left
@@ -373,7 +388,7 @@ return function(D)
   self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=D.mod_progression.slots(ctx),D.mod_progression.keystones(ctx),D.mod_progression.tier(ctx),0
   -- A starter drive and a starting keystone (one random one, from the run seed), so the first opponents already roll
   -- against a build: the drive goes straight into slot 1. One panel announces both.
-  local record=self.mods.drives.loot:roll(seed_for(seed,0,0,5),ctx)
+  local record=self.mods.drives.loot:roll(seed_for(seed,0,0,5+self:salt()),ctx)
   self.starter=record
   local lines={}
   local idx=self:acquire(record,'starter')
@@ -382,7 +397,7 @@ return function(D)
    lines[#lines+1]={text=self:name(record),colour=D.drive_text.rarity_colour[record.rarity]}
    lines[#lines+1]=D.drive_text.drive_lines(self.mods.drives.loot,record)[2] or ''
   end
-  local kid=D.keystones.starting(seed);local rule=self:keystone_rule(kid)
+  local kid=self.seat and self.seat.starting_keystone and self.seat.starting_keystone(self,seed) or D.keystones.starting(seed);local rule=self:keystone_rule(kid)
   local ok,why=self:bag():choose_keystone(kid)
   if ok and rule then
    self:touch();self.starting_keystone=kid;self:log('starting keystone: '..rule.label)
@@ -421,7 +436,7 @@ return function(D)
  end
  -- Opponents roll a build from the player's current strength, exactly as `foe roll` does.
  function H:spawn(e)
-  if not self.running or not e or not e.port or e.port==(self.retail.state and self.retail.state.player_port or 1) then return end
+  if not self.running or not e or not e.port or e.port==self:port0() or self:is_ally(e.port) or self.follower then return end
   -- The spawn signal fires while the scene is still being built: only note the port here. The roll (which
   -- also warms the look shaders) is queued from the first logic frame, when the fighter is fully present.
   self:register_foe(e.port)
@@ -446,7 +461,7 @@ return function(D)
    if v and v.cpu then
     local ok,why=pcall(function()
      if not (foes.jobs and foes.jobs[p]) then
-      local _,strength=self.mods.engine:family_budget(1)
+      local strength=self.seat and self.seat.strength and self.seat.strength(self) or select(2,self.mods.engine:family_budget(1))
       foes:roll_begin(p,strength,seed_for(self.seed,self.stage,self.loop,p),self.stage,'normal',{drives=self:equipped_count(),keystones=#self:keystone_ids()})
      end
      return foes:roll_advance(p,H.tuning.roll_attempts)
@@ -483,12 +498,16 @@ return function(D)
   end
   if d.drops:count()+(self.drop_queue and #self.drop_queue or 0)>=12 then self:log('drop skipped: the ground is full');return end
   local record=d.loot:roll(seed_for(self.seed,self.stage,self.loop,p+self.kos*7),self.mods.engine.context)
-  self.drop_queue=self.drop_queue or {};self.drop_queue[#self.drop_queue+1]={record=record,port=p,tries=0,why=why or 'defeated'};self.drops_given[self.loop..':'..self.stage]=true
+  self.drop_queue=self.drop_queue or {}
+  for _,rec in ipairs(self.seat and self.seat.drop_records and self.seat.drop_records(self,record,p) or {record}) do self.drop_queue[#self.drop_queue+1]={record=rec,port=p,tries=0,why=why or 'defeated'} end
+  self.drops_given[self.loop..':'..self.stage]=true
  end
  -- Where a drop appears: on the stage, on the floor a few steps from the player (the opponent may be off screen).
  function H:drop_position()
-  local g=self.g;local port=self.retail.state and self.retail.state.player_port or 1
-  local v=g.player(port);if not v then return nil end
+  local g=self.g;local port=self:port0()
+  local v=g.player(port)
+  if self.seat and self.seat.anchor_port then port=self.seat.anchor_port(self) or port;v=g.player(port) end
+  if not v then return nil end
   local x,y=v.x+(v.x>0 and -40 or 40),v.y -- toward the middle of the stage, a few steps away, so it can be seen and walked to
   local b=g.stage_bounds and g.stage_bounds();local cam=b and b.camera
   if cam then local lo,hi=cam.left*.7,cam.right*.7;if lo<hi then x=math.max(lo,math.min(hi,x)) end end
@@ -505,8 +524,9 @@ return function(D)
   elseif item.tries>=60 then table.remove(q,1);self:log(('drop failed for %s: %s'):format(self:name(item.record),tostring(why))) end
  end
  -- Called by the drive host after the player walked over a drive: merge, bag, free slot, or ask which to give up.
- function H:picked_up(r)
-  self.hud.m=nil
+ function H:picked_up(r,from)
+  self.hud.m=nil;if from then self:log('received '..self:name(r)..' from P'..from:port0()..' (the drop belongs to this player)');from.hud:flash('Passed it on') end
+  if self.seat and self.seat.route then local to=self.seat.route(self,r);if to and to~=self then return to:picked_up(r,self) end end -- co-op: a drop that belongs to the other player is handed over
   local d=self.mods.drives;local action=self:gain(r,'pickup')
   if action=='merge' then -- apply_plan showed the merge card
   elseif action=='wait' then self.hud:show_card('Picked up: '..D.drive_text.short(d.loot,r),{'Being added to your build.'},D.drive_text.rarity_colour[r.rarity])
@@ -539,10 +559,10 @@ return function(D)
   if not on then self.out_frames=0 end
  end
  function H:foes_out()
-  local port0=self.retail.state and self.retail.state.player_port or 1
+  local port0=self:port0()
   if #self.foe_ports==0 then return false end
   for _,p in ipairs(self.foe_ports) do
-   if p~=port0 then local v=self.g.player(p);if v and (v.stocks or 0)>0 then return false end end
+   if p~=port0 and not self:is_ally(p) then local v=self.g.player(p);if v and (v.stocks or 0)>0 then return false end end
   end
   return true
  end
@@ -567,7 +587,7 @@ return function(D)
   local w=300;local x=a.x+(a.w-w)//2
   g.fill(x,a.y+112,w,34,0x3A3320E8);g.fill(x,a.y+112,w,2,0xEBD175FF)   -- below the match timer
   k.text(x+w//2,a.y+136,text,'body','gold','center')
-  local me=g.player(self.retail.state and self.retail.state.player_port or 1);local best,bd
+  local me=g.player(self:port0());local best,bd
   for _,p in ipairs(list) do if me then local dd=math.abs(p.x-me.x)+math.abs(p.y-me.y);if not bd or dd<bd then best,bd=p,dd end end end
   if not best or not g.project then return end
   local ok,sx,sy,visible=pcall(g.project,best.x,best.y+4,0)
@@ -591,8 +611,9 @@ return function(D)
   local d=self.mods.drives
   if not self.running or self.screen.active or not d or k=='bonus' or k=='boss' or self.hold_gave_up then return self:set_hold(false) end
   local floor=d.drops:count()+(self.drop_queue and #self.drop_queue or 0)
-  local port0=self.retail.state and self.retail.state.player_port or 1
+  local port0=self:port0()
   local me=self.g.player(port0)
+  if self.seat and self.seat.team_alive then me=self.seat.team_alive(self) end -- co-op: any living teammate keeps the hold
   if floor==0 then return self:set_hold(false,'every drive collected') end
   if not me or (me.stocks or 0)<=0 then return self:set_hold(false,'the player is out') end
   if not self.holding_end then self.hud:flash('Collect the drives') end
@@ -619,6 +640,7 @@ return function(D)
   self.faded={};if self.drop_queue then
    for _,it in ipairs(self.drop_queue) do list[#list+1]=it.record end;self.drop_queue={}
   end
+  if self.seat and self.seat.gather then list=self.seat.gather(self,list) end -- co-op: the shared ground is divided between the seats
   for _,r in ipairs(list) do
    if H.tuning.auto_collect then
     local action=self:gain(r,'uncollected')
@@ -631,17 +653,18 @@ return function(D)
   if not self.running then return end
   self.since=self.since+1;self.hud:frame();if not self:ready() then return end
   self.hud:watch(self.mods.engine)
-  if self.synfx then local ok,err=pcall(self.synfx.frame,self.synfx,self.mods.engine,self.retail.state and self.retail.state.player_port or 1);if not ok and not self.synfx_failed then self.synfx_failed=true;self:log('synergy fx frame failed: '..tostring(err)) end end
-  local port0=self.retail.state and self.retail.state.player_port or 1
+  if self.synfx then local ok,err=pcall(self.synfx.frame,self.synfx,self.mods.engine,self:port0());if not ok and not self.synfx_failed then self.synfx_failed=true;self:log('synergy fx frame failed: '..tostring(err)) end end
+  local port0=self:port0()
   -- any CPU fighter that has appeared since the stage began is an opponent too (a spawn event may not have named it). Seen on the
   -- frame it exists, and its roll starts at once (a fast kill must not beat the roll).
-  for p=1,6 do if p~=port0 and not self.rolled[p] then local v=self.g.player(p);if v and v.cpu then self:register_foe(p);self:roll_wanted() end end end
+  if not self.follower then for p=1,6 do if p~=port0 and not self:is_ally(p) and not self.rolled[p] then local v=self.g.player(p);if v and v.cpu then self:register_foe(p);self:roll_wanted() end end end end
   local me=self.g.player(port0)
   if me and type(me.x)=='number' then self.travel_min=math.min(self.travel_min or me.x,me.x);self.travel_max=math.max(self.travel_max or me.x,me.x) end
   if #self.foe_ports>0 then self.foe_seen=true end
+  if self.follower then return end
   if self.since%H.tuning.ko_poll~=0 then return end
   for _,p in ipairs(self.foe_ports) do
-   if p~=port0 then
+   if p~=port0 and not self:is_ally(p) then
     local v=self.g.player(p)
     if v then
      local falls=v.falls or 0;local before=self.fell[p] or 0 -- a stage's fighters start with no falls
@@ -661,8 +684,10 @@ return function(D)
   if final or kind=='bonus' or kind=='boss' or self.foe_seen then return false end
   return ((self.travel_max or 0)-(self.travel_min or 0))<H.tuning.idle_travel
  end
+
  function H:reward_due(stage,final)
   if final then return true end
+  if self.seat and self.seat.reward_due then return self.seat.reward_due(self,stage,final) end
   local _,reward=D.drive_economy.stage(econ(),self.stage_kind,stage)
   return reward>0
  end
@@ -686,8 +711,8 @@ return function(D)
    local many=final or kind=='bonus' or kind=='boss'
    local n=many and econ().bonus_offers or econ().offers
    local forced=final and {'rare','rare','unique'} or nil
-   for i=1,n do self.offers[i]=d.loot:roll(seed_for(self.seed,stage,loop,(final and 11 or 7)+i*13),ctx,forced and forced[i] or D.drive_economy.reward_rarity(ctx,i)) end
-   self:connect_offers(seed_for(self.seed,stage,loop,3),ctx,function(i) return forced and forced[i] or D.drive_economy.reward_rarity(ctx,i) end)
+   for i=1,n do self.offers[i]=d.loot:roll(seed_for(self.seed,stage,loop,(final and 11 or 7)+i*13+self:salt()),ctx,forced and forced[i] or D.drive_economy.reward_rarity(ctx,i)) end
+   self:connect_offers(seed_for(self.seed,stage,loop,3+self:salt()),ctx,function(i) return forced and forced[i] or D.drive_economy.reward_rarity(ctx,i) end)
    local names={};for _,o in ipairs(self.offers) do names[#names+1]=self:name(o) end
    self:log(('stage clear (%s%s): offers %s'):format(kind,final and ', final' or '',table.concat(names,' / ')))
   else self:log(('stage clear (%s): no drive reward this stage'):format(kind)) end
@@ -695,7 +720,7 @@ return function(D)
   local newn=0;for _ in pairs(self.new_keys) do newn=newn+1 end
   self:log(('reward moment: %d offered, %d keystones offered, %d waiting, %d new'):format(#self.offers,#self.key_offers,#self.decide,newn))
   if #self.offers==0 and #self.key_offers==0 and #self.decide==0 then self:settle();return false end
-  local ok=self.g.hold_1p and self.g.hold_1p(H.tuning.hold_ticks)
+  local ok=self:hold_open()
   if ok then self.screen:open('reward');self.holding=true
   else self:log('reward hold unavailable: sorting the drives automatically');self:finish_reward('no-hold') end
   return true
@@ -727,10 +752,13 @@ return function(D)
   if auto and reason~='run-end' then self:settle() end
   self.new_keys={};self.holding=false
   self:log(('reward moment done (%s): %d slots filled, %d in the bag'):format(reason,self:equipped_count(),#self:bag().items))
-  if self.g.release_1p and reason~='released' then self.g.release_1p() end
+  if reason~='released' then self:hold_release(reason) end
   self.hud:flash('Build ready')
  end
  function H:press(a) if self.screen.active then self.screen:press(a) end end
+ -- The reward moment's barrier: a retail run claims the engine's interstage hold; a co-op run's coordinator owns its own (pause + sequence of screens).
+ function H:hold_open() if self.seat and self.seat.barrier then return self.seat.barrier.open(self) end;return self.g.hold_1p and self.g.hold_1p(H.tuning.hold_ticks) end
+ function H:hold_release(reason) if self.seat and self.seat.barrier then return self.seat.barrier.release(self,reason) end;if self.g.release_1p then self.g.release_1p() end end
  -- Rolling a build and validating a bag edit are each close to a script call's whole budget (2M instructions,
  -- 50 ms), and on_frame already carries the host's own work: staging happens in on_tick, a call of its own.
  -- Script cost samples (wall clock, a ring of the last 240 calls) of what the screens and the strip cost per frame / tick: `uxcost`.
@@ -754,6 +782,7 @@ return function(D)
   if not self:ready() then return end
   local drives=self.mods.drives;if not drives then return end
   self:flush_deferred()
+  if self.follower then return end
   self:spawn_queued()
   self:roll_wanted()
  end
@@ -763,7 +792,7 @@ return function(D)
   if self.screen.active then self.screen:draw();sample(self,'screen draw',t0);return end
   local m=self.g.match();if not (m and m.active) or not self:ready() or self.menu_up then return end
   self.hud:draw();sample(self,'strip draw',t0)
-  if self.synfx then local t1=self.g.time and self.g.time();local ok,err=pcall(self.synfx.draw,self.synfx,self.mods.engine,self.retail.state and self.retail.state.player_port or 1);sample(self,'synergy draw',t1);if not ok and not self.synfx_failed then self.synfx_failed=true;self:log('synergy fx draw failed: '..tostring(err)) end end
+  if self.synfx then local t1=self.g.time and self.g.time();local ok,err=pcall(self.synfx.draw,self.synfx,self.mods.engine,self:port0());sample(self,'synergy draw',t1);if not ok and not self.synfx_failed then self.synfx_failed=true;self:log('synergy fx draw failed: '..tostring(err)) end end
   self:draw_hold()
  end
  function H:run_end()

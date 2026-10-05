@@ -2,13 +2,15 @@
 return function(D)
  local V={tuning={persist=false}};V.__index=V
  local labels={damage_dealt='Damage dealt',launch_dealt='Launch dealt',damage_taken='Damage taken',launch_taken='Launch taken',speed='Speed'}
- function V.new(g,lab)
-  local self=setmetatable({g=g,lab=lab,pending={},seed=104729},V)
+ function V.new(g,lab,opts)
+  opts=opts or {}
+  local self=setmetatable({g=g,lab=lab,pending={},seed=104729,port=opts.port or 1,shared_drops=opts.drops~=nil},V)
   self.loot=D.drive_loot.new(D.mod_pool)
   self.bag=D.drive_bag.new(self.loot,{context=lab.engine.context,persist=V.tuning.persist,preflight=function(mods,implicits,context)
-   local probe=D.mod_engine.new(lab.engine.seed,D.mod_pool);probe:import(lab.engine:export());probe:set_context(context);probe:set_build(1,self:combined(mods),implicits);probe:native_rules(1);if lab.check_echo_capacity then lab:check_echo_capacity(probe)end;return true
+   local probe=D.mod_engine.new(lab.engine.seed,D.mod_pool);probe:import(lab.engine:export());probe:set_context(context);probe:set_build(self.port,self:combined(mods),implicits);probe:native_rules(self.port);if lab.check_echo_capacity then lab:check_echo_capacity(probe)end;return true
   end})
-  self.drops=D.drive_drop.new(g);self.menu=D.drive_menu.new(g,self)
+  self.drops=opts.drops or D.drive_drop.new(g);self.menu=D.drive_menu.new(g,self)
+  if self.port~=1 then return self end -- a co-op seat shares the console commands of seat 1
   g.command('drive',function(a) return self:command(a or '') end,'give|drop [rarity] [seed]')
   -- Balance harness hook (debug, LAB only): `simbag <file>` installs an encoded bag snapshot from the script data folder as the
   -- player's real build (the file holds what the offline run simulator produced with the real run rules), at the snapshot's own context.
@@ -37,8 +39,8 @@ return function(D)
    local highest=0;for _,n in ipairs(levels) do highest=math.max(highest,n) end
    out[id]={tier=highest,copies=#levels,tiers=levels}
   end
-  for id,tier in pairs((lab.debug_equipped or {})[1] or {}) do merge(id,tier) end
-  for _,e in ipairs(lab.pending or {}) do if e.port==1 then merge(e.id,1) end end
+  for id,tier in pairs((lab.debug_equipped or {})[self.port] or {}) do merge(id,tier) end
+  for _,e in ipairs(lab.pending or {}) do if e.port==self.port then merge(e.id,1) end end
   return out
  end
  function V:view()
@@ -82,8 +84,8 @@ return function(D)
    if not ok then self.g.log('bag: refused '..tostring(why)) end
   end
   self.pending={};self:bump();self.applied=true;local b,e=self.bag,self.lab.engine;self.stamp={equipped=b.equipped,keystone=b.keystone,keystones=b.keystones,depth=b.context.depth,loop=b.context.loop,engine=e,edepth=e.context.depth,eloop=e.context.loop}
-  local mods,implicits=self.bag:derive();mods=self:combined(mods);self.lab.engine:set_build(1,mods,implicits);if not next(mods) then self.lab.engine.equipped[1]=nil end;if not next(implicits) then self.lab.engine.implicits[1]=nil end
-  self.lab.engine.display.drive_build=self.lab.engine.display.drive_build or {};local looks={};for i=1,self.bag:slots() do local r=self.bag.equipped[i];if r then looks[#looks+1]={colour=r.colour,rarity=r.rarity} end end;self.lab.engine.display.drive_build[1]=looks
+  local mods,implicits=self.bag:derive();mods=self:combined(mods);self.lab.engine:set_build(self.port,mods,implicits);if not next(mods) then self.lab.engine.equipped[self.port]=nil end;if not next(implicits) then self.lab.engine.implicits[self.port]=nil end
+  self.lab.engine.display.drive_build=self.lab.engine.display.drive_build or {};local looks={};for i=1,self.bag:slots() do local r=self.bag.equipped[i];if r then looks[#looks+1]={colour=r.colour,rarity=r.rarity} end end;self.lab.engine.display.drive_build[self.port]=looks
  end
  function V:budget_lines()
   local mods,implicit=self:view():derive();local families,strength=D.mod_budget.build(D.mod_pool,self:combined(mods),implicit,self.lab.engine.statuses[1])
@@ -110,7 +112,7 @@ return function(D)
  function V:pickup(e)
   if self.lab:replaying() then return end
   local hosted=self.on_pickup and self.lab:hosted()
-  local r=self.drops:pickup(e,self.bag,hosted and true or false);self:bump()
+  local r=self.drops:pickup(e,self.bag,hosted and true or false,self.port);self:bump()
   if r and hosted then self.on_pickup(r)  -- a run shows its own card and logs
   elseif r then self.menu.notice='Picked up '..self.loot:name(r);self.card=self.menu.notice;self.card_left=120;self.g.log(self.menu.notice) end
  end
@@ -132,7 +134,7 @@ return function(D)
   local config={};for k,v in pairs(self.bag.config) do config[k]=v end
   local context=D.mod_progression.context(s.bag.context or lab.engine.context);assert(context.depth==lab.engine.context.depth and context.loop==lab.engine.context.loop,'bag/engine progression mismatch');s.bag.context=context;config.context=context
   config.preflight=function(mods,implicits,ctx)
-   local engine=D.mod_engine.new(lab.engine.seed,D.mod_pool);engine:import(lab.engine:export());engine:set_context(ctx);engine:set_build(1,self:combined(mods,lab),implicits);engine:native_rules(1);if lab.check_echo_capacity then lab:check_echo_capacity(engine,lab.echo_manual)end;return true
+   local engine=D.mod_engine.new(lab.engine.seed,D.mod_pool);engine:import(lab.engine:export());engine:set_context(ctx);engine:set_build(self.port,self:combined(mods,lab),implicits);engine:native_rules(self.port);if lab.check_echo_capacity then lab:check_echo_capacity(engine,lab.echo_manual)end;return true
   end
   local probe=D.drive_bag.new(self.loot,config);assert(probe:restore(s.bag))
   for _,d in pairs(s.drops.records or {}) do self.loot:validate(d.record) end
@@ -180,20 +182,20 @@ return function(D)
  function V:tick()
   self.drops:retry_retired()
   if self.menu.active and (not self.lab:allowed() or self.lab:replaying()) then self.menu:close();return end
-  local p=self.g.pad(1,true) or {};local chord=p.Z and p.START
-  D.menu_input.settle(self.g)
+  local p=self.g.pad(self.port,true) or {};local chord=p.Z and p.START
+  D.menu_input.settle(self.g,self.port)
   -- Z+START is the bag: keep the whole chord from the game so the press that opens the bag does not also pause the
   -- match (and the START that closes it is hidden by the menu's own mask). Re-asserted now and then: a scene change
   -- clears the engine's masks.
   if self.g.input_chord then
    local want=self.lab:allowed() and not self.lab:replaying()
    self.chord_age=(self.chord_age or 0)+1
-   if want~=self.chord_on or (want and self.chord_age>=120) then self.chord_on=want;self.chord_age=0;self.g.input_chord(1,want and 'Z+START' or nil) end
+   if want~=self.chord_on or (want and self.chord_age>=120) then self.chord_on=want;self.chord_age=0;self.g.input_chord(self.port,want and 'Z+START' or nil) end
   end
   if chord and not self.chord and not self.menu.active and not self.lab:replaying() then local ok=self.lab:allowed();if ok then if self.opener and self.lab:hosted() then self.opener() else self.menu:open();if self.lab.options.activate then self.lab.options.activate() end end end end
   self.chord=chord;self.menu:tick()
  end
- function V:frame() self.drops.juice:tick();if self.card_left then self.card_left=self.card_left-1;if self.card_left<=0 then self.card=nil;self.card_left=nil end end end
+ function V:frame() if not self.shared_drops then self.drops.juice:tick() end;if self.card_left then self.card_left=self.card_left-1;if self.card_left<=0 then self.card=nil;self.card_left=nil end end end
  function V:draw()
   self.menu:draw()
   if self.card and not self.menu.active and self.g.kit then local a=self.g.safe_area();self.g.kit.panel(a.x+20,a.y+48,a.w-40,42);self.g.kit.text(a.x+32,a.y+74,self.card,'body','bone','left',{max_w=a.w-64}) end

@@ -19,7 +19,7 @@ return function(D)
  local T=function() return D.drive_text end
  local function ceil(n) return math.ceil(n) end
  function S.new(g,host)
-  return setmetatable({g=g,host=host,input=D.menu_input.new(g),active=false,mode='bag',layout='main',prev={},blocks={},descs={}},S)
+  return setmetatable({g=g,host=host,input=D.menu_input.new(g,host and host.seat and host.seat.port),active=false,mode='bag',layout='main',prev={},blocks={},descs={}},S)
  end
  function S:drives() return self.host.mods.drives end
  -- ---- cells ---------------------------------------------------------------------------------------------------
@@ -240,7 +240,7 @@ return function(D)
   if not self.view then self:new_view() end
   local old=self.view.fe
   self.view:set_blocks(self.blocks)
-  self.view:set_title(self.layout=='swap' and (self.swap.from=='bag' and 'SWAP' or 'BAG FULL') or (self.mode=='reward' and 'STAGE CLEAR' or 'YOUR DRIVES'))
+  self.view:set_title(self.layout=='swap' and (self.swap.from=='bag' and 'SWAP' or 'BAG FULL') or (self.mode=='reward' and 'STAGE CLEAR' or 'YOUR DRIVES')..(self.host.seat and ('  -  PLAYER '..self.host.seat.port) or ''))
   local back=self.layout=='swap' and (self.swap.from=='decide' and 'Leave it' or 'Back') or (self.mode=='reward' and ((#h.offers>0 or #h.key_offers>0) and 'Skip' or 'Continue') or 'Close')
   self.view:set_actions({B=back})
   if self.layout=='main' and self.back_focus then self.view:set_focus(self.back_focus[1],self.back_focus[2]);self.back_focus=nil end
@@ -448,6 +448,7 @@ return function(D)
   if not self.active or not self.view then return end
   local g=self.g
   self.view:draw()
+  if self.host.seat then local a=g.safe_area();local c=D.run_hud.port_colour[self.host.seat.port] or 0xFFFFFFFF;g.fill(a.x,a.y,a.w,6,c);g.fill(a.x,a.y+a.h-6,a.w,6,c);g.fill(a.x,a.y,6,a.h,c);g.fill(a.x+a.w-6,a.y,6,a.h,c) end -- co-op: the screen wears its owner's port colour
   if self.host.synfx then local ok,err=pcall(self.host.synfx.draw_grid,self.host.synfx,self);if not ok and not self.synfx_failed then self.synfx_failed=true;self.host:log('synergy grid overlay failed: '..tostring(err)) end end
   local k=g.kit;local L=self.view.lay
   if self.notice and k and L then

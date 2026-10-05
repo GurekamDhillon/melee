@@ -933,6 +933,36 @@ static const struct {
     GENO_ATTR(shield_break_initial_velocity, 0),
     GENO_ATTR(rapid_jab_window, 1),
     GENO_ATTR(clank_animation_length, 0),
+    /* slice 2 (v7): the rest of the scalar members of ftCo_DatAttrs. APPEND ONLY: a parsed profile stores
+     * the index into this table. The first 40 above keep their indices. Landing lags are here;
+     * dodge, roll and shield-drop numbers are NOT members of this struct (they live in other tables). */
+    GENO_ATTR(hit_spark_variant, 1),
+    GENO_ATTR(ledge_jump_horizontal_velocity, 0),
+    GENO_ATTR(ledge_jump_vertical_velocity, 0),
+    GENO_ATTR(item_throw_velocity_multiplier, 0),
+    GENO_ATTR(heavy_throw_velocity_multiplier, 0),
+    GENO_ATTR(specials_ground_speed_retention, 0),
+    GENO_ATTR(kirby_b_star_damage, 0),
+    GENO_ATTR(normal_landing_lag, 0),
+    GENO_ATTR(landingairn_lag, 0),
+    GENO_ATTR(landingairf_lag, 0),
+    GENO_ATTR(landingairb_lag, 0),
+    GENO_ATTR(landingairhi_lag, 0),
+    GENO_ATTR(landingairlw_lag, 0),
+    GENO_ATTR(name_tag_height, 0),
+    GENO_ATTR(passivewall_vel_x, 0),
+    GENO_ATTR(wall_jump_horizontal_velocity, 0),
+    GENO_ATTR(wall_jump_vertical_velocity, 0),
+    GENO_ATTR(passiveceil_vel_x, 0),
+    GENO_ATTR(trophy_scale, 0),
+    GENO_ATTR(screw_attack_launch_velocity, 0),
+    GENO_ATTR(wall_jump_min_approach_speed, 0),
+    GENO_ATTR(damageice_ice_size, 0),
+    GENO_ATTR(damageicejump_vel_y, 0),
+    GENO_ATTR(damageicejump_vel_x_mult, 0),
+    GENO_ATTR(respawn_platform_scale, 0),
+    GENO_ATTR(warp_star_hitbox_scale, 0),
+    GENO_ATTR(camera_zoom_target_bone, 1),
 };
 #define GENO_NATTRS ((int) (sizeof(geno_attrs) / sizeof(geno_attrs[0])))
 
@@ -2271,6 +2301,93 @@ int Geno_TakeStunBonus(Fighter* vic)
 void* GenoGame_StateOf(Fighter* fp)
 {
     return geno_state(fp);
+}
+
+/* ---- slice 2 (D8): the rollback hash word of a DEFINED fighter's Geno state ------------------------ */
+static u32 geno_dg(u32 h, u32 v)
+{
+    h ^= v;
+    h *= 0x01000193u;
+    return h ^ (h >> 13);
+}
+static u32 geno_dgf(u32 h, f32 f)
+{
+    union {
+        f32 f;
+        u32 u;
+    } c;
+    c.f = f;
+    return geno_dg(h, c.u);
+}
+
+/* A digest of everything in this fighter's GenoState that can decide what happens next: the variable
+ * banks, the registered change-action checks, the move variables, the per-action timers and rehit/link
+ * state, the hit record. NOT the diagnostics (hook_calls, resets, changes, state_entries, art_spawned,
+ * counters, motion_land) and not the transient collision-callback edge words, which are zero at the
+ * start of a logic frame. 0 for every fighter that is not a define, so no other fighter's hash changes
+ * (RB_GameHash mixes the word only when it is nonzero). */
+extern int Geno_DefineBaseKind(int kind);
+u32 GenoDefine_StateDigest(Fighter* fp)
+{
+    GenoState* s;
+    u32 h = 0x47444946u; /* "GDIF" */
+    int i, j;
+    if (fp == NULL || Geno_DefineBaseKind(fp->kind) < 0) {
+        return 0;
+    }
+    s = geno_state(fp);
+    if (s->profile < 0) {
+        return 0;
+    }
+    for (i = 0; i < GENO_VARS_PER_BANK; i++) {
+        h = geno_dg(h, (u32) s->la_i[i]);
+        h = geno_dg(h, (u32) s->ra_i[i]);
+        h = geno_dgf(h, s->la_f[i]);
+        h = geno_dgf(h, s->ra_f[i]);
+    }
+    h = geno_dg(h, s->extra_jumps);
+    h = geno_dg(h, (u32) s->action_time);
+    h = geno_dg(h, s->nchecks);
+    for (i = 0; i < (int) s->nchecks && i < GENO_MAX_CHECKS; i++) {
+        h = geno_dg(h, s->checks[i].target);
+        h = geno_dg(h, s->checks[i].once);
+        h = geno_dg(h, s->checks[i].ncond);
+        for (j = 0; j < (int) s->checks[i].ncond && j < GENO_CHECK_CONDS; j++) {
+            h = geno_dg(h, s->checks[i].cond[j].head);
+            h = geno_dg(h, s->checks[i].cond[j].arg1);
+            h = geno_dg(h, s->checks[i].cond[j].arg2);
+        }
+    }
+    for (i = 0; i < GENO_MAX_REHIT; i++) {
+        h = geno_dg(h, (u32) s->rehit_period[i]);
+        h = geno_dg(h, (u32) s->rehit_count[i]);
+        h = geno_dg(h, (u32) s->link_mode[i]);
+        h = geno_dg(h, (u32) s->stun_add[i]);
+        h = geno_dg(h, (u32) s->hb_flags[i]);
+    }
+    h = geno_dg(h, (u32) s->stun_bonus);
+    h = geno_dg(h, (u32) s->hold_motion);
+    h = geno_dg(h, (u32) s->hold_frames);
+    for (i = 0; i < GENO_MOVE_VARS; i++) {
+        h = geno_dg(h, (u32) s->move_i[i]);
+        h = geno_dgf(h, s->move_f[i]);
+    }
+    h = geno_dg(h, (u32) s->enter_from);
+    h = geno_dg(h, (u32) s->hidden);
+    h = geno_dg(h, (u32) s->hit_count);
+    h = geno_dgf(h, s->hit_damage);
+    h = geno_dg(h, (u32) s->hit_port);
+    h = geno_dg(h, (u32) s->hit_counter);
+    h = geno_dg(h, (u32) s->ledge);
+    h = geno_dg(h, (u32) s->motion_started);
+    h = geno_dgf(h, s->motion_vy);
+    h = geno_dgf(h, s->motion_facing);
+    h = geno_dgf(h, s->motion_gravity);
+    h = geno_dg(h, (u32) s->enter_keep);
+    h = geno_dg(h, (u32) s->atk_connected);
+    h = geno_dg(h, (u32) s->atk_connected_prev);
+    h = geno_dgf(h, s->fall_limit);
+    return h != 0 ? h : 1u;
 }
 
 /* ---- v2 ---------------------------------------------------------------------------------------- */

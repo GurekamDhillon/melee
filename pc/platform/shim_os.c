@@ -173,14 +173,53 @@ void *gw_OSAllocFromArenaHi(u32 size, u32 align) {
 
 /* ---- heap --------------------------------------------------------------------------------- */
 
+static void gw_heap_mutated(void);
+
 void *gw_OSInitAlloc(void *arena_start, void *arena_end, int max_heaps) {
   gw_set_cur_heap(-1);
+  gw_heap_mutated();
   return OSInitAlloc(arena_start, arena_end, max_heaps);
 }
 
-int gw_OSCreateHeap(void *start, void *end) { return OSCreateHeap(start, end); }
+/* OSCheckHeap answers "free payload bytes" by walking every cell of the heap (aurora OSAlloc.cpp, a
+ * full consistency check). Game code asks per stage proc (lbHeap_Free) and per limited allocation
+ * (HSD_ObjAlloc), tens of times a frame, between which the heap rarely changes. Every mutation of the
+ * heap goes through the wrappers below, so a counter bumped by each of them (the "epoch") tells exactly
+ * when a remembered answer is still true: the cache returns what the walk would return.
+ * MELEE_HEAP_CHECK=1 turns the cache off, so every query is the full consistency walk again. */
+#define GW_HEAPQ_N 16
+static unsigned gw_heap_epoch = 1;
+static unsigned gw_heapq_epoch[GW_HEAPQ_N];
+static int gw_heapq_val[GW_HEAPQ_N];
+static unsigned gw_heapq_queries, gw_heapq_walks;
+static int gw_heapq_full = -1;
+static void gw_heap_mutated(void) { if (++gw_heap_epoch == 0) gw_heap_epoch = 1; }
+int gw_HeapCheckFull(void) {
+  if (gw_heapq_full < 0) {
+    const char *e = getenv("MELEE_HEAP_CHECK");
+    gw_heapq_full = e && e[0] && e[0] != '0';
+  }
+  return gw_heapq_full;
+}
+int gw_OSCheckHeap(int heap) {
+  int r;
+  ++gw_heapq_queries;
+  if (heap >= 0 && heap < GW_HEAPQ_N && !gw_HeapCheckFull() && gw_heapq_epoch[heap] == gw_heap_epoch)
+    return gw_heapq_val[heap];
+  r = OSCheckHeap(heap);
+  ++gw_heapq_walks;
+  if (heap >= 0 && heap < GW_HEAPQ_N) { gw_heapq_epoch[heap] = gw_heap_epoch; gw_heapq_val[heap] = r; }
+  return r;
+}
+/* test hooks: which 0 queries, 1 walks, 2 epoch, 3 cache off */
+unsigned gw_HeapCheckStat(int which) {
+  return which == 0 ? gw_heapq_queries : which == 1 ? gw_heapq_walks : which == 2 ? gw_heap_epoch : (unsigned)gw_HeapCheckFull();
+}
+
+int gw_OSCreateHeap(void *start, void *end) { gw_heap_mutated(); return OSCreateHeap(start, end); }
 
 void gw_OSDestroyHeap(int heap) {
+  gw_heap_mutated();
   OSDestroyHeap(heap);
   if (gw_cur_heap() == heap) {
     gw_set_cur_heap(-1);
@@ -227,17 +266,18 @@ static void gw_trk_del(void *p) {
 }
 
 void *gw_OSAllocFromHeap(int heap, u32 size) {
-  void *r = OSAllocFromHeap(heap, size);
+  void *r;
+  gw_heap_mutated();
+  r = OSAllocFromHeap(heap, size);
   if (gw_trk_on && r) gw_trk_add(heap, r, size);
   return r;
 }
 
 void gw_OSFreeToHeap(int heap, void *ptr) {
   if (gw_trk_on && ptr) gw_trk_del(ptr);
+  gw_heap_mutated();
   OSFreeToHeap(heap, ptr);
 }
-
-int gw_OSCheckHeap(int heap) { return OSCheckHeap(heap); }
 
 /* stage-lane heap accounting (lbHeap_StageSlotDump): every allocated cell, addr + size, to
  * heapdump_<n>.txt in the working directory, for before/after diffs of a stage switch cycle. */
@@ -610,3 +650,60 @@ void gw_OSPanic(const char *file, int line, const char *fmt, ...) {
 }
 
 void gw_OSInit(void) { OSInit(); }
+
+/* ---- tests: the cached OSCheckHeap answers exactly what the full walk answers -------------------- */
+#include "gw_test.h"
+
+static unsigned char gw_heap_test_arena[1 << 18] __attribute__((aligned(32)));
+
+static int heap_test_cache_equals_walk(void) {
+  enum { BLK = 1 << 17, N = 14 };
+  int base = gw_cur_heap(), h, i, rc = 0, own_arena = 0;
+  void *blk = NULL, *p[N];
+  static const unsigned sz[N] = {96, 500, 4096, 64, 12000, 700, 32, 2048, 9000, 160, 33, 5000, 256, 1024};
+  unsigned q0, w0, e0;
+  if (base < 0 && OSCheckHeap(0) < 0) {
+    /* The headless suite never boots the OS heap: give it a private arena (nothing else uses it there). */
+    unsigned char *lo = (unsigned char *)gw_OSInitAlloc(gw_heap_test_arena, gw_heap_test_arena + sizeof gw_heap_test_arena, 4);
+    lo = (unsigned char *)(((uintptr_t)lo + 31u) & ~(uintptr_t)31u);
+    own_arena = 1;
+    h = gw_OSCreateHeap(lo, gw_heap_test_arena + sizeof gw_heap_test_arena);
+  } else {
+    blk = base >= 0 ? gw_OSAllocFromHeap(base, BLK) : NULL;
+    for (i = 0; !blk && i < 8; ++i) { base = i; blk = gw_OSAllocFromHeap(base, BLK); }
+    if (!blk) { gw_test_fail("heap test: no block from the running heap"); return 1; }
+    h = gw_OSCreateHeap(blk, (char *)blk + BLK);
+  }
+  if (h < 0 || h >= GW_HEAPQ_N) {
+    gw_test_fail("heap test: handle %d outside the cached range", h);
+    if (blk) gw_OSFreeToHeap(base, blk);
+    return 1;
+  }
+#define HEAP_SAME(what) do { int c_ = gw_OSCheckHeap(h), w_ = OSCheckHeap(h); \
+    if (c_ != w_ || c_ < 0) { gw_test_fail("heap test: cached %d, walk %d after %s", c_, w_, what); rc = 1; } } while (0)
+  HEAP_SAME("create");
+  for (i = 0; i < N; ++i) { p[i] = gw_OSAllocFromHeap(h, sz[i]); if (!p[i]) { gw_test_fail("heap test: alloc %d failed", i); rc = 1; } HEAP_SAME("alloc"); }
+  for (i = 0; i < N; i += 2) { if (p[i]) gw_OSFreeToHeap(h, p[i]); HEAP_SAME("free (even)"); }
+  for (i = 1; i < N; i += 2) { if (p[i]) gw_OSFreeToHeap(h, p[i]); HEAP_SAME("free (odd, coalescing)"); }
+  /* with no mutation between them, a hundred queries cost at most one walk */
+  q0 = gw_HeapCheckStat(0); w0 = gw_HeapCheckStat(1); e0 = gw_HeapCheckStat(2);
+  for (i = 0; i < 100; ++i) (void)gw_OSCheckHeap(h);
+  if (!gw_HeapCheckStat(3) && (gw_HeapCheckStat(1) - w0 > 1 || gw_HeapCheckStat(0) - q0 != 100 || gw_HeapCheckStat(2) != e0)) {
+    gw_test_fail("heap test: 100 unmutated queries walked %u times", gw_HeapCheckStat(1) - w0); rc = 1;
+  }
+  /* one allocation invalidates it: the next answer is a new one, and it is the walk's */
+  { void *x = gw_OSAllocFromHeap(h, 4000); int c_, w_;
+    c_ = gw_OSCheckHeap(h); w_ = OSCheckHeap(h);
+    if (!x || c_ != w_) { gw_test_fail("heap test: stale answer after allocation (%d vs %d)", c_, w_); rc = 1; }
+    if (x) gw_OSFreeToHeap(h, x); }
+  HEAP_SAME("final");
+#undef HEAP_SAME
+  gw_OSDestroyHeap(h);
+  if (blk) gw_OSFreeToHeap(base, blk);
+  (void)own_arena;
+  return rc;
+}
+
+void gw_heap_tests_register(void) {
+  gw_test_register("heap_check_cache_equals_walk", heap_test_cache_equals_walk);
+}

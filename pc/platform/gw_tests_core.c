@@ -470,6 +470,7 @@ void gw_tests_register_all(void) {
   gw_mexid_tests_register();
   gw_script_tests_register();
   { extern void gw_profiler_tests_register(void); gw_profiler_tests_register(); }
+  { extern void gw_heap_tests_register(void); gw_heap_tests_register(); }
   gw_kit_tests_register();
   gw_pad_tests_register();
   gw_mouse_tests_register();

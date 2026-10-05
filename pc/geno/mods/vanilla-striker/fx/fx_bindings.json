@@ -1,0 +1,38 @@
+{
+  "geno_fx_bindings": 1,
+  "fighter": "vanilla-striker",
+  "host": "mario",
+  "unit_scale": 1.0,
+  "states": [
+    {
+      "state": "Jab1",
+      "subaction": 46,
+      "clock": "animation",
+      "script": "moves/jab1.genoasm",
+      "calls": [
+        {
+          "frame": 3,
+          "macro": "spark",
+          "effect": "StrikerSparks",
+          "package": "StrikerSparks",
+          "bone": "hand",
+          "joint": 9,
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": 0.6,
+          "follow": true,
+          "when": [],
+          "end_event": "emitter_life"
+        }
+      ]
+    }
+  ]
+}

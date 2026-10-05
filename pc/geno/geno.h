@@ -13,8 +13,10 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 6    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
-                             4 = v5: articles, on_hit, counter windows - docs/geno.md section 19) */
+#define GENO_VERSION 7    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
+                             4 = v5: articles, on_hit, counter windows - docs/geno.md section 19;
+                             7 = slice 2: a define may use the full attribute table, special_attributes,
+                             fx_bindings) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
 #define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
 
@@ -245,7 +247,7 @@ enum {
 
 /* Attribute overrides travel as (index, value bits); the index names a field of ftCo_DatAttrs
  * through the game half's table (GenoGame_AttrFind). */
-#define GENO_MAX_ATTRS 48
+#define GENO_MAX_ATTRS 128 /* v7: was 48; the table has 67 entries (GENO_NATTRS), a profile may name them all */
 #define GENO_MAX_JUMP_VY 16
 #define GENO_MAX_PROFILES 65535 /* v6: allocated profiles; explicit id-space ceiling, not fixed storage */
 #define GENO_MAX_SPECIAL 64      /* v1: special_attributes entries per profile */

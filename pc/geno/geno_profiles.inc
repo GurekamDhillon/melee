@@ -17,6 +17,7 @@ static union {
 } Geno_ProfileStorage;
 static unsigned int Geno_ProfileStorageUsed;
 
+unsigned Geno_ProfileStorageBytes(void) { return Geno_ProfileStorageUsed; }
 static void* geno_profile_alloc(int bytes)
 {
     void* p = geno_storage_take(Geno_ProfileStorage.bytes, GENO_PROFILE_STORAGE_BYTES,

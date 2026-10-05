@@ -8,6 +8,8 @@ extern int Geno_DefineBaseKind(int kind);
 extern int Geno_DefineBaseCK(int ck);
 extern int Geno_DefineName(int ck, char* out, int cap);
 extern int Geno_DefineIdentityWord(int kind, int high);
+/* slice 2 (D8): digest of a defined fighter's GenoState for RB_GameHash; 0 for any other fighter */
+extern u32 GenoDefine_StateDigest(Fighter* fp);
 void GenoDefine_InitKinds(void);
 void GenoDefine_CaptureMario(void);
 void GenoDefine_ResetDescriptors(void);

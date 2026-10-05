@@ -6,9 +6,11 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     static const char* keys[] = {"key", "name", "base", "common", "resources"};
     int def = jd_get(d, e, "define"), c, i, v;
     if (def < 0) return 0;
-    if (version != 6 || jd_get(d, e, "attach") >= 0 || d->n[def].type != JN_OBJ ||
-        jd_get(d, e, "articles") >= 0 || jd_get(d, e, "fx_bindings") >= 0 ||
-        jd_get(d, e, "special_attributes") >= 0) goto refused;
+    /* v7 (slice 2) widens a define: the whole common attribute table, special_attributes, fx_bindings.
+     * A v6 file keeps exactly its v6 meaning; articles stay refused until slice 3. */
+    if ((version != 6 && version != 7) || jd_get(d, e, "attach") >= 0 || d->n[def].type != JN_OBJ ||
+        jd_get(d, e, "articles") >= 0 ||
+        (version < 7 && (jd_get(d, e, "fx_bindings") >= 0 || jd_get(d, e, "special_attributes") >= 0))) goto refused;
     for (c = d->n[def].first; c >= 0; c = d->n[c].next) {
         for (i = 0; i < 5 && strcmp(d->n[c].key, keys[i]); ++i) {}
         if (i == 5 || d->n[c].type != JN_STR) goto refused;
@@ -32,7 +34,13 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     if (v >= 0) {
         if (d->n[v].type != JN_OBJ || d->n[v].count > GENO_MAX_ATTRS) goto refused;
         for (c = d->n[v].first; c >= 0; c = d->n[c].next)
-            if (d->n[c].type != JN_NUM || gw_GenoGame_AttrFind(d->n[c].key) < 0) goto refused;
+            if (d->n[c].type != JN_NUM || gw_GenoGame_AttrFind(d->n[c].key) < 0 ||
+                (version < 7 && gw_GenoGame_AttrFind(d->n[c].key) >= 40)) {
+                gw_log("geno: %s: define attribute \"%s\" %s", where, d->n[c].key,
+                       d->n[c].type != JN_NUM ? "is not a number" :
+                       gw_GenoGame_AttrFind(d->n[c].key) < 0 ? "is not a common attribute Geno knows" : "needs \"geno\": 7");
+                goto refused;
+            }
     }
     v = jd_get(d, e, "subactions");
     if (v >= 0) {
@@ -86,7 +94,7 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
     p->defined = 1;
     return 1;
 refused:
-    gw_log("geno: %s: define refused (requires v6 native Mario/common v1/retail references; no attach or later-slice resources)", where);
+    gw_log("geno: %s: define refused (requires v6 or v7 native Mario/common v1/retail references; no attach or articles; v7 for special_attributes, fx_bindings and attributes past the first 40)", where);
     return -1;
 }
 

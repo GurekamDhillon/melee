@@ -27,6 +27,23 @@ void ScriptGame_NoteMotion(Fighter* fp,int motion) {
 /* Inclusive Special ranges audited from each ft family forward.h enum.
  * Non-special extension states (taunts, extra jumps/smashes, zair, float) stay unknown.
  * DrMario/Falco/Pichu/Ganon/Emblem/CLink share their base-family tables. */
+/* The tag a Geno profile declares for the state or animation `fp` is in (0 = none declared). */
+static int script_hit_declared(Fighter* fp,int profile)
+{
+ extern int Geno_StateMoveTag(int profile,int state);
+ extern int Geno_OverlayMoveTag(int profile,int index);
+ extern int Geno_OverlayCount(int profile);
+ extern int Geno_OverlayAnim(int profile,int index);
+ extern int Geno_CommonMoveTag(int profile,int motion);
+ int i,declared=0;
+ /* Declared in the fighter's data first: a Geno state, a define common_states row, or a subaction
+  * overlay on the animation now playing. */
+ if(fp->motion_id>=0x400)declared=Geno_StateMoveTag(profile,fp->motion_id-0x400);
+ else declared=Geno_CommonMoveTag(profile,fp->motion_id);
+ for(i=0;!declared && i<Geno_OverlayCount(profile);++i)
+  if(Geno_OverlayAnim(profile,i)==(int)fp->anim_id)declared=Geno_OverlayMoveTag(profile,i);
+ return declared;
+}
 static int script_hit_family_move(Fighter* fp)
 {
  static const unsigned short range[33][2]={
@@ -37,21 +54,17 @@ static int script_hit_family_move(Fighter* fp)
  int tag=script_hit_move_tag(fp->motion_id),profile,base,e=script_special_slot(fp);
  extern int Geno_ProfileForKind(int kind);
  extern int Geno_DefineBaseKind(int kind);
- extern int Geno_StateMoveTag(int profile,int state);
- extern int Geno_OverlayMoveTag(int profile,int index);
- extern int Geno_OverlayCount(int profile);
- extern int Geno_OverlayAnim(int profile,int index);
- extern int Geno_CommonMoveTag(int profile,int motion);
- if(tag)return tag;
  profile=Geno_ProfileForKind(fp->kind);
+ /* A DEFINE's own declaration wins over the tag its motion id would derive (slice 2, D6): a define may
+  * bind a tilt's row to a smash-like script and say so. Retail, m-ex and attach fighters keep the old
+  * order (the motion-id tag first), byte for byte. */
+ if(profile>=0 && Geno_DefineBaseKind(fp->kind)>=0) {
+  int declared=script_hit_declared(fp,profile);
+  if(declared)return declared;
+ }
+ if(tag)return tag;
  if(profile>=0) {
-  int i,declared=0;
-  /* Declared in the fighter's data first: a Geno state, a define common_states row, or a subaction
-   * overlay on the animation now playing. */
-  if(fp->motion_id>=0x400)declared=Geno_StateMoveTag(profile,fp->motion_id-0x400);
-  else declared=Geno_CommonMoveTag(profile,fp->motion_id);
-  for(i=0;!declared && i<Geno_OverlayCount(profile);++i)
-   if(Geno_OverlayAnim(profile,i)==(int)fp->anim_id)declared=Geno_OverlayMoveTag(profile,i);
+  int declared=script_hit_declared(fp,profile);
   if(declared)return declared;
   /* Undeclared: a state a special input started is that special; a state in the base fighter's own
    * special range (define = native Mario, attach = the vanilla kind) keeps the vanilla answer. */
@@ -65,6 +78,8 @@ static int script_hit_family_move(Fighter* fp)
  /* m-ex fighters: no table of their own, so the input family is the honest answer. */
  return e>=0 && script_special_open[e] && fp->motion_id>=341 ? 8 : 0;
 }
+/* The move tag the hit context reports for `fp`'s current action (suite tests; the reports use the static). */
+int ScriptGame_HitFamilyMove(Fighter* fp) {return script_hit_family_move(fp);}
 void ScriptGame_ReportHitContext(Fighter* attacker,Fighter* victim,int element,int item)
 {
     extern void Script_HitContext(int,int,int,int,int,int,int,int,int);

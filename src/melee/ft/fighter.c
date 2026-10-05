@@ -3964,6 +3964,16 @@ static u32 ftRb_Bits(f32 f)
     return c.u;
 }
 
+/* Slice 2 (D8): a native-define fighter's Geno state (variables, checks, move vars, timers) decides what
+ * it does next, but is not in the word above. The digest is 0 for every other fighter and the word is
+ * mixed only when it is nonzero, so no existing fighter's hash changes. */
+static u32 ftRb_GenoDefineWord(Fighter* fp)
+{
+    extern u32 GenoDefine_StateDigest(Fighter * fp);
+    u32 d = GenoDefine_StateDigest(fp);
+    return d != 0 ? d ^ 0x47444946u : 0;
+}
+
 u32 RB_GameHash(void)
 {
     extern u32* HSD_RandSeedPtr;
@@ -3988,6 +3998,12 @@ u32 RB_GameHash(void)
             h = ftRb_Mix(h, ftRb_Bits(fp->dmg.x1830_percent));
             h = ftRb_Mix(h, ftRb_Bits(fp->facing_dir));
             h = ftRb_Mix(h, ScriptGame_IntrWinHashWord(i + 1 + 6 * j)); /* 0 unless a window ever opened */
+            {
+                u32 gw = ftRb_GenoDefineWord(fp);
+                if (gw != 0) {
+                    h = ftRb_Mix(h, gw);
+                }
+            }
         }
     }
     return h;

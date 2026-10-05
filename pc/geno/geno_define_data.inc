@@ -4,6 +4,7 @@
  * No MxDt row or ftFunction archive is constructed or installed for this kind.
  */
 #include "geno_define_game.h"
+#include "geno.h"
 #include <sysdolphin/baselib/memory.h>
 #include <melee/ft/kinds/ftMario/forward.h>
 #include <melee/ft/kinds/ftMario/types.h>
@@ -110,6 +111,18 @@ void GenoDefine_Load(int kind, int base)
     gFtDataList[kind] = out;
     OSReport("geno: native define kind %d loaded: retail:mario; independent common/special rows; interpreter attempts %u\n",
              kind, GenoDefine_InterpreterAttempts[kind]);
+    {
+        extern int Geno_ProfilePoolWords(int p);
+        extern int Geno_PoolWords(void);
+        extern int Geno_ProfileForKind(int kind);
+        extern int Geno_OverlayCount(int p);
+        extern int Geno_StateCount(int p);
+        extern unsigned Geno_ProfileStorageBytes(void);
+        int p = Geno_ProfileForKind(kind);
+        OSReport("geno: define budgets: kind %d overlays %d/%d, pool %d words (all profiles %d/%d), states %d/%d, arena %u/%u\n",
+                 kind, Geno_OverlayCount(p), GENO_MAX_OVERLAYS, Geno_ProfilePoolWords(p), Geno_PoolWords(), GENO_POOL_WORDS,
+                 Geno_StateCount(p), GENO_MAX_STATES, Geno_ProfileStorageBytes(), 2u * 1024u * 1024u /* GENO_PROFILE_STORAGE_BYTES */);
+    }
 }
 
 void GenoDefine_BindFighter(Fighter* fp)

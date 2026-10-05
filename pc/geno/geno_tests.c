@@ -281,6 +281,7 @@ static int test_geno_state_resets(void)
     return 0;
 }
 
+extern int GenoGame_AttrIsInt(int index);
 static int test_geno_attr_table(void)
 {
     if (GenoGame_AttrOffset(GenoGame_AttrFind("max_jumps")) != 0x58 ||
@@ -290,6 +291,26 @@ static int test_geno_attr_table(void)
     {
         TestFail("attribute name table does not match ftCo_DatAttrs");
         return 1;
+    }
+    /* v7: every entry lies inside the struct and is word aligned; the original 40 keep their indices;
+       the new ones are appended; the profile arrays hold the whole table. */
+    {
+        int i, n = 0;
+        for (i = 0; GenoGame_AttrOffset(i) >= 0; ++i) {
+            int off = GenoGame_AttrOffset(i);
+            if (off + 4 > (int) sizeof(ftCo_DatAttrs) || (off & 3) != 0) {
+                TestFail("an attribute offset lies outside ftCo_DatAttrs or is unaligned");
+                return 1;
+            }
+            ++n;
+        }
+        if (GenoGame_AttrFind("walk_accel_mul") != 0 || GenoGame_AttrFind("clank_animation_length") != 39 ||
+            GenoGame_AttrFind("hit_spark_variant") != 40 || GenoGame_AttrFind("normal_landing_lag") != 47 ||
+            GenoGame_AttrFind("landingairn_lag") != 48 || GenoGame_AttrOffset(47) != 0xE4 ||
+            GenoGame_AttrIsInt(40) != 1 || GenoGame_AttrIsInt(47) != 0 || n < 60 || n > GENO_MAX_ATTRS) {
+            TestFail("attribute table order or size is not the v7 table");
+            return 1;
+        }
     }
     if (GenoGame_HookFind("geno.count_frames") != GENO_HOOK_COUNT_FRAMES ||
         GenoGame_HookFind("geno.nope") != -1)
@@ -3413,6 +3434,8 @@ static int test_geno_fly(void)
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_define_snapshot", test_geno_define_snapshot);
+    TestRegister("geno_define_hit_tag", test_geno_define_hit_tag);
+    TestRegister("geno_define_state_hash", test_geno_define_state_hash);
     TestRegister("geno_fly", test_geno_fly);
     TestRegister("geno_ftcmd_escape", test_geno_ftcmd_escape);
     TestRegister("geno_ftcmd_loops", test_geno_ftcmd_loops);

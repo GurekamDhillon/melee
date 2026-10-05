@@ -1,0 +1,6 @@
+# Up throw: 5%, the combo starter, pops straight up
+wait 1
+throw idx=0 damage=5 unk0=88 hit_x24=70 hit_x28=0 hit_x2C=40
+throw idx=1 damage=1 unk0=361 hit_x24=100 hit_x28=0 hit_x2C=40
+wait 18
+throw_flag hit_idx=0

@@ -1,0 +1,3 @@
+# Down special: a counter. A hit taken in action frames 4-24 is negated and answered (state CounterStrike).
+wait 30
+CHG auto ALWAYS ONCE

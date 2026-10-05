@@ -725,7 +725,8 @@ static void gn_add_v1(gn_registry *r, gn_profile *p, const jdoc *d, int e, const
                 continue;
             }
             if (p->nov >= GENO_MAX_OVERLAYS || r->nslot >= GN_MAX_SLOTS) {
-                gw_log("geno: %s: too many subaction overlays - the rest are ignored", where);
+                gw_log("geno: %s: too many subaction overlays (limit %d per profile, %d slots over all profiles) - the rest are ignored",
+                       where, GENO_MAX_OVERLAYS, GN_MAX_SLOTS);
                 break;
             }
             if (wl >= 0 && d->n[wl].type == JN_ARR) {
@@ -1480,6 +1481,15 @@ int gw_Geno_MotionAnim(int p, int motion) {
     return -1;
 }
 int gw_Geno_OverlayCount(int p) { return gn_at(p) ? gn_at(p)->nov : 0; }
+/* Slice 2 budgets: overlay words (with their End words) one profile took from the shared pool, and the
+ * words every profile has taken; the total is what GENO_POOL_WORDS bounds. */
+int gw_Geno_ProfilePoolWords(int p) {
+    const gn_profile *x = gn_at(p);
+    int i, w = 0;
+    if (x == NULL) return 0;
+    for (i = 0; i < x->nov; ++i) w += gn_reg()->slot_len[x->ov_slot[i]];
+    return w;
+}
 int gw_Geno_OverlayAnim(int p, int i) {
     const gn_profile *x = gn_at(p);
     return x != NULL && i >= 0 && i < x->nov ? x->ov_anim[i] : -1;
@@ -2239,6 +2249,9 @@ static int test_geno_registry_reload_layout(void) {
 void geno_registry_tests_register(void) {
     gw_test_register("geno_define_registry", test_geno_define_registry);
     gw_test_register("geno_define_repeated_install", test_geno_define_repeated_install);
+    gw_test_register("geno_define_attrs_v7", test_geno_define_attrs_v7);
+    gw_test_register("geno_define_v7_parse", test_geno_define_v7_parse);
+    gw_test_register("geno_define_overlay_budget", test_geno_define_overlay_budget);
     gw_test_register("geno_items_registry",gn_items_registry_test);
     gw_test_register("geno_items_physics",gn_items_physics_test);
     gw_test_register("geno_items_snapshot",gn_items_snapshot_test);

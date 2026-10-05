@@ -147,8 +147,15 @@ int ScriptGame_StageSlotParticleBegin(int link)
 }
 void ScriptGame_StageSlotProcEnd(void)
 {
-    unsigned freebytes=lbHeap_Free(0);
+    /* The retail-live early-out comes BEFORE the heap query: lbHeap_Free(0) is OSCheckHeap, a walk of
+     * every cell of the heap, and this runs for every owned stage proc and particle of every frame
+     * (about 32 a frame on a retail stage: 0.6 ms of a 16 ms frame). The answer is read only below.
+     * MELEE_HEAP_CHECK=1 restores the eager query for A/B measurement. */
+    unsigned freebytes=0;
+    extern int HeapCheckFull(void);
+    if(HeapCheckFull())freebytes=lbHeap_Free(0);
     if(script_retail_proc){script_retail_proc=0;script_retail_capture=0;return;}
+    if(!HeapCheckFull())freebytes=lbHeap_Free(0);
     if(freebytes<script_slot_proc_heap)script_slot_native_cost+=script_slot_proc_heap-freebytes;
     else {
         unsigned released=freebytes-script_slot_proc_heap;

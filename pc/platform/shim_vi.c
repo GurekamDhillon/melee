@@ -71,8 +71,13 @@ static void gw_video_sync_viewport_policy(void);
 /* Latch once at frame start: cameras, kit, scripts and framebuffer use the
  * same view even if settings/window events change while game logic runs. */
 static bool gw_view_begin_frame(int offscreen) {
+  bool ok;
   gw_video_sync_viewport_policy();
-  return offscreen ? aurora_begin_frame_offscreen() : aurora_begin_frame();
+  /* queue_wait: the frame slot acquired here is the game thread's render-worker back-pressure. */
+  gw_prof_begin(GW_PROF_QUEUE_WAIT, 0);
+  ok = offscreen ? aurora_begin_frame_offscreen() : aurora_begin_frame();
+  gw_prof_end();
+  return ok;
 }
 void gw_View_SceneBegin(int scene) { gw_view_scene = scene; }
 float gw_View_Aspect(void) { return gw_view_effective_aspect; }
@@ -744,7 +749,11 @@ void gw_Video_SetRenderScale(float scale) {
 
 static void gw_present_overlays(void);
 
+static int gw_perfrec_conditions(char *out, unsigned cap);
+static void gw_perfrec_log(const char *line);
 bool gw_frame_init(void) {
+  gw_prof_set_conditions_cb(gw_perfrec_conditions);
+  gw_prof_set_log_cb(gw_perfrec_log);
   gw_prof_frame_begin();
   gw_video_load();
   gw_video_apply_scale();
@@ -853,10 +862,59 @@ static double gw_prof_ms(long long a, long long b) {
   return ((double)(b - a) * 1000.0) / gw_prof_freq;
 }
 
-int64_t gw_perf_gx_begin(void) { return gw_perf_collecting ? gw_prof_now() : 0; }
+/* GX call time: measured only for the perf overlay or the FULL profiler (a clock pair around every
+ * GXBegin / display list is too dear for the always-on summary, which counts the calls instead). */
+static long long gw_prof_gx_ticks;
+int64_t gw_perf_gx_begin(void) { return (gw_perf_collecting || gw_prof_enabled()) ? gw_prof_now() : 0; }
 void gw_perf_gx_end(int64_t start) {
-  if (start) gw_perf_gx_ticks += gw_prof_now() - start;
+  if (start) { long long d = gw_prof_now() - start; gw_perf_gx_ticks += d; gw_prof_gx_ticks += d; }
 }
+/* ---- perf record glue (gw_profiler.c writes perf.json; this supplies the run conditions) ---- */
+extern int gw_Mods_ActiveCount(void);
+extern int gw_Mods_ActiveAt(int n);
+extern const char *gw_Mods_Id(int i);
+extern const char *gw_Mods_Version(int i);
+static unsigned long gw_link_stamp_id(void) {
+  const unsigned char *base = (const unsigned char *)GetModuleHandleA(NULL);
+  const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)base;
+  const IMAGE_NT_HEADERS *nt;
+  if (base == NULL || dos->e_magic != IMAGE_DOS_SIGNATURE) return 0;
+  nt = (const IMAGE_NT_HEADERS *)(base + dos->e_lfanew);
+  return nt->Signature == IMAGE_NT_SIGNATURE ? nt->FileHeader.TimeDateStamp : 0;
+}
+static void gw_perfrec_esc(char *dst, size_t cap, const char *s) {
+  size_t n = 0;
+  for (; s && *s && n + 7 < cap; ++s) {
+    unsigned char c = (unsigned char)*s;
+    if (c == '"' || c == '\\') { dst[n++] = '\\'; dst[n++] = (char)c; }
+    else if (c < 32) n += (size_t)snprintf(dst + n, cap - n, "\\u%04x", c);
+    else dst[n++] = (char)c;
+  }
+  dst[n] = 0;
+}
+static int gw_perfrec_conditions(char *out, unsigned cap) {
+  char token[600], esc[700], mods[900];
+  const char *t = getenv("MELEE_SCENE"), *ww = getenv("MELEE_WINDOW_W"), *wh = getenv("MELEE_WINDOW_H");
+  const char *tr = getenv("MELEE_TURBO_RENDER"), *rs = getenv("MELEE_RENDER_SCALE");
+  int i, n = gw_Mods_ActiveCount(), len = 0;
+  mods[0] = 0;
+  for (i = 0; i < n && len < 780; ++i) {
+    int m = gw_Mods_ActiveAt(i);
+    char id[96], ver[48];
+    gw_perfrec_esc(id, sizeof id, gw_Mods_Id(m));
+    gw_perfrec_esc(ver, sizeof ver, gw_Mods_Version(m));
+    len += snprintf(mods + len, sizeof mods - (size_t)len, "%s{\"id\":\"%s\",\"version\":\"%s\"}", i ? "," : "", id, ver);
+  }
+  snprintf(token, sizeof token, "%s", t ? t : "");
+  gw_perfrec_esc(esc, sizeof esc, token);
+  return snprintf(out, cap,
+      "\"clock\":\"%s\",\"turbo_render\":%d,\"turbo_render_env\":\"%s\",\"fps_cap\":%d,\"vsync\":%d,"
+      "\"window\":\"%sx%s\",\"render_scale\":\"%s\",\"build_id\":\"%08lX\",\"mods\":[%s],"
+      "\"scene_token\":\"%s\",\"profiler_full\":%s",
+      gw_turbo ? "turbo_virtual" : "realtime", (int)gw_turbo_render, tr ? tr : "", gw_video_fps, gw_video_vsync,
+      ww ? ww : "?", wh ? wh : "?", rs ? rs : "", gw_link_stamp_id(), mods, esc, gw_prof_enabled() ? "true" : "false");
+}
+static void gw_perfrec_log(const char *line) { gw_log("%s", line); }
 
 /* Kernel+user CPU time of the calling thread, in 100 ns units. The wall split cannot tell real
  * game work from the pad-wait spin, and those call for opposite fixes (optimise the work vs.
@@ -2071,6 +2129,16 @@ void gw_frame_tick(void) {
   gw_ax_frame_tick();
 
   if (prof_complete_frame) {
+    if (gw_prof_active()) {
+      static uint32_t last_prims, last_dlists;
+      uint32_t copies, prims, dlists;
+      const AuroraStats *as = presented ? aurora_get_stats() : NULL;
+      gw_gx_get_stats(&copies, &prims, &dlists);
+      gw_prof_frame_stats(as ? as->drawCallCount : 0, prims - last_prims, dlists - last_dlists, presented,
+                          gw_end_frames, (double)gw_uncap_cost * 1000.0 / GW_TIMER_CLOCK);
+      last_prims = prims; last_dlists = dlists;
+      if (gw_prof_enabled()) { gw_prof_gx_ms(gw_prof_ms(0, gw_prof_gx_ticks)); gw_prof_gx_ticks = 0; }
+    }
     gw_prof_frame_end();
     gw_prof_frame_begin();
   }

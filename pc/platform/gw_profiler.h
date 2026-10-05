@@ -19,12 +19,19 @@ enum GwProfId {
     GW_PROF_MESH_UPLOAD, GW_PROF_SHADER_COMPILE, GW_PROF_PIPELINE_COMPILE,
     GW_PROF_CHUNK_LOAD, GW_PROF_CHUNK_UNLOAD, GW_PROF_MODEL_RELOAD, GW_PROF_BENCH_CALL,
     GW_PROF_GPU_PASS, GW_PROF_SUBMIT, GW_PROF_PACING, GW_PROF_AUDIO, GW_PROF_AUDIO_MIX,
-    GW_PROF_OBJECT_CALLBACK, GW_PROF_FRAME_WORK, GW_PROF_ZONES, GW_PROF_ZONE_COUNT,
+    GW_PROF_OBJECT_CALLBACK, GW_PROF_FRAME_WORK, GW_PROF_ZONES,
+    /* perf-2: GX display-list recording (per-frame sample, full profiler only), CPU skinning matrix
+     * setup, effect pipeline creation, and the game thread blocked on the render worker. */
+    GW_PROF_GX_RECORD, GW_PROF_ENVELOPE, GW_PROF_EFFECT_PIPELINE, GW_PROF_QUEUE_WAIT,
+    GW_PROF_ZONE_COUNT,
     GW_PROF_MEX_INSTRUCTIONS = 64, GW_PROF_ROLLBACK_FRAMES,
     GW_PROF_SNAPSHOT_BYTES, GW_PROF_HEAP_FREE, GW_PROF_HEAP_USED,
     GW_PROF_DRAW_CALLS, GW_PROF_VERTICES, GW_PROF_PARTICLE_COUNT,
     GW_PROF_HEAP0_FREE, GW_PROF_HEAP3_FREE, GW_PROF_HEAP4_FREE, GW_PROF_HEAP5_FREE,
-    GW_PROF_PIPELINE_SKIPS, GW_PROF_PIPELINE_WAITS, GW_PROF_COUNTER_END
+    GW_PROF_PIPELINE_SKIPS, GW_PROF_PIPELINE_WAITS,
+    /* per-frame event counts (game thread): see gw_prof_tally */
+    GW_PROF_ENV_SETUPS, GW_PROF_ENV_REUSED, GW_PROF_POBJ_DRAWS, GW_PROF_GX_BEGINS, GW_PROF_GX_DLISTS,
+    GW_PROF_COUNTER_END
 };
 typedef struct GwProfStats {
     unsigned long long count;
@@ -37,7 +44,8 @@ typedef struct GwProfDetailStats {
 } GwProfDetailStats;
 void gw_prof_init(void);
 void gw_prof_shutdown(void);
-int gw_prof_enabled(void);
+int gw_prof_enabled(void);   /* the FULL profiler (MELEE_PROFILER=1): events, traces, details */
+int gw_prof_active(void);    /* full profiler or the always-on summary */
 double gw_prof_clock_ms(void);
 void gw_prof_set_enabled(int enabled);
 void gw_prof_reset(void);
@@ -73,6 +81,32 @@ void gw_ProfEnd(void);
 void gw_ProfCounter(int id, int value);
 void gw_ProfCounterDetail(int id, int detail, int value);
 int gw_ProfEnabled(void);
+/* ---- always-on summary (perf record) --------------------------------------------------------
+ * MELEE_PERF_SUMMARY=0 turns it off. It keeps per-scene frame-work and bucket accumulators and a
+ * small percentile reservoir; no event ring, no hitch dumps. perf.json is written at scene end and
+ * exit (path: MELEE_PERF_PATH, default perf.json in the working directory). */
+void gw_prof_summary_set(int on);
+int gw_prof_summary_enabled(void);
+/* Increment a per-frame event counter (GW_PROF_ENV_SETUPS ...). Game thread only. */
+void gw_prof_tally(unsigned id);
+void gw_prof_scene_begin(const char *name);
+void gw_prof_scene_end(void);
+/* Called once per presented frame by the frame tick: aurora's draw call count for that frame. */
+void gw_prof_frame_stats(unsigned draw_calls, unsigned gx_begins, unsigned gx_dlists, int presented,
+                         unsigned end_frames, double replay_ms);
+/* GX call time of the frame just ended, in ms (full profiler / perf overlay only). */
+void gw_prof_gx_ms(double ms);
+/* Summary-mode script attribution: push a script zone for mod `id` (the pointer must stay valid). */
+void gw_prof_script_begin(const char *id);
+/* Callbacks the platform registers: a JSON fragment of run conditions, and a log line sink. */
+void gw_prof_set_conditions_cb(int (*fn)(char *out, unsigned cap));
+void gw_prof_set_log_cb(void (*fn)(const char *line));
+int gw_prof_perf_write(const char *path);
+/* "perf" console/Lua command helper: status line. Bench window: MELEE_PERF_WINDOW=<warm>,<frames>. */
+int gw_prof_perf_status(char *out, unsigned cap);
+int gw_prof_scene_draws(double *mean, unsigned *max, unsigned long long *frames, unsigned long long *with_draws);
+void gw_ProfCount(int id);
+int gw_ProfActive(void);
 #define GW_PROF_ZONE_BEGIN(id, detail) gw_prof_begin((id), (detail))
 #define GW_PROF_ZONE_END() gw_prof_end()
 #define GW_PROF_JOIN_(a,b) a##b
@@ -82,7 +116,7 @@ int gw_ProfEnabled(void);
 static inline void gw_prof_scope_cleanup(unsigned *mark) { if (*mark != ~0u) gw_prof_unwind(*mark); }
 #define GW_PROF_ZONE(id) \
     unsigned GW_PROF_JOIN(gw_prof_scope_,__LINE__) __attribute__((cleanup(gw_prof_scope_cleanup))) = \
-        gw_prof_enabled() ? gw_prof_mark() : ~0u; gw_prof_begin((id), 0)
+        gw_prof_active() ? gw_prof_mark() : ~0u; gw_prof_begin((id), 0)
 #endif
 #ifdef __cplusplus
 }

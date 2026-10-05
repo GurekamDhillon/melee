@@ -290,6 +290,88 @@ void gw_diag_envelope(int count, float weight_sum) {
   }
 }
 
+/* perf-2 diagnostic (MELEE_POBJ_DIAG=1): what a frame's envelope draws are made of. Per logic frame:
+ * pobj draws, distinct pobjs (draws/distinct = passes over the same model), envelope slots set up, how many
+ * are rigid (one joint, weight 1), joint terms blended, and distinct envelopes (same joint list and weights).
+ * Host-only, render-side counters; nothing here reaches game state. */
+static int gw_pd_on = -1;
+static struct {
+  unsigned frame, draws, distinct_pobj, slots, rigid, terms, distinct_env, max_slots, slot_hist[12];
+  unsigned pset[16384];
+  unsigned long long eset[65536];
+  unsigned ctx[16], ctx_draws[16], ctx_repeats[16];
+  unsigned c2[24][3], c2_draws[24], c2_repeats[24];
+} gw_pd;
+int gw_diag_pobj_enabled(void) {
+  if (gw_pd_on < 0) {
+    const char *v = getenv("MELEE_POBJ_DIAG");
+    gw_pd_on = v != NULL && *v != '\0' && *v != '0';
+  }
+  return gw_pd_on;
+}
+static void gw_pd_roll(unsigned frame) {
+  if (gw_pd.frame != frame) {
+    if (gw_pd.draws != 0u && (gw_pd.frame % 120u) == 0u)
+      gw_log("gw: POBJDIAG frame=%u pobj_draws=%u distinct_pobj=%u slots=%u rigid=%u terms=%u distinct_env=%u "
+             "slots_per_pobj_hist[1..10]=%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",
+             gw_pd.frame, gw_pd.draws, gw_pd.distinct_pobj, gw_pd.slots, gw_pd.rigid, gw_pd.terms,
+             gw_pd.distinct_env, gw_pd.slot_hist[1], gw_pd.slot_hist[2], gw_pd.slot_hist[3], gw_pd.slot_hist[4],
+             gw_pd.slot_hist[5], gw_pd.slot_hist[6], gw_pd.slot_hist[7], gw_pd.slot_hist[8], gw_pd.slot_hist[9],
+             gw_pd.slot_hist[10]);
+    if (gw_pd.draws != 0u && (gw_pd.frame % 120u) == 0u) {
+      int i;
+      for (i = 0; i < 16 && gw_pd.ctx_draws[i]; ++i)
+        gw_log("gw: POBJDIAG   render gobj classifier=%u gx_link=%u p_link=%u draws=%u of_which_repeats=%u",
+               gw_pd.ctx[i] >> 16, (gw_pd.ctx[i] >> 8) & 255u, gw_pd.ctx[i] & 255u, gw_pd.ctx_draws[i], gw_pd.ctx_repeats[i]);
+    }
+    if (gw_pd.draws != 0u && (gw_pd.frame % 120u) == 0u) {
+      int i;
+      for (i = 0; i < 24 && gw_pd.c2_draws[i]; ++i)
+        gw_log("gw: POBJDIAG   pass rendermode=0x%08x dobj_flags=0x%x jobj_flags=0x%x draws=%u of_which_repeats=%u",
+               gw_pd.c2[i][0], gw_pd.c2[i][1], gw_pd.c2[i][2], gw_pd.c2_draws[i], gw_pd.c2_repeats[i]);
+    }
+    memset(&gw_pd, 0, sizeof gw_pd);
+    gw_pd.frame = frame;
+  }
+}
+void gw_diag_pobj_draw(unsigned pobj, int frame, int slots, unsigned ctx, unsigned rmode, unsigned dflags, unsigned jflags) {
+  unsigned h, i, repeat = 0;
+  gw_pd_roll((unsigned) frame);
+  gw_pd.draws++;
+  if (slots >= 0 && slots < 12) gw_pd.slot_hist[slots]++;
+  h = (pobj * 2654435761u) >> 18;
+  for (;;) {
+    h &= 16383u;
+    if (gw_pd.pset[h] == pobj) { repeat = 1; break; }
+    if (gw_pd.pset[h] == 0u) { gw_pd.pset[h] = pobj; gw_pd.distinct_pobj++; break; }
+    h++;
+  }
+  for (i = 0; i < 24; ++i) {
+    if (gw_pd.c2_draws[i] == 0u) { gw_pd.c2[i][0] = rmode; gw_pd.c2[i][1] = dflags; gw_pd.c2[i][2] = jflags; }
+    if (gw_pd.c2[i][0] == rmode && gw_pd.c2[i][1] == dflags && gw_pd.c2[i][2] == jflags) {
+      gw_pd.c2_draws[i]++; gw_pd.c2_repeats[i] += repeat; break;
+    }
+  }
+  for (i = 0; i < 16; ++i) {
+    if (gw_pd.ctx_draws[i] == 0u) gw_pd.ctx[i] = ctx;
+    if (gw_pd.ctx[i] == ctx) { gw_pd.ctx_draws[i]++; gw_pd.ctx_repeats[i] += repeat; break; }
+  }
+}
+void gw_diag_env_slot(unsigned k0, unsigned k1, int terms) {
+  unsigned long long key = ((unsigned long long) k0 << 32) | k1;
+  unsigned h = (unsigned) ((key * 0x9E3779B97F4A7C15ull) >> 48);
+  if (key == 0ull) key = 1ull;
+  gw_pd.slots++;
+  gw_pd.terms += (unsigned) terms;
+  if (terms <= 1) gw_pd.rigid++;
+  for (;;) {
+    h &= 65535u;
+    if (gw_pd.eset[h] == key) break;
+    if (gw_pd.eset[h] == 0ull) { gw_pd.eset[h] = key; gw_pd.distinct_env++; break; }
+    h++;
+  }
+}
+
 void gw_diag_envelope_report(void) {
   if (gw_env_draws != 0u) {
     gw_log("gw: DIAG   envelope: blends=%u bad_weight_sum=%u", gw_env_draws, gw_env_badsum);
@@ -778,6 +860,62 @@ void gw_GenoPalCachePut(u32 k0, u32 k1, u32 k2, u32 frame, const void *in) {
   gw_pal_cache[i].k2 = k2;
   gw_pal_cache[i].frame = frame + 1u;
   memcpy(gw_pal_cache[i].v, in, sizeof gw_pal_cache[i].v);
+}
+/* ---- envelope matrix memo (perf-2) ---------------------------------------------------------------------
+ * pobj.c's SetupEnvelopeModelMtx asks here for a slot's view-space position matrix (and normal matrix) before
+ * computing it. The key is a 128-bit hash of every input of the arithmetic, supplied by the caller, so a hit is the
+ * identical computation on identical bits. Render-side native memory: not in guest memory, not in a snapshot, and
+ * a miss costs nothing but the computation. MELEE_ENV_CACHE=1 on, =compare checks every hit against a fresh
+ * computation (and logs any difference), unset/0 off (it measured a gain of only ~0.3-0.5 ms a legacy-skinned fighter). The bytes are the guest's own (big-endian), copied verbatim. */
+#define GW_EC_SIZE 16384u
+typedef struct { unsigned k[4]; unsigned char valid, have_nrm, pad[2]; unsigned char tmp[48], nrm[48]; } GwEnvCacheEntry;
+static GwEnvCacheEntry gw_ec[GW_EC_SIZE];
+static int gw_ec_mode = -1;
+static unsigned gw_ec_hits, gw_ec_misses, gw_ec_compared, gw_ec_bad, gw_ec_reported;
+int gw_env_cache_mode(void) {
+  if (gw_ec_mode < 0) {
+    const char *v = getenv("MELEE_ENV_CACHE");
+    gw_ec_mode = (v == NULL || *v == '\0') ? 0 : (!strcmp(v, "0") || !strcmp(v, "off")) ? 0
+               : (!strcmp(v, "compare") || !strcmp(v, "2")) ? 2 : 1;
+    gw_log("gw: envelope matrix cache: %s (MELEE_ENV_CACHE)", gw_ec_mode == 0 ? "off" : gw_ec_mode == 2 ? "compare" : "on");
+  }
+  return gw_ec_mode;
+}
+static unsigned gw_ec_index(unsigned k0, unsigned k1, unsigned k2, unsigned k3) {
+  return (k0 ^ (k1 * 0x9E3779B1u) ^ (k2 >> 3) ^ (k3 * 0x85EBCA6Bu)) & (GW_EC_SIZE - 1u);
+}
+int gw_env_cache_get(unsigned k0, unsigned k1, unsigned k2, unsigned k3, void *tmp, void *nrm, int want_nrm) {
+  GwEnvCacheEntry *e = &gw_ec[gw_ec_index(k0, k1, k2, k3)];
+  if (!e->valid || e->k[0] != k0 || e->k[1] != k1 || e->k[2] != k2 || e->k[3] != k3 || (want_nrm && !e->have_nrm)) {
+    ++gw_ec_misses;
+    return 0;
+  }
+  ++gw_ec_hits;
+  memcpy(tmp, e->tmp, sizeof e->tmp);
+  if (want_nrm) memcpy(nrm, e->nrm, sizeof e->nrm);
+  if (((gw_ec_hits + gw_ec_misses) & 0xFFFFFu) == 0u)
+    gw_log("gw: ENVCACHE hits=%u misses=%u compared=%u mismatches=%u", gw_ec_hits, gw_ec_misses, gw_ec_compared, gw_ec_bad);
+  return want_nrm ? 2 : 1;
+}
+void gw_env_cache_put(unsigned k0, unsigned k1, unsigned k2, unsigned k3, const void *tmp, const void *nrm, int have_nrm) {
+  GwEnvCacheEntry *e = &gw_ec[gw_ec_index(k0, k1, k2, k3)];
+  e->k[0] = k0; e->k[1] = k1; e->k[2] = k2; e->k[3] = k3;
+  e->valid = 1;
+  e->have_nrm = (unsigned char) (have_nrm != 0);
+  memcpy(e->tmp, tmp, sizeof e->tmp);
+  if (have_nrm) memcpy(e->nrm, nrm, sizeof e->nrm);
+}
+void gw_env_cache_compare(unsigned k0, unsigned k1, unsigned k2, unsigned k3, const void *tmp, const void *nrm, int have_nrm) {
+  GwEnvCacheEntry *e = &gw_ec[gw_ec_index(k0, k1, k2, k3)];
+  int bad = memcmp(e->tmp, tmp, sizeof e->tmp) != 0;
+  if (have_nrm && e->have_nrm) bad |= memcmp(e->nrm, nrm, sizeof e->nrm) != 0;
+  ++gw_ec_compared;
+  if (bad) {
+    ++gw_ec_bad;
+    if (gw_ec_reported < 8u) { ++gw_ec_reported; gw_log("gw: ENVCACHE MISMATCH key=%08x:%08x:%08x:%08x", k0, k1, k2, k3); }
+  }
+  if ((gw_ec_compared & 0x3FFFFu) == 0u)
+    gw_log("gw: ENVCACHE compare: %u hits compared, %u mismatches (lookups %u)", gw_ec_compared, gw_ec_bad, gw_ec_hits + gw_ec_misses);
 }
 /* MELEE_PAL_FORCE=1: pobj.c turns vanilla envelope POBJs into palette POBJs (a draw-path test; never for play) */
 int gw_diag_geno_pal_force(void) {

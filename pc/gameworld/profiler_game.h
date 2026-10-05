@@ -7,10 +7,15 @@ extern void ProfBegin(int id, int detail);
 extern void ProfEnd(void);
 extern void ProfCounter(int id, int value);
 extern int ProfEnabled(void);
-#define PC_PROF_BEGIN(id, detail) do { if (ProfEnabled()) ProfBegin((id), (detail)); } while (0)
+extern int ProfActive(void);
+extern void ProfCount(int id);
+/* ProfActive: the full profiler OR the always-on summary. ProfEnabled stays the full profiler only. */
+#define PC_PROF_BEGIN(id, detail) do { if (ProfActive()) ProfBegin((id), (detail)); } while (0)
+#define PC_PROF_COUNT(id) ProfCount(id)
 #define PC_PROF_END() ProfEnd()
 #else
 #define PC_PROF_BEGIN(id, detail) ((void) 0)
+#define PC_PROF_COUNT(id) ((void) 0)
 #define PC_PROF_END() ((void) 0)
 #endif
 #endif

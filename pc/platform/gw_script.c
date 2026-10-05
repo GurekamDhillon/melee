@@ -745,6 +745,8 @@ static int gs_pcall(int script, int nargs, int nres, const char *what) {
         detail = gs_prof_identity(identity);
         gw_prof_detail_name(detail, identity);
         gw_prof_begin(GW_PROF_LUA_CALLBACK, detail);
+    } else if (gw_prof_active()) {
+        gw_prof_script_begin(gs.s[script].id); /* always-on summary: per-mod script time */
     }
     rc = lua_pcall(L, nargs, nres, base);
     gw_hang_callback(gs_script_id(script), what, 0);
@@ -2820,6 +2822,8 @@ static void gs_run_tasks(void) {
                 snprintf(identity, sizeof identity, "%s:task%d", s->id, k);
                 detail = gs_prof_identity(identity); gw_prof_detail_name(detail, identity);
                 gw_prof_begin(GW_PROF_LUA_CALLBACK, detail);
+            } else if (gw_prof_active()) {
+                gw_prof_script_begin(s->id);
             }
             {
                 int item_mark=gs_item_call_begin(), previous_refusal=gs_callback_refused;

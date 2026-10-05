@@ -1137,6 +1137,34 @@ static void SetupSharedVtxModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
 #if defined(TARGET_PC)
 /* Unprefixed: gwtool prefixes every symbol in a game TU with gw_. */
 extern void diag_envelope(int count, float weight_sum);
+#include <sysdolphin/baselib/gobj.h>
+extern int diag_pobj_enabled(void);
+extern void diag_pobj_draw(unsigned pobj, int frame, int slots, unsigned ctx, unsigned rmode, unsigned dflags, unsigned jflags);
+extern void diag_env_slot(unsigned k0, unsigned k1, int terms);
+extern int geno_stun_frame(void);
+/* Envelope matrix memo (shim_gx.c; native, render-only, never in a snapshot). MELEE_ENV_CACHE: 0 off, 1 on
+ * (default), 2 compare (compute everything, check every hit against the memo). The key is the logic frame, the
+ * view matrix and the envelope-node matrix (hashed once a pobj) and each slot's joint list with weights; it assumes
+ * joint matrices do not change inside one logic frame under one view, which compare mode checks against fresh
+ * arithmetic. (Hashing every joint matrix instead was exact by construction and measured SLOWER than the
+ * arithmetic it saves.) */
+extern int env_cache_mode(void);
+extern int env_cache_get(u32 k0, u32 k1, u32 k2, u32 k3, void* tmp, void* nrm, int want_nrm); /* 0 miss, 1 hit, 2 hit with normals */
+extern void env_cache_put(u32 k0, u32 k1, u32 k2, u32 k3, const void* tmp, const void* nrm, int have_nrm);
+extern void env_cache_compare(u32 k0, u32 k1, u32 k2, u32 k3, const void* tmp, const void* nrm, int have_nrm);
+static inline void env_hash_f32s(u32* h0, u32* h1, const f32* p, int n)
+{
+    int i;
+    for (i = 0; i < n; i++) {
+        union {
+            f32 f;
+            u32 u;
+        } b;
+        b.f = p[i];
+        *h0 = (*h0 ^ b.u) * 16777619u;
+        *h1 = ((*h1 << 5) | (*h1 >> 27)) * 2246822519u + b.u * 0x9E3779B1u;
+    }
+}
 extern int diag_geno_pal_selftest(void);
 extern void diag_geno_pal_compare(int slots, int pos_equal, int nrm_equal, int nrm_checked);
 static int geno_pal_selftest_on = -1; /* MELEE_PAL_SELFTEST, read once */
@@ -1155,6 +1183,10 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
     MtxPtr right;
     Mtx mtx;
     PObjSetupFlag flags = SETUP_NONE;
+#if defined(TARGET_PC)
+    int ec_mode = 0;
+    u32 ec_c0 = 0, ec_c1 = 0;
+#endif
 
     jobj = HSD_JObjGetCurrent();
     HSD_PObjClearMtxMark(NULL, HSD_MTX_ENVELOPE);
@@ -1163,6 +1195,19 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
 #if defined(TARGET_PC)
     if (geno_pal_selftest_on < 0) {
         geno_pal_selftest_on = diag_geno_pal_selftest();
+    }
+    ec_mode = env_cache_mode();
+    if (ec_mode) {
+        /* the view matrix and the envelope-node matrix are inputs of every slot of this pobj */
+        ec_c0 = 2166136261u;
+        ec_c1 = 0x9E3779B9u;
+        ec_c0 = (ec_c0 ^ (u32) geno_stun_frame()) * 16777619u; /* the logic frame: joints do not move within one */
+        env_hash_f32s(&ec_c0, &ec_c1, &vmtx[0][0], 12);
+        if (right) {
+            env_hash_f32s(&ec_c0, &ec_c1, &right[0][0], 12);
+        } else {
+            ec_c0 ^= 0x5bd1e995u;
+        }
     }
 #endif
 
@@ -1174,8 +1219,60 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
         HSD_Envelope* envelope = list->data;
         s32 mtx_no = HSD_Index2PosNrmMtx(MtxIdx);
         int perf = 0;
+#if defined(TARGET_PC)
+        u32 ec_h0 = 0, ec_h1 = 0;
+        int ec_hit = 0, ec_nrm = 0, ec_use = 0;
+        Mtx ec_tmp, ec_nrmm;
+#endif
 
         HSD_ASSERT(1872, envelope);
+#if defined(TARGET_PC)
+        PC_PROF_COUNT(GW_PROF_ENV_SETUPS);
+        if (diag_pobj_enabled()) {
+            u32 k0 = 2166136261u, k1 = 0x9E3779B9u;
+            int terms = 0;
+            HSD_Envelope* ek;
+            for (ek = envelope; ek != NULL; ek = ek->next) {
+                union {
+                    f32 f;
+                    u32 u;
+                } wb;
+                wb.f = ek->weight;
+                k0 = (k0 ^ (u32) ek->jobj) * 16777619u;
+                k0 = (k0 ^ wb.u) * 16777619u;
+                k1 = (k1 + (u32) ek->jobj * 31u + wb.u) * 2246822519u;
+                terms++;
+            }
+            diag_env_slot(k0, k1, terms);
+        }
+        if (ec_mode) {
+            /* the same HSD_JObjSetupMatrix calls, in the same order, that the arithmetic below makes: a hit must
+             * leave the joints exactly as the uncached path does (the logic reads what the draw sets up) */
+            HSD_Envelope* eh;
+            ec_h0 = ec_c0 ^ 0x9E3779B9u;
+            ec_h1 = ec_c1 + 0x85EBCA6Bu;
+            for (eh = envelope; eh != NULL; eh = eh->next) {
+                union {
+                    f32 f;
+                    u32 u;
+                } wb;
+                HSD_JObjSetupMatrix(eh->jobj);
+                wb.f = eh->weight;
+                ec_h0 = (ec_h0 ^ (u32) eh->jobj) * 16777619u;
+                ec_h0 = (ec_h0 ^ wb.u) * 16777619u;
+                ec_h1 = (ec_h1 + (u32) eh->jobj * 31u + wb.u) * 2246822519u;
+            }
+            ec_hit = env_cache_get(ec_h0, ec_h1, ec_c0, ec_c1, ec_tmp, ec_nrmm, (flags & SETUP_NORMAL) != 0);
+            ec_nrm = ec_hit == 2;
+            ec_use = ec_hit && ec_mode == 1;
+        }
+#endif
+#if defined(TARGET_PC)
+        if (ec_use) {
+            PC_PROF_COUNT(GW_PROF_ENV_REUSED);
+            memcpy(tmp, ec_tmp, sizeof(Mtx));
+        } else {
+#endif
         if (envelope->weight >= (1.0f - FLT_EPSILON)) {
             HSD_JObjSetupMatrix(envelope->jobj);
             if (right) {
@@ -1224,6 +1321,9 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
             MTXConcat(mtxp, right, mtx);
         }
         MTXConcat(vmtx, mtxp, tmp);
+#if defined(TARGET_PC)
+        }
+#endif
         GXLoadPosMtxImm(tmp, mtx_no);
         HSD_PerfCountMtxLoad();
 #if defined(TARGET_PC)
@@ -1234,7 +1334,15 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
 #endif
 
         if (flags & SETUP_NORMAL) {
+#if defined(TARGET_PC)
+            if (ec_use && ec_nrm) {
+                memcpy(mtx, ec_nrmm, sizeof(Mtx));
+            } else {
+                HSD_MtxInverseTranspose(tmp, mtx);
+            }
+#else
             HSD_MtxInverseTranspose(tmp, mtx);
+#endif
 #if defined(TARGET_PC)
             if (geno_pal_selftest_on > 0) {
                 memcpy(&geno_pal_legacy[MtxIdx][12], mtx, sizeof(Mtx));
@@ -1250,6 +1358,15 @@ static void SetupEnvelopeModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
                 HSD_PerfCountMtxLoad();
             }
         }
+#if defined(TARGET_PC)
+        if (ec_mode) {
+            if (ec_hit && ec_mode == 2) {
+                env_cache_compare(ec_h0, ec_h1, ec_c0, ec_c1, tmp, mtx, (flags & SETUP_NORMAL) != 0);
+            } else if (!ec_hit || ((flags & SETUP_NORMAL) && !ec_nrm)) {
+                env_cache_put(ec_h0, ec_h1, ec_c0, ec_c1, tmp, mtx, (flags & SETUP_NORMAL) != 0);
+            }
+        }
+#endif
     }
 #if defined(TARGET_PC)
     if (geno_pal_selftest_on > 0) {
@@ -1298,6 +1415,23 @@ static void PObjDispShapeAnim(HSD_PObj* pobj, u32 rendermode)
 
 void HSD_PObjDisp(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
 {
+#if defined(TARGET_PC)
+    PC_PROF_COUNT(GW_PROF_POBJ_DRAWS);
+    if (diag_pobj_enabled()) {
+        int n = 0;
+        if (pobj_type(pobj) == POBJ_ENVELOPE) {
+            HSD_SList* l;
+            for (l = pobj->u.envelope_list; l != NULL; l = l->next) n++;
+        }
+        diag_pobj_draw((unsigned) pobj, geno_stun_frame(), n,
+                       HSD_GObj_804D7814 != NULL ? ((unsigned) HSD_GObj_804D7814->classifier << 16) |
+                                                       ((unsigned) HSD_GObj_804D7814->gx_link << 8) |
+                                                       HSD_GObj_804D7814->p_link
+                                                 : 0xFFFFFFFFu,
+                       rendermode, 0u,
+                       HSD_JObjGetCurrent() != NULL ? HSD_JObjGetCurrent()->flags : 0xFFFFFFFFu);
+    }
+#endif
     switch (pobj->flags & (POBJ_CULLFRONT | POBJ_CULLBACK)) {
     case 0x0:
         HSD_StateSetCullMode(GX_CULL_NONE);
@@ -1541,7 +1675,9 @@ static void GenoPalSetupMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
         }
         return;
     }
+    PC_PROF_BEGIN(GW_PROF_ENVELOPE, 0); /* palette matrix setup (the legacy path's twin is the skinning zone) */
     n = geno_pal_compute(pobj, vmtx, right, geno_pal_data, (flags & SETUP_NORMAL) != 0);
+    PC_PROF_END();
     GXAuroraLoadPalette((u32) n, (u32) pobj ^ (u32) jobj, geno_pal_data);
 }
 

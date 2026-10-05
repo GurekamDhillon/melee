@@ -42,7 +42,13 @@ static void gw_aurora_profiler_sink(const char *name, uint64_t frame, uint64_t n
   unsigned id, detail = 2166136261u;
   const unsigned char *p = (const unsigned char *)name;
   (void)data;
-  if (!gw_prof_enabled()) return;
+  if (!gw_prof_active()) return;
+  if (!gw_prof_enabled()) { /* summary only: the worker's busy time and pipeline compiles, nothing else */
+    if (!strcmp(name, "cpu.render_worker")) gw_prof_cpu_completed(GW_PROF_RENDER, 0, (double)ns * 0.000001);
+    else if (!strncmp(name, "cpu.pipeline_compile.", 21) || !strcmp(name, "cpu.pipeline_wait"))
+      gw_prof_cpu_completed(GW_PROF_PIPELINE_COMPILE, 0, (double)ns * 0.000001);
+    return;
+  }
   if (!strcmp(name, "cpu.pipeline_skip")) { gw_prof_counter(GW_PROF_PIPELINE_SKIPS, 1); return; }
   if (!strcmp(name, "cpu.pipeline_wait")) { gw_prof_counter(GW_PROF_PIPELINE_WAITS, 1); }
   for (; *p; ++p) detail = (detail ^ *p) * 16777619u;
@@ -377,7 +383,7 @@ int main(int argc, char *argv[]) {
   }
   gw_prof_init();
   aurora_profiler_set_sink(gw_aurora_profiler_sink, NULL);
-  aurora_profiler_enable(gw_prof_enabled() != 0);
+  aurora_profiler_enable(gw_prof_active() != 0);
   AuroraInfo info = aurora_initialize(argc, argv, &config);
   gw_log("prof: GPU timestamps %s (D3D11 has no Dawn timestamp feature; opt into D3D12 for supported adapters)",
          aurora_profiler_gpu_available() ? "available" : "unavailable");

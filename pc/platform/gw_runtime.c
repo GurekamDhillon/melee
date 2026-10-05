@@ -1,6 +1,7 @@
 /* Core runtime for the game world: startup fixups, memory regions, logging. */
 #include "gw.h"
 #include "gw_hang.h"
+#include "gw_profiler.h"
 #include "gw_uigen.h"
 #include "gw_mods.h"
 #include "gw_matchrules.h"
@@ -2756,6 +2757,13 @@ const char *gw_SceneReport_SceneName(int scene_kind) { return gw_sr_scene_name(s
 
 void gw_SceneReport_State(int phase, int mode, int state_id, int scene_kind) {
   if (phase == 0) gw_hang_scene(scene_kind);
+  { /* the perf record's scene boundaries (gw_profiler.c): one record per scene visit */
+    char scene_name[96];
+    if (phase == 0) {
+      snprintf(scene_name, sizeof scene_name, "%s/%s", gw_sr_scene_name(scene_kind), gw_sr_mode_name(mode));
+      gw_prof_scene_begin(scene_name);
+    } else gw_prof_scene_end();
+  }
   if (!gw_SceneReport_Enabled()) return;
   gw_log("scene: %s mode=%s(%d) state=%d screen=%s(%d)", phase == 0 ? "enter" : "leave ",
          gw_sr_mode_name(mode), mode, state_id, gw_sr_scene_name(scene_kind), scene_kind);

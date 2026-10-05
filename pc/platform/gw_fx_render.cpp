@@ -43,6 +43,7 @@
 extern "C" {
 #include "gw.h"
 #include "gw_fx_internal.h"
+#include "gw_profiler.h"
 #include <dolphin/gx.h>
 }
 
@@ -546,8 +547,15 @@ wgpu::RenderPipeline pipeline(const aurora::gfx::DrawContext& ctx, uint32_t kind
   rd.depthStencil = L.depthStencilFormat != wgpu::TextureFormat::Undefined ? &ds : nullptr;
   rd.multisample.count = L.sampleCount;
   rd.fragment = &fs;
-  if (custom) return shader_runtime::fx_pipeline(*custom, rd, ctx.layout.key, kind, blend, depthTest);
+  /* effect_pipeline zone: first-use creation stalls (not counted by pipeline_compile) */
+  gw_prof_begin(GW_PROF_EFFECT_PIPELINE, kind);
+  if (custom) {
+    auto cp = shader_runtime::fx_pipeline(*custom, rd, ctx.layout.key, kind, blend, depthTest);
+    gw_prof_end();
+    return cp;
+  }
   auto p = ctx.device.CreateRenderPipeline(&rd);
+  gw_prof_end();
   g_pipes.emplace(key, p);
   gw_log("fx: pipeline kind %u blend %u depth %u created (%zu total)", kind, blend, depthTest, g_pipes.size());
   return p;

@@ -98,6 +98,10 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
 | `MELEE_NO_ONBOARD=1` | skip the first boot's visit to SETTINGS > CONTROLS (also skipped for any `MELEE_SCENE` / `MELEE_PAD_SCRIPT` run; settings.cfg `onboarded=1` records it) |
 | `MELEE_PROFILER=1` | bounded native zones/counters; see workspace `docs/profiling.md` |
+| `MELEE_PERF_SUMMARY=0` | the always-on perf record (summary, default ON, cost under 0.01 ms a frame) off; it writes `perf.json` + a `perf:` log line per scene; judged by `tools/port/perfjudge.py` / `bench.sh` (workspace `tools/port/README.md`) |
+| `MELEE_PERF_PATH`, `MELEE_PERF_HITCH_MS`, `MELEE_PERF_WINDOW=<warm>,<frames>` | perf.json path (default `perf.json` in the working directory), hitch line (default 16.67 ms), bench window (set by `bench.sh`) |
+| `MELEE_ENV_CACHE=1\|compare` | opt-in memo of envelope skinning matrices per logic frame and view (compare: check every hit, log `ENVCACHE`); default off |
+| `MELEE_POBJ_DIAG=1` | `POBJDIAG` log lines: pobj draws v distinct pobjs (render passes), envelope slots, joint terms, distinct envelopes |
 | `MELEE_PROF_REPORT=<path>` | JSON run report on clean shutdown or `prof report` |
 | `MELEE_PROF_TRACE=<path>` | Chrome/Perfetto JSON trace; also enables shutdown trace |
 | `MELEE_PROF_HITCH_MS=<ms>` | work-time hitch threshold, default 16.6667 ms; excludes pacing |

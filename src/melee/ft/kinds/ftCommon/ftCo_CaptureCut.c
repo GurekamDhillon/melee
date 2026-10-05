@@ -198,6 +198,14 @@ void ftCo_800DC920(Fighter_GObj* arg0, Fighter_GObj* gobj)
 
 void ftCo_800DCE34(Fighter_GObj* gobj0, Fighter_GObj* gobj1)
 {
+#if defined(TARGET_PC)
+    /* ftCo_8008EC90 (ftCo_Damage.c) passes fp->victim_gobj as gobj1 at several call sites, re-reading it AFTER earlier calls
+     * in the same branch (ftCommon_8007DB58, ftCo_800DCFD4, ftCo_8008E908 enter a new action, and leaving a capture state
+     * clears the partner's victim_gobj). When that happens gobj1 is NULL: the grab was already cut. Retail reads user_data at
+     * address 0x2C of low memory and carries on with garbage; the PC build faults (a near-NULL read, seen twice after ~250
+     * CPU-vs-CPU trials with a fight/script mode switcher). The capture is already released, so there is nothing to cut. */
+    if (gobj0 == NULL || gobj1 == NULL) return;
+#endif
     Fighter* fp1 = GET_FIGHTER(gobj1);
     ftCo_800DC920(gobj0, gobj1);
     if (fp1->x221B_b7) {

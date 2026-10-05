@@ -2413,6 +2413,20 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
                 extern float Replay_Trigger(int port, int follower);
                 extern u32 Replay_Buttons(int port, int follower);
                 int port = fp->player_id, fol = fp->is_sub_fighter;
+                {   /* the curated bench SyncTest: first-pass inputs recorded, resimulated frames get them back */
+                    extern int Snap_InputHook(int port, int fol, float* v, u32* b);
+                    float iv[5];
+                    u32 ib = fp->input.held_buttons[0];
+                    iv[0] = fp->input.lstick[0].x; iv[1] = fp->input.lstick[0].y;
+                    iv[2] = fp->input.cstick[0].x; iv[3] = fp->input.cstick[0].y;
+                    iv[4] = fp->input.triggers[0];
+                    if (Snap_InputHook(port, fol, iv, &ib)) {
+                        fp->input.lstick[0].x = iv[0]; fp->input.lstick[0].y = iv[1];
+                        fp->input.cstick[0].x = iv[2]; fp->input.cstick[0].y = iv[3];
+                        fp->input.triggers[0] = iv[4];
+                        fp->input.held_buttons[0] = ib;
+                    }
+                }
                 if (Replay_HasInput(port, fol)) {
                     fp->input.lstick[0].x = Replay_StickX(port, fol);
                     fp->input.lstick[0].y = Replay_StickY(port, fol);
@@ -3175,6 +3189,10 @@ void Fighter_procMap(Fighter_GObj* gobj)
             c[16].f = fp->x3E4_fighterCmdScript.frame_count;
             for (n = 0; n < 17; ++n) {
                 w[i++] = c[n].u;
+            }
+            { /* the Turbo interrupt window (0 unless a window ever opened): inside the compare, so a resimulated window that differs is a mismatch */
+                extern unsigned ScriptGame_IntrWinHashWord(int entity);
+                w[i++] = ScriptGame_IntrWinHashWord(fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0));
             }
             Snap_CuratedMix(w, i);
         }

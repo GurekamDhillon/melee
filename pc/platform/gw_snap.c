@@ -1562,6 +1562,18 @@ static struct {
     uint64_t h;
 } sn_cur_ring[32];
 static long sn_cur_mismatch, sn_cur_checked;
+/* the raw words of each curated record, kept per frame so the first mismatches can name the field that differs */
+#define SN_CUR_RECS 8
+#define SN_CUR_W 32
+static uint32_t sn_cur_w[SN_CUR_RECS][SN_CUR_W];
+static int sn_cur_wn[SN_CUR_RECS];
+static int sn_cur_nrec;
+static struct {
+    int frame;
+    int nrec;
+    int n[SN_CUR_RECS];
+    uint32_t w[SN_CUR_RECS][SN_CUR_W];
+} sn_cur_words[32];
 
 int gw_Snap_Curated(void) {
     if (sn_curated < 0) {
@@ -1574,6 +1586,12 @@ int gw_Snap_Curated(void) {
 void gw_Snap_CuratedMix(const uint32_t *w, int n) {
     if (gw_Snap_Curated()) {
         static int poison = -1;
+        if (sn_cur_nrec < SN_CUR_RECS) {
+            int q = n < SN_CUR_W ? n : SN_CUR_W;
+            memcpy(sn_cur_w[sn_cur_nrec], w, (size_t) q * 4);
+            sn_cur_wn[sn_cur_nrec] = q;
+        }
+        sn_cur_nrec++;
         sn_cur_acc += sn_h64((const uint8_t *) w, (size_t) n * 4, 0x5EED5EEDull);
         if (poison < 0) {
             const char *e = getenv("MELEE_SYNCTEST_CURATED_POISON");
@@ -1585,14 +1603,49 @@ void gw_Snap_CuratedMix(const uint32_t *w, int n) {
     }
 }
 
+/* MELEE_SYNCTEST_BENCH + CURATED only: a live scripted pad cannot be re-read for a resimulated frame (the resim would see
+ * the CURRENT pad), so a SyncTest of a match with changing input would mismatch for that reason alone. The first pass
+ * records each fighter's processed input per frame here, and a resimulated frame gets exactly that back (fighter.c, at
+ * the point a Slippi replay writes its inputs). Returns 1 when `v` (lx, ly, cx, cy, trigger) and `*b` were replaced. */
+static struct {
+    int frame;
+    int has;
+    float v[5];
+    uint32_t b;
+} sn_in_ring[32][8];
+int gw_Snap_InputHook(int port, int fol, float *v, uint32_t *b) {
+    int f, slot, k;
+    if (!gw_Snap_Curated() || !sn_bench_mode() || port < 0 || port > 3 || fol < 0 || fol > 1) {
+        return 0;
+    }
+    f = sn_frame();
+    slot = (f & 0x7FFFFFFF) % 32;
+    k = port * 2 + fol;
+    if (sn.cur_is_resim) {
+        if (sn_in_ring[slot][k].has && sn_in_ring[slot][k].frame == f) {
+            memcpy(v, sn_in_ring[slot][k].v, sizeof sn_in_ring[slot][k].v);
+            *b = sn_in_ring[slot][k].b;
+            return 1;
+        }
+        return 0;
+    }
+    sn_in_ring[slot][k].frame = f;
+    sn_in_ring[slot][k].has = 1;
+    memcpy(sn_in_ring[slot][k].v, v, sizeof sn_in_ring[slot][k].v);
+    sn_in_ring[slot][k].b = *b;
+    return 0;
+}
+
 /* Top of a logic iteration: the previous iteration simulated frame sn_frame(); its
  * accumulator is the first pass's record (recorded) or a resimulation's (compared). */
 static void sn_cur_take(void) {
     int f = sn_frame();
     int slot = (f & 0x7FFFFFFF) % 32;
     uint64_t h = sn_cur_acc;
+    int nrec = sn_cur_nrec < SN_CUR_RECS ? sn_cur_nrec : SN_CUR_RECS;
     sn_cur_acc = 0;
     if (f < -123) {
+        sn_cur_nrec = 0;
         return;
     }
     if (sn.cur_is_resim) {
@@ -1604,16 +1657,34 @@ static void sn_cur_take(void) {
                 sn.mismatches++;
                 gw_RbViz_MarkMismatch();
                 if (sn_cur_mismatch <= 8) {
+                    int r, k;
                     gw_log("snap: CURATED MISMATCH frame %d (resimulated %d back from %d): first pass %016llX resim %016llX",
                            f, sn.target - f, sn.target, (unsigned long long) sn_cur_ring[slot].h,
                            (unsigned long long) h);
+                    if (sn_cur_words[slot].frame == f) {
+                        gw_log("snap:   records first pass %d, resim %d", sn_cur_words[slot].nrec, nrec);
+                        for (r = 0; r < nrec && r < sn_cur_words[slot].nrec; ++r) {
+                            for (k = 0; k < sn_cur_wn[r] && k < sn_cur_words[slot].n[r]; ++k) {
+                                if (sn_cur_w[r][k] != sn_cur_words[slot].w[r][k]) {
+                                    gw_log("snap:   record %d (player %u follower %u) word %d: first pass %08X resim %08X", r,
+                                           (unsigned) sn_cur_w[r][0], (unsigned) sn_cur_w[r][1], k,
+                                           (unsigned) sn_cur_words[slot].w[r][k], (unsigned) sn_cur_w[r][k]);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     } else {
         sn_cur_ring[slot].frame = f;
         sn_cur_ring[slot].h = h;
+        sn_cur_words[slot].frame = f;
+        sn_cur_words[slot].nrec = nrec;
+        memcpy(sn_cur_words[slot].n, sn_cur_wn, sizeof sn_cur_wn);
+        memcpy(sn_cur_words[slot].w, sn_cur_w, sizeof sn_cur_w);
     }
+    sn_cur_nrec = 0;
 }
 
 /* ---- SyncTest --------------------------------------------------------------------------------- */
@@ -1835,6 +1906,7 @@ void gw_SyncTest_IterStart(void) {
                 if (gw_Snap_Curated()) {
                     gw_log("snap: curated hash: %ld compared, %ld mismatching, resim iteration (logic only) %.2f ms",
                            sn_cur_checked, sn_cur_mismatch, sn_t[2] / (sn_tn[2] ? sn_tn[2] : 1));
+                    { extern void gw_MatchTurboLog(void); gw_MatchTurboLog(); }
                 }
                 if (sn_cb_on == 1) {
                     int a, b, top[8], nt = 0;

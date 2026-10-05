@@ -593,6 +593,14 @@ static void geno_install_overlays(Fighter* fp, int p)
         CmdUnion* mine;
         extern int Geno_DefineBaseKind(int kind);
         if (Geno_DefineBaseKind(fp->kind) >= 0 && anim >= fp->x58C) {
+            /* The opening-cinematic copy of a fighter (GS_INTRO_*) carries only a reduced subaction table (16 rows); a real
+             * fighter always has the full common table (hundreds of rows). A reduced copy skips the overlay quietly (one
+             * line, once); a real fighter with an out-of-range overlay still refuses loudly. */
+            static int reduced_noted;
+            if (fp->x58C <= 16) {
+                if (!reduced_noted) { reduced_noted = 1; OSReport("geno: overlay %d skipped on a reduced intro copy (rows %d)\n", anim, fp->x58C); }
+                continue;
+            }
             OSReport("geno: native definition refused out-of-range overlay %d (rows %d)\n", anim, fp->x58C);
             continue;
         }

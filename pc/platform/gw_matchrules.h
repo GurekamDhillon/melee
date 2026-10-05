@@ -26,6 +26,11 @@
 #define GW_TURBO_AIR_JUMPS   0x00000100u /* a hit landed in the air restores air jumps */
 #define GW_TURBO_HITLAG      0x00000200u /* RESERVED: window usable during hitlag (not built: refused) */
 #define GW_TURBO_NO_STEER    0x00000400u /* walking and turning never take the window (stick held = steering, not intent) */
+#define GW_TURBO_NO_MOVE_LOOP 0x00000800u /* NOT in V1 (owner's decision pending). A cancel into crouch, dash or a jump remembers the
+                                             granting move for the rest of the window's original length: that same move, thrown
+                                             again out of the crouch/dash/jump, grants no window until the memory ends or a
+                                             different attack lands. Closes jab -> crouch -> jab -> crouch ... on a grounded
+                                             opponent (the same-move guard compares the cancel target, and crouch is another move). */
 #define GW_TURBO_FRAMES_SHIFT 24
 #define GW_TURBO_FRAMES_MASK 0xFF000000u
 #define GW_TURBO_DEFAULT_FRAMES 30       /* logic frames outside hitlag; 0 in the word = this */
@@ -36,7 +41,7 @@
                      GW_TURBO_SMASH_STILL | GW_TURBO_NO_SHIELD | GW_TURBO_NO_AIRDODGE | GW_TURBO_AIR_JUMPS | \
                      GW_TURBO_NO_STEER)
 /* Bits this build implements. A word with any other bit set is refused, never half-applied. */
-#define GW_TURBO_SUPPORTED (0x000001FFu | GW_TURBO_NO_STEER | GW_TURBO_FRAMES_MASK)
+#define GW_TURBO_SUPPORTED (0x000001FFu | GW_TURBO_NO_STEER | GW_TURBO_NO_MOVE_LOOP | GW_TURBO_FRAMES_MASK)
 
 static inline int gw_turbo_frames(unsigned w) {
     unsigned f = (w & GW_TURBO_FRAMES_MASK) >> GW_TURBO_FRAMES_SHIFT;

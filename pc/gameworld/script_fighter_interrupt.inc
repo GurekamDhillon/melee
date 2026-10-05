@@ -70,6 +70,7 @@
 
 extern int MatchTurboRules(void);     /* native: the rule word in force for this match */
 extern int MatchTurboColAnim(void);   /* native: the indicator's colour animation id */
+extern void MatchTurboNote(int what); /* native counters (not rolled back): 0 window opened, 1 cancel taken, 2 repeat refused by NO_MOVE_LOOP, 3 window opened after resim marker */
 extern bool ftCo_Catch_CheckInput(Fighter_GObj* gobj);
 
 /* the moves a window can come from (a key), and the classes of exit */
@@ -105,6 +106,9 @@ typedef struct IntrWin {
     int opened;       /* counters, for the log and the tests */
     int cancels;
     int ind;          /* indicator frames left (0 = none showing) */
+    int taken;        /* the exit class of the last cancel (IW_X_*), for the movement memory */
+    int carry_key;    /* NO_MOVE_LOOP: the move remembered across a movement cancel (IW_K_*), 0 = none */
+    int carry_frames; /* ... for this many more free frames */
 } IntrWin;
 static IntrWin ft_intrwin[12];
 static int ft_intrwin_logged;
@@ -165,6 +169,21 @@ static void intrwin_close(IntrWin* w, int cancelled)
     w->owner = 0;
 }
 
+/* NO_MOVE_LOOP: a cancel that took a movement exit (crouch, dash, jump, air jump) remembers the granting move for the
+ * rest of the window's length; the memory runs down on free (non-hitlag) frames, one per tick. Pure state: tested. */
+static void intrwin_carry_set(IntrWin* w)
+{
+    if ((w->rules & GW_TURBO_NO_MOVE_LOOP) &&
+        (w->taken & (IW_X_CROUCH | IW_X_DASH | IW_X_JUMP | IW_X_AIRJUMP)) && w->frames > 1) {
+        w->carry_key = w->key;
+        w->carry_frames = w->frames - 1;
+    }
+}
+static void intrwin_carry_tick(IntrWin* w)
+{
+    if (w->carry_frames > 0 && --w->carry_frames == 0) w->carry_key = 0;
+}
+
 /* The core of opening a rule window: pure state, no engine calls (the tests drive it with a fake
  * fighter). Returns 1 if a window opened. */
 static int intrwin_open(int entity, Fighter* fp, int kind, unsigned rules)
@@ -177,6 +196,16 @@ static int intrwin_open(int entity, Fighter* fp, int kind, unsigned rules)
     key = intrwin_key(fp->motion_id);
     if (key == IW_K_NONE) return 0; /* throws, grabs, item swings: not a move this rule knows */
     w = &ft_intrwin[entity - 1];
+    if ((rules & GW_TURBO_NO_MOVE_LOOP) && w->carry_frames > 0) {
+        if (w->carry_key == key) {
+            /* the same move again through a movement cancel: no window, and the memory re-arms for a full window length, so
+             * the rest of a chain (jab 2, the rapid jab) that keeps landing without a different attack cannot reopen it */
+            w->carry_frames = gw_turbo_frames(rules);
+            MatchTurboNote(2);
+            return 0;
+        }
+        w->carry_key = 0; w->carry_frames = 0;                    /* a different attack landed: the memory ends */
+    }
     if (w->last_attack == fp->x2068_attackID && w->last_inst == (int) fp->x206C_attack_instance &&
         w->last_motion == fp->motion_id && w->opened > 0)
         return 0; /* the same move instance already granted one: a multi-hit counts once */
@@ -191,6 +220,7 @@ static int intrwin_open(int entity, Fighter* fp, int kind, unsigned rules)
     w->last_inst = (int) fp->x206C_attack_instance;
     w->last_motion = fp->motion_id;
     w->opened++;
+    MatchTurboNote(0);
     if ((rules & GW_TURBO_AIR_JUMPS) && fp->ground_or_air == GA_Air && fp->x1968_jumpsUsed > 1)
         fp->x1968_jumpsUsed = 1;
     return 1;
@@ -215,7 +245,7 @@ void ScriptGame_IntrWinHit(Fighter* fp, int kind)
         ftCo_800BFFD0(fp, (enum_t) MatchTurboColAnim(), 0);
         ft_intrwin[entity - 1].ind = IW_IND_FRAMES;
     }
-    if (ft_intrwin_logged < 64 || (ft_intrwin[entity - 1].opened & 63) == 0) {
+    if (ft_intrwin_logged < 4000 || (ft_intrwin[entity - 1].opened & 63) == 0) {
         ft_intrwin_logged++;
         OSReport("turbo: window open entity=%d key=%d motion=%d kind=%d frames=%d air=%d\n", entity,
                  ft_intrwin[entity - 1].key, fp->motion_id, kind, ft_intrwin[entity - 1].frames,
@@ -253,6 +283,7 @@ static int intrwin_attack_want(Fighter* fp)
     do {                                                                                            \
         if ((w)->exits & (cls) &&                                                                   \
             intrwin_allows((unsigned) (w)->rules, (w)->key, ground, (cls), (cand)) && (call)) {    \
+            (w)->taken = (cls);                                                                     \
             return 1;                                                                               \
         }                                                                                           \
     } while (0)
@@ -318,14 +349,17 @@ void ScriptGame_IntrWinTick(Fighter_GObj* gobj)
     entity = fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0);
     w = &ft_intrwin[entity - 1];
     if (w->ind > 0 && --w->ind == 0) ftCo_800C0074(fp); /* the overlay's own list: stop it */
+    intrwin_carry_tick(w);
     if (w->frames <= 0) return;
     if (fp->motion_id != w->motion) { intrwin_clear_ind(fp, w); intrwin_close(w, 0); return; }
     if (intrwin_exits(gobj, fp, w)) {
-        if (ft_intrwin_logged < 400) {
+        if (ft_intrwin_logged < 4000) {
             ft_intrwin_logged++;
             OSReport("turbo: cancel entity=%d from key=%d (motion %d) into motion %d\n", entity, w->key,
                      w->motion, fp->motion_id);
         }
+        MatchTurboNote(1);
+        intrwin_carry_set(w);
         intrwin_clear_ind(fp, w);
         intrwin_close(w, 1);
         return;
@@ -396,8 +430,13 @@ unsigned ScriptGame_IntrWinHashWord(int entity)
     if (entity < 1 || entity > 12) return 0;
     w = &ft_intrwin[entity - 1];
     if (w->opened == 0) return 0;
+    /* everything that steers a later decision is in the word: the open window, the counters, the repeat guard's memory of
+     * the last move instance, and the NO_MOVE_LOOP memory (0 when unused) */
     return ((unsigned) w->frames << 24) ^ ((unsigned) w->opened << 12) ^ ((unsigned) w->cancels << 4) ^
-           (unsigned) w->motion ^ (unsigned) w->key << 16;
+           (unsigned) w->motion ^ (unsigned) w->key << 16 ^
+           ((unsigned) w->last_inst * 0x85EBCA6Bu) ^ ((unsigned) w->last_attack * 0xC2B2AE35u) ^
+           ((unsigned) w->last_motion * 0x27D4EB2Fu) ^
+           ((unsigned) (w->carry_key * 131 + w->carry_frames) * 0x9E3779B1u);
 }
 
 #include "script_fighter_interrupt_tests.inc"

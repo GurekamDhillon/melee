@@ -2844,6 +2844,7 @@ void gw_Netplay_Tick(void) {
         np_connected_title(title, sizeof title);
     }
     if ((++np.ticks % 600) == 0) {
+        extern void gw_MatchTurboLog(void);
         gw_net_stats s;
         gw_net_get_stats(np.net, &s);
         gw_log("netplay: frame %d, rtt %u ms, advantage %.1f, remote confirmed %d, rollbacks %d, "
@@ -2851,6 +2852,7 @@ void gw_Netplay_Tick(void) {
                gw_net_frame_advantage(np.net), gw_net_remote_confirmed_frame(np.net),
                gw_rb_rollbacks(), gw_rb_desyncs(), s.packets_sent, s.packets_received,
                s.resent_frames, np.desync_frame != GW_NET_NO_FRAME ? " - CHECKSUM DESYNC" : "");
+        gw_MatchTurboLog();
         if (sim.on) {
             gw_log("netplay: network sim - %u sent, %u dropped, %u duplicated, %d in flight",
                    sim.n_sent, sim.n_dropped, sim.n_dup, sim.nq);

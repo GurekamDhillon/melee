@@ -1576,3 +1576,27 @@ bool grShrineRoute_OnCheckShadowRender(Vec3* a, int b, HSD_JObj* jobj)
         return false;
     }
 }
+
+#if defined(TARGET_PC)
+/* Read-only view of the Underground Maze's route state for gd.stage_objectives() (pc/gameworld/script_skill.inc).
+ * The logic object is stage gobj 4 (grShrineRoute_80208F70): xC4 the phase (0 choosing a spot, 1-3 the spot's event,
+ * 4-5 reset, 6 the exit was chosen: the route is complete), xC6 a bit per spot already done, xC8 the chosen spot's map
+ * point id. field 0 phase, 1 done mask, 2 chosen id, 3 kind of the symbol on spot idx (0..5): 3 = the way out, 1 = an
+ * event room, -1 none. Returns -1 when the logic object does not exist. */
+int grShrineRoute_ScriptQuery(int field, int idx)
+{
+    Ground_GObj* gobj = Ground_GetMapGObj(4); /* a lookup (Ground_GetStageGObj BUILDS a new object) */
+    Ground* gp;
+    if (gobj == NULL || (gp = gobj->user_data) == NULL) return -1;
+    switch (field) {
+    case 0: return gp->u.shrineroute.xC4;
+    case 1: return gp->u.shrineroute.xC6;
+    case 2: return gp->u.shrineroute.xC8;
+    case 3:
+        if (idx < 0 || idx > 5 || gp->u.map.symbol[idx] == NULL ||
+            gp->u.map.symbol[idx]->user_data == NULL) return -1;
+        return ((Ground*) gp->u.map.symbol[idx]->user_data)->map_id;
+    }
+    return -1;
+}
+#endif

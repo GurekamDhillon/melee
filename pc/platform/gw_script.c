@@ -1200,12 +1200,16 @@ static const char *const gs_char_names[] = {
 extern const char *gw_Mex_FighterName(int ext);
 extern int gw_Mex_PortCKindToExt(int ckind);
 
+extern int gw_Geno_DefineName(int ck, char *out, int cap);
+const char *gw_Script_CharName(int c);
 static const char *gs_char_name(int c) {
-    static char buf[32];
+    static char buf[48];
     const char *m;
     if (c >= 0 && c < (int) (sizeof gs_char_names / sizeof gs_char_names[0])) {
         return gs_char_names[c];
     }
+    /* a Geno-defined fighter (ckind = kind + 1): the define's own name, as written */
+    if (c > 0 && gw_Geno_DefineName(c, buf, (int) sizeof buf)) return buf;
     /* an m-ex fighter (ACE's Wolf is 34): its own name from the disc's m-ex data, lower case like
        the vanilla table */
     m = c >= 0 ? gw_Mex_FighterName(gw_Mex_PortCKindToExt(c)) : NULL;
@@ -1220,6 +1224,8 @@ static const char *gs_char_name(int c) {
     snprintf(buf, sizeof buf, "character %d", c);
     return buf;
 }
+const char *gw_Script_CharName(int c) { return gs_char_name(c); } /* the native test reads it */
+
 
 /* ---- Geno Lab: names and extra player fields ------------------------------------------------ */
 static void gs_push_hit_fields(lua_State *L, const int *hi, const float *hf);

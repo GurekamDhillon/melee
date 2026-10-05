@@ -2471,9 +2471,26 @@ int gw_MatchTurboColAnim(void) {
   int id = gw_Settings_Int("turbo_colanim", 8);
   return (id >= 0 && id < 0x7B) ? id : 8;
 }
+/* Native Turbo counters: what the simulation DID, counted where a rollback cannot rewind them (the in-game
+ * counters are simulation state, so they show the final timeline; these show every execution, resimulated frames
+ * included). what: 0 window opened, 1 cancel taken, 2 repeat refused (NO_MOVE_LOOP). Reset each scene. */
+static int gw_turbo_exec[4];
+extern int gw_ScriptGame_IntrWinRead(int entity, int field);
+void gw_MatchTurboNote(int what) {
+  if (what >= 0 && what < 4) gw_turbo_exec[what]++;
+}
+/* one summary line for the periodic netplay / rollback logs; silent until a window has ever opened */
+void gw_MatchTurboLog(void) {
+  if (gw_turbo_exec[0] == 0) return;
+  gw_log("turbo: executed windows %d cancels %d loop-refusals %d (resim included) | final timeline P1 %d/%d P2 %d/%d (windows/cancels)",
+         gw_turbo_exec[0], gw_turbo_exec[1], gw_turbo_exec[2], gw_ScriptGame_IntrWinRead(1, 4),
+         gw_ScriptGame_IntrWinRead(1, 5), gw_ScriptGame_IntrWinRead(2, 4), gw_ScriptGame_IntrWinRead(2, 5));
+}
 /* gw_RB_SceneBegin (gw_rollback.c), every scene */
 void gw_MatchRules_SceneBegin(int scene_kind) {
   gw_rules_in_vs = scene_kind == 2;
+  if (gw_turbo_exec[0] != 0) gw_MatchTurboLog(); /* the match that just ended */
+  memset(gw_turbo_exec, 0, sizeof gw_turbo_exec);
   if (gw_rules_in_vs) {
     int w = gw_MatchTurboRules();
     if (w != 0) gw_log("match rules: turbo=0x%08x (%d free frames) source=%s", (unsigned) w,
@@ -3601,12 +3618,29 @@ static int test_gxtex_header_and_copy(void) {
 
 #include "gw_scene_six_tests.inc"
 
+/* gd.player(n).char_name for a Geno-defined fighter is the define's own name (not "character 127"); the vanilla names are
+ * unchanged. The registry may hold no define in a bare test run: then the define half has nothing to check. */
+extern const char *gw_Script_CharName(int c);
+extern int gw_Geno_DefineName(int ck, char *out, int cap);
+static int test_geno_define_char_name(void) {
+  char want[64];
+  int ck;
+  if (strcmp(gw_Script_CharName(2), "Fox") != 0) { gw_test_fail("char name of ckind 2: %s", gw_Script_CharName(2)); return 1; }
+  if (gw_Geno_DefineName(2, want, (int) sizeof want)) { gw_test_fail("a vanilla ckind reads as a define"); return 1; }
+  for (ck = 100; ck < 200; ++ck) {
+    if (gw_Geno_DefineName(ck, want, (int) sizeof want) && strcmp(gw_Script_CharName(ck), want) != 0) {
+      gw_test_fail("define ckind %d: name %s, want %s", ck, gw_Script_CharName(ck), want); return 1;
+    }
+  }
+  return 0;
+}
 void gw_scene_tests_register(void) {
   gw_test_register("scene_six_slots", test_scene_six_slots);
   gw_test_register("scene_six_fix1", test_scene_six_fix1);
   gw_test_register("scene_six_seed", test_scene_six_seed);
   gw_test_register("scene_six_budget", test_scene_six_budget);
   gw_test_register("scene_six_refusals", test_scene_six_refusals);
+  gw_test_register("geno_define_char_name", test_geno_define_char_name);
   gw_test_register("gxtex_header_and_copy", test_gxtex_header_and_copy);
   gw_test_register("scene_ckind_fkind_table", test_scene_ckind_fkind_table);
   gw_test_register("scene_launch_keywords", test_scene_launch_keywords);

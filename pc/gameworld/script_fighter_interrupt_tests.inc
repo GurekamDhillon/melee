@@ -14,7 +14,7 @@ int ScriptGame_IntrWinTest(void)
 
     /* the word */
     if (!gw_turbo_valid(0) || !gw_turbo_valid(v1) || gw_turbo_valid(GW_TURBO_SHIELD_HIT) ||
-        gw_turbo_valid(v1 | GW_TURBO_HITLAG) || gw_turbo_valid(v1 | 0x10000u) || gw_turbo_valid(v1 | 0x800u) ||
+        gw_turbo_valid(v1 | GW_TURBO_HITLAG) || gw_turbo_valid(v1 | 0x10000u) || gw_turbo_valid(v1 | 0x1000u) || !gw_turbo_valid(v1 | GW_TURBO_NO_MOVE_LOOP) ||
         gw_turbo_valid(v1 | (200u << GW_TURBO_FRAMES_SHIFT)) || gw_turbo_frames(v1) != 30 ||
         gw_turbo_frames(v1 | (12u << GW_TURBO_FRAMES_SHIFT)) != 12) rc |= 1;
 
@@ -87,6 +87,50 @@ int ScriptGame_IntrWinTest(void)
     ScriptGame_IntrWinRelease(0);
     if (ft_intrwin[4].frames) rc |= 131072;
 
+    /* NO_MOVE_LOOP (not in V1): jab -> crouch -> jab. The first jab's window is taken as a crouch cancel; the same jab
+     * thrown again (a new instance) inside the remembered frames grants no window, a different move does and ends the
+     * memory, the memory runs out on free frames, and without the bit nothing is remembered (the loop stays open). */
+    {
+        unsigned vl = v1 | GW_TURBO_NO_MOVE_LOOP;
+        IntrWin* w = &ft_intrwin[2];
+        memset(ft_intrwin, 0, sizeof ft_intrwin);
+        fp->motion_id = ftCo_MS_Attack11; fp->ground_or_air = GA_Ground; fp->x2068_attackID = 1; fp->x206C_attack_instance = 1;
+        if (!intrwin_open(3, fp, IW_OPEN_HIT, vl)) rc |= 1 << 19;
+        w->frames = 24; w->taken = IW_X_CROUCH;              /* the cancel into crouch with 24 frames left */
+        intrwin_carry_set(w); intrwin_close(w, 1);
+        if (w->carry_key != IW_K_JAB || w->carry_frames != 23) rc |= 1 << 20;
+        fp->x206C_attack_instance = 2;                       /* jab again, out of the crouch, 6 frames later */
+        if (intrwin_open(3, fp, IW_OPEN_HIT, vl) || w->opened != 1) rc |= 1 << 21; /* refused: no window */
+        for (int i = 0; i < 5; ++i) intrwin_carry_tick(w);
+        if (w->carry_frames != 25 || w->carry_key != IW_K_JAB) rc |= 1 << 22; /* the refusal re-armed it to 30, minus 5 ticks */
+        fp->motion_id = ftCo_MS_AttackS3S; fp->x2068_attackID = 2; fp->x206C_attack_instance = 3;
+        if (!intrwin_open(3, fp, IW_OPEN_HIT, vl) || w->carry_key != 0 || w->carry_frames != 0) rc |= 1 << 23; /* different attack: opens, memory ends */
+        intrwin_close(w, 0);
+        fp->motion_id = ftCo_MS_Attack11; fp->x2068_attackID = 3; fp->x206C_attack_instance = 4;
+        if (!intrwin_open(3, fp, IW_OPEN_HIT, vl)) rc |= 1 << 24;                 /* the memory is gone: jab grants again */
+        w->frames = 3; w->taken = IW_X_DASH; intrwin_carry_set(w); intrwin_close(w, 1);
+        intrwin_carry_tick(w); intrwin_carry_tick(w);
+        if (w->carry_frames != 0 || w->carry_key != 0) rc |= 1 << 25;             /* expires on schedule */
+        fp->x206C_attack_instance = 5;
+        if (!intrwin_open(3, fp, IW_OPEN_HIT, vl)) rc |= 1 << 26;
+        /* without the bit: nothing remembered, the repeat is allowed (the loop works) */
+        w->frames = 24; w->taken = IW_X_CROUCH; intrwin_carry_set(w); intrwin_close(w, 1);
+        memset(w, 0, sizeof *w);
+        fp->motion_id = ftCo_MS_Attack11; fp->x2068_attackID = 7; fp->x206C_attack_instance = 1;
+        if (!intrwin_open(3, fp, IW_OPEN_HIT, v1)) rc |= 1 << 27;
+        w->frames = 24; w->taken = IW_X_CROUCH; intrwin_carry_set(w); intrwin_close(w, 1);
+        if (w->carry_frames != 0) rc |= 1 << 28;
+        fp->x206C_attack_instance = 2;
+        if (!intrwin_open(3, fp, IW_OPEN_HIT, v1)) rc |= 1 << 29;
+        w->frames = 24; w->taken = IW_X_ESCAPE; intrwin_close(w, 1);                /* a roll is not a movement cancel */
+        memset(ft_intrwin, 0, sizeof ft_intrwin);
+    }
+
+    {   /* not a Turbo case, but the same fixture hook: the grab-cut call with a NULL partner (ftCo_CaptureCut.c) must return */
+        extern void ftCo_800DCE34(Fighter_GObj* gobj0, Fighter_GObj* gobj1);
+        ftCo_800DCE34(NULL, NULL);
+        ftCo_800DCE34((Fighter_GObj*) (void*) saved, NULL);
+    }
     memcpy(ft_intrwin, saved, sizeof saved);
     return rc;
 }

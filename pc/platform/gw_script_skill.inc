@@ -143,6 +143,7 @@ static int l_skill_thresholds(lua_State* L)
 extern int gw_ScriptGame_ObjectiveKind(void);
 extern int gw_ScriptGame_ObjectiveDoor(int idx,int field);
 extern int gw_ScriptGame_ObjectiveZone(int idx,int field);
+extern int gw_ScriptGame_ObjectiveRoute(int group,int idx,int field);
 /* gd.stage_objectives(): {targets={ {id=,x=,y=,z=,state=}, ... }, remaining=n, doors=nil, finish=nil,
  * supported={targets=true, doors=false, finish=false}}. Read-only; works offline and online (it only reads items). */
 static int l_stage_objectives(lua_State* L)
@@ -189,7 +190,46 @@ static int l_stage_objectives(lua_State* L)
             lua_setfield(L,-2,"zones");
             lua_setfield(L,-2,"finish");
         }
-        lua_createtable(L,0,3);gs_setbool(L,"targets",1);gs_setbool(L,"doors",race!=0);gs_setbool(L,"finish",race!=0);lua_setfield(L,-2,"supported");
+        {   /* Underground Maze / F-Zero Grand Prix: route markers (see ScriptGame_ObjectiveRoute for what each point means). */
+            int rk=gw_ScriptGame_ObjectiveRoute(0,0,0);
+            if(rk){
+                int g,k,inx,fin=0;
+                lua_createtable(L,0,8);
+                gs_setstr(L,"stage",rk==1?"underground_maze":"fzero_grand_prix");
+                gs_setint(L,"candidate",gw_ScriptGame_ObjectiveRoute(0,0,1));
+                gs_setint(L,"latched",gw_ScriptGame_ObjectiveRoute(0,0,2));
+                if(rk==1){gs_setint(L,"phase",gw_ScriptGame_ObjectiveRoute(0,0,3));gs_setint(L,"done_mask",gw_ScriptGame_ObjectiveRoute(0,0,4));
+                    gs_setbool(L,"exit_chosen",gw_ScriptGame_ObjectiveRoute(0,0,5)!=0);}
+                else gs_setint(L,"checkpoints_passed",gw_ScriptGame_ObjectiveRoute(0,0,3));
+                for(g=1;g<=2;++g){
+                    lua_newtable(L);k=0;
+                    for(inx=0;inx<26;++inx){
+                        int id;
+                        if(!gw_ScriptGame_ObjectiveRoute(g,inx,0)) continue;
+                        id=gw_ScriptGame_ObjectiveRoute(g,inx,4);
+                        lua_createtable(L,0,9);
+                        gs_setint(L,"index",inx);gs_setint(L,"id",id);
+                        gs_setnum(L,"x",gs_skill_f(gw_ScriptGame_ObjectiveRoute(g,inx,1)));gs_setnum(L,"y",gs_skill_f(gw_ScriptGame_ObjectiveRoute(g,inx,2)));gs_setnum(L,"z",gs_skill_f(gw_ScriptGame_ObjectiveRoute(g,inx,3)));
+                        if(g==1){
+                            int cand=gw_ScriptGame_ObjectiveRoute(0,0,1),lat=gw_ScriptGame_ObjectiveRoute(0,0,2);
+                            int sk=gw_ScriptGame_ObjectiveRoute(1,inx,5);
+                            gs_setstr(L,"role",rk==1?(sk==3?"exit":sk==1?"room":"spot"):"finish");
+                            gs_setbool(L,"inside",cand==id);gs_setbool(L,"reached",lat==id);
+                            if(rk==1){gs_setint(L,"symbol",sk);gs_setbool(L,"done",gw_ScriptGame_ObjectiveRoute(1,inx,6)!=0);}
+                            if(rk==2&&lat==id) fin=1;
+                        } else {
+                            gs_setstr(L,"role","checkpoint");
+                            if(rk==2) gs_setbool(L,"passed",inx<gw_ScriptGame_ObjectiveRoute(0,0,3));
+                        }
+                        lua_rawseti(L,-2,++k);
+                    }
+                    lua_setfield(L,-2,g==1?"points":"secondary");
+                }
+                if(rk==2) gs_setbool(L,"finished",fin!=0);
+                lua_setfield(L,-2,"route");
+            }
+        }
+        lua_createtable(L,0,4);gs_setbool(L,"targets",1);gs_setbool(L,"doors",race!=0);gs_setbool(L,"finish",race!=0);gs_setbool(L,"route",gw_ScriptGame_ObjectiveRoute(0,0,0)!=0);lua_setfield(L,-2,"supported");
     }
     return 1;
 }

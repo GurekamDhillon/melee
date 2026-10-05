@@ -271,6 +271,69 @@ int ScriptGame_SkillConst(int idx)
     return 0;
 }
 
+
+/* Route stages, read-only (the Adventure stages gd.stage_objectives() lists route markers for).
+ * Underground Maze (Gr_Kind_ShrineRoute, src/melee/gr/grshrineroute.c; NOT grkinokoroute.c, which is Mushroom Kingdom):
+ * map points 0xBD..0xC2 are six SPOTS; the stage places a symbol on each (fn_80208A38: one random spot gets the exit
+ * symbol, map_id 3, the other five an event-room symbol, map_id 1). Each frame Ground_801C3DB4 tests the first player's x
+ * against a (x1C * scale) wide box around each point (the y test is the stage's own tall box); the first point inside that
+ * passes the stage predicate and is not already done (xC6 bit) becomes stage_info.x720 and, in phase 0, is taken: an exit
+ * spot sets phase 6 and stage_info.flags |= 0x10 (the route is complete, the stage ends); an event-room spot starts that room
+ * (phase 1-3, xC8 = the point id, the done bit set when the event ends). 0xC3..0xC6 are scanned by Ground_801C0C2C but
+ * the stage has no such points (they read as absent).
+ * F-Zero Grand Prix (Gr_Kind_BigBlueRoute, grbigblueroute.c): map points 5,6,7 are the checkpoints (the first player's x
+ * passing one advances the stage's counter, gp+0xC8, mirrored in stage_info.x6DC); the finish is the usual route box over
+ * points 0x99..0xB2 (Ground_801C3D44(0, 30, 4000): candidate stage_info.x714, latched stage_info.x6D0 when flags & 0x10).
+ * group 0 (header): field 0 kind (0 none, 1 maze, 2 fzero), 1 candidate point id (-1 none), 2 latched/taken id (-1 none),
+ * 3 maze phase / fzero checkpoints passed, 4 maze done mask, 5 maze: exit chosen (stage_info.flags & 0x10).
+ * group 1 (main points: maze 0xBD+idx idx 0..9, fzero 0x99+idx idx 0..25), group 2 (fzero checkpoints 5,6,7):
+ * field 0 present, 1/2/3 x/y/z bits, 4 point id, 5 maze: symbol kind (3 exit, 1 room, -1 none), 6 maze: done. */
+extern int grShrineRoute_ScriptQuery(int field, int idx);
+int ScriptGame_ObjectiveRoute(int group, int idx, int field)
+{
+    int kind = stage_info.grkind == Gr_Kind_ShrineRoute ? 1 : stage_info.grkind == Gr_Kind_BigBlueRoute ? 2 : 0;
+    if (group == 0) {
+        int ph;
+        switch (field) {
+        case 0: return kind;
+        case 1: return kind == 1 ? stage_info.x720 : kind == 2 ? stage_info.x714 : -1;
+        case 2:
+            if (kind == 2) return (stage_info.flags & 0x10) ? stage_info.x6D0 : -1;
+            if (kind == 1) {
+                ph = grShrineRoute_ScriptQuery(0, 0);
+                return (ph >= 1 && ph <= 3) || ph == 6 ? grShrineRoute_ScriptQuery(2, 0) : -1;
+            }
+            return -1;
+        case 3:
+            if (kind == 1) { ph = grShrineRoute_ScriptQuery(0, 0); return ph < 0 ? 0 : ph; }
+            return kind == 2 ? stage_info.x6DC : 0;
+        case 4: { int m = kind == 1 ? grShrineRoute_ScriptQuery(1, 0) : 0; return m < 0 ? 0 : m; }
+        case 5: return kind == 1 && (stage_info.flags & 0x10) ? 1 : 0;
+        }
+        return 0;
+    } else {
+        Vec3 p; int id, cand = -1;
+        if (!kind || idx < 0 || field < 0 || field > 6) return 0;
+        if (group == 1) {
+            if (kind == 1) { if (idx > 9) return 0; id = 0xBD + idx; cand = stage_info.x720; }
+            else { if (idx > 25) return 0; id = 0x99 + idx; cand = stage_info.x714; }
+        } else if (group == 2 && kind == 2) {
+            if (idx > 2) return 0;
+            id = 5 + idx;
+        } else return 0;
+        if (!Ground_801C2D24(id, &p)) return 0;
+        switch (field) {
+        case 0: return 1;
+        case 1: return script_skill_bits(p.x); case 2: return script_skill_bits(p.y); case 3: return script_skill_bits(p.z);
+        case 4: return id;
+        case 5: return kind == 1 && group == 1 ? grShrineRoute_ScriptQuery(3, idx) : -1;
+        case 6: { int m = kind == 1 && group == 1 ? grShrineRoute_ScriptQuery(1, 0) : 0; return m > 0 && (m & (1 << idx)) ? 1 : 0; }
+        }
+        (void) cand;
+        return 0;
+    }
+}
+
 #include "script_crit.inc"
 #include "script_shock.inc"
 

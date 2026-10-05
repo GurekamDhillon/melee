@@ -187,11 +187,89 @@ void gw_OSDestroyHeap(int heap) {
   }
 }
 
-void *gw_OSAllocFromHeap(int heap, u32 size) { return OSAllocFromHeap(heap, size); }
+/* stage-lane leak accounting: while on, every live heap block remembers the host return
+ * addresses of its allocation (resolve against melee-pc.map). Dumped with gw_OSDumpHeap. */
+__declspec(dllimport) unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long, unsigned long, void **, unsigned long *);
+#define GW_TRK_N (1u << 16)
+#define GW_TRK_FRAMES 10
+static struct { void *p; u32 size; int heap; void *bt[GW_TRK_FRAMES]; } *gw_trk;
+static int gw_trk_on;
+void gw_OSAllocTrack(int on) {
+  if (on && !gw_trk) gw_trk = calloc(GW_TRK_N, sizeof *gw_trk);
+  gw_trk_on = on && gw_trk;
+}
+static void gw_trk_add(int heap, void *p, u32 size) {
+  unsigned h = (unsigned)(((uintptr_t)p >> 5) * 2654435761u) & (GW_TRK_N - 1), n = 0;
+  while (gw_trk[h].p && n++ < GW_TRK_N) h = (h + 1) & (GW_TRK_N - 1);
+  if (gw_trk[h].p) return;
+  gw_trk[h].p = p; gw_trk[h].size = size; gw_trk[h].heap = heap;
+  { /* translated code keeps no ebp chain: scan upward from this frame for text addresses
+     * that follow a call (return addresses), skipping repeats. */
+    uintptr_t *sp = (uintptr_t *)__builtin_frame_address(0);
+    unsigned k, f = 0;
+    for (k = 0; k < 3000 && f < GW_TRK_FRAMES; ++k) {
+      uintptr_t v = sp[k];
+      if (v >= 0x10001000u && v < 0x10860000u && (f == 0 || gw_trk[h].bt[f - 1] != (void *)v))
+        gw_trk[h].bt[f++] = (void *)v;
+    }
+  }
+}
+static void gw_trk_del(void *p) {
+  unsigned h = (unsigned)(((uintptr_t)p >> 5) * 2654435761u) & (GW_TRK_N - 1), n = 0;
+  while (gw_trk[h].p && n++ < GW_TRK_N) {
+    if (gw_trk[h].p == p) {
+      /* backward-shift not needed: tombstone keeps the probe chain intact */
+      gw_trk[h].p = (void *)(uintptr_t)1; gw_trk[h].size = 0;
+      return;
+    }
+    h = (h + 1) & (GW_TRK_N - 1);
+  }
+}
 
-void gw_OSFreeToHeap(int heap, void *ptr) { OSFreeToHeap(heap, ptr); }
+void *gw_OSAllocFromHeap(int heap, u32 size) {
+  void *r = OSAllocFromHeap(heap, size);
+  if (gw_trk_on && r) gw_trk_add(heap, r, size);
+  return r;
+}
+
+void gw_OSFreeToHeap(int heap, void *ptr) {
+  if (gw_trk_on && ptr) gw_trk_del(ptr);
+  OSFreeToHeap(heap, ptr);
+}
 
 int gw_OSCheckHeap(int heap) { return OSCheckHeap(heap); }
+
+/* stage-lane heap accounting (lbHeap_StageSlotDump): every allocated cell, addr + size, to
+ * heapdump_<n>.txt in the working directory, for before/after diffs of a stage switch cycle. */
+static FILE *gw_dump_file;
+static void gw_dump_visit(void *p, u32 size) {
+  const unsigned char *b = (const unsigned char *)p;
+  unsigned i, n = size > 32 + 48 ? 48 : (size > 32 ? size - 32 : 0);
+  if (!gw_dump_file) return;
+  fprintf(gw_dump_file, "%08x %u ", (unsigned)(uintptr_t)p, (unsigned)size);
+  for (i = 0; i < n; ++i) fprintf(gw_dump_file, "%02x", b[i]);
+  fputc(10, gw_dump_file);
+}
+void gw_OSDumpHeap(int heap) {
+  static int seq;
+  char name[64];
+  (void)heap;
+  snprintf(name, sizeof name, "heapdump_%d.txt", seq++);
+  gw_dump_file = fopen(name, "w");
+  OSVisitAllocated(gw_dump_visit);
+  if (gw_trk) {
+    unsigned k, j;
+    if (gw_dump_file) for (k = 0; k < GW_TRK_N; ++k)
+      if (gw_trk[k].p > (void *)(uintptr_t)1) {
+        fprintf(gw_dump_file, "T %08x %u %d", (unsigned)(uintptr_t)gw_trk[k].p, gw_trk[k].size, gw_trk[k].heap);
+        for (j = 0; j < GW_TRK_FRAMES; ++j) fprintf(gw_dump_file, " %08x", (unsigned)(uintptr_t)gw_trk[k].bt[j]);
+        fputc(10, gw_dump_file);
+      }
+  }
+  if (gw_dump_file) fclose(gw_dump_file);
+  gw_dump_file = NULL;
+  gw_log("heap dump written: %s", name);
+}
 
 int gw_OSSetCurrentHeap(int heap) {
   int old = gw_cur_heap();

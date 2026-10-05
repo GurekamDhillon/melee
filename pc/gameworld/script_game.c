@@ -2726,11 +2726,38 @@ float ScriptGame_LabTObjF(int slot, int d, int t, int field)
  * action, ECB, jumps and knockback velocity untouched. */
 /* Validate both entities before changing either controller. Retail initialization
  * preserves Nana's special kind; dormant Zelda/Sheik gets the requested mode too. */
+/* Engine-level idle CPUs. The per-slot choice a script made lives here (game memory, so a
+ * savestate carries it); the launch-level default (scene token `cpus=idle` / `pN=.../idle`,
+ * MELEE_CPU_IDLE=1) is native and constant for the process. 0 = follow the default,
+ * 1 = script said stand, 2 = script said fight. Reset at every match start. */
+extern int Script_CpuIdleDefault(int slot);
+static unsigned char script_cpu_override[6];
+void ScriptGame_CpuModeReset(void){memset(script_cpu_override,0,sizeof script_cpu_override);}
+/* Pure policy (tested): is this CPU slot idle? */
+static int script_cpu_idle_policy(int kind0,int override,int dflt)
+{
+    if (override==2) return 0;
+    if (override==1 || kind0) return 1;
+    return dflt==1 || dflt==2;
+}
 int ScriptGame_CpuStanding(Fighter* fp)
 {
     int slot=fp->player_id;
-    return slot>=0 && slot<6 && Player_GetPlayerSlotType(slot)==Gm_PKind_Cpu &&
-           Player_GetCpuType(slot)==CpuKind_0;
+    if (slot<0 || slot>=6 || Player_GetPlayerSlotType(slot)!=Gm_PKind_Cpu) return 0;
+    return script_cpu_idle_policy(Player_GetCpuType(slot)==CpuKind_0,script_cpu_override[slot],
+                                  Script_CpuIdleDefault(slot));
+}
+/* gd.cpu_modes(): 0 not a CPU, 1 fight (retail default), 2 idle (global), 3 idle (slot token),
+ * 4 idle (script), 5 fight (script), 6 fight (slot token beats the global), 7 idle (retail kind 0). */
+int ScriptGame_CpuModeInfo(int slot)
+{
+    int d;
+    if (slot<0 || slot>=6 || Player_GetPlayerSlotType(slot)!=Gm_PKind_Cpu) return 0;
+    if (script_cpu_override[slot]==1) return 4;
+    if (script_cpu_override[slot]==2) return 5;
+    if (Player_GetCpuType(slot)==CpuKind_0) return 7;
+    d=Script_CpuIdleDefault(slot);
+    return d==1 ? 2 : d==2 ? 3 : d==3 ? 6 : 1;
 }
 static int script_cpu_stand_quiet(Fighter* fp, int standing)
 {
@@ -2777,7 +2804,7 @@ static int script_cpu_mode_persist(Fighter** pair,int slot,int fight,
 int ScriptGame_CpuMode(int slot, int fight)
 {
     Fighter* pair[2]; HSD_GObj* other;
-    if (slot<0 || slot>=6 || Player_GetPlayerSlotType(slot)!=Gm_PKind_Cpu) return 0;
+    if (slot<0 || slot>=6 || fight<0 || fight>2 || Player_GetPlayerSlotType(slot)!=Gm_PKind_Cpu) return 0;
     pair[0]=script_fighter(slot); pair[1]=NULL;
     if (!pair[0]) return 0;
     /* This accessor follows transformed[] and returns Nana or the other form.
@@ -2787,8 +2814,16 @@ int ScriptGame_CpuMode(int slot, int fight)
         if (!script_gobj_live(other) || !GET_FIGHTER(other)) return 0;
         pair[1]=GET_FIGHTER(other);
     }
-    return script_cpu_mode_persist(pair,slot,fight,ftCo_800A101C,
-                                   Player_SetPlayerAndEntityCpuType);
+    if (fight==2) {
+        /* default: follow the launch setting; undo a stand's kind-0 only if one was set */
+        if (Player_GetCpuType(slot)==CpuKind_0 &&
+            !script_cpu_mode_persist(pair,slot,1,ftCo_800A101C,Player_SetPlayerAndEntityCpuType)) return 0;
+        script_cpu_override[slot]=0;
+        return 1;
+    }
+    if (!script_cpu_mode_persist(pair,slot,fight,ftCo_800A101C,Player_SetPlayerAndEntityCpuType)) return 0;
+    script_cpu_override[slot]=fight ? 2 : 1;
+    return 1;
 }
 #include "script_cpu_mode_tests.inc"
 

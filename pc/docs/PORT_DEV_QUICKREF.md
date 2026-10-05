@@ -93,6 +93,7 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_TARGET_TEST=<char>` | boot straight into Target Test with that character (name or ckind; dev/testing) |
 | `MELEE_PAD_SCRIPT=<file>` | text scripts consume PADReads; `.lua` files run gameplay scripts whose `gd.input` holds count completed logic frames, including paused single steps |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted input) |
+| `MELEE_CPU_IDLE=1` | every CPU-controlled fighter stands still for the whole process (neutral input at the AI's write point; it still takes hits, falls, respawns). Same as scene `cpus=idle`; per slot `p2=fox/idle`. A script's `gd.cpu_mode(port,"fight")` overrides one slot, `"default"` returns it. Ignored in netplay. `run.sh --idle-cpus` sets it; agent test runs should. Log: `cpu: P2 idle (global)` at match start; `gd.cpu_modes()` |
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
 | `MELEE_NO_ONBOARD=1` | skip the first boot's visit to SETTINGS > CONTROLS (also skipped for any `MELEE_SCENE` / `MELEE_PAD_SCRIPT` run; settings.cfg `onboarded=1` records it) |
 | `MELEE_PROFILER=1` | bounded native zones/counters; see workspace `docs/profiling.md` |

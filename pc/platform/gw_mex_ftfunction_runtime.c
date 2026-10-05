@@ -392,13 +392,18 @@ static uint32_t gw_mex_load_hsd(const char *path, const char *symbol, uint32_t f
 
 /* Load MxDt.dat once. Safe to call when it is absent (vanilla disc): mexData stays unloaded and
  * anything that needs it fails loudly at the point of use rather than at boot. */
+static int gw_mexdt_absent; /* MxDt.dat was looked for and is not there (vanilla disc) */
 static void gw_mexdt_load(void) {
     uint32_t root, fighter, lookup, item;
-    if (gw_mexdt != 0u) {
+    if (gw_mexdt != 0u || gw_mexdt_absent) {
         return;
     }
     root = gw_mex_load_hsd("MxDt.dat", "mexData", 0u, &gw_mexdt_base, &gw_mexdt_size);
     if (root == 0u) {
+        /* Attempt and log once per process: every caller used to retry (and log in the DVD shim)
+         * on each call, ~3,500 suppressed lines per 10 s on the vanilla disc. The disc and the
+         * mod set are fixed for the life of the process, so the answer cannot change. */
+        gw_mexdt_absent = 1;
         return;
     }
     /* Validate the three pointers everything below depends on, so a layout mismatch is caught
@@ -3453,6 +3458,7 @@ void gw_Mex_GrInvalidate(void); /* pc/platform/gw_mex_grfunction.h */
 
 void gw_Mex_InvalidateAfterMem1Restore(void) {
     gw_mexdt = 0u;
+    gw_mexdt_absent = 0;
     gw_mexdt_base = 0u;
     gw_mexdt_size = 0u;
     gw_mex_mexdata_base = 0u; /* re-runs gw_Mex_RuntimeInit, re-allocating the persist region */

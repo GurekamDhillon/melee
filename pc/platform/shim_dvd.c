@@ -486,7 +486,19 @@ void *gw_DVDReadFileAlloc(const char *path, uint32_t *out_size) {
     }
   }
   if (entrynum < 0 || !gw_iso_open() || gw_fst_nodes == 0) {
-    gw_log("gw: DVDReadFileAlloc: %s not found on the disc image", path != NULL ? path : "(null)");
+    {
+      /* A miss is a miss for the life of the disc: say it once per path (a small negative
+       * cache of the paths already reported), not on every retry. */
+      static char missed[8][96];
+      static unsigned missed_n;
+      const char *p = path != NULL ? path : "(null)";
+      unsigned i, n = missed_n < 8 ? missed_n : 8;
+      for (i = 0; i < n; ++i) {
+        if (strcmp(missed[i], p) == 0) return NULL;
+      }
+      snprintf(missed[missed_n++ & 7], sizeof missed[0], "%s", p);
+      gw_log("gw: DVDReadFileAlloc: %s not found on the disc image", p);
+    }
     return NULL;
   }
   if (gw_fst_kind((uint32_t)entrynum) != 0) {

@@ -35,6 +35,13 @@ int ScriptGame_CpuModeTest(void)
     if (pair[0]->cpu.kind!=CpuKind_0 ||
         !script_cpu_mode_pair(pair,1,script_cpu_mode_test_init) ||
         zelda.cpu.kind!=CpuKind_4 || sheik.cpu.kind!=CpuKind_4) rc++;
+    /* idle policy: retail untouched with no default; the global/slot default idles; a script
+     * fight beats both defaults; a script stand and retail kind 0 always idle. */
+    if (script_cpu_idle_policy(0,0,0) || script_cpu_idle_policy(0,0,3) ||
+        !script_cpu_idle_policy(0,0,1) || !script_cpu_idle_policy(0,0,2) ||
+        script_cpu_idle_policy(0,2,1) || script_cpu_idle_policy(0,2,2) || script_cpu_idle_policy(1,2,1) ||
+        !script_cpu_idle_policy(0,1,0) || !script_cpu_idle_policy(1,0,0) ||
+        !script_cpu_idle_policy(1,0,3)) rc++;
     pair[0]=&zelda; pair[1]=&nana; nana.is_sub_fighter=1;
     script_cpu_mode_test_calls=0;
     if (!script_cpu_mode_pair(pair,0,script_cpu_mode_test_init) ||

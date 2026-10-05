@@ -288,6 +288,23 @@ void grPushOn_802187A8(Ground_GObj* gobj)
     HSD_LObj* lobj;
 
     gp->u.pushon.gobj = ((HSD_GObj*) HSD_GObjGXLinkHead)->next_gx;
+#if defined(TARGET_PC)
+    {
+        /* The decomp reads the head of GX link 4 and expects the fighters' light GObj
+         * (ftCo_8009F4A4: classifier 12, built from the stage's map_plit with its many point
+         * lights, on link 4). It is the head in retail because Player_80036DA4 builds it before
+         * the stage; in this port the stage's own link-4 objects can precede it, so the head is
+         * a light-less stage object and the first HSD_LObjSetPosition on the NULL point light
+         * asserted (lobj.c:859). Take the classifier-12 light object from the link instead. */
+        HSD_GObj* h;
+        for (h = HSD_GObjGXLinkHead[4]; h != NULL; h = h->next_gx) {
+            if (h->classifier == 12 && h->obj_kind == HSD_GObj_LightKind && h->hsd_obj != NULL) {
+                gp->u.pushon.gobj = h;
+                break;
+            }
+        }
+    }
+#endif
     PAD_STACK(16);
     grPushOn_802190D0(gp->u.pushon.gobj);
     lobj = ((HSD_GObj*) gp->u.pushon.gobj)->hsd_obj;

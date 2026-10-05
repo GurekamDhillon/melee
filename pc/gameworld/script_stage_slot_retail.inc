@@ -13,8 +13,10 @@ extern HSD_PSFormGroup** psFormGroupArray[65];
 extern int Stage_StageSlotSelect(int);
 extern void Ground_StageSlotRetailInstall(StageIdPair*,HSD_Archive*);
 extern void Ground_StageSlotFighterLightingClear(void);
+extern void mpIsland_StageSlotFree(void);
+extern void grZakoGenerator_StageSlotRelease(void);
 static struct {
-    void* raw;unsigned bytes;int kind,music;
+    int stashed;unsigned bytes;int kind,music;
     void* working;unsigned working_bytes;HSD_Archive* archive;
     MapCollData* prepared;
     void* buffer;
@@ -25,6 +27,7 @@ void ScriptGame_StageSlotRetailCaptureBegin(void)
 {
     /* Normal scene init. Previous scene storage has already been released by
      * the scene owner: never dereference/free its stale ledger or raw cache. */
+    Script_StageRawStash(4,0,0,0);
     memset(&script_retail,0,sizeof script_retail);
     memset(&script_retail_owned,0,sizeof script_retail_owned);
     script_retail_capture=!STAGE_SLOT_PARTIAL_FALLBACK;
@@ -116,7 +119,7 @@ static void script_retail_particles(void)
 static int script_slot_retail_cache_host(void)
 {
     char path[262];const char* file;int entry;size_t actual;
-    if(script_retail.raw)return 1;
+    if(script_retail.stashed)return 1;
     if(!script_retail_live || !st_retail_supported(stage_info.grkind))return 0;
     file=Ground_StageSlotDataFile(stage_info.grkind);if(!file)return 0;
     path[0]='/';while(*file=='/')++file;
@@ -126,11 +129,15 @@ static int script_slot_retail_cache_host(void)
     entry=DVDConvertPathToEntrynum(path);if(entry<0)return 0;
     script_retail.bytes=lbFile_8001634C(entry);
     if(script_retail.bytes<32 || script_retail.bytes>8*1024*1024)return 0;
-    script_retail.raw=lbHeap_StageSlotTryAlloc((script_retail.bytes+31)&~31u);
-    if(!script_retail.raw)return 0;
-    lbFile_8001668C(path,script_retail.raw,&actual);
-    if(actual!=script_retail.bytes) {
-        lbHeap_80015CA8(0,script_retail.raw);script_retail.raw=NULL;return 0;
+    {
+        void* tmp=lbHeap_StageSlotTryAlloc((script_retail.bytes+31)&~31u);
+        if(!tmp)return 0;
+        lbFile_8001668C(path,tmp,&actual);
+        /* Native stash, not heap 0: see gw_Script_StageRawStash. */
+        if(actual!=script_retail.bytes || !Script_StageRawStash(0,(unsigned)&script_retail,(unsigned)tmp,actual)) {
+            lbHeap_80015CA8(0,tmp);return 0;
+        }
+        lbHeap_80015CA8(0,tmp);script_retail.stashed=1;
     }
     script_retail.kind=stage_info.grkind;script_retail.music=lbAudioAx_StageSlotMusic();
     return 1;
@@ -163,8 +170,8 @@ static int script_slot_retail_check(ScriptStageSlot* s)
 {
     int kind=script_retail_kind(s);
     unsigned required;
-    if(!s->raw || kind<0 || !st_retail_supported(kind) ||
-       !script_retail_live || !script_retail.raw)return -18;
+    if(!s->raw_bytes || kind<0 || !st_retail_supported(kind) ||
+       !script_retail_live || !script_retail.stashed)return -18;
     if(!st_retail_supported(stage_info.grkind))return -18;
     if(!st_retail_capacity(s->nverts,s->nlines,s->njoints,script_stage.cap))return -7;
     /* Simultaneously retain the current visit and allocate the replacement.
@@ -215,6 +222,7 @@ void ScriptGame_StageSlotRetailCollision(void)
     int nv=dst->vert_count,nl=dst->line_count,nj=dst->joint_count;
     script_stage.base_v=nv;script_stage.base_l=nl;script_stage.base_j=nj;script_stage.map=dst;
     script_arena.groups=nj;
+    mpIsland_StageSlotFree();
     mpLibLoad(dst);
     dst->vert_count+=script_stage.cap*2;dst->line_count+=script_stage.cap;
     dst->joint_count+=script_stage.cap;
@@ -241,10 +249,23 @@ void ScriptGame_StageSlotRetailCollision(void)
     HSD_Free(oldv);HSD_Free(oldl);HSD_Free(oldj);script_retail_free_map(old);
     script_retail.prepared=NULL;
 }
+static void script_retail_pool_check(const char* where)
+{
+    /* Diagnostic: a pool whose free counter and free list disagree makes the next
+     * HSD_ObjAlloc dereference NULL. Log it at each phase of a visit. */
+    HSD_ObjAllocData* pools[2]={&gobj_alloc_data,&gobjproc_alloc_data};int k;
+    for(k=0;k<2;++k) {
+        unsigned n=0;HSD_ObjAllocLink* l=pools[k]->freehead;
+        while(l && n<=pools[k]->free+4){++n;l=l->next;}
+        if(n!=(unsigned)pools[k]->free)OSReport("stage switch: ERROR pool %s %s free=%u list=%u used=%u\n",k?"proc":"gobj",where,
+                 (unsigned)pools[k]->free,n,(unsigned)pools[k]->used);
+    }
+}
 static void script_retail_destroy(void)
 {
     int i;HSD_GObj* g;
     script_retail_capture=0;
+    script_retail_pool_check("destroy-begin");
     Ground_StageSlotFighterLightingClear();
     script_retail_particles();
     /* Ground destructors own subordinate cameras and marker/collision links.
@@ -257,6 +278,13 @@ static void script_retail_destroy(void)
                candidate->user_data_kind==3) {g=candidate;break;}
         }
         if(!g)break;
+        /* Retail Ground_801C4A08 frees gp->x18. Fountain's two platforms and its
+         * main object share one x18 (grizumi.c: platground->x18 = xC8), freed once per
+         * owner: the scene exit that always followed never noticed. Free it only while
+         * it is still a live owned object, else the GObj pool free list becomes a cycle
+         * and the next stage's first GObj_Create dereferences NULL. */
+        {Ground* gp=g->user_data;
+         if(gp->x18 && st_owned_find(&script_retail_owned,gp->x18)<0)gp->x18=NULL;}
         Ground_801C4A08(g);
     }
     while(script_retail_owned.count) {
@@ -268,11 +296,13 @@ static void script_retail_destroy(void)
         } else HSD_GObjFree(g);
     }
     script_retail_particles();script_retail_clear_banks();
+    grZakoGenerator_StageSlotRelease();
     memset(it_804A0F60,0,sizeof script_slot_articles);
     if(script_retail.buffer)HSD_Free(script_retail.buffer);script_retail.buffer=NULL;
     if(script_retail.archive)lbHeap_80015CA8(0,script_retail.archive);
     if(script_retail.working)lbHeap_80015CA8(0,script_retail.working);
     script_retail.archive=NULL;script_retail.working=NULL;
+    script_retail_pool_check("destroy-end");
 }
 static void script_retail_items(int remove_stage)
 {
@@ -294,10 +324,10 @@ static void script_retail_items(int remove_stage)
     }
 }
 #include "script_stage_slot_carry.inc"
-static int script_retail_visit(const void* raw,unsigned bytes,int kind,int music,int place)
+static int script_retail_visit(unsigned rawkey,unsigned bytes,int kind,int music,int place)
 {
     void* work;HSD_Archive* archive;MapCollData* map;StageIdPair pair;
-    int i;
+    int i;unsigned free_in=lbHeap_Free(0),free_prepared,free_torn;
     (void)place; /* Full visits always use continuous carry, including legacy KO requests. */
     if(lbHeap_Free(0)<bytes+sizeof(HSD_Archive)+2048*sizeof(CollVtx)+1536*sizeof(CollLine)+
         SCRIPT_STAGE_JOINTS*sizeof(CollJoint)+2048*sizeof(Vec2)+1536*sizeof(MapLine)+
@@ -307,7 +337,9 @@ static int script_retail_visit(const void* raw,unsigned bytes,int kind,int music
     if(!work || !archive) {
         if(work)lbHeap_80015CA8(0,work);if(archive)lbHeap_80015CA8(0,archive);return -4;
     }
-    memcpy(work,raw,bytes);
+    if(!Script_StageRawStash(1,rawkey,(unsigned)work,bytes)) {
+        lbHeap_80015CA8(0,archive);lbHeap_80015CA8(0,work);return -4;
+    }
     if(HSD_ArchiveParse(archive,work,bytes)<0) {
         lbHeap_80015CA8(0,archive);lbHeap_80015CA8(0,work);return -2;
     }
@@ -315,10 +347,11 @@ static int script_retail_visit(const void* raw,unsigned bytes,int kind,int music
         HSD_ArchiveLocateExtern(archive,HSD_ArchiveGetExtern(archive,i),NULL);
     map=script_retail_prepare(HSD_ArchiveGetPublicAddress(archive,"coll_data"));
     if(!map){lbHeap_80015CA8(0,archive);lbHeap_80015CA8(0,work);return -4;}
+    free_prepared=lbHeap_Free(0);
     /* Commit begins only after private archive and complete map allocations.
      * Contacts are detached before retail destroys their old joint owners. */
     ScriptGame_StageIsolationClear(0);
-    script_switch_detach();script_retail_items(1);script_retail_destroy();
+    script_switch_detach();script_retail_items(1);script_retail_destroy();free_torn=lbHeap_Free(0);
     script_retail.working=work;script_retail.working_bytes=bytes;script_retail.archive=archive;script_retail.prepared=map;
     script_retail_loading=1;script_retail_capture=1;
     pair.grkind=kind;pair.stkind=(StKind)Stage_StageSlotSelect(kind);
@@ -326,18 +359,19 @@ static int script_retail_visit(const void* raw,unsigned bytes,int kind,int music
      * retail on_init can apply FD/background-specific clips. Keep its GObj. */
     Camera_800311DC(0.1f);Camera_800311CC(16384.0f);
     Ground_StageSlotRetailInstall(&pair,archive);
+    script_retail_pool_check("installed");
     Camera_80030730(Ground_801C20D0());Ground_EnableMatchCamera();
     script_retail_loading=0;script_retail_capture=0;
     script_retail_carry();
     script_retail_items(0);
     ScriptGame_StageMusicRequest(music);
-    OSReport("stage switch: complete retail visit kind=%d objects=%d heap0_free=%u\n",
-             kind,script_retail_owned.count,lbHeap_Free(0));
+    OSReport("stage switch: complete retail visit kind=%d objects=%d heap0_free=%u in=%u prepared=%u torn=%u\n",
+             kind,script_retail_owned.count,lbHeap_Free(0),free_in,free_prepared,free_torn);
     return 0;
 }
 static int script_slot_retail_switch(ScriptStageSlot* s,int owner,int place)
 {
-    int rc=script_retail_visit(s->raw,s->raw_bytes,script_retail_kind(s),s->music,place);
+    int rc=script_retail_visit((unsigned)s,s->raw_bytes,script_retail_kind(s),s->music,place);
     if(rc)return rc;
     script_retail.switched=1;script_switch.owner=owner;script_switch.active=s->handle;
     s->dynamic=4;s->dynamic_kind=stage_info.grkind;++script_switch.epoch;
@@ -346,7 +380,7 @@ static int script_slot_retail_switch(ScriptStageSlot* s,int owner,int place)
 static int script_slot_retail_release(int owner)
 {
     if(!script_retail.switched || (owner && owner!=script_switch.owner))return 1;
-    if(script_retail_visit(script_retail.raw,script_retail.bytes,script_retail.kind,script_retail.music,0)) {
+    if(script_retail_visit((unsigned)&script_retail,script_retail.bytes,script_retail.kind,script_retail.music,0)) {
         /* Never free a live visit's private archive on restoration failure. */
         OSReport("stage switch: original restoration refused (resource capacity)\n");return 0;
     }

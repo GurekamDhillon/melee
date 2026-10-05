@@ -70,6 +70,8 @@ static unsigned lbHeap_Free(int x){(void)x;return 10000000;}
 static unsigned lbHeap_Capacity(int x){(void)x;return 11000000;}
 static void* lbHeap_StageSlotTryAlloc(unsigned n){++fixture_allocs;return calloc(1,n);}
 static void lbHeap_80015CA8(int heap,void* p){(void)heap;++fixture_frees;free(p);}
+static int Script_StageRawStash(int op,unsigned key,unsigned addr,unsigned bytes){(void)op;(void)key;(void)addr;(void)bytes;return 0;}
+static void lbHeap_StageSlotDump(int m){(void)m;}
 static int Netplay_Enabled(void){return fixture_online;}
 static int RB_Enabled(void){return 0;}
 static int Replay_Active(void){return 0;}

@@ -62,6 +62,8 @@ extern void gw_ScriptGame_SetPercent(int slot, int percent);
 extern int gw_ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int bkb);
 extern int gw_ScriptGame_Impulse(int slot, int x_bits, int y_bits);
 extern int gw_ScriptGame_CpuMode(int slot, int fight);
+extern int gw_ScriptGame_CpuModeInfo(int slot);
+extern void gw_ScriptGame_CpuModeReset(void);
 extern int gw_ScriptGame_CpuTechnical(int slot, int owner, int skill, int seed);
 extern void gw_ScriptGame_CpuTechnicalClear(int owner);
 extern int gw_ScriptGame_CpuTechnicalState(int slot, int owner, int field);
@@ -1881,6 +1883,23 @@ static int l_hit(lua_State *L) {
     return 1;
 }
 
+static int gs_cpu_mode_words(int info, const char **mode, const char **source) {
+    static const char *const m[] = {"", "fight", "idle", "idle", "idle", "fight", "fight", "idle"};
+    static const char *const src[] = {"", "retail", "global", "slot", "script", "script", "slot", "retail"};
+    if (info <= 0 || info > 7) return 0;
+    *mode = m[info]; *source = src[info];
+    return 1;
+}
+/* "cpu: P2 idle (global)" - which CPUs could interfere is visible from the log alone. */
+static void gs_cpu_log_slot(int slot) {
+    const char *w, *src;
+    if (gs_cpu_mode_words(gw_ScriptGame_CpuModeInfo(slot), &w, &src))
+        gw_log("cpu: P%d %s (%s)", slot + 1, w, src);
+}
+static void gs_cpu_log_all(void) {
+    int slot;
+    for (slot = 0; slot < 6; ++slot) gs_cpu_log_slot(slot);
+}
 static int l_cpu_mode(lua_State *L) {
     int slot = gs_slot_arg(L, 1), fight;
     size_t len;
@@ -1889,10 +1908,32 @@ static int l_cpu_mode(lua_State *L) {
     mode = lua_tolstring(L, 2, &len);
     if (len == 5 && memcmp(mode, "stand", 5) == 0) fight = 0;
     else if (len == 5 && memcmp(mode, "fight", 5) == 0) fight = 1;
-    else return luaL_error(L, "cpu_mode: expected stand or fight");
+    else if (len == 7 && memcmp(mode, "default", 7) == 0) fight = 2; /* back to the launch setting */
+    else return luaL_error(L, "cpu_mode: expected stand, fight or default");
     gs_require_offline(L, "cpu_mode");
     gs_rw_branch();
-    lua_pushboolean(L, gw_ScriptGame_CpuMode(slot, fight));
+    {
+        int ok = gw_ScriptGame_CpuMode(slot, fight);
+        if (ok) gs_cpu_log_slot(slot);
+        lua_pushboolean(L, ok);
+    }
+    return 1;
+}
+
+/* gd.cpu_modes(): {[1..6] = {mode="idle"|"fight", source="global"|"slot"|"script"|"retail"}}
+ * for every CPU slot (human and empty slots are absent), so a test can assert that no CPU can
+ * interfere, and the log line says the same to a reviewer. */
+static int l_cpu_modes(lua_State *L) {
+    int slot;
+    lua_newtable(L);
+    for (slot = 0; slot < 6; ++slot) {
+        const char *w, *src;
+        if (!gs_cpu_mode_words(gw_ScriptGame_CpuModeInfo(slot), &w, &src)) continue;
+        lua_newtable(L);
+        gs_setstr(L, "mode", w);
+        gs_setstr(L, "source", src);
+        lua_rawseti(L, -2, slot + 1);
+    }
     return 1;
 }
 
@@ -5334,6 +5375,43 @@ int gw_Script_StageArchiveInput(int which, int at) {
         return gs_stage_archive_data[at];
     return 0;
 }
+/* Native-side stash for the retail stage archives (slot raw caches and the host stage's raw).
+ * Keeping them out of the game's heap 0 frees ~4 MB there (a switch copies one into a private
+ * working buffer, then the archive parser relocates that copy in place). Guest pointers are
+ * host pointers (MEM1 is mapped at a fixed low address), as for gw_OSAllocFromHeap. op: 0 store,
+ * 1 load, 2 free key, 3 stored bytes, 4 free all. */
+#define GS_STASH_N 64
+static struct { unsigned key; unsigned char *data; unsigned bytes; } gs_stash[GS_STASH_N];
+int gw_Script_StageRawStash(int op, unsigned key, unsigned addr, unsigned bytes) {
+    int i, free_i = -1;
+    if (op == 4) {
+        for (i = 0; i < GS_STASH_N; ++i) { free(gs_stash[i].data); memset(&gs_stash[i], 0, sizeof gs_stash[i]); }
+        return 1;
+    }
+    for (i = 0; i < GS_STASH_N; ++i) {
+        if (gs_stash[i].data && gs_stash[i].key == key) break;
+        if (!gs_stash[i].data && free_i < 0) free_i = i;
+    }
+    if (op == 0) {
+        unsigned char *d;
+        if (i < GS_STASH_N) { free(gs_stash[i].data); memset(&gs_stash[i], 0, sizeof gs_stash[i]); free_i = i; }
+        if (free_i < 0 || !bytes || !addr) return 0;
+        d = (unsigned char *)malloc(bytes);
+        if (!d) return 0;
+        memcpy(d, (const void *)(uintptr_t)addr, bytes);
+        gs_stash[free_i].key = key; gs_stash[free_i].data = d; gs_stash[free_i].bytes = bytes;
+        return 1;
+    }
+    if (i >= GS_STASH_N) return 0;
+    if (op == 1) {
+        if (bytes > gs_stash[i].bytes || !addr) return 0;
+        memcpy((void *)(uintptr_t)addr, gs_stash[i].data, bytes);
+        return 1;
+    }
+    if (op == 2) { free(gs_stash[i].data); memset(&gs_stash[i], 0, sizeof gs_stash[i]); return 1; }
+    if (op == 3) return (int)gs_stash[i].bytes;
+    return 0;
+}
 int gw_Script_StageTextByte(int which, int at) {
     const char *p = which == 0 ? gs_stage_model_file : gs_stage_model_symbol;
     int cap = which == 0 ? sizeof gs_stage_model_file : sizeof gs_stage_model_symbol;
@@ -6288,7 +6366,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"loadstate", l_loadstate}, {"pause", l_pause}, {"resume", l_resume}, {"step", l_step},
     {"hitstop", l_hitstop}, {"hitstop_cancel", l_hitstop_cancel},
     {"paused", l_paused}, {"set_percent", l_set_percent}, {"set_damage", l_set_damage},
-    {"hit", l_hit}, {"impulse", l_impulse}, {"cpu_mode", l_cpu_mode}, {"cpu_technical", l_cpu_technical}, {"set_stocks", l_set_stocks},
+    {"hit", l_hit}, {"impulse", l_impulse}, {"cpu_mode", l_cpu_mode}, {"cpu_modes", l_cpu_modes}, {"cpu_technical", l_cpu_technical}, {"set_stocks", l_set_stocks},
     {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"fly_target", l_fly_target}, {"fly_attack", l_fly_attack}, {"fly_clear", l_fly_clear}, {"fly_state", l_fly_state},
@@ -8599,7 +8677,9 @@ void gw_Script_FramePost(void) {
     if (any && !gs.match_active) {
         gs.match_active = 1;
         gs.match_frame = 0;
+        gw_ScriptGame_CpuModeReset(); /* a script's stand/fight choice lasts one match */
         gs_hook_all("on_match_start", 0, 0, 0);
+        gs_cpu_log_all();
     } else if (gs.match_active) {
         gs.match_frame++;
     }
@@ -9722,7 +9802,7 @@ static int test_script_cpu_mode(void) {
         return 1;
     }
     if (gw_ScriptGame_CpuMode(-1, 0) || gw_ScriptGame_CpuMode(6, 1) ||
-        gw_ScriptGame_CpuMode(0, -1) || gw_ScriptGame_CpuMode(0, 2)) {
+        gw_ScriptGame_CpuMode(0, -1) || gw_ScriptGame_CpuMode(0, 3)) {
         gw_test_fail("CPU mode bridge accepted invalid slot/mode");
         return 1;
     }

@@ -3527,6 +3527,15 @@ light_selected:
     if ((r28_carrier.lights = selected) == NULL) {
         r28_carrier.lights = Ground_803E06C8;
     }
+#if defined(TARGET_PC)
+    if (Mex_GrTrace()) {
+        int q;
+        for (q = 0; q < 14; ++q) {
+            OSReport("grtrace: lightset[%d]=%p\n", q, (void*) r28_carrier.lights[q]);
+            if (r28_carrier.lights[q] == NULL) break;
+        }
+    }
+#endif
     temp_r3 = GObj_Create(0xD, 3, 0);
     if (temp_r3 == NULL) {
         OSReport("%s:%d: couldn t get gobj\n", __FILE__, 0xEAF);

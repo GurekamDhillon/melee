@@ -25,6 +25,20 @@
 #include <sysdolphin/baselib/psstructs.h>
 #include <sysdolphin/baselib/random.h>
 
+#if defined(TARGET_PC)
+/* Stage-slot teardown: the spawn table grZakoGenerator_801CA67C allocates (972 bytes) was only
+ * ever freed by the heap reset of a scene exit, and a stage switch overwrote the pointer in
+ * 801CAE04 without freeing it. Called after the outgoing stage's procs are gone. */
+void grZakoGenerator_StageSlotRelease(void)
+{
+    if (lbl_8049F030.x4 != NULL) {
+        HSD_Free(lbl_8049F030.x4);
+    }
+    lbl_8049F030.x0 = NULL;
+    lbl_8049F030.x4 = NULL;
+}
+#endif
+
 grZakoGenerator_Config*
 grZakoGenerator_801CA394(grZakoGenerator_Spawn* spawn_descs, int count,
                          grZakoGenerator_SpawnFunc callback, f32 arg4)

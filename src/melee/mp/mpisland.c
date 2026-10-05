@@ -627,6 +627,32 @@ void mpIsland_8005B334(int arg0, int arg1, int arg2, bool arg3)
 }
 
 #if defined(TARGET_PC)
+/* Stage-slot teardown: return every island of the outgoing map. A scene exit used to reset the
+ * heap and so never freed these 0x2C-byte segments (mpIsland_8005A728/B004 allocate, nothing
+ * frees): one leak of ~5 segments per stage visit. The script lists x10/x14 are stitched onto
+ * the tail of `next`/`x4` after every batch, so those two chains reach them; x20 is the
+ * recycle list; x18/x1C are the floor/ceiling recycle lists
+ * (mpIsland_8005B334 -> 8005AE1C). None of the three is reachable from the others. */
+void mpIsland_StageSlotFree(void)
+{
+    mp_UnkStruct0* lists[5];
+    int i;
+    lists[0] = mpIsland_80458E88.next;
+    lists[1] = mpIsland_80458E88.x4;
+    lists[2] = mpIsland_80458E88.x20;
+    lists[3] = mpIsland_80458E88.x18;
+    lists[4] = mpIsland_80458E88.x1C;
+    for (i = 0; i < 5; ++i) {
+        mp_UnkStruct0* p = lists[i];
+        while (p != NULL) {
+            mp_UnkStruct0* n = p->next;
+            HSD_Free(p);
+            p = n;
+        }
+    }
+    mpIsland_8005A6F8();
+}
+
 /* Script joints have only dynamic ranges. Recycle dirty islands in ONE list
  * walk, build each changed joint on an empty temporary list, then stitch once.
  * B334 used to scan and reverse every island for every added line. */

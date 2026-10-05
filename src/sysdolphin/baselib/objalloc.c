@@ -62,6 +62,18 @@ void HSD_ObjAllocTopUp(void)
 }
 #endif
 
+#if defined(TARGET_PC)
+/* Diagnostic (stage-lane leak accounting): one log line per pool. */
+void HSD_ObjAllocReport(void)
+{
+    HSD_ObjAllocData* d;
+    for (d = alloc_datas; d != NULL; d = d->next) {
+        OSReport("objpool %p size=%d used=%d free=%d peak=%d\n", d, (int) d->size,
+                 (int) d->used, (int) d->free, (int) d->peak);
+    }
+}
+#endif
+
 void HSD_ObjSetHeap(u32 size, void* ptr)
 {
     obj_heap.curr = (u32) ptr;

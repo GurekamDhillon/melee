@@ -26,6 +26,8 @@
 #define ST_SLOT_GROUPS 64
 #define ST_SLOT_HEADROOM (512*1024)
 extern void* lbHeap_StageSlotTryAlloc(unsigned);
+extern void lbHeap_StageSlotDump(int);
+extern int Script_StageRawStash(int op,unsigned key,unsigned addr,unsigned bytes);
 extern int lbAudioAx_StageSlotMusic(void);
 #include "script_stage_music.inc"
 typedef struct {
@@ -130,7 +132,7 @@ static void script_slot_dispose(ScriptStageSlot* s)
     if(s->lines) lbHeap_80015CA8(0,s->lines);
     if(s->archive) lbHeap_80015CA8(0,s->archive);
     if(s->data) lbHeap_80015CA8(0,s->data);
-    if(s->raw) lbHeap_80015CA8(0,s->raw);
+    if(s->raw_bytes) Script_StageRawStash(2,(unsigned)s,0,0);
     memset(s,0,sizeof *s);
 }
 /* Preflight bounds every pointer used by slot metadata. Model descriptor tree
@@ -178,9 +180,8 @@ int ScriptGame_StageSlotLoad(int owner,int handle,int music)
     } else lbFile_8001668C(path,s->data,&read_bytes);
 #ifndef STAGE_SLOT_FIXTURE
     if(!STAGE_SLOT_PARTIAL_FALLBACK) {
-        s->raw=lbHeap_StageSlotTryAlloc((bytes+31)&~31u);
-        if(!s->raw){script_slot_dispose(s);return -4;}
-        memcpy(s->raw,s->data,bytes);s->raw_bytes=bytes;
+        if(!Script_StageRawStash(0,(unsigned)s,(unsigned)s->data,bytes)){script_slot_dispose(s);return -4;}
+        s->raw_bytes=bytes;
     }
 #endif
     rc=read_bytes==bytes ? st_dat_open(s->data,bytes,&v) : ST_DAT_RANGE;
@@ -357,6 +358,7 @@ int ScriptGame_StageSlotRead(int handle,int owner,int field,int index)
     if(field==31) return lbHeap_Capacity(0);
     if(field==32) return ST_SLOT_HEADROOM;
     if(field==33) return script_stage.cap;
+    if(field==40){lbHeap_StageSlotDump(index);return 1;}
     if(!s) return 0;
     switch(field) {
     case 0:return s->handle; case 1:return s->bytes+script_slot_native_bytes(s); case 2:return s->nverts;

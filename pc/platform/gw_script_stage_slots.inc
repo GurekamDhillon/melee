@@ -87,7 +87,8 @@ static int l_stage_slot_info(lua_State* L)
 }
 static int l_stage_slots(lua_State* L)
 {
-    int i,n=0;lua_newtable(L);
+    int i,n=0;{int m=lua_isboolean(L,1)?lua_toboolean(L,1):(int)lua_tointeger(L,1);if(m)gw_ScriptGame_StageSlotRead(0,0,40,m);}
+    lua_newtable(L);
     for(i=0;i<16;++i) {int h=gw_ScriptGame_StageSlotAt(gs.cur+1,i);if(h){gs_stage_slot_info(L,h);lua_rawseti(L,-2,++n);}}
     gs_setint(L,"heap_free",gw_ScriptGame_StageSlotRead(0,0,30,0));
     gs_setint(L,"heap_capacity",gw_ScriptGame_StageSlotRead(0,0,31,0));

@@ -1564,6 +1564,7 @@ typedef struct {
   int team;
   int stocks;
   int nametag;
+  int cpu_idle; /* /idle -> 1, /fight -> 0, unset -1: this CPU stands still / always fights */
 } GwSlPlayer;
 
 typedef struct {
@@ -1587,6 +1588,7 @@ typedef struct {
   int rule_stocks;
   int rule_minutes; /* 0 = no limit */
   int rule_pause;   /* 0 off, 1 on */
+  int cpus;         /* `cpus=idle` 1 / `cpus=fight` 0 / unset -1: every CPU slot idles */
   int errors;       /* count of rejected fields; a config with errors is still used */
   GwSlPlayer p[GW_SL_SLOTS];
   int enemy_team_colors; /* 0 off, 1 force untinted enemy team costumes */
@@ -1694,6 +1696,7 @@ static void gw_sl_player_init(GwSlPlayer *p) {
   p->team = -1;
   p->stocks = -1;
   p->nametag = -1;
+  p->cpu_idle = -1;
 }
 
 static void gw_sl_config_init(GwSceneConfig *c) {
@@ -1709,6 +1712,7 @@ static void gw_sl_config_init(GwSceneConfig *c) {
   c->onep_level = -1;
   c->skip_memcard = -1;
   c->teams = -1;
+  c->cpus = -1;
   c->time_limit = -1;
   c->item_freq = -1;
   c->rule_match = -1;
@@ -1977,6 +1981,12 @@ static int gw_sl_parse_player(const char *v, GwSlPlayer *p) {
     } else if ((rest = gw_sl_after(tok, "cpu")) != NULL && gw_sl_all_digits(rest)) {
       p->slot_type = GW_SL_PK_CPU;
       p->cpu_level = atoi(rest);
+    } else if (tt_ieq(tok, "idle")) {
+      /* a CPU that stands still for the whole process: see gw_Script_CpuIdleDefault */
+      p->cpu_idle = 1;
+      if (p->slot_type < 0) p->slot_type = GW_SL_PK_CPU;
+    } else if (tt_ieq(tok, "fight")) {
+      p->cpu_idle = 0; /* beats the global default for this slot */
     } else if (tt_ieq(tok, "cpu")) {
       p->slot_type = GW_SL_PK_CPU;
     } else if (tt_ieq(tok, "human") || tt_ieq(tok, "hu")) {
@@ -2104,6 +2114,14 @@ static int gw_sl_apply(GwSceneConfig *c, const char *key, const char *val) {
       (atoi(key+1)<1 || atoi(key+1)>GW_SL_SLOTS)) {
     gw_log("gw: scene: %s refused: fighter slots are p1 through p6",key);
     c->invalid_slot=1; return -1;
+  }
+  if (tt_ieq(key, "cpus")) {
+    /* global CPU policy: idle = every CPU-controlled fighter stands still (see
+     * gw_Script_CpuIdleDefault); fight = retail AI (clears an earlier `cpus=idle`) */
+    if (tt_ieq(val, "idle")) c->cpus = 1;
+    else if (tt_ieq(val, "fight")) c->cpus = 0;
+    else return -1;
+    return 0;
   }
   if (tt_ieq(key, "teams")) {
     c->teams = (val[0] == '1');
@@ -2286,6 +2304,11 @@ static void gw_sl_log_config(const GwSceneConfig *c) {
   }
 }
 
+static int gw_cpu_idle_sticky = -1;
+static void gw_cpu_idle_note(const GwSceneConfig *c) {
+  if (c->cpus >= 0) gw_cpu_idle_sticky = c->cpus;
+}
+
 static void gw_sl_load(void) {
   const char *text;
   char filebuf[4096];
@@ -2363,6 +2386,7 @@ parsed:
   if (gw_sl_cfg.game_mode == 0x0F && gw_sl_cfg.tt_ckind < 0) {
     gw_sl_cfg.tt_ckind = gw_sl_cfg.p[0].ckind;
   }
+  gw_cpu_idle_note(&gw_sl_cfg);
   gw_sl_log_config(&gw_sl_cfg);
 }
 
@@ -2398,7 +2422,37 @@ void gw_SceneLaunch_SetText(const char *text) {
   if (text != NULL && text[0] != '\0') {
     gw_log("gw: scene: set at runtime \"%s\"", text);
     gw_sl_parse(&gw_sl_cfg, text, "runtime");
+    gw_cpu_idle_note(&gw_sl_cfg);
   }
+}
+
+/* ---- idle CPUs: one native default, read by game code every frame it asks ----------------------
+ * The global comes from MELEE_CPU_IDLE=1 (whole process) or the scene token `cpus=idle`. A scene
+ * set later at runtime keeps it unless that scene says `cpus=fight` ("sticky"); a per-slot
+ * `pN=fox/idle` or `/fight` token lives in the current scene. Returns 0 retail behaviour,
+ * 1 idle by the global, 2 idle by the slot token, 3 the slot token says fight. Netplay and
+ * rollback never idle a CPU (the retail AI is what the peers both ran). */
+extern int gw_Netplay_Enabled(void);
+int gw_Script_CpuIdleDefault(int slot) {
+  static int env = -1;
+  int d = 0;
+  if (env < 0) env = gw_Env1("MELEE_CPU_IDLE");
+  gw_sl_load();
+  if (slot < 0 || slot >= GW_SL_SLOTS) return 0;
+  if (gw_sl_cfg.p[slot].cpu_idle == 1) d = 2;
+  else if (gw_sl_cfg.p[slot].cpu_idle == 0) d = 3;
+  else if (env == 1 || gw_cpu_idle_sticky == 1) d = 1;
+  if (d != 0 && gw_Netplay_Enabled()) {
+    static int told;
+    if (!told) { told = 1; gw_log("cpu: idle CPUs ignored in netplay (peers must run the retail AI)"); }
+    return 0;
+  }
+  return d;
+}
+/* For the log, run.json and tests: is an idle default requested at all? */
+int gw_CpuIdleRequested(void) {
+  gw_sl_load();
+  return gw_Env1("MELEE_CPU_IDLE") || gw_cpu_idle_sticky == 1;
 }
 
 const char *gw_SceneLaunch_Mission(void) { gw_sl_load(); return gw_sl_cfg.mission; }
@@ -2812,6 +2866,46 @@ static int test_scene_index_spaces(void) {
                  c->p[1].ckind);
     return 1;
   }
+  gw_SceneLaunch_LoadForTest(NULL);
+  return 0;
+}
+
+/* Idle CPUs: the tokens parse, bad values are rejected, and the default is retail (off). */
+static int test_scene_cpu_idle_tokens(void) {
+  const GwSceneConfig *c;
+  int env = gw_Env1("MELEE_CPU_IDLE");
+  gw_SceneLaunch_LoadForTest("mode=vs;p1=fox;p2=fox/idle;p3=marth/cpu0/idle;p4=falco/cpu5/fight;p5=jigglypuff/cpu3");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->cpus != -1 || c->p[0].cpu_idle != -1 ||
+      c->p[1].cpu_idle != 1 || c->p[1].slot_type != GW_SL_PK_CPU ||
+      c->p[2].cpu_idle != 1 || c->p[2].cpu_level != 0 || c->p[2].slot_type != GW_SL_PK_CPU ||
+      c->p[3].cpu_idle != 0 || c->p[3].cpu_level != 5 || c->p[4].cpu_idle != -1) {
+    gw_test_fail("cpu idle slot tokens: errors %d cpus %d p2 %d/%d p3 %d lvl %d p4 %d", c->errors, c->cpus,
+                 c->p[1].cpu_idle, c->p[1].slot_type, c->p[2].cpu_idle, c->p[2].cpu_level, c->p[3].cpu_idle);
+    return 1;
+  }
+  /* the native default game code reads: slot token 2, slot fight 3, nothing = retail (or the env global) */
+  if (gw_Script_CpuIdleDefault(1) != 2 || gw_Script_CpuIdleDefault(2) != 2 ||
+      gw_Script_CpuIdleDefault(3) != 3 || gw_Script_CpuIdleDefault(4) != (env ? 1 : 0) ||
+      gw_Script_CpuIdleDefault(-1) != 0 || gw_Script_CpuIdleDefault(6) != 0) {
+    gw_test_fail("cpu idle default per slot wrong (env %d)", env);
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=vs;cpus=idle;p2=fox/cpu9");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->cpus != 1 || c->p[1].cpu_idle != -1) {
+    gw_test_fail("cpus=idle: errors %d cpus %d", c->errors, c->cpus);
+    return 1;
+  }
+  gw_SceneLaunch_LoadForTest("mode=vs;cpus=fight");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->cpus != 0) { gw_test_fail("cpus=fight: cpus %d", c->cpus); return 1; }
+  gw_SceneLaunch_LoadForTest("mode=vs;cpus=recover");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors != 1 || c->cpus != -1) { gw_test_fail("cpus=recover accepted (errors %d)", c->errors); return 1; }
+  gw_SceneLaunch_LoadForTest("mode=vs;p2=fox/cpu4");
+  c = (const GwSceneConfig *)gw_SceneLaunch_ConfigForTest();
+  if (c->errors || c->cpus != -1 || c->p[1].cpu_idle != -1) { gw_test_fail("default scene is not retail"); return 1; }
   gw_SceneLaunch_LoadForTest(NULL);
   return 0;
 }
@@ -3423,6 +3517,7 @@ void gw_scene_tests_register(void) {
   gw_test_register("scene_parse_training", test_scene_parse_training);
   gw_test_register("scene_index_spaces", test_scene_index_spaces);
   gw_test_register("scene_parse_vs_four", test_scene_parse_vs_four);
+  gw_test_register("scene_cpu_idle_tokens", test_scene_cpu_idle_tokens);
   gw_test_register("scene_parse_stage", test_scene_parse_stage);
   gw_test_register("scene_memcard_default", test_scene_memcard_default);
   gw_test_register("scene_parse_file_form", test_scene_parse_file_form);

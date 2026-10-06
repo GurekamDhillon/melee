@@ -664,6 +664,7 @@ static int gs_msgh(lua_State *L) {
     return 1;
 }
 
+static void gs_ui_release(int script); /* gw_script_ui.inc: a switched-off script's screens go */
 static void gs_report(int script, const char *what, const char *err) {
     GsScript *s = (script >= 0 && script < gs.n) ? &gs.s[script] : NULL;
     gw_Console_Print(GS_RED, "[%s] %s: %s", gs_script_id(script), what, err);
@@ -698,6 +699,7 @@ static void gs_report(int script, const char *what, const char *err) {
         gs_enemy_release_owner(script + 1);
         gw_Geno_ItemReleaseOwner(script + 1);
         gs_hud_release_owner(script + 1);
+        gs_ui_release(script);
         for (k = 0; k < GS_MAX_TASKS; ++k) {
             gw_script_pad_release_owner(s->task_pad_owner[k]);
         }
@@ -9477,7 +9479,9 @@ static int t_exec(const char *line, char *out, int cap) { return gw_Script_Exec(
 /* gd.ui: register, open, move focus by feed, reject a bad description, close */
 static int test_script_ui_binding(void) {
     char out[512];
+    int rc = 0;
     if (!gw_Kit_Available()) {
+        gw_log("TEST SKIPPED script_ui_binding: the script kit is unavailable (no ui/ directory), so nothing was checked");
         return 0;
     }
     t_exec("= gd.ui.screen{id='uitest.a', primary={kind='list', items={{id='one',label='One'},{id='two',label='Two'}}}, "
@@ -9486,31 +9490,38 @@ static int test_script_ui_binding(void) {
     t_exec("= gd.ui.state().top", out, sizeof out);
     if (strstr(out, "uitest.a") == NULL) {
         gw_test_fail("gd.ui.state().top is not the opened screen: %s", out);
-        return 1;
+        rc = 1;
+        goto done;
     }
     t_exec("= (gd.ui.focus('uitest.a'))", out, sizeof out);
     if (strstr(out, "one") == NULL) {
         gw_test_fail("the first item does not start with focus: %s", out);
-        return 1;
+        rc = 1;
+        goto done;
     }
     t_exec("= gd.ui.feed('uitest.a', 'down')", out, sizeof out);
     t_exec("= (gd.ui.focus('uitest.a'))", out, sizeof out);
     if (strstr(out, "two") == NULL) {
         gw_test_fail("feeding 'down' did not move focus to the second item: %s", out);
-        return 1;
+        rc = 1;
+        goto done;
     }
     t_exec("= gd.ui.screen{id='uitest.bad', primary={kind='tiles'}}", out, sizeof out);
     if (strstr(out, "not supported") == NULL) {
         gw_test_fail("a bad description was not refused with its message: %s", out);
-        return 1;
+        rc = 1;
+        goto done;
     }
     t_exec("= gd.ui.close('uitest.a')", out, sizeof out);
     t_exec("= gd.ui.state().top", out, sizeof out);
     if (strstr(out, "uitest.a") != NULL) {
         gw_test_fail("the closed screen is still the top: %s", out);
-        return 1;
+        rc = 1;
+        goto done;
     }
-    return 0;
+done:
+    gs_ui_release(gs.console);                                   /* the test's screens do not outlive it */
+    return rc;
 }
 
 #include "gw_script_deadline_tests.inc"

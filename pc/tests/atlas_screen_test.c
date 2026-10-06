@@ -262,6 +262,22 @@ static void hardening(void)
     }
 }
 
+/* on.page(dir) and on.start() are read, on.change(item, value) is kept, and every one of their references is reported */
+static void page_start_change(void)
+{
+    static AtScreen sc;
+    char err[160];
+    int root = atv_table(A), prim = atv_table(A), items = atv_table(A), it = atv_table(A), on = atv_table(A), refs[24], n;
+    S(root, "id", "m.pc"); S(prim, "kind", "list"); S(it, "id", "a"); S(it, "label", "A"); atv_push(A, items, it);
+    atv_set(A, prim, "items", items); atv_set(A, root, "primary", prim);
+    atv_set(A, on, "page", atv_fn(A, 41)); atv_set(A, on, "start", atv_fn(A, 42)); atv_set(A, on, "change", atv_fn(A, 43));
+    atv_set(A, root, "on", on);
+    CHECK(at_screen_from_val(A, root, NULL, &sc, err, sizeof err));
+    CHECK(sc.fn_page == 41 && sc.fn_start == 42 && sc.fn_change == 43);
+    n = at_screen_fn_refs(&sc, refs, 24);
+    CHECK(n == 3);
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
@@ -272,6 +288,7 @@ int main(void)
     atv_init(A); refocus();
     atv_init(A); accept_semantics();
     atv_init(A); hardening();
+    atv_init(A); page_start_change();
     free(A);
     ATLAS_DONE("atlas screen");
 }

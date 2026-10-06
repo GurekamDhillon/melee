@@ -22,7 +22,7 @@ extern int gw_Settings_Int(const char *key, int dflt); /* gw_settings.c:138; the
 #define GS_UI_SLOTS 8
 
 typedef struct {
-    int used, owner, explain_dirty, dialog_fn, warned, render_warned;
+    int used, owner, explain_dirty, dialog_fn, warned, render_warned, ex_warned;
     AtScreen sc;
     AtView view;
     AtHits hits;
@@ -36,19 +36,30 @@ static AtStack gs_ui_stack;
 static AtvArena gs_ui_arena;
 static AtScreen gs_ui_scratch;
 static int gs_ui_role_idx[AT_R_COUNT];
-static int gs_ui_roles_state; /* 0 not tried, 1 every Atlas role found, -1 missing */
+static int gs_ui_roles_state; /* 0 not tried, 1 every Atlas role found and every page loaded, -1 missing */
+static char gs_ui_why[160];   /* the reason when it is -1 */
 static struct { double sum, max; int frames, quads; float canvas_w; } gs_ui_stat;
+static int gs_ui_reduced; /* gw_Settings_Int("reduced_motion") read once per draw pass */
 
 /* ---- fonts: the Atlas roles by name, resolved once ------------------------------------------------ */
 static int gs_ui_roles_ok(void) {
     int r;
     if (gs_ui_roles_state != 0) return gs_ui_roles_state > 0;
     gs_ui_roles_state = -1;
+    snprintf(gs_ui_why, sizeof gs_ui_why, "%s", gw_Kit_Available() ? "" : gw_Kit_Why());
     if (!gw_Kit_Available()) return 0;
     for (r = 0; r < AT_R_COUNT; r++) {
+        const char *missing;
         gs_ui_role_idx[r] = gw_Kit_Role(at_role(r)->name);
         if (gs_ui_role_idx[r] < 0) {
+            snprintf(gs_ui_why, sizeof gs_ui_why, "the font manifest has no Atlas text role \"%s\"", at_role(r)->name);
             gw_log("ui: the font manifest has no Atlas role \"%s\" (rebuild the kit fonts: menu/pipeline/font_atlas.py)", at_role(r)->name);
+            return 0;
+        }
+        missing = gw_Kit_RoleMissingPage(gs_ui_role_idx[r]);          /* a manifest role whose page is absent draws nothing */
+        if (missing != NULL) {
+            snprintf(gs_ui_why, sizeof gs_ui_why, "the Atlas font page \"%s\" (role \"%s\") did not load", missing, at_role(r)->name);
+            gw_log("ui: %s (deploy the Atlas font pages to ui/: menu/pipeline/font_atlas.py, then png2gx)", gs_ui_why);
             return 0;
         }
     }
@@ -102,7 +113,7 @@ static void gs_ui_model_draw(void *u, int model, int ring, float x, float y, flo
     memset(&p, 0, sizeof p);
     p.x = x; p.y = y; p.w = w; p.h = h;
     p.yaw = 18.0f; p.pitch = 12.0f;                             /* the bag's pose (envoy run_screen.lua S.model_opts) */
-    p.spin = (focused && !gw_Settings_Int("reduced_motion", 0)) ? 120.0f : 0.0f;
+    p.spin = (focused && !gs_ui_reduced) ? 120.0f : 0.0f;
     p.clock = (float) gs_ui_clock;
     p.margin = 0.02f; p.dim = dim ? 0.35f : 1.0f; p.alpha = 1.0f; p.tint = 0xFFFFFFFFu; p.cull = 0;
     if (ring >= 0 && (a = gs_ui_model_asset(ring)) >= 0) (void) gs_sm_emit(a, &p, 1, &why);   /* the rarity ring first: it passes behind the body */
@@ -131,7 +142,9 @@ static int gs_ui_copy(lua_State *L, int idx, int depth) {
         return n;
     }
     if (t == LUA_TTABLE) {
-        int n = atv_table(&gs_ui_arena), len = (int) lua_rawlen(L, idx), i;
+        int n, len = (int) lua_rawlen(L, idx), i;
+        if (!lua_checkstack(L, 6)) { gs_ui_arena.overflow = 1; return -1; }   /* a key, a value and the call's own slots, per level */
+        n = atv_table(&gs_ui_arena);
         if (n < 0) return -1;
         for (i = 1; i <= len; i++) {
             int v;
@@ -177,6 +190,12 @@ static int gs_ui_find(const char *id) {
     return -1;
 }
 
+/* A script that is unloaded or switched off (gs_report) runs nothing: not a handler, not a dialog. */
+static int gs_ui_usable(int owner) { return owner >= 0 && owner < gs.n && gs.s[owner].used && !gs.s[owner].disabled; }
+
+/* A screen belongs to the script that registered it; only that script (and the console) may drive it. */
+static int gs_ui_may_touch(int slot) { return gs.cur == gs.console || gs_ui_slot[slot].owner == gs.cur; }
+
 /* the mod id of the running script (the part of "envoy/main" before the slash); NULL for the console */
 static const char *gs_ui_owner_mod(char *buf, int cap) {
     const GsScript *s = gs_cur_script();
@@ -193,7 +212,7 @@ static const char *gs_ui_owner_mod(char *buf, int cap) {
 static int gs_ui_call(int slot, int ref, const char *a, const char *b, int nres) {
     lua_State *L = gs.L;
     int owner = gs_ui_slot[slot].owner;
-    if (ref < 0 || !gs_may_run(owner)) return 0;
+    if (ref < 0 || !gs_may_run(owner) || !gs_ui_usable(owner)) return 0;
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
     if (!lua_isfunction(L, -1)) { lua_pop(L, 1); return 0; }
     lua_pushstring(L, a != NULL ? a : "");
@@ -208,13 +227,15 @@ static int gs_ui_open_screen(int slot);
 static void gs_ui_apply_result(void) {
     lua_State *L = gs.L;
     if (lua_istable(L, -1)) {
-        lua_getfield(L, -1, "pop");
+        lua_pushliteral(L, "pop");                                 /* raw reads: a handler's table may carry a metatable, and this */
+        lua_rawget(L, -2);                                         /* runs outside any protected call (from gs_ui_tick) */
         if (lua_toboolean(L, -1) && at_stack_top(&gs_ui_stack) >= 0) gs_ui_close_screen(at_stack_top(&gs_ui_stack));
         lua_pop(L, 1);
-        lua_getfield(L, -1, "push");
+        lua_pushliteral(L, "push");
+        lua_rawget(L, -2);
         if (lua_type(L, -1) == LUA_TSTRING) {
             int s = gs_ui_find(lua_tostring(L, -1));
-            if (s >= 0) gs_ui_open_screen(s);
+            if (s >= 0 && gs_ui_may_touch(s)) gs_ui_open_screen(s);
         }
         lua_pop(L, 1);
     }
@@ -238,14 +259,14 @@ static void gs_ui_refresh_view(int slot) {
         atv_init(&gs_ui_arena);
         n = gs_ui_copy(L, -1, 0);
         if (gs_ui_arena.overflow) {
-            gw_log("ui: %s: the explainer provider returned too large a table; showing none", u->sc.id);
+            if (!(u->ex_warned & 1)) { u->ex_warned |= 1; gw_log("ui: %s: the explainer provider returned too large a table; showing none", u->sc.id); }
             at_explainer_from_val(&gs_ui_arena, -1, &u->view.ex, err, sizeof err);
         } else {
             at_explainer_from_val(&gs_ui_arena, n, &u->view.ex, err, sizeof err);
         }
         gs_ui_unref_arena_except(L, NULL, 0);
         lua_pop(L, 1);
-        if (u->view.ex.warn) gw_log("ui: %s: an explainer string was cut to its field", u->sc.id);
+        if (u->view.ex.warn && !(u->ex_warned & 2)) { u->ex_warned |= 2; gw_log("ui: %s: an explainer string was cut to its field", u->sc.id); }
     } else {
         atv_init(&gs_ui_arena);
         at_explainer_from_val(&gs_ui_arena, -1, &u->view.ex, err, sizeof err);
@@ -278,6 +299,49 @@ static void gs_ui_refresh_view(int slot) {
     }
 }
 
+/* ---- what is held right now -------------------------------------------------------------------------- */
+static unsigned gs_ui_key_mask(void) {
+    unsigned m = 0;
+    if (gs.key_now[VK_UP]) m |= AT_KEY_UP;
+    if (gs.key_now[VK_DOWN]) m |= AT_KEY_DOWN;
+    if (gs.key_now[VK_LEFT]) m |= AT_KEY_LEFT;
+    if (gs.key_now[VK_RIGHT]) m |= AT_KEY_RIGHT;
+    if (gs.key_now[VK_RETURN]) m |= AT_KEY_ENTER;
+    if (gs.key_now[VK_ESCAPE]) m |= AT_KEY_ESC;
+    if (gs.key_now[VK_TAB]) m |= AT_KEY_TAB;
+    if (gs.key_now[VK_SHIFT]) m |= AT_KEY_SHIFT;
+    return m;
+}
+
+static unsigned gs_ui_pad_read(const GsUiSlot *u, int *sx, int *sy) {
+    unsigned b;
+    int cx, cy, tl, tr;
+    gw_script_pad_state(u->sc.port - 1, &b, sx, sy, &cx, &cy, &tl, &tr);
+    return gw_script_pad_raw_buttons(u->sc.port - 1);
+}
+
+/* A screen that becomes the top one (opened, or uncovered when the one above it closed) starts from the buttons, keys
+ * and mouse buttons held at that moment, so a press has to be released before it can fire on the new top: a held A that
+ * opened a screen does not accept on it, and one held B closes one level, not the whole stack. The events these calls
+ * would make are discarded (capacity 0); only the previous-state they leave behind is wanted. */
+static void gs_ui_prime(int slot) {
+    GsUiSlot *u = &gs_ui_slot[slot];
+    AtEvent ev[1];
+    float x, y, wheel;
+    int buttons, sx = 0, sy = 0;
+    double now = gs_now_ms();
+    memset(&u->pad, 0, sizeof u->pad);
+    memset(&u->keys, 0, sizeof u->keys);
+    memset(&u->mouse, 0, sizeof u->mouse);
+    if (at_screen_wants_pad(&u->sc)) {
+        unsigned b = gs_ui_pad_read(u, &sx, &sy);
+        (void) at_pad_events(&u->pad, b, sx, sy, now, ev, 0);
+    }
+    (void) at_key_events(&u->keys, gs_ui_key_mask(), now, ev, 0);
+    gw_Mouse_ScriptRead(&x, &y, &buttons, &wheel);
+    (void) at_mouse_events(&u->mouse, x, y, buttons, 0, &u->hits, ev, 0);
+}
+
 /* ---- stack operations --------------------------------------------------------------------------------- */
 static int gs_ui_open_screen(int slot) {
     GsUiSlot *u = &gs_ui_slot[slot];
@@ -288,9 +352,7 @@ static int gs_ui_open_screen(int slot) {
     u->view.opened_ms = gs_now_ms();
     u->view.port_rgba = 0;
     u->explain_dirty = 1;
-    memset(&u->pad, 0, sizeof u->pad);
-    memset(&u->keys, 0, sizeof u->keys);
-    memset(&u->mouse, 0, sizeof u->mouse);
+    gs_ui_prime(slot);
     gw_log("ui: screen %s open (%d blocks, %d items)", u->sc.id, u->sc.n_blocks, u->sc.n_items);
     if (u->sc.fn_open >= 0 && gs_ui_call(slot, u->sc.fn_open, "", "", 1)) gs_ui_apply_result();
     return 1;
@@ -303,18 +365,25 @@ static void gs_ui_close_screen(int slot) {
     if (!at_stack_remove(&gs_ui_stack, slot)) return;
     if (u->sc.fn_close >= 0 && gs_ui_call(slot, u->sc.fn_close, "", "", 1)) lua_pop(gs.L, 1);
     gw_log("ui: screen %s closed", u->sc.id);
+    if (at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
 }
 
-/* a script unloaded: its screens and their references go */
+/* a script unloaded or switched off: its screens and their references go */
 static void gs_ui_release(int script) {
     int i;
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
+        int was_top;
         if (!u->used || u->owner != script) continue;
+        was_top = at_stack_top(&gs_ui_stack) == i;
         at_stack_remove(&gs_ui_stack, i);
         gs_ui_unref_screen(gs.L, &u->sc);
         if (u->dialog_fn >= 0) luaL_unref(gs.L, LUA_REGISTRYINDEX, u->dialog_fn);
         memset(u, 0, sizeof *u);
+        u->dialog_fn = u->sc.fn_provide = u->sc.fn_accept = u->sc.fn_back = u->sc.fn_focus = u->sc.fn_change = u->sc.fn_open =
+            u->sc.fn_close = u->sc.fn_counter = u->sc.fn_page = u->sc.fn_start = -1;
+        u->sc.fn_alt[0] = u->sc.fn_alt[1] = u->sc.fn_alt[2] = -1;
+        if (was_top && at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
     }
 }
 
@@ -326,12 +395,57 @@ static void gs_ui_dialog_press(int slot, int btn) {
     for (i = 0; i < u->view.dialog.n; i++) if (u->view.dialog.btn[i] == btn) hit = 1;
     if (!hit) return;
     u->view.dialog.open = 0;
-    if (u->dialog_fn >= 0 && gs_may_run(u->owner)) {
+    if (u->dialog_fn >= 0) {                                       /* answered: the reference is taken now and dropped now */
+        int ref = u->dialog_fn;
         char one[2];
         one[0] = (char) btn; one[1] = '\0';
-        lua_rawgeti(L, LUA_REGISTRYINDEX, u->dialog_fn);
-        if (lua_isfunction(L, -1)) { lua_pushstring(L, one); (void) gs_pcall(u->owner, 1, 0, "ui:dialog"); } else lua_pop(L, 1);
+        u->dialog_fn = -1;
+        lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
+        luaL_unref(L, LUA_REGISTRYINDEX, ref);
+        if (lua_isfunction(L, -1) && gs_may_run(u->owner) && gs_ui_usable(u->owner)) { lua_pushstring(L, one); (void) gs_pcall(u->owner, 1, 0, "ui:dialog"); } else lua_pop(L, 1);
     }
+}
+
+/* on.change(item id, value): a toggle gives its new state (true / false), a slider its new number, a choice the direction
+ * it was stepped (-1 or +1: the options are the script's own). The engine updates what it shows for a toggle and a slider
+ * at once; the script re-registers when it wants the row to read differently. Returns 1 when the event was a value event. */
+static int gs_ui_value_event(int slot, const AtEvent *e) {
+    GsUiSlot *u = &gs_ui_slot[slot];
+    AtItem *it;
+    int idx = u->view.focus.index, left, right, accept, step, nv, is_bool = 0, dir = 0;
+    char id[AT_ID];
+    double val = 0.0;
+    if (u->sc.primary != AT_PRIMARY_LIST || idx < 0 || idx >= u->sc.n_items) return 0;
+    it = &u->sc.items[idx];
+    if ((it->vkind != AT_VAL_TOGGLE && it->vkind != AT_VAL_CHOICE && it->vkind != AT_VAL_SLIDER) || (it->flags & AT_CELL_DISABLED)) return 0;
+    left = e->type == AT_EV_MOVE && e->a == AT_DIR_LEFT;
+    right = e->type == AT_EV_MOVE && e->a == AT_DIR_RIGHT;
+    accept = e->type == AT_EV_ACCEPT;
+    if (!left && !right && !accept) return 0;
+    snprintf(id, sizeof id, "%s", it->id);
+    if (it->vkind == AT_VAL_TOGGLE) {
+        it->on = !it->on; is_bool = 1; val = it->on;
+    } else if (it->vkind == AT_VAL_CHOICE) {
+        dir = left ? -1 : 1; val = dir;
+    } else {
+        if (accept) return 0;                                     /* a slider is stepped, not accepted */
+        step = (it->vmax - it->vmin) / 20; if (step < 1) step = 1;
+        nv = it->vval + (left ? -step : step);
+        if (nv < it->vmin) nv = it->vmin;
+        if (nv > it->vmax) nv = it->vmax;
+        if (nv == it->vval) return 1;                             /* at the end: nothing changed, nothing to report */
+        it->vval = nv; val = nv;
+    }
+    if (u->sc.fn_change >= 0 && gs_may_run(u->owner) && gs_ui_usable(u->owner)) {
+        lua_State *L = gs.L;
+        lua_rawgeti(L, LUA_REGISTRYINDEX, u->sc.fn_change);
+        if (lua_isfunction(L, -1)) {
+            lua_pushstring(L, id);
+            if (is_bool) lua_pushboolean(L, val != 0.0); else lua_pushinteger(L, (lua_Integer) val);
+            if (gs_pcall(u->owner, 2, 1, "ui") == 0) gs_ui_apply_result();
+        } else lua_pop(L, 1);
+    }
+    return 1;
 }
 
 static void gs_ui_event(int slot, const AtEvent *e) {
@@ -347,6 +461,7 @@ static void gs_ui_event(int slot, const AtEvent *e) {
         else if (e->type == AT_EV_ALT) gs_ui_dialog_press(slot, e->a);
         return;
     }
+    if (gs_ui_value_event(slot, e)) { u->explain_dirty = 1; return; }
     nb = at_screen_focus_blocks(&u->sc, fb);
     if (e->type == AT_EV_MOVE) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a, 1);
     else if (e->type == AT_EV_SCROLL && u->sc.primary == AT_PRIMARY_LIST) u->view.focus = at_focus_move(fb, nb, u->view.focus, e->a < 0 ? AT_DIR_UP : AT_DIR_DOWN, 0);
@@ -377,6 +492,19 @@ static void gs_ui_event(int slot, const AtEvent *e) {
     } else if (e->type == AT_EV_ALT) {
         alt = e->a == 'X' ? 0 : e->a == 'Y' ? 1 : 2;
         if (u->sc.fn_alt[alt] >= 0 && gs_ui_call(slot, u->sc.fn_alt[alt], cid, bid, 1)) gs_ui_apply_result();
+    } else if (e->type == AT_EV_PAGE) {                           /* L / R, Tab / Shift+Tab: on.page(dir, cell id, block id), dir -1 or +1 */
+        if (u->sc.fn_page >= 0 && gs_may_run(u->owner) && gs_ui_usable(u->owner)) {
+            lua_State *L = gs.L;
+            lua_rawgeti(L, LUA_REGISTRYINDEX, u->sc.fn_page);
+            if (lua_isfunction(L, -1)) {
+                lua_pushinteger(L, e->a < 0 ? -1 : 1);
+                lua_pushstring(L, cid != NULL ? cid : "");
+                lua_pushstring(L, bid != NULL ? bid : "");
+                if (gs_pcall(u->owner, 3, 1, "ui") == 0) gs_ui_apply_result();
+            } else lua_pop(L, 1);
+        }
+    } else if (e->type == AT_EV_START) {                          /* START: on.start(cell id, block id) (the spec leaves it to the screen) */
+        if (u->sc.fn_start >= 0 && gs_ui_call(slot, u->sc.fn_start, cid, bid, 1)) gs_ui_apply_result();
     }
 }
 
@@ -389,27 +517,17 @@ static void gs_ui_tick(void) {
     if (top < 0) return;
     u = &gs_ui_slot[top];
     if (!u->used) { at_stack_remove(&gs_ui_stack, top); return; }
+    if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go */
     if (!gs_may_run(u->owner)) return;
     if (at_screen_wants_pad(&u->sc)) {
-        unsigned b;
-        int sx, sy, cx, cy, tl, tr;
-        gw_script_pad_state(u->sc.port - 1, &b, &sx, &sy, &cx, &cy, &tl, &tr);
-        b = gw_script_pad_raw_buttons(u->sc.port - 1);
+        int sx, sy;
+        unsigned b = gs_ui_pad_read(u, &sx, &sy);
         n = at_pad_events(&u->pad, b, sx, sy, now, ev, 16);
         for (i = 0; i < n && at_stack_top(&gs_ui_stack) == top; i++) gs_ui_event(top, &ev[i]);
     }
     if (at_stack_top(&gs_ui_stack) != top) return;
     {
-        unsigned m = 0;
-        if (gs.key_now[VK_UP]) m |= AT_KEY_UP;
-        if (gs.key_now[VK_DOWN]) m |= AT_KEY_DOWN;
-        if (gs.key_now[VK_LEFT]) m |= AT_KEY_LEFT;
-        if (gs.key_now[VK_RIGHT]) m |= AT_KEY_RIGHT;
-        if (gs.key_now[VK_RETURN]) m |= AT_KEY_ENTER;
-        if (gs.key_now[VK_ESCAPE]) m |= AT_KEY_ESC;
-        if (gs.key_now[VK_TAB]) m |= AT_KEY_TAB;
-        if (gs.key_now[VK_SHIFT]) m |= AT_KEY_SHIFT;
-        n = at_key_events(&u->keys, m, now, ev, 16);
+        n = at_key_events(&u->keys, gs_ui_key_mask(), now, ev, 16);
         for (i = 0; i < n && at_stack_top(&gs_ui_stack) == top; i++) gs_ui_event(top, &ev[i]);
     }
     if (at_stack_top(&gs_ui_stack) != top) return;
@@ -434,7 +552,7 @@ static void gs_ui_draw(void) {
     double ms;
     if (top < 0 || !gs_ui_roles_ok()) return;
     u = &gs_ui_slot[top];
-    if (!u->used) return;
+    if (!u->used || !gs_ui_usable(u->owner)) return;
     if (gw_Kit_QuadRoom() < AT_SCREEN_QUAD_CAP) {
         if (!u->warned) { u->warned = 1; gw_log("ui: %s not drawn: only %d quads left this frame", u->sc.id, gw_Kit_QuadRoom()); }
         return;
@@ -447,7 +565,8 @@ static void gs_ui_draw(void) {
     memset(&info, 0, sizeof info);
     first = gw_Kit_QuadCount();
     gs_ui_stat.canvas_w = gw_Console_ScriptWidth();
-    at_render_ex(&u->sc, &u->view, gs_ui_stat.canvas_w, gs_now_ms(), gw_Settings_Int("reduced_motion", 0) != 0, &ops, &sink, &u->hits, &info);
+    gs_ui_reduced = gw_Settings_Int("reduced_motion", 0) != 0;
+    at_render_ex(&u->sc, &u->view, gs_ui_stat.canvas_w, gs_now_ms(), gs_ui_reduced, &ops, &sink, &u->hits, &info);
     gw_Kit_SetTracking(0.0f);                                     /* belt and braces: no draw leaves tracking set */
     quads = gw_Kit_QuadCount() - first;
     gs_kit_record(first, quads);
@@ -459,9 +578,8 @@ static void gs_ui_draw(void) {
     if (ms > gs_ui_stat.max) gs_ui_stat.max = ms;
     if ((info.warned || info.capped || info.hits_dropped) && !u->render_warned) {   /* once per screen, never per frame */
         u->render_warned = 1;
-        gw_log("ui: %s render budget: %d entries (warning line %d, cap %d)%s%s%s", u->sc.id, info.entries, AT_SCREEN_QUAD_WARN, AT_SCREEN_QUAD_CAP,
-               info.capped ? "; the cap was reached and later entries were dropped" : "",
-               info.dropped > 0 ? "; entries dropped" : "",
+        gw_log("ui: %s render budget: %d entries (warning line %d, cap %d)%s%s", u->sc.id, info.entries, AT_SCREEN_QUAD_WARN, AT_SCREEN_QUAD_CAP,
+               info.capped ? "; the cap was reached, later entries were dropped" : "",
                info.hits_dropped > 0 ? "; some hit rectangles did not fit (the mouse cannot reach them)" : "");
     }
     gs.cur = old;
@@ -471,7 +589,7 @@ static void gs_ui_draw(void) {
 static int l_ui_available(lua_State *L) {
     int ok = gs_ui_roles_ok();
     lua_pushboolean(L, ok);
-    lua_pushstring(L, ok ? "" : (gw_Kit_Available() ? "the Atlas text roles are missing from the font manifest" : gw_Kit_Why()));
+    lua_pushstring(L, ok ? "" : gs_ui_why);
     return 2;
 }
 
@@ -519,7 +637,6 @@ static int l_ui_screen(lua_State *L) {
     u->sc = gs_ui_scratch;
     u->used = 1;
     u->owner = gs.cur;
-    u->render_warned = 0;
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);
     else { AtFocusBlock fb[AT_MAX_BLOCKS]; u->view.focus = at_focus_first(fb, at_screen_focus_blocks(&u->sc, fb)); }
     u->explain_dirty = 1;
@@ -530,6 +647,7 @@ static int l_ui_screen(lua_State *L) {
 static int gs_ui_slot_arg(lua_State *L, int idx) {
     int s = gs_ui_find(luaL_checkstring(L, idx));
     if (s < 0) luaL_error(L, "gd.ui: no screen \"%s\"", lua_tostring(L, idx));
+    if (!gs_ui_may_touch(s)) luaL_error(L, "gd.ui: screen \"%s\" belongs to another script", lua_tostring(L, idx));
     return s;
 }
 
@@ -537,6 +655,7 @@ static int l_ui_open(lua_State *L) { lua_pushboolean(L, gs_ui_open_screen(gs_ui_
 
 static int l_ui_close(lua_State *L) {
     int s = lua_isstring(L, 1) ? gs_ui_slot_arg(L, 1) : at_stack_top(&gs_ui_stack);
+    if (s >= 0 && !gs_ui_may_touch(s)) s = -1;                      /* close() with no id closes the top screen only if it is the caller's */
     if (s >= 0) gs_ui_close_screen(s);
     lua_pushboolean(L, s >= 0);
     return 1;
@@ -554,7 +673,10 @@ static int l_ui_feed(lua_State *L) {
     else if (strcmp(k, "accept") == 0) e.type = AT_EV_ACCEPT;
     else if (strcmp(k, "back") == 0) e.type = AT_EV_BACK;
     else if (strcmp(k, "x") == 0 || strcmp(k, "y") == 0 || strcmp(k, "z") == 0) { e.type = AT_EV_ALT; e.a = k[0] - 'a' + 'A'; }
-    else return luaL_error(L, "gd.ui.feed: unknown intent \"%s\" (up down left right accept back x y z)", k);
+    else if (strcmp(k, "l") == 0) { e.type = AT_EV_PAGE; e.a = -1; }
+    else if (strcmp(k, "r") == 0) { e.type = AT_EV_PAGE; e.a = 1; }
+    else if (strcmp(k, "start") == 0) e.type = AT_EV_START;
+    else return luaL_error(L, "gd.ui.feed: unknown intent \"%s\" (up down left right accept back x y z l r start)", k);
     gs_ui_event(s, &e);
     if (gs_ui_slot[s].used && gs_ui_slot[s].explain_dirty) gs_ui_refresh_view(s);
     lua_pushboolean(L, 1);
@@ -588,7 +710,7 @@ static int l_ui_note(lua_State *L) {
     const char *kind;
     double secs;
     luaL_checktype(L, 1, LUA_TTABLE);
-    if (top < 0) { lua_pushboolean(L, 0); return 1; }
+    if (top < 0 || !gs_ui_may_touch(top)) { lua_pushboolean(L, 0); return 1; }
     u = &gs_ui_slot[top];
     lua_getfield(L, 1, "text");
     snprintf(u->view.note.text, AT_STR, "%s", luaL_optstring(L, -1, ""));
@@ -612,7 +734,7 @@ static int l_ui_dialog(lua_State *L) {
     int top = at_stack_top(&gs_ui_stack), i, n;
     GsUiSlot *u;
     luaL_checktype(L, 1, LUA_TTABLE);
-    if (top < 0) { lua_pushboolean(L, 0); return 1; }
+    if (top < 0 || !gs_ui_may_touch(top)) { lua_pushboolean(L, 0); return 1; }
     u = &gs_ui_slot[top];
     if (u->dialog_fn >= 0) { luaL_unref(L, LUA_REGISTRYINDEX, u->dialog_fn); u->dialog_fn = -1; }
     memset(&u->view.dialog, 0, sizeof u->view.dialog);

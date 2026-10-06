@@ -64,7 +64,7 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
     const char *kind, *id, *w;
     memset(o, 0, sizeof *o);
     if (a->overflow) FAIL("gd.ui.screen: the description is too large (it overflowed the conversion arena)");
-    o->fn_provide = o->fn_accept = o->fn_back = o->fn_focus = o->fn_change = o->fn_open = o->fn_close = o->fn_counter = -1;
+    o->fn_provide = o->fn_accept = o->fn_back = o->fn_focus = o->fn_change = o->fn_open = o->fn_close = o->fn_counter = o->fn_page = o->fn_start = -1;
     o->fn_alt[0] = o->fn_alt[1] = o->fn_alt[2] = -1;
     o->preset = AT_PRESET_NONE;
     o->port = 1;
@@ -244,6 +244,8 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
         o->fn_change = get_fn(a, on, "change");
         o->fn_open = get_fn(a, on, "open");
         o->fn_close = get_fn(a, on, "close");
+        o->fn_page = get_fn(a, on, "page");
+        o->fn_start = get_fn(a, on, "start");
         alt = atv_get(a, on, "alt");
         o->fn_alt[0] = get_fn(a, alt, "X");
         o->fn_alt[1] = get_fn(a, alt, "Y");
@@ -286,7 +288,7 @@ int at_screen_fn_refs(const AtScreen *s, int *out, int cap)
     int na = 0;
     all[na++] = s->fn_provide; all[na++] = s->fn_accept; all[na++] = s->fn_back; all[na++] = s->fn_focus;
     all[na++] = s->fn_change; all[na++] = s->fn_open; all[na++] = s->fn_close; all[na++] = s->fn_counter;
-    all[na++] = s->fn_alt[0]; all[na++] = s->fn_alt[1]; all[na++] = s->fn_alt[2];
+    all[na++] = s->fn_alt[0]; all[na++] = s->fn_alt[1]; all[na++] = s->fn_alt[2]; all[na++] = s->fn_page; all[na++] = s->fn_start;
     for (i = 0; i < na; i++) if (all[i] >= 0 && n < cap) out[n++] = all[i];
     for (i = 0; i < s->n_keys; i++) {
         if (s->keys[i].fn_label >= 0 && n < cap) out[n++] = s->keys[i].fn_label;

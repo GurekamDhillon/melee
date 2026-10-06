@@ -1071,5 +1071,16 @@
     "in_game": false,
     "controls": "console: assist <0..1>. Scene: mode=lab;stage=fd;p1=fox/cpu0;p2=fox/cpu9",
     "setup": []
+  },
+  {
+    "id": "demo_atlas_screen",
+    "path": "demos/atlas-screen",
+    "title": "Atlas screens (gd.ui)",
+    "api": "gd.ui (screens, key hints, corner note, dialog)",
+    "category": "demo",
+    "new": true,
+    "in_game": false,
+    "controls": "F7 opens and closes; D-pad or arrows move; A change; X note; Y dialog; B close; TAB switches list and grid; mouse hover, click, right click, wheel",
+    "setup": []
   }
 ]

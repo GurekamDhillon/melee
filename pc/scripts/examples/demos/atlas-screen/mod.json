@@ -1,0 +1,10 @@
+{
+  "id": "demo_atlas_screen",
+  "name": "Atlas screens (gd.ui)",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": false,
+  "rollback_safe": false,
+  "entry": "scripts/main.lua"
+}

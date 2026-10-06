@@ -97,6 +97,35 @@ static int BossHook_AllSleeping(void)
     return 1;
 }
 
+/* A boss hand whose HP is 0 but that never ran the retail death (Master Hand 0x1B, Crazy Hand 0x1C): the controller below would wait for
+ * a Sleep that cannot come (2026-10-06: Crazy Hand reached 0 HP by a non-hit damage write, the fight never ended, the player was held
+ * blast-zone immune by state 7's Player_80036844(0, 1) and fell out of the world). Retail starts a stamina KO from the damage commit
+ * (Fighter_TakeDamage_8006CC7C -> ftCo_800C8C84 -> fn_800C8E74); this runs the same function for such a hand, so its death is the
+ * retail one. Safe to repeat: ftCo_800C8C84 refuses once the death has begun (x2224_b2). Returns the number of hands driven. */
+extern bool ftCo_800C8C84(HSD_GObj* gobj);
+static int BossHook_DriveDeaths(void)
+{
+    int port, n = 0;
+    for (port = 1; port < 3; ++port) {
+        HSD_GObj* gobj = Player_GetEntity(port);
+        if (gobj != NULL) {
+            Fighter* fp = GET_FIGHTER(gobj);
+            if (BossHook_Kind(fp->kind) && Player_GetRemainingHP(port) <= 0 &&
+                fp->motion_id != ftCo_MS_Sleep && !fp->x2224_b2)
+            {
+                if (ftCo_800C8C84(gobj)) {
+                    OSReport("boss_hook: hand port=%d kind=%d was at 0 HP without a retail death: driven through ftCo_800C8C84\n",
+                             port + 1, fp->kind);
+                    ++n;
+                }
+            }
+        }
+    }
+    return n;
+}
+
+#define BOSS_END_WAIT_MAX 300 /* controller ticks (5 s of logic at full speed): the boss-end wait must not outlast this */
+
 static void BossHook_Poll(void)
 {
     int port;
@@ -206,6 +235,12 @@ void fn_8017C1A4(HSD_GObj* unused)
     }
     if (tmp->x0 >= 3 && tmp->x0 <= 8 && Script_BossHookEnabled()) {
         BossHook_Poll();
+    }
+    if (tmp->x0 >= 3 && tmp->x0 <= 8) {
+        static int drive_tick;
+        if (++drive_tick % 10 == 0) {
+            BossHook_DriveDeaths();
+        }
     }
 #endif
     switch (tmp->x0) {
@@ -378,7 +413,7 @@ void fn_8017C1A4(HSD_GObj* unused)
     case 8:
         /* Wait for the death cleanup in ftCo_800BFD04, then for FramePost. A bad death
          * animation cannot strand the match: the same safety limit applies to that wait. */
-        if (!BossHook_AllSleeping() && ++boss_hook.sleep_wait < 3600) break;
+        if (!BossHook_AllSleeping() && ++boss_hook.sleep_wait < BOSS_END_WAIT_MAX) break;
         if (boss_hook.pending) break;
         if (boss_hook.held) {
             if (!boss_hook.restored) {
@@ -401,7 +436,7 @@ void fn_8017C1A4(HSD_GObj* unused)
             }
             break;
         }
-        if (boss_hook.sleep_wait >= 3600) OSReport("boss_hook: death wait timed out\n");
+        if (boss_hook.sleep_wait >= BOSS_END_WAIT_MAX) OSReport("boss_hook: death wait timed out\n");
         boss_hook.held = 0;
         if (boss_hook.restored) {
             gmVs_GetSceneController()->state.hud_enabled = 0;

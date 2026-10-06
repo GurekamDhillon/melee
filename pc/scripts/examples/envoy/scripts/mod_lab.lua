@@ -441,6 +441,8 @@ return function(D)
   local staged=#self.pending>0 or (self.foes and #self.foes.pending>0) or (self.drives and (#self.drives.pending>0 or self.drives:stale())) or self:seats_busy()
   if ready and staged then
    local bag=self.drives and self.drives.bag:snapshot();local seat_bags={};for p,seat in pairs(self.seats) do seat_bags[p]=seat.bag:snapshot() end;local debug=D.mod_codec.decode(D.mod_codec.encode(self.debug_equipped))
+   local fixed=self.engine.sanitize_statuses and self.engine:sanitize_statuses()
+   if fixed then for _,line in ipairs(fixed) do self.g.log('mod: status repaired before publishing: '..line) end end
    local phase='check'
    local accepted,why=pcall(function()
     self:prospective(self.engine,self.debug_equipped,self.pending,self.foes,self.drives and self.drives:snapshot(),players,nil,self:seat_snapshots())
@@ -509,8 +511,8 @@ return function(D)
    elseif self.hit_owned[p] then ops[#ops+1]={op='hit_rules',port=p,rules={},status_bits=0} end
    local damage=self.engine.damage[p]
    -- A boss's remaining HP is its stamina minus its damage and the game ends the fight when it reaches 0. Only a hit can start the boss's
-   -- death, so (char 26 / 27: Master Hand, Crazy Hand) a damage-over-time tick (burn) must never take a boss's damage up: it would end the fight with the boss alive (the 2026-10-05 softlock).
-   if players[p] and damage and damage>0 and life[p] and (life[p].char==26 or life[p].char==27) then
+   -- death, so (char 26 / 27: Master Hand, Crazy Hand) a damage-over-time tick (burn) must never take a boss's damage up: it would end the fight with the boss alive (the 2026-10-05 softlock). The same rule now also holds in the engine, at the one percent-write choke point (ScriptGame_SetPercent: a write can leave a hand at 1 HP, never 0), because this guard missed the Crazy Hand that arrived mid-fight on 2026-10-06 (its `life` entry did not exist yet).
+   if players[p] and damage and damage>0 and (((life[p] or {}).char or players[p].char)==26 or ((life[p] or {}).char or players[p].char)==27) then
     self.boss_dot_skipped=(self.boss_dot_skipped or 0)+1
     if self.boss_dot_skipped==1 then self.g.log('envoy: damage over time does not hurt a boss (only hits do)') end
     damage=nil

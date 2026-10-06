@@ -24,7 +24,7 @@ return function(D)
  --                   so its drive has to be reachable before that)
  -- How many drives a run hands out (floor drops per stage, which stages give a reward, how many are offered, the bag's size)
  -- is `D.drive_economy.tuning` (floor_max, floor_chance, team_max, reward_every, offers, bonus_offers, bag_capacity).
- H.tuning={settle_frames=30,roll_attempts=2,drops=true,auto_collect=true,hold_ticks=2850,end_hold=true,end_hold_frames=1800,ko_poll=6,drop_percent=50,payout=true,oob_margin=300,oob_frames=240,oob_fallback=3000}
+ H.tuning={settle_frames=30,roll_attempts=2,drops=true,auto_collect=true,hold_ticks=2850,end_hold=true,end_hold_frames=1800,ko_poll=6,drop_percent=50,payout=true,oob_margin=300,oob_frames=240,oob_fallback=3000,stale_hold_frames=1200}
  local function econ() return D.drive_economy.tuning end
  -- `seat` (co-op only): {index=,port=,drives=,allies={[port]=true,...},strength=fn,gather=fn,route=fn,barrier={open=fn,release=fn},anchor=,colour=}.
  -- No seat: the one-player host, exactly as before. Seat 1 is the lead (it owns the stage's opponents, drops and match hold); the other
@@ -102,7 +102,51 @@ return function(D)
  -- The port this host's player plays on (1 in every one-player run), whether `p` is one of the player's allies, and a seed salt that
  -- differs per seat (0 for seat 1 and for a one-player run, so those seeds are unchanged).
  function H:port0() return self.seat and self.seat.port or (self.retail.state and self.retail.state.player_port or 1) end
- function H:is_ally(p) return self.seat~=nil and self.seat.allies~=nil and self.seat.allies[p]==true end
+ -- Whether `p` fights ON the player's side: a co-op seat's ally, or a retail TEAMMATE. A 1P Classic team stage gives the human one CPU
+ -- teammate (the giant stage two): that fighter is never an opponent: no foe registration, no opponent build, no drop decision, no payout
+ -- debt, not a foe for the stage end, and the out-of-bounds watchdog leaves it alone like any ally. Two rules, the first when the engine
+ -- reports teams (gd.player(p).team, engine of 2026-10-06), else the second (the stage_start `opponents` list, which the engine builds from
+ -- retail's own teams and which therefore leaves a teammate out: see H:classify_allies). The log names the rule once per stage.
+ function H:is_ally(p)
+  if self.seat~=nil and self.seat.allies~=nil and self.seat.allies[p]==true then return true end
+  return self:teammate(p)
+ end
+ function H:teammate(p)
+  if p==self:port0() then return false end
+  local ra=self.retail_allies;if ra and ra[p]==true then return true end
+  local g=self.g;if not g.player then return false end
+  local me,v=g.player(self:port0()),g.player(p)
+  if me and v and type(me.team)=='number' and type(v.team)=='number' and me.team>=0 and v.team>=0 then
+   local tc=self.team_cache;if not tc then tc={};self.team_cache=tc end
+   local same=me.team==v.team
+   if tc[p]==nil then tc[p]=same;if same then self:log(("P%d is the player's teammate (engine team %d, the same as the player's): never an opponent"):format(p,v.team)) end end
+   return tc[p]
+  end
+  return false
+ end
+ -- At the stage's start, once: which CPU fighters are the player's teammates, and by which rule (logged either way).
+ function H:classify_allies(e)
+  self.retail_allies={};self.team_cache={};self.ally_rule=nil
+  local g=self.g;if self.seat or not g.player then return end
+  local port0=self:port0();local listed={};local have=type(e.opponents)=='table'
+  if have then for _,o in ipairs(e.opponents) do if o.port then listed[o.port]=true end end end
+  local by_team,by_list=0,0
+  for p=1,6 do
+   if p~=port0 then
+    local v=g.player(p)
+    if v and v.cpu then
+     if type(v.team)=='number' then by_team=by_team+1;self:teammate(p)
+     elseif have and not listed[p] then
+      by_list=by_list+1;self.retail_allies[p]=true
+      self:log(("P%d is the player's teammate (fallback rule: the engine reports no team, and retail's opponent list for this %s stage leaves it out)"):format(p,self.stage_kind))
+     end
+    end
+   end
+  end
+  local me=g.player(port0)
+  if me and type(me.team)=='number' then self.ally_rule='engine team' elseif have then self.ally_rule='retail opponent list' else self.ally_rule='none' end
+  self:log(('ally rule for this %s stage: %s'):format(self.stage_kind,self.ally_rule))
+ end
  -- Co-op: a decision worth recording (the run's event list, the same on both peers); a one-player host records nothing.
  function H:emit(kind,a,b) if self.seat and self.seat.emit then self.seat.emit(self,kind,a,b) end end
  function H:salt() return self.seat and (self.seat.index-1)*1000 or 0 end
@@ -474,8 +518,9 @@ return function(D)
   self.fell={};self.hurt={};self.dropped={};self.since=0;self.kos=0;self.faded={}
   self.travel_min,self.travel_max=nil,nil;self.foe_seen=false
   self.stage_kind=e.stage_kind or 'battle';self.foe_ports={};self.rolled={};self.drop_queue={};self.hold_gave_up=false;self.holding_end=false;self.out_frames=0;self.last_blast=nil;self.oob={}
-  do local P=D.drive_drop.payout;if self.seq then self:end_payout() end;self.seq=P.seq();self.leave_w=P.leave_watch();self.idle_w=P.idle_watch();self.paying=false;self.pay_idle=false;self.spots=nil;self.spot_i=0 end
-  for _,o in ipairs(e.opponents or {}) do if o.port then self.foe_ports[#self.foe_ports+1]=o.port;self.rolled[o.port]=true;self.rolls[o.port]=true end end
+  do local P=D.drive_drop.payout;if self.seq then self:end_payout() end;self.seq=P.seq();self.leave_w=P.leave_watch();self.idle_w=P.idle_watch();self.paying=false;self.pay_state='idle';self.pay_idle=false;self.spots=nil;self.spot_i=0;self.stale_sig=nil;self.stale_frames=0 end
+  self:classify_allies(e)
+  for _,o in ipairs(e.opponents or {}) do if o.port and not self:is_ally(o.port) then self.foe_ports[#self.foe_ports+1]=o.port;self.rolled[o.port]=true;self.rolls[o.port]=true end end
   self.foe_seen=#self.foe_ports>0
   local ctx=self:context_for(self.stage,self.loop)
   self.mods:set_context(ctx)
@@ -489,12 +534,14 @@ return function(D)
   if not self.running or not e or not e.port or e.port==self:port0() or self:is_ally(e.port) or self.follower then return end
   -- The spawn signal fires while the scene is still being built: only note the port here. The roll (which
   -- also warms the look shaders) is queued from the first logic frame, when the fighter is fully present.
+  if self.team_cache then self.team_cache[e.port]=nil end
   self:register_foe(e.port)
  end
  -- An opponent exists for this stage from the moment it appears (Adventure's side-scrollers and hordes spawn fighters after
  -- the stage starts): it is watched for drops, and its build is rolled ONCE per port per stage (a respawn on the same port
  -- keeps that build; the engine re-installs it).
  function H:register_foe(p)
+  if self:is_ally(p) then return end
   local known=false;for _,q in ipairs(self.foe_ports) do if q==p then known=true end end
   if not known then self.foe_ports[#self.foe_ports+1]=p;self:log('opponent P'..p..' joined the stage') end
   if not self.rolled[p] then self.rolled[p]=true;self.rolls[p]=true end
@@ -612,11 +659,11 @@ return function(D)
  end
  function H:foes_out()
   local port0=self:port0()
-  if #self.foe_ports==0 then return false end
+  local real=0
   for _,p in ipairs(self.foe_ports) do
-   if p~=port0 and not self:is_ally(p) then local v=self.g.player(p);if v and (v.stocks or 0)>0 then return false end end
+   if p~=port0 and not self:is_ally(p) then real=real+1;local v=self.g.player(p);if v and (v.stocks or 0)>0 then return false end end
   end
-  return true
+  return real>0
  end
  -- The "collect the drives" hold: a banner (the strip's small flash text was easy to miss) and a marker on the nearest floor drive:
  -- a bobbing arrow over it when it is on screen, an edge arrow pointing toward it when it is not. Drawing only.
@@ -674,12 +721,12 @@ return function(D)
   for _,p in ipairs(self.foe_ports) do if p~=port0 and not self:is_ally(p) then out[#out+1]=p end end
   return out
  end
- function H:begin_payout()
-  local P=D.drive_drop.payout;self.paying=true
+ function H:begin_payout(why)
+  local P=D.drive_drop.payout;self.paying=true;self.pay_state='arriving'
   local kind=self.stage_kind;local max=self:drop_rule(kind)
   local given=self.retry and self.drops_given~=nil and self.drops_given[self.loop..':'..self.stage]==true
   local owed=P.owed_foes(kind,max,self:foes_list(),{kos=self.kos,dropped=self.dropped,given=given})
-  self:log(('the last opponent is out: %d drive decision(s) owed%s'):format(#owed,given and ' (a retry: the stage already gave its drop)' or ''))
+  self:log(('the last opponent is out: %d drive decision(s) owed%s%s'):format(#owed,given and ' (a retry: the stage already gave its drop)' or '',why and (' ['..why..']') or ''))
   for _,p in ipairs(owed) do self:on_ko(p,'owed at the clear',true) end
   local n=self.seq:pending()
   if n>0 then
@@ -722,11 +769,28 @@ return function(D)
  -- The payout ends (collected, left, lost, run end): its transient effects stop and what has not arrived is returned (and never lost silently).
  function H:end_payout()
   local left=self.seq and self.seq:clear(self.g) or {}
-  self.paying=false;return left
+  self.paying=false;self.pay_state='done';return left
+ end
+ -- The end hold's state, explicit: H.pay_state is 'idle' (the payout has not begun), 'arriving' (begun, drives still to appear),
+ -- 'waiting' (all have appeared; the player collects), or 'done'. A payout runs AT MOST ONCE per stage attempt: once 'done' the hold is
+ -- never taken again (it used to be re-taken every poll when the release left `paying` false, deferring retail's end again and again).
+ -- What begins it: retail's own decision, read from the engine (gd.match_end_pending: the outcome retail reached and the hold is
+ -- deferring), with the stock count (every opponent out) as the fallback on an engine without that read. The watchdog below releases a hold
+ -- that has stopped meaning anything.
+ function H:end_pending()
+  local g=self.g;if not g.match_end_pending then return nil end
+  local ok,o=pcall(g.match_end_pending);if ok and type(o)=='number' and o>0 then return o end
+  return false
+ end
+ function H:world_sig(port0)
+  local t={}
+  for p=1,6 do if p~=port0 then local v=self.g.player(p);if v then t[#t+1]=('%d:%s:%s:%s'):format(p,tostring(v.stocks),tostring(v.percent),tostring(v.action)) end end end
+  return table.concat(t,'|')
  end
  function H:update_payout_hold()
   local P=D.drive_drop.payout;local k=self.stage_kind;local d=self.mods.drives
   if not self.running or self.screen.active or not d or k=='bonus' or k=='boss' or self.hold_gave_up or #self.foe_ports==0 then return self:set_hold(false) end
+  if self.pay_state=='done' then self.hold_banner=nil;return self:set_hold(false) end
   local me=self.g.player(self:port0())
   if self.seat and self.seat.team_alive then me=self.seat.team_alive(self) end -- co-op: any living teammate keeps the hold
   local alive=me~=nil and (me.stocks or 0)>0
@@ -734,13 +798,30 @@ return function(D)
    local lost=self:end_payout();if #lost>0 then self:log(('the player is out: %d owed drive(s) are not paid (the stage is lost)'):format(#lost)) end
    return self:set_hold(false,'the player is out')
   end
-  if not self.paying and self:foes_out() then self:begin_payout() end
+  local pending=self:end_pending()
+  if self.pay_state=='idle' then
+   if pending then self:begin_payout('retail has decided the stage is over: engine outcome '..tostring(pending))
+   elseif pending==nil and self:foes_out() then self:begin_payout('every opponent is out: stock count, this engine has no end signal') end
+  end
   local floor=d.drops:count();local queued=(self.drop_queue and #self.drop_queue or 0)+(self.seq and self.seq:pending() or 0)
+  if self.pay_state=='arriving' and (self.seq and self.seq:pending() or 0)==0 then self.pay_state='waiting' end
   if floor+queued>0 then
    if not self.hold_banner then self.hud:flash('Collect the drives') end
    self.hold_banner=(self.paying and floor==0) and 'The stage pays out' or 'Collect the drives'
   else self.hold_banner=nil end
-  self:set_hold(true) -- the stage's end is always held while the player lives (the log line says why)
+  self:set_hold(true) -- the stage's end is held while the player lives and the payout is not done (the log line says why)
+  -- watchdog: the end is held (retail decided, or every foe is out), nothing is owed or on the floor, and no fighter has acted, been hit
+  -- or lost a stock for stale_hold_frames: the hold means nothing any more. Release it, loudly, and never take it again this stage.
+  local held_end=pending or (pending==nil and self:foes_out())
+  local sig=self:world_sig(self:port0())
+  if held_end and floor+queued==0 and sig==self.stale_sig then self.stale_frames=(self.stale_frames or 0)+H.tuning.ko_poll else self.stale_frames=0 end
+  self.stale_sig=sig
+  if self.stale_frames>=H.tuning.stale_hold_frames then
+   self:log(('WATCHDOG: the stage end has been held for %d s with nothing owed, nothing on the floor and no fighter acting: the hold is released and will not be taken again this stage (engine end signal: %s)'):format(self.stale_frames//60,tostring(pending)))
+   self.g.log('envoy: WATCHDOG released a stale stage-end hold')
+   self:end_payout();self.hold_gave_up=true;self.hold_banner=nil
+   return self:set_hold(false,'stale hold watchdog')
+  end
   if not self.paying then return end
   local why=P.release_reason{floor=floor,queued=queued,alive=alive,left=self.leave_w.done,idle=self.pay_idle==true}
   if not why then return end
@@ -755,6 +836,7 @@ return function(D)
    for _,it in ipairs(self:end_payout()) do self.drop_queue[#self.drop_queue+1]={record=it.record,tries=0,why='away'} end
    self:log('payout: the player is away: what is left is gathered at the stage end');self.hold_gave_up=true
   else self:end_payout() end
+  self.pay_state='done'
   self:set_hold(false,why)
  end
  function H:update_hold()
@@ -849,12 +931,19 @@ return function(D)
   if box then return v.x<box.left-m or v.x>box.right+m or v.y<box.bottom-m or v.y>box.top+m end
   return math.abs(v.x)>f or math.abs(v.y)>f
  end
+ -- RULE (2026-10-06: a won boss fight became a game over): this net NEVER takes the player's LAST stock. It is a repair for a fighter the game
+ -- forgot to KO, and the only honest repair for the last stock is to put the fighter back on the stage; ending the run is the game's business.
+ -- And on a boss stage it does not touch the player once the boss is defeated: the retail boss controller makes the player immune to the blast
+ -- zone by design while it waits for the hands to go down (src/melee/gm/gm_17C0.c fn_8017C1A4, Player_80036844).
  function H:oob_resolve(p,v,box)
   local g=self.g;local left=(v.stocks or 0)-1
-  self:log(('P%d is out of bounds (x=%.0f y=%.0f) and was never knocked out: losing a stock (%d left)'):format(p,v.x,v.y,math.max(left,0)))
-  self.hud:flash(p==self:port0() and 'Out of bounds: a stock is lost' or ('P'..p..' out of bounds: a stock is lost'),true)
-  if g.set_stocks then g.set_stocks(p,math.max(left,0)) end
-  if left>0 and g.teleport then
+  local player=p==self:port0()
+  local last=player and left<=0
+  if last then self:log(('P%d is out of bounds (x=%.0f y=%.0f) on the LAST stock: put back on the stage, the stock is not taken'):format(p,v.x,v.y))
+  else self:log(('P%d is out of bounds (x=%.0f y=%.0f) and was never knocked out: losing a stock (%d left)'):format(p,v.x,v.y,math.max(left,0))) end
+  self.hud:flash(player and (last and 'Out of bounds: put back' or 'Out of bounds: a stock is lost') or ('P'..p..' out of bounds: a stock is lost'),true)
+  if g.set_stocks and not last then g.set_stocks(p,math.max(left,0)) end
+  if (left>0 or last) and g.teleport then
    local fl=box and box.floor;local x=fl and (fl.left+fl.right)/2 or (box and box.origin and box.origin.x) or 0
    local y=(fl and fl.top or (box and box.origin and box.origin.y) or 0)+40
    g.teleport(p,x,y)
@@ -866,7 +955,8 @@ return function(D)
   local ports={self:port0()};for _,p in ipairs(self.foe_ports) do if p~=ports[1] and not self:is_ally(p) then ports[#ports+1]=p end end
   for _,p in ipairs(ports) do
    local v=g.player(p)
-   if v and type(v.x)=='number' and type(v.y)=='number' and (v.stocks or 0)>0 and not v.hidden and not (g.fly and g.fly(p)==true) and v.char~=26 and v.char~=27 and self:oob_outside(v,box) then
+   local boss_won=p==self:port0() and self.stage_kind=='boss' and self.retail and self.retail.boss==true
+   if v and not boss_won and type(v.x)=='number' and type(v.y)=='number' and (v.stocks or 0)>0 and not v.hidden and not (g.fly and g.fly(p)==true) and v.char~=26 and v.char~=27 and self:oob_outside(v,box) then
     self.oob[p]=(self.oob[p] or 0)+step
     if self.oob[p]>=H.tuning.oob_frames then self.oob[p]=0;self:oob_resolve(p,v,box) end
    else self.oob[p]=0 end

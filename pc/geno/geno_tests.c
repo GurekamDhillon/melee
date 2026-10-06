@@ -2413,6 +2413,34 @@ static int test_geno_lab_stale_fighter(void)
     return rc;
 }
 
+/* gd.player(p).team: the retail team index, readable for a slot whose fighter has not spawned, -1 for an empty slot.
+ * Field 9 is SCRIPT_I_TEAM (script_game.c; SI_TEAM in gw_script.c). The Envoy mod reads it to tell a CPU teammate
+ * (a 1P team stage) from an opponent. */
+static int test_geno_player_team_read(void)
+{
+    static StaticPlayer saved1, saved2;
+    int rc = 0;
+    t_setup();
+    saved1 = player_slots[1];
+    saved2 = player_slots[2];
+    player_slots[1].pkind = 1; /* CPU */
+    player_slots[1].team = 0;
+    player_slots[2].pkind = 1;
+    player_slots[2].team = 2;
+    if (ScriptGame_FighterI(1, 9) != 0 || ScriptGame_FighterI(2, 9) != 2) {
+        TestFail("the team read must return Player_GetTeam for a present slot");
+        rc = 1;
+    }
+    player_slots[2].pkind = 3; /* none */
+    if (ScriptGame_FighterI(2, 9) != -1 || ScriptGame_FighterI(6, 9) != -1) {
+        TestFail("an empty or out-of-range slot must read team -1");
+        rc = 1;
+    }
+    player_slots[1] = saved1;
+    player_slots[2] = saved2;
+    return rc;
+}
+
 /* ---- LAB, the Lab's own game mode (geno_lab_mode.c) ------------------------------------------ */
 #include <melee/gm/gm_1A3F.h>
 #include <melee/gm/gmfrontend.h>
@@ -3495,6 +3523,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v3_cape", test_geno_v3_cape);
     TestRegister("geno_v3_drill", test_geno_v3_drill);
     TestRegister("geno_lab_stale_fighter", test_geno_lab_stale_fighter);
+    TestRegister("geno_player_team_read", test_geno_player_team_read);
     TestRegister("geno_v4_drill_pose", test_geno_v4_drill_pose);
     TestRegister("geno_v4_tornado_spin", test_geno_v4_tornado_spin);
     TestRegister("geno_lab_mode_table", test_geno_lab_mode_table);

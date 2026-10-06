@@ -74,6 +74,99 @@ check(not ui.engine_press('x.b', 'y'), 'no handler: nothing')
 ui.feed('x.b', 'down'); check(ui.fed[1][1] == 'x.b' and ui.fed[1][2] == 'down', 'feed is recorded')
 ui.note({ text = 'hi' }); ui.dialog({ title = 'T' }); check(#ui.notes == 1 and #ui.dialogs == 1, 'notes and dialogs are recorded')
 ui.close('x.a'); check(ui.state().depth == 0, 'close removes the screen')
+-- ---- fix round 1: parity with gw_ui_screen.c as it is now ---------------------------------------------------------------
+local function list1(extra) local d = { id = 'x.l', primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } }; for k, v in pairs(extra or {}) do d[k] = v end; return d end
+raises(function() ui.screen(list1({ id = 'x.' .. string.rep('i', 46) })) end, 'too long', 'a screen id over 47 characters')
+check(ui.screen(list1({ id = 'x.' .. string.rep('i', 45) })), 'a 47 character screen id registers')
+raises(function() ui.screen(list1({ chapter = 6 })) end, 'chapter is 0 to 5', 'chapter above 5')
+raises(function() ui.screen(list1({ chapter = -1 })) end, 'chapter is 0 to 5', 'chapter below 0')
+check(ui.screen(list1({ chapter = 5 })), 'chapter 5')
+raises(function() ui.screen(list1({ port = 0 })) end, 'port is 1 to 4', 'port 0')
+raises(function() ui.screen(list1({ port = 5 })) end, 'port is 1 to 4', 'port 5')
+check(ui.screen(list1({ port = 4 })), 'port 4')
+raises(function() ui.screen(list1({ explainer = { width = 'huge' } })) end, 'narrow, normal or wide', 'a bad explainer width')
+raises(function() ui.screen(list1({ explainer = 'some' })) end, 'table or "none"', 'a bad explainer string')
+check(ui.screen(list1({ explainer = 'none' })) and ui.screen(list1({ explainer = { width = 'wide' } })), 'none and the three widths')
+raises(function() ui.screen({ id = 'x.l', primary = { kind = 'grid', blocks = { 5 } } }) end, 'block 1 is not a table', 'a non-table block')
+raises(function() ui.screen({ id = 'x.l', primary = { kind = 'grid', blocks = { { id = 'b', cols = 1, cells = { 'c' } } } } }) end, 'cell 1 is not a table', 'a non-table cell')
+raises(function() ui.screen({ id = 'x.l', primary = { kind = 'list', items = { 'i' } } }) end, 'item 1 is not a table', 'a non-table item')
+raises(function() ui.screen(list1({ keys = { 'A' } })) end, 'key hint 1 is not a table', 'a non-table key')
+raises(function() ui.screen(list1({ keys = { { 'A', 'ok' }, { 'B', 'ok' }, { 'X', 'ok' }, { 'Y', 'ok' }, { 'Z', 'ok' }, { 'L', 'ok' }, { 'R', 'ok' } } })) end, 'at most 6', 'seven keys')
+raises(function() ui.screen({ id = 'x.l', primary = { kind = 'list', items = { { id = 'a', value = { kind = 'dial' } } } } }) end, 'unknown value kind', 'an unknown value kind')
+-- the conversion arena
+local big = {}; for i = 1, 3000 do big[i] = i end
+raises(function() ui.screen(list1({ extra = big })) end, 'the description is too large', 'an oversized array')
+local keyed = {}; for i = 1, 3000 do keyed['k' .. i] = { i } end
+raises(function() ui.screen(list1({ extra = keyed })) end, 'the description is too large', 'an oversized keyed table')
+local deep = {}; do local c = deep; for _ = 1, 12 do c.x = {}; c = c.x end end
+raises(function() ui.screen(list1({ extra = deep })) end, 'nested too deeply', 'nesting past 8 levels')
+local cyc = {}; cyc.self = cyc
+raises(function() ui.screen(list1({ extra = cyc })) end, 'nested too deeply', 'a cycle')
+local words = {}; for i = 1, 200 do words[i] = string.rep('w', 300) end
+raises(function() ui.screen(list1({ extra = words })) end, 'the description is too large', 'a string pool over the ceiling')
+check(ui.screen(list1({ extra = { 1, 2, 3 } })), 'a small extra table is fine')
+-- explainer fields are cut to their buffers (AT_STR 63, AT_TEXT 159) with a warning
+local cutd = list1({ explainer = { provide = function() return { title = string.rep('t', 100), kicker = 'k', what = string.rep('word ', 60) } end } })
+ui.screen(cutd); local cv = ui.refresh('x.l').explainer
+check(#cv.title == 63 and #cv.what == 159 and cv.warn == true, 'title cut to 63 and what to 159, with a warning (got ' .. #cv.title .. ', ' .. #cv.what .. ')')
+local okd = list1({ explainer = { provide = function() return { title = 'short', what = 'fits' } end } })
+ui.screen(okd); check(ui.refresh('x.l').explainer.warn == false, 'nothing cut: no warning')
+-- the owner prefix, and ownership of every call
+local mod = Stub.new({ owner_mod = 'envoy', caller = 'envoy/a' })
+raises(function() mod.screen(list1({ id = 'other.x' })) end, 'must start with "envoy."', 'a mod screen id carries the mod id')
+check(mod.screen(list1({ id = 'envoy.x' })) and mod.open('envoy.x'), 'the owner registers and opens')
+mod.caller = 'envoy/b'
+raises(function() mod.open('envoy.x') end, 'belongs to another script', 'open of another script\'s screen')
+raises(function() mod.close('envoy.x') end, 'belongs to another script', 'close of another script\'s screen')
+raises(function() mod.feed('envoy.x', 'down') end, 'belongs to another script', 'feed')
+raises(function() mod.focus('envoy.x') end, 'belongs to another script', 'focus')
+raises(function() mod.set_focus('envoy.x', 'list', 'a') end, 'belongs to another script', 'set_focus')
+raises(function() mod.screen(list1({ id = 'envoy.x' })) end, 'belongs to another script', 're-registering it')
+check(mod.note({ text = 'x' }) == false and mod.dialog({ title = 'x' }) == false and mod.close() == false, 'note, dialog and close() act only on the caller\'s own top screen')
+check(mod.state().top == 'envoy.x' and #mod.notes == 0 and #mod.dialogs == 0, 'and nothing changed')
+mod.caller = 'console'; check(mod.feed('envoy.x', 'down') and mod.close('envoy.x'), 'the console may drive any screen')
+raises(function() mod.feed('envoy.x', 'sideways') end, 'unknown intent', 'an unknown intent') -- (screen is closed but still registered)
+-- page, start, value rows, results
+local pl = {}
+local pg = list1({ id = 'x.p', primary = { kind = 'list', items = {
+  { id = 'tg', label = 'T', value = { kind = 'toggle', on = false } }, { id = 'sl', label = 'S', value = { kind = 'slider', min = 0, max = 100, value = 50 } },
+  { id = 'ch', label = 'C', value = { kind = 'choice' } }, { id = 'off', label = 'D', disabled = true, value = { kind = 'toggle' } } } },
+  on = { page = function(dir, c, b) pl[#pl + 1] = 'page ' .. dir .. ' ' .. c .. ' ' .. b end, start = function(c, b) pl[#pl + 1] = 'start ' .. c end,
+         change = function(id, v) pl[#pl + 1] = id .. '=' .. tostring(v) end, accept = function(c) pl[#pl + 1] = 'accept ' .. c end } })
+ui.screen(pg); ui.open('x.p')
+ui.engine_press('x.p', 'l'); ui.engine_press('x.p', 'r'); ui.engine_press('x.p', 'start')
+check(table.concat(pl, ',') == 'page -1 tg list,page 1 tg list,start tg', 'L and R reach on.page(dir, cell, block); START reaches on.start (got ' .. table.concat(pl, ',') .. ')')
+pl = {}
+ui.engine_press('x.p', 'accept'); ui.engine_press('x.p', 'accept')
+check(table.concat(pl, ',') == 'tg=true,tg=false', 'a toggle flips on accept, and on.accept is not called for it (got ' .. table.concat(pl, ',') .. ')')
+ui.set_focus('x.p', 'list', 'sl'); pl = {}
+ui.engine_row('x.p', 'right'); ui.engine_row('x.p', 'left'); ui.engine_row('x.p', 'left')
+check(table.concat(pl, ',') == 'sl=55,sl=50,sl=45', 'a slider steps by 5 on 0..100 (got ' .. table.concat(pl, ',') .. ')')
+ui.set_focus('x.p', 'list', 'ch'); pl = {}
+ui.engine_row('x.p', 'right'); ui.engine_row('x.p', 'left'); ui.engine_press('x.p', 'accept')
+check(table.concat(pl, ',') == 'ch=1,ch=-1,ch=1', 'a choice reports its direction (got ' .. table.concat(pl, ',') .. ')')
+ui.set_focus('x.p', 'list', 'off'); pl = {}
+ui.engine_row('x.p', 'right'); ui.engine_press('x.p', 'accept')
+check(#pl == 0, 'a disabled row changes nothing')
+ui.close('x.p')
+-- the pad: a held button is carried across a stack change
+local hl = {}
+local function mk(id, acc, back)
+  return list1({ id = id, on = { accept = function() hl[#hl + 1] = id .. ':a'; return acc end, back = function() hl[#hl + 1] = id .. ':b'; return back end } })
+end
+ui.screen(mk('x.1', { push = 'x.2' }, { pop = true })); ui.screen(mk('x.2', nil, { pop = true })); ui.screen(mk('x.3', nil, { pop = true }))
+ui.open('x.1'); ui.hold('A'); ui.tick()
+check(table.concat(hl, ',') == 'x.1:a' and ui.state().top == 'x.2', 'the press fires on the first screen and pushes the second')
+ui.tick(); ui.tick()
+check(table.concat(hl, ',') == 'x.1:a', 'a still-held A does not fire on the new top')
+ui.release('A'); ui.tick(); ui.hold('A'); ui.tick()
+check(table.concat(hl, ',') == 'x.1:a,x.2:a', 'released and pressed again, it fires')
+ui.release('A'); ui.tick(); hl = {}
+ui.open('x.3'); ui.hold('B'); ui.tick(); ui.tick(); ui.tick()
+check(table.concat(hl, ',') == 'x.3:b' and ui.state().top == 'x.2', 'one held B closes one level, not the stack (got ' .. table.concat(hl, ',') .. ' top ' .. tostring(ui.state().top) .. ')')
+ui.release('B'); ui.tick(); ui.hold('B'); ui.tick()
+check(table.concat(hl, ',') == 'x.3:b,x.2:b' and ui.state().top == 'x.1', 'after a release the next B closes the next level')
+ui.release('B'); ui.close(); ui.held = {}
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

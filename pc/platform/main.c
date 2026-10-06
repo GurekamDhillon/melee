@@ -200,13 +200,19 @@ static AuroraBackend gw_desired_backend(void) {
   return BACKEND_D3D11;
 }
 #else
-/* No D3D11/D3D12 on Linux - Vulkan is the only backend, so MELEE_BACKEND only chooses between
- * an explicit request and Aurora's own auto-detection. */
+/* No D3D11/D3D12 on Linux: MELEE_BACKEND=vulkan (the default), opengles, or auto (Aurora's own order). If the
+ * requested backend finds no adapter Aurora falls through its list anyway (Vulkan, OpenGL ES, Null). */
 static AuroraBackend gw_desired_backend(void) {
   const char *env = getenv("MELEE_BACKEND");
   if (env != NULL && _stricmp(env, "auto") == 0) {
     gw_log("melee-pc: MELEE_BACKEND=auto");
     return BACKEND_AUTO;
+  }
+  if (env != NULL && (_stricmp(env, "opengles") == 0 || _stricmp(env, "gles") == 0)) {
+    /* For a machine whose Vulkan enumeration fails outright (the log shows "No supported adapters" under
+     * "Requesting adapter ... Backend: Vulkan"): go straight to Dawn's OpenGL ES backend (EGL). */
+    gw_log("melee-pc: MELEE_BACKEND=%s -> OpenGL ES", env);
+    return BACKEND_OPENGLES;
   }
   if (env != NULL && _stricmp(env, "d3d11") != 0 && _stricmp(env, "d3d12") != 0 &&
       _stricmp(env, "vulkan") != 0) {

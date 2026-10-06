@@ -235,9 +235,62 @@ static void explainer_note_dialog(void)
     }
 }
 
+static void fix_round1(void)
+{
+    AtRect r = { 32.0f, 100.0f, 300.0f, 34.0f };
+    AtItem it = item("Window", AT_VAL_NONE), lg = item("A really quite long row label that cannot fit", AT_VAL_NONE);
+    AtSink s;
+    int i, k;
+    float c = (float) AT_PX_CH_S;
+    /* the focus and press ticks stay inside the chamfered silhouette: nothing coloured ember touches the cut-away corner */
+    for (k = 0; k < 2; k++) {
+        s = rec_sink();
+        at_part_row(&s, &FAKE, r, &it, k ? AT_ST_PRESS : AT_ST_FOCUS);
+        for (i = 0; i < REC.np; i++) {
+            unsigned col = REC.p[i].rgba;
+            if (col == AT_C_EMBER || col == AT_C_EMBER_D) {
+                float top = poly_miny(&REC.p[i]), left = poly_minx(&REC.p[i]), ry = k ? 101.0f : 98.0f;
+                if (left <= 32.0f + 0.01f && poly_maxy(&REC.p[i]) - top < 30.0f) CHECK(top >= ry + c - 0.01f);   /* a tick on the left edge starts below the chamfer */
+            }
+        }
+    }
+    /* a long label in a 60 px plate: every text stays inside the plate */
+    { AtRect n = { 32.0f, 100.0f, 60.0f, 34.0f };
+      s = rec_sink(); at_part_row(&s, &FAKE, n, &lg, AT_ST_REST);
+      for (i = 0; i < REC.nt; i++) CHECK(REC.t[i].x + fake_width(0, REC.t[i].role, REC.t[i].s) <= 32.0f + 60.0f + 0.01f);
+      s = rec_sink(); lg.vkind = AT_VAL_TOGGLE; at_part_row(&s, &FAKE, n, &lg, AT_ST_REST);   /* no room at all for the label: it is not drawn unfitted */
+      CHECK(find_text(lg.label) == NULL);
+    }
+    /* a tag with a slot narrower than its padding draws no unfitted text */
+    s = rec_sink(); (void) at_part_tag(&s, &FAKE, 0.0f, 0.0f, "ABCDEFGH", AT_TAG_PLAIN, 10.0f);
+    for (i = 0; i < REC.nt; i++) CHECK(fake_width(0, REC.t[i].role, REC.t[i].s) <= 0.01f);
+    /* a focused tab: lift 2 px, an ember front edge and a tick */
+    { AtRect tr = { 32.0f, 70.0f, 300.0f, 30.0f };
+      static const char *const nm[3] = { "VIDEO", "AUDIO", "CONTROLS" };
+      static const int ct[3] = { 5, 3, 12 };
+      float top = 1e9f;
+      s = rec_sink(); at_part_tabs(&s, &FAKE, tr, nm, ct, 3, 1, 0);
+      for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == AT_C_GROUND2 && poly_miny(&REC.p[i]) < top) top = poly_miny(&REC.p[i]);
+      CHECK_NEAR(top, 72.0f);                                              /* an unfocused tab top is 74; focused it is lifted 2 */
+      CHECK(count_color(AT_C_EMBER) == 2);                                 /* the front edge and the tick */
+    }
+    /* a wide tab set stays inside r.w, with and without counts */
+    { AtRect tr = { 32.0f, 70.0f, 200.0f, 30.0f };
+      static const char *const nm[4] = { "VIDEO SETTINGS", "AUDIO SETTINGS", "CONTROLS", "ACCESSIBILITY" };
+      static const int ct[4] = { 5, 3, 12, 7 };
+      for (k = 0; k < 2; k++) {
+          float maxr = 0.0f;
+          s = rec_sink(); at_part_tabs(&s, &FAKE, tr, nm, k ? NULL : ct, 4, 0, -1);
+          for (i = 0; i < REC.np; i++) if (poly_maxx(&REC.p[i]) > maxr) maxr = poly_maxx(&REC.p[i]);
+          CHECK(maxr <= 32.0f + 200.0f + 0.01f);
+          for (i = 0; i < REC.nt; i++) CHECK(REC.t[i].x + fake_width(0, REC.t[i].role, REC.t[i].s) <= 32.0f + 200.0f + 0.01f);
+      }
+    }
+}
+
 int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
-    cells(); hints_and_chrome(); explainer_note_dialog();
+    cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1();
     ATLAS_DONE("atlas parts");
 }

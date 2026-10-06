@@ -152,7 +152,7 @@ static float part_slider(const AtSink *s, float right, float cy, int vmin, int v
 void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it, int state)
 {
     unsigned face = AT_C_PLATE2, edge = AT_C_EDGE2, txt = AT_C_TEXT2, val = AT_C_MUTED;
-    float e = 3.0f, y = r.y, right, cy, vw = 0.0f, lx;
+    float e = 3.0f, y = r.y, right, cy, vw = 0.0f, lx, avail;
     int disabled = state == AT_ST_DISABLED || (it->flags & AT_CELL_DISABLED), focus = state == AT_ST_FOCUS && !disabled;
     AtRect pr;
     if (disabled) { face = AT_C_PLATE; txt = AT_C_DIM; val = AT_C_DIM; }
@@ -160,8 +160,9 @@ void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it
     else if (state == AT_ST_PRESS) { face = AT_C_PLATE; edge = AT_C_EMBER_D; txt = AT_C_IVORY; e = 1.0f; y += 1.0f; }
     pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
     at_plate(s, pr, face, edge, e, (float) AT_PX_CH_S);
-    if (focus) at_poly_rect(s, r.x, y, 4.0f, r.h - e, AT_C_EMBER);
-    if (state == AT_ST_PRESS) at_poly_rect(s, r.x, y, 4.0f, r.h - e, AT_C_EMBER_D);
+    /* the tick starts below the chamfer so it never squares off the cut corner */
+    if (focus) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER);
+    if (state == AT_ST_PRESS) at_poly_rect(s, r.x, y + (float) AT_PX_CH_S, 4.0f, r.h - e - (float) AT_PX_CH_S, AT_C_EMBER_D);
     if (it->flags & AT_CELL_SELECTED) at_poly_rect(s, r.x + r.w - 4.0f, y, 4.0f, r.h - e, AT_C_JADE);
     right = r.x + r.w - 12.0f - ((it->flags & AT_CELL_SELECTED) ? 6.0f : 0.0f);
     cy = y + (r.h - e) * 0.5f;
@@ -177,28 +178,58 @@ void at_part_row(const AtSink *s, const AtTextOps *o, AtRect r, const AtItem *it
     default: break;
     }
     lx = r.x + 12.0f;
-    if (it->sub[0] != '\0') {
-        at_text(s, o, AT_R_ROW16, it->label, lx, y + 15.0f, txt, AT_ALIGN_LEFT, right - lx - vw - 8.0f);
-        at_text(s, o, AT_R_BODY12, it->sub, lx, y + r.h - e - 4.0f, AT_C_MUTED, AT_ALIGN_LEFT, right - lx - vw - 8.0f);
-    } else {
-        at_text(s, o, AT_R_ROW16, it->label, lx, mid_base(y, r.h - e, AT_R_ROW16), txt, AT_ALIGN_LEFT, right - lx - vw - 8.0f);
+    avail = right - lx - vw - 8.0f;
+    if (avail >= 8.0f) {                                                /* no room: draw nothing rather than unfitted text */
+        if (it->sub[0] != '\0') {
+            at_text(s, o, AT_R_ROW16, it->label, lx, y + 15.0f, txt, AT_ALIGN_LEFT, avail);
+            at_text(s, o, AT_R_BODY12, it->sub, lx, y + r.h - e - 4.0f, AT_C_MUTED, AT_ALIGN_LEFT, avail);
+        } else {
+            at_text(s, o, AT_R_ROW16, it->label, lx, mid_base(y, r.h - e, AT_R_ROW16), txt, AT_ALIGN_LEFT, avail);
+        }
     }
 }
 
+/* Tabs fit inside r.w: the names step down one role (CAP16 to CAP14), then are truncated in proportion; when even the
+ * padding and counts do not fit, the counts are dropped, and a name with no room left is not drawn. */
 void at_part_tabs(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *names, const int *counts, int n, int active, int focus_tab)
 {
-    float x = r.x, bottom = r.y + r.h;
-    int i;
+    float x = r.x, bottom = r.y + r.h, gaps = n > 1 ? 2.0f * (float) (n - 1) : 0.0f, fixed, names_w, scale = 1.0f;
+    int i, role = AT_R_CAP16, with_counts = counts != NULL, pass;
+    for (pass = 0; pass < 3; pass++) {
+        fixed = gaps; names_w = 0.0f;
+        for (i = 0; i < n; i++) {
+            char num[16];
+            snprintf(num, sizeof num, "%d", counts != NULL ? counts[i] : 0);
+            fixed += 28.0f + (with_counts ? twidth(o, AT_R_NUM12, num) + 6.0f : 0.0f);
+            names_w += twidth(o, role, names[i]);
+        }
+        if (fixed + names_w <= r.w) break;
+        if (pass == 0) role = AT_R_CAP14;
+        else if (pass == 1 && with_counts && r.w - fixed < 8.0f * (float) n) with_counts = 0;
+        else break;
+    }
+    if (fixed + names_w > r.w) scale = names_w > 0.0f && r.w > fixed ? (r.w - fixed) / names_w : 0.0f;
     for (i = 0; i < n; i++) {
-        char num[16];
-        float tw = twidth(o, AT_R_CAP16, names[i]), cw = 0.0f, w, h = i == active ? 30.0f : 26.0f, y = bottom - h;
-        snprintf(num, sizeof num, "%d", counts != NULL ? counts[i] : 0);
-        if (counts != NULL) cw = twidth(o, AT_R_NUM12, num) + 6.0f;
-        w = tw + cw + 28.0f;
-        at_poly_rect(s, x, y, w, h, i == active ? AT_C_PLATE : AT_C_GROUND2);
-        at_text(s, o, AT_R_CAP16, names[i], x + 14.0f, mid_base(y, h, AT_R_CAP16), i == active ? AT_C_IVORY : AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
-        if (counts != NULL) at_text(s, o, AT_R_NUM12, num, x + 14.0f + tw + 6.0f, mid_base(y, h, AT_R_NUM12), i == active ? AT_C_EMBER : AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
-        if (i == focus_tab) at_poly_rect(s, x, y, w, 2.0f, AT_C_EMBER);
+        char num[16], fit[200];
+        int fr = role;
+        float tw = twidth(o, role, names[i]), cw = 0.0f, w, h = i == active ? 30.0f : 26.0f, y = bottom - h, nw, e = 3.0f;
+        int draw_name;
+        unsigned face = i == active ? AT_C_PLATE : AT_C_GROUND2;
+        if (i == focus_tab) y -= 2.0f;                                    /* the focused tab lifts like a focused row */
+        snprintf(num, sizeof num, "%d", with_counts ? counts[i] : 0);
+        if (with_counts) cw = twidth(o, AT_R_NUM12, num) + 6.0f;
+        draw_name = tw * scale >= 8.0f;
+        if (draw_name) { fr = at_fit(o, role, names[i], tw * scale, fit, sizeof fit); nw = twidth(o, fr, fit); } else nw = 0.0f;
+        w = nw + cw + 28.0f;
+        if (x + w > r.x + r.w) w = r.x + r.w - x;
+        if (w <= 0.0f) break;
+        at_poly_rect(s, x, y, w, h, face);
+        if (draw_name) at_text(s, o, fr, fit, x + 14.0f, mid_base(y, h, fr), i == active ? AT_C_IVORY : AT_C_MUTED, AT_ALIGN_LEFT, 0.0f);
+        if (with_counts) at_text(s, o, AT_R_NUM12, num, x + 14.0f + nw + 6.0f, mid_base(y, h, AT_R_NUM12), i == active ? AT_C_EMBER : AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
+        if (i == focus_tab) {                                             /* three cues: the lift, an ember front edge, an ember tick */
+            at_poly_rect(s, x, y + h - e, w, e, AT_C_EMBER);
+            at_poly_rect(s, x, y, 4.0f, h - e, AT_C_EMBER);
+        }
         x += w + 2.0f;
     }
 }
@@ -215,7 +246,7 @@ float at_part_tag(const AtSink *s, const AtTextOps *o, float x, float y, const c
     if (max_w > 0.0f && w > max_w) w = max_w;
     r.x = x; r.y = y; r.w = w; r.h = 20.0f;
     at_plate(s, r, face, face, 0.0f, (float) AT_PX_CH_S);
-    at_text(s, o, AT_R_CAP12, text, x + 8.0f, mid_base(y, 20.0f, AT_R_CAP12), ink, AT_ALIGN_LEFT, w - 16.0f);
+    if (w - 16.0f >= 8.0f) at_text(s, o, AT_R_CAP12, text, x + 8.0f, mid_base(y, 20.0f, AT_R_CAP12), ink, AT_ALIGN_LEFT, w - 16.0f);
     return w;
 }
 

@@ -892,15 +892,27 @@ MatchOutcome gm_GetTeamBattleOutcome(void)
  * the player losing the last stock ends the match as usual. Offline only: the script layer refuses it online and
  * clears it at every scene change. */
 static int gmVs_end_hold;
+/* The outcome the retail rules have decided on but the hold is deferring (0 when none): re-derived by every
+ * gm_GetMatchOutcome call, so it is only ever as stale as the last poll. gd.match_end_pending reads it. */
+static int gmVs_held_outcome;
 
 void gmVs_SetEndHold(int on)
 {
     gmVs_end_hold = on != 0;
+    if (!gmVs_end_hold) {
+        gmVs_held_outcome = 0;
+    }
+}
+
+int gmVs_GetHeldOutcome(void)
+{
+    return gmVs_held_outcome;
 }
 
 static MatchOutcome gmVs_HoldOutcome(MatchOutcome outcome)
 {
     if (gmVs_end_hold && outcome != OUTCOME_NONE && Player_GetStocks(0) > 0) {
+        gmVs_held_outcome = (int) outcome;
         return OUTCOME_NONE;
     }
     return outcome;
@@ -916,6 +928,9 @@ MatchOutcome gm_GetMatchOutcome(void)
     VsSceneController* tmp = &controller;
     PAD_STACK(0x8);
 
+#if defined(TARGET_PC)
+    gmVs_held_outcome = 0;
+#endif
     if (controller.state.match_result != OUTCOME_NONE) {
         return controller.state.match_result;
     }

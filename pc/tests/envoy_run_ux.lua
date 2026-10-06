@@ -511,12 +511,13 @@ T.test('40 stages of gains against a full bag: every drive merges, equips, bags 
  assert(not has(s,'drop skipped') and not has(s,'bag and ground full'),'the old softlock lines are gone')
 end)
 T.test('late-spawning opponents (Adventure side-scrollers): registered when they appear, rolled once, drops work',function()
- local s,g,mods,host=start_run();stage(host,{kind='team',opponents={}});assert(#host.foe_ports==0)
+ local s,g,mods,host=start_run();s.players[2]=nil -- the fixture's P2 would be a CPU the retail opponent list leaves out: a teammate (envoy_teamlock.lua)
+ stage(host,{kind='team',opponents={}});assert(#host.foe_ports==0)
  s.players[3]={x=40,y=0,percent=0,stocks=1,falls=0,char=2,cpu=true}
  host:spawn({port=3});assert(#host.foe_ports==1 and host.rolls[3] and has(s,'opponent P3 joined the stage'))
  host.rolls[3]=nil;host:spawn({port=3});assert(not host.rolls[3],'a respawn on the same port is not rolled again')
  s.players[4]={x=60,y=0,percent=0,stocks=1,falls=0,char=2,cpu=true}
- for _=1,6 do host:frame() end;assert(host.rolled[4] and #host.foe_ports==3,'a CPU that no spawn event named is found by the scan')
+ for _=1,6 do host:frame() end;assert(host.rolled[4] and #host.foe_ports==2,'a CPU that no spawn event named is found by the scan')
  s.players[3].falls=1;for _=1,6 do host:frame() end;assert(host.drop_queue and #host.drop_queue==1,'a late-spawned opponent drops')
 end)
 
@@ -591,9 +592,9 @@ T.test('a fighter far outside the blast zone that was never knocked out loses a 
  for _=1,150 do host:frame() end
  assert(s.players[1].stocks==2,'a stock was lost: '..s.players[1].stocks);assert(tp and tp[1]==1 and tp[2]==0 and tp[3]==40,'put back on the stage')
  assert(has(s,'P1 is out of bounds') and host.hud.toasts~=nil,'logged')
- -- the last stock: lost, not put back (the game's own game-over flow takes it from there)
+ -- the last stock: NEVER taken (2026-10-06: a won boss fight became a game over); the fighter is put back on the stage
  tp=nil;s.players[1].stocks=1;s.players[1].y=-2000;for _=1,300 do host:frame() end
- assert(s.players[1].stocks==0 and not tp)
+ assert(s.players[1].stocks==1 and tp and tp[1]==1,'the last stock stays, the fighter is put back')
 end)
 T.test('with no bounds from the engine the last bounds of the stage are used, then a huge fixed box',function()
  local s,g,mods,host=start_run();stage(host);local first=true

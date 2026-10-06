@@ -148,7 +148,10 @@ return function(D)
       local cause=D.mod_skill.is_skill(e.kind) and D.mod_skill.cause_of(e.kind) or nil
       local amount=math.max(0,math.min(100,value(effect.amount or 1)*(D.mod_tuning and D.mod_tuning.amount_scale(m,effect) or 1)))
       if v then
-       v.stacks=math.min(effect.max,v.stacks+1)
+       -- Two appliers of one status can differ in `max` (Plague Bearer stacks Burn to 3, a plain burn to 1): the instance keeps the
+       -- LARGEST maximum any applier of it allows, so its stacks never exceed its own max (a snapshot of stacks 2, max 1 was refused,
+       -- 2026-10-06, and the refusal cost the player the whole build).
+       v.max=math.max(v.max,effect.max);v.stacks=math.min(v.max,v.stacks+1)
        if effect.refresh=='refresh' then v.expires=expires elseif effect.refresh=='extend' then v.expires=math.min(self.frame+3600,v.expires+duration) end
        v.amount=math.max(v.amount,amount)
       else v={expires=expires,stacks=1,max=effect.max,amount=amount,next_tick=self.frame+60,origin={}};at[effect.status]=v end
@@ -542,13 +545,23 @@ return function(D)
   end
   return C.encode{version=1,seed=self.seed,frame=self.frame,context=self.context,equipped=self.equipped,implicits=self.implicits,statuses=statuses,recent=self.recent,trace=self.trace,dropped=self.dropped,limit=self.limit,depth=self.depth,display=self.display}
  end
+ -- The live statuses repaired in place (a max below its stacks is raised); the host logs what this returns. Cheap: a handful of instances.
+ function E:sanitize_statuses()
+  local out
+  for p,at in pairs(self.statuses) do for name,v in pairs(at) do
+   if type(v)=='table' and type(v.stacks)=='number' and type(v.max)=='number' and v.max<v.stacks and v.stacks<=8 then
+    out=out or {};out[#out+1]=('P%d %s: max %d raised to its %d stacks'):format(p,tostring(name),v.max,v.stacks);v.max=v.stacks
+   end
+  end end
+  return out
+ end
  function E:import(text)
   local at=C.decode(text);at.context=D.mod_progression.context(at.context);assert(at.version==1 and type(at.frame)=='number' and at.frame%1==0 and at.frame>=0,'invalid modifier snapshot')
   assert(type(at.seed)=='number' and at.seed%1==0 and at.seed>=1 and at.seed<2147483647,'invalid random state')
   assert(type(at.limit)=='number' and at.limit>=1 and at.limit<=128 and at.limit%1==0 and type(at.depth)=='number' and at.depth>=1 and at.depth<=16 and at.depth%1==0,'invalid snapshot budget')
   -- A snapshot from before the readability split may hold a piece the split cut: it is dropped (and listed in self.retired_dropped for the
   -- host to say so), never a refusal of the whole snapshot.
-  self.retired_dropped=nil
+  self.retired_dropped=nil;self.status_repairs=nil
   for p,mods in pairs(at.equipped) do assert(type(p)=='number' and p>=1 and p<=6 and p%1==0)
    for id in pairs(mods) do if not self.rules[id] and D.drive_loot and D.drive_loot.is_retired(id) then mods[id]=nil;self.retired_dropped=self.retired_dropped or {};self.retired_dropped[#self.retired_dropped+1]=id end end
    for id,tier in pairs(mods) do assert(self.rules[id] and S.level(tier),'unknown snapshot modifier') end
@@ -557,7 +570,21 @@ return function(D)
   for p,base in pairs(at.implicits) do assert(type(p)=='number' and p%1==0 and p>=1 and p<=6);for key,value in pairs(base) do assert(S.values[key] and type(value)=='number' and value==value and value>=-1000000 and value<=1000000,'invalid snapshot implicit') end end
   for p,statuses in pairs(at.statuses) do assert(type(p)=='number' and p>=1 and p<=6 and p%1==0)
    for name,v in pairs(statuses) do
-    -- which field refuses is named (a deep-loop campaign run hit this once with no way to tell)
+    -- A status instance that is slightly out of range is REPAIRED (its max raised to its stacks, its stacks and amount clamped, an expiry
+    -- in the past made now), one that cannot be repaired is DROPPED: never a refusal of the whole snapshot, which costs the player the build.
+    -- Both are listed in self.status_repairs for the host to say so.
+    if type(v)=='table' and S.statuses[name] and type(v.stacks)=='number' and type(v.max)=='number' then
+     local before=('stacks %s max %s'):format(tostring(v.stacks),tostring(v.max))
+     local fixed=false
+     if v.stacks%1~=0 or v.stacks<1 then v.stacks=math.max(1,math.floor(v.stacks));fixed=true end
+     if v.stacks>8 then v.stacks=8;fixed=true end
+     if v.max<v.stacks then v.max=v.stacks;fixed=true end
+     if v.max>8 then v.max=8;v.stacks=math.min(v.stacks,8);fixed=true end
+     if type(v.expires)=='number' and v.expires<at.frame then v.expires=at.frame;fixed=true end
+     if type(v.amount)=='number' and (v.amount<0 or v.amount>100) then v.amount=math.max(0,math.min(100,v.amount));fixed=true end
+     if type(v.next_tick)=='number' and v.next_tick%1~=0 then v.next_tick=math.floor(v.next_tick);fixed=true end
+     if fixed then self.status_repairs=self.status_repairs or {};self.status_repairs[#self.status_repairs+1]=('P%d %s repaired (%s)'):format(p,name,before) end
+    end
     local why
     if not S.statuses[name] then why='unknown status' elseif type(v)~='table' then why='not a table'
     elseif not (v.stacks>=1 and v.stacks<=8 and v.stacks%1==0) then why='stacks '..tostring(v.stacks)
@@ -567,7 +594,9 @@ return function(D)
     elseif not (v.amount>=0 and v.amount<=100) then why='amount '..tostring(v.amount)
     elseif type(v.origin)~='table' then why='origin'
     elseif not (v.cause==nil or D.mod_skill.cause[v.cause]~=nil) then why='cause '..tostring(v.cause) end
-    assert(not why,'invalid snapshot status '..tostring(name)..': '..tostring(why))
+    if why then
+     statuses[name]=nil;self.status_repairs=self.status_repairs or {};self.status_repairs[#self.status_repairs+1]=('P%d %s dropped (%s)'):format(p,tostring(name),why)
+    end
    end
   end
   for p,events in pairs(at.recent) do assert(type(p)=='number' and p%1==0 and p>=1 and p<=6);for event,frame in pairs(events) do assert(S.events[event] and type(frame)=='number' and frame%1==0 and frame>=0 and frame<=at.frame,'invalid recent event') end end

@@ -124,7 +124,7 @@ extern uint64_t gw_snap_hash(void);
 extern int gw_BossHook_Hold(int frames);
 extern int gw_BossHook_Release(void);
 enum { SF_X, SF_Y, SF_VX, SF_VY, SF_PERCENT, SF_FACING, SF_ANIM_FRAME, SF_HITLAG };
-enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTUME, SI_SLOT_TYPE, SI_FALLS };
+enum { SI_PRESENT, SI_KIND, SI_CHAR, SI_ACTION, SI_AIRBORNE, SI_STOCKS, SI_COSTUME, SI_SLOT_TYPE, SI_FALLS, SI_TEAM };
 
 /* ---- the Geno Lab's inspection half (script_game.c; field numbers in script_lab.h) ------------ */
 #include "../gameworld/script_lab.h"
@@ -1102,6 +1102,7 @@ static int l_boss_release(lua_State *L) {
  * The retail side is gmVs_HoldOutcome (src/melee/gm/gmvs.c). */
 #define GS_END_HOLDS 8
 extern void gw_ScriptGame_MatchEndHold(int on);
+extern int gw_ScriptGame_MatchEndPending(void);
 #define gmVs_SetEndHold gw_ScriptGame_MatchEndHold
 static char gs_end_hold_reason[GS_END_HOLDS][24];
 static int gs_end_hold_owner[GS_END_HOLDS];
@@ -1127,6 +1128,13 @@ static void gs_end_hold_release_owner(int owner) { /* owner 0: every hold (scene
         }
     }
     if (had && !gs_end_hold_any()) gmVs_SetEndHold(0);
+}
+/* gd.match_end_pending(): the outcome number retail has decided on and a hold is deferring (OUTCOME_TEAM_ELIMINATION etc.),
+ * or nil when no end is being held. Read-only; re-derived from the engine's own poll every frame; nil while no hold is up. */
+static int l_match_end_pending(lua_State *L) {
+    int o = gs_end_hold_any() ? gw_ScriptGame_MatchEndPending() : 0;
+    if (o) lua_pushinteger(L, o); else lua_pushnil(L);
+    return 1;
 }
 static int l_match_end_hold(lua_State *L) {
     const char *reason;
@@ -1399,6 +1407,7 @@ static void gs_push_player(lua_State *L, int slot) {
     gs_setint(L, "kind", gw_ScriptGame_FighterI(slot, SI_KIND));
     gs_setint(L, "costume", gw_ScriptGame_FighterI(slot, SI_COSTUME));
     gs_setbool(L, "cpu", gw_ScriptGame_FighterI(slot, SI_SLOT_TYPE) == 1);
+    gs_setint(L, "team", gw_ScriptGame_FighterI(slot, SI_TEAM)); /* retail team index; equal values are allies */
     gs_setnum(L, "x", gw_ScriptGame_FighterF(slot, SF_X));
     gs_setnum(L, "y", gw_ScriptGame_FighterF(slot, SF_Y));
     gs_setnum(L, "vx", gw_ScriptGame_FighterF(slot, SF_VX));
@@ -6526,7 +6535,7 @@ static const luaL_Reg gs_gd_funcs[] = {
     {"play_sound", l_play_sound}, {"hold_hitbox", l_hold_hitbox},
     {"fly", l_fly}, {"teleport", l_teleport}, {"fly_speed", l_fly_speed}, {"fly_solid", l_fly_solid},
     {"fly_target", l_fly_target}, {"fly_attack", l_fly_attack}, {"fly_clear", l_fly_clear}, {"fly_state", l_fly_state},
-    {"match_end_hold", l_match_end_hold}, {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
+    {"match_end_hold", l_match_end_hold}, {"match_end_pending", l_match_end_pending}, {"boss_hold", l_boss_hold}, {"boss_release", l_boss_release},
     {"mode_blob", l_mode_blob},
     {"scene_launch", l_scene_launch}, {"scene_clear", l_scene_clear}, {"text", l_text},
     {"box", l_box}, {"fill", l_fill}, {"line", l_line}, {"key", l_key},

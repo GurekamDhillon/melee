@@ -1670,6 +1670,7 @@ enum {
     SCRIPT_I_COSTUME,
     SCRIPT_I_SLOT_TYPE, /* 0 human, 1 cpu, 2 demo, 3 none */
     SCRIPT_I_FALLS, /* main fighter deaths, including time-mode/LAB */
+    SCRIPT_I_TEAM, /* Player_GetTeam: equal teams are allies (a 1P team stage gives the human a CPU teammate) */
 };
 
 /* A slot's fighter counts only while its gobj is in the live fighter list. The scene start clears
@@ -1802,6 +1803,9 @@ int ScriptGame_FighterI(int slot, int field)
     if (field == SCRIPT_I_SLOT_TYPE) {
         return (slot >= 0 && slot < 6) ? (int) Player_GetPlayerSlotType(slot) : 3;
     }
+    if (field == SCRIPT_I_TEAM) {
+        return (slot >= 0 && slot < 6 && Player_GetPlayerSlotType(slot) != 3) ? (int) Player_GetTeam(slot) : -1;
+    }
     fp = script_fighter(slot);
     if (fp == NULL) {
         return field == SCRIPT_I_PRESENT ? 0 : -1;
@@ -1830,7 +1834,20 @@ int ScriptGame_FighterI(int slot, int field)
 /* Gameplay writes: only for scripts whose manifest says "gameplay": true (gw_script.c checks). */
 void ScriptGame_SetPercent(int slot, int percent)
 {
-    if (script_fighter(slot) != NULL) {
+    Fighter* fp = script_fighter(slot);
+    if (fp != NULL) {
+        /* THE choke point for every script percent write (gd.set_damage, the sim journal's damage op: the mod's burn/echo/price ticks).
+         * A boss hand's HP is its stamina minus this value and only a retail hit starts its death (Fighter_TakeDamage_8006CC7C ->
+         * ftCo_800C8C84); a write that took it to 0 left the boss controller waiting for a Sleep that cannot come (2026-10-05 and
+         * 2026-10-06 softlocks). So a write can bring a hand to 1 HP at most; a hand already at 0 is left as it is. */
+        if (fp->kind == Ft_Kind_MasterH || fp->kind == Ft_Kind_CrezyH) {
+            int stamina = Player_GetOtherStamina(slot);
+            if (Player_GetRemainingHP(slot) > 0 && stamina > 0 && percent >= stamina) {
+                OSReport("script: set_damage on boss hand P%d would take its HP to 0 (%d of %d): held at 1 HP, only a hit may kill it\n",
+                         slot + 1, percent, stamina);
+                percent = stamina - 1;
+            }
+        }
         Player_SetHUDDamage(slot, percent);
     }
 }
@@ -2882,6 +2899,12 @@ extern void gmVs_SetEndHold(int on);
 void ScriptGame_MatchEndHold(int on)
 {
     gmVs_SetEndHold(on);
+}
+/* gd.match_end_pending: the outcome (MatchOutcome) retail has decided and the hold is deferring, 0 when none. */
+extern int gmVs_GetHeldOutcome(void);
+int ScriptGame_MatchEndPending(void)
+{
+    return gmVs_GetHeldOutcome();
 }
 
 /* ---- enemies2: explicit enemy hits; fighter port semantics remain unchanged ---- */

@@ -205,4 +205,109 @@ T.test('the older hold (payout=false) is untouched: only while a drive is on the
  local s,g,mods,host=start();frames(host,12);assert(not held(s),'no drive, no hold in the old mode')
  host:on_ko(2);frames(host,12);assert(held(s));D.run_host.tuning.payout=true
 end)
+-- ---- teammates, the engine's end signal, a payout that runs once, the stale-hold watchdog (2026-10-06 team-stage softlock) ----------
+-- A retail Classic TEAM stage gives the human a CPU teammate; the giant stage two. They are allies: never a foe, never rolled, never owed.
+local function cpu(team,stocks) return {x=40,y=0,percent=0,stocks=stocks or 1,falls=0,char=2,action=14,cpu=true,team=team} end
+local function count(s,text) local n=0;for _,l in ipairs(s.logs) do if l:find(text,1,true) then n=n+1 end end;return n end
+-- P1 (team 0) with teammate(s) on team 0 and opponents on team 1, the engine reporting teams; `opp` is the retail opponent list the engine builds.
+local function team_stage(kind,mates,foes,withteam)
+ local opp={};for _,p in ipairs(foes) do opp[#opp+1]={port=p} end
+ local s,g,mods,host=start(kind,opp,77)
+ s.players[1].team=withteam and 0 or nil;s.players[2]=nil
+ for _,p in ipairs(mates) do s.players[p]=cpu(withteam and 0 or nil) end
+ for _,p in ipairs(foes) do s.players[p]=cpu(withteam and 1 or nil) end
+ return s,g,mods,host,opp
+end
+local function restage(host,kind,opp) host:stage_start({stage_index=1,loop=0,stage_kind=kind,opponents=opp});host.since=99 end
+T.test('a retail teammate (the engine reports teams): never registered, rolled, owed or watched; the stage end counts only the opponents',function()
+ local s,g,mods,host,opp=team_stage('team',{2},{3,4},true)
+ restage(host,'team',opp)
+ assert(has(s,'ally rule for this team stage: engine team') and has(s,"P2 is the player's teammate (engine team 0"),'the rule is logged')
+ host:spawn({port=2});host:spawn({port=3});host:spawn({port=4})
+ frames(host,12)
+ assert(#host.foe_ports==2 and not host.rolls[2] and not host.rolled[2],'the teammate is not an opponent: no registration, no roll')
+ assert(not has(s,'opponent P2 joined'),'and is not logged as one')
+ assert(#host:foes_list()==2 and host:is_ally(2) and not host:is_ally(3))
+ assert(not host:foes_out());s.players[3].stocks=0;assert(not host:foes_out())
+ s.players[4].stocks=0;assert(host:foes_out(),'both opponents out while the teammate lives: the stage is over by the foes')
+ -- the debt covers the two opponents, never the teammate
+ host:begin_payout();assert(count(s,'drive decision(s) owed')==1)
+ -- the out-of-bounds watchdog leaves the teammate alone (it only watches the player and the opponents)
+ s.players[2].x=99999;for _=1,600 do host:oob_watch() end;assert(not has(s,'P2 is out of bounds'),'allies are not policed')
+end)
+T.test('a retail teammate on an engine with no team read: retail\'s opponent list for the stage leaves it out, the fallback is logged',function()
+ local s,g,mods,host,opp=team_stage('team',{2},{3,4},false)
+ restage(host,'team',opp)
+ assert(has(s,"fallback rule: the engine reports no team") and has(s,'ally rule for this team stage: retail opponent list'))
+ host:spawn({port=2});host:spawn({port=3});frames(host,12)
+ assert(host:is_ally(2) and not host:is_ally(3) and #host.foe_ports==2 and not host.rolls[2])
+ s.players[3].stocks=0;s.players[4].stocks=0;assert(host:foes_out(),'the stock count ignores the teammate')
+end)
+T.test('every stage kind with a non-opponent fighter: giant (two allies), metal, battle and team: allies never count, the end begins by the engine signal',function()
+ for _,k in ipairs({'giant','metal','battle','team'}) do
+  local mates=(k=='giant') and {2,3} or (k=='team') and {2} or {}
+  local foes=(k=='giant') and {4} or (k=='team') and {3,4} or {3}
+  local s,g,mods,host,opp=team_stage(k,mates,foes,true);restage(host,k,opp)
+  s.pending=nil;g.match_end_pending=function() return s.pending end
+  for _,p in ipairs(mates) do host:spawn({port=p}) end;for _,p in ipairs(foes) do host:spawn({port=p}) end
+  frames(host,12);assert(held(s),k..': held');assert(#host.foe_ports==#foes,k..': only the real opponents are foes ('..#host.foe_ports..')')
+  for _,p in ipairs(mates) do assert(host:is_ally(p) and not host.rolled[p],k..': P'..p..' is an ally') end
+  for _,p in ipairs(foes) do s.players[p].stocks=0 end
+  frames(host,12);assert(host.pay_state=='idle' and not has(s,'drive decision(s) owed'),k..': an engine that reports no end yet means retail has not ended: no payout')
+  s.pending=3;frames(host,6);assert(host.pay_state~='idle' and has(s,'retail has decided the stage is over: engine outcome 3'),k..': the payout begins on the engine signal')
+ end
+end)
+T.test('the engine signal begins the payout even while the stock count says an opponent lives (retail decides, not the mod)',function()
+ local s,g,mods,host=start();s.pending=nil;g.match_end_pending=function() return s.pending end
+ frames(host,12);assert(held(s) and host.pay_state=='idle' and s.players[2].stocks==1)
+ s.pending=3;frames(host,6);assert(host.pay_state=='arriving' or host.pay_state=='waiting',tostring(host.pay_state))
+ assert(has(s,'the last opponent is out: 1 drive decision(s) owed [retail has decided'),'logged with the rule that began it')
+end)
+T.test('without the engine read the stock count still begins the payout (an older engine), and says so',function()
+ local s,g,mods,host=start();assert(g.match_end_pending==nil);frames(host,12);s.players[2].stocks=0;frames(host,6)
+ assert(host.paying and has(s,'stock count, this engine has no end signal'))
+end)
+T.test('a payout runs once per stage: 600 frames after a clear that owes nothing hold exactly one hold and one release (the 2026-10-06 loop)',function()
+ local s,g,mods,host=start();host:on_ko(2,'passed 50%');host.drop_queue={}
+ frames(host,12);s.players[2].stocks=0;frames(host,600)
+ assert(host.pay_state=='done');assert(count(s,'match end held')==1,'one hold, got '..count(s,'match end held'))
+ assert(count(s,'match end released')==1,'one release, got '..count(s,'match end released'))
+ assert(count(s,'drive decision(s) owed')==1,'one payout, got '..count(s,'drive decision(s) owed'))
+ assert(not held(s))
+ -- and with a drive paid out and collected: still once
+ local s2,g2,m2,h2=start();frames(h2,12);s2.players[2].stocks=0;frames(h2,70)
+ m2:pickup{name='drive_payout',port=1,item=s2.spawns[1].handle,payload=s2.payload};frames(h2,600)
+ assert(count(s2,'match end held')==1 and count(s2,'match end released')==1 and count(s2,'drive decision(s) owed')==1,'collected: still one of each')
+ -- a new stage attempt starts the machine again
+ h2:stage_start({stage_index=1,loop=0,stage_kind='battle',opponents={{port=2}}});assert(h2.pay_state=='idle')
+end)
+T.test('the stale-hold watchdog: the end is held, nothing owed or on the floor, nobody acting for stale_hold_frames: released loudly, never retaken',function()
+ local s,g,mods,host=start();frames(host,12);s.players[2].stocks=0
+ host.begin_payout=function() end -- a payout that can never begin: the strand this watchdog exists for
+ local N=D.run_host.tuning.stale_hold_frames
+ frames(host,N-60);assert(held(s),'not yet: '..N..' frames of nothing')
+ frames(host,200);assert(not held(s) and has(s,'WATCHDOG'),'released and said so')
+ local released=count(s,'match end released');frames(host,600);assert(not held(s) and count(s,'match end held')==1 and count(s,'match end released')==released,'never retaken')
+ -- a fighter acting resets the clock
+ local s2,g2,m2,h2=start();frames(h2,12);s2.players[2].stocks=0;h2.begin_payout=function() end
+ for i=1,3 do frames(h2,N-200);s2.players[2].action=14+i end
+ assert(held(s2) and not has(s2,'WATCHDOG'),'a fighter that acts keeps the clock from running out')
+end)
+T.test('a respawn on a port re-reads its team (Adventure reuses slots)',function()
+ local s,g,mods,host,opp=team_stage('battle',{},{3},true);restage(host,'battle',opp)
+ host:spawn({port=3});assert(not host:is_ally(3))
+ s.players[3].team=0;assert(not host:is_ally(3),'cached for the fighter that was there')
+ host:spawn({port=3});assert(host:is_ally(3),'a spawn event reads the port again')
+end)
+T.test('the out-of-bounds net never takes the last stock (put back instead) and leaves the player of a won boss fight alone; an opponent still loses one',function()
+ local s,g,mods,host=start('battle');local set,tp={},{}
+ g.set_stocks=function(p,n) set[#set+1]={p,n};s.players[p].stocks=n end;g.teleport=function(p,x,y) tp[#tp+1]={p,x,y};s.players[p].x=x;s.players[p].y=y end
+ s.players[1].stocks=1;s.players[1].x=-88;s.players[1].y=-9000;frames(host,600)
+ assert(#set==0,'the last stock is not taken');assert(#tp>=1 and has(s,'on the LAST stock: put back on the stage'),'the fighter is put back, said so')
+ s.players[1].stocks=3;s.players[1].x=-88;s.players[1].y=-9000;frames(host,600);assert(#set==1 and set[1][2]==2,'a spare stock is still taken')
+ local sb,gb,mb,hb=start('boss');local set2={};gb.set_stocks=function(p,n) set2[#set2+1]=n end;gb.teleport=function() set2[#set2+1]='tp' end
+ hb.retail.boss=true;sb.players[1].stocks=3;sb.players[1].x=0;sb.players[1].y=-9000;frames(hb,900);assert(#set2==0,'after boss_defeated the player is not policed')
+ local s3,g3,m3,h3=start('battle');local set3={};g3.set_stocks=function(p,n) set3[#set3+1]={p,n};s3.players[p].stocks=n end;g3.teleport=function() end
+ s3.players[2].stocks=2;s3.players[2].x=0;s3.players[2].y=-9000;frames(h3,600);assert(#set3>=1 and set3[1][1]==2,'an opponent that never fell loses a stock')
+end)
 T.done()

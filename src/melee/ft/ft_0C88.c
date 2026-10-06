@@ -14,6 +14,18 @@ void ftCo_800C884C(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     fp->x203C.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);
+#if defined(TARGET_PC)
+    {
+        /* The metal model is the donor fighter's second mesh, built from ftData::x5C against the fighter's own joints.
+         * A base "none" define has no donor mesh (its x5C would name another fighter's joints: the envelope resolve
+         * found no JObj for them), so it has no metal model: the metal box shows the normal one. */
+        extern int Geno_DefineIsNone(int kind);
+        if (Geno_DefineIsNone(fp->kind)) {
+            fp->x203C.count = 0;
+            return;
+        }
+    }
+#endif
     ftPartsPObjSetDefaultClass();
     ft_800C85B8(gobj);
     ftPartsPObjClearDefaultClass();

@@ -1,84 +1,28 @@
 {
-  "geno": 8,
+  "geno": 9,
   "fighters": [
     {
       "define": {
         "key": "vanilla-courier",
         "name": "Vanilla Courier",
-        "base": "mario",
+        "base": "none",
         "common": "melee.common.v1",
-        "resources": "retail:mario"
+        "resources": "mod:files"
+      },
+      "fighter": {
+        "plan": "plan.json",
+        "animation": "GnCourierAJ.dat",
+        "costumes": [
+          { "file": "GnCourier_default.dat", "joint": "courier_joint", "matanim": "courier_matanim" },
+          { "file": "GnCourier_red.dat", "joint": "courier_joint", "matanim": "courier_matanim" },
+          { "file": "GnCourier_blue.dat", "joint": "courier_joint", "matanim": "courier_matanim" },
+          { "file": "GnCourier_green.dat", "joint": "courier_joint", "matanim": "courier_matanim" }
+        ]
       },
       "attributes": {
         "walk_max_vel": 1.3,
         "gravity": 0.085
-      },
-      "articles": [
-        {
-          "name": "CourierModel",
-          "model": {
-            "file": "GnCourier_default.dat",
-            "symbol": "courier_joint"
-          },
-          "scale": 1.0,
-          "lifetime": 3000,
-          "velocity": [
-            0,
-            0
-          ],
-          "spawn": [
-            0,
-            0
-          ],
-          "max_live": 1,
-          "despawn": {
-            "hit": false,
-            "shield": false,
-            "stage": false,
-            "clank": false
-          },
-          "hitboxes": [
-            {
-              "damage": 1,
-              "size": 0.5,
-              "offset": [
-                0,
-                0,
-                0
-              ],
-              "angle": 361,
-              "kbg": 10,
-              "bkb": 5,
-              "element": 0,
-              "sfx_severity": 0,
-              "start": 1,
-              "end": 0
-            }
-          ]
-        }
-      ],
-      "states": [
-        {
-          "name": "ShowModel",
-          "behavior": "geno.ground",
-          "subaction": 295,
-          "like": "motion:343",
-          "phys": "auto",
-          "coll": "both",
-          "move_tag": "special"
-        }
-      ],
-      "specials": {
-        "n": "geno:ShowModel",
-        "air_n": "geno:ShowModel"
-      },
-      "subactions": [
-        {
-          "index": 295,
-          "file": "moves/show.words",
-          "move_tag": "special"
-        }
-      ]
+      }
     }
   ]
 }

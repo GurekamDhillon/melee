@@ -30,6 +30,7 @@
 #include "gw_mods.h"
 #include "gw_test.h"
 #include "../geno/geno.h"
+#include "../geno/geno_plan.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -371,6 +372,14 @@ static int gn_kind_for_file(const char *pl) {
 
 /* ---- profiles ----------------------------------------------------------------------------------- */
 
+/* slice 4: the files a base "none" define names (entry-level "fighter" block); plan is parsed on first use. */
+struct gn_fm {
+    char plan_file[64], anim_file[64];
+    int ncostume;
+    char cos_file[16][64], cos_joint[16][48], cos_matanim[16][48];
+    GenoPlan *plan; int plan_tried;
+};
+
 typedef struct {
     uint64_t id;
     char hex[17];
@@ -380,6 +389,7 @@ typedef struct {
     char name[64];
     int defined;
     char define_key[40];
+    int none;                                 /* slice 4: base "none" - no donor model, clips or tables */
     int ncommon;
     int common_row[64][9]; /* motion, like, subaction, flags, move_id, anim/iasa/phys/coll */
     uint64_t iasa_warned;
@@ -450,6 +460,7 @@ typedef struct {
     char art_sym[GENO_MAX_ARTICLES][64];      /* its joint symbol ("" = the first *_joint) */
     uint32_t art_joint[GENO_MAX_ARTICLES];    /* loaded HSD_Joint (guest address), 0 = not yet */
     int art_tried[GENO_MAX_ARTICLES];         /* the load was attempted (a failure is not retried) */
+    struct gn_fm *fm;                         /* slice 4: a base "none" define's own model, bank and plan; NULL otherwise */
 } gn_profile;
 
 #define GN_NONE 0xFFFFFFFFu

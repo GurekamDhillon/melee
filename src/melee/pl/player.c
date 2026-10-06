@@ -262,6 +262,11 @@ void Player_80031AD0(int slot)
 
 void Player_80031CB0(CharacterKind kind, u8 color)
 {
+#if defined(TARGET_PC)
+    /* a Geno define's character-kind mapping (and, for base "none", its own file names) is made by InitKinds; the scene's preload
+     * asks for the fighter's files before any fighter exists, so make it first or the define preloads nothing */
+    { extern void GenoDefine_InitKinds(void); GenoDefine_InitKinds(); }
+#endif
     if (ftMapping_list[kind].internal_id != -1) {
         ftData_800855C8(ftMapping_list[kind].internal_id, color);
     }

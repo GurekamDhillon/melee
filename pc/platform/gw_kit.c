@@ -1700,12 +1700,22 @@ static int test_kit_poly4_and_tracking(void) {
             return 1;
         }
         gap0 = b->x[0] - a->x[0];
+        gw_Kit_BeginFrame();                       /* BeginFrame clears the tracking: set it after, not before */
         gw_Kit_SetTracking(3.0f);
-        gw_Kit_BeginFrame();
         gw_Kit_DrawText(0, 100, "II", role, 0xFFFFFFFFu, GW_KIT_ALIGN_LEFT, 0, 0, NULL);
         a = gw_Kit_QuadAt(0);
         b = gw_Kit_QuadAt(1);
         gap1 = b->x[0] - a->x[0];
+        gw_Kit_SetTracking(3.0f);
+        gw_Kit_BeginFrame();                       /* and a frame boundary never leaves it set */
+        gw_Kit_DrawText(0, 100, "II", role, 0xFFFFFFFFu, GW_KIT_ALIGN_LEFT, 0, 0, NULL);
+        a = gw_Kit_QuadAt(0);
+        b = gw_Kit_QuadAt(1);
+        if (fabsf((b->x[0] - a->x[0]) - gap0) > 0.01f) {
+            gw_test_fail("BeginFrame left the tracking set: the gap is %.2f, not %.2f", b->x[0] - a->x[0], gap0);
+            gw_Kit_SetTracking(0.0f);
+            return 1;
+        }
         gw_Kit_SetTracking(0.0f);
         if (fabsf((gap1 - gap0) - 3.0f) > 0.01f) {
             gw_test_fail("drawing with tracking 3 moved the second glyph by %.2f, not 3", gap1 - gap0);
@@ -1716,10 +1726,40 @@ static int test_kit_poly4_and_tracking(void) {
     return 0;
 }
 
+static int test_kit_atlas_roles(void) {
+    static const char *const names[] = {"a_cap12", "a_cap14", "a_cap16", "a_cap20", "a_title", "a_hero", "a_display",
+                                        "a_body12", "a_body14", "a_row16", "a_num12", "a_num14", "a_num16"};
+    int i, found = 0;
+    if (!gw_Kit_Available()) {
+        return 0;
+    }
+    for (i = 0; i < 13; i++) {
+        if (gw_Kit_Role(names[i]) >= 0) found++;
+    }
+    if (found == 0) {
+        return 0; /* this lane's ui/ has no Atlas fonts yet: nothing to check */
+    }
+    if (found != 13) {
+        gw_test_fail("only %d of the 13 Atlas text roles are in the font manifest", found);
+        return 1;
+    }
+    for (i = 0; i < 13; i++) {
+        float size = 0.0f;
+        int role = gw_Kit_Role(names[i]);
+        gw_Kit_RoleMetrics(role, &size, NULL, NULL, NULL, NULL);
+        if (size < 12.0f || gw_Kit_TextWidth(role, "Aa 123") <= 0.0f) {
+            gw_test_fail("Atlas role %s: size %.1f, no width", names[i], size);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void gw_kit_tests_register(void) {
     gw_test_register("kit_decode_formats", test_kit_decode_formats);
     gw_test_register("kit_json_and_colours", test_kit_json_and_colours);
     gw_test_register("kit_text_layout", test_kit_text_layout);
     gw_test_register("kit_panel_and_row", test_kit_panel_and_row);
     gw_test_register("kit_poly4_and_tracking", test_kit_poly4_and_tracking);
+    gw_test_register("kit_atlas_roles", test_kit_atlas_roles);
 }

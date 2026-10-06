@@ -1,0 +1,6 @@
+# Back throw: 10%, the kill throw
+wait 1
+throw idx=0 damage=10 unk0=140 hit_x24=85 hit_x28=0 hit_x2C=60
+throw idx=1 damage=3 unk0=361 hit_x24=100 hit_x28=0 hit_x2C=60
+wait 44
+throw_flag hit_idx=0

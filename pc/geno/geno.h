@@ -13,11 +13,12 @@
 #ifndef GENO_H
 #define GENO_H
 
-#define GENO_VERSION 8    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
+#define GENO_VERSION 9    /* newest geno.json "geno" field this build reads (v2-v5 keys are additive;
                              4 = v5: articles, on_hit, counter windows - docs/geno.md section 19;
                              7 = slice 2: a define may use the full attribute table, special_attributes,
                              fx_bindings;
-                             8 = slice 3: a define may declare articles and a named-sound table) */
+                             8 = slice 3: a define may declare articles and a named-sound table;
+                             9 = slice 4: a define may be base "none" (own model, clip bank and tables)) */
 #define GENO_ID_VERSION 1 /* salt of the stable ids: NOT bumped by v2 (same entry -> same id) */
 #define GENO_LEVEL 3      /* feature level: 0 v0, 1 v1 (section 15), 2 v2 (section 16), 3 v3 (section 17) */
 

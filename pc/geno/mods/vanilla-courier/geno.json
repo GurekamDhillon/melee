@@ -1,81 +1,332 @@
 {
-  "geno": 8,
+  "geno": 9,
   "fighters": [
     {
       "define": {
         "key": "vanilla-courier",
         "name": "Vanilla Courier",
-        "base": "mario",
+        "base": "none",
         "common": "melee.common.v1",
-        "resources": "retail:mario"
+        "resources": "mod:files"
+      },
+      "fighter": {
+        "plan": "plan.json",
+        "animation": "GnCourierAJ.dat",
+        "costumes": [
+          {
+            "file": "GnCourier_default.dat",
+            "joint": "courier_joint",
+            "matanim": "courier_matanim"
+          },
+          {
+            "file": "GnCourier_red.dat",
+            "joint": "courier_joint",
+            "matanim": "courier_matanim"
+          },
+          {
+            "file": "GnCourier_blue.dat",
+            "joint": "courier_joint",
+            "matanim": "courier_matanim"
+          },
+          {
+            "file": "GnCourier_green.dat",
+            "joint": "courier_joint",
+            "matanim": "courier_matanim"
+          }
+        ]
       },
       "attributes": {
+        "aerial_drift_base": 0.02,
+        "aerial_friction": 0.016,
+        "air_drift_max": 0.86,
+        "air_drift_stick_mul": 0.025,
+        "air_jump_h_multiplier": 0.9,
+        "air_jump_v_multiplier": 1,
+        "air_max_horizontal_velocity": 3,
+        "clank_animation_length": 16,
+        "dash_accel_base": 0.02,
+        "dash_accel_mul": 0.06,
+        "dash_initial_velocity": 1.5,
+        "dash_max_velocity": 1.5,
+        "fast_fall_velocity": 2.3,
+        "fast_walk_min": 0.72,
+        "gravity": 0.085,
+        "ground_friction": 0.06,
+        "ground_max_horizontal_velocity": 3,
+        "ground_to_air_jump_momentum_multiplier": 0.8,
+        "hop_v_initial_velocity": 1.4,
+        "initial_shield_size": 10.75,
+        "jab_2_input_window": 24,
+        "jab_3_input_window": 24,
+        "jump_h_initial_velocity": 1,
+        "jump_h_max_velocity": 1.5,
+        "jump_startup_time": 4,
+        "jump_v_initial_velocity": 2.3,
+        "landingairb_lag": 15,
+        "landingairf_lag": 21,
+        "landingairhi_lag": 15,
+        "landingairlw_lag": 23,
+        "landingairn_lag": 16,
+        "max_jumps": 2,
+        "max_run_brake_frames": 30,
+        "mid_walk_point": 0.5,
+        "model_scaling": 1.0,
+        "normal_landing_lag": 4,
+        "rapid_jab_window": 0,
+        "run_animation_scaling": 1.32,
+        "shield_break_initial_velocity": 2.5,
+        "slow_walk_max": 0.29,
+        "standing_turn_frames": 4,
+        "terminal_velocity": 1.7,
+        "walk_accel_base": 0.1,
+        "walk_accel_mul": 0.1,
         "walk_max_vel": 1.3,
-        "gravity": 0.085
+        "weight": 100
       },
-      "articles": [
+      "jumps": {
+        "max": 3
+      },
+      "special_attributes": [
         {
-          "name": "CourierModel",
-          "model": {
-            "file": "GnCourier_default.dat",
-            "symbol": "courier_joint"
-          },
-          "scale": 1.0,
-          "lifetime": 3000,
-          "velocity": [
-            0,
-            0
-          ],
-          "spawn": [
-            0,
-            0
-          ],
-          "max_live": 1,
-          "despawn": {
-            "hit": false,
-            "shield": false,
-            "stage": false,
-            "clank": false
-          },
-          "hitboxes": [
-            {
-              "damage": 1,
-              "size": 0.5,
-              "offset": [
-                0,
-                0,
-                0
-              ],
-              "angle": 361,
-              "kbg": 10,
-              "bkb": 5,
-              "element": 0,
-              "sfx_severity": 0,
-              "start": 1,
-              "end": 0
-            }
-          ]
+          "index": 1,
+          "float": 1.6
+        },
+        {
+          "index": 2,
+          "float": 0.03
         }
       ],
       "states": [
         {
-          "name": "ShowModel",
+          "name": "NCharge",
           "behavior": "geno.ground",
           "subaction": 295,
           "like": "motion:343",
+          "anim": "loop",
+          "phys": "auto",
+          "coll": "both",
+          "iasa": "none",
+          "move_tag": "special"
+        },
+        {
+          "name": "NRelease",
+          "behavior": "geno.ground",
+          "subaction": 296,
+          "like": "motion:343",
+          "phys": "auto",
+          "coll": "both",
+          "move_tag": "special"
+        },
+        {
+          "name": "SLunge",
+          "behavior": "geno.ground",
+          "subaction": 297,
+          "like": "motion:345",
+          "phys": "auto",
+          "coll": "both",
+          "move_tag": "special"
+        },
+        {
+          "name": "Rise",
+          "behavior": "geno.air",
+          "subaction": 299,
+          "like": "motion:347",
+          "next": "helpless",
+          "move_tag": "special"
+        },
+        {
+          "name": "Counter",
+          "behavior": "geno.ground",
+          "subaction": 301,
+          "like": "motion:349",
+          "phys": "auto",
+          "coll": "both",
+          "counter": {
+            "from": 4,
+            "to": 24,
+            "target": "geno:CounterStrike"
+          },
+          "move_tag": "special"
+        },
+        {
+          "name": "CounterStrike",
+          "behavior": "geno.ground",
+          "subaction": 302,
+          "like": "motion:349",
           "phys": "auto",
           "coll": "both",
           "move_tag": "special"
         }
       ],
       "specials": {
-        "n": "geno:ShowModel",
-        "air_n": "geno:ShowModel"
+        "n": "geno:NCharge",
+        "air_n": "geno:NCharge",
+        "s": "geno:SLunge",
+        "air_s": "geno:SLunge",
+        "hi": "geno:Rise",
+        "air_hi": "geno:Rise",
+        "lw": "geno:Counter",
+        "air_lw": "geno:Counter"
       },
       "subactions": [
         {
+          "index": 46,
+          "file": "moves/jab1.words",
+          "move_tag": "jab"
+        },
+        {
+          "index": 47,
+          "file": "moves/jab2.words",
+          "move_tag": "jab"
+        },
+        {
+          "index": 48,
+          "file": "moves/jab3.words",
+          "move_tag": "jab"
+        },
+        {
+          "index": 52,
+          "file": "moves/dash_attack.words",
+          "move_tag": "dash_attack"
+        },
+        {
+          "index": 53,
+          "file": "moves/ftilt_up.words",
+          "move_tag": "tilt"
+        },
+        {
+          "index": 55,
+          "file": "moves/ftilt.words",
+          "move_tag": "tilt"
+        },
+        {
+          "index": 57,
+          "file": "moves/ftilt_down.words",
+          "move_tag": "tilt"
+        },
+        {
+          "index": 58,
+          "file": "moves/utilt.words",
+          "move_tag": "tilt"
+        },
+        {
+          "index": 59,
+          "file": "moves/dtilt.words",
+          "move_tag": "tilt"
+        },
+        {
+          "index": 60,
+          "file": "moves/fsmash_up.words",
+          "move_tag": "smash"
+        },
+        {
+          "index": 62,
+          "file": "moves/fsmash.words",
+          "move_tag": "smash"
+        },
+        {
+          "index": 64,
+          "file": "moves/fsmash_down.words",
+          "move_tag": "smash"
+        },
+        {
+          "index": 66,
+          "file": "moves/usmash.words",
+          "move_tag": "smash"
+        },
+        {
+          "index": 67,
+          "file": "moves/dsmash.words",
+          "move_tag": "smash"
+        },
+        {
+          "index": 68,
+          "file": "moves/nair.words",
+          "move_tag": "aerial"
+        },
+        {
+          "index": 69,
+          "file": "moves/fair.words",
+          "move_tag": "aerial"
+        },
+        {
+          "index": 70,
+          "file": "moves/bair.words",
+          "move_tag": "aerial"
+        },
+        {
+          "index": 71,
+          "file": "moves/uair.words",
+          "move_tag": "aerial"
+        },
+        {
+          "index": 72,
+          "file": "moves/dair.words",
+          "move_tag": "aerial"
+        },
+        {
+          "index": 242,
+          "file": "moves/grab.words",
+          "move_tag": "grab"
+        },
+        {
+          "index": 243,
+          "file": "moves/dash_grab.words",
+          "move_tag": "grab"
+        },
+        {
+          "index": 245,
+          "file": "moves/pummel.words",
+          "move_tag": "grab"
+        },
+        {
+          "index": 247,
+          "file": "moves/fthrow.words",
+          "move_tag": "throw"
+        },
+        {
+          "index": 248,
+          "file": "moves/bthrow.words",
+          "move_tag": "throw"
+        },
+        {
+          "index": 249,
+          "file": "moves/uthrow.words",
+          "move_tag": "throw"
+        },
+        {
+          "index": 250,
+          "file": "moves/dthrow.words",
+          "move_tag": "throw"
+        },
+        {
           "index": 295,
-          "file": "moves/show.words",
+          "file": "moves/n_charge.words",
+          "move_tag": "special"
+        },
+        {
+          "index": 296,
+          "file": "moves/n_release.words",
+          "move_tag": "special"
+        },
+        {
+          "index": 297,
+          "file": "moves/s_lunge.words",
+          "move_tag": "special"
+        },
+        {
+          "index": 299,
+          "file": "moves/rise.words",
+          "move_tag": "special"
+        },
+        {
+          "index": 301,
+          "file": "moves/counter.words",
+          "move_tag": "special"
+        },
+        {
+          "index": 302,
+          "file": "moves/counter_strike.words",
           "move_tag": "special"
         }
       ]

@@ -224,7 +224,14 @@ static void** ftCommonData_ExtendKindTable(void** loaded, int slot)
      * on an m-ex disc (bosses moved to the end, added fighters from 27). */
     for (i = 0; i < Ft_Kind_Max; ++i) {
         int base = Geno_DefineBaseKind(i);
-        int k = Mex_InternalForPortKind(base >= 0 ? base : i);
+        int k;
+        if (slot == 0 && base >= 0) {
+            /* a base "none" define has its own skeleton: its parts table comes from its package */
+            extern FighterPartsTable* GenoDefine_PartsTable(int kind);
+            FighterPartsTable* own = GenoDefine_PartsTable(i);
+            if (own != NULL) { out[i] = own; continue; }
+        }
+        k = Mex_InternalForPortKind(base >= 0 ? base : i);
         if (k < 0) {
             /* vanilla disc: retail layout, no m-ex rows - but retail's row 0x21 is real: Captain
                Falcon's throws put figatrees authored for kind 0x21 on the victim (x597_bits), so

@@ -1,0 +1,6 @@
+# Forward throw: 6%, a low launch that sets up a chase
+wait 1
+throw idx=0 damage=6 unk0=38 hit_x24=60 hit_x28=0 hit_x2C=45
+throw idx=1 damage=2 unk0=361 hit_x24=100 hit_x28=0 hit_x2C=45
+wait 12
+throw_flag hit_idx=0

@@ -1,0 +1,6 @@
+# Standing grab: wider than the donor's
+PUT ANIM_RATE 1.0
+wait 6
+hitbox raw=0x2C000000,0x039A0000,0x06800680,0xB4990012,0x0020008B
+wait 3
+clear_hitboxes

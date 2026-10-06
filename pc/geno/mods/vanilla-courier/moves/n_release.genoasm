@@ -1,0 +1,18 @@
+# Neutral special release: a dash strike. Speed and damage grow with the charge; the base speed and the
+# per-frame growth are the Striker's own special attribute words 1 and 2.
+GET la_f:0 MOVE_I0
+GET la_f:1 SPECIAL_F:2
+MUL la_f:0 la_f:1
+GET la_f:1 SPECIAL_F:1
+ADD la_f:0 la_f:1
+PUT FWD_VEL la_f:0
+GET la_f:2 MOVE_I0
+MUL la_f:2 0.15
+ADD la_f:2 6.0
+wait 3
+hitbox slot=0 joint=0 damage=6 size=4.5 x=3 y=6 angle=361 kbg=90 fkb=0 bkb=40
+hitbox slot=1 joint=0 damage=6 size=3.5 x=0 y=6 angle=361 kbg=90 fkb=0 bkb=40
+HBDMG 3 la_f:2
+wait 8
+clear_hitboxes
+PUT FWD_VEL 0.8

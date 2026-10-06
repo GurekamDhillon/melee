@@ -122,6 +122,12 @@ int gw_Kit_DrawTri(int tex, const float x[3], const float y[3], const float u[3]
                    const uint32_t col[3], const float *clip);
 int gw_Kit_QuadRoom(void); /* quads the bank can still take this frame */
 int gw_Kit_DrawFlat(float x, float y, float w, float h, uint32_t rgba, float shear);
+/* One flat quad with four arbitrary corners (top-left, top-right, bottom-right, bottom-left): the Atlas plates
+ * and glyphs are built from these. Returns 1 when added, 0 when the list is full or the colour is transparent. */
+int gw_Kit_DrawPoly4(const float x[4], const float y[4], uint32_t rgba);
+/* Letter-spacing in px added after every glyph by gw_Kit_TextWidth, gw_Kit_Fit, gw_Kit_DrawText and the paragraph
+ * (0 = none, the default). A caller sets it around its own text and resets it to 0. */
+void gw_Kit_SetTracking(float px);
 /* A 9-slice panel from <prefix>_corner_tl/_tr/_bl/_br, <prefix>_edge_h (top; flipped vertically
  * for the bottom), <prefix>_edge_v (left; flipped horizontally for the right) and an optional
  * <prefix>_fill. `piece` <= 0: the corner texture's 1x size (clamped to half the panel). The

@@ -285,11 +285,11 @@ static int kit_ui_dirs(char dirs[4][MAX_PATH]) {
 /* ============================================================================================
  * the font (font_manifest.json), the palette (kit.json) and the row template (list_layout.json)
  * ============================================================================================ */
-#define KF_ROLES 12
+#define KF_ROLES 24 /* the 10 legacy roles and the 13 Atlas roles, with room */
 #define KF_NCH 100 /* 0x20..0x7E, the ellipsis, the four arrows (as gmfrontend_kit.inc) */
 #define KF_ELLIPSIS 95
 #define KF_ARROW 96
-#define KF_MAX_KERN 16000
+#define KF_MAX_KERN 32000 /* the legacy roles carry 6,364 pairs, the Atlas ones about as many again; the loader stops silently past this */
 #define KIT_SECTIONS 5
 
 typedef struct {
@@ -335,6 +335,7 @@ static struct {
     char row_role[16];
     char st_face[3][16], st_label[3][16], st_plate[3][16], st_value[3][16];
 } kf;
+static float kf_track; /* letter-spacing in px after every glyph (gw_Kit_SetTracking) */
 
 static int kf_char(const char *key) {
     const unsigned char *k = (const unsigned char *)key;
@@ -631,7 +632,7 @@ static float kf_width_raw(int role, const char *s) {
     int prev = -1;
     for (; *s != '\0'; s++) {
         int c = kf_slot(r, (unsigned char)*s);
-        x += kf_kern(r, prev, c) + r->g[c].adv;
+        x += kf_kern(r, prev, c) + r->g[c].adv + kf_track;
         prev = c;
     }
     return x;
@@ -1247,7 +1248,7 @@ int gw_Kit_DrawText(float x, float y, const char *s, int role, uint32_t rgba, in
             added += kq_add(gx, gy, gx + g->size[0], gy + g->size[1], g->uv[0], g->uv[1], g->uv[2], g->uv[3],
                             rgba, r->tex[g->page], shear, y);
         }
-        pen += g->adv;
+        pen += g->adv + kf_track;
     }
     return added;
 }
@@ -1323,6 +1324,25 @@ int gw_Kit_DrawImage(int tex, float x, float y, float w, float h, uint32_t rgba,
 int gw_Kit_DrawFlat(float x, float y, float w, float h, uint32_t rgba, float shear) {
     return kq_add(x, y, x + w, y + h, 0, 0, 0, 0, rgba, -1, shear, y + h * 0.5f);
 }
+
+int gw_Kit_DrawPoly4(const float x[4], const float y[4], uint32_t rgba) {
+    GwKitQuad *q;
+    int k;
+    if (nkq >= KQ_MAX || (rgba & 0xFF) == 0) return 0;
+    q = &kq[nkq++];
+    for (k = 0; k < 4; k++) {
+        q->x[k] = x[k];
+        q->y[k] = y[k];
+        q->u[k] = 0.0f;
+        q->v[k] = 0.0f;
+    }
+    q->rgba = rgba;
+    q->tex = -1;
+    q->flags = 0;
+    return 1;
+}
+
+void gw_Kit_SetTracking(float px) { kf_track = px; }
 
 int gw_Kit_DrawPanel(float x, float y, float w, float h, const char *prefix, const char *mod_ui,
                      float piece, uint32_t tint, uint32_t fill_rgba, float shear) {
@@ -1637,9 +1657,69 @@ static int test_kit_panel_and_row(void) {
     return 0;
 }
 
+static int test_kit_poly4_and_tracking(void) {
+    const float px[4] = {10.0f, 50.0f, 50.0f, 10.0f}, py[4] = {20.0f, 20.0f, 60.0f, 60.0f};
+    int role, n;
+    float w0, w1;
+    if (!gw_Kit_Available()) {
+        return 0;
+    }
+    gw_Kit_BeginFrame();
+    n = gw_Kit_DrawPoly4(px, py, 0xFF7A3DFFu);
+    if (n != 1 || gw_Kit_QuadCount() != 1 || gw_Kit_QuadAt(0)->tex != -1 || gw_Kit_QuadAt(0)->x[2] != 50.0f ||
+        gw_Kit_QuadAt(0)->y[2] != 60.0f || gw_Kit_QuadAt(0)->rgba != 0xFF7A3DFFu) {
+        gw_test_fail("DrawPoly4 did not append one flat quad with its corners (%d, %d quads)", n, gw_Kit_QuadCount());
+        return 1;
+    }
+    if (gw_Kit_DrawPoly4(px, py, 0x00000000u) != 0 || gw_Kit_QuadCount() != 1) {
+        gw_test_fail("a fully transparent poly was drawn");
+        return 1;
+    }
+    role = gw_Kit_Role("body");
+    if (role < 0) {
+        role = 0;
+    }
+    gw_Kit_SetTracking(0.0f);
+    w0 = gw_Kit_TextWidth(role, "ABC");
+    gw_Kit_SetTracking(2.0f);
+    w1 = gw_Kit_TextWidth(role, "ABC");
+    gw_Kit_SetTracking(0.0f);
+    if (fabsf((w1 - w0) - 6.0f) > 0.01f) {
+        gw_test_fail("tracking of 2 px over three glyphs should add 6 px (it added %.2f)", w1 - w0);
+        return 1;
+    }
+    {
+        const GwKitQuad *a, *b;
+        float gap0, gap1;
+        gw_Kit_BeginFrame();
+        gw_Kit_DrawText(0, 100, "II", role, 0xFFFFFFFFu, GW_KIT_ALIGN_LEFT, 0, 0, NULL);
+        a = gw_Kit_QuadAt(0);
+        b = gw_Kit_QuadAt(1);
+        if (a == NULL || b == NULL) {
+            gw_test_fail("two glyphs drew no quads");
+            return 1;
+        }
+        gap0 = b->x[0] - a->x[0];
+        gw_Kit_SetTracking(3.0f);
+        gw_Kit_BeginFrame();
+        gw_Kit_DrawText(0, 100, "II", role, 0xFFFFFFFFu, GW_KIT_ALIGN_LEFT, 0, 0, NULL);
+        a = gw_Kit_QuadAt(0);
+        b = gw_Kit_QuadAt(1);
+        gap1 = b->x[0] - a->x[0];
+        gw_Kit_SetTracking(0.0f);
+        if (fabsf((gap1 - gap0) - 3.0f) > 0.01f) {
+            gw_test_fail("drawing with tracking 3 moved the second glyph by %.2f, not 3", gap1 - gap0);
+            return 1;
+        }
+    }
+    gw_Kit_BeginFrame();
+    return 0;
+}
+
 void gw_kit_tests_register(void) {
     gw_test_register("kit_decode_formats", test_kit_decode_formats);
     gw_test_register("kit_json_and_colours", test_kit_json_and_colours);
     gw_test_register("kit_text_layout", test_kit_text_layout);
     gw_test_register("kit_panel_and_row", test_kit_panel_and_row);
+    gw_test_register("kit_poly4_and_tracking", test_kit_poly4_and_tracking);
 }

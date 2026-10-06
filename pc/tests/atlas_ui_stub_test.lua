@@ -167,6 +167,24 @@ check(table.concat(hl, ',') == 'x.3:b' and ui.state().top == 'x.2', 'one held B 
 ui.release('B'); ui.tick(); ui.hold('B'); ui.tick()
 check(table.concat(hl, ',') == 'x.3:b,x.2:b' and ui.state().top == 'x.1', 'after a release the next B closes the next level')
 ui.release('B'); ui.close(); ui.held = {}
+-- fix round 2: a handler's result is judged by slot owners
+do
+  local m = Stub.new({ owner_mod = 'envoy' })
+  local function rs(id, caller, on) m.caller = caller; m.screen({ id = id, primary = { kind = 'list', items = { { id = 'a', label = 'A' } } }, on = on }) end
+  rs('envoy.one', 'envoy/a', { accept = function() return { push = 'envoy.two' } end })
+  rs('envoy.two', 'envoy/a', {})
+  rs('envoy.theirs', 'envoy/b', {})
+  rs('envoy.pop', 'envoy/a', { accept = function() return { pop = true } end })
+  m.caller = 'envoy/a'; m.open('envoy.one'); m.engine_press('envoy.one', 'accept')
+  check(m.state().top == 'envoy.two', 'a handler result pushes its own screen')
+  rs('envoy.push_theirs', 'envoy/a', { accept = function() return { push = 'envoy.theirs' } end })
+  m.caller = 'envoy/a'; m.open('envoy.push_theirs'); m.engine_press('envoy.push_theirs', 'accept')
+  check(m.state().top == 'envoy.push_theirs', 'it cannot push another script screen')
+  m.caller = 'envoy/a'; m.open('envoy.pop')
+  m.caller = 'envoy/b'; m.open('envoy.theirs')
+  m.caller = 'envoy/a'; m.engine_press('envoy.pop', 'accept')
+  check(m.state().top == 'envoy.theirs', 'a pop returned by one script does not close another script top screen')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

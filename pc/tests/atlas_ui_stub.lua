@@ -281,11 +281,16 @@ function Stub.new(opts)
  end
 
  -- {pop = true} / {push = "id"} from a handler, read raw like the binding
- local function apply(r)
+ -- judged by slot owners (gs_ui_apply_result): the handler's owner may pop only a top screen it owns, push only one it owns
+ local function apply(r, owner)
   if type(r) ~= 'table' then return end
-  if rawget(r, 'pop') and top() then ui.close(top()) end
+  if rawget(r, 'pop') and top() and ui._owner[top()] == owner then
+   local keep = ui.caller; ui.caller = 'console'; ui.close(top()); ui.caller = keep
+  end
   local p = rawget(r, 'push')
-  if type(p) == 'string' and ui.screens[p] and may_touch(p) then ui.open(p) end
+  if type(p) == 'string' and ui.screens[p] and ui._owner[p] == owner then
+   local keep = ui.caller; ui.caller = 'console'; ui.open(p); ui.caller = keep
+  end
  end
 
  local function row_of(d, f)
@@ -315,7 +320,7 @@ function Stub.new(opts)
    st.val = nv; arg = nv
   end
   local on = d.on or {}
-  if on.change then apply(on.change(it.id, arg)) end
+  if on.change then apply(on.change(it.id, arg), ui._owner[id]) end
   return true, arg
  end
 
@@ -333,7 +338,7 @@ function Stub.new(opts)
    if not on.page then return false end
    local r = on.page(kind == 'l' and -1 or 1, f and f.cell, f and f.block)
    if ui.screens[id] then ui.refresh(id) end
-   apply(r)
+   apply(r, ui._owner[id])
    return true, r
   end
   if kind == 'accept' and f then
@@ -342,7 +347,7 @@ function Stub.new(opts)
   if not fn then return false end
   local r = fn(f and f.cell, f and f.block)
   if ui.screens[id] then ui.refresh(id) end
-  apply(r)
+  apply(r, ui._owner[id])
   return true, r
  end
 

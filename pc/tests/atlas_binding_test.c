@@ -322,5 +322,48 @@ int main(void)
     LUA_IS("CH={}; gd.ui.feed('c.one','down'); gd.ui.feed('c.one','accept'); gd.ui.feed('c.one','right'); return #CH", "0");    /* a disabled row changes nothing */
     LUA_IS("CH={}; gd.ui.screen{id='c.two', primary={kind='list', items={{id='sl',label='S',value={kind='slider',min=0,max=10,value=10}}}}, on={change=function(id,v) CH[#CH+1]=id..'='..v end}}; gd.ui.open('c.two'); gd.ui.feed('c.two','right'); return #CH", "0");   /* at the end: no change */
     LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
+    /* ---- fix round 2: a handler's result is judged by slot owners, never by gs.cur (which is -1 in the tick) ---- */
+    gs_ui_release(0); gs_ui_release(1); gs_ui_release(2);
+    g_pad = 0;
+    /* a result returned during a REAL tick (gs.cur = -1, screens owned by a script that is not the console) pushes its owner's screen */
+    gs.cur = 1;
+    LUA_IS("R2={}; gd.ui.screen{id='envoy.p1', primary={kind='list', items={{id='a',label='A'}}}, on={accept=function() R2[#R2+1]='p1'; return {push='envoy.p2'} end}}; "
+           "gd.ui.screen{id='envoy.p2', primary={kind='list', items={{id='a',label='A'}}}, on={accept=function() R2[#R2+1]='p2' end, back=function() R2[#R2+1]='p2b'; return {pop=true} end}}; return gd.ui.open('envoy.p1')", "true");
+    gs.cur = -1;
+    g_pad = 0; gs_ui_tick();
+    g_pad = AT_PAD_A; gs_ui_tick();
+    g_pad = 0; gs_ui_tick();
+    LUA_IS("return table.concat(R2,',')..'/'..gd.ui.state().top", "p1/envoy.p2");               /* the push from the tick worked */
+    g_pad = AT_PAD_B; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    LUA_IS("return table.concat(R2,',')..'/'..gd.ui.state().top", "p1,p2b/envoy.p1");           /* and so did a pop from the tick */
+    /* it cannot push a screen another script owns */
+    gs.cur = 2;
+    LUA_IS("return gd.ui.screen{id='envoy.q', primary={kind='list', items={{id='a',label='A'}}}}", "true");
+    gs.cur = 1;
+    LUA_IS("gd.ui.screen{id='envoy.p3', primary={kind='list', items={{id='a',label='A'}}}, on={accept=function() return {push='envoy.q'} end}}; return gd.ui.open('envoy.p3')", "true");
+    gs.cur = -1;
+    g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    gs.cur = 0;
+    LUA_IS("return gd.ui.state().top", "envoy.p3");                                              /* the push of script 2's screen was refused */
+    /* and a pop returned by one script's handler does not close another script's top screen */
+    gs.cur = 1;
+    LUA_IS("gd.ui.screen{id='envoy.a', primary={kind='list', items={{id='a',label='A'}}}, on={accept=function() return {pop=true} end}}; return gd.ui.open('envoy.a')", "true");
+    gs.cur = 2;
+    LUA_IS("gd.ui.open('envoy.q'); return gd.ui.state().top", "envoy.q");
+    gs.cur = 1;
+    LUA_IS("return tostring(gd.ui.feed('envoy.a','accept'))", "true");                          /* script 1 feeds its own screen, which is not on top */
+    gs.cur = 0;
+    LUA_IS("return gd.ui.state().top", "envoy.q");                                               /* script 2's screen is still open */
+    LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
+    gs_ui_release(0); gs_ui_release(1); gs_ui_release(2);
+    /* re-registering a top screen under another port primes the new port's buttons: a held A does not fire on it */
+    LUA_IS("PT={}; PTD=function(port) return gd.ui.screen{id='pt.s', port=port, primary={kind='list', items={{id='a',label='A'}}}, on={accept=function() PT[#PT+1]='a' end}} end; PTD(1); return gd.ui.open('pt.s')", "true");
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A;
+    LUA_IS("return PTD(2)", "true");
+    gs_ui_tick(); gs_ui_tick();
+    LUA_IS("return #PT", "0");
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0;
+    LUA_IS("return #PT", "1");
+    LUA_IS("while gd.ui.state().top do gd.ui.close() end return 'clear'", "clear");
     ATLAS_DONE("atlas binding");
 }

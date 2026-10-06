@@ -224,18 +224,20 @@ static void gs_ui_close_screen(int slot);
 static int gs_ui_open_screen(int slot);
 
 /* a handler may return {pop = true} or {push = "screen id"} */
-static void gs_ui_apply_result(void) {
+/* A handler's result is judged by the slot owners, never by gs.cur: the tick calls handlers between hooks, where gs.cur is -1.
+ * `owner` is the script whose handler returned it: it may pop only a top screen it owns and push only a screen it owns. */
+static void gs_ui_apply_result(int owner) {
     lua_State *L = gs.L;
     if (lua_istable(L, -1)) {
         lua_pushliteral(L, "pop");                                 /* raw reads: a handler's table may carry a metatable, and this */
         lua_rawget(L, -2);                                         /* runs outside any protected call (from gs_ui_tick) */
-        if (lua_toboolean(L, -1) && at_stack_top(&gs_ui_stack) >= 0) gs_ui_close_screen(at_stack_top(&gs_ui_stack));
+        if (lua_toboolean(L, -1) && at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].owner == owner) gs_ui_close_screen(at_stack_top(&gs_ui_stack));
         lua_pop(L, 1);
         lua_pushliteral(L, "push");
         lua_rawget(L, -2);
         if (lua_type(L, -1) == LUA_TSTRING) {
             int s = gs_ui_find(lua_tostring(L, -1));
-            if (s >= 0 && gs_ui_may_touch(s)) gs_ui_open_screen(s);
+            if (s >= 0 && gs_ui_slot[s].owner == owner) gs_ui_open_screen(s);
         }
         lua_pop(L, 1);
     }
@@ -345,6 +347,7 @@ static void gs_ui_prime(int slot) {
 /* ---- stack operations --------------------------------------------------------------------------------- */
 static int gs_ui_open_screen(int slot) {
     GsUiSlot *u = &gs_ui_slot[slot];
+    int owner = u->owner;
     AtStackEntry *top;
     if (!at_stack_push(&gs_ui_stack, slot)) return 0;
     top = at_stack_top_entry(&gs_ui_stack);
@@ -354,7 +357,7 @@ static int gs_ui_open_screen(int slot) {
     u->explain_dirty = 1;
     gs_ui_prime(slot);
     gw_log("ui: screen %s open (%d blocks, %d items)", u->sc.id, u->sc.n_blocks, u->sc.n_items);
-    if (u->sc.fn_open >= 0 && gs_ui_call(slot, u->sc.fn_open, "", "", 1)) gs_ui_apply_result();
+    if (u->sc.fn_open >= 0 && gs_ui_call(slot, u->sc.fn_open, "", "", 1)) gs_ui_apply_result(owner);
     return 1;
 }
 
@@ -411,6 +414,7 @@ static void gs_ui_dialog_press(int slot, int btn) {
  * at once; the script re-registers when it wants the row to read differently. Returns 1 when the event was a value event. */
 static int gs_ui_value_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
+    int owner = u->owner;
     AtItem *it;
     int idx = u->view.focus.index, left, right, accept, step, nv, is_bool = 0, dir = 0;
     char id[AT_ID];
@@ -442,7 +446,7 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
         if (lua_isfunction(L, -1)) {
             lua_pushstring(L, id);
             if (is_bool) lua_pushboolean(L, val != 0.0); else lua_pushinteger(L, (lua_Integer) val);
-            if (gs_pcall(u->owner, 2, 1, "ui") == 0) gs_ui_apply_result();
+            if (gs_pcall(u->owner, 2, 1, "ui") == 0) gs_ui_apply_result(owner);
         } else lua_pop(L, 1);
     }
     return 1;
@@ -450,6 +454,7 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
 
 static void gs_ui_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
+    int owner = u->owner;
     AtFocusBlock fb[AT_MAX_BLOCKS];
     AtFocusPos before = u->view.focus;
     const char *cid, *bid;
@@ -486,12 +491,12 @@ static void gs_ui_event(int slot, const AtEvent *e) {
         return;
     }
     if (e->type == AT_EV_ACCEPT) {
-        if (u->sc.fn_accept >= 0 && cid != NULL && at_cell_accepts(&u->sc, u->view.focus) && gs_ui_call(slot, u->sc.fn_accept, cid, bid, 1)) gs_ui_apply_result();
+        if (u->sc.fn_accept >= 0 && cid != NULL && at_cell_accepts(&u->sc, u->view.focus) && gs_ui_call(slot, u->sc.fn_accept, cid, bid, 1)) gs_ui_apply_result(owner);
     } else if (e->type == AT_EV_BACK) {
-        if (u->sc.fn_back >= 0 && gs_ui_call(slot, u->sc.fn_back, cid, bid, 1)) gs_ui_apply_result();
+        if (u->sc.fn_back >= 0 && gs_ui_call(slot, u->sc.fn_back, cid, bid, 1)) gs_ui_apply_result(owner);
     } else if (e->type == AT_EV_ALT) {
         alt = e->a == 'X' ? 0 : e->a == 'Y' ? 1 : 2;
-        if (u->sc.fn_alt[alt] >= 0 && gs_ui_call(slot, u->sc.fn_alt[alt], cid, bid, 1)) gs_ui_apply_result();
+        if (u->sc.fn_alt[alt] >= 0 && gs_ui_call(slot, u->sc.fn_alt[alt], cid, bid, 1)) gs_ui_apply_result(owner);
     } else if (e->type == AT_EV_PAGE) {                           /* L / R, Tab / Shift+Tab: on.page(dir, cell id, block id), dir -1 or +1 */
         if (u->sc.fn_page >= 0 && gs_may_run(u->owner) && gs_ui_usable(u->owner)) {
             lua_State *L = gs.L;
@@ -500,11 +505,11 @@ static void gs_ui_event(int slot, const AtEvent *e) {
                 lua_pushinteger(L, e->a < 0 ? -1 : 1);
                 lua_pushstring(L, cid != NULL ? cid : "");
                 lua_pushstring(L, bid != NULL ? bid : "");
-                if (gs_pcall(u->owner, 3, 1, "ui") == 0) gs_ui_apply_result();
+                if (gs_pcall(u->owner, 3, 1, "ui") == 0) gs_ui_apply_result(owner);
             } else lua_pop(L, 1);
         }
     } else if (e->type == AT_EV_START) {                          /* START: on.start(cell id, block id) (the spec leaves it to the screen) */
-        if (u->sc.fn_start >= 0 && gs_ui_call(slot, u->sc.fn_start, cid, bid, 1)) gs_ui_apply_result();
+        if (u->sc.fn_start >= 0 && gs_ui_call(slot, u->sc.fn_start, cid, bid, 1)) gs_ui_apply_result(owner);
     }
 }
 
@@ -516,7 +521,11 @@ static void gs_ui_tick(void) {
     GsUiSlot *u;
     if (top < 0) return;
     u = &gs_ui_slot[top];
-    if (!u->used) { at_stack_remove(&gs_ui_stack, top); return; }
+    if (!u->used) {
+        at_stack_remove(&gs_ui_stack, top);
+        if (at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
+        return;
+    }
     if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go */
     if (!gs_may_run(u->owner)) return;
     if (at_screen_wants_pad(&u->sc)) {
@@ -595,7 +604,7 @@ static int l_ui_available(lua_State *L) {
 
 static int l_ui_screen(lua_State *L) {
     char err[200], owner[64];
-    int root, slot, nkeep, keep[40], replace = 0;
+    int root, slot, nkeep, keep[40], replace = 0, old_port = 0;
     GsUiSlot *u;
     AtFocusPos old;
     char old_block[AT_ID], old_cell[AT_ID];
@@ -634,12 +643,14 @@ static int l_ui_screen(lua_State *L) {
         at_view_init(&u->view);
         u->dialog_fn = -1;
     }
+    old_port = u->sc.port;
     u->sc = gs_ui_scratch;
     u->used = 1;
     u->owner = gs.cur;
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);
     else { AtFocusBlock fb[AT_MAX_BLOCKS]; u->view.focus = at_focus_first(fb, at_screen_focus_blocks(&u->sc, fb)); }
     u->explain_dirty = 1;
+    if (replace && old_port != u->sc.port && at_stack_top(&gs_ui_stack) == slot) gs_ui_prime(slot);   /* the new port's buttons held now must be released first */
     lua_pushboolean(L, 1);
     return 1;
 }

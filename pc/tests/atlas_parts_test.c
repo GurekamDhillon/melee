@@ -205,7 +205,7 @@ static void explainer_note_dialog(void)
     {                                                                       /* a long unbroken rule: clamped, still inside the pane */
         char big[400];
         memset(big, 'x', 150); big[150] = '\0';
-        for (i = 0; i < 40; i++) strcat(big, " word");
+        for (i = 0; i < 40; i++) memcpy(big + 150 + 5 * i, " word", 6);
         snprintf(e.what, sizeof e.what, "%s", big);
     }
     s = rec_sink(); at_part_explainer(&s, &FAKE, pane, &e);
@@ -288,9 +288,116 @@ static void fix_round1(void)
     }
 }
 
+/* ---- round 2: the chamfer rule, the three focus cues, and text that never leaves its box ---------------- */
+
+/* the right edge of a recorded text, whatever its alignment */
+static float text_right(const RecText *t)
+{
+    float w = fake_width(0, t->role, t->s);
+    return t->align == AT_ALIGN_RIGHT ? t->x : t->align == AT_ALIGN_CENTER ? t->x + w * 0.5f : t->x + w;
+}
+static float text_left(const RecText *t)
+{
+    float w = fake_width(0, t->role, t->s);
+    return t->align == AT_ALIGN_RIGHT ? t->x - w : t->align == AT_ALIGN_CENTER ? t->x - w * 0.5f : t->x;
+}
+/* 1 when no polygon vertex lies inside the cut-away triangle of the top-left or bottom-right chamfer of r */
+static int corners_clear(AtRect r, float c)
+{
+    int i, k;
+    for (i = 0; i < REC.np; i++) {
+        for (k = 0; k < 4; k++) {
+            float dx = REC.p[i].x[k] - r.x, dy = REC.p[i].y[k] - r.y, ex = r.x + r.w - REC.p[i].x[k], ey = r.y + r.h - REC.p[i].y[k];
+            if (dx >= -0.01f && dy >= -0.01f && dx + dy < c - 0.01f) return 0;
+            if (ex >= -0.01f && ey >= -0.01f && ex + ey < c - 0.01f) return 0;
+        }
+    }
+    return 1;
+}
+static float min_y_of(unsigned rgba)
+{
+    float m = 1e9f; int i;
+    for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == rgba && poly_miny(&REC.p[i]) < m) m = poly_miny(&REC.p[i]);
+    return m;
+}
+
+static void fix_round2(void)
+{
+    AtSink s;
+    int i;
+    AtRect r = { 100.0f, 100.0f, 56.0f, 56.0f };
+    AtCell c;
+    /* nothing is drawn over a chamfered corner: the note's icon, the merge and selected outlines */
+    { AtRect nr = { 300.0f, 22.0f, 300.0f, 30.0f };
+      s = rec_sink(); at_part_note(&s, &FAKE, nr, "Saved", AT_NOTE_OK, 0.5f);
+      CHECK(corners_clear(nr, (float) AT_PX_CH_S)); }
+    c = mk_cell("Cell", 7, AT_CELL_MERGE);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(corners_clear(r, (float) AT_PX_CH_XS));
+    c = mk_cell("Cell", 7, AT_CELL_SELECTED);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(corners_clear(r, (float) AT_PX_CH_XS) && count_color(AT_C_JADE) >= 3);
+    /* a focused stone: lift 2, an ember front edge, four brackets in the port colour */
+    c = mk_cell("Stone", AT_NO_MODEL, 0); c.letter = 'P'; c.rgba = 0xB872F0FFu;
+    { AtRect sr = { 100.0f, 100.0f, 34.0f, 38.0f };
+      s = rec_sink(); at_part_stone(&s, &FAKE, sr, &c, AT_ST_FOCUS, AT_C_P2);
+      CHECK(count_color(AT_C_P2) == 8 && count_color(AT_C_EMBER) == 1 && poly_miny(&REC.p[0]) == 98.0f);
+      c.flags = AT_CELL_EMPTY;
+      s = rec_sink(); at_part_stone(&s, &FAKE, sr, &c, AT_ST_FOCUS, AT_C_P2);
+      CHECK(count_color(AT_C_P2) == 8 && count_color(AT_C_EMBER) == 1 && poly_miny(&REC.p[0]) == 98.0f); }
+    /* a focused empty cell: lift 2, an ember outline with a front edge, brackets */
+    c = mk_cell("Empty", AT_NO_MODEL, AT_CELL_EMPTY);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_FOCUS, AT_C_P2);
+    CHECK(count_color(AT_C_P2) == 8 && count_color(AT_C_EMBER) >= 4 && min_y_of(AT_C_EMBER) == 98.0f && count_color(AT_C_LINE) == 0);
+    /* a pressed cell sits 1 px low with the dark ember edge; a disabled cell shows it */
+    c = mk_cell("Cell", 7, 0);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_PRESS, 0);
+    CHECK(count_color(AT_C_EMBER_D) >= 1 && count_color(AT_C_EMBER) == 0 && REC.m[0].y == 104.0f);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_DISABLED, 0);
+    CHECK(REC.m[0].dim == 1 && REC.m[0].focused == 0);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_DISABLED, AT_C_P2);
+    CHECK(count_color(AT_C_P2) == 0);                                       /* a disabled cell takes no focus */
+    /* a focused dialog button: lift 2, an ember front edge and tick, four brackets */
+    { AtDialog d; AtRect b[2];
+      memset(&d, 0, sizeof d);
+      d.open = 1; snprintf(d.title, sizeof d.title, "DISCARD?"); snprintf(d.body, sizeof d.body, "Gone for good.");
+      d.n = 2; d.btn[0] = 'A'; snprintf(d.label[0], 24, "Discard"); d.btn[1] = 'B'; snprintf(d.label[1], 24, "Cancel"); d.focus = 1;
+      s = rec_sink(); at_part_dialog(&s, &FAKE, 640.0f, &d, 0.0f, b);
+      CHECK(count_color(AT_C_EMBER) == 10);                                 /* edge, tick, eight bracket strips */
+      CHECK(min_y_of(AT_C_LIFT) == b[1].y - 2.0f);
+      /* two 23-character labels stay inside the 332 px plate */
+      snprintf(d.label[0], 24, "ABCDEFGHIJKLMNOPQRSTUVW"); snprintf(d.label[1], 24, "abcdefghijklmnopqrstuvw");
+      s = rec_sink(); at_part_dialog(&s, &FAKE, 640.0f, &d, 0.0f, b);
+      CHECK(b[0].x >= 154.0f + 16.0f - 0.01f && b[1].x + b[1].w <= 486.0f - 16.0f + 0.01f && b[0].x + b[0].w <= b[1].x);
+      for (i = 0; i < REC.nt; i++) CHECK(text_left(&REC.t[i]) >= 154.0f && text_right(&REC.t[i]) <= 486.0f);
+      CHECK(texts_legible()); }
+    /* a long trail in a narrow rect: no text past the right edge, however narrow */
+    { static const char *const tl[3] = { "SOLO", "ENVOY", "A VERY LONG CURRENT PAGE TITLE HERE" };
+      static const float widths[5] = { 300.0f, 150.0f, 100.0f, 60.0f, 20.0f };
+      int k;
+      for (k = 0; k < 5; k++) {
+          AtRect tr = { 32.0f, 22.0f, widths[k], 30.0f };
+          s = rec_sink(); at_part_trail(&s, &FAKE, tr, tl, 3);
+          for (i = 0; i < REC.nt; i++) CHECK(text_right(&REC.t[i]) <= tr.x + tr.w + 0.01f);
+      } }
+    /* a narrow footer and a long hint label stay inside */
+    { AtFooter f; AtRect fr = { 32.0f, 434.0f, 200.0f, 26.0f };
+      memset(&f, 0, sizeof f);
+      f.has = 1; f.model_a = f.model_b = f.model_out = AT_NO_MODEL;
+      snprintf(f.label, sizeof f.label, "COMBINE"); snprintf(f.text, sizeof f.text, "A long outcome sentence that has no room");
+      s = rec_sink(); at_part_footer(&s, &FAKE, fr, &f);
+      for (i = 0; i < REC.nt; i++) CHECK(text_right(&REC.t[i]) <= fr.x + fr.w + 0.01f);
+      for (i = 0; i < REC.nm; i++) CHECK(REC.m[i].x + REC.m[i].w <= fr.x + fr.w + 0.01f); }
+    { char lab[201]; float adv;
+      memset(lab, 'q', 200); lab[200] = '\0';
+      s = rec_sink(); adv = at_part_hint(&s, &FAKE, 40.0f, 450.0f, 'A', lab);
+      for (i = 0; i < REC.nt; i++) CHECK(text_right(&REC.t[i]) <= 40.0f + adv);
+      CHECK(adv < 400.0f); }
+}
+
 int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
-    cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1();
+    cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2();
     ATLAS_DONE("atlas parts");
 }

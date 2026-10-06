@@ -519,6 +519,15 @@ BOOL MoveFileExA(const char *from, const char *to, DWORD flags) {
 
 /* ---- misc ---- */
 DWORD GetCurrentProcessId(void) { return (DWORD)getpid(); }
+void GetSystemTimeAsFileTime(FILETIME *ft) {
+    struct timespec ts;
+    uint64_t ticks;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    /* 1601-01-01 to 1970-01-01 is 11644473600 s */
+    ticks = ((uint64_t)ts.tv_sec + 11644473600ull) * 10000000ull + (uint64_t)ts.tv_nsec / 100u;
+    ft->dwLowDateTime = (DWORD)(ticks & 0xFFFFFFFFu);
+    ft->dwHighDateTime = (DWORD)(ticks >> 32);
+}
 
 DWORD GetTempPathA(DWORD cap, char *out) {
     const char *dir = getenv("TMPDIR");
@@ -614,6 +623,20 @@ static int gw_vk_to_scancode(int vk) {
         return SDL_SCANCODE_MINUS;
     case VK_OEM_PERIOD:
         return SDL_SCANCODE_PERIOD;
+    case VK_OEM_PLUS:
+        return SDL_SCANCODE_EQUALS;
+    case VK_OEM_COMMA:
+        return SDL_SCANCODE_COMMA;
+    case VK_OEM_2:
+        return SDL_SCANCODE_SLASH;
+    case VK_OEM_4:
+        return SDL_SCANCODE_LEFTBRACKET;
+    case VK_OEM_5:
+        return SDL_SCANCODE_BACKSLASH;
+    case VK_OEM_6:
+        return SDL_SCANCODE_RIGHTBRACKET;
+    case VK_OEM_7:
+        return SDL_SCANCODE_APOSTROPHE;
     default:
         return SDL_SCANCODE_UNKNOWN;
     }

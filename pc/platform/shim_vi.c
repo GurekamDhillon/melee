@@ -874,6 +874,10 @@ extern int gw_Mods_ActiveCount(void);
 extern int gw_Mods_ActiveAt(int n);
 extern const char *gw_Mods_Id(int i);
 extern const char *gw_Mods_Version(int i);
+#ifndef _WIN32
+extern unsigned long gw_log_link_stamp(void); /* gw_log.c: the ELF build-id word */
+static unsigned long gw_link_stamp_id(void) { return gw_log_link_stamp(); }
+#else
 static unsigned long gw_link_stamp_id(void) {
   const unsigned char *base = (const unsigned char *)GetModuleHandleA(NULL);
   const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)base;
@@ -882,6 +886,7 @@ static unsigned long gw_link_stamp_id(void) {
   nt = (const IMAGE_NT_HEADERS *)(base + dos->e_lfanew);
   return nt->Signature == IMAGE_NT_SIGNATURE ? nt->FileHeader.TimeDateStamp : 0;
 }
+#endif
 static void gw_perfrec_esc(char *dst, size_t cap, const char *s) {
   size_t n = 0;
   for (; s && *s && n + 7 < cap; ++s) {

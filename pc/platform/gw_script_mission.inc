@@ -263,6 +263,10 @@ static int l_mod_list(lua_State *L)
  * Preserve existing Linux scripts/model loading; new mission IO fails closed. */
 #include <sys/stat.h>
 static int gs_mission_script_root(char out[MAX_PATH]) { (void)out; return 0; }
+static int gs_mission_error(lua_State *L, const char *error)
+{
+    lua_pushnil(L); lua_pushstring(L, error); return 2;
+}
 static int gs_mission_unavailable(lua_State *L) {
     lua_pushnil(L); lua_pushliteral(L, "mission file access requires Windows"); return 2;
 }

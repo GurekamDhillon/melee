@@ -54,6 +54,9 @@ static double prof_now(void) {
 #include <pthread.h>
 #include <stdatomic.h>
 #include <time.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <unistd.h>
 static pthread_mutex_t prof_mutex = PTHREAD_MUTEX_INITIALIZER;
 static _Atomic unsigned prof_on, prof_generation = 1, prof_frame, prof_dropped;
 static _Atomic unsigned prof_sum;
@@ -384,6 +387,9 @@ static void (*sum_log_cb)(const char *line);
 #ifdef _WIN32
 static ULONGLONG sum_cpu_idle0, sum_cpu_kernel0, sum_cpu_user0, sum_own0;
 static int sum_cpu_primed;
+#else
+static unsigned long long sum_cpu_idle0, sum_cpu_total0, sum_own0; /* /proc jiffies */
+static int sum_cpu_primed;
 #endif
 
 static void sum_cfg(void) {
@@ -580,7 +586,30 @@ static unsigned sum_other_instances(void) {
     CloseHandle(snap);
     return n;
 #else
-    return 0;
+    /* Other melee processes: /proc/<pid>/comm equal to "melee" (the package's bin/melee), names only. */
+    DIR *d = opendir("/proc");
+    struct dirent *de;
+    unsigned n = 0;
+    long self = (long)getpid();
+    if (!d) return 0xFFFFu;
+    while ((de = readdir(d)) != NULL) {
+        char path[64], comm[32];
+        FILE *f;
+        long pid;
+        if (!isdigit((unsigned char)de->d_name[0])) continue;
+        pid = atol(de->d_name);
+        if (pid == self) continue;
+        snprintf(path, sizeof path, "/proc/%s/comm", de->d_name);
+        f = fopen(path, "r");
+        if (!f) continue;
+        if (fgets(comm, sizeof comm, f)) {
+            comm[strcspn(comm, "\r\n")] = 0;
+            if (!strcmp(comm, "melee")) n++;
+        }
+        fclose(f);
+    }
+    closedir(d);
+    return n;
 #endif
 }
 static void sum_memory(double *peak_ws, double *peak_commit, double *ws) {
@@ -590,6 +619,22 @@ static void sum_memory(double *peak_ws, double *peak_commit, double *ws) {
     if (K32GetProcessMemoryInfo(GetCurrentProcess(), &pm, sizeof pm)) {
         *peak_ws = pm.PeakWorkingSetSize / 1048576.0; *peak_commit = pm.PeakPagefileUsage / 1048576.0;
         *ws = pm.WorkingSetSize / 1048576.0; return;
+    }
+#else
+    /* VmHWM = peak resident set, VmPeak = peak address space ("commit" on Windows), VmRSS = resident now. */
+    FILE *f = fopen("/proc/self/status", "r");
+    if (f) {
+        char line[128];
+        unsigned long kb;
+        double hwm = 0, peak = 0, rss = 0;
+        while (fgets(line, sizeof line, f)) {
+            if (sscanf(line, "VmHWM: %lu kB", &kb) == 1) hwm = kb / 1024.0;
+            else if (sscanf(line, "VmPeak: %lu kB", &kb) == 1) peak = kb / 1024.0;
+            else if (sscanf(line, "VmRSS: %lu kB", &kb) == 1) rss = kb / 1024.0;
+        }
+        fclose(f);
+        *peak_ws = hwm; *peak_commit = peak; *ws = rss;
+        return;
     }
 #endif
     *peak_ws = *peak_commit = *ws = 0;
@@ -615,6 +660,38 @@ static void sum_cpu_sample(double now_ms) {
         if (load > sum_scene.lo_max) sum_scene.lo_max = load;
     }
     sum_cpu_idle0 = idle; sum_cpu_kernel0 = kern; sum_cpu_user0 = user; sum_own0 = own; sum_cpu_primed = 1;
+#else
+    /* /proc/stat's first line (all CPUs, jiffies) and this process's utime+stime from /proc/self/stat. */
+    unsigned long long v[8] = {0}, total = 0, idle, own = 0, ut, st;
+    char line[512], *rp;
+    FILE *f = fopen("/proc/stat", "r");
+    int i;
+    if (f) {
+        int ok = fgets(line, sizeof line, f) != NULL &&
+                 sscanf(line, "cpu %llu %llu %llu %llu %llu %llu %llu %llu", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7]) >= 4;
+        fclose(f);
+        if (ok) {
+            for (i = 0; i < 8; ++i) total += v[i];
+            idle = v[3] + v[4];
+            f = fopen("/proc/self/stat", "r");
+            if (f) {
+                if (fgets(line, sizeof line, f) && (rp = strrchr(line, ')')) != NULL &&
+                    sscanf(rp + 1, " %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %llu %llu", &ut, &st) == 2) own = ut + st;
+                fclose(f);
+            }
+            if (sum_cpu_primed && total > sum_cpu_total0) {
+                double dt = (double)(total - sum_cpu_total0);
+                double busy = dt - (double)(idle - sum_cpu_idle0);
+                double mine = (double)(own - sum_own0);
+                double load = 100.0 * (busy - mine) / dt;
+                if (load < 0) load = 0;
+                if (sum_scene.lo_n == 0) sum_scene.lo_first = load;
+                sum_scene.lo_last = load; sum_scene.lo_sum += load; sum_scene.lo_n++;
+                if (load > sum_scene.lo_max) sum_scene.lo_max = load;
+            }
+            sum_cpu_total0 = total; sum_cpu_idle0 = idle; sum_own0 = own; sum_cpu_primed = 1;
+        }
+    }
 #endif
     sum_last_cpu_ms = now_ms;
 }
@@ -684,7 +761,7 @@ static int sum_write_file(int in_progress_scene) {
 #ifdef _WIN32
             (unsigned long)GetCurrentProcessId(),
 #else
-            0ul,
+            (unsigned long)getpid(),
 #endif
             prof_load(&prof_sum) ? "true" : "false", prof_load(&prof_on) ? "true" : "false",
             sum_scenes_total, sum_scenes_short, cond);
@@ -755,9 +832,7 @@ void gw_prof_scene_begin(const char *name) {
     snprintf(sum_scene.name, sizeof sum_scene.name, "%s", name ? name : "?");
     sum_scene.t0 = prof_now();
     sum_scene.others_start = sum_scene.others_end = 0xFFFFu;
-#ifdef _WIN32
     sum_cpu_primed = 0;
-#endif
 }
 
 /* ---- the frame tick ---- */

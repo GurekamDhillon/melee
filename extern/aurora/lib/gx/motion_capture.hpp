@@ -44,6 +44,11 @@ inline std::unordered_map<BlobKey,std::weak_ptr<const Blob>,BlobKeyHash>& blob_p
 inline std::atomic<uint64_t> blob_ids{0},blob_live_bytes{0},blob_hits{0},blob_misses{0};
 // 128-bit content hash: four interleaved CRC32C lanes (hardware crc32, ~4 bytes per cycle; the port is 32-bit, where a 64-bit
 // multiply hash runs several times slower), mixed with the length. Not cryptographic; this only dedupes presentation data.
+// The crc32 intrinsics need SSE4.2; clang and gcc refuse to inline them (always_inline) into a function without the
+// feature, which a bare i686 target (the Linux build) does not enable. Every x86 CPU since 2008 has it.
+#if defined(__clang__) || defined(__GNUC__)
+__attribute__((target("sse4.2")))
+#endif
 inline void hash128(const uint8_t* p,size_t n,uint64_t& a,uint64_t& b){
     uint32_t c0=0x9E3779B9u^uint32_t(n),c1=0x85EBCA6Bu,c2=0xC2B2AE35u,c3=0x27D4EB2Fu^uint32_t(uint64_t(n)>>16);size_t i=0;
     for(;i+16<=n;i+=16){

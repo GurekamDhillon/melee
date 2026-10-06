@@ -189,6 +189,7 @@ typedef struct {
     DWORD dwLowDateTime;
     DWORD dwHighDateTime;
 } FILETIME;
+void GetSystemTimeAsFileTime(FILETIME *ft); /* 100 ns ticks since 1601, like the Win32 call */
 typedef struct {
     DWORD dwFileAttributes;
     DWORD nFileSizeHigh;
@@ -288,6 +289,13 @@ SHORT GetAsyncKeyState(int vk);
 #define VK_OEM_3 0xC0      /* `~ */
 #define VK_OEM_MINUS 0xBD  /* -_ */
 #define VK_OEM_PERIOD 0xBE /* .> */
+#define VK_OEM_PLUS 0xBB   /* =+ */
+#define VK_OEM_COMMA 0xBC  /* ,< */
+#define VK_OEM_2 0xBF      /* /? */
+#define VK_OEM_4 0xDB      /* [{ */
+#define VK_OEM_5 0xDC      /* backslash and | */
+#define VK_OEM_6 0xDD      /* ]} */
+#define VK_OEM_7 0xDE      /* quote */
 
 /* ---- window (see gw.h's gw_get_window()/gw_window_focused()/gw_set_window_title()) ----
  *

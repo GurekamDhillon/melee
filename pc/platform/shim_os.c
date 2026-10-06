@@ -228,7 +228,9 @@ void gw_OSDestroyHeap(int heap) {
 
 /* stage-lane leak accounting: while on, every live heap block remembers the host return
  * addresses of its allocation (resolve against melee-pc.map). Dumped with gw_OSDumpHeap. */
+#ifdef _WIN32
 __declspec(dllimport) unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long, unsigned long, void **, unsigned long *);
+#endif
 #define GW_TRK_N (1u << 16)
 #define GW_TRK_FRAMES 10
 static struct { void *p; u32 size; int heap; void *bt[GW_TRK_FRAMES]; } *gw_trk;

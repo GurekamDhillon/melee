@@ -90,7 +90,10 @@ static int test_script_model_api(void)
         "for _,v in ipairs{{scale=0},{scale=101},{x=0/0},{z=math.huge},{layer=9},"
         "{scale_x=0},{scale_y=math.huge},{scale_z=-101},{alpha=1},{background=1},"
         "{rot=361},{visible=1},{tint=-1},{tint=0x100000000}} do assert(not pcall(options,v)) end "
-        "assert(open_model('a')==open_model('A')); assert(open_model('b')~=open_model('a'))")) {
+#ifdef _WIN32 /* a model name is case-insensitive only where the file system is (NTFS); a Linux file system is not */
+        "assert(open_model('a')==open_model('A')); "
+#endif
+        "assert(open_model('b')~=open_model('a'))")) {
         gw_test_fail("model Lua validation/cache: %s", lua_tostring(L, -1)); { fail_line = __LINE__; goto done; }
     }
     if (gs_stage_nmodels != 2 || gs_stage_models[0].image != gs_stage_models[1].image ||

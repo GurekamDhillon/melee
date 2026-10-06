@@ -22,6 +22,7 @@ static int l_campaign_storage(lua_State *L) {
     if (len > (1 << 20)) return luaL_error(L, "campaign files are at most 1 MB");
     gs_data_path(L, name, path, sizeof path);
     snprintf(temp, sizeof temp, "%s.tmp", path);
+#ifdef _WIN32
     file = CreateFileA(temp, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, NULL);
     if (file == INVALID_HANDLE_VALUE) error = GetLastError();
@@ -33,6 +34,19 @@ static int l_campaign_storage(lua_State *L) {
         if (!error && !MoveFileExA(temp, path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
             error = GetLastError();
     }
+#else
+    { /* the same temp-write, flush, atomic-replace sequence with POSIX calls (rename() replaces) */
+        FILE *out = fopen(temp, "wb");
+        (void) file;
+        if (!out) error = (DWORD) (errno ? errno : EIO);
+        else {
+            if (fwrite(bytes, 1, len, out) != len) error = (DWORD) (errno ? errno : EIO);
+            if (!error && (fflush(out) || fsync(fileno(out)))) error = (DWORD) (errno ? errno : EIO);
+            if (fclose(out) && !error) error = (DWORD) (errno ? errno : EIO);
+            if (!error && !MoveFileExA(temp, path, 0)) error = (DWORD) (errno ? errno : EIO);
+        }
+    }
+#endif
     if (error) {
         DeleteFileA(temp);
         return luaL_error(L, "campaign atomic write failed (%d)", (int) error);

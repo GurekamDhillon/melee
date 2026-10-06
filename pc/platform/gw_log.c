@@ -45,6 +45,9 @@
  * lines, user paths replaced by %USERPROFILE%) and keeps the whole melee-pc.log beside it as
  * crash-<time>-full.log. A fault after "window closed, shutting down" is marked "during shutdown:
  * yes": the launcher neither alarms the player nor uploads those. */
+#ifndef _WIN32
+#define _GNU_SOURCE /* dl_iterate_phdr (<link.h>), used for the build id below; must precede every include */
+#endif
 #include "gw.h"
 #include "gw_hang.h"
 #include "gw_test.h"
@@ -735,6 +738,10 @@ static DWORD gl_link_stamp(void) {
   return s.found ? s.id : 0;
 #endif
 }
+#ifndef _WIN32
+/* shim_vi.c puts the same word in the perf record's run conditions. */
+unsigned long gw_log_link_stamp(void) { return (unsigned long)gl_link_stamp(); }
+#endif
 
 static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *st) {
   char dir[MAX_PATH], path[MAX_PATH], line[512], settings[1024], cats[GL_LINE];
@@ -833,7 +840,7 @@ static void rep_header(const char *kind, const char *reason, const SYSTEMTIME *s
     sysinfo(&si);
     if (uname(&u) == 0)
       rep("os:              %s %s, %ld cpus, %llu MB RAM\n", u.sysname, u.release, cpus,
-          (unsigned long long)(si.totalram * si.mem_unit / (1024ull * 1024ull)));
+          (unsigned long long)si.totalram * si.mem_unit / (1024ull * 1024ull) /* 64-bit product: both fields are 32-bit in an i686 process */);
   }
 #endif
 }

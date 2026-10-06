@@ -43,9 +43,9 @@ int main(void) {
     assert(prof_percentile(ranks, 10, .95) == 10);
     assert(prof_percentile(ranks, 0, .99) == 0);
 #ifdef _WIN32
-    _putenv_s("MELEE_PROF_TRACE", ""); _putenv_s("MELEE_PROF_REPORT", "");
+    _putenv_s("MELEE_PROF_TRACE", ""); _putenv_s("MELEE_PROF_REPORT", ""); _putenv_s("MELEE_PERF_SUMMARY", "0");
 #else
-    unsetenv("MELEE_PROF_TRACE"); unsetenv("MELEE_PROF_REPORT");
+    unsetenv("MELEE_PROF_TRACE"); unsetenv("MELEE_PROF_REPORT"); setenv("MELEE_PERF_SUMMARY", "0", 1);
 #endif
     gw_prof_init(); gw_prof_set_enabled(0); gw_prof_reset();
     clocks = fixture_clock_calls; allocations = fixture_allocations;

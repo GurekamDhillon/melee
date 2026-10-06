@@ -322,10 +322,12 @@ return function(D)
   self.opened=self.g.time and self.g.time() or 0;self.ticks=0
   if mode=='bag' and self.g.paused and not self.g.paused() then self.g.pause();self.owns_pause=true end
   self:refresh()
+  if mode=='bag' and D.atlas_bag and D.atlas_bag.enabled(self.g) then D.atlas_bag.attach(self) end
   if self.view then self.view:set_countdown(self:seconds_left(),S.tuning.safe_seconds) end
   self.host:log('screen open: '..mode)
  end
  function S:close()
+  if self.atlas then D.atlas_bag.detach(self) end
   if self.active or self.input.masked then self.input:close() end
   self.preview=nil;self:release_models();self.active=false;self.swap=nil;self.confirm=nil;self.view=nil;self.layout='main'
   if self.owns_pause then self.g.resume();self.owns_pause=nil end

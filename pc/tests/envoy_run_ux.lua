@@ -15,7 +15,7 @@ D.mod_display={new=function(g,engine)
  return v
 end}
 D.pickup_juice={pitch={},new=function()return {drop=function()return {fx={}}end,collect=function()end,expire=function()end,clear=function()end,tick=function()end}end}
-for _,n in ipairs({'menu_input','drive_menu','drive_text','drive_drop','drive_lab','foe_lab','mod_lab','run_screen','run_hud','run_host'})do D[n]=T.module(n,D)end
+for _,n in ipairs({'menu_input','drive_menu','drive_text','drive_drop','drive_lab','foe_lab','mod_lab','run_screen','atlas_bag','run_hud','run_host'})do D[n]=T.module(n,D)end
 D.drive_economy.tuning.floor_chance=1 -- a sure first drop, so the flow tests do not depend on a roll; the chance test sets it back
 local function fixture()
  local s={commands={},pad={},logs={},holds=0,releases=0,clock=100,spawns=0,despawns={},held=true,
@@ -650,5 +650,21 @@ T.test('a developer start (depth/loop/build) agrees: slots, keystone allowance, 
  assert(host:totals().strength>0)
  host:stage_start({stage_index=40,loop=2,stage_kind='battle',opponents={{port=2}}});assert(host.mods.engine.context.depth==40 and host.floor==nil,'the run caught up')
  local s2,g2,m2,h2,r2=fixture();r2(true);h2:run_begin(4242);assert(h2.mods.engine.context.depth==0 and h2:equipped_count()==1,'an ordinary start is unchanged')
+end)
+T.test('the Atlas bag over the real RunScreen: described, focus by id, A merges through the legacy handler, B closes both',function()
+ local Stub=dofile((io.open('pc/tests/atlas_ui_stub.lua') and '' or 'melee/')..'pc/tests/atlas_ui_stub.lua')
+ local s,g,mods,host=start_run();stage(host)
+ local ui=Stub.new();g.ui=ui;D.atlas_bag.set(true)
+ local m=mergeable(host);give(host,m);host.screen:open('bag')
+ assert(host.screen.atlas,'the Atlas bag attached');local d=ui.screens['envoy.bag']
+ assert(d and #d.primary.blocks>=3,'equipped, bag and keystone blocks described');assert(ui.stack[#ui.stack]=='envoy.bag')
+ ui.engine_focus('envoy.bag','bag','bag:1')
+ local v=ui.views['envoy.bag'];local keys={};for _,k in ipairs(v.keys) do keys[k[1]]=k[2] end
+ assert(keys.A=='Merge','the legacy label for A is the Atlas key hint: '..tostring(keys.A));assert(v.explainer and v.explainer.title~='')
+ local before=count_drives(host);assert(ui.engine_press('envoy.bag','accept'));assert(count_drives(host)==before-1,'A merged through the legacy handler')
+ assert(ui.engine_press('envoy.bag','back'));assert(not host.screen.active and #ui.stack==0 and host.screen.atlas==nil,'B closed the bag and the Atlas screen')
+ D.atlas_bag.set(false)
+ local s2,g2,m2,h2=start_run();stage(h2);g2.ui=Stub.new();give(h2,mergeable(h2));h2.screen:open('bag')
+ assert(h2.screen.atlas==nil,'switched off, the legacy bag opens untouched');h2.screen:press('back')
 end)
 T.done()

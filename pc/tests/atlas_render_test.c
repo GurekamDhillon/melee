@@ -191,8 +191,160 @@ static void overlays_and_fade(void)
     CHECK(REC.p[REC.np - 1].rgba != ((AT_C_GROUND & 0xFFFFFF00u) | 255u));
 }
 
+/* a grid of nb blocks of `per` cells each, every cell with a model (heavy: a model costs AT_MODEL_COST) */
+static void heavy_fixture(int nb, int per, int cols)
+{
+    int b, i;
+    memset(&SC, 0, sizeof SC); at_view_init(&V);
+    snprintf(SC.id, sizeof SC.id, "heavy"); snprintf(SC.title, sizeof SC.title, "HEAVY");
+    SC.primary = AT_PRIMARY_GRID; SC.preset = AT_PRESET_NARROW; SC.n_blocks = nb;
+    for (b = 0; b < nb; b++) {
+        AtBlock *bk = &SC.blocks[b];
+        snprintf(bk->id, AT_ID, "b%d", b); snprintf(bk->title, AT_STR, "BLOCK %d", b); bk->cols = cols;
+        for (i = 0; i < per; i++) put_cell(bk, bk->id, i, "Drive", 100 + i, 0);
+    }
+    SC.n_keys = 1; SC.keys[0].btn = 'B'; V.key_shown[0] = 1; snprintf(V.key_label[0], AT_STR, "Close");
+    V.focus.block = 0; V.focus.index = 0;
+}
+
+static int units_of_rec(void)
+{
+    int i, n = REC.np + REC.nm * AT_MODEL_COST;
+    for (i = 0; i < REC.nt; i++) { const char *c; for (c = REC.t[i].s; *c; c++) if (((unsigned char) *c & 0xC0) != 0x80) n++; }   /* a glyph per UTF-8 character */
+    return n;
+}
+
+static void budget_enforced(void)
+{
+    AtSink s = rec_sink();
+    AtRenderInfo info;
+    bag_fixture();
+    at_render_ex(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS, &info);
+    CHECK(info.warned == 0 && info.capped == 0 && info.dropped == 0 && info.hits_dropped == 0);   /* the typical bag sets neither */
+    CHECK(info.entries == units_of_rec());                                    /* the count is what was forwarded */
+    s = rec_sink(); heavy_fixture(1, 12, 12);                                  /* 12 models = 1800 + parts: under the warn line */
+    at_render_ex(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS, &info);
+    CHECK(info.warned == 0 && info.capped == 0);
+    s = rec_sink(); heavy_fixture(2, 12, 12);                                  /* 24 models = 3600 + parts: warns, does not cap */
+    at_render_ex(&SC, &V, 1706.6667f, 10000.0, 0, &FAKE, &s, &HITS, &info);
+    CHECK(info.warned == 1 && info.capped == 0 && info.entries >= AT_SCREEN_QUAD_WARN && info.entries <= AT_SCREEN_QUAD_CAP);
+    CHECK(info.entries == units_of_rec());
+    s = rec_sink(); heavy_fixture(6, 12, 12);                                 /* far over: capped, never forwards past 4,096 */
+    at_render_ex(&SC, &V, 1706.6667f, 10000.0, 0, &FAKE, &s, &HITS, &info);
+    CHECK(info.capped == 1 && info.warned == 1 && info.dropped > 0);
+    CHECK(info.entries == units_of_rec() && info.entries <= AT_SCREEN_QUAD_CAP && info.entries > AT_SCREEN_QUAD_CAP - AT_MODEL_COST);
+}
+
+static void hits_stay_in_table(void)
+{
+    AtSink s = rec_sink();
+    AtRenderInfo info;
+    int i;
+    heavy_fixture(6, 12, 6);                                                  /* 72 cells, a key: inside the table */
+    at_render_ex(&SC, &V, 1706.6667f, 10000.0, 0, &FAKE, &s, &HITS, &info);
+    CHECK(info.hits_dropped == 0 && HITS.n <= AT_MAX_HITS);
+    memset(&SC, 0, sizeof SC); at_view_init(&V);
+    SC.primary = AT_PRIMARY_LIST; SC.preset = AT_PRESET_NORMAL; SC.n_items = 32;
+    for (i = 0; i < 32; i++) { snprintf(SC.items[i].id, AT_ID, "i%d", i); snprintf(SC.items[i].label, AT_STR, "Row %d", i); }
+    at_render_ex(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS, &info);
+    CHECK(info.hits_dropped == 0 && HITS.n < AT_MAX_HITS);
+}
+
+static void tall_grid(void)
+{
+    static const float widths[3] = { 640.0f, 853.3333f, 1706.6667f };
+    int w, i, cells0, seen;
+    for (w = 0; w < 3; w++) {
+        AtSink s = rec_sink();
+        AtLayout L;
+        heavy_fixture(6, 12, 4);                                              /* 18 rows of cells: far taller than the plate */
+        SC.footer.has = 1; snprintf(SC.footer.label, 24, "IF YOU MERGE"); snprintf(SC.footer.text, AT_STR, "x");
+        at_render(&SC, &V, widths[w], 10000.0, 0, &FAKE, &s, &HITS);
+        at_layout(widths[w], AT_PRESET_NARROW, &L);
+        cells0 = 0;
+        for (i = 0; i < HITS.n; i++) {
+            const AtHit *h = &HITS.h[i];
+            if (h->kind != AT_HIT_CELL) continue;
+            cells0++;
+            CHECK(h->r.y >= L.primary.y && h->r.y + h->r.h <= L.primary.y + L.primary.h - 12.0f - 48.0f);   /* clear of the footer */
+            CHECK(h->r.y + h->r.h <= L.keys.y || h->r.y >= L.keys.y + L.keys.h);
+        }
+        CHECK(cells0 > 0 && cells0 < 48);                                     /* only the whole rows that fit */
+        s = rec_sink(); heavy_fixture(6, 12, 4);
+        SC.footer.has = 1; snprintf(SC.footer.label, 24, "IF YOU MERGE"); snprintf(SC.footer.text, AT_STR, "x");
+        V.focus.block = 5; V.focus.index = 11;                                /* the last cell of the last block */
+        at_render(&SC, &V, widths[w], 10000.0, 0, &FAKE, &s, &HITS);
+        cells0 = 0; seen = 0;
+        for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == AT_HIT_CELL) {
+            cells0++;
+            if (HITS.h[i].a == 5 && HITS.h[i].b == 11) seen = 1;
+            CHECK(HITS.h[i].r.y + HITS.h[i].r.h <= L.primary.y + L.primary.h - 12.0f - 48.0f);
+        }
+        CHECK(seen && cells0 < 48);                                           /* the focused cell is on screen, the top is scrolled off */
+        CHECK(find_text("BLOCK 5") != NULL && find_text("BLOCK 0") == NULL);
+    }
+}
+
+static void zero_cols(void)
+{
+    AtSink s = rec_sink();
+    bag_fixture();
+    SC.blocks[1].cols = 0;                                                     /* a hand-built screen: no divide by zero */
+    at_render(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS);
+    CHECK(HITS.n > 0);
+}
+
+static void dialog_suppresses_hits(void)
+{
+    AtSink s = rec_sink();
+    int i;
+    bag_fixture();
+    V.dialog.open = 1; V.dialog.n = 2; snprintf(V.dialog.title, AT_STR, "DISCARD?"); snprintf(V.dialog.body, AT_TEXT, "Gone.");
+    V.dialog.btn[0] = 'A'; snprintf(V.dialog.label[0], 24, "Discard"); V.dialog.btn[1] = 'B'; snprintf(V.dialog.label[1], 24, "Cancel");
+    at_render(&SC, &V, 640.0f, 11000.0, 0, &FAKE, &s, &HITS);
+    CHECK(HITS.n == 2);
+    for (i = 0; i < HITS.n; i++) CHECK(HITS.h[i].kind == AT_HIT_DIALOG);
+}
+
+static void long_key_hints(void)
+{
+    AtSink s = rec_sink();
+    AtLayout L;
+    int i, keys = 0;
+    float counter_x;
+    bag_fixture();
+    snprintf(V.key_label[0], AT_STR, "Merge into the equipped slot number one now");
+    snprintf(V.key_label[1], AT_STR, "Discard this drive for good and all");
+    snprintf(V.key_label[2], AT_STR, "Show more about this drive");
+    snprintf(V.key_label[3], AT_STR, "Close this screen");
+    at_render(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS);
+    at_layout(640.0f, AT_PRESET_NARROW, &L);
+    counter_x = L.keys.x + L.keys.w - fake_width(0, AT_R_NUM16, "Bag 1 / 4");
+    for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == AT_HIT_KEY) {
+        keys++;
+        CHECK(HITS.h[i].r.x >= L.keys.x && HITS.h[i].r.x + HITS.h[i].r.w <= counter_x);
+    }
+    CHECK(keys >= 1 && keys < 4);                                              /* the ones that do not fit are left out */
+    CHECK(find_text("Bag 1 / 4") != NULL);
+}
+
+static void stone_note_per_row(void)
+{
+    AtSink s = rec_sink();
+    int i, n = 0;
+    bag_fixture();
+    SC.blocks[2].cols = 2;                                                     /* three stones, two per row: the note sits after two */
+    at_render(&SC, &V, 1706.6667f, 10000.0, 0, &FAKE, &s, &HITS);
+    for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == AT_HIT_CELL && HITS.h[i].a == 2 && HITS.h[i].b == 1) {
+        CHECK(find_text("One held")->x >= HITS.h[i].r.x + HITS.h[i].r.w);
+        n++;
+    }
+    CHECK(n == 1);
+}
+
 int main(void)
 {
     budget_and_legibility(); focus_cues(); long_strings(); hits_at_widths(); list_screen(); overlays_and_fade();
+    budget_enforced(); hits_stay_in_table(); tall_grid(); zero_cols(); dialog_suppresses_hits(); long_key_hints(); stone_note_per_row();
     ATLAS_DONE("atlas render");
 }

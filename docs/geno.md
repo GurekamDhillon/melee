@@ -2374,8 +2374,16 @@ characters are refused; this does not change the older fighter-profile parser.
 }
 ```
 
-`collection` accepts `touch` or `none`; `grab`, held and thrown standalone items
-are explicitly refused. Default hitboxes/hurtboxes are absent. `ports` is a six-bit
+`collection` accepts `touch`, `press` or `none`; `grab`, held and thrown standalone items
+are explicitly refused. `press` is collected by pressing A near it through the retail
+item-pickup states: `ftpickupitem_80094790` (the attack entry states' item check, and the L/R+A catch
+`ftCo_800D705C`) asks `ftpickupitem_800942A0` for an item in the fighter's pickup box, which also asks
+`Geno_ItemPressDist` (`pc/geno/geno_game_items.inc`); the LightGet motion plays and its grab frame
+(`ftpickupitem_Anim`) collects the item (the same event as a touch, then destroys it) instead of
+attaching it to the hand. The `ports`/`teams` masks decide who may; a CPU-controlled fighter never may
+(`ftCo_IsCpuControlled`), and the CPU item seeker never targets these items (`Item_IsGrabbable` is false
+for them). Walking over a `press` item collects nothing. Grounded only, as retail's A pickup is. Source
+and syntax only; not run in the game. Default hitboxes/hurtboxes are absent. `ports` is a six-bit
 fighter-slot mask (bit 0 is slot 1); `teams` is a four-bit team mask. Lifetime and
 blink count logic frames, and blink cannot exceed lifetime. Payload currently has
 only `colour` (`red`, `green`, `blue`, `yellow`, `white`) and integer `amount`

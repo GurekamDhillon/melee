@@ -82,6 +82,7 @@ static int gn_items_registry_test(void)
   gw_Geno_ItemParam(1,GENO_IP_SCALE)==gn_item_bits(1),"legacy definition defaults");
  GNI_CHECK(gw_Geno_ItemDefineText("{\"name\":\"overflow\"}","fixture","items/overflow/item.json",error,sizeof error)<0,"full registry accepted definition");
  GNI_CHECK(gn_item_count==GENO_ITEM_MAX_DEFS,"overflow changed count");
+ GNI_CHECK(gw_Geno_ItemDefineText("{\"name\":\"press-drive\",\"collection\":\"press\",\"ports\":3}","fixture","items/press/item.json",error,sizeof error)<0,"full registry accepted press definition");
  GNI_CHECK(!gw_Geno_ItemParam(-1,0)&&!gw_Geno_ItemParam(0,GENO_IP_COUNT)&&!gw_Geno_ItemPayload(GENO_ITEM_MAX_DEFS,0),"invalid scalar read not inert");
 done:
  memcpy(gn_items,saved,sizeof gn_items);gn_item_count=saved_count;free(saved);

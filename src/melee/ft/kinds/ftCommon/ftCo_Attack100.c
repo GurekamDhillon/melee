@@ -335,6 +335,17 @@ void fn_800D6F58(Fighter_GObj* gobj, Item_GObj* item_gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     Fighter_Part part;
+#if defined(TARGET_PC)
+    {   /* the L/R+A item catch: a "press" script item is collected, not held (Geno_ItemPressDist) */
+        extern float Geno_ItemPressDist(HSD_GObj*, Fighter*);
+        extern void Geno_ItemPressCollect(HSD_GObj*, int);
+        if (Geno_ItemPressDist(item_gobj, fp) >= 0.0f) {
+            Geno_ItemPressCollect(item_gobj, fp->player_id);
+            fp->x2224_b1 = true;
+            return;
+        }
+    }
+#endif
     if (fp->item_gobj != NULL) {
         fp->x1978 = item_gobj;
     } else {

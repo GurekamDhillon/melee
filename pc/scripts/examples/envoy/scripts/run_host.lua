@@ -24,7 +24,7 @@ return function(D)
  --                   so its drive has to be reachable before that)
  -- How many drives a run hands out (floor drops per stage, which stages give a reward, how many are offered, the bag's size)
  -- is `D.drive_economy.tuning` (floor_max, floor_chance, team_max, reward_every, offers, bonus_offers, bag_capacity).
- H.tuning={settle_frames=30,roll_attempts=2,drops=true,auto_collect=true,hold_ticks=2850,end_hold=true,end_hold_frames=1800,ko_poll=6,drop_percent=50,oob_margin=300,oob_frames=240,oob_fallback=3000}
+ H.tuning={settle_frames=30,roll_attempts=2,drops=true,auto_collect=true,hold_ticks=2850,end_hold=true,end_hold_frames=1800,ko_poll=6,drop_percent=50,payout=true,oob_margin=300,oob_frames=240,oob_fallback=3000}
  local function econ() return D.drive_economy.tuning end
  -- `seat` (co-op only): {index=,port=,drives=,allies={[port]=true,...},strength=fn,gather=fn,route=fn,barrier={open=fn,release=fn},anchor=,colour=}.
  -- No seat: the one-player host, exactly as before. Seat 1 is the lead (it owns the stage's opponents, drops and match hold); the other
@@ -389,6 +389,8 @@ return function(D)
   -- Crits draw from the engine's generator; restart it from the run seed so a run is reproducible (never a default seed).
   if self.g.crit_seed and not self.follower then pcall(self.g.crit_seed,seed_for(seed,0,0,9)) end
   self.running=true;self.seed=seed;self.fell={};self.rolls={};self.stage=0;self.loop=0;self.drops=0
+  -- a run's floor drives are collected by pressing A on them (collection "press"), not by walking over them (drive_drop.lua R:item_for)
+  if self.mods.drives and self.mods.drives.drops and not self.follower then self.mods.drives.drops.press=true end
   -- A new run is not a retry of the last one's stages: the attempt counts and the stages' given drops were never cleared, so every run after the first
   -- in a game session found its stages 'already played' and gave no floor drive at all (found by the co-op campaigns; a solo run had it too).
   self.attempts={};self.drops_given={};self.retry=false;self.drop_queue=nil
@@ -472,6 +474,7 @@ return function(D)
   self.fell={};self.hurt={};self.dropped={};self.since=0;self.kos=0;self.faded={}
   self.travel_min,self.travel_max=nil,nil;self.foe_seen=false
   self.stage_kind=e.stage_kind or 'battle';self.foe_ports={};self.rolled={};self.drop_queue={};self.hold_gave_up=false;self.holding_end=false;self.out_frames=0;self.last_blast=nil;self.oob={}
+  do local P=D.drive_drop.payout;if self.seq then self:end_payout() end;self.seq=P.seq();self.leave_w=P.leave_watch();self.idle_w=P.idle_watch();self.paying=false;self.pay_idle=false;self.spots=nil;self.spot_i=0 end
   for _,o in ipairs(e.opponents or {}) do if o.port then self.foe_ports[#self.foe_ports+1]=o.port;self.rolled[o.port]=true;self.rolls[o.port]=true end end
   self.foe_seen=#self.foe_ports>0
   local ctx=self:context_for(self.stage,self.loop)
@@ -528,7 +531,7 @@ return function(D)
   if kind=='team' then return econ().team_max,1 end
   return econ().floor_max,econ().floor_chance
  end
- function H:on_ko(p,why)
+ function H:on_ko(p,why,arrive)
   if self.stage_kind=='team' then if self.dropped[p] then return end;self.dropped[p]=true end -- one per opponent
   self.kos=self.kos+1
   self.drops_given=self.drops_given or {}
@@ -543,10 +546,13 @@ return function(D)
    local roll=x/2147483647
    if roll>=chance then self:log(('opponent P%d dropped nothing'):format(p));return end
   end
-  if d.drops:count()+(self.drop_queue and #self.drop_queue or 0)>=12 then self:log('drop skipped: the ground is full');return end
+  if d.drops:count()+(self.drop_queue and #self.drop_queue or 0)+(self.seq and self.seq:pending() or 0)>=12 then self:log('drop skipped: the ground is full');return end
   local record=d.loot:roll(seed_for(self.seed,self.stage,self.loop,p+self.kos*7),self.mods.engine.context)
   self.drop_queue=self.drop_queue or {}
-  for _,rec in ipairs(self.seat and self.seat.drop_records and self.seat.drop_records(self,record,p) or {record}) do self.drop_queue[#self.drop_queue+1]={record=rec,port=p,tries=0,why=why or 'defeated'} end
+  for _,rec in ipairs(self.seat and self.seat.drop_records and self.seat.drop_records(self,record,p) or {record}) do
+   if arrive and self.seq then self.seq:add({record=rec,port=p,why=why}) -- the stage-end payout: it arrives with the flourish (H:arrive)
+   else self.drop_queue[#self.drop_queue+1]={record=rec,port=p,tries=0,why=why or 'defeated'} end
+  end
   self.drops_given[self.loop..':'..self.stage]=true
  end
  -- Where a drop appears: on the stage, on the floor a few steps from the player (the opponent may be off screen).
@@ -600,7 +606,7 @@ return function(D)
   self.holding_end=on and true or false
   if not on then self.hold_banner=nil end
   if g.match_end_hold(H.HOLD,self.holding_end) then
-   self:log(on and 'match end held: collect the drives' or ('match end released'..(why and (': '..why) or '')))
+   self:log(on and ('match end held: '..(self.hold_banner and 'collect the drives' or 'the stage end waits for the payout')) or ('match end released'..(why and (': '..why) or '')))
   end
   if not on then self.out_frames=0 end
  end
@@ -633,6 +639,10 @@ return function(D)
   local w=300;local x=a.x+(a.w-w)//2
   g.fill(x,a.y+150,w,34,0x3A3320E8);g.fill(x,a.y+150,w,2,0xEBD175FF)   -- well below the match timer; the banner is the one instruction
   k.text(x+w//2,a.y+174,text,'body','gold','center')
+  if self.paying then -- the way out: hold Z + D-pad Down
+   g.fill(x,a.y+184,w,18,0x3A3320E8);k.text(x+w//2,a.y+197,'Hold Z + D-pad Down to leave','caption','gold','center')
+   local pr=self.leave_w and self.leave_w:progress() or 0;if pr>0 then g.fill(x,a.y+201,math.floor(w*pr),2,0xEBD175FF) end
+  end
   local me=g.player(self:port0());local best,bd
   for _,p in ipairs(list) do if me then local dd=math.abs(p.x-me.x)+math.abs(p.y-me.y);if not bd or dd<bd then best,bd=p,dd end end end
   if not best or not g.project then return end
@@ -650,8 +660,106 @@ return function(D)
    tri(g,math.floor(cx+(dir=='left' and -2 or 2))+(dir=='left' and 0 or 0),math.floor(cy),dir,14,gold)
   end
  end
+ -- ---- the stage-end payout --------------------------------------------------------------------------------------------------
+ -- The end of a battle stage is ALWAYS held (gd.match_end_hold) while the player lives, so a stage cleared faster than any drop could
+ -- appear still ends the same way: when the last opponent is out, the drops the stage still OWES (decisions the fight never made: see
+ -- drive_drop.lua P.owed_foes) are decided with the same seeds as a mid-fight drop, and arrive on the stage one after another with a flourish
+ -- (P.flourish) on the main floor, as ordinary drives the player collects with A. The hold ends when every drive is collected, or the player
+ -- leaves (holds Z + D-pad Down for a second: what is left is skipped), or the player is out (the stage is lost the normal way: no payout), or
+ -- the player is away from the pad for two minutes (what is left is gathered, as it always was). There is no timer to run out while the player plays.
+ -- Not on bonus or boss stages (nothing is owed there, and Master Hand's own end must not be held: PROGRESS.md of 2026-10-05), nor in a run with
+ -- `payout` off (the older hold, below, which only waits while a mid-fight drop is on the floor).
+ function H:foes_list()
+  local port0=self:port0();local out={}
+  for _,p in ipairs(self.foe_ports) do if p~=port0 and not self:is_ally(p) then out[#out+1]=p end end
+  return out
+ end
+ function H:begin_payout()
+  local P=D.drive_drop.payout;self.paying=true
+  local kind=self.stage_kind;local max=self:drop_rule(kind)
+  local given=self.retry and self.drops_given~=nil and self.drops_given[self.loop..':'..self.stage]==true
+  local owed=P.owed_foes(kind,max,self:foes_list(),{kos=self.kos,dropped=self.dropped,given=given})
+  self:log(('the last opponent is out: %d drive decision(s) owed%s'):format(#owed,given and ' (a retry: the stage already gave its drop)' or ''))
+  for _,p in ipairs(owed) do self:on_ko(p,'owed at the clear',true) end
+  local n=self.seq:pending()
+  if n>0 then
+   local anchor=self.seat and self.seat.anchor_port and self.seat.anchor_port(self) or self:port0()
+   self.spots=P.spots(n,P.area(self.g,self.g.player(anchor)));self.spot_i=0
+   self.hud:flash('The stage pays out')
+   self:log(('payout: %d drive(s) arrive, %d spot(s) planned on the main floor'):format(n,#self.spots))
+  end
+ end
+ function H:arrive(e)
+  local P=D.drive_drop.payout;local d=self.mods.drives
+  local spot=self.spots and self.spots[(self.spot_i or 0)+1];local x,y
+  if spot then x,y=spot.x,spot.y+12 else x,y=self:drop_position() end
+  local ok,why=false,'no position'
+  if x then ok,why=pcall(function() return d.drops:spawn(e.record,x,y+P.tuning.arrive_height,{payout=true}) end) end
+  if ok then
+   self.spot_i=(self.spot_i or 0)+1
+   P.flourish(self.g,self.seq,x,y-12,e.record)
+   self:log(('payout: %s arrives at x=%.0f (%s)'):format(self:name(e.record),x,e.why or 'owed'))
+   self.hud:flash('A drive arrived')
+  else
+   e.tries=(e.tries or 0)+1
+   if e.tries>=60 then self.faded[#self.faded+1]=e.record;self:log(('payout: %s could not arrive (%s): it is gathered at the stage end'):format(self:name(e.record),tostring(why)))
+   else table.insert(self.seq.queue,1,e);self.seq.wait=10 end
+  end
+ end
+ -- Called every logic frame by H:frame: the arrivals' pacing and effects, and the leave / away watches (raw pads of the player's ports).
+ function H:payout_frame()
+  if not self.paying or not self.seq then return end
+  local g=self.g;local P=D.drive_drop.payout;self.seq:tick_fx(g)
+  if g.pad then
+   local ports={self:port0()};if self.seat and self.seat.allies then for p in pairs(self.seat.allies) do ports[#ports+1]=p end end
+   local active,last
+   for _,p in ipairs(ports) do local pad=g.pad(p,true);if pad then last=pad;self.leave_w:feed(pad,1)
+     if (pad.buttons or 0)~=0 or math.abs(pad.x or 0)>20 or math.abs(pad.y or 0)>20 or math.abs(pad.cx or 0)>20 or math.abs(pad.cy or 0)>20 then active=pad end end end
+   if self.idle_w:feed(active or last,1) then self.pay_idle=true end
+  end
+  local e=self.seq:step();if e then self:arrive(e) end
+ end
+ -- The payout ends (collected, left, lost, run end): its transient effects stop and what has not arrived is returned (and never lost silently).
+ function H:end_payout()
+  local left=self.seq and self.seq:clear(self.g) or {}
+  self.paying=false;return left
+ end
+ function H:update_payout_hold()
+  local P=D.drive_drop.payout;local k=self.stage_kind;local d=self.mods.drives
+  if not self.running or self.screen.active or not d or k=='bonus' or k=='boss' or self.hold_gave_up or #self.foe_ports==0 then return self:set_hold(false) end
+  local me=self.g.player(self:port0())
+  if self.seat and self.seat.team_alive then me=self.seat.team_alive(self) end -- co-op: any living teammate keeps the hold
+  local alive=me~=nil and (me.stocks or 0)>0
+  if not alive then
+   local lost=self:end_payout();if #lost>0 then self:log(('the player is out: %d owed drive(s) are not paid (the stage is lost)'):format(#lost)) end
+   return self:set_hold(false,'the player is out')
+  end
+  if not self.paying and self:foes_out() then self:begin_payout() end
+  local floor=d.drops:count();local queued=(self.drop_queue and #self.drop_queue or 0)+(self.seq and self.seq:pending() or 0)
+  if floor+queued>0 then
+   if not self.hold_banner then self.hud:flash('Collect the drives') end
+   self.hold_banner=(self.paying and floor==0) and 'The stage pays out' or 'Collect the drives'
+  else self.hold_banner=nil end
+  self:set_hold(true) -- the stage's end is always held while the player lives (the log line says why)
+  if not self.paying then return end
+  local why=P.release_reason{floor=floor,queued=queued,alive=alive,left=self.leave_w.done,idle=self.pay_idle==true}
+  if not why then return end
+  if why=='the player left' then
+   local skipped=self:end_payout()
+   for _,rec in pairs(d.drops.records) do skipped[#skipped+1]={record=rec.record} end
+   for _,it in ipairs(self.drop_queue or {}) do skipped[#skipped+1]=it end
+   for _,r in ipairs(self.faded) do skipped[#skipped+1]={record=r} end
+   for _,it in ipairs(skipped) do self:log('payout: skipped '..self:name(it.record)..' (the player left)') end
+   self.drop_queue={};self.faded={};d.drops:clear();self.hold_gave_up=true
+  elseif why=='the player is away' then
+   for _,it in ipairs(self:end_payout()) do self.drop_queue[#self.drop_queue+1]={record=it.record,tries=0,why='away'} end
+   self:log('payout: the player is away: what is left is gathered at the stage end');self.hold_gave_up=true
+  else self:end_payout() end
+  self:set_hold(false,why)
+ end
  function H:update_hold()
   if not H.tuning.end_hold or not self.g.match_end_hold then return end
+  if H.tuning.payout then return self:update_payout_hold() end -- the stage-end payout (above); `payout=false` keeps the older hold below
   local k=self.stage_kind
   local d=self.mods.drives
   if not self.running or self.screen.active or not d or k=='bonus' or k=='boss' or self.hold_gave_up then return self:set_hold(false) end
@@ -707,6 +815,7 @@ return function(D)
   if me and type(me.x)=='number' then self.travel_min=math.min(self.travel_min or me.x,me.x);self.travel_max=math.max(self.travel_max or me.x,me.x) end
   if #self.foe_ports>0 then self.foe_seen=true end
   if self.follower then return end
+  self:payout_frame()
   if self.since%H.tuning.ko_poll~=0 then return end
   self:oob_watch()
   for _,p in ipairs(self.foe_ports) do
@@ -782,7 +891,7 @@ return function(D)
  -- allowance owes a step), hold the barrier and show the grid. Nothing to show: sort quietly and let the run go on.
  function H:stage_reward(stage,loop,final)
   if not self.running or not self.mods.drives then return false end
-  self:set_hold(false,'stage clear')
+  self:set_hold(false,'stage clear');if self.seq then self:end_payout() end
   self:flush_deferred(true)
   self:collect_ground()
   local kind=self.stage_kind
@@ -887,7 +996,8 @@ return function(D)
  function H:run_end()
   self.hold_banner=nil
   if not self.running then return end
-  self:set_hold(false,'run end')
+  self:set_hold(false,'run end');if self.seq then self:end_payout() end
+  if self.mods.drives and self.mods.drives.drops and not self.follower then self.mods.drives.drops.press=nil end
   if self.screen.active then self.screen:close() end
   if #self.offers>0 or #self.key_offers>0 or #self.decide>0 then self:finish_reward('run-end') end
   self.running=false;self.fell={};self.rolls={};self.mods:run_end();self.hud:clear();if self.synfx then self.synfx:reset() end;self:log('run end: bag and build cleared')

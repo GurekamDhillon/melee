@@ -1,5 +1,5 @@
 {
- "note": "Courier hitbox retargeting data (read by tools/geno/courier_moves.py). 'roles' maps a Striker/Mario joint index in the donor scripts to the Courier joint that plays the same limb; 'hitboxes' overrides the Nth hitbox command of a move (0-based, in script order) with a Courier joint NAME and optional x/y/z/size, where the clip strikes with a different limb than Mario's did.",
+ "note": "Courier hitbox retargeting data (read by tools/geno/courier_moves.py). 'roles' maps a Striker/Mario joint index in the donor scripts to the Courier joint that plays the same limb; 'hitboxes' overrides the Nth hitbox command of a move (0-based, in script order) with a Courier joint NAME and optional x/y/z/size, where the clip strikes with a different limb than Mario's did. 'delay' (move: frames) adds frames before a move's first hitbox and takes them from the wait that follows its first hitbox group, so the box appears when the clip's strike pose is on screen (the smashes' charge hold shows the pose a frame late).",
  "roles": {
   "0": "TopN",
   "1": "trans",
@@ -77,7 +77,8 @@
   },
   "dash_attack": {
    "0": {
-    "joint": "forearm_L"
+    "joint": "forearm_L",
+    "size": 2.8
    },
    "1": {
     "joint": "head"
@@ -91,10 +92,12 @@
     "joint": "foot_R"
    },
    "1": {
-    "joint": "shin_R"
+    "joint": "shin_R",
+    "size": 2.4
    },
    "2": {
-    "joint": "thigh_R"
+    "joint": "thigh_R",
+    "size": 2.0
    }
   },
   "ftilt_up": {
@@ -102,10 +105,12 @@
     "joint": "foot_R"
    },
    "1": {
-    "joint": "shin_R"
+    "joint": "shin_R",
+    "size": 2.4
    },
    "2": {
-    "joint": "thigh_R"
+    "joint": "thigh_R",
+    "size": 2.0
    }
   },
   "ftilt_down": {
@@ -113,10 +118,12 @@
     "joint": "foot_R"
    },
    "1": {
-    "joint": "shin_R"
+    "joint": "shin_R",
+    "size": 2.4
    },
    "2": {
-    "joint": "thigh_R"
+    "joint": "thigh_R",
+    "size": 2.0
    }
   },
   "dtilt": {
@@ -124,10 +131,12 @@
     "joint": "foot_R"
    },
    "1": {
-    "joint": "shin_R"
+    "joint": "shin_R",
+    "size": 2.4
    },
    "2": {
-    "joint": "thigh_R"
+    "joint": "thigh_R",
+    "size": 2.0
    }
   },
   "fsmash": {
@@ -135,16 +144,22 @@
     "joint": "hand_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 3.0
    },
    "1": {
     "joint": "forearm_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 2.4
    },
    "2": {
-    "joint": "upperarm_R"
+    "joint": "upperarm_R",
+    "size": 1.8,
+    "x": 0,
+    "y": 0,
+    "z": 0
    }
   },
   "fsmash_up": {
@@ -152,16 +167,22 @@
     "joint": "hand_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 3.0
    },
    "1": {
     "joint": "forearm_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 2.4
    },
    "2": {
-    "joint": "upperarm_R"
+    "joint": "upperarm_R",
+    "size": 1.8,
+    "x": 0,
+    "y": 0,
+    "z": 0
    }
   },
   "fsmash_down": {
@@ -169,24 +190,32 @@
     "joint": "hand_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 3.0
    },
    "1": {
     "joint": "forearm_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 2.4
    },
    "2": {
-    "joint": "upperarm_R"
+    "joint": "upperarm_R",
+    "size": 1.8,
+    "x": 0,
+    "y": 0,
+    "z": 0
    }
   },
   "usmash": {
    "0": {
-    "joint": "hand_R"
+    "joint": "hand_R",
+    "size": 3.0
    },
    "1": {
-    "joint": "hand_R"
+    "joint": "hand_R",
+    "size": 3.4
    }
   },
   "dsmash": {
@@ -200,7 +229,8 @@
     "joint": "shin_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 2.6
    },
    "2": {
     "joint": "hand_R",
@@ -212,7 +242,8 @@
     "joint": "forearm_R",
     "x": 0,
     "y": 0,
-    "z": 0
+    "z": 0,
+    "size": 2.4
    }
   },
   "nair": {
@@ -242,7 +273,8 @@
     "joint": "foot_R"
    },
    "1": {
-    "joint": "shin_R"
+    "joint": "shin_R",
+    "size": 3.0
    }
   },
   "uair": {
@@ -250,18 +282,22 @@
     "joint": "foot_R"
    },
    "1": {
-    "joint": "shin_R"
+    "joint": "shin_R",
+    "size": 3.0
    }
   },
   "dair": {
    "0": {
-    "joint": "foot_R"
+    "joint": "foot_R",
+    "size": 3.2
    },
    "1": {
-    "joint": "foot_L"
+    "joint": "foot_L",
+    "size": 3.2
    },
    "2": {
-    "joint": "foot_R"
+    "joint": "foot_R",
+    "size": 3.4
    }
   },
   "n_release": {
@@ -305,6 +341,17 @@
     "y": 0,
     "z": 0
    }
+  },
+  "utilt": {
+   "2": {
+    "size": 2.6
+   }
   }
+ },
+ "delay": {
+  "fsmash": 1,
+  "fsmash_up": 1,
+  "fsmash_down": 1,
+  "usmash": 1
  }
 }

@@ -2646,8 +2646,37 @@ Not decided because not reached: how clip rate follows ground speed (retail's wa
 - **Rollback.** No new gameplay state: rows and tables are static per kind. `gd.rewind_test` mid-jab: 0 simulation bytes differ; the bench
   SyncTest (k=12, Courier against Mario, pad bots, 700 frames): 7,200 checks, 0 mismatching.
 - **Open.** ECB offsets, IK lengths, ledge snap and the hurtbox scale are the donor's numbers; the three donor fixtures are unchanged (same
-  stable ids); `tools/geno check` does not yet know format 9; Turn / TurnRun flip frames follow `standing_turn_frames` (4, as the art) and
+  stable ids); Turn / TurnRun flip frames follow `standing_turn_frames` (4, as the art) and
   the dash-turn constant (donor's); costumes (four files exist), stage switching, six slots and a Classic run were not exercised.
+
+### 22.5 Slice 4d: format 9 reference, the Courier's moves, the guard crash and the independence census (built 2026-10-05)
+
+**Format 9 (`geno: 9`).** `define.base` is `"mario"` (retail Mario is the template, `resources: "retail:mario"`) or `"none"` (the package owns its
+model, bank, parts table and joint fields, `resources: "mod:files"`). A `none` define carries a `fighter` block: `plan` (the converter's
+`plan.json`: joints, parts table, role joints, `ftdata` joint fields, hurtboxes, motion rows), `animation` (the bank `.dat`) and `costumes`
+(`file`, `joint`, `matanim` per costume). Its subaction rows are its own table (no 0..302 limit); `tools/geno check` and `report` accept it.
+
+**The guard crash (fixed).** `ftCo_80091E78` (guard) blends the body from `ftData->x20->x0[2]`, a joint tree that starts at `FtPart_TransN`. A
+`none` define's `ftData` was a copy of Mario's, so the tree was Mario's: walked over another skeleton it ran past the parts table and read a
+NULL part (`ftAnim_80070010` / `80070108` -> `lb_8000C868`, read of NULL+0x38, the owner's crash entering Guard). Now a `none` define takes its
+own costume model's joint tree below the root (`GenoDefine_RestPoseTree`), and after the blend the `ThrowN` joint's translation is cleared the way
+`ftCo_800921DC` clears it, so the bubble is centred on its parent. Checked in the LAB: shield on, hold, drop, rolls, spot dodge, a real hit in
+shield (`GuardSetOff`), shield held to break (`ShieldBreakFly`..`Furafura`).
+
+**`ThrowN` is one joint with two jobs.** `ftData->x8->x11` is where a held victim attaches (`ftCo_CatchPull`: the victim's `XRotN` is moved onto it)
+and the joint the shield bubble hangs from. The converter now maps the art's `grab_anchor` to it (it was `shield_origin`, which put the victim
+inside the Courier). A split of the two (a separate shield origin) is not built.
+
+**Courier hitboxes** are data in the fixture's `retarget.json` (`roles`, per-hitbox `joint`/`x`/`y`/`z`/`size`, and `delay`): sizes were tuned for
+Mario's body (a 4.6 fist on an 11.7-unit fighter); the Courier's are 1.8-3.4 on the striking limb. `delay` shifts a move's first hitbox group
+later by whole frames because the charge smashes' strike pose shows one frame after the clip's hit frame. All 32 scripts keep the Striker's
+damage, angle, knockback growth and base (diffed), so knockback is the Striker's formula.
+
+**Independence census.** `GenoDefine_Census` logs, per `none` kind, the `ftData` pointer fields that are still the donor's pointers; the pure
+function `GenoDefine_FtDataSharedMask` is checked by `geno_none_independence`. Today: `x18` (demo blend table), `x1C` (per-row part lists, Mario's
+part numbers), `x24`, `x2C` (dynamics), `x48` (item hat table) and `x5C` (the metal model's joint tree). Own storage (donor-valued defaults until
+authored): `x20` (the guard tree table; the tree is the costume's), `x3C` camera box, `x40` pick-up offsets, `x50`, `x4C` sound-id struct. Common-state
+code is the engine and stays shared by design.
 
 ### Frame-counting convention: the first `wait` of an authored script
 

@@ -1162,7 +1162,7 @@ static int kq_build;
 #define kq (kq_bank[kq_build])
 #define nkq (nkq_bank[kq_build])
 
-void gw_Kit_BeginFrame(void) { nkq = 0; }
+void gw_Kit_BeginFrame(void) { nkq = 0; kf_track = 0.0f; /* letter-spacing never carries into another frame's text */ }
 void gw_Kit_SwapBanks(void) { kq_build = !kq_build; }
 int gw_Kit_QuadCount(void) { return nkq; }
 void gw_Kit_TruncateQuads(int n) { if (n >= 0 && n < nkq) nkq = n; }

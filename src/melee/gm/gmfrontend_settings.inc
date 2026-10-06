@@ -186,6 +186,9 @@ static int fsv_get_fps(void) { return Video_ShowFps(); }
 static void fsv_set_fps(int v) { Video_SetShowFps(v); }
 static const char* const fsv_fps_names[] = { "Off", "FPS", "Performance" };
 
+static int fsv_get_reduced(void) { return Settings_Int("reduced_motion", 0) != 0; }
+static void fsv_set_reduced(int v) { Settings_SetInt("reduced_motion", v); }
+
 static const FrontendItem fe_items_set_video[] = {
     { FE_TOGGLE, 0, "Widescreen", "Follow the window from 4:3 to 32:9. Native screens keep bars. MELEE_WIDESCREEN overrides this.",
       fsv_get_widescreen, fsv_set_widescreen, 0, 1, 1 },
@@ -198,6 +201,8 @@ static const FrontendItem fe_items_set_video[] = {
       fsv_set_vsync, 0, 1, 1 },
     { FE_CHOICE, 0, "Show FPS", "Off, a frame-rate readout, or a frame-time graph.",
       fsv_get_fps, fsv_set_fps, 0, 2, 1, fsv_fps_names },
+    { FE_TOGGLE, 0, "Reduced Motion", "Menus cut instead of fading, and models stop turning. Applies to the new menus.",
+      fsv_get_reduced, fsv_set_reduced, 0, 1, 1 },
 };
 
 /* ---- AUDIO ---------------------------------------------------------------------------------- */

@@ -6254,6 +6254,7 @@ static const luaL_Reg gs_kit_funcs[] = {
     {"icon", l_kit_icon}, {"panel", l_kit_panel}, {"button", l_kit_button}, {"list", l_kit_list},
     {"color", l_kit_color}, {NULL, NULL}};
 static void gs_prof_setfuncs(lua_State *L, const luaL_Reg *funcs, const char *prefix);
+#include "gw_script_ui.inc"
 
 /* gd.kit: the functions, and the kit's data as tables (colors, roles, row, shear). */
 static void gs_push_kit(lua_State *L) {
@@ -6786,6 +6787,8 @@ static void gs_build_base(lua_State *L) {
     }
     gs_push_kit(L);
     lua_setfield(L, -2, "kit");
+    gs_push_ui(L);
+    lua_setfield(L, -2, "ui");
     /* the prelude adds wait / wait_until / press / tilt */
     if (luaL_loadbufferx(L, gs_prelude, sizeof gs_prelude - 1, "=gd.prelude", "t") == LUA_OK) {
         lua_pushvalue(L, -2);
@@ -6843,6 +6846,10 @@ static int gs_new_env(lua_State *L) {
             lua_getfield(L, -1, "kit");
             gs_copy_deep(L, -1, 3);
             lua_setfield(L, -3, "kit");
+            lua_pop(L, 1);
+            lua_getfield(L, -1, "ui");
+            gs_copy_deep(L, -1, 2);
+            lua_setfield(L, -3, "ui");
             lua_pop(L, 1);
         }
         lua_setfield(L, -3, copy[i]);
@@ -6954,6 +6961,7 @@ static void gs_unload(int i) {
     }
     gs_zones_release(s->stage_owner);
     gs_contact_release(i);
+    gs_ui_release(i);
     gs_deadline_release(i);
     gs_callback_release(i);
     gs_mode_drop(i);
@@ -7600,6 +7608,7 @@ static void gs_finish_draw(void) {
     }
     gs.cam_stamp++;
     gs_hook_all("on_draw", 0, 0, 0);
+    gs_ui_draw();
     gs_comm_draw();
     gs_stage_draw();
     gs_contact_draw();
@@ -7660,6 +7669,7 @@ void gw_Script_Tick(void) {
     }
     gs_presentation_tick();
     gs_stage_presentation_tick();
+    gs_ui_tick();
     gs_hook_all("on_tick", 0, 0, 0);
     /* Hooks and transition commits have returned. No stream starts while the
        presentation timer or explicit pause prevents normal frame progress. */
@@ -9464,6 +9474,45 @@ static void gs_socket_poll(void) {
 
 static int t_exec(const char *line, char *out, int cap) { return gw_Script_Exec(line, out, cap); }
 
+/* gd.ui: register, open, move focus by feed, reject a bad description, close */
+static int test_script_ui_binding(void) {
+    char out[512];
+    if (!gw_Kit_Available()) {
+        return 0;
+    }
+    t_exec("= gd.ui.screen{id='uitest.a', primary={kind='list', items={{id='one',label='One'},{id='two',label='Two'}}}, "
+           "explainer='none', keys={{'A','Pick'},{'B','Back'}}}", out, sizeof out);
+    t_exec("= gd.ui.open('uitest.a')", out, sizeof out);
+    t_exec("= gd.ui.state().top", out, sizeof out);
+    if (strstr(out, "uitest.a") == NULL) {
+        gw_test_fail("gd.ui.state().top is not the opened screen: %s", out);
+        return 1;
+    }
+    t_exec("= (gd.ui.focus('uitest.a'))", out, sizeof out);
+    if (strstr(out, "one") == NULL) {
+        gw_test_fail("the first item does not start with focus: %s", out);
+        return 1;
+    }
+    t_exec("= gd.ui.feed('uitest.a', 'down')", out, sizeof out);
+    t_exec("= (gd.ui.focus('uitest.a'))", out, sizeof out);
+    if (strstr(out, "two") == NULL) {
+        gw_test_fail("feeding 'down' did not move focus to the second item: %s", out);
+        return 1;
+    }
+    t_exec("= gd.ui.screen{id='uitest.bad', primary={kind='tiles'}}", out, sizeof out);
+    if (strstr(out, "not supported") == NULL) {
+        gw_test_fail("a bad description was not refused with its message: %s", out);
+        return 1;
+    }
+    t_exec("= gd.ui.close('uitest.a')", out, sizeof out);
+    t_exec("= gd.ui.state().top", out, sizeof out);
+    if (strstr(out, "uitest.a") != NULL) {
+        gw_test_fail("the closed screen is still the top: %s", out);
+        return 1;
+    }
+    return 0;
+}
+
 #include "gw_script_deadline_tests.inc"
 
 #include "gw_script_contacts_tests.inc"
@@ -11019,6 +11068,7 @@ void gw_script_tests_register(void) {
     gw_test_register("script_hit", test_script_hit);
     gw_test_register("script_kit_mod_art", test_script_kit_mod_art);
     gw_test_register("script_kit_isolated", test_script_kit_isolated);
+    gw_test_register("script_ui_binding", test_script_ui_binding);
     gw_test_register("script_text_optional_args", test_script_text_optional_args);
     gw_test_register("script_lua_runs", test_script_lua_runs);
     gw_test_register("script_profiler_api", test_script_profiler_api);

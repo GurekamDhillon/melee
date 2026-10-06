@@ -11,10 +11,14 @@ What it needs (a builder, not a player): Python 3 with numpy, scipy and Pillow; 
 models, a 1.5 MB animation bank) and may be zipped into a mod archive; nothing is committed, so the choice to ship is made
 when a release is cut.
 
-What loads today: `geno.json` here is a v8 define on the Mario preset whose neutral special spawns the Courier's MODEL
-as an article (`articles[0].model`), which proves the converter's output draws on the vanilla disc through the palette POBJ
-path, textured, one piece (see `melee/docs/geno.md` 22.3). It is NOT yet a fighter: it has no clips playing on this
-skeleton, no hurtboxes, no `base: "none"`. The full fixture replaces this `geno.json` when the engine side (22.3 "What is
-left") lands: the Striker's move set with `ANIM_RATE` 1.0 on the Courier's own bank.
+What loads today: `geno.json` here is a format 9 define with `base: "none"`: the Courier is a fighter on its own model, skeleton, clips,
+parts table and hurtboxes, with the Striker's 32 moves retargeted onto its limbs (`retarget.json`: roles, per-hitbox joint / offset / size,
+and a start `delay`; regenerate with `python -m tools.geno.courier_moves`). See `melee/docs/geno.md` 22.4-22.5.
+
+Known gaps (slice 4d): the ftData pointer fields still the donor's are `x18 x1C x24 x2C x48 x5C` (the census line in the log names
+them); the metal box has no metal model; ECB offsets, IK lengths, ledge snap and the camera box are the donor's numbers; the held victim
+and the shield bubble share one joint (`ThrowN`), so the bubble is centred by clearing that joint's translation; item swings and
+Kirby's copy were not exercised; Classic, Versus to the results, stage switching and six slots were not run; the grab hitbox is the
+donor's raw words at TopN; dair's clip keeps the feet low and still (see `_build/audit-20261003/geno-slice4d/ART-REQUEST.md`).
 
 Credit: Blender and glTF 2.0 (Khronos) made the art; HSDLib (Ploaj) writes the model files; see `CREDITS.md`.

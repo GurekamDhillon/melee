@@ -224,6 +224,21 @@ static inline void inlineD0(Fighter_GObj* gobj)
     }
 }
 
+#if defined(TARGET_PC)
+/* The guard's rest-pose joint tree: a retail fighter's is ftData->x20->x0[2] (its own data file's pose tree); a Geno base
+ * "none" define has none (the field is the donor's tree, of the donor's joint count: walked over another skeleton it
+ * reads NULL parts), so it takes its own model's joint tree (the costume's: the rest pose). */
+extern HSD_Joint* GenoDefine_RestPoseTree(Fighter* fp);
+static HSD_Joint* ftCo_GuardPoseTree(Fighter* fp)
+{
+    HSD_Joint* own = GenoDefine_RestPoseTree(fp);
+    return own != NULL ? own : fp->ft_data->x20->x0[2];
+}
+#define GUARD_POSE_TREE(fp) ftCo_GuardPoseTree(fp)
+#else
+#define GUARD_POSE_TREE(fp) ((fp)->ft_data->x20->x0[2])
+#endif
+
 void ftCo_80091E78(Fighter_GObj* gobj, float arg1)
 {
     Fighter* fp = gobj->user_data;
@@ -239,7 +254,7 @@ void ftCo_80091E78(Fighter_GObj* gobj, float arg1)
             HSD_JObjAnimAll(jobj);
             if (fp->mv.co.guard.x4 < 1) {
                 ftAnim_80070108(fp, FtPart_TransN, 1 - fp->mv.co.guard.x4,
-                                fp->mv.co.guard.x4, fp->ft_data->x20->x0[2]);
+                                fp->mv.co.guard.x4, GUARD_POSE_TREE(fp));
             }
             if (arg1 < 1) {
                 ftAnim_8006FE9C(fp, FtPart_TransN, arg1, 1 - arg1);
@@ -248,13 +263,23 @@ void ftCo_80091E78(Fighter_GObj* gobj, float arg1)
             }
         } else if (arg1 < 1) {
             ftAnim_80070010(fp, FtPart_TransN, arg1, 1 - arg1,
-                            fp->ft_data->x20->x0[2]);
+                            GUARD_POSE_TREE(fp));
         } else {
-            ftAnim_8006FA58(fp, FtPart_TransN, fp->ft_data->x20->x0[2]);
+            ftAnim_8006FA58(fp, FtPart_TransN, GUARD_POSE_TREE(fp));
         }
         {
             scl.x = scl.y = scl.z = inlineB0(fp);
             HSD_JObjSetScale(fp->parts[fp->ft_data->x8->x11].joint, &scl);
+#if defined(TARGET_PC)
+            if (GenoDefine_RestPoseTree(fp) != NULL) {
+                /* ThrowN is the shield bubble's joint and the held victim's joint (one part in retail). Retail's guard pose
+                 * tree has its translation at 0 (ftCo_800921DC clears it too), which centres the bubble on its parent; an
+                 * authored fighter's rest tree carries the hold anchor in front of the body, so clear it after the blend. */
+                Vec3 zero;
+                zero.x = zero.y = zero.z = 0.0f;
+                HSD_JObjSetTranslate(fp->parts[fp->ft_data->x8->x11].joint, &zero);
+            }
+#endif
         }
         inlineD0(gobj);
     }

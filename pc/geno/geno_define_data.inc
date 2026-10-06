@@ -281,6 +281,52 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
              kind, mapped, n, conflicts, (int) ftData_Table_Unk0[kind].count, njoints);
 }
 
+/* ftData pointer fields, by name, in struct order (the census; docs/geno.md 22.4 "independence"). */
+static const struct { const char* name; int off; } GenoDefine_FtDataFields[] = {
+    {"x0", 0x00}, {"ext_attr", 0x04}, {"x8", 0x08}, {"xC", 0x0C}, {"x10", 0x10}, {"x14", 0x14}, {"x18", 0x18}, {"x1C", 0x1C},
+    {"x20", 0x20}, {"x24", 0x24}, {"x28", 0x28}, {"x2C", 0x2C}, {"x30", 0x30}, {"x34", 0x34}, {"x38", 0x38}, {"x3C", 0x3C},
+    {"x40", 0x40}, {"x44", 0x44}, {"x48", 0x48}, {"x4C", 0x4C}, {"x50", 0x50}, {"x54", 0x54}, {"x58", 0x58}, {"x5C", 0x5C}};
+#define GENO_FTDATA_FIELDS ((int)(sizeof GenoDefine_FtDataFields / sizeof GenoDefine_FtDataFields[0]))
+
+/* Which ftData pointer fields of a define are the very pointers of the donor's ftData (bit i = field i). Pure: the
+ * independence test runs it on synthetic structs; the loader logs it for every base "none" kind. */
+unsigned GenoDefine_FtDataSharedMask(const ftData* own, const ftData* donor)
+{
+    unsigned mask = 0; int i;
+    for (i = 0; i < GENO_FTDATA_FIELDS; ++i)
+        if (*(void* const*)((const char*)own + GenoDefine_FtDataFields[i].off) == *(void* const*)((const char*)donor + GenoDefine_FtDataFields[i].off)
+            && *(void* const*)((const char*)own + GenoDefine_FtDataFields[i].off) != NULL) mask |= 1u << i;
+    return mask;
+}
+const char* GenoDefine_FtDataFieldName(int i) { return i >= 0 && i < GENO_FTDATA_FIELDS ? GenoDefine_FtDataFields[i].name : "?"; }
+static unsigned GenoDefine_CensusMask[Ft_Kind_Max - Ft_Kind_Mex0];
+unsigned Geno_DefineCensusMask(int kind) { return kind >= Ft_Kind_Mex0 && kind < Ft_Kind_Max ? GenoDefine_CensusMask[kind - Ft_Kind_Mex0] : 0u; }
+
+static void GenoDefine_Census(int kind, const ftData* own, const ftData* donor)
+{
+    unsigned mask = GenoDefine_FtDataSharedMask(own, donor); int i;
+    char list[256]; list[0] = 0;
+    GenoDefine_CensusMask[kind - Ft_Kind_Mex0] = mask;
+    for (i = 0; i < GENO_FTDATA_FIELDS; ++i)
+        if (mask & (1u << i)) { strcat(list, " "); strcat(list, GenoDefine_FtDataFields[i].name); }
+    OSReport("geno: census kind %d: ftData fields still the donor's pointers:%s (%s)\n", kind, mask ? list : " none", mask ? "see docs/geno.md 22.4 for what each is and why" : "independent");
+}
+
+/* A base "none" define's own storage for the small ftData tables the donor's copy would otherwise share: the guard pose tree
+ * table (the tree itself is the costume's, GenoDefine_RestPoseTree), the camera box, the item pick-up offsets, the second
+ * pick-up vector and the sound-id table struct. The numbers are the template's defaults until the package authors them. */
+static HSD_Joint* GenoDefine_GuardTrees[3];
+static ftData_x20 GenoDefine_X20;
+static void GenoDefine_OwnTables(int kind, ftData* out)
+{
+    GenoDefine_X20.x0 = GenoDefine_GuardTrees; GenoDefine_X20.x8 = out->x20 ? out->x20->x8 : 0.0f;
+    out->x20 = &GenoDefine_X20;
+    out->x3C = gd_data_copy(out->x3C, sizeof *out->x3C);
+    out->x40 = gd_data_copy(out->x40, sizeof *out->x40);
+    out->x50 = gd_data_copy(out->x50, sizeof *out->x50);
+    out->x4C_sfx = gd_data_copy(out->x4C_sfx, sizeof *out->x4C_sfx);
+}
+
 void GenoDefine_Load(int kind, int base)
 {
     extern int Netplay_Enabled(void);
@@ -302,7 +348,11 @@ void GenoDefine_Load(int kind, int base)
         if ((flags & 0x3f) != 0x21)
             row->x10_animCurrFlags = (flags & ~0x3fu) | (kind < 64 ? kind : FT_ANIM_KIND_SELF);
     }
-    if (Geno_DefineIsNone(kind)) GenoDefine_BuildOwn(kind, out, n);
+    if (Geno_DefineIsNone(kind)) {
+        GenoDefine_BuildOwn(kind, out, n);
+        GenoDefine_OwnTables(kind, out);
+        GenoDefine_Census(kind, out, source);
+    }
     GenoDefine_CommonRows[kind] = gd_data_copy(ftData_MotionStateList, sizeof(MotionState)*ftCo_MS_Count);
     GenoDefine_SpecificRows[kind] = gd_data_copy(ftData_CharacterStateTables[base], sizeof(MotionState)*ftMr_MS_SelfCount);
     if (Geno_DefineIsNone(kind)) {
@@ -330,6 +380,15 @@ void GenoDefine_Load(int kind, int base)
                  kind, Geno_OverlayCount(p), GENO_MAX_OVERLAYS, Geno_ProfilePoolWords(p), Geno_PoolWords(), GENO_POOL_WORDS,
                  Geno_StateCount(p), GENO_MAX_STATES, Geno_ProfileStorageBytes(), 2u * 1024u * 1024u /* GENO_PROFILE_STORAGE_BYTES */);
     }
+}
+
+/* A base "none" define's rest-pose joint tree (the guard's pose blend reads a joint tree from ftData x20: the donor's would be
+ * walked over another skeleton): the fighter's own costume model joint tree from its TransN joint, NULL for any other fighter. */
+HSD_Joint* GenoDefine_RestPoseTree(Fighter* fp)
+{
+    if (!Geno_DefineIsNone(fp->kind)) return NULL;
+    /* the guard walks it from FtPart_TransN (as ftCo_80091E78 does the costume's), so it is the tree below the root joint */
+    return CostumeListsForeachCharacter[fp->kind].costume_list[fp->x619_costume_id].joint->child;
 }
 
 void GenoDefine_BindFighter(Fighter* fp)

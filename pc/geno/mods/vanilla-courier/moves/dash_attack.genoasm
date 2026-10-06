@@ -4,12 +4,12 @@ wait 1
 continuation 4
 PUT FWD_VEL 2.6
 wait 5
-hitbox slot=0 joint=2 damage=6 size=3.6 x=0 y=0 z=0 angle=361 kbg=70 fkb=0 bkb=45
-hitbox slot=1 joint=0 damage=6 size=2.4 x=0 y=0 z=0 angle=361 kbg=70 fkb=0 bkb=45
+hitbox slot=0 joint=12 damage=6 size=2.8 x=0 y=0 z=0 angle=361 kbg=70 fkb=0 bkb=45
+hitbox slot=1 joint=25 damage=6 size=2.4 x=0 y=0 z=0 angle=361 kbg=70 fkb=0 bkb=45
 PUT FWD_VEL 2.2
 wait 4
 clear_hitboxes
-hitbox slot=0 joint=2 damage=4 size=3.0 x=0 y=0 z=0 angle=70 kbg=40 fkb=0 bkb=30
+hitbox slot=0 joint=12 damage=4 size=3.0 x=0 y=0 z=0 angle=70 kbg=40 fkb=0 bkb=30
 wait 12
 clear_hitboxes
 wait 8

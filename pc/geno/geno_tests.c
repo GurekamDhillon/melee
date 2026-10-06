@@ -3431,9 +3431,33 @@ static int test_geno_fly(void)
 }
 
 #include "geno_define_snapshot_tests.inc"
+
+/* Slice 4d: the independence census. A base "none" define's ftData must hold no pointer of the donor's that it does not
+ * list as shared (docs/geno.md 22.4). The census function is pure: it names the pointer fields two ftData share. */
+extern unsigned GenoDefine_FtDataSharedMask(const struct ftData* own, const struct ftData* donor);
+extern const char* GenoDefine_FtDataFieldName(int i);
+static int test_geno_none_independence(void)
+{
+    static struct ftData a, b;
+    static int marker[4];
+    unsigned m;
+    int rc = 0;
+    memset(&a, 0, sizeof a); memset(&b, 0, sizeof b);
+    if (GenoDefine_FtDataSharedMask(&a, &b) != 0u) { TestFail("census: empty structs share nothing (NULL is not shared)"); rc = 1; }
+    a.x20 = (ftData_x20*) &marker[0]; b.x20 = (ftData_x20*) &marker[0];
+    a.x3C = (struct UnkFloat6_Camera*) &marker[1]; b.x3C = (struct UnkFloat6_Camera*) &marker[2];
+    a.x5C = (HSD_Joint*) &marker[3]; b.x5C = (HSD_Joint*) &marker[3];
+    m = GenoDefine_FtDataSharedMask(&a, &b);
+    if (m != ((1u << 8) | (1u << 23))) { TestFail("census: exactly x20 and x5C are the shared pointers"); rc = 1; }
+    if (strcmp(GenoDefine_FtDataFieldName(8), "x20") != 0 || strcmp(GenoDefine_FtDataFieldName(23), "x5C") != 0) {
+        TestFail("census: field names"); rc = 1;
+    }
+    return rc;
+}
 void GenoTestRegisterAll(void)
 {
     TestRegister("geno_define_snapshot", test_geno_define_snapshot);
+    TestRegister("geno_none_independence", test_geno_none_independence);
     TestRegister("geno_define_hit_tag", test_geno_define_hit_tag);
     TestRegister("geno_define_state_hash", test_geno_define_state_hash);
     TestRegister("geno_define_article_digest", test_geno_define_article_digest);

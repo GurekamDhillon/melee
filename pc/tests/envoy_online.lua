@@ -56,13 +56,13 @@ end)
 
 -- ---- stage 1: the record ------------------------------------------------------------------------------------------------
 local function build()
- return {kindling=1,glass_core=1,heavy={tier=2,copies=1},pyre={tiers={1,2}}},{damage_dealt=1.1,status_duration=1.5}
+ return {kindling=1,glass_core=1,lingering={tier=2,copies=1},pyre={tiers={1,2}}},{damage_dealt=1.1,status_duration=1.5}
 end
 T.test('a build record is canonical: sorted, compact, round-trips, same bytes whatever the insertion order',function()
  local eq,imp=build();local rec,dig=C.build_record({seed=12345,game=2,loop=0,port=1},eq,imp)
  assert(rec:match('^EB1|12345|2|0|1|%x+|'),rec);assert(#rec<400 and #dig==16 and rec:sub(-16)==dig)
  local p=C.parse_build_record(rec);assert(p and p.digest==dig and p.meta.seed==12345 and p.meta.game==2 and p.meta.port==1)
- assert(p.equipped.kindling==1 and p.equipped.heavy==2 and p.equipped.pyre.tiers[2]==2 and p.implicits.damage_dealt==1.1)
+ assert(p.equipped.kindling==1 and p.equipped.lingering==2 and p.equipped.pyre.tiers[2]==2 and p.implicits.damage_dealt==1.1)
  assert(#p.keystones==0,'glass_core is a unique, not a keystone')
  local eq2,imp2={},{};local ids={};for id in pairs(eq) do ids[#ids+1]=id end;table.sort(ids,function(a,b) return a>b end)
  for _,id in ipairs(ids) do eq2[id]=eq[id] end;imp2.status_duration=1.5;imp2.damage_dealt=1.1
@@ -91,7 +91,7 @@ T.test('the parser refuses a wrong version, a bad digest, unsorted fields, a lyi
  bad(rec:sub(1,-2)..'0','digest');bad('EB2'..rec:sub(4),'version');bad((rec:gsub('|','/')),'fields');bad(rec..'x','digest')
  local f={};for x in (body..'|'):gmatch('([^|]*)|') do f[#f+1]=x end
  local function with(i,v) local g={table.unpack(f)};g[i]=v;return resign(table.concat(g,'|')) end
- bad(with(7,'pyre=1,kindling=1'),'sorted');bad(with(7,'kindling=1,kindling=1'),'sorted');bad(with(7,'nonsense_id=1'),'unknown');bad(with(9,'heavy'),'keystone')
+ bad(with(7,'pyre=1,kindling=1'),'sorted');bad(with(7,'kindling=1,kindling=1'),'sorted');bad(with(7,'nonsense_id=1'),'unknown');bad(with(9,'lingering'),'keystone')
  bad(with(6,'0123456789abcdef'),'different modifier pool');bad(with(7,'kindling=0'),'tier');bad(with(2,'-3'),'seed');bad(with(2,'1.5'),'seed')
  bad(string.rep('x',500),'compact');bad('a b','compact')
  local ks;for _,m in ipairs(D.mod_pool) do if m.kind=='keystone' then ks=m.id break end end

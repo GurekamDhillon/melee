@@ -20,7 +20,7 @@ T.test('four actual drives reach representative Rare plus Glass native budget',f
   for _,id in ipairs(ids) do r.affixes[#r.affixes+1]={id=id,tier=3} end
   assert(loot:validate(r));return r
  end
- local records={rare(401,'red',{'heavy','pyre','kindling','malice'}),rare(402,'green',{'cinder','lingering','feasting','renewal'}),rare(403,'blue',{'featherweight','shatter','updraft','icebound'}),{seed=404,depth=10,colour='white',rarity='unique',unique='glass_core',affixes={{id='glass_core',tier=1}}}}
+ local records={rare(401,'red',{'lingering','pyre','kindling','malice'}),rare(402,'green',{'cinder','lingering','feasting','renewal'}),rare(403,'blue',{'armoured','shatter','updraft','icebound'}),{seed=404,depth=10,colour='white',rarity='unique',unique='glass_core',affixes={{id='glass_core',tier=1}}}}
  for slot,r in ipairs(records) do assert(bag:give(r));assert(bag:equip(1,slot)) end
  local mods,implicit=bag:derive();local e=D.mod_engine.new(1,D.mod_pool);e:set_build(1,mods,implicit)
  e.statuses[2]={};for name,amount in pairs({burn=4.5,curse=.0375}) do e.statuses[2][name]={amount=amount,expires=1000,next_tick=60,stacks=1,max=1,origin={}} end
@@ -28,9 +28,9 @@ T.test('four actual drives reach representative Rare plus Glass native budget',f
  for _,r in ipairs(rules) do if not r.match.incoming then
   if not r.match.status_bits or r.match.status_bits==1 then launch=launch+(r.change.launch or 1)-1;damage=damage+(r.change.percent_damage or 1)-1 end
  end end
- assert(math.abs(launch-1.195)<1e-9);assert(math.min(1.6,damage)==1.6);assert(#rules<=8)
+ assert(math.abs(launch-1.12)<1e-9);assert(math.min(1.6,damage)==1.6);assert(#rules<=8)
  local target=e:native_rules(2);assert(#target==1 and target[1].match.incoming and math.abs(target[1].change.launch-1.0375)<1e-9)
- assert(math.abs(launch*target[1].change.launch-1.2398125)<1e-9)
+ assert(math.abs(launch*target[1].change.launch-1.162)<1e-9)
  local b=e:family_budget(1);assert(b.damage_dealt.raw>.6 and b.damage_dealt.value==1+b.damage_dealt.raw)
  local before=e:export();e:emit{kind='stock_lost',port=1};e:drain();assert(e.equipped[1].glass_core and e:values(1).damage_dealt>1.6)
  local restored=D.mod_engine.new(2,D.mod_pool);restored:import(e:export());assert(restored:export()==e:export())

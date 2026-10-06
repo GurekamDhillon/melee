@@ -123,5 +123,46 @@ return function(D)
   return self:publish(s)
  end
  function B:new_run() if self.config.persist then return true end;return self:publish({items={},equipped={}}) end
+ -- ---- saves from before the readability split ---------------------------------------------------------------------------------------
+ -- A saved bag (a run's checkpoint, a LAB savestate, a co-op record) may hold a piece the split cut (loot.is_retired: Heavy, Featherweight and
+ -- twelve keystones) or a drive with more rules than the new limit (legacy three and four rule drives). `migrate` rewrites the STATE in place,
+ -- before it is validated: a cut piece is dropped (a drive left with no rule goes with it), a drive over the limit keeps its first two rules, a
+ -- cut keystone leaves the list (its pick is owed again by the allowance). It returns the notices, one string each, so the caller can log and show
+ -- them: nothing is lost silently. A state that holds nothing cut is returned untouched with no notices.
+ local function pretty(id) return (tostring(id):gsub('_',' '):gsub('^%l',string.upper)) end
+ function B.migrate(s,loot)
+  local notes={}
+  if type(s)~='table' then return notes end
+  local limit=D.mod_progression.max_rules or 2
+  local function fix(r)
+   if type(r)~='table' or type(r.affixes)~='table' then return r end
+   if r.unique and not loot.rules[r.unique] then notes[#notes+1]='Dropped a drive: '..pretty(r.unique)..' was cut.';return nil end
+   local kept,changed={},false
+   for _,a in ipairs(r.affixes) do
+    if type(a)=='table' and loot.rules[a.id] then kept[#kept+1]=a
+    else changed=true;notes[#notes+1]='Dropped '..pretty(type(a)=='table' and a.id or '?')..': this piece was cut.' end
+   end
+   if #kept==0 then notes[#notes+1]='Dropped a drive: nothing was left on it.';return nil end
+   if not r.unique and #kept>limit then
+    for i=#kept,limit+1,-1 do notes[#notes+1]='Dropped '..pretty(kept[i].id)..': a drive holds at most '..limit..' rules now.';kept[i]=nil end
+    changed=true
+   end
+   if changed then r.affixes=kept end
+   return r
+  end
+  local items={};for _,r in ipairs(s.items or {}) do local k=fix(r);if k then items[#items+1]=k end end
+  if s.items then s.items=items end
+  if s.equipped then for slot,r in pairs(s.equipped) do local k=fix(r);s.equipped[slot]=k end end
+  local function known(id) return loot.rules[id]~=nil end
+  if s.keystones then
+   local list={};for _,id in ipairs(s.keystones) do if known(id) then list[#list+1]=id else notes[#notes+1]='Dropped keystone '..pretty(id)..': it was cut (you may pick another).' end end
+   s.keystones=list
+  end
+  if s.keystone and not known(s.keystone) then
+   notes[#notes+1]='Dropped keystone '..pretty(s.keystone)..': it was cut (you may pick another).';s.keystone=nil
+  elseif s.keystone and s.keystones and #s.keystones==0 then s.keystones={s.keystone} end
+  if s.keystones and #s.keystones==1 then s.keystone=s.keystones[1] elseif s.keystones and #s.keystones~=1 then s.keystone=nil end
+  return notes
+ end
  return B
 end

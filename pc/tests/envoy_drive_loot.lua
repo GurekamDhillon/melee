@@ -21,7 +21,7 @@ T.test('depth floor, forced rarity, fixed unique and white extra',function()
  for seed=1,100 do for _,rarity in ipairs({'common','magic','rare','unique'}) do
   local r=loot:roll(seed*104729,20,rarity)
   for _,a in ipairs(r.affixes) do assert(a.tier==5) end
-  if rarity~='unique' then assert(#r.affixes==({common=1,magic=2,rare=4})[rarity]+(r.colour=='white' and 1 or 0)) end
+  if rarity~='unique' then assert(#r.affixes==({common=1,magic=2,rare=2})[rarity],'at most two rules, no white extra') end
  end end
  T.refuses(function() loot:roll(1,1,'keystone') end)
  for depth=0,10,5 do local r=loot:roll(1,depth,'rare');for _,a in ipairs(r.affixes) do assert(a.tier==1+depth/5) end end
@@ -35,10 +35,10 @@ T.test('every bag record is validated and malformed arrays/groups refused',funct
  local r=loot:roll(104729,1,'rare');r.affixes[2]=r.affixes[1];T.refuses(function() loot:validate(r) end)
  r=loot:roll(104729,1,'rare');r.affixes[9]={id='kindling',tier=1};T.refuses(function() loot:validate(r) end)
  r=loot:roll(104729,1,'rare');r.affixes[1].tier=1.5;assert(not bag:give(r))
- -- Exact review regression: keys 2..5, four valid normal affixes, no index1.
+ -- Exact review regression: keys 2..3, two valid normal affixes (the most a drive holds now), no index1.
  local dense=loot:roll(1,12,'rare');dense.colour='red'
- local hole={false,dense.affixes[1],dense.affixes[2],dense.affixes[3],dense.affixes[4]}
- hole[1]=nil;assert(#hole==5,'regression must retain a length above its sparse count');dense.affixes=hole
+ local hole={false,dense.affixes[1],dense.affixes[2]}
+ hole[1]=nil;assert(#hole==3,'regression must retain a length above its sparse count');dense.affixes=hole
  T.refuses(function() loot:validate(dense) end);assert(not bag:give(dense))
 end)
 T.test('full bag slots swap discard and checkpoint exactness',function()
@@ -73,8 +73,8 @@ T.test('complete native rule budget rejects more than thirty regular rules witho
 end)
 T.test('duplicate IDs retain the higher tier and unequip restores the lower tier',function()
  local bag=D.drive_bag.new(loot)
- local low=loot:roll(72,0,'rare');local high=loot:roll(72,10,'rare')
- assert(#low.affixes==1 and #high.affixes==4) -- the curve: the same seed is one affix early and four deep
+ local low,high;for seed=72,400 do low=loot:roll(seed,0,'rare');high=loot:roll(seed,10,'rare');if low.affixes[1].id==high.affixes[1].id then break end end   -- (a payoff is redrawn while it is not yet open: pick a seed whose first rule is the same at both depths)
+ assert(#low.affixes==1 and #high.affixes==2) -- the curve: the same seed is one rule early and two deep
  for i,a in ipairs(low.affixes) do assert(a.id==high.affixes[i].id and high.affixes[i].tier==3 and a.tier==1) end
  assert(bag:give(low));assert(bag:equip(1,1));assert(bag:give(high));assert(bag:equip(1,2))
  local mods=bag:derive();for _,a in ipairs(low.affixes) do assert(mods[a.id]==3) end

@@ -75,9 +75,28 @@ flow; its historical tests remain, but it is not the default.
 
 See MENUS.md, PLAYTEST.md and NATIVE-TEST-PLAN.md for controller/native acceptance.
 
+## The pieces (the readability split, 2026-10-05)
+
+A **drive** carries at most TWO rules: one below effective depth 5, two from depth 5 on (a standing rule and a trigger rule), and a white
+drive gets no extra one. It is named by its colour and its rules (`Green Drive: Kindling + Updraft`), never by grammar. A **keystone** is one
+rule line and one price line; the price is one of seven learned once: Slow, Low, Fragile, Weak, Vulnerable, Lock, and Bleed (lose damage
+points each time an event keystone fires). No keystone pays with a status on its own fighter. The pool is 72 pieces: 36 drive rules (13
+standing, 23 trigger), six uniques and 30 keystones. The rule payoffs (Pyre, Cinder, Shatter, Brittle, Malice, Feasting, Renewal, Rush,
+Crosswind, Bastion, Trailing) open at effective depth 5. A second copy of a rule you hold merges into it whatever its colour.
+
+Five statuses are learned, each with one word everywhere: **Burning**, **Chilled**, **Haste**, **Guarded**, **Marked** (the old Curse; its internal
+id is still `curse`, so saves are valid). **Momentum** is a counter (up to 5, spent when you land: `engine:momentum(port)` gives the count a
+later pass draws as orbs) and **Shock** is private to the electric theme. A crit is x1.5 unless the piece says otherwise (Brutal, Gambler,
+Executioner). The glossary is `drive_text.glossary()` / `mod_status.glossary()`. The pieces' one-line texts are in the research notes
+(`_build/audit-20261003/envoy-split/APPENDIX-pieces.md` in the workspace). A saved run that holds a piece the split cut drops it with a notice
+(`drive_bag.migrate`); Heavy, Featherweight and twelve keystones are the retired ids.
+
+**A run started from the menus or the console uses the rule host** (this pool, bag and opponent rolls) by default; `envoy rules off` selects the
+older companion-stat route for the next run, which is unchanged. `envoy devui on|off` shows the developer figures (see PLAYTEST.md).
+
 Rolled drives and a controller bag are available in the offline LAB debugger.
-The shared pool has 36 records: 26 normal modifiers, six uniques and four
-keystones. `drive give rare 42` grants loot; `drive drop magic 123` spawns a
+The shared pool has 72 records: 36 drive rules, six uniques and 30
+keystones (the LAB debugger alone, without the keystone module, has fewer). `drive give rare 42` grants loot; `drive drop magic 123` spawns a
 physical pickup near P2. `bag` or Z+START opens the twelve-drive bag. Select a
 drive, then a slot to equip/swap; select an occupied slot to unequip. Left/Right
 pages details, including current family totals, safety limits and equip previews.

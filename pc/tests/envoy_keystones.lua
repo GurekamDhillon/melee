@@ -4,10 +4,10 @@ for _,n in ipairs({'mod_progression','mod_schema','mod_codec','mod_budget','keys
 local K,P=D.keystones,D.mod_progression;local loot=D.drive_loot.new(D.mod_pool)
 local function pool_keys() local out={};for _,m in ipairs(D.mod_pool) do if m.kind=='keystone' then out[#out+1]=m end end;return out end
 T.test('thirty keystones, six drive colours, unique ids, every one in the validated pool with a drawback',function()
- local keys=pool_keys();assert(#keys==42,#keys);local ids,fam={},{}
+ local keys=pool_keys();assert(#keys==30,#keys);local ids,fam={},{}
  for _,m in ipairs(keys) do assert(not ids[m.id]);ids[m.id]=true;assert(type(m.cost)=='string' and #m.cost>0,m.id);local f=K.family(m.id);assert(f,m.id);fam[f]=(fam[f] or 0)+1;assert(#m.families>=1) end
- for _,f in ipairs(K.families) do assert((fam[f] or 0)>=4,f..' has too few keystones') end
- assert(#K.ids()==42)
+ for _,f in ipairs(K.families) do assert((fam[f] or 0)>=3,f..' has too few keystones') end
+ assert(#K.ids()==30)
 end)
 T.test('every keystone reads as an effect line then a drawback line, in plain words',function()
  for _,m in ipairs(pool_keys()) do for _,tier in ipairs({1,3,6}) do
@@ -38,7 +38,7 @@ T.test('each keystone does something in the engine: equip rules change values or
  end
 end)
 T.test('exclusive keystones and stacked drawbacks are refused everywhere the budget is read',function()
- assert(K.check{'smash_doctrine','aerial_doctrine'}==nil and K.check{'pyromancer','frozen_oath'}==nil and K.check{'echo_oath','echo_weaver'}==nil and K.check{'iron_resolve','banked_momentum'}==nil)
+ assert(K.check{'smash_doctrine','aerial_doctrine'}==nil and K.check{'pyromancer','frozen_oath'}==nil and K.check{'executioner','gambler'}==nil)
  assert(K.check{'smash_doctrine','sprinter','bloodlust'});assert(K.check({'bulwark','bulwark'})==nil)
  -- drawbacks add and floor: run speed -15% (Smasher) -25% (Bulwark) -20% (Dive Bomber) passes the -45% floor only two at a time
  assert(K.check{'smash_doctrine','bulwark'}==true and K.check{'smash_doctrine','bulwark','dive_bomber'}==nil)
@@ -50,7 +50,7 @@ end)
 T.test('the starting keystone is seeded, playable from stage one and varied',function()
  local seen,n={},0
  for seed=1,400 do local a=K.starting(seed);assert(a==K.starting(seed));assert(K.meta[a].starter~=false);if not seen[a] then seen[a]=true;n=n+1 end end
- assert(n>=20,'only '..n..' different starting keystones')
+ assert(n>=18,'only '..n..' different starting keystones')
  T.refuses(function() K.starting(-1) end)
  -- it equips without a choice at depth 0 and the build is legal
  for seed=1,60 do local id=K.starting(seed);local bag=D.drive_bag.new(loot,{context=P.context(0,0)});assert(bag:choose_keystone(id),id);bag:derive() end

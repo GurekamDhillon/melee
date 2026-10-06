@@ -21,44 +21,41 @@ return function(D)
   local out={}
   local function add(r) out[#out+1]=r end
   -- ---- technique triggers (suffixes: they happen on an event) ------------------------------------------------------
-  add(rec('clean_landing','of the Clean Landing','suffix','lcancel_hit',{},{status('haste','$duration')},
-   tiers3({duration=90},{duration=120},{duration=150}),'L-cancel a landing after the aerial hit: Haste for {duration} frames.','haste',.6,{'hasted','aerial','technique'},5,
+  add(rec('clean_landing','Clean Landing','suffix','lcancel_hit',{},{status('haste','$duration')},
+   tiers3({duration=90},{duration=120},{duration=150}),'L-cancel after a hit: Haste for {duration} frames.','haste',.6,{'hasted','aerial','technique'},5,
    'Technique: hit-confirmed L-cancel (verified). Haste is earned: blue afterimages for its length.'))
-  add(rec('wave_edge','of the Wave','suffix','wavedash',{},{{op='crit_next',count=1,multiplier='$mult'}},
-   tiers3({mult=1.4},{mult=1.6},{mult=1.8}),'Wavedash: your next hit crits for x{mult}.','momentum',.1,{'critical','technique'},6,
+  add(rec('wave_edge','Wave','suffix','wavedash',{},{{op='crit_next',count=1,multiplier='$mult'}},
+   tiers3({mult=1.4},{mult=1.6},{mult=1.8}),'Wavedash: your next hit crits (x{mult}).','momentum',.1,{'critical','technique'},6,
    'Technique: wavedash (verified). The forced crit lasts until a hit lands.'))
-  add(rec('shield_stance','of the Stance','suffix','perfect_shield',{},{{op='armor',type='hit_count',value=1,frames='$frames'}},
-   tiers3({frames=90},{frames=120},{frames=150}),'Perfect shield: absorb the next hit with armour for up to {frames} frames.','guarded',.5,{'guarded','technique'},7,
+  add(rec('shield_stance','Stance','suffix','perfect_shield',{},{{op='armor',type='hit_count',value=1,frames='$frames'}},
+   tiers3({frames=90},{frames=120},{frames=150}),'Perfect shield: armour absorbs the next hit for up to {frames} frames.','guarded',.5,{'guarded','technique'},7,
    'Technique: perfect shield (verified). Armour only, no status, so no afterimage.'))
-  add(rec('tech_guard','of the Tech','suffix','tech',{},{status('guarded','$duration')},
+  add(rec('tech_guard','Tech','suffix','tech',{},{status('guarded','$duration')},
    tiers3({duration=60},{duration=90},{duration=120}),'Tech: Guarded for {duration} frames.','guarded',.5,{'guarded','technique'},5,
    'Technique: tech (verified; tech directions are partly measured). Guarded is earned: teal afterimages.'))
-  add(rec('combo_surge','of the Combo','suffix','combo',{{combo_at_least=3}},{status('haste','$duration')},
-   tiers3({duration=45},{duration=60},{duration=75}),'Land the third or later hit of a combo (the second on a Shocked target): Haste for {duration} frames.','haste',.98,{'hasted','technique'},6,
-   'Technique: combo count (verified). Opponents fire it too: it needs only hits. Also fires from the second hit on a Shocked target: a reader of Shock.'))
-  out[#out].also={{trigger='combo',conditions={{combo_at_least=2},{target_status='shock'}}}}
-  add(rec('combo_finish','of the Finish','suffix','combo_end',{{combo_at_least=3}},{{op='heal',amount='$heal',subject='self'}},
-   tiers3({heal=3},{heal=4},{heal=5}),'Finish a combo of three or more hits (two on a Shocked or Cursed target): heal {heal} damage points.','guarded',.42,{'healing','technique'},6,
-   'Technique: combo end (verified). Also fires from two hits on a Shocked or a Cursed target: a reader of both.'))
-  out[#out].also={{trigger='combo_end',conditions={{combo_at_least=2},{target_status='shock'}}},{trigger='combo_end',conditions={{combo_at_least=2},{target_status='curse'}}}}
-  add(rec('retaliation','of Retaliation','suffix','armor',{{armor_result='absorbed'}},{{op='crit_next',count=1,multiplier='$mult'}},
-   tiers3({mult=1.4},{mult=1.6},{mult=1.8}),'When your armour absorbs a hit, or you take a hit while Guarded: your next hit crits for x{mult}.','burn',.04,{'critical','guarded'},8,
-   'Armour source (Stance, a Wavedasher or Juggernaut keystone), or any Guarded source through a hit taken: a reader of Guarded. Armour events are verified.',30))
-  out[#out].also={{trigger='hit_taken',conditions={{self_status='guarded'}}}}
+  add(rec('combo_surge','Combo','suffix','combo',{{combo_at_least=3}},{status('haste','$duration')},
+   tiers3({duration=45},{duration=60},{duration=75}),'3rd hit of a combo: Haste for {duration} frames.','haste',.98,{'hasted','technique'},6,
+   'Technique: combo count (verified). Opponents fire it too: it needs only hits.'))
+  add(rec('combo_finish','Finish','suffix','combo_end',{{combo_at_least=3}},{{op='heal',amount='$heal',subject='self'}},
+   tiers3({heal=3},{heal=4},{heal=5}),'Finish a combo of 3+ hits: heal {heal} damage points.','guarded',.42,{'healing','technique'},6,
+   'Technique: combo end (verified).'))
+  add(rec('retaliation','Retaliation','suffix','armor',{{armor_result='absorbed'}},{{op='crit_next',count=1,multiplier='$mult'}},
+   tiers3({mult=1.4},{mult=1.6},{mult=1.8}),'When armour absorbs a hit: your next hit crits (x{mult}).','burn',.04,{'critical','guarded'},8,
+   'Armour source (Stance, a Wavedasher or Juggernaut keystone). Armour events are verified.',30))
   -- ---- crit families (prefixes: passive) -----------------------------------------------------------------------------
   add(rec('keen','Keen','prefix','equip',{},{{op='crit',chance='$chance'}},
-   tiers3({chance=.05},{chance=.0625},{chance=.075}),'Your hits crit {chance%} of the time (x1.5 damage).','burn',.08,{'critical','damage'},4,
+   tiers3({chance=.05},{chance=.0625},{chance=.075}),'Your hits crit {chance%} of the time.','burn',.08,{'critical','damage'},4,
    'Crit chance. The engine default is no crits; every crit starts from a rule like this one.',60))
   add(rec('brutal','Brutal','prefix','equip',{},{{op='crit',chance=.03},{op='crit',multiplier='$mult'}},
-   tiers3({mult=1.25},{mult=1.3125},{mult=1.375}),'Your hits crit 3% of the time; your crits deal more: the multiplier gains {mult}.','burn',.0,{'critical','damage'},6,
+   tiers3({mult=1.25},{mult=1.3125},{mult=1.375}),'Your hits crit 3% of the time; crits deal x{mult} extra.','burn',.0,{'critical','damage'},6,
    'Crit multiplier (a gain on top of the base) with a small chance of its own, so it is never a dead roll; other crit chances add to it.'))
-  add(rec('ruthless','Ruthless','prefix','equip',{},{{op='crit',tag='aerial',chance='$chance',multiplier='$mult'}},
-   tiers3({chance=.12,mult=1.6},{chance=.15,mult=1.7},{chance=.18,mult=1.8}),'Your aerial hits crit {chance%} of the time (x{mult}).','momentum',.1,{'critical','aerial'},6,
+  add(rec('ruthless','Ruthless','prefix','equip',{},{{op='crit',tag='aerial',chance='$chance'}},
+   tiers3({chance=.15},{chance=.1875},{chance=.225}),'Your aerial hits crit {chance%} of the time.','momentum',.1,{'critical','aerial'},6,
    'Per-move-tag crit (aerial slot).'))
-  add(rec('finishing','Finishing','prefix','equip',{},{{op='crit',chance='$chance',multiplier='$mult',min_percent=100}},
-   tiers3({chance=.2,mult=1.75},{chance=.25,mult=1.9},{chance=.3,mult=2}),'Your hits crit {chance%} of the time (x{mult}), but only on a target above 100% damage.','shock',.0,{'critical','damage'},7,
+  add(rec('finishing','Finishing','prefix','equip',{},{{op='crit',chance='$chance',min_percent=100}},
+   tiers3({chance=.25},{chance=.3125},{chance=.375}),'Hits on a target above 100% crit {chance%} of the time.','shock',.0,{'critical','damage'},7,
    'Conditional crit: the percent floor applies to all of this fighter\'s crits (the engine has one floor per fighter).'))
-  add(rec('critical_flow','of Critical Flow','suffix','crit',{},{status('haste','$duration')},
+  add(rec('critical_flow','Critical Flow','suffix','crit',{},{status('haste','$duration')},
    tiers3({duration=45},{duration=60},{duration=75}),'Land a crit: Haste for {duration} frames.','haste',.55,{'hasted','critical'},6,
    'Crit trigger. Not a technique: no earned afterimage. Needs a crit chance from elsewhere.'))
   return out

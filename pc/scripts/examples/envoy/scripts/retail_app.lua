@@ -104,7 +104,12 @@ return function(D)
   end
   function A:command(arg)
    -- The rule host switch: Classic / Adventure runs install the pool, bag, slots, opponent rolls and looks
-   -- instead of the companion-stat templates. Takes effect on the next run; the old route is the default.
+   -- instead of the companion-stat templates. Takes effect on the next run; the rule host is the DEFAULT (since the readability split);
+   -- `envoy rules off` keeps the older companion-stat route reachable.
+   if arg=='devui' or arg=='devui on' or arg=='devui off' then
+    if arg~='devui' then D.mod_tuning.set_dev_ui(arg=='devui on');if self.retail.host then self.retail.host.hud.m=nil end end
+    self.g.log('envoy: developer overlay is '..(D.mod_tuning.dev_ui() and 'ON' or 'off'));return true
+   end
    if arg=='rules' or arg=='rules on' or arg=='rules off' then
     if arg~='rules' then
      if self.retail.active or self.retail.pending then return false,'finish the retail run before switching the rule host' end

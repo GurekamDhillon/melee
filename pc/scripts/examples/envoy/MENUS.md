@@ -55,15 +55,21 @@ The same grid with `YOUR DRIVES`, no offered blocks, no countdown, `Close` for B
 by `gd.input_chord`, and the START that closes it is hidden until released, so it does not also pause.
 
 ## Build strip (during fights)
-Top-left: one pip per slot (fill = drive colour, border = rarity; dark = empty), build strength as a percentage (`+56%`), `Depth n`
-(`NG+n`), and the keystones you hold as small cells (an initial on the family colour, six then `+n`). It flashes about 1.5 s when
-a slot changes, a drive is gained or a modifier fires.
+Top-left: one pip per slot (fill = drive colour, border = rarity; dark = empty) and the keystones you hold as small cells (an initial on the
+family colour, six then `+n`). That is all: the `+56%` strength and the `Depth n` / `NG+n` text are developer figures (`envoy devui on`), and a
+small gold `N waiting` shows only while drives wait for a decision. There is no flash text under the strip except the out-of-bounds notice
+("Out of bounds: a stock is lost"); every other flash ("Build ready", a modifier's name) is developer-only. The synergy pill next to the
+strip (assembled emblems and a chain counter) stays.
 
 ## Announcements and cards
-Centred panel, about 6 s, once: the starter drive and starting keystone (one panel), "Fifth slot unlocked", "Keystone allowance: n.
-A keystone is offered at the next stage clear.", "Drive tier n", "New Game+ n". Bottom card: "A drive dropped!" plus its one short line, "Picked up: <short
-name>", "Merged!" with the drive and what got stronger, "Bag full: <name>". Opponent plate (stage start, about 4 s): its modifiers one line each
-(keystones: name and effect), three per page.
+Centred panel, about 6 s, once: the starter drive and starting keystone (one panel). A new slot, keystone allowance, drive tier or New Game+ is
+NOT announced in a match: the next between-stage (reward) screen carries one line in its title, "STAGE CLEAR  -  Unlocked: fifth slot, keystone
+allowance 2, drive tier 2". The synergy message ("<Archetype> assembled" and its blurb) is a SMALL note in the top-right corner (about 4 s), with
+the archetype's emblem. A pickup, a merge ("Merged!") or a full bag is a ONE-LINE note bottom-left; there is no "A drive dropped!" card (the
+floor effect says it). Opponent card (stage start, about 6 s): a small card at the top right per opponent (at most three at once): the fighter's
+name, its keystones (name and rule) and a drive-rule count. No strength figure (developer only), and it stays clear of the match timer. The
+mod's teaching and error messages ("Technique rule fired", "Build update refused") go to the log always and to a panel only with the overlay on.
+The "Collect the drives" banner sits below the timer (the floor arrow marks the nearest drive; the banner is the one text).
 
 ## Drops
 At most one drive per stage on the floor: battle/giant/metal 70% (at the first trigger: an opponent passes 50% damage or loses a stock),
@@ -79,12 +85,14 @@ Console: `uxdump` logs slots, bag, keystones, offers, HUD and the open screen as
 
 ## Technique modifiers in the grid (skill layer, 2026-10-05)
 
-A technique modifier reads "<when>: <what>" on the first line of its detail panel (for example "L-cancel a landing after the aerial hit: Haste for
-2 seconds."), and a second line says what to look for ("You earn it by technique: a blue afterimage shows while it lasts."). A crit modifier says
-"Your hits crit 5% of the time." and "Crits are rare: the engine has none until a modifier grants a chance." There are no ids, tiers or numbers
-from the budget in either line. Technique and crit modifiers never roll before their depth (see PLAYTEST.md), so a stage-1 drive stays one plain
-effect. The first time a technique rule fires in a run, the build strip shows one toast ("Technique rule fired: ..."). A strong crit also toasts
-("Critical hit x2.0"); a weak one only plays the light impact frame.
+A technique modifier reads "<when>: <what>" in ONE line of its detail panel (for example "L-cancel after a hit: Haste for 2 s."); the tutorial
+line that used to follow is gone (the glossary and the afterimage colours carry it). A crit modifier says "Your hits crit 5% of the time." (a crit
+is x1.5; Brutal says "Your hits crit 3% of the time; crits gain +0.25x."). There are no ids, tiers or numbers from the budget in any line.
+Technique and crit modifiers never roll before their depth (see PLAYTEST.md), so a stage-1 drive stays one plain effect. The first time a
+technique rule fires in a run the log says so (a panel only with the developer overlay on). A crit plays the impact frame and the tracer; there
+is no "Critical hit x..." text any more. The crit presentation code exposes one parameter table per crit (`earned_fx` `F.crit_params`: strength
+0..1, the multiplier, the element and colour of the hit, the piece that caused it, and a listener list `F.crit_listeners`) for a later pass that
+maps them to crit tiers.
 
 # Envoy retail 1P menu contract - 2026-10-04 fix1
 

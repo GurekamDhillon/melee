@@ -45,10 +45,10 @@ return function(D)
   local function r(id,label,kind,copies,damage,cost,live)
    local effects={{op='echo',copies=copies,delay=8,damage=damage,knockback=1,match={move=kind=='normal' and 'aerial' or 'any'},once_per_move=true}}
    if live then effects[#effects+1]={op='value',key='damage_dealt',value=live}end
-   return {id=id,label=label,kind=kind,cost=cost,tags={'aerial','damage','momentum'},trigger='equip',conditions={},effects=effects,tiers={{copies=1},{copies=2},{copies=3}},stacking={max=1},text='Historical '..(kind=='normal' and 'aerial' or 'all move')..' hitboxes repeat at '..tostring(damage*100)..'% damage; higher tiers arm more copies.',visual={look='momentum',hue=.72,strength=.45,priority=20},families=live and {'echo','damage_dealt'} or {'echo'},affix=kind=='normal' and 'suffix' or nil,group=kind=='normal' and id or nil,weight=kind=='normal' and 100 or nil,fixed_colour=kind=='unique' and 'purple' or nil}
+   return {id=id,label=label,kind=kind,cost=cost,tags={'aerial','damage'},trigger='equip',conditions={},effects=effects,tiers={{copies=1},{copies=2},{copies=3}},stacking={max=1},text='Historical '..(kind=='normal' and 'aerial' or 'all move')..' hitboxes repeat at '..tostring(damage*100)..'% damage; higher tiers arm more copies.',visual={look='momentum',hue=.72,strength=.45,priority=20},families=live and {'echo','damage_dealt'} or {'echo'},affix=kind=='normal' and 'suffix' or nil,group=kind=='normal' and id or nil,weight=kind=='normal' and 100 or nil,fixed_colour=kind=='unique' and 'purple' or nil}
   end
-  local trail=r('trailing','Trailing','normal',3,.4);trail.affix='prefix';trail.tags={'hasted','momentum'};trail.effects[1].slots={};trail.effects[1].status='haste';trail.text='While Hasted, leave three historical afterimages.'
-  return {trail,r('echoes','of Echoes','normal','$copies',.4),r('echo_heart','Echo Heart','unique',3,.4,'All attack damage, including echoes, is 25% lower.',.75),r('echo_oath','Echo Oath','keystone',3,.6,'All attack damage, including echoes, is 50% lower.',.5)}
+  local trail=r('trailing','Trailing','normal',3,.4);trail.affix='prefix';trail.tags={'hasted'};trail.effects[1].slots={};trail.effects[1].status='haste';trail.text='While you have Haste, leave three historical afterimages.';trail.min_depth=5   -- a payoff: it needs Haste from elsewhere
+  return {trail,r('echoes','Echoes','normal','$copies',.4),r('echo_heart','Echo Heart','unique',3,.4,'All attack damage, including echoes, is 25% lower.',.75)}
  end
  return X
 end

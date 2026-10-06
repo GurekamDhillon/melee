@@ -56,8 +56,6 @@ T.test('timed effects: super armour, intangibility and an interrupt window are q
  local e=engine({wavedasher=P.tier(P.context(40,0))});frame(e);e:emit{kind='wavedash',port=1,tags={}};e:drain()
  local armor;for _,f in ipairs(e.fx) do if f.op=='armor' then armor=f end end
  assert(armor and armor.type=='super' and armor.frames==6,'wavedash gives 6 frames of super armour')
- assert(e:status(1,'guarded') and e:status(1,'guarded').cause=='wave')
- local e2=engine({phase_dash=P.tier(P.context(40,0))});frame(e2);e2:emit{kind='air_dodge',port=1,tags={}};e2:drain();assert(e2.fx[1].op=='intangible' and e2.fx[1].frames==4)
  local itr=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[1]))
  itr.id='probe_interrupt';itr.kind='normal';itr.cost=nil;itr.affix='suffix';itr.group='probe_interrupt';itr.weight=1;itr.trigger='hit_dealt';itr.conditions={};itr.tags={};itr.families={'interrupt'}
  itr.effects={{op='interrupt',frames=10,exits={'jab','jump'},guard=true}};itr.tiers={{x=1}};itr.text='probe'
@@ -80,7 +78,7 @@ T.test('safety floors: armour, intangibility and crit values are bounded by the 
  local e=engine({keen=1,brutal=1},P.context(60,3));local cfg=e:crit_config(1);assert(cfg.slots.default.chance<=.6 and cfg.slots.default.multiplier_max<=4)
  -- a deep tier cannot lift the restriction rules: two restrictions at most, never shield with air dodge
  assert(not D.mod_budget.restrictions_ok({'shield','air_dodge'}) and not D.mod_budget.restrictions_ok({'run','grab','shield'}) and D.mod_budget.restrictions_ok({'run'}))
- assert(not D.keystones.check({'aerialist','powershield_oath'}) and not D.keystones.check({'juggernaut','sprinter'}))
+ assert(not D.keystones.check({'juggernaut','sprinter'}))
 end)
 T.test('crit: none by default; chance, multiplier, tag slot, percent floor and next-hit-crits derive one configuration',function()
  assert(engine({}):crit_config(1)==nil)
@@ -101,7 +99,6 @@ T.test('passive state: air jumps, restrictions and permanent armour; Aerialist a
  local tier=P.tier(P.context(40,0))
  local a=engine({aerialist=tier}):passive_state(1);assert(a.air_jumps==5 and a.forbid[1]=='shield')
  local j=engine({juggernaut=tier}):passive_state(1);assert(j.armor and j.armor.type=='damage_threshold' and j.armor.value==6 and j.forbid[1]=='run')
- T.refuses(function() engine({aerialist=tier,powershield_oath=tier}) end)
 end)
 T.test('technique modifiers sit in the depth curve: never before min_depth, present from the middle of a run',function()
  local loot=D.drive_loot.new(D.mod_pool);local early,mid=0,0
@@ -110,7 +107,7 @@ T.test('technique modifiers sit in the depth curve: never before min_depth, pres
   local m=loot:roll(seed,12,'rare');for _,a in ipairs(m.affixes) do if loot.rules[a.id].min_depth then mid=mid+1 end end
  end
  assert(early==0,'no technique modifier before its depth');assert(mid>=40,'technique modifiers appear in a deep run: '..mid)
- for _,m in ipairs(D.mod_pool) do if m.min_depth then assert(m.min_depth>=4 and m.affix and m.notes,m.id) end end
+ for _,m in ipairs(D.mod_pool) do if m.min_depth then assert(m.min_depth>=4 and m.affix,m.id) end end
  local r=loot:roll(5,12,'rare');local tech;for _,m in ipairs(D.mod_pool) do if m.min_depth then tech=m end end
  local forced=D.mod_codec.decode(D.mod_codec.encode(r));forced.depth=2;forced.affixes={{id=tech.id,tier=1}};forced.rarity='magic'
  T.refuses(function() loot:validate(forced) end)
@@ -126,7 +123,6 @@ T.test('Shock status and Conductor chain to the nearest other opponent',function
  e:emit{kind='hit_dealt',port=1,target=2,tags={electric=true}};e:drain()
  assert(e:status(2,'shock') and e:status(4,'shock') and not e:status(3,'shock'),'port 4 is nearer to the victim than port 3')
  local plain=engine({conductor=P.tier(P.context(40,0))});frame(plain);plain:emit{kind='hit_dealt',port=1,target=2,tags={fire=true}};plain:drain();assert(not plain:status(2,'shock'))
- local cm=engine({critical_mass=P.tier(P.context(40,0))});frame(cm);cm:emit{kind='crit',port=1,target=2,tags={critical=true},strength=.5};cm:drain();assert(cm:status(1,'momentum') and cm:status(2,'shock'))
 end)
 
 -- ---- the host's journal operations -----------------------------------------------------------------------------------------
@@ -152,8 +148,7 @@ T.test('host: skill event on_skill -> engine -> journal ops on the event frame; 
  assert(a:frame());local o=find(s.ops,'fighter_armor',function(o) return o.type=='super' end)
  assert(o and o.entity==1 and o.frames==6 and o.value==1,'super armour for exactly 6 frames on the event frame')
  assert(not find(s.ops,'fighter_caps'),'unchanged passive state is not rewritten')
- assert(a.engine:status(1,'guarded'))
- local ch=find(s.ops,'timed_status',function(o) return o.channel==1 end);assert(ch and ch.frames>0 and ch.value==D.mod_skill.cause.wave.index,'earned channel carries the cause')
+ assert(not a.engine:status(1,'guarded'),'Wavedasher is one rule (super armour) and a price: no status')
  a:skill{kind='perfect_shield',port=1,entity=1};assert(#a.engine.queue==0,'perfect_shield skill copy is ignored')
 end)
 T.test('host: crit configuration written once, forced crit and interrupt, shock mirror, cleared on lost stock',function()
@@ -192,6 +187,12 @@ T.test('earned_fx: crit presentation scales with strength, is light at the botto
  local host;host={g=g,engine=nil,enabled=true,toast=function(t) host.toasted=t end}
  local fx=F.new(host);fx:crit{attacker=1,victim=2,strength=.2,multiplier=1.4,x=1,y=2,z=0};assert(#passes==1 and fx.pass==1 and not host.toasted)
  fx:crit{attacker=1,victim=2,strength=.9,multiplier=2.5,x=1,y=2,z=0};assert(#passes==2 and removed==1,'one pass at a time: the live one is removed first')
- assert(host.toasted and #tracers==1 and tracers[1].anchor=='active_hitboxes' and tracers[1].trigger=='flag','a strong crit toasts; the tracer is a window on the hit, not always on')
+ assert(not host.toasted,'the "Critical hit x..." HUD text is gone: a crit is never toasted')
+ assert(#tracers==1 and tracers[1].anchor=='active_hitboxes' and tracers[1].trigger=='flag','the tracer is a window on the hit, not always on')
+ -- the presentation parameters a later pass maps to crit tiers: strength 0..1, the multiplier, the element and colour of the hit, the piece that caused it
+ local p=fx.last_crit;assert(p and math.abs(p.strength-.9)<1e-9 and p.multiplier==2.5 and p.attacker==1 and p.victim==2 and #p.colour==4 and p.sequence_strength>0)
+ assert(p.element==nil and p.piece==nil)
+ local seen;F.crit_listeners[#F.crit_listeners+1]=function(q) seen=q end;fx:crit{attacker=1,victim=2,strength=.4,multiplier=1.5,element='fire',x=1,y=2,z=0};F.crit_listeners[#F.crit_listeners]=nil
+ assert(seen and seen.element=='fire' and seen.colour==F.element_colour.fire and seen.strength==.4)
 end)
 T.done()

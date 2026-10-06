@@ -1,20 +1,24 @@
--- Keystones: build-defining rules, each with a real drawback (about thirty, spread over the six drive colours).
+-- Keystones: build-defining rules, each with a real drawback (thirty, spread over the six drive colours).
 -- The concept (a small pool of rule-changing "keystone" passives that trade a drawback for a new way to play) is
 -- Path of Exile's: https://www.pathofexile.com/ ; Grinding Gear Games' design is the acknowledged model for the
 -- idea, nothing here copies a keystone's rules, names or numbers from that game.
 --
+-- THE SHAPE OF A KEYSTONE (readability split, 2026-10-05): ONE rule line and ONE price line. The price comes from a fixed list of seven,
+-- learned once (K.prices): Slow (run speed down), Low (jump height down), Fragile (launched farther), Weak (damage you deal down),
+-- Vulnerable (damage you take up), Lock (an action forbidden) and, for a keystone that fires on an event, Bleed (lose damage points each time
+-- it fires). NO keystone pays with a status on its own fighter (the looks of Chilled, Marked and Burning mean "the enemy has this", never
+-- "you paid for it"). A keystone that was cut keeps its id in K.retired so an old save can say what it dropped.
+--
 -- Pure data plus pure selection. A record is an ordinary modifier record (mod_schema validates it); the metadata
--- beside it (drive family, the two plain-word lines, exclusions, whether it can be a starting keystone) lives in
+-- beside it (drive family, the two plain-word lines, the price kind, exclusions, whether it can be a starting keystone) lives in
 -- K.meta so the record format does not change. Every record here uses only what the modifier engine and the
 -- run host apply TODAY: fighter values, native hit rules, statuses, heal/damage, one echo window, existing events.
 -- K.waiting lists good keystones that still need engine work (an item route); they are data only, never in the pool,
--- so nothing is faked. The technique keystones (wavedash, L-cancel, perfect shield, combos, crits, armour, air jumps) moved
--- into the pool when the engine's skill events, crits and armour types landed (see the technique section below).
+-- so nothing is faked.
 --
--- A one-trigger record can only carry effects of that trigger, so a triggered keystone pays its drawback with
--- an effect of the same trigger (self damage, a status on yourself, a status removed); an equip keystone pays
--- with a fighter value. Afterimage rule: nothing here draws an afterimage; the one echo keystone (Echo Weaver)
--- only echoes while Haste is on you, so it starts with Haste and ends with it.
+-- A one-trigger record can only carry effects of that trigger, so a triggered keystone pays its price with an effect of the same
+-- trigger (self damage); an equip keystone pays with a fighter value or a restriction. Afterimage rule: nothing here draws an
+-- afterimage; the one echo keystone (Echo Weaver) only echoes while Haste is on you, so it starts with Haste and ends with it.
 return function(D)
  local K={}
  local S=D.mod_schema
@@ -24,10 +28,18 @@ return function(D)
  end
  local function drop(name,subject) return {op='remove_status',status=name,subject=subject or 'self'} end
  local function value(key,v) return {op='value',key=key,value=v} end
+ local function bleed(n) return {op='damage',amount=n,subject='self'} end
  local function round(n) return math.floor(n+.5) end
  local function pct(n) return ('%d%%'):format(round(n*100)) end
- local function secs(f) local s=f/60;return s==math.floor(s) and ('%d seconds'):format(s) or ('%.1f seconds'):format(s) end
+ local function secs(f) local s=f/60;return s==math.floor(s) and ('%d s'):format(s) or ('%.1f s'):format(s) end
  K.records_list={};K.meta={};K.order={}
+ -- The seven prices (the whole list a player learns).
+ K.prices={'slow','low','fragile','weak','vulnerable','lock','bleed'}
+ K.price_words={slow='Slow: you run slower',low='Low: you jump lower',fragile='Fragile: you are launched farther',weak='Weak: you deal less damage',
+  vulnerable='Vulnerable: you take more damage',lock='Lock: an action is forbidden',bleed='Bleed: you lose damage points each time it fires'}
+ -- Keystones cut by the split: ids a saved run may still hold. A save that holds one drops it and says so (drive_bag.migrate).
+ K.retired={skyfarer=true,phase_dash=true,clash_king=true,echo_oath=true,banked_momentum=true,desperado=true,finishers_mark=true,powershield_oath=true,
+  featherfall=true,still_heart=true,hang_time=true,critical_mass=true}
  -- id, label, drive family (colour), trigger, conditions, effects, tier values, cost sentence, look, hue, tags, meta
  local function ks(id,label,family,trigger,conditions,effects,tier,cost,look,hue,tags,meta,interval)
   local r={id=id,label=label,kind='keystone',cost=cost,tags=tags,trigger=trigger,interval=interval,conditions=conditions,effects=effects,
@@ -39,141 +51,107 @@ return function(D)
  -- ---- red: damage dealt ---------------------------------------------------------------------------------------
  ks('smash_doctrine',"Smasher's Creed",'red','equip',{},
   {{op='convert',match={move='smash'},change={percent_damage=1.6}},value('run_speed',.85)},{},'Run speed -15%.','burn',.02,tags('smash','damage'),
-  {effect=function(x) return 'Smash attacks deal '..x.up(1.6)..' more damage' end,drawback='Drawback: you run 15% slower',excludes={'aerial_doctrine'},uses='native hit rule + fighter value'})
+  {effect=function(x) return 'Smash attacks deal '..x.up(1.6)..' more damage.' end,drawback='Drawback: you run 15% slower.',price='slow',excludes={'aerial_doctrine'},uses='native hit rule + fighter value'})
  ks('aerial_doctrine','Skybreaker','red','equip',{},
   {{op='convert',match={move='aerial'},change={percent_damage=1.5}},value('jump_height',.8)},{},'Jump height -20%.','momentum',.08,tags('aerial','damage'),
-  {effect=function(x) return 'Aerial attacks deal '..x.up(1.5)..' more damage' end,drawback='Drawback: you jump 20% lower',excludes={'smash_doctrine'},uses='native hit rule + fighter value'})
+  {effect=function(x) return 'Aerial attacks deal '..x.up(1.5)..' more damage.' end,drawback='Drawback: you jump 20% lower.',price='low',excludes={'smash_doctrine'},uses='native hit rule + fighter value'})
  ks('bloodlust','Bloodlust','red','ko_dealt',{},
-  {{op='heal',amount='$heal',subject='self'},status('haste','self','$duration'),status('curse','self',180,.1)},{heal=20,duration=180},
-  'Be launched 10% farther for 3 seconds.','curse',.0,tags('hasted','healing'),
-  {effect=function(x) return 'Knock out a fighter: heal '..round(x.res('heal'))..'% and gain Haste for '..secs(x.res('duration')) end,
-   drawback='Drawback: you are launched 10% farther for the same time',uses='ko_dealt event, heal, Haste, Curse on self'})
+  {{op='heal',amount='$heal',subject='self'},bleed(3)},{heal=20},
+  'You lose 3 damage points each time.','curse',.0,tags('healing'),
+  {effect=function(x) return 'Knock out a fighter: heal '..round(x.res('heal'))..'%.' end,
+   drawback='Drawback: you lose 3 damage points each time.',price='bleed',uses='ko_dealt event, heal, self damage'})
  ks('last_stand','Last Stand','red','interval',{{last_stock=true}},
-  {status('guarded','self',90),status('haste','self',90),{op='damage',amount=2,subject='self'}},{},
-  'On your last stock you lose 2 damage points every second.','guarded',.99,tags('guarded','hasted'),
-  {effect=function() return 'On your last stock you are always Guarded and Hasted' end,drawback='Drawback: on your last stock you bleed 2 damage every second',starter=false,uses='interval + last_stock condition'},60)
+  {status('guarded','self',90),bleed(2)},{},
+  'You lose 2 damage points every second.','guarded',.99,tags('guarded'),
+  {effect=function() return 'On your last stock you are always Guarded.' end,drawback='Drawback: you lose 2 damage points every second.',price='bleed',starter=false,uses='interval + last_stock condition, Guarded, self damage'},60)
  -- ---- green: speed -------------------------------------------------------------------------------------------
  ks('sprinter','Sprinter\'s Pact','green','equip',{},
-  {value('run_speed',1.35),value('air_speed',1.2),value('knockback_taken',1.2)},{},'Launched 20% farther.','haste',.34,tags('hasted'),
-  {effect=function() return 'Run speed +35% and air speed +20%' end,drawback='Drawback: you are launched 20% farther',excludes={'juggernaut'},uses='fighter values'})
+  {value('run_speed',1.3),value('air_speed',1.3),value('knockback_taken',1.2)},{},'Launched 20% farther.','haste',.34,tags('hasted'),
+  {effect=function() return 'Run and air speed +30%.' end,drawback='Drawback: you are launched 20% farther.',price='fragile',excludes={'juggernaut'},uses='fighter values'})
  ks('hit_and_run','Hit and Run','green','hit_dealt',{},
-  {status('haste','self','$duration'),status('momentum','self','$duration',1,5),status('curse','self',120,.05)},{duration=120},
-  'Launched 5% farther for 2 seconds after each hit.','haste',.3,tags('hasted','momentum'),
-  {effect=function(x) return 'Every hit you land gives Haste and Momentum for '..secs(x.res('duration')) end,drawback='Drawback: each hit also makes you launched 5% farther for the same time',uses='hit_dealt, Haste, Momentum, Curse on self'})
+  {status('haste','self','$duration'),bleed(1)},{duration=120},
+  'You lose 1 damage point per hit.','haste',.3,tags('hasted'),
+  {effect=function(x) return 'Every hit you land gives Haste for '..secs(x.res('duration'))..'.' end,drawback='Drawback: you lose 1 damage point per hit.',price='bleed',uses='hit_dealt, Haste, self damage'})
  ks('perpetual_motion','Perpetual Motion','green','landing',{},
-  {status('haste','self','$duration'),{op='damage',amount=1,subject='self'}},{duration=240},
+  {status('haste','self','$duration'),bleed(1)},{duration=240},
   'Every landing costs 1 damage point.','haste',.36,tags('hasted'),
-  {effect=function(x) return 'Every landing gives Haste for '..secs(x.res('duration')) end,drawback='Drawback: every landing costs you 1 damage point',uses='landing event, Haste, self damage'})
- ks('banked_momentum','Banked Momentum','green','interval',{},
-  {status('momentum','self',600,1,5),status('curse','self',90,.05)},{},'You are always launched 5% farther.','momentum',.16,tags('momentum'),
-  {effect=function() return 'Every second you gain a Momentum stack (up to 5)' end,drawback='Drawback: you are always launched 5% farther',excludes={'iron_resolve'},uses='interval, Momentum, Curse on self'},60)
+  {effect=function(x) return 'Every landing gives Haste for '..secs(x.res('duration'))..'.' end,drawback='Drawback: every landing costs you 1 damage point.',price='bleed',uses='landing event, Haste, self damage'})
  -- ---- blue: defence -----------------------------------------------------------------------------------------
  ks('bulwark','Bulwark','blue','equip',{},
-  {value('knockback_taken',.6),value('damage_taken',.8),value('run_speed',.75),value('jump_height',.85)},{},'Run speed -25% and jump height -15%.','guarded',.6,tags('guarded'),
-  {effect=function() return 'Launch you take -40% and damage you take -20%' end,drawback='Drawback: you run 25% slower and jump 15% lower',uses='fighter values'})
+  {value('knockback_taken',.65),value('run_speed',.8)},{},'Run speed -20%.','guarded',.6,tags('guarded'),
+  {effect=function() return 'Launch you take -35%.' end,drawback='Drawback: you run 20% slower.',price='slow',uses='fighter values'})
  ks('iron_resolve','Iron Resolve','blue','interval',{},
-  {status('guarded','self',60),drop('momentum')},{},'You cannot hold Momentum.','guarded',.63,tags('guarded','momentum'),
-  {effect=function() return 'You are always Guarded: 25% less damage and 15% less launch taken' end,drawback='Drawback: you cannot hold Momentum',excludes={'banked_momentum'},uses='interval, Guarded, remove Momentum'},30)
+  {status('guarded','self',60),drop('momentum')},{},'You cannot hold Momentum.','guarded',.63,tags('guarded'),
+  {effect=function() return 'You are always Guarded.' end,drawback='Drawback: you cannot hold Momentum.',price='lock',uses='interval, Guarded, remove Momentum'},30)
  ks('retribution','Retribution','blue','hit_taken',{},
-  {status('curse','target','$duration','$bonus'),status('chill','self',120)},{duration=180,bonus=.08},'You are Chilled for 2 seconds.','curse',.78,tags('cursed','chilled'),
-  {effect=function(x) return 'When you are hit, the attacker is Cursed (later hits launch them '..pct(x.res('bonus'))..' farther) for '..secs(x.res('duration')) end,drawback='Drawback: you are Chilled (20% slower) for 2 seconds',uses='hit_taken, Curse on attacker, Chill on self'})
+  {status('curse','target','$duration','$bonus'),bleed(1)},{duration=180,bonus=.08},'You lose 1 damage point each time.','curse',.78,tags('cursed'),
+  {effect=function(x) return 'When you are hit, the attacker is Marked for '..secs(x.res('duration'))..'.' end,drawback='Drawback: you lose 1 damage point each time.',price='bleed',uses='hit_taken, Mark on the attacker, self damage'})
  ks('parry_master','Parry Master','blue','perfect_shield',{},
-  {status('guarded','self','$duration'),{op='heal',amount='$heal',subject='self'},status('chill','self',90)},{duration=300,heal=10},'You are Chilled for 1.5 seconds.','guarded',.58,tags('guarded','healing'),
-  {effect=function(x) return 'Perfect shield: Guarded for '..secs(x.res('duration'))..' and heal '..round(x.res('heal'))..'%' end,drawback='Drawback: you are Chilled (20% slower) for 1.5 seconds',uses='perfect_shield event, Guarded, heal, Chill on self'})
+  {status('guarded','self','$duration'),bleed(1)},{duration=300},'You lose 1 damage point each time.','guarded',.58,tags('guarded'),
+  {effect=function(x) return 'Perfect shield: Guarded for '..secs(x.res('duration'))..'.' end,drawback='Drawback: you lose 1 damage point each time.',price='bleed',uses='perfect_shield event, Guarded, self damage'})
  -- ---- yellow: jump and air ------------------------------------------------------------------------------------
  ks('skyborne','Skyborne','yellow','equip',{},
   {value('jump_height',1.5),value('air_jump_height',1.5),value('knockback_taken',1.25)},{},'Launched 25% farther.','momentum',.14,tags('aerial'),
-  {effect=function() return 'Jump height and air jump height +50%' end,drawback='Drawback: you are launched 25% farther',uses='fighter values'})
+  {effect=function() return 'Jump and air jump height +50%.' end,drawback='Drawback: you are launched 25% farther.',price='fragile',uses='fighter values'})
  ks('dive_bomber','Dive Bomber','yellow','equip',{},
   {{op='convert',match={move='aerial'},change={launch=1.3}},value('run_speed',.8)},{},'Run speed -20%.','momentum',.12,tags('aerial'),
-  {effect=function() return 'Aerial attacks launch 30% farther' end,drawback='Drawback: you run 20% slower',uses='native hit rule + fighter value'})
- ks('skyfarer','Skyfarer','yellow','jump',{},
-  {status('haste','self','$duration'),{op='damage',amount=1,subject='self'}},{duration=90},'Every jump costs 1 damage point.','haste',.33,tags('hasted','aerial'),
-  {effect=function(x) return 'Every jump gives Haste for '..secs(x.res('duration')) end,drawback='Drawback: every jump costs you 1 damage point',uses='jump event, Haste, self damage'})
- ks('hang_time','Hang Time','yellow','air_jump',{},
-  {status('guarded','self','$duration'),status('momentum','self',180,1,5),status('curse','self',120,.05)},{duration=120},'Launched 5% farther for 2 seconds.','guarded',.5,tags('guarded','momentum','aerial'),
-  {effect=function(x) return 'Every air jump gives Guarded for '..secs(x.res('duration'))..' and Momentum' end,drawback='Drawback: each air jump also makes you launched 5% farther for 2 seconds',uses='air_jump event, Guarded, Momentum, Curse on self'})
+  {effect=function() return 'Aerial attacks launch 30% farther.' end,drawback='Drawback: you run 20% slower.',price='slow',uses='native hit rule + fighter value'})
  -- ---- purple: statuses --------------------------------------------------------------------------------------
  ks('pandemic','Pandemic','purple','equip',{},{value('status_duration',1.6),value('damage_dealt',.85)},{},'Damage you deal -15%.','curse',.7,tags('cursed'),
-  {effect=function() return 'Statuses you cause last 60% longer' end,drawback='Drawback: damage you deal -15%',uses='fighter values'})
+  {effect=function() return 'Statuses you cause last 60% longer.' end,drawback='Drawback: damage you deal -15%.',price='weak',uses='fighter values'})
  ks('opportunist','Opportunist','purple','hit_dealt',{{target_status='any'}},
-  {status('curse','target','$duration','$bonus'),{op='damage',amount=1,subject='self'}},{duration=150,bonus=.06},'Each such hit costs you 1 damage point.','curse',.74,tags('cursed'),
-  {effect=function(x) return 'Hit a target with any status: Curse it (later hits launch it '..pct(x.res('bonus'))..' farther) for '..secs(x.res('duration')) end,drawback='Drawback: each such hit costs you 1 damage point',uses='hit_dealt + target_status condition, Curse, self damage'})
+  {status('curse','target','$duration','$bonus'),bleed(1)},{duration=150,bonus=.06},'You lose 1 damage point per hit.','curse',.74,tags('cursed'),
+  {effect=function(x) return 'Hit a target with a status: Mark it for '..secs(x.res('duration'))..'.' end,drawback='Drawback: you lose 1 damage point per hit.',price='bleed',uses='hit_dealt + target_status condition, Mark, self damage'})
  ks('plague_bearer','Plague Bearer','purple','hit_dealt',{},
-  {status('burn','target','$duration','$damage',3),status('burn','self',60,1)},{duration=120,damage=2},'Each hit also sets you Burning for 1 second.','burn',.04,tags('burning','fire'),
-  {effect=function(x) return 'Every hit sets the target Burning for '..secs(x.res('duration'))..' ('..round(x.res('damage'))..' damage a second, stacking to 3)' end,drawback='Drawback: each hit also sets you Burning for 1 second',uses='hit_dealt, Burn on target and self'})
+  {status('burn','target','$duration','$damage',3),bleed(1)},{duration=120,damage=1.5},'You lose 1 damage point per hit.','burn',.04,tags('burning','fire'),
+  {effect=function() return 'Every hit sets the target Burning (stacks to 3).' end,drawback='Drawback: you lose 1 damage point per hit.',price='bleed',uses='hit_dealt, Burning on the target, self damage'})
  ks('deep_freeze','Deep Freeze','purple','hit_dealt',{},
-  {status('chill','target','$duration'),status('curse','target','$duration','$bonus'),status('chill','self',60)},{duration=240,bonus=.04},'Each hit also Chills you for 1 second.','chill',.53,tags('chilled','ice'),
-  {effect=function(x) return 'Every hit Chills and Curses the target for '..secs(x.res('duration')) end,drawback='Drawback: each hit also Chills you (20% slower) for 1 second',uses='hit_dealt, Chill and Curse on target, Chill on self'})
+  {status('chill','target','$duration'),bleed(1)},{duration=240},'You lose 1 damage point per hit.','chill',.53,tags('chilled','ice'),
+  {effect=function(x) return 'Every hit Chills the target for '..secs(x.res('duration'))..'.' end,drawback='Drawback: you lose 1 damage point per hit.',price='bleed',uses='hit_dealt, Chill on the target, self damage'})
  ks('everburn','Everburn','purple','equip',{},
-  {{op='versus-status',status='burn',match={},change={percent_damage=1.5,launch=1.15}},value('status_duration',1.3),value('damage_taken',1.15)},{},'Damage you take +15%.','burn',.05,tags('burning','damage'),
-  {effect=function(x) return 'Burning targets take '..x.up(1.5)..' more damage and launch 15% farther; your statuses last 30% longer' end,drawback='Drawback: you take 15% more damage',uses='native versus-status rule + fighter values'})
+  {{op='versus-status',status='burn',match={},change={percent_damage=1.5}},value('damage_taken',1.15)},{},'Damage you take +15%.','burn',.05,tags('burning','damage'),
+  {effect=function(x) return 'Burning targets take '..x.up(1.5)..' more damage.' end,drawback='Drawback: you take 15% more damage.',price='vulnerable',uses='native versus-status rule + fighter value'})
  -- ---- white: rule-bending -----------------------------------------------------------------------------------
- ks('clash_king','Clash King','white','clank',{},
-  {{op='heal',amount='$heal',subject='self'},status('haste','self','$duration'),{op='damage',amount=2,subject='self'}},{heal=10,duration=150},'Each clank costs you 2 damage points.','shock',.57,tags('hasted','healing'),
-  {effect=function(x) return 'Clank with a fighter: heal '..round(x.res('heal'))..'% and gain Haste for '..secs(x.res('duration')) end,drawback='Drawback: each clank costs you 2 damage points',starter=false,uses='clank event, heal, Haste, self damage'})
  ks('echo_weaver','Echo Weaver','white','equip',{},
   {{op='echo',copies=2,delay=8,damage=.5,knockback=1,match={move='any'},once_per_move=true,status='haste'},value('damage_dealt',.9)},{},'Damage you deal -10%.','haste',.72,tags('hasted','damage'),
-  {effect=function() return 'While Hasted, your attacks repeat twice at half damage' end,drawback='Drawback: damage you deal -10%',excludes={'echo_oath'},starter=false,uses='echo effect gated on Haste (starts and ends with the status)'})
- ks('finishers_mark',"Finisher's Mark",'white','hit_dealt',{{target_damage_above=100}},
-  {status('curse','target','$duration','$bonus'),status('chill','self',60)},{duration=150,bonus=.08},'Each such hit Chills you for 1 second.','curse',.8,tags('cursed'),
-  {effect=function(x) return 'Hit a target above 100% damage: Curse it (later hits launch it '..pct(x.res('bonus'))..' farther) for '..secs(x.res('duration')) end,drawback='Drawback: each such hit Chills you (20% slower) for 1 second',uses='hit_dealt + target_damage_above condition, Curse, Chill on self'})
- ks('desperado','Desperado','white','interval',{{self_damage_above=80}},
-  {status('haste','self',60),status('guarded','self',60),status('curse','self',60,.1)},{},'While you are above 80% damage you are launched 10% farther.','haste',.9,tags('hasted','guarded'),
-  {effect=function() return 'While you are above 80% damage you are Hasted and Guarded' end,drawback='Drawback: in that state you are launched 10% farther',starter=false,uses='interval + self_damage_above condition'},30)
+  {effect=function() return 'While you have Haste, your attacks repeat twice at half damage.' end,drawback='Drawback: damage you deal -10%.',price='weak',starter=false,uses='echo effect gated on Haste (starts and ends with the status)'})
  ks('fury','Fury','white','hit_taken',{},
-  {status('momentum','self',300,1,5),status('haste','self','$duration'),drop('guarded')},{duration=180},'Being hit ends your Guarded status.','momentum',.97,tags('hasted','momentum'),
-  {effect=function(x) return 'When you are hit, gain Momentum and Haste for '..secs(x.res('duration')) end,drawback='Drawback: being hit ends your Guarded status',uses='hit_taken, Momentum, Haste, remove Guarded'})
+  {status('haste','self','$duration'),bleed(1)},{duration=180},'You lose 1 damage point each time.','momentum',.97,tags('hasted'),
+  {effect=function(x) return 'When you are hit, gain Haste for '..secs(x.res('duration'))..'.' end,drawback='Drawback: you lose 1 damage point each time.',price='bleed',uses='hit_taken, Haste, self damage'})
  -- ---- technique keystones: the engine's skill events, armour types, caps and crits -----------------------------
  -- Triggered by a technique, so each earns its reward by playing Melee well, and pays on the same trigger. `technique` names
  -- the skill events they listen to (mod_skill: verified in the game or flagged) and `cpu` says whether a retail CPU opponent can
  -- ever fire them (an opponent's roll of a 'dead' one is inert: opponents are not scripted).
  ks('wavedasher','Wavedasher','green','wavedash',{},
-  {{op='armor',type='super',frames=6},status('guarded','self',12),{op='damage',amount=2,subject='self'}},{},
-  'Each wavedash costs 2 damage points.','haste',.12,tags('guarded','technique'),
-  {effect=function() return 'Wavedash: super armour for 6 frames, then Guarded for 12 (gold afterimages while it lasts)' end,drawback='Drawback: each wavedash costs you 2 damage points',starter=false,technique={'wavedash'},uses='wavedash skill event, super armour (6 frames), Guarded, self damage'})
+  {{op='armor',type='super',frames=6},bleed(2)},{},
+  'You lose 2 damage points each time.','haste',.12,tags('guarded','technique'),
+  {effect=function() return 'Wavedash: super armour for 6 frames.' end,drawback='Drawback: you lose 2 damage points each time.',price='bleed',starter=false,technique={'wavedash'},uses='wavedash skill event, super armour (6 frames), self damage'})
  ks('clean_lander','Clean Lander','green','lcancel_hit',{},
-  {status('haste','self','$duration'),{op='damage',amount=1,subject='self'}},{duration=120},
-  'Each such landing costs 1 damage point.','haste',.62,tags('hasted','aerial','technique'),
-  {effect=function(x) return 'L-cancel a landing after the aerial hit: Haste for '..secs(x.res('duration'))..' (blue afterimages for exactly that long)' end,drawback='Drawback: each such landing costs you 1 damage point',starter=false,technique={'lcancel_hit'},uses='hit-confirmed L-cancel skill event, Haste (earned), self damage'})
- ks('powershield_oath','Powershield Oath','blue','perfect_shield',{},
-  {{op='armor',type='hit_count',value=1,frames=90},status('guarded','self',90),status('chill','self',60)},{},
-  'You are Chilled for 1 second.','guarded',.5,tags('guarded','technique'),
-  {effect=function() return 'Perfect shield: absorb the next hit with armour and be Guarded for 1.5 seconds (teal afterimages)' end,drawback='Drawback: you are Chilled (20% slower) for 1 second',starter=false,excludes={'aerialist'},technique={'perfect_shield'},uses='perfect_shield, hit-count armour, Guarded (earned), Chill on self'})
+  {status('haste','self','$duration'),bleed(1)},{duration=120},
+  'You lose 1 damage point each time.','haste',.62,tags('hasted','aerial','technique'),
+  {effect=function(x) return 'L-cancel after a hit: Haste for '..secs(x.res('duration'))..'.' end,drawback='Drawback: you lose 1 damage point each time.',price='bleed',starter=false,technique={'lcancel_hit'},uses='hit-confirmed L-cancel skill event, Haste (earned), self damage'})
  ks('juggernaut','Juggernaut','blue','equip',{},
   {{op='armor',type='damage_threshold',value=6},{op='restrict',forbid={'run'}}},{},'You cannot run.','guarded',.55,tags('guarded','technique'),
-  {effect=function() return 'You do not flinch from hits that deal under 6 damage' end,drawback='Drawback: you cannot run',starter=false,excludes={'sprinter'},uses='permanent damage-threshold armour + run restriction (fighter caps)'})
+  {effect=function() return 'You do not flinch from hits that deal under 6 damage.' end,drawback='Drawback: you cannot run.',price='lock',starter=false,excludes={'sprinter'},uses='permanent damage-threshold armour + run restriction (fighter caps)'})
  ks('executioner','Executioner','red','equip',{},
   {{op='crit',chance=1,multiplier=2,min_percent=100},value('damage_dealt',.9)},{},'Damage you deal -10%, and hits on a target under 100% never crit.','burn',.0,tags('damage','critical'),
-  {effect=function() return 'Hits on a target above 100% damage always crit for double' end,drawback='Drawback: damage you deal -10%, and no hit below 100% can crit',starter=false,excludes={'gambler'},uses='crit chance with a percent floor, fighter value'})
- ks('critical_mass','Critical Mass','white','crit',{},
-  {status('momentum','self','$duration',1,5),status('shock','target','$shock'),status('curse','self',90,.05)},{duration=300,shock=180},'A crit also makes you launched 5% farther for 1.5 seconds.','momentum',.1,tags('momentum','critical','shocked'),
-  {effect=function(x) return 'Land a crit: gain Momentum (up to 5) for '..secs(x.res('duration'))..' and Shock the target (its next hit taken stuns longer)' end,drawback='Drawback: each crit also makes you launched 5% farther for 1.5 seconds',starter=false,uses='crit event, Momentum, Shock on the target, Curse on self'})
+  {effect=function() return 'Hits on a target above 100% damage always crit for double.' end,drawback='Drawback: damage you deal -10%, and no hit below 100% can crit.',price='weak',starter=false,excludes={'gambler'},uses='crit chance with a percent floor, fighter value'})
  ks('combo_conduit','Combo Conduit','red','combo',{{combo_at_least=3}},
-  {{op='crit_next',count=1,multiplier=1.6},status('chill','self',60)},{},'Each such hit Chills you for 1 second.','curse',.98,tags('critical','technique'),
-  {effect=function() return 'Land the third or later hit of a combo (the second on a Cursed target): your next hit crits for x1.6' end,drawback='Drawback: each such hit Chills you (20% slower) for 1 second',starter=false,technique={'combo'},uses='combo skill event with a count condition, forced crit, Chill on self'})
- K.records_list[#K.records_list].also={{trigger='combo',conditions={{combo_at_least=2},{target_status='curse'}}}}   -- also fires from the second hit on a Cursed target: a reader of Curse
+  {{op='crit_next',count=1,multiplier=1.6},bleed(1)},{},'You lose 1 damage point each time.','curse',.98,tags('critical','technique'),
+  {effect=function() return '3rd hit of a combo: your next hit crits (x1.6).' end,drawback='Drawback: you lose 1 damage point each time.',price='bleed',starter=false,technique={'combo'},uses='combo skill event with a count condition, forced crit, self damage'})
  ks('aerialist','Aerialist','yellow','equip',{},
   {{op='air_jumps',count=5},{op='restrict',forbid={'shield'}}},{},'You cannot shield.','momentum',.14,tags('aerial','technique'),
-  {effect=function() return 'You have five air jumps' end,drawback='Drawback: you cannot shield',starter=false,excludes={'powershield_oath'},uses='air-jump count and a shield restriction (fighter caps)'})
- ks('phase_dash','Phase Dash','green','air_dodge',{},
-  {{op='intangible',frames=4},{op='damage',amount=1,subject='self'}},{},'Each air dodge costs 1 damage point.','haste',.5,tags('technique'),
-  {effect=function() return 'Air dodge: you are intangible for 4 extra frames' end,drawback='Drawback: each air dodge costs you 1 damage point',starter=false,technique={'air_dodge'},uses='air_dodge skill event (flagged: not confirmed in play), intangibility, self damage'})
+  {effect=function() return 'You have five air jumps.' end,drawback='Drawback: you cannot shield.',price='lock',starter=false,uses='air-jump count and a shield restriction (fighter caps)'})
  ks('conductor','Conductor','purple','hit_dealt',{{tag='electric'}},
-  {status('shock','target','$duration'),{op='chain_status',status='shock',duration='$duration',amount=1,max=1,refresh='refresh'},{op='damage',amount=1,subject='self'}},{duration=150},'Each electric hit costs you 1 damage point.','shock',.58,tags('electric','shocked'),
-  {effect=function(x) return 'Electric hits Shock the target and chain Shock to the nearest other opponent for '..secs(x.res('duration')) end,drawback='Drawback: each electric hit costs you 1 damage point',starter=false,uses='hit_dealt with an electric condition, Shock on the target, chain_status to the nearest other opponent, self damage'})
+  {status('shock','target','$duration'),{op='chain_status',status='shock',duration='$duration',amount=1,max=1,refresh='refresh'},bleed(1)},{duration=150},'You lose 1 damage point per electric hit.','shock',.58,tags('electric','shocked'),
+  {effect=function() return 'Electric hits Shock the target and chain it onward.' end,drawback='Drawback: you lose 1 damage point per electric hit.',price='bleed',starter=false,uses='hit_dealt with an electric condition, Shock on the target, chain_status to the nearest other opponent, self damage'})
  ks('gambler','Gambler','white','equip',{},
   {{op='crit',chance=.35,multiplier=2,multiplier_max=3},value('damage_dealt',.8)},{},'All your hits deal 20% less damage before any crit.','shock',.12,tags('damage','critical'),
-  {effect=function() return 'Every hit has a 35% chance to deal double or triple damage' end,drawback='Drawback: all your hits deal 20% less damage first',starter=false,excludes={'executioner'},uses='crit chance with a multiplier range, fighter value'})
- ks('featherfall','Featherfall','yellow','equip',{},
-  {value('fall_speed',.65),value('weight',.75),value('knockback_taken',1.3)},{},'Launched 30% farther.','momentum',.15,tags('aerial'),
-  {effect=function() return 'You fall 35% slower and weigh 25% less' end,drawback='Drawback: you are launched 30% farther',uses='fall-speed and weight fighter values'})
+  {effect=function() return 'Every hit has a 35% chance to deal double or triple damage.' end,drawback='Drawback: all your hits deal 20% less damage first.',price='weak',starter=false,excludes={'executioner'},uses='crit chance with a multiplier range, fighter value'})
  -- ---- keystones that already lived in mod_pool.lua (kept there; their metadata is here) ---------------------
  K.legacy={
-  pyromancer={family='red',effect=function() return 'All your attacks become fire' end,drawback='Drawback: ice hits against you deal 60% more damage',excludes={'frozen_oath'},uses='native convert rule + versus-status (incoming)'},
-  frozen_oath={family='blue',effect=function() return 'All your attacks become ice' end,drawback='Drawback: fire hits against you deal 60% more damage',excludes={'pyromancer'},uses='native convert rule + versus-status (incoming)'},
-  still_heart={family='green',effect=function() return 'Moving fast turns into taking less damage instead' end,drawback='Drawback: you cannot get a speed boost',uses='status_applied + remove Haste, Guarded'},
-  echo_oath={family='white',effect=function() return 'Every attack repeats a moment later at reduced damage' end,drawback='Drawback: all your attack damage is 50% lower',starter=false,excludes={'echo_weaver'},uses='echo effect (existing)'},
+  pyromancer={family='red',effect=function() return 'All your attacks become fire.' end,drawback='Drawback: ice hits against you deal 60% more damage.',price='vulnerable',excludes={'frozen_oath'},uses='native convert rule + versus-status (incoming)'},
+  frozen_oath={family='blue',effect=function() return 'All your attacks become ice.' end,drawback='Drawback: fire hits against you deal 60% more damage.',price='vulnerable',excludes={'pyromancer'},uses='native convert rule + versus-status (incoming)'},
  }
  for id,m in pairs(K.legacy) do K.meta[id]=m;K.order[#K.order+1]=id end
  table.sort(K.order)
@@ -183,7 +161,8 @@ return function(D)
  function K.records() local out={};for i,r in ipairs(K.records_list) do out[i]=r end;return out end
  function K.ids() local out={};for i,id in ipairs(K.order) do out[i]=id end;return out end
  function K.family(id) return K.meta[id] and K.meta[id].family end
- -- Two plain lines for a keystone at a tier: its effect, then its drawback. No ids, no tiers, no budget numbers.
+ function K.price(id) return K.meta[id] and K.meta[id].price end
+ -- Two plain lines for a keystone at a tier: its rule, then its price. No ids, no tiers, no budget numbers.
  function K.lines(m,tier)
   local meta=K.meta[m.id];if not meta then return nil end
   local x={m=m,tier=tier or 1}

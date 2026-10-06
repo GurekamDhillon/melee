@@ -105,7 +105,7 @@ T.test('the run starts the plan: stage launched through scene_launch, stage-long
  populate(s,coop);assert(coop.state=='stage' and s.holds['envoy-coop']==true,'the run, not the engine, ends the stage')
  local h=coop.hosts[1];assert(h.stage==0 and h.stage_kind=='team' and #h.foe_ports==2 and h.foe_ports[1]==3)
  assert(not coop.hosts[2].rolls[3] or true)
- settle(coop,40)
+ settle(coop,120)   -- the opponents' search may take more slices now that the pool is narrower
  assert(mods.foes.builds[3] and mods.foes.builds[4],'opponents rolled a build each, on ports 3 and 4 and not on a teammate')
  assert(not mods.foes.builds[2] and not mods.foes.builds[1])
  assert(coop.last_team_strength and coop.last_team_strength>=1)
@@ -192,14 +192,15 @@ T.test('floor drops: first touch takes it; causer gives it to the player who las
  end
  local s,g,mods,coop=drop_for('first',2);local n=0;for k,r in pairs(mods.drives.drops.records) do n=n+1 end;assert(n==1)
  for k,r in pairs(mods.drives.drops.records) do mods:pickup{name='drive',port=2,item=r.handle,payload={colour='white',amount=k}} end
- local function held(h) local c=#h:bag().items;for i=1,h:bag():slots() do if h:bag().equipped[i] then c=c+1 end end;return c end
- assert(held(coop.hosts[2])==2 and held(coop.hosts[1])==1,'P2 touched it first and has it')
+ -- a drive that merges into a held rule (any colour) counts as held too: it is in the build, not in a slot of its own
+ local function held(h,s) local c=#h:bag().items;for i=1,h:bag():slots() do if h:bag().equipped[i] then c=c+1 end end;for _,l in ipairs(s.logs) do if l:find('P'..h:port0()..' merged',1,true) then c=c+1 end end;return c end
+ assert(held(coop.hosts[2],s)==2 and held(coop.hosts[1],s)==1,'P2 touched it first and has it')
  local s,g,mods,coop=drop_for('causer',1);for k,r in pairs(mods.drives.drops.records) do mods:pickup{name='drive',port=2,item=r.handle,payload={colour='white',amount=k}} end
- assert(held(coop.hosts[1])==2 and held(coop.hosts[2])==1,'P2 touched it, P1 hit the opponent: the drive passed to P1')
- assert(coop.hosts[1].hud.card and coop.hosts[2].hud.flash_text=='Passed it on')
+ assert(held(coop.hosts[1],s)==2 and held(coop.hosts[2],s)==1,'P2 touched it, P1 hit the opponent: the drive passed to P1')
+ local got;for _,l in ipairs(s.logs) do if l:find('received',1,true) and l:find('from P2',1,true) then got=true end end;assert(coop.hosts[1].hud.card and got,'P1 received the drive from P2 (said in the log; the strip flash is a developer figure now)')
  local s,g,mods,coop=drop_for('both',nil);local n=0;for _ in pairs(mods.drives.drops.records) do n=n+1 end;assert(n==2,'duplicated: two on the floor')
  for k,r in pairs(mods.drives.drops.records) do mods:pickup{name='drive',port=1,item=r.handle,payload={colour='white',amount=k}} end
- assert(held(coop.hosts[1])==2 and held(coop.hosts[2])==2,'both got one whoever touched them')
+ assert(held(coop.hosts[1],s)==2 and held(coop.hosts[2],s)==2,'both got one whoever touched them')
  reset()
 end)
 T.test('a second run in the same session gives floor drops again (the attempt counts and given drops are cleared at run begin)',function()

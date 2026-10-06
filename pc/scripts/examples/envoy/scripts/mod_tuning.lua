@@ -61,6 +61,15 @@ return function(D)
   return out
  end
  -- Presentation layers (per peer, optional one by one). `intensity` scales every synergy visual 0..1.
+ -- THE DEVELOPER OVERLAY (off by default, mod side): one predicate gates every developer-only figure and message: the strength and depth
+ -- text on the build strip, the strip's flash text, the opponent-strength figure, the mod's error and teaching toasts (always logged, shown only
+ -- with it on), the Modifier LAB text box and the Drive LAB card. `envoy devui on|off` sets it; the ENVOY_DEVUI environment flag ('1' or 'on')
+ -- is the default where the mod can read it (nothing here asks the engine for anything).
+ local env_on=false
+ do local ok,v=pcall(function() return os and os.getenv and os.getenv('ENVOY_DEVUI') end);env_on=ok and (v=='1' or v=='on') end
+ T.dev_flag=nil
+ function T.dev_ui() if T.dev_flag~=nil then return T.dev_flag end;return env_on end
+ function T.set_dev_ui(v) T.dev_flag=v and true or false;T.rev=T.rev+0;return T.dev_flag end
  T.fx={intensity=1,grid_links=true,grid_banner=true,offer_marks=true,chain=true,hud=true,surface=true,announce=true,nameplate=true}
  T.fx_names={'grid_links','grid_banner','offer_marks','chain','hud','surface','announce','nameplate'}
  return T

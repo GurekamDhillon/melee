@@ -146,6 +146,19 @@ return function(D)
   assert(type(s)=='table' and type(s.pending or {})=='table','invalid drive checkpoint')
   s=D.mod_codec.decode(D.mod_codec.encode(s))
   for k in pairs(s) do assert(({bag=true,drops=true,pending=true,seed=true})[k],'unknown drive checkpoint field') end
+  -- A checkpoint from before the readability split may hold pieces that were cut: they are dropped here, with a notice, so the rest of the run loads.
+  do
+   local notes=D.drive_bag.migrate(s.bag,self.loot)
+   for id,d in pairs(s.drops and s.drops.records or {}) do
+    local probe={items={d.record},equipped={}};local n=D.drive_bag.migrate(probe,self.loot)
+    if #n>0 then for _,line in ipairs(n) do notes[#notes+1]=line end;if probe.items[1] then d.record=probe.items[1] else s.drops.records[id]=nil end end
+   end
+   if #notes>0 then
+    self.migrated=notes
+    for _,line in ipairs(notes) do self.lab.g.log('drive bag: older save: '..line) end
+    if self.lab.toast then pcall(self.lab.toast,#notes==1 and notes[1] or (#notes..' pieces from an older version were dropped: see the log')) end
+   end
+  end
   assert(type(s.seed)=='number' and s.seed%1==0 and s.seed>=1 and s.seed<=2147483646,'invalid drive seed')
   local n=0;for k in pairs(s.pending or {}) do assert(type(k)=='number' and k%1==0 and k>=1 and k<=12,'invalid pending index');n=n+1 end;assert(n==#(s.pending or {}),'sparse pending array')
   local config={};for k,v in pairs(self.bag.config) do config[k]=v end
@@ -218,7 +231,7 @@ return function(D)
  function V:frame() if not self.shared_drops then self.drops.juice:tick() end;if self.card_left then self.card_left=self.card_left-1;if self.card_left<=0 then self.card=nil;self.card_left=nil end end end
  function V:draw()
   self.menu:draw()
-  if self.card and not self.menu.active and self.g.kit then local a=self.g.safe_area();self.g.kit.panel(a.x+20,a.y+48,a.w-40,42);self.g.kit.text(a.x+32,a.y+74,self.card,'body','bone','left',{max_w=a.w-64}) end
+  if self.card and not self.menu.active and self.g.kit and D.mod_tuning and D.mod_tuning.dev_ui() then local a=self.g.safe_area();self.g.kit.panel(a.x+20,a.y+48,a.w-40,42);self.g.kit.text(a.x+32,a.y+74,self.card,'body','bone','left',{max_w=a.w-64}) end
  end
  return V
 end

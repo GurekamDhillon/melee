@@ -1,6 +1,6 @@
 local T=dofile((io.open('pc/tests/envoy_testlib.lua') and '' or 'melee/')..'pc/tests/envoy_testlib.lua')
 local D={}
-for _,n in ipairs({'mod_progression','mod_schema','mod_codec','mod_engine','mod_pool','drive_loot','drive_bag','foe_roll'}) do D[n]=T.module(n,D) end
+for _,n in ipairs({'mod_progression','mod_schema','mod_codec','mod_budget','keystones','mod_engine','mod_pool','drive_loot','drive_bag','foe_roll'}) do D[n]=T.module(n,D) end
 D.mod_display={new=function(g,engine)
  local v={engine=engine}
  function v:warm() return g.fixture.ready end
@@ -76,7 +76,7 @@ T.test('downshift preflights pending sixth slot and multiple keystone choices at
  local s,a=fixture();assert(depth(s,'12 3'));assert(a.drives:command('give unique 71'));a:frame()
  assert(a.drives:queue('equip',1,6));local before=a:export();assert(not depth(s,'0'));assert(before==a:export())
  a:frame();assert(a.drives:queue('unequip',6));a:frame()
- for _,id in ipairs({'pyromancer','frozen_oath','still_heart'})do assert(a.drives:queue('choose_keystone',id))end
+ for _,id in ipairs({'pyromancer','bulwark','sprinter'})do assert(a.drives:queue('choose_keystone',id))end
  before=a:export();assert(not depth(s,'5'));assert(before==a:export());a:frame()
  before=a:export();assert(not depth(s,'5'));assert(before==a:export())
 end)
@@ -137,9 +137,9 @@ T.test('joint incompatible pending foe and CPU modifier checkpoint refuses befor
 end)
 T.test('valid late joint pending checkpoint stays queued then commits all three CPU keys',function()
  local s,a=fixture();assert(depth(s,'12 3'));assert(a.drives:command('give rare 79'));a:frame()
- local saved=D.mod_codec.decode(a:export());saved.foes.pending={{op='roll',record=key_foe(a,a.engine.context)}};saved.pending={{port=2,id='frozen_oath'},{port=2,id='still_heart'}};saved.enabled=true;s.blob=D.mod_codec.encode(saved)
+ local saved=D.mod_codec.decode(a:export());saved.foes.pending={{op='roll',record=key_foe(a,a.engine.context)}};saved.pending={{port=2,id='bulwark'},{port=2,id='sprinter'}};saved.enabled=true;s.blob=D.mod_codec.encode(saved)
  a:loadstate();assert(#a.pending==2 and #a.foes.pending==1 and not a.engine.equipped[2],'restore applied queued CPU builds')
- assert(a:export()==s.blob);a:frame();assert(a.enabled and a.engine.equipped[2].pyromancer and a.engine.equipped[2].frozen_oath and a.engine.equipped[2].still_heart)
+ assert(a:export()==s.blob);a:frame();assert(a.enabled and a.engine.equipped[2].pyromancer and a.engine.equipped[2].bulwark and a.engine.equipped[2].sprinter)
  assert(#a.pending==0 and #a.foes.pending==0 and s.clears==0)
 end)
 T.test('joint pending roll clear and debug restore follows the actual retirement order',function()

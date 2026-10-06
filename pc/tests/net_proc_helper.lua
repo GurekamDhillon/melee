@@ -13,7 +13,7 @@ if arg and arg[1]=='set' then
  end
  return
 end
-local eq={};local want={'kindling','pyre','heavy','featherweight','armoured','cinder','shatter','lingering'}
+local eq={};local want={'kindling','pyre','frosted','burning','armoured','cinder','shatter','lingering'}
 for _,id in ipairs(want) do eq[id]=1 end
 eq.glass_core=1
 print((C.build_record({seed=12345,game=2,loop=0,port=1},eq,{damage_dealt=1.1,status_duration=1.5})))

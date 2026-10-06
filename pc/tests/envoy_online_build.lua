@@ -17,13 +17,13 @@ local function census()
  end
  return safe,unsafe,equip
 end
-T.test('the pool census: 38 passive records, 33 online-safe, the 5 echo records are not',function()
+T.test('the pool census: 34 passive records, 30 online-safe, the 4 echo records are not',function()
  local safe,unsafe,equip=census()
- assert(equip==38,'passive (equip) records: '..equip)
- assert(#safe==33 and #unsafe==5,('safe %d unsafe %d'):format(#safe,#unsafe))
+ assert(equip==34,'passive (equip) records: '..equip)
+ assert(#safe==30 and #unsafe==4,('safe %d unsafe %d'):format(#safe,#unsafe))
  for _,u in ipairs(unsafe) do assert(u:find('echo'),'an unsafe record that is not an echo record: '..u) end
  local triggered=0;for _,m in ipairs(D.mod_pool) do if m.trigger~='equip' then local s=D.mod_engine.online_safe(m);assert(not s);triggered=triggered+1 end end
- assert(triggered==#D.mod_pool-38)
+ assert(triggered==#D.mod_pool-34)
  print(('pool %d records: %d passive (%d online-safe, %d echo), %d triggered'):format(#D.mod_pool,equip,#safe,#unsafe,triggered))
 end)
 T.test('passive_ops refuses a triggered or echo record and a unknown id',function()

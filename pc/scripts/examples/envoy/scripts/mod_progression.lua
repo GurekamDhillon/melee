@@ -36,23 +36,27 @@ return function()
  P.keystone_step=5
  function P.allowance(c) return 1+math.floor(P.effective(c)/P.keystone_step) end
  function P.keystones(c) return P.allowance(c) end
- -- Affix count grows with depth: how many modifiers one drive may carry, and which rarities roll naturally.
+ -- RULES PER DRIVE (readability split, 2026-10-05): never more than two. ONE rule below effective depth 5, two from depth 5 on, and no
+ -- extra rule for a white drive (the roller alternates a standing rule and a trigger rule, so a two-rule drive is one of each). Rarity stops
+ -- meaning "more rules": a magic and a rare drive both carry up to two; the better tier comes from merging and from depth.
  -- Bands are in EFFECTIVE depth (depth + 13 per New Game+ loop), so every loop is in the top band.
- P.affix_bands={{top=2,cap=1},{top=5,cap=2},{top=9,cap=3},{top=math.huge,cap=4}}
+ P.max_rules=2
+ P.affix_bands={{top=4,cap=1},{top=math.huge,cap=P.max_rules}}
  P.rarity_from={common=0,magic=3,rare=6,unique=10}
  function P.affix_cap(c) local e=P.effective(c);for _,b in ipairs(P.affix_bands) do if e<=b.top then return b.cap end end end
- function P.band_top(c) local e=P.effective(c);for _,b in ipairs(P.affix_bands) do if e<=b.top then return b.top end end end
  function P.rarity_allowed(c,rarity) return P.effective(c)>=P.rarity_from[rarity] end
- P.rarity_affixes={common=1,magic=2,rare=4}
+ P.rarity_affixes={common=1,magic=2,rare=2}
  -- Natural drop weights by band. Tuned so the build power of a filled set of slots stays within about 10% of the
  -- pre-curve game from depth 5 on (see PLAYTEST: affix-count curve), while early drives are one plain effect.
  P.rarity_bands={{top=2,w={common=100,magic=0,rare=0,unique=0}},{top=5,w={common=85,magic=15,rare=0,unique=0}},
   {top=9,w={common=82,magic=15,rare=3,unique=0}},{top=math.huge,w={common=80,magic=15,rare=4,unique=1}}}
  function P.rarity_weights(c) local e=P.effective(c);for _,b in ipairs(P.rarity_bands) do if e<=b.top then return b.w end end end
- -- The one count rule: rarity's own count, held down by the depth band; White's extra modifier only past depth 2.
+ -- The top of the band an effective depth sits in: the room an opponent's roll may borrow in tier without leaving the depth's rarity band (it keeps an early
+ -- opponent from rolling a unique at depth 5). Rarity bands, since the rule-count bands are only two now.
+ function P.band_top(c) local e=P.effective(c);for _,b in ipairs(P.rarity_bands) do if e<=b.top then return b.top end end end
+ -- The one count rule: rarity's own count, held down by the depth band. `white` is accepted and ignored (White no longer adds a rule).
  function P.affix_count(c,rarity,white)
-  local n=math.min(P.rarity_affixes[rarity] or 1,P.affix_cap(c))
-  return n+((white and P.effective(c)>=3) and 1 or 0)
+  return math.min(P.rarity_affixes[rarity] or 1,P.affix_cap(c))
  end
  -- Opponents roll against the player's ACTUAL build strength times this edge, which grows with effective depth
  -- (was .003: opponents were barely ahead; .010 gives +5% at depth 5, +10% at depth 10, +13% in New Game+ 1, +39% in NG+3; a bigger edge makes the late exchanges lopsided (power_curve test)).

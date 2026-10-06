@@ -101,23 +101,23 @@ return function(D)
  -- roles: {name, alts}; alts = alternatives, each a list of ids that must ALL be held. colour 0xRRGGBB; motif names the emblem and the surface treatment.
  G.archetypes={
   {id='burn',name='Burn stacking',colour=0xFF4A2A,motif='flame',blurb='Your hits set Burn and your payoff drives turn it into damage.',
-   roles={{name='a Burn applier',alts={{'plague_bearer'},{'kindling','burning'},{'kindling','pyromancer'},{'kindling','ember_crown'}}},{name='a payoff',alts={{'pyre'},{'cinder'},{'everburn'}}}}},
+   roles={{name='a Burning applier',alts={{'plague_bearer'},{'kindling'}}},{name='a payoff',alts={{'pyre'},{'cinder'},{'everburn'}}}}},
   {id='chill',name='Chill stacking',colour=0x7FD6FF,motif='frost',blurb='Your hits Chill and your payoff drives turn it into damage.',
-   roles={{name='a Chill applier',alts={{'deep_freeze'},{'icebound','frosted'},{'icebound','frozen_oath'},{'icebound','winter_heart'}}},{name='a payoff',alts={{'brittle'},{'shatter'}}}}},
+   roles={{name='a Chill applier',alts={{'deep_freeze'},{'icebound'}}},{name='a payoff',alts={{'brittle'},{'shatter'}}}}},
   {id='shock',name='Shock chain',colour=0x21E6E6,motif='arc',blurb='Electric hits Shock one opponent and chain it to the next.',
    roles={{name='an electric source',alts={{'charged'},{'storm_shell'}}},{name='Conductor',alts={{'conductor'}}}}},
   {id='momentum',name='Momentum speed',colour=0xFFB11F,motif='chevron',blurb='Hits build Momentum and a landing spends it.',
-   roles={{name='a Momentum source',alts={{'updraft'},{'hit_and_run'},{'banked_momentum'},{'hang_time'},{'reprisal'},{'critical_mass'},{'fury'}}},{name='a landing payoff',alts={{'crosswind'},{'bastion'}}}}},
+   roles={{name='a Momentum source',alts={{'updraft'},{'rush'}}},{name='a landing payoff',alts={{'crosswind'},{'bastion'}}}}},
   {id='haste',name='Haste web',colour=0x5CF04C,motif='web',blurb='Haste feeds your Haste payoffs, and they feed Haste again.',
-   roles={{name='a Haste source',alts={{'ledge'},{'clean_landing'},{'combo_surge'},{'skyfarer'},{'perpetual_motion'},{'bloodlust'},{'hit_and_run'},{'critical_flow'},{'crosswind'}}},{name='a payoff',alts={{'rush'},{'echo_weaver'},{'trailing'}}}}},
+   roles={{name='a Haste source',alts={{'ledge'},{'clean_landing'},{'combo_surge'},{'perpetual_motion'},{'hit_and_run'},{'critical_flow'},{'crosswind'},{'fury'},{'clean_lander'}}},{name='a payoff',alts={{'rush'},{'echo_weaver'},{'trailing'}}}}},
   {id='guard',name='Guard and heal',colour=0x4C7BFF,motif='plate',blurb='Guarded turns into healing.',
-   roles={{name='a Guarded source',alts={{'reprisal'},{'bastion'},{'shelter'},{'tech_guard'},{'parry_master'},{'hang_time'},{'iron_resolve'},{'last_stand'},{'desperado'}}},{name='Renewal',alts={{'renewal'}}}}},
+   roles={{name='a Guarded source',alts={{'reprisal'},{'bastion'},{'shelter'},{'tech_guard'},{'parry_master'},{'iron_resolve'},{'last_stand'}}},{name='Renewal',alts={{'renewal'}}}}},
   {id='technique',name='Technique crit',colour=0xFF3FA4,motif='sight',blurb='A technique forces a crit and the crit pays out.',
-   roles={{name='a technique trigger',alts={{'wave_edge'},{'combo_conduit'}}},{name='a crit payoff',alts={{'critical_flow'},{'critical_mass'}}}}},
+   roles={{name='a technique trigger',alts={{'wave_edge'},{'combo_conduit'}}},{name='a crit payoff',alts={{'critical_flow'}}}}},
   {id='crit',name='Passive crit',colour=0xA67CFF,motif='burst',blurb='Crit chance meets a stronger crit.',
-   roles={{name='a crit chance',alts={{'keen'},{'ruthless'},{'finishing'},{'gambler'},{'executioner'}}},{name='a crit payoff',alts={{'brutal'},{'critical_flow'},{'critical_mass'}}}}},
+   roles={{name='a crit chance',alts={{'keen'},{'ruthless'},{'finishing'},{'gambler'},{'executioner'}}},{name='a crit payoff',alts={{'brutal'},{'critical_flow'}}}}},
   {id='armour',name='Armour retaliation',colour=0xC8D2DC,motif='spike',blurb='Armour that absorbs a hit makes your next hit a crit.',
-   roles={{name='an armour source',alts={{'shield_stance'},{'wavedasher'},{'powershield_oath'},{'juggernaut'}}},{name='Retaliation',alts={{'retaliation'}}}}},
+   roles={{name='an armour source',alts={{'shield_stance'},{'wavedasher'},{'juggernaut'}}},{name='Retaliation',alts={{'retaliation'}}}}},
  }
  G.by_id={};for i,a in ipairs(G.archetypes) do G.by_id[a.id]=a;a.index=i end
  local piece_cache=setmetatable({},{__mode='k'})
@@ -193,11 +193,12 @@ return function(D)
   return nil
  end
  -- ---- words -------------------------------------------------------------------------------------------------------------------
- local status_name={burn='Burn',shock='Shock',chill='Chill',curse='Curse',haste='Haste',guarded='Guarded',momentum='Momentum'}
+ -- ONE word per status (mod_status.label): the link text says Burning, Chilled, Haste, Guarded, Marked, never the old names.
+ local function status_name(st) return D.mod_status.label(st) end
  local function sets_phrase(key)
   local st,subj=key:match('^status:(%a+):(%a+)$')
-  if st then if subj=='target' then return 'Sets '..(status_name[st] or st)..' on the target' end;return 'Gives you '..(status_name[st] or st) end
-  st=key:match('^status:(%a+)$');if st and st~='any' then return 'Gives '..(status_name[st] or st) end
+  if st then if subj=='target' then return 'Puts '..status_name(st)..' on the target' end;return 'Gives you '..status_name(st) end
+  st=key:match('^status:(%a+)$');if st and st~='any' then return 'Gives '..status_name(st) end
   if key=='status:any' then return 'Puts a status on the target' end
   local e=key:match('^elem:(%a+)$');if e then return 'Makes your hits '..e:sub(1,1):upper()..e:sub(2) end
   if key=='event:crit' then return 'Sets up a crit' end

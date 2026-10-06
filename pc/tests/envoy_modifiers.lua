@@ -25,11 +25,11 @@ T.test('deterministic statuses and intended tagged chains',function()
 end)
 T.test('two other chains plus unique and keystone use only supported effects',function()
  local r=D.mod_engine.new(6,D.mod_pool)
- r:equip(1,'updraft');r:equip(1,'crosswind');r:equip(1,'still_heart');r:equip(1,'glass_core')
+ r:equip(1,'updraft');r:equip(1,'crosswind');r:equip(1,'pyromancer');r:equip(1,'glass_core')
  r:begin_frame({[1]={percent=0,grounded=false},[2]={percent=0,grounded=true}})
  r:emit{kind='hit_dealt',port=1,target=2,tags={aerial=true}};r:drain();assert(r:status(1,'momentum'))
  r:emit{kind='landing',port=1,tags={grounded=true}};r:drain()
- assert(not r:status(1,'haste') and r:status(1,'guarded'))
+ assert(r:status(1,'haste') and not r:status(1,'momentum'),'landing spends the Momentum stack and gives Haste')
  local v=r:values(1);assert(v.damage_dealt==1.6 and v.damage_taken>1)
  r:equip(2,'icebound');r:equip(2,'brittle');r:emit{kind='hit_dealt',port=2,target=1,tags={ice=true}};r:drain()
  r:emit{kind='hit_dealt',port=2,target=1,tags={normal=true}};r:drain();assert(r:status(1,'curse'))
@@ -47,20 +47,19 @@ local function fresh(id)
  r:begin_frame({[1]={percent=50,stocks=3,grounded=true},[2]={percent=0,stocks=3,grounded=true}});r:drain();return r
 end
 local function hit(r,tags) r:emit{kind='hit_dealt',port=1,target=2,tags=tags or {}};r:drain() end
-for _,id in ipairs({'kindling','pyre','feasting','updraft','crosswind','icebound','brittle','reprisal','glass_core','still_heart'}) do
+for _,id in ipairs({'kindling','pyre','feasting','updraft','crosswind','icebound','brittle','reprisal','glass_core'}) do
  T.test('standalone rule '..id,function()
   local r=fresh(id)
-  if id=='kindling' then hit(r,{fire=true});assert(r:status(2,'burn'))
-  elseif id=='icebound' then hit(r,{ice=true});assert(r:status(2,'chill'))
+  if id=='kindling' then hit(r,{});assert(r:status(2,'burn'),'Burn applies on any hit')
+  elseif id=='icebound' then hit(r,{});assert(r:status(2,'chill'),'Chill applies on any hit')
   elseif id=='updraft' then hit(r,{aerial=true});assert(r:status(1,'momentum'))
   elseif id=='glass_core' then local v=r:values(1);assert(v.damage_dealt==1.6 and v.damage_taken==1.6)
-  elseif id=='reprisal' then r:emit{kind='perfect_shield',port=1};r:drain();assert(r:status(1,'guarded') and r:status(1,'momentum'))
+  elseif id=='reprisal' then r:emit{kind='perfect_shield',port=1};r:drain();assert(r:status(1,'guarded') and not r:status(1,'momentum'),'Reprisal is one effect: Guarded')
   else
-   local status=({pyre='burn',feasting='chill',crosswind='momentum',brittle='chill',still_heart='haste'})[id]
-   local port=(id=='crosswind' or id=='still_heart') and 1 or 2
+   local status=({pyre='burn',feasting='chill',crosswind='momentum',brittle='chill'})[id]
+   local port=(id=='crosswind') and 1 or 2
    r.statuses[port]={[status]={stacks=1,max=1,expires=181,next_tick=61,amount=1,origin={}}}
    if id=='crosswind' then r:emit{kind='landing',port=1};r:drain();assert(r:status(1,'haste') and not r:status(1,'momentum'))
-   elseif id=='still_heart' then r:emit{kind='status_applied',port=1,status='haste'};r:drain();assert(r:status(1,'guarded') and not r:status(1,'haste'))
    elseif id=='feasting' then r:emit{kind='ko_dealt',port=1,target=2};r:drain();assert(r.damage[1]==-10)
    elseif id=='pyre' then local rules=r:native_rules(1);assert(rules[1].match.status_bits==1 and rules[1].change.launch==1.08);hit(r);assert(not r:status(2,'curse'))
    else hit(r);assert(r:status(2,'curse')) end
@@ -88,7 +87,7 @@ T.test('status duration refresh stacks exact expiration and KO cleanup',function
  r:equip(1,'glass_core');r:emit{kind='stock_lost',port=1};r:drain();assert(r:values(1).damage_dealt==1.6 and r.equipped[1].glass_core==1 and not r.statuses[1] and not r.recent[1])
  r=fresh('kindling');hit(r,{fire=true});players=r.players;local total=0
  for _=1,180 do r:begin_frame(players);r:drain();total=total+(r.damage[2] or 0) end
- assert(total==9 and not r:status(2,'burn'))
+ assert(total==3 and not r:status(2,'burn'),'Kindling burns 1 damage a second for 3 seconds')
 end)
 T.test('synthetic event cycle obeys depth and interval is logic-frame deterministic',function()
  local m=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[1]));m.families={'conversion'};m.id='cycle';m.trigger='interval';m.interval=2;m.conditions={};m.effects={{op='emit',event='interval',tag='damage'}}

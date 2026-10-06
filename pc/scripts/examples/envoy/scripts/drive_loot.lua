@@ -3,6 +3,10 @@ return function(D)
  local L={};L.__index=L
  L.colours={'red','green','blue','yellow','purple','white'}
  L.max_merges=3
+ -- Pieces the readability split cut (ids stay reserved so an old save can say what it dropped): the two ordinary drives with a price
+ -- and, from keystones.lua, the twelve keystones. See drive_bag.migrate.
+ L.retired_normal={heavy=true,featherweight=true}
+ function L.is_retired(id) return L.retired_normal[id]==true or (D.keystones and D.keystones.retired and D.keystones.retired[id]==true) or false end
  L.implicit_families=D.mod_budget.implicit_families
  L.implicits={red={damage_dealt=1.08},green={run_speed=1.08,air_speed=1.08},blue={knockback_taken=.92},yellow={jump_height=1.08},purple={status_duration=1.2},white={}}
  -- The depth a record opens at now (mod_tuning.min_depth_cap lowers it for the technique drives; validation accepts the lowest, so a switch never invalidates a held drive).
@@ -74,7 +78,6 @@ return function(D)
    local base=D.mod_progression.affix_count(context,rarity,false)
    local first=rand(2)<1 and 'prefix' or 'suffix'
    for i=1,base do local kind=((i%2==1)==(first=='prefix')) and 'prefix' or 'suffix';affix(kind) end
-   if rec.colour=='white' and D.mod_progression.affix_count(context,rarity,true)>base then affix() end
   end
   self:validate(rec);return rec
  end
@@ -110,14 +113,13 @@ return function(D)
  end
  function L:name(r)
   self:validate(r);if r.unique then return self.rules[r.unique].label..' Drive' end
-  local before,after={},{};for _,a in ipairs(r.affixes) do local m=self.rules[a.id];local t=m.affix=='prefix' and before or after;t[#t+1]=m.label end
-  local base=r.colour:sub(1,1):upper()..r.colour:sub(2)..' Drive'
-  -- One modifier reads as one short line, never a prefix and suffix chain.
-  if #r.affixes==1 then return base..': '..self.rules[r.affixes[1].id].label end
-  return (#before>0 and table.concat(before,' ')..' ' or '')..base..(#after>0 and ' of the '..table.concat(after,' and ') or '')
+  -- A drive is named by its colour and its rules, never by grammar (no prefix and suffix English, so no "of the of"):
+  -- one rule `Green Drive: Kindling`, two rules `Green Drive: Kindling + Updraft` (a saved pre-split drive may list more).
+  local labels={};for _,a in ipairs(r.affixes) do labels[#labels+1]=self.rules[a.id].label end
+  return r.colour:sub(1,1):upper()..r.colour:sub(2)..' Drive: '..table.concat(labels,' + ')
  end
  function L:tooltip(r)
-  self:validate(r);local out={};local implicit={red='+8% attack percent damage; launch unchanged',green='+8% run and air speed',blue='-8% launch taken',yellow='+8% jump height',purple='+20% status duration',white='One extra modifier; no base implicit'}
+  self:validate(r);local out={};local implicit={red='+8% attack percent damage; launch unchanged',green='+8% run and air speed',blue='-8% launch taken',yellow='+8% jump height',purple='+20% status duration',white='No base bonus'}
   out[1]=r.unique and r.colour=='white' and 'No base implicit; fixed unique rules' or implicit[r.colour]
   for _,a in ipairs(r.affixes) do local m=self.rules[a.id];local tier=a.tier
    out[#out+1]=D.mod_schema.describe(m,tier)

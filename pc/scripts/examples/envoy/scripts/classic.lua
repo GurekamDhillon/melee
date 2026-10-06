@@ -26,9 +26,9 @@ return function(D)
   return out
  end
  function R.new(g,profile,commit)
-  -- rules: the new route. When true the run installs the rule host (pool, bag, slots, opponent rolls,
-  -- looks) instead of the companion-stat templates; false keeps the old stat route exactly as it was.
-  return setmetatable({g=g,profile=profile,commit=commit,active=false,owned={},items={},observed={},cleared={},loop=0,elapsed=0,rules=false},R)
+  -- rules: the rule-host route, now the DEFAULT. When true the run installs the rule host (pool, bag, slots, opponent rolls,
+  -- looks) instead of the companion-stat templates; `envoy rules off` selects the old stat route, which stays exactly as it was.
+  return setmetatable({g=g,profile=profile,commit=commit,active=false,owned={},items={},observed={},cleared={},loop=0,elapsed=0,rules=true},R)
  end
  function R:available()
   for _,api in ipairs({'start_1p','mode_1p','hold_1p','release_1p','loop_1p','spawn_1p','end_1p'}) do

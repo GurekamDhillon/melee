@@ -183,7 +183,8 @@ return function(D)
  end
  function F:announce(a)
   local h=self.host;if not (h and h.hud) then return end
-  h.hud:announce({{text=a.name..' assembled',colour='gold'},a.blurb},a)
+  -- a SMALL top-corner note (readability split), not the six-second banner
+  if h.hud.corner then h.hud:corner({{text=a.name..' assembled',colour='gold'},a.blurb},a) else h.hud:announce({{text=a.name..' assembled',colour='gold'},a.blurb},a) end
   if h.log then h:log('synergy: '..a.name..' assembled') end
  end
  -- ---- drawing: a fight ---------------------------------------------------------------------------------------------------------

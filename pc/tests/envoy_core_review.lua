@@ -20,11 +20,11 @@ end
 function tests.raw()
  local e=D.mod_engine.new(1,D.mod_pool,{context={depth=12,loop=3}})
  e:set_build(1,{},{});e:set_build(2,{storm_shell=11,armoured=11,frozen_oath=11},{})
- local delta=(-.2-.08)*D.mod_progression.growth(11);close(e:family_budget(2).damage_taken.raw,delta)
+ local delta=(-.08)*D.mod_progression.growth(11);close(e:family_budget(2).damage_taken.raw,delta)
  local native=e:native_rules(2);local aggregate;for _,r in ipairs(native)do if r.id==1002 then aggregate=r.change.percent_damage end end;close(aggregate,1+delta)
  local hit=e:contact_ratios(1,2,'fire');close(hit.incoming,.15)
  e:set_build(2,{glass_core={tier=11,copies=4},storm_shell=11,armoured=11},{})
- close(e:family_budget(2).damage_taken.raw,delta+2.4);close(e:contact_ratios(1,2).incoming,.15)
+ close(e:family_budget(2).damage_taken.raw,delta+2.4);close(e:contact_ratios(1,2).incoming,1+delta+2.4)
  e:set_build(1,{glass_core={tier=1000000,copies=4},storm_shell=1000000},{})
  local h=e:contact_ratios(1,2);close(h.outgoing,64);assert(h.incoming>=.15)
  for _,r in ipairs(e:native_rules(1))do for _,v in pairs(r.change)do if type(v)=='number' then assert(v==v and math.abs(v)<=1e9)end end end
@@ -46,10 +46,10 @@ function tests.upper()
 end
 function tests.tooltip()
  local loot=D.drive_loot.new(D.mod_pool);local r={seed=1,depth=12,loop=3,colour='yellow',rarity='unique',unique='storm_shell',affixes={{id='storm_shell',tier=11}}}
- local text=table.concat(loot:tooltip(r),' / ');assert(not text:find('x-',1,true),'negative physical ratio shown');assert(text:find('Resistance',1,true) and text:find('15%',1,true))
+ local text=table.concat(loot:tooltip(r),' / ');assert(not text:find('x-',1,true),'negative physical ratio shown');assert(text:find('Deal 20% less attack damage',1,true))
 end
 function tests.effects()
- local m=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[6]));m.id='mixed_heal';m.kind='unique';m.cost='Requires a KO';m.affix=nil;m.group=nil;m.weight=nil;m.conditions={};m.tiers={{heal=2},{heal=10}}
+ local m=D.mod_codec.decode(D.mod_codec.encode(D.mod_pool[6]));m.id='mixed_heal';m.kind='unique';m.min_depth=nil;m.cost='Requires a KO';m.affix=nil;m.group=nil;m.weight=nil;m.conditions={};m.tiers={{heal=2},{heal=10}}
  local e=D.mod_engine.new(1,{m});e:set_build(1,{mixed_heal={tier=2,copies=2,tiers={1,2}}},{})
  e:begin_frame({[1]={percent=50},[2]={percent=0}});e:emit{kind='ko_dealt',port=1,target=2,tags={}};e:drain();close(e.damage[1],-12);assert(e.used==2)
  m.trigger='interval';m.interval='$frames';m.tiers={{heal=2,frames=60},{heal=10,frames=90}}

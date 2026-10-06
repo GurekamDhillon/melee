@@ -794,7 +794,7 @@ return function(D)
   if self.drives and self.drives.menu.active then self.drives:draw();return end
   local plate=self.foes and self.g.kit and next(self.foes.labels)~=nil
   -- The Modifier LAB debug text (ids, last chain) is a LAB tool: a run's own strip and plates replace it.
-  if plate then self.foes:draw() elseif self.enabled and not self:hosted() and not self.hide_box then self.display:draw(self.engine) end
+  if plate then self.foes:draw() elseif self.enabled and not self:hosted() and not self.hide_box and D.mod_tuning and D.mod_tuning.dev_ui() then self.display:draw(self.engine) end
   if self.drives and not plate then self.drives:draw() end
  end
  function L:unload()

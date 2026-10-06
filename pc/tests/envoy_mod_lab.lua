@@ -88,7 +88,7 @@ end)
 T.test('queued keystones validated and illegal ports refused',function()
  local s,a=fixture();assert(not a:command('add kindling 7'));assert(not a:command('add missing'))
  assert(a:command('intensity 0'));assert(a.engine.display.intensity==0)
- assert(not a:command('intensity 2'));assert(a:command('add still_heart'));assert(a:command('add still_heart'))
+ assert(not a:command('intensity 2'));assert(a:command('add pyromancer'));assert(a:command('add pyromancer'))
 end)
 T.test('invalid hit context stays unclassified and nil attacker still emits taken',function()
  local s,a=fixture();assert(a:command('add kindling'));a:frame()
@@ -224,11 +224,12 @@ T.test('unexpected pending publication failure does not escape frame or replace 
  local ok=pcall(a.frame,a);assert(ok,'pending error escaped frame');assert(not a.enabled and #a.pending==0);assert(bag==D.mod_codec.encode(a.drives:snapshot()))
 end)
 T.test('combined actual HUD and CPU plates never paint over each other',function()
- local s,a=fixture();s.players[3]={cpu=true,percent=0,stocks=4,falls=0,char=3,action=14};assert(a.foes:command('roll 1.4 32 2'));assert(a.foes:command('roll 1.4 33 3'));a:frame()
+ local s,a=fixture();D.mod_tuning=D.mod_tuning or T.module('mod_tuning',D);D.mod_tuning.set_dev_ui(true)   -- the Modifier LAB box is a developer overlay
+ s.players[3]={cpu=true,percent=0,stocks=4,falls=0,char=3,action=14};assert(a.foes:command('roll 1.4 32 2'));assert(a.foes:command('roll 1.4 33 3'));a:frame()
  a.engine.statuses[1]={burn={stacks=1,expires=200}};local fills,panels=0,0;a.g.safe_area=function()return{x=0,y=0,w=640,h=360}end
  a.g.kit={available=function()return true end,panel=function(_,y,_,h)assert(y+h<=336);panels=panels+1 end,text=function(_,y)assert(y<=336)end};a.g.fill=function()fills=fills+1 end
  local actual=T.module('mod_display',D);a.display=actual.new(a.g,a.engine);a:draw();assert(panels>0 and fills==0,'debug HUD overlaps foe plate')
- a.foes.labels={};a:draw();assert(fills==1,'debug HUD missing after timed plates retire')
+ a.foes.labels={};a:draw();assert(fills==1,'debug HUD missing after timed plates retire');D.mod_tuning.set_dev_ui(false)
 end)
 T.test('clear remains available at full foe queue capacity',function()
  local _,a=fixture();for i=1,12 do assert(a.foes:command('roll 1.4 '..i..' 2')) end;assert(a.foes:command('clear'));assert(#a.foes.pending==1 and a.foes.pending[1].op=='clear')

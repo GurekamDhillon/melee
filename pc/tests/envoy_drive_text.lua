@@ -8,7 +8,7 @@ T.test('every modifier has plain lines at every tier',function()
  end end
 end)
 T.test('a rolled drive reads as header, base line and modifiers; totals show before/after',function()
- local loot=D.drive_loot.new(D.mod_pool);local r=loot:roll(5,{depth=3,loop=0},'rare')
+ local loot=D.drive_loot.new(D.mod_pool);local r=loot:roll(5,{depth=6,loop=0},'rare')
  local lines=D.drive_text.drive_lines(loot,r);assert(#lines>=3 and lines[1]:find('Base',1,true))
  assert(D.drive_text.header(loot,r):find('Rare / ',1,true))
  local f,s=D.mod_budget.build(D.mod_pool,{},{},{});local a=D.drive_text.totals(f,s)

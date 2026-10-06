@@ -8,7 +8,7 @@ T.test('progression owns monotonic tiers slots and independent difficulty',funct
  assert(P.keystones(P.context(12,3))==11 and P.keystones(P.context(0,0))==1 and P.keystones(P.context(5,0))==2 and P.keystones(P.context(10,0))==3 and P.keystones(P.context(0,5))==14 and P.factor(P.context(12,3),'boss')>P.factor(P.context(12,3)))
  for _,v in ipairs({-1,1.5,math.huge,0/0,2147483647}) do T.refuses(function()P.context(v,0)end) end
 end)
-for _,n in ipairs({'mod_schema','mod_codec','mod_budget','mod_pool','mod_engine','drive_loot','drive_bag','foe_roll'})do D[n]=T.module(n,D)end
+for _,n in ipairs({'mod_schema','mod_codec','mod_budget','keystones','mod_pool','mod_engine','drive_loot','drive_bag','foe_roll'})do D[n]=T.module(n,D)end
 T.test('late tiers multiple uniques and keystones contribute and restore atomically',function()
  local found={};for _,m in ipairs(D.mod_pool)do found[m.id]=m end;assert(found.armoured and found.cleansing,'same-pool defensive answers missing')
  local c=D.mod_progression.context(12,3);local loot=D.drive_loot.new(D.mod_pool);local bag=D.drive_bag.new(loot,{context=c})
@@ -19,8 +19,8 @@ T.test('late tiers multiple uniques and keystones contribute and restore atomica
  assert(bag:give(r));assert(bag:equip(1,2));local two=bag:derive();assert(two.glass_core.copies==2)
  local e=D.mod_engine.new(1,D.mod_pool,{context=c});e:set_build(1,two,{})
  local b,s=e:family_budget(1);assert(b.damage_dealt.value>10 and s>10)
- assert(bag:choose_keystone('pyromancer'));assert(bag:choose_keystone('still_heart'));assert(bag:choose_keystone('frozen_oath'))
- local mods,imp=bag:derive();e:set_build(1,mods,imp);assert(e.equipped[1].still_heart and e.equipped[1].frozen_oath)
+ assert(bag:choose_keystone('pyromancer'));assert(bag:choose_keystone('bulwark'));assert(bag:choose_keystone('sprinter'))
+ local mods,imp=bag:derive();e:set_build(1,mods,imp);assert(e.equipped[1].bulwark and e.equipped[1].sprinter)
  local snap=e:export();local bad=D.mod_codec.decode(snap);bad.context.loop=-1;T.refuses(function()e:import(D.mod_codec.encode(bad))end);assert(e:export()==snap)
 end)
 T.test('engine emits widened safe values preserves legal additions and rejects malformed copies',function()

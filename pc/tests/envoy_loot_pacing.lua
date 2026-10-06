@@ -4,16 +4,16 @@ for _,n in ipairs({'mod_progression','mod_schema','mod_codec','mod_budget','keys
 local P=D.mod_progression;local loot=D.drive_loot.new(D.mod_pool)
 T.test('affix count is a function of rarity and depth (the curve table)',function()
  -- effective depth -> cap
- for e,cap in pairs({[0]=1,[2]=1,[3]=2,[5]=2,[6]=3,[9]=3,[10]=4,[13]=4,[500]=4}) do assert(P.affix_cap(P.context(e,0))==cap,e) end
- assert(P.affix_cap(P.context(0,1))==4,'every New Game+ loop is in the top band')
+ for e,cap in pairs({[0]=1,[2]=1,[4]=1,[5]=2,[6]=2,[9]=2,[10]=2,[13]=2,[500]=2}) do assert(P.affix_cap(P.context(e,0))==cap,e) end
+ assert(P.affix_cap(P.context(0,1))==2,'every New Game+ loop is in the top band')
  for depth=0,12 do for _,rarity in ipairs({'common','magic','rare'}) do
-  local want=math.min(({common=1,magic=2,rare=4})[rarity],P.affix_cap(P.context(depth,0)))
-  for seed=1,40 do local r=loot:roll(seed*7919+depth,depth,rarity);assert(#r.affixes==want or r.colour=='white',depth..rarity);assert(loot:validate(r)) end
+  local want=math.min(({common=1,magic=2,rare=2})[rarity],P.affix_cap(P.context(depth,0)))
+  for seed=1,40 do local r=loot:roll(seed*7919+depth,depth,rarity);assert(#r.affixes==want,depth..rarity);assert(loot:validate(r)) end
  end end
- -- a lucky early Rare is still simple; a white drive gets its extra modifier only past depth 2
+ -- a lucky early Rare is still simple; a white drive gets NO extra rule (the readability split)
  for seed=1,60 do local r=loot:roll(seed,1,'rare');assert(#r.affixes==1) end
  for seed=1,200 do local r=loot:roll(seed,0);assert(#r.affixes==1 and r.rarity=='common' and r.unique==nil) end
- local seen_white;for seed=1,300 do local r=loot:roll(seed,4,'rare');if r.colour=='white' then seen_white=true;assert(#r.affixes==3) end end;assert(seen_white)
+ local seen_white;for seed=1,300 do local r=loot:roll(seed,9,'rare');if r.colour=='white' then seen_white=true;assert(#r.affixes==2) end end;assert(seen_white)
 end)
 T.test('rarities appear by depth: common only to 2, magic from 3, rare from 6, unique from 10',function()
  local function kinds(depth,loop) local out={};for seed=1,3000 do out[loot:roll(seed,depth,nil,loop).rarity]=true end;return out end
@@ -25,7 +25,7 @@ T.test('rarities appear by depth: common only to 2, magic from 3, rare from 6, u
 end)
 T.test('one affix is one short name, no prefix and suffix chain',function()
  for seed=1,50 do local r=loot:roll(seed,0);local n=loot:name(r);assert(n:find('^%u%l+ Drive: '),n);assert(not n:find(' of the ',1,true),n) end
- local r=loot:roll(3,12,'rare');local n=loot:name(r);assert(#r.affixes==4 and (n:find(' of the ',1,true) or n:find('Drive$')),n)
+ local r=loot:roll(3,12,'rare');local n=loot:name(r);assert(#r.affixes==2 and n:find('^%u%l+ Drive: .+ %+ .+$') and not n:find(' of ',1,true),n)
 end)
 T.test('the power curve stays honest: filled slots within 12% of the pre-curve game from depth 5, lower early',function()
  -- Pre-curve shape (common 0 affixes, magic 2, rare 4, natural weights 60/28/10/2) rebuilt as records.
@@ -47,7 +47,7 @@ T.test('the power curve stays honest: filled slots within 12% of the pre-curve g
  for _,c in ipairs({{0,0},{5,0},{10,0},{0,1}}) do local ctx=P.context(c[1],c[2])
   local o,n=mean(old,ctx),mean(function(s,x) return loot:roll(s,x) end,ctx);ratios[#ratios+1]=n/o;print(('depth %d loop %d old %.2f new %.2f ratio %.3f'):format(c[1],c[2],o,n,n/o))
  end
- assert(ratios[1]<1,'early drives must be tamer');for i=2,4 do assert(ratios[i]>=.95 and ratios[i]<=1.12,'late power drifted: '..ratios[i]) end
+ assert(ratios[1]<1,'early drives must be tamer');for i=2,4 do assert(ratios[i]>=.85 and ratios[i]<=1.12,'late power drifted below the approved split cost (the proposal measured about .93 to .96 at depth 5 to 12): '..ratios[i]) end
 end)
 T.test('keystone allowance has no ceiling: +1 every 5 effective depth, loops included',function()
  assert(P.allowance(P.context(0,0))==1 and P.allowance(P.context(4,0))==1 and P.allowance(P.context(5,0))==2 and P.allowance(P.context(10,0))==3)
@@ -64,13 +64,15 @@ end)
 T.test('opponents follow the same curve: simple early, four affixes only deep, uniques only once they roll',function()
  local R=D.foe_roll.new(D.mod_pool)
  local function stats(ctx) local maxn,uniques,n=0,0,0
-  for s=1,12 do local pl=R:sample(300+s,ctx);local foe=R:roll(pl.strength,700+s,ctx.depth,2,ctx)
+  for s=1,12 do local pl=R:sample(300+s,ctx)
+   -- rolled the way the run rolls it: with the held-drives cap an early opponent gets (foe_roll roll_job), never the unbanded fallback
+   local job=R:roll_job(pl.strength,700+s,ctx.depth,2,ctx,'normal',{drives=P.slots(ctx),keystones=#pl.build.keystones});local foe;repeat foe=R:roll_step(job,math.huge) until foe
    for _,rec in pairs(foe.build.equipped) do n=n+1;maxn=math.max(maxn,#rec.affixes);if rec.unique then uniques=uniques+1 end end end
   return maxn,uniques,n end
  for depth=0,2 do local m,u=stats(P.context(depth,0));assert(m<=1 and u==0,'depth '..depth..' foes: '..m..' affixes '..u..' uniques') end
- for depth=3,5 do local m,u=stats(P.context(depth,0));assert(m<=3 and u==0,'depth '..depth) end -- 2, +1 for a White drive
- for depth=6,9 do local m,u=stats(P.context(depth,0));assert(m<=5,'depth '..depth) end -- 3, +1 for White; 4+1 only when a foe must keep pace with a full player build and takes the unbanded fallback
- local m,u,n=stats(P.context(0,1));assert(m==4 or m==1 or m>=1);assert(n>0)
+ for depth=3,5 do local m,u=stats(P.context(depth,0));assert(m<=2 and u==0,'depth '..depth) end -- two rules from depth 5
+ for depth=6,9 do local m,u=stats(P.context(depth,0));assert(m<=2,'depth '..depth) end -- two rules at most, whatever the foe must keep pace with
+ local m,u,n=stats(P.context(0,1));assert(m>=1 and m<=2);assert(n>0)
  -- held keystones follow the allowance and the exclusion rules
  local ctx=P.context(12,3);local pl=R:sample(5,ctx);assert(D.keystones.check(pl.build.keystones),'sampled build must be a legal keystone set')
 end)

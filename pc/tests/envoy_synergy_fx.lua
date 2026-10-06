@@ -43,7 +43,7 @@ T.test('surface lane: archetype index plus level, only while assembled; a firing
  f.active[1]={arch=G.by_id.chill,frame=1,size=.5};assert(math.floor(f:lane(both,1))==G.by_id.chill.index)
 end)
 T.test('chains: the trace names the records, a flash is made at most every 18 frames, the counter climbs and fades',function()
- local host={mods={},hud={}};local f,g=fx_with(host);local e=engine({ledge=1,still_heart=1,renewal=1});host.mods.engine=e
+ local host={mods={},hud={}};local f,g=fx_with(host);local e=engine({ledge=1,shelter=1,renewal=1});host.mods.engine=e
  e:begin_frame({[1]={percent=0},[2]={percent=0}});e:emit{kind='ledge_grab',port=1,tags={}};e:drain()
  assert(e.trace_port==1)
  local ids=F.trace_ids(e);assert(#ids>=2,table.concat(ids,','))
@@ -89,7 +89,7 @@ T.test('the grid: links, banner, offer marks and the detail line',function()
  local m=f:grid_model(screen)
  assert(m.offers['offer:1'] and m.offers['offer:1'].kind=='advance' or m.offers['offer:1'].kind=='complete',m.offers['offer:1'] and m.offers['offer:1'].kind)
  assert(not m.offers['offer:2'],'Icebound connects to nothing held and builds no chain')
- assert(#m.links>=2,'Cinder links to Kindling; Burning links to Kindling')
+ assert(#m.links>=1,'Cinder links to Kindling (Burning no longer feeds Kindling: it applies on any hit)')
  assert(m.marks['eq:1'] and m.marks['offer:1'] and not m.marks['key:1'],'a stat stick has no mark')
  assert(m.banner[1].archetype.id=='burn' and m.banner[1].filled==1 and m.banner[1].missing=='a payoff'~=nil)
  g.calls={};f:draw_grid(screen);assert(#g.calls>20)

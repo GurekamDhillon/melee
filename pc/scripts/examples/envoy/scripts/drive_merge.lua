@@ -2,11 +2,13 @@
 -- and is consumed, so it never becomes another inventory item. Pure functions of two loot records and the loot
 -- module; the run host decides when to call them (it is not wired in here).
 --
--- WHAT "MATCHES" MEANS (all three must hold):
---   1. same colour (the base type; White matches White);
---   2. neither is a Unique (a Unique is a fixed rule; two of the same already stack as copies);
---   3. COMPARABLE: they share a modifier id (exact), or one of the gained drive's modifiers touches a budget
---      family one of the held drive's modifiers touches (for example two of the "damage taken" modifiers).
+-- WHAT "MATCHES" MEANS (all of these must hold):
+--   1. neither is a Unique (a Unique is a fixed rule; two of the same already stack as copies);
+--   2. COMPARABLE: they share a modifier id (exact), or one of the gained drive's modifiers touches a budget
+--      family one of the held drive's modifiers touches (for example two of the "damage taken" modifiers);
+--   3. a SHARED RULE merges across colours (a second copy of a rule you already hold is never inert, whatever its colour: the
+--      readability split, since a duplicate rule on a second drive was ignored by the build); a merge on a shared budget FAMILY
+--      alone still needs the same colour (the base type; White matches White).
 --   And the held drive has merges left (Loot.max_merges = 3 per drive).
 --
 -- WHAT A MERGE DOES: exactly one of the held drive's modifiers goes up one tier (the exact-id one if there is one,
@@ -36,9 +38,10 @@ return function(D)
  function M.can_merge(held,gained,loot)
   if type(held)~='table' or type(gained)~='table' then return false,'not drives' end
   if held.unique or gained.unique or held.rarity=='unique' or gained.rarity=='unique' then return false,'A unique drive does not merge.' end
-  if held.colour~=gained.colour then return false,'Different colours do not merge.' end
   if (held.merged or 0)>=loot.max_merges then return false,'This drive is fully merged.' end
-  if not M.target_affix(held,gained,loot) then return false,'Nothing in common to improve.' end
+  local at,exact=M.target_affix(held,gained,loot)
+  if not at then return false,held.colour~=gained.colour and 'Different colours do not merge.' or 'Nothing in common to improve.' end
+  if held.colour~=gained.colour and not exact then return false,'Different colours do not merge.' end
   return true
  end
  -- Returns the improved record (a new table; `held` is not touched) and what changed, or nil and why.

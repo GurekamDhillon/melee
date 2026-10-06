@@ -94,9 +94,11 @@ return function(D)
     self.lab.engine.display.drive_build=self.lab.engine.display.drive_build or {};self.lab.engine.display.drive_build[r.port]=looks
     local role=r.role or 'normal';local factor=D.mod_progression.factor(r.context or r.build.context,role)
     local title=('P%d %s / %s %.2f / target %.2f x%.2f'):format(r.port,tostring(D.fighters and D.fighters.plate(self.g,(self.g.player(r.port) or {}).char_name or (self.g.player(r.port) or {}).name) or 'CPU'),role,r.strength,r.target,factor)
-    local foe=(self.g.player(r.port) or {});local plate=('%s  (opponent strength %.1f)'):format(tostring(D.fighters and D.fighters.plate(self.g,foe.char_name or foe.name) or 'Opponent'),r.strength)
+    -- The opponent card: the fighter's name (the strength figure is a developer figure: `envoy devui on`), then its keystones and a rule count.
+    local foe=(self.g.player(r.port) or {});local plate=tostring(D.fighters and D.fighters.plate(self.g,foe.char_name or foe.name) or 'Opponent')
+    if D.mod_tuning and D.mod_tuning.dev_ui() then plate=('%s  (opponent strength %.1f)'):format(plate,r.strength) end
     if #plain==0 then plain={'No modifiers: a vanilla fighter'} end
-    self.labels[r.port]={title=self.lab:hosted() and plate or title,lines=self.lab:hosted() and plain or names,left=240};self.g.log('foe: '..title..' / '..table.concat(names,', '))
+    self.labels[r.port]={title=self.lab:hosted() and plate or title,lines=self.lab:hosted() and plain or names,left=self.lab:hosted() and 360 or 240};self.g.log('foe: '..title..' / '..table.concat(names,', '))
    end
   end;self.pending={}
  end
@@ -105,9 +107,21 @@ return function(D)
   if self.driver and self.drive and next(self.driver.foes) then local m=self.g.match();if m and m.active then self.driver:frame(m.frame) end end
   if self.defer and self.defer() then return end -- an announcement is up: the plate waits its turn (its timer does not run)
   for p,label in pairs(self.labels) do label.left=label.left-1;if label.left<=0 then self.labels[p]=nil end end end
+ -- A rule-host run shows each opponent as a SMALL card at the top right (name, keystones, a rule count): no strength figure, clear of the
+ -- match timer (top centre) and the player tags, all opponents at once (at most three), for six seconds, not a full-width panel in turn.
+ function F:draw_cards(ports)
+  local g=self.g;local k=g.kit;local a=g.safe_area();local w=math.min(300,a.w//3);local x=a.x+a.w-w-10;local y=a.y+58
+  for i,p in ipairs(ports) do if i>3 then break end
+   local l=self.labels[p];local n=math.min(#l.lines,4);local h=26+n*17
+   k.panel(x,y,w,h);k.text(x+10,y+19,l.title,'caption','bone','left',{max_w=w-20})
+   for j=1,n do k.text(x+10,y+19+j*17,l.lines[j],'caption','muted','left',{max_w=w-20}) end
+   y=y+h+6
+  end
+ end
  function F:draw()
   if not self.g.kit or (self.defer and self.defer()) then return end;local a=self.g.safe_area();local y=a.y+42;local ports={}
   for p=2,6 do if self.labels[p] then ports[#ports+1]=p end end;if #ports==0 then return end
+  if self.lab:hosted() then return self:draw_cards(ports) end
   local shown=ports[math.floor(self.lab.engine.frame/45)%#ports+1];local l=self.labels[shown]
   -- Wrapping measures text through the kit: done once per label and width, not on every drawn frame.
   self.wrapped=self.wrapped or setmetatable({},{__mode='k'})
@@ -134,6 +148,22 @@ return function(D)
   assert(type(s)=='table','invalid foe checkpoint');for k in pairs(s) do assert(({seed=true,stage=true,builds=true,pending=true,labels=true})[k],'unknown foe field') end
   assert(type(s.seed)=='number' and s.seed%1==0 and s.seed>=0 and s.seed<=2147483646,'invalid foe seed');assert(type(s.stage)=='number' and s.stage%1==0 and s.stage>=0 and s.stage<=2147483646,'invalid foe stage')
   assert(type(s.builds)=='table' and type(s.pending)=='table' and type(s.labels)=='table','invalid foe roots')
+  -- An opponent rolled before the readability split may hold a piece the split cut: that opponent is forgotten (it is rolled again at the next
+  -- stage), never a refusal of the whole checkpoint.
+  do
+   local L=D.drive_loot
+   local function stale(r)
+    if not (L and L.is_retired and type(r)=='table' and type(r.build)=='table') then return false end
+    local b=r.build
+    for _,rec in pairs(b.equipped or {}) do for _,a in ipairs(rec.affixes or {}) do if L.is_retired(a.id) then return true end end end
+    for _,rec in ipairs(b.items or {}) do for _,a in ipairs(rec.affixes or {}) do if L.is_retired(a.id) then return true end end end
+    for _,id in ipairs(b.keystones or {}) do if L.is_retired(id) then return true end end
+    return b.keystone~=nil and L.is_retired(b.keystone) or false
+   end
+   for p,r in pairs(s.builds) do if stale(r) then s.builds[p]=nil;if s.labels[p] then s.labels[p]=nil end;self.g.log('foe: an opponent from an older version held a cut piece and was dropped (P'..tostring(p)..')') end end
+   local kept={};for _,e in ipairs(s.pending) do if e.op=='roll' and stale(e.record) then self.g.log('foe: a queued opponent roll from an older version held a cut piece and was dropped') else kept[#kept+1]=e end end
+   if #kept~=#s.pending then s.pending=kept end
+  end
   for p,r in pairs(s.builds) do assert(p==r.port,'foe port mismatch');self.roller:validate(r) end
   local count=0;for i,e in pairs(s.pending) do assert(type(i)=='number' and i%1==0 and i>=1 and i<=12,'invalid foe pending index');count=count+1;assert(e.op=='clear' or e.op=='roll','invalid foe action');if e.op=='roll' then self.roller:validate(e.record) end end;assert(count==#s.pending,'sparse foe pending')
   for p,l in pairs(s.labels) do assert(s.builds[p] and type(l.title)=='string' and type(l.lines)=='table' and type(l.left)=='number' and l.left%1==0 and l.left>=1 and l.left<=240,'invalid foe label');for _,line in ipairs(l.lines) do assert(type(line)=='string','invalid foe label text') end end

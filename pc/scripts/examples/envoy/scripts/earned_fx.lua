@@ -137,16 +137,32 @@ return function(D)
   self:note('window','tracer window refused: '..tostring(res));return false
  end
  -- ---- on_crit -------------------------------------------------------------------------------------------------------
+ -- The crit presentation parameters, ONE table a later pass can map to crit tiers (strength 0..1, the multiplier, the element and colour of the
+ -- hit, the piece that caused it). Nothing here changes what is drawn: the screen effect and the tracer keep their behaviour; the HUD
+ -- pop-up text ("Critical hit x1.7") is gone.
+ F.element_colour={fire={1,.45,.15,.85},ice={.55,.85,1,.85},electric={.45,1,1,.85}}
+ F.crit_listeners={}
+ function F:crit_piece(attacker)
+  local eng=self.host and self.host.engine;if not (eng and eng.list and type(attacker)=='number') then return nil end
+  local eq=eng.equipped and eng.equipped[attacker] or {}
+  for _,m in ipairs(eng.list) do if eq[m.id] then for _,fx in ipairs(m.effects) do if fx.op=='crit' or fx.op=='crit_next' then return m.id end end end end
+  return nil
+ end
+ function F:crit_params(e)
+  local strength=clamp(tonumber(e.strength) or 0,0,1)
+  local element=type(e.element)=='string' and e.element or nil
+  return {strength=strength,sequence_strength=F.sequence_strength(strength),multiplier=tonumber(e.multiplier) or 1,element=element,
+   colour=(element and F.element_colour[element]) or D.mod_skill.cause.crit.tint,piece=self:crit_piece(e.attacker),attacker=e.attacker,victim=e.victim,
+   tag=e.move_tag,forced=e.forced==true}
+ end
  function F:crit(e)
   self.stat.crits=self.stat.crits+1
-  local strength=clamp(tonumber(e.strength) or 0,0,1)
+  local params=self:crit_params(e);local strength=params.strength
   local point=(type(e.x)=='number' and type(e.y)=='number') and {x=e.x,y=e.y,z=e.z or 0} or nil
-  self:play(F.sequence_strength(strength),point)
+  self.last_crit=params
+  self:play(params.sequence_strength,point)
   self:mark_hit(e.attacker,strength)
-  if strength>=F.tuning.strong and self.host.toast then
-   self.stat.toasts=self.stat.toasts+1
-   self.host.toast(('Critical hit x%.1f'):format(tonumber(e.multiplier) or 1))
-  end
+  for _,fn in ipairs(F.crit_listeners) do pcall(fn,params,self) end
  end
  function F:command(arg)
   local w={};for x in (arg or ''):gmatch('%S+') do w[#w+1]=x end

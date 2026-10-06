@@ -1,11 +1,32 @@
 # Envoy rule-host run: what to see, stage by stage (the grid pass, 2026-10-05)
 
-Setup: `envoy rules on`, then `envoy classic` (console), vanilla disc, offline. Controller: A / B / X / Y, D-pad or stick. See MENUS.md for the grid.
+**The readability split (2026-10-05) supersedes the numbers and wording below where they differ** (one or two rules per drive, 72 pieces, 30
+keystones with one of seven prices, five statuses and a counter, the HUD of MENUS.md). The old sections stay as history.
+
+Setup: `envoy classic` (console) or START in the Envoy menu (the rule host is the default; `envoy rules off` selects the older companion-stat
+route). Vanilla disc, offline. Controller: A / B / X / Y, D-pad or stick. See MENUS.md for the grid.
+
+## The developer overlay (off by default)
+`envoy devui on|off` (or the `ENVOY_DEVUI=1` environment flag where the mod can read it) is ONE predicate (`mod_tuning.dev_ui()`). On it shows: the
+strength percentage and the depth text on the build strip, the strip's flash text (a modifier's name, "Build ready"), the opponent-strength figure on
+the opponent card, the mod's teaching and error panels ("Technique rule fired", "Build update refused"; they are always in the log), the Modifier LAB
+text box and the Drive LAB card. Owed on the engine side (not in the mod): the FLY readout, the LAB mod's default mode and a settings key for the switch.
+
+## What to check after the split (needs a game window: not done in the session that wrote it)
+1. `envoy start classic <fighter>`: one drive with ONE rule, one keystone with one rule line and one price line. Bar: squares and a keystone letter, no `%`, no `Depth`.
+2. `envoy start classic <fighter> depth=6 loop=0 build=7`: five drives with at most two rules each; the reward screen title says "Unlocked: ..." after the first reward.
+3. `drive grant rare 11` twice: the second copy of a held rule merges ("Merged!", a one-line note bottom-left) even when its colour differs.
+4. A fire build (Kindling applies Burning on any hit, 1 damage a second); Plague Bearer 1.5 a second per stack; no keystone puts a status look on yourself.
+5. `envoy devui on`: the figures return; `envoy devui off`: they go.
+6. Complete an archetype: a small corner note, not a banner; link flash and tints unchanged. Crits: impact frame and tracer play, no text.
+7. Opponent card: top right, keystones and `N drive rules`, clear of the timer. Win with a drive on the floor: "Collect the drives" sits below the timer.
+
+## The grid pass, stage by stage (history)
 1. Stage 1 start: ONE panel: "Your starter drive" (one modifier, e.g. `Green Drive: Lingering`) and "Your keystone: <name>" with its effect and drawback. The strip top-left: one filled pip, a `+n%` strength, Depth 0, one small keystone cell.
 2. Fight: the opponent plate lists its modifiers one line each (early on, one or two). Hit it past 50%: a drive may drop (70% on a battle stage, never more than one). The match does not end at the last KO while a drive lies on the floor: pick it up (a merge says "Merged!", otherwise it goes in the bag, or a free slot when the bag is full, or a grid asks which drive to give up).
 3. Stages 1 and 2 give no reward screen; the third stage (index 2) does: three offered cells, your six equipped cells (two locked), your four bag cells, the keystone you hold. Focus a cell: the panel shows its lines and `Build strength a -> b`; A does the obvious thing (merge, else equip, else bag, else ask).
 4. Merging: when an offered drive shares a colour and a modifier with one you hold, the held cell shows a plus and A says Merge: one modifier of the held drive goes up a tier, nothing is added.
-5. Depth 5 (stage 6): "Fifth slot unlocked", "Keystone allowance: 2. A keystone is offered at the next stage clear." At that clear the keystone row appears next to the offered drives: three cells from three colours, pick one (B twice skips; it stays owed).
+5. Depth 5 (stage 6): no banner any more; the next reward screen's title says "Unlocked: fifth slot, keystone allowance 2, drive tier 2". At that clear the keystone row appears next to the offered drives: three cells from three colours, pick one (B twice skips; it stays owed).
 6. Bag screen: Z+START in a fight opens the same grid and pauses; B or START closes it without pausing the match. Four bag places; a fifth drive asks which to give up.
 7. Bonus stage: three offered drives. Master Hand: two Rare and one Unique. After it: "New Game+ 1", your build carries over, opponents are rolled a step above your actual strength.
 Judge: are the cells readable at a glance (colour, border, pips); is the one detail panel enough; do early drops feel tame; is 45 s enough (the engine hold is 2850 units of 1/60 s); is a drive per stage the right amount.

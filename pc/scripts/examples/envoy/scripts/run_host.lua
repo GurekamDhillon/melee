@@ -43,7 +43,8 @@ return function(D)
    mods.drives.on_expire=function(r,why) self:expired(r,why) end
   end
   -- A technique or crit moment worth a line (first technique rule fired, a strong crit): the strip's toast, presentation only.
-  if not self.follower then mods.toast=function(text) if self.running then self.hud:announce({{text='Technique',colour='gold'},text}) end end end
+  -- Teaching and error messages from the mod (technique hint, "Build update refused ...") are LOGGED always and shown only with the developer overlay on.
+  if not self.follower then mods.toast=function(text) if self.running then self:log('mod message: '..tostring(text));if D.run_hud.dev_ui() then self.hud:announce({{text='Technique',colour='gold'},text}) end end end end
   if mods.foes and not self.follower then mods.foes.defer=function() return self.running and ((self.hud and #self.hud.toasts>0) or self.menu_up==true) end end  -- the opponent plate waits while an announcement is up (they used to overlap)
   if self.follower then return self end -- the console commands belong to the lead seat (they take a port where it matters)
   g.command('uxdump',function() self:dump();return true end,'log the rule host state: slots, bag, keystones, offers, screen, hud')
@@ -366,15 +367,20 @@ return function(D)
   self.offers={};self.key_offers={};self:touch()
  end
  -- ---- announcements ---------------------------------------------------------------------------------------------
- -- One announcement per change, said once: a new slot, a keystone allowance, a drive tier, New Game+.
- local function milestones(self,ctx)
+ -- Milestones (a new slot, a keystone allowance, a drive tier, New Game+) are NOT announced in a match any more: when a stage starts they are
+ -- remembered (self.pending_ms) and the NEXT between-stage screen carries them as ONE short line ("Unlocked: fifth slot, keystone allowance 2, drive tier 2").
+ -- `milestone_parts` compares a context with what the run has already seen; `mark_milestones` records it when the stage starts.
+ local function milestone_parts(self,ctx)
   local list={}
   local slots=D.mod_progression.slots(ctx);local keys=D.mod_progression.keystones(ctx);local tier=D.mod_progression.tier(ctx)
-  local function add(title,line) list[#list+1]={{text=title,colour='gold'},line} end
-  if self.seen_slots and slots>self.seen_slots then add(({[5]='Fifth slot unlocked',[6]='Sixth slot unlocked'})[slots] or ('Slot '..slots..' unlocked'),'You can equip one more drive. Open the bag with Z+START.') end
-  if self.seen_keys and keys>self.seen_keys then add('Keystone allowance: '..keys,'A keystone is offered at the next stage clear.') end
-  if self.seen_tier and tier>self.seen_tier and not self.follower then add('Drive tier '..tier,'New drives roll stronger modifiers; opponents scale up too.') end
-  local ng=D.mod_progression.run_loop(self.retail.mode,ctx);if self.seen_loop and ng>self.seen_loop and not self.follower then add('New Game+ '..ng,'Your build carries over. Opponents start stronger.') end
+  if self.seen_slots and slots>self.seen_slots then list[#list+1]=({[5]='fifth slot',[6]='sixth slot'})[slots] or ('slot '..slots) end
+  if self.seen_keys and keys>self.seen_keys then list[#list+1]='keystone allowance '..keys end
+  if self.seen_tier and tier>self.seen_tier and not self.follower then list[#list+1]='drive tier '..tier end
+  local ng=D.mod_progression.run_loop(self.retail.mode,ctx);if self.seen_loop and ng>self.seen_loop and not self.follower then list[#list+1]='New Game+ '..ng end
+  return list,slots,keys,tier,ng
+ end
+ local function mark_milestones(self,ctx)
+  local list,slots,keys,tier,ng=milestone_parts(self,ctx)
   self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=slots,keys,tier,ng
   return list
  end
@@ -386,7 +392,7 @@ return function(D)
   -- A new run is not a retry of the last one's stages: the attempt counts and the stages' given drops were never cleared, so every run after the first
   -- in a game session found its stages 'already played' and gave no floor drive at all (found by the co-op campaigns; a solo run had it too).
   self.attempts={};self.drops_given={};self.retry=false;self.drop_queue=nil
-  self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
+  self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.pending_ms={};self.milestone_line=nil;self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
   self.mods:run_end() -- a new run starts from an empty bag, whatever the last one left
   local dev=self.dev_pending;self.dev_pending=nil;self.floor=nil
   local ctx=D.mod_progression.context(0,0)
@@ -470,7 +476,8 @@ return function(D)
   self.foe_seen=#self.foe_ports>0
   local ctx=self:context_for(self.stage,self.loop)
   self.mods:set_context(ctx)
-  for _,toast in ipairs(milestones(self,ctx)) do self.hud:announce(toast);self:log('announce: '..toast[1].text) end
+  local passed=mark_milestones(self,ctx);self.pending_ms=self.pending_ms or {}
+  if #passed>0 then for _,p in ipairs(passed) do self.pending_ms[#self.pending_ms+1]=p end;self:log('milestones (shown on the between-stage screen): '..table.concat(passed,', ')) end
   self.hud.m=nil;self.mods.drives:bump()
   self:log(('stage %d (%s) NG+%d context depth=%d slots=%d'):format(self.stage,self.stage_kind,self.loop,ctx.depth,D.mod_progression.slots(ctx)))
  end
@@ -560,7 +567,6 @@ return function(D)
   item.tries=item.tries+1
   local ok,why=pcall(function() return self.mods.drives.drops:spawn(item.record,x,y) end)
   if ok then table.remove(q,1);self:log(('opponent P%d dropped %s (%s)'):format(item.port,self:name(item.record),item.why))
-   self.hud:show_card('A drive dropped!',{D.drive_text.short(self.mods.drives.loot,item.record)},D.drive_text.rarity_colour[item.record.rarity])
   elseif item.tries>=60 then table.remove(q,1);self:log(('drop failed for %s: %s'):format(self:name(item.record),tostring(why))) end
  end
  -- Called by the drive host after the player walked over a drive: merge, bag, free slot, or ask which to give up.
@@ -625,8 +631,8 @@ return function(D)
   local a=g.safe_area();local frame=self.since or 0;local f=(self.g.frame and self.g.frame()) or 0
   local text=self.hold_banner
   local w=300;local x=a.x+(a.w-w)//2
-  g.fill(x,a.y+112,w,34,0x3A3320E8);g.fill(x,a.y+112,w,2,0xEBD175FF)   -- below the match timer
-  k.text(x+w//2,a.y+136,text,'body','gold','center')
+  g.fill(x,a.y+150,w,34,0x3A3320E8);g.fill(x,a.y+150,w,2,0xEBD175FF)   -- well below the match timer; the banner is the one instruction
+  k.text(x+w//2,a.y+174,text,'body','gold','center')
   local me=g.player(self:port0());local best,bd
   for _,p in ipairs(list) do if me then local dd=math.abs(p.x-me.x)+math.abs(p.y-me.y);if not bd or dd<bd then best,bd=p,dd end end end
   if not best or not g.project then return end
@@ -642,7 +648,6 @@ return function(D)
    if dir=='left' then cx=a.x+margin else cx=a.x+a.w-margin end
    g.fill(cx-30,cy-22,60,44,0x1B1A12D8)
    tri(g,math.floor(cx+(dir=='left' and -2 or 2))+(dir=='left' and 0 or 0),math.floor(cy),dir,14,gold)
-   k.text(cx+(dir=='left' and 12 or -12),cy+5,'Drive','caption','gold','center')
   end
  end
  function H:update_hold()
@@ -738,7 +743,7 @@ return function(D)
  function H:oob_resolve(p,v,box)
   local g=self.g;local left=(v.stocks or 0)-1
   self:log(('P%d is out of bounds (x=%.0f y=%.0f) and was never knocked out: losing a stock (%d left)'):format(p,v.x,v.y,math.max(left,0)))
-  self.hud:flash(p==self:port0() and 'Out of bounds: a stock is lost' or ('P'..p..' out of bounds: a stock is lost'))
+  self.hud:flash(p==self:port0() and 'Out of bounds: a stock is lost' or ('P'..p..' out of bounds: a stock is lost'),true)
   if g.set_stocks then g.set_stocks(p,math.max(left,0)) end
   if left>0 and g.teleport then
    local fl=box and box.floor;local x=fl and (fl.left+fl.right)/2 or (box and box.origin and box.origin.x) or 0
@@ -802,6 +807,8 @@ return function(D)
   local newn=0;for _ in pairs(self.new_keys) do newn=newn+1 end
   self:log(('reward moment: %d offered, %d keystones offered, %d waiting, %d new'):format(#self.offers,#self.key_offers,#self.decide,newn))
   if #self.offers==0 and #self.key_offers==0 and #self.decide==0 then self:settle();return false end
+  -- what unlocked since the last between-stage screen (a new slot, keystone allowance, drive tier or New Game+): one line on this screen
+  self.milestone_line=(self.pending_ms and #self.pending_ms>0) and ('Unlocked: '..table.concat(self.pending_ms,', ')) or nil;self.pending_ms={}
   local ok=self:hold_open()
   if ok then self.screen:open('reward');self.holding=true
   else self:log('reward hold unavailable: sorting the drives automatically');self:finish_reward('no-hold') end

@@ -240,7 +240,7 @@ return function(D)
   if not self.view then self:new_view() end
   local old=self.view.fe
   self.view:set_blocks(self.blocks)
-  self.view:set_title(self.layout=='swap' and (self.swap.from=='bag' and 'SWAP' or 'BAG FULL') or (self.mode=='reward' and 'STAGE CLEAR' or 'YOUR DRIVES')..(self.host.seat and ('  -  PLAYER '..self.host.seat.port) or ''))
+  self.view:set_title(self.layout=='swap' and (self.swap.from=='bag' and 'SWAP' or 'BAG FULL') or (self.mode=='reward' and ('STAGE CLEAR'..(self.host.milestone_line and ('  -  '..self.host.milestone_line) or '')) or 'YOUR DRIVES')..(self.host.seat and ('  -  PLAYER '..self.host.seat.port) or ''))
   local back=self.layout=='swap' and (self.swap.from=='decide' and 'Leave it' or 'Back') or (self.mode=='reward' and ((#h.offers>0 or #h.key_offers>0) and 'Skip' or 'Continue') or 'Close')
   self.view:set_actions({B=back})
   if self.layout=='main' and self.back_focus then self.view:set_focus(self.back_focus[1],self.back_focus[2]);self.back_focus=nil end

@@ -13,7 +13,7 @@ return function(D)
  end
  function R:weights(strength)
   local high=math.min(12,math.max(0,math.log(strength)))
-  local w={armoured=1+3*high,cleansing=1+2*high,bastion=1+high,shelter=1+high,reprisal=1+high,renewal=1+high,heavy=1/(1+high)^3,pyre=1/(1+high)^3}
+  local w={armoured=1+3*high,cleansing=1+2*high,bastion=1+high,shelter=1+high,reprisal=1+high,renewal=1+high,pyre=1/(1+high)^3}
   -- A technique record whose trigger nobody performs for the opponent is inert on it: weight it down (it stays rollable, a deliberate
   -- dead roll like the rest of the pool). 'driven' triggers (foe_driver.lua performs them) and 'maybe' ones are left at full weight.
   if D.mod_skill then for _,m in ipairs(self.pool) do if m.min_depth and D.mod_skill.cpu(m.trigger)=='dead' then w[m.id]=.25 end end end

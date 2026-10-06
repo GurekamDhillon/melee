@@ -40,6 +40,10 @@ return function(D)
   self.equipped[port]=checked;self.implicits[port]=base
  end
  function E:status(port,name) return (self.statuses[port] or {})[name] end
+ -- Momentum is a COUNTER, not a status look: how many stacks (0..5) a fighter holds right now. The later visual pass draws it as orbs
+ -- from this one accessor (a pure read of the checkpointed status table; the stack cap is the status record's own `max`).
+ function E:momentum(port) local v=(self.statuses[port] or {}).momentum;return v and v.stacks or 0 end
+ function E:momentum_max(port) local v=(self.statuses[port] or {}).momentum;return v and v.max or 5 end
  function E:clear(port)
   if port then self.equipped[port]=nil;self.implicits[port]=nil;self.statuses[port]=nil;self.recent[port]=nil;self.damage[port]=nil
   else self.equipped={};self.implicits={};self.statuses={};self.recent={};self.damage={};self.queue={};self.trace={} end
@@ -200,7 +204,8 @@ return function(D)
     if self.used<self.limit and tier then for _,instance in ipairs(S.instances(tier))do if self:matches(m,e,instance)then
       self:apply(m,e,instance)
       -- The first time a technique or crit rule fires (per engine, i.e. per run) is logged for the host's announcement.
-      if m.min_depth or m.kind=='keystone' and (D.mod_skill.is_skill(e.kind) or e.kind=='crit') then
+      -- (payoffs now carry min_depth too, so the test is the TRIGGER: a technique, a crit or armour absorbing a hit)
+      if (m.min_depth and (D.mod_skill.is_skill(e.kind) or e.kind=='crit' or e.kind=='armor')) or m.kind=='keystone' and (D.mod_skill.is_skill(e.kind) or e.kind=='crit') then
        self.fired=self.fired or {};if not self.fired[m.id] then self.fired[m.id]=true;self.fired_log=self.fired_log or {};self.fired_log[#self.fired_log+1]={id=m.id,label=m.label,kind=e.kind,port=e.port} end
       end
      end end end
@@ -541,7 +546,11 @@ return function(D)
   local at=C.decode(text);at.context=D.mod_progression.context(at.context);assert(at.version==1 and type(at.frame)=='number' and at.frame%1==0 and at.frame>=0,'invalid modifier snapshot')
   assert(type(at.seed)=='number' and at.seed%1==0 and at.seed>=1 and at.seed<2147483647,'invalid random state')
   assert(type(at.limit)=='number' and at.limit>=1 and at.limit<=128 and at.limit%1==0 and type(at.depth)=='number' and at.depth>=1 and at.depth<=16 and at.depth%1==0,'invalid snapshot budget')
+  -- A snapshot from before the readability split may hold a piece the split cut: it is dropped (and listed in self.retired_dropped for the
+  -- host to say so), never a refusal of the whole snapshot.
+  self.retired_dropped=nil
   for p,mods in pairs(at.equipped) do assert(type(p)=='number' and p>=1 and p<=6 and p%1==0)
+   for id in pairs(mods) do if not self.rules[id] and D.drive_loot and D.drive_loot.is_retired(id) then mods[id]=nil;self.retired_dropped=self.retired_dropped or {};self.retired_dropped[#self.retired_dropped+1]=id end end
    for id,tier in pairs(mods) do assert(self.rules[id] and S.level(tier),'unknown snapshot modifier') end
   end
   at.implicits=at.implicits or {}

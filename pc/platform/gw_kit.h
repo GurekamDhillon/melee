@@ -60,6 +60,9 @@ const char *gw_Kit_Why(void); /* why not, when it is not */
 int gw_Kit_RoleCount(void);
 const char *gw_Kit_RoleName(int role);
 int gw_Kit_Role(const char *name); /* -1 when unknown */
+/* NULL when every page of the role loaded as a texture; else the name of the first page that did not (the role's text would
+ * draw nothing). Looks the pages up if that has not happened yet. */
+const char *gw_Kit_RoleMissingPage(int role);
 /* size, ascent, descent, cap height, line height of a role (1x px); 0 when unknown */
 int gw_Kit_RoleMetrics(int role, float *size, float *ascent, float *descent, float *cap, float *line);
 float gw_Kit_TextWidth(int role, const char *s);

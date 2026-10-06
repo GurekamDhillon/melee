@@ -569,6 +569,18 @@ int gw_Kit_Role(const char *name) {
     return -1;
 }
 
+const char *gw_Kit_RoleMissingPage(int role) {
+    int page;
+    kf_load();
+    if (kf.state != 1 || role < 0 || role >= kf.nr) return "(no such role)";
+    for (page = 0; page < kf.r[role].npages; page++) {
+        KfRole *rw = &kf.r[role];
+        if (rw->tex[page] == -2) rw->tex[page] = gw_Kit_Tex(rw->page[page], NULL);
+        if (rw->tex[page] < 0) return rw->page[page];
+    }
+    return NULL;
+}
+
 int gw_Kit_RoleMetrics(int role, float *size, float *ascent, float *descent, float *cap, float *line) {
     const KfRole *r;
     kf_load();
@@ -1731,21 +1743,24 @@ static int test_kit_atlas_roles(void) {
                                         "a_body12", "a_body14", "a_row16", "a_num12", "a_num14", "a_num16"};
     int i, found = 0;
     if (!gw_Kit_Available()) {
+        gw_log("TEST SKIPPED kit_atlas_roles: the script kit is unavailable (no ui/ directory), so nothing was checked");
         return 0;
     }
     for (i = 0; i < 13; i++) {
         if (gw_Kit_Role(names[i]) >= 0) found++;
     }
-    if (found == 0) {
-        return 0; /* this lane's ui/ has no Atlas fonts yet: nothing to check */
-    }
     if (found != 13) {
-        gw_test_fail("only %d of the 13 Atlas text roles are in the font manifest", found);
+        gw_test_fail("only %d of the 13 Atlas text roles are in the font manifest (the Atlas font pages and manifest must be in ui/)", found);
         return 1;
     }
     for (i = 0; i < 13; i++) {
         float size = 0.0f;
         int role = gw_Kit_Role(names[i]);
+        const char *missing = gw_Kit_RoleMissingPage(role);
+        if (missing != NULL) {
+            gw_test_fail("Atlas role %s: its page %s did not load (the text would draw nothing)", names[i], missing);
+            return 1;
+        }
         gw_Kit_RoleMetrics(role, &size, NULL, NULL, NULL, NULL);
         if (size < 12.0f || gw_Kit_TextWidth(role, "Aa 123") <= 0.0f) {
             gw_test_fail("Atlas role %s: size %.1f, no width", names[i], size);

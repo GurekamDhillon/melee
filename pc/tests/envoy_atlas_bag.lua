@@ -40,9 +40,9 @@ local function fake(opts)
   local ui = Stub.new({ available = opts.available })
   local g = { ui = ui, match = function() return { active = true, netplay = opts.netplay or false } end,
     input_mask = function() error('Atlas must never mask the pad') end, input_chord = function() error('Atlas must never chord the pad') end }
-  local log = { pressed = {}, marked = {}, notices = {}, refreshes = 0 }
+  local log = { pressed = {}, marked = {}, notices = {}, refreshes = 0, host = {} }
   local S = setmetatable({ g = g, mode = 'bag', layout = 'main', active = true, log = log, blocks = blocks(),
-    host = { seat = opts.seat, bag = function() return { capacity = function() return 4 end } end, plan_take = function() return { action = 'equip' } end } },
+    host = { seat = opts.seat, log = function(_, t) log.host[#log.host + 1] = t end, bag = function() return { capacity = function() return 4 end } end, plan_take = function() return { action = 'equip' } end } },
     { __index = Class })
   return S, ui, log, g
 end
@@ -74,7 +74,7 @@ T.test('describe: three blocks, positional ids, counts split, stones, flags and 
 end)
 
 T.test('co-op: the seat port is the screen port', function()
-  local S, ui = fake({ seat = { port = 2 } }); A.set(true); assert(A.attach(S)); assert(ui.screens[ID].port == 2); A.set(false)
+  local S, ui = fake({ seat = { port = 2 } }); A.set(true); assert(A.attach(S)); assert(ui.screens['envoy.bag.p2'].port == 2 and ui.screens[ID] == nil, 'seat 2 has its own screen id'); A.set(false)
 end)
 
 T.test('focus: on.focus marks the merge target, re-registers, and the provider explains the real lines', function()
@@ -84,11 +84,12 @@ T.test('focus: on.focus marks the merge target, re-registers, and the provider e
   assert(log.marked[#log.marked] == 'Drive 2', 'the legacy mark_target ran for the focused cell')
   assert(ui.refreshed > before, 'the description was re-registered (merge flags may have changed)')
   local v = ui.views[ID]
-  assert(v.explainer.kicker == 'BAG CELL 2' and v.explainer.title == 'Drive 2', v.explainer.kicker)
-  assert(v.explainer.what == 'Aerial hits set Burning for 3 s.\nBurning targets take more damage.', v.explainer.what)
+  assert(v.explainer.kicker == 'BAG CELL 2 - RULE 1 OF 2' and v.explainer.title == 'Drive 2', v.explainer.kicker)
+  assert(v.explainer.what == 'Aerial hits set Burning for 3 s.', v.explainer.what)   -- ONE rule; Z steps to the other
   assert(v.explainer.media.model == 102 and v.explainer.media.ring == 150 and v.explainer.from.text:find('Magic drive', 1, true))
   local btn = {}; for _, k in ipairs(v.keys) do btn[k[1]] = k[2] end
   assert(btn.A == 'Equip' and btn.Y == 'Discard' and btn.B == 'Close' and btn.X == nil, 'hints are the legacy actions plus Close; a false action is hidden')
+  assert(btn.Z == 'More' and btn.START == 'Close', 'a drive with two rules offers More; START closes')
   assert(v.counter == 'Bag 2 / 4', tostring(v.counter))
   A.set(false)
 end)
@@ -98,12 +99,12 @@ T.test('locked and empty cells have no drive actions and still explain themselve
   ui.engine_focus(ID, 'eq', 'eq:6')
   local v = ui.views[ID]
   assert(v.explainer.title == 'Locked slot' and v.explainer.what == 'Slot 6 unlocks at depth 5.' and v.explainer.media == nil and v.explainer.from == nil)
-  assert(#v.keys == 1 and v.keys[1][1] == 'B', 'only Close is offered')
-  assert(ui.engine_press(ID, 'accept'), 'A reaches the handler ...')
-  assert(log.accepted and log.accepted.kind == 'locked', '... on the locked ref, where the legacy accept does nothing')
+  assert(#v.keys == 2 and v.keys[1][1] == 'START' and v.keys[2][1] == 'B', 'only Close (START and B) is offered')
+  assert(not ui.engine_press(ID, 'accept'), 'a locked cell is disabled: the engine never fires A on it')
+  assert(log.accepted == nil, 'and the legacy accept was not called')
   ui.engine_focus(ID, 'bag', 'bag:4')
   local v2 = ui.views[ID]
-  assert(v2.explainer.what == 'Empty bag place.' and #v2.keys == 1 and v2.counter == 'Bag 4 / 4')
+  assert(v2.explainer.what == 'Empty bag place.' and #v2.keys == 2 and v2.counter == 'Bag 4 / 4')
   A.set(false)
 end)
 
@@ -168,6 +169,142 @@ T.test('a description the engine refuses falls back to the legacy screen', funct
   ui.screen = function() error('gd.ui.screen: refused') end
   assert(A.attach(S) == false and S.atlas == nil and rawget(S, 'draw') == nil, 'attach failed cleanly')
   ui.screen = real; A.set(false)
+end)
+
+
+-- ---- fix round 1 -----------------------------------------------------------------------------------------------------
+
+T.test('one rule at a time: the first rule, "RULE 1 OF n", and Z (or L and R) steps to the next, wrapping', function()
+  local S, ui, log = fake(); A.set(true); A.attach(S)
+  S.blocks[2].cells[2].lines = { 'Magic drive: Triple', 'First rule.', 'Second rule.', 'Third rule.', '', 'Goes into slot 2.' }
+  S.blocks[2].cells[2].detail_done = nil
+  A.set(true); S:refresh(); S.blocks = blocks(); S.blocks[2].cells[2].lines = { 'Magic drive: Triple', 'First rule.', 'Second rule.', 'Third rule.', '', 'Goes into slot 2.' }
+  S:refresh()
+  ui.engine_focus(ID, 'bag', 'bag:2')
+  local v = ui.views[ID]
+  assert(v.explainer.what == 'First rule.' and v.explainer.kicker == 'BAG CELL 2 - RULE 1 OF 3', v.explainer.what .. ' / ' .. v.explainer.kicker)
+  local btn = {}; for _, k in ipairs(v.keys) do btn[k[1]] = k[2] end
+  assert(btn.Z == 'More' and btn.START == 'Close' and btn.B == 'Close', 'a More hint and a START hint')
+  assert(ui.engine_press(ID, 'z'), 'Z reaches the step'); v = ui.views[ID]
+  assert(v.explainer.what == 'Second rule.' and v.explainer.kicker == 'BAG CELL 2 - RULE 2 OF 3', v.explainer.what)
+  ui.engine_press(ID, 'z'); assert(ui.views[ID].explainer.what == 'Third rule.')
+  ui.engine_press(ID, 'z'); assert(ui.views[ID].explainer.what == 'First rule.', 'wraps')
+  ui.engine_press(ID, 'l'); assert(ui.views[ID].explainer.what == 'Third rule.', 'L steps back')
+  ui.engine_press(ID, 'r'); assert(ui.views[ID].explainer.what == 'First rule.', 'R steps forward')
+  assert(not ui.views[ID].explainer.what:find('Second', 1, true), 'never more than one rule at a time')
+  ui.engine_press(ID, 'z'); ui.engine_focus(ID, 'bag', 'bag:1'); ui.engine_focus(ID, 'bag', 'bag:2')
+  assert(ui.views[ID].explainer.what == 'First rule.', 'moving the focus starts at the first rule again')
+  A.set(false)
+end)
+
+T.test('a drive with one rule shows no count and no More hint', function()
+  local S, ui = fake(); A.set(true); A.attach(S)
+  S.blocks[2].cells[1].lines = { 'Magic drive: Single', 'Only rule.', '', 'Goes into slot 2.' }
+  S.blocks[2].cells[1].detail_done = nil; S:refresh(); S.blocks = blocks(); S.blocks[2].cells[1].lines = { 'Magic drive: Single', 'Only rule.', '', 'Goes into slot 2.' }; S:refresh()
+  ui.engine_focus(ID, 'bag', 'bag:1')
+  local v = ui.views[ID]
+  assert(v.explainer.what == 'Only rule.' and v.explainer.kicker == 'BAG CELL 1', v.explainer.kicker)
+  local btn = {}; for _, k in ipairs(v.keys) do btn[k[1]] = k[2] end
+  assert(btn.Z == nil, 'no More hint')
+  assert(not ui.engine_press(ID, 'z') or ui.views[ID].explainer.what == 'Only rule.', 'Z changes nothing')
+  A.set(false)
+end)
+
+T.test('a rule longer than the field is cut at a word, ends in "...", and is logged once as a content bug', function()
+  local S, ui, log = fake(); A.set(true); A.attach(S)
+  local long = {}; for i = 1, 60 do long[i] = 'word' .. i end
+  local rule = table.concat(long, ' ')
+  S.blocks = blocks(); S.blocks[2].cells[1].lines = { 'Magic drive: Long', rule, '', 'x' }; S:refresh()
+  ui.engine_focus(ID, 'bag', 'bag:2'); ui.engine_focus(ID, 'bag', 'bag:1')
+  local what = ui.views[ID].explainer.what
+  assert(#what <= 159 and what:sub(-3) == '...', #what .. ' ' .. what:sub(-10))
+  local body = what:sub(1, -4); local last = body:match('(%S+)$')
+  assert(rule:find(body, 1, true) == 1 and rule:sub(#body + 1, #body + 1) == ' ', 'cut at a word boundary, last word "' .. tostring(last) .. '"')
+  ui.engine_focus(ID, 'bag', 'bag:2'); ui.engine_focus(ID, 'bag', 'bag:1')
+  local n = 0; for _, l in ipairs(log.host) do if l:find('content bug', 1, true) then n = n + 1 end end
+  assert(n == 1, 'logged once, not every time it is shown (' .. n .. ')')
+  A.set(false)
+end)
+
+T.test('two seats open at once are two screens; closing one does not close the other', function()
+  local S1, ui, log1, g = fake(); A.set(true)
+  local S2 = setmetatable({ g = g, mode = 'bag', layout = 'main', active = true, log = { pressed = {}, marked = {}, notices = {}, refreshes = 0 }, blocks = blocks(),
+    host = { seat = { port = 2 }, log = function() end, bag = function() return { capacity = function() return 4 end } end, plan_take = function() return { action = 'equip' } end } }, { __index = Class })
+  assert(A.attach(S1) and A.attach(S2))
+  assert(ui.screens['envoy.bag'] and ui.screens['envoy.bag.p2'], 'two registrations')
+  assert(ui.screens['envoy.bag'].port == 1 and ui.screens['envoy.bag.p2'].port == 2)
+  assert(#ui.stack == 2 and ui.stack[2] == 'envoy.bag.p2')
+  S2:press('down'); assert(ui.fed[#ui.fed][1] == 'envoy.bag.p2', 'seat 2 feeds its own screen')
+  S1:press('down'); assert(ui.fed[#ui.fed][1] == 'envoy.bag', 'seat 1 feeds its own screen')
+  A.detach(S1)
+  assert(#ui.stack == 1 and ui.stack[1] == 'envoy.bag.p2' and S2.atlas, 'seat 1 closed; seat 2 is still open')
+  assert(#'envoy.bag.p4' < 47, 'the id fits the engine limit')
+  A.detach(S2); assert(#ui.stack == 0)
+  A.set(false)
+end)
+
+T.test('a block over the engine\'s cell limit is shown cut with a note, so the screen is never refused', function()
+  local S, ui = fake(); A.set(true)
+  local key = {}; for i = 1, 14 do key[i] = { name = 'K' .. i, colour = 'purple', icon = { kind = 'letter', letter = 'K', colour = 1 }, lines = { 'k', '', 'x' }, ref = { kind = 'key', id = 'k' .. i }, actions = {} } end
+  S.blocks[3].cells = key
+  assert(A.attach(S), 'the screen was not refused')
+  local kb = ui.screens[ID].primary.blocks[3]
+  assert(#kb.cells == 12 and kb.note == '+2 more not shown', #kb.cells .. ' ' .. tostring(kb.note))
+  A.set(false)
+end)
+
+T.test('when the engine refuses the screen it is logged once, with the reason, and the legacy bag stays', function()
+  local S, ui, log = fake(); A.set(true)
+  A.logged = {}
+  ui.screen = function() error('gd.ui.screen: too many screens (8)') end
+  assert(A.attach(S) == false and S.atlas == nil)
+  local S2 = fake(); S2.g.ui = ui; S2.host.log = S.host.log
+  assert(A.attach(S2) == false)
+  local n = 0; for _, l in ipairs(log.host) do if l:find('too many screens', 1, true) then n = n + 1 end end
+  assert(n == 1, 'the reason was logged once (' .. n .. ')')
+  A.set(false)
+end)
+
+T.test('START has a hint, locked cells are disabled, and mark_target runs again after a re-registration', function()
+  local S, ui, log = fake(); A.set(true); A.attach(S)
+  local d = ui.screens[ID]
+  assert(d.primary.blocks[1].cells[6].flags.disabled and d.primary.blocks[1].cells[6].flags.locked, 'a locked cell is disabled')
+  assert(not d.primary.blocks[2].cells[1].flags.disabled)
+  local has_start = false; for _, k in ipairs(d.keys) do if k[1] == 'START' then has_start = true end end
+  assert(has_start, 'the START hint')
+  ui.engine_focus(ID, 'bag', 'bag:2')
+  local before = #log.marked
+  S.blocks = blocks(); S:refresh()
+  assert(#log.marked == before + 1 and log.marked[#log.marked] == 'Drive 2', 'the merge target was marked again for the cell the focus stayed on')
+  A.set(false)
+end)
+
+T.test('the pad\'s Z becomes "more" through the wrapped input poll, once per press, and detach restores the poll', function()
+  local S, ui = fake(); A.set(true)
+  local pad = {}
+  S.g.pad = function() return pad end
+  local polls = 0
+  local Input = {}; function Input.poll() polls = polls + 1; return {} end
+  S.input = setmetatable({ port = 1 }, { __index = Input })
+  assert(A.attach(S))
+  S.blocks[2].cells[2].lines = { 'Magic drive: Triple', 'First rule.', 'Second rule.', '', 'x' }
+  S.blocks = blocks(); S.blocks[2].cells[2].lines = { 'Magic drive: Triple', 'First rule.', 'Second rule.', '', 'x' }; S:refresh()
+  ui.engine_focus(ID, 'bag', 'bag:2')
+  assert(#S.input:poll() == 0, 'nothing pressed')
+  pad.Z = true
+  local out = S.input:poll(); assert(#out == 1 and out[1] == 'more', 'Z became more')
+  assert(#S.input:poll() == 0, 'held: not again')
+  pad.Z = nil; S.input:poll(); pad.Z = true; assert(#S.input:poll() == 1, 'pressed again')
+  S:press('more'); assert(ui.views[ID].explainer.what ~= nil)
+  A.detach(S)
+  assert(rawget(S.input, 'poll') == nil, 'the legacy poll is back')
+  A.set(false)
+end)
+
+T.test('attaching twice is refused', function()
+  local S, ui = fake(); A.set(true)
+  assert(A.attach(S) and A.attach(S) == false and #ui.stack == 1)
+  A.set(false)
 end)
 
 T.done()

@@ -119,6 +119,22 @@ Item_GObj* ftpickupitem_800942A0(Fighter_GObj* gobj, u32 flags)
         Item_GObj* cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM];
         Item_GObj* result = NULL;
         while (cur != NULL) {
+#if defined(TARGET_PC)
+            /* Standalone script items with collection "press" (Geno_ItemPressDist, geno_game_items.inc): found by
+             * the same pickup box, but only for a fighter the item's ports/teams masks allow and never a CPU. */
+            {
+                extern float Geno_ItemPressDist(HSD_GObj*, Fighter*);
+                float press_dist = (flags & (1 << 0)) ? Geno_ItemPressDist(cur, fp) : -1.0f;
+                if (press_dist >= 0.0f) {
+                    if (press_dist < min_dist_sq) {
+                        result = cur;
+                        min_dist_sq = press_dist;
+                    }
+                    cur = cur->next;
+                    continue;
+                }
+            }
+#endif
             if (Item_IsGrabbable(cur)) {
                 enum_t unk_enum = itIsHeavy(cur);
                 if ((!fp->x2222_b4 || !it_8026B47C(cur)) &&
@@ -327,6 +343,14 @@ void ftpickupitem_Anim(Fighter_GObj* gobj)
         Item_GObj* item_gobj =
             ftpickupitem_800942A0(gobj, fp->mv.co.itemget.x0 ? 2 : 1);
         if (item_gobj != NULL) {
+#if defined(TARGET_PC)
+            /* A "press" script item is collected on the grab frame, not held (see Geno_ItemPressDist). */
+            extern float Geno_ItemPressDist(HSD_GObj*, Fighter*);
+            extern void Geno_ItemPressCollect(HSD_GObj*, int);
+            if (Geno_ItemPressDist(item_gobj, fp) >= 0.0f) {
+                Geno_ItemPressCollect(item_gobj, fp->player_id);
+            } else
+#endif
             ftpickupitem_800948A8(gobj, item_gobj);
         }
     }

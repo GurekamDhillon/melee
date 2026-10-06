@@ -135,7 +135,8 @@ int gw_Geno_ItemDefineText(const char* text,const char* root,const char* path,ch
     !gn_item_bool(d,p,"stage_collision",&def.param[GENO_IP_STAGE_COLLISION])) goto bad;
  if(!gn_item_string(d,obj,"collection",collect,sizeof collect)) goto bad;
  if(!strcmp(collect,"touch")) def.param[GENO_IP_COLLECT]=1;
- else if(strcmp(collect,"none")) { why="grab collection is not supported; use touch or none"; goto bad; }
+ else if(!strcmp(collect,"press")) def.param[GENO_IP_COLLECT]=2; /* A on it, through the retail item-pickup states (ftpickupitem.c) */
+ else if(strcmp(collect,"none")) { why="grab collection is not supported; use touch, press or none"; goto bad; }
  for(i=0;i<2;++i) { v=jd_get(d,obj,i?"thrown":"held"); if(v>=0&&(d->n[v].type!=JN_BOOL||d->n[v].num)) { why="held/thrown standalone items are not supported"; goto bad; } }
  if(!gn_item_number(d,obj,"radius",&def.param[GENO_IP_RADIUS],.01,100,0)||
     !gn_item_number(d,obj,"ports",&def.param[GENO_IP_PORT_MASK],1,63,1)||

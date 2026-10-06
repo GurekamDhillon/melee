@@ -100,7 +100,7 @@ T.test('drop rules: team drops one per stage, bonus and boss none, battle at mos
  assert(drops>10 and drops<40,'the drop is a chance, got '..drops..'/40')
  local s4,g4,m4,h4=start_run();D.run_host.tuning.drops=false;stage(h4);h4:on_ko(2);D.run_host.tuning.drops=true;assert(not h4.drop_queue or #h4.drop_queue==0,'drops switch off')
 end)
-T.test('the match end is held while a drive is on the floor, released when it is collected, the player is out, or after 30 s',function()
+T.test('the match end is held while a drive is on the floor, released when it is collected, the player is out, or the player leaves (no timer)',function()
  local function frames(host,n) for _=1,n do host:frame() end end
  local function held(s) return s.endhold and s.endhold['envoy-drives']==true end
  local s,g,mods,host=start_run();stage(host);host:on_ko(2);s.players[2].stocks=0
@@ -109,9 +109,9 @@ T.test('the match end is held while a drive is on the floor, released when it is
  host.mods.drives.drops:clear();frames(host,6);assert(not held(s) and has(s,'match end released: every drive collected'))
  -- the player dying releases it
  local s2,g2,m2,h2=start_run();stage(h2);h2:on_ko(2);s2.players[2].stocks=0;frames(h2,6);assert(held(s2));s2.players[1].stocks=0;frames(h2,6);assert(not held(s2) and has(s2,'the player is out'))
- -- the ceiling: 30 s of logic frames after the last opponent is out, then the drives go to the bag as before
+ -- there is no 30 s ceiling any more (the stage-end payout, envoy_payout.lua): a player who is playing is never cut off; the way out is the leave chord
  local s3,g3,m3,h3=start_run();stage(h3);h3:on_ko(2);s3.players[2].stocks=0;frames(h3,12);assert(held(s3))
- frames(h3,1700);assert(held(s3),'still held before the ceiling');frames(h3,200);assert(not held(s3) and has(s3,'match end hold ceiling (30 s)'))
+ frames(h3,2100);assert(held(s3),'no ceiling: still held after 35 s');s3.pad={Z=true,DOWN=true,buttons=0x14};frames(h3,80);assert(not held(s3) and has(s3,'match end released: the player left'))
  -- opponents still alive: the hold may be on but the ceiling clock does not run
  local s4,g4,m4,h4=start_run();stage(h4);h4:on_ko(2);frames(h4,2400);assert(held(s4),'no ceiling while an opponent is alive')
  -- bonus and boss stages have nothing on the floor: no hold; a stage clear releases it

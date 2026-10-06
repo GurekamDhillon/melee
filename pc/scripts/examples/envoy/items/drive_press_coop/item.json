@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "name": "drive_press_coop",
+  "physics": {
+    "gravity": 0.12,
+    "terminal_velocity": 4,
+    "bounce": 0,
+    "friction": 0.15,
+    "floor_rest": true,
+    "stage_collision": true
+  },
+  "collection": "press",
+  "radius": 7,
+  "ports": 3,
+  "teams": 15,
+  "lifetime": 900,
+  "blink": 120,
+  "count_against_cap": false,
+  "held": false,
+  "thrown": false,
+  "payload": {
+    "colour": "red",
+    "amount": 1
+  },
+  "visual": {
+    "asset_mod": "envoy_drives",
+    "model": "models/drive",
+    "colour_variants": true,
+    "glass": "models/drive_glass",
+    "scale": 2.5,
+    "spin": 6,
+    "bob": 0.6,
+    "hover": 6,
+    "tilt": 12,
+    "bob_speed": 3,
+    "height": 4.4
+  }
+}

@@ -56,6 +56,42 @@ static bool geno_item_in_capsule(f32 dx,f32 dy,f32 radius,f32 top) {
  if(dy>top) dy-=top; else if(dy>0) dy=0;
  return dx*dx+dy*dy<=radius*radius;
 }
+/* collection "press" (item.json): the item is collected by pressing A near it, through the retail item-pickup
+ * states. ftpickupitem_80094790 (the attack entry states' item check) asks ftpickupitem_800942A0 for an item in the
+ * fighter's pickup box; that function now also asks this one, which answers the squared distance from the box
+ * centre or -1 when this fighter may not take the item. The LightGet motion then plays as for any light item and its
+ * grab frame (ftpickupitem_Anim) calls Geno_ItemPressCollect instead of attaching the item to the hand.
+ * Ownership is the same `ports`/`teams` masks the touch rule uses, and a CPU-controlled fighter never qualifies
+ * (ftCo_IsCpuControlled, the same test 800942A0 already applies to CPU kind 28): a retail CPU's jab near the item
+ * would otherwise take it. The CPU item seeker never targets these items: Item_IsGrabbable is false for them (no
+ * `picked_up` in geno_item_logic) and ftCo_800A5F4C / ftCo_800A61D8 also skip `kind >= It_Kind_L_Gun_Ray`. */
+extern bool ftCo_IsCpuControlled(Fighter* fp);
+extern void Item_8026A8EC(Item_GObj* gobj);
+f32 Geno_ItemPressDist(HSD_GObj* g,Fighter* fp) {
+ Item* ip; int d; f32 s,half,xr,yr,ix,iy,x0,y0,x1,y1; Vec4* box;
+ if(!g || !fp) return -1.0f;
+ ip=GET_ITEM(g); d=geno_item_def(ip);
+ if(d<0 || Geno_ItemParam(d,GENO_IP_COLLECT)!=2 || geno_item_vars(ip)->terminal) return -1.0f;
+ if(fp->player_id>=6 || fp->is_sub_fighter || fp->motion_id<=ftCo_MS_RebirthWait || (unsigned)fp->team>=32 ||
+    !(Geno_ItemParam(d,GENO_IP_PORT_MASK)&(1<<fp->player_id)) ||
+    !((u32)Geno_ItemParam(d,GENO_IP_TEAM_MASK)&(1U<<fp->team)) || ftCo_IsCpuControlled(fp)) return -1.0f;
+ s=geno_item_paramf(d,GENO_IP_SCALE); half=geno_item_paramf(d,GENO_IP_HEIGHT)*s*0.5f;
+ xr=geno_item_paramf(d,GENO_IP_RADIUS)*s; yr=xr>half ? xr : half;
+ ix=ip->pos.x; iy=ip->pos.y+geno_item_lift(d,(f32)geno_item_vars(ip)->age)+half;
+ box=fp->ground_or_air==GA_Ground ? &fp->x294_itPickup.gr_light_offset : &fp->x294_itPickup.air_light_offset;
+ x0=fp->facing_dir*box->x+fp->cur_pos.x; y0=fp->cur_pos.y+box->y; x1=box->z; y1=box->w;
+ if(x0-x1-xr<ix && ix<x0+x1+xr && y0-y1-yr<iy && iy<y0+y1+yr)
+  return (ix-x0)*(ix-x0)+(iy-y0)*(iy-y0);
+ return -1.0f;
+}
+void Geno_ItemPressCollect(HSD_GObj* g,int port) {
+ Item* ip; int d;
+ if(!g) return;
+ ip=GET_ITEM(g); d=geno_item_def(ip);
+ if(d<0 || Geno_ItemParam(d,GENO_IP_COLLECT)!=2 || geno_item_vars(ip)->terminal) return;
+ geno_item_event(ip,0,port); /* terminal: the destroy callback's event 2 is then suppressed */
+ Item_8026A8EC(g);
+}
 static bool geno_item_anim(Item_GObj* g) {
  Item* ip=GET_ITEM(g); GenoItemVars* v=geno_item_vars(ip);
  int d=geno_item_def(ip),life=Geno_ItemParam(d,GENO_IP_LIFETIME);

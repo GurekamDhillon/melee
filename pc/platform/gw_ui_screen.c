@@ -15,7 +15,26 @@ static void get_str(const AtvArena *a, int t, const char *k, char *dst, int cap,
     if ((int) strlen(s) >= cap && warn) (*warn)++;
     snprintf(dst, (size_t) cap, "%s", s);
 }
-static int get_int(const AtvArena *a, int t, const char *k, int def) { return (int) atv_numv(a, atv_get(a, t, k), def); }
+static int get_int_of(const AtvArena *a, int n)
+{
+    double d = atv_numv(a, n, -1.0);
+    if (d != d) return -1;
+    return d > 1.0e9 ? 1000000000 : (d < -1.0e9 ? -1000000000 : (int) d);
+}
+/* A number from a script can be NaN, infinite or huge: a bare (int) cast of those is undefined. Non-finite takes the default; the rest is clamped. */
+static int get_int(const AtvArena *a, int t, const char *k, int def)
+{
+    double d = atv_numv(a, atv_get(a, t, k), (double) def);
+    if (d != d) return def;
+    if (d > 1.0e9) return 1000000000;
+    if (d < -1.0e9) return -1000000000;
+    return (int) d;
+}
+/* a model or ring index: below zero means none, and nothing past 65535 is a model */
+static int to_model(int v) { return v < 0 ? AT_NO_MODEL : (v > 65535 ? 65535 : v); }
+static int get_model(const AtvArena *a, int t, const char *k) { return to_model(get_int(a, t, k, AT_NO_MODEL)); }
+/* an id is the refocus and handler key, so one the field would cut is an error, not a twin */
+static int id_too_long(const AtvArena *a, int t) { return (int) strlen(atv_strv(a, atv_get(a, t, "id"), "")) >= AT_ID; }
 static int get_fn(const AtvArena *a, int t, const char *k) { return atv_fnv(a, atv_get(a, t, k)); }
 static int flag(const AtvArena *a, int f, const char *k, unsigned bit) { return atv_boolv(a, atv_get(a, f, k), 0) ? (int) bit : 0; }
 
@@ -44,6 +63,7 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
     int prim, blocks, items, i, j, k, ex, keys, on, alt, nb, nc, n;
     const char *kind, *id, *w;
     memset(o, 0, sizeof *o);
+    if (a->overflow) FAIL("gd.ui.screen: the description is too large (it overflowed the conversion arena)");
     o->fn_provide = o->fn_accept = o->fn_back = o->fn_focus = o->fn_change = o->fn_open = o->fn_close = o->fn_counter = -1;
     o->fn_alt[0] = o->fn_alt[1] = o->fn_alt[2] = -1;
     o->preset = AT_PRESET_NONE;
@@ -85,8 +105,10 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
             int bn = atv_at(a, blocks, i + 1), cells;
             AtBlock *b = &o->blocks[i];
             if (atv_kind(a, bn) != ATV_TABLE) FAIL("gd.ui.screen: block %d is not a table", i + 1);
+            if (id_too_long(a, bn)) FAIL("gd.ui.screen: block %d: id is too long (%d characters at most)", i + 1, AT_ID - 1);
             get_str(a, bn, "id", b->id, AT_ID, &o->warnings);
             if (b->id[0] == '\0') FAIL("gd.ui.screen: block %d has no id", i + 1);
+            for (k = 0; k < i; k++) if (strcmp(o->blocks[k].id, b->id) == 0) FAIL("gd.ui.screen: duplicate block id \"%s\"", b->id);
             get_str(a, bn, "title", b->title, AT_STR, &o->warnings);
             get_str(a, bn, "count", b->count, 24, &o->warnings);
             get_str(a, bn, "note", b->note, AT_STR, &o->warnings);
@@ -96,27 +118,31 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
             cells = atv_get(a, bn, "cells");
             nc = atv_len(a, cells);
             if (nc > AT_MAX_CELLS) FAIL("gd.ui.screen: block \"%s\" has %d cells (%d at most)", b->id, nc, AT_MAX_CELLS);
-            if (b->cols > nc && nc > 0 && b->cols > AT_MAX_CELLS) FAIL("gd.ui.screen: block \"%s\": cols is larger than the cell limit", b->id);
             b->n = nc;
             for (j = 0; j < nc; j++) {
                 int cn = atv_at(a, cells, j + 1);
                 AtCell *c = &b->cells[j];
                 const char *og;
                 if (atv_kind(a, cn) != ATV_TABLE) FAIL("gd.ui.screen: block \"%s\" cell %d is not a table", b->id, j + 1);
+                if (id_too_long(a, cn)) FAIL("gd.ui.screen: block \"%s\" cell %d: id is too long (%d characters at most)", b->id, j + 1, AT_ID - 1);
                 get_str(a, cn, "id", c->id, AT_ID, &o->warnings);
                 if (c->id[0] == '\0') FAIL("gd.ui.screen: block \"%s\" cell %d has no id", b->id, j + 1);
                 for (k = 0; k < i; k++) { int q; for (q = 0; q < o->blocks[k].n; q++) if (strcmp(o->blocks[k].cells[q].id, c->id) == 0) FAIL("gd.ui.screen: duplicate cell id \"%s\"", c->id); }
                 for (k = 0; k < j; k++) if (strcmp(b->cells[k].id, c->id) == 0) FAIL("gd.ui.screen: duplicate cell id \"%s\"", c->id);
                 get_str(a, cn, "name", c->name, AT_STR, &o->warnings);
-                c->model = get_int(a, cn, "model", AT_NO_MODEL);
-                c->ring = get_int(a, cn, "ring", AT_NO_MODEL);
+                c->model = get_model(a, cn, "model");
+                c->ring = get_model(a, cn, "ring");
                 c->index = get_int(a, cn, "index", 0);
+                if (c->index < 0) c->index = 0;
                 c->pips = get_int(a, cn, "pips", 0);
                 if (c->pips < 0) c->pips = 0;
                 if (c->pips > 4) c->pips = 4;
                 og = atv_strv(a, atv_get(a, cn, "origin"), "");
                 c->origin = og[0] == 'G' || og[0] == '+' ? og[0] : 0;
-                c->rgba = (unsigned) atv_numv(a, atv_get(a, cn, "color"), 0);
+                {
+                    double col = atv_numv(a, atv_get(a, cn, "color"), 0);          /* NaN and negatives are 0, too large is all bits set */
+                    c->rgba = !(col >= 0.0) ? 0u : (col >= 4294967295.0 ? 0xFFFFFFFFu : (unsigned) col);
+                }
                 w = atv_strv(a, atv_get(a, cn, "letter"), "");
                 c->letter = w[0];
                 c->flags = read_flags(a, atv_get(a, cn, "flags"));
@@ -127,9 +153,9 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
             if (atv_kind(a, ft) == ATV_TABLE) {
                 o->footer.has = 1;
                 get_str(a, ft, "label", o->footer.label, 24, &o->warnings);
-                o->footer.model_a = get_int(a, ft, "a", AT_NO_MODEL);
-                o->footer.model_b = get_int(a, ft, "b", AT_NO_MODEL);
-                o->footer.model_out = get_int(a, ft, "out", AT_NO_MODEL);
+                o->footer.model_a = get_model(a, ft, "a");
+                o->footer.model_b = get_model(a, ft, "b");
+                o->footer.model_out = get_model(a, ft, "out");
                 get_str(a, ft, "text", o->footer.text, AT_STR, &o->warnings);
             }
         }
@@ -143,6 +169,7 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
             AtItem *it = &o->items[i];
             const char *vk;
             if (atv_kind(a, in) != ATV_TABLE) FAIL("gd.ui.screen: item %d is not a table", i + 1);
+            if (id_too_long(a, in)) FAIL("gd.ui.screen: item %d: id is too long (%d characters at most)", i + 1, AT_ID - 1);
             get_str(a, in, "id", it->id, AT_ID, &o->warnings);
             if (it->id[0] == '\0') FAIL("gd.ui.screen: item %d has no id", i + 1);
             for (k = 0; k < i; k++) if (strcmp(o->items[k].id, it->id) == 0) FAIL("gd.ui.screen: duplicate item id \"%s\"", it->id);
@@ -155,7 +182,10 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
                 vk = atv_strv(a, atv_get(a, vt, "kind"), "");
                 if (strcmp(vk, "toggle") == 0) { it->vkind = AT_VAL_TOGGLE; it->on = atv_boolv(a, atv_get(a, vt, "on"), 0); }
                 else if (strcmp(vk, "choice") == 0) it->vkind = AT_VAL_CHOICE;
-                else if (strcmp(vk, "slider") == 0) { it->vkind = AT_VAL_SLIDER; it->vmin = get_int(a, vt, "min", 0); it->vmax = get_int(a, vt, "max", 100); it->vval = get_int(a, vt, "value", 0); }
+                else if (strcmp(vk, "slider") == 0) { it->vkind = AT_VAL_SLIDER; it->vmin = get_int(a, vt, "min", 0); it->vmax = get_int(a, vt, "max", 100); it->vval = get_int(a, vt, "value", 0);
+                    if (it->vmin >= it->vmax) FAIL("gd.ui.screen: item \"%s\": slider min must be below max", it->id);
+                    if (it->vval < it->vmin) it->vval = it->vmin;
+                    if (it->vval > it->vmax) it->vval = it->vmax; }
                 else if (strcmp(vk, "text") == 0) it->vkind = AT_VAL_TEXT;
                 else if (strcmp(vk, "counter") == 0) it->vkind = AT_VAL_COUNTER;
                 else FAIL("gd.ui.screen: item \"%s\": unknown value kind \"%s\"", it->id, vk);
@@ -235,14 +265,14 @@ int at_explainer_from_val(const AtvArena *a, int t, AtExplainer *e, char *err, i
     get_str(a, t, "what", e->what, AT_TEXT, &e->warn);
     media = atv_get(a, t, "media");
     if (atv_kind(a, media) == ATV_TABLE) {
-        e->media_model = get_int(a, media, "model", AT_NO_MODEL);
-        e->media_ring = get_int(a, media, "ring", AT_NO_MODEL);
+        e->media_model = get_model(a, media, "model");
+        e->media_ring = get_model(a, media, "ring");
     }
     with = atv_get(a, t, "with");
     n = atv_len(a, with);
     for (i = 0; i < n && e->n_with < AT_MAX_WITH; i++) {
         int w = atv_at(a, with, i + 1);
-        e->with_model[e->n_with++] = atv_kind(a, w) == ATV_TABLE ? get_int(a, w, "model", AT_NO_MODEL) : (int) atv_numv(a, w, AT_NO_MODEL);
+        e->with_model[e->n_with++] = atv_kind(a, w) == ATV_TABLE ? get_model(a, w, "model") : to_model(get_int_of(a, w));
     }
     from = atv_get(a, t, "from");
     if (atv_kind(a, from) == ATV_TABLE) get_str(a, from, "text", e->from_text, AT_STR, &e->warn);

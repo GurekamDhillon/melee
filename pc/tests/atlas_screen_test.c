@@ -194,6 +194,74 @@ static void accept_semantics(void)
     CHECK(at_screen_wants_pad(&ls));                                   /* default: the engine polls the pad */
 }
 
+static int one_cell_screen(const char *bid, const char *cid, int *cellout)
+{
+    int root = atv_table(A), prim = atv_table(A), blocks = atv_table(A), b = block(bid, "B", 2, 0), c = cell(cid, "one", -1, 0, 0);
+    S(root, "id", "m.x"); S(prim, "kind", "grid");
+    atv_push(A, atv_get(A, b, "cells"), c); atv_push(A, blocks, b);
+    atv_set(A, prim, "blocks", blocks); atv_set(A, root, "primary", prim);
+    if (cellout) *cellout = c;
+    return root;
+}
+
+static void hardening(void)
+{
+    static AtScreen sc;
+    char err[160];
+    int root, c, i, prim, blocks, items, it, v;
+    /* an arena that overflowed dropped entries: never convert it as if whole */
+    root = bag("m.bag");
+    while (!A->overflow) atv_num(A, 1.0);
+    CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "too large") != NULL);
+    atv_init(A);
+    /* numbers from a script: NaN, infinity and huge values never reach an int cast */
+    root = one_cell_screen("b", "c", &c);
+    N(c, "model", NAN); N(c, "ring", 1e30); N(c, "pips", -INFINITY); N(c, "index", 1e300); N(c, "color", NAN);
+    CHECK(at_screen_from_val(A, root, NULL, &sc, err, sizeof err));
+    CHECK(sc.blocks[0].cells[0].model == AT_NO_MODEL);
+    CHECK(sc.blocks[0].cells[0].ring >= AT_NO_MODEL && sc.blocks[0].cells[0].ring <= 65535);
+    CHECK(sc.blocks[0].cells[0].pips == 0 && sc.blocks[0].cells[0].rgba == 0);
+    CHECK(sc.blocks[0].cells[0].index >= 0);
+    atv_init(A);
+    root = one_cell_screen("b", "c", &c);
+    N(c, "model", -7); N(c, "color", 1e30);
+    CHECK(at_screen_from_val(A, root, NULL, &sc, err, sizeof err));
+    CHECK(sc.blocks[0].cells[0].model == AT_NO_MODEL);                    /* below -1 means none */
+    CHECK(sc.blocks[0].cells[0].rgba == 0xFFFFFFFFu);
+    atv_init(A);
+    /* two blocks, one id */
+    root = atv_table(A); prim = atv_table(A); blocks = atv_table(A);
+    S(root, "id", "m.x"); S(prim, "kind", "grid");
+    atv_push(A, blocks, block("b", "B1", 2, 0)); atv_push(A, blocks, block("b", "B2", 2, 0));
+    atv_set(A, prim, "blocks", blocks); atv_set(A, root, "primary", prim);
+    CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "duplicate") != NULL);
+    atv_init(A);
+    /* an over-long id is an error, not a truncated twin */
+    root = one_cell_screen("b", "cell-id-that-is-longer-than-the-field", NULL);
+    CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "too long") != NULL);
+    atv_init(A);
+    root = one_cell_screen("block-id-that-is-longer-than-the-field", "c", NULL);
+    CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "too long") != NULL);
+    atv_init(A);
+    root = atv_table(A); prim = atv_table(A); items = atv_table(A);
+    S(root, "id", "m.x"); S(prim, "kind", "list");
+    it = atv_table(A); S(it, "id", "item-id-that-is-longer-than-the-field"); S(it, "label", "L"); atv_push(A, items, it);
+    atv_set(A, prim, "items", items); atv_set(A, root, "primary", prim);
+    CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "too long") != NULL);
+    atv_init(A);
+    /* slider bounds */
+    for (i = 0; i < 3; i++) {
+        root = atv_table(A); prim = atv_table(A); items = atv_table(A);
+        S(root, "id", "m.x"); S(prim, "kind", "list");
+        it = atv_table(A); S(it, "id", "v"); S(it, "label", "V"); v = atv_table(A); S(v, "kind", "slider");
+        N(v, "min", i == 0 ? 10 : 0); N(v, "max", i == 0 ? 10 : 100); N(v, "value", i == 2 ? 500 : 30);
+        atv_set(A, it, "value", v); atv_push(A, items, it); atv_set(A, prim, "items", items); atv_set(A, root, "primary", prim);
+        if (i == 0) { CHECK(!at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(strstr(err, "slider") != NULL); }
+        else { CHECK(at_screen_from_val(A, root, NULL, &sc, err, sizeof err)); CHECK(sc.items[0].vval == (i == 2 ? 100 : 30)); }
+        atv_init(A);
+    }
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
@@ -203,6 +271,7 @@ int main(void)
     atv_init(A); explainer();
     atv_init(A); refocus();
     atv_init(A); accept_semantics();
+    atv_init(A); hardening();
     free(A);
     ATLAS_DONE("atlas screen");
 }

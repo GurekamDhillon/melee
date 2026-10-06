@@ -1,0 +1,6 @@
+# Dash grab: longer reach
+PUT ANIM_RATE 1.0
+wait 9
+hitbox raw=0x2C000000,0x03CC0000,0x07000700,0xB4990012,0x0020008B
+wait 4
+clear_hitboxes

@@ -1,0 +1,11 @@
+# Neutral special: charge. Hold B up to 60 frames (MOVE_I0 counts); release (or the cap) strikes.
+PUT MOVE_I0 0
+CHG geno:1 HELD 2 NOT
+loop 60
+GET la_i:0 MOVE_I0
+ADD la_i:0 1
+PUT MOVE_I0 la_i:0
+wait 1
+loop_end
+CHG geno:1 ALWAYS ONCE
+wait 1

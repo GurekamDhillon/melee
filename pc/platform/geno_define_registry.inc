@@ -329,6 +329,18 @@ static int gn_plan_parse(GenoPlan* pl, const jdoc* d, const char* who)
     rows = jd_get(d, root, "motion_rows");
     if (rows < 0 || d->n[rows].type != JN_ARR || d->n[rows].count > GPL_MAX_MOTIONS) { gw_log("geno: plan %s: no motion_rows", who); return 0; }
     for (i = 0; i < GPL_MAX_MOTIONS; ++i) pl->motion_clip[i] = -1;
+    for (i = 0; i < GPL_MAX_ROWS; ++i) pl->row_clip[i] = -1;
+    {   /* row_clips: the clip for each animation row by its ftCo_SM_ name (rows no state names but the engine plays by number) */
+        int rc = jd_get(d, root, "row_clips"), e, ri = 0;
+        if (rc >= 0 && d->n[rc].type == JN_ARR) {
+            for (e = d->n[rc].first; e >= 0 && ri < GPL_MAX_ROWS; e = d->n[e].next, ++ri) {
+                if (d->n[e].type == JN_STR) {
+                    for (i = 0; i < pl->nclips && strcmp(pl->clip_name[i], d->n[e].str); ++i) {}
+                    if (i < pl->nclips) pl->row_clip[ri] = (short)i;
+                }
+            }
+        }
+    }
     for (c = d->n[rows].first; c >= 0; c = d->n[c].next) {
         int m = gn_plan_num(d, c, "motion", 0, GPL_MAX_MOTIONS - 1), cl = jd_get(d, c, "clip");
         if (m < 0) { gw_log("geno: plan %s: bad motion row", who); return 0; }
@@ -415,6 +427,7 @@ int gw_Geno_DefinePlanInt(int kind, int what, int i)
     case 11: return i >= 0 && i < pl->nclips ? (int)pl->clip_bytes[i] : -1;
     case 12: return i >= 0 && i < pl->nclips ? pl->clip_frames[i] : -1;
     case 13: return i >= 0 && i < GPL_MAX_MOTIONS ? (int)pl->motion_clip[i] : -1;
+    case 14: return i >= 0 && i < GPL_MAX_ROWS ? (int)pl->row_clip[i] : -1;
     case 5: return pl->nhurt;
     case 20: return i >= 0 && i < 5 ? pl->ft_x8[i] : -1;
     case 21: return i == 0 ? pl->ft_x34[0] : -1;

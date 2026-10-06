@@ -1,0 +1,16 @@
+# Neutral air: 9% then 6%, long active window
+PUT ANIM_RATE 1.0
+wait 4
+cmd_var idx=0 value=1
+hitbox slot=0 joint=36 damage=9 size=2.9 x=0 y=0 z=0 angle=361 kbg=100 fkb=0 bkb=18
+hitbox slot=1 joint=32 damage=9 size=2.9 x=0 y=0 z=0 angle=361 kbg=100 fkb=0 bkb=18
+wait 4
+clear_hitboxes
+hitbox slot=0 joint=36 damage=6 size=2.9 x=0 y=0 z=0 angle=361 kbg=100 fkb=0 bkb=12
+hitbox slot=1 joint=32 damage=6 size=2.9 x=0 y=0 z=0 angle=361 kbg=100 fkb=0 bkb=12
+wait 22
+clear_hitboxes
+wait 3
+cmd_var idx=0 value=0
+wait 7
+iasa

@@ -2624,6 +2624,31 @@ clip on the skeleton, any fighter use of the files (the model is an article, not
 
 Not decided because not reached: how clip rate follows ground speed (retail's walk/run rate follows velocity; the Courier's reference speeds are 2 to 15 times below the Striker's gameplay speeds), the facing flip frames of `Turn`/`TurnRun`, the real ECB and hurtbox radii, and the model scale (1.0 was used; the Courier is about 11.7 units tall).
 
+### 22.4 Slice 4, engine half so far: the Courier is a fighter (built 2026-10-05; see the open list below)
+
+`base: "none"` (format 9) loads the define's own model, animation bank, parts table (42 joints), joint fields and 15 hurtboxes from its
+`plan.json`. It stands in `Wait`, walks, jumps and attacks with its own clips, carrying the Striker's moves retargeted by role.
+
+- **The pose bug (cause, measured).** Constant channels were written as ONE-key tracks. `FObjLoadData` (`fobj.c`) takes a key's interpolation
+  op from the key before it (`op_intrp = op`, then the new op is parsed), so a one-key track reaches state 6 with `op_intrp == 0` and
+  `FObjUpdateAnim` calls the joint update with an uninitialised value (0). Every constant channel zeroed its joint (the thigh's rest rotation
+  of pi, the hips' height): legs up, hips at y 0. The converter now writes constants as two linear keys. Joint world positions agree with a
+  forward-kinematics check of the same clips (five clips of five kinds, 42 joints, worst 0.14 units on an 11.7-unit fighter).
+- **Rows.** `GenoDefine_BuildOwn`: the Wait state claims its row first (the idle picker, `ftCo_8008A7A8`, re-reads the row by number); any
+  other state that shares a donor row but names a different clip gets a row of its own (rows `n..`, `ftData` `xC` and `x10` extended,
+  `ftData_Table_Unk0[kind].count` raised, the per-kind motion-state copies remapped); a row no state names takes the clip its
+  `ftCo_SM_` name gives (plan `row_clips`), else the Wait clip, because the engine plays some rows by number (`ftCo_Fall_Anim_Inner` blends toward
+  `ftCo_SM_FallF`/`FallB`; an empty row was a NULL tree and a crash).
+- **Hurtbox status words** (`ftColl_8007B128`): a borrowed script word naming a joint a none define has no hurtbox on is skipped (retail and
+  every other define still assert). Moves retargeted by role (`tools/geno/courier_moves.py`) do not hit this.
+- **Attributes.** The fixture authors 46 of the 67 named attributes; `model_scaling` is 1.0 and the walk / run reference speeds come from
+  the art. The other 21 and the unnamed `ftCo_DatAttrs` fields are still the donor's.
+- **Rollback.** No new gameplay state: rows and tables are static per kind. `gd.rewind_test` mid-jab: 0 simulation bytes differ; the bench
+  SyncTest (k=12, Courier against Mario, pad bots, 700 frames): 7,200 checks, 0 mismatching.
+- **Open.** ECB offsets, IK lengths, ledge snap and the hurtbox scale are the donor's numbers; the three donor fixtures are unchanged (same
+  stable ids); `tools/geno check` does not yet know format 9; Turn / TurnRun flip frames follow `standing_turn_frames` (4, as the art) and
+  the dash-turn constant (donor's); costumes (four files exist), stage switching, six slots and a Classic run were not exercised.
+
 ### Frame-counting convention: the first `wait` of an authored script
 
 A subaction script's `wait N` is the engine's own synchronous timer, run by retail's ftAction loop

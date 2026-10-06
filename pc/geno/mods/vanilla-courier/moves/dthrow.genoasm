@@ -1,0 +1,6 @@
+# Down throw: 4%, low pop
+wait 1
+throw idx=0 damage=4 unk0=75 hit_x24=60 hit_x28=0 hit_x2C=30
+throw idx=1 damage=1 unk0=361 hit_x24=100 hit_x28=0 hit_x2C=30
+wait 18
+throw_flag hit_idx=0

@@ -3304,6 +3304,17 @@ void ftColl_8007B128(Fighter_GObj* fighter_gobj, int bone_id,
         }
     }
 
+#if defined(TARGET_PC)
+    {
+        /* A base "none" define has its own skeleton: a script word it borrowed from the donor (a hurtbox status change
+         * naming one of the donor's joints) can name a joint the define has no hurtbox on. That is not a malformed
+         * fighter: skip the word. (Retail data and every other define still assert.) */
+        extern int Geno_DefineIsNone(int kind);
+        if (Geno_DefineIsNone(fp->kind)) {
+            return;
+        }
+    }
+#endif
     HSD_ASSERTREPORT(0x888, 0,
                      "in ftCollisionSetHitStatus illegal parts!\n");
 }

@@ -7,6 +7,7 @@
 #define GPL_MAX_PARTS 56
 #define GPL_MAX_CLIPS 256
 #define GPL_MAX_MOTIONS 351
+#define GPL_MAX_ROWS 512
 #define GPL_NONE 255
 typedef struct GenoPlan {
     int ok;                                     /* parsed and consistent */
@@ -25,6 +26,7 @@ typedef struct GenoPlan {
     int nhurt;                                  /* hurtbox capsules (the engine holds 15) */
     int hurt_joint[16], hurt_height[16], hurt_grab[16];
     float hurt_a[16][3], hurt_b[16][3], hurt_radius[16]; /* joint-local, host byte order (the game gets bit patterns) */
+    short row_clip[GPL_MAX_ROWS];               /* clip per animation ROW (the engine's subaction numbers, ftCo_SM_*), -1 = no name matches */
     short motion_clip[GPL_MAX_MOTIONS];         /* clip index per engine motion row, -1 = the row plays none */
 } GenoPlan;
 #endif

@@ -22,6 +22,8 @@ static Fighter_CostumeStrings GenoDefine_CostumeStrings[Ft_Kind_Max - Ft_Kind_Me
 static FighterPartsTable GenoDefine_Parts[Ft_Kind_Max - Ft_Kind_Mex0];
 static u8 GenoDefine_PartsJ2P[Ft_Kind_Max - Ft_Kind_Mex0][128];
 static u8 GenoDefine_PartsP2J[Ft_Kind_Max - Ft_Kind_Mex0][56];
+#define GENO_OWN_EXTRA_ROWS 96
+static short GenoDefine_RowRemap[Ft_Kind_Max - Ft_Kind_Mex0][512];   /* motion -> its own animation row (>= n), -1: keeps the donor's number */
 static void* GenoDefine_VisTable[16][4];     /* no visibility groups: every row NULL, model_num 0 */
 static u16 GenoDefine_TobjZero;
 static u16* GenoDefine_TobjTable[16];        /* no texture animations: n_costume_tobjs 0 */
@@ -208,17 +210,64 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
     out->x8 = x8;
     GenoDefine_JointFields(kind, out, x8);
     for (i = 0; i < n; ++i) { pick[i] = -1; rank[i] = 0; }
-    for (m = 0; m < nmotions && m < ftCo_MS_Count + ftMr_MS_SelfCount; ++m) {
-        MotionState* st = m < ftCo_MS_Count ? &ftData_MotionStateList[m] : &ftMr_Init_MotionStateTable[m - ftCo_MS_Count];
-        int a = st->anim_id, c = Geno_DefinePlanInt(kind, 13, m);
-        if (a < 0 || a >= n || c < 0) continue;
-        /* the row's rank: a state with its own name beats one that aliases (the clip name equals Mario's row it serves) */
-        if (rank[a] < 1) { pick[a] = (short)c; rank[a] = 1; }
-        else if (pick[a] != c) {
-            ++conflicts;
-            if (conflicts <= 32) OSReport("geno: base none kind %d: motion %d shares animation row %d with another state but names clip %s, not %s; the first stays\n",
-                                         kind, m, a, Geno_DefinePlanText(kind, 0, c), Geno_DefinePlanText(kind, 0, pick[a]));
+    {
+        int slot = kind - Ft_Kind_Mex0, extras = 0;
+        short ex_a[GENO_OWN_EXTRA_ROWS], ex_c[GENO_OWN_EXTRA_ROWS];
+        Fighter_WaitAnimData* rows2;
+        u8 (*blend2)[2];
+        for (m = 0; m < 512; ++m) GenoDefine_RowRemap[slot][m] = -1;
+        {   /* The Wait state claims its row first: ftCo_8008A7A8 re-picks the idle clip from the fighter's wait table BY ROW
+             * (and treats rows 2 and 31 specially), so the row the table names must hold the Courier's own Wait clip; the
+             * states that merely borrow that row (Rebirth) get rows of their own below. */
+            MotionState* ws = &ftData_MotionStateList[ftCo_MS_Wait];
+            int wc = Geno_DefinePlanInt(kind, 13, ftCo_MS_Wait);
+            if (ws->anim_id >= 0 && ws->anim_id < n && wc >= 0) { pick[ws->anim_id] = (short) wc; rank[ws->anim_id] = 1; }
         }
+        for (m = 0; m < nmotions && m < ftCo_MS_Count + ftMr_MS_SelfCount; ++m) {
+            MotionState* st = m < ftCo_MS_Count ? &ftData_MotionStateList[m] : &ftMr_Init_MotionStateTable[m - ftCo_MS_Count];
+            int a = st->anim_id, c = Geno_DefinePlanInt(kind, 13, m);
+            if (a < 0 || a >= n || c < 0) continue;
+            /* the row's rank: the first state to name a row keeps it */
+            if (rank[a] < 1) { pick[a] = (short)c; rank[a] = 1; }
+            else if (pick[a] != c) {
+                /* Two states of Mario's table share this row but the package gives them different clips: the later one gets a
+                 * row of its own (a copy of the shared row's script and blend data, the package's clip), one per (row, clip). */
+                for (i = 0; i < extras; ++i) if (ex_a[i] == a && ex_c[i] == c) break;
+                if (i == extras) {
+                    HSD_ASSERTREPORT(__LINE__, extras < GENO_OWN_EXTRA_ROWS, "Geno base none: too many own animation rows\n");
+                    ex_a[extras] = (short)a; ex_c[extras] = (short)c; ++extras;
+                }
+                GenoDefine_RowRemap[slot][m] = (short)(n + i);
+                ++conflicts;
+            }
+        }
+        {   /* A row no state of the package points at is still played BY NUMBER (ftCo_Fall_Anim_Inner blends toward the FallF and FallB rows,
+             * ftAnim_8006EDD0 -> a NULL tree -> crash): it takes the clip its ftCo_SM_ name gives (plan row_clips), else the Wait clip. */
+            int wc = Geno_DefinePlanInt(kind, 13, ftCo_MS_Wait), filled = 0;
+            for (i = 0; i < n; ++i) {
+                int rc;
+                if (pick[i] >= 0) continue;
+                rc = Geno_DefinePlanInt(kind, 14, i);
+                pick[i] = (short)(rc >= 0 ? rc : wc);
+                if (pick[i] >= 0) ++filled;
+            }
+            OSReport("geno: base none kind %d: %d rows no state names take their ftCo_SM_ clip or Wait\n", kind, filled);
+        }
+        rows2 = (Fighter_WaitAnimData*) HSD_MemAlloc((n + extras) * sizeof *rows2);
+        blend2 = (u8 (*)[2]) HSD_MemAlloc((n + extras) * 2);
+        HSD_ASSERTREPORT(__LINE__, rows2 != NULL && blend2 != NULL, "Geno definition descriptor allocation exhausted\n");
+        memcpy(rows2, out->xC, n * sizeof *rows2);
+        memcpy(blend2, out->x10, n * 2);
+        for (i = 0; i < extras; ++i) {
+            rows2[n + i] = rows2[ex_a[i]];
+            blend2[n + i][0] = blend2[ex_a[i]][0]; blend2[n + i][1] = blend2[ex_a[i]][1];
+            rows2[n + i].x0 = (char*)Geno_DefinePlanText(kind, 1, ex_c[i]);
+            rows2[n + i].x4 = (s32)Geno_DefinePlanInt(kind, 10, ex_c[i]);
+            rows2[n + i].x8 = (s32)Geno_DefinePlanInt(kind, 11, ex_c[i]);
+            ++mapped;
+        }
+        out->xC = rows2; out->x10 = blend2;
+        ftData_Table_Unk0[kind].count = n + extras;
     }
     for (i = 0; i < n; ++i) {
         Fighter_WaitAnimData* row = &out->xC[i];
@@ -228,8 +277,8 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
         row->x8 = (s32)Geno_DefinePlanInt(kind, 11, pick[i]);
         ++mapped;
     }
-    OSReport("geno: base none kind %d: %d of %d animation rows take the package's clips (%d shared-row conflicts); own parts table of %d joints\n",
-             kind, mapped, n, conflicts, njoints);
+    OSReport("geno: base none kind %d: %d of %d animation rows take the package's clips (%d states given a row of their own, %d rows in all); own parts table of %d joints\n",
+             kind, mapped, n, conflicts, (int) ftData_Table_Unk0[kind].count, njoints);
 }
 
 void GenoDefine_Load(int kind, int base)
@@ -256,7 +305,14 @@ void GenoDefine_Load(int kind, int base)
     if (Geno_DefineIsNone(kind)) GenoDefine_BuildOwn(kind, out, n);
     GenoDefine_CommonRows[kind] = gd_data_copy(ftData_MotionStateList, sizeof(MotionState)*ftCo_MS_Count);
     GenoDefine_SpecificRows[kind] = gd_data_copy(ftData_CharacterStateTables[base], sizeof(MotionState)*ftMr_MS_SelfCount);
-    GenoGame_DefineApplyRows(kind, GenoDefine_CommonRows[kind], GenoDefine_SpecificRows[kind], n);
+    if (Geno_DefineIsNone(kind)) {
+        int m, slot = kind - Ft_Kind_Mex0;
+        for (m = 0; m < ftCo_MS_Count + ftMr_MS_SelfCount && m < 512; ++m) {
+            MotionState* ms = m < ftCo_MS_Count ? &GenoDefine_CommonRows[kind][m] : &GenoDefine_SpecificRows[kind][m - ftCo_MS_Count];
+            if (GenoDefine_RowRemap[slot][m] >= 0) ms->anim_id = GenoDefine_RowRemap[slot][m];
+        }
+    }
+    GenoGame_DefineApplyRows(kind, GenoDefine_CommonRows[kind], GenoDefine_SpecificRows[kind], Geno_DefineIsNone(kind) ? (int) ftData_Table_Unk0[kind].count : n);
     ftData_CharacterStateTables[kind] = GenoDefine_SpecificRows[kind];
     gFtDataList[kind] = out;
     OSReport("geno: native define kind %d loaded: %s; independent common/special rows; interpreter attempts %u\n",

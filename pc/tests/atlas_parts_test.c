@@ -98,8 +98,146 @@ static void tabs_and_tags(void)
     CHECK(w <= 60.0f + 0.01f);                                             /* a tag never outgrows its slot */
 }
 
+static AtCell mk_cell(const char *name, int model, unsigned flags)
+{
+    AtCell c; memset(&c, 0, sizeof c);
+    snprintf(c.id, sizeof c.id, "c"); snprintf(c.name, sizeof c.name, "%s", name);
+    c.model = model; c.ring = AT_NO_MODEL; c.flags = flags;
+    return c;
+}
+
+static void cells(void)
+{
+    AtRect r = { 100.0f, 100.0f, 56.0f, 56.0f };
+    AtCell c = mk_cell("Kindling", 7, 0);
+    AtSink s = rec_sink();
+    int rest;
+    c.ring = 9;
+    at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(REC.nm == 1 && REC.m[0].model == 7 && REC.m[0].ring == 9 && REC.m[0].focused == 0 && REC.m[0].dim == 0);
+    CHECK(REC.m[0].x >= r.x && REC.m[0].x + REC.m[0].w <= r.x + r.w && REC.m[0].y >= r.y && REC.m[0].y + REC.m[0].h <= r.y + r.h);   /* the model stays inside the cell */
+    rest = count_color(AT_C_EMBER);
+    CHECK(rest == 0 && find_text("Kindling") == NULL);                      /* a cell with a model shows only the model */
+    s = rec_sink();
+    at_part_cell(&s, &FAKE, r, &c, AT_ST_FOCUS, 0);
+    CHECK(REC.m[0].focused == 1);
+    CHECK(count_color(AT_C_EMBER) >= 9);                                    /* the ember edge and eight bracket strips */
+    s = rec_sink();
+    at_part_cell(&s, &FAKE, r, &c, AT_ST_FOCUS, AT_C_P2);
+    CHECK(count_color(AT_C_P2) == 8);                                       /* brackets take the focusing port's colour */
+    c = mk_cell("Locked slot", AT_NO_MODEL, AT_CELL_LOCKED);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(REC.nm == 0 && count_color(AT_C_DIM) >= 4);                       /* the lock glyph, no model, no name */
+    c = mk_cell("Empty slot", AT_NO_MODEL, AT_CELL_EMPTY);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(REC.nm == 0 && count_color(AT_C_LINE) == 4 && count_color(AT_C_LINE2) == 2);   /* an outline and a plus, no plate */
+    c = mk_cell("Cell", 7, AT_CELL_MERGE);
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(find_text("+ MERGE") != NULL && count_color(AT_C_JADE) >= 1);
+    c = mk_cell("Cell", 7, 0); c.pips = 3; c.origin = 'G'; c.index = 2;
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(find_text("G") != NULL && find_text("2") != NULL && count_color(AT_C_JADE) == 3 + 1 /* pips + origin mark */);
+    c = mk_cell("Mr. Game & Watch", AT_NO_MODEL, 0);                        /* no model: the name, fitted into the cell */
+    s = rec_sink(); at_part_cell(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(REC.nt == 1 && REC.t[0].role == AT_R_BODY12 && REC.t[0].align == AT_ALIGN_CENTER);
+    CHECK(texts_legible());
+    c = mk_cell("Stone", AT_NO_MODEL, 0); c.letter = 'P'; c.rgba = 0xB872F0FFu;
+    { AtRect sr = { 100.0f, 100.0f, 34.0f, 38.0f };
+      s = rec_sink(); at_part_stone(&s, &FAKE, sr, &c, AT_ST_REST, 0);
+      CHECK(find_text("P") != NULL && count_color(0xB872F0FFu) == 1);
+      c.flags = AT_CELL_EMPTY; s = rec_sink(); at_part_stone(&s, &FAKE, sr, &c, AT_ST_REST, 0); CHECK(find_text("P") == NULL);
+      c.flags = AT_CELL_LOCKED; s = rec_sink(); at_part_stone(&s, &FAKE, sr, &c, AT_ST_REST, 0); CHECK(count_color(AT_C_DIM) >= 4); }
+}
+
+static void hints_and_chrome(void)
+{
+    AtSink s = rec_sink();
+    float adv;
+    static const char *const trail3[3] = { "SOLO", "ENVOY", "YOUR DRIVES" };
+    AtRect tr = { 32.0f, 22.0f, 480.0f, 30.0f };
+    adv = at_part_hint(&s, &FAKE, 40.0f, 450.0f, 'A', "Merge into slot 1");
+    CHECK(REC.np == 3 && REC.p[0].rgba == AT_C_PAD_A);                      /* the octagon disc */
+    CHECK(find_text("Merge into slot 1") != NULL && find_text("A") != NULL);
+    CHECK(adv > fake_width(0, AT_R_BODY14, "Merge into slot 1") + 18.0f);
+    s = rec_sink(); at_part_hint(&s, &FAKE, 40.0f, 450.0f, 'B', "Close"); CHECK(REC.p[0].rgba == AT_C_PAD_B);
+    s = rec_sink(); at_part_hint(&s, &FAKE, 40.0f, 450.0f, 'Z', "Bag"); CHECK(REC.p[0].rgba == AT_C_PAD_Z);
+    s = rec_sink(); at_part_hint(&s, &FAKE, 40.0f, 450.0f, 'S', "Fight"); CHECK(find_text("START") != NULL);
+    s = rec_sink(); at_part_hint(&s, &FAKE, 40.0f, 450.0f, 'M', "Move"); CHECK(REC.np == 2);   /* the d-pad cross */
+
+    s = rec_sink();
+    at_part_trail(&s, &FAKE, tr, trail3, 3);
+    CHECK(find_text("YOUR DRIVES")->role == AT_R_CAP20 && find_text("YOUR DRIVES")->rgba == AT_C_IVORY);   /* here: bright and large */
+    CHECK(find_text("SOLO")->role == AT_R_CAP16 && find_text("SOLO")->rgba == AT_C_MUTED);
+    CHECK(count_color(AT_C_EMBER) >= 1);                                    /* the mark */
+    s = rec_sink();
+    tr.w = 150.0f;                                                          /* too narrow: the earliest parents drop out */
+    at_part_trail(&s, &FAKE, tr, trail3, 3);
+    CHECK(find_text("YOUR DRIVES") != NULL && find_text("SOLO") == NULL);
+    s = rec_sink();
+    at_part_chapter(&s, &FAKE, (AtRect){ 496.0f, 26.0f, 112.0f, 20.0f }, 2);
+    CHECK(find_text("I") && find_text("II") && find_text("III") && find_text("IV") && find_text("V"));
+    CHECK(count_color(AT_C_EMBER) == 1 && find_text("II")->rgba == AT_C_INK);
+    s = rec_sink();
+    at_part_rail(&s, &FAKE, (AtRect){ 32.0f, 66.0f, 104.0f, 362.0f }, 2);
+    CHECK(find_text("SOLO") && find_text("VERSUS") && find_text("SETTINGS") && find_text("VERSUS")->rgba == AT_C_IVORY);
+}
+
+static void explainer_note_dialog(void)
+{
+    AtRect pane = { 448.0f, 66.0f, 160.0f, 362.0f };
+    AtExplainer e;
+    AtSink s;
+    int i;
+    memset(&e, 0, sizeof e);
+    e.has = 1; e.media_model = 5; e.media_ring = 6;
+    snprintf(e.kicker, sizeof e.kicker, "BAG CELL 1"); snprintf(e.title, sizeof e.title, "KINDLING");
+    snprintf(e.what, sizeof e.what, "Your hits set the target Burning for 3 s.");
+    e.n_with = 2; e.with_model[0] = 8; e.with_model[1] = 9; snprintf(e.from_text, sizeof e.from_text, "Depth 0, Fire");
+    s = rec_sink();
+    at_part_explainer(&s, &FAKE, pane, &e);
+    CHECK(find_text("BAG CELL 1")->role == AT_R_CAP14 && find_text("BAG CELL 1")->rgba == AT_C_JADE);   /* WHAT: kicker, title, one rule */
+    CHECK(find_text("KINDLING")->role == AT_R_TITLE);
+    CHECK(find_text("target Burning for") != NULL);                         /* wrapped inside the 136 px inner width */
+    CHECK(find_text("WITH") != NULL && find_text("FROM") != NULL && find_text("Depth 0, Fire") != NULL);
+    CHECK(REC.nm == 3);                                                     /* the big media model and two WITH cells */
+    for (i = 0; i < REC.nt; i++) CHECK(REC.t[i].base <= pane.y + pane.h && REC.t[i].x >= pane.x);
+    CHECK(texts_legible());
+    {                                                                       /* a long unbroken rule: clamped, still inside the pane */
+        char big[400];
+        memset(big, 'x', 150); big[150] = '\0';
+        for (i = 0; i < 40; i++) strcat(big, " word");
+        snprintf(e.what, sizeof e.what, "%s", big);
+    }
+    s = rec_sink(); at_part_explainer(&s, &FAKE, pane, &e);
+    for (i = 0; i < REC.nt; i++) CHECK(REC.t[i].base <= pane.y + pane.h - 12.0f + 0.01f);
+    e.has = 0; s = rec_sink(); at_part_explainer(&s, &FAKE, pane, &e);
+    CHECK(REC.np == 3 && REC.nt == 0);                                      /* nothing to explain: an empty plate */
+
+    s = rec_sink();
+    at_part_note(&s, &FAKE, (AtRect){ 300.0f, 22.0f, 300.0f, 30.0f }, "Merged! Kindling got stronger.", AT_NOTE_OK, 0.5f);
+    CHECK(count_color(AT_C_JADE) >= 2 && find_text("Merged! Kindling got stronger.")->role == AT_R_BODY14);   /* icon square and the timer line */
+    s = rec_sink();
+    at_part_note(&s, &FAKE, (AtRect){ 300.0f, 22.0f, 200.0f, 30.0f }, "Careful", AT_NOTE_WARN, 1.0f);
+    CHECK(count_color(AT_C_SUN) >= 1);
+
+    { AtDialog d; AtRect b[2]; int n;
+      memset(&d, 0, sizeof d);
+      d.open = 1; snprintf(d.title, sizeof d.title, "DISCARD DRIVE?"); snprintf(d.body, sizeof d.body, "This drive is gone for good.");
+      d.n = 2; d.btn[0] = 'A'; snprintf(d.label[0], 24, "Discard"); d.btn[1] = 'B'; snprintf(d.label[1], 24, "Cancel"); d.focus = 1;
+      s = rec_sink();
+      n = at_part_dialog(&s, &FAKE, 640.0f, &d, 0.0f, b);
+      CHECK(n == 2);
+      CHECK(REC.p[0].rgba == AT_C_SCRIM && poly_minx(&REC.p[0]) == 0.0f && poly_maxx(&REC.p[0]) == 640.0f && poly_maxy(&REC.p[0]) == 480.0f);   /* the scrim covers the canvas */
+      CHECK(find_text("DISCARD DRIVE?") != NULL && find_text("Discard") != NULL && find_text("Cancel") != NULL);
+      CHECK(b[0].x >= 150.0f && b[1].x + b[1].w <= 640.0f - 150.0f && b[0].x + b[0].w <= b[1].x);   /* buttons inside the 332 px plate, not overlapping */
+      s = rec_sink(); n = at_part_dialog(&s, &FAKE, 1706.0f, &d, 0.0f, b);
+      CHECK(b[0].x > 600.0f && b[1].x + b[1].w < 1100.0f);                   /* centred on a wide canvas */
+    }
+}
+
 int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
+    cells(); hints_and_chrome(); explainer_note_dialog();
     ATLAS_DONE("atlas parts");
 }

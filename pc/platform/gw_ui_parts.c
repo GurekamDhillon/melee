@@ -219,4 +219,250 @@ float at_part_tag(const AtSink *s, const AtTextOps *o, float x, float y, const c
     return w;
 }
 
-/* <<< Task 8 appends the second half of the parts here >>> */
+void at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba)
+{
+    int focus = state == AT_ST_FOCUS, has_model = c->model != AT_NO_MODEL;
+    float y = focus ? r.y - 2.0f : r.y;
+    AtRect pr;
+    pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
+    if (c->flags & AT_CELL_EMPTY) {
+        outline(s, pr, 1.0f, AT_C_LINE);
+        glyph_plus(s, r.x + r.w * 0.5f, y + r.h * 0.5f, 14.0f, 2.0f, AT_C_LINE2);
+    } else {
+        unsigned face = (c->flags & AT_CELL_LOCKED) ? AT_C_PLATE : (focus ? AT_C_LIFT : (has_model ? AT_C_GROUND2 : AT_C_PLATE2));
+        at_plate(s, pr, face, focus ? AT_C_EMBER : AT_C_EDGE2, 3.0f, (float) AT_PX_CH_XS);
+        if (c->flags & AT_CELL_LOCKED) {
+            glyph_lock(s, r.x + r.w * 0.5f, y + r.h * 0.5f, AT_C_DIM);
+        } else if (has_model) {
+            at_poly_rect(s, r.x + r.w * 0.18f, y + r.h * 0.77f, r.w * 0.64f, r.h * 0.12f, 0x00000073u);   /* the floor shadow */
+            s->model(s->user, c->model, c->ring, r.x + 3.0f, y + 3.0f, r.w - 6.0f, r.h - 8.0f, focus, (c->flags & AT_CELL_DISABLED) ? 1 : 0);
+        } else {
+            at_text(s, o, AT_R_BODY12, c->name, r.x + r.w * 0.5f, y + r.h - 8.0f, AT_C_IVORY, AT_ALIGN_CENTER, r.w - 6.0f);
+        }
+        if (c->index > 0) {
+            char num[12];
+            snprintf(num, sizeof num, "%d", c->index);
+            at_text(s, o, AT_R_NUM12, num, r.x + 4.0f, y + 13.0f, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
+        }
+        if (c->origin != 0) {
+            char one[2];
+            one[0] = c->origin; one[1] = '\0';
+            at_poly_rect(s, r.x + r.w - 14.0f, y, 14.0f, 14.0f, c->origin == 'G' ? AT_C_JADE : AT_C_SUN);
+            at_text(s, o, AT_R_CAP12, one, r.x + r.w - 7.0f, y + 11.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+        } else if (c->flags & AT_CELL_NEW) {
+            at_poly_rect(s, r.x + r.w - 9.0f, y + 3.0f, 6.0f, 6.0f, AT_C_EMBER_D);
+        }
+        if (c->pips > 0) {
+            int p;
+            for (p = 0; p < c->pips; p++) at_poly_rect(s, r.x + r.w - 20.0f - 7.0f * (float) (c->pips - 1 - p), y + r.h - 12.0f, 5.0f, 5.0f, AT_C_JADE);
+        }
+        if (c->flags & (AT_CELL_MERGE | AT_CELL_SELECTED)) outline(s, pr, 2.0f, AT_C_JADE);
+        if (c->flags & AT_CELL_MERGE) {
+            at_poly_rect(s, r.x, y + r.h - 18.0f, r.w, 15.0f, AT_C_JADE);
+            at_text(s, o, AT_R_CAP12, "+ MERGE", r.x + r.w * 0.5f, y + r.h - 7.0f, AT_C_INK, AT_ALIGN_CENTER, r.w - 4.0f);
+        }
+    }
+    if (focus) brackets(s, pr, focus_rgba != 0 ? focus_rgba : AT_C_EMBER);
+}
+
+void at_part_stone(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba)
+{
+    int focus = state == AT_ST_FOCUS;
+    float y = focus ? r.y - 2.0f : r.y;
+    AtRect pr;
+    unsigned face = c->rgba != 0 ? c->rgba : AT_C_LINE2;
+    char one[2];
+    pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
+    if (c->flags & AT_CELL_EMPTY) face = AT_C_GROUND;
+    else if (c->flags & AT_CELL_LOCKED) face = AT_C_PLATE;
+    poly4(s, r.x + r.w * 0.2f, y, r.x + r.w * 0.8f, y, r.x + r.w, y + r.h, r.x, y + r.h, face);     /* the arch stone */
+    if (c->flags & AT_CELL_EMPTY) glyph_plus(s, r.x + r.w * 0.5f, y + r.h * 0.6f, 12.0f, 2.0f, AT_C_LINE2);
+    else if (c->flags & AT_CELL_LOCKED) glyph_lock(s, r.x + r.w * 0.5f, y + r.h * 0.6f, AT_C_DIM);
+    else if (c->letter != 0) {
+        one[0] = c->letter; one[1] = '\0';
+        at_text(s, o, AT_R_CAP20, one, r.x + r.w * 0.5f, y + r.h - 9.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    }
+    if (focus) brackets(s, pr, focus_rgba != 0 ? focus_rgba : AT_C_EMBER);
+}
+
+float at_part_hint(const AtSink *s, const AtTextOps *o, float x, float base, char btn, const char *label)
+{
+    float cy = base - 5.0f, gw = 18.0f, lw;
+    char one[2];
+    one[0] = btn; one[1] = '\0';
+    if (btn == 'A' || btn == 'B' || btn == 'X' || btn == 'Y') {
+        at_disc(s, x + 9.0f, cy, 9.0f, btn == 'A' ? AT_C_PAD_A : btn == 'B' ? AT_C_PAD_B : AT_C_PAD_X);
+        at_text(s, o, AT_R_CAP12, one, x + 9.0f, mid_base(cy - 9.0f, 18.0f, AT_R_CAP12), btn == 'B' ? AT_C_IVORY : AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    } else if (btn == 'Z') {
+        gw = 20.0f;
+        at_poly_rect(s, x, cy - 9.0f, gw, 18.0f, AT_C_PAD_Z);
+        at_text(s, o, AT_R_CAP12, one, x + gw * 0.5f, mid_base(cy - 9.0f, 18.0f, AT_R_CAP12), AT_C_IVORY, AT_ALIGN_CENTER, 0.0f);
+    } else if (btn == 'L' || btn == 'R') {
+        gw = 22.0f;
+        at_poly_rect(s, x, cy - 8.0f, gw, 16.0f, AT_C_MUTED);
+        at_text(s, o, AT_R_CAP12, one, x + gw * 0.5f, mid_base(cy - 8.0f, 16.0f, AT_R_CAP12), AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    } else if (btn == 'S') {
+        gw = twidth(o, AT_R_CAP12, "START") + 14.0f;
+        at_poly_rect(s, x, cy - 8.0f, gw, 16.0f, AT_C_MUTED);
+        at_text(s, o, AT_R_CAP12, "START", x + gw * 0.5f, mid_base(cy - 8.0f, 16.0f, AT_R_CAP12), AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    } else {                                                             /* 'M': the d-pad cross, for "Move" */
+        at_poly_rect(s, x, cy - 3.0f, 18.0f, 6.0f, AT_C_TEXT2);
+        at_poly_rect(s, x + 6.0f, cy - 9.0f, 6.0f, 18.0f, AT_C_TEXT2);
+    }
+    at_text(s, o, AT_R_BODY14, label, x + gw + 6.0f, base, AT_C_TEXT2, AT_ALIGN_LEFT, 0.0f);
+    lw = twidth(o, AT_R_BODY14, label);
+    return gw + 6.0f + lw + 18.0f;
+}
+
+float at_part_trail(const AtSink *s, const AtTextOps *o, AtRect r, const char *const *items, int n)
+{
+    float x = r.x, cy = r.y + r.h * 0.5f, sep = 18.0f, total = 0.0f, base = cy + 7.0f;
+    int i, first = 0;
+    poly4(s, x + 11.0f, cy - 11.0f, x + 22.0f, cy, x + 11.0f, cy + 11.0f, x, cy, AT_C_EMBER);        /* the mark: a diamond ring */
+    poly4(s, x + 11.0f, cy - 6.0f, x + 17.0f, cy, x + 11.0f, cy + 6.0f, x + 5.0f, cy, AT_C_GROUND);
+    x += 34.0f;
+    for (i = 0; i < n; i++) total += twidth(o, i == n - 1 ? AT_R_CAP20 : AT_R_CAP16, items[i]) + (i > 0 ? sep : 0.0f);
+    while (total > r.w - 34.0f && first < n - 1) {                       /* too wide: the earliest parents drop out */
+        total -= twidth(o, AT_R_CAP16, items[first]) + (first + 1 < n ? sep : 0.0f);
+        first++;
+    }
+    if (first > 0) {
+        at_text(s, o, AT_R_CAP16, "\xE2\x80\xA6", x, base, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
+        x += twidth(o, AT_R_CAP16, "\xE2\x80\xA6") + sep;
+    }
+    for (i = first; i < n; i++) {
+        int here = i == n - 1, role = here ? AT_R_CAP20 : AT_R_CAP16;
+        at_text(s, o, role, items[i], x, base, here ? AT_C_IVORY : AT_C_MUTED, AT_ALIGN_LEFT, r.x + r.w - x);
+        x += twidth(o, role, items[i]);
+        if (!here) {
+            at_text(s, o, AT_R_CAP14, ">", x + sep * 0.5f, base, AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
+            x += sep;
+        }
+    }
+    return x;
+}
+
+static const char *const ROMAN[5] = { "I", "II", "III", "IV", "V" };
+static const char *const CHAPTER_NAME[5] = { "SOLO", "VERSUS", "ONLINE", "MODS", "SETTINGS" };
+
+void at_part_chapter(const AtSink *s, const AtTextOps *o, AtRect r, int active)
+{
+    int i;
+    for (i = 0; i < 5; i++) {
+        float x = r.x + 23.0f * (float) i;
+        int on = active == i + 1;
+        at_poly_rect(s, x, r.y, 20.0f, 20.0f, on ? AT_C_EMBER : AT_C_GROUND2);
+        at_text(s, o, AT_R_CAP12, ROMAN[i], x + 10.0f, mid_base(r.y, 20.0f, AT_R_CAP12), on ? AT_C_INK : AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
+    }
+}
+
+void at_part_rail(const AtSink *s, const AtTextOps *o, AtRect r, int active)
+{
+    int i;
+    for (i = 0; i < 5; i++) {
+        AtRect row;
+        int on = active == i + 1;
+        row.x = r.x; row.y = r.y + 34.0f * (float) i; row.w = r.w; row.h = 30.0f;
+        if (on) at_plate(s, row, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH_S);
+        at_poly_rect(s, row.x + 8.0f, row.y + 5.0f, 20.0f, 20.0f, on ? AT_C_EMBER : AT_C_GROUND2);
+        at_text(s, o, AT_R_CAP12, ROMAN[i], row.x + 18.0f, mid_base(row.y + 5.0f, 20.0f, AT_R_CAP12), on ? AT_C_INK : AT_C_DIM, AT_ALIGN_CENTER, 0.0f);
+        at_text(s, o, AT_R_CAP14, CHAPTER_NAME[i], row.x + 36.0f, mid_base(row.y, 28.0f, AT_R_CAP14), on ? AT_C_IVORY : AT_C_DIM, AT_ALIGN_LEFT, r.w - 40.0f);
+    }
+}
+
+void at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtExplainer *e)
+{
+    float x = r.x + 12.0f, w = r.w - 24.0f, y = r.y + 12.0f, bottom = r.y + r.h - 12.0f;
+    char lines[5][96];
+    int n, i, clamped = 0;
+    at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
+    if (!e->has) return;
+    at_poly_rect(s, x, y, w, 96.0f, AT_C_GROUND2);                       /* the media well */
+    if (e->media_model != AT_NO_MODEL) s->model(s->user, e->media_model, e->media_ring, x + 8.0f, y + 4.0f, w - 16.0f, 88.0f, 1, 0);
+    y += 106.0f;
+    at_text(s, o, AT_R_CAP14, e->kicker, x, y + 11.0f, AT_C_JADE, AT_ALIGN_LEFT, w);
+    y += 18.0f;
+    at_text(s, o, AT_R_TITLE, e->title, x, y + 24.0f, AT_C_IVORY, AT_ALIGN_LEFT, w);
+    y += 36.0f;
+    n = at_wrap(o, AT_R_BODY14, e->what, w, 4, lines, &clamped);
+    for (i = 0; i < n && y + 18.0f <= bottom; i++) {
+        at_text(s, o, AT_R_BODY14, lines[i], x, y + 13.0f, AT_C_IVORY, AT_ALIGN_LEFT, 0.0f);
+        y += 18.0f;
+    }
+    y += 8.0f;
+    if (e->n_with > 0 && y + 44.0f <= bottom) {                          /* a label, then its content under it, so a narrow pane still fits */
+        at_text(s, o, AT_R_CAP12, "WITH", x, y + 11.0f, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
+        for (i = 0; i < e->n_with; i++) {
+            float cx = x + 26.0f * (float) i;
+            at_poly_rect(s, cx, y + 16.0f, 22.0f, 22.0f, AT_C_GROUND2);
+            if (e->with_model[i] != AT_NO_MODEL) s->model(s->user, e->with_model[i], AT_NO_MODEL, cx + 1.0f, y + 17.0f, 20.0f, 20.0f, 0, 0);
+        }
+        y += 44.0f;
+    }
+    if (e->from_text[0] != '\0' && y + 40.0f <= bottom) {
+        at_text(s, o, AT_R_CAP12, "FROM", x, y + 11.0f, AT_C_DIM, AT_ALIGN_LEFT, 0.0f);
+        at_part_tag(s, o, x, y + 16.0f, e->from_text, AT_TAG_JADE, w);
+    }
+}
+
+void at_part_footer(const AtSink *s, const AtTextOps *o, AtRect r, const AtFooter *f)
+{
+    float x = r.x + 14.0f, cy = r.y + r.h * 0.5f, mx;
+    at_plate(s, r, AT_C_PLATE2, AT_C_EDGE2, 3.0f, (float) AT_PX_CH_S);
+    at_text(s, o, AT_R_CAP14, f->label, x, mid_base(r.y, r.h - 3.0f, AT_R_CAP14), AT_C_MUTED, AT_ALIGN_LEFT, 76.0f);
+    mx = x + 88.0f;
+    if (f->model_a != AT_NO_MODEL) s->model(s->user, f->model_a, AT_NO_MODEL, mx, cy - 14.0f, 28.0f, 28.0f, 0, 0);
+    glyph_plus(s, mx + 40.0f, cy, 8.0f, 2.0f, AT_C_MUTED);
+    if (f->model_b != AT_NO_MODEL) s->model(s->user, f->model_b, AT_NO_MODEL, mx + 52.0f, cy - 14.0f, 28.0f, 28.0f, 1, 0);
+    tri(s, mx + 90.0f, cy - 5.0f, mx + 100.0f, cy, mx + 90.0f, cy + 5.0f, AT_C_JADE);
+    if (f->model_out != AT_NO_MODEL) s->model(s->user, f->model_out, AT_NO_MODEL, mx + 106.0f, cy - 14.0f, 28.0f, 28.0f, 0, 0);
+    at_text(s, o, AT_R_BODY14, f->text, mx + 146.0f, mid_base(r.y, r.h - 3.0f, AT_R_BODY14), AT_C_TEXT2, AT_ALIGN_LEFT, r.x + r.w - mx - 146.0f - 10.0f);
+}
+
+void at_part_note(const AtSink *s, const AtTextOps *o, AtRect r, const char *text, int kind, float remaining)
+{
+    unsigned tone = kind == AT_NOTE_OK ? AT_C_JADE : kind == AT_NOTE_WARN ? AT_C_SUN : kind == AT_NOTE_ERR ? AT_C_ROSE : AT_C_LINE2;
+    AtRect ic;
+    at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH_S);
+    ic.x = r.x; ic.y = r.y; ic.w = 30.0f; ic.h = r.h - 3.0f;
+    at_poly_rect(s, ic.x, ic.y, ic.w, ic.h, tone);
+    glyph_plus(s, ic.x + 15.0f, ic.y + ic.h * 0.5f, 10.0f, 2.0f, AT_C_INK);
+    at_text(s, o, AT_R_BODY14, text, r.x + 38.0f, mid_base(r.y, r.h - 3.0f, AT_R_BODY14), AT_C_IVORY, AT_ALIGN_LEFT, r.w - 46.0f);
+    if (remaining < 0.0f) remaining = 0.0f;
+    if (remaining > 1.0f) remaining = 1.0f;
+    at_poly_rect(s, r.x, r.y + r.h - 5.0f, (r.w - 8.0f) * remaining, 2.0f, tone);                      /* the timer rule drains */
+}
+
+int at_part_dialog(const AtSink *s, const AtTextOps *o, float canvas_w, const AtDialog *d, float rise, AtRect btn[2])
+{
+    float w = 332.0f, pad = 16.0f, x, y, h, bx, by;
+    char lines[5][96];
+    int n, i, clamped = 0, nb = d->n > 2 ? 2 : d->n;
+    at_poly_rect(s, 0.0f, 0.0f, canvas_w, 480.0f, AT_C_SCRIM);
+    n = at_wrap(o, AT_R_BODY14, d->body, w - 2.0f * pad, 4, lines, &clamped);
+    h = 14.0f + 24.0f + 6.0f + 18.0f * (float) n + 14.0f + 34.0f + 16.0f;
+    x = (canvas_w - w) * 0.5f;
+    y = (480.0f - h) * 0.5f + rise;
+    {
+        AtRect pr;
+        pr.x = x; pr.y = y; pr.w = w; pr.h = h;
+        at_plate(s, pr, AT_C_PLATE, AT_C_EDGE, 6.0f, (float) AT_PX_CH);
+    }
+    at_text(s, o, AT_R_CAP20, d->title, x + pad, y + 34.0f, AT_C_IVORY, AT_ALIGN_LEFT, w - 2.0f * pad);
+    for (i = 0; i < n; i++) at_text(s, o, AT_R_BODY14, lines[i], x + pad, y + 57.0f + 18.0f * (float) i, AT_C_TEXT2, AT_ALIGN_LEFT, 0.0f);
+    by = y + h - 16.0f - 34.0f;
+    bx = x + w - pad;
+    for (i = nb - 1; i >= 0; i--) {
+        float tw = twidth(o, AT_R_CAP16, d->label[i]), bw = tw + 18.0f + 22.0f + 18.0f;
+        int f = d->focus == i;
+        AtRect br;
+        bx -= bw;
+        br.x = bx; br.y = by; br.w = bw; br.h = 34.0f;
+        at_plate(s, br, f ? AT_C_EMBER : AT_C_PLATE2, f ? AT_C_EMBER_D : AT_C_EDGE2, 3.0f, (float) AT_PX_CH_S);
+        at_disc(s, br.x + 18.0f, by + 15.0f, 7.0f, d->btn[i] == 'A' ? AT_C_PAD_A : d->btn[i] == 'B' ? AT_C_PAD_B : AT_C_PAD_X);
+        at_text(s, o, AT_R_CAP16, d->label[i], br.x + 18.0f + 14.0f + 8.0f, mid_base(by, 31.0f, AT_R_CAP16), f ? AT_C_INK : AT_C_TEXT2, AT_ALIGN_LEFT, 0.0f);
+        btn[i] = br;
+        bx -= 8.0f;
+    }
+    return nb;
+}

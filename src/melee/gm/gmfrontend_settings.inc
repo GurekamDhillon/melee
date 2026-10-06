@@ -410,6 +410,12 @@ static void fso_set_turbo(int v)
     Settings_SetInt("turbo_online", v);
 }
 static const char* const fso_turbo_modes[] = { "Off", "On" };
+static int fso_get_envoy(void) { return Netplay_EnvoyPref(); }
+static void fso_set_envoy(int v)
+{
+    Netplay_SetEnvoy(v);
+    Settings_SetInt("envoy_online", v);
+}
 
 static const FrontendItem fe_items_set_online[] = {
     { FE_ACTION, FE_DO_CALL, "Player Name", "Shown to your opponent in the lobby and before matches.",
@@ -422,6 +428,8 @@ static const FrontendItem fe_items_set_online[] = {
       fso_get_stages, fso_set_stages, 0, 1, 1, fso_stage_modes },
     { FE_CHOICE, 0, "Turbo", "Rooms you host: a connected hit can be cancelled. Never in Random.",
       fso_get_turbo, fso_set_turbo, 0, 1, 1, fso_turbo_modes },
+    { FE_CHOICE, 0, "Envoy", "Rooms you host: an Envoy set with a build each. Never in Random.",
+      fso_get_envoy, fso_set_envoy, 0, 1, 1, fso_turbo_modes },
 };
 
 /* ---- MODS: one toggle per mod in the folder --------------------------------------------------- */
@@ -588,4 +596,5 @@ static void fe_settings_apply_online(void)
     fe_np_delay = Settings_Int("delay", fe_np_delay);
     Netplay_SetStageMode(Settings_Int("stage_mode", Netplay_StageMode()));
     Netplay_SetTurbo(Settings_Int("turbo_online", Netplay_TurboPref()));
+    Netplay_SetEnvoy(Settings_Int("envoy_online", Netplay_EnvoyPref()));
 }

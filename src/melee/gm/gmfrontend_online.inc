@@ -1228,6 +1228,10 @@ static void fl_instruction(char* out)
         left = Netplay_LobbyInfo(5);
     bool mine = turn == me;
     const char* pl = left == 1 ? "" : "s";
+    if (Netplay_LobbyInfo(13)) { /* an Envoy reward pick is open: the pick itself is drawn by the Envoy script; the lobby waits */
+        sprintf(out, "Envoy: pick your reward. %d s left.", (Netplay_LobbyInfo(14) + 59) / 60);
+        return;
+    }
     switch (p) {
     case LBP_CHAR_BLIND:
         sprintf(out, "%s", Netplay_LobbyPlayer(me, 2) ? "Locked in. Waiting for your opponent."
@@ -1701,14 +1705,14 @@ static void fl_build_lobby(void)
     const char* hg[4];
     const char* ht[4];
     const char* crumbs[3] = { "VERSUS", "ONLINE PLAY", NULL };
-    char room[24], code[8], title[16];
+    char room[40], code[8], title[16];
     int nh = 0, i, p = fl_phase(), n, cols;
     void *t, *pp;
     const FjNode* L;
     const FjNode* G;
     FlEl e;
     Netplay_RoomCode(code, sizeof code);
-    sprintf(room, Netplay_Turbo() ? "ROOM %s - TURBO" : "ROOM %s", code); /* the host's match rule, shown to both */
+    sprintf(room, Netplay_Envoy() ? (Netplay_Turbo() ? "ROOM %s - TURBO - ENVOY" : "ROOM %s - ENVOY") : (Netplay_Turbo() ? "ROOM %s - TURBO" : "ROOM %s"), code); /* the host's match rules, shown to both */
     crumbs[2] = room;
     if (fl_can_pick_char()) {
         hg[nh] = "glyph_a"; ht[nh++] = "Pick";

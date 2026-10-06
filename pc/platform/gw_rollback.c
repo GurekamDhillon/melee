@@ -353,6 +353,10 @@ void gw_RB_SceneBegin(int scene_kind) {
         extern void gw_MatchRules_SceneBegin(int scene_kind);
         gw_MatchRules_SceneBegin(scene_kind); /* the Turbo rule in force for a VS match */
     }
+    {
+        extern void gw_Script_NetBuildSceneBegin(void);
+        gw_Script_NetBuildSceneBegin(); /* an applied Envoy build never outlives its match */
+    }
     rb_init();
     /* Netplay is armed from the online menu at runtime, long after the first rb_init: start the
        session now (and stand it down once the netplay match is over). */
@@ -951,6 +955,10 @@ int gw_RB_Iterations(int count) {
         int s;
         rb.opened = 1;
         rb.last = gw_Replay_LastFrame();
+        {   /* Online Envoy: the agreed builds are applied ONCE here, on both peers at the same frame, before the first snapshot */
+            extern void gw_Script_NetBuildApply(void);
+            gw_Script_NetBuildApply();
+        }
         gw_Snap_OpenSession(rb.maxb + 1);
         for (s = 0; s < GW_RB_SLOTS; ++s) {
             GwRbInput probe;

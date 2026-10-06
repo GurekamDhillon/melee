@@ -80,6 +80,7 @@ return function(D)
   end,'log the technique layer state')
   g.command('mod',function(arg) return self:command(arg or '') end,'list | add <id> [port] | clear | trace | intensity <0..1> | box on|off | status <name> [port] [frames] [cause] [stacks] [max]')
   g.command('depth',function(arg) return self:depth_command(arg or '') end,'<nonnegative depth> [New Game+ loop]')
+  g.command('envoynet',function(arg) return self:net_command(arg or '') end,'status | auto <0..3|x> | pick <0..3> | stage <seed> [game] | tamper (test hooks)')
   return self
  end
 -- A co-op run adds one drive host per further local player (port 2..): own bag, slots and keystones, the same engine and the same ground.
@@ -687,7 +688,93 @@ return function(D)
    self.toast('Technique rule fired: '..first.label..'. Techniques show as a coloured afterimage while their reward lasts.')
   end
  end
+ -- ---- the online Envoy set (stage 3; _research/envoy-netplay-scoping-2026-10-05.md) ----------------------------------------------------------------
+ -- Runs in the ONLINE LOBBY, never in a match, and writes no gameplay state. It reads gd.netplay().envoy (the host-arbitrated state the native lobby
+ -- keeps), computes BOTH players' builds from the set seed (mod_progression.set_*: pure), stages them natively (gd.netbuild_stage: the native side
+ -- applies them once before frame 0 and reports their word to the other side), draws this player's reward pick and sends it (gd.netplay_act 'rpick').
+ -- The look of the pick is unverified: nobody has seen it.
+ function L:net_log(text) self.g.log('envoy net: '..text) end
+ local function net_label(id) for _,m in ipairs(D.mod_pool) do if m.id==id then return m.label end end;return id end
+ -- This seat's three offers for the game about to be played: computed from the build it ended the previous game with.
+ function L:net_offers(env,np)
+  local seat=np.me+1;local n=self.net
+  local prior=D.mod_progression.set_build(D,env.seed,np.game-1,seat,n.picks)
+  return D.mod_progression.set_offers(D,env.seed,np.game,seat,prior),seat
+ end
+ function L:net_sync()
+  local g=self.g
+  if not (g.netplay and g.netbuild_stage and D.mod_progression and D.mod_progression.set_stage) then return end
+  self.net_ticks=(self.net_ticks or 0)+1;if not self.net and self.net_ticks%20~=0 then return end -- idle: look every 20 ticks (gd.netplay builds a table), active: every tick
+  local np=g.netplay();local env=np and np.envoy;local n=self.net
+  if not (env and env.on and env.seed>0 and np.phase=='lobby') then
+   if n and n.input then n.input:close();n.input=nil end -- (a reconnect between games makes env.on blink off: the state is kept, the native history is the memory)
+   return
+  end
+  if not n or n.seed~=env.seed then n={seed=env.seed,picks={}};self.net=n end
+  local game=np.game;if game<1 then return end
+  -- the picks of every resolved reward come from the lobby's own history (host-resolved, mirrored to the guest), never from this script's memory
+  local picks={};for g,p in pairs(env.history) do picks[g]={[1]=p[1],[2]=p[2]} end;n.picks=picks
+  if n.staged and game<n.staged then n.staged=nil end -- a new set with the same seed (or a restart): stage again
+  if n.staged~=game and (game==1 or n.picks[game]) then
+   local ok,st=pcall(D.mod_progression.set_stage,D,env.seed+(self.net_tamper and 1 or 0),game,n.picks) -- tamper: a TEST hook that makes this client stage a different build
+   if ok then
+    for seat=1,2 do
+     local sok,why=pcall(g.netbuild_stage,seat,st[seat].record,st[seat].ops)
+     if not sok then ok=false;st=why;break end
+    end
+   end
+   if ok then
+    n.staged=game;n.builds={st[1].build,st[2].build}
+    self:net_log(('game %d staged: host %s | guest %s | word %s'):format(game,st[1].digest,st[2].digest,g.netbuild().word))
+   elseif n.fail~=tostring(st) then n.fail=tostring(st);self:net_log('staging failed: '..n.fail) end
+  end
+  if env.open then
+   local offers,seat=self:net_offers(env,np);n.offers=offers;n.seat=seat
+   if env.picks[seat]<0 then
+    if self.net_auto~=nil then
+     n.wait=(n.wait or 0)+1
+     if n.wait>=30 then n.wait=nil;g.netplay_act('rpick',self.net_auto) end
+    else
+     n.input=n.input or D.menu_input.new(g,1);n.input:set_active(true)
+     for _,a in ipairs(n.input:poll()) do
+      if a=='up' then n.cursor=math.max(0,(n.cursor or 0)-1) elseif a=='down' then n.cursor=math.min(3,(n.cursor or 0)+1)
+      elseif a=='accept' then g.netplay_act('rpick',n.cursor or 0) elseif a=='back' then g.netplay_act('rpick',3) end
+     end
+    end
+   elseif n.input then n.input:close();n.input=nil end
+  elseif n.input then n.input:close();n.input=nil end
+ end
+ function L:net_draw()
+  local g=self.g;local n=self.net
+  if not n or not n.offers or not g.netplay or not g.text then return end
+  local np=g.netplay();local env=np.envoy
+  if not (env and env.on and env.open) or env.picks[n.seat]>=0 then return end
+  g.fill(150,110,340,190,0x0A1018E8);g.box(150,110,340,190,0xE8EEF4FF)
+  g.text(162,118,('ENVOY REWARD  -  game %d  -  %d s left'):format(np.game,math.ceil(env.left/60)),0xFFE070FF,1)
+  for i,id in ipairs(n.offers) do
+   g.text(170,146+(i-1)*24,((n.cursor or 0)==i-1 and '> ' or '  ')..net_label(id),(n.cursor or 0)==i-1 and 0xFFFFFFFF or 0xB0B8C4FF,1)
+  end
+  g.text(170,146+72,((n.cursor or 0)==3 and '> ' or '  ')..'Keep my build',(n.cursor or 0)==3 and 0xFFFFFFFF or 0xB0B8C4FF,1)
+  g.text(162,270,'Up/Down choose, A takes it, B keeps. No pick: the first offer.',0x8090A0FF,1)
+ end
+ function L:net_command(arg)
+  local g=self.g;local word,rest=arg:match('^(%S*)%s*(.*)$')
+  if word=='status' or word=='' then
+   local n=self.net;local np=g.netplay and g.netplay();local env=np and np.envoy
+   return ('envoy net: on=%s seed=%s game=%s open=%s picks=%s,%s round=%s staged=%s word=%s peer=%s refused=%s auto=%s'):format(tostring(env and env.on),tostring(env and env.seed),tostring(np and np.game),tostring(env and env.open),tostring(env and env.picks[1]),tostring(env and env.picks[2]),tostring(env and env.round),tostring(n and n.staged),tostring(env and env.word),tostring(env and env.peer_word),tostring(env and env.refused),tostring(self.net_auto))
+  elseif word=='auto' then local v=tonumber(rest);self.net_auto=v and math.max(0,math.min(3,math.floor(v))) or nil;return 'auto pick '..tostring(self.net_auto)
+  elseif word=='pick' then return tostring(g.netplay_act('rpick',tonumber(rest) or 0))
+  elseif word=='stage' then -- TEST hook (offline or lobby): stage both seats of a set at <seed> [game] with the default picks, as the lobby would
+   local seed,game=rest:match('^(%d+)%s*(%d*)$');seed=tonumber(seed);game=tonumber(game) or 1;if not seed then return 'envoynet stage <seed> [game]' end
+   local st=D.mod_progression.set_stage(D,seed,game,{})
+   for seat=1,2 do g.netbuild_stage(seat,st[seat].record,st[seat].ops) end
+   return ('staged game %d of seed %d: %s | %s word %s'):format(game,seed,st[1].digest,st[2].digest,g.netbuild().word)
+  elseif word=='tamper' then self.net_tamper=true;if self.net then self.net.staged=nil end;return 'tampered: this client stages a different build (test hook)'
+  end
+  return 'envoynet status | auto <0..3|x> | pick <0..3> | tamper'
+ end
  function L:tick()
+  self:net_sync()
   if self.drives then self.drives:tick() end
   for _,seat in pairs(self.seats) do seat:tick() end
   if self.fx then self.fx:tick() end
@@ -696,6 +783,7 @@ return function(D)
  end
  function L:scene() if D.menu_input then D.menu_input.reset() end;self:reset();self.display=D.mod_display.new(self.g,self.engine) end -- scene invalidates shader handles
  function L:draw()
+  self:net_draw()
   if self.drives and self.drives.menu.active then self.drives:draw();return end
   local plate=self.foes and self.g.kit and next(self.foes.labels)~=nil
   -- The Modifier LAB debug text (ids, last chain) is a LAB tool: a run's own strip and plates replace it.

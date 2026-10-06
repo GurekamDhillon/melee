@@ -4,6 +4,9 @@
 return function(D)
  local I={};local S={};S.__index=S
  local START=0x1000
+ -- Online (a netplay or rollback session) the engine refuses input masks and chords: they would change what is SENT. The Envoy lobby menus are local UI only, so
+ -- they simply do not mask there (a masked D-pad is a convenience, never a rule).
+ local function offline(g) local m=g.match and g.match();return not (m and m.netplay) end
  local shared={held_start=false} -- START still held after a menu closed: keep hiding it until it is let go
  local extra={} -- the same latch for another port (a co-op seat); port 1 keeps `shared`, so a one-player run is unchanged
  local function latch(port) if (port or 1)==1 then return shared end;local l=extra[port];if not l then l={held_start=false};extra[port]=l end;return l end
@@ -12,7 +15,7 @@ return function(D)
   port=port or 1;local l=latch(port)
   if not l.held_start then return end
   local p=g.pad(port,true) or {}
-  if not p.START then l.held_start=false;if g.input_mask then g.input_mask(port,0) end end
+  if not p.START then l.held_start=false;if g.input_mask and offline(g) then g.input_mask(port,0) end end
  end
  -- A scene change releases every mask in the engine: forget the latch with it, whichever host would have serviced it.
  function I.reset() shared.held_start=false;for _,l in pairs(extra) do l.held_start=false end end
@@ -24,7 +27,7 @@ return function(D)
   I.settle(self.g,self.port)
   local p=self.g.pad(self.port,true) or {};local out={}
   local held=(p.LEFT and 1 or 0)+(p.RIGHT and 2 or 0)+(p.DOWN and 4 or 0)+(p.UP and 8 or 0)
-  if self.g.input_mask then
+  if self.g.input_mask and offline(self.g) then
    if self.active then self.g.input_mask(self.port,15|(self.hide_start and START or 0));self.masked=15;self.masked_start=self.hide_start
    elseif self.masked then local keep=self.masked_start and p.START and START or 0;self.masked=held;self.g.input_mask(self.port,held|keep);if held==0 and keep==0 then self.masked=nil;self.masked_start=nil end end
   end
@@ -40,7 +43,7 @@ return function(D)
  function S:close()
   local p=self.g.pad and self.g.pad(self.port,true) or {};local l=latch(self.port)
   l.held_start=(self.hide_start and p.START) and true or false
-  if self.g.input_mask then self.g.input_mask(self.port,l.held_start and START or 0) end;self.active=false;self.hide_start=nil;self.masked_start=nil;self.masked=nil;self.previous={};self.direction=nil;self.held=0
+  if self.g.input_mask and offline(self.g) then self.g.input_mask(self.port,l.held_start and START or 0) end;self.active=false;self.hide_start=nil;self.masked_start=nil;self.masked=nil;self.previous={};self.direction=nil;self.held=0
  end
  return I
 end

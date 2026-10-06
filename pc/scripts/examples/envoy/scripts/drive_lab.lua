@@ -11,7 +11,7 @@ return function(D)
   end})
   self.drops=opts.drops or D.drive_drop.new(g);self.menu=D.drive_menu.new(g,self)
   if self.port~=1 then return self end -- a co-op seat shares the console commands of seat 1
-  g.command('drive',function(a) return self:command(a or '') end,'give|drop [rarity] [seed]')
+  g.command('drive',function(a) return self:command(a or '') end,'give|grant|drop [rarity] [seed]  (grant = give and equip into the first free slot)')
   -- Balance harness hook (debug, LAB only): `simbag <file>` installs an encoded bag snapshot from the script data folder as the
   -- player's real build (the file holds what the offline run simulator produced with the real run rules), at the snapshot's own context.
   g.command('simbag',function(name)
@@ -44,8 +44,21 @@ return function(D)
   return out
  end
  function V:view()
-  local draft=D.drive_bag.new(self.loot,self.bag.config);assert(draft:restore(self.bag:snapshot()))
-  for _,e in ipairs(self.pending) do assert(draft[e.op](draft,e.a,e.b)) end
+  -- Called from the bag screen, the strip and the reservation count, every frame: it must never assert. A bag state that no longer restores
+  -- (inconsistent run state) shows the live bag; a queued edit that has become invalid (the context changed under it) is dropped, said once.
+  local draft=D.drive_bag.new(self.loot,self.bag.config)
+  if not draft:restore(self.bag:snapshot()) then
+   if not self.view_bad then self.view_bad=true;self.lab.g.log('drive bag: the bag state no longer validates; showing it unedited') end
+   draft.items,draft.equipped,draft.keystone,draft.keystones,draft.context=self.bag.items,self.bag.equipped,self.bag.keystone,self.bag.keystones,self.bag.context
+   return draft
+  end
+  self.view_bad=nil
+  local kept={}
+  for _,e in ipairs(self.pending) do
+   if draft[e.op](draft,e.a,e.b) then kept[#kept+1]=e
+   else self.lab.g.log('drive bag: a queued edit ('..tostring(e.op)..') is no longer valid and was dropped') end
+  end
+  if #kept~=#self.pending then self.pending=kept;self.rev=(self.rev or 0)+1 end
   return draft
  end
  -- `rev` changes whenever anything the bag screen shows changes (queued edits, applied edits, restore, clear, pickup).
@@ -63,12 +76,16 @@ return function(D)
   local ok,why=pcall(function()
    local allowed,reason=self.lab:allowed();assert(allowed,reason);assert(not self.lab:replaying(),'drive edit refused during rewind')
    local w={};for v in arg:gmatch('%S+') do w[#w+1]=v end
-   assert((w[1]=='give' or w[1]=='drop') and #w<=3,'usage: drive give|drop [rarity] [seed]')
+   assert((w[1]=='give' or w[1]=='grant' or w[1]=='drop') and #w<=3,'usage: drive give|grant|drop [rarity] [seed]')
+   -- Inside a run the queue is applied only once the stage's entrance is over, and a stage change throws a queued edit away (V:soft_clear): an edit
+   -- sent during the intro would be reported as done and never arrive (seen 2026-10-05). Refuse it, and say why.
+   if w[1]~='drop' and self.lab.options.run_ready and self.lab:hosted() and not self.lab.options.run_ready() then error('the stage has not started yet: try again once the fight begins',0) end
    if w[1]=='drop' then assert(not (self.g.paused and self.g.paused()),'resume gameplay before dropping; wait one checkpoint before saving');assert(#self.pending==0,'wait for queued bag edits to commit before dropping') end
    local seed=tonumber(w[3] or self.seed);assert(seed and seed%1==0,'integer seed required')
    local record=self.loot:roll(seed,self.lab.engine.context,w[2] and w[2]:lower());assert(self:reserved()<self.bag:capacity(),'bag full (ground drops reserve space)')
    self.lab.display:warm(self.lab.engine);assert(not self.lab.display.error,'shader warmup unavailable')
-   if w[1]=='give' then assert(self:queue('give',record)) else self.drops:spawn(record);self.lab.enabled=true end
+   if w[1]=='grant' then local granted,how=self:grant(record);assert(granted,how);w[1]='grant ('..how..')'
+   elseif w[1]=='give' then assert(self:queue('give',record)) else self.drops:spawn(record);self.lab.enabled=true end
    if self.lab.options.activate then self.lab.options.activate() end
    if not w[3] then self.seed=(self.seed*16807)%2147483647 end
    self.g.log('drive: '..w[1]..' '..self.loot:name(record))
@@ -159,6 +176,7 @@ return function(D)
  -- Stage teardown inside a run: ground drops, queued edits and the open menu belong to the old scene; the
  -- bag, slots and equipped build persist.
  function V:soft_clear()
+  if #self.pending>0 then self.lab.g.log('drive bag: '..#self.pending..' queued edit(s) dropped by the scene change');if self.lab.toast then pcall(self.lab.toast,'Queued bag edits were dropped by the scene change') end end
   self:bump();self.menu:close();self.drops:clear();self.pending={};self.applied=false
  end
  -- Run adapter: put one rolled drive in the bag and equip it into the first free slot (the bag menu can

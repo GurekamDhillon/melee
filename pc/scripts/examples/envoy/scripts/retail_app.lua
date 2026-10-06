@@ -58,8 +58,36 @@ return function(D)
    if self.retail and self.retail.active then c.hud=self.retail.mode..' / NG+'..self.retail.loop..' / START: pause' end
    return c
   end
+  -- A run is launched by a scene reset. Issued in the opening movie / attract demo, or in the first frames of any scene, the reset can run while
+  -- that scene still has DVD/stream reads outstanding and the game's reset spin never ends (the 2026-10-05 menu hang: a run started in the attract
+  -- demo, whose own end the same START press caused). So a start waits until the scene is a settled one, says so, and goes ahead by itself.
+  A.SCENE_SETTLE=90 -- logic frames a scene must have been up before a launch is issued from it
+  A.TITLE_LAST=420 -- the title screen lasts about 620 frames before the demo starts
+  A.SCENE_WAIT_MAX=18000 -- ticks to wait before giving up (the attract loop comes round to a usable title in a minute or two)
+  function A:scene_watch()
+   local g=self.g;local s=g.scene and g.scene();if type(s)~='table' then return end
+   if s.epoch~=self.scene_epoch then self.scene_epoch=s.epoch;self.scene_since=g.frame and g.frame() or 0 end
+  end
+  function A:scene_safe()
+   local g=self.g;local s=g.scene and g.scene();if type(s)~='table' then return true end
+   self:scene_watch()
+   -- the attract loop (opening movie, title, demo) ends its own scenes: a launch issued in the movie or the demo, or as the title is about to
+   -- give way to the demo, lands in the first frame of the next scene
+   if s.name=='GS_MOVIE_OPENING' or (s.name=='GS_VS' and s.mode_name=='GM_OPENING_MV') then return false,'the opening movie / demo is playing' end
+   local f=g.frame and g.frame() or 0;local age=f-(self.scene_since or f)
+   if age<A.SCENE_SETTLE then return false,'the screen has only just changed' end
+   if s.name=='GS_TITLE' and age>A.TITLE_LAST then return false,'the title screen is about to give way to the demo' end
+   return true
+  end
   function A:start_retail(mode,fighter,difficulty,stocks,seed)
    if self.run.active or self.run.pending then return false,'settle parked campaign first' end
+   do local safe,why=self:scene_safe()
+    if not safe then
+     if not self.retail_request then self.retail_request={mode=mode,fighter=fighter,difficulty=difficulty,stocks=stocks,seed=seed,ticks=0} end
+     self.retail_request.scene_wait=true;self.notice='The run starts when the screen settles'
+     self.g.log('envoy: run start deferred: '..tostring(why)..'; it starts once the screen has settled');return true
+    end
+   end
    local ok,why=self.retail:available()
    if not ok then self.notice=why;self.visible=true;self.menu:show('setup');self.g.log('envoy: '..why);return false,why end
    if self.hub and self.hub.active then self.hub:clear();self.mission:stop('retail run launch') end
@@ -68,6 +96,7 @@ return function(D)
     self.notice='Waiting for garden cleanup';return true
    end
    self.retail.profile=self.run.profile
+   if self.dev_spec and self.retail.host then self.retail.host:dev_start(self.dev_spec) end;self.dev_spec=nil
    ok,why=self.retail:start(mode or self.menu.run_type,fighter or self.menu.fighter,difficulty or self.menu.difficulty,stocks or self.menu.stocks,seed)
    if ok then self.run.profile=self.retail.profile;self.visible=true;self.notice=nil;self.menu:show('playing')
    else self.notice=why;self.visible=true;self.menu:show('setup');self.g.log('envoy: retail refused '..tostring(why)) end
@@ -104,6 +133,31 @@ return function(D)
     return true
    end
    if arg=='coop' or arg:match('^coop%s') then return self:coop_command(arg) end
+   -- `envoy start <classic|adventure> <fighter> [depth=<n>] [loop=<n>] [build=<seed|current|proposed>]`: a developer start at a chosen depth with a
+   -- consistent build (rule host forced on). depth/loop set a floor on the run's progression context (slots, keystone allowance, tier, opponents);
+   -- build=<seed> rolls the drives for every slot and the keystones up to the allowance at that depth (build=current|proposed also sets the tuning preset).
+   if arg:match('^start%s') then
+    local w={};for x in arg:gmatch('%S+') do w[#w+1]=x end
+    local usage='usage: envoy start <classic|adventure> <fighter> [depth=<n>] [loop=<n>] [build=<seed|current|proposed>]'
+    local mode,token=w[2],w[3];if mode~='classic' and mode~='adventure' then return false,usage end
+    local spec={depth=0,loop=0}
+    for i=4,#w do
+     local k,v=w[i]:match('^(%a+)=(%S+)$');if not k then return false,usage end
+     if k=='depth' or k=='loop' then local n=tonumber(v);if not n or n<0 or n%1~=0 then return false,k..' must be a nonnegative integer' end;spec[k]=n
+     elseif k=='build' then
+      if v=='current' or v=='proposed' then spec.preset=v;spec.build=true
+      else local n=tonumber(v);if not n or n<1 or n%1~=0 or n>2147483646 then return false,'build must be a seed (integer >= 1), current or proposed' end;spec.build=true;spec.build_seed=n end
+     else return false,usage end
+    end
+    if spec.depth>0 or spec.loop>0 then spec.build=spec.build or true end
+    if self.retail.active or self.retail.pending or self.retail_request then return false,'finish the retail run first' end
+    local id,why;if token then id,why=D.fighters.resolve(self.g,token);if not id then self.notice=why;self.g.log('envoy: '..tostring(why));return false,why end end
+    self.retail.rules=true;self.dev_spec=spec;self.menu.run_type=mode;if id then self.menu.fighter=id end
+    self.g.log(('envoy: developer start %s depth=%d loop=%d build=%s'):format(mode,spec.depth,spec.loop,spec.build and (spec.preset or spec.build_seed or 'run seed') or 'none'))
+    local ok,err=self:start_retail(mode,id)
+    if ok==false then self.dev_spec=nil end
+    return ok,err
+   end
    if arg=='start' then
     if self.menu.run_type=='campaign' then return old.command(self,'start') end
     if self.menu.run_type=='coop' then return self:start_coop({f1=self.menu.fighter}) end
@@ -217,10 +271,14 @@ return function(D)
    end
   end
   function A:tick()
+   self:scene_watch()
    if self.coop and self.coop.active then return end
    if self.retail_request then
     local q=self.retail_request;q.ticks=q.ticks+1
-    if not (self.mission.stopping or self.mission.staging or self.mission.retiring or self.mission.recovery) then
+    if q.scene_wait then
+     if self:scene_safe() then q.scene_wait=nil;if not (self.mission.stopping or self.mission.staging or self.mission.retiring or self.mission.recovery) then self.retail_request=nil;self:start_retail(q.mode,q.fighter,q.difficulty,q.stocks,q.seed) end
+     elseif q.ticks>=A.SCENE_WAIT_MAX then self.retail_request=nil;self.notice='The run did not start: the screen never settled';self.g.log('envoy: run start abandoned: the screen never settled') end
+    elseif not (self.mission.stopping or self.mission.staging or self.mission.retiring or self.mission.recovery) then
      self.retail_request=nil;self:start_retail(q.mode,q.fighter,q.difficulty,q.stocks,q.seed)
     elseif q.ticks>=600 then self.retail_request=nil;self.notice='Garden cleanup timed out';self.menu:show('setup') end
    end
@@ -287,7 +345,12 @@ return function(D)
   -- From the end of a retail stage until the next one starts the game's own results screen is up and waits for START: Envoy's
   -- START-opens-the-pause-menu must stay out of the way, or it eats the press (and, with START hidden while a menu is open, the
   -- game never sees it at all).
-  function A:match_end() if self.coop and self.coop.active then self.coop:scene_ended();self.models:unload();self.recolour:clear();return end;if self.retail.active or self.retail.pending then self.g.log('envoy: match end in a retail run: results screen up');self.results_up=true;self.start_ready=false;self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
+  -- A scene change while a run start is waiting for the screen to settle is not a match end: the old handler stopped the app, which dropped the
+  -- waiting request (the 2026-10-05 guard test: the start deferred in the opening movie never fired at the title). Only the old scene's
+  -- ownership is released.
+  function A:match_end() if self.retail_request and self.retail_request.scene_wait and not (self.retail.active or self.retail.pending) and not (self.coop and self.coop.active) then
+    self.g.log('envoy: scene change while the run start is waiting: not a match end, the start stays queued');if self.hub then self.hub:clear() end;self.mission:stop('match end');self.models:unload();return end
+   if self.coop and self.coop.active then self.coop:scene_ended();self.models:unload();self.recolour:clear();return end;if (self.retail.active or self.retail.pending) and not self.retail.stage_started then self.g.log('envoy: match end before the run reached a stage: another scene ended, ignored');return end;if self.retail.active or self.retail.pending then self.g.log('envoy: match end in a retail run: results screen up');self.results_up=true;self.start_ready=false;self.models:unload();self.recolour:clear();return end;return old.match_end(self) end
   function A:unload() self:stop('quit');return old.unload(self) end
   function A:enter_hub()
    if self.retail.active or self.retail.pending then return false,'settle retail run before garden' end

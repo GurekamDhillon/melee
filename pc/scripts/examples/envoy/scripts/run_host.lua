@@ -24,7 +24,7 @@ return function(D)
  --                   so its drive has to be reachable before that)
  -- How many drives a run hands out (floor drops per stage, which stages give a reward, how many are offered, the bag's size)
  -- is `D.drive_economy.tuning` (floor_max, floor_chance, team_max, reward_every, offers, bonus_offers, bag_capacity).
- H.tuning={settle_frames=30,roll_attempts=2,drops=true,auto_collect=true,hold_ticks=2850,end_hold=true,end_hold_frames=1800,ko_poll=6,drop_percent=50}
+ H.tuning={settle_frames=30,roll_attempts=2,drops=true,auto_collect=true,hold_ticks=2850,end_hold=true,end_hold_frames=1800,ko_poll=6,drop_percent=50,oob_margin=300,oob_frames=240,oob_fallback=3000}
  local function econ() return D.drive_economy.tuning end
  -- `seat` (co-op only): {index=,port=,drives=,allies={[port]=true,...},strength=fn,gather=fn,route=fn,barrier={open=fn,release=fn},anchor=,colour=}.
  -- No seat: the one-player host, exactly as before. Seat 1 is the lead (it owns the stage's opponents, drops and match hold); the other
@@ -125,11 +125,12 @@ return function(D)
  function H:totals(edit)
   local d=self.mods.drives;local b=d.bag;local config={};for k,v in pairs(b.config) do config[k]=v end;config.preflight=nil
   local draft=D.drive_bag.new(d.loot,config);local s=b:snapshot()
-  assert(draft:restore(s));if edit then pcall(edit,draft) end
+  if not draft:restore(s) then self.totals_bad=true;self:log('build totals: the bag state is invalid, showing the last good totals');return self.last_totals or D.drive_text.totals({damage_dealt={value=1},launch_dealt={value=1},speed={value=1},damage_taken={value=1}},1) end
+  if edit then pcall(edit,draft) end
   local ok,mods,implicits=pcall(draft.derive,draft)
   if not ok then draft=D.drive_bag.new(d.loot,config);draft:restore(s);mods,implicits=draft:derive() end
   local families,strength=D.mod_budget.build(D.mod_pool,d:combined(mods),implicits,{})
-  return D.drive_text.totals(families,strength)
+  local out=D.drive_text.totals(families,strength);if not edit then self.last_totals=out end;return out
  end
  local why_text={['bag full']='Your bag is full.',['invalid index']='That drive is not available.'}
  local function plain(why)
@@ -387,8 +388,15 @@ return function(D)
   self.attempts={};self.drops_given={};self.retry=false;self.drop_queue=nil
   self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
   self.mods:run_end() -- a new run starts from an empty bag, whatever the last one left
-  local ctx=D.mod_progression.context(0,0);self.mods:set_context(ctx)
-  self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=D.mod_progression.slots(ctx),D.mod_progression.keystones(ctx),D.mod_progression.tier(ctx),0
+  local dev=self.dev_pending;self.dev_pending=nil;self.floor=nil
+  local ctx=D.mod_progression.context(0,0)
+  if dev then
+   ctx=D.mod_progression.run_context(self.retail.mode,dev.depth or 0,dev.loop or 0);self.floor=D.mod_progression.context(ctx)
+   if dev.preset and D.mod_tuning and D.mod_tuning.preset then pcall(D.mod_tuning.preset,dev.preset) end
+   self:log(('developer start: depth=%d loop=%d (effective %d, %d slots, keystone allowance %d)'):format(ctx.depth,ctx.loop,D.mod_progression.effective(ctx),D.mod_progression.slots(ctx),D.mod_progression.keystones(ctx)))
+  end
+  self.mods:set_context(ctx)
+  self.seen_slots,self.seen_keys,self.seen_tier,self.seen_loop=D.mod_progression.slots(ctx),D.mod_progression.keystones(ctx),D.mod_progression.tier(ctx),D.mod_progression.run_loop(self.retail.mode,ctx)
   -- A starter drive and a starting keystone (one random one, from the run seed), so the first opponents already roll
   -- against a build: the drive goes straight into slot 1. One panel announces both.
   local record=self.mods.drives.loot:roll(seed_for(seed,0,0,5+self:salt()),ctx)
@@ -409,6 +417,7 @@ return function(D)
    lines[#lines+1]={text='Your keystone: '..rule.label,colour=D.drive_text.base_colour[fam] or 'gold'}
    lines[#lines+1]=kl[1] or '';lines[#lines+1]=kl[2] or ''
   else self:log('starting keystone refused: '..tostring(why)) end
+  if dev and dev.build then self:dev_fill(ctx,dev.build_seed or seed);self:log('developer build rolled at depth '..ctx.depth..': '..self:equipped_count()..' drives, '..#self:keystone_ids()..' keystones') end
   if #lines>0 then self.hud:announce(lines) end
   self:log('run begin seed='..seed)
  end
@@ -417,6 +426,34 @@ return function(D)
   local b=self:bag();local ok,why=b:give(r)
   if not ok then self:log(('discarded %s (%s): bag full'):format(self:name(r),how));return nil end
   self:mark_new(r);self:touch();return #b.items
+ end
+ -- The context of a stage: the run's own (stage, loop) context, except while a developer start (`envoy start ... depth=<n> loop=<n>`) holds a
+ -- higher floor. The game's own stage counter cannot start past stage 1, so the floor is what makes the slots, keystone allowance and tier agree
+ -- with the build that was rolled at that depth; it ends as soon as the run's own context catches up. The context never goes down (a lower
+ -- one would take slots and keystones away).
+ function H:context_for(stage,loop)
+  local ctx=D.mod_progression.run_context(self.retail.mode,stage,loop);local f=self.floor
+  if f then
+   if D.mod_progression.effective(f)>D.mod_progression.effective(ctx) then return D.mod_progression.context(f) end
+   self.floor=nil;self:log('developer depth floor reached by the run itself: the run counter takes over')
+  end
+  return ctx
+ end
+ -- A developer start: depth/loop floor and an optional seeded build (a full set of slots and keystones rolled at that depth).
+ function H:dev_start(spec) self.dev_pending=spec end
+ function H:dev_fill(ctx,seed)
+  local b=self:bag();local drives=self.mods.drives
+  for slot=1,b:slots() do if not b.equipped[slot] then
+   local ok,why=b:place(slot,drives.loot:roll(seed_for(seed,0,slot,300+self:salt()),ctx))
+   if not ok then self:log('dev build: slot '..slot..' refused: '..tostring(why)) end
+  end end
+  local held=self:keystone_ids()
+  for i=1,D.mod_progression.keystones(ctx)-#held do
+   local pick=D.keystones.offer(ctx,seed_for(seed,0,i,400+self:salt()),1,self:keystone_ids())[1]
+   if not pick then break end
+   local ok,why=b:choose_keystone(pick);if not ok then self:log('dev build: keystone '..tostring(pick)..' refused: '..tostring(why)) end
+  end
+  self:touch()
  end
  -- Progression follows the director's stage and NG+ loop; the bag's slots and keystones grow with it.
  function H:stage_start(e)
@@ -428,10 +465,10 @@ return function(D)
   if self.retry then self:log(('stage %d retry (attempt %d): the build is kept as it was; a drop already given on this stage is not given twice'):format(self.stage,self.attempts[akey])) end
   self.fell={};self.hurt={};self.dropped={};self.since=0;self.kos=0;self.faded={}
   self.travel_min,self.travel_max=nil,nil;self.foe_seen=false
-  self.stage_kind=e.stage_kind or 'battle';self.foe_ports={};self.rolled={};self.drop_queue={};self.hold_gave_up=false;self.holding_end=false;self.out_frames=0
+  self.stage_kind=e.stage_kind or 'battle';self.foe_ports={};self.rolled={};self.drop_queue={};self.hold_gave_up=false;self.holding_end=false;self.out_frames=0;self.last_blast=nil;self.oob={}
   for _,o in ipairs(e.opponents or {}) do if o.port then self.foe_ports[#self.foe_ports+1]=o.port;self.rolled[o.port]=true;self.rolls[o.port]=true end end
   self.foe_seen=#self.foe_ports>0
-  local ctx=D.mod_progression.run_context(self.retail.mode,self.stage,self.loop)
+  local ctx=self:context_for(self.stage,self.loop)
   self.mods:set_context(ctx)
   for _,toast in ipairs(milestones(self,ctx)) do self.hud:announce(toast);self:log('announce: '..toast[1].text) end
   self.hud.m=nil;self.mods.drives:bump()
@@ -666,6 +703,7 @@ return function(D)
   if #self.foe_ports>0 then self.foe_seen=true end
   if self.follower then return end
   if self.since%H.tuning.ko_poll~=0 then return end
+  self:oob_watch()
   for _,p in ipairs(self.foe_ports) do
    if p~=port0 and not self:is_ally(p) then
     local v=self.g.player(p)
@@ -678,6 +716,47 @@ return function(D)
    end
   end
  self:update_hold()
+ end
+ -- ---- out-of-bounds watchdog ------------------------------------------------------------------------------------
+ -- The retail rule is that a fighter that crosses a blast zone loses a stock at once. If one is still alive, far beyond the zone, for
+ -- oob_frames, the game has stopped applying that rule (the 2026-10-05 boss-end state made the player immune to it while the fight
+ -- was waiting on a boss that could not die). This applies the rule instead: lose a stock, and put a fighter that has stocks left
+ -- back on the stage. Logged and flashed, never silent. A fighter in debug flight is exempt (it is meant to leave the stage), and so are the
+ -- boss hands (their entrances and attacks leave the screen by design; a boss's stocks are the fight's own business).
+ function H:oob_box()
+  local g=self.g;local b=g.stage_bounds and g.stage_bounds();local z=b and b.blast
+  if type(z)=='table' and type(z.left)=='number' and type(z.right)=='number' and type(z.bottom)=='number' and type(z.top)=='number' then
+   self.last_blast={left=z.left,right=z.right,bottom=z.bottom,top=z.top,floor=b.main_floor,origin=b.origin}
+  end
+  return self.last_blast -- the last bounds seen this stage when the engine gives none
+ end
+ function H:oob_outside(v,box)
+  local m=H.tuning.oob_margin;local f=H.tuning.oob_fallback
+  if box then return v.x<box.left-m or v.x>box.right+m or v.y<box.bottom-m or v.y>box.top+m end
+  return math.abs(v.x)>f or math.abs(v.y)>f
+ end
+ function H:oob_resolve(p,v,box)
+  local g=self.g;local left=(v.stocks or 0)-1
+  self:log(('P%d is out of bounds (x=%.0f y=%.0f) and was never knocked out: losing a stock (%d left)'):format(p,v.x,v.y,math.max(left,0)))
+  self.hud:flash(p==self:port0() and 'Out of bounds: a stock is lost' or ('P'..p..' out of bounds: a stock is lost'))
+  if g.set_stocks then g.set_stocks(p,math.max(left,0)) end
+  if left>0 and g.teleport then
+   local fl=box and box.floor;local x=fl and (fl.left+fl.right)/2 or (box and box.origin and box.origin.x) or 0
+   local y=(fl and fl.top or (box and box.origin and box.origin.y) or 0)+40
+   g.teleport(p,x,y)
+  end
+ end
+ function H:oob_watch()
+  local g=self.g;if not g.player then return end
+  local box=self:oob_box();local step=H.tuning.ko_poll;self.oob=self.oob or {}
+  local ports={self:port0()};for _,p in ipairs(self.foe_ports) do if p~=ports[1] and not self:is_ally(p) then ports[#ports+1]=p end end
+  for _,p in ipairs(ports) do
+   local v=g.player(p)
+   if v and type(v.x)=='number' and type(v.y)=='number' and (v.stocks or 0)>0 and not v.hidden and not (g.fly and g.fly(p)==true) and v.char~=26 and v.char~=27 and self:oob_outside(v,box) then
+    self.oob[p]=(self.oob[p] or 0)+step
+    if self.oob[p]>=H.tuning.oob_frames then self.oob[p]=0;self:oob_resolve(p,v,box) end
+   else self.oob[p]=0 end
+  end
  end
  function H:ready() return self.running and self.since>=H.tuning.settle_frames end
  -- ---- reward moment ---------------------------------------------------------------------------------------------

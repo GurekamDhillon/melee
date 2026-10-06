@@ -508,6 +508,13 @@ return function(D)
     ops[#ops+1]={op='hit_rules',port=p,rules=rules,status_bits=bits};new_hit_owned[p]=true
    elseif self.hit_owned[p] then ops[#ops+1]={op='hit_rules',port=p,rules={},status_bits=0} end
    local damage=self.engine.damage[p]
+   -- A boss's remaining HP is its stamina minus its damage and the game ends the fight when it reaches 0. Only a hit can start the boss's
+   -- death, so (char 26 / 27: Master Hand, Crazy Hand) a damage-over-time tick (burn) must never take a boss's damage up: it would end the fight with the boss alive (the 2026-10-05 softlock).
+   if players[p] and damage and damage>0 and life[p] and (life[p].char==26 or life[p].char==27) then
+    self.boss_dot_skipped=(self.boss_dot_skipped or 0)+1
+    if self.boss_dot_skipped==1 then self.g.log('envoy: damage over time does not hurt a boss (only hits do)') end
+    damage=nil
+   end
    if players[p] and damage and damage~=0 then ops[#ops+1]={op='damage',port=p,value=math.max(0,math.min(999,players[p].percent+damage))} end
   end
   if self.echoes then self.echoes:ops(ops,players,stock_queued) end
@@ -803,6 +810,18 @@ return function(D)
   ctx=D.mod_progression.context(ctx.depth,ctx.loop)
   self.engine.context=ctx;if self.drives then self.drives.bag.context=D.mod_progression.context(ctx) end
   for _,seat in pairs(self.seats) do seat.bag.context=D.mod_progression.context(ctx) end
+  -- fewer slots than before (never in real play): drives in slots that no longer exist go to the bag when it has room, else stay equipped
+  -- in their slot until the player frees space. Said in the log and on screen either way; nothing is destroyed.
+  local bags={};if self.drives then bags[#bags+1]=self.drives.bag end;for _,seat in pairs(self.seats) do bags[#bags+1]=seat.bag end
+  local function nm(r) local ok,n=pcall(function() return self.drives.loot:name(r) end);return ok and n or 'a drive' end
+  for _,bag in ipairs(bags) do
+   bag.overflow=true
+   local moved,kept=bag:settle_overflow()
+   for _,r in ipairs(moved) do self.g.log('slots reduced to '..bag:slots()..': '..nm(r)..' moved to the bag');if self.toast then pcall(self.toast,'A drive moved to the bag: fewer slots') end end
+   for _,r in ipairs(kept) do self.g.log('slots reduced to '..bag:slots()..' and the bag is full: '..nm(r)..' stays in its slot until you free space');if self.toast then pcall(self.toast,'Bag full: a drive stays in its extra slot') end end
+   local dropped=bag:settle_keystones()
+   for _,id in ipairs(dropped) do self.g.log('keystone allowance reduced to '..D.mod_progression.keystones(bag.context)..': keystone '..tostring(id)..' removed (the pick is owed again)');if self.toast then pcall(self.toast,'A keystone was removed: lower allowance') end end
+  end
  end
  -- Script cost of the per-frame host and of one skill event (wall clock, diagnostic only: `techprobe cost`).
  do

@@ -9,13 +9,39 @@ return function(D)
  function B.new(loot,config)
   config=config or {};return setmetatable({loot=loot,config=config,context=D.mod_progression.context(config.context),items={},equipped={},keystone=nil,keystones={}},B)
  end
- function B:slots(context) return self.config.slots or D.mod_progression.slots(context or self.context) end
+ -- The slot count follows the run's depth and never shrinks in real play (depth only rises, a New Game+ loop adds 13). A bag the RUN owns
+ -- (`overflow`, set by the run adapter's set_context) tolerates a context change that lowers it below the highest equipped slot (a LAB `depth`
+ -- command inside a run, a damaged save): occupied slots stay valid until the player frees them; nothing is destroyed and nothing asserts;
+ -- B:settle_overflow moves them to the bag when there is room. The LAB's own bag (no `overflow`) still REFUSES such a lowering atomically.
+ function B:slots(context,equipped)
+  local n=self.config.slots or D.mod_progression.slots(context or self.context);local hi=0
+  if self.overflow then for k in pairs(equipped or self.equipped) do if math.type(k)=='integer' and k>hi and k<=6 then hi=k end end end
+  return math.max(n,hi)
+ end
+ function B:settle_overflow()
+  local n=self.config.slots or D.mod_progression.slots(self.context);local moved,kept={},{}
+  for slot=6,n+1,-1 do local r=self.equipped[slot]
+   if r then if #self.items<self:capacity() then self.items[#self.items+1]=r;self.equipped[slot]=nil;moved[#moved+1]=r else kept[#kept+1]=r end end
+  end
+  return moved,kept
+ end
+ -- Keystones past a lowered allowance (never in real play: the allowance only grows) are dropped from the end of the list, so the build stays legal;
+ -- the owner says so in the log and on screen, and the pick comes back as owed (keystones.owed). Returns the ids dropped.
+ function B:settle_keystones()
+  local allow=D.mod_progression.keystones(self.context);local dropped={}
+  local list={};for _,id in ipairs(self.keystones or {}) do list[#list+1]=id end
+  if #list==0 and self.keystone then list[1]=self.keystone end
+  if #list<=allow then return dropped end
+  while #list>allow do dropped[#dropped+1]=table.remove(list) end
+  self.keystones=list;self.keystone=#list==1 and list[1] or nil;if #list==0 then self.keystone=nil end
+  return dropped
+ end
  function B:set_context(context)
   local s=self:snapshot();s.context=D.mod_progression.context(context);return self:publish(s)
  end
  function B:derive(state)
   state=state or self;local mods,implicits={},{}
-  for slot=1,self:slots(state.context) do local r=state.equipped[slot];if r then
+  for slot=1,self:slots(state.context,state.equipped) do local r=state.equipped[slot];if r then
    self.loot:validate(r)
    for _,a in ipairs(r.affixes) do local m=self.loot.rules[a.id]
     if m.kind=='unique' then local old=mods[a.id];local tiers=old and D.mod_schema.instances(old) or {};tiers[#tiers+1]=a.tier;mods[a.id]={tier=math.max(old and D.mod_schema.level(old) or 0,a.tier),copies=#tiers,tiers=tiers}
@@ -37,7 +63,7 @@ return function(D)
   if s.keystones then local n=0;for k,id in pairs(s.keystones)do assert(index(k,#s.keystones) and type(id)=='string','invalid keystone array');n=n+1 end;assert(n==#s.keystones,'sparse keystone array')end
   local count=0;for k,r in pairs(s.items) do assert(index(k,#s.items),'invalid bag index');self.loot:validate(r);count=count+1 end
   assert(count==#s.items and count<=self:capacity(),'bag full')
-  for k,r in pairs(s.equipped) do assert(index(k,self:slots(s.context)),'invalid equipped slot');self.loot:validate(r) end
+  for k,r in pairs(s.equipped) do assert(index(k,self:slots(s.context,s.equipped)),'invalid equipped slot');self.loot:validate(r) end
   return self:derive(s)
  end
  function B:snapshot() return copy({items=self.items,equipped=self.equipped,keystone=self.keystone,keystones=self.keystones,context=self.context}) end

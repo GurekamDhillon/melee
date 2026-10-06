@@ -133,4 +133,35 @@ T.test('Adventure: an intro-skip START still held at every stage start never ope
  end
  s.pad={START=true};a:tick();assert(a.menu.screen=='pause' and s.paused,'a fresh START must still pause')
 end)
+T.test('a run start issued in the opening movie / demo waits for a settled title, survives the scene changes, then launches (2026-10-05 hang)',function()
+ local s,a=fixture(true);local scene={name='GS_MOVIE_OPENING',mode_name='GM_OPENING_MV',epoch=1};local frame=100
+ a.g.scene=function() return scene end;a.g.frame=function() return frame end
+ local function logs() local t={};a.g.log=function(x) t[#t+1]=x end;return t end;local log=logs()
+ assert(a:command('classic'));assert(not s.launch and a.retail_request and a.retail_request.scene_wait,'deferred in the movie')
+ assert(table.concat(log,' '):find('run start deferred',1,true),'said so')
+ for _=1,10 do a:tick() end;assert(not s.launch)
+ -- the movie ends: the scene change reaches the app as a match end, which must not drop the request nor count as a run's match end
+ scene={name='GS_VS',mode_name='GM_OPENING_MV',epoch=2};frame=700;a:match_end();assert(a.retail_request and not s.launch and not a.retail.active,'request survives the scene change')
+ for _=1,10 do frame=frame+1;a:tick() end;assert(not s.launch,'not in the attract demo')
+ scene={name='GS_TITLE',mode_name='GM_OPENING_MV',epoch=3};frame=1500;a:match_end();a:tick();assert(not s.launch,'title just entered: settling')
+ frame=1500+30;a:tick();assert(not s.launch);frame=1500+470;a:tick();assert(not s.launch,'title about to give way to the demo')
+ frame=1500+120;a:tick();assert(s.launch and s.launch.mode=='classic' and a.retail.active,'launched from the settled title')
+ assert(not a.retail_request)
+end)
+T.test('a scene end before the run reached a stage is not a match end of the run',function()
+ local s,a=fixture(true);assert(a:command('start'));assert(a.retail.active and not a.retail.stage_started)
+ a.results_up=nil;a:match_end();assert(not a.results_up and a.retail.active,'ignored')
+ a:retail_event('stage_start',s.mode);assert(a.retail.stage_started);a:match_end();assert(a.results_up,'a real match end')
+end)
+T.test('envoy start: depth/loop/build give a consistent run (slots, keystone allowance, rolled build) and bad arguments are refused',function()
+ local s,a=fixture(true)
+ assert(not a:command('start classic mario depth=x'));assert(not a:command('start classic mario bogus=1'));assert(not a:command('start sprint mario'));assert(not s.launch)
+ local ok,why=a:command('start classic mario depth=12 loop=1 build=77');assert(ok,why);assert(s.launch.mode=='classic' and a.retail.rules)
+ local h=a.retail.host
+ if h then
+  local b=h:bag();local ctx=h.mods.engine.context
+  assert(ctx.depth==12 and ctx.loop==1,'context follows the request');assert(b:slots()==6)
+  assert(h:equipped_count()==6,'every slot filled');assert(#h:keystone_ids()==D.mod_progression.keystones(ctx),'keystones up to the allowance')
+ end
+end)
 T.done()

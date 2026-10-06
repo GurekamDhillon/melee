@@ -332,4 +332,15 @@ T.test('canonical fighter bindings checkpoint and clear same-kind replacement tr
  local before=a:export();s.blob=saved;assert(not pcall(a.loadstate,a));assert(a:export()==before,'stale checkpoint changed roots')
  s.players[1].entity_ref=old;assert(pcall(a.loadstate,a));assert(a.observed[1].entity_ref==old)
 end)
+T.test('a burn tick raises an ordinary fighter damage but never a boss damage (only a hit may end a boss fight)',function()
+ local function burned(char)
+  local s,a=fixture();s.players[2].char=char;assert(a:command('add kindling'));assert(a:command('add pyre'));a:frame()
+  a:hit(1,2,{context_valid=true,element_tag='fire',move_tag='aerial',attacker_damage=7,victim_damage=9,attacker_grounded=false,victim_grounded=true})
+  a:frame();assert(a.engine:status(2,'burn'),'burning')
+  local before=s.players[2].percent;for _=1,200 do a:frame() end
+  return before,s.players[2].percent,s
+ end
+ local b0,b1=burned(2);assert(b1>b0,'an ordinary fighter burns: '..b0..' -> '..b1)
+ for _,boss in ipairs({26,27}) do local c0,c1,s=burned(boss);assert(c1==c0,'boss char '..boss..' must not burn: '..c0..' -> '..c1) end
+end)
 T.done()

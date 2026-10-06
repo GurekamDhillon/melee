@@ -569,4 +569,76 @@ T.test('the strip counts waiting drives and a full-bag pickup never opens a scre
  local r=distinct_plain(host,1)[1];local h=host.mods.drives.drops:spawn(r,0,0);mods:pickup{name='drive',port=1,item=h,payload=s.payload}
  assert(#host.decide==1 and not host.screen.active and s.paused~=true);host.hud.m=nil;local m=host.hud:model();assert(m.depth_text:find('1 drive(s) waiting',1,true),m.depth_text)
 end)
+T.test('a fighter far outside the blast zone that was never knocked out loses a stock after 4 s and is put back, loudly',function()
+ local s,g,mods,host=start_run();stage(host)
+ g.stage_bounds=function() return {camera={left=-100,right=100,top=100,bottom=-100},blast={left=-200,right=200,top=180,bottom=-140},main_floor={left=-50,right=50,top=0,bottom=0},origin={x=0,y=0}} end
+ local tp;g.teleport=function(p,x,y) tp={p,x,y};s.players[p].x,s.players[p].y=x,y;return true end
+ g.set_stocks=function(p,n) s.players[p].stocks=n;return true end
+ s.players[1].y=-300;host.since=host.since-host.since%6;for _=1,150 do host:frame() end
+ assert(s.players[1].stocks==3 and not tp,'inside the margin (blast bottom -140, margin 300): nothing yet')
+ s.players[1].y=-2000;local fly=true;g.fly=function() return fly end
+ for _=1,400 do host:frame() end;assert(s.players[1].stocks==3 and not tp,'debug flight is exempt')
+ fly=false;for _=1,100 do host:frame() end;assert(s.players[1].stocks==3 and not tp,'under the limit')
+ for _=1,150 do host:frame() end
+ assert(s.players[1].stocks==2,'a stock was lost: '..s.players[1].stocks);assert(tp and tp[1]==1 and tp[2]==0 and tp[3]==40,'put back on the stage')
+ assert(has(s,'P1 is out of bounds') and host.hud.toasts~=nil,'logged')
+ -- the last stock: lost, not put back (the game's own game-over flow takes it from there)
+ tp=nil;s.players[1].stocks=1;s.players[1].y=-2000;for _=1,300 do host:frame() end
+ assert(s.players[1].stocks==0 and not tp)
+end)
+T.test('with no bounds from the engine the last bounds of the stage are used, then a huge fixed box',function()
+ local s,g,mods,host=start_run();stage(host);local first=true
+ g.stage_bounds=function() if first then first=false;return {blast={left=-200,right=200,top=180,bottom=-140}} end return nil end
+ g.set_stocks=function(p,n) s.players[p].stocks=n;return true end;g.teleport=function() return true end
+ host.since=host.since-host.since%6;host:frame();s.players[1].y=-900;for _=1,300 do host:frame() end;assert(s.players[1].stocks==2,'last bounds remembered')
+ local s2,g2,m2,h2=start_run();stage(h2);g2.stage_bounds=function() return nil end;g2.set_stocks=function(p,n) s2.players[p].stocks=n;return true end;g2.teleport=function() return true end
+ h2.since=h2.since-h2.since%6;s2.players[1].y=-900;for _=1,300 do h2:frame() end;assert(s2.players[1].stocks==3,'no bounds at all: only a huge box applies')
+ s2.players[1].y=-5000;for _=1,300 do h2:frame() end;assert(s2.players[1].stocks==2)
+end)
+T.test('fewer slots than drives equipped (never real play): overflow goes to the bag, or stays in its slot; totals and the strip never assert',function()
+ for _,full in ipairs({false,true}) do
+  local s,g,mods,host=start_run();stage(host,{stage=10})
+  assert(host:bag():slots()==6,'depth 10 has six slots')
+  fill_slots(host);local b=host:bag();assert(b.equipped[5] and b.equipped[6])
+  if full then while #b.items<b:capacity() do assert(b:give(host.mods.drives.loot:roll(700+#b.items,host.mods.engine.context))) end end
+  local held=count_drives(host)
+  mods:set_context(D.mod_progression.context(0,0))   -- what a lower depth does
+  assert(count_drives(host)==held,'no drive destroyed')
+  if full then assert(b.equipped[5] and b.equipped[6] and b:slots()==6,'bag full: they stay in their slots') else assert(not b.equipped[5] and not b.equipped[6] and b:slots()==4,'moved to the bag') end
+  assert(has(s,'slots reduced to'),'logged')
+  host:touch();local t=host:totals();assert(type(t.strength)=='number')
+  host.hud.m=nil;host.hud:model()
+ end
+end)
+T.test('a lowered keystone allowance drops the surplus loudly (never an assertion), and the strip, totals and publication keep working',function()
+ local s,g,mods,host=start_run();stage(host,{stage=10})
+ local b=host:bag();assert(D.mod_progression.keystones(host.mods.engine.context)==3,'depth 10: three keystones')
+ local ids=D.keystones.ids();local held=host:keystone_ids()
+ for _,id in ipairs(ids) do if #host:keystone_ids()<3 then local trial={};for _,h in ipairs(host:keystone_ids()) do trial[#trial+1]=h end;trial[#trial+1]=id
+  if id~=held[1] and D.keystones.check(trial) then assert(b:choose_keystone(id)) end end end
+ assert(#host:keystone_ids()==3)
+ mods:set_context(D.mod_progression.context(0,0))
+ assert(#host:keystone_ids()==1,'cut to the allowance');assert(has(s,'keystone allowance reduced to 1'),'logged')
+ host:touch();assert(type(host:totals().strength)=='number');host.hud.m=nil;host.hud:model()
+ for _=1,40 do mods:frame();host:frame() end;assert(not has(s,'disabled after pending publication refusal'),'the build still publishes')
+end)
+T.test('drive grant gives and equips; give and grant are refused (said) before the stage has started instead of vanishing; a stale queued edit is dropped, not asserted',function()
+ local s,g,mods,host=start_run();stage(host)
+ local before=host:equipped_count();assert(s.commands.drive('grant rare 31'));mods:frame();mods:frame()
+ assert(host:equipped_count()==before+1 or #host:bag().items>0,'granted');assert(has(s,'drive: grant'),'logged')
+ local ready=true;mods.options.run_ready=function() return ready end;ready=false
+ local ok=s.commands.drive('give common 5');assert(not ok and has(s,'the stage has not started yet'),'refused with a reason')
+ ready=true
+ host.mods.drives.pending={{op='equip',a=99,b=1}};local v=host.mods.drives:view();assert(v and #host.mods.drives.pending==0,'stale edit dropped');assert(has(s,'no longer valid'))
+end)
+T.test('a developer start (depth/loop/build) agrees: slots, keystone allowance, tier and a full rolled build; the floor holds until the run catches up and never lowers',function()
+ local s,g,mods,host,run=fixture();run(true);host:dev_start{depth=12,loop=1,build=true,build_seed=77};host:run_begin(4242)
+ local ctx=host.mods.engine.context;local want=D.mod_progression.run_context(host.retail.mode,12,1)
+ assert(ctx.depth==want.depth and ctx.loop==want.loop,'context follows the request');assert(host:bag():slots()==6);assert(host:equipped_count()==6,'six drives')
+ assert(#host:keystone_ids()==D.mod_progression.keystones(ctx),'keystones fill the allowance: '..#host:keystone_ids());assert(has(s,'developer start: depth=12'))
+ stage(host,{stage=0});assert(host.mods.engine.context.depth==12,'the run is at stage 0 but the floor holds the context');assert(#host:keystone_ids()==D.mod_progression.keystones(ctx),'build intact')
+ assert(host:totals().strength>0)
+ host:stage_start({stage_index=40,loop=2,stage_kind='battle',opponents={{port=2}}});assert(host.mods.engine.context.depth==40 and host.floor==nil,'the run caught up')
+ local s2,g2,m2,h2,r2=fixture();r2(true);h2:run_begin(4242);assert(h2.mods.engine.context.depth==0 and h2:equipped_count()==1,'an ordinary start is unchanged')
+end)
 T.done()

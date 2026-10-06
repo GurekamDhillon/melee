@@ -54,7 +54,7 @@ return function(D)
   if not ok then return false,why end
   self.working=working;self.companion=c;ok,why=self:save()
   if not ok then self.g.end_1p();self.working=nil;self.companion=nil;return false,why end
-  self.active=true;self.mode=mode;self.seed=seed;self.loop=0;self.elapsed=0;self.cleared={};self.reward=nil;self.results=nil;self.completed={};self.final_rewards={};self.deferred_complete=nil
+  self.stage_started=false;  self.active=true;self.mode=mode;self.seed=seed;self.loop=0;self.elapsed=0;self.cleared={};self.reward=nil;self.results=nil;self.completed={};self.final_rewards={};self.deferred_complete=nil
   self.initial=clone(self.profile).companions[working.active].stats
   if self.rules and self.host then self.host:run_begin(seed) end
   self.g.log('envoy: retail '..mode..' started seed='..seed..(self.rules and ' (rule host)' or ' (companion stats)'));return true
@@ -79,6 +79,7 @@ return function(D)
  end
  function R:stage_start(e)
   if not self.active then return end
+  self.stage_started=true
   if self.awaiting_loop then
    self.awaiting_loop=nil;S.record_start(self.working,self.seed)
    local ok=self:save();if not ok then self:finish('fail');return end

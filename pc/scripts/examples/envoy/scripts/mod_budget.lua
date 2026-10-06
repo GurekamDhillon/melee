@@ -207,5 +207,45 @@ return function(D)
   local result={};for f in pairs(B.caps) do result[f]={raw_min=low[f] or 0,raw_max=high[f] or 0,min=1+clamp(f,low[f] or 0),max=1+clamp(f,high[f] or 0)} end
   return result
  end
+ -- ---- content memo ----------------------------------------------------------------------------------------------------------------
+ -- build/values are pure functions of (pool, mods, implicits, statuses, strength mode, tuning revision). Probe engines, the bag's draft views,
+ -- the foe roller and the publication check all ask the same question many times a frame at deep loops (the campaigns hit the 2 M instruction
+ -- budget there); one shared, bounded cache answers repeats, and keeps the work an interrupted publication already did, so a retry makes
+ -- progress. Results are shared tables: callers read them, none writes them.
+ local pool_ids=setmetatable({},{__mode='k'});local npool=0
+ local cache,cache_n={},0
+ local function tier_text(t)
+  if type(t)~='table' then return tostring(t) end
+  local o={};if t.tier then o[#o+1]='t'..tostring(t.tier) end;if t.copies then o[#o+1]='c'..tostring(t.copies) end
+  if t.tiers then o[#o+1]='['..table.concat(t.tiers,',')..']' end;return table.concat(o,'/')
+ end
+ local function content_key(kind,pool,mods,implicits,statuses)
+  local id=pool_ids[pool];if not id then npool=npool+1;id=npool;pool_ids[pool]=id end
+  local parts,n={},0
+  for mid,t in pairs(mods or {}) do n=n+1;parts[n]=mid..'='..tier_text(t) end;table.sort(parts)
+  local out={kind,id,B.mode(),D.mod_tuning and D.mod_tuning.rev or 0,table.concat(parts,';')}
+  local im={};for k,v in pairs(implicits or {}) do im[#im+1]=k..'='..tostring(v) end;table.sort(im);out[#out+1]=table.concat(im,';')
+  local st={};for name,v in pairs(statuses or {}) do st[#st+1]=name..':'..tostring(type(v)=='table' and v.stacks)..':'..tostring(type(v)=='table' and v.amount) end;table.sort(st);out[#out+1]=table.concat(st,';')
+  return table.concat(out,'|')
+ end
+ local function remember(key,a,b)
+  if cache_n>=600 then cache,cache_n={},0 end
+  cache[key]={a,b};cache_n=cache_n+1
+ end
+ local raw_build,raw_values=B.build,B.values
+ B.cache_stats={hits=0,misses=0}
+ function B.build(pool,mods,implicits,statuses)
+  local key=content_key('b',pool,mods,implicits,statuses);local hit=cache[key]
+  if hit then B.cache_stats.hits=B.cache_stats.hits+1;return hit[1],hit[2] end
+  B.cache_stats.misses=B.cache_stats.misses+1
+  local a,b=raw_build(pool,mods,implicits,statuses);remember(key,a,b);return a,b
+ end
+ function B.values(pool,mods,implicits,statuses)
+  local key=content_key('v',pool,mods,implicits,statuses);local hit=cache[key]
+  if hit then B.cache_stats.hits=B.cache_stats.hits+1;local out={};for k,v in pairs(hit[1]) do out[k]=v end;return out end -- callers edit their copy
+  B.cache_stats.misses=B.cache_stats.misses+1
+  local a=raw_values(pool,mods,implicits,statuses);remember(key,a);local out={};for k,v in pairs(a) do out[k]=v end;return out
+ end
+ function B.cache_clear() cache,cache_n={},0 end
  return B
 end

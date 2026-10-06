@@ -126,7 +126,10 @@ return function(D)
   for n=1,per do self.g.kit.text(a.x+24,y+23+n*19,lines[page*per+n] or (n==1 and 'Vanilla build' or ''),'body','bone','left',{max_w=a.w-48}) end
  end
  -- `raw`: references instead of a detached copy, for a caller that only encodes the result (the per-frame checkpoint).
- function F:snapshot(raw) local s={seed=self.seed,stage=self.stage,builds=self.builds,pending=self.pending,labels=self.labels};if raw then return s end;return clone(s) end
+ -- The opponent plates (labels: text for four seconds after a roll) are 1 KB each at depth; a run has no rewind, so its checkpoint leaves them out
+ -- and neither are the opponents' build records (the engine's own equipped table, in the same blob, keeps their effects): the blob is capped at 16 KiB
+ -- natively, and four plates plus four 1 KB records plus two players' state overflowed it from NG+1. LAB checkpoints keep all of it.
+ function F:snapshot(raw) local s={seed=self.seed,stage=self.stage,builds=self.lab:hosted() and {} or self.builds,pending=self.pending,labels=self.lab:hosted() and {} or self.labels};if raw then return s end;return clone(s) end
  function F:validate(s)
   assert(type(s)=='table','invalid foe checkpoint');for k in pairs(s) do assert(({seed=true,stage=true,builds=true,pending=true,labels=true})[k],'unknown foe field') end
   assert(type(s.seed)=='number' and s.seed%1==0 and s.seed>=0 and s.seed<=2147483646,'invalid foe seed');assert(type(s.stage)=='number' and s.stage%1==0 and s.stage>=0 and s.stage<=2147483646,'invalid foe stage')

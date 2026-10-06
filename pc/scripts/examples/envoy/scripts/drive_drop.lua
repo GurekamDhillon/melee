@@ -20,7 +20,7 @@ return function(D)
   assert(self:count()<12,'drop capacity exhausted')
   if not at_x then local p=self.g.player(2) or self.g.player(1);assert(p,'fighter absent');at_x,at_y=p.x+10,p.y+8 end
   local id=self.next_id;assert(id<=1000000,'drop id budget exhausted');local c=record.colour=='purple' and 'white' or record.colour
-  local h,why=self.g.item_spawn('drive',at_x,at_y,{payload={colour=c,amount=id}})
+  local h,why=self.g.item_spawn(self.item_name or 'drive',at_x,at_y,{payload={colour=c,amount=id}}) -- co-op spawns `drive_coop`: the same item either player may touch (ports mask 3)
   assert(h,why or 'drive spawn refused');self.next_id=id+1
   self.records[id]={handle=h,record=record};self:visual(h,record,at_x,at_y)
   return h
@@ -32,7 +32,7 @@ return function(D)
  end
  -- `hosted`: a run's host decides what happens to the drive (merge, bag, ask), so nothing is given to the bag here.
  function R:pickup(e,bag,hosted,port)
-  if e.name~='drive' or e.port~=(port or 1) then return false end
+  if (e.name~='drive' and e.name~='drive_coop') or e.port~=(port or 1) then return false end
   local id=e.payload and e.payload.amount;local d=id and self.records[id]
   if not d or d.handle~=(e.item or e.handle) then return false end
   if not hosted then assert(bag:give(d.record)) end;self.records[id]=nil;self.juice:collect(d.handle,nil,self.g.player(e.port or 1));return d.record

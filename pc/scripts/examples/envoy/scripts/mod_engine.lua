@@ -18,8 +18,9 @@ return function(D)
    checked={rules=r,list=l};D._pool_checked[pool]=checked
   end
   local rules,list={},{};for id,m in pairs(checked.rules) do rules[id]=m end;for i,m in ipairs(checked.list) do list[i]=m end
+  checked.tag=checked.tag or (function() D._pool_tags=(D._pool_tags or 0)+1;return D._pool_tags end)()
   D._pool_checked[list]=checked -- an engine's own list is a validated pool too (import() builds its probe from it)
-  return setmetatable({rules=rules,list=list,seed=seed or 1,frame=0,equipped={},implicits={},statuses={},recent={},players={},queue={},damage={},trace={},used=0,fx={},dropped=0,memo={},
+  return setmetatable({pool_tag=checked.tag,rules=rules,list=list,seed=seed or 1,frame=0,equipped={},implicits={},statuses={},recent={},players={},queue={},damage={},trace={},used=0,fx={},dropped=0,memo={},
    context=D.mod_progression.context(limits.context),limit=budget,depth=depth,display={last_pulse=-30,pulse_start=-100,pulse_strength=0,trace_key='',intensity=.65}},E)
  end
  function E:random() self.seed=self.seed*48271%2147483647;return self.seed/2147483647 end
@@ -215,20 +216,40 @@ return function(D)
  -- derived values (name, stacks, amount; expiry and origin never enter a value, a rule or an echo). It is
  -- memoised by that content, so a fighter whose build and statuses did not change costs a key and a lookup
  -- instead of a re-derivation. The key is content, not identity: any write path invalidates it by changing it.
- local function memo_key(self,port)
-  local parts,n={},0
+ local function eq_key(self,port)
   local eq=self.equipped[port]
-  if eq then for id,tier in pairs(eq) do n=n+1;parts[n]=id..'='..(type(tier)=='table' and C.encode(tier) or tostring(tier)) end;table.sort(parts) end
-  local out=table.concat(parts,';')..'|t'..tostring(D.mod_tuning and D.mod_tuning.rev or 0)..'|'
+  self.eqkeys=self.eqkeys or {}
+  local ek=self.eqkeys[port]
+  if not ek or ek.tbl~=eq then
+   local parts,n={},0
+   if eq then for id,tier in pairs(eq) do n=n+1;parts[n]=id..'='..(type(tier)=='table' and C.encode(tier) or tostring(tier)) end;table.sort(parts) end
+   ek={tbl=eq,text=table.concat(parts,';')};self.eqkeys[port]=ek
+  end
+  return ek.text
+ end
+ local function memo_key(self,port)
+  -- The equipped part of the key (every merged drive is a stack table that has to be encoded) is built once per equipped table, not on each of the
+  -- ~20 memo lookups a frame makes (the deep-loop profile: 70 encodes a frame). set_build/import/clear replace the table, which is the invalidation.
+  local out=eq_key(self,port)..'|t'..tostring(D.mod_tuning and D.mod_tuning.rev or 0)..'|'
   local im=self.implicits[port]
   if im then local k={};for key,v in pairs(im) do k[#k+1]=key..'='..tostring(v) end;table.sort(k);out=out..table.concat(k,';') end
   local at=self.statuses[port]
   if at then out=out..'|';for _,name in ipairs(ordered) do local v=at[name];if v then out=out..name..':'..tostring(v.stacks)..':'..tostring(v.amount)..';' end end end
   return out
  end
+ -- The memo is shared between engine instances (the live one, the publication probe, the bag's preflight engines, the foe roller's): a
+ -- derivation is a pure function of the content key, the pool and the progression context, and every probe used to repeat it from scratch
+ -- (the campaigns' slow frames were all that: set_build -> native rules -> budget, 10 to 25 ms at depth). Bounded; cleared when it fills.
+ D._memo_shared=D._memo_shared or {n=0,map={}}
  local function memo(self,port)
   local key=memo_key(self,port);local m=self.memo[port]
-  if not m or m.key~=key then m={key=key};self.memo[port]=m end
+  if not m or m.key~=key then
+   local sh=D._memo_shared
+   local full=key..'|'..tostring(self.pool_tag or 0)..'|'..tostring(self.context and self.context.depth)..':'..tostring(self.context and self.context.loop)
+   m=sh.map[full]
+   if not m then if sh.n>=500 then sh.map,sh.n={},0 end;m={key=key};sh.map[full]=m;sh.n=sh.n+1 end
+   self.memo[port]=m
+  end
   return m
  end
  function E:family_budget(port)
@@ -248,14 +269,17 @@ return function(D)
   return self.echo_names
  end
  function E:echo_description(port)
-  local parts,n={},0
-  local eq=self.equipped[port]
-  if eq then for id,tier in pairs(eq) do n=n+1;parts[n]=id..'='..(type(tier)=='table' and C.encode(tier) or tostring(tier)) end;table.sort(parts) end
-  local key=table.concat(parts,';')
+  local key=eq_key(self,port)
   for name in pairs(self:echo_status_names()) do key=key..'|'..name..'='..tostring(self:status(port,name) and true or false) end
   self.echo_memo=self.echo_memo or {}
   local c=self.echo_memo[port]
-  if not c or c.key~=key then c={key=key,value=D.mod_echo.engine(self,port)};self.echo_memo[port]=c end
+  if not c or c.key~=key then
+   D._memo_shared=D._memo_shared or {n=0,map={}};local sh=D._memo_shared
+   local full='echo|'..key..'|'..tostring(self.pool_tag or 0)..'|'..tostring(self.context and self.context.depth)..':'..tostring(self.context and self.context.loop)
+   c=sh.map[full]
+   if not c then c={key=key,value=D.mod_echo.engine(self,port)};if sh.n>=500 then sh.map,sh.n={},0 end;sh.map[full]=c;sh.n=sh.n+1 end
+   self.echo_memo[port]=c
+  end
   return c.value
  end
  function E:native_rules(port)
@@ -356,7 +380,7 @@ return function(D)
     return {chance=chance,mean=mult,multiplier=1+gain*.5,multiplier_max=math.min(4,1+gain*1.5+extra),launch=math.max(sl.launch,isd and 1 or d.launch)}
    end
    out.default=finish('default')
-   if force and force>out.default.mean then local d=out.default;d.mean=force;d.multiplier=1+(force-1)*.5;d.multiplier_max=math.min(4,1+(force-1)*1.5) end
+   if force and force>out.default.mean then local d=out.default;d.mean=force;d.multiplier_max=math.min(4,1+(force-1)*1.5);d.multiplier=math.min(d.multiplier_max,1+(force-1)*.5) end -- a forced crit above x4 must not leave multiplier above multiplier_max (the native config refuses it: found at deep loops)
    for tag in pairs(slots) do if tag~='default' then out[tag]=finish(tag) end end
    config={slots=out,min_percent=floor}
   end
@@ -457,9 +481,16 @@ return function(D)
   local po,lo=evaluate(attack,false);local pt,lt=evaluate(defence,true)
   return {percent_damage=po*pt,launch=lo*lt,outgoing=po,incoming=pt,launch_out=lo,launch_in=lt,element=element,original_element=original_element}
  end
- function E:export()
+ -- `trim` (a run's checkpoint, which is never restored): each status keeps the first 6 lines of its origin list, not up to 24. At depth six
+ -- fighters carry several statuses each and the origins were 5 KB of the 16 KiB blob (found by the campaigns).
+ function E:export(trim)
   assert(#self.queue==0,'checkpoint requires a drained event boundary')
-  return C.encode{version=1,seed=self.seed,frame=self.frame,context=self.context,equipped=self.equipped,implicits=self.implicits,statuses=self.statuses,recent=self.recent,trace=self.trace,dropped=self.dropped,limit=self.limit,depth=self.depth,display=self.display}
+  local statuses=self.statuses
+  if trim then
+   statuses={}
+   for p,at in pairs(self.statuses) do local t={};for name,v in pairs(at) do local c={};for k,x in pairs(v) do c[k]=x end;if type(v.origin)=='table' and #v.origin>6 then local o={};for i=1,6 do o[i]=v.origin[i] end;c.origin=o end;t[name]=c end;statuses[p]=t end
+  end
+  return C.encode{version=1,seed=self.seed,frame=self.frame,context=self.context,equipped=self.equipped,implicits=self.implicits,statuses=statuses,recent=self.recent,trace=self.trace,dropped=self.dropped,limit=self.limit,depth=self.depth,display=self.display}
  end
  function E:import(text)
   local at=C.decode(text);at.context=D.mod_progression.context(at.context);assert(at.version==1 and type(at.frame)=='number' and at.frame%1==0 and at.frame>=0,'invalid modifier snapshot')
@@ -471,7 +502,19 @@ return function(D)
   at.implicits=at.implicits or {}
   for p,base in pairs(at.implicits) do assert(type(p)=='number' and p%1==0 and p>=1 and p<=6);for key,value in pairs(base) do assert(S.values[key] and type(value)=='number' and value==value and value>=-1000000 and value<=1000000,'invalid snapshot implicit') end end
   for p,statuses in pairs(at.statuses) do assert(type(p)=='number' and p>=1 and p<=6 and p%1==0)
-   for name,v in pairs(statuses) do assert(S.statuses[name] and type(v)=='table' and v.stacks>=1 and v.stacks<=8 and v.stacks%1==0 and v.max>=v.stacks and v.max<=8 and v.expires>=at.frame and v.expires%1==0 and v.next_tick%1==0 and v.amount>=0 and v.amount<=100 and type(v.origin)=='table' and (v.cause==nil or D.mod_skill.cause[v.cause]~=nil),'invalid snapshot status') end
+   for name,v in pairs(statuses) do
+    -- which field refuses is named (a deep-loop campaign run hit this once with no way to tell)
+    local why
+    if not S.statuses[name] then why='unknown status' elseif type(v)~='table' then why='not a table'
+    elseif not (v.stacks>=1 and v.stacks<=8 and v.stacks%1==0) then why='stacks '..tostring(v.stacks)
+    elseif not (v.max>=v.stacks and v.max<=8) then why='max '..tostring(v.max)..' stacks '..tostring(v.stacks)
+    elseif not (v.expires>=at.frame and v.expires%1==0) then why='expires '..tostring(v.expires)..' frame '..tostring(at.frame)
+    elseif not (v.next_tick%1==0) then why='next_tick '..tostring(v.next_tick)
+    elseif not (v.amount>=0 and v.amount<=100) then why='amount '..tostring(v.amount)
+    elseif type(v.origin)~='table' then why='origin'
+    elseif not (v.cause==nil or D.mod_skill.cause[v.cause]~=nil) then why='cause '..tostring(v.cause) end
+    assert(not why,'invalid snapshot status '..tostring(name)..': '..tostring(why))
+   end
   end
   for p,events in pairs(at.recent) do assert(type(p)=='number' and p%1==0 and p>=1 and p<=6);for event,frame in pairs(events) do assert(S.events[event] and type(frame)=='number' and frame%1==0 and frame>=0 and frame<=at.frame,'invalid recent event') end end
   assert(type(at.trace)=='table' and #at.trace<=24 and type(at.dropped)=='number' and at.dropped>=0 and at.dropped%1==0,'invalid snapshot trace');for _,line in ipairs(at.trace) do assert(type(line)=='string' and #line<=160) end

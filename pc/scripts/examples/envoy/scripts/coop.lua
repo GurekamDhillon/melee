@@ -169,6 +169,7 @@ return function(D)
   local s2=self:make_seat(2,2,fighters[2],'human');s2.drives=mods:add_seat(2)
   self.seats={s1,s2}
   self.hosts[1]=app_host_new(self.g,mods,self,s1);self.hosts[2]=app_host_new(self.g,mods,self,s2)
+  if mods.foes then local old=mods.foes.defer;mods.foes.defer=function() return self.screen_owner~=nil or (old~=nil and old()) end end -- the opponent plate waits while a reward screen is up (it bled through the grid)
   self.host=self.hosts[1]
  end
  function C:start(opts)
@@ -184,6 +185,7 @@ return function(D)
   self.stage,self.loop=0,0;self.events={};self.stats={};self.owner_of={};self.last_hitter={};self.results={}
   self.attempt=0;self.active=true;self.state='launching';self.state_info={player_port=1}
   self.mods.tap=function(kind,a,b) self:tap(kind,a,b) end
+  self.mods.drives.drops.item_name='drive_coop' -- the floor drive both players can touch (the solo item only answers port 1: found when seat 2 never collected a drop)
   for i,h in ipairs(self.hosts) do h:run_begin(self.seed) end
   -- run_begin of host 1 resets the shared rule host and every seat's bag; host 2 then gives its own starter from the same run seed (salted by seat).
   self:event('run_begin',0,self.seed,#self.seats)
@@ -244,6 +246,9 @@ return function(D)
   if self.state~='stage' then return end
   self.stage_frames=self.stage_frames+1
   for _,h in ipairs(self.hosts) do h:frame() end
+  if self.stage_frames==1 then self.foe_strength={};for i=1,#self.plan.foes do self.foe_strength[i]=1 end end
+  if self.stage_frames>=60 and self.stage_frames%30==0 then local fs=self.foe_strength -- the strongest each opponent's build was seen during the stage (a roll lands a few seconds in)
+   for i=1,#self.plan.foes do local ok,_,v=pcall(function() return self.mods.engine:family_budget(2+i) end);if ok and v and v>(fs[i] or 0) then fs[i]=v end end end
   -- who dealt and took what: percent changes, credited to the last player who hit the victim
   for p,v in pairs(self:snapshot_players()) do
    local before=self.last_pct[p]
@@ -270,6 +275,15 @@ return function(D)
   local row={loop=self.loop,stage=self.stage,result=result,frames=self.stage_frames,foes=#self.plan.foes,team_strength=self.last_team_strength,strengths=self.last_strengths,
    dealt={},taken={},stage_name=self.plan.stage_name}
   for p=1,6 do row.dealt[p]=self.dealt[p] or 0;row.taken[p]=self.taken[p] or 0 end
+  -- the per-stage detail the synthetic campaigns aggregate: both builds' strength, the opponents' strength, drops each seat gained, script cost
+  local st={};for _,h in ipairs(self.hosts) do local _,v=self.mods.engine:family_budget(h:port0());st[#st+1]=v end
+  local fs=self.foe_strength or {}
+  local gains={0,0};for _,e in ipairs(self.events) do if e.kind=='gain' and e.loop==self.loop and e.stage==self.stage and gains[e.port] then gains[e.port]=gains[e.port]+1 end end
+  local cost=self.mods.cost and self.mods.cost.frame;local cm,cp,cx=0,0,0
+  if cost then local n=math.min(cost.n,240);local sum,sorted=0,{};for i=1,n do sum=sum+cost[i];sorted[i]=cost[i] end;table.sort(sorted);if n>0 then cm=sum/n;cp=sorted[math.max(1,math.ceil(n*.95))] end;cx=cost.max end
+  row.detail={builds=st,foe=fs,gains=gains,cost={cm,cp,cx}}
+  self:log(('stage detail: loop %d stage %d name=%s builds=%.2f/%.2f foes=%s gains=%d/%d cost=%.3f/%.3f/%.3f'):format(self.loop,self.stage,self.plan.stage_name,st[1] or 0,st[2] or 0,
+   table.concat((function() local t={};for i,v in ipairs(fs) do t[i]=('%.2f'):format(v) end;return t end)(),','),gains[1],gains[2],cm,cp,cx))
   self.results[#self.results+1]=row;self.stats[#self.stats+1]=row
   self:log(('stage row: loop %d stage %d %s frames=%d foes=%d team=%.2f dealt P1=%.0f P2=%.0f taken P1=%.0f P2=%.0f'):format(row.loop,row.stage,result,row.frames,row.foes,row.team_strength or 0,row.dealt[1],row.dealt[2],row.taken[1],row.taken[2]))
  end
@@ -318,7 +332,7 @@ return function(D)
   if self.owns_pause then self.g.resume();self.owns_pause=nil end
   pcall(self.g.match_end_hold,'envoy-coop',false)
   for _,h in ipairs(self.hosts) do h:run_end() end
-  self.mods.tap=nil;self.active=false;self.state='idle'
+  self.mods.tap=nil;self.mods.drives.drops.item_name=nil;self.active=false;self.state='idle'
   if reason~='stopped' and self.g.scene_launch then pcall(self.g.scene_launch,'mode=menu') end
  end
  function C:stop() if self.active then self:finish('stopped') end;return true end
@@ -329,7 +343,8 @@ return function(D)
  end
  function C:draw()
   if not self.active then return end
-  if self.screen_owner then self.screen_owner:draw();return end -- one player's screen is up: the other strip stays out of its way
+  if self.screen_owner then self.screen_owner:draw();self.draws_owner_only=(self.draws_owner_only or 0)+1;return end -- one player's screen is up: the other strip stays out of its way
+  if self.state=='reward' then self.draws_other_during_screen=(self.draws_other_during_screen or 0)+1 end -- (counted: it must stay 0 in a run)
   for _,h in ipairs(self.hosts) do h:draw() end
  end
  -- Every place where one machine lets a rule see more than one peer could: listed here so the online version has the checklist.

@@ -27,6 +27,15 @@ return function(D)
     if w[2] and w[3] then local ok,err=pcall(C.set,w[2],w[3]);if not ok then self.g.log('envoy coop: '..tostring(err));return false,tostring(err) end end
     for _,l in ipairs(C.lines()) do self.g.log('envoy coop: '..l) end;return true
    end
+   if w[1]=='ux' then for i,h in ipairs(self.coop.hosts) do self.g.log(('envoy coop ux: seat %d (port %d) screen active=%s mode=%s owner=%s (coop owner is %s, state %s) strips drawn while a screen is up: %s'):format(i,h:port0(),tostring(h.screen.active),tostring(h.screen.mode),tostring(self.coop.screen_owner==h),tostring(self.coop.screen_owner and self.coop.screen_owner:port0()),tostring(self.coop.state),tostring(self.coop.draws_other_during_screen or 0)));h:dump() end;return true end
+   if w[1]=='rows' then -- one line per stage (the log may drop lines under load; this reads the run's own memory): `envoy coop rows`
+    local c=self.coop;local fin=c.final
+    for i,r in ipairs(c.results or {}) do
+     local d=r.detail or {};local function list(t) local o={};for k,v in ipairs(t or {}) do o[k]=('%.2f'):format(v) end;return table.concat(o,',') end
+     self.g.log(('coop row %d: loop=%d stage=%d result=%s frames=%d foes=%d team=%.3f name=%s builds=%s foestr=%s dealt=%.0f/%.0f taken=%.0f/%.0f gains=%s cost=%.3f/%.3f/%.3f'):format(i,r.loop,r.stage,r.result,r.frames,r.foes,r.team_strength or 0,tostring(r.stage_name),list(d.builds),list(d.foe),r.dealt[1],r.dealt[2],r.taken[1],r.taken[2],table.concat(d.gains or {},'/'),(d.cost or {})[1] or 0,(d.cost or {})[2] or 0,(d.cost or {})[3] or 0))
+    end
+    self.g.log(('coop final: active=%s reason=%s stages=%s loops=%s digest=%s'):format(tostring(c.active),fin and fin.reason or '-',fin and fin.stages or '-',fin and fin.loops or '-',fin and fin.digest or '-'));return true
+   end
    if w[1]=='record' then local text,digest=self.coop:record();for l in text:gmatch('[^\n]+') do self.g.log('envoy coop record: '..l) end;self.g.log('envoy coop record: digest '..digest);return true end
    if w[1]=='status' then local c=self.coop;self.g.log(('envoy coop: active=%s state=%s stage=%s loop=%s seed=%s'):format(tostring(c.active),c.state,tostring(c.stage),tostring(c.loop),tostring(c.seed)));return true end
    local opts={};local fighters={}

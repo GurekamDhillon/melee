@@ -139,7 +139,9 @@ return function(D)
   local probe=D.drive_bag.new(self.loot,config);assert(probe:restore(s.bag))
   for _,d in pairs(s.drops.records or {}) do self.loot:validate(d.record) end
   local count=self.drops:validate(s.drops)
-  assert(#probe.items+count<=probe:capacity(),'invalid reserved capacity')
+  -- Ground drops reserve bag space for LAB edits. In a run a drop may land on a full bag (the pickup then asks which drive to give up, `choose`),
+  -- so there the bag is only checked against its own capacity (found in the co-op campaigns: the refusal disabled the mod for good).
+  assert(#probe.items<=probe:capacity() and (#probe.items+count<=probe:capacity() or (self.lab and self.lab.hosted and self.lab:hosted())),'invalid reserved capacity')
   for _,e in ipairs(s.pending or {}) do assert(type(e)=='table','invalid pending edit');for k in pairs(e) do assert(({op=true,a=true,b=e.op=='equip'})[k],'unknown pending field') end;assert(({give=true,equip=true,unequip=true,discard=true,choose_keystone=true})[e.op],'invalid pending drive edit');if count>0 then assert(e.op=='choose_keystone','pending inventory edit races ground pickup') end;assert(probe[e.op](probe,e.a,e.b));assert(#probe.items+count<=probe:capacity(),'overbooked pending draft') end
   assert(#(s.pending or {})<=12,'invalid pending budget')
   return D.mod_codec.decode(D.mod_codec.encode(s))

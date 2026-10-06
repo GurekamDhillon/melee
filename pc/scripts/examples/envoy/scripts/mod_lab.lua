@@ -17,6 +17,51 @@ return function(D)
   -- A read-only probe of the technique layer for tests and the owner: statuses with their cause, what was last written natively, the crit and presentation counters.
   g.command('techprobe',function(arg)
    if arg=='cost reset' then self.cost={} return true end
+   if arg=='prof on' or arg=='prof reset' then -- diagnostic wall-clock profile of the rule host's functions (inclusive time, so nested calls count twice)
+    self.prof=self.prof or {};if arg=='prof reset' then for _,r in pairs(self.prof) do r.n=0;r.sum=0;r.max=0 end end
+    if not self.prof_wrapped then
+     self.prof_wrapped={};local prof=self.prof_wrapped
+     local function done(r,t0,...) local ms=(g.time()-t0)*1000;r.n=r.n+1;r.sum=r.sum+ms;if ms>r.max then r.max=ms end;return ... end
+     local function wrap(prefix,cls) if type(cls)~='table' then return end
+      for k,f in pairs(cls) do if type(f)=='function' and k~='__index' then
+       local name=prefix..'.'..tostring(k);local r={n=0,sum=0,max=0};self.prof[name]=self.prof[name] or r;local rec=self.prof[name]
+       if name=='lab.frame' then -- a slow frame says which functions it spent its time in (inclusive, so nested calls overlap)
+        cls[k]=function(...)
+         local before={};for n,r in pairs(self.prof) do before[n]=r.sum end
+         local t0=g.time();local function fin(...)
+          local ms=(g.time()-t0)*1000;rec.n=rec.n+1;rec.sum=rec.sum+ms;if ms>rec.max then rec.max=ms end
+          if ms>12 then local d={};for n,r in pairs(self.prof) do local x=r.sum-(before[n] or 0);if x>1 and n~='lab.frame' then d[#d+1]={n,x} end end
+           table.sort(d,function(a,b) return a[2]>b[2] end);local o={};for i=1,math.min(8,#d) do o[i]=('%s=%.1f'):format(d[i][1],d[i][2]) end
+           g.log(('techprobe slow frame %.1f ms (engine frame %s): %s'):format(ms,tostring(self.engine.frame),table.concat(o,' ')))
+          end
+          return ...
+         end
+         return fin(f(...))
+        end
+       else
+       cls[k]=function(...) return done(rec,g.time(),f(...)) end
+       end
+      end end
+     end
+     for _,n in ipairs({'mod_budget','mod_codec','mod_graph','mod_echo','mod_status','drive_loot','drive_merge','foe_roll','keystones','drive_text'}) do wrap(n,D[n]) end
+     wrap('engine',getmetatable(self.engine));wrap('lab',getmetatable(self));if self.drives then wrap('drives',getmetatable(self.drives));wrap('bag',getmetatable(self.drives.bag));wrap('loot',getmetatable(self.drives.loot)) end
+     if self.foes then wrap('foes',getmetatable(self.foes)) end
+     g.log('techprobe prof: wrapping installed')
+    end
+    return true
+   end
+   if arg=='prof' then
+    local list={};for name,r in pairs(self.prof or {}) do if r.n>0 then list[#list+1]={name=name,r=r} end end
+    table.sort(list,function(a,b) return a.r.sum>b.r.sum end)
+    for i=1,math.min(30,#list) do local e=list[i];g.log(('techprobe prof: %-34s n=%6d total=%9.1f ms mean=%7.3f max=%7.2f'):format(e.name,e.r.n,e.r.sum,e.r.sum/e.r.n,e.r.max)) end
+    return true
+   end
+   if arg=='ops' or arg=='ops reset' then -- which operations the per-frame commit carries (a run commits a quiet frame only every tenth)
+    local st=self.opstats or {frames=0,empty=0,kinds={}}
+    local o={};for k,n in pairs(st.kinds) do o[#o+1]=k..'='..n end;table.sort(o)
+    g.log(('techprobe ops: frames=%d quiet=%d %s'):format(st.frames,st.empty,table.concat(o,' ')));if arg=='ops reset' then self.opstats=nil end;return true
+   end
+   if arg=='size' then g.log('techprobe size: '..self:size_report());return true end
    if arg=='cost' then
     for name,r in pairs(self.cost or {}) do local n=math.min(r.n,240);local sum,sorted=0,{};for i=1,n do sum=sum+r[i];sorted[i]=r[i] end;table.sort(sorted)
      g.log(('techprobe cost: %s n=%d mean=%.3f ms p95=%.3f ms max=%.3f ms'):format(name,r.n,n>0 and sum/n or 0,sorted[math.max(1,math.ceil(n*.95))] or 0,r.max)) end
@@ -79,7 +124,7 @@ return function(D)
   end
  end
  function L:reset(full)
-  self:release_native()
+  self:release_native();self.op_sig=nil;self.blob_cache=nil
   local keep=not full and self:hosted() and self.drives
   if self.echoes then self.echoes:reset() end
   if self.foes then self.foes:reset() end
@@ -278,8 +323,20 @@ return function(D)
   end
   return players,life
  end
+ -- The checkpoint blob is capped at 16384 bytes natively: which part of it is how big (diagnostic, also logged when a commit is refused).
+ function L:size_report()
+  local parts={echoes=self.echoes and self.echoes:snapshot(true),foes=self.foes and self.foes:snapshot(true),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(true),seats=self:seat_snapshots(true),engine=self.engine:export(),owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed,tech=self.tech}
+  local names={};for k in pairs(parts) do names[#names+1]=k end;table.sort(names);local out={}
+  for _,k in ipairs(names) do local ok,t=pcall(D.mod_codec.encode,{[k]=parts[k]});out[#out+1]=k..'='..(ok and #t or 'over') end
+  if self.foes then local fs=self.foes:snapshot(true);local sub={};for _,k in ipairs({'builds','pending','labels'}) do local ok,t=pcall(D.mod_codec.encode,{fs[k]});sub[#sub+1]=k..'='..(ok and #t or 'over') end;out[#out+1]='foes{'..table.concat(sub,' ')..'}' end
+  if self.foes then for p,r in pairs(self.foes.builds) do local ok,t=pcall(D.mod_codec.encode,r);if ok then out[#out+1]='sample P'..p..'='..t:sub(1,1100) break end end end
+  do local sub={};for _,k in ipairs({'equipped','implicits','statuses','recent','trace','display','damage'}) do local ok,t=pcall(D.mod_codec.encode,{self.engine[k]});sub[#sub+1]=k..'='..(ok and #t or 'over') end;out[#out+1]='engine{'..table.concat(sub,' ')..'}' end
+  local eq={};for p=1,6 do local ok,t=pcall(D.mod_codec.encode,{self.engine.equipped[p] or {}});if ok then eq[#eq+1]='P'..p..'='..#t end end
+  local ok,t=pcall(function() return self:export() end)
+  return 'total='..(ok and #t or 'over')..' '..table.concat(out,' ')..' | equipped '..table.concat(eq,' ')
+ end
  function L:export()
-  return D.mod_codec.encode{version=1,echoes=self.echoes and self.echoes:snapshot(true),foes=self.foes and self.foes:snapshot(true),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(true),seats=self:seat_snapshots(true),engine=self.engine:export(),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed,tech=self.tech}
+  return D.mod_codec.encode{version=1,echoes=self.echoes and self.echoes:snapshot(true),foes=self.foes and self.foes:snapshot(true),debug_equipped=self.debug_equipped,drives=self.drives and self.drives:snapshot(true),seats=self:seat_snapshots(true),engine=self.engine:export(self:hosted()),enabled=self.enabled,owned=self.owned,hit_owned=self.hit_owned,pending=self.pending,observed=self.observed,tech=self.tech}
  end
  function L:check_echo_capacity(engine,manual)
   if not self.echoes then return end;manual=manual or self.echoes.manual
@@ -383,21 +440,44 @@ return function(D)
   local staged=#self.pending>0 or (self.foes and #self.foes.pending>0) or (self.drives and (#self.drives.pending>0 or self.drives:stale())) or self:seats_busy()
   if ready and staged then
    local bag=self.drives and self.drives.bag:snapshot();local seat_bags={};for p,seat in pairs(self.seats) do seat_bags[p]=seat.bag:snapshot() end;local debug=D.mod_codec.decode(D.mod_codec.encode(self.debug_equipped))
+   local phase='check'
    local accepted,why=pcall(function()
     self:prospective(self.engine,self.debug_equipped,self.pending,self.foes,self.drives and self.drives:snapshot(),players,nil,self:seat_snapshots())
+    phase='apply'
     if self.foes then self.foes:apply() end
     for _,e in ipairs(self.pending) do if players[e.port] then self.engine:equip(e.port,e.id);self.debug_equipped[e.port]=self.debug_equipped[e.port] or {};self.debug_equipped[e.port][e.id]=1 end end
     self.pending={}
     if self.drives and (#self.drives.pending>0 or self.drives:has_build()) then self.drives:apply() end
     for _,seat in pairs(self.seats) do if #seat.pending>0 or seat:has_build() then seat:apply() end end
    end)
+   if accepted then self.publish_tries=0;self.publish_refusals=0
+   elseif phase=='check' and tostring(why):find('ran too long',1,true) and (self.publish_tries or 0)<60 then
+    -- The check ran out of script budget before anything was applied: nothing is discarded. The work done so far is memoised
+    -- (mod_budget), so the next frame's retry gets further. Said in the log and on screen; never a silent drop.
+    self.publish_tries=(self.publish_tries or 0)+1
+    if self.publish_tries==1 or self.publish_tries%10==0 then self.g.log('mod: build publication deferred (script budget), retry '..self.publish_tries..': '..tostring(why):sub(1,120)) end
+    if self.publish_tries==1 and self.toast then pcall(self.toast,'Build update delayed: retrying') end
+    return true
+   end
    if not accepted then
-    pcall(self.g.sim_clear);if self.echoes then self.echoes:reset() end;self.display:clear();self.engine=D.mod_engine.new(104729,D.mod_pool,{context=self.engine.context});self.display.engine=self.engine
+    self.publish_tries=0
+    -- A refused publication is retried (twice, a frame apart) before anything is discarded: a transient refusal must not cost the build.
+    self.publish_refusals=(self.publish_refusals or 0)+1
+    if self.publish_refusals<=2 and self:hosted() then
+     self.g.log('mod: build publication refused, retrying ('..self.publish_refusals..'/2): '..tostring(why):sub(1,160))
+     if self.toast then pcall(self.toast,'Build update refused: retrying') end
+     return true
+    end
+    self.publish_refusals=0
+    pcall(self.g.sim_clear);self.op_sig=nil;if self.echoes then self.echoes:reset() end;self.display:clear();self.engine=D.mod_engine.new(104729,D.mod_pool,{context=self.engine.context});self.display.engine=self.engine
     self.enabled=false;self.owned={};self.hit_owned={};self.pending={};self.observed={};self.debug_equipped=debug
     if self.foes then self.foes:reset() end
     if self.drives then self.drives.bag.items=bag.items;self.drives.bag.equipped=bag.equipped;self.drives.bag.keystone=bag.keystone;self.drives.bag.keystones=bag.keystones or {};self.drives.bag.context=bag.context;self.drives.pending={} end
     for p,seat in pairs(self.seats) do local b=seat_bags[p];seat.bag.items=b.items;seat.bag.equipped=b.equipped;seat.bag.keystone=b.keystone;seat.bag.keystones=b.keystones or {};seat.bag.context=b.context;seat.pending={} end
-    self.g.log('mod: disabled after pending publication refusal '..tostring(why));return true
+    self.g.log('mod: disabled after pending publication refusal '..tostring(why)..' (bags kept; the builds are published again from them)')
+    if self.toast then pcall(self.toast,'Build update refused: '..tostring(why):sub(1,60)) end
+    if self:hosted() then self.enabled=true end -- the run's bags are intact: the next frame publishes the builds from them
+    return true
    end
   end
   if self.foes then self.foes:frame() end
@@ -436,13 +516,59 @@ return function(D)
   self.enabled=(self.echoes and self.echoes:active()) or D.mod_progression.effective(self.engine.context)>0 or (self.foes and (#self.foes.pending>0 or next(self.foes.builds)~=nil)) or (self.drives and (#self.drives.pending>0 or self.drives.drops:count()>0 or #self.drives.bag.items>0 or self.drives:has_build())) or self:seats_enable() or #self.pending>0 or next(self.engine.equipped)~=nil or next(self.engine.statuses)~=nil
   -- Visual pulse/cooldown metadata is pure state and belongs in the checkpoint.
   if self.enabled then self.display:update(self.engine,players) else self.display:clear() end
-  local committed,why=pcall(function() return self.g.sim_commit(self:export(),ops) end)
+  -- The journal keeps the last frames' commits, one 2.4 KB slot per operation, under a 128 MiB budget: a commit that re-sends every fighter's overlay
+  -- and hit rules each frame (six fighters: 12 operations, 30 KB a frame) overran it within a long stage ("sim_commit journal memory budget
+  -- exhausted", found in the co-op campaigns at about 3500 frames). Overlays and hit rules stay in place until replaced, so a run (which has no
+  -- rewind) sends only the ones that changed; the LAB keeps sending all of them, as the rewind journal is built on that.
+  local sent
+  if self:hosted() then
+   -- cheap signatures (no encoding): a hit-rule list is the engine memo's own table, so identity says it is unchanged; an overlay is eleven numbers
+   local sig=self.op_sig;if not sig then sig={};self.op_sig=sig end
+   local m=self.g.match and self.g.match();local f=m and m.frame or 0
+   if f<(self.op_frame or 0) or (f>0 and f%120==0) then sig={};self.op_sig=sig end -- a new scene (frame count restarted), and a full refresh every 120 frames as a safeguard
+   self.op_frame=f
+   local kept={};sent={}
+   for _,o in ipairs(ops) do
+    local skip=false
+    if o.op=='fighter_mod' then
+     local prev=sig['m'..o.port]
+     if prev then
+      skip=true;local n=0
+      if o.values then for k,v in pairs(o.values) do n=n+1;if prev.values==nil or prev.values[k]~=v then skip=false;break end end end
+      if skip then local pn=0;if prev.values then for _ in pairs(prev.values) do pn=pn+1 end end;if pn~=n or (prev.values==nil)~=(o.values==nil) then skip=false end end
+     end
+     if not skip then sent['m'..o.port]={values=o.values and (function() local c={};for k,v in pairs(o.values) do c[k]=v end;return c end)() or nil} end
+    elseif o.op=='hit_rules' then
+     local prev=sig['h'..o.port]
+     if prev and prev.rules==o.rules and prev.bits==o.status_bits then skip=true else sent['h'..o.port]={rules=o.rules,bits=o.status_bits} end
+    end
+    if not skip then kept[#kept+1]=o end
+    if #kept>=24 then break end
+   end
+   ops=kept
+  end
+  do local st=self.opstats;if not st then st={frames=0,empty=0,kinds={}};self.opstats=st end
+   st.frames=st.frames+1;if #ops==0 then st.empty=st.empty+1 end;for _,o in ipairs(ops) do st.kinds[o.op]=(st.kinds[o.op] or 0)+1 end end
+  local committed,why
+  if self:hosted() and #ops==0 and (self.engine.frame%10~=0) then committed,why=true,true
+  else
+   -- the operations are applied every frame they exist; the blob (state for a rewind that a run never does) is rebuilt every tenth frame
+   committed,why=pcall(function()
+    local blob=self.blob_cache
+    if not (self:hosted() and blob and self.engine.frame%10~=0) then blob=self:export();self.blob_cache=blob end
+    return self.g.sim_commit(blob,ops)
+   end)
+  end
+  if sent and committed and why then for key,text in pairs(sent) do self.op_sig[key]=text end end
   if not committed or not why then
    -- Validation/allocation failures are atomic natively. Retire old effects
    -- too, rather than letting mutated Lua timers diverge from the game.
+   local ok2,t=pcall(function() return self:size_report() end);local sizes=ok2 and t or nil
    local cleared,detail=pcall(self.g.sim_clear)
    self:reset()
+   if sizes then self.g.log('mod: checkpoint sizes: '..sizes) end
    self.g.log('mod: disabled after checkpoint refusal '..tostring(why)..(cleared and '' or '; clear refused '..tostring(detail)))
+   if self:hosted() then if self.toast then pcall(self.toast,'Build update refused (checkpoint): publishing again') end;self.g.log('mod: the run republishes the builds from the bags next frame') end
   end
   if committed and why and self.echoes then self.echoes:present(players) end
   if committed and why then

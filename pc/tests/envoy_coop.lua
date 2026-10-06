@@ -28,7 +28,7 @@ local function fixture()
   match_end_hold=function(r,on) s.holds[r]=on or nil;return true end,
   scene_launch=function(text) s.launches[#s.launches+1]=text;return text end,
   cpu_assist=function(p,c) s.assist[p]=c;return true end,
-  fly_target=function(p,x,y) s.fly[p]={x=x,y=y} end,fly_attack=function(p,on) s.fly[p]=s.fly[p] or {};s.fly[p].attack=on end,fly_speed=function()end,fly_solid=function()end,fly_clear=function()end,fly=function()end,
+  fly_target=function(p,x,y) s.fly[p]=s.fly[p] or {};s.fly[p].x=x;s.fly[p].y=y end,fly_attack=function(p,on) s.attack_calls=(s.attack_calls or 0)+1;s.fly[p]=s.fly[p] or {};s.fly[p].attack=on end,fly_state=function(p) return {attacking=(s.fly[p] and s.fly[p].attack) or false} end,fly_speed=function()end,fly_solid=function()end,fly_clear=function()end,fly=function()end,
   time=function() return s.clock end,
   safe_area=function() return {x=0,y=0,w=640,h=480,right=640,bottom=480} end,
   stage_bounds=function() return {camera={left=-100,right=100,top=100,bottom=-100}} end,floor_below=function(x,y) return 0 end}
@@ -202,6 +202,15 @@ T.test('floor drops: first touch takes it; causer gives it to the player who las
  assert(held(coop.hosts[1])==2 and held(coop.hosts[2])==2,'both got one whoever touched them')
  reset()
 end)
+T.test('a second run in the same session gives floor drops again (the attempt counts and given drops are cleared at run begin)',function()
+ local s,g,mods,coop=start({seed=31});populate(s,coop);settle(coop,40);s.players[3].falls=1;settle(coop,14);settle(coop,2)
+ assert(mods.drives.drops:count()>=1,'the first run drops a drive on stage 0')
+ coop:stop();for k in pairs(mods.drives.drops.records) do mods.drives.drops.records[k]=nil end
+ local ok,why=coop:start({seed=31});assert(ok,why)
+ s.players={};populate(s,coop);settle(coop,40);s.players[3].falls=1;settle(coop,14);settle(coop,2)
+ assert(mods.drives.drops:count()>=1,'the second run drops one too: its stage 0 is not a retry of the first run')
+ assert(not coop.hosts[1].retry,'and is not marked a retry')
+end)
 T.test('uncollected floor drives are divided between the seats at the stage end, none lost',function()
  reset();local s,g,mods,coop=start({seed=61});Coop.set('reward_every',1);populate(s,coop);settle(coop,40)
  s.players[3].falls=1;settle(coop,14);ko_all(s,coop)
@@ -234,6 +243,18 @@ T.test('the synthetic players fly each seat to the nearest living opponent and a
  local s,g,mods,coop=start();populate(s,coop);settle(coop,40)
  local synth=D.coop_synth.new(g,coop);synth:start('seeded');synth:frame()
  assert(s.fly[1] and s.fly[2] and s.fly[1].attack and s.fly[2].attack)
+ -- the burst attack is armed once, not every frame (every call re-arms the cycle at phase 0, which is the old every-frame attack)
+ synth:frame();synth:frame();assert(s.attack_calls==2,'one arming per seat, not one per frame: '..tostring(s.attack_calls))
+ -- a fighter whose cursor the engine disarmed (a stock lost) is armed again
+ s.fly[1].attack=false;synth:frame();assert(s.attack_calls==3 and s.fly[1].attack)
+end)
+T.test('synth gear gives a seat chosen common drives and an untagged keystone, and the build derives from them',function()
+ local s,g,mods,coop=start();populate(s,coop);settle(coop,40)
+ local synth=D.coop_synth.new(g,coop)
+ assert(synth:gear(1,{'k_plague_bearer','armoured','updraft'}))
+ local b=coop.hosts[1]:bag();assert(b.keystones[1]=='plague_bearer' and b.equipped[1] and b.equipped[2] and #b.items==0)
+ settle(coop,5)
+ assert(mods.engine.equipped[1] and mods.engine.equipped[1].plague_bearer and mods.engine.equipped[1].armoured,'the published build holds the keystone and the drive')
 end)
 T.test('the engine ending the match under the run (CPU-assisted players: the hold needs a human in slot 0) is read from the last frames, not lost',function()
  local s,g,mods,coop=start({seed=77,p1='cpu',p2='cpu'});Coop.set('reward_every',1)

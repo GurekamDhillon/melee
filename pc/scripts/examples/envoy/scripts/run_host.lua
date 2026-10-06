@@ -382,6 +382,9 @@ return function(D)
   -- Crits draw from the engine's generator; restart it from the run seed so a run is reproducible (never a default seed).
   if self.g.crit_seed and not self.follower then pcall(self.g.crit_seed,seed_for(seed,0,0,9)) end
   self.running=true;self.seed=seed;self.fell={};self.rolls={};self.stage=0;self.loop=0;self.drops=0
+  -- A new run is not a retry of the last one's stages: the attempt counts and the stages' given drops were never cleared, so every run after the first
+  -- in a game session found its stages 'already played' and gave no floor drive at all (found by the co-op campaigns; a solo run had it too).
+  self.attempts={};self.drops_given={};self.retry=false;self.drop_queue=nil
   self.offers={};self.key_offers={};self.decide={};self.deferred={};self.new_keys={};self.kos=0;self.faded={};self.hud:clear();if self.synfx then self.synfx:reset() end;if self.screen.active then self.screen:close() end
   self.mods:run_end() -- a new run starts from an empty bag, whatever the last one left
   local ctx=D.mod_progression.context(0,0);self.mods:set_context(ctx)

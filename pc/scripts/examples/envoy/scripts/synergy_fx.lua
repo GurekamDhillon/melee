@@ -119,10 +119,18 @@ return function(D)
   local arch=G().chain_archetype(self:pool(),ids[1],ids[#ids]);if not arch then return end
   local port=e.trace_port or 1
   local size=clamp(.22*(#ids-1)+.12*#ids/4,.2,1)
-  self:chain_fired(e,port,arch,size)
+  -- Co-op: a chain whose first piece one teammate holds and whose last piece the other holds is a link BETWEEN the two seats: the flash goes from the
+  -- applier's seat to the payoff's seat (it used to go from the payoff holder to the nearest fighter, usually an opponent). Solo: no seat table, no change.
+  local allies=self.host and self.host.seat and self.host.seat.allies
+  local link
+  if allies then
+   local function owner(id) for p in pairs(allies) do if (e.equipped[p] or {})[id] then return p end end end
+   local a,b=owner(ids[1]),owner(ids[#ids]);if a and b and a~=b then link={from=a,to=b};port=b end
+  end
+  self:chain_fired(e,port,arch,size,link)
  end
  -- One chain firing: count it, activate the surface, maybe flash a link (never on every hit).
- function F:chain_fired(e,port,arch,size)
+ function F:chain_fired(e,port,arch,size,link)
   local fx=FX();local f=e.frame
   self.active[port]={arch=arch,frame=f,size=size}
   local c=self.counter[port]
@@ -136,7 +144,8 @@ return function(D)
   if players then local best,bd;local me=players[port]
    for p,v in pairs(players) do if p~=port and type(v.x)=='number' and me and type(me.x)=='number' then local d=(v.x-me.x)^2+((v.y or 0)-(me.y or 0))^2;if not bd or d<bd then best,bd=p,d end end end
    target=best end
-  self.flashes[#self.flashes+1]={from=port,to=target,arch=arch,start=f,size=size,soft=soft}
+  if link then self.cross=(self.cross or 0)+1 end
+  self.flashes[#self.flashes+1]={from=link and link.from or port,to=link and link.to or target,arch=arch,start=f,size=size,soft=soft,cross=link~=nil}
   while #self.flashes>4 do table.remove(self.flashes,1) end
  end
  -- The look of the chain pulse for the engine's last trace: the post pass takes a tint and a shape from the archetype.

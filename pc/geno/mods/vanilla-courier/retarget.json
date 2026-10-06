@@ -1,0 +1,310 @@
+{
+ "note": "Courier hitbox retargeting data (read by tools/geno/courier_moves.py). 'roles' maps a Striker/Mario joint index in the donor scripts to the Courier joint that plays the same limb; 'hitboxes' overrides the Nth hitbox command of a move (0-based, in script order) with a Courier joint NAME and optional x/y/z/size, where the clip strikes with a different limb than Mario's did.",
+ "roles": {
+  "0": "TopN",
+  "1": "trans",
+  "2": "XRotN",
+  "3": "YRotN",
+  "4": "hips",
+  "5": "spine",
+  "6": "clavicle_L",
+  "7": "upperarm_L",
+  "8": "forearm_L",
+  "9": "hand_L",
+  "10": "fingers_L",
+  "11": "fingers_L",
+  "12": "fingers_L",
+  "13": "fingers_L",
+  "14": "fingers_L",
+  "15": "fingers_L",
+  "16": "fingers_L",
+  "17": "fingers_L",
+  "18": "thumb_L",
+  "19": "hand_L",
+  "20": "neck",
+  "22": "head",
+  "23": "head",
+  "29": "clavicle_R",
+  "30": "upperarm_R",
+  "31": "forearm_R",
+  "32": "hand_R",
+  "33": "fingers_R",
+  "34": "fingers_R",
+  "35": "fingers_R",
+  "36": "fingers_R",
+  "37": "fingers_R",
+  "38": "fingers_R",
+  "39": "fingers_R",
+  "40": "fingers_R",
+  "41": "thumb_R",
+  "43": "hand_R",
+  "44": "grab_anchor",
+  "47": "thigh_L",
+  "48": "thigh_L",
+  "49": "shin_L",
+  "50": "foot_L",
+  "51": "foot_L",
+  "53": "thigh_R",
+  "54": "thigh_R",
+  "55": "shin_R",
+  "56": "foot_R",
+  "57": "foot_R"
+ },
+ "hitboxes": {
+  "jab1": {
+   "0": {
+    "joint": "hand_L"
+   },
+   "1": {
+    "joint": "forearm_L"
+   }
+  },
+  "jab2": {
+   "0": {
+    "joint": "hand_R"
+   },
+   "1": {
+    "joint": "forearm_R"
+   }
+  },
+  "jab3": {
+   "0": {
+    "joint": "hand_R"
+   },
+   "1": {
+    "joint": "forearm_R"
+   }
+  },
+  "dash_attack": {
+   "0": {
+    "joint": "forearm_L"
+   },
+   "1": {
+    "joint": "head"
+   },
+   "2": {
+    "joint": "forearm_L"
+   }
+  },
+  "ftilt": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "shin_R"
+   },
+   "2": {
+    "joint": "thigh_R"
+   }
+  },
+  "ftilt_up": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "shin_R"
+   },
+   "2": {
+    "joint": "thigh_R"
+   }
+  },
+  "ftilt_down": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "shin_R"
+   },
+   "2": {
+    "joint": "thigh_R"
+   }
+  },
+  "dtilt": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "shin_R"
+   },
+   "2": {
+    "joint": "thigh_R"
+   }
+  },
+  "fsmash": {
+   "0": {
+    "joint": "hand_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "1": {
+    "joint": "forearm_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "2": {
+    "joint": "upperarm_R"
+   }
+  },
+  "fsmash_up": {
+   "0": {
+    "joint": "hand_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "1": {
+    "joint": "forearm_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "2": {
+    "joint": "upperarm_R"
+   }
+  },
+  "fsmash_down": {
+   "0": {
+    "joint": "hand_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "1": {
+    "joint": "forearm_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "2": {
+    "joint": "upperarm_R"
+   }
+  },
+  "usmash": {
+   "0": {
+    "joint": "hand_R"
+   },
+   "1": {
+    "joint": "hand_R"
+   }
+  },
+  "dsmash": {
+   "0": {
+    "joint": "foot_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "1": {
+    "joint": "shin_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "2": {
+    "joint": "hand_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "3": {
+    "joint": "forearm_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   }
+  },
+  "nair": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "foot_L"
+   },
+   "2": {
+    "joint": "foot_R"
+   },
+   "3": {
+    "joint": "foot_L"
+   }
+  },
+  "fair": {
+   "0": {
+    "joint": "hand_L"
+   },
+   "1": {
+    "joint": "hand_R"
+   }
+  },
+  "bair": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "shin_R"
+   }
+  },
+  "uair": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "shin_R"
+   }
+  },
+  "dair": {
+   "0": {
+    "joint": "foot_R"
+   },
+   "1": {
+    "joint": "foot_L"
+   },
+   "2": {
+    "joint": "foot_R"
+   }
+  },
+  "n_release": {
+   "0": {
+    "joint": "hand_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "1": {
+    "joint": "forearm_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   }
+  },
+  "s_lunge": {
+   "0": {
+    "joint": "hand_L",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "1": {
+    "joint": "forearm_L",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   }
+  },
+  "counter_strike": {
+   "0": {
+    "joint": "hand_R",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "1": {
+    "joint": "hand_L",
+    "x": 0,
+    "y": 0,
+    "z": 0
+   }
+  }
+ }
+}

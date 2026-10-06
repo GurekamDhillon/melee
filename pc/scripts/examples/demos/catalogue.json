@@ -1076,11 +1076,11 @@
     "id": "demo_atlas_screen",
     "path": "demos/atlas-screen",
     "title": "Atlas screens (gd.ui)",
-    "api": "gd.ui (screens, key hints, corner note, dialog)",
+    "api": "gd.ui (screens, key hints, corner note, dialog, on.change, on.page, on.start)",
     "category": "demo",
     "new": true,
     "in_game": false,
-    "controls": "F7 opens and closes; D-pad or arrows move; A change; X note; Y dialog; B close; TAB switches list and grid; mouse hover, click, right click, wheel",
+    "controls": "F7 opens and closes; D-pad or arrows move; A or left/right change a row; X note; Y dialog; START note; L or R (Tab) switch list and grid; B close; mouse hover, click, right click, wheel",
     "setup": []
   }
 ]

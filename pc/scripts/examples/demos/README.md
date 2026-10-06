@@ -125,7 +125,7 @@ See `tools/port/demo_tour.py --help` for the integrator's visible second-monitor
 | [`demo_stage_tour`](stage-tour) | Stage tour | Combined stage slots, queue, transition events, surface shaders and HUD | N: next stage; cycles FD/BF/YS every 8s; wipe/flash/morph | No (this packet) |
 | [`demo_tasks`](tasks) | Coroutine input task | Tasks (scripts that wait); Input | Q: jump, drift, wait for landing; task releases its pad claim when complete | No (this packet) |
 | [`demo_console_socket`](console-socket) | External console socket | The console (localhost socket) | Python client.py <port> demo_ping; external commands read player state | No (this packet) |
-| [`demo_atlas_screen`](atlas-screen) | Atlas screens (gd.ui) | gd.ui (screens, key hints, corner note, dialog) | F7 opens and closes; A change; X note; Y dialog; TAB switches list and grid | No (not played yet) |
+| [`demo_atlas_screen`](atlas-screen) | Atlas screens (gd.ui) | gd.ui (screens, key hints, corner note, dialog, on.change, on.page, on.start) | F7 opens and closes; A or left/right change; X note; Y dialog; START note; L or R switch list and grid | No (not played yet) |
 | [`mission-first`](../missions/missions/first) | Existing tiny mission folder | missions README; mission schema | load linked mod folder;  | See engine-day handoff; not run here |
 | [`maze-generator`](../missions) | Seeded generator and ASCII map | missions README Generated maze extension; tools/maze/README.md | Load missions, then mission maze 42 8; mission maze map | No (this packet) |
 

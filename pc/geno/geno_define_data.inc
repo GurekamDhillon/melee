@@ -350,6 +350,17 @@ void GenoDefine_Load(int kind, int base)
     }
     if (Geno_DefineIsNone(kind)) {
         GenoDefine_BuildOwn(kind, out, n);
+        {   /* The donor's demo rows (results / intro poses, out->x14) name figatrees authored for the DONOR's skeleton, and the
+             * results screen decodes them over this fighter's own parts table: past its end ("atree data error!", ftanim.c). A
+             * fighter that is not the donor's skeleton poses with its own Wait clip instead: each demo row becomes a copy of the
+             * Wait row (clip name, offset, size, script and flags; no loaded pointer), and ftData_80085B98 resolves them against
+             * the fighter's own animation bank. */
+            int wr = ftData_MotionStateList[ftCo_MS_Wait].anim_id;
+            if (wr >= 0 && wr < n) {
+                for (i = 0; i < demo; ++i) { out->x14[i] = out->xC[wr]; out->x14[i].x14 = 0; }
+                OSReport("geno: base none kind %d: %d demo (results) rows pose with the own Wait clip, not the donor's figatrees\n", kind, demo);
+            }
+        }
         GenoDefine_OwnTables(kind, out);
         GenoDefine_Census(kind, out, source);
     }

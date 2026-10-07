@@ -2245,6 +2245,21 @@ void ftData_80085B98(Fighter* fp, int arg1, int arg2)
     struct Fighter_WaitAnimData* temp_r3;
 
     temp_r30 = (u32) ftData_UnkIntPairs[fp->kind].data;
+#if defined(TARGET_PC)
+    {
+        /* A Geno "base none" fighter inherits the donor's demo (results / intro) animation file
+         * strings, so ftDemo_SetArchiveData hands it the DONOR's demo archive: those figatrees are
+         * authored for the donor's skeleton and, decoded over the fighter's own parts table, ran
+         * off its end ("atree data error!", ftAnim_8006F4C8) the first time the results screen
+         * posed it. GenoDefine_Load gives such a fighter demo rows that name its own Wait clip, so
+         * the base the rows' offsets are added to is its own animation bank, not the donor's. */
+        extern int Geno_DefineIsNone(int kind);
+        if (Geno_DefineIsNone(fp->kind)) {
+            ftData_80085A14(fp->kind);
+            temp_r30 = (u32) ftData_Table_Unk0[fp->kind].data;
+        }
+    }
+#endif
     fp->x59C = HSD_ObjAlloc(&fighter_x59C_alloc_data);
     fp->x5A0 = HSD_ObjAlloc(&fighter_x59C_alloc_data);
     fp->x5A4 = 0;
@@ -2258,7 +2273,11 @@ void ftData_80085B98(Fighter* fp, int arg1, int arg2)
             temp_r3 = &fp->ft_data->x14[i];
             temp_r0 = temp_r3->x8;
             if (temp_r3->x8 != 0U) {
+#if defined(TARGET_PC)
+                if (temp_r0 > FT_ANIM_BUF_SIZE) { /* fighter.c's buffer (ftparts.h) */
+#else
                 if (temp_r0 > 0xB000) {
+#endif
                     HSD_ASSERTREPORT(0x9DC, 0, "fighter figatree over! %x\n",
                                      temp_r0);
                 }

@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 #define AT_DATA_ROWS 32   /* rows the host holds for a data list (the record holds AT_MAX_ITEMS); the adapter windows the rest */
-enum { AT_DR_DONE = 1, AT_DR_LOCKED = 2, AT_DR_NEW = 4 };
+enum { AT_DR_DONE = 1, AT_DR_LOCKED = 2, AT_DR_NEW = 4, AT_DR_WIN = 8 };
 typedef struct { char label[AT_STR], value[AT_STR], sub[AT_STR]; unsigned flags; } AtDataRow;
 typedef struct {
     char id[AT_ID * 2], title[AT_STR];

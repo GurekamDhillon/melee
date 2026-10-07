@@ -76,6 +76,7 @@ void at_data_fill_item(AtItem *it, const char *id, const AtDataRow *r)
     } else {
         snprintf(it->sub, sizeof it->sub, "%s", r->sub);
         if (r->flags & AT_DR_NEW) snprintf(it->tag, sizeof it->tag, "%s", "NEW");
+        if (r->flags & AT_DR_WIN) { it->flags |= AT_CELL_SELECTED; snprintf(it->tag, sizeof it->tag, "%s", "WINNER"); }   /* the value column says WINNER too */
     }
 }
 

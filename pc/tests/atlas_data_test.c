@@ -54,6 +54,8 @@ int main(void)
     CHECK((it.iflags & AT_ITEM_DISABLED) && (it.flags & AT_CELL_DISABLED) && strcmp(it.tag, "LOCKED") == 0 && it.reason[0] != '\0');
     snprintf(r.sub, AT_STR, "Clear more events first."); at_data_fill_item(&it, "r39", &r); CHECK_STR(it.reason, "Clear more events first.");
     memset(&r, 0, sizeof r); snprintf(r.label, AT_STR, "NEW TAG"); r.flags = AT_DR_NEW; at_data_fill_item(&it, "r0", &r); CHECK_STR(it.tag, "NEW");
+    memset(&r, 0, sizeof r); snprintf(r.label, AT_STR, "P1  Fox"); r.flags = AT_DR_WIN; at_data_fill_item(&it, "r0", &r);
+    CHECK_STR(it.tag, "WINNER"); CHECK((it.flags & AT_CELL_SELECTED) && it.sub[0] == 0);                   /* the winner row: the jade edge and the tag, no "Cleared" */
     at_data_fill_item(NULL, "r0", &r);   /* a NULL item is harmless */
 
     /* a view of 3 rows in a total of 51, window at 10: the screen has 3 items, the counter says 12 / 51 for focus 11 */

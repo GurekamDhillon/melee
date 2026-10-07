@@ -1546,6 +1546,188 @@ uint64_t gw_snap_frame_hash(int frame) {
     return s != NULL ? s->hash : 0;
 }
 
+/* ---- the cross-platform state digest (MELEE_XHASH_LOG, MELEE_XHASH_DUMP_FRAMES) ------------------
+ *
+ * A Windows exe and a Linux ELF of one commit hold the same game state, except for words that are
+ * addresses INSIDE the image (function pointers, pointers to .data): the two images lay their code
+ * out differently. This digest hashes MEM1 and the game's globals with every 32-bit word in
+ * [XH_LO, XH_HI) replaced by a constant, so two platforms' per-frame values can be compared. It is a
+ * diagnostic (it needs no write-watch, so it runs on Linux), never part of the handshake.
+ *
+ *   MELEE_XHASH_LOG=<csv>          one row per live match frame: frame, the rollback checksum
+ *                                  (RB_GameHash), the masked MEM1 digest, the masked globals digest
+ *   MELEE_XHASH_DUMP_FRAMES=a,b,c  at those frames also write the masked images, for xhash_diff.py
+ *   MELEE_XHASH_DUMP_DIR=<dir>     where (default: beside the log)
+ *   MELEE_XHASH_PTR=lo-hi          the masked word range (hex), default 10000000-14000000
+ */
+#define XH_MAX_DUMPS 64
+static uint32_t xh_lo = 0x10000000u, xh_hi = 0x14000000u;
+
+/* game memory and game globals are BIG-endian (gwtool swaps every access): a pointer reads swapped */
+static inline uint32_t xh_bswap(uint32_t v) {
+    return (v >> 24) | ((v >> 8) & 0xFF00u) | ((v << 8) & 0xFF0000u) | (v << 24);
+}
+
+static uint64_t xh_words(const uint8_t *p, size_t n, uint64_t h) {
+    size_t i;
+    for (i = 0; i + 4 <= n; i += 4) {
+        uint32_t v;
+        memcpy(&v, p + i, 4);
+        if (xh_bswap(v) >= xh_lo && xh_bswap(v) < xh_hi) {
+            v = 0xA5A5A5A5u;
+        }
+        h = (h ^ v) * 0x100000001b3ull;
+        h ^= h >> 29;
+    }
+    for (; i < n; ++i) {
+        h = (h ^ p[i]) * 0x100000001b3ull;
+    }
+    return h;
+}
+
+static uint64_t xh_name_hash(const char *s) {
+    uint64_t h = 0xcbf29ce484222325ull;
+    while (*s) {
+        h = (h ^ (uint8_t) *s++) * 0x100000001b3ull;
+    }
+    return h;
+}
+
+static void xh_mask_copy(uint8_t *dst, const uint8_t *src, size_t n) {
+    size_t i;
+    memcpy(dst, src, n);
+    for (i = 0; i + 4 <= n; i += 4) {
+        uint32_t v;
+        memcpy(&v, dst + i, 4);
+        if (xh_bswap(v) >= xh_lo && xh_bswap(v) < xh_hi) {
+            v = 0xA5A5A5A5u;
+            memcpy(dst + i, &v, 4);
+        }
+    }
+}
+
+void gw_snap_xlog(int frame) {
+    static FILE *log;
+    static int tried;
+    static int dumps[XH_MAX_DUMPS], ndumps;
+    static char dumpdir[512];
+    extern uint32_t gw_RB_GameHash(void);
+    uint64_t mem = 0, glob = 0;
+    uint32_t pg;
+    int i;
+    if (!tried) {
+        const char *path = getenv("MELEE_XHASH_LOG"), *v;
+        tried = 1;
+        if (path == NULL || *path == '\0') {
+            return;
+        }
+        if (gw_snap_open(0) != 0) {
+            gw_log("xhash: cannot open the snapshot machinery (no map?)");
+            return;
+        }
+        v = getenv("MELEE_XHASH_PTR");
+        if (v != NULL) {
+            unsigned lo, hi;
+            if (sscanf(v, "%x-%x", &lo, &hi) == 2) {
+                xh_lo = lo;
+                xh_hi = hi;
+            }
+        }
+        v = getenv("MELEE_XHASH_DUMP_FRAMES");
+        while (v != NULL && *v != '\0' && ndumps < XH_MAX_DUMPS) {
+            char *end;
+            long f = strtol(v, &end, 10);
+            if (end == v) {
+                break;
+            }
+            dumps[ndumps++] = (int) f;
+            v = *end == ',' ? end + 1 : end;
+        }
+        v = getenv("MELEE_XHASH_DUMP_DIR");
+        if (v != NULL && *v != '\0') {
+            snprintf(dumpdir, sizeof dumpdir, "%s", v);
+        } else {
+            char *sl;
+            snprintf(dumpdir, sizeof dumpdir, "%s", path);
+            sl = strrchr(dumpdir, '/');
+            if (strrchr(dumpdir, '\\') > sl) {
+                sl = strrchr(dumpdir, '\\');
+            }
+            if (sl != NULL) {
+                *sl = '\0';
+            } else {
+                snprintf(dumpdir, sizeof dumpdir, ".");
+            }
+        }
+        log = fopen(path, "w");
+        if (log == NULL) {
+            gw_log("xhash: cannot open %s", path);
+            return;
+        }
+        fprintf(log, "frame,rb,mem,glob\n");
+        gw_log("xhash: %s (masking words in %08x-%08x), %d dump frame(s)", path, xh_lo, xh_hi, ndumps);
+    }
+    if (log == NULL || !sn.enabled) {
+        return;
+    }
+    for (pg = 0; pg < gw_mem1_size / SN_PAGE; ++pg) {
+        uint64_t h = xh_words((const uint8_t *) (uintptr_t) (0x80000000u + pg * SN_PAGE), SN_PAGE, 0x12345678ull + pg);
+        mem += h * 0x9E3779B97F4A7C15ull + pg;
+    }
+    for (i = 0; i < sn.nsyms; ++i) {
+        const GwSnapSym *s = &sn.syms[i];
+        if (s->len == 0 || s->len > 0x400000 || !sn_game_object(s->obj, s->name)) {
+            continue;
+        }
+        glob += (xh_words((const uint8_t *) (uintptr_t) s->va, s->len, xh_name_hash(s->name)) ^ xh_name_hash(s->name)) *
+                0x9E3779B97F4A7C15ull;
+    }
+    fprintf(log, "%d,%08X,%016llX,%016llX\n", frame, (unsigned) gw_RB_GameHash(), (unsigned long long) mem,
+            (unsigned long long) glob);
+    fflush(log);
+    for (i = 0; i < ndumps; ++i) {
+        if (dumps[i] == frame) {
+            char p[600];
+            FILE *f;
+            uint8_t *buf = (uint8_t *) malloc(gw_mem1_size);
+            snprintf(p, sizeof p, "%s/xh_%d.mem1", dumpdir, frame);
+            f = fopen(p, "wb");
+            if (f != NULL && buf != NULL) {
+                xh_mask_copy(buf, (const uint8_t *) (uintptr_t) 0x80000000u, gw_mem1_size);
+                fwrite(buf, 1, gw_mem1_size, f);
+                fclose(f);
+            }
+            free(buf);
+            snprintf(p, sizeof p, "%s/xh_%d.glob", dumpdir, frame);
+            f = fopen(p, "wb");
+            if (f != NULL) {
+                int k;
+                for (k = 0; k < sn.nsyms; ++k) {
+                    const GwSnapSym *s = &sn.syms[k];
+                    uint8_t *gb;
+                    uint32_t n;
+                    if (s->len == 0 || s->len > 0x400000 || !sn_game_object(s->obj, s->name)) {
+                        continue;
+                    }
+                    gb = (uint8_t *) malloc(s->len);
+                    if (gb == NULL) {
+                        continue;
+                    }
+                    xh_mask_copy(gb, (const uint8_t *) (uintptr_t) s->va, s->len);
+                    n = (uint32_t) strlen(s->name);
+                    fwrite(&n, 4, 1, f);
+                    fwrite(s->name, 1, n, f);
+                    fwrite(&s->len, 4, 1, f);
+                    fwrite(gb, 1, s->len, f);
+                    free(gb);
+                }
+                fclose(f);
+            }
+            gw_log("xhash: dumped frame %d to %s", frame, dumpdir);
+        }
+    }
+}
+
 /* ---- curated gameplay hash (MELEE_SYNCTEST_CURATED=1) --------------------------------------------
  *
  * The strict SyncTest compares every byte of MEM1 and the game's globals (with the render-owned

@@ -8948,6 +8948,7 @@ void gw_Script_FramePost(void) {
                     (unsigned long long) gw_snap_hash());
             fflush(hashlog);
         }
+        { extern void gw_snap_xlog(int frame); gw_snap_xlog(gs.match_frame); } /* MELEE_XHASH_LOG: the cross-platform digest (gw_snap.c) */
     }
 }
 

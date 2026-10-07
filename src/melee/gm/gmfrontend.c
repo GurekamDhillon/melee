@@ -1162,6 +1162,7 @@ static void fe_tex_quad(FeTex* t, float x, float y, float w, float h, GXColor c)
 static void fe_match_setup_from_menus(void);
 static void fe_online_from_menus(void);
 static void fe_settings_from_menus(int page);
+static void fe_settings_resume_game(void);
 static bool fe_is_settings(const FrontendScreen* s);
 static bool fe_is_controls_help(const FrontendScreen* s);
 static int fm_back_kind = -1, fm_back_sel; ///< backing out of a frontend scene lands on this menu item
@@ -1263,6 +1264,10 @@ bool gmFrontend_NativeReturn(int kind, int sel)
 {
     if (!fe_menus_on() || !fm_replaced(kind)) {
         return false;
+    }
+    if (Ui_Ready() != 0 && kind == MENU_KIND_SETTINGS && sel == SEL_SETTINGS_LANG) {
+        fe_settings_resume_game(); /* Atlas: back to the tabs, on GAME at Language (the legacy list is the MELEE_ATLAS=0 destination) */
+        return true;
     }
     OSReport("frontend: native screen backs out to (kind %d, sel %d) - back to the menus\n", kind,
              sel);
@@ -1847,13 +1852,35 @@ static void fe_settings_from_menus(int page)
     fe.next_menus = false;
     fm_back_kind = MENU_KIND_SETTINGS;
     fm_back_sel = 0x41 + page;
-    if (fa_page_from_main && page == FSP_MODS) {
-        /* the Atlas main menu's MODS row: B returns to MAIN > MODS, not the Settings list */
+    if (Ui_Ready()) {
+        /* Atlas: the pages are the tabs of one screen, entered from the main menu's SETTINGS row (or its MODS row, the first boot, the Language return): B returns to that
+           main-menu item, not to a Settings list. MELEE_ATLAS=0 keeps the legacy list. */
         fm_back_kind = MENU_KIND_MAIN;
-        fm_back_sel = SEL_MAIN_MODS;
+        fm_back_sel = SEL_MAIN_SETTINGS;
+        if (fa_page_from_main && page == FSP_MODS) {
+            fm_back_sel = SEL_MAIN_MODS; /* the Atlas main menu's MODS row: B returns to MAIN > MODS */
+        }
     }
     fa_page_from_main = false;
     fm_leave_scene(GM_FRONTEND);
+}
+
+/* The game's Language screen backs out (gmFrontend_NativeReturn) to the tabbed settings, on the GAME tab with the focus on the Language row: the same fields
+ * fe_settings_from_menus sets, with no menus scene in between (the caller leaves GM_MENU for GM_FRONTEND). */
+static void fe_settings_resume_game(void)
+{
+    OSReport("frontend: the Language screen backs out to SETTINGS > GAME, on Language\n");
+    fe_settings_apply_online();
+    fe_ol_note[0] = 0;
+    fe.screen = &fe_screen_settings[FSP_GAMEPLAY];
+    fe.continue_to = GM_MENU;
+    fe.back_to = GM_MENU;
+    fe.reported = GM_MENU;
+    fe.next_menus = false;
+    fm_back_kind = MENU_KIND_MAIN;
+    fm_back_sel = SEL_MAIN_SETTINGS;
+    fa_page_from_main = false;
+    fss.want_label = "Language";
 }
 
 static void fe_change(const FrontendItem* it, int dir)

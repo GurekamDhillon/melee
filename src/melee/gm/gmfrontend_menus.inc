@@ -177,8 +177,8 @@ static const FeMenuItem fm_main_atlas[] = {
     { "VERSUS", "Up to four players. Your rules, your stage.", NULL, SEL_MAIN_VS, FA_SUB, MENU_KIND_VS },
     { "ONLINE", "Play someone over the internet: host a room or join one.", NULL, SEL_MAIN_ONLINE, FA_ONLINE, GM_VS },
     { "MODS", "Turn mods on or off, and see what each one adds.", NULL, SEL_MAIN_MODS, FA_PAGE, 4 },
-    { "SETTINGS", "Video, audio, controls, online, mods and the game's options.", NULL, SEL_MAIN_SETTINGS, FA_SUB,
-      MENU_KIND_SETTINGS },
+    /* the tabbed settings screen (gmfrontend_atlas_set.inc), opened at VIDEO through fe_settings_from_menus(0); B returns to this item. The legacy tree keeps its list. */
+    { "SETTINGS", "Video, audio, controls, online, game options and mods.", NULL, SEL_MAIN_SETTINGS, FA_PAGE, 0 },
 };
 
 static const FeMenuItem fm_vs_atlas[] = {

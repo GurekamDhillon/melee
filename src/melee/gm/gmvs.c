@@ -1217,6 +1217,12 @@ void gm_DoPauseChecksAndRoutine(VsSceneController* arg0, int arg1)
             HSD_PadRumblePauseAll();
             arg0->state.pauser = pauser;
             arg0->state.pause_timer = 0xA;
+#if defined(TARGET_PC)
+            {   /* Atlas: a retail pause began (the pause screen takeover, off by default, pushes its screen from this) */
+                extern void Ui_RetailPause(int pauser, int on); /* pc/platform/gw_script_ui.inc */
+                Ui_RetailPause(pauser, 1);
+            }
+#endif
         }
     }
 }
@@ -1271,12 +1277,22 @@ void gm_DoUnpauseChecksAndRoutine(VsSceneController* arg0, int arg1)
     }
 
     i = gm_GetPlayerPressingUnpause();
+#if defined(TARGET_PC)
+    {   /* the Atlas pause's Resume (offline only; a one-shot request for the pauser). Read here and not in
+         * gm_GetPlayerPressingUnpause: that inline is also read every paused frame for the no-contest buttons and would eat it. */
+        extern int Ui_TakeUnpause(void); /* pc/platform/gw_script_ui.inc */
+        if (i == -1) i = Ui_TakeUnpause();   /* only when no port pressed START this frame */
+    }
+#endif
 
     if (i != -1 && i == arg0->state.pauser) {
         lbAudioAx_80024E84(0);
         gm_ClearDbPauseFlag(arg1);
         ifAll_802F33CC();
         gm_801A10FC(i);
+#if defined(TARGET_PC)
+        { extern void Ui_RetailPause(int pauser, int on); Ui_RetailPause(i, 0); }
+#endif
         HSD_PadRumbleUnpauseAll();
         if (arg0->start.x4_0) {
             if (arg0->start.on_unpause_override != NULL) {
@@ -1352,6 +1368,9 @@ void fn_8016CD98(VsSceneController* scene)
 void fn_8016CF4C(int slot, MatchOutcome matchResult)
 {
     gm_801A10FC(slot);
+#if defined(TARGET_PC)
+    { extern void Ui_RetailPause(int pauser, int on); Ui_RetailPause(slot, 0); }   /* the match ends from the pause: the Atlas pause goes */
+#endif
     controller.state.match_result = matchResult;
     if (matchResult != OUTCOME_RETRY && DbLevel >= DbLKind_DebugRom) {
         gm_ClearDbPauseFlag(1);

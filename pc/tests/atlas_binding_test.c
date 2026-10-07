@@ -17,7 +17,7 @@
 #include "atlas_rec.h"
 
 typedef struct { char id[64]; int used, disabled, gameplay; } GsScript;
-static struct { lua_State *L; int cur, console, n, scene_kind; GsScript s[8]; unsigned char key_now[256]; } gs;
+static struct { lua_State *L; int cur, console, n, scene_kind, match_active; GsScript s[8]; unsigned char key_now[256]; } gs;
 static int g_may_run = 1, g_quads, g_models;
 static double g_now = 1000.0;
 static float g_track;          /* what gw_Kit_SetTracking last set */
@@ -26,6 +26,7 @@ static int g_logs_render;      /* log lines about a render budget */
 static unsigned g_pad;         /* the buttons the stand-in pad holds (the raw GC bits) */
 static char g_last[512];       /* the last lua() result */
 static int g_logs_ex;          /* log lines about an explainer */
+static int g_logs_full;        /* log lines about a full screen pool */
 
 void gw_log(const char *fmt, ...)
 {
@@ -36,10 +37,17 @@ void gw_log(const char *fmt, ...)
     va_end(ap);
     if (strstr(buf, "render budget") != NULL) g_logs_render++;
     if (strstr(buf, "explainer") != NULL) g_logs_ex++;
+    if (strstr(buf, "pool is full") != NULL) g_logs_full++;
 }
 static int gs_may_run(int i) { (void) i; return g_may_run; }
 static int g_netplay, g_last_pcall_owner;
 int gw_RB_Enabled(void) { return 0; }
+static int gs_ui_port_read(int port, char *name, int cap, int *percent, int *stocks, int *cpu)   /* the fighter readbacks gd.player uses */
+{
+    if (port < 1 || port > 2) return 0;
+    snprintf(name, (size_t) cap, "FOX"); *percent = 47 * port; *stocks = 3; *cpu = port == 2;
+    return 1;
+}
 int gw_Netplay_Enabled(void) { return g_netplay; }
 int gw_Mods_Count(void) { return 0; }
 int gw_Mods_MenuCount(int i) { (void) i; return 0; }
@@ -74,11 +82,13 @@ int gw_ScriptGame_ModelRefOwned(int a, int b, int c, int d) { (void) a; (void) b
 int gw_Script_StageResourceOwner(void) { return 0; }
 static int gs_sm_emit(int asset, const GsmParams *p, int clip, const char **why) { (void) asset; (void) p; (void) clip; (void) why; g_models++; return 0; }
 void gw_script_pad_state(int ch, unsigned *b, int *sx, int *sy, int *cx, int *cy, int *tl, int *tr) { (void) ch; *b = 0; *sx = *sy = *cx = *cy = *tl = *tr = 0; }
-unsigned gw_script_pad_raw_buttons(int ch) { (void) ch; return g_pad; }
+static int g_pad_only = -1;   /* >= 0: only that channel holds g_pad (a pause screen reads the pausing port's pad) */
+unsigned gw_script_pad_raw_buttons(int ch) { return (g_pad_only < 0 || ch == g_pad_only) ? g_pad : 0u; }
 static float g_mx = -1000.0f, g_my = -1000.0f; static int g_mbuttons;
 void gw_Mouse_ScriptRead(float *x, float *y, int *buttons, float *wheel) { *x = g_mx; *y = g_my; *buttons = g_mbuttons; *wheel = 0.0f; }
 float gw_Console_ScriptWidth(void) { return 640.0f; }
-int gw_Settings_Int(const char *k, int d) { (void) k; return d; }
+static int g_pause_wanted;     /* the setting atlas_pause (the takeover; off by default) */
+int gw_Settings_Int(const char *k, int d) { return strcmp(k, "atlas_pause") == 0 ? g_pause_wanted : d; }
 static void gs_prof_setfuncs(lua_State *L, const luaL_Reg *funcs, const char *prefix) { (void) prefix; luaL_setfuncs(L, funcs, 0); }
 static int gs_kit_record(int first, int added) { (void) first; return added; }
 static double gs_kit_optnum(lua_State *L, int t, const char *k, double def)
@@ -385,6 +395,294 @@ static void eight_slots_with_engine(void)
     gw_Ui_Display("GD'S MELEE", "PRESS START", "v1", "credit"); gw_Ui_Commit(-1, -1);
     CHECK(gs_ui_engine_slots() == 2 && gs_ui_slot[gs_ui_find("title")].sc.primary == AT_PRIMARY_DISPLAY);
     CHECK(at_screen_wants_pad(&gs_ui_slot[gs_ui_find("title")].sc) == 0);
+}
+
+/* ---- Atlas step 3, Task 1: sixteen slots and gd.ui.forget (run as a mod script, the real path) ---- */
+/* run Lua as script `slot` (gs.cur = slot, as a hook does); 0 when it ran without error, 1 when it raised. The tick runs with gs.cur = -1. */
+static int run_as_script(int slot, const char *code)
+{
+    int old = gs.cur, ok;
+    gs.cur = slot;
+    ok = t_lua(code);
+    gs.cur = old;
+    return ok ? 0 : 1;
+}
+static int run_as_console(const char *code) { return run_as_script(gs.console, code); }
+/* how many registry references the stored screens hold */
+static int lua_refs_held(void)
+{
+    int i, n = 0, refs[40];
+    for (i = 0; i < GS_UI_SLOTS; i++) if (gs_ui_slot[i].used) n += at_screen_fn_refs(&gs_ui_slot[i].sc, refs, 40);
+    return n;
+}
+static void forget_frees_a_slot(void)
+{
+    int i, ref, again;
+    char lua[320];
+    reset_ui();
+    fake_script(1, "envoy"); fake_script_named(2, "envoy/second");
+    CHECK(GS_UI_SLOTS == 16);
+    for (i = 0; i < 16; i++) {                                                  /* 16 screens fit */
+        snprintf(lua, sizeof lua, "assert(gd.ui.screen{id='envoy.s%d', trail={title='T'}, primary={kind='list', items={{id='a', label='A'}}}})", i);
+        CHECK(run_as_script(1, lua) == 0);
+    }
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.screen, {id='envoy.s16', trail={title='T'}, primary={kind='list', items={{id='a', label='A'}}}}))") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.s3')); assert(gd.ui.forget('envoy.s3')); assert(gd.ui.state().depth == 0)") == 0);
+    CHECK(gs_ui_find("envoy.s3") < 0);
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.s16', trail={title='T'}, primary={kind='list', items={{id='a', label='A'}}}})") == 0);
+    CHECK(run_as_script(2, "assert(not pcall(gd.ui.forget, 'envoy.s0'))") == 0);   /* another script: refused */
+    CHECK(gs_ui_find("envoy.s0") >= 0);
+    CHECK(run_as_script(1, "local ok, e = pcall(gd.ui.forget, 'envoy.nope'); assert(not ok and e:find('no screen'))") == 0);
+    CHECK(lua_refs_held() == 0);                                                /* handler-free screens hold no references */
+    /* a screen with handlers: forget returns every reference it holds to the registry (the next luaL_ref reuses the freed one) */
+    CHECK(run_as_script(1, "assert(gd.ui.forget('envoy.s5')); assert(gd.ui.screen{id='envoy.h', primary={kind='list', items={{id='a', label='A'}}}, on={accept=function() end}})") == 0);
+    CHECK(lua_refs_held() == 1);
+    { int refs[40]; at_screen_fn_refs(&gs_ui_slot[gs_ui_find("envoy.h")].sc, refs, 40); ref = refs[0]; }
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.h')); assert(gd.ui.forget('envoy.h'))") == 0);
+    CHECK(lua_refs_held() == 0 && gs_ui_stack.n == 0);
+    lua_pushboolean(gs.L, 1); again = luaL_ref(gs.L, LUA_REGISTRYINDEX);
+    CHECK(again == ref);                                                        /* the freed slot of the registry came back: nothing leaked */
+    luaL_unref(gs.L, LUA_REGISTRYINDEX, again);
+    CHECK(run_as_console("assert(gd.ui.forget('envoy.s0'))") == 0);            /* the console may forget any script screen */
+    CHECK(run_as_script(1, "assert(gd.ui.forget('envoy.s1')); assert(gd.ui.forget('envoy.s2')); assert(gd.ui.screen{id='envoy.again', primary={kind='list', items={{id='a', label='A'}}}})") == 0);
+    reset_ui();
+}
+
+/* ---- Atlas step 3, Task 4: the retail shims the game side calls (Ui_RetailHidden, Ui_RetailPause, Ui_TakeUnpause) ---- */
+static void retail_shims(void)
+{
+    int id;
+    reset_ui(); g_netplay = 0; g_pause_wanted = 0;
+    memset(&gs_ui_retail, 0, sizeof gs_ui_retail);
+    at_pause_off(&gs_ui_pause);
+    for (id = 0; id < AT_RE_COUNT; id++) CHECK(gw_Ui_RetailHidden(id) == 0);          /* empty by default: every guard takes retail's path */
+    at_retail_set(&gs_ui_retail, AT_RS_CONSOLE, 1u << AT_RE_HUD_DAMAGE);
+    CHECK(gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE) == 1 && gw_Ui_RetailHidden(AT_RE_HUD_STOCK) == 0);
+    g_netplay = 1;
+    CHECK(gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE) == 0);                                  /* online: nothing is hidden */
+    g_netplay = 0;
+    at_retail_set(&gs_ui_retail, AT_RS_CONSOLE, 0);
+    gw_Ui_RetailPause(1, 1);                                                           /* takeover not wanted: a pause with no takeover */
+    CHECK(gs_ui_pause.paused && gs_ui_pause.pauser == 1 && !gs_ui_pause.takeover && gs_ui_pause_changed);
+    CHECK(gw_Ui_TakeUnpause() == -1);
+    gw_Ui_RetailPause(1, 0);
+    CHECK(!gs_ui_pause.paused);
+    g_pause_wanted = 1;
+    gw_Ui_RetailPause(2, 1);
+    CHECK(gs_ui_pause.takeover && gs_ui_pause.pauser == 2);
+    CHECK(at_pause_request_unpause(&gs_ui_pause, 0) && gw_Ui_TakeUnpause() == 2 && gw_Ui_TakeUnpause() == -1);   /* one-shot */
+    CHECK(at_pause_request_unpause(&gs_ui_pause, 0));
+    g_netplay = 1; CHECK(gw_Ui_TakeUnpause() == -1); g_netplay = 0;                    /* never taken online */
+    gw_Ui_RetailPause(2, 0); g_pause_wanted = 0; gs_ui_pause_changed = 0;
+    g_netplay = 1; gw_Ui_RetailPause(1, 1); g_pause_wanted = 1;
+    CHECK(!gs_ui_pause.takeover);                                                      /* a pause that began online is never a takeover */
+    gw_Ui_RetailPause(1, 0); g_netplay = 0; g_pause_wanted = 0;
+}
+
+/* ---- Atlas step 3, Task 7: gd.ui.hud, toast, retail_hide, retail and the HUD draw pass (as mod scripts, the real path) ---- */
+static int hud_toasts_in_zone(int owner1, int zone)
+{
+    int i, k, n = 0;
+    for (i = 0; i < GS_UI_HUDS; i++) if (gs_ui_hud[i].owner == owner1) for (k = 0; k < gs_ui_hud[i].n[zone]; k++) if (gs_ui_hud[i].z[zone][k].kind == AT_HP_TOAST) n++;
+    return n;
+}
+static int hud_count(void) { int i, n = 0; for (i = 0; i < GS_UI_HUDS; i++) if (gs_ui_hud[i].owner != 0) n++; return n; }
+static void hud_reset(void)
+{
+    reset_ui();
+    memset(gs_ui_hud, 0, sizeof gs_ui_hud);
+    memset(&gs_ui_retail, 0, sizeof gs_ui_retail);
+    at_pause_off(&gs_ui_pause);
+    fake_script(1, "envoy"); fake_script_named(2, "envoy/second");
+    gs.s[1].gameplay = 1; gs.s[2].gameplay = 1;
+    gs.match_active = 0; g_netplay = 0; g_pause_wanted = 0;
+}
+static void hud_basics(void)
+{
+    hud_reset();
+    gs.match_active = 1;
+    CHECK(run_as_script(1,
+        "assert(gd.ui.hud{id='envoy.hud', zones={top_left={{kind='strip', pips={{fill=0xF07474FF, ring=0xF2C14EFF}}, keys={{letter='P', rgba=0xB872F0FF}}}},"
+        " top_center={{kind='banner', text='Collect the drives', button='A'}}}})") == 0);
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.hud, {id='other.hud', zones={}}))") == 0);          /* the id must start with the mod */
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={top_left={{kind='banner', text='x'}}, top_center={{kind='banner', text='y'}}}}))") == 0);
+    CHECK(hud_count() == 1 && gs_ui_hud[0].n[AT_Z_TOP_LEFT] == 1);                                  /* a refused description changed nothing */
+    g_quads = 0; gs_ui_hud_draw();
+    CHECK(g_quads > 0);                                                                              /* drawn with no screen open */
+    g_may_run = 0; g_quads = 0; gs_ui_hud_draw();                                                    /* a resimulated frame: the draw needs no Lua and still draws */
+    CHECK(g_quads > 0); g_may_run = 1;
+    gs.match_active = 0; g_quads = 0; gs_ui_hud_draw(); CHECK(g_quads == 0); gs.match_active = 1;    /* only inside a match */
+    CHECK(run_as_script(1, "assert(gd.ui.toast{zone='top_right', title='SKYWARD ASSEMBLED', text='Aerials gain Haste.'})") == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.toast{zone='top_right', title='SECOND', text='Replaces the first.'})") == 0);
+    CHECK(hud_toasts_in_zone(2, AT_Z_TOP_RIGHT) == 1 && strcmp(gs_ui_hud[0].z[AT_Z_TOP_RIGHT][0].text, "SECOND") == 0);   /* replaces, never queues */
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.toast, {zone='bottom_left', title='x', text='y'}))") == 0);
+    /* re-describing the HUD keeps the live toast and a note's clock */
+    CHECK(run_as_script(1, "assert(gd.ui.hud{id='envoy.hud', zones={top_left={{kind='note', text='Merged', seconds=4}}}})") == 0);
+    CHECK(hud_toasts_in_zone(2, AT_Z_TOP_RIGHT) == 1);
+    { double until = gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].until_ms;
+      g_now += 500.0;
+      CHECK(run_as_script(1, "assert(gd.ui.hud{id='envoy.hud', zones={top_left={{kind='note', text='Merged', seconds=4}}}})") == 0);
+      CHECK(gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].until_ms == until); }                                  /* the same note is not restarted */
+    CHECK(run_as_script(1, "assert(gd.ui.hud_clear('envoy.hud')); assert(not gd.ui.hud_clear())") == 0);
+    CHECK(hud_count() == 0);
+    /* each script has its own HUD */
+    CHECK(run_as_script(1, "assert(gd.ui.hud{id='envoy.hud', zones={}})") == 0);
+    CHECK(run_as_script(2, "assert(gd.ui.hud{id='envoy.hud', zones={}})") == 0 && hud_count() == 2);
+    gs.match_active = 0;
+}
+static void retail_mask_ownership(void)
+{
+    hud_reset();
+    gs.match_active = 1; g_netplay = 0;
+    CHECK(run_as_script(1, "assert(gd.ui.retail_hide{'hud.damage'}); local r=gd.ui.retail(); assert(r.hidden[1]=='hud.damage')") == 0);
+    CHECK(gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE));
+    CHECK(run_as_script(2, "assert(not pcall(gd.ui.retail_hide, {'hud.stock'}))") == 0);                   /* another script */
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.timer'}))") == 0);                   /* never the clock */
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.bogus'}))") == 0);
+    g_netplay = 1; CHECK(!gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE));                                            /* online: shown */
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.damage'}))") == 0);
+    CHECK(run_as_script(1, "local r = gd.ui.retail(); assert(#r.hidden == 0)") == 0); g_netplay = 0;       /* and gd.ui.retail() says so */
+    gs_ui_release(1);                                                                                       /* unload */
+    CHECK(!gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE) && hud_count() == 0);
+    CHECK(run_as_script(1, "assert(gd.ui.retail_hide{'hud.stock'})") == 0);
+    gs_ui_scene_changed();                                                                                  /* a scene change releases it too */
+    CHECK(!gw_Ui_RetailHidden(AT_RE_HUD_STOCK));
+    CHECK(run_as_script(1, "assert(gd.ui.retail_hide{'hud.stock'}); assert(gd.ui.retail_hide{}); assert(#gd.ui.retail().hidden == 0)") == 0);   /* {} releases */
+    gs.match_active = 0;
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.stock'}))") == 0);                   /* no match: refused */
+    gs.match_active = 1; gs.s[1].gameplay = 0;
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.retail_hide, {'hud.stock'}))") == 0);                   /* not a gameplay script */
+    gs.s[1].gameplay = 1; gs.match_active = 0;
+}
+static void toasts_and_notes_leave_with_the_scene(void)
+{
+    hud_reset(); gs.match_active = 1;
+    CHECK(run_as_script(1, "assert(gd.ui.hud{id='envoy.hud', zones={top_left={{kind='strip', pips={}, keys={}}, {kind='note', text='n'}}}}); assert(gd.ui.toast{zone='top_left', title='T', text='t'})") == 0);
+    CHECK(gs_ui_hud[0].n[AT_Z_TOP_LEFT] == 3);
+    gs_ui_scene_changed();
+    CHECK(gs_ui_hud[0].n[AT_Z_TOP_LEFT] == 1 && gs_ui_hud[0].z[AT_Z_TOP_LEFT][0].kind == AT_HP_STRIP);   /* the strip stays; the script re-describes it */
+    gs.match_active = 0;
+}
+static void console_is_not_the_test(void)
+{
+    /* the console has no mod id: a console HUD, toast or retail claim is refused, so a console-driven pass proves nothing about the real path */
+    hud_reset(); gs.match_active = 1;
+    CHECK(run_as_console("assert(not pcall(gd.ui.hud, {id='envoy.hud', zones={}}))") == 0);
+    CHECK(run_as_console("assert(not pcall(gd.ui.toast, {title='x', text='y'}))") == 0);
+    CHECK(run_as_console("assert(not pcall(gd.ui.retail_hide, {'hud.stock'}))") == 0);
+    gs.match_active = 0;
+}
+static void atlas_console_command(void)
+{
+    char out[320];
+    hud_reset();
+    CHECK(gs_ui_console("retail hud.damage,hud.stock", out, sizeof out) == 0 && gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE) && gw_Ui_RetailHidden(AT_RE_HUD_STOCK));
+    CHECK(gs_ui_console("retail clear", out, sizeof out) == 0 && !gw_Ui_RetailHidden(AT_RE_HUD_DAMAGE));
+    CHECK(gs_ui_console("retail hud.bogus", out, sizeof out) == -1 && strstr(out, "hud.bogus") != NULL);
+    CHECK(gs_ui_console("keepout on", out, sizeof out) == 0 && gs_ui_keepout_show == 1 && gs_ui_console("keepout off", out, sizeof out) == 0 && gs_ui_keepout_show == 0);
+    CHECK(gs_ui_console("hud", out, sizeof out) == 0);
+    CHECK(gs_ui_console("wobble", out, sizeof out) == -1);
+}
+
+/* ---- Atlas step 3, Task 8: the pause screen and the takeover (off by default; as a mod script, through the tick) ---- */
+static void pause_takeover(void)
+{
+    hud_reset();
+    gs_ui_pause_slot = gs_ui_pause_pushed = -1; gs_ui_pause_changed = 0;
+    CHECK(run_as_script(1,
+        "assert(gd.ui.screen{id='envoy.pause', kind='pause', trail={title='PAUSED'}, primary={kind='list', items={{id='resume', label='Resume'}}},"
+        " on={accept=function(c) if c=='resume' then gd.ui.unpause() end end}}); assert(gd.ui.pause_screen('envoy.pause'))") == 0);
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.pause_screen, 'envoy.nope'))") == 0);
+    CHECK(run_as_script(2, "assert(not pcall(gd.ui.pause_screen, 'envoy.pause'))") == 0);                      /* another script's screen */
+    g_pause_wanted = 0; gw_Ui_RetailPause(1, 1); gs.cur = -1; gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0);                                    /* takeover off (the default): nothing pushed */
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    g_pause_wanted = 1; g_pad_only = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) == gs_ui_find("envoy.pause") && gs_ui_slot[gs_ui_find("envoy.pause")].sc.port == 2);   /* the pauser's port drives it */
+    CHECK(run_as_script(1, "assert(gd.ui.state().top == 'envoy.pause')") == 0);
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick();                           /* the pauser presses A on Resume */
+    CHECK(gw_Ui_TakeUnpause() == 1 && gw_Ui_TakeUnpause() == -1);            /* one-shot, and it names the pauser */
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0);                                    /* popped when retail unpaused */
+    g_pad_only = 0;                                                           /* another port's A does not drive it */
+    g_pause_wanted = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0;
+    CHECK(gw_Ui_TakeUnpause() == -1);
+    g_pad_only = -1;
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    g_netplay = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0 && gw_Ui_TakeUnpause() == -1);      /* never online */
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.pause') == false)") == 0);                                 /* and a pause screen does not open online */
+    gw_Ui_RetailPause(1, 0); gs_ui_tick(); g_netplay = 0; g_pause_wanted = 0;
+    CHECK(run_as_script(1, "assert(gd.ui.unpause() == false)") == 0);         /* not paused */
+    /* a request is one-shot and offline-only through the binding too */
+    g_pause_wanted = 1; gw_Ui_RetailPause(2, 1);
+    CHECK(run_as_script(1, "assert(gd.ui.unpause() == true); assert(gd.ui.unpause() == false)") == 0);
+    gw_Ui_RetailPause(2, 0); gs_ui_tick(); g_pause_wanted = 0;
+    CHECK(gw_Ui_TakeUnpause() == -1);                                         /* a request never leaks into the next pause */
+    /* a scene that ends mid-pause leaves no pause and no screen behind */
+    g_pause_wanted = 1; gw_Ui_RetailPause(1, 1); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) >= 0);
+    gs_ui_scene_changed(); gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) < 0 && !gs_ui_pause.paused);
+    g_pause_wanted = 0;
+    /* a screen forgotten or a script unloaded clears the name */
+    CHECK(run_as_script(1, "assert(gd.ui.forget('envoy.pause'))") == 0 && gs_ui_pause_slot == -1);
+    reset_ui();
+}
+
+static void persist_screens_span_scenes(void)
+{
+    reset_ui();
+    fake_script(1, "envoy");
+    gs.scene_kind = 2;
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.keep', persist=true, primary={kind='list', items={{id='a', label='A'}}}}); assert(gd.ui.screen{id='envoy.drop', primary={kind='list', items={{id='a', label='A'}}}});"
+                           " assert(gd.ui.open('envoy.drop')); assert(gd.ui.open('envoy.keep'))") == 0);
+    gw_Ui_SceneExit(2);                                                       /* the scene they were opened in ends */
+    CHECK(gs_ui_stack.n == 1 && at_stack_top(&gs_ui_stack) == gs_ui_find("envoy.keep"));   /* the ordinary one closed, the persistent one stays */
+    gs.scene_kind = 2;                                                        /* the next scene is the same kind (VS to VS) */
+    gw_Ui_SceneExit(2);
+    CHECK(gs_ui_stack.n == 1);                                                /* and it still stays */
+    gs.cur = -1; gs_ui_tick(); gs_ui_tick();
+    CHECK(gs_ui_stack.n == 1);                                                /* the tick keeps running it */
+    CHECK(run_as_script(1, "assert(gd.ui.close('envoy.keep')); assert(gd.ui.state().depth == 0)") == 0);   /* its owner closes it */
+    CHECK(run_as_script(1, "assert(gd.ui.open('envoy.keep'))") == 0);
+    gs_ui_release(1);                                                         /* an unload takes it with it */
+    CHECK(gs_ui_stack.n == 0);
+    reset_ui();
+}
+
+static void takeover_pause_screen_reads_the_pad_itself(void)
+{
+    hud_reset();
+    gs_ui_pause_slot = gs_ui_pause_pushed = -1; gs_ui_pause_changed = 0;
+    /* Envoy's pause screen is input = 'feed': the takeover path has no feeder, so the engine reads the pausing port's pad for it */
+    CHECK(run_as_script(1,
+        "UNP=0; assert(gd.ui.screen{id='envoy.pause', kind='pause', input='feed', primary={kind='list', items={{id='resume', label='Resume'}}},"
+        " on={accept=function() UNP=UNP+1; gd.ui.unpause() end}}); assert(gd.ui.pause_screen('envoy.pause'))") == 0);
+    g_pause_wanted = 1; g_pad_only = 1; g_pad = 0;
+    gw_Ui_RetailPause(1, 1); gs.cur = -1; gs_ui_tick();
+    CHECK(at_stack_top(&gs_ui_stack) == gs_ui_find("envoy.pause"));
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    CHECK(run_as_script(1, "assert(UNP == 1)") == 0);                          /* A reached the handler although the screen is input = feed */
+    CHECK(gw_Ui_TakeUnpause() == 1);
+    gw_Ui_RetailPause(1, 0); gs_ui_tick();
+    /* an ordinary feed screen still does not read the pad */
+    CHECK(run_as_script(1, "assert(gd.ui.screen{id='envoy.f', input='feed', primary={kind='list', items={{id='a', label='A'}}}, on={accept=function() UNP=UNP+10 end}}); assert(gd.ui.open('envoy.f'))") == 0);
+    g_pad = 0; gs_ui_tick(); g_pad = AT_PAD_A; gs_ui_tick(); g_pad = 0; gs_ui_tick();
+    CHECK(run_as_script(1, "assert(UNP == 1)") == 0);
+    g_pad_only = -1; g_pause_wanted = 0;
+    reset_ui();
+}
+static void full_pool_is_said_once(void)
+{
+    int i; char lua[256];
+    reset_ui(); fake_script(1, "envoy"); g_logs_full = 0; gs_ui_full_warned = 0;
+    for (i = 0; i < 16; i++) { snprintf(lua, sizeof lua, "assert(gd.ui.screen{id='envoy.p%d', primary={kind='list', items={{id='a', label='A'}}}})", i); CHECK(run_as_script(1, lua) == 0); }
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.screen, {id='envoy.x1', primary={kind='list', items={{id='a', label='A'}}}}))") == 0);
+    CHECK(run_as_script(1, "assert(not pcall(gd.ui.screen, {id='envoy.x2', primary={kind='list', items={{id='a', label='A'}}}}))") == 0);
+    CHECK(g_logs_full == 1);                                                   /* refused twice, logged once */
+    reset_ui();
 }
 
 /* ---- Atlas step 2, Task 6: entries at run time (driven as the engine and as the mod, not as the console) ---- */
@@ -978,7 +1276,7 @@ int main(void)
     engine_slot_survives_tick(); engine_slot_not_released_by_script_unload(); uncover_primes_engine_screen(); native_intents_are_primed(); polled_event_is_big_endian_for_the_game();
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
-    eight_slots_with_engine();
+    eight_slots_with_engine(); forget_frees_a_slot(); retail_shims(); hud_basics(); retail_mask_ownership(); toasts_and_notes_leave_with_the_scene(); console_is_not_the_test(); atlas_console_command(); pause_takeover(); persist_screens_span_scenes(); takeover_pause_screen_reads_the_pad_itself(); full_pool_is_said_once();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_finds_the_script_with_on_entry(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     after_places_a_mod_entry_among_builtins(); credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();

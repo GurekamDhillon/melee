@@ -39,20 +39,24 @@ return function(D)
  -- A short flash under the strip. Only the out-of-bounds notice (`always`) shows in play; every other flash is a developer figure.
  function Hd:flash(text,always)
   if not (always or Hd.dev_ui()) then return end
-  self.flash_left=Hd.tuning.flash_frames;self.flash_text=text
+  self.flash_left=Hd.tuning.flash_frames;self.flash_text=text;self.flash_always=always and true or nil   -- always: the out-of-bounds notice (a note in the Atlas HUD)
  end
  function Hd:announce(lines,arch) self.toasts[#self.toasts+1]={lines=lines,left=Hd.tuning.announce_frames,arch=arch};self.dirty=true end
  -- The SMALL top-corner notification (the synergy message): one at a time, short, never the wide banner.
  function Hd:corner(lines,arch) self.corners[#self.corners+1]={lines=lines,left=Hd.tuning.corner_frames,arch=arch} end
  -- A pickup is a one-line note in the corner of the screen: title and its first line on one row.
  function Hd:show_card(title,lines,colour) self.card={title=title,lines=lines,colour=colour};self.card_left=Hd.tuning.card_frames end
- function Hd:clear() self.toasts={};self.corners={};self.card=nil;self.card_left=0;self.flash_left=0;self.m=nil;self.last_trace=nil end
+ function Hd:clear() self.toasts={};self.corners={};self.card=nil;self.card_left=0;self.flash_left=0;self.flash_always=nil;self.m=nil;self.last_trace=nil;if D.atlas_hud and self.host then D.atlas_hud.clear(self.host) end end
  -- Called from the logic frame: timers count logic frames, so a pause stops them.
  function Hd:frame()
   if self.flash_left>0 then self.flash_left=self.flash_left-1 end
   local t=self.toasts[1];if t then t.left=t.left-1;if t.left<=0 then table.remove(self.toasts,1) end end
   local c=self.corners[1];if c then c.left=c.left-1;if c.left<=0 then table.remove(self.corners,1) end end
   if self.card_left>0 then self.card_left=self.card_left-1;if self.card_left<=0 then self.card=nil end end
+  if D.atlas_hud then   -- Atlas step 3: the HUD is described again only when something changed (never per frame); a failure never breaks the host
+   local ok,err=pcall(D.atlas_hud.sync,self.host)
+   if not ok and not self.atlas_failed then self.atlas_failed=true;if self.host.log then self.host:log('atlas hud failed, the legacy HUD stays: '..tostring(err)) end end
+  end
  end
  -- A modifier fired: the engine's last trace line changed (a developer flash: gated in Hd:flash).
  function Hd:watch(engine)
@@ -151,6 +155,7 @@ return function(D)
   k.text(x+12,y+18,line,'caption',c.colour or 'gold','left',{max_w=w-24})
  end
  function Hd:draw()
+  if D.atlas_hud and D.atlas_hud.on(self.host) then return end   -- the Atlas HUD draws all of this (gd.ui.hud); the developer overlay keeps the legacy draw whole
   self:draw_strip();self:draw_toast();self:draw_corner();self:draw_card()
  end
  -- Model dump for tests and the console: what the strip would say.

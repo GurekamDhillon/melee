@@ -18,7 +18,7 @@
 #include "atlas_rec.h"
 
 typedef struct { char id[64]; int used, disabled, gameplay; } GsScript;
-static struct { lua_State *L; int cur, console, n, scene_kind; GsScript s[8]; unsigned char key_now[256]; } gs;
+static struct { lua_State *L; int cur, console, n, scene_kind, match_active; GsScript s[8]; unsigned char key_now[256]; } gs;
 static int g_may_run = 1, g_quads, g_art_calls, g_art_ret = 5;
 static double g_now = 1000.0;
 static float g_track;
@@ -29,6 +29,11 @@ static char g_art_key[64];
 void gw_log(const char *fmt, ...) { (void) fmt; }
 static int gs_may_run(int i) { (void) i; return g_may_run; }
 int gw_RB_Enabled(void) { return 0; }
+static int gs_ui_port_read(int port, char *name, int cap, int *percent, int *stocks, int *cpu)   /* the fighter readbacks gd.player uses */
+{
+    (void) port; (void) cap; name[0] = 0; *percent = *stocks = *cpu = 0;
+    return 0;
+}
 int gw_Netplay_Enabled(void) { return 0; }
 int gw_Mods_Count(void) { return 0; }
 int gw_Mods_MenuCount(int i) { (void) i; return 0; }
@@ -200,7 +205,7 @@ static void closed_on_every_exit(void)
     CHECK(gs_ui_stack.n == 0);
     /* the screen's own record is wiped on the next open: nothing of the last screen's cells or cards shows */
     h = open_css(); fill_css(h, 10); gw_Ui_SelCard(h, 1, 2, "KIRBY", "x", "KI", -1, 9, 0, 0u); gw_Ui_SelClose(h);
-    h = open_css(); CHECK(slot_of(h)->sc.cards[1].kind == 0 && slot_of(h)->sc.cards[1].name[0] == '\0' && slot_of(h)->sc.blocks[0].ext_n == 0 && slot_of(h)->sc.n_tabs == 0 && gs_sel.pool[0].id[0] == '\0');
+    h = open_css(); CHECK(slot_of(h)->sc.ports[1].kind == 0 && slot_of(h)->sc.ports[1].name[0] == '\0' && slot_of(h)->sc.blocks[0].ext_n == 0 && slot_of(h)->sc.n_tabs == 0 && gs_sel.pool[0].id[0] == '\0');
     gw_Ui_SceneExit(gs.scene_kind);
     /* the draw pass after a close draws nothing of it */
     g_quads = 0; draw_once(); CHECK(g_quads == 0);
@@ -319,9 +324,9 @@ static void fields_land_where_the_render_reads_them(void)
     gw_Ui_SelCell(h, 3, "f3", "n", "NN", -5, 0u, 'q'); CHECK(gs_sel.pool[3].tex == -1 && gs_sel.pool[3].origin == 0);   /* a negative texture is none; an unknown origin is none */
     gw_Ui_SelCell(h, 4, "f4", "n", "NN", 1, 0u, 0); CHECK(gs_sel.pool[4].id[0] == '\0');               /* past the count */
     gw_Ui_SelCard(h, 1, 2, "KIRBY", "Costume 2", "KI", 4, 7, 2, AT_CARD_READY);
-    CHECK(u->sc.cards[1].kind == 2 && u->sc.cards[1].cpu_lv == 7 && u->sc.cards[1].team == 2 && u->sc.cards[1].ck_tex == 4 && strcmp(u->sc.cards[1].name, "KIRBY") == 0 && (u->sc.cards[1].flags & AT_CARD_READY));
+    CHECK(u->sc.ports[1].kind == 2 && u->sc.ports[1].cpu_lv == 7 && u->sc.ports[1].team == 2 && u->sc.ports[1].ck_tex == 4 && strcmp(u->sc.ports[1].name, "KIRBY") == 0 && (u->sc.ports[1].flags & AT_CARD_READY));
     gw_Ui_SelCard(h, 4, 1, "x", "x", "xx", 0, 0, 0, 0u); gw_Ui_SelCard(h, -1, 1, "x", "x", "xx", 0, 0, 0, 0u);   /* a bad port is ignored */
-    gw_Ui_SelCard(h, 0, 9, "x", "x", "xx", -1, 0, 0, 0u); CHECK(u->sc.cards[0].kind == 0);
+    gw_Ui_SelCard(h, 0, 9, "x", "x", "xx", -1, 0, 0, 0u); CHECK(u->sc.ports[0].kind == 0);
     gw_Ui_SelCursor(h, 2, 1, 11, 3); CHECK(u->view.cursor[2].active == 1 && u->view.cursor[2].index == 11 && u->view.cursor[2].card == 3);
     gw_Ui_SelCursor(h, 2, 1, 4, 9); CHECK(u->view.cursor[2].card == -1);
     gw_Ui_SelCursor(h, 4, 1, 0, -1); gw_Ui_SelCursor(h, -1, 1, 0, -1);                                  /* bad ports: ignored */

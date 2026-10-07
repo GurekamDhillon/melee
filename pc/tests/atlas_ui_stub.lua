@@ -4,11 +4,12 @@
 -- label / counter refresh, accept / back / alt / page / start dispatch, value rows (on.change), {pop=}/{push=} results, a
 -- held-button model of the pad, and the ownership rule (a screen belongs to the script that registered it).
 --
--- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the 8-slot table, the Lua registry, and the entry
+-- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the Lua registry, and the entry
 -- registry's caps and ordering (6 per mod per parent, 12 visible, `after`): those are gw_ui_registry.c's, tested by atlas-registry.
 -- Everything in the conversion arena IS modelled (node, entry and string-pool ceilings and the depth limit), because a stand-in
 -- that accepts a description the engine refuses defeats its purpose.
 local Stub = {}
+Stub.slots = 16   -- GS_UI_SLOTS: one slot per registered screen id, freed only by forget (or the owner script unloading)
 
 local function read_limits()
  local here = (arg and arg[0] or ''):gsub('\\', '/'):gsub('[^/]*$', '')
@@ -72,7 +73,7 @@ function Stub.new(opts)
  opts = opts or {}
  local L = Stub.limits
  local ui = { screens = {}, stack = {}, views = {}, fed = {}, notes = {}, dialogs = {}, refreshed = 0, _f = {}, _owner = {}, _rows = {},
-  available_ok = opts.available ~= false, caller = opts.caller or 'console', owner_mod = opts.owner_mod,
+  available_ok = opts.available ~= false, caller = opts.caller or (opts.mod and (opts.mod .. '/main')) or 'console', owner_mod = opts.owner_mod or opts.mod,
   held = {}, _prev = {} }
  local function fail(msg) error('gd.ui.screen: ' .. msg, 3) end
  local function check_id(what, id)
@@ -92,6 +93,8 @@ function Stub.new(opts)
   local out, p = {}, d.primary
   if p.kind == 'grid' then
    for _, b in ipairs(p.blocks) do for i, c in ipairs(b.cells or {}) do out[#out + 1] = { block = b.id, id = c.id, cell = c, index = i } end end
+  elseif p.kind == 'cards' then
+   for i, c in ipairs(p.cards) do out[#out + 1] = { block = 'cards', id = c.id, cell = c, index = i } end
   elseif p.kind == 'tiles' then
    for i, it in ipairs(p.items) do out[#out + 1] = { block = 'tiles', id = it.id, cell = it, index = i } end
    for i, it in ipairs(p.more or {}) do out[#out + 1] = { block = 'more', id = it.id, cell = it, index = i } end
@@ -117,6 +120,7 @@ function Stub.new(opts)
   local p = d.primary
   if type(p) ~= 'table' then fail('"' .. d.id .. '" has no primary') end
   local seen = {}
+  if d.kind == 'pause' and p.kind ~= 'list' then fail('a pause screen has a list primary') end
   if p.kind == 'grid' then
    local n = #(p.blocks or {})
    if n < 1 or n > L.blocks then fail(('a grid needs 1 to %d blocks (it has %d)'):format(L.blocks, n)) end
@@ -134,6 +138,16 @@ function Stub.new(opts)
      if seen[c.id] then fail('duplicate cell id "' .. c.id .. '"') end
      seen[c.id] = true
     end
+   end
+  elseif p.kind == 'cards' then
+   local n = #(p.cards or {})
+   if n > L.cards then fail(('at most %d cards (%d given)'):format(L.cards, n)) end
+   if n < 1 then fail(('a cards screen needs 1 to %d cards'):format(L.cards)) end
+   for ci, c in ipairs(p.cards) do
+    if type(c) ~= 'table' then fail(('card %d is not a table'):format(ci)) end
+    check_id(('card %d'):format(ci), c.id)
+    if seen[c.id] then fail('duplicate card id ' .. c.id) end
+    seen[c.id] = true
    end
   elseif p.kind == 'list' or p.kind == 'tiles' then
    local n = #(p.items or {})
@@ -163,8 +177,18 @@ function Stub.new(opts)
     end
    end
   else
-   fail(('primary kind "%s" is not supported here (grid, list or tiles)'):format(tostring(p.kind)))
+   fail(('primary kind "%s" is not supported here (grid, list, tiles or cards)'):format(tostring(p.kind)))
   end
+  ui.links_skipped = ui.links_skipped or {}
+  if p.kind == 'grid' and p.links then
+   if #p.links > L.links then fail(('at most %d links (%d given)'):format(L.links, #p.links)) end
+   local skipped = 0
+   for _, lk in ipairs(p.links) do
+    if not (seen[lk.a] and seen[lk.b]) or lk.a == lk.b then skipped = skipped + 1 end
+   end
+   ui.links_skipped[d.id] = skipped
+  end
+  if d.countdown ~= nil and type(d.countdown) ~= 'number' then fail('countdown is a number of seconds') end
   local ex = d.explainer
   if type(ex) == 'string' then
    if ex ~= 'none' then fail('explainer must be a table or "none"') end
@@ -180,6 +204,11 @@ function Stub.new(opts)
   end
   local port = d.port or 1
   if type(port) ~= 'number' or port < 1 or port > 4 then fail('port is 1 to 4') end
+  if not ui.screens[d.id] then
+   local n = 0
+   for _ in pairs(ui.screens) do n = n + 1 end
+   if n >= Stub.slots then fail(('too many screens (%d)'):format(Stub.slots)) end
+  end
   local old = ui.screens[d.id] and ui._f[d.id]
   ui.screens[d.id] = d
   ui._owner[d.id] = ui._owner[d.id] or ui.caller
@@ -207,6 +236,7 @@ function Stub.new(opts)
 
  function ui.open(id)
   own(id)
+  if ui.screens[id].kind == 'pause' and ui.netplay then return false end        -- a pause screen is never opened online
   if top() == id then return false end                                          -- already on top is a refusal (at_stack_push)
   ui.stack[#ui.stack + 1] = id; prime(); ui.refresh(id); return true
  end
@@ -219,6 +249,13 @@ function Stub.new(opts)
   for i = #ui.stack, 1, -1 do if ui.stack[i] == id then table.remove(ui.stack, i) end end
   if was_top and top() then prime() end
   return id ~= nil
+ end
+ -- gd.ui.forget(id): closed if on the stack, its slot freed (the id is unknown afterwards)
+ function ui.forget(id)
+  own(id)
+  ui.close(id)
+  ui.screens[id], ui._f[id], ui._owner[id], ui.views[id], ui._rows[id] = nil, nil, nil, nil, nil
+  return true
  end
  function ui.feed(id, intent)
   own(id)
@@ -351,7 +388,7 @@ function Stub.new(opts)
   elseif kind == 'l' or kind == 'r' then
    if not on.page then return false end
    local r = on.page(kind == 'l' and -1 or 1, f and f.cell, f and f.block)
-   if ui.screens[id] then ui.refresh(id) end
+   if ui.screens[id] and top() == id then ui.refresh(id) end   -- the engine refreshes the top screen only (gs_ui_tick), never one a handler closed
    apply(r, ui._owner[id])
    return true, r
   end
@@ -360,7 +397,7 @@ function Stub.new(opts)
   end
   if not fn then return false end
   local r = fn(f and f.cell, f and f.block)
-  if ui.screens[id] then ui.refresh(id) end
+  if ui.screens[id] and top() == id then ui.refresh(id) end
   apply(r, ui._owner[id])
   return true, r
  end
@@ -440,6 +477,199 @@ function Stub.new(opts)
    return true
   end
   return false
+ end
+
+ -- ---- the HUD layer and the retail takeover (Atlas step 3; gw_ui_hud.c, gw_script_ui.inc) ------------------------------------------------
+ -- gd.ui.hud / hud_clear / toast / retail_hide / retail with the binding's refusals and the quiet-HUD caps. What it does NOT model: the
+ -- layout, the keep-outs and the draw (atlas-hud tests those), and the scene change (ui.scene_changed() plays the binding's part).
+ ui.now, ui.hud_calls, ui.retail_hide_calls, ui.toast_calls = 0, 0, 0, 0   -- ui.now: seconds, the UI clock; tests advance it
+ ui.huds, ui.mask, ui.mask_owner = {}, {}, nil
+ ui.match_active = opts.match ~= false
+ ui.gameplay = opts.gameplay ~= false
+ ui.netplay = opts.netplay and true or false
+ local ZONES = { top_left = true, top_center = true, top_right = true, bottom_left = true, bottom_center = true, bottom_right = true }
+ local ZONE_ORDER = { 'top_left', 'top_center', 'top_right', 'bottom_left', 'bottom_center', 'bottom_right' }
+ local KINDS = { strip = true, banner = true, card = true, note = true, port_card = true, timer = true, toast = true }
+ local ELEMENTS = { 'hud.damage', 'hud.stock', 'hud.timer', 'hud.nametag', 'hud.magnify', 'hud.coin', 'hud.prize', 'hud.hazard', 'pause.panel' }
+ local ELEMENT = {}
+ for _, e in ipairs(ELEMENTS) do ELEMENT[e] = true end
+ local PER_ZONE = 4
+
+ -- mirrors at_hud_cap_ok: one banner and only in top_center, one toast per top zone, three cards, one note
+ function ui.hud_caps(zones)
+  local banners, cards, notes = 0, 0, 0
+  for _, z in ipairs(ZONE_ORDER) do
+   local toasts = 0
+   for _, p in ipairs(zones[z] or {}) do
+    if p.kind == 'banner' then banners = banners + 1; if z ~= 'top_center' then return false, 'a banner lives in top_center only' end
+    elseif p.kind == 'toast' then toasts = toasts + 1; if z:sub(1, 3) ~= 'top' then return false, 'a toast lives in a top zone' end
+    elseif p.kind == 'card' then cards = cards + 1
+    elseif p.kind == 'note' then notes = notes + 1 end
+   end
+   if toasts > 1 then return false, 'at most one toast per zone' end
+  end
+  if banners > 1 then return false, 'at most one banner in the whole HUD' end
+  if cards > 3 then return false, 'at most three opponent cards' end
+  if notes > 1 then return false, 'at most one pickup note' end
+  return true
+ end
+
+ local function hud_err(msg) error('gd.ui.hud: ' .. msg, 3) end
+ local function live(p) return not (p.until_s and ui.now >= p.until_s) end
+
+ function ui.hud(d)
+  ui.hud_calls = ui.hud_calls + 1
+  if type(d) ~= 'table' then hud_err('a HUD description is a table') end
+  if is_console() or not ui.owner_mod then hud_err('a HUD belongs to a mod script (the console has none)') end
+  if type(d.id) ~= 'string' or d.id == '' then hud_err('the description has no id') end
+  if d.id:sub(1, #ui.owner_mod + 1) ~= ui.owner_mod .. '.' then hud_err(('id "%s" must start with "%s."'):format(d.id, ui.owner_mod)) end
+  check_arena(d, L)
+  local zones = {}
+  for z, list in pairs(d.zones or {}) do
+   if not ZONES[z] then hud_err('zone ' .. tostring(z) .. ' is not a zone') end
+   if #list > PER_ZONE then hud_err(('zone %s holds at most %d parts (%d given)'):format(z, PER_ZONE, #list)) end
+   zones[z] = {}
+   for i, p in ipairs(list) do
+    if not KINDS[p.kind] or p.kind == 'toast' then hud_err(('part %d of %s has the unknown kind "%s" (strip, banner, card, note, port_card, timer)'):format(i, z, tostring(p.kind))) end
+    if p.kind == 'port_card' and not (type(p.port) == 'number' and p.port >= 1 and p.port <= 4) then hud_err('a port_card needs port 1 to 4') end
+    if p.kind == 'strip' and (#(p.pips or {}) > 8 or #(p.keys or {}) > 8) then hud_err('a strip shows at most 8 slot pips and 8 keystones') end
+    if p.kind == 'card' and #(p.lines or {}) > 3 then hud_err('a card shows at most 3 lines') end
+    local c = {}; for k, v in pairs(p) do c[k] = v end
+    if c.kind == 'note' then c.until_s = ui.now + math.max(0.5, math.min(15, c.seconds or 4)) end
+    zones[z][i] = c
+   end
+  end
+  local old = ui.huds[ui.caller]
+  if old then
+   for z, list in pairs(old.zones) do
+    for _, p in ipairs(list) do
+     if p.kind == 'toast' and live(p) then
+      zones[z] = zones[z] or {}
+      local has = false; for _, q in ipairs(zones[z]) do if q.kind == 'toast' then has = true end end
+      if not has and #zones[z] < PER_ZONE then table.insert(zones[z], 1, p) end
+     elseif p.kind == 'note' and live(p) then
+      for _, q in ipairs(zones[z] or {}) do if q.kind == 'note' and q.text == p.text then q.until_s = p.until_s end end
+     end
+    end
+   end
+  end
+  local ok, why = ui.hud_caps(zones)
+  if not ok then hud_err(why) end
+  if not old then
+   local n = 0; for _ in pairs(ui.huds) do n = n + 1 end
+   if n >= 4 then hud_err('too many HUDs (4)') end
+  end
+  ui.huds[ui.caller] = { id = d.id, owner = ui.caller, zones = zones }
+  return true
+ end
+
+ function ui.hud_clear(id)
+  if is_console() or not ui.owner_mod then error('gd.ui.hud_clear: a HUD belongs to a mod script (the console has none)', 2) end
+  local h = ui.huds[ui.caller]
+  if h and id ~= nil and id ~= h.id then h = nil end
+  if h then ui.huds[ui.caller] = nil end
+  return h ~= nil
+ end
+
+ function ui.toast(t)
+  ui.toast_calls = ui.toast_calls + 1
+  if type(t) ~= 'table' then error('bad argument #1 to toast (table expected)', 2) end
+  if is_console() or not ui.owner_mod then error('gd.ui.toast: a toast belongs to a mod script (the console has none)', 2) end
+  local z = t.zone or 'top_right'
+  if z ~= 'top_left' and z ~= 'top_right' then error('gd.ui.toast: zone is "top_left" or "top_right"', 2) end
+  local h = ui.huds[ui.caller]
+  if not h then h = { id = ui.owner_mod .. '.toast', owner = ui.caller, zones = {} }; ui.huds[ui.caller] = h end
+  h.zones[z] = h.zones[z] or {}
+  local list, at = h.zones[z], nil
+  for i, p in ipairs(list) do if p.kind == 'toast' then at = i end end
+  local secs = math.max(0.5, math.min(15, t.seconds or 4))
+  local p = { kind = 'toast', title = tostring(t.title or ''), text = tostring(t.text or ''), rgba = t.rgba, from_s = ui.now, until_s = ui.now + secs }
+  if at then list[at] = p
+  else
+   if #list >= PER_ZONE then error(('gd.ui.toast: zone %s is full (%d parts)'):format(z, PER_ZONE), 2) end
+   table.insert(list, 1, p)
+  end
+  return true
+ end
+
+ -- the checks run in the binding's order: online, console or not gameplay, no match, another script's claim, an id a mod may not hide
+ function ui.retail_hide(list)
+  ui.retail_hide_calls = ui.retail_hide_calls + 1
+  if type(list) ~= 'table' then error('bad argument #1 to retail_hide (table expected)', 2) end
+  if ui.netplay then error('gd.ui.retail_hide: not available online (nothing retail is hidden online)', 2) end
+  if is_console() or not ui.gameplay then error('gd.ui.retail_hide: needs a gameplay mod script', 2) end
+  if not ui.match_active then error('gd.ui.retail_hide: needs an active match', 2) end
+  if ui.mask_owner and ui.mask_owner ~= ui.caller then error('gd.ui.retail_hide: the mask belongs to another script', 2) end
+  local m = {}
+  for _, e in ipairs(list) do
+   if type(e) ~= 'string' then error('gd.ui.retail_hide: element names are strings', 2) end
+   if e == 'hud.timer' then error('gd.ui.retail_hide: hud.timer may not be hidden by a mod', 2) end
+   if not ELEMENT[e] then error(('gd.ui.retail_hide: unknown retail element "%s"'):format(e), 2) end
+   m[e] = true
+  end
+  ui.mask = m
+  ui.mask_owner = next(m) and ui.caller or nil
+  return true
+ end
+
+ function ui.retail()
+  local hidden = {}
+  if not ui.netplay then for _, e in ipairs(ELEMENTS) do if ui.mask[e] then hidden[#hidden + 1] = e end end end
+  return { hidden = hidden, paused = ui.paused == true, pauser = ui.pauser, takeover = ui.takeover == true }
+ end
+
+ -- gw_Ui_SceneExit: a scene ends, every screen on the stack closes (its on.close runs) except one that says persist = true
+ function ui.scene_exit()
+  local ids = {}; for i, id in ipairs(ui.stack) do ids[i] = id end
+  for i = #ids, 1, -1 do
+   local d = ui.screens[ids[i]]
+   if d and not d.persist then
+    local keep = ui.caller; ui.caller = 'console'; ui.close(ids[i]); ui.caller = keep
+    local on = d.on or {}; if on.close then on.close('', '') end
+   end
+  end
+ end
+ -- the binding's part at a scene change: the script's mask claim goes, every toast and note with it
+ function ui.scene_changed()
+  ui.mask, ui.mask_owner = {}, nil
+  for _, h in pairs(ui.huds) do
+   for z, list in pairs(h.zones) do
+    local keep = {}
+    for _, p in ipairs(list) do if p.kind ~= 'toast' and p.kind ~= 'note' then keep[#keep + 1] = p end end
+    h.zones[z] = keep
+   end
+  end
+ end
+
+ -- ---- the pause screen and the retail pause takeover (gw_script_ui.inc; the takeover is off unless ui.pause_wanted) ----------------------------
+ ui.paused, ui.pauser, ui.takeover, ui.pause_wanted, ui.pause_slot, ui.pause_pushed, ui.unpause_req = false, nil, false, false, nil, nil, false
+ function ui.pause_screen(id)
+  if id == nil then if ui.pause_slot and may_touch(ui.pause_slot) then ui.pause_slot = nil end; return ui.pause_slot == nil end
+  own(id)
+  if ui.screens[id].kind ~= 'pause' then error(('gd.ui.pause_screen: "%s" is not a pause screen (kind = "pause")'):format(id), 2) end
+  ui.pause_slot = id; return true
+ end
+ function ui.unpause()
+  if not ui.paused or ui.netplay or ui.unpause_req then return false end
+  ui.unpause_req = true; return true
+ end
+ -- the game's part: the one-shot request, taken at the next unpause check (offline only)
+ function ui.take_unpause()
+  if ui.netplay or not ui.paused or not ui.unpause_req then return nil end
+  ui.unpause_req = false; return ui.pauser
+ end
+ -- the retail pause began (on) or ended (not on): the tick pushes or pops the named pause screen
+ function ui.retail_pause(port, on)
+  if on then
+   ui.paused, ui.pauser, ui.takeover, ui.unpause_req = true, port, ui.pause_wanted and not ui.netplay, false
+   if ui.takeover and ui.pause_slot and ui.screens[ui.pause_slot] then
+    ui.screens[ui.pause_slot].port = port + 1
+    local keep = ui.caller; ui.caller = 'console'; if ui.open(ui.pause_slot) then ui.pause_pushed = ui.pause_slot end; ui.caller = keep
+   end
+  else
+   ui.paused, ui.pauser, ui.takeover, ui.unpause_req = false, nil, false, false
+   if ui.pause_pushed then local keep = ui.caller; ui.caller = 'console'; ui.close(ui.pause_pushed); ui.caller = keep; ui.pause_pushed = nil end
+  end
  end
 
  return ui

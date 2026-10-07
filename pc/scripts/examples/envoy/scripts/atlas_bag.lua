@@ -15,32 +15,17 @@
 -- ONE SCREEN PER SEAT: the id is "envoy.bag" for port 1 and "envoy.bag.pN" for port N, so two seats' bags on one machine are
 -- two screens and closing one never closes the other.
 return function(D)
- local A={setting={on=false},logged={}}
+ local K=D.atlas_kit   -- the shared helpers (the switch, the seat id, log once, the rules, paging), step 3
+ local A={setting=K.setting}
  local BASE_ID='envoy.bag'
  local KICKER={eq='EQUIPPED SLOT',bag='BAG CELL',key='KEYSTONE',offer='OFFERED',koffer='KEYSTONE OFFER'}
  local DIRS={up=true,down=true,left=true,right=true}
  local MAX_CELLS=12   -- gw_ui_screen.h AT_MAX_CELLS: a block with more is refused whole, so a longer one is shown cut, with a note
- local WHAT_FIELD=159 -- AT_TEXT - 1: the explainer's `what` holds this many characters
 
- function A.set(on) A.setting.on=on and true or false end
-
- function A.enabled(g)
-  if not A.setting.on or type(g.ui)~='table' or type(g.ui.available)~='function' then return false end
-  return (g.ui.available()) and true or false
- end
-
- function A.id_for(S)
-  local port=(S.host and S.host.seat and S.host.seat.port) or 1
-  if port==1 then return BASE_ID end
-  return BASE_ID..'.p'..tostring(port)
- end
-
- -- one log line per distinct text for the life of the script (a content bug must be visible, not repeated every frame)
- local function log_once(S,text)
-  if A.logged[text] then return end
-  A.logged[text]=true
-  if S.host and S.host.log then S.host:log('atlas bag: '..text) end
- end
+ function A.set(on) K.set(on) end
+ function A.enabled(g) return K.enabled(g) end
+ function A.id_for(S) return K.id(BASE_ID,S) end
+ local function log_once(S,text) K.log_once(S,text,'atlas bag') end
 
  -- 'EQUIPPED 5/6' -> 'EQUIPPED', '5 / 6'
  local function split_title(t)
@@ -63,6 +48,8 @@ return function(D)
   return d
  end
 
+ A.cell_desc=cell_desc;A.split_title=split_title   -- shared with the swap screen (atlas_swap.lua)
+
  -- IF YOU MERGE: the focused drive, the drive it merges into and the result (only when the legacy plan says merge)
  function A.footer(S,c)
   local ref=c and c.ref
@@ -81,21 +68,10 @@ return function(D)
   return ok and res or nil
  end
 
- -- a rule that does not fit the field is broken at its last word that fits and ends in "..."; never mid-word
- local function fit_rule(S,name,rule)
-  if #rule<=WHAT_FIELD then return rule end
-  log_once(S,('content bug: a rule of "%s" is %d characters, the explainer holds %d: %s'):format(tostring(name),#rule,WHAT_FIELD,rule:sub(1,40)..'...'))
-  local cut=rule:sub(1,WHAT_FIELD-3)
-  local at=cut:match('^.*()%s')
-  if at and at>1 then cut=cut:sub(1,at-1) end
-  return cut..'...'
- end
-
- -- the rule lines of a cell: the legacy detail lines after the drive's name line, up to the first blank line
- function A.rules(lines)
-  local rules={}
-  for i=2,#lines do local l=lines[i];if l=='' then break end;rules[#rules+1]=l end
-  return rules
+ local function fit_rule(S,name,rule) return K.fit_rule(S,name,rule,'atlas bag') end
+ function A.rules(lines,cell)
+  local kind=cell and cell.ref and cell.ref.kind
+  return K.rules(lines,(kind=='key' or kind=='koffer') and 1 or 2)
  end
 
  -- what the explainer shows for one cell: the drive's name line, ONE rule (and "RULE k OF n" when there are several)
@@ -106,13 +82,14 @@ return function(D)
   local idx=cid:match(':(%d+)$')
   local ex={kicker=(KICKER[bid] or bid:upper())..(bid~='key' and idx and (' '..idx) or ''),title=c.name or ''}
   if c.empty or (c.ref and c.ref.kind=='locked') then ex.what=lines[1] or '';return ex end
-  local rules=A.rules(lines)
-  local k=(self.rule_cid==cid) and self.rule_k or 1
-  if k>#rules then k=1 end
+  local rules=A.rules(lines,c)
+  local k=K.rule_index(self,cid,#rules)
   if #rules>1 then ex.kicker=ex.kicker..' - RULE '..k..' OF '..#rules end
   ex.what=rules[k] and fit_rule(S,c.name,rules[k]) or ''
   if type(c.icon)=='table' and c.icon.kind=='model' then ex.media={model=c.icon.asset,ring=c.icon.ring} end
-  if lines[1] then ex.from={text=lines[1]} end
+  if c.ref and c.ref.kind=='key' then   -- a keystone has no name line: FROM is its family line, the first line after the rule
+   local seen=false;for _,l in ipairs(lines) do if l=='' then seen=true elseif seen then ex.from={text=l};break end end
+  elseif lines[1] then ex.from={text=lines[1]} end
   return ex
  end
 
@@ -120,7 +97,7 @@ return function(D)
  local function rule_count(self,cid)
   local c=self.cells[cid]
   if not c or c.empty or (c.ref and c.ref.kind=='locked') then return 0 end
-  return #A.rules(c.lines or self.S:detail_lines(c))
+  return #A.rules(c.lines or self.S:detail_lines(c),c)
  end
 
  function A.describe(S,self)
@@ -145,8 +122,9 @@ return function(D)
   local ok,fid=pcall(S.g.ui.focus,self.id)
   local focus=ok and fid and cells[fid] or nil
   local function action(btn) return function(cid) local c=self.cells[cid];return c and c.actions and c.actions[btn] or nil end end
+  local trail=K.parents();trail.title='YOUR DRIVES'
   return {
-   id=self.id,trail={'SOLO','ENVOY',title='YOUR DRIVES'},chapter=1,
+   id=self.id,trail=trail,chapter=1,persist=true,
    primary={kind='grid',blocks=blocks,footer=A.footer(S,focus)},
    explainer={width='narrow',provide=function(cid,bid) return A.explainer(self,cid,bid) end},
    keys={{'A',action('A')},{'X',action('X')},{'Y',action('Y')},
@@ -184,8 +162,7 @@ return function(D)
   if not ok or not cid then return false end
   local n=rule_count(self,cid)
   if n<2 then return false end
-  local k=(self.rule_cid==cid) and self.rule_k or 1
-  self.rule_cid=cid;self.rule_k=(k-1+dir)%n+1
+  K.page(self,cid,n,dir)
   A.register(self)
   return true
  end
@@ -227,10 +204,16 @@ return function(D)
   end
   S.refresh=function(inst)
    orig_refresh(inst)
-   if inst.layout~='main' or inst.mode~='bag' then A.detach(inst);return end
+   if inst.layout~='main' or inst.mode~='bag' then
+    local swap=inst.layout=='swap'
+    A.detach(inst)
+    if swap and D.atlas_swap then D.atlas_swap.attach(inst) end   -- the swap layout is its own Atlas screen (step 3)
+    return
+   end
    if inst.blocks~=self.blocks_ref then A.register(self) end
   end
   S.notify=function(inst,text) orig_notify(inst,text);pcall(g.ui.note,{text=text,kind='info',seconds=4}) end
+  S.enter_swap=function(inst,sw) return K.swap_entry(inst,ID)(inst,sw) end
   -- the pad's Z: the legacy input does not read it, so its poll is wrapped for the life of the screen
   local inp=S.input
   if type(inp)=='table' and type(inp.poll)=='function' then
@@ -258,7 +241,7 @@ return function(D)
   local self=S.atlas
   if not self then return end
   S.atlas=nil
-  for _,k in ipairs({'draw','focused','sync','press','refresh','notify'}) do S[k]=nil end
+  for _,k in ipairs({'draw','focused','sync','press','refresh','notify','enter_swap'}) do S[k]=nil end
   if self.input then self.input.poll=self.input_poll end   -- nil again: the legacy method on the class is back
   if S.g and S.g.ui then pcall(S.g.ui.close,self.id or BASE_ID) end
  end

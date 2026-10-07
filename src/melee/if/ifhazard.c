@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "ifhazard.h"
 
 #include <sysdolphin/baselib/forward.h>
@@ -56,6 +59,10 @@ void fn_802FD680(HSD_GObj* gobj)
 
 void fn_802FD6CC(HSD_GObj* gobj, int pass)
 {
+#if defined(TARGET_PC)
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (Ui_RetailHidden(AT_RE_HUD_HAZARD)) return;
+#endif
     if (!un_804D6D8C && un_804D6D88) {
         HSD_GObj_JObjCallback(gobj, pass);
     }

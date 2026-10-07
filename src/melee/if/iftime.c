@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "iftime.h"
 
 #include <placeholder.h>
@@ -165,6 +168,19 @@ static inline int ifTime_GetCountdownSeconds_dontinline(void)
     return ifTime_GetCountdownSeconds();
 }
 
+#if defined(TARGET_PC)
+/* the match timer and the countdown (the two GObj_SetupGXLink sites below): the Atlas retail mask hides this element's render only (never its proc); empty by default */
+static void ifTime_RenderGuarded(HSD_GObj* gobj, int pass)
+{
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+    if (Ui_RetailHidden(AT_RE_HUD_TIMER)) return;
+    HSD_GObj_JObjCallback(gobj, pass);
+}
+#define IFTIME_RENDER ifTime_RenderGuarded
+#else
+#define IFTIME_RENDER HSD_GObj_JObjCallback
+#endif
+
 void ifTime_UpdateCountdown(HSD_GObj* arg0)
 {
     struct ifTime_data* x = &ifTime_data;
@@ -211,7 +227,7 @@ void ifTime_UpdateTimers(HSD_GObj* arg0)
         }
         tmp = HSD_GObj_JObjKind;
         HSD_GObjObject_80390A70(x->countdown_timer, tmp, jobj2);
-        GObj_SetupGXLink(x->countdown_timer, HSD_GObj_JObjCallback, 11, 0);
+        GObj_SetupGXLink(x->countdown_timer, IFTIME_RENDER, 11, 0);
         x->countdown_seconds = ifTime_GetCountdownSeconds_dontinline();
         lb_8000C0E8(jobj2, x->countdown_seconds, x->countdown_timer_models[0]);
         HSD_JObjReqAnimAll(jobj2, 0.0f);
@@ -255,7 +271,7 @@ void ifTime_CreateTimers(void)
             OSPanic("iftime.c", 389, "");
         }
         HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
-        GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 11, 0);
+        GObj_SetupGXLink(gobj, IFTIME_RENDER, 11, 0);
         anims = ifTime_match_timer_models.anims;
         matanims = ifTime_match_timer_models.matanims;
         shapeanims = ifTime_match_timer_models.shapeanims;

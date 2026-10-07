@@ -96,7 +96,7 @@ return function(D)
    local mo=D.run_screen.model_opts;if w[1] then mo.yaw=w[1] end;if w[2] then mo.pitch=w[2] end;if w[3] then mo.margin=w[3] end
    g.log(('uxmodel: yaw %s pitch %s margin %s'):format(mo.yaw,mo.pitch,mo.margin));return true end,'look tuning: how a drive model sits in its cell: uxmodel [yaw] [pitch] [margin]')
   g.command('uxbag',function() if self.running then self.screen:open('bag') end;return true end,'open the run bag screen')
-  g.command('uxatlas',function(a) if D.atlas_bag then D.atlas_bag.set(a~='off');g.log('uxatlas: the bag screen draws through gd.ui '..((a=='off') and 'off' or 'on')..' (from the next time the bag opens)') end;return true end,'draw the bag screen through the Atlas parts (gd.ui): uxatlas [on|off]')
+  g.command('uxatlas',function(a) if D.atlas_bag then D.atlas_bag.set(a~='off');g.log('uxatlas: the Envoy screens and HUD draw through gd.ui '..((a=='off') and 'off' or 'on')..' (from the next time a screen opens; envoy ui legacy on forces the legacy ones back)') end;return true end,'draw the bag screen through the Atlas parts (gd.ui): uxatlas [on|off]')
   return self
  end
  function H:log(text) self.g.log('envoy rules: '..(self.seat and ('P'..self.seat.port..' ') or '')..text) end
@@ -685,11 +685,13 @@ return function(D)
   local a=g.safe_area();local frame=self.since or 0;local f=(self.g.frame and self.g.frame()) or 0
   local text=self.hold_banner
   local w=300;local x=a.x+(a.w-w)//2
-  g.fill(x,a.y+150,w,34,0x3A3320E8);g.fill(x,a.y+150,w,2,0xEBD175FF)   -- well below the match timer; the banner is the one instruction
-  k.text(x+w//2,a.y+174,text,'body','gold','center')
-  if self.paying then -- the way out: hold Z + D-pad Down
-   g.fill(x,a.y+184,w,18,0x3A3320E8);k.text(x+w//2,a.y+197,'Hold Z + D-pad Down to leave','caption','gold','center')
-   local pr=self.leave_w and self.leave_w:progress() or 0;if pr>0 then g.fill(x,a.y+201,math.floor(w*pr),2,0xEBD175FF) end
+  if not (D.atlas_hud and D.atlas_hud.on(self)) then   -- the banner text moves to the Atlas HUD (atlas_hud.lua); the floor arrow below stays world-space
+   g.fill(x,a.y+150,w,34,0x3A3320E8);g.fill(x,a.y+150,w,2,0xEBD175FF)   -- well below the match timer; the banner is the one instruction
+   k.text(x+w//2,a.y+174,text,'body','gold','center')
+   if self.paying then -- the way out: hold Z + D-pad Down
+    g.fill(x,a.y+184,w,18,0x3A3320E8);k.text(x+w//2,a.y+197,'Hold Z + D-pad Down to leave','caption','gold','center')
+    local pr=self.leave_w and self.leave_w:progress() or 0;if pr>0 then g.fill(x,a.y+201,math.floor(w*pr),2,0xEBD175FF) end
+   end
   end
   local me=g.player(self:port0());local best,bd
   for _,p in ipairs(list) do if me then local dd=math.abs(p.x-me.x)+math.abs(p.y-me.y);if not bd or dd<bd then best,bd=p,dd end end end
@@ -1092,6 +1094,7 @@ return function(D)
   if self.screen.active then self.screen:close() end
   if #self.offers>0 or #self.key_offers>0 or #self.decide>0 then self:finish_reward('run-end') end
   self.running=false;self.fell={};self.rolls={};self.mods:run_end();self.hud:clear();if self.synfx then self.synfx:reset() end;self:log('run end: bag and build cleared')
+  if D.atlas_kit then D.atlas_kit.forget_all(self.g) end   -- Atlas step 3: every Envoy screen is forgotten, so the engine's 16 slots are free again
  end
  -- The model as text, for the console and the tests.
  function H:dump()

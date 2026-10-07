@@ -21,8 +21,10 @@ extern "C" {
 #define AT_STR 64
 #define AT_TEXT 160
 #define AT_NO_MODEL (-1)
+#define AT_MAX_CARDS 4
+#define AT_MAX_LINKS 16
 
-enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4 };
+enum { AT_PRIMARY_LIST = 1, AT_PRIMARY_GRID = 2, AT_PRIMARY_TILES = 3, AT_PRIMARY_DISPLAY = 4, AT_PRIMARY_CARDS = 5 };   /* the plan says CARDS = 3; 3 is TILES */
 enum { AT_CELL_LOCKED = 1, AT_CELL_EMPTY = 2, AT_CELL_MERGE = 4, AT_CELL_NEW = 8, AT_CELL_SELECTED = 16, AT_CELL_DISABLED = 32,
        AT_CELL_BANNED = 64, AT_CELL_PICKED = 128, AT_CELL_UNSET = 256, AT_CELL_P1 = 512 };   /* 64 and up: strike marks, drawing only (step 6 sets them) */
 enum { AT_CARD_OPEN = 1, AT_CARD_CLOSED = 2, AT_CARD_READY = 4, AT_CARD_FOCUS = 8 };   /* AtPortCard.flags */
@@ -36,7 +38,11 @@ typedef struct { char id[AT_ID]; char name[AT_STR]; int model, ring; unsigned fl
 typedef struct { char id[AT_ID]; char title[AT_STR]; char count[24]; char note[AT_STR]; int cols, n, stones; AtCell cells[AT_MAX_CELLS]; AtCell *ext; int ext_n; } AtBlock;
 typedef struct { char name[24]; int count; } AtTab;
 /* one port's card (the band): kind 0 off, 1 human, 2 CPU (the same numbers as AT_CSS_*); ck_tex: the fighter's art slot or -1; cur: its cursor cell */
-typedef struct { int port, kind, ck_tex, cur; char name[AT_STR], sub[AT_STR]; unsigned flags; char abbr[3]; int cpu_lv, team; } AtPortCard;
+typedef struct { int port, kind, ck_tex, cur; char name[AT_STR], sub[AT_STR]; unsigned flags; char abbr[3]; int cpu_lv, team; } AtSelCard;
+/* an offer card: a model well (or, when model < 0 and letter != 0, a keystone arch stone with its letter), the name, ONE rule, a tag */
+typedef struct { int model, ring; char name[AT_STR]; char rule[AT_TEXT]; char tag[24]; int tag_tone; unsigned rgba; char letter; } AtOffer;
+typedef struct { char id[AT_ID]; int disabled; AtOffer offer; } AtCardRec;
+typedef struct { char a[AT_ID], b[AT_ID]; unsigned rgba; } AtLink;      /* a grid link between two cells, by cell id */
 typedef struct { char id[AT_ID]; char label[AT_STR]; char sub[AT_STR]; unsigned flags; int vkind, on; char text[AT_STR]; int vmin, vmax, vval;
                char icon[AT_ID]; char tag[16]; char badge[8]; char numeral[6]; } AtItem;   /* icon, tag, badge, numeral: tiles (hubs, the main menu) */
 typedef struct { char btn; char label[AT_STR]; int fn_label, fn_when; } AtKey;
@@ -58,12 +64,17 @@ typedef struct {
     AtFooter footer;
     AtTab tabs[AT_MAX_TABS]; int n_tabs;             /* a strip of tabs over the grid pane; 0 = none (the active one is AtView.tab) */
     int band;                                        /* AT_BAND_*: port cards or the matchup strip under the pane */
-    AtPortCard cards[4];
+    AtSelCard ports[4];                               /* the character select's port cards (step 3's offer cards are `cards`) */
     int grid_cols_auto;                              /* 1: the renderer picks the grid's columns from the pane's width (at_grid_cols) */
     int grid_cell_min, grid_cell_max;                /* auto columns: the tile size range in px (0: 36 and 56, the character select's; the stage select uses 54 and 72) */
     AtKey keys[AT_MAX_KEYS]; int n_keys;
     char counter[AT_STR]; int fn_counter;
     int input_feed, port;
+    AtCardRec cards[AT_MAX_CARDS]; int n_cards;      /* primary kind "cards": one row of offer cards */
+    AtLink links[AT_MAX_LINKS]; int n_links, links_skipped;   /* a grid: lines drawn between cells under them; one naming a missing cell is skipped and counted */
+    int has_countdown, countdown;                    /* seconds shown at the trail's right end (0:45, rose under 10 s). The script re-registers it once a second */
+    int pause;                                       /* kind = "pause": a screen the retail pause takeover may push (a list primary; offline only) */
+    int persist;                                     /* persist = true: the screen is not closed when the scene it was opened in ends (only its owner closes it) */
     int fn_provide, fn_accept, fn_back, fn_alt[3], fn_focus, fn_change, fn_open, fn_close, fn_page, fn_start;
     int warnings;
 } AtScreen;

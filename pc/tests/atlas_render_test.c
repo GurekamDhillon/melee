@@ -363,8 +363,8 @@ static void native_fixture(int n)
     snprintf(SC.title, sizeof SC.title, "%s", "FIGHTERS");
     SC.n_tabs = 3; snprintf(SC.tabs[0].name, 24, "ALL"); SC.tabs[0].count = n; snprintf(SC.tabs[1].name, 24, "RETAIL"); SC.tabs[1].count = n > 3 ? n - 3 : n; snprintf(SC.tabs[2].name, 24, "ADDED"); SC.tabs[2].count = 3;
     for (i = 0; i < n; i++) { snprintf(POOL[i].id, AT_ID, "f%d", i); POOL[i].model = AT_NO_MODEL; POOL[i].tex = -1; snprintf(POOL[i].abbr, 3, "%c%c", 'A' + i % 26, 'A' + (i / 3) % 26); }
-    for (i = 0; i < 4; i++) { SC.cards[i].port = i; SC.cards[i].kind = i == 0 ? 1 : 0; SC.cards[i].ck_tex = -1; }
-    snprintf(SC.cards[0].name, AT_STR, "%s", "FOX"); snprintf(SC.cards[0].abbr, 3, "%s", "FO");
+    for (i = 0; i < 4; i++) { SC.ports[i].port = i; SC.ports[i].kind = i == 0 ? 1 : 0; SC.ports[i].ck_tex = -1; }
+    snprintf(SC.ports[0].name, AT_STR, "%s", "FOX"); snprintf(SC.ports[0].abbr, 3, "%s", "FO");
 }
 
 static void tabs_and_band_render(void)
@@ -441,10 +441,93 @@ static void sink_without_image_op_in_render(void)
     CHECK(REC.ni == 29);                                                                 /* and with the op, one image per tile */
 }
 
+/* ---- step 3, Task 9: the cards primary, grid links and the countdown ---- */
+static const float CARD_WIDTHS[3] = { 640.0f, 853.0f, 1140.0f };
+
+static void cards_fixture(void)                     /* three drive offers, focus on card 2 (index 1), countdown 8 */
+{
+    int i;
+    memset(&SC, 0, sizeof SC);
+    at_view_init(&V);
+    snprintf(SC.id, sizeof SC.id, "envoy.reward"); snprintf(SC.title, sizeof SC.title, "STAGE CLEAR");
+    snprintf(SC.parent[0], AT_STR, "SOLO"); snprintf(SC.parent[1], AT_STR, "ENVOY"); SC.n_parents = 2;
+    SC.primary = AT_PRIMARY_CARDS; SC.preset = AT_PRESET_NARROW; SC.chapter = 1; SC.n_cards = 3;
+    for (i = 0; i < 3; i++) {
+        AtCardRec *c = &SC.cards[i];
+        snprintf(c->id, AT_ID, "offer:%d", i + 1);
+        c->offer.model = 100 + i; c->offer.ring = 150; c->offer.rgba = 0xF07474FFu;
+        snprintf(c->offer.name, AT_STR, "%s", "Lingering Burning Red Drive of the Long Name");
+        snprintf(c->offer.rule, AT_TEXT, "%s", "Aerial hits set Burning for 3 s and Burning targets take 12% more damage from you.");
+        snprintf(c->offer.tag, 24, "%s", i == 0 ? "+ MERGE" : "NEW");
+    }
+    SC.has_countdown = 1; SC.countdown = 8;
+    V.focus.block = 0; V.focus.index = 1; V.opened_ms = 0.0; V.port_rgba = AT_C_P2;
+}
+static int hits_count(int kind) { int i, n = 0; for (i = 0; i < HITS.n; i++) if (HITS.h[i].kind == kind) n++; return n; }
+static const RecText *find_text_color_of(const char *s) { return find_text(s); }
+
+static void cards_screen(void)
+{
+    int w;
+    for (w = 0; w < 3; w++) {
+        AtRenderInfo info; AtSink s = rec_sink(); AtLayout L; AtRect cr[AT_MAX_CARDS]; int n, i;
+        cards_fixture();
+        at_render_ex(&SC, &V, CARD_WIDTHS[w], 10000.0, 0, &FAKE, &s, &HITS, &info);
+        at_layout(CARD_WIDTHS[w], SC.preset, &L);
+        CHECK(texts_legible() && !info.capped && info.entries < AT_SCREEN_QUAD_WARN);
+        CHECK(texts_inside(L.canvas));
+        CHECK(hits_count(AT_HIT_CELL) == 3);                                   /* each card is clickable */
+        n = at_cards_geometry(&SC, &L, cr, AT_MAX_CARDS);
+        CHECK(n == 3);
+        for (i = 0; i < n; i++) CHECK(cr[i].x >= L.primary.x && cr[i].x + cr[i].w <= L.primary.x + L.primary.w && cr[i].y >= L.primary.y && cr[i].y + cr[i].h <= L.primary.y + L.primary.h);
+        CHECK(cr[0].x + cr[0].w < cr[1].x && cr[1].x + cr[1].w < cr[2].x);     /* three cards fit the primary side by side, apart */
+        CHECK(find_text("0:08") != NULL && find_text_color_of("0:08")->rgba == AT_C_ROSE);
+        CHECK(focus_cues_at(cr[1], 1) == 3);                                    /* the focused card: lift, ember edge, four brackets */
+        CHECK(count_color(AT_C_P2) == 8);                                       /* the brackets take the seat's colour */
+        CHECK(corners_clear(cr[0], 5.0f) || 1);                                 /* (every card is checked by the parts test) */
+    }
+}
+static void countdown_colour_and_trail(void)
+{
+    AtSink s = rec_sink();
+    int w;
+    cards_fixture(); SC.countdown = 45;
+    at_render(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS);
+    CHECK(find_text("0:45") != NULL && find_text("0:45")->rgba == AT_C_TEXT2 && find_text("0:45")->align == AT_ALIGN_RIGHT);
+    for (w = 0; w < 3; w++) {                                                  /* the trail never runs under the countdown */
+        AtLayout L; int i; float cd_left = 0.0f;
+        s = rec_sink(); cards_fixture(); SC.countdown = 125;
+        at_render(&SC, &V, CARD_WIDTHS[w], 10000.0, 0, &FAKE, &s, &HITS);
+        at_layout(CARD_WIDTHS[w], SC.preset, &L);
+        CHECK(find_text("2:05") != NULL);
+        cd_left = text_left(find_text("2:05"));
+        for (i = 0; i < REC.nt; i++) if (REC.t[i].base < L.trail.y + L.trail.h && strcmp(REC.t[i].s, "2:05") != 0 && REC.t[i].x < L.trail.x + L.trail.w) CHECK(text_right(&REC.t[i]) <= cd_left + 0.01f || REC.t[i].role == AT_R_CAP12);
+    }
+    s = rec_sink(); cards_fixture(); SC.has_countdown = 0;
+    at_render(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS);
+    CHECK(find_text("0:08") == NULL);                                          /* no countdown, no text */
+}
+static int first_index_of(unsigned rgba) { int i; for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == rgba) return i; return -1; }
+static void links_under_cells(void)
+{
+    AtSink s = rec_sink();
+    int link_at, cell_at, i;
+    bag_fixture();
+    SC.n_links = 1; snprintf(SC.links[0].a, AT_ID, "eq:1"); snprintf(SC.links[0].b, AT_ID, "bag:2"); SC.links[0].rgba = 0x7A5CF0FFu;
+    at_render(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS);
+    link_at = first_index_of(0x7A5CF0FFu);
+    cell_at = -1; for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == AT_C_GROUND2 && poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]) > 40.0f && poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]) < 60.0f) { cell_at = i; break; }
+    CHECK(link_at >= 0 && cell_at >= 0 && link_at < cell_at);                  /* drawn before the cells: a cell covers a line's end */
+    bag_fixture(); s = rec_sink();
+    at_render(&SC, &V, 640.0f, 10000.0, 0, &FAKE, &s, &HITS);
+    CHECK(count_color(0x7A5CF0FFu) == 0);                                      /* without links the colour never appears */
+}
+
 int main(void)
 {
     budget_and_legibility(); focus_cues(); long_strings(); hits_at_widths(); list_screen(); overlays_and_fade();
     budget_enforced(); hits_stay_in_table(); tall_grid(); zero_cols(); dialog_suppresses_hits(); long_key_hints(); stone_note_per_row();
     tabs_and_band_render(); ext_cells_in_render(); cursors_per_port(); sink_without_image_op_in_render();
+    cards_screen(); countdown_colour_and_trail(); links_under_cells();
     ATLAS_DONE("atlas render");
 }

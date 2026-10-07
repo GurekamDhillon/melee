@@ -229,6 +229,159 @@ do
   local con = Stub.new({}); con.held_by = 'a/main'
   check(con.hold_menu(false) == false, 'the console may release it (console-only check)')
 end
+-- Atlas step 3, Task 1: sixteen slots and forget
+do
+  local u = Stub.new({ caller = 'a/main', owner_mod = 'a' })
+  check(Stub.slots == 16, 'sixteen screen slots')
+  local function one(id) return { id = id, primary = { kind = 'list', items = { { id = 'x', label = 'X' } } } } end
+  for i = 1, 16 do u.screen(one('a.s' .. i)) end
+  raises(function() u.screen(one('a.s17')) end, 'too many screens (16)', 'the 17th screen raises')
+  check(u.screen(one('a.s3')), 'a re-registration of a held id still fits')
+  u.open('a.s5'); check(u.forget('a.s5') == true and u.state().depth == 0 and u.screens['a.s5'] == nil, 'forget closes and frees')
+  check(u.screen(one('a.s17')), 'the freed slot takes a new screen')
+  raises(function() u.forget('a.nope') end, 'no screen', 'forget of an unknown id raises')
+  local other = Stub.new({ caller = 'b/main' }); other.screens, other._owner = u.screens, u._owner
+  raises(function() other.forget('a.s1') end, 'belongs to another script', "another script's screen is refused")
+  local con = Stub.new({}); con.screens, con._owner, con._f, con.views, con._rows = u.screens, u._owner, u._f, u.views, u._rows
+  check(con.forget('a.s1') == true, 'the console may forget any screen (console-only check)')
+end
+-- Atlas step 3, Task 7: the HUD layer and the retail takeover in the stand-in
+do
+  local u = Stub.new({ mod = 'envoy' })
+  check(u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'strip', pips = {}, keys = {} } }, top_center = { { kind = 'banner', text = 'Collect the drives', button = 'A' } } } }), 'a HUD registers')
+  raises(function() u.hud({ id = 'other.hud', zones = {} }) end, 'must start with', 'the id starts with the mod')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'banner' } }, top_center = { { kind = 'banner' } } } }) end, 'banner', 'one banner only, in top_center')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_right = { { kind = 'card' }, { kind = 'card' }, { kind = 'card' }, { kind = 'card' } } } }) end, 'three opponent cards', 'three cards at most')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'note' }, {}, {}, {}, {} } } }) end, 'holds at most', 'four parts per zone')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'wobble' } } } }) end, 'unknown kind', 'a known kind')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'port_card', port = 9 } } } }) end, 'port 1 to 4', 'a port')
+  check(u.huds['envoy/main'].zones.top_left[1].kind == 'strip', 'a refused description changed nothing')
+  check(u.toast({ zone = 'top_right', title = 'ONE', text = 'a' }) and u.toast({ zone = 'top_right', title = 'TWO', text = 'b' }), 'toasts register')
+  check(#u.huds['envoy/main'].zones.top_right == 1 and u.huds['envoy/main'].zones.top_right[1].title == 'TWO', 'a toast replaces the zone\'s toast, never queues')
+  raises(function() u.toast({ zone = 'bottom_left', title = 'x' }) end, 'top_left', 'a toast lives in a top corner')
+  u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'note', text = 'Merged', seconds = 4 } } } })
+  check(u.huds['envoy/main'].zones.top_right[1].title == 'TWO', 'a re-description keeps the live toast')
+  local until_s = u.huds['envoy/main'].zones.top_left[1].until_s
+  u.now = u.now + 0.5; u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'note', text = 'Merged', seconds = 4 } } } })
+  check(u.huds['envoy/main'].zones.top_left[1].until_s == until_s, 'the same note keeps its clock')
+  u.now = 100; u.hud({ id = 'envoy.hud', zones = {} })
+  check(#(u.huds['envoy/main'].zones.top_right or {}) == 0, 'an expired toast is not kept')
+  check(u.hud_clear() == true and u.hud_clear() == false, 'hud_clear')
+  -- retail_hide: the binding's checks in its order
+  check(u.retail_hide({ 'hud.damage' }) and u.retail().hidden[1] == 'hud.damage', 'hide an element')
+  raises(function() u.retail_hide({ 'hud.timer' }) end, 'hud.timer may not be hidden', 'never the clock')
+  raises(function() u.retail_hide({ 'hud.bogus' }) end, 'unknown retail element', 'a known element')
+  local b = Stub.new({ mod = 'envoy', caller = 'envoy/second' }); b.mask, b.mask_owner = u.mask, u.mask_owner
+  raises(function() b.retail_hide({ 'hud.stock' }) end, 'belongs to another script', 'another script\'s mask')
+  u.netplay = true
+  raises(function() u.retail_hide({ 'hud.stock' }) end, 'online', 'refused online')
+  check(#u.retail().hidden == 0, 'nothing is hidden online')
+  u.netplay = false; u.match_active = false
+  raises(function() u.retail_hide({ 'hud.stock' }) end, 'active match', 'needs a match')
+  u.match_active = true; u.scene_changed()
+  check(#u.retail().hidden == 0 and u.mask_owner == nil, 'a scene change releases the mask')
+  check(u.retail_hide({ 'hud.stock' }) and u.retail_hide({}) and #u.retail().hidden == 0, '{} releases it')
+  local con = Stub.new({})
+  raises(function() con.hud({ id = 'envoy.hud', zones = {} }) end, 'mod script', 'the console has no HUD (console-only check)')
+  raises(function() con.retail_hide({}) end, 'gameplay mod script', 'the console may not hide retail (console-only check)')
+  local ng = Stub.new({ mod = 'envoy', gameplay = false })
+  raises(function() ng.retail_hide({ 'hud.stock' }) end, 'gameplay mod script', 'a non-gameplay script may not hide retail')
+end
+-- Atlas step 3, Task 8: pause screens in the stand-in
+do
+  local u = Stub.new({ mod = 'envoy' })
+  raises(function() u.screen({ id = 'envoy.p', kind = 'pause', primary = { kind = 'grid', blocks = { { id = 'b', cols = 1, cells = {} } } } }) end, 'a pause screen has a list primary', 'a pause screen is a list')
+  u.screen({ id = 'envoy.pause', kind = 'pause', primary = { kind = 'list', items = { { id = 'resume', label = 'Resume' } } } })
+  u.screen({ id = 'envoy.plain', primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } })
+  raises(function() u.pause_screen('envoy.plain') end, 'not a pause screen', 'only a pause screen is named')
+  check(u.pause_screen('envoy.pause') and u.pause_slot == 'envoy.pause', 'the pause screen is named')
+  check(u.unpause() == false, 'unpause needs a pause')
+  u.retail_pause(1, true); check(u.state().top == nil, 'takeover off: nothing is pushed'); u.retail_pause(1, false)
+  u.pause_wanted = true; u.retail_pause(1, true)
+  check(u.state().top == 'envoy.pause' and u.screens['envoy.pause'].port == 2 and u.retail().takeover and u.retail().pauser == 1, 'takeover on: pushed, driven by the pauser')
+  check(u.unpause() == true and u.unpause() == false and u.take_unpause() == 1 and u.take_unpause() == nil, 'unpause is one-shot and names the pauser')
+  u.retail_pause(1, false); check(u.state().top == nil and u.take_unpause() == nil, 'popped when retail unpaused; no request leaks')
+  u.netplay = true; u.retail_pause(0, true)
+  check(u.state().top == nil and u.unpause() == false and u.take_unpause() == nil, 'never online')
+  check(u.open('envoy.pause') == false, 'a pause screen does not open online')
+  u.retail_pause(0, false)
+end
+-- scene exit and persist
+do
+  local u = Stub.new({ mod = 'envoy' })
+  u.screen({ id = 'envoy.keep', persist = true, primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } })
+  local closed = 0
+  u.screen({ id = 'envoy.drop', primary = { kind = 'list', items = { { id = 'a', label = 'A' } } }, on = { close = function() closed = closed + 1 end } })
+  u.open('envoy.drop'); u.open('envoy.keep'); u.scene_exit()
+  check(u.state().top == 'envoy.keep' and u.state().depth == 1 and closed == 1, 'a scene exit closes an ordinary screen and leaves a persist screen')
+end
+-- Atlas step 3, Task 9: the cards primary, grid links and the countdown in the stand-in
+do
+  local u = Stub.new({ mod = 'envoy' })
+  local function card(i, extra) local c = { id = 'offer:' .. i, name = 'Drive', rule = 'One rule.' }; for k, v in pairs(extra or {}) do c[k] = v end; return c end
+  check(u.screen({ id = 'envoy.reward', countdown = 8, primary = { kind = 'cards', cards = { card(1), card(2, { disabled = true }), card(3) } } }), 'a cards screen registers')
+  local c, b = u.focus('envoy.reward'); check(c == 'offer:1' and b == 'cards', 'one block named cards, focus on the first card')
+  raises(function() u.screen({ id = 'envoy.r5', primary = { kind = 'cards', cards = { card(1), card(2), card(3), card(4), card(5) } } }) end, 'at most 4 cards', 'a fifth card is refused')
+  raises(function() u.screen({ id = 'envoy.r0', primary = { kind = 'cards', cards = {} } }) end, 'needs 1 to', 'no cards is refused')
+  raises(function() u.screen({ id = 'envoy.rd', primary = { kind = 'cards', cards = { card(1), card(1) } } }) end, 'duplicate card id', 'card ids are unique')
+  raises(function() u.screen({ id = 'envoy.rc', countdown = 'soon', primary = { kind = 'cards', cards = { card(1) } } }) end, 'countdown', 'the countdown is a number')
+  u.open('envoy.reward'); u.set_focus('envoy.reward', 'cards', 'offer:2')
+  local fired = 0
+  u.screens['envoy.reward'].on = { accept = function() fired = fired + 1 end }
+  check(u.engine_press('envoy.reward', 'accept') == false and fired == 0, 'a disabled card does not accept')
+  u.set_focus('envoy.reward', 'cards', 'offer:3'); u.engine_press('envoy.reward', 'accept'); check(fired == 1, 'an enabled card accepts')
+  local g = { id = 'envoy.swap', primary = { kind = 'grid', blocks = { { id = 'eq', cols = 2, cells = { { id = 'eq:1' }, { id = 'eq:2' } } }, { id = 'bag', cols = 1, cells = { { id = 'bag:1' } } } },
+    links = { { a = 'eq:1', b = 'bag:1' }, { a = 'eq:1', b = 'nope' } } } }
+  check(u.screen(g) and u.links_skipped['envoy.swap'] == 1, 'a link naming a missing cell is skipped and counted')
+  g.primary.links = {}; for i = 1, 17 do g.primary.links[i] = { a = 'eq:1', b = 'eq:2' } end
+  raises(function() u.screen(g) end, 'at most 16 links', 'at most 16 links')
+end
+-- Atlas step 3, Task 19: the two demo mods run against the stand-in (their own main.lua, loaded with a fake gd)
+local function load_demo(path, mod, opts)
+  opts = opts or {}
+  local u = Stub.new({ mod = mod, netplay = opts.netplay })
+  local keys, logs = {}, {}
+  local env = setmetatable({ gd = { ui = u, log = function(t) logs[#logs + 1] = t end, key_pressed = function(k) local v = keys[k]; keys[k] = nil; return v end,
+    player = function(p) return opts.players and opts.players[p] end } }, { __index = _G })
+  local chunk = assert(loadfile(prefix .. path, 't', env)); chunk()
+  return env, u, keys, logs
+end
+do
+  local env, u, keys, logs = load_demo('pc/scripts/examples/demos/atlas-hud/scripts/main.lua', 'demo_atlas_hud', { players = { { cpu = false }, { cpu = true }, nil } })
+  keys.F7 = true; env.on_tick()
+  local h = u.huds['demo_atlas_hud/main']
+  check(h and h.id == 'demo_atlas_hud.hud', 'F7 shows the HUD')
+  check(#h.zones.top_left == 1 and h.zones.top_left[1].kind == 'strip' and #h.zones.top_right == 2, 'a strip, a port card for the human port and the toast')
+  check(h.zones.top_right[1].kind == 'toast' and h.zones.top_right[2].kind == 'port_card' and h.zones.top_right[2].port == 1, 'the toast on top of the port card')
+  check(h.zones.top_center[1].kind == 'banner' and h.zones.top_center[1].button == 'A' and h.zones.bottom_left[1].kind == 'note', 'a banner with the A glyph, a note')
+  check(u.hud_caps(h.zones), 'inside the quiet-HUD caps')
+  local want = { '', 'hud.damage', 'hud.stock', 'hud.damage,hud.stock', '' }
+  for i = 1, 4 do
+    keys.F8 = true; env.on_tick()
+    local got = table.concat(u.retail().hidden, ',')
+    check(got == want[i + 1], 'F8 step ' .. i .. ' hides [' .. got .. ']')
+  end
+  keys.F8 = true; env.on_tick(); check(table.concat(u.retail().hidden, ',') == 'hud.damage', 'and round again')
+  keys.F7 = true; env.on_tick(); check(u.huds['demo_atlas_hud/main'] == nil, 'F7 clears it')
+  local env2, u2, keys2, logs2 = load_demo('pc/scripts/examples/demos/atlas-hud/scripts/main.lua', 'demo_atlas_hud', { netplay = true })
+  keys2.F7 = true; env2.on_tick(); keys2.F8 = true; env2.on_tick(); keys2.F8 = true; env2.on_tick()
+  check(u2.huds['demo_atlas_hud/main'] ~= nil and #u2.retail().hidden == 0, 'online the HUD draws and nothing is hidden')
+  local refused = false; for _, l in ipairs(logs2) do if l:find('refused', 1, true) then refused = true end end
+  check(refused, 'the refusal is logged, not raised')
+end
+do
+  local env, u = load_demo('pc/scripts/examples/demos/atlas-pause/scripts/main.lua', 'demo_atlas_pause')
+  env.on_load()
+  check(u.pause_slot == 'demo_atlas_pause.pause' and u.screens['demo_atlas_pause.pause'].kind == 'pause', 'the pause screen is registered and named')
+  u.retail_pause(0, true); check(u.state().top == nil, 'takeover off: nothing changes')
+  u.retail_pause(0, false)
+  u.pause_wanted = true; u.retail_pause(0, true)
+  check(u.state().top == 'demo_atlas_pause.pause', 'takeover on: the demo\'s list')
+  u.engine_press('demo_atlas_pause.pause', 'accept')
+  check(u.take_unpause() == 0, 'Resume asks the engine to unpause the pauser')
+  u.retail_pause(0, false)
+  env.on_unload(); check(u.pause_slot == nil, 'unloading clears the name')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

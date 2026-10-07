@@ -665,6 +665,9 @@ static int gs_msgh(lua_State *L) {
 }
 
 static void gs_ui_release(int script); /* gw_script_ui.inc: a switched-off script's screens go */
+static void gs_ui_scene_changed(void); /* gw_script_ui.inc: a scene ends: the HUD's toasts and notes and the script's retail mask go */
+static void gs_ui_hud_draw(void);      /* gw_script_ui.inc: the HUD layer, under the screen stack */
+static int gs_ui_console(const char *arg, char *out, int cap); /* gw_script_ui.inc: the atlas console command */
 static void gs_report(int script, const char *what, const char *err) {
     GsScript *s = (script >= 0 && script < gs.n) ? &gs.s[script] : NULL;
     gw_Console_Print(GS_RED, "[%s] %s: %s", gs_script_id(script), what, err);
@@ -6257,6 +6260,16 @@ static const luaL_Reg gs_kit_funcs[] = {
     {"icon", l_kit_icon}, {"panel", l_kit_panel}, {"button", l_kit_button}, {"list", l_kit_list},
     {"color", l_kit_color}, {NULL, NULL}};
 static void gs_prof_setfuncs(lua_State *L, const luaL_Reg *funcs, const char *prefix);
+/* a port card of gd.ui.hud: the fighter's name, percent and stocks, read as gd.player reads them (1 when the port has a fighter) */
+static int gs_ui_port_read(int port, char *name, int cap, int *percent, int *stocks, int *cpu) {
+    int slot = port - 1;
+    if (slot < 0 || slot >= 4 || !gs_players_present(slot)) return 0;
+    snprintf(name, (size_t) cap, "%s", gs_char_name(gw_ScriptGame_FighterI(slot, SI_CHAR)));
+    *percent = (int) gw_ScriptGame_FighterF(slot, SF_PERCENT);
+    *stocks = gw_ScriptGame_FighterI(slot, SI_STOCKS);
+    *cpu = gw_ScriptGame_FighterI(slot, SI_SLOT_TYPE) == 1;
+    return 1;
+}
 #include "gw_script_ui.inc"
 
 /* gd.kit: the functions, and the kit's data as tables (colors, roles, row, shear). */
@@ -7465,6 +7478,7 @@ void gw_Script_SceneBegin(int scene_kind) {
     gw_ScriptGame_StageIsolationClear(0);
     gs_stage_isolation_owner = 0;
     gs_hud_release_owner(gs_hud_owner);
+    gs_ui_scene_changed();
     memset(gs_enemy_owned, 0, sizeof gs_enemy_owned);
     gw_Geno_ItemsSceneReset();
     gw_script_pad_masks_clear();
@@ -7616,6 +7630,7 @@ static void gs_finish_draw(void) {
     }
     gs.cam_stamp++;
     gs_hook_all("on_draw", 0, 0, 0);
+    gs_ui_hud_draw();   /* the HUD layer sits under any screen */
     gs_ui_draw();
     gs_comm_draw();
     gs_stage_draw();
@@ -9254,6 +9269,12 @@ static int gs_exec(const char *line_in) {
     if (IS("state")) {
         gs_cmd_state();
         return 0;
+    }
+    if (IS("atlas")) { /* atlas retail <ids|clear> | atlas hud | atlas keepout on|off (gw_script_ui.inc) */
+        char reply[320];
+        int arc = gs_ui_console(arg, reply, (int) sizeof reply);
+        gw_Console_Print(arc == 0 ? GS_GREEN : GS_RED, "%s", reply);
+        return arc;
     }
     if (IS("items")) { gs_cmd_items(); return 0; }
     if (IS("watchdog-stall")) {

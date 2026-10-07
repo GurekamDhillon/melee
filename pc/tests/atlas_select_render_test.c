@@ -28,7 +28,7 @@ static void build_css_screen(AtScreen *sc, AtView *v, AtCell *pool, int n, int n
         if (i >= n - n_added) c->origin = '+';
     }
     for (p = 0; p < 4; p++) {
-        AtPortCard *k = &sc->cards[p];
+        AtSelCard *k = &sc->ports[p];
         k->port = p; k->kind = (ports_mask >> p) & 1 ? 1 : 0; k->ck_tex = -1;
         if (k->kind) { snprintf(k->name, AT_STR, "%s", "A FIGHTER WITH A LONG NAME"); snprintf(k->sub, AT_STR, "%s", "Costume 1"); snprintf(k->abbr, 3, "%s", "FO"); }
     }
@@ -137,7 +137,7 @@ static void style_of_the_screen(void)
       for (k = 0; k < 4; k++) {
           AtRect slot; AtSink s2; AtLayout L2;
           slot.x = sp.band.x + (float) k * (cw + 8.0f); slot.y = sp.band.y; slot.w = cw; slot.h = sp.band.h;
-          s2 = rec_sink(); at_poly_rect(&s2, 0, 0, 640, 480, AT_C_GROUND); at_part_port_card(&s2, &O, slot, &SC.cards[k], 0); CHECK(sty_text_inside(slot, 0) == -1 && sty_chamfer(slot, 5.0f, AT_C_GROUND) == 0);
+          s2 = rec_sink(); at_poly_rect(&s2, 0, 0, 640, 480, AT_C_GROUND); at_part_sel_card(&s2, &O, slot, &SC.ports[k], 0); CHECK(sty_text_inside(slot, 0) == -1 && sty_chamfer(slot, 5.0f, AT_C_GROUND) == 0);
           (void) L2;
       } }
     /* the keys strip is below the band and the tiles, inside the canvas */
@@ -263,7 +263,7 @@ static void build_loading_screen(int n, int permille)
     snprintf(SC.parent[0], AT_STR, "%s", "VERSUS"); snprintf(SC.parent[1], AT_STR, "%s", "MELEE"); SC.n_parents = 2; SC.chapter = 2;
     SC.primary = AT_PRIMARY_GRID; SC.preset = AT_PRESET_NONE; SC.grid_cols_auto = 1; SC.band = AT_BAND_MATCHUP;
     SC.n_blocks = 1; snprintf(SC.blocks[0].id, AT_ID, "%s", "fighters"); SC.blocks[0].ext = POOL; SC.blocks[0].ext_n = 0;
-    for (i = 0; i < 4; i++) { SC.cards[i].port = i; SC.cards[i].ck_tex = -1; SC.cards[i].kind = i < n ? (i == 1 && n == 2 ? 2 : 1) : 0; snprintf(SC.cards[i].name, AT_STR, "%s", i == 0 ? "CAPTAIN FALCON" : "KIRBY"); snprintf(SC.cards[i].abbr, 3, "%s", "CF"); }
+    for (i = 0; i < 4; i++) { SC.ports[i].port = i; SC.ports[i].ck_tex = -1; SC.ports[i].kind = i < n ? (i == 1 && n == 2 ? 2 : 1) : 0; snprintf(SC.ports[i].name, AT_STR, "%s", i == 0 ? "CAPTAIN FALCON" : "KIRBY"); snprintf(SC.ports[i].abbr, 3, "%s", "CF"); }
     V.ex.has = 1; snprintf(V.ex.kicker, AT_STR, "%s", "STAGE"); snprintf(V.ex.title, AT_STR, "%s", "Fountain of Dreams and a very long stage name indeed");
     snprintf(V.counter, AT_STR, "%s", permille >= 1000 ? "READY" : "WARMING UP");
     V.progress = permille;

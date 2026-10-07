@@ -140,9 +140,48 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
         o->tile_cols = get_int(a, prim, "cols", 0);
         if (o->tile_cols < 0 || o->tile_cols > 2) FAIL("gd.ui.screen: tiles: cols must be 1 or 2");
     }
-    else FAIL("gd.ui.screen: primary kind \"%s\" is not supported here (grid, list or tiles)", kind);
+    else if (strcmp(kind, "cards") == 0) o->primary = AT_PRIMARY_CARDS;
+    else FAIL("gd.ui.screen: primary kind \"%s\" is not supported here (grid, list, tiles or cards)", kind);
+    o->pause = strcmp(atv_strv(a, atv_get(a, root, "kind"), ""), "pause") == 0;
+    if (o->pause && o->primary != AT_PRIMARY_LIST) FAIL("gd.ui.screen: a pause screen has a list primary");
+    o->persist = atv_boolv(a, atv_get(a, root, "persist"), 0);
 
-    if (o->primary == AT_PRIMARY_GRID) {
+    if (o->primary == AT_PRIMARY_CARDS) {
+        int cards = atv_get(a, prim, "cards"), nc2 = atv_len(a, cards);
+        if (nc2 > AT_MAX_CARDS) FAIL("gd.ui.screen: at most %d cards (%d given)", AT_MAX_CARDS, nc2);
+        if (nc2 < 1) FAIL("gd.ui.screen: a cards screen needs 1 to %d cards", AT_MAX_CARDS);
+        o->n_cards = nc2;
+        for (i = 0; i < nc2; i++) {
+            int cn = atv_at(a, cards, i + 1), tn;
+            AtCardRec *c = &o->cards[i];
+            const char *lt;
+            if (atv_kind(a, cn) != ATV_TABLE) FAIL("gd.ui.screen: card %d is not a table", i + 1);
+            if (id_too_long(a, cn)) FAIL("gd.ui.screen: card %d: id is too long (%d characters at most)", i + 1, AT_ID - 1);
+            get_str(a, cn, "id", c->id, AT_ID, &o->warnings);
+            if (c->id[0] == '\0') FAIL("gd.ui.screen: card %d has no id", i + 1);
+            for (k = 0; k < i; k++) if (strcmp(o->cards[k].id, c->id) == 0) FAIL("gd.ui.screen: duplicate card id %s", c->id);
+            c->disabled = atv_boolv(a, atv_get(a, cn, "disabled"), 0);
+            get_str(a, cn, "name", c->offer.name, AT_STR, &o->warnings);
+            get_str(a, cn, "rule", c->offer.rule, AT_TEXT, &o->warnings);
+            get_str(a, cn, "tag", c->offer.tag, 24, &o->warnings);
+            c->offer.model = get_model(a, cn, "model");
+            c->offer.ring = get_model(a, cn, "ring");
+            lt = atv_strv(a, atv_get(a, cn, "letter"), "");
+            c->offer.letter = lt[0];
+            {
+                double col = atv_numv(a, atv_get(a, cn, "rgba"), 0);
+                c->offer.rgba = !(col >= 0.0) ? 0u : (col >= 4294967295.0 ? 0xFFFFFFFFu : (unsigned) col);
+            }
+            tn = atv_get(a, cn, "tag_tone");
+            if (atv_kind(a, tn) == ATV_STR) {
+                const char *tt = atv_strv(a, tn, "");
+                c->offer.tag_tone = strcmp(tt, "jade") == 0 ? 1 : strcmp(tt, "ember") == 0 ? 2 : strcmp(tt, "sun") == 0 ? 3 : strcmp(tt, "rose") == 0 ? 4 : 0;
+            } else {
+                c->offer.tag_tone = get_int(a, cn, "tag_tone", 0);
+                if (c->offer.tag_tone < 0 || c->offer.tag_tone > 4) c->offer.tag_tone = 0;
+            }
+        }
+    } else if (o->primary == AT_PRIMARY_GRID) {
         blocks = atv_get(a, prim, "blocks");
         nb = atv_len(a, blocks);
         if (nb < 1 || nb > AT_MAX_BLOCKS) FAIL("gd.ui.screen: a grid needs 1 to %d blocks (it has %d)", AT_MAX_BLOCKS, nb);
@@ -193,6 +232,29 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
                 c->letter = w[0];
                 c->tex = -1;                                                       /* no disc art through the Lua door */
                 c->flags = read_flags(a, atv_get(a, cn, "flags"));
+            }
+        }
+        {
+            int links = atv_get(a, prim, "links"), nl = atv_len(a, links), li;
+            if (nl > AT_MAX_LINKS) FAIL("gd.ui.screen: at most %d links (%d given)", AT_MAX_LINKS, nl);
+            for (li = 0; li < nl; li++) {
+                int ln2 = atv_at(a, links, li + 1);
+                AtLink *lk = &o->links[o->n_links];
+                int fa = 0, fb = 0, bb, cc;
+                if (atv_kind(a, ln2) != ATV_TABLE) FAIL("gd.ui.screen: link %d is not a table", li + 1);
+                get_str(a, ln2, "a", lk->a, AT_ID, &o->warnings);
+                get_str(a, ln2, "b", lk->b, AT_ID, &o->warnings);
+                for (bb = 0; bb < o->n_blocks; bb++) for (cc = 0; cc < o->blocks[bb].n; cc++) {
+                    if (strcmp(o->blocks[bb].cells[cc].id, lk->a) == 0) fa = 1;
+                    if (strcmp(o->blocks[bb].cells[cc].id, lk->b) == 0) fb = 1;
+                }
+                if (!fa || !fb || strcmp(lk->a, lk->b) == 0) { memset(lk, 0, sizeof *lk); o->links_skipped++; continue; }
+                {
+                    double col = atv_numv(a, atv_get(a, ln2, "rgba"), 0);
+                    lk->rgba = !(col >= 0.0) ? 0u : (col >= 4294967295.0 ? 0xFFFFFFFFu : (unsigned) col);
+                    if (lk->rgba == 0u) lk->rgba = 0x4FD6AAFFu;
+                }
+                o->n_links++;
             }
         }
         {
@@ -259,6 +321,14 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
         int cn = atv_get(a, root, "counter");
         if (atv_kind(a, cn) == ATV_STR) snprintf(o->counter, sizeof o->counter, "%s", atv_strv(a, cn, ""));
         else o->fn_counter = atv_fnv(a, cn);
+    }
+    {
+        int cdn = atv_get(a, root, "countdown");
+        if (atv_kind(a, cdn) == ATV_NUM) {
+            o->has_countdown = 1; o->countdown = get_int(a, root, "countdown", 0);
+            if (o->countdown < 0) o->countdown = 0;
+            if (o->countdown > 5999) o->countdown = 5999;
+        }
     }
     o->input_feed = strcmp(atv_strv(a, atv_get(a, root, "input"), "engine"), "feed") == 0;
     o->port = get_int(a, root, "port", 1);
@@ -339,6 +409,10 @@ int at_screen_focus_blocks(const AtScreen *s, AtFocusBlock *fb)
         return 1;
     }
     if (s->primary == AT_PRIMARY_DISPLAY) return 0;
+    if (s->primary == AT_PRIMARY_CARDS) {                                  /* one row of cards: left and right move between them, and wrap */
+        fb[0].col0 = 0; fb[0].row0 = 0; fb[0].cols = s->n_cards > 0 ? s->n_cards : 1; fb[0].n = s->n_cards; fb[0].exists = NULL;
+        return 1;
+    }
     if (s->primary == AT_PRIMARY_TILES) {
         int cols = at_screen_tile_cols(s), rows = (s->n_items + cols - 1) / cols, nb = 0;
         fb[0].col0 = 0; fb[0].row0 = 0; fb[0].cols = cols; fb[0].n = s->n_items; fb[0].exists = NULL; nb = 1;
@@ -371,6 +445,7 @@ const char *at_screen_block_id(const AtScreen *s, int block)
 {
     if (s->primary == AT_PRIMARY_TILES) return block == 0 ? "tiles" : (block == 1 && s->n_more > 0 ? "more" : NULL);
     if (s->primary == AT_PRIMARY_DISPLAY) return NULL;
+    if (s->primary == AT_PRIMARY_CARDS) return block == 0 ? "cards" : NULL;
     if (s->primary == AT_PRIMARY_LIST) return block == 0 ? "list" : NULL;
     return (block >= 0 && block < s->n_blocks) ? s->blocks[block].id : NULL;
 }
@@ -380,6 +455,7 @@ const char *at_screen_cell_id(const AtScreen *s, AtFocusPos p)
     const AtCell *c;
     if (s->primary == AT_PRIMARY_TILES) { const AtItem *it = tiles_cell(s, p); return it != NULL ? it->id : NULL; }
     if (s->primary == AT_PRIMARY_DISPLAY) return NULL;
+    if (s->primary == AT_PRIMARY_CARDS) return (p.block == 0 && p.index >= 0 && p.index < s->n_cards) ? s->cards[p.index].id : NULL;
     if (s->primary == AT_PRIMARY_LIST) return (p.block == 0 && p.index >= 0 && p.index < s->n_items) ? s->items[p.index].id : NULL;
     if (p.block < 0 || p.block >= s->n_blocks) return NULL;
     c = at_block_cell(&s->blocks[p.block], p.index);
@@ -399,6 +475,11 @@ AtFocusPos at_screen_refocus(const AtScreen *s, const char *block_id, const char
         return p;
     }
     if (s->primary == AT_PRIMARY_DISPLAY) return p;
+    if (s->primary == AT_PRIMARY_CARDS) {
+        for (i = 0; cell_id != NULL && i < s->n_cards; i++) if (strcmp(s->cards[i].id, cell_id) == 0) { p.block = 0; p.index = i; return p; }
+        if (s->n_cards > 0) { p.block = 0; p.index = old.index < 0 ? 0 : (old.index >= s->n_cards ? s->n_cards - 1 : old.index); }
+        return p;
+    }
     if (s->primary == AT_PRIMARY_LIST) {
         for (i = 0; cell_id != NULL && i < s->n_items; i++) if (strcmp(s->items[i].id, cell_id) == 0) { p.block = 0; p.index = i; return p; }
         if (s->n_items > 0) { p.block = 0; p.index = old.index < 0 ? 0 : (old.index >= s->n_items ? s->n_items - 1 : old.index); }
@@ -422,6 +503,7 @@ int at_cell_accepts(const AtScreen *s, AtFocusPos p)
 {
     if (at_screen_cell_id(s, p) == NULL) return 0;
     if (s->primary == AT_PRIMARY_TILES) return !(tiles_cell(s, p)->flags & AT_CELL_DISABLED);
+    if (s->primary == AT_PRIMARY_CARDS) return !s->cards[p.index].disabled;
     if (s->primary == AT_PRIMARY_LIST) return !(s->items[p.index].flags & AT_CELL_DISABLED);
     return !(at_block_cell(&s->blocks[p.block], p.index)->flags & AT_CELL_DISABLED);
 }

@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "ifcoget.h"
 
 #include <melee/cm/forward.h>
@@ -46,6 +49,19 @@ static void order_data(void)
 
 /// .sdata2
 /* 4DDC20 */ extern float un_804DDC20;
+
+#if defined(TARGET_PC)
+/* the coin-get counter: the Atlas retail mask hides this element's render only (never its proc); empty by default */
+static void ifCoget_RenderGuarded(HSD_GObj* gobj, int pass)
+{
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+    if (Ui_RetailHidden(AT_RE_HUD_COIN)) return;
+    HSD_GObj_JObjCallback(gobj, pass);
+}
+#define IFCOGET_RENDER ifCoget_RenderGuarded
+#else
+#define IFCOGET_RENDER HSD_GObj_JObjCallback
+#endif
 
 void fn_802FED14(HSD_GObj* gobj)
 {
@@ -96,7 +112,7 @@ void un_802FEFAC(void)
     gobj_ui = GObj_Create(HSD_GOBJ_CLASS_UI, 14, 0);
     jobj_ui = HSD_JObjLoadJoint(un_804D6DA4->models[0]->joint);
     HSD_GObjObject_80390A70(gobj_ui, HSD_GObj_JObjKind, jobj_ui);
-    GObj_SetupGXLink(gobj_ui, HSD_GObj_JObjCallback, 15, 0);
+    GObj_SetupGXLink(gobj_ui, IFCOGET_RENDER, 15, 0);
     HSD_GObj_SetupProc(gobj_ui, fn_802FED14, 17);
     gm_8016895C(jobj_ui, un_804D6DA4->models[0], 0);
     HSD_JObjSetFlagsAll(jobj_ui, JOBJ_HIDDEN);

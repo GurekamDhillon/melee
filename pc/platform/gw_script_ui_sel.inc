@@ -78,7 +78,7 @@ int gw_Ui_SelOpen(int kind, int match_type, const char *t0, const char *t1, cons
     memset(gs_sel.pool, 0, sizeof gs_sel.pool);
     sc->blocks[0].ext = gs_sel.pool;
     sc->blocks[0].ext_n = 0;
-    for (i = 0; i < 4; i++) { sc->cards[i].port = i; sc->cards[i].ck_tex = -1; }
+    for (i = 0; i < 4; i++) { sc->ports[i].port = i; sc->ports[i].ck_tex = -1; }
     gs_sel.qn = 0;
     gs_sel.spec[0] = '\0';
     if (!at_stack_push(&gs_ui_stack, slot)) { memset(u, 0, sizeof *u); u->dialog_fn = -1; return -1; }
@@ -134,9 +134,9 @@ void gw_Ui_SelCell(int h, int i, const char *id, const char *name, const char *a
 
 void gw_Ui_SelCard(int h, int port, int kind, const char *name, const char *sub, const char *abbr, int tex, int cpu_lv, int team, unsigned flags) {
     GsUiSlot *u = gs_sel_get(h);
-    AtPortCard *k;
+    AtSelCard *k;
     if (u == NULL || port < 0 || port > 3) return;
-    k = &u->sc.cards[port];
+    k = &u->sc.ports[port];
     k->port = port;
     k->kind = kind < 0 || kind > 2 ? 0 : kind;
     k->ck_tex = tex < 0 ? -1 : tex;

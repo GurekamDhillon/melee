@@ -44,8 +44,8 @@ void  at_part_cell(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *
 void  at_part_cell_ex(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba, int draw_brackets);
 void  at_sink_image(const AtSink *s, int tex, float x, float y, float w, float h, unsigned rgba);
 int   at_port_mark(const AtSink *s, float cx, float cy, float r, int port, unsigned rgba);   /* the shape: returns the polys used (circle 4, square 1, hexagon 3, diamond 2) */
-void  at_part_port_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int focus);   /* focus: 0 none, else 1 + the port whose cursor is on the card (its brackets take that colour) */
-void  at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int n, int picker);
+void  at_part_sel_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtSelCard *c, int focus);   /* focus: 0 none, else 1 + the port whose cursor is on the card (its brackets take that colour) */
+void  at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtSelCard *c, int n, int picker);
 void  at_cell_brackets(const AtSink *s, AtRect r, unsigned rgba, int slot, int of);        /* four registration brackets; slot/of offsets several ports on one cell */
 void  at_part_stone(const AtSink *s, const AtTextOps *o, AtRect r, const AtCell *c, int state, unsigned focus_rgba);
 float at_part_hint(const AtSink *s, const AtTextOps *o, float x, float base, char btn, const char *label);        /* returns its advance */
@@ -56,6 +56,19 @@ void  at_part_explainer(const AtSink *s, const AtTextOps *o, AtRect r, const AtE
 void  at_part_footer(const AtSink *s, const AtTextOps *o, AtRect r, const AtFooter *f);
 void  at_part_note(const AtSink *s, const AtTextOps *o, AtRect r, const char *text, int kind, float remaining);   /* remaining 0..1 */
 int   at_part_dialog(const AtSink *s, const AtTextOps *o, float canvas_w, const AtDialog *d, float rise, AtRect btn[2]);
+
+/* step 3: the offer card and the in-match HUD parts (HUD parts never take focus and never draw a focus cue) */
+/* AtOffer (an offer card's content) lives in gw_ui_screen.h: the cards primary holds them */
+typedef struct { int port; char name[AT_STR]; int percent, stocks, cpu; } AtPortCard;
+typedef struct { int n_pips; unsigned pip_fill[8], pip_ring[8]; int n_keys; char key_letter[8]; unsigned key_rgba[8]; char wait[24]; } AtStrip;
+/* an offer card: a model well (or a keystone arch stone with its letter when model < 0 and letter != 0), the name, ONE rule (two lines at most), a bottom tag */
+void  at_part_offer(const AtSink *s, const AtTextOps *o, AtRect r, const AtOffer *c, int state, unsigned focus_rgba);
+float at_part_offer_min_h(void);   /* the smallest card that keeps the 12 px floor: model 48 + name + 2 rule lines + tag */
+void  at_part_port_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c);   /* a 3 px top edge in the port colour */
+void  at_part_strip(const AtSink *s, const AtTextOps *o, AtRect r, const AtStrip *st);          /* slot pips, keystone stones, "n waiting" */
+void  at_part_banner(const AtSink *s, const AtTextOps *o, AtRect r, char btn, const char *text, float progress);   /* progress < 0: none */
+void  at_part_toast(const AtSink *s, const AtTextOps *o, AtRect r, unsigned emblem_rgba, const char *title, const char *rule, float remaining);
+void  at_part_link(const AtSink *s, float x0, float y0, float x1, float y1, float th, unsigned rgba);   /* a flat quad along a segment */
 
 #ifdef __cplusplus
 }

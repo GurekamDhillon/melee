@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "ifnametag.h"
 
 #include "forward.h"
@@ -155,12 +158,21 @@ float un_802FC9B4(unsigned char slot, unsigned char arg1, unsigned char arg2,
 
 static void NameTag_RenderCallback(HSD_GObj* gobj, int pass)
 {
+#if defined(TARGET_PC)
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (Ui_RetailHidden(AT_RE_HUD_NAMETAG)) return;
+#endif
     HSD_GObj_JObjCallback(gobj, pass);
 }
 
 void fn_802FCAC4(HSD_GObj* gobj, int pass)
 {
+#if defined(TARGET_PC)
+    extern int Ui_RetailHidden(int id); /* the name text takes the same path as retail's own hidden HUD: moved off screen */
+    if (ifAll_IsHUDHidden() || un_804D6D6C || Ui_RetailHidden(AT_RE_HUD_NAMETAG)) {
+#else
     if (ifAll_IsHUDHidden() || un_804D6D6C) {
+#endif
         int i;
         for (i = 0; i < Gm_Player_NumMax; i++) {
             int do_it;

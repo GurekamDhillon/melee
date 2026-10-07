@@ -3,7 +3,13 @@ return function(D)
  local M={};local S={};S.__index=S
  local function row(label,target,disabled) return {label=label,target=target,disabled=disabled} end
  function M.new() return setmetatable({screen='title',focus={},fighter='mario',run_type='classic',difficulty=2,stocks=3,scroll=0},S) end
- function S:show(screen) self.screen=screen;if screen=='confirm' or screen=='quit' then self.focus[screen]=1 else self.focus[screen]=self.focus[screen] or 1 end;self.scroll=0 end
+ -- ATLAS (step 3): `atlas` is an open Atlas screen that stands for the legacy one ({screen=,input=function(action,c),close=function()}); on_show is
+ -- the app's hook that opens it (atlas_kit.menu_show). Leaving the screen closes it; while it is open the legacy pad events go to it.
+ function S:show(screen)
+  if self.atlas and self.atlas.screen~=screen then local at=self.atlas;self.atlas=nil;at.close() end
+  self.screen=screen;if screen=='confirm' or screen=='quit' then self.focus[screen]=1 else self.focus[screen]=self.focus[screen] or 1 end;self.scroll=0
+  if self.on_show then self.on_show(self,screen) end
+ end
  function S:interlude(data) self.interlude_data=data or {};self:show('interlude') end
  function S:results(result) self.result=result or {};self:show('results') end
  function S:entries(c)
@@ -42,6 +48,7 @@ return function(D)
  end
  function S:input(action,c)
   local screen=self.screen
+  if self.atlas and self.atlas.input and screen==self.atlas.screen then return self.atlas.input(action,c) end
   if screen=='playing' then
    if action=='start' then self:show('pause');return {type='pause'} end
    return

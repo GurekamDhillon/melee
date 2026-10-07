@@ -2,7 +2,9 @@
 local prefix = io.open('pc/tests/atlas_ui_stub.lua') and '' or 'melee/'
 local Stub = dofile(prefix .. 'pc/tests/atlas_ui_stub.lua')
 local T = dofile(prefix .. 'pc/tests/envoy_testlib.lua')
-local A = assert(loadfile(T.root .. 'atlas_bag.lua'))()({})
+local D = {}
+D.atlas_kit = assert(loadfile(T.root .. 'atlas_kit.lua'))()(D)
+local A = assert(loadfile(T.root .. 'atlas_bag.lua'))()(D)
 local ID = 'envoy.bag'
 
 local function drive(i, extra)
@@ -255,7 +257,7 @@ end)
 
 T.test('when the engine refuses the screen it is logged once, with the reason, and the legacy bag stays', function()
   local S, ui, log = fake(); A.set(true)
-  A.logged = {}
+  D.atlas_kit.logged = {}
   ui.screen = function() error('gd.ui.screen: too many screens (8)') end
   assert(A.attach(S) == false and S.atlas == nil)
   local S2 = fake(); S2.g.ui = ui; S2.host.log = S.host.log
@@ -324,6 +326,22 @@ T.test('opened with Z still held (the Z+START chord): the first rule shows; rele
   assert(#out == 1 and out[1] == 'more', 'pressed: more')
   S:press(out[1]); ui.refresh(ID); assert(ui.views[ID].explainer.what == 'Second rule.', 'the second rule is shown')
   A.detach(S); A.set(false)
+end)
+
+T.test('a held keystone explains its effect (it has no name line), with its family as FROM, and a multi-line keystone pages', function()
+  local S, ui = fake(); A.set(true); A.attach(S)
+  ui.engine_focus(ID, 'key', 'key:1')
+  local ex = ui.views[ID].explainer
+  assert(ex.what == 'Keystone rule line.' and ex.from and ex.from.text == 'Purple keystone.', 'what=' .. tostring(ex.what) .. ' from=' .. tostring(ex.from and ex.from.text))
+  local btn = {}; for _, k in ipairs(ui.views[ID].keys) do btn[k[1]] = k[2] end
+  assert(btn.Z == nil, 'one rule: no More hint')
+  S.blocks = blocks(); S.blocks[3].cells[1].lines = { 'Effect one.', 'Effect two.', '', 'Purple keystone.' }; S:refresh()
+  ui.engine_focus(ID, 'bag', 'bag:1'); ui.engine_focus(ID, 'key', 'key:1')
+  ex = ui.views[ID].explainer
+  assert(ex.kicker:find('RULE 1 OF 2', 1, true) and ex.what == 'Effect one.', ex.kicker)
+  btn = {}; for _, k in ipairs(ui.views[ID].keys) do btn[k[1]] = k[2] end
+  assert(btn.Z == 'More', 'two rules: More')
+  A.set(false)
 end)
 
 T.done()

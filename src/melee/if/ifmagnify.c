@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "ifmagnify.h"
 
 #include <math.h>
@@ -304,6 +307,12 @@ void ifMagnify_802FB8C0(HSD_GObj* gobj, int code)
     slot = player - ifMagnify_804A1DE0.player;
     is_colored = false;
     should_display = ifMagnify_IsHUDVisible();
+#if defined(TARGET_PC)
+    {   /* the Atlas retail mask takes retail's own hidden-HUD path: no bubble plate, the arrow is released */
+        extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+        if (Ui_RetailHidden(AT_RE_HUD_MAGNIFY)) should_display = false;
+    }
+#endif
     if (should_display && player->state.is_offscreen) {
         fighter_gobj = Player_GetEntity(slot);
         if (fighter_gobj != NULL) {
@@ -421,6 +430,12 @@ void ifMagnify_802FBBDC(HSD_GObj* gobj)
     }
 
     should_display = ifMagnify_IsHUDVisible();
+#if defined(TARGET_PC)
+    {   /* masked: the same path as retail's hidden HUD (the logic's off-screen flag is its own snapshot, ifMagnify_UpdateLogicOffscreen) */
+        extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
+        if (Ui_RetailHidden(AT_RE_HUD_MAGNIFY)) should_display = false;
+    }
+#endif
     if (should_display) {
         cobj = gobj->hsd_obj;
         HSD_CObjGetOrtho(cobj, &top, &bottom, &left, &right);

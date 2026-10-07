@@ -306,30 +306,6 @@ static void fix_round1(void)
 
 /* ---- round 2: the chamfer rule, the three focus cues, and text that never leaves its box ---------------- */
 
-/* the right edge of a recorded text, whatever its alignment */
-static float text_right(const RecText *t)
-{
-    float w = fake_width(0, t->role, t->s);
-    return t->align == AT_ALIGN_RIGHT ? t->x : t->align == AT_ALIGN_CENTER ? t->x + w * 0.5f : t->x + w;
-}
-static float text_left(const RecText *t)
-{
-    float w = fake_width(0, t->role, t->s);
-    return t->align == AT_ALIGN_RIGHT ? t->x - w : t->align == AT_ALIGN_CENTER ? t->x - w * 0.5f : t->x;
-}
-/* 1 when no polygon vertex lies inside the cut-away triangle of the top-left or bottom-right chamfer of r */
-static int corners_clear(AtRect r, float c)
-{
-    int i, k;
-    for (i = 0; i < REC.np; i++) {
-        for (k = 0; k < 4; k++) {
-            float dx = REC.p[i].x[k] - r.x, dy = REC.p[i].y[k] - r.y, ex = r.x + r.w - REC.p[i].x[k], ey = r.y + r.h - REC.p[i].y[k];
-            if (dx >= -0.01f && dy >= -0.01f && dx + dy < c - 0.01f) return 0;
-            if (ex >= -0.01f && ey >= -0.01f && ex + ey < c - 0.01f) return 0;
-        }
-    }
-    return 1;
-}
 static float min_y_of(unsigned rgba)
 {
     float m = 1e9f; int i;
@@ -462,40 +438,40 @@ static void cell_style(void)
 }
 static void port_cards(void)
 {
-    AtSink s; AtPortCard pc[4]; AtRect r = { 32, 372, 140, 56 }; int p;
+    AtSink s; AtSelCard pc[4]; AtRect r = { 32, 372, 140, 56 }; int p;
     memset(pc, 0, sizeof pc);
     for (p = 0; p < 4; p++) {
         pc[p].port = p; pc[p].kind = 1; snprintf(pc[p].name, sizeof pc[p].name, "%s", "SORA"); snprintf(pc[p].sub, sizeof pc[p].sub, "Costume 1");
         snprintf(pc[p].abbr, sizeof pc[p].abbr, "%s", "SO"); pc[p].ck_tex = -1;
         s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND);
-        at_part_port_card(&s, &O, r, &pc[p], 0);
+        at_part_sel_card(&s, &O, r, &pc[p], 0);
         CHECK(sty_chamfer(r, 5.0f, AT_C_GROUND) == 0);
         CHECK(sty_text_inside(r, 0) == -1);
         CHECK(find_text("SORA") != NULL);
     }
     { int shape[4]; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); shape[p] = at_port_mark(&s2, 50, 50, 12, p, AT_C_P1); CHECK(shape[p] == REC.np); } CHECK(sty_shapes_distinct(shape) == 1); }
     /* every port's numeral is drawn (colour is never the only signal) */
-    { char want[2] = { 0, 0 }; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); want[0] = (char) ('1' + p); at_part_port_card(&s2, &O, r, &pc[p], 0); CHECK(find_text(want) != NULL); } }
+    { char want[2] = { 0, 0 }; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); want[0] = (char) ('1' + p); at_part_sel_card(&s2, &O, r, &pc[p], 0); CHECK(find_text(want) != NULL); } }
     /* each port's top edge is its own colour */
-    { static const unsigned col[4] = { AT_C_P1, AT_C_P2, AT_C_P3, AT_C_P4 }; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[p], 0); CHECK(count_color(col[p]) >= 2); } }
+    { static const unsigned col[4] = { AT_C_P1, AT_C_P2, AT_C_P3, AT_C_P4 }; for (p = 0; p < 4; p++) { AtSink s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[p], 0); CHECK(count_color(col[p]) >= 2); } }
     /* CPU: the word CPU, a level */
-    pc[1].kind = 2; pc[1].cpu_lv = 9; { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[1], 0); CHECK(find_text("CPU") != NULL && find_text("LV 9") != NULL && sty_text_inside(r, 0) == -1); }
+    pc[1].kind = 2; pc[1].cpu_lv = 9; { AtSink s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[1], 0); CHECK(find_text("CPU") != NULL && find_text("LV 9") != NULL && sty_text_inside(r, 0) == -1); }
     /* an open slot and a closed one say so in words */
-    pc[2].kind = 0; { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("OPEN") != NULL && find_text("SORA") == NULL); }
-    pc[2].flags = AT_CARD_CLOSED; { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("CLOSED") != NULL && find_text("OPEN") == NULL); }
+    pc[2].kind = 0; { AtSink s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("OPEN") != NULL && find_text("SORA") == NULL); }
+    pc[2].flags = AT_CARD_CLOSED; { AtSink s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("CLOSED") != NULL && find_text("OPEN") == NULL); }
     /* a focused card shows the three cues; an open focused card on a wide slot says how to join */
     { StySig a, b; AtSink s2; pc[3].kind = 1;
-      s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[3], 0); a = sty_sig(0);
-      s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[3], 1); b = sty_sig(0);
+      s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[3], 0); a = sty_sig(0);
+      s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[3], 1); b = sty_sig(0);
       CHECK(sty_focus_cues(a, b) == 3);
-      pc[2].flags = AT_CARD_OPEN; s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 1); CHECK(find_text("Press A to join") != NULL && sty_text_inside(r, 0) == -1);
-      s2 = rec_sink(); at_part_port_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("Press A to join") == NULL); }
+      pc[2].flags = AT_CARD_OPEN; s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[2], 1); CHECK(find_text("Press A to join") != NULL && sty_text_inside(r, 0) == -1);
+      s2 = rec_sink(); at_part_sel_card(&s2, &O, r, &pc[2], 0); CHECK(find_text("Press A to join") == NULL); }
     /* a narrow card never lets text outside it */
-    { AtRect nr = { 32, 372, 90, 56 }; pc[0].kind = 1; snprintf(pc[0].name, sizeof pc[0].name, "%s", "CAPTAIN FALCON THE FIRST"); { AtSink s2 = rec_sink(); at_part_port_card(&s2, &O, nr, &pc[0], 1); CHECK(sty_text_inside(nr, 0) == -1 && texts_legible()); } }
+    { AtRect nr = { 32, 372, 90, 56 }; pc[0].kind = 1; snprintf(pc[0].name, sizeof pc[0].name, "%s", "CAPTAIN FALCON THE FIRST"); { AtSink s2 = rec_sink(); at_part_sel_card(&s2, &O, nr, &pc[0], 1); CHECK(sty_text_inside(nr, 0) == -1 && texts_legible()); } }
 }
 static void matchup_strip(void)
 {
-    AtPortCard c[2]; AtRect r = { 32, 380, 400, 40 }; AtSink s;
+    AtSelCard c[2]; AtRect r = { 32, 380, 400, 40 }; AtSink s;
     memset(c, 0, sizeof c);
     c[0].port = 0; c[0].kind = 1; snprintf(c[0].name, AT_STR, "%s", "SORA"); c[1].port = 1; c[1].kind = 2; snprintf(c[1].name, AT_STR, "%s", "KIRBY");
     s = rec_sink(); at_poly_rect(&s, 0, 0, 640, 480, AT_C_GROUND); at_part_matchup(&s, &O, r, c, 2, -1);
@@ -569,10 +545,103 @@ static void two_cursors_one_cell(void)
         for (i = 0; i < REC.np; i++) CHECK(poly_minx(&REC.p[i]) >= r.x - 0.01f && poly_maxx(&REC.p[i]) <= r.x + r.w + 0.01f && poly_miny(&REC.p[i]) >= r.y - 0.01f && poly_maxy(&REC.p[i]) <= r.y + r.h + 0.01f); } }   /* four ports: all inside */
 }
 
+/* ---- step 3, Task 2: the shared style helpers are proven on the step 1 parts before anything new leans on them ---- */
+static void shared_helpers_on_step1_parts(void)
+{
+    AtSink s;
+    AtRect r = { 32.0f, 100.0f, 300.0f, 34.0f }, cr = { 100.0f, 100.0f, 56.0f, 56.0f };
+    AtItem it = item("Window", AT_VAL_NONE);
+    AtCell c = mk_cell("Kindling", 7, 0);
+    s = rec_sink(); at_part_row(&s, &FAKE, r, &it, AT_ST_REST);
+    CHECK(no_focus_cues() && focus_cues_at(r, 0) == 0);                    /* at rest: no cue at all */
+    CHECK(corners_clear(r, (float) AT_PX_CH_S) && texts_inside(r));
+    s = rec_sink(); at_part_row(&s, &FAKE, r, &it, AT_ST_FOCUS);
+    CHECK(focus_cues_at(r, 0) == 3);                                       /* lift, ember edge, tick */
+    CHECK(!no_focus_cues());
+    s = rec_sink(); at_part_cell(&s, &FAKE, cr, &c, AT_ST_REST, 0);
+    CHECK(no_focus_cues() && focus_cues_at(cr, 1) == 0);
+    s = rec_sink(); at_part_cell(&s, &FAKE, cr, &c, AT_ST_FOCUS, AT_C_P2);
+    CHECK(focus_cues_at(cr, 1) == 3);                                      /* lift, ember edge, four brackets */
+    { AtRect narrow = { 100.0f, 100.0f, 10.0f, 10.0f };                    /* texts_inside fails when a text leaves its box */
+      s = rec_sink(); at_part_row(&s, &FAKE, r, &it, AT_ST_REST);
+      CHECK(!texts_inside(narrow)); }
+}
+
+/* ---- step 3, Task 5: offer card, port card, strip, banner, toast, link ---- */
+static AtOffer offer_fixture(void)
+{
+    AtOffer c; memset(&c, 0, sizeof c);
+    c.model = 7; c.ring = 9; c.rgba = 0xF07474FFu;
+    snprintf(c.name, sizeof c.name, "%s", "Lingering Burning Red Drive of the Long Name");
+    snprintf(c.rule, sizeof c.rule, "%s", "Aerial hits set Burning for 3 s and Burning targets take 12% more damage from you.");
+    snprintf(c.tag, sizeof c.tag, "%s", "+ MERGE");
+    return c;
+}
+static void offer_card_style(void)
+{
+    AtSink s = rec_sink(); AtOffer c = offer_fixture();
+    AtRect r = { 40.0f, 120.0f, 168.0f, 196.0f };                    /* three cards across the 640 primary */
+    CHECK(at_part_offer_min_h() <= r.h);
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(no_focus_cues());
+    CHECK(corners_clear(r, 5.0f));
+    CHECK(texts_inside((AtRect){ r.x + 8.0f, r.y, r.w - 16.0f, r.h }));
+    CHECK(texts_legible());
+    CHECK(REC.nm == 1);                                               /* the model, once */
+    s = rec_sink();
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_FOCUS, AT_C_P2);
+    CHECK(focus_cues_at(r, 1) == 3);
+    CHECK(count_color(AT_C_P2) == 8);                                 /* brackets take the seat's colour */
+    c.model = -1; c.letter = 'P';                                     /* a keystone offer: an arch stone with its letter */
+    s = rec_sink();
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_REST, AT_C_P1);
+    CHECK(REC.nm == 0 && find_text("P") != NULL && corners_clear(r, 5.0f));
+    s = rec_sink();                                                   /* the smallest card keeps everything inside */
+    r.h = at_part_offer_min_h();
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_REST, 0);
+    CHECK(corners_clear(r, 5.0f) && texts_inside((AtRect){ r.x + 8.0f, r.y, r.w - 16.0f, r.h }));
+    s = rec_sink(); c.model = 7; r.h = 196.0f;
+    at_part_offer(&s, &FAKE, r, &c, AT_ST_DISABLED, 0);
+    CHECK(no_focus_cues());
+}
+static void hud_parts_never_focus(void)
+{
+    AtSink s = rec_sink(); AtPortCard pc = { 2, "FALCO", 147, 3, 0 }; AtStrip st; int i;
+    AtRect r = { 420.0f, 16.0f, 188.0f, 44.0f };
+    AtRect sr = { 24.0f, 16.0f, 240.0f, 20.0f }, br = { 170.0f, 150.0f, 300.0f, 34.0f }, tr = { 400.0f, 16.0f, 216.0f, 44.0f };
+    memset(&st, 0, sizeof st); st.n_pips = 6; st.n_keys = 7;
+    for (i = 0; i < 6; i++) { st.pip_fill[i] = 0xF07474FFu; st.pip_ring[i] = AT_C_SUN; }
+    for (i = 0; i < 7; i++) { st.key_letter[i] = (char) ('A' + i); st.key_rgba[i] = 0xB872F0FFu; }
+    snprintf(st.wait, sizeof st.wait, "%s", "2 waiting");
+    at_part_port_card(&s, &FAKE, r, &pc);
+    CHECK(no_focus_cues() && corners_clear(r, 5.0f) && texts_inside(r) && count_color(AT_C_P2) >= 1 && texts_legible());
+    s = rec_sink(); at_part_strip(&s, &FAKE, sr, &st);
+    CHECK(no_focus_cues() && texts_inside(sr) && texts_legible());
+    CHECK(find_text("+1") != NULL);                                    /* six stones, then +n */
+    s = rec_sink(); at_part_banner(&s, &FAKE, br, 'A', "Collect the drives", -1.0f);
+    CHECK(no_focus_cues() && corners_clear(br, 5.0f) && texts_inside(br) && texts_legible());
+    CHECK(count_color(AT_C_PAD_A) >= 1);                               /* the A glyph: press A to collect */
+    s = rec_sink(); at_part_banner(&s, &FAKE, br, 'A', "Hold Z + Down to leave", 0.4f);
+    CHECK(no_focus_cues() && corners_clear(br, 5.0f) && texts_inside(br));
+    s = rec_sink(); at_part_toast(&s, &FAKE, tr, 0xB872F0FFu, "SKYWARD ASSEMBLED", "Your aerials gain Haste for 2 s and chain Burning onward.", 0.5f);
+    CHECK(no_focus_cues() && corners_clear(tr, 5.0f) && texts_inside(tr) && texts_legible());
+    CHECK(REC.nt == 2);                                                /* one title, one rule line: never more */
+}
+static void link_is_flat(void)
+{
+    AtSink s = rec_sink();
+    at_part_link(&s, 10.0f, 10.0f, 110.0f, 60.0f, 2.0f, AT_C_JADE);
+    CHECK(REC.np == 1 && REC.p[0].rgba == AT_C_JADE);
+    s = rec_sink();
+    at_part_link(&s, 10.0f, 10.0f, 10.0f, 10.0f, 2.0f, AT_C_JADE);
+    CHECK(REC.np == 0);                                                /* a zero-length link draws nothing */
+}
+
 int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
-    cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2();
+    cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2(); shared_helpers_on_step1_parts();
+    offer_card_style(); hud_parts_never_focus(); link_is_flat();
     sink_without_image_is_safe(); image_cell(); cell_style(); port_cards(); matchup_strip(); two_cursors_one_cell(); explainer_art_and_stepper(); strike_marks();
     ATLAS_DONE("atlas parts");
 }

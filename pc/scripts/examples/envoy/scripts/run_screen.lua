@@ -314,6 +314,11 @@ return function(D)
  function S:focused() self:refresh();local c=self.view:focused();return c,c and c.ref end
  -- ---- lifecycle -----------------------------------------------------------------------------------------------
  function S:open(mode)
+  -- ONE SEAT'S SCREEN AT A TIME (Atlas step 3): another seat's Envoy screen on top means this seat's bag waits, with a toast in its own corner
+  if mode=='bag' and D.atlas_kit and D.atlas_kit.enabled(self.g) then
+   local ok,why=D.atlas_kit.may_open(self)
+   if not ok then D.atlas_kit.say_busy(self,why);self.host:log('bag not opened: '..why);return false end
+  end
   self.active=true;self.mode=mode;self.layout='main';self.swap=nil;self.confirm=nil;self.notice=nil;self.dirty=true;self.view=nil;self.key=nil;self.marked=nil
   self:load_models()
   self.input:set_active(true,true);self.input.previous.start=true;self.input.previous.accept=true;self.input.previous.back=true
@@ -323,11 +328,14 @@ return function(D)
   if mode=='bag' and self.g.paused and not self.g.paused() then self.g.pause();self.owns_pause=true end
   self:refresh()
   if mode=='bag' and D.atlas_bag and D.atlas_bag.enabled(self.g) then D.atlas_bag.attach(self) end
+  if mode=='reward' and D.atlas_reward and D.atlas_kit.enabled(self.g) then D.atlas_reward.attach(self) end
   if self.view then self.view:set_countdown(self:seconds_left(),S.tuning.safe_seconds) end
   self.host:log('screen open: '..mode)
  end
  function S:close()
   if self.atlas then D.atlas_bag.detach(self) end
+  if self.atlas_reward then D.atlas_reward.detach(self) end
+  if self.atlas_swap then D.atlas_swap.detach(self) end
   if self.active or self.input.masked then self.input:close() end
   self.preview=nil;self:release_models();self.active=false;self.swap=nil;self.confirm=nil;self.view=nil;self.layout='main'
   if self.owns_pause then self.g.resume();self.owns_pause=nil end

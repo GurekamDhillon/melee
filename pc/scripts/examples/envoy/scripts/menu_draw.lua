@@ -6,6 +6,7 @@ return function(D)
  local function label(name) return (C and C.tuning.stat_names or {})[name] or name end
  local function val(v) if v==nil then return '?' end;return tostring(v) end
  function V.draw(g,s,c)
+  if s.atlas then return end   -- an Atlas screen stands for this one (atlas_kit.menu_show)
   c=c or {};local a=g.safe_area();local k=g.kit
   local w=math.min(a.w-40,740);local x=a.x+(a.w-w)/2;local y=a.y+20
   local function text(t,dy,color) k.text(x+20,y+dy,t,'body',color or 'bone','left',{max_w=w-40}) end

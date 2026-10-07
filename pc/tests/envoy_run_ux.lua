@@ -15,7 +15,7 @@ D.mod_display={new=function(g,engine)
  return v
 end}
 D.pickup_juice={pitch={},new=function()return {drop=function()return {fx={}}end,collect=function()end,expire=function()end,clear=function()end,tick=function()end}end}
-for _,n in ipairs({'menu_input','drive_menu','drive_text','drive_drop','drive_lab','foe_lab','mod_lab','run_screen','atlas_bag','run_hud','run_host'})do D[n]=T.module(n,D)end
+for _,n in ipairs({'menu_input','drive_menu','drive_text','drive_drop','drive_lab','foe_lab','mod_lab','run_screen','atlas_kit','atlas_bag','atlas_reward','run_hud','run_host'})do D[n]=T.module(n,D)end
 D.drive_economy.tuning.floor_chance=1 -- a sure first drop, so the flow tests do not depend on a roll; the chance test sets it back
 local function fixture()
  local s={commands={},pad={},logs={},holds=0,releases=0,clock=100,spawns=0,despawns={},held=true,

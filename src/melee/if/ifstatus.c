@@ -1,3 +1,6 @@
+#if defined(TARGET_PC)
+#include <platform/gw_ui_retail_ids.h>
+#endif
 #include "ifstatus.h"
 
 #include <placeholder.h>
@@ -634,7 +637,8 @@ void ifStatus_802F5DE0(HSD_GObj* player, s32 arg1)
 {
 #if defined(TARGET_PC)
     extern int Script_StatusHUDVisible(void);
-    if (!Script_StatusHUDVisible()) return;
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (!Script_StatusHUDVisible() || Ui_RetailHidden(AT_RE_HUD_DAMAGE)) return;
 #endif
     if (!getPlayerByHUDParent(player)->flags.hide_all_digits) {
         HSD_GObj_JObjCallback(player, arg1);
@@ -656,7 +660,8 @@ void ifStatus_802F5E50(HSD_GObj* gobj, s32 arg1)
 {
 #if defined(TARGET_PC)
     extern int Script_StatusHUDVisible(void);
-    if (!Script_StatusHUDVisible()) return;
+    extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */
+    if (!Script_StatusHUDVisible() || Ui_RetailHidden(AT_RE_HUD_DAMAGE)) return;
 #endif
     IfDamageState* player = getPlayerByNext(gobj);
     if (!player->flags.hide_all_digits) {

@@ -110,6 +110,7 @@ return function(D)
  -- A rule-host run shows each opponent as a SMALL card at the top right (name, keystones, a rule count): no strength figure, clear of the
  -- match timer (top centre) and the player tags, all opponents at once (at most three), for six seconds, not a full-width panel in turn.
  function F:draw_cards(ports)
+  if D.atlas_hud and self.g.ui and D.atlas_kit and D.atlas_kit.enabled(self.g) and type(self.g.ui.hud)=='function' and not (D.run_hud and D.run_hud.dev_ui and D.run_hud.dev_ui()) then return end   -- the Atlas HUD shows the opponent cards
   local g=self.g;local k=g.kit;local a=g.safe_area();local w=math.min(300,a.w//3);local x=a.x+a.w-w-10;local y=a.y+58
   for i,p in ipairs(ports) do if i>3 then break end
    local l=self.labels[p];local n=math.min(#l.lines,4);local h=26+n*17

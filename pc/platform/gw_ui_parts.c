@@ -818,7 +818,7 @@ static const char *team_word(int team) { return team == 1 ? "RED" : team == 2 ? 
 /* One port's card, 56 high in the band: a 3 px top edge in the port's colour, the port's mark with its numeral, the fighter's name and a line
  * under it. A CPU says CPU in a tag and its level; an open slot says OPEN (and, when focused and wide enough, how to join); a closed one CLOSED.
  * Focus lifts it 2 px, turns the front edge ember and puts the four brackets on it in the port's colour. */
-void at_part_port_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int focus)
+void at_part_sel_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtSelCard *c, int focus)
 {
     unsigned tint = port_colour(focus >= 1 ? (focus - 1) & 3 : c->port & 3);   /* focus: 0 none, else 1 + the port whose cursor is on the card */
     unsigned col = c->kind == 2 ? AT_C_CPU : port_colour(c->port & 3), face = c->kind == 0 ? AT_C_GROUND2 : AT_C_PLATE2;
@@ -870,7 +870,7 @@ void at_part_port_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtPo
 
 /* The matchup strip (40 high): the fighters in a row, each a small mark, the numeral and the name, with VS between. picker is the index of the
  * card whose turn it is (it carries an ember underline), or -1. A name that does not fit steps down and is cut; with no room it is dropped. */
-void at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c, int n, int picker)
+void at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtSelCard *c, int n, int picker)
 {
     float slot, vs = n > 1 ? 30.0f : 0.0f, x;
     int i;
@@ -890,4 +890,144 @@ void at_part_matchup(const AtSink *s, const AtTextOps *o, AtRect r, const AtPort
         x += slot;
         if (i + 1 < n) { at_text(s, o, AT_R_CAP12, "VS", x + vs * 0.5f, mid_base(r.y, r.h - 3.0f, AT_R_CAP12), AT_C_DIM, AT_ALIGN_CENTER, 0.0f); x += vs; }
     }
+}
+/* ---- step 3: the offer card and the in-match HUD parts ------------------------------------------------------------------------
+ * Every plate is at_plate(.., 3, 5): nothing else places a vertex in a cut corner (top-left and bottom-right), so tags, emblems and
+ * wells are inset by the chamfer. Text goes only through fit_text (one line) or at_wrap (a stated number of lines). HUD parts
+ * (port card, strip, banner, toast, link) never take focus and never draw a focus cue: no lift, no ember, no brackets. */
+
+#define AT_OFFER_PAD 8.0f
+#define AT_OFFER_NAME_H 22.0f
+#define AT_OFFER_RULE_LINES 2
+#define AT_OFFER_RULE_H 15.0f
+#define AT_OFFER_TAG_H 20.0f
+
+float at_part_offer_min_h(void)
+{
+    /* pad, the model well (48), a gap, the name row, two rule lines, a gap, the tag, the front edge and a pad */
+    return AT_OFFER_PAD + 48.0f + 6.0f + AT_OFFER_NAME_H + AT_OFFER_RULE_LINES * AT_OFFER_RULE_H + 6.0f + AT_OFFER_TAG_H + 3.0f + 6.0f;
+}
+
+/* an offer card: the model well (or a keystone arch stone with its letter), the name, ONE rule (two lines at most) and a bottom tag.
+ * Focus is three cues: lift 2 px, the ember front edge, four brackets in the focusing seat's colour. */
+void at_part_offer(const AtSink *s, const AtTextOps *o, AtRect r, const AtOffer *c, int state, unsigned focus_rgba)
+{
+    int disabled = state == AT_ST_DISABLED, focus = state == AT_ST_FOCUS;
+    float y = focus ? r.y - 2.0f : r.y, inner = r.w - 2.0f * AT_OFFER_PAD, well_h, ty, wx, wy;
+    unsigned face = focus ? AT_C_LIFT : (disabled ? AT_C_PLATE2 : AT_C_PLATE);
+    char lines[AT_OFFER_RULE_LINES][96];
+    int n, i, clamped = 0;
+    AtRect pr;
+    pr.x = r.x; pr.y = y; pr.w = r.w; pr.h = r.h;
+    at_plate(s, pr, face, focus ? AT_C_EMBER : AT_C_EDGE, 3.0f, (float) AT_PX_CH_S);
+    /* the well takes what the text rows leave, between 48 and 150 px */
+    well_h = r.h - (AT_OFFER_PAD + 6.0f + AT_OFFER_NAME_H + AT_OFFER_RULE_LINES * AT_OFFER_RULE_H + 6.0f + AT_OFFER_TAG_H + 3.0f + 6.0f);
+    if (well_h < 48.0f) well_h = 48.0f;
+    if (well_h > 150.0f) well_h = 150.0f;
+    wx = r.x + AT_OFFER_PAD; wy = y + AT_OFFER_PAD;
+    at_poly_rect(s, wx, wy, inner, well_h, AT_C_GROUND2);
+    if (c->model >= 0) {
+        s->model(s->user, c->model, c->ring, wx + 2.0f, wy + 2.0f, inner - 4.0f, well_h - 4.0f, focus, disabled ? 1 : 0);
+    } else if (c->letter != 0) {                                        /* a keystone: its arch stone and letter, in the keystone's colour */
+        float sw = 40.0f, sh = 46.0f, sx = wx + (inner - sw) * 0.5f, sy = wy + (well_h - sh) * 0.5f;
+        char one[2];
+        poly4(s, sx + sw * 0.2f, sy, sx + sw * 0.8f, sy, sx + sw, sy + sh, sx, sy + sh, c->rgba != 0 ? c->rgba : AT_C_LINE2);
+        one[0] = c->letter; one[1] = '\0';
+        at_text(s, o, AT_R_CAP20, one, sx + sw * 0.5f, sy + sh - 12.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+    }
+    ty = wy + well_h + 6.0f;
+    fit_text(s, o, AT_R_CAP16, c->name, wx, ty + 15.0f, disabled ? AT_C_DIM : AT_C_IVORY, AT_ALIGN_LEFT, inner);
+    ty += AT_OFFER_NAME_H;
+    n = at_wrap(o, AT_R_BODY12, c->rule, inner, AT_OFFER_RULE_LINES, lines, &clamped);
+    for (i = 0; i < n; i++) at_text(s, o, AT_R_BODY12, lines[i], wx, ty + 11.0f + AT_OFFER_RULE_H * (float) i, disabled ? AT_C_DIM : AT_C_TEXT2, AT_ALIGN_LEFT, 0.0f);
+    if (c->tag[0] != '\0') at_part_tag(s, o, wx, y + r.h - 3.0f - 6.0f - AT_OFFER_TAG_H, c->tag, c->tag_tone, inner);
+    if (focus) brackets(s, pr, focus_rgba != 0 ? focus_rgba : AT_C_EMBER);
+}
+
+static unsigned port_rgba(int port, int cpu)
+{
+    static const unsigned P[4] = { AT_C_P1, AT_C_P2, AT_C_P3, AT_C_P4 };
+    if (cpu) return AT_C_CPU;
+    return (port >= 1 && port <= 4) ? P[port - 1] : AT_C_CPU;
+}
+
+/* an opponent or player card: a 3 px top edge in the port colour, the name, the percent and the stock pips. No focus. */
+void at_part_port_card(const AtSink *s, const AtTextOps *o, AtRect r, const AtPortCard *c)
+{
+    char pct[16];
+    float x, pw;
+    int i, st = c->stocks < 0 ? 0 : (c->stocks > 5 ? 5 : c->stocks);
+    unsigned col = port_rgba(c->port, c->cpu);
+    at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH_S);
+    at_poly_rect(s, r.x + (float) AT_PX_CH_S, r.y, r.w - (float) AT_PX_CH_S, 3.0f, col);        /* from the cut, never over it */
+    snprintf(pct, sizeof pct, "%d%%", c->percent);
+    pw = twidth(o, AT_R_NUM16, pct);
+    at_text(s, o, AT_R_NUM16, pct, r.x + r.w - 12.0f, r.y + 24.0f, AT_C_IVORY, AT_ALIGN_RIGHT, 0.0f);
+    fit_text(s, o, AT_R_CAP14, c->name, r.x + 12.0f, r.y + 20.0f, AT_C_IVORY, AT_ALIGN_LEFT, r.w - 36.0f - pw);
+    x = r.x + 12.0f;
+    for (i = 0; i < st; i++) { at_poly_rect(s, x, r.y + r.h - 3.0f - 10.0f - 4.0f, 8.0f, 10.0f, col); x += 12.0f; }
+}
+
+/* the build strip: slot pips (a 12 px square, the drive's colour inside a 2 px rarity ring), at most six keystone arch stones with
+ * their letters, "+n" for the rest, then "n waiting". No plate, no focus. */
+void at_part_strip(const AtSink *s, const AtTextOps *o, AtRect r, const AtStrip *st)
+{
+    float x = r.x, right = r.x + r.w, w;
+    int i, shown = st->n_keys > 6 ? 6 : st->n_keys, np = st->n_pips > 8 ? 8 : st->n_pips;
+    for (i = 0; i < np; i++) {
+        at_poly_rect(s, x, r.y + 4.0f, 12.0f, 12.0f, st->pip_ring[i]);
+        at_poly_rect(s, x + 2.0f, r.y + 6.0f, 8.0f, 8.0f, st->pip_fill[i]);
+        x += 16.0f;
+    }
+    if (np > 0 && shown > 0) x += 6.0f;
+    for (i = 0; i < shown; i++) {
+        char one[2];
+        poly4(s, x + 3.0f, r.y + 2.0f, x + 11.0f, r.y + 2.0f, x + 14.0f, r.y + 18.0f, x, r.y + 18.0f, st->key_rgba[i]);
+        one[0] = st->key_letter[i]; one[1] = '\0';
+        if (one[0] != '\0') at_text(s, o, AT_R_CAP12, one, x + 7.0f, r.y + 15.0f, AT_C_INK, AT_ALIGN_CENTER, 0.0f);
+        x += 18.0f;
+    }
+    if (st->n_keys > shown) {
+        char more[12];
+        snprintf(more, sizeof more, "+%d", st->n_keys - shown);
+        w = fit_text(s, o, AT_R_NUM12, more, x, r.y + 15.0f, AT_C_MUTED, AT_ALIGN_LEFT, right - x);
+        x += w + 6.0f;
+    }
+    if (st->wait[0] != '\0' && right - x - 4.0f >= 24.0f)         /* under 24 px a fitted word is only an ellipsis: leave it out */
+        fit_text(s, o, AT_R_BODY12, st->wait, x + 4.0f, r.y + 15.0f, AT_C_MUTED, AT_ALIGN_LEFT, right - x - 4.0f);
+}
+
+/* a banner: the pad glyph, one line. progress >= 0 draws a thin sun-coloured rule along the bottom (the leave progress). No focus. */
+void at_part_banner(const AtSink *s, const AtTextOps *o, AtRect r, char btn, const char *text, float progress)
+{
+    float x = r.x + 14.0f, adv;
+    at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH_S);
+    adv = at_part_hint(s, o, x, r.y + (r.h - 3.0f) * 0.5f + 5.0f, btn, "");
+    fit_text(s, o, AT_R_CAP16, text, x + adv - 12.0f, mid_base(r.y, r.h - 3.0f, AT_R_CAP16), AT_C_IVORY, AT_ALIGN_LEFT, r.x + r.w - 14.0f - (x + adv - 12.0f));
+    if (progress >= 0.0f) {
+        if (progress > 1.0f) progress = 1.0f;
+        at_poly_rect(s, r.x, r.y + r.h - 5.0f, (r.w - 8.0f) * progress, 2.0f, AT_C_SUN);
+    }
+}
+
+/* a toast: the emblem square, a title line, one rule line (fitted, never wrapped) and the drain rule along the bottom. No focus. */
+void at_part_toast(const AtSink *s, const AtTextOps *o, AtRect r, unsigned emblem_rgba, const char *title, const char *rule, float remaining)
+{
+    float tx = r.x + 8.0f + 22.0f + 8.0f, tw = r.x + r.w - 8.0f - tx;
+    at_plate(s, r, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH_S);
+    at_poly_rect(s, r.x + 8.0f, r.y + 8.0f, 22.0f, 22.0f, emblem_rgba);
+    fit_text(s, o, AT_R_CAP14, title, tx, r.y + 18.0f, AT_C_IVORY, AT_ALIGN_LEFT, tw);
+    fit_text(s, o, AT_R_BODY12, rule, tx, r.y + 33.0f, AT_C_TEXT2, AT_ALIGN_LEFT, tw);
+    if (remaining < 0.0f) remaining = 0.0f;
+    if (remaining > 1.0f) remaining = 1.0f;
+    at_poly_rect(s, r.x, r.y + r.h - 5.0f, (r.w - 8.0f) * remaining, 2.0f, emblem_rgba);
+}
+
+/* a flat quad along a segment, th thick (a grid link between two cells, a synergy chain): nothing for a zero-length segment */
+void at_part_link(const AtSink *s, float x0, float y0, float x1, float y1, float th, unsigned rgba)
+{
+    float dx = x1 - x0, dy = y1 - y0, len = (float) sqrt((double) (dx * dx + dy * dy)), nx, ny;
+    if (len < 0.001f) return;
+    nx = -dy / len * th * 0.5f; ny = dx / len * th * 0.5f;
+    poly4(s, x0 + nx, y0 + ny, x1 + nx, y1 + ny, x1 - nx, y1 - ny, x0 - nx, y0 - ny, rgba);
 }

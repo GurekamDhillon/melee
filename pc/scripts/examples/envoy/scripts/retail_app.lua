@@ -6,6 +6,8 @@ return function(D)
   function A.new(...)
    local a=old.new(...);a.retail=D.classic.new(a.g,a.run.profile,function(p) return a.store:commit(p) end)
    a.menu.run_type=C.tuning.retail.default_mode;a.menu.difficulty=C.tuning.retail.difficulty;a.menu.stocks=C.tuning.retail.stocks
+   -- Atlas step 3: the legacy menu shows its screens by name; setup, pause and results open their Atlas descriptions when Atlas is on
+   a.menu.on_show=function(_,screen) if D.atlas_kit then D.atlas_kit.menu_show(a,screen) end end
    a.g.log('envoy: default retail Classic / Adventure + NG+; campaigns parked');return a
   end
   -- ---- co-op (offline, two local players; coop.lua). Off unless asked for: `envoy coop [fighter1] [fighter2] [p1=cpu] [p2=cpu] [seed=N] [loops=N]`.
@@ -98,7 +100,7 @@ return function(D)
    self.retail.profile=self.run.profile
    if self.dev_spec and self.retail.host then self.retail.host:dev_start(self.dev_spec) end;self.dev_spec=nil
    ok,why=self.retail:start(mode or self.menu.run_type,fighter or self.menu.fighter,difficulty or self.menu.difficulty,stocks or self.menu.stocks,seed)
-   if ok then self.run.profile=self.retail.profile;self.visible=true;self.notice=nil;self.menu:show('playing')
+   if ok then self.run.profile=self.retail.profile;self.visible=true;self.notice=nil;self.menu:show('playing');if D.atlas_pause then D.atlas_pause.ensure(self) end   -- the pause screen the retail pause takeover may push
    else self.notice=why;self.visible=true;self.menu:show('setup');self.g.log('envoy: retail refused '..tostring(why)) end
    self:sync_pause();return ok,why
   end
@@ -106,6 +108,15 @@ return function(D)
    -- The rule host switch: Classic / Adventure runs install the pool, bag, slots, opponent rolls and looks
    -- instead of the companion-stat templates. Takes effect on the next run; the rule host is the DEFAULT (since the readability split);
    -- `envoy rules off` keeps the older companion-stat route reachable.
+   -- `envoy ui legacy [on|off]` (Atlas step 3): force every Envoy screen and the HUD back to the legacy code, whatever `uxatlas` says (for the look).
+   -- Atlas itself is switched on with `uxatlas on` (off by default until the owner has seen the screens).
+   if arg=='ui' or arg:match('^ui%s') then
+    local v=arg:match('^ui%s+legacy%s+(%a+)%s*$')
+    if v=='on' or v=='off' then D.atlas_kit.set_legacy(v=='on')
+    elseif arg~='ui' and arg~='ui legacy' then return false,'usage: envoy ui legacy [on|off]' end
+    self.g.log(('envoy: Atlas screens are %s; legacy override is %s (envoy ui legacy on|off; uxatlas on|off switches Atlas)'):format(D.atlas_kit.setting.on and 'on' or 'off',D.atlas_kit.legacy.on and 'ON' or 'off'))
+    return true
+   end
    if arg=='devui' or arg=='devui on' or arg=='devui off' then
     if arg~='devui' then D.mod_tuning.set_dev_ui(arg=='devui on');if self.retail.host then self.retail.host.hud.m=nil end end
     self.g.log('envoy: developer overlay is '..(D.mod_tuning.dev_ui() and 'ON' or 'off'));return true
@@ -397,7 +408,14 @@ return function(D)
    if not self:entry_available() then self.g.log('envoy: the Atlas menus are unavailable; open the Envoy menu with the console command: envoy menu');return nil end
    local app=self
    local items,what={},{}
-   for _,r in ipairs(ENTRY_ROWS) do items[#items+1]={id=r.id,label=r.label};what[r.id]=r end
+   local rows={}
+   for _,r in ipairs(ENTRY_ROWS) do
+    rows[#rows+1]=r
+    if r.id=='adventure' and D.atlas_kit and D.atlas_kit.enabled(self.g) and D.atlas_setup then   -- Atlas step 3: the run setup screen (mode, fighter, difficulty, stocks)
+     rows[#rows+1]={id='setup',label='RUN SETUP',what='Pick the mode, fighter, difficulty and stocks, then begin.'}
+    end
+   end
+   for _,r in ipairs(rows) do items[#items+1]={id=r.id,label=r.label};what[r.id]=r end
    local ok,err=pcall(function() self.g.ui.screen{
     id=ENTRY_ID,chapter=1,trail={'SOLO',title='ENVOY'},
     primary={kind='list',items=items},
@@ -415,6 +433,10 @@ return function(D)
      if self.g.ui.note then pcall(self.g.ui.note,{text=tostring(why or 'The run did not start'),kind='warn'}) end
      return nil
     end
+    return {pop=true}
+   elseif cell=='setup' then
+    self.visible=true;self.menu:show('setup')
+    if self.menu.atlas and self.g.ui.hold_menu then pcall(self.g.ui.hold_menu,true);self.menu_held=true end
     return {pop=true}
    elseif cell=='menu' then
     self:command('menu')

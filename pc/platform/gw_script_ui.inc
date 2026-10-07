@@ -16,17 +16,20 @@
  * centred or right-aligned run by half or all of one gap to put the visible glyphs where the parts asked. */
 #include "gw_mods.h"
 #include "gw_ui_policy.h"
+#include "gw_ui_hud.h"
 #include "gw_ui_registry.h"
+#include "gw_ui_retail.h"
 #include "gw_ui_render.h"
 #include "gw_ui_stack.h"
+#include "gw_ui_tokens.h"
 
 extern int gw_Settings_Int(const char *key, int dflt); /* gw_settings.c:138; the Reduced Motion row writes "reduced_motion" */
 
-#define GS_UI_SLOTS 8
+#define GS_UI_SLOTS 16 /* Envoy alone holds up to nine (bag, bag.p2, reward, keystone, swap, setup, pause, results, the online pick) */
 #define GS_UI_ENGINE (-2) /* GsUiSlot.owner for a native screen (the menus, the title, Credits): drawn from a record the game fills, no Lua */
 
 typedef struct {
-    int used, owner, explain_dirty, dialog_fn, warned, render_warned, ex_warned;
+    int used, owner, explain_dirty, dialog_fn, warned, render_warned, ex_warned, links_warned;
     int scene;              /* the scene kind that was current when it was pushed (gw_Ui_SceneExit closes it with that scene) */
     int rebuilds;           /* an engine screen: how many times its record was replaced */
     unsigned primed_frame;  /* an engine screen: the tick it became the top again (an intent in that same frame is dropped) */
@@ -57,6 +60,12 @@ static int gs_ui_menu_held_by = -2;   /* gd.ui.hold_menu: the script index holdi
 static unsigned gs_ui_script_close_frame; /* the tick a script's screen last closed (+1): a press of that frame is not the menu's */
 static unsigned gs_ui_frame; /* gs_ui_tick calls: the 'same frame' of an uncovered engine screen */
 static int gs_ui_reduced; /* gw_Settings_Int("reduced_motion") read once per draw pass */
+static AtRetail gs_ui_retail;                                    /* the retail takeover's mask (spec 6.8); empty by default */
+static AtPause gs_ui_pause = { 0, -1, 0, 0 };                    /* the retail pause as Atlas sees it */
+static int gs_ui_pause_changed;                                  /* a retail pause began or ended: the tick pushes or pops the pause screen */
+static int gs_ui_pause_slot = -1;                                /* the screen gd.ui.pause_screen named (latest call wins) */
+static int gs_ui_pause_pushed = -1;
+static int gs_ui_full_warned;                                    /* the full-pool refusal is logged once */                              /* the screen the tick pushed for the running pause, -1 none */
 
 /* ---- fonts: the Atlas roles by name, resolved once ------------------------------------------------ */
 static int gs_ui_roles_ok(void) {
@@ -363,7 +372,7 @@ static void gs_ui_prime(int slot) {
     memset(&u->keys, 0, sizeof u->keys);
     memset(&u->mouse, 0, sizeof u->mouse);
     if (u->owner == GS_UI_ENGINE) u->primed_frame = gs_ui_frame + 1;  /* an intent of this same frame is the press that closed the screen above */
-    if (at_screen_wants_pad(&u->sc)) {
+    if (at_screen_wants_pad(&u->sc) || slot == gs_ui_pause_pushed) {
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
         (void) at_pad_events(&u->pad, b, sx, sy, now, ev, 0);
     }
@@ -405,24 +414,33 @@ static void gs_ui_close_screen(int slot) {
 
 /* a script unloaded or switched off: its screens and their references go */
 static void gs_ui_reg_release_script(int script);
+static void gs_ui_hud_release(int script);
+/* a slot's screen leaves the stack, its Lua references go back to the registry and the slot is free again */
+static void gs_ui_free_slot(int i) {
+    GsUiSlot *u = &gs_ui_slot[i];
+    int was_top = at_stack_top(&gs_ui_stack) == i;
+    while (at_stack_remove(&gs_ui_stack, i)) {}                    /* open pushes again, so a duplicate entry may exist */
+    if (gs_ui_pause_slot == i) gs_ui_pause_slot = -1;
+    if (gs_ui_pause_pushed == i) gs_ui_pause_pushed = -1;
+    gs_ui_unref_screen(gs.L, &u->sc);
+    if (u->dialog_fn >= 0) luaL_unref(gs.L, LUA_REGISTRYINDEX, u->dialog_fn);
+    memset(u, 0, sizeof *u);
+    u->dialog_fn = u->sc.fn_provide = u->sc.fn_accept = u->sc.fn_back = u->sc.fn_focus = u->sc.fn_change = u->sc.fn_open =
+        u->sc.fn_close = u->sc.fn_counter = u->sc.fn_page = u->sc.fn_start = -1;
+    u->sc.fn_alt[0] = u->sc.fn_alt[1] = u->sc.fn_alt[2] = -1;
+    if (was_top && at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
+}
+
 static void gs_ui_release(int script) {
     int i;
     if (script < 0) return;                                        /* an engine screen is never released by a script's unload */
     if (gs_ui_menu_held_by == script) gs_ui_menu_held_by = -2;      /* a script that goes takes its hold with it */
     gs_ui_reg_release_script(script);                                        /* an engine screen is never released by a script's unload */
+    gs_ui_hud_release(script);                                               /* its HUD and its claim on the retail mask go too */
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
-        int was_top;
         if (!u->used || u->owner != script) continue;
-        was_top = at_stack_top(&gs_ui_stack) == i;
-        at_stack_remove(&gs_ui_stack, i);
-        gs_ui_unref_screen(gs.L, &u->sc);
-        if (u->dialog_fn >= 0) luaL_unref(gs.L, LUA_REGISTRYINDEX, u->dialog_fn);
-        memset(u, 0, sizeof *u);
-        u->dialog_fn = u->sc.fn_provide = u->sc.fn_accept = u->sc.fn_back = u->sc.fn_focus = u->sc.fn_change = u->sc.fn_open =
-            u->sc.fn_close = u->sc.fn_counter = u->sc.fn_page = u->sc.fn_start = -1;
-        u->sc.fn_alt[0] = u->sc.fn_alt[1] = u->sc.fn_alt[2] = -1;
-        if (was_top && at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
+        gs_ui_free_slot(i);
     }
 }
 
@@ -560,6 +578,21 @@ static void gs_ui_tick(void) {
     GsUiSlot *u;
     gs_ui_frame++;
     gs_ui_overlay_try();
+    if (gs_ui_pause_changed) {                  /* a retail pause began or ended: push or pop the named pause screen (a push is presentation only) */
+        gs_ui_pause_changed = 0;
+        if (gs_ui_pause.paused && gs_ui_pause.takeover && gs_ui_pause_slot >= 0 && gs_ui_slot[gs_ui_pause_slot].used && gs_ui_slot[gs_ui_pause_slot].sc.pause &&
+            gs_ui_usable(gs_ui_slot[gs_ui_pause_slot].owner)) {
+            gs_ui_slot[gs_ui_pause_slot].sc.port = gs_ui_pause.pauser + 1;                       /* the pausing port drives it */
+            if (gs_ui_open_screen(gs_ui_pause_slot)) gs_ui_pause_pushed = gs_ui_pause_slot;
+        } else if (!gs_ui_pause.paused && gs_ui_pause_pushed >= 0) {
+            int s = gs_ui_pause_pushed;
+            gs_ui_pause_pushed = -1;
+            if (gs_ui_slot[s].used) {
+                if (at_stack_top(&gs_ui_stack) == s) gs_ui_close_screen(s);
+                else at_stack_remove(&gs_ui_stack, s);
+            }
+        }
+    }
     top = at_stack_top(&gs_ui_stack);
     if (top < 0) return;
     u = &gs_ui_slot[top];
@@ -571,7 +604,7 @@ static void gs_ui_tick(void) {
     if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go (never an engine screen) */
     if (!gs_may_run(u->owner)) return;
     if (u->native_sel) { gs_sel_tick(u); return; }                      /* a select screen: its own mouse path; the pad is the game's */
-    if (at_screen_wants_pad(&u->sc)) {
+    if (at_screen_wants_pad(&u->sc) || top == gs_ui_pause_pushed) {   /* a pause screen the takeover pushed reads the pausing port's pad itself, whatever its input says */
         int sx, sy;
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
         n = at_pad_events(&u->pad, b, sx, sy, now, ev, 16);
@@ -935,12 +968,17 @@ int gw_Ui_TopIsEngine(const char *id) {
     return id == NULL || strcmp(gs_ui_slot[top].sc.id, id) == 0;
 }
 
-/* a scene ends: every screen pushed during it goes (the menu's, a mod's opened from a menu entry) */
+/* a scene ends: every screen pushed during it goes (the menu's, a mod's opened from a menu entry), except a mod screen that says
+ * persist = true (Envoy's reward, swap and bag screens span the ladder's VS-to-VS scenes: the owner closes them, or its unload does) */
 void gw_Ui_SceneExit(int scene_kind) {
     int i, any = 0;
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
         if (!u->used || u->scene != scene_kind || !gs_ui_find_on_stack(i)) continue;
+        if (u->owner != GS_UI_ENGINE && u->sc.persist) {            /* persist = true: the mod's run screen spans scenes; only its owner closes it */
+            u->scene = -1;                                            /* it now belongs to no scene: the next exit leaves it alone too */
+            continue;
+        }
         any = 1;
         if (u->owner == GS_UI_ENGINE) gs_ui_free_engine_slot(i);
         else gs_ui_close_screen(i);                                 /* a mod's screen: on.close runs, the screen stays registered */
@@ -1094,6 +1132,395 @@ static void gs_ui_reg_boot(void) {
         }
     }
     gs_ui_reg_log();
+}
+
+/* ---- the retail takeover (spec 6.8): the element mask and the retail pause ---------------------------------------------------
+ * Game code calls these unprefixed (Ui_RetailHidden, Ui_RetailPause, Ui_TakeUnpause; melee/CLAUDE.md "The shim boundary"). The mask is
+ * EMPTY by default: with every source empty each guard's code path is retail's own. It reads 0 while netplay or rollback is on, so
+ * nothing retail is ever hidden online, and a guard never skips a proc, only a render callback or a panel's visibility. */
+static int gs_ui_retail_env_done;
+
+static int gs_ui_online(void) { return gs_ui_netplay(); }
+
+/* MELEE_ATLAS_RETAIL="hud.damage,hud.stock" (or "all"): read once, into the environment source; a bad name is logged and ignored */
+static void gs_ui_retail_env(void) {
+    const char *e;
+    unsigned m = 0;
+    char err[96];
+    if (gs_ui_retail_env_done) return;
+    gs_ui_retail_env_done = 1;
+    e = getenv("MELEE_ATLAS_RETAIL");
+    if (e == NULL || e[0] == '\0') return;
+    if (!at_retail_parse(e, &m, err, sizeof err)) { gw_log("ui: MELEE_ATLAS_RETAIL ignored: %s", err); return; }
+    at_retail_set(&gs_ui_retail, AT_RS_ENV, m);
+    {
+        char names[160];
+        int id, n = 0;
+        names[0] = '\0';
+        for (id = 0; id < AT_RE_COUNT; id++)
+            if (m >> id & 1u) n += snprintf(names + n, sizeof names - (size_t) n, "%s%s", n > 0 ? "," : "", at_retail_name(id));
+        gw_log("ui: retail elements hidden by MELEE_ATLAS_RETAIL: %s", names);
+    }
+}
+
+/* the Atlas pause takeover is off unless MELEE_ATLAS_PAUSE=1 or the setting atlas_pause is on */
+static int gs_ui_pause_wanted(void) {
+    static int env = -1;
+    if (env < 0) {
+        const char *e = getenv("MELEE_ATLAS_PAUSE");
+        env = e != NULL && strcmp(e, "1") == 0;
+        if (env) gw_log("ui: the Atlas pause takeover is on (MELEE_ATLAS_PAUSE=1)");
+    }
+    return env || gw_Settings_Int("atlas_pause", 0) != 0;
+}
+
+int gw_Ui_RetailHidden(int id) {
+    gs_ui_retail_env();
+    return at_retail_hidden(&gs_ui_retail, id, gs_ui_online());
+}
+
+void gw_Ui_RetailPause(int pauser, int on) {
+    if (on) at_pause_on(&gs_ui_pause, pauser, gs_ui_pause_wanted(), gs_ui_online());
+    else at_pause_off(&gs_ui_pause);
+    gs_ui_pause_changed = 1;
+}
+
+int gw_Ui_TakeUnpause(void) { return gs_ui_online() ? -1 : at_pause_take_unpause(&gs_ui_pause); }
+
+/* ---- the HUD layer: gd.ui.hud and gd.ui.toast (spec 6.8 part 3) ----------------------------------------------------------------
+ * A HUD is a script's presentation description, held here and drawn every rendered frame UNDER the screen stack (gs_ui_hud_draw, called
+ * before gs_ui_draw). It is never on the stack, never takes input and never calls Lua: its record changes only from script hooks (which
+ * do not run on a resimulated frame), its timings are on the UI clock, and it draws online. One HUD per script, four in all. It belongs to
+ * the script that set it: the unload, a switch-off and a scene change release it (gs_ui_release, gs_ui_scene_changed). The embedding file
+ * defines gs_ui_port_read (a port card's name, percent and stocks come from the fighter readbacks gd.player uses). */
+#define GS_UI_HUDS 4
+static AtHud gs_ui_hud[GS_UI_HUDS];
+static int gs_ui_hud_warned[GS_UI_HUDS];
+static int gs_ui_keepout_show;                 /* console: atlas keepout on - the retail keep-out rectangles as 1 px rose outlines */
+static int gs_ui_port_read(int port, char *name, int cap, int *percent, int *stocks, int *cpu);   /* 1 when that port has a fighter */
+
+static AtHud *gs_ui_hud_find(int owner1) {
+    int i;
+    for (i = 0; i < GS_UI_HUDS; i++) if (gs_ui_hud[i].owner == owner1) return &gs_ui_hud[i];
+    return NULL;
+}
+
+/* a script goes (unload, switch-off): its HUD and its claim on the retail mask go with it */
+static void gs_ui_hud_release(int script) {
+    int i;
+    if (script < 0) return;
+    for (i = 0; i < GS_UI_HUDS; i++) if (gs_ui_hud[i].owner == script + 1) { memset(&gs_ui_hud[i], 0, sizeof gs_ui_hud[i]); gs_ui_hud_warned[i] = 0; }
+    at_retail_release_script(&gs_ui_retail, script + 1);
+}
+
+/* a scene ends: the script's mask claim is released with every toast and note (a HUD's strips and banners are re-described by the script) */
+static void gs_ui_scene_changed(void) {
+    int i, z, k;
+    if (gs_ui_retail.script_owner > 0) at_retail_release_script(&gs_ui_retail, gs_ui_retail.script_owner);
+    for (i = 0; i < GS_UI_HUDS; i++) {
+        AtHud *h = &gs_ui_hud[i];
+        if (h->owner == 0) continue;
+        for (z = 0; z < AT_Z_COUNT; z++) {
+            int w = 0;
+            for (k = 0; k < h->n[z]; k++) {
+                if (h->z[z][k].kind == AT_HP_TOAST || h->z[z][k].kind == AT_HP_NOTE) continue;
+                if (w != k) h->z[z][w] = h->z[z][k];
+                w++;
+            }
+            for (k = w; k < h->n[z]; k++) memset(&h->z[z][k], 0, sizeof h->z[z][k]);
+            h->n[z] = w;
+        }
+    }
+    at_pause_off(&gs_ui_pause);                                                   /* a scene that ends mid-pause leaves no pause behind */
+    gs_ui_pause_changed = 1;
+}
+
+static int gs_ui_part_live(const AtHudPart *p, double now) { return !(p->until_ms > 0.0 && now >= p->until_ms); }
+
+/* gd.ui.hud{ id = "mod.hud", zones = { top_left = { {kind="strip", ...} }, ... } } -> true. Replaces the caller's HUD; its live toasts stay
+ * (a toast is set by gd.ui.toast and must not vanish when the strip is re-described) and a note keeps its clock while its text is the same. */
+static int l_ui_hud(lua_State *L) {
+    char ownerbuf[64], err[160], why[96];
+    const char *om = gs_ui_owner_mod(ownerbuf, sizeof ownerbuf);
+    int root, z, k, j, i, slot = -1;
+    double now = gs_now_ms();
+    AtHud nh, *old;
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (om == NULL) return luaL_error(L, "gd.ui.hud: a HUD belongs to a mod script (the console has none)");
+    atv_init(&gs_ui_arena);
+    root = gs_ui_copy(L, 1, 0);
+    if (root < 0 || gs_ui_arena.overflow) { gs_ui_unref_arena_except(L, NULL, 0); return luaL_error(L, "gd.ui.hud: the description is too large or nested too deeply"); }
+    k = at_hud_from_val(&gs_ui_arena, root, om, now, &nh, err, sizeof err);
+    gs_ui_unref_arena_except(L, NULL, 0);                                         /* a HUD holds no function: any the table carried go */
+    if (!k) return luaL_error(L, "%s", err);
+    old = gs_ui_hud_find(gs.cur + 1);
+    if (old != NULL) {
+        for (z = 0; z < AT_Z_COUNT; z++) {
+            int has_toast = 0;
+            for (k = 0; k < nh.n[z]; k++) {
+                if (nh.z[z][k].kind == AT_HP_TOAST) has_toast = 1;
+                if (nh.z[z][k].kind != AT_HP_NOTE) continue;
+                for (j = 0; j < old->n[z]; j++)                                    /* the same note keeps its clock: a rebuild does not restart it */
+                    if (old->z[z][j].kind == AT_HP_NOTE && strcmp(old->z[z][j].text, nh.z[z][k].text) == 0 && gs_ui_part_live(&old->z[z][j], now)) {
+                        nh.z[z][k].from_ms = old->z[z][j].from_ms; nh.z[z][k].until_ms = old->z[z][j].until_ms;
+                    }
+            }
+            for (j = 0; j < old->n[z] && !has_toast; j++) {
+                if (old->z[z][j].kind != AT_HP_TOAST || !gs_ui_part_live(&old->z[z][j], now) || nh.n[z] >= AT_HUD_PER_ZONE) continue;
+                for (k = nh.n[z]; k > 0; k--) nh.z[z][k] = nh.z[z][k - 1];         /* a live toast stays on top of its zone */
+                nh.z[z][0] = old->z[z][j];
+                nh.n[z]++;
+                has_toast = 1;
+            }
+        }
+        if (!at_hud_cap_ok(&nh, why, sizeof why)) return luaL_error(L, "gd.ui.hud: %s", why);
+        slot = (int) (old - gs_ui_hud);
+    } else {
+        for (i = 0; i < GS_UI_HUDS; i++) if (gs_ui_hud[i].owner == 0) { slot = i; break; }
+        if (slot < 0) return luaL_error(L, "gd.ui.hud: too many HUDs (%d)", GS_UI_HUDS);
+    }
+    nh.owner = gs.cur + 1;
+    gs_ui_hud[slot] = nh;
+    gs_ui_hud_warned[slot] = 0;
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+static int l_ui_hud_clear(lua_State *L) {
+    AtHud *h;
+    char ownerbuf[64];
+    const char *om = gs_ui_owner_mod(ownerbuf, sizeof ownerbuf);
+    if (om == NULL) return luaL_error(L, "gd.ui.hud_clear: a HUD belongs to a mod script (the console has none)");
+    h = gs_ui_hud_find(gs.cur + 1);
+    if (h != NULL && lua_isstring(L, 1) && strcmp(lua_tostring(L, 1), h->id) != 0) h = NULL;
+    if (h != NULL) { int i = (int) (h - gs_ui_hud); memset(h, 0, sizeof *h); gs_ui_hud_warned[i] = 0; }
+    lua_pushboolean(L, h != NULL);
+    return 1;
+}
+
+/* gd.ui.toast{ zone = "top_left" | "top_right", title =, text =, rgba =, seconds = }: one toast per zone of the caller's HUD (a new one
+ * replaces the old), 0.5 to 15 s, 4 by default. A script with no HUD gets an empty one, "<mod>.toast". */
+static int l_ui_toast(lua_State *L) {
+    char ownerbuf[64], idbuf[AT_ID_HUD], why[96];
+    const char *om = gs_ui_owner_mod(ownerbuf, sizeof ownerbuf), *zn, *s;
+    int z, k, slot = -1, i;
+    double secs, now = gs_now_ms();
+    AtHud *h;
+    AtHudPart p, *dst;
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (om == NULL) return luaL_error(L, "gd.ui.toast: a toast belongs to a mod script (the console has none)");
+    lua_getfield(L, 1, "zone");
+    zn = luaL_optstring(L, -1, "top_right");
+    z = at_hud_zone_by_name(zn);
+    if (z != AT_Z_TOP_LEFT && z != AT_Z_TOP_RIGHT) { lua_pop(L, 1); return luaL_error(L, "gd.ui.toast: zone is \"top_left\" or \"top_right\""); }
+    lua_pop(L, 1);
+    memset(&p, 0, sizeof p);
+    p.kind = AT_HP_TOAST;
+    lua_getfield(L, 1, "title"); snprintf(p.text, AT_STR, "%s", luaL_optstring(L, -1, "")); lua_pop(L, 1);
+    lua_getfield(L, 1, "text"); snprintf(p.rule, AT_TEXT, "%s", luaL_optstring(L, -1, "")); lua_pop(L, 1);
+    lua_getfield(L, 1, "rgba");
+    if (lua_isnumber(L, -1)) { double d = lua_tonumber(L, -1); p.rgba = (d >= 0.0 && d <= 4294967295.0) ? (unsigned) d : 0u; }
+    lua_pop(L, 1);
+    secs = gs_kit_optnum(L, 1, "seconds", 4.0);
+    if (secs != secs || secs < 0.5) secs = 0.5;
+    if (secs > 15.0) secs = 15.0;
+    p.from_ms = now; p.until_ms = now + secs * 1000.0;
+    s = om;
+    h = gs_ui_hud_find(gs.cur + 1);
+    if (h == NULL) {
+        for (i = 0; i < GS_UI_HUDS; i++) if (gs_ui_hud[i].owner == 0) { slot = i; break; }
+        if (slot < 0) return luaL_error(L, "gd.ui.toast: too many HUDs (%d)", GS_UI_HUDS);
+        h = &gs_ui_hud[slot];
+        memset(h, 0, sizeof *h);
+        snprintf(idbuf, sizeof idbuf, "%s.toast", s);
+        snprintf(h->id, sizeof h->id, "%s", idbuf);
+        h->owner = gs.cur + 1;
+    }
+    dst = NULL;
+    for (k = 0; k < h->n[z]; k++) if (h->z[z][k].kind == AT_HP_TOAST) { dst = &h->z[z][k]; break; }   /* replaces, never queues */
+    if (dst == NULL) {
+        if (h->n[z] >= AT_HUD_PER_ZONE) return luaL_error(L, "gd.ui.toast: zone %s is full (%d parts)", zn, AT_HUD_PER_ZONE);
+        for (k = h->n[z]; k > 0; k--) h->z[z][k] = h->z[z][k - 1];
+        dst = &h->z[z][0];
+        h->n[z]++;
+    }
+    *dst = p;
+    if (!at_hud_cap_ok(h, why, sizeof why)) return luaL_error(L, "gd.ui.toast: %s", why);
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* a copy of the HUD for this frame: a port card's name, percent and stocks read from the fighter, a card for a port with none left out */
+static void gs_ui_hud_fill_ports(AtHud *h) {
+    int z, k;
+    for (z = 0; z < AT_Z_COUNT; z++) {
+        int w = 0;
+        for (k = 0; k < h->n[z]; k++) {
+            AtHudPart *p = &h->z[z][k];
+            if (p->kind == AT_HP_PORT_CARD) {
+                int pct = 0, st = 0, cpu = 0;
+                char name[AT_STR];
+                if (!gs_ui_port_read(p->port.port, name, sizeof name, &pct, &st, &cpu)) continue;
+                snprintf(p->port.name, sizeof p->port.name, "%s", name);
+                p->port.percent = pct; p->port.stocks = st; p->port.cpu = cpu;
+            }
+            if (w != k) h->z[z][w] = h->z[z][k];
+            w++;
+        }
+        h->n[z] = w;
+    }
+}
+
+static void gs_ui_hud_warn_once(int i, const char *msg) {
+    if (gs_ui_hud_warned[i]) return;
+    gs_ui_hud_warned[i] = 1;
+    gw_log("ui: HUD %s: %s", gs_ui_hud[i].id, msg);
+}
+
+/* the HUD layer: every script's HUD, under the screen stack, every rendered frame. Never calls Lua. Draws in a match only. */
+static void gs_ui_hud_draw(void) {
+    int i, entries;
+    double now;
+    float w;
+    AtKeepOut ko;
+    AtHudLayout l;
+    AtTextOps ops;
+    AtSink sink;
+    static AtHud frame_copy;
+    if (!gs.match_active || !gs_ui_roles_ok()) return;
+    now = gs_now_ms();
+    w = gw_Console_ScriptWidth();
+    gs_ui_reduced = gw_Settings_Int("reduced_motion", 0) != 0;
+    at_hud_retail_keepouts(w, ~at_retail_effective(&gs_ui_retail, gs_ui_online()), &ko);
+    ops.width = gs_ui_width; ops.user = NULL;
+    memset(&sink, 0, sizeof sink);                                            /* every AtSink op is set or NULL (AtSink.image arrived with the select) */
+    sink.user = NULL; sink.poly = gs_ui_poly; sink.text = gs_ui_text; sink.model = gs_ui_model_draw; sink.image = gs_ui_image;
+    if (gs_ui_keepout_show) {
+        for (i = 0; i < ko.n; i++) {                                              /* 1 px outlines, for measuring them against the retail HUD */
+            AtRect r = ko.r[i];
+            at_poly_rect(&sink, r.x, r.y, r.w, 1.0f, AT_C_ROSE); at_poly_rect(&sink, r.x, r.y + r.h - 1.0f, r.w, 1.0f, AT_C_ROSE);
+            at_poly_rect(&sink, r.x, r.y, 1.0f, r.h, AT_C_ROSE); at_poly_rect(&sink, r.x + r.w - 1.0f, r.y, 1.0f, r.h, AT_C_ROSE);
+        }
+    }
+    for (i = 0; i < GS_UI_HUDS; i++) {
+        int first, quads;
+        if (gs_ui_hud[i].owner <= 0 || !gs_ui_usable(gs_ui_hud[i].owner - 1)) continue;
+        if (gw_Kit_QuadRoom() < AT_HUD_QUAD_CAP) { gs_ui_hud_warn_once(i, "not drawn: the kit quad list is nearly full"); continue; }
+        frame_copy = gs_ui_hud[i];
+        gs_ui_hud_fill_ports(&frame_copy);
+        at_hud_layout(&frame_copy, w, &ko, now, &ops, &l);
+        if (l.dropped) gs_ui_hud_warn_once(i, "a part did not fit and is not shown");
+        entries = 0;
+        first = gw_Kit_QuadCount();
+        at_hud_render(&frame_copy, &l, now, gs_ui_reduced, &ops, &sink, &entries);
+        quads = gw_Kit_QuadCount() - first;
+        gs_kit_record(first, quads);
+    }
+    gw_Kit_SetTracking(0.0f);
+}
+
+/* ---- gd.ui.retail_hide and gd.ui.retail ---------------------------------------------------------------------------------------- */
+/* gd.ui.retail_hide{ "hud.damage", ... } claims the script source of the retail mask (offline, a gameplay mod script, in a match); {} releases it.
+ * The checks run in this order: online, console or not a gameplay script, no match, another script's claim, an id a mod may not hide. */
+static int l_ui_retail_hide(lua_State *L) {
+    int n, i;
+    unsigned m = 0, add;
+    char err[96];
+    const GsScript *me;
+    err[0] = 0;
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (gs_ui_online()) return luaL_error(L, "gd.ui.retail_hide: not available online (nothing retail is hidden online)");
+    me = (gs.cur >= 0 && gs.cur < gs.n) ? &gs.s[gs.cur] : NULL;
+    if (gs.cur == gs.console || me == NULL || !me->gameplay) return luaL_error(L, "gd.ui.retail_hide: needs a gameplay mod script");
+    if (!gs.match_active) return luaL_error(L, "gd.ui.retail_hide: needs an active match");
+    if (gs_ui_retail.script_owner != 0 && gs_ui_retail.script_owner != gs.cur + 1) return luaL_error(L, "gd.ui.retail_hide: the mask belongs to another script");
+    n = (int) lua_rawlen(L, 1);
+    for (i = 1; i <= n; i++) {
+        lua_rawgeti(L, 1, i);
+        if (lua_type(L, -1) != LUA_TSTRING) { lua_pop(L, 1); return luaL_error(L, "gd.ui.retail_hide: element names are strings"); }
+        if (!at_retail_parse(lua_tostring(L, -1), &add, err, sizeof err) || strcmp(lua_tostring(L, -1), "all") == 0) {
+            lua_pop(L, 1);
+            return luaL_error(L, "gd.ui.retail_hide: %s", err[0] != '\0' ? err : "name the elements, not \"all\"");
+        }
+        if ((add & ~at_retail_script_allowed()) != 0u) { lua_pop(L, 1); return luaL_error(L, "gd.ui.retail_hide: hud.timer may not be hidden by a mod"); }
+        m |= add;
+        lua_pop(L, 1);
+    }
+    at_retail_set(&gs_ui_retail, AT_RS_SCRIPT, m);
+    gs_ui_retail.script_owner = m != 0u ? gs.cur + 1 : 0;
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
+/* gd.ui.retail() -> { hidden = {names}, paused = bool, pauser = n or nil, takeover = bool }: what is hidden now (all sources; empty online) */
+static int l_ui_retail(lua_State *L) {
+    int id, n = 0;
+    unsigned m;
+    gs_ui_retail_env();
+    m = at_retail_effective(&gs_ui_retail, gs_ui_online());
+    lua_newtable(L);
+    lua_newtable(L);
+    for (id = 0; id < AT_RE_COUNT; id++) if (m >> id & 1u) { lua_pushstring(L, at_retail_name(id)); lua_rawseti(L, -2, ++n); }
+    lua_setfield(L, -2, "hidden");
+    lua_pushboolean(L, gs_ui_pause.paused); lua_setfield(L, -2, "paused");
+    if (gs_ui_pause.paused) { lua_pushinteger(L, gs_ui_pause.pauser); lua_setfield(L, -2, "pauser"); }
+    lua_pushboolean(L, gs_ui_pause.takeover); lua_setfield(L, -2, "takeover");
+    return 1;
+}
+
+/* the console command: atlas retail <ids|clear> | atlas hud | atlas keepout on|off. The reply goes into out. */
+static int gs_ui_console(const char *arg, char *out, int cap) {
+    char err[96];
+    unsigned m;
+    int i, z, k, n = 0;
+    while (*arg == ' ') arg++;
+    out[0] = '\0';
+    if (strncmp(arg, "retail", 6) == 0 && (arg[6] == '\0' || arg[6] == ' ')) {
+        const char *list = arg + 6;
+        while (*list == ' ') list++;
+        if (strcmp(list, "clear") == 0) m = 0u;
+        else if (list[0] == '\0') { snprintf(out, (size_t) cap, "usage: atlas retail <ids|all|clear> (hud.damage hud.stock hud.timer hud.nametag hud.magnify hud.coin hud.prize hud.hazard pause.panel)"); return -1; }
+        else if (!at_retail_parse(list, &m, err, sizeof err)) { snprintf(out, (size_t) cap, "%s", err); return -1; }
+        at_retail_set(&gs_ui_retail, AT_RS_CONSOLE, m);
+        gw_log("ui: console retail mask: %u (effective %u%s)", m, at_retail_effective(&gs_ui_retail, gs_ui_online()), gs_ui_online() ? "; online, nothing is hidden" : "");
+        snprintf(out, (size_t) cap, "retail elements hidden: %u%s", at_retail_effective(&gs_ui_retail, gs_ui_online()), gs_ui_online() ? " (online: none)" : "");
+        return 0;
+    }
+    if (strcmp(arg, "hud") == 0) {
+        AtKeepOut ko;
+        AtHudLayout l;
+        AtTextOps ops;
+        static AtHud copy;
+        double now = gs_now_ms();
+        float w = gw_Console_ScriptWidth();
+        at_hud_retail_keepouts(w, ~at_retail_effective(&gs_ui_retail, gs_ui_online()), &ko);
+        ops.width = gs_ui_width; ops.user = NULL;
+        gw_log("ui: canvas width %.1f; %d keep-out rectangle(s)", (double) w, ko.n);
+        for (i = 0; i < ko.n; i++) gw_log("ui: keep-out %d: %.1f %.1f %.1f %.1f", i, (double) ko.r[i].x, (double) ko.r[i].y, (double) ko.r[i].w, (double) ko.r[i].h);
+        for (i = 0; i < GS_UI_HUDS; i++) {
+            if (gs_ui_hud[i].owner <= 0) continue;
+            copy = gs_ui_hud[i];
+            gs_ui_hud_fill_ports(&copy);
+            at_hud_layout(&copy, w, &ko, now, &ops, &l);
+            for (z = 0; z < AT_Z_COUNT; z++) for (k = 0; k < copy.n[z]; k++) {
+                gw_log("ui: HUD %s %s[%d] kind %d %s %.1f %.1f %.1f %.1f", copy.id, at_hud_zone_name(z), k, copy.z[z][k].kind, l.shown[z][k] ? "shown" : "hidden",
+                       (double) l.rect[z][k].x, (double) l.rect[z][k].y, (double) l.rect[z][k].w, (double) l.rect[z][k].h);
+                n++;
+            }
+        }
+        snprintf(out, (size_t) cap, "%d HUD part(s) logged; canvas width %.1f", n, (double) w);
+        return 0;
+    }
+    if (strncmp(arg, "keepout", 7) == 0) {
+        const char *v = arg + 7;
+        while (*v == ' ') v++;
+        if (strcmp(v, "on") != 0 && strcmp(v, "off") != 0) { snprintf(out, (size_t) cap, "usage: atlas keepout on|off"); return -1; }
+        gs_ui_keepout_show = strcmp(v, "on") == 0;
+        snprintf(out, (size_t) cap, "retail keep-out rectangles %s", gs_ui_keepout_show ? "drawn" : "hidden");
+        return 0;
+    }
+    snprintf(out, (size_t) cap, "usage: atlas retail <ids|clear> | atlas hud | atlas keepout on|off");
+    return -1;
 }
 
 /* a built-in entry (the adapter registers the native tree's rows that mods place themselves relative to) */
@@ -1280,6 +1707,7 @@ static int l_ui_screen(lua_State *L) {
         int i;
         for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
         if (slot < 0) {
+            if (!gs_ui_full_warned) { gs_ui_full_warned = 1; gw_log("ui: the screen pool is full (%d): %s was refused (gd.ui.forget frees a slot)", GS_UI_SLOTS, gs_ui_scratch.id); }
             gs_ui_unref_screen(L, &gs_ui_scratch);
             return luaL_error(L, "gd.ui.screen: too many screens (%d)", GS_UI_SLOTS);
         }
@@ -1302,6 +1730,7 @@ static int l_ui_screen(lua_State *L) {
     gs_ui_put_screen(&u->sc);
     u->used = 1;
     u->owner = gs.cur;
+    if (u->sc.links_skipped > 0 && !u->links_warned) { u->links_warned = 1; gw_log("ui: %s: %d grid link(s) name a missing cell and are skipped", u->sc.id, u->sc.links_skipped); }
     if (replace) u->view.focus = at_screen_refocus(&u->sc, old_block[0] ? old_block : NULL, old_cell[0] ? old_cell : NULL, old);
     else { AtFocusBlock fb[AT_MAX_BLOCKS]; u->view.focus = at_focus_first(fb, at_screen_focus_blocks(&u->sc, fb)); }
     u->explain_dirty = 1;
@@ -1318,7 +1747,45 @@ static int gs_ui_slot_arg(lua_State *L, int idx) {
     return s;
 }
 
-static int l_ui_open(lua_State *L) { lua_pushboolean(L, gs_ui_open_screen(gs_ui_slot_arg(L, 1))); return 1; }
+static int l_ui_open(lua_State *L) {
+    int s = gs_ui_slot_arg(L, 1);
+    if (gs_ui_slot[s].sc.pause && gs_ui_online()) { lua_pushboolean(L, 0); return 1; }          /* a pause screen is never opened online */
+    lua_pushboolean(L, gs_ui_open_screen(s));
+    return 1;
+}
+
+/* gd.ui.pause_screen(id | nil): the caller's own pause screen (kind = "pause") that the retail pause pushes while the takeover is on.
+ * The latest call wins; nil clears the named screen when it is the caller's. With the takeover off (the default) nothing is pushed. */
+static int l_ui_pause_screen(lua_State *L) {
+    if (lua_isnoneornil(L, 1)) {
+        if (gs_ui_pause_slot >= 0 && gs_ui_may_touch(gs_ui_pause_slot)) gs_ui_pause_slot = -1;
+        lua_pushboolean(L, gs_ui_pause_slot < 0);
+        return 1;
+    } else {
+        int s = gs_ui_slot_arg(L, 1);
+        if (!gs_ui_slot[s].sc.pause) return luaL_error(L, "gd.ui.pause_screen: \"%s\" is not a pause screen (kind = \"pause\")", gs_ui_slot[s].sc.id);
+        gs_ui_pause_slot = s;
+        lua_pushboolean(L, 1);
+        return 1;
+    }
+}
+
+/* gd.ui.unpause() -> true when the request was accepted: paused, offline, none pending. The game side takes it at its next unpause check
+ * (Ui_TakeUnpause) and runs retail's own unpause routine for the pauser. One-shot; never online. */
+static int l_ui_unpause(lua_State *L) {
+    lua_pushboolean(L, at_pause_request_unpause(&gs_ui_pause, gs_ui_online()));
+    return 1;
+}
+
+/* gd.ui.forget(id): close it if it is on the stack (on.close runs first), release every Lua reference it holds, free its slot. */
+static int l_ui_forget(lua_State *L) {
+    int slot = gs_ui_slot_arg(L, 1);                               /* raises for an unknown id, an engine screen or another script's */
+    if (at_stack_top(&gs_ui_stack) == slot) gs_ui_close_screen(slot);
+    if (!gs_ui_slot[slot].used) { lua_pushboolean(L, 1); return 1; }   /* on.close forgot it itself */
+    gs_ui_free_slot(slot);
+    lua_pushboolean(L, 1);
+    return 1;
+}
 
 static int l_ui_close(lua_State *L) {
     int s = lua_isstring(L, 1) ? gs_ui_slot_arg(L, 1) : at_stack_top(&gs_ui_stack);
@@ -1456,7 +1923,8 @@ static int l_ui_state(lua_State *L) {
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
     {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
-    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {NULL, NULL}};
+    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {"forget", l_ui_forget}, {"hud", l_ui_hud}, {"hud_clear", l_ui_hud_clear}, {"toast", l_ui_toast},
+    {"retail_hide", l_ui_retail_hide}, {"retail", l_ui_retail}, {"pause_screen", l_ui_pause_screen}, {"unpause", l_ui_unpause}, {NULL, NULL}};
 
 static void gs_push_ui(lua_State *L) {
     lua_newtable(L);

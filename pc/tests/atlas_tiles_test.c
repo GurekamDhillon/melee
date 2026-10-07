@@ -8,17 +8,6 @@
 static AtScreen SC; static AtView V; static AtHits H;
 static const float WIDTHS[3] = { 640.0f, 853.0f, 1140.0f };
 
-/* copied from atlas_parts_test.c:304-316: no vertex inside the top-left or bottom-right cut-away */
-static int corners_clear(AtRect r, float c)
-{
-    int i, k;
-    for (i = 0; i < REC.np; i++) for (k = 0; k < 4; k++) {
-        float dx = REC.p[i].x[k] - r.x, dy = REC.p[i].y[k] - r.y, ex = r.x + r.w - REC.p[i].x[k], ey = r.y + r.h - REC.p[i].y[k];
-        if (dx >= -0.01f && dy >= -0.01f && dx + dy < c - 0.01f) return 0;
-        if (ex >= -0.01f && ey >= -0.01f && ex + ey < c - 0.01f) return 0;
-    }
-    return 1;
-}
 static int text_inside(AtRect r)
 {
     int i;

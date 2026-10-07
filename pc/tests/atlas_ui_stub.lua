@@ -73,7 +73,7 @@ function Stub.new(opts)
  opts = opts or {}
  local L = Stub.limits
  local ui = { screens = {}, stack = {}, views = {}, fed = {}, notes = {}, dialogs = {}, refreshed = 0, _f = {}, _owner = {}, _rows = {},
-  available_ok = opts.available ~= false, caller = opts.caller or 'console', owner_mod = opts.owner_mod,
+  available_ok = opts.available ~= false, caller = opts.caller or (opts.mod and (opts.mod .. '/main')) or 'console', owner_mod = opts.owner_mod or opts.mod,
   held = {}, _prev = {} }
  local function fail(msg) error('gd.ui.screen: ' .. msg, 3) end
  local function check_id(what, id)
@@ -453,6 +453,157 @@ function Stub.new(opts)
    return true
   end
   return false
+ end
+
+ -- ---- the HUD layer and the retail takeover (Atlas step 3; gw_ui_hud.c, gw_script_ui.inc) ------------------------------------------------
+ -- gd.ui.hud / hud_clear / toast / retail_hide / retail with the binding's refusals and the quiet-HUD caps. What it does NOT model: the
+ -- layout, the keep-outs and the draw (atlas-hud tests those), and the scene change (ui.scene_changed() plays the binding's part).
+ ui.now, ui.hud_calls, ui.retail_hide_calls, ui.toast_calls = 0, 0, 0, 0   -- ui.now: seconds, the UI clock; tests advance it
+ ui.huds, ui.mask, ui.mask_owner = {}, {}, nil
+ ui.match_active = opts.match ~= false
+ ui.gameplay = opts.gameplay ~= false
+ ui.netplay = opts.netplay and true or false
+ local ZONES = { top_left = true, top_center = true, top_right = true, bottom_left = true, bottom_center = true, bottom_right = true }
+ local ZONE_ORDER = { 'top_left', 'top_center', 'top_right', 'bottom_left', 'bottom_center', 'bottom_right' }
+ local KINDS = { strip = true, banner = true, card = true, note = true, port_card = true, timer = true, toast = true }
+ local ELEMENTS = { 'hud.damage', 'hud.stock', 'hud.timer', 'hud.nametag', 'hud.magnify', 'hud.coin', 'hud.prize', 'hud.hazard', 'pause.panel' }
+ local ELEMENT = {}
+ for _, e in ipairs(ELEMENTS) do ELEMENT[e] = true end
+ local PER_ZONE = 4
+
+ -- mirrors at_hud_cap_ok: one banner and only in top_center, one toast per top zone, three cards, one note
+ function ui.hud_caps(zones)
+  local banners, cards, notes = 0, 0, 0
+  for _, z in ipairs(ZONE_ORDER) do
+   local toasts = 0
+   for _, p in ipairs(zones[z] or {}) do
+    if p.kind == 'banner' then banners = banners + 1; if z ~= 'top_center' then return false, 'a banner lives in top_center only' end
+    elseif p.kind == 'toast' then toasts = toasts + 1; if z:sub(1, 3) ~= 'top' then return false, 'a toast lives in a top zone' end
+    elseif p.kind == 'card' then cards = cards + 1
+    elseif p.kind == 'note' then notes = notes + 1 end
+   end
+   if toasts > 1 then return false, 'at most one toast per zone' end
+  end
+  if banners > 1 then return false, 'at most one banner in the whole HUD' end
+  if cards > 3 then return false, 'at most three opponent cards' end
+  if notes > 1 then return false, 'at most one pickup note' end
+  return true
+ end
+
+ local function hud_err(msg) error('gd.ui.hud: ' .. msg, 3) end
+ local function live(p) return not (p.until_s and ui.now >= p.until_s) end
+
+ function ui.hud(d)
+  ui.hud_calls = ui.hud_calls + 1
+  if type(d) ~= 'table' then hud_err('a HUD description is a table') end
+  if is_console() or not ui.owner_mod then hud_err('a HUD belongs to a mod script (the console has none)') end
+  if type(d.id) ~= 'string' or d.id == '' then hud_err('the description has no id') end
+  if d.id:sub(1, #ui.owner_mod + 1) ~= ui.owner_mod .. '.' then hud_err(('id "%s" must start with "%s."'):format(d.id, ui.owner_mod)) end
+  check_arena(d, L)
+  local zones = {}
+  for z, list in pairs(d.zones or {}) do
+   if not ZONES[z] then hud_err('zone ' .. tostring(z) .. ' is not a zone') end
+   if #list > PER_ZONE then hud_err(('zone %s holds at most %d parts (%d given)'):format(z, PER_ZONE, #list)) end
+   zones[z] = {}
+   for i, p in ipairs(list) do
+    if not KINDS[p.kind] or p.kind == 'toast' then hud_err(('part %d of %s has the unknown kind "%s" (strip, banner, card, note, port_card, timer)'):format(i, z, tostring(p.kind))) end
+    if p.kind == 'port_card' and not (type(p.port) == 'number' and p.port >= 1 and p.port <= 4) then hud_err('a port_card needs port 1 to 4') end
+    if p.kind == 'strip' and (#(p.pips or {}) > 8 or #(p.keys or {}) > 8) then hud_err('a strip shows at most 8 slot pips and 8 keystones') end
+    if p.kind == 'card' and #(p.lines or {}) > 3 then hud_err('a card shows at most 3 lines') end
+    local c = {}; for k, v in pairs(p) do c[k] = v end
+    if c.kind == 'note' then c.until_s = ui.now + math.max(0.5, math.min(15, c.seconds or 4)) end
+    zones[z][i] = c
+   end
+  end
+  local old = ui.huds[ui.caller]
+  if old then
+   for z, list in pairs(old.zones) do
+    for _, p in ipairs(list) do
+     if p.kind == 'toast' and live(p) then
+      zones[z] = zones[z] or {}
+      local has = false; for _, q in ipairs(zones[z]) do if q.kind == 'toast' then has = true end end
+      if not has and #zones[z] < PER_ZONE then table.insert(zones[z], 1, p) end
+     elseif p.kind == 'note' and live(p) then
+      for _, q in ipairs(zones[z] or {}) do if q.kind == 'note' and q.text == p.text then q.until_s = p.until_s end end
+     end
+    end
+   end
+  end
+  local ok, why = ui.hud_caps(zones)
+  if not ok then hud_err(why) end
+  if not old then
+   local n = 0; for _ in pairs(ui.huds) do n = n + 1 end
+   if n >= 4 then hud_err('too many HUDs (4)') end
+  end
+  ui.huds[ui.caller] = { id = d.id, owner = ui.caller, zones = zones }
+  return true
+ end
+
+ function ui.hud_clear(id)
+  if is_console() or not ui.owner_mod then error('gd.ui.hud_clear: a HUD belongs to a mod script (the console has none)', 2) end
+  local h = ui.huds[ui.caller]
+  if h and id ~= nil and id ~= h.id then h = nil end
+  if h then ui.huds[ui.caller] = nil end
+  return h ~= nil
+ end
+
+ function ui.toast(t)
+  ui.toast_calls = ui.toast_calls + 1
+  if type(t) ~= 'table' then error('bad argument #1 to toast (table expected)', 2) end
+  if is_console() or not ui.owner_mod then error('gd.ui.toast: a toast belongs to a mod script (the console has none)', 2) end
+  local z = t.zone or 'top_right'
+  if z ~= 'top_left' and z ~= 'top_right' then error('gd.ui.toast: zone is "top_left" or "top_right"', 2) end
+  local h = ui.huds[ui.caller]
+  if not h then h = { id = ui.owner_mod .. '.toast', owner = ui.caller, zones = {} }; ui.huds[ui.caller] = h end
+  h.zones[z] = h.zones[z] or {}
+  local list, at = h.zones[z], nil
+  for i, p in ipairs(list) do if p.kind == 'toast' then at = i end end
+  local secs = math.max(0.5, math.min(15, t.seconds or 4))
+  local p = { kind = 'toast', title = tostring(t.title or ''), text = tostring(t.text or ''), rgba = t.rgba, from_s = ui.now, until_s = ui.now + secs }
+  if at then list[at] = p
+  else
+   if #list >= PER_ZONE then error(('gd.ui.toast: zone %s is full (%d parts)'):format(z, PER_ZONE), 2) end
+   table.insert(list, 1, p)
+  end
+  return true
+ end
+
+ -- the checks run in the binding's order: online, console or not gameplay, no match, another script's claim, an id a mod may not hide
+ function ui.retail_hide(list)
+  ui.retail_hide_calls = ui.retail_hide_calls + 1
+  if type(list) ~= 'table' then error('bad argument #1 to retail_hide (table expected)', 2) end
+  if ui.netplay then error('gd.ui.retail_hide: not available online (nothing retail is hidden online)', 2) end
+  if is_console() or not ui.gameplay then error('gd.ui.retail_hide: needs a gameplay mod script', 2) end
+  if not ui.match_active then error('gd.ui.retail_hide: needs an active match', 2) end
+  if ui.mask_owner and ui.mask_owner ~= ui.caller then error('gd.ui.retail_hide: the mask belongs to another script', 2) end
+  local m = {}
+  for _, e in ipairs(list) do
+   if type(e) ~= 'string' then error('gd.ui.retail_hide: element names are strings', 2) end
+   if e == 'hud.timer' then error('gd.ui.retail_hide: hud.timer may not be hidden by a mod', 2) end
+   if not ELEMENT[e] then error(('gd.ui.retail_hide: unknown retail element "%s"'):format(e), 2) end
+   m[e] = true
+  end
+  ui.mask = m
+  ui.mask_owner = next(m) and ui.caller or nil
+  return true
+ end
+
+ function ui.retail()
+  local hidden = {}
+  if not ui.netplay then for _, e in ipairs(ELEMENTS) do if ui.mask[e] then hidden[#hidden + 1] = e end end end
+  return { hidden = hidden, paused = ui.paused == true, pauser = ui.pauser, takeover = ui.takeover == true }
+ end
+
+ -- the binding's part at a scene change: the script's mask claim goes, every toast and note with it
+ function ui.scene_changed()
+  ui.mask, ui.mask_owner = {}, nil
+  for _, h in pairs(ui.huds) do
+   for z, list in pairs(h.zones) do
+    local keep = {}
+    for _, p in ipairs(list) do if p.kind ~= 'toast' and p.kind ~= 'note' then keep[#keep + 1] = p end end
+    h.zones[z] = keep
+   end
+  end
  end
 
  return ui

@@ -231,3 +231,119 @@ void at_hud_render(const AtHud *h, const AtHudLayout *l, double now_ms, int redu
     }
     if (entries != NULL) *entries = hs.n;
 }
+
+/* ---- the Lua description -> the record (pure: the caller has already copied the table into a value tree) ---- */
+#define HFAIL(...) do { snprintf(err, (size_t) errcap, __VA_ARGS__); return 0; } while (0)
+
+static const char *const ZONE_NAMES[AT_Z_COUNT] = { "top_left", "top_center", "top_right", "bottom_left", "bottom_center", "bottom_right" };
+const char *at_hud_zone_name(int z) { return (z >= 0 && z < AT_Z_COUNT) ? ZONE_NAMES[z] : NULL; }
+int at_hud_zone_by_name(const char *name)
+{
+    int z;
+    for (z = 0; z < AT_Z_COUNT; z++) if (name != NULL && strcmp(name, ZONE_NAMES[z]) == 0) return z;
+    return -1;
+}
+
+static unsigned colour_of(const AtvArena *a, int n)
+{
+    double d = atv_numv(a, n, 0.0);
+    if (d != d || d < 0.0 || d > 4294967295.0) return 0u;
+    return (unsigned) d;
+}
+static void copy_str(const AtvArena *a, int t, const char *k, char *dst, int cap)
+{
+    int n = atv_get(a, t, k);
+    if (atv_kind(a, n) == ATV_STR) snprintf(dst, (size_t) cap, "%s", atv_strv(a, n, ""));
+}
+static double clamp_secs(double s) { return s != s ? 4.0 : (s < 0.5 ? 0.5 : (s > 15.0 ? 15.0 : s)); }
+
+int at_hud_from_val(const AtvArena *a, int root, const char *owner_mod, double now_ms, AtHud *out, char *err, int errcap)
+{
+    const char *id;
+    int zones, z, i, k;
+    memset(out, 0, sizeof *out);
+    if (a->overflow) HFAIL("gd.ui.hud: the description is too large");
+    if (atv_kind(a, root) != ATV_TABLE) HFAIL("gd.ui.hud: a HUD description is a table");
+    id = atv_strv(a, atv_get(a, root, "id"), "");
+    if (id[0] == '\0') HFAIL("gd.ui.hud: the description has no id");
+    if (owner_mod != NULL && owner_mod[0] != '\0') {
+        size_t ol = strlen(owner_mod);
+        if (strncmp(id, owner_mod, ol) != 0 || id[ol] != '.') HFAIL("gd.ui.hud: id \"%s\" must start with \"%s.\"", id, owner_mod);
+    }
+    if (strlen(id) >= sizeof out->id) HFAIL("gd.ui.hud: id \"%s\" is too long (%d characters at most)", id, (int) sizeof out->id - 1);
+    snprintf(out->id, sizeof out->id, "%s", id);
+    zones = atv_get(a, root, "zones");
+    if (zones >= 0 && atv_kind(a, zones) != ATV_TABLE) HFAIL("gd.ui.hud: zones is a table of zone names to part lists");
+    for (z = 0; z < AT_Z_COUNT && zones >= 0; z++) {
+        int list = atv_get(a, zones, ZONE_NAMES[z]), n;
+        if (list < 0) continue;
+        if (atv_kind(a, list) != ATV_TABLE) HFAIL("gd.ui.hud: zone %s is a list of parts", ZONE_NAMES[z]);
+        n = atv_len(a, list);
+        if (n > AT_HUD_PER_ZONE) HFAIL("gd.ui.hud: zone %s holds at most %d parts (%d given)", ZONE_NAMES[z], AT_HUD_PER_ZONE, n);
+        for (i = 0; i < n; i++) {
+            int pt = atv_at(a, list, i + 1), t, kn;
+            const char *kind;
+            AtHudPart *p = &out->z[z][i];
+            if (atv_kind(a, pt) != ATV_TABLE) HFAIL("gd.ui.hud: part %d of %s is not a table", i + 1, ZONE_NAMES[z]);
+            kind = atv_strv(a, atv_get(a, pt, "kind"), "");
+            p->progress = -1.0f;
+            if (strcmp(kind, "strip") == 0) {
+                int pips = atv_get(a, pt, "pips"), keys = atv_get(a, pt, "keys");
+                p->kind = AT_HP_STRIP;
+                kn = atv_len(a, pips);
+                if (kn > 8) HFAIL("gd.ui.hud: a strip shows at most 8 slot pips (%d given)", kn);
+                for (k = 0; k < kn; k++) { t = atv_at(a, pips, k + 1); p->strip.pip_fill[k] = colour_of(a, atv_get(a, t, "fill")); p->strip.pip_ring[k] = colour_of(a, atv_get(a, t, "ring")); }
+                p->strip.n_pips = kn;
+                kn = atv_len(a, keys);
+                if (kn > 8) HFAIL("gd.ui.hud: a strip shows at most 8 keystones (%d given)", kn);
+                for (k = 0; k < kn; k++) {
+                    const char *l;
+                    t = atv_at(a, keys, k + 1);
+                    l = atv_strv(a, atv_get(a, t, "letter"), "");
+                    p->strip.key_letter[k] = l[0];
+                    p->strip.key_rgba[k] = colour_of(a, atv_get(a, t, "rgba"));
+                }
+                p->strip.n_keys = kn;
+                copy_str(a, pt, "wait", p->strip.wait, (int) sizeof p->strip.wait);
+            } else if (strcmp(kind, "banner") == 0) {
+                const char *b = atv_strv(a, atv_get(a, pt, "button"), "A");
+                p->kind = AT_HP_BANNER;
+                copy_str(a, pt, "text", p->text, AT_STR);
+                p->btn = (b[0] != '\0' && strchr("ABXYZLR", b[0]) != NULL) ? b[0] : 'A';
+                p->progress = (float) atv_numv(a, atv_get(a, pt, "progress"), -1.0);
+                if (p->progress != p->progress) p->progress = -1.0f;
+            } else if (strcmp(kind, "card") == 0) {
+                int lines = atv_get(a, pt, "lines");
+                p->kind = AT_HP_CARD;
+                copy_str(a, pt, "title", p->text, AT_STR);
+                p->rgba = colour_of(a, atv_get(a, pt, "rgba"));
+                kn = atv_len(a, lines);
+                if (kn > 3) HFAIL("gd.ui.hud: a card shows at most 3 lines (%d given)", kn);
+                for (k = 0; k < kn; k++) snprintf(p->lines[k], AT_STR, "%s", atv_strv(a, atv_at(a, lines, k + 1), ""));
+                p->n_lines = kn;
+            } else if (strcmp(kind, "note") == 0) {
+                p->kind = AT_HP_NOTE;
+                copy_str(a, pt, "text", p->text, AT_STR);
+                p->from_ms = now_ms;
+                p->until_ms = now_ms + 1000.0 * clamp_secs(atv_numv(a, atv_get(a, pt, "seconds"), 4.0));
+            } else if (strcmp(kind, "port_card") == 0) {
+                double port = atv_numv(a, atv_get(a, pt, "port"), 0.0);
+                p->kind = AT_HP_PORT_CARD;
+                if (!(port >= 1.0 && port <= 4.0)) HFAIL("gd.ui.hud: a port_card needs port 1 to 4");
+                p->port.port = (int) port;
+            } else if (strcmp(kind, "timer") == 0) {
+                double s = atv_numv(a, atv_get(a, pt, "seconds"), 0.0);
+                p->kind = AT_HP_TIMER;
+                p->seconds = (s != s || s < 0.0) ? 0 : (s > 5999.0 ? 5999 : (int) s);
+            } else {
+                HFAIL("gd.ui.hud: part %d of %s has the unknown kind \"%s\" (strip, banner, card, note, port_card, timer)", i + 1, ZONE_NAMES[z], kind);
+            }
+        }
+        out->n[z] = n;
+    }
+    {
+        char why[96];
+        if (!at_hud_cap_ok(out, why, sizeof why)) HFAIL("gd.ui.hud: %s", why);
+    }
+    return 1;
+}

@@ -245,6 +245,48 @@ do
   local con = Stub.new({}); con.screens, con._owner, con._f, con.views, con._rows = u.screens, u._owner, u._f, u.views, u._rows
   check(con.forget('a.s1') == true, 'the console may forget any screen (console-only check)')
 end
+-- Atlas step 3, Task 7: the HUD layer and the retail takeover in the stand-in
+do
+  local u = Stub.new({ mod = 'envoy' })
+  check(u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'strip', pips = {}, keys = {} } }, top_center = { { kind = 'banner', text = 'Collect the drives', button = 'A' } } } }), 'a HUD registers')
+  raises(function() u.hud({ id = 'other.hud', zones = {} }) end, 'must start with', 'the id starts with the mod')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'banner' } }, top_center = { { kind = 'banner' } } } }) end, 'banner', 'one banner only, in top_center')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_right = { { kind = 'card' }, { kind = 'card' }, { kind = 'card' }, { kind = 'card' } } } }) end, 'three opponent cards', 'three cards at most')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'note' }, {}, {}, {}, {} } } }) end, 'holds at most', 'four parts per zone')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'wobble' } } } }) end, 'unknown kind', 'a known kind')
+  raises(function() u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'port_card', port = 9 } } } }) end, 'port 1 to 4', 'a port')
+  check(u.huds['envoy/main'].zones.top_left[1].kind == 'strip', 'a refused description changed nothing')
+  check(u.toast({ zone = 'top_right', title = 'ONE', text = 'a' }) and u.toast({ zone = 'top_right', title = 'TWO', text = 'b' }), 'toasts register')
+  check(#u.huds['envoy/main'].zones.top_right == 1 and u.huds['envoy/main'].zones.top_right[1].title == 'TWO', 'a toast replaces the zone\'s toast, never queues')
+  raises(function() u.toast({ zone = 'bottom_left', title = 'x' }) end, 'top_left', 'a toast lives in a top corner')
+  u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'note', text = 'Merged', seconds = 4 } } } })
+  check(u.huds['envoy/main'].zones.top_right[1].title == 'TWO', 'a re-description keeps the live toast')
+  local until_s = u.huds['envoy/main'].zones.top_left[1].until_s
+  u.now = u.now + 0.5; u.hud({ id = 'envoy.hud', zones = { top_left = { { kind = 'note', text = 'Merged', seconds = 4 } } } })
+  check(u.huds['envoy/main'].zones.top_left[1].until_s == until_s, 'the same note keeps its clock')
+  u.now = 100; u.hud({ id = 'envoy.hud', zones = {} })
+  check(#(u.huds['envoy/main'].zones.top_right or {}) == 0, 'an expired toast is not kept')
+  check(u.hud_clear() == true and u.hud_clear() == false, 'hud_clear')
+  -- retail_hide: the binding's checks in its order
+  check(u.retail_hide({ 'hud.damage' }) and u.retail().hidden[1] == 'hud.damage', 'hide an element')
+  raises(function() u.retail_hide({ 'hud.timer' }) end, 'hud.timer may not be hidden', 'never the clock')
+  raises(function() u.retail_hide({ 'hud.bogus' }) end, 'unknown retail element', 'a known element')
+  local b = Stub.new({ mod = 'envoy', caller = 'envoy/second' }); b.mask, b.mask_owner = u.mask, u.mask_owner
+  raises(function() b.retail_hide({ 'hud.stock' }) end, 'belongs to another script', 'another script\'s mask')
+  u.netplay = true
+  raises(function() u.retail_hide({ 'hud.stock' }) end, 'online', 'refused online')
+  check(#u.retail().hidden == 0, 'nothing is hidden online')
+  u.netplay = false; u.match_active = false
+  raises(function() u.retail_hide({ 'hud.stock' }) end, 'active match', 'needs a match')
+  u.match_active = true; u.scene_changed()
+  check(#u.retail().hidden == 0 and u.mask_owner == nil, 'a scene change releases the mask')
+  check(u.retail_hide({ 'hud.stock' }) and u.retail_hide({}) and #u.retail().hidden == 0, '{} releases it')
+  local con = Stub.new({})
+  raises(function() con.hud({ id = 'envoy.hud', zones = {} }) end, 'mod script', 'the console has no HUD (console-only check)')
+  raises(function() con.retail_hide({}) end, 'gameplay mod script', 'the console may not hide retail (console-only check)')
+  local ng = Stub.new({ mod = 'envoy', gameplay = false })
+  raises(function() ng.retail_hide({ 'hud.stock' }) end, 'gameplay mod script', 'a non-gameplay script may not hide retail')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

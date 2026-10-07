@@ -2,6 +2,7 @@
 #include "atlas_fake.h"
 #include "atlas_rec.h"
 #include "../platform/gw_ui_hud.h"
+#include "../platform/gw_ui_val.h"
 
 static const float WIDTHS[3] = { 640.0f, 853.0f, 1140.0f };
 static int meets(AtRect a, AtRect b) { return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h; }
@@ -69,4 +70,41 @@ static void expiry_and_render_style(void)
         CHECK(no_focus_cues() && texts_legible() && entries <= AT_HUD_QUAD_CAP);
     }
 }
-int main(void) { keepout_and_safe(); hidden_element_frees_space(); caps(); expiry_and_render_style(); ATLAS_DONE("atlas-hud"); }
+/* ---- the description -> record conversion (what gd.ui.hud copies from Lua) ---- */
+static AtvArena ARENA;
+static int tbl(void) { return atv_table(&ARENA); }
+static int sset(int t, const char *k, const char *v) { return atv_set(&ARENA, t, k, atv_str(&ARENA, v)); }
+static int nset(int t, const char *k, double v) { return atv_set(&ARENA, t, k, atv_num(&ARENA, v)); }
+static int part(const char *kind) { int p = tbl(); sset(p, "kind", kind); return p; }
+static void from_val(void)
+{
+    AtHud h; char err[160]; int root, zones, tl, tc, strip, pips, pip, keys, key, banner, tr, card, lines;
+    atv_init(&ARENA);
+    root = tbl(); sset(root, "id", "envoy.hud"); zones = tbl(); atv_set(&ARENA, root, "zones", zones);
+    tl = tbl(); atv_set(&ARENA, zones, "top_left", tl);
+    strip = part("strip"); atv_push(&ARENA, tl, strip);
+    pips = tbl(); atv_set(&ARENA, strip, "pips", pips); pip = tbl(); nset(pip, "fill", (double) 0xF07474FFu); nset(pip, "ring", (double) 0xF2C14EFFu); atv_push(&ARENA, pips, pip);
+    keys = tbl(); atv_set(&ARENA, strip, "keys", keys); key = tbl(); sset(key, "letter", "P"); nset(key, "rgba", (double) 0xB872F0FFu); atv_push(&ARENA, keys, key);
+    sset(strip, "wait", "2 waiting");
+    tc = tbl(); atv_set(&ARENA, zones, "top_center", tc);
+    banner = part("banner"); sset(banner, "text", "Collect the drives"); sset(banner, "button", "A"); atv_push(&ARENA, tc, banner);
+    tr = tbl(); atv_set(&ARENA, zones, "top_right", tr);
+    card = part("card"); sset(card, "title", "MARTH"); lines = tbl(); atv_push(&ARENA, lines, atv_str(&ARENA, "Pyromancer")); atv_set(&ARENA, card, "lines", lines); atv_push(&ARENA, tr, card);
+    CHECK(at_hud_from_val(&ARENA, root, "envoy", 1000.0, &h, err, sizeof err));
+    CHECK_STR(h.id, "envoy.hud");
+    CHECK(h.n[AT_Z_TOP_LEFT] == 1 && h.z[AT_Z_TOP_LEFT][0].kind == AT_HP_STRIP && h.z[AT_Z_TOP_LEFT][0].strip.n_pips == 1 && h.z[AT_Z_TOP_LEFT][0].strip.n_keys == 1);
+    CHECK(h.z[AT_Z_TOP_LEFT][0].strip.pip_fill[0] == 0xF07474FFu && h.z[AT_Z_TOP_LEFT][0].strip.key_letter[0] == 'P');
+    CHECK(h.z[AT_Z_TOP_CENTER][0].kind == AT_HP_BANNER && h.z[AT_Z_TOP_CENTER][0].btn == 'A' && h.z[AT_Z_TOP_CENTER][0].progress < 0.0f);
+    CHECK(h.z[AT_Z_TOP_RIGHT][0].kind == AT_HP_CARD && h.z[AT_Z_TOP_RIGHT][0].n_lines == 1);
+    CHECK(!at_hud_from_val(&ARENA, root, "other", 1000.0, &h, err, sizeof err) && strstr(err, "must start with") != NULL);
+    { int r2 = tbl(), z2 = tbl(), l2 = tbl(); sset(r2, "id", "envoy.hud"); atv_set(&ARENA, r2, "zones", z2); atv_set(&ARENA, z2, "top_left", l2);
+      atv_push(&ARENA, l2, part("wobble"));
+      CHECK(!at_hud_from_val(&ARENA, r2, "envoy", 1000.0, &h, err, sizeof err) && strstr(err, "unknown kind") != NULL); }
+    { int b2 = part("banner"); atv_push(&ARENA, tl, b2);                   /* a second banner, and in the wrong zone */
+      CHECK(!at_hud_from_val(&ARENA, root, "envoy", 1000.0, &h, err, sizeof err) && strstr(err, "banner") != NULL && strstr(err, "gd.ui.hud") != NULL); }
+    { int pc = part("port_card"); int z2 = tbl(); int r2 = tbl(); atv_set(&ARENA, r2, "id", atv_str(&ARENA, "envoy.hud")); atv_set(&ARENA, r2, "zones", z2);
+      atv_set(&ARENA, z2, "top_left", tbl()); atv_push(&ARENA, atv_get(&ARENA, z2, "top_left"), pc); nset(pc, "port", 7);
+      CHECK(!at_hud_from_val(&ARENA, r2, "envoy", 1000.0, &h, err, sizeof err) && strstr(err, "port 1 to 4") != NULL); }
+    CHECK(at_hud_zone_by_name("top_right") == AT_Z_TOP_RIGHT && at_hud_zone_by_name("middle") == -1 && strcmp(at_hud_zone_name(AT_Z_BOTTOM_LEFT), "bottom_left") == 0);
+}
+int main(void) { keepout_and_safe(); hidden_element_frees_space(); caps(); expiry_and_render_style(); from_val(); ATLAS_DONE("atlas-hud"); }

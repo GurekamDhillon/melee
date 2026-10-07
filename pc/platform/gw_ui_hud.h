@@ -6,6 +6,7 @@
 #define GW_UI_HUD_H
 #include "gw_ui_parts.h"
 #include "gw_ui_retail_ids.h"
+#include "gw_ui_val.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,6 +37,13 @@ int    at_hud_cap_ok(const AtHud *h, char *why, int cap);       /* the quiet-HUD
 void   at_hud_layout(const AtHud *h, float canvas_w, const AtKeepOut *k, double now_ms, const AtTextOps *o, AtHudLayout *out);
 /* draws every shown part; entries counts what was sent to the sink (at most AT_HUD_QUAD_CAP: later ones are dropped) */
 void   at_hud_render(const AtHud *h, const AtHudLayout *l, double now_ms, int reduced, const AtTextOps *o, const AtSink *s, int *entries);
+
+/* The zone names ("top_left" ... "bottom_right") and their numbers. */
+const char *at_hud_zone_name(int zone);
+int    at_hud_zone_by_name(const char *name);                     /* -1 when it is not a zone */
+/* 1 ok; 0 with the reason in err ("gd.ui.hud: ..."). owner_mod: the mod id the HUD's id must start with (NULL or "" for none). The cap
+ * check (at_hud_cap_ok) is part of it. A note's from/until are taken from now_ms. */
+int    at_hud_from_val(const AtvArena *a, int root, const char *owner_mod, double now_ms, AtHud *out, char *err, int errcap);
 
 #ifdef __cplusplus
 }

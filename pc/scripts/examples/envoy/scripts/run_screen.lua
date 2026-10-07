@@ -314,6 +314,11 @@ return function(D)
  function S:focused() self:refresh();local c=self.view:focused();return c,c and c.ref end
  -- ---- lifecycle -----------------------------------------------------------------------------------------------
  function S:open(mode)
+  -- ONE SEAT'S SCREEN AT A TIME (Atlas step 3): another seat's Envoy screen on top means this seat's bag waits, with a toast in its own corner
+  if mode=='bag' and D.atlas_kit and D.atlas_kit.enabled(self.g) then
+   local ok,why=D.atlas_kit.may_open(self)
+   if not ok then D.atlas_kit.say_busy(self,why);self.host:log('bag not opened: '..why);return false end
+  end
   self.active=true;self.mode=mode;self.layout='main';self.swap=nil;self.confirm=nil;self.notice=nil;self.dirty=true;self.view=nil;self.key=nil;self.marked=nil
   self:load_models()
   self.input:set_active(true,true);self.input.previous.start=true;self.input.previous.accept=true;self.input.previous.back=true

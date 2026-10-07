@@ -302,4 +302,59 @@ T.test('Atlas off or legacy: the legacy box and its cursor input stay', function
   D.atlas_kit.set_legacy(false)
 end)
 
+-- ---- Task 17: one seat's screen at a time, and the screen count ---------------------------------------------------------------
+
+local function count_screens(ui) local n = 0; for _ in pairs(ui.screens) do n = n + 1 end; return n end
+
+T.test('seat 2\'s bag waits while seat 1\'s reward is up, with a toast in its own corner', function()
+  local e1 = F.start(D, { seat = { port = 1, index = 1 } }); F.stage(e1.host)
+  local e2 = F.new(D, { seat = { port = 2, index = 2 } })
+  e2.host.g = e1.g; e2.host.screen.g = e1.g; e2.host.screen.input.g = e1.g
+  e2.run(true); e2.host:run_begin(4243); F.stage(e2.host)
+  reward(e1, F.plain_drives(e1.host, 3))
+  assert(e1.ui.state().top == 'envoy.reward')
+  e2.host.screen:open('bag')
+  assert(not e2.host.screen.active and e1.ui.state().top == 'envoy.reward', 'seat 2\'s bag did not open over seat 1\'s screen')
+  local t; for _, p in ipairs(e1.ui.huds['envoy/main'] and e1.ui.huds['envoy/main'].zones.top_right or {}) do if p.kind == 'toast' then t = p end end
+  assert(t and t.text == 'Player 1 has a screen open', 'a toast in seat 2\'s corner (top right): ' .. tostring(t and t.text))
+  assert(has_log(e1, 'bag not opened: Player 1 has a screen open'), 'and said so in the log')
+  -- seat 1's own bag is not blocked by its own screen being on top
+  local e3 = F.start(D); F.stage(e3.host); e3.host.screen:open('bag')
+  assert(e3.host.screen.active and e3.ui.state().top == 'envoy.bag', 'a solo bag opens')
+  e3.host.screen:close()
+end)
+
+T.test('seat 1\'s bag waits while seat 2\'s screen is up', function()
+  local e = F.start(D, { seat = { port = 1, index = 1 } }); F.stage(e.host)
+  e.ui.screen({ id = 'envoy.reward.p2', primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } }); e.ui.open('envoy.reward.p2')
+  e.host.screen:open('bag')
+  assert(not e.host.screen.active and e.ui.state().top == 'envoy.reward.p2')
+  local ok, why = D.atlas_kit.may_open(e.host.screen); assert(not ok and why == 'Player 2 has a screen open', tostring(why))
+end)
+
+T.test('envoy registers at most nine screens, and frees them all at run end', function()
+  local e = F.start(D); F.stage(e.host)
+  local S = e.host.screen
+  S:open('bag'); S:close()                                                       -- envoy.bag
+  local many = F.plain_drives(e.host, 3)
+  F.present(e.host, many); S:close()                                             -- envoy.reward
+  local ids = D.keystones.offer(D.mod_progression.context(10, 0), 77, 3, {})
+  F.present(e.host, {}, ids); S:close()                                          -- envoy.keystone
+  e.ui.screen({ id = 'envoy.swap', primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } })   -- (the swap screen is registered by atlas_swap: counted by its test)
+  local n = count_screens(e.ui)
+  assert(n >= 3 and n <= 9, 'at most nine live: ' .. n)
+  e.host:run_end()
+  assert(count_screens(e.ui) == 0, 'after the run ends every Envoy screen is forgotten: ' .. count_screens(e.ui))
+  assert(#e.ui.stack == 0)
+end)
+
+T.test('forget_all frees the slots of every id Envoy uses, seats included', function()
+  local e = F.start(D)
+  for _, id in ipairs({ 'envoy.bag', 'envoy.bag.p2', 'envoy.reward', 'envoy.keystone', 'envoy.swap', 'envoy.setup', 'envoy.pause', 'envoy.results', 'envoy.netpick' }) do
+    e.ui.screen({ id = id, primary = { kind = 'list', items = { { id = 'a', label = 'A' } } } })
+  end
+  assert(count_screens(e.ui) == 9)
+  assert(D.atlas_kit.forget_all(e.g) == 9 and count_screens(e.ui) == 0)
+end)
+
 T.done()

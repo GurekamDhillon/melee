@@ -1094,6 +1094,7 @@ return function(D)
   if self.screen.active then self.screen:close() end
   if #self.offers>0 or #self.key_offers>0 or #self.decide>0 then self:finish_reward('run-end') end
   self.running=false;self.fell={};self.rolls={};self.mods:run_end();self.hud:clear();if self.synfx then self.synfx:reset() end;self:log('run end: bag and build cleared')
+  if D.atlas_kit then D.atlas_kit.forget_all(self.g) end   -- Atlas step 3: every Envoy screen is forgotten, so the engine's 16 slots are free again
  end
  -- The model as text, for the console and the tests.
  function H:dump()

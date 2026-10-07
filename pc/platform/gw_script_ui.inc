@@ -31,6 +31,7 @@ typedef struct {
     int rebuilds;           /* an engine screen: how many times its record was replaced */
     unsigned primed_frame;  /* an engine screen: the tick it became the top again (an intent in that same frame is dropped) */
     int self_close;         /* an engine screen the host runs alone (Credits): B closes it here, no event reaches the game */
+    int native_sel;         /* a select screen (gw_script_ui_sel.inc): its cells are in adapter storage, the mouse is read there */
     AtScreen sc;
     AtView view;
     AtHits hits;
@@ -376,6 +377,8 @@ static int gs_ui_open_screen(int slot) {
     GsUiSlot *u = &gs_ui_slot[slot];
     int owner = u->owner;
     AtStackEntry *top;
+    { int t = at_stack_top(&gs_ui_stack);                          /* no mod screen over a select: it owns the pad and the cursors of every port */
+      if (t >= 0 && gs_ui_slot[t].native_sel) { gw_log("ui: screen %s not opened: a select screen is on top", u->sc.id); return 0; } }
     if (!at_stack_push(&gs_ui_stack, slot)) return 0;
     top = at_stack_top_entry(&gs_ui_stack);
     if (top != NULL && top->focus.block >= 0 && u->view.focus.block < 0) u->view.focus = top->focus;
@@ -488,6 +491,7 @@ static int gs_ui_value_event(int slot, const AtEvent *e) {
 static void gs_ui_engine_event(int slot, const AtEvent *e);
 static void gs_ui_fix_scroll(GsUiSlot *u);
 static void gs_ui_overlay_try(void);
+static void gs_sel_tick(GsUiSlot *u);
 
 static void gs_ui_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
@@ -566,6 +570,7 @@ static void gs_ui_tick(void) {
     }
     if (!gs_ui_usable(u->owner)) { gs_ui_release(u->owner); return; }   /* switched off or unloaded: its screens go (never an engine screen) */
     if (!gs_may_run(u->owner)) return;
+    if (u->native_sel) { gs_sel_tick(u); return; }                      /* a select screen: its own mouse path; the pad is the game's */
     if (at_screen_wants_pad(&u->sc)) {
         int sx, sy;
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
@@ -600,7 +605,7 @@ static void gs_ui_draw(void) {
     if (top < 0 || !gs_ui_roles_ok()) return;
     u = &gs_ui_slot[top];
     if (!u->used || !gs_ui_usable(u->owner)) return;
-    if (u->owner == GS_UI_ENGINE && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
+    if (u->owner == GS_UI_ENGINE && !u->native_sel && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
     if (gw_Kit_QuadRoom() < AT_SCREEN_QUAD_CAP) {
         if (!u->warned) { u->warned = 1; gw_log("ui: %s not drawn: only %d quads left this frame", u->sc.id, gw_Kit_QuadRoom()); }
         return;
@@ -891,7 +896,7 @@ void gw_Ui_Intent(int type, int a) {
     GsUiSlot *u;
     if (top < 0) return;
     u = &gs_ui_slot[top];
-    if (!u->used || u->owner != GS_UI_ENGINE) return;              /* a script's screen on top: the menu takes no input */
+    if (!u->used || u->owner != GS_UI_ENGINE || u->native_sel) return;   /* a script's screen on top: the menu takes no input; a select reads the pads itself */
     if (gs_ui_menu_held_by != -2) return;                          /* held by a script (gd.ui.hold_menu): no input either */
     if (u->primed_frame == gs_ui_frame + 1) return;                 /* the press that uncovered it is not its own */
     if (!gs_may_run(GS_UI_ENGINE)) return;
@@ -1457,3 +1462,5 @@ static void gs_push_ui(lua_State *L) {
     lua_newtable(L);
     gs_prof_setfuncs(L, gs_ui_funcs, "gd.ui");
 }
+
+#include "gw_script_ui_sel.inc"

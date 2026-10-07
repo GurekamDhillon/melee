@@ -788,6 +788,90 @@ do
   lab("ui on"); lab("menu")
   expect(ui.state().top == SCREEN and #rows() >= 1, "after a reload the screen opens again from the new instance")
   lab("menu close"); lab("ui off")
+
+  -- ---- Task 9: the HUD ----
+  lab("ui on")
+  -- the harness's fake fighters carry only what the older checks read; the info readout reads the rest (the real game has them all)
+  for i = 1, 2 do
+    local q = P[i]
+    for k, v in pairs({ anim_frame_f = 0, anim_rate = 1, vx = 0, vy = 0, kb_vx = 0, kb_vy = 0, jumps_max = 2, jumps_left = 2, walljumps_used = 0, ground_vel = 0,
+                        hitlag = 0, hitstun = 0, kb_applied = 0, ledge_cooldown = 0, ecb_lock = 0, anim_name = "", intangible = 0, invincible = 0 }) do
+      if q[k] == nil then q[k] = v end
+    end
+    q.ecb = q.ecb or { bottom = { y = 0 } }
+  end
+  local old_timeline = gd.timeline                                            -- the harness's timeline has no motion_name; the real one does
+  gd.timeline = function(port, id) local tt = old_timeline(port, id); tt.motion_name = tt.motion_name or P[port].motion_name; return tt end
+  local function hud() return ui.huds[ui.caller] end                           -- what gd.ui.hud last got from this script
+  local function zone(name) return hud() and hud().zones and hud().zones[name] or {} end
+  local function part(zn, kind) for _, p in ipairs(zone(zn)) do if p.kind == kind then return p end end end
+  local function tap(k) gd.key_pressed = function(x) return x == k end pcall(env.on_tick) gd.key_pressed = function() return false end end
+  lab("mode inspect"); run(2)
+  if not lab("status"):find("info=ON", 1, true) then tap("I") end
+  pcall(env.on_tick)
+  expect(hud() ~= nil and hud().id == "geno-lab.hud", "in a LAB match the HUD is registered through gd.ui.hud")
+  local info = part("top_left", "readout")
+  expect(info ~= nil and #info.rows >= 9 and info.title:find("P1", 1, true) ~= nil, "INSPECT with I on: an info readout for the focused fighter")
+  local labels = {}
+  for _, r in ipairs(info.rows) do labels[r.label] = r.value end
+  expect(labels["Motion"] ~= nil and labels["Position"] ~= nil and labels["Hitlag"] ~= nil and labels["Shield"] ~= nil, "the readout has the info panel's fields as label and value rows")
+  for _, r in ipairs(info.rows) do expect(#r.label <= 23 and #r.value <= 39, "readout row fits its fields: " .. r.label) end
+  expect(#info.rows <= 10, "ten rows at most: the panel has to end above the middle of the screen")
+  local second = part("top_right", "readout")
+  expect(second ~= nil and second.title:find("P2", 1, true) ~= nil, "a second readout for the other fighter, in the other corner")
+  lab("mode frames"); run(2)
+  if not lab("status"):find("timeline=ON", 1, true) then tap("T") end
+  pcall(env.on_tick)
+  local tl = part("bottom_center", "track")
+  expect(tl ~= nil and tl.len >= 1 and tl.now >= 1 and tl.now <= tl.len, "FRAMES with T on: a timeline track for the focused fighter, the playhead inside the move")
+  expect(type(tl.spans) == "table" and type(tl.marks) == "table" and tl.right:find("f ", 1, true) ~= nil, "windows, marks and the 'f n / len' text")
+  for _, m in ipairs(tl.marks) do expect(m.kind == "iasa" or m.kind == "invinc" or m.kind == "gfx" or m.kind == "sfx" or m.kind == "vis", "a mark kind the part knows: " .. tostring(m.kind)) end
+  local chips = part("bottom_left", "chips")
+  expect(chips ~= nil and #chips.items >= 2, "the mode strip: the mode and its toggles")
+  expect(chips.items[1].text == "FRAMES", "the first chip names the mode (a word, not a colour)")
+  -- a notice is a corner note for its two seconds, then gone
+  gd.time = function() return now / 60 end
+  gd.hot_reload_status = function() return { text = "ok" } end
+  env.on_hot_reload(true); pcall(env.on_tick)                       -- on_hot_reload calls say("Reloaded: ok")
+  local note = part("top_center", "note")
+  expect(note ~= nil and note.text == "Reloaded: ok" and note.tone == "ok", "say() shows a corner note")
+  now = now + 600; pcall(env.on_tick)
+  expect(part("top_center", "note") == nil, "and it is gone after its time")
+  -- the menu open: the HUD is cleared (the pause screen is the only thing drawn)
+  lab("menu"); pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_center") == 0 and #zone("bottom_left") == 0, "with the pause menu open the HUD is empty")
+  lab("menu close")
+  -- hidden or off: nothing
+  lab("hide"); pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_left") == 0, "Lab UI hidden: no HUD parts")
+  lab("hide")
+  -- online or outside a LAB match: no HUD
+  local real_match = gd.match
+  gd.match = function() return { active = true, frame = now, netplay = true } end
+  pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_left") == 0, "online: the Lab draws no HUD")
+  gd.match = real_match
+  -- the legacy drawing steps aside for these four things while the HUD is on, and comes back with `lab ui off`
+  lab("mode inspect")
+  lab("ui off"); pcall(env.on_tick)
+  expect(#zone("top_left") == 0 and #zone("bottom_left") == 0, "lab ui off clears the HUD")
+  lab("ui on")
+  -- a HUD that fails says so once and does not stop the tick
+  local real_hud = ui.hud
+  ui.hud = function() error("boom") end
+  logs = {}
+  pcall(env.on_tick); pcall(env.on_tick)
+  local said = 0
+  for _, l in ipairs(logs) do if l:find("the HUD failed", 1, true) then said = said + 1 end end
+  expect(said == 1, "a failing HUD is logged once and the tick goes on (said " .. said .. " times)")
+  ui.hud = real_hud
+  -- the budget: building the HUD every tick stays small
+  lab("mode inspect")
+  local t0 = os.clock()
+  for _ = 1, 200 do pcall(env.on_tick) end
+  expect((os.clock() - t0) / 200 < 0.002, string.format("a HUD rebuild is under 2 ms of Lua (%.3f ms)", (os.clock() - t0) / 200 * 1000))
+  gd.timeline = old_timeline
+  lab("ui off"); lab("mode training")
 -- (Task 9 adds its checks above this closing end: one block, one preamble, no new file-scope local)
 end
 for k in pairs(unknown) do u[#u + 1] = k end

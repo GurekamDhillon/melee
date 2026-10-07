@@ -1541,7 +1541,7 @@ local function draw_frames(list)
   txt(18, 24, s, "body", BONE)
   txt(8 + w - 10, 23, extra, "caption", MUTED, "right")
   if T("net") then draw_rollbacks() end
-  if not T("timeline") then return end
+  if not T("timeline") or (menu.ui.hud_on and menu.ui.hud_on()) then return end
   local others = {}
   for _, p in ipairs(list) do if p.port ~= focus then others[#others + 1] = p end end
   local n = 1 + math.min(1, #others)
@@ -5105,6 +5105,94 @@ end
     if okl and #list > 0 then table.insert(TABS, #TABS, { name = "MODS", icon = "lab_modes", items = mod_items }) end
   end
 
+  -- ---- the HUD (menu closed): info readouts, the timeline, the mode strip, a notice -------------------------------------------
+  -- Descriptions for gd.ui.hud, rebuilt every script tick from what the legacy drawing reads (info_lines, draw_timeline, draw_strip, say): no number is typed in.
+  -- Everything else the LAB draws (hitboxes, skeleton, ECB, hit labels, the performance graph, the move browser, launch, A/B, the rollback strip, the help
+  -- overlay, the event log, drill results) is a dev overlay and keeps its primitive drawing.
+  local HUD = "geno-lab.hud"
+  local hud_was_empty = false
+  local function tone(c) -- the Lab's own colours mean: gold = something is active, OK = good, DANGER = bad; map them to the readout's tones
+    if c == GOLD then return "warn" elseif c == OK then return "ok" elseif c == DANGER then return "bad" end
+    return nil
+  end
+  -- ten rows a fighter: the panel is 200 px wide and sits between the retail timer and the corner (the HUD layout keeps it off the retail damage plates);
+  -- the old panel's ECB row is not shown (it has no room), the others are folded into these
+  local function info_rows(p)
+    local r = {}
+    local function add(label, value, c) r[#r + 1] = { label = label, value = clip(value, 39), tone = tone(c) } end
+    add("Motion", string.format("%s  f%d", p.motion_name, p.action_frame + 1))
+    add("Action", string.format("%d  %s %.1f", p.action, p.anim_name ~= "" and p.anim_name or "-", p.anim_frame_f))
+    add("Position", string.format("%s %s  %s", f2(p.x), f2(p.y), p.airborne and "air" or "ground"))
+    add("Velocity", string.format("%s %s", f2(p.vx), f2(p.vy)))
+    add("Knockback v", string.format("%s %s", f2(p.kb_vx), f2(p.kb_vy)))
+    add("Jumps", string.format("%d/%d  wj %d", p.jumps_left, p.jumps_max, p.walljumps_used))
+    add("Hitlag", string.format("%.0f", p.hitlag), p.in_hitlag and GOLD or nil)
+    add("Hitstun", string.format("%.0f  kb %.1f", p.hitstun, p.kb_applied), p.in_hitstun and GOLD or nil)
+    add("Body", string.format("%d %d %s", p.intangible, p.invincible, p.body_state), (p.intangible > 0 or p.invincible > 0 or p.body_state ~= "normal") and OK or nil)
+    add("Shield", string.format("%.1f  %s  cd %d", p.shield, p.iasa and "IASA" or "-", p.ledge_cooldown), p.iasa and OK or nil)
+    return r
+  end
+  local function track_of(p)
+    local c = timeline_of(p)
+    if c == nil then return nil end
+    local spans, marks, parts, iasa = {}, {}, {}, nil
+    for _, hw in ipairs(c.windows) do
+      if #spans < 16 then spans[#spans + 1] = { from = hw.from, to = hw.to, id = hw.id } end
+      parts[#parts + 1] = string.format("f%d-%d #%d %d%% a%d", hw.from, hw.to, hw.id, hw.dmg, hw.angle)
+    end
+    for _, e in ipairs(c.marks) do
+      if e.name == "iasa" then iasa = e.frame end
+      local k = MARK_TEX[e.name] or (e.name:find("sfx") and "sfx")
+      if k and #marks < 24 then marks[#marks + 1] = { frame = e.frame, kind = k } end
+    end
+    local len = math.max(c.len, 1)
+    local now_f = math.floor(p.anim_frame_f + 1)
+    return {
+      kind = "track", title = clip(fighter_name(p.port) .. "  " .. tostring(c.tl.motion_name or "") .. (c.tl.conditional and " [conditional]" or ""), 63),
+      right = string.format("f %d / %d%s", now_f, len, iasa and ("   IASA " .. iasa) or ""),
+      len = len, now = math.max(1, math.min(len, now_f)), spans = spans, marks = marks, note = clip(table.concat(parts, "   "), 63),
+    }
+  end
+  local function chips_of()
+    local md, items = mode(), {}
+    items[1] = { text = md.name, tone = gd.paused() and "warn" or "ok" }
+    for _, t in ipairs(md.t) do if #items < 12 then items[#items + 1] = { text = clip(t.k .. " " .. t.label, 23), on = T(t.id) and true or false } end end
+    for _, a in ipairs(md.a) do if #items < 12 then items[#items + 1] = { text = clip(a.k .. " " .. a.label, 23), on = a.state and (STATES[a.state]() and true or false) or nil } end end
+    local h = gd.history()
+    return { kind = "chips", items = items,
+      right = string.format("f %d  %s", gd.match().frame, h.replaying and string.format("REPLAY +%s s", secs(h.fwd)) or string.format("rewind %s s", secs(h.back))) }
+  end
+  menu.ui.hud_tick = function()
+    if UI == nil or UI.hud == nil or not on then return end
+    local live = cfg.on and not cfg.hidden and not menu.open and gd.match().active and not gd.match().netplay
+    if not live then
+      if not hud_was_empty then UI.hud({ id = HUD, zones = {} }) hud_was_empty = true end
+      return
+    end
+    hud_was_empty = false
+    local list = gd.players()
+    local z = { top_left = {}, top_right = {}, top_center = {}, bottom_center = {}, bottom_left = { chips_of() } }
+    local md = mode()
+    if md.id == "inspect" and T("info") then
+      for i, p in ipairs(focus_first(list, 2)) do
+        z[i == 1 and "top_left" or "top_right"][1] = { kind = "readout", title = fighter_name(p.port), rows = info_rows(p), cols = 1 }
+      end
+    end
+    if md.id == "frames" and T("timeline") then
+      local a = gd.player(focus)
+      if a then
+        local t = track_of(a)
+        if t then z.bottom_center[1] = t end
+      end
+    end
+    if notice and gd.time() < notice_until then
+      local c = notice[2]
+      z.top_center[1] = { kind = "note", text = clip(notice[1], 63), tone = c == DANGER and "err" or c == GOLD and "warn" or c == OK and "ok" or "info", seconds = math.max(0.5, notice_until - gd.time()) }
+    end
+    UI.hud({ id = HUD, zones = z })
+  end
+  menu.ui.hud_on = function() return on and UI ~= nil and UI.hud ~= nil end
+
   menu.ui.on = function() return opened end
   menu.ui.refresh = function()
     if opened then
@@ -5144,6 +5232,10 @@ end
 end)()
 
 function on_tick()
+  if menu.ui.hud_tick then   -- a failing HUD must not stop the tick, and must not fail silently: it says so once
+    local okh, errh = pcall(menu.ui.hud_tick)
+    if not okh and not menu.ui.hud_failed then menu.ui.hud_failed = true gd.log("Geno Lab: the HUD failed: " .. tostring(errh)) end
+  end
   if lab_menu_tick() then return end -- the menu owns every key while it is open
   if not cfg.on then return end
   if LE.tick() then return end -- the frame-data export owns the tick while it runs
@@ -5332,12 +5424,14 @@ function on_draw()
   if id == "hitboxes" then LD.draw_d2({ swept = T("swept"), hurt = T("hurt"), shield = T("shield"), grab = T("grab") }) end
   LD.draw_drill()
   if id == "inspect" then
-    if T("info") then draw_info(list) end
+    if T("info") and not (menu.ui.hud_on and menu.ui.hud_on()) then draw_info(list) end
     if T("attrs") then draw_attrs(list) end
     if T("log") then draw_log() end
   end
-  draw_strip()
-  draw_notice()
+  if not (menu.ui.hud_on and menu.ui.hud_on()) then   -- the Atlas HUD draws the mode strip and the notice
+    draw_strip()
+    draw_notice()
+  end
   if cfg.perf then draw_perf() end
   if cfg.help then draw_help() end
 end

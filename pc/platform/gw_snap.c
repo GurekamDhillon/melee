@@ -1556,6 +1556,7 @@ uint64_t gw_snap_frame_hash(int frame) {
  *
  *   MELEE_XHASH_LOG=<csv>          one row per live match frame: frame, the rollback checksum
  *                                  (RB_GameHash), the masked MEM1 digest, the masked globals digest
+ *   MELEE_XHASH_MEM_EVERY=N        compute the (expensive) mem and glob columns only every Nth frame; 0 in between
  *   MELEE_XHASH_DUMP_FRAMES=a,b,c  at those frames also write the masked images, for xhash_diff.py
  *   MELEE_XHASH_DUMP_DIR=<dir>     where (default: beside the log)
  *   MELEE_XHASH_PTR=lo-hi          the masked word range (hex), default 10000000-20000000
@@ -1652,6 +1653,7 @@ void gw_snap_xlog(int frame) {
     static FILE *log;
     static int tried;
     static int dumps[XH_MAX_DUMPS], ndumps;
+    static int mem_every = 1;
     static char dumpdir[512];
     extern uint32_t gw_RB_GameHash(void);
     extern void gw_RB_XRegions(void);
@@ -1675,6 +1677,10 @@ void gw_snap_xlog(int frame) {
                 xh_lo = lo;
                 xh_hi = hi;
             }
+        }
+        v = getenv("MELEE_XHASH_MEM_EVERY");
+        if (v != NULL && atoi(v) > 1) {
+            mem_every = atoi(v);
         }
         v = getenv("MELEE_XHASH_SKIP");
         while (v != NULL && *v != '\0' && xh_nskip < 64) {
@@ -1735,6 +1741,9 @@ void gw_snap_xlog(int frame) {
     if (log == NULL || !sn.enabled) {
         return;
     }
+    if (mem_every > 1 && frame % mem_every != 0) {
+        goto xh_cols; /* only the cheap columns this frame */
+    }
     for (pg = 0; pg < gw_mem1_size / SN_PAGE; ++pg) {
         uint8_t tmp[SN_PAGE];
         uint64_t h = xh_words(xh_page(pg, tmp), SN_PAGE, 0x12345678ull + pg);
@@ -1748,6 +1757,7 @@ void gw_snap_xlog(int frame) {
         glob += (xh_words((const uint8_t *) (uintptr_t) s->va, s->len, xh_name_hash(s->name)) ^ xh_name_hash(s->name)) *
                 0x9E3779B97F4A7C15ull;
     }
+xh_cols:
     xh_nreg = 0;
     gw_RB_XRegions();
     for (i = 0; i < xh_nreg; ++i) {

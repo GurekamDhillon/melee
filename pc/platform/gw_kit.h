@@ -104,6 +104,9 @@ int gw_Kit_TexAddGX(const char *key, const uint8_t *img, size_t img_size, int w,
  * decodable, the image is short, there is no palette for a palette format, or every one of the 192 slots was used in the last two frames. */
 int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img_size, int w, int h,
                      int tlut_fmt, const uint8_t *tlut, int tlut_n);
+/* A .gxtex file's bytes (a mod's own art: png2gx.py's container) into the same pool; -1 when it is not a v1 .gxtex or does not fit. */
+int gw_Kit_TexAddGxtex(const char *key, const uint8_t *blob, size_t len);
+int gw_Kit_TexHsdFind(const char *key);   /* the slot a key already holds, or -1; decodes nothing */
 void gw_Kit_TexHsdFrame(int frame);   /* the host calls it once per frame: the eviction clock */
 void gw_Kit_TexDropHsd(void);         /* frees the whole disc-art pool (a disc or mod change); a scene exit does not call it: the pool stays warm */
 int gw_Kit_TexHsdCount(void);

@@ -31,9 +31,78 @@ static int gn_define_fighter(gn_profile* p, const jdoc* d, int e, const char* wh
             !gn_fm_str(d, c, "matanim", fm->cos_matanim[i], sizeof fm->cos_matanim[i], 0)) {
             gw_log("geno: %s: fighter.costumes[%d] needs file and joint (matanim optional)", where, i); free(fm); return 0;
         }
+        /* slice 6: a declared colour set. "name" is what the select shows; "team" says which team battle colour this costume is. */
+        fm->cos_team[i] = -1;
+        {
+            int nv = jd_get(d, c, "name"), tv = jd_get(d, c, "team"), k;
+            if (nv >= 0) {
+                if (d->n[nv].type != JN_STR || !d->n[nv].str[0] || strlen(d->n[nv].str) >= sizeof fm->cos_name[i]) {
+                    gw_log("geno: %s: fighter.costumes[%d].name must be a string of 1..23 characters", where, i); free(fm); return 0;
+                }
+                for (k = 0; d->n[nv].str[k]; ++k)
+                    if ((unsigned char)d->n[nv].str[k] < 32 || (unsigned char)d->n[nv].str[k] > 126) {
+                        gw_log("geno: %s: fighter.costumes[%d].name must be printable ASCII", where, i); free(fm); return 0;
+                    }
+                snprintf(fm->cos_name[i], sizeof fm->cos_name[i], "%s", d->n[nv].str);
+            }
+            if (tv >= 0) {
+                const char* t = d->n[tv].type == JN_STR ? d->n[tv].str : "";
+                if (!strcmp(t, "red")) fm->cos_team[i] = 0;
+                else if (!strcmp(t, "blue")) fm->cos_team[i] = 1;
+                else if (!strcmp(t, "green")) fm->cos_team[i] = 2;
+                else { gw_log("geno: %s: fighter.costumes[%d].team must be \"red\", \"blue\" or \"green\"", where, i); free(fm); return 0; }
+            }
+        }
     }
     p->fm = fm;
     return 1;
+}
+
+/* slice 6: the optional entry-level "presentation": {"icon": "a.gxtex", "portrait": "b.gxtex" | [..16], "stock": "c.gxtex" | [..16]}.
+ * Strict like the rest of a define: an unknown key, a name that is not a plain *.gxtex file name, or more than 16 entries refuses the
+ * entry with the reason in the log. Whether the file exists is checked when it is first used (and offline by tools.geno.check):
+ * a missing file falls back to the donor's (or no) art and logs once. Nothing here is simulation state. */
+static int gn_pres_name_ok(const char* s)
+{
+    size_t n = strlen(s);
+    if (n < 7 || n >= 64 || _stricmp(s + n - 6, ".gxtex") || strpbrk(s, "/\\:") || strstr(s, "..")) return 0;
+    for (; *s; ++s) if ((unsigned char)*s < 33 || (unsigned char)*s > 126) return 0;
+    return 1;
+}
+static int gn_define_presentation(gn_profile* p, const jdoc* d, int e, const char* where)
+{
+    static const char* keys[3] = {"icon", "portrait", "stock"};
+    int pv = jd_get(d, e, "presentation"), c, k;
+    struct gn_pres* pr;
+    if (pv < 0) return 1;
+    if (d->n[pv].type != JN_OBJ) { gw_log("geno: %s: presentation must be an object", where); return 0; }
+    for (c = d->n[pv].first; c >= 0; c = d->n[c].next) {
+        for (k = 0; k < 3 && strcmp(d->n[c].key, keys[k]); ++k) {}
+        if (k == 3) { gw_log("geno: %s: presentation key \"%s\" is not known (icon, portrait, stock)", where, d->n[c].key); return 0; }
+    }
+    pr = (struct gn_pres*)calloc(1, sizeof *pr);
+    if (!pr) return 0;
+    for (k = 0; k < 3; ++k) {
+        int v = jd_get(d, pv, keys[k]), q, n = 0;
+        if (v < 0) continue;
+        if (d->n[v].type == JN_STR) {
+            if (!gn_pres_name_ok(d->n[v].str)) goto bad;
+            snprintf(pr->file[k][0], sizeof pr->file[k][0], "%s", d->n[v].str);
+            n = 1;
+        } else if (d->n[v].type == JN_ARR && k != GN_PRES_ICON && d->n[v].count >= 1 && d->n[v].count <= 16) {
+            for (q = d->n[v].first; q >= 0; q = d->n[q].next) {
+                if (d->n[q].type != JN_STR || !gn_pres_name_ok(d->n[q].str)) goto bad;
+                snprintf(pr->file[k][n++], sizeof pr->file[k][0], "%s", d->n[q].str);
+            }
+        } else goto bad;
+        pr->n[k] = n;
+    }
+    p->pres = pr;
+    return 1;
+bad:
+    gw_log("geno: %s: presentation.%s must be one plain *.gxtex file name (portrait and stock: or 1..16 of them; icon: one)", where, keys[k]);
+    free(pr);
+    return 0;
 }
 
 /* Included after the registry types/parser helpers. Native boot metadata only.
@@ -88,6 +157,8 @@ static int gn_define_parse(gn_profile* p, const jdoc* d, int e, int version, con
             }
     }
     if (!gn_sounds_check(d, e, where)) goto refused;
+    if (version < 9 && jd_get(d, e, "presentation") >= 0) { gw_log("geno: %s: presentation needs \"geno\": 9", where); goto refused; }
+    if (!gn_define_presentation(p, d, e, where)) goto refused;
     v = jd_get(d, e, "subactions");
     if (v >= 0) {
         if (d->n[v].type != JN_ARR) goto refused;
@@ -291,6 +362,103 @@ const char* gw_Geno_DefineString(int kind, int which, int costume)
     if (which == 3) return fm->cos_joint[costume];
     if (which == 4) return fm->cos_matanim[costume][0] ? fm->cos_matanim[costume] : NULL;
     return NULL;
+}
+
+/* ---- slice 6: costumes as declared colour sets, and a define's own menu and HUD art ----------------------------------------------------
+ * Everything is by CK (the resident id the menus and the match setup carry; the FighterKind is ck - 1). A donor-based define (base "mario")
+ * keeps Mario's costume list; a base "none" define's costumes are its fighter.costumes, with the team colours it declared. */
+static int gn_fm_team_costume(const struct gn_fm* fm, int team)
+{
+    int i;
+    if (!fm || fm->ncostume < 1 || team < 0 || team > 2) return -1;
+    for (i = 0; i < fm->ncostume; ++i) if (fm->cos_team[i] == team) return i;
+    /* undeclared: red is the first costume, blue the second, green the third, each wrapping to the first when there are fewer */
+    return team < fm->ncostume ? team : 0;
+}
+static const char* gn_pres_file(const gn_profile* p, int what, int costume)
+{
+    if (!p || !p->pres || what < 0 || what > 2 || p->pres->n[what] < 1) return NULL;
+    if (what == GN_PRES_ICON || costume < 0 || costume >= p->pres->n[what]) costume = 0;
+    return p->pres->file[what][costume];
+}
+static const gn_profile* gn_define_profile_ck(int ck)
+{
+    gn_registry* r = gn_reg(); int p;
+    if (!r->kinds_built) gn_build_kinds(r);
+    p = gdf_profile_for_kind(&r->definitions, ck - 1);
+    return p >= 0 ? &r->p[p] : NULL;
+}
+/* how many costumes the define declares: 0 for anything that is not a base "none" define (the caller keeps its own count) */
+int gw_Geno_DefineCostumeCountCK(int ck)
+{
+    const gn_profile* p = gn_define_profile_ck(ck);
+    return p && p->fm ? p->fm->ncostume : 0;
+}
+/* the costume a team battle colour (0 red, 1 blue, 2 green) uses, or -1 when the define is not a base "none" one */
+int gw_Geno_DefineTeamCostume(int ck, int team)
+{
+    const gn_profile* p = gn_define_profile_ck(ck);
+    return p ? gn_fm_team_costume(p->fm, team) : -1;
+}
+/* the declared name of a costume ("" when it has none; 0 when the define is not a base "none" one or the costume is out of range) */
+int gw_Geno_DefineCostumeName(int ck, int costume, char* out, int cap)
+{
+    const gn_profile* p = gn_define_profile_ck(ck);
+    if (!p || !p->fm || costume < 0 || costume >= p->fm->ncostume || !out || cap <= 0) return 0;
+    snprintf(out, (size_t)cap, "%s", p->fm->cos_name[costume]);
+    return out[0] != 0;
+}
+/* 1 when the package declares art of this kind (0 icon, 1 portrait, 2 stock) */
+int gw_Geno_DefineHasArt(int ck, int what, int costume) { return gn_pres_file(gn_define_profile_ck(ck), what, costume) != NULL; }
+/* the file's bytes, from the mod's files/ by name: malloc'd, the caller frees; NULL when the define declares none or the file is missing
+ * (logged once per file). Host only: the game side gets a gxtex handle or a kit texture, never this pointer. */
+static void* gn_pres_read(const gn_profile* p, const char* name, uint32_t* len)
+{
+    extern void* gw_DVDReadFileAlloc(const char* path, uint32_t* out_size);
+    void* raw = gw_DVDReadFileAlloc(name, len);
+    if (!raw) {
+        static char said[16][64]; static int nsaid; int i;
+        for (i = 0; i < nsaid && strcmp(said[i], name); ++i) {}
+        if (i == nsaid && nsaid < 16) { snprintf(said[nsaid++], sizeof said[0], "%s", name); gw_log("geno: %s: presentation file %s is not in the mod's files/", p->name, name); }
+    }
+    return raw;
+}
+/* A kit texture index for the define's art, decoded into the kit's pool (key "gn:<define key>:<what>:<costume entry>"), or -1: nothing declared,
+ * a missing or malformed file, or a full pool. The Atlas select draws a tile with letters then. */
+int gw_Geno_DefineArtTex(int ck, int what, int costume)
+{
+    extern int gw_Kit_TexAddGxtex(const char* key, const uint8_t* blob, size_t len);
+    extern int gw_Kit_TexHsdFind(const char* key);
+    const gn_profile* p = gn_define_profile_ck(ck);
+    const char* file = gn_pres_file(p, what, costume);
+    char key[96];
+    uint32_t len = 0; void* raw; int tex;
+    if (!file) return -1;
+    snprintf(key, sizeof key, "gn:%s:%d:%s", p->define_key, what, file);
+    tex = gw_Kit_TexHsdFind(key);
+    if (tex >= 0) return tex;
+    raw = gn_pres_read(p, file, &len);
+    if (!raw) return -1;
+    tex = gw_Kit_TexAddGxtex(key, (const uint8_t*)raw, len);
+    if (tex < 0) gw_log("geno: %s: presentation file %s is not a usable .gxtex", p->name, file);
+    else gw_log("geno: %s: %s from its package: %s as kit texture %d", p->name, what == 0 ? "select icon" : what == 1 ? "portrait" : "stock icon", file, tex);
+    free(raw);
+    return tex;
+}
+/* A gxtex handle (gw_GxTex_*: width, height, format, CopyImage, CopyTlut, Close) for the same art, for game code that builds an HSD_ImageDesc
+ * of its own (the HUD stock icon, the results screen). -1 as above. The caller closes the handle. */
+int gw_Geno_DefineArtOpen(int ck, int what, int costume)
+{
+    extern int gw_GxTex_OpenBlob(const unsigned char* blob, uint32_t len, const char* label);
+    const gn_profile* p = gn_define_profile_ck(ck);
+    const char* file = gn_pres_file(p, what, costume);
+    uint32_t len = 0; void* raw; int h;
+    if (!file) return -1;
+    raw = gn_pres_read(p, file, &len);
+    if (!raw) return -1;
+    h = gw_GxTex_OpenBlob((const unsigned char*)raw, len, file); /* copies; the blob is ours to free */
+    free(raw);
+    return h;
 }
 
 static int gn_plan_num(const jdoc* d, int o, const char* key, int lo, int hi)

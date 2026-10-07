@@ -377,7 +377,19 @@ struct gn_fm {
     char plan_file[64], anim_file[64];
     int ncostume;
     char cos_file[16][64], cos_joint[16][48], cos_matanim[16][48];
+    char cos_name[16][24];          /* slice 6: a costume's declared name ("" = none) */
+    signed char cos_team[16];       /* slice 6: a declared team colour set: -1 none, 0 red, 1 blue, 2 green */
     GenoPlan *plan; int plan_tried;
+};
+
+/* slice 6: how a define looks in the menus and the HUD. Optional entry-level "presentation": every name is a .gxtex of the
+ * mod's files/ folder (pc/tools/png2gx.py writes one); nothing here is simulation state. what: 0 icon, 1 portrait, 2 stock. */
+#define GN_PRES_ICON 0
+#define GN_PRES_PORTRAIT 1
+#define GN_PRES_STOCK 2
+struct gn_pres {
+    int n[3];                       /* entries per kind: icon 0..1, portrait and stock 0..16 (one per costume; a costume past the list uses entry 0) */
+    char file[3][16][64];
 };
 
 typedef struct {
@@ -461,6 +473,7 @@ typedef struct {
     uint32_t art_joint[GENO_MAX_ARTICLES];    /* loaded HSD_Joint (guest address), 0 = not yet */
     int art_tried[GENO_MAX_ARTICLES];         /* the load was attempted (a failure is not retried) */
     struct gn_fm *fm;                         /* slice 4: a base "none" define's own model, bank and plan; NULL otherwise */
+    struct gn_pres *pres;                     /* slice 6: a define's own menu and HUD art, NULL = none declared */
 } gn_profile;
 
 #define GN_NONE 0xFFFFFFFFu
@@ -2365,6 +2378,9 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_define_overlay_budget", test_geno_define_overlay_budget);
     gw_test_register("geno_define_v8_parse", test_geno_define_v8_parse);
     gw_test_register("geno_define_resolver", test_geno_define_resolver);
+    gw_test_register("geno_define_presentation", test_geno_define_presentation);
+    gw_test_register("geno_gxtex_art", test_geno_gxtex_art);
+    gw_test_register("geno_define_presentation_ck", test_geno_define_presentation_ck);
     gw_test_register("geno_items_registry",gn_items_registry_test);
     gw_test_register("geno_items_physics",gn_items_physics_test);
     gw_test_register("geno_items_snapshot",gn_items_snapshot_test);

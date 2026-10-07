@@ -2702,6 +2702,41 @@ part numbers), `x24`, `x2C` (dynamics), `x48` (item hat table) and `x5C` (the me
 authored): `x20` (the guard tree table; the tree is the costume's), `x3C` camera box, `x40` pick-up offsets, `x50`, `x4C` sound-id struct. Common-state
 code is the engine and stays shared by design.
 
+### 22.6 Slice 6, first increments: costumes as colour sets, a define's own menu and HUD art (built 2026-10-07; the rest of slice 6 is NOT built)
+
+Brief and ranking: workspace `docs/superpowers/plans/2026-10-07-geno-slice6-presentation.md`. Format: **still `"geno": 9`** (no bump: the keys below are
+presentation, not simulation; an engine that does not know them ignores them; `presentation` is refused in a file below 9). The entry's content id
+changes when the keys are present, and not otherwise.
+
+```json
+"fighter": { "costumes": [ {"file": "...", "joint": "...", "name": "Teal"}, {"file": "...", "joint": "...", "name": "Red", "team": "red"} ] },
+"presentation": { "icon": "GnCourier_icon.gxtex", "portrait": ["GnCourier_csp_default.gxtex", "GnCourier_csp_red.gxtex"], "stock": "GnCourier_stock_default.gxtex" }
+```
+
+| key | meaning |
+|---|---|
+| `fighter.costumes[].name` | the label the Atlas select shows on the card (`Teal`) and on the stepper (`1 / 4 Teal`); printable ASCII, 1..23 characters. Without it the select says `Costume N` |
+| `fighter.costumes[].team` | `red`, `blue` or `green`: the team battle colour this costume is (the first declared wins; a second is a `check` error). Undeclared: red is costume 0, blue 1, green 2, each wrapping to 0 when there are fewer costumes. `gm_GetNumCostumesForCKind`, `gm_80169264` (red), `gm_801692BC` (blue) and `gm_80169290` (green) answer a base `none` define's own list; a donor-based define keeps Mario's |
+| `presentation.icon` | the select tile (64x56 is the retail size; any size up to 1024 is drawn fitted) |
+| `presentation.portrait` | the portrait (retail 136x188), one file or one per costume; a costume past the list uses the first |
+| `presentation.stock` | the HUD stock icon, one file or one per costume. **rgb5a3 or rgba8 only** (the swap carries no palette) |
+
+Each name is a `.gxtex` of the mod's `files/` folder (`pc/tools/png2gx.py --allow-odd-size`; the container is the one the menus already use) and is read at run
+time with the same lookup as `plan.json`, so name them with the fighter's prefix. A missing or unusable file logs once (`geno: <name>: presentation file X is not in the mod's files/`)
+and the game falls back: the donor's art for a donor-based define, **letters and `DISC ART` for a base `none` define (never Mario's face)**, Mario's stock frame for the HUD.
+
+What reads it: the Atlas select (`gmfrontend_atlas_select.inc`, shim `Ui_ArtGeno` -> `gw_Geno_DefineArtTex` -> `gw_Kit_TexAddGxtex`: the kit's disc-art pool); the HUD stock icon
+(`ifstock.c`: `gm_GenoStockFrame` returns `20000 + ck * 32 + costume` and a wrapper that replaces `HSD_TObjReqAnimAll` in that file points the icon's own TObj image table at an
+`HSD_ImageDesc` built from the package's bytes, `gw_Geno_DefineArtOpen` -> `gw_GxTex_OpenBlob`; cached per scene). The legacy kit select keeps the donor's tile for a donor-based define
+and none for a `none` define; the retail CSS never lists a define. Logged: `geno: <name>: select icon|portrait|stock icon from its package: <file> as kit texture N`,
+`geno: stock icon of ck N costume C: WxH format F from its package`, `frontend: character select - ck N icon|portrait from its package (kit texture T)`.
+
+Also built here, each a small retail-path guard (all `TARGET_PC`, a define only): the **results name plate** is drawn from the define's name (`gmRst_DrawName`: it was blank, a define being no m-ex slot);
+**records**: a define's matches write no retail row (`gm_CKindToSelKind` sends every m-ex or define CK to one retail selkind, Captain Falcon's, so a define's KOs and play time would have
+been written into a retail fighter's record; `fn_80162068`, `fn_80162170`); **announcer**: a define is silent (`gm_80168C5C`; the donor's call named Mario). Not built (elevated, see the brief):
+own announcer and voice audio, CPU AI hints, Kirby copy policy, a define's own records, the package emblem and the results stock icon. Tests: `geno_define_presentation`,
+`geno_gxtex_art`, `geno_define_presentation_ck`.
+
 ### Frame-counting convention: the first `wait` of an authored script
 
 A subaction script's `wait N` is the engine's own synchronous timer, run by retail's ftAction loop

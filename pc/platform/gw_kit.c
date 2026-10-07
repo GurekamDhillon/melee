@@ -1247,6 +1247,31 @@ int gw_Kit_TexAddHsd(const char *key, int gx_fmt, const uint8_t *img, size_t img
     return KT_HSD_BASE + slot;
 }
 
+/* A .gxtex file's bytes (pc/tools/png2gx.py: a 64-byte big-endian header, then the GX-tiled image and its TLUT) into the same pool. A mod's own
+ * art (a Geno define's icon and portrait) takes this path: original or player-made pixels, read at run time from the mod's folder, never from the
+ * disc. -1 for anything that is not a v1 .gxtex that fits its own length, or that the pool cannot take. The same key is the same slot. */
+int gw_Kit_TexAddGxtex(const char *key, const uint8_t *blob, size_t len) {
+    uint32_t fmt, w, h, tfmt, tn, isz, tsz, ioff, toff;
+    if (key == NULL || key[0] == '\0' || blob == NULL || len < 64 || kt_be32(blob) != 0x47585458u || kt_be32(blob + 4) != 1) return -1;
+    fmt = kt_be32(blob + 8); w = kt_be32(blob + 12); h = kt_be32(blob + 16);
+    tfmt = kt_be32(blob + 20); tn = kt_be32(blob + 24);
+    isz = kt_be32(blob + 28); tsz = kt_be32(blob + 32); ioff = kt_be32(blob + 36); toff = kt_be32(blob + 40);
+    if (w < 1 || h < 1 || w > 1024 || h > 1024 || fmt > 10) return -1;
+    if ((uint64_t)ioff + isz > len || (tsz != 0 && (uint64_t)toff + tsz > len)) return -1;
+    return gw_Kit_TexAddHsd(key, (int)fmt, blob + ioff, isz, (int)w, (int)h, (int)tfmt, tsz != 0 ? blob + toff : NULL,
+                            (int)(tsz / 2 < tn ? tsz / 2 : tn));
+}
+/* the slot a key already holds, or -1 (no decode, no eviction) */
+int gw_Kit_TexHsdFind(const char *key) {
+    int i;
+    if (key == NULL) return -1;
+    for (i = 0; i < KT_HSD_MAX; i++) {
+        KitTex *e = kt[KT_HSD_BASE + i];
+        if (e != NULL && strcmp(e->path, key) == 0) { e->used = hsd_clock; return e->rgba != NULL ? KT_HSD_BASE + i : -1; }
+    }
+    return -1;
+}
+
 void gw_Kit_TexHsdFrame(int frame) { hsd_clock = frame; }
 int gw_Kit_TexHsdCount(void) { return hsd_n; }
 int gw_Kit_TexGeneration(int tex) { return (tex >= KT_HSD_BASE && tex < KT_HSD_BASE + KT_HSD_MAX) ? hsd_gen[tex - KT_HSD_BASE] : 0; }

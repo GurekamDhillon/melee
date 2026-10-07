@@ -3329,11 +3329,8 @@ int gw_PcFeHubDemo(void) {
   return atoi(v);
 }
 
-static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet) {
-  char path[1024];
-  FILE *f;
-  long len;
-  unsigned char *blob;
+/* Parses a .gxtex already in memory and takes ownership of the blob (freed on failure). */
+static int gw_gxtex_install(unsigned char *blob, long len, const char *path) {
   GwGxTex t;
   int i;
   for (i = 0; i < GW_GXTEX_MAX; i++) {
@@ -3342,37 +3339,15 @@ static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet) {
     }
   }
   if (i == GW_GXTEX_MAX) {
-    gw_log("gxtex: no free slot for '%s' (%d open)", name, GW_GXTEX_MAX);
+    gw_log("gxtex: no free slot for '%s' (%d open)", path, GW_GXTEX_MAX);
+    free(blob);
     return -1;
   }
-  if (snprintf(path, sizeof path, "%s/%s.gxtex", dir, name) >= (int)sizeof path) {
-    gw_log("gxtex: path for '%s' is too long", name);
-    return -1;
-  }
-  f = fopen(path, "rb");
-  if (f == NULL) {
-    if (!quiet) {
-      gw_log("gxtex: cannot open %s", path);
-    }
-    return -1;
-  }
-  fseek(f, 0, SEEK_END);
-  len = ftell(f);
-  fseek(f, 0, SEEK_SET);
   if (len < 64) {
     gw_log("gxtex: %s is %ld bytes, too short for a header", path, len);
-    fclose(f);
-    return -1;
-  }
-  blob = (unsigned char *)malloc((size_t)len);
-  if (blob == NULL || fread(blob, 1, (size_t)len, f) != (size_t)len) {
-    gw_log("gxtex: short read on %s", path);
     free(blob);
-    fclose(f);
     return -1;
   }
-  fclose(f);
-
   memset(&t, 0, sizeof t);
   if (gw_gxtex_be32(blob) != GW_GXTEX_MAGIC || gw_gxtex_be32(blob + 4) != GW_GXTEX_VERSION) {
     gw_log("gxtex: %s is not a v%d .gxtex", path, GW_GXTEX_VERSION);
@@ -3406,6 +3381,57 @@ static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet) {
          (unsigned)t.width, (unsigned)t.height, (unsigned)t.format, (unsigned)t.image_size,
          (unsigned)t.tlut_entries, (unsigned)t.tlut_fmt);
   return i;
+}
+
+
+/* A .gxtex whose bytes the host already holds (a mod's files/ read by name): copied, so the caller keeps its buffer. */
+int gw_GxTex_OpenBlob(const unsigned char *bytes, uint32_t len, const char *label) {
+  unsigned char *copy;
+  if (bytes == NULL || len < 64) {
+    return -1;
+  }
+  copy = (unsigned char *)malloc(len);
+  if (copy == NULL) {
+    return -1;
+  }
+  memcpy(copy, bytes, len);
+  return gw_gxtex_install(copy, (long)len, label != NULL ? label : "(blob)");
+}
+
+static int gw_gxtex_open_dir(const char *dir, const char *name, int quiet) {
+  char path[1024];
+  FILE *f;
+  long len;
+  unsigned char *blob;
+  if (snprintf(path, sizeof path, "%s/%s.gxtex", dir, name) >= (int)sizeof path) {
+    gw_log("gxtex: path for '%s' is too long", name);
+    return -1;
+  }
+  f = fopen(path, "rb");
+  if (f == NULL) {
+    if (!quiet) {
+      gw_log("gxtex: cannot open %s", path);
+    }
+    return -1;
+  }
+  fseek(f, 0, SEEK_END);
+  len = ftell(f);
+  fseek(f, 0, SEEK_SET);
+  if (len < 64) {
+    gw_log("gxtex: %s is %ld bytes, too short for a header", path, len);
+    fclose(f);
+    return -1;
+  }
+  blob = (unsigned char *)malloc((size_t)len);
+  if (blob == NULL || fread(blob, 1, (size_t)len, f) != (size_t)len) {
+    gw_log("gxtex: short read on %s", path);
+    free(blob);
+    fclose(f);
+    return -1;
+  }
+  fclose(f);
+
+  return gw_gxtex_install(blob, len, path);
 }
 
 /* MELEE_MENUTEX names the element. The game asks for "the one the environment names" rather

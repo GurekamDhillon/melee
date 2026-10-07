@@ -275,6 +275,11 @@ int gw_Ui_ArtDecode(const char *key, int gx_fmt, const void *img, int size, int 
     return gw_Kit_TexAddHsd(key, gx_fmt, (const uint8_t *) img, size < 0 ? 0u : (size_t) size, w, h, tlut_fmt, (const uint8_t *) tlut, tlut_n);
 }
 
+/* a Geno define's own art (its package's .gxtex, read at run time from the mod's folder): the kit texture, or -1 when the define declares none of this kind
+ * or the file is missing or malformed. what: 0 icon, 1 portrait, 2 stock. The adapter then draws the tile's letters. */
+extern int gw_Geno_DefineArtTex(int ck, int what, int costume);
+int gw_Ui_ArtGeno(int ck, int what, int costume) { return gw_Geno_DefineArtTex(ck, what, costume); }
+
 /* the disc art is dropped when the roster it was decoded for changed (a mod toggled): the key names a fighter or a stage, not a disc, and the disc is fixed for the process */
 void gw_Ui_ArtDrop(void) { gw_Kit_TexDropHsd(); }
 

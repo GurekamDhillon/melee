@@ -16,23 +16,45 @@
           {
             "file": "GnCourier_default.dat",
             "joint": "courier_joint",
-            "matanim": "courier_matanim"
+            "matanim": "courier_matanim",
+            "name": "Teal"
           },
           {
             "file": "GnCourier_red.dat",
             "joint": "courier_joint",
-            "matanim": "courier_matanim"
+            "matanim": "courier_matanim",
+            "name": "Red",
+            "team": "red"
           },
           {
             "file": "GnCourier_blue.dat",
             "joint": "courier_joint",
-            "matanim": "courier_matanim"
+            "matanim": "courier_matanim",
+            "name": "Blue",
+            "team": "blue"
           },
           {
             "file": "GnCourier_green.dat",
             "joint": "courier_joint",
-            "matanim": "courier_matanim"
+            "matanim": "courier_matanim",
+            "name": "Green",
+            "team": "green"
           }
+        ]
+      },
+      "presentation": {
+        "icon": "GnCourier_icon.gxtex",
+        "portrait": [
+          "GnCourier_csp_default.gxtex",
+          "GnCourier_csp_red.gxtex",
+          "GnCourier_csp_blue.gxtex",
+          "GnCourier_csp_green.gxtex"
+        ],
+        "stock": [
+          "GnCourier_stock_default.gxtex",
+          "GnCourier_stock_red.gxtex",
+          "GnCourier_stock_blue.gxtex",
+          "GnCourier_stock_green.gxtex"
         ]
       },
       "attributes": {

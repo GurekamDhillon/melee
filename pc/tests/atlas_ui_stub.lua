@@ -4,7 +4,8 @@
 -- label / counter refresh, accept / back / alt / page / start dispatch, value rows (on.change), {pop=}/{push=} results, a
 -- held-button model of the pad, and the ownership rule (a screen belongs to the script that registered it).
 --
--- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the 8-slot table, and the Lua registry.
+-- What it does NOT model: layout, drawing, the quad budget, mouse and keyboard, the 8-slot table, the Lua registry, and the entry
+-- registry's caps and ordering (6 per mod per parent, 12 visible, `after`): those are gw_ui_registry.c's, tested by atlas-registry.
 -- Everything in the conversion arena IS modelled (node, entry and string-pool ceilings and the depth limit), because a stand-in
 -- that accepts a description the engine refuses defeats its purpose.
 local Stub = {}
@@ -377,6 +378,61 @@ function Stub.new(opts)
    if top() ~= id then break end                -- the top screen changed: the rest of this tick's input is dropped
    ui.engine_press(id, PAD[b])
   end
+ end
+
+ -- ---- entries: gd.ui.entry, on_entry, and the engine's part of choosing one ----------------------------------------------
+ -- An entry as mod.json "menus" declares it (the host reads the manifest; a test registers it here). It validates what
+ -- at_menus_parse and at_reg_add validate (a label, the id namespace, a built-in parent, opens or action = "script").
+ local PARENTS = { main = true, solo = true, versus = true, online = true, mods = true, settings = true, more = true }
+ ui.entries, ui.hooks, ui.netplay = {}, {}, false
+ function ui.register_entry(e)
+  local function bad(msg) error('entry "' .. tostring(e.id) .. '": ' .. msg, 2) end
+  if type(e.id) ~= 'string' or e.id == '' then error('an entry needs an id', 2) end
+  if type(e.label) ~= 'string' or e.label == '' then bad('an entry needs a label') end
+  if not (PARENTS[e.parent] or tostring(e.parent):match('^settings%.%w')) then bad('unknown parent "' .. tostring(e.parent) .. '"') end
+  local mod = ui.owner_mod
+  if mod and not (e.id == mod or e.id:sub(1, #mod + 1) == mod .. '.') then bad('the id of a mod entry is "' .. mod .. '" or starts with "' .. mod .. '."') end
+  if not (e.action == 'script' or e.opens) then bad('an entry needs opens or action "script"') end
+  if ui.entries[e.id] then bad('the id is already registered') end
+  ui.entries[e.id] = { id = e.id, parent = e.parent, label = e.label:sub(1, 18), opens = e.opens, action = e.action, online = e.online and true or false,
+                       visible = true, badge = '', mod = mod }
+  return true
+ end
+ -- gd.ui.entry(id, { visible =, badge = }): true when the caller's mod owns that entry
+ function ui.entry(id, t)
+  local e = ui.entries[id]
+  if not e or is_console() or not ui.owner_mod or e.mod ~= ui.owner_mod then return false end
+  if type(t) == 'table' then
+   if type(t.visible) == 'boolean' then e.visible = t.visible end
+   if type(t.badge) == 'string' then e.badge = t.badge end
+  end
+  return true
+ end
+ -- what the player sees under `parent`: visible entries; a netplay session hides the ones without online under versus and online
+ function ui.entries_under(parent)
+  local out = {}
+  for _, e in pairs(ui.entries) do
+   if e.parent == parent and e.visible and not (ui.netplay and (parent == 'versus' or parent == 'online') and not e.online) then out[#out + 1] = e.id end
+  end
+  table.sort(out)
+  return out
+ end
+ -- the engine's part: choosing an entry. "opens" pushes the mod's own screen; "script" runs the mod's hooks.on_entry(id) and applies {push=}.
+ function ui.engine_activate(id)
+  local e = ui.entries[id]
+  if not e or not e.visible then return false end
+  if ui.netplay and (e.parent == 'versus' or e.parent == 'online') and not e.online then return false end
+  if e.action == 'script' then
+   local fn = ui.hooks.on_entry
+   if type(fn) ~= 'function' then return false end
+   apply(fn(id), ui.hooks.owner or ui.caller)           -- the hook's owner: the mod's script (default: the stub's caller)
+   return true
+  end
+  if ui.screens[e.opens] and tostring(ui._owner[e.opens]):match('^([^/]+)') == e.mod then
+   local keep = ui.caller; ui.caller = 'console'; ui.open(e.opens); ui.caller = keep
+   return true
+  end
+  return false
  end
 
  return ui

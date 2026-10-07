@@ -36,10 +36,29 @@ void gw_log(const char *fmt, ...)
     if (strstr(buf, "explainer") != NULL) g_logs_ex++;
 }
 static int gs_may_run(int i) { (void) i; return g_may_run; }
+static int g_netplay, g_last_pcall_owner;
+int gw_RB_Enabled(void) { return 0; }
+int gw_Netplay_Enabled(void) { return g_netplay; }
+int gw_Mods_Count(void) { return 0; }
+int gw_Mods_MenuCount(int i) { (void) i; return 0; }
+const char *gw_Mods_MenuField(int i, int k, const char *f) { (void) i; (void) k; (void) f; return ""; }
+const char *gw_Mods_Id(int i) { (void) i; return ""; }
 static int gs_pcall(int script, int nargs, int nres, const char *what)
 {
-    (void) script; (void) what;
-    if (lua_pcall(gs.L, nargs, nres, 0) != LUA_OK) { lua_pop(gs.L, 1); return -1; }
+    int old = gs.cur, rc = 0;
+    (void) what;
+    g_last_pcall_owner = script;
+    gs.cur = script;                                  /* the real gs_pcall runs the call as that script */
+    if (lua_pcall(gs.L, nargs, nres, 0) != LUA_OK) { lua_pop(gs.L, 1); rc = -1; }
+    gs.cur = old;
+    return rc;
+}
+static int gs_get_hook(int i, const char *name)       /* the hooks live in one global table here */
+{
+    if (!gs.s[i].used || gs.s[i].disabled) return 0;
+    lua_getglobal(gs.L, name);
+    if (lua_isfunction(gs.L, -1)) return 1;
+    lua_pop(gs.L, 1);
     return 0;
 }
 static const GsScript *gs_cur_script(void) { return &gs.s[gs.cur]; }
@@ -111,6 +130,8 @@ static void reset_ui(void)
     for (i = 0; i < GS_UI_SLOTS; i++) { memset(&gs_ui_slot[i], 0, sizeof gs_ui_slot[i]); gs_ui_slot[i].dialog_fn = -1; }
     memset(&gs_ui_stack, 0, sizeof gs_ui_stack);
     gs_ui_qn = 0; g_pad = 0; gs.cur = 0; gs.scene_kind = -1;
+    for (i = 1; i < 8; i++) gs.s[i].used = 0;       /* the earlier tests' scripts: each test here names its own */
+    g_netplay = 0;
 }
 static void fake_script(int i, const char *mod)
 {
@@ -323,6 +344,125 @@ static void eight_slots_with_engine(void)
     gw_Ui_Display("GD'S MELEE", "PRESS START", "v1", "credit"); gw_Ui_Commit(-1, -1);
     CHECK(gs_ui_engine_slots() == 2 && gs_ui_slot[gs_ui_find("title")].sc.primary == AT_PRIMARY_DISPLAY);
     CHECK(at_screen_wants_pad(&gs_ui_slot[gs_ui_find("title")].sc) == 0);
+}
+
+/* ---- Atlas step 2, Task 6: entries at run time (driven as the engine and as the mod, not as the console) ---- */
+#include "gw_ui_menus_json.h"
+static void reg_boot_with(const char *json, const char *mod)
+{
+    AtEntry e[6]; char err[96]; int n, i;
+    at_reg_init(&gs_ui_reg);
+    n = at_menus_parse(json, mod, e, 6, err, sizeof err);
+    for (i = 0; i < n; i++) at_reg_add(&gs_ui_reg, &e[i]);
+    gs_ui_reg_booted = 1;
+}
+static void fake_netplay(int on) { g_netplay = on; }
+static int last_pcall_owner(void) { return g_last_pcall_owner; }
+
+static void entry_opens_pushes_mod_screen(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"opens\":\"envoy.setup\"}]}", "envoy");
+    engine_menu("solo", 6);
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.setup', primary={kind='list', items={{id='a', label='A'}}} }");
+    gs.cur = -1;                                         /* activation comes from the engine, not from a script */
+    CHECK(gw_Ui_EntryCount("solo") == 1);
+    CHECK_STR(gw_Ui_EntryField("solo", 0, "label"), "ENVOY");
+    CHECK_STR(gw_Ui_EntryField("solo", 0, "tag"), "MOD");
+    CHECK(gw_Ui_EntryActivate("solo", 0) == 1);
+    CHECK(strcmp(gs_ui_slot[at_stack_top(&gs_ui_stack)].sc.id, "envoy.setup") == 0);
+    CHECK(gs_ui_slot[at_stack_top(&gs_ui_stack)].owner == 3);   /* the screen keeps its owner: its handlers run as envoy */
+    CHECK(gw_Ui_TopIsEngine("solo") == 0);                       /* the native menu is covered: it draws and takes no input */
+}
+static void entry_script_runs_on_entry_as_the_mod(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"action\":\"script\"}]}", "envoy");
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("function on_entry(id) ENTRY_SEEN = id; return nil end");
+    gs.cur = -1; g_last_pcall_owner = -9;
+    CHECK(gw_Ui_EntryActivate("solo", 0) == 1);
+    gs.cur = 3; CHECK(t_lua("return ENTRY_SEEN == 'envoy'"));
+    CHECK(last_pcall_owner() == 3);                         /* called through gs_pcall(owner = the mod), not the console */
+    /* a {push=} result opens one of the mod's own screens */
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"action\":\"script\"}]}", "envoy");
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.entry', primary={kind='list', items={{id='a', label='A'}}} }; function on_entry(id) return {push='envoy.entry'} end");
+    gs.cur = -1;
+    CHECK(gw_Ui_EntryActivate("solo", 0) == 1 && strcmp(gs_ui_slot[at_stack_top(&gs_ui_stack)].sc.id, "envoy.entry") == 0);
+    /* a script whose on_entry is missing: refused */
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"action\":\"script\"}]}", "envoy");
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("on_entry = nil"); gs.cur = -1;
+    CHECK(gw_Ui_EntryActivate("solo", 0) == 0);
+}
+static void entry_missing_screen_refused(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"opens\":\"envoy.nope\"}]}", "envoy");
+    fake_script(3, "envoy");
+    CHECK(gw_Ui_EntryActivate("solo", 0) == 0);
+    gs.cur = 4; fake_script(4, "other");
+    gs.cur = 4; t_lua("gd.ui.screen{ id='other.nope', primary={kind='list', items={{id='a', label='A'}}} }");
+    gs.cur = -1;
+    CHECK(gw_Ui_EntryActivate("solo", 5) == 0 && gw_Ui_EntryActivate(NULL, 0) == 0);
+}
+static void entry_from_other_script_cannot_hide(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"action\":\"script\"}]}", "envoy");
+    fake_script(4, "other");
+    gs.cur = 4; CHECK(t_lua("return gd.ui.entry('envoy', {visible=false}) == false"));
+    CHECK(gw_Ui_EntryCount("solo") == 1);
+    gs.cur = gs.console; CHECK(t_lua("return gd.ui.entry('envoy', {visible=false}) == false"));      /* the console owns no entry (console-only check) */
+    fake_script(3, "envoy");
+    gs.cur = 3; CHECK(t_lua("return gd.ui.entry('envoy', {visible=false}) == true"));
+    CHECK(gw_Ui_EntryCount("solo") == 0);
+    CHECK(t_lua("return gd.ui.entry('envoy', {visible=true, badge='NEW'}) == true"));
+    CHECK(gw_Ui_EntryCount("solo") == 1 && strcmp(gw_Ui_EntryField("solo", 0, "badge"), "NEW") == 0);
+}
+static void entry_hidden_in_netplay(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"m.v\",\"parent\":\"versus\",\"label\":\"V\",\"action\":\"script\"},"
+                              "{\"id\":\"m.ok\",\"parent\":\"versus\",\"label\":\"OK\",\"action\":\"script\",\"online\":true}]}", "m");
+    fake_script(3, "m");
+    gs.cur = 3; t_lua("function on_entry(id) ENTRY_SEEN = id end"); gs.cur = -1;
+    fake_netplay(1);
+    CHECK(gw_Ui_EntryCount("versus") == 1);                      /* only the one that says online */
+    CHECK(gw_Ui_EntryActivate("versus", 0) == 1);                /* index 0 is now m.ok: the list the player sees is the list that activates */
+    gs.cur = 3; CHECK(t_lua("return ENTRY_SEEN == 'm.ok'"));
+    fake_netplay(0);
+    CHECK(gw_Ui_EntryCount("versus") == 2);
+}
+static void entry_screen_closed_on_scene_exit(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"opens\":\"envoy.setup\"}]}", "envoy");
+    gs.scene_kind = 1; engine_menu("solo", 6);
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.setup', primary={kind='list', items={{id='a', label='A'}}} }");
+    gs.cur = -1; gw_Ui_EntryActivate("solo", 0);
+    CHECK(gs_ui_stack.n == 2);
+    gw_Ui_SceneExit(1);
+    CHECK(gs_ui_stack.n == 0);
+}
+static void entry_mod_unloaded(void)
+{
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"action\":\"script\"}]}", "envoy");
+    fake_script(3, "envoy");
+    gs_ui_release(3);                                    /* the only script of the mod unloads: its entries go with it */
+    CHECK(gw_Ui_EntryCount("solo") == 0);
+    fake_script_off(3);
+    CHECK(gw_Ui_EntryActivate("solo", 0) == 0);          /* no owner to run on_entry: refused, logged, no crash */
+    reset_ui(); reg_boot_with("{\"menus\":[{\"id\":\"envoy\",\"parent\":\"solo\",\"label\":\"ENVOY\",\"action\":\"script\"}]}", "envoy");
+    fake_script(3, "envoy"); fake_script(4, "envoy");
+    gs_ui_release(3);
+    CHECK(gw_Ui_EntryCount("solo") == 1);                /* a second script of the mod still runs: the entry stays */
+    fake_script_off(3); fake_script_off(4); gs.s[4].id[0] = '\0';
+}
+static void builtin_entries_register(void)
+{
+    reset_ui(); at_reg_init(&gs_ui_reg); gs_ui_reg_booted = 1;
+    CHECK(gw_Ui_EntryBuiltin("solo", "lab", "LAB", 7) == 1 && gw_Ui_EntryBuiltin("solo", "lab", "LAB", 7) == 0);
+    CHECK(gw_Ui_EntryBuiltin("nowhere", "x", "X", 0) == 0);
+    CHECK(gw_Ui_EntryCount("solo") == 1 && gw_Ui_EntryActivate("solo", 0) == 0);   /* a native row is the adapter's to run */
+    CHECK_STR(gw_Ui_EntryField("solo", 0, "tag"), "");
 }
 
 int main(void)
@@ -593,5 +733,7 @@ int main(void)
     intents_from_any_port(); engine_screen_covered_takes_no_intent(); scene_exit_closes_scene_screens(); console_cannot_touch_engine();
     mod_cannot_take_engine_id(); commit_without_change_does_not_rebuild(); engine_focus_is_the_games_cursor(); engine_close_and_queue();
     eight_slots_with_engine();
+    entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
+    entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
     ATLAS_DONE("atlas binding");
 }

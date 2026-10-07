@@ -187,6 +187,38 @@ do
   m.caller = 'envoy/a'; m.engine_press('envoy.pop', 'accept')
   check(m.state().top == 'envoy.theirs', 'a pop returned by one script does not close another script top screen')
 end
+-- entries (Atlas step 2): register_entry validates like at_menus_parse / at_reg_add; gd.ui.entry is the owner's alone; the engine's part
+do
+  local m = Stub.new({ owner_mod = 'envoy', caller = 'envoy/a' })
+  check(m.register_entry({ id = 'envoy', parent = 'solo', label = 'ENVOY', action = 'script' }), 'an entry registers')
+  raises(function() m.register_entry({ id = 'envoy', parent = 'solo', label = 'X', action = 'script' }) end, 'already registered', 'a duplicate id')
+  raises(function() m.register_entry({ id = 'lab', parent = 'solo', label = 'LAB', action = 'script' }) end, 'starts with "envoy."', 'the id namespace')
+  raises(function() m.register_entry({ id = 'envoy.x', parent = 'nowhere', label = 'X', action = 'script' }) end, 'unknown parent', 'an unknown parent')
+  raises(function() m.register_entry({ id = 'envoy.y', parent = 'solo', label = '', action = 'script' }) end, 'needs a label', 'a label')
+  raises(function() m.register_entry({ id = 'envoy.z', parent = 'solo', label = 'Z' }) end, 'needs opens or action', 'an action')
+  check(m.register_entry({ id = 'envoy.s', parent = 'settings.video', label = 'S', opens = 'envoy.q' }), 'a settings page is a parent')
+  check(m.entry('envoy', { visible = false }) == true and #m.entries_under('solo') == 0, 'the owner hides its entry')
+  check(m.entry('envoy', { visible = true, badge = 'NEW' }) == true and #m.entries_under('solo') == 1 and m.entries.envoy.badge == 'NEW', 'and shows it again with a badge')
+  local other = Stub.new({ owner_mod = 'other', caller = 'other/a' }); other.entries = m.entries
+  check(other.entry('envoy', { visible = false }) == false and #m.entries_under('solo') == 1, 'another mod cannot hide it')
+  local con = Stub.new({}); con.entries = m.entries
+  check(con.entry('envoy', { visible = false }) == false, 'the console owns no entry')
+  -- the engine's part: a script entry runs on_entry as the mod and applies {push=}
+  m.screen(list1({ id = 'envoy.entry' }))
+  m.hooks.on_entry = function(id) m.hooks.seen = id; return { push = 'envoy.entry' } end
+  check(m.engine_activate('envoy') and m.hooks.seen == 'envoy' and m.stack[#m.stack] == 'envoy.entry', 'a script entry runs on_entry and pushes the mod screen')
+  m.close('envoy.entry')
+  m.register_entry({ id = 'envoy.o', parent = 'solo', label = 'O', opens = 'envoy.entry' })
+  check(m.engine_activate('envoy.o') and m.stack[#m.stack] == 'envoy.entry', 'an opens entry pushes the mod screen')
+  m.close('envoy.entry')
+  m.netplay = true
+  check(m.engine_activate('envoy') == true and #m.entries_under('solo') == 2, 'netplay hides entries under versus and online only: solo is unaffected')
+  m.close('envoy.entry')
+  m.register_entry({ id = 'envoy.v', parent = 'versus', label = 'V', action = 'script' })
+  check(#m.entries_under('versus') == 0 and m.engine_activate('envoy.v') == false, 'a versus entry without online is hidden in netplay')
+  m.netplay = false
+  check(#m.entries_under('versus') == 1, 'and is back offline')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

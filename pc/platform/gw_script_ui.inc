@@ -14,6 +14,8 @@
  * so a value can never reach another script's text or the legacy menus. The kit adds the spacing after the last
  * glyph too (a width is n x tracking wider), so gs_ui_width reports the visible width and gs_ui_text shifts a
  * centred or right-aligned run by half or all of one gap to put the visible glyphs where the parts asked. */
+#include "gw_mods.h"
+#include "gw_ui_registry.h"
 #include "gw_ui_render.h"
 #include "gw_ui_stack.h"
 
@@ -380,9 +382,11 @@ static void gs_ui_close_screen(int slot) {
 }
 
 /* a script unloaded or switched off: its screens and their references go */
+static void gs_ui_reg_release_script(int script);
 static void gs_ui_release(int script) {
     int i;
-    if (script < 0) return;                                        /* an engine screen is never released by a script's unload */
+    if (script < 0) return;
+    gs_ui_reg_release_script(script);                                        /* an engine screen is never released by a script's unload */
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
         int was_top;
@@ -896,6 +900,164 @@ static int gs_ui_engine_slots(void) {
     return n;
 }
 
+/* ---- entries at run time: the registry, gd.ui.entry, on_entry ------------------------------------------------------
+ * The registry (gw_ui_registry.c) holds the menu tree's entries: the built-ins the adapter registers (gw_Ui_EntryBuiltin) and what
+ * each ACTIVE mod's mod.json "menus" declares (read once, on the first use). The native menu shows an entry as a MOD tile; choosing
+ * it comes back here (gw_Ui_EntryActivate): an "opens" entry pushes the mod's own registered screen, a "script" entry runs the
+ * mod's on_entry(id) as that mod (its budget, its owner). A switched-off or unloaded mod's entries leave with it. An entry is
+ * never shown, nor activated, over a netplay session unless it says "online": true. */
+
+static AtRegistry gs_ui_reg;
+static int gs_ui_reg_booted;
+
+static int gs_ui_netplay(void) { return gw_RB_Enabled() || gw_Netplay_Enabled(); }
+
+static void gs_ui_reg_log(void) {
+    int i;
+    for (i = 0; i < gs_ui_reg.nlog; i++) gw_log("ui: registry: %s", gs_ui_reg.log[i]);
+    gs_ui_reg.nlog = 0;
+}
+
+static void gs_ui_reg_boot(void) {
+    int i, k;
+    if (gs_ui_reg_booted) return;
+    gs_ui_reg_booted = 1;
+    at_reg_init(&gs_ui_reg);
+    for (i = 0; i < gw_Mods_Count(); i++) {
+        for (k = 0; k < gw_Mods_MenuCount(i); k++) {
+            AtEntry e;
+            memset(&e, 0, sizeof e);
+            snprintf(e.mod, sizeof e.mod, "%s", gw_Mods_Id(i));
+            snprintf(e.id, sizeof e.id, "%s", gw_Mods_MenuField(i, k, "id"));
+            snprintf(e.parent, sizeof e.parent, "%s", gw_Mods_MenuField(i, k, "parent"));
+            snprintf(e.label, sizeof e.label, "%s", gw_Mods_MenuField(i, k, "label"));
+            snprintf(e.blurb, sizeof e.blurb, "%s", gw_Mods_MenuField(i, k, "blurb"));
+            snprintf(e.icon, sizeof e.icon, "%s", gw_Mods_MenuField(i, k, "icon"));
+            snprintf(e.after, sizeof e.after, "%s", gw_Mods_MenuField(i, k, "after"));
+            snprintf(e.opens, sizeof e.opens, "%s", gw_Mods_MenuField(i, k, "opens"));
+            e.action = strcmp(gw_Mods_MenuField(i, k, "action"), "script") == 0 ? AT_ENTRY_SCRIPT : AT_ENTRY_OPENS;
+            e.online = strcmp(gw_Mods_MenuField(i, k, "online"), "true") == 0;
+            e.visible = 1;
+            at_reg_add(&gs_ui_reg, &e);
+        }
+    }
+    gs_ui_reg_log();
+}
+
+/* a built-in entry (the adapter registers the native tree's rows that mods place themselves relative to) */
+int gw_Ui_EntryBuiltin(const char *parent, const char *id, const char *label, int native_arg) {
+    AtEntry e;
+    int ok;
+    gs_ui_reg_boot();
+    memset(&e, 0, sizeof e);
+    snprintf(e.parent, sizeof e.parent, "%s", parent != NULL ? parent : "");
+    snprintf(e.id, sizeof e.id, "%s", id != NULL ? id : "");
+    snprintf(e.label, sizeof e.label, "%s", label != NULL ? label : "");
+    e.action = AT_ENTRY_NATIVE; e.native_arg = native_arg; e.visible = 1; e.online = 1; e.builtin = 1;
+    ok = at_reg_add(&gs_ui_reg, &e);
+    gs_ui_reg_log();
+    return ok;
+}
+
+int gw_Ui_EntryCount(const char *parent) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    gs_ui_reg_boot();
+    return parent != NULL ? at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT) : 0;
+}
+
+/* only mod entries are tiles the adapter adds after its own rows, so k counts the visible children as a whole */
+const char *gw_Ui_EntryField(const char *parent, int k, const char *field) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    int n;
+    gs_ui_reg_boot();
+    if (parent == NULL || field == NULL) return "";
+    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);
+    if (k < 0 || k >= n) return "";
+    if (strcmp(field, "id") == 0) return c[k]->id;
+    if (strcmp(field, "label") == 0) return c[k]->label;
+    if (strcmp(field, "blurb") == 0) return c[k]->blurb;
+    if (strcmp(field, "badge") == 0) return c[k]->badge;
+    if (strcmp(field, "tag") == 0) return c[k]->builtin ? "" : "MOD";
+    return "";
+}
+
+/* the first live script of mod `mod` (its script id is "<mod>/<name>"), or -1 */
+static int gs_ui_mod_script(const char *mod) {
+    size_t ml = strlen(mod);
+    int i;
+    if (ml == 0) return -1;
+    for (i = 0; i < gs.n; i++) {
+        if (gs.s[i].used && !gs.s[i].disabled && strncmp(gs.s[i].id, mod, ml) == 0 && gs.s[i].id[ml] == '/') return i;
+    }
+    return -1;
+}
+
+static int gs_ui_script_in_mod(int script, const char *mod) {
+    size_t ml = strlen(mod);
+    return script >= 0 && script < gs.n && ml > 0 && strncmp(gs.s[script].id, mod, ml) == 0 && gs.s[script].id[ml] == '/';
+}
+
+int gw_Ui_EntryActivate(const char *parent, int k) {
+    const AtEntry *c[AT_REG_VISIBLE_PER_PARENT];
+    const AtEntry *e;
+    int n, owner;
+    gs_ui_reg_boot();
+    if (parent == NULL) return 0;
+    n = at_reg_children(&gs_ui_reg, parent, gs_ui_netplay(), c, AT_REG_VISIBLE_PER_PARENT);   /* the netplay rule is the list's own */
+    if (k < 0 || k >= n) { gw_log("ui: entry %s/%d refused: not available now", parent, k); return 0; }
+    e = c[k];
+    if (e->builtin) return 0;                                       /* a native row: the adapter runs it itself */
+    owner = gs_ui_mod_script(e->mod);
+    if (owner < 0) { gw_log("ui: entry %s refused: no running script of mod %s", e->id, e->mod); return 0; }
+    if (e->action == AT_ENTRY_OPENS) {
+        int s = gs_ui_find(e->opens);
+        if (s < 0 || !gs_ui_script_in_mod(gs_ui_slot[s].owner, e->mod) || !gs_ui_usable(gs_ui_slot[s].owner)) {
+            gw_log("ui: entry %s refused: mod %s has not registered the screen %s", e->id, e->mod, e->opens);
+            return 0;
+        }
+        return gs_ui_open_screen(s);
+    }
+    if (!gs_may_run(owner) || !gs_get_hook(owner, "on_entry")) { gw_log("ui: entry %s refused: mod %s has no on_entry", e->id, e->mod); return 0; }
+    lua_pushstring(gs.L, e->id);
+    if (gs_pcall(owner, 1, 1, "on_entry") != 0) return 0;
+    gs_ui_apply_result(owner);                                      /* {push = "<mod>.<screen>"} opens one of the mod's own screens */
+    return 1;
+}
+
+/* a script unloaded: its mod's entries go too, unless another script of the mod is still running */
+static void gs_ui_reg_release_script(int script) {
+    char mod[64];
+    char *slash;
+    int i;
+    if (script < 0 || script >= gs.n) return;
+    snprintf(mod, sizeof mod, "%s", gs.s[script].id);
+    slash = strchr(mod, '/');
+    if (slash == NULL) return;
+    *slash = '\0';
+    for (i = 0; i < gs.n; i++) if (i != script && gs.s[i].used && !gs.s[i].disabled && gs_ui_script_in_mod(i, mod)) return;
+    at_reg_drop_mod(&gs_ui_reg, mod);
+}
+
+/* gd.ui.entry(id, { visible = bool, badge = "NEW" or "" }): true when the calling script's mod owns that entry */
+static int l_ui_entry(lua_State *L) {
+    char owner[64];
+    const char *mod = gs_ui_owner_mod(owner, sizeof owner), *badge = NULL;
+    int visible = -1, ok;
+    const char *id = luaL_checkstring(L, 1);
+    gs_ui_reg_boot();
+    if (lua_istable(L, 2)) {
+        lua_getfield(L, 2, "visible");
+        if (lua_isboolean(L, -1)) visible = lua_toboolean(L, -1);
+        lua_pop(L, 1);
+        lua_getfield(L, 2, "badge");
+        if (lua_type(L, -1) == LUA_TSTRING) badge = lua_tostring(L, -1);
+        lua_pop(L, 1);
+    }
+    ok = mod != NULL && at_reg_set(&gs_ui_reg, mod, id, visible, badge);
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
 /* ---- the Lua functions -------------------------------------------------------------------------------- */
 static int l_ui_available(lua_State *L) {
     int ok = gs_ui_roles_ok();
@@ -1116,7 +1278,7 @@ static int l_ui_state(lua_State *L) {
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
     {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
-    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {NULL, NULL}};
+    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {NULL, NULL}};
 
 static void gs_push_ui(lua_State *L) {
     lua_newtable(L);

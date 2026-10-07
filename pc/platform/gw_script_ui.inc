@@ -30,6 +30,7 @@ typedef struct {
     int scene;              /* the scene kind that was current when it was pushed (gw_Ui_SceneExit closes it with that scene) */
     int rebuilds;           /* an engine screen: how many times its record was replaced */
     unsigned primed_frame;  /* an engine screen: the tick it became the top again (an intent in that same frame is dropped) */
+    int self_close;         /* an engine screen the host runs alone (Credits): B closes it here, no event reaches the game */
     AtScreen sc;
     AtView view;
     AtHits hits;
@@ -656,6 +657,10 @@ static void gs_ui_fix_scroll(GsUiSlot *u) {
     else if (u->sc.primary == AT_PRIMARY_TILES) u->view.scroll = at_tiles_scroll(&u->sc, &pl, u->view.focus.block == 0 ? u->view.focus.index : -1, u->view.scroll);
 }
 
+static void gs_ui_credits_view(GsUiSlot *u);
+static void gs_ui_free_engine_slot(int slot);
+static void gs_ui_after_close(void);
+
 /* an engine screen's event: the view moves, the game is told through the queue */
 static void gs_ui_engine_event(int slot, const AtEvent *e) {
     GsUiSlot *u = &gs_ui_slot[slot];
@@ -670,6 +675,11 @@ static void gs_ui_engine_event(int slot, const AtEvent *e) {
         if (at_screen_cell_id(&u->sc, p) != NULL) u->view.focus = p;
     }
     gs_ui_fix_scroll(u);
+    if (u->self_close) {                                           /* Credits: the host's own screen, the game is told nothing */
+        if (e->type == AT_EV_BACK) { gs_ui_free_engine_slot(slot); gs_ui_after_close(); return; }
+        if (u->view.focus.block != before.block || u->view.focus.index != before.index) gs_ui_credits_view(u);
+        return;
+    }
     if (u->view.focus.block != before.block || u->view.focus.index != before.index) {
         gs_ui_q_push(AT_EV_FOCUS, u->view.focus.block, u->view.focus.index);
         return;
@@ -828,7 +838,7 @@ int gw_Ui_Commit(int focus_block, int focus_index) {
             u->view.focus = at_screen_refocus(&u->sc, b[0] ? b : NULL, c[0] ? c : NULL, old);
             u->rebuilds++;
         }
-        if (memcmp(&u->view.ex, &gs_ui_scratch_ex, sizeof u->view.ex) != 0 || u->explain_dirty) gs_ui_engine_view(u);
+        if (!u->self_close && (memcmp(&u->view.ex, &gs_ui_scratch_ex, sizeof u->view.ex) != 0 || u->explain_dirty)) gs_ui_engine_view(u);
     }
     if (focus_block >= 0) {                                        /* the game's cursor is the truth */
         AtFocusPos p;
@@ -902,6 +912,69 @@ static int gs_ui_engine_slots(void) {
     int i, n = 0;
     for (i = 0; i < GS_UI_SLOTS; i++) if (gs_ui_slot[i].used && gs_ui_slot[i].owner == GS_UI_ENGINE) n++;
     return n;
+}
+
+/* ---- the Credits screen (MAIN MENU > More > Credits): a host-native list, B closes it here ---------------------------------
+ * The rows are CREDITS.md's: each outside project we use or learned from, with its author, licence and link. Nothing here is
+ * invented; the last row sends the player to the whole file. A row's short line is the list's sub; the link and what we drew
+ * on are the explainer's text for the focused row. */
+typedef struct { const char *label, *sub, *what; } GsCredit;
+static const GsCredit gs_credits[] = {
+    { "doldecomp/melee", "the doldecomp contributors", "github.com/doldecomp/melee. The matching decompilation the port is built from." },
+    { "Aurora", "encounter. MIT", "github.com/encounter/aurora. The GameCube SDK reimplementation the port renders through." },
+    { "Project Slippi", "Fizzi and the Project Slippi team", "slippi.gg. The replay format, rollback practice and UCF codes the port follows." },
+    { "m-ex", "akaneia", "github.com/akaneia/m-ex. The mod format the port's m-ex layer reads; consulted, never copied (tools/mex_port)." },
+    { "Lua 5.4", "Lua.org, PUC-Rio", "lua.org. The scripting language embedded in the port." },
+    { "Barlow Condensed", "Jeremy Tribby. SIL OFL 1.1", "github.com/jpt/barlow. The caps labels and titles of the Atlas menus." },
+    { "Source Sans 3", "Adobe. SIL OFL 1.1", "github.com/adobe-fonts/source-sans. The menus' body text." },
+    { "Hasklug", "Nerd Fonts. SIL OFL 1.1", "github.com/ryanoasis/nerd-fonts. The menus' numerals." },
+    { "SDL", "the SDL contributors. zlib", "github.com/libsdl-org/SDL. Controller buttons, axes and device polling." },
+    { "Dawn and Tint", "Google. BSD-3-Clause", "dawn.googlesource.com/dawn. The WebGPU backend and the shader validation." },
+    { "Tracy", "Bartosz Taudul. BSD-3-Clause", "github.com/wolfpld/tracy. The optional development profiler client." },
+    { "GGPO", "Tony Cannon", "ggpo.net. The rollback vocabulary; ideas only, the netcode is our own." },
+    { "melee-pc", "999sian and contributors", "github.com/999sian/melee-pc. Rollback snapshot design; ideas only." },
+    { "MeleeVS", "Joyastick", "github.com/Joyastick/melee-pc-TagFighter. Benching and reserve fighters; ideas only." },
+    { "Project M and Project+", "their development teams", "github.com/Fracture17/ProjectMCodes. Turbo mode prior art; ideas only, our code is original." },
+    { "Blender", "the Blender Foundation. GPL", "blender.org. Modelling and animating our original fighter art." },
+    { "glTF 2.0", "Khronos", "khronos.org/gltf. The model interchange format of the authored-fighter converter." },
+    { "HSDLib", "Ploaj", "github.com/Ploaj/HSDLib. Writes the converter's model files." },
+    { "Playwright", "Microsoft. Apache 2.0", "playwright.dev. Renders the menu mockups and the README art." },
+    { "Path of Exile", "Grinding Gear Games", "pathofexile.com. The model for Envoy's loot; ideas only." },
+    { "Super Smash Bros. Ultimate", "Nintendo, Bandai Namco, Sora Ltd.", "Design reference for the companion and stage switching; ideas only." },
+    { "and more", "see CREDITS.md", "Every project, finding and idea we use or learned from is in CREDITS.md." },
+};
+
+static void gs_ui_credits_view(GsUiSlot *u) {
+    int i = u->view.focus.index;
+    memset(&u->view.ex, 0, sizeof u->view.ex);
+    u->view.ex.media_model = u->view.ex.media_ring = AT_NO_MODEL;
+    if (i < 0 || i >= (int) (sizeof gs_credits / sizeof gs_credits[0])) return;
+    u->view.ex.has = 1;
+    snprintf(u->view.ex.kicker, sizeof u->view.ex.kicker, "CREDITS");
+    snprintf(u->view.ex.title, sizeof u->view.ex.title, "%s", gs_credits[i].label);
+    snprintf(u->view.ex.what, sizeof u->view.ex.what, "%s", gs_credits[i].what);
+}
+
+/* push the Credits screen over the main menu (the game's More > Credits calls this) */
+int gw_Ui_OpenCredits(void) {
+    int i, slot;
+    if (!gw_Ui_Begin("more.credits", AT_PRIMARY_LIST, 0, "CREDITS")) return 0;
+    gw_Ui_Trail("MAIN MENU");
+    for (i = 0; i < (int) (sizeof gs_credits / sizeof gs_credits[0]) && i < AT_MAX_ITEMS; i++) {
+        AtItem *it = &gs_ui_scratch.items[gs_ui_scratch.n_items++];
+        memset(it, 0, sizeof *it);
+        snprintf(it->id, sizeof it->id, "c%d", i);
+        snprintf(it->label, sizeof it->label, "%s", gs_credits[i].label);
+        snprintf(it->sub, sizeof it->sub, "%s", gs_credits[i].sub);
+    }
+    gw_Ui_Key('B', "Back");
+    gs_ui_scratch_ex.has = 0;
+    if (!gw_Ui_Commit(0, 0)) return 0;
+    slot = gs_ui_find("more.credits");
+    if (slot < 0) return 0;
+    gs_ui_slot[slot].self_close = 1;
+    gs_ui_credits_view(&gs_ui_slot[slot]);
+    return 1;
 }
 
 /* ---- entries at run time: the registry, gd.ui.entry, on_entry ------------------------------------------------------

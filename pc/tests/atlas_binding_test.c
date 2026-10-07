@@ -13,6 +13,8 @@
 #include "gw_kit.h"
 #include "gw_screen_model.h"
 #include "atlas_check.h"
+#include "atlas_fake.h"
+#include "atlas_rec.h"
 
 typedef struct { char id[64]; int used, disabled, gameplay; } GsScript;
 static struct { lua_State *L; int cur, console, n, scene_kind; GsScript s[8]; unsigned char key_now[256]; } gs;
@@ -465,6 +467,52 @@ static void builtin_entries_register(void)
     CHECK_STR(gw_Ui_EntryField("solo", 0, "tag"), "");
 }
 
+/* ---- Task 9: the Credits screen ---- */
+static void credits_screen(void)
+{
+    int t, b, i, slot, w;
+    reset_ui();
+    engine_menu("main", 5);
+    CHECK(gw_Ui_OpenCredits() == 1);
+    slot = gs_ui_find("more.credits");
+    CHECK(slot >= 0 && gs_ui_slot[slot].owner == GS_UI_ENGINE && gs_ui_slot[slot].self_close == 1);
+    CHECK(gw_Ui_TopIsEngine("more.credits") == 1 && gw_Ui_TopIsEngine("main") == 0);
+    CHECK(gs_ui_slot[slot].sc.n_items >= 20 && gs_ui_slot[slot].sc.n_items <= AT_MAX_ITEMS);
+    for (i = 0; i < gs_ui_slot[slot].sc.n_items; i++) CHECK(gs_ui_slot[slot].sc.items[i].sub[0] != '\0' && gs_ui_slot[slot].sc.items[i].label[0] != '\0');
+    CHECK(strcmp(gs_ui_slot[slot].sc.items[gs_ui_slot[slot].sc.n_items - 1].sub, "see CREDITS.md") == 0);   /* the last row sends the player to the file */
+    CHECK(gs_ui_slot[slot].view.ex.has && gs_ui_slot[slot].view.ex.what[0] != '\0');
+    for (w = 0; w < 3; w++) {
+        static const float WS[3] = { 640.0f, 853.0f, 1140.0f };
+        AtSink s = rec_sink();
+        AtHits h;
+        AtLayout L;
+        at_layout(WS[w], gs_ui_slot[slot].sc.preset, &L);
+        at_render(&gs_ui_slot[slot].sc, &gs_ui_slot[slot].view, WS[w], 1e6, 0, &FAKE, &s, &h);
+        CHECK(texts_legible());
+        for (i = 0; i < REC.nt; i++) {                                           /* every text sits on the canvas */
+            float tw = fake_width(0, REC.t[i].role, REC.t[i].s), x = REC.t[i].align == AT_ALIGN_RIGHT ? REC.t[i].x - tw : REC.t[i].align == AT_ALIGN_CENTER ? REC.t[i].x - tw * 0.5f : REC.t[i].x;
+            CHECK(x >= -0.5f && x + tw <= L.canvas.w + 0.5f);
+        }
+        { const RecText *r = find_text("CREDITS"); CHECK(r != NULL); }
+        for (i = 0; i < REC.nt; i++) if (strncmp(REC.t[i].s, "doldecomp", 9) == 0 && REC.t[i].x >= L.primary.x - 0.5f && REC.t[i].x < L.explainer.x) {   /* the first row's label is inside the primary pane */
+            CHECK(REC.t[i].x + fake_width(0, REC.t[i].role, REC.t[i].s) <= L.primary.x + L.primary.w + 0.5f);
+        }
+    }
+    gw_Ui_Intent(AT_EV_MOVE, AT_DIR_DOWN);                                       /* focus moves inside Credits: the explainer follows, nothing reaches the game */
+    CHECK(strcmp(gs_ui_slot[slot].view.ex.title, "Aurora") == 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    gw_Ui_Intent(AT_EV_ACCEPT, 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    gw_Ui_Intent(AT_EV_BACK, 0);                                                 /* B pops it ... */
+    CHECK(gw_Ui_TopIsEngine("main") == 1 && gs_ui_find("more.credits") < 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);                                     /* ... and the main menu does not see that B */
+    gw_Ui_Intent(AT_EV_BACK, 0);                                                 /* the same frame: the press that closed Credits is not the menu's */
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);
+    gs_ui_tick();
+    gw_Ui_Intent(AT_EV_BACK, 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_BACK);
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -735,5 +783,6 @@ int main(void)
     eight_slots_with_engine();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
+    credits_screen();
     ATLAS_DONE("atlas binding");
 }

@@ -39,6 +39,8 @@ enum { FM_HUB, FM_LIST };
 enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE, FA_TBD };
 #define SEL_MAIN_TBD 0x43
 #define SEL_VS_ONLINE 0x40 ///< not a vanilla selection: VERSUS > ONLINE is the port's
+#define SEL_MAIN_ONLINE 0x44 ///< not a vanilla selection: the Atlas main menu's ONLINE (VERSUS no longer lists it)
+#define SEL_MAIN_MODS 0x45   ///< not a vanilla selection: the Atlas main menu's MODS (the Settings > Mods page)
 #define SEL_1P_LAB 0x42    ///< not a vanilla selection: SOLO > LAB (the Geno Lab, private build)
 #define FMF_PORT 1  ///< gm_801677E8(the port that pressed A) before acting, as vanilla does
 #define FMF_NOSFX 2 ///< no sfxForward (Data > Sound Test stops the music instead)
@@ -69,6 +71,7 @@ typedef struct FeMenu {
 
 /* The Atlas adapter (gmfrontend_atlas.inc, included after this file) and its host shims (pc/platform/gw_script_ui.inc). */
 extern int Ui_Ready(void);
+extern int Ui_OpenCredits(void);
 extern int Ui_Begin(const char* id, int primary, int chapter, const char* title);
 extern void Ui_Cols(int cols);
 extern void Ui_Trail(const char* parent);
@@ -163,6 +166,26 @@ static const FeMenuItem fm_vs[] = {
     { "NAME ENTRY", "Make a name tag.", "ico_names", SEL_VS_NAME, FA_NATIVE },
 };
 
+/* The Atlas main menu (spec 13.2): Solo, Versus, Online, Mods, Settings; Collection, Data and Credits are its More strip (drawn by
+ * the adapter, not FeMenuItems). VERSUS no longer lists ONLINE. The legacy tree above stays for MELEE_ATLAS=0. Icons are NULL:
+ * Atlas draws no icons, and the legacy hub underneath is hidden. */
+static const FeMenuItem fm_main_atlas[] = {
+    { "SOLO", "Classic, Adventure, events, training and more.", NULL, SEL_MAIN_1P, FA_SUB, MENU_KIND_1P },
+    { "VERSUS", "Up to four players. Your rules, your stage.", NULL, SEL_MAIN_VS, FA_SUB, MENU_KIND_VS },
+    { "ONLINE", "Play someone over the internet: host a room or join one.", NULL, SEL_MAIN_ONLINE, FA_ONLINE, GM_VS },
+    { "MODS", "Turn mods on or off, and see what each one adds.", NULL, SEL_MAIN_MODS, FA_PAGE, 4 },
+    { "SETTINGS", "Video, audio, controls, online, mods and the game's options.", NULL, SEL_MAIN_SETTINGS, FA_SUB,
+      MENU_KIND_SETTINGS },
+};
+
+static const FeMenuItem fm_vs_atlas[] = {
+    { "MELEE", "Up to four players. Your rules, your stage.", NULL, SEL_VS_MELEE, FA_MATCH_SETUP, GM_VS },
+    { "TOURNAMENT", "A bracket for up to 64 players.", NULL, SEL_VS_TOURNAMENT, FA_MODE, GM_TOURNAMENT },
+    { "SPECIAL MELEE", "Melee with a twist.", NULL, SEL_VS_SPECIAL, FA_SUB, MENU_KIND_SPECIAL },
+    { "RULES", "Stock, time, items and stages.", NULL, SEL_VS_RULES, FA_NATIVE },
+    { "NAME ENTRY", "Make a name tag.", NULL, SEL_VS_NAME, FA_NATIVE },
+};
+
 static const FeMenuItem fm_special[] = {
     { "CAMERA MODE", "Take pictures during the match.", NULL, SEL_SPECIAL_VS_CAMERA, FA_MODE,
       GM_CAMERA_MODE },
@@ -226,7 +249,7 @@ static const FeMenuItem fm_records[] = {
 };
 
 static const FeMenu fm_menus[] = {
-    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main, FM_N(fm_main), "main" },
+    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main, FM_N(fm_main), NULL },
     { MENU_KIND_1P, FM_HUB, SEL_1P_REG, MENU_KIND_MAIN, SEL_MAIN_1P, 1, "SOLO", fm_1p,
       FM_N(fm_1p), "solo" },
     { MENU_KIND_REG, FM_HUB, SEL_REG_CLASSIC, MENU_KIND_1P, SEL_1P_REG, 1, "REGULAR MATCH",
@@ -236,7 +259,7 @@ static const FeMenu fm_menus[] = {
     { MENU_KIND_MULTI_VS, FM_LIST, 0, MENU_KIND_STADIUM, SEL_STADIUM_MULTIMAN, 0,
       "MULTI-MAN MELEE", fm_multi, FM_N(fm_multi), "solo.multiman" },
     { MENU_KIND_VS, FM_HUB, SEL_VS_MELEE, MENU_KIND_MAIN, SEL_MAIN_VS, 0, "VERSUS", fm_vs,
-      FM_N(fm_vs), "versus" },
+      FM_N(fm_vs), NULL },
     { MENU_KIND_SPECIAL, FM_LIST, 0, MENU_KIND_VS, SEL_VS_SPECIAL, 0, "SPECIAL MELEE",
       fm_special, FM_N(fm_special), "versus.special" },
     { MENU_KIND_TOY, FM_HUB, SEL_TOY_COLLECTION, MENU_KIND_MAIN, SEL_MAIN_TOY, 1,
@@ -249,9 +272,25 @@ static const FeMenu fm_menus[] = {
       fm_records, FM_N(fm_records), "more.records" },
 };
 
+/* The two rows that differ under Atlas (the main menu has Online and Mods; Versus lost Online). fm_find prefers them. */
+static const FeMenu fm_menus_atlas[] = {
+    { MENU_KIND_MAIN, FM_HUB, SEL_MAIN_VS, 0xFF, 0, 0, "MAIN MENU", fm_main_atlas, FM_N(fm_main_atlas), "main" },
+    { MENU_KIND_VS, FM_HUB, SEL_VS_MELEE, MENU_KIND_MAIN, SEL_MAIN_VS, 0, "VERSUS", fm_vs_atlas, FM_N(fm_vs_atlas),
+      "versus" },
+};
+
+static bool fa_page_from_main; ///< the Mods page was entered from the Atlas main menu: B returns to MAIN > MODS
+
 static const FeMenu* fm_find(int kind)
 {
     int i;
+    if (Ui_Ready()) {
+        for (i = 0; i < FM_N(fm_menus_atlas); i++) {
+            if (fm_menus_atlas[i].kind == kind) {
+                return &fm_menus_atlas[i];
+            }
+        }
+    }
     for (i = 0; i < FM_N(fm_menus); i++) {
         if (fm_menus[i].kind == kind) {
             return &fm_menus[i];
@@ -339,8 +378,14 @@ static void fm_position_for(u8 previous_mode, u8* kind, u8* sel)
         /* backing out of ONLINE (or its rooms): the VS hub, on ONLINE */
         fm_back_to_online_item = false;
         if (previous_mode == GM_VS && rules->force_main_menu == 0) {
-            *kind = MENU_KIND_VS;
-            *sel = SEL_VS_ONLINE;
+            if (Ui_Ready()) {
+                /* Atlas: Online is a main-menu row, so B from it lands there */
+                *kind = MENU_KIND_MAIN;
+                *sel = SEL_MAIN_ONLINE;
+            } else {
+                *kind = MENU_KIND_VS;
+                *sel = SEL_VS_ONLINE;
+            }
             return;
         }
     }
@@ -1307,6 +1352,7 @@ static void fm_confirm(void)
     case FA_PAGE:
         fm.pend_kind = 6;
         fm.pend_a = it->arg;
+        fa_page_from_main = Ui_Ready() && m->kind == MENU_KIND_MAIN;
         break;
     case FA_TBD:
         fm.pend_kind = 7;

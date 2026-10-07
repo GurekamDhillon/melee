@@ -139,15 +139,29 @@ static void fa_trail(const FeMenu* m)
     }
 }
 
-/* The More strip is the main menu's (Task 9: Collection, Data, Credits). */
+/* The More strip is the main menu's: Collection and Data open their hubs (as the legacy main items do), Credits is the host's own
+ * screen. Indices: 0 COLLECTION, 1 DATA, 2 CREDITS. */
 static void fa_more_submit(const FeMenu* m)
 {
-    (void) m;
+    if (m->kind == MENU_KIND_MAIN) {
+        Ui_More("collection", "COLLECTION");
+        Ui_More("data", "DATA");
+        Ui_More("credits", "CREDITS");
+    }
 }
 
 static void fa_more(int index)
 {
-    (void) index;
+    sfxForward();
+    if (index == 0 || index == 1) {
+        /* the legacy FA_SUB path: vanilla enters every submenu on its first item */
+        fm.pend_kind = 1;
+        fm.pend_a = index == 0 ? MENU_KIND_TOY : MENU_KIND_DATA;
+        fm.pend_b = 0;
+        fm.leave_at = fp.frame + 1;
+    } else {
+        Ui_OpenCredits();
+    }
 }
 
 /* the whole screen, every frame: the host replaces its record only when something differs */

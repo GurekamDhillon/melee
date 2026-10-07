@@ -57,6 +57,7 @@ void at_view_init(AtView *v)
     int i;
     memset(v, 0, sizeof *v);
     v->focus.block = v->focus.index = -1;
+    v->ex.media_model = v->ex.media_ring = AT_NO_MODEL;
     v->ex.media_tex = -1;
     for (i = 0; i < AT_MAX_CURSORS; i++) { v->cursor[i].block = 0; v->cursor[i].index = -1; v->cursor[i].card = -1; }
 }

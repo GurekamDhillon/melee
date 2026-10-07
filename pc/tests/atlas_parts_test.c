@@ -304,30 +304,6 @@ static void fix_round1(void)
 
 /* ---- round 2: the chamfer rule, the three focus cues, and text that never leaves its box ---------------- */
 
-/* the right edge of a recorded text, whatever its alignment */
-static float text_right(const RecText *t)
-{
-    float w = fake_width(0, t->role, t->s);
-    return t->align == AT_ALIGN_RIGHT ? t->x : t->align == AT_ALIGN_CENTER ? t->x + w * 0.5f : t->x + w;
-}
-static float text_left(const RecText *t)
-{
-    float w = fake_width(0, t->role, t->s);
-    return t->align == AT_ALIGN_RIGHT ? t->x - w : t->align == AT_ALIGN_CENTER ? t->x - w * 0.5f : t->x;
-}
-/* 1 when no polygon vertex lies inside the cut-away triangle of the top-left or bottom-right chamfer of r */
-static int corners_clear(AtRect r, float c)
-{
-    int i, k;
-    for (i = 0; i < REC.np; i++) {
-        for (k = 0; k < 4; k++) {
-            float dx = REC.p[i].x[k] - r.x, dy = REC.p[i].y[k] - r.y, ex = r.x + r.w - REC.p[i].x[k], ey = r.y + r.h - REC.p[i].y[k];
-            if (dx >= -0.01f && dy >= -0.01f && dx + dy < c - 0.01f) return 0;
-            if (ex >= -0.01f && ey >= -0.01f && ex + ey < c - 0.01f) return 0;
-        }
-    }
-    return 1;
-}
 static float min_y_of(unsigned rgba)
 {
     float m = 1e9f; int i;
@@ -412,9 +388,31 @@ static void fix_round2(void)
       CHECK(adv < 400.0f); }
 }
 
+/* ---- step 3, Task 2: the shared style helpers are proven on the step 1 parts before anything new leans on them ---- */
+static void shared_helpers_on_step1_parts(void)
+{
+    AtSink s;
+    AtRect r = { 32.0f, 100.0f, 300.0f, 34.0f }, cr = { 100.0f, 100.0f, 56.0f, 56.0f };
+    AtItem it = item("Window", AT_VAL_NONE);
+    AtCell c = mk_cell("Kindling", 7, 0);
+    s = rec_sink(); at_part_row(&s, &FAKE, r, &it, AT_ST_REST);
+    CHECK(no_focus_cues() && focus_cues_at(r, 0) == 0);                    /* at rest: no cue at all */
+    CHECK(corners_clear(r, (float) AT_PX_CH_S) && texts_inside(r));
+    s = rec_sink(); at_part_row(&s, &FAKE, r, &it, AT_ST_FOCUS);
+    CHECK(focus_cues_at(r, 0) == 3);                                       /* lift, ember edge, tick */
+    CHECK(!no_focus_cues());
+    s = rec_sink(); at_part_cell(&s, &FAKE, cr, &c, AT_ST_REST, 0);
+    CHECK(no_focus_cues() && focus_cues_at(cr, 1) == 0);
+    s = rec_sink(); at_part_cell(&s, &FAKE, cr, &c, AT_ST_FOCUS, AT_C_P2);
+    CHECK(focus_cues_at(cr, 1) == 3);                                      /* lift, ember edge, four brackets */
+    { AtRect narrow = { 100.0f, 100.0f, 10.0f, 10.0f };                    /* texts_inside fails when a text leaves its box */
+      s = rec_sink(); at_part_row(&s, &FAKE, r, &it, AT_ST_REST);
+      CHECK(!texts_inside(narrow)); }
+}
+
 int main(void)
 {
     plates(); rows(); values(); tabs_and_tags();
-    cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2();
+    cells(); hints_and_chrome(); explainer_note_dialog(); fix_round1(); fix_round2(); shared_helpers_on_step1_parts();
     ATLAS_DONE("atlas parts");
 }

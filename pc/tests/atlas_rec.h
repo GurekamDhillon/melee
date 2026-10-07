@@ -4,7 +4,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include "atlas_fake.h"
 #include "../platform/gw_ui_parts.h"
+#include "../platform/gw_ui_tokens.h"
 
 #define REC_POLYS 4096
 typedef struct { float x[4], y[4]; unsigned rgba; } RecPoly;
@@ -49,4 +51,57 @@ static float poly_maxy(const RecPoly *p) { float m = p->y[0]; int i; for (i = 1;
 static int count_color(unsigned rgba) { int i, n = 0; for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == rgba) n++; return n; }
 static const RecText *find_text(const char *s) { int i; for (i = 0; i < REC.nt; i++) if (strcmp(REC.t[i].s, s) == 0) return &REC.t[i]; return NULL; }
 static int texts_legible(void) { int i; for (i = 0; i < REC.nt; i++) if (at_role_size(REC.t[i].role) < 12) return 0; return 1; }
+/* ---- the three style checks every part and screen test shares (step 3, Task 2) ---- */
+/* the right and left edge of a recorded text, whatever its alignment (measured with the fake width the tests draw with) */
+static float text_right(const RecText *t)
+{
+    float w = fake_width(0, t->role, t->s);
+    return t->align == AT_ALIGN_RIGHT ? t->x : t->align == AT_ALIGN_CENTER ? t->x + w * 0.5f : t->x + w;
+}
+static float text_left(const RecText *t)
+{
+    float w = fake_width(0, t->role, t->s);
+    return t->align == AT_ALIGN_RIGHT ? t->x - w : t->align == AT_ALIGN_CENTER ? t->x - w * 0.5f : t->x;
+}
+/* 1 when no polygon vertex lies inside the cut-away triangle of the top-left or bottom-right chamfer of r */
+static int corners_clear(AtRect r, float c)
+{
+    int i, k;
+    for (i = 0; i < REC.np; i++) {
+        for (k = 0; k < 4; k++) {
+            float dx = REC.p[i].x[k] - r.x, dy = REC.p[i].y[k] - r.y, ex = r.x + r.w - REC.p[i].x[k], ey = r.y + r.h - REC.p[i].y[k];
+            if (dx >= -0.01f && dy >= -0.01f && dx + dy < c - 0.01f) return 0;
+            if (ex >= -0.01f && ey >= -0.01f && ex + ey < c - 0.01f) return 0;
+        }
+    }
+    return 1;
+}
+/* 1 when every recorded text lies inside r, measured with the width that drew it */
+static int texts_inside(AtRect r)
+{
+    int i;
+    for (i = 0; i < REC.nt; i++)
+        if (text_left(&REC.t[i]) < r.x - 0.01f || text_right(&REC.t[i]) > r.x + r.w + 0.01f) {
+            printf("  text \"%s\" leaves its box [%g, %g]\n", REC.t[i].s, r.x, r.x + r.w);
+            return 0;
+        }
+    return 1;
+}
+/* The focus cues of a part drawn at r: 1 for the lift (a lifted face whose top is r.y - 2), 1 for the ember front edge (a wide ember
+ * strip along the bottom), 1 for the tick (rows: a 4 px ember strip at the left edge) or for the brackets (cells and cards: eight
+ * strips reaching outside r). A part at rest has none (no_focus_cues). */
+static int focus_cues_at(AtRect r, int is_cell)
+{
+    int i, lift = 0, edge = 0, tick = 0, br = 0;
+    for (i = 0; i < REC.np; i++) {
+        const RecPoly *p = &REC.p[i];
+        if (p->rgba == AT_C_LIFT && fabsf(poly_miny(p) - (r.y - 2.0f)) < 0.6f) lift = 1;
+        if (p->rgba == AT_C_EMBER && poly_maxy(p) >= r.y + r.h - 2.01f && poly_maxy(p) <= r.y + r.h + 0.01f && poly_maxx(p) - poly_minx(p) > r.w * 0.5f) edge = 1;
+        if (!is_cell && p->rgba == AT_C_EMBER && poly_maxx(p) - poly_minx(p) <= 4.01f && poly_minx(p) <= r.x + 0.01f) tick = 1;
+        if (is_cell && (poly_minx(p) < r.x - 0.01f || poly_maxx(p) > r.x + r.w + 0.01f) && p->rgba != AT_C_LIFT) br++;
+    }
+    return lift + edge + (is_cell ? (br >= 8) : tick);
+}
+/* no ember and no lift anywhere: nothing on screen shows focus */
+static int no_focus_cues(void) { return count_color(AT_C_EMBER) == 0 && count_color(AT_C_LIFT) == 0; }
 #endif

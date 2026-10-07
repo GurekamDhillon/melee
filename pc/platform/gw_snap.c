@@ -1722,7 +1722,7 @@ void gw_snap_xlog(int frame) {
             gw_log("xhash: cannot open %s", path);
             return;
         }
-        fprintf(log, "frame,rb,mem,glob\n");
+        fprintf(log, "frame,rb,wide,mem,glob\n");
         gw_log("xhash: %s (masking words in %08x-%08x, %d skipped range(s)), %d dump frame(s)", path, xh_lo, xh_hi, xh_nskip, ndumps);
     }
     if (log == NULL || !sn.enabled) {
@@ -1741,8 +1741,13 @@ void gw_snap_xlog(int frame) {
         glob += (xh_words((const uint8_t *) (uintptr_t) s->va, s->len, xh_name_hash(s->name)) ^ xh_name_hash(s->name)) *
                 0x9E3779B97F4A7C15ull;
     }
-    fprintf(log, "%d,%08X,%016llX,%016llX\n", frame, (unsigned) gw_RB_GameHash(), (unsigned long long) mem,
-            (unsigned long long) glob);
+    xh_nreg = 0;
+    gw_RB_XRegions();
+    for (i = 0; i < xh_nreg; ++i) {
+        wide += xh_words((const uint8_t *) (uintptr_t) xh_reg[i].va, xh_reg[i].len, 0x9E3779B9ull + xh_reg[i].tag) * 0x9E3779B97F4A7C15ull;
+    }
+    fprintf(log, "%d,%08X,%016llX,%016llX,%016llX\n", frame, (unsigned) gw_RB_GameHash(), (unsigned long long) wide,
+            (unsigned long long) mem, (unsigned long long) glob);
     fflush(log);
     for (i = 0; i < ndumps; ++i) {
         if (dumps[i] == frame) {

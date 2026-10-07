@@ -47,6 +47,8 @@ static int gs_ui_role_idx[AT_R_COUNT];
 static int gs_ui_roles_state; /* 0 not tried, 1 every Atlas role found and every page loaded, -1 missing */
 static char gs_ui_why[160];   /* the reason when it is -1 */
 static struct { double sum, max; int frames, quads; float canvas_w; } gs_ui_stat;
+static int gs_ui_menu_held_by = -2;   /* gd.ui.hold_menu: the script index holding the native menu, -2 none */
+static unsigned gs_ui_script_close_frame; /* the tick a script's screen last closed (+1): a press of that frame is not the menu's */
 static unsigned gs_ui_frame; /* gs_ui_tick calls: the 'same frame' of an uncovered engine screen */
 static int gs_ui_reduced; /* gw_Settings_Int("reduced_motion") read once per draw pass */
 
@@ -378,6 +380,7 @@ static void gs_ui_close_screen(int slot) {
     AtStackEntry *top = at_stack_top_entry(&gs_ui_stack);
     if (top != NULL && top->screen == slot) { top->focus = u->view.focus; top->scroll = u->view.scroll; }
     if (!at_stack_remove(&gs_ui_stack, slot)) return;
+    if (u->owner != GS_UI_ENGINE) gs_ui_script_close_frame = gs_ui_frame + 1;
     if (u->sc.fn_close >= 0 && gs_ui_call(slot, u->sc.fn_close, "", "", 1)) lua_pop(gs.L, 1);
     gw_log("ui: screen %s closed", u->sc.id);
     if (at_stack_top(&gs_ui_stack) >= 0 && gs_ui_slot[at_stack_top(&gs_ui_stack)].used) gs_ui_prime(at_stack_top(&gs_ui_stack));
@@ -387,7 +390,8 @@ static void gs_ui_close_screen(int slot) {
 static void gs_ui_reg_release_script(int script);
 static void gs_ui_release(int script) {
     int i;
-    if (script < 0) return;
+    if (script < 0) return;                                        /* an engine screen is never released by a script's unload */
+    if (gs_ui_menu_held_by == script) gs_ui_menu_held_by = -2;      /* a script that goes takes its hold with it */
     gs_ui_reg_release_script(script);                                        /* an engine screen is never released by a script's unload */
     for (i = 0; i < GS_UI_SLOTS; i++) {
         GsUiSlot *u = &gs_ui_slot[i];
@@ -579,6 +583,7 @@ static void gs_ui_draw(void) {
     if (top < 0 || !gs_ui_roles_ok()) return;
     u = &gs_ui_slot[top];
     if (!u->used || !gs_ui_usable(u->owner)) return;
+    if (u->owner == GS_UI_ENGINE && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
     if (gw_Kit_QuadRoom() < AT_SCREEN_QUAD_CAP) {
         if (!u->warned) { u->warned = 1; gw_log("ui: %s not drawn: only %d quads left this frame", u->sc.id, gw_Kit_QuadRoom()); }
         return;
@@ -865,6 +870,7 @@ void gw_Ui_Intent(int type, int a) {
     if (top < 0) return;
     u = &gs_ui_slot[top];
     if (!u->used || u->owner != GS_UI_ENGINE) return;              /* a script's screen on top: the menu takes no input */
+    if (gs_ui_menu_held_by != -2) return;                          /* held by a script (gd.ui.hold_menu): no input either */
     if (u->primed_frame == gs_ui_frame + 1) return;                 /* the press that uncovered it is not its own */
     if (!gs_may_run(GS_UI_ENGINE)) return;
     memset(&e, 0, sizeof e);
@@ -890,7 +896,7 @@ void gw_Ui_Close(const char *id) {
 
 int gw_Ui_TopIsEngine(const char *id) {
     int top = at_stack_top(&gs_ui_stack);
-    if (top < 0 || !gs_ui_slot[top].used || gs_ui_slot[top].owner != GS_UI_ENGINE) return 0;
+    if (top < 0 || !gs_ui_slot[top].used || gs_ui_slot[top].owner != GS_UI_ENGINE || gs_ui_menu_held_by != -2) return 0;
     return id == NULL || strcmp(gs_ui_slot[top].sc.id, id) == 0;
 }
 
@@ -904,6 +910,7 @@ void gw_Ui_SceneExit(int scene_kind) {
         if (u->owner == GS_UI_ENGINE) gs_ui_free_engine_slot(i);
         else gs_ui_close_screen(i);                                 /* a mod's screen: on.close runs, the screen stays registered */
     }
+    gs_ui_menu_held_by = -2;                                       /* a hold lasts for the scene that took it */
     if (any) gs_ui_after_close();
 }
 
@@ -1135,7 +1142,28 @@ static int l_ui_entry(lua_State *L) {
     return 1;
 }
 
+/* 1 when the native menu must take no input: a script's screen is on top, a script holds it (gd.ui.hold_menu), or a script's screen closed
+ * in this very tick (its B is not the menu's). The legacy menus (MELEE_ATLAS=0) ask this; the Atlas adapter is covered by gw_Ui_Intent. */
+int gw_Ui_MenuBlocked(void) {
+    int top = at_stack_top(&gs_ui_stack);
+    if (gs_ui_menu_held_by != -2 || gs_ui_script_close_frame == gs_ui_frame + 1) return 1;
+    return top >= 0 && gs_ui_slot[top].used && gs_ui_slot[top].owner != GS_UI_ENGINE;
+}
+
 /* ---- the Lua functions -------------------------------------------------------------------------------- */
+/* gd.ui.hold_menu(on): a script that draws its own menu over a native one (Envoy's legacy menu over the frontend) holds the native
+ * menu: it takes no input and draws nothing while held. Only the holder (or the console) releases it; a hold ends when the script
+ * unloads or the scene ends. Returns whether the menu is held. */
+static int l_ui_hold_menu(lua_State *L) {
+    if (lua_toboolean(L, 1)) {
+        if (gs.cur >= 0) gs_ui_menu_held_by = gs.cur;
+    } else if (gs_ui_menu_held_by == gs.cur || gs.cur == gs.console) {
+        gs_ui_menu_held_by = -2;
+    }
+    lua_pushboolean(L, gs_ui_menu_held_by != -2);
+    return 1;
+}
+
 static int l_ui_available(lua_State *L) {
     int ok = gs_ui_roles_ok();
     lua_pushboolean(L, ok);
@@ -1355,7 +1383,7 @@ static int l_ui_state(lua_State *L) {
 static const luaL_Reg gs_ui_funcs[] = {
     {"available", l_ui_available}, {"screen", l_ui_screen}, {"open", l_ui_open}, {"close", l_ui_close},
     {"feed", l_ui_feed}, {"focus", l_ui_focus}, {"set_focus", l_ui_set_focus}, {"note", l_ui_note},
-    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {NULL, NULL}};
+    {"dialog", l_ui_dialog}, {"state", l_ui_state}, {"entry", l_ui_entry}, {"hold_menu", l_ui_hold_menu}, {NULL, NULL}};
 
 static void gs_push_ui(lua_State *L) {
     lua_newtable(L);

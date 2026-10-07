@@ -8,5 +8,8 @@
   "api_version": 1,
   "gameplay": true,
   "rollback_safe": false,
-  "entry": "scripts/main.lua"
+  "entry": "scripts/main.lua",
+  "menus": [
+    { "id": "envoy", "parent": "solo", "label": "ENVOY", "blurb": "Explore, fight and evolve your build.", "after": "training", "action": "script", "online": false }
+  ]
 }

@@ -156,7 +156,7 @@ static void menus_into_registry(void)
     CHECK(n == 2 && added == 1 && at_reg_children(&r, "solo", 0, c, 8) == 1);
 }
 #ifndef ENVOY_MENUS_EXPECTED
-#define ENVOY_MENUS_EXPECTED 0
+#define ENVOY_MENUS_EXPECTED 1
 #endif
 static void envoy_manifest(void)
 {

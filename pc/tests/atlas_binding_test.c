@@ -513,6 +513,44 @@ static void credits_screen(void)
     CHECK(gw_Ui_PollEvent(&t, &b, &i) == 1 && t == AT_EV_BACK);
 }
 
+/* ---- Task 11: gd.ui.hold_menu and the legacy menu's gate ---- */
+static void held_menu_takes_no_intent(void)
+{
+    int t, b, i;
+    reset_ui();
+    engine_menu("main", 5);
+    fake_script(3, "envoy"); fake_script(4, "other");
+    gs.cur = 4; CHECK(t_lua("return gd.ui.hold_menu(true)"));       /* any script may hold it ... */
+    CHECK(gw_Ui_TopIsEngine("main") == 0 && gw_Ui_MenuBlocked() == 1);
+    gw_Ui_Intent(AT_EV_ACCEPT, 0);
+    CHECK(gw_Ui_PollEvent(&t, &b, &i) == 0);                          /* ... and the held menu takes no intent */
+    gs.cur = 3; CHECK(t_lua("return gd.ui.hold_menu(false)"));        /* another script cannot release it */
+    CHECK(gw_Ui_TopIsEngine("main") == 0);
+    gs.cur = 4; CHECK(t_lua("return gd.ui.hold_menu(false)"));
+    CHECK(gw_Ui_TopIsEngine("main") == 1 && gw_Ui_MenuBlocked() == 0);
+    gs.cur = 3; t_lua("gd.ui.hold_menu(true)");
+    gs_ui_release(3);                                                  /* the holder unloads: the hold goes with it */
+    CHECK(gw_Ui_TopIsEngine("main") == 1);
+    gs.cur = 3; t_lua("gd.ui.hold_menu(true)");
+    gw_Ui_SceneExit(5);                                                /* a scene ends: so does the hold */
+    CHECK(gs_ui_menu_held_by == -2);
+    gs.cur = 3; t_lua("gd.ui.hold_menu(true)"); gs.cur = gs.console; CHECK(t_lua("return gd.ui.hold_menu(false)") && gs_ui_menu_held_by == -2);   /* console: labelled */
+}
+static void menu_blocked_by_a_mod_screen(void)
+{
+    reset_ui();
+    engine_menu("main", 5);
+    CHECK(gw_Ui_MenuBlocked() == 0);
+    fake_script(3, "envoy");
+    gs.cur = 3; t_lua("gd.ui.screen{ id='envoy.s', primary={kind='list', items={{id='a', label='A'}}}, on={back=function() return {pop=true} end} }; gd.ui.open('envoy.s')");
+    CHECK(gw_Ui_MenuBlocked() == 1);                                   /* a mod's screen on top: the legacy menu takes no input */
+    gs.cur = -1; gs_ui_tick();
+    fake_pad_hold(1, AT_PAD_B); gs_ui_tick();                          /* B closes the mod screen in this tick ... */
+    CHECK(gw_Ui_MenuBlocked() == 1);                                   /* ... and the menu still takes no input in that same frame */
+    gs_ui_tick();
+    CHECK(gw_Ui_MenuBlocked() == 0);
+}
+
 int main(void)
 {
     lua_State *L = luaL_newstate();
@@ -783,6 +821,6 @@ int main(void)
     eight_slots_with_engine();
     entry_opens_pushes_mod_screen(); entry_script_runs_on_entry_as_the_mod(); entry_missing_screen_refused(); entry_from_other_script_cannot_hide();
     entry_hidden_in_netplay(); entry_screen_closed_on_scene_exit(); entry_mod_unloaded(); builtin_entries_register();
-    credits_screen();
+    credits_screen(); held_menu_takes_no_intent(); menu_blocked_by_a_mod_screen();
     ATLAS_DONE("atlas binding");
 }

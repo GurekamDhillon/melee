@@ -380,6 +380,13 @@ function Stub.new(opts)
   end
  end
 
+ -- gd.ui.hold_menu(on): a script holds the native menu (no input, no drawing); only the holder or the console releases it
+ function ui.hold_menu(on)
+  if on then if not is_console() then ui.held_by=ui.caller end
+  elseif ui.held_by==ui.caller or is_console() then ui.held_by=nil end
+  return ui.held_by~=nil
+ end
+
  -- ---- entries: gd.ui.entry, on_entry, and the engine's part of choosing one ----------------------------------------------
  -- An entry as mod.json "menus" declares it (the host reads the manifest; a test registers it here). It validates what
  -- at_menus_parse and at_reg_add validate (a label, the id namespace, a built-in parent, opens or action = "script").

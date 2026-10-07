@@ -1,5 +1,11 @@
 # SuperTime Envoy ? retail Classic / Adventure
 
+Menu entry (Atlas step 2, 2026-10-06): **SOLO > ENVOY**. `mod.json` `menus` names the entry and the host calls `on_entry("envoy")` (generated into
+`main.lua` by `tools/port/envoy_bundle.py`). Branch A: it opens a small Atlas screen (START CLASSIC, START ADVENTURE, ENVOY MENU, BACK) in front of the
+native menu; ENVOY MENU opens the legacy menu below and holds the native menu with `gd.ui.hold_menu` until it closes. Whether a run starts from the
+front end (Branch B is the fallback: launch the same offline scene `envoy start` uses) is checked in the game, not by the offline tests. Under
+`MELEE_ATLAS=0` the legacy SOLO hub lists the entry too. Offline test: `pc/tests/envoy_atlas_entry.lua`.
+
 2026-10-04 fix1 supersedes the earlier retail source tuning. Source and
 offline tests are not native gameplay acceptance. Open `envoy menu`, continue to
 the asset-free menu, choose a fighter and start Classic (default) or Adventure from setup.

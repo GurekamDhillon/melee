@@ -219,6 +219,15 @@ do
   m.netplay = false
   check(#m.entries_under('versus') == 1, 'and is back offline')
 end
+do
+  local a, b = Stub.new({ caller = 'a/main', owner_mod = 'a' }), Stub.new({ caller = 'b/main', owner_mod = 'b' })
+  check(a.hold_menu(true) == true and a.held_by == 'a/main', 'a script holds the native menu')
+  b.held_by = 'a/main'
+  check(b.hold_menu(false) == true, 'another script cannot release it')
+  check(a.hold_menu(false) == false, 'the holder releases it')
+  local con = Stub.new({}); con.held_by = 'a/main'
+  check(con.hold_menu(false) == false, 'the console may release it (console-only check)')
+end
 local off = Stub.new({ available = false }); check(select(1, off.available()) == false, 'an unavailable stub says so')
 print(('atlas ui stub: %d checks, %d failed'):format(count, fails))
 os.exit(fails == 0 and 0 or 1)

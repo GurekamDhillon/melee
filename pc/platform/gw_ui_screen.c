@@ -1,7 +1,12 @@
 #include "gw_ui_screen.h"
+#include "gw_ui_item.h"
 
 #include <stdio.h>
 #include <string.h>
+
+/* gw_ui_item.h has no libc and no screen header (game-side files include it): its kinds are plain ints that must equal AT_VAL_* */
+_Static_assert(AT_IVK_NONE == AT_VAL_NONE && AT_IVK_TOGGLE == AT_VAL_TOGGLE && AT_IVK_CHOICE == AT_VAL_CHOICE && AT_IVK_SLIDER == AT_VAL_SLIDER &&
+               AT_IVK_TEXT == AT_VAL_TEXT && AT_IVK_COUNTER == AT_VAL_COUNTER, "gw_ui_item.h value kinds must equal AT_VAL_*");
 
 #define FAIL(...) do { snprintf(err, (size_t) errcap, __VA_ARGS__); return 0; } while (0)
 
@@ -271,7 +276,7 @@ int at_screen_from_val(const AtvArena *a, int root, const char *owner, AtScreen 
     } else {
         items = atv_get(a, prim, "items");
         n = atv_len(a, items);
-        if (n < 1 || n > AT_MAX_ITEMS) FAIL("gd.ui.screen: a list needs 1 to %d items (it has %d)", AT_MAX_ITEMS, n);
+        if (n < 1 || n > AT_MAX_ITEMS_LUA) FAIL("gd.ui.screen: a list needs 1 to %d items (it has %d)", AT_MAX_ITEMS_LUA, n);   /* the record holds AT_MAX_ITEMS: the native screens' limit */
         o->n_items = n;
         for (i = 0; i < n; i++)
             if (!read_item(a, atv_at(a, items, i + 1), i, o->items, o, 0, err, errcap)) return 0;

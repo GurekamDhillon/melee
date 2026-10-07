@@ -6,7 +6,7 @@ local function check(cond, msg) count = count + 1; if not cond then fails = fail
 local function raises(f, part, msg) local ok, e = pcall(f); check(not ok and tostring(e):find(part, 1, true), msg .. ' (got ' .. tostring(e) .. ')') end
 
 local L = Stub.limits
-check(L.blocks == 6 and L.cells == 12 and L.items == 32 and L.keys == 6, 'limits are read from gw_ui_screen.h')
+check(L.blocks == 6 and L.cells == 12 and L.items == 64 and L.items_lua == 32 and L.keys == 6, 'limits are read from gw_ui_screen.h')
 check(L['with'] == 4, 'the with limit is read from the header too')
 
 local function cell(id, extra) local c = { id = id, name = id }; for k, v in pairs(extra or {}) do c[k] = v end; return c end

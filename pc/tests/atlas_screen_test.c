@@ -437,6 +437,32 @@ static void grid_links(void)
     CHECK(!at_screen_from_val(A, root, "envoy", &sc, err, sizeof err) && strstr(err, "at most 16 links") != NULL);
 }
 
+/* headings are a property of the row below them (item.group), not rows: focus never lands on one, and Up from the first row wraps to the last */
+static void refocus_skips_headings(void)
+{
+    static AtScreen sc;
+    AtFocusBlock fb[AT_MAX_BLOCKS];
+    AtFocusPos p, q;
+    int i, nb;
+    memset(&sc, 0, sizeof sc);
+    sc.primary = AT_PRIMARY_LIST; sc.n_items = 6;
+    for (i = 0; i < 6; i++) { snprintf(sc.items[i].id, AT_ID, "i%d", i); snprintf(sc.items[i].group, 24, "%s", i < 3 ? "DISPLAY" : "REMAP"); }
+    nb = at_screen_focus_blocks(&sc, fb);
+    CHECK(nb == 1 && fb[0].n == 6);                                       /* six rows, two headings: the focus block counts only the rows */
+    p.block = 0; p.index = 0;
+    q = at_focus_move(fb, nb, p, AT_DIR_UP, 1);
+    CHECK(q.block == 0 && q.index == 5);                                  /* Up from the first row wraps to the last, never onto a heading */
+    p.index = 2; q = at_focus_move(fb, nb, p, AT_DIR_DOWN, 1);
+    CHECK(q.index == 3);                                                  /* across a heading: the next row */
+    q = at_screen_refocus(&sc, NULL, "i4", p);
+    CHECK(q.block == 0 && q.index == 4);                                  /* refocus by id */
+    q = at_screen_refocus(&sc, NULL, "gone", p);
+    CHECK(q.block == 0 && q.index == 2);                                  /* an id that left: the same place, clamped */
+    sc.n_items = 2;
+    q = at_screen_refocus(&sc, NULL, "gone", p);
+    CHECK(q.block == 0 && q.index == 1);                                  /* fewer rows: the last one, never past the end */
+}
+
 int main(void)
 {
     A = (AtvArena *) malloc(sizeof *A);
@@ -446,6 +472,7 @@ int main(void)
     atv_init(A); tiles_screen();
     atv_init(A); explainer();
     atv_init(A); refocus();
+    refocus_skips_headings();
     atv_init(A); pause_and_persist();
     atv_init(A); cards_and_countdown();
     atv_init(A); grid_links();

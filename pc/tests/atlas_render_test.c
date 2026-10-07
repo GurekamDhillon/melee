@@ -523,11 +523,169 @@ static void links_under_cells(void)
     CHECK(count_color(0x7A5CF0FFu) == 0);                                      /* without links the colour never appears */
 }
 
+/* ---- Atlas step 5: value rows (a toggle, a stepped slider, an engine-owned choice, a readout, a disabled row with its reason, group headings) ---- */
+static void put_item(int i, const char *id, const char *label, int vkind, const char *group)
+{
+    AtItem *it = &SC.items[i];
+    memset(it, 0, sizeof *it);
+    snprintf(it->id, AT_ID, "%s", id); snprintf(it->label, AT_STR, "%s", label); it->vkind = vkind; snprintf(it->group, sizeof it->group, "%s", group);
+}
+static void value_fixture(void)
+{
+    AtItem *it;
+    memset(&SC, 0, sizeof SC); at_view_init(&V);
+    snprintf(SC.id, sizeof SC.id, "settings"); snprintf(SC.title, sizeof SC.title, "SETTINGS"); snprintf(SC.parent[0], AT_STR, "MAIN MENU"); SC.n_parents = 1;
+    SC.primary = AT_PRIMARY_LIST; SC.preset = AT_PRESET_NORMAL; SC.chapter = 5; SC.n_items = 6;
+    SC.n_tabs = 2; snprintf(SC.tabs[0].name, 24, "VIDEO"); snprintf(SC.tabs[1].name, 24, "AUDIO");
+    put_item(0, "i0", "VSync", AT_VAL_TOGGLE, "DISPLAY"); SC.items[0].on = 1;
+    put_item(1, "i1", "Master Volume", AT_VAL_SLIDER, "DISPLAY"); it = &SC.items[1]; it->vmin = 0; it->vmax = 100; it->vstep = 5; it->vval = 45; snprintf(it->text, AT_STR, "45%%");
+    put_item(2, "i2", "Show FPS", AT_VAL_CHOICE, "DISPLAY"); it = &SC.items[2]; it->vmin = 0; it->vmax = 2; it->vval = 1; it->n_opts = 3; snprintf(it->opt[0], 24, "Off"); snprintf(it->opt[1], 24, "FPS"); snprintf(it->opt[2], 24, "Performance"); snprintf(it->text, AT_STR, "FPS");
+    put_item(3, "i3", "Port 1", AT_VAL_TEXT, "REMAP"); it = &SC.items[3]; it->iflags = AT_ITEM_RO; snprintf(it->text, AT_STR, "Nothing connected");
+    put_item(4, "i4", "Bind Input", AT_VAL_NONE, "REMAP"); it = &SC.items[4]; it->flags = AT_CELL_DISABLED; it->iflags = AT_ITEM_DISABLED; snprintf(it->reason, sizeof it->reason, "Connect a controller first.");
+    put_item(5, "i5", "Recalibrate", AT_VAL_NONE, "REMAP");
+    V.focus.block = 0; V.focus.index = -1;
+}
+static AtRect hit_row(int i)
+{
+    int k;
+    AtRect none = { 0, 0, 0, 0 };
+    for (k = 0; k < HITS.n; k++) if (HITS.h[k].kind == AT_HIT_CELL && HITS.h[k].b == i) return HITS.h[k].r;
+    return none;
+}
+/* every recorded text that sits on a row lies inside that row, measured with the width that drew it */
+static int texts_in_rows(void)
+{
+    int i, k;
+    for (i = 0; i < REC.nt; i++) for (k = 0; k < HITS.n; k++) {
+        const AtRect *r;
+        if (HITS.h[k].kind != AT_HIT_CELL) continue;
+        r = &HITS.h[k].r;
+        if (REC.t[i].base > r->y + 2.0f && REC.t[i].base < r->y + r->h && text_right(&REC.t[i]) > r->x && text_left(&REC.t[i]) < r->x + r->w) {
+            if (text_left(&REC.t[i]) < r->x - 0.01f || text_right(&REC.t[i]) > r->x + r->w + 0.01f) { printf("  text \"%s\" leaves its row\n", REC.t[i].s); return i; }
+        }
+    }
+    return -1;
+}
+static int lit_ticks(AtRect r)                     /* the slider's lit ticks inside a row: the AT_C_TEXT2 polys in the slider's 70 px */
+{
+    int k, lit = 0;
+    for (k = 0; k < REC.np; k++)
+        if (REC.p[k].rgba == AT_C_TEXT2 && poly_minx(&REC.p[k]) > r.x + r.w - 90.0f && poly_miny(&REC.p[k]) >= r.y && poly_maxy(&REC.p[k]) <= r.y + r.h) lit++;
+    return lit;
+}
+static void value_rows_style(void)
+{
+    static const float widths[2] = { 640.0f, 853.3333f };
+    int w, i;
+    for (w = 0; w < 2; w++) {
+        for (i = 0; i < 6; i++) {
+            AtSink s;
+            AtRect row, area, canvas;
+            StySig rest, foc;
+            value_fixture(); V.focus.index = -1;
+            s = rec_sink(); at_render(&SC, &V, widths[w], 10000.0, 1, &O, &s, &HITS);
+            row = hit_row(i);
+            CHECK(row.w > 0.0f);
+            area.x = row.x - 4.0f; area.y = row.y - 4.0f; area.w = row.w + 8.0f; area.h = row.h + 8.0f;
+            canvas.x = 0.0f; canvas.y = 0.0f; canvas.w = widths[w]; canvas.h = 480.0f;
+            rest = sty_sig_in(0, area);
+            CHECK(corners_clear(row, (float) AT_PX_CH_S));
+            if (i != 4) CHECK(sty_chamfer(row, (float) AT_PX_CH_S, AT_C_PLATE) == 0);   /* the disabled row's face IS the pane's: corners_clear covers it */
+            CHECK(texts_legible());
+            CHECK(sty_text_inside(canvas, 0) == -1);
+            CHECK(texts_in_rows() == -1);
+            value_fixture(); V.focus.index = i;
+            s = rec_sink(); at_render(&SC, &V, widths[w], 10000.0, 1, &O, &s, &HITS);
+            foc = sty_sig_in(0, area);
+            CHECK(sty_focus_cues(rest, foc) == 3);                                    /* lift, ember edge and tick, on every row kind */
+        }
+    }
+}
+static void value_row_signals(void)
+{
+    AtSink s;
+    AtRect r1;
+    value_fixture();
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 10000.0, 1, &O, &s, &HITS);
+    CHECK(find_text("ON") != NULL && find_text("OFF") != NULL);                        /* a toggle is words, not only a colour */
+    CHECK(find_text("45%") != NULL && find_text("FPS") != NULL && find_text("Nothing connected") != NULL);
+    CHECK(find_text("Connect a controller first.") != NULL);                           /* a disabled row says why */
+    CHECK(lit_ticks(hit_row(1)) == (45 - 0) * 10 / 100);                               /* the slider's lit ticks are (v - min) / (max - min) of its ten */
+    value_fixture(); SC.items[1].vval = 100; s = rec_sink(); at_render(&SC, &V, 640.0f, 10000.0, 1, &O, &s, &HITS);
+    r1 = hit_row(1);
+    CHECK(lit_ticks(r1) == 9);                                                         /* full: nine lit ticks and the thumb */
+    value_fixture(); SC.items[1].vval = 0; s = rec_sink(); at_render(&SC, &V, 640.0f, 10000.0, 1, &O, &s, &HITS);
+    CHECK(lit_ticks(hit_row(1)) == 0);
+    value_fixture(); SC.items[4].reason[0] = '\0'; s = rec_sink(); at_render(&SC, &V, 640.0f, 10000.0, 1, &O, &s, &HITS);
+    CHECK(find_text("NOT NOW") != NULL && texts_legible());                            /* a disabled row with no reason still says it in words */
+}
+static void headings_and_tabs(void)
+{
+    AtSink s;
+    AtLayout L; AtSplit sp;
+    int k, rows = 0, tabs = 0;
+    value_fixture();
+    s = rec_sink(); at_render(&SC, &V, 640.0f, 10000.0, 1, &O, &s, &HITS);
+    CHECK(find_text("DISPLAY") != NULL && find_text("REMAP") != NULL);                 /* a heading when the group changes, once per group */
+    CHECK(find_text("VIDEO") != NULL && find_text("AUDIO") != NULL);                   /* the tab strip over a list */
+    at_layout(640.0f, AT_PRESET_NORMAL, &L); at_layout_split(&L, 1, AT_BAND_NONE, &sp);
+    for (k = 0; k < HITS.n; k++) {
+        rows += HITS.h[k].kind == AT_HIT_CELL; tabs += HITS.h[k].kind == AT_HIT_TAB;
+        if (HITS.h[k].kind == AT_HIT_CELL) CHECK(HITS.h[k].r.y >= sp.grid.y && HITS.h[k].r.y + HITS.h[k].r.h <= sp.grid.y + sp.grid.h);   /* under the strip, inside the pane */
+    }
+    CHECK(rows == 6 && tabs == 2);                                                     /* headings take no hit rectangle */
+    { const RecText *h = find_text("REMAP"); AtRect r3 = hit_row(3), r2 = hit_row(2);
+      CHECK(h != NULL && h->base > r2.y + r2.h && h->base < r3.y);                     /* the heading sits between the two rows it separates */
+      CHECK(r3.y - (r2.y + r2.h) >= 22.0f); }
+    /* no tabs: the pane is the whole primary place, as before */
+    value_fixture(); SC.n_tabs = 0; s = rec_sink(); at_render(&SC, &V, 640.0f, 10000.0, 1, &O, &s, &HITS);
+    CHECK(find_text("AUDIO") == NULL && hit_row(0).y >= L.primary.y);
+}
+static void list_window_with_headings(void)
+{
+    static AtScreen big;
+    int i, first, n;
+    memset(&big, 0, sizeof big);
+    big.primary = AT_PRIMARY_LIST; big.n_items = 40;
+    for (i = 0; i < 40; i++) { snprintf(big.items[i].id, AT_ID, "i%d", i); snprintf(big.items[i].group, 24, "%s", i < 10 ? "A" : i < 20 ? "B" : "C"); }
+    n = at_list_window(&big, 334.0f, 0);
+    CHECK(n >= 5 && n <= 8);                                                           /* a heading costs 22 px: fewer rows than the 39 px rule alone */
+    CHECK(n == (int) ((334.0f - 28.0f - 22.0f) / 39.0f));
+    for (i = 0; i < 40; i++) big.items[i].group[0] = 0;
+    CHECK(at_list_window(&big, 334.0f, 0) == (int) ((334.0f - 28.0f) / 39.0f));       /* no groups: exactly the legacy count */
+    big.n_items = 40; for (i = 0; i < 40; i++) snprintf(big.items[i].group, 24, "%s", i < 10 ? "A" : i < 20 ? "B" : "C");
+    first = 0;
+    for (i = 0; i < 40; i++) {                                                          /* walking down: the focused row is always in the window, the scroll never jumps back */
+        int prev = first, c;
+        first = at_list_scroll_to(&big, 334.0f, i, first);
+        c = at_list_window(&big, 334.0f, first);
+        CHECK(i >= first && i < first + c && first >= prev);
+    }
+    first = at_list_scroll_to(&big, 334.0f, 0, first);
+    CHECK(first == 0);                                                                  /* back to the top */
+    CHECK(at_list_scroll_to(&big, 334.0f, 39, 0) + at_list_window(&big, 334.0f, at_list_scroll_to(&big, 334.0f, 39, 0)) >= 40);   /* the last row can be reached */
+}
+static void sixty_four_rows(void)
+{
+    static AtScreen big;
+    static AtView bv;
+    AtSink s = rec_sink();
+    int i;
+    memset(&big, 0, sizeof big); at_view_init(&bv);
+    big.primary = AT_PRIMARY_LIST; big.preset = AT_PRESET_NORMAL; big.n_items = 64;
+    for (i = 0; i < 64; i++) { snprintf(big.items[i].id, AT_ID, "i%d", i); snprintf(big.items[i].label, AT_STR, "Mod %d", i); big.items[i].vkind = AT_VAL_TOGGLE; }
+    bv.focus.block = 0; bv.focus.index = 41;
+    bv.scroll = at_list_scroll_to(&big, 362.0f, 41, 0);
+    at_render(&big, &bv, 640.0f, 10000.0, 1, &O, &s, &HITS);
+    CHECK(HITS.n >= 5 && HITS.n < AT_MAX_HITS && find_text("Mod 41") != NULL);        /* the 41st mod is on screen when focused */
+}
+
 int main(void)
 {
     budget_and_legibility(); focus_cues(); long_strings(); hits_at_widths(); list_screen(); overlays_and_fade();
     budget_enforced(); hits_stay_in_table(); tall_grid(); zero_cols(); dialog_suppresses_hits(); long_key_hints(); stone_note_per_row();
     tabs_and_band_render(); ext_cells_in_render(); cursors_per_port(); sink_without_image_op_in_render();
     cards_screen(); countdown_colour_and_trail(); links_under_cells();
+    value_rows_style(); value_row_signals(); headings_and_tabs(); list_window_with_headings(); sixty_four_rows();
     ATLAS_DONE("atlas render");
 }

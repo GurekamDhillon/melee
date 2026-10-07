@@ -715,7 +715,11 @@ static void gs_ui_fix_scroll(GsUiSlot *u) {
     AtLayout pl;
     if (u->view.focus.index < 0) return;
     at_layout(640.0f, u->sc.preset, &pl);                          /* the pane's height does not depend on the width */
-    if (u->sc.primary == AT_PRIMARY_LIST) u->view.scroll = at_list_scroll(u->view.focus.index, u->view.scroll, at_list_visible(&pl), u->sc.n_items);
+    if (u->sc.primary == AT_PRIMARY_LIST) {                        /* the window counts group headings, and a tab strip shortens the pane */
+        float ph = pl.primary.h;
+        if (u->sc.n_tabs > 0) { AtSplit sp; at_layout_split(&pl, 1, AT_BAND_NONE, &sp); ph = sp.grid.h; }
+        u->view.scroll = at_list_scroll_to(&u->sc, ph, u->view.focus.index, u->view.scroll);
+    }
     else if (u->sc.primary == AT_PRIMARY_TILES) u->view.scroll = at_tiles_scroll(&u->sc, &pl, u->view.focus.block == 0 ? u->view.focus.index : -1, u->view.scroll);
 }
 

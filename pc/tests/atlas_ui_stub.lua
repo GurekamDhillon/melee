@@ -18,7 +18,7 @@ local function read_limits()
   if f then
    local text = f:read('a'); f:close()
    local L = {}
-   for name, v in text:gmatch('#define%s+AT_MAX_(%u+)%s+(%d+)') do L[name:lower()] = tonumber(v) end
+   for name, v in text:gmatch('#define%s+AT_MAX_(%u[%u_]*)%s+(%d+)') do L[name:lower()] = tonumber(v) end   -- items = the native record (64); items_lua = the Lua door (32)
    L.id = tonumber(text:match('#define%s+AT_ID%s+(%d+)'))     -- a block, cell or item id holds AT_ID - 1 characters; a screen id twice that
    L.str = tonumber(text:match('#define%s+AT_STR%s+(%d+)'))
    L.text = tonumber(text:match('#define%s+AT_TEXT%s+(%d+)'))
@@ -161,7 +161,7 @@ function Stub.new(opts)
      seen[it.id] = true
     end
    end
-   if n < 1 or n > L.items then fail(('a list needs 1 to %d items (it has %d)'):format(L.items, n)) end
+   if n < 1 or n > L.items_lua then fail(('a list needs 1 to %d items (it has %d)'):format(L.items_lua, n)) end
    for ii, it in ipairs(p.items) do
     if type(it) ~= 'table' then fail(('item %d is not a table'):format(ii)) end
     check_id(('item %d'):format(ii), it.id)

@@ -18,6 +18,7 @@ workspace `_research/frontend-menus.md`; the art itself: workspace `menu/`.
 | `gmfrontend_select.inc` | the kit's character and stage select |
 | `gmfrontend_kit.inc`, `_kitlist.inc`, `_player.inc` | drawing: the font atlas and palettes (`kit.json`), the row list (`list_layout.json`, `widgets_layout.json`), the layout/motion player |
 | `gmfrontend_mouse.inc` | the mouse in the menus |
+| `gmfrontend_atlas_online.inc` | the Atlas drawing of the room screens: copies legacy predicates into the host's room view by name, turns mouse and keyboard intents into the same MenuInput bits; reads netplay state, writes none (`tools/port/check_atlas_online.sh`) |
 | `gmfrontend_atlas.inc` | the Atlas adapter for the menu tree: `FeMenu.atlas_id`, `fa_frame` / `fa_sync`, the More strip, the scene policy's stand-in hook (see "Atlas" below) |
 | `gmscmemcard.c` | the memory-card prompt, the boot blocker; the port's skip and auto-create are here |
 
@@ -33,6 +34,9 @@ workspace `_research/frontend-menus.md`; the art itself: workspace `menu/`.
 - Env switches: `MELEE_FRONTEND_MENUS` (the tree, default on), `MELEE_NATIVE_CSS`,
   `MELEE_FE_HUBDEMO`, `MELEE_NO_ONBOARD`, `MELEE_ATLAS` (`0` = the legacy menus and the retail title), `MELEE_ATLAS_SCENES`
   (`<kind>:<retail|overlay|replace>,...`, a development override of the scene policy).
+- A change to what the online screens show goes in the adapter (`gmfrontend_atlas_online.inc`) or in `pc/platform/gw_ui_room.c`; a change to what they do goes in
+  `gmfrontend_online.inc` and the netplay layer, never in the adapter. Run `tools/port/check_atlas_online.sh` after touching either. `fa_room_on()` means a room
+  screen is attached in the host, not that Atlas is enabled: a refusal leaves the legacy drawing.
 - Syntax-check off Windows as PowerPC (root `CLAUDE.md`); the `.inc` files compile only through
   `gmfrontend.c`.
 

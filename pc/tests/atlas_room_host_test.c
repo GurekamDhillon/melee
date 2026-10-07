@@ -344,7 +344,6 @@ static void draw_through_host(void)
     s = rec_sink();
     memset(&info, 0, sizeof info);
     at_render_ex(&u->sc, &u->view, 1140.0f, g_now, 0, &FAKE, &s, &u->hits, &info);
-    printf("entries %d hits %d\n", info.entries, u->hits.n);
     CHECK(info.entries < 1200 && !info.capped && info.hits_dropped == 0 && u->hits.n > 10);
     gw_Ui_RoomEnd();
     s = rec_sink();

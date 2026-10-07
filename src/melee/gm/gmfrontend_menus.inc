@@ -36,8 +36,7 @@
  */
 
 enum { FM_HUB, FM_LIST };
-enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE, FA_TBD };
-#define SEL_MAIN_TBD 0x43
+enum { FA_SUB, FA_MODE, FA_NATIVE, FA_MATCH_SETUP, FA_ONLINE, FA_PAGE };
 #define SEL_VS_ONLINE 0x40 ///< not a vanilla selection: VERSUS > ONLINE is the port's
 #define SEL_MAIN_ONLINE 0x44 ///< not a vanilla selection: the Atlas main menu's ONLINE (VERSUS no longer lists it)
 #define SEL_MAIN_MODS 0x45   ///< not a vanilla selection: the Atlas main menu's MODS (the Settings > Mods page)
@@ -94,7 +93,6 @@ static void fa_open_reset(const struct FeMenu* m, int sel);
 static void fa_scene_exit(void);
 
 static const FeMenuItem fm_main[] = {
-    { "SUPERTIME ENVOY", "Explore, fight and evolve your build.", "ico_adventure", SEL_MAIN_TBD, FA_TBD },
     { "SOLO", "Classic, Adventure, events, training and more.", "ico_solo", SEL_MAIN_1P, FA_SUB,
       MENU_KIND_1P },
     { "VERSUS", "Up to four players. Your rules, your stage.", "ico_versus", SEL_MAIN_VS, FA_SUB,
@@ -309,10 +307,6 @@ static bool fm_replaced(int kind)
  * (mnhyaku.c) and cycles through all six with no check. */
 static bool fm_visible(const FeMenu* m, const FeMenuItem* it)
 {
-    if (m->kind == MENU_KIND_MAIN && it->sel == SEL_MAIN_TBD) {
-        extern int Script_TbdAvailable(void);
-        return Script_TbdAvailable() != 0;
-    }
     if (m->kind == MENU_KIND_MULTI_VS) {
         return true;
     }
@@ -1289,12 +1283,6 @@ static void fm_do_pending(void)
         OSReport("frontend: -> SETTINGS page %d\n", fm.pend_a);
         fe_settings_from_menus(fm.pend_a);
         return;
-    case 7: {
-        extern void Script_TbdRequest(void);
-        Script_TbdRequest();
-        fm.fading_out = true;
-        return;
-    }
     }
 }
 
@@ -1353,9 +1341,6 @@ static void fm_confirm(void)
         fm.pend_kind = 6;
         fm.pend_a = it->arg;
         fa_page_from_main = Ui_Ready() && m->kind == MENU_KIND_MAIN;
-        break;
-    case FA_TBD:
-        fm.pend_kind = 7;
         break;
     }
     if (fp.motion_ok) {

@@ -38,7 +38,7 @@
 extern "C" {
 #endif
 
-#define GW_SCRIPT_API_VERSION 1
+#define GW_SCRIPT_API_VERSION 2
 
 /* ---- scene loop (gmscene.c; the game calls these without the gw_ prefix) --------------------- */
 /* Retail 1P notifications are queued; hooks run only at offline boundaries. */

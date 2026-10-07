@@ -409,7 +409,6 @@ static struct {
     float set_rate[6];
     float set_lift[6];
     int lab_request;   /* the frontend's LAB entry / MELEE_LAB=1 asked for the Lab */
-    int tbd_request;   /* the installed roguelite's main-menu entry */
     /* keys */
     unsigned char key_now[256], key_prev[256];
     /* console */
@@ -4092,10 +4091,11 @@ static int l_lab_request(lua_State *L) {
     return 1;
 }
 
+/* Deprecated in API 2 (removed in API 3): the main-menu TBD tile is gone, so there is never a request. A mod adds a main-menu entry
+ * with mod.json "menus" and on_entry (docs/scripting.md, Atlas entries); gd.deprecated.tbd_request says so. */
 static int l_tbd_request(lua_State *L) {
-    int clear = lua_toboolean(L, 1);
-    lua_pushboolean(L, gs.tbd_request);
-    if (clear) gs.tbd_request = 0;
+    (void) L;
+    lua_pushboolean(L, 0);
     return 1;
 }
 
@@ -6749,11 +6749,13 @@ static void gs_build_base(lua_State *L) {
     lua_pushboolean(L,1);lua_setfield(L,-2,"clank_event");
     lua_pushboolean(L,1);lua_setfield(L,-2,"sim_supported");
     lua_pushboolean(L,1);lua_setfield(L,-2,"echo_supported");
-    lua_pushstring(L, "GD's Melee scripting API 1");
+    lua_pushstring(L, "GD's Melee scripting API 2");
     lua_setfield(L, -2, "api_name");
     lua_pushinteger(L, 1);
     lua_setfield(L, -2, "lab_api"); /* the Geno Lab API (private build); nil elsewhere */
     lua_newtable(L);
+    lua_pushstring(L, "use mod.json menus and on_entry (docs/scripting.md, Atlas entries)");
+    lua_setfield(L, -2, "tbd_request");     /* API 2: always false; removed in API 3 */
     lua_setfield(L, -2, "deprecated"); /* name -> "use X instead", filled as the API evolves */
     lua_newtable(L);
     for (i = 0; i < 12; ++i) {
@@ -7702,16 +7704,6 @@ int gw_Script_LabAvailable(void) {
 }
 void gw_Script_LabRequest(void) { gs.lab_request = 1; }
 
-int gw_Script_TbdAvailable(void) {
-    int i;
-    gs_init();
-    for (i = 0; i < gs.n; ++i) {
-        if (gs.s[i].used && !gs.s[i].disabled &&
-            strcmp(gs.s[i].id, "roguelite/main") == 0 && gs.s[i].gameplay) return 1;
-    }
-    return 0;
-}
-void gw_Script_TbdRequest(void) { gs.tbd_request = 1; }
 
 void gw_Script_PostRender(void) {
     gw_Shader_PostDraw(1); /* after retail HUD, before the host/ImGui overlay */
@@ -9507,7 +9499,7 @@ static int test_script_ui_binding(void) {
         rc = 1;
         goto done;
     }
-    t_exec("= gd.ui.screen{id='uitest.bad', primary={kind='tiles'}}", out, sizeof out);
+    t_exec("= gd.ui.screen{id='uitest.bad', primary={kind='wheel'}}", out, sizeof out);
     if (strstr(out, "not supported") == NULL) {
         gw_test_fail("a bad description was not refused with its message: %s", out);
         rc = 1;
@@ -9558,8 +9550,14 @@ static int test_script_lua_runs(void) {
         gw_test_fail("console globals do not persist: \"%s\"", out);
         return 1;
     }
-    if (t_exec("= gd.api_version", out, sizeof out) != 0 || strstr(out, "1") == NULL) {
+    if (t_exec("= gd.api_version", out, sizeof out) != 0 || strstr(out, "2") == NULL) {
         gw_test_fail("gd.api_version: \"%s\"", out);
+        return 1;
+    }
+    /* API 2: gd.tbd_request is a stub that is always false (the main-menu tile is gone) and says what replaced it */
+    if (t_exec("= gd.api_version, gd.tbd_request(true), gd.deprecated.tbd_request ~= nil", out, sizeof out) != 0 ||
+        strstr(out, "2\nfalse\ntrue") == NULL) {
+        gw_test_fail("gd.tbd_request deprecation: \"%s\"", out);
         return 1;
     }
     return 0;

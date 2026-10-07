@@ -102,11 +102,11 @@ static const char* fa_item_id(const FeMenuItem* it)
     return id;
 }
 
+/* A built-in entry owned by its mod: the LAB (the Geno Lab script mod) is tagged MOD like a registry entry. The spec's "moved to the
+ * entry's on_entry" is not done: a Lua handler cannot enter GM_LAB without a new gameplay API, and the native action does exactly that. */
 static const char* fa_item_tag(const FeMenu* m, const FeMenuItem* it)
 {
-    (void) m;
-    (void) it;
-    return "";
+    return (m->kind == MENU_KIND_1P && it->sel == SEL_1P_LAB) ? "MOD" : "";
 }
 
 static const char* fa_numeral(int i)

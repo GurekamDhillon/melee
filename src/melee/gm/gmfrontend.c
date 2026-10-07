@@ -1162,6 +1162,7 @@ static bool fm_back_to_online_item; ///< backing out of ONLINE lands on its VS h
 #include "gmfrontend_panel.inc"
 #include "gmfrontend_mouse.inc"
 #include "gmfrontend_menus.inc"
+#include "gmfrontend_atlas.inc"
 #include "gmfrontend_kitlist.inc"
 #include "gmfrontend_online.inc"
 #include "gmfrontend_select.inc"

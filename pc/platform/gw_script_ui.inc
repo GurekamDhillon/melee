@@ -15,6 +15,7 @@
  * glyph too (a width is n x tracking wider), so gs_ui_width reports the visible width and gs_ui_text shifts a
  * centred or right-aligned run by half or all of one gap to put the visible glyphs where the parts asked. */
 #include "gw_mods.h"
+#include "gw_ui_policy.h"
 #include "gw_ui_registry.h"
 #include "gw_ui_render.h"
 #include "gw_ui_stack.h"
@@ -697,6 +698,9 @@ static void gs_ui_after_close(void) {
 }
 
 int gw_Ui_Ready(void) { return gs_ui_roles_ok() && atlas_env_on(); }
+
+/* the scene policy for a scene kind (RETAIL 0, OVERLAY 1, REPLACE 2): the table, MELEE_ATLAS and MELEE_ATLAS_SCENES (gw_ui_policy.h) */
+int gw_Ui_ScenePolicy(int scene_kind) { return at_policy_for(scene_kind, atlas_env_on(), getenv("MELEE_ATLAS_SCENES")); }
 
 static void gs_ui_scratch_reset(void) {
     memset(&gs_ui_scratch, 0, sizeof gs_ui_scratch);

@@ -188,6 +188,20 @@ void gm_801A4014(GameMode* mode)
      */
     scene =
         (GameScene*) ((uintptr_t) gm_FindGameSceneHandler(kind) | (zero = 0));
+#if defined(TARGET_PC)
+    {
+        /* The Atlas scene policy (pc/platform/gw_ui_policy.c): RETAIL runs the scene as it is, OVERLAY too (the host draws over it
+         * from its scene-begin hook), REPLACE swaps in the stand-in's on_enter/on_frame pair. NULL: no stand-in, stay retail. */
+        extern int Ui_ScenePolicy(int);
+        extern GameScene* gmFrontend_AtlasStandIn(u8 kind);
+        if (Ui_ScenePolicy(kind) == 2 /* AT_POLICY_REPLACE */) {
+            GameScene* stand_in = gmFrontend_AtlasStandIn(kind);
+            if (stand_in != NULL) {
+                scene = stand_in;
+            }
+        }
+    }
+#endif
     gm_801A4BD4();
     gm_801A4B88(info);
     if (scene->on_enter != NULL) {

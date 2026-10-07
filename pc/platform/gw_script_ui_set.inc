@@ -206,7 +206,7 @@ static void gs_set_tick(GsUiSlot *u) {
 /* 1 when gw_Ui_SetOpen would succeed now: Atlas is on, no native screen is open, a slot is free */
 int gw_Ui_SetCanOpen(void) {
     int i;
-    if (!gw_Ui_Ready() || gs_set_is_open() || gw_Ui_SelCanOpen() == 0) return 0;
+    if (!gw_Ui_Ready() || gs_set_is_open() || gs_room_is_open() || gw_Ui_SelCanOpen() == 0) return 0;
     for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) return 1;
     return 0;
 }
@@ -219,7 +219,7 @@ int gw_Ui_SetOpen(int kind, int active_tab, const char *t0, const char *t1, cons
     AtScreen *sc;
     static const char *const ids[7] = { "settings.tabs", "settings.remap", "settings.howto", "settings.erase", "settings.rules", "settings.morerules", "settings.match" };
     if (!gw_Ui_Ready() || kind < GS_SET_TABS || kind > GS_SET_MATCH) return -1;
-    if (gs_set_is_open() || gw_Ui_SelCanOpen() == 0) return -1;     /* one native screen at a time: the stack has one top */
+    if (gs_set_is_open() || gs_room_is_open() || gw_Ui_SelCanOpen() == 0) return -1;     /* one native screen at a time: the stack has one top */
     for (i = 0; i < GS_UI_SLOTS; i++) if (!gs_ui_slot[i].used) { slot = i; break; }
     if (slot < 0) { gw_log("ui: no free screen slot for the settings screen"); return -1; }
     u = &gs_ui_slot[slot];

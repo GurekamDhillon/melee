@@ -21,6 +21,7 @@
 #include "gw_ui_item.h"
 #include "gw_ui_retail.h"
 #include "gw_ui_render.h"
+#include "gw_ui_room.h"
 #include "gw_ui_stack.h"
 #include "gw_ui_tokens.h"
 
@@ -37,6 +38,7 @@ typedef struct {
     int self_close;         /* an engine screen the host runs alone (Credits): B closes it here, no event reaches the game */
     int native_sel;         /* a select screen (gw_script_ui_sel.inc): its cells are in adapter storage, the mouse is read there */
     int native_set;         /* the settings screens (gw_script_ui_set.inc): rows filled by the table walker, keys and mouse read there, the pad fed as intents */
+    int native_room;        /* the online room screens (gw_script_ui_room.inc): a plain-data view the game fills by name; keys and mouse read there, the pad is the game's */
     AtScreen sc;
     AtView view;
     AtHits hits;
@@ -260,6 +262,8 @@ static int gs_ui_call(int slot, int ref, const char *a, const char *b, int nres)
 
 static void gs_ui_close_screen(int slot);
 static int gs_ui_open_screen(int slot);
+static void gs_room_tick(GsUiSlot *u);   /* gw_script_ui_room.inc */
+static int gs_room_is_open(void);
 
 /* a handler may return {pop = true} or {push = "screen id"} */
 /* A handler's result is judged by the slot owners, never by gs.cur: the tick calls handlers between hooks, where gs.cur is -1.
@@ -389,7 +393,7 @@ static int gs_ui_open_screen(int slot) {
     int owner = u->owner;
     AtStackEntry *top;
     { int t = at_stack_top(&gs_ui_stack);                          /* no mod screen over a select: it owns the pad and the cursors of every port */
-      if (t >= 0 && (gs_ui_slot[t].native_sel || gs_ui_slot[t].native_set)) { gw_log("ui: screen %s not opened: a select or settings screen is on top", u->sc.id); return 0; } }
+      if (t >= 0 && (gs_ui_slot[t].native_sel || gs_ui_slot[t].native_set || gs_ui_slot[t].native_room)) { gw_log("ui: screen %s not opened: a select, settings or online room screen is on top", u->sc.id); return 0; } }
     if (!at_stack_push(&gs_ui_stack, slot)) return 0;
     top = at_stack_top_entry(&gs_ui_stack);
     if (top != NULL && top->focus.block >= 0 && u->view.focus.block < 0) u->view.focus = top->focus;
@@ -612,6 +616,7 @@ static void gs_ui_tick(void) {
     if (!gs_may_run(u->owner)) return;
     if (u->native_sel) { gs_sel_tick(u); return; }                      /* a select screen: its own mouse path; the pad is the game's */
     if (u->native_set) { gs_set_tick(u); return; }                      /* the settings: the keys and the mouse here, the pad is the game's (gw_Ui_SetIntent) */
+    if (u->native_room) { gs_room_tick(u); return; }                    /* the online room: keys and mouse become intents the game polls; the pad is the game's own read */
     if (at_screen_wants_pad(&u->sc) || top == gs_ui_pause_pushed) {   /* a pause screen the takeover pushed reads the pausing port's pad itself, whatever its input says */
         int sx, sy;
         unsigned b = gs_ui_pad_read(u, &sx, &sy);
@@ -646,7 +651,7 @@ static void gs_ui_draw(void) {
     if (top < 0 || !gs_ui_roles_ok()) return;
     u = &gs_ui_slot[top];
     if (!u->used || !gs_ui_usable(u->owner)) return;
-    if (u->owner == GS_UI_ENGINE && !u->native_sel && !u->native_set && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
+    if (u->owner == GS_UI_ENGINE && !u->native_sel && !u->native_set && !u->native_room && gs_ui_menu_held_by != -2) return;   /* held: a script's own menu is drawn over the frontend instead */
     if (gw_Kit_QuadRoom() < AT_SCREEN_QUAD_CAP) {
         if (!u->warned) { u->warned = 1; gw_log("ui: %s not drawn: only %d quads left this frame", u->sc.id, gw_Kit_QuadRoom()); }
         return;
@@ -942,7 +947,7 @@ void gw_Ui_Intent(int type, int a) {
     GsUiSlot *u;
     if (top < 0) return;
     u = &gs_ui_slot[top];
-    if (!u->used || u->owner != GS_UI_ENGINE || u->native_sel || u->native_set) return;   /* a script's screen on top: the menu takes no input; a select reads the pads itself, the settings take gw_Ui_SetIntent */
+    if (!u->used || u->owner != GS_UI_ENGINE || u->native_sel || u->native_set || u->native_room) return;   /* a script's screen on top: the menu takes no input; a select reads the pads itself, the settings take gw_Ui_SetIntent */
     if (gs_ui_menu_held_by != -2) return;                          /* held by a script (gd.ui.hold_menu): no input either */
     if (u->primed_frame == gs_ui_frame + 1) return;                 /* the press that uncovered it is not its own */
     if (!gs_may_run(GS_UI_ENGINE)) return;
@@ -2011,3 +2016,4 @@ static void gs_push_ui(lua_State *L) {
 
 #include "gw_script_ui_sel.inc"
 #include "gw_script_ui_set.inc"
+#include "gw_script_ui_room.inc"

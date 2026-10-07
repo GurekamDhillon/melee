@@ -111,13 +111,13 @@ static int lint_focus_row(AtRect rest)
  * focus colour: a bracket is two thin strips). */
 static int lint_focus_cell(AtRect rest, unsigned focus_rgba)
 {
-    int i, bad = 0, small = 0;
+    int i, bad = 0, nsmall = 0;
     if (lint_top() > rest.y - 1.5f) bad++;
     if (count_color(AT_C_EMBER) < 1) bad++;
     for (i = 0; i < REC.np; i++)
         if (REC.p[i].rgba == focus_rgba && poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]) <= 14.0f &&
-            poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) <= 14.0f) small++;
-    if (small < 4) bad++;
+            poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) <= 14.0f) nsmall++;
+    if (nsmall < 4) bad++;
     return bad;
 }
 #endif

@@ -64,6 +64,7 @@ static struct {
     int limit;
     int elapsed;
     int sleep_wait;
+    int driven_mask; /* hands already driven into the death by BossHook_DriveDeaths: once only, see there */
 } boss_hook;
 
 extern int Script_BossHookEnabled(void);
@@ -101,7 +102,12 @@ static int BossHook_AllSleeping(void)
  * a Sleep that cannot come (2026-10-06: Crazy Hand reached 0 HP by a non-hit damage write, the fight never ended, the player was held
  * blast-zone immune by state 7's Player_80036844(0, 1) and fell out of the world). Retail starts a stamina KO from the damage commit
  * (Fighter_TakeDamage_8006CC7C -> ftCo_800C8C84 -> fn_800C8E74); this runs the same function for such a hand, so its death is the
- * retail one. Safe to repeat: ftCo_800C8C84 refuses once the death has begun (x2224_b2). Returns the number of hands driven. */
+ * retail one. Returns the number of hands driven.
+ * ONCE per hand (driven_mask). For a hand ftCo_800C8C84 does NOT set x2224_b2 (only fn_800C8E74's non-hand branch does), so it never refuses:
+ * repeating it re-entered ftMh_MS_343_80151484 / ftCh_GrabUnk1_8015ADD0 every 10 ticks, and each entry re-ran the damage-state setup:
+ * self_vel.y = the death launch, the 'frames until Sleep' counter (mv.*.unk0.x8) = its full length, the damage SFX and effects. The
+ * counter never reached 0 (so no Sleep), the hand rose forever and the effects piled up until the frame arena and heap were full
+ * (2026-10-06 game proofs gp-e/gp-f/gp-h). */
 extern bool ftCo_800C8C84(HSD_GObj* gobj);
 static int BossHook_DriveDeaths(void)
 {
@@ -111,9 +117,10 @@ static int BossHook_DriveDeaths(void)
         if (gobj != NULL) {
             Fighter* fp = GET_FIGHTER(gobj);
             if (BossHook_Kind(fp->kind) && Player_GetRemainingHP(port) <= 0 &&
-                fp->motion_id != ftCo_MS_Sleep && !fp->x2224_b2)
+                fp->motion_id != ftCo_MS_Sleep && !fp->x2224_b2 && !(boss_hook.driven_mask & (1 << port)))
             {
                 if (ftCo_800C8C84(gobj)) {
+                    boss_hook.driven_mask |= 1 << port;
                     OSReport("boss_hook: hand port=%d kind=%d was at 0 HP without a retail death: driven through ftCo_800C8C84\n",
                              port + 1, fp->kind);
                     ++n;
@@ -466,7 +473,7 @@ void fn_8017C71C(void)
     tmp->x8 = 0;
 #if defined(TARGET_PC)
     boss_hook.sent_mask = boss_hook.pending = boss_hook.held = boss_hook.restored = 0;
-    boss_hook.limit = boss_hook.elapsed = boss_hook.sleep_wait = 0;
+    boss_hook.limit = boss_hook.elapsed = boss_hook.sleep_wait = boss_hook.driven_mask = 0;
 #endif
     tmp->xC = ftBossLib_8015C530(gm_8017E068());
     Player_SetOtherStamina(2, tmp->xC);

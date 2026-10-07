@@ -2083,7 +2083,7 @@ static void fl_open(int art)
         fl_load_init();
     }
     fl.art = art;
-    if (art == FL_CSS || art == FL_SSS) {
+    if (art == FL_CSS || art == FL_SSS || art == FL_LOAD) {
         fas_open(art); /* the Atlas drawing of the select, when it can run: the legacy drawing stays off while it does */
     }
     fl.frames = 0;
@@ -2496,6 +2496,10 @@ static void fl_frame(void)
     case FL_CSS: fs_css_frame(); break;
     case FL_SSS: fs_sss_frame(); break;
     default: break;
+    }
+    if (fas_active() && fl.art == FL_LOAD) {
+        fas_frame(); /* the Atlas loading screen: the hold above is the game's; this only draws */
+        return;
     }
     if (fe.screen == NULL || fe.screen->art != fl.art || fe.leaving != 0) {
         return; /* switched away (fe_switch_screen rebuilt) or leaving */

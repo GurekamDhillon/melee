@@ -213,6 +213,29 @@ static void draw_tabs(const AtScreen *sc, const AtView *v, AtRect r, const AtTex
     for (i = 0; i < n; i++) if (rects[i].w > 0.0f) hit_add(hc, rects[i], AT_HIT_TAB, i, 0);
 }
 
+/* The loading screen's pane: the stage (kicker and name from the view's explainer) and the warm-up bar: a track, a fill that follows view.progress (0 to 1000, clamped),
+ * the state word (view.counter: WARMING UP or READY) and the percentage. Nothing here is a hit: there is nothing to click on while the game loads. */
+static void draw_loading(const AtView *v, AtRect pane, const AtTextOps *o, const AtSink *s)
+{
+    float cx = pane.x + pane.w * 0.5f, tw = pane.w - 48.0f, bw, bx, by, ty;
+    int pm = v->progress < 0 ? 0 : (v->progress > 1000 ? 1000 : v->progress);
+    char pct[8];
+    if (tw < 40.0f) return;
+    ty = pane.y + pane.h * 0.36f;
+    if (v->ex.has) {
+        at_text(s, o, AT_R_CAP14, v->ex.kicker, cx, ty, AT_C_JADE, AT_ALIGN_CENTER, tw);
+        at_text(s, o, AT_R_TITLE, v->ex.title, cx, ty + 40.0f, AT_C_IVORY, AT_ALIGN_CENTER, tw);
+    }
+    bw = tw < 360.0f ? tw : 360.0f;
+    bx = cx - bw * 0.5f;
+    by = pane.y + pane.h * 0.64f;
+    at_poly_rect(s, bx, by, bw, 14.0f, AT_C_GROUND2);
+    if (pm > 0) at_poly_rect(s, bx, by, bw * (float) pm / 1000.0f, 14.0f, AT_C_EMBER);
+    at_text(s, o, AT_R_CAP12, v->counter, bx, by - 8.0f, pm >= 1000 ? AT_C_IVORY : AT_C_MUTED, AT_ALIGN_LEFT, bw - 56.0f);
+    snprintf(pct, sizeof pct, "%d%%", pm / 10);
+    at_text(s, o, AT_R_NUM14, pct, bx + bw, by - 8.0f, AT_C_DIM, AT_ALIGN_RIGHT, 0.0f);
+}
+
 /* The band: four port cards in equal columns, or the matchup strip. A card is focused when a port's cursor is on it (card = its index);
  * the brackets take that port's colour. A card's hit rectangle is its slot. */
 static void draw_band(const AtScreen *sc, const AtView *v, AtRect r, const AtTextOps *o, const AtSink *s, HitCtx *hc)
@@ -377,6 +400,7 @@ void at_render_ex(const AtScreen *sc, const AtView *v, float canvas_w, double no
             at_plate(s, sp.grid, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH);
             draw_grid(sc, v, &gl, o, s, &hc);
             if (sc->n_tabs > 0) draw_tabs(sc, v, sp.tabs, o, s, &hc);
+            if (sc->band == AT_BAND_MATCHUP) draw_loading(v, sp.grid, o, s);
             if (sc->band != AT_BAND_NONE) draw_band(sc, v, sp.band, o, s, &hc);
         } else if (sc->primary == AT_PRIMARY_GRID) { at_plate(s, L.primary, AT_C_PLATE, AT_C_EDGE, 3.0f, (float) AT_PX_CH); draw_grid(sc, v, &L, o, s, &hc); }
         else {

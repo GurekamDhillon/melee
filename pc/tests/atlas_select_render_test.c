@@ -254,9 +254,58 @@ static void stages_256(void)
       CHECK(info.capped == 0 && info.entries < AT_SCREEN_QUAD_WARN && texts_legible() && find_text("BAN") != NULL); }
 }
 
+/* the loading screen ("GET READY"): the matchup strip, the stage and the warm-up bar; the hold logic is the game's, only the drawing is here */
+static void build_loading_screen(int n, int permille)
+{
+    int i;
+    memset(&SC, 0, sizeof SC); at_view_init(&V); memset(POOL, 0, sizeof POOL);
+    snprintf(SC.id, sizeof SC.id, "%s", "select.load"); snprintf(SC.title, sizeof SC.title, "%s", "GET READY");
+    snprintf(SC.parent[0], AT_STR, "%s", "VERSUS"); snprintf(SC.parent[1], AT_STR, "%s", "MELEE"); SC.n_parents = 2; SC.chapter = 2;
+    SC.primary = AT_PRIMARY_GRID; SC.preset = AT_PRESET_NONE; SC.grid_cols_auto = 1; SC.band = AT_BAND_MATCHUP;
+    SC.n_blocks = 1; snprintf(SC.blocks[0].id, AT_ID, "%s", "fighters"); SC.blocks[0].ext = POOL; SC.blocks[0].ext_n = 0;
+    for (i = 0; i < 4; i++) { SC.cards[i].port = i; SC.cards[i].ck_tex = -1; SC.cards[i].kind = i < n ? (i == 1 && n == 2 ? 2 : 1) : 0; snprintf(SC.cards[i].name, AT_STR, "%s", i == 0 ? "CAPTAIN FALCON" : "KIRBY"); snprintf(SC.cards[i].abbr, 3, "%s", "CF"); }
+    V.ex.has = 1; snprintf(V.ex.kicker, AT_STR, "%s", "STAGE"); snprintf(V.ex.title, AT_STR, "%s", "Fountain of Dreams and a very long stage name indeed");
+    snprintf(V.counter, AT_STR, "%s", permille >= 1000 ? "READY" : "WARMING UP");
+    V.progress = permille;
+}
+static void loading_screen(void)
+{
+    static const int pm[] = { 0, 250, 500, 999, 1000 }, widths[] = { 640, 1140 };
+    int k, w, n;
+    for (n = 1; n <= 4; n++) for (w = 0; w < 2; w++) for (k = 0; k < 5; k++) {
+        AtSink s; AtRenderInfo info; AtLayout L; AtSplit sp; int i, fills = 0; float track_x = -1, track_w = 0, fill_w = 0;
+        build_loading_screen(n, pm[k]);
+        s = rec_sink(); at_poly_rect(&s, 0, 0, 1.0f, 1.0f, AT_C_GROUND);
+        at_render_ex(&SC, &V, (float) widths[w], 1000.0, 1, &O, &s, &HITS, &info);
+        at_layout((float) widths[w], AT_PRESET_NONE, &L); at_layout_split(&L, 0, AT_BAND_MATCHUP, &sp);
+        CHECK(info.capped == 0 && info.entries < AT_SCREEN_QUAD_WARN && texts_legible());
+        CHECK(find_text("STAGE") != NULL && find_text(pm[k] >= 1000 ? "READY" : "WARMING UP") != NULL);
+        CHECK(n < 2 || find_text("VS") != NULL);                                           /* the strip puts VS between the fighters */
+        CHECK(find_text("CAPTAIN FALCON") != NULL || widths[w] == 640);                         /* the first fighter is named (a narrow strip may fit it down to an ellipsis)*/
+        /* the stage name stays inside the pane; the cards' names inside the strip */
+        for (i = 0; i < REC.nt; i++) {
+            const RecText *t = &REC.t[i]; float tw = fake_width(NULL, t->role, t->s), left = t->x - (t->align == AT_ALIGN_CENTER ? tw * 0.5f : t->align == AT_ALIGN_RIGHT ? tw : 0.0f);
+            if (t->base >= sp.band.y && t->base <= sp.band.y + sp.band.h) CHECK(left >= sp.band.x - 0.01f && left + tw <= sp.band.x + sp.band.w + 0.01f);
+            if (t->base >= sp.grid.y && t->base <= sp.grid.y + sp.grid.h && t->x >= sp.grid.x && t->x <= sp.grid.x + sp.grid.w) CHECK(left >= sp.grid.x - 0.01f && left + tw <= sp.grid.x + sp.grid.w + 0.01f);
+        }
+        /* the bar: the fill polys lie inside the track, and their width follows the permille */
+        for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == AT_C_EMBER && poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) >= 10.0f && poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) <= 16.0f) { fills++; fill_w = poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]); }
+        for (i = 0; i < REC.np; i++) if (REC.p[i].rgba == AT_C_GROUND2 && poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) >= 10.0f && poly_maxy(&REC.p[i]) - poly_miny(&REC.p[i]) <= 16.0f && poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]) > 100.0f) { track_x = poly_minx(&REC.p[i]); track_w = poly_maxx(&REC.p[i]) - poly_minx(&REC.p[i]); }
+        CHECK(track_x >= sp.grid.x && track_x + track_w <= sp.grid.x + sp.grid.w + 0.01f && track_w > 100.0f);
+        if (pm[k] == 0) CHECK(fills == 0);
+        else { CHECK(fills == 1 && fill_w <= track_w + 0.01f && fill_w >= track_w * (float) pm[k] / 1000.0f - 0.5f && fill_w <= track_w * (float) pm[k] / 1000.0f + 0.5f); }
+        if (pm[k] >= 1000) CHECK(fill_w >= track_w - 0.01f);
+        CHECK(HITS.n == 0 || count_hits(AT_HIT_CELL) == 0);                                /* nothing to click on a loading screen */
+    }
+    build_loading_screen(2, 500); V.progress = 5000; { AtSink s = rec_sink(); AtRenderInfo info; at_render_ex(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS, &info); CHECK(info.capped == 0); }   /* a wild value never draws outside the track */
+    { AtSink s; int i; float maxx = 0; AtLayout L; build_loading_screen(2, 5000); V.progress = 5000; s = rec_sink(); at_render(&SC, &V, 640.0f, 1000.0, 1, &O, &s, &HITS); at_layout(640.0f, AT_PRESET_NONE, &L);
+      for (i = 0; i < REC.np; i++) if (poly_maxx(&REC.p[i]) > maxx && REC.p[i].rgba == AT_C_EMBER) maxx = poly_maxx(&REC.p[i]);
+      CHECK(maxx <= L.primary.x + L.primary.w + 0.01f); }
+}
+
 int main(void)
 {
     rosters_at_three_widths(); hits_follow_layout(); placeholder_when_no_art(); style_of_the_screen(); focus_on_a_cell_has_three_cues();
-    long_roster_scroll_follows_cursor(); entries_stay_bounded(); stages_256();
+    long_roster_scroll_follows_cursor(); entries_stay_bounded(); stages_256(); loading_screen();
     ATLAS_DONE("atlas select render");
 }

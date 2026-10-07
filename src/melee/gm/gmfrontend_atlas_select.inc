@@ -29,6 +29,8 @@ extern void Ui_SelCounter(int h, const char* text);
 extern void Ui_SelNote(int h, const char* text, int kind);
 extern int Ui_SelPoll(int h, int* kind, int* a, int* b);
 extern int Ui_SelCols(int h);
+extern void Ui_SelProgress(int h, int permille);
+extern int Settings_Int(const char* key, int dflt);
 extern int Ui_ArtDecode(const char* key, int gx_fmt, const void* img, int size, int w, int h, int tlut_fmt, const void* tlut, int tlut_n);
 
 extern int Ui_CssOpen(int match_type, int online, int teams);
@@ -43,6 +45,7 @@ extern void Ui_CssEntering(int port);
 extern void Ui_CssTraining(int human);
 extern void Ui_CssCols(int cols);
 extern void Ui_CssSetTab(int tab);
+extern void Ui_CssSetPortCk(int p, int ck, int costume);
 extern unsigned Ui_CssStep(int port, unsigned trig, unsigned rep, int frame);
 extern unsigned Ui_CssMouse(int port, int vis, int card, int moved, int click, int rclick, int wheel);
 extern int Ui_CssGet(int what, int i);
@@ -69,8 +72,8 @@ enum { FA_CI_LEFT = 1, FA_CI_RIGHT = 2, FA_CI_UP = 4, FA_CI_DOWN = 8, FA_CI_A = 
        FA_CI_L = 512, FA_CI_R = 1024, FA_CI_START = 2048 };
 enum { FA_CE_MOVE = 1, FA_CE_FORWARD = 2, FA_CE_BACK = 4, FA_CE_TOAST = 8, FA_CE_FINISH_GO = 16, FA_CE_FINISH_BACK = 32 };
 enum { FA_CELL_LOCKED = 1, FA_CELL_DISABLED = 32 };
-enum { FA_CARD_OPEN = 1, FA_CARD_CLOSED = 2, FA_CARD_READY = 4 };
-enum { FA_SEL_CSS = 0, FA_SEL_SSS = 1 };
+enum { FA_CARD_OPEN = 1, FA_CARD_CLOSED = 2, FA_CARD_READY = 4, FA_CARD_FOCUS = 8 };
+enum { FA_SEL_CSS = 0, FA_SEL_SSS = 1, FA_SEL_LOAD = 2 };
 enum { FA_SELEV_CELL = 1, FA_SELEV_CARD = 2, FA_SELEV_TAB = 3, FA_SELEV_KEY = 4, FA_SELEV_WHEEL = 5 };
 enum { FA_NOTE_INFO = 3 };
 /* Ui_CssGet / Ui_SssGet selectors (gw_script_ui_sel.inc GS_CSSG_*, GS_SSSG_*) */
@@ -294,11 +297,14 @@ static int fas_open_css(void)
     CSSData* css = fcs.css;
     const char *t0, *t1;
     int mt, i, p;
-    if (css == NULL || fcs.online) {
-        return 0; /* the online lobby's pick keeps the legacy screen until its own gate (Task 11) */
+    if (css == NULL) {
+        return 0;
     }
-    mt = fcs.training ? 0x17 : (int) css->match_type;
-    if (!Ui_CssOpen(mt, 0, fcs.teams)) {
+    if (fcs.online && Settings_Int("atlas_lobby", 0) == 0) {
+        return 0; /* the online lobby's pick keeps the legacy screen until a two-client look: MELEE_ATLAS_LOBBY=1 turns the Atlas one on (Task 13 item 9) */
+    }
+    mt = fcs.online ? 0x40 /* AT_MT_LOBBY */ : fcs.training ? 0x17 : (int) css->match_type;
+    if (!Ui_CssOpen(mt, fcs.online ? 1 : 0, fcs.teams)) {
         return 0; /* no profile for this match type: the screen it had stays; never guess */
     }
     Ui_CssPair(CKind_Zelda, CKind_Seak);
@@ -323,7 +329,11 @@ static int fas_open_css(void)
         fs_preload_only = fas.enter; /* Event, Classic, Stadium...: the mode filled the other entries (Sandbag, the Multi-Man, the opponents) */
     }
     fas_crumbs(mt, &t0, &t1);
-    fas.h = Ui_SelOpen(FA_SEL_CSS, mt, t0, t1, "FIGHTERS");
+    if (fcs.online) {
+        t0 = "VERSUS";
+        t1 = "ONLINE PLAY";
+    }
+    fas.h = Ui_SelOpen(FA_SEL_CSS, mt, t0, t1, fcs.online ? "PICK A FIGHTER" : "FIGHTERS");
     if (fas.h < 0) {
         return 0;
     }
@@ -524,6 +534,12 @@ static void fas_css_frame(void)
             Ui_SelNote(fas.h, buf, FA_NOTE_INFO);
         }
         if (ev & FA_CE_FINISH_GO) {
+            if (online && Ui_CssGet(FA_CG_CK, 0) == CKind_Zelda && Ui_CssGet(FA_CG_VIS_OF_CK, CKind_Seak) == Ui_CssGet(FA_CG_VIS_OF_CK, CKind_Zelda) &&
+                fs_sheik_ok() && (fs_held(0) & PAD_BUTTON_A))
+            {
+                int cos = Ui_CssGet(FA_CG_COSTUME, 0);
+                Ui_CssSetPortCk(0, CKind_Seak, cos < fs_costumes(CKind_Seak) ? cos : 0); /* A held while locking in: Sheik, as when a match loads */
+            }
             fas_finish_css(1);
             return;
         }
@@ -655,6 +671,50 @@ static void fas_sss_frame(void)
     fas_submit_sss();
 }
 
+/* ---- the loading screen ("GET READY") -------------------------------------------------------------- */
+
+/* The warm-up and the hold are the game's (fe_load_step, fl_frame_load: untouched); this only draws who fights where, the stage and the bar. fl_ld is the legacy
+ * screen's own list of fighters, read the same way. The online loading screen (the lobby's) follows the lobby's gate. */
+static int fas_open_loading(void)
+{
+    if (fl_ld.online && Settings_Int("atlas_lobby", 0) == 0) {
+        return 0;
+    }
+    fas.h = Ui_SelOpen(FA_SEL_LOAD, 0, "VERSUS", fl_ld.online ? "ONLINE PLAY" : "MELEE", "GET READY");
+    if (fas.h < 0) {
+        return 0;
+    }
+    OSReport("frontend: loading screen - Atlas, %d fighter(s)\n", fl_ld.n);
+    return 1;
+}
+
+static void fas_loading_frame(void)
+{
+    char name[40], sub[24], abbr[4], stage[64];
+    int i, p;
+    for (p = 0; p < 4; p++) {
+        Ui_SelCard(fas.h, p, 0, "", "", "", -1, 0, 0, 0u);
+    }
+    for (i = 0; i < fl_ld.n && i < 4; i++) {
+        int ck = fl_ld.ck[i], cpu = fl_ld.cpu[i], port = fl_ld.port[i] & 3;
+        name[0] = '\0';
+        if (ck >= 0) {
+            fas_fighter_name(ck, name, 40);
+        }
+        fas_abbr(name, abbr);
+        sub[0] = '\0';
+        if (fl_ld.online) {
+            fp_copy(sub, i == fl_ld.me ? "YOU" : "OPPONENT", 24);
+        }
+        Ui_SelCard(fas.h, port, cpu ? FS_CPU : FS_HMN, name, sub, abbr, -1, cpu, 0, (fl_ld.online && i == fl_ld.me) ? (unsigned) FA_CARD_FOCUS : 0u);
+    }
+    Netplay_StageNameExt(fl_ld.ext, stage, 64);
+    Ui_SelExplain(fas.h, "STAGE", stage, "", "", -1, "", "", "");
+    Ui_SelProgress(fas.h, (int) (fe.progress * 1000.0F));
+    Ui_SelCounter(fas.h, fl_ld.ready ? "READY" : "WARMING UP");
+    Ui_SelKeys(fas.h, "");
+}
+
 /* ---- the hooks gmfrontend_online.inc calls (fl_open, fl_frame, fl_exit) ------------------------------- */
 
 /* Called from fl_open for the CSS and the SSS, after the legacy open has filled fcs. 1: an Atlas screen is up and the legacy drawing stays off. */
@@ -675,6 +735,8 @@ static int fas_open(int art)
         fas.active = fas_open_css();
     } else if (art == FL_SSS) {
         fas.active = fas_open_sss();
+    } else if (art == FL_LOAD) {
+        fas.active = fas_open_loading();
     }
     fas.art = art;
     return fas.active;
@@ -687,8 +749,10 @@ static void fas_frame(void)
     }
     if (fas.art == FL_CSS) {
         fas_css_frame();
-    } else {
+    } else if (fas.art == FL_SSS) {
         fas_sss_frame();
+    } else {
+        fas_loading_frame();
     }
 }
 

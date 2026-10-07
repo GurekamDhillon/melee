@@ -4281,7 +4281,11 @@ void RB_XRegions(void)
         }
         /* xD64..xD7C hold sound handles (sfx_unk1/2, xD6C, ...): the audio engine's ids, not state */
         Snap_XRegion(0x040000 + n * 0x100, (u32) g->user_data, 0xD64);
-        Snap_XRegion(0x040001 + n * 0x100, (u32) g->user_data + 0xD7C, (u32) sizeof(Item) - 0xD7C);
+        /* the kind-specific union xDD4_itemVar..xFCC is left out: some kinds keep a sound handle in it (a Dream Land item at
+         * +0xDE8 differed by 0x10, one voice slot, between a Windows and a Linux run while nothing else did) and the union has
+         * no per-kind map to mask only those words */
+        Snap_XRegion(0x040001 + n * 0x100, (u32) g->user_data + 0xD7C, 0xDD4 - 0xD7C);
+        Snap_XRegion(0x040002 + n * 0x100, (u32) g->user_data + 0xFCC, (u32) sizeof(Item) - 0xFCC);
         Snap_XRegion(0x050000 + n * 0x100, (u32) g, 0x40);
         ftRb_XTree(0x060000 + n * 0x1000, g);
     }

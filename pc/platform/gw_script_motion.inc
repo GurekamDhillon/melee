@@ -39,6 +39,21 @@ static void gs_motion_array(lua_State* L,int table,const char* key,float* value,
         for(i=0;i<count;++i){lua_rawgeti(L,-1,i+1);double n=luaL_checknumber(L,-1);if(!isfinite(n)||n<lo||n>hi)luaL_error(L,"invalid motion %s",key);value[i]=(float)n;lua_pop(L,1);}
     }lua_pop(L,1);
 }
+static void gs_motion_colors(lua_State* L,int table,const char* key,float (*value)[4],int* count,int max)
+{   /* a list of 0..max {r,g,b,a} colours (0..1); an empty list clears */
+    int i,k;lua_getfield(L,table,key);
+    if(!lua_isnil(L,-1)){
+        luaL_checktype(L,-1,LUA_TTABLE);size_t n=lua_rawlen(L,-1);
+        if(n>(size_t)max||(max==GW_MOTION_GRADIENT&&n==1))luaL_error(L,max==GW_MOTION_GRADIENT?"motion %s needs 0 or 2..%d colours":"motion %s needs 0..%d colours",key,max);
+        memset(value,0,sizeof(float)*4*(size_t)max);*count=(int)n;
+        for(i=0;i<(int)n;++i){
+            lua_rawgeti(L,-1,i+1);luaL_checktype(L,-1,LUA_TTABLE);
+            if(lua_rawlen(L,-1)!=4)luaL_error(L,"motion %s colours need 4 floats",key);
+            for(k=0;k<4;++k){lua_rawgeti(L,-1,k+1);double c=luaL_checknumber(L,-1);if(!isfinite(c)||c<0||c>1)luaL_error(L,"invalid motion %s",key);value[i][k]=(float)c;lua_pop(L,1);}
+            lua_pop(L,1);
+        }
+    }lua_pop(L,1);
+}
 static int gs_motion_joint(lua_State* L,int index)
 {
     static const char* names[]={"left_hand","right_hand","left_foot","right_foot","head"};
@@ -49,7 +64,7 @@ static int gs_motion_joint(lua_State* L,int index)
 }
 static void gs_motion_options(lua_State* L,int table,GwMotionOptions* o)
 {
-    static const char* keys[]={"port","sub","anchor","copies","spacing","lifetime","length","smoothing","blend","trigger","flag","follow","clear_on_respawn","surface","shader","depth","speed","scale","fade","width","taper","intensity","params","offset","tint","tail","edge","debug",NULL};
+    static const char* keys[]={"port","sub","anchor","copies","spacing","lifetime","length","smoothing","blend","trigger","flag","follow","clear_on_respawn","surface","shader","depth","speed","scale","fade","width","taper","intensity","params","offset","tint","tail","edge","palette","gradient","hue_shift","scale_falloff","pulse","hue_drift","hue_span","swell","debug",NULL};
     static const char* blends[]={"alpha","additive"},*triggers[]={"always","moving","flag"},*surfaces[]={"own","silhouette","gradient"};
     static const char* shaders[]={"solid","glow","fire","electric","frost","dark"};
     luaL_checktype(L,table,LUA_TTABLE);gs_item_keys(L,table,keys);
@@ -71,6 +86,10 @@ static void gs_motion_options(lua_State* L,int table,GwMotionOptions* o)
     gs_motion_number(L,table,"fade",&o->curve,0.25f,4);gs_motion_number(L,table,"width",&o->width,0.05f,24);
     gs_motion_number(L,table,"taper",&o->taper,0,4);gs_motion_number(L,table,"intensity",&o->intensity,0,1);
     gs_motion_array(L,table,"tint",o->tint,4,0,1);gs_motion_array(L,table,"tail",o->tail,4,0,1);gs_motion_array(L,table,"edge",o->edge,4,0,1);
+    gs_motion_colors(L,table,"palette",o->palette,&o->palette_count,GW_MOTION_PALETTE);gs_motion_colors(L,table,"gradient",o->gradient,&o->gradient_count,GW_MOTION_GRADIENT);
+    gs_motion_number(L,table,"hue_shift",&o->hue_shift,-360,360);gs_motion_number(L,table,"scale_falloff",&o->scale_falloff,-1,1);
+    gs_motion_array(L,table,"pulse",o->pulse,2,0,20);if(o->pulse[1]>1)luaL_error(L,"invalid motion pulse");
+    gs_motion_number(L,table,"hue_drift",&o->hue_drift,-720,720);gs_motion_number(L,table,"hue_span",&o->hue_span,-720,720);gs_motion_number(L,table,"swell",&o->swell,-1,4);
     gs_motion_array(L,table,"params",o->params,4,0,10);gs_motion_array(L,table,"offset",o->offset,3,-100,100);
     lua_getfield(L,table,"anchor");
     if(!lua_isnil(L,-1)){

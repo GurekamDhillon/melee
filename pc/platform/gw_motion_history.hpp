@@ -17,6 +17,32 @@ inline Point catmull(Point a,Point b,Point c,Point d,float t){
 inline float fade(int age,int lifetime,float curve){
     return lifetime>0?std::pow(std::clamp(1-float(age)/lifetime,0.f,1.f),curve):0;
 }
+// Colour variety helpers (pure, presentation only). Rotate an RGB triple's hue about the grey axis by `degrees`.
+inline void hue_rotate(float* rgb,float degrees){
+    if(degrees==0)return;
+    const float r=degrees*0.01745329252f,c=std::cos(r),s=std::sin(r),k=(1-c)/3,q=0.57735026919f*s;
+    const float in[3]={rgb[0],rgb[1],rgb[2]};
+    rgb[0]=in[0]*(c+k)+in[1]*(k-q)+in[2]*(k+q);
+    rgb[1]=in[0]*(k+q)+in[1]*(c+k)+in[2]*(k-q);
+    rgb[2]=in[0]*(k-q)+in[1]*(k+q)+in[2]*(c+k);
+    for(int i=0;i<3;++i)rgb[i]=std::clamp(rgb[i],0.f,1.f);
+}
+// Evenly spaced stops, t=0 first stop, t=1 last. count must be >=2.
+inline void gradient_sample(const float (*stops)[4],int count,float t,float* out){
+    const float x=std::clamp(t,0.f,1.f)*float(count-1);
+    const int i=std::min(int(x),count-2);const float f=x-float(i);
+    for(int k=0;k<4;++k)out[k]=stops[i][k]*(1-f)+stops[i+1][k]*f;
+}
+// Alpha multiplier of a travelling pulse: `phase` = rate*seconds - 2*age (a ripple that runs down the trail).
+inline float pulse_factor(float rate,float depth,float seconds,float age){
+    if(depth<=0)return 1;
+    return 1-depth*(0.5f+0.5f*std::sin(6.28318530718f*(rate*seconds-2*age)));
+}
+// Width multiplier along the trail: tapers to the tail, with an optional mid-trail swell (+) or pinch (-).
+inline float width_profile(float age,float taper,float swell){
+    const float base=std::pow(std::max(0.f,1-age),taper);
+    return base*std::max(0.f,1+swell*std::sin(3.14159265359f*std::clamp(age,0.f,1.f)));
+}
 template<class T,size_t N> class History {
     struct Entry {int frame;T value;};
     std::array<std::optional<Entry>,N> entries{};

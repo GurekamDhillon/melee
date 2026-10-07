@@ -23,7 +23,10 @@ assert(loadfile(root..'/scripts/main.lua','t',env))()
 env.on_frame();assert(calls.warm)
 env.on_tick();assert(options.intensity==0,'render enabled before warm readiness')
 ready=true;env.on_tick();assert(options.intensity==1,'exaggerated integrator default was lost')
-for _,key in ipairs({'C','F','I','S','W','L','A','T','G'}) do keys[key]=true;env.on_tick();keys[key]=false end
+local variety={P='palette',H='hue_shift',E='scale_falloff'}
+for _,key in ipairs({'C','F','I','S','W','L','A','T','G','P','H','E','U','B','M','O','R','1','2','3','4'}) do keys[key]=true;env.on_tick();keys[key]=false end
+assert(options.palette or options.gradient or options.hue_shift or options.scale_falloff or options.pulse or options.swell,'variety keys set nothing')
+for k,v in pairs(options) do if type(v)=='number' then assert(v==v and v>-1e9 and v<1e9,'non-finite '..k) end end
 env.on_draw();assert(commands.demo_state);commands.demo_state('check')
 env.on_unload();env.on_scene();assert(env.on_frame)
 print('motion demo warm ordering and live controls PASS: '..root)

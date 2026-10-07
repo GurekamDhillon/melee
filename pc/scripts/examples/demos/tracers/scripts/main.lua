@@ -5,6 +5,19 @@ local anchors,anchor={'right_hand','active_hitboxes','held_item','sword_tip'},1
 local styles,style,width,length,hits={'solid','glow','fire','electric','frost','dark'},2,6,31,false
 local intensity=1
 local looks={solid={tint={1,1,0.6,1},tail={1,0.5,0,0.2}},glow={tint={0.1,1,1,1},tail={0.2,0.2,1,0.1}},fire={tint={1,0.55,0.05,1},tail={1,0,0,0.1}},electric={tint={1,1,0.2,1},tail={0.3,0.6,1,0.1}},frost={tint={0.7,0.95,1,1},tail={0.2,0.5,1,0.1}},dark={tint={0.7,0.1,1,1},tail={0.1,0,0.2,0.2}}}
+-- Variety presets. G gradient, U pulse, H hue motion, B swell, M blend, O over-fighter, 1..4 the shader params, R reset.
+local grads={
+  {name='off',list={}},
+  {name='fire>ice',list={{1,0.95,0.6,1},{1,0.4,0.05,0.9},{0.3,0.4,1,0.6},{0.1,0.1,0.5,0}}},
+  {name='rainbow',list={{1,0.1,0.1,1},{1,0.9,0.1,1},{0.1,1,0.4,0.9},{0.2,0.4,1,0}}},
+  {name='sunset',list={{1,1,0.8,1},{1,0.5,0.6,0.9},{0.5,0.2,0.8,0}}},
+}
+local pulses={{name='off',v={0,0}},{name='slow',v={1.5,0.5}},{name='fast',v={6,0.8}}}
+local hues={{name='off',drift=0,span=0},{name='drift 90/s',drift=90,span=0},{name='span 360',drift=0,span=360},{name='both',drift=120,span=-240}}
+local swells={{name='off',v=0},{name='bulge',v=1.5},{name='fat bulge',v=4},{name='pinch',v=-0.7}}
+local gi,pu,hu,sw,blend,over=1,1,1,1,'alpha',false
+local knobs,levels={1,2,0.5,2},{{0.25,0.5,1},{0.5,1,2,4,8},{0,0.5,1,2,5},{0,1,2,4,8}}
+local knob_names,knob_at={'strength','frequency','core_width','motion_rate'},{3,2,2,3}
 local function start()
   if handle or not gd.match().active or not gd.player(1) then return end
   handle=assert(gd.tracer_add{port=1,anchor='right_hand',width=6,taper=0.4,length=31,smoothing=8,shader='glow',params={1,2,0.5,2},tint=looks.glow.tint,tail=looks.glow.tail,edge={1,1,1,0.8},intensity=0})
@@ -26,14 +39,30 @@ function on_tick()
   if gd.key_pressed('S') then style=style%6+1;assert(gd.tracer_set(handle,{shader=styles[style],tint=looks[styles[style]].tint,tail=looks[styles[style]].tail})) end
   if gd.key_pressed('W') then width=width>=24 and 0.5 or math.min(24,width+6);assert(gd.tracer_set(handle,{width=width})) end
   if gd.key_pressed('L') then length=length>=60 and 4 or math.min(60,length+20);assert(gd.tracer_set(handle,{length=length})) end
+  if gd.key_pressed('G') then gi=gi%#grads+1;assert(gd.tracer_set(handle,{gradient=grads[gi].list})) end
+  if gd.key_pressed('U') then pu=pu%#pulses+1;assert(gd.tracer_set(handle,{pulse=pulses[pu].v})) end
+  if gd.key_pressed('H') then hu=hu%#hues+1;assert(gd.tracer_set(handle,{hue_drift=hues[hu].drift,hue_span=hues[hu].span})) end
+  if gd.key_pressed('B') then sw=sw%#swells+1;assert(gd.tracer_set(handle,{swell=swells[sw].v})) end
+  if gd.key_pressed('M') then blend=blend=='alpha' and 'additive' or 'alpha';assert(gd.tracer_set(handle,{blend=blend})) end
+  if gd.key_pressed('O') then over=not over;assert(gd.tracer_set(handle,{depth=not over})) end
+  for k=1,4 do
+    if gd.key_pressed(tostring(k)) then knob_at[k]=knob_at[k]%#levels[k]+1;knobs[k]=levels[k][knob_at[k]];assert(gd.tracer_set(handle,{params=knobs})) end
+  end
+  if gd.key_pressed('R') then
+    gi,pu,hu,sw,blend,over=1,1,1,1,'alpha',false;knobs={1,2,0.5,2};knob_at={3,2,2,3}
+    assert(gd.tracer_set(handle,{gradient={},pulse={0,0},hue_drift=0,hue_span=0,swell=0,blend='alpha',depth=true,params=knobs}))
+  end
   if gd.key_pressed('A') then anchor=anchor%#anchors+1;local ok,why=pcall(gd.tracer_set,handle,{anchor=anchors[anchor]});if not ok then gd.log('tracer anchor '..anchors[anchor]..' refused: '..tostring(why)) end end
 end
 function on_draw()
   local a=gd.safe_area()
-  gd.fill(a.x+12,a.y+100,math.min(a.w-24,760),92,0x101827dd)
+  gd.fill(a.x+12,a.y+100,math.min(a.w-24,760),160,0x101827dd)
   gd.text(a.x+24,a.y+110,'Tracers: '..status,0xffd369ff,1.2)
   gd.text(a.x+24,a.y+136,'S: shader colour  W: width to 24  L: length to 60  A: anchor (hand, hitboxes, held item, sword tip)')
-  gd.text(a.x+24,a.y+158,('shader=%s width=%.1f length=%d anchor=%s'):format(styles[style],width,length,anchors[anchor]))
+  gd.text(a.x+24,a.y+158,('shader=%s width=%.1f length=%d anchor=%s blend=%s over_fighter=%s'):format(styles[style],width,length,anchors[anchor],blend,tostring(over)))
+  gd.text(a.x+24,a.y+180,'G: gradient  U: pulse  H: hue motion  B: swell  M: blend  O: over fighter  R: reset  1-4: shader params')
+  gd.text(a.x+24,a.y+202,('gradient=%s  pulse=%s  hue=%s  swell=%s'):format(grads[gi].name,pulses[pu].name,hues[hu].name,swells[sw].name))
+  gd.text(a.x+24,a.y+224,('params: %s=%.2f %s=%.2f %s=%.2f %s=%.2f'):format(knob_names[1],knobs[1],knob_names[2],knobs[2],knob_names[3],knobs[3],knob_names[4],knobs[4]))
 end
 function on_unload() if warm then gd.warm_release(warm) end end
 gd.command('demo_state',function(token) gd.log('tour state '..tostring(token)..' '..status) end,'demo_state <token>')

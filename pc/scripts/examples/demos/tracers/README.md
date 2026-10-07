@@ -11,3 +11,7 @@ The overlay reports live parameters. Preparation runs before intensity
 is enabled; unloading `demo_tracers` releases owned emitters. This source has not
 been run or visually accepted. Changing a fighter material/costume may require
 another warm pass; unsupported captures are skipped whole.
+
+Variety: G gradient (off, fire>ice, rainbow, sunset), U pulse (off, slow, fast), H hue motion (off, drift, span, both),
+B swell (off, bulge, fat bulge, pinch), M alpha/additive blend, O draw over the fighter, 1-4 the four shader params
+(strength, frequency, core_width, motion_rate), R reset. The overlay lists the live values.

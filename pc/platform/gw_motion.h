@@ -6,13 +6,20 @@ extern "C" {
 #endif
 enum { GW_MOTION_AFTERIMAGE=1,GW_MOTION_TRACER=2 };
 enum { GW_MOTION_MAX_COPIES=12,GW_MOTION_HISTORY=64,GW_MOTION_MAX_AGE=60,
-       GW_MOTION_STATS_COUNT=35 };
+       GW_MOTION_STATS_COUNT=35,GW_MOTION_PALETTE=6,GW_MOTION_GRADIENT=4 };
 enum { GW_ANCHOR_JOINT=0,GW_ANCHOR_HITBOX=1,GW_ANCHOR_HELD=2,GW_ANCHOR_SWORD=3,GW_ANCHOR_ITEM=4,GW_ANCHOR_HITS=5 };
 typedef struct {
     int kind,port,sub,anchor,index,item,copies,spacing,lifetime,length,smoothing;
     int blend,trigger,flag,follow,clear_on_respawn,surface,shader,depth;
     float speed,scale,curve,width,taper,intensity,params[4],offset[3];
     float tint[4],tail[4],edge[4];
+    /* Colour variety (presentation only; all zero = the pre-variety look). Afterimages: palette cycles by copy index,
+       hue_shift rotates copy n's hue by (n-1)*hue_shift degrees, scale_falloff shrinks (+) or grows (-) older copies.
+       Tracers: gradient stops are spread evenly head to tail, pulse={Hz,depth} ripples alpha along the trail, hue_drift
+       (deg/s) and hue_span (deg head to tail) rotate hue, swell bulges (+) or pinches (-) the width mid-trail. */
+    int palette_count,gradient_count;
+    float palette[GW_MOTION_PALETTE][4],gradient[GW_MOTION_GRADIENT][4];
+    float hue_shift,scale_falloff,pulse[2],hue_drift,hue_span,swell;
 } GwMotionOptions;
 void gw_motion_defaults(GwMotionOptions*,int kind);
 int gw_motion_add(unsigned owner,const GwMotionOptions*,const char** error);

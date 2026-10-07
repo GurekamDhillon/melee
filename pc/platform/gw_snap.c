@@ -1633,13 +1633,29 @@ static void xh_mask_copy(uint8_t *dst, const uint8_t *src, size_t n) {
     }
 }
 
+/* the simulation-owned regions game code hands over (fighter.c RB_XRegions) */
+typedef struct {
+    uint32_t tag, va, len;
+} XhReg;
+static XhReg xh_reg[4096];
+static int xh_nreg;
+void gw_Snap_XRegion(int tag, uint32_t va, uint32_t len) {
+    if (xh_nreg < 4096 && va >= 0x80000000u && len != 0 && va - 0x80000000u + len <= gw_mem1_size) {
+        xh_reg[xh_nreg].tag = (uint32_t) tag;
+        xh_reg[xh_nreg].va = va;
+        xh_reg[xh_nreg].len = len;
+        xh_nreg++;
+    }
+}
+
 void gw_snap_xlog(int frame) {
     static FILE *log;
     static int tried;
     static int dumps[XH_MAX_DUMPS], ndumps;
     static char dumpdir[512];
     extern uint32_t gw_RB_GameHash(void);
-    uint64_t mem = 0, glob = 0;
+    extern void gw_RB_XRegions(void);
+    uint64_t mem = 0, glob = 0, wide = 0;
     uint32_t pg;
     int i;
     if (!tried) {
@@ -1767,6 +1783,24 @@ void gw_snap_xlog(int frame) {
                     fwrite(&s->len, 4, 1, f);
                     fwrite(gb, 1, s->len, f);
                     free(gb);
+                }
+                fclose(f);
+            }
+            snprintf(p, sizeof p, "%s/xh_%d.regs", dumpdir, frame);
+            f = fopen(p, "wb");
+            if (f != NULL) {
+                int k;
+                for (k = 0; k < xh_nreg; ++k) {
+                    uint8_t *rb = (uint8_t *) malloc(xh_reg[k].len);
+                    if (rb == NULL) {
+                        continue;
+                    }
+                    xh_mask_copy(rb, (const uint8_t *) (uintptr_t) xh_reg[k].va, xh_reg[k].len);
+                    fwrite(&xh_reg[k].tag, 4, 1, f);
+                    fwrite(&xh_reg[k].len, 4, 1, f);
+                    fwrite(&xh_reg[k].va, 4, 1, f);
+                    fwrite(rb, 1, xh_reg[k].len, f);
+                    free(rb);
                 }
                 fclose(f);
             }

@@ -127,6 +127,8 @@ Never redirect stdout into the game's own `melee-pc.log` (two writers).
 | `MELEE_MODS_DIR=<path>` | parent of mod folders; use a Windows path (`pwd -W` in Git Bash), not `/c/...` |
 | `MELEE_TURBO_HASHLOG=<path>` | optional per-match-frame full snapshot hash CSV for realtime/turbo parity checks |
 | `MELEE_TEST_SEED=<integer>` | fix the boot RNG seed for scripted parity checks; otherwise use OSGetTick |
+| `MELEE_ATLAS=0` | the legacy menus and the retail title exactly as before; absent or anything else = the Atlas menus (the front door: title, main menu, hubs) |
+| `MELEE_ATLAS_SCENES=<kind>:<retail\|overlay\|replace>,...` | development override of the Atlas scene policy table (`pc/platform/gw_ui_policy.c`); ignored under `MELEE_ATLAS=0` |
 | `MELEE_WINDOW_X/Y` | window position; may be negative. Applied at creation, so no flash |
 | `MELEE_WINDOW_W/H` | window size (Aurora clamps to at least 640x480) |
 | `MELEE_AUDIO_LATENCY_MS` | output ring cushion, default 60 (section 19.2) |

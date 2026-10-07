@@ -971,7 +971,7 @@ static const GsCredit gs_credits[] = {
     { "doldecomp/melee", "the doldecomp contributors", "github.com/doldecomp/melee. The matching decompilation the port is built from." },
     { "Aurora", "encounter. MIT", "github.com/encounter/aurora. The GameCube SDK reimplementation the port renders through." },
     { "Project Slippi", "Fizzi and the Project Slippi team", "slippi.gg. The replay format, rollback practice and UCF codes the port follows." },
-    { "m-ex", "akaneia", "github.com/akaneia/m-ex. The mod format the port's m-ex layer reads; consulted, never copied (tools/mex_port)." },
+    { "m-ex", "akaneia and contributors", "github.com/akaneia/m-ex. The content mod the port's m-ex layer follows; consulted, never copied (it publishes no licence)." },
     { "Lua 5.4", "Lua.org, PUC-Rio", "lua.org. The scripting language embedded in the port." },
     { "Barlow Condensed", "Jeremy Tribby. SIL OFL 1.1", "github.com/jpt/barlow. The caps labels and titles of the Atlas menus." },
     { "Source Sans 3", "Adobe. SIL OFL 1.1", "github.com/adobe-fonts/source-sans. The menus' body text." },

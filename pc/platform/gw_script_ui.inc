@@ -1098,6 +1098,7 @@ static const GsCredit gs_credits[] = {
     { "melee-pc", "999sian and contributors", "github.com/999sian/melee-pc. Rollback snapshot design; ideas only." },
     { "MeleeVS", "Joyastick", "github.com/Joyastick/melee-pc-TagFighter. Benching and reserve fighters; ideas only." },
     { "Project M and Project+", "their development teams", "github.com/Fracture17/ProjectMCodes. Turbo mode prior art; ideas only, our code is original." },
+    { "20XX Turbo", "UnclePunch", "Melee Turbo Mode Replaces Single Button Mode. Turbo window prior art; ideas only, no code copied." },
     { "Blender", "the Blender Foundation. GPL", "blender.org. Modelling and animating our original fighter art." },
     { "glTF 2.0", "Khronos", "khronos.org/gltf. The model interchange format of the authored-fighter converter." },
     { "HSDLib", "Ploaj", "github.com/Ploaj/HSDLib. Writes the converter's model files." },

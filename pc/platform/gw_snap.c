@@ -1558,10 +1558,17 @@ uint64_t gw_snap_frame_hash(int frame) {
  *                                  (RB_GameHash), the masked MEM1 digest, the masked globals digest
  *   MELEE_XHASH_DUMP_FRAMES=a,b,c  at those frames also write the masked images, for xhash_diff.py
  *   MELEE_XHASH_DUMP_DIR=<dir>     where (default: beside the log)
- *   MELEE_XHASH_PTR=lo-hi          the masked word range (hex), default 10000000-14000000
+ *   MELEE_XHASH_PTR=lo-hi          the masked word range (hex), default 10000000-20000000
+ *   MELEE_XHASH_SKIP=a-b,c-d       MEM1 address ranges (hex) hashed and dumped as zero: state that is not the
+ *                                  simulation's and differs by platform (native stack pointers in OSThread
+ *                                  contexts, the audio engine's voice blocks)
  */
 #define XH_MAX_DUMPS 64
-static uint32_t xh_lo = 0x10000000u, xh_hi = 0x14000000u;
+static uint32_t xh_lo = 0x10000000u, xh_hi = 0x20000000u;
+static struct {
+    uint32_t lo, hi; /* MEM1 byte range [lo, hi) hashed as zero (and dumped as zero) */
+} xh_skip[64];
+static int xh_nskip;
 
 /* game memory and game globals are BIG-endian (gwtool swaps every access): a pointer reads swapped */
 static inline uint32_t xh_bswap(uint32_t v) {
@@ -1583,6 +1590,26 @@ static uint64_t xh_words(const uint8_t *p, size_t n, uint64_t h) {
         h = (h ^ p[i]) * 0x100000001b3ull;
     }
     return h;
+}
+
+
+/* MEM1 page `pg` with the skip ranges zeroed, into tmp (4 KB) */
+static const uint8_t *xh_page(uint32_t pg, uint8_t *tmp) {
+    const uint8_t *src = (const uint8_t *) (uintptr_t) (0x80000000u + pg * SN_PAGE);
+    uint32_t va = 0x80000000u + pg * SN_PAGE;
+    int k, copied = 0;
+    for (k = 0; k < xh_nskip; ++k) {
+        if (xh_skip[k].lo < va + SN_PAGE && va < xh_skip[k].hi) {
+            uint32_t lo = xh_skip[k].lo > va ? xh_skip[k].lo : va;
+            uint32_t hi = xh_skip[k].hi < va + SN_PAGE ? xh_skip[k].hi : va + SN_PAGE;
+            if (!copied) {
+                memcpy(tmp, src, SN_PAGE);
+                copied = 1;
+            }
+            memset(tmp + (lo - va), 0, hi - lo);
+        }
+    }
+    return copied ? tmp : src;
 }
 
 static uint64_t xh_name_hash(const char *s) {
@@ -1633,6 +1660,21 @@ void gw_snap_xlog(int frame) {
                 xh_hi = hi;
             }
         }
+        v = getenv("MELEE_XHASH_SKIP");
+        while (v != NULL && *v != '\0' && xh_nskip < 64) {
+            unsigned lo, hi;
+            int used = 0;
+            if (sscanf(v, "%x-%x%n", &lo, &hi, &used) < 2 || used == 0) {
+                break;
+            }
+            xh_skip[xh_nskip].lo = lo;
+            xh_skip[xh_nskip].hi = hi;
+            xh_nskip++;
+            v += used;
+            if (*v == ',') {
+                v++;
+            }
+        }
         v = getenv("MELEE_XHASH_DUMP_FRAMES");
         while (v != NULL && *v != '\0' && ndumps < XH_MAX_DUMPS) {
             char *end;
@@ -1665,13 +1707,14 @@ void gw_snap_xlog(int frame) {
             return;
         }
         fprintf(log, "frame,rb,mem,glob\n");
-        gw_log("xhash: %s (masking words in %08x-%08x), %d dump frame(s)", path, xh_lo, xh_hi, ndumps);
+        gw_log("xhash: %s (masking words in %08x-%08x, %d skipped range(s)), %d dump frame(s)", path, xh_lo, xh_hi, xh_nskip, ndumps);
     }
     if (log == NULL || !sn.enabled) {
         return;
     }
     for (pg = 0; pg < gw_mem1_size / SN_PAGE; ++pg) {
-        uint64_t h = xh_words((const uint8_t *) (uintptr_t) (0x80000000u + pg * SN_PAGE), SN_PAGE, 0x12345678ull + pg);
+        uint8_t tmp[SN_PAGE];
+        uint64_t h = xh_words(xh_page(pg, tmp), SN_PAGE, 0x12345678ull + pg);
         mem += h * 0x9E3779B97F4A7C15ull + pg;
     }
     for (i = 0; i < sn.nsyms; ++i) {
@@ -1693,7 +1736,11 @@ void gw_snap_xlog(int frame) {
             snprintf(p, sizeof p, "%s/xh_%d.mem1", dumpdir, frame);
             f = fopen(p, "wb");
             if (f != NULL && buf != NULL) {
-                xh_mask_copy(buf, (const uint8_t *) (uintptr_t) 0x80000000u, gw_mem1_size);
+                uint32_t q;
+                uint8_t tmp[SN_PAGE];
+                for (q = 0; q < gw_mem1_size / SN_PAGE; ++q) {
+                    xh_mask_copy(buf + (size_t) q * SN_PAGE, xh_page(q, tmp), SN_PAGE);
+                }
                 fwrite(buf, 1, gw_mem1_size, f);
                 fclose(f);
             }
